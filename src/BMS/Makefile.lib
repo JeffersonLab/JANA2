@@ -1,0 +1,80 @@
+#
+#
+# $Header$
+#
+
+# Things common to both library and executable builds live in Makefile.common
+include $(JANA_HOME)/src/BMS/Makefile.common
+
+.PHONY: mkdirs clean env
+
+VPATH = $(DEP_DIR)
+
+# First target. Make sure directories and dependancy files exist
+all: mkdirs $(DEPS) $(LIBNAME)($(OBJS))
+	@rm -f $(DICT_FILES)
+ifeq ($(OSNAME),Darwin)
+	ranlib $(LIBNAME)
+endif
+
+mkdirs:
+	@mkdir -p $(LIB_DIR)
+	@mkdir -p $(DEP_DIR)
+
+install: all
+	mkdir -p $(INSTALL_DIR)/lib/$(OSNAME)
+	mkdir -p $(INSTALL_DIR)/include/$(MODULE_NAME)
+	install -p $(LIBNAME) $(INSTALL_DIR)/lib/$(OSNAME)
+	install -p $(wildcard *.h *.hh *.hxx) $(INSTALL_DIR)/include/$(MODULE_NAME)
+
+uninstall: 
+	rm -f $(INSTALL_DIR)/lib/$(OSNAME)/$(shell basename $(LIBNAME))
+	rm -rf $(INSTALL_DIR)/include/$(MODULE_NAME)
+
+clean:
+	rm -rf $(LIB_DIR) $(DEP_DIR) $(DICT_FILES) *.bak *~ core last.kumac*  #*#
+
+pristine: clean
+	rm -rf .bin .obj .lib .depends
+
+
+# Rules to make DEPENDS files from source. Note that these are similar to the
+# rules in Makefile.bin, but use the implicit rules for archiving objects.
+%.d : %.cpp
+	@$(DCXX) -MM -MT "$(LIBNAME)($(basename $@).o)" $(CXXFLAGS) $< > $(DEP_DIR)/$@
+%.d : %.cc
+	@$(DCXX) -MM -MT "$(LIBNAME)($(basename $@).o)" $(CXXFLAGS) $< > $(DEP_DIR)/$@
+%.d : %.cxx
+	@$(DCXX) -MM -MT "$(LIBNAME)($(basename $@).o)" $(CXXFLAGS) $< > $(DEP_DIR)/$@
+%.d : %.c
+	@$(DCC) -MM -MT "$(LIBNAME)($(basename $@).o)" $(CFLAGS) $< > $(DEP_DIR)/$@
+%.d : %.F
+	@$(DFC) -MM -MT "$(LIBNAME)($(basename $@).o)" $(FFLAGS) $< > $(DEP_DIR)/$@
+
+# Rule to make ROOT dictionary
+%_Dict.cc: %.h
+	rootcint -f $@ -c $(INCS) $< 
+
+
+env:
+	@echo FC			= $(FC)
+	@echo CC			= $(CC)
+	@echo CXX		= $(CXX)
+	@echo FFLAGS	= $(FFLAGS)
+	@echo CFLAGS	= $(CFLAGS)
+	@echo CXXFLAGS	= $(CXXFLAGS)
+	@echo FSRC		= $(FSRC)
+	@echo CSRC		= $(CSRC)
+	@echo CXXSRC	= $(CXXSRC)
+	@echo LIBS		= $(LIBS)
+	@echo OSNAME	= $(OSNAME)
+	@echo OBJS		= $(OBJS)
+	@echo MODULE_NAME   = $(MODULE_NAME)
+	@echo LIBNAME	= $(LIBNAME)
+	@echo DEP_DIR	= $(DEP_DIR)
+	@echo DEPS		= $(DEPS)
+	@echo TMP		= $(TMP)
+	@echo PACKAGES = $(PACKAGES)
+	@echo PACKAGE_MAKEFILES = $(PACKAGE_MAKEFILES)
+	@echo HSRC		         = $(HSRC)
+

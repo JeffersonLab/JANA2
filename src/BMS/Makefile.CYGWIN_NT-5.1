@@ -1,0 +1,9 @@
+# Options specific to Windows platform using Cygwin.
+#
+# This was done on a Windows XP SP1 computer and not
+# tested on other versions of Windows.
+
+# Optimization causes seg faults on WinXP. Disable it
+CXXFLAGS += -O0
+MISC_LIBS += -lrpc
+

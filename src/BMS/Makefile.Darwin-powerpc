@@ -1,0 +1,6 @@
+# Is for Mac OS X machines with powerpc chips
+
+OSXFLAGS = -Wno-long-double
+
+CFLAGS += $(OSXFLAGS)
+CXXFLAGS += $(OSXFLAGS)

@@ -1,0 +1,130 @@
+#
+#
+# $Header$
+#
+
+
+# Things common to both library and executable builds live in Makefile.common
+include $(JANA_HOME)/src/BMS/Makefile.common
+
+.PHONY: all mkdirs clean env
+
+ifeq ($(LD), ld)
+ LD = $(CXX)
+endif
+
+ifdef DEBUG
+	LD_FLAGS	+= -g -pg
+endif
+
+ifndef SOLIB_SUFFIX
+	SOLIB_SUFFIX = so
+endif
+
+ifndef SOLIB_NAME
+   SOLIB_NAME = $(MODULE_NAME).$(SOLIB_SUFFIX)
+endif
+
+# Redefine OBJS to include debug suffixes
+DOBJS = $(addsuffix $(DEBUG_SUFFIX).o,$(basename $(OBJS)))
+
+OBJ_DIR = .obj/$(OSNAME)
+OUTPUT_OPTION = -o $(OBJ_DIR)/$@
+VPATH = $(OBJ_DIR):$(BIN_DIR)
+LINK_OBJS += $(addprefix $(OBJ_DIR)/,$(DOBJS))
+
+LIB_DIRS += $(INSTALL_DIR)/lib/$(OSNAME)
+ifdef JANA_MY
+  LIB_DIRS += $(JANA_HOME)/lib/$(OSNAME)
+endif
+
+LD_DIRS += $(addprefix -L,$(LIB_DIRS))
+LD_LIBS += $(addsuffix $(DEBUG_SUFFIX),$(addprefix -l,$(ADDITIONAL_MODULES)))
+
+
+all: mkdirs $(DEPS) $(LIB_DIR)/$(SOLIB_NAME)
+	@rm -f $(DICT_FILES)
+
+
+$(LIB_DIR)/$(SOLIB_NAME): $(DOBJS)
+	$(CXX) $(LD_SO_FLAGS) $(LD_DIRS) \
+	    $(LINK_OBJS) \
+		 $(LD_LIBS) $(MISC_LIBS) \
+		 -o $@
+
+mkdirs:
+	@mkdir -p $(LIB_DIR)
+	@mkdir -p $(OBJ_DIR)
+	@mkdir -p $(DEP_DIR)
+
+install: all
+	mkdir -p $(INSTALL_DIR)/lib/$(OSNAME)
+	mkdir -p $(INSTALL_DIR)/include/$(MODULE_NAME)
+	install -p $(LIB_DIR)/$(SOLIB_NAME) $(INSTALL_DIR)/lib/$(OSNAME)
+	install -p *.h $(INSTALL_DIR)/include/$(MODULE_NAME)
+
+relink: exec_clean all
+
+clean:
+	rm -rf $(LIB_DIR) $(OBJ_DIR) $(DEP_DIR) $(DICT_FILES) *.o *.bak *~ core last.kumac*  #*# 
+
+pristine: clean
+	rm -rf .bin .obj .lib .depends
+
+exec_clean:
+	rm -f $(LIB_DIR)/$(SOLIB_NAME)
+
+
+# Rules to make DEPENDS files from source. Note that these are similar to the
+# rules in Makefile.lib, but uses the objects explicitly
+%.d : %.cpp
+	@$(DCXX) -MM -MT "$(basename $@).o" $(CXXFLAGS) $< > $(DEP_DIR)/$(basename $@).d
+%.d : %.cc
+	@$(DCXX) -MM -MT "$(basename $@).o" $(CXXFLAGS) $< > $(DEP_DIR)/$(basename $@).d
+%.d : %.cxx
+	@$(DCXX) -MM -MT "$(basename $@).o" $(CXXFLAGS) $< > $(DEP_DIR)/$(basename $@).d
+%.d : %.c
+	@$(DCC) -MM -MT "$(basename $@).o" $(CFLAGS) $< > $(DEP_DIR)/$(basename $@).d
+%.d : %.F
+	@$(DFC) -MM -MT "$(basename $@).o" $(FFLAGS) $< > $(DEP_DIR)/$(basename $@).d
+
+# Rules to make DEBUG objects from source. Note for programs, we give the
+# objects funny names while for libraries only the library has a funny name.
+%_d.o : %.cpp
+	$(CXX) -c $(CXXFLAGS) $< $(OUTPUT_OPTION)
+%_d.o : %.cc
+	$(CXX) -c $(CXXFLAGS) $< $(OUTPUT_OPTION)
+%_d.o : %.cxx
+	$(CXX) -c $(CXXFLAGS) $< $(OUTPUT_OPTION)
+%_d.o : %.c
+	$(CC) -c $(CFLAGS) $< $(OUTPUT_OPTION)
+%_d.o : %.F
+	$(FC) -c $(FFLAGS) $< $(OUTPUT_OPTION)
+
+
+env:
+	@echo FC			     = $(FC)
+	@echo CC			     = $(CC)
+	@echo CXX		     = $(CXX)
+	@echo LD            = $(LD)
+	@echo FFLAGS	     = $(FFLAGS)
+	@echo CFLAGS	     = $(CFLAGS)
+	@echo CXXFLAGS	     = $(CXXFLAGS)
+	@echo FSRC		     = $(FSRC)
+	@echo CSRC		     = $(CSRC)
+	@echo CXXSRC	     = $(CXXSRC)
+	@echo LIBS		     = $(LIBS)
+	@echo OSNAME	     = $(OSNAME)
+	@echo OBJS		     = $(OBJS)
+	@echo LIBNAME	     = $(LIBNAME)
+	@echo DEPS		     = $(DEPS)
+	@echo SOLIB_NAME    = $(SOLIB_NAME)
+	@echo LD_LIBS       = $(LD_LIBS)
+	@echo LIB_DIR       = $(LIB_DIR)
+	@echo MISC_LIBS     = $(MISC_LIBS)
+	@echo VPATH		     = $(VPATH)
+	@echo MODULE_NAME   = $(MODULE_NAME)
+	@echo MODULES       = $(MODULES)
+	@echo HSRC		     = $(HSRC)
+
+

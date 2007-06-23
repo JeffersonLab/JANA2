@@ -1,0 +1,137 @@
+#
+#
+# $Header$
+#
+
+#
+# This is a generic makefile used to build all the source in the
+# current directory (anything with a .c, .cc, .cxx, .cpp or .F 
+# suffix) into a library. This file is actually included by another
+# file which implements the actual rule. The idea is that a given
+# directory will contain source that represents a library,
+# in which case Makefile.lib is included, or an executable,
+# in which case Makefile.bin is included.
+# 
+
+.PHONY: mkdirs clean env all first
+
+# The first target is made by default when make is invoked with no
+# arguments. We want to include other targets here (namely, depends
+# files) so we need to make a dummy target appear first that calls
+# the real default target which resides in either Makefile.bin or
+# Makefile.lib
+first: all
+
+ifndef OS
+OS = $(shell uname)
+endif
+ifndef ARCH
+ARCH = $(shell uname -p)
+endif
+ifndef OSNAME
+OSNAME = $(OS)-$(ARCH)
+endif
+
+ifndef FC
+FC		= g77
+endif
+ifndef CC
+CC		= gcc
+endif
+ifndef CXX
+CXX	= g++
+endif
+
+# Only the GNU compiler seems to support the -MM option right now.
+# hence, we define separate compilers for creating the gmake rules
+ifndef DFC
+DFC		= g77
+endif
+ifndef DCC
+DCC		= gcc
+endif
+ifndef DCXX
+DCXX	= g++
+endif
+
+LIB_DIR		= .lib/$(OSNAME)
+BIN_DIR		= .bin/$(OSNAME)
+DEP_DIR		= .depends/$(OSNAME)
+# The following gets overwritten with JANA_MY below
+INSTALL_DIR = $(JANA_HOME)
+
+# include working directory first
+FFLAGS   += -I.
+CFLAGS   += -I.
+CXXFLAGS += -I.
+
+# include JANA_MY include directory (if JANA_MY) is defined
+ifdef JANA_MY
+FFLAGS   += -I$(JANA_MY)/include
+CFLAGS   += -I$(JANA_MY)/include
+CXXFLAGS += -I$(JANA_MY)/include
+INSTALL_DIR = $(JANA_MY)
+endif
+
+# include JANA_HOME include directory
+FFLAGS   += -I$(JANA_HOME)/include
+CFLAGS   += -I$(JANA_HOME)/include
+CXXFLAGS += -I$(JANA_HOME)/include
+
+
+# Include user specified package makefiles
+PACKAGE_MAKEFILES = $(foreach name,$(subst :, ,$(PACKAGES)),$(JANA_HOME)/src/BMS/Makefile.$(name))
+
+ifdef PACKAGES
+include $(PACKAGE_MAKEFILES)
+endif
+
+FSRC		+= $(wildcard *.F)
+CSRC		+= $(wildcard *.c)
+CXXSRC	+= $(wildcard *.cc *.cpp *.cxx)
+
+
+# Note: we use sort here just to remove duplicates
+OBJS	+= $(NO_DEP_OBJS)
+OBJS  += $(sort $(addsuffix .o,$(basename $(FSRC) $(CSRC) $(CXXSRC))))
+ODEPS = $(filter-out $(NO_DEP_OBJS),$(OBJS))
+DEPS	+= $(ODEPS:.o=.d)
+
+ifdef DEBUG
+	DEBUG_SUFFIX = _d
+	FFLAGS   += -g -pg
+	CFLAGS	+= -g -pg
+	CXXFLAGS	+= -g -pg
+else
+#	Do NOT turn on optimization in FFLAGS. Compilation will fail on hddsGeant3.F
+	CFLAGS	+= -O2
+	CXXFLAGS	+= -O2
+endif
+
+ifndef MODULE_NAME
+ MODULE_NAME = $(shell basename $(shell pwd))
+endif
+LIBNAME = $(LIB_DIR)/lib$(MODULE_NAME)$(DEBUG_SUFFIX).a
+
+# Include platform specific definitions
+# (the "-" at the front means don't error if the file doesn't exist)
+-include $(JANA_HOME)/src/BMS/Makefile.$(OS)
+-include $(JANA_HOME)/src/BMS/Makefile.$(ARCH)
+-include $(JANA_HOME)/src/BMS/Makefile.$(OSNAME)
+
+# For GNU compilers, add verbose warnings
+ifeq ($(FC),g77)
+  FFLAGS   += -Wall
+endif
+ifeq ($(CC),gcc)
+  CFLAGS   += -Wall
+endif
+ifeq ($(CXX),g++)
+  CXXFLAGS += -Wall
+endif
+
+# Include all dependancy files
+ifneq ($(strip $(DEPS)),)
+-include $(foreach s,$(DEPS),$(DEP_DIR)/$s)
+endif
+
