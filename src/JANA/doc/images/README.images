@@ -1,0 +1,22 @@
+$Id: README.images 702 2004-11-18 15:33:24Z davidl $
+
+
+README.images
+11/18/04  D. Lawrence
+
+
+The files in this directory are automatically copied into the
+html directory by the Makefile. They are meant to provide a 
+way to include images in the doxygen generated documentation.
+
+To include an image in the code, just use the <img> tag as
+in the usual HTML and refer to the file just by name (in
+other words, don't put an "images/" path in front of it).
+
+For example:
+
+<IMG src="my_picture.jpg">
+
+Images should all have a .gif, .jpg, or .png suffix.
+
+

@@ -1,0 +1,136 @@
+// $Id: JFactory_base.h 1730 2006-05-02 17:02:57Z davidl $
+
+
+#ifndef _JFACTORY_BASE_H_
+#define _JFACTORY_BASE_H_
+
+#include <vector>
+#include <list>
+#include <string>
+using namespace std;
+
+#include "JEventProcessor.h"
+//#include "JEventLoop.h"
+
+class JEventLoop;
+
+/// This class is used as a base class for all factory classes.
+/// Typically, a factory object will be an instance of the
+/// the JFactory template class, (using the class type of the
+/// objects it provides). In order for the JEvent object to
+/// treat all factories alike (i.e. keep an array of them) they
+/// must all be derived from a common base class. This is that
+/// base class.
+///
+/// Note that most JANA user will not use this class
+/// directly (with the possible exception of calling dataClassName()).
+/// They may occasionally need to dynamic_cast a pointer
+/// to a JFactory_base object into a pointer to the subclass
+/// though.
+
+class JFactory_base:public JEventProcessor{
+	
+	
+	friend class JEvent;
+
+	public:
+	
+		/// Get pointers to factories objects (as void*). 
+		///
+		/// This gets typecast in the template member function
+		/// also named "Get()" in the JEventLoop class. Since there
+		/// is no base class for vector objects, we give it something
+		/// that should at least be the same size i.e. vector<void*>
+		virtual vector<void*>& Get(void)=0;
+		
+		/// Returns the number of rows.
+		virtual int GetNrows(void)=0;
+		
+		/// Delete the factory's data depending on the flags
+		virtual jerror_t Reset(void)=0;
+		
+		/// Delete the factory's data regardless of the flags
+		virtual jerror_t HardReset(void)=0;
+		
+		/// Return the pointer to the class's name which this
+		/// factory provides.
+		virtual const char* dataClassName(void)=0;
+		
+		/// Returns the size of the data class on which this factory is based
+		virtual int dataClassSize(void)=0;
+		
+		/// Returns a string object with a nicely formatted ASCII table of the data
+		virtual const string toString(void){return string(" <Print method undefined for ")+dataClassName()+string("> ");}
+
+		/// The data tag string associated with this factory. Most factories
+		/// will not overide this.
+		virtual inline const char* Tag(void){return "";}
+		
+		/// Find object pointer in factory's _data vector and return it
+		virtual const JObject* GetByID(oid_t id)=0;
+
+		/// Used by JEventLoop to give a pointer back to itself
+		void SetJEventLoop(JEventLoop *loop){this->eventLoop=loop;}
+		
+		enum JFactory_Flags_t{
+			JFACTORY_NULL		=0x00,
+			PERSISTANT			=0x01,
+			WRITE_TO_OUTPUT	=0x02,
+			NOT_OBJECT_OWNER	=0x04
+		};
+		
+		/// Get all flags in the form of a single word
+		inline unsigned int GetFactoryFlags(void){return flags;}
+		
+		/// Set a flag (or flags)
+		inline void SetFactoryFlag(JFactory_Flags_t f){
+			flags |= (unsigned int)f;
+		}
+
+		/// Clear a flag (or flags)
+		inline void ClearFactoryFlag(JFactory_Flags_t f){
+			flags &= ~(unsigned int)f;
+		}
+
+		/// Test if a flag (or set of flags) is set
+		inline bool TestFactoryFlag(JFactory_Flags_t f){
+			return (flags & (unsigned int)f) == (unsigned int)f;
+		}
+		
+	
+	protected:
+		JEventLoop *eventLoop;
+		unsigned int flags;
+		int debug_level;
+		int busy;
+		string _table;
+		string _row;
+		int _icol;
+		int _columns[100];
+		int header_width;
+
+		// Methods useful in help produce nicely formatted ASCII
+		void printheader(const char *header);
+		void printnewrow(void);
+		void printcol(const char *str);
+		template<typename T> void printcol(const char* format, T);
+		void printrow(void);
+};
+
+
+//-------------
+// printcol
+//-------------
+template<typename T>
+void JFactory_base::printcol(const char *format, T val)
+{
+	/// Print a formatted value to "str". Used by Print()
+	char mystr[256]="";
+	sprintf(mystr, format, val);
+	unsigned long pos = _columns[_icol]-strlen(mystr);
+	if((unsigned long)_columns[_icol]<strlen(mystr))pos = 0;
+	_row.replace(pos, strlen(mystr), mystr);
+	_icol++;
+}
+
+#endif // _JFACTORY_BASE_H_
