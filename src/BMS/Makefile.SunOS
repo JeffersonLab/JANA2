@@ -6,8 +6,15 @@ FC		= f77
 CC		= cc
 CXX	= CC
 
+ifdef DEBUG
+	FFLAGS   += -g0
+	CFLAGS	+= -g0
+	CXXFLAGS	+= -g0
+endif
+
 CXXFLAGS += -erroff=%all
 
 LD_SO_FLAGS = -G
 
 MISC_LIBS += -lz -lrt -lnsl
+
