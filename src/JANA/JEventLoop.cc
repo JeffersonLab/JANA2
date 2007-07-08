@@ -240,6 +240,14 @@ jerror_t JEventLoop::Print(const string data_name, const char *tag)
 }
 
 //-------------
+// GetJCalibration
+//-------------
+JCalibration* JEventLoop::GetJCalibration(void)
+{
+	return app->GetJCalibration(event.GetRunNumber());
+}
+
+//-------------
 // PrintCallStack
 //-------------
 void JEventLoop::PrintCallStack(void)

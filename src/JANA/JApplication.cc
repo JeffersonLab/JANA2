@@ -28,6 +28,7 @@ using namespace std;
 #include "JGeometry.h"
 #include "JParameterManager.h"
 #include "JLog.h"
+#include "JCalibrationFile.h"
 
 void* LaunchEventBufferThread(void* arg);
 void* LaunchThread(void* arg);
@@ -134,6 +135,7 @@ JApplication::JApplication(int narg, char* argv[])
 	pthread_mutex_init(&app_mutex, NULL);
 	pthread_mutex_init(&current_source_mutex, NULL);
 	pthread_mutex_init(&geometry_mutex, NULL);
+	pthread_mutex_init(&calibration_mutex, NULL);
 	pthread_mutex_init(&event_buffer_mutex, NULL);
 
 	// Variables used for calculating the rate
@@ -216,6 +218,8 @@ JApplication::~JApplication()
 {
 	for(unsigned int i=0; i<geometries.size(); i++)delete geometries[i];
 	geometries.clear();
+	for(unsigned int i=0; i<calibrations.size(); i++)delete calibrations[i];
+	calibrations.clear();
 	for(unsigned int i=0; i<heartbeats.size(); i++)delete heartbeats[i];
 	heartbeats.clear();
 }
@@ -552,6 +556,60 @@ JGeometry* JApplication::GetJGeometry(unsigned int run_number)
 
 	// Unlock geometry mutex
 	pthread_mutex_unlock(&geometry_mutex);
+
+	return g;
+}
+
+//---------------------------------
+// GetJCalibration
+//---------------------------------
+JCalibration* JApplication::GetJCalibration(unsigned int run_number)
+{
+	/// Return a pointer to the JCalibration object that is valid for the
+	/// given run number.
+	///
+	/// This first searches through the list of existing JCalibration
+	/// objects (created by this JApplication object) to see if it
+	/// already has the right one.If so, a pointer to it is returned.
+	/// If not, a new JCalibration object is created and added to the
+	/// internal list.
+	/// Note that since we need to make sure the list is not modified 
+	/// by one thread while being searched by another, a mutex is
+	/// locked while searching the list. It is <b>NOT</b> efficient
+	/// to get or even use the JCalibration object every event. Factories
+	/// should access it in their brun() callback and keep a local
+	/// copy of the required constants for use in the evnt() callback.
+
+	// Lock mutex to keep list from being modified while we search it
+	pthread_mutex_lock(&calibration_mutex);
+
+	vector<JCalibration*>::iterator iter = calibrations.begin();
+	for(; iter!=calibrations.end(); iter++){
+		if((*iter)->GetRunMin()>(int)run_number)continue;
+		if((*iter)->GetRunMax()<(int)run_number)continue;
+		// Found it! Unlock mutex and return pointer
+		JCalibration *g = *iter;
+		pthread_mutex_unlock(&calibration_mutex);
+		return g;
+	}
+	
+	// JCalibration object for this run_number doesn't exist in our list.
+	// Create a new one and add it to the list.
+	// We need to create an object of the appropriate subclass of
+	// JCalibration. This determined by the first several characters
+	// of the URL that specifies the calibration database location.
+	// For now, only the JCalibrationFile subclass exists so we'll
+	// just make one of those and defer the heavier algorithm until
+	// later.
+	const char *url = getenv("JANA_CALIB_URL");
+	if(!url)url="file://./";
+	const char *context = getenv("JANA_CALIB_CONTEXT");
+	if(!context)context="default";
+	JCalibration *g = new JCalibrationFile(string(url), run_number, context);
+	if(g)calibrations.push_back(g);
+
+	// Unlock calibration mutex
+	pthread_mutex_unlock(&calibration_mutex);
 
 	return g;
 }

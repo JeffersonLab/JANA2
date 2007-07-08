@@ -27,6 +27,7 @@ class JEventSource;
 class JEvent;
 class JGeometry;
 class JParameterManager;
+class JCalibration;
 
 // For plugins
 typedef void InitPlugin_t(JApplication* app);
@@ -59,6 +60,7 @@ class JApplication{
 		vector<JFactoryGenerator*> GetFactoryGenerators(void){return factoryGenerators;} ///< Get the current list of JFactoryGenerators
 		JParameterManager* GetJParameterManager(void){return jparms;}
 		JGeometry* GetJGeometry(unsigned int run_number); ///< Get the JGeometry object for the specified run number.
+		JCalibration* GetJCalibration(unsigned int run_number); ///< Get the JCalibration object for the specified run number.
 		jerror_t RegisterSharedObject(const char *soname, bool verbose=true); ///< Register a dynamically linked shared object
 		jerror_t RegisterSharedObjectDirectory(string sodirname); ///< Register all shared objects in a directory
 		jerror_t AddPluginPath(string path); ///< Add a directory to the plugin search path
@@ -100,6 +102,8 @@ class JApplication{
 		JParameterManager *jparms;
 		vector<JGeometry*> geometries;
 		pthread_mutex_t geometry_mutex;
+		vector<JCalibration*> calibrations;
+		pthread_mutex_t calibration_mutex;
 		
 		list<JEvent*> event_buffer;
 		bool event_buffer_filling;

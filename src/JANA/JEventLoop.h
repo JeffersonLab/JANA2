@@ -17,6 +17,7 @@ using namespace std;
 #include "JException.h"
 #include "JEvent.h"
 #include "JFactory_base.h"
+#include "JCalibration.h"
 
 template<class T> class JFactory;
 class JApplication;
@@ -38,6 +39,10 @@ class JEventLoop{
 		jerror_t ClearFactories(void); ///< Reset all factories in preparation for next event.
 		jerror_t PrintFactories(int sparsify=0); ///< Print a list of all factories.
 		jerror_t Print(const string data_name, const char *tag=""); ///< Print the data of the given type
+
+		JCalibration* GetJCalibration();
+		template<class T> bool GetCalib(string namepath, map<string,T> &vals);
+		template<class T> bool GetCalib(string namepath, vector<T> &vals);
 
 		jerror_t Loop(void); ///< Loop over events
 		jerror_t OneEvent(void); ///< Process a single event
@@ -278,6 +283,50 @@ const T* JEventLoop::FindByID(oid_t id)
 
 	return NULL;
 }
+
+//-------------
+// GetCalib (map)
+//-------------
+template<class T>
+bool JEventLoop::GetCalib(string namepath, map<string,T> &vals)
+{
+	/// Get the JCalibration object from JApplication for the run number of
+	/// the current event and call its Get() method to get the constants.
+
+	// Note that we could do this by making "vals" a generic type T thus, combining
+	// this with the vector version below. However, doing this explicitly will make
+	// it easier for the user to understand how to call us.
+
+	vals.clear();
+
+	JCalibration *calib = GetJCalibration();
+	if(!calib){
+		_DBG_<<"Unable to get JCalibration object for run "<<event.GetRunNumber()<<endl;
+		return true;
+	}
+	
+	return calib->Get(namepath, vals);
+}
+
+//-------------
+// GetCalib (vector)
+//-------------
+template<class T> bool JEventLoop::GetCalib(string namepath, vector<T> &vals)
+{
+	/// Get the JCalibration object from JApplication for the run number of
+	/// the current event and call its Get() method to get the constants.
+
+	vals.clear();
+
+	JCalibration *calib = GetJCalibration();
+	if(!calib){
+		_DBG_<<"Unable to get JCalibration object for run "<<event.GetRunNumber()<<endl;
+		return true;
+	}
+	
+	return calib->Get(namepath, vals);
+}
+
 
 
 #endif // _JEventLoop_
