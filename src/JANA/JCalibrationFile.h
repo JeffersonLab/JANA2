@@ -20,6 +20,7 @@ class JCalibrationFile:public JCalibration{
 		static const char* static_className(void){return "JCalibrationFile";}
 		
 		bool Get(string namepath, map<string, string> &svals);
+		bool Get(string namepath, vector< map<string, string> > &svals);
 		
 	protected:
 	
