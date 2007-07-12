@@ -71,6 +71,29 @@ JParameterManager::~JParameterManager()
 }
 
 //---------------------------------
+// GetParameters
+//---------------------------------
+void JParameterManager::GetParameters(map<string,string> &parms, string filter)
+{
+	/// Copy a list of all parameters into the supplied map, replacing
+	/// its current contents. If a filter string is supplied, it is
+	/// used to filter out all parameters that are do not start with
+	/// the filter string. In addition, the filter string is removed
+	/// from the keys.
+	
+	parms.clear();
+	for(unsigned int i=0; i<parameters.size(); i++){
+		string key = parameters[i]->GetKey();
+		string value = parameters[i]->GetValue();
+		if(filter.size()>0){
+			if(key.substr(0,filter.size())!=filter)continue;
+			key.erase(0, filter.size());
+		}
+		parms[key] = value;
+	}
+}
+
+//---------------------------------
 // PrintParameters
 //---------------------------------
 void JParameterManager::PrintParameters(void)
@@ -137,10 +160,18 @@ void JParameterManager::PrintParameters(void)
 		string val = p->GetValue();
 		string line = " " + key + string(max_key_len-key.length(),' ') + " = " + val + string(max_val_len-val.length(),' ');
 
+		// Special prefixes to *not* make loud warning messages about
+		string prefix="DEFTAG:";
+		string jana="JANA:";
+		bool warn = (!p->hasdefault);
+		if(key.substr(0,prefix.size())==prefix)warn=false;
+		if(key.substr(0,jana.size())==jana)warn=false;
+
+		// Print the parameter
 		if(!p->isdefault)cout<<ansi_bold;
-		if(!p->hasdefault)cout<<ansi_red<<ansi_bold<<ansi_blink;
+		if(warn)cout<<ansi_red<<ansi_bold<<ansi_blink;
 		cout<<line.c_str();
-		if(!p->hasdefault)cout<<" <-- NO DEFAULT! (TYPO?)"<<ansi_normal;
+		if(warn)cout<<" <-- NO DEFAULT! (TYPO?)"<<ansi_normal;
 		if(!p->isdefault)cout<<ansi_normal;
 		cout<<endl;
 	}
