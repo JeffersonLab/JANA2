@@ -36,6 +36,7 @@ class JEventLoop{
 		JFactory_base* GetFactory(const string data_name, const char *tag=""); ///< Get a specific factory pointer
 		vector<JFactory_base*> GetFactories(void){return factories;} ///< Get all factory pointers
 		vector<string> GetFactoryNames(void); ///< Get names of all factories
+		map<string,string> GetDefaultTags(void){return default_tags;}
 		jerror_t ClearFactories(void); ///< Reset all factories in preparation for next event.
 		jerror_t PrintFactories(int sparsify=0); ///< Print a list of all factories.
 		jerror_t Print(const string data_name, const char *tag=""); ///< Print the data of the given type
@@ -50,6 +51,7 @@ class JEventLoop{
 		inline void Resume(void){pause = 0;} ///< Resume event processing
 		inline void Quit(void){quit = 1;} ///< Clean up and exit the event loop
 		inline bool GetQuit(void){return quit;}
+		void QuitProgram(void);
 		
 		template<class T> JFactory<T>* Get(vector<const T*> &t, const char *tag=""); ///< Get data object pointers from (source or factory)
 		template<class T> JFactory<T>* GetFromFactory(vector<const T*> &t, const char *tag=""); ///< Get data object pointers from factory
@@ -85,6 +87,7 @@ class JEventLoop{
 		int quit;
 		int auto_free;
 		pthread_t pthread_id;
+		map<string, string> default_tags;
 };
 
 
@@ -108,9 +111,7 @@ JFactory<T>* JEventLoop::Get(vector<const T*> &t, const char *tag)
 	/// the data are only either read in or generated once.
 	/// Ownership of the objects will always be with the
 	/// factory so subsequent calls will always return pointers to
-	/// the same data (unless the factory doesn't exist in which
-	/// case the objects will be read from the file multiple
-	/// times).
+	/// the same data.
 	///
 	/// If the factory is called on to generate the data,
 	/// it is done by calling the factory's Get() method
@@ -121,6 +122,11 @@ JFactory<T>* JEventLoop::Get(vector<const T*> &t, const char *tag)
 	/// it should look in the source first or not. If
 	/// it returns NULL, then the factory couldn't be
 	/// found so we automatically try the file.
+	///
+	/// Note that if no factory exists to hold the objects
+	/// from the file, one can be created automatically
+	/// providing the <i>JANA:AUTOFACTORYCREATE</i>
+	/// configuration parameter is set.
 	
 	JFactory<T>* factory=NULL;
 	try{
@@ -128,15 +134,37 @@ JFactory<T>* JEventLoop::Get(vector<const T*> &t, const char *tag)
 		if(!factory){
 			// No factory exists for this type and tag. It's possible
 			// that the source may be able to provide the objects
-			// but it will need a place to put them. We create a
+			// but it will need a place to put them. We can create a
 			// dumb JFactory just to hold the data in case the source
-			// can provide the objects.
-			AddFactory(new JFactory<T>(tag));
-			cout<<__FILE__<<":"<<__LINE__<<" Auto-created "<<T::className()<<":"<<tag<<" factory"<<endl;
+			// can provide the objects. Before we do though, make sure
+			// the user condones this via the presence of the
+			// "JANA:AUTOFACTORYCREATE" config parameter.
+			string p;
+			gPARMS->GetParameter("JANA:AUTOFACTORYCREATE", p);
+			if(p.size()==0){
+				cout<<endl;
+				_DBG__;
+				cout<<"No factory of type \""<<T::className()<<"\" with tag \""<<tag<<"\" exists."<<endl;
+				cout<<"If you are reading objects from a file, I can auto-create a factory"<<endl;
+				cout<<"of the appropriate type to hold the objects, but this feature is turned"<<endl;
+				cout<<"off by default. To turn it on, set the \"JANA:AUTOFACTORYCREATE\""<<endl;
+				cout<<"configuration parameter. This can usually be done by passing the"<<endl;
+				cout<<"following argument to the program from the command line:"<<endl;
+				cout<<endl;
+				cout<<"   -PJANA:AUTOFACTORYCREATE=1"<<endl;
+				cout<<endl;
+				cout<<"Note that since the most commonly expected occurance of this situation."<<endl;
+				cout<<"is an error, the program will quit now."<<endl;
+				cout<<endl;
+				QuitProgram();
+			}else{
+				AddFactory(new JFactory<T>(tag));
+				cout<<__FILE__<<":"<<__LINE__<<" Auto-created "<<T::className()<<":"<<tag<<" factory"<<endl;
 			
-			// Now try once more. The GetFromFactory method will call
-			// GetFromSource since it's empty.
-			factory = GetFromFactory(t, tag);
+				// Now try once more. The GetFromFactory method will call
+				// GetFromSource since it's empty.
+				factory = GetFromFactory(t, tag);
+			}
 		}
 	}catch(JException *exception){
 		// Uh-oh, an exception was thrown. Add us to the call stack
@@ -163,10 +191,18 @@ template<class T>
 JFactory<T>* JEventLoop::GetFromFactory(vector<const T*> &t, const char *tag)
 {
 	// We need to find the factory providing data type T with
-	// tag given by "tag".
+	// tag given by "tag". 
 	vector<JFactory_base*>::iterator iter=factories.begin();
 	JFactory<T> *factory = NULL;
 	string className(T::className());
+	
+	// Check if a tag was specified for this data type to use for the
+	// default.
+	if(strlen(tag)==0){
+		map<string, string>::const_iterator iter = default_tags.find(className);
+		if(iter!=default_tags.end())tag = iter->second.c_str();
+	}
+	
 	for(; iter!=factories.end(); iter++){
 		// It turns out a long standing bug in g++ makes dynamic_cast return
 		// zero improperly when used on objects created on one side of

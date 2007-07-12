@@ -48,6 +48,7 @@ JEventLoop::JEventLoop(JApplication *app)
 	// Copy the event processor list to our local vector
 	processors = app->GetProcessors();
 
+	app->GetJParameterManager()->GetParameters(default_tags, "DEFTAG:");
 	app->GetJParameterManager()->PrintParameters();
 }
 
@@ -402,6 +403,14 @@ jerror_t JEventLoop::OneEvent(void)
 	if(auto_free)event.FreeEvent();
 			
 	return NOERROR;
+}
+
+//-------------
+// QuitProgram
+//-------------
+void JEventLoop::QuitProgram(void)
+{
+	app->Quit();
 }
 
 //-------------
