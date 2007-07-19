@@ -18,9 +18,11 @@ JCalibrationFile::JCalibrationFile(string url, int run, string context):JCalibra
 {
 	// File URL should be of form:
 	// file:///path-to-root-dir
-	// The value of "context" is assumed to be the name of a directory inside the
-	// calibration root directory. The value of namepath will then be followed
-	// relative to that.
+	// The value of namepath will then be followed relative to this.
+	
+	// NOTE: The original design here added an additional "context" directory
+	// that was always appended to the URL. This idea was shouted down at
+	// the July 17, 2007 software meeting and so was removed.
 
 	// First, check that the URL even starts with "file://"
 	if(url.substr(0, 7)!=string("file://")){
@@ -32,7 +34,8 @@ JCalibrationFile::JCalibrationFile(string url, int run, string context):JCalibra
 	// Fill basedir with path to directory.
 	basedir = url;
 	basedir.replace(0,7,string("")); // wipe out "file://" part
-	basedir += "/" + context + "/";
+	if(basedir[basedir.size()-1]!='/')basedir += "/";
+	//basedir += context + "/"; // (see not above)
 
 	// Try and get a hold of the info.xml file in basedir
 	string fname = basedir + "info.xml";
