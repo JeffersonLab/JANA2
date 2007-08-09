@@ -136,20 +136,35 @@ JFactory_base* JEventLoop::GetFactory(const string data_name, const char *tag)
 //-------------
 // GetFactoryNames
 //-------------
-vector<string> JEventLoop::GetFactoryNames(void)
+void JEventLoop::GetFactoryNames(vector<string> &factorynames)
 {
-	/// Return a vector<string> whose members are 
-	/// the names of the currently registered factories. 
-	vector<string> names;
+	/// Fill the given vector<string> with the complete
+	/// list of factories. The values are in "name:tag"
+	/// format where the ":tag" is ommitted for factories
+	/// with no tag. 
 	vector<JFactory_base*>::iterator factory = factories.begin();
 	for(; factory!=factories.end(); factory++){
 		string name = (*factory)->dataClassName();
 		string tag = (*factory)->Tag();
 		if(tag.size()>0)name = name + ":" + tag;
-		names.push_back(name);
+		factorynames.push_back(name);
 	}	
-	
-	return names;
+}
+
+//-------------
+// GetFactoryNames
+//-------------
+void JEventLoop::GetFactoryNames(map<string,string> &factorynames)
+{
+	/// Fill the given map<string, string> with the complete
+	/// list of factories. The key is the name of the data class
+	/// produced by the factory. The value is the tag.
+	vector<JFactory_base*>::iterator factory = factories.begin();
+	for(; factory!=factories.end(); factory++){
+		string name = (*factory)->dataClassName();
+		string tag = (*factory)->Tag();
+		factorynames[name] = tag;
+	}	
 }
 
 //-------------
