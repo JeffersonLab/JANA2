@@ -47,6 +47,7 @@ void ParseCommandLineArguments(int &narg, char *argv[])
 		if(argv[i][0] != '-')continue;
 		
 		string name, tag;
+		unsigned int pos;
 		switch(argv[i][1]){
 			case 'h':
 				Usage();
@@ -54,7 +55,7 @@ void ParseCommandLineArguments(int &narg, char *argv[])
 			case 'D':
 				name = &argv[i][2];
 				tag = "";
-				unsigned int pos = name.rfind(":",name.size()-1);
+				pos = name.rfind(":",name.size()-1);
 				if(pos != (unsigned int)string::npos){
 					tag = name.substr(pos+1,name.size());
 					name.erase(pos);
