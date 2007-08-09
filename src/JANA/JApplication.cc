@@ -700,6 +700,7 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 		Nthreads = NTHREADS_COMMAND_LINE;
 	}
 	cout<<"Launching threads "; cout.flush();
+	usleep(100000); // give time for above message to print before messages from threads interfere.
 	for(int i=0; i<Nthreads; i++){
 		pthread_t thr;
 		pthread_create(&thr, NULL, LaunchThread, this);
