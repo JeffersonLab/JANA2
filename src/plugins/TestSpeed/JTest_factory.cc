@@ -14,6 +14,16 @@
 //------------------
 jerror_t JTest_factory::init(void)
 {
+	// There is a speed governor in the evnt() method that chews up CPU
+	// cycles to better emulatean actual system. The governer_iterations
+	// parameter controls how much CPU to use. This can be changed on
+	// the command-line at program start by adding the option:
+	//   -PGOVERNOR_ITERATIONS=###
+	// where ### is some integer. Setting ### to 0 will bypass the governor
+	// completely.
+	governer_iterations = 100000;
+	gPARMS->SetDefaultParameter("GOVERNER_ITERATIONS", governer_iterations);
+
 	return NOERROR;
 }
 
@@ -24,7 +34,7 @@ jerror_t JTest_factory::brun(JEventLoop *eventLoop, int runnumber)
 {
 	val1 = 1.234;
 	val2 = 9.876;
-
+	
 	return NOERROR;
 }
 
@@ -45,7 +55,7 @@ jerror_t JTest_factory::evnt(JEventLoop *loop, int eventnumber)
 		// need to do a lot of calculations to produce
 		// the factory's data.
 		double a = 1.234;
-		for(int j=0; j<100000; j++){
+		for(int j=0; j<governer_iterations; j++){
 			a = log(fabs(a*sqrt(pow(a, 2.2))));
 		}
 		
