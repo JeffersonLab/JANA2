@@ -87,6 +87,8 @@ class JApplication{
 		string Val2StringWithPrefix(float val);
 		jerror_t OpenNext(void);
 		jerror_t AttachPlugins(void);
+		jerror_t RecordFactoryCalls(JEventLoop *loop);
+		jerror_t PrintFactoryReport(void);
 
 		bool init_called;
 		vector<const char*> source_names;
@@ -98,6 +100,8 @@ class JApplication{
 		vector<JEventLoop*> loops;
 		vector<double*> heartbeats;
 		pthread_mutex_t app_mutex;
+		map<pthread_t, map<string, unsigned int> > Nfactory_calls;
+		map<pthread_t, map<string, unsigned int> > Nfactory_gencalls;
 		
 		JParameterManager *jparms;
 		vector<JGeometry*> geometries;
@@ -123,6 +127,7 @@ class JApplication{
 		double rate_instantaneous;
 		double rate_average;
 		vector<pthread_t> threads;
+		bool print_factory_report;
 };
 
 

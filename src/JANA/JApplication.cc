@@ -30,6 +30,12 @@ using namespace std;
 #include "JLog.h"
 #include "JCalibrationFile.h"
 
+#ifndef ansi_escape
+#define ansi_escape			((char)0x1b)
+#define ansi_bold 			ansi_escape<<"[1m"
+#define ansi_normal			ansi_escape<<"[0m"
+#endif // ansi_escape
+
 void* LaunchEventBufferThread(void* arg);
 void* LaunchThread(void* arg);
 
@@ -158,6 +164,8 @@ JApplication::JApplication(int narg, char* argv[])
 	// Event buffer
 	event_buffer_filling = true;
 	
+	print_factory_report = false;
+	
 	// Sources
 	current_source = NULL;
 	for(int i=1; i<narg; i++){
@@ -182,6 +190,11 @@ JApplication::JApplication(int narg, char* argv[])
 		if(!strncmp(arg, argv[i],strlen(arg))){
 			const char* sodirname = &argv[i][strlen(arg)];
 			RegisterSharedObjectDirectory(sodirname);
+			continue;
+		}
+		arg="--factoryreport";
+		if(!strncmp(arg, argv[i],strlen(arg))){
+			print_factory_report = true;
 			continue;
 		}
 		arg="-P";
@@ -332,12 +345,12 @@ void JApplication::EventBufferThread(void)
 		if(Niterations>100){
 			double s = (double)Nread/(double)Niterations + 1.0E-6;
 			sleep_time = (int)((double)sleep_time*0.5/s);
-			if(sleep_time<1)sleep_time=1;
+			if(sleep_time<0)sleep_time=0;
 			if(sleep_time>100000)sleep_time=100000;
 			Nread = Niterations = 0;
 		}
 		
-		usleep(sleep_time);
+		if(sleep_time>0)usleep(sleep_time);
 
 	}while(err!=NO_MORE_EVENT_SOURCES);
 
@@ -463,6 +476,7 @@ jerror_t JApplication::RemoveJEventLoop(JEventLoop *loop)
 	vector<double*>::iterator hbiter = heartbeats.begin();
 	for(; iter!=loops.end(); iter++, hbiter++){
 		if((*iter) == loop){
+			if(print_factory_report)RecordFactoryCalls(loop);
 			loops.erase(iter);
 			heartbeats.erase(hbiter);
 			break;
@@ -812,6 +826,9 @@ jerror_t JApplication::Fini(void)
 	// Delete all sources allowing them to close cleanly
 	for(unsigned int i=0;i<sources.size();i++)delete sources[i];
 	sources.clear();
+	
+	// Print final factory report
+	if(print_factory_report)PrintFactoryReport();
 
 	return NOERROR;
 }
@@ -1126,6 +1143,125 @@ jerror_t JApplication::AttachPlugins(void)
 	}
 
 	return RESOURCE_UNAVAILABLE;
+}
+
+//---------------------------------
+// RecordFactoryCalls
+//---------------------------------
+jerror_t JApplication::RecordFactoryCalls(JEventLoop *loop)
+{
+	/// Record the number of calls to each of the factories owned by the
+	/// given JEventLoop. This is called (eventually) when the JEventLoop
+	/// is deleted so that it contains the final statistics.
+	map<string, unsigned int> calls;
+	map<string, unsigned int> gencalls;
+	vector<JFactory_base*> factories = loop->GetFactories();
+	for(unsigned int i=0; i<factories.size(); i++){
+		JFactory_base *fac = factories[i];
+		string name = fac->dataClassName();
+		string tag = fac->Tag();
+		string nametag = name;
+		if(tag != "")nametag += ":" + tag;
+		calls[nametag] = fac->GetNcalls();
+		gencalls[nametag] = fac->GetNgencalls();
+	}
+	
+	// Lock mutex and add to master list
+	Lock();
+	Nfactory_calls[pthread_self()] = calls;
+	Nfactory_gencalls[pthread_self()] = gencalls;
+	Unlock();
+
+	return NOERROR;
+}
+
+
+//---------------------------------
+// PrintFactoryReport
+//---------------------------------
+jerror_t JApplication::PrintFactoryReport(void)
+{
+	/// Print a brief report to the screen listing all of the existing
+	/// factories and how many calls were made to each.
+	
+	// First, get a list of the nametags and thread numbers
+	vector<string> nametag;
+	vector<pthread_t> thread;
+	map<pthread_t, map<string, unsigned int> >::iterator iter=Nfactory_calls.begin();
+	for(; iter!=Nfactory_calls.end(); iter++){
+		thread.push_back(iter->first);
+		if(iter==Nfactory_calls.begin()){
+			map<string, unsigned int>::iterator itern = iter->second.begin();
+			for(; itern!=iter->second.end(); itern++){
+				nametag.push_back(itern->first);
+			}
+		}
+	}
+	
+	// Print table title and info
+	cout<<endl;
+	cout<<ansi_bold;
+	cout<<"Factory Report:"<<endl;
+	cout<<"======================"<<endl;
+	cout<<ansi_normal;
+	cout<<"The table below contains the number of calls to each factory by thread"<<endl;
+	cout<<"Entries are:  \"Num. calls/Num. gens\"    where Num. calls is the number"<<endl;
+	cout<<"of times the factory's data objects were requested and Num. gens is"<<endl;
+	cout<<"the number of events that the factory actually had to generate objects."<<endl;
+	cout<<""<<endl;
+	
+	// Some parameters to control spacing in table
+	int colwidth = 15;
+	int colshift = 35;
+	
+	// Print column headers
+	string header1(80,' ');
+	string header2(80,' ');
+	string facstring = "Factory:";
+	header2.replace(0, facstring.size(), facstring);
+	string totstring = "Total";
+	header2.replace(colshift-colwidth, totstring.size(), totstring);
+	for(unsigned int i=0; i<thread.size(); i++){
+		stringstream ss;
+		ss<<"0x"<<hex<<(unsigned long)thread[i];
+		string thridstring = "Thread";
+		header2.replace(colshift+i*colwidth, ss.str().size(), ss.str());
+		header1.replace(colshift+1+i*colwidth, thridstring.size(), thridstring);
+	}
+	cout<<endl;
+	cout<<header1<<endl;
+	cout<<header2<<endl;
+	string hr(80,'-');
+	cout<<hr<<endl;
+	
+	// Loop over nametags
+	for(unsigned int i=0; i<nametag.size(); i++){
+		string &name = nametag[i];
+		string line(80,' ');
+		line.replace(0, name.size(), name);
+		
+		// Loop over threads
+		unsigned int Ntot = 0;
+		unsigned int Ngen_tot = 0;
+		for(unsigned int j=0; j<thread.size(); j++){
+			unsigned int N = Nfactory_calls[thread[j]][name];
+			unsigned int Ngen = Nfactory_gencalls[thread[j]][name];
+			stringstream ss;
+			ss<<N<<"/"<<Ngen;
+			line.replace(colshift+j*colwidth, ss.str().size(), ss.str());
+			Ntot += N;
+			Ngen_tot += Ngen;
+		}
+		
+		// Add total calls to line
+		stringstream ss;
+		ss<<Ntot<<"/"<<Ngen_tot;
+		line.replace(colshift-colwidth-2, ss.str().size(), ss.str());
+		cout<<line<<endl;
+	}
+	cout<<endl;
+
+	return NOERROR;
 }
 
 //---------------------------------
