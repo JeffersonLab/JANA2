@@ -46,6 +46,12 @@ class JFactory_base:public JEventProcessor{
 		/// Returns the number of rows.
 		virtual int GetNrows(void)=0;
 		
+		/// Returns the number of requests for this factory's data.
+		int GetNcalls(void){return Ncalls_to_Get;}
+		
+		/// Returns the number of events this factory had to generate data for.
+		int GetNgencalls(void){return Ncalls_to_evnt;}
+		
 		/// Delete the factory's data depending on the flags
 		virtual jerror_t Reset(void)=0;
 		
@@ -108,6 +114,8 @@ class JFactory_base:public JEventProcessor{
 		int _icol;
 		int _columns[100];
 		int header_width;
+		unsigned int Ncalls_to_Get;
+		unsigned int Ncalls_to_evnt;
 
 		// Methods useful in help produce nicely formatted ASCII
 		void printheader(const char *header);

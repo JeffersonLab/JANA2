@@ -112,6 +112,8 @@ JFactory<T>::JFactory(const char *tag)
 	use_factory = 0;
 	busy = 0;
 	tag_str = tag;
+	Ncalls_to_Get = 0;
+	Ncalls_to_evnt = 0;
 
 	// Allow any factory to have its debug_level set via environment variable
 	debug_level = 0;
@@ -177,6 +179,8 @@ jerror_t JFactory<T>::Get(vector<const T*> &d)
 	/// (type jerror_t) with a value INFINITE_RECURSION if that
 	/// situation is detected.
 	
+	Ncalls_to_Get++;
+	
 	// If evnt_called is set, then just copy the pointers and return
 	if(evnt_called)return CopyFrom(d);
 	
@@ -212,6 +216,7 @@ jerror_t JFactory<T>::Get(vector<const T*> &d)
 	
 	// Call evnt routine to generate data
 	try{
+		Ncalls_to_evnt++;
 		evnt(eventLoop, event_number);
 		CopyFrom(d);
 	}catch(JException *exception){
