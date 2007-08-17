@@ -84,6 +84,8 @@ class JApplication{
 		
 	private:
 	
+		JApplication(){} ///< Prevent use of default constructor
+	
 		string Val2StringWithPrefix(float val);
 		jerror_t OpenNext(void);
 		jerror_t AttachPlugins(void);
