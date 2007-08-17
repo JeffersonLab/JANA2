@@ -120,6 +120,13 @@ void USR2_Handle(int x)
 //---------------------------------
 JApplication::JApplication(int narg, char* argv[])
 {
+	/// JApplication constructor
+	///
+	/// The arguments passed here are typically those passed into the program
+	/// through <i>main()</i>. The argument list is parsed and any arguments
+	/// not relevant for JANA are quietly ignored. This is the
+	/// only constructor available for JApplication.
+
 	// Set up to catch SIGINTs for graceful exits
 	signal(SIGINT,ctrlCHandle);
 
@@ -229,6 +236,10 @@ JApplication::JApplication(int narg, char* argv[])
 //---------------------------------
 JApplication::~JApplication()
 {
+	/// JApplication destructor
+	///
+	/// Releases memory allocated by this JApplication object.
+
 	for(unsigned int i=0; i<geometries.size(); i++)delete geometries[i];
 	geometries.clear();
 	for(unsigned int i=0; i<calibrations.size(); i++)delete calibrations[i];
@@ -243,7 +254,7 @@ JApplication::~JApplication()
 jerror_t JApplication::NextEvent(JEvent &event)
 {
 	/// Grab an event from the event buffer. If no events are
-	/// there, it will loop until:
+	/// there, it will wait until:
 	/// A. an event shows up
 	/// B. "event_buffer_filling" flag is cleared.
 	/// C. the JEventLoop's quit flag is set
@@ -284,7 +295,7 @@ void* LaunchEventBufferThread(void* arg)
 {
 	/// This routine is launched in a thread and simply
 	/// calls the EventBufferThread() method of the
-	/// JApplication pointe passed in through arg
+	/// JApplication pointer passed in through arg
 	JApplication *app = (JApplication*)arg;
 	app->EventBufferThread();
 	
@@ -406,6 +417,7 @@ jerror_t JApplication::ReadEvent(JEvent &event)
 //---------------------------------
 unsigned int JApplication::GetEventBufferSize(void)
 {
+	/// Returns the number of events currently in the event buffer
 	pthread_mutex_lock(&event_buffer_mutex);
 	unsigned int Nevents_in_buffer = event_buffer.size();
 	pthread_mutex_unlock(&event_buffer_mutex);
@@ -418,6 +430,15 @@ unsigned int JApplication::GetEventBufferSize(void)
 //---------------------------------
 jerror_t JApplication::AddProcessor(JEventProcessor *processor)
 {
+	/// Add a JEventProcessor object to be included when processing events.
+	/// This <b>must</b> be called before invoking the Run() method since
+	/// each thread's JEventLoop will copy the list of event processors when
+	/// it is created. Adding JEventProcessor objects after event processing
+	/// has begun will have no effect.
+	///
+	/// The JEventProcessor object will be used by the system, but it will not
+	/// delete it. It is up to the caller to delete it after event processing has
+	/// stopped (i.e. Run() has returned).
 	processor->SetJApplication(this);
 	processors.push_back(processor);
 
@@ -429,6 +450,15 @@ jerror_t JApplication::AddProcessor(JEventProcessor *processor)
 //---------------------------------
 jerror_t JApplication::RemoveProcessor(JEventProcessor *processor)
 {
+	/// Remove a JEventProcessor object from the list kept by the JApplication object. 
+	/// This <b>must</b> be called before invoking the Run() method since
+	/// each thread's JEventLoop will copy the list of event processors when
+	/// it is created. Removing JEventProcessor objects after event processing
+	/// has begun will have no effect.
+	///
+	/// The JEventProcessor object will be used by the system, but it will not
+	/// delete it. It is up to the caller to delete it after event processing has
+	/// stopped (i.e. Run() has returned).
 	vector<JEventProcessor*>::iterator iter = processors.begin();
 	for(; iter!=processors.end(); iter++){
 		if((*iter) == processor){
@@ -445,6 +475,12 @@ jerror_t JApplication::RemoveProcessor(JEventProcessor *processor)
 //---------------------------------
 jerror_t JApplication::AddJEventLoop(JEventLoop *loop, double* &heartbeat)
 {
+	/// Add a JEventLoop object and generate a complete set of factories
+	/// for it by calling the GenerateFactories method for each of the
+	/// JFactoryGenerator objects registered via AddFactoryGenerator().
+	/// This is typically not called directly but rather, called by
+	/// the JEventLoop constructor.
+
 	pthread_mutex_lock(&app_mutex);
 	loops.push_back(loop);
 
@@ -472,6 +508,9 @@ jerror_t JApplication::AddJEventLoop(JEventLoop *loop, double* &heartbeat)
 //---------------------------------
 jerror_t JApplication::RemoveJEventLoop(JEventLoop *loop)
 {
+	/// Remove a JEventLoop object from the application. This is typically
+	/// not called directly by the user. Rather, it is called from the
+	/// JEventLoop destructor.
 	vector<JEventLoop*>::iterator iter = loops.begin();
 	vector<double*>::iterator hbiter = heartbeats.begin();
 	for(; iter!=loops.end(); iter++, hbiter++){
@@ -491,6 +530,10 @@ jerror_t JApplication::RemoveJEventLoop(JEventLoop *loop)
 //---------------------------------
 jerror_t JApplication::AddEventSourceGenerator(JEventSourceGenerator *generator)
 {
+	/// Add an event source generator to the application. This is used to
+	/// decide which generator to use to read in a specific source passed
+	/// on the command line and then created a JEventSource object to handle
+	/// it. Ownership of the JEventSourceGenerator stays with the caller.
 	eventSourceGenerators.push_back(generator);
 
 	return NOERROR;
@@ -501,6 +544,8 @@ jerror_t JApplication::AddEventSourceGenerator(JEventSourceGenerator *generator)
 //---------------------------------
 jerror_t JApplication::RemoveEventSourceGenerator(JEventSourceGenerator *generator)
 {
+	/// Remove the specified JEventSourceGenerator object from the application.
+	/// This does not delete the object, just removes it from the list.
 	vector<JEventSourceGenerator*>& f = eventSourceGenerators;
 	vector<JEventSourceGenerator*>::iterator iter = find(f.begin(), f.end(), generator);
 	if(iter != f.end())f.erase(iter);
@@ -513,6 +558,8 @@ jerror_t JApplication::RemoveEventSourceGenerator(JEventSourceGenerator *generat
 //---------------------------------
 jerror_t JApplication::AddFactoryGenerator(JFactoryGenerator *generator)
 {
+	/// Add a JFactoryGenerator object to the application. Ownership
+	/// of the object stays with the caller.
 	factoryGenerators.push_back(generator);
 
 	return NOERROR;
@@ -523,6 +570,8 @@ jerror_t JApplication::AddFactoryGenerator(JFactoryGenerator *generator)
 //---------------------------------
 jerror_t JApplication::RemoveFactoryGenerator(JFactoryGenerator *generator)
 {
+	/// Remove the specified JFactoryGenerator object from the application.
+	/// The object is not deleted.
 	vector<JFactoryGenerator*>& f = factoryGenerators;
 	vector<JFactoryGenerator*>::iterator iter = find(f.begin(), f.end(), generator);
 	if(iter != f.end())f.erase(iter);
@@ -669,6 +718,12 @@ void* LaunchThread(void* arg)
 //---------------------------------
 jerror_t JApplication::Init(void)
 {
+	/// Initialize the JApplication object. This is not typically called by
+	/// the user except in GUI applications where the main event loop is
+	/// handled by the GUI package. For normal event processing programs
+	/// (ones that call JApplication::Run()), this is called automatically
+	/// from Run().
+
 	if(init_called)return NOERROR; // don't initialize twice1
 	init_called = true;
 
@@ -696,6 +751,11 @@ jerror_t JApplication::Init(void)
 //---------------------------------
 jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 {
+	/// Begin processing events. This will launch the specified number of threads
+	/// and start them processing events. This method will return only when 
+	/// all events have been processed, or processing is stopped early by the
+	/// user.
+
 	// If a JEventProcessor was passed, then add it to our list first
 	if(proc){
 		jerror_t err = AddProcessor(proc);
@@ -801,6 +861,10 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 //---------------------------------
 jerror_t JApplication::Fini(void)
 {
+	/// Close out at the end of event processing. All <i>erun()</i> routines
+	/// and <i>fini()</i> routines are called as necessary. All JEventSources
+	/// are deleted and the final report is printed, if specified.
+	
 	// Make sure erun is called
 	for(unsigned int i=0;i<processors.size();i++){
 		JEventProcessor *proc = processors[i];
@@ -838,6 +902,9 @@ jerror_t JApplication::Fini(void)
 //---------------------------------
 void JApplication::Pause(void)
 {
+	/// Pause all JEventLoops to stop event processing. Events currently
+	/// being processed will be finished and the loops will pause at the
+	/// beginning of the next event.
 	vector<JEventLoop*>::iterator iter = loops.begin();
 	for(; iter!=loops.end(); iter++){
 		(*iter)->Pause();
@@ -849,6 +916,7 @@ void JApplication::Pause(void)
 //---------------------------------
 void JApplication::Resume(void)
 {
+	/// Resume event processing for all threads.
 	vector<JEventLoop*>::iterator iter = loops.begin();
 	for(; iter!=loops.end(); iter++){
 		(*iter)->Resume();
@@ -860,6 +928,9 @@ void JApplication::Resume(void)
 //---------------------------------
 void JApplication::Quit(void)
 {
+	/// Quit the application. This will invoke the Quit() method of all
+	/// JEventLoops. This does not force a runaway thread to be killed and
+	/// will only cause the program to quit if all JEventLoops quit cleanly.
 	cout<<endl<<"Telling all threads to quit ..."<<endl;
 	vector<JEventLoop*>::iterator iter = loops.begin();
 	for(; iter!=loops.end(); iter++){
@@ -872,6 +943,11 @@ void JApplication::Quit(void)
 //----------------
 string JApplication::Val2StringWithPrefix(float val)
 {
+	/// Return the value as a string with the appropriate latin unit prefix
+	/// appended.
+	/// Values returned are: "G", "M", "k", "", "u", and "m" for
+	/// values of "val" that are: >1.5E9, >1.5E6, >1.5E3, <1.0E-7, <1.0E-4, 1.0E-1
+	/// respectively.
 	char *units = "";
 	if(val>1.5E9){
 		val/=1.0E9;
@@ -1211,8 +1287,15 @@ jerror_t JApplication::PrintFactoryReport(void)
 	cout<<""<<endl;
 	
 	// Some parameters to control spacing in table
-	int colwidth = 15;
-	int colshift = 35;
+	unsigned int colwidth = 15;
+	unsigned int colshift = 10 + colwidth;
+	
+	// Check length of factory nametag strings and increase colshift to accomodate
+	// the largest one.
+	for(unsigned int i=0; i<nametag.size(); i++){
+		unsigned int s = nametag[i].size()+3+colwidth;
+		if(s>colshift)colshift = s;
+	}
 	
 	// Print column headers
 	string header1(80,' ');
