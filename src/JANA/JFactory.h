@@ -179,7 +179,6 @@ jerror_t JFactory<T>::Get(vector<const T*> &d)
 	/// (type jerror_t) with a value INFINITE_RECURSION if that
 	/// situation is detected.
 	
-	Ncalls_to_Get++;
 	
 	// If evnt_called is set, then just copy the pointers and return
 	if(evnt_called)return CopyFrom(d);
@@ -343,6 +342,7 @@ jerror_t JFactory<T>::CopyFrom(vector<const T*> &data)
 	/// (use the Get(vector<const T*>) method for that).
 	/// This only copies pointers to already existing objects.
 	for(unsigned int i=0;i<_data.size(); i++)data.push_back(_data[i]);
+	Ncalls_to_Get++;
 	
 	return NOERROR;
 }
