@@ -150,6 +150,7 @@ JApplication::JApplication(int narg, char* argv[])
 	pthread_mutex_init(&geometry_mutex, NULL);
 	pthread_mutex_init(&calibration_mutex, NULL);
 	pthread_mutex_init(&event_buffer_mutex, NULL);
+	pthread_cond_init(&event_buffer_cond, NULL);
 
 	// Variables used for calculating the rate
 	show_ticker = 1;
@@ -161,6 +162,7 @@ JApplication::JApplication(int narg, char* argv[])
 	rate_average = 0.0;
 	monitor_heartbeat= true;
 	init_called = false;
+	stop_event_buffer = false;
 	
 	// Default plugin search path
 	AddPluginPath(".");
@@ -266,6 +268,10 @@ jerror_t JApplication::NextEvent(JEvent &event)
 		if(event_buffer.size()>0){
 			myevent = event_buffer.back();
 			event_buffer.pop_back();
+			
+			// Wake up event buffer filler thread since a slot in the buffer
+			// is now open.
+			pthread_cond_signal(&event_buffer_cond);
 		}
 		pthread_mutex_unlock(&event_buffer_mutex);
 		if(event.GetJEventLoop()->GetQuit())break;
@@ -309,60 +315,37 @@ void JApplication::EventBufferThread(void)
 {
 	/// This method runs continuously
 	/// reading in events to keep the event_buffer list filled.
-	/// It exits once it has read the last event.
+	/// It exits once it has read the last event or the value of
+	/// stop_event_buffer has been set to true.
+	unsigned int MAX_EVENTS_IN_BUFFER = 10;
 	jerror_t err;
-	unsigned int sleep_time=10;
-	int Niterations=0;
-	int Nread=0;
 	do{
-		Niterations++;
-
+		// Lock mutex
 		pthread_mutex_lock(&event_buffer_mutex);
-		unsigned int Nevents_in_buffer = event_buffer.size();
+		
+		// Wait until either a slot is open to read an event into,
+		// or we're told to stop.
+		while(event_buffer.size()>=MAX_EVENTS_IN_BUFFER){
+			pthread_cond_wait(&event_buffer_cond, &event_buffer_mutex);
+			if(stop_event_buffer)break;
+		}
+		
+		// Unlock mutex
 		pthread_mutex_unlock(&event_buffer_mutex);
-		
-		unsigned int MAX_EVENTS_IN_BUFFER = 10;
-		err = NOERROR;
-		if(Nevents_in_buffer<MAX_EVENTS_IN_BUFFER){
-			JEvent *event = new JEvent;
-			err = ReadEvent(*event);
+		if(stop_event_buffer)break;
 
-			if(err==NOERROR){
-				pthread_mutex_lock(&event_buffer_mutex);
-				event_buffer.push_front(event);
-				pthread_mutex_unlock(&event_buffer_mutex);
-				Nevents_in_buffer++;
-				Nread++;
-			}else{
-				delete event;
-			}
-		}
-		
-		// If we know the buffer is not full, then don't sleep
-		// at all and go right into the next iteration
-		if(Nevents_in_buffer<MAX_EVENTS_IN_BUFFER && err==NOERROR)continue;
-		
-		// Here we want to sleep a little to avoid wasting a lot
-		// of CPU time checking the event buffer at a rate
-		// much more frequent than it is emptied.It turns out that
-		// if we sleep too little, it will severely degrade the 
-		// performance on a single processor machine. Sleeping
-		// too much is obviously bad since it would cause 
-		// the event consumers to go into a holding pattern
-		// waiting for events. Therefore, we keep a tally of
-		// how often we actually needed to read in an event
-		// every 100 times through this loop. The sleep time
-		// is then adjusted to try and maintain that at 50%
-		if(Niterations>100){
-			double s = (double)Nread/(double)Niterations + 1.0E-6;
-			sleep_time = (int)((double)sleep_time*0.5/s);
-			if(sleep_time<0)sleep_time=0;
-			if(sleep_time>100000)sleep_time=100000;
-			Nread = Niterations = 0;
-		}
-		
-		if(sleep_time>0)usleep(sleep_time);
+		// The only way to get to here is if there is room in the event
+		// buffer for another event. Read one in and add it to the buffer
+		JEvent *event = new JEvent;
+		err = ReadEvent(*event);
 
+		if(err==NOERROR){
+			pthread_mutex_lock(&event_buffer_mutex);
+			event_buffer.push_front(event);
+			pthread_mutex_unlock(&event_buffer_mutex);
+		}else{
+			delete event;
+		}
 	}while(err!=NO_MORE_EVENT_SOURCES);
 
 	event_buffer_filling=false;
@@ -890,6 +873,14 @@ jerror_t JApplication::Fini(void)
 	// Delete all sources allowing them to close cleanly
 	for(unsigned int i=0;i<sources.size();i++)delete sources[i];
 	sources.clear();
+	
+	// Tell event buffer thread to quit (if he hasn't already)
+	for(int i=0; i<10; i++){
+		if(!event_buffer_filling)break;
+		stop_event_buffer = true;
+		pthread_cond_signal(&event_buffer_cond);
+		usleep(100000);
+	}
 	
 	// Print final factory report
 	if(print_factory_report)PrintFactoryReport();

@@ -114,6 +114,7 @@ class JApplication{
 		list<JEvent*> event_buffer;
 		bool event_buffer_filling;
 		pthread_mutex_t event_buffer_mutex;
+		pthread_cond_t event_buffer_cond;
 
 		vector<string> pluginPaths;
 		vector<string> plugins;
@@ -130,6 +131,7 @@ class JApplication{
 		double rate_average;
 		vector<pthread_t> threads;
 		bool print_factory_report;
+		bool stop_event_buffer;
 };
 
 
