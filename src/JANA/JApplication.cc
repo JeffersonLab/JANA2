@@ -146,7 +146,6 @@ JApplication::JApplication(int narg, char* argv[])
 
 	// Initialize application level mutexes
 	pthread_mutex_init(&app_mutex, NULL);
-	pthread_mutex_init(&current_source_mutex, NULL);
 	pthread_mutex_init(&geometry_mutex, NULL);
 	pthread_mutex_init(&calibration_mutex, NULL);
 	pthread_mutex_init(&event_buffer_mutex, NULL);
@@ -319,9 +318,16 @@ void JApplication::EventBufferThread(void)
 	/// stop_event_buffer has been set to true.
 	unsigned int MAX_EVENTS_IN_BUFFER = 10;
 	jerror_t err;
+	JEvent *event = NULL;
 	do{
 		// Lock mutex
 		pthread_mutex_lock(&event_buffer_mutex);
+		
+		// The "event" pointer actually gets created below, but waits to get
+		// pushed onto the event_buffer list until now to save locking and
+		// unlocking the mutex one time.
+		if(event!=NULL)event_buffer.push_front(event);
+		event=NULL;
 		
 		// Wait until either a slot is open to read an event into,
 		// or we're told to stop.
@@ -336,15 +342,11 @@ void JApplication::EventBufferThread(void)
 
 		// The only way to get to here is if there is room in the event
 		// buffer for another event. Read one in and add it to the buffer
-		JEvent *event = new JEvent;
+		event = new JEvent;
 		err = ReadEvent(*event);
-
-		if(err==NOERROR){
-			pthread_mutex_lock(&event_buffer_mutex);
-			event_buffer.push_front(event);
-			pthread_mutex_unlock(&event_buffer_mutex);
-		}else{
+		if(err!=NOERROR){
 			delete event;
+			event = NULL;
 		}
 	}while(err!=NO_MORE_EVENT_SOURCES);
 
@@ -360,10 +362,11 @@ jerror_t JApplication::ReadEvent(JEvent &event)
 	/// source is open, or the current source has no more events,
 	/// then open the next source and recall ourself
 
-	pthread_mutex_lock(&current_source_mutex);
+	// Note that this routine only gets called from the event buffer
+	// thread and so does not need to use a mutex any more. 
+	
 	if(!current_source){
 		jerror_t err = OpenNext();
-		pthread_mutex_unlock(&current_source_mutex);
 		if(err != NOERROR)return err;
 		return ReadEvent(event);
 	}
@@ -380,7 +383,6 @@ jerror_t JApplication::ReadEvent(JEvent &event)
 	switch(err){
 		case NO_MORE_EVENTS_IN_SOURCE:
 			current_source = NULL;
-			pthread_mutex_unlock(&current_source_mutex);
 			return ReadEvent(event);
 			break;
 		default:
@@ -389,8 +391,6 @@ jerror_t JApplication::ReadEvent(JEvent &event)
 
 	// Event counter
 	NEvents++;
-
-	pthread_mutex_unlock(&current_source_mutex);
 
 	return NOERROR;
 }

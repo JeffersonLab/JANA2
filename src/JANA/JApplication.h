@@ -96,7 +96,6 @@ class JApplication{
 		vector<const char*> source_names;
 		vector<JEventSource*> sources;
 		JEventSource *current_source;
-		pthread_mutex_t current_source_mutex;
 	
 		vector<JEventProcessor*> processors;
 		vector<JEventLoop*> loops;
