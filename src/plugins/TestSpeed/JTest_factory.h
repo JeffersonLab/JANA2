@@ -13,7 +13,7 @@
 
 class JTest_factory:public JFactory<JTest>{
 	public:
-		JTest_factory(){};
+		JTest_factory();
 		~JTest_factory(){};
 		const string toString(void);
 

@@ -10,12 +10,12 @@
 #include "JTest_factory.h"
 
 //------------------
-// init
+// JTest_factory (constructor)
 //------------------
-jerror_t JTest_factory::init(void)
+JTest_factory::JTest_factory(void)
 {
 	// There is a speed governor in the evnt() method that chews up CPU
-	// cycles to better emulatean actual system. The governer_iterations
+	// cycles to better emulate an actual system. The governer_iterations
 	// parameter controls how much CPU to use. This can be changed on
 	// the command-line at program start by adding the option:
 	//   -PGOVERNOR_ITERATIONS=###
@@ -23,6 +23,13 @@ jerror_t JTest_factory::init(void)
 	// completely.
 	governer_iterations = 10000;
 	gPARMS->SetDefaultParameter("GOVERNOR_ITERATIONS", governer_iterations);
+}
+
+//------------------
+// init
+//------------------
+jerror_t JTest_factory::init(void)
+{
 
 	return NOERROR;
 }
