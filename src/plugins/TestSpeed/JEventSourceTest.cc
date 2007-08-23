@@ -9,6 +9,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <cmath>
 using namespace std;
 
 #include <JANA/JApplication.h>
@@ -36,10 +37,22 @@ void InitPlugin(JApplication *app){
 	cout<<"e.g."<<endl;
 	cout<<"        jana --plugin=jpseed_test dummy"<<endl;
 	cout<<endl;
-	cout<<"Also note that the average processing rate will start off low"<<endl;
-	cout<<"due to the initial event buffer filling. The program should be"<<endl;
-	cout<<"allowed to run for at leat 1 minute in order for it to reach"<<endl;
-	cout<<"a steady state."<<endl;
+	cout<<"There are built-in delays in both the processor and source"<<endl;
+	cout<<"that can be adjusted to more realistically test the system."<<endl;
+	cout<<"These are controlled by configuration parameters on the command"<<endl;
+	cout<<"line. To control the sleep time spent in the event source, use:"<<endl;
+	cout<<endl;
+	cout<<"    -PMAX_IO_RATE_HZ=100"<<endl;
+	cout<<endl;
+	cout<<"this will cause the source the sleep for 1/100th of a second for"<<endl;
+	cout<<"each event."<<endl;
+	cout<<endl;
+	cout<<"To adjust the time spent in the processor, use:"<<endl;
+	cout<<endl;
+	cout<<"    -PGOVENOR_ITERATIONS=1000"<<endl;
+	cout<<endl;
+	cout<<"this will cause the \"number-crunching\" loop to iterate 1000"<<endl;
+	cout<<"times so that CPU cycles are chewed up in the processor itself."<<endl;
 	cout<<endl;
 }
 } // "C"
@@ -51,6 +64,10 @@ JEventSourceTest::JEventSourceTest(const char* source_name):JEventSource(source_
 {
 	/// Constructor for JEventSourceTest object
 	cout<<"Opening fake event generator. No actual events will be read in"<<endl;
+	
+	MAX_IO_RATE_HZ = 100;
+	
+	gPARMS->SetDefaultParameter("MAX_IO_RATE_HZ",MAX_IO_RATE_HZ);
 }
 
 //----------------
@@ -77,6 +94,18 @@ jerror_t JEventSourceTest::GetEvent(JEvent &event)
 	event.SetEventNumber(event_number);
 	event.SetRunNumber(run_number);
 	event.SetRef(NULL);
+
+	// Sleep to emulate I/O delay. This will not give an entirely accurate
+	// result since it gives up the delay time for use by other threads.
+	// It will at least limit the overall I/O rate which is more realistic
+	// than no delay.
+	if(MAX_IO_RATE_HZ>0){
+		struct timespec rqtp, rmtp;
+		double delay = 1.0/(double)MAX_IO_RATE_HZ;
+		rqtp.tv_sec = (unsigned long)floor(delay);
+		rqtp.tv_nsec = (unsigned long)((delay-floor(delay))*1.0E9);
+		nanosleep(&rqtp, &rmtp);
+	}
 
 	return NOERROR;
 }

@@ -31,6 +31,8 @@ class JEventSourceTest:public JEventSource
 		jerror_t GetObjects(JEvent &event, JFactory_base *factory);
 		
 	private:
+	
+		unsigned long MAX_IO_RATE_HZ;
 };
 
 #endif //_JEVENT_SOURCEHDDM_H_
