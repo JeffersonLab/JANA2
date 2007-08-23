@@ -21,8 +21,8 @@ jerror_t JTest_factory::init(void)
 	//   -PGOVERNOR_ITERATIONS=###
 	// where ### is some integer. Setting ### to 0 will bypass the governor
 	// completely.
-	governer_iterations = 100000;
-	gPARMS->SetDefaultParameter("GOVERNER_ITERATIONS", governer_iterations);
+	governer_iterations = 10000;
+	gPARMS->SetDefaultParameter("GOVERNOR_ITERATIONS", governer_iterations);
 
 	return NOERROR;
 }
