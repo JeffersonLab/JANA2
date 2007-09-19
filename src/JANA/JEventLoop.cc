@@ -145,7 +145,7 @@ void JEventLoop::GetFactoryNames(vector<string> &factorynames)
 	vector<JFactory_base*>::iterator factory = factories.begin();
 	for(; factory!=factories.end(); factory++){
 		string name = (*factory)->dataClassName();
-		string tag = (*factory)->Tag();
+		string tag = (*factory)->Tag()==NULL ? "":(*factory)->Tag();
 		if(tag.size()>0)name = name + ":" + tag;
 		factorynames.push_back(name);
 	}	
@@ -218,11 +218,14 @@ jerror_t JEventLoop::PrintFactories(int sparsify)
 		}catch(...){}
 		str.replace(22-strlen(num), strlen(num), num);
 
-		const char *tag = factory->Tag();
-		if(strlen(tag)){
-			char tag_str[256];
-			sprintf(tag_str, "\"%s\"", tag);
-			str.replace(26, strlen(tag_str), tag_str);
+		string tag = factory->Tag()==NULL ? "":factory->Tag();
+		//const char *tag = factory->Tag();
+		if(tag.size()>0){
+			tag = "\"" + tag + "\"";
+			//char tag_str[256];
+			//sprintf(tag_str, "\"%s\"", tag);
+			//str.replace(26, strlen(tag_str), tag_str);
+			str.replace(0, tag.size(), tag);
 		}
 		
 		cout<<str<<endl;

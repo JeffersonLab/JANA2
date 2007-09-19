@@ -199,7 +199,8 @@ JFactory<T>* JEventLoop::GetFromFactory(vector<const T*> &t, const char *tag)
 	
 	// Check if a tag was specified for this data type to use for the
 	// default.
-	if(strlen(tag)==0){
+	const char *mytag = tag==NULL ? "":tag; // prtection against NULL tags
+	if(strlen(mytag)==0){
 		map<string, string>::const_iterator iter = default_tags.find(className);
 		if(iter!=default_tags.end())tag = iter->second.c_str();
 	}
@@ -216,7 +217,8 @@ JFactory<T>* JEventLoop::GetFromFactory(vector<const T*> &t, const char *tag)
 		//factory = dynamic_cast<JFactory<T> *>(*iter);
 		if(className == (*iter)->dataClassName())factory = (JFactory<T>*)(*iter);
 		if(factory == NULL)continue;
-		if(!strcmp(factory->Tag(), tag)){
+		const char *factag = factory->Tag()==NULL ? "":factory->Tag();
+		if(!strcmp(factag, tag)){
 			break;
 		}else{
 			factory=NULL;
