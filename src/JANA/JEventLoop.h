@@ -10,6 +10,7 @@
 
 #include <vector>
 #include <string>
+#include <utility>
 using namespace std;
 
 #include "jerror.h"
@@ -29,6 +30,30 @@ class JEventLoop{
 		virtual ~JEventLoop(); ////< Destructor
 		virtual const char* className(void){return static_className();}
 		static const char* static_className(void){return "JEventLoop";}
+
+		enum data_source_t{
+			DATA_NOT_AVAILABLE = 1,
+			DATA_FROM_CACHE,
+			DATA_FROM_SOURCE,
+			DATA_FROM_FACTORY
+		};
+		
+		typedef struct{
+			string caller_name;
+			string caller_tag;
+			string callee_name;
+			string callee_tag;
+			clock_t start_time;
+			clock_t end_time;
+			data_source_t data_source;
+		}call_stack_t;
+
+		typedef struct{
+			const char* factory_name;
+			const char* tag;
+			const char* filename;
+			int line;
+		}error_call_stack_t;
 		
 		JApplication* GetJApplication(void){return app;} ///< Get pointer to the JApplication object
 		virtual jerror_t AddFactory(JFactory_base* factory); ///< Add a factory
@@ -55,22 +80,18 @@ class JEventLoop{
 		void QuitProgram(void);
 		
 		template<class T> JFactory<T>* Get(vector<const T*> &t, const char *tag=""); ///< Get data object pointers from (source or factory)
-		template<class T> JFactory<T>* GetFromFactory(vector<const T*> &t, const char *tag=""); ///< Get data object pointers from factory
+		template<class T> JFactory<T>* GetFromFactory(vector<const T*> &t, const char *tag="", data_source_t &data_source); ///< Get data object pointers from factory
 		template<class T> jerror_t GetFromSource(vector<const T*> &t, JFactory_base *factory=NULL); ///< Get data object pointers from source.
 		inline JEvent& GetJEvent(void){return event;} ///< Get pointer to the current JEvent object.
 		inline void SetJEvent(JEvent *event){this->event = *event;} ///< Set the JEvent pointer.
 		inline void SetAutoFree(int auto_free){this->auto_free = auto_free;} ///< Set the Auto-Free flag on/off
 		inline pthread_t GetPThreadID(void){return pthread_id;} ///< Get the pthread of the thread to which this JEventLoop belongs
 		
-		typedef struct{
-			const char* factory_name;
-			const char* tag;
-			const char* filename;
-			int line;
-		}call_stack_t;
-		inline void AddToCallStack(call_stack_t &cs){call_stack.push_back(cs);} ///< Add layer to the factory call stack
+
 		inline vector<call_stack_t> GetCallStack(void){return call_stack;} ///< Get the current factory call stack
-		void PrintCallStack(void); ///< Print the current factory call stack
+		inline void AddToErrorCallStack(error_call_stack_t &cs){error_call_stack.push_back(cs);} ///< Add layer to the factory call stack
+		inline vector<error_call_stack_t> GetErrorCallStack(void){return error_call_stack;} ///< Get the current factory error call stack
+		void PrintErrorCallStack(void); ///< Print the current factory call stack
 		
 		const JObject* FindByID(oid_t id); ///< Find a data object by its identifier.
 		template<class T> const T* FindByID(oid_t id); ///< Find a data object by its type and identifier
@@ -81,6 +102,7 @@ class JEventLoop{
 		JEvent event;
 		vector<JFactory_base*> factories;
 		vector<JEventProcessor*> processors;
+		vector<error_call_stack_t> error_call_stack;
 		vector<call_stack_t> call_stack;
 		JApplication *app;
 		double *heartbeat;
@@ -89,6 +111,10 @@ class JEventLoop{
 		int auto_free;
 		pthread_t pthread_id;
 		map<string, string> default_tags;
+		vector<pair<string,string> > auto_activated_factories;
+		bool record_call_stack;
+		string caller_name;
+		string caller_tag;
 };
 
 
@@ -129,9 +155,25 @@ JFactory<T>* JEventLoop::Get(vector<const T*> &t, const char *tag)
 	/// providing the <i>JANA:AUTOFACTORYCREATE</i>
 	/// configuration parameter is set.
 	
+	// If we are trying to keep track of the call stack then we
+	// need to add a new call_stack_t object to the the list
+	// and initialize it with the start time and caller/callee
+	// info.
+	call_stack_t cs;
+	if(record_call_stack){
+		cs.caller_name = caller_name;
+		cs.caller_tag = caller_tag;
+		cs.callee_name = T::className();
+		cs.callee_tag = tag;
+		caller_name = cs.callee_name;
+		caller_tag = cs.callee_tag;
+		cs.start_time = clock();
+	}
+
+	// Get the data (or at least try to)
 	JFactory<T>* factory=NULL;
 	try{
-		factory = GetFromFactory(t, tag);
+		factory = GetFromFactory(t, tag, cs.data_source);
 		if(!factory){
 			// No factory exists for this type and tag. It's possible
 			// that the source may be able to provide the objects
@@ -164,24 +206,33 @@ JFactory<T>* JEventLoop::Get(vector<const T*> &t, const char *tag)
 			
 				// Now try once more. The GetFromFactory method will call
 				// GetFromSource since it's empty.
-				factory = GetFromFactory(t, tag);
+				factory = GetFromFactory(t, tag, cs.data_source);
 			}
 		}
 	}catch(JException *exception){
 		// Uh-oh, an exception was thrown. Add us to the call stack
 		// and re-throw the exception
-		call_stack_t cs;
-		cs.factory_name = T::className();
-		cs.tag = tag;
-		if(exception!=NULL && call_stack.size()==0){
-			//cs.filename = exception->filename;
-			//cs.line = exception->line;
+		error_call_stack_t ecs;
+		ecs.factory_name = T::className();
+		ecs.tag = tag;
+		if(exception!=NULL && error_call_stack.size()==0){
+			//ecs.filename = exception->filename;
+			//ecs.line = exception->line;
 		}else{
-			cs.filename = NULL;
+			ecs.filename = NULL;
 		}
-		call_stack.push_back(cs);
+		error_call_stack.push_back(ecs);
 		throw(exception);
 	}
+	
+	// If recording the call stack, update the end_time field
+	if(record_call_stack){
+		cs.end_time = clock();
+		caller_name = cs.caller_name;
+		caller_tag = cs.caller_tag;
+		call_stack.push_back(cs);
+	}
+	
 	return factory;
 }
 
@@ -189,7 +240,7 @@ JFactory<T>* JEventLoop::Get(vector<const T*> &t, const char *tag)
 // GetFromFactory
 //-------------
 template<class T> 
-JFactory<T>* JEventLoop::GetFromFactory(vector<const T*> &t, const char *tag)
+JFactory<T>* JEventLoop::GetFromFactory(vector<const T*> &t, const char *tag, data_source_t &data_source)
 {
 	// We need to find the factory providing data type T with
 	// tag given by "tag". 
@@ -226,13 +277,17 @@ JFactory<T>* JEventLoop::GetFromFactory(vector<const T*> &t, const char *tag)
 	}
 	
 	// If factory not found, just return now
-	if(!factory)return NULL;
+	if(!factory){
+		data_source = DATA_NOT_AVAILABLE;
+		return NULL;
+	}
 	
 	// OK, we found the factory. If the evnt() routine has already
 	// been called, then just call the factory's Get() routine
 	// to return a copy of the existing data
 	if(factory->evnt_was_called()){
 		factory->CopyFrom(t);
+		data_source = DATA_FROM_CACHE;
 		return factory;
 	}
 	
@@ -258,6 +313,7 @@ JFactory<T>* JEventLoop::GetFromFactory(vector<const T*> &t, const char *tag)
 			// to the factory's CopyFrom() method in JEvent::GetObjects().
 			// All we need to do now is just return the factory pointer.
 
+			data_source = DATA_FROM_SOURCE;
 			return factory;
 		}
 	}
@@ -265,6 +321,7 @@ JFactory<T>* JEventLoop::GetFromFactory(vector<const T*> &t, const char *tag)
 	// OK. It looks like we have to have the factory make this.
 	// Get pointers to data from the factory.
 	factory->Get(t);
+	data_source = DATA_FROM_FACTORY;
 	
 	return factory;
 }

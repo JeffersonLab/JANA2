@@ -219,12 +219,12 @@ jerror_t JFactory<T>::Get(vector<const T*> &d)
 		evnt(eventLoop, event_number);
 		CopyFrom(d);
 	}catch(JException *exception){
-		JEventLoop::call_stack_t cs;
+		JEventLoop::error_call_stack_t cs;
 		cs.factory_name = dataClassName();
 		cs.tag = Tag();
 		cs.filename = __FILE__;
 		cs.line = __LINE__;
-		eventLoop->AddToCallStack(cs);
+		eventLoop->AddToErrorCallStack(cs);
 		throw exception;
 	}
 	evnt_called = 1;

@@ -50,6 +50,16 @@ JEventLoop::JEventLoop(JApplication *app)
 
 	app->GetJParameterManager()->GetParameters(default_tags, "DEFTAG:");
 	app->GetJParameterManager()->PrintParameters();
+	app->GetJParameterManager()->GetParameter( "RECORD_CALL_STACK", record_call_stack);
+	
+	auto_activated_factories = app->GetAutoActivatedFactories();
+	
+	// Initialize the caller strings for when we record the call stack
+	// these will get over written twice with each call to Get(). Once
+	// to copy in who is being called and then again later to copy
+	// back in who did the calling.
+	caller_name = "DEventProcessor";
+	caller_tag = "";
 }
 
 //---------------------------------
@@ -267,18 +277,18 @@ JCalibration* JEventLoop::GetJCalibration(void)
 }
 
 //-------------
-// PrintCallStack
+// PrintErrorCallStack
 //-------------
-void JEventLoop::PrintCallStack(void)
+void JEventLoop::PrintErrorCallStack(void)
 {
 	// Create a list of the call strings while finding the longest one
 	vector<string> routines;
 	unsigned int max_length = 0;
-	for(unsigned int i=0; i<call_stack.size(); i++){
-		string routine = call_stack[i].factory_name;
-		if(call_stack[i].tag){
-			if(strlen(call_stack[i].tag)){
-				routine = routine + ":" + call_stack[i].tag;
+	for(unsigned int i=0; i<error_call_stack.size(); i++){
+		string routine = error_call_stack[i].factory_name;
+		if(error_call_stack[i].tag){
+			if(strlen(error_call_stack[i].tag)){
+				routine = routine + ":" + error_call_stack[i].tag;
 			}
 		}
 		if(routine.size()>max_length) max_length = routine.size();
@@ -288,11 +298,11 @@ void JEventLoop::PrintCallStack(void)
 	stringstream sstr;
 	sstr<<" Factory Call Stack"<<endl;
 	sstr<<"============================"<<endl;
-	for(unsigned int i=0; i<call_stack.size(); i++){
+	for(unsigned int i=0; i<error_call_stack.size(); i++){
 		string routine = routines[i];
 		sstr<<" "<<routine<<string(max_length+2 - routine.size(),' ');
-		if(call_stack[i].filename){
-			sstr<<"--  "<<" line:"<<call_stack[i].line<<"  "<<call_stack[i].filename;
+		if(error_call_stack[i].filename){
+			sstr<<"--  "<<" line:"<<error_call_stack[i].line<<"  "<<error_call_stack[i].filename;
 		}
 		sstr<<endl;
 	}
@@ -379,6 +389,17 @@ jerror_t JEventLoop::OneEvent(void)
 	}
 	if(err != NOERROR && err !=EVENT_NOT_IN_MEMORY)return err;
 		
+	// Initialize the factory call stacks
+	error_call_stack.clear();
+	if(record_call_stack)call_stack.clear();
+	
+	// Loop over the list of factories to "auto activate" and activate them
+	for(unsigned int i=0; i<auto_activated_factories.size(); i++){
+		pair<string, string> &facname = auto_activated_factories[i];
+		JFactory_base *fac = GetFactory(facname.first, (facname.second).c_str());
+		if(fac)fac->GetNrows();
+	}
+
 	// Call Event Processors
 	int event_number = event.GetEventNumber();
 	int run_number = event.GetRunNumber();
@@ -404,16 +425,13 @@ jerror_t JEventLoop::OneEvent(void)
 		}
 		proc->UnlockState();
 
-		// Initialize the factory call stack
-		call_stack.clear();
-
 		// Call the event routine
 		try{
 			proc->evnt(this, event_number);
 		}catch(JException *exception){
-			call_stack_t cs = {"JEventLoop", "OneEvent", __FILE__, __LINE__};
-			call_stack.push_back(cs);
-			PrintCallStack();
+			error_call_stack_t cs = {"JEventLoop", "OneEvent", __FILE__, __LINE__};
+			error_call_stack.push_back(cs);
+			PrintErrorCallStack();
 			throw exception;
 		}
 	}

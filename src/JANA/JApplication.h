@@ -12,6 +12,7 @@
 #include <vector>
 #include <string>
 #include <list>
+#include <utility>
 #include <sstream>
 using namespace std;
 
@@ -41,6 +42,8 @@ class JApplication{
 		virtual ~JApplication(); ///< Destructor
 		virtual const char* className(void){return static_className();}
 		static const char* static_className(void){return "JApplication";}
+		
+		void Usage(void);
 		
 		void EventBufferThread(void);
 		unsigned int GetEventBufferSize(void);
@@ -74,6 +77,8 @@ class JApplication{
 		inline int GetNEvents(void){return NEvents;} ///< Returns the number of events processed so far.
 		inline float GetRate(void){return rate_instantaneous;} ///< Get the current event processing rate
 		const vector<void*> GetSharedObjectHandles(void){return sohandles;} ///< Get pointers to dynamically linked objects
+		vector<pair<string,string> > GetAutoActivatedFactories(void){return auto_activated_factories;}
+		void AddAutoActivatedFactory(string name, string tag){auto_activated_factories.push_back(pair<string,string>(name,tag));}
 		void PrintRate(); ///< Print the current rate to stdout
 		void SetShowTicker(int what){show_ticker = what;} ///< Turn auto-printing of rate to screen on or off.
 		void SignalThreads(int signo); ///< Send a system signal to all processing threads.
@@ -103,6 +108,7 @@ class JApplication{
 		pthread_mutex_t app_mutex;
 		map<pthread_t, map<string, unsigned int> > Nfactory_calls;
 		map<pthread_t, map<string, unsigned int> > Nfactory_gencalls;
+		vector<pair<string,string> > auto_activated_factories;
 		
 		JParameterManager *jparms;
 		vector<JGeometry*> geometries;

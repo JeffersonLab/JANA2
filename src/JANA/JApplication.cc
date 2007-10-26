@@ -205,6 +205,19 @@ JApplication::JApplication(int narg, char* argv[])
 			print_factory_report = true;
 			continue;
 		}
+		arg="--auto_activate=";
+		if(!strncmp(arg, argv[i],strlen(arg))){
+			string nametag(&argv[i][strlen(arg)]);
+			string name = nametag;
+			string tag = "";
+			string::size_type pos = nametag.find(":");
+			if(pos!=string::npos){
+				name = nametag.substr(0,pos);
+				tag = nametag.substr(pos+1,nametag.size()-pos);
+			}
+			AddAutoActivatedFactory(name, tag);
+			continue;
+		}
 		arg="-P";
 		if(!strncmp(arg, argv[i],strlen(arg))){
 			char* pstr = strdup(&argv[i][strlen(arg)]);
@@ -230,6 +243,23 @@ JApplication::JApplication(int narg, char* argv[])
 	
 	// Global variable
 	japp = this;
+}
+
+//---------------------------------
+// Usage
+//---------------------------------
+void JApplication::Usage(void)
+{
+	/// Print lines identifying the default JANA command line arguments
+	
+	cout<<"  --nthreads=X             Launch X processing threads"<<endl;
+	cout<<"  --plugin=plugin_name     Attach the plug-in named \"plugin_name\""<<endl;
+	cout<<"  --so=shared_obj          Attach a plug-in with filename \"shared_obj\""<<endl;
+	cout<<"  --sodir=shared_dir       Add the directory \"shared_dir\" to search list"<<endl;
+	cout<<"  --factoryreport          Dump a short report on factories to screen at end of job"<<endl;
+	cout<<"  --auto_activate=factory  Auto activate \"factory\" for every event"<<endl;
+	cout<<"  -Pkey=value              Set configuration parameter \"key\" to \"value\""<<endl;
+	cout<<"  -Pprint                  Print all configuration params"<<endl;
 }
 
 //---------------------------------
