@@ -80,7 +80,7 @@ class JEventLoop{
 		void QuitProgram(void);
 		
 		template<class T> JFactory<T>* Get(vector<const T*> &t, const char *tag=""); ///< Get data object pointers from (source or factory)
-		template<class T> JFactory<T>* GetFromFactory(vector<const T*> &t, const char *tag="", data_source_t &data_source); ///< Get data object pointers from factory
+		template<class T> JFactory<T>* GetFromFactory(vector<const T*> &t, const char *tag="", data_source_t &data_source=NULL); ///< Get data object pointers from factory
 		template<class T> jerror_t GetFromSource(vector<const T*> &t, JFactory_base *factory=NULL); ///< Get data object pointers from source.
 		inline JEvent& GetJEvent(void){return event;} ///< Get pointer to the current JEvent object.
 		inline void SetJEvent(JEvent *event){this->event = *event;} ///< Set the JEvent pointer.
