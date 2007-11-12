@@ -7,9 +7,9 @@ CC		= cc
 CXX	= CC
 
 ifdef DEBUG
-	FFLAGS   += -g0
-	CFLAGS	+= -g0
-	CXXFLAGS	+= -g0
+	override FFLAGS := $(filter-out -g,$(FFLAGS)) -g0
+	override CFLAGS := $(filter-out -g,$(CFLAGS)) -g0
+	override CXXFLAGS := $(filter-out -g,$(CXXFLAGS)) -g0
 endif
 
 CXXFLAGS += -erroff=%all
