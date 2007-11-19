@@ -235,7 +235,7 @@ jerror_t JEventLoop::PrintFactories(int sparsify)
 			//char tag_str[256];
 			//sprintf(tag_str, "\"%s\"", tag);
 			//str.replace(26, strlen(tag_str), tag_str);
-			str.replace(0, tag.size(), tag);
+			str.replace(26, tag.size(), tag);
 		}
 		
 		cout<<str<<endl;
