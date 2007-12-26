@@ -833,8 +833,11 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 			if(monitor_heartbeat && (*hb > 7.0+sleep_time)){
 				// Thread hasn't done anything for more than 2 seconds. 
 				// Remove it from monitoring lists.
-				cerr<<" Thread "<<i<<" hasn't responded in "<<*hb<<" seconds. Delisting it..."<<endl;
 				JEventLoop *loop = *(loops.begin()+i);
+				JEvent &event = loop->GetJEvent();
+				cerr<<" Thread "<<i<<" hasn't responded in "<<*hb<<" seconds.";
+				cerr<<" (run:event="<<event.GetRunNumber()<<":"<<event.GetEventNumber()<<")";
+				cerr<<" Delisting ..."<<endl;
 				loops.erase(loops.begin()+i);
 				heartbeats.erase(heartbeats.begin()+i);
 				
