@@ -16,6 +16,12 @@ using namespace std;
 
 #include "jerror.h"
 
+// The following is here just so we can use ROOT's THtml class to generate
+// documentation.
+#ifdef __CINT__
+class pthread_mutex_t;
+#endif
+
 class JFactory_base;
 class JEvent;
 

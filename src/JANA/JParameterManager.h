@@ -21,6 +21,12 @@ using namespace std;
 
 #include "jerror.h"
 
+// The following is here just so we can use ROOT's THtml class to generate
+// documentation.
+#ifdef __CINT__
+class pthread_mutex_t;
+#endif
+
 /// The JParameterManager class is used by the framework to manage
 /// configuration parameters in the form of JParameter objects. The
 /// factory author will implement a configuration parameter in one

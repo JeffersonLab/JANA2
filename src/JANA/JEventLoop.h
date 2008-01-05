@@ -20,6 +20,13 @@ using namespace std;
 #include "JFactory_base.h"
 #include "JCalibration.h"
 
+// The following is here just so we can use ROOT's THtml class to generate
+// documentation.
+#ifdef __CINT__
+class pthread_mutex_t;
+typedef unsigned long pthread_t;
+#endif
+
 template<class T> class JFactory;
 class JApplication;
 class JEventProcessor;
