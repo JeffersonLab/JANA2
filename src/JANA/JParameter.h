@@ -78,10 +78,7 @@ class JParameter{
 		static inline dataType_t DataType(double &v){return DOUBLE;}
 		
 		static const char* DataName(dataType_t type);
-		
-		void Serialize(JILStream&) const;
-		void Deserialize(JILStream&);
-		
+				
 	protected:
 		string key;
 		string value;
