@@ -9,7 +9,8 @@
 #define _JFactoryGenerator_
 
 #include "jerror.h"
-#include "JEventLoop.h"
+
+class JEventLoop;
 
 /// This class is used by the JEventLoop objects to create factories
 /// in each event processing thread. One factory generator may be used

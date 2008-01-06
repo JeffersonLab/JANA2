@@ -30,6 +30,12 @@ class JGeometry;
 class JParameterManager;
 class JCalibration;
 
+#ifdef __CINT__
+class pthread_mutex_t;
+typedef unsigned long pthread_t;
+class pthread_cond_t;
+#endif
+
 // For plugins
 typedef void InitPlugin_t(JApplication* app);
 
