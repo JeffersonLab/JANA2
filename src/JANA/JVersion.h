@@ -1,4 +1,4 @@
-// $Id: $
+// $Id$
 //
 //    File: JVersion.h
 // Created: Wed Apr  2 12:39:36 EDT 2008
@@ -35,15 +35,10 @@ class JVersion{
 			return ss.str();
 		}
 		
-		static string GetIDstring(void){
-			string id = "$Id: $";
-			return id;
-		}
-
-		static string GetSVNrevision(void){
-			string id = "$Id: $";
-			return id;
-		}
+		static string GetIDstring(void){return "$Id$";}
+		static string GetSVNrevision(void){return "$Revision$";}
+		static string GetDate(void){return "$Date$";}
+		static string GetURL(void){return "$URL$";}
 		
 	protected:
 		
