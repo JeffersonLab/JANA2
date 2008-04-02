@@ -36,11 +36,23 @@ class JVersion{
 		}
 		
 		static string GetIDstring(void){return "$Id$";}
-		static string GetSVNrevision(void){return "$Revision$";}
-		static string GetDate(void){return "$Date$";}
-		static string GetURL(void){return "$URL$";}
+		static string GetSVNrevision(void){return ExtractContent("$Revision$");}
+		static string GetDate(void){return ExtractContent("$Date$");}
+		static string GetURL(void){return ExtractContent("$URL$");}
 		
 	protected:
+		
+		static string ExtractContent(const char *ccstr){
+			/// Attempt to cut off everything leading up to and including
+			/// the first space character and everything after and
+			/// including the last space character of the given string.
+			string str = ccstr;
+			string::size_type pos_start = str.find_first_of(" ", 0);
+			if(pos_start==string::npos)return str;
+			string::size_type pos_end = str.find_last_of(" ", str.size());
+			if(pos_end==string::npos)return str;
+			return str.substr(pos_start+1, pos_end-(pos_start+1));
+		}
 		
 	
 	private:

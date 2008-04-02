@@ -9,10 +9,12 @@
 
 #include "MyProcessor.h"
 #include "JANA/JApplication.h"
+#include "JANA/JVersion.h"
 
 
 void ParseCommandLineArguments(int &narg, char *argv[]);
 void Usage(void);
+
 
 
 //-----------
@@ -52,6 +54,14 @@ void ParseCommandLineArguments(int &narg, char *argv[])
 			case 'h':
 				Usage();
 				break;
+			case 'v':
+				cout<<"          JANA version: "<<JVersion::GetVersion()<<endl;
+				cout<<"        JANA ID string: "<<JVersion::GetIDstring()<<endl;
+				cout<<"     JANA SVN revision: "<<JVersion::GetSVNrevision()<<endl;
+				cout<<"JANA last changed date: "<<JVersion::GetDate()<<endl;
+				cout<<"              JANA URL: "<<JVersion::GetURL()<<endl;
+				exit(0);
+				break;
 			case 'D':
 				name = &argv[i][2];
 				tag = "";
@@ -88,6 +98,7 @@ void Usage(void)
 	cout<<"Options:"<<endl;
 	cout<<endl;
 	cout<<"   -h       Print this message"<<endl;
+	cout<<"   -v       Print the JANA version number"<<endl;
 	cout<<"   -Dname   Activate factory for data of type \"name\" (can be used mult. times)"<<endl;
 	cout<<"   -A       Activate all factories"<<endl;
 	cout<<endl;
