@@ -46,7 +46,7 @@ JEventLoop::JEventLoop(JApplication *app)
 	pthread_id = pthread_self();
 	
 	// Copy the event processor list to our local vector
-	processors = app->GetProcessors();
+	RefreshProcessorListFromJApplication();
 
 	app->GetJParameterManager()->GetParameters(default_tags, "DEFTAG:");
 	app->GetJParameterManager()->PrintParameters();
@@ -94,6 +94,14 @@ JEventLoop::~JEventLoop()
 	}
 
 	factories.clear();
+}
+
+//-------------
+// RefreshProcessorListFromJApplication
+//-------------
+void JEventLoop::RefreshProcessorListFromJApplication(void)
+{
+	processors = app->GetProcessors();
 }
 
 //-------------
@@ -274,6 +282,14 @@ jerror_t JEventLoop::Print(const string data_name, const char *tag)
 JCalibration* JEventLoop::GetJCalibration(void)
 {
 	return app->GetJCalibration(event.GetRunNumber());
+}
+
+//-------------
+// GetJGeometry
+//-------------
+JGeometry* JEventLoop::GetJGeometry(void)
+{
+	return app->GetJGeometry(event.GetRunNumber());
 }
 
 //-------------

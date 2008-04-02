@@ -19,6 +19,7 @@ using namespace std;
 #include "JEvent.h"
 #include "JFactory_base.h"
 #include "JCalibration.h"
+#include "JGeometry.h"
 
 // The following is here just so we can use ROOT's THtml class to generate
 // documentation.
@@ -63,6 +64,7 @@ class JEventLoop{
 		}error_call_stack_t;
 		
 		JApplication* GetJApplication(void){return app;} ///< Get pointer to the JApplication object
+		void RefreshProcessorListFromJApplication(void); ///< Re-copy the list of JEventProcessors from JApplication
 		virtual jerror_t AddFactory(JFactory_base* factory); ///< Add a factory
 		jerror_t RemoveFactory(JFactory_base* factory); ///< Remove a factory
 		JFactory_base* GetFactory(const string data_name, const char *tag=""); ///< Get a specific factory pointer
@@ -77,6 +79,10 @@ class JEventLoop{
 		JCalibration* GetJCalibration();
 		template<class T> bool GetCalib(string namepath, map<string,T> &vals);
 		template<class T> bool GetCalib(string namepath, vector<T> &vals);
+
+		JGeometry* GetJGeometry();
+		template<class T> bool GetGeom(string namepath, map<string,T> &vals);
+		template<class T> bool GetGeom(string namepath, T &val);
 
 		jerror_t Loop(void); ///< Loop over events
 		jerror_t OneEvent(void); ///< Process a single event
@@ -428,6 +434,48 @@ template<class T> bool JEventLoop::GetCalib(string namepath, vector<T> &vals)
 	}
 	
 	return calib->Get(namepath, vals);
+}
+
+
+//-------------
+// GetGeom (map)
+//-------------
+template<class T>
+bool JEventLoop::GetGeom(string namepath, map<string,T> &vals)
+{
+	/// Get the JGeometry object from JApplication for the run number of
+	/// the current event and call its Get() method to get the constants.
+
+	// Note that we could do this by making "vals" a generic type T thus, combining
+	// this with the vector version below. However, doing this explicitly will make
+	// it easier for the user to understand how to call us.
+
+	vals.clear();
+
+	JGeometry *geom = GetJGeometry();
+	if(!geom){
+		_DBG_<<"Unable to get JGeometry object for run "<<event.GetRunNumber()<<endl;
+		return true;
+	}
+	
+	return geom->Get(namepath, vals);
+}
+
+//-------------
+// GetGeom (atomic)
+//-------------
+template<class T> bool JEventLoop::GetGeom(string namepath, T &val)
+{
+	/// Get the JCalibration object from JApplication for the run number of
+	/// the current event and call its Get() method to get the constants.
+
+	JGeometry *geom = GetJGeometry();
+	if(!geom){
+		_DBG_<<"Unable to get JGeometry object for run "<<event.GetRunNumber()<<endl;
+		return true;
+	}
+	
+	return geom->Get(namepath, val);
 }
 
 

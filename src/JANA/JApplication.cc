@@ -25,7 +25,7 @@ using namespace std;
 #include "JEventProcessor.h"
 #include "JEventSource.h"
 #include "JEvent.h"
-#include "JGeometry.h"
+#include "JGeometryXML.h"
 #include "JParameterManager.h"
 #include "JLog.h"
 #include "JCalibrationFile.h"
@@ -617,17 +617,28 @@ JGeometry* JApplication::GetJGeometry(unsigned int run_number)
 
 	vector<JGeometry*>::iterator iter = geometries.begin();
 	for(; iter!=geometries.end(); iter++){
-		if((*iter)->IsInRange(run_number)){
-			// Found it! Unlock mutex and return pointer
-			JGeometry *g = *iter;
-			pthread_mutex_unlock(&geometry_mutex);
-			return g;
-		}
+		if((*iter)->GetRunMin()>(int)run_number)continue;
+		if((*iter)->GetRunMax()<(int)run_number)continue;
+		// Found it! Unlock mutex and return pointer
+		JGeometry *g = *iter;
+		pthread_mutex_unlock(&geometry_mutex);
+		return g;
 	}
+	
 	
 	// JGeometry object for this run_number doesn't exist in our list.
 	// Create a new one and add it to the list.
-	JGeometry *g = new JGeometry(run_number);
+	// We need to create an object of the appropriate subclass of
+	// JGeometry. This is determined by the first several characters
+	// of the URL that specifies the calibration database location.
+	// For now, only the JGeometryXML subclass exists so we'll
+	// just make one of those and defer the heavier algorithm until
+	// later.
+	const char *url = getenv("JANA_GEOMETRY_URL");
+	if(!url)url="file://./";
+	const char *context = getenv("JANA_GEOMETRY_CONTEXT");
+	if(!context)context="default";
+	JGeometry *g = new JGeometryXML(string(url), run_number, context);
 	if(g)geometries.push_back(g);
 
 	// Unlock geometry mutex
@@ -711,6 +722,7 @@ void* LaunchThread(void* arg)
 
 	// Loop over events until done. Catch any jerror_t's thrown
 	try{
+		eventLoop->RefreshProcessorListFromJApplication(); // make sure we're up-to-date
 		eventLoop->Loop();
 	}catch(JException *exception){
 		if(exception)delete exception;
@@ -751,11 +763,17 @@ jerror_t JApplication::Init(void)
 		cerr<<__FILE__<<":"<<__LINE__<<" Error thrown ("<<err<<") from JEventProcessor::init()"<<endl;
 		exit(-1);
 	}
+	
+	// At this point, we may have added some event processors through plugins
+	// that were not present before we were called. Any JEventLoop objects
+	// that exist would not have these in their list of prcessors. Refresh
+	// the lists for all event loops
+	for(unsigned int i=0; i<loops.size(); i++)loops[i]->RefreshProcessorListFromJApplication();
 
 	// Launch event buffer thread
 	pthread_t ebthr;
 	pthread_create(&ebthr, NULL, LaunchEventBufferThread, this);
-	
+
 	return NOERROR;
 }
 

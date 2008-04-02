@@ -1,8 +1,16 @@
 
-PACKAGES = 
-
+# Make sure JANA_HOME is defined
 ifdef JANA_HOME
 
+# Option for XERCES
+ifdef XERCESCROOT
+PACKAGES = XERCES
+CXXFLAGS += -DXERCESC
+else
+PACKAGES = 
+endif
+
+# Option for building shared libraries
 ifdef JANA_SHARED
 include $(JANA_HOME)/src/BMS/Makefile.shlib
 else
