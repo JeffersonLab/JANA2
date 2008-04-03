@@ -33,9 +33,13 @@ using namespace xercesc;
 //---------------------------------
 JGeometryXML::JGeometryXML(string url, int run, string context):JGeometry(url,run,context)
 {
-	// File URL should be of form:
-	// file:///path-to-root-dir
-	// The value of namepath will then be followed relative to this.
+	/// File URL should be of form:
+	/// file:///path-to-xmlfile
+	/// If multiple XML files are required, then this should point to a
+	/// top level file that includes all of the others.
+	
+	// Initialize our flag until we confirm the URL points to a valid XML file
+	valid_xmlfile = false;
 	
 	// First, check that the URL even starts with "xmlfile://"
 	if(url.substr(0, 10)!=string("xmlfile://")){
@@ -89,6 +93,8 @@ JGeometryXML::JGeometryXML(string url, int run, string context):JGeometry(url,ru
 	//cout<<"Parsing geometry starting from: \""<<xmlfile<<"\" ... "<<endl;
 	parser->resetDocumentPool();
 	doc = parser->parseURI(xmlfile.c_str());
+
+	valid_xmlfile = true;
 #endif
 }
 
@@ -99,10 +105,12 @@ JGeometryXML::~JGeometryXML()
 {
 #ifdef XERCESC
 	// Release parser and delete any memory it allocated
-	parser->release();
+	if(valid_xmlfile){
+		parser->release();
 	
-	// Shutdown XERCES
-	XMLPlatformUtils::Terminate();
+		// Shutdown XERCES
+		XMLPlatformUtils::Terminate();
+	}
 #endif
 }
 
@@ -116,6 +124,8 @@ bool JGeometryXML::Get(string xpath, string &sval)
 	/// occurance will be returned. The value of xpath may contain restrictions
 	/// on the attributes anywhere along the node path via the XPATH 1.0
 	/// specification as implemented by Xerces.
+
+	if(!valid_xmlfile){sval=""; return false;}
 
 #ifdef XERCESC
 
@@ -194,16 +204,12 @@ bool JGeometryXML::Get(string xpath, map<string, string> &svals)
 	// Clear out anything that might already be in the svals container
 	svals.clear();
 
+	if(!valid_xmlfile){return false;}
+
 #ifdef XERCESC
 	// Get the pointer to the node of interest.
 	string attribute;
 	DOMNode *node = FindNode(xpath, attribute);
-
-	if(attribute!=""){
-		_DBG_<<"Get(string, map<string, string>&) method called but an attribute was specified in xpath."<<endl;
-		_DBG_<<"The xpath string should NOT end in \"/@attributeName\" when calling this method."<<endl;
-		return false;
-	}
 	
 	if(node!=NULL){
 		// We found the node! Loop over attributes.
@@ -221,7 +227,7 @@ bool JGeometryXML::Get(string xpath, map<string, string> &svals)
 				XMLString::release(&attrName);
 				XMLString::release(&attrValue);
 				
-				svals[name] = value;
+				if(name==attribute || attribute=="")svals[name] = value;
 			}
 		}
 
@@ -241,6 +247,9 @@ void JGeometryXML::GetXPaths(vector<string> &xpaths, ATTR_LEVEL_t level)
 	/// Get all of the xpaths associated with the current geometry. Optionally
 	/// append the attributes according to the value of level. (See JGeometry.h
 	/// for valid values).
+	
+	if(!valid_xmlfile){xpaths.clear(); return;}
+
 #ifdef XERCESC
 	AddNodeToList((DOMNode*)doc->getDocumentElement(), "", xpaths, level);
 #endif // XERCESC
@@ -327,7 +336,8 @@ DOMNode* JGeometryXML::FindNode(string xpath, string &attribute)
 	
 	// First, parse the string to get node names and attribute qualifiers
 	vector<pair<string, map<string,string> > > nodes;
-	ParseXPath(xpath, nodes, attribute);
+	unsigned int attr_depth;
+	ParseXPath(xpath, nodes, attribute, attr_depth);
 
 #if 0	
 	vector<pair<string, map<string,string> > >::iterator iter = nodes.begin();
@@ -347,7 +357,7 @@ DOMNode* JGeometryXML::FindNode(string xpath, string &attribute)
 	// The only practical way to find the nodes now is to use a recursive
 	// routine to walk the tree until it finds the correct node with all
 	// of the correct attributes of the parent nodes along the way.
-	DOMNode *node = SearchTree(doc, 0, nodes);
+	DOMNode *node = SearchTree(doc, 0, nodes, attr_depth);
 
 	return node;
 }
@@ -355,7 +365,7 @@ DOMNode* JGeometryXML::FindNode(string xpath, string &attribute)
 //---------------------------------
 // ParseXPath
 //---------------------------------
-void JGeometryXML::ParseXPath(string xpath, vector<pair<string, map<string,string> > > &nodes, string &attribute)
+void JGeometryXML::ParseXPath(string xpath, vector<pair<string, map<string,string> > > &nodes, string &attribute, unsigned int &attr_depth)
 {
 	/// Parse a xpath string to obtain a list of node names and for each,
 	/// a map of the attributes and their (optional) values. This is a
@@ -380,6 +390,7 @@ void JGeometryXML::ParseXPath(string xpath, vector<pair<string, map<string,strin
 
 	// Clear attribute string
 	attribute = "";
+	attr_depth = -1;
 
 	// First, split path up into strings using "/" as a delimiter
 	vector<string> sections;
@@ -470,9 +481,20 @@ void JGeometryXML::ParseXPath(string xpath, vector<pair<string, map<string,strin
 		// "element" node. In these cases, we want to add the final attribute
 		// to the qualifiers list of the previously found node and NOT
 		// create a a whole other entry in the nodes map.
-		if(nodeName=="" && (i+1)==sections.size() && i>0){
+		if(nodeName=="" && i>0){
 			if(qualifiers.size()==1){
+				if(attribute!=""){
+					// If we get here then it looks like we have already found a
+					// "lone attribute" that is the target of the xpath query.
+					// This can happen with an xpath that looks like this:
+					//   //mynode/@id/hello/@name
+					// This is an error in the xpath so we notify the user
+					// but then go ahead and replace the attribute with the
+					// current one.
+					_DBG_<<"Multiple attribute targets specified in \""<<xpath<<"\""<<endl;
+				}
 				attribute = qualifiers.begin()->first;
+				attr_depth = nodes.size()-1;
 				map<string,string> &last_qualifiers = nodes[i-1].second;
 				last_qualifiers[attribute] = "";
 			}
@@ -488,7 +510,7 @@ void JGeometryXML::ParseXPath(string xpath, vector<pair<string, map<string,strin
 //---------------------------------
 // SearchTree
 //---------------------------------
-DOMNode* JGeometryXML::SearchTree(DOMNode* current_node, unsigned int depth, vector<pair<string, map<string,string> > > &nodes)
+DOMNode* JGeometryXML::SearchTree(DOMNode* current_node, unsigned int depth, vector<pair<string, map<string,string> > > &nodes, unsigned int attr_depth)
 {
 	// First, make sure "depth" isn't deeper than our nodes map.
 	if(depth>=nodes.size())return NULL;
@@ -513,7 +535,7 @@ DOMNode* JGeometryXML::SearchTree(DOMNode* current_node, unsigned int depth, vec
 		// specified in our nodes map. Try each of our children
 		// Loop over children and recall ourselves for each of them
 		for (DOMNode *child = current_node->getFirstChild(); child != 0; child=child->getNextSibling()){
-			DOMNode *node = SearchTree(child, 0, nodes);
+			DOMNode *node = SearchTree(child, 0, nodes, attr_depth);
 			if(node!=NULL){
 				// Wow! it looks like we found it. Go ahead and return the
 				// node pointer.
@@ -567,8 +589,10 @@ DOMNode* JGeometryXML::SearchTree(DOMNode* current_node, unsigned int depth, vec
 	// are correct. Now we need to loop over this node's children and
 	// have them check against the next level.
 	for (DOMNode *child = current_node->getFirstChild(); child != 0; child=child->getNextSibling()){
-		DOMNode *node = SearchTree(child, depth+1, nodes);
-		if(node!=NULL)return node;
+		DOMNode *node = SearchTree(child, depth+1, nodes, attr_depth);
+		if(node!=NULL){
+			return depth==attr_depth ? current_node:node;
+		}
 	}
 	
 	return NULL;

@@ -40,6 +40,7 @@ class JGeometryXML:public JGeometry{
 		JGeometryXML();
 		
 		string xmlfile;
+		bool valid_xmlfile;
 
 #ifdef XERCESC
 		xercesc::DOMBuilder *parser;
@@ -47,8 +48,8 @@ class JGeometryXML:public JGeometry{
 		
 		void AddNodeToList(xercesc::DOMNode* start, string start_path, vector<string> &xpaths, JGeometry::ATTR_LEVEL_t level);
 		xercesc::DOMNode* FindNode(string xpath, string &attribute);
-		void ParseXPath(string xpath, vector<pair<string, map<string,string> > > &nodes, string &attribute);
-		xercesc::DOMNode* SearchTree(xercesc::DOMNode* current_node, unsigned int depth, vector<pair<string, map<string,string> > > &nodes);
+		void ParseXPath(string xpath, vector<pair<string, map<string,string> > > &nodes, string &attribute, unsigned int &attr_depth);
+		xercesc::DOMNode* SearchTree(xercesc::DOMNode* current_node, unsigned int depth, vector<pair<string, map<string,string> > > &nodes, unsigned int attr_depth);
 
 		// Error handler callback class
 		class ErrorHandler : public xercesc::DOMErrorHandler

@@ -159,7 +159,8 @@ bool JGeometry::Get(string xpath, vector<T> &vals, string delimiter)
 	/// This method can be used to get a list of values (possibly only one)
 	/// from a single geometry attribute specified by xpath. The attribute
 	/// is obtained as a string using the non-templated Get(...) method
-	/// and the string broken into tokens separated by white space. Each
+	/// and the string broken into tokens separated by the delimiter
+	/// (which defaults to a single white space). Each
 	/// token is then converted into type T using the stringstream class
 	/// so T is restricted to the types stringstream understands (int, float, 
 	/// double, string, ...).
@@ -170,21 +171,24 @@ bool JGeometry::Get(string xpath, vector<T> &vals, string delimiter)
 	
 	// Get values in the form of strings
 	vals.clear();
-	map<string, string> svals;
+	string svals;
 	bool res = Get(xpath, svals);
 	if(!res)return res;
 	
-	// Loop over values, converting the strings to type "T" and
-	// copying them into the vals map.
-	map<string,string>::const_iterator iter;
-	for(iter=svals.begin(); iter!=svals.end(); ++iter){
-		// Use stringstream to convert from a string to type "T"
+	string::size_type pos_start = svals.find_first_not_of(delimiter,0);
+	while(pos_start != string::npos){
+		string::size_type pos_end = svals.find_first_of(delimiter, pos_start);
+		if(pos_end==string::npos)pos_end=svals.size();
+
 		T v;
-		stringstream ss(iter->second);
+		string val = svals.substr(pos_start, pos_end-pos_start);
+		stringstream ss(val);
 		ss >> v;
 		vals.push_back(v);
+		
+		pos_start = svals.find_first_not_of(delimiter, pos_end);
 	}
-	
+
 	return res;
 }
 

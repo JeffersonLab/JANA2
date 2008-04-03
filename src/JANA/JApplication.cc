@@ -29,6 +29,7 @@ using namespace std;
 #include "JParameterManager.h"
 #include "JLog.h"
 #include "JCalibrationFile.h"
+#include "JVersion.h"
 
 #ifndef ansi_escape
 #define ansi_escape			((char)0x1b)
@@ -237,6 +238,15 @@ JApplication::JApplication(int narg, char* argv[])
 			free(pstr);
 			continue;
 		}
+		arg="--janaversion";
+		if(!strncmp(arg, argv[i],strlen(arg))){
+			cout<<"          JANA version: "<<JVersion::GetVersion()<<endl;
+			cout<<"        JANA ID string: "<<JVersion::GetIDstring()<<endl;
+			cout<<"     JANA SVN revision: "<<JVersion::GetSVNrevision()<<endl;
+			cout<<"JANA last changed date: "<<JVersion::GetDate()<<endl;
+			cout<<"              JANA URL: "<<JVersion::GetURL()<<endl;
+			continue;
+		}
 		if(argv[i][0] == '-')continue;
 		source_names.push_back(argv[i]);
 	}
@@ -260,6 +270,7 @@ void JApplication::Usage(void)
 	cout<<"  --auto_activate=factory  Auto activate \"factory\" for every event"<<endl;
 	cout<<"  -Pkey=value              Set configuration parameter \"key\" to \"value\""<<endl;
 	cout<<"  -Pprint                  Print all configuration params"<<endl;
+	cout<<"  --janaversion            Print JANA verson information"<<endl;
 }
 
 //---------------------------------
