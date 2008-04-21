@@ -5,12 +5,14 @@
 #define _JFACTORY_BASE_H_
 
 #include <vector>
-#include <list>
 #include <string>
-using namespace std;
+using std::vector;
+using std::string;
 
 #include "JEventProcessor.h"
-//#include "JEventLoop.h"
+
+// Place everything in JANA namespace
+namespace jana{
 
 class JEventLoop;
 
@@ -22,8 +24,8 @@ class JEventLoop;
 /// must all be derived from a common base class. This is that
 /// base class.
 ///
-/// Note that most JANA user will not use this class
-/// directly (with the possible exception of calling dataClassName()).
+/// Note that most JANA users will not use this class
+/// directly (with the possible exception of calling GetDataClassName()).
 /// They may occasionally need to dynamic_cast a pointer
 /// to a JFactory_base object into a pointer to the subclass
 /// though.
@@ -60,20 +62,21 @@ class JFactory_base:public JEventProcessor{
 		
 		/// Return the pointer to the class's name which this
 		/// factory provides.
-		virtual const char* dataClassName(void)=0;
+		virtual const char* GetDataClassName(void)=0;
 		
 		/// Returns the size of the data class on which this factory is based
-		virtual int dataClassSize(void)=0;
+		virtual int GetDataClassSize(void)=0;
 		
 		/// Returns a string object with a nicely formatted ASCII table of the data
-		virtual const string toString(void){return string(" <Print method undefined for ")+dataClassName()+string("> ");}
+		string toString(void) const;
+		virtual void toStrings(vector<vector<pair<string,string> > > &items) const =0;
 
 		/// The data tag string associated with this factory. Most factories
 		/// will not overide this.
 		virtual inline const char* Tag(void){return "";}
 		
 		/// Find object pointer in factory's _data vector and return it
-		virtual const JObject* GetByID(oid_t id)=0;
+		virtual const JObject* GetByID(JObject::oid_t id)=0;
 
 		/// Used by JEventLoop to give a pointer back to itself
 		void SetJEventLoop(JEventLoop *loop){this->eventLoop=loop;}
@@ -109,36 +112,12 @@ class JFactory_base:public JEventProcessor{
 		unsigned int flags;
 		int debug_level;
 		int busy;
-		string _table;
-		string _row;
-		int _icol;
-		int _columns[100];
-		int header_width;
 		unsigned int Ncalls_to_Get;
 		unsigned int Ncalls_to_evnt;
 
-		// Methods useful in help produce nicely formatted ASCII
-		void printheader(const char *header);
-		void printnewrow(void);
-		void printcol(const char *str);
-		template<typename T> void printcol(const char* format, T);
-		void printrow(void);
 };
 
 
-//-------------
-// printcol
-//-------------
-template<typename T>
-void JFactory_base::printcol(const char *format, T val)
-{
-	/// Print a formatted value to "str". Used by Print()
-	char mystr[256]="";
-	sprintf(mystr, format, val);
-	unsigned long pos = _columns[_icol]-strlen(mystr);
-	if((unsigned long)_columns[_icol]<strlen(mystr))pos = 0;
-	_row.replace(pos, strlen(mystr), mystr);
-	_icol++;
-}
+} // Close JANA namespace
 
 #endif // _JFACTORY_BASE_H_

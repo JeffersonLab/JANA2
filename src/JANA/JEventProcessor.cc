@@ -6,6 +6,7 @@
 //
 
 #include "JEventProcessor.h"
+using namespace jana;
 
 //---------------------------------
 // JEventProcessor    (Constructor)

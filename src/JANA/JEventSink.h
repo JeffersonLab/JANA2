@@ -12,12 +12,14 @@
 #include <pthread.h>
 #include <string>
 #include <typeinfo>
-using namespace std;
+using std::string;
 
 #include "jerror.h"
 #include "JFactory_base.h"
 #include "JEventProcessor.h"
 #include "JEventLoop.h"
+
+namespace jana{
 
 class JEventSink:public JEventProcessor{
 	public:
@@ -60,6 +62,8 @@ class JEventSink:public JEventProcessor{
 		bool initialized;
 		pthread_mutex_t sink_mutex;
 };
+
+} // Close jana namespace
 
 #endif // _JEventSink_
 

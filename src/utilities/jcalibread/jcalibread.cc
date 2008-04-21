@@ -9,6 +9,7 @@ using namespace std;
 
 #include <JANA/JApplication.h>
 #include <JANA/JCalibration.h>
+using namespace jana;
 
 void ParseCommandLineArguments(int &narg, char *argv[]);
 void Usage(void);
@@ -30,7 +31,9 @@ int main(int narg, char *argv[])
 	
 	// Get constants
 	map<string, string> vals;
+	vector< map<string, float> > tvals;
 	jcalib->Get(NAMEPATH, vals);
+	jcalib->Get(NAMEPATH, tvals);
 	
 	// Display constants
 	cout<<endl<<"Values for \""<<NAMEPATH<<"\" for run "<<RUN_NUMBER<<endl;
@@ -55,6 +58,16 @@ int main(int narg, char *argv[])
 		cout<<endl;
 	}
 	cout<<endl;
+	
+	for(unsigned int i=0; i<tvals.size(); i++){
+		map<string, float> &row = tvals[i];
+		map<string, float>::iterator iter = row.begin();
+		for(;iter!=row.end(); iter++){
+			cout<<iter->first<<"="<<iter->second<<"  ";
+		}
+		cout<<endl;
+	}
+
 	
 	delete app;
 

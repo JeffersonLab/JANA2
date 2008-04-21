@@ -7,9 +7,14 @@
 /// janadump print event info to screen
 ///
 
+#include <vector>
+#include <iostream>
+using namespace std;
+
 #include <JANA/JEventProcessor.h>
 #include <JANA/JEventLoop.h>
 #include <JANA/JFactory.h>
+using namespace jana;
 
 extern int PAUSE_BETWEEN_EVENTS;
 extern int SKIP_BORING_EVENTS;

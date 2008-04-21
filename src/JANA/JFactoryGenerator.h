@@ -10,6 +10,10 @@
 
 #include "jerror.h"
 
+// Place everything in JANA namespace
+namespace jana
+{
+
 class JEventLoop;
 
 /// This class is used by the JEventLoop objects to create factories
@@ -63,6 +67,8 @@ class JFactoryGenerator{
 	private:
 
 };
+
+} // Close JANA namespace
 
 #endif // _JFactoryGenerator_
 

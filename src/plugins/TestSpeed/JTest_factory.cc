@@ -93,31 +93,3 @@ jerror_t JTest_factory::fini(void)
 {
 	return NOERROR;
 }
-
-//------------------
-// toString
-//------------------
-const string JTest_factory::toString(void)
-{
-	// Ensure our Get method has been called so _data is up to date
-	Get();
-	if(_data.size()<=0)return string(); // don't print anything if we have no data!
-
-	// Put the class specific code to produce nicely formatted ASCII here.
-	// The DFactory_base class has several methods defined to help. They
-	// rely on positions of colons (:) in the header. Here's an example:
-	//
-	printheader("row:    x:     y:");
-	
-	for(unsigned int i=0; i<_data.size(); i++){
-		JTest *myJTest = _data[i];
-	
-		printnewrow();
-		printcol("%d",	i);
-		printcol("%1.3f",	myJTest->x);
-		printcol("%3.2f",	myJTest->y);
-		printrow();
-	}
-
-	return _table;
-}

@@ -8,6 +8,7 @@
 #include <iostream>
 
 #include "JParameter.h"
+using namespace jana;
 
 //---------------------------------
 // JParameter    (Constructor)
@@ -25,14 +26,14 @@ JParameter::JParameter(string my_key, string my_value)
 //---------------------------------
 void JParameter::Dump(void)
 {
-	cout<<" -----------------------------"<<endl;
-	cout<<"  className: "<<className()<<endl;
-	cout<<"        key: "<<key<<endl;
-	cout<<"      value: "<<value<<endl;
-	cout<<"  isdefault: "<<isdefault<<endl;
-	cout<<" hasdefault: "<<hasdefault<<endl;
-	cout<<"    printme: "<<printme<<endl;
-	cout<<"       type: "<<DataName(type)<<endl;
+	std::cout<<" -----------------------------"<<std::endl;
+	std::cout<<"  className: "<<className()<<std::endl;
+	std::cout<<"        key: "<<key<<std::endl;
+	std::cout<<"      value: "<<value<<std::endl;
+	std::cout<<"  isdefault: "<<isdefault<<std::endl;
+	std::cout<<" hasdefault: "<<hasdefault<<std::endl;
+	std::cout<<"    printme: "<<printme<<std::endl;
+	std::cout<<"       type: "<<DataName(type)<<std::endl;
 }
 
 //---------------------------------

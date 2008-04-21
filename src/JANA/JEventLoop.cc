@@ -18,6 +18,7 @@ using namespace std;
 #include "JEventLoop.h"
 #include "JEvent.h"
 #include "JFactory.h"
+using namespace jana;
 
 jmp_buf SETJMP_ENV;
 
@@ -78,7 +79,7 @@ JEventLoop::~JEventLoop()
 		}catch(jerror_t err){
 			cerr<<endl;
 			cerr<<__FILE__<<":"<<__LINE__<<" Error thrown ("<<err<<") from JFactory<";
-			cerr<<factories[i]->dataClassName()<<">::fini()"<<endl;
+			cerr<<factories[i]->GetDataClassName()<<">::fini()"<<endl;
 		}
 	}
 
@@ -89,7 +90,7 @@ JEventLoop::~JEventLoop()
 		}catch(jerror_t err){
 			cerr<<endl;
 			cerr<<__FILE__<<":"<<__LINE__<<" Error thrown ("<<err<<") while deleting JFactory<";
-			cerr<<factories[i]->dataClassName()<<">"<<endl;
+			cerr<<factories[i]->GetDataClassName()<<">"<<endl;
 		}
 	}
 
@@ -140,7 +141,7 @@ JFactory_base* JEventLoop::GetFactory(const string data_name, const char *tag)
 	// Search for specified factory and return pointer to it
 	vector<JFactory_base*>::iterator iter = factories.begin();
 	for(; iter!=factories.end(); iter++){
-		if(data_name == (*iter)->dataClassName()){
+		if(data_name == (*iter)->GetDataClassName()){
 			if(!strcmp((*iter)->Tag(), tag)){
 				return *iter;
 			}
@@ -162,7 +163,7 @@ void JEventLoop::GetFactoryNames(vector<string> &factorynames)
 	/// with no tag. 
 	vector<JFactory_base*>::iterator factory = factories.begin();
 	for(; factory!=factories.end(); factory++){
-		string name = (*factory)->dataClassName();
+		string name = (*factory)->GetDataClassName();
 		string tag = (*factory)->Tag()==NULL ? "":(*factory)->Tag();
 		if(tag.size()>0)name = name + ":" + tag;
 		factorynames.push_back(name);
@@ -179,7 +180,7 @@ void JEventLoop::GetFactoryNames(map<string,string> &factorynames)
 	/// produced by the factory. The value is the tag.
 	vector<JFactory_base*>::iterator factory = factories.begin();
 	for(; factory!=factories.end(); factory++){
-		string name = (*factory)->dataClassName();
+		string name = (*factory)->GetDataClassName();
 		string tag = (*factory)->Tag();
 		factorynames[name] = tag;
 	}	
@@ -227,7 +228,7 @@ jerror_t JEventLoop::PrintFactories(int sparsify)
 		
 		// To make things look pretty, copy all values into the buffer "str"
 		string str(79,' ');
-		string name = factory->dataClassName();
+		string name = factory->GetDataClassName();
 		str.replace(0, name.size(), name);
 
 		char num[32]="";
@@ -468,7 +469,7 @@ void JEventLoop::QuitProgram(void)
 //-------------
 // FindByID
 //-------------
-const JObject* JEventLoop::FindByID(oid_t id)
+const JObject* JEventLoop::FindByID(JObject::oid_t id)
 {
 	// Loop over all factories and all objects until the one
 	// with the speficied id is found. Return NULL if it is not found
@@ -499,7 +500,7 @@ JFactory_base* JEventLoop::FindOwner(const JObject *obj)
 //-------------
 // FindOwner
 //-------------
-JFactory_base* JEventLoop::FindOwner(oid_t id)
+JFactory_base* JEventLoop::FindOwner(JObject::oid_t id)
 {
 	// Loop over all factories and all objects until
 	// the speficied one is found. Return NULL if it is not found

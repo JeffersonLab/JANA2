@@ -10,7 +10,8 @@
 
 #include <vector>
 #include <string>
-using namespace std;
+using std::vector;
+using std::string;
 
 #include <pthread.h>
 
@@ -22,8 +23,13 @@ using namespace std;
 class pthread_mutex_t;
 #endif
 
+
+// Place everything in JANA namespace
+namespace jana{
+
 class JFactory_base;
 class JEvent;
+
 
 /// This is the base class for event sources in JANA. See
 /// JEventSourceGenerator for a brief overview of how sources
@@ -113,6 +119,8 @@ class JEventSource{
 	private:
 
 };
+
+} // Close JANA namespace
 
 #endif // _JEventSource_
 

@@ -10,8 +10,8 @@
 #ifndef _JERROR_H_
 #define _JERROR_H_
 
-#define _DBG_ cerr<<__FILE__<<":"<<__LINE__<<" "
-#define _DBG__ cerr<<__FILE__<<":"<<__LINE__<<endl
+#define _DBG_ std::cerr<<__FILE__<<":"<<__LINE__<<" "
+#define _DBG__ std::cerr<<__FILE__<<":"<<__LINE__<<std::endl
 
 enum jerror_t{
 	NOERROR = 0,

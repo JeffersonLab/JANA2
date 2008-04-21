@@ -6,6 +6,7 @@
 //
 
 #include "JCalibration.h"
+using namespace jana;
 
 //---------------------------------
 // JCalibration    (Constructor)

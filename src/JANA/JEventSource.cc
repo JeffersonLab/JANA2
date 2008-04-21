@@ -10,6 +10,7 @@
 using namespace std;
 
 #include "JEventSource.h"
+using namespace jana;
 
 //---------------------------------
 // JEventSource    (Constructor)

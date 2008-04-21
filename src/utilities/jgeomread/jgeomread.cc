@@ -9,6 +9,8 @@ using namespace std;
 
 #include <JANA/JApplication.h>
 #include <JANA/JGeometry.h>
+using namespace jana;
+
 
 void ParseCommandLineArguments(int &narg, char *argv[]);
 void Usage(void);

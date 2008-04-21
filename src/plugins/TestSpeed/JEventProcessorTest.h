@@ -4,6 +4,7 @@
 
 #include <JANA/JEventProcessor.h>
 #include <JANA/JEventLoop.h>
+using namespace jana;
 
 
 class JEventProcessorTest:public JEventProcessor

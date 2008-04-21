@@ -1,5 +1,5 @@
 
-CFLAGS += -I$(XERCESCROOT)/include
-CXXFLAGS += -I$(XERCESCROOT)/include
+CFLAGS += -I$(XERCESCROOT)/include -DXERCESC
+CXXFLAGS += -I$(XERCESCROOT)/include -DXERCESC
 MISC_LIBS += -L$(XERCESCROOT)/lib -lxerces-c
 

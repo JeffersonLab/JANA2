@@ -12,18 +12,18 @@
 #include <cstdio>
 #include <vector>
 #include <string>
-using namespace std;
+using std::vector;
+using std::string;
 
 #include "jerror.h"
 #include "JEventSource.h"
 #include "JFactory_base.h"
-#include "JObject.h"
 
-class JEventLoop;
 
-template<class T>
-class JFactory;
+// Place everything in JANA namespace
+namespace jana{
 
+template<class T> class JFactory;
 
 class JEvent{
 	public:
@@ -53,6 +53,7 @@ class JEvent{
 		JEventLoop *loop;
 
 };
+
 
 //---------------------------------
 // GetObjects
@@ -89,22 +90,25 @@ jerror_t JEvent::GetObjects(vector<const T*> &t, JFactory_base *factory)
 		// cause dynamic_cast to fail for objects created in a routine
 		// attached via libdl. Because of this, we have to check the
 		// name of the data class. I am leaving the above dynamic_cast
-		// here becaue it *should* be the proper way to do this and
+		// here because it *should* be the proper way to do this and
 		// does actually work most of the time. Hopefully, this will
 		// be resolved at some point and we can remove this message
 		// and use this code to flag true bugs.
-		if(!strcmp(factory->dataClassName(), T::className())){
+		if(!strcmp(factory->GetDataClassName(), T::static_className())){
 			fac = (JFactory<T>*)factory;
 			fac->CopyFrom(t);
 		}else{
-			cout<<__FILE__<<":"<<__LINE__<<" BUG DETECTED!! email davidl@jlab.org and complain!"<<endl;
-			cout<<"factory->dataClassName()=\""<<factory->dataClassName()<<"\""<<endl;
-			cout<<"T::className()=\""<<T::className()<<"\""<<endl;
+			std::cout<<__FILE__<<":"<<__LINE__<<" BUG DETECTED!! email davidl@jlab.org and complain!"<<std::endl;
+			std::cout<<"factory->GetDataClassName()=\""<<factory->GetDataClassName()<<"\""<<std::endl;
+			std::cout<<"T::className()=\""<<T::static_className()<<"\""<<std::endl;
 		}
 	}
 
 	return NOERROR;
 }
+
+} // Close JANA namespace
+
 
 #endif // _JEvent_
 

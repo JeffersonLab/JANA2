@@ -4,8 +4,6 @@
 #ifndef _JFACTORY_H_
 #define _JFACTORY_H_
 
-#define HDCLASSDEF(T) \
-	static const char* className(){return #T;}
 
 
 #include "JObject.h"
@@ -14,14 +12,19 @@
 
 #include <vector>
 #include <string>
-using namespace std;
+using std::vector;
+using std::string;
 
 #include "JEventLoop.h"
 #include "JFactory_base.h"
 #include "JEvent.h"
 
+// Place everything in JANA namespace
+namespace jana
+{
+
 ///
-/// Hall-D Data Factory
+/// JANA Data Factory (base class for algorithms)
 ///
 /// All data (except that read from the data source) must
 /// be derived from the data that was read from the source.
@@ -43,7 +46,7 @@ using namespace std;
 ///
 /// Instantiating a JFactory<T> object itself would be pointless
 /// since they would use the default  init(), brun(),evnt(),erun(),
-/// and fini().
+/// and fini()
 /// methods from JEventProcessor which do nothing. Instead,
 /// A new class should be derived from this one which implements
 /// its own init(), brun(),evnt(),erun(), and fini() methods.
@@ -68,16 +71,17 @@ class JFactory:public JFactory_base{
 		jerror_t Get(vector<const T*> &d);
 		int GetNrows(void);
 		data_origin_t GetDataOrigin(void){return data_origin;}
-		inline const char* className(void){return T::className();}
-		inline const char* dataClassName(void){return className();}
+		inline const char* className(void){return T::static_className();}
+		inline const char* GetDataClassName(void){return className();}
+		inline void toStrings(vector<vector<pair<string,string> > > &items) const;
 		virtual const char* Tag(void){return tag_str;}
-		inline int dataClassSize(void){return sizeof(T);}
+		inline int GetDataClassSize(void){return sizeof(T);}
 		inline int GetEventCalled(void){return evnt_called;}
-		inline int CheckSourceFirst(void){return !use_factory;}
+		inline int GetCheckSourceFirst(void){return !use_factory;}
 		jerror_t CopyFrom(vector<const T*> &data);
 		jerror_t CopyTo(vector<T*> &data);
-		const T* GetByIDT(oid_t id);
-		const JObject* GetByID(oid_t id){return dynamic_cast<const JObject*>(GetByIDT(id));}
+		const T* GetByIDT(JObject::oid_t id);
+		const JObject* GetByID(JObject::oid_t id){return dynamic_cast<const JObject*>(GetByIDT(id));}
 		
 
 	protected:
@@ -117,7 +121,7 @@ JFactory<T>::JFactory(const char *tag)
 
 	// Allow any factory to have its debug_level set via environment variable
 	debug_level = 0;
-	string envar = string() + "DEBUG_" + dataClassName();
+	string envar = string() + "DEBUG_" + GetDataClassName();
 	char *ptr = getenv(envar.c_str());
 	if(ptr)debug_level = atoi(ptr);
 }
@@ -220,7 +224,7 @@ jerror_t JFactory<T>::Get(vector<const T*> &d)
 		CopyFrom(d);
 	}catch(JException *exception){
 		JEventLoop::error_call_stack_t cs;
-		cs.factory_name = dataClassName();
+		cs.factory_name = GetDataClassName();
 		cs.tag = Tag();
 		cs.filename = __FILE__;
 		cs.line = __LINE__;
@@ -351,12 +355,40 @@ jerror_t JFactory<T>::CopyFrom(vector<const T*> &data)
 // GetByIDT
 //-------------
 template<class T>
-const T* JFactory<T>::GetByIDT(oid_t id)
+const T* JFactory<T>::GetByIDT(JObject::oid_t id)
 {
 	for(unsigned int i=0;i<_data.size();i++)
 		if(_data[i]->id == id)return (const T*)_data[i];
 	return NULL;
 }
+
+//-------------
+// toStrings
+//-------------
+template<class T>
+void JFactory<T>::toStrings(vector<vector<pair<string,string> > > &items) const
+{
+	/// Get the data for all objects already created by this factory for the
+	/// given event by calling the toStrings() method of each one.
+	///
+	/// Note that this will not activate the factory to generate the objects
+	/// if they do not already exist.
+	///
+	/// The items vector is cleared upon entry
+	
+	items.clear();
+	
+	for(unsigned int i=0;i<_data.size();i++){
+		vector<pair<string, string> > myitems;
+		_data[i]->toStrings(myitems);
+		if(myitems.size()>0)items.push_back(myitems);
+	}
+}
+
+
+
+} // Close JANA namespace
+
 
 #endif // __CINT__
 

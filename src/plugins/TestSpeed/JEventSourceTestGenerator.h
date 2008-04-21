@@ -9,6 +9,7 @@
 #define _JEventSourceTestGenerator_
 
 #include "JANA/JEventSourceGenerator.h"
+using namespace jana;
 
 class JEventSourceTestGenerator:public JEventSourceGenerator{
 	public:

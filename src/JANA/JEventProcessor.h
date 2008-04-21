@@ -10,11 +10,15 @@
 
 #include <pthread.h>
 #include <vector>
-using namespace std;
+using std::vector;
 
 #include "jerror.h"
 #include "JParameterManager.h"
 #include "JObject.h"
+
+// Place everything in JANA namespace
+namespace jana
+{
 
 class JEventLoop;
 class JApplication;
@@ -70,6 +74,7 @@ class JEventProcessor{
 
 };
 
+} // Close JANA namespace
 
 #endif // _JEventProcessor_
 

@@ -26,7 +26,7 @@ using namespace xercesc;
 #endif
 
 #include "JGeometryXML.h"
-
+using namespace jana;
 
 //---------------------------------
 // JGeometryXML    (Constructor)
@@ -45,6 +45,7 @@ JGeometryXML::JGeometryXML(string url, int run, string context):JGeometry(url,ru
 	if(url.substr(0, 10)!=string("xmlfile://")){
 		_DBG_<<"Poorly formed URL. Should start with \"xmlfile://\"."<<endl;
 		_DBG_<<"URL:"<<url<<endl;
+		_DBG_<<"(Try setting you JANA_GEOMETRY_URL environment variable.)"<<endl;
 		return;
 	}
 	

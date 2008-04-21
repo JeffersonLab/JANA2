@@ -10,12 +10,20 @@
 
 #include "jerror.h"
 
+namespace jana
+{
 class JApplication;
 class JEventSource;
+}
 
 extern "C" {
-extern void InitPlugin(JApplication *app);
+extern void InitPlugin(jana::JApplication *app);
 }
+
+// Place everything in JANA namespace
+namespace jana
+{
+
 
 /// This is a base class for all event source generators. JANA implements
 /// event sources in a modular way so that new types of sources can be
@@ -63,6 +71,8 @@ class JEventSourceGenerator{
 	private:
 
 };
+
+} // Close JANA namespace
 
 #endif // _JEventSourceGenerator_
 

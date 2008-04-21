@@ -4,14 +4,16 @@
 // MyProcessor.cc
 //
 
-#include <iostream>
-using namespace std;
 
 #include <stdio.h>
 #include <unistd.h>
 
-#include "MyProcessor.h"
+#include <JANA/JEventProcessor.h>
+#include <JANA/JEventLoop.h>
+#include <JANA/JFactory.h>
+using namespace jana;
 
+#include "MyProcessor.h"
 
 int PAUSE_BETWEEN_EVENTS = 1;
 int SKIP_BORING_EVENTS = 0;

@@ -88,7 +88,7 @@ void PrintFactoryList(JApplication *app)
 	vector<JFactory_base*> factories = loop->GetFactories();
 	vector<JFactory_base*>::iterator iter = factories.begin();
 	for(; iter!=factories.end(); iter++){
-		cout<<" "<<(*iter)->dataClassName();
+		cout<<" "<<(*iter)->GetDataClassName();
 		if(strlen((*iter)->Tag()) !=0){
 			cout<<" : "<<(*iter)->Tag();
 		}

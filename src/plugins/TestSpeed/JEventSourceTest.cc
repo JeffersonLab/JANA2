@@ -131,7 +131,7 @@ jerror_t JEventSourceTest::GetObjects(JEvent &event, JFactory_base *factory)
 	if(!factory)throw RESOURCE_UNAVAILABLE;
 
 	// Get name of data class we're trying to extract
-	string dataClassName = factory->dataClassName();
+	string dataClassName = factory->GetDataClassName();
 	
 	// Just return. The _data vector should already be reset to have zero objects
 	return OBJECT_NOT_AVAILABLE;

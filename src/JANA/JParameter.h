@@ -11,9 +11,15 @@
 
 #include <string>
 #include <stdlib.h>
-using namespace std;
+using std::string;
 
 #include "jerror.h"
+
+
+// Place everything in JANA namespace
+namespace jana
+{
+
 
 class JILStream;
 
@@ -89,6 +95,10 @@ class JParameter{
 	private:
 
 };
+
+} // Close JANA namespace
+
+
 
 #endif // _JParameter_
 

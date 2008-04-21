@@ -8,9 +8,10 @@
 
 
 #include "MyProcessor.h"
-#include "JANA/JApplication.h"
-#include "JANA/JVersion.h"
+#include <JANA/JApplication.h>
+#include <JANA/JVersion.h>
 
+using namespace std;
 
 void ParseCommandLineArguments(int &narg, char *argv[]);
 void Usage(void);

@@ -16,6 +16,7 @@ using namespace std;
 
 #include <JANA/JEventSource.h>
 #include <JANA/jerror.h>
+using namespace jana;
 
 
 class JEventSourceTest:public JEventSource

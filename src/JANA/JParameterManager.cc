@@ -9,6 +9,7 @@
 #include <pthread.h>
 
 #include "JParameterManager.h"
+using namespace jana;
 
 #ifndef ansi_escape
 #define ansi_escape			((char)0x1b)
@@ -115,7 +116,7 @@ void JParameterManager::PrintParameters(void)
 
 
 	if(parameters.size() == 0){
-		cout<<" - No configuration parameters defined -"<<endl;
+		std::cout<<" - No configuration parameters defined -"<<std::endl;
 		return;
 	}
 	
@@ -128,8 +129,8 @@ void JParameterManager::PrintParameters(void)
 	// Sort parameters alphabetically
 	sort(parameters.begin(), parameters.end(), JParameterAlphaSort());
 	
-	cout<<endl;
-	cout<<" --- Configuration Parameters --"<<endl;
+	std::cout<<std::endl;
+	std::cout<<" --- Configuration Parameters --"<<std::endl;
 	
 	// First, find the longest key and value and set the "printme" flags
 	unsigned int max_key_len = 0;
@@ -168,17 +169,17 @@ void JParameterManager::PrintParameters(void)
 		if(key.substr(0,jana.size())==jana)warn=false;
 
 		// Print the parameter
-		if(!p->isdefault)cout<<ansi_bold;
-		if(warn)cout<<ansi_red<<ansi_bold<<ansi_blink;
-		cout<<line.c_str();
-		if(warn)cout<<" <-- NO DEFAULT! (TYPO?)"<<ansi_normal;
-		if(!p->isdefault)cout<<ansi_normal;
-		cout<<endl;
+		if(!p->isdefault)std::cout<<ansi_bold;
+		if(warn)std::cout<<ansi_red<<ansi_bold<<ansi_blink;
+		std::cout<<line.c_str();
+		if(warn)std::cout<<" <-- NO DEFAULT! (TYPO?)"<<ansi_normal;
+		if(!p->isdefault)std::cout<<ansi_normal;
+		std::cout<<std::endl;
 	}
 	
-	if(!Nprinted)cout<<"        < all defaults >"<<endl;
+	if(!Nprinted)std::cout<<"        < all defaults >"<<std::endl;
 	
-	cout<<" -------------------------------"<<endl;
+	std::cout<<" -------------------------------"<<std::endl;
 }
 
 //---------------------------------

@@ -10,6 +10,7 @@
 using namespace std;
 
 #include "JCalibrationFile.h"
+using namespace jana;
 
 //---------------------------------
 // JCalibrationFile    (Constructor)

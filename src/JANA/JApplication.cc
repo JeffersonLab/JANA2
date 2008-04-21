@@ -30,6 +30,7 @@ using namespace std;
 #include "JLog.h"
 #include "JCalibrationFile.h"
 #include "JVersion.h"
+using namespace jana;
 
 #ifndef ansi_escape
 #define ansi_escape			((char)0x1b)
@@ -41,7 +42,7 @@ void* LaunchEventBufferThread(void* arg);
 void* LaunchThread(void* arg);
 
 JLog dlog;
-JApplication *japp = NULL;
+jana::JApplication *japp = NULL;
 
 int SIGINT_RECEIVED = 0;
 int SIGUSR1_RECEIVED = 0;
@@ -1287,7 +1288,7 @@ jerror_t JApplication::RecordFactoryCalls(JEventLoop *loop)
 	vector<JFactory_base*> factories = loop->GetFactories();
 	for(unsigned int i=0; i<factories.size(); i++){
 		JFactory_base *fac = factories[i];
-		string name = fac->dataClassName();
+		string name = fac->GetDataClassName();
 		string tag = fac->Tag();
 		string nametag = name;
 		if(tag != "")nametag += ":" + tag;

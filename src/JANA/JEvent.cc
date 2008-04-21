@@ -6,6 +6,8 @@
 //
 
 #include "JEvent.h"
+using namespace std;
+using namespace jana;
 
 //---------------------------------
 // JEvent    (Constructor)

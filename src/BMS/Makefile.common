@@ -78,6 +78,10 @@ FFLAGS   += -I$(JANA_HOME)/include
 CFLAGS   += -I$(JANA_HOME)/include
 CXXFLAGS += -I$(JANA_HOME)/include
 
+# Option for XERCES
+ifdef XERCESCROOT
+PACKAGES += XERCES
+endif
 
 # Include user specified package makefiles
 PACKAGE_MAKEFILES = $(foreach name,$(subst :, ,$(PACKAGES)),$(JANA_HOME)/src/BMS/Makefile.$(name))

@@ -10,13 +10,12 @@
 
 #include <JANA/JFactory.h>
 #include "JTest.h"
+using namespace jana;
 
 class JTest_factory:public JFactory<JTest>{
 	public:
 		JTest_factory();
 		~JTest_factory(){};
-		const string toString(void);
-
 
 	private:
 		jerror_t init(void);						///< Called once at program start.

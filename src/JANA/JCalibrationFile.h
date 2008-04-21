@@ -11,6 +11,9 @@
 #include "jerror.h"
 #include "JCalibration.h"
 
+// Place everything in JANA namespace
+namespace jana
+{
 
 class JCalibrationFile:public JCalibration{
 	public:
@@ -31,6 +34,9 @@ class JCalibrationFile:public JCalibration{
 		string basedir;
 
 };
+
+} // Close JANA namespace
+
 
 #endif // _JCalibrationFile_
 

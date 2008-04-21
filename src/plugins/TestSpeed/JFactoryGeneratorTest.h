@@ -7,6 +7,7 @@
 
 #include "JANA/jerror.h"
 #include "JANA/JFactoryGenerator.h"
+using namespace jana;
 
 class JFactoryGeneratorTest: public JFactoryGenerator{
 	public:

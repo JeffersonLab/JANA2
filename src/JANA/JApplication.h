@@ -14,7 +14,10 @@
 #include <list>
 #include <utility>
 #include <sstream>
-using namespace std;
+using std::vector;
+using std::list;
+using std::string;
+using std::stringstream;
 
 #include "jerror.h"
 #include "JParameter.h"
@@ -22,13 +25,6 @@ using namespace std;
 #include "JFactoryGenerator.h"
 #include "JEventLoop.h"
 
-class JApplication;
-class JEventProcessor;
-class JEventSource;
-class JEvent;
-class JGeometry;
-class JParameterManager;
-class JCalibration;
 
 #ifdef __CINT__
 class pthread_mutex_t;
@@ -36,11 +32,19 @@ typedef unsigned long pthread_t;
 class pthread_cond_t;
 #endif
 
-// For plugins
-typedef void InitPlugin_t(JApplication* app);
-
 /// A JANA program will have exactly one JApplication object. It is
 /// the central registration point for the other JANA objects.
+
+// Place everything in JANA namespace
+namespace jana
+{
+
+class JEventProcessor;
+class JEventSource;
+class JEvent;
+class JGeometry;
+class JParameterManager;
+class JCalibration;
 
 class JApplication{
 	public:
@@ -145,11 +149,18 @@ class JApplication{
 		bool stop_event_buffer;
 };
 
+} // Close JANA namespace
+
+
+
+// For plugins
+typedef void InitPlugin_t(jana::JApplication* app);
+
 
 // This routine is used to bootstrap plugins. It is done outside
 // of the JApplication class to ensure it sees the global variables
 // that the rest of the plugin's InitPlugin routine sees.
-inline void InitJANAPlugin(JApplication *app)
+inline void InitJANAPlugin(jana::JApplication *app)
 {
 	// Make sure global parameter manager pointer
 	// is pointing to the one being used by app

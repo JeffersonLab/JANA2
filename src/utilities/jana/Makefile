@@ -3,12 +3,6 @@
 ifdef JANA_HOME
 
 
-# Option for XERCES
-ifdef XERCESCROOT
-PACKAGES = XERCES
-CXXFLAGS += -DXERCESC
-endif
-
 LD_LIBS += -lJANA -ldl
 LD_DIRS += -L$(JANA_HOME)/lib/$(OSNAME)
 

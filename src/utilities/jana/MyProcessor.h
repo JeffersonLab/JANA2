@@ -11,6 +11,7 @@ using std::map;
 
 #include <JANA/JEventProcessor.h>
 #include <JANA/JEventLoop.h>
+using namespace jana;
 
 extern map<string, string> autoactivate;
 extern bool ACTIVATE_ALL;

@@ -8,6 +8,8 @@
 
 #include "JEventSink.h"
 #include "JEventLoop.h"
+using namespace std;
+using namespace jana;
 
 //---------------------------------
 // JEventSink    (Constructor)
@@ -62,7 +64,7 @@ void JEventSink::AddAllToWriteList(JEventLoop *loop)
 	vector<JFactory_base*> factories = loop->GetFactories();
 	for(unsigned int i=0; i<factories.size(); i++){
 		if(!factories[i]->TestFactoryFlag(JFactory_base::WRITE_TO_OUTPUT))continue;
-		AddToWriteList(factories[i]->dataClassName(), factories[i]->Tag());
+		AddToWriteList(factories[i]->GetDataClassName(), factories[i]->Tag());
 	}
 }
 

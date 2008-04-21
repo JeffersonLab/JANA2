@@ -19,6 +19,10 @@ using std::string;
 using std::stringstream;
 using std::vector;
 
+// Place everything in JANA namespace
+namespace jana
+{
+
 class JCalibration{
 	public:
 		JCalibration(string url, int run, string context="default");
@@ -253,6 +257,7 @@ bool JCalibration::Get(string namepath, vector< vector<T> > &vals)
 	return res;
 }
 
+} // Close JANA namespace
 
 #endif // _JCalibration_
 

@@ -13,7 +13,10 @@
 #include <string>
 #include <sstream>
 #include <map>
-using namespace std;
+using std::vector;
+using std::string;
+using std::stringstream;
+using std::map;
 
 #include <pthread.h>
 
@@ -26,6 +29,12 @@ using namespace std;
 #ifdef __CINT__
 class pthread_mutex_t;
 #endif
+
+
+// Place everything in JANA namespace
+namespace jana
+{
+
 
 /// The JParameterManager class is used by the framework to manage
 /// configuration parameters in the form of JParameter objects. The
@@ -62,9 +71,6 @@ class JParameterManager{
 
 };
 
-// Global variable for accessing parameters (defined in JParameterManager.cc)
-extern JParameterManager *gPARMS;
-
 
 //---------------------------------
 // SetDefaultParameter
@@ -84,8 +90,8 @@ JParameter* JParameterManager::SetDefaultParameter(K key, V &val)
 			stringstream ss;
 			ss<<val;
 			if(ss.str() != p->GetValue()){
-				cout<<" WARNING: Multiple calls to SetDefaultParameter with key=\""
-				<<key<<"\" value= "<<val<<" and "<<my_val<<endl;
+				std::cout<<" WARNING: Multiple calls to SetDefaultParameter with key=\""
+				<<key<<"\" value= "<<val<<" and "<<my_val<<std::endl;
 			}
 		}else{
 			// Parameters set from the command line will have the
@@ -195,6 +201,13 @@ JParameter* JParameterManager::GetParameter(K key, V &val)
 	}
 	return p;
 }
+
+} // Close JANA namespace
+
+
+
+// Global variable for accessing parameters (defined in JParameterManager.cc)
+extern jana::JParameterManager *gPARMS;
 
 #endif // _JParameterManager_
 

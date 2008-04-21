@@ -23,6 +23,10 @@ using std::endl;
 #include <xercesc/dom/DOMAttr.hpp>
 #endif
 
+// Place everything in JANA namespace
+namespace jana
+{
+
 class JGeometryXML:public JGeometry{
 	public:
 		JGeometryXML(string url, int run, string context="default");
@@ -69,6 +73,9 @@ class JGeometryXML:public JGeometry{
 #endif
 
 };
+
+} // Close JANA namespace
+
 
 #endif // _JGeometryXML_
 

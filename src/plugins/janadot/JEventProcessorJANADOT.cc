@@ -8,6 +8,7 @@ using namespace std;
 
 #include <JANA/JApplication.h>
 #include "JEventProcessorJANADOT.h"
+using namespace jana;
 
 
 // Routine used to allow us to register our JEventSourceGenerator

@@ -11,7 +11,8 @@
 #include <vector>
 #include <string>
 #include <utility>
-using namespace std;
+using std::vector;
+using std::string;
 
 #include "jerror.h"
 #include "JObject.h"
@@ -27,6 +28,11 @@ using namespace std;
 class pthread_mutex_t;
 typedef unsigned long pthread_t;
 #endif
+
+
+// Place everything in JANA namespace
+namespace jana{
+
 
 template<class T> class JFactory;
 class JApplication;
@@ -106,10 +112,10 @@ class JEventLoop{
 		inline vector<error_call_stack_t> GetErrorCallStack(void){return error_call_stack;} ///< Get the current factory error call stack
 		void PrintErrorCallStack(void); ///< Print the current factory call stack
 		
-		const JObject* FindByID(oid_t id); ///< Find a data object by its identifier.
-		template<class T> const T* FindByID(oid_t id); ///< Find a data object by its type and identifier
+		const JObject* FindByID(JObject::oid_t id); ///< Find a data object by its identifier.
+		template<class T> const T* FindByID(JObject::oid_t id); ///< Find a data object by its type and identifier
 		JFactory_base* FindOwner(const JObject *t); ///< Find the factory that owns a data object by pointer
-		JFactory_base* FindOwner(oid_t id); ///< Find a factory that owns a data object by identifier
+		JFactory_base* FindOwner(JObject::oid_t id); ///< Find a factory that owns a data object by identifier
 
 	private:
 		JEvent event;
@@ -176,7 +182,7 @@ JFactory<T>* JEventLoop::Get(vector<const T*> &t, const char *tag)
 	if(record_call_stack){
 		cs.caller_name = caller_name;
 		cs.caller_tag = caller_tag;
-		cs.callee_name = T::className();
+		cs.callee_name = T::static_className();
 		cs.callee_tag = tag;
 		caller_name = cs.callee_name;
 		caller_tag = cs.callee_tag;
@@ -198,24 +204,24 @@ JFactory<T>* JEventLoop::Get(vector<const T*> &t, const char *tag)
 			string p;
 			gPARMS->GetParameter("JANA:AUTOFACTORYCREATE", p);
 			if(p.size()==0){
-				cout<<endl;
+				std::cout<<std::endl;
 				_DBG__;
-				cout<<"No factory of type \""<<T::className()<<"\" with tag \""<<tag<<"\" exists."<<endl;
-				cout<<"If you are reading objects from a file, I can auto-create a factory"<<endl;
-				cout<<"of the appropriate type to hold the objects, but this feature is turned"<<endl;
-				cout<<"off by default. To turn it on, set the \"JANA:AUTOFACTORYCREATE\""<<endl;
-				cout<<"configuration parameter. This can usually be done by passing the"<<endl;
-				cout<<"following argument to the program from the command line:"<<endl;
-				cout<<endl;
-				cout<<"   -PJANA:AUTOFACTORYCREATE=1"<<endl;
-				cout<<endl;
-				cout<<"Note that since the most commonly expected occurance of this situation."<<endl;
-				cout<<"is an error, the program will quit now."<<endl;
-				cout<<endl;
+				std::cout<<"No factory of type \""<<T::static_className()<<"\" with tag \""<<tag<<"\" exists."<<std::endl;
+				std::cout<<"If you are reading objects from a file, I can auto-create a factory"<<std::endl;
+				std::cout<<"of the appropriate type to hold the objects, but this feature is turned"<<std::endl;
+				std::cout<<"off by default. To turn it on, set the \"JANA:AUTOFACTORYCREATE\""<<std::endl;
+				std::cout<<"configuration parameter. This can usually be done by passing the"<<std::endl;
+				std::cout<<"following argument to the program from the command line:"<<std::endl;
+				std::cout<<std::endl;
+				std::cout<<"   -PJANA:AUTOFACTORYCREATE=1"<<std::endl;
+				std::cout<<std::endl;
+				std::cout<<"Note that since the most commonly expected occurance of this situation."<<std::endl;
+				std::cout<<"is an error, the program will quit now."<<std::endl;
+				std::cout<<std::endl;
 				QuitProgram();
 			}else{
 				AddFactory(new JFactory<T>(tag));
-				cout<<__FILE__<<":"<<__LINE__<<" Auto-created "<<T::className()<<":"<<tag<<" factory"<<endl;
+				std::cout<<__FILE__<<":"<<__LINE__<<" Auto-created "<<T::static_className()<<":"<<tag<<" factory"<<std::endl;
 			
 				// Now try once more. The GetFromFactory method will call
 				// GetFromSource since it's empty.
@@ -226,7 +232,7 @@ JFactory<T>* JEventLoop::Get(vector<const T*> &t, const char *tag)
 		// Uh-oh, an exception was thrown. Add us to the call stack
 		// and re-throw the exception
 		error_call_stack_t ecs;
-		ecs.factory_name = T::className();
+		ecs.factory_name = T::static_className();
 		ecs.tag = tag;
 		if(exception!=NULL && error_call_stack.size()==0){
 			//ecs.filename = exception->filename;
@@ -259,7 +265,7 @@ JFactory<T>* JEventLoop::GetFromFactory(vector<const T*> &t, const char *tag, da
 	// tag given by "tag". 
 	vector<JFactory_base*>::iterator iter=factories.begin();
 	JFactory<T> *factory = NULL;
-	string className(T::className());
+	string className(T::static_className());
 	
 	// Check if a tag was specified for this data type to use for the
 	// default.
@@ -279,7 +285,7 @@ JFactory<T>* JEventLoop::GetFromFactory(vector<const T*> &t, const char *tag, da
 		// To avoid this problem which can occur with plugins, we check
 		// the name of the data classes are the same. (sigh)
 		//factory = dynamic_cast<JFactory<T> *>(*iter);
-		if(className == (*iter)->dataClassName())factory = (JFactory<T>*)(*iter);
+		if(className == (*iter)->GetDataClassName())factory = (JFactory<T>*)(*iter);
 		if(factory == NULL)continue;
 		const char *factag = factory->Tag()==NULL ? "":factory->Tag();
 		if(!strcmp(factag, tag)){
@@ -305,7 +311,7 @@ JFactory<T>* JEventLoop::GetFromFactory(vector<const T*> &t, const char *tag, da
 	}
 	
 	// Next option is to get the objects from the data source
-	if(factory->CheckSourceFirst()){
+	if(factory->GetCheckSourceFirst()){
 		// If the object type/tag is found in the source, it
 		// will return NOERROR, even if there are zero instances
 		// of it. If it is not available in the source then it
@@ -364,7 +370,7 @@ jerror_t JEventLoop::GetFromSource(vector<const T*> &t, JFactory_base *factory)
 // FindByID
 //-------------
 template<class T> 
-const T* JEventLoop::FindByID(oid_t id)
+const T* JEventLoop::FindByID(JObject::oid_t id)
 {
 	/// This is a templated method that can be used in place
 	/// of the non-templated FindByID(oid_t) method if one knows
@@ -382,7 +388,7 @@ const T* JEventLoop::FindByID(oid_t id)
 	// Loop over factories looking for ones that provide
 	// specified data type.
 	for(uint i=0; i<factories.size(); i++){
-		if(factories[i]->dataClassName() != T::className())continue;
+		if(factories[i]->GetDataClassName() != T::className())continue;
 
 		// This factory provides data of type T. Search it for
 		// the object with the specified id.
@@ -410,7 +416,7 @@ bool JEventLoop::GetCalib(string namepath, map<string,T> &vals)
 
 	JCalibration *calib = GetJCalibration();
 	if(!calib){
-		_DBG_<<"Unable to get JCalibration object for run "<<event.GetRunNumber()<<endl;
+		_DBG_<<"Unable to get JCalibration object for run "<<event.GetRunNumber()<<std::endl;
 		return true;
 	}
 	
@@ -429,7 +435,7 @@ template<class T> bool JEventLoop::GetCalib(string namepath, vector<T> &vals)
 
 	JCalibration *calib = GetJCalibration();
 	if(!calib){
-		_DBG_<<"Unable to get JCalibration object for run "<<event.GetRunNumber()<<endl;
+		_DBG_<<"Unable to get JCalibration object for run "<<event.GetRunNumber()<<std::endl;
 		return true;
 	}
 	
@@ -454,7 +460,7 @@ bool JEventLoop::GetGeom(string namepath, map<string,T> &vals)
 
 	JGeometry *geom = GetJGeometry();
 	if(!geom){
-		_DBG_<<"Unable to get JGeometry object for run "<<event.GetRunNumber()<<endl;
+		_DBG_<<"Unable to get JGeometry object for run "<<event.GetRunNumber()<<std::endl;
 		return true;
 	}
 	
@@ -471,12 +477,14 @@ template<class T> bool JEventLoop::GetGeom(string namepath, T &val)
 
 	JGeometry *geom = GetJGeometry();
 	if(!geom){
-		_DBG_<<"Unable to get JGeometry object for run "<<event.GetRunNumber()<<endl;
+		_DBG_<<"Unable to get JGeometry object for run "<<event.GetRunNumber()<<std::endl;
 		return true;
 	}
 	
 	return geom->Get(namepath, val);
 }
+
+} // Close JANA namespace
 
 
 
