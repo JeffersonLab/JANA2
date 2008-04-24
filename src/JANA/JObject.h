@@ -8,14 +8,17 @@
 #ifndef _JObject_
 #define _JObject_
 
+#include <sstream>
 #include <cassert>
 #include <map>
 #include <vector>
 #include <string>
+#include <typeinfo>
 using std::pair;
 using std::map;
 using std::vector;
 using std::string;
+using std::stringstream;
 
 
 /// The JObject class is a base class for all data classes.
@@ -50,8 +53,8 @@ class JObject{
 
 		typedef unsigned long oid_t;
 	
-		JObject(){id = (oid_t)this;}
-		JObject( oid_t aId ) : id( aId ) {}
+		JObject(){id = (oid_t)this; append_types=false;}
+		JObject( oid_t aId ) : id( aId ) { append_types=false;}
 
 		virtual ~JObject(){}
 		
@@ -71,10 +74,14 @@ class JObject{
 		virtual void toStrings(vector<pair<string,string> > &items)const;
 		template<typename T> void AddString(vector<pair<string,string> > &items, const char *name, const char *format, const T &val) const;
 
+		bool GetAppendTypes(void) const {return append_types;} ///< Get state of append_types flag (for AddString)
+		void SetAppendTypes(bool append_types){this->append_types=append_types;} ///< Set state of append_types flag (for AddString)
+
 		oid_t id;
 	
 	private:
 		
+		bool append_types;
 		map<const JObject*, string> associated;
 		
 };
@@ -194,10 +201,58 @@ void JObject::AddString(vector<pair<string,string> > &items, const char *name, c
 	/// string (format) and add it to the given vector (items) with the column
 	/// name "name". This is intended for use in the toStrings() method of
 	/// classes that inherit from JObject.
+	///
+	/// The append_type flag provides a facility for recording the data type
+	/// and value with default formatting into items. This can be used 
+	/// by a generic convertor (not part of JANA) to auto-generate a
+	/// representation of this object for use in some other persistence
+	/// package (e.g. ROOT files).
+	///
+	/// If the append_types flag is set then the data type of "val" is
+	/// automatically appended with a colon (:) separator to the
+	/// name (first) part of the pair. In addition, "val" is converted
+	/// using stringstream and appended as well, also with a colon (:)
+	/// separator. For example, if the value of name passed in is "px"
+	/// and T is of type double, then the first member of the pair
+	/// appended to items will be something like "px:double:1.23784"
+	/// which can be decifered later to get the name, type, and value
+	/// of the data member.
+	///
+	/// By default, the append_types flag is not set and the name part
+	/// of the pair is a straight copy of the name argument that is
+	/// passed in.
+
 	char str[256];
 	sprintf(str, format, val);
+
+	stringstream ss;
+	ss<<name;
+	if(append_types){
+		if(typeid(T)==typeid(int)){
+			ss<<":int:"<<val;
+		}else if(typeid(T)==typeid(unsigned int)){
+			ss<<":uint:"<<val;
+		}else if(typeid(T)==typeid(long)){
+			ss<<":long:"<<val;
+		}else if(typeid(T)==typeid(unsigned long)){
+			ss<<":ulong:"<<val;
+		}else if(typeid(T)==typeid(float)){
+			ss<<":float:"<<val;
+		}else if(typeid(T)==typeid(double)){
+			ss<<":double:"<<val;
+		}else if(typeid(T)==typeid(string)){
+			ss<<":string:"<<val;
+		}else if(typeid(T)==typeid(const char*)){
+			ss<<":string:"<<val;
+		}else if(typeid(T)==typeid(char*)){
+			ss<<":string:"<<val;
+		}else{
+			ss<<":unknown:"<<str;
+		}
+	}
+
 	pair<string, string> item;
-	item.first = name;
+	item.first = ss.str();
 	item.second = string(str);
 	items.push_back(item);
 }

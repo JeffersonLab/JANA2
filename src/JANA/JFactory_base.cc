@@ -41,9 +41,9 @@ string JFactory_base::toString(void) const
 	vector<unsigned int> colwidths;
 	vector<string> headers;
 	vector<pair<string,string> >::iterator hiter = h.begin();
-	{
+	for(; hiter!=h.end(); hiter++){
 		headers.push_back(hiter->first);
-		colwidths.push_back(hiter->first.length());
+		colwidths.push_back(hiter->first.length()+2);
 	}
 	
 	assert(headers.size()==colwidths.size());
@@ -57,7 +57,7 @@ string JFactory_base::toString(void) const
 		for(unsigned int j=0; j<a.size(); j++){
 			pair<string,string> &b = a[j];
 			
-			unsigned int len = b.second.length();
+			unsigned int len = b.second.length()+2;
 			if(len>colwidths[j])colwidths[j] = len;
 		}
 	}
@@ -66,11 +66,11 @@ string JFactory_base::toString(void) const
 	
 	// Print header
 	unsigned int header_width=0;
-	for(unsigned int i=0; i<colwidths.size(); i++)header_width += colwidths[i]+1;
+	for(unsigned int i=0; i<colwidths.size(); i++)header_width += colwidths[i];
 	string header = string(header_width,' ');
 	unsigned int pos=0;
 	for(unsigned int i=0; i<colwidths.size(); i++){
-		header.replace(pos+colwidths[i]-headers[i].length(), headers[i].length(), headers[i]);
+		header.replace(pos+colwidths[i]-headers[i].length()-1, headers[i].length()+1, headers[i]+":");
 		pos += colwidths[i];
 	}
 	ss<<header<<endl;
@@ -88,8 +88,8 @@ string JFactory_base::toString(void) const
 		for(unsigned int j=0; j<a.size(); j++){
 			pair<string,string> &b = a[j];
 			
-			row.replace(pos+colwidths[j]-b.second.length(), b.second.length(), b.second);			
-			pos += colwidths[i];
+			row.replace(pos+colwidths[j]-b.second.length()-1, b.second.length(), b.second);			
+			pos += colwidths[j];
 		}
 		
 		ss<<row<<endl;

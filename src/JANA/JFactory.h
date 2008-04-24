@@ -73,7 +73,7 @@ class JFactory:public JFactory_base{
 		data_origin_t GetDataOrigin(void){return data_origin;}
 		inline const char* className(void){return T::static_className();}
 		inline const char* GetDataClassName(void){return className();}
-		inline void toStrings(vector<vector<pair<string,string> > > &items) const;
+		inline void toStrings(vector<vector<pair<string,string> > > &items, bool append_types=false) const;
 		virtual const char* Tag(void){return tag_str;}
 		inline int GetDataClassSize(void){return sizeof(T);}
 		inline int GetEventCalled(void){return evnt_called;}
@@ -366,7 +366,7 @@ const T* JFactory<T>::GetByIDT(JObject::oid_t id)
 // toStrings
 //-------------
 template<class T>
-void JFactory<T>::toStrings(vector<vector<pair<string,string> > > &items) const
+void JFactory<T>::toStrings(vector<vector<pair<string,string> > > &items, bool append_types) const
 {
 	/// Get the data for all objects already created by this factory for the
 	/// given event by calling the toStrings() method of each one.
@@ -374,13 +374,23 @@ void JFactory<T>::toStrings(vector<vector<pair<string,string> > > &items) const
 	/// Note that this will not activate the factory to generate the objects
 	/// if they do not already exist.
 	///
-	/// The items vector is cleared upon entry
+	/// The value of <i>append_types</i> is used to set the append_types
+	/// flag for each of the objects prior to calling its <i>toStrings</i>
+	/// method. Afterwards, the value of the objects' append_types flag
+	/// is reset to whatever value it had upon entry. Please see the documentation
+	/// of the AddString method of JObject for more details on what this
+	/// flag does.
+	///
+	/// The items vector is cleared upon entry.
 	
 	items.clear();
 	
 	for(unsigned int i=0;i<_data.size();i++){
 		vector<pair<string, string> > myitems;
+		bool save_append_types = _data[i]->GetAppendTypes();
+		_data[i]->SetAppendTypes(append_types);
 		_data[i]->toStrings(myitems);
+		_data[i]->SetAppendTypes(save_append_types);
 		if(myitems.size()>0)items.push_back(myitems);
 	}
 }

@@ -69,7 +69,7 @@ class JFactory_base:public JEventProcessor{
 		
 		/// Returns a string object with a nicely formatted ASCII table of the data
 		string toString(void) const;
-		virtual void toStrings(vector<vector<pair<string,string> > > &items) const =0;
+		virtual void toStrings(vector<vector<pair<string,string> > > &items, bool append_types=false) const =0;
 
 		/// The data tag string associated with this factory. Most factories
 		/// will not overide this.

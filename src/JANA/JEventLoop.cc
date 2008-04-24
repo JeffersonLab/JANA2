@@ -272,7 +272,11 @@ jerror_t JEventLoop::Print(const string data_name, const char *tag)
 		return NOERROR;
 	}
 	
-	cout<<factory->toString();
+	string str = factory->toString();
+	if(str=="")return NOERROR;
+	
+	cout<<factory->GetDataClassName()<<":"<<factory->Tag()<<endl;
+	cout<<str<<endl;;
 
 	return NOERROR;
 }
