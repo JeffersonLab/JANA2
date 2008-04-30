@@ -366,7 +366,7 @@ DOMNode* JGeometryXML::FindNode(string xpath, string &attribute)
 //---------------------------------
 // ParseXPath
 //---------------------------------
-void JGeometryXML::ParseXPath(string xpath, vector<pair<string, map<string,string> > > &nodes, string &attribute, unsigned int &attr_depth)
+void JGeometryXML::ParseXPath(string xpath, vector<pair<string, map<string,string> > > &nodes, string &attribute, unsigned int &attr_depth) const
 {
 	/// Parse a xpath string to obtain a list of node names and for each,
 	/// a map of the attributes and their (optional) values. This is a

@@ -37,7 +37,9 @@ class JGeometryXML:public JGeometry{
 		bool Get(string xpath, string &sval);
 		bool Get(string xpath, map<string, string> &svals);
 		void GetXPaths(vector<string> &xpaths, ATTR_LEVEL_t level);
-		
+
+		void ParseXPath(string xpath, vector<pair<string, map<string,string> > > &nodes, string &attribute, unsigned int &attr_depth) const;
+
 	protected:
 	
 	private:
@@ -52,7 +54,6 @@ class JGeometryXML:public JGeometry{
 		
 		void AddNodeToList(xercesc::DOMNode* start, string start_path, vector<string> &xpaths, JGeometry::ATTR_LEVEL_t level);
 		xercesc::DOMNode* FindNode(string xpath, string &attribute);
-		void ParseXPath(string xpath, vector<pair<string, map<string,string> > > &nodes, string &attribute, unsigned int &attr_depth);
 		xercesc::DOMNode* SearchTree(xercesc::DOMNode* current_node, unsigned int depth, vector<pair<string, map<string,string> > > &nodes, unsigned int attr_depth);
 
 		// Error handler callback class
