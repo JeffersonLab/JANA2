@@ -1,5 +1,4 @@
 
-PACKAGES = XERCES
 
 CXXFLAGS += -I$(JANA_HOME)/include
 LD_LIBS += -lJANA -ldl

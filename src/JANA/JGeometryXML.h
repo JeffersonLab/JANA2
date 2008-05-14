@@ -12,10 +12,11 @@
 using std::cout;
 using std::endl;
 
-#include "jerror.h"
-#include "JGeometry.h"
+#include <JANA/jerror.h>
+#include <JANA/JGeometry.h>
+#include <JANA/jana_config.h>
 
-#ifdef XERCESC
+#if HAVE_XERCES
 #include <xercesc/dom/DOMErrorHandler.hpp>
 #include <xercesc/dom/DOMBuilder.hpp>
 #include <xercesc/dom/DOMDocument.hpp>
@@ -36,9 +37,13 @@ class JGeometryXML:public JGeometry{
 		
 		bool Get(string xpath, string &sval);
 		bool Get(string xpath, map<string, string> &svals);
-		void GetXPaths(vector<string> &xpaths, ATTR_LEVEL_t level);
+		void GetXPaths(vector<string> &xpaths, ATTR_LEVEL_t level, const string &filter="");
 
-		void ParseXPath(string xpath, vector<pair<string, map<string,string> > > &nodes, string &attribute, unsigned int &attr_depth) const;
+		typedef pair<string, map<string,string> > node_t;
+		typedef vector<node_t>::iterator node_iter_t;
+
+		void ParseXPath(string xpath, vector<node_t > &nodes, string &attribute, unsigned int &attr_depth) const;
+		bool NodeCompare(node_iter_t iter1, node_iter_t end1, node_iter_t iter2, node_iter_t end2);
 
 	protected:
 	
@@ -48,7 +53,7 @@ class JGeometryXML:public JGeometry{
 		string xmlfile;
 		bool valid_xmlfile;
 
-#ifdef XERCESC
+#if HAVE_XERCES
 		xercesc::DOMBuilder *parser;
 		xercesc::DOMDocument *doc;
 		

@@ -63,7 +63,7 @@ INSTALL_DIR = $(JANA_HOME)
 # include working directory first
 FFLAGS   += -I.
 CFLAGS   += -I.
-CXXFLAGS += -I.
+CXXFLAGS += -I. -I..
 
 # include JANA_MY include directory (if JANA_MY) is defined
 ifdef JANA_MY
@@ -78,9 +78,17 @@ FFLAGS   += -I$(JANA_HOME)/include
 CFLAGS   += -I$(JANA_HOME)/include
 CXXFLAGS += -I$(JANA_HOME)/include
 
-# Option for XERCES
-ifdef XERCESCROOT
-PACKAGES += XERCES
+# include autoconf genertated configuration file
+include $(JANA_HOME)/src/BMS/jana_conf.mk
+
+# Optional XERCES package
+ifeq ($(HAVE_XERCES), yes)
+PACKAGES += XERCES:
+endif
+
+# Optional MySQL package
+ifeq ($(HAVE_MYSQL), yes)
+PACKAGES += MYSQL:
 endif
 
 # Include user specified package makefiles

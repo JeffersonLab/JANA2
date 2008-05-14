@@ -26,6 +26,7 @@ using namespace std;
 #include "JEventSource.h"
 #include "JEvent.h"
 #include "JGeometryXML.h"
+#include "JGeometryMYSQL.h"
 #include "JParameterManager.h"
 #include "JLog.h"
 #include "JCalibrationFile.h"
@@ -650,7 +651,16 @@ JGeometry* JApplication::GetJGeometry(unsigned int run_number)
 	if(!url)url="file://./";
 	const char *context = getenv("JANA_GEOMETRY_CONTEXT");
 	if(!context)context="default";
-	JGeometry *g = new JGeometryXML(string(url), run_number, context);
+	
+	// Decide what type of JGeometry object to create and instantiate it
+	string url_str = url;
+	string context_str = context;
+	JGeometry *g = NULL;
+	if(url_str.find("xmlfile://")==0){
+		g = new JGeometryXML(string(url), run_number, context);
+	}else if(url_str.find("mysql:")==0){
+		g = new JGeometryMYSQL(string(url), run_number, context);
+	}
 	if(g)geometries.push_back(g);
 
 	// Unlock geometry mutex

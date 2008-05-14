@@ -1,8 +1,14 @@
 
-MYSQL_CFLAGS = $(shell mysql_config --cflags)
-MYSQL_LIBS = $(shell mysql_config --libs)
-
+# Values set by autoconf in jana_conf.mk
 CFLAGS += $(MYSQL_CFLAGS)
 CXXFLAGS += $(MYSQL_CFLAGS)
+MISC_LIBS += $(MYSQL_LDFLAGS)
 
-LIBS += $(MYSQL_LIBS)
+# Old style (possibly never even used)
+#MYSQL_CFLAGS = $(shell mysql_config --cflags)
+#MYSQL_LIBS = $(shell mysql_config --libs)
+#
+#CFLAGS += $(MYSQL_CFLAGS)
+#CXXFLAGS += $(MYSQL_CFLAGS)
+#
+#LIBS += $(MYSQL_LIBS)

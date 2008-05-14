@@ -10,7 +10,10 @@
 #include <string>
 using namespace std;
 
-#ifdef XERCESC
+#include "JGeometryXML.h"
+using namespace jana;
+
+#if HAVE_XERCES
 #include <xercesc/util/PlatformUtils.hpp>
 #include <xercesc/parsers/AbstractDOMParser.hpp>
 #include <xercesc/dom/DOMImplementationLS.hpp>
@@ -25,8 +28,6 @@ using namespace std;
 using namespace xercesc;
 #endif
 
-#include "JGeometryXML.h"
-using namespace jana;
 
 //---------------------------------
 // JGeometryXML    (Constructor)
@@ -57,7 +58,7 @@ JGeometryXML::JGeometryXML(string url, int run, string context):JGeometry(url,ru
 	ifstream f(xmlfile.c_str());
 	if(!f.is_open()){
 		_DBG_<<"Unable to open \""<<xmlfile<<"\"! Geometry not info not available!!"<<endl;
-#ifdef XERCESC
+#if HAVE_XERCES
 		parser = NULL;
 		doc = NULL;
 #endif
@@ -71,7 +72,7 @@ JGeometryXML::JGeometryXML(string url, int run, string context):JGeometry(url,ru
 	// this calibration is valid. For now, just set them all to run_requested.
 	run_min = run_max = run_found = GetRunRequested();
 
-#ifndef XERCESC
+#ifndef HAVE_XERCES
 	cout<<endl;
 	cout<<"This JANA library was compiled without XERCESC support. To enable"<<endl;
 	cout<<"XERCESC, install it on your system and set your XERCESCROOT enviro."<<endl;
@@ -104,10 +105,10 @@ JGeometryXML::JGeometryXML(string url, int run, string context):JGeometry(url,ru
 //---------------------------------
 JGeometryXML::~JGeometryXML()
 {
-#ifdef XERCESC
+#if HAVE_XERCES
 	// Release parser and delete any memory it allocated
 	if(valid_xmlfile){
-		parser->release();
+		//parser->release(); // This seems to be causing seg. faults so it is commented out.
 	
 		// Shutdown XERCES
 		XMLPlatformUtils::Terminate();
@@ -128,7 +129,7 @@ bool JGeometryXML::Get(string xpath, string &sval)
 
 	if(!valid_xmlfile){sval=""; return false;}
 
-#ifdef XERCESC
+#if HAVE_XERCES
 
 	// Ideally we would use the XPath parser built into xerces to parse
 	// our xpath string. However, the piss-poor documentation on this feature
@@ -207,7 +208,7 @@ bool JGeometryXML::Get(string xpath, map<string, string> &svals)
 
 	if(!valid_xmlfile){return false;}
 
-#ifdef XERCESC
+#if HAVE_XERCES
 	// Get the pointer to the node of interest.
 	string attribute;
 	DOMNode *node = FindNode(xpath, attribute);
@@ -243,125 +244,95 @@ bool JGeometryXML::Get(string xpath, map<string, string> &svals)
 //---------------------------------
 // GetXPaths
 //---------------------------------
-void JGeometryXML::GetXPaths(vector<string> &xpaths, ATTR_LEVEL_t level)
+void JGeometryXML::GetXPaths(vector<string> &xpaths, ATTR_LEVEL_t level, const string &filter)
 {
 	/// Get all of the xpaths associated with the current geometry. Optionally
 	/// append the attributes according to the value of level. (See JGeometry.h
 	/// for valid values).
-	
+	/// If a non-empty string is passed in for "filter" then it is
+	/// used to match xpaths that should be kept. If no filter is specified
+	/// (i.e. an empty string) then all xpaths are returned.
+
 	if(!valid_xmlfile){xpaths.clear(); return;}
 
-#ifdef XERCESC
+#if HAVE_XERCES
 	AddNodeToList((DOMNode*)doc->getDocumentElement(), "", xpaths, level);
 #endif // XERCESC
-}
 
-#ifdef XERCESC
-//---------------------------------
-// AddNodeToList
-//---------------------------------
-void JGeometryXML::AddNodeToList(xercesc::DOMNode* start, string start_path, vector<string> &xpaths, ATTR_LEVEL_t level)
-{
-	/// This calls itself recursively to walk the DOM tree and find all xpaths 
-	/// corresponding to all of the nodes. It optionally will append
-	/// the attributes to the nodes in a form compatible with XPATH 1.0
-	/// such that they can be used (though usually one would want to
-	/// edit it slightly) as the xpath argument to one of the Get methods.
+	// If no filter is specified then return now.
+	if(filter=="")return;
+	
+	// Parse the filter xpath
+	vector<node_t> filter_nodes;
+	string dummy_str;
+	unsigned int dummy_int;
+	ParseXPath(filter, filter_nodes, dummy_str, dummy_int);
+	
+	// We need at least one node on the filter to compare to
+	if(filter_nodes.size()==0)return;
 
-	// Get name of this node
-	char* tmp = XMLString::transcode(start->getNodeName());
-	string nodeName = tmp;
-	XMLString::release(&tmp);
-	
-	// Ignore nodes that start with a "#"
-	if(nodeName[0] == '#')return;
-	
-	// Create map of all attributes of this node
-	map<string,string> attributes;
-	if(start->hasAttributes()) {
-		DOMNamedNodeMap *pAttributes = start->getAttributes();
-		int nSize = pAttributes->getLength();
-		for(int i=0;i<nSize;++i) {
-			DOMAttr *pAttributeNode = (DOMAttr*) pAttributes->item(i);
-			char *attrName = XMLString::transcode(pAttributeNode->getName());
-			char *attrValue = XMLString::transcode(pAttributeNode->getValue());
-			attributes[attrName] = attrValue;
-			XMLString::release(&attrName);
-			XMLString::release(&attrValue);
-		}
-	}
-	
-	// Create attribute qualifier string
-	string attr_qualifiers = "";
-	if(level!=attr_level_none && attributes.size()>0){
-		attr_qualifiers += "[";
-		map<string,string>::iterator iter = attributes.begin();
-		for(int i=0; iter!=attributes.end(); i++, iter++){
-			if(i>0)attr_qualifiers += " and ";
-			attr_qualifiers += "@"+iter->first+"='"+iter->second+"'";
-		}
-		attr_qualifiers += "]";
-	}
-	
-	// Create xpath for this node
-	string xpath = start_path + "/" + nodeName;
-	xpaths.push_back(xpath + attr_qualifiers);
-
-	// Add any child nodes of this node
-	//string current_path = start_path + "/" + nodeName;
-	for (DOMNode *child = start->getFirstChild(); child != 0; child=child->getNextSibling()){
-		AddNodeToList(child, xpath + (level==attr_level_all ? attr_qualifiers:""), xpaths, level);
-	}
-}
-
-//---------------------------------
-// FindNode
-//---------------------------------
-DOMNode* JGeometryXML::FindNode(string xpath, string &attribute)
-{
-	/// Parse the xpath string into node names and attribute qualifiers.
-	/// This is a *very* restricted form of the xpath syntax and done only
-	/// to serve the purposes of this specific application at this time.
-	/// The string "attribute" is used to return the name of the attribute
-	/// if it is specified at the end of the xpath string. For example,
-	///
-	/// '//hdds:element[@name="Antimony"]/@a'
-	///
-	/// specifies that the attribute "a" of the element node is what is
-	/// desired. By contrast,
-	///
-	/// '//hdds:element[@name="Antimony" and @a]'
-	///
-	/// specifies the node, but not a particular attribute. For these cases,
-	/// an empty string is ("") is copied into the attribute variable.
-	
-	// First, parse the string to get node names and attribute qualifiers
-	vector<pair<string, map<string,string> > > nodes;
-	unsigned int attr_depth;
-	ParseXPath(xpath, nodes, attribute, attr_depth);
-
-#if 0	
-	vector<pair<string, map<string,string> > >::iterator iter = nodes.begin();
-	for(; iter!=nodes.end(); iter++){
-		_DBG_<<"node \""<<iter->first<<"\": ";
+	// Loop over all xpaths
+	vector<string> xpaths_to_keep;
+	for(unsigned int i=0; i<xpaths.size(); i++){
+		// Parse this xpath
+		vector<node_t> nodes;
+		ParseXPath(xpaths[i], nodes, dummy_str, dummy_int);
 		
-		map<string,string> &qualifiers = iter->second;
-		map<string,string>::iterator qiter = qualifiers.begin();
-		for(; qiter!=qualifiers.end(); qiter++){
-			_DBG_<<"\""<<qiter->first<<"\"=\""<<qiter->second<<"\" ";
+		// Loop over nodes of this xpath
+		vector<node_t>::iterator iter;
+		for(iter=nodes.begin(); iter!=nodes.end(); iter++){
+			if(NodeCompare(filter_nodes.begin(), filter_nodes.end(), iter, nodes.end()))xpaths_to_keep.push_back(xpaths[i]);
 		}
-		
-		cout<<endl;
 	}
-#endif
-
-	// The only practical way to find the nodes now is to use a recursive
-	// routine to walk the tree until it finds the correct node with all
-	// of the correct attributes of the parent nodes along the way.
-	DOMNode *node = SearchTree(doc, 0, nodes, attr_depth);
-
-	return node;
+	
+	xpaths = xpaths_to_keep;
 }
+
+//---------------------------------
+// FilterCompare
+//---------------------------------
+bool JGeometryXML::NodeCompare(node_iter_t iter1, node_iter_t end1, node_iter_t iter2, node_iter_t end2)
+{
+	/// Loop over nodes starting at iter1 and iter2 through end1 and end2
+	/// to see if they match. The number of nodes and their names must
+	/// match as well as the attributes. The attributes themselves are
+	/// matched in the following way: All attributes appearing in the
+	/// iter1 to end1 list must also appear in the iter2 to end2 list.
+	/// The reverse however, need not be true. Furthermore, if the
+	/// attribute value in the first list is an empty string, then the
+	/// corresponding attribute value in the second list can be anything.
+	/// Otherwise, they must be an exact match.
+
+	// Loop over nodes in both lists simultaneously
+	for(; iter1!=end1; iter1++, iter2++){
+		// If we hit the end of the second iterator before the first
+		// then they must not match.
+		if(iter2==end2)return false;
+		
+		// Check node names
+		if(iter1->first!="*")
+			if(iter1->first != iter2->first)return false;
+
+		// Loop over attributes for iter1
+		map<string,string> &attr1 = iter1->second;
+		map<string,string> &attr2 = iter2->second;
+		map<string,string>::iterator attr_iter1 = attr1.begin();
+		for(; attr_iter1!= attr1.end(); attr_iter1++){
+
+			// Check if this attribute exists
+			map<string,string>::iterator attr_iter2 = attr2.find(attr_iter1->first);
+			if(attr_iter2==attr2.end())return false;
+			// Attribute exists in both lists. If non-emtpy string in list 1,
+			// then verify they match
+			if(attr_iter1->second!=""){
+				if(attr_iter1->second!=attr_iter2->second)return false;
+			}
+		}
+	}
+
+	return true;
+}
+
 
 //---------------------------------
 // ParseXPath
@@ -506,6 +477,113 @@ void JGeometryXML::ParseXPath(string xpath, vector<pair<string, map<string,strin
 		}
 	}
 
+}
+
+#if HAVE_XERCES
+//---------------------------------
+// AddNodeToList
+//---------------------------------
+void JGeometryXML::AddNodeToList(xercesc::DOMNode* start, string start_path, vector<string> &xpaths, ATTR_LEVEL_t level)
+{
+	/// This calls itself recursively to walk the DOM tree and find all xpaths 
+	/// corresponding to all of the nodes. It optionally will append
+	/// the attributes to the nodes in a form compatible with XPATH 1.0
+	/// such that they can be used (though usually one would want to
+	/// edit it slightly) as the xpath argument to one of the Get methods.
+
+	// Get name of this node
+	char* tmp = XMLString::transcode(start->getNodeName());
+	string nodeName = tmp;
+	XMLString::release(&tmp);
+	
+	// Ignore nodes that start with a "#"
+	if(nodeName[0] == '#')return;
+	
+	// Create map of all attributes of this node
+	map<string,string> attributes;
+	if(start->hasAttributes()) {
+		DOMNamedNodeMap *pAttributes = start->getAttributes();
+		int nSize = pAttributes->getLength();
+		for(int i=0;i<nSize;++i) {
+			DOMAttr *pAttributeNode = (DOMAttr*) pAttributes->item(i);
+			char *attrName = XMLString::transcode(pAttributeNode->getName());
+			char *attrValue = XMLString::transcode(pAttributeNode->getValue());
+			attributes[attrName] = attrValue;
+			XMLString::release(&attrName);
+			XMLString::release(&attrValue);
+		}
+	}
+	
+	// Create attribute qualifier string
+	string attr_qualifiers = "";
+	if(level!=attr_level_none && attributes.size()>0){
+		attr_qualifiers += "[";
+		map<string,string>::iterator iter = attributes.begin();
+		for(int i=0; iter!=attributes.end(); i++, iter++){
+			if(i>0)attr_qualifiers += " and ";
+			attr_qualifiers += "@"+iter->first+"='"+iter->second+"'";
+		}
+		attr_qualifiers += "]";
+	}
+	
+	// Create xpath for this node
+	string xpath = start_path + "/" + nodeName;
+	xpaths.push_back(xpath + attr_qualifiers);
+
+	// Add any child nodes of this node
+	//string current_path = start_path + "/" + nodeName;
+	for (DOMNode *child = start->getFirstChild(); child != 0; child=child->getNextSibling()){
+		AddNodeToList(child, xpath + (level==attr_level_all ? attr_qualifiers:""), xpaths, level);
+	}
+}
+
+//---------------------------------
+// FindNode
+//---------------------------------
+DOMNode* JGeometryXML::FindNode(string xpath, string &attribute)
+{
+	/// Parse the xpath string into node names and attribute qualifiers.
+	/// This is a *very* restricted form of the xpath syntax and done only
+	/// to serve the purposes of this specific application at this time.
+	/// The string "attribute" is used to return the name of the attribute
+	/// if it is specified at the end of the xpath string. For example,
+	///
+	/// '//hdds:element[@name="Antimony"]/@a'
+	///
+	/// specifies that the attribute "a" of the element node is what is
+	/// desired. By contrast,
+	///
+	/// '//hdds:element[@name="Antimony" and @a]'
+	///
+	/// specifies the node, but not a particular attribute. For these cases,
+	/// an empty string is ("") is copied into the attribute variable.
+	
+	// First, parse the string to get node names and attribute qualifiers
+	vector<pair<string, map<string,string> > > nodes;
+	unsigned int attr_depth;
+	ParseXPath(xpath, nodes, attribute, attr_depth);
+
+#if 0	
+	vector<pair<string, map<string,string> > >::iterator iter = nodes.begin();
+	for(; iter!=nodes.end(); iter++){
+		_DBG_<<"node \""<<iter->first<<"\": ";
+		
+		map<string,string> &qualifiers = iter->second;
+		map<string,string>::iterator qiter = qualifiers.begin();
+		for(; qiter!=qualifiers.end(); qiter++){
+			_DBG_<<"\""<<qiter->first<<"\"=\""<<qiter->second<<"\" ";
+		}
+		
+		cout<<endl;
+	}
+#endif
+
+	// The only practical way to find the nodes now is to use a recursive
+	// routine to walk the tree until it finds the correct node with all
+	// of the correct attributes of the parent nodes along the way.
+	DOMNode *node = SearchTree(doc, 0, nodes, attr_depth);
+
+	return node;
 }
 
 //---------------------------------

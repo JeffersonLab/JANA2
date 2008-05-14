@@ -1,5 +1,11 @@
 
-CFLAGS += -I$(XERCESCROOT)/include -DXERCESC
-CXXFLAGS += -I$(XERCESCROOT)/include -DXERCESC
-MISC_LIBS += -L$(XERCESCROOT)/lib -lxerces-c
+# Values set by autoconf in jana_conf.mk
+CFLAGS += $(XERCES_CPPFLAGS)
+CXXFLAGS += $(XERCES_CPPFLAGS)
+MISC_LIBS += $(XERCES_LDFLAGS) -lxerces-c
+
+# Old style
+#CFLAGS += -I$(XERCESCROOT)/include -DXERCESC
+#CXXFLAGS += -I$(XERCESCROOT)/include -DXERCESC
+#MISC_LIBS += -L$(XERCESCROOT)/lib -lxerces-c
 

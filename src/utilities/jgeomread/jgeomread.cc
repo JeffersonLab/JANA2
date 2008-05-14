@@ -17,7 +17,8 @@ void Usage(void);
 
 unsigned int RUN_NUMBER = 100;
 string XPATH="";
-bool LIST_XPATHS=false;
+bool LIST_XPATHS = false;
+bool FILTER_XPATHS = false;
 bool QUIET = false;
 JGeometry::ATTR_LEVEL_t ATTRIBUTE_LEVEL=JGeometry::attr_level_last;
 
@@ -42,6 +43,18 @@ int main(int narg, char *argv[])
 		cout<<"----------------------------------------------------------------"<<endl;
 		for(unsigned int i=0; i<xpaths.size(); i++)cout<< xpaths[i] <<endl;
 		cout<<endl;
+	}
+	
+	// List all xpaths that pass the given xpath as a filter
+	if(FILTER_XPATHS && XPATH!=""){
+		vector<string> xpaths;
+		jgeom->GetXPaths(xpaths, ATTRIBUTE_LEVEL, XPATH);
+		cout<<endl;
+		cout<<"List of all valid (filtered) xpaths for url=\""<<jgeom->GetURL()<<"\" ("<<xpaths.size()<<" total)"<<endl;
+		cout<<"----------------------------------------------------------------"<<endl;
+		for(unsigned int i=0; i<xpaths.size(); i++)cout<< xpaths[i] <<endl;
+		cout<<endl;
+		return 0;
 	}
 	
 	// Get and display values for a specific namepath if one was specified
@@ -137,6 +150,9 @@ void ParseCommandLineArguments(int &narg, char *argv[])
 				case 'c':
 					ATTRIBUTE_LEVEL = JGeometry::attr_level_none;
 					break;
+				case 'f':
+					FILTER_XPATHS = true;
+					break;
 				case 'R':
 					if(strlen(argv[i])==2){
 						RUN_NUMBER = atoi(argv[++i]);
@@ -170,6 +186,7 @@ void Usage(void)
 	cout<<"   -a        Include attributes for all nodes when listing xpaths"<<endl;
 	cout<<"   -b        Include attributes for only the last node when listing xpaths(default)"<<endl;
 	cout<<"   -c        Don't include any attributes listing xpaths"<<endl;
+	cout<<"   -f        List all xpaths using the specified xpath as a filter"<<endl;
 	cout<<"   -t type   Set data type (float, int, ...)"<<endl;
 	cout<<endl;
 	cout<<" Example: (note this relies on the structure of the backend)"<<endl;

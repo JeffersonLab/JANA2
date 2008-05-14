@@ -13,6 +13,12 @@ install:
 	make -C jcalibread install
 	make -C jgeomread install
 
+relink:
+	make -C jana relink
+	make -C janadump relink
+	make -C jcalibread relink
+	make -C jgeomread relink
+
 pristine:
 	make -C jana pristine
 	make -C janadump pristine

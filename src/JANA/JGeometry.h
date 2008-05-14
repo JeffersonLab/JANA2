@@ -90,7 +90,7 @@ class JGeometry{
 		// Virtual methods called through base class
 		virtual bool Get(string xpath, string &sval)=0;
 		virtual bool Get(string xpath, map<string, string> &svals)=0;
-		virtual void GetXPaths(vector<string> &xpaths, ATTR_LEVEL_t level=attr_level_last)=0;
+		virtual void GetXPaths(vector<string> &xpaths, ATTR_LEVEL_t level=attr_level_last, const string &filter="")=0;
 
 		// Templated methods that can return more useful forms
 		template<class T> bool Get(string xpath, T &val);

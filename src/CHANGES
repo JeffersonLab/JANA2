@@ -1,0 +1,15 @@
+
+Changes in version 0.4.3
+
+- Added CHANGES file
+- Added autoconf to build system:
+	= Optionally include MySQL as well as XERCES using autoconf
+	= XERCES conditional compiles now based on HAVE_XERCES value
+- Fixed name of TestSpeed plugin (there was a typo in the name "TerstSpeed.so")
+- Added optional filter argument to GetXPaths method of JGeometry class
+- Added code that decided whether to make a JGeometryXML or a JGeometryMYSQL
+  object based on the JANA_GEOMETRY_URL value. This probably needs to be redone
+  with a generator mechanism in order to make it extensible.
+- Added JGeometryMYSQL class. Class is just a place holder and not yet implemented
+
+
