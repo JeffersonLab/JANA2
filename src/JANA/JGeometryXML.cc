@@ -362,7 +362,7 @@ void JGeometryXML::ParseXPath(string xpath, vector<pair<string, map<string,strin
 
 	// Clear attribute string
 	attribute = "";
-	attr_depth = -1;
+	attr_depth = 0xFFFFFFFF;
 
 	// First, split path up into strings using "/" as a delimiter
 	vector<string> sections;
