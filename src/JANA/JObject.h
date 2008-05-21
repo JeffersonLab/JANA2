@@ -132,9 +132,12 @@ void JObject::Get(vector<const T*> &ptrs, string classname) const
 	
 	if(classname=="")classname=T::static_className();
 	
-	map<const JObject*, string>::iterator iter = associated.begin();
+	map<const JObject*, string>::const_iterator iter = associated.begin();
 	for(; iter!=associated.end(); iter++){
-		if(iter->second == classname)ptrs.push_back(iter->first);
+		if(iter->second == classname){
+			const T *ptr = dynamic_cast<const T*>(iter->first);
+			ptrs.push_back(ptr);
+		}
 	}	
 }
 
