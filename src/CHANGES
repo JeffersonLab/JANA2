@@ -1,4 +1,10 @@
 
+Changes in version 0.4.4
+
+- Fixed bug in JGeometryXML where the unsigned attr_depth was being initialized
+  using a signed value.
+- Fixed bugs in JObject::Get and GetT methods
+
 Changes in version 0.4.3
 
 - Added CHANGES file
