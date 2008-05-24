@@ -165,7 +165,7 @@ void JObject::GetT(vector<const T*> &ptrs) const
 	
 	string classname=T::static_className();
 	
-	map<const JObject*, string>::iterator iter = associated.begin();
+	map<const JObject*, string>::const_iterator iter = associated.begin();
 	for(; iter!=associated.end(); iter++){
 		const T *ptr = dynamic_cast<const T*>(iter->first);
 		if(ptr != NULL)ptrs.push_back(ptr);
