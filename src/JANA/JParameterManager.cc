@@ -127,7 +127,7 @@ void JParameterManager::PrintParameters(void)
 	bool printAll = filter == "all";
 	
 	// Sort parameters alphabetically
-	sort(parameters.begin(), parameters.end(), JParameterAlphaSort());
+	std::sort(parameters.begin(), parameters.end(), JParameterAlphaSort());
 	
 	std::cout<<std::endl;
 	std::cout<<" --- Configuration Parameters --"<<std::endl;
