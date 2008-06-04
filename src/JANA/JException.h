@@ -36,6 +36,7 @@
 #include <string>
 #include <sstream>
 #include <new>
+#include <string.h>
 
 #ifdef __linux__
 #include <execinfo.h>

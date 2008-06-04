@@ -52,7 +52,7 @@ int JStreamLogBuffer::sync() {
 }
 
 const char* JStreamLogBuffer::getTimeStamp() {
-	std::time_t thetime;
+	time_t thetime;
 	time(&thetime);
 	char* timestr = ctime(&thetime);
 	int len = strlen(timestr);

@@ -13,6 +13,7 @@
 #include <string>
 #include <sstream>
 #include <map>
+#include <algorithm>
 using std::vector;
 using std::string;
 using std::stringstream;

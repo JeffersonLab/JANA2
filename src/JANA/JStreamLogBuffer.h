@@ -13,6 +13,7 @@
 #define _DSTREAMLOGBUFFER_H_
 
 #include <iostream>
+#include <string.h>
 
 
 /// JStreamLogBuffer is a streambuf-derived buffer for use

@@ -35,6 +35,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <string.h>
 
 enum {
 	INFO,
@@ -55,7 +56,7 @@ class JLog
 		inline void log(std::string msg, int level) {
 			if (level < __level)
 				return;
-			std::time_t ts = std::time(0);
+			time_t ts = time(0);
 			char* t = ctime(&ts); 
 			t[strlen(t)-1] = 0;
 			switch (level) {
