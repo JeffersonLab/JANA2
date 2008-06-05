@@ -33,9 +33,9 @@ OUTPUT_OPTION = -o $(OBJ_DIR)/$@
 VPATH = $(OBJ_DIR):$(BIN_DIR)
 LINK_OBJS += $(addprefix $(OBJ_DIR)/,$(DOBJS))
 
-LIB_DIRS += $(INSTALL_DIR)/lib/$(OSNAME)
+LIB_DIRS += $(INSTALL_DIR)/lib
 ifdef JANA_MY
-  LIB_DIRS += $(JANA_HOME)/lib/$(OSNAME)
+  LIB_DIRS += $(JANA_HOME)/lib
 endif
 
 LD_DIRS += $(addprefix -L,$(LIB_DIRS))
@@ -58,10 +58,13 @@ mkdirs:
 	@mkdir -p $(DEP_DIR)
 
 install: all
-	mkdir -p $(INSTALL_DIR)/lib/$(OSNAME)
+	mkdir -p $(INSTALL_DIR)/lib
 	mkdir -p $(INSTALL_DIR)/include/$(MODULE_NAME)
-	install -p $(LIB_DIR)/$(SOLIB_NAME) $(INSTALL_DIR)/lib/$(OSNAME)
+	install -p $(LIB_DIR)/$(SOLIB_NAME) $(INSTALL_DIR)/lib
 	install -p *.h $(INSTALL_DIR)/include/$(MODULE_NAME)
+
+uninstall: 
+	if test -d $(INSTALL_DIR)/lib ; then cd $(INSTALL_DIR)/lib ; rm -f $(SOLIB_NAME) ; fi
 
 relink: exec_clean all
 

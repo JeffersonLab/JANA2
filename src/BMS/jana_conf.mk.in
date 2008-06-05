@@ -11,3 +11,5 @@ XERCES_CPPFLAGS = @XERCES_CPPFLAGS@
 XERCES_LDFLAGS = @XERCES_LDFLAGS@
 XERCES_VERSION = @XERCES_VERSION@
 
+prefix = @prefix@
+exec_prefix = @exec_prefix@

@@ -57,29 +57,19 @@ endif
 LIB_DIR		= .lib/$(OSNAME)
 BIN_DIR		= .bin/$(OSNAME)
 DEP_DIR		= .depends/$(OSNAME)
-# The following gets overwritten with JANA_MY below
-INSTALL_DIR = $(JANA_HOME)
 
-# include working directory first
-FFLAGS   += -I.
-CFLAGS   += -I.
-CXXFLAGS += -I. -I..
-
-# include JANA_MY include directory (if JANA_MY) is defined
-ifdef JANA_MY
-FFLAGS   += -I$(JANA_MY)/include
-CFLAGS   += -I$(JANA_MY)/include
-CXXFLAGS += -I$(JANA_MY)/include
-INSTALL_DIR = $(JANA_MY)
-endif
-
-# include JANA_HOME include directory
-FFLAGS   += -I$(JANA_HOME)/include
-CFLAGS   += -I$(JANA_HOME)/include
-CXXFLAGS += -I$(JANA_HOME)/include
 
 # include autoconf genertated configuration file
-include $(JANA_HOME)/src/BMS/jana_conf.mk
+#include $(JANA_HOME)/src/BMS/jana_conf.mk
+include jana_conf.mk
+
+# Set installation directory based on what was specified during configuration
+INSTALL_DIR=${exec_prefix}
+
+# include directories
+FFLAGS   += -I. -I.. -I$(INSTALL_DIR)/include
+CFLAGS   += -I. -I.. -I$(INSTALL_DIR)/include
+CXXFLAGS += -I. -I.. -I$(INSTALL_DIR)/include
 
 # Optional XERCES package
 ifeq ($(HAVE_XERCES), yes)

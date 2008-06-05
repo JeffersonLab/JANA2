@@ -22,13 +22,13 @@ mkdirs:
 	@mkdir -p $(DEP_DIR)
 
 install: all
-	mkdir -p $(INSTALL_DIR)/lib/$(OSNAME)
+	mkdir -p $(INSTALL_DIR)/lib
 	mkdir -p $(INSTALL_DIR)/include/$(MODULE_NAME)
-	install -p $(LIBNAME) $(INSTALL_DIR)/lib/$(OSNAME)
+	install -p $(LIBNAME) $(INSTALL_DIR)/lib
 	install -p $(wildcard *.h *.hh *.hxx) $(INSTALL_DIR)/include/$(MODULE_NAME)
 
 uninstall: 
-	rm -f $(INSTALL_DIR)/lib/$(OSNAME)/$(shell basename $(LIBNAME))
+	rm -f $(INSTALL_DIR)/lib/$(shell basename $(LIBNAME))
 	rm -rf $(INSTALL_DIR)/include/$(MODULE_NAME)
 
 clean:

@@ -8,6 +8,10 @@ install:
 	make -C janadot install
 	make -C TestSpeed install
 
+uninstall:
+	make -C janadot uninstall
+	make -C TestSpeed uninstall
+
 pristine:
 	make -C janadot pristine
 	make -C TestSpeed pristine

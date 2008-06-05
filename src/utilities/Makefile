@@ -13,6 +13,12 @@ install:
 	make -C jcalibread install
 	make -C jgeomread install
 
+uninstall:
+	make -C jana uninstall
+	make -C janadump uninstall
+	make -C jcalibread uninstall
+	make -C jgeomread uninstall
+
 relink:
 	make -C jana relink
 	make -C janadump relink

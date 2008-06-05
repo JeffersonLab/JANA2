@@ -34,9 +34,9 @@ OUTPUT_OPTION = -o $(OBJ_DIR)/$@
 VPATH = $(OBJ_DIR):$(BIN_DIR)
 LINK_OBJS += $(addprefix $(OBJ_DIR)/,$(NON_MAIN_OBJS))
 
-LIB_DIRS += $(INSTALL_DIR)/lib/$(OSNAME)
+LIB_DIRS += $(INSTALL_DIR)/lib
 ifdef JANA_MY
-  LIB_DIRS += $(JANA_HOME)/lib/$(OSNAME)
+  LIB_DIRS += $(JANA_HOME)/lib
 endif
 
 LD_DIRS += $(addprefix -L,$(LIB_DIRS))
@@ -60,8 +60,11 @@ mkdirs:
 	@mkdir -p $(DEP_DIR)
 
 install: all
-	mkdir -p $(INSTALL_DIR)/bin/$(OSNAME)
-	install -p $(EXE_PATHNAMES) $(INSTALL_DIR)/bin/$(OSNAME)
+	mkdir -p $(INSTALL_DIR)/bin
+	install -p $(EXE_PATHNAMES) $(INSTALL_DIR)/bin
+
+uninstall: 
+	if test -d $(INSTALL_DIR)/bin ; then cd $(INSTALL_DIR)/bin ; rm -f $(EXE_NAMES) ; fi
 
 relink: exec_clean all
 

@@ -1,4 +1,16 @@
 
+Changes in version 0.4.5
+
+- Addition of headers and add/remove of std:: for gcc4.3 compatibility
+- Completed "uninstall" target for build system
+- Added default to autoconf for CCC=CC when building on SunOS
+- Changed install scheme to more closely match unix default. Default
+  now is to install directly in bin,lib,include with no platform specific
+  directory unless specified at configure time via the --prefix or
+  --exec_prefix arguments.
+- Added INSTALL file
+
+
 Changes in version 0.4.4
 
 - Fixed bug in JGeometryXML where the unsigned attr_depth was being initialized

@@ -622,7 +622,7 @@ XERCES_LIBS
 XERCES_VERSION
 HAVE_MYSQL
 HAVE_XERCES
-HAVE_CLHEP
+testme
 LIBOBJS
 LTLIBOBJS'
 ac_subst_files=''
@@ -1655,6 +1655,227 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 echo "                             Configuring JANA ..."
+
+# ===========================================================================
+#              http://autoconf-archive.cryp.to/ax_lib_mysql.html
+# ===========================================================================
+#
+# SYNOPSIS
+#
+#   AX_LIB_MYSQL([MINIMUM-VERSION])
+#
+# DESCRIPTION
+#
+#   This macro provides tests of availability of MySQL client library of
+#   particular version or newer.
+#
+#   AX_LIB_MYSQL macro takes only one argument which is optional. If there
+#   is no required version passed, then macro does not run version test.
+#
+#   The --with-mysql option takes one of three possible values:
+#
+#   no - do not check for MySQL client library
+#
+#   yes - do check for MySQL library in standard locations (mysql_config
+#   should be in the PATH)
+#
+#   path - complete path to mysql_config utility, use this option if
+#   mysql_config can't be found in the PATH
+#
+#   This macro calls:
+#
+#     AC_SUBST(MYSQL_CFLAGS)
+#     AC_SUBST(MYSQL_LDFLAGS)
+#     AC_SUBST(MYSQL_VERSION)
+#
+#   And sets:
+#
+#     HAVE_MYSQL
+#
+# LAST MODIFICATION
+#
+#   2008-04-12
+#
+# COPYLEFT
+#
+#   Copyright (c) 2008 Mateusz Loskot <mateusz@loskot.net>
+#
+#   Copying and distribution of this file, with or without modification, are
+#   permitted in any medium without royalty provided the copyright notice
+#   and this notice are preserved.
+
+
+
+
+# ===========================================================================
+#              http://autoconf-archive.cryp.to/acx_pthread.html
+# ===========================================================================
+#
+# SYNOPSIS
+#
+#   ACX_PTHREAD([ACTION-IF-FOUND[, ACTION-IF-NOT-FOUND]])
+#
+# DESCRIPTION
+#
+#   This macro figures out how to build C programs using POSIX threads. It
+#   sets the PTHREAD_LIBS output variable to the threads library and linker
+#   flags, and the PTHREAD_CFLAGS output variable to any special C compiler
+#   flags that are needed. (The user can also force certain compiler
+#   flags/libs to be tested by setting these environment variables.)
+#
+#   Also sets PTHREAD_CC to any special C compiler that is needed for
+#   multi-threaded programs (defaults to the value of CC otherwise). (This
+#   is necessary on AIX to use the special cc_r compiler alias.)
+#
+#   NOTE: You are assumed to not only compile your program with these flags,
+#   but also link it with them as well. e.g. you should link with
+#   $PTHREAD_CC $CFLAGS $PTHREAD_CFLAGS $LDFLAGS ... $PTHREAD_LIBS $LIBS
+#
+#   If you are only building threads programs, you may wish to use these
+#   variables in your default LIBS, CFLAGS, and CC:
+#
+#          LIBS="$PTHREAD_LIBS $LIBS"
+#          CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+#          CC="$PTHREAD_CC"
+#
+#   In addition, if the PTHREAD_CREATE_JOINABLE thread-attribute constant
+#   has a nonstandard name, defines PTHREAD_CREATE_JOINABLE to that name
+#   (e.g. PTHREAD_CREATE_UNDETACHED on AIX).
+#
+#   ACTION-IF-FOUND is a list of shell commands to run if a threads library
+#   is found, and ACTION-IF-NOT-FOUND is a list of commands to run it if it
+#   is not found. If ACTION-IF-FOUND is not specified, the default action
+#   will define HAVE_PTHREAD.
+#
+#   Please let the authors know if this macro fails on any platform, or if
+#   you have any other suggestions or comments. This macro was based on work
+#   by SGJ on autoconf scripts for FFTW (http://www.fftw.org/) (with help
+#   from M. Frigo), as well as ac_pthread and hb_pthread macros posted by
+#   Alejandro Forero Cuervo to the autoconf macro repository. We are also
+#   grateful for the helpful feedback of numerous users.
+#
+# LAST MODIFICATION
+#
+#   2008-04-12
+#
+# COPYLEFT
+#
+#   Copyright (c) 2008 Steven G. Johnson <stevenj@alum.mit.edu>
+#
+#   This program is free software: you can redistribute it and/or modify it
+#   under the terms of the GNU General Public License as published by the
+#   Free Software Foundation, either version 3 of the License, or (at your
+#   option) any later version.
+#
+#   This program is distributed in the hope that it will be useful, but
+#   WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+#   Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License along
+#   with this program. If not, see <http://www.gnu.org/licenses/>.
+#
+#   As a special exception, the respective Autoconf Macro's copyright owner
+#   gives unlimited permission to copy, distribute and modify the configure
+#   scripts that are the output of Autoconf when processing the Macro. You
+#   need not follow the terms of the GNU General Public License when using
+#   or distributing such scripts, even though portions of the text of the
+#   Macro appear in them. The GNU General Public License (GPL) does govern
+#   all other use of the material that constitutes the Autoconf Macro.
+#
+#   This special exception to the GPL applies to versions of the Autoconf
+#   Macro released by the Autoconf Macro Archive. When you make and
+#   distribute a modified version of the Autoconf Macro, you may extend this
+#   special exception to the GPL to apply to your modified version as well.
+
+
+
+# ===========================================================================
+#             http://autoconf-archive.cryp.to/ax_lib_xerces.html
+# ===========================================================================
+#
+# SYNOPSIS
+#
+#   AX_LIB_XERCES([MINIMUM-VERSION])
+#
+# DESCRIPTION
+#
+#   This macro provides tests of availability of Apache Xerces C++ Parser of
+#   particular version or newer. This macros checks for Apache Xerces C++
+#   Parser headers and libraries and defines compilation flags
+#
+#   Macro supports following options and their values:
+#
+#   1) Single-option usage:
+#
+#     --with-xerces - yes, no or path to Xerces installation prefix
+#
+#   2) Three-options usage (all options are required):
+#
+#     --with-xerces=yes
+#     --with-xerces-inc - path to base directory with Xerces headers
+#     --with-xerces-lib - linker flags for Xerces
+#
+#   This macro calls:
+#
+#     AC_SUBST(XERCES_CPPFLAGS)
+#     AC_SUBST(XERCES_LDFLAGS)
+#     AC_SUBST(XERCES_VERSION) - only if version requirement is used
+#
+#   And sets:
+#
+#     HAVE_XERCES
+#
+# LAST MODIFICATION
+#
+#   2008-04-12
+#
+# COPYLEFT
+#
+#   Copyright (c) 2008 Mateusz Loskot <mateusz@loskot.net>
+#
+#   Copying and distribution of this file, with or without modification, are
+#   permitted in any medium without royalty provided the copyright notice
+#   and this notice are preserved.
+
+
+
+
+# ===========================================================================
+#             http://www.jlab.org/JANA
+# ===========================================================================
+#
+# If either the JANA_MY or JANA_HOME environment variable is set, then use
+# it as our default installation prefix (with JANA_MY being preferred over
+# JANA_HOME). Otherwise, default to /usr/local.
+#
+if test x"$JANA_HOME" != "x" ; then
+    ac_default_prefix="$JANA_HOME"
+fi
+if test x"$JANA_MY" != "x" ; then
+    ac_default_prefix="$JANA_MY"
+fi
+#
+# For solaris machines we want to default to the solaris compiler(CC) as
+# opposed to the gnu compiler(g++). For some reason, this is not the default
+# with the AC_PROG_CXX test below which finds a gnu compiler, but then
+# procedes to complain that we are not using the native compiler and
+# requires us to re-run it with a special command line switch. Note that
+# we also only set the C++ compiler (variable CCC) if the variable is
+# not already set to allow the user to override this default behavior
+# in an expected way.
+my_os=`uname`
+if test "$my_os" = "SunOS"; then
+    if test x"$CCC"="x"; then
+        CCC="CC"
+    fi
+fi
+{ echo "$as_me:$LINENO: uname/CCC: $my_os/$CCC" >&5
+echo "$as_me: uname/CCC: $my_os/$CCC" >&6;}
+
+
+# ===========================================================================
+# Perform tests for optional packages used by JANA
 ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -2332,193 +2553,6 @@ ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
-
-# ===========================================================================
-#              http://autoconf-archive.cryp.to/ax_lib_mysql.html
-# ===========================================================================
-#
-# SYNOPSIS
-#
-#   AX_LIB_MYSQL([MINIMUM-VERSION])
-#
-# DESCRIPTION
-#
-#   This macro provides tests of availability of MySQL client library of
-#   particular version or newer.
-#
-#   AX_LIB_MYSQL macro takes only one argument which is optional. If there
-#   is no required version passed, then macro does not run version test.
-#
-#   The --with-mysql option takes one of three possible values:
-#
-#   no - do not check for MySQL client library
-#
-#   yes - do check for MySQL library in standard locations (mysql_config
-#   should be in the PATH)
-#
-#   path - complete path to mysql_config utility, use this option if
-#   mysql_config can't be found in the PATH
-#
-#   This macro calls:
-#
-#     AC_SUBST(MYSQL_CFLAGS)
-#     AC_SUBST(MYSQL_LDFLAGS)
-#     AC_SUBST(MYSQL_VERSION)
-#
-#   And sets:
-#
-#     HAVE_MYSQL
-#
-# LAST MODIFICATION
-#
-#   2008-04-12
-#
-# COPYLEFT
-#
-#   Copyright (c) 2008 Mateusz Loskot <mateusz@loskot.net>
-#
-#   Copying and distribution of this file, with or without modification, are
-#   permitted in any medium without royalty provided the copyright notice
-#   and this notice are preserved.
-
-
-
-
-# ===========================================================================
-#              http://autoconf-archive.cryp.to/acx_pthread.html
-# ===========================================================================
-#
-# SYNOPSIS
-#
-#   ACX_PTHREAD([ACTION-IF-FOUND[, ACTION-IF-NOT-FOUND]])
-#
-# DESCRIPTION
-#
-#   This macro figures out how to build C programs using POSIX threads. It
-#   sets the PTHREAD_LIBS output variable to the threads library and linker
-#   flags, and the PTHREAD_CFLAGS output variable to any special C compiler
-#   flags that are needed. (The user can also force certain compiler
-#   flags/libs to be tested by setting these environment variables.)
-#
-#   Also sets PTHREAD_CC to any special C compiler that is needed for
-#   multi-threaded programs (defaults to the value of CC otherwise). (This
-#   is necessary on AIX to use the special cc_r compiler alias.)
-#
-#   NOTE: You are assumed to not only compile your program with these flags,
-#   but also link it with them as well. e.g. you should link with
-#   $PTHREAD_CC $CFLAGS $PTHREAD_CFLAGS $LDFLAGS ... $PTHREAD_LIBS $LIBS
-#
-#   If you are only building threads programs, you may wish to use these
-#   variables in your default LIBS, CFLAGS, and CC:
-#
-#          LIBS="$PTHREAD_LIBS $LIBS"
-#          CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
-#          CC="$PTHREAD_CC"
-#
-#   In addition, if the PTHREAD_CREATE_JOINABLE thread-attribute constant
-#   has a nonstandard name, defines PTHREAD_CREATE_JOINABLE to that name
-#   (e.g. PTHREAD_CREATE_UNDETACHED on AIX).
-#
-#   ACTION-IF-FOUND is a list of shell commands to run if a threads library
-#   is found, and ACTION-IF-NOT-FOUND is a list of commands to run it if it
-#   is not found. If ACTION-IF-FOUND is not specified, the default action
-#   will define HAVE_PTHREAD.
-#
-#   Please let the authors know if this macro fails on any platform, or if
-#   you have any other suggestions or comments. This macro was based on work
-#   by SGJ on autoconf scripts for FFTW (http://www.fftw.org/) (with help
-#   from M. Frigo), as well as ac_pthread and hb_pthread macros posted by
-#   Alejandro Forero Cuervo to the autoconf macro repository. We are also
-#   grateful for the helpful feedback of numerous users.
-#
-# LAST MODIFICATION
-#
-#   2008-04-12
-#
-# COPYLEFT
-#
-#   Copyright (c) 2008 Steven G. Johnson <stevenj@alum.mit.edu>
-#
-#   This program is free software: you can redistribute it and/or modify it
-#   under the terms of the GNU General Public License as published by the
-#   Free Software Foundation, either version 3 of the License, or (at your
-#   option) any later version.
-#
-#   This program is distributed in the hope that it will be useful, but
-#   WITHOUT ANY WARRANTY; without even the implied warranty of
-#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
-#   Public License for more details.
-#
-#   You should have received a copy of the GNU General Public License along
-#   with this program. If not, see <http://www.gnu.org/licenses/>.
-#
-#   As a special exception, the respective Autoconf Macro's copyright owner
-#   gives unlimited permission to copy, distribute and modify the configure
-#   scripts that are the output of Autoconf when processing the Macro. You
-#   need not follow the terms of the GNU General Public License when using
-#   or distributing such scripts, even though portions of the text of the
-#   Macro appear in them. The GNU General Public License (GPL) does govern
-#   all other use of the material that constitutes the Autoconf Macro.
-#
-#   This special exception to the GPL applies to versions of the Autoconf
-#   Macro released by the Autoconf Macro Archive. When you make and
-#   distribute a modified version of the Autoconf Macro, you may extend this
-#   special exception to the GPL to apply to your modified version as well.
-
-
-
-# ===========================================================================
-#             http://autoconf-archive.cryp.to/ax_lib_xerces.html
-# ===========================================================================
-#
-# SYNOPSIS
-#
-#   AX_LIB_XERCES([MINIMUM-VERSION])
-#
-# DESCRIPTION
-#
-#   This macro provides tests of availability of Apache Xerces C++ Parser of
-#   particular version or newer. This macros checks for Apache Xerces C++
-#   Parser headers and libraries and defines compilation flags
-#
-#   Macro supports following options and their values:
-#
-#   1) Single-option usage:
-#
-#     --with-xerces - yes, no or path to Xerces installation prefix
-#
-#   2) Three-options usage (all options are required):
-#
-#     --with-xerces=yes
-#     --with-xerces-inc - path to base directory with Xerces headers
-#     --with-xerces-lib - linker flags for Xerces
-#
-#   This macro calls:
-#
-#     AC_SUBST(XERCES_CPPFLAGS)
-#     AC_SUBST(XERCES_LDFLAGS)
-#     AC_SUBST(XERCES_VERSION) - only if version requirement is used
-#
-#   And sets:
-#
-#     HAVE_XERCES
-#
-# LAST MODIFICATION
-#
-#   2008-04-12
-#
-# COPYLEFT
-#
-#   Copyright (c) 2008 Mateusz Loskot <mateusz@loskot.net>
-#
-#   Copying and distribution of this file, with or without modification, are
-#   permitted in any medium without royalty provided the copyright notice
-#   and this notice are preserved.
-
-
-
-
-# Perform tests for optional packages used by JANA
 
 
 # Check whether --with-mysql was given.
@@ -3905,6 +3939,11 @@ ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
 
 
+    # Default to environment  6/4/2008 DL
+    if test x"$XERCESCROOT" != "x"; then
+      xerces_prefix="$XERCESCROOT"
+    fi
+
 
 # Check whether --with-xerces was given.
 if test "${with_xerces+set}" = set; then
@@ -4290,6 +4329,8 @@ echo "$as_me: WARNING: Xerces C++ Parser support requested but headers or librar
 { echo "$as_me:$LINENO: creating JANA/jana_config.h" >&5
 echo "$as_me: creating JANA/jana_config.h" >&6;}
 cp confdefs.h JANA/jana_config.h
+
+
 
 
 
@@ -4972,7 +5013,7 @@ XERCES_LIBS!$XERCES_LIBS$ac_delim
 XERCES_VERSION!$XERCES_VERSION$ac_delim
 HAVE_MYSQL!$HAVE_MYSQL$ac_delim
 HAVE_XERCES!$HAVE_XERCES$ac_delim
-HAVE_CLHEP!$HAVE_CLHEP$ac_delim
+testme!$testme$ac_delim
 LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF

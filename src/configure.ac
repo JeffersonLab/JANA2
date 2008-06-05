@@ -14,8 +14,6 @@
 AC_INIT(janaconfig, version-0.1)
 
 echo "                             Configuring JANA ..."
-AC_PROG_CXX
-AC_LANG(C++)
 
 # ===========================================================================
 #              http://autoconf-archive.cryp.to/ax_lib_mysql.html
@@ -499,6 +497,11 @@ AC_DEFUN([AX_LIB_XERCES],
 [
     AC_REQUIRE([ACX_PTHREAD])
 
+    # Default to environment  6/4/2008 DL
+    if test x"$XERCESCROOT" != "x"; then
+      xerces_prefix="$XERCESCROOT"
+    fi
+	 
     AC_ARG_WITH([xerces],
         AC_HELP_STRING([--with-xerces=@<:@ARG@:>@],
             [use Xerces C++ Parser from given prefix (ARG=path); check standard prefixes (ARG=yes); disable (ARG=no)]
@@ -746,7 +749,42 @@ XMLPlatformUtils::Initialize();
 ])
 
 
+# ===========================================================================
+#             http://www.jlab.org/JANA
+# ===========================================================================
+#
+# If either the JANA_MY or JANA_HOME environment variable is set, then use
+# it as our default installation prefix (with JANA_MY being preferred over
+# JANA_HOME). Otherwise, default to /usr/local.
+#
+if test x"$JANA_HOME" != "x" ; then
+    ac_default_prefix="$JANA_HOME"
+fi
+if test x"$JANA_MY" != "x" ; then
+    ac_default_prefix="$JANA_MY"
+fi
+#
+# For solaris machines we want to default to the solaris compiler(CC) as
+# opposed to the gnu compiler(g++). For some reason, this is not the default
+# with the AC_PROG_CXX test below which finds a gnu compiler, but then
+# procedes to complain that we are not using the native compiler and
+# requires us to re-run it with a special command line switch. Note that
+# we also only set the C++ compiler (variable CCC) if the variable is
+# not already set to allow the user to override this default behavior
+# in an expected way.
+my_os=`uname`
+if test "$my_os" = "SunOS"; then
+    if test x"$CCC"="x"; then
+        CCC="CC"
+    fi
+fi
+AC_MSG_NOTICE([uname/CCC: $my_os/$CCC])
+
+
+# ===========================================================================
 # Perform tests for optional packages used by JANA
+AC_PROG_CXX
+AC_LANG(C++)
 AX_LIB_MYSQL([3.23.00])
 ACX_PTHREAD
 AX_LIB_XERCES
@@ -756,6 +794,8 @@ cp confdefs.h JANA/jana_config.h
 
 AC_SUBST([HAVE_MYSQL])
 AC_SUBST([HAVE_XERCES])
-AC_SUBST([HAVE_CLHEP])
+AC_SUBST([prefix])
+AC_SUBST([exec_prefix])
+AC_SUBST([testme])
 AC_OUTPUT(BMS/jana_conf.mk)
 
