@@ -3,6 +3,25 @@
 # $Header$
 #
 
+# WARNING: Changes should be made to Makefile.common.in. Changes to 
+# Makefile.common will be overwritten whenever configure is run.
+#
+# The following are set by the configure script
+HAVE_MYSQL	:= yes
+HAVE_XERCES	:= yes
+
+MYSQL_CFLAGS = -I/usr/include/mysql -g -pipe -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4 -m32 -march=i386 -mtune=generic -fasynchronous-unwind-tables -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -fno-strict-aliasing -fwrapv
+MYSQL_LDFLAGS = -L/usr/lib/mysql -lmysqlclient -lz -lcrypt -lnsl -lm -L/usr/lib -lssl -lcrypto
+MYSQL_VERSION = 5.0.51a
+
+XERCES_CPPFLAGS = -I/home/davidl/mac/Linux/xerces/xerces-c-src_2_8_0/include -I/home/davidl/mac/Linux/xerces/xerces-c-src_2_8_0/include/xercesc
+XERCES_LDFLAGS = -L/home/davidl/mac/Linux/xerces/xerces-c-src_2_8_0/lib 
+XERCES_VERSION = 
+
+prefix = /home/davidl/mac/12GeV/builds/latest/Linux-i686
+exec_prefix = ${prefix}
+
+
 #
 # This is a generic makefile used to build all the source in the
 # current directory (anything with a .c, .cc, .cxx, .cpp or .F 
@@ -58,11 +77,6 @@ LIB_DIR		= .lib/$(OSNAME)
 BIN_DIR		= .bin/$(OSNAME)
 DEP_DIR		= .depends/$(OSNAME)
 
-
-# include autoconf genertated configuration file
-#include $(JANA_HOME)/src/BMS/jana_conf.mk
-include jana_conf.mk
-
 # Set installation directory based on what was specified during configuration
 INSTALL_DIR=${exec_prefix}
 
@@ -82,7 +96,7 @@ PACKAGES += MYSQL:
 endif
 
 # Include user specified package makefiles
-PACKAGE_MAKEFILES = $(foreach name,$(subst :, ,$(PACKAGES)),$(JANA_HOME)/src/BMS/Makefile.$(name))
+PACKAGE_MAKEFILES = $(foreach name,$(subst :, ,$(PACKAGES)),$(BMSDIR)/Makefile.$(name))
 
 ifdef PACKAGES
 include $(PACKAGE_MAKEFILES)
@@ -117,9 +131,9 @@ LIBNAME = $(LIB_DIR)/lib$(MODULE_NAME)$(DEBUG_SUFFIX).a
 
 # Include platform specific definitions
 # (the "-" at the front means don't error if the file doesn't exist)
--include $(JANA_HOME)/src/BMS/Makefile.$(OS)
--include $(JANA_HOME)/src/BMS/Makefile.$(ARCH)
--include $(JANA_HOME)/src/BMS/Makefile.$(OSNAME)
+-include $(BMSDIR)/Makefile.$(OS)
+-include $(BMSDIR)/Makefile.$(ARCH)
+-include $(BMSDIR)/Makefile.$(OSNAME)
 
 # For GNU compilers, add verbose warnings
 ifeq ($(FC),g77)
