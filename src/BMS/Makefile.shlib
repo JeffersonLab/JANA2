@@ -4,8 +4,11 @@
 #
 
 
-# Things common to both library and executable builds live in Makefile.common
-include $(JANA_HOME)/src/BMS/Makefile.common
+# The BMS directory. Note that we could use "lastword" here, but it
+# doesn't seem to be implemented widely yet.
+BMSDIR = $(dir $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))
+#BMSDIR = $(dir $(lastword $(MAKEFILE_LIST)))
+include $(BMSDIR)/Makefile.common
 
 .PHONY: all mkdirs clean env
 
@@ -34,9 +37,6 @@ VPATH = $(OBJ_DIR):$(BIN_DIR)
 LINK_OBJS += $(addprefix $(OBJ_DIR)/,$(DOBJS))
 
 LIB_DIRS += $(INSTALL_DIR)/lib
-ifdef JANA_MY
-  LIB_DIRS += $(JANA_HOME)/lib
-endif
 
 LD_DIRS += $(addprefix -L,$(LIB_DIRS))
 LD_LIBS += $(addsuffix $(DEBUG_SUFFIX),$(addprefix -l,$(ADDITIONAL_MODULES)))

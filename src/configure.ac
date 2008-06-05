@@ -797,5 +797,5 @@ AC_SUBST([HAVE_XERCES])
 AC_SUBST([prefix])
 AC_SUBST([exec_prefix])
 AC_SUBST([testme])
-AC_OUTPUT(BMS/jana_conf.mk)
+AC_OUTPUT(BMS/Makefile.common)
 

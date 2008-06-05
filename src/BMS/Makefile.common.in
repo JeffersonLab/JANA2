@@ -7,19 +7,19 @@
 # Makefile.common will be overwritten whenever configure is run.
 #
 # The following are set by the configure script
-HAVE_MYSQL	:= yes
-HAVE_XERCES	:= yes
+HAVE_MYSQL	:= @HAVE_MYSQL@
+HAVE_XERCES	:= @HAVE_XERCES@
 
-MYSQL_CFLAGS = -I/usr/include/mysql -g -pipe -Wp,-D_FORTIFY_SOURCE=2 -fexceptions -fstack-protector --param=ssp-buffer-size=4 -m32 -march=i386 -mtune=generic -fasynchronous-unwind-tables -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -fno-strict-aliasing -fwrapv
-MYSQL_LDFLAGS = -L/usr/lib/mysql -lmysqlclient -lz -lcrypt -lnsl -lm -L/usr/lib -lssl -lcrypto
-MYSQL_VERSION = 5.0.51a
+MYSQL_CFLAGS = @MYSQL_CFLAGS@
+MYSQL_LDFLAGS = @MYSQL_LDFLAGS@
+MYSQL_VERSION = @MYSQL_VERSION@
 
-XERCES_CPPFLAGS = -I/home/davidl/mac/Linux/xerces/xerces-c-src_2_8_0/include -I/home/davidl/mac/Linux/xerces/xerces-c-src_2_8_0/include/xercesc
-XERCES_LDFLAGS = -L/home/davidl/mac/Linux/xerces/xerces-c-src_2_8_0/lib 
-XERCES_VERSION = 
+XERCES_CPPFLAGS = @XERCES_CPPFLAGS@
+XERCES_LDFLAGS = @XERCES_LDFLAGS@
+XERCES_VERSION = @XERCES_VERSION@
 
-prefix = /home/davidl/mac/12GeV/builds/latest/Linux-i686
-exec_prefix = ${prefix}
+prefix = @prefix@
+exec_prefix = @exec_prefix@
 
 
 #

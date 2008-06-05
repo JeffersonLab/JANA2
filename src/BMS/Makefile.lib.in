@@ -4,12 +4,7 @@
 #
 
 # Things common to both library and executable builds live in Makefile.common
-
-# The BMS directory. Note that we could use "lastword" here, but it
-# doesn't seem to be implemented widely yet.
-BMSDIR = $(dir $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))
-#BMSDIR = $(dir $(lastword $(MAKEFILE_LIST)))
-include $(BMSDIR)/Makefile.common
+include $(JANA_HOME)/src/BMS/Makefile.common
 
 .PHONY: mkdirs clean env
 
@@ -82,5 +77,4 @@ env:
 	@echo PACKAGES = $(PACKAGES)
 	@echo PACKAGE_MAKEFILES = $(PACKAGE_MAKEFILES)
 	@echo HSRC		         = $(HSRC)
-	@echo BMSDIR	= $(BMSDIR)
 
