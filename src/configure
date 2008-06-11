@@ -1862,16 +1862,11 @@ echo "                             Configuring JANA ..."
 #             http://www.jlab.org/JANA
 # ===========================================================================
 #
-# If either the JANA_MY or JANA_HOME environment variable is set, then use
-# it as our default installation prefix (with JANA_MY being preferred over
-# JANA_HOME). Otherwise, default to /usr/local.
+# By default, install in the directory parallel to the directory configure
+# is being run from (presumably src).
 #
-if test x"$JANA_HOME" != "x" ; then
-    ac_default_prefix="$JANA_HOME"
-fi
-if test x"$JANA_MY" != "x" ; then
-    ac_default_prefix="$JANA_MY"
-fi
+ac_default_prefix="$PWD/.."
+#
 #
 # For solaris machines we want to default to the solaris compiler(CC) as
 # opposed to the gnu compiler(g++). For some reason, this is not the default

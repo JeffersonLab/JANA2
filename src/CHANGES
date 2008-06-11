@@ -1,4 +1,8 @@
 
+Changes in version 0.4.6
+
+- Modified Makefiles to no longer use JANA_HOME
+
 Changes in version 0.4.5
 
 - Addition of headers and add/remove of std:: for gcc4.3 compatibility

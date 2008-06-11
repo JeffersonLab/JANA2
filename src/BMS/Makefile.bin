@@ -22,7 +22,7 @@ ifdef DEBUG
 	LD_FLAGS	+= -g -pg
 endif
 
-MAIN_FILES = $(shell $(JANA_HOME)/src/BMS/main_files.sh)
+MAIN_FILES = $(shell $(BMSDIR)/main_files.sh)
 
 EXE_NAMES = $(addsuffix $(DEBUG_SUFFIX),$(basename $(MAIN_FILES)))
 EXE_PATHNAMES = $(foreach s,$(EXE_NAMES),$(BIN_DIR)/$s)
@@ -38,14 +38,11 @@ VPATH = $(OBJ_DIR):$(BIN_DIR)
 LINK_OBJS += $(addprefix $(OBJ_DIR)/,$(NON_MAIN_OBJS))
 
 LIB_DIRS += $(INSTALL_DIR)/lib
-ifdef JANA_MY
-  LIB_DIRS += $(JANA_HOME)/lib
-endif
 
 LD_DIRS += $(addprefix -L,$(LIB_DIRS))
-MODULES += $(ADDITIONAL_MODULES)
+MODULES += JANA $(ADDITIONAL_MODULES)
 LD_LIBS += $(addsuffix $(DEBUG_SUFFIX),$(addprefix -l,$(MODULES)))
-
+LD_LIBS += -ldl
 
 all: mkdirs $(DEPS) $(EXE_NAMES)
 	@rm -f $(DICT_FILES)
