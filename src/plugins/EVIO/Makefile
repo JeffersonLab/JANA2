@@ -4,4 +4,5 @@
 
 SOLIB_NAME = jeventsource_evio.so
 
-include ../../BMS/Makefile.shlib
+BMSDIR := ../../BMS
+include $(BMSDIR)/Makefile.shlib

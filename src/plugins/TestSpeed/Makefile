@@ -1,5 +1,6 @@
 
 SOLIB_NAME = TestSpeed.so
 
-include ../../BMS/Makefile.shlib
+BMSDIR := ../../BMS
+include $(BMSDIR)/Makefile.shlib
 

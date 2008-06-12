@@ -1,7 +1,5 @@
 
 
-#LD_LIBS += -lJANA -ldl
-#LD_DIRS += -L$(JANA_HOME)/lib/$(OSNAME)
-
-include ../../BMS/Makefile.bin
+BMSDIR := ../../BMS
+include $(BMSDIR)/Makefile.bin
 

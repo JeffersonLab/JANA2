@@ -5,12 +5,8 @@
 
 # Things common to both library and executable builds live in Makefile.common
 
-# The BMS directory. Note that we could use "lastword" here, but it
-# doesn't seem to be implemented widely yet.
-FMFL = $(filter-out .depends%, $(MAKEFILE_LIST))
-BMSDIR = $(dir $(word $(words $(FMFL)),$(FMFL)))
-#BMSDIR = $(dir $(lastword $(MAKEFILE_LIST)))
-include $(BMSDIR)Makefile.common
+# The BMSDIR variable needs to be set prior to including this file
+include $(BMSDIR)/Makefile.common
 
 .PHONY: mkdirs clean env
 
@@ -84,4 +80,5 @@ env:
 	@echo PACKAGE_MAKEFILES = $(PACKAGE_MAKEFILES)
 	@echo HSRC		         = $(HSRC)
 	@echo BMSDIR	= $(BMSDIR)
+	@echo MAKEFILE_LIST = $(MAKEFILE_LIST)
 

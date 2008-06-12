@@ -1,9 +1,10 @@
 
+BMSDIR := ../BMS
 
 # Option for building shared libraries
 ifdef JANA_SHARED
-include ../BMS/Makefile.shlib
+include $(BMSDIR)/Makefile.shlib
 else
-include ../BMS/Makefile.lib
+include $(BMSDIR)/Makefile.lib
 endif
 

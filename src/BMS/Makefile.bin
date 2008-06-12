@@ -4,12 +4,8 @@
 #
 
 
-# The BMS directory. Note that we could use "lastword" here, but it
-# doesn't seem to be implemented widely yet.
-FMFL = $(filter-out .depends%, $(MAKEFILE_LIST))
-BMSDIR = $(dir $(word $(words $(FMFL)),$(FMFL)))
-#BMSDIR = $(dir $(lastword $(MAKEFILE_LIST)))
-include $(BMSDIR)Makefile.common
+# The BMSDIR variable needs to be set prior to including this file
+include $(BMSDIR)/Makefile.common
 
 .PHONY: mkdirs clean env
 
@@ -23,7 +19,7 @@ ifdef DEBUG
 	LD_FLAGS	+= -g -pg
 endif
 
-MAIN_FILES = $(shell $(BMSDIR)main_files.sh)
+MAIN_FILES = $(shell $(BMSDIR)/main_files.sh)
 
 EXE_NAMES = $(addsuffix $(DEBUG_SUFFIX),$(basename $(MAIN_FILES)))
 EXE_PATHNAMES = $(foreach s,$(EXE_NAMES),$(BIN_DIR)/$s)
