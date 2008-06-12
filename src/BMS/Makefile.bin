@@ -6,9 +6,10 @@
 
 # The BMS directory. Note that we could use "lastword" here, but it
 # doesn't seem to be implemented widely yet.
-BMSDIR = $(dir $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))
+FMFL = $(filter-out .depends%, $(MAKEFILE_LIST))
+BMSDIR = $(dir $(word $(words $(FMFL)),$(FMFL)))
 #BMSDIR = $(dir $(lastword $(MAKEFILE_LIST)))
-include $(BMSDIR)/Makefile.common
+include $(BMSDIR)Makefile.common
 
 .PHONY: mkdirs clean env
 
@@ -22,7 +23,7 @@ ifdef DEBUG
 	LD_FLAGS	+= -g -pg
 endif
 
-MAIN_FILES = $(shell $(BMSDIR)/main_files.sh)
+MAIN_FILES = $(shell $(BMSDIR)main_files.sh)
 
 EXE_NAMES = $(addsuffix $(DEBUG_SUFFIX),$(basename $(MAIN_FILES)))
 EXE_PATHNAMES = $(foreach s,$(EXE_NAMES),$(BIN_DIR)/$s)
@@ -132,6 +133,8 @@ env:
 	@echo MAIN_FILES    = "$(MAIN_FILES)"
 	@echo MAIN_OBJS     = $(MAIN_OBJS)
 	@echo NON_MAIN_OBJS = $(NON_MAIN_OBJS)
-	@echo HSRC		         = $(HSRC)
-
+	@echo HSRC			  = $(HSRC)
+	@echo MAKEFILE_LIST = $(MAKEFILE_LIST)
+	@echo BMSDIR		  = $(BMSDIR)
+	@echo test = $(word 2,$(MAKEFILE_LIST))
 

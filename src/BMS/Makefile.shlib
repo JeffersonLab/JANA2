@@ -6,9 +6,10 @@
 
 # The BMS directory. Note that we could use "lastword" here, but it
 # doesn't seem to be implemented widely yet.
-BMSDIR = $(dir $(word $(words $(MAKEFILE_LIST)),$(MAKEFILE_LIST)))
+FMFL = $(filter-out .depends%, $(MAKEFILE_LIST))
+BMSDIR = $(dir $(word $(words $(FMFL)),$(FMFL)))
 #BMSDIR = $(dir $(lastword $(MAKEFILE_LIST)))
-include $(BMSDIR)/Makefile.common
+include $(BMSDIR)Makefile.common
 
 .PHONY: all mkdirs clean env
 
