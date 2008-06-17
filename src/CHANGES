@@ -2,6 +2,8 @@
 Changes in version 0.4.6
 
 - Modified Makefiles to no longer use JANA_HOME
+- Fixed JEventLoop::FindByID() templated method to use static_className()
+  instead of className() so it can be called without an object.
 
 Changes in version 0.4.5
 
