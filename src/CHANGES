@@ -1,4 +1,8 @@
 
+Changes in version 0.4.7
+
+- Added janaroot plugin for automatic generation of ROOT trees from object
+
 Changes in version 0.4.6
 
 - Modified Makefiles to no longer use JANA_HOME
