@@ -2,6 +2,8 @@
 Changes in version 0.4.7
 
 - Added janaroot plugin for automatic generation of ROOT trees from object
+- Create symbolic link to src directory if no "src" dir/file exists in the
+  installation directory
 
 Changes in version 0.4.6
 

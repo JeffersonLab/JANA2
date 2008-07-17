@@ -774,7 +774,12 @@ if test "$my_os" = "SunOS"; then
     fi
 fi
 AC_MSG_NOTICE([uname/CCC: $my_os/$CCC])
-
+#
+#
+# Set the current location as the source directory so the makefiles
+# Makefile.lib and Makefile.bin, ... can make a symlink to it if they
+# are installing the binaries to a non-default location.
+JANA_SRC_DIR="$PWD"
 
 # ===========================================================================
 # Perform tests for optional packages used by JANA
@@ -791,6 +796,6 @@ AC_SUBST([HAVE_MYSQL])
 AC_SUBST([HAVE_XERCES])
 AC_SUBST([prefix])
 AC_SUBST([exec_prefix])
-AC_SUBST([testme])
+AC_SUBST([JANA_SRC_DIR])
 AC_OUTPUT(BMS/Makefile.common)
 

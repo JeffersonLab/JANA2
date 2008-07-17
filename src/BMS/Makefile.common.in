@@ -21,6 +21,7 @@ XERCES_VERSION = @XERCES_VERSION@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 
+JANA_SRC_DIR = @JANA_SRC_DIR@
 
 #
 # This is a generic makefile used to build all the source in the
