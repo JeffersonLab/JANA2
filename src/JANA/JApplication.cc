@@ -203,6 +203,12 @@ JApplication::JApplication(int narg, char* argv[])
 			RegisterSharedObjectDirectory(sodirname);
 			continue;
 		}
+		arg="--config";
+		if(!strncmp(arg, argv[i],strlen(arg))){
+			string fname(&argv[i][strlen(arg)+1]);
+			ReadConfigFile(fname);
+			continue;
+		}
 		arg="--factoryreport";
 		if(!strncmp(arg, argv[i],strlen(arg))){
 			print_factory_report = true;
@@ -264,15 +270,16 @@ void JApplication::Usage(void)
 {
 	/// Print lines identifying the default JANA command line arguments
 	
+	cout<<"  --janaversion            Print JANA verson information"<<endl;
 	cout<<"  --nthreads=X             Launch X processing threads"<<endl;
 	cout<<"  --plugin=plugin_name     Attach the plug-in named \"plugin_name\""<<endl;
 	cout<<"  --so=shared_obj          Attach a plug-in with filename \"shared_obj\""<<endl;
 	cout<<"  --sodir=shared_dir       Add the directory \"shared_dir\" to search list"<<endl;
-	cout<<"  --factoryreport          Dump a short report on factories to screen at end of job"<<endl;
+	cout<<"  --config=filename        Read in the specified JANA configuration file"<<endl;
+	cout<<"  --factoryreport          Dump a short report on factories at end of job"<<endl;
 	cout<<"  --auto_activate=factory  Auto activate \"factory\" for every event"<<endl;
 	cout<<"  -Pkey=value              Set configuration parameter \"key\" to \"value\""<<endl;
 	cout<<"  -Pprint                  Print all configuration params"<<endl;
-	cout<<"  --janaversion            Print JANA verson information"<<endl;
 }
 
 //---------------------------------
@@ -290,6 +297,78 @@ JApplication::~JApplication()
 	calibrations.clear();
 	for(unsigned int i=0; i<heartbeats.size(); i++)delete heartbeats[i];
 	heartbeats.clear();
+}
+
+//---------------------------------
+// ReadConfigFile
+//---------------------------------
+void JApplication::ReadConfigFile(string fname)
+{
+	/// Read in the configuration file with name specified by "fname".
+	/// The file should have the form:
+	///
+	/// <pre>
+	/// key1 value1
+	/// key2 value2
+	/// ...
+	/// </pre>
+	/// 
+	/// Where there is a space between the key and the value (thus, the "key"
+	/// can contain no spaces). The value is taken as the rest of the line
+	/// up to, but not including the newline itself.
+	///
+	/// A key may be specified with no value and the value will be set to "1".
+	///
+	/// A "#" charater will discard the remaining characters in a line up to
+	/// the next newline. Therefore, lines starting with "#" are ignored
+	/// completely.
+	///
+	/// Lines with no characters (except for the newline) are ignored.
+
+	// Try and open file
+	ifstream ifs(fname.c_str());
+	if(!ifs.is_open()){
+		cerr<<"Unable to open configuration file \""<<fname<<"\" !"<<endl;
+		return;
+	}
+	cout<<"Reading configuration from \""<<fname<<"\" ..."<<endl;
+	
+	// Loop over lines
+	char line[1024];
+	while(!ifs.eof()){
+		// Read in next line ignoring comments 
+		ifs.getline(line, 1024);
+		if(strlen(line)==0)continue;
+		if(line[0] == '#')continue;
+		string str(line);
+
+		// Check for comment character and erase comment if found
+		if(str.find('#')!=str.npos)str.erase(str.find('#'));
+
+		// Break line into tokens
+		vector<string> tokens;
+		string buf; // Have a buffer string
+		stringstream ss(str); // Insert the string into a stream
+		while (ss >> buf)tokens.push_back(buf);
+		if(tokens.size()<1)continue; // ignore empty lines
+
+		// Use first token as key
+		string key = tokens[0];
+		
+		// Concatenate remaining tokens into val string
+		string val="";
+		for(unsigned int i=1; i<tokens.size(); i++){
+			if(i!=1)val += " ";
+			val += tokens[i];
+		}
+		if(val=="")val="1";
+
+		// Set Configuration Parameter
+		jparms->SetParameter(key, val);
+	}
+	
+	// close file
+	ifs.close();	
 }
 
 //---------------------------------
@@ -849,7 +928,7 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 		if(rem.tv_sec == 0 && rem.tv_nsec == 0){
 			// If there was no time remaining, then we must have slept
 			// the whole amount
-			int delta_NEvents = NEvents - last_NEvents;
+			int delta_NEvents = NEvents - GetEventBufferSize() - last_NEvents;
 			avg_NEvents += delta_NEvents;
 			avg_time += sleep_time;
 			rate_instantaneous = (double)delta_NEvents/sleep_time;
@@ -857,7 +936,7 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 		}else{
 			cout<<__FILE__<<":"<<__LINE__<<" didn't sleep full "<<sleep_time<<" seconds!"<<endl;
 		}
-		last_NEvents = NEvents;
+		last_NEvents = NEvents - GetEventBufferSize();
 		
 		// If show_ticker is set, then update the screen with the rate(s)
 		if(show_ticker && loops.size()>0)PrintRate();
@@ -906,7 +985,7 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 		dlclose(sohandles[i]);
 	}
 	
-	cout<<" "<<NEvents<<" events processed. Average rate: "
+	cout<<" "<<(NEvents-GetEventBufferSize())<<" events processed. Average rate: "
 		<<Val2StringWithPrefix(rate_average)<<"Hz"<<endl;
 
 	return NOERROR;
@@ -1043,7 +1122,7 @@ string JApplication::Val2StringWithPrefix(float val)
 //----------------
 void JApplication::PrintRate(void)
 {
-	string event_str = Val2StringWithPrefix(NEvents) + " events";
+	string event_str = Val2StringWithPrefix((NEvents-GetEventBufferSize())) + " events";
 	string ir_str = Val2StringWithPrefix(rate_instantaneous) + "Hz";
 	string ar_str = Val2StringWithPrefix(rate_average) + "Hz";
 	cout<<"  "<<event_str<<"   "<<ir_str

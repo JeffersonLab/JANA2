@@ -54,6 +54,7 @@ class JApplication{
 		static const char* static_className(void){return "JApplication";}
 		
 		void Usage(void);
+		void ReadConfigFile(string fname);
 		
 		void EventBufferThread(void);
 		unsigned int GetEventBufferSize(void);

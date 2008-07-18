@@ -76,6 +76,12 @@ void ParseCommandLineArguments(int &narg, char *argv[])
 			case 'A':
 				ACTIVATE_ALL = 1;
 				break;
+			case '-':
+				if(string(argv[i])=="--help"){
+					Usage();
+					break;
+				}
+				break;
 		}
 	}
 }
@@ -86,6 +92,10 @@ void ParseCommandLineArguments(int &narg, char *argv[])
 //-----------
 void Usage(void)
 {
+	// To print the options from JApplication, we need a JApplication object
+	extern jana::JApplication *japp;
+	JApplication *app = japp==NULL ? new JApplication(0,NULL):japp;
+
 	cout<<"Usage:"<<endl;
 	cout<<"       jana [options] source1 source2 ..."<<endl;
 	cout<<endl;
@@ -96,11 +106,16 @@ void Usage(void)
 	cout<<"To specify a tagged factory, append a colon and then the tag"<<endl;
 	cout<<"to the data class. e.g.  dataclassname:tag"<<endl;
 	cout<<endl;
-	cout<<"Options:"<<endl;
+	cout<<"Base JANA options:"<<endl;
+	cout<<endl;
+	app->Usage();
+	cout<<endl;
+	cout<<"Options for jana utility:"<<endl;
 	cout<<endl;
 	cout<<"   -h       Print this message"<<endl;
+	cout<<"   --help   Print this message"<<endl;
 	cout<<"   -v       Print the JANA version number"<<endl;
-	cout<<"   -Dname   Activate factory for data of type \"name\" (can be used mult. times)"<<endl;
+	//cout<<"   -Dname   Activate factory for data of type \"name\" (can be used mult. times)"<<endl;
 	cout<<"   -A       Activate all factories"<<endl;
 	cout<<endl;
 
