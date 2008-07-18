@@ -139,8 +139,9 @@ class JApplication{
 		vector<void*> sohandles;
 
 		int show_ticker;
-		int NEvents;
-		int last_NEvents;
+		int NEvents_read;		///< Number of events read from source
+		int NEvents;			///< Number of events processed
+		int last_NEvents;		///< Number of events processed the last time we calculated rates
 		int avg_NEvents;
 		double avg_time;
 		double rate_instantaneous;

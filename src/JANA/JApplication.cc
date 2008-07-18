@@ -156,6 +156,7 @@ JApplication::JApplication(int narg, char* argv[])
 
 	// Variables used for calculating the rate
 	show_ticker = 1;
+	NEvents_read = 0;
 	NEvents = 0;
 	last_NEvents = 0;
 	avg_NEvents = 0;
@@ -408,6 +409,7 @@ jerror_t JApplication::NextEvent(JEvent &event)
 		event.SetRunNumber(myevent->GetRunNumber());
 		event.SetEventNumber(myevent->GetEventNumber());
 		event.SetRef(myevent->GetRef());
+		NEvents++;
 		delete myevent;
 		return NOERROR;
 	}
@@ -438,6 +440,12 @@ void JApplication::EventBufferThread(void)
 	/// reading in events to keep the event_buffer list filled.
 	/// It exits once it has read the last event or the value of
 	/// stop_event_buffer has been set to true.
+	
+	unsigned int EVENTS_TO_SKIP=0;
+	unsigned int EVENTS_TO_KEEP=0;
+	jparms->SetDefaultParameter("EVENTS_TO_SKIP", EVENTS_TO_SKIP);
+	jparms->SetDefaultParameter("EVENTS_TO_KEEP", EVENTS_TO_KEEP);
+	
 	unsigned int MAX_EVENTS_IN_BUFFER = 10;
 	jerror_t err;
 	JEvent *event = NULL;
@@ -469,7 +477,22 @@ void JApplication::EventBufferThread(void)
 		if(err!=NOERROR){
 			delete event;
 			event = NULL;
+		}else{
+			// If the user specified that some events should be skipped,
+			// then do that here, making sure to free the event first!
+			if(NEvents_read<(int)EVENTS_TO_SKIP){
+				event->FreeEvent();
+				delete event;
+				event = NULL;
+			}
 		}
+		
+		// If the user specified a fixed number of events to keep, then 
+		// check that here and end the loop once we've read them all
+		// in.
+		if(EVENTS_TO_KEEP>0)
+			if(NEvents_read >= (int)(EVENTS_TO_SKIP+EVENTS_TO_KEEP))break;
+		
 	}while(err!=NO_MORE_EVENT_SOURCES);
 
 	event_buffer_filling=false;
@@ -512,7 +535,7 @@ jerror_t JApplication::ReadEvent(JEvent &event)
 	}
 
 	// Event counter
-	NEvents++;
+	NEvents_read++;
 
 	return NOERROR;
 }
@@ -985,8 +1008,9 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 		dlclose(sohandles[i]);
 	}
 	
-	cout<<" "<<(NEvents-GetEventBufferSize())<<" events processed. Average rate: "
-		<<Val2StringWithPrefix(rate_average)<<"Hz"<<endl;
+	cout<<" "<<NEvents<<" events processed ";
+	cout<<" ("<<NEvents_read<<" events read) ";
+	cout<<"Average rate: "<<Val2StringWithPrefix(rate_average)<<"Hz"<<endl;
 
 	return NOERROR;
 }
@@ -1122,13 +1146,15 @@ string JApplication::Val2StringWithPrefix(float val)
 //----------------
 void JApplication::PrintRate(void)
 {
-	string event_str = Val2StringWithPrefix((NEvents-GetEventBufferSize())) + " events";
+	string event_str = Val2StringWithPrefix(NEvents) + " events processed";
+	string event_read_str = "(" + Val2StringWithPrefix(NEvents_read) + " events read)";
 	string ir_str = Val2StringWithPrefix(rate_instantaneous) + "Hz";
 	string ar_str = Val2StringWithPrefix(rate_average) + "Hz";
-	cout<<"  "<<event_str<<"   "<<ir_str
-		<<"  (average rate: "<<ar_str<<")"
-		//<<"  event buffer:"<<GetEventBufferSize()
-		<<"     \r";
+	cout<<"  "<<event_str;
+	cout<<"  "<<event_read_str;
+	cout<<"  "<<ir_str;
+	cout<<"  (avg.: "<<ar_str<<")";
+	cout<<"     \r";
 	cout.flush();
 }
 

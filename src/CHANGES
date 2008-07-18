@@ -4,10 +4,12 @@ Changes in version 0.4.7
 - Added janaroot plugin for automatic generation of ROOT trees from object
 - Create symbolic link to src directory if no "src" dir/file exists in the
   installation directory
-- Fixed event rate reported so events read into buffer, but not yet processed
-  aren't included
+- Fixed event rate reported so the events already read into buffer, but not
+  yet processed aren't included
 - Cleaned up base JANA Usage statement and implemented in the jana utility
 - Added --config option to read in configuration parameters from a file
+- Added EVENTS_TO_SKIP and EVENTS_TO_KEEP to JApplication so one can specify
+  a specific range of events to process from the command line
 
 Changes in version 0.4.6
 
