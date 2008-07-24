@@ -1,0 +1,43 @@
+#
+#
+# $Id$
+#
+
+# BMS system configuration
+#
+# This file contains variables defined by the configure script.
+# It is included by Makefile.common and any other Makefile
+# that only needs configuration information.
+#
+
+
+HAVE_MYSQL	:= @HAVE_MYSQL@
+HAVE_XERCES	:= @HAVE_XERCES@
+HAVE_ROOT	:= @HAVE_ROOT@
+
+MYSQL_CFLAGS = @MYSQL_CFLAGS@
+MYSQL_LDFLAGS = @MYSQL_LDFLAGS@
+MYSQL_VERSION = @MYSQL_VERSION@
+
+XERCES_CPPFLAGS = @XERCES_CPPFLAGS@
+XERCES_LDFLAGS = @XERCES_LDFLAGS@
+XERCES_VERSION = @XERCES_VERSION@
+
+ROOTCONF			= @ROOTCONF@
+ROOTEXEC			= @ROOTEXEC@
+ROOTCINT			= @ROOTCINT@
+ROOTLIBDIR		= @ROOTLIBDIR@
+ROOTINCDIR		= @ROOTINCDIR@
+ROOTCFLAGS		= @ROOTCFLAGS@
+ROOTLIBS			= @ROOTLIBS@
+ROOTGLIBS		= @ROOTGLIBS@
+ROOTAUXLIBS		= @ROOTAUXLIBS@
+ROOTAUXCFLAGS	= @ROOTAUXCFLAGS@
+ROOTRPATH		= @ROOTRPATH@
+
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+
+JANA_SRC_DIR = @JANA_SRC_DIR@
+

@@ -620,9 +620,23 @@ XERCES_CPPFLAGS
 XERCES_LDFLAGS
 XERCES_LIBS
 XERCES_VERSION
+ROOTCONF
+ROOTEXEC
+ROOTCINT
+ROOTLIBDIR
+ROOTINCDIR
+ROOTCFLAGS
+ROOTLIBS
+ROOTGLIBS
+ROOTAUXLIBS
+ROOTAUXCFLAGS
+ROOTRPATH
+ROOTVERSION
+ROOTSOVERSION
 HAVE_MYSQL
 HAVE_XERCES
 JANA_SRC_DIR
+HAVE_ROOT
 LIBOBJS
 LTLIBOBJS'
 ac_subst_files=''
@@ -1212,6 +1226,7 @@ Optional Packages:
                           check standard prefixes (ARG=yes); disable (ARG=no)
   --with-xerces-inc=[DIR] path to Xerces C++ Parser headers
   --with-xerces-lib=[ARG] link options for Xerces C++ Parser libraries
+  --with-rootsys          top of the ROOT installation directory
 
 Some influential environment variables:
   CXX         C++ compiler command
@@ -1838,6 +1853,29 @@ echo "                             Configuring JANA ..."
 #   permitted in any medium without royalty provided the copyright notice
 #   and this notice are preserved.
 
+
+
+# ===========================================================================
+#             http://root.cern.ch (from build/misc/root.m4 of source distrib.)
+#
+# Modified somewhat 7/23/2008 D.L.
+# ===========================================================================
+
+
+#
+# Macro to check if ROOT has a specific feature:
+#
+#   ROOT_FEATURE(FEATURE,[ACTION_IF_HAVE,[ACTION_IF_NOT]])
+#
+# For example
+#
+#   ROOT_FEATURE([ldap],[AC_DEFINE([HAVE_ROOT_LDAP])])
+#
+
+
+#
+# EOF
+#
 
 
 
@@ -4326,6 +4364,206 @@ echo "$as_me: WARNING: Xerces C++ Parser support requested but headers or librar
     fi
 
 
+
+# Check whether --with-rootsys was given.
+if test "${with_rootsys+set}" = set; then
+  withval=$with_rootsys; user_rootsys=$withval
+else
+  user_rootsys="none"
+fi
+
+  if test ! x"$user_rootsys" = xnone; then
+    rootbin="$user_rootsys/bin"
+  elif test ! x"$ROOTSYS" = x ; then
+    rootbin="$ROOTSYS/bin"
+  else
+   rootbin=$PATH
+  fi
+  # Extract the first word of "root-config ", so it can be a program name with args.
+set dummy root-config ; ac_word=$2
+{ echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
+if test "${ac_cv_path_ROOTCONF+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $ROOTCONF in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_ROOTCONF="$ROOTCONF" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $rootbin
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_path_ROOTCONF="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_path_ROOTCONF" && ac_cv_path_ROOTCONF="no"
+  ;;
+esac
+fi
+ROOTCONF=$ac_cv_path_ROOTCONF
+if test -n "$ROOTCONF"; then
+  { echo "$as_me:$LINENO: result: $ROOTCONF" >&5
+echo "${ECHO_T}$ROOTCONF" >&6; }
+else
+  { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+fi
+
+
+  # Extract the first word of "root ", so it can be a program name with args.
+set dummy root ; ac_word=$2
+{ echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
+if test "${ac_cv_path_ROOTEXEC+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $ROOTEXEC in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_ROOTEXEC="$ROOTEXEC" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $rootbin
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_path_ROOTEXEC="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_path_ROOTEXEC" && ac_cv_path_ROOTEXEC="no"
+  ;;
+esac
+fi
+ROOTEXEC=$ac_cv_path_ROOTEXEC
+if test -n "$ROOTEXEC"; then
+  { echo "$as_me:$LINENO: result: $ROOTEXEC" >&5
+echo "${ECHO_T}$ROOTEXEC" >&6; }
+else
+  { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+fi
+
+
+  # Extract the first word of "rootcint ", so it can be a program name with args.
+set dummy rootcint ; ac_word=$2
+{ echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6; }
+if test "${ac_cv_path_ROOTCINT+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  case $ROOTCINT in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_ROOTCINT="$ROOTCINT" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $rootbin
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_path_ROOTCINT="$as_dir/$ac_word$ac_exec_ext"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_path_ROOTCINT" && ac_cv_path_ROOTCINT="no"
+  ;;
+esac
+fi
+ROOTCINT=$ac_cv_path_ROOTCINT
+if test -n "$ROOTCINT"; then
+  { echo "$as_me:$LINENO: result: $ROOTCINT" >&5
+echo "${ECHO_T}$ROOTCINT" >&6; }
+else
+  { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+fi
+
+
+
+  if test ! x"$ROOTCONF" = "xno" && \
+     test ! x"$ROOTCINT" = "xno" ; then
+
+    # define some variables
+    ROOTLIBDIR=`$ROOTCONF --libdir`
+    ROOTINCDIR=`$ROOTCONF --incdir`
+    ROOTCFLAGS=`$ROOTCONF --noauxcflags --cflags`
+    ROOTLIBS=`$ROOTCONF --noauxlibs --noldflags --libs`
+    ROOTGLIBS=`$ROOTCONF --noauxlibs --noldflags --glibs`
+    ROOTAUXCFLAGS=`$ROOTCONF --auxcflags`
+    ROOTAUXLIBS=`$ROOTCONF --auxlibs`
+    ROOTRPATH=$ROOTLIBDIR
+    ROOTVERSION=`$ROOTCONF --version`
+    ROOTSOVERSION=`dirname $ROOTVERSION`
+
+    if test 5.08/00 ; then
+      { echo "$as_me:$LINENO: checking whether ROOT version >= 5.08/00" >&5
+echo $ECHO_N "checking whether ROOT version >= 5.08/00... $ECHO_C" >&6; }
+      vers=`$ROOTCONF --version | tr './' ' ' | awk 'BEGIN { FS = " "; } { printf "%d", ($''1 * 1000 + $''2) * 1000 + $''3;}'`
+      requ=`echo 5.08/00 | tr './' ' ' | awk 'BEGIN { FS = " "; } { printf "%d", ($''1 * 1000 + $''2) * 1000 + $''3;}'`
+		if test $vers -lt $requ ; then
+        { echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6; }
+	no_root="yes"
+      else
+        { echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6; }
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_ROOT 1
+_ACEOF
+
+		  HAVE_ROOT=yes
+		  { echo "$as_me:$LINENO: defining HAVE_ROOT=$HAVE_ROOT" >&5
+echo "$as_me: defining HAVE_ROOT=$HAVE_ROOT" >&6;}
+      fi
+    fi
+  else
+    # otherwise, we say no_root
+    no_root="yes"
+  fi
+
+
+
+
+
+
+
+
+
+
+
+
+  if test "x$no_root" = "x" ; then
+    :
+  else
+    { echo "$as_me:$LINENO: result: ROOT support will not be included" >&5
+echo "${ECHO_T}ROOT support will not be included" >&6; }
+  fi
+
+
 { echo "$as_me:$LINENO: creating JANA/jana_config.h" >&5
 echo "$as_me: creating JANA/jana_config.h" >&6;}
 cp confdefs.h JANA/jana_config.h
@@ -4335,7 +4573,8 @@ cp confdefs.h JANA/jana_config.h
 
 
 
-ac_config_files="$ac_config_files BMS/Makefile.common"
+
+ac_config_files="$ac_config_files BMS/Makefile.config"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -4891,7 +5130,7 @@ cat >>$CONFIG_STATUS <<\_ACEOF
 for ac_config_target in $ac_config_targets
 do
   case $ac_config_target in
-    "BMS/Makefile.common") CONFIG_FILES="$CONFIG_FILES BMS/Makefile.common" ;;
+    "BMS/Makefile.config") CONFIG_FILES="$CONFIG_FILES BMS/Makefile.config" ;;
 
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}
@@ -5011,14 +5250,28 @@ XERCES_CPPFLAGS!$XERCES_CPPFLAGS$ac_delim
 XERCES_LDFLAGS!$XERCES_LDFLAGS$ac_delim
 XERCES_LIBS!$XERCES_LIBS$ac_delim
 XERCES_VERSION!$XERCES_VERSION$ac_delim
+ROOTCONF!$ROOTCONF$ac_delim
+ROOTEXEC!$ROOTEXEC$ac_delim
+ROOTCINT!$ROOTCINT$ac_delim
+ROOTLIBDIR!$ROOTLIBDIR$ac_delim
+ROOTINCDIR!$ROOTINCDIR$ac_delim
+ROOTCFLAGS!$ROOTCFLAGS$ac_delim
+ROOTLIBS!$ROOTLIBS$ac_delim
+ROOTGLIBS!$ROOTGLIBS$ac_delim
+ROOTAUXLIBS!$ROOTAUXLIBS$ac_delim
+ROOTAUXCFLAGS!$ROOTAUXCFLAGS$ac_delim
+ROOTRPATH!$ROOTRPATH$ac_delim
+ROOTVERSION!$ROOTVERSION$ac_delim
+ROOTSOVERSION!$ROOTSOVERSION$ac_delim
 HAVE_MYSQL!$HAVE_MYSQL$ac_delim
 HAVE_XERCES!$HAVE_XERCES$ac_delim
 JANA_SRC_DIR!$JANA_SRC_DIR$ac_delim
+HAVE_ROOT!$HAVE_ROOT$ac_delim
 LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 64; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 78; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

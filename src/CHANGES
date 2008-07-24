@@ -10,6 +10,11 @@ Changes in version 0.4.7
 - Added --config option to read in configuration parameters from a file
 - Added EVENTS_TO_SKIP and EVENTS_TO_KEEP to JApplication so one can specify
   a specific range of events to process from the command line
+- Modified autoconf and BMS to have configuration set in Makefile.config
+  rather than Makefile.common
+- Added ROOT m4 macro to configure.ac. ROOT configuration now set when
+  configure script is run rather than at build time by running root-config
+  then
 
 Changes in version 0.4.6
 

@@ -3,26 +3,6 @@
 # $Header$
 #
 
-# WARNING: Changes should be made to Makefile.common.in. Changes to 
-# Makefile.common will be overwritten whenever configure is run.
-#
-# The following are set by the configure script
-HAVE_MYSQL	:= @HAVE_MYSQL@
-HAVE_XERCES	:= @HAVE_XERCES@
-
-MYSQL_CFLAGS = @MYSQL_CFLAGS@
-MYSQL_LDFLAGS = @MYSQL_LDFLAGS@
-MYSQL_VERSION = @MYSQL_VERSION@
-
-XERCES_CPPFLAGS = @XERCES_CPPFLAGS@
-XERCES_LDFLAGS = @XERCES_LDFLAGS@
-XERCES_VERSION = @XERCES_VERSION@
-
-prefix = @prefix@
-exec_prefix = @exec_prefix@
-
-JANA_SRC_DIR = @JANA_SRC_DIR@
-
 #
 # This is a generic makefile used to build all the source in the
 # current directory (anything with a .c, .cc, .cxx, .cpp or .F 
@@ -34,6 +14,8 @@ JANA_SRC_DIR = @JANA_SRC_DIR@
 # 
 
 .PHONY: mkdirs clean env all first
+
+include $(BMSDIR)/Makefile.config
 
 # The first target is made by default when make is invoked with no
 # arguments. We want to include other targets here (namely, depends

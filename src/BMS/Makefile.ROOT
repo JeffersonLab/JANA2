@@ -1,12 +1,12 @@
 
-ROOTCFLAGS   := $(shell root-config --cflags)
-ROOTLIBS     := $(shell root-config --glibs)
-ROOTGLIBS    := $(shell root-config --glibs)
-ROOTINC      := $(shell root-config --incdir)
+#ROOTCFLAGS   := $(shell root-config --cflags)
+#ROOTLIBS     := $(shell root-config --glibs)
+#ROOTGLIBS    := $(shell root-config --glibs)
+#ROOTINC      := $(shell root-config --incdir)
 
 CFLAGS		+= -D_ROOT_ $(ROOTCFLAGS) -I$(ROOTINC)
 CXXFLAGS		+= -D_ROOT_ $(ROOTCFLAGS) -I$(ROOTINC)
-MISC_LIBS 	+= $(ROOTGLIBS) -lThread -lMinuit
+MISC_LIBS 	+= -L$(ROOTLIBDIR) $(ROOTGLIBS) -lThread -lMinuit
 
 # Create ROOT dictionaries from C++ files containing ClassDef
 HSRC = $(wildcard *.h)
