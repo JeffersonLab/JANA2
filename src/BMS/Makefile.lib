@@ -15,7 +15,7 @@ VPATH = $(DEP_DIR)
 # First target. Make sure directories and dependancy files exist
 all: mkdirs $(DEPS) $(LIBNAME)($(OBJS))
 	@rm -f $(DICT_FILES)
-ifeq ($(OSNAME),Darwin)
+ifeq ($(BMS_OSNAME),Darwin)
 	ranlib $(LIBNAME)
 endif
 
@@ -70,7 +70,7 @@ env:
 	@echo CSRC		= $(CSRC)
 	@echo CXXSRC	= $(CXXSRC)
 	@echo LIBS		= $(LIBS)
-	@echo OSNAME	= $(OSNAME)
+	@echo BMS_OSNAME	= $(BMS_OSNAME)
 	@echo OBJS		= $(OBJS)
 	@echo MODULE_NAME   = $(MODULE_NAME)
 	@echo LIBNAME	= $(LIBNAME)

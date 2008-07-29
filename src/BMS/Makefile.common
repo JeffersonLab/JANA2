@@ -30,8 +30,8 @@ endif
 ifndef ARCH
 ARCH = $(shell uname -p)
 endif
-ifndef OSNAME
-OSNAME = $(OS)-$(ARCH)
+ifndef BMS_OSNAME
+BMS_OSNAME = $(shell $(BMSDIR)/osrelease.pl)
 endif
 
 ifndef FC
@@ -56,9 +56,9 @@ ifndef DCXX
 DCXX	= g++
 endif
 
-LIB_DIR		= .lib/$(OSNAME)
-BIN_DIR		= .bin/$(OSNAME)
-DEP_DIR		= .depends/$(OSNAME)
+LIB_DIR		= .lib/$(BMS_OSNAME)
+BIN_DIR		= .bin/$(BMS_OSNAME)
+DEP_DIR		= .depends/$(BMS_OSNAME)
 
 # Set installation directory based on what was specified during configuration
 INSTALL_DIR=${exec_prefix}
@@ -116,7 +116,7 @@ LIBNAME = $(LIB_DIR)/lib$(MODULE_NAME)$(DEBUG_SUFFIX).a
 # (the "-" at the front means don't error if the file doesn't exist)
 -include $(BMSDIR)/Makefile.$(OS)
 -include $(BMSDIR)/Makefile.$(ARCH)
--include $(BMSDIR)/Makefile.$(OSNAME)
+-include $(BMSDIR)/Makefile.$(BMS_OSNAME)
 
 # For GNU compilers, add verbose warnings
 ifeq ($(FC),g77)

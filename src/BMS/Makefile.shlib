@@ -28,7 +28,7 @@ endif
 # Redefine OBJS to include debug suffixes
 DOBJS = $(addsuffix $(DEBUG_SUFFIX).o,$(basename $(OBJS)))
 
-OBJ_DIR = .obj/$(OSNAME)
+OBJ_DIR = .obj/$(BMS_OSNAME)
 OUTPUT_OPTION = -o $(OBJ_DIR)/$@
 VPATH = $(OBJ_DIR):$(BIN_DIR)
 LINK_OBJS += $(addprefix $(OBJ_DIR)/,$(DOBJS))
@@ -115,7 +115,7 @@ env:
 	@echo CSRC		     = $(CSRC)
 	@echo CXXSRC	     = $(CXXSRC)
 	@echo LIBS		     = $(LIBS)
-	@echo OSNAME	     = $(OSNAME)
+	@echo BMS_OSNAME	     = $(BMS_OSNAME)
 	@echo OBJS		     = $(OBJS)
 	@echo LIBNAME	     = $(LIBNAME)
 	@echo DEPS		     = $(DEPS)

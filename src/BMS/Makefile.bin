@@ -29,7 +29,7 @@ MAIN_OBJS =  $(addsuffix .o,$(EXE_NAMES))
 DOBJS = $(addsuffix $(DEBUG_SUFFIX).o,$(basename $(OBJS)))
 NON_MAIN_OBJS = $(filter-out $(MAIN_OBJS),$(DOBJS))
 
-OBJ_DIR = .obj/$(OSNAME)
+OBJ_DIR = .obj/$(BMS_OSNAME)
 OUTPUT_OPTION = -o $(OBJ_DIR)/$@
 VPATH = $(OBJ_DIR):$(BIN_DIR)
 LINK_OBJS += $(addprefix $(OBJ_DIR)/,$(NON_MAIN_OBJS))
@@ -116,7 +116,7 @@ env:
 	@echo CSRC		     = $(CSRC)
 	@echo CXXSRC	     = $(CXXSRC)
 	@echo LIBS		     = $(LIBS)
-	@echo OSNAME	     = $(OSNAME)
+	@echo BMS_OSNAME	     = $(BMS_OSNAME)
 	@echo OBJS		     = $(OBJS)
 	@echo NO_DEP_OBJS   = $(NO_DEP_OBJS)
 	@echo LIBNAME	     = $(LIBNAME)
