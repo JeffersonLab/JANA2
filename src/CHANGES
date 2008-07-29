@@ -15,6 +15,10 @@ Changes in version 0.4.7
 - Added ROOT m4 macro to configure.ac. ROOT configuration now set when
   configure script is run rather than at build time by running root-config
   then
+- Switched from using OSNAME to BMS_OSNAME as the platform specific variable
+  name to avoid conflicts on systems that use OSNAME for other purposes.
+- Use the osrelease.pl script to determine the unique platform name
+  based on OS, architecture, and gcc version.
 
 Changes in version 0.4.6
 
