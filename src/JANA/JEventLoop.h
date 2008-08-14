@@ -388,7 +388,7 @@ const T* JEventLoop::FindByID(JObject::oid_t id)
 	
 	// Loop over factories looking for ones that provide
 	// specified data type.
-	for(uint i=0; i<factories.size(); i++){
+	for(unsigned int i=0; i<factories.size(); i++){
 		if(factories[i]->GetDataClassName() != T::static_className())continue;
 
 		// This factory provides data of type T. Search it for
