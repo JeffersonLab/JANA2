@@ -1,0 +1,25 @@
+
+
+README janahbook
+8/15/2008   David Lawrence
+
+This directory contains source for a small utility that would create
+Ntuples in an hbook file (for use with PAW) dynamically from JANA
+objects via the toStrings method of factories. This is analogous to
+the janaroot plugin only there were some issues with linking in the
+cernlib libraries into the plugin on Mac OS X, hence this is a stand
+alone utility.
+
+Currently, this utility is not in good working condition. Because this
+is a pure JANA program, the JApplication object is not specialized in
+any way. This means factories have to be added through a plugin and if
+those factories rely on any extra features of JApplication that a
+sub-class provides, it will not work. For example, in the case of GlueX,
+the DApplication derives from JApplication and provides a method
+"GetBField()". The factories that need access to the B-filed will get
+at it by dynamically casting the JApplication to a DApplication.
+
+At this time I am suspending work on this until I can better justify it
+or simply get the itch to complete it or find a work around.
+
+
