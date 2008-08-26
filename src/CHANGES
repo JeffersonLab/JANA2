@@ -4,6 +4,7 @@ Changes in version 0.4.8
 - Replaced stray instances of "uint" in JEventLoop.X with "unsigned int"
 - Added CERNLIB support to autoconf configuration
 - Added janahbook utility. This currently is unfinished.
+- Added warnings counter to janaroot plugin for data of unknown type
 
 Changes in version 0.4.7
 

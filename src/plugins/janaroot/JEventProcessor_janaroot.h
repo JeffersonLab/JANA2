@@ -74,6 +74,9 @@ class JEventProcessor_janaroot:public jana::JEventProcessor{
 
 		pthread_mutex_t rootmutex;
 		unsigned int Nevents;
+		
+		unsigned int Nwarnings;
+		unsigned int MaxWarnings;
 
 		TFile *file;
 		std::map<std::string, TreeInfo*> trees;

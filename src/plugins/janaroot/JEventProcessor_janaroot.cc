@@ -63,6 +63,10 @@ JEventProcessor_janaroot::JEventProcessor_janaroot()
 
 	// Initialize event counter
 	Nevents = 0;
+	
+	// Initialize warnings counter (used in FillTree)
+	Nwarnings = 0;
+	MaxWarnings=50;
 
 	// Release ROOT mutex
 	pthread_mutex_unlock(&rootmutex);
@@ -377,7 +381,12 @@ void JEventProcessor_janaroot::FillTree(JFactory_base *fac, TreeInfo *tinfo)
 					ptr += 256;
 					break;
 				default:
-					_DBG_<<"Unknown type: "<<tinfo->types[j]<<endl;
+					if(Nwarnings<MaxWarnings){
+						_DBG_<<"Unknown type: "<<tinfo->types[j];
+						Nwarnings++;
+						if(Nwarnings==MaxWarnings)cerr<<" --last warning! --";
+						cerr<<endl;
+					}
 					ptr += sizeof(float);
 					break;
 			}
