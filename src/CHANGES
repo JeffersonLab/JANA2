@@ -10,6 +10,7 @@ Changes in version 0.4.8
 - Added THREAD_TIMEOUT config parameter to allow setting from command line
 - Launch a new thread if a dead one is terminated
 - Fixed "hard" exiting when 3 or more SIGINTs are received
+- Exit with message if a plugin is specified, but not found
 
 Changes in version 0.4.7
 

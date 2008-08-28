@@ -1273,7 +1273,7 @@ jerror_t JApplication::RegisterSharedObject(const char *soname, bool verbose)
 	void* handle = dlopen(soname, RTLD_LAZY | RTLD_GLOBAL);
 	if(!handle){
 		if(verbose)cerr<<dlerror()<<endl;
-		return NOERROR;
+		return RESOURCE_UNAVAILABLE;
 	}
 	sohandles.push_back(handle);
 	
@@ -1335,7 +1335,7 @@ jerror_t JApplication::AddPlugin(const char *name)
 	/// of "name" should be something like "bcal_hists" or "track_hists".
 	/// This will look for a file with the given name and a ".so" extension
 	/// in directories listed in the pluginPaths vector. Paths are added
-	/// via the AddPlugin(string path) method.
+	/// via the AddPluginPath(string path) method.
 	///
 	/// Note that plugins are not actually searched for until the Init()
 	/// method of JApplications is called either explicitly by the
@@ -1426,12 +1426,13 @@ jerror_t JApplication::AttachPlugins(void)
 		if(plugin.substr(plugin.size()-3)!=".so")plugin = plugin+".so";
 	
 		// Loop over paths
+		bool found_plugin=false;
 		for(unsigned int i=0; i< pluginPaths.size(); i++){
 			string fullpath = pluginPaths[i] + "/" + plugin;
 			ifstream f(fullpath.c_str());
 			if(f.is_open()){
 				f.close();
-				RegisterSharedObject(fullpath.c_str());
+				if(RegisterSharedObject(fullpath.c_str())==NOERROR)found_plugin=true;
 				break;
 			}
 			if(printPaths) cout<<"Looking for \""<<fullpath<<"\" ...."<<"no"<<endl;
@@ -1441,10 +1442,19 @@ jerror_t JApplication::AttachPlugins(void)
 			f.open(fullpath.c_str());
 			if(f.is_open()){
 				f.close();
-				RegisterSharedObject(fullpath.c_str());
+				if(RegisterSharedObject(fullpath.c_str())==NOERROR)found_plugin=true;
 				break;
 			}
 			if(printPaths) cout<<"Looking for \""<<fullpath<<"\" ...."<<"no"<<endl;
+		}
+		
+		// If we didn't find the plugin, then complain and quit
+		if(!found_plugin){
+			Lock();
+			cerr<<endl<<"***ERROR : Couldn't find plugin \""<<plugins[j]<<"\"!***"<<endl;
+			cerr<<"***        To see paths checked, set JANA_PRINT_PLUGIN_PATHS env. var. and re-run"<<endl;
+			Unlock();
+			exit(-1);
 		}
 	}
 
