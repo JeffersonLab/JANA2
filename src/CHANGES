@@ -5,6 +5,11 @@ Changes in version 0.4.8
 - Added CERNLIB support to autoconf configuration
 - Added janahbook utility. This currently is unfinished.
 - Added warnings counter to janaroot plugin for data of unknown type
+- Added JANAROOT_VERBOSE config parameter to janaroot plugin
+- Improved mutex locking while accessing thread-related members of JApplication
+- Added THREAD_TIMEOUT config parameter to allow setting from command line
+- Launch a new thread if a dead one is terminated
+- Fixed "hard" exiting when 3 or more SIGINTs are received
 
 Changes in version 0.4.7
 

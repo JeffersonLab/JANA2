@@ -639,16 +639,20 @@ jerror_t JApplication::RemoveJEventLoop(JEventLoop *loop)
 	/// Remove a JEventLoop object from the application. This is typically
 	/// not called directly by the user. Rather, it is called from the
 	/// JEventLoop destructor.
-	vector<JEventLoop*>::iterator iter = loops.begin();
-	vector<double*>::iterator hbiter = heartbeats.begin();
-	for(; iter!=loops.end(); iter++, hbiter++){
-		if((*iter) == loop){
+
+	pthread_mutex_lock(&app_mutex);
+	
+	for(unsigned int i=0; i<loops.size(); i++){
+		if(loops[i] == loop){
 			if(print_factory_report)RecordFactoryCalls(loop);
-			loops.erase(iter);
-			heartbeats.erase(hbiter);
+			loops.erase(loops.begin()+i);
+			heartbeats.erase(heartbeats.begin()+i);
+			threads.erase(threads.begin()+i);
 			break;
 		}
 	}
+
+	pthread_mutex_unlock(&app_mutex);
 
 	return NOERROR;
 }
@@ -848,6 +852,9 @@ void* LaunchThread(void* arg)
 	try{
 		eventLoop->RefreshProcessorListFromJApplication(); // make sure we're up-to-date
 		eventLoop->Loop();
+		eventLoop->GetJApplication()->Lock();
+		cout<<"Thread 0x"<<hex<<(unsigned long)pthread_self()<<dec<<" completed gracefully"<<endl;
+		eventLoop->GetJApplication()->Unlock();
 	}catch(JException *exception){
 		if(exception)delete exception;
 		cerr<<__FILE__<<":"<<__LINE__<<" EXCEPTION caught for thread "<<pthread_self()<<endl;
@@ -938,6 +945,10 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 	}
 	cout<<endl;
 	
+	// Get the max time for a thread to be inactive before being deleting
+	double THREAD_TIMEOUT=8.0;
+	jparms->SetDefaultParameter("THREAD_TIMEOUT", THREAD_TIMEOUT);
+	
 	// Do a sleepy loop so the threads can do their work
 	struct timespec req, rem;
 	req.tv_nsec = (int)0.5E9; // set to 1/2 second
@@ -952,7 +963,7 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 			// If there was no time remaining, then we must have slept
 			// the whole amount
 			int delta_NEvents = NEvents - GetEventBufferSize() - last_NEvents;
-			avg_NEvents += delta_NEvents;
+			avg_NEvents += delta_NEvents>0 ? delta_NEvents:0;
 			avg_time += sleep_time;
 			rate_instantaneous = (double)delta_NEvents/sleep_time;
 			rate_average = (double)avg_NEvents/avg_time;
@@ -965,6 +976,11 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 		if(show_ticker && loops.size()>0)PrintRate();
 		
 		if(SIGINT_RECEIVED)Quit();
+		if(SIGINT_RECEIVED>=3)break;
+		
+		// Here we lock the app mutex before looping over the heartbeats since a thread
+		// could finish at any time, changing the heartbeats vector
+		pthread_mutex_lock(&app_mutex);
 		
 		// Add time slept to all heartbeats
 		double rem_time = (double)rem.tv_sec + (1.0E-9)*(double)rem.tv_nsec;
@@ -972,8 +988,8 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 		for(unsigned int i=0;i<heartbeats.size();i++){
 			double *hb = heartbeats[i];
 			*hb += slept_time;
-			if(monitor_heartbeat && (*hb > 7.0+sleep_time)){
-				// Thread hasn't done anything for more than 2 seconds. 
+			if(monitor_heartbeat && (*hb > (THREAD_TIMEOUT-1.0)+sleep_time)){
+				// Thread hasn't done anything for more than THREAD_TIMEOUT seconds. 
 				// Remove it from monitoring lists.
 				JEventLoop *loop = *(loops.begin()+i);
 				JEvent &event = loop->GetJEvent();
@@ -982,35 +998,80 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 				cerr<<" Delisting ..."<<endl;
 				loops.erase(loops.begin()+i);
 				heartbeats.erase(heartbeats.begin()+i);
+				threads.erase(threads.begin()+i);
 				
-				// Signal the non-responsive thread to commit suicide
-				pthread_kill(loop->GetPThreadID(), SIGHUP);
+				// Unlock the mutex so other methods can modify the heartbeats, etc vectors
+				pthread_mutex_unlock(&app_mutex);
+				
+				// Signal the non-responsive thread to commit suicide and wait for it to do so.
+				void *ptr;
+				pthread_t thr = loop->GetPThreadID();
+				pthread_kill(thr, SIGHUP);
+				pthread_join(thr, &ptr);
+				
+				// Launch a new thread to take his place, but only if we're not trying to quit
+				if(!SIGINT_RECEIVED){
+					unsigned int Nloops_left = loops.size();
+					cerr<<" Launching new thread ..."<<endl;
+					pthread_create(&thr, NULL, LaunchThread, this);
+					threads.push_back(thr);
+					
+					// We need to wait for the new thread to create a new JEventLoop
+					// If we don't wait for this here, then control may fall to the
+					// end of the while loop that checks loops.size() before the new
+					// loop is added, causing the program to finish prematurely.
+					for(int j=0; j<10; j++){
+						struct timespec req, rem;
+						req.tv_nsec = (int)0.25E9; // set to 1/4 second
+						req.tv_sec = 0;
+						rem.tv_sec = rem.tv_nsec = 0;
+						nanosleep(&req, &rem);
+						if(loops.size()>Nloops_left)break;
+					}
+				}
+				
+				// Re-lock the mutex
+				pthread_mutex_lock(&app_mutex);
+
+				// Quit this loop so we can re-enter it fresh since the thread list was changed
+				break;
 			}
 		}
+		
+		// We're done with the heartbeats etc. vectors for now. Unlock the mutex.
+		pthread_mutex_unlock(&app_mutex);
+
 
 		// When a JEventLoop runs out of events, it removes itself from
 		// the list before returning from the thread.
 	}while(loops.size() > 0);
 	
-	// Call erun() and fini() methods and delete event sources
-	Fini();
-	
-	// Merge up all the threads
-	for(unsigned int i=0; i<threads.size(); i++){
-		void *ret;
-		cout<<"Merging thread "<<i<<" ..."<<endl; cout.flush();
-		pthread_join(threads[i], &ret);
-	}
-	
-	// Close any open dll's
-	for(unsigned int i=0; i<sohandles.size(); i++){
-		cout<<"Closing shared object handle "<<i<<" ..."<<endl; cout.flush();
-		dlclose(sohandles[i]);
+	// Only be nice about exiting if the user wasn't insistent
+	if(SIGINT_RECEIVED<3){	
+		// Call erun() and fini() methods and delete event sources
+		Fini();
+		
+		// Merge up all the threads
+		for(unsigned int i=0; i<threads.size(); i++){
+			void *ret;
+			cout<<"Merging thread "<<i<<" ..."<<endl; cout.flush();
+			pthread_join(threads[i], &ret);
+		}
+		
+		// Close any open dll's
+		for(unsigned int i=0; i<sohandles.size(); i++){
+			cout<<"Closing shared object handle "<<i<<" ..."<<endl; cout.flush();
+			dlclose(sohandles[i]);
+		}
+	}else{
+		cout<<"Exiting hard due to catching 3 or more SIGINTs ..."<<endl;
 	}
 	
 	cout<<" "<<NEvents<<" events processed ";
 	cout<<" ("<<NEvents_read<<" events read) ";
 	cout<<"Average rate: "<<Val2StringWithPrefix(rate_average)<<"Hz"<<endl;
+
+	if(SIGINT_RECEIVED<3)exit(-1);
 
 	return NOERROR;
 }

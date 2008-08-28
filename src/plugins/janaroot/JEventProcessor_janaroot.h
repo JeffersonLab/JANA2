@@ -77,6 +77,8 @@ class JEventProcessor_janaroot:public jana::JEventProcessor{
 		
 		unsigned int Nwarnings;
 		unsigned int MaxWarnings;
+		
+		int JANAROOT_VERBOSE;
 
 		TFile *file;
 		std::map<std::string, TreeInfo*> trees;

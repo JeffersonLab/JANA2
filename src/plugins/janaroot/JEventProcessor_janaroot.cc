@@ -67,7 +67,7 @@ JEventProcessor_janaroot::JEventProcessor_janaroot()
 	// Initialize warnings counter (used in FillTree)
 	Nwarnings = 0;
 	MaxWarnings=50;
-
+	
 	// Release ROOT mutex
 	pthread_mutex_unlock(&rootmutex);
 }
@@ -77,6 +77,9 @@ JEventProcessor_janaroot::JEventProcessor_janaroot()
 //------------------
 jerror_t JEventProcessor_janaroot::init(void)
 {
+	JANAROOT_VERBOSE=0;
+	app->GetJParameterManager()->SetDefaultParameter("JANAROOT_VERBOSE", JANAROOT_VERBOSE);
+
 	return NOERROR;
 }
 
@@ -309,7 +312,7 @@ TreeInfo* JEventProcessor_janaroot::GetTreeInfo(JFactory_base *fac)
 	*tinfo->Nptr = 0;
 	for(unsigned long i=0; i<Nevents; i++)tinfo->tree->Fill();
 	
-	tinfo->Print();
+	if(JANAROOT_VERBOSE>0)tinfo->Print();
 	
 	return tinfo;
 }
@@ -381,7 +384,7 @@ void JEventProcessor_janaroot::FillTree(JFactory_base *fac, TreeInfo *tinfo)
 					ptr += 256;
 					break;
 				default:
-					if(Nwarnings<MaxWarnings){
+					if(Nwarnings<MaxWarnings && JANAROOT_VERBOSE>0){
 						_DBG_<<"Unknown type: "<<tinfo->types[j];
 						Nwarnings++;
 						if(Nwarnings==MaxWarnings)cerr<<" --last warning! --";
