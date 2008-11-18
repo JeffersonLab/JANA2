@@ -1,7 +1,7 @@
 // Author: David Lawrence  June 25, 2004
 //
 //
-// hd_ana.cc
+// jgeomread.cc
 //
 
 #include <iostream>
