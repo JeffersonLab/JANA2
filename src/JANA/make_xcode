@@ -1,0 +1,18 @@
+#!/bin/tcsh
+
+# For JANA, the makefile system is designed with an "install" target to actually
+# copy the binaries (and headers in the case of the library) out of the source
+# tree. When building utilities, they use the installed headers and libraries so
+# we must make sure the "install" target is used for normal builds in xcode in
+# order to get the expected behavior. Therefore, the following line just sets the
+# value of ACTION to "install" if it is an empty string. The other action we use
+# is "clean" in which case the value if ACTION is unchanged since xcode already
+# sets it for us.
+[ -z $ACTION ] && setenv ACTION install
+
+# Run "make" and pipe the output through awk. The awk script will prepend the
+# current working directory to each output line containing "error:" or "warning:".
+# The effect is to replace filenames with ones including the full path in lines
+# containing errors and warnings so that clicking them in the build results 
+# window of Xcode will open the appropriate file and highlight the appropriate line.
+make $ACTION |& awk '/(error:)|(warning:)/ {printf "'${PWD}'/"}; // {print}'
