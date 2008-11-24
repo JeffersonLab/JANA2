@@ -26,7 +26,7 @@ class JTest_factory:public JFactory<JTest>{
 
 		double val1, val2;
 
-		int governer_iterations;
+		int governor_iterations;
 };
 
 #endif // _JTest_factory_

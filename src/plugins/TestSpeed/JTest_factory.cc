@@ -6,6 +6,7 @@
 //
 
 #include <cmath>
+#include <iostream>
 
 #include "JTest_factory.h"
 
@@ -21,8 +22,8 @@ JTest_factory::JTest_factory(void)
 	//   -PGOVERNOR_ITERATIONS=###
 	// where ### is some integer. Setting ### to 0 will bypass the governor
 	// completely.
-	governer_iterations = 10000;
-	gPARMS->SetDefaultParameter("GOVERNOR_ITERATIONS", governer_iterations);
+	governor_iterations = 10000;
+	gPARMS->SetDefaultParameter("GOVERNOR_ITERATIONS", governor_iterations);
 }
 
 //------------------
@@ -62,7 +63,7 @@ jerror_t JTest_factory::evnt(JEventLoop *loop, int eventnumber)
 		// need to do a lot of calculations to produce
 		// the factory's data.
 		double a = 1.234;
-		for(int j=0; j<governer_iterations; j++){
+		for(int j=0; j<governor_iterations; j++){
 			a = log(fabs(a*sqrt(pow(a, 2.2))));
 		}
 		

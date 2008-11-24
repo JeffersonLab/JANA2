@@ -49,7 +49,7 @@ void InitPlugin(JApplication *app){
 	cout<<endl;
 	cout<<"To adjust the time spent in the processor, use:"<<endl;
 	cout<<endl;
-	cout<<"    -PGOVENOR_ITERATIONS=1000"<<endl;
+	cout<<"    -PGOVERNOR_ITERATIONS=1000"<<endl;
 	cout<<endl;
 	cout<<"this will cause the \"number-crunching\" loop to iterate 1000"<<endl;
 	cout<<"times so that CPU cycles are chewed up in the processor itself."<<endl;
