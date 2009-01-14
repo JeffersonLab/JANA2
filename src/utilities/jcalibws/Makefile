@@ -21,7 +21,8 @@ clean:
 	rm -f .obj/$(BMS_OSNAME)/*.o *~
 	rm -f jcalibws.GetKeyValue.req.xml    jcalibws.GetTable.req.xml
 	rm -f jcalibws.GetKeyValue.res.xml    jcalibws.GetTable.res.xml
-	rm -f jcalibws.nsmap jcalibws.wsdl ns.xsd soapC.cpp soapH.h soapStub.h soapjcalibwsObject.h
+	rm -f jcalibws.nsmap jcalibws.wsdl ns.xsd soapC.cpp soapH.h soapStub.h
+	rm -f soapjcalibwsProxy.h soapjcalibwsObject.h
 	rm -f soapServer.cpp soapServerLib.cpp 
 	rm -f soapClient.cpp soapClientLib.cpp 
 
