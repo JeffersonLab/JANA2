@@ -1,0 +1,21 @@
+
+
+README for jcalibws
+
+Jan. 12, 2009  David Lawrence
+
+This plugin implements a client-side mechanism to access a calibration and
+conditions database using a web-service and the JANA API. In other words,
+this allows calibration constants to be obtained through a Web Service.
+
+Specifically, this will register a JCalibrationGenerator that will be used
+to make a JCalibration object if the JANA_CALIB_URL is set to have the form:
+
+http://*/jcalibws
+
+Requests for contants will be sent to the Web Service and the response 
+passed back to the caller.
+
+The underlying mechanism is the gSOAP package for implemeting SOAP web
+services using C++. 
+
