@@ -7,6 +7,8 @@
 #include <iostream>
 using namespace std;
 
+#include <stdlib.h>
+
 #include <JANA/JApplication.h>
 #include <JANA/JCalibration.h>
 using namespace jana;
@@ -28,7 +30,11 @@ int main(int narg, char *argv[])
 
 	// Instantiate a JApplication object and use it to get a JCalibration object
 	JApplication *app = new JApplication(narg, argv);
+	app->Init();
 	JCalibration *jcalib = app->GetJCalibration(RUN_NUMBER);
+	
+	// Make sure the calibration object exists
+	if(jcalib==NULL)return -1;
 	
 	// Display constants
 	cout<<endl<<"Values for \""<<NAMEPATH<<"\" for run "<<RUN_NUMBER<<endl;
