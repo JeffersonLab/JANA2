@@ -23,6 +23,7 @@ using std::stringstream;
 #include "JParameter.h"
 #include "JEventSourceGenerator.h"
 #include "JFactoryGenerator.h"
+#include "JCalibrationGenerator.h"
 #include "JEventLoop.h"
 
 
@@ -68,10 +69,13 @@ class JApplication{
 		jerror_t RemoveEventSourceGenerator(JEventSourceGenerator*); ///< Remove a JEventSourceGenerator
 		jerror_t AddFactoryGenerator(JFactoryGenerator*); ///< Add a JFactory Generator
 		jerror_t RemoveFactoryGenerator(JFactoryGenerator*); ///< Remove a JFactoryGenerator
+		jerror_t AddCalibrationGenerator(JCalibrationGenerator*); ///< Add a JCalibrationGenerator
+		jerror_t RemoveCalibrationGenerator(JCalibrationGenerator*); ///< Remove a JCalibrationGenerator
 		vector<JEventProcessor*> GetProcessors(void){return processors;} ///< Get the current list of JFactoryGenerators
 		vector<JEventLoop*> GetJEventLoops(void){return loops;} ///< Get the current list of JEventLoops
 		vector<JEventSourceGenerator*> GetEventSourceGenerators(void){return eventSourceGenerators;} ///< Get the current list of JEventSourceGenerators
 		vector<JFactoryGenerator*> GetFactoryGenerators(void){return factoryGenerators;} ///< Get the current list of JFactoryGenerators
+		vector<JCalibrationGenerator*> GetCalibrationGenerators(void){return calibrationGenerators;} ///< Get the current list of JCalibrationGenerators
 		JParameterManager* GetJParameterManager(void){return jparms;}
 		JGeometry* GetJGeometry(unsigned int run_number); ///< Get the JGeometry object for the specified run number.
 		JCalibration* GetJCalibration(unsigned int run_number); ///< Get the JCalibration object for the specified run number.
@@ -107,6 +111,7 @@ class JApplication{
 		jerror_t AttachPlugins(void);
 		jerror_t RecordFactoryCalls(JEventLoop *loop);
 		jerror_t PrintFactoryReport(void);
+		jerror_t PrintResourceReport(void);
 
 		bool init_called;
 		vector<const char*> source_names;
@@ -136,6 +141,7 @@ class JApplication{
 		vector<string> plugins;
 		vector<JEventSourceGenerator*> eventSourceGenerators;
 		vector<JFactoryGenerator*> factoryGenerators;
+		vector<JCalibrationGenerator*> calibrationGenerators;
 		vector<void*> sohandles;
 
 		int show_ticker;
@@ -148,6 +154,7 @@ class JApplication{
 		double rate_average;
 		vector<pthread_t> threads;
 		bool print_factory_report;
+		bool print_resource_report;
 		bool stop_event_buffer;
 };
 

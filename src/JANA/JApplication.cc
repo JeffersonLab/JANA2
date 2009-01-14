@@ -19,6 +19,7 @@ using namespace std;
 #include <dlfcn.h>
 #include <stdlib.h>
 #include <dirent.h>
+#include <sys/resource.h>
 
 #include "JEventLoop.h"
 #include "JApplication.h"
@@ -177,6 +178,7 @@ JApplication::JApplication(int narg, char* argv[])
 	event_buffer_filling = true;
 	
 	print_factory_report = false;
+	print_resource_report = false;
 	
 	// Sources
 	current_source = NULL;
@@ -213,6 +215,11 @@ JApplication::JApplication(int narg, char* argv[])
 		arg="--factoryreport";
 		if(!strncmp(arg, argv[i],strlen(arg))){
 			print_factory_report = true;
+			continue;
+		}
+		arg="--resourcereport";
+		if(!strncmp(arg, argv[i],strlen(arg))){
+			print_resource_report = true;
 			continue;
 		}
 		arg="--auto_activate=";
@@ -278,6 +285,7 @@ void JApplication::Usage(void)
 	cout<<"  --sodir=shared_dir       Add the directory \"shared_dir\" to search list"<<endl;
 	cout<<"  --config=filename        Read in the specified JANA configuration file"<<endl;
 	cout<<"  --factoryreport          Dump a short report on factories at end of job"<<endl;
+	cout<<"  --resourcereport         Dump a short report on system resources used at end of job"<<endl;
 	cout<<"  --auto_activate=factory  Auto activate \"factory\" for every event"<<endl;
 	cout<<"  -Pkey=value              Set configuration parameter \"key\" to \"value\""<<endl;
 	cout<<"  -Pprint                  Print all configuration params"<<endl;
@@ -712,6 +720,33 @@ jerror_t JApplication::RemoveFactoryGenerator(JFactoryGenerator *generator)
 }
 
 //---------------------------------
+// AddCalibrationGenerator
+//---------------------------------
+jerror_t JApplication::AddCalibrationGenerator(JCalibrationGenerator *generator)
+{
+	/// Add a calibration generator to the application. This is used to
+	/// generate a JCalibration object from the URL found in the
+	/// JANA_CLAIB_URL environment variable
+	calibrationGenerators.push_back(generator);
+
+	return NOERROR;
+}
+
+//---------------------------------
+// RemoveCalibrationGenerator
+//---------------------------------
+jerror_t JApplication::RemoveCalibrationGenerator(JCalibrationGenerator *generator)
+{
+	/// Remove the specified JCalibrationGenerator object from the application.
+	/// This does not delete the object, just removes it from the list.
+	vector<JCalibrationGenerator*>& f = calibrationGenerators;
+	vector<JCalibrationGenerator*>::iterator iter = find(f.begin(), f.end(), generator);
+	if(iter != f.end())f.erase(iter);
+
+	return NOERROR;
+}
+
+//---------------------------------
 // GetJGeometry
 //---------------------------------
 JGeometry* JApplication::GetJGeometry(unsigned int run_number)
@@ -811,17 +846,59 @@ JCalibration* JApplication::GetJCalibration(unsigned int run_number)
 	// JCalibration object for this run_number doesn't exist in our list.
 	// Create a new one and add it to the list.
 	// We need to create an object of the appropriate subclass of
-	// JCalibration. This determined by the first several characters
-	// of the URL that specifies the calibration database location.
-	// For now, only the JCalibrationFile subclass exists so we'll
-	// just make one of those and defer the heavier algorithm until
-	// later.
+	// JCalibration. This determined by looking through the 
+	// existing JCalibrationGenerator objects and finding the
+	// which claims the highest probability of being able to 
+	// open it based on the URL. If there are no generators
+	// claiming a non-zero probability and the URL starts with
+	// "file://", then a JCalibrationFile object is created
+	// (i.e. we don't bother making a JCalibrationGeneratorFile
+	// class and instead, handle it here.)
 	const char *url = getenv("JANA_CALIB_URL");
 	if(!url)url="file://./";
 	const char *context = getenv("JANA_CALIB_CONTEXT");
 	if(!context)context="default";
-	JCalibration *g = new JCalibrationFile(string(url), run_number, context);
-	if(g)calibrations.push_back(g);
+	
+	JCalibrationGenerator* gen = NULL;
+	double liklihood = 0.0;
+	for(unsigned int i=0; i<calibrationGenerators.size(); i++){
+		double my_liklihood = calibrationGenerators[i]->CheckOpenable(string(url), run_number, context);
+		if(my_liklihood > liklihood){
+			liklihood = my_liklihood;
+			gen = calibrationGenerators[i];
+		}
+	}
+
+	// Make the JCalibration object
+	JCalibration *g=NULL;
+	if(gen){
+		g = gen->MakeJCalibration(string(url), run_number, context);
+	}
+	if(gen==NULL && !strncmp(url, "file://", 7)){
+		g = new JCalibrationFile(string(url), run_number, context);
+	}
+	if(g){
+		calibrations.push_back(g);
+		cout<<"Created JCalibration object of type: "<<g->className()<<endl;
+		cout<<"Generated via: "<< (gen==NULL ? "fallback creation of JCalibrationFile":gen->Description())<<endl;
+		cout<<"Runs:";
+		cout<<" requested="<<g->GetRunRequested();
+		cout<<" found="<<g->GetRunFound();
+		cout<<" Validity range="<<g->GetRunMin()<<"-"<<g->GetRunMax();
+		cout<<endl;
+		cout<<"URL: "<<g->GetURL()<<endl;
+		cout<<"context: "<<g->GetContext()<<endl;
+	}else{
+		_DBG__;
+		_DBG_<<"Unable to create JCalibration object!"<<endl;
+		_DBG_<<"    URL: "<<url<<endl;
+		_DBG_<<"context: "<<context<<endl;
+		_DBG_<<"    run: "<<run_number<<endl;
+		if(gen)
+			_DBG_<<"attempted to use generator: "<<gen->Description()<<endl;
+		else
+			_DBG_<<"no appropriate generators found. attempted JCalibrationFile"<<endl;
+	}
 
 	// Unlock calibration mutex
 	pthread_mutex_unlock(&calibration_mutex);
@@ -1085,6 +1162,9 @@ jerror_t JApplication::Fini(void)
 	/// and <i>fini()</i> routines are called as necessary. All JEventSources
 	/// are deleted and the final report is printed, if specified.
 	
+	// Print final resource report
+	if(print_resource_report)PrintResourceReport();
+	
 	// Make sure erun is called
 	for(unsigned int i=0;i<processors.size();i++){
 		JEventProcessor *proc = processors[i];
@@ -1118,7 +1198,7 @@ jerror_t JApplication::Fini(void)
 		pthread_cond_signal(&event_buffer_cond);
 		usleep(100000);
 	}
-	
+
 	// Print final factory report
 	if(print_factory_report)PrintFactoryReport();
 
@@ -1582,6 +1662,69 @@ jerror_t JApplication::PrintFactoryReport(void)
 		line.replace(colshift-colwidth-2, ss.str().size(), ss.str());
 		cout<<line<<endl;
 	}
+	cout<<endl;
+
+	return NOERROR;
+}
+
+//---------------------------------
+// PrintResourceReport
+//---------------------------------
+jerror_t JApplication::PrintResourceReport(void)
+{
+	/// Print a brief report to the screen of the resources 
+	/// (memory and CPU usage) used by this process so far
+	struct rusage self_usage, child_usage;
+	getrusage(RUSAGE_SELF, &self_usage);
+	getrusage(RUSAGE_CHILDREN, &child_usage);
+	
+	double self_sys_seconds = (double)self_usage.ru_stime.tv_sec + (double)self_usage.ru_stime.tv_usec/1000000.0;
+	double self_user_seconds = (double)self_usage.ru_utime.tv_sec + (double)self_usage.ru_utime.tv_usec/1000000.0;
+	double child_sys_seconds = (double)child_usage.ru_stime.tv_sec + (double)child_usage.ru_stime.tv_usec/1000000.0;
+	double child_user_seconds = (double)child_usage.ru_utime.tv_sec + (double)child_usage.ru_utime.tv_usec/1000000.0;
+	
+	cout<<"Resource Usage Report :"<<endl;
+	cout<<endl;
+
+	cout<<"SELF: ------------"<<endl;
+	struct rusage *u = &self_usage;
+	cout<<"system time usage:"<<self_sys_seconds<<endl;
+	cout<<"user time usage:"<<self_user_seconds<<endl;
+	cout<<"ru_maxrss="<<u->ru_maxrss<<endl;
+	cout<<"ru_ixrss="<<u->ru_ixrss<<endl;
+	cout<<"ru_idrss="<<u->ru_idrss<<endl;
+	cout<<"ru_isrss="<<u->ru_isrss<<endl;
+	cout<<"ru_minflt="<<u->ru_minflt<<endl;
+	cout<<"ru_majflt="<<u->ru_majflt<<endl;
+	cout<<"ru_nswap="<<u->ru_nswap<<endl;
+	cout<<"ru_inblock="<<u->ru_inblock<<endl;
+	cout<<"ru_oublock="<<u->ru_oublock<<endl;
+	cout<<"ru_msgsnd="<<u->ru_msgsnd<<endl;
+	cout<<"ru_msgrcv="<<u->ru_msgrcv<<endl;
+	cout<<"ru_nsignals="<<u->ru_nsignals<<endl;
+	cout<<"ru_nvcsw="<<u->ru_nvcsw<<endl;
+	cout<<"ru_nivcsw="<<u->ru_nivcsw<<endl;
+
+	cout<<"CHILDREN: ------------"<<endl;
+	u = &child_usage;
+	cout<<"system time usage:"<<child_sys_seconds<<endl;
+	cout<<"user time usage:"<<child_user_seconds<<endl;
+	cout<<"ru_maxrss="<<u->ru_maxrss<<endl;
+	cout<<"ru_ixrss="<<u->ru_ixrss<<endl;
+	cout<<"ru_idrss="<<u->ru_idrss<<endl;
+	cout<<"ru_isrss="<<u->ru_isrss<<endl;
+	cout<<"ru_minflt="<<u->ru_minflt<<endl;
+	cout<<"ru_majflt="<<u->ru_majflt<<endl;
+	cout<<"ru_nswap="<<u->ru_nswap<<endl;
+	cout<<"ru_inblock="<<u->ru_inblock<<endl;
+	cout<<"ru_oublock="<<u->ru_oublock<<endl;
+	cout<<"ru_msgsnd="<<u->ru_msgsnd<<endl;
+	cout<<"ru_msgrcv="<<u->ru_msgrcv<<endl;
+	cout<<"ru_nsignals="<<u->ru_nsignals<<endl;
+	cout<<"ru_nvcsw="<<u->ru_nvcsw<<endl;
+	cout<<"ru_nivcsw="<<u->ru_nivcsw<<endl;
+
+	cout<<endl;
 	cout<<endl;
 
 	return NOERROR;
