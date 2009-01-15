@@ -5,6 +5,8 @@
 #include <JANA/JCalibrationFile.h>
 using namespace jana;
 
+string LOCAL_URL = "file:///group/halld/calib";
+
 //----------------
 // main
 //----------------
@@ -22,7 +24,7 @@ int main(int narg, char *argv[])
 int ns__GetKeyValue(struct soap *soap, calinfo cinfo, keyvals &result)
 {
 	// Create a temporary JCalibration Object
-	JCalibrationFile jcalib("file:///Users/davidl/HallD/calib", cinfo.run, cinfo.context);
+	JCalibrationFile jcalib(LOCAL_URL, cinfo.run, cinfo.context);
 	
 	// Get the requested values
 	map<string, string> svals;
@@ -34,7 +36,6 @@ int ns__GetKeyValue(struct soap *soap, calinfo cinfo, keyvals &result)
 		result.keys.push_back(iter->first);
 		result.vals.push_back(iter->second);
 	}
-	result.N = result.keys.size();
 
    return SOAP_OK; 
 }
@@ -44,6 +45,24 @@ int ns__GetKeyValue(struct soap *soap, calinfo cinfo, keyvals &result)
 //----------------
 int ns__GetTable(struct soap *soap, calinfo cinfo, tabledata &result)
 {
+	// Create a temporary JCalibration Object
+	JCalibrationFile jcalib(LOCAL_URL, cinfo.run, cinfo.context);
+	
+	// Get the requested values
+	vector<map<string, string> > vsvals;
+	result.retval = jcalib.Get(cinfo.namepath, vsvals);
+	
+	// Copy results into result structure
+	map<string, string>::iterator iter;
+	for(unsigned int i=0; i<vsvals.size(); i++){
+		map<string, string> &svals=vsvals[i];
+		keyvals mykeyvals;
+		for(iter=svals.begin(); iter!=svals.end(); iter++){
+			mykeyvals.keys.push_back(iter->first);
+			mykeyvals.vals.push_back(iter->second);
+		}
+		result.table.push_back(mykeyvals);
+	}
 
    return SOAP_OK; 
 }

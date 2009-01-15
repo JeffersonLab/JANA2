@@ -1,4 +1,11 @@
 
+Changes in version 0.4.9
+
+- jcalbread displays either table or key-value format via command-line switch.
+- Added JCalibrationGenerator class and ability to install new types of
+  calibration and conditions database backends.
+- Added a Web Services implementation of JCalibration using gSOAP
+
 Changes in version 0.4.8
 
 - Replaced stray instances of "uint" in JEventLoop.X with "unsigned int"

@@ -18,7 +18,6 @@ class keyvals{
 	public:
 		std::vector<std::string> keys;
 		std::vector<std::string> vals;
-		unsigned long N;
 		bool retval;
 };
 
