@@ -335,13 +335,13 @@ bool JCalibration::Get(string namepath, const T* &vals)
 // TryDelete
 //-------------
 template<typename T>
-bool TryDelete(map<pair<string,string>, void*>::iterator iter)
+bool JCalibration::TryDelete(map<pair<string,string>, void*>::iterator iter)
 {
 	/// Attempt to delete the element in "stored" pointed to by iter.
 	/// Return true if deleted, false if not.
 	///
 	/// This method is maily called from the JCalibration destructor.
-	string &type_name = iter->first.second;
+	const string &type_name = iter->first.second;
 	void *ptr = iter->second;
 
 	// vector<T>
