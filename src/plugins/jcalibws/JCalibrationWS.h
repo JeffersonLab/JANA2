@@ -24,8 +24,8 @@ class JCalibrationWS:public JCalibration{
 		virtual ~JCalibrationWS();
 		const char* className(void){return "JCalibrationWS";}
 		
-		bool Get(string namepath, map<string, string> &svals);
-		bool Get(string namepath, vector< map<string, string> > &vsvals);
+		bool GetCalib(string namepath, map<string, string> &svals);
+		bool GetCalib(string namepath, vector< map<string, string> > &vsvals);
 
 	private:
 		JCalibrationWS(void); // prevent use of default constructor

@@ -32,12 +32,13 @@ class JCalibration{
 		virtual const char* className(void){return static_className();}
 		static const char* static_className(void){return "JCalibration";}
 		
+		virtual bool GetCalib(string namepath, map<string, string> &svals)=0;
+		virtual bool GetCalib(string namepath, vector< map<string, string> > &svals)=0;
+
 		template<class T> bool Get(string namepath, map<string,T> &vals);
 		template<class T> bool Get(string namepath, vector<T> &vals);
 		template<class T> bool Get(string namepath, vector< map<string,T> > &vals);
 		template<class T> bool Get(string namepath, vector< vector<T> > &vals);
-		virtual bool Get(string namepath, map<string, string> &svals)=0;
-		virtual bool Get(string namepath, vector< map<string, string> > &svals)=0;
 		
 		template<class T> bool Get(string namepath, const T* &vals);
 		
@@ -47,16 +48,12 @@ class JCalibration{
 		const int& GetRunMax(void) const {return run_max;}
 		const string& GetContext(void) const {return context;}
 		const string& GetURL(void) const {return url;}
+		void GetAccesses(map<string, vector<string> > &accesses){accesses = this->accesses;}
 
 	protected:
 		int run_min;
 		int run_max;
 		int run_found;
-
-		// Container to hold all stored sets of constants. The "key" is a pair made from
-		// the namepath and the typid().name() of the type stored. The value is a pointer
-		// to the data object container itself.
-		map<pair<string,string>, void*> stored;
 
 	private:
 		JCalibration(){} // Don't allow trivial constructor
@@ -65,6 +62,24 @@ class JCalibration{
 		string context;
 		string url;
 
+		// Container to hold all stored sets of constants. The "key" is a pair made from
+		// the namepath and the typid().name() of the type stored. The value is a pointer
+		// to the data object container itself.
+		map<pair<string,string>, void*> stored;
+		
+		/// Attempt to delete the element in "stored" pointed to by iter.
+		/// Return true if deleted, false if not.
+		template<typename T> bool TryDelete(map<pair<string,string>, void*>::iterator iter);
+		
+		// Container to keep track of which constants were requested. The key is the
+		// namepath and the value is a vector of typeid::name() strings of the data
+		// types making the request. The vector may contain multiple instances of the
+		// same type string so that the size of the vector is the total number of
+		// accesses (probably a mulitple of the number of threads).
+		map<string, vector<string> > accesses;
+
+		/// Record a request for the calibration constants
+		void RecordRequest(string namepath, string type_name);
 };
 
 //-------------
@@ -90,7 +105,8 @@ bool JCalibration::Get(string namepath, map<string,T> &vals)
 	
 	// Get values in the form of strings
 	map<string, string> svals;
-	bool res = Get(namepath, svals);
+	bool res = GetCalib(namepath, svals);
+	RecordRequest(namepath, typeid(T).name());
 	
 	// Loop over values, converting the strings to type "T" and
 	// copying them into the vals map.
@@ -130,7 +146,8 @@ bool JCalibration::Get(string namepath, vector<T> &vals)
 	
 	// Get values in the form of strings
 	map<string, string> svals;
-	bool res = Get(namepath, svals);
+	bool res = GetCalib(namepath, svals);
+	RecordRequest(namepath, typeid(T).name());
 	
 	// Loop over values, converting the strings to type "T" and
 	// copying them into the vals map.
@@ -187,7 +204,8 @@ bool JCalibration::Get(string namepath, vector< map<string,T> > &vals)
 
 	// Get values in the form of strings
 	vector< map<string, string> >svals;
-	bool res = Get(namepath, svals);
+	bool res = GetCalib(namepath, svals);
+	RecordRequest(namepath, typeid(T).name());
 	
 	// Loop over values, converting the strings to type "T" and
 	// copying them into the vals map.
@@ -245,7 +263,8 @@ bool JCalibration::Get(string namepath, vector< vector<T> > &vals)
 	
 	// Get values in the form of strings
 	vector< map<string, string> >svals;
-	bool res = Get(namepath, svals);
+	bool res = GetCalib(namepath, svals);
+	RecordRequest(namepath, typeid(T).name());
 	
 	// Loop over values, converting the strings to type "T" and
 	// copying them into the vals map.
@@ -293,6 +312,7 @@ bool JCalibration::Get(string namepath, const T* &vals)
 	map<pair<string,string>, void*>::iterator iter = stored.find(key);
 	if(iter!=stored.end()){
 		vals = (const T*)iter->second;
+		RecordRequest(namepath, typeid(T).name());
 		return false; // return false to indicated success
 	}
 
@@ -309,6 +329,46 @@ bool JCalibration::Get(string namepath, const T* &vals)
 	}
 	
 	return res;
+}
+
+//-------------
+// TryDelete
+//-------------
+template<typename T>
+bool TryDelete(map<pair<string,string>, void*>::iterator iter)
+{
+	/// Attempt to delete the element in "stored" pointed to by iter.
+	/// Return true if deleted, false if not.
+	///
+	/// This method is maily called from the JCalibration destructor.
+	string &type_name = iter->first.second;
+	void *ptr = iter->second;
+
+	// vector<T>
+	if(type_name==typeid(vector<T>).name()){
+		delete (vector<T>*)ptr;
+		return true;
+	}
+
+	// map<string,T>
+	if(type_name==typeid(map<string,T>).name()){
+		delete (map<string,T>*)ptr;
+		return true;
+	}
+
+	// vector<vector<T> >
+	if(type_name==typeid(vector<vector<T> >).name()){
+		delete (vector<vector<T> >*)ptr;
+		return true;
+	}
+
+	// vector<map<string,T> >
+	if(type_name==typeid(vector<map<string,T> >).name()){
+		delete (vector<map<string,T> >*)ptr;
+		return true;
+	}
+
+	return false;
 }
 
 } // Close JANA namespace

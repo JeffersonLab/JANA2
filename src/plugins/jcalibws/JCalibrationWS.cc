@@ -45,9 +45,9 @@ JCalibrationWS::~JCalibrationWS()
 }
 
 //---------------------------------
-// Get  --  Key-Value pairs
+// GetCalib  --  Key-Value pairs
 //---------------------------------
-bool JCalibrationWS::Get(string namepath, map<string, string> &svals)
+bool JCalibrationWS::GetCalib(string namepath, map<string, string> &svals)
 {
 	// Copy to private calinfo struct so we can be thread-safe
 	calinfo mycinfo = cinfo;
@@ -88,9 +88,9 @@ bool JCalibrationWS::Get(string namepath, map<string, string> &svals)
 }
 
 //---------------------------------
-// Get  --  Table data
+// GetCalib  --  Table data
 //---------------------------------
-bool JCalibrationWS::Get(string namepath, vector< map<string, string> > &vsvals)
+bool JCalibrationWS::GetCalib(string namepath, vector< map<string, string> > &vsvals)
 {
 	// Copy to private calinfo struct so we can be thread-safe
 	calinfo mycinfo = cinfo;

@@ -65,9 +65,9 @@ JCalibrationFile::~JCalibrationFile()
 }
 
 //---------------------------------
-// Get
+// GetCalib
 //---------------------------------
-bool JCalibrationFile::Get(string namepath, map<string, string> &svals)
+bool JCalibrationFile::GetCalib(string namepath, map<string, string> &svals)
 {
 	/// Open file specified by namepath (and the url passed to us in the
 	/// constructor) and read in the calibration constants in plain
@@ -125,9 +125,9 @@ bool JCalibrationFile::Get(string namepath, map<string, string> &svals)
 }
 
 //---------------------------------
-// Get
+// GetCalib
 //---------------------------------
-bool JCalibrationFile::Get(string namepath, vector< map<string, string> > &svals)
+bool JCalibrationFile::GetCalib(string namepath, vector< map<string, string> > &svals)
 {
 	/// Open file specified by namepath (and the url passed to us in the
 	/// constructor) and read in a table of calibration constants in plain

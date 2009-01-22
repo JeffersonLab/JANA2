@@ -7,6 +7,7 @@ Changes in version 0.4.9
 - Added a Web Services implementation of JCalibration using gSOAP
 - Added additional Get method to JCalibration that accepts a pointer
   reference so constants can be stored in JCalibration and recycled
+- Added recording of Get() requests to JCalibration
 
 Changes in version 0.4.8
 
