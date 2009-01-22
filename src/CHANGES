@@ -5,6 +5,8 @@ Changes in version 0.4.9
 - Added JCalibrationGenerator class and ability to install new types of
   calibration and conditions database backends.
 - Added a Web Services implementation of JCalibration using gSOAP
+- Added additional Get method to JCalibration that accepts a pointer
+  reference so constants can be stored in JCalibration and recycled
 
 Changes in version 0.4.8
 

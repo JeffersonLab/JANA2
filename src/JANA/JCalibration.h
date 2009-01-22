@@ -10,6 +10,7 @@
 
 #include "jerror.h"
 
+#include <iostream>
 #include <map>
 #include <string>
 #include <sstream>
@@ -18,6 +19,7 @@ using std::map;
 using std::string;
 using std::stringstream;
 using std::vector;
+using std::pair;
 
 // Place everything in JANA namespace
 namespace jana
@@ -37,6 +39,8 @@ class JCalibration{
 		virtual bool Get(string namepath, map<string, string> &svals)=0;
 		virtual bool Get(string namepath, vector< map<string, string> > &svals)=0;
 		
+		template<class T> bool Get(string namepath, const T* &vals);
+		
 		const int& GetRunRequested(void) const {return run_requested;}
 		const int& GetRunFound(void) const {return run_found;}
 		const int& GetRunMin(void) const {return run_min;}
@@ -48,7 +52,12 @@ class JCalibration{
 		int run_min;
 		int run_max;
 		int run_found;
-	
+
+		// Container to hold all stored sets of constants. The "key" is a pair made from
+		// the namepath and the typid().name() of the type stored. The value is a pointer
+		// to the data object container itself.
+		map<pair<string,string>, void*> stored;
+
 	private:
 		JCalibration(){} // Don't allow trivial constructor
 
@@ -252,6 +261,51 @@ bool JCalibration::Get(string namepath, vector< vector<T> > &vals)
 			vvals.push_back(v);
 		}
 		vals.push_back(vvals);
+	}
+	
+	return res;
+}
+
+//-------------
+// Get  (stored container version)
+//-------------
+template<class T>
+bool JCalibration::Get(string namepath, const T* &vals)
+{
+	/// Templated method used to get a set of calibration constants.
+	///
+	/// Get a pointer to the specified set of constants but keep them
+	/// in the JCalibration object. If the specified constants have already
+	/// been retrieved using type T, then the pointer is copied and the
+	/// routine returns immediately. Otherwise, the constants are retrieved
+	/// using one of the other Get() methods and stored locally before returning
+	/// a pointer so subsequent calls will get the same pointer.
+	
+	// Initialize return pointer to reasonable value
+	vals = NULL;
+	
+	// Create key from namepath and data type
+	pair<string, string> key;
+	key.first = namepath;
+	key.second = typeid(T).name();
+
+	// Look to see if we already have this stored
+	map<pair<string,string>, void*>::iterator iter = stored.find(key);
+	if(iter!=stored.end()){
+		vals = (const T*)iter->second;
+		return false; // return false to indicated success
+	}
+
+
+	// Looks like we don't have it stored already. Allocate memory for
+	// the container and fill it with the constants.
+	T* t = new T;
+	bool res = Get(namepath, *t);
+	
+	// If successfull, store the pointer and copy it into the vals variable 
+	if(!res){ // res==false means Get call was successful
+		stored[key] = t;
+		vals = t;
 	}
 	
 	return res;
