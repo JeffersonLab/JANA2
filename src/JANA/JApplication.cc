@@ -166,6 +166,7 @@ JApplication::JApplication(int narg, char* argv[])
 	rate_average = 0.0;
 	monitor_heartbeat= true;
 	init_called = false;
+	fini_called = false;
 	stop_event_buffer = false;
 	
 	// Default plugin search path
@@ -215,6 +216,11 @@ JApplication::JApplication(int narg, char* argv[])
 		arg="--factoryreport";
 		if(!strncmp(arg, argv[i],strlen(arg))){
 			print_factory_report = true;
+			continue;
+		}
+		arg="--dumpcalibrations";
+		if(!strncmp(arg, argv[i],strlen(arg))){
+			dump_calibrations = true;
 			continue;
 		}
 		arg="--resourcereport";
@@ -285,6 +291,7 @@ void JApplication::Usage(void)
 	cout<<"  --sodir=shared_dir       Add the directory \"shared_dir\" to search list"<<endl;
 	cout<<"  --config=filename        Read in the specified JANA configuration file"<<endl;
 	cout<<"  --factoryreport          Dump a short report on factories at end of job"<<endl;
+	cout<<"  --dumpcalibrations       Dump calibrations used in \"calib\" directory at end of job"<<endl;
 	cout<<"  --resourcereport         Dump a short report on system resources used at end of job"<<endl;
 	cout<<"  --auto_activate=factory  Auto activate \"factory\" for every event"<<endl;
 	cout<<"  -Pkey=value              Set configuration parameter \"key\" to \"value\""<<endl;
@@ -1161,6 +1168,11 @@ jerror_t JApplication::Fini(void)
 	/// Close out at the end of event processing. All <i>erun()</i> routines
 	/// and <i>fini()</i> routines are called as necessary. All JEventSources
 	/// are deleted and the final report is printed, if specified.
+
+	Lock();
+	if(fini_called){Unlock(); return NOERROR;}
+	fini_called=true;
+	Unlock();
 	
 	// Print final resource report
 	if(print_resource_report)PrintResourceReport();
@@ -1197,6 +1209,11 @@ jerror_t JApplication::Fini(void)
 		stop_event_buffer = true;
 		pthread_cond_signal(&event_buffer_cond);
 		usleep(100000);
+	}
+	
+	// Dump calibrations (if requested)
+	if(dump_calibrations){
+		for(unsigned int i=0; i<calibrations.size(); i++)calibrations[i]->DumpCalibrationsToFiles();
 	}
 
 	// Print final factory report

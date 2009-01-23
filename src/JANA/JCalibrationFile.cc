@@ -49,8 +49,10 @@ JCalibrationFile::JCalibrationFile(string url, int run, string context):JCalibra
 	// pass it to some standard parser in the JCalibration base class.
 	// Any volunteers?
 	// Among other things, this should contain the range of runs for which
-	// this calibration is valid. For now, just set them all to run_requested.
-	run_min = run_max = run_found = GetRunRequested();
+	// this calibration is valid. For now, just set the found run to run_requested.
+	run_found = GetRunRequested();
+	run_min = 1;
+	run_max = 10000;
 	
 	// Close info file
 	f.close();

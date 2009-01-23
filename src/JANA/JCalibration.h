@@ -10,6 +10,7 @@
 
 #include "jerror.h"
 
+#include <pthread.h>
 #include <iostream>
 #include <map>
 #include <string>
@@ -27,6 +28,15 @@ namespace jana
 
 class JCalibration{
 	public:
+	
+		enum containerType_t{
+			kUnknownType,
+			kVector,
+			kMap,
+			kVectorVector,
+			kVectorMap
+		};
+	
 		JCalibration(string url, int run, string context="default");
 		virtual ~JCalibration();
 		virtual const char* className(void){return static_className();}
@@ -49,11 +59,23 @@ class JCalibration{
 		const string& GetContext(void) const {return context;}
 		const string& GetURL(void) const {return url;}
 		void GetAccesses(map<string, vector<string> > &accesses){accesses = this->accesses;}
+		
+		containerType_t GetContainerType(string typeid_name);
+		void DumpCalibrationsToFiles(string basedir="./");
+		void WriteCalibFileVector(string dir, string fname, string pathname);
+		void WriteCalibFileMap(string dir, string fname, string pathname);
+		void WriteCalibFileVectorVector(string dir, string fname, string pathname);
+		void WriteCalibFileVectorMap(string dir, string fname, string pathname);
 
 	protected:
 		int run_min;
 		int run_max;
 		int run_found;
+		
+		pthread_mutex_t accesses_mutex;
+		pthread_mutex_t stored_mutex;
+
+		template<typename T> containerType_t TrycontainerType(string typeid_name);
 
 	private:
 		JCalibration(){} // Don't allow trivial constructor
@@ -106,7 +128,7 @@ bool JCalibration::Get(string namepath, map<string,T> &vals)
 	// Get values in the form of strings
 	map<string, string> svals;
 	bool res = GetCalib(namepath, svals);
-	RecordRequest(namepath, typeid(T).name());
+	RecordRequest(namepath, typeid(map<string,T>).name());
 	
 	// Loop over values, converting the strings to type "T" and
 	// copying them into the vals map.
@@ -147,7 +169,7 @@ bool JCalibration::Get(string namepath, vector<T> &vals)
 	// Get values in the form of strings
 	map<string, string> svals;
 	bool res = GetCalib(namepath, svals);
-	RecordRequest(namepath, typeid(T).name());
+	RecordRequest(namepath, typeid(vector<T>).name());
 	
 	// Loop over values, converting the strings to type "T" and
 	// copying them into the vals map.
@@ -205,7 +227,7 @@ bool JCalibration::Get(string namepath, vector< map<string,T> > &vals)
 	// Get values in the form of strings
 	vector< map<string, string> >svals;
 	bool res = GetCalib(namepath, svals);
-	RecordRequest(namepath, typeid(T).name());
+	RecordRequest(namepath, typeid(vector< map<string,T> >).name());
 	
 	// Loop over values, converting the strings to type "T" and
 	// copying them into the vals map.
@@ -264,7 +286,7 @@ bool JCalibration::Get(string namepath, vector< vector<T> > &vals)
 	// Get values in the form of strings
 	vector< map<string, string> >svals;
 	bool res = GetCalib(namepath, svals);
-	RecordRequest(namepath, typeid(T).name());
+	RecordRequest(namepath, typeid(vector< vector<T> >).name());
 	
 	// Loop over values, converting the strings to type "T" and
 	// copying them into the vals map.
@@ -307,11 +329,15 @@ bool JCalibration::Get(string namepath, const T* &vals)
 	pair<string, string> key;
 	key.first = namepath;
 	key.second = typeid(T).name();
+	
+	// Lock mutex while accessing stored data
+	pthread_mutex_lock(&stored_mutex);
 
 	// Look to see if we already have this stored
 	map<pair<string,string>, void*>::iterator iter = stored.find(key);
 	if(iter!=stored.end()){
 		vals = (const T*)iter->second;
+		pthread_mutex_unlock(&stored_mutex);
 		RecordRequest(namepath, typeid(T).name());
 		return false; // return false to indicated success
 	}
@@ -327,6 +353,9 @@ bool JCalibration::Get(string namepath, const T* &vals)
 		stored[key] = t;
 		vals = t;
 	}
+	
+	// Release stored mutex
+	pthread_mutex_unlock(&stored_mutex);
 	
 	return res;
 }
@@ -344,31 +373,32 @@ bool JCalibration::TryDelete(map<pair<string,string>, void*>::iterator iter)
 	const string &type_name = iter->first.second;
 	void *ptr = iter->second;
 
-	// vector<T>
-	if(type_name==typeid(vector<T>).name()){
-		delete (vector<T>*)ptr;
-		return true;
+	switch(TrycontainerType<T>(type_name)){
+		case kVector:			delete (vector<T>*)ptr;						break;
+		case kMap:				delete (map<string,T>*)ptr;				break;
+		case kVectorVector:	delete (vector<vector<T> >*)ptr;			break;
+		case kVectorMap:		delete (vector<map<string,T> >*)ptr;	break;
+		default:
+			// Type T must not be the right type. Inform caller
+			return false;
 	}
 
-	// map<string,T>
-	if(type_name==typeid(map<string,T>).name()){
-		delete (map<string,T>*)ptr;
-		return true;
-	}
+	// If we get here, then we must have found the type above and deleted the container
+	return true;
+}
 
-	// vector<vector<T> >
-	if(type_name==typeid(vector<vector<T> >).name()){
-		delete (vector<vector<T> >*)ptr;
-		return true;
-	}
+//-------------
+// TrycontainerType
+//-------------
+template<typename T>
+JCalibration::containerType_t JCalibration::TrycontainerType(string typeid_name)
+{
+	if(typeid_name==typeid(vector<T>).name())return kVector;
+	if(typeid_name==typeid(map<string,T>).name())return kMap;
+	if(typeid_name==typeid(vector<vector<T> >).name())return kVectorVector;
+	if(typeid_name==typeid(vector<map<string,T> >).name())return kVectorMap;
 
-	// vector<map<string,T> >
-	if(type_name==typeid(vector<map<string,T> >).name()){
-		delete (vector<map<string,T> >*)ptr;
-		return true;
-	}
-
-	return false;
+	return kUnknownType;
 }
 
 } // Close JANA namespace

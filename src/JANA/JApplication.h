@@ -79,6 +79,7 @@ class JApplication{
 		JParameterManager* GetJParameterManager(void){return jparms;}
 		JGeometry* GetJGeometry(unsigned int run_number); ///< Get the JGeometry object for the specified run number.
 		JCalibration* GetJCalibration(unsigned int run_number); ///< Get the JCalibration object for the specified run number.
+		void GetJCalibrations(vector<JCalibration*> &calibs){calibs=calibrations;} ///< Get the list of existing JCalibration objects
 		jerror_t RegisterSharedObject(const char *soname, bool verbose=true); ///< Register a dynamically linked shared object
 		jerror_t RegisterSharedObjectDirectory(string sodirname); ///< Register all shared objects in a directory
 		jerror_t AddPluginPath(string path); ///< Add a directory to the plugin search path
@@ -114,6 +115,7 @@ class JApplication{
 		jerror_t PrintResourceReport(void);
 
 		bool init_called;
+		bool fini_called;
 		vector<const char*> source_names;
 		vector<JEventSource*> sources;
 		JEventSource *current_source;
@@ -156,6 +158,7 @@ class JApplication{
 		bool print_factory_report;
 		bool print_resource_report;
 		bool stop_event_buffer;
+		bool dump_calibrations;
 };
 
 } // Close JANA namespace
