@@ -59,7 +59,7 @@ mkdirs:
 install: all
 	mkdir -p $(INSTALL_DIR)/bin
 	install -p $(EXE_PATHNAMES) $(INSTALL_DIR)/bin
-	if [ ! -e $(INSTALL_DIR)/src ]; then ln -s $(JANA_SRC_DIR) $(INSTALL_DIR)/src ; fi
+	if [ ! -r $(INSTALL_DIR)/src ]; then ln -s $(JANA_SRC_DIR) $(INSTALL_DIR)/src ; fi
 
 uninstall: 
 	if test -d $(INSTALL_DIR)/bin ; then cd $(INSTALL_DIR)/bin ; rm -f $(EXE_NAMES) ; fi

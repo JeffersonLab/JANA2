@@ -28,7 +28,7 @@ install: all
 	mkdir -p $(INSTALL_DIR)/include/$(MODULE_NAME)
 	install -p $(LIBNAME) $(INSTALL_DIR)/lib
 	install -p $(wildcard *.h *.hh *.hxx) $(INSTALL_DIR)/include/$(MODULE_NAME)
-	if [ ! -e $(INSTALL_DIR)/src ]; then ln -s $(JANA_SRC_DIR) $(INSTALL_DIR)/src ; fi
+	if [ ! -r $(INSTALL_DIR)/src ]; then ln -s $(JANA_SRC_DIR) $(INSTALL_DIR)/src ; fi
 
 uninstall: 
 	rm -f $(INSTALL_DIR)/lib/$(shell basename $(LIBNAME))

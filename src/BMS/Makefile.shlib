@@ -59,7 +59,7 @@ install: all
 	mkdir -p $(INSTALL_DIR)/include/$(MODULE_NAME)
 	install -p $(LIB_DIR)/$(SOLIB_NAME) $(INSTALL_DIR)/lib
 	install -p *.h $(INSTALL_DIR)/include/$(MODULE_NAME)
-	if [ ! -e $(INSTALL_DIR)/src ]; then ln -s $(JANA_SRC_DIR) $(INSTALL_DIR)/src ; fi
+	if [ ! -r $(INSTALL_DIR)/src ]; then ln -s $(JANA_SRC_DIR) $(INSTALL_DIR)/src ; fi
 
 uninstall: 
 	if test -d $(INSTALL_DIR)/lib ; then cd $(INSTALL_DIR)/lib ; rm -f $(SOLIB_NAME) ; fi
