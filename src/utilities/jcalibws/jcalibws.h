@@ -28,5 +28,12 @@ class tabledata{
 		bool retval;
 };
 
+// Class to hold return values for for GetListOfNamepaths
+class namepathdata{
+	public:
+		std::vector<std::string> namepaths;
+};
+
 int ns__GetKeyValue(calinfo cinfo, keyvals &result);
 int ns__GetTable(calinfo cinfo, tabledata &result);
+int ns__GetListOfNamepaths(calinfo cinfo, namepathdata &result);

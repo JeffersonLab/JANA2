@@ -5,6 +5,9 @@
 // Creator: davidl (on Darwin Amelia.local 8.10.1 i386)
 //
 
+#include <dirent.h>
+#include <sys/stat.h>
+
 #include <iostream>
 #include <fstream>
 using namespace std;
@@ -204,5 +207,57 @@ bool JCalibrationFile::GetCalib(string namepath, vector< map<string, string> > &
 	}
 	
 	return false;
+}
+
+//---------------------------------
+// GetListOfNamepaths
+//---------------------------------
+void JCalibrationFile::GetListOfNamepaths(vector<string> &namepaths)
+{
+	/// Get a list of the available namepaths by traversing the
+	/// directory stucture looking for files.
+	/// Note that this does NOT check whether the files are of
+	/// a vaild format.
+	AddToNamepathList(basedir.substr(0,basedir.length()-1), namepaths); 
+}
+
+//---------------------------------
+// AddToNamepathList
+//---------------------------------
+void JCalibrationFile::AddToNamepathList(string dirname, vector<string> &namepaths)
+{
+	/// Add the files from the specified directory to the list of namepaths.
+	/// and then recall ourselves for any directories found.
+
+	// Open the directory
+	DIR *dir = opendir(dirname.c_str());
+	if(!dir)return;
+
+	// Loop over directory entries
+	struct dirent *dp;
+	while((dp=readdir(dir))!=NULL){
+		string name(dp->d_name);
+		if(name=="." || name==".." || name==".svn")continue; // ignore this directory and its parent
+		if(name=="info.xml" || name==".DS_Store")continue;
+		
+		// Check if this is a directory and if so, recall to add those
+		// namepaths as well.
+		struct stat st;
+		string fullpath = dirname+"/"+name;
+		if(stat(fullpath.c_str(),&st) == 0){
+			if(st.st_mode & S_IFDIR){
+				// yep, this is a directory
+				AddToNamepathList(dirname+"/"+name, namepaths);
+				
+				// go to next iteration of loop over current directory's contents
+				continue;
+			}
+		}
+		
+		// If we get here then this item is not a directory. Assume it is a valid
+		// namepath and add it to the list
+		namepaths.push_back(dirname+"/"+name);
+	}
+	closedir(dir);
 }
 

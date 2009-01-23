@@ -44,6 +44,7 @@ class JCalibration{
 		
 		virtual bool GetCalib(string namepath, map<string, string> &svals)=0;
 		virtual bool GetCalib(string namepath, vector< map<string, string> > &svals)=0;
+		virtual void GetListOfNamepaths(vector<string> &namepaths)=0;
 
 		template<class T> bool Get(string namepath, map<string,T> &vals);
 		template<class T> bool Get(string namepath, vector<T> &vals);

@@ -147,3 +147,37 @@ bool JCalibrationWS::GetCalib(string namepath, vector< map<string, string> > &vs
 	// We should never actually get here.
 	return false; // everything is OK
 }
+
+//---------------------------------
+// GetListOfNamepaths
+//---------------------------------
+void JCalibrationWS::GetListOfNamepaths(vector<string> &namepaths)
+{
+	// Copy to private calinfo struct so we can be thread-safe
+	calinfo mycinfo = cinfo;
+	namepathdata result;
+
+	// Make sure return map is empty to start with
+	namepaths.clear();
+	
+	// Make sure our "soap" pointer is at least not NULL
+	if(!soap){
+		_DBG_<<"JCalibration soap pointer NULL!"<<endl;
+		return;
+	}
+	
+	// We may need to lock a mutex here to make sure only 1 thread
+	// accesses the "soap" struct at a time.  1/15/2009 DL
+
+	// Get the values from the Web Service and check the results
+   if (soap_call_ns__GetListOfNamepaths(soap, NULL, NULL, mycinfo, result) == SOAP_OK){
+		// Success! Copy results into namepaths.
+		namepaths = result.namepaths;
+		return;
+   }
+	
+	// an error occurred  
+	soap_print_fault(soap, stderr); // display the SOAP fault on the stderr stream
+}
+
+

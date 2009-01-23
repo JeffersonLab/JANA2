@@ -66,3 +66,18 @@ int ns__GetTable(struct soap *soap, calinfo cinfo, tabledata &result)
 
    return SOAP_OK; 
 }
+
+//----------------
+// ns__GetListOfNamepaths
+//----------------
+int ns__GetListOfNamepaths(struct soap *soap, calinfo cinfo, namepathdata &result)
+{
+	// Create a temporary JCalibration Object
+	JCalibrationFile jcalib(LOCAL_URL, cinfo.run, cinfo.context);
+	
+	// Get the requested values
+	vector<string> namepaths;
+	jcalib.GetListOfNamepaths(result.namepaths);
+
+   return SOAP_OK; 
+}

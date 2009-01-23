@@ -8,6 +8,9 @@ Changes in version 0.4.9
 - Added additional Get method to JCalibration that accepts a pointer
   reference so constants can be stored in JCalibration and recycled
 - Added recording of Get() requests to JCalibration
+- Added --dumpcalibrations option to JApplication to record constants used
+  in a way that can be used by subsequent, similar jobs
+- Added GetListOfNamepaths method to JCalibration
 
 Changes in version 0.4.8
 

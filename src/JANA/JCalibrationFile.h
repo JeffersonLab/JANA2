@@ -24,6 +24,7 @@ class JCalibrationFile:public JCalibration{
 		
 		bool GetCalib(string namepath, map<string, string> &svals);
 		bool GetCalib(string namepath, vector< map<string, string> > &svals);
+		void GetListOfNamepaths(vector<string> &namepaths);
 		
 	protected:
 	
@@ -33,6 +34,7 @@ class JCalibrationFile:public JCalibration{
 		
 		string basedir;
 
+		void AddToNamepathList(string dir, vector<string> &namepaths);
 };
 
 } // Close JANA namespace

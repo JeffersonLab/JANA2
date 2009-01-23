@@ -26,6 +26,7 @@ class JCalibrationWS:public JCalibration{
 		
 		bool GetCalib(string namepath, map<string, string> &svals);
 		bool GetCalib(string namepath, vector< map<string, string> > &vsvals);
+		void GetListOfNamepaths(vector<string> &namepaths);
 
 	private:
 		JCalibrationWS(void); // prevent use of default constructor
