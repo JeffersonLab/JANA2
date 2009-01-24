@@ -256,7 +256,7 @@ void JCalibrationFile::AddToNamepathList(string dirname, vector<string> &namepat
 		
 		// If we get here then this item is not a directory. Assume it is a valid
 		// namepath and add it to the list
-		namepaths.push_back(dirname+"/"+name);
+		namepaths.push_back(fullpath.substr(basedir.length()));
 	}
 	closedir(dir);
 }
