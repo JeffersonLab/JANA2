@@ -5,6 +5,8 @@
 // Creator: davidl (on Darwin fwing-dhcp61.jlab.org 8.10.1 i386)
 //
 
+#include <unistd.h>
+
 #include <iostream>
 #include <string>
 #include <fstream>
