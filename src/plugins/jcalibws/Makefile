@@ -1,7 +1,7 @@
 
 SOLIB_NAME = jcalibws.so
 
-PACKAGES := GSOAP
+PACKAGES := gSOAP
 
 # Explicitly add these since they won't necessarily exist if soapcpp2 hasn't been run yet
 CXXSRC += soapC.cpp soapClient.cpp
