@@ -10,6 +10,7 @@
 
 #include "jerror.h"
 
+#include <typeinfo>
 #include <pthread.h>
 #include <iostream>
 #include <map>
