@@ -12,8 +12,7 @@
 #include "JCalibration.h"
 
 // Place everything in JANA namespace
-namespace jana
-{
+namespace jana{
 
 class JCalibrationFile:public JCalibration{
 	public:

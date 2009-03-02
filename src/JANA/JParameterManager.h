@@ -25,16 +25,14 @@ using std::map;
 
 #include "jerror.h"
 
-// The following is here just so we can use ROOT's THtml class to generate
-// documentation.
+// The following is here just so we can use ROOT's THtml class to generate documentation.
 #ifdef __CINT__
-class pthread_mutex_t;
+#include "cint.h"
 #endif
 
 
 // Place everything in JANA namespace
-namespace jana
-{
+namespace jana{
 
 
 /// The JParameterManager class is used by the framework to manage
@@ -206,9 +204,13 @@ JParameter* JParameterManager::GetParameter(K key, V &val)
 } // Close JANA namespace
 
 
+// Hide the following from rootcint
+#ifndef __CINT__
 
 // Global variable for accessing parameters (defined in JParameterManager.cc)
 extern jana::JParameterManager *gPARMS;
+
+#endif // __CINT__
 
 #endif // _JParameterManager_
 

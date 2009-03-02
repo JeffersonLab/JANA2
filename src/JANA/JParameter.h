@@ -17,11 +17,9 @@ using std::string;
 
 
 // Place everything in JANA namespace
-namespace jana
-{
+namespace jana{
 
 
-class JILStream;
 
 /// The JParameter class is used to hold one configuration parameter.
 /// The objects are created and maintained internally via the JANA

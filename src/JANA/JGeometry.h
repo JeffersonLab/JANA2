@@ -20,8 +20,7 @@ using std::stringstream;
 using std::vector;
 
 // Place everything in JANA namespace
-namespace jana
-{
+namespace jana{
 
 /// JGeometry is a virtual base class used to define the interface by
 /// which geometry information can be obtained in JANA.

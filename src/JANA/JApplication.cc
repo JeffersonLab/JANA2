@@ -1273,7 +1273,7 @@ string JApplication::Val2StringWithPrefix(float val)
 	/// Values returned are: "G", "M", "k", "", "u", and "m" for
 	/// values of "val" that are: >1.5E9, >1.5E6, >1.5E3, <1.0E-7, <1.0E-4, 1.0E-1
 	/// respectively.
-	char *units = "";
+	const char *units = "";
 	if(val>1.5E9){
 		val/=1.0E9;
 		units = "G";

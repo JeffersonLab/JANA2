@@ -11,6 +11,14 @@ using std::string;
 
 #include "JEventProcessor.h"
 
+// The following is here just so we can use ROOT's THtml class to generate documentation.
+#ifdef __CINT__
+class pthread_mutex_t;
+typedef unsigned long pthread_t;
+typedef unsigned long oid_t;
+#endif
+
+
 // Place everything in JANA namespace
 namespace jana{
 

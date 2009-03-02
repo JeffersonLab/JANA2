@@ -17,16 +17,25 @@ using std::endl;
 #include <JANA/jana_config.h>
 
 #if HAVE_XERCES
+#ifndef __CINT__
 #include <xercesc/dom/DOMErrorHandler.hpp>
 #include <xercesc/dom/DOMBuilder.hpp>
 #include <xercesc/dom/DOMDocument.hpp>
 #include <xercesc/dom/DOMNode.hpp>
 #include <xercesc/dom/DOMAttr.hpp>
-#endif
+#else // __CINT__
+namespace xercesc{
+class xercesc::DOMBuilder;
+class xercesc::DOMDocument;
+class xercesc::DOMNode;
+class xercesc::DOMErrorHandler;
+class xercesc::DOMError;
+}
+#endif // __CINT__
+#endif // HAVE_XERCES
 
 // Place everything in JANA namespace
-namespace jana
-{
+namespace jana{
 
 class JGeometryXML:public JGeometry{
 	public:

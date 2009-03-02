@@ -8,7 +8,6 @@
 
 #include "JObject.h"
 
-#ifndef __CINT__  // disable this file from ROOT interpreter
 
 #include <vector>
 #include <string>
@@ -19,9 +18,15 @@ using std::string;
 #include "JFactory_base.h"
 #include "JEvent.h"
 
+// The following is here just so we can use ROOT's THtml class to generate documentation.
+#ifdef __CINT__
+class pthread_mutex_t;
+typedef unsigned long pthread_t;
+typedef unsigned long oid_t;
+#endif
+
 // Place everything in JANA namespace
-namespace jana
-{
+namespace jana{
 
 ///
 /// JANA Data Factory (base class for algorithms)
@@ -97,6 +102,8 @@ class JFactory:public JFactory_base{
 };
 
 
+// The following is here just so we can use ROOT's THtml class to generate documentation.
+#ifndef __CINT__
 
 //-------------
 // JFactory
@@ -395,11 +402,11 @@ void JFactory<T>::toStrings(vector<vector<pair<string,string> > > &items, bool a
 	}
 }
 
+#endif //__CINT__
 
 
 } // Close JANA namespace
 
 
-#endif // __CINT__
 
 #endif // _JFACTORY_H_

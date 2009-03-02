@@ -26,19 +26,17 @@ using std::stringstream;
 #include "JCalibrationGenerator.h"
 #include "JEventLoop.h"
 
-
+// The following is here just so we can use ROOT's THtml class to generate documentation.
 #ifdef __CINT__
-class pthread_mutex_t;
-typedef unsigned long pthread_t;
-class pthread_cond_t;
+#include "cint.h"
 #endif
+
 
 /// A JANA program will have exactly one JApplication object. It is
 /// the central registration point for the other JANA objects.
 
 // Place everything in JANA namespace
-namespace jana
-{
+namespace jana{
 
 class JEventProcessor;
 class JEventSource;
@@ -46,6 +44,12 @@ class JEvent;
 class JGeometry;
 class JParameterManager;
 class JCalibration;
+class JParameter;
+class JEventSourceGenerator;
+class JFactoryGenerator;
+class JCalibrationGenerator;
+class JEventLoop;
+
 
 class JApplication{
 	public:
@@ -164,6 +168,8 @@ class JApplication{
 } // Close JANA namespace
 
 
+// The following is here just so we can use ROOT's THtml class to generate documentation.
+#ifndef __CINT__
 
 // For plugins
 typedef void InitPlugin_t(jana::JApplication* app);
@@ -178,6 +184,9 @@ inline void InitJANAPlugin(jana::JApplication *app)
 	// is pointing to the one being used by app
 	gPARMS = app->GetJParameterManager();
 }
+
+#endif //__CINT__
+
 
 #endif // _JApplication_
 

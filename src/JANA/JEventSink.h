@@ -63,7 +63,7 @@ class JEventSink:public JEventProcessor{
 		pthread_mutex_t sink_mutex;
 };
 
-} // Close jana namespace
+} // Close JANA namespace
 
 #endif // _JEventSink_
 

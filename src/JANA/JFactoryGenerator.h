@@ -11,8 +11,7 @@
 #include "jerror.h"
 
 // Place everything in JANA namespace
-namespace jana
-{
+namespace jana{
 
 class JEventLoop;
 

@@ -23,11 +23,9 @@ using std::string;
 #include "JCalibration.h"
 #include "JGeometry.h"
 
-// The following is here just so we can use ROOT's THtml class to generate
-// documentation.
+// The following is here just so we can use ROOT's THtml class to generate documentation.
 #ifdef __CINT__
-class pthread_mutex_t;
-typedef unsigned long pthread_t;
+#include "cint.h"
 #endif
 
 
@@ -38,6 +36,7 @@ namespace jana{
 template<class T> class JFactory;
 class JApplication;
 class JEventProcessor;
+
 
 class JEventLoop{
 	public:
@@ -137,6 +136,8 @@ class JEventLoop{
 		string caller_tag;
 };
 
+// The following is here just so we can use ROOT's THtml class to generate documentation.
+#ifndef __CINT__
 
 //-------------
 // Get
@@ -484,6 +485,8 @@ template<class T> bool JEventLoop::GetGeom(string namepath, T &val)
 	
 	return geom->Get(namepath, val);
 }
+
+#endif //__CINT__
 
 } // Close JANA namespace
 

@@ -10,6 +10,11 @@
 #ifndef _JERROR_H_
 #define _JERROR_H_
 
+// The following is here just so we can use ROOT's THtml class to generate documentation.
+#ifdef __CINT__
+#include "cint.h"
+#endif
+
 #define _DBG_ std::cerr<<__FILE__<<":"<<__LINE__<<" "
 #define _DBG__ std::cerr<<__FILE__<<":"<<__LINE__<<std::endl
 

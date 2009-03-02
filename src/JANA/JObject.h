@@ -20,6 +20,11 @@ using std::vector;
 using std::string;
 using std::stringstream;
 
+// The following is here just so we can use ROOT's THtml class to generate documentation.
+#ifdef __CINT__
+#include "cint.h"
+#endif
+
 
 /// The JObject class is a base class for all data classes.
 /// (See JFactory and JFactory_base for algorithm classes.)
@@ -43,8 +48,7 @@ using std::stringstream;
 	static const char* static_className(void) {return #T;}
 
 // Place everything in JANA namespace
-namespace jana
-{
+namespace jana{
 
 class JObject{
 
@@ -85,6 +89,8 @@ class JObject{
 		map<const JObject*, string> associated;
 		
 };
+
+#ifndef __CINT__
 
 //--------------------------
 // AddAssociatedObject
@@ -259,6 +265,8 @@ void JObject::AddString(vector<pair<string,string> > &items, const char *name, c
 	item.second = string(str);
 	items.push_back(item);
 }
+
+#endif // __CINT__
 
 
 } // Close JANA namespace

@@ -13,8 +13,7 @@
 #include <JANA/jerror.h>
 
 // Place everything in JANA namespace
-namespace jana
-{
+namespace jana{
 
 class JCalibration;
 

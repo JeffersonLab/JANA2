@@ -10,12 +10,16 @@
 #define _JException2_h_
 
 
-#include <exception>
 #include <string>
+
+class exception;
+
+#ifndef __CINT__
+
+#include <exception>
 #include <sstream>
 #include <string.h>
 #include <malloc.h>
-
 
 // for stack trace
 #ifdef SunOS
@@ -32,12 +36,15 @@
  *
  *  throw(JException2("This is a devilish error", 666, SOURCEINFO));
 */
+
 #define SOURCEINFO  __FILE__,__LINE__         
+
+#endif // __CINT__
 
 
 
 /** JANA packages lives in the jana namespace. */
-namespace jana {
+namespace jana{
 
 using namespace std;
 
@@ -72,6 +79,9 @@ public:
   string trace;    /**<Stack trace generated automatically.  Does not work on all architectures.*/
 };
 
+
+// Hide these routines from rootcint
+#ifndef __CINT__
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -237,7 +247,8 @@ string JException2::getStackTrace(void) {
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
+#endif // __CINT__
 
-} // namespace jana
+} // Close JANA namespace
 
 #endif /* _JException2_h_ */

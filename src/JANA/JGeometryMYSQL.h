@@ -13,8 +13,7 @@
 #include <JANA/jana_config.h>
 
 // Place everything in JANA namespace
-namespace jana
-{
+namespace jana{
 
 class JGeometryMYSQL:public JGeometry{
 	public:
@@ -33,7 +32,7 @@ class JGeometryMYSQL:public JGeometry{
 
 };
 
-}
+} // Close JANA namespace
 
 #endif // _JGeometryMYSQL_
 
