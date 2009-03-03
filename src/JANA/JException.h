@@ -1,3 +1,10 @@
+
+
+// JException2.h
+
+// Base exception class for JANA package
+
+// EJW, JLab, 19-apr-2007
 /// 
 /// JException - exception definition for DANA
 /// Author:  Craig Bookwalter (craigb at jlab.org) 
@@ -27,38 +34,61 @@
 ///	  - make it thread-safe 	
 ///
 
-#ifndef DEXCEPTION_H
-#define DEXCEPTION_H
+#ifndef _JException_
+#define _JException_
 
-#include <iostream>
-#include <exception>
-#include <cstdlib>
 #include <string>
-#include <sstream>
-#include <new>
-#include <string.h>
 
-#ifdef __linux__
+class exception;
+
+#ifndef __CINT__
+
+#include <exception>
+#include <sstream>
+
+#ifdef __linux__ || __APPLE__
+#define TRACEABLE_OS
 #include <execinfo.h>
+#include <cxxabi.h>
 #endif
 
-#include <unistd.h>
-#include <limits.h>
+
+#endif // __CINT__
+
+// Place everything in JANA namespace
+namespace jana{
+
 
 class JException : public std::exception 
 {
 	public :
-		JException(std::string msg="");
-		virtual	~JException() throw();
-		const char* what() const throw();
-		const char* trace() const throw();
+		JException(const std::string &txt);
+		JException(const std::string &txt, const char *file, int line);
+		JException(const std::string &txt, int c);
+		JException(const std::string &txt, int c, const char *file, int line);
+		virtual ~JException(void) throw();
+
+		virtual std::string toString(void) const throw();
+		virtual std::string toString(bool includeTrace) const throw();
+		virtual const char* what(void) const throw();
+		static std::string getStackTrace(void);
+		
+		//JException(std::string msg="");
+		//const char* what() const throw();
+		//const char* trace() const throw();
 		friend std::ostream& 
 			operator<<(std::ostream& os, const JException& d);
 		
 	private:
-		void getTrace() throw();
-		std::string _msg;
-		std::string _trace;
+		std::string text;     /**<Exception text.*/
+		int code;        /**<Exception code.*/
+		std::string source;   /**<Exception source file info.*/
+		std::string trace;    /**<Stack trace generated automatically.  Does not work on all architectures.*/
+		//void getTrace() throw();
+		//std::string _msg;
+		//std::string _trace;
 };	
-	
-#endif //DEXCEPTION_H
+
+} // Close JANA namespace
+
+#endif //_JException_

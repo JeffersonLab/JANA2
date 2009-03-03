@@ -98,6 +98,7 @@ class JEventLoop{
 		inline bool GetQuit(void){return quit;}
 		void QuitProgram(void);
 		
+		template<class T> JFactory<T>* GetSingle(const T* &t, const char *tag=""); ///< Get pointer to first data object from (source or factory)
 		template<class T> JFactory<T>* Get(vector<const T*> &t, const char *tag=""); ///< Get data object pointers from (source or factory)
 		template<class T> JFactory<T>* GetFromFactory(vector<const T*> &t, const char *tag="", data_source_t &data_source=NULL); ///< Get data object pointers from factory
 		template<class T> jerror_t GetFromSource(vector<const T*> &t, JFactory_base *factory=NULL); ///< Get data object pointers from source.
@@ -138,6 +139,30 @@ class JEventLoop{
 
 // The following is here just so we can use ROOT's THtml class to generate documentation.
 #ifndef __CINT__
+
+//-------------
+// GetSingle
+//-------------
+template<class T>
+JFactory<T>* JEventLoop::GetSingle(const T* &t, const char *tag)
+{
+	/// This is a convenience method that can be used to get a pointer to the single
+	/// object of type T from the specified factory. It simply calls the Get(vector<...>) method
+	/// and copies the first pointer into "t" (or NULL if no objects are returned).
+	/// 
+	/// This is intended to address the common situation in which there is an interest
+	/// in the event if and only if there is exactly 1 object of type T. If the event
+	/// has no objects of that type or more than 1 object of that type (for the specified
+	/// factory) then an exception of type "unsigned long" is thrown with the value
+	/// being the number of objects of type T.
+	vector<const T*> &v;
+	JFactory<T> *fac = Get(v, tag);
+
+	if(v.size()!=1)throw v.size();
+	
+	t = v[0];
+	return fac;
+}
 
 //-------------
 // Get
