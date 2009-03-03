@@ -76,8 +76,7 @@ class JException : public std::exception
 		//JException(std::string msg="");
 		//const char* what() const throw();
 		//const char* trace() const throw();
-		friend std::ostream& 
-			operator<<(std::ostream& os, const JException& d);
+		friend std::ostream& operator<<(std::ostream& os, const jana::JException& d);
 		
 	private:
 		std::string text;     /**<Exception text.*/
@@ -87,8 +86,12 @@ class JException : public std::exception
 		//void getTrace() throw();
 		//std::string _msg;
 		//std::string _trace;
-};	
+};
+
+std::ostream& operator<<(std::ostream& os, const jana::JException& d);
 
 } // Close JANA namespace
+
+
 
 #endif //_JException_

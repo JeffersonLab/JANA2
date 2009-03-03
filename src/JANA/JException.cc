@@ -180,12 +180,12 @@ string JException::getStackTrace(void) {
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-
-std::ostream& operator<<(std::ostream& os, const JException& d) {
+#if 1
+std::ostream& jana::operator<<(std::ostream& os, const jana::JException& d) {
 	os << d.toString(true);
 	return os;
 }
-
+#endif
 // Below here is Craig's original code (minus the stream operator above). It was
 // disabled when merging it with Elliott's code since they overlapped so much.
 // I'm keeping it here for a little while at least because:
