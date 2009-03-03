@@ -73,7 +73,7 @@ class JEventLoop{
 		void RefreshProcessorListFromJApplication(void); ///< Re-copy the list of JEventProcessors from JApplication
 		virtual jerror_t AddFactory(JFactory_base* factory); ///< Add a factory
 		jerror_t RemoveFactory(JFactory_base* factory); ///< Remove a factory
-		JFactory_base* GetFactory(const string data_name, const char *tag=""); ///< Get a specific factory pointer
+		JFactory_base* GetFactory(const string data_name, const char *tag="", bool allow_deftag=true); ///< Get a specific factory pointer
 		vector<JFactory_base*> GetFactories(void){return factories;} ///< Get all factory pointers
 		void GetFactoryNames(vector<string> &factorynames); ///< Get names of all factories in name:tag format
 		void GetFactoryNames(map<string,string> &factorynames); ///< Get names of all factories in map with key=name, value=tag

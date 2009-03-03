@@ -1,3 +1,11 @@
+Changes in version 0.5.0
+
+- Added GetSingle() method to JEventLoop
+- GetFactory method fixed to honor default tags from command line
+- Merged JException2 class into JException
+- Reworked mechanism to kill stalled threads
+- Fixed problem compiling on Fedora 10
+
 
 Changes in version 0.4.9
 
