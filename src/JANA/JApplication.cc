@@ -1189,7 +1189,7 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 	cout<<" ("<<NEvents_read<<" events read) ";
 	cout<<"Average rate: "<<Val2StringWithPrefix(rate_average)<<"Hz"<<endl;
 
-	if(SIGINT_RECEIVED<3)exit(-1);
+	if(SIGINT_RECEIVED>=3)exit(-1);
 
 	return NOERROR;
 }
