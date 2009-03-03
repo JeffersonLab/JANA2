@@ -42,6 +42,7 @@ using namespace jana;
 
 void* LaunchEventBufferThread(void* arg);
 void* LaunchThread(void* arg);
+void  CleanupThread(void* arg);
 
 JLog dlog;
 jana::JApplication *japp = NULL;
@@ -626,6 +627,11 @@ jerror_t JApplication::AddJEventLoop(JEventLoop *loop, double* &heartbeat)
 
 	pthread_mutex_lock(&app_mutex);
 	loops.push_back(loop);
+	
+	// We need the threads vector to stay in sync with the loops and heartbeats
+	// vectors so we push it on here even though it might seem more natural
+	// to do this from the main thread when this thread was created.
+	threads.push_back(pthread_self());
 
 	// Loop over all factory generators, creating the factories
 	// for this JEventLoop.
@@ -927,10 +933,19 @@ void* LaunchThread(void* arg)
 	//sigemptyset(&set);
 	//sigaddset(&set, SIGUSR2);
 	//pthread_sigmask(SIG_BLOCK, &set, NULL);
+	
+	// For stuck threads, we may need to cancel them at an arbitrary execution
+	// point so we set our cancel type to PTHREAD_CANCEL_ASYNCHRONOUS.
+	int oldtype;
+	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &oldtype);
 
 	// Create JEventLoop object. He automatically registers himself
 	// with the JApplication object. 
 	JEventLoop *eventLoop = new JEventLoop((JApplication*)arg);
+	
+	// Add a cleanup routine to this thread so he can automatically
+	// de-register himself when the thread exits for any reason
+	pthread_cleanup_push(CleanupThread, (void*)eventLoop);
 
 	// Loop over events until done. Catch any jerror_t's thrown
 	try{
@@ -944,13 +959,25 @@ void* LaunchThread(void* arg)
 		cerr<<__FILE__<<":"<<__LINE__<<" EXCEPTION caught for thread "<<pthread_self()<<endl;
 	}
 
-	// Delete JEventLoop object. He automatically de-registers himself
-	// with the JEventLoop Object
-	delete eventLoop;
-
+	// This will cause the JEventLoop to be destroyed (see below) which causes
+	// the entire thread, (, heartbeat, etc ...) to be removed from the JApplication.
+	pthread_cleanup_pop(1);
+	
+	// Exit the thread
 	pthread_exit(arg);
 
 	return arg;
+}
+
+//----------------
+// CleanupThread
+//----------------
+void CleanupThread(void* arg)
+{
+	if(arg!=NULL){
+		JEventLoop *loop = (JEventLoop*)arg;
+		delete loop; // This will cause the destructor to de-register the JEventLoop
+	}
 }
 
 //---------------------------------
@@ -1024,7 +1051,6 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 	for(int i=0; i<Nthreads; i++){
 		pthread_t thr;
 		pthread_create(&thr, NULL, LaunchThread, this);
-		threads.push_back(thr);
 		cout<<".";cout.flush();
 	}
 	cout<<endl;
@@ -1079,43 +1105,42 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 				JEvent &event = loop->GetJEvent();
 				cerr<<" Thread "<<i<<" hasn't responded in "<<*hb<<" seconds.";
 				cerr<<" (run:event="<<event.GetRunNumber()<<":"<<event.GetEventNumber()<<")";
-				cerr<<" Delisting ..."<<endl;
-				loops.erase(loops.begin()+i);
-				heartbeats.erase(heartbeats.begin()+i);
-				threads.erase(threads.begin()+i);
+				cerr<<" Cancelling ..."<<endl;
 				
-				// Unlock the mutex so other methods can modify the heartbeats, etc vectors
-				pthread_mutex_unlock(&app_mutex);
-				
-				// Signal the non-responsive thread to commit suicide and wait for it to do so.
-				void *ptr;
-				pthread_t thr = loop->GetPThreadID();
-				pthread_kill(thr, SIGHUP);
-				pthread_join(thr, &ptr);
-				
+				// At this point, we need to kill the stalled thread. We do this by
+				// calling pthread_cancel which will subsequently destroy the JEventLoop
+				// in the cleanup routine (CleanupThread()) which will remove the
+				// thread and all its pieces (heartbeat, etc..) from the JApplication
+				// by calling RemoveJEventLoop from the JEventLoop destructor (yeah,
+				// I know, it's complicated). Note this will only schedule the stalled
+				// thread to call CleanupThread so it may not happen right away. What's
+				// more, the call will get blocked when it tries to lock the app_mutex
+				// which we currently have locked.
+				pthread_cancel(threads[i]);
+
 				// Launch a new thread to take his place, but only if we're not trying to quit
 				if(!SIGINT_RECEIVED){
-					unsigned int Nloops_left = loops.size();
 					cerr<<" Launching new thread ..."<<endl;
+					pthread_t thr;
 					pthread_create(&thr, NULL, LaunchThread, this);
-					threads.push_back(thr);
 					
 					// We need to wait for the new thread to create a new JEventLoop
 					// If we don't wait for this here, then control may fall to the
 					// end of the while loop that checks loops.size() before the new
 					// loop is added, causing the program to finish prematurely.
-					for(int j=0; j<10; j++){
+					for(int j=0; j<40; j++){
 						struct timespec req, rem;
-						req.tv_nsec = (int)0.25E9; // set to 1/4 second
+						req.tv_nsec = (int)0.100E9; // set to 100 milliseconds
 						req.tv_sec = 0;
 						rem.tv_sec = rem.tv_nsec = 0;
+						pthread_mutex_unlock(&app_mutex); // Unlock the mutex
 						nanosleep(&req, &rem);
-						if(loops.size()>Nloops_left)break;
+						pthread_mutex_lock(&app_mutex); // Re-lock the mutex
+
+						// Our new thread will be in "threads" once it's up and running
+						if(find(threads.begin(), threads.end(), thr)!=threads.end())break;
 					}
 				}
-				
-				// Re-lock the mutex
-				pthread_mutex_lock(&app_mutex);
 
 				// Quit this loop so we can re-enter it fresh since the thread list was changed
 				break;
