@@ -66,7 +66,7 @@ class JException : public std::exception
 		JException(const std::string &txt, const char *file, int line);
 		JException(const std::string &txt, int c);
 		JException(const std::string &txt, int c, const char *file, int line);
-		virtual ~JException(void) throw();
+		virtual ~JException(void) throw(){};
 
 		virtual std::string toString(void) const throw();
 		virtual std::string toString(bool includeTrace) const throw();
