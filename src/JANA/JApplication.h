@@ -173,6 +173,7 @@ class JApplication{
 
 // For plugins
 typedef void InitPlugin_t(jana::JApplication* app);
+typedef void FiniPlugin_t(jana::JApplication* app);
 
 
 // This routine is used to bootstrap plugins. It is done outside

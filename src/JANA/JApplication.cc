@@ -1170,6 +1170,15 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 		// Close any open dll's
 		for(unsigned int i=0; i<sohandles.size(); i++){
 			cout<<"Closing shared object handle "<<i<<" ..."<<endl; cout.flush();
+
+			// Look for a FiniPlugin symbol and execute if found
+			FiniPlugin_t *plugin = (FiniPlugin_t*)dlsym(sohandles[i], "FiniPlugin");
+			if(plugin){
+				cout<<"Finalizing plugin ..."<<endl;
+				(*plugin)(this);
+			}
+			
+			// Close shared object
 			dlclose(sohandles[i]);
 		}
 	}else{
@@ -1397,14 +1406,15 @@ jerror_t JApplication::RegisterSharedObject(const char *soname, bool verbose)
 		if(verbose)cerr<<dlerror()<<endl;
 		return RESOURCE_UNAVAILABLE;
 	}
-	sohandles.push_back(handle);
 	
 	// Look for an InitPlugin symbol
 	InitPlugin_t *plugin = (InitPlugin_t*)dlsym(handle, "InitPlugin");
 	if(plugin){
 		cout<<"Initializing plugin \""<<soname<<"\" ..."<<endl;
 		(*plugin)(this);
+		sohandles.push_back(handle);
 	}else{
+		dlclose(handle);
 		if(verbose)cout<<" --- Nothing useful found in "<<soname<<" ---"<<endl;
 	}
 
