@@ -60,6 +60,8 @@ class JParameterManager{
 		template<typename K> JParameter* GetParameter(K key); ///< Get the value of a configuration parameter
 		template<typename K, typename V> JParameter* GetParameter(K key, V &val); ///< Get pointer to configuration parameters JParameter object
 		void GetParameters(map<string,string> &parms, string filter="");
+		void ReadConfigFile(string fname);
+		void WriteConfigFile(string fname);
 		void PrintParameters(void); ///< Print a list of the configuration parameters
 		void Dump(void); ///< Invoke the Dump() method of all JParameter objects
 		
@@ -99,6 +101,15 @@ JParameter* JParameterManager::SetDefaultParameter(K key, V &val)
 			// already for this parameter, then we don't need to set it
 			// again, but if not, we should set it to the correct type.
 			p->type = JParameter::DataType(val);
+			
+			// If we get here it means the parameter was already set but
+			// is not flagged as being the default. This happens when
+			// the parameter is set via the command line. It may turn out
+			// though that the command line value is exactly the same as
+			// the default value in which case we really should set the
+			// "isdefault" flag so the parameter is not printed as a
+			// "non-default".
+			if(val == my_val) p->isdefault = true;
 		}
 	}
 	

@@ -170,8 +170,11 @@ JApplication::JApplication(int narg, char* argv[])
 	fini_called = false;
 	stop_event_buffer = false;
 	
-	// Default plugin search path
+	// Default plugin search paths
 	AddPluginPath(".");
+	if(const char *ptr = getenv("JANA_HOME")){
+		AddPluginPath(string(ptr) + "/lib");
+	}
 	
 	// Configuration Parameter manager
 	jparms = new JParameterManager();
@@ -182,9 +185,14 @@ JApplication::JApplication(int narg, char* argv[])
 	print_factory_report = false;
 	print_resource_report = false;
 	
-	// Sources
+	// Loop over arguments
 	current_source = NULL;
+	if(narg>0)this->args.push_back(string(argv[0]));
 	for(int i=1; i<narg; i++){
+	
+		// Record arguments
+		this->args.push_back(string(argv[i]));
+	
 		const char *arg="--nthreads=";
 		if(!strncmp(arg, argv[i],strlen(arg))){
 			NTHREADS_COMMAND_LINE = atoi(&argv[i][strlen(arg)]);
@@ -208,10 +216,10 @@ JApplication::JApplication(int narg, char* argv[])
 			RegisterSharedObjectDirectory(sodirname);
 			continue;
 		}
-		arg="--config";
+		arg="--config=";
 		if(!strncmp(arg, argv[i],strlen(arg))){
-			string fname(&argv[i][strlen(arg)+1]);
-			ReadConfigFile(fname);
+			string fname(&argv[i][strlen(arg)]);
+			jparms->ReadConfigFile(fname);
 			continue;
 		}
 		arg="--factoryreport";
@@ -222,6 +230,11 @@ JApplication::JApplication(int narg, char* argv[])
 		arg="--dumpcalibrations";
 		if(!strncmp(arg, argv[i],strlen(arg))){
 			dump_calibrations = true;
+			continue;
+		}
+		arg="--dumpconfig";
+		if(!strncmp(arg, argv[i],strlen(arg))){
+			dump_configurations = true;
 			continue;
 		}
 		arg="--resourcereport";
@@ -292,8 +305,9 @@ void JApplication::Usage(void)
 	cout<<"  --sodir=shared_dir       Add the directory \"shared_dir\" to search list"<<endl;
 	cout<<"  --config=filename        Read in the specified JANA configuration file"<<endl;
 	cout<<"  --factoryreport          Dump a short report on factories at end of job"<<endl;
-	cout<<"  --dumpcalibrations       Dump calibrations used in \"calib\" directory at end of job"<<endl;
-	cout<<"  --resourcereport         Dump a short report on system resources used at end of job"<<endl;
+	cout<<"  --dumpcalibrations       Dump calibrations used in a directory at end of job"<<endl;
+	cout<<"  --dumpcconfig            Dump all config. parameters into file at end of job"<<endl;
+	cout<<"  --resourcereport         Dump report on system resources used at end of job"<<endl;
 	cout<<"  --auto_activate=factory  Auto activate \"factory\" for every event"<<endl;
 	cout<<"  -Pkey=value              Set configuration parameter \"key\" to \"value\""<<endl;
 	cout<<"  -Pprint                  Print all configuration params"<<endl;
@@ -314,78 +328,6 @@ JApplication::~JApplication()
 	calibrations.clear();
 	for(unsigned int i=0; i<heartbeats.size(); i++)delete heartbeats[i];
 	heartbeats.clear();
-}
-
-//---------------------------------
-// ReadConfigFile
-//---------------------------------
-void JApplication::ReadConfigFile(string fname)
-{
-	/// Read in the configuration file with name specified by "fname".
-	/// The file should have the form:
-	///
-	/// <pre>
-	/// key1 value1
-	/// key2 value2
-	/// ...
-	/// </pre>
-	/// 
-	/// Where there is a space between the key and the value (thus, the "key"
-	/// can contain no spaces). The value is taken as the rest of the line
-	/// up to, but not including the newline itself.
-	///
-	/// A key may be specified with no value and the value will be set to "1".
-	///
-	/// A "#" charater will discard the remaining characters in a line up to
-	/// the next newline. Therefore, lines starting with "#" are ignored
-	/// completely.
-	///
-	/// Lines with no characters (except for the newline) are ignored.
-
-	// Try and open file
-	ifstream ifs(fname.c_str());
-	if(!ifs.is_open()){
-		cerr<<"Unable to open configuration file \""<<fname<<"\" !"<<endl;
-		return;
-	}
-	cout<<"Reading configuration from \""<<fname<<"\" ..."<<endl;
-	
-	// Loop over lines
-	char line[1024];
-	while(!ifs.eof()){
-		// Read in next line ignoring comments 
-		ifs.getline(line, 1024);
-		if(strlen(line)==0)continue;
-		if(line[0] == '#')continue;
-		string str(line);
-
-		// Check for comment character and erase comment if found
-		if(str.find('#')!=str.npos)str.erase(str.find('#'));
-
-		// Break line into tokens
-		vector<string> tokens;
-		string buf; // Have a buffer string
-		stringstream ss(str); // Insert the string into a stream
-		while (ss >> buf)tokens.push_back(buf);
-		if(tokens.size()<1)continue; // ignore empty lines
-
-		// Use first token as key
-		string key = tokens[0];
-		
-		// Concatenate remaining tokens into val string
-		string val="";
-		for(unsigned int i=1; i<tokens.size(); i++){
-			if(i!=1)val += " ";
-			val += tokens[i];
-		}
-		if(val=="")val="1";
-
-		// Set Configuration Parameter
-		jparms->SetParameter(key, val);
-	}
-	
-	// close file
-	ifs.close();	
 }
 
 //---------------------------------
@@ -662,7 +604,7 @@ jerror_t JApplication::RemoveJEventLoop(JEventLoop *loop)
 	/// JEventLoop destructor.
 
 	pthread_mutex_lock(&app_mutex);
-	
+
 	for(unsigned int i=0; i<loops.size(); i++){
 		if(loops[i] == loop){
 			if(print_factory_report)RecordFactoryCalls(loop);
@@ -949,7 +891,6 @@ void* LaunchThread(void* arg)
 
 	// Loop over events until done. Catch any jerror_t's thrown
 	try{
-		eventLoop->RefreshProcessorListFromJApplication(); // make sure we're up-to-date
 		eventLoop->Loop();
 		eventLoop->GetJApplication()->Lock();
 		cout<<"Thread 0x"<<hex<<(unsigned long)pthread_self()<<dec<<" completed gracefully"<<endl;
@@ -1245,6 +1186,9 @@ jerror_t JApplication::Fini(void)
 		usleep(100000);
 	}
 	
+	// Dump configuration parameters (if requested)
+	if(dump_configurations)jparms->WriteConfigFile("jana.config");
+	
 	// Dump calibrations (if requested)
 	if(dump_calibrations){
 		for(unsigned int i=0; i<calibrations.size(); i++)calibrations[i]->DumpCalibrationsToFiles();
@@ -1518,7 +1462,8 @@ jerror_t JApplication::AttachPlugins(void)
 	/// actually attach and intiailize them. See AddPlugin method
 	/// for more.
 	
-	bool printPaths = getenv("JANA_PRINT_PLUGIN_PATHS") != NULL;
+	bool printPaths;
+	jparms->GetParameter("PRINT_PLUGIN_PATHS", printPaths);
 	
 	/// The JANA_PLUGIN_DIR environment is used to specify
 	/// directories in which every file is attached as a plugin.
@@ -1584,7 +1529,7 @@ jerror_t JApplication::AttachPlugins(void)
 		if(!found_plugin){
 			Lock();
 			cerr<<endl<<"***ERROR : Couldn't find plugin \""<<plugins[j]<<"\"!***"<<endl;
-			cerr<<"***        To see paths checked, set JANA_PRINT_PLUGIN_PATHS env. var. and re-run"<<endl;
+			cerr<<"***        To see paths checked, set PRINT_PLUGIN_PATHS config. parameter"<<endl;
 			Unlock();
 			exit(-1);
 		}

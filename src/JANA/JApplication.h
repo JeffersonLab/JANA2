@@ -59,7 +59,7 @@ class JApplication{
 		static const char* static_className(void){return "JApplication";}
 		
 		void Usage(void);
-		void ReadConfigFile(string fname);
+		vector<string> GetArgs(void){return args;}
 		
 		void EventBufferThread(void);
 		unsigned int GetEventBufferSize(void);
@@ -150,6 +150,7 @@ class JApplication{
 		vector<JCalibrationGenerator*> calibrationGenerators;
 		vector<void*> sohandles;
 
+		vector<string> args;	///< Argument list passed in to JApplication Constructor
 		int show_ticker;
 		int NEvents_read;		///< Number of events read from source
 		int NEvents;			///< Number of events processed
@@ -163,6 +164,7 @@ class JApplication{
 		bool print_resource_report;
 		bool stop_event_buffer;
 		bool dump_calibrations;
+		bool dump_configurations;
 };
 
 } // Close JANA namespace

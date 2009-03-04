@@ -46,16 +46,7 @@ JEventLoop::JEventLoop(JApplication *app)
 	quit = 0;
 	auto_free = 1;
 	pthread_id = pthread_self();
-	
-	// Copy the event processor list to our local vector
-	RefreshProcessorListFromJApplication();
-
-	app->GetJParameterManager()->GetParameters(default_tags, "DEFTAG:");
-	app->GetJParameterManager()->PrintParameters();
-	app->GetJParameterManager()->GetParameter( "RECORD_CALL_STACK", record_call_stack);
-	
-	auto_activated_factories = app->GetAutoActivatedFactories();
-	
+		
 	// Initialize the caller strings for when we record the call stack
 	// these will get over written twice with each call to Get(). Once
 	// to copy in who is being called and then again later to copy
@@ -352,6 +343,15 @@ jerror_t JEventLoop::Loop(void)
 	/// Loop over events until Quit() method is called or we run
 	/// out of events.
 	
+	// Copy the event processor list to our local vector
+	RefreshProcessorListFromJApplication();
+
+	app->GetJParameterManager()->GetParameters(default_tags, "DEFTAG:");
+	app->GetJParameterManager()->GetParameter( "RECORD_CALL_STACK", record_call_stack);
+	app->GetJParameterManager()->PrintParameters();
+	
+	auto_activated_factories = app->GetAutoActivatedFactories();
+
 	do{
 		// Let main thread know we're alive
 		*heartbeat = 0.0;

@@ -7,8 +7,12 @@
 
 #include <ctype.h>
 #include <pthread.h>
+#include <fstream>
+#include <iostream>
+using namespace std;
 
 #include "JParameterManager.h"
+#include "JApplication.h"
 using namespace jana;
 
 #ifndef ansi_escape
@@ -32,6 +36,7 @@ using namespace jana;
 
 
 JParameterManager *gPARMS=NULL; // global pointer set to last instantiation
+extern jana::JApplication *japp;
 
 class JParameterAlphaSort{
 	public:
@@ -95,6 +100,137 @@ void JParameterManager::GetParameters(map<string,string> &parms, string filter)
 }
 
 //---------------------------------
+// ReadConfigFile
+//---------------------------------
+void JParameterManager::ReadConfigFile(string fname)
+{
+	/// Read in the configuration file with name specified by "fname".
+	/// The file should have the form:
+	///
+	/// <pre>
+	/// key1 value1
+	/// key2 value2
+	/// ...
+	/// </pre>
+	/// 
+	/// Where there is a space between the key and the value (thus, the "key"
+	/// can contain no spaces). The value is taken as the rest of the line
+	/// up to, but not including the newline itself.
+	///
+	/// A key may be specified with no value and the value will be set to "1".
+	///
+	/// A "#" charater will discard the remaining characters in a line up to
+	/// the next newline. Therefore, lines starting with "#" are ignored
+	/// completely.
+	///
+	/// Lines with no characters (except for the newline) are ignored.
+
+	// Try and open file
+	ifstream ifs(fname.c_str());
+	if(!ifs.is_open()){
+		cerr<<"Unable to open configuration file \""<<fname<<"\" !"<<endl;
+		return;
+	}
+	cout<<"Reading configuration from \""<<fname<<"\" ..."<<endl;
+	
+	// Loop over lines
+	char line[1024];
+	while(!ifs.eof()){
+		// Read in next line ignoring comments 
+		ifs.getline(line, 1024);
+		if(strlen(line)==0)continue;
+		if(line[0] == '#')continue;
+		string str(line);
+
+		// Check for comment character and erase comment if found
+		if(str.find('#')!=str.npos)str.erase(str.find('#'));
+
+		// Break line into tokens
+		vector<string> tokens;
+		string buf; // Have a buffer string
+		stringstream ss(str); // Insert the string into a stream
+		while (ss >> buf)tokens.push_back(buf);
+		if(tokens.size()<1)continue; // ignore empty lines
+
+		// Use first token as key
+		string key = tokens[0];
+		
+		// Concatenate remaining tokens into val string
+		string val="";
+		for(unsigned int i=1; i<tokens.size(); i++){
+			if(i!=1)val += " ";
+			val += tokens[i];
+		}
+		if(val=="")val="1";
+
+		// Set Configuration Parameter
+		SetParameter(key, val);
+	}
+	
+	// close file
+	ifs.close();	
+}
+
+//---------------------------------
+// WriteConfigFile
+//---------------------------------
+void JParameterManager::WriteConfigFile(string fname)
+{
+	/// Write all of the configuration parameters out to an ASCII file in
+	/// a format compatible with reading in via ReadConfigFile().
+
+	// Try and open file
+	ofstream ofs(fname.c_str());
+	if(!ofs.is_open()){
+		cerr<<"Unable to open configuration file \""<<fname<<"\" for writing!"<<endl;
+		return;
+	}
+	cout<<"Writing configuration parameters to \""<<fname<<"\" ..."<<endl;
+	
+	// Write header
+	time_t t = time(NULL);
+	string timestr(ctime(&t));
+	vector<string> args;
+	if(japp) args = japp->GetArgs();
+	ofs<<"#"<<endl;
+	ofs<<"# JANA Configuration parameters (auto-generated)"<<endl;
+	ofs<<"#"<<endl;
+	ofs<<"# created: "<<timestr;
+	ofs<<"# command:";
+	for(unsigned int i=0; i<args.size(); i++)ofs<<" "<<args[i];
+	ofs<<endl;
+	ofs<<"#"<<endl;
+	ofs<<endl;
+	
+	// Sort parameters alphabetically
+	std::sort(parameters.begin(), parameters.end(), JParameterAlphaSort());
+
+	// First, find the longest key and value
+	unsigned int max_key_len = 0;
+	unsigned int max_val_len = 0;
+	for(unsigned int i=0; i<parameters.size(); i++){
+		JParameter *p = parameters[i];		
+		if(p->GetKey().length()>max_key_len) max_key_len = p->GetKey().length(); 
+		if(p->GetValue().length()>max_val_len) max_val_len = p->GetValue().length(); 
+	}
+	
+	// Loop over parameters a second time and print them out
+	for(unsigned int i=0; i<parameters.size(); i++){
+		JParameter *p = parameters[i];
+		string key = p->GetKey();
+		string val = p->GetValue();
+		string line = key;
+		if(val.length()>0) line += string(max_key_len-key.length(),' ') + " " + val + string(max_val_len-val.length(),' ');
+
+		// Print the parameter
+		ofs<<line.c_str()<<endl;
+	}
+	
+	// close file
+	ofs.close();	
+}
+
+//---------------------------------
 // PrintParameters
 //---------------------------------
 void JParameterManager::PrintParameters(void)
@@ -150,6 +286,16 @@ void JParameterManager::PrintParameters(void)
 		if(p->GetKey().length()>max_key_len) max_key_len = p->GetKey().length(); 
 		if(p->GetValue().length()>max_val_len) max_val_len = p->GetValue().length(); 
 	}
+
+	// Special prefixes to *not* make loud warning messages about
+	vector<string> no_warn;
+	no_warn.push_back("DEFTAG:");
+	no_warn.push_back("JANA:");
+	no_warn.push_back("EVENTS_TO_SKIP");
+	no_warn.push_back("EVENTS_TO_KEEP");
+	no_warn.push_back("THREAD_TIMEOUT");
+	no_warn.push_back("RECORD_CALL_STACK");
+	no_warn.push_back("PRINT_PLUGIN_PATHS");
 	
 	// Loop over parameters a second time and print them out
 	int Nprinted = 0;
@@ -161,12 +307,13 @@ void JParameterManager::PrintParameters(void)
 		string val = p->GetValue();
 		string line = " " + key + string(max_key_len-key.length(),' ') + " = " + val + string(max_val_len-val.length(),' ');
 
-		// Special prefixes to *not* make loud warning messages about
-		string prefix="DEFTAG:";
-		string jana="JANA:";
+		// Warn if value has been set without specifying a default ...
 		bool warn = (!p->hasdefault);
-		if(key.substr(0,prefix.size())==prefix)warn=false;
-		if(key.substr(0,jana.size())==jana)warn=false;
+		
+		// ... unless it is a "special" parameter used internally by JANA
+		for(unsigned int j=0; j<no_warn.size(); j++){
+			if(key.substr(0,no_warn[j].size())==no_warn[j])warn=false;
+		}
 
 		// Print the parameter
 		if(!p->isdefault)std::cout<<ansi_bold;
