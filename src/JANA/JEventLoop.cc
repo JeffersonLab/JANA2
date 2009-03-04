@@ -76,7 +76,7 @@ JEventLoop::~JEventLoop()
 	// Call all factories' fini methods
 	for(unsigned int i=0; i<factories.size(); i++){
 		try{
-			factories[i]->fini();
+			if(factories[i]->init_was_called())factories[i]->fini();
 		}catch(jerror_t err){
 			cerr<<endl;
 			cerr<<__FILE__<<":"<<__LINE__<<" Error thrown ("<<err<<") from JFactory<";
