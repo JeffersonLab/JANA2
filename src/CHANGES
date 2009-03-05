@@ -1,5 +1,9 @@
 Changes in version 0.5.0
 
+- Added PLUGINS config. param for alternate way of specifying plugins
+- Improved handling of config. params (fixed multiple display bug)
+- Add $JANA_HOME/lib to plugin path automatically
+- Added --dumpconfig standard option to write all config. parameters to a file
 - Fixed bug where fini methods of factories were always called, even when init never was
 - Fixed bug where normal completion of Run method resulted in exiting with code of -1
 - Added optional FiniPlugin procedure call for plugins
