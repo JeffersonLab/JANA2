@@ -130,6 +130,13 @@ bool JGeometryXML::Get(string xpath, string &sval)
 	if(!valid_xmlfile){sval=""; return false;}
 
 #if HAVE_XERCES
+	
+	// XERCES locks its own mutex which causes horrible problems if the thread
+	// is canceled while it has the lock. Disable cancelibility while here.
+	int oldstate, oldtype;
+	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldstate);
+	pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, &oldtype);
+
 
 	// Ideally we would use the XPath parser built into xerces to parse
 	// our xpath string. However, the piss-poor documentation on this feature
@@ -156,6 +163,8 @@ bool JGeometryXML::Get(string xpath, string &sval)
 	if(attribute==""){
 		_DBG_<<"Get(string, string&) method called but no attribute specified in xpath."<<endl;
 		_DBG_<<"The xpath string should end in \"/@attributeName\"."<<endl;
+		pthread_setcancelstate(oldstate, NULL);
+		pthread_setcanceltype(oldtype, NULL);
 		return false;
 	}
 
@@ -179,10 +188,16 @@ bool JGeometryXML::Get(string xpath, string &sval)
 			// Check if this is the attribute we're looking for
 			if(name == attribute){
 				sval = value;
+				pthread_setcancelstate(oldstate, NULL);
+				pthread_setcanceltype(oldtype, NULL);
 				return true;
 			}
 		}
 	}
+
+	pthread_setcancelstate(oldstate, NULL);
+	pthread_setcanceltype(oldtype, NULL);
+
 #endif
 
 	_DBG_<<"Node or attribute not found."<<endl;
@@ -209,6 +224,13 @@ bool JGeometryXML::Get(string xpath, map<string, string> &svals)
 	if(!valid_xmlfile){return false;}
 
 #if HAVE_XERCES
+
+	// XERCES locks its own mutex which causes horrible problems if the thread
+	// is canceled while it has the lock. Disable cancelibility while here.
+	int oldstate, oldtype;
+	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldstate);
+	pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, &oldtype);
+
 	// Get the pointer to the node of interest.
 	string attribute;
 	DOMNode *node = FindNode(xpath, attribute);
@@ -233,8 +255,14 @@ bool JGeometryXML::Get(string xpath, map<string, string> &svals)
 			}
 		}
 
+		pthread_setcancelstate(oldstate, NULL);
+		pthread_setcanceltype(oldtype, NULL);
 		return true;
 	}
+
+	pthread_setcancelstate(oldstate, NULL);
+	pthread_setcanceltype(oldtype, NULL);
+
 #endif
 
 	// Looks like we failed to find the requested item. Let the caller know.
