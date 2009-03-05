@@ -250,7 +250,6 @@ void JParameterManager::PrintParameters(void)
 	// release the parameters mutex
 	pthread_mutex_unlock(&parameter_mutex);
 
-
 	if(parameters.size() == 0){
 		std::cout<<" - No configuration parameters defined -"<<std::endl;
 		return;
@@ -296,6 +295,7 @@ void JParameterManager::PrintParameters(void)
 	no_warn.push_back("THREAD_TIMEOUT");
 	no_warn.push_back("RECORD_CALL_STACK");
 	no_warn.push_back("PRINT_PLUGIN_PATHS");
+	no_warn.push_back("PLUGINS");
 	
 	// Loop over parameters a second time and print them out
 	int Nprinted = 0;

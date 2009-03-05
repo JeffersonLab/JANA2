@@ -609,6 +609,7 @@ jerror_t JApplication::RemoveJEventLoop(JEventLoop *loop)
 		if(loops[i] == loop){
 			if(print_factory_report)RecordFactoryCalls(loop);
 			loops.erase(loops.begin()+i);
+			delete heartbeats[i];
 			heartbeats.erase(heartbeats.begin()+i);
 			threads.erase(threads.begin()+i);
 			break;
@@ -878,8 +879,9 @@ void* LaunchThread(void* arg)
 	
 	// For stuck threads, we may need to cancel them at an arbitrary execution
 	// point so we set our cancel type to PTHREAD_CANCEL_ASYNCHRONOUS.
-	int oldtype;
+	int oldtype, oldstate;
 	pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, &oldtype);
+	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &oldstate);
 
 	// Create JEventLoop object. He automatically registers himself
 	// with the JApplication object. 
@@ -1046,18 +1048,19 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 				JEvent &event = loop->GetJEvent();
 				cerr<<" Thread "<<i<<" hasn't responded in "<<*hb<<" seconds.";
 				cerr<<" (run:event="<<event.GetRunNumber()<<":"<<event.GetEventNumber()<<")";
-				cerr<<" Cancelling ..."<<endl;
+				cerr<<" Canceling ..."<<endl;
 				
-				// At this point, we need to kill the stalled thread. We do this by
-				// calling pthread_cancel which will subsequently destroy the JEventLoop
-				// in the cleanup routine (CleanupThread()) which will remove the
-				// thread and all its pieces (heartbeat, etc..) from the JApplication
-				// by calling RemoveJEventLoop from the JEventLoop destructor (yeah,
-				// I know, it's complicated). Note this will only schedule the stalled
-				// thread to call CleanupThread so it may not happen right away. What's
-				// more, the call will get blocked when it tries to lock the app_mutex
-				// which we currently have locked.
-				pthread_cancel(threads[i]);
+				// At this point, we need to kill the stalled thread. One would normally
+				// do this by calling pthread_cancel() but that seems to have problems.
+				// Namely, it was observed that when the thread was deep in a Xerces call
+				// that it would die with a mutex locked causing other threads to wait
+				// endlessly in pthread_mutex_lock for it to open back up. They way we do
+				// this here is to send a HUP signal to the thread which interrupts
+				// it immediately allowing it's signal handler to call pthread_exit
+				// and thereby invoking the CleanupThread() routine. I don't actually
+				// understand why we don't run into the same mutex probelm this way
+				// but empirically, it seems to work.   3/5/2009  DL
+				pthread_kill(threads[i], SIGHUP);
 
 				// Launch a new thread to take his place, but only if we're not trying to quit
 				if(!SIGINT_RECEIVED){
@@ -1077,9 +1080,10 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 						pthread_mutex_unlock(&app_mutex); // Unlock the mutex
 						nanosleep(&req, &rem);
 						pthread_mutex_lock(&app_mutex); // Re-lock the mutex
-
 						// Our new thread will be in "threads" once it's up and running
-						if(find(threads.begin(), threads.end(), thr)!=threads.end())break;
+						if(find(threads.begin(), threads.end(), thr)!=threads.end()){
+							break;
+						}
 					}
 				}
 
@@ -1462,7 +1466,7 @@ jerror_t JApplication::AttachPlugins(void)
 	/// actually attach and intiailize them. See AddPlugin method
 	/// for more.
 	
-	bool printPaths;
+	bool printPaths=false;
 	jparms->GetParameter("PRINT_PLUGIN_PATHS", printPaths);
 	
 	/// The JANA_PLUGIN_DIR environment is used to specify
@@ -1493,6 +1497,20 @@ jerror_t JApplication::AttachPlugins(void)
 			str = str.substr(cutAt+1);
 		}
 		if(str.length() > 0)AddPluginPath(str);
+	}
+	
+	// Add plugins specified via PLUGINS configuration parameter
+	// (comma separated list).
+	string plugins_conf;
+	jparms->GetParameter("PLUGINS", plugins_conf);
+	if(plugins_conf.length()>0){
+		string &str = plugins_conf;
+		unsigned int cutAt;
+		while( (cutAt = str.find(",")) != (unsigned int)str.npos ){
+			if(cutAt > 0)plugins.push_back(str.substr(0,cutAt));
+			str = str.substr(cutAt+1);
+		}
+		if(str.length() > 0)plugins.push_back(str);
 	}
 	
 	// Loop over plugins
