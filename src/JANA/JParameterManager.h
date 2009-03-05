@@ -143,9 +143,6 @@ JParameter* JParameterManager::SetParameter(K key, V val)
 	p->isdefault = false;
 	p->type = JParameter::DataType(val);
 	
-	// Tell the JParameterManager it needs to re-print if requested
-	printParametersCalled = false;
-
 	// release the parameters mutex
 	pthread_mutex_unlock(&parameter_mutex);
 
