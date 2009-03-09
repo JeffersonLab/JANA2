@@ -46,7 +46,7 @@ class exception;
 #include <exception>
 #include <sstream>
 
-#ifdef __linux__ || __APPLE__
+#if defined(__linux__) || defined(__APPLE__)
 #define TRACEABLE_OS
 #include <execinfo.h>
 #include <cxxabi.h>
