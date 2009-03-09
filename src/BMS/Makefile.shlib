@@ -9,6 +9,11 @@ include $(BMSDIR)/Makefile.common
 
 .PHONY: all mkdirs clean env
 
+# This may not be supported on all platforms. It is needed however,
+# at least on Fedora 10 with SELinux enabled which will complain
+# about text relocations and deny plugin execution otherwise.
+CXXFLAGS += -fPIC
+
 ifeq ($(LD), ld)
  LD = $(CXX)
 endif
