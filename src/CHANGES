@@ -1,5 +1,6 @@
 Changes in version 0.5.0
 
+- Added -fPIC switch when building plugins
 - Added PLUGINS config. param for alternate way of specifying plugins
 - Improved handling of config. params (fixed multiple display bug)
 - Add $JANA_HOME/lib to plugin path automatically
