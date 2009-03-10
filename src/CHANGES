@@ -1,3 +1,13 @@
+
+Changes in version 0.5.1
+
+- Fixed bug introduced with 0.5.0 where JEventLoop was not
+  getting properly initialized for GUI's
+- Fixed bug where call stack recording did not record the
+  DEFTAG replacement tag
+- Add percentage of total processing time to janadot output
+
+
 Changes in version 0.5.0
 
 - Added -fPIC switch when building plugins
