@@ -105,6 +105,19 @@ jerror_t JEventProcessorJANADOT::evnt(JEventLoop *loop, int eventnumber)
 //------------------------------------------------------------------
 jerror_t JEventProcessorJANADOT::fini(void)
 {
+	// Find the DEventProcessor link so we can get the total ticks for
+	// the process in order to add the percentage to the label below
+	map<CallLink, CallStats>::iterator iter;
+	unsigned long total_ticks = 1;
+	for(iter=call_links.begin(); iter!=call_links.end(); iter++){
+		const CallLink &link = iter->first;
+		CallStats &stats = iter->second;
+		if(link.caller_name=="DEventProcessor"){
+			total_ticks = stats.from_factory_ticks;
+			break;
+		}
+	}
+
 	// Open dot file for writing
 	cout<<"Opening output file \"jana.dot\""<<endl;
 	ofstream file("jana.dot");
@@ -112,7 +125,6 @@ jerror_t JEventProcessorJANADOT::fini(void)
 	file<<"digraph G {"<<endl;
 
 	// Loop over call links
-	map<CallLink, CallStats>::iterator iter;
 	map<string,bool> factory_names;
 	for(iter=call_links.begin(); iter!=call_links.end(); iter++){
 		const CallLink &link = iter->first;
@@ -123,12 +135,16 @@ jerror_t JEventProcessorJANADOT::fini(void)
 		string nametag2 = link.callee_name;
 		if(link.caller_tag.size()>0)nametag1 += ":"+link.caller_tag;
 		if(link.callee_tag.size()>0)nametag2 += ":"+link.callee_tag;
+		char percentstr[32];
+		sprintf(percentstr, "%5.1f%%",100.0*(double)stats.from_factory_ticks/(double)total_ticks);
 		
 		file<<"\t";
 		file<<"\""<<nametag1<<"\"";
 		file<<" -> ";
 		file<<"\""<<nametag2<<"\"";
-		file<<" [style=bold, fontsize=8, label=\""<<Ntotal<<" calls\\n"<<stats.from_factory_ticks<<" ticks\"];";
+		file<<" [style=bold, fontsize=8, label=\""<<Ntotal<<" calls";
+		file<<"\\n"<<stats.from_factory_ticks<<" ticks";
+		file<<"\\n"<<percentstr<<"\"];";
 		file<<endl;
 		
 		// Keep a list of factory nametags so we can write out their
