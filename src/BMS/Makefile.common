@@ -17,6 +17,13 @@
 
 include $(BMSDIR)/Makefile.config
 
+# This may not be supported on all platforms. It is needed however,
+# at least on Fedora 10 with SELinux enabled which will complain
+# about text relocations and deny plugin execution otherwise.
+CFLAGS += -fPIC
+CXXFLAGS += -fPIC
+
+
 # The first target is made by default when make is invoked with no
 # arguments. We want to include other targets here (namely, depends
 # files) so we need to make a dummy target appear first that calls
