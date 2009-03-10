@@ -42,6 +42,7 @@ JEventLoop::JEventLoop(JApplication *app)
 	this->app = app;
 	app->AddJEventLoop(this, heartbeat);
 	event.SetJEventLoop(this);
+	initialized = false;
 	pause = 0;
 	quit = 0;
 	auto_free = 1;
@@ -336,13 +337,12 @@ void JEventLoop::PrintErrorCallStack(void)
 }
 
 //-------------
-// Loop
+// Initialize
 //-------------
-jerror_t JEventLoop::Loop(void)
+void JEventLoop::Initialize(void)
 {
-	/// Loop over events until Quit() method is called or we run
-	/// out of events.
-	
+	initialized = true;
+
 	// Copy the event processor list to our local vector
 	RefreshProcessorListFromJApplication();
 
@@ -351,7 +351,16 @@ jerror_t JEventLoop::Loop(void)
 	app->GetJParameterManager()->PrintParameters();
 	
 	auto_activated_factories = app->GetAutoActivatedFactories();
+}
 
+//-------------
+// Loop
+//-------------
+jerror_t JEventLoop::Loop(void)
+{
+	/// Loop over events until Quit() method is called or we run
+	/// out of events.
+	
 	do{
 		// Let main thread know we're alive
 		*heartbeat = 0.0;
@@ -387,9 +396,9 @@ jerror_t JEventLoop::Loop(void)
 //-------------
 jerror_t JEventLoop::OneEvent(void)
 {
-	/// Read in and process one event. If eventno is
-	/// less than 0, then grab the next event from
-	/// the source. Otherwise, jump to the specified event
+	/// Read in and process one event.
+
+	if(!initialized)Initialize();
 
 	// Clear evnt_called flag in all factories
 	ClearFactories();

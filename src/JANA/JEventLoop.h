@@ -90,6 +90,7 @@ class JEventLoop{
 		template<class T> bool GetGeom(string namepath, map<string,T> &vals);
 		template<class T> bool GetGeom(string namepath, T &val);
 
+		void Initialize(void); ///< Do initializations just before event processing starts
 		jerror_t Loop(void); ///< Loop over events
 		jerror_t OneEvent(void); ///< Process a single event
 		inline void Pause(void){pause = 1;} ///< Pause event processing
@@ -126,6 +127,7 @@ class JEventLoop{
 		vector<call_stack_t> call_stack;
 		JApplication *app;
 		double *heartbeat;
+		bool initialized;
 		int pause;
 		int quit;
 		int auto_free;
@@ -200,6 +202,15 @@ JFactory<T>* JEventLoop::Get(vector<const T*> &t, const char *tag)
 	/// from the file, one can be created automatically
 	/// providing the <i>JANA:AUTOFACTORYCREATE</i>
 	/// configuration parameter is set.
+
+	// Check if a tag was specified for this data type to use for the
+	// default.
+	const char *mytag = tag==NULL ? "":tag; // prtection against NULL tags
+	if(strlen(mytag)==0){
+		map<string, string>::const_iterator iter = default_tags.find(T::static_className());
+		if(iter!=default_tags.end())tag = iter->second.c_str();
+	}
+	
 	
 	// If we are trying to keep track of the call stack then we
 	// need to add a new call_stack_t object to the the list
