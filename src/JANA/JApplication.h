@@ -63,8 +63,8 @@ class JApplication{
 		
 		void EventBufferThread(void);
 		unsigned int GetEventBufferSize(void);
-		jerror_t NextEvent(JEvent &event); ///< Get the next event from the event buffer
-		jerror_t ReadEvent(JEvent &event); ///< Get the next event from the source.
+		virtual jerror_t NextEvent(JEvent &event); ///< Get the next event from the event buffer
+		virtual jerror_t ReadEvent(JEvent &event); ///< Get the next event from the source.
 		jerror_t AddProcessor(JEventProcessor *processor); ///< Add a JEventProcessor.
 		jerror_t RemoveProcessor(JEventProcessor *processor); ///< Remove a JEventProcessor
 		jerror_t AddJEventLoop(JEventLoop *loop, double* &heartbeat); ///< Add a JEventLoop
@@ -88,18 +88,18 @@ class JApplication{
 		jerror_t RegisterSharedObjectDirectory(string sodirname); ///< Register all shared objects in a directory
 		jerror_t AddPluginPath(string path); ///< Add a directory to the plugin search path
 		jerror_t AddPlugin(const char *name); ///< Add the specified plugin to the shared objects list.
-		jerror_t Init(void); ///< Initialize the JApplication object
-		jerror_t Run(JEventProcessor *proc=NULL, int Nthreads=0); ///< Process all events from all sources
-		jerror_t Fini(void); ///< Gracefully end event processing
-		void Pause(void); ///< Pause event processing
-		void Resume(void); ///< Resume event processing
-		void Quit(void); ///< Stop event processing
+		virtual jerror_t Init(void); ///< Initialize the JApplication object
+		virtual jerror_t Run(JEventProcessor *proc=NULL, int Nthreads=0); ///< Process all events from all sources
+		virtual jerror_t Fini(void); ///< Gracefully end event processing
+		virtual void Pause(void); ///< Pause event processing
+		virtual void Resume(void); ///< Resume event processing
+		virtual void Quit(void); ///< Stop event processing
 		inline int GetNEvents(void){return NEvents;} ///< Returns the number of events processed so far.
 		inline float GetRate(void){return rate_instantaneous;} ///< Get the current event processing rate
 		const vector<void*> GetSharedObjectHandles(void){return sohandles;} ///< Get pointers to dynamically linked objects
 		vector<pair<string,string> > GetAutoActivatedFactories(void){return auto_activated_factories;}
 		void AddAutoActivatedFactory(string name, string tag){auto_activated_factories.push_back(pair<string,string>(name,tag));}
-		void PrintRate(); ///< Print the current rate to stdout
+		virtual void PrintRate(); ///< Print the current rate to stdout
 		void SetShowTicker(int what){show_ticker = what;} ///< Turn auto-printing of rate to screen on or off.
 		void SignalThreads(int signo); ///< Send a system signal to all processing threads.
 		inline void Lock(void){pthread_mutex_lock(&app_mutex);} ///< Lock the application-wide mutex (don't use this!)
