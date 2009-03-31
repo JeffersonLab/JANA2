@@ -184,6 +184,8 @@ JApplication::JApplication(int narg, char* argv[])
 	
 	print_factory_report = false;
 	print_resource_report = false;
+	dump_calibrations = false;
+
 	
 	// Loop over arguments
 	current_source = NULL;
