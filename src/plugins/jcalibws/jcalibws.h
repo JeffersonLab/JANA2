@@ -1,8 +1,9 @@
 // File: jcalibws.h 
 //gsoap ns service name: jcalibws 
 //gsoap ns service namespace: urn:jcalibws
-//gsoap ns service location: http://www.jlab.org/HallD/Software/test/jcalibws
+//gsoap ns service location: https://halldweb1.jlab.org/cgi-bin/jcalibws
 #import "stl.h"
+
 
 // Class to hold information needed to obtain a specific set of values
 class calinfo{
