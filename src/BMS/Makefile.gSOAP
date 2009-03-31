@@ -4,7 +4,7 @@ ifndef GSOAP
 endif
 
 CXXFLAGS += -I$(GSOAP)/share/gsoap/import
-MISC_LIBS += -L$(GSOAP) -lgsoap++ -lgsoapck++ -lgsoapssl++
+MISC_LIBS += -L$(GSOAP) -lgsoap++ -lgsoapck++ -lgsoapssl++  -lssl -lcrypto -lz
 
 WSDL2H = $(GSOAP)/bin/wsdl2h
 SOAPCPP2 = $(GSOAP)/bin/soapcpp2
