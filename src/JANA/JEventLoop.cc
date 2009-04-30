@@ -43,6 +43,7 @@ JEventLoop::JEventLoop(JApplication *app)
 	app->AddJEventLoop(this, heartbeat);
 	event.SetJEventLoop(this);
 	initialized = false;
+	print_parameters_called = false;
 	pause = 0;
 	quit = 0;
 	auto_free = 1;
@@ -348,7 +349,6 @@ void JEventLoop::Initialize(void)
 
 	app->GetJParameterManager()->GetParameters(default_tags, "DEFTAG:");
 	app->GetJParameterManager()->GetParameter( "RECORD_CALL_STACK", record_call_stack);
-	app->GetJParameterManager()->PrintParameters();
 	
 	auto_activated_factories = app->GetAutoActivatedFactories();
 }
@@ -479,7 +479,17 @@ jerror_t JEventLoop::OneEvent(void)
 	}
 
 	if(auto_free)event.FreeEvent();
-			
+	
+	// We want to print the parameters after the first event so that defaults
+	// set by init or brun methods or even data objects created during the
+	// processing of the event will be included. This is not foolproof since
+	// some of these things may not occur until many events in. This also 
+	// pushes any error messages from the first event further up the screen.
+	if(!print_parameters_called){
+		print_parameters_called = true;
+		app->GetJParameterManager()->PrintParameters();
+	}
+
 	return NOERROR;
 }
 

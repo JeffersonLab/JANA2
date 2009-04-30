@@ -128,6 +128,7 @@ class JEventLoop{
 		JApplication *app;
 		double *heartbeat;
 		bool initialized;
+		bool print_parameters_called;
 		int pause;
 		int quit;
 		int auto_free;

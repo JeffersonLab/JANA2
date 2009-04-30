@@ -37,9 +37,11 @@ class JParameter{
 		virtual const char* className(void){return static_className();}
 		static const char* static_className(void){return "JParameter";}
 		
-		inline void SetValue(string val){value = val;}
+		inline void SetValue(string val){value = val; isdefault = (hasdefault && default_value==value);}
+		inline void SetDefault(string val){default_value = val; hasdefault=true; isdefault = (default_value==value);}
 		inline const string& GetKey(void){return key;}					///< Return key as a STL string
 		inline const string& GetValue(void){return value;}				///< Return value as a STL string
+		inline const string& GetDefault(void){return default_value;}///< Return value as a STL string
 		inline float f(void){return (float)atof(value.c_str());}		///< Return value as a float
 		inline double d(void){return (double)atof(value.c_str());}	///< Return value as a double
 		inline int i(void){return (int)atoi(value.c_str());}			///< Return value as an int
@@ -86,6 +88,7 @@ class JParameter{
 	protected:
 		string key;
 		string value;
+		string default_value;
 		bool isdefault;	///< is the current value set by SetDefaultParameter ?
 		bool hasdefault;	///< was SetDefaultParameter ever called for this key ?
 		bool printme;		///< used by ParameterManager::PrintParameters()

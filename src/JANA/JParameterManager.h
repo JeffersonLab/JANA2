@@ -79,42 +79,34 @@ class JParameterManager{
 template<typename K, typename V>
 JParameter* JParameterManager::SetDefaultParameter(K key, V &val)
 {
-	V my_val = val;
+	stringstream ss;
+	ss<<val;
+	string sval = ss.str();
 	
 	JParameter *p = GetParameter(key,val);
 	if(!p){
 		p = SetParameter(key, val);
-		p->isdefault = true;
 	}else{
 		// Warn user if two different default values are set
-		if(p->isdefault){
-			stringstream ss;
-			ss<<val;
-			if(ss.str() != p->GetValue()){
-				std::cout<<" WARNING: Multiple calls to SetDefaultParameter with key=\""
-				<<key<<"\" value= "<<val<<" and "<<my_val<<std::endl;
-			}
-		}else{
+		if(p->hasdefault && (sval != p->GetDefault()) ){
+			std::cout<<" WARNING: Multiple calls to SetDefaultParameter with key=\""
+			<<key<<"\" value= \""<<p->GetDefault()<<"\" and \""<<sval<<"\""<<std::endl;
+			std::cout<<"        : (\""<<sval<<"\" will be used for the default.)"<<std::endl;
+		}
+
+		if(!p->hasdefault){
 			// Parameters set from the command line will have the
 			// wrong data type since SetParameter will have been called
-			// with a string type for the value. If a default was set,
-			// already for this parameter, then we don't need to set it
-			// again, but if not, we should set it to the correct type.
+			// with a string type for the value. If a default has not
+			// been set already for this parameter, then we assume the
+			// currently set data type is invalid and we replace it with
+			// the type specified in this call.
 			p->type = JParameter::DataType(val);
-			
-			// If we get here it means the parameter was already set but
-			// is not flagged as being the default. This happens when
-			// the parameter is set via the command line. It may turn out
-			// though that the command line value is exactly the same as
-			// the default value in which case we really should set the
-			// "isdefault" flag so the parameter is not printed as a
-			// "non-default".
-			if(val == my_val) p->isdefault = true;
 		}
 	}
 	
-	// Set the "hasdefault" flag so typos can be filtered later
-	p->hasdefault = true;
+	// Set the default for this parameter
+	p->SetDefault(sval);
 
 	return p;
 }
@@ -137,11 +129,10 @@ JParameter* JParameterManager::SetParameter(K key, V val)
 	if(!p){
 		p = new JParameter(skey, sval);
 		parameters.push_back(p);
+		p->type = JParameter::DataType(val);
 	}else{
 		p->SetValue(sval);
 	}
-	p->isdefault = false;
-	p->type = JParameter::DataType(val);
 	
 	// release the parameters mutex
 	pthread_mutex_unlock(&parameter_mutex);
