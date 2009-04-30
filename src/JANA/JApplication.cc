@@ -169,6 +169,8 @@ JApplication::JApplication(int narg, char* argv[])
 	init_called = false;
 	fini_called = false;
 	stop_event_buffer = false;
+	dump_calibrations = false;
+	dump_configurations = false;
 	
 	// Default plugin search paths
 	AddPluginPath(".");
@@ -184,7 +186,6 @@ JApplication::JApplication(int narg, char* argv[])
 	
 	print_factory_report = false;
 	print_resource_report = false;
-	dump_calibrations = false;
 
 	
 	// Loop over arguments
@@ -1018,10 +1019,12 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 			// If there was no time remaining, then we must have slept
 			// the whole amount
 			int delta_NEvents = NEvents - GetEventBufferSize() - last_NEvents;
-			avg_NEvents += delta_NEvents>0 ? delta_NEvents:0;
-			avg_time += sleep_time;
-			rate_instantaneous = (double)delta_NEvents/sleep_time;
-			rate_average = (double)avg_NEvents/avg_time;
+			if(NEvents>Nthreads){
+				avg_NEvents += delta_NEvents>0 ? delta_NEvents:0;
+				avg_time += sleep_time;
+			}
+			rate_instantaneous = sleep_time>0.0 ? (double)delta_NEvents/sleep_time:0.0;
+			rate_average = avg_time>0.0 ? (double)avg_NEvents/avg_time:0.0;
 		}else{
 			cout<<__FILE__<<":"<<__LINE__<<" didn't sleep full "<<sleep_time<<" seconds!"<<endl;
 		}
