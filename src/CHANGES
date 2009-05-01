@@ -1,4 +1,16 @@
 
+Changes in version 0.5.2
+
+- Fixed bug where calibrations and configurations were always being
+  dumped at the end of the job.
+- Added default_value field to JParameter and improved bookkeeping of
+  isdefault and hasdefault values
+- Move printing of configuration parameters to after the first event
+- Fixed printing of rate average to not include first Nthreads events
+  which can be much slower due to initializations
+- Made Init, Run, Fini, ... methods vitural
+- Added crypto libraries to gSOAP Makefile
+
 Changes in version 0.5.1
 
 - Fixed bug introduced with 0.5.0 where JEventLoop was not
