@@ -158,7 +158,7 @@ JFactory<T>* JEventLoop::GetSingle(const T* &t, const char *tag)
 	/// has no objects of that type or more than 1 object of that type (for the specified
 	/// factory) then an exception of type "unsigned long" is thrown with the value
 	/// being the number of objects of type T.
-	vector<const T*> &v;
+	vector<const T*> v;
 	JFactory<T> *fac = Get(v, tag);
 
 	if(v.size()!=1)throw v.size();
