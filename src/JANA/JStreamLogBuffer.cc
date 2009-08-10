@@ -5,6 +5,7 @@
 //
 
 #include "JStreamLogBuffer.h"
+#include <stdio.h>
 #include <sstream>
 
 JStreamLogBuffer::JStreamLogBuffer(std::streambuf* buf, const char* tag) :
