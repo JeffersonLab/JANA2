@@ -39,12 +39,12 @@
 
 #include <string>
 
-class exception;
 
 #ifndef __CINT__
 
 #include <exception>
 #include <sstream>
+using std::exception;
 
 #if defined(__linux__) || defined(__APPLE__)
 #define TRACEABLE_OS
