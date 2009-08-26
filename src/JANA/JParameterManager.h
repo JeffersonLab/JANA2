@@ -104,9 +104,17 @@ JParameter* JParameterManager::SetDefaultParameter(K key, V &val)
 			p->type = JParameter::DataType(val);
 		}
 	}
-	
+
+	// The call to SetDefault() below can cause a reallocation
+	// of a string's buffer. If two threads do this simulataneously,
+	// you can get a "double free" followed by a seg. fault.
+	pthread_mutex_lock(&parameter_mutex);
+
 	// Set the default for this parameter
 	p->SetDefault(sval);
+
+	// release the parameters mutex
+	pthread_mutex_unlock(&parameter_mutex);
 
 	return p;
 }
