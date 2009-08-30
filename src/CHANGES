@@ -1,3 +1,8 @@
+Changes in version 0.5.3
+
+- Fixed bug that caused seg. faults due to double free in SetDefaultParameter
+- Added RootSpy utility and plugin
+
 
 Changes in version 0.5.2
 

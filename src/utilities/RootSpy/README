@@ -1,0 +1,25 @@
+
+README for RootSpy
+Aug. 30, 2009  David Lawrence  davidl@jlab.org
+
+
+This program can be used in conjunction with the rootspy plugin to
+allow retrieval and display of histograms from a running processing
+via the cMsg messaging system. The cMsg package must be installed 
+for this to build (currently at cMsg-3.0) and the CMSGROOT environment
+variable set as well as the LD_LIBRARY_PATH.
+
+The rootspy plugin must be attached to the histogram producing object
+when it is started. The RootSpy program and the histogram producer(s)
+can be started in any order.
+
+This system is distributed as part of JANA, but does not actually
+use JANA itself aside from the InitPlugin(JApplication *japp)
+format of the trivial routine used as the plugin entry point.
+
+One could simply delete that routine, compile the plugin as a 
+reqular library, and simply create a DRootSpy object to get the
+same functionality without requiring JANA at all.
+
+Please direct any questions/comments to:
+David Lawrence <davidl@jlab.org>

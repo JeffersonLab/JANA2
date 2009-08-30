@@ -1,0 +1,4 @@
+#!/bin/tcsh -f 
+
+java -cp $CMSGROOT/jar/cMsg-3.0.jar org/jlab/coda/cMsg/cMsgDomain/server/cMsgNameServer
+
