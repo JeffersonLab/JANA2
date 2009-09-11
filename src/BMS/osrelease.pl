@@ -53,6 +53,10 @@ if ($uname eq 'Linux') {
 	    $release = '_RHEL4';
 	} elsif ($release_string =~ /^Red Hat Enterprise Linux Client release 5.*/) {
 	    $release = '_RHEL5';
+	} elsif ($release_string =~ /^CentOS release 4.*/ ){
+	    $release = '_CentOS4';
+	} elsif ($release_string =~ /^CentOS release 5.*/ ){
+	    $release = '_CentOS5';
 	} else {
 	    print STDERR "unrecognized Red Hat release\n";
 	    $release = '_RH';
@@ -71,6 +75,9 @@ if ($uname eq 'Linux') {
 } elsif ($uname eq 'SunOS') {
 	$release = '_' . `uname -r`;
 	chomp $release;
+	@toks = split(/\s/, `CC -V 2>&1`);
+	$CC_version =  $toks[3];
+	$compiler_version = "CC${CC_version}";
 } elsif ($uname eq 'Darwin') {
  	$release_string = `uname -r`;
 	if ($release_string =~ /^6.*/) {
@@ -99,6 +106,11 @@ $gccversion = `gcc -dumpversion`;
 chomp $processor;
 chomp $gccversion;
 
+# If the compiler_version variable is not set, use the gcc version
+if ($compiler_version eq '') {
+	$compiler_version = "gcc${gccversion}";
+}
+
 # Finally, form and print the complete string to stdout
-print "${uname}${release}-${processor}-gcc${gccversion}\n";
+print "${uname}${release}-${processor}-${compiler_version}\n";
 exit;
