@@ -115,7 +115,7 @@ else
 endif
 
 ifndef MODULE_NAME
- MODULE_NAME = $(shell basename $(shell pwd))
+ MODULE_NAME = $(shell basename "$(shell pwd)")
 endif
 LIBNAME = $(LIB_DIR)/lib$(MODULE_NAME)$(DEBUG_SUFFIX).a
 
