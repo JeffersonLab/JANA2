@@ -1,6 +1,6 @@
 
 CFLAGS		+= -I$(CMSGROOT)/include
 CXXFLAGS	+= -I$(CMSGROOT)/include
-MISC_LIBS 	+= -L$(CMSGROOT)/$(BMS_OSNAME)/lib -lcmsg -lcmsgxx -lcMsgRegex
+MISC_LIBS 	+= -L$(CMSGROOT)/lib -lcmsg -lcmsgxx -lcmsgRegex
 
 MISC_LIBS	+= -lrt
