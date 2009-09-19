@@ -1,5 +1,5 @@
 
-PACKAGES = ROOT:cMsg
+PACKAGES = ROOT:cMsg:RootSpy
 
 MISC_LIBS += -lrootspy
 

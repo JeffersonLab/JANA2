@@ -1,0 +1,6 @@
+
+CFLAGS		+= -I$(ROOTSPY)/include
+CXXFLAGS	+= -I$(ROOTSPY)/include
+MISC_LIBS 	+= -L$(ROOTSPY)/lib -lrootspy
+
+MISC_LIBS	+= -lrt
