@@ -47,15 +47,23 @@ class JCalibration{
 		virtual const char* className(void){return static_className();}
 		static const char* static_className(void){return "JCalibration";}
 		
+		// Returns "false" on success and "true" on error
 		virtual bool GetCalib(string namepath, map<string, string> &svals)=0;
 		virtual bool GetCalib(string namepath, vector< map<string, string> > &svals)=0;
+		virtual bool PutCalib(string namepath, int run_min, int run_max, string &author, map<string, string> &svals, string &comment="");
+		virtual bool PutCalib(string namepath, int run_min, int run_max, string &author, vector< map<string, string> > &svals, string &comment="");
 		virtual void GetListOfNamepaths(vector<string> &namepaths)=0;
 
 		template<class T> bool Get(string namepath, map<string,T> &vals);
 		template<class T> bool Get(string namepath, vector<T> &vals);
 		template<class T> bool Get(string namepath, vector< map<string,T> > &vals);
 		template<class T> bool Get(string namepath, vector< vector<T> > &vals);
-		
+
+		template<class T> bool Put(string namepath, int run_min, int run_max, string &author, map<string,T> &vals, string &comment="");
+		template<class T> bool Put(string namepath, int run_min, int run_max, string &author, vector<T> &vals, string &comment="");
+		template<class T> bool Put(string namepath, int run_min, int run_max, string &author, vector< map<string,T> > &vals, string &comment="");
+		template<class T> bool Put(string namepath, int run_min, int run_max, string &author, vector< vector<T> > &vals, string &comment="");
+
 		template<class T> bool Get(string namepath, const T* &vals);
 		
 		const int& GetRunRequested(void) const {return run_requested;}
@@ -362,6 +370,147 @@ bool JCalibration::Get(string namepath, const T* &vals)
 	
 	// Release stored mutex
 	pthread_mutex_unlock(&stored_mutex);
+	
+	return res;
+}
+
+//-------------
+// Put  (map version)
+//-------------
+template<class T>
+bool JCalibration::Put(string namepath, int run_min, int run_max, string &author, map<string,T> &vals, string &comment)
+{
+	/// Templated method used to write a set of calibration constants.
+	///
+	/// This method will write the specified calibration constants in the form of
+	/// strings using the virtual (non-templated) PutCalib(...) method. It will
+	/// then convert the strings into the data type on which the "value"
+	/// part of <i>vals</i> is based. It does this using the stringstream
+	/// class so T is restricted to the types it understands (int, float, 
+	/// double, string, ...).
+	
+	// Loop over values, converting the type "T" values to strings 
+	map<string,string> svals;
+	//map<string,T>::const_iterator iter;
+	typeof(vals.begin()) iter;
+	for(iter=vals.begin(); iter!=vals.end(); ++iter){
+		// Use stringstream to convert from a string to type "T"
+		stringstream ss;
+		ss<<iter->second;
+		svals[iter->first] = ss.str();
+	}
+
+	// Put values that have been converted to strings
+	bool res = PutCalib(namepath, run_min, run_max, author, svals, comment);
+	
+	return res;
+}
+
+//-------------
+// Put  (vector version)
+//-------------
+template<class T>
+bool JCalibration::Put(string namepath, int run_min, int run_max, string &author, vector<T> &vals, string &comment)
+{
+	/// Templated method used to write a set of calibration constants.
+	///
+	/// This method will write the specified calibration constants in the form of
+	/// strings using the virtual (non-templated) PutCalib(...) method. It will
+	/// then convert the strings into the data type on which the "value"
+	/// part of <i>vals</i> is based. It does this using the stringstream
+	/// class so T is restricted to the types it understands (int, float, 
+	/// double, string, ...).
+	
+	// Loop over values, converting the type "T" values to strings 
+	map<string,string> svals;
+	typeof(vals.begin()) iter;
+	int i=0;
+	for(iter=vals.begin(); iter!=vals.end(); ++iter, ++i){
+		// Use stringstream to convert from a string to type "T"
+		stringstream ss;
+		ss<<iter->second;
+		stringstream iss;
+		iss<<i;
+		svals[iss.str()] = ss.str();
+	}
+
+	// Put values that have been converted to strings
+	bool res = PutCalib(namepath, run_min, run_max, author, svals, comment);
+	
+	return res;
+}
+
+//-------------
+// Put  (table, map version)
+//-------------
+template<class T>
+bool JCalibration::Put(string namepath, int run_min, int run_max, string &author, vector< map<string,T> > &vals, string &comment)
+{
+	/// Templated method used to write a set of calibration constants.
+	///
+	/// This method will write the specified calibration constants in the form of
+	/// strings using the virtual (non-templated) PutCalib(...) method. It will
+	/// then convert the strings into the data type on which the "value"
+	/// part of <i>vals</i> is based. It does this using the stringstream
+	/// class so T is restricted to the types it understands (int, float, 
+	/// double, string, ...).
+	
+	// Loop over vector
+	vector<map<string,string> > vsvals;
+	for(unsigned int i=0; i<vals.size(); i++){
+		// Loop over values, converting the type "T" values to strings 
+		map<string,string> svals;
+		map<string, T> &mvals = vals[i];
+		typeof(mvals.begin()) iter;
+		for(iter=mvals.begin(); iter!=mvals.end(); ++iter){
+			// Use stringstream to convert from a string to type "T"
+			stringstream ss;
+			ss<<iter->second;
+			svals[iter->first] = ss.str();
+		}
+		vsvals.push_back(svals);
+	}
+
+	// Put values that have been converted to strings
+	bool res = PutCalib(namepath, run_min, run_max, author, vsvals, comment);
+	
+	return res;
+}
+	
+//-------------
+// Put  (table, vector version)
+//-------------
+template<class T>
+bool JCalibration::Put(string namepath, int run_min, int run_max, string &author, vector< vector<T> > &vals, string &comment)
+{
+	/// Templated method used to write a set of calibration constants.
+	///
+	/// This method will write the specified calibration constants in the form of
+	/// strings using the virtual (non-templated) PutCalib(...) method. It will
+	/// then convert the strings into the data type on which the "value"
+	/// part of <i>vals</i> is based. It does this using the stringstream
+	/// class so T is restricted to the types it understands (int, float, 
+	/// double, string, ...).
+	
+	// Loop over vector
+	vector<map<string,string> > vsvals;
+	for(unsigned int i=0; i<vals.size(); i++){
+		// Loop over values, converting the type "T" values to strings 
+		vector<string> svals;
+		vector<T> &mvals = vals[i];
+		for(unsigned int j=0; j<mvals.size(); j++){
+			// Use stringstream to convert from a string to type "T"
+			stringstream ss;
+			ss<<mvals[j];
+			stringstream iss;
+			iss<<i;
+			svals[iss.str()] = ss.str();
+		}
+		vsvals.push_back(svals);
+	}
+
+	// Put values that have been converted to strings
+	bool res = PutCalib(namepath, run_min, run_max, author, vsvals, comment);
 	
 	return res;
 }

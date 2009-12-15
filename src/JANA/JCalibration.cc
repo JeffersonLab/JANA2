@@ -72,6 +72,24 @@ JCalibration::~JCalibration()
 }
 
 //---------------------------------
+// PutCalib
+//---------------------------------
+bool JCalibration::PutCalib(string namepath, int run_min, int run_max, string &author, map<string, string> &svals, string &comment)
+{
+	_DBG_<<"PutCalib(string namepath, int run_min, int run_max, string &author, map<string, string> &svals, string &comment="") not implemented!"<<endl;
+	return true;
+}
+
+//---------------------------------
+// PutCalib
+//---------------------------------
+bool JCalibration::PutCalib(string namepath, int run_min, int run_max, string &author, vector< map<string, string> > &svals, string &comment)
+{
+	_DBG_<<"PutCalib(string namepath, int run_min, int run_max, string &author, vector< map<string, string> > &svals, string &comment="") not implemented!"<<endl;
+	return true;
+}
+
+//---------------------------------
 // RecordRequest
 //---------------------------------
 void JCalibration::RecordRequest(string namepath, string type_name)

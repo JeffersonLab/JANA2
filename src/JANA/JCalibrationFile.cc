@@ -7,6 +7,7 @@
 
 #include <dirent.h>
 #include <sys/stat.h>
+#include <time.h>
 
 #include <iostream>
 #include <fstream>
@@ -207,6 +208,157 @@ bool JCalibrationFile::GetCalib(string namepath, vector< map<string, string> > &
 	}
 	
 	return false;
+}
+
+//---------------------------------
+// PutCalib
+//---------------------------------
+bool JCalibrationFile::JCalibrationFile::PutCalib(string namepath, int run_min, int run_max, string &author, map<string, string> &svals, string &comment)
+{
+	// Open the item file creating the directory path if needed and
+	// writing a header to it.
+	ofstream *fptr = CreateItemFile(namepath, run_min, run_max, author, comment);
+	if(!fptr)return true;
+	
+	// Loop over values
+	map<string, string>::iterator iter;
+	for(iter=svals.begin(); iter!=svals.end(); iter++){
+		(*fptr)<<iter->first<<"  "<<iter->second<<endl;
+	}
+	
+	// Close file
+	fptr->close();
+	delete fptr;
+
+	return true;
+}
+
+//---------------------------------
+// PutCalib
+//---------------------------------
+bool JCalibrationFile::JCalibrationFile::PutCalib(string namepath, int run_min, int run_max, string &author, vector< map<string, string> > &svals, string &comment)
+{
+	// We need at least one element to make this worthwhile
+	if(svals.size()<1)return true;
+
+	// Open the item file creating the directory path if needed and
+	// writing a header to it.
+	ofstream *fptr = CreateItemFile(namepath, run_min, run_max, author, comment);
+	if(!fptr)return true;
+	
+	// Write list of column names from first element
+	vector<string> colnames;
+	map<string,string>::const_iterator iter = svals[0].begin();
+	for(; iter!=svals[0].end(); iter++){
+		colnames.push_back(iter->first);
+	}
+	
+	// Write column names to header
+	(*fptr)<<"#% ";
+	for(unsigned int i=0; i<colnames.size(); i++){
+		(*fptr)<<" "<<colnames[i];
+	}
+	(*fptr)<<endl;
+	
+	// Loop over values
+	for(unsigned int j=0; j<svals.size(); j++){
+		map<string, string> &mvals = svals[j];
+		for(unsigned int i=0; i<colnames.size(); i++){
+			(*fptr)<<mvals[colnames[i]]<<"  ";
+		}
+		(*fptr)<<endl;
+	}
+
+	// Close file
+	fptr->close();
+	delete fptr;
+
+	return true;
+}
+
+//---------------------------------
+// CreateItemFile
+//---------------------------------
+ofstream* JCalibrationFile::CreateItemFile(string namepath, int run_min, int run_max, string &author, string &comment)
+{
+	// Make sure the directory path exists for this namepath
+	MakeDirectoryPath(namepath);
+
+	// Open file, overwriting any existing file
+	string fname = basedir + namepath;
+	ofstream *fptr = new ofstream(fname.c_str());
+	ofstream &f = *fptr;
+	if(!f.is_open()){
+		_DBG_<<"Unable to open \""<<fname<<"\"!"<<endl;
+		delete fptr;
+		return NULL;
+	}
+	
+	// The comment string may come in several lines and we want each of those to be
+	// prefixed with a comment character "#".
+	vector<string>lines;
+	size_t start = 0;
+	size_t end;
+	while((end=comment.find('\n', start))!=string::npos){
+		lines.push_back(comment.substr(start, end-start));
+		start = end+1;
+	}
+	if(start<comment.size())lines.push_back(comment.substr(start, (comment.size())-start));
+	
+	// Write comments in header
+	time_t now = time(NULL);
+	string host = "unknown";
+	const char *hostptr = getenv("HOST");
+	if(hostptr)host = hostptr;
+	f<<"#"<<endl;
+	f<<"# Created: "<<ctime(&now);
+	f<<"# Host: "<<host<<endl;
+	f<<"# Author: "<<author<<endl;
+	f<<"# Namepath: "<<namepath<<endl;
+	f<<"# Context: "<<GetContext()<<endl;
+	f<<"# Run range: "<<run_min<<" - "<<run_max<<endl;
+	f<<"#"<<endl;
+	f<<"# Comment:"<<endl;
+	for(unsigned int i=0; i<lines.size(); i++){
+		f<<"# "<<lines[i];
+		if(lines[i][lines.size()-1] != '\n')f<<endl;
+	}
+	f<<"#"<<endl;
+	
+	return fptr;
+}
+
+//---------------------------------
+// MakeDirectoryPath
+//---------------------------------
+void JCalibrationFile::MakeDirectoryPath(string namepath)
+{
+	/// Create all subdirectories of basedir needed to hold the
+	/// item identified by the given namepath.
+
+	// Make sure full directory structure exists. The basedir is 
+	// created first then each subdirectory within that.
+	vector<string>dirs;
+	size_t start = 0;
+	size_t end;
+	while((end=namepath.find('/', start))!=string::npos){
+		dirs.push_back(namepath.substr(start, end-start));
+		start = end+1;
+	}
+	if(start<namepath.size())dirs.push_back(namepath.substr(start, (namepath.size())-start));
+	
+	// Last element in dirs should be item name. Check that dirs
+	// has at least one element (so we can use dirs.size()-1 below)
+	// and bail now if it doesn't.
+	if(dirs.size()<1)return;
+	
+	// Loop over subdirectories, creating them as we go
+	string dirname = basedir;
+	mkdir(dirname.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+	for(unsigned int i=0; i<dirs.size()-1; i++){
+		dirname += string("/") + dirs[i];
+		mkdir(dirname.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+	}
 }
 
 //---------------------------------

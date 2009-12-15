@@ -789,6 +789,11 @@ JCalibration* JApplication::GetJCalibration(unsigned int run_number)
 	/// should access it in their brun() callback and keep a local
 	/// copy of the required constants for use in the evnt() callback.
 
+	const char *url = getenv("JANA_CALIB_URL");
+	if(!url)url="file://./";
+	const char *context = getenv("JANA_CALIB_CONTEXT");
+	if(!context)context="default";
+
 	// Lock mutex to keep list from being modified while we search it
 	pthread_mutex_lock(&calibration_mutex);
 
@@ -796,6 +801,8 @@ JCalibration* JApplication::GetJCalibration(unsigned int run_number)
 	for(; iter!=calibrations.end(); iter++){
 		if((*iter)->GetRunMin()>(int)run_number)continue;
 		if((*iter)->GetRunMax()<(int)run_number)continue;
+		if((*iter)->GetURL()!=url)continue;					// These allow specialty programs to change
+		if((*iter)->GetContext()!=context)continue;		// the source and still use us to instantiate
 		// Found it! Unlock mutex and return pointer
 		JCalibration *g = *iter;
 		pthread_mutex_unlock(&calibration_mutex);
@@ -813,10 +820,6 @@ JCalibration* JApplication::GetJCalibration(unsigned int run_number)
 	// "file://", then a JCalibrationFile object is created
 	// (i.e. we don't bother making a JCalibrationGeneratorFile
 	// class and instead, handle it here.)
-	const char *url = getenv("JANA_CALIB_URL");
-	if(!url)url="file://./";
-	const char *context = getenv("JANA_CALIB_CONTEXT");
-	if(!context)context="default";
 	
 	JCalibrationGenerator* gen = NULL;
 	double liklihood = 0.0;
