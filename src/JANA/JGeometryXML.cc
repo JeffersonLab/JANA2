@@ -125,7 +125,7 @@ bool JGeometryXML::Get(string xpath, string &sval)
 	/// and attribute by searching the XML DOM tree. Only the first matching
 	/// occurance will be returned. The value of xpath may contain restrictions
 	/// on the attributes anywhere along the node path via the XPATH 1.0
-	/// specification as implemented by Xerces.
+	/// specification.
 
 	if(!valid_xmlfile){sval=""; return false;}
 
@@ -137,70 +137,20 @@ bool JGeometryXML::Get(string xpath, string &sval)
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldstate);
 	pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, &oldtype);
 
-
-	// Ideally we would use the XPath parser built into xerces to parse
-	// our xpath string. However, the piss-poor documentation on this feature
-	// has already cost me more time than it would take to write my own
-	// (limited) parser with still no results or real clues as to what
-	// I'm doing wrong. So, with great bitterness, I'm commenting this
-	// out and just writing my own so I can move on to more important things.
-
-	//XMLCh* xpath_xmlch = XMLString::transcode(xpath.c_str());
-	//DOMNode *node=NULL;
-	//try{
-	//		node = (DOMNode*)doc->evaluate(xpath_xmlch, doc, NULL, DOMXPathResult::ANY_TYPE, NULL);
-	//}catch(DOMException ex){
-	//	char *mess = XMLString::transcode(ex.getMessage());
-	//	cout<<"Exception: "<<mess<<endl;
-	//	cout<<"xpath=\""<<XMLString::transcode(xpath_xmlch)<<"\""<<endl;
-	//	XMLString::release(&mess);
-	//}
-	//XMLString::release(&xpath_xmlch);
-
-	string attribute;
-	DOMNode *node = FindNode(xpath, attribute);
+	multimap<xercesc::DOMNode*, string> attributes;
+	FindAttributeValues(xpath, attributes, 1);
 	
-	if(attribute==""){
-		_DBG_<<"Get(string, string&) method called but no attribute specified in xpath."<<endl;
-		_DBG_<<"The xpath string should end in \"/@attributeName\"."<<endl;
-		pthread_setcancelstate(oldstate, NULL);
-		pthread_setcanceltype(oldtype, NULL);
-		return false;
-	}
-
-	if(node!=NULL && node->hasAttributes()){
-		// We found the node! Loop over attributes looking for the one we want
-		// get all the attributes of the node
-
-		DOMNamedNodeMap *pAttributes = node->getAttributes();
-		int nSize = pAttributes->getLength();
-		for(int i=0;i<nSize;++i) {
-			DOMAttr *pAttributeNode = (DOMAttr*) pAttributes->item(i);
-			
-			// Copy name/value into local variables and realease memory allocated by xerces
-			char *attrName  = XMLString::transcode(pAttributeNode->getName());
-			char *attrValue = XMLString::transcode(pAttributeNode->getValue());
-			string name(attrName);
-			string value(attrValue);
-			XMLString::release(&attrName);
-			XMLString::release(&attrValue);
-			
-			// Check if this is the attribute we're looking for
-			if(name == attribute){
-				sval = value;
-				pthread_setcancelstate(oldstate, NULL);
-				pthread_setcanceltype(oldtype, NULL);
-				return true;
-			}
-		}
-	}
-
+	// If we found the attribute, copy it to users string
+	if(attributes.size()>0)sval = (attributes.begin())->second;
+	
 	pthread_setcancelstate(oldstate, NULL);
 	pthread_setcanceltype(oldtype, NULL);
 
+	if(attributes.size()>0)return true; // return true to say we found it
+
 #endif
 
-	_DBG_<<"Node or attribute not found."<<endl;
+	_DBG_<<"Node or attribute not found for xpath \""<<xpath<<"\"."<<endl;
 
 	// Looks like we failed to find the requested item. Let the caller know.
 	return false;
@@ -215,11 +165,52 @@ bool JGeometryXML::Get(string xpath, map<string, string> &svals)
 	/// Only the first matching
 	/// occurance will be returned. The value of xpath may contain restrictions
 	/// on the attributes anywhere along the node path via the XPATH 1.0
-	/// specification as implemented by Xerces.
+	/// specification.
 
 
 	// Clear out anything that might already be in the svals container
 	svals.clear();
+
+	if(!valid_xmlfile)return false;
+
+#if HAVE_XERCES
+	
+	// XERCES locks its own mutex which causes horrible problems if the thread
+	// is canceled while it has the lock. Disable cancelibility while here.
+	int oldstate, oldtype;
+	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldstate);
+	pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, &oldtype);
+
+	multimap<xercesc::DOMNode*, string> attributes;
+	FindAttributeValues(xpath, attributes, 1);
+	
+	// If we found the node, get the attribute list
+	if(attributes.size()>0)GetAttributes((attributes.begin())->first, svals);
+
+	pthread_setcancelstate(oldstate, NULL);
+	pthread_setcanceltype(oldtype, NULL);
+
+	if(attributes.size()>0)return true; // return true to say we found it
+
+#endif
+
+	_DBG_<<"Node or attribute not found for xpath \""<<xpath<<"\"."<<endl;
+
+	// Looks like we failed to find the requested item. Let the caller know.
+	return false;
+}
+
+//---------------------------------
+// GetMultiple
+//---------------------------------
+bool JGeometryXML::GetMultiple(string xpath, vector<string> &vsval)
+{
+	/// Get the value of the attribute pointed to by the specified xpath
+	/// and attribute by searching the XML DOM tree. All matching
+	/// occurances will be returned. The value of xpath may contain restrictions
+	/// on the attributes anywhere along the node path.
+
+	vsval.clear();
 
 	if(!valid_xmlfile){return false;}
 
@@ -231,33 +222,12 @@ bool JGeometryXML::Get(string xpath, map<string, string> &svals)
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldstate);
 	pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, &oldtype);
 
-	// Get the pointer to the node of interest.
-	string attribute;
-	DOMNode *node = FindNode(xpath, attribute);
+	multimap<xercesc::DOMNode*, string> attributes;
+	FindAttributeValues(xpath, attributes, 0);
 	
-	if(node!=NULL){
-		// We found the node! Loop over attributes.
-		if(node->hasAttributes()) {
-			// get all the attributes of the node
-			DOMNamedNodeMap *pAttributes = node->getAttributes();
-			int nSize = pAttributes->getLength();
-			for(int i=0;i<nSize;++i) {
-				DOMAttr *pAttributeNode = (DOMAttr*) pAttributes->item(i);
-				// Copy name/value into map, realeasing memory allocated by xerces
-				char *attrName  = XMLString::transcode(pAttributeNode->getName());
-				char *attrValue = XMLString::transcode(pAttributeNode->getValue());
-				string name(attrName);
-				string value(attrValue);
-				XMLString::release(&attrName);
-				XMLString::release(&attrValue);
-				
-				if(name==attribute || attribute=="")svals[name] = value;
-			}
-		}
-
-		pthread_setcancelstate(oldstate, NULL);
-		pthread_setcanceltype(oldtype, NULL);
-		return true;
+	multimap<xercesc::DOMNode*, string>::iterator iter = attributes.begin();
+	for(; iter!=attributes.end(); iter++){
+		vsval.push_back(iter->second);
 	}
 
 	pthread_setcancelstate(oldstate, NULL);
@@ -266,7 +236,52 @@ bool JGeometryXML::Get(string xpath, map<string, string> &svals)
 #endif
 
 	// Looks like we failed to find the requested item. Let the caller know.
-	return false;
+	return vsval.size()>0;
+}
+
+//---------------------------------
+// GetMultiple
+//---------------------------------
+bool JGeometryXML::GetMultiple(string xpath, vector<map<string, string> >&vsvals)
+{
+	/// Get the value of the attribute pointed to by the specified xpath
+	/// and attribute by searching the XML DOM tree. All matching
+	/// occurances will be returned. The value of xpath may contain restrictions
+	/// on the attributes anywhere along the node path.
+
+	vsvals.clear();
+
+	if(!valid_xmlfile){return false;}
+
+#if HAVE_XERCES
+
+	// XERCES locks its own mutex which causes horrible problems if the thread
+	// is canceled while it has the lock. Disable cancelibility while here.
+	int oldstate, oldtype;
+	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldstate);
+	pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, &oldtype);
+
+	multimap<xercesc::DOMNode*, string> attributes;
+	FindAttributeValues(xpath, attributes, 0);
+	
+	multimap<xercesc::DOMNode*, string>::iterator iter = attributes.begin();
+	for(; iter!=attributes.end(); iter++){
+
+		DOMNode *node = iter->first;
+		if(!node)continue;
+
+		map<string, string> svals;
+		GetAttributes(node, svals);
+		vsvals.push_back(svals);
+	}
+
+	pthread_setcancelstate(oldstate, NULL);
+	pthread_setcanceltype(oldtype, NULL);
+
+#endif
+
+	// Looks like we failed to find the requested item. Let the caller know.
+	return vsvals.size()>0;
 }
 
 //---------------------------------
@@ -317,7 +332,7 @@ void JGeometryXML::GetXPaths(vector<string> &xpaths, ATTR_LEVEL_t level, const s
 }
 
 //---------------------------------
-// FilterCompare
+// NodeCompare
 //---------------------------------
 bool JGeometryXML::NodeCompare(node_iter_t iter1, node_iter_t end1, node_iter_t iter2, node_iter_t end2)
 {
@@ -565,10 +580,11 @@ void JGeometryXML::AddNodeToList(xercesc::DOMNode* start, string start_path, vec
 	}
 }
 
+#if 0
 //---------------------------------
 // FindNode
 //---------------------------------
-DOMNode* JGeometryXML::FindNode(string xpath, string &attribute)
+DOMNode* JGeometryXML::FindNode(string xpath, string &attribute, DOMNode *after_node)
 {
 	/// Parse the xpath string into node names and attribute qualifiers.
 	/// This is a *very* restricted form of the xpath syntax and done only
@@ -591,34 +607,68 @@ DOMNode* JGeometryXML::FindNode(string xpath, string &attribute)
 	unsigned int attr_depth;
 	ParseXPath(xpath, nodes, attribute, attr_depth);
 
-#if 0	
-	vector<pair<string, map<string,string> > >::iterator iter = nodes.begin();
-	for(; iter!=nodes.end(); iter++){
-		_DBG_<<"node \""<<iter->first<<"\": ";
-		
-		map<string,string> &qualifiers = iter->second;
-		map<string,string>::iterator qiter = qualifiers.begin();
-		for(; qiter!=qualifiers.end(); qiter++){
-			_DBG_<<"\""<<qiter->first<<"\"=\""<<qiter->second<<"\" ";
-		}
-		
-		cout<<endl;
-	}
-#endif
-
 	// The only practical way to find the nodes now is to use a recursive
 	// routine to walk the tree until it finds the correct node with all
 	// of the correct attributes of the parent nodes along the way.
-	DOMNode *node = SearchTree(doc, 0, nodes, attr_depth);
+	DOMNode *node = SearchTree(doc, 0, nodes, attr_depth, after_node);
 
 	return node;
 }
+#endif
 
+//---------------------------------
+// FindAttributeValues
+//---------------------------------
+void JGeometryXML::FindAttributeValues(string &xpath, multimap<DOMNode*, string> &attributes, unsigned int max_values)
+{
+	/// Search the DOM tree and find attributes matching the given xpath
+	
+	// First, parse the string to get node names and attribute qualifiers
+	SearchParameters sp;
+	ParseXPath(xpath, sp.nodes, sp.attribute_name, sp.attr_depth);
+	
+	// Fill in starting values for recursive search
+	sp.max_values = max_values;
+	sp.depth = 0;
+	sp.attr_value = "";
+	sp.current_node = doc;
+	
+	// Do the search. Results are returned in sp.
+	sp.SearchTree();
+	
+	// Copy search results into user provided container
+	attributes = sp.attributes;
+}
+
+#if 0
 //---------------------------------
 // SearchTree
 //---------------------------------
-DOMNode* JGeometryXML::SearchTree(DOMNode* current_node, unsigned int depth, vector<pair<string, map<string,string> > > &nodes, unsigned int attr_depth)
+DOMNode* JGeometryXML::SearchTree(DOMNode* current_node, unsigned int depth, vector<pair<string, map<string,string> > > &nodes, unsigned int attr_depth, bool find_all, vector<DOMNode*> *dom_nodes)
 {
+	/// This is a reentrant routine that recursively calls itself while walking the
+	/// DOM tree, looking for a path that matches the xpath already parsed and
+	/// passed to us via the "nodes" variable. This examines the node specified
+	/// by "current_node" and if needed, all of it's children. The value of "depth"
+	/// specifies which element of the nodes vector we are looking for. On the initial
+	/// call to this routine, depth will be 0 signifying that we are trying to match
+	/// the first node. Note that the first level specified in the xpath may not be
+	/// at the root of the DOM tree so we may recall ourselves at several levels
+	/// with depth=0 as we try to find the starting point in the DOM tree.
+	///
+	/// The "attr_depth" value specifies which element of the "nodes" vector has
+	/// the atribute of interest. This is needed since the attribute of interest may
+	/// reside at any level in the xpath (not necessarily at the end).
+	///
+	/// The "after_node" value is used when looking for multiple nodes that satisfy
+	/// the same xpath. If this is NULL, then the first matching node encountered 
+	/// is returned. If it is non-NULL, then matching nodes are skipped until
+	/// the one specified by "after_node" is found. At that point, after_node is
+	/// set to NULL and the search continued so that the next matching node will be
+	/// returned. This means for each matching instance, the tree is re-searched 
+	/// from the begining to look for the additional matches which is not very
+	/// efficient, but it is what it is.
+
 	// First, make sure "depth" isn't deeper than our nodes map.
 	if(depth>=nodes.size())return NULL;
 
@@ -642,12 +692,22 @@ DOMNode* JGeometryXML::SearchTree(DOMNode* current_node, unsigned int depth, vec
 		// specified in our nodes map. Try each of our children
 		// Loop over children and recall ourselves for each of them
 		for (DOMNode *child = current_node->getFirstChild(); child != 0; child=child->getNextSibling()){
-			DOMNode *node = SearchTree(child, 0, nodes, attr_depth);
+#if 0
+			DOMNode *node = SearchTree(child, 0, nodes, attr_depth, after_node);
 			if(node!=NULL){
-				// Wow! it looks like we found it. Go ahead and return the
-				// node pointer.
-				return node;
+				// Wow! it looks like we found it. If after_node is non-NULL, then
+				// we need to continue searching the children for the next matching
+				// node. If the node found happens to be after_node, then we need
+				// to set after_node to NULL so that the next node found is returned
+				// to the initial caller.
+				if(after_node!=NULL){
+					if(node == after_node)after_node=NULL;
+				}else{
+					// If we get here then we found the final match
+					return node;
+				}
 			}
+#endif
 		}
 		
 		// Looks like we didn't find the node on this branch. Return NULL.
@@ -689,22 +749,196 @@ DOMNode* JGeometryXML::SearchTree(DOMNode* current_node, unsigned int depth, vec
 	if(Npassed != qualifiers.size())return NULL;
 	
 	// Check if we have found the final node
-	if(depth==nodes.size()-1)return current_node;
+	if(depth==nodes.size()-1){
+		// At this point, we have found a node that completely matches all node names
+		// and qualifiers. If a non-NULL values of "after_node" was passed then we
+		// want to check it against this node
 	
+//		if(node==after_node){
+			// If we get here then we found after_node. Set it to
+			// NULL and continue so we can find the next node.
+//			after_node = NULL;
+//		}
+
+		return current_node;
+	}
+
 	// At this point, we have verified that the node names and all of
-	// the qualifies for each of them up to and including this node
+	// the qualifiers for each of them up to and including this node
 	// are correct. Now we need to loop over this node's children and
 	// have them check against the next level.
 	for (DOMNode *child = current_node->getFirstChild(); child != 0; child=child->getNextSibling()){
 		DOMNode *node = SearchTree(child, depth+1, nodes, attr_depth);
 		if(node!=NULL){
+			// At this point, all nodes with all qualifiers matched have been found.
+			// We are now passing the node pointer containing the attribute of
+			// interest back up the recursive call chain. If we happen to be at the
+			// level where the attribute of interest resides, then pass up our
+			// current node. Otherwise, pass up the node returned by the SearchTree
+			// call above. Note that this mean the deepest node will be passed
+			// up as we back out of the recursive call chain until we hit the
+			// level with the attribute of interest. After that, the node for that
+			// level is passed up (returned).
+		
 			return depth==attr_depth ? current_node:node;
 		}
 	}
 	
 	return NULL;
 }
+#endif
 
+//---------------------------------
+// SearchTree
+//---------------------------------
+void JGeometryXML::SearchParameters::SearchTree(void)
+{
+	/// This is a reentrant routine that recursively calls itself while walking the
+	/// DOM tree, looking for a path that matches the xpath already parsed and
+	/// passed to us via the "nodes" variable. This examines the node specified
+	/// by "current_node" and if needed, all of it's children. The value of "depth"
+	/// specifies which element of the nodes vector we are looking for. On the initial
+	/// call to this routine, depth will be 0 signifying that we are trying to match
+	/// the first node. Note that the first level specified in the xpath may not be
+	/// at the root of the DOM tree so we may recall ourselves at several levels
+	/// with depth=0 as we try to find the starting point in the DOM tree.
+	///
+	/// The "attr_depth" value specifies which element of the "nodes" vector has
+	/// the atribute of interest. This is needed since the attribute of interest may
+	/// reside at any level in the xpath (not necessarily at the end).
+	///
+	/// The "after_node" value is used when looking for multiple nodes that satisfy
+	/// the same xpath. If this is NULL, then the first matching node encountered 
+	/// is returned. If it is non-NULL, then matching nodes are skipped until
+	/// the one specified by "after_node" is found. At that point, after_node is
+	/// set to NULL and the search continued so that the next matching node will be
+	/// returned. This means for each matching instance, the tree is re-searched 
+	/// from the begining to look for the additional matches which is not very
+	/// efficient, but it is what it is.
+
+
+	// First, make sure "depth" isn't deeper than our nodes map!
+	if(depth>=nodes.size())return;
+
+	// Get node name in usable format
+	char *tmp = XMLString::transcode(current_node->getNodeName());
+	string nodeName = tmp;
+	XMLString::release(&tmp);
+
+	// Check if the name of this node matches the one we're looking for
+	// (specified by depth). 
+	if(nodeName!=nodes[depth].first && nodes[depth].first!="" && nodes[depth].first!="*"){
+		
+		// OK, this node is not listed in the xpath explicitly, but it may still
+		// be an ancestor of the desired xpath. We loop over all children in order
+		// to check if the specified xpath exists in any of them.
+
+		// If depth is not 0, then we know we're already part-way into
+		// the tree. Return now since this is not the right branch.
+		if(depth!=0)return;
+		
+		// At this point, we may have just not come across the first node
+		// specified in our nodes map. Try each of our children
+		// Loop over children and recall ourselves for each of them
+		for(DOMNode *child = current_node->getFirstChild(); child != 0; child=child->getNextSibling()){
+			current_node = child;
+			SearchTree(); // attributes are automatically added as the tree is searched
+			if(max_values>0 && attributes.size()>=max_values)return; // bail if max num. of attributes found
+		}
+		
+		// If we get here then we have searched all branches descending from this
+		// node and any matches that were found have already been added to the 
+		// attributes list. Return now since there is nothing else to do for the 
+		// current node.
+		return;
+	}
+
+	// Get list of attributes for this node
+	map<string,string> my_attributes;
+	JGeometryXML::GetAttributes(current_node, my_attributes);
+
+	// If we get here then we are at the "depth"-th node in the list. Check all
+	// attribute qualifiers for this node (if any).
+	unsigned int Npassed = 0;
+	map<string, string> &qualifiers = nodes[depth].second;
+	string my_attr_value = "";
+	map<string, string>::iterator iter;
+	for(iter = qualifiers.begin(); iter!=qualifiers.end(); iter++){
+		const string &attr = iter->first;
+		const string &val = iter->second;
+
+		// Loop over attributes of this node
+		map<string, string>::iterator attr_iter;
+		for(attr_iter = my_attributes.begin(); attr_iter!=my_attributes.end(); attr_iter++){
+			const string &my_attr = attr_iter->first;
+			const string &my_val = attr_iter->second;
+			
+			// If this is the attribute of interest, remember it so we can copy into attr_value below
+			if(attr==attribute_name)my_attr_value = my_val;
+
+			// If this matches a qualifier, increment Npassed counter
+			if(attr == my_attr){
+				if(val=="" || val==my_val)Npassed++;
+				break;
+			}
+		}
+	}
+
+	// If we didn't pass all of the attribute tests, then return now since this does not match the xpath
+	if(Npassed != qualifiers.size())return; 
+	
+	// If we get here AND we're at attr_depth then temporarily record the value of the
+	// attribute of interest so when we get to the end of the xpath we can add it
+	// to the list of attributes found.
+	if(depth==attr_depth)attr_value = my_attr_value;
+
+	// Check if we have found the final node at the end of the xpath
+	if(depth==nodes.size()-1){
+		// At this point, we have found a node that completely matches all node names
+		// and qualifiers. Add this to the list of attributes
+		attributes.insert(pair<DOMNode*, string>(current_node, attr_value));
+
+		// No further searching of this node is needed.
+		return;
+	}
+
+	// At this point, we have verified that the node names and all of
+	// the qualifiers for each of them up to and including this node
+	// are correct. Now we need to loop over this node's children and
+	// have them check against the next level.
+	DOMNode* save_current = current_node;
+	depth++;
+	for (DOMNode *child = current_node->getFirstChild(); child != 0; child=child->getNextSibling()){
+		current_node = child;
+		SearchTree();
+	}
+	depth--;
+	current_node = save_current;
+	
+	return;
+}
+
+//---------------------------------
+// GetAttributes
+//---------------------------------
+void JGeometryXML::GetAttributes(xercesc::DOMNode* node, map<string,string> &attributes)
+{
+	attributes.clear();
+
+	if(!node->hasAttributes())return;
+	
+	// Loop over attributes of this node
+	DOMNamedNodeMap *pAttributes = node->getAttributes();
+	int nSize = pAttributes->getLength();
+	for(int i=0;i<nSize;++i) {
+		DOMAttr *pAttributeNode = (DOMAttr*) pAttributes->item(i);
+		char *tmp1 = XMLString::transcode(pAttributeNode->getName());
+		char *tmp2 = XMLString::transcode(pAttributeNode->getValue());
+		attributes[tmp1] = tmp2;
+		XMLString::release(&tmp1);
+		XMLString::release(&tmp2);
+	}
+}
 
 #endif // XERCESC
 

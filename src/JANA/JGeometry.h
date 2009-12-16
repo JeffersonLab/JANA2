@@ -89,12 +89,17 @@ class JGeometry{
 		// Virtual methods called through base class
 		virtual bool Get(string xpath, string &sval)=0;
 		virtual bool Get(string xpath, map<string, string> &svals)=0;
+		virtual bool GetMultiple(string xpath, vector<string> &vsval)=0;
+		virtual bool GetMultiple(string xpath, vector<map<string, string> >&vsvals)=0;
 		virtual void GetXPaths(vector<string> &xpaths, ATTR_LEVEL_t level=attr_level_last, const string &filter="")=0;
 
 		// Templated methods that can return more useful forms
 		template<class T> bool Get(string xpath, T &val);
 		template<class T> bool Get(string xpath, vector<T> &vals, string delimiter=" ");
 		template<class T> bool Get(string xpath, map<string,T> &vals);
+		template<class T> bool GetMultiple(string xpath, vector<T> &vval);
+		template<class T> bool GetMultiple(string xpath, vector<vector<T> > &vvals, string delimiter=" ");
+		template<class T> bool GetMultiple(string xpath, vector<map<string,T> > &vvals);
 		
 		const int& GetRunRequested(void) const {return run_requested;}
 		const int& GetRunFound(void) const {return run_found;}
@@ -232,6 +237,147 @@ bool JGeometry::Get(string xpath, map<string,T> &vals)
 		vals[iter->first] = v;
 	}
 	
+	return res;
+}
+
+
+//-------------
+// GetMultiple  (single version)
+//-------------
+template<class T>
+bool JGeometry::GetMultiple(string xpath, vector<T> &vval)
+{
+	/// Templated method used to get multiple entries satisfying a single xpath.
+	///
+	/// This method will get the specified geometry element in the form of
+	/// a string using the virtual (non-templated) Get(...) method. It will
+	/// then convert the string into the data type on which <i>val</i> is
+	/// based. It does this using the stringstream
+	/// class so T is restricted to the types stringstream understands (int, float, 
+	/// double, string, ...).
+	///
+	/// This differs from the similar Get() method in that the geometry tree
+	/// will be searched for all nodes satisfying the given xpath and all
+	/// all values will be copied into the container provided. In Get(), only
+	/// the first node encountered that satisfies the xpath will be copied.
+	///
+	/// If no element of the specified name is found, a value
+	/// of boolean "false" is returned. A value of "true" is 
+	/// returned upon success.
+	
+	// Get values in the form of a string
+	vector<string> vsval;
+	bool res = GetMultiple(xpath, vsval);
+	if(!res)return res;
+	
+	// Convert the string to type "T" and copy it into val.
+	// Use stringstream to convert from a string to type "T"
+	for(unsigned int i=0; i<vsval.size(); i++){
+		stringstream ss(vsval[i]);
+		T val;
+		ss >> val;
+		vval.push_back(val);
+	}
+	
+	return res;
+}
+
+//-------------
+// GetMultiple  (vector version)
+//-------------
+template<class T>
+bool JGeometry::GetMultiple(string xpath, vector<vector<T> > &vvals, string delimiter)
+{
+	/// Templated method used to get a set of values from a geometry attribute.
+	///
+	/// This method can be used to get a list of values (possibly only one)
+	/// from a single geometry attribute specified by xpath. The attribute
+	/// is obtained as a string using the non-templated Get(...) method
+	/// and the string broken into tokens separated by the delimiter
+	/// (which defaults to a single white space). Each
+	/// token is then converted into type T using the stringstream class
+	/// so T is restricted to the types stringstream understands (int, float, 
+	/// double, string, ...).
+	///
+	/// If no element of the specified name is found, a value
+	/// of boolean "false" is returned. A value of "true" is 
+	/// returned upon success.
+	
+	// Get values in the form of strings
+	vvals.clear();
+	vector<string> vsvals;
+	bool res = GetMultiple(xpath, vsvals);
+	if(!res)return res;
+
+	for(unsigned int i=0; i<vsvals.size(); i++){
+		string &svals = vsvals[i];
+
+		string::size_type pos_start = svals.find_first_not_of(delimiter,0);
+		vector<T> vals;
+		while(pos_start != string::npos){
+			string::size_type pos_end = svals.find_first_of(delimiter, pos_start);
+			if(pos_end==string::npos)pos_end=svals.size();
+
+			T v;
+			string val = svals.substr(pos_start, pos_end-pos_start);
+			stringstream ss(val);
+			ss >> v;
+			vals.push_back(v);
+			
+			pos_start = svals.find_first_not_of(delimiter, pos_end);
+		}
+		
+		vvals.push_back(vals);
+	}
+
+	return res;
+}
+
+//-------------
+// GetMultiple  (map version)
+//-------------
+template<class T>
+bool JGeometry::GetMultiple(string xpath, vector<map<string,T> > &vvals)
+{
+	/// Templated method used to get a set of geometry attributes.
+	///
+	/// This method can be used to get a list of all attributes for
+	/// a given xpath. The attributes are copied into the <i>vals</i>
+	/// map with the attribute name as the key and the attribute
+	/// value as the value. This relies on the non-templated, virtual
+	/// Get(string, map<string,string>&) method to first get the values
+	/// in the form of strings. It converts them using the stringstream
+	/// class so T is restricted to the types it understands (int, float, 
+	/// double, string, ...).
+	///
+	/// If no element of the specified name is found, a value
+	/// of boolean "false" is returned. A value of "true" is 
+	/// returned upon success.
+	
+	// Get values in the form of strings
+	vector<map<string, string> > vsvals;
+	bool res = GetMultiple(xpath, vsvals);
+	
+	// Loop over values, converting the strings to type "T" and
+	// copying them into the vals map.
+	vvals.clear();
+
+	for(unsigned int i=0; i<vsvals.size(); i++){
+		map<string,string> &svals = vsvals[i];
+	
+		map<string,T> vals;
+		map<string,string>::const_iterator iter;
+		for(iter=svals.begin(); iter!=svals.end(); ++iter){
+			// Use stringstream to convert from a string to type "T"
+			T v;
+			stringstream ss(iter->second);
+			ss >> v;
+			vals[iter->first] = v;
+		}
+		
+		vvals.push_back(vals);
+	}
+
 	return res;
 }
 

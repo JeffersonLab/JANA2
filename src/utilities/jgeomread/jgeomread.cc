@@ -11,7 +11,8 @@ using namespace std;
 #include <JANA/JGeometry.h>
 using namespace jana;
 
-
+void DisplayMultiple(JGeometry *jgeom, bool attribute_specified, string attribute);
+void DisplaySingle(JGeometry *jgeom, bool attribute_specified, string attribute);
 void ParseCommandLineArguments(int &narg, char *argv[]);
 void Usage(void);
 
@@ -20,6 +21,7 @@ string XPATH="";
 bool LIST_XPATHS = false;
 bool FILTER_XPATHS = false;
 bool QUIET = false;
+bool DISPLAY_MULTIPLE = false;
 JGeometry::ATTR_LEVEL_t ATTRIBUTE_LEVEL=JGeometry::attr_level_last;
 
 //-----------
@@ -70,41 +72,116 @@ int main(int narg, char *argv[])
 				attribute = XPATH.substr(pos_slash+2, XPATH.size()-(pos_slash+2));
 			}
 		}
-
-		// If an attribute name was specified, get and print the value for
-		// that specific attribute. Otherwise, get all attributes of the
-		// specified xpath and print them.
-		map<string, string> vals;
-		if(attribute_specified){
-			string sval;
-			if(!jgeom->Get(XPATH, sval)){
-				cerr<<"Couldn't find the specified node."<<endl;
-				return -1;
-			}else{
-				vals[attribute] = sval;
-			}
-		}else{
-			// Get constants
-			if(!jgeom->Get(XPATH, vals)){
-				cerr<<"No node found matching the given xpath."<<endl;
-				return -1;
-			}
-		}
-
-		// Display constants
+		
+		// Display results
 		if(!QUIET)cout<<endl<<"Values for \""<<XPATH<<"\" for run "<<RUN_NUMBER<<endl;
 		if(!QUIET)cout<<"--------------------"<<endl;
-		map<string, string>::iterator iter;
-		
-		// Make one pass to find the maximum key width
-		unsigned int max_key_width = 1;
-		for(iter=vals.begin(); iter!=vals.end(); iter++){
+		if(DISPLAY_MULTIPLE){
+			DisplayMultiple(jgeom, attribute_specified, attribute);
+		}else{
+			DisplaySingle(jgeom, attribute_specified, attribute);
+		}
+
+	}
+	
+	delete app;
+
+	return 0;
+}
+
+//-----------
+// DisplaySingle
+//-----------
+void DisplaySingle(JGeometry *jgeom, bool attribute_specified, string attribute)
+{
+	// If an attribute name was specified, get and print the value for
+	// that specific attribute. Otherwise, get all attributes of the
+	// specified xpath and print them.
+	map<string, string> vals;
+	if(attribute_specified){
+		string sval;
+		if(!jgeom->Get(XPATH, sval)){
+			cerr<<"Couldn't find the specified node."<<endl;
+			exit(-1);
+		}else{
+			vals[attribute] = sval;
+		}
+	}else{
+		// Get constants
+		if(!jgeom->Get(XPATH, vals)){
+			cerr<<"No node found matching the given xpath."<<endl;
+			exit(-1);
+		}
+	}
+
+	// Display constants
+	map<string, string>::iterator iter;
+	
+	// Make one pass to find the maximum key width
+	unsigned int max_key_width = 1;
+	for(iter=vals.begin(); iter!=vals.end(); iter++){
+		string key = iter->first;
+		if(key.length()>max_key_width) max_key_width=key.length();
+	}
+	max_key_width++;
+
+	for(iter=vals.begin(); iter!=vals.end(); iter++){
+		string key = iter->first;
+		string val = iter->second;
+		if(!QUIET){
+			cout<<iter->first<<" ";
+			if(key.length()<max_key_width)
+				for(unsigned int j=0; j<max_key_width-key.length(); j++)cout<<" ";
+		}
+		cout<<iter->second;
+		cout<<endl;
+	}
+}
+
+//-----------
+// DisplayMultiple
+//-----------
+void DisplayMultiple(JGeometry *jgeom, bool attribute_specified, string attribute)
+{
+	// If an attribute name was specified, get and print the value for
+	// that specific attribute. Otherwise, get all attributes of the
+	// specified xpath and print them.
+	vector<map<string, string> > vals;
+	if(attribute_specified){
+		vector<string> svals;
+		if(!jgeom->GetMultiple(XPATH, svals)){
+			cerr<<"Couldn't find the specified node."<<endl;
+			exit(-1);
+		}else{
+			for(unsigned int i=0; i<svals.size(); i++){
+				map<string,string> tmp;
+				tmp[attribute] = svals[i];
+				vals.push_back(tmp);
+			}
+		}
+	}else{
+		// No attribute was specified
+		if(!jgeom->GetMultiple(XPATH, vals)){
+			cerr<<"No node found matching the given xpath."<<endl;
+			exit(-1);
+		}
+	}
+
+	// Make one pass to find the maximum key width
+	unsigned int max_key_width = 1;
+	map<string, string>::iterator iter;
+	for(unsigned int i=0; i<vals.size(); i++){
+		for(iter=vals[i].begin(); iter!=vals[i].end(); iter++){
 			string key = iter->first;
 			if(key.length()>max_key_width) max_key_width=key.length();
 		}
-		max_key_width++;
+	}
+	max_key_width++;
 
-		for(iter=vals.begin(); iter!=vals.end(); iter++){
+	// Print values
+	for(unsigned int i=0; i<vals.size(); i++){
+		if(!QUIET)cout<<"----- "<<i<<endl;
+		for(iter=vals[i].begin(); iter!=vals[i].end(); iter++){
 			string key = iter->first;
 			string val = iter->second;
 			if(!QUIET){
@@ -116,10 +193,6 @@ int main(int narg, char *argv[])
 			cout<<endl;
 		}
 	}
-	
-	delete app;
-
-	return 0;
 }
 
 //-----------
@@ -152,6 +225,9 @@ void ParseCommandLineArguments(int &narg, char *argv[])
 					break;
 				case 'f':
 					FILTER_XPATHS = true;
+					break;
+				case 'm':
+					DISPLAY_MULTIPLE = true;
 					break;
 				case 'R':
 					if(strlen(argv[i])==2){
@@ -187,7 +263,17 @@ void Usage(void)
 	cout<<"   -b        Include attributes for only the last node when listing xpaths(default)"<<endl;
 	cout<<"   -c        Don't include any attributes listing xpaths"<<endl;
 	cout<<"   -f        List all xpaths using the specified xpath as a filter"<<endl;
+	cout<<"   -m        Display all nodes satisfying the given xpath"<<endl;
 	cout<<"   -t type   Set data type (float, int, ...)"<<endl;
+	cout<<endl;
+	cout<<" A note on the use of -f vs. -m: If -m is specified, then"<<endl;
+	cout<<"the values are obtained using one of the GetMultiple() methods"<<endl;
+	cout<<"of JCalibration, otherwise on of the Get() methods is used."<<endl;
+	cout<<"The attribute values for all matching nodes are then printed."<<endl;
+	cout<<" "<<endl;
+	cout<<"The -f argument will get and display a list of xpaths themselves "<<endl;
+	cout<<"but filtering them based on the given filter."<<endl;
+	cout<<" "<<endl;
 	cout<<endl;
 	cout<<" Example: (note this relies on the structure of the backend)"<<endl;
 	cout<<endl;

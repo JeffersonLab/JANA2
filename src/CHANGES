@@ -1,3 +1,9 @@
+
+Changes in version 0.6.0
+
+- Added PutCalib method to JCalibration
+- Added jcalibcopy utility
+
 Changes in version 0.5.3
 
 - Fixed bug that caused seg. faults due to double free in SetDefaultParameter

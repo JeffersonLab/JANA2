@@ -44,6 +44,22 @@ bool JGeometryMYSQL::Get(string path, map<string, string> &svals)
 }
 
 //---------------------------------
+// GetMultiple
+//---------------------------------
+bool JGeometryMYSQL::GetMultiple(string xpath, vector<string> &vsval)
+{
+	return false;
+}
+
+//---------------------------------
+// GetMultiple
+//---------------------------------
+bool JGeometryMYSQL::GetMultiple(string xpath, vector<map<string, string> >&vsvals)
+{
+	return false;
+}
+
+//---------------------------------
 // GetXPaths
 //---------------------------------
 void JGeometryMYSQL::GetXPaths(vector<string> &paths, ATTR_LEVEL_t level, const string &filter)
