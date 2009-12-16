@@ -17,37 +17,26 @@
 #include <string>
 #include "JStreamLogBuffer.h"
 
-/// JStreamLog provides an intuitive interface for logging errors
-/// and messages. To use:
-///	
+/// JStreamLog provides an interface for for writing messages
+/// in a way that buffers them by thread to prevent multiple
+/// threads from simultaneously writing to the screen (via
+/// cout and cerr) causing the characters to intermix resulting
+/// in gibberish.
 ///
-/// #include <iostream>
-/// #include <fstream>	
-///	#include "JStreamLog.h" 
+/// JANA using the jout and jerr global streams by default which
+/// send their output to cout and cerr respectively. In addition,
+/// they can optionally prepend a special "tag" string to indicate
+/// which stream the message came from. By default, these are 
+/// set to "JANA >>" and "JANA ERROR>>", but are user configureable.
+/// One can also turn on prepending of timestamps to be printed
+/// with each line (this is off by default).
 ///
-/// using namespace std;
+/// JStreamLog objects inherit from std::ostream and so can be used
+/// just like cout and cerr.
 ///
-/// int main() {
-///		JStreamLog info(cout, "INFO");
-///			
-///		info << "Some information. " << endMsg;
-///		
-///		ofstream f("errors.log");		
-///		JStreamLog err(f, "ERR");
-///		
-///		err << "There was " << endl << "an error." << endMsg;
-/// 	return 0;
-/// }
+/// Example:
 ///
-///	Some details:
-///  - The instantiation of a JStreamLog requires that an output
-/// stream and a tag be provided. To write a single message to
-/// a JLogStream object, be sure to pass in endMsg to make sure
-/// the buffer is flushed.
-///  - The endMsg manipulator uses a sentinel value from the ASCII table,
-/// namely the ACK character, because it's not often used. If it should
-/// somehow sneak into your message, it will split your message at the point
-/// where ACK entered the stream.
+///    jout<<"Hello World!"<<endl;
 ///
 
 class JStreamLog : public std::ostream
@@ -57,8 +46,18 @@ class JStreamLog : public std::ostream
 		JStreamLog(const std::ostream& os, const std::string& tag);
 		JStreamLog(std::streambuf* buf, const char* tag);
 		virtual ~JStreamLog();
+		
+		std::string GetTag(void);
+		bool GetTimestampFlag(void);
+		JStreamLogBuffer* GetJStreamLogBuffer(void);
+		void SetTag(std::string tag);
+		void SetTimestampFlag(bool prepend_timestamp=true);
 
 };
 
 std::ostream& endMsg(std::ostream& os);
+
+extern JStreamLog jout;
+extern JStreamLog jerr;
+
 #endif //_DSTREAMLOG_H_

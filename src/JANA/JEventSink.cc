@@ -89,16 +89,16 @@ void JEventSink::RemoveFromWriteList(string name, string tag)
 //---------------------------------
 void JEventSink::PrintWriteList(void)
 {
-	cout<<endl;
-	cout<<"Factories to written to file (format is factory:tag)"<<endl;
-	cout<<"----------------------------------------------------"<<endl;
+	jout<<endl;
+	jout<<"Factories to written to file (format is factory:tag)"<<endl;
+	jout<<"----------------------------------------------------"<<endl;
 	vector<factory_name_spec_t>::iterator iter = factories_to_write.begin();
 	for(; iter != factories_to_write.end(); iter++){
-		cout<<(*iter).name;
-		if((*iter).tag.size()>0)cout<<":"<<(*iter).tag;
-		cout<<endl;
+		jout<<(*iter).name;
+		if((*iter).tag.size()>0)jout<<":"<<(*iter).tag;
+		jout<<endl;
 	}
-	cout<<endl;
+	jout<<endl;
 }
 
 //---------------------------------

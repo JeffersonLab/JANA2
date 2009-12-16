@@ -73,11 +73,11 @@ JGeometryXML::JGeometryXML(string url, int run, string context):JGeometry(url,ru
 	run_min = run_max = run_found = GetRunRequested();
 
 #ifndef HAVE_XERCES
-	cout<<endl;
-	cout<<"This JANA library was compiled without XERCESC support. To enable"<<endl;
-	cout<<"XERCESC, install it on your system and set your XERCESCROOT enviro."<<endl;
-	cout<<"variable to point to it. Then, recompile and install JANA."<<endl;
-	cout<<endl;
+	jerr<<endl;
+	jerr<<"This JANA library was compiled without XERCESC support. To enable"<<endl;
+	jerr<<"XERCESC, install it on your system and set your XERCESCROOT enviro."<<endl;
+	jerr<<"variable to point to it. Then, recompile and install JANA."<<endl;
+	jerr<<endl;
 #else
 	// Initialize XERCES system
 	XMLPlatformUtils::Initialize();
@@ -92,7 +92,6 @@ JGeometryXML::JGeometryXML(string url, int run, string context):JGeometry(url,ru
 	parser->setErrorHandler(&errorHandler);
 	
 	// Read in the XML and parse it
-	//cout<<"Parsing geometry starting from: \""<<xmlfile<<"\" ... "<<endl;
 	parser->resetDocumentPool();
 	doc = parser->parseURI(xmlfile.c_str());
 

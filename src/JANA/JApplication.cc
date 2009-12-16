@@ -29,9 +29,9 @@ using namespace std;
 #include "JGeometryXML.h"
 #include "JGeometryMYSQL.h"
 #include "JParameterManager.h"
-#include "JLog.h"
 #include "JCalibrationFile.h"
 #include "JVersion.h"
+#include "JStreamLog.h"
 using namespace jana;
 
 #ifndef ansi_escape
@@ -44,7 +44,6 @@ void* LaunchEventBufferThread(void* arg);
 void* LaunchThread(void* arg);
 void  CleanupThread(void* arg);
 
-JLog dlog;
 jana::JApplication *japp = NULL;
 
 int SIGINT_RECEIVED = 0;
@@ -57,9 +56,9 @@ int NTHREADS_COMMAND_LINE = 0;
 void ctrlCHandle(int x)
 {
 	SIGINT_RECEIVED++;
-	cerr<<endl<<"SIGINT received ("<<SIGINT_RECEIVED<<")....."<<endl;
+	jerr<<endl<<"SIGINT received ("<<SIGINT_RECEIVED<<")....."<<endl;
 	if(SIGINT_RECEIVED == 3){
-		cerr<<endl<<"Three SIGINTS received! Attempting graceful exit ..."<<endl<<endl;
+		jerr<<endl<<"Three SIGINTS received! Attempting graceful exit ..."<<endl<<endl;
 	}
 }
 
@@ -75,7 +74,7 @@ void USR1_Handle(int x)
 	// and re-thrown while recording the factory stack info which is
 	// eventually printed out.
 	SIGUSR1_RECEIVED++;
-	cerr<<endl<<"SIGUSR1 received ("<<SIGUSR1_RECEIVED<<").....(thread=0x"<<hex<<pthread_self()<<dec<<")"<<endl;
+	jerr<<endl<<"SIGUSR1 received ("<<SIGUSR1_RECEIVED<<").....(thread=0x"<<hex<<pthread_self()<<dec<<")"<<endl;
 	if(japp)japp->SignalThreads(SIGUSR2);
 }
 
@@ -90,15 +89,15 @@ void USR2_Handle(int x)
 	// and re-thrown while recording the factory stack info which is
 	// eventually printed out.
 	japp->Lock();
-	cerr<<endl<<"SIGUSR2 received .....(thread=0x"<<hex<<pthread_self()<<dec<<")"<<endl;
+	jerr<<endl<<"SIGUSR2 received .....(thread=0x"<<hex<<pthread_self()<<dec<<")"<<endl;
 
 #ifdef __linux__
 	void * array[50];
 	int nSize = backtrace(array, 50);
 	char ** symbols = backtrace_symbols(array, nSize);
 
-	cout<<endl;
-	cout<<"--- Stack trace for thread=0x"<<hex<<pthread_self()<<dec<<"): ---"<<endl;
+	jout<<endl;
+	jout<<"--- Stack trace for thread=0x"<<hex<<pthread_self()<<dec<<"): ---"<<endl;
 	string cmd("c++filt ");
 	for (int i = 0; i < nSize; i++){
 		char *ptr = strstr(symbols[i], "(");
@@ -112,9 +111,9 @@ void USR2_Handle(int x)
 		cmd += " ";
 	}
 	system(cmd.c_str());
-	cout<<endl;
+	jout<<endl;
 #else
-	cerr<<"Stack trace only supported on Linux at this time"<<endl;
+	jerr<<"Stack trace only supported on Linux at this time"<<endl;
 #endif
 	japp->Unlock();
 	exit(0);
@@ -272,7 +271,7 @@ JApplication::JApplication(int narg, char* argv[])
 				ptr++;
 				jparms->SetParameter(pstr, ptr);
 			}else{
-				cerr<<__FILE__<<":"<<__LINE__<<" bad parameter argument ("<<argv[i]<<") should be of form -Pkey=value"<<endl;
+				_DBG_<<" bad parameter argument ("<<argv[i]<<") should be of form -Pkey=value"<<endl;
 			}
 			free(pstr);
 			continue;
@@ -841,15 +840,15 @@ JCalibration* JApplication::GetJCalibration(unsigned int run_number)
 	}
 	if(g){
 		calibrations.push_back(g);
-		cout<<"Created JCalibration object of type: "<<g->className()<<endl;
-		cout<<"Generated via: "<< (gen==NULL ? "fallback creation of JCalibrationFile":gen->Description())<<endl;
-		cout<<"Runs:";
-		cout<<" requested="<<g->GetRunRequested();
-		cout<<" found="<<g->GetRunFound();
-		cout<<" Validity range="<<g->GetRunMin()<<"-"<<g->GetRunMax();
-		cout<<endl;
-		cout<<"URL: "<<g->GetURL()<<endl;
-		cout<<"context: "<<g->GetContext()<<endl;
+		jout<<"Created JCalibration object of type: "<<g->className()<<endl;
+		jout<<"Generated via: "<< (gen==NULL ? "fallback creation of JCalibrationFile":gen->Description())<<endl;
+		jout<<"Runs:";
+		jout<<" requested="<<g->GetRunRequested();
+		jout<<" found="<<g->GetRunFound();
+		jout<<" Validity range="<<g->GetRunMin()<<"-"<<g->GetRunMax();
+		jout<<endl;
+		jout<<"URL: "<<g->GetURL()<<endl;
+		jout<<"context: "<<g->GetContext()<<endl;
 	}else{
 		_DBG__;
 		_DBG_<<"Unable to create JCalibration object!"<<endl;
@@ -901,11 +900,11 @@ void* LaunchThread(void* arg)
 	try{
 		eventLoop->Loop();
 		eventLoop->GetJApplication()->Lock();
-		cout<<"Thread 0x"<<hex<<(unsigned long)pthread_self()<<dec<<" completed gracefully"<<endl;
+		jout<<"Thread 0x"<<hex<<(unsigned long)pthread_self()<<dec<<" completed gracefully"<<endl;
 		eventLoop->GetJApplication()->Unlock();
 	}catch(JException *exception){
 		if(exception)delete exception;
-		cerr<<__FILE__<<":"<<__LINE__<<" EXCEPTION caught for thread "<<pthread_self()<<endl;
+		_DBG_<<" EXCEPTION caught for thread "<<pthread_self()<<endl;
 	}
 
 	// This will cause the JEventLoop to be destroyed (see below) which causes
@@ -950,8 +949,8 @@ jerror_t JApplication::Init(void)
 	try{
 		for(unsigned int i=0;i<processors.size();i++)processors[i]->init();
 	}catch(jerror_t err){
-		cerr<<endl;
-		cerr<<__FILE__<<":"<<__LINE__<<" Error thrown ("<<err<<") from JEventProcessor::init()"<<endl;
+		jerr<<endl;
+		jerr<<__FILE__<<":"<<__LINE__<<" Error thrown ("<<err<<") from JEventProcessor::init()"<<endl;
 		exit(-1);
 	}
 	
@@ -995,14 +994,14 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 	if(NTHREADS_COMMAND_LINE>0){
 		Nthreads = NTHREADS_COMMAND_LINE;
 	}
-	cout<<"Launching threads "; cout.flush();
+	jout<<"Launching threads "; jout.flush();
 	usleep(100000); // give time for above message to print before messages from threads interfere.
 	for(int i=0; i<Nthreads; i++){
 		pthread_t thr;
 		pthread_create(&thr, NULL, LaunchThread, this);
-		cout<<".";cout.flush();
+		jout<<".";jout.flush();
 	}
-	cout<<endl;
+	jout<<endl;
 	
 	// Get the max time for a thread to be inactive before being deleting
 	double THREAD_TIMEOUT=8.0;
@@ -1029,7 +1028,7 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 			rate_instantaneous = sleep_time>0.0 ? (double)delta_NEvents/sleep_time:0.0;
 			rate_average = avg_time>0.0 ? (double)avg_NEvents/avg_time:0.0;
 		}else{
-			cout<<__FILE__<<":"<<__LINE__<<" didn't sleep full "<<sleep_time<<" seconds!"<<endl;
+			_DBG_<<" didn't sleep full "<<sleep_time<<" seconds!"<<endl;
 		}
 		last_NEvents = NEvents - GetEventBufferSize();
 		
@@ -1054,9 +1053,9 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 				// Remove it from monitoring lists.
 				JEventLoop *loop = *(loops.begin()+i);
 				JEvent &event = loop->GetJEvent();
-				cerr<<" Thread "<<i<<" hasn't responded in "<<*hb<<" seconds.";
-				cerr<<" (run:event="<<event.GetRunNumber()<<":"<<event.GetEventNumber()<<")";
-				cerr<<" Canceling ..."<<endl;
+				jerr<<" Thread "<<i<<" hasn't responded in "<<*hb<<" seconds.";
+				jerr<<" (run:event="<<event.GetRunNumber()<<":"<<event.GetEventNumber()<<")";
+				jerr<<" Canceling ..."<<endl;
 				
 				// At this point, we need to kill the stalled thread. One would normally
 				// do this by calling pthread_cancel() but that seems to have problems.
@@ -1072,7 +1071,7 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 
 				// Launch a new thread to take his place, but only if we're not trying to quit
 				if(!SIGINT_RECEIVED){
-					cerr<<" Launching new thread ..."<<endl;
+					jerr<<" Launching new thread ..."<<endl;
 					pthread_t thr;
 					pthread_create(&thr, NULL, LaunchThread, this);
 					
@@ -1116,18 +1115,18 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 		// Merge up all the threads
 		for(unsigned int i=0; i<threads.size(); i++){
 			void *ret;
-			cout<<"Merging thread "<<i<<" ..."<<endl; cout.flush();
+			jout<<"Merging thread "<<i<<" ..."<<endl; jout.flush();
 			pthread_join(threads[i], &ret);
 		}
 		
 		// Close any open dll's
 		for(unsigned int i=0; i<sohandles.size(); i++){
-			cout<<"Closing shared object handle "<<i<<" ..."<<endl; cout.flush();
+			jout<<"Closing shared object handle "<<i<<" ..."<<endl; jout.flush();
 
 			// Look for a FiniPlugin symbol and execute if found
 			FiniPlugin_t *plugin = (FiniPlugin_t*)dlsym(sohandles[i], "FiniPlugin");
 			if(plugin){
-				cout<<"Finalizing plugin ..."<<endl;
+				jout<<"Finalizing plugin ..."<<endl;
 				(*plugin)(this);
 			}
 			
@@ -1135,12 +1134,12 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 			dlclose(sohandles[i]);
 		}
 	}else{
-		cout<<"Exiting hard due to catching 3 or more SIGINTs ..."<<endl;
+		jout<<"Exiting hard due to catching 3 or more SIGINTs ..."<<endl;
 	}
 	
-	cout<<" "<<NEvents<<" events processed ";
-	cout<<" ("<<NEvents_read<<" events read) ";
-	cout<<"Average rate: "<<Val2StringWithPrefix(rate_average)<<"Hz"<<endl;
+	jout<<" "<<NEvents<<" events processed ";
+	jout<<" ("<<NEvents_read<<" events read) ";
+	jout<<"Average rate: "<<Val2StringWithPrefix(rate_average)<<"Hz"<<endl;
 
 	if(SIGINT_RECEIVED>=3)exit(-1);
 
@@ -1171,8 +1170,8 @@ jerror_t JApplication::Fini(void)
 			try{
 				proc->erun();
 			}catch(jerror_t err){
-				cerr<<endl;
-				cerr<<__FILE__<<":"<<__LINE__<<" Error thrown ("<<err<<") from JEventProcessor::erun()"<<endl;
+				jerr<<endl;
+				_DBG_<<" Error thrown ("<<err<<") from JEventProcessor::erun()"<<endl;
 			}
 			proc->Set_erun_called();
 		}
@@ -1182,8 +1181,8 @@ jerror_t JApplication::Fini(void)
 	try{
 		for(unsigned int i=0;i<processors.size();i++)processors[i]->fini();
 	}catch(jerror_t err){
-		cerr<<endl;
-		cerr<<__FILE__<<":"<<__LINE__<<" Error thrown ("<<err<<") from JEventProcessor::fini()"<<endl;
+		jerr<<endl;
+		_DBG_<<" Error thrown ("<<err<<") from JEventProcessor::fini()"<<endl;
 	}
 	
 	// Delete all sources allowing them to close cleanly
@@ -1246,7 +1245,7 @@ void JApplication::Quit(void)
 	/// Quit the application. This will invoke the Quit() method of all
 	/// JEventLoops. This does not force a runaway thread to be killed and
 	/// will only cause the program to quit if all JEventLoops quit cleanly.
-	cout<<endl<<"Telling all threads to quit ..."<<endl;
+	jout<<endl<<"Telling all threads to quit ..."<<endl;
 	vector<JEventLoop*>::iterator iter = loops.begin();
 	for(; iter!=loops.end(); iter++){
 		(*iter)->Quit();
@@ -1337,12 +1336,12 @@ jerror_t JApplication::OpenNext(void)
 	
 	current_source = NULL;
 	if(gen != NULL){
-		cout<<"Opening source \""<<sname<<"\"of type: "<<gen->Description()<<endl;
+		jout<<"Opening source \""<<sname<<"\"of type: "<<gen->Description()<<endl;
 		current_source = gen->MakeJEventSource(sname);
 	}
 
 	if(!current_source){
-		cerr<<"Unable to open event source!"<<endl;
+		jerr<<"Unable to open event source!"<<endl;
 	}
 	
 	// Add source to list (even if it's NULL!)
@@ -1359,19 +1358,19 @@ jerror_t JApplication::RegisterSharedObject(const char *soname, bool verbose)
 	// Open shared object
 	void* handle = dlopen(soname, RTLD_LAZY | RTLD_GLOBAL);
 	if(!handle){
-		if(verbose)cerr<<dlerror()<<endl;
+		if(verbose)jerr<<dlerror()<<endl;
 		return RESOURCE_UNAVAILABLE;
 	}
 	
 	// Look for an InitPlugin symbol
 	InitPlugin_t *plugin = (InitPlugin_t*)dlsym(handle, "InitPlugin");
 	if(plugin){
-		cout<<"Initializing plugin \""<<soname<<"\" ..."<<endl;
+		jout<<"Initializing plugin \""<<soname<<"\" ..."<<endl;
 		(*plugin)(this);
 		sohandles.push_back(handle);
 	}else{
 		dlclose(handle);
-		if(verbose)cout<<" --- Nothing useful found in "<<soname<<" ---"<<endl;
+		if(verbose)jout<<" --- Nothing useful found in "<<soname<<" ---"<<endl;
 	}
 
 	return NOERROR;
@@ -1386,7 +1385,7 @@ jerror_t JApplication::RegisterSharedObjectDirectory(string sodirname)
 	/// as a shared object file. If the file is not a shared object
 	/// file, or does not have the InitPlugin symbol, it will be
 	/// quietly ignored.
-	cout<<"Looking for plugins in \""<<sodirname<<"\" ..."<<endl;
+	jout<<"Looking for plugins in \""<<sodirname<<"\" ..."<<endl;
 	DIR *dir = opendir(sodirname.c_str());
 
 	struct dirent *d;
@@ -1394,7 +1393,7 @@ jerror_t JApplication::RegisterSharedObjectDirectory(string sodirname)
 	while((d=readdir(dir))){
 		// Try registering the file as a shared object.
 		if(!strncmp(d->d_name,".nfs",4)){
-			cout<<"Skipping .nfs file :"<<d->d_name<<endl;
+			jout<<"Skipping .nfs file :"<<d->d_name<<endl;
 			continue;
 		}
 		sprintf(full_path, "%s/%s",sodirname.c_str(), d->d_name);
@@ -1538,7 +1537,7 @@ jerror_t JApplication::AttachPlugins(void)
 				if(RegisterSharedObject(fullpath.c_str())==NOERROR)found_plugin=true;
 				break;
 			}
-			if(printPaths) cout<<"Looking for \""<<fullpath<<"\" ...."<<"no"<<endl;
+			if(printPaths) jout<<"Looking for \""<<fullpath<<"\" ...."<<"no"<<endl;
 			
 			if(fullpath[0] != '/')continue;
 			fullpath = pluginPaths[i] + "/" + plugins[j] + "/" + plugin;
@@ -1548,14 +1547,14 @@ jerror_t JApplication::AttachPlugins(void)
 				if(RegisterSharedObject(fullpath.c_str())==NOERROR)found_plugin=true;
 				break;
 			}
-			if(printPaths) cout<<"Looking for \""<<fullpath<<"\" ...."<<"no"<<endl;
+			if(printPaths) jout<<"Looking for \""<<fullpath<<"\" ...."<<"no"<<endl;
 		}
 		
 		// If we didn't find the plugin, then complain and quit
 		if(!found_plugin){
 			Lock();
-			cerr<<endl<<"***ERROR : Couldn't find plugin \""<<plugins[j]<<"\"!***"<<endl;
-			cerr<<"***        To see paths checked, set PRINT_PLUGIN_PATHS config. parameter"<<endl;
+			jerr<<endl<<"***ERROR : Couldn't find plugin \""<<plugins[j]<<"\"!***"<<endl;
+			jerr<<"***        To see paths checked, set PRINT_PLUGIN_PATHS config. parameter"<<endl;
 			Unlock();
 			exit(-1);
 		}

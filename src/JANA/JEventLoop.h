@@ -22,6 +22,7 @@ using std::string;
 #include "JFactory_base.h"
 #include "JCalibration.h"
 #include "JGeometry.h"
+#include <JANA/JStreamLog.h>
 
 // The following is here just so we can use ROOT's THtml class to generate documentation.
 #ifdef __CINT__
@@ -243,24 +244,24 @@ JFactory<T>* JEventLoop::Get(vector<const T*> &t, const char *tag)
 			string p;
 			gPARMS->GetParameter("JANA:AUTOFACTORYCREATE", p);
 			if(p.size()==0){
-				std::cout<<std::endl;
+				jout<<std::endl;
 				_DBG__;
-				std::cout<<"No factory of type \""<<T::static_className()<<"\" with tag \""<<tag<<"\" exists."<<std::endl;
-				std::cout<<"If you are reading objects from a file, I can auto-create a factory"<<std::endl;
-				std::cout<<"of the appropriate type to hold the objects, but this feature is turned"<<std::endl;
-				std::cout<<"off by default. To turn it on, set the \"JANA:AUTOFACTORYCREATE\""<<std::endl;
-				std::cout<<"configuration parameter. This can usually be done by passing the"<<std::endl;
-				std::cout<<"following argument to the program from the command line:"<<std::endl;
-				std::cout<<std::endl;
-				std::cout<<"   -PJANA:AUTOFACTORYCREATE=1"<<std::endl;
-				std::cout<<std::endl;
-				std::cout<<"Note that since the most commonly expected occurance of this situation."<<std::endl;
-				std::cout<<"is an error, the program will quit now."<<std::endl;
-				std::cout<<std::endl;
+				jout<<"No factory of type \""<<T::static_className()<<"\" with tag \""<<tag<<"\" exists."<<std::endl;
+				jout<<"If you are reading objects from a file, I can auto-create a factory"<<std::endl;
+				jout<<"of the appropriate type to hold the objects, but this feature is turned"<<std::endl;
+				jout<<"off by default. To turn it on, set the \"JANA:AUTOFACTORYCREATE\""<<std::endl;
+				jout<<"configuration parameter. This can usually be done by passing the"<<std::endl;
+				jout<<"following argument to the program from the command line:"<<std::endl;
+				jout<<std::endl;
+				jout<<"   -PJANA:AUTOFACTORYCREATE=1"<<std::endl;
+				jout<<std::endl;
+				jout<<"Note that since the most commonly expected occurance of this situation."<<std::endl;
+				jout<<"is an error, the program will quit now."<<std::endl;
+				jout<<std::endl;
 				QuitProgram();
 			}else{
 				AddFactory(new JFactory<T>(tag));
-				std::cout<<__FILE__<<":"<<__LINE__<<" Auto-created "<<T::static_className()<<":"<<tag<<" factory"<<std::endl;
+				jout<<__FILE__<<":"<<__LINE__<<" Auto-created "<<T::static_className()<<":"<<tag<<" factory"<<std::endl;
 			
 				// Now try once more. The GetFromFactory method will call
 				// GetFromSource since it's empty.

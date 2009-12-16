@@ -19,6 +19,7 @@ using namespace std;
 #include "JEventLoop.h"
 #include "JEvent.h"
 #include "JFactory.h"
+#include "JStreamLog.h"
 using namespace jana;
 
 jmp_buf SETJMP_ENV;
@@ -26,7 +27,7 @@ jmp_buf SETJMP_ENV;
 // Thread commits suicide when it receives HUP signal
 void thread_HUP_sighandler(int sig)
 {
-	cerr<<"Caught HUP signal for thread 0x"<<hex<<pthread_self()<<dec<<" thread exiting..."<<endl;
+	jerr<<"Caught HUP signal for thread 0x"<<hex<<pthread_self()<<dec<<" thread exiting..."<<endl;
 	pthread_exit(NULL);
 }
 
@@ -71,9 +72,9 @@ JEventLoop::~JEventLoop()
 		try{
 			if(factories[i]->init_was_called())factories[i]->fini();
 		}catch(jerror_t err){
-			cerr<<endl;
-			cerr<<__FILE__<<":"<<__LINE__<<" Error thrown ("<<err<<") from JFactory<";
-			cerr<<factories[i]->GetDataClassName()<<">::fini()"<<endl;
+			jerr<<endl;
+			_DBG_<<" Error thrown ("<<err<<") from JFactory<";
+			jerr<<factories[i]->GetDataClassName()<<">::fini()"<<endl;
 		}
 	}
 
@@ -82,9 +83,9 @@ JEventLoop::~JEventLoop()
 		try{
 			delete factories[i];
 		}catch(jerror_t err){
-			cerr<<endl;
-			cerr<<__FILE__<<":"<<__LINE__<<" Error thrown ("<<err<<") while deleting JFactory<";
-			cerr<<factories[i]->GetDataClassName()<<">"<<endl;
+			jerr<<endl;
+			_DBG_<<" Error thrown ("<<err<<") while deleting JFactory<";
+			jerr<<factories[i]->GetDataClassName()<<">"<<endl;
 		}
 	}
 
@@ -217,11 +218,11 @@ jerror_t JEventLoop::PrintFactories(int sparsify)
 	/// Print a list of all registered factories to the screen
 	/// along with a little info about each.
 
-	cout<<endl;
-	cout<<"Registered factories: ("<<factories.size()<<" total)"<<endl;
-	cout<<endl;
-	cout<<"Name:             nrows:  tag:"<<endl;
-	cout<<"---------------- ------- --------------"<<endl;
+	jout<<endl;
+	jout<<"Registered factories: ("<<factories.size()<<" total)"<<endl;
+	jout<<endl;
+	jout<<"Name:             nrows:  tag:"<<endl;
+	jout<<"---------------- ------- --------------"<<endl;
 
 	for(unsigned int i=0; i<factories.size(); i++){
 		JFactory_base *factory = factories[i];
@@ -252,10 +253,10 @@ jerror_t JEventLoop::PrintFactories(int sparsify)
 			str.replace(26, tag.size(), tag);
 		}
 		
-		cout<<str<<endl;
+		jout<<str<<endl;
 	}
 	
-	cout<<endl;
+	jout<<endl;
 
 	return NOERROR;
 }
@@ -273,15 +274,15 @@ jerror_t JEventLoop::Print(const string data_name, const char *tag)
 	// Search for specified factory and return pointer to it's data container
 	JFactory_base *factory = GetFactory(data_name,tag);
 	if(!factory){
-		cerr<<" ERROR -- Factory not found for class \""<<data_name<<"\""<<endl;
+		jerr<<" ERROR -- Factory not found for class \""<<data_name<<"\""<<endl;
 		return NOERROR;
 	}
 	
 	string str = factory->toString();
 	if(str=="")return NOERROR;
 	
-	cout<<factory->GetDataClassName()<<":"<<factory->Tag()<<endl;
-	cout<<str<<endl;;
+	jout<<factory->GetDataClassName()<<":"<<factory->Tag()<<endl;
+	jout<<str<<endl;;
 
 	return NOERROR;
 }
@@ -334,7 +335,7 @@ void JEventLoop::PrintErrorCallStack(void)
 	}
 	sstr<<"----------------------------"<<endl;
 	
-	cout<<sstr.str();
+	jout<<sstr.str();
 }
 
 //-------------
@@ -413,7 +414,7 @@ jerror_t JEventLoop::OneEvent(void)
 	// from the SIGNINT interrupt handler so infinite loops can be
 	// broken out of and the program will still gracefully exit.
 	if(setjmp(SETJMP_ENV)){
-		cerr<<endl<<"Uh-oh, seems the way-back machine was activated. Bailing this thread"<<endl<<endl;
+		jerr<<endl<<"Uh-oh, seems the way-back machine was activated. Bailing this thread"<<endl<<endl;
 		err = NO_MORE_EVENT_SOURCES;
 	}
 	
@@ -421,10 +422,10 @@ jerror_t JEventLoop::OneEvent(void)
 		case NOERROR:
 			break;
 		case NO_MORE_EVENT_SOURCES:
-			cout<<endl<<"No more event sources"<<endl;
+			jout<<endl<<"No more event sources"<<endl;
 			break;
 		case EVENT_NOT_IN_MEMORY:
-			cout<<endl<<"Event not in memory"<<endl;
+			jerr<<endl<<"Event not in memory"<<endl;
 			break;
 		default:
 			break;

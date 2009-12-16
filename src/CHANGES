@@ -3,6 +3,9 @@ Changes in version 0.6.0
 
 - Added PutCalib method to JCalibration
 - Added jcalibcopy utility
+- Added GetMultiple methods to JCalibration and JCalibrationXML
+- Nearly complete rewrite of JStreamLog and JStreamLogBuffer classes
+  many JANA messages now sent through them. Removed JLog class.
 
 Changes in version 0.5.3
 

@@ -128,10 +128,10 @@ void JParameterManager::ReadConfigFile(string fname)
 	// Try and open file
 	ifstream ifs(fname.c_str());
 	if(!ifs.is_open()){
-		cerr<<"Unable to open configuration file \""<<fname<<"\" !"<<endl;
+		jerr<<"Unable to open configuration file \""<<fname<<"\" !"<<endl;
 		return;
 	}
-	cout<<"Reading configuration from \""<<fname<<"\" ..."<<endl;
+	jout<<"Reading configuration from \""<<fname<<"\" ..."<<endl;
 	
 	// Loop over lines
 	char line[1024];
@@ -182,10 +182,10 @@ void JParameterManager::WriteConfigFile(string fname)
 	// Try and open file
 	ofstream ofs(fname.c_str());
 	if(!ofs.is_open()){
-		cerr<<"Unable to open configuration file \""<<fname<<"\" for writing!"<<endl;
+		jerr<<"Unable to open configuration file \""<<fname<<"\" for writing!"<<endl;
 		return;
 	}
-	cout<<"Writing configuration parameters to \""<<fname<<"\" ..."<<endl;
+	jout<<"Writing configuration parameters to \""<<fname<<"\" ..."<<endl;
 	
 	// Write header
 	time_t t = time(NULL);
@@ -251,7 +251,7 @@ void JParameterManager::PrintParameters(void)
 	pthread_mutex_unlock(&parameter_mutex);
 
 	if(parameters.size() == 0){
-		std::cout<<" - No configuration parameters defined -"<<std::endl;
+		jout<<" - No configuration parameters defined -"<<std::endl;
 		return;
 	}
 	
@@ -264,8 +264,8 @@ void JParameterManager::PrintParameters(void)
 	// Sort parameters alphabetically
 	std::sort(parameters.begin(), parameters.end(), JParameterAlphaSort());
 	
-	std::cout<<std::endl;
-	std::cout<<" --- Configuration Parameters --"<<std::endl;
+	jout<<std::endl;
+	jout<<" --- Configuration Parameters --"<<std::endl;
 	
 	// First, find the longest key and value and set the "printme" flags
 	unsigned int max_key_len = 0;
@@ -316,17 +316,17 @@ void JParameterManager::PrintParameters(void)
 		}
 
 		// Print the parameter
-		if(!p->isdefault)std::cout<<ansi_bold;
-		if(warn)std::cout<<ansi_red<<ansi_bold<<ansi_blink;
-		std::cout<<line.c_str();
-		if(warn)std::cout<<" <-- NO DEFAULT! (TYPO?)"<<ansi_normal;
-		if(!p->isdefault)std::cout<<ansi_normal;
-		std::cout<<std::endl;
+		if(!p->isdefault)jout<<ansi_bold;
+		if(warn)jout<<ansi_red<<ansi_bold<<ansi_blink;
+		jout<<line.c_str();
+		if(warn)jout<<" <-- NO DEFAULT! (TYPO?)"<<ansi_normal;
+		if(!p->isdefault)jout<<ansi_normal;
+		jout<<std::endl;
 	}
 	
-	if(!Nprinted)std::cout<<"        < all defaults >"<<std::endl;
+	if(!Nprinted)jout<<"        < all defaults >"<<std::endl;
 	
-	std::cout<<" -------------------------------"<<std::endl;
+	jout<<" -------------------------------"<<std::endl;
 }
 
 //---------------------------------

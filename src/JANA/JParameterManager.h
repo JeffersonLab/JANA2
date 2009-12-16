@@ -21,7 +21,8 @@ using std::map;
 
 #include <pthread.h>
 
-#include "JParameter.h"
+#include <JANA/JParameter.h>
+#include <JANA/JStreamLog.h>
 
 #include "jerror.h"
 
@@ -89,9 +90,9 @@ JParameter* JParameterManager::SetDefaultParameter(K key, V &val)
 	}else{
 		// Warn user if two different default values are set
 		if(p->hasdefault && (sval != p->GetDefault()) ){
-			std::cout<<" WARNING: Multiple calls to SetDefaultParameter with key=\""
+			jout<<" WARNING: Multiple calls to SetDefaultParameter with key=\""
 			<<key<<"\" value= \""<<p->GetDefault()<<"\" and \""<<sval<<"\""<<std::endl;
-			std::cout<<"        : (\""<<sval<<"\" will be used for the default.)"<<std::endl;
+			jout<<"        : (\""<<sval<<"\" will be used for the default.)"<<std::endl;
 		}
 
 		if(!p->hasdefault){

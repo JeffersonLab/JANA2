@@ -9,12 +9,12 @@
 #define _JGeometryXML_
 
 #include <iostream>
-using std::cout;
-using std::endl;
 
 #include <JANA/jerror.h>
 #include <JANA/JGeometry.h>
 #include <JANA/jana_config.h>
+#include <JANA/JStreamLog.h>
+
 
 #if HAVE_XERCES
 #ifndef __CINT__
@@ -103,7 +103,7 @@ class JGeometryXML:public JGeometry{
 				 //  Constructors and Destructor
 				 ErrorHandler(){}
 				 ~ErrorHandler(){}
-				 bool handleError(const xercesc::DOMError& domError){cout<<"Got Error!!"<<endl; return false;}
+				 bool handleError(const xercesc::DOMError& domError){jerr<<"Got Error!!"<<endl; return false;}
 				 void resetErrors();
 
 			private :

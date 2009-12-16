@@ -33,11 +33,11 @@ JEvent::~JEvent()
 //---------------------------------
 void JEvent::Print(void)
 {
-	cout<<"JEvent: this=0x"<<hex<<(unsigned long)this<<dec;
-	cout<<" source=0x"<<hex<<(unsigned long)source<<dec;
-	cout<<" event_number="<<event_number;
-	cout<<" run_number="<<run_number;
-	cout<<" ref=0x"<<hex<<(unsigned long)ref<<dec;
-	cout<<" loop=0x"<<hex<<(unsigned long)loop<<dec;
-	cout<<endl;
+	jout<<"JEvent: this=0x"<<hex<<(unsigned long)this<<dec;
+	jout<<" source=0x"<<hex<<(unsigned long)source<<dec;
+	jout<<" event_number="<<event_number;
+	jout<<" run_number="<<run_number;
+	jout<<" ref=0x"<<hex<<(unsigned long)ref<<dec;
+	jout<<" loop=0x"<<hex<<(unsigned long)loop<<dec;
+	jout<<endl;
 }
