@@ -292,6 +292,20 @@ JApplication::JApplication(int narg, char* argv[])
 		source_names.push_back(argv[i]);
 	}
 	
+	// Configure output streams based on config parameters
+	string jout_tag = jout.GetTag();
+	string jerr_tag = jerr.GetTag();
+	bool jout_timestamp_flag = jout.GetTimestampFlag();
+	bool jerr_timestamp_flag = jerr.GetTimestampFlag();
+	jparms->SetDefaultParameter("JANA:JOUT_TAG", jout_tag);
+	jparms->SetDefaultParameter("JANA:JERR_TAG", jerr_tag);
+	jparms->SetDefaultParameter("JANA:JOUT_TIMESTAMP_FLAG", jout_timestamp_flag);
+	jparms->SetDefaultParameter("JANA:JERR_TIMESTAMP_FLAG", jerr_timestamp_flag);
+	jout.SetTag(jout_tag);
+	jerr.SetTag(jerr_tag);
+	jout.SetTimestampFlag(jout_timestamp_flag);
+	jerr.SetTimestampFlag(jerr_timestamp_flag);
+	
 	// Global variable
 	japp = this;
 }
