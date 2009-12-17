@@ -74,6 +74,8 @@ class JObject{
 		inline void RemoveAssociatedObject(const JObject *obj);
 		template<typename T> void Get(vector<const T*> &ptrs, string classname="") const ;
 		template<typename T> void GetT(vector<const T*> &ptrs) const ;
+		template<typename T> void GetSingle(const T* &ptrs, string classname="") const ;
+		template<typename T> void GetSingleT(const T* &ptrs) const ;
 
 		// Methods for handling pretty formatting for dumping to the screen or file
 		virtual void toStrings(vector<pair<string,string> > &items)const;
@@ -174,12 +176,70 @@ void JObject::GetT(vector<const T*> &ptrs) const
 	
 	ptrs.clear();
 	
-	string classname=T::static_className();
-	
 	map<const JObject*, string>::const_iterator iter = associated.begin();
 	for(; iter!=associated.end(); iter++){
 		const T *ptr = dynamic_cast<const T*>(iter->first);
 		if(ptr != NULL)ptrs.push_back(ptr);
+	}	
+}
+
+//-------------
+// GetSingle
+//-------------
+template<class T>
+void JObject::GetSingle(const T* &t, string classname) const
+{
+	/// This is a convenience method that can be used to get a pointer to the single
+	/// associate object of type T.
+	///
+	/// The objects are chosen by matching their class names 
+	/// (obtained via JObject::className()) either
+	/// to the one provided in classname or to T::static_className()
+	/// if classname is an empty string.
+	///
+	/// If no object of the specified type is found, a NULL pointer is
+	/// returned.
+
+	t = NULL;
+
+	if(classname=="")classname=T::static_className();
+	
+	map<const JObject*, string>::const_iterator iter = associated.begin();
+	for(; iter!=associated.end(); iter++){
+		if(iter->second == classname){
+			t = dynamic_cast<const T*>(iter->first);
+			if(t!=NULL)return;
+		}
+	}	
+}
+
+//-------------
+// GetSingleT
+//-------------
+template<class T>
+void JObject::GetSingleT(const T* &t) const
+{
+	/// This is a convenience method that can be used to get a pointer to the single
+	/// associate object of type T.
+	///
+	/// This is similar to the GetSingle() method except objects are selected
+	/// by attempting a dynamic_cast to type const T*. This allows
+	/// one to select a list of all objects who have a type T
+	/// somewhere in their inheritance chain.
+	/// The objects are chosen by matching their class names 
+	/// (obtained via JObject::className()) either
+	/// to the one provided in classname or to T::static_className()
+	/// if classname is an empty string.
+	///
+	/// If no object of the specified type is found, a NULL pointer is
+	/// returned.
+	
+	t = NULL;
+
+	map<const JObject*, string>::const_iterator iter = associated.begin();
+	for(; iter!=associated.end(); iter++){
+		t = dynamic_cast<const T*>(iter->first);
+		if(t!=NULL)return;
 	}	
 }
 
