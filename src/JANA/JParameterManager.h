@@ -58,8 +58,9 @@ class JParameterManager{
 		template<typename K, typename V> JParameter* SetDefaultParameter(K key, V& val); ///< Set a configuration parameter's default value
 		template<typename K, typename V> JParameter* SetParameter(K key, V val); ///< Force-set a value for a configuration parameter
 		template<typename K> JParameter* GetParameterNoLock(K key); ///< Get the value of a configuration parameter without locking the mutex
-		template<typename K> JParameter* GetParameter(K key); ///< Get the value of a configuration parameter
-		template<typename K, typename V> JParameter* GetParameter(K key, V &val); ///< Get pointer to configuration parameters JParameter object
+		template<typename K> JParameter* GetParameter(K key); ///< Get JParameter object for a configuration parameter
+		template<typename K, typename V> JParameter* GetParameter(K key, V &val); ///< Get value of a parameter and its JParameter Object
+		template<typename K> JParameter* JParameterManager::GetParameter(K key, string &val); ///< Get value of a parameter and its JParameter Object
 		void GetParameters(map<string,string> &parms, string filter="");
 		void ReadConfigFile(string fname);
 		void WriteConfigFile(string fname);
@@ -203,8 +204,26 @@ JParameter* JParameterManager::GetParameter(K key, V &val)
 	JParameter *p = GetParameter(key);
 	if(p){
 		// use stringstream to convert string into V
-		stringstream ss(p->GetValue());
+		stringstream ss(p->GetValue());		
 		ss>>val;
+	}
+	return p;
+}
+
+//---------------------------------
+// GetParameter
+//---------------------------------
+template<typename K>
+JParameter* JParameterManager::GetParameter(K key, string &val)
+{
+	// Strings are a special case in that they cn contain white space that we want
+	// to copy. If we allow the fully templated version to handle strings,
+	// then the stringstream operator will stop at the first white space
+	// encountered, truncating the string.
+
+	JParameter *p = GetParameter(key);
+	if(p){
+		val = p->GetValue();
 	}
 	return p;
 }
