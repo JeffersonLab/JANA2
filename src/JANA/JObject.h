@@ -8,6 +8,7 @@
 #ifndef _JObject_
 #define _JObject_
 
+#include <cstdio>
 #include <sstream>
 #include <cassert>
 #include <map>
@@ -80,6 +81,9 @@ class JObject{
 
 		bool GetAppendTypes(void) const {return append_types;} ///< Get state of append_types flag (for AddString)
 		void SetAppendTypes(bool append_types){this->append_types=append_types;} ///< Set state of append_types flag (for AddString)
+		void AddLog(string &message) const {messagelog.push_back(message);}
+		void AddLog(vector<string> &messages) const {messagelog.insert(messagelog.end(), messages.begin(), messages.end());}
+		void GetLog(vector<string> &messagelog) const {messagelog = this->messagelog;}
 
 		oid_t id;
 	
@@ -87,6 +91,7 @@ class JObject{
 		
 		bool append_types;
 		map<const JObject*, string> associated;
+		mutable vector<string> messagelog;
 		
 };
 
