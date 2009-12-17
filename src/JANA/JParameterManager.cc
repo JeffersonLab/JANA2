@@ -296,6 +296,7 @@ void JParameterManager::PrintParameters(void)
 	no_warn.push_back("RECORD_CALL_STACK");
 	no_warn.push_back("PRINT_PLUGIN_PATHS");
 	no_warn.push_back("PLUGINS");
+	no_warn.push_back("NTHREADS");
 	
 	// Loop over parameters a second time and print them out
 	int Nprinted = 0;

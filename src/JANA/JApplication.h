@@ -94,6 +94,7 @@ class JApplication{
 		virtual void Pause(void); ///< Pause event processing
 		virtual void Resume(void); ///< Resume event processing
 		virtual void Quit(void); ///< Stop event processing
+		int GetNcores(void){return Ncores;}
 		inline int GetNEvents(void){return NEvents;} ///< Returns the number of events processed so far.
 		inline float GetRate(void){return rate_instantaneous;} ///< Get the current event processing rate
 		const vector<void*> GetSharedObjectHandles(void){return sohandles;} ///< Get pointers to dynamically linked objects
@@ -160,6 +161,7 @@ class JApplication{
 		double rate_instantaneous;
 		double rate_average;
 		vector<pthread_t> threads;
+		int Ncores;				///< Number of processors currently online (sysconf(_SC_NPROCESSORS_ONLN))
 		bool print_factory_report;
 		bool print_resource_report;
 		bool stop_event_buffer;

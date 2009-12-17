@@ -18,6 +18,7 @@ using namespace std;
 #include <signal.h>
 #include <dlfcn.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <dirent.h>
 #include <sys/resource.h>
 
@@ -170,6 +171,7 @@ JApplication::JApplication(int narg, char* argv[])
 	stop_event_buffer = false;
 	dump_calibrations = false;
 	dump_configurations = false;
+	Ncores = sysconf(_SC_NPROCESSORS_ONLN);
 	
 	// Default plugin search paths
 	AddPluginPath(".");
@@ -986,7 +988,16 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 	// Call init() for JEventProcessors (factories don't exist yet)
 	Init();
 	
-	// Launch all threads
+	// Determine number of threads to launch
+	stringstream ss;
+	ss<<Nthreads;
+	string nthreads_str = ss.str();
+	jparms->SetDefaultParameter("NTHREADS", nthreads_str);
+	if(nthreads_str=="Ncores"){
+		Nthreads = Ncores;
+	}else{
+		Nthreads = atoi(nthreads_str.c_str());
+	}
 	if(Nthreads<1){
 		// If Nthreads is less than 1 then automatically set to 1
 		Nthreads = 1;
@@ -994,6 +1005,8 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 	if(NTHREADS_COMMAND_LINE>0){
 		Nthreads = NTHREADS_COMMAND_LINE;
 	}
+
+	// Launch all threads
 	jout<<"Launching threads "; jout.flush();
 	usleep(100000); // give time for above message to print before messages from threads interfere.
 	for(int i=0; i<Nthreads; i++){
