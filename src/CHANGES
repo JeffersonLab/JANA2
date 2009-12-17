@@ -6,6 +6,10 @@ Changes in version 0.6.0
 - Added GetMultiple methods to JCalibration and JCalibrationXML
 - Nearly complete rewrite of JStreamLog and JStreamLogBuffer classes
   many JANA messages now sent through them. Removed JLog class.
+- Added NTHREADS config. parameter which can be set to "Ncores"
+- Added AddLog,GetLog,GetSingle, and GetSingleT methods to JObject
+- Fixed bug with config. parameters containing white space being truncated
+- Link JANA library to all plugins
 
 Changes in version 0.5.3
 

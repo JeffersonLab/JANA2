@@ -36,6 +36,10 @@ LINK_OBJS += $(addprefix $(OBJ_DIR)/,$(DOBJS))
 
 LIB_DIRS += $(INSTALL_DIR)/lib
 
+# Automatically link JANA into plugins. This seems to be
+# required for Fedora 11 running gcc4.4
+ADDITIONAL_MODULES += JANA
+
 LD_DIRS += $(addprefix -L,$(LIB_DIRS))
 LD_LIBS += $(addsuffix $(DEBUG_SUFFIX),$(addprefix -l,$(ADDITIONAL_MODULES)))
 
