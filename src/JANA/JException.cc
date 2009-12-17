@@ -16,6 +16,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <cstdio>
 
 using namespace std;
 using namespace jana;

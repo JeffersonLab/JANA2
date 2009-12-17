@@ -19,12 +19,12 @@ using std::list;
 using std::string;
 using std::stringstream;
 
-#include "jerror.h"
-#include "JParameter.h"
-#include "JEventSourceGenerator.h"
-#include "JFactoryGenerator.h"
-#include "JCalibrationGenerator.h"
-#include "JEventLoop.h"
+#include <JANA/jerror.h>
+#include <JANA/JParameter.h>
+#include <JANA/JEventSourceGenerator.h>
+#include <JANA/JFactoryGenerator.h>
+#include <JANA/JCalibrationGenerator.h>
+#include <JANA/JEventLoop.h>
 
 // The following is here just so we can use ROOT's THtml class to generate documentation.
 #ifdef __CINT__

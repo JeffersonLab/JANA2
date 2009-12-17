@@ -15,6 +15,7 @@ using namespace std;
 #include <execinfo.h>
 #endif
 
+#include <cstdio>
 #include <signal.h>
 #include <dlfcn.h>
 #include <stdlib.h>
