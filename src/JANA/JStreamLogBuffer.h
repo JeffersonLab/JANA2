@@ -37,10 +37,12 @@ class JStreamLogBuffer : public std::streambuf
 		char*			__tag;
 		bool			__newline;
 		bool			__prepend_timestamp;
+		bool			__prepend_threadstamp;
 		
 	protected:
 		int overflow(int c);
 		int sync();
+		std::string getThreadStamp();
 		std::string getTimeStamp();
 		
 		// keep a buffer for each thread that tries to write so only
@@ -53,8 +55,10 @@ class JStreamLogBuffer : public std::streambuf
 
 		std::string GetTag(void){return std::string(__tag);}
 		bool GetTimestampFlag(void){return __prepend_timestamp;}
+		bool GetThreadstampFlag(void){return __prepend_threadstamp;}
 		void SetTag(std::string tag);
 		void SetTimestampFlag(bool prepend_timestamp=true){__prepend_timestamp=prepend_timestamp;}
+		void SetThreadstampFlag(bool prepend_threadstamp=true){__prepend_threadstamp=prepend_threadstamp;}
 };
 
 #endif //_DSTREAMLOGBUFFER_H_

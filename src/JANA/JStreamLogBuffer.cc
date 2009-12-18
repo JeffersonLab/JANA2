@@ -57,7 +57,7 @@ int JStreamLogBuffer::overflow(int c)
 	pthread_rwlock_rdlock(&jstreamlog_rwlock);
 	map<pthread_t,string>::iterator iter = thr_buffers.find(pthread_self());
 	if(iter==thr_buffers.end()){
-		// Add this thread to our list, creating a stringstream for it
+		// Add this thread to our list, creating a string for it
 		pthread_rwlock_unlock(&jstreamlog_rwlock);	// release read only lock
 		pthread_rwlock_wrlock(&jstreamlog_rwlock);	// obtain write lock
 		thr_buffers[pthread_self()] = "";
@@ -65,10 +65,10 @@ int JStreamLogBuffer::overflow(int c)
 		pthread_rwlock_rdlock(&jstreamlog_rwlock);	// re-obtain read only lock
 	}
 
-	// Get reference to this thread's stringstream
+	// Get reference to this thread's string
 	string &str = thr_buffers[pthread_self()];
 	
-	// Add this character to the stringstream
+	// Add this character to the string
 	str += (char)c;
 	
 	// Check if "c" is a special value warranting a flush to __sbuf
@@ -91,9 +91,12 @@ int JStreamLogBuffer::overflow(int c)
 	
 		// Prepend tag (if present)
 		if(strlen(__tag)>0)copy_out.insert(0, string(__tag));
+
+		// Optionally prepend threadid
+		if(__prepend_threadstamp)copy_out.insert(0, getThreadStamp()+" # ");
 	
 		// Optionally prepend time
-		if(__prepend_timestamp)copy_out.insert(0, getTimeStamp()+" : ");
+		if(__prepend_timestamp)copy_out.insert(0, getTimeStamp()+" # ");
 	
 		// Use the mutex to prevent more than one thread from writing at a time
 		pthread_mutex_lock(&jstreamlog_mutex);
@@ -112,6 +115,15 @@ int JStreamLogBuffer::overflow(int c)
 //------------------
 int JStreamLogBuffer::sync() {
 	return static_cast<JStreamLogBuffer*>(__sbuf)->sync();
+}
+
+//------------------
+// getThreadStamp
+//------------------
+string JStreamLogBuffer::getThreadStamp() {
+	stringstream ss;
+	ss<<"thr="<<pthread_self();
+	return ss.str();
 }
 
 //------------------

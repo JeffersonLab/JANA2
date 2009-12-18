@@ -51,6 +51,16 @@ bool JStreamLog::GetTimestampFlag(void)
 }
 
 //------------------
+// GetThreadstampFlag
+//------------------
+bool JStreamLog::GetThreadstampFlag(void)
+{
+	JStreamLogBuffer *b = GetJStreamLogBuffer();
+	
+	return (b ? b->GetThreadstampFlag():false);
+}
+
+//------------------
 // SetTag
 //------------------
 void JStreamLog::SetTag(string tag)
@@ -66,6 +76,15 @@ void JStreamLog::SetTimestampFlag(bool prepend_timestamp)
 {
 	JStreamLogBuffer *b = GetJStreamLogBuffer();
 	if(b)b->SetTimestampFlag(prepend_timestamp);
+}
+
+//------------------
+// SetThreadstampFlag
+//------------------
+void JStreamLog::SetThreadstampFlag(bool prepend_threadstamp)
+{
+	JStreamLogBuffer *b = GetJStreamLogBuffer();
+	if(b)b->SetThreadstampFlag(prepend_threadstamp);
 }
 
 //------------------

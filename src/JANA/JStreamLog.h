@@ -49,9 +49,11 @@ class JStreamLog : public std::ostream
 		
 		std::string GetTag(void);
 		bool GetTimestampFlag(void);
+		bool GetThreadstampFlag(void);
 		JStreamLogBuffer* GetJStreamLogBuffer(void);
 		void SetTag(std::string tag);
 		void SetTimestampFlag(bool prepend_timestamp=true);
+		void SetThreadstampFlag(bool prepend_threadstamp=true);
 
 };
 

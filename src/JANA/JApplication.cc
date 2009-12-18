@@ -297,14 +297,20 @@ JApplication::JApplication(int narg, char* argv[])
 	string jerr_tag = jerr.GetTag();
 	bool jout_timestamp_flag = jout.GetTimestampFlag();
 	bool jerr_timestamp_flag = jerr.GetTimestampFlag();
+	bool jout_threadstamp_flag = jout.GetThreadstampFlag();
+	bool jerr_threadstamp_flag = jerr.GetThreadstampFlag();
 	jparms->SetDefaultParameter("JANA:JOUT_TAG", jout_tag);
 	jparms->SetDefaultParameter("JANA:JERR_TAG", jerr_tag);
 	jparms->SetDefaultParameter("JANA:JOUT_TIMESTAMP_FLAG", jout_timestamp_flag);
 	jparms->SetDefaultParameter("JANA:JERR_TIMESTAMP_FLAG", jerr_timestamp_flag);
+	jparms->SetDefaultParameter("JANA:JOUT_THREADSTAMP_FLAG", jout_threadstamp_flag);
+	jparms->SetDefaultParameter("JANA:JERR_THREADSTAMP_FLAG", jerr_threadstamp_flag);
 	jout.SetTag(jout_tag);
 	jerr.SetTag(jerr_tag);
 	jout.SetTimestampFlag(jout_timestamp_flag);
 	jerr.SetTimestampFlag(jerr_timestamp_flag);
+	jout.SetThreadstampFlag(jout_threadstamp_flag);
+	jerr.SetThreadstampFlag(jerr_threadstamp_flag);
 	
 	// Global variable
 	japp = this;
