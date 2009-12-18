@@ -1816,6 +1816,14 @@ void JApplication::GetIntegratedThreadRates(map<pthread_t,double> &rates_by_thre
 }
 
 //---------------------------------
+// GetThreadNevents
+//---------------------------------
+void JApplication::GetThreadNevents(map<pthread_t,unsigned int> &Nevents_by_thread)
+{
+	for(unsigned int i=0; i<loops.size(); i++)Nevents_by_thread[loops[i]->GetPThreadID()] = loops[i]->GetNevents();
+}
+
+//---------------------------------
 // SignalThreads
 //---------------------------------
 void JApplication::SignalThreads(int signo)

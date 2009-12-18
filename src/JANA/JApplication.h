@@ -99,6 +99,7 @@ class JApplication{
 		inline float GetRate(void){return rate_instantaneous;} ///< Get the current event processing rate
 		void GetInstantaneousThreadRates(map<pthread_t,double> &rates_by_thread);
 		void GetIntegratedThreadRates(map<pthread_t,double> &rates_by_thread);
+		void GetThreadNevents(map<pthread_t,unsigned int> &Nevents_by_thread);
 		const vector<void*> GetSharedObjectHandles(void){return sohandles;} ///< Get pointers to dynamically linked objects
 		vector<pair<string,string> > GetAutoActivatedFactories(void){return auto_activated_factories;}
 		void AddAutoActivatedFactory(string name, string tag){auto_activated_factories.push_back(pair<string,string>(name,tag));}

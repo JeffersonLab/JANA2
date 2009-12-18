@@ -111,6 +111,7 @@ class JEventLoop{
 		double GetInstantaneousRate(void) const {return rate_instantaneous;} ///< Get the current event processing rate
 		double GetIntegratedRate(void) const {return rate_integrated;} ///< Get the current event processing rate
 		double GetLastEventProcessingTime(void) const {return delta_time_single;}
+		unsigned int GetNevents(void) const {return Nevents;}
 
 		inline vector<call_stack_t> GetCallStack(void){return call_stack;} ///< Get the current factory call stack
 		inline void AddToErrorCallStack(error_call_stack_t &cs){error_call_stack.push_back(cs);} ///< Add layer to the factory call stack
