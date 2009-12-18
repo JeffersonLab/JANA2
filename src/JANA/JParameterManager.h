@@ -60,7 +60,7 @@ class JParameterManager{
 		template<typename K> JParameter* GetParameterNoLock(K key); ///< Get the value of a configuration parameter without locking the mutex
 		template<typename K> JParameter* GetParameter(K key); ///< Get JParameter object for a configuration parameter
 		template<typename K, typename V> JParameter* GetParameter(K key, V &val); ///< Get value of a parameter and its JParameter Object
-		template<typename K> JParameter* JParameterManager::GetParameter(K key, string &val); ///< Get value of a parameter and its JParameter Object
+		template<typename K> JParameter* GetParameter(K key, string &val); ///< Get value of a parameter and its JParameter Object
 		void GetParameters(map<string,string> &parms, string filter="");
 		void ReadConfigFile(string fname);
 		void WriteConfigFile(string fname);

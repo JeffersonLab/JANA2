@@ -23,8 +23,8 @@ class JCalibrationFile:public JCalibration{
 
 		bool GetCalib(string namepath, map<string, string> &svals);
 		bool GetCalib(string namepath, vector< map<string, string> > &svals);
-		bool PutCalib(string namepath, int run_min, int run_max, string &author, map<string, string> &svals, string &comment="");
-		bool PutCalib(string namepath, int run_min, int run_max, string &author, vector< map<string, string> > &svals, string &comment="");
+		bool PutCalib(string namepath, int run_min, int run_max, string &author, map<string, string> &svals, string comment="");
+		bool PutCalib(string namepath, int run_min, int run_max, string &author, vector< map<string, string> > &svals, string comment="");
 		void GetListOfNamepaths(vector<string> &namepaths);
 		
 	protected:

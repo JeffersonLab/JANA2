@@ -113,7 +113,7 @@ void USR2_Handle(int x)
 		cmd += symbol;
 		cmd += " ";
 	}
-	system(cmd.c_str());
+	if(system(cmd.c_str()))jerr<<"Error executing \""<<cmd<<"\""<<endl;
 	jout<<endl;
 #else
 	jerr<<"Stack trace only supported on Linux at this time"<<endl;

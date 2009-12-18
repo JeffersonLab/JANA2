@@ -50,8 +50,8 @@ class JCalibration{
 		// Returns "false" on success and "true" on error
 		virtual bool GetCalib(string namepath, map<string, string> &svals)=0;
 		virtual bool GetCalib(string namepath, vector< map<string, string> > &svals)=0;
-		virtual bool PutCalib(string namepath, int run_min, int run_max, string &author, map<string, string> &svals, string &comment="");
-		virtual bool PutCalib(string namepath, int run_min, int run_max, string &author, vector< map<string, string> > &svals, string &comment="");
+		virtual bool PutCalib(string namepath, int run_min, int run_max, string &author, map<string, string> &svals, string comment="");
+		virtual bool PutCalib(string namepath, int run_min, int run_max, string &author, vector< map<string, string> > &svals, string comment="");
 		virtual void GetListOfNamepaths(vector<string> &namepaths)=0;
 
 		template<class T> bool Get(string namepath, map<string,T> &vals);
@@ -496,7 +496,7 @@ bool JCalibration::Put(string namepath, int run_min, int run_max, string &author
 	vector<map<string,string> > vsvals;
 	for(unsigned int i=0; i<vals.size(); i++){
 		// Loop over values, converting the type "T" values to strings 
-		vector<string> svals;
+		map<string,string> svals;
 		vector<T> &mvals = vals[i];
 		for(unsigned int j=0; j<mvals.size(); j++){
 			// Use stringstream to convert from a string to type "T"

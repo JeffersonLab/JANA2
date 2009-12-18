@@ -213,7 +213,7 @@ bool JCalibrationFile::GetCalib(string namepath, vector< map<string, string> > &
 //---------------------------------
 // PutCalib
 //---------------------------------
-bool JCalibrationFile::JCalibrationFile::PutCalib(string namepath, int run_min, int run_max, string &author, map<string, string> &svals, string &comment)
+bool JCalibrationFile::JCalibrationFile::PutCalib(string namepath, int run_min, int run_max, string &author, map<string, string> &svals, string comment)
 {
 	// Open the item file creating the directory path if needed and
 	// writing a header to it.
@@ -236,7 +236,7 @@ bool JCalibrationFile::JCalibrationFile::PutCalib(string namepath, int run_min, 
 //---------------------------------
 // PutCalib
 //---------------------------------
-bool JCalibrationFile::JCalibrationFile::PutCalib(string namepath, int run_min, int run_max, string &author, vector< map<string, string> > &svals, string &comment)
+bool JCalibrationFile::JCalibrationFile::PutCalib(string namepath, int run_min, int run_max, string &author, vector< map<string, string> > &svals, string comment)
 {
 	// We need at least one element to make this worthwhile
 	if(svals.size()<1)return true;

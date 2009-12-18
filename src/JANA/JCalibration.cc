@@ -74,7 +74,7 @@ JCalibration::~JCalibration()
 //---------------------------------
 // PutCalib
 //---------------------------------
-bool JCalibration::PutCalib(string namepath, int run_min, int run_max, string &author, map<string, string> &svals, string &comment)
+bool JCalibration::PutCalib(string namepath, int run_min, int run_max, string &author, map<string, string> &svals, string comment)
 {
 	_DBG_<<"PutCalib(string namepath, int run_min, int run_max, string &author, map<string, string> &svals, string &comment="") not implemented!"<<endl;
 	return true;
@@ -83,7 +83,7 @@ bool JCalibration::PutCalib(string namepath, int run_min, int run_max, string &a
 //---------------------------------
 // PutCalib
 //---------------------------------
-bool JCalibration::PutCalib(string namepath, int run_min, int run_max, string &author, vector< map<string, string> > &svals, string &comment)
+bool JCalibration::PutCalib(string namepath, int run_min, int run_max, string &author, vector< map<string, string> > &svals, string comment)
 {
 	_DBG_<<"PutCalib(string namepath, int run_min, int run_max, string &author, vector< map<string, string> > &svals, string &comment="") not implemented!"<<endl;
 	return true;
@@ -265,10 +265,10 @@ void JCalibration::DumpCalibrationsToFiles(string basedir)
 	// a full or relative path. 
 	char cwd[1024];
 	char fullpath[1024];
-	getcwd(cwd, 1024);		// save current working directory
-	chdir(basedir.c_str());	// cd into the basedir directory
-	getcwd(fullpath, 1024);	// get full bath of basedir directory
-	chdir(cwd);					// cd back into the working directory we started in
+	if(!getcwd(cwd, 1024))return;			// save current working directory
+	if(!chdir(basedir.c_str()))return;	// cd into the basedir directory
+	if(!getcwd(fullpath, 1024))return;	// get full bath of basedir directory
+	if(!chdir(cwd))return;					// cd back into the working directory we started in
 
 	string newurl = string("file://")+fullpath;
 	
