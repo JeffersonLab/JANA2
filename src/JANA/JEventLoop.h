@@ -70,15 +70,15 @@ class JEventLoop{
 			int line;
 		}error_call_stack_t;
 		
-		JApplication* GetJApplication(void){return app;} ///< Get pointer to the JApplication object
+		JApplication* GetJApplication(void) const {return app;} ///< Get pointer to the JApplication object
 		void RefreshProcessorListFromJApplication(void); ///< Re-copy the list of JEventProcessors from JApplication
 		virtual jerror_t AddFactory(JFactory_base* factory); ///< Add a factory
 		jerror_t RemoveFactory(JFactory_base* factory); ///< Remove a factory
 		JFactory_base* GetFactory(const string data_name, const char *tag="", bool allow_deftag=true); ///< Get a specific factory pointer
-		vector<JFactory_base*> GetFactories(void){return factories;} ///< Get all factory pointers
+		vector<JFactory_base*> GetFactories(void) const {return factories;} ///< Get all factory pointers
 		void GetFactoryNames(vector<string> &factorynames); ///< Get names of all factories in name:tag format
 		void GetFactoryNames(map<string,string> &factorynames); ///< Get names of all factories in map with key=name, value=tag
-		map<string,string> GetDefaultTags(void){return default_tags;}
+		map<string,string> GetDefaultTags(void) const {return default_tags;}
 		jerror_t ClearFactories(void); ///< Reset all factories in preparation for next event.
 		jerror_t PrintFactories(int sparsify=0); ///< Print a list of all factories.
 		jerror_t Print(const string data_name, const char *tag=""); ///< Print the data of the given type
@@ -97,7 +97,7 @@ class JEventLoop{
 		inline void Pause(void){pause = 1;} ///< Pause event processing
 		inline void Resume(void){pause = 0;} ///< Resume event processing
 		inline void Quit(void){quit = 1;} ///< Clean up and exit the event loop
-		inline bool GetQuit(void){return quit;}
+		inline bool GetQuit(void) const {return quit;}
 		void QuitProgram(void);
 		
 		template<class T> JFactory<T>* GetSingle(const T* &t, const char *tag=""); ///< Get pointer to first data object from (source or factory)
@@ -107,8 +107,10 @@ class JEventLoop{
 		inline JEvent& GetJEvent(void){return event;} ///< Get pointer to the current JEvent object.
 		inline void SetJEvent(JEvent *event){this->event = *event;} ///< Set the JEvent pointer.
 		inline void SetAutoFree(int auto_free){this->auto_free = auto_free;} ///< Set the Auto-Free flag on/off
-		inline pthread_t GetPThreadID(void){return pthread_id;} ///< Get the pthread of the thread to which this JEventLoop belongs
-		
+		inline pthread_t GetPThreadID(void) const {return pthread_id;} ///< Get the pthread of the thread to which this JEventLoop belongs
+		double GetInstantaneousRate(void) const {return rate_instantaneous;} ///< Get the current event processing rate
+		double GetIntegratedRate(void) const {return rate_integrated;} ///< Get the current event processing rate
+		double GetLastEventProcessingTime(void) const {return delta_time_single;}
 
 		inline vector<call_stack_t> GetCallStack(void){return call_stack;} ///< Get the current factory call stack
 		inline void AddToErrorCallStack(error_call_stack_t &cs){error_call_stack.push_back(cs);} ///< Add layer to the factory call stack
@@ -139,6 +141,15 @@ class JEventLoop{
 		bool record_call_stack;
 		string caller_name;
 		string caller_tag;
+		
+		unsigned int Nevents;			///< Total events processed (this thread)
+		unsigned int Nevents_rate;		///< Num. events accumulated for "instantaneous" rate
+		double delta_time_single;		///< Time spent processing last event
+		double delta_time_rate;			///< Integrated time accumulated "instantaneous" rate (partial number of events)
+		double delta_time;				///< Total time spent processing events (this thread)
+		double rate_instantaneous;		///< Latest instantaneous rate
+		double rate_integrated;			///< Rate integrated over all events
+		
 };
 
 // The following is here just so we can use ROOT's THtml class to generate documentation.

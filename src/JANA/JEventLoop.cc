@@ -14,6 +14,8 @@ using namespace std;
 #include <signal.h>
 #include <setjmp.h>
 #include <unistd.h>
+#include <sys/time.h>
+
 
 #include "JApplication.h"
 #include "JEventLoop.h"
@@ -49,6 +51,14 @@ JEventLoop::JEventLoop(JApplication *app)
 	quit = 0;
 	auto_free = 1;
 	pthread_id = pthread_self();
+	
+	Nevents = 0;
+	Nevents_rate = 0;
+	delta_time_single = 0.0;
+	delta_time_rate = 0.0;
+	delta_time = 0.0;
+	rate_instantaneous = 0.0;
+	rate_integrated = 0.0;
 		
 	// Initialize the caller strings for when we record the call stack
 	// these will get over written twice with each call to Get(). Once
@@ -400,6 +410,11 @@ jerror_t JEventLoop::OneEvent(void)
 	/// Read in and process one event.
 
 	if(!initialized)Initialize();
+	
+	// Get timer value at start of event
+	struct itimerval tmr;
+	getitimer(ITIMER_REAL, &tmr);
+	double start_time = tmr.it_value.tv_sec + tmr.it_value.tv_usec/1.0E6;
 
 	// Clear evnt_called flag in all factories
 	ClearFactories();
@@ -480,6 +495,23 @@ jerror_t JEventLoop::OneEvent(void)
 	}
 
 	if(auto_free)event.FreeEvent();
+	
+	// Get timer value at end of event and record rates
+	getitimer(ITIMER_REAL, &tmr);
+	double end_time = tmr.it_value.tv_sec + tmr.it_value.tv_usec/1.0E6;
+	delta_time_single = end_time - start_time;
+	delta_time_rate += delta_time_single;
+	Nevents_rate++;
+	delta_time += delta_time_single;
+	Nevents++;
+	if(delta_time_rate>2.0 && Nevents_rate>0){
+		rate_instantaneous = (double)Nevents_rate/delta_time_rate;
+		Nevents_rate = 0;
+		delta_time_rate = 0.0;
+	}
+	if(delta_time>0.5){
+		rate_integrated = (double)Nevents/delta_time;
+	}
 	
 	// We want to print the parameters after the first event so that defaults
 	// set by init or brun methods or even data objects created during the

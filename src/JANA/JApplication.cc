@@ -22,6 +22,7 @@ using namespace std;
 #include <unistd.h>
 #include <dirent.h>
 #include <sys/resource.h>
+#include <sys/time.h>
 
 #include "JEventLoop.h"
 #include "JApplication.h"
@@ -311,6 +312,18 @@ JApplication::JApplication(int narg, char* argv[])
 	jerr.SetTimestampFlag(jerr_timestamp_flag);
 	jout.SetThreadstampFlag(jout_threadstamp_flag);
 	jerr.SetThreadstampFlag(jerr_threadstamp_flag);
+	
+	// Start high resolution timer (if it's not already started)
+	struct itimerval start_tmr;
+	getitimer(ITIMER_REAL, &start_tmr);	
+	if(start_tmr.it_value.tv_sec==0 && start_tmr.it_value.tv_usec==0){
+		struct itimerval value, ovalue;
+		value.it_interval.tv_sec = 1000000;
+		value.it_interval.tv_usec = 0;
+		value.it_value.tv_sec = 1000000;
+		value.it_value.tv_usec = 0;
+		setitimer(ITIMER_REAL, &value, &ovalue);
+	}
 	
 	// Global variable
 	japp = this;
@@ -1784,6 +1797,22 @@ jerror_t JApplication::PrintResourceReport(void)
 	cout<<endl;
 
 	return NOERROR;
+}
+
+//---------------------------------
+// GetInstantaneousThreadRates
+//---------------------------------
+void JApplication::GetInstantaneousThreadRates(map<pthread_t,double> &rates_by_thread)
+{
+	for(unsigned int i=0; i<loops.size(); i++)rates_by_thread[loops[i]->GetPThreadID()] = loops[i]->GetInstantaneousRate();
+}
+
+//---------------------------------
+// GetInstegratedThreadRates
+//---------------------------------
+void JApplication::GetIntegratedThreadRates(map<pthread_t,double> &rates_by_thread)
+{
+	for(unsigned int i=0; i<loops.size(); i++)rates_by_thread[loops[i]->GetPThreadID()] = loops[i]->GetIntegratedRate();
 }
 
 //---------------------------------
