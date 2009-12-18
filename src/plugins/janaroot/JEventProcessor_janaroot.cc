@@ -88,6 +88,76 @@ jerror_t JEventProcessor_janaroot::init(void)
 //------------------
 jerror_t JEventProcessor_janaroot::brun(JEventLoop *eventLoop, int runnumber)
 {
+	// Use the ROOT mutex to guarantee that other JEventLoops don't start
+	// processing event before we have filled in the nametags_to_write_out member
+	pthread_mutex_lock(&rootmutex);
+
+	// Allow user to specify factories to write out via configuration parameter
+	string factories_to_write_out="";
+	app->GetJParameterManager()->SetDefaultParameter("WRITEOUT", factories_to_write_out);
+
+	if(factories_to_write_out!=""){
+		// Split list at commas
+		size_t pos=0;
+		string &str = factories_to_write_out;
+		while( (pos = str.find(",")) != string::npos ){
+			if(pos > 0){
+				nametags_to_write_out.push_back(str.substr(0,pos));
+			}
+			str = str.substr(pos+1);
+		}
+		if(str.length() > 0){
+			nametags_to_write_out.push_back(str);
+		}
+		
+		// Clean up nametags a bit in order to be moe forgiving of exact
+		// format user gives us.
+		for(unsigned int j=0; j<nametags_to_write_out.size(); j++){
+		
+			// Strip white space from front and back of nametag
+			stringstream ss;
+			ss<<nametags_to_write_out[j];
+			ss>>nametags_to_write_out[j];
+		
+			// If the user decides to append a colon ":" to the object name,
+			// but with no tag, then we should remove it here so the string
+			// is matched properly in evnt().
+			if(nametags_to_write_out[j].size()<1)continue;
+			size_t pos_last = nametags_to_write_out[j].size()-1;
+			if(nametags_to_write_out[j][pos_last] == ':'){
+				nametags_to_write_out[j].erase(pos_last);
+			}
+		}
+		
+		// At this point we have a list of nametags for factories whose
+		// objects we wish to write to the ROOT file. However, this method
+		// is only called for one JEventLoop and we can't rely on all others
+		// to be up and running yet. So, we have to defer setting the WRITE_TO_OUTPUT
+		// flag until evnt time. What we can do here is look to see which
+		// factories both exist in the one JEventLoop that is up an running
+		// AND were listed in the config parameter.
+		
+		jout<<"Factories whose objects will be written to ROOT file:"<<endl;
+		
+		// Loop over all factories
+		vector<JFactory_base*> factories = eventLoop->GetFactories();
+		for(unsigned int i=0; i<factories.size(); i++){
+			
+			// Form nametag for factory to compare to ones listed in config. param.
+			string nametag = factories[i]->GetDataClassName();
+			string tag = factories[i]->Tag();
+			if(tag.size()!=0)nametag += string(":")+tag;
+
+			// Look to see if this was one set to write out
+			for(unsigned int j=0; j<nametags_to_write_out.size(); j++){
+				if(nametags_to_write_out[j] == nametag){
+					jout<<"  "<<nametag<<endl;
+				}
+			}
+		}
+	}
+	
+	pthread_mutex_unlock(&rootmutex);
 
 	return NOERROR;
 }
@@ -106,11 +176,31 @@ jerror_t JEventProcessor_janaroot::evnt(JEventLoop *loop, int eventnumber)
 	// globals and mucking things up for us there.
 	pthread_mutex_lock(&rootmutex);
 
-	// Get list of all foctories for this JEventLoop that have their
-	// WRITE_TO_OUTPUT flag set.
+	// Get list of all foctories for this JEventLoop to be written out
 	vector<JFactory_base*> allfactories = loop->GetFactories();
 	vector<JFactory_base*> facs;
 	for(unsigned int i=0; i<allfactories.size(); i++){
+	
+		// If nametags_to_write_out is empty, we assume the current state
+		// of WRITE_TO_OUTPUT flags is valid. Otherwise, we set the flags
+		// according to nametags_to_write_out. We do this here rather than
+		// in brun since brun is called only once and if more than one thread
+		// exists, the other threads will not have their WRITE_TO_OUTPUT
+		// flags set properly.
+		if(nametags_to_write_out.size()>0){
+			allfactories[i]->ClearFactoryFlag(JFactory_base::WRITE_TO_OUTPUT);
+
+			// Form nametag for factory to compare to ones listed in config. param.
+			string nametag = allfactories[i]->GetDataClassName();
+			string tag = allfactories[i]->Tag();
+			if(tag.size()!=0)nametag += string(":")+tag;
+			for(unsigned int j=0; j<nametags_to_write_out.size(); j++){
+				if(nametags_to_write_out[j] == nametag){
+					allfactories[i]->SetFactoryFlag(JFactory_base::WRITE_TO_OUTPUT);
+				}
+			}
+		}
+
 		if(allfactories[i]->TestFactoryFlag(JFactory_base::WRITE_TO_OUTPUT))facs.push_back(allfactories[i]);
 	}
 	

@@ -79,6 +79,7 @@ class JEventProcessor_janaroot:public jana::JEventProcessor{
 		unsigned int MaxWarnings;
 		
 		int JANAROOT_VERBOSE;
+		vector<string> nametags_to_write_out;
 
 		TFile *file;
 		std::map<std::string, TreeInfo*> trees;
