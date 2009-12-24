@@ -12,14 +12,27 @@
 #
 AC_DEFUN([CMSG],
 [
-	AC_ARG_WITH([cmsg],
-		[AC_HELP_STRING([--with-cmsg],
-		[top of the cMsg installation directory])],
-		[user_cmsg=$withval],
-		[user_cmsg="yes"])
-	
 	HAVE_CMSG="no"
 
+	# The behavior we want here is that if the user doesn't specify whether to
+	# include cMsg or not, then we look to see if the CMSGROOT environment
+	# variable is set. If it is, then we will automatically try to include it.
+	# If it is not set, and the --with[out]-cmsg command line switch is not
+	# specified, then we disable cMsg support.
+	AC_ARG_WITH([cmsg],
+		[AC_HELP_STRING([--with-cmsg@<:@=DIR@:>@],
+		[include cMsg support (with cMsg install dir)])],
+		[user_cmsg=$withval],
+		[user_cmsg="notspecified"])
+
+	if test "$user_cmsg" = "notspecified"; then
+		if test ! x"$CMSGROOT" = x ; then
+			user_cmsg="yes"
+		else
+			user_cmsg="no"
+		fi
+	fi
+	
 	if test ! "$user_cmsg" = "no"; then
 		HAVE_CMSG="yes"
 
