@@ -44,6 +44,8 @@
 
 AC_DEFUN([AX_LIB_MYSQL],
 [
+	 HAVE_MYSQL="0"
+
     AC_ARG_WITH([mysql],
         AC_HELP_STRING([--with-mysql=@<:@ARG@:>@],
             [use MySQL client library @<:@default=yes@:>@, optionally specify path to mysql_config]
@@ -134,6 +136,7 @@ AC_DEFUN([AX_LIB_MYSQL],
         mysql_version_check=`expr $mysql_version_number \>\= $mysql_version_req_number`
         if test "$mysql_version_check" = "1"; then
             AC_MSG_RESULT([yes])
+				HAVE_MYSQL="1"
         else
             AC_MSG_RESULT([no])
         fi
@@ -142,4 +145,6 @@ AC_DEFUN([AX_LIB_MYSQL],
     AC_SUBST([MYSQL_VERSION])
     AC_SUBST([MYSQL_CFLAGS])
     AC_SUBST([MYSQL_LDFLAGS])
+    AC_SUBST([HAVE_MYSQL])
+
 ])

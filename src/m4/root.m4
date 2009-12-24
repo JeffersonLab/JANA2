@@ -39,6 +39,8 @@ dnl Christian Holm Christensen <cholm@nbi.dk>
 dnl
 AC_DEFUN([ROOT_PATH],
 [
+	HAVE_ROOT="0"
+
   AC_ARG_WITH(rootsys,
   [  --with-rootsys          top of the ROOT installation directory],
     user_rootsys=$withval,
@@ -79,7 +81,7 @@ AC_DEFUN([ROOT_PATH],
       else 
         AC_MSG_RESULT(yes)
 		  AC_DEFINE([HAVE_ROOT],[1],[ROOT analysis framework is defined])
-		  HAVE_ROOT=yes
+		  HAVE_ROOT="1"
 		  AC_MSG_NOTICE([defining HAVE_ROOT=$HAVE_ROOT])
       fi
     fi

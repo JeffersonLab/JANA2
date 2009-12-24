@@ -5,14 +5,14 @@
 # Usage:
 #
 # Just include a single line with "CMSG" in your configure.ac file. This macro
-# doesn't take any arguments. It will add the necessary parameters to CPPFLAGS,
-# LIBS, and LD_FLAGS based on where cMsg is installed.
+# doesn't take any arguments. It will define HAVE_CMSG to be either "0" or
+# "1" depending on whether cMsg is available (and requested). It will also
+# define CMSG_CPPFLAGS, CMSG_LDFLAGS, and CMSG_LIBS.
 #
-# Inclusion of the CMSG macro implies that cmsg is enabled
 #
 AC_DEFUN([CMSG],
 [
-	HAVE_CMSG="no"
+	HAVE_CMSG="0"
 
 	# The behavior we want here is that if the user doesn't specify whether to
 	# include cMsg or not, then we look to see if the CMSGROOT environment
@@ -34,7 +34,7 @@ AC_DEFUN([CMSG],
 	fi
 	
 	if test ! "$user_cmsg" = "no"; then
-		HAVE_CMSG="yes"
+		HAVE_CMSG="1"
 
 		if test ! x"$user_cmsg" = xyes; then
 			cmsgdir="$user_cmsg"
@@ -47,7 +47,7 @@ AC_DEFUN([CMSG],
 		AC_MSG_CHECKING([Looking for cMsg in $cmsgdir])
 		if test ! -d $cmsgdir; then
 			AC_MSG_RESULT([no])
-			HAVE_CMSG="no"
+			HAVE_CMSG="0"
 		else
 			AC_MSG_RESULT([yes])
 		
@@ -99,7 +99,7 @@ AC_DEFUN([CMSG],
 			CMSG_DIR=$cmsgdir
 		fi
 		
-		if test "$HAVE_CMSG" = "no"; then
+		if test "$HAVE_CMSG" = "0"; then
 			AC_MSG_NOTICE("Can't find cMsg (using path=$cmsgdir). ")
 			AC_MSG_NOTICE("Set your CMSGROOT environment variable or use the --with-cmsg=PATH_TO_CMSG")
 			AC_MSG_NOTICE("argument when running configure. Otherwise disable cMsg support by")
