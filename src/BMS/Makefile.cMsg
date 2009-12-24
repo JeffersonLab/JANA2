@@ -1,6 +1,5 @@
 
-CFLAGS		+= -I$(CMSGROOT)/include
-CXXFLAGS	+= -I$(CMSGROOT)/include
-MISC_LIBS 	+= -L$(CMSGROOT)/lib -lcmsg -lcmsgxx -lcmsgRegex
-
-MISC_LIBS	+= -lrt
+CFLAGS		+= $(CMSG_CPPFLAGS)
+CXXFLAGS		+= $(CMSG_CPPFLAGS)
+LDFLAGS		+= $(CMSG_LDFLAGS)
+MISC_LIBS 	+= $(CMSG_LIBS)
