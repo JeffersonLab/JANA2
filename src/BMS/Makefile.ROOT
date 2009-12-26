@@ -4,8 +4,8 @@
 #ROOTGLIBS    := $(shell root-config --glibs)
 ROOTINC      := $(shell root-config --incdir)
 
-CFLAGS		+= -D_ROOT_ $(ROOTCFLAGS) -I$(ROOTINC)
-CXXFLAGS		+= -D_ROOT_ $(ROOTCFLAGS) -I$(ROOTINC)
+CFLAGS		+= -DHAVE_ROOT=$(HAVE_ROOT) -D_ROOT_ $(ROOTCFLAGS) -I$(ROOTINC)
+CXXFLAGS		+= -DHAVE_ROOT=$(HAVE_ROOT) -D_ROOT_ $(ROOTCFLAGS) -I$(ROOTINC)
 MISC_LIBS 	+= -L$(ROOTLIBDIR) $(ROOTGLIBS) -lThread -lMinuit
 
 # Create ROOT dictionaries from C++ files containing ClassDef

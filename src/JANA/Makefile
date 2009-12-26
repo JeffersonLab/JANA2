@@ -1,4 +1,6 @@
 
+PACKAGES=XERCES
+
 BMSDIR := ../BMS
 
 # Option for building shared libraries

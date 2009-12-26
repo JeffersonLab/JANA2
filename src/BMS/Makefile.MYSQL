@@ -1,7 +1,7 @@
 
 # Values set by autoconf in jana_conf.mk
-CFLAGS += $(MYSQL_CFLAGS)
-CXXFLAGS += $(MYSQL_CFLAGS)
+CFLAGS += -DHAVE_MYSQL=$(HAVE_MYSQL) $(MYSQL_CFLAGS)
+CXXFLAGS += -DHAVE_MYSQL=$(HAVE_MYSQL) $(MYSQL_CFLAGS)
 MISC_LIBS += $(MYSQL_LDFLAGS)
 
 # Old style (possibly never even used)

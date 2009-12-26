@@ -9,7 +9,7 @@ BMSDIR := ../../BMS
 include $(BMSDIR)/Makefile.config
 
 # Only try building this if ROOT was configured by the configure script
-ifeq ($(HAVE_ROOT),yes)
+ifeq ($(HAVE_ROOT),1)
 include $(BMSDIR)/Makefile.shlib
 else
 install: roottest

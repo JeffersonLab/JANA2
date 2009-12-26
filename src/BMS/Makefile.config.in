@@ -24,6 +24,12 @@ XERCES_CPPFLAGS = @XERCES_CPPFLAGS@
 XERCES_LDFLAGS = @XERCES_LDFLAGS@
 XERCES_VERSION = @XERCES_VERSION@
 
+# if xerces support is built into the JANA library then all JANA
+# programs will need to link in the xerces library.
+ifeq ($(HAVE_XERCES), 1)
+  PACKAGES += XERCES
+endif
+
 ROOTCONF			= @ROOTCONF@
 ROOTEXEC			= @ROOTEXEC@
 ROOTCINT			= @ROOTCINT@
