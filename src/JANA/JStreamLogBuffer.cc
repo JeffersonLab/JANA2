@@ -21,7 +21,8 @@ std::streambuf(),
 __sbuf(buf),
 __tag(strcpy(new char[strlen(tag)+1], tag)),
 __newline(true),
-__prepend_timestamp(false)
+__prepend_timestamp(false),
+__prepend_threadstamp(false)
 {
 	// The setp(0,0) call effectively sets the buffer size to 0
 	// The reason we set it to 0 is so every character written
