@@ -51,7 +51,7 @@ void InitPlugin(JApplication *japp){
 //---------------------------------
 // janactl_plugin    (Constructor)
 //---------------------------------
-janactl_plugin::janactl_plugin(JApplication *japp)
+janactl_plugin::janactl_plugin(JApplication *japp):jctlout(std::cout, "JANACTL>>")
 {
 	this->japp = japp;
 	
@@ -76,22 +76,22 @@ janactl_plugin::janactl_plugin(JApplication *japp)
 	try {                                    //  all args are of type string
 		cMsgSys->connect(); 
 	} catch (cMsgException e) {
-		jerr<<endl<<"_______________  janactl unable to connect to cMsg system! __________________"<<endl;
-		jerr<<"         UDL : "<<myUDL<<endl;
-		jerr<<"        name : "<<myName<<endl;
-		jerr<<" description : "<<myDescr<<endl;
-		jerr<<endl;
-		jerr << e.toString() << endl; 
-		jerr<<endl;
-		jerr<<"Make sure the UDL is correct (you may set it via the JANACTL:UDL config. parameter)"<<endl;
-		jerr<<"You may also override the default, generated name with JANACTL:Name and the description"<<endl;
-		jerr<<"with JANACTL:Description."<<endl;
+		jctlout<<endl<<"_______________  janactl unable to connect to cMsg system! __________________"<<endl;
+		jctlout<<"         UDL : "<<myUDL<<endl;
+		jctlout<<"        name : "<<myName<<endl;
+		jctlout<<" description : "<<myDescr<<endl;
+		jctlout<<endl;
+		jctlout << e.toString() << endl; 
+		jctlout<<endl;
+		jctlout<<"Make sure the UDL is correct (you may set it via the JANACTL:UDL config. parameter)"<<endl;
+		jctlout<<"You may also override the default, generated name with JANACTL:Name and the description"<<endl;
+		jctlout<<"with JANACTL:Description."<<endl;
 		return;
 	}
 
-	jout<<"---------------------------------------------------"<<endl;
-	jout<<"janactl name: \""<<myname<<"\""<<endl;
-	jout<<"---------------------------------------------------"<<endl;
+	jctlout<<"---------------------------------------------------"<<endl;
+	jctlout<<"janactl name: \""<<myname<<"\""<<endl;
+	jctlout<<"---------------------------------------------------"<<endl;
 
 	// Subscribe to generic janactl info requests
 	subscription_handles.push_back(cMsgSys->subscribe("janactl", "*", this, NULL));
@@ -158,9 +158,35 @@ void janactl_plugin::callback(cMsgMessage *msg, void *userObject)
 	
 	//======================================================================
 	if(cmd=="quit"){
+		
+		jctlout<<endl<<"Quitting application ..."<<endl;
 	
 		// Tell JApplication to quit
 		japp->Quit();
+		
+		delete msg;
+		return;
+	}
+
+	//======================================================================
+	if(cmd=="pause"){
+		
+		jctlout<<endl<<"Pausing event processing ..."<<endl;
+	
+		// Tell JApplication to quit
+		japp->Pause();
+		
+		delete msg;
+		return;
+	}
+
+	//======================================================================
+	if(cmd=="resume"){
+		
+		jctlout<<endl<<"Resuming  event processing ..."<<endl;
+	
+		// Tell JApplication to quit
+		japp->Resume();
 		
 		delete msg;
 		return;

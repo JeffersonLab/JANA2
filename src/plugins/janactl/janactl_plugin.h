@@ -13,6 +13,7 @@
 #include <vector>
 
 #include <JANA/JApplication.h>
+#include <JANA/JStreamLog.h>
 using namespace jana;
 
 #if HAVE_CMSG
@@ -36,6 +37,7 @@ class janactl_plugin:public cMsgCallback{
 		cMsg *cMsgSys;		
 		string myname;
 		JApplication *japp;
+		JStreamLog jctlout;
 		
 		std::vector<void*> subscription_handles;
 };
