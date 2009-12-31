@@ -499,7 +499,7 @@ jerror_t JEventLoop::OneEvent(void)
 	// Get timer value at end of event and record rates
 	getitimer(ITIMER_REAL, &tmr);
 	double end_time = tmr.it_value.tv_sec + tmr.it_value.tv_usec/1.0E6;
-	delta_time_single = end_time - start_time;
+	delta_time_single = start_time - end_time;
 	delta_time_rate += delta_time_single;
 	Nevents_rate++;
 	delta_time += delta_time_single;
