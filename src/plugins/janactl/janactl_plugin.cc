@@ -157,6 +157,18 @@ void janactl_plugin::callback(cMsgMessage *msg, void *userObject)
 	}
 	
 	//======================================================================
+	if(cmd=="kill"){
+		
+		jctlout<<endl<<"Killing application ..."<<endl;
+	
+		// Kill program immediately
+		exit(-1);
+		
+		delete msg;
+		return;
+	}
+	
+	//======================================================================
 	if(cmd=="quit"){
 		
 		jctlout<<endl<<"Quitting application ..."<<endl;
@@ -194,31 +206,39 @@ void janactl_plugin::callback(cMsgMessage *msg, void *userObject)
 	
 	//======================================================================
 	if(cmd=="get threads"){
-#if 0
-		// Add histograms to list, recursively traversing ROOT directories
-		vector<hinfo_t> hinfos;
-		AddRootObjectsToList(gDirectory, hinfos);
-	
-		// If any histograms were found, copy their info into the message
-		if(hinfos.size()>0){
-			// Copy elements of hinfo objects into individual vectors
-			vector<string> hist_names;
-			vector<string> hist_types;
-			vector<string> hist_paths;
-			vector<string> hist_titles;
-			for(unsigned int i=0; i<hinfos.size(); i++){
-				hist_names.push_back(hinfos[i].name);
-				hist_types.push_back(hinfos[i].type);
-				hist_paths.push_back(hinfos[i].path);
-				hist_titles.push_back(hinfos[i].title);
-			}
-			response.add("hist_names", hist_names);
-			response.add("hist_types", hist_types);
-			response.add("hist_paths", hist_paths);
-			response.add("hist_titles", hist_titles);
+		map<pthread_t,double> rate_instantaneous;
+		map<pthread_t,double> rate_average;
+		map<pthread_t,unsigned int> nevents;
+		japp->GetInstantaneousThreadRates(rate_instantaneous);
+		japp->GetIntegratedThreadRates(rate_average);
+		japp->GetThreadNevents(nevents);
+		
+		// Containers to hold thread info
+		vector<uint64_t> threads;
+		vector<double> instantaneous_rates;
+		vector<double> average_rates;
+		vector<uint64_t> nevents_by_thread;
+		
+		// Loop over nevents by thread
+		map<pthread_t,unsigned int>::iterator nevents_iter= nevents.begin();
+		for(; nevents_iter!=nevents.end(); nevents_iter++){
+			// Only include threads for which we have all info
+			map<pthread_t,double>::iterator irate = rate_instantaneous.find(nevents_iter->first);
+			map<pthread_t,double>::iterator arate = rate_average.find(nevents_iter->first);
+			if(irate==rate_instantaneous.end() || arate==rate_average.end())continue;
+			
+			threads.push_back((uint64_t)nevents_iter->first);
+			nevents_by_thread.push_back(nevents_iter->second);
+			instantaneous_rates.push_back(irate->second);
+			average_rates.push_back(arate->second);
 		}
-#endif
-		response.setText("hists list");
+		
+		response.add("threads", &threads);
+		response.add("instantaneous_rates", &instantaneous_rates);
+		response.add("average_rates", &average_rates);
+		response.add("nevents", &nevents_by_thread);
+
+		response.setText("thread info");
 		cMsgSys->send(&response);
 
 		delete msg;
