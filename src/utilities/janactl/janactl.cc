@@ -51,7 +51,9 @@ int main(int narg, char *argv[])
 	// Handle command
 	if(cmd=="list"){
 		jc.ListRemoteProcesses();
-	}else if(cmd=="pause" || cmd=="resume" || cmd=="quit"){
+	}else if(cmd=="thinfo"){
+		jc.GetThreadInfo(SUBJECT);
+	}else if(cmd=="pause" || cmd=="resume" || cmd=="quit" || cmd=="kill"){
 		jc.SendCommand(cmd, SUBJECT);
 	}else{
 		jerr<<"Unknown command \""<<cmd<<"\"!"<<endl;
@@ -139,7 +141,9 @@ void Usage(void)
 	cout<<"   list        Lists available processes."<<endl;
 	cout<<"   pause       Pause remote process(es)"<<endl;
 	cout<<"   resume      Resume remote process(es)"<<endl;
-	cout<<"   quit        Quit remote process(es)"<<endl;
+	cout<<"   quit        Quit remote process(es) gracefully"<<endl;
+	cout<<"   kill        Kill remote process(es) harshly"<<endl;
+	cout<<"   thinfo      Get thread info. for remote process(es)"<<endl;
 	cout<<endl;
 
 	exit(0);

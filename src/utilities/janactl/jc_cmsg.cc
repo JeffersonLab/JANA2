@@ -133,6 +133,40 @@ void jc_cmsg::callback(cMsgMessage *msg, void *userObject)
 		delete msg;
 		return;
 	}
+
+	//===========================================================
+	if(cmd=="thread info"){
+		// Extract data from message
+		vector<uint64_t> *threads = msg->getUint64Vector("threads");
+		vector<double> *instantaneous_rates = msg->getDoubleVector("instantaneous_rates");
+		vector<double> *average_rates = msg->getDoubleVector("average_rates");
+		vector<uint64_t> *nevents = msg->getUint64Vector("nevents");
+		
+		if(threads->size() != instantaneous_rates->size()
+			|| threads->size() != average_rates->size()
+			|| nevents->size() != nevents->size()){
+			
+			delete msg;
+			return;
+		}
+		
+		vector<thrinfo_t> my_thrinfos;
+		for(unsigned int i=0; i<threads->size(); i++){
+			thrinfo_t t;
+			t.thread = (*threads)[i];
+			t.Nevents = (*nevents)[i];
+			t.rate_instantaneous = (*instantaneous_rates)[i];
+			t.rate_average = (*average_rates)[i];
+			my_thrinfos.push_back(t);
+		}
+
+		pthread_mutex_lock(&mutex);
+		thrinfos[sender] = my_thrinfos;
+		pthread_mutex_unlock(&mutex);
+
+		delete msg;
+		return;
+	}
 	
 	//===========================================================
 
@@ -168,5 +202,46 @@ void jc_cmsg::ListRemoteProcesses(void)
 	pthread_mutex_unlock(&mutex);
 }
 
+//---------------------------------
+// GetThreadInfo
+//---------------------------------
+void jc_cmsg::GetThreadInfo(string subject)
+{
+	SendCommand("get threads", subject);
+	last_threadinfo_time = GetTime();
+	
+	// If subject is janactl then assume we're sending this to multiple recipients
+	// so we must wait the full "timeout". Otherwise, we want to continue as soon
+	// as we get the first response. To make this happen, we sleep for 100 us increments
+	// at a time.
+	double time_slept = 0.0;
+	double time_to_sleep_per_iteration = 0.1;
+	do{
+		usleep((int)(time_to_sleep_per_iteration*1.0E6));
+		time_slept += time_to_sleep_per_iteration;
+		if(subject!="janactl" && thrinfos.size()>0)break;
+	}while(time_slept<timeout);
+
+	// Lock mutex
+	pthread_mutex_lock(&mutex);
+	
+	// Print results
+	cout<<endl;
+	cout<<"Threads by process:"<<endl;
+	cout<<"---------------------------------------------------"<<endl;
+	map<string, vector<thrinfo_t> >::iterator iter=thrinfos.begin();
+	for(; iter!=thrinfos.end(); iter++){
+		cout<<iter->first<<":"<<endl;
+		vector<thrinfo_t> &thrinfo = iter->second;
+		for(unsigned int i=0; i<thrinfo.size(); i++){
+			thrinfo_t &t = thrinfo[i];
+			cout<<"   thr. 0x"<<hex<<t.thread<<dec<<"  "<<t.Nevents<<" events  "<<t.rate_instantaneous<<"Hz ("<<t.rate_average<<"Hz avg.)"<<endl;
+		}
+	}
+
+	// unlock mutex
+	pthread_mutex_unlock(&mutex);
+	
+}
 
 

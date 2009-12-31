@@ -23,6 +23,14 @@ class jc_cmsg:public cMsgCallback{
 		jc_cmsg(string myUDL, string myName, string myDescr);
 		virtual ~jc_cmsg();
 		
+		class thrinfo_t{
+			public:
+				uint64_t thread;
+				uint64_t Nevents;
+				double rate_instantaneous;
+				double rate_average;
+		};
+		
 		bool IsConnected(void){return is_connected;}
 		static double GetTime(void){struct itimerval tmr; getitimer(ITIMER_REAL, &tmr); return TimerToDouble(tmr);}
 		static double TimerToDouble(struct itimerval &tmr){return (double)tmr.it_value.tv_sec + (double)(tmr.it_value.tv_usec)*1.0E-6;}
@@ -32,11 +40,14 @@ class jc_cmsg:public cMsgCallback{
 		void PingServers(void);
 		
 		void ListRemoteProcesses(void);
+		void GetThreadInfo(string subject);
 
 		pthread_mutex_t mutex;
 		double start_time;
 		double last_ping_time;
+		double last_threadinfo_time;
 		map<string, double> last_msg_received_time;
+		map<string, vector<thrinfo_t> > thrinfos;
 
 	protected:
 
