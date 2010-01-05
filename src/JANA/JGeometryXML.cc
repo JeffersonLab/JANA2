@@ -72,7 +72,7 @@ JGeometryXML::JGeometryXML(string url, int run, string context):JGeometry(url,ru
 	// this calibration is valid. For now, just set them all to run_requested.
 	run_min = run_max = run_found = GetRunRequested();
 
-#ifndef HAVE_XERCES
+#if !HAVE_XERCES
 	jerr<<endl;
 	jerr<<"This JANA library was compiled without XERCESC support. To enable"<<endl;
 	jerr<<"XERCESC, install it on your system and set your XERCESCROOT enviro."<<endl;
