@@ -14,6 +14,7 @@ using namespace std;
 #include <JANA/jerror.h>
 #include "jc_cmsg.h"
 
+#if HAVE_CMSG
 
 //---------------------------------
 // jc_cmsg    (Constructor)
@@ -244,4 +245,5 @@ void jc_cmsg::GetThreadInfo(string subject)
 	
 }
 
+#endif //HAVE_CMSG
 

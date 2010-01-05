@@ -12,11 +12,10 @@
 
 #include <vector>
 
-
+#if HAVE_CMSG
 #include <cMsg.hxx>
 using namespace cmsg;
 
-class rs_mainframe;
 
 class jc_cmsg:public cMsgCallback{
 	public:
@@ -62,6 +61,8 @@ class jc_cmsg:public cMsgCallback{
 		std::vector<void*> subscription_handles;
 		double timeout;
 };
+
+#endif // HAVE_CMSG
 
 #endif // _jc_cmsg_
 

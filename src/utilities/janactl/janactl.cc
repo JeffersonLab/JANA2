@@ -40,7 +40,8 @@ int main(int narg, char *argv[])
 
 	// Parse the command line
 	string cmd = ParseCommandLineArguments(narg, argv);
-	
+
+#if HAVE_CMSG
 	// Create jc_cmsg object
 	jc_cmsg jc(UDL, NAME, DESCRIPTION);
 	if(!jc.IsConnected())return -1;
@@ -59,6 +60,14 @@ int main(int narg, char *argv[])
 		jerr<<"Unknown command \""<<cmd<<"\"!"<<endl;
 	}
 
+#else
+	jerr<<endl;
+	jerr<<" cMsg support has not been compiled into the JANA executables"<<endl;
+	jerr<<" you are using. Please reconfigure JANA with the --with-cmsg"<<endl;
+	jerr<<" option or the CMSGROOT environment variable set and recompile."<<endl;
+	jerr<<endl;
+#endif // HAVE_CMSG
+	
 	return 0;
 }
 
