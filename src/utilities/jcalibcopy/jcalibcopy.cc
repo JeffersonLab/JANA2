@@ -41,8 +41,10 @@ int main(int narg, char *argv[])
 	app->Init();
 	
 	// Get pointer to source URL
-	setenv("JANA_CALIB_URL", SRC_URL.c_str(), 1);
-	setenv("JANA_CALIB_CONTEXT", SRC_CONTEXT.c_str(), 1);
+	string url = string("JANA_CALIB_URL=")+SRC_URL;
+	string context = string("JANA_CALIB_CONTEXT=")+SRC_CONTEXT;
+	putenv(strdup(url.c_str()));
+	putenv(strdup(context.c_str()));
 	JCalibration *jcalib_src = app->GetJCalibration(SRC_RUN);
 	if(jcalib_src==NULL){
 		_DBG_<<"Unable to calibration object for \""<<SRC_URL<<"\" with context \""<<SRC_CONTEXT<<"\""<<endl;
@@ -50,8 +52,10 @@ int main(int narg, char *argv[])
 	}
 
 	// Get pointer to destination URL
-	setenv("JANA_CALIB_URL", DEST_URL.c_str(), 1);
-	setenv("JANA_CALIB_CONTEXT", DEST_CONTEXT.c_str(), 1);
+	url = string("JANA_CALIB_URL=")+DEST_URL;
+	context = string("JANA_CALIB_CONTEXT=")+DEST_CONTEXT;
+	putenv(strdup(url.c_str()));
+	putenv(strdup(context.c_str()));
 	JCalibration *jcalib_dest = app->GetJCalibration(DEST_RUN_MIN);
 	if(jcalib_dest==NULL){
 		_DBG_<<"Unable to calibration object for \""<<DEST_URL<<"\" with context \""<<DEST_CONTEXT<<"\""<<endl;
