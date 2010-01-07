@@ -58,7 +58,8 @@ JEventProcessor_janaroot::JEventProcessor_janaroot()
 	
 	// Set maximum number of objects a factory can store in an event.
 	// Note that this determines the size of the block in memory needed
-	// for the the event so be conservative!
+	// for the the event so be conservative! (This may be overwritten
+	// in init below via config. parameter.
 	Nmax = 200;
 
 	// Initialize event counter
@@ -79,6 +80,8 @@ jerror_t JEventProcessor_janaroot::init(void)
 {
 	JANAROOT_VERBOSE=0;
 	app->GetJParameterManager()->SetDefaultParameter("JANAROOT_VERBOSE", JANAROOT_VERBOSE);
+
+	app->GetJParameterManager()->SetDefaultParameter("JANAROOT_MAX_OBJECTS", Nmax);
 
 	return NOERROR;
 }

@@ -12,6 +12,7 @@ Changes in version 0.6.0
 - Link JANA library to all plugins (needed for gcc4.4 on F11)
 - Added WRITEOUT config. parameter to janaroot plugin to allow user 
   specification of which factories to write out.
+- Added JANAROOT_MAX_OBJECTS config. parameter to janaroot
 - Added high resolution timer for recording event processing time in 
   single threads
 
