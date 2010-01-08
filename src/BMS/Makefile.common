@@ -74,6 +74,7 @@ INSTALL_DIR=${exec_prefix}
 FFLAGS   += -I. -I.. -I$(INSTALL_DIR)/include
 CFLAGS   += -I. -I.. -I$(INSTALL_DIR)/include
 CXXFLAGS += -I. -I.. -I$(INSTALL_DIR)/include
+LD_FLAGS += -rdynamic
 
 # Optional XERCES package
 ifeq ($(HAVE_XERCES), yes)
