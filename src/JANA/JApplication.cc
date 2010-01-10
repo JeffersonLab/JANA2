@@ -43,6 +43,8 @@ using namespace jana;
 #define ansi_normal			ansi_escape<<"[0m"
 #endif // ansi_escape
 
+extern void force_links(void);
+
 void* LaunchEventBufferThread(void* arg);
 void* LaunchThread(void* arg);
 void  CleanupThread(void* arg);
@@ -133,6 +135,9 @@ JApplication::JApplication(int narg, char* argv[])
 	/// through <i>main()</i>. The argument list is parsed and any arguments
 	/// not relevant for JANA are quietly ignored. This is the
 	/// only constructor available for JApplication.
+	
+	// Force linking of certain routines in all executables
+	if(narg<0)force_links();
 
 	// Set up to catch SIGINTs for graceful exits
 	signal(SIGINT,ctrlCHandle);
