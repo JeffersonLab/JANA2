@@ -1,4 +1,10 @@
 
+Changes in version 0.6.1
+
+- Added option description string to configuration parameters
+- Fixed bug where EVENTS_TO_KEEP actually kept 1 less than specified
+- Start all 3 high resolution system timers
+
 Changes in version 0.6.0
 
 - Added PutCalib method to JCalibration
