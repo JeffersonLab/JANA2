@@ -55,7 +55,7 @@ class JParameterManager{
 		virtual const char* className(void){return static_className();}
 		static const char* static_className(void){return "JParameterManager";}
 	
-		template<typename K, typename V> JParameter* SetDefaultParameter(K key, V& val); ///< Set a configuration parameter's default value
+		template<typename K, typename V> JParameter* SetDefaultParameter(K key, V& val, string description=""); ///< Set a configuration parameter's default value
 		template<typename K, typename V> JParameter* SetParameter(K key, V val); ///< Force-set a value for a configuration parameter
 		template<typename K> JParameter* GetParameterNoLock(K key); ///< Get the value of a configuration parameter without locking the mutex
 		template<typename K> JParameter* GetParameter(K key); ///< Get JParameter object for a configuration parameter
@@ -79,7 +79,7 @@ class JParameterManager{
 // SetDefaultParameter
 //---------------------------------
 template<typename K, typename V>
-JParameter* JParameterManager::SetDefaultParameter(K key, V &val)
+JParameter* JParameterManager::SetDefaultParameter(K key, V &val, string description)
 {
 	stringstream ss;
 	ss<<val;
@@ -114,6 +114,7 @@ JParameter* JParameterManager::SetDefaultParameter(K key, V &val)
 
 	// Set the default for this parameter
 	p->SetDefault(sval);
+	p->SetDescription(description);
 
 	// release the parameters mutex
 	pthread_mutex_unlock(&parameter_mutex);

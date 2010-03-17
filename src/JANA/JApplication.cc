@@ -305,12 +305,12 @@ JApplication::JApplication(int narg, char* argv[])
 	bool jerr_timestamp_flag = jerr.GetTimestampFlag();
 	bool jout_threadstamp_flag = jout.GetThreadstampFlag();
 	bool jerr_threadstamp_flag = jerr.GetThreadstampFlag();
-	jparms->SetDefaultParameter("JANA:JOUT_TAG", jout_tag);
-	jparms->SetDefaultParameter("JANA:JERR_TAG", jerr_tag);
-	jparms->SetDefaultParameter("JANA:JOUT_TIMESTAMP_FLAG", jout_timestamp_flag);
-	jparms->SetDefaultParameter("JANA:JERR_TIMESTAMP_FLAG", jerr_timestamp_flag);
-	jparms->SetDefaultParameter("JANA:JOUT_THREADSTAMP_FLAG", jout_threadstamp_flag);
-	jparms->SetDefaultParameter("JANA:JERR_THREADSTAMP_FLAG", jerr_threadstamp_flag);
+	jparms->SetDefaultParameter("JANA:JOUT_TAG", jout_tag, "string prefixed to all lines sent to jout ofstream");
+	jparms->SetDefaultParameter("JANA:JERR_TAG", jerr_tag, "string prefixed to all lines sent to jerr ofstream");
+	jparms->SetDefaultParameter("JANA:JOUT_TIMESTAMP_FLAG", jout_timestamp_flag, "if non-zero, prepend timestamp to each message printed to jout");
+	jparms->SetDefaultParameter("JANA:JERR_TIMESTAMP_FLAG", jerr_timestamp_flag, "if non-zero, prepend timestamp to each message printed to jerr");
+	jparms->SetDefaultParameter("JANA:JOUT_THREADSTAMP_FLAG", jout_threadstamp_flag, "if non-zero, prepend pthread id to each message printed to jout");
+	jparms->SetDefaultParameter("JANA:JERR_THREADSTAMP_FLAG", jerr_threadstamp_flag, "if non-zero, prepend pthread id to each message printed to jout");
 	jout.SetTag(jout_tag);
 	jerr.SetTag(jerr_tag);
 	jout.SetTimestampFlag(jout_timestamp_flag);
@@ -318,7 +318,7 @@ JApplication::JApplication(int narg, char* argv[])
 	jout.SetThreadstampFlag(jout_threadstamp_flag);
 	jerr.SetThreadstampFlag(jerr_threadstamp_flag);
 	
-	// Start high resolution timer (if it's not already started)
+	// Start high resolution timers (if not already started)
 	struct itimerval start_tmr;
 	getitimer(ITIMER_REAL, &start_tmr);	
 	if(start_tmr.it_value.tv_sec==0 && start_tmr.it_value.tv_usec==0){
@@ -328,6 +328,24 @@ JApplication::JApplication(int narg, char* argv[])
 		value.it_value.tv_sec = 1000000;
 		value.it_value.tv_usec = 0;
 		setitimer(ITIMER_REAL, &value, &ovalue);
+	}
+	getitimer(ITIMER_VIRTUAL, &start_tmr);	
+	if(start_tmr.it_value.tv_sec==0 && start_tmr.it_value.tv_usec==0){
+		struct itimerval value, ovalue;
+		value.it_interval.tv_sec = 1000000;
+		value.it_interval.tv_usec = 0;
+		value.it_value.tv_sec = 1000000;
+		value.it_value.tv_usec = 0;
+		setitimer(ITIMER_VIRTUAL, &value, &ovalue);
+	}
+	getitimer(ITIMER_PROF, &start_tmr);	
+	if(start_tmr.it_value.tv_sec==0 && start_tmr.it_value.tv_usec==0){
+		struct itimerval value, ovalue;
+		value.it_interval.tv_sec = 1000000;
+		value.it_interval.tv_usec = 0;
+		value.it_value.tv_sec = 1000000;
+		value.it_value.tv_usec = 0;
+		setitimer(ITIMER_PROF, &value, &ovalue);
 	}
 	
 	// Global variable
@@ -444,8 +462,8 @@ void JApplication::EventBufferThread(void)
 	
 	unsigned int EVENTS_TO_SKIP=0;
 	unsigned int EVENTS_TO_KEEP=0;
-	jparms->SetDefaultParameter("EVENTS_TO_SKIP", EVENTS_TO_SKIP);
-	jparms->SetDefaultParameter("EVENTS_TO_KEEP", EVENTS_TO_KEEP);
+	jparms->SetDefaultParameter("EVENTS_TO_SKIP", EVENTS_TO_SKIP, "Number of events that will be read in WITHOUT calling event processor(s)");
+	jparms->SetDefaultParameter("EVENTS_TO_KEEP", EVENTS_TO_KEEP, "Maximum number of events for which event processors are called before ending the program");
 	
 	unsigned int MAX_EVENTS_IN_BUFFER = 10;
 	jerror_t err;
@@ -495,6 +513,14 @@ void JApplication::EventBufferThread(void)
 			if(NEvents_read >= (int)(EVENTS_TO_SKIP+EVENTS_TO_KEEP))break;
 		
 	}while(err!=NO_MORE_EVENT_SOURCES);
+
+	// Check if we have a last event that was read in but not added to the 
+	// event buffer and add it now.
+	if(event!=NULL)
+	pthread_mutex_lock(&event_buffer_mutex);
+	event_buffer.push_front(event);
+	pthread_mutex_unlock(&event_buffer_mutex);
+	event=NULL;
 
 	event_buffer_filling=false;
 }
@@ -1031,7 +1057,7 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 	stringstream ss;
 	ss<<Nthreads;
 	string nthreads_str = ss.str();
-	jparms->SetDefaultParameter("NTHREADS", nthreads_str);
+	jparms->SetDefaultParameter("NTHREADS", nthreads_str, "Number of event processing threads. If set to 'Ncores' then one thread will be launched for each core the system claims to have.");
 	if(nthreads_str=="Ncores"){
 		Nthreads = Ncores;
 	}else{
@@ -1057,7 +1083,7 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 	
 	// Get the max time for a thread to be inactive before being deleting
 	double THREAD_TIMEOUT=8.0;
-	jparms->SetDefaultParameter("THREAD_TIMEOUT", THREAD_TIMEOUT);
+	jparms->SetDefaultParameter("THREAD_TIMEOUT", THREAD_TIMEOUT, "Max time a thread system will wait for a thread to update its heartbeat before killing it and launching a new one.");
 	
 	// Do a sleepy loop so the threads can do their work
 	struct timespec req, rem;

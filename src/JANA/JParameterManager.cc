@@ -143,7 +143,16 @@ void JParameterManager::ReadConfigFile(string fname)
 		string str(line);
 
 		// Check for comment character and erase comment if found
-		if(str.find('#')!=str.npos)str.erase(str.find('#'));
+		size_t comment_pos = str.find('#');
+		if(comment_pos!=string::npos){
+		
+			// Parameter descriptions are automatically added to configuration dumps
+			// by adding a space, then the '#'. For string parameters, this extra
+			// space shouldn't be there so check for it and delete it as well if found.
+			if(comment_pos>0 && str[comment_pos-1]==' ')comment_pos--;
+
+			str.erase(comment_pos);
+		}
 
 		// Break line into tokens
 		vector<string> tokens;
@@ -221,6 +230,9 @@ void JParameterManager::WriteConfigFile(string fname)
 		string val = p->GetValue();
 		string line = key;
 		if(val.length()>0) line += string(max_key_len-key.length(),' ') + " " + val + string(max_val_len-val.length(),' ');
+
+		// If there's a description, add it as a comment
+		if(p->GetDescription() != "")line += string(" # ")+p->GetDescription();
 
 		// Print the parameter
 		ofs<<line.c_str()<<endl;
