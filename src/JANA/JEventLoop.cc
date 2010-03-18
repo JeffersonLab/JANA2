@@ -64,7 +64,7 @@ JEventLoop::JEventLoop(JApplication *app)
 	// these will get over written twice with each call to Get(). Once
 	// to copy in who is being called and then again later to copy
 	// back in who did the calling.
-	caller_name = "DEventProcessor";
+	caller_name = "JEventProcessor";
 	caller_tag = "";
 }
 

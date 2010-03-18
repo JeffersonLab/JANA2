@@ -123,14 +123,14 @@ jerror_t JEventProcessorJANADOT::evnt(JEventLoop *loop, int eventnumber)
 //------------------------------------------------------------------
 jerror_t JEventProcessorJANADOT::fini(void)
 {
-	// Find the DEventProcessor link so we can get the total ticks for
+	// Find the JEventProcessor link so we can get the total ticks for
 	// the process in order to add the percentage to the label below
 	map<CallLink, CallStats>::iterator iter;
 	double total_ms = 0.0;
 	for(iter=call_links.begin(); iter!=call_links.end(); iter++){
 		const CallLink &link = iter->first;
 		CallStats &stats = iter->second;
-		if(link.caller_name=="DEventProcessor"){
+		if(link.caller_name=="JEventProcessor"){
 			total_ms += stats.from_factory_ms + stats.from_source_ms + stats.from_cache_ms + stats.data_not_available_ms;
 		}
 	}
