@@ -9,6 +9,7 @@
 #include <iostream>
 
 #include "JTest_factory.h"
+#include "JRawData.h"
 
 //------------------
 // JTest_factory (constructor)
@@ -51,6 +52,12 @@ jerror_t JTest_factory::brun(JEventLoop *eventLoop, int runnumber)
 //------------------
 jerror_t JTest_factory::evnt(JEventLoop *loop, int eventnumber)
 {
+
+	// Get JRawData objects from source. In principle, we would use these
+	// to do something here, but for this simple example, we simply get
+	// them and then don't use them.
+	vector<const JRawData*> rawdatas;
+	loop->Get(rawdatas);
 
 	// Create a few JTest objects
 	for(int i=0; i<100; i++){

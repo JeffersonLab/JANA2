@@ -22,6 +22,7 @@ using namespace std;
 #include "JEventSourceTestGenerator.h"
 #include "JFactoryGeneratorTest.h"
 #include "JEventProcessorTest.h"
+#include "JRawData.h"
 
 // Routine used to allow us to register our JEventSourceGenerator
 extern "C"{
@@ -133,7 +134,27 @@ jerror_t JEventSourceTest::GetObjects(JEvent &event, JFactory_base *factory)
 	// Get name of data class we're trying to extract
 	string dataClassName = factory->GetDataClassName();
 	
-	// Just return. The _data vector should already be reset to have zero objects
+	// We can provide JRawData objects
+	if(dataClassName == "JRawData"){
+		
+		int Nhits = random()%10;
+		vector<JRawData*> hits(Nhits);
+		for(int i=0; i<Nhits; i++){
+			JRawData *hit = new JRawData;
+			hit->crate = 1 + random()%5;
+			hit->slot = 1 + random()%20;
+			hit->channel = 0 + random()%32;
+			hit->adc = 0 + random()%2048;
+			hits.push_back(hit);
+		}
+		JFactory<JRawData> *fac = dynamic_cast<JFactory<JRawData>*>(factory);
+		if(fac)fac->CopyTo(hits);
+		
+		return NOERROR;
+	}
+	
+	// For all other object types, just return OBJECT_NOT_AVAILABLE to indicate
+	// we can't provide this type of object
 	return OBJECT_NOT_AVAILABLE;
 }
 
