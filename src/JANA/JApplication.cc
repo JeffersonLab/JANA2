@@ -180,12 +180,6 @@ JApplication::JApplication(int narg, char* argv[])
 	dump_configurations = false;
 	Ncores = sysconf(_SC_NPROCESSORS_ONLN);
 	
-	// Default plugin search paths
-	AddPluginPath(".");
-	if(const char *ptr = getenv("JANA_HOME")){
-		AddPluginPath(string(ptr) + "/lib");
-	}
-	
 	// Configuration Parameter manager
 	jparms = new JParameterManager();
 	
@@ -1591,6 +1585,12 @@ jerror_t JApplication::AttachPlugins(void)
 			str = str.substr(cutAt+1);
 		}
 		if(str.length() > 0)AddPluginPath(str);
+	}
+	
+	// Default plugin search path
+	AddPluginPath(".");
+	if(const char *ptr = getenv("JANA_HOME")){
+		AddPluginPath(string(ptr) + "/lib");
 	}
 	
 	// Add plugins specified via PLUGINS configuration parameter
