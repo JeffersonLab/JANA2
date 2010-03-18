@@ -61,7 +61,7 @@ class JObject{
 		JObject(){id = (oid_t)this; append_types=false;}
 		JObject( oid_t aId ) : id( aId ) { append_types=false;}
 
-		virtual ~JObject(){}
+		virtual ~JObject();
 		
 		/// Test if this object is of type T by checking its className() against T::static_className()
 		template<typename T> bool IsA(const T *t) const {return dynamic_cast<const T*>(this)!=0L;}
@@ -71,6 +71,7 @@ class JObject{
 
 		// Methods for handling associated objects
 		inline void AddAssociatedObject(const JObject *obj);
+		inline void AddAssociatedObjectAutoDelete(JObject *obj, bool auto_delete=true);
 		inline void RemoveAssociatedObject(const JObject *obj);
 		template<typename T> void Get(vector<const T*> &ptrs, string classname="") const ;
 		template<typename T> void GetT(vector<const T*> &ptrs) const ;
@@ -93,11 +94,21 @@ class JObject{
 		
 		bool append_types;
 		map<const JObject*, string> associated;
+		vector<JObject*> auto_delete;
 		mutable vector<string> messagelog;
 		
 };
 
 #ifndef __CINT__
+
+
+//--------------------------
+// ~JObject
+//--------------------------
+JObject::~JObject()
+{
+	for(unsigned int i=0; i<auto_delete.size(); i++)delete auto_delete[i];
+}
 
 //--------------------------
 // AddAssociatedObject
@@ -109,6 +120,21 @@ void JObject::AddAssociatedObject(const JObject *obj)
 	assert(obj!=NULL);
 	
 	associated[obj] = obj->className();
+}
+
+//--------------------------
+// AddAssociatedObjectAutoDelete
+//--------------------------
+void JObject::AddAssociatedObjectAutoDelete(JObject *obj, bool auto_delete)
+{
+	/// Add a JObject to the list of associated objects. If the auto_delete
+	/// flag is true, then automatically delete it when this object is
+	/// deleted. Otherwise, this behaves identically to the AddAssociatedObject
+	/// method.
+
+	AddAssociatedObject(obj);
+	
+	if(auto_delete)this->auto_delete.push_back(obj);
 }
 
 //--------------------------
