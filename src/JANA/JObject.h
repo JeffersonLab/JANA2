@@ -61,7 +61,9 @@ class JObject{
 		JObject(){id = (oid_t)this; append_types=false;}
 		JObject( oid_t aId ) : id( aId ) { append_types=false;}
 
-		virtual ~JObject();
+		virtual ~JObject(){
+				for(unsigned int i=0; i<auto_delete.size(); i++)delete auto_delete[i];
+		}
 		
 		/// Test if this object is of type T by checking its className() against T::static_className()
 		template<typename T> bool IsA(const T *t) const {return dynamic_cast<const T*>(this)!=0L;}
@@ -101,14 +103,6 @@ class JObject{
 
 #ifndef __CINT__
 
-
-//--------------------------
-// ~JObject
-//--------------------------
-JObject::~JObject()
-{
-	for(unsigned int i=0; i<auto_delete.size(); i++)delete auto_delete[i];
-}
 
 //--------------------------
 // AddAssociatedObject
