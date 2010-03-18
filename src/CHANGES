@@ -3,7 +3,11 @@ Changes in version 0.6.1
 
 - Added option description string to configuration parameters
 - Fixed bug where EVENTS_TO_KEEP actually kept 1 less than specified
-- Start all 3 high resolution system timers
+- Start all 3 high resolution system timers and use PROF timer for 
+  factory call stack accounting
+- Added JRawData object to TestSpeed plugin to make it a more
+  complete example.
+- Fixed bugs in janadot plugin and improved display output
 
 Changes in version 0.6.0
 

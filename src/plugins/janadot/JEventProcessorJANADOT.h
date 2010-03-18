@@ -18,6 +18,13 @@ class JEventProcessorJANADOT:public JEventProcessor
 		jerror_t erun(void){return NOERROR;};	///< Called everytime run number changes, provided brun has been called.
 		jerror_t fini(void);							///< Called after last event of last event source has been processed.
 
+		enum node_type{
+			kDefault,
+			kProcessor,
+			kFactory,
+			kSource
+		};
+
 		class CallLink{
 			public:
 				string caller_name;
@@ -36,26 +43,46 @@ class JEventProcessorJANADOT:public JEventProcessor
 		class CallStats{
 			public:
 				CallStats(void){
-					from_cache_ticks = 0;
-					from_source_ticks = 0;
-					from_factory_ticks = 0;
-					data_not_available_ticks = 0;
+					from_cache_ms = 0;
+					from_source_ms = 0;
+					from_factory_ms = 0;
+					data_not_available_ms = 0;
 					Nfrom_cache = 0;
 					Nfrom_source = 0;
 					Nfrom_factory = 0;
 					Ndata_not_available = 0;
 				}
-				clock_t from_cache_ticks;
-				clock_t from_source_ticks;
-				clock_t from_factory_ticks;
-				clock_t data_not_available_ticks;
+				double from_cache_ms;
+				double from_source_ms;
+				double from_factory_ms;
+				double data_not_available_ms;
 				unsigned int Nfrom_cache;
 				unsigned int Nfrom_source;
 				unsigned int Nfrom_factory;
 				unsigned int Ndata_not_available;
 		};
+		
+		class FactoryCallStats{
+			public:
+				FactoryCallStats(void){
+					type = kDefault;
+					time_waited_on = 0.0;
+					time_waiting = 0.0;
+					Nfrom_factory = 0;
+					Nfrom_source = 0;
+				}
+				node_type type;
+				double time_waited_on;	// time other factories spent waiting on this factory
+				double time_waiting;		// time this factory spent waiting on other factories
+				unsigned int Nfrom_factory;
+				unsigned int Nfrom_source;
+		};
 
 		map<CallLink, CallStats> call_links;
+		map<string, FactoryCallStats> factory_stats;
 		pthread_mutex_t mutex;
 		bool force_all_factories_active;
+		
+		string MakeTimeString(double time_in_ms);
+		string MakeNametag(const string &name, const string &tag);
 };

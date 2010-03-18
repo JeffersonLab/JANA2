@@ -8,6 +8,8 @@
 #ifndef _JEventLoop_
 #define _JEventLoop_
 
+#include <sys/time.h>
+
 #include <vector>
 #include <string>
 #include <utility>
@@ -58,8 +60,8 @@ class JEventLoop{
 			string caller_tag;
 			string callee_name;
 			string callee_tag;
-			clock_t start_time;
-			clock_t end_time;
+			double start_time;
+			double end_time;
 			data_source_t data_source;
 		}call_stack_t;
 
@@ -232,13 +234,16 @@ JFactory<T>* JEventLoop::Get(vector<const T*> &t, const char *tag)
 	// info.
 	call_stack_t cs;
 	if(record_call_stack){
+		struct itimerval tmr;
+		getitimer(ITIMER_PROF, &tmr);
+
 		cs.caller_name = caller_name;
 		cs.caller_tag = caller_tag;
 		cs.callee_name = T::static_className();
 		cs.callee_tag = tag;
 		caller_name = cs.callee_name;
 		caller_tag = cs.callee_tag;
-		cs.start_time = clock();
+		cs.start_time = tmr.it_value.tv_sec + tmr.it_value.tv_usec/1.0E6;
 	}
 
 	// Get the data (or at least try to)
@@ -298,7 +303,9 @@ JFactory<T>* JEventLoop::Get(vector<const T*> &t, const char *tag)
 	
 	// If recording the call stack, update the end_time field
 	if(record_call_stack){
-		cs.end_time = clock();
+		struct itimerval tmr;
+		getitimer(ITIMER_PROF, &tmr);
+		cs.end_time = tmr.it_value.tv_sec + tmr.it_value.tv_usec/1.0E6;
 		caller_name = cs.caller_name;
 		caller_tag = cs.caller_tag;
 		call_stack.push_back(cs);
@@ -321,7 +328,7 @@ JFactory<T>* JEventLoop::GetFromFactory(vector<const T*> &t, const char *tag, da
 	
 	// Check if a tag was specified for this data type to use for the
 	// default.
-	const char *mytag = tag==NULL ? "":tag; // prtection against NULL tags
+	const char *mytag = tag==NULL ? "":tag; // protection against NULL tags
 	if(strlen(mytag)==0){
 		map<string, string>::const_iterator iter = default_tags.find(className);
 		if(iter!=default_tags.end())tag = iter->second.c_str();
