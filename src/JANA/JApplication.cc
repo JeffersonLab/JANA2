@@ -1263,6 +1263,15 @@ jerror_t JApplication::Fini(void)
 		_DBG_<<" Error thrown ("<<err<<") from JEventProcessor::fini()"<<endl;
 	}
 	
+	// Delete all processors
+	try{
+		for(unsigned int i=0;i<processors.size();i++)if(!processors[i]->GetDontDelete())delete processors[i];
+	}catch(...){
+		jerr<<endl;
+		_DBG_<<" Error thrown from JEventProcessor destructor!"<<endl;
+	}
+	processors.clear();
+	
 	// Delete all sources allowing them to close cleanly
 	for(unsigned int i=0;i<sources.size();i++)delete sources[i];
 	sources.clear();
