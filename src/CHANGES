@@ -8,6 +8,10 @@ Changes in version 0.6.1
 - Added JRawData object to TestSpeed plugin to make it a more
   complete example.
 - Fixed bugs in janadot plugin and improved display output
+- Delete all JEventProcessor objects in JApplication::fini so
+  destructors will be called
+- JParameterManager::GetParameter(key) throws exception when parameter
+  doesn't exist
 
 Changes in version 0.6.0
 

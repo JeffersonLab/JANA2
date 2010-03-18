@@ -23,6 +23,7 @@ using std::map;
 
 #include <JANA/JParameter.h>
 #include <JANA/JStreamLog.h>
+#include <JANA/JException.h>
 
 #include "jerror.h"
 
@@ -85,10 +86,11 @@ JParameter* JParameterManager::SetDefaultParameter(K key, V &val, string descrip
 	ss<<val;
 	string sval = ss.str();
 	
-	JParameter *p = GetParameter(key,val);
-	if(!p){
-		p = SetParameter(key, val);
-	}else{
+	JParameter *p;
+	try{
+		// Get the parameter
+		p = GetParameter(key,val);
+
 		// Warn user if two different default values are set
 		if(p->hasdefault && (sval != p->GetDefault()) ){
 			jout<<" WARNING: Multiple calls to SetDefaultParameter with key=\""
@@ -105,6 +107,9 @@ JParameter* JParameterManager::SetDefaultParameter(K key, V &val, string descrip
 			// the type specified in this call.
 			p->type = JParameter::DataType(val);
 		}
+	}catch(JException e){
+		// Parameter doesn't exist. Create it.
+		p = SetParameter(key, val);
 	}
 
 	// The call to SetDefault() below can cause a reallocation
@@ -193,6 +198,9 @@ JParameter* JParameterManager::GetParameter(K key)
 	// release the parameters mutex
 	pthread_mutex_unlock(&parameter_mutex);
 	
+	// If parameter does not exist, thrown an exception
+	if(!p)throw JException("Parameter does not exist!");
+	
 	return p;
 }
 
@@ -202,13 +210,15 @@ JParameter* JParameterManager::GetParameter(K key)
 template<typename K, typename V>
 JParameter* JParameterManager::GetParameter(K key, V &val)
 {
-	JParameter *p = GetParameter(key);
-	if(p){
+	try{
+		JParameter *p = GetParameter(key);
 		// use stringstream to convert string into V
 		stringstream ss(p->GetValue());		
 		ss>>val;
+		return p;
+	}catch(JException e){
+		return NULL;
 	}
-	return p;
 }
 
 //---------------------------------
@@ -222,11 +232,13 @@ JParameter* JParameterManager::GetParameter(K key, string &val)
 	// then the stringstream operator will stop at the first white space
 	// encountered, truncating the string.
 
-	JParameter *p = GetParameter(key);
-	if(p){
+	try{
+		JParameter *p = GetParameter(key);
 		val = p->GetValue();
+		return p;
+	}catch(JException e){
+		return NULL;
 	}
-	return p;
 }
 
 } // Close JANA namespace
