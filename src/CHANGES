@@ -12,6 +12,9 @@ Changes in version 0.6.1
   destructors will be called
 - JParameterManager::GetParameter(key) throws exception when parameter
   doesn't exist
+- Added AddAssociatedObjectAutoDelete method to JObject to allow ownership
+  of JObjects to be handed over to other JObjects.
+- Copy BMS directory to installdir to preserve platform-dependent settings
 
 Changes in version 0.6.0
 

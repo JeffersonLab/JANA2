@@ -6,6 +6,7 @@ install:
 	make -C JANA install
 	make -C utilities install
 	make -C plugins install
+	make -C BMS install
 
 uninstall:
 	make -C JANA uninstall
