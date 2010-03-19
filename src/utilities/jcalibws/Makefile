@@ -8,7 +8,10 @@ CXXSRC += soapC.cpp soapServer.cpp
 # Tell make to create soapH.h first which is needed by jcalibws.cc
 erste: soapH.h all
 
+ifndef BMSDIR
 BMSDIR := ../../BMS
+endif
+
 include $(BMSDIR)/Makefile.bin
 
 # Rule for generating gSOAP source from jcalibws.h header

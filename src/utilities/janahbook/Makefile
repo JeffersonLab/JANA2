@@ -5,7 +5,10 @@
 PACKAGES := CERNLIB
 SOLIB_NAME = janahbook.so
 
+ifndef BMSDIR
 BMSDIR := ../../BMS
+endif
+
 include $(BMSDIR)/Makefile.config
 
 # Only try building this if ROOT was configured by the configure script
