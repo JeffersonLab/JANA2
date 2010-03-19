@@ -259,7 +259,9 @@ JFactory<T>* JEventLoop::Get(vector<const T*> &t, const char *tag)
 			// the user condones this via the presence of the
 			// "JANA:AUTOFACTORYCREATE" config parameter.
 			string p;
-			gPARMS->GetParameter("JANA:AUTOFACTORYCREATE", p);
+			try{
+				gPARMS->GetParameter("JANA:AUTOFACTORYCREATE", p);
+			}catch(...){}
 			if(p.size()==0){
 				jout<<std::endl;
 				_DBG__;

@@ -65,7 +65,7 @@ class JApplication{
 		unsigned int GetEventBufferSize(void);
 		virtual jerror_t NextEvent(JEvent &event); ///< Get the next event from the event buffer
 		virtual jerror_t ReadEvent(JEvent &event); ///< Get the next event from the source.
-		jerror_t AddProcessor(JEventProcessor *processor); ///< Add a JEventProcessor.
+		jerror_t AddProcessor(JEventProcessor *processor, bool delete_me=false); ///< Add a JEventProcessor.
 		jerror_t RemoveProcessor(JEventProcessor *processor); ///< Remove a JEventProcessor
 		jerror_t AddJEventLoop(JEventLoop *loop, double* &heartbeat); ///< Add a JEventLoop
 		jerror_t RemoveJEventLoop(JEventLoop *loop); ///< Remove a JEventLoop

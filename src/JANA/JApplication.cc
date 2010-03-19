@@ -577,7 +577,7 @@ unsigned int JApplication::GetEventBufferSize(void)
 //---------------------------------
 // AddProcessor
 //---------------------------------
-jerror_t JApplication::AddProcessor(JEventProcessor *processor)
+jerror_t JApplication::AddProcessor(JEventProcessor *processor, bool delete_me)
 {
 	/// Add a JEventProcessor object to be included when processing events.
 	/// This <b>must</b> be called before invoking the Run() method since
@@ -590,6 +590,7 @@ jerror_t JApplication::AddProcessor(JEventProcessor *processor)
 	/// stopped (i.e. Run() has returned).
 	processor->SetJApplication(this);
 	processors.push_back(processor);
+	processor->SetDeleteMe(delete_me);
 
 	return NOERROR;
 }
@@ -1257,9 +1258,9 @@ jerror_t JApplication::Fini(void)
 		_DBG_<<" Error thrown ("<<err<<") from JEventProcessor::fini()"<<endl;
 	}
 	
-	// Delete all processors
+	// Delete all processors that are marked for us to delete
 	try{
-		for(unsigned int i=0;i<processors.size();i++)if(!processors[i]->GetDontDelete())delete processors[i];
+		for(unsigned int i=0;i<processors.size();i++)if(processors[i]->GetDeleteMe())delete processors[i];
 	}catch(...){
 		jerr<<endl;
 		_DBG_<<" Error thrown from JEventProcessor destructor!"<<endl;
@@ -1555,7 +1556,9 @@ jerror_t JApplication::AttachPlugins(void)
 	/// for more.
 	
 	bool printPaths=false;
-	jparms->GetParameter("PRINT_PLUGIN_PATHS", printPaths);
+	try{
+		jparms->GetParameter("PRINT_PLUGIN_PATHS", printPaths);
+	}catch(...){}
 	
 	/// The JANA_PLUGIN_DIR environment is used to specify
 	/// directories in which every file is attached as a plugin.
@@ -1596,7 +1599,9 @@ jerror_t JApplication::AttachPlugins(void)
 	// Add plugins specified via PLUGINS configuration parameter
 	// (comma separated list).
 	string plugins_conf;
-	jparms->GetParameter("PLUGINS", plugins_conf);
+	try{
+		jparms->GetParameter("PLUGINS", plugins_conf);
+	}catch(...){}
 	if(plugins_conf.length()>0){
 		string &str = plugins_conf;
 		unsigned int cutAt;

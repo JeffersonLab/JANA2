@@ -358,9 +358,10 @@ void JEventLoop::Initialize(void)
 	// Copy the event processor list to our local vector
 	RefreshProcessorListFromJApplication();
 
-	app->GetJParameterManager()->GetParameters(default_tags, "DEFTAG:");
-	app->GetJParameterManager()->GetParameter( "RECORD_CALL_STACK", record_call_stack);
-	
+	try{
+		app->GetJParameterManager()->GetParameters(default_tags, "DEFTAG:");
+		app->GetJParameterManager()->GetParameter( "RECORD_CALL_STACK", record_call_stack);
+	}catch(...){}
 	auto_activated_factories = app->GetAutoActivatedFactories();
 }
 

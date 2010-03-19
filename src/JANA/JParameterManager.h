@@ -217,6 +217,7 @@ JParameter* JParameterManager::GetParameter(K key, V &val)
 		ss>>val;
 		return p;
 	}catch(JException e){
+		throw  e; // rethrow exception
 		return NULL;
 	}
 }
@@ -237,6 +238,7 @@ JParameter* JParameterManager::GetParameter(K key, string &val)
 		val = p->GetValue();
 		return p;
 	}catch(JException e){
+		throw  e; // rethrow exception
 		return NULL;
 	}
 }

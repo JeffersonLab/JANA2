@@ -97,9 +97,9 @@ class JObject{
 		void SetAppendTypes(bool append_types){this->append_types=append_types;} ///< Set state of append_types flag (for AddString)
 		void SetFactoryPointer(JFactory_base *factory){this->factory=factory;}
 		JFactory_base * GetFactoryPointer(void){return factory;}
-		string GetName(void){return string(static_className());}
-		string GetTag(void);
-		string GetNameTag(void){return GetName() + (GetTag()=="" ? "":":") + GetTag();}
+		string GetName(void) const {return string(className());}
+		string GetTag(void) const ;
+		string GetNameTag(void) const {return GetName() + (GetTag()=="" ? "":":") + GetTag();}
 
 		oid_t id;
 	

@@ -63,8 +63,8 @@ class JEventProcessor{
 		inline void LockState(void){pthread_mutex_lock(&state_mutex);}
 		inline void UnlockState(void){pthread_mutex_unlock(&state_mutex);}
 		inline void SetJApplication(JApplication *app){this->app = app;}
-		inline void SetDontDelete(bool dont_delete){this->dont_delete=dont_delete;} ///< If true, this JEventProcessor object won't be deleted when JApplication::fini is called at the end of Run. Default value is true.
-		inline bool GetDontDelete(void){return dont_delete;} ///< Returns current state of dont_delete flag. 
+		inline void SetDeleteMe(bool delete_me){this->delete_me=delete_me;} ///< If true, this JEventProcessor object will be deleted when JApplication::fini is called at the end of Run. Default value is false.
+		inline bool GetDeleteMe(void){return delete_me;} ///< Returns current state of delete_me flag. 
 
 	protected:
 		JApplication *app;
@@ -74,7 +74,7 @@ class JEventProcessor{
 		int erun_called;
 		int fini_called;
 		int brun_runnumber;
-		bool dont_delete;
+		bool delete_me;
 	
 	private:
 		pthread_mutex_t state_mutex;
