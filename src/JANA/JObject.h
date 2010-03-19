@@ -51,6 +51,9 @@ using std::stringstream;
 // Place everything in JANA namespace
 namespace jana{
 
+class JFactory_base;
+
+
 class JObject{
 
 	public:
@@ -84,11 +87,19 @@ class JObject{
 		virtual void toStrings(vector<pair<string,string> > &items)const;
 		template<typename T> void AddString(vector<pair<string,string> > &items, const char *name, const char *format, const T &val) const;
 
-		bool GetAppendTypes(void) const {return append_types;} ///< Get state of append_types flag (for AddString)
-		void SetAppendTypes(bool append_types){this->append_types=append_types;} ///< Set state of append_types flag (for AddString)
+		// Methods for attaching and retrieving log messages to/from object
 		void AddLog(string &message) const {messagelog.push_back(message);}
 		void AddLog(vector<string> &messages) const {messagelog.insert(messagelog.end(), messages.begin(), messages.end());}
 		void GetLog(vector<string> &messagelog) const {messagelog = this->messagelog;}
+
+		// Misc methods
+		bool GetAppendTypes(void) const {return append_types;} ///< Get state of append_types flag (for AddString)
+		void SetAppendTypes(bool append_types){this->append_types=append_types;} ///< Set state of append_types flag (for AddString)
+		void SetFactoryPointer(JFactory_base *factory){this->factory=factory;}
+		JFactory_base * GetFactoryPointer(void){return factory;}
+		string GetName(void){return string(static_className());}
+		string GetTag(void);
+		string GetNameTag(void){return GetName() + (GetTag()=="" ? "":":") + GetTag();}
 
 		oid_t id;
 	
@@ -98,6 +109,7 @@ class JObject{
 		map<const JObject*, string> associated;
 		vector<JObject*> auto_delete;
 		mutable vector<string> messagelog;
+		JFactory_base *factory;
 		
 };
 

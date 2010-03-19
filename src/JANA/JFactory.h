@@ -61,6 +61,8 @@ namespace jana{
 //-----------------------
 template<class T>
 class JFactory:public JFactory_base{
+
+	friend class JEventLoop;
 	
 	public:
 		JFactory(const char *tag="");
@@ -97,6 +99,7 @@ class JFactory:public JFactory_base{
 		
 		jerror_t Reset(void);
 		jerror_t HardReset(void);
+		void SetFactoryPointers(void);
 		
 		data_origin_t data_origin;
 };
@@ -307,6 +310,26 @@ jerror_t JFactory<T>::HardReset(void)
 	evnt_called = 0;
 	
 	return NOERROR;
+}
+
+//-------------
+// SetFactoryPointers
+//-------------
+template<class T>
+void JFactory<T>::SetFactoryPointers(void)
+{
+	/// Set the JFactory_base pointers for all JObjects in _data to
+	/// point back to this factory. Each item in _data is dynamic_cast
+	/// as a JObject* first and if that succeeds, then the object's
+	/// SetFactoryPointer() method is called.
+	///
+	/// This is called from JEventLoop::GetFromFactory so that the
+	/// pointers are set just after object creation so that the user
+	/// doesn't have to explicitly.
+	for(unsigned int i=0; i<_data.size(); i++){
+		JObject *obj = dynamic_cast<JObject*>(_data[i]);
+		if(obj)obj->SetFactoryPointer(this);
+	}
 }
 
 //-------------

@@ -389,9 +389,12 @@ JFactory<T>* JEventLoop::GetFromFactory(vector<const T*> &t, const char *tag, da
 			// method which also sets the evnt_called flag for the factory.
 			// Note also that the "t" vector is then filled with a call
 			// to the factory's CopyFrom() method in JEvent::GetObjects().
-			// All we need to do now is just return the factory pointer.
+			// All we need to do now is just set the factory pointers in
+			// the newly generated JObjects and return the factory pointer.
 
+			factory->SetFactoryPointers();
 			data_source = DATA_FROM_SOURCE;
+
 			return factory;
 		}
 	}
@@ -399,6 +402,7 @@ JFactory<T>* JEventLoop::GetFromFactory(vector<const T*> &t, const char *tag, da
 	// OK. It looks like we have to have the factory make this.
 	// Get pointers to data from the factory.
 	factory->Get(t);
+	factory->SetFactoryPointers();
 	data_source = DATA_FROM_FACTORY;
 	
 	return factory;
