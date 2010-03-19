@@ -30,9 +30,11 @@ jerror_t JEventProcessorJANADOT::init(void)
 	// Turn on call stack recording
 	bool record_call_stack=true;
 	force_all_factories_active = false;
-	app->GetJParameterManager()->SetDefaultParameter("RECORD_CALL_STACK", record_call_stack);
-	app->GetJParameterManager()->GetParameter("FORCE_ALL_FACTORIES_ACTIVE", force_all_factories_active);
-	
+	try{
+		app->GetJParameterManager()->SetDefaultParameter("RECORD_CALL_STACK", record_call_stack);
+		app->GetJParameterManager()->GetParameter("FORCE_ALL_FACTORIES_ACTIVE", force_all_factories_active);
+	}catch(...){}
+
 	// Initialize our mutex
 	pthread_mutex_init(&mutex, NULL);
 	
