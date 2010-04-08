@@ -30,6 +30,7 @@
 #include <JANA/JEventSink.h>
 #include <JANA/JEventSourceGenerator.h>
 #include <JANA/JFactory_base.h>
+#include <JANA/JFactory.h>
 #include <JANA/JFactoryGenerator.h>
 #include <JANA/JGeometry.h>
 using namespace jana;
@@ -48,8 +49,24 @@ class JEventProcessorDummy:public JEventProcessor
 		JEventProcessorDummy(){}
 };
 
+class JObjectDummy:public JObject
+{
+	public:
+		JObjectDummy(){GetNameTag();} // GetNameTag call ensures GetTag is emitted
+};
+
+class JObjectDummy_factory_tag:public JFactory<JObjectDummy>
+{
+	public:
+		JObjectDummy_factory_tag(){}
+		~JObjectDummy_factory_tag(){}
+		const char* Tag(void){return "tag";}
+};
+
 void force_links(void)
 {
 	new JEventSourceDummy();
 	new JEventProcessorDummy();
+	new JObjectDummy_factory_tag();
+	new JObjectDummy();
 }
