@@ -964,9 +964,8 @@ void* LaunchThread(void* arg)
 		eventLoop->GetJApplication()->Lock();
 		jout<<"Thread 0x"<<hex<<(unsigned long)pthread_self()<<dec<<" completed gracefully"<<endl;
 		eventLoop->GetJApplication()->Unlock();
-	}catch(JException *exception){
-		if(exception)delete exception;
-		_DBG_<<" EXCEPTION caught for thread "<<pthread_self()<<endl;
+	}catch(exception &e){
+		_DBG_<<" EXCEPTION caught for thread "<<pthread_self()<<" : "<<e.what()<<endl;
 	}
 
 	// This will cause the JEventLoop to be destroyed (see below) which causes
@@ -1010,9 +1009,9 @@ jerror_t JApplication::Init(void)
 	// Call init Processors (note: factories don't exist yet)
 	try{
 		for(unsigned int i=0;i<processors.size();i++)processors[i]->init();
-	}catch(jerror_t err){
+	}catch(exception &e){
 		jerr<<endl;
-		jerr<<__FILE__<<":"<<__LINE__<<" Error thrown ("<<err<<") from JEventProcessor::init()"<<endl;
+		_DBG_<<e.what()<<endl;
 		exit(-1);
 	}
 	
@@ -1242,9 +1241,9 @@ jerror_t JApplication::Fini(void)
 		if(proc->brun_was_called() && !proc->erun_was_called()){
 			try{
 				proc->erun();
-			}catch(jerror_t err){
+			}catch(exception &e){
 				jerr<<endl;
-				_DBG_<<" Error thrown ("<<err<<") from JEventProcessor::erun()"<<endl;
+				_DBG_<<e.what()<<endl;
 			}
 			proc->Set_erun_called();
 		}
@@ -1253,9 +1252,9 @@ jerror_t JApplication::Fini(void)
 	// Call fini Processors
 	try{
 		for(unsigned int i=0;i<processors.size();i++)processors[i]->fini();
-	}catch(jerror_t err){
+	}catch(exception &e){
 		jerr<<endl;
-		_DBG_<<" Error thrown ("<<err<<") from JEventProcessor::fini()"<<endl;
+		_DBG_<<e.what()<<endl;
 	}
 	
 	// Delete all processors that are marked for us to delete

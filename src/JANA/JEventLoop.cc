@@ -81,10 +81,11 @@ JEventLoop::~JEventLoop()
 	for(unsigned int i=0; i<factories.size(); i++){
 		try{
 			if(factories[i]->init_was_called())factories[i]->fini();
-		}catch(jerror_t err){
+		}catch(exception &e){
 			jerr<<endl;
-			_DBG_<<" Error thrown ("<<err<<") from JFactory<";
+			_DBG_<<" Error thrown from JFactory<";
 			jerr<<factories[i]->GetDataClassName()<<">::fini()"<<endl;
+			_DBG_<<e.what()<<endl;
 		}
 	}
 
@@ -92,10 +93,11 @@ JEventLoop::~JEventLoop()
 	for(unsigned int i=0; i<factories.size(); i++){
 		try{
 			delete factories[i];
-		}catch(jerror_t err){
+		}catch(exception &e){
 			jerr<<endl;
-			_DBG_<<" Error thrown ("<<err<<") while deleting JFactory<";
+			_DBG_<<" Error thrown while deleting JFactory<";
 			jerr<<factories[i]->GetDataClassName()<<">"<<endl;
+			_DBG_<<e.what()<<endl;
 		}
 	}
 
@@ -487,11 +489,11 @@ jerror_t JEventLoop::OneEvent(void)
 		// Call the event routine
 		try{
 			proc->evnt(this, event_number);
-		}catch(JException *exception){
+		}catch(exception &e){
 			error_call_stack_t cs = {"JEventLoop", "OneEvent", __FILE__, __LINE__};
 			error_call_stack.push_back(cs);
 			PrintErrorCallStack();
-			throw exception;
+			throw;
 		}
 	}
 

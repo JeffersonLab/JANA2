@@ -176,9 +176,9 @@ JFactory<T>* JEventLoop::GetSingle(const T* &t, const char *tag)
 	vector<const T*> v;
 	JFactory<T> *fac = Get(v, tag);
 
+	if(v.size()>0)t = v[0];
 	if(v.size()!=1)throw v.size();
 	
-	t = v[0];
 	return fac;
 }
 
@@ -287,20 +287,15 @@ JFactory<T>* JEventLoop::Get(vector<const T*> &t, const char *tag)
 				factory = GetFromFactory(t, tag, cs.data_source);
 			}
 		}
-	}catch(JException *exception){
+	}catch(exception &e){
 		// Uh-oh, an exception was thrown. Add us to the call stack
 		// and re-throw the exception
 		error_call_stack_t ecs;
 		ecs.factory_name = T::static_className();
 		ecs.tag = tag;
-		if(exception!=NULL && error_call_stack.size()==0){
-			//ecs.filename = exception->filename;
-			//ecs.line = exception->line;
-		}else{
-			ecs.filename = NULL;
-		}
+		ecs.filename = NULL;
 		error_call_stack.push_back(ecs);
-		throw(exception);
+		throw;
 	}
 	
 	// If recording the call stack, update the end_time field

@@ -107,7 +107,7 @@ JParameter* JParameterManager::SetDefaultParameter(K key, V &val, string descrip
 			// the type specified in this call.
 			p->type = JParameter::DataType(val);
 		}
-	}catch(JException e){
+	}catch(exception &e){
 		// Parameter doesn't exist. Create it.
 		p = SetParameter(key, val);
 	}
@@ -216,7 +216,7 @@ JParameter* JParameterManager::GetParameter(K key, V &val)
 		stringstream ss(p->GetValue());		
 		ss>>val;
 		return p;
-	}catch(JException e){
+	}catch(exception &e){
 		throw  e; // rethrow exception
 		return NULL;
 	}
@@ -237,7 +237,7 @@ JParameter* JParameterManager::GetParameter(K key, string &val)
 		JParameter *p = GetParameter(key);
 		val = p->GetValue();
 		return p;
-	}catch(JException e){
+	}catch(exception &e){
 		throw  e; // rethrow exception
 		return NULL;
 	}

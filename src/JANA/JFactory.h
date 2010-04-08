@@ -198,9 +198,9 @@ jerror_t JFactory<T>::Get(vector<const T*> &d)
 	if(evnt_called)return CopyFrom(d);
 	
 	// Check for infinite recursion through factory dependancies
-	if(busy)throw(INFINITE_RECURSION);
+	if(busy)throw JException("Infinite recursion detected in JFactory<T>::Get");
 	busy++;
-	if(busy!=1)throw(INFINITE_RECURSION);  // Should we use a mutex here?
+	if(busy!=1)throw JException("Infinite recursion detected in JFactory<T>::Get");  // Should we use a mutex here?
 	
 	// Grab the current event and run numbers
 	int event_number = eventLoop->GetJEvent().GetEventNumber();
