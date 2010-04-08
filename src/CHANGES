@@ -1,3 +1,9 @@
+Changes in version 0.6.2
+
+- Added to force_links.cc to force JObject::GetTag to be linked
+- Cleaned up exceptions a bit to (nearly) always throw a JException
+  and catch a std::exception
+
 
 Changes in version 0.6.1
 
