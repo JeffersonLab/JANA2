@@ -67,7 +67,7 @@ jerror_t JEvent::GetObjects(vector<const T*> &t, JFactory_base *factory)
 	/// exist in the source).
 	
 	// Make sure source is at least not NULL
-	if(!source)throw JException("JEvent::GetObjects called when source is NULL");
+	if(!source)throw JException(string("JEvent::GetObjects called when source is NULL"));
 	
 	// Get list of object pointers. This will read the objects in
 	// from the source, instantiating them and handing ownership of

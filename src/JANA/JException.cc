@@ -14,6 +14,7 @@
 
 #include "JException.h"
 
+#include <iostream>
 #include <stdlib.h>
 #include <string.h>
 #include <cstdio>
@@ -44,6 +45,7 @@ JException::JException(const string &txt) : text(txt), code(0), source(""), trac
  * @param line Line in file where exception raised
  */
 JException::JException(const string &txt, const char *file, int line) : text(txt), code(0), trace(getStackTrace()) {
+  //std::cerr<<__FILE__<<":"<<__LINE__<<std::endl;
   stringstream ss;
   ss << "File: " << file << ",   Line: " << line << ends;
   source=ss.str();
@@ -74,9 +76,21 @@ JException::JException(const string &txt, int c) : text(txt), code(c), source(""
  * @param line Line in file where exception raised
  */
 JException::JException(const string &txt, int c, const char *file, int line) : text(txt), code(c), trace(getStackTrace()) {
+  //std::cerr<<__FILE__<<":"<<__LINE__<<std::endl;
   stringstream ss;
   ss << "File: " << file << ",   Line: " << line << ends;
   source=ss.str();
+}
+
+
+//-----------------------------------------------------------------------------
+
+/**
+ * Destructor
+ */
+JException::~JException(void) throw()
+{
+  //std::cerr<<__FILE__<<":"<<__LINE__<<" ~JException called! "<<toString()<<std::endl;
 }
 
 
@@ -154,23 +168,29 @@ string JException::getStackTrace(void) {
   stringstream ss;
   for(int i=0; i<trace_size; ++i) {
     
+	 if(!messages[i])continue;
+	 char *message = strdup(messages[i]);
+	 if(!message)continue;
+
     // find first '(' and '+'
-    char *ppar  = strchr(messages[i],'(');
-    char *pplus = strchr(messages[i],'+');
+    char *ppar  = strchr(message,'(');
+    char *pplus = strchr(message,'+');
     if((ppar!=NULL)&&(pplus!=NULL)) {
       
       // replace '+' with nul, then get de-mangled name
       *pplus='\0';
+		dlen=1000;
       abi::__cxa_demangle(ppar+1,dname,&dlen,&status);
       
       // add to stringstream
       *(ppar+1)='\0';
       *pplus='+';
-      ss << "   " << messages[i] << dname << pplus << endl;
+      ss << "   " << message << dname << pplus << endl;
       
     } else {
-      ss << "   " << messages[i] << endl;
+      ss << "   " << message << endl;
     }
+	 free(message);
     
   }
   ss << ends;

@@ -199,7 +199,7 @@ JParameter* JParameterManager::GetParameter(K key)
 	pthread_mutex_unlock(&parameter_mutex);
 	
 	// If parameter does not exist, thrown an exception
-	if(!p)throw JException("Parameter does not exist!");
+	if(!p)throw JException(string("Parameter does not exist: ")+string(key));
 	
 	return p;
 }

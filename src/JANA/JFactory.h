@@ -8,7 +8,7 @@
 
 #include "JObject.h"
 
-
+#include <iostream>
 #include <vector>
 #include <string>
 using std::vector;
@@ -198,10 +198,17 @@ jerror_t JFactory<T>::Get(vector<const T*> &d)
 	if(evnt_called)return CopyFrom(d);
 	
 	// Check for infinite recursion through factory dependancies
-	if(busy)throw JException("Infinite recursion detected in JFactory<T>::Get");
+	if(busy){
+		string mess = string("Infinite recursion detected in JFactory<T>::Get for ")+GetDataClassName()+":"+Tag();
+		std::cerr<<mess<<std::endl;
+		throw JException(mess);
+	}
 	busy++;
-	if(busy!=1)throw JException("Infinite recursion detected in JFactory<T>::Get");  // Should we use a mutex here?
-	
+	if(busy!=1){
+		string mess = string("Infinite recursion detected in JFactory<T>::Get for ")+GetDataClassName()+":"+Tag();
+		std::cerr<<mess<<std::endl;
+		throw JException(mess);
+	}	
 	// Grab the current event and run numbers
 	int event_number = eventLoop->GetJEvent().GetEventNumber();
 	int run_number = eventLoop->GetJEvent().GetRunNumber();
