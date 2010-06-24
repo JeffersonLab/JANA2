@@ -1,6 +1,6 @@
 
 
-DIRS := janadot janactl janaroot TestSpeed
+DIRS := janadot janactl janaroot janarate jana_iotest TestSpeed
 
 .PHONY: $(DIRS)
 
