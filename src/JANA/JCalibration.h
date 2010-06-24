@@ -48,28 +48,26 @@ class JCalibration{
 		static const char* static_className(void){return "JCalibration";}
 		
 		// Returns "false" on success and "true" on error
-		virtual bool GetCalib(string namepath, map<string, string> &svals)=0;
-		virtual bool GetCalib(string namepath, vector< map<string, string> > &svals)=0;
-		virtual bool PutCalib(string namepath, int run_min, int run_max, string &author, map<string, string> &svals, string comment="");
-		virtual bool PutCalib(string namepath, int run_min, int run_max, string &author, vector< map<string, string> > &svals, string comment="");
+		virtual bool GetCalib(string namepath, map<string, string> &svals, int event_number=0)=0;
+		virtual bool GetCalib(string namepath, vector< map<string, string> > &svals, int event_number=0)=0;
+		virtual bool PutCalib(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, map<string, string> &svals, string comment="");
+		virtual bool PutCalib(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, vector< map<string, string> > &svals, string comment="");
 		virtual void GetListOfNamepaths(vector<string> &namepaths)=0;
+		void GetEventBoundaries(vector<int> &event_boundaries); ///< User-callable access to event boundaries
 
-		template<class T> bool Get(string namepath, map<string,T> &vals);
-		template<class T> bool Get(string namepath, vector<T> &vals);
-		template<class T> bool Get(string namepath, vector< map<string,T> > &vals);
-		template<class T> bool Get(string namepath, vector< vector<T> > &vals);
+		template<class T> bool Get(string namepath, map<string,T> &vals, int event_number=0);
+		template<class T> bool Get(string namepath, vector<T> &vals, int event_number=0);
+		template<class T> bool Get(string namepath, vector< map<string,T> > &vals, int event_number=0);
+		template<class T> bool Get(string namepath, vector< vector<T> > &vals, int event_number=0);
 
-		template<class T> bool Put(string namepath, int run_min, int run_max, string &author, map<string,T> &vals, string &comment="");
-		template<class T> bool Put(string namepath, int run_min, int run_max, string &author, vector<T> &vals, string &comment="");
-		template<class T> bool Put(string namepath, int run_min, int run_max, string &author, vector< map<string,T> > &vals, string &comment="");
-		template<class T> bool Put(string namepath, int run_min, int run_max, string &author, vector< vector<T> > &vals, string &comment="");
+		template<class T> bool Put(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, map<string,T> &vals, string &comment="");
+		template<class T> bool Put(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, vector<T> &vals, string &comment="");
+		template<class T> bool Put(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, vector< map<string,T> > &vals, string &comment="");
+		template<class T> bool Put(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, vector< vector<T> > &vals, string &comment="");
 
-		template<class T> bool Get(string namepath, const T* &vals);
+		template<class T> bool Get(string namepath, const T* &vals, int event_number=0);
 		
-		const int& GetRunRequested(void) const {return run_requested;}
-		const int& GetRunFound(void) const {return run_found;}
-		const int& GetRunMin(void) const {return run_min;}
-		const int& GetRunMax(void) const {return run_max;}
+		const int& GetRun(void) const {return run_number;}
 		const string& GetContext(void) const {return context;}
 		const string& GetURL(void) const {return url;}
 		void GetAccesses(map<string, vector<string> > &accesses){accesses = this->accesses;}
@@ -82,21 +80,35 @@ class JCalibration{
 		void WriteCalibFileVectorMap(string dir, string fname, string pathname);
 
 	protected:
-		int run_min;
-		int run_max;
-		int run_found;
+		int run_number;
 		
 		pthread_mutex_t accesses_mutex;
 		pthread_mutex_t stored_mutex;
+		pthread_mutex_t boundaries_mutex;
 
 		template<typename T> containerType_t TrycontainerType(string typeid_name);
+
+		// If the database supports event-level boundaries for calibration constants,
+		// then the RetrieveEventBoundaries() method may be implemented by the 
+		// subclass. It will be called automatically by GetEventBoundaries() when needed.
+		// It will also be called while inside a mutex lock so there is no need to lock
+		// a mutex inside this call. RetrieveEventBoundaries will be called exactly zero or 
+		// one time for this JCalibration object. Values should be copied into the event_boundaries
+		// container. The retrieved_event_boundaries flag will be updated automatically
+		// so the subclass should not set it.
+		virtual void RetrieveEventBoundaries(void){} ///< Optional for DBs that support event-level boundaries
 
 	private:
 		JCalibration(){} // Don't allow trivial constructor
 
-		int run_requested;
 		string context;
 		string url;
+		
+		// Container to hold map of event boundaries. For (rare) cases when multiple sets
+		// of calibration constants are needed for a single run, event-level boundaries can
+		// be used.
+		vector<int> event_boundaries;
+		bool retrieved_event_boundaries; // Set automatically. Do NOT set this in the subclass
 
 		// Container to hold all stored sets of constants. The "key" is a pair made from
 		// the namepath and the typid().name() of the type stored. The value is a pointer
@@ -122,7 +134,7 @@ class JCalibration{
 // Get  (map version)
 //-------------
 template<class T>
-bool JCalibration::Get(string namepath, map<string,T> &vals)
+bool JCalibration::Get(string namepath, map<string,T> &vals, int event_number)
 {
 	/// Templated method used to get a set of calibration constants.
 	///
@@ -141,7 +153,7 @@ bool JCalibration::Get(string namepath, map<string,T> &vals)
 	
 	// Get values in the form of strings
 	map<string, string> svals;
-	bool res = GetCalib(namepath, svals);
+	bool res = GetCalib(namepath, svals, event_number);
 	RecordRequest(namepath, typeid(map<string,T>).name());
 	
 	// Loop over values, converting the strings to type "T" and
@@ -163,7 +175,7 @@ bool JCalibration::Get(string namepath, map<string,T> &vals)
 // Get  (vector version)
 //-------------
 template<class T>
-bool JCalibration::Get(string namepath, vector<T> &vals)
+bool JCalibration::Get(string namepath, vector<T> &vals, int event_number)
 {
 	/// Templated method used to get a set of calibration constants.
 	///
@@ -182,7 +194,7 @@ bool JCalibration::Get(string namepath, vector<T> &vals)
 	
 	// Get values in the form of strings
 	map<string, string> svals;
-	bool res = GetCalib(namepath, svals);
+	bool res = GetCalib(namepath, svals, event_number);
 	RecordRequest(namepath, typeid(vector<T>).name());
 	
 	// Loop over values, converting the strings to type "T" and
@@ -204,7 +216,7 @@ bool JCalibration::Get(string namepath, vector<T> &vals)
 // Get  (table, map version)
 //-------------
 template<class T>
-bool JCalibration::Get(string namepath, vector< map<string,T> > &vals)
+bool JCalibration::Get(string namepath, vector< map<string,T> > &vals, int event_number)
 {
 	/// Templated method used to get a set of calibration constants.
 	///
@@ -240,7 +252,7 @@ bool JCalibration::Get(string namepath, vector< map<string,T> > &vals)
 
 	// Get values in the form of strings
 	vector< map<string, string> >svals;
-	bool res = GetCalib(namepath, svals);
+	bool res = GetCalib(namepath, svals, event_number);
 	RecordRequest(namepath, typeid(vector< map<string,T> >).name());
 	
 	// Loop over values, converting the strings to type "T" and
@@ -266,7 +278,7 @@ bool JCalibration::Get(string namepath, vector< map<string,T> > &vals)
 // Get  (table, vector version)
 //-------------
 template<class T>
-bool JCalibration::Get(string namepath, vector< vector<T> > &vals)
+bool JCalibration::Get(string namepath, vector< vector<T> > &vals, int event_number)
 {
 	/// Templated method used to get a set of calibration constants.
 	///
@@ -299,7 +311,7 @@ bool JCalibration::Get(string namepath, vector< vector<T> > &vals)
 	
 	// Get values in the form of strings
 	vector< map<string, string> >svals;
-	bool res = GetCalib(namepath, svals);
+	bool res = GetCalib(namepath, svals, event_number);
 	RecordRequest(namepath, typeid(vector< vector<T> >).name());
 	
 	// Loop over values, converting the strings to type "T" and
@@ -325,7 +337,7 @@ bool JCalibration::Get(string namepath, vector< vector<T> > &vals)
 // Get  (stored container version)
 //-------------
 template<class T>
-bool JCalibration::Get(string namepath, const T* &vals)
+bool JCalibration::Get(string namepath, const T* &vals, int event_number)
 {
 	/// Templated method used to get a set of calibration constants.
 	///
@@ -360,7 +372,7 @@ bool JCalibration::Get(string namepath, const T* &vals)
 	// Looks like we don't have it stored already. Allocate memory for
 	// the container and fill it with the constants.
 	T* t = new T;
-	bool res = Get(namepath, *t);
+	bool res = Get(namepath, *t, event_number);
 	
 	// If successfull, store the pointer and copy it into the vals variable 
 	if(!res){ // res==false means Get call was successful
@@ -378,7 +390,7 @@ bool JCalibration::Get(string namepath, const T* &vals)
 // Put  (map version)
 //-------------
 template<class T>
-bool JCalibration::Put(string namepath, int run_min, int run_max, string &author, map<string,T> &vals, string &comment)
+bool JCalibration::Put(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, map<string,T> &vals, string &comment)
 {
 	/// Templated method used to write a set of calibration constants.
 	///
@@ -401,7 +413,7 @@ bool JCalibration::Put(string namepath, int run_min, int run_max, string &author
 	}
 
 	// Put values that have been converted to strings
-	bool res = PutCalib(namepath, run_min, run_max, author, svals, comment);
+	bool res = PutCalib(namepath, run_min, run_max, event_min, event_max, author, svals, comment);
 	
 	return res;
 }
@@ -410,7 +422,7 @@ bool JCalibration::Put(string namepath, int run_min, int run_max, string &author
 // Put  (vector version)
 //-------------
 template<class T>
-bool JCalibration::Put(string namepath, int run_min, int run_max, string &author, vector<T> &vals, string &comment)
+bool JCalibration::Put(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, vector<T> &vals, string &comment)
 {
 	/// Templated method used to write a set of calibration constants.
 	///
@@ -435,7 +447,7 @@ bool JCalibration::Put(string namepath, int run_min, int run_max, string &author
 	}
 
 	// Put values that have been converted to strings
-	bool res = PutCalib(namepath, run_min, run_max, author, svals, comment);
+	bool res = PutCalib(namepath, run_min, run_max, event_min, event_max, author, svals, comment);
 	
 	return res;
 }
@@ -444,7 +456,7 @@ bool JCalibration::Put(string namepath, int run_min, int run_max, string &author
 // Put  (table, map version)
 //-------------
 template<class T>
-bool JCalibration::Put(string namepath, int run_min, int run_max, string &author, vector< map<string,T> > &vals, string &comment)
+bool JCalibration::Put(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, vector< map<string,T> > &vals, string &comment)
 {
 	/// Templated method used to write a set of calibration constants.
 	///
@@ -472,7 +484,7 @@ bool JCalibration::Put(string namepath, int run_min, int run_max, string &author
 	}
 
 	// Put values that have been converted to strings
-	bool res = PutCalib(namepath, run_min, run_max, author, vsvals, comment);
+	bool res = PutCalib(namepath, run_min, run_max, event_min, event_max, author, vsvals, comment);
 	
 	return res;
 }
@@ -481,7 +493,7 @@ bool JCalibration::Put(string namepath, int run_min, int run_max, string &author
 // Put  (table, vector version)
 //-------------
 template<class T>
-bool JCalibration::Put(string namepath, int run_min, int run_max, string &author, vector< vector<T> > &vals, string &comment)
+bool JCalibration::Put(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, vector< vector<T> > &vals, string &comment)
 {
 	/// Templated method used to write a set of calibration constants.
 	///
@@ -510,7 +522,7 @@ bool JCalibration::Put(string namepath, int run_min, int run_max, string &author
 	}
 
 	// Put values that have been converted to strings
-	bool res = PutCalib(namepath, run_min, run_max, author, vsvals, comment);
+	bool res = PutCalib(namepath, run_min, run_max, event_min, event_max, author, vsvals, comment);
 	
 	return res;
 }

@@ -20,6 +20,7 @@ JEventProcessor::JEventProcessor(void)
 	erun_called = 0;
 	fini_called = 0;
 	brun_runnumber = -1; // ensure brun is called
+	brun_eventnumber = 0;
 	pthread_mutex_init(&state_mutex, NULL);
 	app = NULL;
 }

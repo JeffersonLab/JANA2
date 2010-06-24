@@ -55,9 +55,7 @@ JCalibrationFile::JCalibrationFile(string url, int run, string context):JCalibra
 	// Any volunteers?
 	// Among other things, this should contain the range of runs for which
 	// this calibration is valid. For now, just set the found run to run_requested.
-	run_found = GetRunRequested();
-	run_min = 1;
-	run_max = 10000;
+	run_number = GetRun(); // redunant, yes, but it's just a place holder
 	
 	// Close info file
 	f.close();
@@ -74,7 +72,7 @@ JCalibrationFile::~JCalibrationFile()
 //---------------------------------
 // GetCalib
 //---------------------------------
-bool JCalibrationFile::GetCalib(string namepath, map<string, string> &svals)
+bool JCalibrationFile::GetCalib(string namepath, map<string, string> &svals, int event_number)
 {
 	/// Open file specified by namepath (and the url passed to us in the
 	/// constructor) and read in the calibration constants in plain
@@ -134,7 +132,7 @@ bool JCalibrationFile::GetCalib(string namepath, map<string, string> &svals)
 //---------------------------------
 // GetCalib
 //---------------------------------
-bool JCalibrationFile::GetCalib(string namepath, vector< map<string, string> > &svals)
+bool JCalibrationFile::GetCalib(string namepath, vector< map<string, string> > &svals, int event_number)
 {
 	/// Open file specified by namepath (and the url passed to us in the
 	/// constructor) and read in a table of calibration constants in plain
@@ -214,7 +212,7 @@ bool JCalibrationFile::GetCalib(string namepath, vector< map<string, string> > &
 //---------------------------------
 // PutCalib
 //---------------------------------
-bool JCalibrationFile::JCalibrationFile::PutCalib(string namepath, int run_min, int run_max, string &author, map<string, string> &svals, string comment)
+bool JCalibrationFile::JCalibrationFile::PutCalib(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, map<string, string> &svals, string comment)
 {
 	// Open the item file creating the directory path if needed and
 	// writing a header to it.
@@ -237,7 +235,7 @@ bool JCalibrationFile::JCalibrationFile::PutCalib(string namepath, int run_min, 
 //---------------------------------
 // PutCalib
 //---------------------------------
-bool JCalibrationFile::JCalibrationFile::PutCalib(string namepath, int run_min, int run_max, string &author, vector< map<string, string> > &svals, string comment)
+bool JCalibrationFile::JCalibrationFile::PutCalib(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, vector< map<string, string> > &svals, string comment)
 {
 	// We need at least one element to make this worthwhile
 	if(svals.size()<1)return true;

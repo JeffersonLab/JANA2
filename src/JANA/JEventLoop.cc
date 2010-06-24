@@ -66,6 +66,8 @@ JEventLoop::JEventLoop(JApplication *app)
 	// back in who did the calling.
 	caller_name = "JEventProcessor";
 	caller_tag = "";
+
+	event_boundaries_run = 0;
 }
 
 //---------------------------------

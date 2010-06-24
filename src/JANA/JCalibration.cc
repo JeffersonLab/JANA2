@@ -23,11 +23,14 @@ using namespace jana;
 JCalibration::JCalibration(string url, int run, string context)
 {
 	this->url = url;
-	this->run_requested = run;
+	this->run_number = run;
 	this->context = context;
+	
+	retrieved_event_boundaries = false;
 	
 	pthread_mutex_init(&accesses_mutex, NULL);
 	pthread_mutex_init(&stored_mutex, NULL);
+	pthread_mutex_init(&boundaries_mutex, NULL);
 }
 
 //---------------------------------
@@ -74,18 +77,18 @@ JCalibration::~JCalibration()
 //---------------------------------
 // PutCalib
 //---------------------------------
-bool JCalibration::PutCalib(string namepath, int run_min, int run_max, string &author, map<string, string> &svals, string comment)
+bool JCalibration::PutCalib(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, map<string, string> &svals, string comment)
 {
-	_DBG_<<"PutCalib(string namepath, int run_min, int run_max, string &author, map<string, string> &svals, string &comment="") not implemented!"<<endl;
+	_DBG_<<"PutCalib(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, map<string, string> &svals, string &comment="") not implemented!"<<endl;
 	return true;
 }
 
 //---------------------------------
 // PutCalib
 //---------------------------------
-bool JCalibration::PutCalib(string namepath, int run_min, int run_max, string &author, vector< map<string, string> > &svals, string comment)
+bool JCalibration::PutCalib(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, vector< map<string, string> > &svals, string comment)
 {
-	_DBG_<<"PutCalib(string namepath, int run_min, int run_max, string &author, vector< map<string, string> > &svals, string &comment="") not implemented!"<<endl;
+	_DBG_<<"PutCalib(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, vector< map<string, string> > &svals, string &comment="") not implemented!"<<endl;
 	return true;
 }
 
@@ -109,6 +112,32 @@ void JCalibration::RecordRequest(string namepath, string type_name)
 	}
 
 	pthread_mutex_unlock(&accesses_mutex);
+}
+
+//---------------------------------
+// GetEventBoundaries
+//---------------------------------
+void JCalibration::GetEventBoundaries(vector<int> &event_boundaries)
+{
+	/// Copy the event boundaries (if any) for this calibration's run
+	/// into the caller supplied container. The contents of the
+	/// container are replaced. If there are no boundaries, then the
+	/// container is cleared and returned empty.
+	
+	// lock mutex
+	pthread_mutex_lock(&boundaries_mutex);
+
+	// If we haven't retrieved the boundaries yet, then do so now
+	if(!retrieved_event_boundaries){
+		RetrieveEventBoundaries();
+		retrieved_event_boundaries = true;
+	}
+
+	// unlock mutex
+	pthread_mutex_unlock(&boundaries_mutex);
+	
+	// Copy boundaries to the caller's container
+	event_boundaries = this->event_boundaries;
 }
 
 //---------------------------------
@@ -147,7 +176,7 @@ void JCalibration::DumpCalibrationsToFiles(string basedir)
 	// Create base directory for writing calibrations into
 	mode_t mode=S_IRWXU | S_IRWXG | S_IRWXO;
 	char str[256];
-	sprintf(str, "calib%d/", GetRunFound());
+	sprintf(str, "calib%d/", GetRun());
 	basedir += string(str);
 	mkdir(basedir.c_str(), mode);
 
@@ -164,9 +193,7 @@ void JCalibration::DumpCalibrationsToFiles(string basedir)
 	cout<<"Calibrations obtained from:"<<endl;
 	cout<<"             URL: "<<GetURL()<<endl;
 	cout<<"         Context: "<<GetContext()<<endl;
-	cout<<"   Requested run: "<<GetRunRequested()<<endl;
-	cout<<"       Run found: "<<GetRunFound()<<endl;
-	cout<<"       Run range: "<<GetRunMin()<<"-"<<GetRunMax()<<endl;
+	cout<<"      Run Number: "<<GetRun()<<endl;
 	cout<<endl;
 	string header = string("namepath") + string(max_namepath_len-8+2,' ') + "data type";
 	cout<<header<<endl;
@@ -249,10 +276,7 @@ void JCalibration::DumpCalibrationsToFiles(string basedir)
 		ofs<<"<jcalibration>"<<endl;
 		ofs<<"	<URL>"<<GetURL()<<"</URL>"<<endl;
 		ofs<<"	<Context>"<<GetContext()<<"</Context>"<<endl;
-		ofs<<"	<RunRequested>"<<GetRunRequested()<<"</RunRequested>"<<endl;
-		ofs<<"	<RunFound>"<<GetRunFound()<<"</RunFound>"<<endl;
-		ofs<<"	<RunMin>"<<GetRunMin()<<"</RunMin>"<<endl;
-		ofs<<"	<RunMax>"<<GetRunMax()<<"</RunMax>"<<endl;
+		ofs<<"	<RunNumber>"<<GetRun()<<"</RunNumber>"<<endl;
 		ofs<<"	<datetime>"<<datetime.substr(0,datetime.length()-1)<<"</datetime>"<<endl;
 		ofs<<"	<timestamp>"<<now<<"</timestamp>"<<endl;
 		ofs<<"</jcalibration>"<<endl;

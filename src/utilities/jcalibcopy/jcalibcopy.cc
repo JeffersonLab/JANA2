@@ -19,6 +19,8 @@ void Usage(void);
 unsigned int SRC_RUN;
 unsigned int DEST_RUN_MIN;
 unsigned int DEST_RUN_MAX;
+unsigned int DEST_EVENT_MIN=0;
+unsigned int DEST_EVENT_MAX=0;
 string NAMEPATH="";
 string SRC_URL="";
 string DEST_URL="";
@@ -72,7 +74,7 @@ int main(int narg, char *argv[])
 		string comment = "Copied with jcalibcopy from \""+SRC_URL+"\" with context \""+SRC_CONTEXT+"\"";
 		
 		// Write constants to destination
-		jcalib_dest->PutCalib(NAMEPATH, DEST_RUN_MIN, DEST_RUN_MAX, AUTHOR, svals, comment);
+		jcalib_dest->PutCalib(NAMEPATH, DEST_RUN_MIN, DEST_RUN_MAX, DEST_EVENT_MIN, DEST_EVENT_MAX, AUTHOR, svals, comment);
 	}else{
 		// Get Constants from source
 		map<string, string> svals;
@@ -82,7 +84,7 @@ int main(int narg, char *argv[])
 		string comment = "Copied with jcalibcopy from \""+SRC_URL+"\" with context \""+SRC_CONTEXT+"\"";
 		
 		// Write constants to destination
-		jcalib_dest->PutCalib(NAMEPATH, DEST_RUN_MIN, DEST_RUN_MAX, AUTHOR, svals, comment);
+		jcalib_dest->PutCalib(NAMEPATH, DEST_RUN_MIN, DEST_RUN_MAX, DEST_EVENT_MIN, DEST_EVENT_MAX, AUTHOR, svals, comment);
 	}
 
 	delete app;
@@ -119,6 +121,16 @@ void ParseCommandLineArguments(int &narg, char *argv[])
 		}
 		if(arg=="-Rmax"){
 			DEST_RUN_MAX = atoi(next_arg.c_str());
+			i++;
+			continue;
+		}		
+		if(arg=="-Emin"){
+			DEST_EVENT_MIN = atoi(next_arg.c_str());
+			i++;
+			continue;
+		}
+		if(arg=="-Emax"){
+			DEST_EVENT_MAX = atoi(next_arg.c_str());
 			i++;
 			continue;
 		}		
@@ -185,13 +197,15 @@ void Usage(void)
 	cout<<endl;
 	cout<<"Required:"<<endl;
 	cout<<endl;
-	cout<<"   -R src_run          Set run number for source"<<endl;
-	cout<<"   -Rmin dest_run_min  Set min run number for destination"<<endl;
-	cout<<"   -Rmax dest_run_max  Set max run number for destination"<<endl;
+	cout<<"   -R src_run            Set run number for source"<<endl;
+	cout<<"   -Rmin dest_run_min    Set min run number for destination"<<endl;
+	cout<<"   -Rmax dest_run_max    Set max run number for destination"<<endl;
 	cout<<endl;
 	cout<<" Options:"<<endl;
-	cout<<"   -T                  Data set is a 2-D table (def. assume 1-D array)"<<endl;
-	cout<<"   -a author           Set author (def. use USER env. var.)"<<endl;
+	cout<<"   -T                    Data set is a 2-D table (def. assume 1-D array)"<<endl;
+	cout<<"   -a author             Set author (def. use USER env. var.)"<<endl;
+	cout<<"   -Emin dest_event_min  Set min event number for destination(def. 0)"<<endl;
+	cout<<"   -Emax dest_event_max  Set max event number for destination(def. 0)"<<endl;
 	cout<<"   -h		            Print this message"<<endl;
 	cout<<endl;
 	cout<<" The url given for either the source or the destination may include a "<<endl;

@@ -219,7 +219,7 @@ jerror_t JFactory<T>::Get(vector<const T*> &d)
 		init_called = 1;
 	}
 	
-	// Call brun routine if run number has changed or it's not been called
+	// Call erun if appropriate
 	if(run_number!=brun_runnumber){
 		if(brun_called && !erun_called){
 			erun();
@@ -227,11 +227,21 @@ jerror_t JFactory<T>::Get(vector<const T*> &d)
 		}
 		brun_called = 0;
 	}
+	
+	// Check if event boundary has been crossed
+	if(brun_called && eventLoop->CheckEventBoundary(event_number, brun_eventnumber)){
+		// This event and the event for the last time we were called
+		// span an event boundary. Force brun to be called again.
+		brun_called = 0;
+	}
+	
+	// Call brun if it hasn't been yet
 	if(!brun_called){
 		brun(eventLoop, run_number);
 		brun_called = 1;
 		erun_called = 0;
 		brun_runnumber = run_number;
+		brun_eventnumber = event_number;
 	}
 	
 	// Call evnt routine to generate data

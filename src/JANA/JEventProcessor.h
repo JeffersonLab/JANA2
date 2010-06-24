@@ -74,6 +74,7 @@ class JEventProcessor{
 		int erun_called;
 		int fini_called;
 		int brun_runnumber;
+		int brun_eventnumber;
 		bool delete_me;
 	
 	private:

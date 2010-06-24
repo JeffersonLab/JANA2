@@ -860,8 +860,7 @@ JCalibration* JApplication::GetJCalibration(unsigned int run_number)
 
 	vector<JCalibration*>::iterator iter = calibrations.begin();
 	for(; iter!=calibrations.end(); iter++){
-		if((*iter)->GetRunMin()>(int)run_number)continue;
-		if((*iter)->GetRunMax()<(int)run_number)continue;
+		if((*iter)->GetRun()!=(int)run_number)continue;
 		if((*iter)->GetURL()!=url)continue;					// These allow specialty programs to change
 		if((*iter)->GetContext()!=context)continue;		// the source and still use us to instantiate
 		// Found it! Unlock mutex and return pointer
@@ -904,11 +903,7 @@ JCalibration* JApplication::GetJCalibration(unsigned int run_number)
 		calibrations.push_back(g);
 		jout<<"Created JCalibration object of type: "<<g->className()<<endl;
 		jout<<"Generated via: "<< (gen==NULL ? "fallback creation of JCalibrationFile":gen->Description())<<endl;
-		jout<<"Runs:";
-		jout<<" requested="<<g->GetRunRequested();
-		jout<<" found="<<g->GetRunFound();
-		jout<<" Validity range="<<g->GetRunMin()<<"-"<<g->GetRunMax();
-		jout<<endl;
+		jout<<"Run:"<<g->GetRun()<<endl;
 		jout<<"URL: "<<g->GetURL()<<endl;
 		jout<<"context: "<<g->GetContext()<<endl;
 	}else{

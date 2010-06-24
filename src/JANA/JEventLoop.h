@@ -114,6 +114,8 @@ class JEventLoop{
 		double GetIntegratedRate(void) const {return rate_integrated;} ///< Get the current event processing rate
 		double GetLastEventProcessingTime(void) const {return delta_time_single;}
 		unsigned int GetNevents(void) const {return Nevents;}
+		
+		inline bool CheckEventBoundary(int event_numberA, int event_numberB);
 
 		inline vector<call_stack_t> GetCallStack(void){return call_stack;} ///< Get the current factory call stack
 		inline void AddToErrorCallStack(error_call_stack_t &cs){error_call_stack.push_back(cs);} ///< Add layer to the factory call stack
@@ -144,6 +146,8 @@ class JEventLoop{
 		bool record_call_stack;
 		string caller_name;
 		string caller_tag;
+		vector<int> event_boundaries;
+		int event_boundaries_run; ///< Run number boundaries were retrieved from (possbily 0)
 		
 		unsigned int Nevents;			///< Total events processed (this thread)
 		unsigned int Nevents_rate;		///< Num. events accumulated for "instantaneous" rate
@@ -426,6 +430,42 @@ jerror_t JEventLoop::GetFromSource(vector<const T*> &t, JFactory_base *factory)
 	return event.GetObjects(t, factory);
 }
 
+
+//-------------
+// CheckEventBoundary
+//-------------
+inline bool JEventLoop::CheckEventBoundary(int event_numberA, int event_numberB)
+{
+	/// Check whether the two event numbers span one or more boundaries
+	/// in the calibration/conditions database for the current run number.
+	/// Return true if they do and false if they don't. The first parameter
+	/// "event_numberA" is also checked if it lands on a boundary in which
+	/// case true is also returned. If event_numberB lands on a boundary,
+	/// but event_numberA does not, then false is returned.
+	///
+	/// This method is not expected to be called by a user. It is, however called,
+	/// everytime a JFactory's Get() method is called.
+
+	// Make sure our copy of the boundaries is up to date
+	if(event.GetRunNumber()!=event_boundaries_run){
+		event_boundaries.clear(); // in case we can't get the JCalibration pointer
+		JCalibration *jcalib = GetJCalibration();
+		if(jcalib)jcalib->GetEventBoundaries(event_boundaries);
+		event_boundaries_run = event.GetRunNumber();
+	}
+	
+	// Loop over boundaries
+	for(unsigned int i=0; i<event_boundaries.size(); i++){
+		int eb = event_boundaries[i];
+		if((eb - event_numberA)*(eb - event_numberB) < 0.0 || eb==event_numberA){ // think about it ....
+			// events span a boundary or is on a boundary. Return true
+			return true;
+		}
+	}
+
+	return false;
+}
+
 //-------------
 // FindByID
 //-------------
@@ -480,7 +520,7 @@ bool JEventLoop::GetCalib(string namepath, map<string,T> &vals)
 		return true;
 	}
 	
-	return calib->Get(namepath, vals);
+	return calib->Get(namepath, vals, event.GetEventNumber());
 }
 
 //-------------
@@ -499,7 +539,7 @@ template<class T> bool JEventLoop::GetCalib(string namepath, vector<T> &vals)
 		return true;
 	}
 	
-	return calib->Get(namepath, vals);
+	return calib->Get(namepath, vals, event.GetEventNumber());
 }
 
 
