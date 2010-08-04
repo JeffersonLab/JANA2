@@ -9,6 +9,8 @@ using namespace jana;
 #include <map>
 using std::map;
 
+class TTree;
+
 class JEventProcessorJANARATE:public JEventProcessor
 {
 	public:
