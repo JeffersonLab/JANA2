@@ -39,6 +39,8 @@
 
 #include <string>
 
+// The following is here just so we can use ROOT's THtml class to generate documentation.
+#include "cint.h"
 
 #ifndef __CINT__
 

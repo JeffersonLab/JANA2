@@ -27,9 +27,7 @@ using std::stringstream;
 #include <JANA/JEventLoop.h>
 
 // The following is here just so we can use ROOT's THtml class to generate documentation.
-#ifdef __CINT__
 #include "cint.h"
-#endif
 
 
 /// A JANA program will have exactly one JApplication object. It is

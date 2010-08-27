@@ -28,9 +28,7 @@ using std::map;
 #include "jerror.h"
 
 // The following is here just so we can use ROOT's THtml class to generate documentation.
-#ifdef __CINT__
 #include "cint.h"
-#endif
 
 
 // Place everything in JANA namespace

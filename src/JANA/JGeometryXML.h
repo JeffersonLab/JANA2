@@ -115,6 +115,12 @@ class JGeometryXML:public JGeometry{
 
 };
 
+// The following is here just so we can use ROOT's THtml class to generate documentation.
+#ifdef G__DICTIONARY
+typedef JGeometryXML::node_t node_t;
+#endif
+
+
 } // Close JANA namespace
 
 

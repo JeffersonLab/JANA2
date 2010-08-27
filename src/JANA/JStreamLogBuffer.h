@@ -19,6 +19,9 @@
 #include <sstream>
 #include <map>
 
+// The following is here just so we can use ROOT's THtml class to generate documentation.
+#include "cint.h"
+
 extern pthread_mutex_t jstreamlog_mutex;
 
 

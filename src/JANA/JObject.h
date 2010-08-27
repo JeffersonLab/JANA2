@@ -22,9 +22,7 @@ using std::string;
 using std::stringstream;
 
 // The following is here just so we can use ROOT's THtml class to generate documentation.
-#ifdef __CINT__
 #include "cint.h"
-#endif
 
 
 /// The JObject class is a base class for all data classes.

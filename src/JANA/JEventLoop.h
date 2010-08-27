@@ -27,9 +27,7 @@ using std::string;
 #include <JANA/JStreamLog.h>
 
 // The following is here just so we can use ROOT's THtml class to generate documentation.
-#ifdef __CINT__
 #include "cint.h"
-#endif
 
 
 // Place everything in JANA namespace
@@ -159,7 +157,13 @@ class JEventLoop{
 		
 };
 
+
 // The following is here just so we can use ROOT's THtml class to generate documentation.
+#ifdef G__DICTIONARY
+typedef JEventLoop::call_stack_t call_stack_t;
+typedef JEventLoop::error_call_stack_t error_call_stack_t;
+#endif
+
 #ifndef __CINT__
 
 //-------------
