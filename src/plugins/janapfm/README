@@ -1,0 +1,33 @@
+
+
+September 16, 2010
+
+This plugin uses the perfmon package to access counters in the
+performance monitoring unit (PMU) of the CPU. It was written
+to do testing on a prototype 48-core machine. The version of
+perfom installed was (I think), 4.0, but it was installed by a
+sysadmin and I was never really sure where he got the code.
+It may be this, but I'm not sure:
+http://perfmon2.sourceforge.net/docs_v4.html
+
+Permon is available on some Linux systems. This will likely not
+work on most others or with other version of perfmon. It is,
+however, a design that did work so could be customized to
+other PMU APIs which is why it is here.
+
+The PMU has a limited number of counters which seems to be much
+smaller than the things they can be set to count (e.g. 4 counters
+and >120 possible events). The plugin tries to get information 
+on all possible events by changing which PMU events are being
+counted on each JANA event. So the first JANA event will count
+the first MAX_COUNTERS event types, the second JANA event will
+count the next MAX_COUNTERS event types and so on, looping back
+to the begining as needed.
+
+The PMU events are written to the ascii file "janapfm.out" at
+the end of event processing. Cumulative values over all JANA
+events are written, but they are kept separate for processing
+thread. No PMU events are recorded for the event reading thread 
+or the main thread which tend to use very little of the CPU.
+
+
