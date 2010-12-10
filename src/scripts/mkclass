@@ -1,0 +1,121 @@
+#!/usr/bin/env perl
+
+if($#ARGV < 0){&Usage();exit;}
+
+$classname = $ARGV[0];
+
+print "\n";
+print "Generating files for class $classname ....\n";
+
+$hfile = $fname = "${classname}.h";
+open(FILE,">$hfile");
+&PrintFileHeader();
+&PrintDataClass();
+close(FILE);
+print " - $hfile\n";
+
+$ccfile = $fname = "${classname}.cc";
+open(FILE,">$ccfile");
+&PrintFileHeader();
+&PrintDataMethods();
+close(FILE);
+print " - $ccfile\n";
+
+print "\n";
+print "The file $hfile should be placed in the \n";
+print "src/libraries/include directory. The $ccfile should be \n";
+print "placed in the appropriate subdirectory in /src/libraries.\n";
+print "\n";
+
+###############
+# PrintFileHeader
+###############
+sub PrintFileHeader()
+{
+	# print a few lines at the very top of the file
+	$uname = `uname -nprs`;
+	chomp($uname);
+	print FILE "// \$Id\$\n";
+	print FILE "//\n";
+	print FILE "//    File: $fname\n";
+	print FILE "// Created: ".`date`;
+	print FILE "// Creator: ".$ENV{"USER"}." (on $uname)\n";
+	print FILE "//\n";
+}
+
+###############
+# PrintDataClass
+###############
+sub PrintDataClass()
+{
+	# perl doesn't respect scope unless explicitly told to. Hence,
+	# all variables (like FILE and $classname) are global.
+
+	$content = "
+\#ifndef _${classname}_
+\#define _${classname}_
+
+\#include <JANA/jerror.h>
+
+class ${classname}{
+	public:
+		${classname}();
+		virtual ~${classname}();
+		
+	protected:
+	
+	
+	private:
+
+};
+
+\#endif // _${classname}_
+
+";
+	print FILE $content;
+	
+}
+
+###############
+# PrintDataMethods
+###############
+sub PrintDataMethods()
+{
+	$content = "
+\#include \"${classname}.h\"
+
+//---------------------------------
+// ${classname}    (Constructor)
+//---------------------------------
+${classname}::${classname}()
+{
+
+}
+
+//---------------------------------
+// ~${classname}    (Destructor)
+//---------------------------------
+${classname}::~${classname}()
+{
+
+}
+";
+	print FILE $content;
+	
+}
+
+###############
+# Usage
+###############
+sub Usage()
+{
+	print "\n";
+	print "Usage:\n\t mkclass class\n";
+	print "\n";
+	print "Generate the C++ source and header files to implement a new\n";
+	print "data class. This generates files defining a generic class with\n";
+	print "no inheritance.\n";
+	print "To generate a data class for use in the JANA framework, look at\n";
+	print "the mkfactory script.\n";
+	print "\n";
+}

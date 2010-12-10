@@ -1,0 +1,230 @@
+#!/usr/bin/env perl
+
+if($#ARGV < 0){&Usage();exit;}
+
+$classname = $ARGV[0];
+print "\n";
+print "Generating files for factory $classname ";
+
+$USE_TAG = 0;
+if($#ARGV >= 1){
+	$tag = $ARGV[1];
+	$USE_TAG = 1;
+	$tag_suffix = "_${tag}";
+	print "with tag $tag ";
+}
+print "....\n";
+
+if(!$USE_TAG){
+	$hfile = $fname = "${classname}.h";
+	open(FILE,">$hfile");
+	&PrintFileHeader();
+	&PrintDataClass();
+	close(FILE);
+	print " - $hfile\n";
+}
+
+$dhfile = $fname = "${classname}_factory${tag_suffix}.h";
+open(FILE,">$dhfile");
+&PrintFileHeader();
+&PrintFactoryClass();
+close(FILE);
+print " - $dhfile\n";
+
+$ccfile = $fname = "${classname}_factory${tag_suffix}.cc";
+open(FILE,">$ccfile");
+&PrintFileHeader();
+&PrintFactoryMethods();
+close(FILE);
+print " - $ccfile\n";
+
+print "\n";
+if($USE_TAG){
+print "The file $dhfile";
+}else{
+print "The files $hfile and $dhfile";
+}
+print " should be placed in the \n";
+print "src/libraries/include directory. The $ccfile should be \n";
+print "placed in the appropriate subdirectory in /src/libraries.\n";
+print "\n";
+
+###############
+# PrintFileHeader
+###############
+sub PrintFileHeader()
+{
+	# print a few lines at the very top of the file
+	$uname = `uname -nprs`;
+	chomp($uname);
+	print FILE "// \$Id\$\n";
+	print FILE "//\n";
+	print FILE "//    File: $fname\n";
+	print FILE "// Created: ".`date`;
+	print FILE "// Creator: ".$ENV{"USER"}." (on $uname)\n";
+	print FILE "//\n";
+}
+
+###############
+# PrintDataClass
+###############
+sub PrintDataClass()
+{
+	# perl doesn't respect scope unless explicitly told to. Hence,
+	# all variables (like FILE and $classname) are global.
+
+	$content = "
+\#ifndef _${classname}_
+\#define _${classname}_
+
+\#include <JANA/JObject.h>
+\#include <JANA/JFactory.h>
+
+class ${classname}:public jana::JObject{
+	public:
+		JOBJECT_PUBLIC(${classname});
+		
+};
+
+\#endif // _${classname}_
+
+";
+	print FILE $content;
+	
+}
+
+###############
+# PrintFactoryClass
+###############
+sub PrintFactoryClass()
+{
+	$content = "
+\#ifndef _${classname}_factory${tag_suffix}_
+\#define _${classname}_factory${tag_suffix}_
+
+\#include <JANA/JFactory.h>
+\#include \"${classname}.h\"
+
+class ${classname}_factory${tag_suffix}:public jana::JFactory<${classname}>{
+	public:
+		${classname}_factory${tag_suffix}(){};
+		~${classname}_factory${tag_suffix}(){};
+";
+
+	if($USE_TAG){
+		$content .= "		const char* Tag(void){return \"$tag\";}";
+	}
+
+	$content .=	"
+
+	private:
+		jerror_t init(void);						///< Called once at program start.
+		jerror_t brun(jana::JEventLoop *eventLoop, int runnumber);	///< Called everytime a new run number is detected.
+		jerror_t evnt(jana::JEventLoop *eventLoop, int eventnumber);	///< Called every event.
+		jerror_t erun(void);						///< Called everytime run number changes, provided brun has been called.
+		jerror_t fini(void);						///< Called after last event of last event source has been processed.
+};
+
+\#endif // _${classname}_factory${tag_suffix}_
+
+";
+	print FILE $content;
+	
+}
+
+###############
+# PrintDataMethods
+###############
+sub PrintFactoryMethods()
+{
+	$content = "
+
+\#include <iostream>
+\#include <iomanip>
+using namespace std;
+
+\#include \"${classname}_factory${tag_suffix}.h\"
+using namespace jana;
+
+//------------------
+// init
+//------------------
+jerror_t ${classname}_factory${tag_suffix}::init(void)
+{
+	return NOERROR;
+}
+
+//------------------
+// brun
+//------------------
+jerror_t ${classname}_factory${tag_suffix}::brun(jana::JEventLoop *eventLoop, int runnumber)
+{
+	return NOERROR;
+}
+
+//------------------
+// evnt
+//------------------
+jerror_t ${classname}_factory${tag_suffix}::evnt(JEventLoop *loop, int eventnumber)
+{
+
+	// Code to generate factory data goes here. Add it like:
+	//
+	// ${classname} *my${classname} = new ${classname};
+	// my${classname}->x = x;
+	// my${classname}->y = y;
+	// ...
+	// _data.push_back(my${classname});
+	//
+	// Note that the objects you create here will be deleted later
+	// by the system and the _data vector will be cleared automatically.
+
+	return NOERROR;
+}
+
+//------------------
+// erun
+//------------------
+jerror_t ${classname}_factory${tag_suffix}::erun(void)
+{
+	return NOERROR;
+}
+
+//------------------
+// fini
+//------------------
+jerror_t ${classname}_factory${tag_suffix}::fini(void)
+{
+	return NOERROR;
+}
+
+";
+	print FILE $content;
+	
+}
+
+###############
+# Usage
+###############
+sub Usage()
+{
+	print "\n";
+	print "Usage:\n\t mkfactory factory [tag]\n";
+	print "\n";
+	print "Generate the C++ source and header files to implement a new\n";
+	print "data factory for the JANA framework. The files will\n";
+	print "define two classes. The first has the name specified on\n";
+	print "the command line and will be the class which actually holds\n";
+	print "the data. The second is the factory class which is created from\n";
+	print "a template and based on the first class.\n";
+	print "\n";
+	print "If the \"tag\" parameter is given, the factory is created\n";
+	print "to provide data of the given type with the specified tag.\n";
+	print "By default, factories have an empty tag. Giving a factory a\n";
+	print "tag allows it to produce data objects of the same class as another\n";
+	print "factory produces. The two factories are distinguished by\n";
+	print "their tags. If a tag is provided, it is assumed that the\n";
+	print "data class already exists so only the factory's header\n";
+	print "(and source) file is generated.\n";
+	print "\n";
+}

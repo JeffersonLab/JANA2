@@ -1,0 +1,106 @@
+#!/usr/bin/env perl
+
+if($#ARGV < 0){&Usage();exit;}
+
+$classname = $ARGV[0];
+print "\n";
+print "Generating file for factory generator for $classname ";
+
+$USE_TAG = 0;
+if($#ARGV >= 1){
+	$tag = $ARGV[1];
+	$USE_TAG = 1;
+	$tag_suffix = "_${tag}";
+	print "with tag $tag ";
+}
+print "....\n";
+
+$dhfile = $fname = "JFactoryGenerator_${classname}${tag_suffix}.h";
+open(FILE,">$dhfile");
+&PrintFileHeader();
+&PrintHeaderContent();
+close(FILE);
+print " - $dhfile\n";
+
+
+print "\n";
+print "Create an instance of the JFactoryGenerator_${classname}${tag_suffix} \n";
+print "class and use it in a JANA application by registering it\n";
+print "with the JApplication object with something like:\n";
+print "\n";
+print "  app->AddFactoryGenerator(new JFactoryGenerator_${classname}${tag_suffix});\n";
+print "\n";
+print "Also, make sure the factory class itself is defined and that\n";
+print "the file \"${classname}_factory${tag_suffix}.h\" is in the include path.\n";
+print "(See mkfactory for helping making ${classname}_factory${tag_suffix}.h/.cc)\n";
+print "\n";
+
+###############
+# PrintFileHeader
+###############
+sub PrintFileHeader()
+{
+	# print a few lines at the very top of the file
+	$uname = `uname -nprs`;
+	chomp($uname);
+	print FILE "// \$Id\$\n";
+	print FILE "//\n";
+	print FILE "//    File: $fname\n";
+	print FILE "// Created: ".`date`;
+	print FILE "// Creator: ".$ENV{"USER"}." (on $uname)\n";
+	print FILE "//\n";
+}
+
+###############
+# PrintHeaderContent
+###############
+sub PrintHeaderContent()
+{
+	$content = "
+\#ifndef _JFactoryGenerator_${classname}${tag_suffix}_
+\#define _JFactoryGenerator_${classname}${tag_suffix}_
+
+\#include <JANA/jerror.h>
+\#include <JANA/JFactoryGenerator.h>
+
+\#include \"${classname}_factory${tag_suffix}.h\"
+
+class JFactoryGenerator_${classname}${tag_suffix}: public jana::JFactoryGenerator{
+	public:
+		JFactoryGenerator_${classname}${tag_suffix}(){}
+		virtual ~JFactoryGenerator_${classname}${tag_suffix}(){}
+		virtual const char* className(void){return static_className();}
+		static const char* static_className(void){return \"JFactoryGenerator_${classname}${tag_suffix}\";}
+		
+		jerror_t GenerateFactories(jana::JEventLoop *loop){
+			loop->AddFactory(new ${classname}_factory${tag_suffix}());
+			return NOERROR;
+		}
+
+};
+
+\#endif // _JFactoryGenerator_${classname}${tag_suffix}_
+
+";
+	print FILE $content;
+	
+}
+
+###############
+# Usage
+###############
+sub Usage()
+{
+	print "\n";
+	print "Usage:\n\t mkfactory_generator factory [tag]\n";
+	print "\n";
+	print "Generate the C++ source and header files to implement a new\n";
+	print "generator for an existing data factory. The file will\n";
+	print "define one class whose code is contained completely in the\n";
+	print "header file. The name will be based on the name specified on\n";
+	print "the command line.\n";
+	print "\n";
+	print "If the \"tag\" parameter is given, the class is created\n";
+	print "with a name that includes it in the standard scheme.\n";
+	print "\n";
+}
