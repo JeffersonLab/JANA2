@@ -1,0 +1,329 @@
+#!/usr/bin/env perl
+
+if($#ARGV < 0){&Usage();exit;}
+
+$sourcetype = "__nada__";
+foreach $arg (@ARGV){
+	if($arg eq "-plugin"){
+		$is_plugin=1;
+	}else{
+		$sourcetype = $arg;
+	}
+}
+
+if($sourcetype eq "__nada__"){&Usage();exit;}
+
+print "\n";
+print "Generating file for event source of type $sourcetype ";
+
+print "....\n";
+
+# JEventSourceGenerator header file
+$sghfile = $fname = "JEventSourceGenerator_${sourcetype}.h";
+open(FILE,">$sghfile");
+&PrintFileHeader();
+&PrintEventSourceGeneratorHeaderContent();
+close(FILE);
+print " - $sghfile\n";
+
+# JEventSourceGenerator implementation file
+$sgccfile = $fname = "JEventSourceGenerator_${sourcetype}.cc";
+open(FILE,">$sgccfile");
+&PrintFileHeader();
+&PrintEventSourceGeneratorMethods($is_plugin);
+close(FILE);
+print " - $sgccfile\n";
+
+# JEventSource header file
+$shfile = $fname = "JEventSource_${sourcetype}.h";
+open(FILE,">$shfile");
+&PrintFileHeader();
+&PrintEventSourceHeader();
+close(FILE);
+print " - $shfile\n";
+
+# JEventSource implementation file
+$sccfile = $fname = "JEventSource_${sourcetype}.cc";
+open(FILE,">$sccfile");
+&PrintFileHeader();
+&PrintEventSourceMethods();
+close(FILE);
+print " - $sccfile\n";
+
+
+print "\n";
+print "Create an instance of the JEventSourceGenerator_${sourcetype} \n";
+print "class and use it in a JANA application by registering it\n";
+print "with the JApplication object with something like:\n";
+print "\n";
+print "  app->AddEventSourceGenerator(new JFactoryGenerator_${sourcetype});\n";
+
+if($is_plugin!=0){
+	print "\n";
+	print "CAUTION: Code has been added to allow this to be compiled as a plugin.\n";
+	print "If mulitple event sources exist in this same directory, only one should\n";
+	print "include the \"InitPlugin\" routine. Others will need to be\n";
+	print "added to the single InitPlugin routine by hand.\n";
+}
+print "\n";
+
+###############
+# PrintFileHeader
+###############
+sub PrintFileHeader()
+{
+	# print a few lines at the very top of the file
+	$uname = `uname -nprs`;
+	chomp($uname);
+	print FILE "// \$Id\$\n";
+	print FILE "//\n";
+	print FILE "//    File: $fname\n";
+	print FILE "// Created: ".`date`;
+	print FILE "// Creator: ".$ENV{"USER"}." (on $uname)\n";
+	print FILE "//\n";
+}
+
+###############
+# PrintEventSourceGeneratorHeaderContent
+###############
+sub PrintEventSourceGeneratorHeaderContent()
+{
+	$content = "
+\#ifndef _JEventSourceGenerator_${sourcetype}_
+\#define _JEventSourceGenerator_${sourcetype}_
+
+\#include <JANA/jerror.h>
+\#include <JANA/JEventSourceGenerator.h>
+
+\#include \"JEventSource_${sourcetype}.h\"
+
+class JEventSourceGenerator_${sourcetype}: public jana::JEventSourceGenerator{
+	public:
+		JEventSourceGenerator_${sourcetype}(){}
+		virtual ~JEventSourceGenerator_${sourcetype}(){}
+		virtual const char* className(void){return static_className();}
+		static const char* static_className(void){return \"JEventSourceGenerator_${sourcetype}\";}
+		
+		const char* Description(void);
+		double CheckOpenable(string source);
+		jana::JEventSource* MakeJEventSource(string source);
+};
+
+\#endif // _JEventSourceGenerator_${sourcetype}_
+
+";
+	print FILE $content;
+	
+}
+
+###############
+# PrintEventSourceGeneratorMethods
+###############
+sub PrintEventSourceGeneratorMethods()
+{
+	$content = "
+\#include <string>
+using std::string;
+
+\#include \"JEventSourceGenerator_${sourcetype}.h\"
+using namespace jana;
+
+
+//---------------------------------
+// Description
+//---------------------------------
+const char* JEventSourceGenerator_${sourcetype}::Description(void)
+{
+	return \"${sourcetype}\";
+}
+
+//---------------------------------
+// CheckOpenable
+//---------------------------------
+double JEventSourceGenerator_${sourcetype}::CheckOpenable(string source)
+{
+	// This should return a value between 0 and 1 inclusive
+	// with 1 indicating it definitely can read events from
+	// the specified source and 0 meaning it definitely can't.
+	// Typically, this will just check the file suffix.
+	
+	return 0.5; 
+}
+
+//---------------------------------
+// MakeJEventSource
+//---------------------------------
+JEventSource* JEventSourceGenerator_${sourcetype}::MakeJEventSource(string source)
+{
+	return new JEventSource_${sourcetype}(source.c_str());
+}
+
+";
+	print FILE $content;
+	
+}
+
+###############
+# PrintEventSourceHeader
+###############
+sub PrintEventSourceHeader()
+{
+	$content = "
+\#ifndef _JEventSource_${sourcetype}_
+\#define _JEventSource_${sourcetype}_
+
+\#include <JANA/jerror.h>
+\#include <JANA/JEventSource.h>
+\#include <JANA/JEvent.h>
+
+class JEventSource_${sourcetype}: public jana::JEventSource{
+	public:
+		JEventSource_${sourcetype}(const char* source_name);
+		virtual ~JEventSource_${sourcetype}();
+		virtual const char* className(void){return static_className();}
+		static const char* static_className(void){return \"JEventSource_${sourcetype}\";}
+		
+		jerror_t GetEvent(jana::JEvent &event);
+		void FreeEvent(jana::JEvent &event);
+		jerror_t GetObjects(jana::JEvent &event, jana::JFactory_base *factory);
+};
+
+\#endif // _JEventSourceGenerator_${sourcetype}_
+
+";
+	print FILE $content;
+	
+}
+
+###############
+# PrintEventSourceMethods
+###############
+sub PrintEventSourceMethods()
+{
+	$content = "
+
+\#include \"JEventSource_${sourcetype}.h\"
+using namespace jana;
+
+//----------------
+// Constructor
+//----------------
+JEventSource_${sourcetype}::JEventSource_${sourcetype}(const char* source_name):JEventSource(source_name)
+{
+	// open event source (e.g. file) here
+}
+
+//----------------
+// Destructor
+//----------------
+JEventSource_${sourcetype}::~JEventSource_${sourcetype}()
+{
+	// close event source here
+}
+
+//----------------
+// GetEvent
+//----------------
+jerror_t JEventSource_${sourcetype}::GetEvent(JEvent &event)
+{
+	// Read an event from the source and copy the vital info into
+	// the JEvent structure. The \"Ref\" of the JEventSource class
+	// can be used to hold a pointer to an arbitrary object, though
+	// you'll need to cast it to the correct pointer type 
+	// in the GetObjects method.
+	event.SetJEventSource(this);
+	event.SetEventNumber(++Nevents_read);
+	event.SetRunNumber(1234);
+	event.SetRef(NULL);
+
+	// If an event was sucessfully read in, return NOERROR. Otherwise,
+	// return NO_MORE_EVENTS_IN_SOURCE. By way of example, this
+	// will return NO_MORE_EVENTS_IN_SOURCE after 100k events.
+	if(Nevents_read>=100000)return NO_MORE_EVENTS_IN_SOURCE;
+	
+	return NOERROR;
+}
+
+//----------------
+// FreeEvent
+//----------------
+void JEventSource_${sourcetype}::FreeEvent(JEvent &event)
+{
+	// If memory was allocated in GetEvent, it can be freed here. This
+	// would typically be done by using event.GetRef() and casting the
+	// returned void* into the proper pointer type so it can be deleted.
+}
+
+//----------------
+// GetObjects
+//----------------
+jerror_t JEventSource_${sourcetype}::GetObjects(JEvent &event, JFactory_base *factory)
+{
+	// This callback is called to extract objects of a specific type from
+	// an event and store them in the factory pointed to by JFactory_base.
+	// The data type desired can be obtained via factory->GetDataClassName()
+	// and the tag via factory->Tag().
+	//
+	// If the object is not one of a type this source can provide, then
+	// it should return OBJECT_NOT_AVAILABLE. Otherwise, it should return
+	// NOERROR;
+	
+	// We must have a factory to hold the data
+	if(!factory)throw RESOURCE_UNAVAILABLE;
+
+	// Get name of data class we're trying to extract and the factory tag
+	string dataClassName = factory->GetDataClassName();
+	string tag = factory->Tag();
+	
+	// Example for providing objects of type XXX
+	//
+	// // Get pointer to object of type MyEvent (this is optional) 
+	// MyEvent *myevent = (MyEvent*)event.GetRef();
+	//
+	// if(dataClassName == \"XXX\"){
+	//
+	//	 // Make objects of type XXX storing them in a vector
+	//   vector<XXX*> xxx_objs;
+	//	 ...
+	//
+	//	 JFactory<XXX> *fac = dynamic_cast<JFactory<XXX>*>(factory);
+	//	 if(fac)fac->CopyTo(xxx_objs);
+	//	
+	//	 return NOERROR;
+	// }
+	
+	// For all other object types, just return OBJECT_NOT_AVAILABLE to indicate
+	// we can't provide this type of object
+	return OBJECT_NOT_AVAILABLE;
+}
+
+";
+	print FILE $content;
+	
+}
+
+###############
+# Usage
+###############
+sub Usage()
+{
+	print "\n";
+	print "Usage:\n\t mkeventsource [-plugin] name\n";
+	print "\n";
+	print "Generate the C++ source and header files to implement a new\n";
+	print "event source for use in the JANA framework. This will produce\n";
+	print "skeleton files for the event source and event source generator.\n";
+	print "\n";
+	print "If the \"tag\" parameter is given, the class is created\n";
+	print "with a name that includes it in the standard scheme.\n";
+	print "\n";
+	print "One can add code to easily make this a plugin via the\n";
+	print "command line switch:\n";
+	print "\n";
+	print " -plugin \n";
+	print "\n";
+	print "If this switch is present on the command line, a \"InitPlugin\"\n";
+	print "routine will be added to a .cc file creating a JEventSourceGenerator\n";
+	print "of this type and adding it to the JApplication.\n";
+	print "\n";
+}
