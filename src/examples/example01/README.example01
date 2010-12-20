@@ -1,0 +1,53 @@
+
+
+README.example01
+
+12/20/2010  DL
+
+
+This simple example illustrates implementing an event source in JANA.
+JANA is designed to allow the same program to read events in from
+multiple sources. For example, from a file or over a network socket.
+The concept is even extended to different file formats so that one
+program could read in events from say a ROOT file or an EVIO file,
+with each file format being handled by a different JEventSource class.
+
+The user specifies the source(s) to the program via command line
+arguments that are passed as strings to each JEventSourceGenerator
+so that it may indicate its ability to read from that specific source.
+The generator giving the highest indication (a number from 0 to 1)
+is asked to created a JEventSource object to read from that source.
+
+Objects are read from the source using 3 callbacks. The callbacks
+are assigned the following tasks:
+
+1. Read in an event [jerror_t GetEvent(JEvent &event)]
+2. Extract objects from the event [jerror_t GetObjects(JEvent &event, JFactory_base *factory)]
+3. Free the event [void FreeEvent(JEvent &event)]
+
+The JEventSource itself will likely keep some internal structure
+or class to represent the event which it frees in the FreeEvent
+callback.
+
+The actual data objects created when they are extracted from the
+event are passed over to the JANA framework which accepts ownership
+of them and becomes responsible for deleting them. Because of this,
+the data objects should not refer to memory that the JEventSource 
+still owns (e.g. a pointer to some part of the event buffer that
+is freed when the FreeEvent callback is called.
+
+To build this example, simply type "make install". The executable
+will be installed in the directory $JANA_HOME/bin.
+
+To run the example, just invoke it on the command line with a
+single dummy argument for the event source. The reason it needs a
+dummy argument is because the JANA framework will not see any
+event sources specified and will quit very quickly. The dummy
+argument will cause it to instantiate an object of type
+JEventSource_MySource. This template does not actually read in
+any events, but will quit after 100k calls to GetEvent().
+
+Note that the skeleton files used to implement the "MySource"
+event source here were generated with the mkeventsource script
+available in the scripts directory of the JANA source.
+
