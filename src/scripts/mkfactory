@@ -39,14 +39,11 @@ close(FILE);
 print " - $ccfile\n";
 
 print "\n";
-if($USE_TAG){
-print "The file $dhfile";
-}else{
-print "The files $hfile and $dhfile";
-}
-print " should be placed in the \n";
-print "src/libraries/include directory. The $ccfile should be \n";
-print "placed in the appropriate subdirectory in /src/libraries.\n";
+print "Make sure the proper factory generator is added to the \n";
+print "JApplication object to ensure copies of the factory class \n";
+print "are instantiated for every processing thread.\n";
+print "(See the mkfactory_generator script for help making the\n";
+print "generator class.)";
 print "\n";
 
 ###############
@@ -83,6 +80,17 @@ sub PrintDataClass()
 class ${classname}:public jana::JObject{
 	public:
 		JOBJECT_PUBLIC(${classname});
+		
+		// Add data members here. For example:
+		// int id;
+		// double E;
+		
+		// This method is used primarily for pretty printing
+		// the second argument to AddString is printf style format
+		void toStrings(vector<pair<string,string> > &items)const{
+			// AddString(items, \"id\", \"%4d\", id);
+			// AddString(items, \"E\", \"%f\", E);
+		}
 		
 };
 
