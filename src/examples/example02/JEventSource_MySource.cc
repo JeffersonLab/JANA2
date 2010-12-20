@@ -9,6 +9,8 @@
 #include "JEventSource_MySource.h"
 using namespace jana;
 
+#include "RawHit.h"
+
 //----------------
 // Constructor
 //----------------
@@ -42,8 +44,8 @@ jerror_t JEventSource_MySource::GetEvent(JEvent &event)
 
 	// If an event was sucessfully read in, return NOERROR. Otherwise,
 	// return NO_MORE_EVENTS_IN_SOURCE. By way of example, this
-	// will return NO_MORE_EVENTS_IN_SOURCE after 100k events.
-	if(Nevents_read>100000)return NO_MORE_EVENTS_IN_SOURCE;
+	// will return NO_MORE_EVENTS_IN_SOURCE after 10k events.
+	if(Nevents_read>10000)return NO_MORE_EVENTS_IN_SOURCE;
 	
 	return NOERROR;
 }
@@ -79,22 +81,32 @@ jerror_t JEventSource_MySource::GetObjects(JEvent &event, JFactory_base *factory
 	string dataClassName = factory->GetDataClassName();
 	string tag = factory->Tag();
 	
-	// Example for providing objects of type XXX
-	//
-	// // Get pointer to object of type MyEvent (this is optional) 
-	// MyEvent *myevent = (MyEvent*)event.GetRef();
-	//
-	// if(dataClassName == "XXX"){
-	//
-	//	 // Make objects of type XXX storing them in a vector
-	//   vector<XXX*> xxx_objs;
-	//	 ...
-	//
-	//	 JFactory<XXX> *fac = dynamic_cast<JFactory<XXX>*>(factory);
-	//	 if(fac)fac->CopyTo(xxx_objs);
-	//	
-	//	 return NOERROR;
-	// }
+	// RawHit objects with no tag were requested.
+	if(dataClassName == "RawHit" && tag==""){
+		int Nhits = random()%100; // randomly create between 0 and 99 RawHit objects
+		vector<RawHit*> hits;
+		for(int i=0; i<Nhits; i++){
+			RawHit *hit = new RawHit();
+			
+			// You would normally fill these with values read from the
+			// file/socket. For this example though, we just put in
+			// random values.
+			hit->crate = 1 + random()%50;
+			hit->slot = 1 + random()%24;
+			hit->channel = random()%32;
+			hit->adc = random()%4096;
+			
+			hits.push_back(hit);
+		}
+		
+		// Cast the pointer to the factory to one that actually has access
+		// to the internal container of the appropriate type. Copy the
+		// pointers if successful.
+		JFactory<RawHit> *fac = dynamic_cast<JFactory<RawHit>*>(factory);
+		if(fac)fac->CopyTo(hits);
+		
+		return NOERROR; // indicate to framework we know about these objects
+	}
 	
 	// For all other object types, just return OBJECT_NOT_AVAILABLE to indicate
 	// we can't provide this type of object

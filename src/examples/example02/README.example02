@@ -1,0 +1,45 @@
+
+
+README.example01
+
+12/20/2010  DL
+
+
+mkfactory RawHit
+mkfactory_generator RawHit
+
+This example builds on example01 by adding the RawHit data class
+(provided by the event source) and a JEventProcessor based class,
+JEventProcessor_MyProcessor. 
+
+The JEventProcessor class is how end users will implement code
+that accesses the objects provided by either the JEventSource 
+or some reconstruction algorithm. The JEventSource class can
+implement 5 callbacks representing the init, begin run, event,
+end run, and finalize state transitions. These are named
+init, brun, evnt, erun, and fini respectively.
+
+The JEventSource has been modified in this example to actually
+create RawHit objects and place them in the appropriate
+container so that they are available to the JEventProcessor.
+The total number of (fake) events was also reduced to 10k
+for this example.
+
+To build this example, simply type "make install". The executable
+will be installed in the directory $JANA_HOME/bin.
+
+To run the example, just invoke it on the command line with a
+single dummy argument for the event source as was done in for
+example01.
+
+Note that the skeleton files used to implement the "RawHit"
+and JEventProcessor were generated using:
+
+mkfactory RawHit
+mkprocessor MyProcessor
+
+The RawHit_factory.cc and RawHit_factory.h files that were also
+generated were discarded for this example. A shortcut was used
+instead as described near the top of the JFactoryGenerator_RawHit.h
+file.
+
