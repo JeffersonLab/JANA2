@@ -85,6 +85,8 @@ exec_clean:
 # rules in Makefile.lib, but uses the objects explicitly
 %.d : %.cpp
 	@$(DCXX) -MM -MT "$(basename $@).o" $(CXXFLAGS) $< > $(DEP_DIR)/$(basename $@).d
+$(DEP_DIR)/%.d : %.cc
+	@$(DCXX) -MM -MT "$(basename $@).o" $(CXXFLAGS) $< > $@
 %.d : %.cc
 	@$(DCXX) -MM -MT "$(basename $@).o" $(CXXFLAGS) $< > $(DEP_DIR)/$(basename $@).d
 %.d : %.cxx
