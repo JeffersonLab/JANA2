@@ -13,7 +13,7 @@ include $(BMSDIR)/Makefile.common
 VPATH = $(DEP_DIR)
 
 # First target. Make sure directories and dependancy files exist
-all: mkdirs $(DEPS) $(foreach obj,$(OBJS),$(LIBNAME)($(obj)))
+all: mkdirs $(DEPS) $(LIBNAME)($(OBJS))
 	@rm -f $(DICT_FILES)
 ifeq ($(BMS_OSNAME),Darwin)
 	ranlib $(LIBNAME)
@@ -43,16 +43,16 @@ pristine: clean
 
 # Rules to make DEPENDS files from source. Note that these are similar to the
 # rules in Makefile.bin, but use the implicit rules for archiving objects.
-$(DEP_DIR)/%.d : %.cpp
-	@$(DCXX) -MM -MT "$(LIBNAME)($(basename $@).o)" $(CXXFLAGS) $< > $@
-$(DEP_DIR)/%.d : %.cc
-	@$(DCXX) -MM -MT "$(LIBNAME)($(basename $@).o)" $(CXXFLAGS) $< > $@
-$(DEP_DIR)/%.d : %.cxx
-	@$(DCXX) -MM -MT "$(LIBNAME)($(basename $@).o)" $(CXXFLAGS) $< > $@
-$(DEP_DIR)/%.d : %.c
-	@$(DCC) -MM -MT "$(LIBNAME)($(basename $@).o)" $(CFLAGS) $< > $@
-$(DEP_DIR)/%.d : %.F
-	@$(DFC) -MM -MT "$(LIBNAME)($(basename $@).o)" $(FFLAGS) $< > $@
+%.d : %.cpp
+	@$(DCXX) -MM -MT "$(LIBNAME)($(basename $@).o)" $(CXXFLAGS) $< > $(DEP_DIR)/$@
+%.d : %.cc
+	@$(DCXX) -MM -MT "$(LIBNAME)($(basename $@).o)" $(CXXFLAGS) $< > $(DEP_DIR)/$@
+%.d : %.cxx
+	@$(DCXX) -MM -MT "$(LIBNAME)($(basename $@).o)" $(CXXFLAGS) $< > $(DEP_DIR)/$@
+%.d : %.c
+	@$(DCC) -MM -MT "$(LIBNAME)($(basename $@).o)" $(CFLAGS) $< > $(DEP_DIR)/$@
+%.d : %.F
+	@$(DFC) -MM -MT "$(LIBNAME)($(basename $@).o)" $(FFLAGS) $< > $(DEP_DIR)/$@
 
 # Rule to make ROOT dictionary
 %_Dict.cc: %.h
