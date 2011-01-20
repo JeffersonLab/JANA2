@@ -103,6 +103,7 @@ OBJS	+= $(NO_DEP_OBJS)
 OBJS  += $(sort $(addsuffix .o,$(basename $(FSRC) $(CSRC) $(CXXSRC))))
 ODEPS = $(filter-out $(NO_DEP_OBJS),$(OBJS))
 DEPS	+= $(ODEPS:.o=.d)
+DEPS_PATH = $(addprefix $(DEP_DIR)/,$(DEPS))
 
 ifdef DEBUG
 	DEBUG_SUFFIX = _d
@@ -138,7 +139,7 @@ ifeq ($(CXX),g++)
 endif
 
 # Include all dependancy files
-ifneq ($(strip $(DEPS)),)
--include $(foreach s,$(DEPS),$(DEP_DIR)/$s)
+ifneq ($(strip $(DEPS_PATH)),)
+-include $(DEPS_PATH)
 endif
 

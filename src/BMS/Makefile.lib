@@ -13,7 +13,8 @@ include $(BMSDIR)/Makefile.common
 VPATH = $(DEP_DIR)
 
 # First target. Make sure directories and dependancy files exist
-all: mkdirs $(DEPS) $(LIBNAME)($(OBJS))
+#all: mkdirs $(DEPS) $(LIBNAME)($(OBJS))
+all: mkdirs $(DEPS) $(foreach obj,$(OBJS),$(LIBNAME)($(obj)))
 	@rm -f $(DICT_FILES)
 ifeq ($(BMS_OSNAME),Darwin)
 	ranlib $(LIBNAME)
@@ -21,7 +22,6 @@ endif
 
 mkdirs:
 	@mkdir -p $(LIB_DIR)
-	@mkdir -p $(DEP_DIR)
 
 install: all
 	mkdir -p $(INSTALL_DIR)/lib
@@ -43,16 +43,21 @@ pristine: clean
 
 # Rules to make DEPENDS files from source. Note that these are similar to the
 # rules in Makefile.bin, but use the implicit rules for archiving objects.
-%.d : %.cpp
-	@$(DCXX) -MM -MT "$(LIBNAME)($(basename $@).o)" $(CXXFLAGS) $< > $(DEP_DIR)/$@
-%.d : %.cc
-	@$(DCXX) -MM -MT "$(LIBNAME)($(basename $@).o)" $(CXXFLAGS) $< > $(DEP_DIR)/$@
-%.d : %.cxx
-	@$(DCXX) -MM -MT "$(LIBNAME)($(basename $@).o)" $(CXXFLAGS) $< > $(DEP_DIR)/$@
-%.d : %.c
-	@$(DCC) -MM -MT "$(LIBNAME)($(basename $@).o)" $(CFLAGS) $< > $(DEP_DIR)/$@
-%.d : %.F
-	@$(DFC) -MM -MT "$(LIBNAME)($(basename $@).o)" $(FFLAGS) $< > $(DEP_DIR)/$@
+$(DEP_DIR)/%.d : %.cpp
+	@mkdir -p $(DEP_DIR)
+	@$(DCXX) -MM -MT "$(LIBNAME)($(notdir $(basename $@).o))" $(CXXFLAGS) $< > $@
+$(DEP_DIR)/%.d : %.cc
+	@mkdir -p $(DEP_DIR)
+	@$(DCXX) -MM -MT "$(LIBNAME)($(notdir $(basename $@).o))" $(CXXFLAGS) $< > $@
+$(DEP_DIR)/%.d : %.cxx
+	@mkdir -p $(DEP_DIR)
+	@$(DCXX) -MM -MT "$(LIBNAME)($(notdir $(basename $@).o))" $(CXXFLAGS) $< > $@
+$(DEP_DIR)/%.d : %.c
+	@mkdir -p $(DEP_DIR)
+	@$(DCC) -MM -MT "$(LIBNAME)($(notdir $(basename $@).o))" $(CFLAGS) $< > $@
+$(DEP_DIR)/%.d : %.F
+	@mkdir -p $(DEP_DIR)
+	@$(DFC) -MM -MT "$(LIBNAME)($(notdir $(basename $@).o))" $(FFLAGS) $< > $@
 
 # Rule to make ROOT dictionary
 %_Dict.cc: %.h
@@ -76,6 +81,7 @@ env:
 	@echo LIBNAME	= $(LIBNAME)
 	@echo DEP_DIR	= $(DEP_DIR)
 	@echo DEPS		= $(DEPS)
+	@echo DEPS_PATH= $(DEPS_PATH)
 	@echo TMP		= $(TMP)
 	@echo PACKAGES = $(PACKAGES)
 	@echo PACKAGE_MAKEFILES = $(PACKAGE_MAKEFILES)

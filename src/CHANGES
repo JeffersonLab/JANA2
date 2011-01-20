@@ -2,6 +2,7 @@ Changes in version 0.6.3
 
 - Added scripts directory along with scripts for creating some
   common classes used in the framework.
+- Modified Makefile.lib to work with GNU make 3.82
 
 
 Changes in version 0.6.2
