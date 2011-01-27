@@ -47,6 +47,7 @@ JEventLoop::JEventLoop(JApplication *app)
 	event.SetJEventLoop(this);
 	initialized = false;
 	print_parameters_called = false;
+	record_call_stack = false;
 	pause = 0;
 	quit = 0;
 	auto_free = 1;
