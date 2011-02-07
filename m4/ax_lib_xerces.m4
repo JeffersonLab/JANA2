@@ -81,9 +81,11 @@ AC_DEFUN([AX_LIB_XERCES],
         ],
         [
         dnl Default behavior is implicit yes
-			if test -d /usr/local/xerces/PRO/include/xercesc ; then
-				xerces_prefix=/usr/local/xerces/PRO
-			elif test -d /usr/local/include/xercesc ; then
+		if test -d "$xerces_prefix/include/xercesc" ; then
+			xerces_prefix="$xerces_prefix"
+		elif test -d /usr/local/xerces/PRO/include/xercesc ; then
+            xerces_prefix=/usr/local
+		elif test -d /usr/local/include/xercesc ; then
             xerces_prefix=/usr/local
         elif test -d /usr/include/xercesc ; then
             xerces_prefix=/usr

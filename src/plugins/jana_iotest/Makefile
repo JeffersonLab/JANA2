@@ -2,7 +2,7 @@
 SOLIB_NAME = jana_iotest.so
 
 ifndef BMSDIR
-BMSDIR := ../../BMS
+BMSDIR := ../../../BMS
 endif
 
 include $(BMSDIR)/Makefile.shlib

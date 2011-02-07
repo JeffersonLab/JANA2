@@ -10,7 +10,7 @@ LD_DIRS += -L$(PFM)/lib
 LD_LIBS += -lpfm
 
 ifndef BMSDIR
-BMSDIR := $(JANA_HOME)/src/BMS
+BMSDIR := ../../../BMS
 endif
 
 include $(BMSDIR)/Makefile.shlib

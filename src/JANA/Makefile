@@ -2,7 +2,7 @@
 PACKAGES=XERCES
 
 ifndef BMSDIR
-BMSDIR := ../BMS
+BMSDIR := ../../BMS
 endif
 
 # Option for building shared libraries

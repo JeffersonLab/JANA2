@@ -12,8 +12,13 @@ include $(BMSDIR)/Makefile.common
 
 VPATH = $(DEP_DIR)
 
-# First target. Make sure directories and dependancy files exist
-#all: mkdirs $(DEPS) $(LIBNAME)($(OBJS))
+
+install: all
+	mkdir -p $(JANA_BUILD_DIR)/lib
+	mkdir -p $(JANA_BUILD_DIR)/include/$(MODULE_NAME)
+	install -p $(LIBNAME) $(JANA_BUILD_DIR)/lib
+	install -p $(wildcard *.h *.hh *.hxx) $(JANA_BUILD_DIR)/include/$(MODULE_NAME)
+
 all: mkdirs $(DEPS) $(foreach obj,$(OBJS),$(LIBNAME)($(obj)))
 	@rm -f $(DICT_FILES)
 ifeq ($(BMS_OSNAME),Darwin)
@@ -23,21 +28,10 @@ endif
 mkdirs:
 	@mkdir -p $(LIB_DIR)
 
-install: all
-	mkdir -p $(INSTALL_DIR)/lib
-	mkdir -p $(INSTALL_DIR)/include/$(MODULE_NAME)
-	install -p $(LIBNAME) $(INSTALL_DIR)/lib
-	install -p $(wildcard *.h *.hh *.hxx) $(INSTALL_DIR)/include/$(MODULE_NAME)
-	if [ ! -r $(INSTALL_DIR)/src ]; then ln -s $(JANA_SRC_DIR) $(INSTALL_DIR)/src ; fi
-
-uninstall: 
-	rm -f $(INSTALL_DIR)/lib/$(shell basename $(LIBNAME))
-	rm -rf $(INSTALL_DIR)/include/$(MODULE_NAME)
-
 clean:
-	rm -rf $(LIB_DIR) $(DEP_DIR) $(DICT_FILES) *.bak *~ core last.kumac*  #*#
+	rm -rf $(LIB_DIR) $(DEP_DIR) $(DICT_FILES) *.bak *~ core  #*#
 
-pristine: clean
+depclean: clean
 	rm -rf .bin .obj .lib .depends
 
 

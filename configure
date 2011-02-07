@@ -692,7 +692,7 @@ CMSG_CPPFLAGS
 CMSG_LDFLAGS
 CMSG_LIBS
 HAVE_XERCES
-JANA_SRC_DIR
+JANA_BUILD_DIR
 HAVE_ROOT
 HAVE_CMSG
 LIBOBJS
@@ -1742,7 +1742,7 @@ echo "                             Configuring JANA ..."
 # By default, install in the directory parallel to the directory configure
 # is being run from (presumably src).
 #
-ac_default_prefix="$PWD/.."
+ac_default_prefix="/usr/local"
 #
 #
 # For solaris machines we want to default to the solaris compiler(CC) as
@@ -1763,10 +1763,8 @@ fi
 echo "$as_me: uname/CCC: $my_os/$CCC" >&6;}
 #
 #
-# Set the current location as the source directory so the makefiles
-# Makefile.lib and Makefile.bin, ... can make a symlink to it if they
-# are installing the binaries to a non-default location.
-JANA_SRC_DIR="$PWD"
+# Set the location of the build directory
+JANA_BUILD_DIR="$PWD"
 
 # ===========================================================================
 # Perform tests for optional packages used by JANA
@@ -3670,9 +3668,11 @@ if test "${with_xerces+set}" = set; then
 
 else
 
-        			if test -d /usr/local/xerces/PRO/include/xercesc ; then
-				xerces_prefix=/usr/local/xerces/PRO
-			elif test -d /usr/local/include/xercesc ; then
+        		if test -d "$xerces_prefix/include/xercesc" ; then
+			xerces_prefix="$xerces_prefix"
+		elif test -d /usr/local/xerces/PRO/include/xercesc ; then
+            xerces_prefix=/usr/local
+		elif test -d /usr/local/include/xercesc ; then
             xerces_prefix=/usr/local
         elif test -d /usr/include/xercesc ; then
             xerces_prefix=/usr
@@ -4660,7 +4660,7 @@ if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
 else
   ac_cv_header_stdc=no
 fi
-rm -f conftest*
+rm -f -r conftest*
 
 fi
 
@@ -4681,7 +4681,7 @@ if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
 else
   ac_cv_header_stdc=no
 fi
-rm -f conftest*
+rm -f -r conftest*
 
 fi
 
@@ -5180,9 +5180,9 @@ echo "${ECHO_T}no" >&6; }
 
 
 
-{ echo "$as_me:$LINENO: creating JANA/jana_config.h" >&5
-echo "$as_me: creating JANA/jana_config.h" >&6;}
-cp confdefs.h JANA/jana_config.h
+{ echo "$as_me:$LINENO: creating src/JANA/jana_config.h" >&5
+echo "$as_me: creating src/JANA/jana_config.h" >&6;}
+cp confdefs.h src/JANA/jana_config.h
 
 
 
@@ -5902,7 +5902,7 @@ CMSG_CPPFLAGS!$CMSG_CPPFLAGS$ac_delim
 CMSG_LDFLAGS!$CMSG_LDFLAGS$ac_delim
 CMSG_LIBS!$CMSG_LIBS$ac_delim
 HAVE_XERCES!$HAVE_XERCES$ac_delim
-JANA_SRC_DIR!$JANA_SRC_DIR$ac_delim
+JANA_BUILD_DIR!$JANA_BUILD_DIR$ac_delim
 HAVE_ROOT!$HAVE_ROOT$ac_delim
 HAVE_CMSG!$HAVE_CMSG$ac_delim
 LIBOBJS!$LIBOBJS$ac_delim

@@ -29,7 +29,7 @@ CXXFLAGS += -fPIC
 # files) so we need to make a dummy target appear first that calls
 # the real default target which resides in either Makefile.bin or
 # Makefile.lib
-first: all
+first: install
 
 ifndef OS
 OS = $(shell uname)
@@ -71,9 +71,9 @@ DEP_DIR		= .depends/$(BMS_OSNAME)
 INSTALL_DIR=${exec_prefix}
 
 # include directories
-FFLAGS   += -I. -I.. -I$(INSTALL_DIR)/include
-CFLAGS   += -I. -I.. -I$(INSTALL_DIR)/include
-CXXFLAGS += -I. -I.. -I$(INSTALL_DIR)/include
+FFLAGS   += -I. -I.. -I$(INSTALL_DIR)/include -I$(JANA_BUILD_DIR)/src
+CFLAGS   += -I. -I.. -I$(INSTALL_DIR)/include -I$(JANA_BUILD_DIR)/src
+CXXFLAGS += -I. -I.. -I$(INSTALL_DIR)/include -I$(JANA_BUILD_DIR)/src
 LD_FLAGS += -rdynamic
 
 # Optional XERCES package

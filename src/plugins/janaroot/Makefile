@@ -6,7 +6,7 @@ PACKAGES := ROOT
 SOLIB_NAME = janaroot.so
 
 ifndef BMSDIR
-BMSDIR := ../../BMS
+BMSDIR := ../../../BMS
 endif
 include $(BMSDIR)/Makefile.config
 

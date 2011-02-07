@@ -5,7 +5,7 @@
 SOLIB_NAME = jeventsource_evio.so
 
 ifndef BMSDIR
-BMSDIR := ../../BMS
+BMSDIR := ../../../BMS
 endif
 
 include $(BMSDIR)/Makefile.shlib

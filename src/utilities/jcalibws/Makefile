@@ -9,7 +9,7 @@ CXXSRC += soapC.cpp soapServer.cpp
 erste: soapH.h all
 
 ifndef BMSDIR
-BMSDIR := ../../BMS
+BMSDIR := ../../../BMS
 endif
 
 include $(BMSDIR)/Makefile.bin

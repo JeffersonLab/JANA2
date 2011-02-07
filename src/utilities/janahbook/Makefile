@@ -6,7 +6,7 @@ PACKAGES := CERNLIB
 SOLIB_NAME = janahbook.so
 
 ifndef BMSDIR
-BMSDIR := ../../BMS
+BMSDIR := ../../../BMS
 endif
 
 include $(BMSDIR)/Makefile.config

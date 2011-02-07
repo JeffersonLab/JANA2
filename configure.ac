@@ -26,7 +26,7 @@ echo "                             Configuring JANA ..."
 # By default, install in the directory parallel to the directory configure
 # is being run from (presumably src).
 #
-ac_default_prefix="$PWD/.."
+ac_default_prefix="/usr/local"
 #
 #
 # For solaris machines we want to default to the solaris compiler(CC) as
@@ -46,10 +46,8 @@ fi
 AC_MSG_NOTICE([uname/CCC: $my_os/$CCC])
 #
 #
-# Set the current location as the source directory so the makefiles
-# Makefile.lib and Makefile.bin, ... can make a symlink to it if they
-# are installing the binaries to a non-default location.
-JANA_SRC_DIR="$PWD"
+# Set the location of the build directory
+JANA_BUILD_DIR="$PWD"
 
 # ===========================================================================
 # Perform tests for optional packages used by JANA
@@ -62,14 +60,14 @@ ROOT_PATH(5.08/00, ,AC_MSG_RESULT(ROOT support will not be included))
 #AC_LIB_CERNLIB(graflib, CLTOU, [AC_LIB_CERNLIB(mathlib,GAUSS,[LIBS="$CERNLIB_LIBS $LIBS"])], AC_MSG_RESULT(CERNLIB support will not be included))
 CMSG
 
-AC_MSG_NOTICE([creating JANA/jana_config.h])
-cp confdefs.h JANA/jana_config.h
+AC_MSG_NOTICE([creating src/JANA/jana_config.h])
+cp confdefs.h src/JANA/jana_config.h
 
 AC_SUBST([HAVE_MYSQL])
 AC_SUBST([HAVE_XERCES])
 AC_SUBST([prefix])
 AC_SUBST([exec_prefix])
-AC_SUBST([JANA_SRC_DIR])
+AC_SUBST([JANA_BUILD_DIR])
 AC_SUBST([HAVE_ROOT])
 #AC_SUBST([HAVE_CERNLIB])
 AC_SUBST([HAVE_CMSG])
