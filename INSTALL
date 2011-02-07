@@ -1,6 +1,17 @@
 
 Installation instructions for JANA
 6/5/2008 David Lawrence
+2/7/2010 Updated DL
+
+
+Quick Start
+--------------------
+> tar xzvf jana_0.6.3.tgz
+> cd jana_0.6.3
+> ./configure
+> make
+> make install
+
 
 Obtaining the Source
 --------------------
@@ -12,63 +23,62 @@ The stable versions are numbered while the "jana_svn_daily_linux.tgz"
 file is regenerated from the repository nightly and should be 
 considered unstable.
 
-JANA may be installed in a system directory such as /usr/local or
-one may choose to install it in its own directory located in a
-private area. If you plan to install to a private area, you should
-make that directory now and unpack the jana source into it. If
-you plan to install to a different loctation than where the source
-is, you can unpack it anywhere. For example:
+Unpack the tarball containing the source. For example:
 
->mkdir ~/JANA
->cd ~/JANA
->tar xzf path-to-tarball/jana_0.4.5.tgz
+>tar xzf path-to-tarball/jana_0.6.3.tgz
 
 
 Configuring
 ------------------------------------------------
 Before building, you must first configure JANA for your system.
-This is done using the included configure script inside the src
-directory. Change to the src directory and run configure.
+This is done using the included configure script. Go to the top
+build directory and run configure.
 For example:
 
->cd src
+>cd jana_0.6.3
 >./configure
 
 
 Running configure with no options will cause the executables,
-libraries, and header files to be installed in directories
-parallel to the src directory (assuming you run configure
-from within the src directory). If you wish to install to
-a different location, this can be specified with the --prefix
-(or --exec_prefix) argument. For example:
+libraries, and header files to be marked for installation to
+/usr/local. If you wish to install to a different location,
+this can be specified with the --prefix (or --exec_prefix)
+argument. For example:
 
->./configure --prefix=/usr/local
+>./configure --prefix=/usr/local/jana/0.6.3
 
 Note that JANA can optionally compile in support for some
 external packages such as the Xerces XML parser or MySQL.
 The command line arguments specific to these can be found
 by running configure with the -h argument. As an example,
-suppose Xerces is installed in a directory pointed to by
-the XERCESCROOT environment variable. One can then do the
-following:
+suppose Xerces is installed in the directory /usr/local/xerces
+One can then do the following:
 
->./configure --with-xerces=$XERCESCROOT
+>./configure --with-xerces=/usr/local/xerces
+
+NOTE: For xerces, the user's XERCESCROOT environment variable 
+is checked first (if it is set) automatically so that one
+does not need to use the --with-xerces command line switch.
+Support for most external packages is handled this way to make 
+somewhat automatic to include this support.
 
 
 Building and Installing
 ---------------------------------------
-To build JANA and install it, just run "make" in the src directory.
+To build JANA and install it, just run "make" followed by
+"make install"
 
 >make
+>make install
 
 The binaries and headers will be installed in the directories 
-parallel to src or in an alternate directory as described above.
+parallel to src during the "make stage" and installed into
+the final installation directory (see above) during "make install".
 
 You can test that the build succeeded by running one of the utility
 programs. For example, the "jana" utility:
 
->cd ../bin
->./jana --janaversion
+>cd ./bin/jana --janaversion
 
 
 Using JANA
@@ -78,7 +88,8 @@ a program that links to it. It is recommended that you set
 the JANA_HOME environment variable to point to the installation
 directory and then use that in your program's build system.
 Also, be sure to add the installation directory+/bin to your PATH if
-it is not already there so as to have access to the utilty programs.
+it is not already there so as to have access to the utilty programs
+and scripts.
 
 
 
