@@ -4,6 +4,7 @@ Changes in version 0.6.3
   common classes used in the framework.
 - Modified Makefile.lib to work with GNU make 3.82
 - Reoganized build system to be closer to classic unix style
+- Added jana-config script for easier setting of compiler options
 
 
 Changes in version 0.6.2
