@@ -997,6 +997,40 @@ jerror_t JApplication::Init(void)
 	// Attach any plugins
 	AttachPlugins();
 
+	// Add auto-activated factories in a style similar to PLUGINS
+	// (comma separated list).
+	try{
+		string autoactivate_conf;
+		jparms->GetParameter("AUTOACTIVATE", autoactivate_conf);
+		if(autoactivate_conf.length()>0){
+			// Loop over comma separated list of factories to auto activate
+			vector<string> myfactories;
+			string &str = autoactivate_conf;
+			unsigned int cutAt;
+			while( (cutAt = str.find(",")) != (unsigned int)str.npos ){
+				if(cutAt > 0)myfactories.push_back(str.substr(0,cutAt));
+				str = str.substr(cutAt+1);
+			}
+			if(str.length() > 0)myfactories.push_back(str);
+
+			// Loop over list of factory strings (which could be in factory:tag
+			// form) and parse the strings as needed in order to add them to
+			// the auto activate list.
+			for(unsigned int i=0; i<myfactories.size(); i++){
+				string nametag = myfactories[i];
+				string name = nametag;
+				string tag = "";
+				string::size_type pos = nametag.find(":");
+				if(pos!=string::npos){
+					name = nametag.substr(0,pos);
+					tag = nametag.substr(pos+1,nametag.size()-pos);
+				}
+				AddAutoActivatedFactory(name, tag);
+			}
+		}
+	}catch(...){}
+
+
 	// Call init Processors (note: factories don't exist yet)
 	try{
 		for(unsigned int i=0;i<processors.size();i++)processors[i]->init();
