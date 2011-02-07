@@ -92,6 +92,7 @@ class JApplication{
 		virtual void Pause(void); ///< Pause event processing
 		virtual void Resume(void); ///< Resume event processing
 		virtual void Quit(void); ///< Stop event processing
+		bool GetQuittingStatus(void){return quitting;} ///< return true if Quit has already been called
 		int GetNcores(void){return Ncores;}
 		inline int GetNEvents(void){return NEvents;} ///< Returns the number of events processed so far.
 		inline float GetRate(void){return rate_instantaneous;} ///< Get the current event processing rate
@@ -168,6 +169,7 @@ class JApplication{
 		bool stop_event_buffer;
 		bool dump_calibrations;
 		bool dump_configurations;
+		bool quitting;
 };
 
 } // Close JANA namespace

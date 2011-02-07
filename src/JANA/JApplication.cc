@@ -178,6 +178,7 @@ JApplication::JApplication(int narg, char* argv[])
 	stop_event_buffer = false;
 	dump_calibrations = false;
 	dump_configurations = false;
+	quitting = false;
 	Ncores = sysconf(_SC_NPROCESSORS_ONLN);
 	
 	// Configuration Parameter manager
@@ -932,12 +933,7 @@ void* LaunchThread(void* arg)
 	/// This is a global function that is used to create
 	/// a new JEventLoop object which runs in its own thread.
 
-	// We don't want event processing threads handling
-	// the SIGUSR1 signals. They should be handled by the main thread
-	//sigset_t set;
-	//sigemptyset(&set);
-	//sigaddset(&set, SIGUSR2);
-	//pthread_sigmask(SIG_BLOCK, &set, NULL);
+	if(japp!=NULL && japp->GetQuittingStatus())return NULL; // in case quit has already been called
 	
 	// For stuck threads, we may need to cancel them at an arbitrary execution
 	// point so we set our cancel type to PTHREAD_CANCEL_ASYNCHRONOUS.
@@ -1094,6 +1090,10 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 			}
 			rate_instantaneous = sleep_time>0.0 ? (double)delta_NEvents/sleep_time:0.0;
 			rate_average = avg_time>0.0 ? (double)avg_NEvents/avg_time:0.0;
+			
+			// In case Quit was called while a thread was being launched ...
+			if(quitting)Quit();
+			
 		}else{
 			_DBG_<<" didn't sleep full "<<sleep_time<<" seconds!"<<endl;
 		}
@@ -1321,6 +1321,7 @@ void JApplication::Quit(void)
 	/// Quit the application. This will invoke the Quit() method of all
 	/// JEventLoops. This does not force a runaway thread to be killed and
 	/// will only cause the program to quit if all JEventLoops quit cleanly.
+	quitting = true;
 	jout<<endl<<"Telling all threads to quit ..."<<endl;
 	vector<JEventLoop*>::iterator iter = loops.begin();
 	for(; iter!=loops.end(); iter++){
