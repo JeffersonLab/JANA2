@@ -71,9 +71,9 @@ DEP_DIR		= .depends/$(BMS_OSNAME)
 INSTALL_DIR=${exec_prefix}
 
 # include directories
-FFLAGS   += -I. -I.. -I$(INSTALL_DIR)/include -I$(JANA_BUILD_DIR)/src
-CFLAGS   += -I. -I.. -I$(INSTALL_DIR)/include -I$(JANA_BUILD_DIR)/src
-CXXFLAGS += -I. -I.. -I$(INSTALL_DIR)/include -I$(JANA_BUILD_DIR)/src
+FFLAGS   += -I. -I.. -I$(JANA_BUILD_DIR)/src
+CFLAGS   += -I. -I.. -I$(JANA_BUILD_DIR)/src
+CXXFLAGS += -I. -I.. -I$(JANA_BUILD_DIR)/src
 LD_FLAGS += -rdynamic
 
 # Optional XERCES package

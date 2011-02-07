@@ -34,7 +34,7 @@ OUTPUT_OPTION = -o $(OBJ_DIR)/$@
 VPATH = $(OBJ_DIR):$(BIN_DIR)
 LINK_OBJS += $(addprefix $(OBJ_DIR)/,$(DOBJS))
 
-LIB_DIRS += $(INSTALL_DIR)/lib
+# LIB_DIRS += $(INSTALL_DIR)/lib
 
 # Automatically link JANA into plugins. This seems to be
 # required for Fedora 11 running gcc4.4
@@ -65,19 +65,11 @@ install: all
 	install -p $(LIB_DIR)/$(SOLIB_NAME) $(JANA_BUILD_DIR)/lib
 	install -p *.h $(JANA_BUILD_DIR)/include/$(MODULE_NAME)
 
-uninstall: 
-	if test -d $(INSTALL_DIR)/lib ; then cd $(INSTALL_DIR)/lib ; rm -f $(SOLIB_NAME) ; fi
-
-relink: exec_clean all
-
 clean:
 	rm -rf $(LIB_DIR) $(OBJ_DIR) $(DEP_DIR) $(DICT_FILES) *.o *.bak *~ core #*# 
 
 depclean: clean
 	rm -rf .bin .obj .lib .depends
-
-exec_clean:
-	rm -f $(LIB_DIR)/$(SOLIB_NAME)
 
 
 # Rules to make DEPENDS files from source. Note that these are similar to the
