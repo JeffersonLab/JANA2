@@ -1,0 +1,14 @@
+#!/bin/sh
+
+# Get architecture by compiling a file and then looking at it
+# using the "file" program.
+
+# This is designed for Mac OS X which does not apparently have a clean
+# way of identifying 32-bit vs. 64 bit (other than looking at the 
+# Darwin version and guessing from that). This way at least allows
+# for non-Apple compilers that may target different architectures.
+
+echo "int main(int narg, char *argv[]){return 0;}" > tmp$$.cc
+g++ -o tmp$$ tmp$$.cc
+file tmp$$ | awk '{print $NF}'
+rm -f tmp$$ tmp$$.cc
