@@ -129,6 +129,7 @@ void JParameterManager::ReadConfigFile(string fname)
 	ifstream ifs(fname.c_str());
 	if(!ifs.is_open()){
 		jerr<<"Unable to open configuration file \""<<fname<<"\" !"<<endl;
+		exit(-1);
 		return;
 	}
 	jout<<"Reading configuration from \""<<fname<<"\" ..."<<endl;
