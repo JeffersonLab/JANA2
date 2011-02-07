@@ -48,6 +48,7 @@ AC_MSG_NOTICE([uname/CCC: $my_os/$CCC])
 #
 # Set the location of the build directory
 JANA_BUILD_DIR="$PWD"
+BMS_OSNAME=`BMS/osrelease.pl`
 
 # ===========================================================================
 # Perform tests for optional packages used by JANA
@@ -69,6 +70,7 @@ AC_SUBST([prefix])
 AC_SUBST([exec_prefix])
 AC_SUBST([JANA_BUILD_DIR])
 AC_SUBST([HAVE_ROOT])
+AC_SUBST([BMS_OSNAME])
 #AC_SUBST([HAVE_CERNLIB])
 AC_SUBST([HAVE_CMSG])
 AC_OUTPUT(BMS/Makefile.config)

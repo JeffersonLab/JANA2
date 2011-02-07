@@ -10,6 +10,7 @@
 # that only needs configuration information.
 #
 
+BMS_OSNAME     := @BMS_OSNAME@
 
 HAVE_MYSQL     := @HAVE_MYSQL@
 HAVE_XERCES    := @HAVE_XERCES@

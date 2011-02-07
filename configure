@@ -694,6 +694,7 @@ CMSG_LIBS
 HAVE_XERCES
 JANA_BUILD_DIR
 HAVE_ROOT
+BMS_OSNAME
 HAVE_CMSG
 LIBOBJS
 LTLIBOBJS'
@@ -1765,6 +1766,7 @@ echo "$as_me: uname/CCC: $my_os/$CCC" >&6;}
 #
 # Set the location of the build directory
 JANA_BUILD_DIR="$PWD"
+BMS_OSNAME=`BMS/osrelease.pl`
 
 # ===========================================================================
 # Perform tests for optional packages used by JANA
@@ -5190,6 +5192,7 @@ cp confdefs.h src/JANA/jana_config.h
 
 
 
+
 #AC_SUBST([HAVE_CERNLIB])
 
 ac_config_files="$ac_config_files BMS/Makefile.config"
@@ -5904,12 +5907,13 @@ CMSG_LIBS!$CMSG_LIBS$ac_delim
 HAVE_XERCES!$HAVE_XERCES$ac_delim
 JANA_BUILD_DIR!$JANA_BUILD_DIR$ac_delim
 HAVE_ROOT!$HAVE_ROOT$ac_delim
+BMS_OSNAME!$BMS_OSNAME$ac_delim
 HAVE_CMSG!$HAVE_CMSG$ac_delim
 LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 85; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 86; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
@@ -6949,12 +6953,13 @@ CMSG_LIBS!$CMSG_LIBS$ac_delim
 HAVE_XERCES!$HAVE_XERCES$ac_delim
 JANA_BUILD_DIR!$JANA_BUILD_DIR$ac_delim
 HAVE_ROOT!$HAVE_ROOT$ac_delim
+BMS_OSNAME!$BMS_OSNAME$ac_delim
 HAVE_CMSG!$HAVE_CMSG$ac_delim
 LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 85; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 86; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
