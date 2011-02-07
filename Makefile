@@ -16,6 +16,8 @@ install: all
 	install -p $(JANA_BUILD_DIR)/bin/* $(prefix)/bin
 	install -p $(JANA_BUILD_DIR)/lib/* $(prefix)/lib
 	cp -rp $(JANA_BUILD_DIR)/include $(prefix)
+	install -p $(filter-out scripts/Makefile,$(wildcard scripts/*)) $(prefix)/bin
+	cp -rp BMS/osrelease.pl BMS/get_macos_arch $(prefix)/bin
 	cp -rp BMS/jana-config $(prefix)/bin
 	chmod +x $(prefix)/bin/jana-config
 	
