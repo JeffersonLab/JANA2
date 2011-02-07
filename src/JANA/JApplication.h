@@ -176,6 +176,8 @@ class JApplication{
 // The following is here just so we can use ROOT's THtml class to generate documentation.
 #ifndef __CINT__
 
+extern jana::JApplication *japp;
+
 // For plugins
 typedef void InitPlugin_t(jana::JApplication* app);
 typedef void FiniPlugin_t(jana::JApplication* app);
