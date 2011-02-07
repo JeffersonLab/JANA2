@@ -695,6 +695,10 @@ HAVE_XERCES
 JANA_BUILD_DIR
 HAVE_ROOT
 BMS_OSNAME
+FFLAGS_CONFIGURE
+CFLAGS_CONFIGURE
+CXXFLAGS_CONFIGURE
+LDFLAGS_CONFIGURE
 HAVE_CMSG
 LIBOBJS
 LTLIBOBJS'
@@ -1744,6 +1748,22 @@ echo "                             Configuring JANA ..."
 # is being run from (presumably src).
 #
 ac_default_prefix="/usr/local"
+#
+#
+# Users may pass compiler flags as arugments to configure.
+# We interpret these as flags to be used in compiling the JANA
+# code, but not when compileing the test programs to see if the
+# c/c++ compilers work. Therefore, we copy them to variables with
+# _CONFIGURE appended to the name and overwrite the actual
+# variables with empty strings.
+FFLAGS_CONFIGURE=$FFLAGS
+CFLAGS_CONFIGURE=$CFLAGS
+CXXFLAGS_CONFIGURE=$CXXFLAGS
+LDFLAGS_CONFIGURE=$LDFLAGS $LD_FLAGS
+FFLAGS=""
+CFLAGS=""
+CXXFLAGS=""
+LDFLAGS=""
 #
 #
 # For solaris machines we want to default to the solaris compiler(CC) as
@@ -5193,6 +5213,10 @@ cp confdefs.h src/JANA/jana_config.h
 
 
 
+
+
+
+
 #AC_SUBST([HAVE_CERNLIB])
 
 ac_config_files="$ac_config_files BMS/Makefile.config"
@@ -5908,12 +5932,16 @@ HAVE_XERCES!$HAVE_XERCES$ac_delim
 JANA_BUILD_DIR!$JANA_BUILD_DIR$ac_delim
 HAVE_ROOT!$HAVE_ROOT$ac_delim
 BMS_OSNAME!$BMS_OSNAME$ac_delim
+FFLAGS_CONFIGURE!$FFLAGS_CONFIGURE$ac_delim
+CFLAGS_CONFIGURE!$CFLAGS_CONFIGURE$ac_delim
+CXXFLAGS_CONFIGURE!$CXXFLAGS_CONFIGURE$ac_delim
+LDFLAGS_CONFIGURE!$LDFLAGS_CONFIGURE$ac_delim
 HAVE_CMSG!$HAVE_CMSG$ac_delim
 LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 86; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 90; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
@@ -6954,12 +6982,16 @@ HAVE_XERCES!$HAVE_XERCES$ac_delim
 JANA_BUILD_DIR!$JANA_BUILD_DIR$ac_delim
 HAVE_ROOT!$HAVE_ROOT$ac_delim
 BMS_OSNAME!$BMS_OSNAME$ac_delim
+FFLAGS_CONFIGURE!$FFLAGS_CONFIGURE$ac_delim
+CFLAGS_CONFIGURE!$CFLAGS_CONFIGURE$ac_delim
+CXXFLAGS_CONFIGURE!$CXXFLAGS_CONFIGURE$ac_delim
+LDFLAGS_CONFIGURE!$LDFLAGS_CONFIGURE$ac_delim
 HAVE_CMSG!$HAVE_CMSG$ac_delim
 LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 86; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 90; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5
@@ -7286,4 +7318,4 @@ if test "$no_create" != yes; then
   $ac_cs_success || { (exit 1); exit 1; }
 fi
 
-
+chmod +x BMS/jana-config

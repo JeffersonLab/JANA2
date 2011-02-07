@@ -49,6 +49,11 @@ CMSG_CPPFLAGS="@CMSG_CPPFLAGS@"
 CMSG_LDFLAGS="@CMSG_LDFLAGS@"
 CMSG_LIBS="@CMSG_LIBS@"
 
+FFLAGS_CONFIGURE="@FFLAGS_CONFIGURE@"
+CFLAGS_CONFIGURE="@CFLAGS_CONFIGURE@"
+CXXFLAGS_CONFIGURE="@CXXFLAGS_CONFIGURE@"
+LDFLAGS_CONFIGURE="@LDFLAGS_CONFIGURE@"
+
 JANA_INSTALL_DIR=@prefix@
 
 # Add flags and libraries from all 3rd party packages
@@ -70,7 +75,7 @@ while test $# -gt 0; do
 
 	case $1 in
 		--cflags)
-			mess="$mess -I${JANA_INSTALL_DIR}/include ${CPPFLAGS}"
+			mess="$mess -I${JANA_INSTALL_DIR}/include ${CPPFLAGS} ${CXXFLAGS_CONFIGURE}"
 			;;
 	esac
 	case $1 in

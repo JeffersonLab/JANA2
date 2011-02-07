@@ -18,6 +18,12 @@
 
 include $(BMSDIR)/Makefile.config
 
+# Include CXXFLAGS, CFLAGS, FFLAGS, and LDFLAGS specified to configure
+FFLAGS   += $(FFLAGS_CONFIGURE)
+CFLAGS   += $(CFLAGS_CONFIGURE)
+CXXFLAGS += $(CXXFLAGS_CONFIGURE)
+LD_FLAGS += $(LDFLAGS_CONFIGURE)
+
 # This may not be supported on all platforms. It is needed however,
 # at least on Fedora 10 with SELinux enabled which will complain
 # about text relocations and deny plugin execution otherwise.

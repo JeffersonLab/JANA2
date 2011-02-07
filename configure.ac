@@ -29,6 +29,22 @@ echo "                             Configuring JANA ..."
 ac_default_prefix="/usr/local"
 #
 #
+# Users may pass compiler flags as arugments to configure.
+# We interpret these as flags to be used in compiling the JANA
+# code, but not when compileing the test programs to see if the
+# c/c++ compilers work. Therefore, we copy them to variables with
+# _CONFIGURE appended to the name and overwrite the actual
+# variables with empty strings.
+FFLAGS_CONFIGURE=$FFLAGS
+CFLAGS_CONFIGURE=$CFLAGS
+CXXFLAGS_CONFIGURE=$CXXFLAGS
+LDFLAGS_CONFIGURE=$LDFLAGS $LD_FLAGS
+FFLAGS=""
+CFLAGS=""
+CXXFLAGS=""
+LDFLAGS=""
+#
+#
 # For solaris machines we want to default to the solaris compiler(CC) as
 # opposed to the gnu compiler(g++). For some reason, this is not the default
 # with the AC_PROG_CXX test below which finds a gnu compiler, but then
@@ -71,8 +87,12 @@ AC_SUBST([exec_prefix])
 AC_SUBST([JANA_BUILD_DIR])
 AC_SUBST([HAVE_ROOT])
 AC_SUBST([BMS_OSNAME])
+AC_SUBST([FFLAGS_CONFIGURE])
+AC_SUBST([CFLAGS_CONFIGURE])
+AC_SUBST([CXXFLAGS_CONFIGURE])
+AC_SUBST([LDFLAGS_CONFIGURE])
 #AC_SUBST([HAVE_CERNLIB])
 AC_SUBST([HAVE_CMSG])
 AC_OUTPUT(BMS/Makefile.config)
 AC_OUTPUT(BMS/jana-config)
-
+[chmod +x BMS/jana-config]
