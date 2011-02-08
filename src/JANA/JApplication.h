@@ -47,7 +47,7 @@ class JEventSourceGenerator;
 class JFactoryGenerator;
 class JCalibrationGenerator;
 class JEventLoop;
-
+class JFactory_base;
 
 class JApplication{
 	public:
@@ -86,6 +86,7 @@ class JApplication{
 		jerror_t RegisterSharedObjectDirectory(string sodirname); ///< Register all shared objects in a directory
 		jerror_t AddPluginPath(string path); ///< Add a directory to the plugin search path
 		jerror_t AddPlugin(const char *name); ///< Add the specified plugin to the shared objects list.
+		void AddFactoriesToDeleteList(vector<JFactory_base*> &factories);
 		virtual jerror_t Init(void); ///< Initialize the JApplication object
 		virtual jerror_t Run(JEventProcessor *proc=NULL, int Nthreads=0); ///< Process all events from all sources
 		virtual jerror_t Fini(void); ///< Gracefully end event processing
@@ -130,6 +131,7 @@ class JApplication{
 	
 		vector<JEventProcessor*> processors;
 		vector<JEventLoop*> loops;
+		vector<JFactory_base*> factories_to_delete;
 		vector<double*> heartbeats;
 		pthread_mutex_t app_mutex;
 		map<pthread_t, map<string, unsigned int> > Nfactory_calls;

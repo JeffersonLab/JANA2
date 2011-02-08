@@ -92,15 +92,22 @@ JEventLoop::~JEventLoop()
 		}
 	}
 
-	// Delete all of the factories
-	for(unsigned int i=0; i<factories.size(); i++){
-		try{
-			delete factories[i];
-		}catch(exception &e){
-			jerr<<endl;
-			_DBG_<<" Error thrown while deleting JFactory<";
-			jerr<<factories[i]->GetDataClassName()<<">"<<endl;
-			_DBG_<<e.what()<<endl;
+	// If we have a valid JApplication pointer then use it to
+	// register all of our factories for deletion after all the
+	// JEventProcessor::fini() methods have been called. Otherwise,
+	// just delete them now.
+	if(app){
+		app->AddFactoriesToDeleteList(factories);
+	}else{
+		for(unsigned int i=0; i<factories.size(); i++){
+			try{
+				delete factories[i];
+			}catch(exception &e){
+				jerr<<endl;
+				_DBG_<<" Error thrown while deleting JFactory<";
+				jerr<<factories[i]->GetDataClassName()<<">"<<endl;
+				_DBG_<<e.what()<<endl;
+			}
 		}
 	}
 

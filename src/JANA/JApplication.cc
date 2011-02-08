@@ -975,10 +975,29 @@ void* LaunchThread(void* arg)
 //----------------
 void CleanupThread(void* arg)
 {
+	/// This gets called when a thread exits so that the associated JEventLoop
+	/// can be deleted.
 	if(arg!=NULL){
 		JEventLoop *loop = (JEventLoop*)arg;
 		delete loop; // This will cause the destructor to de-register the JEventLoop
 	}
+}
+
+//----------------
+// AddFactoriesToDeleteList
+//----------------
+void JApplication::AddFactoriesToDeleteList(vector<JFactory_base*> &factories)
+{
+	/// Add the given list of JFactory_base objects to a list
+	/// to be deleted after all of the JEventProcessor::fini()
+	/// methods have been called. This allows the processors to
+	/// still access data in the factories after event processing
+	/// has completed. Note that at that time, the JEventLoop objects
+	/// have all been destroyed so the processor will have to have
+	/// maintained a copy of the factory pointer on its own.
+	Lock();
+	factories_to_delete.insert(factories_to_delete.end(), factories.begin(), factories.end());
+	Unlock();
 }
 
 //---------------------------------
@@ -1299,6 +1318,19 @@ jerror_t JApplication::Fini(void)
 		_DBG_<<" Error thrown from JEventProcessor destructor!"<<endl;
 	}
 	processors.clear();
+
+	// Delete all factories registered for delayed deletion
+	for(unsigned int i=0; i<factories_to_delete.size(); i++){
+		try{
+			delete factories_to_delete[i];
+		}catch(exception &e){
+			jerr<<endl;
+			_DBG_<<" Error thrown while deleting JFactory<";
+			jerr<<factories_to_delete[i]->GetDataClassName()<<">"<<endl;
+			_DBG_<<e.what()<<endl;
+		}
+	}
+	factories_to_delete.clear();
 	
 	// Delete all sources allowing them to close cleanly
 	for(unsigned int i=0;i<sources.size();i++)delete sources[i];

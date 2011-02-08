@@ -3,8 +3,15 @@ Changes in version 0.6.3
 - Added scripts directory along with scripts for creating some
   common classes used in the framework.
 - Modified Makefile.lib to work with GNU make 3.82
-- Reoganized build system to be closer to classic unix style
+- Reorganized build system to be closer to classic unix style
 - Added jana-config script for easier setting of compiler options
+- Fixed bug where early call to JApplication::Quit() didn't stop
+  program execution
+- Added JANA:BATH_MODE config. param. to disable certain messages
+- Added AUTOACTIVATE config. param. to allow auto-activated factories to
+  be specified via configuration file.
+- Delay deletion of JFactory objects until after processor's fini methods
+  have been called
 
 
 Changes in version 0.6.2
