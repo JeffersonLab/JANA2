@@ -5,6 +5,8 @@
 //
 
 #include <iostream>
+#include <vector>
+#include <map>
 using namespace std;
 
 #include <stdlib.h>
@@ -13,6 +15,7 @@ using namespace std;
 #include <JANA/JCalibration.h>
 using namespace jana;
 
+template<class T> void PrintDataT(JCalibration *jcalib);
 void ParseCommandLineArguments(int &narg, char *argv[]);
 void Usage(void);
 
@@ -20,6 +23,7 @@ unsigned int RUN_NUMBER = 100;
 string NAMEPATH="";
 bool DISPLAY_AS_TABLE = false;
 bool LIST_NAMEPATHS = false;
+string DATATYPE="";
 
 //-----------
 // main
@@ -33,7 +37,7 @@ int main(int narg, char *argv[])
 	JApplication *app = new JApplication(narg, argv);
 	app->Init();
 	JCalibration *jcalib = app->GetJCalibration(RUN_NUMBER);
-	
+
 	// Make sure the calibration object exists
 	if(jcalib==NULL)return -1;
 	
@@ -54,58 +58,90 @@ int main(int narg, char *argv[])
 		// Display constants
 		cout<<endl<<"Values for \""<<NAMEPATH<<"\" for run "<<RUN_NUMBER<<endl;
 		cout<<"--------------------"<<endl;
-		map<string, string>::iterator iter;
-		
-		// Table data and key-value data are displayed a little differently
-		if(DISPLAY_AS_TABLE){
-		
-			// DISPLAY DATA A TABLE
-		
-			// Get constants
-			vector< map<string, float> > tvals;
-			jcalib->Get(NAMEPATH, tvals);
 
-			for(unsigned int i=0; i<tvals.size(); i++){
-				map<string, float> &row = tvals[i];
-				map<string, float>::iterator iter = row.begin();
-				for(;iter!=row.end(); iter++){
-					cout<<iter->first<<"="<<iter->second<<"  ";
-				}
-				cout<<endl;
-			}
+		// Defaults for when no data type is specified. These were chosen
+		// some time ago so I'm not sure if they are still the best option ...
+		if(DATATYPE=="")DATATYPE = DISPLAY_AS_TABLE ? "float":"string";
+
+		// We use a templated routine to print the table (see note below)
+		if(DATATYPE=="float"){
+			PrintDataT<float>(jcalib);
+		}else if(DATATYPE=="double"){
+			PrintDataT<double>(jcalib);
+		}else if(DATATYPE=="string"){
+			PrintDataT<string>(jcalib);
+		}else if(DATATYPE=="int"){
+			PrintDataT<int>(jcalib);
 		}else{
-
-			// DISPLAY DATA A KEY-VALUE
-
-			// Get constants
-			map<string, string> vals;
-			jcalib->Get(NAMEPATH, vals);
-
-			// Make one pass to find the maximum key width
-			unsigned int max_key_width = 1;
-			for(iter=vals.begin(); iter!=vals.end(); iter++){
-				string key = iter->first;
-				if(key.length()>max_key_width) max_key_width=key.length();
-			}
-			max_key_width++;
-
-			for(iter=vals.begin(); iter!=vals.end(); iter++){
-				string key = iter->first;
-				string val = iter->second;
-				cout<<iter->first<<" ";
-				if(key.length()<max_key_width)
-					for(unsigned int j=0; j<max_key_width-key.length(); j++)cout<<" ";
-				cout<<iter->second;
-				cout<<endl;
-			}
+			cout<<"Invalid data type \""<<DATATYPE<<"\"!"<<endl;
+			cout<<"Valid data types are: float double string int"<<endl;
 		}
 	
 		cout<<endl;
 	}
-
 	delete app;
 
 	return 0;
+}
+
+//--------------
+// PrintDataT
+//--------------
+template<class T>
+void PrintDataT(JCalibration *jcalib)
+{
+	/// Templated method for printing data to screen. This used to be 
+	/// embedded in main(), but in order to support user specified 
+	/// data types, it was moved here allowing cout to decide how to 
+	/// display the different types.
+
+	// Oddly enough, this is needed because compiler errors occur
+	// when we do a straight map<string,T>::iterator iter;
+	typedef typename map<string,T>::iterator iter_T;
+
+	// Table data and key-value data are displayed a little differently
+	if(DISPLAY_AS_TABLE){
+	
+		// DISPLAY DATA AS TABLE
+	
+		// Get constants
+		vector< map<string, T> > tvals;
+		jcalib->Get(NAMEPATH, tvals);
+
+		for(unsigned int i=0; i<tvals.size(); i++){
+			map<string, T> &row = tvals[i];
+			iter_T iter = row.begin();
+			for(;iter!=row.end(); iter++){
+				cout<<iter->first<<"="<<iter->second<<"  ";
+			}
+			cout<<endl;
+		}
+	}else{
+
+		// DISPLAY DATA AS KEY-VALUE
+
+		// Get constants
+		map<string, T> vals;
+		jcalib->Get(NAMEPATH, vals);
+
+		// Make one pass to find the maximum key width
+		unsigned int max_key_width = 1;
+		iter_T iter = vals.begin();
+		for(; iter!=vals.end(); iter++){
+			string key = iter->first;
+			if(key.length()>max_key_width) max_key_width=key.length();
+		}
+		max_key_width++;
+
+		for(iter=vals.begin(); iter!=vals.end(); iter++){
+			string key = iter->first;
+			cout<<iter->first<<" ";
+			if(key.length()<max_key_width)
+				for(unsigned int j=0; j<max_key_width-key.length(); j++)cout<<" ";
+			cout<<iter->second;
+			cout<<endl;
+		}
+	}
 }
 
 //-----------
@@ -123,9 +159,24 @@ void ParseCommandLineArguments(int &narg, char *argv[])
 					break;
 				case 'R':
 					if(strlen(argv[i])==2){
-						RUN_NUMBER = atoi(argv[++i]);
+						if((i+1)<narg){
+							RUN_NUMBER = atoi(argv[++i]);
+						}else{
+							cout<<"\"-R\" requires an argument!"<<endl;
+						}
 					}else{
 						RUN_NUMBER = atoi(&argv[i][2]);
+					}
+					break;
+				case 't':
+					if(strlen(argv[i])==2){
+						if((i+1)<narg){
+							DATATYPE = string(argv[++i]);
+						}else{
+							cout<<"\"-t\" requires an argument!"<<endl;
+						}
+					}else{
+						DATATYPE = string(&argv[i][2]);
 					}
 					break;
 				case 'T':
