@@ -316,7 +316,7 @@ TreeInfo* JEventProcessor_janaroot::GetTreeInfo(JFactory_base *fac)
 	cwd->cd();
 	
 	// Add "N" branch to hold num objects for the event
-	tinfo->branches.push_back(tinfo->tree->Branch("N" , NULL, "N/I"));
+	tinfo->branches.push_back(tinfo->tree->Branch("N" , (void*)NULL, "N/I"));
 		
 	// Loop over data members and extract their name and type to form branches
 	tinfo->obj_size=0;
@@ -380,7 +380,7 @@ TreeInfo* JEventProcessor_janaroot::GetTreeInfo(JFactory_base *fac)
 		tinfo->obj_size += item_size;
 		
 		// Create new branch
-		TBranch *branch = tinfo->tree->Branch(iname.c_str(), NULL, branch_def.c_str());
+		TBranch *branch = tinfo->tree->Branch(iname.c_str(), (void*)NULL, branch_def.c_str());
 		tinfo->branches.push_back(branch);
 	}
 	
