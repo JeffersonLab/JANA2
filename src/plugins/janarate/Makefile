@@ -14,8 +14,8 @@ ifeq ($(HAVE_ROOT),1)
 include $(BMSDIR)/Makefile.shlib
 else
 install: roottest
-clean:
-pristine:
+clean: roottest
+depclean: roottest
 endif
 
 
