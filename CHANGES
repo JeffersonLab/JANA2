@@ -12,6 +12,8 @@ Changes in version 0.6.3
   be specified via configuration file.
 - Delay deletion of JFactory objects until after processor's fini methods
   have been called
+- Fixed bug where program would seg. fault if an invalid event source 
+  was provided
 
 
 Changes in version 0.6.2

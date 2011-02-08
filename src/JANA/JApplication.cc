@@ -1333,7 +1333,9 @@ jerror_t JApplication::Fini(void)
 	factories_to_delete.clear();
 	
 	// Delete all sources allowing them to close cleanly
-	for(unsigned int i=0;i<sources.size();i++)delete sources[i];
+	for(unsigned int i=0;i<sources.size();i++){
+		if(sources[i]!=NULL)delete sources[i];
+	}
 	sources.clear();
 	
 	// Tell event buffer thread to quit (if he hasn't already)
@@ -1489,7 +1491,7 @@ jerror_t JApplication::OpenNext(void)
 	}
 
 	if(!current_source){
-		jerr<<"Unable to open event source!"<<endl;
+		jerr<<"Unable to open event source \""<<sname<<"\"!"<<endl;
 	}
 	
 	// Add source to list (even if it's NULL!)
