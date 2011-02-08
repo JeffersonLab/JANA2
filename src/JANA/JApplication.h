@@ -109,6 +109,7 @@ class JApplication{
 		inline void Unlock(void){pthread_mutex_unlock(&app_mutex);} ///< Unlock the application wide mutex (don't use this!)
 		
 		bool monitor_heartbeat; ///< Turn monitoring of processing threads on/off.
+		bool batch_mode;
 		
 	private:
 	

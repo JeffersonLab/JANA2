@@ -173,6 +173,7 @@ JApplication::JApplication(int narg, char* argv[])
 	rate_instantaneous = 0.0;
 	rate_average = 0.0;
 	monitor_heartbeat= true;
+	batch_mode=false;
 	init_called = false;
 	fini_called = false;
 	stop_event_buffer = false;
@@ -1030,6 +1031,10 @@ jerror_t JApplication::Init(void)
 		}
 	}catch(...){}
 
+	// Allow user to specify batch mode via configuration parameter
+	try{
+		jparms->SetDefaultParameter("JANA:BATCH_MODE", batch_mode,"Flag that, when set to TRUE, inhibits many messages from printing. (Default is FALSE)");
+	}catch(...){}
 
 	// Call init Processors (note: factories don't exist yet)
 	try{
@@ -1129,12 +1134,12 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 			if(quitting)Quit();
 			
 		}else{
-			_DBG_<<" didn't sleep full "<<sleep_time<<" seconds!"<<endl;
+			if(!batch_mode)jerr<<" didn't sleep full "<<sleep_time<<" seconds!"<<endl;
 		}
 		last_NEvents = NEvents - GetEventBufferSize();
 		
 		// If show_ticker is set, then update the screen with the rate(s)
-		if(show_ticker && loops.size()>0)PrintRate();
+		if(show_ticker && (!batch_mode) && loops.size()>0)PrintRate();
 		
 		if(SIGINT_RECEIVED)Quit();
 		if(SIGINT_RECEIVED>=3)break;
