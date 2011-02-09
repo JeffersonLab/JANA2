@@ -60,6 +60,7 @@ if test "$my_os" = "SunOS"; then
     fi
 fi
 AC_MSG_NOTICE([uname/CCC: $my_os/$CCC])
+OS=$my_os
 #
 #
 # Set the location of the build directory
@@ -80,6 +81,7 @@ CMSG
 AC_MSG_NOTICE([creating src/JANA/jana_config.h])
 cp confdefs.h src/JANA/jana_config.h
 
+AC_SUBST([OS])
 AC_SUBST([HAVE_MYSQL])
 AC_SUBST([HAVE_XERCES])
 AC_SUBST([prefix])
@@ -96,3 +98,5 @@ AC_SUBST([HAVE_CMSG])
 AC_OUTPUT(BMS/Makefile.config)
 AC_OUTPUT(BMS/jana-config)
 [chmod +x BMS/jana-config]
+AC_OUTPUT(BMS/setenv.csh)
+AC_OUTPUT(BMS/env.sh)

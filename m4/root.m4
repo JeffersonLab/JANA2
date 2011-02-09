@@ -47,6 +47,7 @@ AC_DEFUN([ROOT_PATH],
     user_rootsys="none")
   if test ! x"$user_rootsys" = xnone; then
     rootbin="$user_rootsys/bin"
+	ROOTSYS="$user_rootsys"
   elif test ! x"$ROOTSYS" = x ; then 
     rootbin="$ROOTSYS/bin"
   else 
@@ -90,6 +91,7 @@ AC_DEFUN([ROOT_PATH],
     no_root="yes"
   fi
 
+  AC_SUBST(ROOTSYS)
   AC_SUBST(ROOTLIBDIR)
   AC_SUBST(ROOTINCDIR)
   AC_SUBST(ROOTCFLAGS)

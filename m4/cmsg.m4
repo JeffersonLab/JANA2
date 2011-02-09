@@ -88,7 +88,7 @@ AC_DEFUN([CMSG],
 			AC_MSG_RESULT($cmsg_link_ok);
 			
 			if test "$cmsg_link_ok" = "failed"; then
-				AC_MSG_ERROR("Can't find cMsg.hxx (using path=$cmsgdir). Set your CMSGROOT environment variable or use the --with-cmsg=PATH_TO_CMSG argument when running configure")
+				AC_MSG_ERROR("Test link of cMsg failed (using path=$cmsgdir). Set your CMSGROOT environment variable or use the --with-cmsg=PATH_TO_CMSG argument when running configure")
 			fi
 
 			AC_LANG_POP
@@ -105,7 +105,9 @@ AC_DEFUN([CMSG],
 			AC_MSG_NOTICE("argument when running configure. Otherwise disable cMsg support by")
 			AC_MSG_NOTICE("re-running configure with --without-cmsg.")
 		else
+			CMSGROOT="$cmsgdir"
 			AC_MSG_NOTICE([Configuring cMsg])
+			AC_SUBST(CMSGROOT)
 			AC_SUBST(CMSG_CPPFLAGS)
 			AC_SUBST(CMSG_LDFLAGS)
 			AC_SUBST(CMSG_LIBS)

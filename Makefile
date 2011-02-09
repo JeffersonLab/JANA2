@@ -19,6 +19,8 @@ install: all
 	install -p $(filter-out scripts/Makefile,$(wildcard scripts/*)) $(prefix)/bin
 	install -p BMS/osrelease.pl BMS/get_macos_arch $(prefix)/bin
 	install -p BMS/jana-config $(prefix)/bin
+	install -p BMS/setenv.csh $(prefix)
+	install -p BMS/env.sh $(prefix)
 	
 
 depclean: clean

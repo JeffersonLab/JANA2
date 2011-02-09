@@ -113,6 +113,7 @@ AC_DEFUN([AX_LIB_XERCES],
     XERCES_CPPFLAGS=""
     XERCES_LDFLAGS=""
     XERCES_VERSION=""
+	XERCESCROOT="$xerces_prefix"
 
     dnl
     dnl Collect include/lib paths and flags
@@ -221,6 +222,7 @@ XMLPlatformUtils::Initialize();
     if test "$run_xerces_test" = "yes"; then
         if test "$xerces_header_found" = "yes" -a "$xerces_lib_found" = "yes"; then
 
+            AC_SUBST([XERCESCROOT])
             AC_SUBST([XERCES_CPPFLAGS])
             AC_SUBST([XERCES_LDFLAGS])
             AC_SUBST([XERCES_LIBS])
