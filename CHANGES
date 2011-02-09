@@ -14,7 +14,9 @@ Changes in version 0.6.3
   have been called
 - Fixed bug where program would seg. fault if an invalid event source 
   was provided
-
+- Fixed problem in TestSpeed plugin where number crunching routine
+  was being optimized away.
+- Added auto generation of setenv.csh and env.sh scripts
 
 Changes in version 0.6.2
 
