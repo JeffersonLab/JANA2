@@ -73,6 +73,7 @@ jerror_t JTest_factory::evnt(JEventLoop *loop, int eventnumber)
 		for(int j=0; j<governor_iterations; j++){
 			a = log(fabs(a*sqrt(pow(a, 2.2))));
 		}
+		myJTest->z = a;
 		
 		val1 *= val2;
 		val2 /= val1;
