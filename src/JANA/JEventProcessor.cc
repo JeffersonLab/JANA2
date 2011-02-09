@@ -23,6 +23,7 @@ JEventProcessor::JEventProcessor(void)
 	brun_eventnumber = 0;
 	pthread_mutex_init(&state_mutex, NULL);
 	app = NULL;
+	delete_me = true;
 }
 
 //---------------------------------
