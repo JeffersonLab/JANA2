@@ -17,6 +17,7 @@ Changes in version 0.6.3
 - Fixed problem in TestSpeed plugin where number crunching routine
   was being optimized away.
 - Added auto generation of setenv.csh and env.sh scripts
+- Cleaned up destruction of objects to allow valgrind to run much cleaner
 
 Changes in version 0.6.2
 
