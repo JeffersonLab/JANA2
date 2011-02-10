@@ -23,7 +23,7 @@ JEventProcessor::JEventProcessor(void)
 	brun_eventnumber = 0;
 	pthread_mutex_init(&state_mutex, NULL);
 	app = NULL;
-	delete_me = true;
+	delete_me = false; // n.b. this ALWAYS gets overwritten when JApplication::AddProcessor is called!!
 }
 
 //---------------------------------

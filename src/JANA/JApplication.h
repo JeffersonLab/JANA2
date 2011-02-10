@@ -146,6 +146,7 @@ class JApplication{
 		
 		list<JEvent*> event_buffer;
 		bool event_buffer_filling;
+		pthread_t ebthr;
 		pthread_mutex_t event_buffer_mutex;
 		pthread_cond_t event_buffer_cond;
 
@@ -166,6 +167,7 @@ class JApplication{
 		double rate_instantaneous;
 		double rate_average;
 		vector<pthread_t> threads;
+		vector<pthread_t> threads_to_be_joined; // list of threads that are finished and should be joined
 		int Ncores;				///< Number of processors currently online (sysconf(_SC_NPROCESSORS_ONLN))
 		bool print_factory_report;
 		bool print_resource_report;

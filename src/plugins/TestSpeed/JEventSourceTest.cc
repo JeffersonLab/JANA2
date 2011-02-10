@@ -30,7 +30,7 @@ void InitPlugin(JApplication *app){
 	InitJANAPlugin(app);
 	app->AddEventSourceGenerator(new JEventSourceTestGenerator());
 	app->AddFactoryGenerator(new JFactoryGeneratorTest());
-	app->AddProcessor(new JEventProcessorTest());
+	app->AddProcessor(new JEventProcessorTest(), true);
 	
 	cout<<endl;
 	cout<<"Initialized speed_test plugin."<<endl;

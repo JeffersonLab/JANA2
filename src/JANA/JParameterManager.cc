@@ -74,6 +74,7 @@ JParameterManager::~JParameterManager()
 	for(unsigned int i=0; i<parameters.size(); i++)delete parameters[i];
 	parameters.clear();
 
+	if(gPARMS==this)gPARMS=NULL;
 }
 
 //---------------------------------

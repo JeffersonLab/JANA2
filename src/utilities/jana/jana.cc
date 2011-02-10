@@ -94,7 +94,7 @@ void Usage(void)
 {
 	// To print the options from JApplication, we need a JApplication object
 	extern jana::JApplication *japp;
-	JApplication *app = japp==NULL ? new JApplication(0,NULL):japp;
+	if(japp==NULL)new JApplication(0,NULL);
 
 	cout<<"Usage:"<<endl;
 	cout<<"       jana [options] source1 source2 ..."<<endl;
@@ -108,7 +108,7 @@ void Usage(void)
 	cout<<endl;
 	cout<<"Base JANA options:"<<endl;
 	cout<<endl;
-	app->Usage();
+	if(japp)japp->Usage();
 	cout<<endl;
 	cout<<"Options for jana utility:"<<endl;
 	cout<<endl;
@@ -118,6 +118,8 @@ void Usage(void)
 	//cout<<"   -Dname   Activate factory for data of type \"name\" (can be used mult. times)"<<endl;
 	cout<<"   -A       Activate all factories"<<endl;
 	cout<<endl;
+
+	if(japp!=NULL)delete japp;
 
 	exit(0);
 }

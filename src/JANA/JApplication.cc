@@ -378,6 +378,9 @@ JApplication::~JApplication()
 	/// JApplication destructor
 	///
 	/// Releases memory allocated by this JApplication object.
+	/// as well as JEventSourceGenerator, JFactoryGenerators,
+	/// and JCalibrationGenerators that have been added to the
+	/// application.
 
 	for(unsigned int i=0; i<geometries.size(); i++)delete geometries[i];
 	geometries.clear();
@@ -385,6 +388,35 @@ JApplication::~JApplication()
 	calibrations.clear();
 	for(unsigned int i=0; i<heartbeats.size(); i++)delete heartbeats[i];
 	heartbeats.clear();
+	for(unsigned int i=0; i<eventSourceGenerators.size(); i++)delete eventSourceGenerators[i];
+	eventSourceGenerators.clear();
+	for(unsigned int i=0; i<factoryGenerators.size(); i++)delete factoryGenerators[i];
+	factoryGenerators.clear();
+	for(unsigned int i=0; i<calibrationGenerators.size(); i++)delete calibrationGenerators[i];
+	calibrationGenerators.clear();
+
+	list<JEvent*>::iterator iter;
+	for(iter=event_buffer.begin(); iter!=event_buffer.end(); iter++)delete *iter;
+	event_buffer.clear();
+
+	// Close any open dll's
+	for(unsigned int i=0; i<sohandles.size(); i++){
+		jout<<"Closing shared object handle "<<i<<" ..."<<endl; jout.flush();
+
+		// Look for a FiniPlugin symbol and execute if found
+		FiniPlugin_t *plugin = (FiniPlugin_t*)dlsym(sohandles[i], "FiniPlugin");
+		if(plugin){
+			jout<<"Finalizing plugin ..."<<endl;
+			(*plugin)(this);
+		}
+			
+		// Close shared object
+		dlclose(sohandles[i]);
+	}
+	sohandles.clear();
+	
+	// Delete JParameterManager
+	if(jparms)delete jparms;
 }
 
 //---------------------------------
@@ -677,6 +709,7 @@ jerror_t JApplication::RemoveJEventLoop(JEventLoop *loop)
 			loops.erase(loops.begin()+i);
 			delete heartbeats[i];
 			heartbeats.erase(heartbeats.begin()+i);
+			threads_to_be_joined.push_back(threads[i]);
 			threads.erase(threads.begin()+i);
 			break;
 		}
@@ -1071,7 +1104,6 @@ jerror_t JApplication::Init(void)
 	for(unsigned int i=0; i<loops.size(); i++)loops[i]->RefreshProcessorListFromJApplication();
 
 	// Launch event buffer thread
-	pthread_t ebthr;
 	pthread_create(&ebthr, NULL, LaunchEventBufferThread, this);
 
 	return NOERROR;
@@ -1237,27 +1269,26 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 		// Call erun() and fini() methods and delete event sources
 		Fini();
 		
+		// Merge up threads that have already finished processing
+		for(unsigned int i=0; i<threads_to_be_joined.size(); i++){
+			void *ret;
+			jout<<"Merging thread "<<i<<" ..."<<endl; jout.flush();
+			pthread_join(threads_to_be_joined[i], &ret);
+		}
+		threads_to_be_joined.clear();
+		
 		// Merge up all the threads
 		for(unsigned int i=0; i<threads.size(); i++){
 			void *ret;
 			jout<<"Merging thread "<<i<<" ..."<<endl; jout.flush();
 			pthread_join(threads[i], &ret);
 		}
+		threads.clear();
 		
-		// Close any open dll's
-		for(unsigned int i=0; i<sohandles.size(); i++){
-			jout<<"Closing shared object handle "<<i<<" ..."<<endl; jout.flush();
+		// Event buffer thread
+		jout<<"Merging event reader thread ..."<<endl; jout.flush();
+		pthread_join(ebthr, NULL);
 
-			// Look for a FiniPlugin symbol and execute if found
-			FiniPlugin_t *plugin = (FiniPlugin_t*)dlsym(sohandles[i], "FiniPlugin");
-			if(plugin){
-				jout<<"Finalizing plugin ..."<<endl;
-				(*plugin)(this);
-			}
-			
-			// Close shared object
-			dlclose(sohandles[i]);
-		}
 	}else{
 		jout<<"Exiting hard due to catching 3 or more SIGINTs ..."<<endl;
 	}
