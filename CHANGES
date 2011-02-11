@@ -7,7 +7,7 @@ Changes in version 0.6.3
 - Added jana-config script for easier setting of compiler options
 - Fixed bug where early call to JApplication::Quit() didn't stop
   program execution
-- Added JANA:BATH_MODE config. param. to disable certain messages
+- Added JANA:BATCH_MODE config. param. to disable certain messages
 - Added AUTOACTIVATE config. param. to allow auto-activated factories to
   be specified via configuration file.
 - Delay deletion of JFactory objects until after processor's fini methods
