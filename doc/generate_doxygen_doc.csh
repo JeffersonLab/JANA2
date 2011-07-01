@@ -4,10 +4,11 @@
 # jana version number.
 set version=`../bin/jana -v | grep "JANA version:" | awk '{print $3}'`
 rm -f Doyxfile.tmp
-cat Doxyfile | sed -e 's/alpha/'${version}'/g' > Doyxfile.tmp
+cat Doxyfile | sed -e 's/alpha/'${version}'/g' > Doxyfile.tmp
 
-doxygen Doyxfile.tmp
+doxygen Doxyfile.tmp
 cp images/* html
+rm -f Doyxfile.tmp
 
 
 echo " "
