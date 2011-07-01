@@ -28,3 +28,6 @@ all:
 	@echo "Make sure something links to $(jana_doc_dir)/index.html"
 	@echo
 	
+clean:
+	rm -rf Doxyfile.tmp errors.log html htmldoc $(jana_doc_dir) $(jana_doc_dir).tgz source latex man 
+
