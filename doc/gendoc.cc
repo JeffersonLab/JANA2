@@ -10,6 +10,8 @@ using namespace std;
 #include <JANA/JApplication.h>
 using namespace jana;
 
+#include "mainpage.c++"
+
 JVersion::JVersion(){}
 JVersion::~JVersion(){}
 
