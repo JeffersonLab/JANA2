@@ -1158,13 +1158,18 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 	
 	// Get the max time for a thread to be inactive before being deleting
 	double THREAD_TIMEOUT=8.0;
-	jparms->SetDefaultParameter("THREAD_TIMEOUT", THREAD_TIMEOUT, "Max time a thread system will wait for a thread to update its heartbeat before killing it and launching a new one.");
+	double THREAD_TIMEOUT_FIRST_EVENT=30.0;
+	int MAX_RELAUNCH_THREADS=10;
+	jparms->SetDefaultParameter("THREAD_TIMEOUT", THREAD_TIMEOUT, "Max. time (in seconds) system will wait for a thread to update its heartbeat before killing it and launching a new one.");
+	jparms->SetDefaultParameter("THREAD_TIMEOUT_FIRST_EVENT", THREAD_TIMEOUT_FIRST_EVENT, "Max. time (in seconds) system will wait for first event to complete before killing program.");
+	jparms->SetDefaultParameter("JANA:MAX_RELAUNCH_THREADS", MAX_RELAUNCH_THREADS, "Max. number of times to relaunch a thread due to it timing out before forcing program to quit.");
 	
 	// Do a sleepy loop so the threads can do their work
 	struct timespec req, rem;
 	req.tv_nsec = (int)0.5E9; // set to 1/2 second
 	req.tv_sec = 0;
 	double sleep_time = (double)req.tv_sec + (1.0E-9)*(double)req.tv_nsec;
+	int Nrelaunch_threads = 0;
 	do{
 		// Sleep for a specific amount of time and calculate the rate
 		// on each iteration through the loop
@@ -1173,7 +1178,7 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 		if(rem.tv_sec == 0 && rem.tv_nsec == 0){
 			// If there was no time remaining, then we must have slept
 			// the whole amount
-			int delta_NEvents = NEvents - GetEventBufferSize() - last_NEvents;
+			int delta_NEvents = NEvents - last_NEvents;
 			if(NEvents>Nthreads){
 				avg_NEvents += delta_NEvents>0 ? delta_NEvents:0;
 				avg_time += sleep_time;
@@ -1187,7 +1192,7 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 		}else{
 			if(!batch_mode)jerr<<" didn't sleep full "<<sleep_time<<" seconds!"<<endl;
 		}
-		last_NEvents = NEvents - GetEventBufferSize();
+		last_NEvents = NEvents; // NEvents counts only events that have been extracted from the buffer (not the ones still in the buffer)
 		
 		// If show_ticker is set, then update the screen with the rate(s)
 		if(show_ticker && (!batch_mode) && loops.size()>0)PrintRate();
@@ -1205,14 +1210,30 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 		for(unsigned int i=0;i<heartbeats.size();i++){
 			double *hb = heartbeats[i];
 			*hb += slept_time;
-			if(monitor_heartbeat && (*hb > (THREAD_TIMEOUT-1.0)+sleep_time)){
-				// Thread hasn't done anything for more than THREAD_TIMEOUT seconds. 
+
+			// Choose timeout depending on whether the first event for all threads
+			// has completed or not.
+			double timeout = last_NEvents<=Nthreads ? THREAD_TIMEOUT_FIRST_EVENT:THREAD_TIMEOUT;
+
+//_DBG_<<"*hb="<<*hb<<"  slept_time="<<slept_time<<" sleep_time="<<sleep_time<<"  timeout="<<timeout<<"  last_NEvents="<<last_NEvents<<"  Nthreads="<<Nthreads<<endl;
+			if(monitor_heartbeat && (*hb > (timeout-1.0)+sleep_time)){
+				// Thread hasn't done anything for more than timeout seconds. 
 				// Remove it from monitoring lists.
 				JEventLoop *loop = *(loops.begin()+i);
 				JEvent &event = loop->GetJEvent();
 				jerr<<" Thread "<<i<<" hasn't responded in "<<*hb<<" seconds.";
 				jerr<<" (run:event="<<event.GetRunNumber()<<":"<<event.GetEventNumber()<<")";
-				jerr<<" Canceling ..."<<endl;
+				jerr<<" Cancelling ..."<<endl;
+				
+				// If we haven't processed one event per thread yet, then assume we
+				// are stuck on the first event and so quit the whole program.
+				if(last_NEvents<Nthreads){
+					Quit(); // nicely tell all threads to quit (set their "quit" flag.
+					for(unsigned int j=0;j<threads.size();j++){
+						pthread_kill(threads[j], SIGHUP); // not-so-nicely kill all threads
+					}
+					break; // stop checking heartbeats this time around
+				}
 				
 				// At this point, we need to kill the stalled thread. One would normally
 				// do this by calling pthread_cancel() but that seems to have problems.
@@ -1227,10 +1248,20 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 				pthread_kill(threads[i], SIGHUP);
 
 				// Launch a new thread to take his place, but only if we're not trying to quit
-				if(!SIGINT_RECEIVED){
+				if(!SIGINT_RECEIVED && !quitting){
+				
+					// Check if we've already reached the limit of the number of threads
+					// that can be relaunched.
+					if(Nrelaunch_threads>=MAX_RELAUNCH_THREADS){
+						jerr<<" Too many thread relaunches ("<<MAX_RELAUNCH_THREADS<<") quitting ..."<<endl;
+						Quit();
+						break;
+					}
+				
 					jerr<<" Launching new thread ..."<<endl;
 					pthread_t thr;
 					pthread_create(&thr, NULL, LaunchThread, this);
+					Nrelaunch_threads++;
 					
 					// We need to wait for the new thread to create a new JEventLoop
 					// If we don't wait for this here, then control may fall to the
@@ -1255,6 +1286,14 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 				break;
 			}
 		}
+
+		// Merge up threads that have already finished processing
+		for(unsigned int i=0; i<threads_to_be_joined.size(); i++){
+			void *ret;
+			jout<<"Merging thread "<<i<<" ..."<<endl; jout.flush();
+			pthread_join(threads_to_be_joined[i], &ret);
+		}
+		threads_to_be_joined.clear();
 		
 		// We're done with the heartbeats etc. vectors for now. Unlock the mutex.
 		pthread_mutex_unlock(&app_mutex);
