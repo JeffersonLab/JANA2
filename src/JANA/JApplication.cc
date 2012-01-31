@@ -1255,7 +1255,7 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 		for(unsigned int i=threads.size(); (int)i<this->Nthreads; i++){
 			
 			// Launch a new thread to take his place, but only if we're not trying to quit
-			if( !SIGINT_RECEIVED && !quitting){
+			if( !SIGINT_RECEIVED && !quitting && event_buffer_filling){
 			
 				// Check if we've already reached the limit of the number of threads
 				// that can be relaunched.
@@ -1829,11 +1829,10 @@ jerror_t JApplication::RecordFactoryCalls(JEventLoop *loop)
 		gencalls[nametag] = fac->GetNgencalls();
 	}
 	
-	// Lock mutex and add to master list
-	Lock();
+	// This should only be called when the app_mutex is already locked
+	// so we don't need to do it here.
 	Nfactory_calls[pthread_self()] = calls;
 	Nfactory_gencalls[pthread_self()] = gencalls;
-	Unlock();
 
 	return NOERROR;
 }
@@ -1846,7 +1845,7 @@ jerror_t JApplication::PrintFactoryReport(void)
 {
 	/// Print a brief report to the screen listing all of the existing
 	/// factories and how many calls were made to each.
-	
+
 	// First, get a list of the nametags and thread numbers
 	vector<string> nametag;
 	vector<pthread_t> thread;
