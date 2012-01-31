@@ -244,6 +244,58 @@ void janactl_plugin::callback(cMsgMessage *msg, void *userObject)
 		delete msg;
 		return;
 	}
+
+	//======================================================================
+	if(cmd.find("killthread ")==0){
+
+		// Extract thread number from command
+		stringstream ss(cmd.substr(11));
+		pthread_t thr;
+
+		// If value contains an "x" assume it is in hex form and
+		// represents the pthread_t value. Otherwise, assume it
+		// is an index to the i-th thread.
+		if(ss.str().find("x")!=string::npos){
+			ss >> hex >> *(unsigned long*)&thr;
+		}else{
+			int ithr=0;
+			ss >> ithr;
+			thr = japp->GetThreadID(ithr);
+		}
+
+		// Kill the thread
+		bool found_thread = japp->KillThread(thr);
+		if(found_thread){
+			response.setText("OK"); // send command
+		}else{
+			response.setText("Thread not found!"); // send command
+		}
+		cMsgSys->send(&response);
+
+		delete msg;
+		return;		
+	}
+
+	//======================================================================
+	if(cmd.find("set nthreads ")==0){
+
+		// Extract number of threads from command
+		stringstream ss(cmd.substr(13));
+
+		// Extract the desired thread number
+		int Nthreads=0;
+		ss >> Nthreads;
+		if(Nthreads>0){
+			japp->SetNthreads(Nthreads);
+			response.setText("OK"); // send command
+		}else{
+			response.setText("BAD value for nthreads"); // send command
+		}
+		cMsgSys->send(&response);
+
+		delete msg;
+		return;		
+	}
 	
 	delete msg;
 }

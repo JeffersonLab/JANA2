@@ -56,6 +56,10 @@ int main(int narg, char *argv[])
 		jc.GetThreadInfo(SUBJECT);
 	}else if(cmd=="pause" || cmd=="resume" || cmd=="quit" || cmd=="kill"){
 		jc.SendCommand(cmd, SUBJECT);
+	}else if(cmd.find("killthread ")==0){
+		jc.SendCommand(cmd, SUBJECT);
+	}else if(cmd.find("set ")==0){
+		jc.SendCommand(cmd, SUBJECT);
 	}else{
 		jerr<<"Unknown command \""<<cmd<<"\"!"<<endl;
 	}
@@ -81,7 +85,7 @@ string ParseCommandLineArguments(int narg, char *argv[])
 	// Handle switches and find the command
 
 	// Loop over command line arguments
-	string cmd;
+	string cmd("");
 	bool udl_specified = false;
 	for(int i=1;i<narg;i++){
 		if(argv[i][0] == '-'){
@@ -95,8 +99,10 @@ string ParseCommandLineArguments(int narg, char *argv[])
 			if(arg=="d" || arg=="-description"){DESCRIPTION = arg_next; i++; continue;}
 			if(arg=="s" || arg=="-subject"){SUBJECT = arg_next; i++; continue;}
 		}else{
-			// This must be the command
-			cmd = argv[i];
+			// This must be part of the command
+			if(cmd.length()>0)cmd += " ";
+				
+			cmd += argv[i];
 		
 		} // argv[i][0] == '-'
 	}
@@ -137,7 +143,7 @@ void Usage(void)
 	cout<<"   --description descr.   Same as -d"<<endl;
 	cout<<"   --subject subject      Same as -s"<<endl;
 	cout<<endl;
-	cout<<"The janactl system uses a passive comminucation mechansim for control. Specifically,"<<endl;
+	cout<<"The janactl system uses a passive communication mechansim for control. Specifically,"<<endl;
 	cout<<"messages are sent, but responses (if any) are received asynchronously. As such"<<endl;
 	cout<<"commands such as the \"list\" command simply broadcasts a query to all processes"<<endl;
 	cout<<"that askes for them to send back a message notifying us of their existence. At "<<endl;
@@ -147,12 +153,14 @@ void Usage(void)
 	cout<<"response will continue as soon as that response is recieved."<<endl;
 	cout<<endl;
 	cout<<" commands:"<<endl;
-	cout<<"   list        Lists available processes."<<endl;
-	cout<<"   pause       Pause remote process(es)"<<endl;
-	cout<<"   resume      Resume remote process(es)"<<endl;
-	cout<<"   quit        Quit remote process(es) gracefully"<<endl;
-	cout<<"   kill        Kill remote process(es) harshly"<<endl;
-	cout<<"   thinfo      Get thread info. for remote process(es)"<<endl;
+	cout<<"   list                Lists available processes."<<endl;
+	cout<<"   pause               Pause remote process(es)"<<endl;
+	cout<<"   resume              Resume remote process(es)"<<endl;
+	cout<<"   quit                Quit remote process(es) gracefully"<<endl;
+	cout<<"   kill                Kill remote process(es) harshly"<<endl;
+	cout<<"   thinfo              Get thread info. for remote process(es)"<<endl;
+	cout<<"   killthread thread   Kill specified thread"<<endl;
+	cout<<"   set nthreads N      Change number of processing threads to N"<<endl;
 	cout<<endl;
 
 	exit(0);

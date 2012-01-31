@@ -1149,6 +1149,7 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 	// Launch all threads
 	jout<<"Launching threads "; jout.flush();
 	usleep(100000); // give time for above message to print before messages from threads interfere.
+	this->Nthreads = Nthreads;
 	for(int i=0; i<Nthreads; i++){
 		pthread_t thr;
 		pthread_create(&thr, NULL, LaunchThread, this);
@@ -1179,7 +1180,7 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 			// If there was no time remaining, then we must have slept
 			// the whole amount
 			int delta_NEvents = NEvents - last_NEvents;
-			if(NEvents>Nthreads){
+			if(NEvents>this->Nthreads){
 				avg_NEvents += delta_NEvents>0 ? delta_NEvents:0;
 				avg_time += sleep_time;
 			}
@@ -1213,9 +1214,8 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 
 			// Choose timeout depending on whether the first event for all threads
 			// has completed or not.
-			double timeout = last_NEvents<=Nthreads ? THREAD_TIMEOUT_FIRST_EVENT:THREAD_TIMEOUT;
+			double timeout = last_NEvents<=this->Nthreads ? THREAD_TIMEOUT_FIRST_EVENT:THREAD_TIMEOUT;
 
-//_DBG_<<"*hb="<<*hb<<"  slept_time="<<slept_time<<" sleep_time="<<sleep_time<<"  timeout="<<timeout<<"  last_NEvents="<<last_NEvents<<"  Nthreads="<<Nthreads<<endl;
 			if(monitor_heartbeat && (*hb > (timeout-1.0)+sleep_time)){
 				// Thread hasn't done anything for more than timeout seconds. 
 				// Remove it from monitoring lists.
@@ -1227,7 +1227,7 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 				
 				// If we haven't processed one event per thread yet, then assume we
 				// are stuck on the first event and so quit the whole program.
-				if(last_NEvents<Nthreads){
+				if(last_NEvents<this->Nthreads){
 					Quit(); // nicely tell all threads to quit (set their "quit" flag.
 					for(unsigned int j=0;j<threads.size();j++){
 						pthread_kill(threads[j], SIGHUP); // not-so-nicely kill all threads
@@ -1239,7 +1239,7 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 				// do this by calling pthread_cancel() but that seems to have problems.
 				// Namely, it was observed that when the thread was deep in a Xerces call
 				// that it would die with a mutex locked causing other threads to wait
-				// endlessly in pthread_mutex_lock for it to open back up. They way we do
+				// endlessly in pthread_mutex_lock for it to open back up. The way we do
 				// this here is to send a HUP signal to the thread which interrupts
 				// it immediately allowing it's signal handler to call pthread_exit
 				// and thereby invoking the CleanupThread() routine. I don't actually
@@ -1247,43 +1247,58 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 				// but empirically, it seems to work.   3/5/2009  DL
 				pthread_kill(threads[i], SIGHUP);
 
-				// Launch a new thread to take his place, but only if we're not trying to quit
-				if(!SIGINT_RECEIVED && !quitting){
+			}
+		}
+		
+		// If there are less threads running than specified and we are not trying to
+		// quit, then launch new threads to get us up to the specified amount.
+		for(unsigned int i=threads.size(); (int)i<this->Nthreads; i++){
+			
+			// Launch a new thread to take his place, but only if we're not trying to quit
+			if( !SIGINT_RECEIVED && !quitting){
+			
+				// Check if we've already reached the limit of the number of threads
+				// that can be relaunched.
+				if(Nrelaunch_threads>=MAX_RELAUNCH_THREADS){
+					jerr<<" Too many thread relaunches ("<<MAX_RELAUNCH_THREADS<<") quitting ..."<<endl;
+					Quit();
+					break;
+				}
+			
+				jerr<<" Launching new thread ..."<<endl;
+				pthread_t thr;
+				pthread_create(&thr, NULL, LaunchThread, this);
+				Nrelaunch_threads++;
 				
-					// Check if we've already reached the limit of the number of threads
-					// that can be relaunched.
-					if(Nrelaunch_threads>=MAX_RELAUNCH_THREADS){
-						jerr<<" Too many thread relaunches ("<<MAX_RELAUNCH_THREADS<<") quitting ..."<<endl;
-						Quit();
+				// We need to wait for the new thread to create a new JEventLoop
+				// If we don't wait for this here, then control may fall to the
+				// end of the while loop that checks loops.size() before the new
+				// loop is added, causing the program to finish prematurely.
+				for(int j=0; j<40; j++){
+					struct timespec req, rem;
+					req.tv_nsec = (int)0.100E9; // set to 100 milliseconds
+					req.tv_sec = 0;
+					rem.tv_sec = rem.tv_nsec = 0;
+					pthread_mutex_unlock(&app_mutex); // Unlock the mutex
+					nanosleep(&req, &rem);
+					pthread_mutex_lock(&app_mutex); // Re-lock the mutex
+					// Our new thread will be in "threads" once it's up and running
+					if(find(threads.begin(), threads.end(), thr)!=threads.end()){
 						break;
 					}
-				
-					jerr<<" Launching new thread ..."<<endl;
-					pthread_t thr;
-					pthread_create(&thr, NULL, LaunchThread, this);
-					Nrelaunch_threads++;
-					
-					// We need to wait for the new thread to create a new JEventLoop
-					// If we don't wait for this here, then control may fall to the
-					// end of the while loop that checks loops.size() before the new
-					// loop is added, causing the program to finish prematurely.
-					for(int j=0; j<40; j++){
-						struct timespec req, rem;
-						req.tv_nsec = (int)0.100E9; // set to 100 milliseconds
-						req.tv_sec = 0;
-						rem.tv_sec = rem.tv_nsec = 0;
-						pthread_mutex_unlock(&app_mutex); // Unlock the mutex
-						nanosleep(&req, &rem);
-						pthread_mutex_lock(&app_mutex); // Re-lock the mutex
-						// Our new thread will be in "threads" once it's up and running
-						if(find(threads.begin(), threads.end(), thr)!=threads.end()){
-							break;
-						}
-					}
 				}
-
-				// Quit this loop so we can re-enter it fresh since the thread list was changed
-				break;
+			}
+		}
+		
+		// If there are more threads running than specified and we are not trying to
+		// quit, then kill enough threads to get us down to the specified amount.
+		for(int i=this->Nthreads; i<(int)threads.size(); i++){
+			
+			// Make sure we're not trying to quit
+			if( !SIGINT_RECEIVED && !quitting){
+						
+				jerr<<" Removing thread (to reduce number of threads) ..."<<endl;
+				pthread_kill(threads[i], SIGHUP);				
 			}
 		}
 
@@ -2007,6 +2022,20 @@ void JApplication::GetThreadNevents(map<pthread_t,unsigned int> &Nevents_by_thre
 }
 
 //---------------------------------
+// GetThreadID
+//---------------------------------
+pthread_t JApplication::GetThreadID(unsigned int index)
+{
+	pthread_t thr = 0x0;
+
+	pthread_mutex_lock(&app_mutex);
+	if(index<threads.size())thr = threads[index];
+	pthread_mutex_unlock(&app_mutex);
+	
+	return thr;
+}
+
+//---------------------------------
 // SignalThreads
 //---------------------------------
 void JApplication::SignalThreads(int signo)
@@ -2016,3 +2045,44 @@ void JApplication::SignalThreads(int signo)
 		pthread_kill(threads[i], signo);
 	}
 }
+
+//---------------------------------
+// KillThread
+//---------------------------------
+bool JApplication::KillThread(pthread_t thr, bool verbose)
+{
+	bool found_thread = false;
+
+	pthread_mutex_lock(&app_mutex);
+	for(unsigned int i=0; i<threads.size(); i++){
+		if(threads[i]==thr){
+			pthread_kill(threads[i], SIGHUP);
+			found_thread = true;
+			break;
+		}
+	}
+	pthread_mutex_unlock(&app_mutex);
+	
+	if(verbose){
+		if(found_thread){
+			jout<<"Killing thread: "<<thr<<endl;
+		}else{
+			jout<<"Thread "<<thr<<" not found (and so, not killed)"<<endl;
+		}
+	}
+	
+	return found_thread;
+}
+
+//---------------------------------
+// SetNthreads
+//---------------------------------
+void JApplication::SetNthreads(int new_Nthreads)
+{
+	/// Set the number of desired processing threads. The
+	/// actual number of threads will be adjusted in the
+	/// Run() method.
+	this->Nthreads = new_Nthreads;
+	jout<<"Setting number of processing threads to: "<<this->Nthreads<<endl;
+}
+

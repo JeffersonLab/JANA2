@@ -1,3 +1,13 @@
+
+Changes in version 0.6.4
+
+- Updated online documentation generation
+- Added THREAD_TIMEOUT_FIRST_EVENT parameter
+- Added ability to change the number of threads on the fly. This
+  can be done using janactl, or progamatically using the JApplication
+  pointer.
+
+
 Changes in version 0.6.3
 
 - Added scripts directory along with scripts for creating some

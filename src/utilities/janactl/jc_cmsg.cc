@@ -237,7 +237,7 @@ void jc_cmsg::GetThreadInfo(string subject)
 		vector<thrinfo_t> &thrinfo = iter->second;
 		for(unsigned int i=0; i<thrinfo.size(); i++){
 			thrinfo_t &t = thrinfo[i];
-			cout<<"   thr. 0x"<<hex<<t.thread<<dec<<"  "<<t.Nevents<<" events  "<<t.rate_instantaneous<<"Hz ("<<t.rate_average<<"Hz avg.)"<<endl;
+			cout<<"   thread: "<<i<<" 0x"<<hex<<t.thread<<dec<<"  "<<t.Nevents<<" events  "<<t.rate_instantaneous<<"Hz ("<<t.rate_average<<"Hz avg.)"<<endl;
 		}
 	}
 
