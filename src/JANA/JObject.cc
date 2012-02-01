@@ -19,6 +19,7 @@ using namespace jana;
 //-------------------
 string JObject::GetTag(void) const
 {
-	return factory->Tag();
+	if(factory)return factory->Tag();
+	return string("");
 }
 

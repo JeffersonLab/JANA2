@@ -59,8 +59,8 @@ class JObject{
 
 		typedef unsigned long oid_t;
 	
-		JObject(){id = (oid_t)this; append_types=false;}
-		JObject( oid_t aId ) : id( aId ) { append_types=false;}
+		JObject() : id((oid_t)this),append_types(false),factory(NULL) {}
+		JObject( oid_t aId ) : id( aId ),append_types(false),factory(NULL) {}
 
 		virtual ~JObject(){
 				for(unsigned int i=0; i<auto_delete.size(); i++)delete auto_delete[i];
@@ -94,7 +94,7 @@ class JObject{
 		bool GetAppendTypes(void) const {return append_types;} ///< Get state of append_types flag (for AddString)
 		void SetAppendTypes(bool append_types){this->append_types=append_types;} ///< Set state of append_types flag (for AddString)
 		void SetFactoryPointer(JFactory_base *factory){this->factory=factory;}
-		JFactory_base * GetFactoryPointer(void){return factory;}
+		JFactory_base * GetFactoryPointer(void) const {return factory;}
 		string GetName(void) const {return string(className());}
 		string GetTag(void) const ;
 		string GetNameTag(void) const {return GetName() + (GetTag()=="" ? "":":") + GetTag();}
