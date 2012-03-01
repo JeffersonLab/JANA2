@@ -6,6 +6,9 @@ Changes in version 0.6.4
 - Added ability to change the number of threads on the fly. This
   can be done using janactl, or progamatically using the JApplication
   pointer.
+- Fixed bug that caused deadlock when --factoryreport specified
+- Fixed bug where GetTag could cause seg. fault when used on object 
+  created by event source
 
 
 Changes in version 0.6.3
