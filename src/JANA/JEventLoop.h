@@ -102,7 +102,7 @@ class JEventLoop{
 		
 		template<class T> JFactory<T>* GetSingle(const T* &t, const char *tag=""); ///< Get pointer to first data object from (source or factory)
 		template<class T> JFactory<T>* Get(vector<const T*> &t, const char *tag=""); ///< Get data object pointers from (source or factory)
-		template<class T> JFactory<T>* GetFromFactory(vector<const T*> &t, const char *tag="", data_source_t &data_source=NULL); ///< Get data object pointers from factory
+		template<class T> JFactory<T>* GetFromFactory(vector<const T*> &t, const char *tag="", data_source_t &data_source=null_data_source); ///< Get data object pointers from factory
 		template<class T> jerror_t GetFromSource(vector<const T*> &t, JFactory_base *factory=NULL); ///< Get data object pointers from source.
 		inline JEvent& GetJEvent(void){return event;} ///< Get pointer to the current JEvent object.
 		inline void SetJEvent(JEvent *event){this->event = *event;} ///< Set the JEvent pointer.
@@ -154,6 +154,8 @@ class JEventLoop{
 		double delta_time;				///< Total time spent processing events (this thread)
 		double rate_instantaneous;		///< Latest instantaneous rate
 		double rate_integrated;			///< Rate integrated over all events
+   
+      static data_source_t null_data_source;
 		
 };
 

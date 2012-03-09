@@ -1,7 +1,7 @@
 
 #include <pthread.h>
 
-using namespace std;
+//using namespace std;
 
 #include "JStreamLog.h"
 
@@ -33,7 +33,7 @@ std::ostream& endMsg(std::ostream& dSL) {
 //------------------
 // GetTag
 //------------------
-string JStreamLog::GetTag(void)
+std::string JStreamLog::GetTag(void)
 {
 	JStreamLogBuffer *b = GetJStreamLogBuffer();
 	
@@ -63,7 +63,7 @@ bool JStreamLog::GetThreadstampFlag(void)
 //------------------
 // SetTag
 //------------------
-void JStreamLog::SetTag(string tag)
+void JStreamLog::SetTag(std::string tag)
 {
 	JStreamLogBuffer *b = GetJStreamLogBuffer();
 	if(b)b->SetTag(tag);

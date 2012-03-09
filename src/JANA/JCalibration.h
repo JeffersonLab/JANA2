@@ -58,10 +58,10 @@ class JCalibration{
 		template<class T> bool Get(string namepath, vector< map<string,T> > &vals, int event_number=0);
 		template<class T> bool Get(string namepath, vector< vector<T> > &vals, int event_number=0);
 
-		template<class T> bool Put(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, map<string,T> &vals, string &comment="");
-		template<class T> bool Put(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, vector<T> &vals, string &comment="");
-		template<class T> bool Put(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, vector< map<string,T> > &vals, string &comment="");
-		template<class T> bool Put(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, vector< vector<T> > &vals, string &comment="");
+		template<class T> bool Put(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, map<string,T> &vals, const string &comment="");
+		template<class T> bool Put(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, vector<T> &vals, const string &comment="");
+		template<class T> bool Put(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, vector< map<string,T> > &vals, const string &comment="");
+		template<class T> bool Put(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, vector< vector<T> > &vals, const string &comment="");
 
 		template<class T> bool Get(string namepath, const T* &vals, int event_number=0);
 		
@@ -388,7 +388,7 @@ bool JCalibration::Get(string namepath, const T* &vals, int event_number)
 // Put  (map version)
 //-------------
 template<class T>
-bool JCalibration::Put(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, map<string,T> &vals, string &comment)
+bool JCalibration::Put(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, map<string,T> &vals, const string &comment)
 {
 	/// Templated method used to write a set of calibration constants.
 	///
@@ -420,7 +420,7 @@ bool JCalibration::Put(string namepath, int run_min, int run_max, int event_min,
 // Put  (vector version)
 //-------------
 template<class T>
-bool JCalibration::Put(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, vector<T> &vals, string &comment)
+bool JCalibration::Put(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, vector<T> &vals, const string &comment)
 {
 	/// Templated method used to write a set of calibration constants.
 	///
@@ -454,7 +454,7 @@ bool JCalibration::Put(string namepath, int run_min, int run_max, int event_min,
 // Put  (table, map version)
 //-------------
 template<class T>
-bool JCalibration::Put(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, vector< map<string,T> > &vals, string &comment)
+bool JCalibration::Put(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, vector< map<string,T> > &vals, const string &comment)
 {
 	/// Templated method used to write a set of calibration constants.
 	///
@@ -491,7 +491,7 @@ bool JCalibration::Put(string namepath, int run_min, int run_max, int event_min,
 // Put  (table, vector version)
 //-------------
 template<class T>
-bool JCalibration::Put(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, vector< vector<T> > &vals, string &comment)
+bool JCalibration::Put(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, vector< vector<T> > &vals, const string &comment)
 {
 	/// Templated method used to write a set of calibration constants.
 	///
