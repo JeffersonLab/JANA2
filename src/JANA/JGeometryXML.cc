@@ -14,6 +14,12 @@ using namespace std;
 using namespace jana;
 
 #if HAVE_XERCES
+
+#if XERCES3
+// XERCES 3
+
+#else
+// XERCES 2
 #include <xercesc/util/PlatformUtils.hpp>
 #include <xercesc/parsers/AbstractDOMParser.hpp>
 #include <xercesc/dom/DOMImplementationLS.hpp>
@@ -25,6 +31,9 @@ using namespace jana;
 #include <xercesc/dom/DOMDocument.hpp>
 #include <xercesc/dom/DOMException.hpp>
 #include <xercesc/dom/DOMXPathResult.hpp>
+
+#endif
+
 using namespace xercesc;
 #endif
 
@@ -83,9 +92,15 @@ JGeometryXML::JGeometryXML(string url, int run, string context):JGeometry(url,ru
 	XMLPlatformUtils::Initialize();
 	
 	// Instantiate the DOM parser.
+#if XERCES3
+   parser = new XercesDOMParser();
+   parser->setValidationScheme(XercesDOMParser::Val_Always);
+   parser->setDoNamespaces(true);    // optional
+#else
 	static const XMLCh gLS[] = { chLatin_L, chLatin_S, chNull };
 	DOMImplementation *impl = DOMImplementationRegistry::getDOMImplementation(gLS);
 	parser = ((DOMImplementationLS*)impl)->createDOMBuilder(DOMImplementationLS::MODE_SYNCHRONOUS, 0);
+#endif
 
 	// Create an error handler and install it
 	JGeometryXML::ErrorHandler errorHandler;
@@ -93,8 +108,13 @@ JGeometryXML::JGeometryXML(string url, int run, string context):JGeometry(url,ru
 	
 	// Read in the XML and parse it
 	parser->resetDocumentPool();
+#if XERCES3
+   parser->parse(xmlfile.c_str());
+   doc = parser->getDocument();
+#else
 	doc = parser->parseURI(xmlfile.c_str());
-
+#endif
+   
 	valid_xmlfile = true;
 #endif
 }
@@ -579,42 +599,6 @@ void JGeometryXML::AddNodeToList(xercesc::DOMNode* start, string start_path, vec
 	}
 }
 
-#if 0
-//---------------------------------
-// FindNode
-//---------------------------------
-DOMNode* JGeometryXML::FindNode(string xpath, string &attribute, DOMNode *after_node)
-{
-	/// Parse the xpath string into node names and attribute qualifiers.
-	/// This is a *very* restricted form of the xpath syntax and done only
-	/// to serve the purposes of this specific application at this time.
-	/// The string "attribute" is used to return the name of the attribute
-	/// if it is specified at the end of the xpath string. For example,
-	///
-	/// '//hdds:element[@name="Antimony"]/@a'
-	///
-	/// specifies that the attribute "a" of the element node is what is
-	/// desired. By contrast,
-	///
-	/// '//hdds:element[@name="Antimony" and @a]'
-	///
-	/// specifies the node, but not a particular attribute. For these cases,
-	/// an empty string is ("") is copied into the attribute variable.
-	
-	// First, parse the string to get node names and attribute qualifiers
-	vector<pair<string, map<string,string> > > nodes;
-	unsigned int attr_depth;
-	ParseXPath(xpath, nodes, attribute, attr_depth);
-
-	// The only practical way to find the nodes now is to use a recursive
-	// routine to walk the tree until it finds the correct node with all
-	// of the correct attributes of the parent nodes along the way.
-	DOMNode *node = SearchTree(doc, 0, nodes, attr_depth, after_node);
-
-	return node;
-}
-#endif
-
 //---------------------------------
 // FindAttributeValues
 //---------------------------------
@@ -638,154 +622,6 @@ void JGeometryXML::FindAttributeValues(string &xpath, multimap<DOMNode*, string>
 	// Copy search results into user provided container
 	attributes = sp.attributes;
 }
-
-#if 0
-//---------------------------------
-// SearchTree
-//---------------------------------
-DOMNode* JGeometryXML::SearchTree(DOMNode* current_node, unsigned int depth, vector<pair<string, map<string,string> > > &nodes, unsigned int attr_depth, bool find_all, vector<DOMNode*> *dom_nodes)
-{
-	/// This is a reentrant routine that recursively calls itself while walking the
-	/// DOM tree, looking for a path that matches the xpath already parsed and
-	/// passed to us via the "nodes" variable. This examines the node specified
-	/// by "current_node" and if needed, all of it's children. The value of "depth"
-	/// specifies which element of the nodes vector we are looking for. On the initial
-	/// call to this routine, depth will be 0 signifying that we are trying to match
-	/// the first node. Note that the first level specified in the xpath may not be
-	/// at the root of the DOM tree so we may recall ourselves at several levels
-	/// with depth=0 as we try to find the starting point in the DOM tree.
-	///
-	/// The "attr_depth" value specifies which element of the "nodes" vector has
-	/// the atribute of interest. This is needed since the attribute of interest may
-	/// reside at any level in the xpath (not necessarily at the end).
-	///
-	/// The "after_node" value is used when looking for multiple nodes that satisfy
-	/// the same xpath. If this is NULL, then the first matching node encountered 
-	/// is returned. If it is non-NULL, then matching nodes are skipped until
-	/// the one specified by "after_node" is found. At that point, after_node is
-	/// set to NULL and the search continued so that the next matching node will be
-	/// returned. This means for each matching instance, the tree is re-searched 
-	/// from the begining to look for the additional matches which is not very
-	/// efficient, but it is what it is.
-
-	// First, make sure "depth" isn't deeper than our nodes map.
-	if(depth>=nodes.size())return NULL;
-
-	// Get node name in usable format
-	char *tmp = XMLString::transcode(current_node->getNodeName());
-	string nodeName = tmp;
-	XMLString::release(&tmp);
-
-	// Check if the name of this node matches the one we're looking for
-	// (specified by depth). If not, then we may need to loop over this node's
-	// children and recall ourselves. This is for the case when we are
-	// first called and the depth=0 node may not be at the root of the 
-	// tree.
-	if(nodeName!=nodes[depth].first && nodes[depth].first!="" && nodes[depth].first!="*"){
-
-		// If depth is not 0, then we know we're already part-way into
-		// the tree. Return NULL now to signify this is not the right branch
-		if(depth!=0)return NULL;
-		
-		// At this point, we may have just not come across the first node
-		// specified in our nodes map. Try each of our children
-		// Loop over children and recall ourselves for each of them
-		for (DOMNode *child = current_node->getFirstChild(); child != 0; child=child->getNextSibling()){
-#if 0
-			DOMNode *node = SearchTree(child, 0, nodes, attr_depth, after_node);
-			if(node!=NULL){
-				// Wow! it looks like we found it. If after_node is non-NULL, then
-				// we need to continue searching the children for the next matching
-				// node. If the node found happens to be after_node, then we need
-				// to set after_node to NULL so that the next node found is returned
-				// to the initial caller.
-				if(after_node!=NULL){
-					if(node == after_node)after_node=NULL;
-				}else{
-					// If we get here then we found the final match
-					return node;
-				}
-			}
-#endif
-		}
-		
-		// Looks like we didn't find the node on this branch. Return NULL.
-		return NULL;
-	}
-
-	// OK, We are at the "depth"-th node in our list. Check any attribute
-	// qualifiers for this node.
-	unsigned int Npassed = 0;
-	map<string, string> &qualifiers = nodes[depth].second;
-	map<string, string>::iterator iter = qualifiers.begin();
-	for(; iter!=qualifiers.end(); iter++){
-		const string &attr = iter->first;
-		const string &val = iter->second;
-		
-		// Loop over attributes of this node
-		if(current_node->hasAttributes()) {
-			// get all the attributes of the node
-			DOMNamedNodeMap *pAttributes = current_node->getAttributes();
-			int nSize = pAttributes->getLength();
-			for(int i=0;i<nSize;++i) {
-				DOMAttr *pAttributeNode = (DOMAttr*) pAttributes->item(i);
-				char *tmp1 = XMLString::transcode(pAttributeNode->getName());
-				char *tmp2 = XMLString::transcode(pAttributeNode->getValue());
-				string my_attr = tmp1;
-				string my_val = tmp2;
-				XMLString::release(&tmp1);
-				XMLString::release(&tmp2);
-				
-				if(attr == my_attr){
-					if(val=="" || val==my_val)Npassed++;
-					break;
-				}
-			}
-		}
-	}
-	
-	// If we didn't pass all of the attribute tests, then return NULL now
-	if(Npassed != qualifiers.size())return NULL;
-	
-	// Check if we have found the final node
-	if(depth==nodes.size()-1){
-		// At this point, we have found a node that completely matches all node names
-		// and qualifiers. If a non-NULL values of "after_node" was passed then we
-		// want to check it against this node
-	
-//		if(node==after_node){
-			// If we get here then we found after_node. Set it to
-			// NULL and continue so we can find the next node.
-//			after_node = NULL;
-//		}
-
-		return current_node;
-	}
-
-	// At this point, we have verified that the node names and all of
-	// the qualifiers for each of them up to and including this node
-	// are correct. Now we need to loop over this node's children and
-	// have them check against the next level.
-	for (DOMNode *child = current_node->getFirstChild(); child != 0; child=child->getNextSibling()){
-		DOMNode *node = SearchTree(child, depth+1, nodes, attr_depth);
-		if(node!=NULL){
-			// At this point, all nodes with all qualifiers matched have been found.
-			// We are now passing the node pointer containing the attribute of
-			// interest back up the recursive call chain. If we happen to be at the
-			// level where the attribute of interest resides, then pass up our
-			// current node. Otherwise, pass up the node returned by the SearchTree
-			// call above. Note that this mean the deepest node will be passed
-			// up as we back out of the recursive call chain until we hit the
-			// level with the attribute of interest. After that, the node for that
-			// level is passed up (returned).
-		
-			return depth==attr_depth ? current_node:node;
-		}
-	}
-	
-	return NULL;
-}
-#endif
 
 //---------------------------------
 // SearchTree

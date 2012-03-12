@@ -237,11 +237,16 @@ XMLPlatformUtils::Initialize();
         dnl
         dnl Check Xerces version
         dnl
+ 
         if test "$HAVE_XERCES" = "yes"; then
 		  
 				AC_DEFINE([HAVE_XERCES],[1],[Xerces C++ XML parser is defined])
 
+            dnl We always want to check the xerces version number
             xerces_version_req=ifelse([$1], [], [], [$1])
+            if test x"$xerces_version_req" = "x"; then
+               xerces_version_req="2.7"
+            fi
 
             if test  -n "$xerces_version_req"; then
 
@@ -262,7 +267,6 @@ XMLPlatformUtils::Initialize();
                                     sed -e 's/#define XERCES_VERSION_REVISION.//'`
 
                     XERCES_VERSION="$xerces_major.$xerces_minor.$xerces_revision"
-                    AC_SUBST([XERCES_VERSION])
 
                     dnl Decompose required version string and calculate numerical representation
                     xerces_version_req_major=`expr $xerces_version_req : '\([[0-9]]*\)'`
@@ -288,6 +292,15 @@ XMLPlatformUtils::Initialize();
                         AC_MSG_RESULT([no])
                         AC_MSG_WARN([Found Xerces C++ Parser $XERCES_VERSION, which is older than required. Possible compilation failure.])
                     fi
+                    if test $xerces_major = 3; then
+                        XERCES3=1
+                    else
+                        XERCES3=0
+                    fi
+                    
+                    AC_MSG_NOTICE([Xerces Version: $XERCES_VERSION])
+                    AC_SUBST([XERCES_VERSION])
+                    AC_SUBST([XERCES3])
                 else
                     AC_MSG_RESULT([no])
                     AC_MSG_WARN([Missing header XercesVersion.hpp. Unable to determine Xerces version.])

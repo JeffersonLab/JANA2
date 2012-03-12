@@ -1,6 +1,7 @@
 
 Changes in version 0.6.4
 
+- Updated to use Xerces 3 or Xerces 2 (detected at configure level)
 - Updated online documentation generation
 - Added THREAD_TIMEOUT_FIRST_EVENT parameter
 - Added ability to change the number of threads on the fly. This

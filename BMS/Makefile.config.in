@@ -24,6 +24,7 @@ MYSQL_VERSION   = @MYSQL_VERSION@
 XERCES_CPPFLAGS = @XERCES_CPPFLAGS@
 XERCES_LDFLAGS  = @XERCES_LDFLAGS@
 XERCES_VERSION  = @XERCES_VERSION@
+XERCES3         = @XERCES3@
 
 # if xerces support is built into the JANA library then all JANA
 # programs will need to link in the xerces library.

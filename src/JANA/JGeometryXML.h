@@ -18,11 +18,28 @@
 
 #if HAVE_XERCES
 #ifndef __CINT__
+
+#define XERCES3 1
+#if XERCES3
+
+// XERCES3
+#include <xercesc/parsers/XercesDOMParser.hpp>
+#include <xercesc/dom/DOM.hpp>
+#include <xercesc/sax/HandlerBase.hpp>
+#include <xercesc/util/XMLString.hpp>
+#include <xercesc/util/PlatformUtils.hpp>
+
+#else
+
+// XERCES2
 #include <xercesc/dom/DOMErrorHandler.hpp>
 #include <xercesc/dom/DOMBuilder.hpp>
 #include <xercesc/dom/DOMDocument.hpp>
 #include <xercesc/dom/DOMNode.hpp>
 #include <xercesc/dom/DOMAttr.hpp>
+
+#endif
+
 #else // __CINT__
 namespace xercesc{
 class xercesc::DOMBuilder;
@@ -86,8 +103,13 @@ class JGeometryXML:public JGeometry{
 				void SearchTree(void);	// Returns true if a matching node was found
 		};
 
-		xercesc::DOMBuilder *parser;
-		xercesc::DOMDocument *doc;
+
+#if XERCES3
+      xercesc::XercesDOMParser *parser;
+#else
+      xercesc::DOMBuilder *parser;
+#endif
+      xercesc::DOMDocument *doc;
 		
 		void AddNodeToList(xercesc::DOMNode* start, string start_path, vector<string> &xpaths, JGeometry::ATTR_LEVEL_t level);
 		//xercesc::DOMNode* FindNode(string xpath, string &attribute, xercesc::DOMNode *after_node=NULL);
@@ -97,14 +119,25 @@ class JGeometryXML:public JGeometry{
 		static void GetAttributes(xercesc::DOMNode* node, map<string,string> &attributes);
 
 		// Error handler callback class
-		class ErrorHandler : public xercesc::DOMErrorHandler
-		{
+#if XERCES3
+   class ErrorHandler : public xercesc::ErrorHandler
+#else
+   class ErrorHandler : public xercesc::DOMErrorHandler
+#endif
+   {
 			public:
 				 //  Constructors and Destructor
 				 ErrorHandler(){}
 				 ~ErrorHandler(){}
 				 bool handleError(const xercesc::DOMError& domError){jerr<<"Got Error!!"<<endl; return false;}
-				 void resetErrors();
+             void resetErrors(){}
+      
+            // Purely virtual methods
+#if XERCES3
+      void warning(const xercesc::SAXParseException& exc){}
+      void error(const xercesc::SAXParseException& exc){}
+      void fatalError(const xercesc::SAXParseException& exc){}
+#endif
 
 			private :
 				 //  Unimplemented constructors and operators
