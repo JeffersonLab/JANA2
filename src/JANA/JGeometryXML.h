@@ -19,7 +19,6 @@
 #if HAVE_XERCES
 #ifndef __CINT__
 
-#define XERCES3 1
 #if XERCES3
 
 // XERCES3
