@@ -157,6 +157,7 @@ JApplication::JApplication(int narg, char* argv[])
 	sigaction(SIGUSR2, &sigaction_usr2, NULL);
 
 	// Initialize application level mutexes
+	pthread_mutex_init(&factories_to_delete_mutex, NULL);
 	pthread_mutex_init(&app_mutex, NULL);
 	pthread_mutex_init(&geometry_mutex, NULL);
 	pthread_mutex_init(&calibration_mutex, NULL);
@@ -1028,9 +1029,9 @@ void JApplication::AddFactoriesToDeleteList(vector<JFactory_base*> &factories)
 	/// has completed. Note that at that time, the JEventLoop objects
 	/// have all been destroyed so the processor will have to have
 	/// maintained a copy of the factory pointer on its own.
-	Lock();
+	pthread_mutex_lock(&factories_to_delete_mutex);
 	factories_to_delete.insert(factories_to_delete.end(), factories.begin(), factories.end());
-	Unlock();
+	pthread_mutex_unlock(&factories_to_delete_mutex);
 }
 
 //---------------------------------
@@ -1405,6 +1406,7 @@ jerror_t JApplication::Fini(void)
 	processors.clear();
 
 	// Delete all factories registered for delayed deletion
+	pthread_mutex_lock(&factories_to_delete_mutex);
 	for(unsigned int i=0; i<factories_to_delete.size(); i++){
 		try{
 			delete factories_to_delete[i];
@@ -1416,6 +1418,7 @@ jerror_t JApplication::Fini(void)
 		}
 	}
 	factories_to_delete.clear();
+	pthread_mutex_unlock(&factories_to_delete_mutex);
 	
 	// Delete all sources allowing them to close cleanly
 	for(unsigned int i=0;i<sources.size();i++){

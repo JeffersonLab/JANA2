@@ -135,6 +135,7 @@ class JApplication{
 		vector<JEventProcessor*> processors;
 		vector<JEventLoop*> loops;
 		vector<JFactory_base*> factories_to_delete;
+		pthread_mutex_t factories_to_delete_mutex;
 		vector<double*> heartbeats;
 		pthread_mutex_t app_mutex;
 		map<pthread_t, map<string, unsigned int> > Nfactory_calls;

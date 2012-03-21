@@ -10,7 +10,8 @@ Changes in version 0.6.4
 - Fixed bug that caused deadlock when --factoryreport specified
 - Fixed bug where GetTag could cause seg. fault when used on object 
   created by event source
-
+- Fixed bug that caused occasional deadlock when trying to merge
+  threads at end of event processing
 
 Changes in version 0.6.3
 
