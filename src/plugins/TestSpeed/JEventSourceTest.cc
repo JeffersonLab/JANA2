@@ -36,7 +36,7 @@ void InitPlugin(JApplication *app){
 	cout<<"Initialized speed_test plugin."<<endl;
 	cout<<"For this to work you need to give at least one dummy source."<<endl;
 	cout<<"e.g."<<endl;
-	cout<<"        jana --plugin=jpseed_test dummy"<<endl;
+	cout<<"        jana --plugin=TestSpeed dummy"<<endl;
 	cout<<endl;
 	cout<<"There are built-in delays in both the processor and source"<<endl;
 	cout<<"that can be adjusted to more realistically test the system."<<endl;
@@ -138,7 +138,7 @@ jerror_t JEventSourceTest::GetObjects(JEvent &event, JFactory_base *factory)
 	if(dataClassName == "JRawData"){
 		
 		int Nhits = random()%10;
-		vector<JRawData*> hits(Nhits);
+		vector<JRawData*> hits;
 		for(int i=0; i<Nhits; i++){
 			JRawData *hit = new JRawData;
 			hit->crate = 1 + random()%5;
