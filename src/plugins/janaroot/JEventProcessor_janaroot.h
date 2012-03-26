@@ -46,6 +46,7 @@ class JEventProcessor_janaroot:public jana::JEventProcessor{
 				vector<data_type_t> types;
 				int *Nptr;
 				unsigned long Bptr;
+			map<int, vector<std::string> > StringMap;
 				
 				void Print(void){
 					cout<<"    tree name:"<<tree->GetName()<<endl;

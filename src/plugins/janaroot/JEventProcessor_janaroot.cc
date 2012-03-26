@@ -291,9 +291,12 @@ TreeInfo* JEventProcessor_janaroot::GetTreeInfo(JFactory_base *fac)
 	if(iter!=trees.end())return iter->second;
 	
 	// No branch currently exists. Try creating one.
+	// Passing "true" as second arugment to toStrings causes data
+	// types and unformatted values to be appended to names (keys)
+	// in "items".
 	vector<vector<pair<string,string> > > items;
 	fac->toStrings(items, true);
-	
+
 	// If no objects currently exists for this factory (either because
 	// it was activated, but produced zero objects or was never even
 	// activated) then we have no information by which to create a branch.
@@ -303,7 +306,7 @@ TreeInfo* JEventProcessor_janaroot::GetTreeInfo(JFactory_base *fac)
 	// Create TreeInfo structure
 	TreeInfo *tinfo = new TreeInfo;
 	
-	// Remember the current ROOT directory and switch the file
+	// Remember the current ROOT directory and switch to the file
 	TDirectory *cwd = gDirectory;
 	file->cd();
 
@@ -365,8 +368,9 @@ TreeInfo* JEventProcessor_janaroot::GetTreeInfo(JFactory_base *fac)
 			item_size = sizeof(double);
 			type = type_double;
 		}else if(tokens[1]=="string"){
-			branch_def = iname + "[N]/C";
-			item_size = 256; // not sure what to do here!
+			// Strings must be handled differently
+			tinfo->StringMap[i]; // Create an element in the map with key "i"
+			item_size = 0;
 			type = type_string;
 		}else{
 			branch_def = iname + "[N]/F";
@@ -380,7 +384,12 @@ TreeInfo* JEventProcessor_janaroot::GetTreeInfo(JFactory_base *fac)
 		tinfo->obj_size += item_size;
 		
 		// Create new branch
-		TBranch *branch = tinfo->tree->Branch(iname.c_str(), (void*)NULL, branch_def.c_str());
+		TBranch *branch = NULL;
+		if(type == type_string){
+			branch = tinfo->tree->Branch(iname.c_str(), &tinfo->StringMap[i]);
+		}else{
+			branch = tinfo->tree->Branch(iname.c_str(), (void*)NULL, branch_def.c_str());
+		}
 		tinfo->branches.push_back(branch);
 	}
 	
@@ -393,8 +402,8 @@ TreeInfo* JEventProcessor_janaroot::GetTreeInfo(JFactory_base *fac)
 	tinfo->Nmax = Nmax;
 	tinfo->buff_size = sizeof(int) + tinfo->Nmax*tinfo->obj_size;
 	tinfo->buff = new char[tinfo->buff_size];
-	tinfo->Nptr = (int*)tinfo->buff;
-	tinfo->Bptr = (unsigned long)&tinfo->Nptr[1];
+	tinfo->Nptr = (int*)tinfo->buff;// "N" is first element in buffer
+	tinfo->Bptr = (unsigned long)&tinfo->Nptr[1]; // pointer to buffer starting AFTER "N"
 	
 	// Add to list
 	trees[key] = tinfo;
@@ -417,7 +426,7 @@ void JEventProcessor_janaroot::FillTree(JFactory_base *fac, TreeInfo *tinfo)
 {
 	// Get data in form of strings from factory
 	vector<vector<pair<string,string> > > items;
-	fac->toStrings(items, true);
+	fac->toStrings(items, true); // "true" gets data types and unformatted values
 	
 	// Verify each object has the right number of elements
 	unsigned int Nitems = tinfo->types.size(); // Number of items used to define object in tree
@@ -436,45 +445,48 @@ void JEventProcessor_janaroot::FillTree(JFactory_base *fac, TreeInfo *tinfo)
 	vector<string> tokens;
 	unsigned long ptr =  tinfo->Bptr;
 	for(unsigned int j=0; j<tinfo->types.size(); j++){
+		
+		if(tinfo->branches[j+1] == NULL)continue;
 	
 		// Set the branch address
-		tinfo->branches[j+1]->SetAddress((void*)ptr);
-	
+		if(tinfo->types[j] == type_string){
+			// String address should already be set. We just need to
+			// clear the vector so it can be refilled below.
+			tinfo->StringMap[j].clear();
+		}else{
+			tinfo->branches[j+1]->SetAddress((void*)ptr);
+		}
+
 		// Loop over objects
 		for(unsigned int i=0; i<(unsigned int)*tinfo->Nptr; i++){
 			Tokenize(items[i][j].first, tokens, ':');
 			if(tokens.size()<3)continue;
 
 			stringstream ss(tokens[2]);
+			string str;
 
 			switch(tinfo->types[j]){
 				case type_int:
 					ss>>(*(int*)ptr);
-					ptr += sizeof(int);
 					break;
 				case type_uint:
 					ss>>(*(unsigned int*)ptr);
-					ptr += sizeof(unsigned int);
 					break;
 				case type_long:
 					ss>>(*(long*)ptr);
-					ptr += sizeof(long);
 					break;
 				case type_ulong:
 					ss>>(*(unsigned long*)ptr);
-					ptr += sizeof(unsigned long);
 					break;
 				case type_float:
 					ss>>(*(float*)ptr);
-					ptr += sizeof(float);
 					break;
 				case type_double:
 					ss>>(*(double*)ptr);
-					ptr += sizeof(double);
 					break;
 				case type_string:
-					_DBG_<<"String types not implemented yet!"<<endl;
-					ptr += 256;
+					ss>>str;
+					tinfo->StringMap[j].push_back(str);
 					break;
 				default:
 					if(Nwarnings<MaxWarnings && JANAROOT_VERBOSE>0){
@@ -483,9 +495,9 @@ void JEventProcessor_janaroot::FillTree(JFactory_base *fac, TreeInfo *tinfo)
 						if(Nwarnings==MaxWarnings)cerr<<" --last warning! --";
 						cerr<<endl;
 					}
-					ptr += sizeof(float);
 					break;
 			}
+			ptr += tinfo->item_sizes[j];
 		}
 	}
 
