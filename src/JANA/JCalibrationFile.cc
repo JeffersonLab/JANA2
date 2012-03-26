@@ -11,6 +11,7 @@
 #include <time.h>
 
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 using namespace std;
 
@@ -184,7 +185,7 @@ bool JCalibrationFile::GetCalib(string namepath, vector< map<string, string> > &
 			// Make sure a name exists for this column
 			if(colnames.size()<=icol){
 				stringstream sss;
-				sss<<icol;
+				sss << setw(3) << setfill('0') << icol;
 				colnames.push_back(sss.str());
 			}
 			mval[colnames[icol++]] = val;

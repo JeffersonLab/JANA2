@@ -16,6 +16,9 @@ Changes in version 0.6.4
 - Added mkfactory_plugin script
 - Added general list of rw locks indexed by name
 - Added special methods to JApplication for (un)locking rw lock for ROOT 
+- Added SConstruct script for building with scons
+- Fix bug that caused calibration tables with >10 columns to place columns
+  out of order
 
 Changes in version 0.6.3
 
