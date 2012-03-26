@@ -159,7 +159,7 @@ jerror_t MyProcessor::evnt(JEventLoop *eventLoop, int eventnumber)
 		cout<<endl;
 		switch(toupper(c)){
 			case 'Q':
-				eventLoop->Quit();
+				eventLoop->QuitProgram();
 				break;
 			case 'P':
 				//eventLoop->GotoEvent(eventnumber-1);
