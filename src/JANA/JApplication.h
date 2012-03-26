@@ -109,9 +109,15 @@ class JApplication{
 		                          void SignalThreads(int signo); ///< Send a system signal to all processing threads.
 		                          bool KillThread(pthread_t thr, bool verbose=true); ///< Kill a specific thread. Returns true if thread is found and kill signal sent, false otherwise.
 		                          void SetNthreads(int new_Nthreads); ///< Set the number of processing threads to use (can be called during event processing)
-		                   inline void Lock(void){pthread_mutex_lock(&app_mutex);} ///< Lock the application-wide mutex (don't use this!)
-						   inline void Unlock(void){pthread_mutex_unlock(&app_mutex);} ///< Unlock the application wide mutex (don't use this!)
-		
+	                       inline void Lock(void){WriteLock("app");} ///< Deprecated. Use ReadLock("app") or WriteLock("app") instead. (This just calls WriteLock("app").)
+		      inline pthread_rwlock_t* CreateLock(const string &name, bool throw_exception_if_exists=true);
+			  inline pthread_rwlock_t* ReadLock(const string &name);
+			  inline pthread_rwlock_t* WriteLock(const string &name);
+			  inline pthread_rwlock_t* Unlock(const string &name=string("app"));
+	          inline pthread_rwlock_t* RootReadLock(void){pthread_rwlock_rdlock(root_rw_lock); return root_rw_lock;}
+              inline pthread_rwlock_t* RootWriteLock(void){pthread_rwlock_wrlock(root_rw_lock); return root_rw_lock;}
+              inline pthread_rwlock_t* RootUnLock(void){pthread_rwlock_unlock(root_rw_lock); return root_rw_lock;}
+	
 		bool monitor_heartbeat; ///< Turn monitoring of processing threads on/off.
 		bool batch_mode;
 		
@@ -137,7 +143,6 @@ class JApplication{
 		vector<JFactory_base*> factories_to_delete;
 		pthread_mutex_t factories_to_delete_mutex;
 		vector<double*> heartbeats;
-		pthread_mutex_t app_mutex;
 		map<pthread_t, map<string, unsigned int> > Nfactory_calls;
 		map<pthread_t, map<string, unsigned int> > Nfactory_gencalls;
 		vector<pair<string,string> > auto_activated_factories;
@@ -160,6 +165,11 @@ class JApplication{
 		vector<JFactoryGenerator*> factoryGenerators;
 		vector<JCalibrationGenerator*> calibrationGenerators;
 		vector<void*> sohandles;
+	
+		map<string, pthread_rwlock_t*> rw_locks;
+		pthread_rwlock_t rw_locks_lock; // control access to rw_locks
+		pthread_rwlock_t *app_rw_lock;
+		pthread_rwlock_t *root_rw_lock;
 
 		vector<string> args;	///< Argument list passed in to JApplication Constructor
 		int show_ticker;
@@ -181,6 +191,157 @@ class JApplication{
 		bool dump_configurations;
 		bool quitting;
 };
+
+	
+//---------------------------------
+// CreateLock
+//---------------------------------
+inline pthread_rwlock_t* JApplication::CreateLock(const string &name, bool throw_exception_if_exists)
+{
+	// Lock the rw locks lock
+	pthread_rwlock_wrlock(&rw_locks_lock);
+	
+	// Make sure a lock with this name does not already exist
+	map<string, pthread_rwlock_t*>::iterator iter = rw_locks.find(name);
+	pthread_rwlock_t *lock = (iter != rw_locks.end() ? iter->second:NULL);
+
+	if(lock != NULL){
+		// Lock exists. Throw exception (if specified)
+		if(throw_exception_if_exists){
+			pthread_rwlock_unlock(&rw_locks_lock);
+			string mess = "Trying to create JANA rw lock \""+name+"\" when it already exists!";
+			throw JException(mess);
+		}
+	}else{
+		// Lock does not exist. Create it.
+		lock = new pthread_rwlock_t;
+		pthread_rwlock_init(lock, NULL);
+		rw_locks[name] = lock;
+	}
+	
+	// Unlock the rw locks lock
+	pthread_rwlock_unlock(&rw_locks_lock);
+	
+	return lock;
+}
+	
+//---------------------------------
+// ReadLock
+//---------------------------------
+inline pthread_rwlock_t* JApplication::ReadLock(const string &name)
+{
+	/// Lock a global, named, rw_lock for reading. If a lock with that
+	/// name does not exist, then create one and lock it for reading.
+	///
+	/// This is a little tricky. Access to the map of rw locks must itself
+	/// be controlled by a rw lock. This means we incure the overhead of two
+	/// locks and one unlock for every call to this method. Furthermore, to
+	/// keep this efficient, we want to try only read locking the map at
+	/// first. If we fail to find the requested lock in the map, we must 
+	/// release the map's read lock and try creating the new lock.
+	
+	// Ensure the rw_locks map is not changed while we're looking at it,
+	// lock the rw_locks_lock.
+	pthread_rwlock_rdlock(&rw_locks_lock);
+	
+	// Find the lock. If it doesn't exist, set pointer to NULL
+	map<string, pthread_rwlock_t*>::iterator iter = rw_locks.find(name);
+	pthread_rwlock_t *lock = (iter != rw_locks.end() ? iter->second:NULL);
+	
+	// Unlock the locks lock
+	pthread_rwlock_unlock(&rw_locks_lock);
+	
+	// If the lock doesn't exist, we need to create it. Because multiple
+	// threads may be trying to do this at the same time, one may create 
+	// it while another waits for the locks lock. We flag the CreateLock
+	// method to not throw an exception to accommodate this.
+	if(lock==NULL) lock = CreateLock(name, false);
+	
+	// Finally, lock the named lock or print error message if not found
+	if(lock != NULL){
+		pthread_rwlock_rdlock(lock);
+	}else{
+		string mess = "Unable to find or create lock \""+name+"\" for reading!";
+		throw JException(mess);
+	}
+	
+	return lock;
+}
+
+//---------------------------------
+// WriteLock
+//---------------------------------
+inline pthread_rwlock_t* JApplication::WriteLock(const string &name)
+{
+	/// Lock a global, named, rw_lock for writing. If a lock with that
+	/// name does not exist, then create one and lock it for writing.
+	///
+	/// This is a little tricky. Access to the map of rw locks must itself
+	/// be controlled by a rw lock. This means we incure the overhead of two
+	/// locks and one unlock for every call to this method. Furthermore, to
+	/// keep this efficient, we want to try only read locking the map at
+	/// first. If we fail to find the requested lock in the map, we must 
+	/// release the map's read lock and try creating the new lock.
+	
+	// Ensure the rw_locks map is not changed while we're looking at it,
+	// lock the rw_locks_lock.
+	pthread_rwlock_rdlock(&rw_locks_lock);
+	
+	// Find the lock. If it doesn't exist, set pointer to NULL
+	map<string, pthread_rwlock_t*>::iterator iter = rw_locks.find(name);
+	pthread_rwlock_t *lock = (iter != rw_locks.end() ? iter->second:NULL);
+	
+	// Unlock the locks lock
+	pthread_rwlock_unlock(&rw_locks_lock);
+	
+	// If the lock doesn't exist, we need to create it. Because multiple
+	// threads may be trying to do this at the same time, one may create 
+	// it while another waits for the locks lock. We flag the CreateLock
+	// method to not throw an exception to accommodate this.
+	if(lock==NULL) lock = CreateLock(name, false);
+		
+	// Finally, lock the named lock or print error message if not found
+	if(lock != NULL){
+		pthread_rwlock_wrlock(lock);
+	}else{
+		string mess = "Unable to find or create lock \""+name+"\" for writing!";
+		throw JException(mess);
+	}
+
+	return lock;
+}
+
+//---------------------------------
+// Unlock
+//---------------------------------
+inline pthread_rwlock_t* JApplication::Unlock(const string &name)
+{
+	/// Unlock a global, named rw_lock
+	
+	// To ensure the rw_locks map is not changed while we're looking at it,
+	// lock the rw_locks_lock.
+	pthread_rwlock_rdlock(&rw_locks_lock);
+	
+	// Find the lock. If it doesn't exist, set pointer to NULL
+	map<string, pthread_rwlock_t*>::iterator iter = rw_locks.find(name);
+	pthread_rwlock_t *lock = (iter != rw_locks.end() ? iter->second:NULL);
+	
+	// Unlock the locks lock
+	pthread_rwlock_unlock(&rw_locks_lock);
+	
+	// Finally, unlock the named lock or print error message if not found
+	if(lock != NULL){
+		pthread_rwlock_unlock(lock);
+	}else{
+		string mess = "Unable to find lock \""+name+"\" for unlocking!";
+		throw JException(mess);
+	}
+
+	return lock;
+}
+	
+	
+
 
 } // Close JANA namespace
 

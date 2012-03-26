@@ -158,11 +158,12 @@ JApplication::JApplication(int narg, char* argv[])
 
 	// Initialize application level mutexes
 	pthread_mutex_init(&factories_to_delete_mutex, NULL);
-	pthread_mutex_init(&app_mutex, NULL);
 	pthread_mutex_init(&geometry_mutex, NULL);
 	pthread_mutex_init(&calibration_mutex, NULL);
 	pthread_mutex_init(&event_buffer_mutex, NULL);
 	pthread_cond_init(&event_buffer_cond, NULL);
+	app_rw_lock = CreateLock("app");
+	root_rw_lock = CreateLock("root");
 
 	// Variables used for calculating the rate
 	show_ticker = 1;
@@ -666,7 +667,7 @@ jerror_t JApplication::AddJEventLoop(JEventLoop *loop, double* &heartbeat)
 	/// This is typically not called directly but rather, called by
 	/// the JEventLoop constructor.
 
-	pthread_mutex_lock(&app_mutex);
+	WriteLock("app");
 	loops.push_back(loop);
 	
 	// We need the threads vector to stay in sync with the loops and heartbeats
@@ -688,7 +689,7 @@ jerror_t JApplication::AddJEventLoop(JEventLoop *loop, double* &heartbeat)
 	*heartbeat = 0.0;
 	heartbeats.push_back(heartbeat);
 	
-	pthread_mutex_unlock(&app_mutex);
+	Unlock("app");
 
 	return NOERROR;
 }
@@ -702,7 +703,7 @@ jerror_t JApplication::RemoveJEventLoop(JEventLoop *loop)
 	/// not called directly by the user. Rather, it is called from the
 	/// JEventLoop destructor.
 
-	pthread_mutex_lock(&app_mutex);
+	WriteLock("app");
 
 	for(unsigned int i=0; i<loops.size(); i++){
 		if(loops[i] == loop){
@@ -716,7 +717,7 @@ jerror_t JApplication::RemoveJEventLoop(JEventLoop *loop)
 		}
 	}
 
-	pthread_mutex_unlock(&app_mutex);
+	Unlock("app");
 
 	return NOERROR;
 }
@@ -1204,7 +1205,7 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 		
 		// Here we lock the app mutex before looping over the heartbeats since a thread
 		// could finish at any time, changing the heartbeats vector
-		pthread_mutex_lock(&app_mutex);
+		pthread_rwlock_wrlock(app_rw_lock);
 		
 		// Add time slept to all heartbeats
 		double rem_time = (double)rem.tv_sec + (1.0E-9)*(double)rem.tv_nsec;
@@ -1280,9 +1281,9 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 					req.tv_nsec = (int)0.100E9; // set to 100 milliseconds
 					req.tv_sec = 0;
 					rem.tv_sec = rem.tv_nsec = 0;
-					pthread_mutex_unlock(&app_mutex); // Unlock the mutex
+					pthread_rwlock_unlock(app_rw_lock);
 					nanosleep(&req, &rem);
-					pthread_mutex_lock(&app_mutex); // Re-lock the mutex
+					pthread_rwlock_unlock(app_rw_lock); // Re-lock the mutex
 					// Our new thread will be in "threads" once it's up and running
 					if(find(threads.begin(), threads.end(), thr)!=threads.end()){
 						break;
@@ -1312,7 +1313,7 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 		threads_to_be_joined.clear();
 		
 		// We're done with the heartbeats etc. vectors for now. Unlock the mutex.
-		pthread_mutex_unlock(&app_mutex);
+		pthread_rwlock_unlock(app_rw_lock);
 
 
 		// When a JEventLoop runs out of events, it removes itself from
@@ -1366,10 +1367,10 @@ jerror_t JApplication::Fini(void)
 	/// and <i>fini()</i> routines are called as necessary. All JEventSources
 	/// are deleted and the final report is printed, if specified.
 
-	Lock();
-	if(fini_called){Unlock(); return NOERROR;}
+	pthread_rwlock_wrlock(app_rw_lock);
+	if(fini_called){pthread_rwlock_unlock(app_rw_lock); return NOERROR;}
 	fini_called=true;
-	Unlock();
+	pthread_rwlock_unlock(app_rw_lock);
 	
 	// Print final resource report
 	if(print_resource_report)PrintResourceReport();
@@ -1832,7 +1833,7 @@ jerror_t JApplication::RecordFactoryCalls(JEventLoop *loop)
 		gencalls[nametag] = fac->GetNgencalls();
 	}
 	
-	// This should only be called when the app_mutex is already locked
+	// This should only be called when the app mutex is already locked
 	// so we don't need to do it here.
 	Nfactory_calls[pthread_self()] = calls;
 	Nfactory_gencalls[pthread_self()] = gencalls;
@@ -2030,9 +2031,9 @@ pthread_t JApplication::GetThreadID(unsigned int index)
 {
 	pthread_t thr = 0x0;
 
-	pthread_mutex_lock(&app_mutex);
+	WriteLock("app");
 	if(index<threads.size())thr = threads[index];
-	pthread_mutex_unlock(&app_mutex);
+	Unlock("app");
 	
 	return thr;
 }
@@ -2055,7 +2056,7 @@ bool JApplication::KillThread(pthread_t thr, bool verbose)
 {
 	bool found_thread = false;
 
-	pthread_mutex_lock(&app_mutex);
+	WriteLock("app");
 	for(unsigned int i=0; i<threads.size(); i++){
 		if(threads[i]==thr){
 			pthread_kill(threads[i], SIGHUP);
@@ -2063,7 +2064,7 @@ bool JApplication::KillThread(pthread_t thr, bool verbose)
 			break;
 		}
 	}
-	pthread_mutex_unlock(&app_mutex);
+	Unlock("app");
 	
 	if(verbose){
 		if(found_thread){
@@ -2087,4 +2088,3 @@ void JApplication::SetNthreads(int new_Nthreads)
 	this->Nthreads = new_Nthreads;
 	jout<<"Setting number of processing threads to: "<<this->Nthreads<<endl;
 }
-

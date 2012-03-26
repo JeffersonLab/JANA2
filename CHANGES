@@ -12,6 +12,10 @@ Changes in version 0.6.4
   created by event source
 - Fixed bug that caused occasional deadlock when trying to merge
   threads at end of event processing
+- Updated janaroot to accept stringtypes
+- Added mkfactory_plugin script
+- Added general list of rw locks indexed by name
+- Added special methods to JApplication for (un)locking rw lock for ROOT 
 
 Changes in version 0.6.3
 

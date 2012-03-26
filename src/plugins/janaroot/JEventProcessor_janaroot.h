@@ -72,8 +72,6 @@ class JEventProcessor_janaroot:public jana::JEventProcessor{
 		jerror_t erun(void);						///< Called everytime run number changes, provided brun has been called.
 		jerror_t fini(void);						///< Called after last event of last event source has been processed.
 
-
-		pthread_mutex_t rootmutex;
 		unsigned int Nevents;
 		
 		unsigned int Nwarnings;

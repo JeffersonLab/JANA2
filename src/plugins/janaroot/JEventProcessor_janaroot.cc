@@ -41,9 +41,8 @@ static inline void Tokenize(string str, vector<string> &tokens, const char delim
 //-----------------------------------------
 JEventProcessor_janaroot::JEventProcessor_janaroot()
 {
-	// Initialize mutex
-	pthread_mutex_init(&rootmutex, NULL);
-	pthread_mutex_lock(&rootmutex);
+	// Lock ROOT global for reading
+	japp->RootWriteLock();
 	
 	// Remember current working directory. We do this so we can restore it
 	// and keep ROOT objects from other parts of the program from
@@ -69,8 +68,8 @@ JEventProcessor_janaroot::JEventProcessor_janaroot()
 	Nwarnings = 0;
 	MaxWarnings=50;
 	
-	// Release ROOT mutex
-	pthread_mutex_unlock(&rootmutex);
+	// Release ROOT lock
+	japp->RootUnLock();
 }
 
 //------------------
@@ -93,7 +92,7 @@ jerror_t JEventProcessor_janaroot::brun(JEventLoop *eventLoop, int runnumber)
 {
 	// Use the ROOT mutex to guarantee that other JEventLoops don't start
 	// processing event before we have filled in the nametags_to_write_out member
-	pthread_mutex_lock(&rootmutex);
+	japp->RootWriteLock();
 
 	// Allow user to specify factories to write out via configuration parameter
 	string factories_to_write_out="";
@@ -160,7 +159,7 @@ jerror_t JEventProcessor_janaroot::brun(JEventLoop *eventLoop, int runnumber)
 		}
 	}
 	
-	pthread_mutex_unlock(&rootmutex);
+	japp->RootUnLock();
 
 	return NOERROR;
 }
@@ -177,7 +176,7 @@ jerror_t JEventProcessor_janaroot::evnt(JEventLoop *loop, int eventnumber)
 	// buffers and writing to the ROOT file while we do. Note that
 	// this does not prevent other threads from accessing the ROOT
 	// globals and mucking things up for us there.
-	pthread_mutex_lock(&rootmutex);
+	japp->RootWriteLock();
 
 	// Get list of all foctories for this JEventLoop to be written out
 	vector<JFactory_base*> allfactories = loop->GetFactories();
@@ -230,8 +229,8 @@ jerror_t JEventProcessor_janaroot::evnt(JEventLoop *loop, int eventnumber)
 	Nevents++;
 	
 	// Release the ROOT mutex lock
-	pthread_mutex_unlock(&rootmutex);
-	
+	japp->RootUnLock();	
+
 	return NOERROR;
 }
 
@@ -248,9 +247,9 @@ jerror_t JEventProcessor_janaroot::erun(void)
 //------------------
 jerror_t JEventProcessor_janaroot::fini(void)
 {
-	pthread_mutex_lock(&rootmutex);
+	japp->RootWriteLock();
 	if(!file){
-		pthread_mutex_unlock(&rootmutex);
+		japp->RootUnLock();
 		return NOERROR;
 	}
 
@@ -275,7 +274,7 @@ jerror_t JEventProcessor_janaroot::fini(void)
 	delete file;
 	file=NULL;
 
-	pthread_mutex_unlock(&rootmutex);
+	japp->RootUnLock();
 
 	return NOERROR;
 }
@@ -285,6 +284,8 @@ jerror_t JEventProcessor_janaroot::fini(void)
 //------------------
 TreeInfo* JEventProcessor_janaroot::GetTreeInfo(JFactory_base *fac)
 {
+	// n.b. This gets called while inside the ROOT mutex so it is not locked again here
+
 	// Look for entry in our list of existing branches for this one
 	string key = string(fac->GetDataClassName())+":"+fac->Tag();
 	map<string, TreeInfo*>::iterator iter = trees.find(key);
@@ -424,6 +425,8 @@ TreeInfo* JEventProcessor_janaroot::GetTreeInfo(JFactory_base *fac)
 //------------------
 void JEventProcessor_janaroot::FillTree(JFactory_base *fac, TreeInfo *tinfo)
 {
+	// n.b. This gets called while inside the ROOT mutex so it is not locked again here
+	
 	// Get data in form of strings from factory
 	vector<vector<pair<string,string> > > items;
 	fac->toStrings(items, true); // "true" gets data types and unformatted values
