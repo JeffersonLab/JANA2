@@ -19,6 +19,7 @@ JParameter::JParameter(string my_key, string my_value)
 	value = my_value;
 	isdefault = false;
 	hasdefault = false;
+	type = JParameter::UNKNOWN;
 }
 
 //---------------------------------

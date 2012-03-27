@@ -92,7 +92,7 @@ class JParameter{
 		string value;
 		string default_value;
 		string description;
-		bool isdefault;	///< is the current value set by SetDefaultParameter ?
+		bool isdefault;		///< is the current value set by SetDefaultParameter ?
 		bool hasdefault;	///< was SetDefaultParameter ever called for this key ?
 		bool printme;		///< used by ParameterManager::PrintParameters()
 		dataType_t type;	///< data type used in last set
