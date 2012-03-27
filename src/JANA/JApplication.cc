@@ -1046,7 +1046,14 @@ jerror_t JApplication::Init(void)
 	/// (ones that call JApplication::Run()), this is called automatically
 	/// from Run().
 
-	if(init_called)return NOERROR; // don't initialize twice1
+	if(init_called){
+		string mess = " Attempting to call JApplication::Init() twice!\n";
+		       mess+= " A JApplication object may only be initilaized once and\n";
+		       mess+= " may only process data once. Use a different JApplication\n";
+		       mess+= " object if trying to re-process the data.";
+		jerr << mess << endl;
+		throw JException(mess);
+	}
 	init_called = true;
 
 	// Attach any plugins
@@ -1445,7 +1452,7 @@ jerror_t JApplication::Fini(void)
 
 	// Print final factory report
 	if(print_factory_report)PrintFactoryReport();
-
+	
 	return NOERROR;
 }
 

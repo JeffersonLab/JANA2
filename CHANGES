@@ -21,6 +21,8 @@ Changes in version 0.6.4
   out of order
 - Added CreateParameter method to JParameterManager. Also fixed
   bug where a race condition could occur in SetDefaultParameter
+- Throw exception with informative message if JApplication is initialized
+  twice.
 
 Changes in version 0.6.3
 

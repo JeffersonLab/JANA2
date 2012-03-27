@@ -108,6 +108,7 @@ JParameter* JParameterManager::CreateParameter(K key, string description)
 		// If we get here then the parameter must already exist. Throw an exception.
 		pthread_mutex_unlock(&parameter_mutex); // make sure we unlock mutex before leaving!
 		string mess = "Parameter \""+skey+"\" already exists!";
+		jerr << mess << std::endl;
 		throw JException(mess);
 	}
 	
