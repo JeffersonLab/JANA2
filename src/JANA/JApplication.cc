@@ -157,6 +157,7 @@ JApplication::JApplication(int narg, char* argv[])
 	sigaction(SIGUSR2, &sigaction_usr2, NULL);
 
 	// Initialize application level mutexes
+	pthread_rwlock_init(&rw_locks_lock, NULL);
 	pthread_mutex_init(&factories_to_delete_mutex, NULL);
 	pthread_mutex_init(&geometry_mutex, NULL);
 	pthread_mutex_init(&calibration_mutex, NULL);
