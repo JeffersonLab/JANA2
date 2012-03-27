@@ -19,6 +19,8 @@ Changes in version 0.6.4
 - Added SConstruct script for building with scons
 - Fix bug that caused calibration tables with >10 columns to place columns
   out of order
+- Added CreateParameter method to JParameterManager. Also fixed
+  bug where a race condition could occur in SetDefaultParameter
 
 Changes in version 0.6.3
 

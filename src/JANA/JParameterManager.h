@@ -54,7 +54,8 @@ class JParameterManager{
 		virtual const char* className(void){return static_className();}
 		static const char* static_className(void){return "JParameterManager";}
 	
-		template<typename K, typename V> JParameter* SetDefaultParameter(K key, V& val, string description=""); ///< Set a configuration parameter's default value
+		template<typename K> JParameter* CreateParameter(K key, string description="");
+		template<typename K, typename V> JParameter* SetDefaultParameter(K key, V& val, string description="");
 		template<typename K, typename V> JParameter* SetParameter(K key, V val); ///< Force-set a value for a configuration parameter
 		template<typename K> JParameter* GetParameterNoLock(K key); ///< Get the value of a configuration parameter without locking the mutex
 		template<typename K> JParameter* GetParameter(K key); ///< Get JParameter object for a configuration parameter
@@ -73,6 +74,48 @@ class JParameterManager{
 
 };
 
+	
+//---------------------------------
+// CreateParameter
+//---------------------------------
+template<typename K>
+JParameter* JParameterManager::CreateParameter(K key, string description)
+{
+	/// Create a configuration parameter, throwing an exception if it already exists.
+	///
+	/// This will attempt to create a new Configuration parameter with the given
+	/// name and description (if provided). If a parameter with that name already
+	/// exists, then a JException is thrown.
+	///
+	/// Bewfore using this, you should consider using SetDefaultParameter. That will
+	/// allow the parameter to be changed from the command line or configuration file
+	/// whereas this will create parameters that can only be modified programmatically.
+	
+	string skey(key); // in case key is a const char *
+
+	// Lock mutex to make sure other threads don't change parameters on us
+	pthread_mutex_lock(&parameter_mutex);
+	
+	// Get the parameter
+	JParameter *p = GetParameterNoLock(key);
+
+	if(p == NULL){
+		// Create the parameter
+		string sval("");
+		p = new JParameter(skey, sval);
+		parameters.push_back(p);
+	}else{
+		// If we get here then the parameter must already exist. Throw an exception.
+		pthread_mutex_unlock(&parameter_mutex); // make sure we unlock mutex before leaving!
+		string mess = "Parameter \""+skey+"\" already exists!";
+		throw JException(mess);
+	}
+	
+	// Unlock mutex
+	pthread_mutex_unlock(&parameter_mutex);
+	
+	return p;
+}
 
 //---------------------------------
 // SetDefaultParameter
@@ -80,22 +123,56 @@ class JParameterManager{
 template<typename K, typename V>
 JParameter* JParameterManager::SetDefaultParameter(K key, V &val, string description)
 {
+	/// Retrieve a configuration parameter, creating it if necessary.
+	///
+	/// Upon entry, the value in "val" should be set to the desired default value. It
+	/// will be overwritten if a value for the parameter already exists because
+	/// it was given by the user either on the command line or in a configuration
+	/// file.
+	///
+	/// If the parameter does not already exist, it is created and its value set
+	/// to that of "val".
+	///
+	/// Upon exit, "val" will always contain the value that should be used for event
+	/// processing.
+	///
+	/// If a parameter with the given name already exists, it will be checked to see
+	/// if the parameter already has a default value assigned (this is kept separate
+	/// from the actual value of the parameter used and is maintained purely for
+	/// bookkeeping purposes). If it does not have a default value, then the value
+	/// of "val" upon entry is saved as the default. If it does have a default, then
+	/// the value of the default is compared to the value of "val" upon entry. If the
+	/// two do not match, then a warning message is printed to indicate to the user
+	/// that two different default values are being set for this parameter.
+	///
+	/// Parameters specified on the command line using the "-Pkey=value" syntax will
+	/// not have a default value at the time the parameter is created.
+	///
+	/// This should be called after the JApplication object has been initialized so
+	/// that parameters can be created from any command line options the user may specify.
+	
+	string skey(key); // (handle const char* or string)
 	stringstream ss;
 	ss<<val;
 	string sval = ss.str();
 	
-	JParameter *p;
-	try{
-		// Get the parameter
-		p = GetParameter(key,val);
-
+	pthread_mutex_lock(&parameter_mutex);
+	
+	JParameter *p = GetParameterNoLock(key);
+	if(p != NULL){
+		// Parameter exists
+		
+		// Copy value into user's variable using stringstream for conversion
+		stringstream sss(p->GetValue());		
+		sss>>val;
+		
 		// Warn user if two different default values are set
 		if(p->hasdefault && (sval != p->GetDefault()) ){
 			jout<<" WARNING: Multiple calls to SetDefaultParameter with key=\""
 			<<key<<"\" value= \""<<p->GetDefault()<<"\" and \""<<sval<<"\""<<std::endl;
 			jout<<"        : (\""<<sval<<"\" will be used for the default.)"<<std::endl;
 		}
-
+		
 		if(!p->hasdefault){
 			// Parameters set from the command line will have the
 			// wrong data type since SetParameter will have been called
@@ -104,21 +181,18 @@ JParameter* JParameterManager::SetDefaultParameter(K key, V &val, string descrip
 			// currently set data type is invalid and we replace it with
 			// the type specified in this call.
 			p->type = JParameter::DataType(val);
-		}
-	}catch(exception &e){
+		}		
+	}else{
 		// Parameter doesn't exist. Create it.
-		p = SetParameter(key, val);
+		p = new JParameter(skey, sval);
+		parameters.push_back(p);
+		p->type = JParameter::DataType(val);
 	}
-
-	// The call to SetDefault() below can cause a reallocation
-	// of a string's buffer. If two threads do this simulataneously,
-	// you can get a "double free" followed by a seg. fault.
-	pthread_mutex_lock(&parameter_mutex);
-
-	// Set the default for this parameter
+	
+	// Set the default value and description for this parameter
 	p->SetDefault(sval);
 	p->SetDescription(description);
-
+	
 	// release the parameters mutex
 	pthread_mutex_unlock(&parameter_mutex);
 
