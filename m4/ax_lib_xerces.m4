@@ -288,14 +288,19 @@ XMLPlatformUtils::Initialize();
                     xerces_version_check=`expr $xerces_version_number \>\= $xerces_version_req_number`
                     if test "$xerces_version_check" = "1"; then
                         AC_MSG_RESULT([yes])
+								AC_MSG_CHECKING([if Xerces C++ Parser version is >= 3.0.0])
+								xerces_version3_check=`expr $xerces_version_number \>\= 30000`
+								if test "$xerces_version3_check" = "1"; then
+									AC_MSG_RESULT([yes])
+									AC_DEFINE([XERCES3],[1],[Xerces C++ XML parser is version 3 or later])
+									XERCES3=1
+								else
+									AC_MSG_RESULT([no])
+									XERCES3=0
+								fi
                     else
                         AC_MSG_RESULT([no])
                         AC_MSG_WARN([Found Xerces C++ Parser $XERCES_VERSION, which is older than required. Possible compilation failure.])
-                    fi
-                    if test $xerces_major = 3; then
-                        XERCES3=1
-                    else
-                        XERCES3=0
                     fi
                     
                     AC_MSG_NOTICE([Xerces Version: $XERCES_VERSION])
