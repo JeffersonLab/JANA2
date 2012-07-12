@@ -23,7 +23,7 @@ echo "=========== Generating Dictionaries ========="
 foreach f (`ls J*.h | grep -v JFactory.h`)
 #foreach f (JException.h)
 	echo Generating dictionary for $f ...
-	set cmd="rootcint `basename $f .h`_Dict.C -c -p -I.. -I$JANA_HOME/include -I$XERCESCROOT/include $f"
+	set cmd="rootcint `basename $f .h`_Dict.C -c -p -I.. -I$JANA_HOME/include -DXERCES3=1 -I$XERCESCROOT/include $f"
 	echo $cmd
 	$cmd
 end
