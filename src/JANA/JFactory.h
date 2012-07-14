@@ -256,6 +256,7 @@ jerror_t JFactory<T>::Get(vector<const T*> &d)
 		cs.filename = __FILE__;
 		cs.line = __LINE__;
 		eventLoop->AddToErrorCallStack(cs);
+		busy = 0; // clear busy flag since where exiting early and no longer "busy"
 		throw exception;
 	}
 	evnt_called = 1;
