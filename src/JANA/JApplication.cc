@@ -724,6 +724,30 @@ jerror_t JApplication::RemoveJEventLoop(JEventLoop *loop)
 }
 
 //---------------------------------
+// AddEventSource
+//---------------------------------
+jerror_t JApplication::AddEventSource(string src_name, bool add_to_front)
+{
+	/// Add an event source to the list of sources to be processed. In most
+	/// cases, the user will specify the source (usually an input file) on
+	/// the command line. This method provides a way to add a source 
+	/// programmatically. For example, a plugin that receives events via
+	/// the network could specify the network source automatically so the
+	/// user doesn't need to specify both the plugin and the source.
+	///
+	/// The optional "add_to_front" flag can be set to true to have the
+	/// source prepended to the front of the list of sources. Otherwise,
+	/// it will be appended to the back.
+	if(add_to_front){
+		source_names.insert(source_names.begin(), src_name);
+	}else{
+		source_names.push_back(src_name);
+	}
+
+	return NOERROR;
+}
+
+//---------------------------------
 // AddEventSourceGenerator
 //---------------------------------
 jerror_t JApplication::AddEventSourceGenerator(JEventSourceGenerator *generator)
@@ -1137,6 +1161,14 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 
 	// Call init() for JEventProcessors (factories don't exist yet)
 	Init();
+	
+	// If no event sources were specified, then notify the user now and exit
+	if(source_names.size() == 0){
+		jerr<<endl;
+		jerr<<" xxxxxxxxxxxx  No event sources specified!!  xxxxxxxxxxxx"<<endl;
+		jerr<<endl;
+		return NO_MORE_EVENT_SOURCES;
+	}
 	
 	// Determine number of threads to launch
 	stringstream ss;
@@ -1572,7 +1604,7 @@ jerror_t JApplication::OpenNext(void)
 	// equal liklihoods, the first one in the list will be used.
 	JEventSourceGenerator* gen = NULL;
 	double liklihood = 0.0;
-	const char *sname = source_names[sources.size()];
+	const char *sname = source_names[sources.size()].c_str();
 	for(unsigned int i=0; i<eventSourceGenerators.size(); i++){
 		double my_liklihood = eventSourceGenerators[i]->CheckOpenable(sname);
 		if(my_liklihood > liklihood){
@@ -1583,12 +1615,26 @@ jerror_t JApplication::OpenNext(void)
 	
 	current_source = NULL;
 	if(gen != NULL){
-		jout<<"Opening source \""<<sname<<"\"of type: "<<gen->Description()<<endl;
+		jout<<"Opening source \""<<sname<<"\" of type: "<<gen->Description()<<endl;
 		current_source = gen->MakeJEventSource(sname);
 	}
 
 	if(!current_source){
-		jerr<<"Unable to open event source \""<<sname<<"\"!"<<endl;
+		jerr<<endl;
+		jerr<<"  xxxxxxxxxxxx  Unable to open event source \""<<sname<<"\"!  xxxxxxxxxxxx"<<endl;
+		jerr<<endl;
+		if(sources.size()+1 == source_names.size()){
+			unsigned int Nnull_sources = 0;
+			for(unsigned int i=0; i<sources.size(); i++){
+				if(sources[i] == NULL)Nnull_sources++;
+			}
+			if(Nnull_sources == sources.size()){
+				jerr<<"   xxxxxxxxxxxx  NO VALID EVENT SOURCES GIVEN !!!   xxxxxxxxxxxx  "<<endl;
+				jerr<<endl;
+				Quit();
+				return NO_MORE_EVENT_SOURCES;
+			}
+		}
 	}
 	
 	// Add source to list (even if it's NULL!)

@@ -31,12 +31,10 @@ void InitPlugin(JApplication *app){
 	app->AddEventSourceGenerator(new JEventSourceTestGenerator());
 	app->AddFactoryGenerator(new JFactoryGeneratorTest());
 	app->AddProcessor(new JEventProcessorTest(), true);
+	app->AddEventSource("TestSpeed_fake_event_generator");
 	
 	cout<<endl;
 	cout<<"Initialized speed_test plugin."<<endl;
-	cout<<"For this to work you need to give at least one dummy source."<<endl;
-	cout<<"e.g."<<endl;
-	cout<<"        jana --plugin=TestSpeed dummy"<<endl;
 	cout<<endl;
 	cout<<"There are built-in delays in both the processor and source"<<endl;
 	cout<<"that can be adjusted to more realistically test the system."<<endl;
@@ -46,7 +44,7 @@ void InitPlugin(JApplication *app){
 	cout<<"    -PMAX_IO_RATE_HZ=100"<<endl;
 	cout<<endl;
 	cout<<"this will cause the source the sleep for 1/100th of a second for"<<endl;
-	cout<<"each event."<<endl;
+	cout<<"each event. (Set to 0 for no delay.)"<<endl;
 	cout<<endl;
 	cout<<"To adjust the time spent in the processor, use:"<<endl;
 	cout<<endl;
@@ -66,7 +64,7 @@ JEventSourceTest::JEventSourceTest(const char* source_name):JEventSource(source_
 	/// Constructor for JEventSourceTest object
 	cout<<"Opening fake event generator. No actual events will be read in"<<endl;
 	
-	MAX_IO_RATE_HZ = 100;
+	MAX_IO_RATE_HZ = 10000;
 	
 	gPARMS->SetDefaultParameter("MAX_IO_RATE_HZ",MAX_IO_RATE_HZ);
 }

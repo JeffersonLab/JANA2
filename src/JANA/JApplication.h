@@ -67,6 +67,7 @@ class JApplication{
 		                      jerror_t RemoveProcessor(JEventProcessor *processor); ///< Remove a JEventProcessor
 		                      jerror_t AddJEventLoop(JEventLoop *loop, double* &heartbeat); ///< Add a JEventLoop
 		                      jerror_t RemoveJEventLoop(JEventLoop *loop); ///< Remove a JEventLoop
+		                      jerror_t AddEventSource(string src_name, bool add_to_front=false); ///< Add an event source (e.g. filename) to list to be processed
 		                      jerror_t AddEventSourceGenerator(JEventSourceGenerator*); ///< Add a JEventSourceGenerator
 		                      jerror_t RemoveEventSourceGenerator(JEventSourceGenerator*); ///< Remove a JEventSourceGenerator
 		                      jerror_t AddFactoryGenerator(JFactoryGenerator*); ///< Add a JFactory Generator
@@ -134,7 +135,7 @@ class JApplication{
 
 		bool init_called;
 		bool fini_called;
-		vector<const char*> source_names;
+		vector<string> source_names;
 		vector<JEventSource*> sources;
 		JEventSource *current_source;
 	

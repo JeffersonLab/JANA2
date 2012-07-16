@@ -1,4 +1,11 @@
 
+Changes in version 0.6.5
+
+- Added AddEventSource method to allow sources to be specified programatically
+- Modified TestSpeed plugin to no longer require fake event source
+- Adjusted default governor parameters in TestSpeed to run faster
+- Improved handling of no or non-existent event sources
+
 Changes in version 0.6.4
 
 - Updated to use Xerces 3 or Xerces 2 (detected at configure level)
