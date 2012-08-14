@@ -5,6 +5,9 @@ Changes in version 0.6.5
 - Modified TestSpeed plugin to no longer require fake event source
 - Adjusted default governor parameters in TestSpeed to run faster
 - Improved handling of no or non-existent event sources
+- Fixed bug where order of JCalibration returned vector did not maintain
+  order in file. Zero padding guarantees ordering up to 9999 values.
+- Added ClearAssociatedObjects method to JObject
 
 Changes in version 0.6.4
 

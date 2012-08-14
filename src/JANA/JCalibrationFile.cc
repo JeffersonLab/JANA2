@@ -109,9 +109,11 @@ bool JCalibrationFile::GetCalib(string namepath, map<string, string> &svals, int
 		ss>>key;
 		if(key==line){
 			// Must be just one item here. Copy it to val and set key to "nvals"
+			// colum names are set to position with zero padding so map maintains
+			// correct order (up to 9999)
 			val = key;
 			stringstream sss;
-			sss<<nvals; // This tricky bit is just to convert from an int to a string
+			sss << setw(4) << setfill('0') << nvals; // This tricky bit is just to convert from an int to a string
 			sss>>key;
 		}else{
 			// Looks like there is a key and a value here.
@@ -185,7 +187,7 @@ bool JCalibrationFile::GetCalib(string namepath, vector< map<string, string> > &
 			// Make sure a name exists for this column
 			if(colnames.size()<=icol){
 				stringstream sss;
-				sss << setw(3) << setfill('0') << icol;
+				sss << setw(4) << setfill('0') << icol;
 				colnames.push_back(sss.str());
 			}
 			mval[colnames[icol++]] = val;

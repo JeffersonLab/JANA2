@@ -63,7 +63,7 @@ class JObject{
 		JObject( oid_t aId ) : id( aId ),append_types(false),factory(NULL) {}
 
 		virtual ~JObject(){
-				for(unsigned int i=0; i<auto_delete.size(); i++)delete auto_delete[i];
+			for(unsigned int i=0; i<auto_delete.size(); i++)delete auto_delete[i];
 		}
 		
 		/// Test if this object is of type T by checking its className() against T::static_className()
@@ -76,6 +76,7 @@ class JObject{
 		inline void AddAssociatedObject(const JObject *obj);
 		inline void AddAssociatedObjectAutoDelete(JObject *obj, bool auto_delete=true);
 		inline void RemoveAssociatedObject(const JObject *obj);
+		inline void ClearAssociatedObjects(void);
 		template<typename T> void Get(vector<const T*> &ptrs, string classname="") const ;
 		template<typename T> void GetT(vector<const T*> &ptrs) const ;
 		template<typename T> void GetSingle(const T* &ptrs, string classname="") const ;
@@ -135,6 +136,11 @@ void JObject::AddAssociatedObjectAutoDelete(JObject *obj, bool auto_delete)
 	/// flag is true, then automatically delete it when this object is
 	/// deleted. Otherwise, this behaves identically to the AddAssociatedObject
 	/// method.
+	///
+	/// Note that if the object is removed via RemoveAssociatedObject(...)
+	/// then the object is NOT deleted. BUT, if the entire list of associated
+	/// objects is cleared via ClearAssociatedObjects, then the object will
+	/// be deleted.
 
 	AddAssociatedObject(obj);
 	
@@ -147,13 +153,33 @@ void JObject::AddAssociatedObjectAutoDelete(JObject *obj, bool auto_delete)
 void JObject::RemoveAssociatedObject(const JObject *obj)
 {
 	/// Remove the specified JObject from the list of associated
-	/// objects.
+	/// objects. This will NOT delete the object even if the
+	/// object was added with the AddAssociatedObjectAutoDelete(...)
+	/// method with the auto_delete flag set.
 
 	map<const JObject*, string>::iterator iter = associated.find(obj);
 	
 	if(iter!=associated.end()){
 		associated.erase(iter);
 	}
+}
+	
+//--------------------------
+// ClearAssociatedObjects
+//--------------------------
+void JObject::ClearAssociatedObjects(void)
+{
+	/// Remove all associated objects from the associated objects list.
+	/// This will also delete any objects that were added via the
+	/// AddAssociatedObjectAutoDelete(...) method with the auto_delete
+	/// flag set.
+	
+	// Clear pointers to associated objects
+	associated.clear();
+	
+	// Delete objects in the auto_delete list
+	for(unsigned int i=0; i<auto_delete.size(); i++)delete auto_delete[i];
+	auto_delete.clear();
 }
 
 //--------------------------
