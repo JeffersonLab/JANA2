@@ -118,7 +118,12 @@ class JApplication{
 	          inline pthread_rwlock_t* RootReadLock(void){pthread_rwlock_rdlock(root_rw_lock); return root_rw_lock;}
               inline pthread_rwlock_t* RootWriteLock(void){pthread_rwlock_wrlock(root_rw_lock); return root_rw_lock;}
               inline pthread_rwlock_t* RootUnLock(void){pthread_rwlock_unlock(root_rw_lock); return root_rw_lock;}
-	
+
+                                  void SetStatusBitDescription(uint32_t bit, string description); ///< Set the description of a bit in the status word used in JEvent objects
+                                string GetStatusBitDescription(uint32_t bit); ///< Get the description of a bit in the status word used in JEvent objects
+                                  void GetStatusBitDescriptions(map<uint32_t, string> &status_bit_descriptions); ///< Get the list of all descriptions of a bit in the status word used in JEvent objects
+
+
 		bool monitor_heartbeat; ///< Turn monitoring of processing threads on/off.
 		bool batch_mode;
 		
@@ -191,6 +196,8 @@ class JApplication{
 		bool dump_calibrations;
 		bool dump_configurations;
 		bool quitting;
+
+		map<uint32_t, string> status_bit_descriptions; ///< Descriptions of bits in status word used in JEvent
 };
 
 	

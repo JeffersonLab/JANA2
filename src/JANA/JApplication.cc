@@ -165,6 +165,7 @@ JApplication::JApplication(int narg, char* argv[])
 	pthread_cond_init(&event_buffer_cond, NULL);
 	app_rw_lock = CreateLock("app");
 	root_rw_lock = CreateLock("root");
+	CreateLock("status_bit_descriptions");
 
 	// Variables used for calculating the rate
 	show_ticker = 1;
@@ -2142,3 +2143,54 @@ void JApplication::SetNthreads(int new_Nthreads)
 	this->Nthreads = new_Nthreads;
 	jout<<"Setting number of processing threads to: "<<this->Nthreads<<endl;
 }
+
+
+//---------------------------------
+// SetStatusBitDescription
+//---------------------------------
+void JApplication::SetStatusBitDescription(uint32_t bit, string description)
+{
+	/// Set the description of the specified bit.
+	/// The value of "bit" should be from 0-63.
+	
+	WriteLock("status_bit_descriptions");
+	status_bit_descriptions[bit] = description;
+	Unlock("status_bit_descriptions");
+}
+
+//---------------------------------
+// GetStatusBitDescription
+//---------------------------------
+string JApplication::GetStatusBitDescription(uint32_t bit)
+{
+	/// Get the description of the specified status bit.
+	/// The value of "bit" should be from 0-63.
+	
+	string description("no description available");
+
+	ReadLock("status_bit_descriptions");
+	map<uint32_t, string>::iterator iter = status_bit_descriptions.find(bit);
+	if(iter != status_bit_descriptions.end()) description = iter->second;
+	Unlock("status_bit_descriptions");
+	
+	return description;
+}
+
+//---------------------------------
+// GetStatusBitDescriptions
+//---------------------------------
+void JApplication::GetStatusBitDescriptions(map<uint32_t, string> &status_bit_descriptions)
+{
+	/// Get the full list of descriptions of status bits.
+	/// Note that the meaning of the bits is implementation
+	/// specific and so descriptions are optional. It may be
+	/// that some or none of the bits used have an associated description.
+	
+	ReadLock("status_bit_descriptions");
+	status_bit_descriptions = this->status_bit_descriptions;
+	Unlock("status_bit_descriptions");
+}
+
+
+
+

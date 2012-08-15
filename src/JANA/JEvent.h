@@ -27,23 +27,31 @@ template<class T> class JFactory;
 
 class JEvent{
 	public:
-		JEvent();
-		virtual ~JEvent();
-		virtual const char* className(void){return static_className();}
-		static const char* static_className(void){return "JEvent";}
+		                           JEvent();
+		                   virtual ~JEvent();
+		       virtual const char* className(void){return static_className();}
+		        static const char* static_className(void){return "JEvent";}
 		template<class T> jerror_t GetObjects(vector<const T*> &t, JFactory_base *factory=NULL);
-		inline JEventSource* GetJEventSource(void){return source;}
-		inline int GetEventNumber(void){return event_number;}
-		inline int GetRunNumber(void){return run_number;}
-		inline void* GetRef(void){return ref;}
-		inline JEventLoop* GetJEventLoop(void){return loop;}
-		inline void SetJEventSource(JEventSource *source){this->source=source;}
-		inline void SetRunNumber(int run_number){this->run_number=run_number;}
-		inline void SetEventNumber(int event_number){this->event_number=event_number;}
-		inline void SetRef(void *ref){this->ref=ref;}
-		inline void SetJEventLoop(JEventLoop *loop){this->loop=loop;}
-		inline void FreeEvent(void){if(source)source->FreeEvent(*this);}
-		void Print(void);
+		      inline JEventSource* GetJEventSource(void){return source;}
+		                inline int GetEventNumber(void){return event_number;}
+		                inline int GetRunNumber(void){return run_number;}
+		              inline void* GetRef(void){return ref;}
+			    inline JEventLoop* GetJEventLoop(void){return loop;}
+		               inline void SetJEventSource(JEventSource *source){this->source=source;}
+		               inline void SetRunNumber(int run_number){this->run_number=run_number;}
+		               inline void SetEventNumber(int event_number){this->event_number=event_number;}
+		               inline void SetRef(void *ref){this->ref=ref;}
+		               inline void SetJEventLoop(JEventLoop *loop){this->loop=loop;}
+		               inline void FreeEvent(void){if(source)source->FreeEvent(*this);}
+		                      void Print(void);
+
+		                  uint64_t GetStatus(void){return status;}
+		                      bool GetStatusBit(uint32_t bit);
+		                      bool SetStatusBit(uint32_t bit, bool val=true);
+		                      bool ClearStatusBit(uint32_t bit);
+		                      void SetStatusBitDescription(uint32_t bit, string description);
+		                    string GetStatusBitDescription(uint32_t bit);
+		                      void GetStatusBitDescriptions(map<uint32_t, string> &status_bit_descriptions);
 	
 	private:
 		JEventSource *source;
@@ -51,7 +59,7 @@ class JEvent{
 		int run_number;
 		void *ref;
 		JEventLoop *loop;
-
+		uint64_t status;
 };
 
 

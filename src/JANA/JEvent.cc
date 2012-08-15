@@ -6,8 +6,10 @@
 //
 
 #include "JEvent.h"
+#include <JANA/JApplication.h>
 using namespace std;
 using namespace jana;
+
 
 //---------------------------------
 // JEvent    (Constructor)
@@ -39,5 +41,89 @@ void JEvent::Print(void)
 	jout<<" run_number="<<run_number;
 	jout<<" ref=0x"<<hex<<(unsigned long)ref<<dec;
 	jout<<" loop=0x"<<hex<<(unsigned long)loop<<dec;
+	jout<<" status=0x"<<hex<<status<<dec;
 	jout<<endl;
 }
+
+//---------------------------------
+// GetStatusBit
+//---------------------------------
+bool JEvent::GetStatusBit(uint32_t bit)
+{
+	/// Return the present value of the specified status bit.
+	/// The value of "bit" should be from 0-63.
+	
+	return (status>>bit) & 0x01;
+}
+
+//---------------------------------
+// SetStatusBit
+//---------------------------------
+bool JEvent::SetStatusBit(uint32_t bit, bool val)
+{
+	/// Set the value of the specified status bit. If the
+	/// second argument is passed, the bit will be set to
+	/// that value. Otherwise, the bit will be set to "true".
+	/// The value of "bit" should be from 0-63.
+	/// The value of the status bit prior to  this call is
+	/// returned.
+
+	bool old_val = (status>>bit) & 0x01;
+	
+	uint64_t mask = ((uint64_t)0x01)<<bit;
+	
+	if(val){
+		// Set bit
+		status |= mask;
+	}else{
+		// Clear bit
+		status &= ~mask;
+	}
+	
+	return old_val;
+}
+
+//---------------------------------
+// ClearStatusBit
+//---------------------------------
+bool JEvent::ClearStatusBit(uint32_t bit)
+{
+	/// Clear the specified status bit.
+	/// The value of "bit" should be from 0-63.
+	/// The value of the status bit prior to  this call is
+	/// returned.
+	
+	bool old_val = (status>>bit) & 0x01;
+	
+	uint64_t mask = ((uint64_t)0x01)<<bit;
+	
+	status &= ~mask;
+	
+	return old_val;
+}
+
+//---------------------------------
+// SetStatusBitDescription
+//---------------------------------
+void JEvent::SetStatusBitDescription(uint32_t bit, string description)
+{
+	if(japp)japp->SetStatusBitDescription(bit, description);
+}
+
+//---------------------------------
+// GetStatusBitDescription
+//---------------------------------
+string JEvent::GetStatusBitDescription(uint32_t bit)
+{
+	if(japp) return japp->GetStatusBitDescription(bit);
+	return "no description available";
+}
+
+//---------------------------------
+// GetStatusBitDescriptions
+//---------------------------------
+void JEvent::GetStatusBitDescriptions(map<uint32_t, string> &status_bit_descriptions)
+{
+	if(japp)japp->GetStatusBitDescriptions(status_bit_descriptions);	
+}
+

@@ -41,11 +41,7 @@ class JEventProcessor;
 
 class JEventLoop{
 	public:
-		JEventLoop(JApplication *app); ///< Constructor
-		virtual ~JEventLoop(); ////< Destructor
-		virtual const char* className(void){return static_className();}
-		static const char* static_className(void){return "JEventLoop";}
-
+	
 		enum data_source_t{
 			DATA_NOT_AVAILABLE = 1,
 			DATA_FROM_CACHE,
@@ -62,68 +58,82 @@ class JEventLoop{
 			double end_time;
 			data_source_t data_source;
 		}call_stack_t;
-
+		
 		typedef struct{
 			const char* factory_name;
 			const char* tag;
 			const char* filename;
 			int line;
 		}error_call_stack_t;
-		
-		JApplication* GetJApplication(void) const {return app;} ///< Get pointer to the JApplication object
-		void RefreshProcessorListFromJApplication(void); ///< Re-copy the list of JEventProcessors from JApplication
-		virtual jerror_t AddFactory(JFactory_base* factory); ///< Add a factory
-		jerror_t RemoveFactory(JFactory_base* factory); ///< Remove a factory
-		JFactory_base* GetFactory(const string data_name, const char *tag="", bool allow_deftag=true); ///< Get a specific factory pointer
-		vector<JFactory_base*> GetFactories(void) const {return factories;} ///< Get all factory pointers
-		void GetFactoryNames(vector<string> &factorynames); ///< Get names of all factories in name:tag format
-		void GetFactoryNames(map<string,string> &factorynames); ///< Get names of all factories in map with key=name, value=tag
-		map<string,string> GetDefaultTags(void) const {return default_tags;}
-		jerror_t ClearFactories(void); ///< Reset all factories in preparation for next event.
-		jerror_t PrintFactories(int sparsify=0); ///< Print a list of all factories.
-		jerror_t Print(const string data_name, const char *tag=""); ///< Print the data of the given type
 
-		JCalibration* GetJCalibration();
-		template<class T> bool GetCalib(string namepath, map<string,T> &vals);
-		template<class T> bool GetCalib(string namepath, vector<T> &vals);
-
-		JGeometry* GetJGeometry();
-		template<class T> bool GetGeom(string namepath, map<string,T> &vals);
-		template<class T> bool GetGeom(string namepath, T &val);
-
-		void Initialize(void); ///< Do initializations just before event processing starts
-		jerror_t Loop(void); ///< Loop over events
-		jerror_t OneEvent(void); ///< Process a single event
-		inline void Pause(void){pause = 1;} ///< Pause event processing
-		inline void Resume(void){pause = 0;} ///< Resume event processing
-		inline void Quit(void){quit = 1;} ///< Clean up and exit the event loop
-		inline bool GetQuit(void) const {return quit;}
-		void QuitProgram(void);
+	                                   JEventLoop(JApplication *app); ///< Constructor
+							   virtual ~JEventLoop(); ////< Destructor
+				   virtual const char* className(void){return static_className();}
+					static const char* static_className(void){return "JEventLoop";}
 		
-		template<class T> JFactory<T>* GetSingle(const T* &t, const char *tag=""); ///< Get pointer to first data object from (source or factory)
-		template<class T> JFactory<T>* Get(vector<const T*> &t, const char *tag=""); ///< Get data object pointers from (source or factory)
-		template<class T> JFactory<T>* GetFromFactory(vector<const T*> &t, const char *tag="", data_source_t &data_source=null_data_source); ///< Get data object pointers from factory
-		template<class T> jerror_t GetFromSource(vector<const T*> &t, JFactory_base *factory=NULL); ///< Get data object pointers from source.
-		inline JEvent& GetJEvent(void){return event;} ///< Get pointer to the current JEvent object.
-		inline void SetJEvent(JEvent *event){this->event = *event;} ///< Set the JEvent pointer.
-		inline void SetAutoFree(int auto_free){this->auto_free = auto_free;} ///< Set the Auto-Free flag on/off
-		inline pthread_t GetPThreadID(void) const {return pthread_id;} ///< Get the pthread of the thread to which this JEventLoop belongs
-		double GetInstantaneousRate(void) const {return rate_instantaneous;} ///< Get the current event processing rate
-		double GetIntegratedRate(void) const {return rate_integrated;} ///< Get the current event processing rate
-		double GetLastEventProcessingTime(void) const {return delta_time_single;}
-		unsigned int GetNevents(void) const {return Nevents;}
-		
-		inline bool CheckEventBoundary(int event_numberA, int event_numberB);
+						 JApplication* GetJApplication(void) const {return app;} ///< Get pointer to the JApplication object
+                                  void RefreshProcessorListFromJApplication(void); ///< Re-copy the list of JEventProcessors from JApplication
+                      virtual jerror_t AddFactory(JFactory_base* factory); ///< Add a factory
+							  jerror_t RemoveFactory(JFactory_base* factory); ///< Remove a factory
+                        JFactory_base* GetFactory(const string data_name, const char *tag="", bool allow_deftag=true); ///< Get a specific factory pointer
+                vector<JFactory_base*> GetFactories(void) const {return factories;} ///< Get all factory pointers
+                                  void GetFactoryNames(vector<string> &factorynames); ///< Get names of all factories in name:tag format
+                                  void GetFactoryNames(map<string,string> &factorynames); ///< Get names of all factories in map with key=name, value=tag
+                    map<string,string> GetDefaultTags(void) const {return default_tags;}
+                              jerror_t ClearFactories(void); ///< Reset all factories in preparation for next event.
+							  jerror_t PrintFactories(int sparsify=0); ///< Print a list of all factories.
+                              jerror_t Print(const string data_name, const char *tag=""); ///< Print the data of the given type
 
-		inline vector<call_stack_t> GetCallStack(void){return call_stack;} ///< Get the current factory call stack
-		inline void AddToErrorCallStack(error_call_stack_t &cs){error_call_stack.push_back(cs);} ///< Add layer to the factory call stack
-		inline vector<error_call_stack_t> GetErrorCallStack(void){return error_call_stack;} ///< Get the current factory error call stack
-		void PrintErrorCallStack(void); ///< Print the current factory call stack
-		
-		const JObject* FindByID(JObject::oid_t id); ///< Find a data object by its identifier.
-		template<class T> const T* FindByID(JObject::oid_t id); ///< Find a data object by its type and identifier
-		JFactory_base* FindOwner(const JObject *t); ///< Find the factory that owns a data object by pointer
-		JFactory_base* FindOwner(JObject::oid_t id); ///< Find a factory that owns a data object by identifier
+						 JCalibration* GetJCalibration();
+                template<class T> bool GetCalib(string namepath, map<string,T> &vals);
+                template<class T> bool GetCalib(string namepath, vector<T> &vals);
+
+                            JGeometry* GetJGeometry();
+                template<class T> bool GetGeom(string namepath, map<string,T> &vals);
+			    template<class T> bool GetGeom(string namepath, T &val);
+
+                                  void Initialize(void); ///< Do initializations just before event processing starts
+                              jerror_t Loop(void); ///< Loop over events
+                              jerror_t OneEvent(void); ///< Process a single event
+                           inline void Pause(void){pause = 1;} ///< Pause event processing
+                           inline void Resume(void){pause = 0;} ///< Resume event processing
+                           inline void Quit(void){quit = 1;} ///< Clean up and exit the event loop
+                           inline bool GetQuit(void) const {return quit;}
+                                  void QuitProgram(void);
+
+        template<class T> JFactory<T>* GetSingle(const T* &t, const char *tag=""); ///< Get pointer to first data object from (source or factory)
+        template<class T> JFactory<T>* Get(vector<const T*> &t, const char *tag=""); ///< Get data object pointers from (source or factory)
+        template<class T> JFactory<T>* GetFromFactory(vector<const T*> &t, const char *tag="", data_source_t &data_source=null_data_source); ///< Get data object pointers from factory
+            template<class T> jerror_t GetFromSource(vector<const T*> &t, JFactory_base *factory=NULL); ///< Get data object pointers from source.
+                        inline JEvent& GetJEvent(void){return event;} ///< Get pointer to the current JEvent object.
+                           inline void SetJEvent(JEvent *event){this->event = *event;} ///< Set the JEvent pointer.
+                           inline void SetAutoFree(int auto_free){this->auto_free = auto_free;} ///< Set the Auto-Free flag on/off
+                      inline pthread_t GetPThreadID(void) const {return pthread_id;} ///< Get the pthread of the thread to which this JEventLoop belongs
+                                double GetInstantaneousRate(void) const {return rate_instantaneous;} ///< Get the current event processing rate
+                                double GetIntegratedRate(void) const {return rate_integrated;} ///< Get the current event processing rate
+                                double GetLastEventProcessingTime(void) const {return delta_time_single;}
+                          unsigned int GetNevents(void) const {return Nevents;}
+
+                           inline bool CheckEventBoundary(int event_numberA, int event_numberB);
+
+           inline vector<call_stack_t> GetCallStack(void){return call_stack;} ///< Get the current factory call stack
+                           inline void AddToErrorCallStack(error_call_stack_t &cs){error_call_stack.push_back(cs);} ///< Add layer to the factory call stack
+     inline vector<error_call_stack_t> GetErrorCallStack(void){return error_call_stack;} ///< Get the current factory error call stack
+                                  void PrintErrorCallStack(void); ///< Print the current factory call stack
+
+                        const JObject* FindByID(JObject::oid_t id); ///< Find a data object by its identifier.
+            template<class T> const T* FindByID(JObject::oid_t id); ///< Find a data object by its type and identifier
+                        JFactory_base* FindOwner(const JObject *t); ///< Find the factory that owns a data object by pointer
+                        JFactory_base* FindOwner(JObject::oid_t id); ///< Find a factory that owns a data object by identifier
+
+									   // Convenience methods wrapping JEvent methods of same name
+		                      uint64_t GetStatus(void){return event.GetStatus();}
+		                          bool GetStatusBit(uint32_t bit){return event.GetStatusBit(bit);}
+		                          bool SetStatusBit(uint32_t bit, bool val=true){return event.SetStatusBit(bit, val);}
+		                          bool ClearStatusBit(uint32_t bit){return event.ClearStatusBit(bit);}
+		                          void SetStatusBitDescription(uint32_t bit, string description){event.SetStatusBitDescription(bit, description);}
+		                        string GetStatusBitDescription(uint32_t bit){return event.GetStatusBitDescription(bit);}
+		                          void GetStatusBitDescriptions(map<uint32_t, string> &status_bit_descriptions){return event.GetStatusBitDescriptions(status_bit_descriptions);}
 
 	private:
 		JEvent event;
