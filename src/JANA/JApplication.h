@@ -122,7 +122,7 @@ class JApplication{
                                   void SetStatusBitDescription(uint32_t bit, string description); ///< Set the description of a bit in the status word used in JEvent objects
                                 string GetStatusBitDescription(uint32_t bit); ///< Get the description of a bit in the status word used in JEvent objects
                                   void GetStatusBitDescriptions(map<uint32_t, string> &status_bit_descriptions); ///< Get the list of all descriptions of a bit in the status word used in JEvent objects
-
+                                string StatusWordToString(uint64_t status);
 
 		bool monitor_heartbeat; ///< Turn monitoring of processing threads on/off.
 		bool batch_mode;

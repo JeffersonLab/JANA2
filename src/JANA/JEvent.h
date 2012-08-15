@@ -47,8 +47,10 @@ class JEvent{
 
 		                  uint64_t GetStatus(void){return status;}
 		                      bool GetStatusBit(uint32_t bit);
+		                      void SetStatus(uint64_t status){this->status = status;}
 		                      bool SetStatusBit(uint32_t bit, bool val=true);
 		                      bool ClearStatusBit(uint32_t bit);
+		                      void ClearStatus(void);
 		                      void SetStatusBitDescription(uint32_t bit, string description);
 		                    string GetStatusBitDescription(uint32_t bit);
 		                      void GetStatusBitDescriptions(map<uint32_t, string> &status_bit_descriptions);

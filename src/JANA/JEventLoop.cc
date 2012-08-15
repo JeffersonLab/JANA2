@@ -220,7 +220,8 @@ void JEventLoop::GetFactoryNames(map<string,string> &factorynames)
 jerror_t JEventLoop::ClearFactories(void)
 {
 	/// Loop over all factories and call their Reset() methods.
-	/// Amoung other things, this will clear their evnt_called flags
+	/// Amoung other things, this will clear their evnt_called flags.
+	/// This will also clear the status word for the event.
 	/// This is called from JEventLoop at the
 	/// begining of a new event.
 
@@ -228,6 +229,9 @@ jerror_t JEventLoop::ClearFactories(void)
 	for(; iter!=factories.end(); iter++){
 		(*iter)->Reset();
 	}
+	
+	// Clear status word in JEvent
+	event.ClearStatus();
 
 	return NOERROR;
 }
@@ -592,5 +596,14 @@ JFactory_base* JEventLoop::FindOwner(JObject::oid_t id)
 
 	return NULL;
 }
+
+//-------------
+// StatusWordToString
+//-------------
+string JEventLoop::StatusWordToString(void)
+{
+	return app->StatusWordToString(event.GetStatus());
+}
+
 
 

@@ -90,6 +90,7 @@ bool JEvent::ClearStatusBit(uint32_t bit)
 {
 	/// Clear the specified status bit.
 	/// The value of "bit" should be from 0-63.
+	/// This is equivalent to calling SetStatusBit(bit, false).
 	/// The value of the status bit prior to  this call is
 	/// returned.
 	
@@ -100,6 +101,17 @@ bool JEvent::ClearStatusBit(uint32_t bit)
 	status &= ~mask;
 	
 	return old_val;
+}
+
+//---------------------------------
+// ClearStatus
+//---------------------------------
+void JEvent::ClearStatus(void)
+{
+	/// Clear all bits in the status word. This
+	/// is equivalent to calling SetStatus(0).
+	
+	status = 0L;
 }
 
 //---------------------------------

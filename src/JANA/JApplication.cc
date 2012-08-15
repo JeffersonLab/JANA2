@@ -2191,6 +2191,59 @@ void JApplication::GetStatusBitDescriptions(map<uint32_t, string> &status_bit_de
 	Unlock("status_bit_descriptions");
 }
 
+//---------------------------------
+// StatusWordToString
+//---------------------------------
+string JApplication::StatusWordToString(uint64_t status)
+{
+	/// Given a 64-bit status word, generate a nicely formatted string
+	/// suitable for printing to the screen. This will include the
+	/// entire word in both hexadecimal and binary. It will also print
+	/// 
+	
+	// Lock mutex to prevent changes to status_bit_descriptions while we
+	// read from it.
+	ReadLock("status_bit_descriptions");
+	
+	stringstream ss;
+	
+	// Add status in hex first
+	ss << "status: 0x" << hex << setw(sizeof(uint64_t)*2) << setfill('0') << status << dec <<endl;
+	
+	// Binary
+	ss << setw(0) << "   bin |";
+	for(int i=sizeof(uint64_t)*8-1; i>=0; i--){
+		ss << ((status>>i) & 0x1);
+		if((i%8)==0) ss << "|";
+	}
+	ss << endl;
+	
+	// 1-byte hex under binary
+	ss << "   hex ";
+	for(int i=sizeof(uint64_t) - 1; i>=0; i--){
+		ss << hex << "   0x"<< setw(2) << ((status>>(i*8)) & 0xFF) << "  ";
+	}
+	ss << endl;
+	
+	// Descriptions for each bit that has a description or is set
+	for(int i=0; i<sizeof(uint64_t)*8; i++){
+		uint64_t val = ((status>>i) & 0x1);
+		
+		map<uint32_t, string>::iterator iter = status_bit_descriptions.find(i);
+		
+		if(iter != status_bit_descriptions.end() || val != 0){
+			ss << dec << setw(2) << setfill(' ');
+			ss << " " << val << " - [" << setw(2) << setfill(' ') << i << "] " << GetStatusBitDescription(i) << endl;
+		}
+	}
+	ss << endl;
+	
+	// Release lock
+	Unlock("status_bit_descriptions");
+
+	return ss.str();
+}
+
 
 
 

@@ -131,9 +131,11 @@ class JEventLoop{
 		                          bool GetStatusBit(uint32_t bit){return event.GetStatusBit(bit);}
 		                          bool SetStatusBit(uint32_t bit, bool val=true){return event.SetStatusBit(bit, val);}
 		                          bool ClearStatusBit(uint32_t bit){return event.ClearStatusBit(bit);}
+		                          void ClearStatus(void){event.ClearStatus();}
 		                          void SetStatusBitDescription(uint32_t bit, string description){event.SetStatusBitDescription(bit, description);}
 		                        string GetStatusBitDescription(uint32_t bit){return event.GetStatusBitDescription(bit);}
 		                          void GetStatusBitDescriptions(map<uint32_t, string> &status_bit_descriptions){return event.GetStatusBitDescriptions(status_bit_descriptions);}
+                                string StatusWordToString(void);
 
 	private:
 		JEvent event;
