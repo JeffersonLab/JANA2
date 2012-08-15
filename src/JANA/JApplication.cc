@@ -1772,6 +1772,19 @@ jerror_t JApplication::AttachPlugins(void)
 		jparms->GetParameter("PRINT_PLUGIN_PATHS", printPaths);
 	}catch(...){}
 	
+	// In order to give priority to factories added via plugins,
+	// the list of factory generators needs to be cleared so
+	// those added from plugins will be at the front of the list.
+	// We make a copy of the existing generators first so we can
+	// append them back to the end of the list before exiting.
+	// Similarly for event source generators and calibration generators.
+	vector<JEventSourceGenerator*> my_eventSourceGenerators = eventSourceGenerators;
+	vector<JFactoryGenerator*> my_factoryGenerators = factoryGenerators;
+	vector<JCalibrationGenerator*> my_calibrationGenerators = calibrationGenerators;
+	eventSourceGenerators.clear();
+	factoryGenerators.clear();
+	calibrationGenerators.clear();
+
 	/// The JANA_PLUGIN_DIR environment is used to specify
 	/// directories in which every file is attached as a plugin.
 	/// Files that are not shared object files or do not have
@@ -1863,6 +1876,11 @@ jerror_t JApplication::AttachPlugins(void)
 			exit(-1);
 		}
 	}
+	
+	// Append generators back onto appropriate lists
+	eventSourceGenerators.insert(eventSourceGenerators.end(), my_eventSourceGenerators.begin(), my_eventSourceGenerators.end());
+	factoryGenerators.insert(factoryGenerators.end(), my_factoryGenerators.begin(), my_factoryGenerators.end());
+	calibrationGenerators.insert(calibrationGenerators.end(), my_calibrationGenerators.begin(), my_calibrationGenerators.end());
 
 	return RESOURCE_UNAVAILABLE;
 }

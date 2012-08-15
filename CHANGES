@@ -9,6 +9,7 @@ Changes in version 0.6.5
   order in file. Zero padding guarantees ordering up to 9999 values.
 - Added ClearAssociatedObjects method to JObject
 - Added facility to manage 64bit status word with each event
+- Fixed bug where factories added from plugins did NOT get preference
 
 Changes in version 0.6.4
 
