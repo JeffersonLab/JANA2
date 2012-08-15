@@ -62,6 +62,7 @@ JParameterManager::JParameterManager()
 	printParametersCalled = false;
 	string empty("");
 	SetDefaultParameter("print", empty);
+	verbose = false;
 	
 	gPARMS = this;
 }

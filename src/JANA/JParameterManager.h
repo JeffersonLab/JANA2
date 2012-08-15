@@ -49,10 +49,10 @@ namespace jana{
 
 class JParameterManager{
 	public:
-		JParameterManager();
-		virtual ~JParameterManager();
-		virtual const char* className(void){return static_className();}
-		static const char* static_className(void){return "JParameterManager";}
+		                                 JParameterManager();
+		                         virtual ~JParameterManager();
+					 virtual const char* className(void){return static_className();}
+		              static const char* static_className(void){return "JParameterManager";}
 	
 		template<typename K> JParameter* CreateParameter(K key, string description="");
 		template<typename K, typename V> JParameter* SetDefaultParameter(K key, V& val, string description="");
@@ -61,17 +61,18 @@ class JParameterManager{
 		template<typename K> JParameter* GetParameter(K key); ///< Get JParameter object for a configuration parameter
 		template<typename K, typename V> JParameter* GetParameter(K key, V &val); ///< Get value of a parameter and its JParameter Object
 		template<typename K> JParameter* GetParameter(K key, string &val); ///< Get value of a parameter and its JParameter Object
-		void GetParameters(map<string,string> &parms, string filter="");
-		void ReadConfigFile(string fname);
-		void WriteConfigFile(string fname);
-		void PrintParameters(void); ///< Print a list of the configuration parameters
-		void Dump(void); ///< Invoke the Dump() method of all JParameter objects
+									void GetParameters(map<string,string> &parms, string filter="");
+		                            void ReadConfigFile(string fname);
+		                            void WriteConfigFile(string fname);
+		                            void PrintParameters(void); ///< Print a list of the configuration parameters
+		                            void Dump(void); ///< Invoke the Dump() method of all JParameter objects
+									void SetVerbose(bool verbose=true){this->verbose = verbose;} ///< Turn on additional messages
 		
 	private:
 		vector<JParameter*> parameters;
 		pthread_mutex_t parameter_mutex;
 		bool printParametersCalled;
-
+		bool verbose;
 };
 
 	
@@ -262,6 +263,9 @@ template<typename K>
 JParameter* JParameterManager::GetParameter(K key)
 {
 	/// Thread safe call to get a JParameter*
+	/// To have this print a message to jerr if the requested parameter
+	/// does not exist, set the verbose flag to true via
+	/// the SetVerbose() method.
 	
 	// block so one thread can't write while another reads
 	pthread_mutex_lock(&parameter_mutex);
@@ -274,7 +278,7 @@ JParameter* JParameterManager::GetParameter(K key)
 	// If parameter does not exist, thrown an exception
 	if(!p){
 		string mess = "Parameter does not exist: " + string(key);
-		jerr << mess << std::endl;
+		if(verbose) jerr << mess << std::endl;
 		throw JException(mess);
 	}
 	
