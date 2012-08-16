@@ -11,7 +11,9 @@ Changes in version 0.6.5
 - Added facility to manage 64bit status word with each event
 - Fixed bug where factories added from plugins did NOT get preference
 - Enhanced ctl-C signal handler to do a better job of forcing exits
-  when multiple SIGINTs are received.
+  when multiple SIGINTs are received
+- Added optional argument to JEventLoop::Get to allow any DEFTAG setting
+  to be ignored making it easier to get objects from the default factory
 
 Changes in version 0.6.4
 

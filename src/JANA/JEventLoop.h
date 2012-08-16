@@ -102,8 +102,8 @@ class JEventLoop{
                                   void QuitProgram(void);
 
         template<class T> JFactory<T>* GetSingle(const T* &t, const char *tag=""); ///< Get pointer to first data object from (source or factory)
-        template<class T> JFactory<T>* Get(vector<const T*> &t, const char *tag=""); ///< Get data object pointers from (source or factory)
-        template<class T> JFactory<T>* GetFromFactory(vector<const T*> &t, const char *tag="", data_source_t &data_source=null_data_source); ///< Get data object pointers from factory
+        template<class T> JFactory<T>* Get(vector<const T*> &t, const char *tag="", bool allow_deftag=true); ///< Get data object pointers from (source or factory)
+        template<class T> JFactory<T>* GetFromFactory(vector<const T*> &t, const char *tag="", data_source_t &data_source=null_data_source, bool allow_deftag=true); ///< Get data object pointers from factory
             template<class T> jerror_t GetFromSource(vector<const T*> &t, JFactory_base *factory=NULL); ///< Get data object pointers from source.
                         inline JEvent& GetJEvent(void){return event;} ///< Get pointer to the current JEvent object.
                            inline void SetJEvent(JEvent *event){this->event = *event;} ///< Set the JEvent pointer.
@@ -208,7 +208,7 @@ JFactory<T>* JEventLoop::GetSingle(const T* &t, const char *tag)
 // Get
 //-------------
 template<class T> 
-JFactory<T>* JEventLoop::Get(vector<const T*> &t, const char *tag)
+JFactory<T>* JEventLoop::Get(vector<const T*> &t, const char *tag, bool allow_deftag)
 {
 	/// Retrieve or generate the array of objects of
 	/// type T for the curent event being processed
@@ -243,8 +243,8 @@ JFactory<T>* JEventLoop::Get(vector<const T*> &t, const char *tag)
 
 	// Check if a tag was specified for this data type to use for the
 	// default.
-	const char *mytag = tag==NULL ? "":tag; // prtection against NULL tags
-	if(strlen(mytag)==0){
+	const char *mytag = tag==NULL ? "":tag; // protection against NULL tags
+	if(strlen(mytag)==0 && allow_deftag){
 		map<string, string>::const_iterator iter = default_tags.find(T::static_className());
 		if(iter!=default_tags.end())tag = iter->second.c_str();
 	}
@@ -271,7 +271,7 @@ JFactory<T>* JEventLoop::Get(vector<const T*> &t, const char *tag)
 	// Get the data (or at least try to)
 	JFactory<T>* factory=NULL;
 	try{
-		factory = GetFromFactory(t, tag, cs.data_source);
+		factory = GetFromFactory(t, tag, cs.data_source, allow_deftag);
 		if(!factory){
 			// No factory exists for this type and tag. It's possible
 			// that the source may be able to provide the objects
@@ -306,7 +306,7 @@ JFactory<T>* JEventLoop::Get(vector<const T*> &t, const char *tag)
 			
 				// Now try once more. The GetFromFactory method will call
 				// GetFromSource since it's empty.
-				factory = GetFromFactory(t, tag, cs.data_source);
+				factory = GetFromFactory(t, tag, cs.data_source, allow_deftag);
 			}
 		}
 	}catch(exception &e){
@@ -337,7 +337,7 @@ JFactory<T>* JEventLoop::Get(vector<const T*> &t, const char *tag)
 // GetFromFactory
 //-------------
 template<class T> 
-JFactory<T>* JEventLoop::GetFromFactory(vector<const T*> &t, const char *tag, data_source_t &data_source)
+JFactory<T>* JEventLoop::GetFromFactory(vector<const T*> &t, const char *tag, data_source_t &data_source, bool allow_deftag)
 {
 	// We need to find the factory providing data type T with
 	// tag given by "tag". 
@@ -348,7 +348,7 @@ JFactory<T>* JEventLoop::GetFromFactory(vector<const T*> &t, const char *tag, da
 	// Check if a tag was specified for this data type to use for the
 	// default.
 	const char *mytag = tag==NULL ? "":tag; // protection against NULL tags
-	if(strlen(mytag)==0){
+	if(strlen(mytag)==0 && allow_deftag){
 		map<string, string>::const_iterator iter = default_tags.find(className);
 		if(iter!=default_tags.end())tag = iter->second.c_str();
 	}
