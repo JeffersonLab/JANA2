@@ -67,11 +67,15 @@ void ctrlCHandle(int x)
 	}
 	if(SIGINT_RECEIVED ==6){
 		jerr<<endl<<"Six SIGINTS received! Attempting forceful exit ..."<<endl<<endl;
-		if(japp) japp->Fini(false);
+		if(japp){
+			japp->Fini(false);
+			delete japp;
+		}
+		exit(-1);
 	}
 	if(SIGINT_RECEIVED ==9){
 		jerr<<endl<<"Nine SIGINTS received! OK, I get it! ..."<<endl<<endl;
-		exit(-1);
+		exit(-2);
 	}
 }
 
