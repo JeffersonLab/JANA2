@@ -90,7 +90,7 @@ class JApplication{
 		                          void AddFactoriesToDeleteList(vector<JFactory_base*> &factories);
 		              virtual jerror_t Init(void); ///< Initialize the JApplication object
 		              virtual jerror_t Run(JEventProcessor *proc=NULL, int Nthreads=0); ///< Process all events from all sources
-		              virtual jerror_t Fini(void); ///< Gracefully end event processing
+		              virtual jerror_t Fini(bool check_fini_called_flag=true); ///< Gracefully end event processing
 		                  virtual void Pause(void); ///< Pause event processing
 		                  virtual void Resume(void); ///< Resume event processing
 		                  virtual void Quit(void); ///< Stop event processing

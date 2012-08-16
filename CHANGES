@@ -10,6 +10,8 @@ Changes in version 0.6.5
 - Added ClearAssociatedObjects method to JObject
 - Added facility to manage 64bit status word with each event
 - Fixed bug where factories added from plugins did NOT get preference
+- Enhanced ctl-C signal handler to do a better job of forcing exits
+  when multiple SIGINTs are received.
 
 Changes in version 0.6.4
 

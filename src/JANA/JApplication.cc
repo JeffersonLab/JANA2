@@ -65,6 +65,14 @@ void ctrlCHandle(int x)
 	if(SIGINT_RECEIVED == 3){
 		jerr<<endl<<"Three SIGINTS received! Attempting graceful exit ..."<<endl<<endl;
 	}
+	if(SIGINT_RECEIVED ==6){
+		jerr<<endl<<"Six SIGINTS received! Attempting forceful exit ..."<<endl<<endl;
+		if(japp) japp->Fini(false);
+	}
+	if(SIGINT_RECEIVED ==9){
+		jerr<<endl<<"Nine SIGINTS received! OK, I get it! ..."<<endl<<endl;
+		exit(-1);
+	}
 }
 
 //-----------------------------------------------------------------
@@ -1402,17 +1410,23 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 //---------------------------------
 // Fini
 //---------------------------------
-jerror_t JApplication::Fini(void)
+jerror_t JApplication::Fini(bool check_fini_called_flag)
 {
 	/// Close out at the end of event processing. All <i>erun()</i> routines
 	/// and <i>fini()</i> routines are called as necessary. All JEventSources
 	/// are deleted and the final report is printed, if specified.
 
-	pthread_rwlock_wrlock(app_rw_lock);
-	if(fini_called){pthread_rwlock_unlock(app_rw_lock); return NOERROR;}
-	fini_called=true;
-	pthread_rwlock_unlock(app_rw_lock);
-	
+	// Checking of the fini_called flag is an option since we may get called
+	// as a last desperate attempt to force a clean exit from the singal handler.
+	// Locking the mutex in order to check the flag could stall us again if
+	// the mutex is already locked.
+	if(check_fini_called_flag){
+		pthread_rwlock_wrlock(app_rw_lock);
+		if(fini_called){pthread_rwlock_unlock(app_rw_lock); return NOERROR;}
+		fini_called=true;
+		pthread_rwlock_unlock(app_rw_lock);
+	}
+
 	// Print final resource report
 	if(print_resource_report)PrintResourceReport();
 	
