@@ -215,14 +215,30 @@ jerror_t JFactory<T>::Get(vector<const T*> &d)
 	
 	// Make sure we're initialized
 	if(!init_called){
-		init();
+		try{
+			init();
+		}catch(JException &e){
+			string tag_plus = string(Tag()) + " (init)";
+			JEventLoop::error_call_stack_t cs = {GetDataClassName(), tag_plus.c_str(), __FILE__, __LINE__};
+			eventLoop->AddToErrorCallStack(cs);
+			busy = 0; // clear busy flag since where exiting early and no longer "busy"
+			throw e;
+		}
 		init_called = 1;
 	}
 	
 	// Call erun if appropriate
 	if(run_number!=brun_runnumber){
 		if(brun_called && !erun_called){
-			erun();
+			try{
+				erun();
+			}catch(JException &e){
+				string tag_plus = string(Tag()) + " (erun)";
+				JEventLoop::error_call_stack_t cs = {GetDataClassName(), tag_plus.c_str(), __FILE__, __LINE__};
+				eventLoop->AddToErrorCallStack(cs);
+				busy = 0; // clear busy flag since where exiting early and no longer "busy"
+				throw e;
+			}
 			erun_called = 1;
 		}
 		brun_called = 0;
@@ -237,7 +253,15 @@ jerror_t JFactory<T>::Get(vector<const T*> &d)
 	
 	// Call brun if it hasn't been yet
 	if(!brun_called){
-		brun(eventLoop, run_number);
+		try{
+			brun(eventLoop, run_number);
+		}catch(JException &e){
+			string tag_plus = string(Tag()) + " (brun)";
+			JEventLoop::error_call_stack_t cs = {GetDataClassName(), tag_plus.c_str(), __FILE__, __LINE__};
+			eventLoop->AddToErrorCallStack(cs);
+			busy = 0; // clear busy flag since where exiting early and no longer "busy"
+			throw e;
+		}
 		brun_called = 1;
 		erun_called = 0;
 		brun_runnumber = run_number;
@@ -249,15 +273,12 @@ jerror_t JFactory<T>::Get(vector<const T*> &d)
 		Ncalls_to_evnt++;
 		evnt(eventLoop, event_number);
 		CopyFrom(d);
-	}catch(JException *exception){
-		JEventLoop::error_call_stack_t cs;
-		cs.factory_name = GetDataClassName();
-		cs.tag = Tag();
-		cs.filename = __FILE__;
-		cs.line = __LINE__;
+	}catch(JException &e){
+		string tag_plus = string(Tag()) + " (evnt)";
+		JEventLoop::error_call_stack_t cs = {GetDataClassName(), tag_plus.c_str(), __FILE__, __LINE__};
 		eventLoop->AddToErrorCallStack(cs);
 		busy = 0; // clear busy flag since where exiting early and no longer "busy"
-		throw exception;
+		throw e;
 	}
 	evnt_called = 1;
 	busy=0;

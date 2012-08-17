@@ -1030,7 +1030,7 @@ void* LaunchThread(void* arg)
 		jout<<"Thread 0x"<<hex<<(unsigned long)pthread_self()<<dec<<" completed gracefully"<<endl;
 		eventLoop->GetJApplication()->Unlock();
 	}catch(exception &e){
-		_DBG_<<" EXCEPTION caught for thread "<<pthread_self()<<" : "<<e.what()<<endl;
+		_DBG_<<ansi_bold<<" EXCEPTION caught for thread "<<pthread_self()<<" : "<<e.what()<< ansi_normal << endl;
 	}
 
 	// This will cause the JEventLoop to be destroyed (see below) which causes

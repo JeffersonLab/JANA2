@@ -24,6 +24,12 @@ using namespace std;
 #include "JStreamLog.h"
 using namespace jana;
 
+#ifndef ansi_escape
+#define ansi_escape			((char)0x1b)
+#define ansi_bold 			ansi_escape<<"[1m"
+#define ansi_normal			ansi_escape<<"[0m"
+#endif // ansi_escape
+
 jmp_buf SETJMP_ENV;
 
 // Thread commits suicide when it receives HUP signal
@@ -472,7 +478,17 @@ jerror_t JEventLoop::OneEvent(void)
 	for(unsigned int i=0; i<auto_activated_factories.size(); i++){
 		pair<string, string> &facname = auto_activated_factories[i];
 		JFactory_base *fac = GetFactory(facname.first, (facname.second).c_str());
-		if(fac)fac->GetNrows();
+		try{
+			if(fac) fac->GetNrows();
+		}catch(exception &e){
+			string fac_name = fac==NULL ? "unknown":(string(fac->GetDataClassName()) + ":" + fac->Tag());
+			string tag_plus = string("OneEvent  (autoactivated factory ") + fac_name + ")";
+			error_call_stack_t cs = {"JEventLoop", tag_plus.c_str(), __FILE__, __LINE__};
+			error_call_stack.push_back(cs);
+			PrintErrorCallStack();
+			_DBG_<<ansi_bold<<" EXCEPTION : "<<e.what()<< ansi_normal << endl;
+			throw e;
+		}		
 	}
 
 	// Call Event Processors
@@ -487,16 +503,32 @@ jerror_t JEventLoop::OneEvent(void)
 		proc->LockState();
 		if(run_number!=proc->GetBRUN_RunNumber()){
 			if(proc->brun_was_called() && !proc->erun_was_called()){
-				proc->erun();
-				proc->Set_erun_called();
+				try{
+					proc->erun();
+					proc->Set_erun_called();
+				}catch(exception &e){
+					error_call_stack_t cs = {"JEventLoop", "OneEvent  (erun)", __FILE__, __LINE__};
+					error_call_stack.push_back(cs);
+					PrintErrorCallStack();
+					_DBG_<<ansi_bold<<" EXCEPTION : "<<e.what()<< ansi_normal << endl;
+					throw e;
+				}
 			}
 			proc->Clear_brun_called();
 		}
 		if(!proc->brun_was_called()){
-			proc->brun(this, run_number);
-			proc->Set_brun_called();
-			proc->Clear_erun_called();
-			proc->SetBRUN_RunNumber(run_number);
+			try{
+				proc->brun(this, run_number);
+				proc->Set_brun_called();
+				proc->Clear_erun_called();
+				proc->SetBRUN_RunNumber(run_number);
+			}catch(exception &e){
+				error_call_stack_t cs = {"JEventLoop", "OneEvent  (brun)", __FILE__, __LINE__};
+				error_call_stack.push_back(cs);
+				PrintErrorCallStack();
+				_DBG_<<ansi_bold<<" EXCEPTION : "<<e.what()<< ansi_normal << endl;
+				throw e;
+			}
 		}
 		proc->UnlockState();
 
@@ -504,10 +536,11 @@ jerror_t JEventLoop::OneEvent(void)
 		try{
 			proc->evnt(this, event_number);
 		}catch(exception &e){
-			error_call_stack_t cs = {"JEventLoop", "OneEvent", __FILE__, __LINE__};
+			error_call_stack_t cs = {"JEventLoop", "OneEvent  (evnt)", __FILE__, __LINE__};
 			error_call_stack.push_back(cs);
 			PrintErrorCallStack();
-			throw;
+			_DBG_<<ansi_bold<<" EXCEPTION : "<<e.what()<< ansi_normal << endl;
+			throw e;
 		}
 	}
 

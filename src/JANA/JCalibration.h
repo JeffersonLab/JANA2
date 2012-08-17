@@ -23,6 +23,8 @@ using std::stringstream;
 using std::vector;
 using std::pair;
 
+#include <JANA/JException.h>
+
 // The following is here just so we can use ROOT's THtml class to generate documentation.
 #include "cint.h"
 
@@ -40,18 +42,18 @@ class JCalibration{
 			kVectorMap
 		};
 	
-		JCalibration(string url, int run, string context="default");
-		virtual ~JCalibration();
-		virtual const char* className(void){return static_className();}
-		static const char* static_className(void){return "JCalibration";}
+		                       JCalibration(string url, int run, string context="default");
+		               virtual ~JCalibration();
+		   virtual const char* className(void){return static_className();}
+		    static const char* static_className(void){return "JCalibration";}
 		
 		// Returns "false" on success and "true" on error
-		virtual bool GetCalib(string namepath, map<string, string> &svals, int event_number=0)=0;
-		virtual bool GetCalib(string namepath, vector< map<string, string> > &svals, int event_number=0)=0;
-		virtual bool PutCalib(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, map<string, string> &svals, string comment="");
-		virtual bool PutCalib(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, vector< map<string, string> > &svals, string comment="");
-		virtual void GetListOfNamepaths(vector<string> &namepaths)=0;
-		void GetEventBoundaries(vector<int> &event_boundaries); ///< User-callable access to event boundaries
+		          virtual bool GetCalib(string namepath, map<string, string> &svals, int event_number=0)=0;
+		          virtual bool GetCalib(string namepath, vector< map<string, string> > &svals, int event_number=0)=0;
+		          virtual bool PutCalib(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, map<string, string> &svals, string comment="");
+		          virtual bool PutCalib(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, vector< map<string, string> > &svals, string comment="");
+		          virtual void GetListOfNamepaths(vector<string> &namepaths)=0;
+		                  void GetEventBoundaries(vector<int> &event_boundaries); ///< User-callable access to event boundaries
 
 		template<class T> bool Get(string namepath, map<string,T> &vals, int event_number=0);
 		template<class T> bool Get(string namepath, vector<T> &vals, int event_number=0);
@@ -65,17 +67,17 @@ class JCalibration{
 
 		template<class T> bool Get(string namepath, const T* &vals, int event_number=0);
 		
-		const int& GetRun(void) const {return run_number;}
-		const string& GetContext(void) const {return context;}
-		const string& GetURL(void) const {return url;}
-		void GetAccesses(map<string, vector<string> > &accesses){accesses = this->accesses;}
+					const int& GetRun(void) const {return run_number;}
+				 const string& GetContext(void) const {return context;}
+		         const string& GetURL(void) const {return url;}
+		                  void GetAccesses(map<string, vector<string> > &accesses){accesses = this->accesses;}
 		
-		containerType_t GetContainerType(string typeid_name);
-		void DumpCalibrationsToFiles(string basedir="./");
-		void WriteCalibFileVector(string dir, string fname, string pathname);
-		void WriteCalibFileMap(string dir, string fname, string pathname);
-		void WriteCalibFileVectorVector(string dir, string fname, string pathname);
-		void WriteCalibFileVectorMap(string dir, string fname, string pathname);
+		       containerType_t GetContainerType(string typeid_name);
+		                  void DumpCalibrationsToFiles(string basedir="./");
+		                  void WriteCalibFileVector(string dir, string fname, string pathname);
+		                  void WriteCalibFileMap(string dir, string fname, string pathname);
+		                  void WriteCalibFileVectorVector(string dir, string fname, string pathname);
+		                  void WriteCalibFileVectorMap(string dir, string fname, string pathname);
 
 	protected:
 		int run_number;

@@ -168,30 +168,56 @@ string JException::getStackTrace(void) {
   stringstream ss;
   for(int i=0; i<trace_size; ++i) {
     
-	 if(!messages[i])continue;
-	 char *message = strdup(messages[i]);
-	 if(!message)continue;
+		if(!messages[i])continue;
+		string message(messages[i]);
+     
+		// Find mangled name.
+		//
+		// It seems on Linux and possibly older versions of Mac OS X,
+		// the messages from bactrace_symbols have a format:
+		//
+		// ./backtrace_test(_Z5alphav+0x9) [0x400b0d]
+		//
+		// while on more recent OS X versions it has a format:
+		//
+		// 3   backtrace_test                      0x000000010dc2fbc9 _Z5alphav + 9
 
-    // find first '(' and '+'
-    char *ppar  = strchr(message,'(');
-    char *pplus = strchr(message,'+');
-    if((ppar!=NULL)&&(pplus!=NULL)) {
-      
-      // replace '+' with nul, then get de-mangled name
-      *pplus='\0';
-		dlen=1000;
-      abi::__cxa_demangle(ppar+1,dname,&dlen,&status);
-      
-      // add to stringstream
-      *(ppar+1)='\0';
-      *pplus='+';
-      ss << "   " << message << dname << pplus << endl;
-      
-    } else {
-      ss << "   " << message << endl;
-    }
-	 free(message);
-    
+		//
+		// First, we try pulling out the name assuming Linux style. If that
+		// doesn't work, we try OS X style
+		string mangled_name = "";
+		size_t pos_start = message.find_first_of('(');
+		size_t pos_end = string::npos;
+		if(pos_start != string::npos) pos_end = message.find_first_of('+', ++pos_start);
+		if(pos_end != string::npos){
+			// Linux style
+			// (nothing to do)
+		}else{
+			// OS X style
+			pos_end = message.find_last_of('+');
+			if(pos_end != string::npos && pos_end>2){
+				pos_start = message.find_last_of(' ', pos_end-2);
+				if(pos_start != string::npos){
+					pos_start++; // advance to first character of mangled name
+					pos_end--; // backup to space just after mangled name
+				}
+			}
+		}
+		// Peel out mangled name into a separate string
+		if(pos_start!=string::npos && pos_end!=string::npos){
+			mangled_name = message.substr(pos_start, pos_end-pos_start);
+		}
+		
+		// Demangle name
+		abi::__cxa_demangle(mangled_name.c_str(),dname,&dlen,&status);
+		string demangled_name(dname);
+		
+		// Add demangled name or full message to output
+		if(demangled_name.length()>0){
+			ss << "   " << demangled_name << endl;
+		}else{
+			ss << "   " << message << endl;
+		}
   }
   ss << ends;
   
@@ -352,7 +378,7 @@ void JException::getTrace() throw() {
 	pclose(addr2lineOutput);
 	setenv("PATH", path.c_str(), 1);
 #else // __linux__
-	_trace = std::string("backtrace available only on Linux platforms");
+	_trace = std::string("backtrace not available on this platform");
 #endif // __linux__
 }
 

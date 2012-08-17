@@ -14,6 +14,8 @@ Changes in version 0.6.5
   when multiple SIGINTs are received
 - Added optional argument to JEventLoop::Get to allow any DEFTAG setting
   to be ignored making it easier to get objects from the default factory
+- Improved exception handling, including throwing exception from
+  JCalibrationFile when non-existent constants are requested
 
 Changes in version 0.6.4
 

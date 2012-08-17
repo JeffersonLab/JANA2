@@ -92,8 +92,9 @@ bool JCalibrationFile::GetCalib(string namepath, map<string, string> &svals, int
 	string fname = basedir + namepath;
 	ifstream f(fname.c_str());
 	if(!f.is_open()){
-		_DBG_<<"Unable to open \""<<fname<<"\"!"<<endl;
-		return true;
+		string mess = "Unable to open \"" + fname + "\"!";
+		throw JException(mess);
+		return true; // never gets to this line
 	}
 	
 	// Loop over all lines in the file
@@ -157,8 +158,9 @@ bool JCalibrationFile::GetCalib(string namepath, vector< map<string, string> > &
 	string fname = basedir + namepath;
 	ifstream f(fname.c_str());
 	if(!f.is_open()){
-		_DBG_<<"Unable to open \""<<fname<<"\"!"<<endl;
-		return true;
+		string mess = "Unable to open \"" + fname + "\"!";
+		throw JException(mess);
+		return true; // never gets to this line
 	}
 	
 	// Loop over all lines in the file
