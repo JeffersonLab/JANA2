@@ -64,7 +64,7 @@ JEventSourceTest::JEventSourceTest(const char* source_name):JEventSource(source_
 	/// Constructor for JEventSourceTest object
 	cout<<"Opening fake event generator. No actual events will be read in"<<endl;
 	
-	MAX_IO_RATE_HZ = 10000;
+	MAX_IO_RATE_HZ = 100;
 	
 	gPARMS->SetDefaultParameter("MAX_IO_RATE_HZ",MAX_IO_RATE_HZ);
 }
