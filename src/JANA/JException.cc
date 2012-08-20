@@ -13,6 +13,7 @@
 ///
 
 #include "JException.h"
+#include "jerror.h"
 
 #include <iostream>
 #include <stdlib.h>
@@ -153,10 +154,10 @@ string JException::getStackTrace(void) {
 #ifndef TRACEABLE_OS
 	return string("");
 #else
-  size_t dlen;
+  size_t dlen = 1023;
   char dname[1024];
   void *trace[1024];
-  int status;
+  int status=0;
   
   
   // get trace messages
@@ -185,7 +186,6 @@ string JException::getStackTrace(void) {
 		//
 		// First, we try pulling out the name assuming Linux style. If that
 		// doesn't work, we try OS X style
-		string mangled_name = "";
 		size_t pos_start = message.find_first_of('(');
 		size_t pos_end = string::npos;
 		if(pos_start != string::npos) pos_end = message.find_first_of('+', ++pos_start);
@@ -204,6 +204,7 @@ string JException::getStackTrace(void) {
 			}
 		}
 		// Peel out mangled name into a separate string
+		string mangled_name = "";
 		if(pos_start!=string::npos && pos_end!=string::npos){
 			mangled_name = message.substr(pos_start, pos_end-pos_start);
 		}
