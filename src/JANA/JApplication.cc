@@ -2262,7 +2262,7 @@ string JApplication::StatusWordToString(uint64_t status)
 	ss << endl;
 	
 	// Descriptions for each bit that has a description or is set
-	for(int i=0; i<sizeof(uint64_t)*8; i++){
+	for(unsigned int i=0; i<sizeof(uint64_t)*8; i++){
 		uint64_t val = ((status>>i) & 0x1);
 		
 		map<uint32_t, string>::iterator iter = status_bit_descriptions.find(i);
