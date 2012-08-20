@@ -14,6 +14,7 @@
 #include <list>
 #include <utility>
 #include <sstream>
+#include <stdint.h>
 using std::vector;
 using std::list;
 using std::string;
