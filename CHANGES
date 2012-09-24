@@ -1,4 +1,9 @@
 
+Changes in version 0.6.6
+- JFactory::Get() and friends now catch std::exception rather than than
+  JException (they still catch JException since it derives from std::exception)
+
+
 Changes in version 0.6.5
 
 - Added AddEventSource method to allow sources to be specified programatically

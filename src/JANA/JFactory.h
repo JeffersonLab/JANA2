@@ -217,7 +217,7 @@ jerror_t JFactory<T>::Get(vector<const T*> &d)
 	if(!init_called){
 		try{
 			init();
-		}catch(JException &e){
+		}catch(std::exception &e){
 			string tag_plus = string(Tag()) + " (init)";
 			JEventLoop::error_call_stack_t cs = {GetDataClassName(), tag_plus.c_str(), __FILE__, __LINE__};
 			eventLoop->AddToErrorCallStack(cs);
@@ -232,7 +232,7 @@ jerror_t JFactory<T>::Get(vector<const T*> &d)
 		if(brun_called && !erun_called){
 			try{
 				erun();
-			}catch(JException &e){
+			}catch(std::exception &e){
 				string tag_plus = string(Tag()) + " (erun)";
 				JEventLoop::error_call_stack_t cs = {GetDataClassName(), tag_plus.c_str(), __FILE__, __LINE__};
 				eventLoop->AddToErrorCallStack(cs);
@@ -255,7 +255,7 @@ jerror_t JFactory<T>::Get(vector<const T*> &d)
 	if(!brun_called){
 		try{
 			brun(eventLoop, run_number);
-		}catch(JException &e){
+		}catch(std::exception &e){
 			string tag_plus = string(Tag()) + " (brun)";
 			JEventLoop::error_call_stack_t cs = {GetDataClassName(), tag_plus.c_str(), __FILE__, __LINE__};
 			eventLoop->AddToErrorCallStack(cs);
@@ -273,7 +273,7 @@ jerror_t JFactory<T>::Get(vector<const T*> &d)
 		Ncalls_to_evnt++;
 		evnt(eventLoop, event_number);
 		CopyFrom(d);
-	}catch(JException &e){
+	}catch(std::exception &e){
 		string tag_plus = string(Tag()) + " (evnt)";
 		JEventLoop::error_call_stack_t cs = {GetDataClassName(), tag_plus.c_str(), __FILE__, __LINE__};
 		eventLoop->AddToErrorCallStack(cs);
