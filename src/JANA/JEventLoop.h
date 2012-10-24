@@ -24,6 +24,7 @@ using std::string;
 #include "JFactory_base.h"
 #include "JCalibration.h"
 #include "JGeometry.h"
+#include <JANA/JResourceManager.h>
 #include <JANA/JStreamLog.h>
 
 // The following is here just so we can use ROOT's THtml class to generate documentation.
@@ -91,6 +92,10 @@ class JEventLoop{
                             JGeometry* GetJGeometry();
                 template<class T> bool GetGeom(string namepath, map<string,T> &vals);
 			    template<class T> bool GetGeom(string namepath, T &val);
+
+                     JResourceManager* GetJResourceManager(void);
+                                string GetResource(string namepath);
+                template<class T> bool GetResource(string namepath, T vals, int event_number=0);
 
                                   void Initialize(void); ///< Do initializations just before event processing starts
                               jerror_t Loop(void); ///< Loop over events
@@ -600,6 +605,20 @@ template<class T> bool JEventLoop::GetGeom(string namepath, T &val)
 	}
 	
 	return geom->Get(namepath, val);
+}
+
+//-------------
+// GetResource
+//-------------
+template<class T> bool JEventLoop::GetResource(string namepath, T vals, int event_number)
+{
+	JResourceManager *resource_manager = GetJResourceManager();
+	if(!resource_manager){
+		string mess = string("Unable to get the JResourceManager object (namepath=\"")+namepath+"\")";
+		throw JException(mess);
+	}
+
+	return resource_manager->Get(namepath, vals, event_number);
 }
 
 #endif //__CINT__

@@ -173,6 +173,7 @@ JApplication::JApplication(int narg, char* argv[])
 	pthread_mutex_init(&factories_to_delete_mutex, NULL);
 	pthread_mutex_init(&geometry_mutex, NULL);
 	pthread_mutex_init(&calibration_mutex, NULL);
+	pthread_mutex_init(&resource_manager_mutex, NULL);
 	pthread_mutex_init(&event_buffer_mutex, NULL);
 	pthread_cond_init(&event_buffer_cond, NULL);
 	app_rw_lock = CreateLock("app");
@@ -997,6 +998,58 @@ JCalibration* JApplication::GetJCalibration(unsigned int run_number)
 	pthread_mutex_unlock(&calibration_mutex);
 
 	return g;
+}
+
+//----------------
+// GetJResourceManager
+//----------------
+JResourceManager* JApplication::GetJResourceManager(unsigned int run_number)
+{
+	/// Return a pointer to the JResourceManager object for the
+	/// specified run_number. If no run_number is given or a
+	/// value of 0 is given, then the first element from the
+	/// list of resource managers is returned. If no managers
+	/// currently exist, one will be created using one of the
+	/// following in order of precedence:
+	/// 1. JCalibration corrseponding to given run number
+	/// 2. First JCalibration object in list (used when run_number is zero)
+	/// 3. No backing JCalibration object.
+	///
+	/// The JCalibration is used to hold the URLs of resources
+	/// so when a namepath is specified, the location of the
+	/// resource on the web can be obtained and the file downloaded
+	/// if necessary. See documentation in the JResourceManager
+	/// class for more details.
+
+	// Handle case for when no run number is specified
+	if(run_number == 0){
+		pthread_mutex_lock(&resource_manager_mutex);
+		if(resource_managers.empty()){
+			if(calibrations.empty()){
+				resource_managers.push_back(new JResourceManager(NULL));
+			}else{
+				resource_managers.push_back(new JResourceManager(calibrations[0]));
+			}
+		}
+		pthread_mutex_unlock(&resource_manager_mutex);
+
+		return resource_managers[0];
+	}
+
+	// Run number is non-zero. Use it to get a JCalibration pointer
+	JCalibration *jcalib = GetJCalibration(run_number);
+	for(unsigned int i=0; i<resource_managers.size(); i++){
+		if(resource_managers[i]->GetJCalibration() == jcalib)return resource_managers[i];
+	}
+
+	// No resource manager exists for the JCalibration that
+	// corresponds to the given run_number. Create one.
+	JResourceManager *resource_manager = new JResourceManager(jcalib);
+	pthread_mutex_lock(&resource_manager_mutex);
+	resource_managers.push_back(resource_manager);
+	pthread_mutex_unlock(&resource_manager_mutex);
+
+	return resource_manager;
 }
 
 //----------------

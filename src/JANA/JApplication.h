@@ -26,6 +26,7 @@ using std::stringstream;
 #include <JANA/JFactoryGenerator.h>
 #include <JANA/JCalibrationGenerator.h>
 #include <JANA/JEventLoop.h>
+#include <JANA/JResourceManager.h>
 
 // The following is here just so we can use ROOT's THtml class to generate documentation.
 #include "cint.h"
@@ -84,6 +85,7 @@ class JApplication{
 		                    JGeometry* GetJGeometry(unsigned int run_number); ///< Get the JGeometry object for the specified run number.
 		                 JCalibration* GetJCalibration(unsigned int run_number); ///< Get the JCalibration object for the specified run number.
 		                          void GetJCalibrations(vector<JCalibration*> &calibs){calibs=calibrations;} ///< Get the list of existing JCalibration objects
+                     JResourceManager* GetJResourceManager(unsigned int run_number=0); ///< Get the JResourceManager object for the given run number (or any resource manager if no run number given)
 		                      jerror_t RegisterSharedObject(const char *soname, bool verbose=true); ///< Register a dynamically linked shared object
 		                      jerror_t RegisterSharedObjectDirectory(string sodirname); ///< Register all shared objects in a directory
 		                      jerror_t AddPluginPath(string path); ///< Add a directory to the plugin search path
@@ -159,7 +161,10 @@ class JApplication{
 		pthread_mutex_t geometry_mutex;
 		vector<JCalibration*> calibrations;
 		pthread_mutex_t calibration_mutex;
-		
+
+		vector<JResourceManager*> resource_managers;
+		pthread_mutex_t resource_manager_mutex;
+
 		list<JEvent*> event_buffer;
 		bool event_buffer_filling;
 		pthread_t ebthr;

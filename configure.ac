@@ -74,9 +74,10 @@ AC_LANG(C++)
 AX_LIB_MYSQL([3.23.00])
 ACX_PTHREAD
 AX_LIB_XERCES
-ROOT_PATH(5.08/00, ,AC_MSG_RESULT(ROOT support will not be included))
+ROOT_PATH(5.26/00, ,AC_MSG_RESULT(ROOT support will not be included))
 #AC_LIB_CERNLIB(graflib, CLTOU, [AC_LIB_CERNLIB(mathlib,GAUSS,[LIBS="$CERNLIB_LIBS $LIBS"])], AC_MSG_RESULT(CERNLIB support will not be included))
 CMSG
+MY_TEST_CURL
 
 AC_MSG_NOTICE([creating src/JANA/jana_config.h])
 cp confdefs.h src/JANA/jana_config.h
@@ -95,6 +96,7 @@ AC_SUBST([CXXFLAGS_CONFIGURE])
 AC_SUBST([LDFLAGS_CONFIGURE])
 #AC_SUBST([HAVE_CERNLIB])
 AC_SUBST([HAVE_CMSG])
+AC_SUBST([HAVE_CURL])
 AC_OUTPUT(BMS/Makefile.config)
 AC_OUTPUT(BMS/jana-config)
 [chmod +x BMS/jana-config]

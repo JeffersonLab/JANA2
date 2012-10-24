@@ -2,6 +2,10 @@
 Changes in version 0.6.6
 - JFactory::Get() and friends now catch std::exception rather than than
   JException (they still catch JException since it derives from std::exception)
+- Added JResourceManager class and integrated support for it into
+  JApplication and JEventLoop
+- Added optional support for CURL library (used by JResourceManager)
+- Added "dev" to JVersion::GetVersion() for when under development
 
 
 Changes in version 0.6.5

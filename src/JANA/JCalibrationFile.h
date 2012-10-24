@@ -8,6 +8,8 @@
 #ifndef _JCalibrationFile_
 #define _JCalibrationFile_
 
+#include <fstream>
+
 #include "jerror.h"
 #include "JCalibration.h"
 
@@ -29,7 +31,7 @@ class JCalibrationFile:public JCalibration{
 		
 	protected:
 		
-		ofstream* CreateItemFile(string namepath, int run_min, int run_max, string &author, string &comment);
+		std::ofstream* CreateItemFile(string namepath, int run_min, int run_max, string &author, string &comment);
 		void MakeDirectoryPath(string namepath);
 	
 	private:

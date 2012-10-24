@@ -336,6 +336,28 @@ JGeometry* JEventLoop::GetJGeometry(void)
 }
 
 //-------------
+// GetJResourceManager
+//-------------
+JResourceManager* JEventLoop::GetJResourceManager(void)
+{
+	return app->GetJResourceManager(event.GetRunNumber());
+}
+
+//-------------
+// GetResource
+//-------------
+string JEventLoop::GetResource(string namepath)
+{
+	JResourceManager *resource_manager = GetJResourceManager();
+	if(!resource_manager){
+		string mess = string("Unable to get JResourceManager object (namepath=\"")+namepath+"\")";
+		throw JException(mess);
+	}
+
+	return resource_manager->GetResource(namepath);
+}
+
+//-------------
 // PrintErrorCallStack
 //-------------
 void JEventLoop::PrintErrorCallStack(void)
