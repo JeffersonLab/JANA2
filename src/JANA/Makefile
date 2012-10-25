@@ -1,5 +1,4 @@
 
-PACKAGES=XERCES
 
 ifndef BMSDIR
 BMSDIR := ../../BMS
