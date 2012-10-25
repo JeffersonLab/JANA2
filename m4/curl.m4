@@ -3,8 +3,26 @@
 #
 # http://code.crt.realtors.org/projects/librets/browser/librets/trunk/project/build/ac-macros/curl.m4?rev=1489
 #
-# This has been modified to set the variable HAVE_CURL to be either 0
-# or 1.
+# This has been modified to:
+#
+# 1.) set the variable HAVE_CURL to be either 0 or 1.
+#
+# 2.) Print warning messages instead of errors where appropriate
+#     which stopped configure
+#
+# 3.) Lowered version number down to 7.0.0 (centOS5.3 seems to have
+#     7.15.5 and the original version of this macro had minimum of
+#     7.18.2) n.b. version number 7.17.00 is also buried in this macro
+#     and seems to be used to test whether to run curl-config with
+#     --static-libs or not
+#
+# 4.) Supressed warning about needing libcurl.a for librets (librets
+#     is the package I stole this macro from)
+#
+# 5.) Added --with[out]-curl command line option
+#
+# 6.) Disabled shared/static library checks which seems to be librets
+#     specific since it needs the static library
 #
 # ---------------------------------------------------------------------
 dnl
@@ -14,60 +32,70 @@ AC_DEFUN([MY_TEST_CURL], [
 
   HAVE_CURL="0"
 
-  AC_CACHE_VAL(my_cv_curl_vers, [
-    my_cv_curl_vers=NONE
-    dnl check is the plain-text version of the required version
-    check="7.18.2"
-    check_hex="071202"
+  # This is here just to check for --without-curl so we can 
+  # disable it explictly below. If the user passes us
+  # --without-curl then the variable with_curl is automatically
+  # set to "no"
+  AC_ARG_WITH([curl],
+		[AC_HELP_STRING([--with-curl],
+		[include cURL library support])],
+		[],
+		[with_curl="notspecified"])
 
-    AC_MSG_CHECKING([for curl >= $check])
+  if test "x$with_curl" = xno; then
+ 
+    HAVE_CURL="0"
+    AC_MSG_NOTICE([cURL library support disabled. Building to use external curl binary])
 
-    if eval curl-config --version 2>/dev/null >/dev/null; then
-	  HAVE_CURL="1"
+  else
+ 
+	  AC_CACHE_VAL(my_cv_curl_vers, [
+   	 my_cv_curl_vers=NONE
+   	 dnl check is the plain-text version of the required version
+   	 check="7.0.0"
+   	 check_hex="070000"
+	#    check="7.18.2"
+	#    check_hex="071202"
 
-      ver=`curl-config --version | perl -pe "s/libcurl //g"`
-      hex_ver=`curl-config --vernum`
-      ok=`perl -e "print (hex('$hex_ver')>=hex('$check_hex') ? '1' : '0')"`
+   	 AC_MSG_CHECKING([for curl >= $check])
 
-      if test x$ok != x0; then
-        my_cv_curl_vers="$ver"
-        AC_MSG_RESULT([$my_cv_curl_vers])
+   	 if eval curl-config --version 2>/dev/null >/dev/null; then
+		  HAVE_CURL="1"
 
-        CURL_PREFIX=`curl-config --prefix`
-        CURL_CFLAGS=`curl-config --cflags`
-	case $host_os in
-	    *mingw* | *cygwin*) CURL_CFLAGS="$CURL_CFLAGS -DCURL_STATICLIB" ;;
-	esac
+      	ver=`curl-config --version | perl -pe "s/libcurl //g"`
+      	hex_ver=`curl-config --vernum`
+      	ok=`perl -e "print (hex('$hex_ver')>=hex('$check_hex') ? '1' : '0')"`
 
-        CURL_LIBS=`curl-config --libs`
+      	if test x$ok != x0; then
+      	  my_cv_curl_vers="$ver"
+      	  AC_MSG_RESULT([$my_cv_curl_vers])
 
-        if test "$my_enable_shared_dependencies" != "yes"; then
-          dnl See if curl version is greater than 7.17.00. If so, change CURL_LIBS
+      	  CURL_PREFIX=`curl-config --prefix`
+      	  CURL_CFLAGS=`curl-config --cflags`
+		case $host_os in
+	   	 *mingw* | *cygwin*) CURL_CFLAGS="$CURL_CFLAGS -DCURL_STATICLIB" ;;
+		esac
 
-          ok=`perl -e "print (hex('$hex_ver')>=hex('071100') ? '1' : '0')"`
-          if test x$ok != x0; then
-            CURL_LIBS=`curl-config --static-libs`
-          fi
+      	  CURL_LIBS=`curl-config --libs`
 
-          curl_a="${CURL_PREFIX}/lib/libcurl.a"
-          AC_CHECK_FILE($curl_a, have_curl_a=$curl_a)
-          if test -z "$have_curl_a"; then
-            AC_MSG_ERROR([libcurl.a required to build librets])
-          fi
-          CURL_LIBS=`echo $CURL_LIBS | perl -pe "s/^(-L\S+\s+)?-lcurl\s+//"`
-          CURL_LIBS="${CURL_PREFIX}/lib/libcurl.a $CURL_LIBS"
-        fi
-      else
-        AC_MSG_RESULT(FAILED)
-        AC_MSG_ERROR([$ver is too old. Need version $check or higher.])
-      fi
-    else
-      AC_MSG_RESULT(FAILED)
-      AC_MSG_ERROR([curl-config was not found])
-    fi
-  ])
+      	else
+      	  AC_MSG_RESULT(FAILED)
+      	  AC_MSG_ERROR([$ver is too old. Need version $check or higher.])
+      	fi
+   	 else
+      	AC_MSG_RESULT(FAILED)
+			if test "$with_curl" = notspecified; then
+      	  AC_MSG_WARN([curl-config was not found. Building with external cURL support...])
+			else
+			  AC_MSG_ERROR([curl-config was not found! (use --without-curl to build without curl library support)])
+         fi
+   	 fi
+	  ])
 
-  AC_SUBST(CURL_PREFIX)
-  AC_SUBST(CURL_CFLAGS)
-  AC_SUBST(CURL_LIBS)
+
+	  AC_SUBST(CURL_PREFIX)
+	  AC_SUBST(CURL_CFLAGS)
+	  AC_SUBST(CURL_LIBS)
+
+  fi # Test if with_curl==no
 ])

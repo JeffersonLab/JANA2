@@ -12,9 +12,9 @@
 #include <fstream>
 using namespace std;
 
-#ifdef HAS_CURL
+#ifdef HAVE_CURL
 #include <curl/curl.h>
-#endif // HAS_CURL
+#endif // HAVE_CURL
 
 #include "JParameterManager.h"
 #include "JResourceManager.h"
@@ -78,10 +78,10 @@ JResourceManager::JResourceManager(JCalibration *jcalib, string resource_dir)
 	// Try and open the resources file and read it in
 	ReadResourceInfoFile();
 
-#ifdef HAS_CURL
+#ifdef HAVE_CURL
 	// Initialize CURL system
 	curl_global_init(CURL_GLOBAL_ALL);
-#endif // HAS_CURL
+#endif // HAVE_CURL
 
 	jRESOURCES = this;
 }
@@ -93,10 +93,10 @@ JResourceManager::~JResourceManager()
 {
 	if(jcalibfile) delete jcalibfile;
 
-#ifdef HAS_CURL
+#ifdef HAVE_CURL
 	// Cleanup CURL system
 	curl_global_cleanup();
-#endif // HAS_CURL
+#endif // HAVE_CURL
 }
 
 //---------------------------------
@@ -225,14 +225,14 @@ void JResourceManager::GetResourceFromURL(const string &URL, const string &fullp
 
 	jout << "Downloading " << URL << " ..." << endl;
 
-#ifdef HAS_CURL
+#ifdef HAVE_CURL
 	// Program has CURL library available
 
 	// Initialize curl transaction
 	CURL *curl = curl_easy_init();
 
 	// Setup the options for the download
-	f = fopen(fullpath.c_str(), "w");
+	FILE *f = fopen(fullpath.c_str(), "w");
 	curl_easy_setopt(curl, CURLOPT_VERBOSE, 0);
 	curl_easy_setopt(curl, CURLOPT_URL, URL.c_str());
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, f);
@@ -251,7 +251,7 @@ void JResourceManager::GetResourceFromURL(const string &URL, const string &fullp
 	cout << endl;
 	fclose(f);
 
-#else // HAS_CURL
+#else // HAVE_CURL
 	// Program does NOT have CURL library available
 
 	static int message_printed=0;
@@ -272,7 +272,7 @@ void JResourceManager::GetResourceFromURL(const string &URL, const string &fullp
 	string cmd = "curl " + URL + " -o " + fullpath;
 	cout << cmd << endl;
 	system(cmd.c_str());
-#endif // HAS_CURL
+#endif // HAVE_CURL
 
 	// We may want to have an option to automatically un-compress the file here
 	// if it is in a compressed format. See the bottom of getwebfile.c in the

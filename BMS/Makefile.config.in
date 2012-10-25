@@ -32,6 +32,12 @@ ifeq ($(HAVE_XERCES), 1)
   PACKAGES += XERCES
 endif
 
+# Same for CURL library.
+ifeq ($(HAVE_CURL), 1)
+  PACKAGES += CURL
+endif
+
+
 ROOTCONF        = @ROOTCONF@
 ROOTEXEC        = @ROOTEXEC@
 ROOTCINT        = @ROOTCINT@
