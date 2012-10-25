@@ -1,0 +1,12 @@
+
+
+
+ifeq ($(HAVE_CURL),1)
+
+  CFLAGS    += -DHAVE_CURL $(CURL_CFLAGS)
+  CXXFLAGS  += -DHAVE_CURL $(CURL_CFLAGS)
+  MISC_LIBS += $(CURL_LIBS)
+
+endif
+
+
