@@ -126,7 +126,7 @@ template<class T> bool JResourceManager::Get(string namepath, T vals, int event_
 	GetResource(namepath);
 
 	// Have JCalibrationFile parse the resource file
-	jcalibfile->Get(namepath, vals, event_number);
+	return jcalibfile->Get(namepath, vals, event_number);
 }
 
 } // Close JANA namespace
