@@ -7,7 +7,10 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/stat.h>
 #include <string.h>
+#include <libgen.h>
+#include <errno.h>
 
 #include <fstream>
 using namespace std;
@@ -23,8 +26,9 @@ using namespace jana;
 JResourceManager *jRESOURCES=NULL; // global pointer set to last instantiation
 
 static pthread_mutex_t resource_manager_mutex = PTHREAD_MUTEX_INITIALIZER;
+static string CURRENT_OUTPUT_FNAME = "";
 
-
+static int mkpath(string s, mode_t mode=S_IRWXU | S_IRWXG | S_IRWXO);
 static int mycurl_printprogress(void *clientp, double dltotal, double dlnow, double ultotal,  double ulnow);
 
 
@@ -126,7 +130,7 @@ string JResourceManager::GetResource(string namepath)
 			fullpath = GetLocalPathToResource(resources[URL]);
 		}else{
 			// We don't have an entry for this URL in our
-			// resources list. Getting the file and add the 
+			// resources list. Get the file and add the 
 			// resource to our in-memory list, and then write the
 			// in-memory list out to the resources file.
 
@@ -168,7 +172,10 @@ void JResourceManager::ReadResourceInfoFile(void)
 	// Check if resources file exists
 	string fname = GetLocalPathToResource("resources");
 	ifstream ifs(fname.c_str());
-	if(!ifs.is_open()) return; // no resources file so just return
+	if(!ifs.is_open()) {
+		pthread_mutex_unlock(&resource_manager_mutex);
+		return; // no resources file so just return
+	}
 	ifs.close();
 
 	// The resources file exists. Read it in using the
@@ -224,6 +231,22 @@ void JResourceManager::GetResourceFromURL(const string &URL, const string &fullp
 	pthread_mutex_lock(&resource_manager_mutex);
 
 	jout << "Downloading " << URL << " ..." << endl;
+	CURRENT_OUTPUT_FNAME = fullpath;
+	if(fullpath.length() > 60){
+		CURRENT_OUTPUT_FNAME = string("...") + fullpath.substr(fullpath.length()-60, 60);
+	}
+
+	// Create the directory path needed to hold the resource file
+	char tmp[256];
+	strcpy(tmp, fullpath.c_str());
+	char *path_only = dirname(tmp);
+	mkpath(path_only);
+	
+	// Create an empty info.xml file in resources directory
+	// to avoid warning from JCalibrationFile
+	string info_xml = resource_dir + "/info.xml";
+	ofstream ofs(info_xml.c_str());
+	ofs.close();
 
 #ifdef HAVE_CURL
 	// Program has CURL library available
@@ -232,17 +255,20 @@ void JResourceManager::GetResourceFromURL(const string &URL, const string &fullp
 	CURL *curl = curl_easy_init();
 
 	// Setup the options for the download
+	char error[CURL_ERROR_SIZE] = "";
 	FILE *f = fopen(fullpath.c_str(), "w");
 	curl_easy_setopt(curl, CURLOPT_VERBOSE, 0);
 	curl_easy_setopt(curl, CURLOPT_URL, URL.c_str());
 	curl_easy_setopt(curl, CURLOPT_WRITEDATA, f);
 	curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0);
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0); // allow non-secure SSL connection
 	curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, mycurl_printprogress);
-	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, 1);
+	curl_easy_setopt(curl, CURLOPT_ERRORBUFFER, error);
 	
 
 	// Download the file
 	curl_easy_perform(curl);
+	if(error[0]!=0) cout << error << endl;
 
 	// Close CURL
 	curl_easy_cleanup(curl);
@@ -283,13 +309,45 @@ void JResourceManager::GetResourceFromURL(const string &URL, const string &fullp
 	pthread_mutex_unlock(&resource_manager_mutex);
 }
 
+
+
+// The following will make all neccessary sub directories 
+// in order for the specified path to exist. It was
+// taken from here:
+// http://stackoverflow.com/questions/675039/how-can-i-create-directory-tree-in-c-linux
+// though it was not the first answer
+//----------------------------
+// mkpath
+//----------------------------
+int mkpath(string s, mode_t mode)
+{
+    size_t pre=0,pos;
+    std::string dir;
+    int mdret=0;
+
+    if(s[s.size()-1]!='/'){
+        // force trailing / so we can handle everything in loop
+        s+='/';
+    }
+
+    while((pos=s.find_first_of('/',pre))!=string::npos){
+        dir=s.substr(0,pos++);
+        pre=pos;
+        if(dir.size()==0) continue; // if leading / first time is 0 length
+        if((mdret=mkdir(dir.c_str(),mode)) && errno!=EEXIST){
+            return mdret;
+        }
+    }
+    return mdret;
+}
+
 //----------------------------
 // mycurl_printprogress
 //----------------------------
 int mycurl_printprogress(void *clientp, double dltotal, double dlnow, double ultotal,  double ulnow)
 {
 	unsigned long kB_downloaded = (unsigned long)(dlnow/1024.0);
-	cout << "  " << kB_downloaded << "kB          \r";
+	cout << "  " << kB_downloaded << "kB  " << CURRENT_OUTPUT_FNAME << "\r";
 	cout.flush();
 
 	return 0;

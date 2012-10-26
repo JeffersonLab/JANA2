@@ -80,7 +80,7 @@ class JResourceManager{
 		                  JResourceManager(JCalibration *jcalib=NULL, string resource_dir="");
 		          virtual ~JResourceManager();
 
-    template<class T> bool Get(string namepath, T vals, int event_number=0);
+    template<class T> bool Get(string namepath, T &vals, int event_number=0);
 
 					string GetResource(string namepath);
                     string GetLocalPathToResource(string namepath);
@@ -114,7 +114,7 @@ class JResourceManager{
 //----------------------
 // Get
 //----------------------
-template<class T> bool JResourceManager::Get(string namepath, T vals, int event_number)
+template<class T> bool JResourceManager::Get(string namepath, T &vals, int event_number)
 {
 	/// Get the specified resource and parse it, placing the values in the
 	/// specified "vals" container. This first calls GetResource(namepath)
