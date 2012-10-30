@@ -38,8 +38,8 @@ namespace jana{
 /// 1. Passed as second argument to the constructor
 /// 2. Specified in JANA:RESOURCE_DIR configuration parameter
 /// 3. Specified in JANA_RESOURCE_DIR environment variable
-/// 4. Use HALLD_HOME environment variable + "resources"
-/// 5. Create a local directory called "resources"
+/// 4. Use HALLD_MY environment variable + "resources"
+/// 5. Create a user directory in /tmp called "resources"
 ///
 /// Note that in nearly all instances, no second argument should
 /// be passed to the constructor so that the value can be changed
@@ -77,12 +77,12 @@ namespace jana{
 
 class JResourceManager{
 	public:
-		                  JResourceManager(JCalibration *jcalib=NULL, string resource_dir="");
-		          virtual ~JResourceManager();
+                          JResourceManager(JCalibration *jcalib=NULL, string resource_dir="");
+                  virtual ~JResourceManager();
 
     template<class T> bool Get(string namepath, T &vals, int event_number=0);
 
-					string GetResource(string namepath);
+                    string GetResource(string namepath);
                     string GetLocalPathToResource(string namepath);
 
              JCalibration* GetJCalibration(void){return jcalib;}
@@ -106,6 +106,9 @@ class JResourceManager{
 		void ReadResourceInfoFile(void);
 		void WriteResourceInfoFile(void);
 		void GetResourceFromURL(const string &URL, const string &fullpath);
+		
+		// Argument for the external curl program in case it is used
+		string curl_args;
 
 	private:
 

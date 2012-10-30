@@ -50,19 +50,20 @@ JResourceManager::JResourceManager(JCalibration *jcalib, string resource_dir)
 	// 1. Passed as second argument to this constructor
 	// 2. Specified in JANA:RESOURCE_DIR configuration parameter
 	// 3. Specified in JANA_RESOURCE_DIR environment variable
-	// 4. Use HALLD_HOME environment variable + "resources"
-	// 5. Create a local directory called "resources"
+	// 4. Use HALLD_MY environment variable + "resources"
+	// 5. Create a user directory in /tmp called "resources"
 	//
 	// Note that in nearly all instances, no second argument should
 	// be passed to the constructor so that the value can be changed
 	// via run time parameters.
 
 	// 5.
-	this->resource_dir = "resources";
+	string user = (getenv("USER")==NULL ? getenv("USER"):"jana");
+	this->resource_dir = "/tmp/" + user + "/resources";
 
 	// 4.
-	const char *HALLD_HOME = getenv("HALLD_HOME");
-	if(HALLD_HOME) this->resource_dir = string(HALLD_HOME) + "/resources";
+	const char *HALLD_MY = getenv("HALLD_MY");
+	if(HALLD_MY) this->resource_dir = string(HALLD_MY) + "/resources";
 
 	// 3.
 	const char *JANA_RESOURCE_DIR = getenv("JANA_RESOURCE_DIR");
@@ -85,7 +86,13 @@ JResourceManager::JResourceManager(JCalibration *jcalib, string resource_dir)
 #ifdef HAVE_CURL
 	// Initialize CURL system
 	curl_global_init(CURL_GLOBAL_ALL);
+	curl_args = "";
+#else
+	// curl_args is only used of the CURL library is not
+	curl_args = "--insecure";
+	if(gPARMS)gPARMS->SetDefaultParameter("JANA:CURL_ARGS", curl_args, "additional arguments to be passed to the external curl program");
 #endif // HAVE_CURL
+	
 
 	jRESOURCES = this;
 }
@@ -280,22 +287,7 @@ void JResourceManager::GetResourceFromURL(const string &URL, const string &fullp
 #else // HAVE_CURL
 	// Program does NOT have CURL library available
 
-	static int message_printed=0;
-	if(!message_printed){
-		printf("\nFile not compiled with CURL support! This is most likely\n");
-		printf("because the curl-config script was not in the PATH when\n");
-		printf("this was compiled. It was most likely not in your path\n");
-		printf("because the curl-devel package was not installed on your\n");
-		printf("system. \n");
-		printf("The curl package is only used to automatically download\n");
-		printf("the data tables needed by this package. I will now attempt\n");
-		printf("to get them by running curl externally via the following:\n");
-		printf("\n");
-		
-		message_printed = 1;
-	}
-
-	string cmd = "curl " + URL + " -o " + fullpath;
+	string cmd = "curl " + curl_args + " " + URL + " -o " + fullpath;
 	cout << cmd << endl;
 	system(cmd.c_str());
 #endif // HAVE_CURL
