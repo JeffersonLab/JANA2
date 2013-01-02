@@ -38,8 +38,7 @@ namespace jana{
 /// 1. Passed as second argument to the constructor
 /// 2. Specified in JANA:RESOURCE_DIR configuration parameter
 /// 3. Specified in JANA_RESOURCE_DIR environment variable
-/// 4. Use HALLD_MY environment variable + "resources"
-/// 5. Create a user directory in /tmp called "resources"
+/// 4. Create a user directory in /tmp called "resources"
 ///
 /// Note that in nearly all instances, no second argument should
 /// be passed to the constructor so that the value can be changed
@@ -60,12 +59,32 @@ namespace jana{
 /// the resource and install it if it does not already exist locally.
 /// The download location will be retrieved using the specified
 /// namepath and the JCalibration object passed in to the constructor.
-/// The calibration DB shuld have an entry for the namepath that is
-/// a map of key-values with the key "URL" defined to be the location
-/// of the resouce file on the web.
-/// By contrast, the method GetLocalPathToResource() will give the
-/// full path to where the file *should* be, but it does not try
-/// and retrieve the file if it does not exist.
+/// The calibration DB should have an entry for the namepath that is
+/// a map of key-values with two options for how the URL is specified:
+///
+/// Option 1.) The DB provides a "URL_base" string and a "path"
+/// string. These are combined to make the full URL, and the
+/// "path" is appended to the resource_dir to generate the local
+/// path.
+///
+/// Option 2.) The DB provides a "URL" string only. This is used
+/// as the full URL and as a key to the resources map to find
+/// the local path. If none exists, this local path is taken
+/// to be the namepath specified (appended to resource_dir).
+///
+/// Option 1. takes precedent. If either the "URL_base" or "path"
+/// strings are present, then the other must be as well or an
+/// exception is thrown. If neither is present, then the URL
+/// string is checked and used. If it also does not exist, an
+/// exception is thrown.
+///
+///
+/// A text file named "resources" is maintained at the top level of
+/// the resources directory tree to record what URLs have been
+/// downloaded and where the files are stored. This file is necessary
+/// if option 2 above is used to store URLs in the calibration DB,
+/// but is only informational if option 1 is used. It is ignored
+/// completely if no calibration database is used.
 ///
 /// The templated Get(namepath, T vals [, event_number]) method will
 /// first call the GetResource() method described above, but will

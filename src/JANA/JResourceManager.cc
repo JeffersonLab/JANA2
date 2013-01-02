@@ -50,20 +50,15 @@ JResourceManager::JResourceManager(JCalibration *jcalib, string resource_dir)
 	// 1. Passed as second argument to this constructor
 	// 2. Specified in JANA:RESOURCE_DIR configuration parameter
 	// 3. Specified in JANA_RESOURCE_DIR environment variable
-	// 4. Use HALLD_MY environment variable + "resources"
-	// 5. Create a user directory in /tmp called "resources"
+	// 4. Create a user directory in /tmp called "resources"
 	//
 	// Note that in nearly all instances, no second argument should
 	// be passed to the constructor so that the value can be changed
 	// via run time parameters.
 
-	// 5.
+	// 4.
 	string user = (getenv("USER")==NULL ? getenv("USER"):"jana");
 	this->resource_dir = "/tmp/" + user + "/resources";
-
-	// 4.
-	const char *HALLD_MY = getenv("HALLD_MY");
-	if(HALLD_MY) this->resource_dir = string(HALLD_MY) + "/resources";
 
 	// 3.
 	const char *JANA_RESOURCE_DIR = getenv("JANA_RESOURCE_DIR");
@@ -124,34 +119,91 @@ string JResourceManager::GetResource(string namepath)
 		// resources directory from the JCalibration object.
 		map<string,string> info;
 		jcalib->Get(namepath, info);
-		if(info.find("URL")==info.end()){
-			string mess = string("missing or incomplete info. for resource \"")+namepath+"\"";
-			throw JException(mess);
-		}
-		string URL = info["URL"];
+		
+		// We provide 2 options here:
+		//
+		// Option 1.) The DB provides a "URL_base" string and a "path"
+		// string. These are combined to make the full URL, and the
+		// "path" is appended to the resource_dir to generate the local
+		// path.
+		//
+		// Option 2.) The DB provides a "URL" string only. This is used
+		// as the full URL and as a key to the resources map to find
+		// the relative path. If none exists, this relative path is taken
+		// to be the namepath specified.
+		//
+		// Option 1. takes precedent. If either the "URL_base" or "path"
+		// strings are present, then the other must be as well or an
+		// exception is thrown. If neither is present, then the URL
+		// string is checked and used. If it also does not exist, an
+		// exception is thrown.
+		
+		bool has_URL_base = info.find("URL_base")!=info.end();
+		bool has_path = info.find("path")!=info.end();
+		bool has_URL = info.find("URL")!=info.end();
+		
+		string URL = "";
+		string path = namepath;
+		
+		// Option 1
+		if( has_URL_base || has_path ){
+			if(!has_URL_base){
+				string mess = string("\"path\" specified for resource \"")+namepath+"\" but not \"URL_base\"!";
+				throw JException(mess);
+			}
+			if(!has_path){
+				string mess = string("\"URL_base\" specified for resource \"")+namepath+"\" but not \"path\"!";
+				throw JException(mess);
+			}
+			
+			string URL_base = info["URL_base"];
+			path = info["path"];
+			if(URL_base[URL_base.length()-1] != '/') URL_base += "/";
+			if(path[0] == '/') path.erase(0,1);
+			URL = URL_base + path;
+			
+			fullpath = GetLocalPathToResource(path);
+		
+		// Option 2
+		}else if(has_URL){
+		
+			URL = info["URL"];
 
-		// Do we know about this resource?
-		if(resources.find(URL) != resources.end()){
-			// We already have an entry for this URL.
-			// set the fullpath to point to the file
-			fullpath = GetLocalPathToResource(resources[URL]);
-		}else{
-			// We don't have an entry for this URL in our
-			// resources list. Get the file and add the 
-			// resource to our in-memory list, and then write the
-			// in-memory list out to the resources file.
-
-			// Get file at URL
-			GetResourceFromURL(URL, fullpath);
-
-			// Add entry to resources list
+			// Do we know about this resource?
 			pthread_mutex_lock(&resource_manager_mutex);
-			resources[URL] = namepath;
+			if(resources.find(URL) != resources.end()){
+				fullpath = GetLocalPathToResource(resources[URL]);
+			}
 			pthread_mutex_unlock(&resource_manager_mutex);
 
-			// Write new resource list to file
-			WriteResourceInfoFile();
+		// Insufficient info for either option
+		}else{
+			string mess = string("Neither \"URL_base\",\"path\" pair nor \"URL\" exist in DB for resource \"")+namepath+"\" !";
+			throw JException(mess);
 		}
+
+		// Check if resource file exists.
+		bool file_exists = false;
+		ifstream ifs(fullpath.c_str());
+		if(ifs.is_open()){
+			file_exists = true;
+			ifs.close();
+		}
+		
+		// If file doesn't exist, then download it
+		if(!file_exists) GetResourceFromURL(URL, fullpath);
+
+		// Add entry to resources list if needed
+		bool rewrite_info_file = false;
+		pthread_mutex_lock(&resource_manager_mutex);
+		if(resources.find(URL) == resources.end()){
+			resources[URL] = path;
+			rewrite_info_file = true;
+		}
+		pthread_mutex_unlock(&resource_manager_mutex);
+		
+		// Write new resource list to file
+		if(rewrite_info_file) WriteResourceInfoFile();
 	}
 
 	return fullpath;
