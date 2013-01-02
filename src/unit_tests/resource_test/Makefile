@@ -1,6 +1,6 @@
 
 ifndef BMSDIR
-BMSDIR := ../../../../BMS
+BMSDIR := ../../../BMS
 endif
 
 include $(BMSDIR)/Makefile.bin
