@@ -145,10 +145,11 @@ template<class T> bool JResourceManager::Get(string namepath, T &vals, int event
 	/// "vals" container.
 
 	// Call to GetResource to (optionally) download and install resource file
-	GetResource(namepath);
+	string fullpath = GetResource(namepath);
+	string path = fullpath.substr(resource_dir.size()+1); // chop off resource_dir + "/"
 
 	// Have JCalibrationFile parse the resource file
-	return jcalibfile->Get(namepath, vals, event_number);
+	return jcalibfile->Get(path, vals, event_number);
 }
 
 } // Close JANA namespace

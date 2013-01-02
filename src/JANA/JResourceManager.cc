@@ -191,17 +191,20 @@ string JResourceManager::GetResource(string namepath)
 		}
 		
 		// If file doesn't exist, then download it
-		if(!file_exists) GetResourceFromURL(URL, fullpath);
+		if(!file_exists){
+			GetResourceFromURL(URL, fullpath);
+			resources[URL] = path;
+		}
 
 		// Add entry to resources list if needed
-		bool rewrite_info_file = false;
+		bool rewrite_info_file = !file_exists; // always rewrite if we had to download
 		pthread_mutex_lock(&resource_manager_mutex);
-		if(resources.find(URL) == resources.end()){
+		if( resources.find(URL) == resources.end() ){
 			resources[URL] = path;
 			rewrite_info_file = true;
 		}
 		pthread_mutex_unlock(&resource_manager_mutex);
-		
+
 		// Write new resource list to file
 		if(rewrite_info_file) WriteResourceInfoFile();
 	}
