@@ -74,7 +74,7 @@ TEST_CASE("resource/get option 1", "Gets a remote resource using JResourceManage
 //------------------
 TEST_CASE("resource/get option 2", "Gets a remote resource using JResourceManager through JApplication")
 {
-	// Create JApplication for use with first 3 tests
+	// Create JApplication for use with last 2 tests
 	JApplication *app = new JApplication(NARG, ARGV);
 
 	// First time should download
@@ -97,6 +97,8 @@ TEST_CASE("resource/get option 2", "Gets a remote resource using JResourceManage
 //------------------
 unsigned int TestResourceManager_Option1(void)
 {
+	// Option 1 uses the "URL_base" and "path" keys in the calibDB
+
 	// Create a temporary calibration directory
 	char cwd_buff[1024];
 	getcwd(cwd_buff, 1024);
@@ -160,6 +162,8 @@ unsigned int TestResourceManager_Option1(void)
 //------------------
 unsigned int TestResourceManager_Option2(void)
 {
+	// Option 2 uses only the "URL" key in the calibDB
+
 	// Create a temporary calibration directory
 	char cwd_buff[1024];
 	getcwd(cwd_buff, 1024);
