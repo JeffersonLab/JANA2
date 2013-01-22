@@ -1268,7 +1268,7 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 	// Get the max time for a thread to be inactive before being deleting
 	double THREAD_TIMEOUT=8.0;
 	double THREAD_TIMEOUT_FIRST_EVENT=30.0;
-	int MAX_RELAUNCH_THREADS=10;
+	int MAX_RELAUNCH_THREADS=0;
 	jparms->SetDefaultParameter("THREAD_TIMEOUT", THREAD_TIMEOUT, "Max. time (in seconds) system will wait for a thread to update its heartbeat before killing it and launching a new one.");
 	jparms->SetDefaultParameter("THREAD_TIMEOUT_FIRST_EVENT", THREAD_TIMEOUT_FIRST_EVENT, "Max. time (in seconds) system will wait for first event to complete before killing program.");
 	jparms->SetDefaultParameter("JANA:MAX_RELAUNCH_THREADS", MAX_RELAUNCH_THREADS, "Max. number of times to relaunch a thread due to it timing out before forcing program to quit.");
@@ -1279,6 +1279,8 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 	req.tv_sec = 0;
 	double sleep_time = (double)req.tv_sec + (1.0E-9)*(double)req.tv_nsec;
 	int Nrelaunch_threads = 0;
+	int Nstalled_threads=0;
+	int Nlost_events = 0;;
 	do{
 		// Sleep for a specific amount of time and calculate the rate
 		// on each iteration through the loop
@@ -1351,10 +1353,18 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 				// this here is to send a HUP signal to the thread which interrupts
 				// it immediately allowing it's signal handler to call pthread_exit
 				// and thereby invoking the CleanupThread() routine. I don't actually
-				// understand why we don't run into the same mutex probelm this way
+				// understand why we don't run into the same mutex problem this way
 				// but empirically, it seems to work.   3/5/2009  DL
 				pthread_kill(threads[i], SIGHUP);
-
+				
+				// When we kill a thread that has stalled we have to go to some special
+				// effort to make sure a replacement gets relaunched. What can happen
+				// is that the number of processing threads can drop to zero which
+				// would cause the main do-loop here to exit. The Nstalled_threads counter
+				// is also used to help decide whether to actually launch a new thread or
+				// not.
+				Nstalled_threads++;
+				Nlost_events++; // keep track of events we lost.
 			}
 		}
 		
@@ -1362,13 +1372,36 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 		// quit, then launch new threads to get us up to the specified amount.
 		for(unsigned int i=threads.size(); (int)i<this->Nthreads; i++){
 			
+			bool launch_new_thread = false;
+			if(Nstalled_threads > 0) launch_new_thread = true;
+			if(event_buffer_filling) launch_new_thread = true;
+			if(SIGINT_RECEIVED || quitting) launch_new_thread = false;
+			
 			// Launch a new thread to take his place, but only if we're not trying to quit
-			if( !SIGINT_RECEIVED && !quitting && event_buffer_filling){
+			if(launch_new_thread){
 			
 				// Check if we've already reached the limit of the number of threads
 				// that can be relaunched.
 				if(Nrelaunch_threads>=MAX_RELAUNCH_THREADS){
-					jerr<<" Too many thread relaunches ("<<MAX_RELAUNCH_THREADS<<") quitting ..."<<endl;
+					if(MAX_RELAUNCH_THREADS > 0){
+						jerr<<" Too many thread relaunches ("<<MAX_RELAUNCH_THREADS<<") quitting ..."<<endl;
+					}else{
+						static bool message_shown = false;
+						if(!message_shown){
+							message_shown = true;
+							jerr<<" "<<endl;
+							jerr<<" Automatic relaunching of threads is disabled. If you wish to"<<endl;
+							jerr<<" have the program relaunch a replacement thread when a stalled"<<endl;
+							jerr<<" one is killed, set the JANA:MAX_RELAUNCH_THREADS configuration"<<endl;
+							jerr<<" parameter to a value greater than zero. E.g.:"<<endl;
+							jerr<<" "<<endl;
+							jerr<<"     jana -PJANA:MAX_RELAUNCH_THREADS=10"<<endl;
+							jerr<<" "<<endl;
+							jerr<<" The program will quit now."<<endl;
+							jerr<<" ";
+						}
+					}
+					Nstalled_threads = 0; // Don't let stalled thread count hold us up
 					Quit();
 					break;
 				}
@@ -1376,8 +1409,15 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 				jerr<<" Launching new thread ..."<<endl;
 				pthread_t thr;
 				pthread_create(&thr, NULL, LaunchThread, this);
-				Nrelaunch_threads++;
-				
+				if(Nstalled_threads>0){
+					// Only count threads launched here as "re"launched if
+					// a stalled thread was killed. (We can also be launching
+					// threads because a janactl message came it that told us
+					// to increase the number of processing threads)
+					Nrelaunch_threads++;
+					Nstalled_threads--;
+				}
+
 				// We need to wait for the new thread to create a new JEventLoop
 				// If we don't wait for this here, then control may fall to the
 				// end of the while loop that checks loops.size() before the new
@@ -1406,7 +1446,7 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 			if( !SIGINT_RECEIVED && !quitting){
 						
 				jerr<<" Removing thread (to reduce number of threads) ..."<<endl;
-				pthread_kill(threads[i], SIGHUP);				
+				pthread_kill(threads[i], SIGHUP);
 			}
 		}
 
@@ -1424,7 +1464,14 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 
 		// When a JEventLoop runs out of events, it removes itself from
 		// the list before returning from the thread.
-	}while(loops.size() > 0);
+		// It is possible at this point though that we have sent a SIGHUP to
+		// the last thread(s) and they have quit, but not until after passing
+		// the thread re-launch code above so there are now zero threads but
+		// still more events to process. If a SIGHUP signal was sent this
+		// iteration, then we do not exit the loop until the next iteration.
+		// That will give us a chance to launch the replacement thread and
+		// allow it to die naturally before we stop event processing.
+	}while(loops.size() > 0 || Nstalled_threads>0);
 	
 	// Only be nice about exiting if the user wasn't insistent
 	if(SIGINT_RECEIVED<3){	
@@ -1455,9 +1502,10 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 		jout<<"Exiting hard due to catching 3 or more SIGINTs ..."<<endl;
 	}
 	
-	jout<<" "<<NEvents<<" events processed ";
+	jout<<" "<<NEvents-Nlost_events<<" events processed ";
 	jout<<" ("<<NEvents_read<<" events read) ";
 	jout<<"Average rate: "<<Val2StringWithPrefix(rate_average)<<"Hz"<<endl;
+	if(Nrelaunch_threads > 0) jout<<" "<<Nrelaunch_threads<<" thread relaunches were required"<<endl;
 
 	if(SIGINT_RECEIVED>=3)exit(-1);
 
