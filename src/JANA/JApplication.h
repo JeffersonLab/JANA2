@@ -100,6 +100,7 @@ class JApplication{
 		                          bool GetQuittingStatus(void){return quitting;} ///< return true if Quit has already been called
 		                           int GetNcores(void){return Ncores;}
 		                    inline int GetNEvents(void){return NEvents;} ///< Returns the number of events processed so far.
+		                    inline int GetNLostEvents(void){return Nlost_events;} ///< Returns the number of events processed so far.
 		                  inline float GetRate(void){return rate_instantaneous;} ///< Get the current event processing rate
 		                          void GetInstantaneousThreadRates(map<pthread_t,double> &rates_by_thread);
 		                          void GetIntegratedThreadRates(map<pthread_t,double> &rates_by_thread);
@@ -187,6 +188,7 @@ class JApplication{
 		int show_ticker;
 		int NEvents_read;		///< Number of events read from source
 		int NEvents;			///< Number of events processed
+		int Nlost_events;		///< Number of events lost (e.g. due to stalled threads)
 		int last_NEvents;		///< Number of events processed the last time we calculated rates
 		int avg_NEvents;
 		double avg_time;

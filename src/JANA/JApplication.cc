@@ -184,6 +184,7 @@ JApplication::JApplication(int narg, char* argv[])
 	show_ticker = 1;
 	NEvents_read = 0;
 	NEvents = 0;
+	Nlost_events = 0;
 	last_NEvents = 0;
 	avg_NEvents = 0;
 	avg_time = 0.0;
@@ -1280,7 +1281,6 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 	double sleep_time = (double)req.tv_sec + (1.0E-9)*(double)req.tv_nsec;
 	int Nrelaunch_threads = 0;
 	int Nstalled_threads=0;
-	int Nlost_events = 0;;
 	do{
 		// Sleep for a specific amount of time and calculate the rate
 		// on each iteration through the loop
