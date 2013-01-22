@@ -508,10 +508,11 @@ void JApplication::EventBufferThread(void)
 	
 	unsigned int EVENTS_TO_SKIP=0;
 	unsigned int EVENTS_TO_KEEP=0;
+	unsigned int MAX_EVENTS_IN_BUFFER = 10;
 	jparms->SetDefaultParameter("EVENTS_TO_SKIP", EVENTS_TO_SKIP, "Number of events that will be read in WITHOUT calling event processor(s)");
 	jparms->SetDefaultParameter("EVENTS_TO_KEEP", EVENTS_TO_KEEP, "Maximum number of events for which event processors are called before ending the program");
+	jparms->SetDefaultParameter("MAX_EVENTS_IN_BUFFER", MAX_EVENTS_IN_BUFFER, "Maximum number of events to keep in event buffer (set this to 1 or greater)");
 	
-	unsigned int MAX_EVENTS_IN_BUFFER = 10;
 	jerror_t err;
 	JEvent *event = NULL;
 	do{
