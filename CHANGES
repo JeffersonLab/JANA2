@@ -6,6 +6,8 @@ Changes in version 0.6.6
   JApplication and JEventLoop
 - Added optional support for CURL library (used by JResourceManager)
 - Added "dev" to JVersion::GetVersion() for when under development
+- Fixed bugs in thread relaunching mechanism to prevent deadlocks
+  and infinite recursion. (Also made default to NOT auto-relaunch).
 
 
 Changes in version 0.6.5
