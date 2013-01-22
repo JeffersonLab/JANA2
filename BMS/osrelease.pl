@@ -52,6 +52,8 @@ if ($uname eq 'Linux') {
 	    $release = '_CentOS5';
 	} elsif ($release_string =~ /^CentOS release 6.*/) {
 	    $release = '_CentOS6';
+	} elsif ($release_string =~ /^CentOS release 7.*/) { # guess
+	    $release = '_CentOS7';
 	} elsif ($release_string =~ /^Scientific Linux SL release 5.*/ ) {
 	    $release = '_SL5';
 	  }
@@ -92,6 +94,8 @@ if ($uname eq 'Linux') {
 	    $release = '_macosx10.7';
  	} elsif ($release_string =~ /^12.*/) {
 	    $release = '_macosx10.8';
+ 	} elsif ($release_string =~ /^13.*/) { # guess
+	    $release = '_macosx10.9';
 	} else {
 	    print STDERR "unrecognized Mac OS X (Darwin) release\n";
 	    $release = '_macosx';
