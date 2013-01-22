@@ -2281,6 +2281,51 @@ void JApplication::SetNthreads(int new_Nthreads)
 	jout<<"Setting number of processing threads to: "<<this->Nthreads<<endl;
 }
 
+//---------------------------------
+// RegisterHUPMutex
+//---------------------------------
+void JApplication::RegisterHUPMutex(pthread_mutex_t *mutex)
+{
+	/// Register a pthread_mutex_t to be unlocked inside the default signal
+	/// handler for HUP signals. The mutex should be of type PTHREAD_MUTEX_ERRORCHECK
+	/// so if an unlock attempt is made when it is not locked or locked
+	/// by a different thread, then the program will continue without crashing.
+	/// No check can be made to verify the type so it is up to the user to
+	/// ensure this.
+	/// The main purpose of this is to release a mutex that may be held by a
+	/// thread that is told to die via SIGHUP (e.g. while writing event to file).
+	/// One can also register a callback routine where more complicated handling
+	/// can be perfromed. Note that all registered mutexes will be unlocked first
+	/// before any callbacks are called.
+	HUP_locks.push_back(mutex);
+}
+
+//---------------------------------
+// RegisterHUPCallback
+//---------------------------------
+void JApplication::RegisterHUPCallback(CallBack_t *callback, void *arg)
+{
+	/// Register a callback routine that will be called from the default
+	/// signal handler for HUP signals. The framework will send an HUP
+	/// signal when a thread has stalled or the number of processing
+	/// threads is being reduced. This allows the user to do additional
+	/// cleanup to handle the HUP signal.
+	///
+	/// NOTE: For the special case where all that is needed is to unlock
+	/// a mutex, the RegisterHUPMutex method can be used instead and a
+	/// callback need not be provided. The callback routine should have
+	/// a form like this:
+	///
+	///  void MyHUPCallback(void *arg){ ... }
+	///
+	/// Then it can be registered like this:
+	///
+	///   japp->RegisterHUPCallback(MyHUPCallback, (void*)&my_data) { ... }
+	///
+	/// Note that all registered mutexes will be unlocked first
+	/// before any callbacks are called.
+	HUP_callbacks.push_back(pair<CallBack_t*, void*>(callback, arg));
+}
 
 //---------------------------------
 // SetStatusBitDescription

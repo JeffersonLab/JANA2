@@ -51,6 +51,8 @@ class JCalibrationGenerator;
 class JEventLoop;
 class JFactory_base;
 
+typedef void CallBack_t(void *arg);
+
 class JApplication{
 	public:
 		                               JApplication(int narg, char* argv[]); ///< Constructor
@@ -122,6 +124,10 @@ class JApplication{
 	          inline pthread_rwlock_t* RootReadLock(void){pthread_rwlock_rdlock(root_rw_lock); return root_rw_lock;}
               inline pthread_rwlock_t* RootWriteLock(void){pthread_rwlock_wrlock(root_rw_lock); return root_rw_lock;}
               inline pthread_rwlock_t* RootUnLock(void){pthread_rwlock_unlock(root_rw_lock); return root_rw_lock;}
+                                  void RegisterHUPMutex(pthread_mutex_t *mutex);
+                                  void RegisterHUPCallback(CallBack_t *callback, void *arg);
+			 vector<pthread_mutex_t*>& GetHUPMutexes(void){ return HUP_locks; }  ///< Get list of mutexes that should be unlocked upon receiving a SIGHUP
+    vector<pair<CallBack_t*, void*> >& GetHUPCallbacks(void){return HUP_callbacks;}  ///<< Get list of callback routines that should be called upon receiving a SIGHUP
 
                                   void SetStatusBitDescription(uint32_t bit, string description); ///< Set the description of a bit in the status word used in JEvent objects
                                 string GetStatusBitDescription(uint32_t bit); ///< Get the description of a bit in the status word used in JEvent objects
@@ -183,6 +189,8 @@ class JApplication{
 		pthread_rwlock_t rw_locks_lock; // control access to rw_locks
 		pthread_rwlock_t *app_rw_lock;
 		pthread_rwlock_t *root_rw_lock;
+		vector<pthread_mutex_t*> HUP_locks;
+		vector<pair<CallBack_t*, void*> > HUP_callbacks;
 
 		vector<string> args;	///< Argument list passed in to JApplication Constructor
 		int show_ticker;

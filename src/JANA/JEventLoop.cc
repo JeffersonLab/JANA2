@@ -36,6 +36,20 @@ jmp_buf SETJMP_ENV;
 void thread_HUP_sighandler(int sig)
 {
 	jerr<<"Caught HUP signal for thread 0x"<<hex<<pthread_self()<<dec<<" thread exiting..."<<endl;
+	if(japp){
+		// Unlock any registered mutexes
+		vector<pthread_mutex_t*> &mutexes = japp->GetHUPMutexes();
+		for(unsigned int i=0; i<mutexes.size(); i++) pthread_mutex_unlock(mutexes[i]);
+		
+		// Call any callbacks
+		vector<pair<CallBack_t*, void*> > &callbacks = japp->GetHUPCallbacks();
+		for(unsigned int i=0; i<callbacks.size(); i++) {
+			CallBack_t *callback = callbacks[i].first;
+			void *arg = callbacks[i].second;
+			(*callback)(arg);
+		}
+	}
+	
 	pthread_exit(NULL);
 }
 

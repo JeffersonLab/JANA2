@@ -27,8 +27,7 @@ using namespace jana;
 int NARG;
 char **ARGV;
 
-unsigned int TestResourceManager_Option1(void);
-unsigned int TestResourceManager_Option2(void);
+int Ncalls_to_callback=0;
 
 //------------------
 // main
@@ -36,7 +35,7 @@ unsigned int TestResourceManager_Option2(void);
 int main(int narg, char *argv[])
 {
 	cout<<endl;
-	jout<<"----- starting JResourceManager unit test ------"<<endl;
+	jout<<"----- starting Thread stall/auto-launch unit test ------"<<endl;
 
 	// Record command line args for later use
 	NARG = narg;
@@ -50,7 +49,7 @@ int main(int narg, char *argv[])
 //------------------
 // TEST_CASE
 //------------------
-TEST_CASE("thread_relaunch: single thread, no-auto", "Gets a remote resource using JResourceManager through JApplication")
+TEST_CASE("thread_relaunch: single thread, no-auto", "Stalls thread without activating auto-relaunch")
 {
 	/// Single thread, no auto thread launching
 
@@ -84,7 +83,7 @@ TEST_CASE("thread_relaunch: single thread, no-auto", "Gets a remote resource usi
 //------------------
 // TEST_CASE
 //------------------
-TEST_CASE("thread_relaunch: single thread, with-auto", "Gets a remote resource using JResourceManager through JApplication")
+TEST_CASE("thread_relaunch: single thread, with-auto", "Stalls thread with auto-relaunch turned on")
 {
 	/// Single thread, no auto thread launching
 
@@ -118,7 +117,7 @@ TEST_CASE("thread_relaunch: single thread, with-auto", "Gets a remote resource u
 //------------------
 // TEST_CASE
 //------------------
-TEST_CASE("thread_relaunch: multi-thread, no-auto", "Gets a remote resource using JResourceManager through JApplication")
+TEST_CASE("thread_relaunch: multi-thread, no-auto", "Stalls multiple threads without activating auto-relaunch")
 {
 	/// Single thread, no auto thread launching
 
@@ -153,7 +152,7 @@ TEST_CASE("thread_relaunch: multi-thread, no-auto", "Gets a remote resource usin
 //------------------
 // TEST_CASE
 //------------------
-TEST_CASE("thread_relaunch: multi-thread, with-auto", "Gets a remote resource using JResourceManager through JApplication")
+TEST_CASE("thread_relaunch: multi-thread, with-auto", "Stalls multiple threads with auto-relaunch turned on")
 {
 	/// Single thread, no auto thread launching
 
@@ -181,6 +180,55 @@ TEST_CASE("thread_relaunch: multi-thread, with-auto", "Gets a remote resource us
 	jout<<" Nlost_events=" << app->GetNLostEvents() << endl;
 	REQUIRE( app->GetNEvents() ==  EVENTS_TO_KEEP);
 	REQUIRE( app->GetNLostEvents() ==  EVENTS_TO_KEEP/137);
+
+	delete app;
+}
+
+//------------------
+// MyCallback
+//------------------
+void MyCallback(void *arg)
+{
+	Ncalls_to_callback++;
+	int *iarg = (int*)arg;
+	*iarg += 3;
+}
+
+//------------------
+// TEST_CASE
+//------------------
+TEST_CASE("thread_relaunch: callback", "Stalls thread with callback registered")
+{
+	/// Single thread, no auto thread launching
+
+	jout << "------------------ Test 5 -------------------" << endl;
+
+	// Create JApplication for use with first 3 tests
+	JApplication *app = new JApplication(NARG, ARGV);
+	
+	app->AddFactoryGenerator(new JFactoryGenerator_stalling);
+	app->AddProcessor(new JEventProcessor_dummy);
+	app->AddEventSourceGenerator(new JEventSourceGenerator_dummySource);
+	app->AddEventSource("fake_event_generator");
+	
+	Ncalls_to_callback = 0;
+	int my_value = 5;
+	app->RegisterHUPCallback(MyCallback, &my_value);
+	
+	uint32_t EVENTS_TO_KEEP = 1370;
+	gPARMS->SetParameter("EVENTS_TO_KEEP", EVENTS_TO_KEEP);
+	uint32_t THREAD_TIMEOUT = 1;
+	gPARMS->SetParameter("THREAD_TIMEOUT", THREAD_TIMEOUT);
+	uint32_t MAX_RELAUNCH_THREADS = 10;
+	gPARMS->SetParameter("JANA:MAX_RELAUNCH_THREADS", MAX_RELAUNCH_THREADS);
+	
+	int Nthreads = 1;
+	app->Run(NULL,Nthreads);
+	
+	jout<<" my_value=" << my_value << endl;
+	jout<<" Ncalls_to_callback=" << Ncalls_to_callback << endl;
+	REQUIRE( Ncalls_to_callback ==  EVENTS_TO_KEEP/137);
+	REQUIRE( my_value ==  5 + (3*EVENTS_TO_KEEP)/137);
 
 	delete app;
 }
