@@ -49,24 +49,25 @@ namespace jana{
 
 class JParameterManager{
 	public:
-		                                 JParameterManager();
-		                         virtual ~JParameterManager();
-					 virtual const char* className(void){return static_className();}
-		              static const char* static_className(void){return "JParameterManager";}
+		                                         JParameterManager();
+		                                 virtual ~JParameterManager();
+					         virtual const char* className(void){return static_className();}
+		                      static const char* static_className(void){return "JParameterManager";}
 	
-		template<typename K> JParameter* CreateParameter(K key, string description="");
+                template<typename K> JParameter* CreateParameter(K key, string description="");
+		               template<typename K> bool Exists(K key);
     template<typename K, typename V> JParameter* SetDefaultParameter(K key, V& val, string description="");
     template<typename K, typename V> JParameter* SetParameter(K key, V val); ///< Force-set a value for a configuration parameter
                 template<typename K> JParameter* GetParameterNoLock(K key); ///< Get the value of a configuration parameter without locking the mutex
-		template<typename K> JParameter* GetParameter(K key); ///< Get JParameter object for a configuration parameter
+		        template<typename K> JParameter* GetParameter(K key); ///< Get JParameter object for a configuration parameter
     template<typename K, typename V> JParameter* GetParameter(K key, V &val); ///< Get value of a parameter and its JParameter Object
-		template<typename K> JParameter* GetParameter(K key, string &val); ///< Get value of a parameter and its JParameter Object
-									void GetParameters(map<string,string> &parms, string filter="");
-		                            void ReadConfigFile(string fname);
-		                            void WriteConfigFile(string fname);
-		                            void PrintParameters(void); ///< Print a list of the configuration parameters
-		                            void Dump(void); ///< Invoke the Dump() method of all JParameter objects
-									void SetVerbose(bool verbose=true){this->verbose = verbose;} ///< Turn on additional messages
+		        template<typename K> JParameter* GetParameter(K key, string &val); ///< Get value of a parameter and its JParameter Object
+									        void GetParameters(map<string,string> &parms, string filter="");
+		                                    void ReadConfigFile(string fname);
+		                                    void WriteConfigFile(string fname);
+		                                    void PrintParameters(void); ///< Print a list of the configuration parameters
+		                                    void Dump(void); ///< Invoke the Dump() method of all JParameter objects
+									        void SetVerbose(bool verbose=true){this->verbose = verbose;} ///< Turn on additional messages
 		
 	private:
 		vector<JParameter*> parameters;
@@ -88,7 +89,7 @@ JParameter* JParameterManager::CreateParameter(K key, string description)
 	/// name and description (if provided). If a parameter with that name already
 	/// exists, then a JException is thrown.
 	///
-	/// Bewfore using this, you should consider using SetDefaultParameter. That will
+	/// Before using this, you should consider using SetDefaultParameter. That will
 	/// allow the parameter to be changed from the command line or configuration file
 	/// whereas this will create parameters that can only be modified programmatically.
 	
@@ -117,6 +118,26 @@ JParameter* JParameterManager::CreateParameter(K key, string description)
 	pthread_mutex_unlock(&parameter_mutex);
 	
 	return p;
+}
+
+//---------------------------------
+// Exists
+//---------------------------------
+template<typename K>
+bool JParameterManager::Exists(K key)
+{
+	/// Check to see if a parameter with the given name exists.
+	/// A boolean true is returned if the parameter exists and
+	/// false if it does not.
+	
+	string skey(key); // in case key is a const char *
+
+	// Lock mutex to make sure other threads don't change parameters on us
+	pthread_mutex_lock(&parameter_mutex);
+	JParameter *p = GetParameterNoLock(key);
+	pthread_mutex_unlock(&parameter_mutex);
+	
+	return p != NULL;
 }
 
 //---------------------------------
