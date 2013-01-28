@@ -77,6 +77,17 @@ JResourceManager::JResourceManager(JCalibration *jcalib, string resource_dir)
 
 	// Try and open the resources file and read it in
 	ReadResourceInfoFile();
+	
+	// Check if user has specified a URL base that will be used to
+	// override any found in the calib DB
+	overide_URL_base = false;
+	if(gPARMS){
+		if(gPARMS->Exists("JANA:RESOURCE_URL")){
+			overide_URL_base = true;
+			URL_base = "";
+			gPARMS->SetDefaultParameter("JANA:RESOURCE_URL", URL_base, "Base URL to use for retrieving resources. If set, this will override any URL_base values found in the calib DB.");
+		}
+	}
 
 #ifdef HAVE_CURL
 	// Initialize CURL system
@@ -125,7 +136,10 @@ string JResourceManager::GetResource(string namepath)
 		// Option 1.) The DB provides a "URL_base" string and a "path"
 		// string. These are combined to make the full URL, and the
 		// "path" is appended to the resource_dir to generate the local
-		// path.
+		// path. One may also specify a JANA:RESOURCE_URL configuration
+		// parameter to override the URL_base found in the calibDB. If
+		// the JANA:RESOURCE_URL config. param. is present then the
+		// URL_base parameter in the calib DB is not required.
 		//
 		// Option 2.) The DB provides a "URL" string only. This is used
 		// as the full URL and as a key to the resources map to find
@@ -134,13 +148,17 @@ string JResourceManager::GetResource(string namepath)
 		//
 		// Option 1. takes precedent. If either the "URL_base" or "path"
 		// strings are present, then the other must be as well or an
-		// exception is thrown. If neither is present, then the URL
-		// string is checked and used. If it also does not exist, an
+		// exception is thrown. Note that "URL_base" may be specified via
+		// configuration parameter in which case it need not be in the
+		// calib DB. If neither "URL_base" nor "path" is present, then the
+		// URL string is checked and used. If it also does not exist, an
 		// exception is thrown.
-		
+
 		bool has_URL_base = info.find("URL_base")!=info.end();
 		bool has_path = info.find("path")!=info.end();
 		bool has_URL = info.find("URL")!=info.end();
+		
+		if(overide_URL_base) has_URL_base = true;
 		
 		string URL = "";
 		string path = namepath;
@@ -148,19 +166,24 @@ string JResourceManager::GetResource(string namepath)
 		// Option 1
 		if( has_URL_base || has_path ){
 			if(!has_URL_base){
+				_DBG_<<"URL_base=\""<<info["URL_base"]<<"\" path=\""<<info["path"]<<"\""<<endl;
 				string mess = string("\"path\" specified for resource \"")+namepath+"\" but not \"URL_base\"!";
 				throw JException(mess);
 			}
 			if(!has_path){
+				_DBG_<<"URL_base=\""<<info["URL_base"]<<"\" path=\""<<info["path"]<<"\""<<endl;
 				string mess = string("\"URL_base\" specified for resource \"")+namepath+"\" but not \"path\"!";
 				throw JException(mess);
 			}
 			
-			string URL_base = info["URL_base"];
+			string my_URL_base = info["URL_base"];
+			if(overide_URL_base) my_URL_base = URL_base;
+			if(my_URL_base[my_URL_base.length()-1] != '/') my_URL_base += "/";
+
 			path = info["path"];
-			if(URL_base[URL_base.length()-1] != '/') URL_base += "/";
 			if(path[0] == '/') path.erase(0,1);
-			URL = URL_base + path;
+
+			URL = my_URL_base + path;
 			
 			fullpath = GetLocalPathToResource(path);
 		

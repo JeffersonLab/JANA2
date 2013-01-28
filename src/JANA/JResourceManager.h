@@ -65,7 +65,11 @@ namespace jana{
 /// Option 1.) The DB provides a "URL_base" string and a "path"
 /// string. These are combined to make the full URL, and the
 /// "path" is appended to the resource_dir to generate the local
-/// path.
+/// path. Alternatively, "URL_base" may be provided via the
+/// JANA:RESOURCE_URL configuration parameter in which case it need
+/// not be present in the calib DB. If the config. parameter is
+/// supplied, it will be used instead of any "URL_base" values found
+/// in the calib DB.
 ///
 /// Option 2.) The DB provides a "URL" string only. This is used
 /// as the full URL and as a key to the resources map to find
@@ -130,6 +134,11 @@ class JResourceManager{
 		string curl_args;
 
 	private:
+	
+		// Holds user specified URL_base that superceeds any found
+		// in calib DB
+		bool overide_URL_base;
+		string URL_base;
 
 };
 
