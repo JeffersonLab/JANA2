@@ -10,6 +10,8 @@ using namespace jana;
 class JEventProcessorTest:public JEventProcessor
 {
 	public:
+		const char* className(void){return "JEventProcessorTest";}
+		
 		jerror_t init(void);				///< Called once at program start.
 		jerror_t brun(JEventLoop *loop, int runnumber);	///< Called everytime a new run number is detected.
 		jerror_t evnt(JEventLoop *loop, int eventnumber);						///< Called every event.
