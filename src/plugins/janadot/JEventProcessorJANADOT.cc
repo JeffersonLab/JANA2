@@ -7,6 +7,7 @@
 #include <iostream>
 #include <iomanip>
 #include <fstream>
+#include <set>
 using namespace std;
 
 #include <JANA/JApplication.h>
@@ -27,12 +28,55 @@ void InitPlugin(JApplication *app){
 //------------------------------------------------------------------
 jerror_t JEventProcessorJANADOT::init(void)
 {
+
 	// Turn on call stack recording
 	bool record_call_stack=true;
 	force_all_factories_active = false;
+	suppress_unused_factories = true;
 	try{
 		app->GetJParameterManager()->SetDefaultParameter("RECORD_CALL_STACK", record_call_stack);
-		app->GetJParameterManager()->GetParameter("FORCE_ALL_FACTORIES_ACTIVE", force_all_factories_active);
+		if(app->GetJParameterManager()->Exists("FORCE_ALL_FACTORIES_ACTIVE")){
+			app->GetJParameterManager()->GetParameter("FORCE_ALL_FACTORIES_ACTIVE", force_all_factories_active);
+		}
+		app->GetJParameterManager()->SetDefaultParameter("JANADOT:SUPPRESS_UNUSED_FACTORIES", suppress_unused_factories, "If true, then do not list factories in groups that did not show up in list of factories recorded during processing. If false, these will show up as white ovals with no connections (ghosts)");
+
+		// User can specify grouping using configuration parameters starting with
+		// "JANADOT:GROUP:". The remainder of the parameter name is used to name
+		// the group and the value is a comma separated list of classes to add to
+		// the group.
+		map<string,string> parms;
+		app->GetJParameterManager()->GetParameters(parms, "JANADOT:GROUP:");
+		jout<<"JANADOT groups: "<<parms.size()<<endl;
+		for(map<string,string>::iterator it=parms.begin(); it!=parms.end(); it++){
+		
+			jout<<" JANADOT group \""<<it->first<<"\" found ";
+			
+			// Split vals at commas
+			vector<string> myclasses;
+			string str = it->second;
+			unsigned int cutAt;
+			while( (cutAt = str.find(",")) != (unsigned int)str.npos ){
+				if(cutAt > 0){
+					string val = str.substr(0,cutAt);
+					
+					// Check if a color was specified
+					if(val.find("color_")==0){
+						group_colors[it->first] = val.substr(6);
+					}else{
+						myclasses.push_back(val);
+					}
+				}
+				str = str.substr(cutAt+1);
+			}
+			if(str.length() > 0)myclasses.push_back(str);
+			if(myclasses.size() > 0) groups[it->first] = myclasses;
+			
+			if(group_colors.find(it->first)!=group_colors.end()){
+				jout<<" ("<<group_colors[it->first]<<") ";
+			}
+			jout << myclasses.size() << " classes" << endl;
+		}
+
 	}catch(...){}
 
 	// Initialize our mutex
@@ -174,6 +218,8 @@ jerror_t JEventProcessorJANADOT::fini(void)
 
 	// Add commands for node drawing style
 	vector<string> source_nodes;
+	vector<string> processor_nodes;
+	set<string> factory_nodes;
 	map<string, FactoryCallStats>::iterator fiter;
 	for(fiter=factory_stats.begin(); fiter!=factory_stats.end(); fiter++){
 		FactoryCallStats &fcall_stats = fiter->second;
@@ -201,10 +247,16 @@ jerror_t JEventProcessorJANADOT::fini(void)
 			case kProcessor:
 				fillcolor = "aquamarine";
 				shape = "ellipse";
+				if(fiter->first == "AutoActivated"){
+					fillcolor = "lightgrey";
+					shape = "hexagon";
+				}
+				processor_nodes.push_back(fiter->first);
 				break;
 			case kFactory:
 				fillcolor = "lightblue";
 				shape = "box";
+				factory_nodes.insert(fiter->first);
 				break;
 			case kSource:
 				fillcolor = "green";
@@ -232,11 +284,38 @@ jerror_t JEventProcessorJANADOT::fini(void)
 		if(fcall_stats.type==kSource)file<<", margin=0.,0.";
 		file<<"];"<<endl;
 	}
+
+	// Make all processor nodes appear at top of graph
+	file<<"\t{rank=source; ";
+	for(unsigned int i=0; i<processor_nodes.size(); i++)file<<"\""<<processor_nodes[i]<<"\"; ";
+	file<<"}"<<endl;
 	
 	// Make all source nodes appear on bottom of graph
 	file<<"\t{rank=sink; ";
 	for(unsigned int i=0; i<source_nodes.size(); i++)file<<"\""<<source_nodes[i]<<"\"; ";
 	file<<"}"<<endl;
+	
+	// Add all groups as subgraphs
+	int icluster=0;
+	map<string,vector<string> >::iterator it=groups.begin();
+	for(; it!=groups.end(); it++, icluster++){
+		file << "subgraph cluster_" << icluster <<" {";
+		vector<string> &myclasses = it->second;
+		for(unsigned int i=0; i<myclasses.size(); i++){
+			bool include_class = true;
+			if(suppress_unused_factories){
+				include_class = (factory_nodes.find(myclasses[i]) != factory_nodes.end());
+			}
+			if(include_class){
+				file << "\"" << myclasses[i] << "\"; ";
+			}
+		}
+		file << "label=\"" << it->first << "\"; ";
+		
+		string color = "blue"; // default box color
+		if(group_colors.find(it->first)!=group_colors.end()) color = group_colors[it->first];
+		file << "color="<<color<<"}" << endl;
+	}
 	
 	// Close file
 	file<<"}"<<endl;

@@ -8,6 +8,12 @@ Changes in version 0.6.6
 - Added "dev" to JVersion::GetVersion() for when under development
 - Fixed bugs in thread relaunching mechanism to prevent deadlocks
   and infinite recursion. (Also made default to NOT auto-relaunch).
+- Made MAX_EVENTS_IN_BUFFER a configuration parameter to allow user
+  to set event buffer depth
+- Added callback and mutex unlock registration for when HUP sighandler
+  is called
+- Enhanced to allow janadot to display more than one JEventProcessor
+- Janadot can draw bounding box around groups. janadot_groups.py script added
 
 
 Changes in version 0.6.5

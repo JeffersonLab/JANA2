@@ -11,7 +11,49 @@ using std::map;
 
 class JEventProcessorJANADOT:public JEventProcessor
 {
+
+	/// The janadot plugin is used to generate a call graph with information on
+	/// factory dependencies on one another as well as some profiling to indicate
+	/// where the processing time is being spent. The output is a text file containing
+	/// commands in GraphVix's "DOT" language. This can be converted into a .ps file using
+	/// the "dot" program (usually installed with the "graphviz" package on Linux.) The
+	/// .ps file can then be converted to PDF using ps2pdf.if
+	/// There are a couple of options in janadot that can be controlled via configuration
+	/// parameters. It should be noted that janadot itself turns on the RECORD_CALL_STACK
+	/// configuration parameter so that the framework will record the information needed
+	/// to produce the call graph in the end. Configuration parameters specific to [janadot
+	/// are:
+	/// 
+	/// JANADOT:GROUP:GroupName  - This is used to tell janadot to issue commands that will
+	/// cause dot to draw a box around a specific set of factories and give it a title.
+	/// This is useful for larger projects where the factories may be grouped into libraries
+	/// and the box can guide the user to what library a factory came from. The value of
+	/// "GroupName" is used for the title and the value of the configuration parameter
+	/// should be a comma separated list of factories to include in the group. If a
+	/// factory with a name matching "color_XXX" is found in the factory list, then the
+	/// XXX part is used as the color for the bounding box. For example:
+	/// 
+	/// -PPLUGINS=janadot -PJANADOT:GROUP:Tracking=DTrackHit,DTrackCandidate,DTrackWireBased,color_red
+	/// 
+	/// This will cause dot to draw the boxes for DTrackHit,DTrackCandidate, and
+	/// DTrackWireBased near each other and a larger box drawn around it. A label
+	/// that says "Tracking" will also be draw at the top of the bounding box and
+	/// the bounding box itself will be colored red.
+	/// 
+	/// JANADOT:SUPPRESS_UNUSED_FACTORIES  - By default this is set to true, but one can
+	/// turn it off by setting it to "0". This only has an effect if a JANADOT:GROUP:
+	/// config. parameter (described above) is given. If this is turned off AND a
+	/// factory is specified in the list of factories for the group that does not
+	/// get called during processing, then an ellipse for that factory will be drawn
+	/// inside the bounding box for the group. These types of factories will have
+	/// no connections to them and will be filled with white so they will look a
+	/// little ghostly. In most instances, you will not want this behavior so it
+	/// is supressed by default.
+
+
 	public:
+		const char* className(void){return "JEventProcessorJANADOT";}
+
 		jerror_t init(void);							///< Called once at program start.
 		jerror_t brun(JEventLoop *loop, int runnumber);	///< Called everytime a new run number is detected.
 		jerror_t evnt(JEventLoop *loop, int eventnumber);	///< Called every event.
@@ -82,6 +124,9 @@ class JEventProcessorJANADOT:public JEventProcessor
 		map<string, FactoryCallStats> factory_stats;
 		pthread_mutex_t mutex;
 		bool force_all_factories_active;
+		bool suppress_unused_factories;
+		map<string,vector<string> > groups;
+		map<string,string > group_colors;
 		
 		string MakeTimeString(double time_in_ms);
 		string MakeNametag(const string &name, const string &tag);
