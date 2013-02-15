@@ -85,7 +85,7 @@ JEventLoop::JEventLoop(JApplication *app)
 	// these will get over written twice with each call to Get(). Once
 	// to copy in who is being called and then again later to copy
 	// back in who did the calling.
-	caller_name = "JEventProcessor";
+	caller_name = "JEventProcessorDefault";
 	caller_tag = "";
 
 	event_boundaries_run = 0;
@@ -508,8 +508,12 @@ jerror_t JEventLoop::OneEvent(void)
 		
 	// Initialize the factory call stacks
 	error_call_stack.clear();
-	if(record_call_stack)call_stack.clear();
-	
+	if(record_call_stack){
+		caller_name = "AutoActivated";
+		caller_tag = "";
+		call_stack.clear();
+	}
+
 	// Loop over the list of factories to "auto activate" and activate them
 	for(unsigned int i=0; i<auto_activated_factories.size(); i++){
 		pair<string, string> &facname = auto_activated_factories[i];
@@ -534,6 +538,12 @@ jerror_t JEventLoop::OneEvent(void)
 
 	for(; p!=processors.end(); p++){
 		JEventProcessor *proc = *p;
+
+//_DBG_<<"Setting caller_name to\""<<proc->className()<<"\""<<endl;
+		if(record_call_stack){
+			caller_name = proc->className();
+			caller_tag = "";
+		}
 
 		// Call brun routine if run number has changed or it's not been called
 		proc->LockState();

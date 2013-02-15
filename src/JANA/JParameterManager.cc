@@ -90,6 +90,7 @@ void JParameterManager::GetParameters(map<string,string> &parms, string filter)
 	/// from the keys.
 	
 	parms.clear();
+	pthread_mutex_lock(&parameter_mutex);
 	for(unsigned int i=0; i<parameters.size(); i++){
 		string key = parameters[i]->GetKey();
 		string value = parameters[i]->GetValue();
@@ -99,6 +100,7 @@ void JParameterManager::GetParameters(map<string,string> &parms, string filter)
 		}
 		parms[key] = value;
 	}
+	pthread_mutex_unlock(&parameter_mutex);
 }
 
 //---------------------------------
@@ -315,6 +317,7 @@ void JParameterManager::PrintParameters(void)
 	no_warn.push_back("PLUGINS");
 	no_warn.push_back("AUTOACTIVATE");
 	no_warn.push_back("NTHREADS");
+	no_warn.push_back("JANADOT:GROUP:");
 	
 	// Loop over parameters a second time and print them out
 	int Nprinted = 0;
