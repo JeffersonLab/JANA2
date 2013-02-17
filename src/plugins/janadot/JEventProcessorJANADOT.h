@@ -25,20 +25,27 @@ class JEventProcessorJANADOT:public JEventProcessor
 	/// are:
 	/// 
 	/// JANADOT:GROUP:GroupName  - This is used to tell janadot to issue commands that will
-	/// cause dot to draw a box around a specific set of factories and give it a title.
-	/// This is useful for larger projects where the factories may be grouped into libraries
-	/// and the box can guide the user to what library a factory came from. The value of
-	/// "GroupName" is used for the title and the value of the configuration parameter
+	/// cause dot to draw the graph using colors and/or a bounding box to identify members
+	/// of a group. 
+	/// This is useful for larger projects with lots of factories. The value of
+	/// "GroupName" is used for the title when drawing a bounding box.
+	/// The value of the configuration parameter
 	/// should be a comma separated list of factories to include in the group. If a
 	/// factory with a name matching "color_XXX" is found in the factory list, then the
-	/// XXX part is used as the color for the bounding box. For example:
+	/// XXX part is used as the color for the background of the classes in the group.
+	/// For example:
 	/// 
 	/// -PPLUGINS=janadot -PJANADOT:GROUP:Tracking=DTrackHit,DTrackCandidate,DTrackWireBased,color_red
 	/// 
 	/// This will cause dot to draw the boxes for DTrackHit,DTrackCandidate, and
-	/// DTrackWireBased near each other and a larger box drawn around it. A label
-	/// that says "Tracking" will also be draw at the top of the bounding box and
-	/// the bounding box itself will be colored red.
+	/// DTrackWireBased near each other, with a red background then a larger box drawn
+	/// around it. A label that says "Tracking" will also be draw at the top of the
+	/// bounding box.
+	///
+	/// If one does not wish to have the bounding and label box drawn then a value
+	/// of "no_box" should be added to the list of values (similar to how "color_red"
+	/// was in the above example). Note that these special keyward can be contained
+	/// anywhere in the list and need not be at the end.
 	/// 
 	/// JANADOT:SUPPRESS_UNUSED_FACTORIES  - By default this is set to true, but one can
 	/// turn it off by setting it to "0". This only has an effect if a JANADOT:GROUP:
@@ -49,6 +56,12 @@ class JEventProcessorJANADOT:public JEventProcessor
 	/// no connections to them and will be filled with white so they will look a
 	/// little ghostly. In most instances, you will not want this behavior so it
 	/// is supressed by default.
+	///
+	///
+	/// Because the configurations can become large for large projects, a script
+	/// called "janadot_groups.py" is provided as part of JANA. Just give it the
+	/// path of the top level directory structure where code you wish to document
+	/// it is.
 
 
 	public:
@@ -127,6 +140,8 @@ class JEventProcessorJANADOT:public JEventProcessor
 		bool suppress_unused_factories;
 		map<string,vector<string> > groups;
 		map<string,string > group_colors;
+		map<string,string > node_colors;
+		set<string> no_subgraph_groups;
 		
 		string MakeTimeString(double time_in_ms);
 		string MakeNametag(const string &name, const string &tag);

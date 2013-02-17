@@ -49,7 +49,8 @@ jerror_t JEventProcessorJANADOT::init(void)
 		jout<<"JANADOT groups: "<<parms.size()<<endl;
 		for(map<string,string>::iterator it=parms.begin(); it!=parms.end(); it++){
 		
-			jout<<" JANADOT group \""<<it->first<<"\" found ";
+			string group_name = it->first;
+			jout<<" JANADOT group \""<<group_name<<"\" found ";
 			
 			// Split vals at commas
 			vector<string> myclasses;
@@ -61,7 +62,9 @@ jerror_t JEventProcessorJANADOT::init(void)
 					
 					// Check if a color was specified
 					if(val.find("color_")==0){
-						group_colors[it->first] = val.substr(6);
+						group_colors[group_name] = val.substr(6);
+					}else if(val.find("no_box")==0){
+						no_subgraph_groups.insert(group_name);
 					}else{
 						myclasses.push_back(val);
 					}
@@ -75,6 +78,15 @@ jerror_t JEventProcessorJANADOT::init(void)
 				jout<<" ("<<group_colors[it->first]<<") ";
 			}
 			jout << myclasses.size() << " classes" << endl;
+		}
+		
+		// Make an inverted list keyed by node name that has the group color as the value
+		map<string,vector<string> >::iterator it = groups.begin();
+		for(; it!=groups.end(); it++){
+			if(group_colors.find(it->first) == group_colors.end()) continue;
+			string color = group_colors[it->first];
+			vector<string> &classes = it->second;
+			for(unsigned int i=0; i<classes.size(); i++) node_colors[classes[i]] = color;
 		}
 
 	}catch(...){}
@@ -243,11 +255,12 @@ jerror_t JEventProcessorJANADOT::fini(void)
 		
 		string fillcolor;
 		string shape;
+		string nodename = fiter->first;
 		switch(fcall_stats.type){
 			case kProcessor:
 				fillcolor = "aquamarine";
 				shape = "ellipse";
-				if(fiter->first == "AutoActivated"){
+				if(nodename == "AutoActivated"){
 					fillcolor = "lightgrey";
 					shape = "hexagon";
 				}
@@ -255,13 +268,14 @@ jerror_t JEventProcessorJANADOT::fini(void)
 				break;
 			case kFactory:
 				fillcolor = "lightblue";
+				if(node_colors.find(nodename)!=node_colors.end()) fillcolor = node_colors[nodename];
 				shape = "box";
-				factory_nodes.insert(fiter->first);
+				factory_nodes.insert(nodename);
 				break;
 			case kSource:
 				fillcolor = "green";
 				shape = "trapezium";
-				source_nodes.push_back(fiter->first);
+				source_nodes.push_back(nodename);
 				break;
 			case kDefault:
 			default:
@@ -299,6 +313,9 @@ jerror_t JEventProcessorJANADOT::fini(void)
 	int icluster=0;
 	map<string,vector<string> >::iterator it=groups.begin();
 	for(; it!=groups.end(); it++, icluster++){
+		string group_name = it->first;
+		if(no_subgraph_groups.find(group_name) != no_subgraph_groups.end()) continue;
+
 		file << "subgraph cluster_" << icluster <<" {";
 		vector<string> &myclasses = it->second;
 		for(unsigned int i=0; i<myclasses.size(); i++){
@@ -310,10 +327,11 @@ jerror_t JEventProcessorJANADOT::fini(void)
 				file << "\"" << myclasses[i] << "\"; ";
 			}
 		}
-		file << "label=\"" << it->first << "\"; ";
+		file << "label=\"" << group_name << "\"; ";
 		
 		string color = "blue"; // default box color
-		if(group_colors.find(it->first)!=group_colors.end()) color = group_colors[it->first];
+		if(group_colors.find(group_name)!=group_colors.end()) color = group_colors[group_name];
+		color = "black"; // some colors are awfully light. Make all boxes black for now
 		file << "color="<<color<<"}" << endl;
 	}
 	
