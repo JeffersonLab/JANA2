@@ -299,9 +299,12 @@ void JParameterManager::PrintParameters(void)
 
 		if(!p->printme)continue;
 
-		if(p->GetKey().length()>max_key_len) max_key_len = p->GetKey().length(); 
-		if(p->GetValue().length()>max_val_len) max_val_len = p->GetValue().length(); 
+		if(p->GetKey().length()>max_key_len && p->GetKey().length()<80) max_key_len = p->GetKey().length();
+		if(p->GetValue().length()>max_val_len && p->GetValue().length()<80) max_val_len = p->GetValue().length();
 	}
+	
+	if(max_key_len==0) max_key_len=28;
+	if(max_val_len==0) max_val_len=32;
 
 	// Special prefixes to *not* make loud warning messages about
 	vector<string> no_warn;
@@ -318,6 +321,8 @@ void JParameterManager::PrintParameters(void)
 	no_warn.push_back("AUTOACTIVATE");
 	no_warn.push_back("NTHREADS");
 	no_warn.push_back("JANADOT:GROUP:");
+	no_warn.push_back("JANADOT:FOCUS");
+	no_warn.push_back("JANADOT:SUPPRESS_UNUSED_FACTORIES");
 	
 	// Loop over parameters a second time and print them out
 	int Nprinted = 0;
@@ -327,7 +332,10 @@ void JParameterManager::PrintParameters(void)
 		Nprinted++;
 		string key = p->GetKey();
 		string val = p->GetValue();
-		string line = " " + key + string(max_key_len-key.length(),' ') + " = " + val + string(max_val_len-val.length(),' ');
+		string line = " " + key;
+		if(key.length() < max_key_len) line+=string(max_key_len-key.length(),' ');
+		line += " = " + val;
+		if(val.length() < max_val_len) line+=string(max_val_len-val.length(),' ');
 
 		// Warn if value has been set without specifying a default ...
 		bool warn = (!p->hasdefault);
