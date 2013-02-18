@@ -57,6 +57,13 @@ class JEventProcessorJANADOT:public JEventProcessor
 	/// little ghostly. In most instances, you will not want this behavior so it
 	/// is supressed by default.
 	///
+	/// JANADOT:FOCUS  - If this is set then the value is taken to be the factory
+	/// on which the graph should focus. Specifically, any factories that are not
+	/// direct decendents or ancestors of the focus factory are ommitted from the
+	/// graph. The times and percentages drawn are the same as for the full graph
+	/// no not all time accounting will be visible on such graphs. The specified
+	/// focus factory is drawn with a triple octagon shape to indicate it was used
+	/// as the focus.
 	///
 	/// Because the configurations can become large for large projects, a script
 	/// called "janadot_groups.py" is provided as part of JANA. Just give it the
@@ -142,7 +149,11 @@ class JEventProcessorJANADOT:public JEventProcessor
 		map<string,string > group_colors;
 		map<string,string > node_colors;
 		set<string> no_subgraph_groups;
+		bool has_focus;
+		string focus_factory;
 		
+		void FindDecendents(string caller, set<string> &decendents);
+		void FindAncestors(string callee, set<string> &ancestors);
 		string MakeTimeString(double time_in_ms);
 		string MakeNametag(const string &name, const string &tag);
 };

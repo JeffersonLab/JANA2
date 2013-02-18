@@ -38,6 +38,11 @@ jerror_t JEventProcessorJANADOT::init(void)
 		if(app->GetJParameterManager()->Exists("FORCE_ALL_FACTORIES_ACTIVE")){
 			app->GetJParameterManager()->GetParameter("FORCE_ALL_FACTORIES_ACTIVE", force_all_factories_active);
 		}
+		if(app->GetJParameterManager()->Exists("JANADOT:FOCUS")){
+			has_focus = true;
+			app->GetJParameterManager()->GetParameter("JANADOT:FOCUS", focus_factory);
+			jout<<" Setting JANADOT focus to: "<<focus_factory<<endl;
+		}
 		app->GetJParameterManager()->SetDefaultParameter("JANADOT:SUPPRESS_UNUSED_FACTORIES", suppress_unused_factories, "If true, then do not list factories in groups that did not show up in list of factories recorded during processing. If false, these will show up as white ovals with no connections (ghosts)");
 
 		// User can specify grouping using configuration parameters starting with
@@ -193,6 +198,13 @@ jerror_t JEventProcessorJANADOT::fini(void)
 		}
 	}
 	if(total_ms == 0.0)total_ms = 1.0;
+	
+	// If the user specified a focus factory, find the decendents and ancestors
+	set<string> focus_relatives;
+	if(has_focus){
+		FindDecendents(focus_factory, focus_relatives);
+		FindAncestors(focus_factory, focus_relatives);
+	}
 
 	// Open dot file for writing
 	cout<<"Opening output file \"jana.dot\""<<endl;
@@ -215,6 +227,12 @@ jerror_t JEventProcessorJANADOT::fini(void)
 		
 		string timestr=MakeTimeString(stats.from_factory_ms);
 		
+		// If a focus factory was specified, check if either the 
+		if(has_focus){
+			if(focus_relatives.find(nametag1)==focus_relatives.end()) continue;
+			if(focus_relatives.find(nametag2)==focus_relatives.end()) continue;
+		}
+		
 		file<<"\t";
 		file<<"\""<<nametag1<<"\"";
 		file<<" -> ";
@@ -235,6 +253,12 @@ jerror_t JEventProcessorJANADOT::fini(void)
 	map<string, FactoryCallStats>::iterator fiter;
 	for(fiter=factory_stats.begin(); fiter!=factory_stats.end(); fiter++){
 		FactoryCallStats &fcall_stats = fiter->second;
+		string nodename = fiter->first;
+		
+		// If a focus was specified then check if this node is a relative or not
+		if(has_focus){
+			if(focus_relatives.find(nodename)==focus_relatives.end()) continue;
+		}
 
 		// Decide whether this is a factory, processor, or source
 		if(fcall_stats.Nfrom_source==0 && fcall_stats.Nfrom_factory==0){
@@ -255,7 +279,6 @@ jerror_t JEventProcessorJANADOT::fini(void)
 		
 		string fillcolor;
 		string shape;
-		string nodename = fiter->first;
 		switch(fcall_stats.type){
 			case kProcessor:
 				fillcolor = "aquamarine";
@@ -270,6 +293,7 @@ jerror_t JEventProcessorJANADOT::fini(void)
 				fillcolor = "lightblue";
 				if(node_colors.find(nodename)!=node_colors.end()) fillcolor = node_colors[nodename];
 				shape = "box";
+				if(has_focus && nodename==focus_factory) shape = "tripleoctagon";
 				factory_nodes.insert(nodename);
 				break;
 			case kSource:
@@ -286,21 +310,37 @@ jerror_t JEventProcessorJANADOT::fini(void)
 
 		stringstream label_html;
 		label_html<<"<TABLE border=\"0\" cellspacing=\"0\" cellpadding=\"0\" cellborder=\"0\">";
-		label_html<<"<TR><TD>"<<fiter->first<<"</TD></TR>";
+		label_html<<"<TR><TD>"<<nodename<<"</TD></TR>";
 		if(fcall_stats.type!=kProcessor){
 			label_html<<"<TR><TD><font point-size=\"8\">"<<timestr<<" ("<<percentstr<<")</font></TD></TR>";
 		}
 		label_html<<"</TABLE>";
 		
-		file<<"\t\""<<fiter->first<<"\"";
+		file<<"\t\""<<nodename<<"\"";
 		file<<" [shape="<<shape<<",style=filled,fillcolor="<<fillcolor;
 		file<<", label=<"<<label_html.str()<<">";
 		if(fcall_stats.type==kSource)file<<", margin=0.,0.";
 		file<<"];"<<endl;
 	}
+	
+	// Make node to specify time
+	time_t now = time(NULL);
+	string datetime(ctime(&now));
+	datetime.erase(datetime.length()-1);
+	stringstream label_html;
+	label_html << "<font point-size=\"10\">";
+	label_html << "Created: "<<datetime;
+	label_html << "</font>";
+	file<<"\t\"CreationTime\"";
+	file<<" [shape=box,style=filled,color=white";
+	file<<", label=<"<<label_html.str()<<">";
+	file<<", margin=0.,0.";
+	file<<"];"<<endl;
+	
 
 	// Make all processor nodes appear at top of graph
 	file<<"\t{rank=source; ";
+	file << "\"CreationTime\";";
 	for(unsigned int i=0; i<processor_nodes.size(); i++)file<<"\""<<processor_nodes[i]<<"\"; ";
 	file<<"}"<<endl;
 	
@@ -329,9 +369,8 @@ jerror_t JEventProcessorJANADOT::fini(void)
 		}
 		file << "label=\"" << group_name << "\"; ";
 		
-		string color = "blue"; // default box color
-		if(group_colors.find(group_name)!=group_colors.end()) color = group_colors[group_name];
-		color = "black"; // some colors are awfully light. Make all boxes black for now
+		string color = "forestgreen"; // default box color
+		//if(group_colors.find(group_name)!=group_colors.end()) color = group_colors[group_name];
 		file << "color="<<color<<"}" << endl;
 	}
 	
@@ -352,6 +391,50 @@ jerror_t JEventProcessorJANADOT::fini(void)
 	<<endl;
 
 	return NOERROR;
+}
+
+//------------------------------------------------------------------
+// FindDecendents
+//------------------------------------------------------------------
+void JEventProcessorJANADOT::FindDecendents(string caller, set<string> &decendents)
+{
+	/// The is reentrant and will call itself until all decendents of the
+	/// given caller are recorded in decendents
+
+	decendents.insert(caller);
+
+	map<CallLink, CallStats>::iterator iter;
+	for(iter=call_links.begin(); iter!=call_links.end(); iter++){
+		const CallLink &link = iter->first;
+
+		string mycaller = MakeNametag(link.caller_name, link.caller_tag);
+		string mycallee = MakeNametag(link.callee_name, link.callee_tag);
+		
+		if(mycaller == caller) FindDecendents(mycallee, decendents);
+	}
+
+}
+
+//------------------------------------------------------------------
+// FindAncestors
+//------------------------------------------------------------------
+void JEventProcessorJANADOT::FindAncestors(string callee, set<string> &ancestors)
+{
+	/// The is reentrant and will call itself until all decendents of the
+	/// given caller are recorded in decendents
+
+	ancestors.insert(callee);
+
+	map<CallLink, CallStats>::iterator iter;
+	for(iter=call_links.begin(); iter!=call_links.end(); iter++){
+		const CallLink &link = iter->first;
+
+		string mycaller = MakeNametag(link.caller_name, link.caller_tag);
+		string mycallee = MakeNametag(link.callee_name, link.callee_tag);
+		
+		if(mycallee == callee) FindAncestors(mycaller, ancestors);
+	}
+
 }
 
 //------------------------------------------------------------------
