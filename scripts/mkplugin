@@ -3,14 +3,45 @@
 if($#ARGV < 0){&Usage();exit;}
 
 $pluginname = "__nada__";
+$NO_ROOT = 0;
+$JANA_IMPLEMENTATION = "N/A"; # Initialize to N/A value
+
 foreach $arg (@ARGV){
-	$pluginname = $arg;
+	if($arg eq "--no-root"){
+		$NO_ROOT = 1;
+	}elsif($arg eq "-d"){
+		$JANA_IMPLEMENTATION = "DANA";
+	}elsif($arg eq "-b"){
+		$JANA_IMPLEMENTATION = "BANA";
+	}elsif($arg eq "-j"){
+		$JANA_IMPLEMENTATION = "JANA";
+	}else{
+		$pluginname = $arg;
+	}
+}
+
+# If specific JANA implementation is not defined, then set it
+if( $JANA_IMPLEMENTATION eq "N/A" ){
+
+	# Default JANA implementation package
+	$JANA_IMPLEMENTATION = "JANA";
+
+	# If HALLD_HOME is defined, use DANA so user doesn't need to explicitly pass "-d"
+	if( length($ENV{"HALLD_HOME"}) > 0 ){
+		$JANA_IMPLEMENTATION = "DANA";
+		print "HALLD_HOME environment variable is set. Assuming DANA package.\n";
+		print "(to use JANA instead, pass the \"-j\" option)\n";
+	}
 }
 
 if($pluginname eq "__nada__"){&Usage();exit;}
 
 print "\n";
 print "Generating files for plugin $pluginname ....\n";
+if($NO_ROOT){
+	print "(default ROOT features will *not* be added)\n";
+}
+print "\n";
 
 # Create directory to hold source
 mkdir($pluginname);
@@ -127,7 +158,15 @@ JEventProcessor_${pluginname}::~JEventProcessor_${pluginname}()
 //------------------
 jerror_t JEventProcessor_${pluginname}::init(void)
 {
-	// This is called once at program startup
+	// This is called once at program startup. If you are creating
+	// and filling historgrams in this plugin, you should lock the
+	// ROOT mutex like this:
+	//
+	// japp->RootWriteLock();
+	//  ... fill historgrams or trees ...
+	// japp->RootUnLock();
+	//
+
 	return NOERROR;
 }
 
@@ -147,9 +186,18 @@ jerror_t JEventProcessor_${pluginname}::evnt(JEventLoop *loop, int eventnumber)
 {
 	// This is called for every event. Use of common resources like writing
 	// to a file or filling a histogram should be mutex protected. Using
-	// loop-Get(...) to get reconstructed objects (and thereby activating the
+	// loop->Get(...) to get reconstructed objects (and thereby activating the
 	// reconstruction algorithm) should be done outside of any mutex lock
 	// since multiple threads may call this method at the same time.
+	// Here\'s an example:
+	//
+	// vector<const MyDataClass*> mydataclasses;
+	// loop->Get(mydataclasses);
+	//
+	// japp->RootWriteLock();
+	//  ... fill historgrams or trees ...
+	// japp->RootUnLock();
+
 
 	return NOERROR;
 }
@@ -184,9 +232,12 @@ jerror_t JEventProcessor_${pluginname}::fini(void)
 ###############
 sub PrintMakefile()
 {
+	$PACKAGES = $JANA_IMPLEMENTATION;
+	if(!$NO_ROOT){ $PACKAGES .= ":ROOT"; }
+
 	# Contents of default Makefile for plugins
 	print FILE "\n";
-	print FILE "PACKAGES = JANA\n";
+	print FILE "PACKAGES = $PACKAGES\n";
 	print FILE "\n";
 	print FILE "include \$(HALLD_HOME)/src/BMS/Makefile.shlib\n";
 	print FILE "\n";
@@ -198,10 +249,17 @@ sub PrintMakefile()
 sub Usage()
 {
 	print "\n";
-	print "Usage:\n\t mkplugin name\n";
+	print "Usage:\n\t mkplugin [-b -j -d --no-root] name\n";
 	print "\n";
 	print "Generate the C++ source and header files to implement a new\n";
 	print "plugin for use with the JANA framework.\n";
+	print "\n";
+	print "Options:\n";
+	print "  -b         Use \"BANA\" as base Makefile package in Makefile\n";
+	print "  -j         Use \"JANA\" as base Makefile package in Makefile\n";
+	print "  -d         Use \"DANA\" as base Makefile package in Makefile\n";
+	print "             (this will be set by default if HALLD_HOME is set)\n";
+	print "  --no-root  Do not include \"ROOT\" in the PACKAGES line in Makefile\n";
 	print "\n";
 	print "This script superceeds some similar functionality in the mkprocessor\n";
 	print "script. Unlike mkprocessor, the mkplugin script will create a directory\n";
