@@ -93,7 +93,7 @@ class JApplication{
 		                      jerror_t AddPluginPath(string path); ///< Add a directory to the plugin search path
 		                      jerror_t AddPlugin(const char *name); ///< Add the specified plugin to the shared objects list.
 		                          void AddFactoriesToDeleteList(vector<JFactory_base*> &factories);
-		              virtual jerror_t Init(void); ///< Initialize the JApplication object
+		              virtual jerror_t Init(bool create_event_buffer_thread=true); ///< Initialize the JApplication object
 		              virtual jerror_t Run(JEventProcessor *proc=NULL, int Nthreads=0); ///< Process all events from all sources
 		              virtual jerror_t Fini(bool check_fini_called_flag=true); ///< Gracefully end event processing
 		                  virtual void Pause(void); ///< Pause event processing

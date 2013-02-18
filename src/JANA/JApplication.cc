@@ -1131,7 +1131,7 @@ void JApplication::AddFactoriesToDeleteList(vector<JFactory_base*> &factories)
 //---------------------------------
 // Init
 //---------------------------------
-jerror_t JApplication::Init(void)
+jerror_t JApplication::Init(bool create_event_buffer_thread)
 {
 	/// Initialize the JApplication object. This is not typically called by
 	/// the user except in GUI applications where the main event loop is
@@ -1206,7 +1206,8 @@ jerror_t JApplication::Init(void)
 	for(unsigned int i=0; i<loops.size(); i++)loops[i]->RefreshProcessorListFromJApplication();
 
 	// Launch event buffer thread
-	pthread_create(&ebthr, NULL, LaunchEventBufferThread, this);
+	if(create_event_buffer_thread)
+		pthread_create(&ebthr, NULL, LaunchEventBufferThread, this);
 
 	return NOERROR;
 }
