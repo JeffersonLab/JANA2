@@ -239,7 +239,12 @@ sub PrintMakefile()
 	print FILE "\n";
 	print FILE "PACKAGES = $PACKAGES\n";
 	print FILE "\n";
-	print FILE "include \$(HALLD_HOME)/src/BMS/Makefile.shlib\n";
+	if($JANA_IMPLEMENTATION eq "DANA"){
+		print FILE "include \$(HALLD_HOME)/src/BMS/Makefile.shlib\n";
+	}else{
+		print FILE "BMSDIR = \$(JANA_HOME)/BMS\n";
+		print FILE "include \$(BMSDIR)/Makefile.shlib\n";
+	}
 	print FILE "\n";
 }
 
