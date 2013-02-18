@@ -76,7 +76,7 @@ if len(topdir) == 0:
 
 
 # Box colors
-colors = ['red','blue','lavender','yellow','magenta','salmon','indigo','cornsilk','gold','plum','pink','orchid']
+colors = ['red','cadetblue1','lavender','yellow','magenta','salmon','slateblue1','cornsilk','gold','plum','pink','orchid']
 
 # Search directory tree
 factory_files = {}
