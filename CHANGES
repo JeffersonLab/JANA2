@@ -14,6 +14,8 @@ Changes in version 0.6.6
   is called
 - Enhanced to allow janadot to display more than one JEventProcessor
 - Janadot can draw bounding box around groups. janadot_groups.py script added
+- mkplugin script updated to include more options and ROOT by default
+- Cache node names in JGeometryXML to make multi-threaded startup faster
 
 
 Changes in version 0.6.5

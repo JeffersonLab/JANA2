@@ -116,7 +116,11 @@ JGeometryXML::JGeometryXML(string url, int run, string context):JGeometry(url,ru
 #endif
    
 	valid_xmlfile = true;
-#endif
+	
+	// Make map of node names to speed up code in SearchTree later
+	MapNodeNames(doc);
+	
+#endif  // !HAVE_XERCES
 }
 
 //---------------------------------
@@ -133,6 +137,23 @@ JGeometryXML::~JGeometryXML()
 		XMLPlatformUtils::Terminate();
 	}
 #endif
+}
+
+//---------------------------------
+// MapNodeNames
+//---------------------------------
+void JGeometryXML::MapNodeNames(xercesc::DOMNode *current_node)
+{
+	// Record the current node's name
+	char *tmp = XMLString::transcode(current_node->getNodeName());
+	node_names[current_node] = string(tmp);
+	XMLString::release(&tmp);
+
+	// Loop over children of this node and recall ourselves to map their names
+	for(DOMNode *child = current_node->getFirstChild(); child != 0; child=child->getNextSibling()){
+		current_node = child;
+		MapNodeNames(current_node); // attributes are automatically added as the tree is searched
+	}
 }
 
 //---------------------------------
@@ -554,9 +575,10 @@ void JGeometryXML::AddNodeToList(xercesc::DOMNode* start, string start_path, vec
 	/// edit it slightly) as the xpath argument to one of the Get methods.
 
 	// Get name of this node
-	char* tmp = XMLString::transcode(start->getNodeName());
-	string nodeName = tmp;
-	XMLString::release(&tmp);
+	string nodeName = node_names.at(start);
+	//char* tmp = XMLString::transcode(start->getNodeName());
+	//string nodeName = tmp;
+	//XMLString::release(&tmp);
 	
 	// Ignore nodes that start with a "#"
 	if(nodeName[0] == '#')return;
@@ -617,7 +639,7 @@ void JGeometryXML::FindAttributeValues(string &xpath, multimap<DOMNode*, string>
 	sp.current_node = doc;
 	
 	// Do the search. Results are returned in sp.
-	sp.SearchTree();
+	sp.SearchTree(node_names);
 	
 	// Copy search results into user provided container
 	attributes = sp.attributes;
@@ -626,7 +648,7 @@ void JGeometryXML::FindAttributeValues(string &xpath, multimap<DOMNode*, string>
 //---------------------------------
 // SearchTree
 //---------------------------------
-void JGeometryXML::SearchParameters::SearchTree(void)
+void JGeometryXML::SearchParameters::SearchTree(map<xercesc::DOMNode*, string> &node_names)
 {
 	/// This is a reentrant routine that recursively calls itself while walking the
 	/// DOM tree, looking for a path that matches the xpath already parsed and
@@ -656,9 +678,10 @@ void JGeometryXML::SearchParameters::SearchTree(void)
 	if(depth>=nodes.size())return;
 
 	// Get node name in usable format
-	char *tmp = XMLString::transcode(current_node->getNodeName());
-	string nodeName = tmp;
-	XMLString::release(&tmp);
+	const string &nodeName = node_names.at(current_node);
+	//char *tmp = XMLString::transcode(current_node->getNodeName());
+	//string nodeName = tmp;
+	//XMLString::release(&tmp);
 
 	// Check if the name of this node matches the one we're looking for
 	// (specified by depth). 
@@ -677,7 +700,7 @@ void JGeometryXML::SearchParameters::SearchTree(void)
 		// Loop over children and recall ourselves for each of them
 		for(DOMNode *child = current_node->getFirstChild(); child != 0; child=child->getNextSibling()){
 			current_node = child;
-			SearchTree(); // attributes are automatically added as the tree is searched
+			SearchTree(node_names); // attributes are automatically added as the tree is searched
 			if(max_values>0 && attributes.size()>=max_values)return; // bail if max num. of attributes found
 		}
 		
@@ -745,7 +768,7 @@ void JGeometryXML::SearchParameters::SearchTree(void)
 	depth++;
 	for (DOMNode *child = current_node->getFirstChild(); child != 0; child=child->getNextSibling()){
 		current_node = child;
-		SearchTree();
+		SearchTree(node_names);
 	}
 	depth--;
 	current_node = save_current;

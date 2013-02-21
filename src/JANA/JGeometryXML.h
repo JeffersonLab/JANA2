@@ -64,6 +64,7 @@ class JGeometryXML:public JGeometry{
 		virtual const char* className(void){return static_className();}
 		static const char* static_className(void){return "JGeometryXML";}
 		
+		void MapNodeNames(xercesc::DOMNode *current_node);
 		bool Get(string xpath, string &sval);
 		bool Get(string xpath, map<string, string> &svals);
 		bool GetMultiple(string xpath, vector<string> &vsval);
@@ -80,6 +81,7 @@ class JGeometryXML:public JGeometry{
 		
 		string xmlfile;
 		bool valid_xmlfile;
+		map<xercesc::DOMNode*, string> node_names;
 
 #if HAVE_XERCES
 
@@ -99,7 +101,7 @@ class JGeometryXML:public JGeometry{
 				string attr_value;		// value of attribute of interest in current branch
 				xercesc::DOMNode *current_node;	// current DOMnode being searched
 
-				void SearchTree(void);	// Returns true if a matching node was found
+				void SearchTree(map<xercesc::DOMNode*, string> &node_names);	// Returns true if a matching node was found
 		};
 
 
