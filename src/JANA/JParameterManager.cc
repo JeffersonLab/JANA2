@@ -216,6 +216,9 @@ void JParameterManager::WriteConfigFile(string fname)
 	ofs<<"#"<<endl;
 	ofs<<endl;
 	
+	// Lock mutex to prevent manipulation of parameters while we're writing
+	pthread_mutex_lock(&parameter_mutex);
+	
 	// Sort parameters alphabetically
 	std::sort(parameters.begin(), parameters.end(), JParameterAlphaSort());
 
@@ -243,6 +246,9 @@ void JParameterManager::WriteConfigFile(string fname)
 		ofs<<line.c_str()<<endl;
 	}
 	
+	// Release mutex
+	pthread_mutex_unlock(&parameter_mutex);
+	
 	// close file
 	ofs.close();	
 }
@@ -264,7 +270,7 @@ void JParameterManager::PrintParameters(void)
 	}
 	printParametersCalled = true;
 	
-	// release the parameters mutex
+	// release the parameters mutex (we need to do this before the GetParameter() call below)
 	pthread_mutex_unlock(&parameter_mutex);
 
 	if(parameters.size() == 0){
@@ -278,6 +284,9 @@ void JParameterManager::PrintParameters(void)
 	GetParameter("print", filter);
 	bool printAll = filter == "all";
 	
+	// Lock mutex 
+	pthread_mutex_lock(&parameter_mutex);
+
 	// Sort parameters alphabetically
 	std::sort(parameters.begin(), parameters.end(), JParameterAlphaSort());
 	
@@ -357,6 +366,9 @@ void JParameterManager::PrintParameters(void)
 	if(!Nprinted)jout<<"        < all defaults >"<<std::endl;
 	
 	jout<<" -------------------------------"<<std::endl;
+
+	// release the parameters mutex
+	pthread_mutex_unlock(&parameter_mutex);
 }
 
 //---------------------------------
