@@ -6,6 +6,8 @@
 //
 
 #include <unistd.h>
+#include <errno.h>
+#include <dirent.h>
 
 #include <iostream>
 #include <string>
@@ -15,6 +17,7 @@ using namespace std;
 #include <sys/stat.h>
 
 #include "JCalibration.h"
+#include "JStreamLog.h"
 using namespace jana;
 
 //---------------------------------
@@ -287,12 +290,21 @@ void JCalibration::DumpCalibrationsToFiles(string basedir)
 	// What we want is the full path to the top-level directory of
 	// the calibration files regardless whether basedir is
 	// a full or relative path. 
-	char cwd[1024];
-	char fullpath[1024];
-	if(!getcwd(cwd, 1024))return;			// save current working directory
-	if(!chdir(basedir.c_str()))return;	// cd into the basedir directory
-	if(!getcwd(fullpath, 1024))return;	// get full bath of basedir directory
-	if(!chdir(cwd))return;					// cd back into the working directory we started in
+	char fullpath[1024]="";
+	DIR *dirp = opendir("./"); // this trick suggested by getcwd man page for saving/restoring cwd
+	int err = err = chdir(basedir.c_str());         // cd into the basedir directory
+	if(!err)  err = (getcwd(fullpath, 1024)==NULL); // get full path of basedir directory
+	if(dirp){
+		fchdir(dirfd(dirp));                        // cd back into the working directory we started in
+		closedir(dirp);
+	}
+	if(err != 0){
+		jerr<<" Error getting full pathname to directory where the calib constants were written!" << endl;
+		jerr<<" It's possible you can still access them using the info below, but this is" << endl;
+		jerr<<" likely a critical error!" << endl;
+		if(basedir.length() >1023) basedir = "/fatal/error/its/hopeless/"; // ;)
+		strcpy(fullpath, basedir.c_str());
+	}
 
 	string newurl = string("file://")+fullpath;
 	
