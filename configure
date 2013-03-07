@@ -637,6 +637,7 @@ ac_includes_default="\
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
 HAVE_CURL
+HAVE_CCDB
 HAVE_CMSG
 LDFLAGS_CONFIGURE
 CXXFLAGS_CONFIGURE
@@ -5845,6 +5846,7 @@ cp confdefs.h src/JANA/jana_config.h
 
 
 #AC_SUBST([HAVE_CERNLIB])
+
 
 
 ac_config_files="$ac_config_files BMS/Makefile.config"
