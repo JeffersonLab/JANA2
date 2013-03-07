@@ -77,7 +77,7 @@ AX_LIB_XERCES
 ROOT_PATH(5.26/00, ,AC_MSG_RESULT(ROOT support will not be included))
 #AC_LIB_CERNLIB(graflib, CLTOU, [AC_LIB_CERNLIB(mathlib,GAUSS,[LIBS="$CERNLIB_LIBS $LIBS"])], AC_MSG_RESULT(CERNLIB support will not be included))
 CMSG
-CCDB
+AC_CCDB
 MY_TEST_CURL
 
 AC_MSG_NOTICE([creating src/JANA/jana_config.h])
