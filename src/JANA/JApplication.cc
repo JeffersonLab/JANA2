@@ -33,6 +33,7 @@ using namespace std;
 #include "JGeometryMYSQL.h"
 #include "JParameterManager.h"
 #include "JCalibrationFile.h"
+#include "JCalibrationGeneratorCCDB.h"
 #include "JVersion.h"
 #include "JStreamLog.h"
 using namespace jana;
@@ -311,6 +312,11 @@ JApplication::JApplication(int narg, char* argv[])
 		if(argv[i][0] == '-')continue;
 		source_names.push_back(argv[i]);
 	}
+	
+#if HAVE_CCDB
+	// Optionally install a CCDB calibration generator
+	AddCalibrationGenerator(new JCalibrationGeneratorCCDB());
+#endif
 	
 	// Configure output streams based on config parameters
 	string jout_tag = jout.GetTag();

@@ -38,6 +38,11 @@ ifeq ($(HAVE_CURL), 1)
   PACKAGES += CURL
 endif
 
+# ... and CCDB
+ifeq ($(HAVE_CCDB), 1)
+  PACKAGES += CCDB
+endif
+
 
 ROOTCONF        = @ROOTCONF@
 ROOTEXEC        = @ROOTEXEC@

@@ -197,10 +197,26 @@ void ParseCommandLineArguments(int &narg, char *argv[])
 //-----------
 void Usage(void)
 {
+	// Make sure a JApplication exists
+	if(!japp){
+		char* argv[0];
+		new JApplication(0, argv);
+	}
+
+	// Get list of available calibration generators
+	vector<string> descriptions;
+	if(japp){
+		vector<JCalibrationGenerator*> generators = japp->GetCalibrationGenerators();
+		for(unsigned int i=0; i<generators.size(); i++){
+			descriptions.push_back(generators[i]->Description());
+		}
+	}
+
+	// Print Usage statement
 	cout<<"Usage:"<<endl;
-	cout<<"       janacalibread [options] namepath"<<endl;
+	cout<<"       jcalibread [options] namepath"<<endl;
 	cout<<endl;
-	cout<<"Print the contents of a JANA data source (e.g. a file)"<<endl;
+	cout<<"Print calibration constants available via JANA"<<endl;
 	cout<<"to the screen."<<endl;
 	cout<<endl;
 	cout<<"Options:"<<endl;
@@ -211,6 +227,12 @@ void Usage(void)
 	cout<<"   -T        Display data as table"<<endl;
 	cout<<"   -L        List available namepaths"<<endl;
 	cout<<endl;
+	cout<<endl;
+	cout<<" Built-in available calibration sources:"<<endl;
+	cout<<"  - JANA flat files"<<endl;
+	for(unsigned int i=0; i<descriptions.size(); i++){
+		cout<<"  - "<<descriptions[i]<<endl;
+	}
 
 	exit(0);
 }

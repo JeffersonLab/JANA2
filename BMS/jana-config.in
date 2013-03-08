@@ -23,6 +23,7 @@ HAVE_MYSQL="@HAVE_MYSQL@"
 HAVE_XERCES="@HAVE_XERCES@"
 HAVE_ROOT="@HAVE_ROOT@"
 HAVE_CMSG="@HAVE_CMSG@"
+HAVE_CCDB="@HAVE_CCDB@"
 
 MYSQL_CFLAGS="@MYSQL_CFLAGS@"
 MYSQL_LDFLAGS="@MYSQL_LDFLAGS@"
@@ -49,6 +50,10 @@ CMSG_CPPFLAGS="@CMSG_CPPFLAGS@"
 CMSG_LDFLAGS="@CMSG_LDFLAGS@"
 CMSG_LIBS="@CMSG_LIBS@"
 
+CCDB_CPPFLAGS="@CCDB_CPPFLAGS@"
+CCDB_LDFLAGS="@CCDB_LDFLAGS@"
+CCDB_LIBS="@CCDB_LIBS@"
+
 FFLAGS_CONFIGURE="@FFLAGS_CONFIGURE@"
 CFLAGS_CONFIGURE="@CFLAGS_CONFIGURE@"
 CXXFLAGS_CONFIGURE="@CXXFLAGS_CONFIGURE@"
@@ -57,8 +62,8 @@ LDFLAGS_CONFIGURE="@LDFLAGS_CONFIGURE@"
 JANA_INSTALL_DIR=@prefix@
 
 # Add flags and libraries from all 3rd party packages
-CPPFLAGS="${MYSQL_CFLAGS} ${XERCES_CPPFLAGS} ${ROOTCFLAGS} ${CMSG_CPPFLAGS}"
-LDFLAGS="${MYSQL_LDFLAGS} ${XERCES_LDFLAGS} ${CMSG_LDFLAGS}"
+CPPFLAGS="${MYSQL_CFLAGS} ${XERCES_CPPFLAGS} ${ROOTCFLAGS} ${CMSG_CPPFLAGS} ${CCDB_CPPFLAGS}"
+LDFLAGS="${MYSQL_LDFLAGS} ${XERCES_LDFLAGS} ${CMSG_LDFLAGS} ${CCDB_CPPFLAGS}"
 LIBS="${ROOTGLIBS} ${CMSG_LIBS}"
 
 # If hardwired value doesn't point to libJANA.a, try JANA_HOME
@@ -100,7 +105,7 @@ while test $# -gt 0; do
 			echo "JANA installation. "
 			echo " "
 			echo " --jana-only  Don't include arguments from packages JANA was built "
-			echo "              to include support for. Use this is you wish to specify "
+			echo "              to include support for. Use this if you wish to specify "
 			echo "              these yourself. If you do include this option, it must "
 			echo "              come first in the arugment list as it will only affect "
 			echo "              options that follow it. "

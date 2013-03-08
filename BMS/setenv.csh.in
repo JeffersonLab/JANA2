@@ -59,6 +59,14 @@ if ( ! $?JANAONLY ) then
 		set LIBRARY_PATH="${CMSGROOT}/lib:${LIBRARY_PATH}"
 	endif
 
+	# CCDB
+	set HAVE_CCDB="@HAVE_CCDB@"
+	if ( $HAVE_CCDB )then
+		setenv CCDB_HOME "@CCDB_HOME@"
+		setenv PATH ${CCDB_HOME}/bin:${PATH}
+		set LIBRARY_PATH="${CCDB_HOME}/lib:${LIBRARY_PATH}"
+	endif
+
 endif # JANAONLY
 
 # Copy LIBRARY_PATH to the appropriate variable
