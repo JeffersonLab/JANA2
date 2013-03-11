@@ -210,6 +210,19 @@ JParameter* JParameterManager::SetDefaultParameter(K key, V &val, string descrip
 		p = new JParameter(skey, sval);
 		parameters.push_back(p);
 		p->type = JParameter::DataType(val);
+		
+		// We want the value used by this thread to be exactly the same as the
+		// the value for susequent threads. Since they will get a value that has
+		// been converted to/from a string, we need to do this here as well.
+		V save_val = val;
+		stringstream sss(p->GetValue());
+		sss>>val;
+		
+		// Warn the user if the conversion ends up changing the value
+		if(val != save_val){
+			jerr<<" WARNING! The value for "<<skey<<" is changed while storing and retrieving param. default"<<std::endl;
+			jerr<<"          before conversion:"<<val<<"  after conversion:"<<save_val<<std::endl;
+		}
 	}
 	
 	// Set the default value and description for this parameter
