@@ -168,6 +168,7 @@ class JGeometryXML:public JGeometry{
 		private:
 			std::vector<std::string> xml_filenames;
 			std::string path;
+			bool PRINT_CHECKSUM_INPUT_FILES;
 	};
 
 };

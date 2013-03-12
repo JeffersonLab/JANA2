@@ -11,6 +11,7 @@
 using namespace std;
 
 #include "JGeometryXML.h"
+#include "JParameterManager.h"
 using namespace jana;
 
 #if HAVE_XERCES
@@ -820,6 +821,13 @@ JGeometryXML::EntityResolver::EntityResolver(const string &xmlFile)
 	if(pos != string::npos){
 		path = fname.substr(0,pos) + "/";
 	}
+
+	PRINT_CHECKSUM_INPUT_FILES = false;
+	if(gPARMS){
+		if(gPARMS->Exists("PRINT_CHECKSUM_INPUT_FILES")){
+			gPARMS->GetParameter("PRINT_CHECKSUM_INPUT_FILES", PRINT_CHECKSUM_INPUT_FILES);
+		}
+	}
 }
 
 //----------------------------------
@@ -883,8 +891,10 @@ std::string JGeometryXML::EntityResolver::GetMD5_checksum(void)
 	md5_init(&pms);
 	for(unsigned int i=0; i<xml_filenames.size(); i++){
 
-		std::cerr<<".... Adding file to MD5 checksum : " << xml_filenames[i] << std::endl;
-	
+		if(PRINT_CHECKSUM_INPUT_FILES){
+			std::cerr<<".... Adding file to MD5 checksum : " << xml_filenames[i] << std::endl;
+		}
+
 		ifstream ifs(xml_filenames[i].c_str());
 		if(!ifs.is_open())continue;
 

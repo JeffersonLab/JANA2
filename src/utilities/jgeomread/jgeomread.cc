@@ -23,6 +23,7 @@ bool FILTER_XPATHS = false;
 bool QUIET = false;
 bool DISPLAY_MULTIPLE = false;
 bool PRINT_CHECKSUM = false;
+bool PRINT_CHECKSUM_INPUT_FILES = false;
 JGeometry::ATTR_LEVEL_t ATTRIBUTE_LEVEL=JGeometry::attr_level_last;
 
 //-----------
@@ -35,6 +36,7 @@ int main(int narg, char *argv[])
 
 	// Instantiate a JApplication object and use it to get a JGeometry object
 	JApplication *app = new JApplication(narg, argv);
+	gPARMS->SetDefaultParameter("PRINT_CHECKSUM_INPUT_FILES", PRINT_CHECKSUM_INPUT_FILES, "Have the JGeometry object print the XML file names used.");
 	JGeometry *jgeom = app->GetJGeometry(RUN_NUMBER);
 	
 	// List all valid namepaths, if specified
@@ -242,6 +244,9 @@ void ParseCommandLineArguments(int &narg, char *argv[])
 						RUN_NUMBER = atoi(&argv[i][2]);
 					}
 					break;
+				case 'S':
+					PRINT_CHECKSUM_INPUT_FILES = true;
+					// don't break here!
 				case 's':
 					PRINT_CHECKSUM = true;
 					break;
@@ -275,6 +280,7 @@ void Usage(void)
 	cout<<"   -m        Display all nodes satisfying the given xpath"<<endl;
 	cout<<"   -t type   Set data type (float, int, ...)"<<endl;
 	cout<<"   -s        Print the MD5 checksum of the XML used"<<endl;
+	cout<<"   -S        Same as -s except filenames of XML files are also printed"<<endl;
 	cout<<endl;
 	cout<<" A note on the use of -f vs. -m: If -m is specified, then"<<endl;
 	cout<<"the values are obtained using one of the GetMultiple() methods"<<endl;
