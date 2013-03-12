@@ -97,6 +97,7 @@ JGeometryXML::JGeometryXML(string url, int run, string context):JGeometry(url,ru
 	parser = new XercesDOMParser();
 	parser->setValidationScheme(XercesDOMParser::Val_Always);
 	parser->setValidationSchemaFullChecking(true);
+	parser->setDoSchema(true);
 	parser->setDoNamespaces(true);    // optional
 #else
 	static const XMLCh gLS[] = { chLatin_L, chLatin_S, chNull };
