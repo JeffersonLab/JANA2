@@ -115,6 +115,7 @@ class JApplication{
 		                          void SetShowTicker(int what){show_ticker = what;} ///< Turn auto-printing of rate to screen on or off.
 		                          void SignalThreads(int signo); ///< Send a system signal to all processing threads.
 		                          bool KillThread(pthread_t thr, bool verbose=true); ///< Kill a specific thread. Returns true if thread is found and kill signal sent, false otherwise.
+					      unsigned int GetNthreads(void){return threads.size();} ///< Get the current number of processing threads
 		                          void SetNthreads(int new_Nthreads); ///< Set the number of processing threads to use (can be called during event processing)
 	                       inline void Lock(void){WriteLock("app");} ///< Deprecated. Use ReadLock("app") or WriteLock("app") instead. (This just calls WriteLock("app").)
 		      inline pthread_rwlock_t* CreateLock(const string &name, bool throw_exception_if_exists=true);
