@@ -171,6 +171,7 @@ JApplication::JApplication(int narg, char* argv[])
 
 	// Initialize application level mutexes
 	pthread_rwlock_init(&rw_locks_lock, NULL);
+	pthread_mutex_init(&sources_mutex, NULL);
 	pthread_mutex_init(&factories_to_delete_mutex, NULL);
 	pthread_mutex_init(&geometry_mutex, NULL);
 	pthread_mutex_init(&calibration_mutex, NULL);
@@ -200,6 +201,7 @@ JApplication::JApplication(int narg, char* argv[])
 	dump_configurations = false;
 	quitting = false;
 	Ncores = sysconf(_SC_NPROCESSORS_ONLN);
+	Nsources_deleted = 0;
 	
 	// Configuration Parameter manager
 	jparms = new JParameterManager();
@@ -480,6 +482,7 @@ jerror_t JApplication::NextEvent(JEvent &event)
 		event.SetRunNumber(myevent->GetRunNumber());
 		event.SetEventNumber(myevent->GetEventNumber());
 		event.SetRef(myevent->GetRef());
+		event.SetID(myevent->GetID());
 		NEvents++;
 		delete myevent;
 		return NOERROR;
@@ -600,7 +603,7 @@ jerror_t JApplication::ReadEvent(JEvent &event)
 	// to NULL and recall ourself
 	jerror_t err;
 	try{
-		err = current_source->GetEvent(event);
+		err = current_source->JEventSource::GetEvent(event);
 	}catch(...){
 		// If we get an exception, consider this source finished!
 		err = NO_MORE_EVENTS_IN_SOURCE;
@@ -1469,6 +1472,20 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 		// We're done with the heartbeats etc. vectors for now. Unlock the mutex.
 		pthread_rwlock_unlock(app_rw_lock);
 
+		// Check for event sources that have finished so we can delete the JEventSource
+		// object. These can allocate lots of memory and if the user passes a lot
+		// of files on the command line, then the memory usage keeps piling up.
+		pthread_mutex_lock(&sources_mutex);
+		for(unsigned int i=0; i<sources.size(); i++){
+			if(sources[i]==NULL) continue;
+			if(sources[i]==current_source) continue;
+			if(sources[i]->IsFinished()){
+				delete sources[i];
+				sources[i] = NULL;
+				Nsources_deleted++;
+			}
+		}
+		pthread_mutex_unlock(&sources_mutex);
 
 		// When a JEventLoop runs out of events, it removes itself from
 		// the list before returning from the thread.
@@ -1590,10 +1607,15 @@ jerror_t JApplication::Fini(bool check_fini_called_flag)
 	pthread_mutex_unlock(&factories_to_delete_mutex);
 	
 	// Delete all sources allowing them to close cleanly
+	pthread_mutex_lock(&sources_mutex);
 	for(unsigned int i=0;i<sources.size();i++){
-		if(sources[i]!=NULL)delete sources[i];
+		if(sources[i]!=NULL){
+			delete sources[i];
+			Nsources_deleted++;
+		}
 	}
 	sources.clear();
+	pthread_mutex_unlock(&sources_mutex);
 	
 	// Tell event buffer thread to quit (if he hasn't already)
 	for(int i=0; i<10; i++){
@@ -1720,7 +1742,12 @@ jerror_t JApplication::OpenNext(void)
 	/// Open the next source in the list. If there are none,
 	/// then return NO_MORE_EVENT_SOURCES
 	
-	if(sources.size() >= source_names.size())return NO_MORE_EVENT_SOURCES;
+	pthread_mutex_lock(&sources_mutex);
+
+	if(sources.size() >= source_names.size()){
+		pthread_mutex_unlock(&sources_mutex);
+		return NO_MORE_EVENT_SOURCES;
+	}
 	
 	// Loop over JEventSourceGenerator objects and find the one
 	// (if any) that has the highest chance of being able to read
@@ -1756,10 +1783,11 @@ jerror_t JApplication::OpenNext(void)
 			for(unsigned int i=0; i<sources.size(); i++){
 				if(sources[i] == NULL)Nnull_sources++;
 			}
-			if(Nnull_sources == sources.size()){
+			if( (Nnull_sources==sources.size()) && (Nsources_deleted==0) ){
 				jerr<<"   xxxxxxxxxxxx  NO VALID EVENT SOURCES GIVEN !!!   xxxxxxxxxxxx  "<<endl;
 				jerr<<endl;
 				Quit();
+				pthread_mutex_unlock(&sources_mutex);
 				return NO_MORE_EVENT_SOURCES;
 			}
 		}
@@ -1767,6 +1795,8 @@ jerror_t JApplication::OpenNext(void)
 	
 	// Add source to list (even if it's NULL!)
 	sources.push_back(current_source);
+	
+	pthread_mutex_unlock(&sources_mutex);
 	
 	return NOERROR;
 }

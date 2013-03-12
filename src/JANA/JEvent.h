@@ -43,7 +43,8 @@ class JEvent{
 		               inline void SetEventNumber(int event_number){this->event_number=event_number;}
 		               inline void SetRef(void *ref){this->ref=ref;}
 		               inline void SetJEventLoop(JEventLoop *loop){this->loop=loop;}
-		               inline void FreeEvent(void){if(source)source->FreeEvent(*this);}
+		               inline void FreeEvent(void){if(source)source->JEventSource::FreeEvent(*this);}
+				   inline uint64_t GetID(void) const { return id; }
 		                      void Print(void);
 
 		                  uint64_t GetStatus(void){return status;}
@@ -63,6 +64,13 @@ class JEvent{
 		void *ref;
 		JEventLoop *loop;
 		uint64_t status;
+		uint64_t id;
+		
+				   inline void SetID(uint64_t id){ this->id = id; }
+
+		// Both of these classes need to call SetID
+		friend class JEventSource;
+		friend class JApplication;
 };
 
 

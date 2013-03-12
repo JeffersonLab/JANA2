@@ -154,6 +154,8 @@ class JApplication{
 		vector<string> source_names;
 		vector<JEventSource*> sources;
 		JEventSource *current_source;
+		pthread_mutex_t sources_mutex;
+		unsigned int Nsources_deleted;
 	
 		vector<JEventProcessor*> processors;
 		vector<JEventLoop*> loops;
