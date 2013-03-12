@@ -186,8 +186,7 @@ JParameter* JParameterManager::SetDefaultParameter(K key, V &val, string descrip
 		// Parameter exists
 		
 		// Copy value into user's variable using stringstream for conversion
-		stringstream sss(p->GetValue());		
-		sss>>val;
+		p->GetValue(val);
 		
 		// Warn user if two different default values are set
 		if(p->hasdefault && (sval != p->GetDefault()) ){
@@ -215,13 +214,12 @@ JParameter* JParameterManager::SetDefaultParameter(K key, V &val, string descrip
 		// the value for susequent threads. Since they will get a value that has
 		// been converted to/from a string, we need to do this here as well.
 		V save_val = val;
-		stringstream sss(p->GetValue());
-		sss>>val;
+		p->GetValue(val);
 		
 		// Warn the user if the conversion ends up changing the value
 		if(val != save_val){
 			jerr<<" WARNING! The value for "<<skey<<" is changed while storing and retrieving param. default"<<std::endl;
-			jerr<<"          before conversion:"<<val<<"  after conversion:"<<save_val<<std::endl;
+			jerr<<"          before conversion:"<<save_val<<"  after conversion:"<<val<<std::endl;
 		}
 	}
 	

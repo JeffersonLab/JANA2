@@ -10,6 +10,7 @@
 
 
 #include <string>
+#include <sstream>
 #include <stdlib.h>
 using std::string;
 
@@ -48,6 +49,16 @@ class JParameter{
 		inline double d(void){return (double)atof(value.c_str());}	///< Return value as a double
 		inline int i(void){return (int)atoi(value.c_str());}			///< Return value as an int
 		void Dump(void);
+		
+		// Special GetValue methods to convert strings using stringstream
+		template<typename T> inline void GetValue(T &val){
+			std::stringstream sss(value);
+			sss>>val;
+		}
+		// A string type is a special case since stringstream will tokenize (and we don't want that!)
+		inline void GetValue(string &val){
+			val = value;
+		}
 		
 		enum dataType_t{
 			UNKNOWN,
