@@ -22,6 +22,7 @@ bool LIST_XPATHS = false;
 bool FILTER_XPATHS = false;
 bool QUIET = false;
 bool DISPLAY_MULTIPLE = false;
+bool PRINT_CHECKSUM = false;
 JGeometry::ATTR_LEVEL_t ATTRIBUTE_LEVEL=JGeometry::attr_level_last;
 
 //-----------
@@ -57,6 +58,11 @@ int main(int narg, char *argv[])
 		for(unsigned int i=0; i<xpaths.size(); i++)cout<< xpaths[i] <<endl;
 		cout<<endl;
 		return 0;
+	}
+	
+	// Print the MD5 Checksum
+	if(PRINT_CHECKSUM){
+		cout<<"checksum: "<<jgeom->GetChecksum()<<endl;
 	}
 	
 	// Get and display values for a specific namepath if one was specified
@@ -236,6 +242,9 @@ void ParseCommandLineArguments(int &narg, char *argv[])
 						RUN_NUMBER = atoi(&argv[i][2]);
 					}
 					break;
+				case 's':
+					PRINT_CHECKSUM = true;
+					break;
 			}
 		}else{
 			XPATH = argv[i];
@@ -265,6 +274,7 @@ void Usage(void)
 	cout<<"   -f        List all xpaths using the specified xpath as a filter"<<endl;
 	cout<<"   -m        Display all nodes satisfying the given xpath"<<endl;
 	cout<<"   -t type   Set data type (float, int, ...)"<<endl;
+	cout<<"   -s        Print the MD5 checksum of the XML used"<<endl;
 	cout<<endl;
 	cout<<" A note on the use of -f vs. -m: If -m is specified, then"<<endl;
 	cout<<"the values are obtained using one of the GetMultiple() methods"<<endl;
