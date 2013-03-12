@@ -25,9 +25,6 @@ jerror_t JEventProcessorTest::init(void)
 //------------------------------------------------------------------
 jerror_t JEventProcessorTest::brun(JEventLoop *loop, int runnumber)
 {
-	
-	cout<<"brun(...) method called of JEventProcessorTest"<<endl;
-
 	return NOERROR;
 }
 
