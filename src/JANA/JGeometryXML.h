@@ -15,6 +15,8 @@
 #include <JANA/jana_config.h>
 #include <JANA/JStreamLog.h>
 
+#include <JANA/md5.h>
+
 
 #if HAVE_XERCES
 #ifndef __CINT__
@@ -59,20 +61,21 @@ class JGeometryXML:public JGeometry{
 		typedef pair<string, map<string,string> > node_t;
 		typedef vector<node_t>::iterator node_iter_t;
 	
-		JGeometryXML(string url, int run, string context="default");
-		virtual ~JGeometryXML();
+		                    JGeometryXML(string url, int run, string context="default");
+		            virtual ~JGeometryXML();
 		virtual const char* className(void){return static_className();}
-		static const char* static_className(void){return "JGeometryXML";}
+		 static const char* static_className(void){return "JGeometryXML";}
 		
-		void MapNodeNames(xercesc::DOMNode *current_node);
-		bool Get(string xpath, string &sval);
-		bool Get(string xpath, map<string, string> &svals);
-		bool GetMultiple(string xpath, vector<string> &vsval);
-		bool GetMultiple(string xpath, vector<map<string, string> >&vsvals);
-		void GetXPaths(vector<string> &xpaths, ATTR_LEVEL_t level, const string &filter="");
+		               void MapNodeNames(xercesc::DOMNode *current_node);
+		               bool Get(string xpath, string &sval);
+					   bool Get(string xpath, map<string, string> &svals);
+		               bool GetMultiple(string xpath, vector<string> &vsval);
+		               bool GetMultiple(string xpath, vector<map<string, string> >&vsvals);
+		               void GetXPaths(vector<string> &xpaths, ATTR_LEVEL_t level, const string &filter="");
+		             string GetChecksum(void) const {return md5_checksum;}
 
-		void ParseXPath(string xpath, vector<node_t > &nodes, string &attribute, unsigned int &attr_depth) const;
-		bool NodeCompare(node_iter_t iter1, node_iter_t end1, node_iter_t iter2, node_iter_t end2);
+		               void ParseXPath(string xpath, vector<node_t > &nodes, string &attribute, unsigned int &attr_depth) const;
+		               bool NodeCompare(node_iter_t iter1, node_iter_t end1, node_iter_t iter2, node_iter_t end2);
 
 	protected:
 	
@@ -82,6 +85,7 @@ class JGeometryXML:public JGeometry{
 		string xmlfile;
 		bool valid_xmlfile;
 		map<xercesc::DOMNode*, string> node_names;
+		string md5_checksum;
 
 #if HAVE_XERCES
 
@@ -146,6 +150,25 @@ class JGeometryXML:public JGeometry{
 				 void operator=(const ErrorHandler&);
 		};
 #endif
+
+	// A simple entity resolver to keep track of files being
+	// included from the top-level XML file so a full MD5 sum
+	// can be made
+	class EntityResolver : public xercesc::EntityResolver
+	{
+		public:
+			EntityResolver(const std::string &xmlFile);
+			~EntityResolver();
+			
+			xercesc::InputSource* resolveEntity(const XMLCh* const publicId, const XMLCh* const systemId);
+
+			std::vector<std::string> GetXMLFilenames(void);
+			std::string GetMD5_checksum(void);
+
+		private:
+			std::vector<std::string> xml_filenames;
+			std::string path;
+	};
 
 };
 

@@ -92,6 +92,7 @@ class JGeometry{
 		virtual bool GetMultiple(string xpath, vector<string> &vsval)=0;
 		virtual bool GetMultiple(string xpath, vector<map<string, string> >&vsvals)=0;
 		virtual void GetXPaths(vector<string> &xpaths, ATTR_LEVEL_t level=attr_level_last, const string &filter="")=0;
+		virtual string GetChecksum(void) const {return string("not supported");}
 
 		// Templated methods that can return more useful forms
 		template<class T> bool Get(string xpath, T &val);

@@ -50,6 +50,7 @@ JGeometryXML::JGeometryXML(string url, int run, string context):JGeometry(url,ru
 	
 	// Initialize our flag until we confirm the URL points to a valid XML file
 	valid_xmlfile = false;
+	md5_checksum = "";
 	
 	// First, check that the URL even starts with "xmlfile://"
 	if(url.substr(0, 10)!=string("xmlfile://")){
@@ -93,9 +94,10 @@ JGeometryXML::JGeometryXML(string url, int run, string context):JGeometry(url,ru
 	
 	// Instantiate the DOM parser.
 #if XERCES3
-   parser = new XercesDOMParser();
-   parser->setValidationScheme(XercesDOMParser::Val_Always);
-   parser->setDoNamespaces(true);    // optional
+	parser = new XercesDOMParser();
+	parser->setValidationScheme(XercesDOMParser::Val_Always);
+	parser->setValidationSchemaFullChecking(true);
+	parser->setDoNamespaces(true);    // optional
 #else
 	static const XMLCh gLS[] = { chLatin_L, chLatin_S, chNull };
 	DOMImplementation *impl = DOMImplementationRegistry::getDOMImplementation(gLS);
@@ -106,11 +108,16 @@ JGeometryXML::JGeometryXML(string url, int run, string context):JGeometry(url,ru
 	JGeometryXML::ErrorHandler errorHandler;
 	parser->setErrorHandler(&errorHandler);
 	
+	// EntityResolver is used to keep track of XML filenames so a full MD5 checksum can be made
+	EntityResolver myEntityResolver(xmlfile);
+	parser->setEntityResolver(&myEntityResolver);
+	
 	// Read in the XML and parse it
 	parser->resetDocumentPool();
 #if XERCES3
-   parser->parse(xmlfile.c_str());
-   doc = parser->getDocument();
+	parser->parse(xmlfile.c_str());
+	md5_checksum = myEntityResolver.GetMD5_checksum();
+	doc = parser->getDocument();
 #else
 	doc = parser->parseURI(xmlfile.c_str());
 #endif
@@ -797,6 +804,117 @@ void JGeometryXML::GetAttributes(xercesc::DOMNode* node, map<string,string> &att
 		XMLString::release(&tmp2);
 	}
 }
+
+//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+
+//----------------------------------
+// EntityResolver (constructor)
+//----------------------------------
+JGeometryXML::EntityResolver::EntityResolver(const string &xmlFile)
+{
+	xml_filenames.push_back(xmlFile);
+	
+	string fname = xmlFile;
+	size_t pos = fname.find_last_of('/');
+	if(pos != string::npos){
+		path = fname.substr(0,pos) + "/";
+	}
+}
+
+//----------------------------------
+// EntityResolver (destructor)
+//----------------------------------
+JGeometryXML::EntityResolver::~EntityResolver()
+{
+
+}
+
+//----------------------------------
+// resolveEntity
+//----------------------------------
+xercesc::InputSource* JGeometryXML::EntityResolver::resolveEntity(const XMLCh* const publicId, const XMLCh* const systemId)
+{
+	/// This method gets called from the xerces parser each time it
+	/// opens a file (except for the top-level file). For each of these,
+	/// record the name of the file being opened, then just return NULL
+	/// to have xerces handle opening the file in the normal way.
+
+	// Do some backflips to get strings into std::string format
+	std::string my_publicId = "";
+	std::string my_systemId = "";
+	if(publicId){
+		char *my_publicId_ptr = xercesc::XMLString::transcode(publicId);
+		my_publicId = my_publicId_ptr;
+		xercesc::XMLString::release(&my_publicId_ptr);
+	}
+	if(systemId){
+		char *my_systemId_ptr = xercesc::XMLString::transcode(systemId);
+		my_systemId = my_systemId_ptr;
+		xercesc::XMLString::release(&my_systemId_ptr);
+	}
+	//std::cerr<<"publicId="<<my_publicId<<"  systemId="<<my_systemId<<std::endl;
+
+	// The systemId seems to be the one we want
+	xml_filenames.push_back(path + my_systemId);
+
+	return NULL; // have xerces handle this using its defaults
+}
+
+//----------------------------------
+// GetXMLFilenames
+//----------------------------------
+std::vector<std::string> JGeometryXML::EntityResolver::GetXMLFilenames(void)
+{
+	return xml_filenames;
+}
+
+//----------------------------------
+// GetMD5_checksum
+//----------------------------------
+std::string JGeometryXML::EntityResolver::GetMD5_checksum(void)
+{
+	/// This will calculate an MD5 checksum using all of the files currently
+	/// in the list of XML files. To do this, it opens each file and reads it
+	/// in, in its entirety, updating the checksum as it goes. The checksum is
+	/// returned as a hexadecimal string.
+
+	md5_state_t pms;
+	md5_init(&pms);
+	for(unsigned int i=0; i<xml_filenames.size(); i++){
+
+		std::cerr<<".... Adding file to MD5 checksum : " << xml_filenames[i] << std::endl;
+	
+		ifstream ifs(xml_filenames[i].c_str());
+		if(!ifs.is_open())continue;
+
+		// get length of file:
+		ifs.seekg (0, ios::end);
+		unsigned int length = ifs.tellg();
+		ifs.seekg (0, ios::beg);
+
+		// allocate memory:
+		char *buff = new char [length];
+
+		// read data as a block:
+		ifs.read (buff,length);
+		ifs.close();
+
+		md5_append(&pms, (const md5_byte_t *)buff, length);
+
+		delete[] buff;
+
+		//std::cerr<<".... Adding file to MD5 checksum : " << xml_filenames[i] << "  (size=" << length << ")" << std::endl;
+	}
+	
+	md5_byte_t digest[16];
+	md5_finish(&pms, digest);
+	
+	char hex_output[16*2 + 1];
+	for(int di = 0; di < 16; ++di) sprintf(hex_output + di * 2, "%02x", digest[di]);
+
+	return hex_output;
+}
+
 
 #endif // XERCESC
 
