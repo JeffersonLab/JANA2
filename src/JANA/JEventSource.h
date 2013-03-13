@@ -8,6 +8,8 @@
 #ifndef _JEventSource_
 #define _JEventSource_
 
+#include <stdint.h>
+
 #include <vector>
 #include <string>
 #include <set>
