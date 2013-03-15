@@ -87,13 +87,13 @@ class JApplication{
 		                    JGeometry* GetJGeometry(unsigned int run_number); ///< Get the JGeometry object for the specified run number.
 		                 JCalibration* GetJCalibration(unsigned int run_number); ///< Get the JCalibration object for the specified run number.
 		                          void GetJCalibrations(vector<JCalibration*> &calibs){calibs=calibrations;} ///< Get the list of existing JCalibration objects
-                     JResourceManager* GetJResourceManager(unsigned int run_number=0); ///< Get the JResourceManager object for the given run number (or any resource manager if no run number given)
+                   JResourceManager* GetJResourceManager(unsigned int run_number=0); ///< Get the JResourceManager object for the given run number (or any resource manager if no run number given)
 		                      jerror_t RegisterSharedObject(const char *soname, bool verbose=true); ///< Register a dynamically linked shared object
 		                      jerror_t RegisterSharedObjectDirectory(string sodirname); ///< Register all shared objects in a directory
 		                      jerror_t AddPluginPath(string path); ///< Add a directory to the plugin search path
 		                      jerror_t AddPlugin(const char *name); ///< Add the specified plugin to the shared objects list.
 		                          void AddFactoriesToDeleteList(vector<JFactory_base*> &factories);
-		              virtual jerror_t Init(bool create_event_buffer_thread=true); ///< Initialize the JApplication object
+		              virtual jerror_t Init(void); ///< Initialize the JApplication object
 		              virtual jerror_t Run(JEventProcessor *proc=NULL, int Nthreads=0); ///< Process all events from all sources
 		              virtual jerror_t Fini(bool check_fini_called_flag=true); ///< Gracefully end event processing
 		                  virtual void Pause(void); ///< Pause event processing
@@ -107,47 +107,48 @@ class JApplication{
 		                          void GetInstantaneousThreadRates(map<pthread_t,double> &rates_by_thread);
 		                          void GetIntegratedThreadRates(map<pthread_t,double> &rates_by_thread);
 		                          void GetThreadNevents(map<pthread_t,unsigned int> &Nevents_by_thread);
-						     pthread_t GetThreadID(unsigned int index); ///< Given the thread index (e.g., 0, 1, 2, ...) return the value of pthread_t for it. If outside the range, 0x0 is returned
-				   const vector<void*> GetSharedObjectHandles(void){return sohandles;} ///< Get pointers to dynamically linked objects
+						         pthread_t GetThreadID(unsigned int index); ///< Given the thread index (e.g., 0, 1, 2, ...) return the value of pthread_t for it. If outside the range, 0x0 is returned
+				     const vector<void*> GetSharedObjectHandles(void){return sohandles;} ///< Get pointers to dynamically linked objects
 		  vector<pair<string,string> > GetAutoActivatedFactories(void){return auto_activated_factories;}
 		                          void AddAutoActivatedFactory(string name, string tag){auto_activated_factories.push_back(pair<string,string>(name,tag));}
 		                  virtual void PrintRate(); ///< Print the current rate to stdout
 		                          void SetShowTicker(int what){show_ticker = what;} ///< Turn auto-printing of rate to screen on or off.
 		                          void SignalThreads(int signo); ///< Send a system signal to all processing threads.
 		                          bool KillThread(pthread_t thr, bool verbose=true); ///< Kill a specific thread. Returns true if thread is found and kill signal sent, false otherwise.
-					      unsigned int GetNthreads(void){return threads.size();} ///< Get the current number of processing threads
+					         unsigned int GetNthreads(void){return threads.size();} ///< Get the current number of processing threads
 		                          void SetNthreads(int new_Nthreads); ///< Set the number of processing threads to use (can be called during event processing)
-	                       inline void Lock(void){WriteLock("app");} ///< Deprecated. Use ReadLock("app") or WriteLock("app") instead. (This just calls WriteLock("app").)
+	                      inline void Lock(void){WriteLock("app");} ///< Deprecated. Use ReadLock("app") or WriteLock("app") instead. (This just calls WriteLock("app").)
 		      inline pthread_rwlock_t* CreateLock(const string &name, bool throw_exception_if_exists=true);
-			  inline pthread_rwlock_t* ReadLock(const string &name);
-			  inline pthread_rwlock_t* WriteLock(const string &name);
-			  inline pthread_rwlock_t* Unlock(const string &name=string("app"));
-	          inline pthread_rwlock_t* RootReadLock(void){pthread_rwlock_rdlock(root_rw_lock); return root_rw_lock;}
-              inline pthread_rwlock_t* RootWriteLock(void){pthread_rwlock_wrlock(root_rw_lock); return root_rw_lock;}
-              inline pthread_rwlock_t* RootUnLock(void){pthread_rwlock_unlock(root_rw_lock); return root_rw_lock;}
-                                  void RegisterHUPMutex(pthread_mutex_t *mutex);
-                                  void RegisterHUPCallback(CallBack_t *callback, void *arg);
-			 vector<pthread_mutex_t*>& GetHUPMutexes(void){ return HUP_locks; }  ///< Get list of mutexes that should be unlocked upon receiving a SIGHUP
-    vector<pair<CallBack_t*, void*> >& GetHUPCallbacks(void){return HUP_callbacks;}  ///<< Get list of callback routines that should be called upon receiving a SIGHUP
+            inline pthread_rwlock_t* ReadLock(const string &name);
+            inline pthread_rwlock_t* WriteLock(const string &name);
+            inline pthread_rwlock_t* Unlock(const string &name=string("app"));
+            inline pthread_rwlock_t* RootReadLock(void){pthread_rwlock_rdlock(root_rw_lock); return root_rw_lock;}
+            inline pthread_rwlock_t* RootWriteLock(void){pthread_rwlock_wrlock(root_rw_lock); return root_rw_lock;}
+            inline pthread_rwlock_t* RootUnLock(void){pthread_rwlock_unlock(root_rw_lock); return root_rw_lock;}
+                                void RegisterHUPMutex(pthread_mutex_t *mutex);
+                                void RegisterHUPCallback(CallBack_t *callback, void *arg);
+			  vector<pthread_mutex_t*>& GetHUPMutexes(void){ return HUP_locks; }  ///< Get list of mutexes that should be unlocked upon receiving a SIGHUP
+  vector<pair<CallBack_t*, void*> >& GetHUPCallbacks(void){return HUP_callbacks;}  ///<< Get list of callback routines that should be called upon receiving a SIGHUP
 
-                                  void SetStatusBitDescription(uint32_t bit, string description); ///< Set the description of a bit in the status word used in JEvent objects
-                                string GetStatusBitDescription(uint32_t bit); ///< Get the description of a bit in the status word used in JEvent objects
-                                  void GetStatusBitDescriptions(map<uint32_t, string> &status_bit_descriptions); ///< Get the list of all descriptions of a bit in the status word used in JEvent objects
-                                string StatusWordToString(uint64_t status);
+                                void SetStatusBitDescription(uint32_t bit, string description); ///< Set the description of a bit in the status word used in JEvent objects
+                              string GetStatusBitDescription(uint32_t bit); ///< Get the description of a bit in the status word used in JEvent objects
+                                void GetStatusBitDescriptions(map<uint32_t, string> &status_bit_descriptions); ///< Get the list of all descriptions of a bit in the status word used in JEvent objects
+                              string StatusWordToString(uint64_t status);
 
 		bool monitor_heartbeat; ///< Turn monitoring of processing threads on/off.
 		bool batch_mode;
+		bool create_event_buffer_thread; ///< Set to false before Init is called to prevent the event buffer thread from being created. (Useful if program will not be reading events e.g. jcalibread.)
 		
 	private:
 	
 		                              JApplication(){} ///< Prevent use of default constructor
 	
 		                       string Val2StringWithPrefix(float val);
-		                     jerror_t OpenNext(void);
-		                     jerror_t AttachPlugins(void);
-		                     jerror_t RecordFactoryCalls(JEventLoop *loop);
-		                     jerror_t PrintFactoryReport(void);
-							 jerror_t PrintResourceReport(void);
+                           jerror_t OpenNext(void);
+                           jerror_t AttachPlugins(void);
+                           jerror_t RecordFactoryCalls(JEventLoop *loop);
+                           jerror_t PrintFactoryReport(void);
+                           jerror_t PrintResourceReport(void);
 
 		bool init_called;
 		bool fini_called;

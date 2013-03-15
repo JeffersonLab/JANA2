@@ -194,6 +194,7 @@ JApplication::JApplication(int narg, char* argv[])
 	rate_average = 0.0;
 	monitor_heartbeat= true;
 	batch_mode=false;
+	create_event_buffer_thread = true;
 	init_called = false;
 	fini_called = false;
 	stop_event_buffer = false;
@@ -1140,7 +1141,7 @@ void JApplication::AddFactoriesToDeleteList(vector<JFactory_base*> &factories)
 //---------------------------------
 // Init
 //---------------------------------
-jerror_t JApplication::Init(bool create_event_buffer_thread)
+jerror_t JApplication::Init(void)
 {
 	/// Initialize the JApplication object. This is not typically called by
 	/// the user except in GUI applications where the main event loop is
