@@ -35,7 +35,8 @@ int main(int narg, char *argv[])
 
 	// Instantiate a JApplication object and use it to get a JCalibration object
 	JApplication *app = new JApplication(narg, argv);
-	app->Init(false);
+	app->create_event_buffer_thread = false;
+	app->Init();
 	JCalibration *jcalib = app->GetJCalibration(RUN_NUMBER);
 
 	// Make sure the calibration object exists
