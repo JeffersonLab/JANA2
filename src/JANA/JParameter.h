@@ -53,6 +53,7 @@ class JParameter{
 		// Special GetValue methods to convert strings using stringstream
 		template<typename T> inline void GetValue(T &val){
 			std::stringstream sss(value);
+			sss.precision(15);
 			sss>>val;
 		}
 		// A string type is a special case since stringstream will tokenize (and we don't want that!)

@@ -9,6 +9,7 @@
 #define _JParameterManager_
 
 #include <iostream>
+#include <iomanip>
 #include <vector>
 #include <string>
 #include <sstream>
@@ -176,7 +177,7 @@ JParameter* JParameterManager::SetDefaultParameter(K key, V &val, string descrip
 	
 	string skey(key); // (handle const char* or string)
 	stringstream ss;
-	ss<<val;
+	ss << std::setprecision(15) << val;
 	string sval = ss.str();
 	
 	pthread_mutex_lock(&parameter_mutex);
@@ -218,8 +219,16 @@ JParameter* JParameterManager::SetDefaultParameter(K key, V &val, string descrip
 		
 		// Warn the user if the conversion ends up changing the value
 		if(val != save_val){
-			jerr<<" WARNING! The value for "<<skey<<" is changed while storing and retrieving param. default"<<std::endl;
-			jerr<<"          before conversion:"<<save_val<<"  after conversion:"<<val<<std::endl;
+			// Use dedicated stringstream objects to convert using high precision
+			// to avoid changing the prescision setting of jerr
+			stringstream ss_bef;
+			stringstream ss_aft;
+			ss_bef << std::setprecision(15) << save_val;
+			ss_aft << std::setprecision(15) << val;
+		
+			jerr<<" WARNING! The value for "<<skey<<" is changed while storing and retrieving parameter default"<<std::endl;
+			jerr<<"          before conversion:"<< ss_bef.str() << std::endl;
+			jerr<<"          after  conversion:"<< ss_aft.str() << std::endl;
 		}
 	}
 	
