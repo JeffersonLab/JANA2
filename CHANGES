@@ -1,5 +1,6 @@
 
 Changes in version 0.6.6
+
 - JFactory::Get() and friends now catch std::exception rather than than
   JException (they still catch JException since it derives from std::exception)
 - Added JResourceManager class and integrated support for it into
@@ -16,6 +17,14 @@ Changes in version 0.6.6
 - Janadot can draw bounding box around groups. janadot_groups.py script added
 - mkplugin script updated to include more options and ROOT by default
 - Cache node names in JGeometryXML to make multi-threaded startup faster
+- Fixed bug with jcalibread where it printed error messages at startup
+- Fixed bug in --dumpcalibrations option
+- Added mutex locking to some JParameterManager methods to prevent errors
+  that occurred while printing the parameters and modifying them
+  simultaneously from another thread
+- Fixed bug in JParameterManager that could lead to some config. params. 
+  having different values for the first thread than for other threads
+- Added support for CCDB
 
 
 Changes in version 0.6.5
