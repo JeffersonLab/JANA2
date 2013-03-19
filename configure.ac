@@ -15,6 +15,7 @@
 # 
 
 AC_INIT(janaconfig, version-0.2)
+AC_CONFIG_HEADER(src/JANA/jana_config.h)
 
 echo "                             Configuring JANA ..."
 
@@ -80,8 +81,11 @@ CMSG
 AC_CCDB
 MY_TEST_CURL
 
-AC_MSG_NOTICE([creating src/JANA/jana_config.h])
-cp confdefs.h src/JANA/jana_config.h
+# The following was replaced by the AC_CONFIG_HEADER call above.
+# See note in reconf script about autoheader.
+#AC_MSG_NOTICE([creating src/JANA/jana_config.h])
+#cp confdefs.h src/JANA/jana_config.h
+
 
 AC_SUBST([OS])
 AC_SUBST([HAVE_MYSQL])
@@ -104,3 +108,11 @@ AC_OUTPUT(BMS/jana-config)
 [chmod +x BMS/jana-config]
 AC_OUTPUT(BMS/setenv.csh)
 AC_OUTPUT(BMS/env.sh)
+
+# To avoid warnings about redfeined macros like "PACKAGE_NAME"
+# prepend "JANA_" to all of those here. These warnings come in
+# when the config.h file from another package is also included
+# (e.g. xstream in sim-recon)
+[sed -e 's/PACKAGE\_/JANA\_PACKAGE\_/g' src/JANA/jana_config.h > tmp.h]
+[mv tmp.h src/JANA/jana_config.h]
+

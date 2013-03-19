@@ -25,6 +25,8 @@ Changes in version 0.6.6
 - Fixed bug in JParameterManager that could lead to some config. params. 
   having different values for the first thread than for other threads
 - Added support for CCDB
+- Redfined some macros in jana_config.h to avoid name conflicts with
+  other packages
 
 
 Changes in version 0.6.5
