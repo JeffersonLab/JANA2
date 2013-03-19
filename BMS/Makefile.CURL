@@ -3,15 +3,6 @@
 
 ifeq ($(HAVE_CURL),1)
 
-  # Systems with CURL installed in /usr and with
-  # no CFLAGS will have CURL_FLAGS defined to be
-  # double quotes (""). This trips up gcc which 
-  # thinks it's an argument and claims it can't
-  # find the file!
-  ifeq ($(CURL_CFLAGS),"")
-    CURL_CFLAGS = 
-  endif
-
   CFLAGS    += -DHAVE_CURL $(CURL_CFLAGS)
   CXXFLAGS  += -DHAVE_CURL $(CURL_CFLAGS)
   MISC_LIBS += $(CURL_LDFLAGS) $(CURL_LIBS)
