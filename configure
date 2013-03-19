@@ -649,6 +649,7 @@ JANA_BUILD_DIR
 HAVE_XERCES
 OS
 CURL_LIBS
+CURL_LDFLAGS
 CURL_CFLAGS
 CURL_PREFIX
 CCDB_LIBS
@@ -5792,6 +5793,7 @@ $as_echo "$my_cv_curl_vers" >&6; }
 
       	  CURL_PREFIX=`curl-config --prefix`
       	  CURL_CFLAGS=`curl-config --cflags`
+		  CURL_LDFLAGS="-L$CURL_PREFIX/lib"
 		case $host_os in
 	   	 *mingw* | *cygwin*) CURL_CFLAGS="$CURL_CFLAGS -DCURL_STATICLIB" ;;
 		esac
@@ -5819,6 +5821,7 @@ $as_echo "$as_me: error: curl-config was not found! (use --without-curl to build
    	 fi
 
 fi
+
 
 
 

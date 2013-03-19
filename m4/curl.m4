@@ -72,6 +72,7 @@ AC_DEFUN([MY_TEST_CURL], [
 
       	  CURL_PREFIX=`curl-config --prefix`
       	  CURL_CFLAGS=`curl-config --cflags`
+		  CURL_LDFLAGS="-L$CURL_PREFIX/lib"
 		case $host_os in
 	   	 *mingw* | *cygwin*) CURL_CFLAGS="$CURL_CFLAGS -DCURL_STATICLIB" ;;
 		esac
@@ -95,6 +96,7 @@ AC_DEFUN([MY_TEST_CURL], [
 
 	  AC_SUBST(CURL_PREFIX)
 	  AC_SUBST(CURL_CFLAGS)
+	  AC_SUBST(CURL_LDFLAGS)
 	  AC_SUBST(CURL_LIBS)
 
   fi # Test if with_curl==no
