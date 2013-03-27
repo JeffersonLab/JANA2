@@ -77,6 +77,7 @@ class JObject{
 		inline void AddAssociatedObjectAutoDelete(JObject *obj, bool auto_delete=true);
 		inline void RemoveAssociatedObject(const JObject *obj);
 		inline void ClearAssociatedObjects(void);
+		inline bool IsAssociated(const JObject* locObject) const {return (associated.find(locObject) != associated.end());}
 		template<typename T> void Get(vector<const T*> &ptrs, string classname="") const ;
 		template<typename T> void GetT(vector<const T*> &ptrs) const ;
 		template<typename T> void GetSingle(const T* &ptrs, string classname="") const ;
