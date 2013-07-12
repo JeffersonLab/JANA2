@@ -26,17 +26,18 @@ class JEventProcessorJANARATE:public JEventProcessor
 		
 		struct itimerval start_tmr;
 		struct itimerval end_tmr;
-		struct itimerval last_tmr;
+//		struct itimerval last_tmr;
 		
 		unsigned int Ncalls;
-		unsigned int last_Ncalls;
-		unsigned int PERIOD_EVENTS;
+//		unsigned int last_Ncalls;
+//		unsigned int PERIOD_EVENTS;
 		
 		typedef struct{
-			double rate;
-			double delta_sec;
-			double last_sec;
-			unsigned int Ncalls;
+			double tot_rate;            ///< Instantaneous rate due to all threads
+			double tot_integrated_rate; ///< Total integrated rate for entire job due to all threads
+			double thread_rate;         ///< Last instantaneous rate of this thread (updated every 2 seconds)
+			double thread_delta_sec;    ///< Time to process the previous event (not this one!)
+			unsigned int threadid;      ///< pthreadid of this thread
 		}rate_t;
 		
 		rate_t rate;

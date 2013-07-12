@@ -103,7 +103,8 @@ class JApplication{
 		                           int GetNcores(void){return Ncores;}
 		                    inline int GetNEvents(void){return NEvents;} ///< Returns the number of events processed so far.
 		                    inline int GetNLostEvents(void){return Nlost_events;} ///< Returns the number of events processed so far.
-		                  inline float GetRate(void){return rate_instantaneous;} ///< Get the current event processing rate
+		                  inline float GetRate(void){return rate_instantaneous;} ///< Get the average event processing rate
+		                  inline float GetIntegratedRate(void){return rate_average;} ///< Get the current event processing rate
 		                          void GetInstantaneousThreadRates(map<pthread_t,double> &rates_by_thread);
 		                          void GetIntegratedThreadRates(map<pthread_t,double> &rates_by_thread);
 		                          void GetThreadNevents(map<pthread_t,unsigned int> &Nevents_by_thread);

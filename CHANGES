@@ -1,4 +1,9 @@
 
+Changes in version 0.6.7
+
+- Updated janarate plugin to be more useful in determining ultimate event rates
+
+
 Changes in version 0.6.6
 
 - JFactory::Get() and friends now catch std::exception rather than than

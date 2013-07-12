@@ -7,4 +7,12 @@ CFLAGS += $(OSXFLAGS)
 CXXFLAGS += $(OSXFLAGS)
 LD_FLAGS += -multiply_defined suppress -bind_at_load
 
-LD_SO_FLAGS += -dynamiclib -multiply_defined suppress -flat_namespace -undefined suppress
+# Remove flat_namespace option for reasons described here:
+#   https://lists.macosforge.org/pipermail/macports-dev/2008-October/006266.html
+#
+# We also need to add the JANA library to the link command to avoid undefined reference
+# errors. This is because the -undefined suppress argument isn't allowed when using the
+# modern two-level namespace scheme.
+#
+#LD_SO_FLAGS += -dynamiclib -multiply_defined suppress -flat_namespace -undefined suppress
+LD_SO_FLAGS += -dynamiclib -multiply_defined suppress -L$(JANA_BUILD_DIR)/lib -lJANA
