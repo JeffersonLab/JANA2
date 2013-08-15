@@ -148,7 +148,6 @@ JGeometryXML::~JGeometryXML()
 #endif
 }
 
-#if HAVE_XERCES
 //---------------------------------
 // MapNodeNames
 //---------------------------------
@@ -165,7 +164,6 @@ void JGeometryXML::MapNodeNames(xercesc::DOMNode *current_node)
 		MapNodeNames(current_node); // attributes are automatically added as the tree is searched
 	}
 }
-#endif // HAVE_XERCES
 
 //---------------------------------
 // Get
@@ -843,7 +841,11 @@ JGeometryXML::EntityResolver::~EntityResolver()
 //----------------------------------
 // resolveEntity
 //----------------------------------
+#if XERCES3
 xercesc::InputSource* JGeometryXML::EntityResolver::resolveEntity(const XMLCh* const publicId, const XMLCh* const systemId)
+#else
+xercesc::DOMInputSource* JGeometryXML::EntityResolver::resolveEntity(const XMLCh* const publicId, const XMLCh* const systemId, const XMLCh* const baseURI)
+#endif
 {
 	/// This method gets called from the xerces parser each time it
 	/// opens a file (except for the top-level file). For each of these,

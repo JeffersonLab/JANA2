@@ -34,6 +34,8 @@
 
 // XERCES2
 #include <xercesc/dom/DOMErrorHandler.hpp>
+#include <xercesc/dom/DOMEntityResolver.hpp>
+#include <xercesc/dom/DOMInputSource.hpp>
 #include <xercesc/dom/DOMBuilder.hpp>
 #include <xercesc/dom/DOMDocument.hpp>
 #include <xercesc/dom/DOMNode.hpp>
@@ -66,6 +68,7 @@ class JGeometryXML:public JGeometry{
 		virtual const char* className(void){return static_className();}
 		 static const char* static_className(void){return "JGeometryXML";}
 		
+		               void MapNodeNames(xercesc::DOMNode *current_node);
 		               bool Get(string xpath, string &sval);
 					   bool Get(string xpath, map<string, string> &svals);
 		               bool GetMultiple(string xpath, vector<string> &vsval);
@@ -77,18 +80,13 @@ class JGeometryXML:public JGeometry{
 		               bool NodeCompare(node_iter_t iter1, node_iter_t end1, node_iter_t iter2, node_iter_t end2);
 
 	protected:
-
-#if HAVE_XERCES
-		               void MapNodeNames(xercesc::DOMNode *current_node);
-
-		map<xercesc::DOMNode*, string> node_names;
-#endif // HAVE_XERCES
-
+	
 	private:
 		JGeometryXML();
 		
 		string xmlfile;
 		bool valid_xmlfile;
+		map<xercesc::DOMNode*, string> node_names;
 		string md5_checksum;
 
 #if HAVE_XERCES
@@ -153,18 +151,25 @@ class JGeometryXML:public JGeometry{
 				 ErrorHandler(const ErrorHandler&);
 				 void operator=(const ErrorHandler&);
 		};
+#endif
 
 	// A simple entity resolver to keep track of files being
 	// included from the top-level XML file so a full MD5 sum
 	// can be made
+#if XERCES3
 	class EntityResolver : public xercesc::EntityResolver
+#else
+	class EntityResolver : public xercesc::DOMEntityResolver
+#endif
 	{
 		public:
 			EntityResolver(const std::string &xmlFile);
 			~EntityResolver();
-			
+#if XERCES3
 			xercesc::InputSource* resolveEntity(const XMLCh* const publicId, const XMLCh* const systemId);
-
+#else
+			xercesc::DOMInputSource* resolveEntity(const XMLCh* const publicId, const XMLCh* const systemId, const XMLCh* const baseURI);
+#endif
 			std::vector<std::string> GetXMLFilenames(void);
 			std::string GetMD5_checksum(void);
 
@@ -173,8 +178,6 @@ class JGeometryXML:public JGeometry{
 			std::string path;
 			bool PRINT_CHECKSUM_INPUT_FILES;
 	};
-
-#endif // HAVE_XERCES
 
 };
 
