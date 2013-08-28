@@ -404,7 +404,7 @@ bool JCalibration::Put(string namepath, int run_min, int run_max, int event_min,
 	// Loop over values, converting the type "T" values to strings 
 	map<string,string> svals;
 	//map<string,T>::const_iterator iter;
-	typeof(vals.begin()) iter;
+	__typeof(vals.begin()) iter;
 	for(iter=vals.begin(); iter!=vals.end(); ++iter){
 		// Use stringstream to convert from a string to type "T"
 		stringstream ss;
@@ -435,7 +435,7 @@ bool JCalibration::Put(string namepath, int run_min, int run_max, int event_min,
 	
 	// Loop over values, converting the type "T" values to strings 
 	map<string,string> svals;
-	typeof(vals.begin()) iter;
+	__typeof(vals.begin()) iter;
 	int i=0;
 	for(iter=vals.begin(); iter!=vals.end(); ++iter, ++i){
 		// Use stringstream to convert from a string to type "T"
@@ -473,7 +473,7 @@ bool JCalibration::Put(string namepath, int run_min, int run_max, int event_min,
 		// Loop over values, converting the type "T" values to strings 
 		map<string,string> svals;
 		map<string, T> &mvals = vals[i];
-		typeof(mvals.begin()) iter;
+		__typeof(mvals.begin()) iter;
 		for(iter=mvals.begin(); iter!=mvals.end(); ++iter){
 			// Use stringstream to convert from a string to type "T"
 			stringstream ss;
