@@ -471,6 +471,11 @@ jerror_t JApplication::NextEvent(JEvent &event)
 		}
 		pthread_mutex_unlock(&event_buffer_mutex);
 		if(event.GetJEventLoop()->GetQuit())break;
+		if((myevent==NULL) && event_buffer_filling){
+			// no event in buffer so sleep for a bit so CPU
+			// is not completely eaten up
+			usleep(100);
+		}
 	}while((myevent==NULL) && event_buffer_filling);
 	
 	// If we managed to get an event, copy it to the given
