@@ -19,7 +19,7 @@ string UDL = "cMsg://localhost/cMsg/janactl";
 string NAME = "janactl";
 string DESCRIPTION = "Access JANA processes remotely";
 string SUBJECT = "janactl";
-double TIMEOUT = 3.0; // seconds
+double TIMEOUT = 0.75; // seconds
 
 //-----------
 // main
@@ -60,6 +60,8 @@ int main(int narg, char *argv[])
 		jc.SendCommand(cmd, SUBJECT);
 	}else if(cmd.find("set ")==0){
 		jc.SendCommand(cmd, SUBJECT);
+	}else if(cmd==("list parms") || cmd=="list params" || cmd.find("list conf")==0){
+		jc.ListConfigurationParameters(SUBJECT);
 	}else{
 		jerr<<"Unknown command \""<<cmd<<"\"!"<<endl;
 	}

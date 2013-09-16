@@ -101,7 +101,7 @@ void jc_cmsg::callback(cMsgMessage *msg, void *userObject)
 {
 	if(!msg)return;
 
-	//cout<<"Received message --  Subject:"<<msg->getSubject()<<" Type:"<<msg->getType()<<" Text:"<<msg->getText()<<endl;
+	cout<<"Received message --  Subject:"<<msg->getSubject()<<" Type:"<<msg->getType()<<" Text:"<<msg->getText()<<endl;
 
 	// The convention here is that the message "type" always constains the
 	// unique name of the sender and therefore should be the "subject" to
@@ -164,6 +164,29 @@ void jc_cmsg::callback(cMsgMessage *msg, void *userObject)
 
 		pthread_mutex_lock(&mutex);
 		thrinfos[sender] = my_thrinfos;
+		pthread_mutex_unlock(&mutex);
+
+		delete msg;
+		return;
+	}
+
+	//===========================================================
+	if(cmd=="configuration parameter list"){
+		// Extract data from message
+//		msg->payloadPrint();
+		vector<string> *names = msg->getStringVector("names");
+		vector<string> *vals  = msg->getStringVector("vals");
+		
+		if(names->size() != vals->size()){
+			cerr << "ERROR: names and vals vector sizes don't match!!" << endl;
+			exit(-2);
+		}
+		
+		pthread_mutex_lock(&mutex);
+		config_params_responder = sender;
+		for(unsigned int i=0; i<names->size(); i++){
+			config_params[(*names)[i]] = (*vals)[i];
+		}
 		pthread_mutex_unlock(&mutex);
 
 		delete msg;
@@ -244,6 +267,55 @@ void jc_cmsg::GetThreadInfo(string subject)
 	// unlock mutex
 	pthread_mutex_unlock(&mutex);
 	
+}
+
+//---------------------------------
+// ListConfigurationParameters
+//---------------------------------
+void jc_cmsg::ListConfigurationParameters(string subject)
+{
+	SendCommand("list configuration parameters", subject);
+	//last_threadinfo_time = GetTime();
+	
+	// If subject is janactl then assume we're sending this to multiple recipients
+	// so we must wait the full "timeout". Otherwise, we want to continue as soon
+	// as we get the first response. To make this happen, we sleep for 100 ms increments
+	// at a time.
+	double time_slept = 0.0;
+	double time_to_sleep_per_iteration = 0.1;
+	do{
+		usleep((int)(time_to_sleep_per_iteration*1.0E6));
+		time_slept += time_to_sleep_per_iteration;
+		if(config_params.size()>0)break;
+	}while(time_slept<timeout);
+
+	// Lock mutex
+	pthread_mutex_lock(&mutex);
+	
+	// Get length of longest parameter name for pretty printing
+	map<string, string >::iterator iter=config_params.begin();
+	size_t max_len = 0;
+	for(; iter!=config_params.end(); iter++){
+		size_t len = iter->first.length();
+		if(len > max_len) max_len = len;
+	}
+	max_len++;
+	
+	// Print results
+	cout<<endl;
+	cout<<"Configuration Parameters (from "<<config_params_responder<<"):"<<endl;
+	cout<<"---------------------------------------------------"<<endl;
+	iter=config_params.begin();
+	for(; iter!=config_params.end(); iter++){
+		size_t len = iter->first.length();
+		if(max_len > len) cout<<string(max_len-len, ' '); // indent so that "=" characters line up
+		cout<<iter->first<<" = ";
+		cout<<iter->second<<endl;
+	}
+	cout<<endl;
+
+	// unlock mutex
+	pthread_mutex_unlock(&mutex);
 }
 
 #endif //HAVE_CMSG

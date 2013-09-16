@@ -40,6 +40,7 @@ class jc_cmsg:public cMsgCallback{
 		
 		void ListRemoteProcesses(void);
 		void GetThreadInfo(string subject);
+		void ListConfigurationParameters(string subject);
 
 		pthread_mutex_t mutex;
 		double start_time;
@@ -47,6 +48,8 @@ class jc_cmsg:public cMsgCallback{
 		double last_threadinfo_time;
 		map<string, double> last_msg_received_time;
 		map<string, vector<thrinfo_t> > thrinfos;
+		map<string, string> config_params;
+		string config_params_responder; // only print results from first to respond
 
 	protected:
 

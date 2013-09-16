@@ -72,8 +72,8 @@ janactl_plugin::janactl_plugin(JApplication *japp):jctlout(std::cout, "JANACTL>>
 	parms->SetDefaultParameter("JANACTL:Name", myName);
 	parms->SetDefaultParameter("JANACTL:Description", myDescr);
 	
-	cMsgSys = new cMsg(myUDL,myName,myDescr);      // the cMsg system object, where
-	try {                                    //  all args are of type string
+	cMsgSys = new cMsg(myUDL,myName,myDescr);	// the cMsg system object, where
+	try {                                    	// all args are of type string
 		cMsgSys->connect(); 
 	} catch (cMsgException e) {
 		jctlout<<endl<<"_______________  janactl unable to connect to cMsg system! __________________"<<endl;
@@ -131,9 +131,9 @@ void janactl_plugin::callback(cMsgMessage *msg, void *userObject)
 {
 	if(!msg)return;
 
-	//jout<<"Received message --  Subject:"<<msg->getSubject()<<" Type:"<<msg->getType()<<" Text:"<<msg->getText()<<endl;
+	jout<<"Received message --  Subject:"<<msg->getSubject()<<" Type:"<<msg->getType()<<" Text:"<<msg->getText()<<endl;
 
-	// The convention here is that the message "type" always constains the
+	// The convention here is that the message "type" always contains the
 	// unique name of the sender and therefore should be the "subject" to
 	// which any reponse should be sent.
 	string sender = msg->getType();
@@ -296,7 +296,38 @@ void janactl_plugin::callback(cMsgMessage *msg, void *userObject)
 		delete msg;
 		return;		
 	}
-	
+
+	//======================================================================
+	if(cmd.find("list configuration parameters")==0){
+		
+		if(gPARMS != NULL){
+			
+			map<string,string> parms;
+			gPARMS->GetParameters(parms);
+			vector<string> names;
+			vector<string> vals;
+			for(map<string,string>::iterator iter=parms.begin(); iter!=parms.end(); iter++){
+				string val = iter->second;
+				if(val == "") val="<empty>"; // cMsg bug causes problems if empty string is sent
+				names.push_back(iter->first);
+				vals.push_back(val);
+			}
+
+			response.setText("configuration parameter list");
+			response.add("names", names);
+			response.add("vals" , vals);
+			_DBG_<<"Sending list: name.size()="<<names.size()<<endl;
+
+		}else{
+			response.setText("gPARMS is NULL!");
+		}
+
+		cMsgSys->send(&response);
+
+		delete msg;
+		return;		
+	}
+
 	delete msg;
 }
 
