@@ -81,13 +81,14 @@ class JApplication{
 		      vector<JEventProcessor*> GetProcessors(void){return processors;} ///< Get the current list of JFactoryGenerators
 		           vector<JEventLoop*> GetJEventLoops(void){return loops;} ///< Get the current list of JEventLoops
 		vector<JEventSourceGenerator*> GetEventSourceGenerators(void){return eventSourceGenerators;} ///< Get the current list of JEventSourceGenerators
+		                          void GetActiveEventSourceNames(vector<string> &classNames, vector<string> &sourceNames);
 		    vector<JFactoryGenerator*> GetFactoryGenerators(void){return factoryGenerators;} ///< Get the current list of JFactoryGenerators
 		vector<JCalibrationGenerator*> GetCalibrationGenerators(void){return calibrationGenerators;} ///< Get the current list of JCalibrationGenerators
 		            JParameterManager* GetJParameterManager(void){return jparms;}
 		                    JGeometry* GetJGeometry(unsigned int run_number); ///< Get the JGeometry object for the specified run number.
 		                 JCalibration* GetJCalibration(unsigned int run_number); ///< Get the JCalibration object for the specified run number.
 		                          void GetJCalibrations(vector<JCalibration*> &calibs){calibs=calibrations;} ///< Get the list of existing JCalibration objects
-                   JResourceManager* GetJResourceManager(unsigned int run_number=0); ///< Get the JResourceManager object for the given run number (or any resource manager if no run number given)
+		             JResourceManager* GetJResourceManager(unsigned int run_number=0); ///< Get the JResourceManager object for the given run number (or any resource manager if no run number given)
 		                      jerror_t RegisterSharedObject(const char *soname, bool verbose=true); ///< Register a dynamically linked shared object
 		                      jerror_t RegisterSharedObjectDirectory(string sodirname); ///< Register all shared objects in a directory
 		                      jerror_t AddPluginPath(string path); ///< Add a directory to the plugin search path
@@ -108,17 +109,17 @@ class JApplication{
 		                          void GetInstantaneousThreadRates(map<pthread_t,double> &rates_by_thread);
 		                          void GetIntegratedThreadRates(map<pthread_t,double> &rates_by_thread);
 		                          void GetThreadNevents(map<pthread_t,unsigned int> &Nevents_by_thread);
-						         pthread_t GetThreadID(unsigned int index); ///< Given the thread index (e.g., 0, 1, 2, ...) return the value of pthread_t for it. If outside the range, 0x0 is returned
-				     const vector<void*> GetSharedObjectHandles(void){return sohandles;} ///< Get pointers to dynamically linked objects
+		                     pthread_t GetThreadID(unsigned int index); ///< Given the thread index (e.g., 0, 1, 2, ...) return the value of pthread_t for it. If outside the range, 0x0 is returned
+		           const vector<void*> GetSharedObjectHandles(void){return sohandles;} ///< Get pointers to dynamically linked objects
 		  vector<pair<string,string> > GetAutoActivatedFactories(void){return auto_activated_factories;}
 		                          void AddAutoActivatedFactory(string name, string tag){auto_activated_factories.push_back(pair<string,string>(name,tag));}
 		                  virtual void PrintRate(); ///< Print the current rate to stdout
 		                          void SetShowTicker(int what){show_ticker = what;} ///< Turn auto-printing of rate to screen on or off.
 		                          void SignalThreads(int signo); ///< Send a system signal to all processing threads.
 		                          bool KillThread(pthread_t thr, bool verbose=true); ///< Kill a specific thread. Returns true if thread is found and kill signal sent, false otherwise.
-					         unsigned int GetNthreads(void){return threads.size();} ///< Get the current number of processing threads
+		                  unsigned int GetNthreads(void){return threads.size();} ///< Get the current number of processing threads
 		                          void SetNthreads(int new_Nthreads); ///< Set the number of processing threads to use (can be called during event processing)
-	                      inline void Lock(void){WriteLock("app");} ///< Deprecated. Use ReadLock("app") or WriteLock("app") instead. (This just calls WriteLock("app").)
+		                   inline void Lock(void){WriteLock("app");} ///< Deprecated. Use ReadLock("app") or WriteLock("app") instead. (This just calls WriteLock("app").)
 		      inline pthread_rwlock_t* CreateLock(const string &name, bool throw_exception_if_exists=true);
             inline pthread_rwlock_t* ReadLock(const string &name);
             inline pthread_rwlock_t* WriteLock(const string &name);

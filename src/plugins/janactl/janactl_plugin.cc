@@ -316,10 +316,30 @@ void janactl_plugin::callback(cMsgMessage *msg, void *userObject)
 			response.setText("configuration parameter list");
 			response.add("names", names);
 			response.add("vals" , vals);
-			_DBG_<<"Sending list: name.size()="<<names.size()<<endl;
 
 		}else{
 			response.setText("gPARMS is NULL!");
+		}
+
+		cMsgSys->send(&response);
+
+		delete msg;
+		return;		
+	}
+
+	//======================================================================
+	if(cmd.find("list sources")==0){
+
+		vector<string> classNames;
+		vector<string> sourceNames;
+
+		japp->GetActiveEventSourceNames(classNames, sourceNames);
+
+		_DBG_<<"Sending back "<<classNames.size()<<" source names"<<endl;
+		response.setText("sources list");
+		if(classNames.size() > 0){
+			response.add("classNames" , classNames);
+			response.add("sourceNames", sourceNames);
 		}
 
 		cMsgSys->send(&response);

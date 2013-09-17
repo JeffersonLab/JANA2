@@ -62,6 +62,20 @@ int main(int narg, char *argv[])
 		jc.SendCommand(cmd, SUBJECT);
 	}else if(cmd==("list parms") || cmd=="list params" || cmd.find("list conf")==0){
 		jc.ListConfigurationParameters(SUBJECT);
+	}else if(cmd=="sources" || cmd=="list sources"){
+		jc.ListSources(SUBJECT);
+	}else if(cmd.find("source types")==0){
+		jc.ListSourceTypes(SUBJECT);
+	}else if(cmd.find("factories")==0){
+		jc.ListFactories(SUBJECT);
+	}else if(cmd.find("plugins")==0){
+		jc.ListPlugins(SUBJECT);
+	}else if(cmd.find("attach plugin")==0){
+		jc.SendCommand(cmd, SUBJECT);
+	}else if(cmd=="command" || cmd=="command line"){
+		jc.GetCommandLine(SUBJECT);
+	}else if(cmd=="hostinfo" || cmd=="host info"){
+		jc.GetHostInfo(SUBJECT);
 	}else{
 		jerr<<"Unknown command \""<<cmd<<"\"!"<<endl;
 	}
@@ -163,6 +177,8 @@ void Usage(void)
 	cout<<"   thinfo              Get thread info. for remote process(es)"<<endl;
 	cout<<"   killthread thread   Kill specified thread"<<endl;
 	cout<<"   set nthreads N      Change number of processing threads to N"<<endl;
+	cout<<"   list parms          Lists configuration parameters (only first response received.)"<<endl;
+	cout<<"   list sources        Lists event sources for all remote processes"<<endl;
 	cout<<endl;
 
 	exit(0);

@@ -192,6 +192,37 @@ void jc_cmsg::callback(cMsgMessage *msg, void *userObject)
 		delete msg;
 		return;
 	}
+
+	//===========================================================
+	if(cmd=="sources list"){
+		// Extract data from message
+		vector<string> *classNames = NULL;
+		vector<string> *sourceNames  = NULL;
+		if(msg->payloadContainsName("classNames")) classNames = msg->getStringVector("classNames");
+		if(msg->payloadContainsName("sourceNames")) sourceNames = msg->getStringVector("sourceNames");
+
+		// If no active sources then the pointers will be NULL. This is not
+		// necessarily an error.
+		vector<pair<string, string> > mysources;
+		if(classNames != NULL && sourceNames!=NULL){
+
+			if(classNames->size() != sourceNames->size()){
+				cerr << "ERROR: classNames and sourceNames vector sizes don't match!!" << endl;
+				exit(-2);
+			}
+
+			for(unsigned int i=0; i<classNames->size(); i++){
+				mysources.push_back(make_pair((*classNames)[i], (*sourceNames)[i]));
+			}
+		}
+	
+		pthread_mutex_lock(&mutex);
+		sources[sender] = mysources;
+		pthread_mutex_unlock(&mutex);
+
+		delete msg;
+		return;
+	}
 	
 	//===========================================================
 
@@ -275,7 +306,6 @@ void jc_cmsg::GetThreadInfo(string subject)
 void jc_cmsg::ListConfigurationParameters(string subject)
 {
 	SendCommand("list configuration parameters", subject);
-	//last_threadinfo_time = GetTime();
 	
 	// If subject is janactl then assume we're sending this to multiple recipients
 	// so we must wait the full "timeout". Otherwise, we want to continue as soon
@@ -317,6 +347,101 @@ void jc_cmsg::ListConfigurationParameters(string subject)
 	// unlock mutex
 	pthread_mutex_unlock(&mutex);
 }
+
+//---------------------------------
+// ListSources
+//---------------------------------
+void jc_cmsg::ListSources(string subject)
+{
+	SendCommand("list sources", subject);
+	
+	// Wait for timeout seconds for all clients to respond. Sleep for
+	// 100 ms increments at a time while waiting.
+	double time_slept = 0.0;
+	double time_to_sleep_per_iteration = 0.1;
+	do{
+		usleep((int)(time_to_sleep_per_iteration*1.0E6));
+		time_slept += time_to_sleep_per_iteration;
+		if(subject!="janactl" && sources.size()>0)break;
+	}while(time_slept<timeout);
+
+	// Lock mutex
+	pthread_mutex_lock(&mutex);
+
+	// Find longest responder name
+	map<string, vector<pair<string, string> > >::iterator iter;
+	size_t max_len = 0;
+	for(iter = sources.begin(); iter!=sources.end(); iter++){
+		size_t len = iter->first.length();
+		if(len > max_len) max_len = len;
+	}
+	max_len++;
+
+	// Print results
+	cout<<endl;
+	cout<<"Active Event Sources:"<<endl;
+	cout<<"---------------------------------------------------"<<endl;
+	for(iter = sources.begin(); iter!=sources.end(); iter++){
+		const string &responder = iter->first;
+		const vector<pair<string, string> > &mysources = iter->second;
+
+		for(unsigned int i=0; i<mysources.size(); i++){
+			const string &className = mysources[i].first;
+			const string &sourceName = mysources[i].second;
+			if(i==0){
+				cout << string(max_len - responder.length(), ' ') << responder;
+			}else{
+				cout << string(max_len, ' ');
+			}
+			cout << "   >   "<< className << " : " << sourceName << endl;
+		}
+	}
+	cout<<endl;
+
+	// unlock mutex
+	pthread_mutex_unlock(&mutex);
+}
+
+//---------------------------------
+// ListSourceTypes
+//---------------------------------
+void jc_cmsg::ListSourceTypes(string subject)
+{
+
+}
+
+//---------------------------------
+// ListFactories
+//---------------------------------
+void jc_cmsg::ListFactories(string subject)
+{
+
+}
+
+//---------------------------------
+// ListPlugins
+//---------------------------------
+void jc_cmsg::ListPlugins(string subject)
+{
+
+}
+
+//---------------------------------
+// GetCommandLine
+//---------------------------------
+void jc_cmsg::GetCommandLine(string subject)
+{
+
+}
+
+//---------------------------------
+// GetHostInfo
+//---------------------------------
+void jc_cmsg::GetHostInfo(string subject)
+{
+
+}
+
 
 #endif //HAVE_CMSG
 

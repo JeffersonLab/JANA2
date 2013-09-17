@@ -860,6 +860,31 @@ jerror_t JApplication::RemoveCalibrationGenerator(JCalibrationGenerator *generat
 }
 
 //---------------------------------
+// GetActiveEventSourceNames
+//---------------------------------
+void JApplication::GetActiveEventSourceNames(vector<string> &classNames, vector<string> &sourceNames)
+{
+	/// Get a list of active sources (ones that have not yet been deleted)
+	/// and return them in the provided containers. This puts the class names
+	/// and source names into separate vectors. The elements in the first vector
+	/// correspond to those in the other. It is done this way since this is used
+	/// by the janactl plugin which can easily attach the data in the form of
+	/// multiple vectors.
+	pthread_mutex_lock(&sources_mutex);
+
+	// Add elements in reverse order so most recent source is at beginning of lists
+	for(unsigned int i=0; i<sources.size(); i++){
+		JEventSource *source = sources[sources.size()-i-1];
+		if(source==NULL)continue;
+
+		classNames.push_back(source->className());
+		sourceNames.push_back(source->GetSourceName());
+	}
+
+	pthread_mutex_unlock(&sources_mutex);
+}
+
+//---------------------------------
 // GetJGeometry
 //---------------------------------
 JGeometry* JApplication::GetJGeometry(unsigned int run_number)
