@@ -203,7 +203,8 @@ JApplication::JApplication(int narg, char* argv[])
 	quitting = false;
 	Ncores = sysconf(_SC_NPROCESSORS_ONLN);
 	Nsources_deleted = 0;
-	
+	MAX_RELAUNCH_THREADS=0;
+
 	// Configuration Parameter manager
 	jparms = new JParameterManager();
 	
@@ -1311,7 +1312,6 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 	// Get the max time for a thread to be inactive before being deleting
 	double THREAD_TIMEOUT=8.0;
 	double THREAD_TIMEOUT_FIRST_EVENT=30.0;
-	int MAX_RELAUNCH_THREADS=0;
 	jparms->SetDefaultParameter("THREAD_TIMEOUT", THREAD_TIMEOUT, "Max. time (in seconds) system will wait for a thread to update its heartbeat before killing it and launching a new one.");
 	jparms->SetDefaultParameter("THREAD_TIMEOUT_FIRST_EVENT", THREAD_TIMEOUT_FIRST_EVENT, "Max. time (in seconds) system will wait for first event to complete before killing program.");
 	jparms->SetDefaultParameter("JANA:MAX_RELAUNCH_THREADS", MAX_RELAUNCH_THREADS, "Max. number of times to relaunch a thread due to it timing out before forcing program to quit.");
@@ -2346,6 +2346,27 @@ void JApplication::SetNthreads(int new_Nthreads)
 	/// Set the number of desired processing threads. The
 	/// actual number of threads will be adjusted in the
 	/// Run() method.
+	///
+	/// Note that this may also increase the value of MAX_RELAUNCH_THREADS.
+	/// This is because the algorithm used in the monitoring thread to check
+	/// for dead threads treats any deficit of threads (target number of threads
+	/// minus currently running threads) as though the threads died and new
+	/// ones need to be launched. The MAX_RELAUNCH_THREADS configuration parameter
+	/// is to allow the user the ability to limit the number of automatic
+	/// relaunches that can happen. The default of this is zero which makes
+	/// some sense in an offline environment where one is interested in fixing all
+	/// cases where a thread crash occurs.
+	///
+	/// Presumably, the user does not want the program to
+	/// exit when calling this routine so we make sure that MAX_RELAUNCH_THREADS
+	/// is increased by any defict. It will, however, not decrease the value
+	/// of MAX_RELAUNCH_THREADS if the setting the number of threads to
+	/// something smaller than what is currently running.
+	
+	int deficit = new_Nthreads - this->Nthreads;
+	if(deficit > 0) MAX_RELAUNCH_THREADS += deficit;
+
+	// Now set the new target number of threads
 	this->Nthreads = new_Nthreads;
 	jout<<"Setting number of processing threads to: "<<this->Nthreads<<endl;
 }

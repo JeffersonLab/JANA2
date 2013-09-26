@@ -223,6 +223,52 @@ void jc_cmsg::callback(cMsgMessage *msg, void *userObject)
 		delete msg;
 		return;
 	}
+
+	//===========================================================
+	if(cmd=="host info"){
+		// Extract data from message
+		vector<string> *keys = NULL;
+		vector<string> *vals  = NULL;
+		if(msg->payloadContainsName("keys")) keys = msg->getStringVector("keys");
+		if(msg->payloadContainsName("vals")) vals = msg->getStringVector("vals");
+
+		// If no active sources then the pointers will be NULL. This is not
+		// necessarily an error.
+		vector<pair<string, string> > myhostInfos;
+		if(keys != NULL && vals!=NULL){
+
+			if(keys->size() != vals->size()){
+				cerr << "ERROR: keys and vals vector sizes don't match!!" << endl;
+				exit(-2);
+			}
+
+			for(unsigned int i=0; i<keys->size(); i++){
+				myhostInfos.push_back(make_pair((*keys)[i], (*vals)[i]));
+			}
+		}
+	
+		pthread_mutex_lock(&mutex);
+		hostInfos[sender] = myhostInfos;
+		pthread_mutex_unlock(&mutex);
+
+		delete msg;
+		return;
+	}
+
+	//===========================================================
+	if(cmd=="command line"){
+		// Extract data from message
+		if(msg->payloadContainsName("command")){
+			string command = msg->getString("command");
+	
+			pthread_mutex_lock(&mutex);
+			commandLines.push_back(pair<string,string>(sender, command));
+			pthread_mutex_unlock(&mutex);
+		}
+
+		delete msg;
+		return;
+	}
 	
 	//===========================================================
 
@@ -431,7 +477,38 @@ void jc_cmsg::ListPlugins(string subject)
 //---------------------------------
 void jc_cmsg::GetCommandLine(string subject)
 {
+	/// Get command line used to launch remote process(es)
 
+	SendCommand("command line", subject);
+
+	// Wait for timeout seconds for all clients to respond. Sleep for
+	// 100 ms increments at a time while waiting.
+	double time_slept = 0.0;
+	double time_to_sleep_per_iteration = 0.1;
+	do{
+		usleep((int)(time_to_sleep_per_iteration*1.0E6));
+		time_slept += time_to_sleep_per_iteration;
+		if(subject!="janactl" && commandLines.size()>0)break;
+	}while(time_slept<timeout);
+
+	// Lock mutex
+	pthread_mutex_lock(&mutex);
+
+	// Print results
+	cout<<endl;
+	cout<<"Command Lines:"<<endl;
+	cout<<"---------------------------------------------------"<<endl;
+	vector<pair<string, string> >::iterator iter;
+	for(iter = commandLines.begin(); iter!=commandLines.end(); iter++){
+		const string &responder = iter->first;
+		const string &commandLine = iter->second;
+
+		cout << " " << responder << " : " << commandLine << endl;
+	}
+	cout<<endl;
+
+	// unlock mutex
+	pthread_mutex_unlock(&mutex);
 }
 
 //---------------------------------
@@ -439,7 +516,64 @@ void jc_cmsg::GetCommandLine(string subject)
 //---------------------------------
 void jc_cmsg::GetHostInfo(string subject)
 {
+	/// The remote process will repond with two vectors representing
+	/// key/value pairs which are then just printed. This allows the
+	/// remote process to decide what info it sends.
 
+	SendCommand("host info", subject);
+	
+	// Wait for timeout seconds for all clients to respond. Sleep for
+	// 100 ms increments at a time while waiting.
+	double time_slept = 0.0;
+	double time_to_sleep_per_iteration = 0.1;
+	do{
+		usleep((int)(time_to_sleep_per_iteration*1.0E6));
+		time_slept += time_to_sleep_per_iteration;
+		if(subject!="janactl" && hostInfos.size()>0)break;
+	}while(time_slept<timeout);
+
+	// Lock mutex
+	pthread_mutex_lock(&mutex);
+
+	// Find longest key
+	map<string, vector<pair<string, string> > >::iterator iter;
+	size_t max_len = 0;
+	size_t max_key_len = 0;
+	for(iter = hostInfos.begin(); iter!=hostInfos.end(); iter++){
+		size_t len = iter->first.length();
+		if(len > max_len) max_len = len;
+
+		const vector<pair<string, string> > &myinfos = iter->second;
+		for(unsigned int i=0; i<myinfos.size(); i++){
+			size_t len = myinfos[i].first.length();
+			if(len > max_key_len) max_key_len = len;
+		}
+	}
+	max_len++;
+	max_key_len++;
+
+	// Print results
+	cout<<endl;
+	cout<<"Host info:"<<endl;
+	cout<<"---------------------------------------------------"<<endl;
+	for(iter = hostInfos.begin(); iter!=hostInfos.end(); iter++){
+		const string &responder = iter->first;
+		const vector<pair<string, string> > &myinfos = iter->second;
+
+		cout << "   " << responder << ":" << endl;
+		cout<<"   -----------------------------"<<endl;
+		for(unsigned int i=0; i<myinfos.size(); i++){
+			const string &key = myinfos[i].first;
+			const string &value = myinfos[i].second;
+
+			cout << string(max_key_len - key.length(), ' ');
+			cout << "     "<< key << " : " << value << endl;
+		}
+	}
+	cout<<endl;
+
+	// unlock mutex
+	pthread_mutex_unlock(&mutex);
 }
 
 

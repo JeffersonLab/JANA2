@@ -62,7 +62,7 @@ int main(int narg, char *argv[])
 		jc.SendCommand(cmd, SUBJECT);
 	}else if(cmd==("list parms") || cmd=="list params" || cmd.find("list conf")==0){
 		jc.ListConfigurationParameters(SUBJECT);
-	}else if(cmd=="sources" || cmd=="list sources"){
+	}else if(cmd=="list sources" || cmd=="sources"){
 		jc.ListSources(SUBJECT);
 	}else if(cmd.find("source types")==0){
 		jc.ListSourceTypes(SUBJECT);
@@ -149,9 +149,10 @@ void Usage(void)
 	cout<<"   -t timeout  Set the timeout of commands while waiting for a response."<<endl;
 	cout<<"   -u udl      Set UDL of cMsg server. If not given, the JANACTL_UDL environment"<<endl;
 	cout<<"               variable is used. If that's not set, the localhost is used."<<endl;
+	cout<<"   -n name     Set name of this program for use by cMsg server."<<endl;
 	cout<<"   -d descr.   Set description text of this program for use by cMsg server."<<endl;
 	cout<<"   -s subject  Send command to subject (default is all \"janactl\" which is"<<endl;
-	cout<<"               all processes."<<endl;
+	cout<<"               all processes.)"<<endl;
 	cout<<endl;
 	cout<<"   --timeout timeout      Same as -t"<<endl;
 	cout<<"   --udl udl              Same as -u"<<endl;
@@ -161,12 +162,14 @@ void Usage(void)
 	cout<<endl;
 	cout<<"The janactl system uses a passive communication mechansim for control. Specifically,"<<endl;
 	cout<<"messages are sent, but responses (if any) are received asynchronously. As such"<<endl;
-	cout<<"commands such as the \"list\" command simply broadcasts a query to all processes"<<endl;
-	cout<<"that askes for them to send back a message notifying us of their existence. At "<<endl;
+	cout<<"commands like the \"list\" command simply broadcast a query to all processes"<<endl;
+	cout<<"that asks for them to send back a message notifying us of their existence. At "<<endl;
 	cout<<"some point, we must decide all responses have been received and continue on."<<endl;
-	cout<<"the \"timeout\" for this is set by default to 3 seconds, but an alternate may be set"<<endl;
+	cout<<"the \"timeout\" for this is set by default to 0.75 seconds, but an alternate may be set"<<endl;
 	cout<<"via the \"-t timeout\" command line switch. Commands that expect only a single"<<endl;
-	cout<<"response will continue as soon as that response is recieved."<<endl;
+	cout<<"response will continue as soon as that response is recieved. To target a query to"<<endl;
+	cout<<"a specific process, use the \"-s subject\" option. (Hint: run \"janactl list\" to get"<<endl;
+	cout<<"a list of valid strings for the \"subject\" argument.)"<<endl;
 	cout<<endl;
 	cout<<" commands:"<<endl;
 	cout<<"   list                Lists available processes."<<endl;
@@ -178,7 +181,16 @@ void Usage(void)
 	cout<<"   killthread thread   Kill specified thread"<<endl;
 	cout<<"   set nthreads N      Change number of processing threads to N"<<endl;
 	cout<<"   list parms          Lists configuration parameters (only first response received.)"<<endl;
-	cout<<"   list sources        Lists event sources for all remote processes"<<endl;
+	cout<<"   list sources        Lists event sources for remote process(es)"<<endl;
+
+	cout<<"   list source types   Lists supported event source types for remote process(es)"<<endl;
+	cout<<"   list factories      Lists factories for remote process(es)"<<endl;
+	cout<<"   list plugins        Lists attached plugins for remote process(es)"<<endl;
+	cout<<"   attach plugin X     Have remote process(es) attach plugin X"<<endl;
+	cout<<"                       n.b. X must exist on the remote machine and be"<<endl;
+	cout<<"                       in the JANA_PLUGIN_PATH"<<endl;
+	cout<<"   command line        Print command line used to start remote process(es)"<<endl;
+	cout<<"   host info           Print host info (CPU, RAM, ...) for remote process(es)"<<endl;
 	cout<<endl;
 
 	exit(0);

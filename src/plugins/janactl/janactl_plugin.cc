@@ -6,6 +6,11 @@
 
 #include <unistd.h>
 
+#ifdef __APPLE__
+#define HAVE_SYSCTL
+#include <sys/sysctl.h>
+#endif // __APPLE__
+
 #include <iostream>
 #include <cmath>
 using namespace std;
@@ -335,7 +340,6 @@ void janactl_plugin::callback(cMsgMessage *msg, void *userObject)
 
 		japp->GetActiveEventSourceNames(classNames, sourceNames);
 
-		_DBG_<<"Sending back "<<classNames.size()<<" source names"<<endl;
 		response.setText("sources list");
 		if(classNames.size() > 0){
 			response.add("classNames" , classNames);
@@ -348,9 +352,159 @@ void janactl_plugin::callback(cMsgMessage *msg, void *userObject)
 		return;		
 	}
 
+	//======================================================================
+	if(cmd.find("host info")==0){
+
+		vector<string> keys;
+		vector<string> vals;
+
+		// There does not seem to be a standard way to get detailed system
+		// info that works on both Linux and Mac OS X. Thus, use preprocessor
+		// directives to decide which routine to call to fill the keys, vals
+		// vectors.
+
+#ifdef HAVE_PROC
+		HostInfoPROC(keys, vals);
+#endif // HAVE_PROC
+
+#ifdef HAVE_SYSCTL
+		HostInfoSYSCTL(keys, vals);
+#endif // HAVE_SYSCTL
+
+		// Make sure we have the same number of keys and values
+		if(keys.size() != vals.size()){
+			jctlout << "keys.size() != vals.size() when returning host info!!" << endl;
+			keys.clear();
+			vals.clear();
+		}
+		
+		// Double check that all key/value strings are not empty so cMsg doesn't choke
+		for(unsigned int i=0; i<keys.size(); i++){
+			if(keys[i] == "") keys[i] = "<unknown>";
+			if(vals[i] == "") vals[i] = "<empty>";
+		}
+
+		// Add all key/value pairs to response
+		response.setText("host info");
+		if(keys.size() > 0){
+			response.add("keys" , keys);
+			response.add("vals", vals);
+		}
+
+		cMsgSys->send(&response);
+
+		delete msg;
+		return;		
+	}
+	//======================================================================
+	if(cmd.find("command line")==0){
+
+		// Add all key/value pairs to response
+		response.setText("command line");
+
+		vector<string> args = japp->GetArgs();
+		stringstream ss;
+		for(unsigned int i=0; i<args.size(); i++) ss << args[i] << " ";
+		response.add("command" , ss.str());
+
+		cMsgSys->send(&response);
+
+		delete msg;
+		return;		
+	}
+
 	delete msg;
 }
 
+//---------------------------------
+// HostInfoPROC  (Linux)
+//---------------------------------
+void janactl_plugin::HostInfoPROC(vector<string> &keys, vector<string> &vals)
+{
+	/// Get host info using the /proc mechanism on Linux machines.
+#ifdef HAVE_PROC
+
+#endif // HAVE_PROC
+}
+
+//---------------------------------
+// HostInfoSYSCTL  (Mac OS X)
+//---------------------------------
+void janactl_plugin::HostInfoSYSCTL(vector<string> &keys, vector<string> &vals)
+{
+	/// Get host info using the sysctl mechanism on BSD machines.
+	/// (mainly for Mac OS X). To see a list of all available items
+	/// on a system, use the sysctl command line utility:
+	///
+	///  sysctl -A
+	///
+
+#ifdef HAVE_SYSCTL
+	stringstream ss;
+	char buff[256];
+	size_t bufflen=256;
+
+	// Model
+	bufflen=256;
+	bzero(buff, bufflen);
+	sysctlbyname("hw.model", buff, &bufflen, NULL, 0);
+	keys.push_back("Model");
+	vals.push_back(buff);
+
+	// Machine arch
+	bufflen=256;
+	bzero(buff, bufflen);
+	if(sysctlbyname("machdep.cpu.brand_string", buff, &bufflen, NULL, 0) == 0){
+		keys.push_back("CPU Brand");
+		vals.push_back(buff);
+	}
+
+	// Machine type
+	bufflen=256;
+	bzero(buff, bufflen);
+	sysctlbyname("hw.machine", buff, &bufflen, NULL, 0);
+	keys.push_back("Machine type");
+	vals.push_back(buff);
+
+	// Clock Speed
+	uint64_t cpufrequency = 0;
+	bufflen=sizeof(cpufrequency);
+	sysctlbyname("hw.cpufrequency", &cpufrequency, &bufflen, NULL, 0);
+	double fcpufrequency = ((double)cpufrequency)/1.0E9;
+	ss.str("");
+	ss << fcpufrequency << " GHz";
+	keys.push_back("Clock Speed");
+	vals.push_back(ss.str());
+
+	// RAM
+	uint64_t memsize = 0;
+	bufflen=sizeof(memsize);
+	sysctlbyname("hw.memsize", &memsize, &bufflen, NULL, 0);
+	double fmemsize = ((double)memsize)/1024.0/1024.0/1024.0;
+	ss.str("");
+	ss << fmemsize << " GB";
+	keys.push_back("RAM");
+	vals.push_back(ss.str());
+
+	// Ncores (physical)
+	uint32_t Ncores = 0;
+	bufflen=sizeof(Ncores);
+	sysctlbyname("hw.physicalcpu", &Ncores, &bufflen, NULL, 0);
+	ss.str("");
+	ss << Ncores;
+	keys.push_back("Ncores (physical)");
+	vals.push_back(ss.str());
+
+	// Ncores (logical)
+	Ncores = 0;
+	bufflen=sizeof(Ncores);
+	sysctlbyname("hw.logicalcpu", &Ncores, &bufflen, NULL, 0);
+	ss.str("");
+	ss << Ncores;
+	keys.push_back("Ncores (logical)");
+	vals.push_back(ss.str());
+#endif // HAVE_SYSCTL
+}
 
 #endif // HAVE_CMSG
 

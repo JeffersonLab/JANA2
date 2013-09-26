@@ -3,7 +3,8 @@ Changes in version 0.6.7
 
 - Updated janarate plugin to be more useful in determining ultimate event rates
 - Replaced use of typeof with __typeof__ to appease c++11 compilers
-
+- Fixed bug where event-starved processing threads chewed up CPU unneccesarily
+- Fixed bug in SetNthreads call where program may exit if MAX_RELAUNCH_THREADS is 0
 
 Changes in version 0.6.6
 

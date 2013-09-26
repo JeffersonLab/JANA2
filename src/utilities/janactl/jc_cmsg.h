@@ -57,6 +57,8 @@ class jc_cmsg:public cMsgCallback{
 		map<string, string> config_params;
 		string config_params_responder; // only print results from first to respond
 		map<string, vector<pair<string, string> > > sources;
+		map<string, vector<pair<string, string> > > hostInfos;
+		vector<pair<string, string> > commandLines;
 
 	protected:
 

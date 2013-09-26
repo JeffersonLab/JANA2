@@ -30,7 +30,10 @@ class janactl_plugin:public cMsgCallback{
 	protected:
 
 		void callback(cMsgMessage *msg, void *userObject);
-	
+
+		void HostInfoSYSCTL(vector<string> &keys, vector<string> &vals);
+		void HostInfoPROC(vector<string> &keys, vector<string> &vals);
+
 	private:
 		janactl_plugin(void);
 
