@@ -42,8 +42,8 @@ LD_LIBS += $(addsuffix $(DEBUG_SUFFIX),$(addprefix -l,$(MODULES)))
 LD_LIBS += -ldl
 
 install: all
-	mkdir -p $(JANA_BUILD_DIR)/bin
-	install -p $(EXE_PATHNAMES) $(JANA_BUILD_DIR)/bin
+	mkdir -p $(JANA_INSTALL_DIR)/bin
+	install -p $(EXE_PATHNAMES) $(JANA_INSTALL_DIR)/bin
 
 all: mkdirs $(DEPS) $(EXE_NAMES)
 	@rm -f $(DICT_FILES)

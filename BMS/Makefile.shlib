@@ -60,10 +60,10 @@ mkdirs:
 	@mkdir -p $(DEP_DIR)
 
 install: all
-	mkdir -p $(JANA_BUILD_DIR)/lib
-	mkdir -p $(JANA_BUILD_DIR)/include/$(MODULE_NAME)
-	install -p $(LIB_DIR)/$(SOLIB_NAME) $(JANA_BUILD_DIR)/lib
-	install -p *.h $(JANA_BUILD_DIR)/include/$(MODULE_NAME)
+	mkdir -p $(JANA_INSTALL_DIR)/lib
+	mkdir -p $(JANA_INSTALL_DIR)/include/$(MODULE_NAME)
+	install -p $(LIB_DIR)/$(SOLIB_NAME) $(JANA_INSTALL_DIR)/lib
+	install -p *.h $(JANA_INSTALL_DIR)/include/$(MODULE_NAME)
 
 clean:
 	rm -rf $(LIB_DIR) $(OBJ_DIR) $(DEP_DIR) $(DICT_FILES) *.o *.bak *~ core #*# 

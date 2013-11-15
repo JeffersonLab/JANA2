@@ -149,7 +149,6 @@ jerror_t JEventProcessorJANADOT::evnt(JEventLoop *loop, int eventnumber)
 		link.caller_tag  = stack[i].caller_tag;
 		link.callee_name = stack[i].callee_name;
 		link.callee_tag  = stack[i].callee_tag;
-
 		CallStats &stats = call_links[link]; // get pointer to stats object or create if it doesn't exist
 		
 		switch(stack[i].data_source){
@@ -186,14 +185,31 @@ jerror_t JEventProcessorJANADOT::evnt(JEventLoop *loop, int eventnumber)
 //------------------------------------------------------------------
 jerror_t JEventProcessorJANADOT::fini(void)
 {
-	// Find the JEventProcessor link so we can get the total ticks for
-	// the process in order to add the percentage to the label below
+
+	// In order to get the total time we have to first get a list of 
+	// the event processors (i.e. top-level callers). We can tell
+	// this just by looking for callers that never show up as callees
+	set<string> callers;
+	set<string> callees;
 	map<CallLink, CallStats>::iterator iter;
+	for(iter=call_links.begin(); iter!=call_links.end(); iter++){
+		const CallLink &link = iter->first;
+		string caller = MakeNametag(link.caller_name, link.caller_tag);
+		string callee = MakeNametag(link.callee_name, link.callee_tag);
+		callers.insert(caller);
+		callees.insert(callee);
+	}
+
+	// Loop over list a second time so we can get the total ticks for
+	// the process in order to add the percentage to the label below
 	double total_ms = 0.0;
 	for(iter=call_links.begin(); iter!=call_links.end(); iter++){
 		const CallLink &link = iter->first;
 		CallStats &stats = iter->second;
-		if(link.caller_name=="JEventProcessor"){
+		string caller = MakeNametag(link.caller_name, link.caller_tag);
+		string callee = MakeNametag(link.callee_name, link.callee_tag);
+
+		if(callees.find(caller) == callees.end()){
 			total_ms += stats.from_factory_ms + stats.from_source_ms + stats.from_cache_ms + stats.data_not_available_ms;
 		}
 	}

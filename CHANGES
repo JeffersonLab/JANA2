@@ -5,6 +5,8 @@ Changes in version 0.6.7
 - Replaced use of typeof with __typeof__ to appease c++11 compilers
 - Fixed bug where event-starved processing threads chewed up CPU unneccesarily
 - Fixed bug in SetNthreads call where program may exit if MAX_RELAUNCH_THREADS is 0
+- Fixed bug in installation where --prefix used in configure was not being used
+- Fixed bug in janadot where time normalization was incorrect
 
 Changes in version 0.6.6
 

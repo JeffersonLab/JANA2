@@ -14,10 +14,10 @@ VPATH = $(DEP_DIR)
 
 
 install: all
-	mkdir -p $(JANA_BUILD_DIR)/lib
-	mkdir -p $(JANA_BUILD_DIR)/include/$(MODULE_NAME)
-	install -p $(LIBNAME) $(JANA_BUILD_DIR)/lib
-	install -p $(wildcard *.h *.hh *.hxx) $(JANA_BUILD_DIR)/include/$(MODULE_NAME)
+	mkdir -p $(JANA_INSTALL_DIR)/lib
+	mkdir -p $(JANA_INSTALL_DIR)/include/$(MODULE_NAME)
+	install -p $(LIBNAME) $(JANA_INSTALL_DIR)/lib
+	install -p $(wildcard *.h *.hh *.hxx) $(JANA_INSTALL_DIR)/include/$(MODULE_NAME)
 
 all: mkdirs $(DEPS) $(foreach obj,$(OBJS),$(LIBNAME)($(obj)))
 	@rm -f $(DICT_FILES)
