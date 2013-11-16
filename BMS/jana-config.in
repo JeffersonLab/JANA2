@@ -69,8 +69,8 @@ JANA_INSTALL_DIR=@prefix@
 
 # Add flags and libraries from all 3rd party packages
 CPPFLAGS="${MYSQL_CFLAGS} ${XERCES_CPPFLAGS} ${ROOTCFLAGS} ${CMSG_CPPFLAGS} ${CURL_CFLAGS} ${CCDB_CPPFLAGS}"
-LDFLAGS="${MYSQL_LDFLAGS} ${XERCES_LDFLAGS} ${CMSG_LDFLAGS} ${CURL_LDFLAGS} ${CCDB_CPPFLAGS}"
-LIBS="${ROOTGLIBS} ${CMSG_LIBS} ${CURL_LIBS}"
+LDFLAGS=" ${CCDB_CPPFLAGS} ${CMSG_LDFLAGS} ${XERCES_LDFLAGS}"
+LIBS="${CMSG_LIBS} ${ROOTGLIBS} ${CURL_LDFLAGS} ${CURL_LIBS} ${MYSQL_LDFLAGS}"
 
 # If hardwired value doesn't point to libJANA.a, try JANA_HOME
 if [ ! -e "${JANA_INSTALL_DIR}/lib/libJANA.a" ]; then
@@ -91,7 +91,7 @@ while test $# -gt 0; do
 	esac
 	case $1 in
 		--libs)
-			mess="$mess ${LDFLAGS} -L${JANA_INSTALL_DIR}/lib -lJANA ${LIBS}"
+			mess="$mess -L${JANA_INSTALL_DIR}/lib -lJANA ${LDFLAGS} ${LIBS}"
 			;;
 	esac
 	case $1 in
