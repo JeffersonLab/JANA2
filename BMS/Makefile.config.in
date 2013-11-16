@@ -80,8 +80,4 @@ prefix          = @prefix@
 exec_prefix     = @exec_prefix@
 
 JANA_BUILD_DIR  = @JANA_BUILD_DIR@
-JANA_INSTALL_DIR= $(JANA_BUILD_DIR)
-ifneq ($(prefix), '/usr/local')
-	JANA_INSTALL_DIR = $(prefix)
-endif
 
