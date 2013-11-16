@@ -27,8 +27,8 @@ LD_FLAGS += $(LDFLAGS_CONFIGURE)
 # This may not be supported on all platforms. It is needed however,
 # at least on Fedora 10 with SELinux enabled which will complain
 # about text relocations and deny plugin execution otherwise.
-CFLAGS += -fPIC
-CXXFLAGS += -fPIC
+CFLAGS += -fPIC -g
+CXXFLAGS += -fPIC -g
 
 
 # The first target is made by default when make is invoked with no
