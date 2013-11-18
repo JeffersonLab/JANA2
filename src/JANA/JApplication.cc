@@ -442,6 +442,13 @@ JApplication::~JApplication()
 		dlclose(sohandles[i]);
 	}
 	sohandles.clear();
+
+	map<string, pthread_rwlock_t*>::iterator irw_locks;
+	for(irw_locks=rw_locks.begin(); irw_locks!=rw_locks.end(); irw_locks++) delete irw_locks->second;
+	rw_locks.clear();
+
+	for(unsigned int i=0; i<HUP_locks.size(); i++)delete HUP_locks[i];
+	HUP_locks.clear();
 	
 	// Delete JParameterManager
 	if(jparms)delete jparms;
