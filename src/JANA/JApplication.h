@@ -81,6 +81,8 @@ class JApplication{
 		      vector<JEventProcessor*> GetProcessors(void){return processors;} ///< Get the current list of JFactoryGenerators
 		           vector<JEventLoop*> GetJEventLoops(void){return loops;} ///< Get the current list of JEventLoops
 		vector<JEventSourceGenerator*> GetEventSourceGenerators(void){return eventSourceGenerators;} ///< Get the current list of JEventSourceGenerators
+                 vector<JEventSource*> GetJEventSources(void); ///< Get pointers to all JEventSource objects.
+                  template<class T> T* GetFirstJEventSource(void); ///< Return pointer to first source of specified type or NULL if none exist. Call like this: ptr = GetFirstJEventSource<JEventSourceMyType>();
 		                          void GetActiveEventSourceNames(vector<string> &classNames, vector<string> &sourceNames);
 		    vector<JFactoryGenerator*> GetFactoryGenerators(void){return factoryGenerators;} ///< Get the current list of JFactoryGenerators
 		vector<JCalibrationGenerator*> GetCalibrationGenerators(void){return calibrationGenerators;} ///< Get the current list of JCalibrationGenerators
@@ -370,7 +372,27 @@ inline pthread_rwlock_t* JApplication::Unlock(const string &name)
 
 	return lock;
 }
-	
+
+//---------------------------------
+// GetFirstJEventSource
+//---------------------------------
+template<class T>
+T* JApplication::GetFirstJEventSource(void)
+{
+	/// Be EXTREMELY CAUTIOUS here. The pointer returned from this
+	/// could be made invalid at any point (even before returning
+	/// from this method!)
+
+	T* ptr = NULL;
+	pthread_mutex_lock(&sources_mutex);
+	for(unsigned int i=0; i<sources.size(); i++){
+		ptr = dynamic_cast<T*>(sources[i]);
+		if(ptr != NULL) break;
+	}
+	pthread_mutex_unlock(&sources_mutex);
+
+	return ptr;
+}
 	
 
 

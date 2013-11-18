@@ -870,6 +870,26 @@ jerror_t JApplication::RemoveCalibrationGenerator(JCalibrationGenerator *generat
 //---------------------------------
 // GetActiveEventSourceNames
 //---------------------------------
+vector<JEventSource*> JApplication::GetJEventSources(void)
+{
+	/// Don't use this routine! Well, unless you know exactly what you
+	/// are doing. The pointers returned here reflect a snapshot of an
+	/// internal list that could change at any time. Specifically, any
+	/// of the pointers could be deleted, even before returning from
+	/// this call!
+
+	// Loack the mutex to at least ensure the list can't change while
+	// we're copying it.
+	pthread_mutex_lock(&sources_mutex);
+	vector<JEventSource*> my_sources = sources;
+	pthread_mutex_unlock(&sources_mutex);
+
+	return my_sources;
+}
+
+//---------------------------------
+// GetActiveEventSourceNames
+//---------------------------------
 void JApplication::GetActiveEventSourceNames(vector<string> &classNames, vector<string> &sourceNames)
 {
 	/// Get a list of active sources (ones that have not yet been deleted)
