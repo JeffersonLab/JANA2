@@ -20,6 +20,7 @@ JEvent::JEvent()
 	event_number = 0 ;
 	run_number = 0;
 	ref = NULL;
+	status = 0L;
 }
 
 //---------------------------------

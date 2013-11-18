@@ -497,6 +497,7 @@ jerror_t JApplication::NextEvent(JEvent &event)
 		event.SetEventNumber(myevent->GetEventNumber());
 		event.SetRef(myevent->GetRef());
 		event.SetID(myevent->GetID());
+		event.SetStatus(myevent->GetStatus());
 		NEvents++;
 		delete myevent;
 		return NOERROR;
