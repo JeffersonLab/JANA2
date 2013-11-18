@@ -53,7 +53,7 @@ AC_DEFUN([CMSG],
 		
 			CMSG_CPPFLAGS=-I$cmsgdir/include
 			CMSG_LDFLAGS=-L$cmsgdir/lib
-			CMSG_LIBS='-lcmsg -lcmsgxx -lcmsgRegex'
+			CMSG_LIBS='-lcmsgxx -lcmsgRegex -lcmsg'
 			
 			save_CPPFLAGS=$CPPFLAGS
 			save_LDFLAGS=$LDFLAGS
@@ -74,7 +74,7 @@ AC_DEFUN([CMSG],
 			
 			if test "$cmsg_link_ok" = "no"; then
 				cmsg_link_ok=failed
-				CMSG_LIBS+=' -ldl -lpthread -lrt'
+				CMSG_LIBS+=' -lrt -ldl -lpthread'
 				LIBS=$CMSG_LIBS
 				AC_TRY_LINK([#include <cMsg.hxx>],
 					[cmsg::cMsg cMsgSys("","","");],
@@ -84,11 +84,23 @@ AC_DEFUN([CMSG],
 				# We set it to "no" to indicate -lrt was not needed (confusing isn't it?)
 				cmsg_link_ok=no
 			fi
-			
+
 			AC_MSG_RESULT($cmsg_link_ok);
+
+			# Newer systems (Ubuntu13.10) seem to require the -Wl,--no-as-needed flag
+			# If we were unable to link before, try once more with this flag.
+			if test "$cmsg_link_ok" = "failed"; then
+				AC_MSG_CHECKING([if cmsg needs -Wl,--no-as-needed to link])
+				CMSG_LDFLAGS+=' -Wl,--no-as-needed'
+				LDFLAGS=$CMSG_LDFLAGS
+				AC_TRY_LINK([#include <cMsg.hxx>],
+					[cmsg::cMsg cMsgSys("","","");],
+					[cmsg_link_ok=yes])
+				AC_MSG_RESULT($cmsg_link_ok);
+			fi
 			
 			if test "$cmsg_link_ok" = "failed"; then
-				AC_MSG_ERROR("Test link of cMsg failed (using path=$cmsgdir). Set your CMSGROOT environment variable or use the --with-cmsg=PATH_TO_CMSG argument when running configure")
+				AC_MSG_ERROR("Test link of cMsg failed (using path=$cmsgdir). Set your CMSGROOT environment variable or use the --with-cmsg=PATH_TO_CMSG argument when running configure. Note that this may also be due to some required link options missing. Check the config.log file for clues. Finally, if you just don\'t want to compile in cMsg support, then unset your CMSGROOT environment variable.")
 			fi
 
 			AC_LANG_POP
