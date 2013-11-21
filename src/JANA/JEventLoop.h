@@ -13,9 +13,12 @@
 #include <vector>
 #include <string>
 #include <utility>
+#include <typeinfo>
 #include <string.h>
+#include <map>
 using std::vector;
 using std::string;
+using std::type_info;
 
 #include "jerror.h"
 #include "JObject.h"
@@ -131,6 +134,11 @@ class JEventLoop{
                         JFactory_base* FindOwner(const JObject *t); ///< Find the factory that owns a data object by pointer
                         JFactory_base* FindOwner(JObject::oid_t id); ///< Find a factory that owns a data object by identifier
 
+                                       // User defined references
+                  template<class T> T* GetRef(void);   ///< Get a user-defined reference of a specific type
+          template<class T> vector<T*> GetRefsT(void); ///< Get all user-defined refrences of a specicif type
+      vector<pair<type_info&, void*> > GetRefs(void){ return user_refs; }  ///< Get copy of full list of user-defined references
+
 									   // Convenience methods wrapping JEvent methods of same name
 		                      uint64_t GetStatus(void){return event.GetStatus();}
 		                          bool GetStatusBit(uint32_t bit){return event.GetStatusBit(bit);}
@@ -172,8 +180,9 @@ class JEventLoop{
 		double rate_instantaneous;		///< Latest instantaneous rate
 		double rate_integrated;			///< Rate integrated over all events
    
-      static data_source_t null_data_source;
-		
+		static data_source_t null_data_source;
+
+		vector<pair<type_info&, void*> > user_refs;
 };
 
 
@@ -620,6 +629,37 @@ template<class T> bool JEventLoop::GetResource(string namepath, T vals, int even
 
 	return resource_manager->Get(namepath, vals, event_number);
 }
+
+//-------------
+// GetRef
+//-------------
+template<class T>
+T* JEventLoop::GetRef(void)
+{
+	/// Get a user-defined reference (a pointer)
+	for(unsigned int i=0; i<user_refs.size(); i++){
+		if(user_refs[i].first == typeid(T)) return user_refs[i].second;
+	}
+
+	return NULL;
+}
+
+//-------------
+// GetRefsT
+//-------------
+template<class T>
+vector<T*> JEventLoop::GetRefsT(void)
+{
+	vector<T*> refs;
+	for(unsigned int i=0; i<user_refs.size(); i++){
+		if(user_refs[i].first == typeid(T)){
+			refs.push_back((T*)user_refs[i].second);
+		}
+	}
+
+	return refs;
+}
+
 
 #endif //__CINT__
 
