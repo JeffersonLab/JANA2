@@ -576,6 +576,51 @@ void jc_cmsg::GetHostInfo(string subject)
 	pthread_mutex_unlock(&mutex);
 }
 
+////---------------------------------
+//// AttachPlugin
+////---------------------------------
+//void jc_cmsg::AttachPlugin(string subject, string plugin)
+//{
+//	string command = "attach plugin " + plugin;
+//	SendCommand(command, subject);
+//
+//	// Sometimes, the user will include the ".so" suffix in the
+//	// plugin name. If they don't, then we add it here.
+//	if(plugin.substr(plugin.size()-3)!=".so")plugin = plugin+".so";
+//
+//	// Loop over paths
+//	bool found_plugin=false;
+//	for(unsigned int i=0; i< pluginPaths.size(); i++){
+//		string fullpath = pluginPaths[i] + "/" + plugin;
+//		ifstream f(fullpath.c_str());
+//		if(f.is_open()){
+//			f.close();
+//			if(RegisterSharedObject(fullpath.c_str())==NOERROR)found_plugin=true;
+//			break;
+//		}
+//		if(printPaths) jout<<"Looking for \""<<fullpath<<"\" ...."<<"no"<<endl;
+//		
+//		if(fullpath[0] != '/')continue;
+//		fullpath = pluginPaths[i] + "/" + plugins[j] + "/" + plugin;
+//		f.open(fullpath.c_str());
+//		if(f.is_open()){
+//			f.close();
+//			if(RegisterSharedObject(fullpath.c_str())==NOERROR)found_plugin=true;
+//			break;
+//		}
+//		if(printPaths) jout<<"Looking for \""<<fullpath<<"\" ...."<<"no"<<endl;
+//	}
+//	
+//	// If we didn't find the plugin, then complain and quit
+//	if(!found_plugin){
+//		Lock();
+//		jerr<<endl<<"***ERROR : Couldn't find plugin \""<<plugins[j]<<"\"!***"<<endl;
+//		jerr<<"***        To see paths checked, set PRINT_PLUGIN_PATHS config. parameter"<<endl;
+//		Unlock();
+//		exit(-1);
+//	}
+//}
+
 
 #endif //HAVE_CMSG
 

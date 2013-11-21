@@ -47,6 +47,7 @@ class jc_cmsg:public cMsgCallback{
 		void ListPlugins(string subject);
 		void GetCommandLine(string subject);
 		void GetHostInfo(string subject);
+		void AttachPlugin(string subject, string plugin);
 
 		pthread_mutex_t mutex;
 		double start_time;
