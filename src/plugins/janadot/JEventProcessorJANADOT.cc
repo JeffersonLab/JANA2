@@ -335,7 +335,7 @@ jerror_t JEventProcessorJANADOT::fini(void)
 		file<<"\t\""<<nodename<<"\"";
 		file<<" [shape="<<shape<<",style=filled,fillcolor="<<fillcolor;
 		file<<", label=<"<<label_html.str()<<">";
-		if(fcall_stats.type==kSource)file<<", margin=0.,0.";
+		if(fcall_stats.type==kSource)file<<", margin=0";
 		file<<"];"<<endl;
 	}
 	
@@ -350,7 +350,7 @@ jerror_t JEventProcessorJANADOT::fini(void)
 	file<<"\t\"CreationTime\"";
 	file<<" [shape=box,style=filled,color=white";
 	file<<", label=<"<<label_html.str()<<">";
-	file<<", margin=0.,0.";
+	file<<", margin=0";
 	file<<"];"<<endl;
 	
 
