@@ -485,6 +485,19 @@ jerror_t JApplication::NextEvent(JEvent &event)
 			usleep(100);
 		}
 	}while((myevent==NULL) && event_buffer_filling);
+
+	// It is possible that we got here because the event_buffer_filling
+	// flag was cleared, but only after we failed to read an event from
+	// the event buffer (so myevent is NULL). If myevent is NULL, but
+	// event_buffer is not empty, then try getting it again.
+	if(myevent==NULL){
+		pthread_mutex_lock(&event_buffer_mutex);
+		if(!event_buffer.empty()){
+			myevent = event_buffer.back();
+			event_buffer.pop_back();
+		}
+		pthread_mutex_unlock(&event_buffer_mutex);
+	}
 	
 	// If we managed to get an event, copy it to the given
 	// reference and delete the JEvent object

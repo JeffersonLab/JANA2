@@ -16,6 +16,7 @@
 #include <typeinfo>
 #include <string.h>
 #include <map>
+#include <utility>
 using std::vector;
 using std::string;
 using std::type_info;
@@ -135,9 +136,11 @@ class JEventLoop{
                         JFactory_base* FindOwner(JObject::oid_t id); ///< Find a factory that owns a data object by identifier
 
                                        // User defined references
+                template<class T> void SetRef(T *t);    ///< Add a user reference to this JEventLoop (must be a pointer)
                   template<class T> T* GetRef(void);   ///< Get a user-defined reference of a specific type
           template<class T> vector<T*> GetRefsT(void); ///< Get all user-defined refrences of a specicif type
-      vector<pair<type_info&, void*> > GetRefs(void){ return user_refs; }  ///< Get copy of full list of user-defined references
+vector<pair<const  type_info&, void*> > GetRefs(void){ return user_refs; }  ///< Get copy of full list of user-defined references
+                template<class T> void RemoveRef(T *t); ///< Remove user reference from list
 
 									   // Convenience methods wrapping JEvent methods of same name
 		                      uint64_t GetStatus(void){return event.GetStatus();}
@@ -182,7 +185,7 @@ class JEventLoop{
    
 		static data_source_t null_data_source;
 
-		vector<pair<type_info&, void*> > user_refs;
+		vector<pair<const type_info&, void*> > user_refs;
 };
 
 
@@ -617,6 +620,16 @@ template<class T> bool JEventLoop::GetGeom(string namepath, T &val)
 }
 
 //-------------
+// SetRef
+//-------------
+template<class T>
+void JEventLoop::SetRef(T *t)
+{
+	pair<const type_info&, void*> p(typeid(T), (void*)t);
+	user_refs.push_back(p);
+}
+
+//-------------
 // GetResource
 //-------------
 template<class T> bool JEventLoop::GetResource(string namepath, T vals, int event_number)
@@ -638,7 +651,7 @@ T* JEventLoop::GetRef(void)
 {
 	/// Get a user-defined reference (a pointer)
 	for(unsigned int i=0; i<user_refs.size(); i++){
-		if(user_refs[i].first == typeid(T)) return user_refs[i].second;
+		if(user_refs[i].first == typeid(T)) return (T*)user_refs[i].second;
 	}
 
 	return NULL;
@@ -658,6 +671,22 @@ vector<T*> JEventLoop::GetRefsT(void)
 	}
 
 	return refs;
+}
+
+//-------------
+// RemoveRef
+//-------------
+template<class T>
+void JEventLoop::RemoveRef(T *t)
+{
+	vector<pair<const type_info&, void*> >::iterator iter;
+	for(iter=user_refs.begin(); iter!= user_refs.end(); iter++){
+		if(iter->second == (void*)t){
+			user_refs.erase(iter);
+			return;
+		}
+	}
+	_DBG_<<" Attempt to remove user reference not in event loop!" << std::endl;
 }
 
 
