@@ -1,0 +1,12 @@
+
+import os
+
+Import('env osname')
+
+# Loop over plugins, building each
+subdirs = ['TestSpeed', 'janadot', 'janaroot', 'janactl', 'janarate', 'jana_iotest']
+SConscript(dirs=subdirs, exports='env osname', duplicate=0)
+
+# Uncomment the following to include janaevio in the scons build
+#subdirs = ['janaevio']
+#SConscript(dirs=subdirs, exports='env osname', duplicate=0)

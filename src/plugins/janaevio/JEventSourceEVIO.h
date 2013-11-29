@@ -16,8 +16,11 @@ using namespace std;
 
 #include <JANA/JEventSource.h>
 #include <JANA/jerror.h>
+using namespace jana;
 
 #include <evioUtil.hxx>
+#include <evioFileChannel.hxx>
+using namespace evio;
 
 class JEventSourceEVIO:public JEventSource
 {

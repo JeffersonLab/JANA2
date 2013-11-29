@@ -1,0 +1,12 @@
+
+
+import sbms
+
+# get env object and clone it
+Import('*')
+env = env.Clone()
+
+sbms.AddXERCES(env)
+sbms.library(env)
+
+

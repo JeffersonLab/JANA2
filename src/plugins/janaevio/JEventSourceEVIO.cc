@@ -118,7 +118,7 @@ jerror_t JEventSourceEVIO::GetObjects(JEvent &event, JFactory_base *factory)
 //	if(!my_hddm_s)throw RESOURCE_UNAVAILABLE;
 	
 	// Get name of data class we're trying to extract
-	string dataClassName = factory->dataClassName();
+	string dataClassName = factory->GetDataClassName();
 	
 	// At this point, we have two options. One is that we have the
 	// source only provide one type of object: an evioDOMTree. This

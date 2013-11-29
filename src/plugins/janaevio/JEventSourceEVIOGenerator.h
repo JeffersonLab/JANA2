@@ -8,7 +8,8 @@
 #ifndef _JEventSourceEVIOGenerator_
 #define _JEventSourceEVIOGenerator_
 
-#include "JANA/JEventSourceGenerator.h"
+#include <JANA/JEventSourceGenerator.h>
+using namespace jana;
 
 class JEventSourceEVIOGenerator:public JEventSourceGenerator{
 	public:

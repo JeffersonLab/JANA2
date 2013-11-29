@@ -5,6 +5,7 @@
 // Creator: davidl (on Darwin harriet.jlab.org 11.4.2 i386)
 //
 
+#include <unistd.h>
 
 #include <iostream>
 #include <iomanip>

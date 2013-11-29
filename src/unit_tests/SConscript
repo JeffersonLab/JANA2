@@ -1,0 +1,9 @@
+
+import os
+
+Import('env osname')
+
+# Loop over libraries, building each
+subdirs = ['resource_test', 'thread_relaunch', 'user_references']
+SConscript(dirs=subdirs, exports='env osname', duplicate=0)
+
