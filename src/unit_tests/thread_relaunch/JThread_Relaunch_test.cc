@@ -18,7 +18,7 @@ using namespace std;
 using namespace jana;
 
 #define CATCH_CONFIG_RUNNER
-#include "catch.hpp"
+#include "../catch.hpp"
 
 #include "JFactoryGenerator_stalling.h"
 #include "JEventProcessor_dummy.h"
