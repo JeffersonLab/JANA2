@@ -73,7 +73,7 @@ def mk_jana_config(env):
 
 	# Make sure output directory eists
 	try:
-		os.mkdir(ofdir)
+		os.makedirs(ofdir)
 	except OSError:
 		pass
 
