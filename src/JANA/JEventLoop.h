@@ -139,7 +139,7 @@ class JEventLoop{
                 template<class T> void SetRef(T *t);    ///< Add a user reference to this JEventLoop (must be a pointer)
                   template<class T> T* GetRef(void);   ///< Get a user-defined reference of a specific type
           template<class T> vector<T*> GetRefsT(void); ///< Get all user-defined refrences of a specicif type
-vector<pair<const  type_info&, void*> > GetRefs(void){ return user_refs; }  ///< Get copy of full list of user-defined references
+     vector<pair<const char*, void*> > GetRefs(void){ return user_refs; }  ///< Get copy of full list of user-defined references
                 template<class T> void RemoveRef(T *t); ///< Remove user reference from list
 
 									   // Convenience methods wrapping JEvent methods of same name
@@ -185,7 +185,7 @@ vector<pair<const  type_info&, void*> > GetRefs(void){ return user_refs; }  ///<
    
 		static data_source_t null_data_source;
 
-		vector<pair<const type_info&, void*> > user_refs;
+		vector<pair<const char*, void*> > user_refs;
 };
 
 
@@ -625,7 +625,7 @@ template<class T> bool JEventLoop::GetGeom(string namepath, T &val)
 template<class T>
 void JEventLoop::SetRef(T *t)
 {
-	pair<const type_info&, void*> p(typeid(T), (void*)t);
+	pair<const char*, void*> p(typeid(T).name(), (void*)t);
 	user_refs.push_back(p);
 }
 
@@ -651,7 +651,7 @@ T* JEventLoop::GetRef(void)
 {
 	/// Get a user-defined reference (a pointer)
 	for(unsigned int i=0; i<user_refs.size(); i++){
-		if(user_refs[i].first == typeid(T)) return (T*)user_refs[i].second;
+		if(user_refs[i].first == typeid(T).name()) return (T*)user_refs[i].second;
 	}
 
 	return NULL;
@@ -665,7 +665,7 @@ vector<T*> JEventLoop::GetRefsT(void)
 {
 	vector<T*> refs;
 	for(unsigned int i=0; i<user_refs.size(); i++){
-		if(user_refs[i].first == typeid(T)){
+		if(user_refs[i].first == typeid(T).name()){
 			refs.push_back((T*)user_refs[i].second);
 		}
 	}
@@ -679,7 +679,7 @@ vector<T*> JEventLoop::GetRefsT(void)
 template<class T>
 void JEventLoop::RemoveRef(T *t)
 {
-	vector<pair<const type_info&, void*> >::iterator iter;
+	vector<pair<const char*, void*> >::iterator iter;
 	for(iter=user_refs.begin(); iter!= user_refs.end(); iter++){
 		if(iter->second == (void*)t){
 			user_refs.erase(iter);
