@@ -59,6 +59,7 @@ jerror_t JEventProcessor_UserReference::evnt(JEventLoop *loop, int eventnumber)
 	int *icntr = loop->GetRef<int>();
 	if(!icntr){
 		icntr = new int;
+		*icntr = 0;
 		loop->SetRef(icntr);
 
 		// Keep private list so we can access results later
@@ -70,6 +71,7 @@ jerror_t JEventProcessor_UserReference::evnt(JEventLoop *loop, int eventnumber)
 	float *fcntr = loop->GetRef<float>();
 	if(!fcntr){
 		fcntr = new float;
+		*fcntr = 0.0;
 		loop->SetRef(fcntr);
 
 		// Keep private list so we can access results later
@@ -115,6 +117,7 @@ int JEventProcessor_UserReference::GetTotalI(bool print_vals)
 	// the the values are printed as the total is tallied.
 
 	if(print_vals){
+		cout << endl;
 		cout<<"Checking int loop counters"<<endl;
 		cout<<"-----------------------"<<endl;
 	}
@@ -132,6 +135,10 @@ int JEventProcessor_UserReference::GetTotalI(bool print_vals)
 		if(print_vals) cout <<endl;
 	}
 
+	if(print_vals){
+		cout << "   total:  " << itot << endl;
+	}
+
 	return itot;
 }
 
@@ -144,6 +151,7 @@ float JEventProcessor_UserReference::GetTotalF(bool print_vals)
 	// the the values are printed as the total is tallied.
 
 	if(print_vals){
+		cout << endl;
 		cout<<"Checking float loop counters"<<endl;
 		cout<<"-----------------------"<<endl;
 	}
@@ -159,6 +167,10 @@ float JEventProcessor_UserReference::GetTotalF(bool print_vals)
 			ftot += *fcntr;
 		}
 		if(print_vals) cout <<endl;
+	}
+
+	if(print_vals){
+		cout << "   total:  " << ftot << endl;
 	}
 
 	return ftot;
