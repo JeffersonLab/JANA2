@@ -6,7 +6,7 @@ import sbms
 Import('*')
 env = env.Clone()
 
-sbms.AddXERCES(env)
+sbms.AddJANA(env)
 sbms.library(env)
 
 
