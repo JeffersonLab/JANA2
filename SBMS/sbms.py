@@ -332,6 +332,7 @@ def ApplyPlatformSpecificSettings(env, platform):
 ##################################
 def AddJANA(env):
 	AddXERCES(env)
+	AddCCDB(env)
 	env.AppendUnique(LIBS=['JANA'])
 
 
@@ -403,13 +404,14 @@ def Add_xstream(env):
 # CCDB
 ##################################
 def AddCCDB(env):
-	ccdb_home = os.getenv('CCDB_HOME', 'ccdb')
-	CCDB_CPPPATH = "%s/include" % (ccdb_home)
-	CCDB_LIBPATH = "%s/lib" % (ccdb_home)
-	CCDB_LIBS = "ccdb"
-	env.AppendUnique(CPPPATH = CCDB_CPPPATH)
-	env.AppendUnique(LIBPATH = CCDB_LIBPATH)
-	env.AppendUnique(LIBS    = CCDB_LIBS)
+	ccdb_home = os.getenv('CCDB_HOME', 'none')
+	if(ccdb_home != 'none'):
+		CCDB_CPPPATH = "%s/include" % (ccdb_home)
+		CCDB_LIBPATH = "%s/lib" % (ccdb_home)
+		CCDB_LIBS = "ccdb"
+		env.AppendUnique(CPPPATH = [CCDB_CPPPATH])
+		env.AppendUnique(LIBPATH = [CCDB_LIBPATH])
+		env.AppendUnique(LIBS    = [CCDB_LIBS])
 
 
 ##################################
@@ -420,9 +422,9 @@ def AddXERCES(env):
 	XERCES_CPPPATH = "%s/include" % (xercescroot)
 	XERCES_LIBPATH = "%s/lib" % (xercescroot)
 	XERCES_LIBS = "xerces-c"
-	env.AppendUnique(CPPPATH = XERCES_CPPPATH)
-	env.AppendUnique(LIBPATH = XERCES_LIBPATH)
-	env.AppendUnique(LIBS    = XERCES_LIBS)
+	env.AppendUnique(CPPPATH = [XERCES_CPPPATH])
+	env.AppendUnique(LIBPATH = [XERCES_LIBPATH])
+	env.AppendUnique(LIBS    = [XERCES_LIBS])
 
 
 ##################################
