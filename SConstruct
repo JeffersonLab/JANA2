@@ -9,6 +9,7 @@ sbmsdir = "%s/SBMS" % (os.getcwd())
 sys.path.append(sbmsdir)
 
 import sbms
+import sbms_config
 
 # Get command-line options
 SHOWBUILD = ARGUMENTS.get('SHOWBUILD', 0)
@@ -22,7 +23,7 @@ if(osname == 'build'): 	osname = subprocess.Popen(["./osrelease.pl"], stdout=sub
 arch = ROOT_CFLAGS = subprocess.Popen(["uname"], stdout=subprocess.PIPE).communicate()[0].strip()
 
 # Setup initial environment
-installdir = "#../%s" %(osname)
+installdir = "#%s" %(osname)
 include = "%s/include" % (installdir)
 bin = "%s/bin" % (installdir)
 lib = "%s/lib" % (installdir)
@@ -70,6 +71,9 @@ env.PrependUnique(CFLAGS = ['-g', '-fPIC'], CXXFLAGS = ['-g', '-fPIC'])
 # Apply any platform/architecture specific settings
 sbms.ApplyPlatformSpecificSettings(env, arch)
 sbms.ApplyPlatformSpecificSettings(env, osname)
+
+# generate configuration header file
+sbms_config.mk_jana_config(env)
 
 # build all src
 SConscript('src/SConscript', variant_dir="src/.%s" % (osname), exports='env osname', duplicate=0)
