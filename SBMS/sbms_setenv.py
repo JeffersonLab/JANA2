@@ -27,7 +27,7 @@ from stat import *
 def mk_setenv(env):
 	ofdir = '%s' % env.Dir(env['INSTALLDIR'])
 	ofname = '%s/setenv.csh' % ofdir
-	print 'sbms :Making setenv.csh in %s' % ofdir
+	print 'sbms : Making setenv.csh in %s' % ofdir
 
 	str = ''
 
