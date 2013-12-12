@@ -414,8 +414,6 @@ JApplication::~JApplication()
 	geometries.clear();
 	for(unsigned int i=0; i<calibrations.size(); i++)delete calibrations[i];
 	calibrations.clear();
-	for(unsigned int i=0; i<heartbeats.size(); i++)delete heartbeats[i];
-	heartbeats.clear();
 	for(unsigned int i=0; i<eventSourceGenerators.size(); i++)delete eventSourceGenerators[i];
 	eventSourceGenerators.clear();
 	for(unsigned int i=0; i<factoryGenerators.size(); i++)delete factoryGenerators[i];
@@ -713,7 +711,7 @@ jerror_t JApplication::RemoveProcessor(JEventProcessor *processor)
 //---------------------------------
 // AddJEventLoop
 //---------------------------------
-jerror_t JApplication::AddJEventLoop(JEventLoop *loop, double* &heartbeat)
+jerror_t JApplication::AddJEventLoop(JEventLoop *loop)
 {
 	/// Add a JEventLoop object and generate a complete set of factories
 	/// for it by calling the GenerateFactories method for each of the
@@ -721,13 +719,16 @@ jerror_t JApplication::AddJEventLoop(JEventLoop *loop, double* &heartbeat)
 	/// This is typically not called directly but rather, called by
 	/// the JEventLoop constructor.
 
+	// Create a new JThread object to represent this JEventLoop
+	JThread *jthread = new JThread(loop);
+
+	// Copy pointer to the jthread object into the JEventLoop
+	// so it can update the heartbeat
+	loop->jthread = jthread;
+
+	// Lock application-level mutex so we can use/modify it's members
 	WriteLock("app");
-	loops.push_back(loop);
-	
-	// We need the threads vector to stay in sync with the loops and heartbeats
-	// vectors so we push it on here even though it might seem more natural
-	// to do this from the main thread when this thread was created.
-	threads.push_back(pthread_self());
+	threads.push_back(jthread);
 
 	// Loop over all factory generators, creating the factories
 	// for this JEventLoop.
@@ -735,16 +736,9 @@ jerror_t JApplication::AddJEventLoop(JEventLoop *loop, double* &heartbeat)
 		factoryGenerators[i]->GenerateFactories(loop);
 	}
 	
-	// For the heartbeat, we use a double that the thread should
-	// set to zero each event. It will be added to periodically 
-	// in Run() (see below) by the main thread so as to keep track of
-	// the amount of time in seconds the thread has been inactive.
-	heartbeat = new double;
-	*heartbeat = 0.0;
-	heartbeats.push_back(heartbeat);
-	
+	// Release mutex
 	Unlock("app");
-
+	
 	return NOERROR;
 }
 
@@ -759,13 +753,12 @@ jerror_t JApplication::RemoveJEventLoop(JEventLoop *loop)
 
 	WriteLock("app");
 
-	for(unsigned int i=0; i<loops.size(); i++){
-		if(loops[i] == loop){
+	for(unsigned int i=0; i<threads.size(); i++){
+		JThread *jthread = threads[i];
+		if(jthread->loop == loop){
 			if(print_factory_report)RecordFactoryCalls(loop);
-			loops.erase(loops.begin()+i);
-			delete heartbeats[i];
-			heartbeats.erase(heartbeats.begin()+i);
-			threads_to_be_joined.push_back(threads[i]);
+
+			threads_to_be_joined.push_back(jthread);
 			threads.erase(threads.begin()+i);
 			break;
 		}
@@ -879,6 +872,22 @@ jerror_t JApplication::RemoveCalibrationGenerator(JCalibrationGenerator *generat
 	if(iter != f.end())f.erase(iter);
 
 	return NOERROR;
+}
+
+//---------------------------------
+// GetJEventLoops
+//---------------------------------
+vector<JEventLoop*> JApplication::GetJEventLoops(void)
+{
+	/// Return STL vector of pointers to all active 
+	/// JEventLoop objects associated with this JApplication
+	vector<JEventLoop*> loops;
+	
+	pthread_mutex_lock(&threads_mutex);
+	for(int i; i<threads.size(); i++) loops.push_back(threads[i]->loop);
+	pthread_mutex_unlock(&threads_mutex);
+	
+	return loops;
 }
 
 //---------------------------------
@@ -1143,8 +1152,10 @@ void* LaunchThread(void* arg)
 {
 	/// This is a global function that is used to create
 	/// a new JEventLoop object which runs in its own thread.
+	
+	JApplication *app = (JApplication*)arg;
 
-	if(japp!=NULL && japp->GetQuittingStatus())return NULL; // in case quit has already been called
+	if(app!=NULL && app->GetQuittingStatus())return NULL; // in case quit has already been called
 	
 	// For stuck threads, we may need to cancel them at an arbitrary execution
 	// point so we set our cancel type to PTHREAD_CANCEL_ASYNCHRONOUS.
@@ -1153,19 +1164,17 @@ void* LaunchThread(void* arg)
 	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE, &oldstate);
 
 	// Create JEventLoop object. He automatically registers himself
-	// with the JApplication object. 
-	JEventLoop *eventLoop = new JEventLoop((JApplication*)arg);
+	// with the JApplication object in his constructor. 
+	JEventLoop *loop = new JEventLoop(app);
 	
 	// Add a cleanup routine to this thread so he can automatically
 	// de-register himself when the thread exits for any reason
-	pthread_cleanup_push(CleanupThread, (void*)eventLoop);
+	pthread_cleanup_push(CleanupThread, (void*)loop);
 
 	// Loop over events until done. Catch any jerror_t's thrown
 	try{
-		eventLoop->Loop();
-		eventLoop->GetJApplication()->Lock();
+		loop->Loop();
 		jout<<"Thread 0x"<<hex<<(unsigned long)pthread_self()<<dec<<" completed gracefully"<<endl;
-		eventLoop->GetJApplication()->Unlock();
 	}catch(exception &e){
 		_DBG_<<ansi_bold<<" EXCEPTION caught for thread "<<pthread_self()<<" : "<<e.what()<< ansi_normal << endl;
 	}
@@ -1285,7 +1294,7 @@ jerror_t JApplication::Init(void)
 	// that were not present before we were called. Any JEventLoop objects
 	// that exist would not have these in their list of prcessors. Refresh
 	// the lists for all event loops
-	for(unsigned int i=0; i<loops.size(); i++)loops[i]->RefreshProcessorListFromJApplication();
+	for(unsigned int i=0; i<threads.size(); i++)threads[i]->loop->RefreshProcessorListFromJApplication();
 
 	// Launch event buffer thread
 	if(create_event_buffer_thread)
@@ -1389,43 +1398,43 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 		last_NEvents = NEvents; // NEvents counts only events that have been extracted from the buffer (not the ones still in the buffer)
 		
 		// If show_ticker is set, then update the screen with the rate(s)
-		if(show_ticker && (!batch_mode) && loops.size()>0)PrintRate();
+		if(show_ticker && (!batch_mode) && threads.size()>0)PrintRate();
 		
 		if(SIGINT_RECEIVED)Quit();
 		if(SIGINT_RECEIVED>=3)break;
 		
-		// Here we lock the app mutex before looping over the heartbeats since a thread
-		// could finish at any time, changing the heartbeats vector
-		pthread_rwlock_wrlock(app_rw_lock);
+		// Lock the app so we can check system health (heartbeats etc.)
+		pthread_rwlock_rdlock(app_rw_lock);
 		
 		// Add time slept to all heartbeats
 		double rem_time = (double)rem.tv_sec + (1.0E-9)*(double)rem.tv_nsec;
 		double slept_time = sleep_time - rem_time;
-		for(unsigned int i=0;i<heartbeats.size();i++){
-			double *hb = heartbeats[i];
+		for(unsigned int i=0;i<threads.size();i++){
+			double *hb = &threads[i]->heartbeat;
 			*hb += slept_time;
 
 			// Choose timeout depending on whether the first event for all threads
 			// has completed or not.
 			double timeout = last_NEvents<=this->Nthreads ? THREAD_TIMEOUT_FIRST_EVENT:THREAD_TIMEOUT;
 
-			if(monitor_heartbeat && (*hb > (timeout-1.0)+sleep_time)){
+			if(monitor_heartbeat && ((*hb-slept_time) > timeout)){
 				// Thread hasn't done anything for more than timeout seconds. 
 				// Remove it from monitoring lists.
-				JEventLoop *loop = *(loops.begin()+i);
+				JEventLoop *loop = (*(threads.begin()+i))->loop;
 				JEvent &event = loop->GetJEvent();
-				jerr<<" Thread "<<i<<" hasn't responded in "<<*hb<<" seconds.";
+				jerr<<" Thread "<<i<<" ("<<hex<<threads[i]->thread_id<<dec<<") hasn't responded in "<<*hb<<" seconds.";
 				jerr<<" (run:event="<<event.GetRunNumber()<<":"<<event.GetEventNumber()<<")";
 				jerr<<" Cancelling ..."<<endl;
 				
 				// If we haven't processed one event per thread yet, then assume we
 				// are stuck on the first event and so quit the whole program.
 				if(last_NEvents<this->Nthreads){
+					jerr<<"    -- stalled in first Nthreads events. Killing all threads ..." << endl;
 					Quit(); // nicely tell all threads to quit (set their "quit" flag.
 					for(unsigned int j=0;j<threads.size();j++){
-						pthread_kill(threads[j], SIGHUP); // not-so-nicely kill all threads
+						pthread_kill(threads[j]->thread_id, SIGHUP); // not-so-nicely kill all threads
 					}
-					break; // stop checking heartbeats this time around
+					break; // everyone is dying now so stop checking heartbeats
 				}
 				
 				// At this point, we need to kill the stalled thread. One would normally
@@ -1438,7 +1447,7 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 				// and thereby invoking the CleanupThread() routine. I don't actually
 				// understand why we don't run into the same mutex problem this way
 				// but empirically, it seems to work.   3/5/2009  DL
-				pthread_kill(threads[i], SIGHUP);
+				pthread_kill(threads[i]->thread_id, SIGHUP);
 				
 				// When we kill a thread that has stalled we have to go to some special
 				// effort to make sure a replacement gets relaunched. What can happen
@@ -1503,7 +1512,7 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 
 				// We need to wait for the new thread to create a new JEventLoop
 				// If we don't wait for this here, then control may fall to the
-				// end of the while loop that checks loops.size() before the new
+				// end of the while loop that checks threads.size() before the new
 				// loop is added, causing the program to finish prematurely.
 				for(int j=0; j<40; j++){
 					struct timespec req, rem;
@@ -1512,11 +1521,18 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 					rem.tv_sec = rem.tv_nsec = 0;
 					pthread_rwlock_unlock(app_rw_lock);
 					nanosleep(&req, &rem);
-					pthread_rwlock_unlock(app_rw_lock); // Re-lock the mutex
+					pthread_rwlock_rdlock(app_rw_lock); // Re-lock the mutex
 					// Our new thread will be in "threads" once it's up and running
-					if(find(threads.begin(), threads.end(), thr)!=threads.end()){
-						break;
+					bool found_thread = false;
+					for(int k=0; k<threads.size(); k++){
+						if(threads[k]->thread_id == thr){
+							found_thread = true;
+							break;
+						}
 					}
+					
+					// If the new thread has launched, then stop waiting for it
+					if(found_thread) break;
 				}
 			}
 		}
@@ -1529,19 +1545,25 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 			if( !SIGINT_RECEIVED && !quitting){
 						
 				jerr<<" Removing thread (to reduce number of threads) ..."<<endl;
-				pthread_kill(threads[i], SIGHUP);
+				pthread_kill(threads[i]->thread_id, SIGHUP);
 			}
 		}
+
+		// At this point we may need to write to the threads_to_be_joined
+		// vector so we need to turn the read lock into a write lock
+		pthread_rwlock_unlock(app_rw_lock);
+		pthread_rwlock_wrlock(app_rw_lock);
 
 		// Merge up threads that have already finished processing
 		for(unsigned int i=0; i<threads_to_be_joined.size(); i++){
 			void *ret;
-			jout<<"Merging thread "<<i<<" ..."<<endl; jout.flush();
-			pthread_join(threads_to_be_joined[i], &ret);
+			jout<<"Merging thread "<<i<<" (0x"<<hex<<threads_to_be_joined[i]->thread_id<<dec<<") ..."<<endl; jout.flush();
+			pthread_join(threads_to_be_joined[i]->thread_id, &ret);
+			delete threads_to_be_joined[i];
 		}
 		threads_to_be_joined.clear();
 		
-		// We're done with the heartbeats etc. vectors for now. Unlock the mutex.
+		// We're done with the threads, ... vectors for now. Unlock the mutex.
 		pthread_rwlock_unlock(app_rw_lock);
 
 		// Check for event sources that have finished so we can delete the JEventSource
@@ -1568,7 +1590,7 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 		// iteration, then we do not exit the loop until the next iteration.
 		// That will give us a chance to launch the replacement thread and
 		// allow it to die naturally before we stop event processing.
-	}while(loops.size() > 0 || Nstalled_threads>0);
+	}while(threads.size() > 0 || Nstalled_threads>0);
 	
 	// Only be nice about exiting if the user wasn't insistent
 	if(SIGINT_RECEIVED<3){	
@@ -1578,16 +1600,16 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 		// Merge up threads that have already finished processing
 		for(unsigned int i=0; i<threads_to_be_joined.size(); i++){
 			void *ret;
-			jout<<"Merging thread "<<i<<" ..."<<endl; jout.flush();
-			pthread_join(threads_to_be_joined[i], &ret);
+			jout<<"Merging thread "<<i<<" (0x"<<hex<<threads_to_be_joined[i]->thread_id<<dec<<") ...."<<endl; jout.flush();
+			pthread_join(threads_to_be_joined[i]->thread_id, &ret);
 		}
 		threads_to_be_joined.clear();
 		
 		// Merge up all the threads
 		for(unsigned int i=0; i<threads.size(); i++){
 			void *ret;
-			jout<<"Merging thread "<<i<<" ..."<<endl; jout.flush();
-			pthread_join(threads[i], &ret);
+			jout<<"Merging thread "<<i<<" (0x"<<hex<<threads[i]->thread_id<<dec<<") ....."<<endl; jout.flush();
+			pthread_join(threads[i]->thread_id, &ret);
 		}
 		threads.clear();
 		
@@ -1719,9 +1741,9 @@ void JApplication::Pause(void)
 	/// Pause all JEventLoops to stop event processing. Events currently
 	/// being processed will be finished and the loops will pause at the
 	/// beginning of the next event.
-	vector<JEventLoop*>::iterator iter = loops.begin();
-	for(; iter!=loops.end(); iter++){
-		(*iter)->Pause();
+	vector<JThread*>::iterator iter = threads.begin();
+	for(; iter!=threads.end(); iter++){
+		(*iter)->loop->Pause();
 	}
 }
 
@@ -1731,9 +1753,9 @@ void JApplication::Pause(void)
 void JApplication::Resume(void)
 {
 	/// Resume event processing for all threads.
-	vector<JEventLoop*>::iterator iter = loops.begin();
-	for(; iter!=loops.end(); iter++){
-		(*iter)->Resume();
+	vector<JThread*>::iterator iter = threads.begin();
+	for(; iter!=threads.end(); iter++){
+		(*iter)->loop->Resume();
 	}
 }
 
@@ -1747,9 +1769,9 @@ void JApplication::Quit(void)
 	/// will only cause the program to quit if all JEventLoops quit cleanly.
 	quitting = true;
 	jout<<endl<<"Telling all threads to quit ..."<<endl;
-	vector<JEventLoop*>::iterator iter = loops.begin();
-	for(; iter!=loops.end(); iter++){
-		(*iter)->Quit();
+	vector<JThread*>::iterator iter = threads.begin();
+	for(; iter!=threads.end(); iter++){
+		(*iter)->loop->Quit();
 	}
 }
 
@@ -2307,7 +2329,7 @@ jerror_t JApplication::PrintResourceReport(void)
 //---------------------------------
 void JApplication::GetInstantaneousThreadRates(map<pthread_t,double> &rates_by_thread)
 {
-	for(unsigned int i=0; i<loops.size(); i++)rates_by_thread[loops[i]->GetPThreadID()] = loops[i]->GetInstantaneousRate();
+	for(unsigned int i=0; i<threads.size(); i++)rates_by_thread[threads[i]->loop->GetPThreadID()] = threads[i]->loop->GetInstantaneousRate();
 }
 
 //---------------------------------
@@ -2315,7 +2337,7 @@ void JApplication::GetInstantaneousThreadRates(map<pthread_t,double> &rates_by_t
 //---------------------------------
 void JApplication::GetIntegratedThreadRates(map<pthread_t,double> &rates_by_thread)
 {
-	for(unsigned int i=0; i<loops.size(); i++)rates_by_thread[loops[i]->GetPThreadID()] = loops[i]->GetIntegratedRate();
+	for(unsigned int i=0; i<threads.size(); i++)rates_by_thread[threads[i]->loop->GetPThreadID()] = threads[i]->loop->GetIntegratedRate();
 }
 
 //---------------------------------
@@ -2323,7 +2345,7 @@ void JApplication::GetIntegratedThreadRates(map<pthread_t,double> &rates_by_thre
 //---------------------------------
 void JApplication::GetThreadNevents(map<pthread_t,unsigned int> &Nevents_by_thread)
 {
-	for(unsigned int i=0; i<loops.size(); i++)Nevents_by_thread[loops[i]->GetPThreadID()] = loops[i]->GetNevents();
+	for(unsigned int i=0; i<threads.size(); i++)Nevents_by_thread[threads[i]->loop->GetPThreadID()] = threads[i]->loop->GetNevents();
 }
 
 //---------------------------------
@@ -2334,7 +2356,7 @@ pthread_t JApplication::GetThreadID(unsigned int index)
 	pthread_t thr = 0x0;
 
 	WriteLock("app");
-	if(index<threads.size())thr = threads[index];
+	if(index<threads.size())thr = threads[index]->thread_id;
 	Unlock("app");
 	
 	return thr;
@@ -2347,7 +2369,7 @@ void JApplication::SignalThreads(int signo)
 {
 	// Send signal "signo" to all processing threads.
 	for(unsigned int i=0; i<threads.size(); i++){
-		pthread_kill(threads[i], signo);
+		pthread_kill(threads[i]->thread_id, signo);
 	}
 }
 
@@ -2360,8 +2382,8 @@ bool JApplication::KillThread(pthread_t thr, bool verbose)
 
 	WriteLock("app");
 	for(unsigned int i=0; i<threads.size(); i++){
-		if(threads[i]==thr){
-			pthread_kill(threads[i], SIGHUP);
+		if(threads[i]->thread_id==thr){
+			pthread_kill(thr, SIGHUP);
 			found_thread = true;
 			break;
 		}

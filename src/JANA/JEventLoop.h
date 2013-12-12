@@ -21,13 +21,14 @@ using std::vector;
 using std::string;
 using std::type_info;
 
-#include "jerror.h"
-#include "JObject.h"
-#include "JException.h"
-#include "JEvent.h"
-#include "JFactory_base.h"
-#include "JCalibration.h"
-#include "JGeometry.h"
+#include <JANA/jerror.h>
+#include <JANA/JObject.h>
+#include <JANA/JException.h>
+#include <JANA/JEvent.h>
+#include <JANA/JThread.h>
+#include <JANA/JFactory_base.h>
+#include <JANA/JCalibration.h>
+#include <JANA/JGeometry.h>
 #include <JANA/JResourceManager.h>
 #include <JANA/JStreamLog.h>
 
@@ -46,6 +47,8 @@ class JEventProcessor;
 
 class JEventLoop{
 	public:
+	
+		friend class JApplication;
 	
 		enum data_source_t{
 			DATA_NOT_AVAILABLE = 1,
@@ -160,7 +163,7 @@ class JEventLoop{
 		vector<error_call_stack_t> error_call_stack;
 		vector<call_stack_t> call_stack;
 		JApplication *app;
-		double *heartbeat;
+		JThread *jthread;
 		bool initialized;
 		bool print_parameters_called;
 		int pause;

@@ -69,7 +69,7 @@ class JApplication{
 		              virtual jerror_t ReadEvent(JEvent &event); ///< Get the next event from the source.
 		                      jerror_t AddProcessor(JEventProcessor *processor, bool delete_me=false); ///< Add a JEventProcessor.
 		                      jerror_t RemoveProcessor(JEventProcessor *processor); ///< Remove a JEventProcessor
-		                      jerror_t AddJEventLoop(JEventLoop *loop, double* &heartbeat); ///< Add a JEventLoop
+		                      jerror_t AddJEventLoop(JEventLoop *loop); ///< Add a JEventLoop
 		                      jerror_t RemoveJEventLoop(JEventLoop *loop); ///< Remove a JEventLoop
 		                      jerror_t AddEventSource(string src_name, bool add_to_front=false); ///< Add an event source (e.g. filename) to list to be processed
 		                      jerror_t AddEventSourceGenerator(JEventSourceGenerator*); ///< Add a JEventSourceGenerator
@@ -79,7 +79,7 @@ class JApplication{
 		                      jerror_t AddCalibrationGenerator(JCalibrationGenerator*); ///< Add a JCalibrationGenerator
 		                      jerror_t RemoveCalibrationGenerator(JCalibrationGenerator*); ///< Remove a JCalibrationGenerator
 		      vector<JEventProcessor*> GetProcessors(void){return processors;} ///< Get the current list of JFactoryGenerators
-		           vector<JEventLoop*> GetJEventLoops(void){return loops;} ///< Get the current list of JEventLoops
+		           vector<JEventLoop*> GetJEventLoops(void); ///< Get the current list of JEventLoops
 		vector<JEventSourceGenerator*> GetEventSourceGenerators(void){return eventSourceGenerators;} ///< Get the current list of JEventSourceGenerators
                  vector<JEventSource*> GetJEventSources(void); ///< Get pointers to all JEventSource objects.
                   template<class T> T* GetFirstJEventSource(void); ///< Return pointer to first source of specified type or NULL if none exist. Call like this: ptr = GetFirstJEventSource<JEventSourceMyType>();
@@ -164,10 +164,8 @@ class JApplication{
 		unsigned int Nsources_deleted;
 	
 		vector<JEventProcessor*> processors;
-		vector<JEventLoop*> loops;
 		vector<JFactory_base*> factories_to_delete;
 		pthread_mutex_t factories_to_delete_mutex;
-		vector<double*> heartbeats;
 		map<pthread_t, map<string, unsigned int> > Nfactory_calls;
 		map<pthread_t, map<string, unsigned int> > Nfactory_gencalls;
 		vector<pair<string,string> > auto_activated_factories;
@@ -211,8 +209,9 @@ class JApplication{
 		double avg_time;
 		double rate_instantaneous;
 		double rate_average;
-		vector<pthread_t> threads;
-		vector<pthread_t> threads_to_be_joined; // list of threads that are finished and should be joined
+		pthread_mutex_t threads_mutex;
+		vector<JThread*> threads;
+		vector<JThread*> threads_to_be_joined; // list of threads that are finished and should be joined
 		int Ncores;				///< Number of processors currently online (sysconf(_SC_NPROCESSORS_ONLN))
 		int Nthreads;			///< Number of desired processing threads. This can be changed during event processing via SetNtheads(N)
 		bool print_factory_report;

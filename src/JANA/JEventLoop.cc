@@ -22,6 +22,7 @@ using namespace std;
 #include "JEvent.h"
 #include "JFactory.h"
 #include "JStreamLog.h"
+#include "JException.h"
 using namespace jana;
 
 #ifndef ansi_escape
@@ -36,6 +37,9 @@ jmp_buf SETJMP_ENV;
 void thread_HUP_sighandler(int sig)
 {
 	jerr<<"Caught HUP signal for thread 0x"<<hex<<pthread_self()<<dec<<" thread exiting..."<<endl;
+	//string prev_frame = JException::getStackTrace(false, 20);
+	//if(prev_frame.size()>0) prev_frame.erase(prev_frame.size()-1);
+	//jerr<<" (was in " << prev_frame << ")" << endl;
 	if(japp){
 		// Unlock any registered mutexes
 		vector<pthread_mutex_t*> &mutexes = japp->GetHUPMutexes();
@@ -63,7 +67,8 @@ JEventLoop::JEventLoop(JApplication *app)
 	signal(SIGHUP, thread_HUP_sighandler);
 
 	this->app = app;
-	app->AddJEventLoop(this, heartbeat);
+	jthread = NULL; // should be overwritten in AddJEventLoop
+	app->AddJEventLoop(this);
 	event.SetJEventLoop(this);
 	initialized = false;
 	print_parameters_called = false;
@@ -96,8 +101,8 @@ JEventLoop::JEventLoop(JApplication *app)
 //---------------------------------
 JEventLoop::~JEventLoop()
 {
-	// Remove us from the JEventLoop's list. The application exits
-	// when there are no more JEventLoops registered with it.
+	/// Remove us from the JEventLoop's list. The application exits
+	/// when there are no more JEventLoops registered with it.
 	app->RemoveJEventLoop(this);
 
 	// Call all factories' fini methods
@@ -433,11 +438,11 @@ jerror_t JEventLoop::Loop(void)
 	
 	do{
 		// Let main thread know we're alive
-		*heartbeat = 0.0;
+		if(jthread) jthread->heartbeat = 0.0;
 
 		// Handle pauses and quits
 		while(pause){
-			*heartbeat = 0.0;	// Let main thread know we're alive
+			if(jthread) jthread->heartbeat = 0.0;	// Let main thread know we're alive
 			usleep(500000);
 			if(quit)break;
 		}
