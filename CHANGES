@@ -1,12 +1,15 @@
 
-Changes in version 0.6.7
+Changes in version 0.7.0
 
+- Added JThread class to clean up internal bookkeeping. (Simulataneously
+  fixed some bugs that may have been causing rare stalls or crashes.)
+- Added support for user references
+- Switched to scons build system
 - Updated janarate plugin to be more useful in determining ultimate event rates
 - Replaced use of typeof with __typeof__ to appease c++11 compilers
 - Fixed bug where event-starved processing threads chewed up CPU unneccesarily
 - Fixed bug in SetNthreads call where program may exit if MAX_RELAUNCH_THREADS is 0
 - Fixed bug in janadot where time normalization was incorrect
-- Added support for user references
 - Fixed bug where events processes with EVENTS_TO_KEEP was sometimes off by one
 
 Changes in version 0.6.6
