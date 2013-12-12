@@ -3,6 +3,11 @@ import os
 
 Import('env osname')
 
+# Install unit_test executables in "test" instead of "bin"
+bin = "%s/test" % (env['INSTALLDIR'])
+env.Replace(BINDIR = bin)
+
+
 # Loop over libraries, building each
 subdirs = ['resource_test', 'thread_relaunch', 'user_references']
 SConscript(dirs=subdirs, exports='env osname', duplicate=0)
