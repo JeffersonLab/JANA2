@@ -73,7 +73,7 @@ class JException : public std::exception
 		virtual std::string toString(void) const throw();
 		virtual std::string toString(bool includeTrace) const throw();
 		virtual const char* what(void) const throw();
-		static std::string getStackTrace(void);
+		static std::string getStackTrace(bool demangle_names=true, size_t max_frames=1024);
 		
 		//JException(std::string msg="");
 		//const char* what() const throw();

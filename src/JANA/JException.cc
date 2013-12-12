@@ -149,11 +149,15 @@ const char *JException::what(void) const throw() {
  *
  * @return String containing stack trace
  */
-string JException::getStackTrace(void) {
+string JException::getStackTrace(bool demangle_names, size_t max_frames) {
 
 #ifndef TRACEABLE_OS
 	return string("");
 #else
+
+	// cap max_frames a user can ask for at 1024
+	if(max_frames > 1024) max_frames = 1024;
+
   size_t dlen = 1023;
   char dname[1024];
   void *trace[1024];
@@ -162,15 +166,22 @@ string JException::getStackTrace(void) {
   
   // get trace messages
   int trace_size = backtrace(trace,1024);
-  if(trace_size>1024)trace_size=1024;
+  if(trace_size>1024) trace_size=1024;
   char **messages = backtrace_symbols(trace, trace_size);
   
   // de-mangle and create string
   stringstream ss;
-  for(int i=0; i<trace_size; ++i) {
+  int start_frame = trace_size - max_frames;
+  if(start_frame < 0) start_frame = 0;
+  for(int i=start_frame; i<trace_size; ++i) {
     
 		if(!messages[i])continue;
 		string message(messages[i]);
+		
+		if(!demangle_names){
+			ss << "   " << message << endl;
+			continue;
+		}
      
 		// Find mangled name.
 		//
