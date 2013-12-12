@@ -73,26 +73,13 @@ def mk_setenv(env):
 			str += 'endif\n'
 			str += '\n'
 	
-	# HDDS
-	str += '# HDDS\n'
-	str += 'setenv HDDS_HOME %s\n' % os.getenv('HDDS_HOME', '$HOME/hdds')
-	str += '\n'
-
 	# JANA
 	str += '# JANA\n'
-	str += 'setenv JANA_HOME %s\n' % os.getenv('JANA_HOME', '$HOME/jana')
+	str += 'setenv JANA_HOME %s\n' % env.Dir(env['INSTALLDIR']).srcnode().abspath
 	str += 'setenv JANA_CALIB_URL %s\n' % os.getenv('JANA_CALIB_URL', '$HOME/halld/calib')
 	str += 'setenv JANA_GEOMETRY_URL xmlfile://${HDDS_HOME}/main_HDDS.xml\n'
-	str += 'setenv JANA_PLUGIN_PATH ${JANA_HOME}/lib\n'
+	str += 'setenv JANA_PLUGIN_PATH ${JANA_HOME}/plugins\n'
 	str += 'setenv PATH ${JANA_HOME}/bin:${PATH}\n'
-	str += '\n'
-
-	# HALLD
-	str += '# HALLD\n'
-	str += 'setenv HALLD_HOME %s\n' % os.getenv('HALLD_HOME', '$HOME/halld')
-	str += 'setenv BMS_OSNAME %s\n' % env['OSNAME']
-	str += 'setenv PATH ${HALLD_HOME}/${BMS_OSNAME}/bin:${PATH}\n'
-	str += 'setenv JANA_PLUGIN_PATH ${HALLD_HOME}/${BMS_OSNAME}/plugins:${JANA_PLUGIN_PATH}\n'
 	str += '\n'
 
 	# CCDB
@@ -107,35 +94,22 @@ def mk_setenv(env):
 		str += '\n'
 
 	# ROOT
-	str += '# ROOT\n'
-	str += 'setenv ROOTSYS %s\n' % os.getenv('ROOTSYS', '$HOME/root')
-	str += 'setenv PATH ${ROOTSYS}/bin:${PATH}\n'
-	str += 'setenv %s ${ROOTSYS}/lib:${%s}\n' % (LDLPV, LDLPV)
-	str += '\n'
-
-	# CERNLIB
-	cern = os.getenv('CERN')
-	if cern != None:
-		str += '# CERNLIB\n'
-		str += 'setenv CERN %s\n' % cern
-		str += 'setenv CERN_LEVEL %s\n' % os.getenv('CERN_LEVEL', '2006')
-		str += 'setenv PATH ${CERN}/${CERN_LEVEL}/bin:${PATH}\n'
-		str += 'setenv %s ${CERN}/${CERN_LEVEL}/lib:${%s}\n' % (LDLPV, LDLPV)
-		str += '\n'
-
-	# Java
-	javaroot = os.getenv('JAVAROOT')
-	if javaroot != None:
-		str += '# Java\n'
-		str += 'setenv JAVAROOT %s\n' % javaroot
+	rootsys = os.getenv('ROOTSYS')
+	if rootsys != None:
+		str += '# ROOT\n'
+		str += 'setenv ROOTSYS %s\n' % rootsys
+		str += 'setenv PATH ${ROOTSYS}/bin:${PATH}\n'
+		str += 'setenv %s ${ROOTSYS}/lib:${%s}\n' % (LDLPV, LDLPV)
 		str += '\n'
 
 	# Xerces
-	str += '# Xerces\n'
-	str += 'setenv XERCESCROOT %s\n' % os.getenv('XERCESCROOT', '$HOME/xerces')
-	str += 'setenv PATH ${XERCESCROOT}/bin:${PATH}\n'
-	str += 'setenv %s ${XERCESCROOT}/lib:${%s}\n' % (LDLPV, LDLPV)
-	str += '\n'
+	xercescroot = os.getenv('XERCESCROOT')
+	if xercescroot != None:
+		str += '# Xerces\n'
+		str += 'setenv XERCESCROOT %s\n' % xercescroot
+		str += 'setenv PATH ${XERCESCROOT}/bin:${PATH}\n'
+		str += 'setenv %s ${XERCESCROOT}/lib:${%s}\n' % (LDLPV, LDLPV)
+		str += '\n'
 
 	# Make sure output directory eists
 	try:
