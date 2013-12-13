@@ -30,6 +30,22 @@ import datetime
 import distutils
 from stat import *
 
+##################################
+# which
+#
+# small utility to find if a specified program is in our PATH
+# (copied from the web)
+##################################
+def which(program):
+	def is_exe(fpath):
+		return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+		
+	for path in os.environ["PATH"].split(os.pathsep):
+		path = path.strip('"')
+		exe_file = os.path.join(path, program)
+		if is_exe(exe_file):
+			return exe_file
+	return None
 
 ##################################
 # mk_jana_config_h
@@ -143,7 +159,7 @@ def mk_jana_config_script(env):
 	MYSQL_CFLAGS = ''
 	MYSQL_LDFLAGS = ''
 	MYSQL_VERSION = ''
-	mysql_config = distutils.spawn.find_executable('mysql_config')
+	mysql_config = which('mysql_config')
 	if mysql_config != None:
 		HAVE_MYSQL = 1
 		MYSQL_CFLAGS = subprocess.Popen(["mysql_config", "--cflags"], stdout=subprocess.PIPE).communicate()[0][:-1]
@@ -154,7 +170,7 @@ def mk_jana_config_script(env):
 	HAVE_CURL = 0
 	CURL_CFLAGS = ''
 	CURL_LDFLAGS = ''
-	curl_config = distutils.spawn.find_executable('curl-config')
+	curl_config = which('curl-config')
 	if curl_config != None:
 		HAVE_CURL = 1
 		CURL_CFLAGS = subprocess.Popen(["curl-config", "--cflags"], stdout=subprocess.PIPE).communicate()[0][:-1]
