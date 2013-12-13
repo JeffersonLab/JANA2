@@ -86,6 +86,9 @@ class JFactory_base:public JEventProcessor{
 		/// Find object pointer in factory's _data vector and return it
 		virtual const JObject* GetByID(JObject::oid_t id)=0;
 
+		/// Copy given object pointers into JFactory class (uses dynamic_cast to guarantee correct type)
+		virtual jerror_t CopyTo(vector<JObject*> &data)=0;
+
 		/// Used by JEventLoop to give a pointer back to itself
 		void SetJEventLoop(JEventLoop *loop){this->eventLoop=loop;}
 		
