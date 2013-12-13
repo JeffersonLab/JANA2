@@ -8,20 +8,33 @@
 JStreamLog jout(std::cout, "JANA >>");
 JStreamLog jerr(std::cerr, "JANA ERROR>>");
 
-JStreamLog::JStreamLog(std::streambuf* buf, const char* tag) :
+JStreamLog::JStreamLog(std::streambuf* buf, const char* tag) : own_rdbuf(true),
 std::ostream(new JStreamLogBuffer(buf, tag))
 {}
 
-JStreamLog::JStreamLog(const std::ostream& os, const char* tag) :
+JStreamLog::JStreamLog(const std::ostream& os, const char* tag) : own_rdbuf(true),
 std::ostream(new JStreamLogBuffer(os.rdbuf(), tag))
 {}
 
-JStreamLog::JStreamLog(const std::ostream& os, const std::string& tag) :
+JStreamLog::JStreamLog(const std::ostream& os, const std::string& tag) : own_rdbuf(true),
 std::ostream(new JStreamLogBuffer(os.rdbuf(), tag.c_str()))
 {}
 
 JStreamLog::~JStreamLog() {
-	delete rdbuf();
+	// On some Linux systems (CentOS 6.4) it seems this destructor
+	// is called twice whenever a plugin is attached. I can only guess
+	// that the global-scope jout and jerr are somehow linked when 
+	// the plugin is attached, but their destructors are called both
+	// when they are detached and when the program exists. The problem
+	// manifests in a seg. fault at the very end of the program. To avoid
+	// this, we keep a flag that is set in the constructor and cleared
+	// here in the destructor to indicate that the JStreamLogBuffer has 
+	// been deleted already. Thus, we don't try deleting it a second time
+	// and therefore avoid the seg. fault.    Dec. 13, 2013  D.L.
+	if(own_rdbuf){
+		delete rdbuf();
+	}
+	own_rdbuf = false;
 }
 
 std::ostream& endMsg(std::ostream& dSL) {

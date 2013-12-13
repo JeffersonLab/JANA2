@@ -55,6 +55,8 @@ class JStreamLog : public std::ostream
 		void SetTimestampFlag(bool prepend_timestamp=true);
 		void SetThreadstampFlag(bool prepend_threadstamp=true);
 
+	private:
+		bool own_rdbuf; // keep track if we deleted the buffer object already
 };
 
 std::ostream& endMsg(std::ostream& os);
