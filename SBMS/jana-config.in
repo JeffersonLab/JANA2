@@ -1,0 +1,114 @@
+#!/bin/sh
+
+# Print some compiler options to aid in building programs that use
+# JANA as a 3rd party package.
+
+# Here we have a couple of options for dealing with various user
+# environments. Namely, if the user has set JANA_HOME, but it is
+# different from the installation directory pasted into this file
+# during installation, then we have to decide what to go with.
+#
+# Here we check if the JANA static library file exists using the
+# the hardwired installation directory value. If not, then we
+# look for the JANA_HOME environment variable. If that is not set
+# then just use /usr/local.
+
+# Hardwired values. Most of this is copied from BMS/Makefile.config.in
+# and helps document the settings when JANA was built so there is
+# the possibility of reusing them if needed when building against
+# this JANA installation.
+BMS_OSNAME="@BMS_OSNAME@"
+
+HAVE_MYSQL="@HAVE_MYSQL@"
+HAVE_XERCES="@HAVE_XERCES@"
+HAVE_ROOT="@HAVE_ROOT@"
+HAVE_CMSG="@HAVE_CMSG@"
+HAVE_CURL="@HAVE_CURL@"
+HAVE_CCDB="@HAVE_CCDB@"
+
+MYSQL_CFLAGS="@MYSQL_CFLAGS@"
+MYSQL_LDFLAGS="@MYSQL_LDFLAGS@"
+MYSQL_VERSION="@MYSQL_VERSION@"
+
+XERCES_CPPFLAGS="@XERCES_CPPFLAGS@"
+XERCES_LDFLAGS="@XERCES_LDFLAGS@"
+XERCES_LIBS="@XERCES_LIBS@"
+
+ROOTCFLAGS="@ROOTCFLAGS@"
+ROOTGLIBS="@ROOTGLIBS@"
+
+CMSG_CPPFLAGS="@CMSG_CPPFLAGS@"
+CMSG_LDFLAGS="@CMSG_LDFLAGS@"
+CMSG_LIBS="@CMSG_LIBS@"
+
+CURL_CFLAGS="@CURL_CFLAGS@"
+CURL_LDFLAGS="@CURL_LDFLAGS@"
+
+CCDB_CPPFLAGS="@CCDB_CPPFLAGS@"
+CCDB_LDFLAGS="@CCDB_LDFLAGS@"
+CCDB_LIBS="@CCDB_LIBS@"
+
+
+JANA_INSTALL_DIR="@JANA_INSTALL_DIR@"
+
+# Add flags and libraries from all 3rd party packages
+CPPFLAGS="${MYSQL_CFLAGS} ${XERCES_CPPFLAGS} ${ROOTCFLAGS} ${CMSG_CPPFLAGS} ${CURL_CFLAGS} ${CCDB_CPPFLAGS}"
+LDFLAGS="${MYSQL_LDFLAGS} ${XERCES_LDFLAGS} ${CMSG_LDFLAGS} ${CURL_LDFLAGS} ${CCDB_LDFLAGS}"
+LIBS="${XERCES_LIBS} ${ROOTGLIBS} ${CMSG_LIBS} ${CCDB_LIBS}"
+
+# If hardwired value doesn't point to libJANA.a, try JANA_HOME
+if [ ! -e "${JANA_INSTALL_DIR}/lib/libJANA.a" ]; then
+	if [ -n "${JANA_HOME:+x}" ]; then
+		JANA_INSTALL_DIR=${JANA_HOME}
+	else
+		JANA_INSTALL_DIR=/usr/local
+	fi
+fi
+
+# Loop over command line arguments
+while test $# -gt 0; do
+
+	case $1 in
+		--cflags)
+			mess="$mess -I${JANA_INSTALL_DIR}/include ${CPPFLAGS}"
+			;;
+	esac
+	case $1 in
+		--libs)
+			mess="$mess -L${JANA_INSTALL_DIR}/lib -lJANA ${LDFLAGS} ${LIBS}"
+			;;
+	esac
+	case $1 in
+		--jana-only)
+			CPPFLAGS=""
+			LDFLAGS=""
+			LIBS=""
+			;;
+	esac
+	case $1 in
+		--help)
+			echo " "
+			echo "Usage: "
+			echo "     jana-config [--jana-only] [--cflags] [--libs] "
+			echo " "
+			echo "Print compiler options useful to help build programs using this "
+			echo "JANA installation. "
+			echo " "
+			echo " --jana-only  Don't include arguments from packages JANA was built "
+			echo "              to include support for. Use this if you wish to specify "
+			echo "              these yourself. If you do include this option, it must "
+			echo "              come first in the arugment list as it will only affect "
+			echo "              options that follow it. "
+			echo " "
+			echo " --cflags     print flags needed to compile (not necessarily link) "
+			echo "              a program against this installation of JANA. "
+			echo " "
+			echo " --libs       print flags needed to link a program against this "
+			echo "              installation of JANA. "
+			mess=" "
+			;;
+	esac
+	shift
+done
+
+echo $mess

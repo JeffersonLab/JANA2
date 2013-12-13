@@ -73,7 +73,10 @@ sbms.ApplyPlatformSpecificSettings(env, arch)
 sbms.ApplyPlatformSpecificSettings(env, osname)
 
 # generate configuration header file
-sbms_config.mk_jana_config(env)
+sbms_config.mk_jana_config_h(env)
+
+# generate jana-config helper script
+sbms_config.mk_jana_config_script(env)
 
 # build all src
 SConscript('src/SConscript', variant_dir="src/.%s" % (osname), exports='env osname', duplicate=0)
