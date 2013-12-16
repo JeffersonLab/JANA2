@@ -140,7 +140,7 @@ def mk_jana_config_script(env):
 		HAVE_XERCES = 1
 		XERCES_CPPFLAGS = "-I%s/include -I%s/include/xercesc" % (XERCESCROOT, XERCESCROOT)
 		XERCES_LDFLAGS = "-L%s/lib" % (XERCESCROOT)
-		XERCES_LIBS = "-lxercesc"
+		XERCES_LIBS = "-lxerces-c"
 
 	# CMSG
 	HAVE_CMSG = 0
