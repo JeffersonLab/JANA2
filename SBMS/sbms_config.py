@@ -224,7 +224,7 @@ def mk_jana_config_script(env):
 		str = str.replace("@CURL_LDFLAGS@", '%s' % CURL_LDFLAGS)
 
 		str = str.replace("@CCDB_CPPFLAGS@", '%s' % CCDB_CPPFLAGS)
-		str = str.replace("@CCDB_LDFLAGS@", '%s' % CURL_LDFLAGS)
+		str = str.replace("@CCDB_LDFLAGS@", '%s' % CCDB_LDFLAGS)
 		str = str.replace("@CCDB_LIBS@", '%s' % CCDB_LIBS)
 
 		str = str.replace("@JANA_INSTALL_DIR@", '%s' % JANA_INSTALL_DIR)
