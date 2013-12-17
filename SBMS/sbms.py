@@ -468,16 +468,23 @@ def AddROOT(env):
 	AddLinkFlags(env, ROOT_LINKFLAGS)
 	env.AppendUnique(LIBS = "Geom")
 
+	# Define (DY)LD_LIBRARY_PATH env. var. name
+	LDLPV='LD_LIBRARY_PATH'
+	if os.getenv('DYLD_LIBRARY_PATH', 'unset') != 'unset': LDLPV='DYLD_LIBRARY_PATH'
+
 	# Create Builder that can convert .h file into _Dict.cc file
 	rootsys = os.getenv('ROOTSYS', '/usr/local/root/PRO')
-	env.AppendENVPath('LD_LIBRARY_PATH', '%s/lib' % rootsys )
+	env.AppendENVPath(LDLPV, '%s/lib' % rootsys )
 	if env['SHOWBUILD']==0:
 		rootcintaction = SCons.Script.Action("%s/bin/rootcint -f $TARGET -c $SOURCE" % (rootsys), 'ROOTCINT   [$SOURCE]')
 	else:
 		rootcintaction = SCons.Script.Action("%s/bin/rootcint -f $TARGET -c $SOURCE" % (rootsys))
 	bld = SCons.Script.Builder(action = rootcintaction, suffix='_Dict.cc', src_suffix='.h')
 	env.Append(BUILDERS = {'ROOTDict' : bld})
-	env.Append(LD_LIBRARY_PATH = os.environ['LD_LIBRARY_PATH'])
+	if LDLPV=='LD_LIBRARY_PATH':
+		env.Append(LD_LIBRARY_PATH = os.environ[LDLPV])
+	else:
+		env.Append(DYLD_LIBRARY_PATH = os.environ[LDLPV])
 
 	# Generate ROOT dictionary file targets for each header
 	# containing "ClassDef"
