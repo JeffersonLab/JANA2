@@ -320,6 +320,31 @@ def ApplyPlatformSpecificSettings(env, platform):
 		pass
 
 
+##################################
+# OptionallyBuild
+##################################
+def OptionallyBuild(env, dirs):
+
+	# This is used to add directories that are not built as
+	# part of the standard build, but can still be added
+	# to the dependency tree so that the user can build them
+	# by either invoking scons from within the specific source
+	# directory or by specifying it on the command line.
+	#
+	# 
+
+	subdirs = []
+	for dir in dirs:
+		add_dir = False
+		if env.GetLaunchDir().endswith(dir): add_dir = True
+		#if dir in env['COMMAND_LINE_TARGETS']: add_dir = True
+		for target in env['COMMAND_LINE_TARGETS']:
+			if target.endswith(dir): add_dir = True
+		
+		if add_dir : subdirs.extend([dir])
+
+	if len(subdirs)>0 : env.SConscript(dirs=subdirs, exports='env', duplicate=0)
+
 
 
 #===========================================================
@@ -462,49 +487,51 @@ def AddROOT(env):
 	# We also create a builder for ROOT dictionaries and add targets to
 	# build dictionaries for any headers with "ClassDef" in them.
 
-	ROOT_CFLAGS = subprocess.Popen(["root-config", "--cflags"], stdout=subprocess.PIPE).communicate()[0]
-	ROOT_LINKFLAGS = subprocess.Popen(["root-config", "--glibs"], stdout=subprocess.PIPE).communicate()[0]
-	AddCompileFlags(env, ROOT_CFLAGS)
-	AddLinkFlags(env, ROOT_LINKFLAGS)
-	env.AppendUnique(LIBS = "Geom")
+	if os.getenv('ROOTSYS') != None:
 
-	# Define (DY)LD_LIBRARY_PATH env. var. name
-	LDLPV='LD_LIBRARY_PATH'
-	if os.getenv('DYLD_LIBRARY_PATH', 'unset') != 'unset': LDLPV='DYLD_LIBRARY_PATH'
+		ROOT_CFLAGS = subprocess.Popen(["root-config", "--cflags"], stdout=subprocess.PIPE).communicate()[0]
+		ROOT_LINKFLAGS = subprocess.Popen(["root-config", "--glibs"], stdout=subprocess.PIPE).communicate()[0]
+		AddCompileFlags(env, ROOT_CFLAGS)
+		AddLinkFlags(env, ROOT_LINKFLAGS)
+		env.AppendUnique(LIBS = "Geom")
 
-	# Create Builder that can convert .h file into _Dict.cc file
-	rootsys = os.getenv('ROOTSYS', '/usr/local/root/PRO')
-	env.AppendENVPath(LDLPV, '%s/lib' % rootsys )
-	if env['SHOWBUILD']==0:
-		rootcintaction = SCons.Script.Action("%s/bin/rootcint -f $TARGET -c $SOURCE" % (rootsys), 'ROOTCINT   [$SOURCE]')
-	else:
-		rootcintaction = SCons.Script.Action("%s/bin/rootcint -f $TARGET -c $SOURCE" % (rootsys))
-	bld = SCons.Script.Builder(action = rootcintaction, suffix='_Dict.cc', src_suffix='.h')
-	env.Append(BUILDERS = {'ROOTDict' : bld})
-	if LDLPV=='LD_LIBRARY_PATH':
-		env.Append(LD_LIBRARY_PATH = os.environ[LDLPV])
-	else:
-		env.Append(DYLD_LIBRARY_PATH = os.environ[LDLPV])
+		# Define (DY)LD_LIBRARY_PATH env. var. name
+		LDLPV='LD_LIBRARY_PATH'
+		if os.getenv('DYLD_LIBRARY_PATH', 'unset') != 'unset': LDLPV='DYLD_LIBRARY_PATH'
 
-	# Generate ROOT dictionary file targets for each header
-	# containing "ClassDef"
-	#
-	# n.b. It seems if scons is run when the build directory doesn't exist,
-	# then the cwd is set to the source directory. Otherwise, it is the
-	# build directory. Since the headers will only exist in the source
-	# directory, we must temporarily cd into that to look for headers that
-	# we wish to generate dictionaries for. (This took a long time to figure
-	# out!)
-	curpath = os.getcwd()
-	srcpath = env.Dir('.').srcnode().abspath
-	if(int(env['SHOWBUILD'])>1):
-		print "---- Scanning for headers to generate ROOT dictionaries in: %s" % srcpath
-	os.chdir(srcpath)
-	for f in glob.glob('*.h*'):
-		if 'ClassDef' in open(f).read():
-			env.AppendUnique(ALL_SOURCES = env.ROOTDict(f))
-			if(int(env['SHOWBUILD'])>1):
-				print "       ROOT dictionary for %s" % f
-	os.chdir(curpath)
+		# Create Builder that can convert .h file into _Dict.cc file
+		rootsys = os.getenv('ROOTSYS', '/usr/local/root/PRO')
+		env.AppendENVPath(LDLPV, '%s/lib' % rootsys )
+		if env['SHOWBUILD']==0:
+			rootcintaction = SCons.Script.Action("%s/bin/rootcint -f $TARGET -c $SOURCE" % (rootsys), 'ROOTCINT   [$SOURCE]')
+		else:
+			rootcintaction = SCons.Script.Action("%s/bin/rootcint -f $TARGET -c $SOURCE" % (rootsys))
+		bld = SCons.Script.Builder(action = rootcintaction, suffix='_Dict.cc', src_suffix='.h')
+		env.Append(BUILDERS = {'ROOTDict' : bld})
+		if LDLPV=='LD_LIBRARY_PATH':
+			env.Append(LD_LIBRARY_PATH = os.environ[LDLPV])
+		else:
+			env.Append(DYLD_LIBRARY_PATH = os.environ[LDLPV])
+
+		# Generate ROOT dictionary file targets for each header
+		# containing "ClassDef"
+		#
+		# n.b. It seems if scons is run when the build directory doesn't exist,
+		# then the cwd is set to the source directory. Otherwise, it is the
+		# build directory. Since the headers will only exist in the source
+		# directory, we must temporarily cd into that to look for headers that
+		# we wish to generate dictionaries for. (This took a long time to figure
+		# out!)
+		curpath = os.getcwd()
+		srcpath = env.Dir('.').srcnode().abspath
+		if(int(env['SHOWBUILD'])>1):
+			print "---- Scanning for headers to generate ROOT dictionaries in: %s" % srcpath
+		os.chdir(srcpath)
+		for f in glob.glob('*.h*'):
+			if 'ClassDef' in open(f).read():
+				env.AppendUnique(ALL_SOURCES = env.ROOTDict(f))
+				if(int(env['SHOWBUILD'])>1):
+					print "       ROOT dictionary for %s" % f
+		os.chdir(curpath)
 
 

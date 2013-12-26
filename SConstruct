@@ -40,7 +40,8 @@ env.Replace(    INSTALLDIR    = installdir,
 				LIBDIR        = lib,
 				PLUGINSDIR    = plugins,
 				ALL_SOURCES   = [],        # used so we can add generated sources
-				SHOWBUILD     = SHOWBUILD)
+				SHOWBUILD     = SHOWBUILD,
+				COMMAND_LINE_TARGETS = COMMAND_LINE_TARGETS)
 
 # Use terse output unless otherwise specified
 if SHOWBUILD==0:
