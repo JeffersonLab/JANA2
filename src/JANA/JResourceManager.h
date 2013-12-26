@@ -107,6 +107,7 @@ class JResourceManager{
 
                     string GetResource(string namepath);
                     string GetLocalPathToResource(string namepath);
+        map<string,string> GetLocalResources(void){return resources;}
 
              JCalibration* GetJCalibration(void){return jcalib;}
 
