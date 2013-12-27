@@ -1,12 +1,17 @@
 
 import os
+import sbms
 
 Import('env osname')
 
 # Loop over plugins, building each
-subdirs = ['TestSpeed', 'janadot', 'janaroot', 'janactl', 'janarate', 'jana_iotest']
+subdirs = ['TestSpeed', 'janadot', 'janactl', 'jana_iotest']
 SConscript(dirs=subdirs, exports='env osname', duplicate=0)
 
-# Uncomment the following to include janaevio in the scons build
-#subdirs = ['janaevio']
-#SConscript(dirs=subdirs, exports='env osname', duplicate=0)
+# Only build janarate and janaroot if ROOTSYS is set
+if os.getenv('ROOTSYS') != None :
+	SConscript(dirs=['janaroot', 'janarate'], exports='env osname', duplicate=0)
+
+# Optional builds
+sbms.OptionallyBuild(env, ['janaevio'])
+
