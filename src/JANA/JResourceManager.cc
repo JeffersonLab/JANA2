@@ -6,6 +6,7 @@
 //
 
 #include <stdlib.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <sys/stat.h>
 #include <string.h>
@@ -42,6 +43,10 @@ JResourceManager::JResourceManager(JCalibration *jcalib, string resource_dir)
 	// Record JCalibration object used to get URLs of resources
 	// from calibration DB.
 	this->jcalib = jcalib;
+	
+	// Get list of existing namepaths so we can check if they exist
+	// without JCalibration subclass printing errors.
+	jcalib->GetListOfNamepaths(calib_namepaths);
 
 	// Derive location of resources directory on local system.
 	// This can be specified in several ways, given here in
@@ -153,6 +158,9 @@ string JResourceManager::GetResource(string namepath)
 		// calib DB. If neither "URL_base" nor "path" is present, then the
 		// URL string is checked and used. If it also does not exist, an
 		// exception is thrown.
+		//
+		// Once a URL and local path+filename have been determined, the
+		// local resources map is checked to see if the URL
 
 		bool has_URL_base = info.find("URL_base")!=info.end();
 		bool has_path = info.find("path")!=info.end();
@@ -178,32 +186,38 @@ string JResourceManager::GetResource(string namepath)
 			
 			string my_URL_base = info["URL_base"];
 			if(overide_URL_base) my_URL_base = URL_base;
-			if(my_URL_base[my_URL_base.length()-1] != '/') my_URL_base += "/";
+			if(my_URL_base.length()==0){
+				my_URL_base += "/";
+			}else{
+				if(my_URL_base[my_URL_base.length()-1] != '/') my_URL_base += "/";
+			}
 
 			path = info["path"];
-			if(path[0] == '/') path.erase(0,1);
+			if(path.length()>0)
+				if(path[0] == '/') path.erase(0,1);
 
 			URL = my_URL_base + path;
-			
-			fullpath = GetLocalPathToResource(path);
-		
+
+
 		// Option 2
 		}else if(has_URL){
 		
 			URL = info["URL"];
 
-			// Do we know about this resource?
-			pthread_mutex_lock(&resource_manager_mutex);
-			if(resources.find(URL) != resources.end()){
-				fullpath = GetLocalPathToResource(resources[URL]);
-			}
-			pthread_mutex_unlock(&resource_manager_mutex);
 
 		// Insufficient info for either option
 		}else{
 			string mess = string("Neither \"URL_base\",\"path\" pair nor \"URL\" exist in DB for resource \"")+namepath+"\" !";
 			throw JException(mess);
 		}
+
+		// Do we already have this resource?
+		// (possibly a different namepath uses the same URL)
+		pthread_mutex_lock(&resource_manager_mutex);
+		if(resources.find(URL) != resources.end()){
+			fullpath = resource_dir + "/" + resources[URL];
+		}
+		pthread_mutex_unlock(&resource_manager_mutex);
 
 		// Check if resource file exists.
 		bool file_exists = false;
@@ -212,21 +226,66 @@ string JResourceManager::GetResource(string namepath)
 			file_exists = true;
 			ifs.close();
 		}
+
+		// Flag to decide if we need to rewrite the info file later
+		bool rewrite_info_file = false;
 		
 		// If file doesn't exist, then download it
 		if(!file_exists){
 			GetResourceFromURL(URL, fullpath);
-			resources[URL] = path;
-		}
 
-		// Add entry to resources list if needed
-		bool rewrite_info_file = !file_exists; // always rewrite if we had to download
-		pthread_mutex_lock(&resource_manager_mutex);
-		if( resources.find(URL) == resources.end() ){
+			pthread_mutex_lock(&resource_manager_mutex);
 			resources[URL] = path;
+			pthread_mutex_unlock(&resource_manager_mutex);
+
 			rewrite_info_file = true;
+		}else{
+			// If file does exist, but URL is different, we'll need to download it,
+			// replacing the existing file. The resources map will then need to be updated.
+			bool redownload_required = false;
+			string other_URL = "";
+			map<string,string>::iterator iter;
+			pthread_mutex_lock(&resource_manager_mutex);
+			for(iter=resources.begin(); iter!=resources.end(); iter++){
+				if(iter->second == path){
+					if(iter->first != URL){
+						other_URL = iter->first;
+						redownload_required = true;
+						break;
+					}
+				}
+			}
+			pthread_mutex_unlock(&resource_manager_mutex);
+			
+			if(redownload_required){
+				// We must redownload the file, replacing the existing one.
+				// Remove old file first and warn the user this is happening.
+				jout << " Resource \"" << namepath << "\" already exists, but is" << endl;
+				jout << " associated with the URL: " << other_URL << endl;
+				jout << " Deleting existing file and downloading new version" << endl;
+				jout << " from: " << URL << endl;
+				unlink(fullpath.c_str());
+				
+				GetResourceFromURL(URL, fullpath);
+
+				pthread_mutex_lock(&resource_manager_mutex);
+				resources[URL] = path;
+			
+				// We need to remove any other entries from the resources
+				// map that refer to this file using a different URL since the file
+				// may have changed. 
+				for(iter=resources.begin(); iter!=resources.end(); /* don't increment here */){
+					map<string,string>::iterator tmp = iter; // remember iterator since we might erase it
+					iter++;
+					if(tmp->second == path){
+						if(tmp->first != URL)resources.erase(tmp);
+					}
+				}
+				pthread_mutex_unlock(&resource_manager_mutex);
+				
+				rewrite_info_file = true;
+			}
 		}
-		pthread_mutex_unlock(&resource_manager_mutex);
 
 		// Write new resource list to file
 		if(rewrite_info_file) WriteResourceInfoFile();
@@ -240,7 +299,22 @@ string JResourceManager::GetResource(string namepath)
 //---------------------------------
 string JResourceManager::GetLocalPathToResource(string namepath)
 {
-	return resource_dir + "/" + namepath;
+	 string fullpath = resource_dir + "/" + namepath;
+	 if(jcalib){
+	 	for(unsigned int i=0; i<calib_namepaths.size(); i++){
+	 		if(calib_namepaths[i] == namepath){
+	 			map<string,string> info;
+				jcalib->Get(namepath, info);
+				
+				if(info.find("path")!=info.end()){
+					fullpath = resource_dir + "/" + info["path"];
+				}
+				break;
+			}
+		}
+	}
+	 
+	 return fullpath;
 }
 
 //---------------------------------
