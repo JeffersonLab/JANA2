@@ -4,6 +4,6 @@ import os
 Import('env osname')
 
 # Loop over libraries, building each
-subdirs = ['jana', 'janadump', 'jcalibcopy', 'jcalibread', 'jgeomread', 'janactl']
+subdirs = ['jana', 'janadump', 'jcalibcopy', 'jcalibread', 'jgeomread', 'jresource', 'janactl']
 SConscript(dirs=subdirs, exports='env osname', duplicate=0)
 
