@@ -361,18 +361,27 @@ void Usage(void)
 	cout<<endl;
 	cout<<" For example:"<<endl;
 	cout<<endl;
-	cout<<"   jresource -a test/resources/bigfile https://halldsvn.jlab.org/repos/trunk/calib  Magnets/Solenoid/solenoid_1500"<<endl;
+	cout<<"   jresource -a test/resources/bigfile 0- https://halldsvn.jlab.org/repos/trunk/calib  Magnets/Solenoid/solenoid_1500"<<endl;
 	cout<<endl;
 	cout<<" This works by creating a temporary text file and running the \"ccdb\""<<endl;
 	cout<<"command with appropriate arguments in a subshell. It assumes that ccdb"<<endl;
-	cout<<"is in your PATH and CCDB_CONNECTION is set properly. The arguments are:"<<endl;
+	cout<<"is in your PATH and JANA_CALIB_URL is set properly. (Note that the"<<endl;
+	cout<<"CCDB_CONNECTION environment variable is replaced with whatever"<<endl;
+	cout <<"JANA_CALIB_URL is set to before running ccdb). The arguments are:"<<endl;
 	cout<<endl;
 	cout<<"   namepath   namepath corresponding to resource in CCDB"<<endl;
 	cout<<"   runrange   run range in CCDB format (i.e. 0- means all runs)"<<endl;
 	cout<<"   URL_base   beginning part of URL "<<endl;
 	cout<<"   path       ending part of URL and path of file relative to resource dir."<<endl;
 	cout<<"   variation  (optional) if omitted, \"default\" is used"<<endl;
-	
+	cout<<endl;
+	cout<<" The full URL to the resource is made by combining the URL_base and"<<endl;
+	cout<<"path arguments."<<endl;
+	cout<<endl;
+	cout<<"One should also note that the \"-a\" option is the only command"<<endl;
+	cout<<"that will ask for confirmation before execution. The ccdb commands"<<endl;
+	cout<<"that will be executed will be printed first so you can see what is"<<endl;
+	cout<<"about to be done before it actually happens."<<endl;
 	cout<<endl;
 	cout<<endl;
 

@@ -160,7 +160,9 @@ string JResourceManager::GetResource(string namepath)
 		// exception is thrown.
 		//
 		// Once a URL and local path+filename have been determined, the
-		// local resources map is checked to see if the URL
+		// local resources map is checked to see if the URL already exists
+		// here, possibly associated with another filename. If so, the
+		// other path+filename is used.
 
 		bool has_URL_base = info.find("URL_base")!=info.end();
 		bool has_path = info.find("path")!=info.end();
