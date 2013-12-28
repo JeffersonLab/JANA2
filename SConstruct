@@ -90,5 +90,6 @@ build_targets = map(str,BUILD_TARGETS)
 if len(build_targets)>0:
 	if 'install' in build_targets:
 		import sbms_setenv
-		sbms_setenv.mk_setenv(env)
+		sbms_setenv.mk_setenv_csh(env)
+		sbms_setenv.mk_setenv_bash(env)
 
