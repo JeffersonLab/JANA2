@@ -358,7 +358,7 @@ def OptionallyBuild(env, dirs):
 def AddJANA(env):
 	AddXERCES(env)
 	AddCCDB(env)
-	env.AppendUnique(LIBS=['JANA'])
+	env.AppendUnique(LIBS=['JANA','dl'])
 
 
 ##################################
