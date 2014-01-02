@@ -254,6 +254,7 @@ int main(int narg, char *argv[])
 		
 		// Delete temporary file
 		unlink(".jresource_tmp");
+		unlink(tmpfile.c_str());
 	}
 	
 	delete app;
