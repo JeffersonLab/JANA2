@@ -170,9 +170,25 @@ int main(int narg, char *argv[])
 			exit(-2);
 		}
 		
+		// Download the file to get the md5 checksum
+		string URL = ADD_RESOURCE_URL_BASE + "/" + ADD_RESOURCE_PATH;
+		string tmpfile = ".jresource_tmp_data_file";
+		try{
+			cout<<"Testing resource URL by downloading resource:"<<endl;
+			resman->GetResourceFromURL(URL, tmpfile);
+		}catch(JException &e){
+			cerr<<"--- Error getting resource ---"<<endl;
+			cerr<< e.toString() << endl;
+			ofs.close();
+			unlink(".jresource_tmp");
+			exit(-1);
+		}
+		string md5 = Get_MD5(tmpfile);
+		
 		// Write resource info into temporary file
 		ofs << "URL_base " << ADD_RESOURCE_URL_BASE << endl;
 		ofs << "path     " << ADD_RESOURCE_PATH << endl;
+		ofs << "md5      " << md5 << endl;
 		ofs.close();
 		
 		// We need to make sure the "directory" for the desired namepath exists
@@ -186,7 +202,7 @@ int main(int narg, char *argv[])
 		// Create ccdb commands
 		vector<string> cmds;
 		if(namepath_dir != "") cmds.push_back("ccdb mkdir " + namepath_dir);
-		cmds.push_back("ccdb mktbl " + ADD_RESOURCE_NAMEPATH + " URL_base=string path=string");
+		cmds.push_back("ccdb mktbl " + ADD_RESOURCE_NAMEPATH + " URL_base=string path=string md5=string");
 		cmds.push_back("ccdb add --name-value " + ADD_RESOURCE_NAMEPATH + " -v " + ADD_RESOURCE_VARIATION + " -r " + ADD_RESOURCE_RUNRANGE + " .jresource_tmp");
 
 		// The ccdb commands will use the CCDB_CONNECTION environment variable
@@ -204,6 +220,7 @@ int main(int narg, char *argv[])
 		cout << "   URL_base: " << ADD_RESOURCE_URL_BASE << endl;
 		cout << "       path: " << ADD_RESOURCE_PATH << endl;
 		cout << "  run range: " << ADD_RESOURCE_RUNRANGE << endl;
+		cout << "        md5: " << md5 << endl;
 		cout << endl;
 		cout << "----- CCDB commands to be executed -----" << endl;
 		for(unsigned int i=0; i<cmds.size(); i++) cout << i+1 << ".) " << cmds[i] << endl;
@@ -314,12 +331,13 @@ void ParseCommandLineArguments(int &narg, char *argv[])
 					REMOVE_RESOURCE_NAMEPATH = arg;
 					break;
 				case 'a':
-					if(narg <= i+4){cout<<"'"<<argv[i][1]<<"' requires at least 4 arguments!"<<endl; exit(0);}
+					if(narg <= i+3){cout<<"'"<<argv[i][1]<<"' requires at least 3 arguments!"<<endl; exit(0);}
 					ADD_RESOURCE_NAMEPATH = arg;
 					ADD_RESOURCE_RUNRANGE = argv[i+2];
 					ADD_RESOURCE_URL_BASE = argv[i+3];
-					ADD_RESOURCE_PATH = argv[i+4];
+					if(narg > i+4) ADD_RESOURCE_PATH = argv[i+4];
 					if(narg > i+5) ADD_RESOURCE_VARIATION = argv[i+5];
+					if(ADD_RESOURCE_PATH == "") ADD_RESOURCE_PATH = ADD_RESOURCE_NAMEPATH;
 					break;
 			}
 		}
@@ -357,11 +375,20 @@ void Usage(void)
 	cout<<" The \"-a\" option can be used to add a new resource to a CCDB"<<endl;
 	cout<<"calibration database by issuing it with the following form:"<<endl;
 	cout<<endl;
-	cout<<"   jresource -a namepath  runrange  URL_base  path  variation"<<endl;
+	cout<<"   jresource -a namepath  runrange  URL_base  [path  [variation]]"<<endl;
+	cout<<endl;
+	cout<<" If the \"path\" parameter is not given, then it defaults to the value"<<endl;
+	cout<<"given for \"namepath\" (this is what shouyld be done for GlueX.). If no"<<endl;
+	cout<<"value is given for \"variation\" then \"default\" is used."<<endl;
 	cout<<endl;
 	cout<<" For example:"<<endl;
 	cout<<endl;
-	cout<<"   jresource -a test/resources/bigfile 0- https://halldsvn.jlab.org/repos/trunk/calib  Magnets/Solenoid/solenoid_1500"<<endl;
+	cout<<"   jresource -a Magnets/Solenoid/solenoid_1350_poisson_20130925 0- https://halldweb1.jlab.org/resources"<<endl;
+	cout<<endl;
+	cout<<" This will create an entry in the CCDB with the given namepath which covers"<<endl;
+	cout<<"all run numbers (\"0-\" means run zero to infinity) and with the full URL of:"<<endl;
+	cout<<endl;
+	cout<<" https://halldweb1.jlab.org/resources/Magnets/Solenoid/solenoid_1350_poisson_20130925"<<endl;
 	cout<<endl;
 	cout<<" This works by creating a temporary text file and running the \"ccdb\""<<endl;
 	cout<<"command with appropriate arguments in a subshell. It assumes that ccdb"<<endl;
@@ -373,6 +400,7 @@ void Usage(void)
 	cout<<"   runrange   run range in CCDB format (i.e. 0- means all runs)"<<endl;
 	cout<<"   URL_base   beginning part of URL "<<endl;
 	cout<<"   path       ending part of URL and path of file relative to resource dir."<<endl;
+	cout<<"              (this will be set to namepath if omitted)"<<endl;
 	cout<<"   variation  (optional) if omitted, \"default\" is used"<<endl;
 	cout<<endl;
 	cout<<" The full URL to the resource is made by combining the URL_base and"<<endl;
@@ -381,7 +409,8 @@ void Usage(void)
 	cout<<"One should also note that the \"-a\" option is the only command"<<endl;
 	cout<<"that will ask for confirmation before execution. The ccdb commands"<<endl;
 	cout<<"that will be executed will be printed first so you can see what is"<<endl;
-	cout<<"about to be done before it actually happens."<<endl;
+	cout<<"about to be done before it actually happens. Confirmation is requested"<<endl;
+	cout<<"because it is the only command that can modify the CCDB."<<endl;
 	cout<<endl;
 	cout<<endl;
 

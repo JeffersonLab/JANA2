@@ -111,6 +111,8 @@ class JResourceManager{
 
              JCalibration* GetJCalibration(void){return jcalib;}
 
+                      void GetResourceFromURL(const string &URL, const string &fullpath);
+
 	protected:
 
 		// Used to get URL of remote resource
@@ -132,7 +134,6 @@ class JResourceManager{
 
 		void ReadResourceInfoFile(void);
 		void WriteResourceInfoFile(void);
-		void GetResourceFromURL(const string &URL, const string &fullpath);
 		
 		// Argument for the external curl program in case it is used
 		string curl_args;
