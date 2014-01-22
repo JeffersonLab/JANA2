@@ -284,7 +284,9 @@ def ReorderCommonLibraries(env):
 	# If LIBS is not set or is a simple string, return now
 	if type(env['LIBS']) is not list: return
 
-	libs = ['z', 'bz2', 'pthread', 'm', 'dl']
+	# If any of the following are in LIBS, they will be moved
+	# to the back of LIBS maintaining the order in this list
+	libs = ['ccdb', 'mysql', 'xerces-c','z', 'bz2', 'pthread', 'm', 'dl']
 	for lib in libs:
 		if lib in env['LIBS']:
 			env['LIBS'].remove(lib)
@@ -346,10 +348,63 @@ def OptionallyBuild(env, dirs):
 	if len(subdirs)>0 : env.SConscript(dirs=subdirs, exports='env', duplicate=0)
 
 
+##################################
+# TestCompile
+##################################
+def TestCompile(env, name, includes, content, options):
+
+	# This provides an autoconf-like method to test compilation
+	# of a C++ program to see which arguments are needed to get it
+	# to compile and link. The arguments are:
+	# env       - build environment
+	# name      - name of test (used to make unique filenames)
+	# includes  - list of header files to be #included in test program
+	# content   - content of test program (n.b. this is what gets placed
+	#             inside of "main()" and before the return statement)
+	# options   - list of different argument lists that should be tried
+	#             to see which results in a succesful compilation/link.
+	#             The first to succeed is returned (as a list, not a single 
+	#             string). If none succeed, then a Python "None" value is
+	#             returned. Note that each element of the list is itself a
+	#             string that may contain many arguments, separated by spaces.
+	ifname = '%s' % env.File('.%s_%s.cc' % (env['OSNAME'], name))
+	ofname = '%s' % env.File('.%s_%s' % (env['OSNAME'], name))
+	f = open(ifname, 'w')
+	for header in includes: f.write('#include<%s>\n' % header)
+	f.write('int main(int n, char*argv[]){%s;return 0;}\n' % content)
+	f.close();
+	args = [env['CXX'], '-o', ofname, ifname]
+	ret = None
+	for opt in options:
+		myargs = opt.split()
+		res = subprocess.call(args + myargs, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		if res==0: 
+			ret = myargs
+			break
+	
+	if os.path.exists(ifname): os.unlink(ifname);
+	if os.path.exists(ofname): os.unlink(ofname);
+	return ret
+
+	
 
 #===========================================================
 # Package support follows
 #===========================================================
+
+##################################
+# pthread
+##################################
+def Add_pthread(env):
+	includes = ['pthread.h']
+	content = 'pthread_create(NULL, NULL, NULL, NULL);'
+	if(TestCompile(env, 'pthread', includes, content, ['']) == None):
+		if(TestCompile(env, 'pthread', includes, content, ['-pthread']) != None):
+			env.AppendUnique(LINKFLAGS=['-pthread'])
+		else:
+			if(TestCompile(env, 'pthread', includes, content, ['-lpthread']) != None):
+				env.AppendUnique(LIBS=['pthread'])
+			
 
 
 ##################################

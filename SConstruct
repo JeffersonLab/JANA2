@@ -69,6 +69,9 @@ env.PrependUnique(CPPPATH = ['#src', '#src/plugins'])
 # Turn on debug symbols
 env.PrependUnique(CFLAGS = ['-g', '-fPIC'], CXXFLAGS = ['-g', '-fPIC'])
 
+# Add pthread (more efficient to do this here since it involves test compilations)
+sbms.Add_pthread(env)
+
 # Apply any platform/architecture specific settings
 sbms.ApplyPlatformSpecificSettings(env, arch)
 sbms.ApplyPlatformSpecificSettings(env, osname)
