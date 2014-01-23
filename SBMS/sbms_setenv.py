@@ -77,7 +77,9 @@ def mk_setenv_csh(env):
 	str += '# JANA\n'
 	str += 'setenv JANA_HOME %s\n' % env.Dir(env['INSTALLDIR']).srcnode().abspath
 	str += 'setenv JANA_CALIB_URL %s\n' % os.getenv('JANA_CALIB_URL', '$HOME/halld/calib')
-	str += 'if ( $?HDDS_HOME ) setenv JANA_GEOMETRY_URL xmlfile://${HDDS_HOME}/main_HDDS.xml\n'
+	str += 'if ( $?HDDS_HOME ) then\n'
+	str += '  setenv JANA_GEOMETRY_URL xmlfile://${HDDS_HOME}/main_HDDS.xml\n'
+	str += 'endif\n'
 	str += 'setenv JANA_PLUGIN_PATH ${JANA_HOME}/plugins\n'
 	str += 'setenv PATH ${JANA_HOME}/bin:${PATH}\n'
 	str += '\n'
