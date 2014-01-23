@@ -377,10 +377,20 @@ def TestCompile(env, name, includes, content, options):
 	ret = None
 	for opt in options:
 		myargs = opt.split()
+		if(env['SHOWBUILD'] >0):
+			print 'Test compiling %s:' % name
+			print args + myargs
 		res = subprocess.call(args + myargs, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-		if res==0: 
+		if res==0:
+			if(env['SHOWBUILD'] >0): print '---Succeeded'
 			ret = myargs
 			break
+		else:
+			if(env['SHOWBUILD'] >1):
+				print '----Failed. Test file content was:------'
+				print subprocess.call(['cat', ifname])
+				print '----------------------------------------'
+				
 	
 	if os.path.exists(ifname): os.unlink(ifname);
 	if os.path.exists(ofname): os.unlink(ofname);
@@ -498,13 +508,19 @@ def AddCCDB(env):
 # Xerces
 ##################################
 def AddXERCES(env):
-	xercescroot = os.getenv('XERCESCROOT', 'xerces')
-	XERCES_CPPPATH = "%s/include" % (xercescroot)
-	XERCES_LIBPATH = "%s/lib" % (xercescroot)
-	XERCES_LIBS = "xerces-c"
-	env.AppendUnique(CPPPATH = [XERCES_CPPPATH])
-	env.AppendUnique(LIBPATH = [XERCES_LIBPATH])
-	env.AppendUnique(LIBS    = [XERCES_LIBS])
+	# This relies on sbms_config.py::mk_jana_config_h having been run
+	try:  # (need try block in case HAVE_XERCES is not defined in env)
+		if env['HAVE_XERCES']==1:
+			XERCES_LIBS = "xerces-c"
+			env.AppendUnique(LIBS    = [XERCES_LIBS])
+			xercescroot = os.getenv('XERCESCROOT')
+			if(xercescroot != None):
+				XERCES_CPPPATH = "%s/include" % (xercescroot)
+				XERCES_LIBPATH = "%s/lib" % (xercescroot)
+				env.AppendUnique(CPPPATH = [XERCES_CPPPATH])
+				env.AppendUnique(LIBPATH = [XERCES_LIBPATH])
+	except:
+		env['HAVE_XERCES']=0  # would usually get here if env['HAVE_XERCES'] is not defined
 
 
 ##################################

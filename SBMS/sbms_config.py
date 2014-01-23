@@ -28,6 +28,7 @@ import os, sys
 import subprocess
 import datetime
 import distutils
+import sbms
 from stat import *
 
 ##################################
@@ -64,14 +65,39 @@ def mk_jana_config_h(env):
 	HAVE_XERCES = 0
 	XERCES3 = 0
 	XERCESCROOT = os.getenv('XERCESCROOT')
-	if(XERCESCROOT != None):
+	includes = ['xercesc/util/XercesDefs.hpp','xercesc/util/PlatformUtils.hpp']
+	content = '\nXERCES_CPP_NAMESPACE_USE\nXMLPlatformUtils::Initialize();'
+	if(XERCESCROOT==None):
+		options = ['-lxerces-c']
+	else:
+		options = ['-I%s/include -L%s/lib -lxerces-c' % (XERCESCROOT,XERCESCROOT)]
+	
+	if(sbms.TestCompile(env, 'xerces-c', includes, content, options) != None):
+		# We know xerces is installed and now need to check whether it is xerces2
+		# or xerces3. Try compiling with the special include file only found in xerces3.
 		HAVE_XERCES = 1
-		xerces3file = '%s/include/xercesc/dom/DOMImplementationList.hpp' % XERCESCROOT
-		if(os.path.isfile(xerces3file)): XERCES3 = 1
+		includes.append('xercesc/dom/DOMImplementationList.hpp')
+		if(sbms.TestCompile(env, 'xerces-c', includes, content, options)!=None):
+			XERCES3 = 1
 
 	# CCDB
 	HAVE_CCDB = 0
 	if(os.getenv('CCDB_HOME') != None): HAVE_CCDB = 1
+	
+	# Copy results into build environment for use by other scons scripts
+	env['HAVE_ROOT']   = HAVE_ROOT
+	env['HAVE_XERCES'] = HAVE_XERCES
+	env['XERCES3']     = XERCES3
+	env['HAVE_CCDB']   = HAVE_CCDB
+
+	# If showing build, print config. results
+	if(env['SHOWBUILD']>0):
+		print '--- Configuration results ----'
+		print '    HAVE_ROOT = %d' % HAVE_ROOT
+		print '  HAVE_XERCES = %d' % HAVE_XERCES
+		print '      XERCES3 = %d' % XERCES3
+		print '    HAVE_CCDB = %d' % HAVE_CCDB
+		print '------------------------------'
 		
 	str = ''
 	
