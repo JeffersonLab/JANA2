@@ -887,7 +887,7 @@ vector<JEventLoop*> JApplication::GetJEventLoops(void)
 	vector<JEventLoop*> loops;
 	
 	pthread_mutex_lock(&threads_mutex);
-	for(int i; i<threads.size(); i++) loops.push_back(threads[i]->loop);
+	for(int i=0; i<threads.size(); i++) loops.push_back(threads[i]->loop);
 	pthread_mutex_unlock(&threads_mutex);
 	
 	return loops;
