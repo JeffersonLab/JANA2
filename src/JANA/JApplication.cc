@@ -425,7 +425,20 @@ JApplication::~JApplication()
 	for(iter=event_buffer.begin(); iter!=event_buffer.end(); iter++)delete *iter;
 	event_buffer.clear();
 
+	map<string, pthread_rwlock_t*>::iterator irw_locks;
+	for(irw_locks=rw_locks.begin(); irw_locks!=rw_locks.end(); irw_locks++) delete irw_locks->second;
+	rw_locks.clear();
+
+	for(unsigned int i=0; i<HUP_locks.size(); i++)delete HUP_locks[i];
+	HUP_locks.clear();
+	
+	// Delete JParameterManager
+	if(jparms)delete jparms;
+
 	// Close any open dll's
+	// This must be done after everything else since seg. faults have occurred on
+	// at least one system (Ubuntu13) when JParameters created by a plugin are deleted
+	// after the shared object is closed.
 	for(unsigned int i=0; i<sohandles.size(); i++){
 		jout<<"Closing shared object handle "<<i<<" ..."<<endl; jout.flush();
 
@@ -440,16 +453,6 @@ JApplication::~JApplication()
 		dlclose(sohandles[i]);
 	}
 	sohandles.clear();
-
-	map<string, pthread_rwlock_t*>::iterator irw_locks;
-	for(irw_locks=rw_locks.begin(); irw_locks!=rw_locks.end(); irw_locks++) delete irw_locks->second;
-	rw_locks.clear();
-
-	for(unsigned int i=0; i<HUP_locks.size(); i++)delete HUP_locks[i];
-	HUP_locks.clear();
-	
-	// Delete JParameterManager
-	if(jparms)delete jparms;
 }
 
 //---------------------------------
