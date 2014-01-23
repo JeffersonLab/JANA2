@@ -148,6 +148,7 @@ JGeometryXML::~JGeometryXML()
 #endif
 }
 
+#if HAVE_XERCES
 //---------------------------------
 // MapNodeNames
 //---------------------------------
@@ -164,6 +165,7 @@ void JGeometryXML::MapNodeNames(xercesc::DOMNode *current_node)
 		MapNodeNames(current_node); // attributes are automatically added as the tree is searched
 	}
 }
+#endif // HAVE_XERCES
 
 //---------------------------------
 // Get

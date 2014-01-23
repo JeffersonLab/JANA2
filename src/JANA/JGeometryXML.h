@@ -68,7 +68,9 @@ class JGeometryXML:public JGeometry{
 		virtual const char* className(void){return static_className();}
 		 static const char* static_className(void){return "JGeometryXML";}
 		
+#if HAVE_XERCES
 		               void MapNodeNames(xercesc::DOMNode *current_node);
+#endif  // HAVE_XERCES
 		               bool Get(string xpath, string &sval);
 					   bool Get(string xpath, map<string, string> &svals);
 		               bool GetMultiple(string xpath, vector<string> &vsval);
@@ -86,8 +88,10 @@ class JGeometryXML:public JGeometry{
 		
 		string xmlfile;
 		bool valid_xmlfile;
-		map<xercesc::DOMNode*, string> node_names;
 		string md5_checksum;
+#if HAVE_XERCES
+		map<xercesc::DOMNode*, string> node_names;
+#endif  // HAVE_XERCES
 
 #if HAVE_XERCES
 
@@ -113,9 +117,9 @@ class JGeometryXML:public JGeometry{
 
 #if XERCES3
       xercesc::XercesDOMParser *parser;
-#else
+#else  // XERCES3
       xercesc::DOMBuilder *parser;
-#endif
+#endif  // XERCES3
       xercesc::DOMDocument *doc;
 		
 		void AddNodeToList(xercesc::DOMNode* start, string start_path, vector<string> &xpaths, JGeometry::ATTR_LEVEL_t level);
@@ -128,9 +132,9 @@ class JGeometryXML:public JGeometry{
 		// Error handler callback class
 #if XERCES3
    class ErrorHandler : public xercesc::ErrorHandler
-#else
+#else  // XERCES3
    class ErrorHandler : public xercesc::DOMErrorHandler
-#endif
+#endif  // XERCES3
    {
 			public:
 				 //  Constructors and Destructor
@@ -144,14 +148,13 @@ class JGeometryXML:public JGeometry{
       void warning(const xercesc::SAXParseException& exc){}
       void error(const xercesc::SAXParseException& exc){}
       void fatalError(const xercesc::SAXParseException& exc){}
-#endif
+#endif  // XERCES3
 
 			private :
 				 //  Unimplemented constructors and operators
 				 ErrorHandler(const ErrorHandler&);
 				 void operator=(const ErrorHandler&);
 		};
-#endif
 
 	// A simple entity resolver to keep track of files being
 	// included from the top-level XML file so a full MD5 sum
@@ -160,16 +163,18 @@ class JGeometryXML:public JGeometry{
 	class EntityResolver : public xercesc::EntityResolver
 #else
 	class EntityResolver : public xercesc::DOMEntityResolver
-#endif
+#endif  // XERCES3
 	{
 		public:
 			EntityResolver(const std::string &xmlFile);
 			~EntityResolver();
 #if XERCES3
 			xercesc::InputSource* resolveEntity(const XMLCh* const publicId, const XMLCh* const systemId);
-#else
+#else  // XERCES3
 			xercesc::DOMInputSource* resolveEntity(const XMLCh* const publicId, const XMLCh* const systemId, const XMLCh* const baseURI);
-#endif
+#endif  // XERCES3
+
+
 			std::vector<std::string> GetXMLFilenames(void);
 			std::string GetMD5_checksum(void);
 
@@ -178,6 +183,7 @@ class JGeometryXML:public JGeometry{
 			std::string path;
 			bool PRINT_CHECKSUM_INPUT_FILES;
 	};
+#endif  // HAVE_XERCES
 
 };
 
