@@ -16,6 +16,7 @@
 using namespace std;
 
 #include "JCalibrationFile.h"
+#include "JStreamLog.h"
 using namespace jana;
 
 //---------------------------------
@@ -48,7 +49,7 @@ JCalibrationFile::JCalibrationFile(string url, int run, string context):JCalibra
 	string fname = basedir + "info.xml";
 	ifstream f(fname.c_str());
 	if(!f.is_open()){
-		_DBG_<<"Unable to open \""<<fname<<"\"!"<<endl;
+		jout<<"WARNING: Unable to open \""<<fname<<"\" (not necessarily a problem)"<<endl;
 	}
 	
 	// At this point, we need to read in the info file and probably
