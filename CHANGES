@@ -1,4 +1,16 @@
 
+Changes in version 0.7.1
+
+- Fixed bug that broke janadot
+- Fixed bug that intermittedly broke GUIs
+- Fixed build system to work on Ubuntu 13 with gcc 4.8.0
+- Removed most Makefiles, forcing use of scons from now on
+- Fixed problem where xerces was required. Now it's optional again.
+- Fixed HDDS_HOME bug in setenv.csh script
+- Fixed bug where programs could seg. fault in JApplication destructor when
+  a plugin is used.
+
+
 Changes in version 0.7.0
 
 - Added JThread class to clean up internal bookkeeping. (Simulataneously
