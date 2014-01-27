@@ -22,7 +22,7 @@ class JVersion{
 		enum{
 			major = 0,
 			minor = 7,
-			build = 0
+			build = 1dev
 		};
 		
 		static unsigned int GetMajor(void){return major;}
