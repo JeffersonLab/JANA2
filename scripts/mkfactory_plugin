@@ -287,12 +287,16 @@ class JFactoryGenerator_${classname}${tag_suffix}: public jana::JFactoryGenerato
 ###############
 sub PrintMakefile()
 {
-	# Contents of default Makefile for plugins
-	print FILE "\n";
-	print FILE "PACKAGES = JANA\n";
-	print FILE "\n";
-	print FILE "include \$(HALLD_HOME)/src/BMS/Makefile.shlib\n";
-	print FILE "\n";
+	# For now, just make a straight copy. In the future
+	# the ability to remove ROOT and/or use a JANA
+	# installed version of may be added back.
+
+	#$PACKAGES = $JANA_IMPLEMENTATION;
+	#if(!$NO_ROOT){ $PACKAGES .= ":ROOT"; }
+
+	$from = $ENV{"JANA_HOME"} . "/../SBMS/SConstruct.plug_in";
+	$to = "./${pluginname}/SConstruct";
+	copy($from, $to) or die ("copy failed $!\n from \"$from\"\n to \"$to\"");
 }
 
 ###############

@@ -427,6 +427,19 @@ def AddJANA(env):
 
 
 ##################################
+# JANAInstalled (use an already installed jana-config file)
+##################################
+def AddJANAInstalled(env):
+	jana_home = os.getenv('JANA_HOME')
+	if(jana_home != None):
+		JANA_CFLAGS = subprocess.Popen(["%s/bin/jana-config" % jana_home, "--cflags"], stdout=subprocess.PIPE).communicate()[0]
+		JANA_LINKFLAGS = subprocess.Popen(["%s/bin/jana-config" % jana_home, "--libs"], stdout=subprocess.PIPE).communicate()[0]
+
+		AddCompileFlags(env, JANA_CFLAGS)
+		AddLinkFlags(env, JANA_LINKFLAGS)
+
+
+##################################
 # HDDS
 ##################################
 def AddHDDS(env):

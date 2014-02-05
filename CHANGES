@@ -1,4 +1,13 @@
 
+Changes in version 0.7.1p1
+- Fixed bug in JResourceManager that caused seg. faults if USER
+  environment not set and to always use "jana" if it is.
+- Moved remnants of autoconf (configure, m4, reconf, ...) into BMS
+  to get them out of the way since they are all deprecated.
+- Install scripts into bin
+- Fixed mkplugin and mkfactory_plugin scripts to work with scons
+- Add symbolic link to src directory in installation directory
+
 Changes in version 0.7.1
 
 - Fixed bug that broke janadot

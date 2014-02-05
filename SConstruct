@@ -88,11 +88,16 @@ SConscript('src/SConscript', variant_dir="src/.%s" % (osname), exports='env osna
 # Make install target
 env.Alias('install', installdir)
 
-# Create setenv if user explicitly specified "install" target
+# Create setenv and make link to src if user explicitly specified "install" target
 build_targets = map(str,BUILD_TARGETS)
 if len(build_targets)>0:
 	if 'install' in build_targets:
 		import sbms_setenv
 		sbms_setenv.mk_setenv_csh(env)
 		sbms_setenv.mk_setenv_bash(env)
+		src_dir = '%s/src' % env.Dir(installdir).abspath
+		try:
+			os.symlink('../src', src_dir)
+		except:
+			pass
 

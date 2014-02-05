@@ -25,13 +25,6 @@ if( $JANA_IMPLEMENTATION eq "N/A" ){
 
 	# Default JANA implementation package
 	$JANA_IMPLEMENTATION = "JANA";
-
-	# If HALLD_HOME is defined, use DANA so user doesn't need to explicitly pass "-d"
-	if( length($ENV{"HALLD_HOME"}) > 0 ){
-		$JANA_IMPLEMENTATION = "DANA";
-		print "HALLD_HOME environment variable is set. Assuming DANA package.\n";
-		print "(to use JANA instead, pass the \"-j\" option)\n";
-	}
 }
 
 if($pluginname eq "__nada__"){&Usage();exit;}
@@ -235,17 +228,12 @@ sub PrintMakefile()
 	$PACKAGES = $JANA_IMPLEMENTATION;
 	if(!$NO_ROOT){ $PACKAGES .= ":ROOT"; }
 
-	# Contents of default Makefile for plugins
-	print FILE "\n";
-	print FILE "PACKAGES = $PACKAGES\n";
-	print FILE "\n";
-	if($JANA_IMPLEMENTATION eq "DANA"){
-		print FILE "include \$(HALLD_HOME)/src/BMS/Makefile.shlib\n";
-	}else{
-		print FILE "BMSDIR = \$(JANA_HOME)/BMS\n";
-		print FILE "include \$(BMSDIR)/Makefile.shlib\n";
-	}
-	print FILE "\n";
+	#$PACKAGES = $JANA_IMPLEMENTATION;
+	#if(!$NO_ROOT){ $PACKAGES .= ":ROOT"; }
+
+	$from = $ENV{"JANA_HOME"} . "/../SBMS/SConstruct.plug_in";
+	$to = "./${pluginname}/SConstruct";
+	copy($from, $to) or die ("copy failed $!\n from \"$from\"\n to \"$to\"");
 }
 
 ###############
@@ -260,11 +248,7 @@ sub Usage()
 	print "plugin for use with the JANA framework.\n";
 	print "\n";
 	print "Options:\n";
-	print "  -b         Use \"BANA\" as base Makefile package in Makefile\n";
-	print "  -j         Use \"JANA\" as base Makefile package in Makefile\n";
-	print "  -d         Use \"DANA\" as base Makefile package in Makefile\n";
-	print "             (this will be set by default if HALLD_HOME is set)\n";
-	print "  --no-root  Do not include \"ROOT\" in the PACKAGES line in Makefile\n";
+
 	print "\n";
 	print "This script superceeds some similar functionality in the mkprocessor\n";
 	print "script. Unlike mkprocessor, the mkplugin script will create a directory\n";
