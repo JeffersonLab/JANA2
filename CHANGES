@@ -1,4 +1,8 @@
 
+Changes in version 0.7.1p2
+- Fixed bug (hopefully for good this time) that caused programs
+  to seg. fault at very end if multiple plugins were used 
+
 Changes in version 0.7.1p1
 - Fixed bug in JResourceManager that caused seg. faults if USER
   environment not set and to always use "jana" if it is.
