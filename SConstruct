@@ -85,6 +85,9 @@ sbms_config.mk_jana_config_script(env)
 # build all src
 SConscript('src/SConscript', variant_dir="src/.%s" % (osname), exports='env osname', duplicate=0)
 
+# install scripts
+SConscript('scripts/SConscript', exports='env osname', duplicate=0)
+
 # Make install target
 env.Alias('install', installdir)
 

@@ -1,0 +1,9 @@
+
+
+Import('*')
+
+# Install all files except the SConscript file
+files = [f for f in Glob('*') if 'SConscript' not in str(f)]
+
+env.Install(env.subst('$BINDIR'), files)
+

@@ -1,5 +1,7 @@
 #!/usr/bin/env perl
 
+use File::Copy;
+
 # Get Plugin name or print Usage statement if no arguments
 if($#ARGV < 0){
 	&Usage();
@@ -64,11 +66,9 @@ open(FILE,">$pluginname/$dhfile");
 close(FILE);
 print " - $dhfile\n";
 
-# Create Makefile
-open(FILE,">$pluginname/Makefile");
-&PrintMakefile();
-close(FILE);
-print " - Makefile\n";
+# Copy SConstruct file
+&CopySConstruct();
+print " - SConstruct\n";
 
 ###############
 # PrintFileHeader
@@ -283,9 +283,9 @@ class JFactoryGenerator_${classname}${tag_suffix}: public jana::JFactoryGenerato
 
 
 ###############
-# PrintMakefile
+# CopySConstruct
 ###############
-sub PrintMakefile()
+sub CopySConstruct()
 {
 	# For now, just make a straight copy. In the future
 	# the ability to remove ROOT and/or use a JANA

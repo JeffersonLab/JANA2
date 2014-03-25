@@ -1,5 +1,7 @@
 #!/usr/bin/env perl
 
+use File::Copy;
+
 if($#ARGV < 0){&Usage();exit;}
 
 $pluginname = "__nada__";
@@ -12,7 +14,7 @@ foreach $arg (@ARGV){
 	}elsif($arg eq "-d"){
 		$JANA_IMPLEMENTATION = "DANA";
 	}elsif($arg eq "-b"){
-		$JANA_IMPLEMENTATION = "BANA";
+		$JANA_IMPLEMENTATION = "BANA";pwd
 	}elsif($arg eq "-j"){
 		$JANA_IMPLEMENTATION = "JANA";
 	}else{
@@ -55,11 +57,9 @@ open(FILE,">$pluginname/$ccfile");
 close(FILE);
 print " - $ccfile\n";
 
-# Create Makefile
-open(FILE,">$pluginname/Makefile");
-&PrintMakefile();
-close(FILE);
-print " - Makefile\n";
+# Copy SConstruct file
+&CopySConstruct();
+print " - SConstruct\n";
 
 ###############
 # PrintFileHeader
@@ -221,12 +221,13 @@ jerror_t JEventProcessor_${pluginname}::fini(void)
 }
 
 ###############
-# PrintMakefile
+# CopySConstruct
 ###############
-sub PrintMakefile()
+sub CopySConstruct()
 {
-	$PACKAGES = $JANA_IMPLEMENTATION;
-	if(!$NO_ROOT){ $PACKAGES .= ":ROOT"; }
+	# For now, just make a straight copy. In the future
+	# the ability to remove ROOT and/or use a JANA
+	# installed version of may be added back.
 
 	#$PACKAGES = $JANA_IMPLEMENTATION;
 	#if(!$NO_ROOT){ $PACKAGES .= ":ROOT"; }

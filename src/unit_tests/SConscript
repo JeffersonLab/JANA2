@@ -3,6 +3,8 @@ import os
 
 Import('env osname')
 
+env = env.Clone()
+
 # Install unit_test executables in "test" instead of "bin"
 bin = "%s/test" % (env['INSTALLDIR'])
 env.Replace(BINDIR = bin)

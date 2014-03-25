@@ -62,7 +62,7 @@ JResourceManager::JResourceManager(JCalibration *jcalib, string resource_dir)
 	// via run time parameters.
 
 	// 4.
-	string user = (getenv("USER")==NULL ? getenv("USER"):"jana");
+	string user = (getenv("USER")==NULL ? "jana":getenv("USER"));
 	this->resource_dir = "/tmp/" + user + "/resources";
 
 	// 3.
