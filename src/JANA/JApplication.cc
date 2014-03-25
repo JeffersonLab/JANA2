@@ -1904,7 +1904,7 @@ jerror_t JApplication::OpenNext(void)
 jerror_t JApplication::RegisterSharedObject(const char *soname, bool verbose)
 {
 	// Open shared object
-	void* handle = dlopen(soname, RTLD_LAZY | RTLD_GLOBAL);
+	void* handle = dlopen(soname, RTLD_LAZY | RTLD_GLOBAL | RTLD_NODELETE);
 	if(!handle){
 		if(verbose)jerr<<dlerror()<<endl;
 		return RESOURCE_UNAVAILABLE;
