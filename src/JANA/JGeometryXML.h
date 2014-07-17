@@ -91,6 +91,8 @@ class JGeometryXML:public JGeometry{
 		string md5_checksum;
 #if HAVE_XERCES
 		map<xercesc::DOMNode*, string> node_names;
+		map<string, string> found_xpaths; // used to store xpaths already found to speed up subsequent requests
+		pthread_mutex_t found_xpaths_mutex;
 #endif  // HAVE_XERCES
 
 #if HAVE_XERCES

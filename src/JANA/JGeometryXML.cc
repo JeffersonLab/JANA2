@@ -126,6 +126,9 @@ JGeometryXML::JGeometryXML(string url, int run, string context):JGeometry(url,ru
    
 	valid_xmlfile = true;
 	
+	// Initialize found_xpaths_mutex
+	pthread_mutex_init(&found_xpaths_mutex, NULL);
+	
 	// Make map of node names to speed up code in SearchTree later
 	MapNodeNames(doc);
 	
@@ -179,7 +182,31 @@ bool JGeometryXML::Get(string xpath, string &sval)
 	/// specification.
 
 	if(!valid_xmlfile){sval=""; return false;}
+	
 
+	// Look to see if we have already found the requested xpath.
+	// doing this speeds up startup when using many threads
+	pthread_mutex_lock(&found_xpaths_mutex);
+	map<string, string>::iterator iter = found_xpaths.find(xpath);
+	if(iter != found_xpaths.end()){
+		sval = iter->second;
+		pthread_mutex_unlock(&found_xpaths_mutex);
+		return true;
+	}
+	
+	// It is tempting here to unlock the found_xpaths_mutex
+	// mutex, but doing so actually slows things down. This 
+	// is because of 2 things:
+	//
+	//   1. Xerces will lock its own mutex anyway so the
+	//      following code block will still run serially
+	//
+	//   2. Keeping the mutex locked blocks all other threads
+	//      at the point above before checking if the
+	//      result is cached. They therefore benefit from
+	//      the cache entry once the mutex is finally released
+	//      below.
+	
 #if HAVE_XERCES
 	
 	// XERCES locks its own mutex which causes horrible problems if the thread
@@ -188,11 +215,21 @@ bool JGeometryXML::Get(string xpath, string &sval)
 	pthread_setcancelstate(PTHREAD_CANCEL_DISABLE, &oldstate);
 	pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, &oldtype);
 
+	// NOTE: If this throws an exception, then we'll leave
+	// this routine without unlocking found_xpaths_mutex !
 	multimap<xercesc::DOMNode*, string> attributes;
 	FindAttributeValues(xpath, attributes, 1);
 	
 	// If we found the attribute, copy it to users string
-	if(attributes.size()>0)sval = (attributes.begin())->second;
+	if(attributes.size()>0){
+		sval = (attributes.begin())->second;
+
+		// Cache the result for use in subsequent calls
+		found_xpaths[xpath] = sval;
+	}
+
+	// Unlock the found_xpaths_mutex mutex
+	pthread_mutex_unlock(&found_xpaths_mutex);
 	
 	pthread_setcancelstate(oldstate, NULL);
 	pthread_setcanceltype(oldtype, NULL);
