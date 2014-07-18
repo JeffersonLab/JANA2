@@ -5,6 +5,8 @@ Changes in version 0.7.2
 - Fixed bug where $JANA_HOME/plugins was not automatically searched
 - Use THREAD_TIMEOUT for first event also if it is larger than
   THREAD_TIMEOUT_FIRST_EVENT
+- Set object pointer to NULL in GetSingle() unless only one object exits
+  Also, added optional 3rd argument to supress throwing exception
 
 
 Changes in version 0.7.1p3
