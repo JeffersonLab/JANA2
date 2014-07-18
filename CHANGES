@@ -1,4 +1,8 @@
 
+Changes in version 0.7.1p3
+- The 0.7.1p2 was missing some of the changes in 0.7.1p1 due to
+  some strange error. This corrects that. DON'T USE 0.7.1p2 !!
+
 Changes in version 0.7.1p2
 - Fixed bug (hopefully for good this time) that caused programs
   to seg. fault at very end if multiple plugins were used 
