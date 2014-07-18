@@ -2072,7 +2072,7 @@ jerror_t JApplication::AttachPlugins(void)
 	// Default plugin search path
 	AddPluginPath(".");
 	if(const char *ptr = getenv("JANA_HOME")){
-		AddPluginPath(string(ptr) + "/lib");
+		AddPluginPath(string(ptr) + "/plugins");
 	}
 	
 	// Add plugins specified via PLUGINS configuration parameter
@@ -2125,6 +2125,7 @@ jerror_t JApplication::AttachPlugins(void)
 		if(!found_plugin){
 			Lock();
 			jerr<<endl<<"***ERROR : Couldn't find plugin \""<<plugins[j]<<"\"!***"<<endl;
+			jerr<<"***        make sure the JANA_PLUGIN_PATH environment variable is set correctly."<<endl;
 			jerr<<"***        To see paths checked, set PRINT_PLUGIN_PATHS config. parameter"<<endl;
 			Unlock();
 			exit(-1);
