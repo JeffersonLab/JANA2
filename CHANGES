@@ -1,4 +1,12 @@
 
+Changes in version 0.7.2
+- Use cache for JGeometryXML::Get(string xpath, string &sval)
+  so many-thread process startups are much faster
+- Fixed bug where $JANA_HOME/plugins was not automatically searched
+- Use THREAD_TIMEOUT for first event also if it is larger than
+  THREAD_TIMEOUT_FIRST_EVENT
+
+
 Changes in version 0.7.1p3
 - The 0.7.1p2 was missing some of the changes in 0.7.1p1 due to
   some strange error. This corrects that. DON'T USE 0.7.1p2 !!

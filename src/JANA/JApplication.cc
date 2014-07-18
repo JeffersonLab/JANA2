@@ -1368,6 +1368,11 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 	jparms->SetDefaultParameter("THREAD_TIMEOUT", THREAD_TIMEOUT, "Max. time (in seconds) system will wait for a thread to update its heartbeat before killing it and launching a new one.");
 	jparms->SetDefaultParameter("THREAD_TIMEOUT_FIRST_EVENT", THREAD_TIMEOUT_FIRST_EVENT, "Max. time (in seconds) system will wait for first event to complete before killing program.");
 	jparms->SetDefaultParameter("JANA:MAX_RELAUNCH_THREADS", MAX_RELAUNCH_THREADS, "Max. number of times to relaunch a thread due to it timing out before forcing program to quit.");
+	if(THREAD_TIMEOUT_FIRST_EVENT < THREAD_TIMEOUT){
+		jout << " THREAD_TIMEOUT_FIRST_EVENT is set smaller than THREAD_TIMEOUT"<<endl;
+		jout << " (" << THREAD_TIMEOUT_FIRST_EVENT << " < " << THREAD_TIMEOUT << "). THREAD_TIMEOUT_FIRST_EVENT will be set to " << THREAD_TIMEOUT << endl;
+		THREAD_TIMEOUT_FIRST_EVENT = THREAD_TIMEOUT;
+	}
 	
 	// Do a sleepy loop so the threads can do their work
 	struct timespec req, rem;
