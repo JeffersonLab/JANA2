@@ -272,8 +272,8 @@ jerror_t JEventLoop::PrintFactories(int sparsify)
 	jout<<endl;
 	jout<<"Registered factories: ("<<factories.size()<<" total)"<<endl;
 	jout<<endl;
-	jout<<"Name:             nrows:  tag:"<<endl;
-	jout<<"---------------- ------- --------------"<<endl;
+	jout<<"Name:                nrows:  tag:"<<endl;
+	jout<<"------------------- ------- --------------"<<endl;
 
 	for(unsigned int i=0; i<factories.size(); i++){
 		JFactory_base *factory = factories[i];
@@ -292,7 +292,7 @@ jerror_t JEventLoop::PrintFactories(int sparsify)
 		try{
 			sprintf(num, "%d", factory->GetNrows());
 		}catch(...){}
-		str.replace(22-strlen(num), strlen(num), num);
+		str.replace(25-strlen(num), strlen(num), num);
 
 		string tag = factory->Tag()==NULL ? "":factory->Tag();
 		//const char *tag = factory->Tag();
@@ -301,7 +301,7 @@ jerror_t JEventLoop::PrintFactories(int sparsify)
 			//char tag_str[256];
 			//sprintf(tag_str, "\"%s\"", tag);
 			//str.replace(26, strlen(tag_str), tag_str);
-			str.replace(26, tag.size(), tag);
+			str.replace(29, tag.size(), tag);
 		}
 		
 		jout<<str<<endl;
