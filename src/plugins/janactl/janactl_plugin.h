@@ -41,6 +41,7 @@ class janactl_plugin:public cMsgCallback{
 		string myname;
 		JApplication *japp;
 		JStreamLog jctlout;
+		int VERBOSE;
 		
 		std::vector<void*> subscription_handles;
 };

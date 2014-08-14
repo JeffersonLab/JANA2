@@ -5,10 +5,14 @@
 //
 
 #include <unistd.h>
+#include <stdlib.h>
+#include <stdio.h>
 
 #ifdef __APPLE__
 #define HAVE_SYSCTL
 #include <sys/sysctl.h>
+#else
+#define HAVE_PROC
 #endif // __APPLE__
 
 #include <iostream>
@@ -71,11 +75,18 @@ janactl_plugin::janactl_plugin(JApplication *japp):jctlout(std::cout, "JANACTL>>
 	string myUDL = "cMsg://localhost/cMsg/janactl";
 	string myName = myname;
 	string myDescr = "Allow external monitoring/control of a JANA program";
+	VERBOSE = 0;
 	
+	// Check if environment variable is set for UDL (may be overridden by config. parameter below)
+	const char *JANACTL_UDL = getenv("JANACTL_UDL");
+	if(JANACTL_UDL != NULL) myUDL = JANACTL_UDL;
+	
+	// Configuration parameters
 	JParameterManager *parms = japp->GetJParameterManager();
 	parms->SetDefaultParameter("JANACTL:UDL", myUDL);
 	parms->SetDefaultParameter("JANACTL:Name", myName);
 	parms->SetDefaultParameter("JANACTL:Description", myDescr);
+	parms->SetDefaultParameter("JANACTL:VERBOSE", VERBOSE);
 	
 	cMsgSys = new cMsg(myUDL,myName,myDescr);	// the cMsg system object, where
 	try {                                    	// all args are of type string
@@ -136,7 +147,7 @@ void janactl_plugin::callback(cMsgMessage *msg, void *userObject)
 {
 	if(!msg)return;
 
-	jout<<"Received message --  Subject:"<<msg->getSubject()<<" Type:"<<msg->getType()<<" Text:"<<msg->getText()<<endl;
+	if(VERBOSE>0) jout<<"Received message --  Subject:"<<msg->getSubject()<<" Type:"<<msg->getType()<<" Text:"<<msg->getText()<<endl;
 
 	// The convention here is that the message "type" always contains the
 	// unique name of the sender and therefore should be the "subject" to
@@ -423,7 +434,133 @@ void janactl_plugin::HostInfoPROC(vector<string> &keys, vector<string> &vals)
 {
 	/// Get host info using the /proc mechanism on Linux machines.
 #ifdef HAVE_PROC
+	ifstream ifs("/proc/cpuinfo");
+	if( !ifs.is_open() ) return;
+	
+	// Use map to hold values since we'll run across some of them multiple times
+	map<string, string> mvals;
+	
+	// Read in all lines. For each "processor", record values
+	// in separate map so we can more easily extract info later
+	vector<map<string, string> > procinfo;
+	map<string, string> pinfo;
+	while(!ifs.eof()){
+		char cline[1024];
+		streamsize n = 1024;
+		ifs.getline(cline, n);
+		if(ifs.gcount() < 1) break;
+		string line(cline);
 
+		// Copy key and value parts into separate strings
+		size_t pos = line.find(":");
+		if(pos == string::npos) continue;
+
+		string key = line.substr(0,pos-1);
+		string val = (pos+1)==line.length() ? "":line.substr(pos+2);
+		
+		// Trim whitespace from end of key
+		pos = key.find_last_not_of(" \t");
+		if(pos != string::npos) key = key.substr(0, pos+1);
+		
+		// "processor" key indicates start of info for next processor
+		if(key == "processor"){
+			if(!pinfo.empty()) procinfo.push_back(pinfo);
+			pinfo.clear();
+		}
+
+		pinfo[key] = val;
+	}
+	ifs.close();
+	
+	// Put last processor's info into container
+	if(!pinfo.empty()) procinfo.push_back(pinfo);
+	
+	// Loop over processor infos
+	map<int, int> real_cores;
+	for(unsigned int i=0; i<procinfo.size(); i++){
+		
+		map<string, string> &pinfo = procinfo[i];
+		
+		int physical_id = atoi(pinfo["physical id"].c_str());
+		int cpu_cores = atoi(pinfo["cpu cores"].c_str());
+		real_cores[physical_id] = cpu_cores;
+	}
+	
+	// CPU brand
+	if(!procinfo.empty()){
+		keys.push_back("CPU Brand");
+		vals.push_back(procinfo[0]["model name"]);
+	}
+	
+	// Machine type
+	// (best way to get this is by running uname -m)
+	FILE *pipe = popen("uname -m", "r");
+	if(pipe){
+		char buff[128];
+		if(fgets(buff, 128, pipe) != NULL){
+			buff[strlen(buff)-1] = 0; // trim newline
+			keys.push_back("Machine type");
+			vals.push_back(buff);
+		}
+		pclose(pipe);
+	}
+
+	// Clock Speed
+	char str[256];
+	if(!procinfo.empty()){
+		sprintf(str, "%3.1f GHz", atof(procinfo[0]["cpu MHz"].c_str())/1000.0);
+		keys.push_back("Clock Speed");
+		vals.push_back(str);
+	}
+
+	// Read memory from /proc/meminfo
+	ifs.open("/proc/meminfo");
+	int mem_kB = 0;
+	if(ifs.is_open()){
+		char buff[4096];
+		bzero(buff, 4096);
+		ifs.read(buff, 4095);
+		ifs.close();
+
+		string sbuff(buff);
+		size_t pos = sbuff.find("MemTotal:");
+
+		if(pos != string::npos) mem_kB = atoi(&buff[pos+10+1]);
+	}
+
+	// RAM
+	// reported RAM from /proc/memInfo apparently excludes some amount
+	// claimed by the kernel. To get the correct amount in GB, I did a
+	// linear fit to the values I "knew" were correct and the reported
+	// values in kB for several machines.
+	int mem_GB = (int)round(0.531161471 + (double)mem_kB*9.65808E-7);
+	sprintf(str, "%d GB", mem_GB);	
+	keys.push_back("RAM");
+	vals.push_back(str);
+
+	// Get number of physical cores
+	int Ncores_physical = 0;
+	map<int, int>::iterator iiter;
+	for(iiter=real_cores.begin(); iiter!=real_cores.end(); iiter++){
+		Ncores_physical += iiter->second;
+	}
+	sprintf(str, "%d", Ncores_physical);	
+	keys.push_back("Ncores (physical)");
+	vals.push_back(str);
+
+	// Logical cores
+	sprintf(str, "%d", procinfo.size());
+	keys.push_back("Ncores (logical)");
+	vals.push_back(str);
+
+	// Copy final map values to outputs
+	map<string, string>::iterator iter;
+	for(iter=mvals.begin(); iter!=mvals.end(); iter++){
+		keys.push_back(iter->first);
+		vals.push_back(iter->second);	
+	}
+
+	
 #endif // HAVE_PROC
 }
 

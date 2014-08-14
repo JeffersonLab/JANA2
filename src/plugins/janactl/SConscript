@@ -7,6 +7,7 @@ Import('*')
 env = env.Clone()
 
 sbms.AddJANA(env)
+sbms.AddCMSG(env)
 sbms.plugin(env)
 
 
