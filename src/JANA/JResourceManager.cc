@@ -22,6 +22,7 @@ using namespace std;
 
 #include "JParameterManager.h"
 #include "JResourceManager.h"
+#include "md5.h"
 using namespace jana;
 
 JResourceManager *jRESOURCES=NULL; // global pointer set to last instantiation
@@ -104,6 +105,9 @@ JResourceManager::JResourceManager(JCalibration *jcalib, string resource_dir)
 	if(gPARMS)gPARMS->SetDefaultParameter("JANA:CURL_ARGS", curl_args, "additional arguments to be passed to the external curl program");
 #endif // HAVE_CURL
 	
+	// Allow user to turn off checking of md5 checksums
+	check_md5 = true;
+	if(gPARMS)gPARMS->SetDefaultParameter("JANA:RESOURCE_CHECK_MD5", check_md5, "Set this to 0 to disable checking of the md5 checksum for resource files. You generally want this check left on.");
 
 	jRESOURCES = this;
 }
@@ -167,6 +171,7 @@ string JResourceManager::GetResource(string namepath)
 		bool has_URL_base = info.find("URL_base")!=info.end();
 		bool has_path = info.find("path")!=info.end();
 		bool has_URL = info.find("URL")!=info.end();
+		bool has_md5 = info.find("md5")!=info.end();
 		
 		if(overide_URL_base) has_URL_base = true;
 		
@@ -286,6 +291,29 @@ string JResourceManager::GetResource(string namepath)
 				pthread_mutex_unlock(&resource_manager_mutex);
 				
 				rewrite_info_file = true;
+			}
+		}
+		
+		// If the md5 checksum is in the calibDB then check that our file is correct
+		if(has_md5 && check_md5){
+			string md5sum = Get_MD5(fullpath);
+			if(md5sum != info["md5"]){
+				jerr << "-- ERROR: md5 checksum for the following resource file does not match expected" << endl;
+				jerr << "-- " << fullpath << endl;
+				jerr << "--  for the resource: " << endl;
+				if(has_URL_base) jerr << "--   URL_base = " << info["URL_base"] << endl;
+				if(has_path    ) jerr << "--       path = " << info["path"] << endl;
+				if(has_URL     ) jerr << "--        URL = " << info["URL"] << endl;
+				if(has_md5     ) jerr << "--        md5 = " << info["md5"] << endl;
+				jerr << "-- The md5sum for the existing file is: " << md5sum << endl;
+				jerr << "--" << endl;
+				jerr << "-- This can happen if the resource download was previously interrupted." <<endl;
+				jerr << "-- Try removing the existing file and re-running to trigger a re-download." << endl;
+				jerr << "--" << endl;
+				jerr << "-- This is a fatal error and the program will stop now. To bypass checking" << endl;
+				jerr << "-- the md5sum, set the JANA:RESOURCE_CHECK_MD5 config. parameter to 0." <<endl;
+				jerr << "--" << endl;
+				exit(-1);
 			}
 		}
 
@@ -455,6 +483,38 @@ void JResourceManager::GetResourceFromURL(const string &URL, const string &fullp
 	pthread_mutex_unlock(&resource_manager_mutex);
 }
 
+//-----------
+// Get_MD5
+//-----------
+string JResourceManager::Get_MD5(string fullpath)
+{
+	ifstream ifs(fullpath.c_str());
+	if(!ifs.is_open()) return string("");
+
+	md5_state_t pms;
+	md5_init(&pms);
+	
+	// allocate 10kB buffer for reading in file
+	unsigned int buffer_size = 10000; 
+	char *buff = new char [buffer_size];
+
+	// read data as a block:
+	while(ifs.good()){
+		ifs.read(buff,buffer_size);
+		md5_append(&pms, (const md5_byte_t *)buff, ifs.gcount());
+	}
+	ifs.close();
+
+	delete[] buff;
+
+	md5_byte_t digest[16];
+	md5_finish(&pms, digest);
+	
+	char hex_output[16*2 + 1];
+	for(int di = 0; di < 16; ++di) sprintf(hex_output + di * 2, "%02x", digest[di]);
+
+	return string(hex_output);
+}
 
 
 // The following will make all neccessary sub directories 
@@ -498,3 +558,4 @@ int mycurl_printprogress(void *clientp, double dltotal, double dlnow, double ult
 
 	return 0;
 }
+

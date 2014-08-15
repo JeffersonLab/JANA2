@@ -112,6 +112,7 @@ class JResourceManager{
              JCalibration* GetJCalibration(void){return jcalib;}
 
                       void GetResourceFromURL(const string &URL, const string &fullpath);
+					  string Get_MD5(string fullpath);
 
 	protected:
 
@@ -144,6 +145,7 @@ class JResourceManager{
 		// in calib DB
 		bool overide_URL_base;
 		string URL_base;
+		bool check_md5;
 
 };
 
