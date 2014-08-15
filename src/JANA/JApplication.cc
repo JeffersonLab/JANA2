@@ -137,6 +137,21 @@ void USR2_Handle(int x)
 	exit(0);
 }
 
+//-----------------------------------------------------------------
+// AlarmHandle
+//-----------------------------------------------------------------
+void AlarmHandle(int x)
+{
+	jout << endl;
+	jout << endl;
+	jout << "----- Alarm signal caught! -----" << endl;
+	jout << "This can happen if one of the hi-res timers runs out due to this" <<endl;
+	jout << "being an especially long job. Some JANA accounting numbers may" << endl;
+	jout << "be thrown off by this, but otherwise, it should be harmless." << endl;
+	jout << endl;
+	jout << endl;
+}
+
 //---------------------------------
 // JApplication    (Constructor)
 //---------------------------------
@@ -371,6 +386,11 @@ JApplication::JApplication(int narg, char* argv[])
 		value.it_value.tv_usec = 0;
 		setitimer(ITIMER_PROF, &value, &ovalue);
 	}
+	
+	// Install a handler for SIGALRM so if a timer runs out it won't kill the program
+	signal(SIGALRM, AlarmHandle);
+	signal(SIGPROF, SIG_IGN);
+	signal(SIGVTALRM, SIG_IGN);
 	
 	// Global variable
 	japp = this;
