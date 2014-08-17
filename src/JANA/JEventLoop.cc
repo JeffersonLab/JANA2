@@ -524,7 +524,7 @@ jerror_t JEventLoop::OneEvent(void)
 		pair<string, string> &facname = auto_activated_factories[i];
 		JFactory_base *fac = GetFactory(facname.first, (facname.second).c_str());
 		try{
-			if(fac) fac->GetNrows();
+			if(fac) fac->GetNrows(record_call_stack); // if recording call stack, force GetNrows to call "Get" whether it needs to or not
 		}catch(exception &e){
 			string fac_name = fac==NULL ? "unknown":(string(fac->GetDataClassName()) + ":" + fac->Tag());
 			string tag_plus = string("OneEvent  (autoactivated factory ") + fac_name + ")";

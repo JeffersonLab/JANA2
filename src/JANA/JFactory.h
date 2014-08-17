@@ -76,7 +76,7 @@ class JFactory:public JFactory_base{
 		
 		vector<void*>& Get(void);
 		jerror_t Get(vector<const T*> &d);
-		int GetNrows(void);
+		int GetNrows(bool force_call_to_get=false);
 		data_origin_t GetDataOrigin(void){return data_origin;}
 		inline const char* className(void){return T::static_className();}
 		inline const char* GetDataClassName(void){return className();}
@@ -291,13 +291,22 @@ jerror_t JFactory<T>::Get(vector<const T*> &d)
 // GetNrows
 //-------------
 template<class T>
-int JFactory<T>::GetNrows(void)
+int JFactory<T>::GetNrows(bool force_call_to_get)
 {
 	/// Return the number of objects for this factory for the
 	/// current event. If the objects have not yet been created
 	/// for the event, this will cause them to be generated 
 	/// (or retreived from the source).
-	if(!evnt_called){
+	///
+	/// If the optional "force_call_to_get" parameter is set to true,
+	/// Then the "Get" method will get called regardess of whether it
+	/// has already been called for this event. This is only useful for
+	/// when AUTOACTIVATE'd factories are used AND the call stack is
+	/// being recorded for use by something like the janadot plugin.
+	/// Forcing the call to "Get" will then put an entry on the call stack
+	/// leading to a line being drawn from the AutoActivated polygon to
+	/// all factories listed as being AUTOACTIVATE. 
+	if(!evnt_called || force_call_to_get){
 		// In order to get the objects from the source, the Get() method
 		// of the JEventLoop object must be called. This may seem
 		// convoluted, but it's neccessary for things like janadump

@@ -132,12 +132,14 @@ class JEventProcessorJANADOT:public JEventProcessor
 					time_waiting = 0.0;
 					Nfrom_factory = 0;
 					Nfrom_source = 0;
+					Nfrom_cache = 0;
 				}
 				node_type type;
 				double time_waited_on;	// time other factories spent waiting on this factory
 				double time_waiting;		// time this factory spent waiting on other factories
 				unsigned int Nfrom_factory;
 				unsigned int Nfrom_source;
+				unsigned int Nfrom_cache;
 		};
 
 		map<CallLink, CallStats> call_links;

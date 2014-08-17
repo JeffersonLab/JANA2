@@ -157,6 +157,7 @@ jerror_t JEventProcessorJANADOT::evnt(JEventLoop *loop, int eventnumber)
 				stats.data_not_available_ms += delta_t;
 				break;
 			case JEventLoop::DATA_FROM_CACHE:
+				fcallstats2.Nfrom_cache++;
 				stats.Nfrom_cache++;
 				stats.from_cache_ms += delta_t;
 				break;
@@ -236,6 +237,10 @@ jerror_t JEventProcessorJANADOT::fini(void)
 		unsigned int Ntotal = stats.Nfrom_cache + stats.Nfrom_source + stats.Nfrom_factory;
 		string nametag1 = MakeNametag(link.caller_name, link.caller_tag);
 		string nametag2 = MakeNametag(link.callee_name, link.callee_tag);
+		
+		// Don't draw links when the caller is flagged to be ignored via the special name "<ignore>"
+		if(nametag1 == "<ignore>") continue;
+		
 		double my_ms = stats.from_factory_ms + stats.from_source_ms + stats.from_cache_ms;
 		double percent = 100.0*my_ms/total_ms;
 		char percentstr[32];
@@ -271,15 +276,23 @@ jerror_t JEventProcessorJANADOT::fini(void)
 		FactoryCallStats &fcall_stats = fiter->second;
 		string nodename = fiter->first;
 		
+		// If nodename has special value "<ignore>" then do not draw it. This
+		// is used by event sources that want to draw the low level objects that
+		// were made, even though they weren't specifically requested. The 
+		// caller name would then be set to this value and the tag an empty string.
+		if(nodename == "<ignore>") continue;
+		
 		// If a focus was specified then check if this node is a relative or not
 		if(has_focus){
 			if(focus_relatives.find(nodename)==focus_relatives.end()) continue;
 		}
 
 		// Decide whether this is a factory, processor, or source
-		if(fcall_stats.Nfrom_source==0 && fcall_stats.Nfrom_factory==0){
+		if(fcall_stats.Nfrom_source==0 && fcall_stats.Nfrom_factory==0 && fcall_stats.Nfrom_cache==0){
 			fcall_stats.type = kProcessor;
-		}else if(fcall_stats.Nfrom_source < fcall_stats.Nfrom_factory){
+		}else if(fcall_stats.Nfrom_factory > 0){
+			fcall_stats.type = kFactory;
+		}else if(fcall_stats.Nfrom_cache>0 && fcall_stats.Nfrom_source==0){
 			fcall_stats.type = kFactory;
 		}else{
 			fcall_stats.type = kSource;

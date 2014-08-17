@@ -128,7 +128,11 @@ class JEventLoop{
 
                            inline bool CheckEventBoundary(int event_numberA, int event_numberB);
 
+                           inline bool GetCallStackRecordingStatus(void){ return record_call_stack; }
+                           inline void DisableCallStackRecording(void){ record_call_stack = false; }
+                           inline void EnableCallStackRecording(void){ record_call_stack = true; }
            inline vector<call_stack_t> GetCallStack(void){return call_stack;} ///< Get the current factory call stack
+                           inline void AddToCallStack(call_stack_t &cs){if(record_call_stack) call_stack.push_back(cs);} ///< Add specified item to call stack record but only if record_call_stack is true
                            inline void AddToErrorCallStack(error_call_stack_t &cs){error_call_stack.push_back(cs);} ///< Add layer to the factory call stack
      inline vector<error_call_stack_t> GetErrorCallStack(void){return error_call_stack;} ///< Get the current factory error call stack
                                   void PrintErrorCallStack(void); ///< Print the current factory call stack
