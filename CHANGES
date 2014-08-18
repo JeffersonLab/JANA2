@@ -7,7 +7,12 @@ Changes in version 0.7.2
   THREAD_TIMEOUT_FIRST_EVENT
 - Set object pointer to NULL in GetSingle() unless only one object exits
   Also, added optional 3rd argument to supress throwing exception
-
+- Return useful info for "host info" from Linux servers using janactl
+- Verify md5 checksum for all resources before using them
+- Fixed bug where very long, multi-threaded jobs would terminate due
+  to a timer running out.
+- Added methods to allow manipulation of the factory call stack so that
+  janadot will draw correct relationships. (Needed for GlueX DAQ plugin)
 
 Changes in version 0.7.1p3
 - The 0.7.1p2 was missing some of the changes in 0.7.1p1 due to
