@@ -604,7 +604,7 @@ void JApplication::EventBufferThread(void)
 		}else{
 			// If the user specified that some events should be skipped,
 			// then do that here, making sure to free the event first!
-			if(NEvents_read<(int)EVENTS_TO_SKIP){
+			if(NEvents_read<=(int)EVENTS_TO_SKIP){
 				event->FreeEvent();
 				delete event;
 				event = NULL;
