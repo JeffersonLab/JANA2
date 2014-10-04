@@ -10,7 +10,7 @@ SConscript(dirs=subdirs, exports='env osname', duplicate=0)
 
 # Only build janarate and janaroot if ROOTSYS is set
 if os.getenv('ROOTSYS') != None :
-	SConscript(dirs=['janaroot', 'janarate'], exports='env osname', duplicate=0)
+	SConscript(dirs=['janaroot', 'janarate', 'janaview'], exports='env osname', duplicate=0)
 
 # Optional builds
 sbms.OptionallyBuild(env, ['janaevio'])
