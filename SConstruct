@@ -64,7 +64,7 @@ env.Replace( CXX = os.getenv('CXX', 'g++'),
              FC  = os.getenv('FC' , 'gfortran') )
 
 # Add src and src/plugins to include search path
-env.PrependUnique(CPPPATH = ['#src', '#src/plugins'])
+env.PrependUnique(CPPPATH = ['#', '#src', '#src/plugins'])
 
 # Turn on debug symbols
 env.PrependUnique(CFLAGS = ['-g', '-fPIC'], CXXFLAGS = ['-g', '-fPIC'])
