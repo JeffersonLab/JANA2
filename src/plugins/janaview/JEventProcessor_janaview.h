@@ -29,8 +29,12 @@ class JEventProcessor_janaview:public jana::JEventProcessor{
 
 		void Lock(void){pthread_mutex_lock(&mutex);}
 		void Unlock(void){pthread_mutex_unlock(&mutex);}
+		
 		void NextEvent(void);
+		string MakeNametag(const string &name, const string &tag);
 		void GetObjectTypes(vector<JVFactoryInfo> &facinfo);
+		void GetAssociatedTo(JObject *jobj, vector<const JObject*> &associatedTo);
+		void MakeCallGraph(string nametag);
 
 	private:
 		jerror_t init(void);						///< Called once at program start.

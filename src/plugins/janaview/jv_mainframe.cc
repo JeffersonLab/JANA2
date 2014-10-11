@@ -106,10 +106,36 @@ void jv_mainframe::DoNext(void)
 }
 
 //-------------------
+// DoDelayedSelectObjectType
+//-------------------
+void jv_mainframe::DoDelayedSelectObjectType(void)
+{
+	/// This is here to allow us to defer selection of the object
+	/// type box after UpdateObjectTypeList is called. This happens
+	/// when a new event has been read in. For some reason, calling
+	/// DoSelectObjectType directly from UpdateObjectTypeList causes
+	/// bad behavior in the GUI. Hence, calling this routine a few
+	/// milliseconds after UpdateObjectTypeList has returned.
+	DoSelectObjectType(delayed_object_type_id);
+	lbObjectTypes->Select(delayed_object_type_id);
+	lbObjectTypes->SetTopEntry(delayed_object_type_id);
+	
+	Redraw(lbObjectTypes);
+}
+
+//-------------------
 // DoSelectObjectType
 //-------------------
 void jv_mainframe::DoSelectObjectType(Int_t id)
 {
+	// Clear listboxs of associated objects
+	lbObjects->RemoveAll();
+	lbAssociatedObjects->RemoveAll();
+	lbAssociatedToObjects->RemoveAll();
+	Redraw(lbObjects);
+	Redraw(lbAssociatedObjects);
+	Redraw(lbAssociatedToObjects);
+
 	TGLBEntry *e = lbObjectTypes->GetEntry(id);
 	if(!e){
 		_DBG_<<"Unable to find factory for id:"<<id<< endl;
@@ -129,7 +155,7 @@ void jv_mainframe::DoSelectObjectType(Int_t id)
 		tag = name.substr(pos+1);
 		name = name.substr(0, pos);
 	}
-	
+_DBG_<<"nametag="<<nametag<<endl;	
 	// Get factory and list of objects
 	JEP->Lock();
 	JFactory_base *fac = JEP->loop->GetFactory(name, tag.c_str());
@@ -138,6 +164,16 @@ void jv_mainframe::DoSelectObjectType(Int_t id)
 		_DBG_<<"Unable to find factory for name=\""<<name<<"\"  tag=\"" << tag << "\"" << endl;
 		return;
 	}
+
+	// Here we have to go to some trouble to make sure the event source's GetObjects
+	// method is called. The JFactory::Get method called below will only try to 
+	// generate the objects using the factory algorithm so objects coming from the
+	// source will not be necessarily be there unless we force the call here.	
+	JEvent &jevent = JEP->loop->GetJEvent();
+	JEventSource *source = jevent.GetJEventSource();
+	source->GetObjects(jevent, fac);
+
+	// Get pointers from factory
 	vobjs = fac->Get();
 
 	// Copy list of objects into listbox
@@ -179,6 +215,16 @@ void jv_mainframe::DoSelectObject(Int_t id)
 		lbAssociatedObjects->AddEntry(str, i+1);
 	}
 	Redraw(lbAssociatedObjects);
+	
+	// Get associated to objects
+	a2objs.clear();
+	JEP->GetAssociatedTo(obj, a2objs);
+	for(uint32_t i=0; i<a2objs.size(); i++){
+		char str[256];
+		sprintf(str, "0x%016lx %s", (unsigned long)a2objs[i], a2objs[i]->GetName().c_str());
+		lbAssociatedToObjects->AddEntry(str, i+1);
+	}
+	Redraw(lbAssociatedToObjects);
 }
 
 //-------------------
@@ -220,23 +266,78 @@ void jv_mainframe::DoDoubleClickAssociatedObject(Int_t id)
 	SelectNewObject(obj);
 }
 
+//-------------------
+// DoDoubleClickAssociatedToObject
+//-------------------
+void jv_mainframe::DoDoubleClickAssociatedToObject(Int_t id)
+{
+	// Get pointer to selected object as a JObject
+	Int_t idx = id-1;
+	if(idx<0 || idx>=(Int_t)a2objs.size()) return;	
+	JObject *obj = (JObject*)a2objs[idx];
+	
+	SelectNewObject(obj);
+}
+
 //==============================================================================
+
+//-------------------
+// UpdateInfo
+//-------------------
+void jv_mainframe::UpdateInfo(string source, int run, int event)
+{
+	lSource->SetText(source.c_str());
+
+	char str[256];
+	sprintf(str, "%d", run);
+	lRun->SetText(str);
+	sprintf(str, "%d", event);
+	lEvent->SetText(str);
+	
+	Redraw(lSource);
+}
 
 //-------------------
 // UpdateObjectTypeList
 //-------------------
 void jv_mainframe::UpdateObjectTypeList(vector<JVFactoryInfo> &facinfo)
 {
+	// Check if an entry is already selected and remember it so we can re-select it
+	string selected_nametag = "";
+	Int_t id = lbObjectTypes->GetSelected();
+	if(id>0 && id<=lbObjectTypes->GetNumberOfEntries()){
+		TGLBEntry *e = lbObjectTypes->GetEntry(id);
+		if(e) selected_nametag = e->GetTitle();
+	}
+
 	// Clean out old list and create new one of nametags
 	lbObjectTypes->RemoveAll();
 	objtypes.clear();
+
+	// First, copy all nametags into a set so they will be ordered alphabetically
+	set<string> nametags;
 	for(uint32_t i=0; i<facinfo.size(); i++){
 		JVFactoryInfo &finfo = facinfo[i];
-		lbObjectTypes->AddEntry(finfo.nametag.c_str(), i+1);
-		objtypes.push_back(finfo.nametag);
+		nametags.insert(finfo.nametag);
+	}
+
+	// Fill in listbox and keep corresponding vector of objects
+	set<string>::iterator iter = nametags.begin();
+	id=1;
+	uint32_t selected_id = 0;
+	for(; iter!=nametags.end(); iter++, id++){
+		string nametag = *iter;
+		lbObjectTypes->AddEntry(nametag.c_str(), id);
+		objtypes.push_back(nametag);
+		if(nametag == selected_nametag) selected_id = id;
 	}
 	
 	Redraw(lbObjectTypes);
+
+	if(selected_id>0){
+		delayed_object_type_id = selected_id;
+		TTimer::SingleShot(1000, "jv_mainframe", this, "DoDelayedSelectObjectType()");
+	}	
 }
 
 //-------------------
@@ -317,7 +418,7 @@ void jv_mainframe::SelectNewObject(void *vobj)
 //-------------------
 // Redraw
 //-------------------
-void jv_mainframe::Redraw(TGCompositeFrame *f)
+void jv_mainframe::Redraw(TGFrame *f)
 {
 	// This unfortunate business seems to be needed to get the listbox to redraw itself
 	TGDimension dim = f->GetSize();
@@ -339,6 +440,19 @@ TGLabel* jv_mainframe::AddLabel(TGCompositeFrame* frame, string text, Int_t mode
 	lab->SetMargins(0,0,0,0);
 	lab->SetWrapLength(-1);
 	frame->AddFrame(lab, new TGLayoutHints(hints,2,2,2,2));
+
+	return lab;
+}
+
+//-------------------
+// AddNamedLabel
+//-------------------
+TGLabel* jv_mainframe::AddNamedLabel(TGCompositeFrame* frame, string title, Int_t mode, ULong_t hints)
+{
+	TGHorizontalFrame *f = new TGHorizontalFrame(frame);
+	TGLabel *ltitle = AddLabel(f, title, kTextRight);
+	TGLabel *lab = AddLabel(f, "---------", mode);
+	frame->AddFrame(f, new TGLayoutHints(kLHintsExpandX,2,2,2,2));
 
 	return lab;
 }
@@ -488,12 +602,19 @@ void jv_mainframe::CreateGUI(void)
 	TGHorizontalFrame *fMainBot = new TGHorizontalFrame(fMain);
 
 	fMain->AddFrame(fMainTop, new TGLayoutHints(kLHintsLeft | kLHintsTop | kLHintsExpandX,2,2,2,2));
-	fMain->AddFrame(fMainMid, new TGLayoutHints(kLHintsLeft | kLHintsTop | kLHintsExpandX,2,2,2,2));
-	fMain->AddFrame(fMainBot, new TGLayoutHints(kLHintsLeft | kLHintsTop | kLHintsExpandX | kLHintsExpandY,2,2,2,2));
+	fMain->AddFrame(fMainMid, new TGLayoutHints(kLHintsLeft | kLHintsTop | kLHintsExpandX | kLHintsExpandY,2,2,2,2));
+	fMain->AddFrame(fMainBot, new TGLayoutHints(kLHintsLeft | kLHintsTop | kLHintsExpandX,2,2,2,2));
 
 	//....... Top Frame .......
 	
-	TGButton *bNext = AddButton(fMainTop, "Next");
+	TGGroupFrame *fInfo = new TGGroupFrame(fMainTop, "Current Event Info", kVerticalFrame);
+	fMainTop->AddFrame(fInfo, new TGLayoutHints(kLHintsLeft | kLHintsTop | kLHintsExpandX | kLHintsExpandY,2,2,2,2));
+
+	lSource = AddNamedLabel(fInfo, "Source:");
+	lRun    = AddNamedLabel(fInfo, "   Run:");
+	lEvent  = AddNamedLabel(fInfo, " Event:");
+
+	TGButton *bNext = AddButton(fInfo, "Next");
 
 	//....... Middle Frame .......
 	
@@ -521,7 +642,7 @@ void jv_mainframe::CreateGUI(void)
 	lbObjects = AddListBox(fObjects, "Objects this event");
 
 	lbAssociatedObjects = AddListBox(fAssociated, "Associated Objects");
-	lbAssociatedToObjects = AddListBox(fAssociated, "Objects associated to\n(may be incomplete)");
+	lbAssociatedToObjects = AddListBox(fAssociated, "Objects to which this is associated\n(may be incomplete)");
 
 	lObjectValue = AddLabel(fObjectValues, "---------------");
 	lbObjectValues = AddListBox(fObjectValues, "", 250, kLHintsExpandX | kLHintsExpandY);
@@ -545,6 +666,7 @@ void jv_mainframe::CreateGUI(void)
 	lbAssociatedObjects->Connect("Selected(Int_t)","jv_mainframe", this, "DoSelectAssociatedObject(Int_t)");
 	lbAssociatedObjects->Connect("DoubleClicked(Int_t)","jv_mainframe", this, "DoDoubleClickAssociatedObject(Int_t)");
 	lbAssociatedToObjects->Connect("Selected(Int_t)","jv_mainframe", this, "DoSelectAssociatedToObject(Int_t)");
+	lbAssociatedToObjects->Connect("DoubleClicked(Int_t)","jv_mainframe", this, "DoDoubleClickAssociatedToObject(Int_t)");
 
 }
 

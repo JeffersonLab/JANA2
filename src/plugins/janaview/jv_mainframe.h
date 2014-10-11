@@ -26,6 +26,7 @@ using namespace std;
 #include <TText.h>
 #include <TRootEmbeddedCanvas.h>
 #include <TColor.h>
+#include <TTimer.h>
 
 #include "JVFactoryInfo.h"
 
@@ -71,15 +72,18 @@ class jv_mainframe:public TGMainFrame{
 		void HandleMenu(Int_t id);
 		void DoQuit(void);
 		void DoNext(void);
+		void DoDelayedSelectObjectType(void);
 		void DoSelectObjectType(Int_t id);
 		void DoSelectObject(Int_t id);
 		void DoSelectAssociatedObject(Int_t id);
 		void DoSelectAssociatedToObject(Int_t id);
 		void DoDoubleClickAssociatedObject(Int_t id);
+		void DoDoubleClickAssociatedToObject(Int_t id);
 		
+		void UpdateInfo(string source, int run, int event);
 		void UpdateObjectTypeList(vector<JVFactoryInfo> &facinfo);
 		void SelectNewObject(void *vobj);
-		void Redraw(TGCompositeFrame *lb);
+		void Redraw(TGFrame *lb);
 
 #ifndef __CINT__
 		void UpdateObjectValues(JObject *obj);
@@ -87,12 +91,16 @@ class jv_mainframe:public TGMainFrame{
 
 		// Helper methods for building GUI
 		TGLabel*          AddLabel(TGCompositeFrame* frame, string text, Int_t mode=kTextLeft, ULong_t hints=kLHintsLeft | kLHintsTop);
+		TGLabel*          AddNamedLabel(TGCompositeFrame* frame, string text, Int_t mode=kTextLeft, ULong_t hints=kLHintsLeft | kLHintsTop);
 		TGTextButton*     AddButton(TGCompositeFrame* frame, string text, ULong_t hints=kLHintsLeft | kLHintsTop);
 		TGCheckButton*    AddCheckButton(TGCompositeFrame* frame, string text, ULong_t hints=kLHintsLeft | kLHintsTop);
 		TGPictureButton*  AddPictureButton(TGCompositeFrame* frame, string picture, string tooltip="", ULong_t hints=kLHintsLeft | kLHintsTop);
 		TGFrame*          AddSpacer(TGCompositeFrame* frame, UInt_t w=10, UInt_t h=10, ULong_t hints=kLHintsCenterX | kLHintsCenterY);
 		TGListBox*        AddListBox(TGCompositeFrame* frame, string lab="", UInt_t w=350, ULong_t hints=kLHintsLeft | kLHintsTop | kLHintsExpandX | kLHintsExpandY);
 		
+		TGLabel   *lSource;
+		TGLabel   *lRun;
+		TGLabel   *lEvent;
 		TGLabel   *lObjectType;
 		TGLabel   *lObjectValue;
 		TGListBox *lbObjectTypes;
@@ -109,6 +117,8 @@ class jv_mainframe:public TGMainFrame{
 #endif // __CINT__
 
 	protected:
+	
+		Int_t delayed_object_type_id;
 
 		void CreateGUI(void);
 	
