@@ -21,6 +21,12 @@ jv_mainframe::jv_mainframe(const TGWindow *p, UInt_t w, UInt_t h,  bool build_gu
 	MapWindow();
 	this->SetWidth(1000);
 	Redraw(this);
+	
+	timer = new TTimer();
+	timer->Connect("Timeout()", "jv_mainframe", this, "DoTimer()");
+	sleep_time = 250;
+	timer->Start(sleep_time, kFALSE);
+
 }
 
 //---------------------------------
@@ -86,6 +92,18 @@ void jv_mainframe::HandleMenu(Int_t id)
 	   break;
 
    }
+}
+
+//-------------------
+// DoTimer
+//-------------------
+void jv_mainframe::DoTimer(void)
+{
+	/// This method gets called every 250ms. It doesn't do anything
+	/// itself, but it does cause the screen to get updated. Without
+	/// this, the screen does not seem to update on it's own. It needs
+	/// at least a mouse movement over the screen to cause an update.
+	/// (This was observed on both Linux and Mac OS X).
 }
 
 //-------------------
@@ -155,7 +173,7 @@ void jv_mainframe::DoSelectObjectType(Int_t id)
 		tag = name.substr(pos+1);
 		name = name.substr(0, pos);
 	}
-_DBG_<<"nametag="<<nametag<<endl;	
+
 	// Get factory and list of objects
 	JEP->Lock();
 	JFactory_base *fac = JEP->loop->GetFactory(name, tag.c_str());

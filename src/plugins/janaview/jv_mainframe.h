@@ -77,6 +77,7 @@ class jv_mainframe:public TGMainFrame{
 		void DoSelectObject(Int_t id);
 		void DoSelectAssociatedObject(Int_t id);
 		void DoSelectAssociatedToObject(Int_t id);
+		void DoTimer(void);
 		void DoDoubleClickAssociatedObject(Int_t id);
 		void DoDoubleClickAssociatedToObject(Int_t id);
 		
@@ -117,7 +118,8 @@ class jv_mainframe:public TGMainFrame{
 #endif // __CINT__
 
 	protected:
-	
+		TTimer *timer;
+		long sleep_time; // in milliseconds
 		Int_t delayed_object_type_id;
 
 		void CreateGUI(void);
