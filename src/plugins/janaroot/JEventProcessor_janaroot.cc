@@ -360,6 +360,14 @@ TreeInfo* JEventProcessor_janaroot::GetTreeInfo(JFactory_base *fac)
 			branch_def = iname + "[N]/l";
 			item_size = sizeof(unsigned long);
 			type = type_ulong;
+		}else if(tokens[1]=="short"){
+			branch_def = iname + "[N]/S";
+			item_size = sizeof(short);
+			type = type_short;
+		}else if(tokens[1]=="ushort"){
+			branch_def = iname + "[N]/s";
+			item_size = sizeof(unsigned short);
+			type = type_ushort;
 		}else if(tokens[1]=="float"){
 			branch_def = iname + "[N]/F";
 			item_size = sizeof(float);
@@ -469,6 +477,12 @@ void JEventProcessor_janaroot::FillTree(JFactory_base *fac, TreeInfo *tinfo)
 			string str;
 
 			switch(tinfo->types[j]){
+				case type_short:
+					ss>>(*(short*)ptr);
+					break;
+				case type_ushort:
+					ss>>(*(unsigned short*)ptr);
+					break;
 				case type_int:
 					ss>>(*(int*)ptr);
 					break;

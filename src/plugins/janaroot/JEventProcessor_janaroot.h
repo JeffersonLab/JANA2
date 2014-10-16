@@ -25,6 +25,8 @@ class JEventProcessor_janaroot:public jana::JEventProcessor{
 		
 		enum data_type_t{
 			type_unknown,
+			type_short,
+			type_ushort,
 			type_int,
 			type_uint,
 			type_long,

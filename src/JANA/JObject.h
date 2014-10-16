@@ -15,6 +15,7 @@
 #include <vector>
 #include <string>
 #include <typeinfo>
+#include <stdint.h>
 using std::pair;
 using std::map;
 using std::vector;
@@ -361,12 +362,28 @@ void JObject::AddString(vector<pair<string,string> > &items, const char *name, c
 	if(append_types){
 		if(typeid(T)==typeid(int)){
 			ss<<":int:"<<val;
+		}else if(typeid(T)==typeid(int32_t)){
+			ss<<":int:"<<val;
 		}else if(typeid(T)==typeid(unsigned int)){
+			ss<<":uint:"<<val;
+		}else if(typeid(T)==typeid(uint32_t)){
 			ss<<":uint:"<<val;
 		}else if(typeid(T)==typeid(long)){
 			ss<<":long:"<<val;
+		}else if(typeid(T)==typeid(int64_t)){
+			ss<<":long:"<<val;
 		}else if(typeid(T)==typeid(unsigned long)){
 			ss<<":ulong:"<<val;
+		}else if(typeid(T)==typeid(uint64_t)){
+			ss<<":ulong:"<<val;
+		}else if(typeid(T)==typeid(short)){
+			ss<<":short:"<<val;
+		}else if(typeid(T)==typeid(int16_t)){
+			ss<<":short:"<<val;
+		}else if(typeid(T)==typeid(unsigned short)){
+			ss<<":ushort:"<<val;
+		}else if(typeid(T)==typeid(uint16_t)){
+			ss<<":ushort:"<<val;
 		}else if(typeid(T)==typeid(float)){
 			ss<<":float:"<<val;
 		}else if(typeid(T)==typeid(double)){
