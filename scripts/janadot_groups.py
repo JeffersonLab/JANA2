@@ -127,8 +127,8 @@ for gname in factory_files:
 	# Add color definition
 	if(ASSIGN_COLORS):
 		icolor += 1
-		if(icolor < len(colors)):
-			line+='color_'+colors[icolor]+','
+		if(icolor >= len(colors)): icolor = 0
+		line+='color_'+colors[icolor]+','
 
 	# Set 'no_box' option if specified
 	if(not(DRAW_BOUNDING_BOX)):
