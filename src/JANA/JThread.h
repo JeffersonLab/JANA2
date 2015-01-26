@@ -10,6 +10,8 @@
 
 #include <JANA/jerror.h>
 
+#include <pthread.h>
+
 // Place everything in JANA namespace
 namespace jana{
 
