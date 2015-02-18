@@ -31,6 +31,9 @@ class janactl_plugin:public cMsgCallback{
 
 		void callback(cMsgMessage *msg, void *userObject);
 
+		void HostStatusSYSCTL(vector<string> &keys, vector<string> &vals);
+		void HostStatusPROC(vector<string> &keys, vector<string> &vals);
+
 		void HostInfoSYSCTL(vector<string> &keys, vector<string> &vals);
 		void HostInfoPROC(vector<string> &keys, vector<string> &vals);
 

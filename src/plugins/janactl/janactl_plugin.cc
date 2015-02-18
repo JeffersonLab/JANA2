@@ -407,6 +407,49 @@ void janactl_plugin::callback(cMsgMessage *msg, void *userObject)
 		delete msg;
 		return;		
 	}
+
+	//======================================================================
+	if(cmd.find("host status")==0){
+		// cpu_usage
+		// user, sys, idle
+
+		vector<string> keys;
+		vector<string> vals;
+		
+#ifdef HAVE_PROC
+		HostStatusPROC(keys, vals);
+#endif // HAVE_PROC
+
+#ifdef HAVE_SYSCTL
+		HostStatusSYSCTL(keys, vals);
+#endif // HAVE_SYSCTL
+
+		// Make sure we have the same number of keys and values
+		if(keys.size() != vals.size()){
+			jctlout << "keys.size() != vals.size() when returning host info!!" << endl;
+			keys.clear();
+			vals.clear();
+		}
+		
+		// Double check that all key/value strings are not empty so cMsg doesn't choke
+		for(unsigned int i=0; i<keys.size(); i++){
+			if(keys[i] == "") keys[i] = "<unknown>";
+			if(vals[i] == "") vals[i] = "<empty>";
+		}
+
+		// Add all key/value pairs to response
+		response.setText("host status");
+		if(keys.size() > 0){
+			response.add("keys" , keys);
+			response.add("vals", vals);
+		}
+
+		cMsgSys->send(&response);
+
+		delete msg;
+		return;		
+	}
+
 	//======================================================================
 	if(cmd.find("command line")==0){
 
@@ -425,6 +468,83 @@ void janactl_plugin::callback(cMsgMessage *msg, void *userObject)
 	}
 
 	delete msg;
+}
+
+//---------------------------------
+// HostStatusPROC  (Linux)
+//---------------------------------
+void janactl_plugin::HostStatusPROC(vector<string> &keys, vector<string> &vals)
+{
+	/// Get host info using the /proc mechanism on Linux machines.
+	/// This returns the CPU usage/idle time. In order to work, it
+	/// it needs to take two measurements separated in time and
+	/// calculate the difference. So that we don't linger here
+	/// too long, we maintain static members to keep track of the
+	/// previous reading and take the delta with that.
+#ifdef HAVE_PROC
+	
+	static time_t last_time = 0;
+	static double last_user = 0.0;
+	static double last_nice = 0.0;
+	static double last_sys  = 0.0;
+	static double last_idle = 0.0;
+	static double delta_user = 0.0;
+	static double delta_nice = 0.0;
+	static double delta_sys  = 0.0;
+	static double delta_idle = 1.0;
+
+	time_t now = time(NULL);
+	if(now > last_time){
+		ifstream ifs("/proc/stat");
+		if( ifs.is_open() ){
+			string cpu;
+			double user, nice, sys, idle;
+	
+			ifs >> cpu >> user >> nice >> sys >> idle;
+			ifs.close();
+			
+			delta_user = user - last_user;
+			delta_nice = nice - last_nice;
+			delta_sys  = sys  - last_sys;
+			delta_idle = idle - last_idle;
+			last_user = user;
+			last_nice = nice;
+			last_sys  = sys;
+			last_idle = idle;
+
+			last_time = now;
+		}
+	}
+	
+	double norm = delta_user + delta_nice + delta_sys + delta_idle;
+	double user_percent = 100.0*delta_user/norm;
+	double nice_percent = 100.0*delta_nice/norm;
+	double sys_percent  = 100.0*delta_sys /norm;
+	double idle_percent = 100.0*delta_idle/norm;
+	double cpu_usage    = 100.0 - idle_percent;
+
+	char str[256];
+	
+	sprintf(str, "%5.1f", user_percent);
+	keys.push_back("user");
+	vals.push_back(str);
+
+	sprintf(str, "%5.1f", nice_percent);
+	keys.push_back("nice");
+	vals.push_back(str);
+
+	sprintf(str, "%5.1f", sys_percent);
+	keys.push_back("sys");
+	vals.push_back(str);
+
+	sprintf(str, "%5.1f", idle_percent);
+	keys.push_back("idle");
+	vals.push_back(str);
+
+	sprintf(str, "%5.1f", cpu_usage);
+	keys.push_back("cpu_usage");
+	vals.push_back(str);
+#endif // HAVE_PROC
 }
 
 //---------------------------------
@@ -562,6 +682,14 @@ void janactl_plugin::HostInfoPROC(vector<string> &keys, vector<string> &vals)
 
 	
 #endif // HAVE_PROC
+}
+
+//---------------------------------
+// HostStatusSYSCTL  (Mac OS X)
+//---------------------------------
+void janactl_plugin::HostStatusSYSCTL(vector<string> &keys, vector<string> &vals)
+{
+
 }
 
 //---------------------------------

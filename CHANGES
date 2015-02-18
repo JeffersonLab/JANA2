@@ -3,6 +3,7 @@ Changes in version 0.7.3
 - Fixed issue with EVENTS_TO_SKIP only skipping EVENTS_TO_SKIP-1 events
 - Add janaview plugin
 - Add support for stdint types like uint32_t in janaroot
+- Add "host status" command to janactl plugin for getting cpu usage
 
 
 Changes in version 0.7.2
