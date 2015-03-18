@@ -249,13 +249,17 @@ void janactl_plugin::callback(cMsgMessage *msg, void *userObject)
 			average_rates.push_back(arate->second);
 		}
 		
-		response.add("threads", &threads);
-		response.add("instantaneous_rates", &instantaneous_rates);
-		response.add("average_rates", &average_rates);
-		response.add("nevents", &nevents_by_thread);
+		if(threads.size() > 0){
+			response.add("threads", &threads);
+			response.add("instantaneous_rates", &instantaneous_rates);
+			response.add("average_rates", &average_rates);
+			response.add("nevents", &nevents_by_thread);
 
-		response.setText("thread info");
-		cMsgSys->send(&response);
+			response.setText("thread info");
+			cMsgSys->send(&response);
+		}else{
+			cout << "Ignoring \"get threads\" request due to empty threads info." << endl;
+		}
 
 		delete msg;
 		return;
