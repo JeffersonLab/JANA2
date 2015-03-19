@@ -69,7 +69,7 @@ class JEventLoop{
 		
 		typedef struct{
 			const char* factory_name;
-			const char* tag;
+			string tag;
 			const char* filename;
 			int line;
 		}error_call_stack_t;
@@ -347,7 +347,7 @@ JFactory<T>* JEventLoop::Get(vector<const T*> &t, const char *tag, bool allow_de
 		ecs.tag = tag;
 		ecs.filename = NULL;
 		error_call_stack.push_back(ecs);
-		throw;
+		throw e;
 	}
 	
 	// If recording the call stack, update the end_time field

@@ -258,7 +258,7 @@ jerror_t JFactory<T>::Get(vector<const T*> &d)
 			brun(eventLoop, run_number);
 		}catch(std::exception &e){
 			string tag_plus = string(Tag()) + " (brun)";
-			JEventLoop::error_call_stack_t cs = {GetDataClassName(), tag_plus.c_str(), __FILE__, __LINE__};
+			JEventLoop::error_call_stack_t cs = {GetDataClassName(), tag_plus, __FILE__, __LINE__};
 			eventLoop->AddToErrorCallStack(cs);
 			busy = 0; // clear busy flag since where exiting early and no longer "busy"
 			throw e;

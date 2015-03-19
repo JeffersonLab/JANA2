@@ -386,10 +386,8 @@ void JEventLoop::PrintErrorCallStack(void)
 	unsigned int max_length = 0;
 	for(unsigned int i=0; i<error_call_stack.size(); i++){
 		string routine = error_call_stack[i].factory_name;
-		if(error_call_stack[i].tag){
-			if(strlen(error_call_stack[i].tag)){
-				routine = routine + ":" + error_call_stack[i].tag;
-			}
+		if(error_call_stack[i].tag.length()){
+			routine = routine + ":" + error_call_stack[i].tag;
 		}
 		if(routine.size()>max_length) max_length = routine.size();
 		routines.push_back(routine);
