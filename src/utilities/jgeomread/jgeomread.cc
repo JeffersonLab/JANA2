@@ -70,15 +70,21 @@ int main(int narg, char *argv[])
 	// Get and display values for a specific namepath if one was specified
 	if(XPATH!=""){
 		
-		// Determine whether an attribute was specified at the end of the xpath
+		// Determine whether an attribute was specified by searching the xpath
+		// for an '@' for which there is no '=' before the next '/' or the end
+		// of the xpath.
 		bool attribute_specified = false;
 		string attribute="";
-		string::size_type pos_slash = XPATH.find_last_of("/", XPATH.size());
-		if(pos_slash!=string::npos && (pos_slash+1)!=XPATH.size()){
-			if(XPATH[pos_slash+1] == '@'){
-				attribute_specified = true;
-				attribute = XPATH.substr(pos_slash+2, XPATH.size()-(pos_slash+2));
-			}
+		string::size_type pos = 0;
+		while((pos=XPATH.find("@", pos)) != string::npos){
+			pos++;
+			string::size_type pos_equals = XPATH.find("=", pos);
+			string::size_type pos_slash  = XPATH.find("/", pos);
+			if(pos_equals < pos_slash) continue;
+			if(pos_slash == string::npos) pos_slash = XPATH.size();
+			attribute = XPATH.substr(pos, pos_slash-pos);
+			attribute_specified = true;
+			break;
 		}
 		
 		// Display results
