@@ -11,6 +11,6 @@ env.Replace(BINDIR = bin)
 
 
 # Loop over libraries, building each
-subdirs = ['resource_test', 'thread_relaunch', 'user_references']
+subdirs = ['resource_test', 'thread_relaunch', 'user_references', 'associated_objects']
 SConscript(dirs=subdirs, exports='env osname', duplicate=0)
 

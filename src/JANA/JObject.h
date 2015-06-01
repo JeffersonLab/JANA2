@@ -13,11 +13,13 @@
 #include <cassert>
 #include <map>
 #include <vector>
+#include <set>
 #include <string>
 #include <typeinfo>
 #include <stdint.h>
 using std::pair;
 using std::map;
+using std::set;
 using std::vector;
 using std::string;
 using std::stringstream;
@@ -51,7 +53,7 @@ using std::stringstream;
 namespace jana{
 
 class JFactory_base;
-
+class JEventLoop;
 
 class JObject{
 
@@ -79,10 +81,15 @@ class JObject{
 		inline void RemoveAssociatedObject(const JObject *obj);
 		inline void ClearAssociatedObjects(void);
 		inline bool IsAssociated(const JObject* locObject) const {return (associated.find(locObject) != associated.end());}
-		template<typename T> void Get(vector<const T*> &ptrs, string classname="") const ;
+		template<typename T> void Get(vector<const T*> &ptrs, string classname="", int max_depth=1000000) const ;
 		template<typename T> void GetT(vector<const T*> &ptrs) const ;
 		template<typename T> void GetSingle(const T* &ptrs, string classname="") const ;
 		template<typename T> void GetSingleT(const T* &ptrs) const ;
+		template<typename T> void GetAssociatedAncestors(set<const JObject*> &already_checked, int &max_depth, set<const T*> &objs_found, string classname="") const;
+		template<typename T> void GetAssociatedDescendants(JEventLoop *loop, vector<const T*> &associatedTo, int max_depth=1000000);
+		void GetAssociatedDescendants(JEventLoop *loop, vector<const JObject*> &associatedTo, int max_depth=1000000);
+
+		template<typename T,typename S> void CopyToVector(T itbegin, T itend, vector<const S*> &v) const;
 
 		// Methods for handling pretty formatting for dumping to the screen or file
 		virtual void toStrings(vector<pair<string,string> > &items)const;
@@ -185,31 +192,135 @@ void JObject::ClearAssociatedObjects(void)
 }
 
 //--------------------------
+// CopyToVector
+//
+// This litte utility method is here because the g++ 4.4.7
+// compiler was complaining about the declaration of 
+// set<const T*>::iterator it; in the Get method. Very strange
+// but this at least avoids ever having to declare the variable.
+//--------------------------
+template<typename T,typename S>
+void JObject::CopyToVector(T itbegin, T itend, vector<const S*> &v) const
+{
+	for(T it=itbegin; it!=itend; it++) v.push_back(*it);
+}
+
+//--------------------------
 // Get
 //--------------------------
 template<typename T>
-void JObject::Get(vector<const T*> &ptrs, string classname) const
+void JObject::Get(vector<const T*> &ptrs, string classname, int max_depth) const
 {
-	/// Fill the given vector with pointers to the associated 
-	/// JObjects of the type on which the vector is based. The
-	/// objects are chosen by matching their class names 
-	/// (obtained via JObject::className()) either
-	/// to the one provided in classname or to T::static_className()
-	/// if classname is an empty string.
+	/// Fill the given vector with pointers to the associated objects of the
+	/// type on which the vector is based. The objects are chosen by matching
+	/// their class names (obtained via JObject::className()) either to the
+	/// one provided in classname or to T::static_className() if classname is
+	/// an empty string. Associations will be searched to a level of max_depth
+	/// to find all objects of the requested type. By default, max_depth is
+	/// set to a very large number so that all associations are found. To 
+	/// limit the search to only objects directly associated with this one,
+	/// set max_depth to either "0" or "1".
 	///
 	/// The contents of ptrs are cleared upon entry.
-	
-	ptrs.clear();
-	
+
 	if(classname=="")classname=T::static_className();
+	
+	// Use the GetAssociatedAncestors method which may call itself
+	// recursively to search all levels of association (at or
+	// below this object. Objects for which this is an associated
+	// object are not checked for).
+	set<const JObject*> already_checked;
+	set<const T*> objs_found;
+	int my_max_depth = max_depth;
+	GetAssociatedAncestors(already_checked, my_max_depth, objs_found, classname);
+	
+	// Copy results into caller's container
+	ptrs.clear();
+	CopyToVector(objs_found.begin(), objs_found.end(), ptrs);
+//	set<const T*>::iterator it;
+//	for(it=objs_found.begin(); it!=objs_found.end(); it++){
+//		ptrs.push_back(*it);
+//	}	
+}
+
+//--------------------------
+// GetAssociatedAncestors
+//--------------------------
+template<typename T>
+void JObject::GetAssociatedAncestors(set<const JObject*> &already_checked, int &max_depth, set<const T*> &objs_found, string classname) const
+{
+	/// Get associated objects of the specified type (either "T" or classname).
+	/// Check also for associated objects of any associated objects
+	/// to a level of max_depth associations. This method calls itself
+	/// recursively so care is taken to only check the associated objects
+	/// of each object encountered only once.
+	///
+	/// The "already_checked" parameter should be passed in as an empty container
+	/// that is used to keep track of which objects had their direct associations
+	/// checked. "max_depth" indicates the maximum level of associations to check
+	/// (n.b. both "0" and "1" means only check direct associations.) This must
+	/// be passed as a reference to an existing int since it is modified in order
+	/// to keep track of the current depth in the recursive calls. Set max_depth
+	/// to a very high number (like 1000000) to check all associations. The
+	/// "objs_found" container will contain the actual associated objects found.
+	/// The objects are chosen by matching their class names (obtained via 
+	/// JObject::className()) either to the one provided in "classname" or to
+	/// T::static_className() if classname is an empty string.
+
+	if(already_checked.find(this) == already_checked.end()) already_checked.insert(this);
+
+	if(classname=="")classname=T::static_className();
+	max_depth--;
 	
 	map<const JObject*, string>::const_iterator iter = associated.begin();
 	for(; iter!=associated.end(); iter++){
+	
+		// Add to list if appropriate
 		if(iter->second == classname){
-			const T *ptr = dynamic_cast<const T*>(iter->first);
-			ptrs.push_back(ptr);
+			const T *obj = dynamic_cast<const T*>(iter->first);
+			objs_found.insert(obj);
 		}
+
+		// Check this object's associated objects if appropriate
+		if(max_depth<=0) continue;
+		if(already_checked.find(iter->first) != already_checked.end()) continue;
+		already_checked.insert(iter->first);
+		iter->first->GetAssociatedAncestors(already_checked, max_depth, objs_found, classname);
 	}	
+
+	max_depth++;
+}
+
+//--------------------------
+// GetAssociatedDescendants
+//--------------------------
+template<typename T>
+void GetAssociatedDescendants(JEventLoop *loop, vector<const T*> &associatedTo, int max_depth=1000000)
+{
+	/// Find objects of type "T" for which this object appears in its
+	/// associated ancestors list. (This is kind of the opposite of
+	/// the "Get()" method.)
+	///
+	/// WARNING: this must build and search the ancestor list of EVERY
+	/// object produced by EVERY factory. It is an expensive method
+	/// to call. Use it with great caution!
+	///
+	/// WARNING: this only searches objects that have already been
+	/// created. It will not activate factories they may eventually
+	/// claim this as an associated object so the list returned may
+	/// be incomplete.
+	///
+	/// WARNING: this templated method works by first calling the 
+	/// JObject form and then dynamically casting each of those to see
+	/// if they of type "T". This makes this an even more expensive
+	/// call. Again, use with great caution!!
+	
+	vector<const JObject*> ajobjs;
+	GetAssociatedDescendants(loop, ajobjs, max_depth);
+	for(uint32_t i=0; i<ajobjs.size(); i++){
+		const T *ptr = dynamic_cast<const T*>(ajobjs[i]);
+		if(ptr != NULL) associatedTo.push_back(ptr);
+	}
 }
 
 //--------------------------

@@ -5,6 +5,10 @@ Changes in version 0.7.3
 - Add support for stdint types like uint32_t in janaroot
 - Fixed longstanding bug in jgeomread where attributes specified in the
   middle of the xpath were not displayed
+- Made JANA_CALIB_URL and JANA_CALIB_CONTEXT config. parameters
+- Make JObject::Get() search for associated objects of associated objects,...
+  (added associated_objects unit test to check that it works)
+- Added JObject::GetAssociatedDescendants()
 
 
 Changes in version 0.7.2

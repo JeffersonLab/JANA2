@@ -1042,10 +1042,15 @@ JCalibration* JApplication::GetJCalibration(unsigned int run_number)
 	/// should access it in their brun() callback and keep a local
 	/// copy of the required constants for use in the evnt() callback.
 
-	const char *url = getenv("JANA_CALIB_URL");
-	if(!url)url="file://./";
-	const char *context = getenv("JANA_CALIB_CONTEXT");
-	if(!context)context="default";
+	// url and context may be passed in either as environment variables
+	// or configuration parameters. Default values are used if neither
+	// is available.
+	string url     = "file://./";
+	string context = "default";
+	if( getenv("JANA_CALIB_URL"    )!=NULL ) url     = getenv("JANA_CALIB_URL");
+	if( getenv("JANA_CALIB_CONTEXT")!=NULL ) context = getenv("JANA_CALIB_CONTEXT");
+	gPARMS->SetDefaultParameter("JANA_CALIB_URL",     url,     "URL used to access calibration constants");
+	gPARMS->SetDefaultParameter("JANA_CALIB_CONTEXT", context, "Calibration context to pass on to concrete JCalibration derived class");
 
 	// Lock mutex to keep list from being modified while we search it
 	pthread_mutex_lock(&calibration_mutex);
@@ -1076,7 +1081,7 @@ JCalibration* JApplication::GetJCalibration(unsigned int run_number)
 	JCalibrationGenerator* gen = NULL;
 	double liklihood = 0.0;
 	for(unsigned int i=0; i<calibrationGenerators.size(); i++){
-		double my_liklihood = calibrationGenerators[i]->CheckOpenable(string(url), run_number, context);
+		double my_liklihood = calibrationGenerators[i]->CheckOpenable(url, run_number, context);
 		if(my_liklihood > liklihood){
 			liklihood = my_liklihood;
 			gen = calibrationGenerators[i];
@@ -1086,10 +1091,10 @@ JCalibration* JApplication::GetJCalibration(unsigned int run_number)
 	// Make the JCalibration object
 	JCalibration *g=NULL;
 	if(gen){
-		g = gen->MakeJCalibration(string(url), run_number, context);
+		g = gen->MakeJCalibration(url, run_number, context);
 	}
-	if(gen==NULL && !strncmp(url, "file://", 7)){
-		g = new JCalibrationFile(string(url), run_number, context);
+	if(gen==NULL && (url.find("file://")==0)){
+		g = new JCalibrationFile(url, run_number, context);
 	}
 	if(g){
 		calibrations.push_back(g);
