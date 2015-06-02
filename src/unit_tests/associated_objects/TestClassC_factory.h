@@ -19,10 +19,10 @@ class TestClassC_factory:public jana::JFactory<TestClassC>{
 
 
 	private:
-		jerror_t init(void){}
-		jerror_t brun(jana::JEventLoop *eventLoop, int runnumber){}
-		jerror_t erun(void){}
-		jerror_t fini(void){}
+		jerror_t init(void){return NOERROR;}
+		jerror_t brun(jana::JEventLoop *eventLoop, int runnumber){return NOERROR;}
+		jerror_t erun(void){return NOERROR;}
+		jerror_t fini(void){return NOERROR;}
 
 		jerror_t evnt(jana::JEventLoop *loop, int eventnumber){
 		
@@ -48,6 +48,8 @@ class TestClassC_factory:public jana::JFactory<TestClassC>{
 			// Also add one more TestClassA as an associated object
 			// to the last TestClassB object
 			_data[_data.size()-1]->AddAssociatedObject(objsA[objsB.size()+1]);
+
+			return NOERROR;
 		}
 };
 

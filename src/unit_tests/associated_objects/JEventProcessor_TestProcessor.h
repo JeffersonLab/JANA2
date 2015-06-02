@@ -92,10 +92,10 @@ _DBG_<<"---- "<<objs[0]->className()<<" size="<<objs.size()<<endl;
 		}
 
 	private:
-		jerror_t init(void){}
-		jerror_t brun(jana::JEventLoop *eventLoop, int runnumber){}
-		jerror_t erun(void){}
-		jerror_t fini(void){}
+		jerror_t init(void){return NOERROR;}
+		jerror_t brun(jana::JEventLoop *eventLoop, int runnumber){return NOERROR;}
+		jerror_t erun(void){return NOERROR;}
+		jerror_t fini(void){return NOERROR;}
 
 		jerror_t evnt(jana::JEventLoop *loop, int eventnumber){
 			
@@ -114,6 +114,8 @@ _DBG_<<"---- "<<objs[0]->className()<<" size="<<objs.size()<<endl;
 			FindAssociations(objsB,1);
 			FindAssociations(objsC,1);
 			FindAssociations(objsD,1);
+
+			return NOERROR;
 		}
 		
 
