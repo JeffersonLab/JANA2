@@ -202,6 +202,8 @@ void jv_mainframe::DoSelectObjectType(Int_t id)
 		lbObjects->AddEntry(str, i+1);
 	}
 	
+	JEP->MakeCallGraph();
+	
 	JEP->Unlock();
 	Redraw(lbObjects);
 }
@@ -296,6 +298,19 @@ void jv_mainframe::DoDoubleClickAssociatedToObject(Int_t id)
 	
 	SelectNewObject(obj);
 }
+
+//-------------------
+// HandleConfigureNotify
+//-------------------
+Bool_t jv_mainframe::HandleConfigureNotify(Event_t *event)
+{
+	/// This gets called when the window is resized (but also for other things)
+	/// It is here so we can update the CallGraph tab when the window is resized.
+
+	if(JEP) JEP->MakeCallGraph();
+	return this->TGMainFrame::HandleConfigureNotify(event);
+}
+
 
 //==============================================================================
 
@@ -640,7 +655,7 @@ void jv_mainframe::CreateGUI(void)
 	fMainMid->AddFrame(fObjectTypes, new TGLayoutHints(kLHintsLeft | kLHintsTop | kLHintsExpandY ,2,2,2,2));
 	lbObjectTypes = AddListBox(fObjectTypes, "Object Types", 300, kLHintsExpandY);
 
-	TGTab *fTab = new TGTab(fMainMid);
+	fTab = new TGTab(fMainMid);
 	fMainMid->AddFrame(fTab, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY,2,2,2,2));
 	fTab->SetWidth(600);
 
@@ -668,8 +683,15 @@ void jv_mainframe::CreateGUI(void)
 	// ---- Call Graph Tab ----
 	TGCompositeFrame *tCallGraph = fTab->AddTab("Call Graph");
 	
-	TRootEmbeddedCanvas *canvas = new TRootEmbeddedCanvas("rec1", tCallGraph, 400, 400);
-	tCallGraph->AddFrame(canvas, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY,2,2,2,2));
+	// Use TGCanvas to get scrollbars for the canvas
+	TGCanvas *gcanvas = new TGCanvas(tCallGraph, 100, 100, kFixedSize);
+	tCallGraph->AddFrame(gcanvas, new TGLayoutHints(kLHintsExpandY | kLHintsExpandX));
+	fCanvas = new TGVerticalFrame(gcanvas->GetViewPort(), 10, 10);
+	gcanvas->SetContainer(fCanvas);
+
+	canvas = new TRootEmbeddedCanvas("rec1", fCanvas, 400, 400);
+	canvas->GetCanvas()->SetFillColor(TColor::GetColor( (Float_t)0.96, 0.96, 0.99));
+	fCanvas->AddFrame(canvas, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY,2,2,2,2));
 	
 	//....... Bottom Frame .......
 	//AddSpacer(fMainBot, 50, 1, kLHintsRight);
@@ -685,6 +707,5 @@ void jv_mainframe::CreateGUI(void)
 	lbAssociatedObjects->Connect("DoubleClicked(Int_t)","jv_mainframe", this, "DoDoubleClickAssociatedObject(Int_t)");
 	lbAssociatedToObjects->Connect("Selected(Int_t)","jv_mainframe", this, "DoSelectAssociatedToObject(Int_t)");
 	lbAssociatedToObjects->Connect("DoubleClicked(Int_t)","jv_mainframe", this, "DoDoubleClickAssociatedToObject(Int_t)");
-
 }
 

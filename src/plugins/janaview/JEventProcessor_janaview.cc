@@ -12,6 +12,10 @@ using namespace std;
 #include "JEventProcessor_janaview.h"
 using namespace jana;
 
+#include <TLatex.h>
+#include <TArrow.h>
+#include <TBox.h>
+
 jv_mainframe *JVMF = NULL;
 JEventProcessor_janaview *JEP=NULL;
 
@@ -134,6 +138,8 @@ jerror_t JEventProcessor_janaview::evnt(JEventLoop *loop, int eventnumber)
 	vector<JVFactoryInfo> facinfo;
 	GetObjectTypes(facinfo);
 	JVMF->UpdateObjectTypeList(facinfo);
+	
+	MakeCallGraph();
 
 	pthread_cond_wait(&cond, &mutex);
 	
@@ -229,93 +235,178 @@ void JEventProcessor_janaview::GetAssociatedTo(JObject *jobj, vector<const JObje
 	}
 }
 
-////------------------
-//// FindAncestors
-////------------------
-//void JEventProcessor_janaview::FindAncestors(string nametag, set<string> &callers)
-//{
-//
-//
-//}
-
 //------------------
 // MakeCallGraph
 //------------------
 void JEventProcessor_janaview::MakeCallGraph(string nametag)
 {
-//	vector<JEventLoop::call_stack_t> stack = loop->GetCallStack();
-//	
-//	// Get ancestors
-//	set<string> all_factories;
-//	vector<set<string> > ancestor_chain;
-//	while(true);
-//		set<string> ancestors;
-//		for(uint32_t i=0; i<stack.size(); i++){
-//			JEventLoop::call_stack_t &cs = stack[i];
-//			string caller = MakeNametag(cs.caller_name, cs.caller_tag);
-//			string callee = MakeNametag(cs.callee_name, cs.callee_tag);
-//			if(callee == nametag){
-//				if(all_factories.find(caller) != all_factories.end()) continue;
-//				ancestors.insert(caller);
-//				all_factories.insert(caller);
-//			}
-//		}
-//		if(ancestors.empty()) break;
-//		
-//		ancestor_chain.push_back(ancestors);
-//	}
-//
-//
-//
-//
-//	for(unsigned int i=0; i<stack.size(); i++){
-//
-//		// Keep track of total time each factory spent waiting and being waited on
-//		string nametag1 = MakeNametag(stack[i].caller_name, stack[i].caller_tag);
-//		string nametag2 = MakeNametag(stack[i].callee_name, stack[i].callee_tag);
-//
-//		FactoryCallStats &fcallstats1 = factory_stats[nametag1];
-//		FactoryCallStats &fcallstats2 = factory_stats[nametag2];
-//		
-//		double delta_t = (stack[i].start_time - stack[i].end_time)*1000.0;
-//		fcallstats1.time_waiting += delta_t;
-//		fcallstats2.time_waited_on += delta_t;
-//
-//		// Get pointer to CallStats object representing this calling pair
-//		CallLink link;
-//		link.caller_name = stack[i].caller_name;
-//		link.caller_tag  = stack[i].caller_tag;
-//		link.callee_name = stack[i].callee_name;
-//		link.callee_tag  = stack[i].callee_tag;
-//		CallStats &stats = call_links[link]; // get pointer to stats object or create if it doesn't exist
-//		
-//		switch(stack[i].data_source){
-//			case JEventLoop::DATA_NOT_AVAILABLE:
-//				stats.Ndata_not_available++;
-//				stats.data_not_available_ms += delta_t;
-//				break;
-//			case JEventLoop::DATA_FROM_CACHE:
-//				fcallstats2.Nfrom_cache++;
-//				stats.Nfrom_cache++;
-//				stats.from_cache_ms += delta_t;
-//				break;
-//			case JEventLoop::DATA_FROM_SOURCE:
-//				fcallstats2.Nfrom_source++;
-//				stats.Nfrom_source++;
-//				stats.from_source_ms += delta_t;
-//				break;
-//			case JEventLoop::DATA_FROM_FACTORY:
-//				fcallstats2.Nfrom_factory++;
-//				stats.Nfrom_factory++;
-//				stats.from_factory_ms += delta_t;
-//				break;				
-//		}
-//		
-//	}
-//	
-//	set<string> focus_relatives;
-//	FindDecendents(focus_factory, focus_relatives);
-//	FindAncestors(focus_factory, focus_relatives);
-//
+
+	// Clear canvas
+	TCanvas *c = JVMF->canvas->GetCanvas();
+	c->cd();
+	c->Clear();
+	c->Update();
+
+	// Make list of all factories and their callees
+	vector<JEventLoop::call_stack_t> stack = loop->GetCallStack();
+	if(stack.empty()) return;
+	map<string, CGobj*> cgobjs;
+	for(uint32_t i=0; i<stack.size(); i++){
+		JEventLoop::call_stack_t &cs = stack[i];
+		string caller = MakeNametag(cs.caller_name, cs.caller_tag);
+		string callee = MakeNametag(cs.callee_name, cs.callee_tag);
+		if(caller == "<ignore>") continue;
+		
+		CGobj *caller_obj = cgobjs[caller];
+		CGobj *callee_obj = cgobjs[callee];
+		if( caller_obj==NULL ) caller_obj = cgobjs[caller] = new CGobj(caller);
+		if( callee_obj==NULL ) callee_obj = cgobjs[callee] = new CGobj(callee);
+		
+		caller_obj->callees.insert(callee_obj);
+	}
+
+	// Continually loop, promoting all callers to be higher in rank than all
+	// of their callees
+	do{
+		bool nothing_changed = true;
+		map<string, CGobj*>::iterator iter = cgobjs.begin();
+
+		for(; iter != cgobjs.end(); iter++){
+		
+			CGobj *cgobj = iter->second;
+		
+			set<CGobj*>::iterator it = cgobj->callees.begin();
+			for(; it!=cgobj->callees.end(); it++){
+				if(*it == cgobj) break; // in case we are listed as our own callee!
+				if((*it)->rank >= cgobj->rank){
+					cgobj->rank = (*it)->rank + 1;
+					nothing_changed = false;
+				}
+			}
+
+		}
+		if(nothing_changed) break;
+	}while(true);
+
+	// Determine overall rank properties (widths, heights, members)
+	map<Int_t, CGrankprop > rankprops;
+	map<string, CGobj*>::iterator iter;
+	for(iter=cgobjs.begin(); iter != cgobjs.end(); iter++){
+		CGobj *cgobj = iter->second;
+		CGrankprop &rankprop = rankprops[cgobj->rank];
+		
+		rankprop.cgobjs.push_back(cgobj);
+		rankprop.totheight += cgobj->h;
+		if(cgobj->w > rankprop.totwidth) rankprop.totwidth = cgobj->w;
+	}
+	
+	// Get minimum width and height of canvas needed to display everything
+	Int_t totwidth  = 0; // left edge gap in pixels
+	Int_t totheight = 0;
+	Int_t Nx = rankprops.size(); // number of columns (ranks)
+	Int_t Ny = 0; // number of rows in tallest rank
+	map<Int_t, CGrankprop >::iterator itrp;
+	for(itrp=rankprops.begin(); itrp!=rankprops.end(); itrp++){
+	
+		CGrankprop &rprop = itrp->second;
+		totwidth += rprop.totwidth;
+		Int_t height = rprop.totheight;
+		if(totheight < height){
+			totheight = height;
+			Ny = rprop.cgobjs.size();
+		}
+	}
+	Int_t xspace = 50; // minimum number of pixels between columns
+	Int_t yspace = 10; // minimum number of pixels between rows
+	Int_t minwidth  = totwidth  + (Nx+1)*xspace;
+	Int_t minheight = totheight + (Ny+1)*yspace;
+	
+	// Get actual height and width of canvas so we can either make it
+	// bigger or increase our spacing.
+	// Note that I spent a LOT of time trying to get this to work right.
+	// In the end, I never could. I'm going to have punt now and call it 
+	// "somewhat usable".
+	Int_t cwidth  = JVMF->fTab->GetWidth();
+	Int_t cheight = JVMF->fTab->GetHeight();
+	if( cwidth  < minwidth  ) cwidth  = minwidth;
+	if( cheight < minheight ) cheight = minheight;
+	
+	// Loop over all ranks again, setting x and y spacing and
+	// using them to calculate the box coordinates for each factory
+	xspace = (cwidth - totwidth)/(Nx+1);
+	Int_t xpos = xspace/2;
+	for(itrp=rankprops.begin(); itrp!=rankprops.end(); itrp++){
+	
+		CGrankprop &rprop = itrp->second;
+		yspace = (cheight - rprop.totheight)/(rprop.cgobjs.size()+1);
+		Int_t ypos = yspace;
+		for(uint32_t i=0; i<rprop.cgobjs.size(); i++){
+			CGobj *cgobj = rprop.cgobjs[i];
+			
+			Int_t pad = 4;
+			cgobj->x1 = xpos - pad;
+			cgobj->x2 = xpos + cgobj->w + pad;
+			cgobj->y1 = ypos - pad;
+			cgobj->y2 = ypos + cgobj->h + pad;
+			cgobj->ymid = (cgobj->y2 + cgobj->y1)/2;
+			
+			ypos += cgobj->h + yspace;
+		}
+
+		xpos += rprop.totwidth + xspace;
+	}
+
+	// Clear canvas
+	JVMF->canvas->SetWidth(  cwidth  );
+	JVMF->canvas->SetHeight( cheight );
+	c->SetCanvasSize( cwidth, cheight );
+	c->SetMargin(0.0, 0.0, 0.0, 0.0);
+	c->Clear();
+	c->Update();
+	
+	// Draw links first
+	for(iter=cgobjs.begin(); iter != cgobjs.end(); iter++){
+		CGobj *cgobj1 = iter->second;
+		set<CGobj*> &callees = cgobj1->callees;
+		set<CGobj*>::iterator it = callees.begin();
+		double x1 = cgobj1->x1/(double)cwidth;
+		double y1 = cgobj1->ymid/(double)cheight;
+		for(; it!=callees.end(); it++){
+			CGobj *cgobj2 = *it;
+			double x2 = cgobj2->x2/(double)cwidth;
+			double y2 = cgobj2->ymid/(double)cheight;
+			
+			TLine *lin = new TLine(x1,y1,x2,y2);
+			lin->SetLineColor(kBlack);
+			lin->SetLineWidth(1.0);
+			lin->Draw();
+		}
+	}
+
+	// Draw boxes with factory names
+	TLatex latex;
+	latex.SetTextSizePixels(20);
+	latex.SetTextAlign(22);
+	latex.SetTextColor(kWhite);
+	for(iter=cgobjs.begin(); iter != cgobjs.end(); iter++){
+		CGobj *cgobj = iter->second;
+		double x1 = cgobj->x1/(double)cwidth;
+		double x2 = cgobj->x2/(double)cwidth;
+		double y1 = cgobj->y1/(double)cheight;
+		double y2 = cgobj->y2/(double)cheight;
+
+		TBox *box = new TBox(x1, y1, x2, y2);
+		box->SetFillColor(TColor::GetColor( (Float_t)0.4, 0.4, 0.4));
+		box->Draw();
+		latex.DrawLatex((x1+x2)/2.0, (y1+y2)/2.0, cgobj->nametag.c_str());
+	}
+	
+	TBox *box = new TBox(0.0, 0.0, 1.0, 1.0);
+	box->SetFillStyle(0);
+	box->SetLineWidth(4);
+	box->SetLineColor(kRed);
+	box->Draw();
+
+	c->Update();
 }
 

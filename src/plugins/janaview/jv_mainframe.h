@@ -80,6 +80,7 @@ class jv_mainframe:public TGMainFrame{
 		void DoTimer(void);
 		void DoDoubleClickAssociatedObject(Int_t id);
 		void DoDoubleClickAssociatedToObject(Int_t id);
+		Bool_t HandleConfigureNotify(Event_t *event);
 		
 		void UpdateInfo(string source, int run, int event);
 		void UpdateObjectTypeList(vector<JVFactoryInfo> &facinfo);
@@ -109,6 +110,10 @@ class jv_mainframe:public TGMainFrame{
 		TGListBox *lbAssociatedObjects;
 		TGListBox *lbAssociatedToObjects;
 		TGListBox *lbObjectValues;
+		
+		TGTab *fTab;
+		TGVerticalFrame *fCanvas;
+		TRootEmbeddedCanvas *canvas;
 		
 		vector<string> objtypes; // nametags of values in object type listbox
 		vector<void*> vobjs;
