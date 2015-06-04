@@ -71,6 +71,7 @@ class JCalibration{
 				 const string& GetContext(void) const {return context;}
 		         const string& GetURL(void) const {return url;}
 		                  void GetAccesses(map<string, vector<string> > &accesses){accesses = this->accesses;}
+				        string GetVariation(void);
 		
 		       containerType_t GetContainerType(string typeid_name);
 		                  void DumpCalibrationsToFiles(string basedir="./");

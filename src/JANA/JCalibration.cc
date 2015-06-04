@@ -144,6 +144,45 @@ void JCalibration::GetEventBoundaries(vector<int> &event_boundaries)
 }
 
 //---------------------------------
+// GetVariation
+//---------------------------------
+string JCalibration::GetVariation(void)
+{
+	/// This is a special routine that looks for a string
+	/// of the format "variation=XXX" in the context string
+	/// and if found, returns the "XXX" part. Otherwise, it
+	/// returns "default" assuming no variation was identified.
+	/// This is here for convenience since the CCDB implementation
+	/// will use strings of this format to specify variations.
+	/// When looking for the variation, any spaces or semi-colon
+	/// found in the string will be removed along with characters
+	/// following it. This is to allow semi-colon or space seperated
+	/// lists in the variation.
+	if(context == "default") return context;
+	
+	size_t pos = context.find("variation=");
+	if(pos != context.npos){
+		string variation = context.substr(pos+string("variation=").length());
+		
+		// chop of ";" and everything after it
+		pos = variation.find(";");
+		if(pos != context.npos){
+			variation = variation.substr(0, pos);
+		}
+		
+		// chop off space and everything after it
+		pos = variation.find(" ");
+		if(pos != context.npos){
+			variation = variation.substr(0, pos);
+		}
+
+		return variation;
+	}
+	
+	return "default";
+}
+
+//---------------------------------
 // GetContainerType
 //---------------------------------
 JCalibration::containerType_t JCalibration::GetContainerType(string typeid_name)
