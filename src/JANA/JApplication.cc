@@ -1876,22 +1876,52 @@ jerror_t JApplication::OpenNext(void)
 		return NO_MORE_EVENT_SOURCES;
 	}
 	
-	// Loop over JEventSourceGenerator objects and find the one
-	// (if any) that has the highest chance of being able to read
-	// this source. The return value of 
-	// JEventSourceGenerator::CheckOpenable(source) is a liklihood that
-	// the named source can be read by the JEventSource objects
-	// created by the generator. In most cases, the liklihood will
-	// be either 0.0 or 1.0. In the case that 2 or more generators return
-	// equal liklihoods, the first one in the list will be used.
+	// Check if the user has forced a specific type of event source
+	// be used via the EVENT_SOURCE_TYPE config. parameter. If so,
+	// search for that source and use it. Otherwise, throw an exception.
 	JEventSourceGenerator* gen = NULL;
-	double liklihood = 0.0;
 	const char *sname = source_names[sources.size()].c_str();
-	for(unsigned int i=0; i<eventSourceGenerators.size(); i++){
-		double my_liklihood = eventSourceGenerators[i]->CheckOpenable(sname);
-		if(my_liklihood > liklihood){
-			liklihood = my_liklihood;
+	if(gPARMS->Exists("EVENT_SOURCE_TYPE")){
+		string EVENT_SOURCE_TYPE="";
+		gPARMS->GetParameter("EVENT_SOURCE_TYPE", EVENT_SOURCE_TYPE);
+		for(unsigned int i=0; i<eventSourceGenerators.size(); i++){
+			if(eventSourceGenerators[i]->className() != EVENT_SOURCE_TYPE) continue;
 			gen = eventSourceGenerators[i];
+			jout << "Forcing use of event source type: " << EVENT_SOURCE_TYPE << endl;
+			break;
+		}
+		
+		if(!gen){
+			jerr << endl;
+			jerr << "-----------------------------------------------------------------" << endl;
+			jerr << " You specified event source type \"" << EVENT_SOURCE_TYPE << "\"" << endl;
+			jerr << " be used to read the event sources but no such type exists." << endl;
+			jerr << " Here is a list of available source types:" << endl;
+			jerr << endl;
+			for(unsigned int i=0; i<eventSourceGenerators.size(); i++){
+				jerr << "   " << eventSourceGenerators[i]->className() << endl;
+			}
+			jerr << endl;
+			jerr << "-----------------------------------------------------------------" << endl;
+			Quit();
+		}
+	}else{
+	
+		// Loop over JEventSourceGenerator objects and find the one
+		// (if any) that has the highest chance of being able to read
+		// this source. The return value of 
+		// JEventSourceGenerator::CheckOpenable(source) is a liklihood that
+		// the named source can be read by the JEventSource objects
+		// created by the generator. In most cases, the liklihood will
+		// be either 0.0 or 1.0. In the case that 2 or more generators return
+		// equal liklihoods, the first one in the list will be used.
+		double liklihood = 0.0;
+		for(unsigned int i=0; i<eventSourceGenerators.size(); i++){
+			double my_liklihood = eventSourceGenerators[i]->CheckOpenable(sname);
+			if(my_liklihood > liklihood){
+				liklihood = my_liklihood;
+				gen = eventSourceGenerators[i];
+			}
 		}
 	}
 	

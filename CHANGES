@@ -9,6 +9,8 @@ Changes in version 0.7.3
 - Make JObject::Get() search for associated objects of associated objects,...
   (added associated_objects unit test to check that it works)
 - Added JObject::GetAssociatedDescendants()
+- Added JCalibration::GetVariation()
+- Add EVENT_SOURCE_TYPE param. to allow user to force source type
 
 
 Changes in version 0.7.2
