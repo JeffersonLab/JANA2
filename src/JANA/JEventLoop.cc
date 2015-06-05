@@ -419,11 +419,25 @@ void JEventLoop::Initialize(void)
 	// Copy the event processor list to our local vector
 	RefreshProcessorListFromJApplication();
 
+	string autoactivate;
 	try{
+		// Caution: This routinely jumps to the catch block when RECORD_CALL_STACK
+		// is not defined.
+		app->GetJParameterManager()->GetParameter( "AUTOACTIVATE", autoactivate);
 		app->GetJParameterManager()->GetParameters(default_tags, "DEFTAG:");
 		app->GetJParameterManager()->GetParameter( "RECORD_CALL_STACK", record_call_stack);
 	}catch(...){}
-	auto_activated_factories = app->GetAutoActivatedFactories();
+	
+	// Add autoactivated factories to our private list 
+	if(autoactivate == "all"){
+		for(uint32_t i=0; i<factories.size(); i++){
+			string name = factories[i]->GetDataClassName();
+			string tag  = factories[i]->Tag();
+			auto_activated_factories.push_back(pair<string,string>(name,tag));
+		}
+	}else{
+		auto_activated_factories = app->GetAutoActivatedFactories();
+	}
 }
 
 //-------------

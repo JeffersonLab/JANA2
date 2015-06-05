@@ -219,6 +219,7 @@ class JApplication{
 		bool stop_event_buffer;
 		bool dump_calibrations;
 		bool dump_configurations;
+		bool list_configurations;
 		bool quitting;
 
 		map<uint32_t, string> status_bit_descriptions; ///< Descriptions of bits in status word used in JEvent

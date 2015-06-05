@@ -34,6 +34,7 @@ using namespace std;
 #include "JParameterManager.h"
 #include "JCalibrationFile.h"
 #include "JCalibrationGeneratorCCDB.h"
+#include "JEventSourceGenerator_NULL.h"
 #include "JVersion.h"
 #include "JStreamLog.h"
 using namespace jana;
@@ -215,6 +216,7 @@ JApplication::JApplication(int narg, char* argv[])
 	stop_event_buffer = false;
 	dump_calibrations = false;
 	dump_configurations = false;
+	list_configurations = false;
 	quitting = false;
 	Ncores = sysconf(_SC_NPROCESSORS_ONLN);
 	Nsources_deleted = 0;
@@ -280,6 +282,11 @@ JApplication::JApplication(int narg, char* argv[])
 		arg="--dumpconfig";
 		if(!strncmp(arg, argv[i],strlen(arg))){
 			dump_configurations = true;
+			continue;
+		}
+		arg="--listconfig";
+		if(!strncmp(arg, argv[i],strlen(arg))){
+			list_configurations = true;
 			continue;
 		}
 		arg="--resourcereport";
@@ -411,7 +418,8 @@ void JApplication::Usage(void)
 	cout<<"  --config=filename        Read in the specified JANA configuration file"<<endl;
 	cout<<"  --factoryreport          Dump a short report on factories at end of job"<<endl;
 	cout<<"  --dumpcalibrations       Dump calibrations used in a directory at end of job"<<endl;
-	cout<<"  --dumpcconfig            Dump all config. parameters into file at end of job"<<endl;
+	cout<<"  --dumpconfig             Dump all config. parameters into file at end of job"<<endl;
+	cout<<"  --listconfig             Print all config. parameters to screen and exit"<<endl;
 	cout<<"  --resourcereport         Dump report on system resources used at end of job"<<endl;
 	cout<<"  --auto_activate=factory  Auto activate \"factory\" for every event"<<endl;
 	cout<<"  -Pkey=value              Set configuration parameter \"key\" to \"value\""<<endl;
@@ -1347,9 +1355,23 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 		if(err)return err;
 	}
 
+	// If user specfied that all parameters be listed, then we need to set
+	// it up to do this whether they specified an event source or not.
+	// We also only want to process a single event and ensure that all factories
+	// are activated.
+	if(list_configurations){
+		AddEventSourceGenerator(new JEventSourceGenerator_NULL());
+		jparms->SetParameter("EVENT_SOURCE_TYPE", "JEventSourceGenerator_NULL");
+		jparms->SetParameter("EVENTS_TO_KEEP", 1);
+		jparms->SetParameter("NTHREADS", 1);
+		jparms->SetParameter("AUTOACTIVATE", "all");
+		source_names.clear();
+		source_names.push_back("dummy_source");
+	}
+
 	// Call init() for JEventProcessors (factories don't exist yet)
 	Init();
-	
+		
 	// If no event sources were specified, then notify the user now and exit
 	if(source_names.size() == 0){
 		jerr<<endl;
@@ -1751,6 +1773,9 @@ jerror_t JApplication::Fini(bool check_fini_called_flag)
 		pthread_cond_signal(&event_buffer_cond);
 		usleep(100000);
 	}
+	
+	// List configuration parameters (if requested)
+	if(list_configurations) jparms->DumpSuccinct();
 	
 	// Dump configuration parameters (if requested)
 	if(dump_configurations)jparms->WriteConfigFile("jana.config");

@@ -11,6 +11,8 @@ Changes in version 0.7.3
 - Added JObject::GetAssociatedDescendants()
 - Added JCalibration::GetVariation()
 - Add EVENT_SOURCE_TYPE param. to allow user to force source type
+- Add --listconfig command line switch
+- -PAUTOACTIVATE=all activates all factories automatically
 
 
 Changes in version 0.7.2

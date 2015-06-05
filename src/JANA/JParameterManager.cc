@@ -5,6 +5,10 @@
 // Creator: davidl (on Darwin wire129.jlab.org 7.8.0 powerpc)
 //
 
+#include <unistd.h>
+#include <stdio.h>
+#include <sys/ioctl.h>
+
 #include <ctype.h>
 #include <pthread.h>
 #include <fstream>
@@ -388,3 +392,95 @@ void JParameterManager::Dump(void)
 	pthread_mutex_unlock(&parameter_mutex);
 
 }
+
+//---------------------------------
+// DumpSuccinct
+//---------------------------------
+void JParameterManager::DumpSuccinct(bool print_descriptions)
+{
+	/// Draw one line to stdout for each parameter. Optionally print
+	/// descriptions as well. If descriptions are printed, then
+	/// the width of the terminal screen is used to break up the
+	/// description into multiple lines to better fit it to the
+	/// screen.
+
+	// Get size of terminal
+	struct winsize w;
+    ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
+	int Nrows = w.ws_row;
+	int Ncols = w.ws_col;
+
+	// Just in case a new parameter is written while we're dumping
+	pthread_mutex_lock(&parameter_mutex);
+
+	// Get maximum key width for all parameters
+	int max_key_width=0;
+	int max_val_width=0;
+	for(unsigned int i=0; i<parameters.size(); i++){
+
+		JParameter *p = parameters[i];
+		const string &key = p->GetKey();
+		const string &val = p->GetValue();
+
+		if(key.length() > max_key_width) max_key_width = key.length();
+		if(val.length() > max_val_width) max_val_width = val.length();
+	}
+	
+	// Limit size so one really long key or value doesn't make ugly spacing
+	// for everyone else!
+	if(max_key_width > 48) max_key_width = 48;
+	if(max_val_width > 32) max_val_width = 32;
+
+	cout << endl;
+
+	// print all parameters
+	for(unsigned int i=0; i<parameters.size(); i++){
+	
+		JParameter *p = parameters[i];
+		const string &key = p->GetKey();
+		const string &val = p->GetValue();
+		const string &description = p->GetDescription();
+
+		int Nspaces = max_key_width - key.length();
+		if(Nspaces<0) Nspaces=0;
+
+		// print key = val
+		cout << string(Nspaces, ' ') << key << " = " << val;
+
+		// optionally print description
+		if(print_descriptions) {
+			Nspaces = max_val_width - val.length(); 
+			if(Nspaces>0) cout << string(Nspaces, ' ');
+			
+			// Break description up into multiple lines
+			int Nspaces_descr = max_key_width + max_val_width + 3; // +3 is for " = "
+			int max_width = Ncols - Nspaces_descr - 3;
+			if(max_width<12) max_width = 12;
+			
+			size_t pos_end = 0;
+			while(true){
+				size_t pos_start = pos_end;
+				size_t pos = pos_start;
+				while(true){
+					pos = description.find(" ", pos+1);
+					if(pos == string::npos) pos = description.length();
+					if( (pos-pos_start) > max_width) break;
+					pos_end = pos;
+					if(pos_end==0) break; // empty string
+					if(pos_end==description.length()) break;
+					if(pos_end==string::npos) break;
+				}
+				if(pos_end == pos_start) pos_end = string::npos;
+				if(pos_start!=0) cout << string(Nspaces_descr, ' ');
+				cout << " # " << description.substr(pos_start, pos_end - pos_start) << endl;
+				if(pos_end == string::npos) break;
+				if(pos_end >= description.length()) break;
+			}
+		}
+	}
+	cout << endl;
+	
+	pthread_mutex_unlock(&parameter_mutex);
+
+}
+

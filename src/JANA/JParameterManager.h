@@ -68,6 +68,7 @@ class JParameterManager{
 		                                    void WriteConfigFile(string fname);
 		                                    void PrintParameters(void); ///< Print a list of the configuration parameters
 		                                    void Dump(void); ///< Invoke the Dump() method of all JParameter objects
+		                                    void DumpSuccinct(bool print_descriptions=true); ///< Print one line for each param. optionally including descriptions
 									        void SetVerbose(bool verbose=true){this->verbose = verbose;} ///< Turn on additional messages
 		
 	private:
