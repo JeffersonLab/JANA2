@@ -49,11 +49,13 @@ class JCalibration{
 		
 		// Returns "false" on success and "true" on error
 		          virtual bool GetCalib(string namepath, map<string, string> &svals, int event_number=0)=0;
+		          virtual bool GetCalib(string namepath, vector<string> &svals, int event_number=0)=0;
 		          virtual bool GetCalib(string namepath, vector< map<string, string> > &svals, int event_number=0)=0;
+		          virtual bool GetCalib(string namepath, vector< vector<string> > &svals, int event_number=0)=0;
 		          virtual bool PutCalib(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, map<string, string> &svals, string comment="");
 		          virtual bool PutCalib(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, vector< map<string, string> > &svals, string comment="");
 		          virtual void GetListOfNamepaths(vector<string> &namepaths)=0;
-		                  void GetEventBoundaries(vector<int> &event_boundaries); ///< User-callable access to event boundaries
+		          virtual void GetEventBoundaries(vector<int> &event_boundaries); ///< User-callable access to event boundaries
 
 		template<class T> bool Get(string namepath, map<string,T> &vals, int event_number=0);
 		template<class T> bool Get(string namepath, vector<T> &vals, int event_number=0);
@@ -194,18 +196,18 @@ bool JCalibration::Get(string namepath, vector<T> &vals, int event_number)
 	/// the map version of this method instead of the vector one.
 	
 	// Get values in the form of strings
-	map<string, string> svals;
+	vector<string> svals;
 	bool res = GetCalib(namepath, svals, event_number);
 	RecordRequest(namepath, typeid(vector<T>).name());
 	
 	// Loop over values, converting the strings to type "T" and
 	// copying them into the vals map.
 	vals.clear();
-	map<string,string>::const_iterator iter;
+	vector<string>::const_iterator iter;
 	for(iter=svals.begin(); iter!=svals.end(); ++iter){
 		// Use stringstream to convert from a string to type "T"
 		T v;
-		stringstream ss(iter->second);
+		stringstream ss(*iter);
 		ss >> v;
 		vals.push_back(v);
 	}
@@ -311,7 +313,7 @@ bool JCalibration::Get(string namepath, vector< vector<T> > &vals, int event_num
 	/// 
 	
 	// Get values in the form of strings
-	vector< map<string, string> >svals;
+	vector< vector<string> >svals;
 	bool res = GetCalib(namepath, svals, event_number);
 	RecordRequest(namepath, typeid(vector< vector<T> >).name());
 	
@@ -319,12 +321,12 @@ bool JCalibration::Get(string namepath, vector< vector<T> > &vals, int event_num
 	// copying them into the vals map.
 	vals.clear();
 	for(unsigned int i=0; i<svals.size(); i++){
-		map<string,string>::const_iterator iter;
+		vector<string>::const_iterator iter;
 		vector<T> vvals;
 		for(iter=svals[i].begin(); iter!=svals[i].end(); ++iter){
 			// Use stringstream to convert from a string to type "T"
 			T v;
-			stringstream ss(iter->second);
+			stringstream ss(*iter);
 			ss >> v;
 			vvals.push_back(v);
 		}

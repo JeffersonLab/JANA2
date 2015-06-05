@@ -121,6 +121,52 @@ namespace jana
          /** @brief    get calibration constants
          *
          * @parameter [in]  namepath - full resource string
+         * @parameter [out] svals - data to be returned
+         * @parameter [in]  event_number - optional parameter of event number
+         * @return true if constants were read
+         */
+        bool GetCalib(string namepath, vector<string> &svals, int event_number=0)
+        {
+            //
+            try
+            {   
+                bool result = mCalibration->GetCalib(svals, namepath);
+
+                //>oO CCDB debug output
+                #ifdef CCDB_DEBUG_OUTPUT
+                string result_str((result)?string("loaded"):string("failure"));
+                cout<<"CCDB::janaccdb"<<endl;
+                cout<<"CCDB::janaccdb REQUEST vector<string> request = '"<<namepath<<"' result = "<<result_str<<endl;
+                if(result)
+                {
+                    string first_value(" --NAN-- ");
+                    if(svals.size()>0)
+                    {
+                        vector<string>::const_iterator iter = svals.begin();
+                        first_value.assign(*iter);
+                    }
+                    cout<<"CCDB::janaccdb selected name-values count = '"<<svals.size()<<"' first_value '"<<first_value<<"'"<<endl;
+                }
+                #endif  //>end of  CCDB debug output
+
+                return !result; //JANA has false - if success and true if error
+            }
+            catch (std::exception ex)
+            {
+                //>oO CCDB debug output
+                #ifdef CCDB_DEBUG_OUTPUT
+                cout <<"CCDB::janaccdb Exception caught at GetCalib(string namepath, map<string, string> &svals, int event_number=0)"<<endl;
+                cout <<"CCDB::janaccdb what = "<<ex.what()<<endl;
+                #endif //end of CCDB debug output
+
+                return true; //JANA has false - if success and true if error
+            }
+        }
+
+
+        /** @brief    get calibration constants
+         *
+         * @parameter [in]  namepath - full resource string
          * @parameter [out] vsvals - data to be returned
          * @parameter [in]  event_number - optional parameter of event number
          * @return true if constants were read
@@ -167,7 +213,56 @@ namespace jana
         }
 
 
-        /** @brief    GetListOfNamepaths
+         /** @brief    get calibration constants
+         *
+         * @parameter [in]  namepath - full resource string
+         * @parameter [out] vsvals - data to be returned
+         * @parameter [in]  event_number - optional parameter of event number
+         * @return true if constants were read
+         */
+        bool GetCalib(string namepath, vector< vector<string> > &vsvals, int event_number=0)
+        {
+            //
+            try
+            {
+                 bool result = mCalibration->GetCalib(vsvals, namepath);
+
+                 //>oO CCDB debug output
+                 #ifdef CCDB_DEBUG_OUTPUT
+                 string result_str((result)?string("loaded"):string("failure"));
+                 cout<<"CCDB::janaccdb"<<endl;
+                 cout<<"CCDB::janaccdb REQUEST vector<vector<string>> request = '"<<namepath<<"' result = "<<result_str<<endl;
+                 if(result)
+                 {
+                     string first_value(" --NAN-- ");
+                     if(vsvals.size()>0 && vsvals[0].size()>0)
+                     {
+                         map<string, string>::const_iterator iter = vsvals[0].begin();
+                         first_value.assign(*iter);
+                     }
+
+                     cout<<"CCDB::janaccdb selected rows = '"<<vsvals.size() <<"' selected columns = '"<<(int)((vsvals.size()>0)? vsvals[0].size() :0)
+                         <<"' first value = '"<<first_value<<"'"<<endl;
+                 }
+                 #endif  //end of CCDB debug output
+
+
+                return !result; //JANA has false - if success and true if error, CCDB otherwise
+            }
+            catch (std::exception ex)
+            {
+                //>oO CCDB debug output
+                #ifdef CCDB_DEBUG_OUTPUT
+                cout <<"CCDB::janaccdb Exception caught at GetCalib(string namepath, map<string, string> &svals, int event_number=0)"<<endl;
+                cout <<"CCDB::janaccdb what = "<<ex.what()<<endl;
+                #endif
+
+                return true; //JANA has false - if success and true if error, CCDB otherwise
+            }
+        }
+
+
+       /** @brief    GetListOfNamepaths
          *
          * @parameter [in] vector<string> & namepaths
          * @return   void

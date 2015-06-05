@@ -24,7 +24,9 @@ class JCalibrationFile:public JCalibration{
 		static const char* static_className(void){return "JCalibrationFile";}
 
 		bool GetCalib(string namepath, map<string, string> &svals, int event_number=0);
+		bool GetCalib(string namepath, vector<string> &svals, int event_number=0);
 		bool GetCalib(string namepath, vector< map<string, string> > &svals, int event_number=0);
+		bool GetCalib(string namepath, vector< vector<string> > &svals, int event_number=0);
 		bool PutCalib(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, map<string, string> &svals, string comment="");
 		bool PutCalib(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, vector< map<string, string> > &svals, string comment="");
 		void GetListOfNamepaths(vector<string> &namepaths);

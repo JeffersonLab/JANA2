@@ -13,6 +13,8 @@ Changes in version 0.7.3
 - Add EVENT_SOURCE_TYPE param. to allow user to force source type
 - Add --listconfig command line switch
 - -PAUTOACTIVATE=all activates all factories automatically
+- Add vector versions of GetCalib to JCalibration API to allow access
+  to calibration constants while maintaining position order of source
 
 
 Changes in version 0.7.2
