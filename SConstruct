@@ -15,8 +15,8 @@ import sbms_config
 SHOWBUILD = ARGUMENTS.get('SHOWBUILD', 0)
 
 # Get platform-specific name
-osname = os.getenv('BMS_OSNAME', 'build')
-if(osname == 'build'): 	osname = subprocess.Popen(["./osrelease.pl"], stdout=subprocess.PIPE).communicate()[0].strip()
+osname = os.getenv('BMS_OSNAME')
+if(osname == None): 	osname = subprocess.Popen(["./osrelease.pl"], stdout=subprocess.PIPE).communicate()[0].strip()
 
 
 # Get architecture name

@@ -1,7 +1,0 @@
-#!/bin/sh
-rm -f config.cache
-autoheader configure.ac
-aclocal -I m4
-autoconf
-
-exit

@@ -1,4 +1,0 @@
-
-CXXFLAGS += -I$(JANA_HOME)/include
-LIB_DIRS += $(JANA_HOME)/lib
-

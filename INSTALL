@@ -8,9 +8,9 @@ Installation instructions for JANA
 
 Quick Start
 --------------------
-> tar xzvf jana_0.7.1.tgz
-> cd jana_0.7.1
-> setenv BMS_OSNAME `./BMS/osrelease.pl`
+> tar xzvf jana_0.7.3.tgz
+> cd jana_0.7.3
+> setenv BMS_OSNAME `./SBMS/osrelease.pl`
 > scons -j8 install
 
 
@@ -26,7 +26,7 @@ considered unstable.
 
 Unpack the tarball containing the source. For example:
 
->tar xzf path-to-tarball/jana_0.7.41.tgz
+>tar xzf path-to-tarball/jana_0.7.3.tgz
 
 
 Configuring
@@ -39,7 +39,7 @@ running scons is the BMS_OSNAME environment variable.
 This is used as the names of the build and install
 directories so that JANA can be simultaneously built 
 on multiple platforms using the same network-mounted
-source directory. The script BMS/osrelease.pl may be
+source directory. The script SBMS/osrelease.pl may be
 helpful in setting this, but you are free to set it
 to whatever you choose.
 
