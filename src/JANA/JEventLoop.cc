@@ -429,7 +429,7 @@ void JEventLoop::Initialize(void)
 	}catch(...){}
 	
 	// Add autoactivated factories to our private list 
-	if(autoactivate == "all"){
+	if( (autoactivate == "all") || (autoactivate == "ALL") ){
 		for(uint32_t i=0; i<factories.size(); i++){
 			string name = factories[i]->GetDataClassName();
 			string tag  = factories[i]->Tag();
