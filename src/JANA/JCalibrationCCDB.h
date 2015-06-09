@@ -127,10 +127,36 @@ namespace jana
          */
         bool GetCalib(string namepath, vector<string> &svals, int event_number=0)
         {
-            //
+            /// The CCDB method corresponding to this one treats constants stored as
+			/// a single column but many rows as an error and throws an exception if
+			/// it is detected. The message in the exception suggests using a 
+			/// vector<vector<T> > instead. Thus, we do that here and convert if
+			/// necessary into a 1-D vector.
+			///
+			/// It is worth noting that back in May 2014 a similar issue was 
+			/// addressed in the CCDB code itself when the method filling a
+			/// map<string, string> was used. Fixing this one in CCDB also will
+			/// require coordinated releases of CCDB and JANA. We choose to
+			/// handle it here in order to avoid that.
+			
             try
             {   
-                bool result = mCalibration->GetCalib(svals, namepath);
+				vector<vector<string> > ssvals;
+                bool result = mCalibration->GetCalib(ssvals, namepath);
+				
+				if(ssvals.size() == 1){
+					// ---- COLUMN-WISE ----
+					
+					svals = ssvals[0];
+
+				}else{
+					// ---- ROW-WISE ----
+
+					// add first element of each row (should only be one!)
+					for(uint32_t i=0; i<ssvals.size(); i++){
+						if(ssvals[i].size() > 0) svals.push_back(ssvals[i][0]);
+					}
+				}
 
                 //>oO CCDB debug output
                 #ifdef CCDB_DEBUG_OUTPUT
