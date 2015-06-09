@@ -221,6 +221,8 @@ class JApplication{
 		bool dump_configurations;
 		bool list_configurations;
 		bool quitting;
+		bool override_runnumber;
+		int  user_supplied_runnumber;
 
 		map<uint32_t, string> status_bit_descriptions; ///< Descriptions of bits in status word used in JEvent
 };

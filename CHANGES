@@ -15,6 +15,8 @@ Changes in version 0.7.3
 - -PAUTOACTIVATE=all activates all factories automatically
 - Add vector versions of GetCalib to JCalibration API to allow access
   to calibration constants while maintaining position order of source
+- Add RUNNUMBER configuration parameter that can be used to override
+  the event source supplied run number.
 
 
 Changes in version 0.7.2

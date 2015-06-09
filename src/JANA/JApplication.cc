@@ -218,6 +218,8 @@ JApplication::JApplication(int narg, char* argv[])
 	dump_configurations = false;
 	list_configurations = false;
 	quitting = false;
+	override_runnumber = false;
+	user_supplied_runnumber = 0;
 	Ncores = sysconf(_SC_NPROCESSORS_ONLN);
 	Nsources_deleted = 0;
 	MAX_RELAUNCH_THREADS=0;
@@ -363,6 +365,12 @@ JApplication::JApplication(int narg, char* argv[])
 	jerr.SetTimestampFlag(jerr_timestamp_flag);
 	jout.SetThreadstampFlag(jout_threadstamp_flag);
 	jerr.SetThreadstampFlag(jerr_threadstamp_flag);
+	
+	// Check if user specified a run number via config. parameter
+	try{
+		jparms->GetParameter("RUNNUMBER", user_supplied_runnumber);
+		override_runnumber = true; // only get here if RUNNUMBER parameter exists
+	}catch(...){}
 	
 	// Start high resolution timers (if not already started)
 	struct itimerval start_tmr;
@@ -534,8 +542,13 @@ jerror_t JApplication::NextEvent(JEvent &event)
 		// It's tempting to just copy the *myevent JEvent object into
 		// event directly. This will overwrite the "loop" member
 		// which we don't want. Copy the other members by hand.
+
+		// User has option of overriding run number
+		int my_runnumber = myevent->GetRunNumber();
+		if(override_runnumber) my_runnumber = user_supplied_runnumber;
+
 		event.SetJEventSource(myevent->GetJEventSource());
-		event.SetRunNumber(myevent->GetRunNumber());
+		event.SetRunNumber(my_runnumber);
 		event.SetEventNumber(myevent->GetEventNumber());
 		event.SetRef(myevent->GetRef());
 		event.SetID(myevent->GetID());
