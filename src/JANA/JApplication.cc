@@ -553,6 +553,7 @@ jerror_t JApplication::NextEvent(JEvent &event)
 		event.SetRef(myevent->GetRef());
 		event.SetID(myevent->GetID());
 		event.SetStatus(myevent->GetStatus());
+		event.SetSequential(myevent->GetSequential());
 		NEvents++;
 		delete myevent;
 		return NOERROR;
@@ -601,7 +602,44 @@ void JApplication::EventBufferThread(void)
 		// The "event" pointer actually gets created below, but waits to get
 		// pushed onto the event_buffer list until now to save locking and
 		// unlocking the mutex one time.
-		if(event!=NULL)event_buffer.push_front(event);
+		if(event!=NULL){
+			
+			// Check if the source has set the sequential flag for this
+			// event. If so, then we need to let the buffer drain
+			// completely, then let this event through by itself, then
+			// resume event reading.
+			if(event->sequential){
+
+				// wait for buffer to drain
+				pthread_mutex_unlock(&event_buffer_mutex);
+				while(!event_buffer.empty()){
+					if(stop_event_buffer)break;
+					usleep(1000);
+				}
+				
+
+				// Put this event in the buffer so it can be pulled by a 
+				// thread and processed.
+				pthread_mutex_lock(&event_buffer_mutex);
+				event_buffer.push_front(event);
+				sequential_event_complete = false;
+				pthread_mutex_unlock(&event_buffer_mutex);
+				
+				// The sequential_event_complete flag will be set to true in
+				// JEventLoop::Loop once it has completed processing.
+				while(!sequential_event_complete){
+					if(stop_event_buffer)break;
+					usleep(1000);
+				}
+				pthread_mutex_lock(&event_buffer_mutex);
+			
+			}else{
+
+				// normal event processing
+				event_buffer.push_front(event);
+
+			}
+		}
 		event=NULL;
 		
 		// Wait until either a slot is open to read an event into,

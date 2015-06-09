@@ -38,10 +38,12 @@ class JEvent{
 		                inline int GetRunNumber(void){return run_number;}
 		              inline void* GetRef(void){return ref;}
 			    inline JEventLoop* GetJEventLoop(void){return loop;}
+				       inline bool GetSequential(void){return sequential;}
 		               inline void SetJEventSource(JEventSource *source){this->source=source;}
 		               inline void SetRunNumber(int run_number){this->run_number=run_number;}
 		               inline void SetEventNumber(int event_number){this->event_number=event_number;}
 		               inline void SetRef(void *ref){this->ref=ref;}
+					   inline void SetSequential(bool s=true){sequential=s;}
 		               inline void SetJEventLoop(JEventLoop *loop){this->loop=loop;}
 		               inline void FreeEvent(void){if(source)source->JEventSource::FreeEvent(*this);}
 				   inline uint64_t GetID(void) const { return id; }
@@ -65,6 +67,7 @@ class JEvent{
 		JEventLoop *loop;
 		uint64_t status;
 		uint64_t id;
+		bool sequential;  ///< set to in event source to treat this as a barrier event (i.e. no other events will be processed in parallel with this one)
 		
 				   inline void SetID(uint64_t id){ this->id = id; }
 

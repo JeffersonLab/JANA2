@@ -21,6 +21,7 @@ JEvent::JEvent()
 	run_number = 0;
 	ref = NULL;
 	status = 0L;
+	sequential = false;
 }
 
 //---------------------------------
@@ -43,6 +44,7 @@ void JEvent::Print(void)
 	jout<<" ref=0x"<<hex<<(unsigned long)ref<<dec;
 	jout<<" loop=0x"<<hex<<(unsigned long)loop<<dec;
 	jout<<" status=0x"<<hex<<status<<dec;
+	jout<<" sequential="<<sequential;
 	jout<<endl;
 }
 

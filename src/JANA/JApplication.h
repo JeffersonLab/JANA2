@@ -122,6 +122,7 @@ class JApplication{
 		                  unsigned int GetNthreads(void){return threads.size();} ///< Get the current number of processing threads
 		                          void SetNthreads(int new_Nthreads); ///< Set the number of processing threads to use (can be called during event processing)
 		                   inline void Lock(void){WriteLock("app");} ///< Deprecated. Use ReadLock("app") or WriteLock("app") instead. (This just calls WriteLock("app").)
+		                   inline void SetSequentialEventComplete(void){sequential_event_complete=true;} ///< Used by JEventLoop::Loop to signal the completion of a barrier event
 		      inline pthread_rwlock_t* CreateLock(const string &name, bool throw_exception_if_exists=true);
             inline pthread_rwlock_t* ReadLock(const string &name);
             inline pthread_rwlock_t* WriteLock(const string &name);
@@ -223,6 +224,7 @@ class JApplication{
 		bool quitting;
 		bool override_runnumber;
 		int  user_supplied_runnumber;
+		bool sequential_event_complete;  ///< Used to flag that processing of a barrier event is complete
 
 		map<uint32_t, string> status_bit_descriptions; ///< Descriptions of bits in status word used in JEvent
 };

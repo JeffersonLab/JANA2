@@ -472,6 +472,10 @@ jerror_t JEventLoop::Loop(void)
 			default:
 				break;
 		}
+		
+		// If this was a barrier event then notify event buffer thread
+		// that we have finished processing it.
+		if(event.GetSequential()) app->SetSequentialEventComplete();
 	
 	}while(!quit);
 	

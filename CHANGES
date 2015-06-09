@@ -17,6 +17,7 @@ Changes in version 0.7.3
   to calibration constants while maintaining position order of source
 - Add RUNNUMBER configuration parameter that can be used to override
   the event source supplied run number.
+- Added event barrier mechanism (set JEvent::sequential flag in JEventSource)
 
 
 Changes in version 0.7.2
