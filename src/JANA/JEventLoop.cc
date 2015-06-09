@@ -553,8 +553,8 @@ jerror_t JEventLoop::OneEvent(void)
 	}
 
 	// Call Event Processors
-	int event_number = event.GetEventNumber();
-	int run_number = event.GetRunNumber();
+	uint64_t event_number = event.GetEventNumber();
+	uint32_t run_number = event.GetRunNumber();
 	vector<JEventProcessor*>::iterator p = processors.begin();
 
 	for(; p!=processors.end(); p++){

@@ -34,14 +34,14 @@ class JEvent{
 		        static const char* static_className(void){return "JEvent";}
 		template<class T> jerror_t GetObjects(vector<const T*> &t, JFactory_base *factory=NULL);
 		      inline JEventSource* GetJEventSource(void){return source;}
-		                inline int GetEventNumber(void){return event_number;}
-		                inline int GetRunNumber(void){return run_number;}
+				   inline uint64_t GetEventNumber(void){return event_number;}
+				   inline uint32_t GetRunNumber(void){return run_number;}
 		              inline void* GetRef(void){return ref;}
 			    inline JEventLoop* GetJEventLoop(void){return loop;}
 				       inline bool GetSequential(void){return sequential;}
 		               inline void SetJEventSource(JEventSource *source){this->source=source;}
-		               inline void SetRunNumber(int run_number){this->run_number=run_number;}
-		               inline void SetEventNumber(int event_number){this->event_number=event_number;}
+		               inline void SetRunNumber(uint32_t run_number){this->run_number=run_number;}
+		               inline void SetEventNumber(uint64_t event_number){this->event_number=event_number;}
 		               inline void SetRef(void *ref){this->ref=ref;}
 					   inline void SetSequential(bool s=true){sequential=s;}
 		               inline void SetJEventLoop(JEventLoop *loop){this->loop=loop;}
@@ -61,8 +61,8 @@ class JEvent{
 	
 	private:
 		JEventSource *source;
-		int event_number;
-		int run_number;
+		uint64_t event_number;
+		uint32_t run_number;
 		void *ref;
 		JEventLoop *loop;
 		uint64_t status;
