@@ -327,9 +327,10 @@ JFactory<T>* JEventLoop::Get(vector<const T*> &t, const char *tag, bool allow_de
 				jout<<"   -PJANA:AUTOFACTORYCREATE=1"<<std::endl;
 				jout<<std::endl;
 				jout<<"Note that since the most commonly expected occurance of this situation."<<std::endl;
-				jout<<"is an error, the program will quit now."<<std::endl;
+				jout<<"is an error, the program will now throw an exception so that the factory."<<std::endl;
+				jout<<"call stack can be printed."<<std::endl;
 				jout<<std::endl;
-				QuitProgram();
+				throw exception();
 			}else{
 				AddFactory(new JFactory<T>(tag));
 				jout<<__FILE__<<":"<<__LINE__<<" Auto-created "<<T::static_className()<<":"<<tag<<" factory"<<std::endl;
