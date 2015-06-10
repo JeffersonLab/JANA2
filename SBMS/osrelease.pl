@@ -50,9 +50,7 @@ if ($uname eq 'Linux') {
 	    $release = '_RHEL5';
 	} elsif ($release_string =~ /^Red Hat Enterprise Linux Workstation release 6.*/) {
 	    $release = '_RHEL6';
-	} elsif ($release_string =~ /^Red Hat Enterprise Linux Server release 6.*/) {
-	    $release = '_RHEL6';
-	} elsif ($release_string =~ /^Red Hat Enterprise Linux Server release 7.*/) {
+	} elsif ($release_string =~ /^Red Hat Enterprise Linux Workstation release 7.*/) {
 	    $release = '_RHEL7';
 	} elsif ($release_string =~ /^CentOS release 5.*/) {
 	    $release = '_CentOS5';
@@ -62,6 +60,8 @@ if ($uname eq 'Linux') {
 	    $release = '_CentOS7';
 	} elsif ($release_string =~ /^Scientific Linux SL release 5.*/ ) {
 	    $release = '_SL5';
+	} elsif ($release_string =~ /^Scientific Linux release 6.*/ ) {
+	    $release = '_SL6';
 	  }
 	else {
 	    print STDERR "unrecognized Red Hat release\n";
@@ -100,8 +100,8 @@ if ($uname eq 'Linux') {
 	    $release = '_macosx10.7';
  	} elsif ($release_string =~ /^12.*/) {
 	    $release = '_macosx10.8';
- 	} elsif ($release_string =~ /^13.*/) {
-	    $release = '_macosx10.9';
+    } elsif ($release_string =~ /^13.*/) {
+        $release = '_macosx10.9';
     } elsif ($release_string =~ /^14.*/) {
         $release = '_macosx10.10';
     } elsif ($release_string =~ /^15.*/) {
@@ -125,9 +125,11 @@ $compiler_version_str = `cc -v 2>&1`;
 if ($compiler_version_str =~ /\sgcc version\s/) {
 
 	$compiler_type = "gcc";
+	$ccversion = `gcc -dumpversion`;
+	chomp $ccversion;
 
 } elsif ($compiler_version_str =~ /clang version\s+/) {
-
+	
 	# clang seems to report different numbers for the version
 	# if you use "clang -dumpversion" or "clang -v". The former
 	# seems to correspond to the installed gcc version number
