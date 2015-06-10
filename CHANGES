@@ -18,7 +18,7 @@ Changes in version 0.7.3
 - Add RUNNUMBER configuration parameter that can be used to override
   the event source supplied run number.
 - Added event barrier mechanism (set JEvent::sequential flag in JEventSource)
-- Made event number 
+- Made event number uint64_t in most places and run number int32_t
 
 
 Changes in version 0.7.2
