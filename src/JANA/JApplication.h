@@ -104,8 +104,8 @@ class JApplication{
 		                  virtual void Quit(void); ///< Stop event processing
 		                          bool GetQuittingStatus(void){return quitting;} ///< return true if Quit has already been called
 		                           int GetNcores(void){return Ncores;}
-		                    inline int GetNEvents(void){return NEvents;} ///< Returns the number of events processed so far.
-		                    inline int GetNLostEvents(void){return Nlost_events;} ///< Returns the number of events processed so far.
+					   inline uint64_t GetNEvents(void){return NEvents;} ///< Returns the number of events processed so far.
+				       inline uint64_t GetNLostEvents(void){return Nlost_events;} ///< Returns the number of events processed so far.
 		                  inline float GetRate(void){return rate_instantaneous;} ///< Get the average event processing rate
 		                  inline float GetIntegratedRate(void){return rate_average;} ///< Get the current event processing rate
 		                          void GetInstantaneousThreadRates(map<pthread_t,double> &rates_by_thread);
@@ -202,11 +202,11 @@ class JApplication{
 
 		vector<string> args;	///< Argument list passed in to JApplication Constructor
 		int show_ticker;
-		int NEvents_read;		///< Number of events read from source
-		int NEvents;			///< Number of events processed
-		int Nlost_events;		///< Number of events lost (e.g. due to stalled threads)
-		int last_NEvents;		///< Number of events processed the last time we calculated rates
-		int avg_NEvents;
+		uint64_t NEvents_read;		///< Number of events read from source
+		uint64_t NEvents;			///< Number of events processed
+		uint64_t Nlost_events;		///< Number of events lost (e.g. due to stalled threads)
+		uint64_t last_NEvents;		///< Number of events processed the last time we calculated rates
+		uint64_t avg_NEvents;
 		double avg_time;
 		double rate_instantaneous;
 		double rate_average;

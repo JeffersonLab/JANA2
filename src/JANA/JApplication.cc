@@ -586,11 +586,13 @@ void JApplication::EventBufferThread(void)
 	/// It exits once it has read the last event or the value of
 	/// stop_event_buffer has been set to true.
 	
-	unsigned int EVENTS_TO_SKIP=0;
-	unsigned int EVENTS_TO_KEEP=0;
-	unsigned int MAX_EVENTS_IN_BUFFER = 10;
+	uint64_t EVENTS_TO_SKIP=0;
+	uint64_t EVENTS_TO_KEEP=0;
+	uint64_t SKIP_TO_EVENT = 0;
+	uint32_t MAX_EVENTS_IN_BUFFER = 10;
 	jparms->SetDefaultParameter("EVENTS_TO_SKIP", EVENTS_TO_SKIP, "Number of events that will be read in WITHOUT calling event processor(s)");
 	jparms->SetDefaultParameter("EVENTS_TO_KEEP", EVENTS_TO_KEEP, "Maximum number of events for which event processors are called before ending the program");
+	jparms->SetDefaultParameter("SKIP_TO_EVENT", SKIP_TO_EVENT, "Skip to event with this event number before starting event processing.");
 	jparms->SetDefaultParameter("MAX_EVENTS_IN_BUFFER", MAX_EVENTS_IN_BUFFER, "Maximum number of events to keep in event buffer (set this to 1 or greater)");
 	
 	jerror_t err;
@@ -667,6 +669,22 @@ void JApplication::EventBufferThread(void)
 				event->FreeEvent();
 				delete event;
 				event = NULL;
+			}
+			
+			// If user specified a specific event to skip to, then
+			// check if this is that event.
+			if(SKIP_TO_EVENT!=0){
+				if(event->GetEventNumber()==SKIP_TO_EVENT){
+					// This is the event they're looking for!
+					// Allow the event to be processed and set 
+					// SKIP_TO_EVENT to zero so subsequent events
+					// are processed as well.
+					SKIP_TO_EVENT = 0;
+				}else{
+					event->FreeEvent();
+					delete event;
+					event = NULL;
+				}
 			}
 		}
 		

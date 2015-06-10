@@ -325,6 +325,7 @@ void JParameterManager::PrintParameters(void)
 	no_warn.push_back("JANA:");
 	no_warn.push_back("EVENTS_TO_SKIP");
 	no_warn.push_back("EVENTS_TO_KEEP");
+	no_warn.push_back("SKIP_TO_EVENT");
 	no_warn.push_back("EVENT_SOURCE_TYPE");
 	no_warn.push_back("MAX_EVENTS_IN_BUFFER");
 	no_warn.push_back("THREAD_TIMEOUT");
