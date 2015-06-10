@@ -8,6 +8,7 @@
 #ifndef _JCalibrationGenerator_
 #define _JCalibrationGenerator_
 
+#include <stdint.h>
 #include <string>
 
 #include <JANA/jerror.h>
@@ -52,8 +53,8 @@ class JCalibrationGenerator{
 		virtual ~JCalibrationGenerator(){}
 		
 		virtual const char* Description(void)=0; ///< Get string indicating type of calibration this handles
-		virtual double CheckOpenable(std::string url, int run, std::string context)=0; ///< Test probability of opening the given calibration
-		virtual JCalibration* MakeJCalibration(std::string url, int run, std::string context)=0; ///< Instantiate an JCalibration object (subclass)
+		virtual double CheckOpenable(std::string url, int32_t run, std::string context)=0; ///< Test probability of opening the given calibration
+		virtual JCalibration* MakeJCalibration(std::string url, int32_t run, std::string context)=0; ///< Instantiate an JCalibration object (subclass)
 
 };
 

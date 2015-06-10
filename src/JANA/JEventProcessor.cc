@@ -43,9 +43,9 @@ jerror_t JEventProcessor::init(void)
 }
 
 //----------------
-// brun  (DEPRECATED)
+// brun
 //----------------
-jerror_t JEventProcessor::brun(JEventLoop *loop, int runnumber)
+jerror_t JEventProcessor::brun(JEventLoop *loop, int32_t runnumber)
 {
 	return NOERROR;
 }
@@ -56,15 +56,6 @@ jerror_t JEventProcessor::brun(JEventLoop *loop, int runnumber)
 jerror_t JEventProcessor::evnt(JEventLoop *loop, int eventnumber)
 {
 	return NOERROR;
-}
-
-//----------------
-// brun
-//----------------
-jerror_t JEventProcessor::brun(JEventLoop *loop, uint32_t runnumber)
-{
-	// redirect to "int" version for now so old code still works
-	return brun(loop, (int)runnumber);
 }
 
 //----------------

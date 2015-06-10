@@ -126,7 +126,7 @@ class JEventLoop{
                                 double GetLastEventProcessingTime(void) const {return delta_time_single;}
                           unsigned int GetNevents(void) const {return Nevents;}
 
-                           inline bool CheckEventBoundary(int event_numberA, int event_numberB);
+                           inline bool CheckEventBoundary(uint64_t event_numberA, uint64_t event_numberB);
 
                            inline bool GetCallStackRecordingStatus(void){ return record_call_stack; }
                            inline void DisableCallStackRecording(void){ record_call_stack = false; }
@@ -179,11 +179,11 @@ class JEventLoop{
 		bool record_call_stack;
 		string caller_name;
 		string caller_tag;
-		vector<int> event_boundaries;
-		int event_boundaries_run; ///< Run number boundaries were retrieved from (possbily 0)
+		vector<uint64_t> event_boundaries;
+		int32_t event_boundaries_run; ///< Run number boundaries were retrieved from (possbily 0)
 		
-		unsigned int Nevents;			///< Total events processed (this thread)
-		unsigned int Nevents_rate;		///< Num. events accumulated for "instantaneous" rate
+		uint64_t Nevents;			      ///< Total events processed (this thread)
+		uint64_t Nevents_rate;		   ///< Num. events accumulated for "instantaneous" rate
 		double delta_time_single;		///< Time spent processing last event
 		double delta_time_rate;			///< Integrated time accumulated "instantaneous" rate (partial number of events)
 		double delta_time;				///< Total time spent processing events (this thread)
@@ -483,7 +483,7 @@ jerror_t JEventLoop::GetFromSource(vector<const T*> &t, JFactory_base *factory)
 //-------------
 // CheckEventBoundary
 //-------------
-inline bool JEventLoop::CheckEventBoundary(int event_numberA, int event_numberB)
+inline bool JEventLoop::CheckEventBoundary(uint64_t event_numberA, uint64_t event_numberB)
 {
 	/// Check whether the two event numbers span one or more boundaries
 	/// in the calibration/conditions database for the current run number.
@@ -505,7 +505,7 @@ inline bool JEventLoop::CheckEventBoundary(int event_numberA, int event_numberB)
 	
 	// Loop over boundaries
 	for(unsigned int i=0; i<event_boundaries.size(); i++){
-		int eb = event_boundaries[i];
+		uint64_t eb = event_boundaries[i];
 		if((eb - event_numberA)*(eb - event_numberB) < 0.0 || eb==event_numberA){ // think about it ....
 			// events span a boundary or is on a boundary. Return true
 			return true;

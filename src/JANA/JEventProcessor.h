@@ -32,13 +32,12 @@ class JEventProcessor{
 		virtual const char* className(void){return static_className();}
 		static const char* static_className(void){return "JEventProcessor";}
 		
-		virtual jerror_t init(void);						///< Called once at program start.
-		virtual jerror_t brun(JEventLoop *eventLoop, int runnumber);	///< DEPRECATED. Use the uint32_t version instead
-		virtual jerror_t evnt(JEventLoop *eventLoop, int eventnumber);	///< DEPRECATED. Use the uint64_t version instead
-		virtual jerror_t brun(JEventLoop *eventLoop, uint32_t runnumber);	///< Called everytime a new run number is detected.
+		virtual jerror_t init(void);						                        ///< Called once at program start.
+		virtual jerror_t brun(JEventLoop *eventLoop, int32_t runnumber);	   ///< Called everytime a new run number is detected.
+		virtual jerror_t evnt(JEventLoop *eventLoop, int eventnumber);	      ///< DEPRECATED. Use the uint64_t version instead
 		virtual jerror_t evnt(JEventLoop *eventLoop, uint64_t eventnumber);	///< Called every event.
-		virtual jerror_t erun(void);						///< Called everytime run number changes, provided brun has been called.
-		virtual jerror_t fini(void);						///< Called after last event of last event source has been processed.
+		virtual jerror_t erun(void);						                        ///< Called everytime run number changes, provided brun has been called.
+		virtual jerror_t fini(void);						                        ///< Called after last event of last event source has been processed.
 		
 		inline int init_was_called(void){return init_called;}
 		inline int brun_was_called(void){return brun_called;}

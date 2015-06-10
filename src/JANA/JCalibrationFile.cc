@@ -22,7 +22,7 @@ using namespace jana;
 //---------------------------------
 // JCalibrationFile    (Constructor)
 //---------------------------------
-JCalibrationFile::JCalibrationFile(string url, int run, string context):JCalibration(url,run,context)
+JCalibrationFile::JCalibrationFile(string url, int32_t run, string context):JCalibration(url,run,context)
 {
 	// File URL should be of form:
 	// file:///path-to-root-dir
@@ -74,7 +74,7 @@ JCalibrationFile::~JCalibrationFile()
 //---------------------------------
 // GetCalib
 //---------------------------------
-bool JCalibrationFile::GetCalib(string namepath, map<string, string> &svals, int event_number)
+bool JCalibrationFile::GetCalib(string namepath, map<string, string> &svals, uint64_t event_number)
 {
 	/// Open file specified by namepath (and the url passed to us in the
 	/// constructor) and read in the calibration constants in plain
@@ -137,7 +137,7 @@ bool JCalibrationFile::GetCalib(string namepath, map<string, string> &svals, int
 //---------------------------------
 // GetCalib
 //---------------------------------
-bool JCalibrationFile::GetCalib(string namepath, vector<string> &svals, int event_number)
+bool JCalibrationFile::GetCalib(string namepath, vector<string> &svals, uint64_t event_number)
 {
 	/// Open file specified by namepath (and the url passed to us in the
 	/// constructor) and read in the calibration constants in plain
@@ -203,7 +203,7 @@ bool JCalibrationFile::GetCalib(string namepath, vector<string> &svals, int even
 //---------------------------------
 // GetCalib
 //---------------------------------
-bool JCalibrationFile::GetCalib(string namepath, vector< map<string, string> > &svals, int event_number)
+bool JCalibrationFile::GetCalib(string namepath, vector< map<string, string> > &svals, uint64_t event_number)
 {
 	/// Open file specified by namepath (and the url passed to us in the
 	/// constructor) and read in a table of calibration constants in plain
@@ -284,7 +284,7 @@ bool JCalibrationFile::GetCalib(string namepath, vector< map<string, string> > &
 //---------------------------------
 // GetCalib
 //---------------------------------
-bool JCalibrationFile::GetCalib(string namepath, vector< vector<string> > &svals, int event_number)
+bool JCalibrationFile::GetCalib(string namepath, vector< vector<string> > &svals, uint64_t event_number)
 {
 	/// Open file specified by namepath (and the url passed to us in the
 	/// constructor) and read in a table of calibration constants in plain
@@ -368,7 +368,7 @@ bool JCalibrationFile::GetCalib(string namepath, vector< vector<string> > &svals
 //---------------------------------
 // PutCalib
 //---------------------------------
-bool JCalibrationFile::JCalibrationFile::PutCalib(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, map<string, string> &svals, string comment)
+bool JCalibrationFile::JCalibrationFile::PutCalib(string namepath, int32_t run_min, int32_t run_max, uint64_t event_min, uint64_t event_max, string &author, map<string, string> &svals, string comment)
 {
 	// Open the item file creating the directory path if needed and
 	// writing a header to it.
@@ -391,7 +391,7 @@ bool JCalibrationFile::JCalibrationFile::PutCalib(string namepath, int run_min, 
 //---------------------------------
 // PutCalib
 //---------------------------------
-bool JCalibrationFile::JCalibrationFile::PutCalib(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, vector< map<string, string> > &svals, string comment)
+bool JCalibrationFile::JCalibrationFile::PutCalib(string namepath, int32_t run_min, int32_t run_max, uint64_t event_min, uint64_t event_max, string &author, vector< map<string, string> > &svals, string comment)
 {
 	// We need at least one element to make this worthwhile
 	if(svals.size()<1)return true;
@@ -434,7 +434,7 @@ bool JCalibrationFile::JCalibrationFile::PutCalib(string namepath, int run_min, 
 //---------------------------------
 // CreateItemFile
 //---------------------------------
-ofstream* JCalibrationFile::CreateItemFile(string namepath, int run_min, int run_max, string &author, string &comment)
+ofstream* JCalibrationFile::CreateItemFile(string namepath, int32_t run_min, int32_t run_max, string &author, string &comment)
 {
 	// Make sure the directory path exists for this namepath
 	MakeDirectoryPath(namepath);

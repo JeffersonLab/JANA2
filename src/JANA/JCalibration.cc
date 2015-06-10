@@ -23,7 +23,7 @@ using namespace jana;
 //---------------------------------
 // JCalibration    (Constructor)
 //---------------------------------
-JCalibration::JCalibration(string url, int run, string context)
+JCalibration::JCalibration(string url, int32_t run, string context)
 {
 	this->url = url;
 	this->run_number = run;
@@ -80,7 +80,7 @@ JCalibration::~JCalibration()
 //---------------------------------
 // PutCalib
 //---------------------------------
-bool JCalibration::PutCalib(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, map<string, string> &svals, string comment)
+bool JCalibration::PutCalib(string namepath, int32_t run_min, int32_t run_max, uint64_t event_min, uint64_t event_max, string &author, map<string, string> &svals, string comment)
 {
 	_DBG_<<"PutCalib(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, map<string, string> &svals, string &comment="") not implemented!"<<endl;
 	return true;
@@ -89,7 +89,7 @@ bool JCalibration::PutCalib(string namepath, int run_min, int run_max, int event
 //---------------------------------
 // PutCalib
 //---------------------------------
-bool JCalibration::PutCalib(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, vector< map<string, string> > &svals, string comment)
+bool JCalibration::PutCalib(string namepath, int32_t run_min, int32_t run_max, uint64_t event_min, uint64_t event_max, string &author, vector< map<string, string> > &svals, string comment)
 {
 	_DBG_<<"PutCalib(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, vector< map<string, string> > &svals, string &comment="") not implemented!"<<endl;
 	return true;
@@ -120,7 +120,7 @@ void JCalibration::RecordRequest(string namepath, string type_name)
 //---------------------------------
 // GetEventBoundaries
 //---------------------------------
-void JCalibration::GetEventBoundaries(vector<int> &event_boundaries)
+void JCalibration::GetEventBoundaries(vector<uint64_t> &event_boundaries)
 {
 	/// Copy the event boundaries (if any) for this calibration's run
 	/// into the caller supplied container. The contents of the

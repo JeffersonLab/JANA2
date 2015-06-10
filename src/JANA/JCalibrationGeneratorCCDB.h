@@ -50,7 +50,7 @@ namespace jana
          * @parameter [in] name of the variation
          * @return 0.0 - not openable, 0.99 if openable
          */
-        double CheckOpenable(std::string url, int run, std::string context)
+        double CheckOpenable(std::string url, int32_t run, std::string context)
         {
 			#ifdef CCDB_DEBUG_OUTPUT
 			jout<<"CCDB::janaccdb CheckOpenable "<<"url: '"<<url<<"' run: "<<run<< " context: "<<context<<std::endl;
@@ -68,7 +68,7 @@ namespace jana
          * @parameter [in] name of the variation
          * @return JCalibration pointer or null if error
          */
-        JCalibration* MakeJCalibration(std::string url, int run, std::string context) ///< Instantiate an JCalibration object
+        JCalibration* MakeJCalibration(std::string url, int32_t run, std::string context) ///< Instantiate an JCalibration object
         {
 			#ifdef CCDB_DEBUG_OUTPUT
 			jout<<"CCDB::janaccdb MakeJCalibration "<<"url: '"<<url<<"' run: "<<run<< " context: '"<<context<<"'"<<std::endl;
