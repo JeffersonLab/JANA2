@@ -1,4 +1,8 @@
 
+Changes in version 0.7.4
+- Fixed bug in location osrelease.pl was being run
+- Fixed bug where JGeometryXML.cc wouldn't compile without XERCES
+
 Changes in version 0.7.3
 - Fixed issue with EVENTS_TO_SKIP only skipping EVENTS_TO_SKIP-1 events
 - Add janaview plugin
