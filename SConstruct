@@ -13,6 +13,8 @@ import sbms_config
 
 # Get command-line options
 SHOWBUILD = ARGUMENTS.get('SHOWBUILD', 0)
+BITNESS32 = ARGUMENTS.get('m32', 0)
+BITNESS64 = ARGUMENTS.get('m64', 0)
 
 # Get platform-specific name
 osname = os.getenv('BMS_OSNAME')
@@ -41,7 +43,21 @@ env.Replace(    INSTALLDIR    = installdir,
 				PLUGINSDIR    = plugins,
 				ALL_SOURCES   = [],        # used so we can add generated sources
 				SHOWBUILD     = SHOWBUILD,
+				BITNESS32     = BITNESS32,
+				BITNESS64     = BITNESS64,
 				COMMAND_LINE_TARGETS = COMMAND_LINE_TARGETS)
+
+# Allow user to force bitness
+if BITNESS32!=0:
+	env.AppendUnique(CXXFLAGS    = '-m32')
+	env.AppendUnique(CFLAGS      = '-m32')
+	env.AppendUnique(LINKFLAGS   = '-m32')
+	env.AppendUnique(SHLINKFLAGS = '-m32')
+if BITNESS64!=0:
+	env.AppendUnique(CXXFLAGS    = '-m64')
+	env.AppendUnique(CFLAGS      = '-m64')
+	env.AppendUnique(LINKFLAGS   = '-m64')
+	env.AppendUnique(SHLINKFLAGS = '-m64')
 
 # Use terse output unless otherwise specified
 if SHOWBUILD==0:

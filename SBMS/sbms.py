@@ -362,18 +362,26 @@ def TestCompile(env, name, includes, content, options):
 	# content   - content of test program (n.b. this is what gets placed
 	#             inside of "main()" and before the return statement)
 	# options   - list of different argument lists that should be tried
-	#             to see which results in a succesful compilation/link.
+	#             to see which results in a successful compilation/link.
 	#             The first to succeed is returned (as a list, not a single 
 	#             string). If none succeed, then a Python "None" value is
 	#             returned. Note that each element of the list is itself a
 	#             string that may contain many arguments, separated by spaces.
+	#
+	# n.b. if either the m32 or m64 flags are set by the user 
+	# via the command line then "-m32" or "-m64" are added to the 
+	# compile command. Otherwise, nothing is added and the default
+	# bitness is used.
 	ifname = '%s' % env.File('.%s_%s.cc' % (env['OSNAME'], name))
 	ofname = '%s' % env.File('.%s_%s' % (env['OSNAME'], name))
 	f = open(ifname, 'w')
 	for header in includes: f.write('#include<%s>\n' % header)
 	f.write('int main(int n, char*argv[]){%s;return 0;}\n' % content)
 	f.close();
-	args = [env['CXX'], '-o', ofname, ifname]
+	args = [env['CXX'], '-o', ofname]
+	if (env['BITNESS32']!=0) : args.append('-m32')
+	if (env['BITNESS64']!=0) : args.append('-m64')
+	args.append(ifname)
 	ret = None
 	for opt in options:
 		myargs = opt.split()
