@@ -19,6 +19,8 @@ BITNESS64 = ARGUMENTS.get('m64', 0)
 # Get platform-specific name
 osname = os.getenv('BMS_OSNAME')
 if(osname == None): 	osname = subprocess.Popen(["./SBMS/osrelease.pl"], stdout=subprocess.PIPE).communicate()[0].strip()
+if BITNESS32!=0 : osname = osname.replace('x86_64','i686')
+if BITNESS64!=0 : osname = osname.replace('i686','x86_64')
 
 
 # Get architecture name
