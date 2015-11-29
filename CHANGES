@@ -3,6 +3,13 @@ Changes in version 0.7.4
 - Fixed bug in location osrelease.pl was being run
 - Fixed bug where JGeometryXML.cc wouldn't compile without XERCES
 - Allow user to force bitness of build using either m32=1 or m64=1
+- Added -a, -t, and -b options to janadump. Some modifications
+  to JEventLoop, JFactory, and JFactory_base made to allow better
+  user control of when GetNrows activates a factory.
+- Default for janadump changed to not automatically activate tagged
+  factories when printing summary header.
+- Add SetExitCode and GetExitCode to JApplication.
+- Added examples to scons build tree.
 
 Changes in version 0.7.3
 - Fixed issue with EVENTS_TO_SKIP only skipping EVENTS_TO_SKIP-1 events
