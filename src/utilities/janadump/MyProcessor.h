@@ -7,10 +7,6 @@
 /// janadump print event info to screen
 ///
 
-#include <vector>
-#include <iostream>
-using namespace std;
-
 #include <JANA/JEventProcessor.h>
 #include <JANA/JEventLoop.h>
 #include <JANA/JFactory.h>
@@ -19,6 +15,10 @@ using namespace jana;
 extern int PAUSE_BETWEEN_EVENTS;
 extern int SKIP_BORING_EVENTS;
 extern int PRINT_ALL;
+extern bool LIST_ASSOCIATED_OBJECTS;
+extern bool PRINT_SUMMARY_HEADER;
+extern bool PRINT_STATUS_BITS;
+extern bool ACTIVATE_TAGGED_FOR_SUMMARY;
 
 extern vector<string> toprint;
 
@@ -34,6 +34,9 @@ class MyProcessor:public JEventProcessor
 		typedef struct{
 			string dataClassName;
 			string tag;
+			JFactory_base *fac;
 		}factory_info_t;
 		vector<factory_info_t> fac_info;
+
+		void PrintAssociatedObjects(JEventLoop *eventLoop, const factory_info_t *fac_info);
 };

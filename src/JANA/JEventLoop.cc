@@ -267,7 +267,22 @@ jerror_t JEventLoop::ClearFactories(void)
 jerror_t JEventLoop::PrintFactories(int sparsify)
 {
 	/// Print a list of all registered factories to the screen
-	/// along with a little info about each.
+	/// along with a little info about each. The value of
+	/// "sparsify" controls what gets printed and whether
+	/// factories are activated by this method.
+	///
+	/// sparsify==0  all factories are activated and
+	///              a line printed for each
+	///
+	/// sparsify==1  all factories are activated but
+	///              a line is printed only for those
+	///              with at least one object
+	///
+	/// sparsify==2  factories are not activated, but
+	///              a line is printed for any that
+	///              already have at least one object
+	
+	bool do_not_call_get = (sparsify==2);
 
 	jout<<endl;
 	jout<<"Registered factories: ("<<factories.size()<<" total)"<<endl;
@@ -280,7 +295,7 @@ jerror_t JEventLoop::PrintFactories(int sparsify)
 
 		try{
 			if(sparsify)
-				if(factory->GetNrows()<1)continue;
+				if(factory->GetNrows(false, do_not_call_get)<1)continue;
 		}catch(...){}
 		
 		// To make things look pretty, copy all values into the buffer "str"
@@ -290,7 +305,7 @@ jerror_t JEventLoop::PrintFactories(int sparsify)
 
 		char num[32]="";
 		try{
-			sprintf(num, "%d", factory->GetNrows());
+			sprintf(num, "%d", factory->GetNrows(false, do_not_call_get));
 		}catch(...){}
 		str.replace(25-strlen(num), strlen(num), num);
 

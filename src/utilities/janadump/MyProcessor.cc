@@ -4,20 +4,25 @@
 // MyProcessor.cc
 //
 
+#include <iostream>
+using namespace std;
 
 #include <stdio.h>
 #include <unistd.h>
 
 #include <JANA/JEventProcessor.h>
-#include <JANA/JEventLoop.h>
-#include <JANA/JFactory.h>
-using namespace jana;
+#include <JANA/JApplication.h>
 
 #include "MyProcessor.h"
+
 
 int PAUSE_BETWEEN_EVENTS = 1;
 int SKIP_BORING_EVENTS = 0;
 int PRINT_ALL=0;
+bool LIST_ASSOCIATED_OBJECTS = false;
+bool PRINT_SUMMARY_HEADER = true;
+bool PRINT_STATUS_BITS = false;
+bool ACTIVATE_TAGGED_FOR_SUMMARY = false;
 extern bool SPARSIFY_SUMMARY;
 
 vector<string> toprint;
@@ -90,6 +95,7 @@ jerror_t MyProcessor::brun(JEventLoop *eventLoop, int runnumber)
 		factory_info_t f;
 		f.dataClassName = name;
 		f.tag = tag;
+		f.fac = eventLoop->GetFactory(f.dataClassName, f.tag.c_str());
 		fac_info.push_back(f);
 	}
 	
@@ -108,17 +114,19 @@ jerror_t MyProcessor::evnt(JEventLoop *eventLoop, int eventnumber)
 	// the types we're printing) we must find out first if the event is
 	// "boring".
 	int event_is_boring = 1;
+
 	if(SKIP_BORING_EVENTS){
 		for(unsigned int i=0;i<fac_info.size();i++){
 			
 			string name =fac_info[i].dataClassName;
 			string tag = fac_info[i].tag;
 			JFactory_base *factory = eventLoop->GetFactory(name,tag.c_str());
+			if(!factory)factory = eventLoop->GetFactory("D" + name,tag.c_str());
 			if(factory){
 				try{
 					if(factory->GetNrows()>0){
 						event_is_boring=0;
-						break;
+						if(PRINT_SUMMARY_HEADER)break;
 					}
 				}catch(...){
 					// someone threw an exception
@@ -130,13 +138,29 @@ jerror_t MyProcessor::evnt(JEventLoop *eventLoop, int eventnumber)
 		event_is_boring = 0;
 	}
 	
+	if(SKIP_BORING_EVENTS && event_is_boring)return NOERROR;
+	if(!SKIP_BORING_EVENTS)event_is_boring= 0;
+	
 	// Print event separator
 	cout<<"================================================================"<<endl;
 	cout<<"Event: "<<eventnumber<<endl;
 
 	// We want to print info about all factories results, even if we aren't
-	// printing the actual data.
-	eventLoop->PrintFactories(SPARSIFY_SUMMARY ? 1:0);
+	// printing the actual data. To make sure the informational messages often
+	// printed during brun are printed first, call the GetNrows() method of
+	// all factories ourself first.
+	if(PRINT_SUMMARY_HEADER){
+		vector<JFactory_base*> myfacs = eventLoop->GetFactories();
+		for(unsigned int i=0; i<myfacs.size(); i++){
+			string tag = myfacs[i]->Tag()==NULL ? "":myfacs[i]->Tag();
+			if(tag=="" || ACTIVATE_TAGGED_FOR_SUMMARY){
+				myfacs[i]->GetNrows();
+			}
+		}
+	}
+	
+	if(PRINT_STATUS_BITS) cout << japp->StatusWordToString(eventLoop->GetJEvent().GetStatus()) << endl;
+	if(PRINT_SUMMARY_HEADER) eventLoop->PrintFactories(SPARSIFY_SUMMARY ? 2:0);
 	
 	// Print data for all specified factories
 	for(unsigned int i=0;i<fac_info.size();i++){
@@ -144,10 +168,14 @@ jerror_t MyProcessor::evnt(JEventLoop *eventLoop, int eventnumber)
 			string name =fac_info[i].dataClassName;
 			string tag = fac_info[i].tag;
 			eventLoop->Print(name,tag.c_str());
+			if(LIST_ASSOCIATED_OBJECTS)PrintAssociatedObjects(eventLoop, &fac_info[i]);
 		}catch(...){
 			// exception thrown
 		}
 	}
+	
+	// If the program is quitting, then don't bother waiting for the user
+	if(eventLoop->GetJApplication()->GetQuittingStatus())return NOERROR;
 	
 	// Wait for user input if pausing
 	if(PAUSE_BETWEEN_EVENTS && !event_is_boring){
@@ -173,5 +201,77 @@ jerror_t MyProcessor::evnt(JEventLoop *eventLoop, int eventnumber)
 	}
 	
 	return NOERROR;
+}
+
+//------------------------------------------------------------------
+// PrintAssociatedObjects
+//------------------------------------------------------------------
+void MyProcessor::PrintAssociatedObjects(JEventLoop *loop, const factory_info_t *fac_info)
+{
+	// cast away const-ness of JFactory_base class pointer
+	JFactory_base *fac = const_cast<JFactory_base*>(fac_info->fac);
+	if(!fac)return;
+
+	// Get list of all objects from this factory
+	vector<void*> vobjs = fac->Get();
+	vector<JObject*> objs;
+	for(unsigned int i=0; i<vobjs.size(); i++)objs.push_back((JObject*)vobjs[i]);
+	
+	// Loop over objects from this factory
+	for(unsigned int i=0; i<objs.size(); i++){
+	
+		// First, get a list of all associated objects
+		vector<const JObject*> aobjs;
+		objs[i]->GetT(aobjs);
+		// If no associated objects, just go on to the next object
+		if(aobjs.size()==0)continue;
+		
+		// Print separator
+		cout<<"  [== Associated objects for row "<<i<<" ==]"<<endl;
+
+		// Make a list of all factories that made objects associated to this one
+		map<JFactory_base*, vector<const JObject*> > aofacs;
+		for(unsigned int j=0; j<aobjs.size(); j++){
+			JFactory_base *aofac = loop->FindOwner(aobjs[j]);
+			
+			map<JFactory_base*, vector<const JObject*> >::iterator iter = aofacs.find(aofac);
+			if(iter==aofacs.end()){
+				vector<const JObject*> tmp;
+				aofacs[aofac] = tmp;
+			}
+			// Record this object as belonging to this factory
+			aofacs[aofac].push_back(aobjs[j]);
+		}
+		// Figure out number of spaces to indent objects based on factory name length
+		map<JFactory_base*, vector<const JObject*> >::iterator iter;
+		unsigned int indent=4; // some minimal string length
+		for(iter=aofacs.begin(); iter!=aofacs.end(); iter++){
+			JFactory_base *fac = iter->first;
+			string name = fac->GetDataClassName();
+			if(strlen(fac->Tag())!=0)name += string(":") + fac->Tag();
+			if(name.length()>indent)indent=name.length();
+		}
+		indent += 4; // indent the factory name itself
+		
+		// Loop over factories that produced associated objects for this object and
+		// list the objects it created
+		for(iter=aofacs.begin(); iter!=aofacs.end(); iter++){
+			JFactory_base *fac = iter->first;
+			vector<const JObject*> &ptrs = iter->second;
+			
+			// Print out factory name
+			string name = fac->GetDataClassName();
+			if(strlen(fac->Tag())!=0)name += string(":") + fac->Tag();
+			cout<<string(indent-name.length()-1,' ');
+			cout<<name<<" ";
+			
+			// Loop over objects from this factory that are in the list
+			for(unsigned int j=0; j<ptrs.size(); j++){
+				if(j!=0)cout<<string(indent,' ');
+				cout<<"0x"<<hex<<(unsigned long)ptrs[j]<<dec<<endl;
+			}
+		}
+	}
+	
 }
 

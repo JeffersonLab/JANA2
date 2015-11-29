@@ -54,7 +54,7 @@ class JFactory_base:public JEventProcessor{
 		virtual vector<void*>& Get(void)=0;
 		
 		/// Returns the number of rows.
-		virtual int GetNrows(bool force_call_to_get=false)=0;
+		virtual int GetNrows(bool force_call_to_get=false, bool do_not_call_get=false)=0;
 		
 		/// Returns the number of requests for this factory's data.
 		int GetNcalls(void){return Ncalls_to_Get;}

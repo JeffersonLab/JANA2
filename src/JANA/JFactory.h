@@ -76,7 +76,7 @@ class JFactory:public JFactory_base{
 		
 		vector<void*>& Get(void);
 		jerror_t Get(vector<const T*> &d);
-		int GetNrows(bool force_call_to_get=false);
+		int GetNrows(bool force_call_to_get=false, bool do_not_call_get=false);
 		data_origin_t GetDataOrigin(void){return data_origin;}
 		inline const char* className(void){return T::static_className();}
 		inline const char* GetDataClassName(void){return className();}
@@ -291,12 +291,17 @@ jerror_t JFactory<T>::Get(vector<const T*> &d)
 // GetNrows
 //-------------
 template<class T>
-int JFactory<T>::GetNrows(bool force_call_to_get)
+int JFactory<T>::GetNrows(bool force_call_to_get, bool do_not_call_get)
 {
 	/// Return the number of objects for this factory for the
 	/// current event. If the objects have not yet been created
 	/// for the event, this will cause them to be generated 
-	/// (or retreived from the source).
+	/// (or retreived from the source) UNLESS the "do_not_call_get"
+	/// flag is set to true. If "do_not_call_get" is true then
+	/// "force_call_to_get" is ignored and the number of objects
+	/// already existing is returned. This is useful for things
+	/// like janadump where it wants to control which factories
+	/// get called.
 	///
 	/// If the optional "force_call_to_get" parameter is set to true,
 	/// Then the "Get" method will get called regardess of whether it
@@ -305,20 +310,22 @@ int JFactory<T>::GetNrows(bool force_call_to_get)
 	/// being recorded for use by something like the janadot plugin.
 	/// Forcing the call to "Get" will then put an entry on the call stack
 	/// leading to a line being drawn from the AutoActivated polygon to
-	/// all factories listed as being AUTOACTIVATE. 
-	if(!evnt_called || force_call_to_get){
-		// In order to get the objects from the source, the Get() method
-		// of the JEventLoop object must be called. This may seem
-		// convoluted, but it's neccessary for things like janadump
-		// that only have a list of JFactory_base pointers and
-		// are not able to call the templated JEventLoop::Get()
-		// method directly.
-		// Note that we must use the Tag() method so it will pass
-		// the tag from the subclass (if any). The tag_str member
-		// is only in JFactory for when sources must auto-instantiate
-		// a JFactory<> class.
-		vector<const T*> d; // dummy placeholder
-		eventLoop->Get(d,Tag());
+	/// all factories listed as being AUTOACTIVATE.
+	if( !do_not_call_get ){
+		if(!evnt_called || force_call_to_get){
+			// In order to get the objects from the source, the Get() method
+			// of the JEventLoop object must be called. This may seem
+			// convoluted, but it's neccessary for things like janadump
+			// that only have a list of JFactory_base pointers and
+			// are not able to call the templated JEventLoop::Get()
+			// method directly.
+			// Note that we must use the Tag() method so it will pass
+			// the tag from the subclass (if any). The tag_str member
+			// is only in JFactory for when sources must auto-instantiate
+			// a JFactory<> class.
+			vector<const T*> d; // dummy placeholder
+			eventLoop->Get(d,Tag());
+		}
 	}
 	
 	return _data.size();
