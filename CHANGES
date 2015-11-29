@@ -10,6 +10,7 @@ Changes in version 0.7.4
   factories when printing summary header.
 - Add SetExitCode and GetExitCode to JApplication.
 - Added examples to scons build tree.
+- Fixed bug where DEFTAG: feature only worked if AUTOACTIVATE was used
 
 Changes in version 0.7.3
 - Fixed issue with EVENTS_TO_SKIP only skipping EVENTS_TO_SKIP-1 events

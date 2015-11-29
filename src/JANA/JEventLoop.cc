@@ -436,10 +436,12 @@ void JEventLoop::Initialize(void)
 
 	string autoactivate;
 	try{
-		// Caution: This routinely jumps to the catch block when RECORD_CALL_STACK
-		// is not defined.
 		app->GetJParameterManager()->GetParameter( "AUTOACTIVATE", autoactivate);
+	}catch(...){}
+	try{
 		app->GetJParameterManager()->GetParameters(default_tags, "DEFTAG:");
+	}catch(...){}
+	try{
 		app->GetJParameterManager()->GetParameter( "RECORD_CALL_STACK", record_call_stack);
 	}catch(...){}
 	
