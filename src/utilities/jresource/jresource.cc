@@ -257,11 +257,13 @@ int main(int narg, char *argv[])
 		unlink(tmpfile.c_str());
 	}
 	
+	int exit_code = app->GetExitCode();
+
 	delete app;
 
 	cout << endl;
 
-	return 0;
+	return exit_code;
 }
 
 //-----------

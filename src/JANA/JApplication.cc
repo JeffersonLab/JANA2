@@ -165,6 +165,9 @@ JApplication::JApplication(int narg, char* argv[])
 	/// not relevant for JANA are quietly ignored. This is the
 	/// only constructor available for JApplication.
 	
+	// Default exit code
+	SetExitCode(EX_OK); // EX_OK defined in sysexits.h
+	
 	// Force linking of certain routines in all executables
 	if(narg<0)force_links();
 
@@ -1618,7 +1621,7 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 						}
 					}
 					Nstalled_threads = 0; // Don't let stalled thread count hold us up
-					Quit();
+					Quit(EX_SOFTWARE);
 					break;
 				}
 			
@@ -1902,6 +1905,17 @@ void JApplication::Quit(void)
 	}
 }
 
+//---------------------------------
+// Quit
+//---------------------------------
+void JApplication::Quit(int exit_code)
+{
+	/// Wrapper for Quit(void) that will first set the
+	/// JApplication exit code value.
+	SetExitCode(exit_code);
+	Quit();
+}
+
 //----------------
 // Val2StringWithPrefix
 //----------------
@@ -1997,7 +2011,7 @@ jerror_t JApplication::OpenNext(void)
 			}
 			jerr << endl;
 			jerr << "-----------------------------------------------------------------" << endl;
-			Quit();
+			Quit(EX_UNAVAILABLE);
 		}
 	}else{
 	
@@ -2037,7 +2051,7 @@ jerror_t JApplication::OpenNext(void)
 			if( (Nnull_sources==sources.size()) && (Nsources_deleted==0) ){
 				jerr<<"   xxxxxxxxxxxx  NO VALID EVENT SOURCES GIVEN !!!   xxxxxxxxxxxx  "<<endl;
 				jerr<<endl;
-				Quit();
+				Quit(EX_NOINPUT);
 				pthread_mutex_unlock(&sources_mutex);
 				return NO_MORE_EVENT_SOURCES;
 			}

@@ -1,0 +1,9 @@
+
+import os
+
+Import('env')
+
+# Loop over libraries, building each
+subdirs = ['example01', 'example02']
+SConscript(dirs=subdirs, exports='env', duplicate=0)
+

@@ -1,0 +1,14 @@
+
+JANA Examples
+
+The directories here contain some example programs using
+JANA. These are not built by default. To build all examples,
+invoke "scons -u install" from the examples directory (i.e.
+the one containing this README file). To build only a specific
+example program, cd to its source directory and do the same.
+
+The example executables will be installed in the $JANA_HOME/bin
+directory.
+
+For details on each example program, see the README file in 
+its source directory.

@@ -98,9 +98,11 @@ int main(int narg, char *argv[])
 
 	}
 	
+	int exit_code = app->GetExitCode();
+
 	delete app;
 
-	return 0;
+	return exit_code;
 }
 
 //-----------

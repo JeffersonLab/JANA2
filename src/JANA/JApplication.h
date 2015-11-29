@@ -15,6 +15,7 @@
 #include <utility>
 #include <sstream>
 #include <stdint.h>
+#include <sysexits.h>
 using std::vector;
 using std::list;
 using std::string;
@@ -102,6 +103,7 @@ class JApplication{
 		                  virtual void Pause(void); ///< Pause event processing
 		                  virtual void Resume(void); ///< Resume event processing
 		                  virtual void Quit(void); ///< Stop event processing
+		                  virtual void Quit(int exit_code); ///< Stop event processing and set exit code
 		                          bool GetQuittingStatus(void){return quitting;} ///< return true if Quit has already been called
 		                           int GetNcores(void){return Ncores;}
 					   inline uint64_t GetNEvents(void){return NEvents;} ///< Returns the number of events processed so far.
@@ -139,6 +141,9 @@ class JApplication{
                               string GetStatusBitDescription(uint32_t bit); ///< Get the description of a bit in the status word used in JEvent objects
                                 void GetStatusBitDescriptions(map<uint32_t, string> &status_bit_descriptions); ///< Get the list of all descriptions of a bit in the status word used in JEvent objects
                               string StatusWordToString(uint64_t status);
+                                 int SetExitCode(int ecode){int t=ecode; exit_code=ecode; return t;}
+                                 int GetExitCode(void){return exit_code;}
+
 
 		bool monitor_heartbeat; ///< Turn monitoring of processing threads on/off.
 		bool batch_mode;
@@ -225,6 +230,8 @@ class JApplication{
 		bool override_runnumber;
 		int  user_supplied_runnumber;
 		bool sequential_event_complete;  ///< Used to flag that processing of a barrier event is complete
+
+		int exit_code;
 
 		map<uint32_t, string> status_bit_descriptions; ///< Descriptions of bits in status word used in JEvent
 };

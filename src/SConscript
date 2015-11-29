@@ -1,9 +1,12 @@
 
+import sbms
+
 import os
 
 Import('env osname')
 
 # Loop over libraries, building each
 subdirs = ['JANA', 'plugins', 'utilities', 'unit_tests']
-SConscript(dirs=subdirs, exports='env osname', duplicate=0)
 
+sbms.OptionallyBuild(env, ['examples'])
+SConscript(dirs=subdirs, exports='env osname', duplicate=0)

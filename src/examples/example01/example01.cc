@@ -17,6 +17,10 @@ int main(int narg, char *argv[])
 
 	japp->Run();
 
-	return 0;
+	int exit_code = japp->GetExitCode();
+	
+	delete japp;
+
+	return exit_code;
 }
 

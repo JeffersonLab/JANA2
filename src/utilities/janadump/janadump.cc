@@ -57,9 +57,11 @@ int main(int narg, char *argv[])
 	app->monitor_heartbeat = false;
 	app->Run(&myproc);
 	
+	int exit_code = app->GetExitCode();
+	
 	delete app;
 
-	return 0;
+	return exit_code;
 }
 
 //-----------

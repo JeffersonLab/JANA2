@@ -87,9 +87,11 @@ int main(int narg, char *argv[])
 		jcalib_dest->PutCalib(NAMEPATH, DEST_RUN_MIN, DEST_RUN_MAX, DEST_EVENT_MIN, DEST_EVENT_MAX, AUTHOR, svals, comment);
 	}
 
+	int exit_code = app->GetExitCode();
+
 	delete app;
 
-	return 0;
+	return exit_code;
 }
 
 //-----------

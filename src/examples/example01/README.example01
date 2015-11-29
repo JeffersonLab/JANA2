@@ -36,7 +36,7 @@ the data objects should not refer to memory that the JEventSource
 still owns (e.g. a pointer to some part of the event buffer that
 is freed when the FreeEvent callback is called.
 
-To build this example, simply type "make install". The executable
+To build this example, simply type "scons install". The executable
 will be installed in the directory $JANA_HOME/bin.
 
 To run the example, just invoke it on the command line with a
