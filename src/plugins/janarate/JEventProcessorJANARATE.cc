@@ -2,6 +2,9 @@
 //
 //
 
+#include <sys/time.h>
+#include <sys/resource.h>
+		 
 #include <iostream>
 #include <fstream>
 using namespace std;
@@ -32,10 +35,13 @@ jerror_t JEventProcessorJANARATE::init(void)
 //	initialized = false;
 	finalized = false;
 	Ncalls = 0;
+	prescale = 100;
+	
+	gPARMS->SetDefaultParameter("RATE:PRESCALE", prescale, "Prescale entries in rate tree by this");
 	
 	app->RootReadLock();
 	rate_tree = new TTree("rate_tree","Event Processing Rates");
-	rate_tree->Branch("rates", &rate, "tot_rate/D:tot_integrated_rate:thread_rate:thread_delta_sec:threadid/i");
+	rate_tree->Branch("rates", &rate, "tot_rate/D:tot_integrated_rate:thread_rate:thread_delta_sec:cpu:mem_MB:threadid/i");
 	rate_tree->SetMarkerStyle(20);
 	app->RootUnLock();
 	
@@ -81,7 +87,39 @@ jerror_t JEventProcessorJANARATE::brun(JEventLoop *loop, int32_t runnumber)
 //------------------------------------------------------------------
 jerror_t JEventProcessorJANARATE::evnt(JEventLoop *loop, uint64_t eventnumber)
 {
+	double loadavg = 0.0;
+
+	if(eventnumber%prescale != 0) return NOERROR;
+
+	// Get system resource usage
+	struct rusage usage;
+	getrusage(RUSAGE_SELF, &usage);
+//	double t_user = (double)usage.ru_utime.tv_sec + 1.0E-6*(double)usage.ru_utime.tv_usec;
+//	double t_sys  = (double)usage.ru_stime.tv_sec + 1.0E-6*(double)usage.ru_stime.tv_usec;
+	double mem_usage = (double)(usage.ru_maxrss)/1024.0; // convert to MB
 	
+#ifdef __linux__
+	// Get CPU utilization
+	static uint64_t last_sum3=0.0, last_sum4=0.0;
+	FILE *fp = fopen("/proc/stat","r");
+	if(fp){
+		uint64_t a[4] = {0,0,0,0};
+		fscanf(fp, "%*s %ld %ld %ld %ld", &a[0], &a[1], &a[2], &a[3]);
+		fclose(fp);
+
+		uint64_t sum3 = a[0] + a[1] + a[2];
+		uint64_t sum4 = sum3 + a[3];
+		if(last_sum4!=0) loadavg = ((double)(sum3 - last_sum3))/((double)(sum4 - last_sum4));
+		last_sum3 = sum3;
+		last_sum4 = sum4;
+	}
+#endif // __linux__
+
+#ifdef __APPLE__
+	// Getting CPU utilization on Mac OS X doesn't seem trivial from
+	// a quick web search so we don't implement it here yet.
+#endif // __APPLE__
+
 	// Fill local variable outside mutex lock in case
 	rate_t myrate;
 	myrate.tot_rate = app->GetRate();
@@ -89,6 +127,8 @@ jerror_t JEventProcessorJANARATE::evnt(JEventLoop *loop, uint64_t eventnumber)
 	myrate.thread_rate = loop->GetInstantaneousRate(); // only updated every 2 seconds!
 	myrate.thread_delta_sec = loop->GetLastEventProcessingTime(); // updated every event
 	myrate.threadid = (unsigned int)(0xFFFFFFFF & (unsigned long)loop->GetPThreadID());
+	myrate.cpu = loadavg;
+	myrate.mem_MB = mem_usage;
 	
 	app->RootWriteLock();
 	this->rate = myrate;
