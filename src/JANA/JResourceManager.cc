@@ -59,15 +59,42 @@ JResourceManager::JResourceManager(JCalibration *jcalib, string resource_dir)
 	// 1. Passed as second argument to this constructor
 	// 2. Specified in JANA:RESOURCE_DIR configuration parameter
 	// 3. Specified in JANA_RESOURCE_DIR environment variable
-	// 4. Create a user directory in /tmp called "resources"
+	// 4. Specified in JANA:RESOURCE_DEFAULT_PATH configuration parameter
+	// 5. Create a user directory in /tmp called "resources"
 	//
 	// Note that in nearly all instances, no second argument should
 	// be passed to the constructor so that the value can be changed
 	// via run time parameters.
 
-	// 4.
+	// 5.
 	string user = (getenv("USER")==NULL ? "jana":getenv("USER"));
 	this->resource_dir = "/tmp/" + user + "/resources";
+	
+	// 4.
+	string RESOURCE_DEFAULT_PATH = "";
+	// (make sure param is defined with proper description)
+	if(gPARMS){
+		string description = "Colon (:) separated list of potential directories to be used as the resource directory. Only used if not specified explicitly via JANA:RESOURCE_DIR config. param or JANA_RESOURCE_DIR envar. First directory found to exist is used.";
+		JParameter *p = NULL;
+
+		if(gPARMS->Exists("JANA:RESOURCE_DEFAULT_PATH")){
+			p = gPARMS->GetParameter("JANA:RESOURCE_DEFAULT_PATH", RESOURCE_DEFAULT_PATH);
+		}else{
+			p = gPARMS->SetParameter("JANA:RESOURCE_DEFAULT_PATH", RESOURCE_DEFAULT_PATH); 
+		}
+		p->SetDescription(description);
+	}
+	if(RESOURCE_DEFAULT_PATH != ""){
+		stringstream ss(RESOURCE_DEFAULT_PATH);
+		string path;
+		while (getline(ss, path, ':')) {
+			struct stat sb;
+			if (stat(path.c_str(), &sb) == 0 && S_ISDIR(sb.st_mode)){
+				this->resource_dir = path;
+				break;
+			}
+		}
+    }
 
 	// 3.
 	const char *JANA_RESOURCE_DIR = getenv("JANA_RESOURCE_DIR");

@@ -27,6 +27,7 @@ char **ARGV;
 unsigned int TestResourceManager_Option1(void);
 unsigned int TestResourceManager_Option2(void);
 unsigned int TestResourceManager_Option3(void);
+string       TestResourceManager_DIR(const char* confvar, const char *envar, const char *defpath);
 
 //------------------
 // main
@@ -112,6 +113,42 @@ TEST_CASE("resource/get option 3", "Gets a remote resource using JResourceManage
 	system("rm -rf tmp_calib tmp_resources");
 	
 	delete app;
+}
+
+//------------------
+// TEST_CASE
+//------------------
+TEST_CASE("resource/dir", "Checks that resource manager chooses directory correctly")
+{
+	string user = (getenv("USER")==NULL ? "jana":getenv("USER"));
+	string tmp_dir = "/tmp/" + user + "/resources";
+
+	char cwd_buff[1024];
+	getcwd(cwd_buff, 1024);
+	string local_dir = string(cwd_buff);
+	
+	string mypath1 = string("/bad/path1:/bad/path2:")+local_dir;
+	string mypath2 = string("/bad/path1:")+local_dir+":/bad/path2";
+	string mypath3 = local_dir+":/bad/path1:/bad/path2";
+	string mypath4 = string("/bad/path1:/bad/path2:")+local_dir+"/extra";
+
+	jout << "------------------ No DIR specified -------------------" << endl;
+	REQUIRE( TestResourceManager_DIR(NULL, NULL , NULL) == tmp_dir+"/res/path/test" );
+
+	jout << "------------------ JANA:RESOURCE_DIR -------------------" << endl;
+	REQUIRE( TestResourceManager_DIR(local_dir.c_str(), NULL , NULL) == local_dir+"/res/path/test" );
+	REQUIRE( TestResourceManager_DIR(local_dir.c_str(), "/bad/path" , NULL) == local_dir+"/res/path/test" );
+	REQUIRE( TestResourceManager_DIR(local_dir.c_str(), "/bad/path" , mypath1.c_str()) == local_dir+"/res/path/test" );
+
+	jout << "------------------ JANA_RESOURCE_DIR -------------------" << endl;
+	REQUIRE( TestResourceManager_DIR(NULL, local_dir.c_str(), NULL) == local_dir+"/res/path/test" );
+	REQUIRE( TestResourceManager_DIR(NULL, local_dir.c_str(), mypath1.c_str()) == local_dir+"/res/path/test" );
+
+	jout << "------------------ JANA:RESOURCE_DEFAULT_PATH -------------------" << endl;
+	REQUIRE( TestResourceManager_DIR(NULL, NULL, mypath1.c_str()) == local_dir+"/res/path/test" );
+	REQUIRE( TestResourceManager_DIR(NULL, NULL, mypath2.c_str()) == local_dir+"/res/path/test" );
+	REQUIRE( TestResourceManager_DIR(NULL, NULL, mypath3.c_str()) == local_dir+"/res/path/test" );
+	REQUIRE( TestResourceManager_DIR(NULL, NULL, mypath4.c_str()) == tmp_dir+"/res/path/test" );
 }
 
 //------------------
@@ -327,5 +364,39 @@ unsigned int TestResourceManager_Option3(void)
 	jout<<Bmap.size()<<" entries found" << endl;
 	
 	return Bmap.size();
+}
+
+//------------------
+// TestResourceManager_DIR
+//------------------
+string TestResourceManager_DIR(const char* confvar, const char *envar, const char *defpath)
+{
+	// Set the resource directory using various means and
+	// return the one the resource manager chooses.
+	
+	// Create new JApplication for use in this test only
+	JApplication *japp = new JApplication(NARG, ARGV);
+	
+	// Set JANA:RESOURCE_DIR configuration parameter if given
+	if(confvar) gPARMS->SetParameter("JANA:RESOURCE_DIR", string(confvar));
+	
+	// Set environment variable
+	if(envar){
+		setenv("JANA_RESOURCE_DIR", strdup(envar), 1);
+	}else{
+		unsetenv("JANA_RESOURCE_DIR");
+	}
+
+	// Set JANA:RESOURCE_DEFAULT_PATH configuration parameter if given
+	if(defpath) gPARMS->SetParameter("JANA:RESOURCE_DEFAULT_PATH", string(defpath));
+
+	// Get the resource manager (this should actually instantiate it)
+	JResourceManager *jrm = japp->GetJResourceManager(1);
+	
+	string path = jrm->GetLocalPathToResource("res/path/test");
+
+	delete japp;
+
+	return path;
 }
 

@@ -38,7 +38,8 @@ namespace jana{
 /// 1. Passed as second argument to the constructor
 /// 2. Specified in JANA:RESOURCE_DIR configuration parameter
 /// 3. Specified in JANA_RESOURCE_DIR environment variable
-/// 4. Create a user directory in /tmp called "resources"
+/// 4. Specified in JANA:RESOURCE_DEFAULT_PATH configuration parameter
+/// 5. Create a user directory in /tmp called "resources"
 ///
 /// Note that in nearly all instances, no second argument should
 /// be passed to the constructor so that the value can be changed
