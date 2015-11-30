@@ -673,7 +673,7 @@ void janactl_plugin::HostInfoPROC(vector<string> &keys, vector<string> &vals)
 	vals.push_back(str);
 
 	// Logical cores
-	sprintf(str, "%d", procinfo.size());
+	sprintf(str, "%lu", procinfo.size());
 	keys.push_back("Ncores (logical)");
 	vals.push_back(str);
 

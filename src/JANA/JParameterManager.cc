@@ -415,8 +415,8 @@ void JParameterManager::DumpSuccinct(bool print_descriptions)
 	pthread_mutex_lock(&parameter_mutex);
 
 	// Get maximum key width for all parameters
-	int max_key_width=0;
-	int max_val_width=0;
+	uint32_t max_key_width=0;
+	uint32_t max_val_width=0;
 	for(unsigned int i=0; i<parameters.size(); i++){
 
 		JParameter *p = parameters[i];
@@ -465,7 +465,7 @@ void JParameterManager::DumpSuccinct(bool print_descriptions)
 				while(true){
 					pos = description.find(" ", pos+1);
 					if(pos == string::npos) pos = description.length();
-					if( (pos-pos_start) > max_width) break;
+					if( (pos-pos_start) > (size_t)max_width) break;
 					pos_end = pos;
 					if(pos_end==0) break; // empty string
 					if(pos_end==description.length()) break;

@@ -61,7 +61,7 @@ TEST_CASE("user_reference", "Set and use a user reference")
 	app->AddPlugin("TestSpeed");
 
 	// Set Limit on number of events to process
-	unsigned int events_to_keep = 100;
+	int events_to_keep = 100;
 	gPARMS->SetDefaultParameter("EVENTS_TO_KEEP", events_to_keep);
 
 	// Create event processor that actually uses the user reference

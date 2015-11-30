@@ -168,7 +168,7 @@ void jv_mainframe::DoSelectObjectType(Int_t id)
 	// Get factory name and tag
 	string name = nametag;
 	string tag = "";
-	int pos=name.find(":");
+	uint32_t pos=name.find(":");
 	if(pos != name.npos){
 		tag = name.substr(pos+1);
 		name = name.substr(0, pos);

@@ -143,8 +143,8 @@ TEST_CASE("thread_relaunch: multi-thread, no-auto", "Stalls multiple threads wit
 	
 	jout<<" Nevents=" << app->GetNEvents() << endl;
 	jout<<" Nlost_events=" << app->GetNLostEvents() << endl;
-	REQUIRE( app->GetNEvents() ==  Nthreads*137);
-	REQUIRE( app->GetNLostEvents() ==  Nthreads);
+	REQUIRE( app->GetNEvents() ==  (uint64_t)Nthreads*137);
+	REQUIRE( app->GetNLostEvents() ==  (uint64_t)Nthreads);
 
 	delete app;
 }
@@ -227,8 +227,8 @@ TEST_CASE("thread_relaunch: callback", "Stalls thread with callback registered")
 	
 	jout<<" my_value=" << my_value << endl;
 	jout<<" Ncalls_to_callback=" << Ncalls_to_callback << endl;
-	REQUIRE( Ncalls_to_callback ==  EVENTS_TO_KEEP/137);
-	REQUIRE( my_value ==  5 + (3*EVENTS_TO_KEEP)/137);
+	REQUIRE( (uint32_t)Ncalls_to_callback ==  EVENTS_TO_KEEP/137);
+	REQUIRE( (uint32_t)my_value ==  5 + (3*EVENTS_TO_KEEP)/137);
 
 	delete app;
 }

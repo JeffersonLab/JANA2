@@ -668,7 +668,7 @@ void JApplication::EventBufferThread(void)
 		}else{
 			// If the user specified that some events should be skipped,
 			// then do that here, making sure to free the event first!
-			if(NEvents_read<=(int)EVENTS_TO_SKIP){
+			if(NEvents_read<=(uint64_t)EVENTS_TO_SKIP){
 				event->FreeEvent();
 				delete event;
 				event = NULL;
@@ -695,7 +695,7 @@ void JApplication::EventBufferThread(void)
 		// check that here and end the loop once we've read them all
 		// in.
 		if(EVENTS_TO_KEEP>0)
-			if(NEvents_read >= (int)(EVENTS_TO_SKIP+EVENTS_TO_KEEP))break;
+			if(NEvents_read >= (uint64_t)(EVENTS_TO_SKIP+EVENTS_TO_KEEP))break;
 		
 	}while(err!=NO_MORE_EVENT_SOURCES);
 
@@ -987,7 +987,7 @@ vector<JEventLoop*> JApplication::GetJEventLoops(void)
 	vector<JEventLoop*> loops;
 	
 	pthread_mutex_lock(&threads_mutex);
-	for(int i=0; i<threads.size(); i++) loops.push_back(threads[i]->loop);
+	for(uint32_t i=0; i<threads.size(); i++) loops.push_back(threads[i]->loop);
 	pthread_mutex_unlock(&threads_mutex);
 	
 	return loops;
@@ -1509,7 +1509,7 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 			// If there was no time remaining, then we must have slept
 			// the whole amount
 			int delta_NEvents = NEvents - last_NEvents;
-			if(NEvents>this->Nthreads){
+			if(NEvents>(uint64_t)this->Nthreads){
 				avg_NEvents += delta_NEvents>0 ? delta_NEvents:0;
 				avg_time += sleep_time;
 			}
@@ -1542,7 +1542,7 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 
 			// Choose timeout depending on whether the first event for all threads
 			// has completed or not.
-			double timeout = last_NEvents<=this->Nthreads ? THREAD_TIMEOUT_FIRST_EVENT:THREAD_TIMEOUT;
+			double timeout = last_NEvents<=(uint64_t)this->Nthreads ? THREAD_TIMEOUT_FIRST_EVENT:THREAD_TIMEOUT;
 
 			if(monitor_heartbeat && ((*hb-slept_time) > timeout)){
 				// Thread hasn't done anything for more than timeout seconds. 
@@ -1555,7 +1555,7 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 				
 				// If we haven't processed one event per thread yet, then assume we
 				// are stuck on the first event and so quit the whole program.
-				if(last_NEvents<this->Nthreads){
+				if(last_NEvents<(uint64_t)this->Nthreads){
 					jerr<<"    -- stalled in first Nthreads events. Killing all threads ..." << endl;
 					Quit(); // nicely tell all threads to quit (set their "quit" flag.
 					for(unsigned int j=0;j<threads.size();j++){
@@ -1651,7 +1651,7 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 					pthread_rwlock_rdlock(app_rw_lock); // Re-lock the mutex
 					// Our new thread will be in "threads" once it's up and running
 					bool found_thread = false;
-					for(int k=0; k<threads.size(); k++){
+					for(uint32_t k=0; k<threads.size(); k++){
 						if(threads[k]->thread_id == thr){
 							found_thread = true;
 							break;

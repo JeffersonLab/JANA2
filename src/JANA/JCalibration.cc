@@ -331,7 +331,7 @@ void JCalibration::DumpCalibrationsToFiles(string basedir)
 	// a full or relative path. 
 	char fullpath[1024]="";
 	DIR *dirp = opendir("./"); // this trick suggested by getcwd man page for saving/restoring cwd
-	int err = err = chdir(basedir.c_str());         // cd into the basedir directory
+	int err = chdir(basedir.c_str());         // cd into the basedir directory
 	if(!err)  err = (getcwd(fullpath, 1024)==NULL); // get full path of basedir directory
 	if(dirp){
 		fchdir(dirfd(dirp));                        // cd back into the working directory we started in

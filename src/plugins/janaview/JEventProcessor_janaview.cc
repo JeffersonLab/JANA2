@@ -297,7 +297,7 @@ void JEventProcessor_janaview::MakeCallGraph(string nametag)
 		
 		rankprop.cgobjs.push_back(cgobj);
 		rankprop.totheight += cgobj->h;
-		if(cgobj->w > rankprop.totwidth) rankprop.totwidth = cgobj->w;
+		if((int32_t)cgobj->w > rankprop.totwidth) rankprop.totwidth = cgobj->w;
 	}
 	
 	// Get minimum width and height of canvas needed to display everything
