@@ -45,7 +45,7 @@ jerror_t JEventProcessorJANARATE::init(void)
 //------------------------------------------------------------------
 // brun
 //------------------------------------------------------------------
-jerror_t JEventProcessorJANARATE::brun(JEventLoop *loop, int runnumber)
+jerror_t JEventProcessorJANARATE::brun(JEventLoop *loop, int32_t runnumber)
 {
 	// Record starting time (if necessary)
 //	pthread_mutex_lock(&mutex);
@@ -79,7 +79,7 @@ jerror_t JEventProcessorJANARATE::brun(JEventLoop *loop, int runnumber)
 //------------------------------------------------------------------
 // evnt
 //------------------------------------------------------------------
-jerror_t JEventProcessorJANARATE::evnt(JEventLoop *loop, int eventnumber)
+jerror_t JEventProcessorJANARATE::evnt(JEventLoop *loop, uint64_t eventnumber)
 {
 	
 	// Fill local variable outside mutex lock in case

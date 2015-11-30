@@ -21,11 +21,11 @@ class JEventProcessor_EBTest:public jana::JEventProcessor{
 
 	private:
 		jerror_t init(void){return NOERROR;}
-		jerror_t brun(jana::JEventLoop *loop, int runnumber){return NOERROR;}
+		jerror_t brun(jana::JEventLoop *loop, int32_t runnumber){return NOERROR;}
 		jerror_t erun(void){return NOERROR;}
 		jerror_t fini(void){return NOERROR;}
 
-		jerror_t evnt(jana::JEventLoop *loop, int eventnumber){
+		jerror_t evnt(jana::JEventLoop *loop, uint64_t eventnumber){
 		
 			// We should never processes in parallel with
 			// a barrier event.

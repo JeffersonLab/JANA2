@@ -39,7 +39,7 @@ jerror_t MyProcessor::init(void)
 //------------------------------------------------------------------
 // brun
 //------------------------------------------------------------------
-jerror_t MyProcessor::brun(JEventLoop *eventLoop, int runnumber)
+jerror_t MyProcessor::brun(JEventLoop *eventLoop, int32_t runnumber)
 {
 	// Print factory names
 	eventLoop->PrintFactories();
@@ -84,7 +84,7 @@ jerror_t MyProcessor::brun(JEventLoop *eventLoop, int runnumber)
 //------------------------------------------------------------------
 // evnt
 //------------------------------------------------------------------
-jerror_t MyProcessor::evnt(JEventLoop *eventLoop, int eventnumber)
+jerror_t MyProcessor::evnt(JEventLoop *eventLoop, uint64_t eventnumber)
 {
 	// Loop over factories explicitly mentioned on command line
 	map<string, string>::iterator iter = autofactories.begin();

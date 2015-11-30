@@ -42,7 +42,7 @@ jerror_t JEventProcessor_UserReference::init(void)
 //------------------
 // brun
 //------------------
-jerror_t JEventProcessor_UserReference::brun(JEventLoop *eventLoop, int runnumber)
+jerror_t JEventProcessor_UserReference::brun(JEventLoop *eventLoop, int32_t runnumber)
 {
 	// This is called whenever the run number changes
 	return NOERROR;
@@ -51,7 +51,7 @@ jerror_t JEventProcessor_UserReference::brun(JEventLoop *eventLoop, int runnumbe
 //------------------
 // evnt
 //------------------
-jerror_t JEventProcessor_UserReference::evnt(JEventLoop *loop, int eventnumber)
+jerror_t JEventProcessor_UserReference::evnt(JEventLoop *loop, uint64_t eventnumber)
 {
 	// Get the reference to the counter if it exists. If not, then create
 	// a counter and store it as a user reference. This should create one

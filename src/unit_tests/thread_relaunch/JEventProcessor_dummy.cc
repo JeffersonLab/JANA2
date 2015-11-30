@@ -39,7 +39,7 @@ jerror_t JEventProcessor_dummy::init(void)
 //------------------
 // brun
 //------------------
-jerror_t JEventProcessor_dummy::brun(JEventLoop *eventLoop, int runnumber)
+jerror_t JEventProcessor_dummy::brun(JEventLoop *eventLoop, int32_t runnumber)
 {
 	// This is called whenever the run number changes
 	return NOERROR;
@@ -48,7 +48,7 @@ jerror_t JEventProcessor_dummy::brun(JEventLoop *eventLoop, int runnumber)
 //------------------
 // evnt
 //------------------
-jerror_t JEventProcessor_dummy::evnt(JEventLoop *loop, int eventnumber)
+jerror_t JEventProcessor_dummy::evnt(JEventLoop *loop, uint64_t eventnumber)
 {
 	vector<const stalling*> stallings;
 	loop->Get(stallings);

@@ -39,7 +39,7 @@ jerror_t JTest_factory::init(void)
 //------------------
 // brun
 //------------------
-jerror_t JTest_factory::brun(JEventLoop *eventLoop, int runnumber)
+jerror_t JTest_factory::brun(JEventLoop *eventLoop, int32_t runnumber)
 {
 	val1 = 1.234;
 	val2 = 9.876;
@@ -50,7 +50,7 @@ jerror_t JTest_factory::brun(JEventLoop *eventLoop, int runnumber)
 //------------------
 // evnt
 //------------------
-jerror_t JTest_factory::evnt(JEventLoop *loop, int eventnumber)
+jerror_t JTest_factory::evnt(JEventLoop *loop, uint64_t eventnumber)
 {
 
 	// Get JRawData objects from source. In principle, we would use these

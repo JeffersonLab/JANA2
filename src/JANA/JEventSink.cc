@@ -23,7 +23,7 @@ JEventSink::JEventSink()
 //---------------------------------
 // brun
 //---------------------------------
-jerror_t JEventSink::brun(JEventLoop *loop, int runnumber)
+jerror_t JEventSink::brun(JEventLoop *loop, int32_t runnumber)
 {
 	jerror_t err=NOERROR;
 

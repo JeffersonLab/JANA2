@@ -14,6 +14,7 @@ Changes in version 0.7.4
 - Default compiler now c++/cc instead of g++/gcc and optimization on
   by default (as well as all compiler warnings)
 - Added support for compiling with ROOT 6
+- Made unsigned 64bit event number requirement (and signed 32bit for run)
 
 Changes in version 0.7.3
 - Fixed issue with EVENTS_TO_SKIP only skipping EVENTS_TO_SKIP-1 events

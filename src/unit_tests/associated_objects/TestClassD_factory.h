@@ -20,11 +20,11 @@ class TestClassD_factory:public jana::JFactory<TestClassD>{
 
 	private:
 		jerror_t init(void){return NOERROR;}
-		jerror_t brun(jana::JEventLoop *eventLoop, int runnumber){return NOERROR;}
+		jerror_t brun(jana::JEventLoop *eventLoop, int32_t runnumber){return NOERROR;}
 		jerror_t erun(void){return NOERROR;}
 		jerror_t fini(void){return NOERROR;}
 
-		jerror_t evnt(jana::JEventLoop *loop, int eventnumber){
+		jerror_t evnt(jana::JEventLoop *loop, uint64_t eventnumber){
 		
 			vector<const TestClassA*> objsA;
 			vector<const TestClassB*> objsB;

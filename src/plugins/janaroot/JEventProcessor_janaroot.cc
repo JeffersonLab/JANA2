@@ -88,7 +88,7 @@ jerror_t JEventProcessor_janaroot::init(void)
 //------------------
 // brun
 //------------------
-jerror_t JEventProcessor_janaroot::brun(JEventLoop *eventLoop, int runnumber)
+jerror_t JEventProcessor_janaroot::brun(JEventLoop *eventLoop, int32_t runnumber)
 {
 	// Use the ROOT mutex to guarantee that other JEventLoops don't start
 	// processing event before we have filled in the nametags_to_write_out member
@@ -167,7 +167,7 @@ jerror_t JEventProcessor_janaroot::brun(JEventLoop *eventLoop, int runnumber)
 //------------------
 // evnt
 //------------------
-jerror_t JEventProcessor_janaroot::evnt(JEventLoop *loop, int eventnumber)
+jerror_t JEventProcessor_janaroot::evnt(JEventLoop *loop, uint64_t eventnumber)
 {
 	// We assume that all factories we want to record have already been
 	// activated and so contain the objects (note that the toStrings()

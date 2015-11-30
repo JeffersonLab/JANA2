@@ -107,7 +107,7 @@ jerror_t JEventProcessor_janaview::init(void)
 //------------------
 // brun
 //------------------
-jerror_t JEventProcessor_janaview::brun(JEventLoop *eventLoop, int runnumber)
+jerror_t JEventProcessor_janaview::brun(JEventLoop *eventLoop, int32_t runnumber)
 {
 	eventLoop->EnableCallStackRecording();
 
@@ -117,7 +117,7 @@ jerror_t JEventProcessor_janaview::brun(JEventLoop *eventLoop, int runnumber)
 //------------------
 // evnt
 //------------------
-jerror_t JEventProcessor_janaview::evnt(JEventLoop *loop, int eventnumber)
+jerror_t JEventProcessor_janaview::evnt(JEventLoop *loop, uint64_t eventnumber)
 {
 	// We need to wait here in order to allow the GUI to control when to
 	// go to the next event. Lock the mutex and wait for the GUI to wake us

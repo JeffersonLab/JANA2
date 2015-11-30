@@ -25,7 +25,7 @@ jerror_t stalling_factory::init(void)
 //------------------
 // brun
 //------------------
-jerror_t stalling_factory::brun(jana::JEventLoop *eventLoop, int runnumber)
+jerror_t stalling_factory::brun(jana::JEventLoop *eventLoop, int32_t runnumber)
 {
 	return NOERROR;
 }
@@ -33,7 +33,7 @@ jerror_t stalling_factory::brun(jana::JEventLoop *eventLoop, int runnumber)
 //------------------
 // evnt
 //------------------
-jerror_t stalling_factory::evnt(JEventLoop *loop, int eventnumber)
+jerror_t stalling_factory::evnt(JEventLoop *loop, uint64_t eventnumber)
 {
 
 	if( (eventnumber%137) == 0 ) sleep(60);

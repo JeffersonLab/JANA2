@@ -23,7 +23,7 @@ jerror_t JEventProcessorTest::init(void)
 //------------------------------------------------------------------
 // brun
 //------------------------------------------------------------------
-jerror_t JEventProcessorTest::brun(JEventLoop *loop, int runnumber)
+jerror_t JEventProcessorTest::brun(JEventLoop *loop, int32_t runnumber)
 {
 	return NOERROR;
 }
@@ -31,7 +31,7 @@ jerror_t JEventProcessorTest::brun(JEventLoop *loop, int runnumber)
 //------------------------------------------------------------------
 // evnt
 //------------------------------------------------------------------
-jerror_t JEventProcessorTest::evnt(JEventLoop *loop, int eventnumber)
+jerror_t JEventProcessorTest::evnt(JEventLoop *loop, uint64_t eventnumber)
 {
 	vector<const JTest*> jtests;
 	loop->Get(jtests);

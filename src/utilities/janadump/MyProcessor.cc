@@ -42,7 +42,7 @@ vector<string> toprint;
 //------------------------------------------------------------------
 // brun
 //------------------------------------------------------------------
-jerror_t MyProcessor::brun(JEventLoop *eventLoop, int runnumber)
+jerror_t MyProcessor::brun(JEventLoop *eventLoop, int32_t runnumber)
 {
 	vector<string> factory_names;
 	eventLoop->GetFactoryNames(factory_names);
@@ -107,7 +107,7 @@ jerror_t MyProcessor::brun(JEventLoop *eventLoop, int runnumber)
 //------------------------------------------------------------------
 // evnt
 //------------------------------------------------------------------
-jerror_t MyProcessor::evnt(JEventLoop *eventLoop, int eventnumber)
+jerror_t MyProcessor::evnt(JEventLoop *eventLoop, uint64_t eventnumber)
 {
 
 	// If we're skipping boring events (events with no rows for any of

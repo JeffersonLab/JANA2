@@ -105,7 +105,7 @@ jerror_t JEventProcessorJANADOT::init(void)
 //------------------------------------------------------------------
 // brun
 //------------------------------------------------------------------
-jerror_t JEventProcessorJANADOT::brun(JEventLoop *loop, int runnumber)
+jerror_t JEventProcessorJANADOT::brun(JEventLoop *loop, int32_t runnumber)
 {
 	// Nothing to do here
 	
@@ -115,7 +115,7 @@ jerror_t JEventProcessorJANADOT::brun(JEventLoop *loop, int runnumber)
 //------------------------------------------------------------------
 // evnt
 //------------------------------------------------------------------
-jerror_t JEventProcessorJANADOT::evnt(JEventLoop *loop, int eventnumber)
+jerror_t JEventProcessorJANADOT::evnt(JEventLoop *loop, uint64_t eventnumber)
 {
 	// If we are supposed to activate all factories, do that now
 	if(force_all_factories_active){

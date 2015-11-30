@@ -31,8 +31,8 @@ class JEventSink:public JEventProcessor{
 	protected:
 		virtual jerror_t init(void){return NOERROR;}				///< Called once at program start.
 		jerror_t brun(JEventLoop *eventLoop, int runnumber);	///< Called everytime a new run number is detected.
-		virtual jerror_t brun_sink(JEventLoop *loop, int runnumber)=0;
-		virtual jerror_t evnt(JEventLoop *loop, int eventnumber){return NOERROR;}	///< Called every event.
+		virtual jerror_t brun_sink(JEventLoop *loop, int32_t runnumber)=0;
+		virtual jerror_t evnt(JEventLoop *loop, uint64_t eventnumber){return NOERROR;}	///< Called every event.
 		virtual jerror_t erun(void){return NOERROR;}				///< Called everytime run number changes, provided brun has been called.
 		virtual jerror_t fini(void){return NOERROR;}				///< Called after last event of last event source has been processed.
 		void AddToWriteList(string name, string tag);

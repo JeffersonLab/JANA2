@@ -50,13 +50,13 @@ jerror_t JEventProcessor::brun(JEventLoop *loop, int32_t runnumber)
 	return NOERROR;
 }
 
-//----------------
-// evnt  (DEPRECATED)
-//----------------
-jerror_t JEventProcessor::evnt(JEventLoop *loop, int eventnumber)
-{
-	return NOERROR;
-}
+////----------------
+//// evnt  (DEPRECATED)
+////----------------
+//jerror_t JEventProcessor::evnt(JEventLoop *loop, int eventnumber)
+//{
+//	return NOERROR;
+//}
 
 //----------------
 // evnt
