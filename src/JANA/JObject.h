@@ -121,7 +121,7 @@ class JObject{
 		
 };
 
-#ifndef __CINT__
+#if !defined(__CINT__) && !defined(__CLING__)
 
 
 //--------------------------
@@ -516,7 +516,7 @@ void JObject::AddString(vector<pair<string,string> > &items, const char *name, c
 	items.push_back(item);
 }
 
-#endif // __CINT__
+#endif // __CINT__  __CLING__
 
 
 } // Close JANA namespace

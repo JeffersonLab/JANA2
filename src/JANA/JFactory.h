@@ -19,7 +19,7 @@ using std::string;
 #include "JEvent.h"
 
 // The following is here just so we can use ROOT's THtml class to generate documentation.
-#ifdef __CINT__
+#if defined(__CINT__) || defined(__CLING__)
 class pthread_mutex_t;
 typedef unsigned long pthread_t;
 typedef unsigned long oid_t;
@@ -107,7 +107,7 @@ class JFactory:public JFactory_base{
 
 
 // The following is here just so we can use ROOT's THtml class to generate documentation.
-#ifndef __CINT__
+#if !defined(__CINT__) && !defined(__CLING__)
 
 //-------------
 // JFactory
@@ -530,7 +530,7 @@ void JFactory<T>::toStrings(vector<vector<pair<string,string> > > &items, bool a
 	}
 }
 
-#endif //__CINT__
+#endif //__CINT__  __CLING__
 
 
 } // Close JANA namespace

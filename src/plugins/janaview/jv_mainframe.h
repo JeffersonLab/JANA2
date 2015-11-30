@@ -30,10 +30,10 @@ using namespace std;
 
 #include "JVFactoryInfo.h"
 
-#ifndef __CINT__
+#if !defined(__CINT__) && !defined(__CLING__)
 #include <JANA/JObject.h>
 using namespace jana;
-#endif // __CINT__
+#endif // __CINT__  __CLING__
 
 
 
@@ -87,9 +87,9 @@ class jv_mainframe:public TGMainFrame{
 		void SelectNewObject(void *vobj);
 		void Redraw(TGFrame *lb);
 
-#ifndef __CINT__
+#if !defined(__CINT__) && !defined(__CLING__)
 		void UpdateObjectValues(JObject *obj);
-#endif // __CINT__
+#endif // __CINT__  __CLING__
 
 		// Helper methods for building GUI
 		TGLabel*          AddLabel(TGCompositeFrame* frame, string text, Int_t mode=kTextLeft, ULong_t hints=kLHintsLeft | kLHintsTop);
@@ -117,10 +117,10 @@ class jv_mainframe:public TGMainFrame{
 		
 		vector<string> objtypes; // nametags of values in object type listbox
 		vector<void*> vobjs;
-#ifndef __CINT__
+#if !defined(__CINT__) && !defined(__CLING__)
 		vector<const JObject*> aobjs;
 		vector<const JObject*> a2objs;
-#endif // __CINT__
+#endif // __CINT__  __CLING__
 
 	protected:
 		TTimer *timer;

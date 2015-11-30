@@ -202,7 +202,7 @@ typedef JEventLoop::call_stack_t call_stack_t;
 typedef JEventLoop::error_call_stack_t error_call_stack_t;
 #endif
 
-#ifndef __CINT__
+#if !defined(__CINT__) && !defined(__CLING__)
 
 //-------------
 // GetSingle
@@ -704,7 +704,7 @@ void JEventLoop::RemoveRef(T *t)
 }
 
 
-#endif //__CINT__
+#endif //__CINT__  __CLING__
 
 } // Close JANA namespace
 

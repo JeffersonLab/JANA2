@@ -370,12 +370,12 @@ JParameter* JParameterManager::GetParameter(K key, string &val)
 
 
 // Hide the following from rootcint
-#ifndef __CINT__
+#if !defined(__CINT__) && !defined(__CLING__)
 
 // Global variable for accessing parameters (defined in JParameterManager.cc)
 extern jana::JParameterManager *gPARMS;
 
-#endif // __CINT__
+#endif // __CINT__  __CLING__
 
 #endif // _JParameterManager_
 

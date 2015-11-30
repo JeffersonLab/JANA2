@@ -23,7 +23,7 @@ using std::set;
 
 // The following is here just so we can use ROOT's THtml class to generate
 // documentation.
-#ifdef __CINT__
+#if defined(__CINT__) || defined(__CLING__)
 class pthread_mutex_t;
 #endif
 

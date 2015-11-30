@@ -411,7 +411,7 @@ T* JApplication::GetFirstJEventSource(void)
 
 
 // The following is here just so we can use ROOT's THtml class to generate documentation.
-#ifndef __CINT__
+#if !defined(__CINT__) && !defined(__CLING__)
 
 extern jana::JApplication *japp;
 
@@ -430,7 +430,7 @@ inline void InitJANAPlugin(jana::JApplication *app)
 	gPARMS = app->GetJParameterManager();
 }
 
-#endif //__CINT__
+#endif //__CINT__ __CLING__
 
 
 #endif // _JApplication_

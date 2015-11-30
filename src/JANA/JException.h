@@ -42,7 +42,7 @@
 // The following is here just so we can use ROOT's THtml class to generate documentation.
 #include "cint.h"
 
-#ifndef __CINT__
+#if !defined(__CINT__) && !defined(__CLING__)
 
 #include <exception>
 #include <sstream>
@@ -55,7 +55,7 @@ using std::exception;
 #endif
 
 
-#endif // __CINT__
+#endif // __CINT__  __CLING__
 
 // Place everything in JANA namespace
 namespace jana{

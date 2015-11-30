@@ -19,7 +19,7 @@
 
 
 #if HAVE_XERCES
-#ifndef __CINT__
+#if !defined(__CINT__) && !defined(__CLING__)
 
 #if XERCES3
 
@@ -43,7 +43,7 @@
 
 #endif
 
-#else // __CINT__
+#else // __CINT__  __CLING__
 namespace xercesc{
 class xercesc::DOMBuilder;
 class xercesc::DOMDocument;
@@ -51,7 +51,7 @@ class xercesc::DOMNode;
 class xercesc::DOMErrorHandler;
 class xercesc::DOMError;
 }
-#endif // __CINT__
+#endif // __CINT__  __CLING__
 #endif // HAVE_XERCES
 
 // Place everything in JANA namespace

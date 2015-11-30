@@ -1,6 +1,6 @@
 
 // This stuff is needed by rootcint to generate the dictionary files
-#ifdef __CINT__
+#if defined(__CINT__) || defined(__CLING__)
 
 namespace jana{}
 using namespace jana;
@@ -14,7 +14,7 @@ class __signed;
 class timespec;
 class timeval;
 
-#endif // __CINT__
+#endif // __CINT__  __CLING__
 
 
 // This stuff is needed when actually compiling the dictionary files with g++
