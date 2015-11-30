@@ -7,7 +7,7 @@ invoke "scons -u install" from the examples directory (i.e.
 the one containing this README file). To build only a specific
 example program, cd to its source directory and do the same.
 
-The example executables will be installed in the $JANA_HOME/bin
+The example executables will be installed in the $JANA_HOME/example
 directory.
 
 For details on each example program, see the README file in 
