@@ -408,7 +408,7 @@ void JParameterManager::DumpSuccinct(bool print_descriptions)
 	// Get size of terminal
 	struct winsize w;
     ioctl(STDOUT_FILENO, TIOCGWINSZ, &w);
-	int Nrows = w.ws_row;
+//	int Nrows = w.ws_row;
 	int Ncols = w.ws_col;
 
 	// Just in case a new parameter is written while we're dumping

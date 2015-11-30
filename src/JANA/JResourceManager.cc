@@ -31,7 +31,10 @@ static pthread_mutex_t resource_manager_mutex = PTHREAD_MUTEX_INITIALIZER;
 static string CURRENT_OUTPUT_FNAME = "";
 
 static int mkpath(string s, mode_t mode=S_IRWXU | S_IRWXG | S_IRWXO);
+
+#ifdef HAVE_CURL
 static int mycurl_printprogress(void *clientp, double dltotal, double dlnow, double ultotal,  double ulnow);
+#endif // HAVE_CURL
 
 
 //---------------------------------
@@ -547,6 +550,7 @@ int mkpath(string s, mode_t mode)
     return mdret;
 }
 
+#ifdef HAVE_CURL
 //----------------------------
 // mycurl_printprogress
 //----------------------------
@@ -558,4 +562,5 @@ int mycurl_printprogress(void *clientp, double dltotal, double dlnow, double ult
 
 	return 0;
 }
+#endif // HAVE_CURL
 

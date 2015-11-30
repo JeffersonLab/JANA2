@@ -13,6 +13,9 @@ import sbms_config
 
 # Get command-line options
 SHOWBUILD = ARGUMENTS.get('SHOWBUILD', 0)
+OPTIMIZATION = ARGUMENTS.get('OPTIMIZATION', 2)
+DEBUG = ARGUMENTS.get('DEBUG', 1)
+PROFILE = ARGUMENTS.get('PROFILE', 0)
 BITNESS32 = ARGUMENTS.get('m32', 0)
 BITNESS64 = ARGUMENTS.get('m64', 0)
 
@@ -32,9 +35,10 @@ include = "%s/include" % (installdir)
 bin = "%s/bin" % (installdir)
 lib = "%s/lib" % (installdir)
 plugins = "%s/plugins" % (installdir)
-env = Environment(    CPPPATH      = [include],
-                      LIBPATH      = [lib],
-                      variant_dir  =".%s" % (osname))
+env = Environment(        ENV = os.environ,  # Bring in full environement, including PATH
+                      CPPPATH = [include],
+                      LIBPATH = [lib],
+                  variant_dir = ".%s" % (osname))
 
 # These are SBMS-specific variables (i.e. not default scons ones)
 env.Replace(    INSTALLDIR    = installdir,
@@ -77,15 +81,39 @@ if SHOWBUILD==0:
 
 
 # Get compiler from environment variables (if set)
-env.Replace( CXX = os.getenv('CXX', 'g++'),
-             CC  = os.getenv('CC' , 'gcc'),
+env.Replace( CXX = os.getenv('CXX', 'c++'),
+             CC  = os.getenv('CC' , 'cc'),
              FC  = os.getenv('FC' , 'gfortran') )
+
+# Get compiler name
+compiler = 'unknown'
+compiler_string = subprocess.Popen([env['CC'],"-v"], stderr=subprocess.PIPE).communicate()[1]
+if 'clang' in compiler_string:
+	compiler = 'clang'
+if 'gcc' in compiler_string and 'clang' not in compiler_string:
+	compiler = 'gcc'
+env.Replace(COMPILER = compiler)
 
 # Add src and src/plugins to include search path
 env.PrependUnique(CPPPATH = ['#', '#src', '#src/plugins'])
 
-# Turn on debug symbols
-env.PrependUnique(CFLAGS = ['-g', '-fPIC'], CXXFLAGS = ['-g', '-fPIC'])
+# Standard flags (optimization level and warnings)
+env.PrependUnique(      CFLAGS = ['-O%s' % OPTIMIZATION, '-fPIC', '-Wall'])
+env.PrependUnique(    CXXFLAGS = ['-O%s' % OPTIMIZATION, '-fPIC', '-Wall'])
+env.PrependUnique(FORTRANFLAGS = ['-O%s' % OPTIMIZATION, '-fPIC', '-Wall'])
+
+# Turn on debug symbols unless user told us not to
+if not DEBUG=='0':
+	env.PrependUnique(      CFLAGS = ['-g'])
+	env.PrependUnique(    CXXFLAGS = ['-g'])
+	env.PrependUnique(FORTRANFLAGS = ['-g'])
+
+# Turn on profiling if user asked for it
+if PROFILE=='1':
+	env.PrependUnique(      CFLAGS = ['-pg'])
+	env.PrependUnique(    CXXFLAGS = ['-pg'])
+	env.PrependUnique(FORTRANFLAGS = ['-pg'])
+	env.PrependUnique(   LINKFLAGS = ['-pg'])
 
 # Add pthread (more efficient to do this here since it involves test compilations)
 sbms.Add_pthread(env)

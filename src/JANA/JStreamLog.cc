@@ -8,16 +8,13 @@
 JStreamLog jout(std::cout, "JANA >>");
 JStreamLog jerr(std::cerr, "JANA ERROR>>");
 
-JStreamLog::JStreamLog(std::streambuf* buf, const char* tag) : own_rdbuf(true),
-std::ostream(new JStreamLogBuffer(buf, tag))
+JStreamLog::JStreamLog(std::streambuf* buf, const char* tag) : std::ostream(new JStreamLogBuffer(buf, tag)), own_rdbuf(true)
 {}
 
-JStreamLog::JStreamLog(const std::ostream& os, const char* tag) : own_rdbuf(true),
-std::ostream(new JStreamLogBuffer(os.rdbuf(), tag))
+JStreamLog::JStreamLog(const std::ostream& os, const char* tag) : std::ostream(new JStreamLogBuffer(os.rdbuf(), tag)), own_rdbuf(true)
 {}
 
-JStreamLog::JStreamLog(const std::ostream& os, const std::string& tag) : own_rdbuf(true),
-std::ostream(new JStreamLogBuffer(os.rdbuf(), tag.c_str()))
+JStreamLog::JStreamLog(const std::ostream& os, const std::string& tag) : std::ostream(new JStreamLogBuffer(os.rdbuf(), tag.c_str())), own_rdbuf(true)
 {}
 
 JStreamLog::~JStreamLog() {

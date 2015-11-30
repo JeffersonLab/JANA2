@@ -51,7 +51,7 @@ bool FactoryNameSort(JFactory_base *a,JFactory_base *b){
 //-------------------
 void* JanaViewRootGUIThread(void *arg)
 {
-	JEventProcessor_janaview *jproc = (JEventProcessor_janaview*)arg;
+//	JEventProcessor_janaview *jproc = (JEventProcessor_janaview*)arg;
 
 	// Create a ROOT TApplication object
 	int narg = 0;

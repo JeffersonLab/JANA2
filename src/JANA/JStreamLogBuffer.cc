@@ -20,7 +20,7 @@ JStreamLogBuffer::JStreamLogBuffer(std::streambuf* buf, const char* tag) :
 std::streambuf(),
 __sbuf(buf),
 __tag(strcpy(new char[strlen(tag)+1], tag)),
-__newline(true),
+//__newline(true),
 __prepend_timestamp(false),
 __prepend_threadstamp(false)
 {

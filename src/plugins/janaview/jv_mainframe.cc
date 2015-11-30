@@ -483,7 +483,7 @@ TGLabel* jv_mainframe::AddLabel(TGCompositeFrame* frame, string text, Int_t mode
 TGLabel* jv_mainframe::AddNamedLabel(TGCompositeFrame* frame, string title, Int_t mode, ULong_t hints)
 {
 	TGHorizontalFrame *f = new TGHorizontalFrame(frame);
-	TGLabel *ltitle = AddLabel(f, title, kTextRight);
+	AddLabel(f, title, kTextRight);
 	TGLabel *lab = AddLabel(f, "---------", mode);
 	frame->AddFrame(f, new TGLayoutHints(kLHintsExpandX,2,2,2,2));
 
@@ -573,10 +573,10 @@ void jv_mainframe::CreateGUI(void)
    // Create menubar and popup menus. The hint objects are used to place
    // and group the different menu widgets with respect to eachother.
 
-	TGDockableFrame    *fMenuDock;
+//	TGDockableFrame    *fMenuDock;
 	TGMenuBar  *fMenuBar;
 	TGPopupMenu  *fMenuFile, *fMenuTools, *fMenuView;
-	TGLayoutHints      *fMenuBarLayout, *fMenuBarItemLayout, *fMenuBarHelpLayout;
+	TGLayoutHints      *fMenuBarLayout, *fMenuBarItemLayout;
 
 	fMenuBarLayout = new TGLayoutHints(kLHintsTop | kLHintsExpandX);
 	fMenuBarItemLayout = new TGLayoutHints(kLHintsTop | kLHintsLeft, 0, 4, 0, 0);

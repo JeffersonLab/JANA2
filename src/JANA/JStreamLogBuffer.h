@@ -38,7 +38,7 @@ class JStreamLogBuffer : public std::streambuf
 	private:
 		std::streambuf* __sbuf;
 		char*			__tag;
-		bool			__newline;
+//		bool			__newline;
 		bool			__prepend_timestamp;
 		bool			__prepend_threadstamp;
 		
