@@ -1,0 +1,9 @@
+
+
+This directory contains some example ROOT macros
+for making some plots of the performance of JANA.
+These were developed for Hall-D at JLab and so 
+won't work with just generic JANA. They may save
+a little time though.
+
+

@@ -15,7 +15,8 @@ Changes in version 0.7.4
   by default (as well as all compiler warnings)
 - Added support for compiling with ROOT 6
 - Made unsigned 64bit event number requirement (and signed 32bit for run)
-- Added JANA:RESOURCE_DEFAULT_PATH conf. par. 
+- Added JANA:RESOURCE_DEFAULT_PATH conf. par.
+- Added macros directory with some example ROOT macros
 
 Changes in version 0.7.3
 - Fixed issue with EVENTS_TO_SKIP only skipping EVENTS_TO_SKIP-1 events
