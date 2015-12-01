@@ -1,4 +1,7 @@
 
+Changes in version 0.7.5
+
+
 Changes in version 0.7.4
 - Fixed bug in location osrelease.pl was being run
 - Fixed bug where JGeometryXML.cc wouldn't compile without XERCES
