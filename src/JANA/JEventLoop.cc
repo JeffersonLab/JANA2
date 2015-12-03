@@ -180,12 +180,13 @@ jerror_t JEventLoop::RemoveFactory(JFactory_base* factory)
 //-------------
 JFactory_base* JEventLoop::GetFactory(const string data_name, const char *tag, bool allow_deftag)
 {
+	if( tag==NULL) tag = ""; // protection against NULL tags
+
 	// Try replacing specified tag with a default supplied at run time. This is the default
 	// behavior and should mirror how the Get() method works.
 	if(allow_deftag){
 		// Check if a tag was specified for this data type to use for the default.
-		const char *mytag = tag==NULL ? "":tag; // prtection against NULL tags
-		if(strlen(mytag)==0){
+		if(strlen(tag)==0){
 			map<string, string>::const_iterator iter = default_tags.find(data_name);
 			if(iter!=default_tags.end())tag = iter->second.c_str();
 		}
@@ -195,7 +196,9 @@ JFactory_base* JEventLoop::GetFactory(const string data_name, const char *tag, b
 	vector<JFactory_base*>::iterator iter = factories.begin();
 	for(; iter!=factories.end(); iter++){
 		if(data_name == (*iter)->GetDataClassName()){
-			if(!strcmp((*iter)->Tag(), tag)){
+			const char *mytag = (*iter)->Tag();
+			if(mytag==NULL) mytag = ""; // protection against NULL tags
+			if( !strcmp(mytag, tag) ){
 				return *iter;
 			}
 		}
