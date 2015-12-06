@@ -1,6 +1,6 @@
 
 Changes in version 0.7.5
-- Fixed potential big in JEventLoopGetFactory where NULL pointers could
+- Fixed potential bug in JEventLoopGetFactory where NULL pointers could
   be passed to strcmp
 
 Changes in version 0.7.4
