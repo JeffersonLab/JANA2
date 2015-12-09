@@ -165,7 +165,7 @@ jerror_t ${classname}_factory${tag_suffix}::init(void)
 //------------------
 // brun
 //------------------
-jerror_t ${classname}_factory${tag_suffix}::brun(jana::JEventLoop *eventLoop, int runnumber)
+jerror_t ${classname}_factory${tag_suffix}::brun(jana::JEventLoop *eventLoop, int32_t runnumber)
 {
 	return NOERROR;
 }
@@ -173,7 +173,7 @@ jerror_t ${classname}_factory${tag_suffix}::brun(jana::JEventLoop *eventLoop, in
 //------------------
 // evnt
 //------------------
-jerror_t ${classname}_factory${tag_suffix}::evnt(JEventLoop *loop, int eventnumber)
+jerror_t ${classname}_factory${tag_suffix}::evnt(JEventLoop *loop, uint64_t eventnumber)
 {
 
 	// Code to generate factory data goes here. Add it like:

@@ -64,7 +64,8 @@ jerror_t JEventProcessor::brun(JEventLoop *loop, int32_t runnumber)
 jerror_t JEventProcessor::evnt(JEventLoop *loop, uint64_t eventnumber)
 {
 	// redirect to "int" version for now so old code still works
-	return evnt(loop, (int)eventnumber);
+//	return evnt(loop, (int)eventnumber); // this caused hangs in sim-recon in jana 0.7.4
+	return NOERROR;
 }
 
 //----------------

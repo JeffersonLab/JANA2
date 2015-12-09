@@ -579,31 +579,44 @@ def AddROOT(env):
 	# We also create a builder for ROOT dictionaries and add targets to
 	# build dictionaries for any headers with "ClassDef" in them.
 
-	if os.getenv('ROOTSYS') != None:
+	rootsys = os.getenv('ROOTSYS')
+	if rootsys != None:
 
-		ROOT_CFLAGS = subprocess.Popen(["root-config", "--cflags"], stdout=subprocess.PIPE).communicate()[0]
-		ROOT_LINKFLAGS = subprocess.Popen(["root-config", "--glibs"], stdout=subprocess.PIPE).communicate()[0]
+		ROOT_CFLAGS = subprocess.Popen(["%s/bin/root-config" % rootsys, "--cflags"], stdout=subprocess.PIPE).communicate()[0]
+		ROOT_LINKFLAGS = subprocess.Popen(["%s/bin/root-config" % rootsys, "--glibs"], stdout=subprocess.PIPE).communicate()[0]
 		AddCompileFlags(env, ROOT_CFLAGS)
 		AddLinkFlags(env, ROOT_LINKFLAGS)
 		env.AppendUnique(LIBS = "Geom")
+		if os.getenv('LD_LIBRARY_PATH'  ) != None : env.Append(LD_LIBRARY_PATH   = os.environ['LD_LIBRARY_PATH'  ])
+		if os.getenv('DYLD_LIBRARY_PATH') != None : env.Append(DYLD_LIBRARY_PATH = os.environ['DYLD_LIBRARY_PATH'])
 
-		# Define (DY)LD_LIBRARY_PATH env. var. name
-		LDLPV='LD_LIBRARY_PATH'
-		if os.getenv('DYLD_LIBRARY_PATH', 'unset') != 'unset': LDLPV='DYLD_LIBRARY_PATH'
+		# NOTE on (DY)LD_LIBRARY_PATH :
+		# Linux (and most unixes) use LD_LIBRARY_PATH while Mac OS X uses
+		# DYLD_LIBRARY_PATH. Unfortunately, the "thisroot.csh" script distributed
+		# with ROOT sets both of these so we can't use the presence of the
+		# DYLD_LIBRARY_PATH environment variable to decide which of these to 
+		# work with. Thus, we just append to whichever are set, which may be both.
 
 		# Create Builder that can convert .h file into _Dict.cc file
-		rootsys = os.getenv('ROOTSYS', '/usr/local/root/PRO')
-		env.AppendENVPath(LDLPV, '%s/lib' % rootsys )
+		if os.getenv('LD_LIBRARY_PATH'  ) != None : env.AppendENVPath('LD_LIBRARY_PATH'  , '%s/lib' % rootsys )
+		if os.getenv('DYLD_LIBRARY_PATH') != None : env.AppendENVPath('DYLD_LIBRARY_PATH', '%s/lib' % rootsys )
+		rootcintpath  = "%s/bin/rootcint" % (rootsys)
+		rootclingpath = "%s/bin/rootcling" % (rootsys)
 		if env['SHOWBUILD']==0:
-			rootcintaction = SCons.Script.Action("%s/bin/rootcint -f $TARGET -c $SOURCE" % (rootsys), 'ROOTCINT   [$SOURCE]')
+			rootcintaction  = SCons.Script.Action("%s -f $TARGET -c $SOURCE" % (rootcintpath) , 'ROOTCINT   [$SOURCE]')
+			rootclingaction = SCons.Script.Action("%s -f $TARGET -c $SOURCE" % (rootclingpath), 'ROOTCLING  [$SOURCE]')
 		else:
-			rootcintaction = SCons.Script.Action("%s/bin/rootcint -f $TARGET -c $SOURCE" % (rootsys))
-		bld = SCons.Script.Builder(action = rootcintaction, suffix='_Dict.cc', src_suffix='.h')
+			rootcintaction  = SCons.Script.Action("%s -f $TARGET -c $SOURCE" % (rootcintpath) )
+			rootclingaction = SCons.Script.Action("%s -f $TARGET -c $SOURCE" % (rootclingpath))
+		if os.path.exists(rootclingpath) :
+			bld = SCons.Script.Builder(action = rootclingaction, suffix='_Dict.cc', src_suffix='.h')
+		elif os.path.exists(rootcintpath):
+			bld = SCons.Script.Builder(action = rootcintaction, suffix='_Dict.cc', src_suffix='.h')
+		else:
+			print 'Neither rootcint nor rootcling exists. Unable to create ROOT dictionaries if any encountered.'
+			return
+
 		env.Append(BUILDERS = {'ROOTDict' : bld})
-		if LDLPV=='LD_LIBRARY_PATH':
-			env.Append(LD_LIBRARY_PATH = os.environ[LDLPV])
-		else:
-			env.Append(DYLD_LIBRARY_PATH = os.environ[LDLPV])
 
 		# Generate ROOT dictionary file targets for each header
 		# containing "ClassDef"
@@ -619,7 +632,7 @@ def AddROOT(env):
 		if(int(env['SHOWBUILD'])>1):
 			print "---- Scanning for headers to generate ROOT dictionaries in: %s" % srcpath
 		os.chdir(srcpath)
-		for f in glob.glob('*.h*'):
+		for f in glob.glob('*.[h|hh|hpp]'):
 			if 'ClassDef' in open(f).read():
 				env.AppendUnique(ALL_SOURCES = env.ROOTDict(f))
 				if(int(env['SHOWBUILD'])>1):

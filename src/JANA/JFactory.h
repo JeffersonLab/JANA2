@@ -211,8 +211,8 @@ jerror_t JFactory<T>::Get(vector<const T*> &d)
 		throw JException(mess);
 	}	
 	// Grab the current event and run numbers
-	int event_number = eventLoop->GetJEvent().GetEventNumber();
-	int run_number = eventLoop->GetJEvent().GetRunNumber();
+	uint64_t event_number = eventLoop->GetJEvent().GetEventNumber();
+	int32_t run_number = eventLoop->GetJEvent().GetRunNumber();
 	
 	// Make sure we're initialized
 	if(!init_called){
