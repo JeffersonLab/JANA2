@@ -263,6 +263,28 @@ string JResourceManager::GetResource(string namepath)
 			file_exists = true;
 			ifs.close();
 		}
+		
+		// If file doesn't exist, it could be because
+		// 1. there was no "resources" file or the file was installed by hand without updating "resources"
+		// and
+		// 2. the file name does not match the namepath exactly
+		//
+		// In this case we could download the file and the correct entry into "resources"
+		// will be made automatically EXCEPT, if one is using a JANA_RESOURCE_DIR that
+		// the user does not have write privileges in. That would also result in two
+		// copies of the resource file. For this special case, we need to check if a file
+		// exists that uses the path obtained from jcalib rather than the namepath.
+		bool check_for_redownload = true;
+		if( (!file_exists) && has_path ){
+			string alternate_fullpath = resource_dir + "/" +info["path"];
+			ifstream ifs(alternate_fullpath.c_str());
+			if(ifs.is_open()){
+				ifs.close();
+				file_exists = true;				
+				fullpath = alternate_fullpath;
+				check_for_redownload = false; // don't try changing anything if we're using this fallback
+			}
+		}
 
 		// Flag to decide if we need to rewrite the info file later
 		bool rewrite_info_file = false;
@@ -276,7 +298,7 @@ string JResourceManager::GetResource(string namepath)
 			pthread_mutex_unlock(&resource_manager_mutex);
 
 			rewrite_info_file = true;
-		}else{
+		}else if(check_for_redownload){
 			// If file does exist, but URL is different, we'll need to download it,
 			// replacing the existing file. The resources map will then need to be updated.
 			bool redownload_required = false;

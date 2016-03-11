@@ -7,6 +7,8 @@ Changes in version 0.7.5
   have values truncated to first colon
 - Print date/time of when a thread finishes.
 - Added THREAD_STALL_WARN_TIMEOUT
+- Added fallback for when resource file is not same name as namepath and
+  does not appear in resources file.
 
 Changes in version 0.7.4p2
 - Fixed bug in JFactory::Get where event number and run number types
