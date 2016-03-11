@@ -2383,9 +2383,12 @@ jerror_t JApplication::PrintFactoryReport(void)
 		if(s>colshift)colshift = s;
 	}
 	
+	unsigned int maxcol = colshift+1+thread.size()*colwidth;
+	if(maxcol<80) maxcol = 80;
+	
 	// Print column headers
-	string header1(80,' ');
-	string header2(80,' ');
+	string header1(maxcol,' ');
+	string header2(maxcol,' ');
 	string facstring = "Factory:";
 	header2.replace(0, facstring.size(), facstring);
 	string totstring = "Total";
@@ -2400,13 +2403,13 @@ jerror_t JApplication::PrintFactoryReport(void)
 	cout<<endl;
 	cout<<header1<<endl;
 	cout<<header2<<endl;
-	string hr(80,'-');
+	string hr(maxcol,'-');
 	cout<<hr<<endl;
 	
 	// Loop over nametags
 	for(unsigned int i=0; i<nametag.size(); i++){
 		string &name = nametag[i];
-		string line(80,' ');
+		string line(maxcol,' ');
 		line.replace(0, name.size(), name);
 		
 		// Loop over threads
