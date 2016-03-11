@@ -502,7 +502,8 @@ void JEventProcessor_janaroot::FillTree(JFactory_base *fac, TreeInfo *tinfo)
 					ss>>(*(double*)ptr);
 					break;
 				case type_string:
-					ss>>str;
+					str = items[i][j].first.substr(tokens[0].length()+tokens[1].length()+2);
+					//ss>>str;
 					tinfo->StringMap[j].push_back(str);
 					break;
 				default:

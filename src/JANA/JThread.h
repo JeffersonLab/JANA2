@@ -19,13 +19,13 @@ class JEventLoop;
 
 class JThread{
 	public:
-		JThread(JEventLoop *loop=NULL):loop(loop),heartbeat(0.0),thread_id(pthread_self()){}
+		JThread(JEventLoop *loop=NULL):loop(loop),heartbeat(0.0),thread_id(pthread_self()),printed_stall_warning(false){}
 		virtual ~JThread(){}
 		
 		JEventLoop *loop;
 		double heartbeat;
 		pthread_t thread_id;
-		
+		bool printed_stall_warning;
 
 };
 

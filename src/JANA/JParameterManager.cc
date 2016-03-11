@@ -330,6 +330,7 @@ void JParameterManager::PrintParameters(void)
 	no_warn.push_back("MAX_EVENTS_IN_BUFFER");
 	no_warn.push_back("THREAD_TIMEOUT");
 	no_warn.push_back("THREAD_TIMEOUT_FIRST_EVENT");
+	no_warn.push_back("THREAD_STALL_WARN_TIMEOUT");
 	no_warn.push_back("RECORD_CALL_STACK");
 	no_warn.push_back("PRINT_PLUGIN_PATHS");
 	no_warn.push_back("PLUGINS");

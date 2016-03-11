@@ -2,6 +2,11 @@
 Changes in version 0.7.5
 - Fixed potential bug in JEventLoopGetFactory where NULL pointers could
   be passed to strcmp
+- Fixed bug in PrintFactoryReport where long factory names could cause crash
+- Fixed bug in janaroot where string types containing colons would
+  have values truncated to first colon
+- Print date/time of when a thread finishes.
+- 
 
 Changes in version 0.7.4p2
 - Fixed bug in JFactory::Get where event number and run number types

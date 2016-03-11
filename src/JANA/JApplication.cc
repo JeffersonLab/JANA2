@@ -1282,7 +1282,8 @@ void* LaunchThread(void* arg)
 	// Loop over events until done. Catch any jerror_t's thrown
 	try{
 		loop->Loop();
-		jout<<"Thread 0x"<<hex<<(unsigned long)pthread_self()<<dec<<" completed gracefully"<<endl;
+		time_t t = time(NULL);
+		jout<<"Thread 0x"<<hex<<(unsigned long)pthread_self()<<dec<<" completed gracefully: "<< ctime(&t);
 	}catch(exception &e){
 		_DBG_<<ansi_bold<<" EXCEPTION caught for thread "<<pthread_self()<<" : "<<e.what()<< ansi_normal << endl;
 	}
@@ -1486,11 +1487,18 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 	double THREAD_TIMEOUT_FIRST_EVENT=30.0;
 	jparms->SetDefaultParameter("THREAD_TIMEOUT", THREAD_TIMEOUT, "Max. time (in seconds) system will wait for a thread to update its heartbeat before killing it and launching a new one.");
 	jparms->SetDefaultParameter("THREAD_TIMEOUT_FIRST_EVENT", THREAD_TIMEOUT_FIRST_EVENT, "Max. time (in seconds) system will wait for first event to complete before killing program.");
+	double THREAD_STALL_WARN_TIMEOUT=THREAD_TIMEOUT;
+	jparms->SetDefaultParameter("THREAD_STALL_WARN_TIMEOUT", THREAD_STALL_WARN_TIMEOUT, "Max. time (in seconds) before printing a stalled thread warning (first NTHREADS events are ignored).");
 	jparms->SetDefaultParameter("JANA:MAX_RELAUNCH_THREADS", MAX_RELAUNCH_THREADS, "Max. number of times to relaunch a thread due to it timing out before forcing program to quit.");
 	if(THREAD_TIMEOUT_FIRST_EVENT < THREAD_TIMEOUT){
 		jout << " THREAD_TIMEOUT_FIRST_EVENT is set smaller than THREAD_TIMEOUT"<<endl;
 		jout << " (" << THREAD_TIMEOUT_FIRST_EVENT << " < " << THREAD_TIMEOUT << "). THREAD_TIMEOUT_FIRST_EVENT will be set to " << THREAD_TIMEOUT << endl;
 		THREAD_TIMEOUT_FIRST_EVENT = THREAD_TIMEOUT;
+	}
+	if(THREAD_STALL_WARN_TIMEOUT > THREAD_TIMEOUT){
+		jout << " THREAD_STALL_WARN_TIMEOUT is set greater than THREAD_TIMEOUT"<<endl;
+		jout << " (" << THREAD_STALL_WARN_TIMEOUT << " > " << THREAD_TIMEOUT << "). THREAD_STALL_WARN_TIMEOUT will be set to " << THREAD_TIMEOUT << endl;
+		THREAD_STALL_WARN_TIMEOUT = THREAD_TIMEOUT;
 	}
 	
 	// Do a sleepy loop so the threads can do their work
@@ -1539,6 +1547,21 @@ jerror_t JApplication::Run(JEventProcessor *proc, int Nthreads)
 		for(unsigned int i=0;i<threads.size();i++){
 			double *hb = &threads[i]->heartbeat;
 			*hb += slept_time;
+			
+			// Print warning if stalled for more than THREAD_STALL_WARN_TIMEOUT so
+			// user knows info (run, event) on what's stalling
+			if(monitor_heartbeat && ((*hb-slept_time) > THREAD_STALL_WARN_TIMEOUT)){
+				if(!threads[i]->printed_stall_warning){
+					uint64_t runnum = threads[i]->loop->GetJEvent().GetRunNumber();
+					uint64_t eventnum = threads[i]->loop->GetJEvent().GetEventNumber();
+					jerr << "thread " << i << " has stalled on run:" << runnum << " event:" << eventnum << endl;
+					threads[i]->printed_stall_warning = true;
+				}
+			}else{
+				// Reset in case we've moved on to another event so info
+				// on next stalled event will be printed as well.
+				threads[i]->printed_stall_warning = false;
+			}
 
 			// Choose timeout depending on whether the first event for all threads
 			// has completed or not.
