@@ -6,7 +6,7 @@ Changes in version 0.7.5
 - Fixed bug in janaroot where string types containing colons would
   have values truncated to first colon
 - Print date/time of when a thread finishes.
-- 
+- Added THREAD_STALL_WARN_TIMEOUT
 
 Changes in version 0.7.4p2
 - Fixed bug in JFactory::Get where event number and run number types
