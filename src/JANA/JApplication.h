@@ -132,6 +132,8 @@ class JApplication{
             inline pthread_rwlock_t* RootReadLock(void){pthread_rwlock_rdlock(root_rw_lock); return root_rw_lock;}
             inline pthread_rwlock_t* RootWriteLock(void){pthread_rwlock_wrlock(root_rw_lock); return root_rw_lock;}
             inline pthread_rwlock_t* RootUnLock(void){pthread_rwlock_unlock(root_rw_lock); return root_rw_lock;}
+            inline pthread_rwlock_t* RootFillLock(JEventProcessor *proc);
+            inline pthread_rwlock_t* RootFillUnLock(JEventProcessor *proc);
                                 void RegisterHUPMutex(pthread_mutex_t *mutex);
                                 void RegisterHUPCallback(CallBack_t *callback, void *arg);
 			  vector<pthread_mutex_t*>& GetHUPMutexes(void){ return HUP_locks; }  ///< Get list of mutexes that should be unlocked upon receiving a SIGHUP
@@ -202,6 +204,7 @@ class JApplication{
 		pthread_rwlock_t rw_locks_lock; // control access to rw_locks
 		pthread_rwlock_t *app_rw_lock;
 		pthread_rwlock_t *root_rw_lock;
+		map<JEventProcessor*, pthread_rwlock_t*> root_fill_rw_lock;
 		vector<pthread_mutex_t*> HUP_locks;
 		vector<pair<CallBack_t*, void*> > HUP_callbacks;
 
@@ -381,6 +384,36 @@ inline pthread_rwlock_t* JApplication::Unlock(const string &name)
 		throw JException(mess);
 	}
 
+	return lock;
+}
+
+//---------------------------------
+// RootFillLock
+//---------------------------------
+inline pthread_rwlock_t* jana::JApplication::RootFillLock(JEventProcessor *proc)
+{
+	/// Use this to lock a rwlock that is used exclusively by the given
+	/// JEventProcessor. This addresses the common case where many plugins
+	/// are in use and all contending for the same root lock. You should
+	/// only use this when filling a histogram and not for creating. Use
+	/// RootWriteLock and RootUnLock for that.
+	pthread_rwlock_t *lock = root_fill_rw_lock[proc];
+	pthread_rwlock_wrlock(lock);
+	return lock;
+}
+
+//---------------------------------
+// RootFillUnLock
+//---------------------------------
+inline pthread_rwlock_t* jana::JApplication::RootFillUnLock(JEventProcessor *proc)
+{
+	/// Use this to unlock a rwlock that is used exclusively by the given
+	/// JEventProcessor. This addresses the common case where many plugins
+	/// are in use and all contending for the same root lock. You should
+	/// only use this when filling a histogram and not for creating. Use
+	/// RootWriteLock and RootUnLock for that.
+	pthread_rwlock_t *lock = root_fill_rw_lock[proc];
+	pthread_rwlock_unlock(root_fill_rw_lock[proc]);
 	return lock;
 }
 

@@ -492,6 +492,13 @@ JApplication::~JApplication()
 		dlclose(sohandles[i]);
 	}
 	sohandles.clear();
+	
+	// Delete ROOT fill locks
+	map<JEventProcessor*, pthread_rwlock_t*>::iterator iter_rfl;
+	for(iter_rfl=root_fill_rw_lock.begin(); iter_rfl!=root_fill_rw_lock.end(); iter_rfl++){
+		delete *iter;
+	}
+	root_fill_rw_lock.clear();
 }
 
 //---------------------------------
@@ -782,6 +789,10 @@ jerror_t JApplication::AddProcessor(JEventProcessor *processor, bool delete_me)
 	processor->SetJApplication(this);
 	processors.push_back(processor);
 	processor->SetDeleteMe(delete_me);
+	
+	pthread_rwlock_t *lock = new pthread_rwlock_t;
+	pthread_rwlock_init(lock, NULL);
+	root_fill_rw_lock[processor] = lock;
 
 	return NOERROR;
 }
