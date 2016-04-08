@@ -397,7 +397,14 @@ inline pthread_rwlock_t* jana::JApplication::RootFillLock(JEventProcessor *proc)
 	/// are in use and all contending for the same root lock. You should
 	/// only use this when filling a histogram and not for creating. Use
 	/// RootWriteLock and RootUnLock for that.
-	pthread_rwlock_t *lock = root_fill_rw_lock[proc];
+	map<JEventProcessor*, pthread_rwlock_t*>::iterator iter = root_fill_rw_lock.find(proc);
+	if(iter==root_fill_rw_lock.end()){
+		jerr << "**** Tried calling JApplication::RootFillLock with something other than a registered JEventProcessor* !!" << std::endl;
+		jerr << "**** Quitting now...." << std::endl;
+		Quit();
+		return NULL;
+	}
+	pthread_rwlock_t *lock = iter->second;
 	pthread_rwlock_wrlock(lock);
 	return lock;
 }
@@ -412,7 +419,14 @@ inline pthread_rwlock_t* jana::JApplication::RootFillUnLock(JEventProcessor *pro
 	/// are in use and all contending for the same root lock. You should
 	/// only use this when filling a histogram and not for creating. Use
 	/// RootWriteLock and RootUnLock for that.
-	pthread_rwlock_t *lock = root_fill_rw_lock[proc];
+	map<JEventProcessor*, pthread_rwlock_t*>::iterator iter = root_fill_rw_lock.find(proc);
+	if(iter==root_fill_rw_lock.end()){
+		jerr << "**** Tried calling JApplication::RootFillLock with something other than a registered JEventProcessor* !!" << std::endl;
+		jerr << "**** Quitting now...." << std::endl;
+		Quit();
+		return NULL;
+	}
+	pthread_rwlock_t *lock = iter->second;
 	pthread_rwlock_unlock(root_fill_rw_lock[proc]);
 	return lock;
 }

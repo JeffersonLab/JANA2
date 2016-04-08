@@ -496,7 +496,7 @@ JApplication::~JApplication()
 	// Delete ROOT fill locks
 	map<JEventProcessor*, pthread_rwlock_t*>::iterator iter_rfl;
 	for(iter_rfl=root_fill_rw_lock.begin(); iter_rfl!=root_fill_rw_lock.end(); iter_rfl++){
-		delete *iter;
+		delete iter_rfl->second;
 	}
 	root_fill_rw_lock.clear();
 }
