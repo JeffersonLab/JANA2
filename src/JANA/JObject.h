@@ -80,7 +80,7 @@ class JObject{
 		inline void AddAssociatedObjectAutoDelete(JObject *obj, bool auto_delete=true);
 		inline void RemoveAssociatedObject(const JObject *obj);
 		inline void ClearAssociatedObjects(void);
-		inline bool IsAssociated(const JObject* locObject) const;
+		inline bool IsAssociated(const JObject* locObject) const {return (associated.find(locObject) != associated.end());}
 		template<typename T> void Get(vector<const T*> &ptrs, string classname="", int max_depth=1000000) const ;
 		template<typename T> void GetT(vector<const T*> &ptrs) const ;
 		template<typename T> void GetSingle(const T* &ptrs, string classname="") const ;
@@ -110,14 +110,11 @@ class JObject{
 		string GetNameTag(void) const {return GetName() + (GetTag()=="" ? "":":") + GetTag();}
 
 		oid_t id;
-
-		mutable JObject *tmp_obj;
-
+	
 	private:
 		
 		bool append_types;
-//		map<const JObject*, string> associated;
-		vector<const JObject*> associated;
+		map<const JObject*, string> associated;
 		vector<JObject*> auto_delete;
 		mutable vector<string> messagelog;
 		JFactory_base *factory;
@@ -126,15 +123,6 @@ class JObject{
 
 #if !defined(__CINT__) && !defined(__CLING__)
 
-//--------------------------
-// IsAssociated
-//--------------------------
-inline bool JObject::IsAssociated(const JObject* locObject) const
-{
-	for(uint32_t i=0; i<associated.size(); i++) if(associated[i] == locObject) return true;
-
-	return false;
-}
 
 //--------------------------
 // AddAssociatedObject
@@ -143,11 +131,9 @@ void JObject::AddAssociatedObject(const JObject *obj)
 {
 	/// Add a JObject to the list of associated objects
 
-//	assert(obj!=NULL);
+	assert(obj!=NULL);
 	
-	associated.push_back(obj);
-	
-//	associated[obj] = obj->className();
+	associated[obj] = obj->className();
 }
 
 //--------------------------
@@ -180,18 +166,11 @@ void JObject::RemoveAssociatedObject(const JObject *obj)
 	/// object was added with the AddAssociatedObjectAutoDelete(...)
 	/// method with the auto_delete flag set.
 
-	vector<const JObject*>::iterator iter = associated.begin();
-	for(; iter!=associated.end(); iter++){
-		if(*iter == obj){
-			associated.erase(iter);
-			return;
-		}
+	map<const JObject*, string>::iterator iter = associated.find(obj);
+	
+	if(iter!=associated.end()){
+		associated.erase(iter);
 	}
-		
-//				
-//	if(iter!=associated.end()){
-//		associated.erase(iter);
-//	}
 }
 	
 //--------------------------
@@ -292,24 +271,21 @@ void JObject::GetAssociatedAncestors(set<const JObject*> &already_checked, int &
 
 	if(classname=="")classname=T::static_className();
 	max_depth--;
-
-//	map<const JObject*, string>::const_iterator iter = associated.begin();
-//	for(; iter!=associated.end(); iter++){
-	for(uint32_t i=0; i<associated.size(); i++){
 	
-		const JObject *aobj = associated[i];
+	map<const JObject*, string>::const_iterator iter = associated.begin();
+	for(; iter!=associated.end(); iter++){
 	
 		// Add to list if appropriate
-		if(classname == aobj->className()){
-			const T *obj = dynamic_cast<const T*>(aobj);
+		if(iter->second == classname){
+			const T *obj = dynamic_cast<const T*>(iter->first);
 			objs_found.insert(obj);
 		}
 
 		// Check this object's associated objects if appropriate
 		if(max_depth<=0) continue;
-		if(already_checked.find(aobj) != already_checked.end()) continue;
-		already_checked.insert(aobj);
-		aobj->GetAssociatedAncestors(already_checked, max_depth, objs_found, classname);
+		if(already_checked.find(iter->first) != already_checked.end()) continue;
+		already_checked.insert(iter->first);
+		iter->first->GetAssociatedAncestors(already_checked, max_depth, objs_found, classname);
 	}	
 
 	max_depth++;
@@ -369,10 +345,9 @@ void JObject::GetT(vector<const T*> &ptrs) const
 	
 	ptrs.clear();
 	
-//	map<const JObject*, string>::const_iterator iter = associated.begin();
-//	for(; iter!=associated.end(); iter++){
-	for(uint32_t i=0; i<associated.size(); i++){
-		const T *ptr = dynamic_cast<const T*>(associated[i]);
+	map<const JObject*, string>::const_iterator iter = associated.begin();
+	for(; iter!=associated.end(); iter++){
+		const T *ptr = dynamic_cast<const T*>(iter->first);
 		if(ptr != NULL)ptrs.push_back(ptr);
 	}	
 }
@@ -398,12 +373,10 @@ void JObject::GetSingle(const T* &t, string classname) const
 
 	if(classname=="")classname=T::static_className();
 	
-//	map<const JObject*, string>::const_iterator iter = associated.begin();
-//	for(; iter!=associated.end(); iter++){
-	for(uint32_t i=0; i<associated.size(); i++){
-		const JObject *aobj = associated[i];
-		if(classname == aobj->className()){
-			t = dynamic_cast<const T*>(aobj);
+	map<const JObject*, string>::const_iterator iter = associated.begin();
+	for(; iter!=associated.end(); iter++){
+		if(iter->second == classname){
+			t = dynamic_cast<const T*>(iter->first);
 			if(t!=NULL)return;
 		}
 	}	
@@ -432,10 +405,9 @@ void JObject::GetSingleT(const T* &t) const
 	
 	t = NULL;
 
-//	map<const JObject*, string>::const_iterator iter = associated.begin();
-//	for(; iter!=associated.end(); iter++){
-	for(uint32_t i=0; i<associated.size(); i++){
-		t = dynamic_cast<const T*>(associated[i]);
+	map<const JObject*, string>::const_iterator iter = associated.begin();
+	for(; iter!=associated.end(); iter++){
+		t = dynamic_cast<const T*>(iter->first);
 		if(t!=NULL)return;
 	}	
 }
