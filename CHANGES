@@ -1,4 +1,8 @@
 
+Changes in version 0.7.6
+- Fixed bug (yet again) in JStreamLog destructor that caused seg. faults
+  at program exit when using plugins on RHEL6
+
 Changes in version 0.7.5p1
 - Added RootFillLock and RootFillUnLock methods to JApplication
 

@@ -29,7 +29,8 @@ JStreamLog::~JStreamLog() {
 	// been deleted already. Thus, we don't try deleting it a second time
 	// and therefore avoid the seg. fault.    Dec. 13, 2013  D.L.
 	if(own_rdbuf){
-		delete rdbuf();
+		std::streambuf *mybuf = rdbuf(NULL);
+		if(mybuf!=NULL) delete mybuf;
 	}
 	own_rdbuf = false;
 }
