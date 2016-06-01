@@ -1,5 +1,9 @@
 
 Changes in version 0.7.6
+- Fix bug where factory erun method wasn't getting called at end of
+  program.
+
+Changes in version 0.7.5p2
 - Fixed bug (yet again) in JStreamLog destructor that caused seg. faults
   at program exit when using plugins on RHEL6
 

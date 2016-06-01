@@ -105,6 +105,18 @@ JEventLoop::~JEventLoop()
 	/// when there are no more JEventLoops registered with it.
 	app->RemoveJEventLoop(this);
 
+	// Call all factories' erun methods
+	for(unsigned int i=0; i<factories.size(); i++){
+		try{
+			if(factories[i]->brun_was_called())factories[i]->erun();
+		}catch(exception &e){
+			jerr<<endl;
+			_DBG_<<" Error thrown from JFactory<";
+			jerr<<factories[i]->GetDataClassName()<<">::erun()"<<endl;
+			_DBG_<<e.what()<<endl;
+		}
+	}
+
 	// Call all factories' fini methods
 	for(unsigned int i=0; i<factories.size(); i++){
 		try{
