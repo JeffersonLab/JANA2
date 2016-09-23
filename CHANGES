@@ -2,6 +2,10 @@
 Changes in version 0.7.6
 - Fix bug where factory erun method wasn't getting called at end of
   program.
+- Fixed bugs where plugin paths would stop being searched when a
+  matching file was found even if it could be attached. Also,
+  print information about seach paths before looking for file
+  and not just if it failed to find the plugin.
 
 Changes in version 0.7.5p2
 - Fixed bug (yet again) in JStreamLog destructor that caused seg. faults
