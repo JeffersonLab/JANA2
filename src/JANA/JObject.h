@@ -60,7 +60,7 @@ class JObject{
 	public:
 		JOBJECT_PUBLIC(JObject);
 
-		typedef unsigned long oid_t;
+		typedef unsigned long long oid_t;
 	
 		JObject() : id((oid_t)this),append_types(false),factory(NULL) {}
 		JObject( oid_t aId ) : id( aId ),append_types(false),factory(NULL) {}

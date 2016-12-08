@@ -7,6 +7,7 @@ Changes in version 0.7.6
   print information about seach paths before looking for file
   and not just if it failed to find the plugin.
 - Expose underlying ccdb::Calibration object pointer and mutex
+- Make JObject::oid_t unsigned long long as per Paul M.'s suggestion
 
 Changes in version 0.7.5p2
 - Fixed bug (yet again) in JStreamLog destructor that caused seg. faults
