@@ -77,6 +77,24 @@ namespace jana
             return "JCalibrationCCDB";
         }
 
+        /** @brief gets pointer to underlying ccdb::Calibration object
+         */
+		ccdb::Calibration* GetCCDBCalibObj(void){
+			return mCalibration;
+		}
+
+        /** @brief lock mutex used when accessing CCDB
+         */
+		void Lock(void){
+			pthread_mutex_lock(&mutex);
+		}
+
+        /** @brief unlock mutex used when accessing CCDB
+         */
+		void Unlock(void){
+			pthread_mutex_unlock(&mutex);
+		}
+
 
         /** @brief    get calibration constants
          *
