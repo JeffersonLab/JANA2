@@ -98,8 +98,8 @@ env.Replace(COMPILER = compiler)
 env.PrependUnique(CPPPATH = ['#', '#src', '#src/plugins'])
 
 # Standard flags (optimization level and warnings)
-env.PrependUnique(      CFLAGS = ['-O%s' % OPTIMIZATION, '-fPIC', '-Wall'])
-env.PrependUnique(    CXXFLAGS = ['-O%s' % OPTIMIZATION, '-fPIC', '-Wall'])
+env.PrependUnique(      CFLAGS = ['-O%s' % OPTIMIZATION, '-fPIC', '-Wall', '-std=c++11'])
+env.PrependUnique(    CXXFLAGS = ['-O%s' % OPTIMIZATION, '-fPIC', '-Wall', '-std=c++11'])
 env.PrependUnique(FORTRANFLAGS = ['-O%s' % OPTIMIZATION, '-fPIC', '-Wall'])
 
 # Turn on debug symbols unless user told us not to
