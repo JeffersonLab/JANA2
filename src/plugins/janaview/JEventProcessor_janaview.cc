@@ -126,7 +126,7 @@ jerror_t JEventProcessor_janaview::evnt(JEventLoop *loop, uint64_t eventnumber)
 
 	pthread_mutex_lock(&mutex);
 
-	static bool processed_first_event = false;
+	// static bool processed_first_event = false;
 
 	this->loop = loop;
 	this->eventnumber = eventnumber;
@@ -143,7 +143,7 @@ jerror_t JEventProcessor_janaview::evnt(JEventLoop *loop, uint64_t eventnumber)
 
 	pthread_cond_wait(&cond, &mutex);
 	
-	processed_first_event = true;
+	// processed_first_event = true;
 	
 	pthread_mutex_unlock(&mutex);
 
