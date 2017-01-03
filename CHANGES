@@ -3,6 +3,7 @@ Changes in version 0.7.7
 - Set compiler to use C++11 standard (code now requires it)
 - Change container type used for associated objects from map to set
   in order to save RAM.
+- Fixed bug where JApplication::threads_mutex wasn't initialized
 
 Changes in version 0.7.6
 - Fix bug where factory erun method wasn't getting called at end of

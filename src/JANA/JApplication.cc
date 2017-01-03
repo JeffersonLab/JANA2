@@ -195,6 +195,7 @@ JApplication::JApplication(int narg, char* argv[])
 	pthread_mutex_init(&geometry_mutex, NULL);
 	pthread_mutex_init(&calibration_mutex, NULL);
 	pthread_mutex_init(&resource_manager_mutex, NULL);
+	pthread_mutex_init(&threads_mutex, NULL);
 	pthread_mutex_init(&event_buffer_mutex, NULL);
 	pthread_cond_init(&event_buffer_cond, NULL);
 	app_rw_lock = CreateLock("app");
