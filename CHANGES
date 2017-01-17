@@ -1,4 +1,8 @@
 
+Changes in version 0.7.7p1
+- Use static_cast in JFactory::Get to accomodate classes with multiple
+  inheritance (courtesy Andrea Celentano @ INFN)
+
 Changes in version 0.7.7
 - Set compiler to use C++11 standard (code now requires it)
 - Change container type used for associated objects from map to set

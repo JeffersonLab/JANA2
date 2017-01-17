@@ -154,16 +154,36 @@ template<class T>
 vector<void*>& JFactory<T>::Get(void)
 {
 	/// Return a STL vector of pointers to the objects produced by the
-	/// factory. The pointers are type cast as void* so this can be
+	/// factory. The pointers are cast as void* so this can be
 	/// accessed through the JFactory_base base class. This just
 	/// dispatches to the type specific Get(vector<const T*> &)
 	/// method.
+	///
+	/// IMPORTANT NOTE ON MULTIPLE INHERITANCE:
+	/// This will use a static_cast to return void* pointers to the
+	/// start of the JObject data. If the data object class inherits
+	/// from multiple classes and JObject is not the first one, then 
+	/// the void* pointers will be pointing to the middle of the object
+	/// data. To obtain the pointer to the actual start of the object
+	/// one needs to first cast to JObject* and then static cast to
+	/// the correct type.
 	vector<const T*> d;
 	Get(d);
 	
 	// Copy the pointers into a vector of void*s.
 	_vdata.clear();
-	for(unsigned int i=0;i<_data.size();i++)_vdata.push_back((void*)_data[i]);
+	for(unsigned int i=0;i<_data.size();i++){
+		// Here we use a static_cast to make sure a pointer to
+		// the JObject data is stored. In the case of multiple
+		// inheritance, data from another class may precede the
+		// JObject data so the void* pointers may not actually
+		// point to the start of the object. We do this so other
+		// JANA facilities can make use of the JObject part of
+		// the class without having to know how to cast it to the
+		// full object type.
+		void *vpointer = static_cast<JObject*>(_data[i]);
+		_vdata.push_back(vpointer);
+	}
 	
 	return _vdata;
 }
