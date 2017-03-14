@@ -374,6 +374,8 @@ JApplication::JApplication(int narg, char* argv[])
 	try{
 		jparms->GetParameter("RUNNUMBER", user_supplied_runnumber);
 		override_runnumber = true; // only get here if RUNNUMBER parameter exists
+		int32_t tmp=0;
+		jparms->SetDefaultParameter("RUNNUMBER", tmp, "User supplied run number"); // register default value to avoid blinking red
 	}catch(...){}
 	
 	// Start high resolution timers (if not already started)
@@ -1101,12 +1103,16 @@ JGeometry* JApplication::GetJGeometry(unsigned int run_number)
 	string url_str = url;
 	string context_str = context;
 	JGeometry *g = NULL;
-	if(url_str.find("xmlfile://")==0){
+	if(url_str.find("xmlfile://")==0 || url_str.find("ccdb://")==0){
 		g = new JGeometryXML(string(url), run_number, context);
 	}else if(url_str.find("mysql:")==0){
 		g = new JGeometryMYSQL(string(url), run_number, context);
 	}
-	if(g)geometries.push_back(g);
+	if(g){
+		geometries.push_back(g);
+	}else{
+		jerr << "Cannot make JGeometry object for \"" << url_str << "\" (Don't know how!)" << endl;
+	}
 
 	// Unlock geometry mutex
 	pthread_mutex_unlock(&geometry_mutex);
