@@ -286,7 +286,7 @@ void Usage(void)
 	cout<<"   -c        Don't include any attributes listing xpaths"<<endl;
 	cout<<"   -f        List all xpaths using the specified xpath as a filter"<<endl;
 	cout<<"   -m        Display all nodes satisfying the given xpath"<<endl;
-	cout<<"   -t type   Set data type (float, int, ...)"<<endl;
+	cout<<"   -R run    Set run number"<<endl;
 	cout<<"   -s        Print the MD5 checksum of the XML used"<<endl;
 	cout<<"   -S        Same as -s except filenames of XML files are also printed"<<endl;
 	cout<<endl;
