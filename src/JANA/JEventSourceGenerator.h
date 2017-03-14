@@ -10,6 +10,9 @@
 
 #include "jerror.h"
 
+#include <string>
+using std::string;
+
 namespace jana{
 class JApplication;
 class JEventSource;
