@@ -14,6 +14,7 @@
 #include <JANA/JGeometry.h>
 #include <JANA/jana_config.h>
 #include <JANA/JStreamLog.h>
+#include <JANA/JCalibration.h>
 
 #include <JANA/md5.h>
 
@@ -29,7 +30,7 @@
 #include <xercesc/sax/HandlerBase.hpp>
 #include <xercesc/util/XMLString.hpp>
 #include <xercesc/util/PlatformUtils.hpp>
-
+#include <xercesc/framework/MemBufInputSource.hpp>
 #else
 
 // XERCES2
@@ -64,6 +65,8 @@ class JGeometryXML:public JGeometry{
 		typedef vector<node_t>::iterator node_iter_t;
 	
 		                    JGeometryXML(string url, int run, string context="default");
+		                    void Init(string xmlfile, string xml);
+
 		            virtual ~JGeometryXML();
 		virtual const char* className(void){return static_className();}
 		 static const char* static_className(void){return "JGeometryXML";}
@@ -82,12 +85,13 @@ class JGeometryXML:public JGeometry{
 		               bool NodeCompare(node_iter_t iter1, node_iter_t end1, node_iter_t iter2, node_iter_t end2);
 
 	protected:
-	
+
 	private:
 		JGeometryXML();
 		
 		string xmlfile;
 		bool valid_xmlfile;
+		JCalibration *jcalib;
 		string md5_checksum;
 		map<string, string> found_xpaths; // used to store xpaths already found to speed up subsequent requests
 		pthread_mutex_t found_xpaths_mutex;
@@ -168,7 +172,7 @@ class JGeometryXML:public JGeometry{
 #endif  // XERCES3
 	{
 		public:
-			EntityResolver(const std::string &xmlFile);
+			EntityResolver(const std::string &xmlFile, JCalibration *jcalib);
 			~EntityResolver();
 #if XERCES3
 			xercesc::InputSource* resolveEntity(const XMLCh* const publicId, const XMLCh* const systemId);
@@ -182,7 +186,9 @@ class JGeometryXML:public JGeometry{
 
 		private:
 			std::vector<std::string> xml_filenames;
+			std::vector<std::string> xml_content;
 			std::string path;
+			JCalibration *jcalib;
 			bool PRINT_CHECKSUM_INPUT_FILES;
 	};
 #endif  // HAVE_XERCES

@@ -5,13 +5,17 @@
 // Creator: davidl
 //
 
+#include <unistd.h>
+
 #include <iostream>
 #include <fstream>
 #include <string>
 using namespace std;
 
+#include "JApplication.h"
 #include "JGeometryXML.h"
 #include "JParameterManager.h"
+#include "JCalibrationCCDB.h"
 using namespace jana;
 
 #if HAVE_XERCES
@@ -45,43 +49,124 @@ using namespace xercesc;
 JGeometryXML::JGeometryXML(string url, int run, string context):JGeometry(url,run,context)
 {
 	/// File URL should be of form:
-	/// file:///path-to-xmlfile
+	///
+	/// xmlfile:///path-to-xmlfile
+	///
+	///   or
+	///
+	/// ccdb://path-to-dir-in-ccdb
+	///
 	/// If multiple XML files are required, then this should point to a
-	/// top level file that includes all of the others.
+	/// top level file that includes all of the others. If using CCDB,
+	/// the given directory is search for items corresponding to the
+	/// specified run and context. All items found are assumed to be
+	/// XML files and are read in.
 	
-	// Initialize our flag until we confirm the URL points to a valid XML file
+	// Initialize our flag until we confirm the URL points to valid XML
 	valid_xmlfile = false;
 	md5_checksum = "";
-	
-	// First, check that the URL even starts with "xmlfile://"
-	if(url.substr(0, 10)!=string("xmlfile://")){
-		_DBG_<<"Poorly formed URL. Should start with \"xmlfile://\"."<<endl;
+	jcalib = NULL;
+#if HAVE_XERCES
+	parser = NULL;
+	doc = NULL;
+#endif
+
+	string xmlfile;
+	string xml;
+
+	if(url.find("xmlfile://")==0){
+		//-------------- FILE -------------------
+		// Fill basedir with path to directory.
+		xmlfile = url.substr(10); // wipe out "xmlfile://" part
+		
+		// Try and open top-level XML file to see if it exists and is readable
+		if( access(xmlfile.c_str(), R_OK)){
+			jerr << " Unable to open \""<<xmlfile<<"\"! Geometry info not available!!"<<endl;
+			run_min = run_max = -1;
+			return;
+		}
+
+	}else if(url.find("ccdb://")==0){
+		//-------------- CCDB -------------------
+		// Get calibration object
+		xmlfile = url.substr(7); // wipe out "ccdb://" part
+		jcalib = japp->GetJCalibration((uint32_t)run);
+		
+		// Read in top level file from Calib DB
+		vector< map<string, string> > vals;
+		jcalib->GetCalib(xmlfile, vals);
+		if(vals.empty()){
+			jerr << " Failed to get XML for " << xmlfile << "! Geometry info not available!!" << endl;
+			run_min = run_max = -1;
+			return;
+		}
+		xml = vals[0].begin()->second;
+
+//		vector<string> allnamepaths;
+//		jcalib->GetListOfNamepaths(allnamepaths);
+//		map<string, string> xml_files; // key="file" name  val=xml
+//		for(auto s : allnamepaths){
+//			if( (s.find("GEOMETRY/")==0) && (s.find(".xml")!=string::npos) ) {
+//
+//				vector< map<string, string> > vals;
+//				jcalib->GetCalib(s, vals);
+//				if(!vals.empty()){
+//					string &x = vals[0].begin()->second;
+//					xml_files[s] = x;
+//				}else{
+//					jerr << "Failed to get XML for " << s <<  endl;
+//				}
+//			}
+//		}
+//		
+//		// Loop over all XML entities, replacing any includes with the entire
+//		// entity. This is needed since we can't use the normal file mechanism.
+//		for(auto p : xml_files){
+//			map<string, string> entities; // key=entity name  val=XML filename (calib itemname)
+//			stringstream ss(p.second);
+//			string line;
+//			while( getline(ss, line) ){
+//				// Check if this line defines an ENTITY
+//				auto pos = line.find("<!ENTITY");
+//				if(pos != string::npos){
+//					stringstream sss(ss.str().substr(pos+1));
+//					vector<string> tokens;
+//					
+//				}
+//			}
+//		}
+//		
+		
+	}else{
+		_DBG_<<"Poorly formed URL. Should start with \"xmlfile://\" or \"ccdb://\"."<<endl;
 		_DBG_<<"URL:"<<url<<endl;
 		_DBG_<<"(Try setting you JANA_GEOMETRY_URL environment variable.)"<<endl;
 		return;
 	}
-	
-	// Fill basedir with path to directory.
-	xmlfile = url;
-	xmlfile.replace(0,10,string("")); // wipe out "xmlfile://" part
-	
-	// Try and open top-level XML file to see if it exists and is readable
-	ifstream f(xmlfile.c_str());
-	if(!f.is_open()){
-		_DBG_<<"Unable to open \""<<xmlfile<<"\"! Geometry not info not available!!"<<endl;
-#if HAVE_XERCES
-		parser = NULL;
-		doc = NULL;
-#endif
-		run_min = run_max = -1;
-		return;
-	}else{
-		f.close();
-	}
+
+
+	// Initialize class with XML obtained above
+	Init(xmlfile, xml);
 	
 	// Among other things, this should contain the range of runs for which
 	// this calibration is valid. For now, just set them all to run_requested.
 	run_min = run_max = run_found = GetRunRequested();
+
+}
+
+//---------------------------------
+// Init
+//---------------------------------
+void JGeometryXML::Init(string xmlfile, string xml)
+{
+	/// This will do the actual work of parsing the XML.  It is called from
+	/// the constructor. Upon entry, xmlfile will contain the path to the
+	/// top-level file (with any protocol prefix stripped away). This may be
+	/// a file in the local filesystem or a path in the Calib DB. If we are
+	/// reading from the Calib DB, then xml will be a non-empty string with
+	/// the contents of the top-level file already read in. The value of 
+	/// data member jcalib will also be non-NULL.
+
 
 #if !HAVE_XERCES
 	jerr<<endl;
@@ -111,19 +196,40 @@ JGeometryXML::JGeometryXML(string url, int run, string context):JGeometry(url,ru
 	parser->setErrorHandler(&errorHandler);
 	
 	// EntityResolver is used to keep track of XML filenames so a full MD5 checksum can be made
-	EntityResolver myEntityResolver(xmlfile);
+	EntityResolver myEntityResolver(xmlfile, jcalib);
 	parser->setEntityResolver(&myEntityResolver);
-	
-	// Read in the XML and parse it
+
+	// Reset document pool	
 	parser->resetDocumentPool();
+
+	// Parse top-level file allowing entity resolver to handle lower levels
+	if( xml != "" ){
+		// --- Read lower levels from Calib DB
 #if XERCES3
-	parser->parse(xmlfile.c_str());
-	md5_checksum = myEntityResolver.GetMD5_checksum();
-	doc = parser->getDocument();
+		xercesc::MemBufInputSource myxml_buf((const unsigned char*)xml.c_str(), xml.size(), "myxml (in memory)");
+		parser->parse(myxml_buf);
+		md5_checksum = myEntityResolver.GetMD5_checksum();
 #else
-	doc = parser->parseURI(xmlfile.c_str());
+		jerr << "XML string (as opposed to file) parsing not supported with xerces2" << endl;
+		exit(-1);
 #endif
-   
+	}else{
+		// --- Read top and lower levels from files
+#if XERCES3
+		parser->parse(xmlfile.c_str());
+		md5_checksum = myEntityResolver.GetMD5_checksum();
+#else
+		doc = parser->parseURI(xmlfile.c_str());
+#endif
+	}
+ 
+	// Process xml string
+
+#if XERCES3
+	// Get full DOM	
+	doc = parser->getDocument();
+#endif
+
 	valid_xmlfile = true;
 	
 	// Initialize found_xpaths_mutex
@@ -851,10 +957,14 @@ void JGeometryXML::GetAttributes(xercesc::DOMNode* node, map<string,string> &att
 //----------------------------------
 // EntityResolver (constructor)
 //----------------------------------
-JGeometryXML::EntityResolver::EntityResolver(const string &xmlFile)
+JGeometryXML::EntityResolver::EntityResolver(const string &xmlFile, JCalibration *jcalib)
 {
+	/// xmlFile may specify full path to actual file or to item in CCDB
+
 	xml_filenames.push_back(xmlFile);
+	this->jcalib = jcalib;
 	
+	// Peel off path part
 	string fname = xmlFile;
 	size_t pos = fname.find_last_of('/');
 	if(pos != string::npos){
@@ -888,7 +998,8 @@ xercesc::DOMInputSource* JGeometryXML::EntityResolver::resolveEntity(const XMLCh
 {
 	/// This method gets called from the xerces parser each time it
 	/// opens a file (except for the top-level file). For each of these,
-	/// record the name of the file being opened, then just return NULL
+	/// record the name of the file being opened. If jcalib is not NULL,
+	/// then try reading from the calib DB. Otherwise, just return NULL
 	/// to have xerces handle opening the file in the normal way.
 
 	// Do some backflips to get strings into std::string format
@@ -904,12 +1015,32 @@ xercesc::DOMInputSource* JGeometryXML::EntityResolver::resolveEntity(const XMLCh
 		my_systemId = my_systemId_ptr;
 		xercesc::XMLString::release(&my_systemId_ptr);
 	}
-	//std::cerr<<"publicId="<<my_publicId<<"  systemId="<<my_systemId<<std::endl;
-
+	
 	// The systemId seems to be the one we want
-	xml_filenames.push_back(path + my_systemId);
+	string fullpath = path + my_systemId;
+	xml_filenames.push_back(fullpath);
 
-	return NULL; // have xerces handle this using its defaults
+	if(jcalib){
+		// Read from Calib DB
+		vector< map<string, string> > vals;
+		jcalib->GetCalib(fullpath, vals);
+		if(vals.empty()){
+			jerr << " Failed to get XML from Calib DB for " << fullpath << "! Geometry info not available!!" << endl;
+			exit(-1);
+		}
+		string &xml = vals[0].begin()->second;
+		
+		// Here we save the xml string in a member container so that it persists in
+		// memory through the life of this resolver object. It was observed that sometimes
+		// not all entities were parsed when a stack variable was used since MemBufInputSource
+		// apparently does not make a copy of the data.
+		xml_content.push_back(xml);
+		auto *myxml_buf = new xercesc::MemBufInputSource((const unsigned char*)xml_content.back().c_str(), xml_content.back().size(), "dummy string");
+		return myxml_buf;
+	}else{
+		// Read from file
+		return NULL; // have xerces handle this using its defaults
+	}	
 }
 
 //----------------------------------
@@ -932,32 +1063,43 @@ std::string JGeometryXML::EntityResolver::GetMD5_checksum(void)
 
 	md5_state_t pms;
 	md5_init(&pms);
-	for(unsigned int i=0; i<xml_filenames.size(); i++){
+	for(string fullpath : xml_filenames){
 
-		if(PRINT_CHECKSUM_INPUT_FILES){
-			std::cerr<<".... Adding file to MD5 checksum : " << xml_filenames[i] << std::endl;
+		uint32_t fsize = 0;
+
+		// Read from Calib DB or from file
+		if(jcalib){
+			vector< map<string, string> > vals;
+			jcalib->GetCalib(fullpath, vals);
+			if( !vals.empty() ){
+				string &xml = vals[0].begin()->second;
+				md5_append(&pms, (const md5_byte_t *)xml.c_str(), xml.size());
+				fsize = xml.size();
+			}
+		}else{
+			ifstream ifs(fullpath);
+			if(!ifs.is_open())continue;
+
+			// get length of file:
+			ifs.seekg (0, ios::end);
+			unsigned int length = ifs.tellg();
+			ifs.seekg (0, ios::beg);
+
+			// allocate memory:
+			char *buff = new char [length];
+
+			// read data as a block:
+			ifs.read (buff,length);
+			ifs.close();
+			
+			md5_append(&pms, (const md5_byte_t *)buff, length);
+			fsize = length;
+
+			delete[] buff;
 		}
 
-		ifstream ifs(xml_filenames[i].c_str());
-		if(!ifs.is_open())continue;
-
-		// get length of file:
-		ifs.seekg (0, ios::end);
-		unsigned int length = ifs.tellg();
-		ifs.seekg (0, ios::beg);
-
-		// allocate memory:
-		char *buff = new char [length];
-
-		// read data as a block:
-		ifs.read (buff,length);
-		ifs.close();
-
-		md5_append(&pms, (const md5_byte_t *)buff, length);
-
-		delete[] buff;
-
-		//std::cerr<<".... Adding file to MD5 checksum : " << xml_filenames[i] << "  (size=" << length << ")" << std::endl;
+		if(PRINT_CHECKSUM_INPUT_FILES) cerr << " .... Adding file to MD5 checksum : " << fullpath <<" (" << fsize << " bytes)" << endl;
+		
 	}
 	
 	md5_byte_t digest[16];
