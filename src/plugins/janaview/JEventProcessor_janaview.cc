@@ -27,6 +27,11 @@ extern "C"{
 void InitPlugin(JApplication *app){
 	InitJANAPlugin(app);
 	app->AddProcessor(new JEventProcessor_janaview());
+	
+	// Some event sources don't maintain call stack info
+	// unless told to do so via environment variable.
+	gPARMS->SetParameter("RECORD_CALL_STACK", 1);
+	
 }
 } // "C"
 
@@ -76,6 +81,9 @@ void* JanaViewRootGUIThread(void *arg)
 //------------------
 JEventProcessor_janaview::JEventProcessor_janaview()
 {
+	loop = NULL;
+	eventnumber = 0;
+
 	pthread_mutex_init(&mutex, NULL);
 	pthread_cond_init(&cond, NULL);
 
@@ -107,9 +115,10 @@ jerror_t JEventProcessor_janaview::init(void)
 //------------------
 // brun
 //------------------
-jerror_t JEventProcessor_janaview::brun(JEventLoop *eventLoop, int32_t runnumber)
+jerror_t JEventProcessor_janaview::brun(JEventLoop *loop, int32_t runnumber)
 {
-	eventLoop->EnableCallStackRecording();
+	this->loop = loop;
+	loop->EnableCallStackRecording();
 
 	return NOERROR;
 }
@@ -195,6 +204,8 @@ string JEventProcessor_janaview::MakeNametag(const string &name, const string &t
 //------------------
 void JEventProcessor_janaview::GetObjectTypes(vector<JVFactoryInfo> &facinfo)
 {
+	if(!loop) return;
+
 	// Get factory pointers and sort them by factory name
 	vector<JFactory_base*> factories = loop->GetFactories();
 	sort(factories.begin(), factories.end(), FactoryNameSort);
@@ -214,6 +225,8 @@ void JEventProcessor_janaview::GetObjectTypes(vector<JVFactoryInfo> &facinfo)
 //------------------
 void JEventProcessor_janaview::GetAssociatedTo(JObject *jobj, vector<const JObject*> &associatedTo)
 {
+	if(!loop) return;
+
 	vector<JFactory_base*> factories = loop->GetFactories();
 	for(uint32_t i=0; i<factories.size(); i++){
 		
@@ -240,21 +253,27 @@ void JEventProcessor_janaview::GetAssociatedTo(JObject *jobj, vector<const JObje
 //------------------
 void JEventProcessor_janaview::MakeCallGraph(string nametag)
 {
+	if(!loop) return;
+
+	if(nametag=="") nametag = JVMF->GetSelectedObjectType();
 
 	// Clear canvas
 	TCanvas *c = JVMF->canvas->GetCanvas();
 	c->cd();
 	c->Clear();
 	c->Update();
+	
+	// Delete any existing callgraph objects
+	for(auto it : cgobjs) if(it.second) delete it.second;
+	cgobjs.clear();
 
 	// Make list of all factories and their callees
 	vector<JEventLoop::call_stack_t> stack = loop->GetCallStack();
 	if(stack.empty()) return;
-	map<string, CGobj*> cgobjs;
-	for(uint32_t i=0; i<stack.size(); i++){
-		JEventLoop::call_stack_t &cs = stack[i];
+	for(auto &cs : stack){
 		string caller = MakeNametag(cs.caller_name, cs.caller_tag);
 		string callee = MakeNametag(cs.callee_name, cs.callee_tag);
+
 		if(caller == "<ignore>") continue;
 		
 		CGobj *caller_obj = cgobjs[caller];
@@ -271,28 +290,25 @@ void JEventProcessor_janaview::MakeCallGraph(string nametag)
 		bool nothing_changed = true;
 		map<string, CGobj*>::iterator iter = cgobjs.begin();
 
-		for(; iter != cgobjs.end(); iter++){
-		
-			CGobj *cgobj = iter->second;
-		
-			set<CGobj*>::iterator it = cgobj->callees.begin();
-			for(; it!=cgobj->callees.end(); it++){
-				if(*it == cgobj) break; // in case we are listed as our own callee!
-				if((*it)->rank >= cgobj->rank){
-					cgobj->rank = (*it)->rank + 1;
+		for(auto p : cgobjs){	
+			CGobj *caller_obj = p.second;
+			for(auto callee_obj : caller_obj->callees){
+				if(caller_obj == callee_obj) break; // in case we are listed as our own callee!
+				if( callee_obj->rank >= caller_obj->rank){
+					caller_obj->rank = callee_obj->rank + 1;
 					nothing_changed = false;
 				}
 			}
-
 		}
+
 		if(nothing_changed) break;
 	}while(true);
 
 	// Determine overall rank properties (widths, heights, members)
 	map<Int_t, CGrankprop > rankprops;
 	map<string, CGobj*>::iterator iter;
-	for(iter=cgobjs.begin(); iter != cgobjs.end(); iter++){
-		CGobj *cgobj = iter->second;
+	for(auto p : cgobjs){	
+		CGobj *cgobj = p.second;
 		CGrankprop &rankprop = rankprops[cgobj->rank];
 		
 		rankprop.cgobjs.push_back(cgobj);
@@ -355,6 +371,28 @@ void JEventProcessor_janaview::MakeCallGraph(string nametag)
 
 		xpos += rprop.totwidth + xspace;
 	}
+	
+	// Fill decendants and ancestors fields for all cgobjs. This will
+	// allow us to draw the "primary path" i.e. links that would be a 
+	// direct result of the specified nametag being called
+	for(auto it=rankprops.rbegin(); it!=rankprops.rend(); it++){
+		CGrankprop &rprop = it->second;
+		for(auto cgobj : rprop.cgobjs){
+			for(auto callee_obj : cgobj->callees){
+				callee_obj->ancestors.insert(cgobj);
+				callee_obj->ancestors.insert(cgobj->ancestors.begin(), cgobj->ancestors.end());
+			}
+		}
+	}
+	for(auto it : rankprops){
+		CGrankprop &rprop = it.second;
+		for(auto cgobj : rprop.cgobjs){
+			cgobj->decendants.insert(cgobj->callees.begin(), cgobj->callees.end());
+			for(auto callee_obj : cgobj->callees){
+				cgobj->decendants.insert(callee_obj->decendants.begin(), callee_obj->decendants.end());
+			}
+		}
+	}
 
 	// Clear canvas
 	JVMF->canvas->SetWidth(  cwidth  );
@@ -367,18 +405,26 @@ void JEventProcessor_janaview::MakeCallGraph(string nametag)
 	// Draw links first
 	for(iter=cgobjs.begin(); iter != cgobjs.end(); iter++){
 		CGobj *cgobj1 = iter->second;
-		set<CGobj*> &callees = cgobj1->callees;
-		set<CGobj*>::iterator it = callees.begin();
 		double x1 = cgobj1->x1/(double)cwidth;
 		double y1 = cgobj1->ymid/(double)cheight;
-		for(; it!=callees.end(); it++){
-			CGobj *cgobj2 = *it;
+		for(auto cgobj2 : cgobj1->callees){ 
 			double x2 = cgobj2->x2/(double)cwidth;
 			double y2 = cgobj2->ymid/(double)cheight;
 			
+			bool is_ancestor   = cgobj1->ancestors.count(cgobjs[nametag]) || cgobj1->nametag==nametag;
+			bool is_descendant = cgobj2->decendants.count(cgobjs[nametag]) || cgobj2->nametag==nametag;
+			
 			TLine *lin = new TLine(x1,y1,x2,y2);
-			lin->SetLineColor(kBlack);
-			lin->SetLineWidth(1.0);
+			if(is_ancestor){
+				lin->SetLineColor(kGreen+2);
+				lin->SetLineWidth(4.0);
+			}else if(is_descendant){
+				lin->SetLineColor(kBlue);
+				lin->SetLineWidth(4.0);
+			}else{
+				lin->SetLineColor(kBlack);
+				lin->SetLineWidth(1.0);
+			}
 			lin->Draw();
 		}
 	}
@@ -387,16 +433,37 @@ void JEventProcessor_janaview::MakeCallGraph(string nametag)
 	TLatex latex;
 	latex.SetTextSizePixels(20);
 	latex.SetTextAlign(22);
-	latex.SetTextColor(kWhite);
+	TBox *border = new TBox();
 	for(iter=cgobjs.begin(); iter != cgobjs.end(); iter++){
 		CGobj *cgobj = iter->second;
+		if(!cgobj) continue; // NULL may be inserted above while looking for nametag
 		double x1 = cgobj->x1/(double)cwidth;
 		double x2 = cgobj->x2/(double)cwidth;
 		double y1 = cgobj->y1/(double)cheight;
 		double y2 = cgobj->y2/(double)cheight;
+		double padx = 4.0/(double)cwidth;
+		double pady = 4.0/(double)cheight;
 
 		TBox *box = new TBox(x1, y1, x2, y2);
-		box->SetFillColor(TColor::GetColor( (Float_t)0.4, 0.4, 0.4));
+		latex.SetTextColor(kWhite);
+		if(cgobj->nametag == nametag){
+			latex.SetTextColor(kBlack);
+			box->SetFillColor(TColor::GetColor( (Float_t)1.0, 0.3, 1.0));
+			border->SetFillColor(kGreen+1);
+			border->DrawBox(x1-padx, y1-pady, (x1+x2)/2.0, y2+pady);
+			border->SetFillColor(kBlue);
+			border->DrawBox((x1+x2)/2.0, y1-pady, x2+padx, y2+pady);
+		}else if(cgobj->ancestors.count(cgobjs[nametag])){
+			box->SetFillColor(kGreen+3);
+			border->SetFillColor(kGreen);
+			border->DrawBox(x1-padx, y1-pady, x2+padx, y2+pady);
+		}else if(cgobj->decendants.count(cgobjs[nametag])){
+			box->SetFillColor(kBlue);
+			border->SetFillColor(kCyan);
+			border->DrawBox(x1-padx, y1-pady, x2+padx, y2+pady);
+		}else{
+			box->SetFillColor(TColor::GetColor( (Float_t)0.4, 0.4, 0.4));
+		}
 		box->Draw();
 		latex.DrawLatex((x1+x2)/2.0, (y1+y2)/2.0, cgobj->nametag.c_str());
 	}
@@ -408,5 +475,10 @@ void JEventProcessor_janaview::MakeCallGraph(string nametag)
 	box->Draw();
 
 	c->Update();
+
+	// This is needed to force the scrollbars to redraw with the
+	// proper parameters if the canvas size has changed (which
+	// it almost always has!)
+	JVMF->Redraw(JVMF->gcanvas);
 }
 

@@ -43,6 +43,8 @@ class JEventProcessor_janaview:public jana::JEventProcessor{
 				Int_t rank; // rank
 				
 				set<CGobj*> callees;
+				set<CGobj*> decendants;
+				set<CGobj*> ancestors;
 		};
 		
 		class CGrankprop{
@@ -62,6 +64,7 @@ class JEventProcessor_janaview:public jana::JEventProcessor{
 		pthread_cond_t cond;
 		JEventLoop *loop;
 		int eventnumber;
+		map<string, CGobj*> cgobjs;
 
 		void Lock(void){pthread_mutex_lock(&mutex);}
 		void Unlock(void){pthread_mutex_unlock(&mutex);}

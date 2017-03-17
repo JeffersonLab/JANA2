@@ -80,8 +80,10 @@ class jv_mainframe:public TGMainFrame{
 		void DoTimer(void);
 		void DoDoubleClickAssociatedObject(Int_t id);
 		void DoDoubleClickAssociatedToObject(Int_t id);
+		void DoCallGraphClicked(Int_t event, Int_t x, Int_t y, TObject *selected);
 		Bool_t HandleConfigureNotify(Event_t *event);
 		
+		string GetSelectedObjectType(void);
 		void UpdateInfo(string source, int run, int event);
 		void UpdateObjectTypeList(vector<JVFactoryInfo> &facinfo);
 		void SelectNewObject(void *vobj);
@@ -112,6 +114,7 @@ class jv_mainframe:public TGMainFrame{
 		TGListBox *lbObjectValues;
 		
 		TGTab *fTab;
+		TGCanvas *gcanvas;
 		TGVerticalFrame *fCanvas;
 		TRootEmbeddedCanvas *canvas;
 		
@@ -126,6 +129,7 @@ class jv_mainframe:public TGMainFrame{
 		TTimer *timer;
 		long sleep_time; // in milliseconds
 		Int_t delayed_object_type_id;
+		string last_selected_nametag;
 
 		void CreateGUI(void);
 	

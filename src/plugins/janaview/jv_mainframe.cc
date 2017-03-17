@@ -5,6 +5,7 @@
 // Creator: davidl (on Darwin harriet.jlab.org 13.4.0 i386)
 //
 
+
 #include "jv_mainframe.h"
 #include "JEventProcessor_janaview.h"
 
@@ -164,6 +165,7 @@ void jv_mainframe::DoSelectObjectType(Int_t id)
 	string nametag = e->GetTitle();
 	lObjectType->SetTitle(strdup(nametag.c_str()));
 	lObjectType->Resize();
+	last_selected_nametag = nametag;
 	
 	// Get factory name and tag
 	string name = nametag;
@@ -191,8 +193,13 @@ void jv_mainframe::DoSelectObjectType(Int_t id)
 	JEventSource *source = jevent.GetJEventSource();
 	source->GetObjects(jevent, fac);
 
+	JEventLoop::call_stack_t cs;
+	JEP->loop->CallStackStart(cs, "JEventProcessor_janaview", "", name, tag);
+
 	// Get pointers from factory
 	vobjs = fac->Get();
+
+	JEP->loop->CallStackEnd(cs);
 
 	// Copy list of objects into listbox
 	lbObjects->RemoveAll();
@@ -300,6 +307,44 @@ void jv_mainframe::DoDoubleClickAssociatedToObject(Int_t id)
 }
 
 //-------------------
+// DoCallGraphClicked
+//-------------------
+void jv_mainframe::DoCallGraphClicked(Int_t event, Int_t x, Int_t y, TObject *selected)
+{
+	if( event != kButton1Up ) return;
+	
+	// y is reported in pixels from bottom so reverse it
+	y = canvas->GetCanvas()->GetWh() - y;
+	
+	for(auto it : JEP->cgobjs){
+		auto cgobj = it.second;
+		if(!cgobj) continue;
+		if( x<cgobj->x1 || x>cgobj->x2) continue;
+		if( y<cgobj->y1 || y>cgobj->y2) continue;
+		
+		// Search for entry in object type listbox with this nametag
+		for(Int_t id=0; id<lbObjectTypes->GetNumberOfEntries(); id++){
+			TGLBEntry *e = lbObjectTypes->GetEntry(id);
+			if(!e) continue;
+			string nametag = e->GetTitle();
+			if(nametag != cgobj->nametag) continue;
+			
+			// Another oddity of the ROOT GUI system. We need to
+			// set the object type twice, but do it on a timer
+			// so the sequencing all works out. The screen flashes
+			// a couple of times, but seems to settle quickly on
+			// the right thing.
+			delayed_object_type_id = id;
+			TTimer::SingleShot(1, "jv_mainframe", this, "DoDelayedSelectObjectType()");
+			TTimer::SingleShot(10, "jv_mainframe", this, "DoDelayedSelectObjectType()");
+			_DBG_ << "selecting " << nametag << endl; 
+			break;
+		}
+		break;
+	}
+}
+
+//-------------------
 // HandleConfigureNotify
 //-------------------
 Bool_t jv_mainframe::HandleConfigureNotify(Event_t *event)
@@ -315,6 +360,22 @@ Bool_t jv_mainframe::HandleConfigureNotify(Event_t *event)
 //==============================================================================
 
 //-------------------
+// GetSelectedObjectType
+//-------------------
+string jv_mainframe::GetSelectedObjectType(void)
+{
+	string selected_nametag = "";
+	Int_t id = lbObjectTypes->GetSelected();
+	if(id>0 && id<=lbObjectTypes->GetNumberOfEntries()){
+		TGLBEntry *e = lbObjectTypes->GetEntry(id);
+		if(e) selected_nametag = e->GetTitle();
+	}
+	if(selected_nametag=="") selected_nametag = last_selected_nametag;
+	
+	return selected_nametag;
+}
+
+//-------------------
 // UpdateInfo
 //-------------------
 void jv_mainframe::UpdateInfo(string source, int run, int event)
@@ -322,9 +383,9 @@ void jv_mainframe::UpdateInfo(string source, int run, int event)
 	lSource->SetText(source.c_str());
 
 	char str[256];
-	sprintf(str, "%d", run);
+	sprintf(str, "%d     ", run);
 	lRun->SetText(str);
-	sprintf(str, "%d", event);
+	sprintf(str, "%d            ", event);
 	lEvent->SetText(str);
 	
 	Redraw(lSource);
@@ -336,12 +397,7 @@ void jv_mainframe::UpdateInfo(string source, int run, int event)
 void jv_mainframe::UpdateObjectTypeList(vector<JVFactoryInfo> &facinfo)
 {
 	// Check if an entry is already selected and remember it so we can re-select it
-	string selected_nametag = "";
-	Int_t id = lbObjectTypes->GetSelected();
-	if(id>0 && id<=lbObjectTypes->GetNumberOfEntries()){
-		TGLBEntry *e = lbObjectTypes->GetEntry(id);
-		if(e) selected_nametag = e->GetTitle();
-	}
+	string selected_nametag = GetSelectedObjectType();
 
 	// Clean out old list and create new one of nametags
 	lbObjectTypes->RemoveAll();
@@ -356,7 +412,7 @@ void jv_mainframe::UpdateObjectTypeList(vector<JVFactoryInfo> &facinfo)
 
 	// Fill in listbox and keep corresponding vector of objects
 	set<string>::iterator iter = nametags.begin();
-	id=1;
+	Int_t id=1;
 	uint32_t selected_id = 0;
 	for(; iter!=nametags.end(); iter++, id++){
 		string nametag = *iter;
@@ -484,7 +540,7 @@ TGLabel* jv_mainframe::AddNamedLabel(TGCompositeFrame* frame, string title, Int_
 {
 	TGHorizontalFrame *f = new TGHorizontalFrame(frame);
 	AddLabel(f, title, kTextRight);
-	TGLabel *lab = AddLabel(f, "---------", mode);
+	TGLabel *lab = AddLabel(f, "------------------------", mode);
 	frame->AddFrame(f, new TGLayoutHints(kLHintsExpandX,2,2,2,2));
 
 	return lab;
@@ -640,27 +696,27 @@ void jv_mainframe::CreateGUI(void)
 
 	//....... Top Frame .......
 	
-	TGGroupFrame *fInfo = new TGGroupFrame(fMainTop, "Current Event Info", kVerticalFrame);
+	TGGroupFrame *fInfo = new TGGroupFrame(fMainTop, "Current Event Info   ", kVerticalFrame);
 	fMainTop->AddFrame(fInfo, new TGLayoutHints(kLHintsLeft | kLHintsTop | kLHintsExpandX | kLHintsExpandY,2,2,2,2));
 
-	lSource = AddNamedLabel(fInfo, "Source:");
-	lRun    = AddNamedLabel(fInfo, "   Run:");
-	lEvent  = AddNamedLabel(fInfo, " Event:");
+	lSource = AddNamedLabel(fInfo, "Source:   ");
+	lRun    = AddNamedLabel(fInfo, "   Run:  ");
+	lEvent  = AddNamedLabel(fInfo, " Event:  ");
 
-	TGButton *bNext = AddButton(fInfo, "Next");
+	TGButton *bNext = AddButton(fInfo, "Next ");
 
 	//....... Middle Frame .......
 	
 	TGVerticalFrame *fObjectTypes = new TGVerticalFrame(fMainMid);
 	fMainMid->AddFrame(fObjectTypes, new TGLayoutHints(kLHintsLeft | kLHintsTop | kLHintsExpandY ,2,2,2,2));
-	lbObjectTypes = AddListBox(fObjectTypes, "Object Types", 300, kLHintsExpandY);
+	lbObjectTypes = AddListBox(fObjectTypes, "Object Types   ", 300, kLHintsExpandY);
 
 	fTab = new TGTab(fMainMid);
 	fMainMid->AddFrame(fTab, new TGLayoutHints(kLHintsExpandX | kLHintsExpandY,2,2,2,2));
 	fTab->SetWidth(600);
 
 	// ---- Object Details Tab ----
-	TGCompositeFrame *tObjectDetails = fTab->AddTab("Object Details");
+	TGCompositeFrame *tObjectDetails = fTab->AddTab("Object Details      ");
 	TGHorizontalFrame *fObjectDetails = new TGHorizontalFrame(tObjectDetails);
 	tObjectDetails->AddFrame(fObjectDetails, new TGLayoutHints(kLHintsLeft | kLHintsTop | kLHintsExpandX | kLHintsExpandY ,2,2,2,2));
 
@@ -671,20 +727,20 @@ void jv_mainframe::CreateGUI(void)
 	fObjectDetails->AddFrame(fAssociated, new TGLayoutHints(kLHintsLeft | kLHintsTop | kLHintsExpandX | kLHintsExpandY ,2,2,2,2));
 	fObjectDetails->AddFrame(fObjectValues, new TGLayoutHints(kLHintsLeft | kLHintsTop | kLHintsExpandX | kLHintsExpandY ,2,2,2,2));
 
-	lObjectType = AddLabel(fObjects, "---------------");
-	lbObjects = AddListBox(fObjects, "Objects this event");
+	lObjectType = AddLabel(fObjects, "--------------------------");
+	lbObjects = AddListBox(fObjects, "Objects this event:        ");
 
-	lbAssociatedObjects = AddListBox(fAssociated, "Associated Objects");
-	lbAssociatedToObjects = AddListBox(fAssociated, "Objects to which this is associated\n(may be incomplete)");
+	lbAssociatedObjects = AddListBox(fAssociated, "Associated Objects:         ");
+	lbAssociatedToObjects = AddListBox(fAssociated, "Objects to which this is associated:             \n(may be incomplete)");
 
 	lObjectValue = AddLabel(fObjectValues, "---------------");
 	lbObjectValues = AddListBox(fObjectValues, "", 250, kLHintsExpandX | kLHintsExpandY);
 
 	// ---- Call Graph Tab ----
-	TGCompositeFrame *tCallGraph = fTab->AddTab("Call Graph");
+	TGCompositeFrame *tCallGraph = fTab->AddTab("Call Graph   ");
 	
 	// Use TGCanvas to get scrollbars for the canvas
-	TGCanvas *gcanvas = new TGCanvas(tCallGraph, 100, 100, kFixedSize);
+	gcanvas = new TGCanvas(tCallGraph, 100, 100, kFixedSize);
 	tCallGraph->AddFrame(gcanvas, new TGLayoutHints(kLHintsExpandY | kLHintsExpandX));
 	fCanvas = new TGVerticalFrame(gcanvas->GetViewPort(), 10, 10);
 	gcanvas->SetContainer(fCanvas);
@@ -695,7 +751,7 @@ void jv_mainframe::CreateGUI(void)
 	
 	//....... Bottom Frame .......
 	//AddSpacer(fMainBot, 50, 1, kLHintsRight);
-	TGTextButton *bQuit = AddButton(fMainBot, "Quit", kLHintsRight | kLHintsBottom);
+	TGTextButton *bQuit = AddButton(fMainBot, "Quit  ", kLHintsRight | kLHintsBottom);
 
 
 	//==================== Connect GUI elements to methods ====================
@@ -707,5 +763,6 @@ void jv_mainframe::CreateGUI(void)
 	lbAssociatedObjects->Connect("DoubleClicked(Int_t)","jv_mainframe", this, "DoDoubleClickAssociatedObject(Int_t)");
 	lbAssociatedToObjects->Connect("Selected(Int_t)","jv_mainframe", this, "DoSelectAssociatedToObject(Int_t)");
 	lbAssociatedToObjects->Connect("DoubleClicked(Int_t)","jv_mainframe", this, "DoDoubleClickAssociatedToObject(Int_t)");
+	canvas->GetCanvas()->Connect("ProcessedEvent(Int_t,Int_t,Int_t,TObject*)", "jv_mainframe", this,"DoCallGraphClicked(Int_t,Int_t,Int_t,TObject*)");
 }
 

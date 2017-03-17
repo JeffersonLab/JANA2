@@ -131,6 +131,8 @@ class JEventLoop{
                            inline bool GetCallStackRecordingStatus(void){ return record_call_stack; }
                            inline void DisableCallStackRecording(void){ record_call_stack = false; }
                            inline void EnableCallStackRecording(void){ record_call_stack = true; }
+		                     inline void CallStackStart(JEventLoop::call_stack_t &cs, const string &caller_name, const string &caller_tag, const string callee_name, const string callee_tag);
+		                     inline void CallStackEnd(JEventLoop::call_stack_t &cs);
            inline vector<call_stack_t> GetCallStack(void){return call_stack;} ///< Get the current factory call stack
                            inline void AddToCallStack(call_stack_t &cs){if(record_call_stack) call_stack.push_back(cs);} ///< Add specified item to call stack record but only if record_call_stack is true
                            inline void AddToErrorCallStack(error_call_stack_t &cs){error_call_stack.push_back(cs);} ///< Add layer to the factory call stack
@@ -285,18 +287,9 @@ JFactory<T>* JEventLoop::Get(vector<const T*> &t, const char *tag, bool allow_de
 	// and initialize it with the start time and caller/callee
 	// info.
 	call_stack_t cs;
-	if(record_call_stack){
-		struct itimerval tmr;
-		getitimer(ITIMER_PROF, &tmr);
 
-		cs.caller_name = caller_name;
-		cs.caller_tag = caller_tag;
-		cs.callee_name = T::static_className();
-		cs.callee_tag = tag;
-		caller_name = cs.callee_name;
-		caller_tag = cs.callee_tag;
-		cs.start_time = tmr.it_value.tv_sec + tmr.it_value.tv_usec/1.0E6;
-	}
+	// Optionally record starting info of call stack entry
+	if(record_call_stack) CallStackStart(cs, caller_name, caller_tag, T::static_className(), tag);
 
 	// Get the data (or at least try to)
 	JFactory<T>* factory=NULL;
@@ -351,15 +344,8 @@ JFactory<T>* JEventLoop::Get(vector<const T*> &t, const char *tag, bool allow_de
 		throw e;
 	}
 	
-	// If recording the call stack, update the end_time field
-	if(record_call_stack){
-		struct itimerval tmr;
-		getitimer(ITIMER_PROF, &tmr);
-		cs.end_time = tmr.it_value.tv_sec + tmr.it_value.tv_usec/1.0E6;
-		caller_name = cs.caller_name;
-		caller_tag = cs.caller_tag;
-		call_stack.push_back(cs);
-	}
+	// If recording the call stack, update the end_time field and add to stack
+	if(record_call_stack) CallStackEnd(cs);
 	
 	return factory;
 }
@@ -479,6 +465,43 @@ jerror_t JEventLoop::GetFromSource(vector<const T*> &t, JFactory_base *factory)
 	return event.GetObjects(t, factory);
 }
 
+//-------------
+// CallStackStart
+//-------------
+inline void JEventLoop::CallStackStart(JEventLoop::call_stack_t &cs, const string &caller_name, const string &caller_tag, const string callee_name, const string callee_tag)
+{
+	/// This is used to fill initial info into a call_stack_t stucture
+	/// for recording the call stack. It should be matched with a call
+	/// to CallStackEnd. It is normally called from the Get() method
+	/// above, but may also be used by external actors to manipulate
+	/// the call stack (presumably for good and not evil).
+
+	struct itimerval tmr;
+	getitimer(ITIMER_PROF, &tmr);
+
+	cs.caller_name    = this->caller_name;
+	cs.caller_tag     = this->caller_tag;
+	this->caller_name = cs.callee_name = callee_name;
+	this->caller_tag  = cs.callee_tag  = callee_tag;
+	cs.start_time = tmr.it_value.tv_sec + tmr.it_value.tv_usec/1.0E6;
+}
+
+//-------------
+// CallStackEnd
+//-------------
+inline void JEventLoop::CallStackEnd(JEventLoop::call_stack_t &cs)
+{
+	/// Complete a call stack entry. This should be matched
+	/// with a previous call to CallStackStart which was
+	/// used to fill the cs structure.
+
+	struct itimerval tmr;
+	getitimer(ITIMER_PROF, &tmr);
+	cs.end_time = tmr.it_value.tv_sec + tmr.it_value.tv_usec/1.0E6;
+	caller_name = cs.caller_name;
+	caller_tag  = cs.caller_tag;
+	call_stack.push_back(cs);
+}
 
 //-------------
 // CheckEventBoundary
