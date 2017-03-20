@@ -1,4 +1,9 @@
 
+Changes in version 0.7.8
+- Implement support of XML geometry in calib DB
+- Fix and improve janaview call graph feature. Also fixed bug that caused
+  occasional crash during janaview start up.
+
 Changes in version 0.7.7p1
 - Use static_cast in JFactory::Get to accomodate classes with multiple
   inheritance (courtesy Andrea Celentano @ INFN)
