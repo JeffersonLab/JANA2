@@ -452,26 +452,23 @@ JApplication::~JApplication()
 	/// and JCalibrationGenerators that have been added to the
 	/// application.
 
-	for(unsigned int i=0; i<geometries.size(); i++)delete geometries[i];
+	for(auto p : geometries           ) delete p;
 	geometries.clear();
-	for(unsigned int i=0; i<calibrations.size(); i++)delete calibrations[i];
+	for(auto p : calibrations         ) delete p;
 	calibrations.clear();
-	for(unsigned int i=0; i<eventSourceGenerators.size(); i++)delete eventSourceGenerators[i];
+	for(auto p : eventSourceGenerators) delete p;
 	eventSourceGenerators.clear();
-	for(unsigned int i=0; i<factoryGenerators.size(); i++)delete factoryGenerators[i];
+	for(auto p : factoryGenerators    ) delete p;
 	factoryGenerators.clear();
-	for(unsigned int i=0; i<calibrationGenerators.size(); i++)delete calibrationGenerators[i];
+	for(auto p : calibrationGenerators) delete p;
 	calibrationGenerators.clear();
-
-	list<JEvent*>::iterator iter;
-	for(iter=event_buffer.begin(); iter!=event_buffer.end(); iter++)delete *iter;
+	for(auto p : resource_managers    ) delete p;
+	resource_managers.clear();
+	for(auto p : event_buffer         ) delete p;
 	event_buffer.clear();
-
-	map<string, pthread_rwlock_t*>::iterator irw_locks;
-	for(irw_locks=rw_locks.begin(); irw_locks!=rw_locks.end(); irw_locks++) delete irw_locks->second;
+	for(auto p : rw_locks             ) delete p.second;
 	rw_locks.clear();
-
-	for(unsigned int i=0; i<HUP_locks.size(); i++)delete HUP_locks[i];
+	for(auto p : HUP_locks            ) delete p;
 	HUP_locks.clear();
 	
 	// Delete JParameterManager
