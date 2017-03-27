@@ -105,14 +105,7 @@ void JCalibration::RecordRequest(string namepath, string type_name)
 	// Lock mutex when accessing "accesses" container.
 	pthread_mutex_lock(&accesses_mutex);
 	
-	map<string, vector<string> >::iterator iter = accesses.find(namepath);
-	if(iter==accesses.end()){
-		vector<string> types;
-		types.push_back(type_name);
-		accesses[namepath] = types;
-	}else{
-		iter->second.push_back(type_name);
-	}
+	accesses[namepath].push_back(type_name);
 
 	pthread_mutex_unlock(&accesses_mutex);
 }
