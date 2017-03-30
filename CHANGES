@@ -1,4 +1,7 @@
 
+Changes in version 0.7.?
+- Print comment from JCalibration when present.
+
 Changes in version 0.7.8
 - Implement support of XML geometry in calib DB
 - Fix and improve janaview call graph feature. Also fixed bug that caused
