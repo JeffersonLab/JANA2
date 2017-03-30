@@ -1198,6 +1198,7 @@ JCalibration* JApplication::GetJCalibration(unsigned int run_number)
 		jout<<"Run:"<<g->GetRun()<<endl;
 		jout<<"URL: "<<g->GetURL()<<endl;
 		jout<<"context: "<<g->GetContext()<<endl;
+		jout<<"comment: "<<g->GetComment()<<endl;
 	}else{
 		_DBG__;
 		_DBG_<<"Unable to create JCalibration object!"<<endl;

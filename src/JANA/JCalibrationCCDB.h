@@ -79,6 +79,22 @@ namespace jana
 
         /** @brief gets pointer to underlying ccdb::Calibration object
          */
+		  string GetComment(void){
+		  		if(mCalibration!=NULL){
+		  			auto p = mCalibration->GetProvider();
+					if(p!=NULL){
+						auto v = p->GetVariation(mCalibration->GetDefaultVariation());
+						if(v!=NULL){
+							return v->GetComment();
+						}
+					}	
+				}
+				return "";
+		  }
+
+
+        /** @brief gets pointer to underlying ccdb::Calibration object
+         */
 		ccdb::Calibration* GetCCDBCalibObj(void){
 			return mCalibration;
 		}

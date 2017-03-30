@@ -70,11 +70,12 @@ class JCalibration{
 
 		template<class T> bool Get(string namepath, const T* &vals, uint64_t event_number=0);
 		
-		       const int32_t& GetRun(void) const {return run_number;}
+		        const int32_t& GetRun(void) const {return run_number;}
 		         const string& GetContext(void) const {return context;}
 		         const string& GetURL(void) const {return url;}
 		                  void GetAccesses(map<string, vector<string> > &accesses){accesses = this->accesses;}
 		                string GetVariation(void);
+		        virtual string GetComment(void){return "";}
 		
 		       containerType_t GetContainerType(string typeid_name);
 		                  void DumpCalibrationsToFiles(string basedir="./");
