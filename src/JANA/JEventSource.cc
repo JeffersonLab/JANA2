@@ -57,7 +57,7 @@ jerror_t JEventSource::GetEvent(JEvent &event)
 //----------------
 // GetEvent
 //----------------
-jerror_t GetEvent(uint64_t eventNumber, JEvent &event)
+jerror_t JEventSource::GetEvent(uint64_t eventNumber, JEvent &event)
 {
 	/// This can be used for random access to a specific event number.
 	/// Subclasses are not required to support this so if they don't
