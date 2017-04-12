@@ -1,6 +1,7 @@
 
-Changes in version 0.7.?
+Changes in version 0.7.8p1
 - Print comment from JCalibration when present.
+- Extend JEventSource API to include methods to allow random access support
 
 Changes in version 0.7.8
 - Implement support of XML geometry in calib DB
