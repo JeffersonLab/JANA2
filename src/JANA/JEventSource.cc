@@ -55,6 +55,20 @@ jerror_t JEventSource::GetEvent(JEvent &event)
 }
 
 //----------------
+// GetEvent
+//----------------
+jerror_t GetEvent(uint64_t eventNumber, JEvent &event)
+{
+	/// This can be used for random access to a specific event number.
+	/// Subclasses are not required to support this so if they don't
+	/// override this then this will simply return RESOURCE_UNAVAILABLE.
+	/// One can check if this is overridden prior to calling it by
+	/// calling the CanRandomAccess() method. 
+
+	return RESOURCE_UNAVAILABLE;
+}
+
+//----------------
 // GetObjects
 //----------------
 jerror_t JEventSource::GetObjects(JEvent &event, JFactory_base *factory)
