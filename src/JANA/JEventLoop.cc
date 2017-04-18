@@ -517,6 +517,39 @@ jerror_t JEventLoop::Loop(void)
 //-------------
 // OneEvent
 //-------------
+jerror_t JEventLoop::OneEvent(uint64_t event_number)
+{
+	/// Read in and process one event with a specific event number.
+	/// This can be used with event sources that support random access
+	/// to specific event numbers. To check if the current event source
+	/// supports this, check the result of:
+	///
+	///  bool hasRA = loop->HasRandomAccess();
+	///
+	/// which is functionally equivalent to:
+	///
+	///  bool hasRA = loop->GetJApplication()->GetCurrentEventSource()->HasRandomAccess();
+	///
+	/// n.b. there is some small danger in the above line. If no event source
+	/// happens to exist then GetCurrentEventSource() will return a NULL
+	/// pointer. Also in the case where the source changes between calling
+	/// this and actually processing the next event AND the value of
+	/// CanRandomAccess() is different between the two sources, then an exception
+	/// may be thrown.
+	///
+	/// This method will push the given run number to the front of the 
+	/// queue of events to process, in front of any other events that
+	/// already happen to be in the queue. To add events to the end of the
+	/// queue, use one of the AddToEventQueue() methods and just call
+	/// the OneEvent() method without any arguments.
+	
+	next_events_to_process.push_front(event_number);
+	return OneEvent();
+}
+
+//-------------
+// OneEvent
+//-------------
 jerror_t JEventLoop::OneEvent(void)
 {
 	/// Read in and process one event.
@@ -532,7 +565,15 @@ jerror_t JEventLoop::OneEvent(void)
 	ClearFactories();
 
 	// Try to read in an event
-	jerror_t err = app->NextEvent(event);
+	jerror_t err = NOERROR;
+	if( !next_events_to_process.empty() ) {
+		// Specific event numbers are queued. Try reading next in queue
+		err = app->NextEvent( next_events_to_process.front(), event );
+		next_events_to_process.pop_front();
+	}else{
+		// No queue. Just read next event from source
+		err = app->NextEvent(event);
+	}
 	
 	// Here is a bit of voodoo. Calling setjmp() records the entire stack
 	// so that a subsequent call to longjmp() will return us right here.
@@ -681,6 +722,23 @@ jerror_t JEventLoop::OneEvent(void)
 void JEventLoop::QuitProgram(void)
 {
 	app->Quit();
+}
+
+//-------------
+// HasRandomAccess
+//-------------
+bool JEventLoop::HasRandomAccess(void)
+{
+	/// Convienience wrapper for checking if the current event source has
+	/// random access ability. This is potentially dangerous since in principle
+	/// the source can change between calling this and calling OneEvent(event_num, ...)
+	/// AND the two differ. This would only be an issue if two different types
+	/// of sources are used.
+	
+	JEventSource *source = GetJApplication()->GetCurrentEventSource();
+	if(!source) return false;
+
+	return source->HasRandomAccess();
 }
 
 //-------------

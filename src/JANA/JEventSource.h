@@ -109,7 +109,7 @@ class JEventSource{
 		virtual void FreeEvent(JEvent &event);      ///< Free an event that is no longer needed.
 		virtual jerror_t GetObjects(JEvent &event, JFactory_base *factory); ///< Get objects from an event
 		
-		virtual bool     CanRandomAccess(void){ return false; }          ///< Does base class support Random Access
+		virtual bool     HasRandomAccess(void){ return false; }          ///< Does base class support Random Access
 		virtual jerror_t GetEvent(uint64_t eventNumber, JEvent &event);  ///< Get specific event
 
 		inline const char* GetSourceName(void){return source_name.c_str();} ///< Get this sources name

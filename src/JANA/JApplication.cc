@@ -504,6 +504,88 @@ JApplication::~JApplication()
 //---------------------------------
 // NextEvent
 //---------------------------------
+jerror_t JApplication::NextEvent(uint64_t event_number, JEvent &event)
+{
+	/// Read in a specific event number from the current source
+	/// (if it supports random access).
+	/// This will throw an exception if no current event source exists
+	/// or the source does not support random access of events.
+	///
+	/// If the event happens to already be in the event buffer, then
+	/// it will use it without re-reading it, discarding any other events
+	/// currently ahead of it in the event buffer waiting to be procesesed.
+	/// Events after it in the buffer will be left for subsequent processing.
+	///
+	/// If the event is not already in the buffer, it is requested from the
+	/// JEventSource. It is left to the specific subclass how it will handle
+	/// the event stream after that. It is recommended that it continue
+	/// reading events after the one requested but this is not guaranteed.
+
+	// First, we must stop the EventBufferThread from reading from the
+	// current event source or creating a new event source
+	pthread_mutex_lock(&event_buffer_mutex);
+	pthread_mutex_lock(&sources_mutex);
+	
+	// Make sure current_source exists
+	if(!current_source){
+		pthread_mutex_unlock(&event_buffer_mutex);
+		pthread_mutex_unlock(&sources_mutex);
+		throw JException("JApplication::NextEvent(uint64_t, JEvent&) called when current_source==NULL");
+	}
+
+	// Make sure the current_source supports random access
+	if(!current_source->HasRandomAccess()){
+		pthread_mutex_unlock(&event_buffer_mutex);
+		pthread_mutex_unlock(&sources_mutex);
+		throw JException("JApplication::NextEvent(uint64_t, JEvent&) called when current_source does not support random access");
+	}
+
+	// Check if specified event happens to be in buffer
+	auto it = find_if(event_buffer.begin(), event_buffer.end(), [&event_number](JEvent *j){return j->GetEventNumber() == event_number;});
+
+	// Remove all events in buffer up to the event of interest
+	// (if it exists, otherwise remove all events)
+	for(auto myit=event_buffer.begin(); myit!=it; myit++){
+		(*myit)->FreeEvent();
+		delete (*myit);		
+	}
+	event_buffer.erase(event_buffer.begin(), it);
+	
+	// Read event from source if necessary.
+	// Note that if reading from source, we must hold the mutex locks while
+	// reading. However, if using event from existing buffer then release
+	// locks first before calling NextEvent()
+	jerror_t err = NOERROR;
+	if( event_buffer.empty() ){
+
+		// Event must be read from source. Call base class so it can record event ID
+		err = current_source->JEventSource::GetEvent(event_number, event);
+
+		pthread_mutex_unlock(&event_buffer_mutex);
+		pthread_mutex_unlock(&sources_mutex);
+		
+		// It's possible that when we were called the EventBufferThread was
+		// sleeping on a condition, waiting for a slot in event_buffer to
+		// open up. It is normally woke from this in NextEvent when it pulls
+		// an event from the buffer. We need to wake it here since slots have
+		// now opened.
+		pthread_cond_signal(&event_buffer_cond);
+	
+	}else{
+	
+		// Release mutexes to allow EventBufferThread to continue	
+		pthread_mutex_unlock(&event_buffer_mutex);
+		pthread_mutex_unlock(&sources_mutex);
+		
+		err = NextEvent(event);
+	}
+	
+	return err;
+}
+
+//---------------------------------
+// NextEvent
+//---------------------------------
 jerror_t JApplication::NextEvent(JEvent &event)
 {
 	/// Grab an event from the event buffer. If no events are

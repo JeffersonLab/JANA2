@@ -67,6 +67,7 @@ class JApplication{
 		                          void EventBufferThread(void);
 		                  unsigned int GetEventBufferSize(void);
 		              virtual jerror_t NextEvent(JEvent &event); ///< Get the next event from the event buffer
+		              virtual jerror_t NextEvent(uint64_t event_number, JEvent &event); ///< Get the specified event number from the current event source
 		              virtual jerror_t ReadEvent(JEvent &event); ///< Get the next event from the source.
 		                      jerror_t AddProcessor(JEventProcessor *processor, bool delete_me=false); ///< Add a JEventProcessor.
 		                      jerror_t RemoveProcessor(JEventProcessor *processor); ///< Remove a JEventProcessor
@@ -85,6 +86,7 @@ class JApplication{
                  vector<JEventSource*> GetJEventSources(void); ///< Get pointers to all JEventSource objects.
                   template<class T> T* GetFirstJEventSource(void); ///< Return pointer to first source of specified type or NULL if none exist. Call like this: ptr = GetFirstJEventSource<JEventSourceMyType>();
 		                          void GetActiveEventSourceNames(vector<string> &classNames, vector<string> &sourceNames);
+		                 JEventSource* GetCurrentEventSource(void){return current_source;}
 		    vector<JFactoryGenerator*> GetFactoryGenerators(void){return factoryGenerators;} ///< Get the current list of JFactoryGenerators
 		vector<JCalibrationGenerator*> GetCalibrationGenerators(void){return calibrationGenerators;} ///< Get the current list of JCalibrationGenerators
 		            JParameterManager* GetJParameterManager(void){return jparms;}

@@ -60,12 +60,28 @@ jerror_t JEventSource::GetEvent(JEvent &event)
 jerror_t JEventSource::GetEvent(uint64_t eventNumber, JEvent &event)
 {
 	/// This can be used for random access to a specific event number.
-	/// Subclasses are not required to support this so if they don't
-	/// override this then this will simply return RESOURCE_UNAVAILABLE.
-	/// One can check if this is overridden prior to calling it by
-	/// calling the CanRandomAccess() method. 
+	/// Subclasses are not required to support this so a check of
+	/// HasRandomAccess() is first made and if it returns false then this
+	/// will return RESOURCE_UNAVAILABLE. Users can check this themselves
+	/// prior to calling this method by calling the HasRandomAccess() method. 
 
-	return RESOURCE_UNAVAILABLE;
+	/// This gets called from
+	/// JApplication::NextEvent(uint64_t event_number, JEvent &event)
+	/// which is normally only called when doing a random access of
+	/// a specific event. Like GetEvent(...) above, this will record
+	/// the event if here in the base class before dispatching the 
+	/// call to the subclass' GetEvent method.
+
+	if( !HasRandomAccess() ) return RESOURCE_UNAVAILABLE;
+
+	pthread_mutex_lock(&in_progress_mutex);
+
+	event.SetID(++Ncalls_to_GetEvent);
+	in_progess_events.insert(event.GetID());
+
+	pthread_mutex_unlock(&in_progress_mutex);
+	
+	return GetEvent(eventNumber, event);
 }
 
 //----------------

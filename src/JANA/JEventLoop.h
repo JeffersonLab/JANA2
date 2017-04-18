@@ -11,6 +11,7 @@
 #include <sys/time.h>
 
 #include <vector>
+#include <list>
 #include <string>
 #include <utility>
 #include <typeinfo>
@@ -18,6 +19,7 @@
 #include <map>
 #include <utility>
 using std::vector;
+using std::list;
 using std::string;
 using std::type_info;
 
@@ -106,12 +108,20 @@ class JEventLoop{
 
                                   void Initialize(void); ///< Do initializations just before event processing starts
                               jerror_t Loop(void); ///< Loop over events
+                              jerror_t OneEvent(uint64_t event_number); ///< Process a specific single event (if source supports it)
                               jerror_t OneEvent(void); ///< Process a single event
                            inline void Pause(void){pause = 1;} ///< Pause event processing
                            inline void Resume(void){pause = 0;} ///< Resume event processing
                            inline void Quit(void){quit = 1;} ///< Clean up and exit the event loop
                            inline bool GetQuit(void) const {return quit;}
                                   void QuitProgram(void);
+
+		                               // Support for random access of events
+		                          bool HasRandomAccess(void);
+		                          void AddToEventQueue(uint64_t event_number){ next_events_to_process.push_back(event_number); }
+		                          void AddToEventQueue(list<uint64_t> &event_numbers) { next_events_to_process.insert(next_events_to_process.end(), event_numbers.begin(), event_numbers.end()); }
+		                list<uint64_t> GetEventQueue(void){ return next_events_to_process; }
+		                          void ClearEventQueue(void){ next_events_to_process.clear(); }
 
         template<class T> JFactory<T>* GetSingle(const T* &t, const char *tag="", bool exception_if_not_one=true); ///< Get pointer to first data object from (source or factory).
         template<class T> JFactory<T>* Get(vector<const T*> &t, const char *tag="", bool allow_deftag=true); ///< Get data object pointers from (source or factory)
@@ -183,6 +193,7 @@ class JEventLoop{
 		string caller_tag;
 		vector<uint64_t> event_boundaries;
 		int32_t event_boundaries_run; ///< Run number boundaries were retrieved from (possbily 0)
+		list<uint64_t> next_events_to_process;
 		
 		uint64_t Nevents;			      ///< Total events processed (this thread)
 		uint64_t Nevents_rate;		   ///< Num. events accumulated for "instantaneous" rate
