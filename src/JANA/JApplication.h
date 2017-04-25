@@ -154,7 +154,7 @@ class JApplication{
 		bool create_event_buffer_thread; ///< Set to false before Init is called to prevent the event buffer thread from being created. (Useful if program will not be reading events e.g. jcalibread.)
 		int  MAX_RELAUNCH_THREADS;
 
-	private:
+	protected:
 	
 		                              JApplication(){} ///< Prevent use of default constructor
 	
