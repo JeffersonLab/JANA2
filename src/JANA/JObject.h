@@ -15,6 +15,8 @@
 #include <vector>
 #include <set>
 #include <string>
+#include <cstdint>
+#include <type_traits>
 #include <typeinfo>
 #include <stdint.h>
 using std::pair;
@@ -47,7 +49,10 @@ using std::stringstream;
 /// requiring classes that inherit from JObject to be redefined explicity.
 #define JOBJECT_PUBLIC(T) \
 	virtual const char* className(void) const {return static_className();} \
-	static const char* static_className(void) {return #T;}
+	static const char* static_className(void) {return #T;} \
+	virtual JObject* Clone() const {return CloneObject<T>( *this );}
+
+
 
 // Place everything in JANA namespace
 namespace jana{
@@ -67,6 +72,58 @@ class JObject{
 
 		virtual ~JObject(){
 			for(unsigned int i=0; i<auto_delete.size(); i++)delete auto_delete[i];
+		}
+
+		// Copy constructor
+		JObject(const JObject& o) :
+			id( (oid_t)this ), append_types(o.append_types), associated(
+					o.associated), auto_delete(), messagelog(
+					o.messagelog), factory(o.factory) {
+			// Deep copy the objects in auto_delete vector
+			for( auto obj : o.auto_delete ) {
+				auto_delete.push_back( obj->Clone() );
+			}
+		}
+
+		// Move constructor
+		JObject( const JObject&& o ) : id( (oid_t)this ), append_types(o.append_types), associated(
+				std::move(o.associated)), auto_delete(std::move(o.auto_delete)), messagelog( std::move(
+				o.messagelog)), factory(o.factory) {
+			factory = nullptr;
+		}
+
+		// Assignment operator
+		JObject& operator=( const JObject& o) {
+			if( this == &o ) return *this;
+			append_types = o.append_types;
+			associated = o.associated;
+			messagelog = o.messagelog;
+			factory = o.factory;
+			auto_delete.clear();
+			for( auto obj : o.auto_delete ) {
+				auto_delete.push_back( obj->Clone() );
+			}
+			return *this;
+		}
+
+		// Define template static method for cloning the object of this type. This would get called from a
+		// virtual method define for each subclass to polymorphically clone the objects.
+		template<typename TYPE>
+			static typename std::enable_if<
+				(std::is_abstract <TYPE>::value || !std::is_copy_constructible<TYPE>::value), JObject*>::type CloneObject(
+								const TYPE& obj) {
+			// For abstract method it will return null pointer, and probably will cause problems. But
+			// there sohuld not be any object of abstract class to start with.
+			return nullptr;
+		}
+		template<typename TYPE>
+		static typename std::enable_if<
+				(!std::is_abstract <TYPE>::value
+						&& std::is_copy_constructible <TYPE>::value ), JObject*>::type CloneObject(
+								const TYPE& obj) {
+			// For non-abstract class create a new object using the copy constructor of the class
+			// given in the template argument.
+			return new TYPE(obj);
 		}
 		
 		/// Test if this object is of type T by checking its className() against T::static_className()
