@@ -97,6 +97,7 @@ class JEventLoop{
 						 JCalibration* GetJCalibration();
                 template<class T> bool GetCalib(string namepath, map<string,T> &vals);
                 template<class T> bool GetCalib(string namepath, vector<T> &vals);
+                template<class T> bool GetCalib(string namepath, T &val);
 
                             JGeometry* GetJGeometry();
                 template<class T> bool GetGeom(string namepath, map<string,T> &vals);
@@ -625,6 +626,24 @@ template<class T> bool JEventLoop::GetCalib(string namepath, vector<T> &vals)
 	return calib->Get(namepath, vals, event.GetEventNumber());
 }
 
+//-------------
+// GetCalib (single)
+//-------------
+template<class T> bool JEventLoop::GetCalib(string namepath, T &val)
+{
+	/// This is a convenience method for getting a single entry. It
+	/// simply calls the vector version and returns the first entry.
+	/// It returns true if the vector version returns true AND there
+	/// is at least one entry in the vector. No check is made for there
+	/// there being more than one entry in the vector.
+
+	vector<T> vals;
+	bool ret = GetCalib(namepath, vals);
+	if(vals.empty()) return true;
+	val = vals[0];
+	
+	return ret;
+}
 
 //-------------
 // GetGeom (map)
