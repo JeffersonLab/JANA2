@@ -511,6 +511,22 @@ jerror_t JEventLoop::Loop(void)
 	
 	}while(!quit);
 	
+	// Clear objects from all factories. Paul M. requested this. Here was
+	// his reason:
+	//
+	//   I'm trying to implement a new resource pool class (1+ pool objects
+	//   per thread, with common pool shared between threads).  But, at the
+	//   end of the program, because the factories aren't cleared until they're
+	//   deleted in JApplication::fini(), the threads have been closed by then
+	//   and my thread_local pools are out of scope.
+	//
+	//   If you just add the ClearFactories() call, it will clear up the
+	//   objects while the thread is still running and solve this problem.
+	//   Also, there is no reason for the fini()'s of the individual plugins
+	//   to have any expectation for the contents of _data, so this should
+	//   have no adverse effect.
+	ClearFactories();
+	
 	return NOERROR;
 }
 

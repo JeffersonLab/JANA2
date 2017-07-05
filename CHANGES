@@ -4,6 +4,8 @@ Changes in version 0.7.9
   from DApplication (specifically locks as requested by Hovanes E.)
 - Added JEventLoop::GetCalib() for getting a single number from CalibDB
 - Added JObject::Clone method using code provided by Hovanes E.
+- Added call to ClearFactories() when JEventLoop::Loop() is ending to allow
+  Paul M.'s TLS pools to work properly (see 7/4/2017 e-mail)
 
 Changes in version 0.7.8p1
 - Print comment from JCalibration when present.
