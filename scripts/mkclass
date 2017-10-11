@@ -79,8 +79,6 @@ def PrintFileHeader(f):
 // ------ Last repository commit info -----
 //     $Date$
 //   $Author$
-//       $Id$
-//     $File$
 //   $Source$
 // $Revision$
 //
