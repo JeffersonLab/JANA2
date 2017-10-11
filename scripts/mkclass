@@ -66,15 +66,24 @@ def PrintCopyright(f):
 #-----------------
 def PrintFileHeader(f):
 	# print a few lines at the very top of the file
+	# n.b. the RCS style keyword replacement is done via
+	# custom filters in git. See .gitattributes, .git_filters
+	# and .git/config
 	uname   = subprocess.check_output(['uname', '-nprs'])[:-1]
 	thedate =  subprocess.check_output(['date'])[:-1]
 	
 	content = """//
-// $Id:$
-//
 //    File: """ + f.name + """
 // Created: """ + thedate + """
 // Creator: """ + os.environ["USER"] + """ (on """ + uname + """)
+// ------ Last repository commit info -----
+//     $Date$
+//   $Author$
+//       $Id$
+//     $File$
+//   $Source$
+// $Revision$
+//
 """
 	f.write(content)
 
@@ -84,8 +93,8 @@ def PrintFileHeader(f):
 def PrintClassDef(f):
 
 	content = """
-#ifndef _"""+classname+"""_
-#define _"""+classname+"""_
+#ifndef _"""+classname+"""_h_
+#define _"""+classname+"""_h_
 
 class """+classname+"""{
 	public:
@@ -99,7 +108,7 @@ class """+classname+"""{
 
 };
 
-#endif // _"""+classname+"""_
+#endif // _"""+classname+"""_h_
 
 """
 	f.write(content)
