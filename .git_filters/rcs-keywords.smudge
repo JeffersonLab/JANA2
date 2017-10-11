@@ -41,7 +41,7 @@ while (<STDIN>) {
     s/\$Date[^\$]*\$/\$Date:   $date \$/;
     s/\$Author[^\$]*\$/\$Author: $author \$/;
     s/\$Id[^\$]*\$/\$Id: $filename | $date | $name \$/;
-    s/\$File[^\$]*\$/\$File:   $filename \$/;
+    s/\$File[^\$]*\$/\$File: $filename \$/;
     s/\$Source[^\$]*\$/\$Source: $path \$/;
 	s/\$Revision[^\$]*\$/\$Revision: $ident \$/;
 } continue {
