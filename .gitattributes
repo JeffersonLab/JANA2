@@ -7,10 +7,3 @@
 *.csh filter=rcs-keywords
 
 
-*.h   ident
-*.c   ident
-*.cc  ident
-*.py  ident
-*.sh  ident
-*.csh ident
-
