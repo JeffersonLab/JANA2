@@ -1,15 +1,13 @@
 //
 //    File: JApplication.h
-// Created: Wed Oct 11 10:35:46 EDT 2017
+// Created: Wed Oct 11 12:43:18 EDT 2017
 // Creator: davidl (on Darwin harriet.jlab.org 15.6.0 i386)
-//
 // ------ Last repository commit info -----
 //     $Date$
 //   $Author$
-//       $Id$
-//     $File$
 //   $Source$
 // $Revision$
+//
 //
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 // Jefferson Science Associates LLC Copyright Notice:  
