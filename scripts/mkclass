@@ -76,12 +76,12 @@ def PrintFileHeader(f):
 //    File: """ + f.name + """
 // Created: """ + thedate + """
 // Creator: """ + os.environ["USER"] + """ (on """ + uname + """)
-// ------ Last repository commit info -----
-//     $Date$
-//   $Author$
-//   $Source$
-// $Revision$
 //
+// ------ Last repository commit info -----
+// [ Date ]
+// [ Author ]
+// [ Source ]
+// [ Revision ]
 """
 	f.write(content)
 

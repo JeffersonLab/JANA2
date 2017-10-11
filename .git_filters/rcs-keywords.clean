@@ -1,13 +1,25 @@
 #!/usr/bin/perl -p
 #
+# Note: This was modified to use a format like:
+#  [ keyword ]
+#
+#  instead of
+#
+#  $keyword$
+#
+# The original copyright notice by Martin Turner is left below
+# since this is based on his original work.
+#
+# 10/11/2017 David Lawrence
+#----------------------------------------------------
 # @brief  Git filter to implement rcs keyword expansion as seen in cvs and svn.
 # @author Martin Turon
 #
 # Copyright (c) 2009-2011 Turon Technologies, Inc.  All rights reserved.
-
-s/\$Id[^\$]*\$/\$Id\$/; 
-s/\$Date[^\$]*\$/\$Date\$/;
-s/\$Author[^\$]*\$/\$Author\$/; 
-s/\$Source[^\$]*\$/\$Source\$/; 
-s/\$File[^\$]*\$/\$File\$/; 
-s/\$Revision[^\$]*\$/\$Revision\$/;
+#
+s/\[ Id[^\[]*\]/\[ Id \]/; 
+s/\[ Date[^\[]*\]/\[ Date \]/;
+s/\[ Author[^\[]*\]/\[ Author \]/; 
+s/\[ Source[^\[]*\]/\[ Source \]/; 
+s/\[ File[^\[]*\]/\[ File \]/; 
+s/\[ Revision[^\[]*\]/\[ Revision \]/;

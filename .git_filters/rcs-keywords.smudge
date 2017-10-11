@@ -1,5 +1,18 @@
 #!/usr/bin/perl
 #
+# Note: This was modified to use a format like:
+#  [ keyword ]
+#
+#  instead of
+#
+#  $keyword$
+#
+# The original copyright notice by Martin Turner is left below
+# since this is based on his original work.
+#
+# 10/11/2017 David Lawrence
+#----------------------------------------------------
+#
 # @brief  Git filter to implement rcs keyword expansion as seen in cvs and svn.
 # @author Martin Turon
 #
@@ -38,12 +51,12 @@ $rev =~ /^commit (.*)$/m;
 $ident = $1;
 
 while (<STDIN>) {
-    s/\$Date[^\$]*\$/\$Date:   $date \$/;
-    s/\$Author[^\$]*\$/\$Author: $author \$/;
-    s/\$Id[^\$]*\$/\$Id: $filename | $date | $name \$/;
-    s/\$File[^\$]*\$/\$File: $filename \$/;
-    s/\$Source[^\$]*\$/\$Source: $path \$/;
-	s/\$Revision[^\$]*\$/\$Revision: $ident \$/;
+    s/\[ Date[^\[]*\]/\[ Date: $date \]/;
+    s/\[ Author[^\[]*\]/\[ Author: $author \]/;
+    s/\[ Id[^\[]*\]/\[ Id: $filename | $date | $name \]/;
+    s/\[ File[^\[]*\]/\[ File: $filename \]/;
+    s/\[ Source[^\[]*\]/\[ Source: $path \]/;
+	s/\[ Revision[^\[]*\]/\[ Revision: $ident \]/;
 } continue {
     print or die "-p destination: $!\n";
 }
