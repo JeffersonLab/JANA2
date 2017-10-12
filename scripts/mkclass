@@ -135,7 +135,7 @@ def PrintClassMethods(f):
 //---------------------------------
 // ~"""+classname+"""    (Destructor)
 //---------------------------------
-"""+classname+"""::~"""+classname+"""
+"""+classname+"""::~"""+classname+"""()
 {
 
 }
