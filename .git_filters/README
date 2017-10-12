@@ -1,0 +1,34 @@
+
+These scripts are used to do keyword replacement in source
+files. The git system is really set up to discourage this
+sort of thing since it goes against their "philosophy".
+As a consequence, this won't work without some additional 
+action after creating a local clone of the repository.
+Specifically, these lines need to be added to the .git/config
+file:
+
+
+[filter "rcs-keywords"]
+	smudge = $GIT_DIR/../.git_filters/rcs-keywords.smudge %f
+	clean = $GIT_DIR/../.git_filters/rcs-keywords.clean
+
+
+This can be done with a text editor, or by issuing the following
+commands:
+
+
+git config filter.rcs-keywords.smudge '$GIT_DIR/../.git_filters/rcs-keywords.clean %f'
+git config filter.rcs-keywords.clean '$GIT_DIR/../.git_filters/rcs-keywords.clean'
+
+
+Note that this whole system is set up to modify the file contents
+as they are staged (for commit) and again when checked out of the
+repository. The actual files in the repository will never include
+the expanded keywords. The whole purpose of the system is to:
+
+1. make it easy for developers to see the meta data of
+   the files they are working on.
+
+2. make it easier to identify the provanance of a file 
+   when examining an installation
+
