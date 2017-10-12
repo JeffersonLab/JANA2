@@ -1,7 +1,7 @@
 //
-//    File: JApplication.h
-// Created: Wed Oct 11 13:09:35 EDT 2017
-// Creator: davidl (on Darwin harriet.jlab.org 15.6.0 i386)
+//    File: JQueue.h
+// Created: Wed Oct 11 22:51:32 EDT 2017
+// Creator: davidl (on Darwin harriet 15.6.0 i386)
 //
 // ------ Last repository commit info -----
 // [ Date ]
@@ -36,69 +36,34 @@
 // OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+//
+// Description:
+//
+//
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+#ifndef _JQueue_h_
+#define _JQueue_h_
 
-#ifndef _JApplication_h_
-#define _JApplication_h_
+#include <stdcint>
 
-#include <cstdint>
-#include <vector>
-using std::vector;
-
-class JEventProcessor;
-class JEventSource;
-class JEventSourceGenerator;
-class JFactoryGenerator;
-class JQueue;
-class JParameterManager;
-class JResourceManager;
-class JThread;
 class JTask;
 
-class JApplication{
+class JQueue{
 	public:
-		JApplication();
-		virtual ~JApplication();
-
-		int GetExitCode(void);
-		void Quit(void);
-		void Run(uint32_t nthreads=0);
-		void SetMaxThreads(uint32_t);
-		void SetTicker(bool ticker_on=true);
-		void Stop(void);
+		JQueue();
+		virtual ~JQueue();
 		
-		void AddJEventProcessor(JEventProcessor *processor);
-		void AddJEventSource(JEventSource *source);
-		void AddJEventSourceGenerator(JEventSourceGenerator *source_generator);
-		void AddJFactoryGenerator(JFactoryGenerator *factory_generator);
+		     int Put(JTask*);
+		uint32_t GetMaxTasks(void);
+		  string GetName();
+		  JTask* GetNext(void);
+		uint32_t GetNumTasks(void);
 		
-		void GetJEventProcessors(vector<JEventProcessor*> &processors);
-		void GetJEventSources(vector<JEventSource*> &sources);
-		void GetJEventSourceGenerators(vector<EventSourceGenerator*> &source_generators);
-		void GetJFactoryGenerators(vector<JFactoryGenerator*> &factory_generators);
-		void GetJQueues(vector<const JQueue*> &queues);
-		const JQueue* GetJQueue(const string &name);
-		const JParameterManager* GetJParameterManager(void);
-		const JResourceManager* GetJResourceManager(void);
-		
-		uint32_t GetNcores(void);
-		uint32_t GetNJThreads(void);
-		uint64_t GetNtasksCompleted(string name="");
-		uint64_t GetNeventsProcessed(void);
-		float GetIntegratedRate(void);
-		float GetInstantaneousRate(void);
-		void GetInstantaneousRates(vector<double> &rates_by_queue);
-		void GetIntegratedRates(map<string,double> &rates_by_thread);
-		
-		void RemoveJEventProcessor(JEvenetProcessor *processor);
-		void RemoveJEventSource(JEventSource *source);
-		void RemoveJEventSourceGenerator(JEventSourceGenerator *source_generator);
-		void RemoveJFactoryGenerator(JFactoryGenerator *factory_generator);
-
 	protected:
-		
+	
 	private:
 
 };
 
-#endif // _JApplication_h_
+#endif // _JQueue_h_
 

@@ -39,6 +39,17 @@
 
 #include "JApplication.h"
 
+#include <JANA/JEventProcessor.h>
+#include <JANA/JEventSource.h>
+#include <JANA/JEventSourceGenerator.h>
+#include <JANA/JFactoryGenerator.h>
+#include <JANA/JQueue.h>
+#include <JANA/JParameterManager.h>
+#include <JANA/JResourceManager.h>
+#include <JANA/JThread.h>
+#include <JANA/JTask.h>
+
+
 //---------------------------------
 // JApplication    (Constructor)
 //---------------------------------
@@ -50,7 +61,247 @@ JApplication::JApplication()
 //---------------------------------
 // ~JApplication    (Destructor)
 //---------------------------------
-JApplication::~JApplication
+JApplication::~JApplication()
 {
 
+}
+
+//---------------------------------
+// GetExitCode
+//---------------------------------
+int JApplication::GetExitCode(void)
+{
+	
+}
+
+//---------------------------------
+// Quit
+//---------------------------------
+void JApplication::Quit(void)
+{
+	
+}
+
+//---------------------------------
+// Run
+//---------------------------------
+void JApplication::Run(uint32_t nthreads)
+{
+	
+}
+
+//---------------------------------
+// SetMaxThreads
+//---------------------------------
+void JApplication::SetMaxThreads(uint32_t)
+{
+	
+}
+
+//---------------------------------
+// SetTicker
+//---------------------------------
+void JApplication::SetTicker(bool ticker_on)
+{
+	
+}
+
+//---------------------------------
+// Stop
+//---------------------------------
+void JApplication::Stop(void)
+{
+	
+}
+
+//---------------------------------
+// AddJEventProcessor
+//---------------------------------
+void JApplication::AddJEventProcessor(JEventProcessor *processor)
+{
+	
+}
+
+//---------------------------------
+// AddJEventSource
+//---------------------------------
+void JApplication::AddJEventSource(JEventSource *source)
+{
+	
+}
+
+//---------------------------------
+// AddJEventSourceGenerator
+//---------------------------------
+void JApplication::AddJEventSourceGenerator(JEventSourceGenerator *source_generator)
+{
+	
+}
+
+//---------------------------------
+// AddJFactoryGenerator
+//---------------------------------
+void JApplication::AddJFactoryGenerator(JFactoryGenerator *factory_generator)
+{
+	
+}
+
+//---------------------------------
+// GetJEventProcessors
+//---------------------------------
+void JApplication::GetJEventProcessors(vector<JEventProcessor*> &processors)
+{
+	
+}
+
+//---------------------------------
+// GetJEventSources
+//---------------------------------
+void JApplication::GetJEventSources(vector<JEventSource*> &sources)
+{
+	
+}
+
+//---------------------------------
+// GetJEventSourceGenerators
+//---------------------------------
+void JApplication::GetJEventSourceGenerators(vector<EventSourceGenerator*> &source_generators)
+{
+	
+}
+
+//---------------------------------
+// GetJFactoryGenerators
+//---------------------------------
+void JApplication::GetJFactoryGenerators(vector<JFactoryGenerator*> &factory_generators)
+{
+	
+}
+
+//---------------------------------
+// GetJQueues
+//---------------------------------
+void JApplication::GetJQueues(vector<const JQueue*> &queues)
+{
+	
+}
+
+//---------------------------------
+// GetJQueue
+//---------------------------------
+const JQueue* JApplication::GetJQueue(const string &name)
+{
+	
+}
+
+//---------------------------------
+// GetJParameterManager
+//---------------------------------
+const JParameterManager* JApplication::GetJParameterManager(void)
+{
+	
+}
+
+//---------------------------------
+// GetJResourceManager
+//---------------------------------
+const JResourceManager* JApplication::GetJResourceManager(void)
+{
+	
+}
+
+//---------------------------------
+// GetNcores
+//---------------------------------
+uint32_t JApplication::GetNcores(void)
+{
+	
+}
+
+//---------------------------------
+// GetNJThreads
+//---------------------------------
+uint32_t JApplication::GetNJThreads(void)
+{
+	
+}
+
+//---------------------------------
+// GetNtasksCompleted
+//---------------------------------
+uint64_t JApplication::GetNtasksCompleted(string name="")
+{
+	
+}
+
+//---------------------------------
+// GetNeventsProcessed
+//---------------------------------
+uint64_t JApplication::GetNeventsProcessed(void)
+{
+	
+}
+
+//---------------------------------
+// GetIntegratedRate
+//---------------------------------
+float JApplication::GetIntegratedRate(void)
+{
+	
+}
+
+//---------------------------------
+// GetInstantaneousRate
+//---------------------------------
+float JApplication::GetInstantaneousRate(void)
+{
+	
+}
+
+//---------------------------------
+// GetInstantaneousRates
+//---------------------------------
+void JApplication::GetInstantaneousRates(vector<double> &rates_by_queue)
+{
+	
+}
+
+//---------------------------------
+// GetIntegratedRates
+//---------------------------------
+void JApplication::GetIntegratedRates(map<string,double> &rates_by_thread)
+{
+	
+}
+
+//---------------------------------
+// RemoveJEventProcessor
+//---------------------------------
+void JApplication::RemoveJEventProcessor(JEvenetProcessor *processor)
+{
+	
+}
+
+//---------------------------------
+// RemoveJEventSource
+//---------------------------------
+void JApplication::RemoveJEventSource(JEventSource *source)
+{
+	
+}
+
+//---------------------------------
+// RemoveJEventSourceGenerator
+//---------------------------------
+void JApplication::RemoveJEventSourceGenerator(JEventSourceGenerator *source_generator)
+{
+	
+}
+
+//---------------------------------
+// RemoveJFactoryGenerator
+//---------------------------------
+void JApplication::RemoveJFactoryGenerator(JFactoryGenerator *factory_generator)
+{
+	
 }
