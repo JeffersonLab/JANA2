@@ -1,7 +1,7 @@
 //
-//    File: JEventSource.h
-// Created: Thu Oct 12 08:15:39 EDT 2017
-// Creator: davidl (on Darwin harriet.jlab.org 15.6.0 i386)
+//    File: JQueueT.cc
+// Created: Mon Oct 16 08:41:13 CDT 2017
+// Creator: davidl (on Darwin visitor097-233.wl.anl-external.org 15.6.0 i386)
 //
 // ------ Last repository commit info -----
 // [ Date ]
@@ -36,25 +36,6 @@
 // OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-//
-// Description:
-//
-//
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-#ifndef _JEventSource_h_
-#define _JEventSource_h_
 
-class JEventSource{
-	public:
-		JEventSource();
-		virtual ~JEventSource();
-		
-	protected:
-	
-	
-	private:
-
-};
-
-#endif // _JEventSource_h_
+#include "JQueueT.h"
 

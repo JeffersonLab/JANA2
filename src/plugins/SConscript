@@ -1,0 +1,11 @@
+
+import sbms
+
+import os
+
+Import('env osname')
+
+# Loop over plugins, building each
+subdirs = ['jana_test']
+
+SConscript(dirs=subdirs, exports='env osname', duplicate=0)

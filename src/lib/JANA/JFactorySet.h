@@ -1,6 +1,6 @@
 //
-//    File: JEventSource.cc
-// Created: Thu Oct 12 08:15:39 EDT 2017
+//    File: JFactorySet.h
+// Created: Fri Oct 20 09:33:40 EDT 2017
 // Creator: davidl (on Darwin harriet.jlab.org 15.6.0 i386)
 //
 // ------ Last repository commit info -----
@@ -36,21 +36,32 @@
 // OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+//
+// Description:
+//
+//
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+#ifndef _JFactorySet_h_
+#define _JFactorySet_h_
 
-#include "JEventSource.h"
+#include <vector>
 
-//---------------------------------
-// JEventSource    (Constructor)
-//---------------------------------
-JEventSource::JEventSource()
-{
+#include <JFactory.h>
 
-}
+class JFactorySet{
+	public:
+		JFactorySet();
+		virtual ~JFactorySet();
+		
+		std::vector<JFactory*> GetJFactories(void);
+		
+	protected:
+	
+		std::vector<JFactory*> _factories;
+	
+	private:
 
-//---------------------------------
-// ~JEventSource    (Destructor)
-//---------------------------------
-JEventSource::~JEventSource
-{
+};
 
-}
+#endif // _JFactorySet_h_
+

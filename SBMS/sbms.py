@@ -171,7 +171,8 @@ def plugin(env, pluginname=''):
 	if pluginname=='':
 		pluginname = os.path.split(os.getcwd())[1]
 
-	env.PrependUnique(CPPPATH = ['.'])
+	srcdir = str(env.Dir('.').srcnode().path)
+	env.AppendUnique(CPPPATH = ['.', '#src/lib/JANA'])
 
 	# Add C/C++ targets
 	env.AppendUnique(ALL_SOURCES = env.Glob('*.c'))

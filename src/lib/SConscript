@@ -1,0 +1,9 @@
+
+import sbms
+import os
+
+Import('env osname')
+
+subdirs = ['JANA']
+
+SConscript(dirs=subdirs, exports='env osname', duplicate=0)

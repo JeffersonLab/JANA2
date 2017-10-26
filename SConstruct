@@ -30,15 +30,16 @@ if BITNESS64!=0 : osname = osname.replace('i686','x86_64')
 arch = ROOT_CFLAGS = subprocess.Popen(["uname"], stdout=subprocess.PIPE).communicate()[0].strip()
 
 # Setup initial environment
-installdir = "#%s" %(osname)
+installdir = "#" + osname
+variantdir = "." + osname
 include = "%s/include" % (installdir)
 bin = "%s/bin" % (installdir)
 lib = "%s/lib" % (installdir)
 plugins = "%s/plugins" % (installdir)
 env = Environment(        ENV = os.environ,  # Bring in full environement, including PATH
-                      CPPPATH = [include],
+                      CPPPATH = ["#src/lib"],
                       LIBPATH = [lib],
-                  variant_dir = ".%s" % (osname))
+                  variant_dir = variantdir)
 
 # These are SBMS-specific variables (i.e. not default scons ones)
 env.Replace(    INSTALLDIR    = installdir,
@@ -67,7 +68,7 @@ if BITNESS64!=0:
 
 # Use terse output unless otherwise specified
 if SHOWBUILD==0:
-	env.Replace(   CCCOMSTR        = "Compiling  [$SOURCE]",
+	env.Replace(  CCCOMSTR        = "Compiling  [$SOURCE]",
 				  CXXCOMSTR       = "Compiling  [$SOURCE]",
 				  FORTRANPPCOMSTR = "Compiling  [$SOURCE]",
 				  FORTRANCOMSTR   = "Compiling  [$SOURCE]",
@@ -95,7 +96,7 @@ if 'gcc' in compiler_string and 'clang' not in compiler_string:
 env.Replace(COMPILER = compiler)
 
 # Add src and src/plugins to include search path
-env.PrependUnique(CPPPATH = ['#', '#src', '#src/plugins'])
+#env.PrependUnique(CPPPATH = ['#/.' + osname + '/lib', '#', '#src', '#src/plugins'])
 
 # Standard flags (optimization level and warnings)
 env.PrependUnique(      CFLAGS = ['-O%s' % OPTIMIZATION, '-fPIC', '-Wall'])

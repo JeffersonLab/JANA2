@@ -1,7 +1,7 @@
 //
-//    File: JTask.cc
-// Created: Wed Oct 11 22:41:08 EDT 2017
-// Creator: davidl (on Darwin harriet 15.6.0 i386)
+//    File: JFactoryGenerator.cc
+// Created: Thu Oct 12 08:15:55 EDT 2017
+// Creator: davidl (on Darwin harriet.jlab.org 15.6.0 i386)
 //
 // ------ Last repository commit info -----
 // [ Date ]
@@ -37,20 +37,20 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-#include "JTask.h"
+#include "JFactoryGenerator.h"
 
 //---------------------------------
-// JTask    (Constructor)
+// JFactoryGenerator    (Constructor)
 //---------------------------------
-JTask::JTask()
+JFactoryGenerator::JFactoryGenerator()
 {
 
 }
 
 //---------------------------------
-// ~JTask    (Destructor)
+// ~JFactoryGenerator    (Destructor)
 //---------------------------------
-JTask::~JTask
+JFactoryGenerator::~JFactoryGenerator()
 {
 
 }

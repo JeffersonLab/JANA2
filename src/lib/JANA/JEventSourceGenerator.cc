@@ -1,7 +1,7 @@
 //
-//    File: JThread.cc
-// Created: Wed Oct 11 22:51:22 EDT 2017
-// Creator: davidl (on Darwin harriet 15.6.0 i386)
+//    File: JEventSourceGenerator.cc
+// Created: Thu Oct 12 08:15:45 EDT 2017
+// Creator: davidl (on Darwin harriet.jlab.org 15.6.0 i386)
 //
 // ------ Last repository commit info -----
 // [ Date ]
@@ -37,20 +37,20 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-#include "JThread.h"
+#include "JEventSourceGenerator.h"
 
 //---------------------------------
-// JThread    (Constructor)
+// JEventSourceGenerator    (Constructor)
 //---------------------------------
-JThread::JThread()
+JEventSourceGenerator::JEventSourceGenerator()
 {
 
 }
 
 //---------------------------------
-// ~JThread    (Destructor)
+// ~JEventSourceGenerator    (Destructor)
 //---------------------------------
-JThread::~JThread
+JEventSourceGenerator::~JEventSourceGenerator()
 {
 
 }

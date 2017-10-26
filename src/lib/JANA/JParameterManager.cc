@@ -1,7 +1,7 @@
 //
-//    File: JThread.h
-// Created: Wed Oct 11 22:51:22 EDT 2017
-// Creator: davidl (on Darwin harriet 15.6.0 i386)
+//    File: JParameterManager.cc
+// Created: Thu Oct 12 08:16:11 EDT 2017
+// Creator: davidl (on Darwin harriet.jlab.org 15.6.0 i386)
 //
 // ------ Last repository commit info -----
 // [ Date ]
@@ -36,25 +36,21 @@
 // OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-//
-// Description:
-//
-//
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-#ifndef _JThread_h_
-#define _JThread_h_
 
-class JThread{
-	public:
-		JThread();
-		virtual ~JThread();
-		
-	protected:
-	
-	
-	private:
+#include "JParameterManager.h"
 
-};
+//---------------------------------
+// JParameterManager    (Constructor)
+//---------------------------------
+JParameterManager::JParameterManager()
+{
 
-#endif // _JThread_h_
+}
 
+//---------------------------------
+// ~JParameterManager    (Destructor)
+//---------------------------------
+JParameterManager::~JParameterManager()
+{
+
+}

@@ -1,7 +1,7 @@
 //
-//    File: JResourceManager.cc
-// Created: Thu Oct 12 08:16:17 EDT 2017
-// Creator: davidl (on Darwin harriet.jlab.org 15.6.0 i386)
+//    File: JQueue.h
+// Created: Wed Oct 11 22:51:32 EDT 2017
+// Creator: davidl (on Darwin harriet 15.6.0 i386)
 //
 // ------ Last repository commit info -----
 // [ Date ]
@@ -36,21 +36,62 @@
 // OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+//
+// Description:
+//
+//
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+#ifndef _JQueue_h_
+#define _JQueue_h_
 
-#include "JResourceManager.h"
+#include <cstdint>
+#include <string>
+#include <atomic>
+#include <vector>
+#include <set>
 
-//---------------------------------
-// JResourceManager    (Constructor)
-//---------------------------------
-JResourceManager::JResourceManager()
-{
+class JEvent;
 
-}
+class JQueue{
+	public:
+	
+		enum{
+			kNone,
+			kQUEUE_FULL,
+			kNO_ERROR
+		}Flags_t;
+	
+		JQueue(std::string name, bool run_processors=true);
+		virtual ~JQueue();
+		
+		                   void AddConvertFromType(std::string name);
+		                   void AddConvertFromTypes(std::set<std::string> names);
+		            virtual int AddEvent(JEvent*);
+			                int AddToQueue(JEvent *jevent);
+		   const std::set<std::string> GetConvertFromTypes(void);
+		               uint32_t GetMaxEvents(void);
+		            std::string GetName();
+		                JEvent* GetEvent(void);
+		               uint32_t GetNumEvents(void);
+		               uint64_t GetNumEventsProcessed(void);
+		                   bool GetRunProcessors(void);
+		
+	protected:
+		std::string _name;
+		bool _run_processors;
+		bool _done;
+		std::set<std::string> _convert_from_types;
+		
+		std::vector<JEvent*> _queue;
+		std::atomic<uint64_t> _nevents_processed;
 
-//---------------------------------
-// ~JResourceManager    (Destructor)
-//---------------------------------
-JResourceManager::~JResourceManager
-{
+		std::atomic<uint32_t> iread;
+		std::atomic<uint32_t> iwrite;
+		std::atomic<uint32_t> iend;
+	
+	private:
 
-}
+};
+
+#endif // _JQueue_h_
+

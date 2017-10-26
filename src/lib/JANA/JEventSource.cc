@@ -1,6 +1,6 @@
 //
-//    File: JEventProcessor.cc
-// Created: Thu Oct 12 08:15:32 EDT 2017
+//    File: JEventSource.cc
+// Created: Thu Oct 12 08:15:39 EDT 2017
 // Creator: davidl (on Darwin harriet.jlab.org 15.6.0 i386)
 //
 // ------ Last repository commit info -----
@@ -37,20 +37,22 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-#include "JEventProcessor.h"
+#include "JEventSource.h"
+
+using namespace std;
 
 //---------------------------------
-// JEventProcessor    (Constructor)
+// JEventSource    (Constructor)
 //---------------------------------
-JEventProcessor::JEventProcessor()
+JEventSource::JEventSource(string name)
 {
 
 }
 
 //---------------------------------
-// ~JEventProcessor    (Destructor)
+// ~JEventSource    (Destructor)
 //---------------------------------
-JEventProcessor::~JEventProcessor
+JEventSource::~JEventSource()
 {
 
 }

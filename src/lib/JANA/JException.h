@@ -1,6 +1,6 @@
 //
-//    File: JEventSourceGenerator.cc
-// Created: Thu Oct 12 08:15:45 EDT 2017
+//    File: JException.h
+// Created: Fri Oct 20 09:36:30 EDT 2017
 // Creator: davidl (on Darwin harriet.jlab.org 15.6.0 i386)
 //
 // ------ Last repository commit info -----
@@ -36,21 +36,69 @@
 // OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+//
+// Description:
+//
+//
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+#ifndef _JException_h_
+#define _JException_h_
 
-#include "JEventSourceGenerator.h"
+#include <string>
+
+class JException{
+	public:
+		JException(std::string mess="");
+		virtual ~JException();
+
+		template<typename T>
+		JException(std::string mess, T t);
+
+		template<typename T, typename U>
+		JException(std::string mess, T t, U u);
+
+		template<typename T, typename U, typename V>
+		JException(std::string mess, T t, U u, V v);
+		
+	protected:
+		std::string _mess;
+	
+	private:
+
+};
 
 //---------------------------------
-// JEventSourceGenerator    (Constructor)
+// JException    (Constructor)
 //---------------------------------
-JEventSourceGenerator::JEventSourceGenerator()
+template<typename T>
+JException::JException(std::string mess, T t)
 {
-
+	char cmess[1024];
+	sprintf(cmess, mess.c_str(), t);
+	_mess = cmess;
 }
 
 //---------------------------------
-// ~JEventSourceGenerator    (Destructor)
+// JException    (Constructor)
 //---------------------------------
-JEventSourceGenerator::~JEventSourceGenerator
+template<typename T, typename U>
+JException::JException(std::string mess, T t, U u)
 {
-
+	char cmess[1024];
+	sprintf(cmess, mess.c_str(), t, u);
+	_mess = cmess;
 }
+
+//---------------------------------
+// JException    (Constructor)
+//---------------------------------
+template<typename T, typename U, typename V>
+JException::JException(std::string mess, T t, U u, V v)
+{
+	char cmess[1024];
+	sprintf(cmess, mess.c_str(), t, u, v);
+	_mess = cmess;
+}
+
+#endif // _JException_h_
+

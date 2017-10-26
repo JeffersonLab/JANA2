@@ -1,7 +1,7 @@
 //
-//    File: JParameterManager.h
-// Created: Thu Oct 12 08:16:11 EDT 2017
-// Creator: davidl (on Darwin harriet.jlab.org 15.6.0 i386)
+//    File: JObject.h
+// Created: Sun Oct 15 21:30:42 CDT 2017
+// Creator: davidl (on Darwin harriet.local 15.6.0 i386)
 //
 // ------ Last repository commit info -----
 // [ Date ]
@@ -41,13 +41,34 @@
 //
 //
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-#ifndef _JParameterManager_h_
-#define _JParameterManager_h_
+#ifndef _JObject_h_
+#define _JObject_h_
 
-class JParameterManager{
+/// The JObject class is a base class for all data classes.
+/// (See JFactory and JFactory_base for algorithm classes.)
+///
+///
+/// The following line should be included in the public definition of all
+/// classes which inherit from JObject with the argument being the name of the
+/// class without any quotes.
+/// e.g. for a class named "MyClass" :
+/// 
+///  public:
+///     JOBJECT_PUBLIC(MyClass);
+///
+/// This will define a virtual method <i>className()</i> and a static
+/// method <i>static_className()</i> that are used by JANA to identify
+/// the object's last generation in the inheritance chain by name. This
+/// also allows for possible upgrades to JANA in the future without
+/// requiring classes that inherit from JObject to be redefined explicity.
+#define JOBJECT_PUBLIC(T) \
+	virtual const char* className(void) const {return static_className();} \
+	static const char* static_className(void) {return #T;}
+
+class JObject{
 	public:
-		JParameterManager();
-		virtual ~JParameterManager();
+		JObject();
+		virtual ~JObject();
 		
 	protected:
 	
@@ -56,5 +77,5 @@ class JParameterManager{
 
 };
 
-#endif // _JParameterManager_h_
+#endif // _JObject_h_
 

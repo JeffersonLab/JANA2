@@ -1,6 +1,6 @@
 //
-//    File: JFactoryGenerator.cc
-// Created: Thu Oct 12 08:15:55 EDT 2017
+//    File: JException.cc
+// Created: Fri Oct 20 09:36:30 EDT 2017
 // Creator: davidl (on Darwin harriet.jlab.org 15.6.0 i386)
 //
 // ------ Last repository commit info -----
@@ -37,20 +37,22 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-#include "JFactoryGenerator.h"
+#include "JException.h"
+
+using namespace std;
 
 //---------------------------------
-// JFactoryGenerator    (Constructor)
+// JException    (Constructor)
 //---------------------------------
-JFactoryGenerator::JFactoryGenerator()
+JException::JException(string mess)
 {
-
+	_mess = mess;
 }
 
 //---------------------------------
-// ~JFactoryGenerator    (Destructor)
+// ~JException    (Destructor)
 //---------------------------------
-JFactoryGenerator::~JFactoryGenerator
+JException::~JException()
 {
 
 }

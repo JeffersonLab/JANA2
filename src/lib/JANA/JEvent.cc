@@ -1,7 +1,7 @@
 //
-//    File: JQueue.h
-// Created: Wed Oct 11 22:51:32 EDT 2017
-// Creator: davidl (on Darwin harriet 15.6.0 i386)
+//    File: JEvent.cc
+// Created: Sun Oct 15 21:15:05 CDT 2017
+// Creator: davidl (on Darwin harriet.local 15.6.0 i386)
 //
 // ------ Last repository commit info -----
 // [ Date ]
@@ -36,34 +36,38 @@
 // OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-//
-// Description:
-//
-//
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-#ifndef _JQueue_h_
-#define _JQueue_h_
 
-#include <stdcint>
+#include "JEvent.h"
 
-class JTask;
+//---------------------------------
+// JEvent    (Constructor)
+//---------------------------------
+JEvent::JEvent()
+{
 
-class JQueue{
-	public:
-		JQueue();
-		virtual ~JQueue();
-		
-		     int Put(JTask*);
-		uint32_t GetMaxTasks(void);
-		  string GetName();
-		  JTask* GetNext(void);
-		uint32_t GetNumTasks(void);
-		
-	protected:
-	
-	private:
+}
 
-};
+//---------------------------------
+// ~JEvent    (Destructor)
+//---------------------------------
+JEvent::~JEvent()
+{
 
-#endif // _JQueue_h_
+}
+
+//---------------------------------
+// Recycle
+//---------------------------------
+void JEvent::Recycle(void)
+{
+	/// Recycle this event. This virtual method should take care
+	/// of either deleting this JEvent object or returning it to
+	/// a pool for reuse. The expectation is that the subclass will
+	/// store sufficient information regarding the location of the 
+	/// pool for it to be returned. For very simple applications
+	/// where the highest levels of efficiency are not required,
+	/// deleting the object is OK.
+
+	delete this; // Yes, this is OK by the C++ standard
+}
 

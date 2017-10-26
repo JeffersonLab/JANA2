@@ -1,6 +1,6 @@
 //
-//    File: JParameterManager.cc
-// Created: Thu Oct 12 08:16:11 EDT 2017
+//    File: JEventSource.h
+// Created: Thu Oct 12 08:15:39 EDT 2017
 // Creator: davidl (on Darwin harriet.jlab.org 15.6.0 i386)
 //
 // ------ Last repository commit info -----
@@ -36,21 +36,27 @@
 // OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+//
+// Description:
+//
+//
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+#ifndef _JEventSource_h_
+#define _JEventSource_h_
 
-#include "JParameterManager.h"
+#include <string>
 
-//---------------------------------
-// JParameterManager    (Constructor)
-//---------------------------------
-JParameterManager::JParameterManager()
-{
+class JEventSource{
+	public:
+		JEventSource(std::string name);
+		virtual ~JEventSource();
+		
+	protected:
+	
+	
+	private:
 
-}
+};
 
-//---------------------------------
-// ~JParameterManager    (Destructor)
-//---------------------------------
-JParameterManager::~JParameterManager
-{
+#endif // _JEventSource_h_
 
-}
