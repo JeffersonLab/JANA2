@@ -50,8 +50,14 @@ using std::string;
 using std::map;
 
 #ifndef _DBG__
-#define _DBG__ std::cerr<<__FILE__<<":"<<__LINE__<<std::endl
-#define _DBG_ std::cerr<<__FILE__<<":"<<__LINE__<<" "
+#include <mutex>
+extern std::mutex DBG_MUTEX;
+#define _DBG_LOCK_ 
+#define _DBG_RELEASE_ 
+//#define _DBG_LOCK_ DBG_MUTEX.lock()
+//#define _DBG_RELEASE_ DBG_MUTEX.unlock()
+#define _DBG__ _DBG_LOCK_;std::cerr<<__FILE__<<":"<<__LINE__<<std::endl;_DBG_RELEASE_
+#define _DBG_ _DBG_LOCK_;std::cerr<<__FILE__<<":"<<__LINE__<<" "
 #endif
 
 #define jout cout
@@ -113,6 +119,8 @@ class JApplication{
 		JParameterManager* GetJParameterManager(void);
 		JResourceManager* GetJResourceManager(void);
 		
+		bool GetAllQueuesEmpty(void);
+		void GetNextEvent(void);
 		uint32_t GetNcores(void);
 		uint32_t GetNJThreads(void);
 		uint64_t GetNtasksCompleted(string name="");
@@ -128,10 +136,13 @@ class JApplication{
 		void RemoveJFactoryGenerator(JFactoryGenerator *factory_generator);
 		void RemovePlugin(string &plugin_name);
 
+		string Val2StringWithPrefix(float val);
+
 	protected:
 	
 		int _exit_code;
 		bool _quitting;
+		bool _draining_queues;
 		vector<string> _plugins;
 		vector<string> _plugin_paths;
 		vector<void*> _sohandles;

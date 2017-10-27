@@ -48,6 +48,7 @@
 #include <string>
 #include <atomic>
 #include <vector>
+#include <mutex>
 #include <set>
 
 class JEvent;
@@ -60,6 +61,20 @@ class JQueue{
 			kQUEUE_FULL,
 			kNO_ERROR
 		}Flags_t;
+		
+		// The following taken from https://stackoverflow.com/questions/13193484/how-to-declare-a-vector-of-atomic-in-c
+		// It allows us to use a vector of atomics
+		template <typename T>
+		class atomwrapper{
+			public:
+			  std::atomic<T> _a;
+			  atomwrapper():_a(){}
+			  atomwrapper(const std::atomic<T> &a):_a(a.load()){}
+			  atomwrapper(const atomwrapper &other):_a(other._a.load()){}
+			  atomwrapper &operator=(const atomwrapper &other){_a.store(other._a.load());}
+			  atomwrapper &operator=(T &other){_a.store(other); return *this;}
+		};
+
 	
 		JQueue(std::string name, bool run_processors=true);
 		virtual ~JQueue();
@@ -82,13 +97,13 @@ class JQueue{
 		bool _done;
 		std::set<std::string> _convert_from_types;
 		
-		std::vector<JEvent*> _queue;
+		std::vector< JEvent* > _queue;
 		std::atomic<uint64_t> _nevents_processed;
 
 		std::atomic<uint32_t> iread;
 		std::atomic<uint32_t> iwrite;
 		std::atomic<uint32_t> iend;
-	
+		std::mutex _mutex;
 	private:
 
 };

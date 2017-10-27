@@ -39,6 +39,7 @@
 
 #include <unistd.h>
 #include <dlfcn.h>
+#include <signal.h>
 
 #include <cstdlib>
 #include <sstream>
@@ -56,11 +57,14 @@ using namespace std;
 #include <JANA/JResourceManager.h>
 #include <JANA/JThread.h>
 #include <JANA/JTask.h>
+#include <JANA/JException.h>
+#include <JANA/JEvent.h>
 
 
 JApplication *japp = NULL;
 
 int SIGINT_RECEIVED = 0;
+std::mutex DBG_MUTEX;
 
 //-----------------------------------------------------------------
 // ctrlCHandle
@@ -92,6 +96,7 @@ JApplication::JApplication(int narg, char *argv[])
 	
 	_exit_code = 0;
 	_quitting = false;
+	_draining_queues = false;
 	_pmanager = NULL;
 	_rmanager = NULL;
 	
@@ -310,7 +315,7 @@ void JApplication::PrintStatus(void)
 {
 	// Print ticker
 	stringstream ss;
-	ss << " " << GetNeventsProcessed() << " events processed  " << GetIntegratedRate() << "Hz (" << GetIntegratedRate() << "Hz avg.) ";
+	ss << " " << GetNeventsProcessed() << " events processed  " << Val2StringWithPrefix( GetInstantaneousRate() ) << "Hz (" << Val2StringWithPrefix( GetIntegratedRate() ) << "Hz avg) ";
 	jout << ss.str() << "\r";
 	jout.flush();
 }
@@ -345,11 +350,16 @@ void JApplication::Run(uint32_t nthreads)
 	// Monitor status of all threads
 	while( !_quitting ){
 		
+		// If we are finishing up (i.e. waiting for all events
+		// to finish processing) and all JQueues are empty,
+		// then tell all threads to quit.
+		if( _draining_queues && GetAllQueuesEmpty() ) Quit();
+		
 		// Check if all threads have finished
 		uint32_t Nended = 0;
 		for(auto t : _jthreads )if( t->IsEnded() ) Nended++;
 		if( Nended == _jthreads.size() ) break;
-		
+
 		// Sleep a few cycles
 		this_thread::sleep_for( chrono::milliseconds(500) );
 		
@@ -525,6 +535,48 @@ JResourceManager* JApplication::GetJResourceManager(void)
 }
 
 //---------------------------------
+// GetAllQueuesEmpty
+//---------------------------------
+bool JApplication::GetAllQueuesEmpty(void)
+{
+	/// Returns true if all JQueues are currently empty.
+	uint32_t Nempty_queues = 0;
+	for( auto q : _jqueues ){
+		if( q->GetNumEvents() == 0 ) Nempty_queues++;
+	}
+	
+	return Nempty_queues == _jqueues.size();
+}
+
+//---------------------------------
+// GetNextEvent
+//---------------------------------
+void JApplication::GetNextEvent(void)
+{
+	/// Read the next JEvent from the current event source
+	/// or open a new one if needed. The JEventSource object
+	/// itself will place the event in the appropriate JQueue.
+	/// Note that this may cause new JQueue objects to be
+	/// created from the JEventSource subclass constructor.
+	/// If no more events are available from the last event
+	/// source, then the JApplication will be flagged to quit
+	/// and a JException will be thrown.
+
+	JQueue *queue = GetJQueue("Physics Events");
+	if( (queue!=NULL) && (queue->GetNumEventsProcessed()<10000000) ){
+		queue->AddToQueue( new JEvent() );
+		return;
+	}
+	
+	// No more events and no more sources. Set flag to drain
+	// all queues by processing all remaining events and then
+	// quit the program. Throw exception to tell calling JThread
+	// to continue processing events from queues
+	_draining_queues = true;
+	throw JException("No more event sources");	
+}
+
+//---------------------------------
 // GetNcores
 //---------------------------------
 uint32_t JApplication::GetNcores(void)
@@ -587,6 +639,17 @@ uint64_t JApplication::GetNeventsProcessed(void)
 //---------------------------------
 float JApplication::GetIntegratedRate(void)
 {
+	auto now = std::chrono::high_resolution_clock::now();
+	uint64_t N = GetNeventsProcessed();
+	static auto start_t = now;
+	static uint64_t start_N = N;
+
+	std::chrono::duration<float> delta_t = now - start_t;
+	float delta_t_seconds = delta_t.count();
+	float delta_N = (float)(GetNeventsProcessed() - start_N);
+
+	if( delta_t_seconds >= 0.5) return delta_N / delta_t_seconds;
+
 	return 0.0;
 }
 
@@ -595,7 +658,23 @@ float JApplication::GetIntegratedRate(void)
 //---------------------------------
 float JApplication::GetInstantaneousRate(void)
 {
-	return 0.0;
+	auto now = std::chrono::high_resolution_clock::now();
+	uint64_t N = GetNeventsProcessed();
+	static auto last_t = now;
+	static uint64_t last_N = N;
+
+	std::chrono::duration<float> delta_t = now - last_t;
+	float delta_t_seconds = delta_t.count();
+	float delta_N = (float)(GetNeventsProcessed() - last_N);
+
+	static float last_R = 0.0;
+	if( delta_t_seconds >= 0.5) {
+		last_R = delta_N / delta_t_seconds;
+		last_t = now;
+		last_N = N;
+	}
+
+	return last_R;
 }
 
 //---------------------------------
@@ -645,3 +724,40 @@ void JApplication::RemoveJFactoryGenerator(JFactoryGenerator *factory_generator)
 {
 	
 }
+
+//----------------
+// Val2StringWithPrefix
+//----------------
+string JApplication::Val2StringWithPrefix(float val)
+{
+	/// Return the value as a string with the appropriate latin unit prefix
+	/// appended.
+	/// Values returned are: "G", "M", "k", "", "u", and "m" for
+	/// values of "val" that are: >1.5E9, >1.5E6, >1.5E3, <1.0E-7, <1.0E-4, 1.0E-1
+	/// respectively.
+	const char *units = "";
+	if(val>1.5E9){
+		val/=1.0E9;
+		units = "G";
+	}else 	if(val>1.5E6){
+		val/=1.0E6;
+		units = "M";
+	}else if(val>1.5E3){
+		val/=1.0E3;
+		units = "k";
+	}else if(val<1.0E-7){
+		units = "";
+	}else if(val<1.0E-4){
+		val/=1.0E6;
+		units = "u";
+	}else if(val<1.0E-1){
+		val/=1.0E3;
+		units = "m";
+	}
+	
+	char str[256];
+	sprintf(str,"%3.1f %s", val, units);
+
+	return string(str);
+}
+

@@ -52,10 +52,12 @@ thread_local JThread *JTHREAD = NULL;
 //---------------------------------
 JThread::JThread(JApplication *app):_run_state(kRUN_STATE_INITIALIZING)
 {
-
+	_japp = app;
 	_run_state = kRUN_STATE_IDLE;
 	_run_state_target = kRUN_STATE_IDLE;
 	_isjoined = false;
+	
+	_japp->GetJQueues(_queues);
 	
 	_thread = new thread( &JThread::Loop, this );
 }
@@ -69,9 +71,9 @@ JThread::~JThread()
 }
 
 //---------------------------------
-// GetNeventsProcessed
+// GetNumEventsProcessed
 //---------------------------------
-uint64_t JThread::GetNeventsProcessed(void)
+uint64_t JThread::GetNumEventsProcessed(void)
 {
 	/// Get total number of events processed by this thread. This
 	/// returns a total of all "events" from all queues. Since the
@@ -82,7 +84,7 @@ uint64_t JThread::GetNeventsProcessed(void)
 	/// counts for individual queues for a perhaps more useful breakdown.
 	
 	map<string,uint64_t> Nevents;
-	GetNeventsProcessed(Nevents);
+	GetNumEventsProcessed(Nevents);
 	
 	uint64_t Ntot = 0;
 	for(auto p : Nevents) Ntot += p.second;
@@ -91,9 +93,9 @@ uint64_t JThread::GetNeventsProcessed(void)
 }
 
 //---------------------------------
-// GetNeventsProcessed
+// GetNumEventsProcessed
 //---------------------------------
-void JThread::GetNeventsProcessed(map<string,uint64_t> &Nevents)
+void JThread::GetNumEventsProcessed(map<string,uint64_t> &Nevents)
 {
 	/// Get number of events processed by this thread for each
 	/// JQueue. The key will be the name of the JQueue and value
@@ -193,7 +195,6 @@ void JThread::Loop(void)
 	JTHREAD = this;
 
 	while( _run_state_target != kRUN_STATE_ENDED ){
-		
 		// If specified, go into idle state
 		if( _run_state_target == kRUN_STATE_IDLE ) _run_state = kRUN_STATE_IDLE;
 
@@ -211,7 +212,8 @@ void JThread::Loop(void)
 
 			// Process event if found
 			if(event){
-				
+//_DBG_ << "event=" << event << endl; _DBG_RELEASE_;
+
 				// This flag is used to verify that either the event 
 				// processors or downstream queue converter were run
 				// on this event. If nothing is done then that is
@@ -229,8 +231,9 @@ void JThread::Loop(void)
 				// Look downstream for queue that can convert from this
 				// subclass of JEvent.
 				auto it_queue = rit_queue.base(); // n.b. already points to next queue!
-				const string &queue_name = (*it_queue)->GetName();
+				const string &queue_name = it_queue != _queues.end() ? (*it_queue)->GetName():"";
 				JQueue *next_queue = NULL;
+
 				for(; it_queue != _queues.end(); it_queue++){
 					// Loop over names this can convert from
 					for( auto &n : (*it_queue)->GetConvertFromTypes() ){
@@ -258,6 +261,32 @@ void JThread::Loop(void)
 				
 				// continue while loop to process next event
 				continue;
+
+			}else{
+				// No events in any queues. Try grabbing one from source
+				try{
+					_japp->GetNextEvent();
+					
+					// continue while loop to process next event
+					continue;
+				}catch(...){
+					// Unable to get another event. The JApplication::GetNextEvent
+					// call should signal all threads to quit if appropriate.
+					// There are at least two possibilities:
+					//
+					// 1. We have exhausted all events from all sources and
+					//    JApplication has told or will soon tell all JThreads
+					//    to end.
+					// 2. We are reading from a live stream and there are currently
+					//    no events available, but some may still come so we
+					//    need to go idle.
+					//
+					// Note that with the short sleep cycle below, we could end
+					// up with all threads rapidly and repeatedly calling 
+					// GetNextEvent. It is up to JApplication to ensure that
+					// those calls return quickly for all but the one thread that
+					// is actually trying to read the next event.
+				}
 			}
 		}
 		

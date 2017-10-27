@@ -62,8 +62,8 @@ public:
 		JThread(JApplication *app=NULL);
 		virtual ~JThread();
 
-		uint64_t GetNeventsProcessed(void);
-		void GetNeventsProcessed(map<string,uint64_t> &Nevents);
+		uint64_t GetNumEventsProcessed(void);
+		void GetNumEventsProcessed(map<string,uint64_t> &Nevents);
 		thread* GetThread(void);
 		void Join(void);
 
@@ -84,7 +84,7 @@ protected:
 		bool _isjoined;
 		JApplication *_japp;
 		map<string, uint64_t> _events_processed;
-		const vector<JQueue*> _queues;
+		vector<JQueue*> _queues;
 		
 	private:
 

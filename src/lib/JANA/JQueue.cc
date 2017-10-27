@@ -37,6 +37,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
+#include <JApplication.h>
 #include <JException.h>
 
 #include "JQueue.h"
@@ -53,6 +54,8 @@ JQueue::JQueue(string name, bool run_processors):_name(name),_run_processors(run
 	iread  = 0;
 	iwrite = 0;
 	iend   = 0;
+	
+	_queue.resize(200);
 }
 
 //---------------------------------
@@ -117,7 +120,11 @@ int JQueue::AddToQueue(JEvent *jevent)
 	// the queue is full, it returns immediately. (This is to give the
 	// calling thread a chance to do something else or call this again.
 	// for another try.)
+
 	while(!_done){
+
+		lock_guard<mutex> lguard(_mutex); // should be able to get rid of this
+
 		uint32_t idx = iwrite;
 		uint32_t inext = (idx+1)%_queue.size();
 		if( inext == iread ) return kQUEUE_FULL;
@@ -129,7 +136,7 @@ int JQueue::AddToQueue(JEvent *jevent)
 			break;
 		}
 	}
-	
+
 	return kNO_ERROR;
 }
 
@@ -173,8 +180,11 @@ JEvent* JQueue::GetEvent(void)
 	/// the call is interrupted. This operates without locks.	
 
 	while(!_done){
+
+		lock_guard<mutex> lguard(_mutex); // should be able to get rid of this
+
 		uint32_t idx = iread;
-		if(idx == iend) return NULL;
+		if( idx == iend ) return NULL;
 		JEvent *Event = _queue[idx];
 		uint32_t inext = (idx+1)%_queue.size();
 		if( iread.compare_exchange_weak(idx, inext) ){
