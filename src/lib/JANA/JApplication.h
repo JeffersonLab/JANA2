@@ -140,6 +140,7 @@ class JApplication{
 
 	protected:
 	
+		vector<string> _args;	///< Argument list passed in to JApplication Constructor
 		int _exit_code;
 		bool _quitting;
 		bool _draining_queues;
@@ -151,6 +152,7 @@ class JApplication{
 		vector<JEventSourceGenerator*> _eventSourceGenerators;
 		vector<JFactoryGenerator*> _factoryGenerators;
 		vector<JCalibrationGenerator*> _calibrationGenerators;
+		vector<std::string> _source_names;
 		JParameterManager *_pmanager;
 		JResourceManager *_rmanager;
 	

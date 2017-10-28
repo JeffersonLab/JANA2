@@ -44,17 +44,63 @@
 #ifndef _JParameter_h_
 #define _JParameter_h_
 
+#include <string>
+#include <sstream>
+
 class JParameter{
 	public:
-		JParameter();
+		template<typename T>
+		JParameter(std::string name, T val);
 		virtual ~JParameter();
+		
+		template<typename T>
+		T GetValue(void);
+
+		template<typename T>
+		T GetValue(T &val);
 		
 	protected:
 	
+		std::string _name;
+		std::string _val;
 	
 	private:
 
 };
+
+//---------------------------------
+// JParameter    (Constructor)
+//---------------------------------
+template<typename T>
+JParameter::JParameter(std::string name, T val):_name(name)
+{
+	std::stringstream ss;
+	ss << val;
+	_val = ss.str();
+}
+
+//---------------------------------
+// GetValue
+//---------------------------------
+template<typename T>
+T JParameter::GetValue(void)
+{
+	std::stringstream ss(_val);
+	T val;
+	ss >> val;
+	
+	return val;
+}
+
+//---------------------------------
+// GetValue
+//---------------------------------
+template<typename T>
+T JParameter::GetValue(T &val)
+{
+	val = GetValue<T>();
+	return val;
+}
 
 #endif // _JParameter_h_
 

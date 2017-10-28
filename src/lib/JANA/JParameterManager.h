@@ -45,19 +45,30 @@
 #define _JParameterManager_h_
 
 #include <string>
+#include <map>
 
-#include <JParameter.h>
+#include <JANA/JParameter.h>
+#include <JANA/JException.h>
 
 class JParameterManager{
 	public:
 		JParameterManager();
 		virtual ~JParameterManager();
 		
+		bool Exists(std::string name);
+
 		template<typename T>
 		JParameter* GetParameter(std::string name, T &val);
 
+		template<typename T>
+		T GetParameterValue(std::string name);
+		
+		template<typename T>
+		JParameter* SetParameter(std::string name, T val);
+
 	protected:
 	
+		std::map<std::string, JParameter*> _jparameters;
 	
 	private:
 
@@ -69,7 +80,33 @@ class JParameterManager{
 template<typename T>
 JParameter* JParameterManager::GetParameter(std::string name, T &val)
 {	
-	return NULL;
+	if( ! Exists(name) ) return NULL;
+
+	auto jpar = _jparameters[name];
+	jpar->GetValue( val );
+	return jpar;
+}		
+
+//---------------------------------
+// GetParameterValue
+//---------------------------------
+template<typename T>
+T JParameterManager::GetParameterValue(std::string name)
+{	
+	if( ! Exists(name) ) throw JException("Unknown parameter \"%s\"", name.c_str());
+
+	return _jparameters[name]->GetValue<T>();
+}		
+
+//---------------------------------
+// SetParameter
+//---------------------------------
+template<typename T>
+JParameter* JParameterManager::SetParameter(std::string name, T val)
+{	
+	if( !Exists(name) ) _jparameters[name] = new JParameter(name, val);
+
+	return _jparameters[name];
 }		
 
 #endif // _JParameterManager_h_

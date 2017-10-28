@@ -59,6 +59,7 @@ using namespace std;
 #include <JANA/JTask.h>
 #include <JANA/JException.h>
 #include <JANA/JEvent.h>
+#include <JANA/JVersion.h>
 
 
 JApplication *japp = NULL;
@@ -99,7 +100,67 @@ JApplication::JApplication(int narg, char *argv[])
 	_draining_queues = false;
 	_pmanager = NULL;
 	_rmanager = NULL;
+
+	// Loop over arguments
+	if(narg>0) _args.push_back(string(argv[0]));
+	for(int i=1; i<narg; i++){
 	
+		string arg  = argv[i];
+		string next = (i+1)<narg ? argv[i+1]:"";
+	
+		// Record arguments
+		_args.push_back( arg );
+	
+//		arg="--config=";
+//		if(!strncmp(arg, argv[i],strlen(arg))){
+//			string fname(&argv[i][strlen(arg)]);
+//			jparms->ReadConfigFile(fname);
+//			continue;
+//		}
+//		arg="--dumpcalibrations";
+//		if(!strncmp(arg, argv[i],strlen(arg))){
+//			dump_calibrations = true;
+//			continue;
+//		}
+//		arg="--dumpconfig";
+//		if(!strncmp(arg, argv[i],strlen(arg))){
+//			dump_configurations = true;
+//			continue;
+//		}
+//		arg="--listconfig";
+//		if(!strncmp(arg, argv[i],strlen(arg))){
+//			list_configurations = true;
+//			continue;
+//		}
+//		arg="--resourcereport";
+//		if(!strncmp(arg, argv[i],strlen(arg))){
+//			print_resource_report = true;
+//			continue;
+//		}
+		if( arg.find("-P") == 0 ){
+			auto pos = arg.find("=");
+			if( (pos!= string::npos) && (pos>2) ){
+				string key = arg.substr(2, pos-2);
+				string val = arg.substr(pos+1);
+				GetJParameterManager()->SetParameter(key, val);
+			}else{
+				_DBG_ << " bad parameter argument (" << arg << ") should be of form -Pkey=value" << endl;
+			}
+			continue;
+		}
+		if( arg == "--janaversion" ) {
+			cout<<"          JANA version: "<<JVersion::GetVersion()<<endl;
+			cout<<"        JANA ID string: "<<JVersion::GetIDstring()<<endl;
+			cout<<"     JANA SVN revision: "<<JVersion::GetRevision()<<endl;
+			cout<<"JANA last changed date: "<<JVersion::GetDate()<<endl;
+			cout<<"              JANA URL: "<<JVersion::GetSource()<<endl;
+			continue;
+		}
+		if( arg.find("-") == 0 )continue;
+
+		_source_names.push_back(arg);
+	}
+
 	japp = this;
 }
 
@@ -305,6 +366,8 @@ void JApplication::PrintFinalReport(void)
 		jout << string(max_len - name.length(), ' ') << name << "  " << j->GetNumEventsProcessed() << endl;
 	}
 	jout << endl;
+	jout << "Integrated Rate: " << Val2StringWithPrefix( GetIntegratedRate() ) << "Hz" << endl;
+	jout << endl;
 
 }
 
@@ -315,7 +378,7 @@ void JApplication::PrintStatus(void)
 {
 	// Print ticker
 	stringstream ss;
-	ss << " " << GetNeventsProcessed() << " events processed  " << Val2StringWithPrefix( GetInstantaneousRate() ) << "Hz (" << Val2StringWithPrefix( GetIntegratedRate() ) << "Hz avg) ";
+	ss << " " << GetNeventsProcessed() << " events processed  " << Val2StringWithPrefix( GetInstantaneousRate() ) << "Hz (" << Val2StringWithPrefix( GetIntegratedRate() ) << "Hz avg)             ";
 	jout << ss.str() << "\r";
 	jout.flush();
 }
@@ -334,6 +397,17 @@ void JApplication::Quit(void)
 //---------------------------------
 void JApplication::Run(uint32_t nthreads)
 {
+	
+	// Set number of threads
+	try{
+		string snthreads = GetJParameterManager()->GetParameterValue<string>("NTHREADS");
+		if( snthreads == "Ncores" ){
+			nthreads = GetNcores();
+		}else{
+			stringstream ss(snthreads);
+			ss >> nthreads;
+		}
+	}catch(...){}
 	if( nthreads==0 ) nthreads=1;
 
 	// Setup all queues and attach plugins
@@ -521,6 +595,8 @@ JParameterManager* JApplication::GetJParameterManager(void)
 {
 	/// Return pointer to the JParameterManager object.
 	
+	if( !_pmanager ) _pmanager = new JParameterManager();
+	
 	return _pmanager;
 }
 
@@ -639,6 +715,12 @@ uint64_t JApplication::GetNeventsProcessed(void)
 //---------------------------------
 float JApplication::GetIntegratedRate(void)
 {
+
+	// Once we start draining the queues, freez the integrated
+	// rate so it is not distorted by the wind down
+	static float last_R = 0.0;
+	if( _draining_queues ) return last_R;
+
 	auto now = std::chrono::high_resolution_clock::now();
 	uint64_t N = GetNeventsProcessed();
 	static auto start_t = now;
@@ -648,9 +730,11 @@ float JApplication::GetIntegratedRate(void)
 	float delta_t_seconds = delta_t.count();
 	float delta_N = (float)(GetNeventsProcessed() - start_N);
 
-	if( delta_t_seconds >= 0.5) return delta_N / delta_t_seconds;
+	if( delta_t_seconds >= 0.5) {
+		last_R = delta_N / delta_t_seconds;
+	}
 
-	return 0.0;
+	return last_R;
 }
 
 //---------------------------------

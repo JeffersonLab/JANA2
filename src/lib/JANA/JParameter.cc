@@ -39,13 +39,6 @@
 
 #include "JParameter.h"
 
-//---------------------------------
-// JParameter    (Constructor)
-//---------------------------------
-JParameter::JParameter()
-{
-
-}
 
 //---------------------------------
 // ~JParameter    (Destructor)

@@ -39,6 +39,8 @@
 
 #include "JParameterManager.h"
 
+using namespace std;
+
 //---------------------------------
 // JParameterManager    (Constructor)
 //---------------------------------
@@ -52,5 +54,14 @@ JParameterManager::JParameterManager()
 //---------------------------------
 JParameterManager::~JParameterManager()
 {
+	for( auto p : _jparameters ) delete p.second;
+	_jparameters.clear();
+}
 
+//---------------------------------
+// Exists
+//---------------------------------
+bool JParameterManager::Exists(string name)
+{
+	return _jparameters.count(name) != 0;
 }

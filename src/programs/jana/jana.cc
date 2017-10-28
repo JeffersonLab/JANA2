@@ -36,7 +36,7 @@ int main(int narg, char *argv[])
 	JApplication app(narg, argv);
 
 	// Run though all events, calling our event processor's methods
-	app.Run(8);
+	app.Run();
 	
 	return app.GetExitCode();
 }
