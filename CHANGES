@@ -1,4 +1,7 @@
 
+Changes in version 0.7.9p1
+- Make most private members of JGeometryXML protected
+
 Changes in version 0.7.9
 - Switch all private members of JApplication to protected to allow access
   from DApplication (specifically locks as requested by Hovanes E.)
