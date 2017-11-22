@@ -181,6 +181,7 @@ void JGeometryXML::Init(string xmlfile, string xml)
 	// Instantiate the DOM parser.
 #if XERCES3
 	parser = new XercesDOMParser();
+	parser->setCreateEntityReferenceNodes(false);
 	parser->setValidationScheme(XercesDOMParser::Val_Always);
 	parser->setValidationSchemaFullChecking(true);
 	parser->setDoSchema(true);
