@@ -84,11 +84,11 @@ class JGeometryXML:public JGeometry{
 		               void ParseXPath(string xpath, vector<node_t > &nodes, string &attribute, unsigned int &attr_depth) const;
 		               bool NodeCompare(node_iter_t iter1, node_iter_t end1, node_iter_t iter2, node_iter_t end2);
 
-	protected:
 
 	private:
 		JGeometryXML();
 		
+	protected:
 		string xmlfile;
 		bool valid_xmlfile;
 		JCalibration *jcalib;
