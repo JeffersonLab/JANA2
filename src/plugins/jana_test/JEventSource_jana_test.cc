@@ -7,15 +7,63 @@
 
 
 #include "JEventSource_jana_test.h"
-
 using namespace std;
+
+#include <JANA/JQueue.h>
+#include <JANA/JApplication.h>
+
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// JQueue subclasses
+class JQueuePrimary:public JQueue{
+	public:
+		
+		JQueuePrimary(void):JQueue("Primary", false){}
+		~JQueuePrimary(void){}
+};
+
+class JQueueSecondary:public JQueue{
+	public:
+		
+		JQueueSecondary():JQueue("Secondary", false){
+			_convert_from_types.insert( "Primary" );
+		}
+		~JQueueSecondary(){}
+		
+		int AddEvent(JEvent *jevent){
+			AddToQueue(jevent); // in a real implementation we transform this in some way
+			return 0;
+		}
+};
+
+
+class JQueueFinal:public JQueue{
+	public:
+		
+		JQueueFinal(void):JQueue("Final", false){
+			_convert_from_types.insert( "Physics Events" );
+		}
+		~JQueueFinal(void){}
+		
+		int AddEvent(JEvent *jevent){
+			AddToQueue(jevent); // in a real implementation we transform this in some way
+			return 0;
+		}
+};
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 
 //----------------
 // Constructor
 //----------------
 JEventSource_jana_test::JEventSource_jana_test(const char* source_name):JEventSource(source_name)
 {
-	// open event source (e.g. file) here
+	// Create 2 JQueues in the JApplication
+	japp->AddJQueue( new JQueuePrimary() );
+	japp->AddJQueue( new JQueueSecondary() );
+	japp->AddJQueue( new JQueueFinal() );
+
+
+
 }
 
 //----------------
@@ -56,6 +104,8 @@ void JEventSource_jana_test::FreeEvent(JEvent &event)
 	// If memory was allocated in GetEvent, it can be freed here. This
 	// would typically be done by using event.GetRef() and casting the
 	// returned void* into the proper pointer type so it can be deleted.
+	
+	delete &event;
 }
 
 //----------------

@@ -44,6 +44,7 @@
 #include <cstdint>
 #include <vector>
 #include <string>
+#include <mutex>
 #include <map>
 using std::vector;
 using std::string;
@@ -62,6 +63,8 @@ extern std::mutex DBG_MUTEX;
 
 #define jout cout
 #define jerr cerr
+
+#include <JANA/JParameterManager.h>
 
 class JApplication;
 class JEventProcessor;
@@ -102,6 +105,7 @@ class JApplication{
 		void SetTicker(bool ticker_on=true);
 		void Stop(void);
 		
+		void AddEventSource(std::string source_name);
 		void AddJEventProcessor(JEventProcessor *processor);
 		void AddJEventSource(JEventSource *source);
 		void AddJEventSourceGenerator(JEventSourceGenerator *source_generator);
@@ -130,6 +134,8 @@ class JApplication{
 		void GetInstantaneousRates(vector<double> &rates_by_queue);
 		void GetIntegratedRates(map<string,double> &rates_by_thread);
 		
+		void OpenNext(void);
+		
 		void RemoveJEventProcessor(JEventProcessor *processor);
 		void RemoveJEventSource(JEventSource *source);
 		void RemoveJEventSourceGenerator(JEventSourceGenerator *source_generator);
@@ -137,6 +143,7 @@ class JApplication{
 		void RemovePlugin(string &plugin_name);
 
 		string Val2StringWithPrefix(float val);
+		template<typename T> T GetParameterValue(std::string name);
 
 	protected:
 	
@@ -153,6 +160,10 @@ class JApplication{
 		vector<JFactoryGenerator*> _factoryGenerators;
 		vector<JCalibrationGenerator*> _calibrationGenerators;
 		vector<std::string> _source_names;
+		vector<JEventSource*> _sources_active;
+		vector<JEventSource*> _sources_exhausted;
+		std::mutex _source_mutex;
+		std::atomic<bool> _all_sources_opened;
 		JParameterManager *_pmanager;
 		JResourceManager *_rmanager;
 	
@@ -162,6 +173,17 @@ class JApplication{
 	private:
 
 };
+
+//---------------------------------
+// GetParameterValue
+//---------------------------------
+template<typename T>
+T JApplication::GetParameterValue(std::string name)
+{	
+	/// This is a convenience function that just calls the method
+	/// of the same name in JParameterManager.	
+	return GetJParameterManager()->GetParameterValue<T>(name);
+}		
 
 extern JApplication *japp;
 

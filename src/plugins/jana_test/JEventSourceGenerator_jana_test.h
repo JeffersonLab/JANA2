@@ -14,7 +14,7 @@
 
 class JEventSourceGenerator_jana_test: public JEventSourceGenerator{
 	public:
-		JEventSourceGenerator_jana_test(){}
+		JEventSourceGenerator_jana_test():JEventSourceGenerator("jana_test"){}
 		virtual ~JEventSourceGenerator_jana_test(){}
 		virtual const char* className(void){return static_className();}
 		static const char* static_className(void){return "JEventSourceGenerator_jana_test";}

@@ -39,10 +39,12 @@
 
 #include "JEventSourceGenerator.h"
 
+using namespace std;
+
 //---------------------------------
 // JEventSourceGenerator    (Constructor)
 //---------------------------------
-JEventSourceGenerator::JEventSourceGenerator()
+JEventSourceGenerator::JEventSourceGenerator(std::string name):_name(name)
 {
 
 }
@@ -53,4 +55,12 @@ JEventSourceGenerator::JEventSourceGenerator()
 JEventSourceGenerator::~JEventSourceGenerator()
 {
 
+}
+
+//---------------------------------
+// GetName
+//---------------------------------
+string JEventSourceGenerator::GetName(void)
+{
+	return _name;
 }

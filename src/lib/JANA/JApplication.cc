@@ -100,6 +100,7 @@ JApplication::JApplication(int narg, char *argv[])
 	_draining_queues = false;
 	_pmanager = NULL;
 	_rmanager = NULL;
+	_all_sources_opened = false;
 
 	// Loop over arguments
 	if(narg>0) _args.push_back(string(argv[0]));
@@ -400,7 +401,7 @@ void JApplication::Run(uint32_t nthreads)
 	
 	// Set number of threads
 	try{
-		string snthreads = GetJParameterManager()->GetParameterValue<string>("NTHREADS");
+		string snthreads = GetParameterValue<string>("NTHREADS");
 		if( snthreads == "Ncores" ){
 			nthreads = GetNcores();
 		}else{
@@ -496,6 +497,20 @@ void JApplication::Stop(void)
 void JApplication::AddJEventProcessor(JEventProcessor *processor)
 {
 	
+}
+
+//---------------------------------
+// AddEventSource
+//---------------------------------
+void JApplication::AddEventSource(std::string source_name)
+{
+	/// Add the named event source to the list of event sources to read from.
+	/// Usually, these are taken from the command line, but this allows cutom
+	/// plugins to add a source programmatically. This will be added to the end
+	/// of the current list of source names (i.e. after any entered on the
+	/// command line.)
+	
+	_source_names.push_back(source_name);
 }
 
 //---------------------------------
@@ -629,27 +644,158 @@ bool JApplication::GetAllQueuesEmpty(void)
 //---------------------------------
 void JApplication::GetNextEvent(void)
 {
+	/// Read in a JEvent from one of the active sources. If there are
+	/// no active sources, open the next source. If all sources have
+	/// been exhausted, then the JApplication will be flagged to quit
+	/// and a JException will be thrown.
+
+	// This is designed to allow multiple threads to read from multiple
+	// input streams simultaneously. It uses atomics to avoid mutex locking
+	// where possible. This does complicate things a bit so here goes an
+	// explanation:
+	//
+	// 1. The _sources_active container is sized to hold the maximum number
+	// of simultaneous event streams. Each element will contain either a NULL
+	// pointer or a pointer to a valid JEventSource object.
+	//
+	// 2. This will first look for a non-NULL value in _active_sources. If
+	// one is found, it will try and claim exclusive use via its _in_use
+	// atomic member. If it obtains that, then it will either read an
+	// event from it, or, if there are no more events, set the slot in
+	// _actve_sources to NULL indicating it can be filled by another source.
+	// The exhausted pointer is then added to the _sources_exhausted container.
+	//
+	// 3. If exclusive use of a source cannot be obtained and there is at
+	// least one NULL pointer in _active_sources, then OpenNext() will be
+	// called. That will lock a mutex while creating a new JEventSource
+	// and placing it in the _active_sources queue.
+	//
+	// Mutexes are only used when:
+	//
+	// A. creating a new JEventSource and writing it into _active_sources
+	//
+	// B. writing an exhausted JEventSource into _sources_exhausted 
+	//
+	// Both of those should happen infrequently. Most calls to this should
+	// result in either an event being read in or nothing at all happening.
+	// Most of the time only accesses to a few atomic variables will occur.
+	
+	uint32_t islot = 0;
+	bool has_null_slot = false;
+	for(auto src : _active_sources){
+		if( src != nullptr ){
+			bool tmp = false;
+			if( src->_in_use.compare_exchange_weak(tmp, true) ){
+				// We now have exclusive use of src
+				if( src->IsDone() ){
+					// No more events in this source. Retire it.
+					_active_sources[islot] = nullptr;
+					lock_guard<mutex> lguard(_sources_exhausted_mutex);
+					_sources_exhausted.push_back( src );
+				} else {
+					try{
+						// Read event from this source
+						switch( src->GetEvent() ){
+							case JEventSource::kSUCCESS:
+							case JEventSource::kNO_MORE_EVENTS:
+								// Not throwing an exception here will cause the calling
+								// JThread to immediately cycle back to start of Loop 
+								// without sleeping.
+								break;
+							case JEventSource::kTRY_AGAIN:
+								// This will cause the calling JThread to sleep briefly
+								src->_in_use.store( false );
+								throw JException("source stalled. try again.");
+								break;
+						}
+					}catch(...){
+						// There was a problem reading from this source.
+						// Make sure it is flagged as done so it will be
+						// cleaned up on a subsequent call.
+						src->SetDone(true);
+					}
+				}
+				
+				// Free the _in_use flag
+				src->_in_use.store( false );
+				
+				// At this point we have either read in an event or changed
+				// the state of a source.
+				return;
+			}
+		}else{
+			has_null_slot = true; 
+		}
+		islot++;
+	}
+	
+	// If we get here then we were not able to get exclusive use of an existing
+	// source object. If there are no empty slots then we are waiting on other
+	// threads to read in events. Throw an exception to cause the calling JThread
+	// to sleep breifly before trying again.
+	if( !has_null_slot ) throw JException("thread stalled waiting for event");
+	
+	// There was and possibly still is at least one empty slot for an event source.
+	// Try opening the next source.
+	OpenNext();
+
+
+
+//	try{
+//		switch( OpenNext() ){
+//			case kSUCCESS:
+//			case kNO_SOURCE_SLOTS_AVAILABLE:
+//			case kNO_MORE_SOURCES
+//				break;
+//			case kNO_MORE_SOURCES:
+//		}
+//	}catch(JException &e){
+//		throw 
+//	}
+
+	
+	// If all slots in _active_sources are either NULL, or have a source
+	// in use by another thread, then OpenNext() will be called. This will
+
 	/// Read the next JEvent from the current event source
 	/// or open a new one if needed. The JEventSource object
 	/// itself will place the event in the appropriate JQueue.
 	/// Note that this may cause new JQueue objects to be
 	/// created from the JEventSource subclass constructor.
 	/// If no more events are available from the last event
-	/// source, then the JApplication will be flagged to quit
-	/// and a JException will be thrown.
+	/// source, 
 
-	JQueue *queue = GetJQueue("Physics Events");
-	if( (queue!=NULL) && (queue->GetNumEventsProcessed()<10000000) ){
-		queue->AddToQueue( new JEvent() );
-		return;
-	}
+	// This mutex allows us to manipulate the current source or
+	// _sources vector if needed. A source may still implement
+	// multi-threaded input (e.g. from multiple independant streams)
+	// but would need to do so at the JQueue level rather than
+	// the JApplication level.
+//	lock_guard<mutex> lg_source(_source_mutex);
+//	
+//	try{
+//		if( _sources.empty() || _sources.back()->IsDone() ) OpenNext();
+//		
+//		// The following may fail if there are no more events, but
+//		// the IsDone flag was not set yet.
+//		// It should be the responsibility of the JEventSource subclass
+//		// to pick the right queue and place the events in there.
+////		_sources.back()->GetEvent();
+//		
+//	}catch(...){
+//		// No more events and no more sources. Set flag to drain
+//		// all queues by processing all remaining events and then
+//		// quit the program. Throw exception to tell calling JThread
+//		// to continue processing events from queues
+//		_draining_queues = true;
+//		throw JException("No more event sources");	
+//	}
+
+//	JQueue *queue = GetJQueue("Physics Events");
+//	if( (queue!=NULL) && (queue->GetNumEventsProcessed()<100000000) ){
+//		queue->AddToQueue( new JEvent() );
+//		return;
+//	}
 	
-	// No more events and no more sources. Set flag to drain
-	// all queues by processing all remaining events and then
-	// quit the program. Throw exception to tell calling JThread
-	// to continue processing events from queues
-	_draining_queues = true;
-	throw JException("No more event sources");	
 }
 
 //---------------------------------
@@ -775,6 +921,102 @@ void JApplication::GetInstantaneousRates(vector<double> &rates_by_queue)
 void JApplication::GetIntegratedRates(map<string,double> &rates_by_thread)
 {
 	
+}
+
+//---------------------------------
+// OpenNext
+//---------------------------------
+void JApplication::OpenNext(void)
+{
+	/// Try opening the next source in the list. This will return immediately
+	/// if all sources have already been opened.
+
+
+	if( _all_sources_opened ) return;
+
+//	/// Open the next source in the list. If there are none,
+//	/// then throw a JException
+//	
+//	static mutex src_mutex;
+//	lock_guard<mutex>(src_mutex);
+//
+//	if(_sources.size() >= _source_names.size()) throw JException("No more sources");
+//	string source_name = _source_names[_sources.size()];
+//	current_source = NULL;
+//	
+//	// Check if the user has forced a specific type of event source
+//	// be used via the EVENT_SOURCE_TYPE config. parameter. If so,
+//	// search for that source and use it. Otherwise, throw an exception.
+//	JEventSourceGenerator* gen = NULL;
+//	try{
+//		string EVENT_SOURCE_TYPE = GetParameterValue<string>("EVENT_SOURCE_TYPE");
+//		for( auto sg : _eventSourceGenerators ){
+//			if( sg->GetName() == EVENT_SOURCE_TYPE ){
+//				gen = sg;
+//				jout << "Forcing use of event source type: " << EVENT_SOURCE_TYPE << endl;
+//				break;
+//			}
+//		}
+//		if(!gen){
+//			jerr << endl;
+//			jerr << "-----------------------------------------------------------------" << endl;
+//			jerr << " You specified event source type \"" << EVENT_SOURCE_TYPE << "\"" << endl;
+//			jerr << " be used to read the event sources but no such type exists." << endl;
+//			jerr << " Here is a list of available source types:" << endl;
+//			jerr << endl;
+//			for( auto sg : _eventSourceGenerators ) jerr << "   " << sg->GetName() << endl;
+//			jerr << endl;
+//			jerr << "-----------------------------------------------------------------" << endl;
+//			SetExitCode(-1);
+//			Quit();
+//		}
+//	}catch(...){}
+//	
+//	if(!gen){
+//	
+//		// Loop over JEventSourceGenerator objects and find the one
+//		// (if any) that has the highest chance of being able to read
+//		// this source. The return value of 
+//		// JEventSourceGenerator::CheckOpenable(source) is a liklihood that
+//		// the named source can be read by the JEventSource objects
+//		// created by the generator. In most cases, the liklihood will
+//		// be either 0.0 or 1.0. In the case that 2 or more generators return
+//		// equal liklihoods, the first one in the list will be used.
+//		double liklihood = 0.0;
+//		for( auto sg : _eventSourceGenerators ){
+//			double my_liklihood = sg->CheckOpenable(source_name);
+//			if(my_liklihood > liklihood){
+//				liklihood = my_liklihood;
+//				gen = sg;
+//			}
+//		}
+//	}
+//	
+//	if(gen != NULL){
+//		jout << "Opening source \"" << source_name << "\" of type: "<< gen->Description() << endl;
+//		current_source = gen->MakeJEventSource(source_name);
+//	}
+//
+//	if(!current_source){
+//		jerr<<endl;
+//		jerr<<"  xxxxxxxxxxxx  Unable to open event source \""<<source_name<<"\"!  xxxxxxxxxxxx"<<endl;
+//		jerr<<endl;
+//		if(sources.size()+1 == source_names.size()){
+//			unsigned int Nnull_sources = 0;
+//			for(unsigned int i=0; i<sources.size(); i++){
+//				if(sources[i] == NULL)Nnull_sources++;
+//			}
+//			if( (Nnull_sources==sources.size()) && (Nsources_deleted==0) ){
+//				jerr<<"   xxxxxxxxxxxx  NO VALID EVENT SOURCES GIVEN !!!   xxxxxxxxxxxx  "<<endl;
+//				jerr<<endl;
+//				SetExitCode(-1);
+//				Quit();
+//			}
+//		}
+//	}
+//	
+//	// Add source to list (even if it's NULL!)
+//	sources.push_back(current_source);
 }
 
 //---------------------------------

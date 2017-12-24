@@ -51,8 +51,13 @@ class JEventSource{
 		JEventSource(std::string name);
 		virtual ~JEventSource();
 		
+		virtual bool IsDone();
+		
+		void SetDone(bool done = true);
+		
 	protected:
 	
+		bool _done;
 	
 	private:
 

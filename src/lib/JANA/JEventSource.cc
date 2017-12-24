@@ -56,3 +56,21 @@ JEventSource::~JEventSource()
 {
 
 }
+
+//---------------------------------
+// IsDone
+//---------------------------------
+bool JEventSource::IsDone()
+{
+	return _done;
+}
+
+//---------------------------------
+// SetDone
+//---------------------------------
+void JEventSource::SetDone(bool done)
+{
+	_done = done;
+}
+
+

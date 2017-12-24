@@ -67,7 +67,8 @@ JThread::JThread(JApplication *app):_run_state(kRUN_STATE_INITIALIZING)
 //---------------------------------
 JThread::~JThread()
 {
-
+//extern void WriteBuff(void);
+//WriteBuff();
 }
 
 //---------------------------------
@@ -277,15 +278,14 @@ void JThread::Loop(void)
 					// 1. We have exhausted all events from all sources and
 					//    JApplication has told or will soon tell all JThreads
 					//    to end.
+					//
 					// 2. We are reading from a live stream and there are currently
 					//    no events available, but some may still come so we
 					//    need to go idle.
 					//
-					// Note that with the short sleep cycle below, we could end
-					// up with all threads rapidly and repeatedly calling 
-					// GetNextEvent. It is up to JApplication to ensure that
-					// those calls return quickly for all but the one thread that
-					// is actually trying to read the next event.
+					// In either case, we fall down to the sleep call below before
+					// executing the loop again. The only way to avoid the sleep call
+					// is for the above GetNextEvent() call to have succeeded.
 				}
 			}
 		}

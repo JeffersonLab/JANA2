@@ -42,6 +42,56 @@
 
 #include "JQueue.h"
 
+//++++++++++++++++++++++++++++++++++++++++++++++++
+//#include <fstream>
+//using namespace std;
+//typedef struct{
+//	uint32_t type;
+//	uint32_t id;
+//	uint32_t iwrite;
+//	uint32_t iread;
+//	uint32_t iend;
+//	uint32_t idx;
+//	uint32_t inext;
+//	uint64_t ptr;
+//}buff_t;
+//std::atomic<int> jthread_id(0);
+//thread_local uint32_t tid;
+//thread_local uint32_t cnt = 0;
+//thread_local buff_t* BUFF = NULL;
+//
+//void AddBuff(uint32_t type, uint32_t iwrite, uint32_t iread, uint32_t iend, uint32_t idx, uint32_t inext, uint64_t ptr){
+//	if(cnt>=1000) return;
+//	if(!BUFF) {
+//		BUFF = new buff_t[1000];
+//		tid = jthread_id++;
+//	}
+//	buff_t *buff = &BUFF[cnt++];
+//	buff->type = type;
+//	buff->id = tid;
+//	buff->iwrite = iwrite;
+//	buff->iread = iread;
+//	buff->iend = iend;
+//	buff->idx = idx;
+//	buff->inext = inext;
+//	buff->ptr = ptr;
+//}
+//
+//// Called from JThread destructor
+//void WriteBuff(void){
+//	char fname[100];
+//	sprintf(fname, "ringbuff_%d.out", tid);
+//	ofstream ofs(fname);
+//	for(int i=0; i<1000; i++){
+//		buff_t *b = &BUFF[i];
+//		ofs << tid << "," << b->type << "," << b->iwrite << "," << b->iread << "," << b->iend << "," << b->ptr <<endl;
+//	}
+//	ofs.close();
+//}
+//
+//++++++++++++++++++++++++++++++++++++++++++++++++
+
+
 using namespace std;
 
 //---------------------------------
@@ -123,15 +173,15 @@ int JQueue::AddToQueue(JEvent *jevent)
 
 	while(!_done){
 
-		lock_guard<mutex> lguard(_mutex); // should be able to get rid of this
-
 		uint32_t idx = iwrite;
 		uint32_t inext = (idx+1)%_queue.size();
 		if( inext == iread ) return kQUEUE_FULL;
 		if( iwrite.compare_exchange_weak(idx, inext) ){
 			_queue[idx] = jevent;
+			uint32_t save_idx = idx;
 			while( !_done ){
 				if( iend.compare_exchange_weak(idx, inext) ) break;
+				idx = save_idx;
 			}
 			break;
 		}
@@ -181,15 +231,13 @@ JEvent* JQueue::GetEvent(void)
 
 	while(!_done){
 
-		lock_guard<mutex> lguard(_mutex); // should be able to get rid of this
-
 		uint32_t idx = iread;
 		if( idx == iend ) return NULL;
-		JEvent *Event = _queue[idx];
+		JEvent *jevent = _queue[idx];
 		uint32_t inext = (idx+1)%_queue.size();
 		if( iread.compare_exchange_weak(idx, inext) ){
-			_nevents_processed++;
-			return Event;
+				_nevents_processed++;
+				return jevent;
 		}
 	}
 	

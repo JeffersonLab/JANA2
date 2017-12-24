@@ -44,13 +44,17 @@
 #ifndef _JEventSourceGenerator_h_
 #define _JEventSourceGenerator_h_
 
+#include <string>
+
 class JEventSourceGenerator{
 	public:
-		JEventSourceGenerator();
+		JEventSourceGenerator(std::string name);
 		virtual ~JEventSourceGenerator();
 		
+		std::string GetName(void);
+		
 	protected:
-	
+		std::string _name;
 	
 	private:
 
