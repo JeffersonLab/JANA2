@@ -45,15 +45,28 @@
 #define _JEventSource_h_
 
 #include <string>
+#include <atomic>
 
 class JEventSource{
 	public:
+	
+		enum RETURN_STATUS{
+			kSUCCESS,
+			kNO_MORE_EVENTS,
+			kTRY_AGAIN,
+			kUNKNOWN
+		};
+	
+		std::atomic<bool> _in_use;
+
 		JEventSource(std::string name);
 		virtual ~JEventSource();
 		
+		virtual RETURN_STATUS GetEvent(void){ return kSUCCESS; }
 		virtual bool IsDone();
 		
 		void SetDone(bool done = true);
+
 		
 	protected:
 	

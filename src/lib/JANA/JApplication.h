@@ -44,6 +44,7 @@
 #include <cstdint>
 #include <vector>
 #include <string>
+#include <atomic>
 #include <mutex>
 #include <map>
 using std::vector;
@@ -162,7 +163,7 @@ class JApplication{
 		vector<std::string> _source_names;
 		vector<JEventSource*> _sources_active;
 		vector<JEventSource*> _sources_exhausted;
-		std::mutex _source_mutex;
+		std::mutex _sources_exhausted_mutex;
 		std::atomic<bool> _all_sources_opened;
 		JParameterManager *_pmanager;
 		JResourceManager *_rmanager;

@@ -682,14 +682,14 @@ void JApplication::GetNextEvent(void)
 	
 	uint32_t islot = 0;
 	bool has_null_slot = false;
-	for(auto src : _active_sources){
+	for(auto src : _sources_active){
 		if( src != nullptr ){
 			bool tmp = false;
 			if( src->_in_use.compare_exchange_weak(tmp, true) ){
 				// We now have exclusive use of src
 				if( src->IsDone() ){
 					// No more events in this source. Retire it.
-					_active_sources[islot] = nullptr;
+					_sources_active[islot] = nullptr;
 					lock_guard<mutex> lguard(_sources_exhausted_mutex);
 					_sources_exhausted.push_back( src );
 				} else {
@@ -707,6 +707,11 @@ void JApplication::GetNextEvent(void)
 								src->_in_use.store( false );
 								throw JException("source stalled. try again.");
 								break;
+							default:
+								src->_in_use.store( false );
+								throw JException("Unknown response from event source.");
+								break;
+								
 						}
 					}catch(...){
 						// There was a problem reading from this source.
