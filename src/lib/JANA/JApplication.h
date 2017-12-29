@@ -45,10 +45,12 @@
 #include <vector>
 #include <string>
 #include <atomic>
+#include <deque>
 #include <mutex>
 #include <map>
 using std::vector;
 using std::string;
+using std::deque;
 using std::map;
 
 #ifndef _DBG__
@@ -62,8 +64,8 @@ extern std::mutex DBG_MUTEX;
 #define _DBG_ _DBG_LOCK_;std::cerr<<__FILE__<<":"<<__LINE__<<" "
 #endif
 
-#define jout cout
-#define jerr cerr
+#define jout std::cout
+#define jerr std::cerr
 
 #include <JANA/JParameterManager.h>
 
@@ -123,6 +125,7 @@ class JApplication{
 		JQueue* GetJQueue(const string &name);
 		JParameterManager* GetJParameterManager(void);
 		JResourceManager* GetJResourceManager(void);
+		void GetJThreads(vector<JThread*> &threads);
 		
 		bool GetAllQueuesEmpty(void);
 		void GetNextEvent(void);
@@ -152,19 +155,20 @@ class JApplication{
 		int _exit_code;
 		bool _quitting;
 		bool _draining_queues;
-		vector<string> _plugins;
-		vector<string> _plugin_paths;
-		vector<void*> _sohandles;
-		vector<JQueue*> _jqueues;
-		vector<JThread*> _jthreads;
-		vector<JEventSourceGenerator*> _eventSourceGenerators;
-		vector<JFactoryGenerator*> _factoryGenerators;
-		vector<JCalibrationGenerator*> _calibrationGenerators;
-		vector<std::string> _source_names;
-		vector<JEventSource*> _sources_active;
-		vector<JEventSource*> _sources_exhausted;
+		std::vector<string> _plugins;
+		std::vector<string> _plugin_paths;
+		std::vector<void*> _sohandles;
+		std::vector<JQueue*> _jqueues;
+		std::vector<JThread*> _jthreads;
+		std::vector<JEventSourceGenerator*> _eventSourceGenerators;
+		std::vector<JFactoryGenerator*> _factoryGenerators;
+		std::vector<JCalibrationGenerator*> _calibrationGenerators;
+		std::vector<std::string> _source_names;
+		std::deque<std::string> _source_names_unopened;
+		std::vector<JEventSource*> _sources_active;
+		std::vector<JEventSource*> _sources_exhausted;
 		std::mutex _sources_exhausted_mutex;
-		std::atomic<bool> _all_sources_opened;
+		std::mutex _sources_open_mutex;
 		JParameterManager *_pmanager;
 		JResourceManager *_rmanager;
 	

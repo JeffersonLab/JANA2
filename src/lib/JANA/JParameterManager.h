@@ -41,6 +41,9 @@
 //
 //
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+#include <JANA/JApplication.h>
+
 #ifndef _JParameterManager_h_
 #define _JParameterManager_h_
 
@@ -49,6 +52,9 @@
 
 #include <JANA/JParameter.h>
 #include <JANA/JException.h>
+
+class JParameterManager;
+extern JParameterManager *gPARMS;
 
 class JParameterManager{
 	public:
@@ -63,6 +69,9 @@ class JParameterManager{
 		template<typename T>
 		T GetParameterValue(std::string name);
 		
+		template<typename K, typename V>
+		JParameter* SetDefaultParameter(K key, V& val, std::string description="");
+
 		template<typename T>
 		JParameter* SetParameter(std::string name, T val);
 
@@ -99,12 +108,121 @@ T JParameterManager::GetParameterValue(std::string name)
 }		
 
 //---------------------------------
+// SetDefaultParameter
+//---------------------------------
+template<typename K, typename V>
+JParameter* JParameterManager::SetDefaultParameter(K key, V &val, std::string description)
+{
+	/// Retrieve a configuration parameter, creating it if necessary.
+	///
+	/// Upon entry, the value in "val" should be set to the desired default value. It
+	/// will be overwritten if a value for the parameter already exists because
+	/// it was given by the user either on the command line or in a configuration
+	/// file.
+	///
+	/// If the parameter does not already exist, it is created and its value set
+	/// to that of "val".
+	///
+	/// Upon exit, "val" will always contain the value that should be used for event
+	/// processing.
+	///
+	/// If a parameter with the given name already exists, it will be checked to see
+	/// if the parameter already has a default value assigned (this is kept separate
+	/// from the actual value of the parameter used and is maintained purely for
+	/// bookkeeping purposes). If it does not have a default value, then the value
+	/// of "val" upon entry is saved as the default. If it does have a default, then
+	/// the value of the default is compared to the value of "val" upon entry. If the
+	/// two do not match, then a warning message is printed to indicate to the user
+	/// that two different default values are being set for this parameter.
+	///
+	/// Parameters specified on the command line using the "-Pkey=value" syntax will
+	/// not have a default value at the time the parameter is created.
+	///
+	/// This should be called after the JApplication object has been initialized so
+	/// that parameters can be created from any command line options the user may specify.
+
+	return SetParameter(key, val);
+	
+#if 0
+	string skey(key); // (handle const char* or string)
+	stringstream ss;
+	ss << std::setprecision(15) << val;
+	string sval = ss.str();
+	
+	pthread_mutex_lock(&parameter_mutex);
+	
+	JParameter *p = GetParameterNoLock(key);
+	if(p != NULL){
+		// Parameter exists
+		
+		// Copy value into user's variable using stringstream for conversion
+		p->GetValue(val);
+		
+		// Warn user if two different default values are set
+		if(p->hasdefault && (sval != p->GetDefault()) ){
+			jout<<" WARNING: Multiple calls to SetDefaultParameter with key=\""
+			<<key<<"\" value= \""<<p->GetDefault()<<"\" and \""<<sval<<"\""<<std::endl;
+			jout<<"        : (\""<<sval<<"\" will be used for the default.)"<<std::endl;
+		}
+		
+		if(!p->hasdefault){
+			// Parameters set from the command line will have the
+			// wrong data type since SetParameter will have been called
+			// with a string type for the value. If a default has not
+			// been set already for this parameter, then we assume the
+			// currently set data type is invalid and we replace it with
+			// the type specified in this call.
+			p->type = JParameter::DataType(val);
+		}		
+	}else{
+		// Parameter doesn't exist. Create it.
+		p = new JParameter(skey, sval);
+		parameters.push_back(p);
+		p->type = JParameter::DataType(val);
+		
+		// We want the value used by this thread to be exactly the same as the
+		// the value for susequent threads. Since they will get a value that has
+		// been converted to/from a string, we need to do this here as well.
+		V save_val = val;
+		p->GetValue(val);
+		
+		// Warn the user if the conversion ends up changing the value
+		if(val != save_val){
+			// Use dedicated stringstream objects to convert using high precision
+			// to avoid changing the prescision setting of jerr
+			stringstream ss_bef;
+			stringstream ss_aft;
+			ss_bef << std::setprecision(15) << save_val;
+			ss_aft << std::setprecision(15) << val;
+		
+			jerr<<" WARNING! The value for "<<skey<<" is changed while storing and retrieving parameter default"<<std::endl;
+			jerr<<"          before conversion:"<< ss_bef.str() << std::endl;
+			jerr<<"          after  conversion:"<< ss_aft.str() << std::endl;
+		}
+	}
+	
+	// Set the default value and description for this parameter
+	p->SetDefault(sval);
+	p->SetDescription(description);
+	
+	// release the parameters mutex
+	pthread_mutex_unlock(&parameter_mutex);
+
+	return p;
+#endif
+}
+
+//---------------------------------
 // SetParameter
 //---------------------------------
 template<typename T>
 JParameter* JParameterManager::SetParameter(std::string name, T val)
 {	
-	if( !Exists(name) ) _jparameters[name] = new JParameter(name, val);
+	if( !Exists(name) ) {
+		_jparameters[name] = new JParameter(name, val);
+	}else{
+		_DBG_<<"  FIXME!!!!!!" << std::endl;
+	}
 
 	return _jparameters[name];
 }		

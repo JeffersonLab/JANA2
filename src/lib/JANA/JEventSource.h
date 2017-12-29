@@ -47,6 +47,8 @@
 #include <string>
 #include <atomic>
 
+#include <JANA/JEvent.h>
+
 class JEventSource{
 	public:
 	
@@ -62,7 +64,7 @@ class JEventSource{
 		JEventSource(std::string name);
 		virtual ~JEventSource();
 		
-		virtual RETURN_STATUS GetEvent(void){ return kSUCCESS; }
+		virtual RETURN_STATUS GetEvent(void){ return kUNKNOWN; }
 		virtual bool IsDone();
 		
 		void SetDone(bool done = true);

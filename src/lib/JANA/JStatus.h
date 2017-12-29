@@ -1,7 +1,7 @@
 //
-//    File: JParameterManager.cc
-// Created: Thu Oct 12 08:16:11 EDT 2017
-// Creator: davidl (on Darwin harriet.jlab.org 15.6.0 i386)
+//    File: JStatus.h
+// Created: Wed Dec 27 18:08:16 EST 2017
+// Creator: davidl (on Darwin harriet 15.6.0 i386)
 //
 // ------ Last repository commit info -----
 // [ Date ]
@@ -36,34 +36,67 @@
 // OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+//
+// Description:
+//
+//
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+#ifndef _JStatus_h_
+#define _JStatus_h_
 
-#include "JParameterManager.h"
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
-using namespace std;
+#include <string>
+#include <sstream>
 
-JParameterManager *gPARMS = nullptr;
+#include <JANA/JApplication.h>
 
-//---------------------------------
-// JParameterManager    (Constructor)
-//---------------------------------
-JParameterManager::JParameterManager()
-{
-	gPARMS = this;
-}
+class JStatus;
+extern JStatus *gJSTATUS;
 
-//---------------------------------
-// ~JParameterManager    (Destructor)
-//---------------------------------
-JParameterManager::~JParameterManager()
-{
-	for( auto p : _jparameters ) delete p.second;
-	_jparameters.clear();
-}
+class JStatus{
+	public:
 
-//---------------------------------
-// Exists
-//---------------------------------
-bool JParameterManager::Exists(string name)
-{
-	return _jparameters.count(name) != 0;
-}
+		//---------------------------------
+		// Report
+		//---------------------------------
+		static void Report(void){
+		
+			/// Static method used to generate and write the current status of the JANA process
+			/// to the named pipe. On the first call, this will create a JStatus object and
+			/// create the named pipe (see JANA::STATUS_FNAME for name). Subsequent calls
+			/// will open the pipe, write to it, and close it. This is generally called when
+			/// the process receives a USR1 signal. Typically, if a single JANA process is
+			/// running on the node, then one can issue a "killall <progname> -USR1" and then
+			/// do a "cat /tmp/jana_status" to see the report.
+		
+			// Create a JStatus object if one does not already exist
+			if( gJSTATUS == nullptr ) new JStatus();
+
+			// Generate a report
+			std::stringstream ss;
+			gJSTATUS->GenerateReport( ss );
+			gJSTATUS->SendReport( ss );
+
+		}
+		
+		static void RecordBackTrace(void);
+		
+		void GenerateReport(std::stringstream &ss);
+		void SendReport(std::stringstream &ss);
+		
+	protected:
+		
+		JStatus();
+		virtual ~JStatus();
+
+		std::string path;
+
+};
+
+
+#endif // _JStatus_h_
+

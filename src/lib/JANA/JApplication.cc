@@ -60,6 +60,7 @@ using namespace std;
 #include <JANA/JException.h>
 #include <JANA/JEvent.h>
 #include <JANA/JVersion.h>
+#include <JANA/JStatus.h>
 
 
 JApplication *japp = NULL;
@@ -86,6 +87,23 @@ void ctrlCHandle(int x)
 	}
 }
 
+//-----------------------------------------------------------------
+// USR1Handle
+//-----------------------------------------------------------------
+void USR1Handle(int x)
+{
+	thread th( JStatus::Report );
+	th.detach();
+}
+
+//-----------------------------------------------------------------
+// USR2Handle
+//-----------------------------------------------------------------
+void USR2Handle(int x)
+{
+	JStatus::RecordBackTrace();
+}
+
 
 //---------------------------------
 // JApplication    (Constructor)
@@ -94,13 +112,16 @@ JApplication::JApplication(int narg, char *argv[])
 {
 	// Set up to catch SIGINTs for graceful exits
 	signal(SIGINT,ctrlCHandle);
+
+	// Set up to catch USR1's and USR2's for status reporting
+	signal(SIGUSR1,USR1Handle);
+	signal(SIGUSR2,USR2Handle);
 	
 	_exit_code = 0;
 	_quitting = false;
 	_draining_queues = false;
 	_pmanager = NULL;
 	_rmanager = NULL;
-	_all_sources_opened = false;
 
 	// Loop over arguments
 	if(narg>0) _args.push_back(string(argv[0]));
@@ -161,6 +182,8 @@ JApplication::JApplication(int narg, char *argv[])
 
 		_source_names.push_back(arg);
 	}
+	
+	for(auto s : _source_names) _source_names_unopened.push_back(s);
 
 	japp = this;
 }
@@ -345,6 +368,9 @@ void JApplication::Initialize(void)
 	
 	// Attach all plugins
 	AttachPlugins();
+	
+	// Create slots for as many sources as we can have open simultaneously
+	_sources_active.push_back(nullptr);
 }
 
 //---------------------------------
@@ -626,6 +652,17 @@ JResourceManager* JApplication::GetJResourceManager(void)
 }
 
 //---------------------------------
+// GetJThreads
+//---------------------------------
+void JApplication::GetJThreads(vector<JThread*> &threads)
+{
+	/// Copy list of the pointers to all JThread objects into
+	/// provided container.
+
+	threads = _jthreads;
+}
+
+//---------------------------------
 // GetAllQueuesEmpty
 //---------------------------------
 bool JApplication::GetAllQueuesEmpty(void)
@@ -679,7 +716,7 @@ void JApplication::GetNextEvent(void)
 	// Both of those should happen infrequently. Most calls to this should
 	// result in either an event being read in or nothing at all happening.
 	// Most of the time only accesses to a few atomic variables will occur.
-	
+
 	uint32_t islot = 0;
 	bool has_null_slot = false;
 	for(auto src : _sources_active){
@@ -936,92 +973,105 @@ void JApplication::OpenNext(void)
 	/// Try opening the next source in the list. This will return immediately
 	/// if all sources have already been opened.
 
+	
+	// Lock mutex while we look for a slot with a nullptr 
+	lock_guard<mutex> lg(_sources_open_mutex);
 
-	if( _all_sources_opened ) return;
+	if( _source_names_unopened.empty() ) return;
 
-//	/// Open the next source in the list. If there are none,
-//	/// then throw a JException
-//	
-//	static mutex src_mutex;
-//	lock_guard<mutex>(src_mutex);
-//
-//	if(_sources.size() >= _source_names.size()) throw JException("No more sources");
-//	string source_name = _source_names[_sources.size()];
-//	current_source = NULL;
-//	
-//	// Check if the user has forced a specific type of event source
-//	// be used via the EVENT_SOURCE_TYPE config. parameter. If so,
-//	// search for that source and use it. Otherwise, throw an exception.
-//	JEventSourceGenerator* gen = NULL;
-//	try{
-//		string EVENT_SOURCE_TYPE = GetParameterValue<string>("EVENT_SOURCE_TYPE");
-//		for( auto sg : _eventSourceGenerators ){
-//			if( sg->GetName() == EVENT_SOURCE_TYPE ){
-//				gen = sg;
-//				jout << "Forcing use of event source type: " << EVENT_SOURCE_TYPE << endl;
-//				break;
-//			}
-//		}
-//		if(!gen){
-//			jerr << endl;
-//			jerr << "-----------------------------------------------------------------" << endl;
-//			jerr << " You specified event source type \"" << EVENT_SOURCE_TYPE << "\"" << endl;
-//			jerr << " be used to read the event sources but no such type exists." << endl;
-//			jerr << " Here is a list of available source types:" << endl;
-//			jerr << endl;
-//			for( auto sg : _eventSourceGenerators ) jerr << "   " << sg->GetName() << endl;
-//			jerr << endl;
-//			jerr << "-----------------------------------------------------------------" << endl;
-//			SetExitCode(-1);
-//			Quit();
-//		}
-//	}catch(...){}
-//	
-//	if(!gen){
-//	
-//		// Loop over JEventSourceGenerator objects and find the one
-//		// (if any) that has the highest chance of being able to read
-//		// this source. The return value of 
-//		// JEventSourceGenerator::CheckOpenable(source) is a liklihood that
-//		// the named source can be read by the JEventSource objects
-//		// created by the generator. In most cases, the liklihood will
-//		// be either 0.0 or 1.0. In the case that 2 or more generators return
-//		// equal liklihoods, the first one in the list will be used.
-//		double liklihood = 0.0;
-//		for( auto sg : _eventSourceGenerators ){
-//			double my_liklihood = sg->CheckOpenable(source_name);
-//			if(my_liklihood > liklihood){
-//				liklihood = my_liklihood;
-//				gen = sg;
-//			}
-//		}
-//	}
-//	
-//	if(gen != NULL){
-//		jout << "Opening source \"" << source_name << "\" of type: "<< gen->Description() << endl;
-//		current_source = gen->MakeJEventSource(source_name);
-//	}
-//
-//	if(!current_source){
-//		jerr<<endl;
-//		jerr<<"  xxxxxxxxxxxx  Unable to open event source \""<<source_name<<"\"!  xxxxxxxxxxxx"<<endl;
-//		jerr<<endl;
-//		if(sources.size()+1 == source_names.size()){
-//			unsigned int Nnull_sources = 0;
-//			for(unsigned int i=0; i<sources.size(); i++){
-//				if(sources[i] == NULL)Nnull_sources++;
-//			}
-//			if( (Nnull_sources==sources.size()) && (Nsources_deleted==0) ){
-//				jerr<<"   xxxxxxxxxxxx  NO VALID EVENT SOURCES GIVEN !!!   xxxxxxxxxxxx  "<<endl;
-//				jerr<<endl;
-//				SetExitCode(-1);
-//				Quit();
-//			}
-//		}
-//	}
-//	
-//	// Add source to list (even if it's NULL!)
-//	sources.push_back(current_source);
+	// Try and find a slot with a nullptr that we can grab exclusive use of.
+	// Note that slots that do not contain a value of nullptr may be overwritten
+	// to containe nullptr in GetNextEvent(). This, is the only place where a
+	// nullptr can be overwritten with something else though.
+	
+	int islot = 0;
+	for(auto src : _sources_active){
+		if( src == nullptr ) break;
+		islot++;
+	}
+	if( islot >= _sources_active.size() ) return;
+	
+	// Get name of next source to open
+	string source_name = _source_names_unopened.front();
+	_source_names_unopened.pop_front();
+
+	// Check if the user has forced a specific type of event source
+	// be used via the EVENT_SOURCE_TYPE config. parameter. If so,
+	// search for that source and use it. Otherwise, throw an exception.
+	JEventSourceGenerator* gen = nullptr;
+	try{
+		string EVENT_SOURCE_TYPE = GetParameterValue<string>("EVENT_SOURCE_TYPE");
+		for( auto sg : _eventSourceGenerators ){
+			if( sg->GetName() == EVENT_SOURCE_TYPE ){
+				gen = sg;
+				jout << "Forcing use of event source type: " << EVENT_SOURCE_TYPE << endl;
+				break;
+			}
+		}
+		if(!gen){
+			jerr << endl;
+			jerr << "-----------------------------------------------------------------" << endl;
+			jerr << " You specified event source type \"" << EVENT_SOURCE_TYPE << "\"" << endl;
+			jerr << " be used to read the event sources but no such type exists." << endl;
+			jerr << " Here is a list of available source types:" << endl;
+			jerr << endl;
+			for( auto sg : _eventSourceGenerators ) jerr << "   " << sg->GetName() << endl;
+			jerr << endl;
+			jerr << "-----------------------------------------------------------------" << endl;
+			SetExitCode(-1);
+			Quit();
+		}
+	}catch(...){}
+	
+	if(gen == nullptr){
+	
+		// Loop over JEventSourceGenerator objects and find the one
+		// (if any) that has the highest chance of being able to read
+		// this source. The return value of 
+		// JEventSourceGenerator::CheckOpenable(source) is a liklihood that
+		// the named source can be read by the JEventSource objects
+		// created by the generator. In most cases, the liklihood will
+		// be either 0.0 or 1.0. In the case that 2 or more generators return
+		// equal liklihoods, the first one in the list will be used.
+		double liklihood = 0.0;
+		for( auto sg : _eventSourceGenerators ){
+			double my_liklihood = sg->CheckOpenable(source_name);
+			if(my_liklihood > liklihood){
+				liklihood = my_liklihood;
+				gen = sg;
+			}
+		}
+	}
+	
+	// Try openng the source using the chosen generator
+	JEventSource *new_source = nullptr;
+	if(gen != nullptr){
+		jout << "Opening source \"" << source_name << "\" of type: "<< gen->Description() << endl;
+		new_source = gen->MakeJEventSource(source_name);
+	}
+
+	if(new_source){
+
+		// Copy pointer into the empty active pointers slot
+		_sources_active[islot] = new_source;	
+
+	}else{
+
+		// Problem opening source. Notify user
+		jerr<<endl;
+		jerr<<"  xxxxxxxxxxxx  Unable to open event source \""<<source_name<<"\"!  xxxxxxxxxxxx"<<endl;
+		jerr<<endl;
+		if( _source_names_unopened.empty() ){
+			unsigned int Nactive_sources = 0;
+			for(auto src : _sources_active) if( src != nullptr ) Nactive_sources++;
+			if( (Nactive_sources==0) && (_sources_exhausted.empty()) ){
+				jerr<<"   xxxxxxxxxxxx  NO VALID EVENT SOURCES GIVEN !!!   xxxxxxxxxxxx  "<<endl;
+				jerr<<endl;
+				SetExitCode(-1);
+				Quit();
+			}
+		}
+	}
 }
 
 //---------------------------------

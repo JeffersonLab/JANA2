@@ -64,7 +64,7 @@ public:
 
 		uint64_t GetNumEventsProcessed(void);
 		void GetNumEventsProcessed(map<string,uint64_t> &Nevents);
-		thread* GetThread(void);
+		std::thread* GetThread(void);
 		void Join(void);
 
 		void End(void);
@@ -78,12 +78,12 @@ public:
 		
 protected:
 		
-		thread *_thread;
+		std::thread *_thread;
 		RUN_STATE_t _run_state;           ///< Current state
-		RUN_STATE_t _run_state_target;    ///< State to tranistion to after current event
+		RUN_STATE_t _run_state_target;    ///< State to transtion to after current event
 		bool _isjoined;
 		JApplication *_japp;
-		map<string, uint64_t> _events_processed;
+		map<std::string, uint64_t> _events_processed;
 		vector<JQueue*> _queues;
 		
 	private:
