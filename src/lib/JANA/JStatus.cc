@@ -46,6 +46,7 @@
 #include <pthread.h>
 #include <execinfo.h>
 #include <cxxabi.h>
+#include <signal.h>
 
 #include <set>
 #include <map>

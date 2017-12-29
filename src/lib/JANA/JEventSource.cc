@@ -44,7 +44,7 @@ using namespace std;
 //---------------------------------
 // JEventSource    (Constructor)
 //---------------------------------
-JEventSource::JEventSource(string name)
+JEventSource::JEventSource(string name):_in_use(false),_done(false)
 {
 
 }

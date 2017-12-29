@@ -991,7 +991,7 @@ void JApplication::OpenNext(void)
 	// to containe nullptr in GetNextEvent(). This, is the only place where a
 	// nullptr can be overwritten with something else though.
 	
-	int islot = 0;
+	uint32_t islot = 0;
 	for(auto src : _sources_active){
 		if( src == nullptr ) break;
 		islot++;

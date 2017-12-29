@@ -81,15 +81,7 @@ class JResourceManager;
 class JThread;
 class JTask;
 
-// This routine is used to bootstrap plugins. It is done outside
-// of the JApplication class to ensure it sees the global variables
-// that the rest of the plugin's InitPlugin routine sees.
-inline void InitJANAPlugin(JApplication *app)
-{
-	// Make sure global parameter manager pointer
-	// is pointing to the one being used by app
-//	gPARMS = app->GetJParameterManager();
-}
+extern JApplication *japp;
 
 
 class JApplication{
@@ -191,7 +183,17 @@ T JApplication::GetParameterValue(std::string name)
 	return GetJParameterManager()->GetParameterValue<T>(name);
 }		
 
-extern JApplication *japp;
+
+// This routine is used to bootstrap plugins. It is done outside
+// of the JApplication class to ensure it sees the global variables
+// that the rest of the plugin's InitPlugin routine sees.
+inline void InitJANAPlugin(JApplication *app)
+{
+	// Make sure global pointers are pointing to the 
+	// same ones being used by executable
+	japp = app;
+	gPARMS = app->GetJParameterManager();
+}
 
 #endif // _JApplication_h_
 
