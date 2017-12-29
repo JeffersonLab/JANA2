@@ -163,6 +163,7 @@ class JApplication{
 		std::vector<JEventSourceGenerator*> _eventSourceGenerators;
 		std::vector<JFactoryGenerator*> _factoryGenerators;
 		std::vector<JCalibrationGenerator*> _calibrationGenerators;
+		std::vector<JEventProcessor*> _eventProcessors;
 		std::vector<std::string> _source_names;
 		std::deque<std::string> _source_names_unopened;
 		std::vector<JEventSource*> _sources_active;

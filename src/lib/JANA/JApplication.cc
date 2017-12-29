@@ -364,12 +364,16 @@ void JApplication::Initialize(void)
 {
 	// Create default JQueue for event processing
 	// (plugins may replace this)
-	AddJQueue( new JQueue("Physics Events") );
+	JQueue *physics_queue = new JQueue("Physics Events");
+	physics_queue->SetRunProcessors();
+	physics_queue->SetPassThrough();
+	AddJQueue( physics_queue );
 	
 	// Attach all plugins
 	AttachPlugins();
 	
 	// Create slots for as many sources as we can have open simultaneously
+	// (limit to 1 for now)
 	_sources_active.push_back(nullptr);
 }
 
@@ -405,7 +409,7 @@ void JApplication::PrintStatus(void)
 {
 	// Print ticker
 	stringstream ss;
-	ss << " " << GetNeventsProcessed() << " events processed  " << Val2StringWithPrefix( GetInstantaneousRate() ) << "Hz (" << Val2StringWithPrefix( GetIntegratedRate() ) << "Hz avg)             ";
+	ss << "  " << GetNeventsProcessed() << " events processed  " << Val2StringWithPrefix( GetInstantaneousRate() ) << "Hz (" << Val2StringWithPrefix( GetIntegratedRate() ) << "Hz avg)             ";
 	jout << ss.str() << "\r";
 	jout.flush();
 }
@@ -522,7 +526,7 @@ void JApplication::Stop(void)
 //---------------------------------
 void JApplication::AddJEventProcessor(JEventProcessor *processor)
 {
-	
+	_eventProcessors.push_back( processor );
 }
 
 //---------------------------------
@@ -552,7 +556,9 @@ void JApplication::AddJEventSource(JEventSource *source)
 //---------------------------------
 void JApplication::AddJEventSourceGenerator(JEventSourceGenerator *source_generator)
 {
-	
+	/// Add the given JEventSourceGenerator to the list of queues
+
+	_eventSourceGenerators.push_back( source_generator );
 }
 
 //---------------------------------
@@ -560,7 +566,9 @@ void JApplication::AddJEventSourceGenerator(JEventSourceGenerator *source_genera
 //---------------------------------
 void JApplication::AddJFactoryGenerator(JFactoryGenerator *factory_generator)
 {
-	
+	/// Add the given JFactoryGenerator to the list of queues
+
+	_factoryGenerators.push_back( factory_generator );
 }
 
 //---------------------------------
@@ -578,7 +586,7 @@ void JApplication::AddJQueue(JQueue *queue)
 //---------------------------------
 void JApplication::GetJEventProcessors(vector<JEventProcessor*> &processors)
 {
-	
+	processors = _eventProcessors;
 }
 
 //---------------------------------
@@ -594,7 +602,7 @@ void JApplication::GetJEventSources(vector<JEventSource*> &sources)
 //---------------------------------
 void JApplication::GetJEventSourceGenerators(vector<JEventSourceGenerator*> &source_generators)
 {
-	
+	source_generators = _eventSourceGenerators;
 }
 
 //---------------------------------
@@ -602,7 +610,7 @@ void JApplication::GetJEventSourceGenerators(vector<JEventSourceGenerator*> &sou
 //---------------------------------
 void JApplication::GetJFactoryGenerators(vector<JFactoryGenerator*> &factory_generators)
 {
-	
+	factory_generators = _factoryGenerators;
 }
 
 //---------------------------------
@@ -973,7 +981,6 @@ void JApplication::OpenNext(void)
 	/// Try opening the next source in the list. This will return immediately
 	/// if all sources have already been opened.
 
-	
 	// Lock mutex while we look for a slot with a nullptr 
 	lock_guard<mutex> lg(_sources_open_mutex);
 

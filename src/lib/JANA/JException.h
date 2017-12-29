@@ -60,6 +60,8 @@ class JException{
 		template<typename T, typename U, typename V>
 		JException(std::string mess, T t, U u, V v);
 		
+		std::string GetMessage(void);
+		
 	protected:
 		std::string _mess;
 	

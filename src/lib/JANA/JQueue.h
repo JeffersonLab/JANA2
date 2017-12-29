@@ -83,6 +83,7 @@ class JQueue{
 		                   void AddConvertFromTypes(std::set<std::string> names);
 		            virtual int AddEvent(JEvent*);
 			                int AddToQueue(JEvent *jevent);
+		                   bool GetCanSink(void);
 		   const std::set<std::string> GetConvertFromTypes(void);
 		               uint32_t GetMaxEvents(void);
 		            std::string GetName();
@@ -90,11 +91,16 @@ class JQueue{
 		               uint32_t GetNumEvents(void);
 		               uint64_t GetNumEventsProcessed(void);
 		                   bool GetRunProcessors(void);
+		                   void SetPassThrough(bool pass_through=true);
+		                   void SetRunProcessors(bool run_processors=true);
+		                   void SetCanSink(bool can_sink=true);
 		
 	protected:
 		std::string _name;
 		bool _run_processors;
 		bool _done;
+		bool _pass_through;
+		bool _can_sink;
 		std::set<std::string> _convert_from_types;
 		
 		std::vector< JEvent* > _queue;

@@ -56,3 +56,14 @@ JException::~JException()
 {
 
 }
+
+//---------------------------------
+// GetMessage
+//---------------------------------
+std::string JException::GetMessage(void)
+{
+	return _mess;
+}
+
+
+

@@ -97,7 +97,7 @@ using namespace std;
 //---------------------------------
 // JQueue    (Constructor)
 //---------------------------------
-JQueue::JQueue(string name, bool run_processors):_name(name),_run_processors(run_processors),_done(false)
+JQueue::JQueue(string name, bool run_processors):_name(name),_run_processors(run_processors),_done(false),_pass_through(false),_can_sink(false)
 {
 	_nevents_processed = 0;
 	
@@ -145,9 +145,16 @@ int JQueue::AddEvent(JEvent *jevent)
 {
 	/// Convert the given JEvent into a new JEvent subclass of the type stored
 	/// by this queue. This default virtual method of the JQueue class is expected
-	/// to be overridden by the subclass. This base class method will simply 
-	/// throw an exception if called.
-	throw JException("Generic JQueue::AddEvent called.");
+	/// to be overridden by the subclass. As such, the default behavior here is
+	/// to throw an exception. The exception may be supressed by calling 
+	/// SetNoException which essentially configures the queue in "pass through"
+	/// mode allowing it to accept events without any conversion.
+	
+	if( !_pass_through ) throw JException("Generic JQueue::AddEvent called.");
+	
+	AddToQueue(jevent); // only for pass through mode.
+
+	return kNO_ERROR;
 }
 
 //---------------------------------
@@ -188,6 +195,17 @@ int JQueue::AddToQueue(JEvent *jevent)
 	}
 
 	return kNO_ERROR;
+}
+
+//---------------------------------
+// GetCanSink
+//---------------------------------
+bool JQueue::GetCanSink(void)
+{
+	/// Return state of "can sink" flag.
+	/// See SetCanSink() for details.
+
+	return _can_sink;
 }
 
 //---------------------------------
@@ -236,8 +254,8 @@ JEvent* JQueue::GetEvent(void)
 		JEvent *jevent = _queue[idx];
 		uint32_t inext = (idx+1)%_queue.size();
 		if( iread.compare_exchange_weak(idx, inext) ){
-				_nevents_processed++;
-				return jevent;
+			_nevents_processed++;
+			return jevent;
 		}
 	}
 	
@@ -281,5 +299,67 @@ bool JQueue::GetRunProcessors(void)
 	return _run_processors;
 }
 
+//---------------------------------
+// SetCanSink
+//---------------------------------
+void JQueue::SetCanSink(bool can_sink)
+{
+	/// Set flag indicating this queue can act as an event "sink".
+	/// Being a sink means that events pulled from this queue
+	/// *may* be thrown away under certain conditions. Normally, 
+	/// when an event is pulled from a queue, it has event processors
+	/// run on it, or it is converted into another form that fits
+	/// in another queue (or both). If neither of these happens,
+	/// then it is considered an error and an exception is thrown.
+	/// Setting the "can sink" flag avoids the exception and quietly
+	/// discards the event if no queue is found to convert from this
+	/// queue's type. 
+	///
+	/// Note that if the "run processors" flag is set, then that
+	/// also allows this to act as a sink and so setting the "can
+	/// sink" flag has no effect. Likewise, if another JQueue is
+	/// added that can convert events from this queue, then the
+	/// events will be passed on to that regardless of the setting
+	/// of the "can sink" flag. 
+	///
+	/// The intended purpose of this is to allow a final stage queue
+	/// that does something useful with the events while converting
+	/// them to go into it. (e.g. write them to a file). That would
+	/// an alternative configuration to using JEventProcessors to
+	/// process the events from the final queue.
 
+	_can_sink = can_sink;
+}
+
+//---------------------------------
+// SetNoException
+//---------------------------------
+void JQueue::SetPassThrough(bool pass_through)
+{
+	/// Set flag used only by default AddEvent method to allow
+	/// events to be passed in without throwning an exception.
+	/// The default behavior is to throw an exception when the
+	/// AddEvent method of the base class is called since that
+	/// will not be what is desired in most cases. Setting this
+	/// flag to true will allow this JQueue base class to be used
+	/// in a pass through like mode where JEvent objects can be
+	/// placed into it without conversion.
+
+	_pass_through = pass_through;
+}
+
+//---------------------------------
+// SetRunProcessors
+//---------------------------------
+void JQueue::SetRunProcessors(bool run_processors)
+{
+	/// Flag this queue to run (or not) the JEventProcessors
+	/// on an event as it is pulled from the queue. The most
+	/// common case will have only one JQueue with this flag
+	/// set to run the processors. If no arguments are given,
+	/// then this flag will be set to true. Otherwise, it will
+	/// be set to whatever argument is passed.
+
+	_run_processors = run_processors;
+}
 

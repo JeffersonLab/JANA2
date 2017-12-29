@@ -9,47 +9,6 @@
 #include "JEventSource_jana_test.h"
 using namespace std;
 
-#include <JANA/JQueue.h>
-#include <JANA/JApplication.h>
-
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// JQueue subclasses
-class JQueuePrimary:public JQueue{
-	public:
-		
-		JQueuePrimary(void):JQueue("Primary", false){}
-		~JQueuePrimary(void){}
-};
-
-class JQueueSecondary:public JQueue{
-	public:
-		
-		JQueueSecondary():JQueue("Secondary", false){
-			_convert_from_types.insert( "Primary" );
-		}
-		~JQueueSecondary(){}
-		
-		int AddEvent(JEvent *jevent){
-			AddToQueue(jevent); // in a real implementation we transform this in some way
-			return 0;
-		}
-};
-
-
-class JQueueFinal:public JQueue{
-	public:
-		
-		JQueueFinal(void):JQueue("Final", false){
-			_convert_from_types.insert( "Physics Events" );
-		}
-		~JQueueFinal(void){}
-		
-		int AddEvent(JEvent *jevent){
-			AddToQueue(jevent); // in a real implementation we transform this in some way
-			return 0;
-		}
-};
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
 //----------------
@@ -57,13 +16,14 @@ class JQueueFinal:public JQueue{
 //----------------
 JEventSource_jana_test::JEventSource_jana_test(const char* source_name):JEventSource(source_name)
 {
-	// Create 2 JQueues in the JApplication
-	japp->AddJQueue( new JQueuePrimary() );
-	japp->AddJQueue( new JQueueSecondary() );
-	japp->AddJQueue( new JQueueFinal() );
+	// Create 3 JQueues in the JApplication
+	_queue_primary   = new JQueuePrimary();
+	_queue_secondary = new JQueueSecondary();
+	_queue_final     = new JQueueFinal();
 
-
-
+	japp->AddJQueue( _queue_primary );
+	japp->AddJQueue( _queue_secondary );
+	japp->AddJQueue( _queue_final );
 }
 
 //----------------
@@ -77,23 +37,29 @@ JEventSource_jana_test::~JEventSource_jana_test()
 //----------------
 // GetEvent
 //----------------
-void JEventSource_jana_test::GetEvent(JEvent &event)
+JEventSource::RETURN_STATUS JEventSource_jana_test::GetEvent(void)
 {
-	// Read an event from the source and copy the vital info into
-	// the JEvent structure. The "Ref" of the JEventSource class
-	// can be used to hold a pointer to an arbitrary object, though
-	// you'll need to cast it to the correct pointer type 
-	// in the GetObjects method.
+	/// Read an event (or possibly block of events) from the source and 
+	/// place it (or them) into the appropriate JQueue's. This must 
+	/// provide a JEvent of the appropriate type for the JQueue.
+	
+	// We just use the base class here. In a real implementation, this
+	// would be a subclass of JEvent.
+	JEvent *event = new JEvent();
+	_queue_primary->AddToQueue( event );
+	
 //	event.SetJEventSource(this);
 //	event.SetEventNumber(++Nevents_read);
 //	event.SetRunNumber(1234);
 //	event.SetRef(NULL);
 
-	// If an event was sucessfully read in, return NOERROR. Otherwise,
-	// return NO_MORE_EVENTS_IN_SOURCE. By way of example, this
-	// will return NO_MORE_EVENTS_IN_SOURCE after 100k events.
+	// If an event was sucessfully read in, return kSUCCESS. If there
+	// are no more events in the source to read, return kNO_MORE_EVENTS.
+	// If the source has no events at the moment, but may later (e.g.
+	// a live stream) then return kTRY_AGAIN;
 //	if(Nevents_read>=100000)return NO_MORE_EVENTS_IN_SOURCE;
 	
+	return kSUCCESS;
 }
 
 //----------------

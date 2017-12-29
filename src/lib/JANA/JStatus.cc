@@ -40,6 +40,7 @@
 #include "JParameterManager.h"
 #include "JStatus.h"
 #include "JThread.h"
+#include "JQueue.h"
 
 #include <time.h>
 #include <pthread.h>
@@ -116,6 +117,18 @@ void JStatus::GenerateReport(std::stringstream &ss)
 	ss << "    Nsourcegenerators: " << source_generators.size() << endl;
 	ss << "   Nfactorygenerators: " << factory_generators.size() << endl;
 	ss << "              Nqueues: " << queues.size() << endl;
+	ss << endl;
+	
+	for(auto q : queues){
+		ss << "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - " << endl;
+		ss << "  queue " << q->GetName() << ":" << endl;
+		ss << "                       Nevents: " << q->GetNumEvents() <<endl;
+		ss << "             Nevents processed: " << q->GetNumEventsProcessed() << endl;
+		ss << "          Max allowed in queue: " << q->GetMaxEvents() << endl;
+		ss << "             ConvertFrom types: ";
+		for( auto s : q->GetConvertFromTypes() ) ss << s << ", ";
+		ss << endl;
+	}
 	
 	// The only way to get a stack trace for a thread is from within the thread
 	// itself. To do this, we must signal every thread to interrupt it so it
