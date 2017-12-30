@@ -63,12 +63,14 @@ class JEventSource_jana_test: public JEventSource{
 		static const char* static_className(void){return "JEventSource_jana_test";}
 		
 		RETURN_STATUS GetEvent(void);
-		void FreeEvent(JEvent &event);
-		void GetObjects(JEvent &event, JFactory *factory);
+		void ReturnToPool(JEvent *event);
 		
 		JQueuePrimary *_queue_primary;
 		JQueueSecondary *_queue_secondary;
 		JQueueFinal *_queue_final;
+	
+	protected:
+		JQueue _jevent_pool;
 };
 
 #endif // _JEventSourceGenerator_jana_test_

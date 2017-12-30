@@ -1,7 +1,7 @@
 //
-//    File: JEvent.h
-// Created: Sun Oct 15 21:15:05 CDT 2017
-// Creator: davidl (on Darwin harriet.local 15.6.0 i386)
+//    File: JEvent_test.h
+// Created: Fri Dec 29 19:51:34 EST 2017
+// Creator: davidl (on Darwin harriet 15.6.0 i386)
 //
 // ------ Last repository commit info -----
 // [ Date ]
@@ -41,46 +41,26 @@
 //
 //
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-#ifndef _JEvent_h_
-#define _JEvent_h_
+#ifndef _JEvent_test_h_
+#define _JEvent_test_h_
 
-#include <vector>
+#include "JEvent.h"
+#include "JEventSource_jana_test.h"
 
-#include <JObject.h>
-#include <JException.h>
-#include <JFactorySet.h>
+class JEvent_test:public JEvent {
+	public:	
+		JEvent_test(JEventSource_jana_test *source):_source(source){}
+		virtual ~JEvent_test(){}
 
-
-class JEvent{
-	public:
-		JEvent();
-		virtual ~JEvent();
-		
-		virtual void Recycle(void);
-		
-		template<class T>
-		JFactory* Get(std::vector<const T*> &v);
+		void Recycle(void){
+			_source->ReturnToPool( this );
+		}		
+	
 		
 	protected:
-	
-		JFactorySet *_factory_set;
 
-	private:
-
+		JEventSource_jana_test *_source;
 };
 
-template<class T> 
-JFactory* JEvent::Get(std::vector<const T*> &v)
-{
-	if( !_factory_set) throw JException("_factory_set not set before JEvent::Get called");
-
-	for(auto *fac : _factory_set->GetJFactories() ){
-		if( fac->GetName() != T::static_className() ) continue;
-		return fac;
-	}
-	
-	return NULL;
-}
-
-#endif // _JEvent_h_
+#endif // _JEvent_test_h_
 
