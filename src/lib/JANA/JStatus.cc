@@ -220,6 +220,7 @@ void JStatus::RecordBackTrace(void)
 
 	// de-mangle and create string
 	stringstream ss;
+	ss << "CPU: " << japp->GetCPU() << endl;
 	int max_frames = 1024;
 	int start_frame = trace_size - max_frames;
 	if(start_frame < 0) start_frame = 0;

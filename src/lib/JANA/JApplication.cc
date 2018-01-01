@@ -40,6 +40,12 @@
 #include <unistd.h>
 #include <dlfcn.h>
 #include <signal.h>
+#include <sched.h>
+
+#ifdef __APPLE__
+#import <mach/thread_act.h>
+#include <cpuid.h>
+#endif  // __APPLE__
 
 #include <cstdlib>
 #include <sstream>
@@ -448,6 +454,11 @@ void JApplication::Run(uint32_t nthreads)
 	jout << "Creating " << nthreads << " processing threads ..." << endl;
 	while( _jthreads.size() < nthreads ) _jthreads.push_back( new JThread(this) );
 	
+	// Optionally set thread affinity
+	try{
+		if( GetParameterValue<bool>("AFFINITY") ) SetThreadAffinity();
+	}catch(...){}
+	
 	// Start all threads running
 	jout << "Start processing ..." << endl;
 	for(auto t : _jthreads ) t->Run();
@@ -511,6 +522,55 @@ void JApplication::SetMaxThreads(uint32_t)
 void JApplication::SetTicker(bool ticker_on)
 {
 	
+}
+
+//---------------------------------
+// SetThreadAffinity
+//---------------------------------
+void JApplication::SetThreadAffinity(void)
+{
+	/// Set the affinity of each thread. This will force each JThread
+	/// to be assigned to a specific HW thread. At this point, it just
+	/// assigns them sequentially. More sophisticated assignments should
+	/// be done by the user by getting a list of JThreads and then getting
+	/// a pointer to the std::thread object via the GetThread method.
+	///
+	/// Note that setting the thread affinity is not something that can be
+	/// done through the C++ standard. It is done here only for pthreads
+	/// which is the underlying thread package for Linux and Mac OS X
+	/// (at least at the moment).
+
+	if( typeid(thread::native_handle_type) != typeid(pthread_t) ){
+		jout << endl;
+		jout << "WARNING: AFFINITY is set to true, but thread system is not pthreads." << endl;
+		jout << "         Thread affinity will not be set by JANA." << endl;
+		jout << endl;
+		return;
+	}
+
+	jout << "Setting affinity for all threads." << endl;
+
+	uint32_t ithread = 0;
+	uint32_t ncores = GetNcores();
+	for( auto jt : _jthreads ){
+		pthread_t t = jt->GetThread()->native_handle();
+
+#ifdef __APPLE__
+		// Mac OS X
+		uint32_t icpu = (ithread++)%ncores;
+		thread_affinity_policy_data_t policy = { (int)icpu };
+		thread_port_t mach_thread = pthread_mach_thread_np( t );
+		thread_policy_set(mach_thread, THREAD_AFFINITY_POLICY, (thread_policy_t)&policy, THREAD_AFFINITY_POLICY_COUNT);
+		_DBG_<<"CPU: " << GetCPU() << "  (mach_thread="<<mach_thread<<", icpu=" << icpu <<")" << endl;
+#else
+		// Linux
+		cpu_set_t cpuset;
+    	CPU_ZERO(&cpuset);
+    	CPU_SET( (ithread++)%ncores, &cpuset);
+    	int rc = pthread_setaffinity_np( t, sizeof(cpu_set_t), &cpuset);
+		if( rc !=0 ) jerr << "ERROR: pthread_setaffinity_np returned " << rc << " for thread " << ithread << endl;
+#endif
+	}
 }
 
 //---------------------------------
@@ -846,6 +906,50 @@ void JApplication::GetNextEvent(void)
 //		return;
 //	}
 	
+}
+
+//---------------------------------
+// GetCPU
+//---------------------------------
+uint32_t JApplication::GetCPU(void)
+{
+	/// Returns the current CPU the calling thread is running on.
+	/// Note that unless the thread affinity has been set, this may 
+	/// change, even before returning from this call. The thread
+	/// affinity of all threads may be fixed by setting the AFFINITY
+	/// configuration parameter at program start up.
+
+	int cpuid;
+
+#ifdef __APPLE__
+
+	//--------- Mac OS X ---------
+
+// From https://stackoverflow.com/questions/33745364/sched-getcpu-equivalent-for-os-x
+#define CPUID(INFO, LEAF, SUBLEAF) __cpuid_count(LEAF, SUBLEAF, INFO[0], INFO[1], INFO[2], INFO[3])
+#define GETCPU(CPU) {                              \
+        uint32_t CPUInfo[4];                           \
+        CPUID(CPUInfo, 1, 0);                          \
+        /* CPUInfo[1] is EBX, bits 24-31 are APIC ID */ \
+        if ( (CPUInfo[3] & (1 << 9)) == 0) {           \
+          CPU = -1;  /* no APIC on chip */             \
+        }                                              \
+        else {                                         \
+          CPU = (unsigned)CPUInfo[1] >> 24;                    \
+        }                                              \
+        if (CPU < 0) CPU = 0;                          \
+      }
+
+	GETCPU(cpuid);
+#else  // __APPLE__
+
+	//--------- Linux ---------
+	cpuid = sched_getcpu();
+
+#endif // __APPLE__
+
+
+	return cpuid;
 }
 
 //---------------------------------

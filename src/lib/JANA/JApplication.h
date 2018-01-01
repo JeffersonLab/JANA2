@@ -98,6 +98,7 @@ class JApplication{
 		void SetExitCode(int exit_code);
 		void SetMaxThreads(uint32_t);
 		void SetTicker(bool ticker_on=true);
+		void SetThreadAffinity(void);
 		void Stop(void);
 		
 		void AddEventSource(std::string source_name);
@@ -121,6 +122,7 @@ class JApplication{
 		
 		bool GetAllQueuesEmpty(void);
 		void GetNextEvent(void);
+		uint32_t GetCPU(void);
 		uint32_t GetNcores(void);
 		uint32_t GetNJThreads(void);
 		uint64_t GetNtasksCompleted(string name="");

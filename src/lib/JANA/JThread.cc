@@ -304,7 +304,6 @@ void JThread::Loop(void)
 		jerr << "** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** " << endl;
 		jerr << "Caught JException: " << e.GetMessage() << endl; 
 		jerr << "** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** " << endl;
-this_thread::sleep_for( chrono::seconds(10) );		
 	}
 	
 	// Set flag that we're done just before exiting thread
