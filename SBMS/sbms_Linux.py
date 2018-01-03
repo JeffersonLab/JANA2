@@ -4,6 +4,6 @@
 #
 
 def InitENV(env):
-	pass
+	env.PrependUnique(LINKFLAGS = ['-Wl,-E'])
 
 
