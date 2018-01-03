@@ -6,7 +6,7 @@ import os
 Import('env osname')
 
 # Loop over libraries, building each
-subdirs = ['lib', 'programs', 'plugins']
+subdirs = ['lib', 'programs', 'plugins', 'examples']
 #subdirs = ['libJANA', 'plugins', 'utilities', 'unit_tests']
 
 #sbms.OptionallyBuild(env, ['examples'])
