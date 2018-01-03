@@ -42,20 +42,34 @@
 #include "JThread.h"
 #include "JQueue.h"
 
+#include <stdlib.h>
+#include <stdio.h>
 #include <time.h>
 #include <pthread.h>
 #include <execinfo.h>
 #include <cxxabi.h>
 #include <signal.h>
+#include <dlfcn.h>
+#include <string.h>
 
 #include <set>
 #include <map>
 using namespace std;
 
+#define MAX_FRAMES 256
+
+
 JStatus *gJSTATUS = nullptr;
-static map<pthread_t, string> BACKTRACES;
+static map<pthread_t, JStatus::BACKTRACE_INFO_t> BACKTRACES;
+//static map<pthread_t, int> CPU_NUMBER;
+//static map<pthread_t, vector<void*> > BACKTRACES;
+//static map<pthread_t, vector<char[256]> > BACKTRACE_SYMBOLS;
+static uint32_t BACKTRACES_COMPLETED;
 static mutex BT_MUTEX;
 static bool FILTER_TRACES = true;
+
+static JStatus::char_str char_str_empty = {""};
+//static char char_str_empty[512] = {""};
 
 //---------------------------------
 // JStatus    (Constructor)
@@ -85,6 +99,28 @@ JStatus::JStatus()
 JStatus::~JStatus()
 {
 
+}
+
+//---------------------------------
+// Report
+//---------------------------------
+void JStatus::Report(void){
+
+	/// Static method used to generate and write the current status of the JANA process
+	/// to the named pipe. On the first call, this will create a JStatus object and
+	/// create the named pipe (see JANA::STATUS_FNAME for name). Subsequent calls
+	/// will open the pipe, write to it, and close it. This is generally called when
+	/// the process receives a USR1 signal. Typically, if a single JANA process is
+	/// running on the node, then one can issue a "killall <progname> -USR1" and then
+	/// do a "cat /tmp/jana_status" to see the report.
+
+	// Create a JStatus object if one does not already exist
+	if( gJSTATUS == nullptr ) new JStatus();
+
+	// Generate a report
+	std::stringstream ss;
+	gJSTATUS->GenerateReport( ss );
+	gJSTATUS->SendReport( ss );
 }
 
 //---------------------------------
@@ -146,16 +182,26 @@ void JStatus::GenerateReport(std::stringstream &ss)
 	if( typeid(thread::native_handle_type) == typeid(pthread_t) ){
 		ss << "underlying thread model: pthreads" << endl;
 	
-		// Clear any existing backtraces
-		BACKTRACES.clear();
-				
 		// Get list of pthreads, including this one which is hopefully the main thread
 		set<pthread_t> pthreads;
-		pthreads.insert( pthread_self() );
 		for(auto t : threads) pthreads.insert( t->GetThread()->native_handle() );
+		pthreads.insert(pthread_self());
+		
+		// Pre-allocate memory to hold the traces for all threads.
+		// We must do this here because the signals we send next
+		// may interrupt a malloc call and if we try calling malloc
+		// while recording the trace, we'll become deadlocked.
+		BACKTRACES.clear();
+		BACKTRACES_COMPLETED = 0;
+		for(auto pthr : pthreads) {
+			auto &btinfo = BACKTRACES[pthr];
+			btinfo.cpuid = -1;
+			btinfo.bt.reserve(MAX_FRAMES);
+			btinfo.bt_symbols.reserve(MAX_FRAMES);
+			btinfo.bt_fnames.reserve(MAX_FRAMES);
+		}
 		
 		// Loop over all threads, signaling them to generate a backtrace
-		jout << "Number of pthreads: " << pthreads.size() << endl;
 		for(auto pthr : pthreads) pthread_kill( pthr, SIGUSR2 );
 		
 		// Wait for all threads to finish their backtraces. Limit how long we'll wait
@@ -164,18 +210,18 @@ void JStatus::GenerateReport(std::stringstream &ss)
 			this_thread::sleep_for( chrono::microseconds(1000) );
 			
 			lock_guard<mutex> lg(BT_MUTEX);
-			if( BACKTRACES.size() == pthreads.size() ) break;
+			if( BACKTRACES_COMPLETED == pthreads.size() ) break;
 		}
 		
 		// Loop over threads, printing backtrace results
 		lock_guard<mutex> lg(BT_MUTEX);
 		for(auto pthr : pthreads){
 			ss << endl;
-			ss << "native handle: " << pthr;
+			ss << "native handle: " << hex << pthr << dec;
 			if( pthr==pthread_self() ) ss << "  (probably main thread)";
 			ss << endl;
 			if( BACKTRACES.count(pthr)==1 ){
-				ss << BACKTRACES[pthr];
+				ss << BackTraceToString(BACKTRACES[pthr]);
 			}else{
 				ss << "  < backtrace unavailable >" << endl;
 			}
@@ -184,6 +230,8 @@ void JStatus::GenerateReport(std::stringstream &ss)
 		ss << "underlying thread model: unknown" << endl;
 	}
 
+	// Release any memory allocated for backtraces
+	BACKTRACES.clear();
 }
 
 //---------------------------------
@@ -206,75 +254,71 @@ void JStatus::SendReport(std::stringstream &ss)
 //---------------------------------
 void JStatus::RecordBackTrace(void)
 {
+	/// Record the backtrace for the current thread in the 
+	/// BACKTRACES global. 
+
+	// get trace
+	void *trace[MAX_FRAMES];
+	int trace_size = backtrace(trace,MAX_FRAMES);
+
+	// Lock mutex while writing to globals
 	lock_guard<mutex> lg(BT_MUTEX);
 
-	size_t dlen = 1023;
-	char dname[1024];
-	void *trace[1024];
-	int status=0;
-
-	// get trace messages
-	int trace_size = backtrace(trace,1024);
-	if(trace_size>1024) trace_size=1024;
-	char **messages = backtrace_symbols(trace, trace_size);
-
-	// de-mangle and create string
-	stringstream ss;
-	ss << "CPU: " << japp->GetCPU() << endl;
-	int max_frames = 1024;
-	int start_frame = trace_size - max_frames;
-	if(start_frame < 0) start_frame = 0;
-	for(int i=start_frame; i<trace_size; ++i) {
-
-		if(!messages[i])continue;
-		string message(messages[i]);
-
-		// Find mangled name.
-		//
-		// It seems on Linux and possibly older versions of Mac OS X,
-		// the messages from backtrace_symbols have a format:
-		//
-		// ./backtrace_test(_Z5alphav+0x9) [0x400b0d]
-		//
-		// while on more recent OS X versions it has a format:
-		//
-		// 3   backtrace_test                      0x000000010dc2fbc9 _Z5alphav + 9
-
-		//
-		// First, we try pulling out the name assuming Linux style. If that
-		// doesn't work, we try OS X style
-		size_t pos_start = message.find_first_of('(');
-		size_t pos_end = string::npos;
-		if(pos_start != string::npos) pos_end = message.find_first_of('+', ++pos_start);
-		if(pos_end != string::npos){
-			// Linux style
-			// (nothing to do)
-		}else{
-			// OS X style
-			pos_end = message.find_last_of('+');
-			if(pos_end != string::npos && pos_end>2){
-				pos_start = message.find_last_of(' ', pos_end-2);
-				if(pos_start != string::npos){
-					pos_start++; // advance to first character of mangled name
-					pos_end--; // backup to space just after mangled name
-				}
-			}
-		}
-		// Peel out mangled name into a separate string
-		string mangled_name = "";
-		if(pos_start!=string::npos && pos_end!=string::npos){
-			mangled_name = message.substr(pos_start, pos_end-pos_start);
-		}
-
-		// Demangle name
-		abi::__cxa_demangle(mangled_name.c_str(),dname,&dlen,&status);
-		string demangled_name(status ? "":dname);
+	// Write trace info to pre-allocated containers
+	auto &btinfo = BACKTRACES[pthread_self()];
+	btinfo.cpuid = japp->GetCPU();
+	btinfo.bt_symbols.resize(trace_size, char_str_empty);
+	btinfo.bt_fnames.resize(trace_size, char_str_empty);
+	for(int i=0; i<trace_size; i++){
+		btinfo.bt.push_back(trace[i]);
 		
-		string name = message;
-		if(demangled_name.length()>0){
-			name = demangled_name + "**";
-		}else if(mangled_name.length()>0){
-			name = mangled_name + "*";
+		// n.b. we do not use backtrace_symbols here because
+		// it allocates memory which could cause a deadlock
+		// if we interrupted a malloc call to do this trace.
+		// Linking with -Wl,-E option on Linux (and without
+		// any option on Mac OS X) makes the symbols available
+		// to dladdr in the dynamic symbols table.
+		Dl_info dlinfo;
+		if(dladdr(trace[i], &dlinfo)){
+			strcpy(btinfo.bt_symbols[i].x, dlinfo.dli_sname ? dlinfo.dli_sname:"<N/A>*");
+			strcpy(btinfo.bt_fnames[i].x , dlinfo.dli_fname ? dlinfo.dli_fname:"<N/A>*");
+		}else{
+			strcpy(btinfo.bt_symbols[i].x, "<N/A>");
+			strcpy(btinfo.bt_fnames[i].x , "<N/A>");
+		}
+	}
+
+	// Increment global counter indicating we're done.
+	// (n.b. mutex is still locked here)
+	BACKTRACES_COMPLETED++;
+}
+
+//---------------------------------
+// BackTraceToString
+//---------------------------------
+string JStatus::BackTraceToString(BACKTRACE_INFO_t &btinfo)
+{
+	/// Convert the given trace to a multi-line string.
+
+	// Loop over symbols in backtrace
+	stringstream ss;
+	ss << "CPU: " << btinfo.cpuid << endl;
+	for(uint32_t i=0; i<btinfo.bt_symbols.size(); i++) {
+	
+		// Try demangling the name of the symbol
+		string name = btinfo.bt_symbols[i].x;
+		if( name.find("<N/A>") != string::npos ) name = btinfo.bt_fnames[i].x;
+		size_t dlen = 1023;
+		char dname[1024];
+		int status=0;
+		abi::__cxa_demangle(name.c_str(), dname, &dlen, &status);
+		string demangled_name(status ? "":dname);
+		if(status==0) name = demangled_name;
+		
+		// Truncate really long names since they are usually indiscernable
+		if( name.length()>40 ) {
+			name.erase(40);
+			name += " ...";
 		}
 		
 		// Ignore frames where the name seems un-useful
@@ -289,13 +333,11 @@ void JStatus::RecordBackTrace(void)
 		}
 
 		// Add demangled name or full message to output
-		ss << string(i+20, ' ') + "`- " << name << endl;
+		ss << string(i+5, ' ') + "`- " << name << " (" << hex << btinfo.bt[i] << dec << ")" << endl;
 	}
 	ss << ends;
 
-	free(messages);
-
-	BACKTRACES[pthread_self()] = ss.str();
+	return ss.str();
 }
 
 

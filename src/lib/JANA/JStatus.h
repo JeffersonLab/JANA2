@@ -50,6 +50,7 @@
 #include <unistd.h>
 
 #include <string>
+#include <vector>
 #include <sstream>
 
 #include <JANA/JApplication.h>
@@ -60,40 +61,28 @@ extern JStatus *gJSTATUS;
 class JStatus{
 	public:
 
-		//---------------------------------
-		// Report
-		//---------------------------------
-		static void Report(void){
-		
-			/// Static method used to generate and write the current status of the JANA process
-			/// to the named pipe. On the first call, this will create a JStatus object and
-			/// create the named pipe (see JANA::STATUS_FNAME for name). Subsequent calls
-			/// will open the pipe, write to it, and close it. This is generally called when
-			/// the process receives a USR1 signal. Typically, if a single JANA process is
-			/// running on the node, then one can issue a "killall <progname> -USR1" and then
-			/// do a "cat /tmp/jana_status" to see the report.
-		
-			// Create a JStatus object if one does not already exist
-			if( gJSTATUS == nullptr ) new JStatus();
+		typedef struct { char x[512]; } char_str;
+		//typedef char char_str[512];
+		typedef struct{
+			int cpuid;
+			vector<void*> bt;
+			vector<char_str> bt_symbols;
+			vector<char_str> bt_fnames;
+		}BACKTRACE_INFO_t;
 
-			// Generate a report
-			std::stringstream ss;
-			gJSTATUS->GenerateReport( ss );
-			gJSTATUS->SendReport( ss );
-
-		}
-		
+		static void Report(void);
 		static void RecordBackTrace(void);
 		
 		void GenerateReport(std::stringstream &ss);
 		void SendReport(std::stringstream &ss);
+		std::string BackTraceToString(BACKTRACE_INFO_t &btinfo);
 		
 	protected:
 		
 		JStatus();
 		virtual ~JStatus();
 
-		std::string path;
+		std::string path; // path to named pipe (def. /tmp/jana_status)
 
 };
 
