@@ -86,6 +86,14 @@ extern JApplication *japp;
 
 class JApplication{
 	public:
+	
+		enum RETURN_STATUS{
+			kSUCCESS,
+			kNO_MORE_EVENTS,
+			kTRY_AGAIN,
+			kUNKNOWN
+		};
+	
 		JApplication(int narg, char *argv[]);
 		virtual ~JApplication();
 
@@ -98,7 +106,7 @@ class JApplication{
 		void SetExitCode(int exit_code);
 		void SetMaxThreads(uint32_t);
 		void SetTicker(bool ticker_on=true);
-		void SetThreadAffinity(void);
+		void SetThreadAffinity(int affinity_algorithm);
 		void Stop(void);
 		
 		void AddEventSource(std::string source_name);
@@ -121,7 +129,7 @@ class JApplication{
 		void GetJThreads(vector<JThread*> &threads);
 		
 		bool GetAllQueuesEmpty(void);
-		void GetNextEvent(void);
+		uint32_t GetNextEvent(void);
 		uint32_t GetCPU(void);
 		uint32_t GetNcores(void);
 		uint32_t GetNJThreads(void);

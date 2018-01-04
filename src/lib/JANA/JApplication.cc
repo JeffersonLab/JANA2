@@ -325,13 +325,14 @@ void JApplication::AddPlugin(string plugin_name)
 	/// Add the specified plugin to the list of plugins to be
 	/// attached. This only records the name. The plugin is not
 	/// actually attached until AttachPlugins() is called (typically
-	/// from Run()).
+	/// from Initialize() which is called from Run()).
 	/// This will check if the plugin already exists in the list
 	/// of plugins to attach and will not add it a second time
 	/// if it is already there. This may be important if the order
 	/// of plugins is important. It is left to the user to handle
 	/// in those cases.
 	for( string &n : _plugins) if( n == plugin_name ) return;
+_DBG_<<"Adding plugin " << plugin_name << endl;
 	_plugins.push_back(plugin_name);
 }
 
@@ -456,9 +457,14 @@ void JApplication::Run(uint32_t nthreads)
 	
 	// Optionally set thread affinity
 	try{
-		if( GetParameterValue<bool>("AFFINITY") ) SetThreadAffinity();
+		int affinity_algorithm = 0;
+		_pmanager->SetDefaultParameter("AFFINITY", affinity_algorithm, "Set the thread affinity algorithm. 0=none, 1=sequential, 2=core fill");
+		SetThreadAffinity( affinity_algorithm );
 	}catch(...){}
 	
+	// Print summary of config. parameters (if any aren't default)
+	GetJParameterManager()->PrintParameters();
+
 	// Start all threads running
 	jout << "Start processing ..." << endl;
 	for(auto t : _jthreads ) t->Run();
@@ -527,7 +533,7 @@ void JApplication::SetTicker(bool ticker_on)
 //---------------------------------
 // SetThreadAffinity
 //---------------------------------
-void JApplication::SetThreadAffinity(void)
+void JApplication::SetThreadAffinity(int affinity_algorithm)
 {
 	/// Set the affinity of each thread. This will force each JThread
 	/// to be assigned to a specific HW thread. At this point, it just
@@ -539,25 +545,55 @@ void JApplication::SetThreadAffinity(void)
 	/// done through the C++ standard. It is done here only for pthreads
 	/// which is the underlying thread package for Linux and Mac OS X
 	/// (at least at the moment).
+	
+	// The default algorithm does not set the affinity at all
+	if( affinity_algorithm==0 ){
+		jout << "Thread affinity not set" << endl;
+		return;
+	}
 
 	if( typeid(thread::native_handle_type) != typeid(pthread_t) ){
 		jout << endl;
-		jout << "WARNING: AFFINITY is set to true, but thread system is not pthreads." << endl;
+		jout << "WARNING: AFFINITY is set, but thread system is not pthreads." << endl;
 		jout << "         Thread affinity will not be set by JANA." << endl;
 		jout << endl;
 		return;
 	}
 
-	jout << "Setting affinity for all threads." << endl;
+	jout << "Setting affinity for all threads using algorithm " << affinity_algorithm << endl;
 
 	uint32_t ithread = 0;
 	uint32_t ncores = GetNcores();
 	for( auto jt : _jthreads ){
 		pthread_t t = jt->GetThread()->native_handle();
 
+		uint32_t icpu = ithread;
+		switch( affinity_algorithm ){
+			case 1:
+				// This just assigns threads in numerical order.
+				// This is probably the best option for most
+				// production jobs.
+				break;
+
+			case 2:
+				// This algorithm places subsequent threads ncores/2 apart
+				// which generally will pair them up on single cores.
+				// This is good if the threads benefit from sharing the L1
+				// and L2 cache. It is not good if they don't since they
+				// will likely compete for the core itself.
+				icpu = ithread/2;
+				icpu += ((ithread%2)*ncores/2);
+				icpu %= ncores;
+				break;
+			default:
+				jerr << "Unknown affinity algorithm " << affinity_algorithm << endl;
+				exit( -1 );
+				break;
+		}
+		ithread++;
+
 #ifdef __APPLE__
 		// Mac OS X
-		uint32_t icpu = (ithread++)%ncores;
 		thread_affinity_policy_data_t policy = { (int)icpu };
 		thread_port_t mach_thread = pthread_mach_thread_np( t );
 		thread_policy_set(mach_thread, THREAD_AFFINITY_POLICY, (thread_policy_t)&policy, THREAD_AFFINITY_POLICY_COUNT);
@@ -566,7 +602,7 @@ void JApplication::SetThreadAffinity(void)
 		// Linux
 		cpu_set_t cpuset;
     	CPU_ZERO(&cpuset);
-    	CPU_SET( (ithread++)%ncores, &cpuset);
+    	CPU_SET( icpu, &cpuset);
     	int rc = pthread_setaffinity_np( t, sizeof(cpu_set_t), &cpuset);
 		if( rc !=0 ) jerr << "ERROR: pthread_setaffinity_np returned " << rc << " for thread " << ithread << endl;
 #endif
@@ -747,7 +783,7 @@ bool JApplication::GetAllQueuesEmpty(void)
 //---------------------------------
 // GetNextEvent
 //---------------------------------
-void JApplication::GetNextEvent(void)
+uint32_t JApplication::GetNextEvent(void)
 {
 	/// Read in a JEvent from one of the active sources. If there are
 	/// no active sources, open the next source. If all sources have
@@ -818,10 +854,11 @@ void JApplication::GetNextEvent(void)
 								break;
 								
 						}
-					}catch(...){
+					}catch(JException &e){
 						// There was a problem reading from this source.
 						// Make sure it is flagged as done so it will be
 						// cleaned up on a subsequent call.
+						jerr << e.GetMessage() << endl;
 						src->SetDone(true);
 					}
 				}
@@ -831,7 +868,7 @@ void JApplication::GetNextEvent(void)
 				
 				// At this point we have either read in an event or changed
 				// the state of a source.
-				return;
+				return kSUCCESS;
 			}
 		}else{
 			has_null_slot = true; 
@@ -843,69 +880,17 @@ void JApplication::GetNextEvent(void)
 	// source object. If there are no empty slots then we are waiting on other
 	// threads to read in events. Throw an exception to cause the calling JThread
 	// to sleep breifly before trying again.
-	if( !has_null_slot ) throw JException("thread stalled waiting for event");
+	if( !has_null_slot ) return kTRY_AGAIN;
+	//if( !has_null_slot ) throw JException("thread stalled waiting for event");
 	
 	// There was and possibly still is at least one empty slot for an event source.
 	// Try opening the next source.
 	OpenNext();
 
-
-
-//	try{
-//		switch( OpenNext() ){
-//			case kSUCCESS:
-//			case kNO_SOURCE_SLOTS_AVAILABLE:
-//			case kNO_MORE_SOURCES
-//				break;
-//			case kNO_MORE_SOURCES:
-//		}
-//	}catch(JException &e){
-//		throw 
-//	}
-
-	
-	// If all slots in _active_sources are either NULL, or have a source
-	// in use by another thread, then OpenNext() will be called. This will
-
-	/// Read the next JEvent from the current event source
-	/// or open a new one if needed. The JEventSource object
-	/// itself will place the event in the appropriate JQueue.
-	/// Note that this may cause new JQueue objects to be
-	/// created from the JEventSource subclass constructor.
-	/// If no more events are available from the last event
-	/// source, 
-
-	// This mutex allows us to manipulate the current source or
-	// _sources vector if needed. A source may still implement
-	// multi-threaded input (e.g. from multiple independant streams)
-	// but would need to do so at the JQueue level rather than
-	// the JApplication level.
-//	lock_guard<mutex> lg_source(_source_mutex);
-//	
-//	try{
-//		if( _sources.empty() || _sources.back()->IsDone() ) OpenNext();
-//		
-//		// The following may fail if there are no more events, but
-//		// the IsDone flag was not set yet.
-//		// It should be the responsibility of the JEventSource subclass
-//		// to pick the right queue and place the events in there.
-////		_sources.back()->GetEvent();
-//		
-//	}catch(...){
-//		// No more events and no more sources. Set flag to drain
-//		// all queues by processing all remaining events and then
-//		// quit the program. Throw exception to tell calling JThread
-//		// to continue processing events from queues
-//		_draining_queues = true;
-//		throw JException("No more event sources");	
-//	}
-
-//	JQueue *queue = GetJQueue("Physics Events");
-//	if( (queue!=NULL) && (queue->GetNumEventsProcessed()<100000000) ){
-//		queue->AddToQueue( new JEvent() );
-//		return;
-//	}
-	
+	// Return kSUCCESS to tell calling thread to loop back
+	// immediately without sleeping since there may now be
+	// something for it to do.
+	return kSUCCESS;
 }
 
 //---------------------------------

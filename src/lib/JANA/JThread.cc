@@ -272,7 +272,16 @@ void JThread::Loop(void)
 					// No events in any queues. Try grabbing one from source
 					try{
 
-						_japp->GetNextEvent();
+						switch( _japp->GetNextEvent() ){
+							case JApplication::kSUCCESS:
+								// Loop back again immediately since something may now be available
+								continue; 
+								break;
+							case JApplication::kTRY_AGAIN:
+							default:
+								// Nothing for us to do. Fall down to sleep call below.
+								break;
+						}
 						
 						// continue while loop to process next event
 						continue;

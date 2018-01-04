@@ -67,3 +67,63 @@ bool JParameterManager::Exists(string name)
 {
 	return _jparameters.count(name) != 0;
 }
+
+//---------------------------------
+// FindParameter
+//---------------------------------
+JParameter* JParameterManager::FindParameter(std::string name)
+{	
+	if( ! Exists(name) ) return nullptr;
+
+	return _jparameters[name];
+}		
+
+//---------------------------------
+// PrintParameters
+//---------------------------------
+void JParameterManager::PrintParameters(bool all)
+{
+	/// Print configuration parameters to stdout.
+	/// If "all" is false (default) then only parameters
+	/// whose values are different than their default are
+	/// printed.
+	/// If "all" is true then all parameters are 
+	/// printed.
+
+	// Find maximum key length
+	uint32_t max_key_len = 4;
+	vector<string> keys;
+	for(auto &p : _jparameters){
+		string key = p.first;
+		auto j = p.second;
+		if( (!all) && j->IsDefault() ) continue;
+		keys.push_back( key );
+		if( key.length()>max_key_len ) max_key_len = key.length();
+	}
+	
+	// If all params are set to default values, then print a one line
+	// summary
+	if(keys.empty()){
+		jout << "All configuration parameters set to default values." << endl;
+		return;
+	}
+
+	// Print title/header
+	string title("Config. Parameters");
+	uint32_t half_title_len = 1+title.length()/2;
+	if( max_key_len < half_title_len ) max_key_len = half_title_len;
+	cout << endl;
+	cout << string(max_key_len+4-half_title_len, ' ') << title << endl;
+	cout << "  " << string(2*max_key_len + 3, '=') << endl;
+	cout << string(max_key_len/2, ' ') << "name" << string(max_key_len, ' ') << "value" <<endl;
+	cout << "  " << string(max_key_len, '-') << "   " << string(max_key_len, '-') << endl;
+
+	// Print all parameters
+	for(string &key : keys){
+		string val = _jparameters[key]->GetValue<string>();
+		cout << string(max_key_len+2-key.length(),' ') << key << " = " << val <<endl;
+	}
+	cout << endl;
+}
+
+

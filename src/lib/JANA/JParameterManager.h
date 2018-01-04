@@ -62,6 +62,8 @@ class JParameterManager{
 		virtual ~JParameterManager();
 		
 		bool Exists(std::string name);
+		JParameter* FindParameter(std::string);
+		void PrintParameters(bool all=false);
 
 		template<typename T>
 		JParameter* GetParameter(std::string name, T &val);
@@ -141,7 +143,27 @@ JParameter* JParameterManager::SetDefaultParameter(K key, V &val, std::string de
 	/// This should be called after the JApplication object has been initialized so
 	/// that parameters can be created from any command line options the user may specify.
 
-	return SetParameter(key, val);
+	auto p = FindParameter(key);
+	if( p != nullptr ){
+		
+		if( p->GetHasDefault() ){
+			auto s1 = p->template GetDefault<std::string>(); // yes, this crazy syntax is correct
+			auto s2 = p->template GetValue<std::string>();   // yes, this crazy syntax is correct
+			if( s1 != s2 ){
+				throw JException("WARNING: Multiple calls to SetDefaultParameter with key=\"%s\": %s != %s", key, s1.c_str(), s2.c_str());
+			}
+		}else{
+			p->SetDefault( val );
+		}
+		
+	}else{
+		p = SetParameter(key, val);
+		p->SetDefault( val );
+	}
+
+	val = p->template GetValue<V>();
+
+	return p;
 	
 #if 0
 	string skey(key); // (handle const char* or string)
@@ -221,7 +243,7 @@ JParameter* JParameterManager::SetParameter(std::string name, T val)
 	if( !Exists(name) ) {
 		_jparameters[name] = new JParameter(name, val);
 	}else{
-		_DBG_<<"  FIXME!!!!!!" << std::endl;
+		_jparameters[name]->SetValue( val );
 	}
 
 	return _jparameters[name];

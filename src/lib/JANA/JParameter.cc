@@ -47,3 +47,27 @@ JParameter::~JParameter()
 {
 
 }
+
+//---------------------------------
+// GetHasDefault
+//---------------------------------
+bool JParameter::GetHasDefault(void)
+{
+	/// Returns whether this parameter has a default
+	/// value assigned to it. The default is set by
+	/// calling JParameterManager::SetDefaultParameter
+	/// (preferred) or calling the SetDefault method of
+	/// this class.
+	
+	return _has_default;
+}
+
+//---------------------------------
+// IsDefault
+//---------------------------------
+bool JParameter::IsDefault(void)
+{
+	if( !_has_default ) return false;
+	
+	return _val == _default;
+}

@@ -54,15 +54,31 @@ class JParameter{
 		virtual ~JParameter();
 		
 		template<typename T>
+		T GetDefault(void);
+		
+		bool GetHasDefault(void);
+
+		template<typename T>
 		T GetValue(void);
 
 		template<typename T>
 		T GetValue(T &val);
 		
+		bool IsDefault(void);
+
+		template<typename T>
+		T SetDefault(T val);
+
+		template<typename T>
+		T SetValue(T val);
+		
 	protected:
+		
+		bool _has_default;
 	
 		std::string _name;
 		std::string _val;
+		std::string _default;
 	
 	private:
 
@@ -72,11 +88,22 @@ class JParameter{
 // JParameter    (Constructor)
 //---------------------------------
 template<typename T>
-JParameter::JParameter(std::string name, T val):_name(name)
+JParameter::JParameter(std::string name, T val):_has_default(false),_name(name),_default("")
 {
-	std::stringstream ss;
-	ss << val;
-	_val = ss.str();
+	SetValue<T>(val);
+}
+
+//---------------------------------
+// GetDefault
+//---------------------------------
+template<typename T>
+T JParameter::GetDefault(void)
+{
+	std::stringstream ss(_default);
+	T val;
+	ss >> val;
+	
+	return val;
 }
 
 //---------------------------------
@@ -100,6 +127,38 @@ T JParameter::GetValue(T &val)
 {
 	val = GetValue<T>();
 	return val;
+}
+
+//---------------------------------
+// SetDefault
+//---------------------------------
+template<typename T>
+T JParameter::SetDefault(T def)
+{
+	T old_def = GetDefault<T>();
+
+	std::stringstream ss;
+	ss << def;
+	_default = ss.str();
+
+	_has_default = true;
+
+	return old_def;
+}
+
+//---------------------------------
+// SetValue
+//---------------------------------
+template<typename T>
+T JParameter::SetValue(T val)
+{
+	T old_val = GetValue<T>();
+
+	std::stringstream ss;
+	ss << val;
+	_val = ss.str();
+
+	return old_val;
 }
 
 #endif // _JParameter_h_
