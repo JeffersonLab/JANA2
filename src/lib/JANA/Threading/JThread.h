@@ -48,6 +48,9 @@
 
 #include <JApplication.h>
 
+namespace JANA { namespace Threading
+{
+
 class JThread{
 public:
 	
@@ -72,12 +75,14 @@ public:
 		bool IsEnded(void);
 		bool IsJoined(void);
 		void Loop(void);
+		void Loop_Body(void);
 		void Run(void);
 		void SetQueues(const vector<JQueue*> *queues=NULL);
 		void Stop(bool wait_until_idle = false);
 		
-protected:
+	protected:
 		
+		bool _same_input; //If true, always read from input "A," else each loop rotate between inputs
 		std::thread *_thread;
 		RUN_STATE_t _run_state;           ///< Current state
 		RUN_STATE_t _run_state_target;    ///< State to transtion to after current event
@@ -91,6 +96,8 @@ protected:
 };
 
 extern thread_local JThread *JTHREAD;
+
+}} //end namespaces
 
 #endif // _JThread_h_
 

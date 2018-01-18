@@ -1,7 +1,7 @@
 //
-//    File: JQueueT.cc
-// Created: Mon Oct 16 08:41:13 CDT 2017
-// Creator: davidl (on Darwin visitor097-233.wl.anl-external.org 15.6.0 i386)
+//    File: JQueueInterface.h
+// Created: Wed Oct 11 22:51:32 EDT 2017
+// Creator: davidl (on Darwin harriet 15.6.0 i386)
 //
 // ------ Last repository commit info -----
 // [ Date ]
@@ -36,6 +36,43 @@
 // OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+//
+// Description:
+//
+//
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+#ifndef _JQueueInterface_h_
+#define _JQueueInterface_h_
 
-#include "JQueueT.h"
+#include <cstdint>
+#include <atomic>
+#include <vector>
 
+namespace JANA { namespace Threading
+{
+
+class JTaskBase;
+
+class JQueueInterface
+{
+	public:
+	
+		enum{
+			kNone,
+			kQUEUE_FULL,
+			kNO_ERROR
+		}Flags_t;
+
+		virtual ~JQueueInterface() = default;
+
+		virtual int AddTask(JTaskBase *JTaskBase) = 0;
+		virtual JTaskBase* GetTask(void) = 0;
+
+		virtual uint32_t GetMaxTasks(void) = 0;
+		virtual uint32_t GetNumTasks(void) = 0;
+		virtual uint64_t GetNumTasksProcessed(void) = 0;
+};
+
+}} //end namespaces
+
+#endif // _JQueueInterface_h_

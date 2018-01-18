@@ -190,133 +190,151 @@ bool JThread::IsJoined(void)
 //---------------------------------
 void JThread::Loop(void)
 {
-	/// Loop continuously, processing events
-	
 	// Set thread_local global variable
 	JTHREAD = this;
 
+	/// Loop continuously, processing events
 	try{
-
-		while( _run_state_target != kRUN_STATE_ENDED ){
+		while( _run_state_target != kRUN_STATE_ENDED )
+		{
 			// If specified, go into idle state
 			if( _run_state_target == kRUN_STATE_IDLE ) _run_state = kRUN_STATE_IDLE;
 
 			// If in the running state, try and process an event
-			if(_run_state == kRUN_STATE_RUNNING){
-
-				// Loop over queues looking for event
-				// (rit_queue = "reverse iterator queue" and is queue event was pulled from)
-				JEvent *event = NULL;
-
-				_japp->GetJQueues(_queues); // must update in case new JEventSource adds new queue(s)
-
-				auto rit_queue = _queues.rbegin();
-				for(; rit_queue != _queues.rend(); rit_queue++){
-					event = (*rit_queue)->GetEvent();
-					if(event) break;
-				}
-
-				// Process event if found
-				if(event){
-					// This flag is used to verify that one of these condtions
-					// has been met for the event:
-					//
-					//  1. JEventProcessors were run on the event
-					//  2. Event has been converted and inserted into downstream queue
-					//  3. This queue has the "can sink" flag set.
-					//
-					// If none of the above have been met then nothing has been done
-					// with this event and it is considered an error condition.
-					bool event_processed = (*rit_queue)->GetCanSink();
-					
-					// Run processors on this event if the queue has the
-					// run_processors flag set. This is where the bulk of
-					// reconstruction is expected to happen.
-					if( (*rit_queue)->GetRunProcessors() ) {
-						event_processed = true;
-					}
-					
-					// Look downstream for queue that can convert from this
-					// subclass of JEvent.
-					const string &queue_name = (*rit_queue)->GetName();
-					JQueue *next_queue = NULL;
-					for(auto q : _queues){
-						// Loop over names this can convert from
-						for( auto &n : q->GetConvertFromTypes() ){
-							if( n == queue_name){
-								next_queue = q;
-							}
-							if(next_queue) break;
-						}
-						if(next_queue) break;
-					}
-					
-					// If downstream queue was found, use it to convert event
-					if(next_queue) {
-						next_queue->AddEvent(event);
-						event_processed = true;
-					}else{
-						event->Recycle(); // return to pool or delete JEvent
-						event = NULL; // keep a cleaner house
-					}
-
-					// Verify that something was done to process this event
-					if( !event_processed ){
-						throw JException("Cannot process event. No queue registered that can convert events from\n queue type \"%s\" and this queue is not flagged\n for event processing or as able to sink events", queue_name.c_str());
-					}
-
-					// continue while loop to process next event
-					continue;
-
-				}else{
-					// No events in any queues. Try grabbing one from source
-					try{
-
-						switch( _japp->GetNextEvent() ){
-							case JApplication::kSUCCESS:
-								// Loop back again immediately since something may now be available
-								continue; 
-								break;
-							case JApplication::kTRY_AGAIN:
-							default:
-								// Nothing for us to do. Fall down to sleep call below.
-								break;
-						}
-						
-						// continue while loop to process next event
-						continue;
-					}catch(...){
-						// Unable to get another event. The JApplication::GetNextEvent
-						// call should signal all threads to quit if appropriate.
-						// There are at least two possibilities:
-						//
-						// 1. We have exhausted all events from all sources and
-						//    JApplication has told or will soon tell all JThreads
-						//    to end.
-						//
-						// 2. We are reading from a live stream and there are currently
-						//    no events available, but some may still come so we
-						//    need to go idle.
-						//
-						// In either case, we fall down to the sleep call below before
-						// executing the loop again. The only way to avoid the sleep call
-						// is for the above GetNextEvent() call to have succeeded.
-					}
-				}
-			}
-			
-			// If we get here then we either are not in the running state or
-			// or there are no events to process. Sleep a minimal amount.
-			this_thread::sleep_for( chrono::nanoseconds(100) );
+			if(_run_state == kRUN_STATE_RUNNING)
+				Loop_Body();
+			else
+				this_thread::sleep_for( chrono::nanoseconds(100) ); //Sleep a minimal amount.
 		}
 	}catch( JException &e){
 		jerr << "** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** " << endl;
-		jerr << "Caught JException: " << e.GetMessage() << endl; 
+		jerr << "Caught JException: " << e.GetMessage() << endl;
 		jerr << "** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** " << endl;
 	}
-	
+
 	// Set flag that we're done just before exiting thread
 	_run_state = kRUN_STATE_ENDED;
+}
+
+
+//---------------------------------
+// Loop_Body
+//---------------------------------
+void JThread::Loop_Body(void)
+{
+	//There are N input files open (of M files specified) at any given time
+	//_same_input: If true, always read from input "A," else each loop rotate between inputs
+
+	//Loop steps, in order of priority:
+	//Could be I/O bound:
+		//If not enough events buffered (in queue) from current input, buffer another event
+		//If too many events in output buffers (queues), execute output tasks
+	//Otherwise:
+		//Process tasks in user-provided queues first
+		//Process events (Execute all processors on event)
+
+
+	// Loop over queues looking for event
+	// (rit_queue = "reverse iterator queue" and is queue event was pulled from)
+	JEvent *event = NULL;
+
+	_japp->GetJQueues(_queues); // must update in case new JEventSource adds new queue(s)
+
+	auto rit_queue = _queues.rbegin();
+	for(; rit_queue != _queues.rend(); rit_queue++){
+		event = (*rit_queue)->GetEvent();
+		if(event) break;
+	}
+
+	// Process event if found
+	if(event){
+		// This flag is used to verify that one of these condtions
+		// has been met for the event:
+		//
+		//  1. JEventProcessors were run on the event
+		//  2. Event has been converted and inserted into downstream queue
+		//  3. This queue has the "can sink" flag set.
+		//
+		// If none of the above have been met then nothing has been done
+		// with this event and it is considered an error condition.
+		bool event_processed = (*rit_queue)->GetCanSink();
+
+		// Run processors on this event if the queue has the
+		// run_processors flag set. This is where the bulk of
+		// reconstruction is expected to happen.
+		if( (*rit_queue)->GetRunProcessors() ) {
+			event_processed = true;
+		}
+
+		// Look downstream for queue that can convert from this
+		// subclass of JEvent.
+		const string &queue_name = (*rit_queue)->GetName();
+		JQueue *next_queue = NULL;
+		for(auto q : _queues){
+			// Loop over names this can convert from
+			for( auto &n : q->GetConvertFromTypes() ){
+				if( n == queue_name){
+					next_queue = q;
+				}
+				if(next_queue) break;
+			}
+			if(next_queue) break;
+		}
+
+		// If downstream queue was found, use it to convert event
+		if(next_queue) {
+			next_queue->AddEvent(event);
+			event_processed = true;
+		}else{
+			event->Recycle(); // return to pool or delete JEvent
+			event = NULL; // keep a cleaner house
+		}
+
+		// Verify that something was done to process this event
+		if( !event_processed ){
+			throw JException("Cannot process event. No queue registered that can convert events from\n queue type \"%s\" and this queue is not flagged\n for event processing or as able to sink events", queue_name.c_str());
+		}
+
+		// continue while loop to process next event
+		continue;
+
+	}else{
+		// No events in any queues. Try grabbing one from source
+		try{
+
+			switch( _japp->GetNextEvent() ){
+				case JApplication::kSUCCESS:
+					// Loop back again immediately since something may now be available
+					continue;
+					break;
+				case JApplication::kTRY_AGAIN:
+				default:
+					// Nothing for us to do. Fall down to sleep call below.
+					break;
+			}
+			
+			// continue while loop to process next event
+			continue;
+		}catch(...){
+			// Unable to get another event. The JApplication::GetNextEvent
+			// call should signal all threads to quit if appropriate.
+			// There are at least two possibilities:
+			//
+			// 1. We have exhausted all events from all sources and
+			//    JApplication has told or will soon tell all JThreads
+			//    to end.
+			//
+			// 2. We are reading from a live stream and there are currently
+			//    no events available, but some may still come so we
+			//    need to go idle.
+			//
+			// In either case, we fall down to the sleep call below before
+			// executing the loop again. The only way to avoid the sleep call
+			// is for the above GetNextEvent() call to have succeeded.
+		}
+
+		this_thread::sleep_for( chrono::nanoseconds(100) ); //Sleep a minimal amount.
+	}
 }
 
 //---------------------------------

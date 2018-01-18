@@ -79,7 +79,6 @@ class JQueue;
 class JParameterManager;
 class JResourceManager;
 class JThread;
-class JTask;
 
 extern JApplication *japp;
 

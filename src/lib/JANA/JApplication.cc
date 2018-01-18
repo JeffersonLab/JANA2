@@ -62,7 +62,6 @@ using namespace std;
 #include <JANA/JParameterManager.h>
 #include <JANA/JResourceManager.h>
 #include <JANA/JThread.h>
-#include <JANA/JTask.h>
 #include <JANA/JException.h>
 #include <JANA/JEvent.h>
 #include <JANA/JVersion.h>

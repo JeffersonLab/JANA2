@@ -1,6 +1,6 @@
 //
-//    File: JTask.h
-// Created: Wed Oct 11 22:41:08 EDT 2017
+//    File: JQueue.h
+// Created: Wed Oct 11 22:51:32 EDT 2017
 // Creator: davidl (on Darwin harriet 15.6.0 i386)
 //
 // ------ Last repository commit info -----
@@ -39,30 +39,44 @@
 //
 // Description:
 //
-//   Base class for a task to be run by a JThread. User code will create
-// objects derived from JTask and add them to one of the JQueue's. When 
-// a JThread becomes idle, it will pull the next available JTask from 
-// one of the JQueue objects and run its Run method.
 //
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-#ifndef _JTask_h_
-#define _JTask_h_
+#ifndef _JQueue_h_
+#define _JQueue_h_
 
-#include <JANA/JQueue.h>
+#include <cstdint>
+#include <atomic>
+#include <vector>
 
-class JTask{
+namespace JANA { namespace Threading
+{
+
+class JTaskBase;
+
+class JQueue : public JQueueInterface
+{
 	public:
-		JTask(JQueue *queue=NULL);
-		virtual ~JTask();
-		
-		virtual int Run(void) ;
-		
-	protected:
 	
+		JQueue(std::size_t aQueueSize = 200);
+
+		int AddTask(JTaskBase *JTaskBase);
+		JTaskBase* GetTask(void);
+
+		uint32_t GetMaxTasks(void);
+		uint32_t GetNumTasks(void);
+		uint64_t GetNumTasksProcessed(void);
 	
 	private:
+		bool _done = false;
+		
+		std::vector<JTaskBase*> _queue;
+		std::atomic<uint64_t> _nevents_processed{0};
 
+		std::atomic<uint32_t> iread{0};
+		std::atomic<uint32_t> iwrite{0};
+		std::atomic<uint32_t> iend{0};
 };
 
-#endif // _JTask_h_
+}} //end namespaces
 
+#endif // _JQueue_h_
