@@ -51,6 +51,7 @@
 //#include <JApplication.h>
 
 class JThreadManager;
+class JEventSource;
 
 class JThread{
 	public:
@@ -86,7 +87,9 @@ class JThread{
 		JThreadManager* mThreadManager = nullptr;
 		JQueueSet* mQueueSet = nullptr;
 		std::size_t mQueueSetIndex = 0;
+		JQueueInterface* mEventQueue = nullptr;
 		bool mRotateEventSources = false;
+		bool mSourceEmpty = false;
 
 		std::thread *_thread;
 		RUN_STATE_t _run_state = kRUN_STATE_IDLE;           ///< Current state

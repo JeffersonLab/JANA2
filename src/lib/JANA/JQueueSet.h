@@ -63,79 +63,30 @@ class JQueueSet
 		//Otherwise:
 			//Process tasks in user-provided queues first (finish analyzing an open event)
 			//Process events (Execute all processors on new event)
+			//Process remaining tasks in output queue
 
-		enum class JQueueType { Input = 0, Output, SubTasks, Events };
+		//How is this implemented?:
+			//First loop through queues calling CheckBuffer()
+		//Difference between Input & Events
+		//If not disentangling: None really
+		//Want to distinguish between reading in events from file, and processing events
+		//If event queue size < N, get more events from file
+		//OR:
+		//If disentangle queue size < N, get more events from file. If event queue size < M, disentangle
+		enum class JQueueType { Output = 0, SubTasks, Events };
 
-		JQueueInterface* Get_Queue(JQueueType aQueueType, const std::string& aName = "") const;
+		JQueueInterface* GetQueue(JQueueType aQueueType, const std::string& aName = "") const;
 
-		void Set_Queues(JQueueType aQueueType, const std::vector<JQueueInterface*>& aQueues);
-		void Add_Queue(JQueueType aQueueType, JQueueInterface* aQueue);
-		void Remove_Queues(JQueueType aQueueType);
-		void Remove_Queues(void);
+		void SetQueues(JQueueType aQueueType, const std::vector<JQueueInterface*>& aQueues);
+		void AddQueue(JQueueType aQueueType, JQueueInterface* aQueue);
+		void RemoveQueues(JQueueType aQueueType);
+		void RemoveQueues(void);
 
-		std::pair<JQueueType, JTaskBase*> Get_Task(void) const;
-		JTaskBase* Get_Task(JQueueType aQueueType, const std::string& aQueueName) const;
+		std::pair<JQueueType, JTaskBase*> GetTask(void) const;
+		JTaskBase* GetTask(JQueueType aQueueType, const std::string& aQueueName) const;
 
 	private:
 		std::map<JQueueType, std::vector<JQueueInterface*>> mQueues;
 };
-
-inline void JQueueSet::Set_Queues(JQueueSet::JQueueType aQueueType, const std::vector<JQueueInterface*>& aQueues)
-{
-	mQueues.emplace(aQueueType, aQueues);
-}
-
-inline void JQueueSet::Add_Queue(JQueueSet::JQueueType aQueueType, JQueueInterface* aQueue)
-{
-	mQueues[aQueueType].push_back(aQueue);
-}
-
-inline void JQueueSet::Remove_Queues(JQueueSet::JQueueType aQueueType)
-{
-	mQueues.erase(aQueueType);
-}
-
-inline void JQueueSet::Remove_Queues(void)
-{
-	mQueues.clear();
-}
-
-inline JQueueInterface* JQueueSet::Get_Queue(JQueueSet::JQueueType aQueueType, const std::string& aName) const
-{
-	auto sMapIterator = mQueues.find(aQueueType);
-	if(sMapIterator == std::end(mQueues))
-		return nullptr;
-
-	const auto& sQueues = sMapIterator->second;
-	if((sQueues.size() == 1) || (aName == ""))
-		return sQueues[0];
-
-	auto sFindQueue = [aName](const JQueueInterface* aQueue) -> bool { return (aQueue->GetName() == aName); };
-
-	auto sEnd = std::end(sQueues);
-	auto sVectorIterator = std::find_if(std::begin(sQueues), sEnd, sFindQueue);
-	return (sVectorIterator != sEnd) ? (*sVectorIterator) : nullptr;
-}
-
-inline std::pair<JQueueSet::JQueueType, JTaskBase*> JQueueSet::Get_Task(void) const
-{
-	for(auto& sQueuePair : mQueues)
-	{
-		auto& sQueueVector = sQueuePair.second;
-		for(auto& sQueue : sQueueVector)
-		{
-			auto sTask = sQueue->GetTask();
-			if(sTask != nullptr)
-				return std::make_pair(sQueuePair.first, sTask);
-		}
-	}
-	return std::make_pair(JQueueType::Input, nullptr);
-}
-
-inline JTaskBase* JQueueSet::Get_Task(JQueueSet::JQueueType aQueueType, const std::string& aQueueName) const
-{
-	auto sQueue = Get_Queue(aQueueType, aQueueName);
-	return sQueue->GetTask();
-}
 
 #endif // _JQueueSet_h_

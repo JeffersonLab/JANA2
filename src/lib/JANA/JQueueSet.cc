@@ -1,7 +1,7 @@
 //
-//    File: JEventSource.cc
-// Created: Thu Oct 12 08:15:39 EDT 2017
-// Creator: davidl (on Darwin harriet.jlab.org 15.6.0 i386)
+//    File: JQueueSet.cc
+// Created: Wed Oct 11 22:51:32 EDT 2017
+// Creator: davidl (on Darwin harriet 15.6.0 i386)
 //
 // ------ Last repository commit info -----
 // [ Date ]
@@ -36,63 +36,101 @@
 // OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+//
+// Description:
+//
+//
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-#include "JEventSource.h"
-#include "JFunctions.h"
-#include "JApplication.h"
+#include "JQueueSet.h"
+
+#include <algorithm>
 
 //---------------------------------
-// JEventSource    (Constructor)
+// Set_Queues
 //---------------------------------
-JEventSource::JEventSource(string name, JApplication* aApplication) : mApplication(aApplication)
+void JQueueSet::SetQueues(JQueueSet::JQueueType aQueueType, const std::vector<JQueueInterface*>& aQueues)
 {
-
+	mQueues.emplace(aQueueType, aQueues);
 }
 
 //---------------------------------
-// ~JEventSource    (Destructor)
+// Add_Queue
 //---------------------------------
-JEventSource::~JEventSource()
+void JQueueSet::AddQueue(JQueueSet::JQueueType aQueueType, JQueueInterface* aQueue)
 {
-
+	mQueues[aQueueType].push_back(aQueue);
 }
 
 //---------------------------------
-// GetProcessEventTask
+// Remove_Queues
 //---------------------------------
-std::shared_ptr<JTaskBase> JEventSource::GetProcessEventTask(void)
+void JQueueSet::RemoveQueues(JQueueSet::JQueueType aQueueType)
 {
-	//First get the event from the input file
-	auto sEventPair = std::make_pair(std::shared_ptr<JEvent>(nullptr), kUNKNOWN);
-	do
+	mQueues.erase(aQueueType);
+}
+
+//---------------------------------
+// Remove_Queues
+//---------------------------------
+void JQueueSet::RemoveQueues(void)
+{
+	mQueues.clear();
+}
+
+//---------------------------------
+// Get_Queue
+//---------------------------------
+JQueueInterface* JQueueSet::GetQueue(JQueueSet::JQueueType aQueueType, const std::string& aName) const
+{
+	//Check if any queues of the desired type
+	auto sMapIterator = mQueues.find(aQueueType);
+	if(sMapIterator == std::end(mQueues))
+		return nullptr; //nope
+
+	//If only one queue, or name is "" (any), get the first queue
+	const auto& sQueues = sMapIterator->second;
+	if((sQueues.size() == 1) || (aName == ""))
+		return sQueues[0];
+
+	//Try to find the queue with the given name
+	auto sFindQueue = [aName](const JQueueInterface* aQueue) -> bool { return (aQueue->GetName() == aName); };
+
+	auto sEnd = std::end(sQueues);
+	auto sVectorIterator = std::find_if(std::begin(sQueues), sEnd, sFindQueue);
+	return (sVectorIterator != sEnd) ? (*sVectorIterator) : nullptr;
+}
+
+//---------------------------------
+// Get_Task
+//---------------------------------
+std::pair<JQueueSet::JQueueType, JTaskBase*> JQueueSet::GetTask(void) const
+{
+	//Loop through queue types (in order of priority)
+	for(auto& sQueuePair : mQueues)
 	{
-		sEventPair = GetEvent();
+		auto sQueueType = sQueuePair.first;
+		auto& sQueueVector = sQueuePair.second;
+
+		//Loop through queues of this type
+		for(auto& sQueue : sQueueVector)
+		{
+			//Get task if any
+			auto sTask = sQueue->GetTask();
+			if(sTask != nullptr)
+				return std::make_pair(sQueueType, sTask);
+		}
 	}
-	while((sEventPair.second == JEventSource::kTRY_AGAIN) || (sEventPair.second == JEventSource::kUNKNOWN));
 
-	//Then make the default task for analyzing it (running the processors) and return it
-	return JMakeAnalyzeEventTask(sEventPair.first, mApplication); //From JFunctions
+	//No tasks remaining
+	return std::make_pair(JQueueType::Events, (JTaskBase*)nullptr);
 }
 
-std::pair<std::shared_ptr<JEvent>, JEventSource::RETURN_STATUS> JEventSource::GetEvent(void)
+//---------------------------------
+// Get_Task
+//---------------------------------
+JTaskBase* JQueueSet::GetTask(JQueueSet::JQueueType aQueueType, const std::string& aQueueName) const
 {
-	return std::make_pair(std::shared_ptr<JEvent>(nullptr), kUNKNOWN);
+	auto sQueue = GetQueue(aQueueType, aQueueName);
+	return sQueue->GetTask();
 }
-
-//---------------------------------
-// IsDone
-//---------------------------------
-bool JEventSource::IsDone()
-{
-	return _done;
-}
-
-//---------------------------------
-// SetDone
-//---------------------------------
-void JEventSource::SetDone(bool done)
-{
-	_done = done;
-}
-
-

@@ -47,6 +47,7 @@
 #include <atomic>
 #include <deque>
 #include <mutex>
+#include <memory>
 #include <map>
 using std::vector;
 using std::string;
@@ -81,6 +82,11 @@ class JResourceManager;
 class JThread;
 class JEventSourceManager;
 class JThreadManager;
+template <typename DataType>
+class JResourcePool;
+
+template <typename ReturnType>
+class JTask;
 
 extern JApplication *japp;
 
@@ -125,6 +131,9 @@ class JApplication{
 		JEventSourceManager* GetJEventSourceManager(void) const;
 		void GetJThreads(vector<JThread*> &threads);
 		
+		//TASKS
+		std::shared_ptr<JTask<void>> GetVoidTask(void);
+
 		bool GetAllQueuesEmpty(void);
 		uint32_t GetCPU(void);
 		uint64_t GetNtasksCompleted(string name="");
@@ -165,6 +174,8 @@ class JApplication{
 		
 	private:
 
+		//Task pools
+		std::shared_ptr<JResourcePool<JTask<void>>> mVoidTaskPool;
 };
 
 //---------------------------------

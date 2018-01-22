@@ -47,8 +47,12 @@
 #include <string>
 #include <utility>
 #include <atomic>
+#include <memory>
 
 #include <JANA/JEvent.h>
+
+class JTaskBase;
+class JApplication;
 
 class JEventSource{
 	public:
@@ -62,10 +66,10 @@ class JEventSource{
 	
 		std::atomic<bool> _in_use;
 
-		JEventSource(std::string name);
+		JEventSource(std::string name, JApplication* aApplication);
 		virtual ~JEventSource();
 		
-		virtual std::pair<std::shared_ptr<JEvent>, RETURN_STATUS> GetEvent(void){ return std::pair<std::shared_ptr<JEvent>, RETURN_STATUS>(nullptr, kUNKNOWN); }
+		virtual std::shared_ptr<JTaskBase> GetProcessEventTask(void);
 		virtual bool IsDone();
 		
 		void SetDone(bool done = true);
@@ -73,9 +77,11 @@ class JEventSource{
 		
 	protected:
 	
-		bool _done;
+		bool _done = false;
 	
 	private:
+		virtual std::pair<std::shared_ptr<JEvent>, RETURN_STATUS> GetEvent(void);
+		JApplication* mApplication = nullptr;
 
 };
 

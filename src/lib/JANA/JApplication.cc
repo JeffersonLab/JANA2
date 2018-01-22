@@ -68,6 +68,7 @@ using namespace std;
 #include <JANA/JEvent.h>
 #include <JANA/JVersion.h>
 #include <JANA/JStatus.h>
+#include <JANA/JResourcePool.h>
 
 
 JApplication *japp = NULL;
@@ -131,6 +132,8 @@ JApplication::JApplication(int narg, char *argv[])
 	_rmanager = NULL;
 	_eventSourceManager = new JEventSourceManager();
 	_threadManager = new JThreadManager(_eventSourceManager);
+	mVoidTaskPool = std::make_shared<JResourcePool<JTask<void>>>();
+	mVoidTaskPool->Set_ControlParams(30, 20, 200, 100, 0);
 
 	// Loop over arguments
 	if(narg>0) _args.push_back(string(argv[0]));
@@ -702,6 +705,14 @@ uint32_t JApplication::GetCPU(void)
 
 
 	return cpuid;
+}
+
+//---------------------------------
+// GetVoidTask
+//---------------------------------
+std::shared_ptr<JTask<void>> JApplication::GetVoidTask(void)
+{
+	return mVoidTaskPool->Get_SharedResource();
 }
 
 //---------------------------------

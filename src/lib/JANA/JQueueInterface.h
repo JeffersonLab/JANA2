@@ -66,6 +66,7 @@ class JQueueInterface
 		virtual int AddTask(const std::shared_ptr<JTaskBase>& aTask) = 0;
 		virtual int AddTask(std::shared_ptr<JTaskBase>&& aTask) = 0;
 		virtual std::shared_ptr<JTaskBase> GetTask(void) = 0;
+		virtual bool CheckBuffer(void); //Only used for the event queue
 
 		virtual uint32_t GetMaxTasks(void) = 0;
 		virtual uint32_t GetNumTasks(void) = 0;
@@ -82,6 +83,12 @@ inline JQueueInterface::JQueueInterface(const std::string& aName) : mName(aName)
 inline std::string JQueueInterface::GetName(void) const
 {
 	return mName;
+}
+
+inline bool JQueueInterface::CheckBuffer(void)
+{
+	//Return true if the # tasks-buffer is low/high enough to process a task (if/as desired)
+	return true;
 }
 
 #endif // _JQueueInterface_h_

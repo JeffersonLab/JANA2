@@ -43,6 +43,7 @@
 
 #include "JThread.h"
 #include "JThreadManager.h"
+#include "JEventSource.h"
 
 thread_local JThread *JTHREAD = nullptr;
 
@@ -200,10 +201,34 @@ void JThread::Loop(void)
 				continue;
 			}
 
-			// We're running, grab the next task and execute it
-			auto sTaskPair = mQueueSet->Get_Task();
+			//Check if not enough events queued
+			if(!mSourceEmpty && !mEventQueue->CheckBuffer())
+			{
+				//Not enough queued. Get the next event from the source, and get a task to process it
+				auto sEventTask = mEventSource->GetProcessEventTask();
+				if(sEventTask == nullptr)
+				{
+					//The source has been emptied.
+					//Continue processing jobs from this source until there aren't any more
+					mSourceEmpty = true;
+				}
+				else
+				{
+					//Add the process-event task to the event queue.
+					mEventQueue->AddTask(std::move(sEventTask));
+					continue;
+				}
+			}
+
+			// Grab the next task and execute it
+			auto sTaskPair = mQueueSet->GetTask();
 			if(sTaskPair.second == nullptr)
 			{
+				if(mSourceEmpty)
+				{
+					//We are done processing this file
+					mThreadManager->RegisterFileFinished(mEventSource);
+				}
 				if(mRotateEventSources) //No tasks, try to rotate to a different input file
 					mQueueSet = mThreadManager->GetNextQueueSet(mQueueSetIndex);
 				else //No tasks, wait a bit for this event source to be ready
@@ -215,7 +240,11 @@ void JThread::Loop(void)
 
 			//Task complete.  If this was an output or process-event task, rotate to next open file (if desired)
 			if(mRotateEventSources && ((sTaskPair.first == JQueueSet::JQueueType::Events) || sTaskPair.first == JQueueSet::JQueueType::Output))
+			{
 				mQueueSet = mThreadManager->GetNextQueueSet(mQueueSetIndex);
+				mEventQueue = mQueueSet->GetQueue(JQueueSet::JQueueType::Events);
+				mSourceEmpty = false;
+			}
 		}
 	}catch( JException &e){
 		jerr << "** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** " << std::endl;
@@ -225,46 +254,6 @@ void JThread::Loop(void)
 
 	// Set flag that we're done just before exiting thread
 	_run_state = kRUN_STATE_ENDED;
-}
-
-//---------------------------------
-// Loop_Body
-//---------------------------------
-void JThread::Loop_Body(void)
-{
-	// No events in any queues. Try grabbing one from source
-	try{
-
-		switch( _japp->GetNextEvent() ){
-			case JApplication::kSUCCESS:
-				// Loop back again immediately since something may now be available
-				continue;
-				break;
-			case JApplication::kTRY_AGAIN:
-			default:
-				// Nothing for us to do. Fall down to sleep call below.
-				break;
-		}
-
-		// continue while loop to process next event
-		continue;
-	}catch(...){
-		// Unable to get another event. The JApplication::GetNextEvent
-		// call should signal all threads to quit if appropriate.
-		// There are at least two possibilities:
-		//
-		// 1. We have exhausted all events from all sources and
-		//    JApplication has told or will soon tell all JThreads
-		//    to end.
-		//
-		// 2. We are reading from a live stream and there are currently
-		//    no events available, but some may still come so we
-		//    need to go idle.
-		//
-		// In either case, we fall down to the sleep call below before
-		// executing the loop again. The only way to avoid the sleep call
-		// is for the above GetNextEvent() call to have succeeded.
-	}
 }
 
 //---------------------------------

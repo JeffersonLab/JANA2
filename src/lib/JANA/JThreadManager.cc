@@ -1,6 +1,51 @@
+//
+//    File: JThreadManager.cc
+// Created: Wed Oct 11 22:51:32 EDT 2017
+// Creator: davidl (on Darwin harriet 15.6.0 i386)
+//
+// ------ Last repository commit info -----
+// [ Date ]
+// [ Author ]
+// [ Source ]
+// [ Revision ]
+//
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Jefferson Science Associates LLC Copyright Notice:
+// Copyright 251 2014 Jefferson Science Associates LLC All Rights Reserved. Redistribution
+// and use in source and binary forms, with or without modification, are permitted as a
+// licensed user provided that the following conditions are met:
+// 1. Redistributions of source code must retain the above copyright notice, this
+//    list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright notice, this
+//    list of conditions and the following disclaimer in the documentation and/or other
+//    materials provided with the distribution.
+// 3. The name of the author may not be used to endorse or promote products derived
+//    from this software without specific prior written permission.
+// This material resulted from work developed under a United States Government Contract.
+// The Government retains a paid-up, nonexclusive, irrevocable worldwide license in such
+// copyrighted data to reproduce, distribute copies to the public, prepare derivative works,
+// perform publicly and display publicly and to permit others to do so.
+// THIS SOFTWARE IS PROVIDED BY JEFFERSON SCIENCE ASSOCIATES LLC "AS IS" AND ANY EXPRESS
+// OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+// MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
+// JEFFERSON SCIENCE ASSOCIATES, LLC OR THE U.S. GOVERNMENT BE LIABLE TO LICENSEE OR ANY
+// THIRD PARTES FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+// OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//
+// Description:
+//
+//
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 #include <algorithm>
 
 #include "JThreadManager.h"
+#include "JEventSource.h"
 
 //---------------------------------
 // JThreadManager
@@ -22,9 +67,9 @@ void JThreadManager::CreateThreads(std::size_t aNumThreads)
 	std::size_t sQueueSetIndex = 0;
 	for(decltype(aNumThreads) si = 0; si < aNumThreads; si++)
 	{
-		if(sQueueSetIndex > mQueueSetsBySource.size())
+		if(sQueueSetIndex > mActiveQueueSets.size())
 			sQueueSetIndex = 0;
-		mThreads.push_back(new JThread(this, mQueueSetsBySource[sQueueSetIndex], sQueueSetIndex, nullptr));
+		mThreads.push_back(new JThread(this, mActiveQueueSets[sQueueSetIndex], sQueueSetIndex, nullptr));
 		sQueueSetIndex++;
 	}
 }
@@ -63,6 +108,22 @@ void JThreadManager::GetJThreads(std::vector<JThread*>& aThreads) const
 }
 
 //---------------------------------
+// SetQueue
+//---------------------------------
+void JThreadManager::SetQueue(JQueueSet::JQueueType aQueueType, JQueueInterface* aQueue, const std::string& aEventSourceGeneratorName)
+{
+	//Set a template queue that will be used (cloned) for future event sources of that type (won't be used for any currently open sources)
+	//Doesn't lock: Assume's no one is crazy enough to call this while in the middle of running.
+
+	auto sFind_Key = [aEventSourceGeneratorName](const std::pair<std::string, JQueueSet*>& aPair) -> bool { return (aPair.first == aEventSourceGeneratorName); };
+
+	auto sEnd = std::end(mTemplateQueueSets);
+	auto sIterator = std::find_if(std::begin(mTemplateQueueSets), sEnd, sFind_Key);
+	if(sIterator == sEnd)
+
+}
+
+//---------------------------------
 // GetQueueSet
 //---------------------------------
 JQueueSet* JThreadManager::GetQueueSet(const JEventSource* aEventSource) const
@@ -70,10 +131,18 @@ JQueueSet* JThreadManager::GetQueueSet(const JEventSource* aEventSource) const
 	auto sFind_Key = [aEventSource](const std::pair<JEventSource*, JQueueSet*>& aPair) -> bool { return (aPair.first == aEventSource); };
 
 	//LOCK
+	bool sExpected = false;
+	while(!mQueueSetsLock.compare_exchange_weak(sExpected, true))
+		sExpected = false;
 
-	auto sEnd = std::end(mQueueSetsBySource);
-	auto sIterator = std::find_if(std::begin(mQueueSetsBySource), sEnd, sFind_Key);
-	return (sIterator != sEnd) ? (*sIterator).second : nullptr;
+	auto sEnd = std::end(mActiveQueueSets);
+	auto sIterator = std::find_if(std::begin(mActiveQueueSets), sEnd, sFind_Key);
+	auto sResult = (sIterator != sEnd) ? (*sIterator).second : nullptr;
+
+	//UNLOCK
+	mQueueSetsLock = true;
+
+	return sResult;
 }
 
 //---------------------------------
@@ -84,11 +153,17 @@ JQueueSet* JThreadManager::GetNextQueueSet(std::size_t& aCurrentSetIndex)
 	aCurrentSetIndex++;
 
 	//LOCK
+	bool sExpected = false;
+	while(!mQueueSetsLock.compare_exchange_weak(sExpected, true))
+		sExpected = false;
 
-	if(aCurrentSetIndex > mQueueSetsBySource.size())
+	if(aCurrentSetIndex > mActiveQueueSets.size())
 		aCurrentSetIndex = 0;
 
-	return mQueueSetsBySource[aCurrentSetIndex];
+	//UNLOCK
+	mQueueSetsLock = true;
+
+	return mActiveQueueSets[aCurrentSetIndex];
 }
 
 //---------------------------------
@@ -135,7 +210,7 @@ JQueueInterface* JThreadManager::Get_Queue(const std::shared_ptr<JTaskBase>& aTa
 JQueueInterface* JThreadManager::Get_Queue(const JEventSource* aEventSource, JQueueSet::JQueueType aQueueType, const std::string& aQueueName) const
 {
 	auto sQueueSet = GetQueueSet(aEventSource);
-	return sQueueSet->Get_Queue(aQueueType, aQueueName);
+	return sQueueSet->GetQueue(aQueueType, aQueueName);
 }
 
 //---------------------------------
