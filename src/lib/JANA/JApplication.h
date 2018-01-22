@@ -79,6 +79,8 @@ class JQueue;
 class JParameterManager;
 class JResourceManager;
 class JThread;
+class JEventSourceManager;
+class JThreadManager;
 
 extern JApplication *japp;
 
@@ -105,33 +107,26 @@ class JApplication{
 		void SetExitCode(int exit_code);
 		void SetMaxThreads(uint32_t);
 		void SetTicker(bool ticker_on=true);
-		void SetThreadAffinity(int affinity_algorithm);
 		void Stop(void);
 		
-		void AddEventSource(std::string source_name);
 		void AddJEventProcessor(JEventProcessor *processor);
-		void AddJEventSource(JEventSource *source);
-		void AddJEventSourceGenerator(JEventSourceGenerator *source_generator);
 		void AddJFactoryGenerator(JFactoryGenerator *factory_generator);
 		void AddJQueue(JQueue *queue);
 		void AddPlugin(string plugin_name);
 		void AddPluginPath(string path);
 		
-		void GetJEventProcessors(vector<JEventProcessor*> &processors);
-		void GetJEventSources(vector<JEventSource*> &sources);
-		void GetJEventSourceGenerators(vector<JEventSourceGenerator*> &source_generators);
+		void GetJEventProcessors(vector<JEventProcessor*>& aProcessors);
 		void GetJFactoryGenerators(vector<JFactoryGenerator*> &factory_generators);
 		void GetJQueues(vector<JQueue*> &queues);
 		JQueue* GetJQueue(const string &name);
 		JParameterManager* GetJParameterManager(void);
 		JResourceManager* GetJResourceManager(void);
+		JThreadManager* GetJThreadManager(void) const;
+		JEventSourceManager* GetJEventSourceManager(void) const;
 		void GetJThreads(vector<JThread*> &threads);
 		
 		bool GetAllQueuesEmpty(void);
-		uint32_t GetNextEvent(void);
 		uint32_t GetCPU(void);
-		uint32_t GetNcores(void);
-		uint32_t GetNJThreads(void);
 		uint64_t GetNtasksCompleted(string name="");
 		uint64_t GetNeventsProcessed(void);
 		float GetIntegratedRate(void);
@@ -139,11 +134,7 @@ class JApplication{
 		void GetInstantaneousRates(vector<double> &rates_by_queue);
 		void GetIntegratedRates(map<string,double> &rates_by_thread);
 		
-		void OpenNext(void);
-		
 		void RemoveJEventProcessor(JEventProcessor *processor);
-		void RemoveJEventSource(JEventSource *source);
-		void RemoveJEventSourceGenerator(JEventSourceGenerator *source_generator);
 		void RemoveJFactoryGenerator(JFactoryGenerator *factory_generator);
 		void RemovePlugin(string &plugin_name);
 
@@ -161,18 +152,13 @@ class JApplication{
 		std::vector<void*> _sohandles;
 		std::vector<JQueue*> _jqueues;
 		std::vector<JThread*> _jthreads;
-		std::vector<JEventSourceGenerator*> _eventSourceGenerators;
 		std::vector<JFactoryGenerator*> _factoryGenerators;
 		std::vector<JCalibrationGenerator*> _calibrationGenerators;
 		std::vector<JEventProcessor*> _eventProcessors;
-		std::vector<std::string> _source_names;
-		std::deque<std::string> _source_names_unopened;
-		std::vector<JEventSource*> _sources_active;
-		std::vector<JEventSource*> _sources_exhausted;
-		std::mutex _sources_exhausted_mutex;
-		std::mutex _sources_open_mutex;
 		JParameterManager *_pmanager;
 		JResourceManager *_rmanager;
+		JEventSourceManager* _eventSourceManager;
+		JThreadManager* _threadManager;
 	
 		void AttachPlugins(void);
 		void AttachPlugin(string name, bool verbose=false);

@@ -1,5 +1,5 @@
 //
-//    File: JQueueInterface.h
+//    File: JQueue.h
 // Created: Wed Oct 11 22:51:32 EDT 2017
 // Creator: davidl (on Darwin harriet 15.6.0 i386)
 //
@@ -41,38 +41,37 @@
 //
 //
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-#ifndef _JQueueInterface_h_
-#define _JQueueInterface_h_
+#ifndef _JQueue_h_
+#define _JQueue_h_
 
 #include <cstdint>
 #include <atomic>
 #include <vector>
 
-namespace JANA { namespace Threading
-{
-
 class JTaskBase;
 
-class JQueueInterface
+class JQueue : public JQueueInterface
 {
 	public:
 	
-		enum{
-			kNone,
-			kQUEUE_FULL,
-			kNO_ERROR
-		}Flags_t;
+		JQueue(std::size_t aQueueSize = 200);
 
-		virtual ~JQueueInterface() = default;
+		int AddTask(JTaskBase *JTaskBase);
+		JTaskBase* GetTask(void);
 
-		virtual int AddTask(JTaskBase *JTaskBase) = 0;
-		virtual JTaskBase* GetTask(void) = 0;
+		uint32_t GetMaxTasks(void);
+		uint32_t GetNumTasks(void);
+		uint64_t GetNumTasksProcessed(void);
+	
+	private:
+		bool _done = false;
+		
+		std::vector<JTaskBase*> _queue;
+		std::atomic<uint64_t> _nevents_processed{0};
 
-		virtual uint32_t GetMaxTasks(void) = 0;
-		virtual uint32_t GetNumTasks(void) = 0;
-		virtual uint64_t GetNumTasksProcessed(void) = 0;
+		std::atomic<uint32_t> iread{0};
+		std::atomic<uint32_t> iwrite{0};
+		std::atomic<uint32_t> iend{0};
 };
 
-}} //end namespaces
-
-#endif // _JQueueInterface_h_
+#endif // _JQueue_h_

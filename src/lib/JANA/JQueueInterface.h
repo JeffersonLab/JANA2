@@ -1,6 +1,6 @@
 //
-//    File: JThread.h
-// Created: Wed Oct 11 22:51:22 EDT 2017
+//    File: JQueueInterface.h
+// Created: Wed Oct 11 22:51:32 EDT 2017
 // Creator: davidl (on Darwin harriet 15.6.0 i386)
 //
 // ------ Last repository commit info -----
@@ -41,63 +41,47 @@
 //
 //
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-#ifndef _JThread_h_
-#define _JThread_h_
+#ifndef _JQueueInterface_h_
+#define _JQueueInterface_h_
 
-#include <thread>
+#include <cstdint>
+#include <string>
+#include <memory>
 
-#include <JApplication.h>
+class JTaskBase;
 
-namespace JANA { namespace Threading
+class JQueueInterface
 {
-
-class JThread{
-public:
+	public:
 	
-		enum RUN_STATE_t {
-			kRUN_STATE_INITIALIZING,
-			kRUN_STATE_IDLE,
-			kRUN_STATE_RUNNING,
-			kRUN_STATE_ENDED,
-			kRUN_STATE_OTHER
+		enum Flags_t {
+			kNone,
+			kQUEUE_FULL,
+			kNO_ERROR
 		};
-	
-		JThread(JApplication *app=NULL);
-		virtual ~JThread();
 
-		uint64_t GetNumEventsProcessed(void);
-		void GetNumEventsProcessed(map<string,uint64_t> &Nevents);
-		std::thread* GetThread(void);
-		void Join(void);
+		JQueueInterface(const std::string& aName);
+		virtual ~JQueueInterface() = default;
 
-		void End(void);
-		bool IsIdle(void);
-		bool IsEnded(void);
-		bool IsJoined(void);
-		void Loop(void);
-		void Loop_Body(void);
-		void Run(void);
-		void SetQueues(const vector<JQueue*> *queues=NULL);
-		void Stop(bool wait_until_idle = false);
-		
-	protected:
-		
-		bool _same_input; //If true, always read from input "A," else each loop rotate between inputs
-		std::thread *_thread;
-		RUN_STATE_t _run_state;           ///< Current state
-		RUN_STATE_t _run_state_target;    ///< State to transtion to after current event
-		bool _isjoined;
-		JApplication *_japp;
-		map<std::string, uint64_t> _events_processed;
-		vector<JQueue*> _queues;
-		
+		virtual int AddTask(const std::shared_ptr<JTaskBase>& aTask) = 0;
+		virtual int AddTask(std::shared_ptr<JTaskBase>&& aTask) = 0;
+		virtual std::shared_ptr<JTaskBase> GetTask(void) = 0;
+
+		virtual uint32_t GetMaxTasks(void) = 0;
+		virtual uint32_t GetNumTasks(void) = 0;
+		virtual uint64_t GetNumTasksProcessed(void) = 0;
+
+		std::string GetName(void) const;
+
 	private:
-
+		std::string mName;
 };
 
-extern thread_local JThread *JTHREAD;
+inline JQueueInterface::JQueueInterface(const std::string& aName) : mName(aName) { }
 
-}} //end namespaces
+inline std::string JQueueInterface::GetName(void) const
+{
+	return mName;
+}
 
-#endif // _JThread_h_
-
+#endif // _JQueueInterface_h_

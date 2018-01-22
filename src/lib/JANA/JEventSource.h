@@ -45,6 +45,7 @@
 #define _JEventSource_h_
 
 #include <string>
+#include <utility>
 #include <atomic>
 
 #include <JANA/JEvent.h>
@@ -64,7 +65,7 @@ class JEventSource{
 		JEventSource(std::string name);
 		virtual ~JEventSource();
 		
-		virtual RETURN_STATUS GetEvent(void){ return kUNKNOWN; }
+		virtual std::pair<std::shared_ptr<JEvent>, RETURN_STATUS> GetEvent(void){ return std::pair<std::shared_ptr<JEvent>, RETURN_STATUS>(nullptr, kUNKNOWN); }
 		virtual bool IsDone();
 		
 		void SetDone(bool done = true);

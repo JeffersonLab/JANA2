@@ -1,6 +1,6 @@
 //
-//    File: JQueue.h
-// Created: Wed Oct 11 22:51:32 EDT 2017
+//    File: JThread.h
+// Created: Wed Oct 11 22:51:22 EDT 2017
 // Creator: davidl (on Darwin harriet 15.6.0 i386)
 //
 // ------ Last repository commit info -----
@@ -41,42 +41,64 @@
 //
 //
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-#ifndef _JQueue_h_
-#define _JQueue_h_
+#ifndef _JThread_h_
+#define _JThread_h_
 
-#include <cstdint>
-#include <atomic>
-#include <vector>
+#include <thread>
 
-namespace JANA { namespace Threading
-{
+#include "JQueueInterface.h"
+#include "JQueueSet.h"
+//#include <JApplication.h>
 
-class JTaskBase;
+class JThreadManager;
 
-class JQueue : public JQueueInterface
-{
+class JThread{
 	public:
-	
-		JQueue(std::size_t aQueueSize = 200);
 
-		int AddTask(JTaskBase *JTaskBase);
-		JTaskBase* GetTask(void);
+		enum RUN_STATE_t {
+			kRUN_STATE_INITIALIZING,
+			kRUN_STATE_IDLE,
+			kRUN_STATE_RUNNING,
+			kRUN_STATE_ENDED,
+			kRUN_STATE_OTHER
+		};
 
-		uint32_t GetMaxTasks(void);
-		uint32_t GetNumTasks(void);
-		uint64_t GetNumTasksProcessed(void);
-	
-	private:
-		bool _done = false;
+		JThread(JThreadManager* aThreadManager, JQueueSet* aQueueSet, std::size_t aQueueSetIndex, JEventSource* aSource);
+		virtual ~JThread();
+
+		uint64_t GetNumEventsProcessed(void);
+		void GetNumEventsProcessed(std::map<std::string,uint64_t> &Nevents);
+		std::thread* GetThread(void);
+		void Join(void);
+
+		void End(void);
+		bool IsIdle(void);
+		bool IsEnded(void);
+		bool IsJoined(void);
+		void Loop(void);
+		void Loop_Body(void);
+		void Run(void);
+		void Stop(bool wait_until_idle = false);
 		
-		std::vector<JTaskBase*> _queue;
-		std::atomic<uint64_t> _nevents_processed{0};
+	protected:
+		
+		JEventSource* mEventSource = nullptr;
+		JThreadManager* mThreadManager = nullptr;
+		JQueueSet* mQueueSet = nullptr;
+		std::size_t mQueueSetIndex = 0;
+		bool mRotateEventSources = false;
 
-		std::atomic<uint32_t> iread{0};
-		std::atomic<uint32_t> iwrite{0};
-		std::atomic<uint32_t> iend{0};
+		std::thread *_thread;
+		RUN_STATE_t _run_state = kRUN_STATE_IDLE;           ///< Current state
+		RUN_STATE_t _run_state_target = kRUN_STATE_IDLE;    ///< State to transtion to after current event
+		bool _isjoined = false;
+		std::map<std::string, uint64_t> _events_processed;
+		
+	private:
+
 };
 
-}} //end namespaces
+extern thread_local JThread *JTHREAD;
 
-#endif // _JQueue_h_
+#endif // _JThread_h_
+

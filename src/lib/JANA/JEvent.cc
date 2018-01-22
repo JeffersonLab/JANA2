@@ -56,6 +56,22 @@ JEvent::~JEvent()
 }
 
 //---------------------------------
+// GetEventSource
+//---------------------------------
+JEventSource* JEvent::GetEventSource(void) const
+{
+	return mEventSource;
+}
+
+//---------------------------------
+// SetEventSource
+//---------------------------------
+void JEvent::SetEventSource(JEventSource* aSource)
+{
+	mEventSource = aSource;
+}
+
+//---------------------------------
 // Recycle
 //---------------------------------
 void JEvent::Recycle(void)

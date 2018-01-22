@@ -61,6 +61,8 @@ using namespace std;
 #include <JANA/JQueue.h>
 #include <JANA/JParameterManager.h>
 #include <JANA/JResourceManager.h>
+#include <JANA/JEventSourceManager.h>
+#include <JANA/JThreadManager.h>
 #include <JANA/JThread.h>
 #include <JANA/JException.h>
 #include <JANA/JEvent.h>
@@ -127,6 +129,8 @@ JApplication::JApplication(int narg, char *argv[])
 	_draining_queues = false;
 	_pmanager = NULL;
 	_rmanager = NULL;
+	_eventSourceManager = new JEventSourceManager();
+	_threadManager = new JThreadManager(_eventSourceManager);
 
 	// Loop over arguments
 	if(narg>0) _args.push_back(string(argv[0]));
@@ -185,11 +189,9 @@ JApplication::JApplication(int narg, char *argv[])
 		}
 		if( arg.find("-") == 0 )continue;
 
-		_source_names.push_back(arg);
+		_eventSourceManager->AddEventSource(arg);
 	}
 	
-	for(auto s : _source_names) _source_names_unopened.push_back(s);
-
 	japp = this;
 }
 
@@ -221,10 +223,10 @@ void JApplication::AttachPlugins(void)
 	// We make a copy of the existing generators first so we can
 	// append them back to the end of the list before exiting.
 	// Similarly for event source generators and calibration generators.
-	vector<JEventSourceGenerator*> my_eventSourceGenerators = _eventSourceGenerators;
+	vector<JEventSourceGenerator*> my_eventSourceGenerators = _eventSourceManager->GetJEventSourceGenerators();
 	vector<JFactoryGenerator*> my_factoryGenerators = _factoryGenerators;
 	vector<JCalibrationGenerator*> my_calibrationGenerators = _calibrationGenerators;
-	_eventSourceGenerators.clear();
+	_eventSourceManager->ClearJEventSourceGenerators();
 	_factoryGenerators.clear();
 	_calibrationGenerators.clear();
 
@@ -286,7 +288,8 @@ void JApplication::AttachPlugins(void)
 	}
 	
 	// Append generators back onto appropriate lists
-	_eventSourceGenerators.insert(_eventSourceGenerators.end(), my_eventSourceGenerators.begin(), my_eventSourceGenerators.end());
+	for(auto sGenerator : my_eventSourceGenerators)
+		_eventSourceManager->AddJEventSourceGenerator(sGenerator);
 	_factoryGenerators.insert(_factoryGenerators.end(), my_factoryGenerators.begin(), my_factoryGenerators.end());
 	_calibrationGenerators.insert(_calibrationGenerators.end(), my_calibrationGenerators.begin(), my_calibrationGenerators.end());
 
@@ -371,16 +374,10 @@ void JApplication::Initialize(void)
 	// Create default JQueue for event processing
 	// (plugins may replace this)
 	JQueue *physics_queue = new JQueue("Physics Events");
-	physics_queue->SetRunProcessors();
-	physics_queue->SetPassThrough();
 	AddJQueue( physics_queue );
 	
 	// Attach all plugins
 	AttachPlugins();
-	
-	// Create slots for as many sources as we can have open simultaneously
-	// (limit to 1 for now)
-	_sources_active.push_back(nullptr);
 }
 
 //---------------------------------
@@ -434,12 +431,14 @@ void JApplication::Quit(void)
 //---------------------------------
 void JApplication::Run(uint32_t nthreads)
 {
+	//Do this while still single-threaded!
+	_eventSourceManager->OpenInitSources();
 	
 	// Set number of threads
 	try{
 		string snthreads = GetParameterValue<string>("NTHREADS");
 		if( snthreads == "Ncores" ){
-			nthreads = GetNcores();
+			nthreads = _threadManager->GetNcores();
 		}else{
 			stringstream ss(snthreads);
 			ss >> nthreads;
@@ -452,13 +451,13 @@ void JApplication::Run(uint32_t nthreads)
 
 	// Create all remaining threads (one may have been created in Init)
 	jout << "Creating " << nthreads << " processing threads ..." << endl;
-	while( _jthreads.size() < nthreads ) _jthreads.push_back( new JThread(this) );
+	_threadManager->CreateThreads(nthreads);
 	
 	// Optionally set thread affinity
 	try{
 		int affinity_algorithm = 0;
 		_pmanager->SetDefaultParameter("AFFINITY", affinity_algorithm, "Set the thread affinity algorithm. 0=none, 1=sequential, 2=core fill");
-		SetThreadAffinity( affinity_algorithm );
+		_threadManager->SetThreadAffinity( affinity_algorithm );
 	}catch(...){}
 	
 	// Print summary of config. parameters (if any aren't default)
@@ -529,84 +528,7 @@ void JApplication::SetTicker(bool ticker_on)
 	
 }
 
-//---------------------------------
-// SetThreadAffinity
-//---------------------------------
-void JApplication::SetThreadAffinity(int affinity_algorithm)
-{
-	/// Set the affinity of each thread. This will force each JThread
-	/// to be assigned to a specific HW thread. At this point, it just
-	/// assigns them sequentially. More sophisticated assignments should
-	/// be done by the user by getting a list of JThreads and then getting
-	/// a pointer to the std::thread object via the GetThread method.
-	///
-	/// Note that setting the thread affinity is not something that can be
-	/// done through the C++ standard. It is done here only for pthreads
-	/// which is the underlying thread package for Linux and Mac OS X
-	/// (at least at the moment).
-	
-	// The default algorithm does not set the affinity at all
-	if( affinity_algorithm==0 ){
-		jout << "Thread affinity not set" << endl;
-		return;
-	}
 
-	if( typeid(thread::native_handle_type) != typeid(pthread_t) ){
-		jout << endl;
-		jout << "WARNING: AFFINITY is set, but thread system is not pthreads." << endl;
-		jout << "         Thread affinity will not be set by JANA." << endl;
-		jout << endl;
-		return;
-	}
-
-	jout << "Setting affinity for all threads using algorithm " << affinity_algorithm << endl;
-
-	uint32_t ithread = 0;
-	uint32_t ncores = GetNcores();
-	for( auto jt : _jthreads ){
-		pthread_t t = jt->GetThread()->native_handle();
-
-		uint32_t icpu = ithread;
-		switch( affinity_algorithm ){
-			case 1:
-				// This just assigns threads in numerical order.
-				// This is probably the best option for most
-				// production jobs.
-				break;
-
-			case 2:
-				// This algorithm places subsequent threads ncores/2 apart
-				// which generally will pair them up on single cores.
-				// This is good if the threads benefit from sharing the L1
-				// and L2 cache. It is not good if they don't since they
-				// will likely compete for the core itself.
-				icpu = ithread/2;
-				icpu += ((ithread%2)*ncores/2);
-				icpu %= ncores;
-				break;
-			default:
-				jerr << "Unknown affinity algorithm " << affinity_algorithm << endl;
-				exit( -1 );
-				break;
-		}
-		ithread++;
-
-#ifdef __APPLE__
-		// Mac OS X
-		thread_affinity_policy_data_t policy = { (int)icpu };
-		thread_port_t mach_thread = pthread_mach_thread_np( t );
-		thread_policy_set(mach_thread, THREAD_AFFINITY_POLICY, (thread_policy_t)&policy, THREAD_AFFINITY_POLICY_COUNT);
-		_DBG_<<"CPU: " << GetCPU() << "  (mach_thread="<<mach_thread<<", icpu=" << icpu <<")" << endl;
-#else
-		// Linux
-		cpu_set_t cpuset;
-    	CPU_ZERO(&cpuset);
-    	CPU_SET( icpu, &cpuset);
-    	int rc = pthread_setaffinity_np( t, sizeof(cpu_set_t), &cpuset);
-		if( rc !=0 ) jerr << "ERROR: pthread_setaffinity_np returned " << rc << " for thread " << ithread << endl;
-#endif
-	}
-}
 
 //---------------------------------
 // Stop
@@ -622,38 +544,6 @@ void JApplication::Stop(void)
 void JApplication::AddJEventProcessor(JEventProcessor *processor)
 {
 	_eventProcessors.push_back( processor );
-}
-
-//---------------------------------
-// AddEventSource
-//---------------------------------
-void JApplication::AddEventSource(std::string source_name)
-{
-	/// Add the named event source to the list of event sources to read from.
-	/// Usually, these are taken from the command line, but this allows cutom
-	/// plugins to add a source programmatically. This will be added to the end
-	/// of the current list of source names (i.e. after any entered on the
-	/// command line.)
-	
-	_source_names.push_back(source_name);
-}
-
-//---------------------------------
-// AddJEventSource
-//---------------------------------
-void JApplication::AddJEventSource(JEventSource *source)
-{
-	
-}
-
-//---------------------------------
-// AddJEventSourceGenerator
-//---------------------------------
-void JApplication::AddJEventSourceGenerator(JEventSourceGenerator *source_generator)
-{
-	/// Add the given JEventSourceGenerator to the list of queues
-
-	_eventSourceGenerators.push_back( source_generator );
 }
 
 //---------------------------------
@@ -679,25 +569,9 @@ void JApplication::AddJQueue(JQueue *queue)
 //---------------------------------
 // GetJEventProcessors
 //---------------------------------
-void JApplication::GetJEventProcessors(vector<JEventProcessor*> &processors)
+void JApplication::GetJEventProcessors(vector<JEventProcessor*>& aProcessors)
 {
-	processors = _eventProcessors;
-}
-
-//---------------------------------
-// GetJEventSources
-//---------------------------------
-void JApplication::GetJEventSources(vector<JEventSource*> &sources)
-{
-	
-}
-
-//---------------------------------
-// GetJEventSourceGenerators
-//---------------------------------
-void JApplication::GetJEventSourceGenerators(vector<JEventSourceGenerator*> &source_generators)
-{
-	source_generators = _eventSourceGenerators;
+	_eventProcessors = aProcessors;
 }
 
 //---------------------------------
@@ -755,14 +629,19 @@ JResourceManager* JApplication::GetJResourceManager(void)
 }
 
 //---------------------------------
-// GetJThreads
+// GetJThreadManager
 //---------------------------------
-void JApplication::GetJThreads(vector<JThread*> &threads)
+JThreadManager* JApplication::GetJThreadManager(void) const
 {
-	/// Copy list of the pointers to all JThread objects into
-	/// provided container.
+	return _threadManager;
+}
 
-	threads = _jthreads;
+//---------------------------------
+// GetJEventSourceManager
+//---------------------------------
+JEventSourceManager* JApplication::GetJEventSourceManager(void) const
+{
+	return _eventSourceManager;
 }
 
 //---------------------------------
@@ -779,118 +658,7 @@ bool JApplication::GetAllQueuesEmpty(void)
 	return Nempty_queues == _jqueues.size();
 }
 
-//---------------------------------
-// GetNextEvent
-//---------------------------------
-uint32_t JApplication::GetNextEvent(void)
-{
-	/// Read in a JEvent from one of the active sources. If there are
-	/// no active sources, open the next source. If all sources have
-	/// been exhausted, then the JApplication will be flagged to quit
-	/// and a JException will be thrown.
 
-	// This is designed to allow multiple threads to read from multiple
-	// input streams simultaneously. It uses atomics to avoid mutex locking
-	// where possible. This does complicate things a bit so here goes an
-	// explanation:
-	//
-	// 1. The _sources_active container is sized to hold the maximum number
-	// of simultaneous event streams. Each element will contain either a NULL
-	// pointer or a pointer to a valid JEventSource object.
-	//
-	// 2. This will first look for a non-NULL value in _active_sources. If
-	// one is found, it will try and claim exclusive use via its _in_use
-	// atomic member. If it obtains that, then it will either read an
-	// event from it, or, if there are no more events, set the slot in
-	// _actve_sources to NULL indicating it can be filled by another source.
-	// The exhausted pointer is then added to the _sources_exhausted container.
-	//
-	// 3. If exclusive use of a source cannot be obtained and there is at
-	// least one NULL pointer in _active_sources, then OpenNext() will be
-	// called. That will lock a mutex while creating a new JEventSource
-	// and placing it in the _active_sources queue.
-	//
-	// Mutexes are only used when:
-	//
-	// A. creating a new JEventSource and writing it into _active_sources
-	//
-	// B. writing an exhausted JEventSource into _sources_exhausted 
-	//
-	// Both of those should happen infrequently. Most calls to this should
-	// result in either an event being read in or nothing at all happening.
-	// Most of the time only accesses to a few atomic variables will occur.
-
-	uint32_t islot = 0;
-	bool has_null_slot = false;
-	for(auto src : _sources_active){
-		if( src != nullptr ){
-			bool tmp = false;
-			if( src->_in_use.compare_exchange_weak(tmp, true) ){
-				// We now have exclusive use of src
-				if( src->IsDone() ){
-					// No more events in this source. Retire it.
-					_sources_active[islot] = nullptr;
-					lock_guard<mutex> lguard(_sources_exhausted_mutex);
-					_sources_exhausted.push_back( src );
-				} else {
-					try{
-						// Read event from this source
-						switch( src->GetEvent() ){
-							case JEventSource::kSUCCESS:
-							case JEventSource::kNO_MORE_EVENTS:
-								// Not throwing an exception here will cause the calling
-								// JThread to immediately cycle back to start of Loop 
-								// without sleeping.
-								break;
-							case JEventSource::kTRY_AGAIN:
-								// This will cause the calling JThread to sleep briefly
-								src->_in_use.store( false );
-								throw JException("source stalled. try again.");
-								break;
-							default:
-								src->_in_use.store( false );
-								throw JException("Unknown response from event source.");
-								break;
-								
-						}
-					}catch(JException &e){
-						// There was a problem reading from this source.
-						// Make sure it is flagged as done so it will be
-						// cleaned up on a subsequent call.
-						jerr << e.GetMessage() << endl;
-						src->SetDone(true);
-					}
-				}
-				
-				// Free the _in_use flag
-				src->_in_use.store( false );
-				
-				// At this point we have either read in an event or changed
-				// the state of a source.
-				return kSUCCESS;
-			}
-		}else{
-			has_null_slot = true; 
-		}
-		islot++;
-	}
-	
-	// If we get here then we were not able to get exclusive use of an existing
-	// source object. If there are no empty slots then we are waiting on other
-	// threads to read in events. Throw an exception to cause the calling JThread
-	// to sleep breifly before trying again.
-	if( !has_null_slot ) return kTRY_AGAIN;
-	//if( !has_null_slot ) throw JException("thread stalled waiting for event");
-	
-	// There was and possibly still is at least one empty slot for an event source.
-	// Try opening the next source.
-	OpenNext();
-
-	// Return kSUCCESS to tell calling thread to loop back
-	// immediately without sleeping since there may now be
-	// something for it to do.
-	return kSUCCESS;
-}
 
 //---------------------------------
 // GetCPU
@@ -934,28 +702,6 @@ uint32_t JApplication::GetCPU(void)
 
 
 	return cpuid;
-}
-
-//---------------------------------
-// GetNcores
-//---------------------------------
-uint32_t JApplication::GetNcores(void)
-{
-	/// Returns the number of cores that are on the computer.
-	/// The count will be full cores+hyperthreads (or equivalent) 
-
-	return sysconf(_SC_NPROCESSORS_ONLN);
-}
-
-//---------------------------------
-// GetNJThreads
-//---------------------------------
-uint32_t JApplication::GetNJThreads(void)
-{
-	/// Returns the number of JThread objects that currently
-	/// exist.
-	
-	return _jthreads.size();
 }
 
 //---------------------------------
@@ -1062,114 +808,6 @@ void JApplication::GetIntegratedRates(map<string,double> &rates_by_thread)
 }
 
 //---------------------------------
-// OpenNext
-//---------------------------------
-void JApplication::OpenNext(void)
-{
-	/// Try opening the next source in the list. This will return immediately
-	/// if all sources have already been opened.
-
-	// Lock mutex while we look for a slot with a nullptr 
-	lock_guard<mutex> lg(_sources_open_mutex);
-
-	if( _source_names_unopened.empty() ) return;
-
-	// Try and find a slot with a nullptr that we can grab exclusive use of.
-	// Note that slots that do not contain a value of nullptr may be overwritten
-	// to containe nullptr in GetNextEvent(). This, is the only place where a
-	// nullptr can be overwritten with something else though.
-	
-	uint32_t islot = 0;
-	for(auto src : _sources_active){
-		if( src == nullptr ) break;
-		islot++;
-	}
-	if( islot >= _sources_active.size() ) return;
-	
-	// Get name of next source to open
-	string source_name = _source_names_unopened.front();
-	_source_names_unopened.pop_front();
-
-	// Check if the user has forced a specific type of event source
-	// be used via the EVENT_SOURCE_TYPE config. parameter. If so,
-	// search for that source and use it. Otherwise, throw an exception.
-	JEventSourceGenerator* gen = nullptr;
-	try{
-		string EVENT_SOURCE_TYPE = GetParameterValue<string>("EVENT_SOURCE_TYPE");
-		for( auto sg : _eventSourceGenerators ){
-			if( sg->GetName() == EVENT_SOURCE_TYPE ){
-				gen = sg;
-				jout << "Forcing use of event source type: " << EVENT_SOURCE_TYPE << endl;
-				break;
-			}
-		}
-		if(!gen){
-			jerr << endl;
-			jerr << "-----------------------------------------------------------------" << endl;
-			jerr << " You specified event source type \"" << EVENT_SOURCE_TYPE << "\"" << endl;
-			jerr << " be used to read the event sources but no such type exists." << endl;
-			jerr << " Here is a list of available source types:" << endl;
-			jerr << endl;
-			for( auto sg : _eventSourceGenerators ) jerr << "   " << sg->GetName() << endl;
-			jerr << endl;
-			jerr << "-----------------------------------------------------------------" << endl;
-			SetExitCode(-1);
-			Quit();
-		}
-	}catch(...){}
-	
-	if(gen == nullptr){
-	
-		// Loop over JEventSourceGenerator objects and find the one
-		// (if any) that has the highest chance of being able to read
-		// this source. The return value of 
-		// JEventSourceGenerator::CheckOpenable(source) is a liklihood that
-		// the named source can be read by the JEventSource objects
-		// created by the generator. In most cases, the liklihood will
-		// be either 0.0 or 1.0. In the case that 2 or more generators return
-		// equal liklihoods, the first one in the list will be used.
-		double liklihood = 0.0;
-		for( auto sg : _eventSourceGenerators ){
-			double my_liklihood = sg->CheckOpenable(source_name);
-			if(my_liklihood > liklihood){
-				liklihood = my_liklihood;
-				gen = sg;
-			}
-		}
-	}
-	
-	// Try openng the source using the chosen generator
-	JEventSource *new_source = nullptr;
-	if(gen != nullptr){
-		jout << "Opening source \"" << source_name << "\" of type: "<< gen->Description() << endl;
-		new_source = gen->MakeJEventSource(source_name);
-	}
-
-	if(new_source){
-
-		// Copy pointer into the empty active pointers slot
-		_sources_active[islot] = new_source;	
-
-	}else{
-
-		// Problem opening source. Notify user
-		jerr<<endl;
-		jerr<<"  xxxxxxxxxxxx  Unable to open event source \""<<source_name<<"\"!  xxxxxxxxxxxx"<<endl;
-		jerr<<endl;
-		if( _source_names_unopened.empty() ){
-			unsigned int Nactive_sources = 0;
-			for(auto src : _sources_active) if( src != nullptr ) Nactive_sources++;
-			if( (Nactive_sources==0) && (_sources_exhausted.empty()) ){
-				jerr<<"   xxxxxxxxxxxx  NO VALID EVENT SOURCES GIVEN !!!   xxxxxxxxxxxx  "<<endl;
-				jerr<<endl;
-				SetExitCode(-1);
-				Quit();
-			}
-		}
-	}
-}
-
-//---------------------------------
 // RemoveJEventProcessor
 //---------------------------------
 void JApplication::RemoveJEventProcessor(JEventProcessor *processor)
@@ -1177,21 +815,6 @@ void JApplication::RemoveJEventProcessor(JEventProcessor *processor)
 	
 }
 
-//---------------------------------
-// RemoveJEventSource
-//---------------------------------
-void JApplication::RemoveJEventSource(JEventSource *source)
-{
-	
-}
-
-//---------------------------------
-// RemoveJEventSourceGenerator
-//---------------------------------
-void JApplication::RemoveJEventSourceGenerator(JEventSourceGenerator *source_generator)
-{
-	
-}
 
 //---------------------------------
 // RemoveJFactoryGenerator

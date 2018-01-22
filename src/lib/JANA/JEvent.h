@@ -50,6 +50,7 @@
 #include <JException.h>
 #include <JFactorySet.h>
 
+class JEventSource;
 
 class JEvent{
 	public:
@@ -61,9 +62,13 @@ class JEvent{
 		template<class T>
 		JFactory* Get(std::vector<const T*> &v);
 		
+		JEventSource* GetEventSource(void) const;
+		void SetEventSource(JEventSource* aSource);
+
 	protected:
 	
-		JFactorySet *_factory_set;
+		JFactorySet *_factory_set = nullptr;
+		JEventSource* mEventSource = nullptr;
 
 	private:
 

@@ -39,8 +39,6 @@
 
 #include "JQueue.h"
 
-namespace JANA { namespace Threading {
-
 //---------------------------------
 // JQueue    (Constructor)
 //---------------------------------
@@ -147,5 +145,3 @@ uint64_t JQueue::GetNumTasksProcessed(void)
 	
 	return _nevents_processed;
 }
-
-}} //end namespaces

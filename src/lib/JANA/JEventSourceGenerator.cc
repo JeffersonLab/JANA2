@@ -60,7 +60,23 @@ JEventSourceGenerator::~JEventSourceGenerator()
 //---------------------------------
 // GetName
 //---------------------------------
-string JEventSourceGenerator::GetName(void)
+string JEventSourceGenerator::GetName(void) const
 {
 	return _name;
+}
+
+//---------------------------------
+// GetExtractEventQueue
+//---------------------------------
+JQueueInterface* JEventSourceGenerator::GetExtractEventQueue(void) const
+{
+	return mExtractEventQueue;
+}
+
+//---------------------------------
+// SetExtractEventQueue
+//---------------------------------
+void JEventSourceGenerator::SetExtractEventQueue(JQueueInterface* aQueue)
+{
+	mExtractEventQueue = aQueue;
 }

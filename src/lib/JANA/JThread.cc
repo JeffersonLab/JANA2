@@ -39,27 +39,20 @@
 
 #include <thread>
 #include <chrono>
-using namespace std;
+#include <iostream>
 
-#include <JEvent.h>
-#include <JQueue.h>
 #include "JThread.h"
+#include "JThreadManager.h"
 
-thread_local JThread *JTHREAD = NULL;
+thread_local JThread *JTHREAD = nullptr;
 
 //---------------------------------
 // JThread    (Constructor)
 //---------------------------------
-JThread::JThread(JApplication *app):_run_state(kRUN_STATE_INITIALIZING)
+JThread::JThread(JThreadManager* aThreadManager, JQueueSet* aQueueSet, std::size_t aQueueSetIndex, JEventSource* aSource) :
+		mEventSource(aSource), mQueueSet(aQueueSet), mQueueSetIndex(aQueueSetIndex), mThreadManager(aThreadManager)
 {
-	_japp = app;
-	_run_state = kRUN_STATE_IDLE;
-	_run_state_target = kRUN_STATE_IDLE;
-	_isjoined = false;
-	
-	_japp->GetJQueues(_queues);  // gets overwritten in Loop
-	
-	_thread = new thread( &JThread::Loop, this );
+	_thread = new std::thread( &JThread::Loop, this );
 }
 
 //---------------------------------
@@ -84,7 +77,7 @@ uint64_t JThread::GetNumEventsProcessed(void)
 	/// GetNeventsProcessed(map<string,uint64_t> &) which returns
 	/// counts for individual queues for a perhaps more useful breakdown.
 	
-	map<string,uint64_t> Nevents;
+	std::map<std::string,uint64_t> Nevents;
 	GetNumEventsProcessed(Nevents);
 	
 	uint64_t Ntot = 0;
@@ -96,7 +89,7 @@ uint64_t JThread::GetNumEventsProcessed(void)
 //---------------------------------
 // GetNumEventsProcessed
 //---------------------------------
-void JThread::GetNumEventsProcessed(map<string,uint64_t> &Nevents)
+void JThread::GetNumEventsProcessed(std::map<std::string,uint64_t> &Nevents)
 {
 	/// Get number of events processed by this thread for each
 	/// JQueue. The key will be the name of the JQueue and value
@@ -111,7 +104,7 @@ void JThread::GetNumEventsProcessed(map<string,uint64_t> &Nevents)
 //---------------------------------
 // GetThread
 //---------------------------------
-thread* JThread::GetThread(void)
+std::thread* JThread::GetThread(void)
 {
 	/// Get the C++11 thread object.
 
@@ -129,7 +122,7 @@ void JThread::Join(void)
 	/// from a method JApplication.
 	
 	if( _run_state != kRUN_STATE_ENDED ) End();
-	while( _run_state != kRUN_STATE_ENDED ) this_thread::sleep_for( chrono::microseconds(100) );
+	while( _run_state != kRUN_STATE_ENDED ) std::this_thread::sleep_for( chrono::microseconds(100) );
 	_thread->join();
 	_isjoined = true;
 }
@@ -200,140 +193,77 @@ void JThread::Loop(void)
 			// If specified, go into idle state
 			if( _run_state_target == kRUN_STATE_IDLE ) _run_state = kRUN_STATE_IDLE;
 
-			// If in the running state, try and process an event
-			if(_run_state == kRUN_STATE_RUNNING)
-				Loop_Body();
-			else
-				this_thread::sleep_for( chrono::nanoseconds(100) ); //Sleep a minimal amount.
+			// If not running, sleep and loop again
+			if(_run_state != kRUN_STATE_RUNNING)
+			{
+				std::this_thread::sleep_for( std::chrono::nanoseconds(100) ); //Sleep a minimal amount.
+				continue;
+			}
+
+			// We're running, grab the next task and execute it
+			auto sTaskPair = mQueueSet->Get_Task();
+			if(sTaskPair.second == nullptr)
+			{
+				if(mRotateEventSources) //No tasks, try to rotate to a different input file
+					mQueueSet = mThreadManager->GetNextQueueSet(mQueueSetIndex);
+				else //No tasks, wait a bit for this event source to be ready
+					std::this_thread::sleep_for( std::chrono::nanoseconds(100) ); //Sleep a minimal amount.
+				continue;
+			}
+
+			(*sTaskPair.second)(); //Execute task
+
+			//Task complete.  If this was an output or process-event task, rotate to next open file (if desired)
+			if(mRotateEventSources && ((sTaskPair.first == JQueueSet::JQueueType::Events) || sTaskPair.first == JQueueSet::JQueueType::Output))
+				mQueueSet = mThreadManager->GetNextQueueSet(mQueueSetIndex);
 		}
 	}catch( JException &e){
-		jerr << "** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** " << endl;
-		jerr << "Caught JException: " << e.GetMessage() << endl;
-		jerr << "** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** " << endl;
+		jerr << "** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** " << std::endl;
+		jerr << "Caught JException: " << e.GetMessage() << std::endl;
+		jerr << "** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** " << std::endl;
 	}
 
 	// Set flag that we're done just before exiting thread
 	_run_state = kRUN_STATE_ENDED;
 }
 
-
 //---------------------------------
 // Loop_Body
 //---------------------------------
 void JThread::Loop_Body(void)
 {
-	//There are N input files open (of M files specified) at any given time
-	//_same_input: If true, always read from input "A," else each loop rotate between inputs
+	// No events in any queues. Try grabbing one from source
+	try{
 
-	//Loop steps, in order of priority:
-	//Could be I/O bound:
-		//If not enough events buffered (in queue) from current input, buffer another event
-		//If too many events in output buffers (queues), execute output tasks
-	//Otherwise:
-		//Process tasks in user-provided queues first
-		//Process events (Execute all processors on event)
-
-
-	// Loop over queues looking for event
-	// (rit_queue = "reverse iterator queue" and is queue event was pulled from)
-	JEvent *event = NULL;
-
-	_japp->GetJQueues(_queues); // must update in case new JEventSource adds new queue(s)
-
-	auto rit_queue = _queues.rbegin();
-	for(; rit_queue != _queues.rend(); rit_queue++){
-		event = (*rit_queue)->GetEvent();
-		if(event) break;
-	}
-
-	// Process event if found
-	if(event){
-		// This flag is used to verify that one of these condtions
-		// has been met for the event:
-		//
-		//  1. JEventProcessors were run on the event
-		//  2. Event has been converted and inserted into downstream queue
-		//  3. This queue has the "can sink" flag set.
-		//
-		// If none of the above have been met then nothing has been done
-		// with this event and it is considered an error condition.
-		bool event_processed = (*rit_queue)->GetCanSink();
-
-		// Run processors on this event if the queue has the
-		// run_processors flag set. This is where the bulk of
-		// reconstruction is expected to happen.
-		if( (*rit_queue)->GetRunProcessors() ) {
-			event_processed = true;
-		}
-
-		// Look downstream for queue that can convert from this
-		// subclass of JEvent.
-		const string &queue_name = (*rit_queue)->GetName();
-		JQueue *next_queue = NULL;
-		for(auto q : _queues){
-			// Loop over names this can convert from
-			for( auto &n : q->GetConvertFromTypes() ){
-				if( n == queue_name){
-					next_queue = q;
-				}
-				if(next_queue) break;
-			}
-			if(next_queue) break;
-		}
-
-		// If downstream queue was found, use it to convert event
-		if(next_queue) {
-			next_queue->AddEvent(event);
-			event_processed = true;
-		}else{
-			event->Recycle(); // return to pool or delete JEvent
-			event = NULL; // keep a cleaner house
-		}
-
-		// Verify that something was done to process this event
-		if( !event_processed ){
-			throw JException("Cannot process event. No queue registered that can convert events from\n queue type \"%s\" and this queue is not flagged\n for event processing or as able to sink events", queue_name.c_str());
+		switch( _japp->GetNextEvent() ){
+			case JApplication::kSUCCESS:
+				// Loop back again immediately since something may now be available
+				continue;
+				break;
+			case JApplication::kTRY_AGAIN:
+			default:
+				// Nothing for us to do. Fall down to sleep call below.
+				break;
 		}
 
 		// continue while loop to process next event
 		continue;
-
-	}else{
-		// No events in any queues. Try grabbing one from source
-		try{
-
-			switch( _japp->GetNextEvent() ){
-				case JApplication::kSUCCESS:
-					// Loop back again immediately since something may now be available
-					continue;
-					break;
-				case JApplication::kTRY_AGAIN:
-				default:
-					// Nothing for us to do. Fall down to sleep call below.
-					break;
-			}
-			
-			// continue while loop to process next event
-			continue;
-		}catch(...){
-			// Unable to get another event. The JApplication::GetNextEvent
-			// call should signal all threads to quit if appropriate.
-			// There are at least two possibilities:
-			//
-			// 1. We have exhausted all events from all sources and
-			//    JApplication has told or will soon tell all JThreads
-			//    to end.
-			//
-			// 2. We are reading from a live stream and there are currently
-			//    no events available, but some may still come so we
-			//    need to go idle.
-			//
-			// In either case, we fall down to the sleep call below before
-			// executing the loop again. The only way to avoid the sleep call
-			// is for the above GetNextEvent() call to have succeeded.
-		}
-
-		this_thread::sleep_for( chrono::nanoseconds(100) ); //Sleep a minimal amount.
+	}catch(...){
+		// Unable to get another event. The JApplication::GetNextEvent
+		// call should signal all threads to quit if appropriate.
+		// There are at least two possibilities:
+		//
+		// 1. We have exhausted all events from all sources and
+		//    JApplication has told or will soon tell all JThreads
+		//    to end.
+		//
+		// 2. We are reading from a live stream and there are currently
+		//    no events available, but some may still come so we
+		//    need to go idle.
+		//
+		// In either case, we fall down to the sleep call below before
+		// executing the loop again. The only way to avoid the sleep call
+		// is for the above GetNextEvent() call to have succeeded.
 	}
 }
 
@@ -346,14 +276,6 @@ void JThread::Run(void)
 	/// sets the run state flag. 
 
 	_run_state = _run_state_target = kRUN_STATE_RUNNING;
-}
-
-//---------------------------------
-// SetQueues
-//---------------------------------
-void JThread::SetQueues(const vector<JQueue*> *queues)
-{
-	
 }
 
 //---------------------------------
@@ -378,5 +300,5 @@ void JThread::Stop(bool wait_until_idle)
 	// That should only be for the duration of processing of the current
 	// event though and this method is expected to be used rarely so
 	// this should be OK.
-	if( wait_until_idle ) while( _run_state == kRUN_STATE_RUNNING ) this_thread::yield();
+	if( wait_until_idle ) while( _run_state == kRUN_STATE_RUNNING ) std::this_thread::yield();
 }
