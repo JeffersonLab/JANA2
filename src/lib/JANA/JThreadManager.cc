@@ -47,6 +47,8 @@
 #include "JThreadManager.h"
 #include "JEventSource.h"
 #include "JApplication.h"
+#include "JEventSourceManager.h"
+#include "JQueue.h"
 
 //---------------------------------
 // JThreadManager
@@ -76,14 +78,43 @@ void JThreadManager::CreateThreads(std::size_t aNumThreads)
 }
 
 //---------------------------------
-// GetNcores
+// PrepareQueues
 //---------------------------------
-uint32_t JThreadManager::GetNcores(void)
+void JThreadManager::PrepareQueues(void)
 {
-	/// Returns the number of cores that are on the computer.
-	/// The count will be full cores+hyperthreads (or equivalent)
+	//Call while single-threaded during program startup
+	//For each open event source, create a set of queues using the template queue set
+	//Also, add the custom event queue that is unique to each event source
+	std::vector<JEventSource*> sSources;
+	mEventSourceManager->GetJEventSources(sSources);
+	for(auto sSource : sSources)
+		mActiveQueueSets.emplace_back(sSource, MakeQueueSet(sSource));
+}
 
-	return sysconf(_SC_NPROCESSORS_ONLN);
+//---------------------------------
+// MakeQueueSet
+//---------------------------------
+JQueueSet* JThreadManager::MakeQueueSet(JEventSource* sEventSource)
+{
+	//Create queue set from template
+	//The template contains queues that are identical for all sources (e.g. subtask, output queues)
+
+	//Don't just use default copy-constructor.
+	//We want each event source to have its own set of queues.
+	//This is in case there are "barrier" events:
+		//If a barrier event comes through, we don't want to analyze any
+		//subsequent events until it is finished being analyzed.
+		//However, we can still analyze events from other sources,
+		//and don't want to block those: Separate queues
+	auto sQueueSet = mTemplateQueueSet.Clone();
+
+	//get source-specific event queue (e.g. disentangle events)
+	auto sEventQueue = sEventSource->GetEventQueue();
+	if(sEventQueue == nullptr) //unspecified by source, use default
+		sEventQueue = new JQueue();
+	sQueueSet->AddQueue(JQueueSet::JQueueType::Events, sEventQueue);
+
+	return sQueueSet;
 }
 
 //---------------------------------
@@ -111,16 +142,16 @@ void JThreadManager::GetJThreads(std::vector<JThread*>& aThreads) const
 //---------------------------------
 // Get_Queue
 //---------------------------------
-JQueueInterface* JThreadManager::Get_Queue(const std::shared_ptr<JTaskBase>& aTask, JQueueSet::JQueueType aQueueType, const std::string& aQueueName) const
+JQueueInterface* JThreadManager::GetQueue(const std::shared_ptr<JTaskBase>& aTask, JQueueSet::JQueueType aQueueType, const std::string& aQueueName) const
 {
 	auto sEventSource = aTask->GetEvent()->GetEventSource();
-	return Get_Queue(sEventSource, aQueueType, aQueueName);
+	return GetQueue(sEventSource, aQueueType, aQueueName);
 }
 
 //---------------------------------
 // Get_Queue
 //---------------------------------
-JQueueInterface* JThreadManager::Get_Queue(const JEventSource* aEventSource, JQueueSet::JQueueType aQueueType, const std::string& aQueueName) const
+JQueueInterface* JThreadManager::GetQueue(const JEventSource* aEventSource, JQueueSet::JQueueType aQueueType, const std::string& aQueueName) const
 {
 	auto sQueueSet = GetQueueSet(aEventSource);
 	return sQueueSet->GetQueue(aQueueType, aQueueName);
@@ -129,17 +160,11 @@ JQueueInterface* JThreadManager::Get_Queue(const JEventSource* aEventSource, JQu
 //---------------------------------
 // SetQueue
 //---------------------------------
-void JThreadManager::SetQueue(JQueueSet::JQueueType aQueueType, JQueueInterface* aQueue, const std::string& aEventSourceGeneratorName)
+void JThreadManager::AddQueue(JQueueSet::JQueueType aQueueType, JQueueInterface* aQueue)
 {
-	//Set a template queue that will be used (cloned) for future event sources of that type (won't be used for any currently open sources)
+	//Set a template queue that will be used (cloned) for each event source
 	//Doesn't lock: Assume's no one is crazy enough to call this while in the middle of running.
-
-	auto sFind_Key = [aEventSourceGeneratorName](const std::pair<std::string, JQueueSet*>& aPair) -> bool { return (aPair.first == aEventSourceGeneratorName); };
-
-	auto sEnd = std::end(mTemplateQueueSets);
-	auto sIterator = std::find_if(std::begin(mTemplateQueueSets), sEnd, sFind_Key);
-	if(sIterator == sEnd)
-
+	mTemplateQueueSet.AddQueue(aQueueType, aQueue);
 }
 
 //---------------------------------
@@ -159,7 +184,7 @@ JQueueSet* JThreadManager::GetQueueSet(const JEventSource* aEventSource) const
 	auto sResult = (sIterator != sEnd) ? (*sIterator).second : nullptr;
 
 	//UNLOCK
-	mQueueSetsLock = true;
+	mQueueSetsLock = false;
 
 	return sResult;
 }
@@ -167,7 +192,7 @@ JQueueSet* JThreadManager::GetQueueSet(const JEventSource* aEventSource) const
 //---------------------------------
 // GetNextQueueSet
 //---------------------------------
-JQueueSet* JThreadManager::GetNextQueueSet(std::size_t& aCurrentSetIndex)
+std::pair<JEventSource*, JQueueSet*> JThreadManager::GetNextSourceQueues(std::size_t& aCurrentSetIndex)
 {
 	aCurrentSetIndex++;
 
@@ -178,11 +203,76 @@ JQueueSet* JThreadManager::GetNextQueueSet(std::size_t& aCurrentSetIndex)
 
 	if(aCurrentSetIndex > mActiveQueueSets.size())
 		aCurrentSetIndex = 0;
+	auto sQueuePair = mActiveQueueSets[aCurrentSetIndex];
 
 	//UNLOCK
-	mQueueSetsLock = true;
+	mQueueSetsLock = false;
 
-	return mActiveQueueSets[aCurrentSetIndex];
+	return sQueuePair;
+}
+
+//---------------------------------
+// RegisterSourceFinished
+//---------------------------------
+std::pair<JEventSource*, JQueueSet*> JThreadManager::RegisterSourceFinished(const JEventSource* aFinishedEventSource, std::size_t& aQueueSetIndex)
+{
+	//Open the next source (if not done already)
+	JEventSource::RETURN_STATUS sStatus = JEventSource::RETURN_STATUS::kUNKNOWN;
+	JEventSource* sNextSource = nullptr;
+	std::tie(sStatus, sNextSource) = mEventSourceManager->OpenNext(aFinishedEventSource);
+
+	//LOCK
+	bool sExpected = false;
+	while(!mQueueSetsLock.compare_exchange_weak(sExpected, true))
+		sExpected = false;
+
+	//Update queue sets (if opened) OR get new source (if previous thread opened it already)
+
+	if(sStatus == JEventSource::RETURN_STATUS::kNO_MORE_EVENTS)
+	{
+		//No new sources to open
+
+		//Retire the current queue set and delete it from the active queue
+		mRetiredQueueSets.push_back(mActiveQueueSets[aQueueSetIndex]);
+		mActiveQueueSets.erase(std::begin(mActiveQueueSets) + aQueueSetIndex);
+
+		if(mActiveQueueSets.empty())
+		{
+			//Closing the last event source. Signal to the application that we are done.
+
+			//UNLOCK
+			mQueueSetsLock = false;
+
+			//TODO: QUIT HERE!!
+		}
+
+		//Rotate this thread to the next open source
+		aQueueSetIndex++;
+		if(aQueueSetIndex > mActiveQueueSets.size())
+			aQueueSetIndex = 0;
+		auto sQueuePair = mActiveQueueSets[aQueueSetIndex];
+
+		//UNLOCK
+		mQueueSetsLock = false;
+
+		return sQueuePair;
+	}
+	else if(sNextSource != nullptr)
+	{
+		//We have just opened a new event source
+
+		//Retire the current queue set, insert a new one in its place
+		mRetiredQueueSets.push_back(mActiveQueueSets[aQueueSetIndex]);
+		mActiveQueueSets[aQueueSetIndex].first = std::make_pair(sNextSource, MakeQueueSet(sNextSource));
+	}
+	//else new source opened previously (in place), just get and return it
+
+	auto sQueuePair = mActiveQueueSets[aQueueSetIndex];
+
+	//UNLOCK
+	mQueueSetsLock = false;
+
+	return sQueuePair;
 }
 
 //---------------------------------

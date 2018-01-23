@@ -47,7 +47,24 @@
 #include <algorithm>
 
 //---------------------------------
-// Set_Queues
+// ~JQueueSet
+//---------------------------------
+JQueueSet::~JQueueSet(void)
+{
+	//Loop through queue types
+	for(auto& sQueuePair : mQueues)
+	{
+		auto sQueueType = sQueuePair.first;
+		auto& sQueueVector = sQueuePair.second;
+
+		//Loop through queues of this type
+		for(auto& sQueue : sQueueVector)
+			delete sQueue;
+	}
+}
+
+//---------------------------------
+// SetQueues
 //---------------------------------
 void JQueueSet::SetQueues(JQueueSet::JQueueType aQueueType, const std::vector<JQueueInterface*>& aQueues)
 {
@@ -55,7 +72,7 @@ void JQueueSet::SetQueues(JQueueSet::JQueueType aQueueType, const std::vector<JQ
 }
 
 //---------------------------------
-// Add_Queue
+// AddQueue
 //---------------------------------
 void JQueueSet::AddQueue(JQueueSet::JQueueType aQueueType, JQueueInterface* aQueue)
 {
@@ -63,7 +80,7 @@ void JQueueSet::AddQueue(JQueueSet::JQueueType aQueueType, JQueueInterface* aQue
 }
 
 //---------------------------------
-// Remove_Queues
+// RemoveQueues
 //---------------------------------
 void JQueueSet::RemoveQueues(JQueueSet::JQueueType aQueueType)
 {
@@ -71,11 +88,32 @@ void JQueueSet::RemoveQueues(JQueueSet::JQueueType aQueueType)
 }
 
 //---------------------------------
-// Remove_Queues
+// RemoveQueues
 //---------------------------------
 void JQueueSet::RemoveQueues(void)
 {
 	mQueues.clear();
+}
+
+//---------------------------------
+// Clone
+//---------------------------------
+JQueueSet* JQueueSet::Clone(void) const
+{
+	auto sClone = new JQueueSet();
+
+	//Loop through queue types
+	for(auto& sQueuePair : mQueues)
+	{
+		auto sQueueType = sQueuePair.first;
+		auto& sQueueVector = sQueuePair.second;
+
+		//Loop through queues of this type
+		for(auto& sQueue : sQueueVector)
+			sClone->AddQueue(sQueueType, sQueue->Clone());
+	}
+
+	return sClone;
 }
 
 //---------------------------------
@@ -104,7 +142,7 @@ JQueueInterface* JQueueSet::GetQueue(JQueueSet::JQueueType aQueueType, const std
 //---------------------------------
 // Get_Task
 //---------------------------------
-std::pair<JQueueSet::JQueueType, JTaskBase*> JQueueSet::GetTask(void) const
+std::pair<JQueueSet::JQueueType, std::shared_ptr<JTaskBase>> JQueueSet::GetTask(void) const
 {
 	//Loop through queue types (in order of priority)
 	for(auto& sQueuePair : mQueues)
@@ -118,18 +156,18 @@ std::pair<JQueueSet::JQueueType, JTaskBase*> JQueueSet::GetTask(void) const
 			//Get task if any
 			auto sTask = sQueue->GetTask();
 			if(sTask != nullptr)
-				return std::make_pair(sQueueType, sTask);
+				return std::make_pair(sQueueType, std::move(sTask));
 		}
 	}
 
 	//No tasks remaining
-	return std::make_pair(JQueueType::Events, (JTaskBase*)nullptr);
+	return std::make_pair(JQueueType::Events, std::shared_ptr<JTaskBase>(nullptr));
 }
 
 //---------------------------------
 // Get_Task
 //---------------------------------
-JTaskBase* JQueueSet::GetTask(JQueueSet::JQueueType aQueueType, const std::string& aQueueName) const
+std::shared_ptr<JTaskBase> JQueueSet::GetTask(JQueueSet::JQueueType aQueueType, const std::string& aQueueName) const
 {
 	auto sQueue = GetQueue(aQueueType, aQueueName);
 	return sQueue->GetTask();

@@ -37,6 +37,8 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
+#include <algorithm>
+
 #include "JEventSourceManager.h"
 
 using namespace std;
@@ -106,123 +108,6 @@ void JEventSourceManager::ClearJEventSourceGenerators(void)
 }
 
 //---------------------------------
-// GetNextEvent
-//---------------------------------
-uint32_t JEventSourceManager::GetNextEvent(void)
-{
-	/// Read in a JEvent from one of the active sources. If there are
-	/// no active sources, open the next source. If all sources have
-	/// been exhausted, then the JEventSourceManager will be flagged to quit
-	/// and a JException will be thrown.
-
-	// This is designed to allow multiple threads to read from multiple
-	// input streams simultaneously. It uses atomics to avoid mutex locking
-	// where possible. This does complicate things a bit so here goes an
-	// explanation:
-	//
-	// 1. The _sources_active container is sized to hold the maximum number
-	// of simultaneous event streams. Each element will contain either a NULL
-	// pointer or a pointer to a valid JEventSource object.
-	//
-	// 2. This will first look for a non-NULL value in _active_sources. If
-	// one is found, it will try and claim exclusive use via its _in_use
-	// atomic member. If it obtains that, then it will either read an
-	// event from it, or, if there are no more events, set the slot in
-	// _actve_sources to NULL indicating it can be filled by another source.
-	// The exhausted pointer is then added to the _sources_exhausted container.
-	//
-	// 3. If exclusive use of a source cannot be obtained and there is at
-	// least one NULL pointer in _active_sources, then OpenNext() will be
-	// called. That will lock a mutex while creating a new JEventSource
-	// and placing it in the _active_sources queue.
-	//
-	// Mutexes are only used when:
-	//
-	// A. creating a new JEventSource and writing it into _active_sources
-	//
-	// B. writing an exhausted JEventSource into _sources_exhausted
-	//
-	// Both of those should happen infrequently. Most calls to this should
-	// result in either an event being read in or nothing at all happening.
-	// Most of the time only accesses to a few atomic variables will occur.
-
-	bool has_null_slot = false;
-	for(uint32_t islot = 0; islot < _sources_active.size(); islot++)
-	{
-		auto src = _sources_active[islot];
-		if( src == nullptr )
-		{
-			has_null_slot = true;
-			continue;
-		}
-
-		bool tmp = false;
-		if(!src->_in_use.compare_exchange_weak(tmp, true) )
-			continue;
-
-		// We now have exclusive use of src
-		if( src->IsDone() ){
-			// No more events in this source. Retire it.
-			_sources_active[islot] = nullptr;
-			std::lock_guard<std::mutex> lguard(_sources_exhausted_mutex);
-			_sources_exhausted.push_back( src );
-		} else {
-			try{
-				// Read event from this source
-				switch( src->GetEvent() ){
-					case JEventSource::kSUCCESS:
-					case JEventSource::kNO_MORE_EVENTS:
-						// Not throwing an exception here will cause the calling
-						// JThread to immediately cycle back to start of Loop
-						// without sleeping.
-						break;
-					case JEventSource::kTRY_AGAIN:
-						// This will cause the calling JThread to sleep briefly
-						src->_in_use.store( false );
-						throw JException("source stalled. try again.");
-						break;
-					default:
-						src->_in_use.store( false );
-						throw JException("Unknown response from event source.");
-						break;
-
-				}
-			}catch(JException &e){
-				// There was a problem reading from this source.
-				// Make sure it is flagged as done so it will be
-				// cleaned up on a subsequent call.
-				jerr << e.GetMessage() << endl;
-				src->SetDone(true);
-			}
-		}
-
-		// Free the _in_use flag
-		src->_in_use.store( false );
-
-		// At this point we have either read in an event or changed
-		// the state of a source.
-		return JApplication::kSUCCESS;
-	}
-
-	// If we get here then we were not able to get exclusive use of an existing
-	// source object. If there are no empty slots then we are waiting on other
-	// threads to read in events. Throw an exception to cause the calling JThread
-	// to sleep breifly before trying again.
-	if( !has_null_slot ) return JApplication::kTRY_AGAIN;
-	//if( !has_null_slot ) throw JException("thread stalled waiting for event");
-
-	// There was and possibly still is at least one empty slot for an event source.
-	// Try opening the next source.
-	OpenNext();
-
-	// Return kSUCCESS to tell calling thread to loop back
-	// immediately without sleeping since there may now be
-	// something for it to do.
-	return JApplication::kSUCCESS;
-}
-
-
-//---------------------------------
 // OpenNext
 //---------------------------------
 void JEventSourceManager::OpenInitSources(void)
@@ -236,14 +121,14 @@ void JEventSourceManager::OpenInitSources(void)
 	{
 		std::string source_name = _source_names_unopened.front();
 		_source_names_unopened.pop_front();
-		OpenSource(si, source_name);
+		_sources_active[si] = OpenSource(source_name);
 	}
 }
 
 //---------------------------------
 // OpenSource
 //---------------------------------
-void JEventSourceManager::OpenSource(std::size_t islot, const std::string& source_name)
+JEventSource* JEventSourceManager::OpenSource(const std::string& source_name)
 {
 	// Check if the user has forced a specific type of event source
 	// be used via the EVENT_SOURCE_TYPE config. parameter. If so,
@@ -253,67 +138,63 @@ void JEventSourceManager::OpenSource(std::size_t islot, const std::string& sourc
 	if(gen == nullptr)
 		gen = GetEventSourceGenerator(source_name);
 
-	// Try openng the source using the chosen generator
+	// Try opening the source using the chosen generator
 	JEventSource *new_source = nullptr;
 	if(gen != nullptr){
 		jout << "Opening source \"" << source_name << "\" of type: "<< gen->Description() << endl;
 		new_source = gen->MakeJEventSource(source_name);
 	}
 
-	if(new_source){
+	if(new_source)
+		return new_source;
 
-		// Copy pointer into the empty active pointers slot
-		_sources_active[islot] = new_source;
-
-	}else{
-
-		// Problem opening source. Notify user
-		jerr<<std::endl;
-		jerr<<"  xxxxxxxxxxxx  Unable to open event source \""<<source_name<<"\"!  xxxxxxxxxxxx"<<std::endl;
-		jerr<<std::endl;
-		if( _source_names_unopened.empty() ){
-			unsigned int Nactive_sources = 0;
-			for(auto src : _sources_active) if( src != nullptr ) Nactive_sources++;
-			if( (Nactive_sources==0) && (_sources_exhausted.empty()) ){
-				jerr<<"   xxxxxxxxxxxx  NO VALID EVENT SOURCES GIVEN !!!   xxxxxxxxxxxx  "<<std::endl;
-				jerr<<std::endl;
-				mApplication->SetExitCode(-1);
-				mApplication->Quit();
-			}
+	// Problem opening source. Notify user
+	jerr<<std::endl;
+	jerr<<"  xxxxxxxxxxxx  Unable to open event source \""<<source_name<<"\"!  xxxxxxxxxxxx"<<std::endl;
+	jerr<<std::endl;
+	if( _source_names_unopened.empty() ){
+		unsigned int Nactive_sources = 0;
+		for(auto src : _sources_active) if( src != nullptr ) Nactive_sources++;
+		if( (Nactive_sources==0) && (_sources_exhausted.empty()) ){
+			jerr<<"   xxxxxxxxxxxx  NO VALID EVENT SOURCES GIVEN !!!   xxxxxxxxxxxx  "<<std::endl;
+			jerr<<std::endl;
+			mApplication->SetExitCode(-1);
+			mApplication->Quit();
 		}
 	}
+
+	return nullptr;
 }
 
 //---------------------------------
 // OpenNext
 //---------------------------------
-void JEventSourceManager::OpenNext(void)
+std::pair<JEventSource::RETURN_STATUS, JEventSource*> JEventSourceManager::OpenNext(const JEventSource* aPreviousSource)
 {
-	/// Try opening the next source in the list. This will return immediately
-	/// if all sources have already been opened.
+	/// Remove the previous source from the opened list and open a new one.
+	auto sFindSlot = [aPreviousSource](const JEventSource* sSource) -> bool { return (sSource == aPreviousSource); };
 
-	// Lock mutex while we look for a slot with a nullptr
+	// Lock
 	std::lock_guard<std::mutex> lg(_sources_open_mutex);
 
-	if( _source_names_unopened.empty() ) return;
+	//Find slot
+	auto sEnd = std::end(_sources_active);
+	auto sIterator = std::find_if(std::begin(_sources_active), sEnd, sFindSlot);
+	if(sIterator == sEnd)
+		return std::make_pair(JEventSource::kSUCCESS, (JEventSource*)nullptr); //Previous source already closed and new one already opened (if any)
 
-	// Try and find a slot with a nullptr that we can grab exclusive use of.
-	// Note that slots that do not contain a value of nullptr may be overwritten
-	// to containe nullptr in GetNextEvent(). This is the only place where a
-	// nullptr can be overwritten with something else though.
+	//Register source finished
+	_sources_exhausted.push_back(*sIterator);
 
-	uint32_t islot = 0;
-	for(auto src : _sources_active){
-		if( src == nullptr ) break;
-		islot++;
-	}
-	if( islot >= _sources_active.size() ) return;
+	if( _source_names_unopened.empty())
+		return std::make_pair(JEventSource::kNO_MORE_EVENTS, (JEventSource*)nullptr);
 
 	// Get name of next source to open
-	std::string source_name = _source_names_unopened.front();
+	auto source_name = _source_names_unopened.front();
 	_source_names_unopened.pop_front();
 
-	OpenSource(islot, source_name);
+	*sIterator = OpenSource(source_name);
+	return std::make_pair(JEventSource::kSUCCESS, *sIterator);
 }
 
 //---------------------------------

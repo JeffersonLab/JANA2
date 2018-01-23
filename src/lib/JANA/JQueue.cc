@@ -42,22 +42,19 @@
 //---------------------------------
 // JQueue    (Constructor)
 //---------------------------------
-JQueue::JQueue(std::size_t aQueueSize)
+JQueue::JQueue(std::size_t aQueueSize, std::size_t aTaskBufferSize) : mTaskBufferSize(aTaskBufferSize)
 {
-	_queue.resize(aQueueSize);
+	mQueue.resize(aQueueSize);
 }
 
 //---------------------------------
-// AddToQueue
+// AddTask
 //---------------------------------
-int JQueue::AddTask(JTaskBase *jevent)
+int JQueue::AddTask(const std::shared_ptr<JTaskBase>& aTask)
 {
 	/// Add the given JTaskBase to this queue. This will do so without locks.
 	/// If the queue is full, it will return immediately with a value
 	/// of JQueue::kQUEUE_FULL. Upon success, it will return JQueue::NO_ERROR.
-	/// The specific subclass of JTaskBase that is passed in should be of the
-	/// type held by this queue. If adding a different subclass that must
-	/// be converted, use the AddEvent method.
 
 	// The queue is maintained by 3 atomic indices. The goal of this
 	// method is to increment both the iwrite and iend indices so
@@ -68,23 +65,84 @@ int JQueue::AddTask(JTaskBase *jevent)
 	// calling thread a chance to do something else or call this again.
 	// for another try.)
 
-	while(!_done){
-
+	while(true)
+	{
 		uint32_t idx = iwrite;
-		uint32_t inext = (idx+1)%_queue.size();
-		if( inext == iread ) return kQUEUE_FULL;
-		if( iwrite.compare_exchange_weak(idx, inext) ){
-			_queue[idx] = jevent;
+		if(idx == ibegin)
+			return kQUEUE_FULL;
+		uint32_t inext = (idx + 1) % mQueue.size();
+
+		//The queue is not full: iwrite is pointing to an empty slot: idx
+		//If we can increment iwrite before someone else does, then we have exclusive access to slot idx
+		//Why is access exclusive?:
+			//Once we increment, the next writer will try to write to a following slot
+			//The next writer can write to the next slot, but it can't increment iend until this thread does (so it will spin)
+			//The next reader can't read past iend (which is before this slot), and we haven't incremented iend yet
+			//And even if #threads > #slots, eventually the queue will be full and it won't get past the above check (ibegin isn't incrementing)
+
+		if( iwrite.compare_exchange_weak(idx, inext) )
+		{
+			//OK, we've claimed exclusive access to the slot. Insert the task.
+			mQueue[idx] = aTask;
+
+			//Now that we've inserted the task, indicate to readers that this slot can now be read (by incrementing iend)
 			uint32_t save_idx = idx;
-			while( !_done ){
-				if( iend.compare_exchange_weak(idx, inext) ) break;
+			while(!iend.compare_exchange_weak(idx, inext))
 				idx = save_idx;
-			}
-			break;
+			return kNO_ERROR;
 		}
 	}
 
-	return kNO_ERROR;
+	return kNO_ERROR; //can never happen
+}
+
+//---------------------------------
+// AddTask
+//---------------------------------
+int JQueue::AddTask(std::shared_ptr<JTaskBase>&& aTask)
+{
+	/// Add the given JTaskBase to this queue. This will do so without locks.
+	/// If the queue is full, it will return immediately with a value
+	/// of JQueue::kQUEUE_FULL. Upon success, it will return JQueue::NO_ERROR.
+
+	// The queue is maintained by 3 atomic indices. The goal of this
+	// method is to increment both the iwrite and iend indices so
+	// they point to the same slot upon exit. The JTaskBase pointer will
+	// be copied into the slot just in front of the one these point
+	// to, making it available to the GetEvent method. If it sees that
+	// the queue is full, it returns immediately. (This is to give the
+	// calling thread a chance to do something else or call this again.
+	// for another try.)
+
+	while(true)
+	{
+		uint32_t idx = iwrite;
+		if(idx == ibegin)
+			return kQUEUE_FULL;
+		uint32_t inext = (idx + 1) % mQueue.size();
+
+		//The queue is not full: iwrite is pointing to an empty slot: idx
+		//If we can increment iwrite before someone else does, then we have exclusive access to slot idx
+		//Why is access exclusive?:
+			//Once we increment, the next writer will try to write to a following slot
+			//The next writer can write to the next slot, but it can't increment iend until this thread does (so it will spin)
+			//The next reader can't read past iend (which is before this slot), and we haven't incremented iend yet
+			//And even if #threads > #slots, eventually the queue will be full and it won't get past the above check (ibegin isn't incrementing)
+
+		if( iwrite.compare_exchange_weak(idx, inext) )
+		{
+			//OK, we've claimed exclusive access to the slot. Insert the task.
+			mQueue[idx] = std::move(aTask);
+
+			//Now that we've inserted the task, indicate to readers that this slot can now be read (by incrementing iend)
+			uint32_t save_idx = idx;
+			while(!iend.compare_exchange_weak(idx, inext))
+				idx = save_idx;
+			return kNO_ERROR;
+		}
+	}
+
+	return kNO_ERROR; //can never happen
 }
 
 //---------------------------------
@@ -93,33 +151,51 @@ int JQueue::AddTask(JTaskBase *jevent)
 uint32_t JQueue::GetMaxTasks(void)
 {
 	/// Returns maximum number of Tasks queue can hold at one time.
-	return _queue.size();
+	return mQueue.size();
 }
 
 //---------------------------------
 // GetEvent
 //---------------------------------
-JTaskBase* JQueue::GetTask(void)
+std::shared_ptr<JTaskBase> JQueue::GetTask(void)
 {
-	/// Retreive the next JTaskBase from this queue. Upon sucesss, a pointer to
+	/// Retrieve the next JTaskBase from this queue. Upon success, a shared pointer to
 	/// a JTaskBase object is returned (ownership is then considered transferred
 	/// to the caller). A nullptr pointer is returned if the queue is empty or
 	/// the call is interrupted. This operates without locks.	
 
-	while(!_done){
-
+	while(true)
+	{
 		uint32_t idx = iread;
-		if( idx == iend ) return nullptr;
-		auto sTask = _queue[idx];
-		uint32_t inext = (idx+1)%_queue.size();
-		if( iread.compare_exchange_weak(idx, inext) ){
-			_nevents_processed++;
-			return sTask;
+		if( idx == iend )
+			return nullptr;
+
+		//The queue is not empty: iread is pointing to a used slot: idx
+		//If we can increment iread before someone else does, then we have exclusive read access to slot idx
+		//Why is access exclusive?:
+			//Once we increment, the next reader will try to read a following slot
+			//The next reader can read the next slot, but it can't increment ibegin until this thread does (so it will spin)
+			//The next writer can't write past ibegin (which is this slot), and we haven't incremented ibegin yet
+			//And even if #threads > #slots, eventually the queue will be full and it won't get past the above check (iend isn't incrementing)
+
+		auto sTask = mQueue[idx];
+		uint32_t inext = (idx + 1) % mQueue.size();
+		if( iread.compare_exchange_weak(idx, inext) )
+		{
+			//OK, we've claimed exclusive access to the slot. Move out the task (doesn't increase reference count).
+			auto sTask = std::move(mQueue[idx]);
+			mTasksProcessed++;
+
+			//Now that we've retrieved the task, indicate to writers that this slot can now be written-to (by incrementing ibegin)
+			uint32_t save_idx = idx;
+			while(!ibegin.compare_exchange_weak(idx, inext))
+				idx = save_idx;
+
+			return sTask; //should be copy-elided
 		}
 	}
-	
-	// throw exception?
-	return nullptr;
+
+	return nullptr; //can never happen
 }
 
 //---------------------------------
@@ -127,11 +203,10 @@ JTaskBase* JQueue::GetTask(void)
 //---------------------------------
 uint32_t JQueue::GetNumTasks(void)
 {
-	/// Returns the number of events currently in this queue.
-	
-	if(iend >= iread) return iend - iread;
-	
-	return _queue.size() - (iread - iend);
+	/// Returns the number of tasks currently in this queue.
+	//size 10, end = 2, begin = 9: -7
+	auto sDifference = (int)iend - (int)ibegin;
+	return (sDifference > 0) ? sDifference : sDifference + mQueue.size();
 }
 
 //---------------------------------
@@ -143,5 +218,21 @@ uint64_t JQueue::GetNumTasksProcessed(void)
 	/// queue. Does not include events still in the queue (see
 	/// GetNumTasks for that).
 	
-	return _nevents_processed;
+	return mTasksProcessed;
+}
+
+//---------------------------------
+// AreEnoughTasksBuffered
+//---------------------------------
+bool JQueue::AreEnoughTasksBuffered(void)
+{
+	return (GetNumTasks() >= mTaskBufferSize);
+}
+
+//---------------------------------
+// Clone
+//---------------------------------
+JQueueInterface* JQueue::Clone(void) const
+{
+	return (new JQueue(*this));
 }

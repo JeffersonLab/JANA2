@@ -23,3 +23,8 @@ std::shared_ptr<JTaskBase> JMakeAnalyzeEventTask(std::shared_ptr<JEvent>& aEvent
 	sTask->SetTask(std::move(sPackagedTask));
 	return std::static_pointer_cast<JTaskBase>(sTask);
 }
+
+std::string JGetLongestQueueName(JThreadManager* aThreadManager, JEventSourceManager* aEventSourceManager)
+{
+	//Check
+}

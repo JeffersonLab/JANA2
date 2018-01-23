@@ -48,30 +48,36 @@
 #include <atomic>
 #include <vector>
 
-class JTaskBase;
+#include "JQueueInterface.h"
 
 class JQueue : public JQueueInterface
 {
 	public:
 	
-		JQueue(std::size_t aQueueSize = 200);
+		JQueue(std::size_t aQueueSize = 200, std::size_t aTaskBufferSize = 0);
 
-		int AddTask(JTaskBase *JTaskBase);
-		JTaskBase* GetTask(void);
+		int AddTask(const std::shared_ptr<JTaskBase>& aTask);
+		int AddTask(std::shared_ptr<JTaskBase>&& aTask);
+		std::shared_ptr<JTaskBase> GetTask(void);
+		bool AreEnoughTasksBuffered(void);
 
 		uint32_t GetMaxTasks(void);
 		uint32_t GetNumTasks(void);
 		uint64_t GetNumTasksProcessed(void);
 	
-	private:
-		bool _done = false;
-		
-		std::vector<JTaskBase*> _queue;
-		std::atomic<uint64_t> _nevents_processed{0};
+		JQueueInterface* Clone(void) const;
 
-		std::atomic<uint32_t> iread{0};
-		std::atomic<uint32_t> iwrite{0};
-		std::atomic<uint32_t> iend{0};
+	private:
+
+		std::size_t mTaskBufferSize = 0;
+
+		std::vector<std::shared_ptr<JTaskBase>> mQueue;
+		std::atomic<uint64_t> mTasksProcessed{0};
+
+		std::atomic<uint32_t> iread{0};		//The slot that the next thread will try to read from
+		std::atomic<uint32_t> iwrite{0};	//The slot that the next thread will try to write to
+		std::atomic<uint32_t> ibegin{0};	//The slot indicating the beginning of the read region
+		std::atomic<uint32_t> iend{0};		//The slot indicating one-past-the-end of the read region
 };
 
 #endif // _JQueue_h_

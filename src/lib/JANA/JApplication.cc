@@ -374,13 +374,16 @@ int JApplication::GetExitCode(void)
 //---------------------------------
 void JApplication::Initialize(void)
 {
-	// Create default JQueue for event processing
-	// (plugins may replace this)
-	JQueue *physics_queue = new JQueue("Physics Events");
-	AddJQueue( physics_queue );
-	
+	// Create default JQueue for task processing (plugins may replace this)
+	// Event queues are defined by the event source
+	_threadManager->AddQueue(JQueueSet::JQueueType::SubTasks, new JQueue("SubTasks"));
+
 	// Attach all plugins
 	AttachPlugins();
+
+	//Prepare for running: Open event sources and prepare task queues for them
+	_eventSourceManager->OpenInitSources();
+	_threadManager->PrepareQueues();
 }
 
 //---------------------------------
@@ -396,11 +399,11 @@ void JApplication::PrintFinalReport(void)
 	jout << endl;
 	jout << "Final Report" << endl;
 	jout << "-----------------------------" << endl;
-	jout << string(max_len-6, ' ') << "JQueue:  Nevents" << endl;
+	jout << string(max_len-6, ' ') << "JQueue:  Ntasks" << endl;
 	jout << " " << string(max_len, '-') << "  --------" <<endl;
 	for(auto j : _jqueues){
 		string name = j->GetName();
-		jout << string(max_len - name.length(), ' ') << name << "  " << j->GetNumEventsProcessed() << endl;
+		jout << string(max_len - name.length(), ' ') << name << "  " << j->GetNumTasksProcessed() << endl;
 	}
 	jout << endl;
 	jout << "Integrated Rate: " << Val2StringWithPrefix( GetIntegratedRate() ) << "Hz" << endl;
@@ -434,9 +437,6 @@ void JApplication::Quit(void)
 //---------------------------------
 void JApplication::Run(uint32_t nthreads)
 {
-	//Do this while still single-threaded!
-	_eventSourceManager->OpenInitSources();
-	
 	// Set number of threads
 	try{
 		string snthreads = GetParameterValue<string>("NTHREADS");
@@ -560,16 +560,6 @@ void JApplication::AddJFactoryGenerator(JFactoryGenerator *factory_generator)
 }
 
 //---------------------------------
-// AddJQueue
-//---------------------------------
-void JApplication::AddJQueue(JQueue *queue)
-{
-	/// Add the given JQueue to the list of queues
-
-	_jqueues.push_back( queue );
-}
-
-//---------------------------------
 // GetJEventProcessors
 //---------------------------------
 void JApplication::GetJEventProcessors(vector<JEventProcessor*>& aProcessors)
@@ -583,30 +573,6 @@ void JApplication::GetJEventProcessors(vector<JEventProcessor*>& aProcessors)
 void JApplication::GetJFactoryGenerators(vector<JFactoryGenerator*> &factory_generators)
 {
 	factory_generators = _factoryGenerators;
-}
-
-//---------------------------------
-// GetJQueues
-//---------------------------------
-void JApplication::GetJQueues(vector<JQueue*> &queues)
-{
-	/// Copy list of the pointers to all JQueue objects into
-	/// provided container.
-	
-	queues = _jqueues;
-}
-
-//---------------------------------
-// GetJQueue
-//---------------------------------
-JQueue* JApplication::GetJQueue(const string &name)
-{
-	/// Return pointer to the JQueue object with the given name.
-	/// If no such queue exists, NULL is returned.
-	
-	for(auto q : _jqueues ) if( q->GetName() == name ) return q;
-	
-	return NULL;
 }
 
 //---------------------------------
@@ -661,7 +627,16 @@ bool JApplication::GetAllQueuesEmpty(void)
 	return Nempty_queues == _jqueues.size();
 }
 
+//---------------------------------
+// GetNcores
+//---------------------------------
+uint32_t JApplication::GetNcores(void)
+{
+	/// Returns the number of cores that are on the computer.
+	/// The count will be full cores+hyperthreads (or equivalent)
 
+	return sysconf(_SC_NPROCESSORS_ONLN);
+}
 
 //---------------------------------
 // GetCPU

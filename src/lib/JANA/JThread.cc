@@ -40,6 +40,7 @@
 #include <thread>
 #include <chrono>
 #include <iostream>
+#include <tuple>
 
 #include "JThread.h"
 #include "JThreadManager.h"
@@ -203,56 +204,76 @@ void JThread::Loop(void)
 			}
 
 			//Check if not enough events queued
-			if(!mSourceEmpty && !mEventQueue->CheckBuffer())
+			if(!mSourceEmpty && !mEventQueue->AreEnoughTasksBuffered())
 			{
-				//Not enough queued. Get the next event from the source, and get a task to process it
-				auto sEventTask = mEventSource->GetProcessEventTask();
-				if(sEventTask == nullptr)
-				{
-					//The source has been emptied.
-					//Continue processing jobs from this source until there aren't any more
-					mSourceEmpty = true;
-				}
-				else
+				//Not enough queued. Get the next event from the source, and get a task to process it (unless another thread has locked access)
+				auto sReturnStatus = JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
+				auto sEventTask = std::shared_ptr<JTaskBase>(nullptr);
+				std::tie(sEventTask, sReturnStatus) = mEventSource->GetProcessEventTask();
+
+				if(sReturnStatus == JEventSource::RETURN_STATUS::kSUCCESS)
 				{
 					//Add the process-event task to the event queue.
 					mEventQueue->AddTask(std::move(sEventTask));
 					continue;
 				}
+				else if(sReturnStatus == JEventSource::RETURN_STATUS::kNO_MORE_EVENTS)
+				{
+					//The source has been emptied.
+					//Continue processing jobs from this source until there aren't any more
+					mSourceEmpty = true;
+				}
+				//Else: Another thread has exclusive access to this event source
+				//In this case, try to execute other jobs for this source (if none, will rotate-sources/sleep after check
 			}
 
-			// Grab the next task and execute it
-			auto sTaskPair = mQueueSet->GetTask();
-			if(sTaskPair.second == nullptr)
+			// Grab the next task
+			auto sQueueType = JQueueSet::JQueueType::Events;
+			auto sTask = std::shared_ptr<JTaskBase>(nullptr);
+			std::tie(sQueueType, sTask) = mQueueSet->GetTask();
+
+			//Do we have a task?
+			if(sTask == nullptr)
 			{
-				//There are no tasks in the queue! What to do?
+				//There are no tasks in the queue for this event source.  Are we done with the source?
+				//We are not done with a source until all tasks referencing it have completed.
+
+				//Just because there isn't a task in any of the queues doesn't mean we are done:
+				//A thread may have removed a task and be currently running it.
+				//Also, that thread may spawn a bunch of sub-tasks, so we still want all threads
+				//to be available to process them.
+
+				//So, how can we tell if all threads are done processing tasks from a given file?
+				//When all JEvent's associated with that file are destroyed/recycled.
+				//We track this by counting the number of open JEvent's in each JEventSource.
+
 				if(mSourceEmpty && (mEventSource->GetNumOutstandingEvents() == 0))
 				{
-					//We are not done with a file until all tasks referencing it have completed.
-					//Just because there isn't a task in any of the queues doesn't mean we are done:
-					//A thread may have removed a task and be currently running it.
-					//Also, that thread may spawn a bunch of sub-tasks, so we still want all threads
-					//to be available to process them.
-
-					//So, how can we tell if all threads are done processing tasks from a given file?
-					//When all JEvent's associated with that file are destroyed/recycled.
-					//We track this by counting the number of open JEvent's in each JEventSource.
-					mThreadManager->RegisterFileFinished(mEventSource);
+					//Tell the thread manager that the source is finished (in case it didn't know already)
+					//Use the existing queues for the next event source
+					//If all sources are done, then all tasks are done, and this call will tell the program to end.
+					mEventSource = mThreadManager->RegisterSourceFinished(mEventSource, mQueueSetIndex);
+					if(mEventSource == nullptr) //No new sources, get queues from next open source
+						std::tie(mEventSource, mQueueSet) = mThreadManager->GetNextSourceQueues(mQueueSetIndex);
+					mSourceEmpty = false;
+					continue;
 				}
+
 				if(mRotateEventSources) //No tasks, try to rotate to a different input file
-					mQueueSet = mThreadManager->GetNextQueueSet(mQueueSetIndex);
+					std::tie(mEventSource, mQueueSet) = mThreadManager->GetNextSourceQueues(mQueueSetIndex);
 				else //No tasks, wait a bit for this event source to be ready
 					std::this_thread::sleep_for( std::chrono::nanoseconds(100) ); //Sleep a minimal amount.
 				continue;
 			}
 
-			(*sTaskPair.second)(); //Execute task
+			//Execute task
+			(*sTask)();
 
 			//Task complete.  If this was an event task, rotate to next open file (if desired)
 			//Don't rotate if it was a subtask or output task, because many of these may have submitted at once and we want to finish those first
-			if(mRotateEventSources && (sTaskPair.first == JQueueSet::JQueueType::Events))
+			if(mRotateEventSources && (sQueueType == JQueueSet::JQueueType::Events))
 			{
-				mQueueSet = mThreadManager->GetNextQueueSet(mQueueSetIndex);
+				std::tie(mEventSource, mQueueSet) = mThreadManager->GetNextSourceQueues(mQueueSetIndex);
 				mEventQueue = mQueueSet->GetQueue(JQueueSet::JQueueType::Events);
 				mSourceEmpty = false;
 			}

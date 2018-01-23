@@ -37,15 +37,14 @@ class JEventSourceManager
 		void RemoveJEventSource(JEventSource *source);
 		void RemoveJEventSourceGenerator(JEventSourceGenerator *source_generator);
 
-		uint32_t GetNextEvent(void);
-		void OpenNext(void);
+		std::pair<JEventSource::RETURN_STATUS, JEventSource*> OpenNext(const JEventSource* aPreviousSource);
 
 	private:
 
 		JEventSourceGenerator* GetUserEventSourceGenerator(void);
 		JEventSourceGenerator* GetEventSourceGenerator(const std::string& source_name);
 
-		void OpenSource(std::size_t islot, const std::string& source_name);
+		JEventSource* OpenSource(const std::string& source_name);
 
 		JApplication* mApplication;
 		std::size_t mMaxNumOpenFiles;

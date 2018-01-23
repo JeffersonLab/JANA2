@@ -117,24 +117,21 @@ class JApplication{
 		
 		void AddJEventProcessor(JEventProcessor *processor);
 		void AddJFactoryGenerator(JFactoryGenerator *factory_generator);
-		void AddJQueue(JQueue *queue);
 		void AddPlugin(string plugin_name);
 		void AddPluginPath(string path);
 		
 		void GetJEventProcessors(vector<JEventProcessor*>& aProcessors);
 		void GetJFactoryGenerators(vector<JFactoryGenerator*> &factory_generators);
-		void GetJQueues(vector<JQueue*> &queues);
-		JQueue* GetJQueue(const string &name);
 		JParameterManager* GetJParameterManager(void);
 		JResourceManager* GetJResourceManager(void);
 		JThreadManager* GetJThreadManager(void) const;
 		JEventSourceManager* GetJEventSourceManager(void) const;
-		void GetJThreads(vector<JThread*> &threads);
 		
 		//TASKS
 		std::shared_ptr<JTask<void>> GetVoidTask(void);
 
 		bool GetAllQueuesEmpty(void);
+		uint32_t GetNcores(void);
 		uint32_t GetCPU(void);
 		uint64_t GetNtasksCompleted(string name="");
 		uint64_t GetNeventsProcessed(void);
@@ -159,7 +156,6 @@ class JApplication{
 		std::vector<string> _plugins;
 		std::vector<string> _plugin_paths;
 		std::vector<void*> _sohandles;
-		std::vector<JQueue*> _jqueues;
 		std::vector<JThread*> _jthreads;
 		std::vector<JFactoryGenerator*> _factoryGenerators;
 		std::vector<JCalibrationGenerator*> _calibrationGenerators;

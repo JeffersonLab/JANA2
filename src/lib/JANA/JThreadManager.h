@@ -74,17 +74,18 @@ class JThreadManager
 		~JThreadManager(void){TerminateThreads();};
 
 		//INFORMATION
-		uint32_t GetNcores(void);
 		uint32_t GetNJThreads(void);
 
 		//GETTERS
 		void GetJThreads(std::vector<JThread*>& aThreads) const;
-		JQueueInterface* Get_Queue(const JEventSource* aEventSource, JQueueSet::JQueueType aQueueType, const std::string& aQueueName) const;
+
+		//QUEUES
+		JQueueInterface* GetQueue(const JEventSource* aEventSource, JQueueSet::JQueueType aQueueType, const std::string& aQueueName) const;
+		void AddQueue(JQueueSet::JQueueType aQueueType, JQueueInterface* aQueue);
+		void PrepareQueues(void);
 
 		//CONFIG
 		void SetThreadAffinity(int affinity_algorithm);
-		//YIKES: Must set in a way such that all future event sources get this too!!
-		void SetQueue(JQueueSet::JQueueType aQueueType, JQueueInterface* aQueue, const std::string& aEventSourceGeneratorName = ""); //"" = all
 
 		//CREATE/DESTROY
 		void CreateThreads(std::size_t aNumThreads);
@@ -96,20 +97,27 @@ class JThreadManager
 
 	private:
 
-		JQueueSet* GetNextQueueSet(std::size_t& aCurrentSetIndex);
+		//CALLED DIRECTLY BY JTHREAD
+		std::pair<JEventSource*, JQueueSet*> GetNextSourceQueues(std::size_t& aCurrentSetIndex);
 		JQueueSet* GetQueueSet(const JEventSource* aEventSource) const;
-		JQueueInterface* Get_Queue(const std::shared_ptr<JTaskBase>& aTask, JQueueSet::JQueueType aQueueType, const std::string& aQueueName) const;
+		JQueueInterface* GetQueue(const std::shared_ptr<JTaskBase>& aTask, JQueueSet::JQueueType aQueueType, const std::string& aQueueName) const;
+		std::pair<JEventSource*, JQueueSet*> RegisterSourceFinished(const JEventSource* aFinishedEventSource, std::size_t& aQueueSetIndex);
+
+		//INTERNAL CALLS
+		JQueueSet* MakeQueueSet(JEventSource* sEventSource);
 
 		//THREADS
 		std::vector<JThread*> mThreads;
+
+		//QUEUES
 		mutable std::atomic<bool> mQueueSetsLock{false};
-
+		JQueueSet mTemplateQueueSet; //When a new source is opened, these queues are cloned for it
 		//faster to linear-search unsorted vector-of-pairs than sorted-vector or map (unless large (~50+) number of open sources)
-		JQueueSet* mTemplateQueueSet; //When a new source is opened, these queues are cloned for it
 		std::vector<std::pair<JEventSource*, JQueueSet*>> mActiveQueueSets;
+		std::vector<std::pair<JEventSource*, JQueueSet*>> mRetiredQueueSets; //source already finished
 
-		bool mRotateEventSources;
-		JEventSourceManager* mEventSourceManager;
+		bool mRotateEventSources = false;
+		JEventSourceManager* mEventSourceManager = nullptr;
 };
 
 #endif

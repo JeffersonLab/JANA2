@@ -60,33 +60,58 @@ JEventSource::~JEventSource()
 //---------------------------------
 // GetProcessEventTask
 //---------------------------------
-std::shared_ptr<JTaskBase> JEventSource::GetProcessEventTask(void)
+std::pair<std::shared_ptr<JTaskBase>, JEventSource::RETURN_STATUS> JEventSource::GetProcessEventTask(void)
 {
+	//This version is called by JThread
+
 	//If file closed, return dummy pair
-	auto sEventPair = std::make_pair(std::shared_ptr<JEvent>(nullptr), kNO_MORE_EVENTS);
 	if(mFileClosed)
-		return sEventPair;
+		return std::make_pair(std::shared_ptr<JTaskBase>(nullptr), RETURN_STATUS::kNO_MORE_EVENTS);
+
+	//Attempt to acquire atomic lock
+	bool sExpected = false;
+	if(!mInUse.compare_exchange_weak(sExpected, true)) //failed, return busy
+		return std::make_pair(std::shared_ptr<JTaskBase>(nullptr), RETURN_STATUS::kBUSY);
 
 	//Get the event from the input file
+	auto sReturnStatus = RETURN_STATUS::kNO_MORE_EVENTS;
+	auto sEvent = std::shared_ptr<JEvent>(nullptr);
 	do
 	{
-		sEventPair = GetEvent();
+		std::tie(sEvent, sReturnStatus) = GetEvent();
 	}
-	while((sEventPair.second == JEventSource::kTRY_AGAIN) || (sEventPair.second == JEventSource::kUNKNOWN));
+	while((sReturnStatus == RETURN_STATUS::kTRY_AGAIN) || (sReturnStatus == RETURN_STATUS::kUNKNOWN));
+
+	//Done with the lock: Unlock
+	mInUse = false;
 
 	//If file closed, return dummy pair
-	if(sEventPair.second == kNO_MORE_EVENTS)
+	if(sReturnStatus == RETURN_STATUS::kNO_MORE_EVENTS)
 	{
 		mFileClosed = true;
-		return sEventPair;
+		return std::make_pair(std::shared_ptr<JTaskBase>(nullptr), RETURN_STATUS::kNO_MORE_EVENTS);
 	}
 
-	//Then make the default task for analyzing it (running the processors) and return it
-	return JMakeAnalyzeEventTask(sEventPair.first, mApplication); //From JFunctions
+	//Then make the task for analyzing it (default: running the processors) and return it
+	return GetProcessEventTask(sEvent);
 }
 
+//---------------------------------
+// GetProcessEventTask
+//---------------------------------
+std::pair<std::shared_ptr<JTaskBase>, JEventSource::RETURN_STATUS> JEventSource::GetProcessEventTask(std::shared_ptr<JEvent>& aEvent)
+{
+	//This version creates the task (default: run the processors), and can be overridden in derived classes (but cannot be called)
+	return std::make_pair(JMakeAnalyzeEventTask(aEvent, mApplication), RETURN_STATUS::kSUCCESS); //From JFunctions
+}
+
+//---------------------------------
+// GetEvent
+//---------------------------------
 std::pair<std::shared_ptr<JEvent>, JEventSource::RETURN_STATUS> JEventSource::GetEvent(void)
 {
+	//Get a JEvent from the file.
+	//This should be overridden in derived classes.
 	return std::make_pair(std::shared_ptr<JEvent>(nullptr), kUNKNOWN);
 }
 

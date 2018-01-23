@@ -53,6 +53,7 @@
 
 class JTaskBase;
 class JApplication;
+class JQueueInterface;
 
 class JEventSource{
 
@@ -60,22 +61,22 @@ class JEventSource{
 
 	public:
 	
-		enum RETURN_STATUS{
+		enum class RETURN_STATUS {
 			kSUCCESS,
 			kNO_MORE_EVENTS,
+			kBUSY,
 			kTRY_AGAIN,
 			kUNKNOWN
 		};
-	
-		std::atomic<bool> _in_use;
 
 		JEventSource(std::string name, JApplication* aApplication);
 		virtual ~JEventSource();
 		
-		virtual std::shared_ptr<JTaskBase> GetProcessEventTask(void);
+		std::pair<std::shared_ptr<JTaskBase>, JEventSource::RETURN_STATUS> GetProcessEventTask(void);
 		bool IsFileClosed();
 		
 		std::size_t GetNumOutstandingEvents(void) const{return mNumOutstandingEvents;}
+		JQueueInterface* GetEventQueue(void) const{return mEventQueue;}
 		
 	protected:
 	
@@ -84,13 +85,18 @@ class JEventSource{
 
 	private:
 
+		JQueueInterface* mEventQueue = nullptr; //For handling event-source-specific logic (such as disentangling events, dealing with barriers, etc.)
+
 		//Called by JEvent
 		void IncrementEventCount(void){mNumOutstandingEvents++;}
 		void DecrementEventCount(void){mNumOutstandingEvents--;}
 
+		virtual std::pair<std::shared_ptr<JTaskBase>, JEventSource::RETURN_STATUS> GetProcessEventTask(std::shared_ptr<JEvent>& aEvent);
+
 		//Keep track of file/event status
 		std::atomic<bool> mFileClosed{false};
-		static std::atomic<std::size_t> mNumOutstandingEvents{0}; //Number of JEvents with this event source
+		std::atomic<bool> mInUse{false};
+		std::atomic<std::size_t> mNumOutstandingEvents{0}; //Number of JEvents with this event source
 };
 
 #endif // _JEventSource_h_

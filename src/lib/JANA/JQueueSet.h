@@ -52,7 +52,7 @@
 
 class JQueueSet
 {
-	//If you want individual queues to skip-until-buffered (e.g. output) or skip-if-buffered (e.g. input): Is responsibility of individual JQueue
+	//The JQueueSet OWNS the queues it contains, and deletes them upon destruction.
 
 	public:
 
@@ -65,16 +65,9 @@ class JQueueSet
 			//Process events (Execute all processors on new event)
 			//Process remaining tasks in output queue
 
-		//How is this implemented?:
-			//First loop through queues calling CheckBuffer()
-		//Difference between Input & Events
-		//If not disentangling: None really
-		//Want to distinguish between reading in events from file, and processing events
-		//If event queue size < N, get more events from file
-		//OR:
-		//If disentangle queue size < N, get more events from file. If event queue size < M, disentangle
 		enum class JQueueType { Output = 0, SubTasks, Events };
 
+		~JQueueSet(void);
 		JQueueInterface* GetQueue(JQueueType aQueueType, const std::string& aName = "") const;
 
 		void SetQueues(JQueueType aQueueType, const std::vector<JQueueInterface*>& aQueues);
@@ -82,8 +75,9 @@ class JQueueSet
 		void RemoveQueues(JQueueType aQueueType);
 		void RemoveQueues(void);
 
-		std::pair<JQueueType, JTaskBase*> GetTask(void) const;
-		JTaskBase* GetTask(JQueueType aQueueType, const std::string& aQueueName) const;
+		JQueueSet* Clone(void) const;
+		std::pair<JQueueType, std::shared_ptr<JTaskBase>> GetTask(void) const;
+		std::shared_ptr<JTaskBase> GetTask(JQueueType aQueueType, const std::string& aQueueName) const;
 
 	private:
 		std::map<JQueueType, std::vector<JQueueInterface*>> mQueues;
