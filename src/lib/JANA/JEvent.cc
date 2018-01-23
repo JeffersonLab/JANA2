@@ -69,21 +69,16 @@ JEventSource* JEvent::GetEventSource(void) const
 void JEvent::SetEventSource(JEventSource* aSource)
 {
 	mEventSource = aSource;
+	mEventSource->IncrementEventCount();
 }
 
 //---------------------------------
-// Recycle
+// Release
 //---------------------------------
-void JEvent::Recycle(void)
+void JEvent::Release(void)
 {
-	/// Recycle this event. This virtual method should take care
-	/// of either deleting this JEvent object or returning it to
-	/// a pool for reuse. The expectation is that the subclass will
-	/// store sufficient information regarding the location of the 
-	/// pool for it to be returned. For very simple applications
-	/// where the highest levels of efficiency are not required,
-	/// deleting the object is OK.
-
-	delete this; // Yes, this is OK by the C++ standard
+	//Release all (pointers to) resources, called when recycled to pool
+	mFactorySet = nullptr;
+	mEventSource->DecrementEventCount();
+	mEventSource = nullptr;
 }
-

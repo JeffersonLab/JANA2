@@ -133,7 +133,7 @@ JApplication::JApplication(int narg, char *argv[])
 	_eventSourceManager = new JEventSourceManager();
 	_threadManager = new JThreadManager(_eventSourceManager);
 	mVoidTaskPool = std::make_shared<JResourcePool<JTask<void>>>();
-	mVoidTaskPool->Set_ControlParams(30, 20, 200, 100, 0);
+	mVoidTaskPool->Set_ControlParams(30, 20, 200, 100, 0); //TODO: Config these!!
 
 	// Loop over arguments
 	if(narg>0) _args.push_back(string(argv[0]));

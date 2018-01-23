@@ -55,6 +55,9 @@ class JTaskBase;
 class JApplication;
 
 class JEventSource{
+
+	friend JEvent;
+
 	public:
 	
 		enum RETURN_STATUS{
@@ -70,19 +73,24 @@ class JEventSource{
 		virtual ~JEventSource();
 		
 		virtual std::shared_ptr<JTaskBase> GetProcessEventTask(void);
-		virtual bool IsDone();
+		bool IsFileClosed();
 		
-		void SetDone(bool done = true);
-
+		std::size_t GetNumOutstandingEvents(void) const{return mNumOutstandingEvents;}
 		
 	protected:
 	
-		bool _done = false;
-	
-	private:
 		virtual std::pair<std::shared_ptr<JEvent>, RETURN_STATUS> GetEvent(void);
 		JApplication* mApplication = nullptr;
 
+	private:
+
+		//Called by JEvent
+		void IncrementEventCount(void){mNumOutstandingEvents++;}
+		void DecrementEventCount(void){mNumOutstandingEvents--;}
+
+		//Keep track of file/event status
+		std::atomic<bool> mFileClosed{false};
+		static std::atomic<std::size_t> mNumOutstandingEvents{0}; //Number of JEvents with this event source
 };
 
 #endif // _JEventSource_h_

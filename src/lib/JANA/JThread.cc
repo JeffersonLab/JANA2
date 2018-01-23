@@ -44,6 +44,7 @@
 #include "JThread.h"
 #include "JThreadManager.h"
 #include "JEventSource.h"
+#include "JApplication.h"
 
 thread_local JThread *JTHREAD = nullptr;
 
@@ -123,7 +124,7 @@ void JThread::Join(void)
 	/// from a method JApplication.
 	
 	if( _run_state != kRUN_STATE_ENDED ) End();
-	while( _run_state != kRUN_STATE_ENDED ) std::this_thread::sleep_for( chrono::microseconds(100) );
+	while( _run_state != kRUN_STATE_ENDED ) std::this_thread::sleep_for( std::chrono::microseconds(100) );
 	_thread->join();
 	_isjoined = true;
 }
@@ -224,9 +225,18 @@ void JThread::Loop(void)
 			auto sTaskPair = mQueueSet->GetTask();
 			if(sTaskPair.second == nullptr)
 			{
-				if(mSourceEmpty)
+				//There are no tasks in the queue! What to do?
+				if(mSourceEmpty && (mEventSource->GetNumOutstandingEvents() == 0))
 				{
-					//We are done processing this file
+					//We are not done with a file until all tasks referencing it have completed.
+					//Just because there isn't a task in any of the queues doesn't mean we are done:
+					//A thread may have removed a task and be currently running it.
+					//Also, that thread may spawn a bunch of sub-tasks, so we still want all threads
+					//to be available to process them.
+
+					//So, how can we tell if all threads are done processing tasks from a given file?
+					//When all JEvent's associated with that file are destroyed/recycled.
+					//We track this by counting the number of open JEvent's in each JEventSource.
 					mThreadManager->RegisterFileFinished(mEventSource);
 				}
 				if(mRotateEventSources) //No tasks, try to rotate to a different input file
@@ -238,15 +248,16 @@ void JThread::Loop(void)
 
 			(*sTaskPair.second)(); //Execute task
 
-			//Task complete.  If this was an output or process-event task, rotate to next open file (if desired)
-			if(mRotateEventSources && ((sTaskPair.first == JQueueSet::JQueueType::Events) || sTaskPair.first == JQueueSet::JQueueType::Output))
+			//Task complete.  If this was an event task, rotate to next open file (if desired)
+			//Don't rotate if it was a subtask or output task, because many of these may have submitted at once and we want to finish those first
+			if(mRotateEventSources && (sTaskPair.first == JQueueSet::JQueueType::Events))
 			{
 				mQueueSet = mThreadManager->GetNextQueueSet(mQueueSetIndex);
 				mEventQueue = mQueueSet->GetQueue(JQueueSet::JQueueType::Events);
 				mSourceEmpty = false;
 			}
 		}
-	}catch( JException &e){
+	}catch(JException &e){
 		jerr << "** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** " << std::endl;
 		jerr << "Caught JException: " << e.GetMessage() << std::endl;
 		jerr << "** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** " << std::endl;

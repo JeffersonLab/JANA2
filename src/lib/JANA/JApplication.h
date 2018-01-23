@@ -174,8 +174,9 @@ class JApplication{
 		
 	private:
 
-		//Task pools
-		std::shared_ptr<JResourcePool<JTask<void>>> mVoidTaskPool;
+		//Resource pools //One per thread to minimize locking
+		//TODO: Add methods to set control parameters
+		static thread_local std::shared_ptr<JResourcePool<JTask<void>>> mVoidTaskPool;
 };
 
 //---------------------------------

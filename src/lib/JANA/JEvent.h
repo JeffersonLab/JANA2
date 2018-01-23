@@ -49,15 +49,14 @@
 #include <JObject.h>
 #include <JException.h>
 #include <JFactorySet.h>
+#include "JResettable.h"
 
 class JEventSource;
 
-class JEvent{
+class JEvent : public JResettable {
 	public:
 		JEvent();
 		virtual ~JEvent();
-		
-		virtual void Recycle(void);
 		
 		template<class T>
 		JFactory* Get(std::vector<const T*> &v);
@@ -65,9 +64,13 @@ class JEvent{
 		JEventSource* GetEventSource(void) const;
 		void SetEventSource(JEventSource* aSource);
 
+		//RESOURCES
+		void Release(void);
+		void Reset(void){}; //Perhaps get factory set
+
 	protected:
 	
-		JFactorySet *_factory_set = nullptr;
+		JFactorySet* mFactorySet = nullptr;
 		JEventSource* mEventSource = nullptr;
 
 	private:
@@ -77,9 +80,9 @@ class JEvent{
 template<class T> 
 JFactory* JEvent::Get(std::vector<const T*> &v)
 {
-	if( !_factory_set) throw JException("_factory_set not set before JEvent::Get called");
+	if( !mFactorySet) throw JException("_factory_set not set before JEvent::Get called");
 
-	for(auto *fac : _factory_set->GetJFactories() ){
+	for(auto *fac : mFactorySet->GetJFactories() ){
 		if( fac->GetName() != T::static_className() ) continue;
 		return fac;
 	}

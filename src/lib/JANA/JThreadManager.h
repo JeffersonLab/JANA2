@@ -71,7 +71,7 @@ class JThreadManager
 
 		//STRUCTORS
 		JThreadManager(JEventSourceManager* aEventSourceManager, bool aRotateEventSources);
-		~JThreadManager(void){Terminate_Threads();};
+		~JThreadManager(void){TerminateThreads();};
 
 		//INFORMATION
 		uint32_t GetNcores(void);
@@ -88,11 +88,11 @@ class JThreadManager
 
 		//CREATE/DESTROY
 		void CreateThreads(std::size_t aNumThreads);
-		void Terminate_Threads(void);
+		void TerminateThreads(void);
 
 		//SUBMIT
-		void Submit_Tasks(const std::vector<std::shared_ptr<JTaskBase>>& aTasks, JQueueSet::JQueueType aQueueType, const std::string& aQueueName = "");
-		void Submit_AsyncTasks(const std::vector<std::shared_ptr<JTaskBase>>& aTasks, JQueueSet::JQueueType aQueueType, const std::string& aQueueName = "");
+		void SubmitTasks(const std::vector<std::shared_ptr<JTaskBase>>& aTasks, JQueueSet::JQueueType aQueueType, const std::string& aQueueName = "");
+		void SubmitAsyncTasks(const std::vector<std::shared_ptr<JTaskBase>>& aTasks, JQueueSet::JQueueType aQueueType, const std::string& aQueueName = "");
 
 	private:
 

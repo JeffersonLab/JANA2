@@ -62,13 +62,24 @@ JEventSource::~JEventSource()
 //---------------------------------
 std::shared_ptr<JTaskBase> JEventSource::GetProcessEventTask(void)
 {
-	//First get the event from the input file
-	auto sEventPair = std::make_pair(std::shared_ptr<JEvent>(nullptr), kUNKNOWN);
+	//If file closed, return dummy pair
+	auto sEventPair = std::make_pair(std::shared_ptr<JEvent>(nullptr), kNO_MORE_EVENTS);
+	if(mFileClosed)
+		return sEventPair;
+
+	//Get the event from the input file
 	do
 	{
 		sEventPair = GetEvent();
 	}
 	while((sEventPair.second == JEventSource::kTRY_AGAIN) || (sEventPair.second == JEventSource::kUNKNOWN));
+
+	//If file closed, return dummy pair
+	if(sEventPair.second == kNO_MORE_EVENTS)
+	{
+		mFileClosed = true;
+		return sEventPair;
+	}
 
 	//Then make the default task for analyzing it (running the processors) and return it
 	return JMakeAnalyzeEventTask(sEventPair.first, mApplication); //From JFunctions
@@ -82,17 +93,10 @@ std::pair<std::shared_ptr<JEvent>, JEventSource::RETURN_STATUS> JEventSource::Ge
 //---------------------------------
 // IsDone
 //---------------------------------
-bool JEventSource::IsDone()
+bool JEventSource::IsFileClosed()
 {
-	return _done;
+	return mFileClosed;
 }
 
-//---------------------------------
-// SetDone
-//---------------------------------
-void JEventSource::SetDone(bool done)
-{
-	_done = done;
-}
 
 

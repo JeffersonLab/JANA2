@@ -46,6 +46,7 @@
 
 #include "JThreadManager.h"
 #include "JEventSource.h"
+#include "JApplication.h"
 
 //---------------------------------
 // JThreadManager
@@ -108,6 +109,24 @@ void JThreadManager::GetJThreads(std::vector<JThread*>& aThreads) const
 }
 
 //---------------------------------
+// Get_Queue
+//---------------------------------
+JQueueInterface* JThreadManager::Get_Queue(const std::shared_ptr<JTaskBase>& aTask, JQueueSet::JQueueType aQueueType, const std::string& aQueueName) const
+{
+	auto sEventSource = aTask->GetEvent()->GetEventSource();
+	return Get_Queue(sEventSource, aQueueType, aQueueName);
+}
+
+//---------------------------------
+// Get_Queue
+//---------------------------------
+JQueueInterface* JThreadManager::Get_Queue(const JEventSource* aEventSource, JQueueSet::JQueueType aQueueType, const std::string& aQueueName) const
+{
+	auto sQueueSet = GetQueueSet(aEventSource);
+	return sQueueSet->GetQueue(aQueueType, aQueueName);
+}
+
+//---------------------------------
 // SetQueue
 //---------------------------------
 void JThreadManager::SetQueue(JQueueSet::JQueueType aQueueType, JQueueInterface* aQueue, const std::string& aEventSourceGeneratorName)
@@ -167,9 +186,9 @@ JQueueSet* JThreadManager::GetNextQueueSet(std::size_t& aCurrentSetIndex)
 }
 
 //---------------------------------
-// Submit_Tasks
+// SubmitTasks
 //---------------------------------
-void JThreadManager::Submit_Tasks(const std::vector<std::shared_ptr<JTaskBase>>& aTasks, JQueueSet::JQueueType aQueueType, const std::string& aQueueName)
+void JThreadManager::SubmitTasks(const std::vector<std::shared_ptr<JTaskBase>>& aTasks, JQueueSet::JQueueType aQueueType, const std::string& aQueueName)
 {
 	//Tasks are added to the specified queue.
 	//Function does not return until all tasks are finished.
@@ -196,27 +215,9 @@ void JThreadManager::Submit_Tasks(const std::vector<std::shared_ptr<JTaskBase>>&
 }
 
 //---------------------------------
-// Get_Queue
+// SubmitAsyncTasks
 //---------------------------------
-JQueueInterface* JThreadManager::Get_Queue(const std::shared_ptr<JTaskBase>& aTask, JQueueSet::JQueueType aQueueType, const std::string& aQueueName) const
-{
-	auto sEventSource = aTask->GetEvent()->GetEventSource();
-	return Get_Queue(sEventSource, aQueueType, aQueueName);
-}
-
-//---------------------------------
-// Get_Queue
-//---------------------------------
-JQueueInterface* JThreadManager::Get_Queue(const JEventSource* aEventSource, JQueueSet::JQueueType aQueueType, const std::string& aQueueName) const
-{
-	auto sQueueSet = GetQueueSet(aEventSource);
-	return sQueueSet->GetQueue(aQueueType, aQueueName);
-}
-
-//---------------------------------
-// Submit_AsyncTasks
-//---------------------------------
-void JThreadManager::Submit_AsyncTasks(const std::vector<std::shared_ptr<JTaskBase>>& aTasks, JQueueSet::JQueueType aQueueType, const std::string& aQueueName)
+void JThreadManager::SubmitAsyncTasks(const std::vector<std::shared_ptr<JTaskBase>>& aTasks, JQueueSet::JQueueType aQueueType, const std::string& aQueueName)
 {
 	//Tasks are added to the specified queue.
 	//Function returns immediately; it doesn't wait until all tasks are finished.
@@ -249,23 +250,23 @@ void JThreadManager::SetThreadAffinity(int affinity_algorithm)
 
 	// The default algorithm does not set the affinity at all
 	if( affinity_algorithm==0 ){
-		jout << "Thread affinity not set" << endl;
+		jout << "Thread affinity not set" << std::endl;
 		return;
 	}
 
-	if( typeid(thread::native_handle_type) != typeid(pthread_t) ){
-		jout << endl;
-		jout << "WARNING: AFFINITY is set, but thread system is not pthreads." << endl;
-		jout << "         Thread affinity will not be set by JANA." << endl;
-		jout << endl;
+	if( typeid(std::thread::native_handle_type) != typeid(pthread_t) ){
+		jout << std::endl;
+		jout << "WARNING: AFFINITY is set, but thread system is not pthreads." << std::endl;
+		jout << "         Thread affinity will not be set by JANA." << std::endl;
+		jout << std::endl;
 		return;
 	}
 
-	jout << "Setting affinity for all threads using algorithm " << affinity_algorithm << endl;
+	jout << "Setting affinity for all threads using algorithm " << affinity_algorithm << std::endl;
 
 	uint32_t ithread = 0;
 	uint32_t ncores = GetNcores();
-	for( auto jt : _jthreads ){
+	for( auto jt : mThreads ){
 		pthread_t t = jt->GetThread()->native_handle();
 
 		uint32_t icpu = ithread;
@@ -287,7 +288,7 @@ void JThreadManager::SetThreadAffinity(int affinity_algorithm)
 				icpu %= ncores;
 				break;
 			default:
-				jerr << "Unknown affinity algorithm " << affinity_algorithm << endl;
+				jerr << "Unknown affinity algorithm " << affinity_algorithm << std::endl;
 				exit( -1 );
 				break;
 		}
@@ -298,14 +299,14 @@ void JThreadManager::SetThreadAffinity(int affinity_algorithm)
 		thread_affinity_policy_data_t policy = { (int)icpu };
 		thread_port_t mach_thread = pthread_mach_thread_np( t );
 		thread_policy_set(mach_thread, THREAD_AFFINITY_POLICY, (thread_policy_t)&policy, THREAD_AFFINITY_POLICY_COUNT);
-		_DBG_<<"CPU: " << GetCPU() << "  (mach_thread="<<mach_thread<<", icpu=" << icpu <<")" << endl;
+		_DBG_<<"CPU: " << GetCPU() << "  (mach_thread="<<mach_thread<<", icpu=" << icpu <<")" << std::endl;
 #else
 		// Linux
 		cpu_set_t cpuset;
     	CPU_ZERO(&cpuset);
     	CPU_SET( icpu, &cpuset);
     	int rc = pthread_setaffinity_np( t, sizeof(cpu_set_t), &cpuset);
-		if( rc !=0 ) jerr << "ERROR: pthread_setaffinity_np returned " << rc << " for thread " << ithread << endl;
+		if( rc !=0 ) jerr << "ERROR: pthread_setaffinity_np returned " << rc << " for thread " << ithread << std::endl;
 #endif
 	}
 }
@@ -313,7 +314,7 @@ void JThreadManager::SetThreadAffinity(int affinity_algorithm)
 //---------------------------------
 // Terminate_Threads
 //---------------------------------
-void JThreadManager::Terminate_Threads(void)
+void JThreadManager::TerminateThreads(void)
 {
 	//After they finish their current tasks
 	if(mThreads.empty())
