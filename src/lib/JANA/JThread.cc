@@ -122,9 +122,10 @@ void JThread::Join(void)
 	/// Join this thread. If the thread is not already in the ended
 	/// state then this will call End() and wait for it to do so
 	/// before calling join. This should generally only be called 
-	/// from a method JApplication.
-	
-	if( _run_state != kRUN_STATE_ENDED ) End();
+	/// from a method JThreadManager.
+	if(_isjoined)
+		return;
+	if( _run_state_target != kRUN_STATE_ENDED ) End();
 	while( _run_state != kRUN_STATE_ENDED ) std::this_thread::sleep_for( std::chrono::microseconds(100) );
 	_thread->join();
 	_isjoined = true;
@@ -252,9 +253,8 @@ void JThread::Loop(void)
 					//Tell the thread manager that the source is finished (in case it didn't know already)
 					//Use the existing queues for the next event source
 					//If all sources are done, then all tasks are done, and this call will tell the program to end.
+
 					mEventSource = mThreadManager->RegisterSourceFinished(mEventSource, mQueueSetIndex);
-					if(mEventSource == nullptr) //No new sources, get queues from next open source
-						std::tie(mEventSource, mQueueSet) = mThreadManager->GetNextSourceQueues(mQueueSetIndex);
 					mSourceEmpty = false;
 					continue;
 				}

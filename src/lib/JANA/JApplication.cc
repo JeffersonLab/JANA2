@@ -130,7 +130,7 @@ JApplication::JApplication(int narg, char *argv[])
 	_draining_queues = false;
 	_pmanager = NULL;
 	_rmanager = NULL;
-	_eventSourceManager = new JEventSourceManager();
+	_eventSourceManager = new JEventSourceManager(this);
 	_threadManager = new JThreadManager(_eventSourceManager);
 	mVoidTaskPool = std::make_shared<JResourcePool<JTask<void>>>();
 	mVoidTaskPool->Set_ControlParams(30, 20, 200, 100, 0); //TODO: Config these!!
@@ -226,7 +226,8 @@ void JApplication::AttachPlugins(void)
 	// We make a copy of the existing generators first so we can
 	// append them back to the end of the list before exiting.
 	// Similarly for event source generators and calibration generators.
-	vector<JEventSourceGenerator*> my_eventSourceGenerators = _eventSourceManager->GetJEventSourceGenerators();
+	vector<JEventSourceGenerator*> my_eventSourceGenerators;
+	_eventSourceManager->GetJEventSourceGenerators(my_eventSourceGenerators);
 	vector<JFactoryGenerator*> my_factoryGenerators = _factoryGenerators;
 	vector<JCalibrationGenerator*> my_calibrationGenerators = _calibrationGenerators;
 	_eventSourceManager->ClearJEventSourceGenerators();
@@ -391,23 +392,61 @@ void JApplication::Initialize(void)
 //---------------------------------
 void JApplication::PrintFinalReport(void)
 {
-	// Get longest JQueue name
-	uint32_t max_len = 0 ;
-	for(auto j : _jqueues) if( j->GetName().length() > max_len ) max_len = j->GetName().length();
-	max_len += 2;
+	//Get queues
+	std::vector<std::pair<JEventSource*, JQueueSet*>> sAllQueues;
+	_threadManager->GetRetiredQueues(sAllQueues);
 
-	jout << endl;
-	jout << "Final Report" << endl;
-	jout << "-----------------------------" << endl;
-	jout << string(max_len-6, ' ') << "JQueue:  Ntasks" << endl;
-	jout << " " << string(max_len, '-') << "  --------" <<endl;
-	for(auto j : _jqueues){
-		string name = j->GetName();
-		jout << string(max_len - name.length(), ' ') << name << "  " << j->GetNumTasksProcessed() << endl;
+	// Get longest JQueue name
+	uint32_t sSourceMaxNameLength = 0, sQueueMaxNameLength = 0;
+	for(auto& sSourcePair : sAllQueues)
+	{
+		auto sSource = sSourcePair.first;
+		auto sSourceLength = sSource->GetName();
+		if(sSourceLength > sSourceMaxNameLength)
+			sSourceMaxNameLength = sSourceLength;
+
+		std::map<JQueueSet::JQueueType, std::vector<JQueueInterface*>> sSourceQueues;
+		sSourcePair.second->GetQueues(sSourceQueues);
+		for(auto& sTypePair : sSourceQueues)
+		{
+			for(auto sQueue : sTypePair.second)
+			{
+				auto sLength = sQueue->GetName().size();
+				if(sLength > sQueueMaxNameLength)
+					sQueueMaxNameLength = sLength;
+			}
+		}
 	}
-	jout << endl;
-	jout << "Integrated Rate: " << Val2StringWithPrefix( GetIntegratedRate() ) << "Hz" << endl;
-	jout << endl;
+	sSourceMaxNameLength += 2;
+	if(sSourceMaxNameLength < 8)
+		sSourceMaxNameLength = 8;
+	sQueueMaxNameLength += 2;
+	if(sQueueMaxNameLength < 7)
+		sQueueMaxNameLength = 7;
+
+	jout << std::endl;
+	jout << "Final Report" << std::endl;
+	jout << "-----------------------------" << std::endl;
+	jout << "Source" << std::string(sSourceMaxNameLength - 6, ' ') << "Queue" << std::string(sQueueMaxNameLength - 5, ' ') << "NTasks" << std::endl;
+	jout << std::string(sSourceMaxNameLength + sQueueMaxNameLength + 8, '-') << std::endl;
+	for(auto& sSourcePair : sAllQueues)
+	{
+		auto sSource = sSourcePair.first;
+		std::map<JQueueSet::JQueueType, std::vector<JQueueInterface*>> sSourceQueues;
+		sSourcePair.second->GetQueues(sSourceQueues);
+		for(auto& sTypePair : sSourceQueues)
+		{
+			for(auto sQueue : sTypePair.second)
+			{
+				jout << sSource->GetName() << string(sSourceMaxNameLength - sSource->GetName().size(), ' ')
+						<< sQueue->GetName() << string(sQueueMaxNameLength - sQueue->GetName().size(), ' ')
+						<< sQueue->GetNumTasksProcessed() << std::endl;
+			}
+		}
+	}
+	jout << std::endl;
+	jout << "Integrated Rate: " << Val2StringWithPrefix( GetIntegratedRate() ) << "Hz" << std::endl;
+	jout << std::endl;
 
 }
 
@@ -428,7 +467,7 @@ void JApplication::PrintStatus(void)
 //---------------------------------
 void JApplication::Quit(void)
 {
-	for(auto t : _jthreads ) t->End();
+	_threadManager->EndThreads();
 	_quitting = true;
 }
 
@@ -468,20 +507,20 @@ void JApplication::Run(uint32_t nthreads)
 
 	// Start all threads running
 	jout << "Start processing ..." << endl;
-	for(auto t : _jthreads ) t->Run();
+	_threadManager->RunThreads();
 	
 	// Monitor status of all threads
 	while( !_quitting ){
 		
-		// If we are finishing up (i.e. waiting for all events
-		// to finish processing) and all JQueues are empty,
-		// then tell all threads to quit.
-		if( _draining_queues && GetAllQueuesEmpty() ) Quit();
+		// If we are finishing up (all input sources are closed, and are waiting for all events to finish processing)
+		// This flag is used by the integrated rate calculator
+		// The JThreadManager is in charge of telling all the threads to end
+		if(!_draining_queues)
+			_draining_queues = _eventSourceManager->AreAllFilesClosed();
 		
 		// Check if all threads have finished
-		uint32_t Nended = 0;
-		for(auto t : _jthreads )if( t->IsEnded() ) Nended++;
-		if( Nended == _jthreads.size() ) break;
+		if(_threadManager->HaveAllThreadsEnded())
+			break;
 
 		// Sleep a few cycles
 		this_thread::sleep_for( chrono::milliseconds(500) );
@@ -494,7 +533,7 @@ void JApplication::Run(uint32_t nthreads)
 	jout << "Event processing ended. " << endl;
 	if( SIGINT_RECEIVED <= 1 ){
 		cout << "Merging threads ..." << endl;
-		for(auto t : _jthreads ) t->Join();
+		_threadManager->JoinThreads();
 	}
 	
 	// Report Final numbers
@@ -614,31 +653,6 @@ JEventSourceManager* JApplication::GetJEventSourceManager(void) const
 }
 
 //---------------------------------
-// GetAllQueuesEmpty
-//---------------------------------
-bool JApplication::GetAllQueuesEmpty(void)
-{
-	/// Returns true if all JQueues are currently empty.
-	uint32_t Nempty_queues = 0;
-	for( auto q : _jqueues ){
-		if( q->GetNumEvents() == 0 ) Nempty_queues++;
-	}
-	
-	return Nempty_queues == _jqueues.size();
-}
-
-//---------------------------------
-// GetNcores
-//---------------------------------
-uint32_t JApplication::GetNcores(void)
-{
-	/// Returns the number of cores that are on the computer.
-	/// The count will be full cores+hyperthreads (or equivalent)
-
-	return sysconf(_SC_NPROCESSORS_ONLN);
-}
-
-//---------------------------------
 // GetCPU
 //---------------------------------
 uint32_t JApplication::GetCPU(void)
@@ -703,27 +717,8 @@ uint64_t JApplication::GetNtasksCompleted(string name)
 //---------------------------------
 uint64_t JApplication::GetNeventsProcessed(void)
 {
-	/// Return the total number of events processed. Since
-	/// the concept of "event" may be different for each
-	/// JQueue when multiple JQueues are present, this will
-	/// report the number of events that have passed through
-	/// the last JQueue in the chain that has the run_processors
-	/// flag set. This should typically be the event count
-	/// that the user is most interested in. Note that this
-	/// count will include events from the JQueue described
-	/// above that are still being processed in a JThread. 
-	/// (because those events have technically left the queue.)
-	///
-	/// If no queues have the run_processor flag set, then the 
-	/// number that have left the last queue will be used.
-	
-	if( _jqueues.empty() ) return 0;
-	
-	for(auto rit_queue = _jqueues.rbegin(); rit_queue != _jqueues.rend(); rit_queue++){
-		if( (*rit_queue)->GetRunProcessors() ) return (*rit_queue)->GetNumEventsProcessed();
-	}
-	
-	return _jqueues.back()->GetNumEventsProcessed();
+	/// Return the total number of events processed.
+	return _eventSourceManager->GetNumEventsProcessed();
 }
 
 //---------------------------------

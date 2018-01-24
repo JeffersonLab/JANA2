@@ -33,6 +33,10 @@ class JEventSourceManager
 
 		void OpenInitSources(void); //Call while single-threaded!!
 
+		//INFORMATION
+		bool AreAllFilesClosed(void) const;
+		std::size_t GetNumEventsProcessed(void) const;
+
 		void ClearJEventSourceGenerators(void);
 		void RemoveJEventSource(JEventSource *source);
 		void RemoveJEventSourceGenerator(JEventSourceGenerator *source_generator);
@@ -56,8 +60,7 @@ class JEventSourceManager
 		std::vector<JEventSource*> _sources_active;
 		std::vector<JEventSource*> _sources_exhausted;
 
-		std::mutex _sources_exhausted_mutex;
-		std::mutex _sources_open_mutex;
+		mutable std::mutex mSourcesMutex;
 };
 
 /**************************************************************** MEMBER FUNCTION DEFINITIONS ****************************************************************/

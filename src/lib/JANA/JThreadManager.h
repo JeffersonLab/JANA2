@@ -70,11 +70,12 @@ class JThreadManager
 	public:
 
 		//STRUCTORS
-		JThreadManager(JEventSourceManager* aEventSourceManager, bool aRotateEventSources);
-		~JThreadManager(void){TerminateThreads();};
+		JThreadManager(JEventSourceManager* aEventSourceManager);
+		~JThreadManager(void);
 
 		//INFORMATION
 		uint32_t GetNJThreads(void);
+		uint32_t GetNcores(void);
 
 		//GETTERS
 		void GetJThreads(std::vector<JThread*>& aThreads) const;
@@ -83,13 +84,17 @@ class JThreadManager
 		JQueueInterface* GetQueue(const JEventSource* aEventSource, JQueueSet::JQueueType aQueueType, const std::string& aQueueName) const;
 		void AddQueue(JQueueSet::JQueueType aQueueType, JQueueInterface* aQueue);
 		void PrepareQueues(void);
+		void GetRetiredQueues(std::vector<std::pair<JEventSource*, JQueueSet*>>& aQueues) const;
 
 		//CONFIG
 		void SetThreadAffinity(int affinity_algorithm);
 
 		//CREATE/DESTROY
 		void CreateThreads(std::size_t aNumThreads);
-		void TerminateThreads(void);
+		void RunThreads(void);
+		void EndThreads(void);
+		void JoinThreads(void);
+		bool HaveAllThreadsEnded(void);
 
 		//SUBMIT
 		void SubmitTasks(const std::vector<std::shared_ptr<JTaskBase>>& aTasks, JQueueSet::JQueueType aQueueType, const std::string& aQueueName = "");
@@ -105,6 +110,7 @@ class JThreadManager
 
 		//INTERNAL CALLS
 		JQueueSet* MakeQueueSet(JEventSource* sEventSource);
+		void LockQueueSets(void) const;
 
 		//THREADS
 		std::vector<JThread*> mThreads;

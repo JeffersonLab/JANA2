@@ -53,12 +53,19 @@
 //---------------------------------
 // JThreadManager
 //---------------------------------
-JThreadManager::JThreadManager(JEventSourceManager* aEventSourceManager, bool aRotateEventSources) :
-mEventSourceManager(aEventSourceManager), mRotateEventSources(aRotateEventSources)
+JThreadManager::JThreadManager(JEventSourceManager* aEventSourceManager) : mEventSourceManager(aEventSourceManager)
 {
-	//Get queue sets
+}
 
-
+//---------------------------------
+// ~JThreadManager
+//---------------------------------
+JThreadManager::~JThreadManager(void)
+{
+	EndThreads();
+	JoinThreads();
+	for(auto sThread : mThreads)
+		delete sThread;
 }
 
 //---------------------------------
@@ -66,6 +73,7 @@ mEventSourceManager(aEventSourceManager), mRotateEventSources(aRotateEventSource
 //---------------------------------
 void JThreadManager::CreateThreads(std::size_t aNumThreads)
 {
+	//Before calling this, the queues should be prepared first!
 	mThreads.reserve(aNumThreads);
 	std::size_t sQueueSetIndex = 0;
 	for(decltype(aNumThreads) si = 0; si < aNumThreads; si++)
@@ -140,7 +148,17 @@ void JThreadManager::GetJThreads(std::vector<JThread*>& aThreads) const
 }
 
 //---------------------------------
-// Get_Queue
+// LockQueueSets
+//---------------------------------
+void JThreadManager::LockQueueSets(void) const
+{
+	bool sExpected = false;
+	while(!mQueueSetsLock.compare_exchange_weak(sExpected, true))
+		sExpected = false;
+}
+
+//---------------------------------
+// GetQueue
 //---------------------------------
 JQueueInterface* JThreadManager::GetQueue(const std::shared_ptr<JTaskBase>& aTask, JQueueSet::JQueueType aQueueType, const std::string& aQueueName) const
 {
@@ -149,12 +167,26 @@ JQueueInterface* JThreadManager::GetQueue(const std::shared_ptr<JTaskBase>& aTas
 }
 
 //---------------------------------
-// Get_Queue
+// GetQueue
 //---------------------------------
 JQueueInterface* JThreadManager::GetQueue(const JEventSource* aEventSource, JQueueSet::JQueueType aQueueType, const std::string& aQueueName) const
 {
 	auto sQueueSet = GetQueueSet(aEventSource);
 	return sQueueSet->GetQueue(aQueueType, aQueueName);
+}
+
+//---------------------------------
+// GetRetiredQueues
+//---------------------------------
+void JThreadManager::GetRetiredQueues(std::vector<std::pair<JEventSource*, JQueueSet*>>& aQueues) const
+{
+	//LOCK
+	LockQueueSets();
+
+	aQueues = mRetiredQueueSets;
+
+	//UNLOCK
+	mQueueSetsLock = false;
 }
 
 //---------------------------------
@@ -175,9 +207,7 @@ JQueueSet* JThreadManager::GetQueueSet(const JEventSource* aEventSource) const
 	auto sFind_Key = [aEventSource](const std::pair<JEventSource*, JQueueSet*>& aPair) -> bool { return (aPair.first == aEventSource); };
 
 	//LOCK
-	bool sExpected = false;
-	while(!mQueueSetsLock.compare_exchange_weak(sExpected, true))
-		sExpected = false;
+	LockQueueSets();
 
 	auto sEnd = std::end(mActiveQueueSets);
 	auto sIterator = std::find_if(std::begin(mActiveQueueSets), sEnd, sFind_Key);
@@ -197,9 +227,7 @@ std::pair<JEventSource*, JQueueSet*> JThreadManager::GetNextSourceQueues(std::si
 	aCurrentSetIndex++;
 
 	//LOCK
-	bool sExpected = false;
-	while(!mQueueSetsLock.compare_exchange_weak(sExpected, true))
-		sExpected = false;
+	LockQueueSets();
 
 	if(aCurrentSetIndex > mActiveQueueSets.size())
 		aCurrentSetIndex = 0;
@@ -222,9 +250,7 @@ std::pair<JEventSource*, JQueueSet*> JThreadManager::RegisterSourceFinished(cons
 	std::tie(sStatus, sNextSource) = mEventSourceManager->OpenNext(aFinishedEventSource);
 
 	//LOCK
-	bool sExpected = false;
-	while(!mQueueSetsLock.compare_exchange_weak(sExpected, true))
-		sExpected = false;
+	LockQueueSets();
 
 	//Update queue sets (if opened) OR get new source (if previous thread opened it already)
 
@@ -238,12 +264,14 @@ std::pair<JEventSource*, JQueueSet*> JThreadManager::RegisterSourceFinished(cons
 
 		if(mActiveQueueSets.empty())
 		{
-			//Closing the last event source. Signal to the application that we are done.
+			//The last event source is done.
 
 			//UNLOCK
 			mQueueSetsLock = false;
 
-			//TODO: QUIT HERE!!
+			//Tell all threads to end.
+			EndThreads();
+			return std::pair<JEventSource*, JQueueSet*>(nullptr, nullptr);
 		}
 
 		//Rotate this thread to the next open source
@@ -288,7 +316,7 @@ void JThreadManager::SubmitTasks(const std::vector<std::shared_ptr<JTaskBase>>& 
 		return;
 
 	//Submit tasks
-	auto sQueue = Get_Queue(aTasks[0], aQueueType, aQueueName);
+	auto sQueue = GetQueue(aTasks[0], aQueueType, aQueueName);
 	for(auto sTask : aTasks)
 		sQueue->AddTask(sTask); //TODO: Check return!!
 
@@ -317,7 +345,7 @@ void JThreadManager::SubmitAsyncTasks(const std::vector<std::shared_ptr<JTaskBas
 		return;
 
 	//Submit tasks
-	auto sQueue = Get_Queue(aTasks[0], aQueueType, aQueueName);
+	auto sQueue = GetQueue(aTasks[0], aQueueType, aQueueName);
 	for(auto sTask : aTasks)
 		sQueue->AddTask(sTask); //TODO: Check return!!
 }
@@ -402,21 +430,50 @@ void JThreadManager::SetThreadAffinity(int affinity_algorithm)
 }
 
 //---------------------------------
-// Terminate_Threads
+// GetNcores
 //---------------------------------
-void JThreadManager::TerminateThreads(void)
+uint32_t JThreadManager::GetNcores(void)
 {
-	//After they finish their current tasks
-	if(mThreads.empty())
-		return;
+	/// Returns the number of cores that are on the computer.
+	/// The count will be full cores+hyperthreads (or equivalent)
 
-	//Join threads
-	for(std::size_t si = 0; si < mThreads.size(); si++)
-	{
-		mThreads[si]->Stop(true);
-		delete mThreads[si];
-	}
-	mThreads.clear();
+	return sysconf(_SC_NPROCESSORS_ONLN);
 }
 
 
+//---------------------------------
+// RunThreads
+//---------------------------------
+void JThreadManager::RunThreads(void)
+{
+	for(auto sThread : mThreads)
+		sThread->Run();
+}
+
+//---------------------------------
+// EndThreads
+//---------------------------------
+void JThreadManager::EndThreads(void)
+{
+	//Tell threads to end after they finish their current tasks
+	for(auto sThread : mThreads)
+		sThread->End();
+}
+
+//---------------------------------
+// JoinThreads
+//---------------------------------
+void JThreadManager::JoinThreads(void)
+{
+	for(auto sThread : mThreads)
+		sThread->Join();
+}
+
+//---------------------------------
+// JoinThreads
+//---------------------------------
+bool JThreadManager::HaveAllThreadsEnded(void)
+{
+	auto sEndChecker = [](JThread* aThread) -> bool {return aThread->IsEnded();}
+	return std::all_of(std::begin(mThreads), std::end(mThreads), sEndChecker);
+}

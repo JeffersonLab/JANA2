@@ -130,8 +130,6 @@ class JApplication{
 		//TASKS
 		std::shared_ptr<JTask<void>> GetVoidTask(void);
 
-		bool GetAllQueuesEmpty(void);
-		uint32_t GetNcores(void);
 		uint32_t GetCPU(void);
 		uint64_t GetNtasksCompleted(string name="");
 		uint64_t GetNeventsProcessed(void);

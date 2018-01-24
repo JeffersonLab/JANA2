@@ -40,6 +40,7 @@
 #include <algorithm>
 
 #include "JEventSourceManager.h"
+#include "JEventSource.h"
 
 using namespace std;
 
@@ -175,7 +176,7 @@ std::pair<JEventSource::RETURN_STATUS, JEventSource*> JEventSourceManager::OpenN
 	auto sFindSlot = [aPreviousSource](const JEventSource* sSource) -> bool { return (sSource == aPreviousSource); };
 
 	// Lock
-	std::lock_guard<std::mutex> lg(_sources_open_mutex);
+	std::lock_guard<std::mutex> lg(mSourcesMutex);
 
 	//Find slot
 	auto sEnd = std::end(_sources_active);
@@ -274,4 +275,34 @@ JEventSourceGenerator* JEventSourceManager::GetUserEventSourceGenerator(void)
 	}catch(...){}
 
 	return gen;
+}
+
+//---------------------------------
+// GetNumEventsProcessed
+//---------------------------------
+std::size_t JEventSourceManager::GetNumEventsProcessed(void) const
+{
+	// Lock
+	std::lock_guard<std::mutex> lg(mSourcesMutex);
+
+	auto sNumEventGetter = [](JEventSource* aSource) -> std::size_t {return aSource->GetNumEventsProcessed();};
+
+	//Sum from active sources and exhausted ones
+	auto sNumEvents = std::accumulate(std::begin(_sources_active), std::end(_sources_active), 0, sNumEventGetter);
+	return std::accumulate(std::begin(_sources_exhausted), std::end(_sources_exhausted), sNumEvents, sNumEventGetter);
+}
+
+//---------------------------------
+// AreAllFilesClosed
+//---------------------------------
+bool JEventSourceManager::AreAllFilesClosed(void) const
+{
+	// Lock
+	std::lock_guard<std::mutex> lg(mSourcesMutex);
+
+	if(!_source_names_unopened.empty())
+		return false;
+
+	auto sClosedChecker = [](JEventSource* aSource) -> bool {return aSource->IsFileClosed();};
+	return std::all_of(std::begin(_sources_active), std::end(_sources_active), sClosedChecker);
 }

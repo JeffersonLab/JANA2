@@ -68,14 +68,16 @@ class JQueueSet
 		enum class JQueueType { Output = 0, SubTasks, Events };
 
 		~JQueueSet(void);
-		JQueueInterface* GetQueue(JQueueType aQueueType, const std::string& aName = "") const;
+		JQueueSet* Clone(void) const;
 
 		void SetQueues(JQueueType aQueueType, const std::vector<JQueueInterface*>& aQueues);
 		void AddQueue(JQueueType aQueueType, JQueueInterface* aQueue);
 		void RemoveQueues(JQueueType aQueueType);
 		void RemoveQueues(void);
 
-		JQueueSet* Clone(void) const;
+		JQueueInterface* GetQueue(JQueueType aQueueType, const std::string& aName = "") const;
+		void GetQueues(std::map<JQueueType, std::vector<JQueueInterface*>>& aQueues) const;
+
 		std::pair<JQueueType, std::shared_ptr<JTaskBase>> GetTask(void) const;
 		std::shared_ptr<JTaskBase> GetTask(JQueueType aQueueType, const std::string& aQueueName) const;
 

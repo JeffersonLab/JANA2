@@ -117,7 +117,15 @@ JQueueSet* JQueueSet::Clone(void) const
 }
 
 //---------------------------------
-// Get_Queue
+// GetQueues
+//---------------------------------
+void JQueueSet::GetQueues(std::map<JQueueSet::JQueueType, std::vector<JQueueInterface*>>& aQueues) const
+{
+	aQueues = mQueues;
+}
+
+//---------------------------------
+// GetQueue
 //---------------------------------
 JQueueInterface* JQueueSet::GetQueue(JQueueSet::JQueueType aQueueType, const std::string& aName) const
 {
@@ -140,7 +148,7 @@ JQueueInterface* JQueueSet::GetQueue(JQueueSet::JQueueType aQueueType, const std
 }
 
 //---------------------------------
-// Get_Task
+// GetTask
 //---------------------------------
 std::pair<JQueueSet::JQueueType, std::shared_ptr<JTaskBase>> JQueueSet::GetTask(void) const
 {
@@ -165,7 +173,7 @@ std::pair<JQueueSet::JQueueType, std::shared_ptr<JTaskBase>> JQueueSet::GetTask(
 }
 
 //---------------------------------
-// Get_Task
+// GetTask
 //---------------------------------
 std::shared_ptr<JTaskBase> JQueueSet::GetTask(JQueueSet::JQueueType aQueueType, const std::string& aQueueName) const
 {

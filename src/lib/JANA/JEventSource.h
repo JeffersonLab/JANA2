@@ -74,7 +74,9 @@ class JEventSource{
 		
 		std::pair<std::shared_ptr<JTaskBase>, JEventSource::RETURN_STATUS> GetProcessEventTask(void);
 		bool IsFileClosed();
+		std::size_t GetNumEventsProcessed(void) const{return mEventsProcessed;}
 		
+		std::string GetName(void) const{return mName;}
 		std::size_t GetNumOutstandingEvents(void) const{return mNumOutstandingEvents;}
 		JQueueInterface* GetEventQueue(void) const{return mEventQueue;}
 		
@@ -86,16 +88,18 @@ class JEventSource{
 	private:
 
 		JQueueInterface* mEventQueue = nullptr; //For handling event-source-specific logic (such as disentangling events, dealing with barriers, etc.)
+		std::string mName;
 
 		//Called by JEvent
 		void IncrementEventCount(void){mNumOutstandingEvents++;}
-		void DecrementEventCount(void){mNumOutstandingEvents--;}
+		void DecrementEventCount(void){mNumOutstandingEvents--; mEventsProcessed++;}
 
 		virtual std::pair<std::shared_ptr<JTaskBase>, JEventSource::RETURN_STATUS> GetProcessEventTask(std::shared_ptr<JEvent>& aEvent);
 
 		//Keep track of file/event status
 		std::atomic<bool> mFileClosed{false};
 		std::atomic<bool> mInUse{false};
+		std::atomic<std::size_t> mEventsProcessed{0};
 		std::atomic<std::size_t> mNumOutstandingEvents{0}; //Number of JEvents with this event source
 };
 
