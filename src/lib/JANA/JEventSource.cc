@@ -106,16 +106,6 @@ std::pair<std::shared_ptr<JTaskBase>, JEventSource::RETURN_STATUS> JEventSource:
 }
 
 //---------------------------------
-// GetEvent
-//---------------------------------
-std::pair<std::shared_ptr<JEvent>, JEventSource::RETURN_STATUS> JEventSource::GetEvent(void)
-{
-	//Get a JEvent from the file.
-	//This should be overridden in derived classes.
-	return std::make_pair(std::shared_ptr<JEvent>(nullptr), RETURN_STATUS::kUNKNOWN);
-}
-
-//---------------------------------
 // IsDone
 //---------------------------------
 bool JEventSource::IsFileClosed()

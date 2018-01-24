@@ -45,21 +45,10 @@
 #define _JEvent_test_h_
 
 #include "JEvent.h"
-#include "JEventSource_jana_test.h"
 
 class JEvent_test:public JEvent {
 	public:	
-		JEvent_test(JEventSource_jana_test *source):_source(source){}
 		virtual ~JEvent_test(){}
-
-		void Recycle(void){
-			_source->ReturnToPool( this );
-		}		
-	
-		
-	protected:
-
-		JEventSource_jana_test *_source;
 };
 
 #endif // _JEvent_test_h_

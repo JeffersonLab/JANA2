@@ -52,7 +52,7 @@ class JEventProcessor{
 		JEventProcessor();
 		virtual ~JEventProcessor();
 
-		virtual void Process(std::shared_ptr<JEvent>& aEvent) = 0;
+		virtual void Process(std::shared_ptr<JEvent>& aEvent){}; //TODO: Implement!!
 		
 	protected:
 	

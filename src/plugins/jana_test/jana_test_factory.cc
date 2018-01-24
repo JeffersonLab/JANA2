@@ -11,6 +11,7 @@
 using namespace std;
 
 #include "jana_test_factory.h"
+#include "JEventSourceManager.h"
 #include "JEventSourceGenerator_jana_test.h"
 #include "JFactoryGenerator_jana_test.h"
 #include "JEventProcessor_jana_test.h"
@@ -20,7 +21,7 @@ using namespace std;
 extern "C"{
 void InitPlugin(JApplication *app){
 	InitJANAPlugin(app);
-	app->AddJEventSourceGenerator(new JEventSourceGenerator_jana_test());
+	app->GetJEventSourceManager()->AddJEventSourceGenerator(new JEventSourceGenerator_jana_test());
 	app->AddJFactoryGenerator(new JFactoryGenerator_jana_test());
 	app->AddJEventProcessor(new JEventProcessor_jana_test());
 }

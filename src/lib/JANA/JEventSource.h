@@ -82,7 +82,7 @@ class JEventSource{
 		
 	protected:
 	
-		virtual std::pair<std::shared_ptr<JEvent>, RETURN_STATUS> GetEvent(void);
+		virtual std::pair<std::shared_ptr<JEvent>, RETURN_STATUS> GetEvent(void) = 0;
 		JApplication* mApplication = nullptr;
 
 	private:
