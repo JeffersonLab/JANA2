@@ -54,13 +54,22 @@ JQueueSet::~JQueueSet(void)
 	//Loop through queue types
 	for(auto& sQueuePair : mQueues)
 	{
-		auto sQueueType = sQueuePair.first;
-		auto& sQueueVector = sQueuePair.second;
-
 		//Loop through queues of this type
+		auto& sQueueVector = sQueuePair.second;
 		for(auto& sQueue : sQueueVector)
 			delete sQueue;
 	}
+}
+
+//---------------------------------
+// GetNumQueues
+//---------------------------------
+std::size_t JQueueSet::GetNumQueues(void) const
+{
+	std::size_t sNumQueues = 0;
+	for(auto& sQueuePair : mQueues)
+		sNumQueues += sQueuePair.second.size();
+	return sNumQueues;
 }
 
 //---------------------------------

@@ -43,6 +43,7 @@
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 #include <algorithm>
+#include <unistd.h>
 
 #include "JThreadManager.h"
 #include "JEventSource.h"
@@ -80,7 +81,7 @@ void JThreadManager::CreateThreads(std::size_t aNumThreads)
 	{
 		if(sQueueSetIndex > mActiveQueueSets.size())
 			sQueueSetIndex = 0;
-		mThreads.push_back(new JThread(this, mActiveQueueSets[sQueueSetIndex], sQueueSetIndex, nullptr));
+		mThreads.push_back(new JThread(this, mActiveQueueSets[sQueueSetIndex].second, sQueueSetIndex, mActiveQueueSets[sQueueSetIndex].first));
 		sQueueSetIndex++;
 	}
 }
@@ -119,7 +120,7 @@ JQueueSet* JThreadManager::MakeQueueSet(JEventSource* sEventSource)
 	//get source-specific event queue (e.g. disentangle events)
 	auto sEventQueue = sEventSource->GetEventQueue();
 	if(sEventQueue == nullptr) //unspecified by source, use default
-		sEventQueue = new JQueue();
+		sEventQueue = new JQueue("Events");
 	sQueueSet->AddQueue(JQueueSet::JQueueType::Events, sEventQueue);
 
 	return sQueueSet;
@@ -184,6 +185,20 @@ void JThreadManager::GetRetiredQueues(std::vector<std::pair<JEventSource*, JQueu
 	LockQueueSets();
 
 	aQueues = mRetiredQueueSets;
+
+	//UNLOCK
+	mQueueSetsLock = false;
+}
+
+//---------------------------------
+// GetActiveQueues
+//---------------------------------
+void JThreadManager::GetActiveQueues(std::vector<std::pair<JEventSource*, JQueueSet*>>& aQueues) const
+{
+	//LOCK
+	LockQueueSets();
+
+	aQueues = mActiveQueueSets;
 
 	//UNLOCK
 	mQueueSetsLock = false;
@@ -291,7 +306,7 @@ std::pair<JEventSource*, JQueueSet*> JThreadManager::RegisterSourceFinished(cons
 
 		//Retire the current queue set, insert a new one in its place
 		mRetiredQueueSets.push_back(mActiveQueueSets[aQueueSetIndex]);
-		mActiveQueueSets[aQueueSetIndex].first = std::make_pair(sNextSource, MakeQueueSet(sNextSource));
+		mActiveQueueSets[aQueueSetIndex] = std::make_pair(sNextSource, MakeQueueSet(sNextSource));
 	}
 	//else new source opened previously (in place), just get and return it
 
@@ -474,6 +489,6 @@ void JThreadManager::JoinThreads(void)
 //---------------------------------
 bool JThreadManager::HaveAllThreadsEnded(void)
 {
-	auto sEndChecker = [](JThread* aThread) -> bool {return aThread->IsEnded();}
+	auto sEndChecker = [](JThread* aThread) -> bool {return aThread->IsEnded();};
 	return std::all_of(std::begin(mThreads), std::end(mThreads), sEndChecker);
 }

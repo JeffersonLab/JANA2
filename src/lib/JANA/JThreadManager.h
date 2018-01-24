@@ -85,6 +85,7 @@ class JThreadManager
 		void AddQueue(JQueueSet::JQueueType aQueueType, JQueueInterface* aQueue);
 		void PrepareQueues(void);
 		void GetRetiredQueues(std::vector<std::pair<JEventSource*, JQueueSet*>>& aQueues) const;
+		void GetActiveQueues(std::vector<std::pair<JEventSource*, JQueueSet*>>& aQueues) const;
 
 		//CONFIG
 		void SetThreadAffinity(int affinity_algorithm);

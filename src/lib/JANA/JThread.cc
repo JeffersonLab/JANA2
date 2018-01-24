@@ -53,7 +53,7 @@ thread_local JThread *JTHREAD = nullptr;
 // JThread    (Constructor)
 //---------------------------------
 JThread::JThread(JThreadManager* aThreadManager, JQueueSet* aQueueSet, std::size_t aQueueSetIndex, JEventSource* aSource) :
-		mEventSource(aSource), mQueueSet(aQueueSet), mQueueSetIndex(aQueueSetIndex), mThreadManager(aThreadManager)
+		mThreadManager(aThreadManager), mQueueSet(aQueueSet), mQueueSetIndex(aQueueSetIndex), mEventSource(aSource)
 {
 	_thread = new std::thread( &JThread::Loop, this );
 }
@@ -254,13 +254,18 @@ void JThread::Loop(void)
 					//Use the existing queues for the next event source
 					//If all sources are done, then all tasks are done, and this call will tell the program to end.
 
-					mEventSource = mThreadManager->RegisterSourceFinished(mEventSource, mQueueSetIndex);
+					std::tie(mEventSource, mQueueSet) = mThreadManager->RegisterSourceFinished(mEventSource, mQueueSetIndex);
+					if(mQueueSet != nullptr)
+						mEventQueue = mQueueSet->GetQueue(JQueueSet::JQueueType::Events);
 					mSourceEmpty = false;
 					continue;
 				}
 
 				if(mRotateEventSources) //No tasks, try to rotate to a different input file
+				{
 					std::tie(mEventSource, mQueueSet) = mThreadManager->GetNextSourceQueues(mQueueSetIndex);
+					mEventQueue = mQueueSet->GetQueue(JQueueSet::JQueueType::Events);
+				}
 				else //No tasks, wait a bit for this event source to be ready
 					std::this_thread::sleep_for( std::chrono::nanoseconds(100) ); //Sleep a minimal amount.
 				continue;

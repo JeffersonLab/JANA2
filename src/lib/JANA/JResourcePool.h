@@ -10,7 +10,7 @@
 #include <memory>
 #include <algorithm>
 
-#include "DResettable.h"
+#include "JResettable.h"
 
 /****************************************************** OVERVIEW ******************************************************
  *
@@ -81,7 +81,7 @@
  * Solution 1: Disable intra-thread sharing of objects that CONTAIN shared_ptrs: Everything that is or inherits from DKinematicData
  * Do this by setting the max size of the shared pool to zero for these types.
  *
- * Solution 2: Have those objects inherit from DResettable (below), and define the member functions.
+ * Solution 2: Have those objects inherit from JResettable (below), and define the member functions.
  *
  **********************************************************************************************************************/
 
@@ -118,7 +118,7 @@ template <typename DType> class JResourcePool : public std::enable_shared_from_t
 		void Recycle(std::vector<DType*>& sResources); //move-clears the input vector
 
 		std::size_t Get_SharedPoolSize(void) const;
-		std::size_t Get_PoolSize(void) const{return JResourcePool_Local.size();}
+		std::size_t Get_PoolSize(void) const{return mResourcePool_Local.size();}
 		std::size_t Get_NumObjectsAllThreads(void) const{return dObjectCounter;}
 
 		static constexpr unsigned int Get_CacheLineSize(void)
@@ -136,13 +136,13 @@ template <typename DType> class JResourcePool : public std::enable_shared_from_t
 
 	private:
 
-		//Enable this version if type inherits from DResettable //void: is return type
-		template <typename RType> typename std::enable_if<std::is_base_of<DResettable, RType>::value, void>::type Release_Resources(DResettable* sResource){sResource->Release();}
-		template <typename RType> typename std::enable_if<std::is_base_of<DResettable, RType>::value, void>::type Reset(DResettable* sResource){sResource->Reset();}
+		//Enable this version if type inherits from JResettable //void: is return type
+		template <typename RType> typename std::enable_if<std::is_base_of<JResettable, RType>::value, void>::type Release_Resources(JResettable* sResource){sResource->Release();}
+		template <typename RType> typename std::enable_if<std::is_base_of<JResettable, RType>::value, void>::type Reset(JResettable* sResource){sResource->Reset();}
 
-		//Enable this version if type does NOT inherit from DResettable //void: is return type
-		template <typename RType> typename std::enable_if<!std::is_base_of<DResettable, RType>::value, void>::type Release_Resources(RType* sResource){};
-		template <typename RType> typename std::enable_if<!std::is_base_of<DResettable, RType>::value, void>::type Reset(RType* sResource){};
+		//Enable this version if type does NOT inherit from JResettable //void: is return type
+		template <typename RType> typename std::enable_if<!std::is_base_of<JResettable, RType>::value, void>::type Release_Resources(RType* sResource){};
+		template <typename RType> typename std::enable_if<!std::is_base_of<JResettable, RType>::value, void>::type Reset(RType* sResource){};
 
 		//Assume that access to the shared pool won't happen very often: will mostly access the thread-local pool (this object)
 		void Get_Resources_StaticPool(void);
@@ -152,7 +152,7 @@ template <typename DType> class JResourcePool : public std::enable_shared_from_t
 		alignas(Get_CacheLineSize()) std::size_t dGetBatchSize = 100;
 		alignas(Get_CacheLineSize()) std::size_t dNumToAllocateAtOnce = 20;
 		alignas(Get_CacheLineSize()) std::size_t dMaxLocalPoolSize = 2000;
-		alignas(Get_CacheLineSize()) std::vector<DType*> JResourcePool_Local;
+		alignas(Get_CacheLineSize()) std::vector<DType*> mResourcePool_Local;
 
 		//static class members have external linkage: same instance shared between every translation unit (would be globally, put only private access)
 		alignas(Get_CacheLineSize()) static std::mutex dSharedPoolMutex;
@@ -168,17 +168,17 @@ template <typename DType> class DSharedPtrRecycler
 {
 	public:
 		DSharedPtrRecycler(void) = delete;
-		DSharedPtrRecycler(const std::shared_ptr<JResourcePool<DType>>& sResourcePool) : JResourcePool(sResourcePool) {};
+		DSharedPtrRecycler(const std::shared_ptr<JResourcePool<DType>>& sResourcePool) : mResourcePool(sResourcePool) {};
 		void operator()(const DType* sResource) const{(*this)(const_cast<DType*>(sResource));}
 		void operator()(DType* sResource) const;
 
 	private:
-		std::weak_ptr<JResourcePool<DType>> JResourcePool;
+		std::weak_ptr<JResourcePool<DType>> mResourcePool;
 };
 
 template <typename DType> void DSharedPtrRecycler<DType>::operator()(DType* sResource) const
 {
-	auto sSharedPtr = JResourcePool.lock();
+	auto sSharedPtr = mResourcePool.lock();
 	if(sSharedPtr == nullptr)
 		delete sResource;
 	else
@@ -208,7 +208,7 @@ template <typename DType> JResourcePool<DType>::JResourcePool(std::size_t sGetBa
 
 template <typename DType> JResourcePool<DType>::JResourcePool(void)
 {
-	JResourcePool_Local.reserve(dMaxLocalPoolSize);
+	mResourcePool_Local.reserve(dMaxLocalPoolSize);
 	{
 		std::lock_guard<std::mutex> sLock(dSharedPoolMutex); //LOCK
 		++dPoolCounter;
@@ -223,7 +223,7 @@ template <typename DType> JResourcePool<DType>::JResourcePool(void)
 template <typename DType> JResourcePool<DType>::~JResourcePool(void)
 {
 	//Move all objects into the shared pool
-	Recycle_Resources_StaticPool(JResourcePool_Local);
+	Recycle_Resources_StaticPool(mResourcePool_Local);
 
 	//if this was the last thread, delete all of the remaining resources
 	//first move them outside of the vector, then release the lock
@@ -259,21 +259,21 @@ template <typename DType> DType* JResourcePool<DType>::Get_Resource(void)
 {
 	if(dDebugLevel >= 10)
 		std::cout << "GET RESOURCE " << typeid(DType).name() << std::endl;
-	if(JResourcePool_Local.empty())
+	if(mResourcePool_Local.empty())
 		Get_Resources_StaticPool();
-	if(JResourcePool_Local.empty())
+	if(mResourcePool_Local.empty())
 	{
 		//perhaps instead use custom allocator
-		auto sPotentialNewSize = JResourcePool_Local.size() + dNumToAllocateAtOnce - 1;
-		auto sNumToAllocate = (sPotentialNewSize <= dMaxLocalPoolSize) ? dNumToAllocateAtOnce : (dMaxLocalPoolSize - JResourcePool_Local.size() + 1);
+		auto sPotentialNewSize = mResourcePool_Local.size() + dNumToAllocateAtOnce - 1;
+		auto sNumToAllocate = (sPotentialNewSize <= dMaxLocalPoolSize) ? dNumToAllocateAtOnce : (dMaxLocalPoolSize - mResourcePool_Local.size() + 1);
 		for(size_t si = 0; si < sNumToAllocate - 1; ++si)
-			JResourcePool_Local.push_back(new DType);
+			mResourcePool_Local.push_back(new DType);
 		dObjectCounter += sNumToAllocate;
 		return new DType();
 	}
 
-	auto sResource = JResourcePool_Local.back();
-	JResourcePool_Local.pop_back();
+	auto sResource = mResourcePool_Local.back();
+	mResourcePool_Local.pop_back();
 	Reset<DType>(sResource);
 	return sResource;
 }
@@ -321,13 +321,13 @@ template <typename DType> void JResourcePool<DType>::Recycle(std::vector<DType*>
 		Release_Resources<DType>(sResource);
 
 	size_t sFirstToMoveIndex = 0;
-	auto sPotentialNewPoolSize = JResourcePool_Local.size() + sResources.size();
+	auto sPotentialNewPoolSize = mResourcePool_Local.size() + sResources.size();
 	if(sPotentialNewPoolSize > dMaxLocalPoolSize) //we won't move all of the resources into the sal pool, as it would be too large: only move a subset
-		sFirstToMoveIndex = sResources.size() - (dMaxLocalPoolSize - JResourcePool_Local.size());
+		sFirstToMoveIndex = sResources.size() - (dMaxLocalPoolSize - mResourcePool_Local.size());
 
-	std::move(sResources.begin() + sFirstToMoveIndex, sResources.end(), std::back_inserter(JResourcePool_Local));
+	std::move(sResources.begin() + sFirstToMoveIndex, sResources.end(), std::back_inserter(mResourcePool_Local));
 	sResources.resize(sFirstToMoveIndex);
-	if(!locResources.empty())
+	if(!sResources.empty())
 		Recycle_Resources_StaticPool(sResources);
 }
 
@@ -351,8 +351,8 @@ template <typename DType> void JResourcePool<DType>::Get_Resources_StaticPool(vo
 	}
 	else
 	{
-		sPotentialNewLocalSize = JResourcePool_Local.size() + dGetBatchSize;
-		sGetBatchSize = (sPotentialNewLocalSize <= dMaxLocalPoolSize) ? dGetBatchSize : dMaxLocalPoolSize - JResourcePool_Local.size();
+		sPotentialNewLocalSize = mResourcePool_Local.size() + dGetBatchSize;
+		sGetBatchSize = (sPotentialNewLocalSize <= dMaxLocalPoolSize) ? dGetBatchSize : dMaxLocalPoolSize - mResourcePool_Local.size();
 	}
 
 
@@ -363,7 +363,7 @@ template <typename DType> void JResourcePool<DType>::Get_Resources_StaticPool(vo
 		auto sFirstToMoveIndex = (sGetBatchSize >= JResourcePool_Shared.size()) ? 0 : JResourcePool_Shared.size() - sGetBatchSize;
 		if(dDebugLevel > 0)
 			std::cout << "MOVING FROM SHARED POOL " << typeid(DType).name() << ": " << JResourcePool_Shared.size() - sFirstToMoveIndex << std::endl;
-		std::move(JResourcePool_Shared.begin() + sFirstToMoveIndex, JResourcePool_Shared.end(), std::back_inserter(JResourcePool_Local));
+		std::move(JResourcePool_Shared.begin() + sFirstToMoveIndex, JResourcePool_Shared.end(), std::back_inserter(mResourcePool_Local));
 		JResourcePool_Shared.resize(sFirstToMoveIndex);
 	} //UNLOCK
 }
@@ -379,7 +379,7 @@ template <typename DType> void JResourcePool<DType>::Recycle_Resources_StaticPoo
 			sFirstToMoveIndex = sResources.size() - (dMaxSharedPoolSize - JResourcePool_Shared.size());
 
 		if(dDebugLevel > 0)
-			std::cout << "MOVING TO SHARED POOL " << typeid(DType).name() << ": " << JResourcePool_Local.size() - sFirstToMoveIndex << std::endl;
+			std::cout << "MOVING TO SHARED POOL " << typeid(DType).name() << ": " << mResourcePool_Local.size() - sFirstToMoveIndex << std::endl;
 
 		std::move(sResources.begin() + sFirstToMoveIndex, sResources.end(), std::back_inserter(JResourcePool_Shared));
 	} //UNLOCK

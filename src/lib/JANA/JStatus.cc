@@ -40,7 +40,11 @@
 #include "JParameterManager.h"
 #include "JStatus.h"
 #include "JThread.h"
-#include "JQueue.h"
+#include "JQueueInterface.h"
+#include "JQueueSet.h"
+#include "JEventSourceManager.h"
+#include "JEventSource.h"
+#include "JThreadManager.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -134,37 +138,54 @@ void JStatus::GenerateReport(std::stringstream &ss)
 	vector<JEventSource*> sources;
 	vector<JEventSourceGenerator*> source_generators;
 	vector<JFactoryGenerator*> factory_generators;
-	vector<JQueue*> queues;
+	std::vector<std::pair<JEventSource*, JQueueSet*>> active_queues;
+	std::vector<std::pair<JEventSource*, JQueueSet*>> retired_queues;
 	vector<JThread*> threads;
 
 	japp->GetJEventProcessors(processors);
-	japp->GetJEventSources(sources);
-	japp->GetJEventSourceGenerators(source_generators);
+	japp->GetJEventSourceManager()->GetJEventSources(sources); //ignores exhausted sources!!
+	japp->GetJEventSourceManager()->GetJEventSourceGenerators(source_generators);
 	japp->GetJFactoryGenerators(factory_generators);
-	japp->GetJQueues(queues);
-	japp->GetJThreads(threads);
+	japp->GetJThreadManager()->GetActiveQueues(active_queues);
+	japp->GetJThreadManager()->GetRetiredQueues(retired_queues); //assumes one didn't retire in between calls!
+	japp->GetJThreadManager()->GetJThreads(threads);
+
+	std::size_t sNumQueues = 0;
+	for(auto& sQueuePair : active_queues)
+		sNumQueues += sQueuePair.second->GetNumQueues();
+	for(auto& sQueuePair : retired_queues)
+		sNumQueues += sQueuePair.second->GetNumQueues();
 
 	ss << "------ JANA STATUS REPORT -------" << endl;
 	ss << "generated: " << ctime(&t);
 	ss << endl;
-	ss << "      Nthreads/Ncores: " << japp->GetNJThreads() << " / " << japp->GetNcores() << endl;
+	ss << "      Nthreads/Ncores: " << japp->GetJThreadManager()->GetNJThreads() << " / " << japp->GetJThreadManager()->GetNcores() << endl;
 	ss << "    Nevents processed: " << japp->GetNeventsProcessed() << endl;
 	ss << "          Nprocessors: " << processors.size() << endl;
 	ss << "             Nsources: " << sources.size() << endl;
 	ss << "    Nsourcegenerators: " << source_generators.size() << endl;
 	ss << "   Nfactorygenerators: " << factory_generators.size() << endl;
-	ss << "              Nqueues: " << queues.size() << endl;
+	ss << "              Nqueues: " << sNumQueues << endl;
 	ss << endl;
 	
-	for(auto q : queues){
-		ss << "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - " << endl;
-		ss << "  queue " << q->GetName() << ":" << endl;
-		ss << "                       Nevents: " << q->GetNumEvents() <<endl;
-		ss << "             Nevents processed: " << q->GetNumEventsProcessed() << endl;
-		ss << "          Max allowed in queue: " << q->GetMaxEvents() << endl;
-		ss << "             ConvertFrom types: ";
-		for( auto s : q->GetConvertFromTypes() ) ss << s << ", ";
-		ss << endl;
+	for(auto& sQueuePair : active_queues)
+	{
+		auto sQueueSet = sQueuePair.second;
+		std::map<JQueueSet::JQueueType, std::vector<JQueueInterface*>> sQueuesByType;
+		sQueueSet->GetQueues(sQueuesByType);
+		for(auto& sQueueTypePair : sQueuesByType)
+		{
+			auto& sQueues = sQueueTypePair.second;
+			for(auto sQueue : sQueues)
+			{
+				ss << "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - " << endl;
+				ss << "  active source, queue: " << sQueuePair.first->GetName() << ", " << sQueue->GetName() << ": " << endl;
+				ss << "                       Ntasks: " << sQueue->GetNumTasks() <<endl;
+				ss << "             Ntasks processed: " << sQueue->GetNumTasksProcessed() << endl;
+				ss << "          Max allowed in queue: " << sQueue->GetMaxTasks() << endl;
+				ss << endl;
+			}
+		}
 	}
 	
 	// The only way to get a stack trace for a thread is from within the thread

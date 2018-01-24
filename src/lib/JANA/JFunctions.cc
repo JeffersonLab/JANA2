@@ -2,6 +2,7 @@
 #include "JEvent.h"
 #include "JTask.h"
 #include "JApplication.h"
+#include "JEventProcessor.h"
 
 std::shared_ptr<JTaskBase> JMakeAnalyzeEventTask(std::shared_ptr<JEvent>& aEvent, JApplication* aApplication)
 {
@@ -22,9 +23,4 @@ std::shared_ptr<JTaskBase> JMakeAnalyzeEventTask(std::shared_ptr<JEvent>& aEvent
 	sTask->SetEvent(std::move(aEvent));
 	sTask->SetTask(std::move(sPackagedTask));
 	return std::static_pointer_cast<JTaskBase>(sTask);
-}
-
-std::string JGetLongestQueueName(JThreadManager* aThreadManager, JEventSourceManager* aEventSourceManager)
-{
-	//Check
 }

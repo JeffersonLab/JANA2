@@ -38,6 +38,7 @@
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 #include "JEvent.h"
+#include "JEventSource.h"
 
 //---------------------------------
 // JEvent    (Constructor)

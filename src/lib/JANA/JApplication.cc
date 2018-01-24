@@ -72,6 +72,7 @@ using namespace std;
 
 
 JApplication *japp = NULL;
+thread_local std::shared_ptr<JResourcePool<JTask<void>>> JApplication::mVoidTaskPool = std::make_shared<JResourcePool<JTask<void>>>();
 
 int SIGINT_RECEIVED = 0;
 std::mutex DBG_MUTEX;
@@ -401,7 +402,7 @@ void JApplication::PrintFinalReport(void)
 	for(auto& sSourcePair : sAllQueues)
 	{
 		auto sSource = sSourcePair.first;
-		auto sSourceLength = sSource->GetName();
+		auto sSourceLength = sSource->GetName().size();
 		if(sSourceLength > sSourceMaxNameLength)
 			sSourceMaxNameLength = sSourceLength;
 

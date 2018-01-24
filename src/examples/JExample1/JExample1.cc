@@ -8,6 +8,7 @@
 #include <JANA/JApplication.h>
 #include <JANA/JEventSourceGenerator.h>
 #include <JANA/JEventSource.h>
+#include <JANA/JEventSourceManager.h>
 #include <JANA/JQueue.h>
 
 
@@ -30,12 +31,10 @@ class JEvent_example1:public JEvent {
 // JQueue.
 class JEventSource_example1: public JEventSource{
 	public:
-		JEventSource_example1(const char* source_name):JEventSource(source_name){}
+		JEventSource_example1(const char* source_name):JEventSource(source_name, japp){}
 
-		RETURN_STATUS GetEvent(void){
-			JEvent *evt = new JEvent_example1(1.0, 2); // JANA will "free" this by calling its Recycle method
-			japp->GetJQueue("Physics Events")->AddToQueue( evt );
-			return kSUCCESS;
+		std::pair<std::shared_ptr<JEvent>, RETURN_STATUS> GetEvent(void){
+			return std::make_pair(std::make_shared<JEvent_example1>(1.0, 2), JEventSource::RETURN_STATUS::kSUCCESS);
 		}
 };
 
@@ -65,7 +64,7 @@ class JEventSourceGenerator_example1: public JEventSourceGenerator{
 extern "C"{
 void InitPlugin(JApplication *app){
 	InitJANAPlugin(app);
-	app->AddJEventSourceGenerator(new JEventSourceGenerator_example1());
+	app->GetJEventSourceManager()->AddJEventSourceGenerator(new JEventSourceGenerator_example1());
 }
 } // "C"
 

@@ -70,6 +70,7 @@ class JQueueSet
 		~JQueueSet(void);
 		JQueueSet* Clone(void) const;
 
+		std::size_t GetNumQueues(void) const;
 		void SetQueues(JQueueType aQueueType, const std::vector<JQueueInterface*>& aQueues);
 		void AddQueue(JQueueType aQueueType, JQueueInterface* aQueue);
 		void RemoveQueues(JQueueType aQueueType);

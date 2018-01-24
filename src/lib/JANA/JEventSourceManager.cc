@@ -182,20 +182,20 @@ std::pair<JEventSource::RETURN_STATUS, JEventSource*> JEventSourceManager::OpenN
 	auto sEnd = std::end(_sources_active);
 	auto sIterator = std::find_if(std::begin(_sources_active), sEnd, sFindSlot);
 	if(sIterator == sEnd)
-		return std::make_pair(JEventSource::kSUCCESS, (JEventSource*)nullptr); //Previous source already closed and new one already opened (if any)
+		return std::make_pair(JEventSource::RETURN_STATUS::kSUCCESS, (JEventSource*)nullptr); //Previous source already closed and new one already opened (if any)
 
 	//Register source finished
 	_sources_exhausted.push_back(*sIterator);
 
 	if( _source_names_unopened.empty())
-		return std::make_pair(JEventSource::kNO_MORE_EVENTS, (JEventSource*)nullptr);
+		return std::make_pair(JEventSource::RETURN_STATUS::kNO_MORE_EVENTS, (JEventSource*)nullptr);
 
 	// Get name of next source to open
 	auto source_name = _source_names_unopened.front();
 	_source_names_unopened.pop_front();
 
 	*sIterator = OpenSource(source_name);
-	return std::make_pair(JEventSource::kSUCCESS, *sIterator);
+	return std::make_pair(JEventSource::RETURN_STATUS::kSUCCESS, *sIterator);
 }
 
 //---------------------------------
@@ -285,7 +285,7 @@ std::size_t JEventSourceManager::GetNumEventsProcessed(void) const
 	// Lock
 	std::lock_guard<std::mutex> lg(mSourcesMutex);
 
-	auto sNumEventGetter = [](JEventSource* aSource) -> std::size_t {return aSource->GetNumEventsProcessed();};
+	auto sNumEventGetter = [](std::size_t aTotal, JEventSource* aSource) -> std::size_t {return aTotal + aSource->GetNumEventsProcessed();};
 
 	//Sum from active sources and exhausted ones
 	auto sNumEvents = std::accumulate(std::begin(_sources_active), std::end(_sources_active), 0, sNumEventGetter);

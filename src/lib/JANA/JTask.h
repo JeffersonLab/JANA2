@@ -27,6 +27,7 @@ class JTaskBase : public JResettable
 	public:
 
 		//STRUCTORS
+		JTaskBase(void) = default;
 		virtual ~JTaskBase(void) = default;
 
 		//MOVERS
@@ -54,6 +55,8 @@ template <typename ReturnType>
 class JTask : public JTaskBase
 {
 	public:
+		//STRUCTORS
+		JTask(void) = default;
 
 		//MOVERS
 		JTask(JTask&&) = default;

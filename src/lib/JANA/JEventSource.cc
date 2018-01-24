@@ -112,7 +112,7 @@ std::pair<std::shared_ptr<JEvent>, JEventSource::RETURN_STATUS> JEventSource::Ge
 {
 	//Get a JEvent from the file.
 	//This should be overridden in derived classes.
-	return std::make_pair(std::shared_ptr<JEvent>(nullptr), kUNKNOWN);
+	return std::make_pair(std::shared_ptr<JEvent>(nullptr), RETURN_STATUS::kUNKNOWN);
 }
 
 //---------------------------------

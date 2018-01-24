@@ -44,10 +44,15 @@
 #ifndef _JEventProcessor_h_
 #define _JEventProcessor_h_
 
+#include <memory>
+class JEvent;
+
 class JEventProcessor{
 	public:
 		JEventProcessor();
 		virtual ~JEventProcessor();
+
+		virtual void Process(std::shared_ptr<JEvent>& aEvent) = 0;
 		
 	protected:
 	

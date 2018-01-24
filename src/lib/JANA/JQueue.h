@@ -54,7 +54,15 @@ class JQueue : public JQueueInterface
 {
 	public:
 	
-		JQueue(std::size_t aQueueSize = 200, std::size_t aTaskBufferSize = 0);
+		JQueue(const std::string& aName, std::size_t aQueueSize = 200, std::size_t aTaskBufferSize = 0);
+
+		//COPIERS //needed because atomic not copyable
+		JQueue(const JQueue& aQueue);
+		JQueue& operator=(const JQueue& aQueue);
+
+		//MOVERS //specify because deleted by default if copiers specified
+		JQueue(JQueue&&) = default;
+		JQueue& operator=(JQueue&&) = default;
 
 		int AddTask(const std::shared_ptr<JTaskBase>& aTask);
 		int AddTask(std::shared_ptr<JTaskBase>&& aTask);

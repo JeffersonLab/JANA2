@@ -83,10 +83,11 @@ class JThread{
 		
 	protected:
 		
-		JEventSource* mEventSource = nullptr;
 		JThreadManager* mThreadManager = nullptr;
 		JQueueSet* mQueueSet = nullptr;
 		std::size_t mQueueSetIndex = 0;
+		JEventSource* mEventSource = nullptr;
+
 		JQueueInterface* mEventQueue = nullptr;
 		bool mRotateEventSources = false;
 		bool mSourceEmpty = false;

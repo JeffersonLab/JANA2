@@ -60,8 +60,17 @@ class JQueueInterface
 			kNO_ERROR
 		};
 
+		//STRUCTORS
 		JQueueInterface(const std::string& aName);
 		virtual ~JQueueInterface() = default;
+
+		//COPIERS //needed because movers specified
+		JQueueInterface(const JQueueInterface& aQueue) = default;
+		JQueueInterface& operator=(const JQueueInterface& aQueue) = default;
+
+		//MOVERS //needed because destructor specified
+		JQueueInterface(JQueueInterface&&) = default;
+		JQueueInterface& operator=(JQueueInterface&&) = default;
 
 		virtual int AddTask(const std::shared_ptr<JTaskBase>& aTask) = 0;
 		virtual int AddTask(std::shared_ptr<JTaskBase>&& aTask) = 0;
@@ -73,7 +82,7 @@ class JQueueInterface
 		virtual uint64_t GetNumTasksProcessed(void) = 0;
 
 		std::string GetName(void) const;
-		JQueueInterface* Clone(void) const = 0;
+		virtual JQueueInterface* Clone(void) const = 0;
 
 	private:
 		std::string mName;

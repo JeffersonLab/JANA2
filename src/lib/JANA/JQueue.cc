@@ -42,9 +42,29 @@
 //---------------------------------
 // JQueue    (Constructor)
 //---------------------------------
-JQueue::JQueue(std::size_t aQueueSize, std::size_t aTaskBufferSize) : mTaskBufferSize(aTaskBufferSize)
+JQueue::JQueue(const std::string& aName, std::size_t aQueueSize, std::size_t aTaskBufferSize) : JQueueInterface(aName), mTaskBufferSize(aTaskBufferSize)
 {
 	mQueue.resize(aQueueSize);
+}
+
+//---------------------------------
+// JQueue    (Copy Constructor)
+//---------------------------------
+JQueue::JQueue(const JQueue& aQueue) : JQueueInterface(aQueue)
+{
+	//Assume this is called by Clone() or similar on an empty queue (ugh, can improve later)
+	mTaskBufferSize = aQueue.mTaskBufferSize;
+}
+
+//---------------------------------
+// operator=
+//---------------------------------
+JQueue& JQueue::operator=(const JQueue& aQueue)
+{
+	//Assume this is called by Clone() or similar on an empty queue (ugh, can improve later)
+	JQueueInterface::operator=(aQueue);
+	mTaskBufferSize = aQueue.mTaskBufferSize;
+	return *this;
 }
 
 //---------------------------------
