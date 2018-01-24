@@ -123,7 +123,7 @@ class JThreadManager
 		std::vector<std::pair<JEventSource*, JQueueSet*>> mActiveQueueSets;
 		std::vector<std::pair<JEventSource*, JQueueSet*>> mRetiredQueueSets; //source already finished
 
-		bool mRotateEventSources = false;
+		bool mRotateEventSources = true;
 		JEventSourceManager* mEventSourceManager = nullptr;
 };
 

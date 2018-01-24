@@ -76,20 +76,17 @@ std::pair<std::shared_ptr<JTaskBase>, JEventSource::RETURN_STATUS> JEventSource:
 	//Get the event from the input file
 	auto sReturnStatus = RETURN_STATUS::kNO_MORE_EVENTS;
 	auto sEvent = std::shared_ptr<JEvent>(nullptr);
-	do
-	{
-		std::tie(sEvent, sReturnStatus) = GetEvent();
-	}
-	while((sReturnStatus == RETURN_STATUS::kTRY_AGAIN) || (sReturnStatus == RETURN_STATUS::kUNKNOWN));
+	auto sEventPair = GetEvent();
 
 	//Done with the lock: Unlock
 	mInUse = false;
 
-	//If file closed, return dummy pair
-	if(sReturnStatus == RETURN_STATUS::kNO_MORE_EVENTS)
+	//Return if no event
+	if(sEventPair.first == nullptr)
 	{
-		mFileClosed = true;
-		return std::make_pair(std::shared_ptr<JTaskBase>(nullptr), RETURN_STATUS::kNO_MORE_EVENTS);
+		if(sEventPair.second == RETURN_STATUS::kNO_MORE_EVENTS)
+			mFileClosed = true;
+		return sEventPair;
 	}
 
 	//Then make the task for analyzing it (default: running the processors) and return it

@@ -50,8 +50,8 @@ class JEventSourceManager
 
 		JEventSource* OpenSource(const std::string& source_name);
 
-		JApplication* mApplication;
-		std::size_t mMaxNumOpenFiles;
+		JApplication* mApplication = nullptr;
+		std::size_t mMaxNumOpenFiles = 2; //TODO: Make configurable!
 
 		std::vector<std::string> _source_names;
 		std::deque<std::string> _source_names_unopened;

@@ -18,6 +18,9 @@
 
 #include "JEvent_test.h"
 
+template <typename DataType>
+class JResourcePool;
+
 class JEventSource_jana_test: public JEventSource
 {
 	public:
@@ -30,6 +33,9 @@ class JEventSource_jana_test: public JEventSource
 		
 	protected:
 		std::vector<std::shared_ptr<JEvent_test>> mEventsFromFile; //simulates a file
+
+		//Resource pool for events
+		static thread_local std::shared_ptr<JResourcePool<JEvent_test>> mEventPool;
 };
 
 #endif // _JEventSourceGenerator_jana_test_

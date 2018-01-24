@@ -5,27 +5,7 @@
 // Creator: davidl (on Darwin harriet 15.6.0 i386)
 //
 
-
-#include <iostream>
-#include <iomanip>
-using namespace std;
-
 #include "jana_test_factory.h"
-#include "JEventSourceManager.h"
-#include "JEventSourceGenerator_jana_test.h"
-#include "JFactoryGenerator_jana_test.h"
-#include "JEventProcessor_jana_test.h"
-
-// Routine used to create our JEventProcessor
-#include <JANA/JApplication.h>
-extern "C"{
-void InitPlugin(JApplication *app){
-	InitJANAPlugin(app);
-	app->GetJEventSourceManager()->AddJEventSourceGenerator(new JEventSourceGenerator_jana_test());
-	app->AddJFactoryGenerator(new JFactoryGenerator_jana_test());
-	app->AddJEventProcessor(new JEventProcessor_jana_test());
-}
-} // "C"
 
 //------------------
 // init

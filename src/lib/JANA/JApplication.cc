@@ -133,8 +133,7 @@ JApplication::JApplication(int narg, char *argv[])
 	_rmanager = NULL;
 	_eventSourceManager = new JEventSourceManager(this);
 	_threadManager = new JThreadManager(_eventSourceManager);
-	mVoidTaskPool = std::make_shared<JResourcePool<JTask<void>>>();
-	mVoidTaskPool->Set_ControlParams(30, 20, 200, 100, 0); //TODO: Config these!!
+	mVoidTaskPool->Set_ControlParams(30, 20, 200, 100, 10000); //TODO: Config these!!
 
 	// Loop over arguments
 	if(narg>0) _args.push_back(string(argv[0]));
@@ -193,6 +192,7 @@ JApplication::JApplication(int narg, char *argv[])
 		}
 		if( arg.find("-") == 0 )continue;
 
+		std::cout << "add source: " << arg << "\n";
 		_eventSourceManager->AddEventSource(arg);
 	}
 	
@@ -495,7 +495,7 @@ void JApplication::Run(uint32_t nthreads)
 	// Create all remaining threads (one may have been created in Init)
 	jout << "Creating " << nthreads << " processing threads ..." << endl;
 	_threadManager->CreateThreads(nthreads);
-	
+
 	// Optionally set thread affinity
 	try{
 		int affinity_algorithm = 0;
@@ -509,7 +509,7 @@ void JApplication::Run(uint32_t nthreads)
 	// Start all threads running
 	jout << "Start processing ..." << endl;
 	_threadManager->RunThreads();
-	
+
 	// Monitor status of all threads
 	while( !_quitting ){
 		
@@ -521,10 +521,13 @@ void JApplication::Run(uint32_t nthreads)
 		
 		// Check if all threads have finished
 		if(_threadManager->HaveAllThreadsEnded())
+		{
+			std::cout << "All threads have ended.\n";
 			break;
+		}
 
 		// Sleep a few cycles
-		this_thread::sleep_for( chrono::milliseconds(500) );
+		std::this_thread::sleep_for( std::chrono::milliseconds(500) );
 		
 		// Print status
 		PrintStatus();
@@ -604,7 +607,7 @@ void JApplication::AddJFactoryGenerator(JFactoryGenerator *factory_generator)
 //---------------------------------
 void JApplication::GetJEventProcessors(vector<JEventProcessor*>& aProcessors)
 {
-	_eventProcessors = aProcessors;
+	aProcessors = _eventProcessors;
 }
 
 //---------------------------------

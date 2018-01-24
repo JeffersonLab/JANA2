@@ -64,7 +64,7 @@ class JThread{
 			kRUN_STATE_OTHER
 		};
 
-		JThread(JThreadManager* aThreadManager, JQueueSet* aQueueSet, std::size_t aQueueSetIndex, JEventSource* aSource);
+		JThread(JThreadManager* aThreadManager, JQueueSet* aQueueSet, std::size_t aQueueSetIndex, JEventSource* aSource, bool aRotateEventSources);
 		virtual ~JThread();
 
 		uint64_t GetNumEventsProcessed(void);
@@ -99,7 +99,7 @@ class JThread{
 		std::map<std::string, uint64_t> _events_processed;
 		
 	private:
-
+int count = 0;
 };
 
 extern thread_local JThread *JTHREAD;

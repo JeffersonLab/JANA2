@@ -84,7 +84,7 @@ class JQueue : public JQueueInterface
 
 		std::atomic<uint32_t> iread{0};		//The slot that the next thread will try to read from
 		std::atomic<uint32_t> iwrite{0};	//The slot that the next thread will try to write to
-		std::atomic<uint32_t> ibegin{0};	//The slot indicating the beginning of the read region
+		std::atomic<uint32_t> ibegin{0};	//The slot indicating the beginning of the read region //is separate from iread in order to get exclusive access to iread
 		std::atomic<uint32_t> iend{0};		//The slot indicating one-past-the-end of the read region
 };
 

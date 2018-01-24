@@ -9,6 +9,8 @@
 #define _jana_test_
 
 #include <vector>
+#include <utility>
+#include <string>
 
 #include <JANA/JObject.h>
 #include <JANA/JFactory.h>
@@ -23,7 +25,7 @@ class jana_test:public JObject{
 		
 		// This method is used primarily for pretty printing
 		// the second argument to AddString is printf style format
-		void toStrings(std::vector<pair<string,string> > &items)const{
+		void toStrings(std::vector<std::pair<std::string,std::string> > &items)const{
 			// AddString(items, "id", "%4d", id);
 			// AddString(items, "E", "%f", E);
 		}

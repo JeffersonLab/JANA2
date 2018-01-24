@@ -77,11 +77,13 @@ void JThreadManager::CreateThreads(std::size_t aNumThreads)
 	//Before calling this, the queues should be prepared first!
 	mThreads.reserve(aNumThreads);
 	std::size_t sQueueSetIndex = 0;
+	std::cout << "#queue sets: " << mActiveQueueSets.size() << "\n";
+
 	for(decltype(aNumThreads) si = 0; si < aNumThreads; si++)
 	{
 		if(sQueueSetIndex > mActiveQueueSets.size())
 			sQueueSetIndex = 0;
-		mThreads.push_back(new JThread(this, mActiveQueueSets[sQueueSetIndex].second, sQueueSetIndex, mActiveQueueSets[sQueueSetIndex].first));
+		mThreads.push_back(new JThread(this, mActiveQueueSets[sQueueSetIndex].second, sQueueSetIndex, mActiveQueueSets[sQueueSetIndex].first, mRotateEventSources));
 		sQueueSetIndex++;
 	}
 }
@@ -96,8 +98,13 @@ void JThreadManager::PrepareQueues(void)
 	//Also, add the custom event queue that is unique to each event source
 	std::vector<JEventSource*> sSources;
 	mEventSourceManager->GetJEventSources(sSources);
+
+	std::cout << "#sources: " << sSources.size() << "\n";
 	for(auto sSource : sSources)
 		mActiveQueueSets.emplace_back(sSource, MakeQueueSet(sSource));
+
+	if(sSources.size() < 2)
+		mRotateEventSources = false; //nothing to rotate to
 }
 
 //---------------------------------
@@ -239,12 +246,14 @@ JQueueSet* JThreadManager::GetQueueSet(const JEventSource* aEventSource) const
 //---------------------------------
 std::pair<JEventSource*, JQueueSet*> JThreadManager::GetNextSourceQueues(std::size_t& aCurrentSetIndex)
 {
+	//Rotate to the next event source (and corresponding queue set)
+	//Increment the current set index, and if past the end, loop back to 0
 	aCurrentSetIndex++;
 
 	//LOCK
 	LockQueueSets();
 
-	if(aCurrentSetIndex > mActiveQueueSets.size())
+	if(aCurrentSetIndex >= mActiveQueueSets.size())
 		aCurrentSetIndex = 0;
 	auto sQueuePair = mActiveQueueSets[aCurrentSetIndex];
 
@@ -263,20 +272,22 @@ std::pair<JEventSource*, JQueueSet*> JThreadManager::RegisterSourceFinished(cons
 	JEventSource::RETURN_STATUS sStatus = JEventSource::RETURN_STATUS::kUNKNOWN;
 	JEventSource* sNextSource = nullptr;
 	std::tie(sStatus, sNextSource) = mEventSourceManager->OpenNext(aFinishedEventSource);
+	std::cout << "source finished, next source = " << sNextSource << "\n";
 
 	//LOCK
 	LockQueueSets();
 
 	//Update queue sets (if opened) OR get new source (if previous thread opened it already)
-
 	if(sStatus == JEventSource::RETURN_STATUS::kNO_MORE_EVENTS)
 	{
 		//No new sources to open
+		std::cout << "no new sources to open\n";
 
 		//Retire the current queue set and delete it from the active queue
 		mRetiredQueueSets.push_back(mActiveQueueSets[aQueueSetIndex]);
 		mActiveQueueSets.erase(std::begin(mActiveQueueSets) + aQueueSetIndex);
 
+		std::cout << "num active queue sets = " << mActiveQueueSets.size() << "\n";
 		if(mActiveQueueSets.empty())
 		{
 			//The last event source is done.
@@ -303,6 +314,7 @@ std::pair<JEventSource*, JQueueSet*> JThreadManager::RegisterSourceFinished(cons
 	else if(sNextSource != nullptr)
 	{
 		//We have just opened a new event source
+		std::cout << "new sources opened\n";
 
 		//Retire the current queue set, insert a new one in its place
 		mRetiredQueueSets.push_back(mActiveQueueSets[aQueueSetIndex]);

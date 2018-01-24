@@ -37,6 +37,7 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
+#include <iostream>
 #include "JQueue.h"
 
 //---------------------------------
@@ -137,9 +138,9 @@ int JQueue::AddTask(std::shared_ptr<JTaskBase>&& aTask)
 	while(true)
 	{
 		uint32_t idx = iwrite;
-		if(idx == ibegin)
-			return kQUEUE_FULL;
 		uint32_t inext = (idx + 1) % mQueue.size();
+		if(inext == ibegin)
+			return kQUEUE_FULL;
 
 		//The queue is not full: iwrite is pointing to an empty slot: idx
 		//If we can increment iwrite before someone else does, then we have exclusive access to slot idx
@@ -226,7 +227,7 @@ uint32_t JQueue::GetNumTasks(void)
 	/// Returns the number of tasks currently in this queue.
 	//size 10, end = 2, begin = 9: -7
 	auto sDifference = (int)iend - (int)ibegin;
-	return (sDifference > 0) ? sDifference : sDifference + mQueue.size();
+	return (sDifference >= 0) ? sDifference : sDifference + mQueue.size();
 }
 
 //---------------------------------
@@ -246,7 +247,10 @@ uint64_t JQueue::GetNumTasksProcessed(void)
 //---------------------------------
 bool JQueue::AreEnoughTasksBuffered(void)
 {
-	return (GetNumTasks() >= mTaskBufferSize);
+	//This function is only called for the Event queue
+	//If not enough tasks (events) are buffered, we will read in more events
+//	std::cout << "num tasks, buffer size = " << GetNumTasks() << ", " << mTaskBufferSize << "\n";
+	return (mTaskBufferSize == 0) ? (GetNumTasks() >= 1) : (GetNumTasks() >= mTaskBufferSize);
 }
 
 //---------------------------------

@@ -122,7 +122,7 @@ void JEventSourceManager::OpenInitSources(void)
 	{
 		std::string source_name = _source_names_unopened.front();
 		_source_names_unopened.pop_front();
-		_sources_active[si] = OpenSource(source_name);
+		_sources_active.push_back(OpenSource(source_name));
 	}
 }
 

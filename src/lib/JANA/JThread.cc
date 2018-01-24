@@ -52,8 +52,9 @@ thread_local JThread *JTHREAD = nullptr;
 //---------------------------------
 // JThread    (Constructor)
 //---------------------------------
-JThread::JThread(JThreadManager* aThreadManager, JQueueSet* aQueueSet, std::size_t aQueueSetIndex, JEventSource* aSource) :
-		mThreadManager(aThreadManager), mQueueSet(aQueueSet), mQueueSetIndex(aQueueSetIndex), mEventSource(aSource)
+JThread::JThread(JThreadManager* aThreadManager, JQueueSet* aQueueSet, std::size_t aQueueSetIndex, JEventSource* aSource, bool aRotateEventSources) :
+		mThreadManager(aThreadManager), mQueueSet(aQueueSet), mQueueSetIndex(aQueueSetIndex), mEventSource(aSource),
+		mEventQueue(mQueueSet->GetQueue(JQueueSet::JQueueType::Events)), mRotateEventSources(aRotateEventSources)
 {
 	_thread = new std::thread( &JThread::Loop, this );
 }
@@ -204,9 +205,13 @@ void JThread::Loop(void)
 				continue;
 			}
 
+			std::cout << "Running!\n";
 			//Check if not enough events queued
+			std::cout << "is-empty, enough buffered: " << mSourceEmpty << ", " << mEventQueue->AreEnoughTasksBuffered() << "\n";
 			if(!mSourceEmpty && !mEventQueue->AreEnoughTasksBuffered())
 			{
+				std::cout << "Get process event task\n";
+
 				//Not enough queued. Get the next event from the source, and get a task to process it (unless another thread has locked access)
 				auto sReturnStatus = JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
 				auto sEventTask = std::shared_ptr<JTaskBase>(nullptr);
@@ -214,24 +219,33 @@ void JThread::Loop(void)
 
 				if(sReturnStatus == JEventSource::RETURN_STATUS::kSUCCESS)
 				{
+					std::cout << "Success, add task\n";
 					//Add the process-event task to the event queue.
 					mEventQueue->AddTask(std::move(sEventTask));
 					continue;
 				}
 				else if(sReturnStatus == JEventSource::RETURN_STATUS::kNO_MORE_EVENTS)
 				{
+					std::cout << "No more events.\n";
 					//The source has been emptied.
 					//Continue processing jobs from this source until there aren't any more
 					mSourceEmpty = true;
 				}
+				else if(sReturnStatus == JEventSource::RETURN_STATUS::kTRY_AGAIN)
+				{
+					std::cout << "Try again later.\n";
+				}
 				//Else: Another thread has exclusive access to this event source
 				//In this case, try to execute other jobs for this source (if none, will rotate-sources/sleep after check
 			}
+			std::cout << "Grab task\n";
 
 			// Grab the next task
 			auto sQueueType = JQueueSet::JQueueType::Events;
 			auto sTask = std::shared_ptr<JTaskBase>(nullptr);
 			std::tie(sQueueType, sTask) = mQueueSet->GetTask();
+
+			std::cout << "Task pointer: " << sTask << "\n";
 
 			//Do we have a task?
 			if(sTask == nullptr)
@@ -248,6 +262,7 @@ void JThread::Loop(void)
 				//When all JEvent's associated with that file are destroyed/recycled.
 				//We track this by counting the number of open JEvent's in each JEventSource.
 
+				std::cout << "is empty, # outstanding = " << mSourceEmpty << ", " << mEventSource->GetNumOutstandingEvents() << "\n";
 				if(mSourceEmpty && (mEventSource->GetNumOutstandingEvents() == 0))
 				{
 					//Tell the thread manager that the source is finished (in case it didn't know already)
@@ -276,11 +291,15 @@ void JThread::Loop(void)
 
 			//Task complete.  If this was an event task, rotate to next open file (if desired)
 			//Don't rotate if it was a subtask or output task, because many of these may have submitted at once and we want to finish those first
+			std::cout << "rotate flag, event-check: " << mRotateEventSources << ", " << (sQueueType == JQueueSet::JQueueType::Events) << "\n";
 			if(mRotateEventSources && (sQueueType == JQueueSet::JQueueType::Events))
 			{
+				std::cout << "rotate sources\n";
 				std::tie(mEventSource, mQueueSet) = mThreadManager->GetNextSourceQueues(mQueueSetIndex);
+				std::cout << "get event queue\n";
 				mEventQueue = mQueueSet->GetQueue(JQueueSet::JQueueType::Events);
 				mSourceEmpty = false;
+				std::cout << "rotated\n";
 			}
 		}
 	}catch(JException &e){

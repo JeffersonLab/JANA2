@@ -7,6 +7,11 @@
 
 #include "JEventSource_jana_test.h"
 #include "JEvent_test.h"
+#include "JResourcePool.h"
+
+#include <iostream>
+
+thread_local std::shared_ptr<JResourcePool<JEvent_test>> JEventSource_jana_test::mEventPool = std::make_shared<JResourcePool<JEvent_test>>();
 
 //----------------
 // Constructor
@@ -14,11 +19,9 @@
 JEventSource_jana_test::JEventSource_jana_test(const char* source_name) : JEventSource(source_name, japp)
 {
 	// Allocate pool of JEvent objects
-	mEventsFromFile.reserve(10000);
-	std::vector<std::shared_ptr<JEvent_test>> mEventsFromFile; //simulates a file
-
+	mEventsFromFile.reserve(1);
 	for(std::size_t i = 0; i < mEventsFromFile.capacity(); i++)
-		mEventsFromFile.emplace_back(new JEvent_test());
+		mEventsFromFile.emplace_back(mEventPool->Get_SharedResource());
 }
 
 //----------------
