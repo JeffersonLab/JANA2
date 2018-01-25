@@ -68,6 +68,7 @@ extern std::mutex DBG_MUTEX;
 #define jout std::cout
 #define jerr std::cerr
 
+#include "JResourcePool.h"
 #include <JANA/JParameterManager.h>
 
 class JApplication;
@@ -82,8 +83,6 @@ class JResourceManager;
 class JThread;
 class JEventSourceManager;
 class JThreadManager;
-template <typename DataType>
-class JResourcePool;
 
 template <typename ReturnType>
 class JTask;
@@ -168,9 +167,9 @@ class JApplication{
 		
 	private:
 
-		//Resource pools //One per thread to minimize locking
+		//Resource pools
 		//TODO: Add methods to set control parameters
-		static thread_local std::shared_ptr<JResourcePool<JTask<void>>> mVoidTaskPool;
+		JResourcePool<JTask<void>> mVoidTaskPool;
 };
 
 //---------------------------------

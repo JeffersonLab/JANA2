@@ -72,7 +72,6 @@ using namespace std;
 
 
 JApplication *japp = NULL;
-thread_local std::shared_ptr<JResourcePool<JTask<void>>> JApplication::mVoidTaskPool = std::make_shared<JResourcePool<JTask<void>>>();
 
 int SIGINT_RECEIVED = 0;
 std::mutex DBG_MUTEX;
@@ -133,7 +132,7 @@ JApplication::JApplication(int narg, char *argv[])
 	_rmanager = NULL;
 	_eventSourceManager = new JEventSourceManager(this);
 	_threadManager = new JThreadManager(_eventSourceManager);
-	mVoidTaskPool->Set_ControlParams(30, 20, 200, 100, 10000); //TODO: Config these!!
+	mVoidTaskPool.Set_ControlParams(200, 10000); //TODO: Config these!!
 
 	// Loop over arguments
 	if(narg>0) _args.push_back(string(argv[0]));
@@ -705,7 +704,7 @@ uint32_t JApplication::GetCPU(void)
 //---------------------------------
 std::shared_ptr<JTask<void>> JApplication::GetVoidTask(void)
 {
-	return mVoidTaskPool->Get_SharedResource();
+	return mVoidTaskPool.Get_SharedResource();
 }
 
 //---------------------------------

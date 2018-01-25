@@ -14,26 +14,14 @@
 
 /****************************************************** OVERVIEW ******************************************************
  *
- * This class can be used to pool resources between pools for a given object type, even on different threads.
- * The way this works is that, in addition to a "local" resource pool for each instantiated JResourcePool object,
- * there is a private static resource pool, which is thus shared amongst all pools of that type.
- *
- * So, if an object is requested and the local pool is empty, it will then try to retrieve one from the shared pool.
- * If none exist, it makes a new one.
- * Also, if you a recycle an object and the local pool is "full," it will save it to the shared pool instead.
- * The reason there is both a "local" pool and a shared pool is to minimize the locking needed.
- * Control variables can be set to define exactly how this behaves.
- *
+ * This class can be used as a wrapper to a (private) static resource pool that is accessible to all class instances.
  * A pool counter keeps track of how many JResourcePool's there are for a given type.
  * Once it drops to zero, all of the remaining objects are deleted.
  *
  ***************************************** DEFINITION AND USE: NON-SHARED_PTR'S ***************************************
  *
- * If you do not intend to retrieve the resources from this pool as shared_ptr's, then just define a pool (in e.g. a factory) as:
- * JResourcePool<MyClass> dMyClassPool;
- *
- * You can then retrieve and recycle resources via the Get_Resource() and Recycle() functions.
- * Be sure to recycle the memory once you are done with it (e.g. beginning of factory evnt() call) or else it will leak.
+ * You can retrieve and recycle resources via the Get_Resource() and Recycle() functions.
+ * Be sure to recycle the memory once you are done with it or else it will leak.
  *
  ******************************************* DEFINITION AND USE: SHARED_PTR'S *****************************************
  *
@@ -42,46 +30,7 @@
  * These shared_ptr's have been created with a JSharedPtrRecycler functor:
  * Once the shared_ptr goes out of scope, the contained resource is automatically recycled back to the pool.
  *
- * Note that there is a tricky situation that arises when a shared_ptr outlives the life of the JResourcePool.
- * This can happen if (e.g.) shared_ptr's are stored as members of a factory alongside a JResourcePool, and the pool is destroyed first.
- * Or if they are created by a thread_local pool, and the objects outlive the thread.
- *
- * To combat this, we have the JSharedPtrRecycler hold a weak_ptr to the JResourcePool (where the object gets recycled to).
- * That way, if the pool has been deleted, the weak_ptr will have expired and we can manually delete the object instead of trying to recycle it.
- * This only works if the pool itself has been created within a shared_ptr in the first place, so it is recommended that these pools be defined as:
- *
- * YOU MUST DO THIS!!
- * auto dMyClassPool = std::make_shared<JResourcePool<MyClass>>();
- *
- *************************************************** FACTORY OBJECTS **************************************************
- *
- * If you want the _data objects for the factory to be managed by a resource pool instead of JANA, in the factory init() call:
- * SetFactoryFlag(NOT_OBJECT_OWNER);
- * With this flag set, JANA will not delete the objects in _data, but it will clear them (_data.clear()) prior to the evnt() method.
- * So that means you must also put them in a separate factory vector so that you have a handle on them to recycle them at the beginning of the factory evnt().
- *
- *************************************************** CLASS COMPONENTS **************************************************
- *
- * Note that the components of the particle classes (DKinematicData, DChargedTrackHypothesis, DNeutralParticleHypothesis) contain shared_ptr's.
- * That's because the components (kinematics, timing info, etc.) are often identical between objects, and instead of duplicating the memory, it's cheaper to just shared
- * For example, the kinematics for the pre-kinfit DChargedTrackHypothesis are identical to those from the DTrackTimeBased.
- * Also, the tracking information for the post-kinfit DChargedTrackHypothesis is identical to the pre-kinfit information.
- *
- * The resource pools for these shared_ptr's are defined to be private thread_local within the classes themselves.
- * That way each thread has an instance of the pool, while still sharing a common pool underneath.
- *
- *********************************************** BEWARE: CLASS COMPONENTS **********************************************
- *
- * Problem: Creating a resource on one thread, and recycling it on another thread: race condition in the resource pool local pool.
- *
- * How does this happen?  You create a charged-hypo on one thread, which creates a DKinematicInfo object on that thread.
- * You then recycle the hypo, and another thread picks it up.  The other thread calls Hypo::Reset(), which clears the DKinematicInfo.
- * Since it's stored in a shared_ptr, it goes back to the thread it was created.
- *
- * Solution 1: Disable intra-thread sharing of objects that CONTAIN shared_ptrs: Everything that is or inherits from DKinematicData
- * Do this by setting the max size of the shared pool to zero for these types.
- *
- * Solution 2: Have those objects inherit from JResettable (below), and define the member functions.
+ * The shared_ptr MUST NOT outlive the life of the JResourcePool!!! Or else it will crash.
  *
  **********************************************************************************************************************/
 
@@ -90,7 +39,7 @@
 #define alignas(A)
 #endif
 
-template <typename DType> class JResourcePool : public std::enable_shared_from_this<JResourcePool<DType>>
+template <typename DType> class JResourcePool
 {
 	//TYPE TRAIT REQUIREMENTS
 	//If these statements are false, this won't compile
@@ -101,8 +50,7 @@ template <typename DType> class JResourcePool : public std::enable_shared_from_t
 	public:
 		//STRUCTORS
 		JResourcePool(void);
-		JResourcePool(std::size_t sGetBatchSize, std::size_t sNumToAllocateAtOnce, std::size_t sMaxLocalPoolSize);
-		JResourcePool(std::size_t sGetBatchSize, std::size_t sNumToAllocateAtOnce, std::size_t sMaxLocalPoolSize, std::size_t sMaxSharedPoolSize, std::size_t sDebugLevel);
+		JResourcePool(std::size_t sMaxPoolSize, std::size_t sDebugLevel);
 		~JResourcePool(void);
 
 		//COPIERS
@@ -113,10 +61,13 @@ template <typename DType> class JResourcePool : public std::enable_shared_from_t
 		JResourcePool(JResourcePool&&) = delete;
 		JResourcePool& operator=(JResourcePool&&) = delete;
 
-		void Set_ControlParams(std::size_t sGetBatchSize, std::size_t sNumToAllocateAtOnce, std::size_t sMaxLocalPoolSize);
-		void Set_ControlParams(std::size_t sGetBatchSize, std::size_t sNumToAllocateAtOnce, std::size_t sMaxLocalPoolSize, std::size_t sMaxSharedPoolSize, std::size_t sDebugLevel);
+		void Set_ControlParams(std::size_t sMaxPoolSize, std::size_t sDebugLevel);
+
+		//GET RESOURCES
+		std::vector<DType*> Get_Resources(std::size_t aNumResources);
 		DType* Get_Resource(void);
 		std::shared_ptr<DType> Get_SharedResource(void);
+		std::vector<std::shared_ptr<DType>> Get_SharedResources(std::size_t aNumResources);
 
 		//RECYCLE CONST OBJECTS //these methods just const_cast and call the non-const versions
 		void Recycle(const DType* sResource){Recycle(const_cast<DType*>(sResource));}
@@ -126,8 +77,7 @@ template <typename DType> class JResourcePool : public std::enable_shared_from_t
 		void Recycle(DType* sResource);
 		void Recycle(std::vector<DType*>& sResources); //move-clears the input vector
 
-		std::size_t Get_SharedPoolSize(void) const;
-		std::size_t Get_PoolSize(void) const{return mResourcePool_Local.size();}
+		std::size_t Get_PoolSize(void) const;
 		std::size_t Get_NumObjectsAllThreads(void) const{return dObjectCounter;}
 
 		static constexpr unsigned int Get_CacheLineSize(void)
@@ -145,6 +95,8 @@ template <typename DType> class JResourcePool : public std::enable_shared_from_t
 
 	private:
 
+		void LockPool(void) const;
+
 		//Enable this version if type inherits from JResettable //void: is return type
 		template <typename RType> typename std::enable_if<std::is_base_of<JResettable, RType>::value, void>::type Release_Resources(JResettable* sResource){sResource->Release();}
 		template <typename RType> typename std::enable_if<std::is_base_of<JResettable, RType>::value, void>::type Reset(JResettable* sResource){sResource->Reset();}
@@ -154,19 +106,15 @@ template <typename DType> class JResourcePool : public std::enable_shared_from_t
 		template <typename RType> typename std::enable_if<!std::is_base_of<JResettable, RType>::value, void>::type Reset(RType* sResource){};
 
 		//Assume that access to the shared pool won't happen very often: will mostly access the thread-local pool (this object)
-		void Get_Resources_StaticPool(void);
+		std::vector<DType*> Get_Resources_StaticPool(std::size_t aNumResources);
 		void Recycle_Resources_StaticPool(std::vector<DType*>& sResources);
 
 		alignas(Get_CacheLineSize()) std::size_t dDebugLevel = 100;
-		alignas(Get_CacheLineSize()) std::size_t dGetBatchSize = 100;
-		alignas(Get_CacheLineSize()) std::size_t dNumToAllocateAtOnce = 20;
-		alignas(Get_CacheLineSize()) std::size_t dMaxLocalPoolSize = 2000;
-		alignas(Get_CacheLineSize()) std::vector<DType*> mResourcePool_Local;
 
 		//static class members have external linkage: same instance shared between every translation unit (would be globally, put only private access)
-		alignas(Get_CacheLineSize()) static std::mutex dSharedPoolMutex;
-		alignas(Get_CacheLineSize()) static std::vector<DType*> JResourcePool_Shared;
-		alignas(Get_CacheLineSize()) static std::size_t dMaxSharedPoolSize;
+		alignas(Get_CacheLineSize()) static std::atomic<bool> dPoolLock;
+		alignas(Get_CacheLineSize()) static std::vector<DType*> mResourcePool;
+		alignas(Get_CacheLineSize()) static std::size_t dMaxPoolSize;
 		alignas(Get_CacheLineSize()) static std::size_t dPoolCounter; //must be accessed within a lock due to how it's used in destructor: freeing all resources
 		alignas(Get_CacheLineSize()) static std::atomic<size_t> dObjectCounter; //can be accessed without a lock!
 };
@@ -177,80 +125,67 @@ template <typename DType> class JSharedPtrRecycler
 {
 	public:
 		JSharedPtrRecycler(void) = delete;
-		JSharedPtrRecycler(const std::shared_ptr<JResourcePool<DType>>& sResourcePool) : mResourcePool(sResourcePool) {};
+		JSharedPtrRecycler(JResourcePool<DType>* sResourcePool) : mResourcePool(sResourcePool) {};
 		void operator()(const DType* sResource) const{(*this)(const_cast<DType*>(sResource));}
-		void operator()(DType* sResource) const;
+		void operator()(DType* sResource) const{mResourcePool->Recycle(sResource);};
 
 	private:
-		std::weak_ptr<JResourcePool<DType>> mResourcePool;
+		JResourcePool<DType>* mResourcePool = nullptr;
 };
-
-template <typename DType> void JSharedPtrRecycler<DType>::operator()(DType* sResource) const
-{
-	auto sSharedPtr = mResourcePool.lock();
-	if(sSharedPtr == nullptr)
-		delete sResource;
-	else
-		sSharedPtr->Recycle(sResource);
-}
 
 /************************************************************************* STATIC MEMBER DEFINITIONS, STRUCTORS *************************************************************************/
 
 //STATIC MEMBER DEFINITIONS
 //Since these are part of a template, these statics will only be defined once, no matter how much this header is included
-template <typename DType> std::mutex JResourcePool<DType>::dSharedPoolMutex;
-template <typename DType> std::vector<DType*> JResourcePool<DType>::JResourcePool_Shared = {};
-template <typename DType> std::size_t JResourcePool<DType>::dMaxSharedPoolSize{1000};
+template <typename DType> std::atomic<bool> JResourcePool<DType>::dPoolLock{0};
+template <typename DType> std::vector<DType*> JResourcePool<DType>::mResourcePool = {};
+template <typename DType> std::size_t JResourcePool<DType>::dMaxPoolSize{1000};
 template <typename DType> std::size_t JResourcePool<DType>::dPoolCounter{0};
 template <typename DType> std::atomic<std::size_t> JResourcePool<DType>::dObjectCounter{0};
 
 //CONSTRUCTORS
-template <typename DType> JResourcePool<DType>::JResourcePool(std::size_t sGetBatchSize, std::size_t sNumToAllocateAtOnce, std::size_t sMaxLocalPoolSize, std::size_t sMaxSharedPoolSize, std::size_t sDebugLevel) : JResourcePool()
+template <typename DType> JResourcePool<DType>::JResourcePool(std::size_t sMaxPoolSize, std::size_t sDebugLevel) : JResourcePool()
 {
-	Set_ControlParams(sGetBatchSize, sNumToAllocateAtOnce, sMaxLocalPoolSize, sMaxSharedPoolSize, sDebugLevel);
-}
-
-template <typename DType> JResourcePool<DType>::JResourcePool(std::size_t sGetBatchSize, std::size_t sNumToAllocateAtOnce, std::size_t sMaxLocalPoolSize) : JResourcePool()
-{
-	Set_ControlParams(sGetBatchSize, sNumToAllocateAtOnce, sMaxLocalPoolSize);
+	Set_ControlParams(sMaxPoolSize, sDebugLevel);
 }
 
 template <typename DType> JResourcePool<DType>::JResourcePool(void)
 {
-	mResourcePool_Local.reserve(dMaxLocalPoolSize);
-	{
-		std::lock_guard<std::mutex> sLock(dSharedPoolMutex); //LOCK
-		++dPoolCounter;
-		if(dDebugLevel > 0)
-			std::cout << "CONSTRUCTOR THREAD COUNTER " << typeid(DType).name() << ": " << dPoolCounter << std::endl;
-		if(dPoolCounter == 1)
-			JResourcePool_Shared.reserve(dMaxSharedPoolSize);
-	} //UNLOCK
+	LockPool();
+	++dPoolCounter;
+	if(dDebugLevel > 0)
+		std::cout << "CONSTRUCTOR POOL COUNTER " << typeid(DType).name() << ": " << dPoolCounter << std::endl;
+	if(dPoolCounter == 1)
+		mResourcePool.reserve(dMaxPoolSize);
+	dPoolLock = false; //unlock
 }
 
 //DESTRUCTOR
 template <typename DType> JResourcePool<DType>::~JResourcePool(void)
 {
-	//Move all objects into the shared pool
-	Recycle_Resources_StaticPool(mResourcePool_Local);
-
 	//if this was the last thread, delete all of the remaining resources
 	//first move them outside of the vector, then release the lock
 	std::vector<DType*> sResources;
-	{
-		std::lock_guard<std::mutex> sLock(dSharedPoolMutex); //LOCK
-		--dPoolCounter;
-		if(dDebugLevel > 0)
-			std::cout << "DESTRUCTOR THREAD COUNTER " << typeid(DType).name() << ": " << dPoolCounter << std::endl;
-		if(dPoolCounter > 0)
-			return; //not the last thread
 
-		//last thread: move all resources out of the shared pool
-		if(dDebugLevel > 0)
-			std::cout << "DESTRUCTOR MOVING FROM SHARED POOL " << typeid(DType).name() << ": " << std::distance(JResourcePool_Shared.begin(), JResourcePool_Shared.end()) << std::endl;
-		std::move(JResourcePool_Shared.begin(), JResourcePool_Shared.end(), std::back_inserter(sResources));
-		JResourcePool_Shared.clear();
-	} //UNLOCK
+	//Lock
+	LockPool();
+
+	//Update/check pool counter
+	auto sNumPoolsRemaining = --dPoolCounter;
+	if(dDebugLevel > 0)
+		std::cout << "DESTRUCTOR POOL COUNTER " << typeid(DType).name() << ": " << sNumPoolsRemaining << std::endl;
+	if(dPoolCounter > 0)
+	{
+		dPoolLock = false; //unlock
+		return; //not the last thread
+	}
+
+	//last thread: move all resources out of the shared pool
+	if(dDebugLevel > 0)
+		std::cout << "DESTRUCTOR GETTING FROM SHARED POOL " << typeid(DType).name() << ": " << std::distance(mResourcePool.begin(), mResourcePool.end()) << std::endl;
+	std::copy(mResourcePool.begin(), mResourcePool.end(), std::back_inserter(sResources));
+	mResourcePool.clear();
+	dPoolLock = false; //unlock
 
 	//delete the resources
 	if(dDebugLevel > 0)
@@ -259,57 +194,74 @@ template <typename DType> JResourcePool<DType>::~JResourcePool(void)
 		delete sResource;
 	dObjectCounter -= sResources.size(); //I sure hope this is zero!
 	if(dDebugLevel > 0)
-		std::cout << "All objects (ought) to be destroyed, theoretical # remaining: " << dObjectCounter;
+		std::cout << "All objects (ought) to be destroyed, theoretical # remaining: " << dObjectCounter << "\n";
 }
 
 /************************************************************************* NON-SHARED-POOL-ACCESSING MEMBER FUNCTIONS *************************************************************************/
 
-template <typename DType> DType* JResourcePool<DType>::Get_Resource(void)
+template <typename DType> void JResourcePool<DType>::Set_ControlParams(size_t sMaxPoolSize, size_t sDebugLevel)
+{
+	dDebugLevel = sDebugLevel;
+
+	LockPool();
+	dMaxPoolSize = sMaxPoolSize;
+	mResourcePool.reserve(dMaxPoolSize);
+	dPoolLock = false;
+}
+
+template <typename DType>
+DType* JResourcePool<DType>::Get_Resource(void)
 {
 	if(dDebugLevel >= 10)
 		std::cout << "GET RESOURCE " << typeid(DType).name() << std::endl;
-	if(mResourcePool_Local.empty())
-		Get_Resources_StaticPool();
-	if(mResourcePool_Local.empty())
+
+	//Get resources from pool
+	auto sResources = Get_Resources_StaticPool(1);
+	if(!sResources.empty())
+		return sResources[0];
+
+	//Pool was empty: Allocate one
+	dObjectCounter++;
+	return new DType();
+}
+
+template <typename DType>
+std::vector<DType*> JResourcePool<DType>::Get_Resources(std::size_t aNumResources)
+{
+	if(dDebugLevel >= 10)
+		std::cout << "GET " << aNumResources << " RESOURCES " << typeid(DType).name() << std::endl;
+
+	//Get resources from pool
+	auto sResources = Get_Resources_StaticPool(aNumResources);
+	auto sNumAcquired = sResources.size();
+
+	//Allocate the rest (if the pool didn't have enough)
+	dObjectCounter += aNumResources - sNumAcquired; //Amount we are about to allocate
+	while(sNumAcquired != aNumResources)
 	{
-		//perhaps instead use custom allocator
-		auto sPotentialNewSize = mResourcePool_Local.size() + dNumToAllocateAtOnce - 1;
-		auto sNumToAllocate = (sPotentialNewSize <= dMaxLocalPoolSize) ? dNumToAllocateAtOnce : (dMaxLocalPoolSize - mResourcePool_Local.size() + 1);
-		for(size_t si = 0; si < sNumToAllocate - 1; ++si)
-			mResourcePool_Local.push_back(new DType);
-		dObjectCounter += sNumToAllocate;
-		return new DType();
+		sResources.push_back(new DType());
+		sNumAcquired++;
 	}
 
-	auto sResource = mResourcePool_Local.back();
-	mResourcePool_Local.pop_back();
-	Reset<DType>(sResource);
-	return sResource;
+	return sResources;
 }
 
-template <typename DType> void JResourcePool<DType>::Set_ControlParams(size_t sGetBatchSize, size_t sNumToAllocateAtOnce, size_t sMaxLocalPoolSize, size_t sMaxSharedPoolSize, size_t sDebugLevel)
+template <typename DType>
+std::shared_ptr<DType> JResourcePool<DType>::Get_SharedResource(void)
 {
-	dDebugLevel = sDebugLevel;
-	dGetBatchSize = sGetBatchSize;
-	dNumToAllocateAtOnce = (sNumToAllocateAtOnce > 0) ? sNumToAllocateAtOnce : 1;
-	dMaxLocalPoolSize = sMaxLocalPoolSize;
-	{
-		std::lock_guard<std::mutex> sLock(dSharedPoolMutex); //LOCK
-		dMaxSharedPoolSize = sMaxSharedPoolSize;
-		JResourcePool_Shared.reserve(dMaxSharedPoolSize);
-	} //UNLOCK
+	return std::shared_ptr<DType>(Get_Resource(), JSharedPtrRecycler<DType>(this));
 }
 
-template <typename DType> void JResourcePool<DType>::Set_ControlParams(size_t sGetBatchSize, size_t sNumToAllocateAtOnce, size_t sMaxLocalPoolSize)
+template <typename DType>
+std::vector<std::shared_ptr<DType>> JResourcePool<DType>::Get_SharedResources(std::size_t aNumResources)
 {
-	dGetBatchSize = sGetBatchSize;
-	dNumToAllocateAtOnce = (sNumToAllocateAtOnce > 0) ? sNumToAllocateAtOnce : 1;
-	dMaxLocalPoolSize = sMaxLocalPoolSize;
-}
+	std::vector<std::shared_ptr<DType>> sSharedResources;
+	sSharedResources.reserve(aNumResources);
 
-template <typename DType> std::shared_ptr<DType> JResourcePool<DType>::Get_SharedResource(void)
-{
-	return std::shared_ptr<DType>(Get_Resource(), JSharedPtrRecycler<DType>(this->shared_from_this()));
+	auto sResources = Get_Resources(aNumResources);
+	for(auto sResource : sResources)
+		sSharedResources.emplace_back(sResource, JSharedPtrRecycler<DType>(this));
+	return sSharedResources;
 }
 
 template <typename DType> void JResourcePool<DType>::Recycle(std::vector<const DType*>& sResources)
@@ -326,90 +278,101 @@ template <typename DType> void JResourcePool<DType>::Recycle(std::vector<const D
 
 template <typename DType> void JResourcePool<DType>::Recycle(std::vector<DType*>& sResources)
 {
-	if(dDebugLevel >= 10)
-		std::cout << "RECYCLE " << sResources.size() << " RESOURCES " << typeid(DType).name() << std::endl;
 	for(auto& sResource : sResources)
 		Release_Resources<DType>(sResource);
 
-	size_t sFirstToMoveIndex = 0;
-	auto sPotentialNewPoolSize = mResourcePool_Local.size() + sResources.size();
-	if(sPotentialNewPoolSize > dMaxLocalPoolSize) //we won't move all of the resources into the local pool, as it would be too large: only move a subset
-		sFirstToMoveIndex = sResources.size() - (dMaxLocalPoolSize - mResourcePool_Local.size());
-
-	std::move(sResources.begin() + sFirstToMoveIndex, sResources.end(), std::back_inserter(mResourcePool_Local));
-	sResources.resize(sFirstToMoveIndex);
-	if(!sResources.empty())
-		Recycle_Resources_StaticPool(sResources);
+	Recycle_Resources_StaticPool(sResources);
 }
 
 template <typename DType> void JResourcePool<DType>::Recycle(DType* sResource)
 {
 	if(sResource == nullptr)
 		return;
-	std::vector<DType*> sResourceVector{sResource};
-	Recycle(sResourceVector);
+	Release_Resources<DType>(sResource);
+	std::vector<DType*> sResources{sResource};
+	Recycle_Resources_StaticPool(sResources);
 }
 
 /************************************************************************* SHARED-POOL-ACCESSING MEMBER FUNCTIONS *************************************************************************/
 
-template <typename DType> void JResourcePool<DType>::Get_Resources_StaticPool(void)
+//---------------------------------
+// LockPool
+//---------------------------------
+template <typename DType>
+void JResourcePool<DType>::LockPool(void) const
 {
-	std::size_t sPotentialNewLocalSize, sGetBatchSize;
-	if(dMaxLocalPoolSize == 0) //Special case
-	{
-		sGetBatchSize = 1;
-		sPotentialNewLocalSize = 1;
-	}
-	else
-	{
-		sPotentialNewLocalSize = mResourcePool_Local.size() + dGetBatchSize;
-		sGetBatchSize = (sPotentialNewLocalSize <= dMaxLocalPoolSize) ? dGetBatchSize : dMaxLocalPoolSize - mResourcePool_Local.size();
-	}
-
-
-	{
-		std::lock_guard<std::mutex> sLock(dSharedPoolMutex); //LOCK
-		if(JResourcePool_Shared.empty())
-			return;
-		auto sFirstToMoveIndex = (sGetBatchSize >= JResourcePool_Shared.size()) ? 0 : JResourcePool_Shared.size() - sGetBatchSize;
-		if(dDebugLevel > 0)
-			std::cout << "MOVING FROM SHARED POOL " << typeid(DType).name() << ": " << JResourcePool_Shared.size() - sFirstToMoveIndex << std::endl;
-		std::move(JResourcePool_Shared.begin() + sFirstToMoveIndex, JResourcePool_Shared.end(), std::back_inserter(mResourcePool_Local));
-		JResourcePool_Shared.resize(sFirstToMoveIndex);
-	} //UNLOCK
+	bool sExpected = false;
+	while(!dPoolLock.compare_exchange_weak(sExpected, true))
+		sExpected = false;
 }
 
-template <typename DType> void JResourcePool<DType>::Recycle_Resources_StaticPool(std::vector<DType*>& sResources)
+template <typename DType>
+std::vector<DType*> JResourcePool<DType>::Get_Resources_StaticPool(std::size_t aNumResources)
 {
-	std::size_t sFirstToMoveIndex = 0;
+	//Initialize return vector
+	std::vector<DType*> sResources;
+	sResources.reserve(aNumResources);
+
+	//Lock
+	LockPool();
+
+	//Return if empty
+	if(mResourcePool.empty())
 	{
-		std::lock_guard<std::mutex> sLock(dSharedPoolMutex); //LOCK
+		dPoolLock = false; //Unlock
+		return sResources;
+	}
 
-		auto sPotentialNewPoolSize = JResourcePool_Shared.size() + sResources.size();
-		if(sPotentialNewPoolSize > dMaxSharedPoolSize) //we won't move all of the resources into the shared pool, as it would be too large: only move a subset
-			sFirstToMoveIndex = sResources.size() - (dMaxSharedPoolSize - JResourcePool_Shared.size());
+	//Get resources from the back of the pool
+	//Beware, we may be requesting more resources than are in the pool
+	auto sFirstToCopyIndex = (aNumResources >= mResourcePool.size()) ? 0 : mResourcePool.size() - aNumResources;
+	std::copy(mResourcePool.begin() + sFirstToCopyIndex, mResourcePool.end(), std::back_inserter(sResources));
+	mResourcePool.resize(sFirstToCopyIndex);
 
-		if(dDebugLevel > 0)
-			std::cout << "MOVING TO SHARED POOL " << typeid(DType).name() << ": " << mResourcePool_Local.size() - sFirstToMoveIndex << std::endl;
+	dPoolLock = false; //Unlock
+	if(dDebugLevel > 0)
+		std::cout << "RETRIEVED FROM SHARED POOL " << typeid(DType).name() << ": " << sResources.size() << std::endl;
+	return sResources;
+}
 
-		std::move(sResources.begin() + sFirstToMoveIndex, sResources.end(), std::back_inserter(JResourcePool_Shared));
-	} //UNLOCK
+template <typename DType>
+void JResourcePool<DType>::Recycle_Resources_StaticPool(std::vector<DType*>& sResources)
+{
+	if(dDebugLevel >= 10)
+		std::cout << "RECYCLE " << sResources.size() << " RESOURCES " << typeid(DType).name() << std::endl;
+
+	std::size_t sFirstToCopyIndex = 0;
+	{
+		LockPool();
+
+		auto sPotentialNewPoolSize = mResourcePool.size() + sResources.size();
+		if(sPotentialNewPoolSize > dMaxPoolSize) //we won't move all of the resources into the shared pool, as it would be too large: only move a subset
+			sFirstToCopyIndex = sResources.size() - (dMaxPoolSize - mResourcePool.size());
+
+		std::copy(sResources.begin() + sFirstToCopyIndex, sResources.end(), std::back_inserter(mResourcePool));
+		dPoolLock = false; //Unlock
+	}
 
 	if(dDebugLevel > 0)
-		std::cout << "DELETING " << typeid(DType).name() << ": " << sFirstToMoveIndex << std::endl;
+	{
+		std::cout << "PUT IN SHARED POOL " << typeid(DType).name() << ": " << sResources.size() - sFirstToCopyIndex << std::endl;
+		std::cout << "DELETING " << typeid(DType).name() << ": " << sFirstToCopyIndex << std::endl;
+	}
 
-	//any resources that were not moved into the shared pool are deleted instead (too many)
+	//any resources that were not copied into the shared pool are deleted instead (too many)
 	auto Deleter = [](DType* sResource) -> void {delete sResource;};
-	std::for_each(sResources.begin(), sResources.begin() + sFirstToMoveIndex, Deleter);
+	std::for_each(sResources.begin(), sResources.begin() + sFirstToCopyIndex, Deleter);
 
-	dObjectCounter -= sFirstToMoveIndex;
+	dObjectCounter -= sFirstToCopyIndex;
 	sResources.clear();
 }
 
-template <typename DType> std::size_t JResourcePool<DType>::Get_SharedPoolSize(void) const
+template <typename DType> std::size_t JResourcePool<DType>::Get_PoolSize(void) const
 {
-	std::lock_guard<std::mutex> sLock(dSharedPoolMutex); //LOCK
-	return JResourcePool_Shared.size();
-} //UNLOCK
+	LockPool();
+	auto sSize = mResourcePool.size();
+	dPoolLock = false; //Unlock
+	return sSize;
+}
 
 #endif // JResourcePool_h
