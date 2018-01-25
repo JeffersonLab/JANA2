@@ -91,6 +91,7 @@ class JThread{
 		JQueueInterface* mEventQueue = nullptr;
 		bool mRotateEventSources = false;
 		bool mSourceEmpty = false;
+		std::size_t mFullRotationCheckIndex = 0; //For detecting when we are simply rotating and not executing
 
 		std::thread *_thread;
 		RUN_STATE_t _run_state = kRUN_STATE_IDLE;           ///< Current state

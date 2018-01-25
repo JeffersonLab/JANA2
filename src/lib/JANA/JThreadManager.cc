@@ -74,17 +74,13 @@ JThreadManager::~JThreadManager(void)
 //---------------------------------
 void JThreadManager::CreateThreads(std::size_t aNumThreads)
 {
-	//Before calling this, the queues should be prepared first!
+	//Create the threads, assigning them queue sets (and event sources)
+	//Before calling this, the queues (& event sources) should be prepared first!
 	mThreads.reserve(aNumThreads);
-	std::size_t sQueueSetIndex = 0;
-	std::cout << "#queue sets: " << mActiveQueueSets.size() << "\n";
-
 	for(decltype(aNumThreads) si = 0; si < aNumThreads; si++)
 	{
-		if(sQueueSetIndex > mActiveQueueSets.size())
-			sQueueSetIndex = 0;
+		auto sQueueSetIndex = si % mActiveQueueSets.size();
 		mThreads.push_back(new JThread(this, mActiveQueueSets[sQueueSetIndex].second, sQueueSetIndex, mActiveQueueSets[sQueueSetIndex].first, mRotateEventSources));
-		sQueueSetIndex++;
 	}
 }
 
@@ -209,6 +205,10 @@ void JThreadManager::GetActiveQueues(std::vector<std::pair<JEventSource*, JQueue
 
 	//UNLOCK
 	mQueueSetsLock = false;
+
+	//filter out nullptr queues
+	auto sNullChecker = [](const std::pair<JEventSource*, JQueueSet*>& sPair) -> bool {return (sPair.second == nullptr);};
+	aQueues.erase(std::remove_if(std::begin(aQueues), std::end(aQueues), sNullChecker), std::end(aQueues));
 }
 
 //---------------------------------
@@ -253,8 +253,15 @@ std::pair<JEventSource*, JQueueSet*> JThreadManager::GetNextSourceQueues(std::si
 	//LOCK
 	LockQueueSets();
 
-	if(aCurrentSetIndex >= mActiveQueueSets.size())
-		aCurrentSetIndex = 0;
+	while(true)
+	{
+		if(aCurrentSetIndex >= mActiveQueueSets.size())
+			aCurrentSetIndex = 0;
+		if(mActiveQueueSets[aCurrentSetIndex].second == nullptr)
+			aCurrentSetIndex++;
+		else
+			break;
+	}
 	auto sQueuePair = mActiveQueueSets[aCurrentSetIndex];
 
 	//UNLOCK
@@ -269,6 +276,8 @@ std::pair<JEventSource*, JQueueSet*> JThreadManager::GetNextSourceQueues(std::si
 std::pair<JEventSource*, JQueueSet*> JThreadManager::RegisterSourceFinished(const JEventSource* aFinishedEventSource, std::size_t& aQueueSetIndex)
 {
 	//Open the next source (if not done already)
+	//If two threads reach here at the same time, only one will open the source.
+	//The other thread will update to the new source later below
 	JEventSource::RETURN_STATUS sStatus = JEventSource::RETURN_STATUS::kUNKNOWN;
 	JEventSource* sNextSource = nullptr;
 	std::tie(sStatus, sNextSource) = mEventSourceManager->OpenNext(aFinishedEventSource);
@@ -277,56 +286,100 @@ std::pair<JEventSource*, JQueueSet*> JThreadManager::RegisterSourceFinished(cons
 	//LOCK
 	LockQueueSets();
 
-	//Update queue sets (if opened) OR get new source (if previous thread opened it already)
-	if(sStatus == JEventSource::RETURN_STATUS::kNO_MORE_EVENTS)
-	{
-		//No new sources to open
-		std::cout << "no new sources to open\n";
-
-		//Retire the current queue set and delete it from the active queue
-		mRetiredQueueSets.push_back(mActiveQueueSets[aQueueSetIndex]);
-		mActiveQueueSets.erase(std::begin(mActiveQueueSets) + aQueueSetIndex);
-
-		std::cout << "num active queue sets = " << mActiveQueueSets.size() << "\n";
-		if(mActiveQueueSets.empty())
-		{
-			//The last event source is done.
-
-			//UNLOCK
-			mQueueSetsLock = false;
-
-			//Tell all threads to end.
-			EndThreads();
-			return std::pair<JEventSource*, JQueueSet*>(nullptr, nullptr);
-		}
-
-		//Rotate this thread to the next open source
-		aQueueSetIndex++;
-		if(aQueueSetIndex > mActiveQueueSets.size())
-			aQueueSetIndex = 0;
-		auto sQueuePair = mActiveQueueSets[aQueueSetIndex];
-
-		//UNLOCK
-		mQueueSetsLock = false;
-
-		return sQueuePair;
-	}
-	else if(sNextSource != nullptr)
+	if(sNextSource != nullptr)
 	{
 		//We have just opened a new event source
-		std::cout << "new sources opened\n";
+		std::cout << "new source opened\n";
 
 		//Retire the current queue set, insert a new one in its place
 		mRetiredQueueSets.push_back(mActiveQueueSets[aQueueSetIndex]);
 		mActiveQueueSets[aQueueSetIndex] = std::make_pair(sNextSource, MakeQueueSet(sNextSource));
+
+		//Get and return the new queue set and source (don't forget to unlock!)
+		auto sQueuePair = mActiveQueueSets[aQueueSetIndex];
+		mQueueSetsLock = false;
+		return sQueuePair;
 	}
-	//else new source opened previously (in place), just get and return it
 
+	//OK, the "next" source is null. Either another thread opened a new source, or there are no more sources to open.
+	if(sStatus == JEventSource::RETURN_STATUS::kUNKNOWN)
+	{
+		//OK, we're not quite sure what happened.
+		//When trying to open the next source, we searched for the old one but it was already registered as exhausted.
+		//So either:
+			//Another thread opened a new source, and installed it into mActiveQueueSets at the same slot
+			//There were no other sources to open, and installed nullptr in its place
+		if(mActiveQueueSets[aQueueSetIndex].second != nullptr)
+		{
+			std::cout << "another thread opened a new source\n";
+
+			//Get and return the new queue set and source (don't forget to unlock!)
+			auto sQueuePair = mActiveQueueSets[aQueueSetIndex];
+			mQueueSetsLock = false;
+			return sQueuePair;
+		}
+
+		//There were no new sources to open, so the other thread retired the queue set and put nullptr in its place
+
+		//If done, tell all threads to end (if not done so already)
+		//If not, rotate this thread to the next open source and return the next queue set
+		return CheckAllSourcesDone(aQueueSetIndex);
+	}
+
+	//We removed the previous source from the active list (first one to get there), and there are no new sources to open
+	std::cout << "no new sources to open\n";
+
+	//Retire the current queue set and remove it from the active queue
+	//Note that we can't actually erase it: It would invalidate the queue set indices of other threads
+	//Instead, we replace it with nullptr
+	if(mActiveQueueSets[aQueueSetIndex].second != nullptr) //if not done already by another thread
+	{
+		mRetiredQueueSets.push_back(mActiveQueueSets[aQueueSetIndex]);
+		mActiveQueueSets[aQueueSetIndex].second = nullptr;
+	}
+
+	//If done, tell all threads to end
+	//If not, rotate this thread to the next open source and return the next queue set
+	return CheckAllSourcesDone(aQueueSetIndex);
+}
+
+//---------------------------------
+// CheckAllSourcesDone
+//---------------------------------
+std::pair<JEventSource*, JQueueSet*> JThreadManager::CheckAllSourcesDone(std::size_t& aQueueSetIndex)
+{
+	//Only called by RegisterSourceFinished, and already within a lock on mQueueSetsLock
+		//This is only called once there are no more files to open, and we want to see if all jobs are done.
+	//If done, tell all threads to end
+	//If not, rotate this thread to the next open source and return the next queue set
+
+	//Check if all sources are done
+	auto sNullChecker = [](const std::pair<JEventSource*, JQueueSet*>& sPair) -> bool {return (sPair.second == nullptr);};
+	if(std::all_of(std::begin(mActiveQueueSets), std::end(mActiveQueueSets), sNullChecker))
+	{
+		//The last event source is done.
+
+		//UNLOCK
+		mQueueSetsLock = false;
+
+		//Tell all threads to end.
+		EndThreads();
+		return std::pair<JEventSource*, JQueueSet*>(nullptr, nullptr);
+	}
+
+	//Not all sources are done yet.
+	//Rotate this thread to the next open source.
+	do
+	{
+		aQueueSetIndex++;
+		if(aQueueSetIndex >= mActiveQueueSets.size())
+			aQueueSetIndex = 0;
+	}
+	while(mActiveQueueSets[aQueueSetIndex].second == nullptr);
+
+	//Get and return the next queue set and source (don't forget to unlock!)
 	auto sQueuePair = mActiveQueueSets[aQueueSetIndex];
-
-	//UNLOCK
 	mQueueSetsLock = false;
-
 	return sQueuePair;
 }
 

@@ -89,6 +89,8 @@ void JEventSourceManager::AddJEventSourceGenerator(JEventSourceGenerator *source
 //---------------------------------
 void JEventSourceManager::GetJEventSources(std::vector<JEventSource*>& aSources) const
 {
+	// Lock
+	std::lock_guard<std::mutex> lg(mSourcesMutex);
 	aSources = _sources_active;
 }
 
@@ -178,15 +180,21 @@ std::pair<JEventSource::RETURN_STATUS, JEventSource*> JEventSourceManager::OpenN
 	// Lock
 	std::lock_guard<std::mutex> lg(mSourcesMutex);
 
+	//Check if a previous thread has already closed the last source
+	if( _sources_active.empty())
+		return std::make_pair(JEventSource::RETURN_STATUS::kNO_MORE_EVENTS, (JEventSource*)nullptr);
+
 	//Find slot
 	auto sEnd = std::end(_sources_active);
 	auto sIterator = std::find_if(std::begin(_sources_active), sEnd, sFindSlot);
-	if(sIterator == sEnd)
-		return std::make_pair(JEventSource::RETURN_STATUS::kSUCCESS, (JEventSource*)nullptr); //Previous source already closed and new one already opened (if any)
+	if(sIterator == sEnd) //Previous source already closed and new one already opened (if any)
+		return std::make_pair(JEventSource::RETURN_STATUS::kUNKNOWN, (JEventSource*)nullptr); //unknown: don't know if any were opened
 
 	//Register source finished
 	_sources_exhausted.push_back(*sIterator);
+	_sources_active.erase(sIterator);
 
+	//If no new sources to open, return
 	if( _source_names_unopened.empty())
 		return std::make_pair(JEventSource::RETURN_STATUS::kNO_MORE_EVENTS, (JEventSource*)nullptr);
 
@@ -194,8 +202,10 @@ std::pair<JEventSource::RETURN_STATUS, JEventSource*> JEventSourceManager::OpenN
 	auto source_name = _source_names_unopened.front();
 	_source_names_unopened.pop_front();
 
-	*sIterator = OpenSource(source_name);
-	return std::make_pair(JEventSource::RETURN_STATUS::kSUCCESS, *sIterator);
+	//Open the new source, register it, and return it
+	auto sNewSource = OpenSource(source_name);
+	_sources_active.push_back(sNewSource);
+	return std::make_pair(JEventSource::RETURN_STATUS::kSUCCESS, sNewSource);
 }
 
 //---------------------------------

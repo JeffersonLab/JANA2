@@ -132,7 +132,7 @@ JApplication::JApplication(int narg, char *argv[])
 	_rmanager = NULL;
 	_eventSourceManager = new JEventSourceManager(this);
 	_threadManager = new JThreadManager(_eventSourceManager);
-	mVoidTaskPool.Set_ControlParams(200, 10000); //TODO: Config these!!
+	mVoidTaskPool.Set_ControlParams(200, 0); //TODO: Config these!!
 
 	// Loop over arguments
 	if(narg>0) _args.push_back(string(argv[0]));
@@ -426,9 +426,9 @@ void JApplication::PrintFinalReport(void)
 
 	jout << std::endl;
 	jout << "Final Report" << std::endl;
-	jout << "-----------------------------" << std::endl;
+	jout << std::string(sSourceMaxNameLength + sQueueMaxNameLength + 9, '-') << std::endl;
 	jout << "Source" << std::string(sSourceMaxNameLength - 6, ' ') << "Queue" << std::string(sQueueMaxNameLength - 5, ' ') << "NTasks" << std::endl;
-	jout << std::string(sSourceMaxNameLength + sQueueMaxNameLength + 8, '-') << std::endl;
+	jout << std::string(sSourceMaxNameLength + sQueueMaxNameLength + 9, '-') << std::endl;
 	for(auto& sSourcePair : sAllQueues)
 	{
 		auto sSource = sSourcePair.first;
@@ -729,7 +729,6 @@ uint64_t JApplication::GetNeventsProcessed(void)
 //---------------------------------
 float JApplication::GetIntegratedRate(void)
 {
-
 	// Once we start draining the queues, freez the integrated
 	// rate so it is not distorted by the wind down
 	static float last_R = 0.0;

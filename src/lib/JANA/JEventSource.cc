@@ -44,7 +44,7 @@
 //---------------------------------
 // JEventSource    (Constructor)
 //---------------------------------
-JEventSource::JEventSource(string name, JApplication* aApplication) : mApplication(aApplication)
+JEventSource::JEventSource(string name, JApplication* aApplication) : mApplication(aApplication), mName(name)
 {
 
 }

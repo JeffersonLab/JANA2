@@ -77,7 +77,7 @@ int JQueue::AddTask(const std::shared_ptr<JTaskBase>& aTask)
 	/// If the queue is full, it will return immediately with a value
 	/// of JQueue::kQUEUE_FULL. Upon success, it will return JQueue::NO_ERROR.
 
-	// The queue is maintained by 3 atomic indices. The goal of this
+	// The queue is maintained by 4 atomic indices. The goal of this
 	// method is to increment both the iwrite and iend indices so
 	// they point to the same slot upon exit. The JTaskBase pointer will
 	// be copied into the slot just in front of the one these point
@@ -123,24 +123,14 @@ int JQueue::AddTask(const std::shared_ptr<JTaskBase>& aTask)
 int JQueue::AddTask(std::shared_ptr<JTaskBase>&& aTask)
 {
 	/// Add the given JTaskBase to this queue. This will do so without locks.
-	/// If the queue is full, it will return immediately with a value
-	/// of JQueue::kQUEUE_FULL. Upon success, it will return JQueue::NO_ERROR.
-
-	// The queue is maintained by 3 atomic indices. The goal of this
-	// method is to increment both the iwrite and iend indices so
-	// they point to the same slot upon exit. The JTaskBase pointer will
-	// be copied into the slot just in front of the one these point
-	// to, making it available to the GetEvent method. If it sees that
-	// the queue is full, it returns immediately. (This is to give the
-	// calling thread a chance to do something else or call this again.
-	// for another try.)
+	/// See other AddTask method for details.
 
 	while(true)
 	{
 		uint32_t idx = iwrite;
 		uint32_t inext = (idx + 1) % mQueue.size();
 		if(inext == ibegin)
-			return kQUEUE_FULL;
+			continue; //we've MOVED the input: failure is not an option: retry
 
 		//The queue is not full: iwrite is pointing to an empty slot: idx
 		//If we can increment iwrite before someone else does, then we have exclusive access to slot idx

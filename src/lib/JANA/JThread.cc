@@ -205,9 +205,8 @@ void JThread::Loop(void)
 				continue;
 			}
 
-			std::cout << "Running!\n";
 			//Check if not enough events queued
-			std::cout << "is-empty, enough buffered: " << mSourceEmpty << ", " << mEventQueue->AreEnoughTasksBuffered() << "\n";
+//			std::cout << "is-empty, enough buffered: " << mSourceEmpty << ", " << mEventQueue->AreEnoughTasksBuffered() << "\n";
 			if(!mSourceEmpty && !mEventQueue->AreEnoughTasksBuffered())
 			{
 				std::cout << "Get process event task\n";
@@ -219,7 +218,7 @@ void JThread::Loop(void)
 
 				if(sReturnStatus == JEventSource::RETURN_STATUS::kSUCCESS)
 				{
-					std::cout << "Success, add task\n";
+//					std::cout << "Success, add task\n";
 					//Add the process-event task to the event queue.
 					mEventQueue->AddTask(std::move(sEventTask));
 					continue;
@@ -238,7 +237,7 @@ void JThread::Loop(void)
 				//Else: Another thread has exclusive access to this event source
 				//In this case, try to execute other jobs for this source (if none, will rotate-sources/sleep after check
 			}
-			std::cout << "Grab task\n";
+//			std::cout << "Grab task\n";
 
 			// Grab the next task
 			auto sQueueType = JQueueSet::JQueueType::Events;
@@ -262,7 +261,7 @@ void JThread::Loop(void)
 				//When all JEvent's associated with that file are destroyed/recycled.
 				//We track this by counting the number of open JEvent's in each JEventSource.
 
-				std::cout << "is empty, # outstanding = " << mSourceEmpty << ", " << mEventSource->GetNumOutstandingEvents() << "\n";
+				std::cout << "null task: is empty, # outstanding = " << mSourceEmpty << ", " << mEventSource->GetNumOutstandingEvents() << "\n";
 				if(mSourceEmpty && (mEventSource->GetNumOutstandingEvents() == 0))
 				{
 					//Tell the thread manager that the source is finished (in case it didn't know already)
@@ -273,13 +272,21 @@ void JThread::Loop(void)
 					if(mQueueSet != nullptr)
 						mEventQueue = mQueueSet->GetQueue(JQueueSet::JQueueType::Events);
 					mSourceEmpty = false;
+					mFullRotationCheckIndex = mQueueSetIndex; //reset for full-rotation-with-no-action check
 					continue;
 				}
 
 				if(mRotateEventSources) //No tasks, try to rotate to a different input file
 				{
+					std::cout << "rotate sources\n";
 					std::tie(mEventSource, mQueueSet) = mThreadManager->GetNextSourceQueues(mQueueSetIndex);
 					mEventQueue = mQueueSet->GetQueue(JQueueSet::JQueueType::Events);
+					mSourceEmpty = false;
+
+					//Check if we have rotated through all open event sources without doing anything
+					//If so, we are probably waiting for another thread to finish a task, or for more events to be ready.
+					if(mQueueSetIndex == mFullRotationCheckIndex) //yep
+						std::this_thread::sleep_for( std::chrono::nanoseconds(100) ); //Sleep a minimal amount.
 				}
 				else //No tasks, wait a bit for this event source to be ready
 					std::this_thread::sleep_for( std::chrono::nanoseconds(100) ); //Sleep a minimal amount.
@@ -291,15 +298,14 @@ void JThread::Loop(void)
 
 			//Task complete.  If this was an event task, rotate to next open file (if desired)
 			//Don't rotate if it was a subtask or output task, because many of these may have submitted at once and we want to finish those first
-			std::cout << "rotate flag, event-check: " << mRotateEventSources << ", " << (sQueueType == JQueueSet::JQueueType::Events) << "\n";
+//			std::cout << "rotate flag, event-check: " << mRotateEventSources << ", " << (sQueueType == JQueueSet::JQueueType::Events) << "\n";
 			if(mRotateEventSources && (sQueueType == JQueueSet::JQueueType::Events))
 			{
 				std::cout << "rotate sources\n";
+				mFullRotationCheckIndex = mQueueSetIndex; //reset for full-rotation-with-no-action check
 				std::tie(mEventSource, mQueueSet) = mThreadManager->GetNextSourceQueues(mQueueSetIndex);
-				std::cout << "get event queue\n";
 				mEventQueue = mQueueSet->GetQueue(JQueueSet::JQueueType::Events);
 				mSourceEmpty = false;
-				std::cout << "rotated\n";
 			}
 		}
 	}catch(JException &e){

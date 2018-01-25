@@ -84,11 +84,10 @@ class JEventSource{
 	
 		virtual std::pair<std::shared_ptr<JEvent>, RETURN_STATUS> GetEvent(void) = 0;
 		JApplication* mApplication = nullptr;
+		std::string mName;
+		JQueueInterface* mEventQueue = nullptr; //For handling event-source-specific logic (such as disentangling events, dealing with barriers, etc.)
 
 	private:
-
-		JQueueInterface* mEventQueue = nullptr; //For handling event-source-specific logic (such as disentangling events, dealing with barriers, etc.)
-		std::string mName;
 
 		//Called by JEvent
 		void IncrementEventCount(void){mNumOutstandingEvents++;}

@@ -109,7 +109,7 @@ template <typename DType> class JResourcePool
 		std::vector<DType*> Get_Resources_StaticPool(std::size_t aNumResources);
 		void Recycle_Resources_StaticPool(std::vector<DType*>& sResources);
 
-		alignas(Get_CacheLineSize()) std::size_t dDebugLevel = 100;
+		alignas(Get_CacheLineSize()) std::size_t dDebugLevel = 0;
 
 		//static class members have external linkage: same instance shared between every translation unit (would be globally, put only private access)
 		alignas(Get_CacheLineSize()) static std::atomic<bool> dPoolLock;
@@ -139,7 +139,7 @@ template <typename DType> class JSharedPtrRecycler
 //Since these are part of a template, these statics will only be defined once, no matter how much this header is included
 template <typename DType> std::atomic<bool> JResourcePool<DType>::dPoolLock{0};
 template <typename DType> std::vector<DType*> JResourcePool<DType>::mResourcePool = {};
-template <typename DType> std::size_t JResourcePool<DType>::dMaxPoolSize{1000};
+template <typename DType> std::size_t JResourcePool<DType>::dMaxPoolSize{10};
 template <typename DType> std::size_t JResourcePool<DType>::dPoolCounter{0};
 template <typename DType> std::atomic<std::size_t> JResourcePool<DType>::dObjectCounter{0};
 

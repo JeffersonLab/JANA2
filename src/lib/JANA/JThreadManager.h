@@ -112,6 +112,7 @@ class JThreadManager
 		//INTERNAL CALLS
 		JQueueSet* MakeQueueSet(JEventSource* sEventSource);
 		void LockQueueSets(void) const;
+		std::pair<JEventSource*, JQueueSet*> CheckAllSourcesDone(std::size_t& aQueueSetIndex);
 
 		//THREADS
 		std::vector<JThread*> mThreads;
@@ -120,7 +121,7 @@ class JThreadManager
 		mutable std::atomic<bool> mQueueSetsLock{false};
 		JQueueSet mTemplateQueueSet; //When a new source is opened, these queues are cloned for it
 		//faster to linear-search unsorted vector-of-pairs than sorted-vector or map (unless large (~50+) number of open sources)
-		std::vector<std::pair<JEventSource*, JQueueSet*>> mActiveQueueSets;
+		std::vector<std::pair<JEventSource*, JQueueSet*>> mActiveQueueSets; //if no new open sources, nullptr inserted on retirement!!
 		std::vector<std::pair<JEventSource*, JQueueSet*>> mRetiredQueueSets; //source already finished
 
 		bool mRotateEventSources = true;
