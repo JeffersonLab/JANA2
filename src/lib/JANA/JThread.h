@@ -100,7 +100,10 @@ class JThread{
 		std::map<std::string, uint64_t> _events_processed;
 		
 	private:
-int count = 0;
+
+		//INTERNAL CALLS
+		bool CheckEventQueue(void);
+		void HandleNullTask(void);
 };
 
 extern thread_local JThread *JTHREAD;
