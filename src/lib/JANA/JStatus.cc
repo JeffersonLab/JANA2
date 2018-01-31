@@ -143,7 +143,7 @@ void JStatus::GenerateReport(std::stringstream &ss)
 	vector<JThread*> threads;
 
 	japp->GetJEventProcessors(processors);
-	japp->GetJEventSourceManager()->GetJEventSources(sources); //ignores exhausted sources!!
+	japp->GetJEventSourceManager()->GetActiveJEventSources(sources); //ignores exhausted sources!!
 	japp->GetJEventSourceManager()->GetJEventSourceGenerators(source_generators);
 	japp->GetJFactoryGenerators(factory_generators);
 	japp->GetJThreadManager()->GetActiveQueues(active_queues);

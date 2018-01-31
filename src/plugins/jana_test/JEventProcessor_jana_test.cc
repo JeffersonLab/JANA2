@@ -26,63 +26,35 @@ void InitPlugin(JApplication *app){
 //------------------
 // JEventProcessor_jana_test (Constructor)
 //------------------
-JEventProcessor_jana_test::JEventProcessor_jana_test()
+JEventProcessor_jana_test::JEventProcessor_jana_test(void)
 {
-
+	//This is the new init()
 }
 
 //------------------
 // ~JEventProcessor_jana_test (Destructor)
 //------------------
-JEventProcessor_jana_test::~JEventProcessor_jana_test()
+JEventProcessor_jana_test::~JEventProcessor_jana_test(void)
 {
-
+	//This is the new fini()
 }
 
 //------------------
-// init
+// ChangeRun
 //------------------
-void JEventProcessor_jana_test::init(void)
-{
-	// This is called once at program startup
-}
-
-//------------------
-// brun
-//------------------
-void JEventProcessor_jana_test::brun(JEvent *jevent, int32_t runnumber)
+void JEventProcessor_jana_test::ChangeRun(const std::shared_ptr<JEvent>& aEvent)
 {
 	// This is called whenever the run number changes
 }
 
 //------------------
-// evnt
+// AnalyzeEvent
 //------------------
-void JEventProcessor_jana_test::evnt(JEvent *jevent, uint64_t eventnumber)
+void JEventProcessor_jana_test::AnalyzeEvent(const std::shared_ptr<JEvent>& aEvent)
 {
 	// This is called for every event. Use of common resources like writing
 	// to a file or filling a histogram should be mutex protected. Using
 	// loop->Get(...) to get reconstructed objects (and thereby activating the
 	// reconstruction algorithm) should be done outside of any mutex lock
 	// since multiple threads may call this method at the same time.
-
 }
-
-//------------------
-// erun
-//------------------
-void JEventProcessor_jana_test::erun(void)
-{
-	// This is called whenever the run number changes, before it is
-	// changed to give you a chance to clean up before processing
-	// events from the next run number.
-}
-
-//------------------
-// fini
-//------------------
-void JEventProcessor_jana_test::fini(void)
-{
-	// Called before program exit after event processing is finished.
-}
-

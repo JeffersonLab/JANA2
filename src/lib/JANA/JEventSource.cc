@@ -40,19 +40,32 @@
 #include "JEventSource.h"
 #include "JFunctions.h"
 #include "JApplication.h"
+#include <JANA/JEvent.h>
 
 //---------------------------------
 // JEventSource    (Constructor)
 //---------------------------------
 JEventSource::JEventSource(string name, JApplication* aApplication) : mApplication(aApplication), mName(name)
 {
+	//Do not open the source here!
+	//It will be opened in the Open() method
 
+	//Create JEventQueue here!
+	//Create JFactoryGenerator here! (for all types in the files)
 }
 
 //---------------------------------
 // ~JEventSource    (Destructor)
 //---------------------------------
 JEventSource::~JEventSource()
+{
+
+}
+
+//---------------------------------
+// Open
+//---------------------------------
+void JEventSource::Open(void)
 {
 
 }

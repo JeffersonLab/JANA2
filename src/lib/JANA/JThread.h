@@ -64,7 +64,7 @@ class JThread{
 			kRUN_STATE_OTHER
 		};
 
-		JThread(JThreadManager* aThreadManager, JQueueSet* aQueueSet, std::size_t aQueueSetIndex, JEventSource* aSource, bool aRotateEventSources);
+		JThread(JApplication* aApplication, JQueueSet* aQueueSet, std::size_t aQueueSetIndex, JEventSource* aSource, bool aRotateEventSources);
 		virtual ~JThread();
 
 		uint64_t GetNumEventsProcessed(void);
@@ -83,6 +83,7 @@ class JThread{
 		
 	protected:
 		
+		JApplication* mApplication = nullptr;
 		JThreadManager* mThreadManager = nullptr;
 		JQueueSet* mQueueSet = nullptr;
 		std::size_t mQueueSetIndex = 0;

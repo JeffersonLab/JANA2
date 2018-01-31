@@ -44,16 +44,16 @@
 #ifndef _JFactoryGenerator_h_
 #define _JFactoryGenerator_h_
 
+#include <unordered_map>
+#include <typeindex>
+
+class JFactoryBase;
+
 class JFactoryGenerator{
 	public:
-		JFactoryGenerator();
-		virtual ~JFactoryGenerator();
+		virtual ~JFactoryGenerator() = 0;
 		
-	protected:
-	
-	
-	private:
-
+		std::vector<JFactoryBase*> GenerateFactories(void) = 0;
 };
 
 #endif // _JFactoryGenerator_h_

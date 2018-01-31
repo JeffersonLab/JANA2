@@ -40,14 +40,6 @@
 #include "JFactoryGenerator.h"
 
 //---------------------------------
-// JFactoryGenerator    (Constructor)
-//---------------------------------
-JFactoryGenerator::JFactoryGenerator()
-{
-
-}
-
-//---------------------------------
 // ~JFactoryGenerator    (Destructor)
 //---------------------------------
 JFactoryGenerator::~JFactoryGenerator()

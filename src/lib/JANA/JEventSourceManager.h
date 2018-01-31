@@ -28,9 +28,11 @@ class JEventSourceManager
 		void AddJEventSource(JEventSource *source);
 		void AddJEventSourceGenerator(JEventSourceGenerator *source_generator);
 
-		void GetJEventSources(std::vector<JEventSource*>& aSources) const;
+		void GetActiveJEventSources(std::vector<JEventSource*>& aSources) const;
+		void GetUnopenedJEventSources(std::vector<JEventSource*>& aSources) const;
 		void GetJEventSourceGenerators(std::vector<JEventSourceGenerator*>& aGenerators) const;
 
+		void CreateSources(void); //Call while single-threaded!!
 		void OpenInitSources(void); //Call while single-threaded!!
 
 		//INFORMATION
@@ -48,15 +50,15 @@ class JEventSourceManager
 		JEventSourceGenerator* GetUserEventSourceGenerator(void);
 		JEventSourceGenerator* GetEventSourceGenerator(const std::string& source_name);
 
-		JEventSource* OpenSource(const std::string& source_name);
+		JEventSource* CreateSource(const std::string& source_name);
 
 		JApplication* mApplication = nullptr;
 		std::size_t mMaxNumOpenFiles = 2; //TODO: Make configurable!
 
 		std::vector<std::string> _source_names;
-		std::deque<std::string> _source_names_unopened;
 
 		std::vector<JEventSourceGenerator*> _eventSourceGenerators;
+		std::deque<JEventSource*> _sources_unopened;
 		std::vector<JEventSource*> _sources_active;
 		std::vector<JEventSource*> _sources_exhausted;
 

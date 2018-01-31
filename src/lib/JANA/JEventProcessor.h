@@ -45,21 +45,22 @@
 #define _JEventProcessor_h_
 
 #include <memory>
-#include <iostream>
+#include <cstddef>
+#include <limits>
+
 class JEvent;
 
 class JEventProcessor{
 	public:
-		JEventProcessor();
-		virtual ~JEventProcessor();
 
-		virtual void Process(std::shared_ptr<JEvent>& aEvent){/*for(int si = 0; si < 1000; si++)std::cout << si << "\n";*/} //TODO: Implement!!
-		
-	protected:
-	
+		virtual ~JEventProcessor(void) = 0;
+
+		void Process(std::shared_ptr<JEvent>& aEvent);
+		virtual void AnalyzeEvent(const std::shared_ptr<JEvent>& aEvent){};
+		virtual void ChangeRun(const std::shared_ptr<JEvent>& aEvent){};
 	
 	private:
-
+		std::atomic<uint32_t> mPreviousRunNumber = std::numeric_limits<uint32_t>::max();
 };
 
 #endif // _JEventProcessor_h_

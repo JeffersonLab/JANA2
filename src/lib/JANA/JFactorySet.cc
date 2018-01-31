@@ -37,14 +37,28 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
+#include <iterator>
+
 #include "JFactorySet.h"
 
 //---------------------------------
 // JFactorySet    (Constructor)
 //---------------------------------
-JFactorySet::JFactorySet()
+JFactorySet::JFactorySet(const std::vector<JFactoryGenerator*>& aFactoryGenerators)
 {
-
+	//Add all factories from all factory generators
+	for(auto sGenerator : aFactoryGenerators)
+	{
+		auto sFactories = sGenerator->GenerateFactories();
+		for(auto sFactory : sFactories)
+		{
+			auto sKey = std::make_pair(sFactory->GetObjectType(), sFactory->GetTag());
+			if(mFactories.find(sKey) == std::end(mFactories))
+				mFactories.emplace(sKey, sFactory);
+			else
+				delete sFactory; //Factory created by another source. Delete it!!
+		}
+	}
 }
 
 //---------------------------------
@@ -53,4 +67,27 @@ JFactorySet::JFactorySet()
 JFactorySet::~JFactorySet()
 {
 
+}
+
+//---------------------------------
+// GetFactory
+//---------------------------------
+JFactoryBase* JFactorySet::GetFactory(std::type_index aObjectType, const std::string& aFactoryTag) const
+{
+	auto sIterator = mFactories.find(std::make_pair(aObjectType, aFactoryTag));
+	return (sIterator != std::end(mFactories)) ? sIterator->second : nullptr;
+}
+
+//---------------------------------
+// ResetNewEvent
+//---------------------------------
+void JFactorySet::ResetNewEvent(void)
+{
+	//Loop over all factories and: clear the data and set the created flag to false
+	for(const auto& sFactoryPair : mFactories)
+	{
+		auto sFactory = sFactoryPair.second;
+		sFactory->ClearData();
+		sFactory->SetCreated(false);
+	}
 }

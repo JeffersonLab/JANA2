@@ -17,12 +17,10 @@ class JEventProcessor_jana_test:public JEventProcessor{
 		~JEventProcessor_jana_test();
 		const char* className(void){return "JEventProcessor_jana_test";}
 
+		void AnalyzeEvent(const std::shared_ptr<JEvent>& aEvent);
+		void ChangeRun(const std::shared_ptr<JEvent>& aEvent);
+
 	private:
-		void init(void);						///< Called once at program start.
-		void brun(JEvent *jevent, int32_t runnumber);	///< Called everytime a new run number is detected.
-		void evnt(JEvent *jevent, uint64_t eventnumber);	///< Called every event.
-		void erun(void);						///< Called everytime run number changes, provided brun has been called.
-		void fini(void);						///< Called after last event of last event source has been processed.
 };
 
 #endif // _JEventProcessor_jana_test_

@@ -50,6 +50,7 @@
 #include <cstdlib>
 #include <sstream>
 #include <iostream>
+#include <unordered_set>
 using namespace std;
 
 #include "JApplication.h"
@@ -382,6 +383,24 @@ void JApplication::Initialize(void)
 	// Attach all plugins
 	AttachPlugins();
 
+	// Create all event sources
+	_eventSourceManager->CreateSources();
+
+	// Get factory generators from event sources
+	std::vector<JEventSource*> sEventSources;
+	_eventSourceManager->GetUnopenedJEventSources(sEventSources);
+	std::unordered_set<std::type_index> sSourceTypes;
+	for(auto sSource : sEventSources)
+	{
+		auto sTypeIndex = sSource->GetDerivedType();
+		if(sSourceTypes.find(sTypeIndex) != std::end(sSourceTypes))
+			continue; //same type as before: duplicate factories!
+
+		auto sGenerator = sSource->GetFactoryGenerator();
+		if(sGenerator != nullptr)
+			_factoryGenerators.push_back(sGenerator);
+	}
+
 	//Prepare for running: Open event sources and prepare task queues for them
 	_eventSourceManager->OpenInitSources();
 	_threadManager->PrepareQueues();
@@ -705,6 +724,14 @@ uint32_t JApplication::GetCPU(void)
 std::shared_ptr<JTask<void>> JApplication::GetVoidTask(void)
 {
 	return mVoidTaskPool.Get_SharedResource();
+}
+
+//---------------------------------
+// GetFactorySet
+//---------------------------------
+std::shared_ptr<JFactorySet> JApplication::GetFactorySet(void)
+{
+	return mFactorySetPool.Get_SharedResource(_factoryGenerators);
 }
 
 //---------------------------------

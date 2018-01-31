@@ -49,11 +49,14 @@
 #include <atomic>
 #include <memory>
 
-#include <JANA/JEvent.h>
-
 class JTaskBase;
 class JApplication;
 class JQueueInterface;
+class JEvent;
+
+//Deriving classes should:
+//Overload all virtual methods (as needed)
+//Create their own JFactoryGenerator and JQueueInterface and store in the member variables (as needed)
 
 class JEventSource{
 
@@ -72,13 +75,19 @@ class JEventSource{
 		JEventSource(std::string name, JApplication* aApplication);
 		virtual ~JEventSource();
 		
+		virtual void Open(void);
+		virtual bool GetObjects(const std::shared_ptr<JEvent>& aEvent, JFactoryBase* aFactory){return false;}
+
 		std::pair<std::shared_ptr<JTaskBase>, JEventSource::RETURN_STATUS> GetProcessEventTask(void);
 		bool IsFileClosed();
 		std::size_t GetNumEventsProcessed(void) const{return mEventsProcessed;}
 		
 		std::string GetName(void) const{return mName;}
 		std::size_t GetNumOutstandingEvents(void) const{return mNumOutstandingEvents;}
+
 		JQueueInterface* GetEventQueue(void) const{return mEventQueue;}
+		JFactoryGenerator* GetFactoryGenerator(void) const{return mFactoryGenerator;}
+		virtual std::type_index GetDerivedType(void) const = 0; //So that we only execute factory generator once per type
 		
 	protected:
 	
@@ -86,10 +95,11 @@ class JEventSource{
 		JApplication* mApplication = nullptr;
 		std::string mName;
 		JQueueInterface* mEventQueue = nullptr; //For handling event-source-specific logic (such as disentangling events, dealing with barriers, etc.)
+		JFactoryGenerator* mFactoryGenerator = nullptr; //This should create default factories for all types available in the event source
 
 	private:
 
-		//Called by JEvent
+		//Called by JEvent when recycling (decrement) and setting new event source (increment)
 		void IncrementEventCount(void){mNumOutstandingEvents++;}
 		void DecrementEventCount(void){mNumOutstandingEvents--; mEventsProcessed++;}
 
@@ -99,7 +109,7 @@ class JEventSource{
 		std::atomic<bool> mFileClosed{false};
 		std::atomic<bool> mInUse{false};
 		std::atomic<std::size_t> mEventsProcessed{0};
-		std::atomic<std::size_t> mNumOutstandingEvents{0}; //Number of JEvents with this event source
+		std::atomic<std::size_t> mNumOutstandingEvents{0}; //Number of JEvents still be analyzed from this event source (source done when 0)
 };
 
 #endif // _JEventSource_h_

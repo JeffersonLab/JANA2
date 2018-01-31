@@ -54,7 +54,7 @@
 //---------------------------------
 // JThreadManager
 //---------------------------------
-JThreadManager::JThreadManager(JEventSourceManager* aEventSourceManager) : mEventSourceManager(aEventSourceManager)
+JThreadManager::JThreadManager(JApplication* aApplication) : mApplication(aApplication), mEventSourceManager(mApplication->GetJEventSourceManager())
 {
 }
 
@@ -80,7 +80,7 @@ void JThreadManager::CreateThreads(std::size_t aNumThreads)
 	for(decltype(aNumThreads) si = 0; si < aNumThreads; si++)
 	{
 		auto sQueueSetIndex = si % mActiveQueueSets.size();
-		mThreads.push_back(new JThread(this, mActiveQueueSets[sQueueSetIndex].second, sQueueSetIndex, mActiveQueueSets[sQueueSetIndex].first, mRotateEventSources));
+		mThreads.push_back(new JThread(mApplication, mActiveQueueSets[sQueueSetIndex].second, sQueueSetIndex, mActiveQueueSets[sQueueSetIndex].first, mRotateEventSources));
 	}
 }
 
@@ -93,7 +93,7 @@ void JThreadManager::PrepareQueues(void)
 	//For each open event source, create a set of queues using the template queue set
 	//Also, add the custom event queue that is unique to each event source
 	std::vector<JEventSource*> sSources;
-	mEventSourceManager->GetJEventSources(sSources);
+	mEventSourceManager->GetActiveJEventSources(sSources);
 
 	std::cout << "#sources: " << sSources.size() << "\n";
 	for(auto sSource : sSources)
@@ -386,6 +386,69 @@ std::pair<JEventSource*, JQueueSet*> JThreadManager::CheckAllSourcesDone(std::si
 //---------------------------------
 // SubmitTasks
 //---------------------------------
+void JThreadManager::RunTasksWhileWaiting(const std::atomic<bool>& aWaitFlag, const JEventSource* aEventSource, JQueueSet::JQueueType aQueueType, const std::string& aQueueName)
+{
+	//While waiting (while flag is true), execute tasks in the specified queue.
+	//Function does not return until the wait flag is false, which can only be changed by another thread.
+	//This is typically called during JEvent::Get(), if the objects haven't been created yet.
+	//In this case, one thread holds the input wait lock while creating them,
+	//and the other thread comes here and executes other tasks until the first thread finishes.
+
+	//The thread holding the wait lock may be submitting its own tasks (and need them to finish first),
+	//so waiting threads should execute tasks from that queue to minimize the wait time.
+
+	//Get queue for executing tasks
+	auto sQueueSet = GetQueueSet(aEventSource);
+	auto sQueue = sQueueSet->GetQueue(aQueueType, aQueueName);
+
+	//While waiting for the other thread to finish, execute tasks
+	while(aWaitFlag)
+	{
+		//Get task and execute it
+		auto sTask = GetTask(sQueueSet, sQueue);
+		if(sTask != nullptr)
+			(*sTask)(); //Execute task
+		else
+			std::this_thread::sleep_for(std::chrono::nanoseconds(100)); //Sleep a minimal amount.
+	}
+}
+
+std::shared_ptr<JTaskBase> JThreadManager::GetTask(JQueueSet* aQueueSet, JQueueInterface* aQueue) const
+{
+	//This is called by threads who have just submitted (or are waiting on) tasks to complete,
+	//and want work to do in the meantime.
+
+	//This prefers getting tasks from the queue specified by the input arguments,
+	//then searches other queues if none are there.
+
+	//Prefer executing tasks from the input queue
+	auto sTask = aQueue->GetTask();
+	if(sTask != nullptr)
+		return sTask;
+
+	//Next, prefer executing tasks from the same event source (input queue set)
+	sTask = aQueueSet->GetTask();
+	if(sTask != nullptr)
+		return sTask;
+
+	//Finally, loop over all active queue sets (different event sources)
+	LockQueueSets();
+	for(auto sQueueSet : mActiveQueueSets)
+	{
+		if(sQueueSet == aQueueSet)
+			continue; //already checked that one
+		sTask = aQueueSet->GetTask();
+		if(sTask != nullptr)
+			return sTask;
+	}
+
+	//No tasks in any queues, return nullptr
+	return nullptr;
+}
+
+//---------------------------------
+// SubmitTasks
+//---------------------------------
 void JThreadManager::SubmitTasks(const std::vector<std::shared_ptr<JTaskBase>>& aTasks, JQueueSet::JQueueType aQueueType, const std::string& aQueueName)
 {
 	//Tasks are added to the specified queue.
@@ -406,6 +469,8 @@ void JThreadManager::SubmitTasks(const std::vector<std::shared_ptr<JTaskBase>>& 
 	//While waiting for results, execute tasks from the queue we submitted to
 	do
 	{
+		auto sTask = GetTask(sQueueSet, sQueue);
+
 		auto sTask = sQueue->GetTask();
 		(*sTask)(); //Execute task
 	}

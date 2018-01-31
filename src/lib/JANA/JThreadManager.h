@@ -54,12 +54,15 @@
 #include "JThread.h"
 #include "JTask.h"
 #include "JQueueSet.h"
+#include "JResourcePool.h"
+#include "JFactorySet.h"
 
 /**************************************************************** TYPE DECLARATIONS ****************************************************************/
 
 class JThreadManager;
 class JEventSourceManager;
 class JEventSource;
+class JApplication;
 
 /**************************************************************** TYPE DEFINITIONS ****************************************************************/
 
@@ -70,7 +73,7 @@ class JThreadManager
 	public:
 
 		//STRUCTORS
-		JThreadManager(JEventSourceManager* aEventSourceManager);
+		JThreadManager(JApplication* aEventSourceManager);
 		~JThreadManager(void);
 
 		//INFORMATION
@@ -97,9 +100,10 @@ class JThreadManager
 		void JoinThreads(void);
 		bool HaveAllThreadsEnded(void);
 
-		//SUBMIT
-		void SubmitTasks(const std::vector<std::shared_ptr<JTaskBase>>& aTasks, JQueueSet::JQueueType aQueueType, const std::string& aQueueName = "");
-		void SubmitAsyncTasks(const std::vector<std::shared_ptr<JTaskBase>>& aTasks, JQueueSet::JQueueType aQueueType, const std::string& aQueueName = "");
+		// SUBMIT / EXECUTE TASKS
+		void SubmitTasks(const std::vector<std::shared_ptr<JTaskBase>>& aTasks, JQueueSet::JQueueType aQueueType = JQueueSet::JQueueType::SubTasks, const std::string& aQueueName = "");
+		void SubmitAsyncTasks(const std::vector<std::shared_ptr<JTaskBase>>& aTasks, JQueueSet::JQueueType aQueueType = JQueueSet::JQueueType::SubTasks, const std::string& aQueueName = "");
+		void RunTasksWhileWaiting(const std::atomic<bool>& aWaitFlag, const JEventSource* aEventSource, JQueueSet::JQueueType aQueueType = JQueueSet::JQueueType::SubTasks, const std::string& aQueueName = "");
 
 	private:
 
@@ -113,6 +117,12 @@ class JThreadManager
 		JQueueSet* MakeQueueSet(JEventSource* sEventSource);
 		void LockQueueSets(void) const;
 		std::pair<JEventSource*, JQueueSet*> CheckAllSourcesDone(std::size_t& aQueueSetIndex);
+		std::shared_ptr<JTaskBase> GetTask(JQueueSet* aQueueSet, JQueueInterface* aQueue) const;
+
+		//CONTROL
+		JApplication* mApplication;
+		JEventSourceManager* mEventSourceManager = nullptr;
+		bool mRotateEventSources = true;
 
 		//THREADS
 		std::vector<JThread*> mThreads;
@@ -123,9 +133,6 @@ class JThreadManager
 		//faster to linear-search unsorted vector-of-pairs than sorted-vector or map (unless large (~50+) number of open sources)
 		std::vector<std::pair<JEventSource*, JQueueSet*>> mActiveQueueSets; //if no new open sources, nullptr inserted on retirement!!
 		std::vector<std::pair<JEventSource*, JQueueSet*>> mRetiredQueueSets; //source already finished
-
-		bool mRotateEventSources = true;
-		JEventSourceManager* mEventSourceManager = nullptr;
 };
 
 #endif

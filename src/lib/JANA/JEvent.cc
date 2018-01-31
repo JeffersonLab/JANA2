@@ -74,6 +74,15 @@ void JEvent::SetEventSource(JEventSource* aSource)
 }
 
 //---------------------------------
+// SetFactorySet
+//---------------------------------
+void JEvent::SetFactorySet(const std::shared_ptr<JFactorySet>& aFactorySet)
+{
+	mFactorySet = aFactorySet;
+	mFactorySet->ResetNewEvent(); //Resets all factories (clears data, sets "created" flag to false
+}
+
+//---------------------------------
 // Release
 //---------------------------------
 void JEvent::Release(void)

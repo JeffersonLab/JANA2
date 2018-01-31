@@ -64,7 +64,6 @@ void JEventSourceManager::AddEventSource(const std::string& source_name)
 	/// command line.)
 
 	_source_names.push_back(source_name);
-	_source_names_unopened.push_back(source_name);
 }
 
 //---------------------------------
@@ -85,13 +84,23 @@ void JEventSourceManager::AddJEventSourceGenerator(JEventSourceGenerator *source
 }
 
 //---------------------------------
-// GetJEventSources
+// GetActiveJEventSources
 //---------------------------------
-void JEventSourceManager::GetJEventSources(std::vector<JEventSource*>& aSources) const
+void JEventSourceManager::GetActiveJEventSources(std::vector<JEventSource*>& aSources) const
 {
 	// Lock
 	std::lock_guard<std::mutex> lg(mSourcesMutex);
 	aSources = _sources_active;
+}
+
+//---------------------------------
+// GetUnopenedJEventSources
+//---------------------------------
+void JEventSourceManager::GetUnopenedJEventSources(std::vector<JEventSource*>& aSources) const
+{
+	// Lock
+	std::lock_guard<std::mutex> lg(mSourcesMutex);
+	aSources = _sources_unopened;
 }
 
 //---------------------------------
@@ -111,27 +120,61 @@ void JEventSourceManager::ClearJEventSourceGenerators(void)
 }
 
 //---------------------------------
-// OpenNext
+// CreateSources
 //---------------------------------
-void JEventSourceManager::OpenInitSources(void)
+void JEventSourceManager::CreateSources(void)
 {
 	//Single-threaded here!
-	if(_source_names_unopened.empty())
-		return;
 
-	auto sNumFilesToOpen = (_source_names_unopened.size() >= mMaxNumOpenFiles) ? mMaxNumOpenFiles : _source_names_unopened.size();
-	for(std::size_t si = 0; si < sNumFilesToOpen; si++)
+	//Create all of the JEventSource's that we will need, even if they won't all be active at the same time.
+	//We will have a separate method to open the sources that we'll have to call before reading from them.
+
+	//Why do we do this?
+	//We need to store the objects in the event sources in factories, and these types are only known to the source.
+	//These factories need to be created for these sources, and stored in the JFactorySet
+	//However, we want this operation to happen at the beginning of the program, while we're still single-threaded.
+	//If we instead do it on-demand during JEvent analysis, we'd have to lock the JFactorySet every time we add/get a factory from it.
+
+	for(auto sSourceName : _source_names)
 	{
-		std::string source_name = _source_names_unopened.front();
-		_source_names_unopened.pop_front();
-		_sources_active.push_back(OpenSource(source_name));
+		auto sSource = CreateSource(sSourceName);
+		if(sSource != nullptr)
+			_sources_unopened.push_back(sSource);
+	}
+
+	if(_sources_unopened.empty())
+	{
+		jerr<<"   xxxxxxxxxxxx  NO VALID EVENT SOURCES GIVEN !!!   xxxxxxxxxxxx  "<<std::endl;
+		jerr<<std::endl;
+		mApplication->SetExitCode(-1);
+		mApplication->Quit();
 	}
 }
 
 //---------------------------------
-// OpenSource
+// OpenInitSources
 //---------------------------------
-JEventSource* JEventSourceManager::OpenSource(const std::string& source_name)
+void JEventSourceManager::OpenInitSources(void)
+{
+	//Single-threaded here!
+	if(_sources_unopened.empty())
+		return;
+
+	//Open up to the max allowed number of simultaneously-open sources, and register them as active.
+
+	auto sNumFilesToOpen = (_sources_unopened.size() >= mMaxNumOpenFiles) ? mMaxNumOpenFiles : _sources_unopened.size();
+	for(std::size_t si = 0; si < sNumFilesToOpen; si++)
+	{
+		std::string source_name = _sources_unopened.front();
+		_sources_unopened.pop_front();
+		_sources_active.push_back(CreateSource(source_name));
+	}
+}
+
+//---------------------------------
+// CreateSource
+//---------------------------------
+JEventSource* JEventSourceManager::CreateSource(const std::string& source_name)
 {
 	// Check if the user has forced a specific type of event source
 	// be used via the EVENT_SOURCE_TYPE config. parameter. If so,
@@ -155,16 +198,6 @@ JEventSource* JEventSourceManager::OpenSource(const std::string& source_name)
 	jerr<<std::endl;
 	jerr<<"  xxxxxxxxxxxx  Unable to open event source \""<<source_name<<"\"!  xxxxxxxxxxxx"<<std::endl;
 	jerr<<std::endl;
-	if( _source_names_unopened.empty() ){
-		unsigned int Nactive_sources = 0;
-		for(auto src : _sources_active) if( src != nullptr ) Nactive_sources++;
-		if( (Nactive_sources==0) && (_sources_exhausted.empty()) ){
-			jerr<<"   xxxxxxxxxxxx  NO VALID EVENT SOURCES GIVEN !!!   xxxxxxxxxxxx  "<<std::endl;
-			jerr<<std::endl;
-			mApplication->SetExitCode(-1);
-			mApplication->Quit();
-		}
-	}
 
 	return nullptr;
 }
@@ -195,15 +228,15 @@ std::pair<JEventSource::RETURN_STATUS, JEventSource*> JEventSourceManager::OpenN
 	_sources_active.erase(sIterator);
 
 	//If no new sources to open, return
-	if( _source_names_unopened.empty())
+	if( _sources_unopened.empty())
 		return std::make_pair(JEventSource::RETURN_STATUS::kNO_MORE_EVENTS, (JEventSource*)nullptr);
 
-	// Get name of next source to open
-	auto source_name = _source_names_unopened.front();
-	_source_names_unopened.pop_front();
+	//Get the new source
+	auto sNewSource = _sources_unopened.front();
+	_sources_unopened.pop_front();
 
 	//Open the new source, register it, and return it
-	auto sNewSource = OpenSource(source_name);
+	sNewSource->Open();
 	_sources_active.push_back(sNewSource);
 	return std::make_pair(JEventSource::RETURN_STATUS::kSUCCESS, sNewSource);
 }
@@ -310,7 +343,7 @@ bool JEventSourceManager::AreAllFilesClosed(void) const
 	// Lock
 	std::lock_guard<std::mutex> lg(mSourcesMutex);
 
-	if(!_source_names_unopened.empty())
+	if(!_sources_unopened.empty())
 		return false;
 
 	auto sClosedChecker = [](JEventSource* aSource) -> bool {return aSource->IsFileClosed();};

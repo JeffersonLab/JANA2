@@ -64,10 +64,14 @@ template <typename DType> class JResourcePool
 		void Set_ControlParams(std::size_t sMaxPoolSize, std::size_t sDebugLevel);
 
 		//GET RESOURCES
-		std::vector<DType*> Get_Resources(std::size_t aNumResources);
-		DType* Get_Resource(void);
-		std::shared_ptr<DType> Get_SharedResource(void);
-		std::vector<std::shared_ptr<DType>> Get_SharedResources(std::size_t aNumResources);
+		template <typename... ConstructorArgTypes>
+		std::vector<DType*> Get_Resources(std::size_t aNumResources, ConstructorArgTypes&&... aConstructorArgs);
+		template <typename... ConstructorArgTypes>
+		DType* Get_Resource(ConstructorArgTypes&&... aConstructorArgs);
+		template <typename... ConstructorArgTypes>
+		std::shared_ptr<DType> Get_SharedResource(ConstructorArgTypes&&... aConstructorArgs);
+		template <typename... ConstructorArgTypes>
+		std::vector<std::shared_ptr<DType>> Get_SharedResources(std::size_t aNumResources, ConstructorArgTypes&&... aConstructorArgs);
 
 		//RECYCLE CONST OBJECTS //these methods just const_cast and call the non-const versions
 		void Recycle(const DType* sResource){Recycle(const_cast<DType*>(sResource));}
@@ -210,7 +214,8 @@ template <typename DType> void JResourcePool<DType>::Set_ControlParams(size_t sM
 }
 
 template <typename DType>
-DType* JResourcePool<DType>::Get_Resource(void)
+template <typename... ConstructorArgTypes>
+DType* JResourcePool<DType>::Get_Resource(ConstructorArgTypes&&... aConstructorArgs)
 {
 	if(dDebugLevel >= 10)
 		std::cout << "GET RESOURCE " << typeid(DType).name() << std::endl;
@@ -222,11 +227,12 @@ DType* JResourcePool<DType>::Get_Resource(void)
 
 	//Pool was empty: Allocate one
 	dObjectCounter++;
-	return new DType();
+	return new DType(std::forward<ConstructorArgTypes>(aConstructorArgs)...);
 }
 
 template <typename DType>
-std::vector<DType*> JResourcePool<DType>::Get_Resources(std::size_t aNumResources)
+template <typename... ConstructorArgTypes>
+std::vector<DType*> JResourcePool<DType>::Get_Resources(std::size_t aNumResources, ConstructorArgTypes&&... aConstructorArgs)
 {
 	if(dDebugLevel >= 10)
 		std::cout << "GET " << aNumResources << " RESOURCES " << typeid(DType).name() << std::endl;
@@ -239,7 +245,7 @@ std::vector<DType*> JResourcePool<DType>::Get_Resources(std::size_t aNumResource
 	dObjectCounter += aNumResources - sNumAcquired; //Amount we are about to allocate
 	while(sNumAcquired != aNumResources)
 	{
-		sResources.push_back(new DType());
+		sResources.push_back(new DType(std::forward<ConstructorArgTypes>(aConstructorArgs)...));
 		sNumAcquired++;
 	}
 
@@ -247,18 +253,20 @@ std::vector<DType*> JResourcePool<DType>::Get_Resources(std::size_t aNumResource
 }
 
 template <typename DType>
-std::shared_ptr<DType> JResourcePool<DType>::Get_SharedResource(void)
+template <typename... ConstructorArgTypes>
+std::shared_ptr<DType> JResourcePool<DType>::Get_SharedResource(ConstructorArgTypes&&... aConstructorArgs)
 {
-	return std::shared_ptr<DType>(Get_Resource(), JSharedPtrRecycler<DType>(this));
+	return std::shared_ptr<DType>(Get_Resource(std::forward<ConstructorArgTypes>(aConstructorArgs)...), JSharedPtrRecycler<DType>(this));
 }
 
 template <typename DType>
-std::vector<std::shared_ptr<DType>> JResourcePool<DType>::Get_SharedResources(std::size_t aNumResources)
+template <typename... ConstructorArgTypes>
+std::vector<std::shared_ptr<DType>> JResourcePool<DType>::Get_SharedResources(std::size_t aNumResources, ConstructorArgTypes&&... aConstructorArgs)
 {
 	std::vector<std::shared_ptr<DType>> sSharedResources;
 	sSharedResources.reserve(aNumResources);
 
-	auto sResources = Get_Resources(aNumResources);
+	auto sResources = Get_Resources(aNumResources, std::forward<ConstructorArgTypes>(aConstructorArgs)...);
 	for(auto sResource : sResources)
 		sSharedResources.emplace_back(sResource, JSharedPtrRecycler<DType>(this));
 	return sSharedResources;

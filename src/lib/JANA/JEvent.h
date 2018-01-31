@@ -45,49 +45,132 @@
 #define _JEvent_h_
 
 #include <vector>
+#include <cstddef>
+#include <memory>
 
 #include <JObject.h>
 #include <JException.h>
 #include <JFactorySet.h>
 #include "JResettable.h"
+#include "JFactory.h"
+#include "JEventSource.h"
+#include "JApplication.h"
 
-class JEventSource;
-
-class JEvent : public JResettable {
+class JEvent : public JResettable, std::enable_shared_from_this<JEvent>
+{
 	public:
+
 		JEvent();
 		virtual ~JEvent();
 		
-		template<class T>
-		JFactory* Get(std::vector<const T*> &v);
-		
-		JEventSource* GetEventSource(void) const;
-		void SetEventSource(JEventSource* aSource);
+		//FACTORIES
+		void SetFactorySet(const std::shared_ptr<JFactorySet>& aFactorySet);
+		template<class DataType>
+		JFactory<DataType>* GetFactory(const std::string& aTag = "") const;
+
+		//OBJECTS
+		template<class DataType>
+		typename JFactory<DataType>::PairType Get(const std::string& aTag = "") const;
 
 		//RESOURCES
 		void Release(void);
-		void Reset(void){}; //Perhaps get factory set
+		void Reset(void){}; //Called when acquired-from resource pool
+
+		//SETTERS
+		void SetRunNumber(uint32_t aRunNumber){mRunNumber = aRunNumber;}
+		void SetEventNumber(uint64_t aEventNumber){mEventNumber = aEventNumber;}
+		void SetEventSource(JEventSource* aSource);
+
+		//GETTERS
+		uint32_t GetRunNumber(void) const{return mRunNumber;}
+		uint64_t GetEventNumber(void) const{return mEventNumber;}
+		JEventSource* GetEventSource(void) const;
 
 	protected:
 	
-		JFactorySet* mFactorySet = nullptr;
+		std::shared_ptr<JFactorySet> mFactorySet = nullptr;
 		JEventSource* mEventSource = nullptr;
 
 	private:
-
+		uint32_t mRunNumber = 0;
+		uint64_t mEventNumber = 0;
 };
 
-template<class T> 
-JFactory* JEvent::Get(std::vector<const T*> &v)
+//---------------------------------
+// GetFactory
+//---------------------------------
+template<class DataType>
+inline JFactory<DataType>* JEvent::GetFactory(const std::string& aTag) const
 {
-	if( !mFactorySet) throw JException("_factory_set not set before JEvent::Get called");
+	return mFactorySet->GetFactory(std::type_index(typeid(DataType)), aTag);
+}
 
-	for(auto *fac : mFactorySet->GetJFactories() ){
-		if( fac->GetName() != T::static_className() ) continue;
-		return fac;
+//---------------------------------
+// Get
+//---------------------------------
+template<class DataType>
+typename JFactory<DataType>::PairType JEvent::Get(const std::string& aTag) const
+{
+	//First get the factory
+	auto sFactory = GetFactory<DataType>(aTag);
+	if(sFactory == nullptr)
+	{
+		//Uh oh, No factory exists for this type.
+		jerr << "ERROR: No factory found for type = " << typeid(DataType).name() << ", tag = " << aTag << "\n";
+		japp->SetExitCode(-1);
+		japp->Quit();
+		//TODO: Throw exception??
+		return {};
 	}
-	
-	return NULL;
+
+	//If objects previously created, just return them
+	if(sFactory->GetCreated())
+		return sFactory->Get();
+
+	//Attempt to acquire the "creating" lock for the factory
+	//If we succeed, first check to see if they were created in between
+		//Then create the objects and return them
+	//If we fail, another thread is currently creating the objects.
+		//Instead, execute queued tasks until the objects are ready
+	if(!sFactory->AcquireCreatingLock())
+	{
+
+	}
+
+	//Lock acquired.
+	//TODO: Be careful! If we throw exception within here, we may not release the lock. Put try/catch loop
+	//First though check to see whether another thread created the objects
+	//between our last check of GetCreated and acquiring the lock.
+	if(sFactory->GetCreated())
+	{
+		sFactory->ReleaseCreatingLock();
+		return sFactory->Get();
+	}
+
+	//If not, first try to get from the event source
+	auto sSharedThis = this->shared_from_this();
+	if(mEventSource->GetObjects(sSharedThis, sFactory))
+	{
+		sFactory->SetCreated(true);
+		sFactory->ReleaseCreatingLock();
+		return sFactory->Get();
+	}
+
+	//Not in the file: have the factory make them
+	//First compare current run # to previous run. If different, call ChangeRun()
+	if(sFactory->GetPreviousRunNumber() != mRunNumber)
+	{
+		sFactory->ChangeRun(sSharedThis);
+		sFactory->SetPreviousRunNumber(mRunNumber);
+	}
+
+	//Create the objects
+	sFactory->Create(sSharedThis);
+	sFactory->SetCreated(true);
+	sFactory->ReleaseCreatingLock();
+
+	//Return the objects
+	return sFactory->Get();
 }
 
 #endif // _JEvent_h_

@@ -40,11 +40,17 @@
 #include "JEventProcessor.h"
 
 //---------------------------------
-// JEventProcessor    (Constructor)
+// Process
 //---------------------------------
-JEventProcessor::JEventProcessor()
+void JEventProcessor::Process(std::shared_ptr<JEvent>& aEvent)
 {
-
+	auto sRunNumber = aEvent->GetRunNumber();
+	if(sRunNumber != mPreviousRunNumber)
+	{
+		ChangeRun(aEvent);
+		mPreviousRunNumber = sRunNumber;
+	}
+	AnalyzeEvent(aEvent);
 }
 
 //---------------------------------

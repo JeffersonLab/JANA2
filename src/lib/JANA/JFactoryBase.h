@@ -1,5 +1,5 @@
 //
-//    File: JFactory.cc
+//    File: JFactoryBase.h
 // Created: Fri Oct 20 09:44:48 EDT 2017
 // Creator: davidl (on Darwin harriet.jlab.org 15.6.0 i386)
 //
@@ -36,21 +36,65 @@
 // OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+//
+// Description:
+//
+//
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+#ifndef _JFactoryBase_h_
+#define _JFactoryBase_h_
 
-#include "JFactory.h"
+#include <string>
+#include <typeindex>
+#include <memory>
+#include <limits>
 
-//---------------------------------
-// JFactory    (Constructor)
-//---------------------------------
-JFactory::JFactory()
+class JEvent;
+
+class JFactoryBase
 {
+	public:
 
+		JFactoryBase(std::string aName, std::string aTag = "") : mName(aName), mTag(aTag) { };
+		virtual ~JFactoryBase() = default;
+
+		std::string GetName(void) const;
+		std::string GetTag(void) const;
+		std::type_index GetObjectType(void) const = 0;
+
+		virtual void Create(const std::shared_ptr<JEvent>& aEvent){};
+		virtual void ChangeRun(const std::shared_ptr<JEvent>& aEvent){};
+
+		uint32_t GetPreviousRunNumber(void) const{return mPreviousRunNumber;}
+		void SetPreviousRunNumber(uint32_t aRunNumber){mPreviousRunNumber = aRunNumber;}
+
+		//Have objects already been created?
+		bool GetCreated(void) const{return mCreated;}
+		void SetCreated(bool aCreated){mCreated = aCreated;}
+
+		bool AcquireCreatingLock(void);
+		void ReleaseCreatingLock(void);
+
+		virtual void ClearData(void) = 0;
+
+	private:
+		std::string mName;
+		std::string mTag;
+		std::atomic<bool> mCreating{false}; //true if a thread is currently creating objects (effectively a lock)
+		std::atomic<bool> mCreated{false}; //true if created previously, false if not
+		uint32_t mPreviousRunNumber = std::numeric_limits<uint32_t>::max();
+};
+
+#endif // _JFactoryBase_h_
+
+inline bool JFactoryBase::AcquireCreatingLock(void)
+{
+	bool sExpected = false;
+	return mCreating.compare_exchange_weak(sExpected, true);
 }
 
-//---------------------------------
-// ~JFactory    (Destructor)
-//---------------------------------
-JFactory::~JFactory()
+inline void JFactoryBase::ReleaseCreatingLock(void)
 {
-
+	//Only call with thread used to acquire!
+	mCreating = false;
 }
