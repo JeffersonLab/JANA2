@@ -16,9 +16,10 @@
 JEventSource_jana_test::JEventSource_jana_test(const char* source_name) : JEventSource(source_name, japp)
 {
 	// Allocate pool of JEvent objects
+	mNumEventsToGenerate = 20000;
 	mEventsFromFile.reserve(20000);
-	for(std::size_t i = 0; i < mEventsFromFile.capacity(); i++)
-		mEventsFromFile.emplace_back(mEventPool.Get_SharedResource());
+	auto sThreadManager = mApplication->GetJThreadManager();
+	mEventPool.Get_SharedResources(mEventsFromFile.capacity(), std::back_inserter(mEventsFromFile), sThreadManager);
 }
 
 //----------------
@@ -26,6 +27,7 @@ JEventSource_jana_test::JEventSource_jana_test(const char* source_name) : JEvent
 //----------------
 JEventSource_jana_test::~JEventSource_jana_test()
 {
+	//Close the file/stream handle
 }
 
 //----------------
@@ -43,15 +45,32 @@ std::pair<std::shared_ptr<JEvent>, JEventSource::RETURN_STATUS> JEventSource_jan
 	if(mEventsFromFile.empty())
 		return std::make_pair(std::shared_ptr<JEvent>(nullptr), JEventSource::RETURN_STATUS::kNO_MORE_EVENTS);
 
-	auto event = std::move(mEventsFromFile[mEventsFromFile.size() - 1]);
+	auto sEvent = std::move(mEventsFromFile[mEventsFromFile.size() - 1]);
 	mEventsFromFile.pop_back();
 	
-	event->SetEventSource(this);
-//	event.SetEventNumber(++Nevents_read);
-//	event.SetRunNumber(1234);
-//	event.SetRef(NULL);
-
+	sEvent->SetEventSource(this);
+	sEvent->SetEventNumber(mNumEventsToGenerate - mEventsFromFile.size());
+	sEvent->SetRunNumber(1234);
+//	sEvent->SetRef(NULL);
 	
-	return std::make_pair(std::static_pointer_cast<JEvent>(event), JEventSource::RETURN_STATUS::kSUCCESS);
+	return std::make_pair(std::static_pointer_cast<JEvent>(sEvent), JEventSource::RETURN_STATUS::kSUCCESS);
 }
 
+//----------------
+// Open
+//----------------
+void JEventSource_jana_test::Open(void)
+{
+	//Open the file/stream handle
+}
+
+//----------------
+// GetObjects
+//----------------
+bool JEventSource_jana_test::GetObjects(const std::shared_ptr<JEvent>& aEvent, JFactoryBase* aFactory)
+{
+	//Get objects of the specified type, and set them in the factory
+	//If this type is not supplied by the file, return false. Else return true.
+	auto sTypeIndex = aFactory->GetObjectType();
+	return false;
+}

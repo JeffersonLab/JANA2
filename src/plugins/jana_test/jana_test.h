@@ -22,14 +22,7 @@ class jana_test:public JObject{
 		// Add data members here. For example:
 		// int id;
 		// double E;
-		
-		// This method is used primarily for pretty printing
-		// the second argument to AddString is printf style format
-		void toStrings(std::vector<std::pair<std::string,std::string> > &items)const{
-			// AddString(items, "id", "%4d", id);
-			// AddString(items, "E", "%f", E);
-		}
-		
+
 };
 
 #endif // _jana_test_

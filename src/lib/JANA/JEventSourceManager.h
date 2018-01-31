@@ -29,7 +29,7 @@ class JEventSourceManager
 		void AddJEventSourceGenerator(JEventSourceGenerator *source_generator);
 
 		void GetActiveJEventSources(std::vector<JEventSource*>& aSources) const;
-		void GetUnopenedJEventSources(std::vector<JEventSource*>& aSources) const;
+		void GetUnopenedJEventSources(std::deque<JEventSource*>& aSources) const;
 		void GetJEventSourceGenerators(std::vector<JEventSourceGenerator*>& aGenerators) const;
 
 		void CreateSources(void); //Call while single-threaded!!

@@ -83,6 +83,7 @@ class JResourceManager;
 class JThread;
 class JEventSourceManager;
 class JThreadManager;
+class JFactorySet;
 
 template <typename ReturnType>
 class JTask;

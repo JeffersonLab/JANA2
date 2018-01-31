@@ -12,18 +12,14 @@
 #include <JANA/JEvent.h>
 #include "jana_test.h"
 
-class jana_test_factory:public JFactory{
+class jana_test_factory : public JFactory<jana_test>
+{
 	public:
-		jana_test_factory(){};
-		~jana_test_factory(){};
-
+		jana_test_factory(void) : JFactory<jana_test>("jana_test_factory") { }
 
 	private:
-		void init(void);						///< Called once at program start.
-		void brun(JEvent *jevent, int32_t runnumber);	///< Called everytime a new run number is detected.
-		void evnt(JEvent *jevent, uint64_t eventnumber);	///< Called every event.
-		void erun(void);						///< Called everytime run number changes, provided brun has been called.
-		void fini(void);						///< Called after last event of last event source has been processed.
+		void ChangeRun(const std::shared_ptr<JEvent>& aEvent);
+		void Create(const std::shared_ptr<JEvent>& aEvent);
 };
 
 #endif // _jana_test_factory_

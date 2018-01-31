@@ -43,6 +43,7 @@
 #include <tuple>
 
 #include "JThread.h"
+#include "JEvent.h"
 #include "JThreadManager.h"
 #include "JEventSource.h"
 #include "JApplication.h"

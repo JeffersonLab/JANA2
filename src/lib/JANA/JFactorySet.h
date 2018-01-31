@@ -46,11 +46,13 @@
 
 #include <string>
 #include <typeindex>
-#include <unordered_map>
+#include <map>
 
 #include "JFactoryGenerator.h"
 
 class JFactoryBase;
+template <typename DataType>
+class JFactory;
 
 class JFactorySet
 {
@@ -67,7 +69,7 @@ class JFactorySet
 	protected:
 	
 		//string: tag
-		std::unordered_map<std::pair<std::type_index, std::string>, JFactoryBase*> mFactories;
+		std::map<std::pair<std::type_index, std::string>, JFactoryBase*> mFactories;
 };
 
 //---------------------------------

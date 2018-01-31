@@ -48,6 +48,7 @@
 #include <typeindex>
 #include <memory>
 #include <limits>
+#include <atomic>
 
 class JEvent;
 
@@ -58,12 +59,16 @@ class JFactoryBase
 		JFactoryBase(std::string aName, std::string aTag = "") : mName(aName), mTag(aTag) { };
 		virtual ~JFactoryBase() = default;
 
-		std::string GetName(void) const;
-		std::string GetTag(void) const;
-		std::type_index GetObjectType(void) const = 0;
+		std::string GetName(void) const{return mName;}
+		std::string GetTag(void) const{return mTag;}
 
-		virtual void Create(const std::shared_ptr<JEvent>& aEvent){};
+		//VIRTUAL METHODS OVERLOADED BY JFactory
+		virtual std::type_index GetObjectType(void) const = 0;
+		virtual void ClearData(void) = 0;
+
+		//VIRTUAL METHODS TO BE OVERLOADED BY USER FACTORIES
 		virtual void ChangeRun(const std::shared_ptr<JEvent>& aEvent){};
+		virtual void Create(const std::shared_ptr<JEvent>& aEvent){};
 
 		uint32_t GetPreviousRunNumber(void) const{return mPreviousRunNumber;}
 		void SetPreviousRunNumber(uint32_t aRunNumber){mPreviousRunNumber = aRunNumber;}
@@ -73,9 +78,8 @@ class JFactoryBase
 		void SetCreated(bool aCreated){mCreated = aCreated;}
 
 		bool AcquireCreatingLock(void);
+		const std::atomic<bool>& GetCreatingLock(void) const;
 		void ReleaseCreatingLock(void);
-
-		virtual void ClearData(void) = 0;
 
 	private:
 		std::string mName;
@@ -86,6 +90,12 @@ class JFactoryBase
 };
 
 #endif // _JFactoryBase_h_
+
+inline const std::atomic<bool>& JFactoryBase::GetCreatingLock(void) const
+{
+	//Get a reference to the lock. This is so that threads can do other things in the meantime while waiting for this
+	return mCreating;
+}
 
 inline bool JFactoryBase::AcquireCreatingLock(void)
 {

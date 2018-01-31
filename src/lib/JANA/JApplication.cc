@@ -132,7 +132,7 @@ JApplication::JApplication(int narg, char *argv[])
 	_pmanager = NULL;
 	_rmanager = NULL;
 	_eventSourceManager = new JEventSourceManager(this);
-	_threadManager = new JThreadManager(_eventSourceManager);
+	_threadManager = new JThreadManager(this);
 	mVoidTaskPool.Set_ControlParams(200, 0); //TODO: Config these!!
 
 	// Loop over arguments
@@ -387,7 +387,7 @@ void JApplication::Initialize(void)
 	_eventSourceManager->CreateSources();
 
 	// Get factory generators from event sources
-	std::vector<JEventSource*> sEventSources;
+	std::deque<JEventSource*> sEventSources;
 	_eventSourceManager->GetUnopenedJEventSources(sEventSources);
 	std::unordered_set<std::type_index> sSourceTypes;
 	for(auto sSource : sEventSources)

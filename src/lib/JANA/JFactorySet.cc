@@ -40,6 +40,7 @@
 #include <iterator>
 
 #include "JFactorySet.h"
+#include "JFactoryBase.h"
 
 //---------------------------------
 // JFactorySet    (Constructor)

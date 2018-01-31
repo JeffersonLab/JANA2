@@ -110,7 +110,7 @@ inline void JFactory<DataType>::Set(std::vector<DataType>&& aData)
 template <typename DataType>
 inline typename JFactory<DataType>::PairType JFactory<DataType>::Get(void) const
 {
-	return std::make_pair(std::cbegin(mData), std::cend(mData));
+	return std::make_pair(mData.cbegin(), mData.cend());
 }
 
 //---------------------------------

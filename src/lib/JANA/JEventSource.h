@@ -48,11 +48,14 @@
 #include <utility>
 #include <atomic>
 #include <memory>
+#include <typeindex>
 
 class JTaskBase;
 class JApplication;
 class JQueueInterface;
 class JEvent;
+class JFactoryBase;
+class JFactoryGenerator;
 
 //Deriving classes should:
 //Overload all virtual methods (as needed)

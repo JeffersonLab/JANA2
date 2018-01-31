@@ -46,8 +46,12 @@
 
 #include "JEvent.h"
 
+class JThreadManager;
+
 class JEvent_test:public JEvent {
-	public:	
+	public:
+		JEvent_test(JThreadManager* aThreadManager) : JEvent(aThreadManager) { }
+
 		virtual ~JEvent_test(){}
 };
 

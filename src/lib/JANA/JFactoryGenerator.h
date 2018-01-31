@@ -44,8 +44,7 @@
 #ifndef _JFactoryGenerator_h_
 #define _JFactoryGenerator_h_
 
-#include <unordered_map>
-#include <typeindex>
+#include <vector>
 
 class JFactoryBase;
 
@@ -53,7 +52,7 @@ class JFactoryGenerator{
 	public:
 		virtual ~JFactoryGenerator() = 0;
 		
-		std::vector<JFactoryBase*> GenerateFactories(void) = 0;
+		virtual std::vector<JFactoryBase*> GenerateFactories(void) = 0;
 };
 
 #endif // _JFactoryGenerator_h_

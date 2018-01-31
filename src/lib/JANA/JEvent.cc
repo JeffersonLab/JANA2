@@ -43,7 +43,7 @@
 //---------------------------------
 // JEvent    (Constructor)
 //---------------------------------
-JEvent::JEvent()
+JEvent::JEvent(JThreadManager* aThreadManager) : mThreadManager(aThreadManager)
 {
 
 }

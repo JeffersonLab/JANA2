@@ -5,18 +5,22 @@
 // Creator: davidl (on Linux jana2.jlab.org 3.10.0-693.11.1.el7.x86_64)
 //
 
+#include <memory>
+#include <utility>
+
 #include <JANA/JApplication.h>
 #include <JANA/JEventSourceGenerator.h>
 #include <JANA/JEventSource.h>
 #include <JANA/JEventSourceManager.h>
 #include <JANA/JQueue.h>
-
+#include <JANA/JEvent.h>
+#include <JANA/JEventSource.h>
 
 //-------------------------------------------------------------------------
 // This class represents a single, complete "event" read from the source
 class JEvent_example1:public JEvent {
 	public:	
-		JEvent_example1(double a, int b):A(a),B(b){}
+		JEvent_example1(double a, int b): JEvent(japp->GetJThreadManager()), A(a),B(b){}
 
 		double A;
 		int B;		
@@ -32,6 +36,8 @@ class JEvent_example1:public JEvent {
 class JEventSource_example1: public JEventSource{
 	public:
 		JEventSource_example1(const char* source_name):JEventSource(source_name, japp){}
+
+		std::type_index GetDerivedType(void) const {return std::type_index(typeid(JEventSource_example1));}; //So that we only execute factory generator once per type
 
 		std::pair<std::shared_ptr<JEvent>, RETURN_STATUS> GetEvent(void){
 			return std::make_pair(std::make_shared<JEvent_example1>(1.0, 2), JEventSource::RETURN_STATUS::kSUCCESS);

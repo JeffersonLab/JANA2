@@ -48,10 +48,10 @@
 
 #include "JQueueInterface.h"
 #include "JQueueSet.h"
-//#include <JApplication.h>
 
 class JThreadManager;
 class JEventSource;
+class JApplication;
 
 class JThread{
 	public:

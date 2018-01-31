@@ -47,6 +47,7 @@
 #include <vector>
 #include <cstddef>
 #include <memory>
+#include <exception>
 
 #include <JObject.h>
 #include <JException.h>
@@ -55,12 +56,13 @@
 #include "JFactory.h"
 #include "JEventSource.h"
 #include "JApplication.h"
+#include "JThreadManager.h"
 
-class JEvent : public JResettable, std::enable_shared_from_this<JEvent>
+class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 {
 	public:
 
-		JEvent();
+		JEvent(JThreadManager* aThreadManager);
 		virtual ~JEvent();
 		
 		//FACTORIES
@@ -92,6 +94,7 @@ class JEvent : public JResettable, std::enable_shared_from_this<JEvent>
 		JEventSource* mEventSource = nullptr;
 
 	private:
+		JThreadManager* mThreadManager = nullptr;
 		uint32_t mRunNumber = 0;
 		uint64_t mEventNumber = 0;
 };
@@ -128,46 +131,56 @@ typename JFactory<DataType>::PairType JEvent::Get(const std::string& aTag) const
 		return sFactory->Get();
 
 	//Attempt to acquire the "creating" lock for the factory
-	//If we succeed, first check to see if they were created in between
-		//Then create the objects and return them
-	//If we fail, another thread is currently creating the objects.
-		//Instead, execute queued tasks until the objects are ready
 	if(!sFactory->AcquireCreatingLock())
 	{
+		//We failed: Another thread is currently creating the objects.
+		//Instead, execute queued tasks until the objects are ready
+		mThreadManager->DoWorkWhileWaiting(sFactory->GetCreatingLock(), mEventSource);
 
-	}
-
-	//Lock acquired.
-	//TODO: Be careful! If we throw exception within here, we may not release the lock. Put try/catch loop
-	//First though check to see whether another thread created the objects
-	//between our last check of GetCreated and acquiring the lock.
-	if(sFactory->GetCreated())
-	{
-		sFactory->ReleaseCreatingLock();
+		//It's done, return the results
 		return sFactory->Get();
 	}
 
-	//If not, first try to get from the event source
-	auto sSharedThis = this->shared_from_this();
-	if(mEventSource->GetObjects(sSharedThis, sFactory))
+	//If we throw exception within here, we may not release the lock, unless we do try/catch:
+	try
 	{
+		//Lock acquired. First check to see if they were created since the last check.
+		if(sFactory->GetCreated())
+		{
+			sFactory->ReleaseCreatingLock();
+			return sFactory->Get();
+		}
+
+		//Not yet: We need to create the objects.
+		//First try to get from the event source
+		auto sSharedThis = this->shared_from_this();
+		if(mEventSource->GetObjects(sSharedThis, sFactory))
+		{
+			sFactory->SetCreated(true);
+			sFactory->ReleaseCreatingLock();
+			return sFactory->Get();
+		}
+
+		//Not in the file: have the factory make them
+		//First compare current run # to previous run. If different, call ChangeRun()
+		if(sFactory->GetPreviousRunNumber() != mRunNumber)
+		{
+			sFactory->ChangeRun(sSharedThis);
+			sFactory->SetPreviousRunNumber(mRunNumber);
+		}
+
+		//Create the objects
+		sFactory->Create(sSharedThis);
 		sFactory->SetCreated(true);
 		sFactory->ReleaseCreatingLock();
-		return sFactory->Get();
 	}
-
-	//Not in the file: have the factory make them
-	//First compare current run # to previous run. If different, call ChangeRun()
-	if(sFactory->GetPreviousRunNumber() != mRunNumber)
+	catch(...)
 	{
-		sFactory->ChangeRun(sSharedThis);
-		sFactory->SetPreviousRunNumber(mRunNumber);
+		//Catch the exception, unlock, rethrow
+		auto sException = std::current_exception();
+		sFactory->ReleaseCreatingLock();
+		std::rethrow_exception(sException);
 	}
-
-	//Create the objects
-	sFactory->Create(sSharedThis);
-	sFactory->SetCreated(true);
-	sFactory->ReleaseCreatingLock();
 
 	//Return the objects
 	return sFactory->Get();

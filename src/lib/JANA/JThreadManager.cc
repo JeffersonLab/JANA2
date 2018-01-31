@@ -44,12 +44,14 @@
 
 #include <algorithm>
 #include <unistd.h>
+#include <tuple>
 
 #include "JThreadManager.h"
 #include "JEventSource.h"
 #include "JApplication.h"
 #include "JEventSourceManager.h"
 #include "JQueue.h"
+#include "JEvent.h"
 
 //---------------------------------
 // JThreadManager
@@ -384,100 +386,6 @@ std::pair<JEventSource*, JQueueSet*> JThreadManager::CheckAllSourcesDone(std::si
 }
 
 //---------------------------------
-// SubmitTasks
-//---------------------------------
-void JThreadManager::RunTasksWhileWaiting(const std::atomic<bool>& aWaitFlag, const JEventSource* aEventSource, JQueueSet::JQueueType aQueueType, const std::string& aQueueName)
-{
-	//While waiting (while flag is true), execute tasks in the specified queue.
-	//Function does not return until the wait flag is false, which can only be changed by another thread.
-	//This is typically called during JEvent::Get(), if the objects haven't been created yet.
-	//In this case, one thread holds the input wait lock while creating them,
-	//and the other thread comes here and executes other tasks until the first thread finishes.
-
-	//The thread holding the wait lock may be submitting its own tasks (and need them to finish first),
-	//so waiting threads should execute tasks from that queue to minimize the wait time.
-
-	//Get queue for executing tasks
-	auto sQueueSet = GetQueueSet(aEventSource);
-	auto sQueue = sQueueSet->GetQueue(aQueueType, aQueueName);
-
-	//While waiting for the other thread to finish, execute tasks
-	while(aWaitFlag)
-	{
-		//Get task and execute it
-		auto sTask = GetTask(sQueueSet, sQueue);
-		if(sTask != nullptr)
-			(*sTask)(); //Execute task
-		else
-			std::this_thread::sleep_for(std::chrono::nanoseconds(100)); //Sleep a minimal amount.
-	}
-}
-
-std::shared_ptr<JTaskBase> JThreadManager::GetTask(JQueueSet* aQueueSet, JQueueInterface* aQueue) const
-{
-	//This is called by threads who have just submitted (or are waiting on) tasks to complete,
-	//and want work to do in the meantime.
-
-	//This prefers getting tasks from the queue specified by the input arguments,
-	//then searches other queues if none are there.
-
-	//Prefer executing tasks from the input queue
-	auto sTask = aQueue->GetTask();
-	if(sTask != nullptr)
-		return sTask;
-
-	//Next, prefer executing tasks from the same event source (input queue set)
-	sTask = aQueueSet->GetTask();
-	if(sTask != nullptr)
-		return sTask;
-
-	//Finally, loop over all active queue sets (different event sources)
-	LockQueueSets();
-	for(auto sQueueSet : mActiveQueueSets)
-	{
-		if(sQueueSet == aQueueSet)
-			continue; //already checked that one
-		sTask = aQueueSet->GetTask();
-		if(sTask != nullptr)
-			return sTask;
-	}
-
-	//No tasks in any queues, return nullptr
-	return nullptr;
-}
-
-//---------------------------------
-// SubmitTasks
-//---------------------------------
-void JThreadManager::SubmitTasks(const std::vector<std::shared_ptr<JTaskBase>>& aTasks, JQueueSet::JQueueType aQueueType, const std::string& aQueueName)
-{
-	//Tasks are added to the specified queue.
-	//Function does not return until all tasks are finished.
-	//Function ASSUMES all tasks from the same event source!!!
-
-	if(aTasks.empty())
-		return;
-
-	//Submit tasks
-	auto sQueue = GetQueue(aTasks[0], aQueueType, aQueueName);
-	for(auto sTask : aTasks)
-		sQueue->AddTask(sTask); //TODO: Check return!!
-
-	//Function to check whether tasks are complete
-	auto sCompleteChecker = [](const std::shared_ptr<JTaskBase>& sTask) -> bool {return sTask->IsFinished();};
-
-	//While waiting for results, execute tasks from the queue we submitted to
-	do
-	{
-		auto sTask = GetTask(sQueueSet, sQueue);
-
-		auto sTask = sQueue->GetTask();
-		(*sTask)(); //Execute task
-	}
-	while(!std::all_of(std::begin(aTasks), std::end(aTasks), sCompleteChecker)); //Exit if all tasks completed
-}
-
-//---------------------------------
 // SubmitAsyncTasks
 //---------------------------------
 void JThreadManager::SubmitAsyncTasks(const std::vector<std::shared_ptr<JTaskBase>>& aTasks, JQueueSet::JQueueType aQueueType, const std::string& aQueueName)
@@ -493,6 +401,152 @@ void JThreadManager::SubmitAsyncTasks(const std::vector<std::shared_ptr<JTaskBas
 	auto sQueue = GetQueue(aTasks[0], aQueueType, aQueueName);
 	for(auto sTask : aTasks)
 		sQueue->AddTask(sTask); //TODO: Check return!!
+}
+
+//---------------------------------
+// SubmitTasks
+//---------------------------------
+void JThreadManager::SubmitTasks(const std::vector<std::shared_ptr<JTaskBase>>& aTasks, JQueueSet::JQueueType aQueueType, const std::string& aQueueName)
+{
+	//Tasks are added to the specified queue.
+	//Function does not return until all tasks are finished.
+	//Function ASSUMES all tasks from the same event source!!!
+
+	if(aTasks.empty())
+		return;
+
+	//Get queue
+	auto sEventSource = aTasks[0]->GetEvent()->GetEventSource();
+	auto sQueueSet = GetQueueSet(sEventSource);
+	auto sQueue = sQueueSet->GetQueue(aQueueType, aQueueName);
+
+	//Submit tasks
+	for(auto sTask : aTasks)
+		sQueue->AddTask(sTask); //TODO: Check return!!
+
+	//While waiting for results, execute tasks from the queue we submitted to
+	DoWorkWhileWaitingForTasks(aTasks, sQueueSet, sQueue);
+}
+
+//---------------------------------
+// DoWorkWhileWaiting
+//---------------------------------
+void JThreadManager::DoWorkWhileWaiting(const std::atomic<bool>& aWaitFlag, const JEventSource* aEventSource, JQueueSet::JQueueType aQueueType, const std::string& aQueueName)
+{
+	//While waiting (while flag is true), execute tasks in the specified queue.
+	//Function does not return until the wait flag is false, which can only be changed by another thread.
+	//This is typically called during JEvent::Get(), if the objects haven't been created yet.
+	//In this case, one thread holds the input wait lock while creating them,
+	//and the other thread comes here and executes other tasks until the first thread finishes.
+
+	//The thread holding the wait lock may be submitting its own tasks (and need them to finish first),
+	//so waiting threads should execute tasks from that queue to minimize the wait time.
+
+	//Get queue for executing tasks
+	auto sQueueSet = GetQueueSet(aEventSource);
+	auto sQueue = sQueueSet->GetQueue(aQueueType, aQueueName);
+
+	//Build is-it-done checker
+	auto sWaitFunction = [&aWaitFlag](void) -> bool {return aWaitFlag;};
+
+	//Execute tasks while waiting
+	DoWorkWhileWaitingForTasks(sWaitFunction, sQueueSet, sQueue);
+}
+
+//---------------------------------
+// DoWorkWhileWaitingForTasks
+//---------------------------------
+void JThreadManager::DoWorkWhileWaitingForTasks(const std::vector<std::shared_ptr<JTaskBase>>& aSubmittedTasks, JQueueSet::JQueueType aQueueType, const std::string& aQueueName)
+{
+	//The passed-in tasks have already been submitted (e.g. via SubmitTasks or SubmitAsyncTasks).
+	//While waiting for those to finish, we get tasks from the queues and execute those.
+	//The queue arguments should be those for the queue we just submitted the tasks to.
+	//That way, this thread will help do the work that was just submitted.
+
+	//Get queue
+	auto sEventSource = aSubmittedTasks[0]->GetEvent()->GetEventSource();
+	auto sQueueSet = GetQueueSet(sEventSource);
+	auto sQueue = sQueueSet->GetQueue(aQueueType, aQueueName);
+
+	//Defer to next function
+	DoWorkWhileWaitingForTasks(aSubmittedTasks, sQueueSet, sQueue);
+}
+
+//---------------------------------
+// DoWorkWhileWaitingForTasks
+//---------------------------------
+void JThreadManager::DoWorkWhileWaitingForTasks(const std::vector<std::shared_ptr<JTaskBase>>& aSubmittedTasks, JQueueSet* aQueueSet, JQueueInterface* aQueue)
+{
+	//The passed-in tasks have already been submitted (e.g. via SubmitTasks or SubmitAsyncTasks).
+	//While waiting for those to finish, we get tasks from the queues and execute those.
+	//The queue arguments should be those for the queue we just submitted the tasks to.
+	//That way, this thread will help do the work that was just submitted.
+
+	//Is-it-done checker
+	auto sTaskCompleteChecker = [](const std::shared_ptr<JTaskBase>& sTask) -> bool {return sTask->IsFinished();};
+
+	//Wait if all tasks aren't finished
+	auto sWaitFunction = [aSubmittedTasks, sTaskCompleteChecker](void) -> bool {
+		return !std::all_of(std::begin(aSubmittedTasks), std::end(aSubmittedTasks), sTaskCompleteChecker);};
+
+	//Execute tasks while waiting
+	DoWorkWhileWaitingForTasks(sWaitFunction, aQueueSet, aQueue);
+}
+
+//---------------------------------
+// DoWorkWhileWaitingForTasks
+//---------------------------------
+void JThreadManager::DoWorkWhileWaitingForTasks(const std::function<bool(void)>& aWaitFunction, JQueueSet* aQueueSet, JQueueInterface* aQueue)
+{
+	//Won't return until aWaitFunction returns true.
+	//In the meantime, executes tasks (or sleeps if none available)
+	while(aWaitFunction())
+	{
+		//Get task and execute it
+		auto sTask = GetTask(aQueueSet, aQueue);
+		if(sTask != nullptr)
+			(*sTask)(); //Execute task
+		else
+			std::this_thread::sleep_for(std::chrono::nanoseconds(100)); //Sleep a minimal amount.
+	}
+}
+
+//---------------------------------
+// GetTask
+//---------------------------------
+std::shared_ptr<JTaskBase> JThreadManager::GetTask(JQueueSet* aQueueSet, JQueueInterface* aQueue) const
+{
+	//This is called by threads who have just submitted (or are waiting on) tasks to complete,
+	//and want work to do in the meantime.
+
+	//This prefers getting tasks from the queue specified by the input arguments,
+	//then searches other queues if none are there.
+
+	//Prefer executing tasks from the input queue
+	auto sTask = aQueue->GetTask();
+	if(sTask != nullptr)
+		return sTask;
+
+	//Next, prefer executing tasks from the same event source (input queue set)
+	JQueueSet::JQueueType sQueueType;
+	std::tie(sQueueType, sTask) = aQueueSet->GetTask();
+	if(sTask != nullptr)
+		return sTask;
+
+	//Finally, loop over all active queue sets (different event sources)
+	LockQueueSets();
+	for(auto sQueueSetPair : mActiveQueueSets)
+	{
+		auto sQueueSet = sQueueSetPair.second;
+		if(sQueueSet == aQueueSet)
+			continue; //already checked that one
+		std::tie(sQueueType, sTask) = aQueueSet->GetTask();
+		if(sTask != nullptr)
+			return sTask;
+	}
+
+	//No tasks in any queues, return nullptr
+	return nullptr;
 }
 
 //---------------------------------

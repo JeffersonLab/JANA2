@@ -49,7 +49,7 @@
 #include <vector>
 #include <memory>
 #include <atomic>
-#include <unordered_map>
+#include <functional>
 
 #include "JThread.h"
 #include "JTask.h"
@@ -73,7 +73,7 @@ class JThreadManager
 	public:
 
 		//STRUCTORS
-		JThreadManager(JApplication* aEventSourceManager);
+		JThreadManager(JApplication* aApplication);
 		~JThreadManager(void);
 
 		//INFORMATION
@@ -103,7 +103,8 @@ class JThreadManager
 		// SUBMIT / EXECUTE TASKS
 		void SubmitTasks(const std::vector<std::shared_ptr<JTaskBase>>& aTasks, JQueueSet::JQueueType aQueueType = JQueueSet::JQueueType::SubTasks, const std::string& aQueueName = "");
 		void SubmitAsyncTasks(const std::vector<std::shared_ptr<JTaskBase>>& aTasks, JQueueSet::JQueueType aQueueType = JQueueSet::JQueueType::SubTasks, const std::string& aQueueName = "");
-		void RunTasksWhileWaiting(const std::atomic<bool>& aWaitFlag, const JEventSource* aEventSource, JQueueSet::JQueueType aQueueType = JQueueSet::JQueueType::SubTasks, const std::string& aQueueName = "");
+		void DoWorkWhileWaiting(const std::atomic<bool>& aWaitFlag, const JEventSource* aEventSource, JQueueSet::JQueueType aQueueType = JQueueSet::JQueueType::SubTasks, const std::string& aQueueName = "");
+		void DoWorkWhileWaitingForTasks(const std::vector<std::shared_ptr<JTaskBase>>& aSubmittedTasks, JQueueSet::JQueueType aQueueType = JQueueSet::JQueueType::SubTasks, const std::string& aQueueName = "");
 
 	private:
 
@@ -118,6 +119,8 @@ class JThreadManager
 		void LockQueueSets(void) const;
 		std::pair<JEventSource*, JQueueSet*> CheckAllSourcesDone(std::size_t& aQueueSetIndex);
 		std::shared_ptr<JTaskBase> GetTask(JQueueSet* aQueueSet, JQueueInterface* aQueue) const;
+		void DoWorkWhileWaitingForTasks(const std::function<bool(void)>& aWaitFunction, JQueueSet* aQueueSet, JQueueInterface* aQueue);
+		void DoWorkWhileWaitingForTasks(const std::vector<std::shared_ptr<JTaskBase>>& aSubmittedTasks, JQueueSet* aQueueSet, JQueueInterface* aQueue);
 
 		//CONTROL
 		JApplication* mApplication;

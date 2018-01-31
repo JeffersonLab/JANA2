@@ -8,53 +8,22 @@
 #include "jana_test_factory.h"
 
 //------------------
-// init
+// ChangeRun
 //------------------
-void jana_test_factory::init(void)
+void jana_test_factory::ChangeRun(const std::shared_ptr<JEvent>& aEvent)
 {
 
 }
 
 //------------------
-// brun
+// Create
 //------------------
-void jana_test_factory::brun(JEvent *jevent, int32_t runnumber)
+void jana_test_factory::Create(const std::shared_ptr<JEvent>& aEvent)
 {
-
-}
-
-//------------------
-// evnt
-//------------------
-void jana_test_factory::evnt(JEvent *jevent, uint64_t eventnumber)
-{
-
 	// Code to generate factory data goes here. Add it like:
 	//
-	// jana_test *myjana_test = new jana_test;
-	// myjana_test->x = x;
-	// myjana_test->y = y;
-	// ...
-	// _data.push_back(myjana_test);
+	// mData.emplace_back(/* jana_test constructor arguments */);
 	//
 	// Note that the objects you create here will be deleted later
-	// by the system and the _data vector will be cleared automatically.
-
+	// by the system and the mData vector will be cleared automatically.
 }
-
-//------------------
-// erun
-//------------------
-void jana_test_factory::erun(void)
-{
-
-}
-
-//------------------
-// fini
-//------------------
-void jana_test_factory::fini(void)
-{
-
-}
-

@@ -27,9 +27,14 @@ class JEventSource_jana_test: public JEventSource
 		virtual const char* className(void){return static_className();}
 		static const char* static_className(void){return "JEventSource_jana_test";}
 		
+		void Open(void);
+		bool GetObjects(const std::shared_ptr<JEvent>& aEvent, JFactoryBase* aFactory);
+
 		std::pair<std::shared_ptr<JEvent>, RETURN_STATUS> GetEvent(void);
-		
+		std::type_index GetDerivedType(void) const{return std::type_index(typeid(JEventSource_jana_test));} //So that we only execute factory generator once per type
+
 	protected:
+		std::size_t mNumEventsToGenerate;
 		std::vector<std::shared_ptr<JEvent_test>> mEventsFromFile; //simulates a file
 
 		//Resource pool for events

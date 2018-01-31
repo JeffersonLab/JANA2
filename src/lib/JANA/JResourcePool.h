@@ -9,6 +9,7 @@
 #include <type_traits>
 #include <memory>
 #include <algorithm>
+#include <iterator>
 
 #include "JResettable.h"
 
@@ -65,13 +66,15 @@ template <typename DType> class JResourcePool
 
 		//GET RESOURCES
 		template <typename... ConstructorArgTypes>
-		std::vector<DType*> Get_Resources(std::size_t aNumResources, ConstructorArgTypes&&... aConstructorArgs);
-		template <typename... ConstructorArgTypes>
 		DType* Get_Resource(ConstructorArgTypes&&... aConstructorArgs);
+		template <typename ContainerType, typename... ConstructorArgTypes>
+		void Get_Resources(std::size_t aNumResources, std::back_insert_iterator<ContainerType> aInsertIterator, ConstructorArgTypes&&... aConstructorArgs);
+
+		//GET SHARED RESOURCES
 		template <typename... ConstructorArgTypes>
 		std::shared_ptr<DType> Get_SharedResource(ConstructorArgTypes&&... aConstructorArgs);
-		template <typename... ConstructorArgTypes>
-		std::vector<std::shared_ptr<DType>> Get_SharedResources(std::size_t aNumResources, ConstructorArgTypes&&... aConstructorArgs);
+		template <typename ContainerType, typename... ConstructorArgTypes>
+		void Get_SharedResources(std::size_t aNumResources, std::back_insert_iterator<ContainerType> aInsertIterator, ConstructorArgTypes&&... aConstructorArgs);
 
 		//RECYCLE CONST OBJECTS //these methods just const_cast and call the non-const versions
 		void Recycle(const DType* sResource){Recycle(const_cast<DType*>(sResource));}
@@ -109,8 +112,9 @@ template <typename DType> class JResourcePool
 		template <typename RType> typename std::enable_if<!std::is_base_of<JResettable, RType>::value, void>::type Release_Resources(RType* sResource){};
 		template <typename RType> typename std::enable_if<!std::is_base_of<JResettable, RType>::value, void>::type Reset(RType* sResource){};
 
-		//Assume that access to the shared pool won't happen very often: will mostly access the thread-local pool (this object)
-		std::vector<DType*> Get_Resources_StaticPool(std::size_t aNumResources);
+		template <typename ContainerType>
+		std::size_t Get_Resources_StaticPool(std::size_t aNumResources, std::back_insert_iterator<ContainerType> aInsertIterator);
+		DType* Get_Resource_StaticPool(void);
 		void Recycle_Resources_StaticPool(std::vector<DType*>& sResources);
 
 		alignas(Get_CacheLineSize()) std::size_t dDebugLevel = 0;
@@ -221,9 +225,9 @@ DType* JResourcePool<DType>::Get_Resource(ConstructorArgTypes&&... aConstructorA
 		std::cout << "GET RESOURCE " << typeid(DType).name() << std::endl;
 
 	//Get resources from pool
-	auto sResources = Get_Resources_StaticPool(1);
-	if(!sResources.empty())
-		return sResources[0];
+	auto sResource = Get_Resource_StaticPool();
+	if(sResource != nullptr)
+		return sResource;
 
 	//Pool was empty: Allocate one
 	dObjectCounter++;
@@ -231,25 +235,22 @@ DType* JResourcePool<DType>::Get_Resource(ConstructorArgTypes&&... aConstructorA
 }
 
 template <typename DType>
-template <typename... ConstructorArgTypes>
-std::vector<DType*> JResourcePool<DType>::Get_Resources(std::size_t aNumResources, ConstructorArgTypes&&... aConstructorArgs)
+template <typename ContainerType, typename... ConstructorArgTypes>
+void JResourcePool<DType>::Get_Resources(std::size_t aNumResources, std::back_insert_iterator<ContainerType> aInsertIterator, ConstructorArgTypes&&... aConstructorArgs)
 {
 	if(dDebugLevel >= 10)
 		std::cout << "GET " << aNumResources << " RESOURCES " << typeid(DType).name() << std::endl;
 
 	//Get resources from pool
-	auto sResources = Get_Resources_StaticPool(aNumResources);
-	auto sNumAcquired = sResources.size();
+	auto sNumAcquired = Get_Resources_StaticPool(aNumResources, aInsertIterator);
 
 	//Allocate the rest (if the pool didn't have enough)
 	dObjectCounter += aNumResources - sNumAcquired; //Amount we are about to allocate
 	while(sNumAcquired != aNumResources)
 	{
-		sResources.push_back(new DType(std::forward<ConstructorArgTypes>(aConstructorArgs)...));
+		aInsertIterator = new DType(std::forward<ConstructorArgTypes>(aConstructorArgs)...);
 		sNumAcquired++;
 	}
-
-	return sResources;
 }
 
 template <typename DType>
@@ -260,16 +261,17 @@ std::shared_ptr<DType> JResourcePool<DType>::Get_SharedResource(ConstructorArgTy
 }
 
 template <typename DType>
-template <typename... ConstructorArgTypes>
-std::vector<std::shared_ptr<DType>> JResourcePool<DType>::Get_SharedResources(std::size_t aNumResources, ConstructorArgTypes&&... aConstructorArgs)
+template <typename ContainerType, typename... ConstructorArgTypes>
+void JResourcePool<DType>::Get_SharedResources(std::size_t aNumResources, std::back_insert_iterator<ContainerType> aInsertIterator, ConstructorArgTypes&&... aConstructorArgs)
 {
-	std::vector<std::shared_ptr<DType>> sSharedResources;
-	sSharedResources.reserve(aNumResources);
+	//Get unshared resources
+	std::vector<DType*> sResources;
+	sResources.reserve(aNumResources);
+	Get_Resources(aNumResources, std::back_inserter(sResources), std::forward<ConstructorArgTypes>(aConstructorArgs)...);
 
-	auto sResources = Get_Resources(aNumResources, std::forward<ConstructorArgTypes>(aConstructorArgs)...);
+	//Convert to shared_ptr's
 	for(auto sResource : sResources)
-		sSharedResources.emplace_back(sResource, JSharedPtrRecycler<DType>(this));
-	return sSharedResources;
+		aInsertIterator = std::shared_ptr<DType>(sResource, JSharedPtrRecycler<DType>(this)); //calls push_back with r-value (doesn't change ref count)
 }
 
 template <typename DType> void JResourcePool<DType>::Recycle(std::vector<const DType*>& sResources)
@@ -315,11 +317,37 @@ void JResourcePool<DType>::LockPool(void) const
 }
 
 template <typename DType>
-std::vector<DType*> JResourcePool<DType>::Get_Resources_StaticPool(std::size_t aNumResources)
+template <typename ContainerType>
+std::size_t JResourcePool<DType>::Get_Resources_StaticPool(std::size_t aNumResources, std::back_insert_iterator<ContainerType> aInsertIterator)
 {
-	//Initialize return vector
-	std::vector<DType*> sResources;
-	sResources.reserve(aNumResources);
+	//Lock
+	LockPool();
+
+	//Return if empty
+	if(mResourcePool.empty())
+	{
+		dPoolLock = false; //Unlock
+		return 0;
+	}
+
+	//Get resources from the back of the pool
+	//Beware, we may be requesting more resources than are in the pool
+	auto sFirstToCopyIndex = (aNumResources >= mResourcePool.size()) ? 0 : mResourcePool.size() - aNumResources;
+	std::copy(mResourcePool.begin() + sFirstToCopyIndex, mResourcePool.end(), aInsertIterator);
+	auto sNumRetrieved = mResourcePool.size() - sFirstToCopyIndex;
+	mResourcePool.resize(sFirstToCopyIndex);
+
+	dPoolLock = false; //Unlock
+	if(dDebugLevel > 0)
+		std::cout << "RETRIEVED FROM SHARED POOL " << typeid(DType).name() << ": " << sNumRetrieved << std::endl;
+
+	return sNumRetrieved;
+}
+
+template <typename DType>
+DType* JResourcePool<DType>::Get_Resource_StaticPool(void)
+{
+	DType* sResource = nullptr;
 
 	//Lock
 	LockPool();
@@ -328,19 +356,18 @@ std::vector<DType*> JResourcePool<DType>::Get_Resources_StaticPool(std::size_t a
 	if(mResourcePool.empty())
 	{
 		dPoolLock = false; //Unlock
-		return sResources;
+		return nullptr;
 	}
 
-	//Get resources from the back of the pool
-	//Beware, we may be requesting more resources than are in the pool
-	auto sFirstToCopyIndex = (aNumResources >= mResourcePool.size()) ? 0 : mResourcePool.size() - aNumResources;
-	std::copy(mResourcePool.begin() + sFirstToCopyIndex, mResourcePool.end(), std::back_inserter(sResources));
-	mResourcePool.resize(sFirstToCopyIndex);
+	//Get resource from the back of the pool
+	sResource = mResourcePool.back();
+	mResourcePool.pop_back();
 
 	dPoolLock = false; //Unlock
 	if(dDebugLevel > 0)
-		std::cout << "RETRIEVED FROM SHARED POOL " << typeid(DType).name() << ": " << sResources.size() << std::endl;
-	return sResources;
+		std::cout << "RETRIEVED FROM SHARED POOL " << typeid(DType).name() << ": " << 1 << std::endl;
+
+	return sResource;
 }
 
 template <typename DType>

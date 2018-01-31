@@ -47,6 +47,7 @@
 #include <memory>
 #include <cstddef>
 #include <limits>
+#include <atomic>
 
 class JEvent;
 
@@ -60,7 +61,7 @@ class JEventProcessor{
 		virtual void ChangeRun(const std::shared_ptr<JEvent>& aEvent){};
 	
 	private:
-		std::atomic<uint32_t> mPreviousRunNumber = std::numeric_limits<uint32_t>::max();
+		std::atomic<uint32_t> mPreviousRunNumber{std::numeric_limits<uint32_t>::max()};
 };
 
 #endif // _JEventProcessor_h_

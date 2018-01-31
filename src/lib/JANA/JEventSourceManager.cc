@@ -96,7 +96,7 @@ void JEventSourceManager::GetActiveJEventSources(std::vector<JEventSource*>& aSo
 //---------------------------------
 // GetUnopenedJEventSources
 //---------------------------------
-void JEventSourceManager::GetUnopenedJEventSources(std::vector<JEventSource*>& aSources) const
+void JEventSourceManager::GetUnopenedJEventSources(std::deque<JEventSource*>& aSources) const
 {
 	// Lock
 	std::lock_guard<std::mutex> lg(mSourcesMutex);
@@ -161,13 +161,13 @@ void JEventSourceManager::OpenInitSources(void)
 		return;
 
 	//Open up to the max allowed number of simultaneously-open sources, and register them as active.
-
 	auto sNumFilesToOpen = (_sources_unopened.size() >= mMaxNumOpenFiles) ? mMaxNumOpenFiles : _sources_unopened.size();
 	for(std::size_t si = 0; si < sNumFilesToOpen; si++)
 	{
-		std::string source_name = _sources_unopened.front();
+		auto sSource = _sources_unopened.front();
 		_sources_unopened.pop_front();
-		_sources_active.push_back(CreateSource(source_name));
+		sSource->Open();
+		_sources_active.push_back(sSource);
 	}
 }
 
