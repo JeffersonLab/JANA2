@@ -16,6 +16,7 @@
 
 #include "jana_test.h"
 #include "JEvent.h"
+#include "JLog.h"
 
 // Routine used to create our JEventProcessor
 #include <JANA/JApplication.h>
@@ -65,6 +66,11 @@ void JEventProcessor_jana_test::AnalyzeEvent(const std::shared_ptr<const JEvent>
 
 	auto sJanaTestIterators = aEvent->Get<jana_test>();
 
-	auto sPrinter = [](const jana_test& aObject) -> void {std::cout << &aObject;};
-	std::for_each(sJanaTestIterators.first, sJanaTestIterators.second, sPrinter);
+	JLog sLogger(2);
+	while(sJanaTestIterators.first != sJanaTestIterators.second)
+	{
+		sLogger << *(sJanaTestIterators.first);
+		sJanaTestIterators.first++;
+	}
+	sLogger << JLogEnd();
 }

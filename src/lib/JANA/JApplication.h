@@ -84,6 +84,7 @@ class JThread;
 class JEventSourceManager;
 class JThreadManager;
 class JFactorySet;
+class JLogWrapper;
 
 template <typename ReturnType>
 class JTask;
@@ -147,6 +148,10 @@ class JApplication{
 		string Val2StringWithPrefix(float val);
 		template<typename T> T GetParameterValue(std::string name);
 
+		//LOG WRAPPERS
+		JLogWrapper* GetLogWrapper(uint32_t aLogIndex) const;
+		void SetLogWrapper(uint32_t aLogIndex, JLogWrapper* aLogWrapper);
+
 	protected:
 	
 		vector<string> _args;	///< Argument list passed in to JApplication Constructor
@@ -164,6 +169,7 @@ class JApplication{
 		JResourceManager *_rmanager;
 		JEventSourceManager* _eventSourceManager;
 		JThreadManager* _threadManager;
+		std::map<uint32_t, JLogWrapper*> mLogWrappers;
 	
 		void AttachPlugins(void);
 		void AttachPlugin(string name, bool verbose=false);

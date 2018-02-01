@@ -8,6 +8,7 @@
 #include "jana_test_factory.h"
 
 #include <chrono>
+#include <iostream>
 
 //------------------
 // Constructor

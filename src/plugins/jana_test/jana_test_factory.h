@@ -13,6 +13,7 @@
 #include "jana_test.h"
 
 #include <random>
+#include <atomic>
 
 class jana_test_factory : public JFactory<jana_test>
 {

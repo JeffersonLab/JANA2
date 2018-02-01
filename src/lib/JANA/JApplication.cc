@@ -70,6 +70,7 @@ using namespace std;
 #include <JANA/JVersion.h>
 #include <JANA/JStatus.h>
 #include <JANA/JResourcePool.h>
+#include <JANA/JLogWrapper.h>
 
 
 JApplication *japp = NULL;
@@ -119,6 +120,9 @@ void USR2Handle(int x)
 //---------------------------------
 JApplication::JApplication(int narg, char *argv[])
 {
+	//Must do before setting loggers
+	japp = this;
+
 	// Set up to catch SIGINTs for graceful exits
 	signal(SIGINT,ctrlCHandle);
 
@@ -126,6 +130,11 @@ JApplication::JApplication(int narg, char *argv[])
 	signal(SIGUSR1,USR1Handle);
 	signal(SIGUSR2,USR2Handle);
 	
+	//Loggers //Switch to enum!! //Must be done before any code that uses a logger!
+	SetLogWrapper(0, new JLogWrapper(std::cout)); //stdout
+	SetLogWrapper(1, new JLogWrapper(std::cerr)); //stderr
+	SetLogWrapper(2, new JLogWrapper(std::cout)); //hd_dump
+
 	_exit_code = 0;
 	_quitting = false;
 	_draining_queues = false;
@@ -195,8 +204,6 @@ JApplication::JApplication(int narg, char *argv[])
 		std::cout << "add source: " << arg << "\n";
 		_eventSourceManager->AddEventSource(arg);
 	}
-	
-	japp = this;
 }
 
 //---------------------------------
@@ -297,8 +304,8 @@ void JApplication::AttachPlugins(void)
 		_eventSourceManager->AddJEventSourceGenerator(sGenerator);
 	_factoryGenerators.insert(_factoryGenerators.end(), my_factoryGenerators.begin(), my_factoryGenerators.end());
 	_calibrationGenerators.insert(_calibrationGenerators.end(), my_calibrationGenerators.begin(), my_calibrationGenerators.end());
-
 }
+
 //---------------------------------
 // AttachPlugin
 //---------------------------------
@@ -716,6 +723,23 @@ uint32_t JApplication::GetCPU(void)
 
 
 	return cpuid;
+}
+
+//---------------------------------
+// SetLogWrapper
+//---------------------------------
+void JApplication::SetLogWrapper(uint32_t aLogIndex, JLogWrapper* aLogWrapper)
+{
+	mLogWrappers.emplace(aLogIndex, aLogWrapper);
+}
+
+//---------------------------------
+// GetLogWrapper
+//---------------------------------
+JLogWrapper* JApplication::GetLogWrapper(uint32_t aLogIndex) const
+{
+	auto sIterator = mLogWrappers.find(aLogIndex);
+	return ((sIterator != std::end(mLogWrappers)) ? sIterator->second : nullptr);
 }
 
 //---------------------------------

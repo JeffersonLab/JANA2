@@ -45,9 +45,11 @@
 #define _JThread_h_
 
 #include <thread>
+#include <atomic>
 
 #include "JQueueInterface.h"
 #include "JQueueSet.h"
+#include "JLog.h"
 
 class JThreadManager;
 class JEventSource;
@@ -64,12 +66,13 @@ class JThread{
 			kRUN_STATE_OTHER
 		};
 
-		JThread(JApplication* aApplication, JQueueSet* aQueueSet, std::size_t aQueueSetIndex, JEventSource* aSource, bool aRotateEventSources);
+		JThread(int aThreadID, JApplication* aApplication, JQueueSet* aQueueSet, std::size_t aQueueSetIndex, JEventSource* aSource, bool aRotateEventSources);
 		virtual ~JThread();
 
 		uint64_t GetNumEventsProcessed(void);
 		void GetNumEventsProcessed(std::map<std::string,uint64_t> &Nevents);
 		std::thread* GetThread(void);
+		int GetThreadID(void) const;
 		void Join(void);
 
 		void End(void);
@@ -94,12 +97,17 @@ class JThread{
 		bool mSourceEmpty = false;
 		std::size_t mFullRotationCheckIndex = 0; //For detecting when we are simply rotating and not executing
 
+		int mDebugLevel = 0;
+		JLog* mLogger = nullptr;
+
 		std::thread *_thread;
 		std::atomic<RUN_STATE_t> mRunState{kRUN_STATE_IDLE};           ///< Current state
 		std::atomic<RUN_STATE_t> mRunStateTarget{kRUN_STATE_IDLE};    ///< State to transtion to after current event
 		bool _isjoined = false;
 		std::map<std::string, uint64_t> _events_processed;
 		
+		int mThreadID;
+
 	private:
 
 		//INTERNAL CALLS

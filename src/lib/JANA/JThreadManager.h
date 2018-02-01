@@ -56,6 +56,7 @@
 #include "JQueueSet.h"
 #include "JResourcePool.h"
 #include "JFactorySet.h"
+#include "JLog.h"
 
 /**************************************************************** TYPE DECLARATIONS ****************************************************************/
 
@@ -126,6 +127,8 @@ class JThreadManager
 		JApplication* mApplication;
 		JEventSourceManager* mEventSourceManager = nullptr;
 		bool mRotateEventSources = true;
+		int mDebugLevel = 0;
+		JLog* mLogger = nullptr;
 
 		//THREADS
 		std::vector<JThread*> mThreads;

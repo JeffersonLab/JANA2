@@ -214,7 +214,7 @@ std::pair<JEventSource::RETURN_STATUS, JEventSource*> JEventSourceManager::OpenN
 	std::lock_guard<std::mutex> lg(mSourcesMutex);
 
 	//Check if a previous thread has already closed the last source
-	if( _sources_active.empty())
+	if(_sources_active.empty())
 		return std::make_pair(JEventSource::RETURN_STATUS::kNO_MORE_EVENTS, (JEventSource*)nullptr);
 
 	//Find slot
@@ -228,7 +228,7 @@ std::pair<JEventSource::RETURN_STATUS, JEventSource*> JEventSourceManager::OpenN
 	_sources_active.erase(sIterator);
 
 	//If no new sources to open, return
-	if( _sources_unopened.empty())
+	if(_sources_unopened.empty())
 		return std::make_pair(JEventSource::RETURN_STATUS::kNO_MORE_EVENTS, (JEventSource*)nullptr);
 
 	//Get the new source

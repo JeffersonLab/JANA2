@@ -58,6 +58,8 @@
 //---------------------------------
 JThreadManager::JThreadManager(JApplication* aApplication) : mApplication(aApplication), mEventSourceManager(mApplication->GetJEventSourceManager())
 {
+	mDebugLevel = 500;
+	mLogger = new JLog(0); //std::cout
 }
 
 //---------------------------------
@@ -82,7 +84,7 @@ void JThreadManager::CreateThreads(std::size_t aNumThreads)
 	for(decltype(aNumThreads) si = 0; si < aNumThreads; si++)
 	{
 		auto sQueueSetIndex = si % mActiveQueueSets.size();
-		mThreads.push_back(new JThread(mApplication, mActiveQueueSets[sQueueSetIndex].second, sQueueSetIndex, mActiveQueueSets[sQueueSetIndex].first, mRotateEventSources));
+		mThreads.push_back(new JThread(si + 1, mApplication, mActiveQueueSets[sQueueSetIndex].second, sQueueSetIndex, mActiveQueueSets[sQueueSetIndex].first, mRotateEventSources));
 	}
 }
 
@@ -97,7 +99,8 @@ void JThreadManager::PrepareQueues(void)
 	std::vector<JEventSource*> sSources;
 	mEventSourceManager->GetActiveJEventSources(sSources);
 
-	std::cout << "#sources: " << sSources.size() << "\n";
+	if(mDebugLevel > 0)
+		*mLogger << "#sources: " << sSources.size() << "\n" << JLogEnd();
 	for(auto sSource : sSources)
 		mActiveQueueSets.emplace_back(sSource, MakeQueueSet(sSource));
 
@@ -283,7 +286,8 @@ std::pair<JEventSource*, JQueueSet*> JThreadManager::RegisterSourceFinished(cons
 	JEventSource::RETURN_STATUS sStatus = JEventSource::RETURN_STATUS::kUNKNOWN;
 	JEventSource* sNextSource = nullptr;
 	std::tie(sStatus, sNextSource) = mEventSourceManager->OpenNext(aFinishedEventSource);
-	std::cout << "source finished, next source = " << sNextSource << "\n";
+	if(mDebugLevel > 0)
+		*mLogger << "Thread " << JTHREAD->GetThreadID() << ": Source finished, next source = " << sNextSource << "\n" << JLogEnd();
 
 	//LOCK
 	LockQueueSets();
@@ -291,7 +295,8 @@ std::pair<JEventSource*, JQueueSet*> JThreadManager::RegisterSourceFinished(cons
 	if(sNextSource != nullptr)
 	{
 		//We have just opened a new event source
-		std::cout << "new source opened\n";
+		if(mDebugLevel > 0)
+			*mLogger << "Thread " << JTHREAD->GetThreadID() << ": New source opened\n" << JLogEnd();
 
 		//Retire the current queue set, insert a new one in its place
 		mRetiredQueueSets.push_back(mActiveQueueSets[aQueueSetIndex]);
@@ -313,7 +318,8 @@ std::pair<JEventSource*, JQueueSet*> JThreadManager::RegisterSourceFinished(cons
 			//There were no other sources to open, and installed nullptr in its place
 		if(mActiveQueueSets[aQueueSetIndex].second != nullptr)
 		{
-			std::cout << "another thread opened a new source\n";
+			if(mDebugLevel > 0)
+				*mLogger << "Thread " << JTHREAD->GetThreadID() << ": Another thread opened a new source\n" << JLogEnd();
 
 			//Get and return the new queue set and source (don't forget to unlock!)
 			auto sQueuePair = mActiveQueueSets[aQueueSetIndex];
@@ -329,7 +335,8 @@ std::pair<JEventSource*, JQueueSet*> JThreadManager::RegisterSourceFinished(cons
 	}
 
 	//We removed the previous source from the active list (first one to get there), and there are no new sources to open
-	std::cout << "no new sources to open\n";
+	if(mDebugLevel > 0)
+		*mLogger << "Thread " << JTHREAD->GetThreadID() << ": No new sources to open\n" << JLogEnd();
 
 	//Retire the current queue set and remove it from the active queue
 	//Note that we can't actually erase it: It would invalidate the queue set indices of other threads
@@ -360,6 +367,8 @@ std::pair<JEventSource*, JQueueSet*> JThreadManager::CheckAllSourcesDone(std::si
 	if(std::all_of(std::begin(mActiveQueueSets), std::end(mActiveQueueSets), sNullChecker))
 	{
 		//The last event source is done.
+		if(mDebugLevel > 0)
+			*mLogger << "Thread " << JTHREAD->GetThreadID() << ": All tasks from all event sources are done\n" << JLogEnd();
 
 		//UNLOCK
 		mQueueSetsLock = false;
@@ -370,7 +379,7 @@ std::pair<JEventSource*, JQueueSet*> JThreadManager::CheckAllSourcesDone(std::si
 	}
 
 	//Not all sources are done yet.
-	//Rotate this thread to the next open source.
+	//Rotate this thread to the next open/task-processing source.
 	do
 	{
 		aQueueSetIndex++;
@@ -542,10 +551,14 @@ std::shared_ptr<JTaskBase> JThreadManager::GetTask(JQueueSet* aQueueSet, JQueueI
 			continue; //already checked that one
 		std::tie(sQueueType, sTask) = aQueueSet->GetTask();
 		if(sTask != nullptr)
+		{
+			mQueueSetsLock = false; //UNLOCK
 			return sTask;
+		}
 	}
 
 	//No tasks in any queues, return nullptr
+	mQueueSetsLock = false; //UNLOCK
 	return nullptr;
 }
 

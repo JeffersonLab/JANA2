@@ -16,10 +16,7 @@
 JEventSource_jana_test::JEventSource_jana_test(const char* source_name) : JEventSource(source_name, japp)
 {
 	// Allocate pool of JEvent objects
-//	mNumEventsToGenerate = 20000;
 	mNumEventsToGenerate = 20000;
-	mEventsFromFile.reserve(mNumEventsToGenerate);
-	mEventPool.Get_SharedResources(mEventsFromFile.capacity(), std::back_inserter(mEventsFromFile), mApplication);
 }
 
 //----------------
@@ -42,16 +39,16 @@ std::pair<std::shared_ptr<const JEvent>, JEventSource::RETURN_STATUS> JEventSour
 	// If the source has no events at the moment, but may later (e.g.
 	// a live stream) then return kTRY_AGAIN;
 
-	if(mEventsFromFile.empty())
+	if(mNumEventsToGenerate == mNumEventsGenerated)
 		return std::make_pair(std::shared_ptr<JEvent>(nullptr), JEventSource::RETURN_STATUS::kNO_MORE_EVENTS);
 
-	auto sEvent = std::move(mEventsFromFile[mEventsFromFile.size() - 1]);
-	mEventsFromFile.pop_back();
+	auto sEvent = mEventPool.Get_SharedResource(mApplication);
+	mNumEventsGenerated++;
 	
 	sEvent->SetEventSource(this);
-	sEvent->SetEventNumber(mNumEventsToGenerate - mEventsFromFile.size());
+	sEvent->SetEventNumber(mNumEventsGenerated);
 	sEvent->SetRunNumber(1234);
-//	sEvent->SetRef(NULL);
+//	sEvent->SetRef(nullptr);
 	
 	return std::make_pair(std::static_pointer_cast<JEvent>(sEvent), JEventSource::RETURN_STATUS::kSUCCESS);
 }

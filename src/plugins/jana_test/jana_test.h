@@ -14,6 +14,7 @@
 #include <array>
 
 #include <JANA/JObject.h>
+#include "JLog.h"
 
 class jana_test : public JObject
 {
@@ -43,10 +44,11 @@ class jana_test : public JObject
 };
 
 //STREAM OPERATOR
-inline std::ostream& operator<<(std::ostream& aStream, const jana_test* aObject)
+inline JLog& operator<<(JLog& aLog, const jana_test& aObject)
 {
-	aStream << "ID: " << aObject->GetID() << ", E:" << aObject->GetE() << ", #Randoms: " << aObject->GetRandoms().size() << "\n";
-	return aStream;
+	aLog.SetHeaders({"ID", "E", "#Randoms"});
+	aLog << aObject.GetID() << aObject.GetE() << aObject.GetRandoms().size() << "\n";
+	return aLog;
 }
 
 #endif // _jana_test_

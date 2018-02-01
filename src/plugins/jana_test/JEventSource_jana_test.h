@@ -35,7 +35,7 @@ class JEventSource_jana_test: public JEventSource
 
 	protected:
 		std::size_t mNumEventsToGenerate;
-		std::vector<std::shared_ptr<JEvent_test>> mEventsFromFile; //simulates a file
+		std::size_t mNumEventsGenerated = 0;
 
 		//Resource pool for events
 		JResourcePool<JEvent_test> mEventPool;
