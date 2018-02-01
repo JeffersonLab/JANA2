@@ -4,20 +4,20 @@
 #include "JApplication.h"
 #include "JEventProcessor.h"
 
-std::shared_ptr<JTaskBase> JMakeAnalyzeEventTask(std::shared_ptr<JEvent>& aEvent, JApplication* aApplication)
+std::shared_ptr<JTaskBase> JMakeAnalyzeEventTask(std::shared_ptr<const JEvent>&& aEvent, JApplication* aApplication)
 {
 	//Get processors
 	std::vector<JEventProcessor*> sProcessors;
 	aApplication->GetJEventProcessors(sProcessors);
 
 	//Define function that will be executed by the task (running processors on the event)
-	auto sRunProcessors = [sProcessors](std::shared_ptr<JEvent>& aEvent) -> void
+	auto sRunProcessors = [sProcessors](const std::shared_ptr<const JEvent>& aEvent) -> void
 	{
 //		std::cout << "Executing # processors = " << sProcessors.size() << "\n";
 		for(auto sProcessor : sProcessors)
 			sProcessor->Process(aEvent);
 	};
-	auto sPackagedTask = std::packaged_task<void(std::shared_ptr<JEvent>&)>(sRunProcessors);
+	auto sPackagedTask = std::packaged_task<void(const std::shared_ptr<const JEvent>&)>(sRunProcessors);
 
 	//Get the JTask, set it up, and return it
 	auto sTask = aApplication->GetVoidTask(); //std::make_shared<JTask<void>>(aEvent, sPackagedTask);

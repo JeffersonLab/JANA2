@@ -11,19 +11,42 @@
 #include <vector>
 #include <utility>
 #include <string>
+#include <array>
 
 #include <JANA/JObject.h>
-#include <JANA/JFactory.h>
 
-class jana_test:public JObject{
+class jana_test : public JObject
+{
 	public:
 		JOBJECT_PUBLIC(jana_test);
 		
-		// Add data members here. For example:
-		// int id;
-		// double E;
+		//STRUCTORS
+		jana_test(double aE, int aID) : mE(aE), mID(aID) { }
 
+		//GETTERS
+		int GetID(void) const{return mID;}
+		double GetE(void) const{return mE;}
+		std::vector<double> GetRandoms(void) const{return mRandoms;}
+
+		//SETTERS
+		void SetID(int aID){mID = aID;}
+		void SetE(double aE){mE = aE;}
+		void AddRandom(double aRandom){mRandoms.push_back(aRandom);}
+
+	private:
+
+		std::vector<double> mRandoms;
+		std::array<double, 20> mGarbage = {}; //Simulate a "large" object
+
+		double mE;
+		int mID;
 };
 
-#endif // _jana_test_
+//STREAM OPERATOR
+inline std::ostream& operator<<(std::ostream& aStream, const jana_test* aObject)
+{
+	aStream << "ID: " << aObject->GetID() << ", E:" << aObject->GetE() << ", #Randoms: " << aObject->GetRandoms().size() << "\n";
+	return aStream;
+}
 
+#endif // _jana_test_

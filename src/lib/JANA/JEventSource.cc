@@ -107,16 +107,16 @@ std::pair<std::shared_ptr<JTaskBase>, JEventSource::RETURN_STATUS> JEventSource:
 //---------------------------------
 // GetProcessEventTask
 //---------------------------------
-std::pair<std::shared_ptr<JTaskBase>, JEventSource::RETURN_STATUS> JEventSource::GetProcessEventTask(std::shared_ptr<JEvent>& aEvent)
+std::pair<std::shared_ptr<JTaskBase>, JEventSource::RETURN_STATUS> JEventSource::GetProcessEventTask(std::shared_ptr<const JEvent>& aEvent)
 {
 	//This version creates the task (default: run the processors), and can be overridden in derived classes (but cannot be called)
-	return std::make_pair(JMakeAnalyzeEventTask(aEvent, mApplication), RETURN_STATUS::kSUCCESS); //From JFunctions
+	return std::make_pair(JMakeAnalyzeEventTask(std::move(aEvent), mApplication), RETURN_STATUS::kSUCCESS); //From JFunctions
 }
 
 //---------------------------------
 // IsDone
 //---------------------------------
-bool JEventSource::IsFileClosed()
+bool JEventSource::IsFileClosed(void) const
 {
 	return mFileClosed;
 }

@@ -67,8 +67,8 @@ class JFactoryBase
 		virtual void ClearData(void) = 0;
 
 		//VIRTUAL METHODS TO BE OVERLOADED BY USER FACTORIES
-		virtual void ChangeRun(const std::shared_ptr<JEvent>& aEvent){};
-		virtual void Create(const std::shared_ptr<JEvent>& aEvent){};
+		virtual void ChangeRun(const std::shared_ptr<const JEvent>& aEvent){};
+		virtual void Create(const std::shared_ptr<const JEvent>& aEvent){};
 
 		uint32_t GetPreviousRunNumber(void) const{return mPreviousRunNumber;}
 		void SetPreviousRunNumber(uint32_t aRunNumber){mPreviousRunNumber = aRunNumber;}

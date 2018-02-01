@@ -20,7 +20,7 @@
 // This class represents a single, complete "event" read from the source
 class JEvent_example1:public JEvent {
 	public:	
-		JEvent_example1(double a, int b): JEvent(japp->GetJThreadManager()), A(a),B(b){}
+		JEvent_example1(double a, int b): JEvent(japp), A(a),B(b){}
 
 		double A;
 		int B;		
@@ -39,8 +39,8 @@ class JEventSource_example1: public JEventSource{
 
 		std::type_index GetDerivedType(void) const {return std::type_index(typeid(JEventSource_example1));}; //So that we only execute factory generator once per type
 
-		std::pair<std::shared_ptr<JEvent>, RETURN_STATUS> GetEvent(void){
-			return std::make_pair(std::make_shared<JEvent_example1>(1.0, 2), JEventSource::RETURN_STATUS::kSUCCESS);
+		std::pair<std::shared_ptr<const JEvent>, RETURN_STATUS> GetEvent(void){
+			return std::make_pair(std::make_shared<const JEvent_example1>(1.0, 2), JEventSource::RETURN_STATUS::kSUCCESS);
 		}
 };
 

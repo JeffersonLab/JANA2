@@ -50,7 +50,7 @@ class JThreadManager;
 
 class JEvent_test:public JEvent {
 	public:
-		JEvent_test(JThreadManager* aThreadManager) : JEvent(aThreadManager) { }
+		JEvent_test(JApplication* aApplication) : JEvent(aApplication) { }
 
 		virtual ~JEvent_test(){}
 };

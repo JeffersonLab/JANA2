@@ -729,9 +729,17 @@ std::shared_ptr<JTask<void>> JApplication::GetVoidTask(void)
 //---------------------------------
 // GetFactorySet
 //---------------------------------
-std::shared_ptr<JFactorySet> JApplication::GetFactorySet(void)
+JFactorySet* JApplication::GetFactorySet(void)
 {
-	return mFactorySetPool.Get_SharedResource(_factoryGenerators);
+	return mFactorySetPool.Get_Resource(_factoryGenerators);
+}
+
+//---------------------------------
+// Recycle
+//---------------------------------
+void JApplication::Recycle(JFactorySet* aFactorySet)
+{
+	return mFactorySetPool.Recycle(aFactorySet);
 }
 
 //---------------------------------

@@ -34,9 +34,9 @@ class JTaskBase : public JResettable
 		JTaskBase(JTaskBase&&) = default;
 		JTaskBase& operator=(JTaskBase&&) = default;
 
-		void SetEvent(std::shared_ptr<JEvent>& aEvent){mEvent = aEvent;}
-		void SetEvent(std::shared_ptr<JEvent>&& aEvent){mEvent = std::move(aEvent);}
-		JEvent* GetEvent(void) {return mEvent.get();} //don't increase ref count
+		void SetEvent(std::shared_ptr<const JEvent>& aEvent){mEvent = aEvent;}
+		void SetEvent(std::shared_ptr<const JEvent>&& aEvent){mEvent = std::move(aEvent);}
+		const JEvent* GetEvent(void) {return mEvent.get();} //don't increase ref count
 
 		virtual bool IsFinished(void) const = 0;
 
@@ -48,7 +48,7 @@ class JTaskBase : public JResettable
 		void Reset(void){}; 					//Re-initialize the object, called when retrieved from pool
 
 	protected:
-		std::shared_ptr<JEvent> mEvent;
+		std::shared_ptr<const JEvent> mEvent;
 };
 
 template <typename ReturnType>
@@ -62,7 +62,7 @@ class JTask : public JTaskBase
 		JTask(JTask&&) = default;
 		JTask& operator=(JTask&&) = default;
 
-		void SetTask(std::packaged_task<ReturnType(std::shared_ptr<JEvent>&)>&& aTask){mTask = std::move(aTask); mFuture = mTask.get_future();}
+		void SetTask(std::packaged_task<ReturnType(const std::shared_ptr<const JEvent>&)>&& aTask){mTask = std::move(aTask); mFuture = mTask.get_future();}
 
 		bool IsFinished(void) const{return (mFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready);}
 		ReturnType GetResult(void){return mFuture.get();}
@@ -71,7 +71,7 @@ class JTask : public JTaskBase
 		void operator()(void){mTask(mEvent);}
 
 	private:
-		std::packaged_task<ReturnType(std::shared_ptr<JEvent>&)> mTask;
+		std::packaged_task<ReturnType(const std::shared_ptr<const JEvent>&)> mTask;
 		std::future<ReturnType> mFuture;
 };
 

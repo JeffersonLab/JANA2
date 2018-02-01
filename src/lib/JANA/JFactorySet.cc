@@ -80,9 +80,9 @@ JFactoryBase* JFactorySet::GetFactory(std::type_index aObjectType, const std::st
 }
 
 //---------------------------------
-// ResetNewEvent
+// Release
 //---------------------------------
-void JFactorySet::ResetNewEvent(void)
+void JFactorySet::Release(void)
 {
 	//Loop over all factories and: clear the data and set the created flag to false
 	for(const auto& sFactoryPair : mFactories)

@@ -12,14 +12,20 @@
 #include <JANA/JEvent.h>
 #include "jana_test.h"
 
+#include <random>
+
 class jana_test_factory : public JFactory<jana_test>
 {
 	public:
-		jana_test_factory(void) : JFactory<jana_test>("jana_test_factory") { }
+		//STRUCTORS
+		jana_test_factory(void);
+		~jana_test_factory(void);
 
 	private:
-		void ChangeRun(const std::shared_ptr<JEvent>& aEvent);
-		void Create(const std::shared_ptr<JEvent>& aEvent);
+		void ChangeRun(const std::shared_ptr<const JEvent>& aEvent);
+		void Create(const std::shared_ptr<const JEvent>& aEvent);
+
+		std::mt19937 mRandomGenerator;
 };
 
 #endif // _jana_test_factory_

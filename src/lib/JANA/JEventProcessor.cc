@@ -43,7 +43,7 @@
 //---------------------------------
 // Process
 //---------------------------------
-void JEventProcessor::Process(std::shared_ptr<JEvent>& aEvent)
+void JEventProcessor::Process(const std::shared_ptr<const JEvent>& aEvent)
 {
 	auto sRunNumber = aEvent->GetRunNumber();
 	if(sRunNumber != mPreviousRunNumber)

@@ -79,10 +79,10 @@ class JEventSource{
 		virtual ~JEventSource();
 		
 		virtual void Open(void);
-		virtual bool GetObjects(const std::shared_ptr<JEvent>& aEvent, JFactoryBase* aFactory){return false;}
+		virtual bool GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactoryBase* aFactory){return false;}
 
 		std::pair<std::shared_ptr<JTaskBase>, JEventSource::RETURN_STATUS> GetProcessEventTask(void);
-		bool IsFileClosed();
+		bool IsFileClosed(void) const;
 		std::size_t GetNumEventsProcessed(void) const{return mEventsProcessed;}
 		
 		std::string GetName(void) const{return mName;}
@@ -94,7 +94,7 @@ class JEventSource{
 		
 	protected:
 	
-		virtual std::pair<std::shared_ptr<JEvent>, RETURN_STATUS> GetEvent(void) = 0;
+		virtual std::pair<std::shared_ptr<const JEvent>, RETURN_STATUS> GetEvent(void) = 0;
 		JApplication* mApplication = nullptr;
 		std::string mName;
 		JQueueInterface* mEventQueue = nullptr; //For handling event-source-specific logic (such as disentangling events, dealing with barriers, etc.)
@@ -106,7 +106,7 @@ class JEventSource{
 		void IncrementEventCount(void){mNumOutstandingEvents++;}
 		void DecrementEventCount(void){mNumOutstandingEvents--; mEventsProcessed++;}
 
-		virtual std::pair<std::shared_ptr<JTaskBase>, JEventSource::RETURN_STATUS> GetProcessEventTask(std::shared_ptr<JEvent>& aEvent);
+		virtual std::pair<std::shared_ptr<JTaskBase>, JEventSource::RETURN_STATUS> GetProcessEventTask(std::shared_ptr<const JEvent>& aEvent);
 
 		//Keep track of file/event status
 		std::atomic<bool> mFileClosed{false};

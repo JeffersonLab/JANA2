@@ -49,12 +49,13 @@
 #include <map>
 
 #include "JFactoryGenerator.h"
+#include "JResettable.h"
 
 class JFactoryBase;
 template <typename DataType>
 class JFactory;
 
-class JFactorySet
+class JFactorySet : public JResettable
 {
 	public:
 		JFactorySet(const std::vector<JFactoryGenerator*>& aFactoryGenerators);
@@ -64,7 +65,7 @@ class JFactorySet
 		void AddFactory(JFactory<DataType>* aFactory, const std::string& aFactoryTag);
 		JFactoryBase* GetFactory(std::type_index aObjectType, const std::string& aFactoryTag) const;
 		
-		void ResetNewEvent(void);
+		void Release(void);
 
 	protected:
 	

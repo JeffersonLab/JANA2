@@ -56,9 +56,9 @@ class JEventProcessor{
 
 		virtual ~JEventProcessor(void) = 0;
 
-		void Process(std::shared_ptr<JEvent>& aEvent);
-		virtual void AnalyzeEvent(const std::shared_ptr<JEvent>& aEvent){};
-		virtual void ChangeRun(const std::shared_ptr<JEvent>& aEvent){};
+		void Process(const std::shared_ptr<const JEvent>& aEvent);
+		virtual void AnalyzeEvent(const std::shared_ptr<const JEvent>& aEvent){};
+		virtual void ChangeRun(const std::shared_ptr<const JEvent>& aEvent){};
 	
 	private:
 		std::atomic<uint32_t> mPreviousRunNumber{std::numeric_limits<uint32_t>::max()};

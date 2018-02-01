@@ -116,6 +116,7 @@ template <typename DType> class JResourcePool
 		std::size_t Get_Resources_StaticPool(std::size_t aNumResources, std::back_insert_iterator<ContainerType> aInsertIterator);
 		DType* Get_Resource_StaticPool(void);
 		void Recycle_Resources_StaticPool(std::vector<DType*>& sResources);
+		void Recycle_Resource_StaticPool(DType* sResource);
 
 		alignas(Get_CacheLineSize()) std::size_t dDebugLevel = 0;
 
@@ -299,8 +300,7 @@ template <typename DType> void JResourcePool<DType>::Recycle(DType* sResource)
 	if(sResource == nullptr)
 		return;
 	Release_Resources<DType>(sResource);
-	std::vector<DType*> sResources{sResource};
-	Recycle_Resources_StaticPool(sResources);
+	Recycle_Resource_StaticPool(sResource);
 }
 
 /************************************************************************* SHARED-POOL-ACCESSING MEMBER FUNCTIONS *************************************************************************/
@@ -400,6 +400,39 @@ void JResourcePool<DType>::Recycle_Resources_StaticPool(std::vector<DType*>& sRe
 
 	dObjectCounter -= sFirstToCopyIndex;
 	sResources.clear();
+}
+
+template <typename DType>
+void JResourcePool<DType>::Recycle_Resource_StaticPool(DType* sResource)
+{
+	if(dDebugLevel >= 10)
+		std::cout << "RECYCLE 1 RESOURCE " << typeid(DType).name() << std::endl;
+
+	{
+		LockPool();
+
+		if(mResourcePool.size() != dMaxPoolSize)
+		{
+			mResourcePool.push_back(sResource);
+			sResource = nullptr;
+		}
+
+		dPoolLock = false; //Unlock
+	}
+
+	if(dDebugLevel > 10)
+	{
+		std::cout << "PUT IN SHARED POOL " << typeid(DType).name() << ": " << (sResource == nullptr) << std::endl;
+		std::cout << "DELETING " << typeid(DType).name() << ": " << (sResource != nullptr) << std::endl;
+	}
+
+	//any resources that were not copied into the shared pool are deleted instead (too many)
+
+	if(sResource != nullptr)
+	{
+		delete sResource;
+		dObjectCounter--;
+	}
 }
 
 template <typename DType> std::size_t JResourcePool<DType>::Get_PoolSize(void) const

@@ -43,7 +43,7 @@
 //---------------------------------
 // JEvent    (Constructor)
 //---------------------------------
-JEvent::JEvent(JThreadManager* aThreadManager) : mThreadManager(aThreadManager)
+JEvent::JEvent(JApplication* aApplication) : mApplication(aApplication), mThreadManager(mApplication->GetJThreadManager())
 {
 
 }
@@ -76,10 +76,9 @@ void JEvent::SetEventSource(JEventSource* aSource)
 //---------------------------------
 // SetFactorySet
 //---------------------------------
-void JEvent::SetFactorySet(const std::shared_ptr<JFactorySet>& aFactorySet)
+void JEvent::SetFactorySet(JFactorySet* aFactorySet)
 {
 	mFactorySet = aFactorySet;
-	mFactorySet->ResetNewEvent(); //Resets all factories (clears data, sets "created" flag to false
 }
 
 //---------------------------------
@@ -88,6 +87,7 @@ void JEvent::SetFactorySet(const std::shared_ptr<JFactorySet>& aFactorySet)
 void JEvent::Release(void)
 {
 	//Release all (pointers to) resources, called when recycled to pool
+	mApplication->Recycle(mFactorySet);
 	mFactorySet = nullptr;
 	mEventSource->DecrementEventCount();
 	mEventSource = nullptr;

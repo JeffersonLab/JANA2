@@ -17,8 +17,8 @@ class JEventProcessor_jana_test:public JEventProcessor{
 		~JEventProcessor_jana_test();
 		const char* className(void){return "JEventProcessor_jana_test";}
 
-		void AnalyzeEvent(const std::shared_ptr<JEvent>& aEvent);
-		void ChangeRun(const std::shared_ptr<JEvent>& aEvent);
+		void AnalyzeEvent(const std::shared_ptr<const JEvent>& aEvent);
+		void ChangeRun(const std::shared_ptr<const JEvent>& aEvent);
 
 	private:
 };

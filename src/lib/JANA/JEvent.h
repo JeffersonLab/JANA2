@@ -62,13 +62,13 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 {
 	public:
 
-		JEvent(JThreadManager* aThreadManager);
+		JEvent(JApplication* aApplication);
 		virtual ~JEvent();
 		
 		//FACTORIES
-		void SetFactorySet(const std::shared_ptr<JFactorySet>& aFactorySet);
+		void SetFactorySet(JFactorySet* aFactorySet);
 		template<class DataType>
-		JFactory<DataType>* GetFactory(const std::string& aTag = "") const;
+		const JFactory<DataType>* GetFactory(const std::string& aTag = "") const;
 
 		//OBJECTS
 		template<class DataType>
@@ -76,7 +76,6 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 
 		//RESOURCES
 		void Release(void);
-		void Reset(void){}; //Called when acquired-from resource pool
 
 		//SETTERS
 		void SetRunNumber(uint32_t aRunNumber){mRunNumber = aRunNumber;}
@@ -90,10 +89,11 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 
 	protected:
 	
-		std::shared_ptr<JFactorySet> mFactorySet = nullptr;
+		JFactorySet* mFactorySet = nullptr;
 		JEventSource* mEventSource = nullptr;
 
 	private:
+		JApplication* mApplication = nullptr;
 		JThreadManager* mThreadManager = nullptr;
 		uint32_t mRunNumber = 0;
 		uint64_t mEventNumber = 0;
@@ -103,7 +103,7 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 // GetFactory
 //---------------------------------
 template<class DataType>
-inline JFactory<DataType>* JEvent::GetFactory(const std::string& aTag) const
+inline const JFactory<DataType>* JEvent::GetFactory(const std::string& aTag) const
 {
 	return mFactorySet->GetFactory(std::type_index(typeid(DataType)), aTag);
 }
@@ -115,8 +115,8 @@ template<class DataType>
 typename JFactory<DataType>::PairType JEvent::Get(const std::string& aTag) const
 {
 	//First get the factory
-	auto sFactory = GetFactory<DataType>(aTag);
-	if(sFactory == nullptr)
+	auto sFactoryBase = mFactorySet->GetFactory(std::type_index(typeid(DataType)), aTag);
+	if(sFactoryBase == nullptr)
 	{
 		//Uh oh, No factory exists for this type.
 		jerr << "ERROR: No factory found for type = " << typeid(DataType).name() << ", tag = " << aTag << "\n";
@@ -125,6 +125,7 @@ typename JFactory<DataType>::PairType JEvent::Get(const std::string& aTag) const
 		//TODO: Throw exception??
 		return {};
 	}
+	auto sFactory = static_cast<JFactory<DataType>*>(sFactoryBase);
 
 	//If objects previously created, just return them
 	if(sFactory->GetCreated())
@@ -141,7 +142,7 @@ typename JFactory<DataType>::PairType JEvent::Get(const std::string& aTag) const
 		return sFactory->Get();
 	}
 
-	//If we throw exception within here, we may not release the lock, unless we do try/catch:
+	//If we throw exception within here we may not release the lock, unless we do try/catch:
 	try
 	{
 		//Lock acquired. First check to see if they were created since the last check.
@@ -154,7 +155,7 @@ typename JFactory<DataType>::PairType JEvent::Get(const std::string& aTag) const
 		//Not yet: We need to create the objects.
 		//First try to get from the event source
 		auto sSharedThis = this->shared_from_this();
-		if(mEventSource->GetObjects(sSharedThis, sFactory))
+		if(mEventSource->GetObjects(sSharedThis, static_cast<JFactoryBase*>(sFactory)))
 		{
 			sFactory->SetCreated(true);
 			sFactory->ReleaseCreatingLock();

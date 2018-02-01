@@ -6,11 +6,16 @@
 //
 
 #include <iostream>
+#include <algorithm>
+
 #include "JEventProcessor_jana_test.h"
 
 #include "JEventSourceManager.h"
 #include "JEventSourceGenerator_jana_test.h"
 #include "JFactoryGenerator_jana_test.h"
+
+#include "jana_test.h"
+#include "JEvent.h"
 
 // Routine used to create our JEventProcessor
 #include <JANA/JApplication.h>
@@ -42,7 +47,7 @@ JEventProcessor_jana_test::~JEventProcessor_jana_test(void)
 //------------------
 // ChangeRun
 //------------------
-void JEventProcessor_jana_test::ChangeRun(const std::shared_ptr<JEvent>& aEvent)
+void JEventProcessor_jana_test::ChangeRun(const std::shared_ptr<const JEvent>& aEvent)
 {
 	// This is called whenever the run number changes
 }
@@ -50,11 +55,16 @@ void JEventProcessor_jana_test::ChangeRun(const std::shared_ptr<JEvent>& aEvent)
 //------------------
 // AnalyzeEvent
 //------------------
-void JEventProcessor_jana_test::AnalyzeEvent(const std::shared_ptr<JEvent>& aEvent)
+void JEventProcessor_jana_test::AnalyzeEvent(const std::shared_ptr<const JEvent>& aEvent)
 {
 	// This is called for every event. Use of common resources like writing
 	// to a file or filling a histogram should be mutex protected. Using
 	// loop->Get(...) to get reconstructed objects (and thereby activating the
 	// reconstruction algorithm) should be done outside of any mutex lock
 	// since multiple threads may call this method at the same time.
+
+	auto sJanaTestIterators = aEvent->Get<jana_test>();
+
+	auto sPrinter = [](const jana_test& aObject) -> void {std::cout << &aObject;};
+	std::for_each(sJanaTestIterators.first, sJanaTestIterators.second, sPrinter);
 }

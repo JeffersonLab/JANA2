@@ -127,9 +127,10 @@ class JApplication{
 		JThreadManager* GetJThreadManager(void) const;
 		JEventSourceManager* GetJEventSourceManager(void) const;
 		
-		//GET POOL RESOURCES
+		//GET/RECYCLE POOL RESOURCES
 		std::shared_ptr<JTask<void>> GetVoidTask(void);
-		std::shared_ptr<JFactorySet> GetFactorySet(void);
+		JFactorySet* GetFactorySet(void);
+		void Recycle(JFactorySet* aFactorySet);
 
 		uint32_t GetCPU(void);
 		uint64_t GetNtasksCompleted(string name="");

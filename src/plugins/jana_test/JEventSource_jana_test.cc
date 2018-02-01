@@ -18,8 +18,7 @@ JEventSource_jana_test::JEventSource_jana_test(const char* source_name) : JEvent
 	// Allocate pool of JEvent objects
 	mNumEventsToGenerate = 20000;
 	mEventsFromFile.reserve(20000);
-	auto sThreadManager = mApplication->GetJThreadManager();
-	mEventPool.Get_SharedResources(mEventsFromFile.capacity(), std::back_inserter(mEventsFromFile), sThreadManager);
+	mEventPool.Get_SharedResources(mEventsFromFile.capacity(), std::back_inserter(mEventsFromFile), mApplication);
 }
 
 //----------------
@@ -33,7 +32,7 @@ JEventSource_jana_test::~JEventSource_jana_test()
 //----------------
 // GetEvent
 //----------------
-std::pair<std::shared_ptr<JEvent>, JEventSource::RETURN_STATUS> JEventSource_jana_test::GetEvent(void)
+std::pair<std::shared_ptr<const JEvent>, JEventSource::RETURN_STATUS> JEventSource_jana_test::GetEvent(void)
 {
 	/// Read an event (or possibly block of events) from the source return it.
 	
@@ -67,7 +66,7 @@ void JEventSource_jana_test::Open(void)
 //----------------
 // GetObjects
 //----------------
-bool JEventSource_jana_test::GetObjects(const std::shared_ptr<JEvent>& aEvent, JFactoryBase* aFactory)
+bool JEventSource_jana_test::GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactoryBase* aFactory)
 {
 	//Get objects of the specified type, and set them in the factory
 	//If this type is not supplied by the file, return false. Else return true.
