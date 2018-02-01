@@ -127,8 +127,8 @@ void JThread::Join(void)
 	/// from a method JThreadManager.
 	if(_isjoined)
 		return;
-	if( _run_state_target != kRUN_STATE_ENDED ) End();
-	while( _run_state != kRUN_STATE_ENDED ) std::this_thread::sleep_for( std::chrono::microseconds(100) );
+	if( mRunStateTarget != kRUN_STATE_ENDED ) End();
+	while( mRunState != kRUN_STATE_ENDED ) std::this_thread::sleep_for( std::chrono::microseconds(100) );
 	_thread->join();
 	_isjoined = true;
 }
@@ -143,7 +143,7 @@ void JThread::End(void)
 	/// thread then that will complete first. The JThread will then
 	/// exit. If you wish to stop processing of events temporarily
 	/// without exiting the thread then use Stop().
-	_run_state_target = kRUN_STATE_ENDED;
+	mRunStateTarget = kRUN_STATE_ENDED;
 	
 	// n.b. to implement a "wait_until_ended" here we would need
 	// to do somethimg like register a flag that gets set just
@@ -165,7 +165,7 @@ bool JThread::IsIdle(void)
 	/// after calling Stop() to know when the thread has finished
 	/// processing its current event.
 	
-	return _run_state == kRUN_STATE_IDLE;
+	return mRunState == kRUN_STATE_IDLE;
 }
 
 //---------------------------------
@@ -173,7 +173,7 @@ bool JThread::IsIdle(void)
 //---------------------------------
 bool JThread::IsEnded(void)
 {
-	return _run_state == kRUN_STATE_ENDED;
+	return mRunState == kRUN_STATE_ENDED;
 }
 
 //---------------------------------
@@ -194,13 +194,13 @@ void JThread::Loop(void)
 
 	/// Loop continuously, processing events
 	try{
-		while( _run_state_target != kRUN_STATE_ENDED )
+		while( mRunStateTarget != kRUN_STATE_ENDED )
 		{
 			// If specified, go into idle state
-			if( _run_state_target == kRUN_STATE_IDLE ) _run_state = kRUN_STATE_IDLE;
+			if( mRunStateTarget == kRUN_STATE_IDLE ) mRunState = kRUN_STATE_IDLE;
 
 			// If not running, sleep and loop again
-			if(_run_state != kRUN_STATE_RUNNING)
+			if(mRunState != kRUN_STATE_RUNNING)
 			{
 				std::this_thread::sleep_for( std::chrono::nanoseconds(100) ); //Sleep a minimal amount.
 				continue;
@@ -275,7 +275,7 @@ void JThread::Loop(void)
 	}
 
 	// Set flag that we're done just before exiting thread
-	_run_state = kRUN_STATE_ENDED;
+	mRunState = kRUN_STATE_ENDED;
 }
 
 //---------------------------------
@@ -379,7 +379,7 @@ void JThread::Run(void)
 	/// Start this thread processing events. This simply
 	/// sets the run state flag. 
 
-	_run_state = _run_state_target = kRUN_STATE_RUNNING;
+	mRunState = mRunStateTarget = kRUN_STATE_RUNNING;
 }
 
 //---------------------------------
@@ -397,12 +397,12 @@ void JThread::Stop(bool wait_until_idle)
 	/// completely.
 	/// Use IsIdle() to check if the thread is in the idle
 	/// state.
-	_run_state_target = kRUN_STATE_IDLE;
+	mRunStateTarget = kRUN_STATE_IDLE;
 	
 	// The use of yield() here will (according to stack overflow) cause
 	// the core to be 100% busy while waiting for the state to change.
 	// That should only be for the duration of processing of the current
 	// event though and this method is expected to be used rarely so
 	// this should be OK.
-	if( wait_until_idle ) while( _run_state == kRUN_STATE_RUNNING ) std::this_thread::yield();
+	if( wait_until_idle ) while( mRunState == kRUN_STATE_RUNNING ) std::this_thread::yield();
 }

@@ -95,8 +95,8 @@ class JThread{
 		std::size_t mFullRotationCheckIndex = 0; //For detecting when we are simply rotating and not executing
 
 		std::thread *_thread;
-		RUN_STATE_t _run_state = kRUN_STATE_IDLE;           ///< Current state
-		RUN_STATE_t _run_state_target = kRUN_STATE_IDLE;    ///< State to transtion to after current event
+		std::atomic<RUN_STATE_t> mRunState{kRUN_STATE_IDLE};           ///< Current state
+		std::atomic<RUN_STATE_t> mRunStateTarget{kRUN_STATE_IDLE};    ///< State to transtion to after current event
 		bool _isjoined = false;
 		std::map<std::string, uint64_t> _events_processed;
 		

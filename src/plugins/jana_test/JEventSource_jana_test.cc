@@ -16,8 +16,9 @@
 JEventSource_jana_test::JEventSource_jana_test(const char* source_name) : JEventSource(source_name, japp)
 {
 	// Allocate pool of JEvent objects
+//	mNumEventsToGenerate = 20000;
 	mNumEventsToGenerate = 20000;
-	mEventsFromFile.reserve(20000);
+	mEventsFromFile.reserve(mNumEventsToGenerate);
 	mEventPool.Get_SharedResources(mEventsFromFile.capacity(), std::back_inserter(mEventsFromFile), mApplication);
 }
 
