@@ -10,6 +10,7 @@
 
 #include <vector>
 #include <memory>
+#include <random>
 
 #include <JANA/JEventSource.h>
 #include <JANA/JEvent.h>
@@ -18,6 +19,10 @@
 #include "JResourcePool.h"
 
 #include "JEvent_test.h"
+#include "JSourceObject.h"
+#include "JSourceObject2.h"
+
+class JEvent;
 
 class JEventSource_jana_test: public JEventSource
 {
@@ -28,14 +33,22 @@ class JEventSource_jana_test: public JEventSource
 		static const char* static_className(void){return "JEventSource_jana_test";}
 		
 		void Open(void);
+
+		//Public get interface
 		bool GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactoryBase* aFactory);
 
 		std::pair<std::shared_ptr<const JEvent>, RETURN_STATUS> GetEvent(void);
 		std::type_index GetDerivedType(void) const{return std::type_index(typeid(JEventSource_jana_test));} //So that we only execute factory generator once per type
 
-	protected:
+	private:
+
+		//Getter functions for each type
+		bool GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactory<JSourceObject>* aFactory);
+		bool GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactory<JSourceObject2>* aFactory);
+
 		std::size_t mNumEventsToGenerate;
 		std::size_t mNumEventsGenerated = 0;
+		std::mt19937 mRandomGenerator;
 
 		//Resource pool for events
 		JResourcePool<JEvent_test> mEventPool;

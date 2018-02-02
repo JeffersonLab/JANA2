@@ -120,6 +120,7 @@ class JThreadManager
 		void LockQueueSets(void) const;
 		std::pair<JEventSource*, JQueueSet*> CheckAllSourcesDone(std::size_t& aQueueSetIndex);
 		std::shared_ptr<JTaskBase> GetTask(JQueueSet* aQueueSet, JQueueInterface* aQueue) const;
+		void SubmitTasks(const std::vector<std::shared_ptr<JTaskBase>>& aTasks, JQueueSet* aQueueSet, JQueueInterface* aQueue);
 		void DoWorkWhileWaitingForTasks(const std::function<bool(void)>& aWaitFunction, JQueueSet* aQueueSet, JQueueInterface* aQueue);
 		void DoWorkWhileWaitingForTasks(const std::vector<std::shared_ptr<JTaskBase>>& aSubmittedTasks, JQueueSet* aQueueSet, JQueueInterface* aQueue);
 
@@ -128,7 +129,8 @@ class JThreadManager
 		JEventSourceManager* mEventSourceManager = nullptr;
 		bool mRotateEventSources = true;
 		int mDebugLevel = 0;
-		JLog* mLogger = nullptr;
+		uint32_t mLogTarget = 0; //std::cout
+		std::chrono::nanoseconds mSleepTime = std::chrono::nanoseconds(100);
 
 		//THREADS
 		std::vector<JThread*> mThreads;

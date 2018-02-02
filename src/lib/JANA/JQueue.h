@@ -64,8 +64,8 @@ class JQueue : public JQueueInterface
 		JQueue(JQueue&&) = default;
 		JQueue& operator=(JQueue&&) = default;
 
-		int AddTask(const std::shared_ptr<JTaskBase>& aTask);
-		int AddTask(std::shared_ptr<JTaskBase>&& aTask);
+		Flags_t AddTask(const std::shared_ptr<JTaskBase>& aTask);
+		Flags_t AddTask(std::shared_ptr<JTaskBase>&& aTask);
 		std::shared_ptr<JTaskBase> GetTask(void);
 		bool AreEnoughTasksBuffered(void);
 

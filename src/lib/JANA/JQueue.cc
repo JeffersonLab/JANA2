@@ -71,7 +71,27 @@ JQueue& JQueue::operator=(const JQueue& aQueue)
 //---------------------------------
 // AddTask
 //---------------------------------
-int JQueue::AddTask(const std::shared_ptr<JTaskBase>& aTask)
+JQueueInterface::Flags_t JQueue::AddTask(const std::shared_ptr<JTaskBase>& aTask)
+{
+	//We want to copy the task into the queue instead of moving it.
+	//However, we don't want to duplicate the complicated code in both functions.
+	//Instead, we will create a local copy, and then call the other method with it.
+
+	//We need to create a local copy first because we will move from it
+	//And we don't want to move from the input (the whole point is to make a COPY).
+
+	//This will incur a ref-count change due to copy, but we had to do that anyway.
+	//The additional move into the queue is cheap (2 pointers),
+	//and is worth avoiding the code duplication (or confusion of other tricks)
+
+	auto sTempTask = aTask;
+	return AddTask(std::move(sTempTask));
+}
+
+//---------------------------------
+// AddTask
+//---------------------------------
+JQueueInterface::Flags_t JQueue::AddTask(std::shared_ptr<JTaskBase>&& aTask)
 {
 	/// Add the given JTaskBase to this queue. This will do so without locks.
 	/// If the queue is full, it will return immediately with a value
@@ -89,48 +109,9 @@ int JQueue::AddTask(const std::shared_ptr<JTaskBase>& aTask)
 	while(true)
 	{
 		uint32_t idx = iwrite;
-		if(idx == ibegin)
-			return kQUEUE_FULL;
-		uint32_t inext = (idx + 1) % mQueue.size();
-
-		//The queue is not full: iwrite is pointing to an empty slot: idx
-		//If we can increment iwrite before someone else does, then we have exclusive access to slot idx
-		//Why is access exclusive?:
-			//Once we increment, the next writer will try to write to a following slot
-			//The next writer can write to the next slot, but it can't increment iend until this thread does (so it will spin)
-			//The next reader can't read past iend (which is before this slot), and we haven't incremented iend yet
-			//And even if #threads > #slots, eventually the queue will be full and it won't get past the above check (ibegin isn't incrementing)
-
-		if( iwrite.compare_exchange_weak(idx, inext) )
-		{
-			//OK, we've claimed exclusive access to the slot. Insert the task.
-			mQueue[idx] = aTask;
-
-			//Now that we've inserted the task, indicate to readers that this slot can now be read (by incrementing iend)
-			uint32_t save_idx = idx;
-			while(!iend.compare_exchange_weak(idx, inext))
-				idx = save_idx;
-			return kNO_ERROR;
-		}
-	}
-
-	return kNO_ERROR; //can never happen
-}
-
-//---------------------------------
-// AddTask
-//---------------------------------
-int JQueue::AddTask(std::shared_ptr<JTaskBase>&& aTask)
-{
-	/// Add the given JTaskBase to this queue. This will do so without locks.
-	/// See other AddTask method for details.
-
-	while(true)
-	{
-		uint32_t idx = iwrite;
 		uint32_t inext = (idx + 1) % mQueue.size();
 		if(inext == ibegin)
-			continue; //we've MOVED the input: failure is not an option: retry
+			return Flags_t::kQUEUE_FULL;
 
 		//The queue is not full: iwrite is pointing to an empty slot: idx
 		//If we can increment iwrite before someone else does, then we have exclusive access to slot idx
@@ -140,7 +121,7 @@ int JQueue::AddTask(std::shared_ptr<JTaskBase>&& aTask)
 			//The next reader can't read past iend (which is before this slot), and we haven't incremented iend yet
 			//And even if #threads > #slots, eventually the queue will be full and it won't get past the above check (ibegin isn't incrementing)
 
-		if( iwrite.compare_exchange_weak(idx, inext) )
+		if(iwrite.compare_exchange_weak(idx, inext))
 		{
 			//OK, we've claimed exclusive access to the slot. Insert the task.
 			mQueue[idx] = std::move(aTask);
@@ -149,11 +130,11 @@ int JQueue::AddTask(std::shared_ptr<JTaskBase>&& aTask)
 			uint32_t save_idx = idx;
 			while(!iend.compare_exchange_weak(idx, inext))
 				idx = save_idx;
-			return kNO_ERROR;
+			return Flags_t::kNO_ERROR;
 		}
 	}
 
-	return kNO_ERROR; //can never happen
+	return Flags_t::kNO_ERROR; //can never happen
 }
 
 //---------------------------------
@@ -178,7 +159,7 @@ std::shared_ptr<JTaskBase> JQueue::GetTask(void)
 	while(true)
 	{
 		uint32_t idx = iread;
-		if( idx == iend )
+		if(idx == iend)
 			return nullptr;
 
 		//The queue is not empty: iread is pointing to a used slot: idx

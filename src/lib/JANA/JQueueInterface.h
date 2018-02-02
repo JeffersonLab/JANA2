@@ -54,7 +54,7 @@ class JQueueInterface
 {
 	public:
 	
-		enum Flags_t {
+		enum class Flags_t {
 			kNone,
 			kQUEUE_FULL,
 			kNO_ERROR
@@ -72,8 +72,8 @@ class JQueueInterface
 		JQueueInterface(JQueueInterface&&) = default;
 		JQueueInterface& operator=(JQueueInterface&&) = default;
 
-		virtual int AddTask(const std::shared_ptr<JTaskBase>& aTask) = 0;
-		virtual int AddTask(std::shared_ptr<JTaskBase>&& aTask) = 0;
+		virtual Flags_t AddTask(const std::shared_ptr<JTaskBase>& aTask) = 0;
+		virtual Flags_t AddTask(std::shared_ptr<JTaskBase>&& aTask) = 0;
 		virtual std::shared_ptr<JTaskBase> GetTask(void) = 0;
 		virtual bool AreEnoughTasksBuffered(void){return true;} //Only used for the event queue
 

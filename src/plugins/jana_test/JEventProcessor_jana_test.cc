@@ -17,6 +17,7 @@
 #include "jana_test.h"
 #include "JEvent.h"
 #include "JLog.h"
+#include "JSourceObject.h"
 
 // Routine used to create our JEventProcessor
 #include <JANA/JApplication.h>
@@ -35,6 +36,9 @@ void InitPlugin(JApplication *app){
 JEventProcessor_jana_test::JEventProcessor_jana_test(void)
 {
 	//This is the new init()
+
+	//Add queue for subtasks (not supplied by default!)
+	japp->GetJThreadManager()->AddQueue(JQueueSet::JQueueType::SubTasks, new JQueue("Subtasks", 2000));
 }
 
 //------------------
@@ -64,13 +68,32 @@ void JEventProcessor_jana_test::AnalyzeEvent(const std::shared_ptr<const JEvent>
 	// reconstruction algorithm) should be done outside of any mutex lock
 	// since multiple threads may call this method at the same time.
 
-	auto sJanaTestIterators = aEvent->Get<jana_test>();
+	//Get objects
+	auto sIterators_JanaTest = aEvent->Get<jana_test>(); //Will get from factory
+	auto sIterators_SourceObject = aEvent->Get<JSourceObject>(); //Will get from file
+	auto sIterators_SourceObject2 = aEvent->Get<JSourceObject2>(); //Will get from file, and will submit jobs to generate random #'s
 
-	JLog sLogger(2);
-	while(sJanaTestIterators.first != sJanaTestIterators.second)
+	//Print JSourceObject's inline-style
+	while(sIterators_SourceObject.first != sIterators_SourceObject.second)
 	{
-		sLogger << *(sJanaTestIterators.first);
-		sJanaTestIterators.first++;
+		//Can do this in one line, but being explicit to make it easier to read
+		auto& sObject = *(sIterators_SourceObject.first);
+		JLog() << sObject << JLogEnd(); //One object at a time
+		sIterators_SourceObject.first++;
 	}
-	sLogger << JLogEnd();
+
+	//Print JSourceObject2's inline-style
+	while(sIterators_SourceObject2.first != sIterators_SourceObject2.second)
+		JLog() << *(sIterators_SourceObject2.first++) << JLogEnd(); //One-liner version
+
+	//Print jana_test objects hd_dump-style
+		//(arg = 2 (should probably replace with enum))
+	JLog sDumpLogger(2); //all objects at once: this way other threads can't interleave output in between rows
+	while(sIterators_JanaTest.first != sIterators_JanaTest.second)
+	{
+		auto& sObject = *(sIterators_JanaTest.first);
+		sDumpLogger << sObject;
+		sIterators_JanaTest.first++;
+	}
+	sDumpLogger << JLogEnd(); //only now is it dumped to screen
 }

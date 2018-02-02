@@ -96,6 +96,7 @@ class JThread{
 		bool mRotateEventSources = false;
 		bool mSourceEmpty = false;
 		std::size_t mFullRotationCheckIndex = 0; //For detecting when we are simply rotating and not executing
+		std::chrono::nanoseconds mSleepTime = std::chrono::nanoseconds(100);
 
 		int mDebugLevel = 0;
 		JLog* mLogger = nullptr;

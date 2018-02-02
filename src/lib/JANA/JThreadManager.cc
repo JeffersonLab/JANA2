@@ -59,7 +59,6 @@
 JThreadManager::JThreadManager(JApplication* aApplication) : mApplication(aApplication), mEventSourceManager(mApplication->GetJEventSourceManager())
 {
 	mDebugLevel = 500;
-	mLogger = new JLog(0); //std::cout
 }
 
 //---------------------------------
@@ -100,7 +99,7 @@ void JThreadManager::PrepareQueues(void)
 	mEventSourceManager->GetActiveJEventSources(sSources);
 
 	if(mDebugLevel > 0)
-		*mLogger << "#sources: " << sSources.size() << "\n" << JLogEnd();
+		JLog(mLogTarget) << "#sources: " << sSources.size() << "\n" << JLogEnd();
 	for(auto sSource : sSources)
 		mActiveQueueSets.emplace_back(sSource, MakeQueueSet(sSource));
 
@@ -287,7 +286,7 @@ std::pair<JEventSource*, JQueueSet*> JThreadManager::RegisterSourceFinished(cons
 	JEventSource* sNextSource = nullptr;
 	std::tie(sStatus, sNextSource) = mEventSourceManager->OpenNext(aFinishedEventSource);
 	if(mDebugLevel > 0)
-		*mLogger << "Thread " << JTHREAD->GetThreadID() << ": Source finished, next source = " << sNextSource << "\n" << JLogEnd();
+		JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << ": Source finished, next source = " << sNextSource << "\n" << JLogEnd();
 
 	//LOCK
 	LockQueueSets();
@@ -296,7 +295,7 @@ std::pair<JEventSource*, JQueueSet*> JThreadManager::RegisterSourceFinished(cons
 	{
 		//We have just opened a new event source
 		if(mDebugLevel > 0)
-			*mLogger << "Thread " << JTHREAD->GetThreadID() << ": New source opened\n" << JLogEnd();
+			JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << ": New source opened\n" << JLogEnd();
 
 		//Retire the current queue set, insert a new one in its place
 		mRetiredQueueSets.push_back(mActiveQueueSets[aQueueSetIndex]);
@@ -318,8 +317,9 @@ std::pair<JEventSource*, JQueueSet*> JThreadManager::RegisterSourceFinished(cons
 			//There were no other sources to open, and installed nullptr in its place
 		if(mActiveQueueSets[aQueueSetIndex].second != nullptr)
 		{
+			//Another thread opened a new source, and installed it into mActiveQueueSets at the same slot
 			if(mDebugLevel > 0)
-				*mLogger << "Thread " << JTHREAD->GetThreadID() << ": Another thread opened a new source\n" << JLogEnd();
+				JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << ": Another thread opened a new source\n" << JLogEnd();
 
 			//Get and return the new queue set and source (don't forget to unlock!)
 			auto sQueuePair = mActiveQueueSets[aQueueSetIndex];
@@ -336,7 +336,7 @@ std::pair<JEventSource*, JQueueSet*> JThreadManager::RegisterSourceFinished(cons
 
 	//We removed the previous source from the active list (first one to get there), and there are no new sources to open
 	if(mDebugLevel > 0)
-		*mLogger << "Thread " << JTHREAD->GetThreadID() << ": No new sources to open\n" << JLogEnd();
+		JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << ": No new sources to open\n" << JLogEnd();
 
 	//Retire the current queue set and remove it from the active queue
 	//Note that we can't actually erase it: It would invalidate the queue set indices of other threads
@@ -368,7 +368,7 @@ std::pair<JEventSource*, JQueueSet*> JThreadManager::CheckAllSourcesDone(std::si
 	{
 		//The last event source is done.
 		if(mDebugLevel > 0)
-			*mLogger << "Thread " << JTHREAD->GetThreadID() << ": All tasks from all event sources are done\n" << JLogEnd();
+			JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << ": All tasks from all event sources are done\n" << JLogEnd();
 
 		//UNLOCK
 		mQueueSetsLock = false;
@@ -400,16 +400,19 @@ std::pair<JEventSource*, JQueueSet*> JThreadManager::CheckAllSourcesDone(std::si
 void JThreadManager::SubmitAsyncTasks(const std::vector<std::shared_ptr<JTaskBase>>& aTasks, JQueueSet::JQueueType aQueueType, const std::string& aQueueName)
 {
 	//Tasks are added to the specified queue.
-	//Function returns immediately; it doesn't wait until all tasks are finished.
+	//Function returns as soon as all tasks are submitted; it doesn't wait until all tasks are finished.
 	//Function ASSUMES all tasks from the same event source!!!
 
 	if(aTasks.empty())
 		return;
 
+	//Get queue
+	auto sEventSource = aTasks[0]->GetEvent()->GetEventSource();
+	auto sQueueSet = GetQueueSet(sEventSource);
+	auto sQueue = sQueueSet->GetQueue(aQueueType, aQueueName);
+
 	//Submit tasks
-	auto sQueue = GetQueue(aTasks[0], aQueueType, aQueueName);
-	for(auto sTask : aTasks)
-		sQueue->AddTask(sTask); //TODO: Check return!!
+	SubmitTasks(aTasks, sQueueSet, sQueue);
 }
 
 //---------------------------------
@@ -430,11 +433,40 @@ void JThreadManager::SubmitTasks(const std::vector<std::shared_ptr<JTaskBase>>& 
 	auto sQueue = sQueueSet->GetQueue(aQueueType, aQueueName);
 
 	//Submit tasks
-	for(auto sTask : aTasks)
-		sQueue->AddTask(sTask); //TODO: Check return!!
+	SubmitTasks(aTasks, sQueueSet, sQueue);
 
 	//While waiting for results, execute tasks from the queue we submitted to
 	DoWorkWhileWaitingForTasks(aTasks, sQueueSet, sQueue);
+}
+
+//---------------------------------
+// SubmitTasks
+//---------------------------------
+void JThreadManager::SubmitTasks(const std::vector<std::shared_ptr<JTaskBase>>& aTasks, JQueueSet* aQueueSet, JQueueInterface* aQueue)
+{
+	//You would think submitting tasks would be easy.
+	//However, the task JQueue can fill up, and we may not be able to put all of our tasks in.
+	//If that happens, we will execute one of the tasks in the queue before trying to add more.
+	//This function returns once all tasks are submitted.
+
+	//Prepare iterators
+	auto sIterator = std::begin(aTasks);
+	auto sEnd = std::end(aTasks);
+
+	//Loop over tasks and submit them
+	while(sIterator != sEnd)
+	{
+		//Try to submit task
+		if(aQueue->AddTask(*sIterator) != JQueueInterface::Flags_t::kNO_ERROR)
+		{
+			//Failed (queue probably full): Execute a task in the meantime
+			auto sTask = aQueue->GetTask();
+			if(sTask != nullptr)
+				(*sTask)(); //Execute task
+		}
+		else
+			sIterator++; //advance to the next task
+	}
 }
 
 //---------------------------------
@@ -516,7 +548,7 @@ void JThreadManager::DoWorkWhileWaitingForTasks(const std::function<bool(void)>&
 		if(sTask != nullptr)
 			(*sTask)(); //Execute task
 		else
-			std::this_thread::sleep_for(std::chrono::nanoseconds(100)); //Sleep a minimal amount.
+			std::this_thread::sleep_for(mSleepTime); //Sleep a minimal amount.
 	}
 }
 

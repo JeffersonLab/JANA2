@@ -5,7 +5,9 @@
 #include <memory>
 
 #include "JResettable.h"
+
 //JTaskBase is used to erase the return-type of the packaged_task
+
 //JTask must be used in a shared_ptr
 //This is because std::future and std::packaged_task are non-copyable (only movable)
 //And often two pieces of code want to use the JTask (the JQueue and the code waiting for the result)
@@ -34,7 +36,7 @@ class JTaskBase : public JResettable
 		JTaskBase(JTaskBase&&) = default;
 		JTaskBase& operator=(JTaskBase&&) = default;
 
-		void SetEvent(std::shared_ptr<const JEvent>& aEvent){mEvent = aEvent;}
+		void SetEvent(const std::shared_ptr<const JEvent>& aEvent){mEvent = aEvent;}
 		void SetEvent(std::shared_ptr<const JEvent>&& aEvent){mEvent = std::move(aEvent);}
 		const JEvent* GetEvent(void) {return mEvent.get();} //don't increase ref count
 

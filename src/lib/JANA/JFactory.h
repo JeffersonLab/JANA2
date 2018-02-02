@@ -56,8 +56,8 @@ class JFactory : public JFactoryBase
 		using IteratorType = typename std::vector<DataType>::const_iterator;
 		using PairType = std::pair<IteratorType, IteratorType>;
 
-		JFactory(std::string aName, std::string aTag = "");
-		virtual ~JFactory() = 0;
+		JFactory(const std::string& aName = typeid(DataType).name(), const std::string& aTag = "");
+		virtual ~JFactory() = default;
 
 		void Set(std::vector<DataType>&& aData);
 		PairType Get(void) const;
@@ -74,15 +74,7 @@ class JFactory : public JFactoryBase
 // JFactory
 //---------------------------------
 template <typename DataType>
-inline JFactory<DataType>::JFactory(std::string aName, std::string aTag) : JFactoryBase(aName, aTag)
-{
-}
-
-//---------------------------------
-// ~JFactory
-//---------------------------------
-template <typename DataType>
-inline JFactory<DataType>::~JFactory(void)
+inline JFactory<DataType>::JFactory(const std::string& aName, const std::string& aTag) : JFactoryBase(aName, aTag)
 {
 }
 

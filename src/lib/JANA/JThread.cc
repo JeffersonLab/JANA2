@@ -58,9 +58,8 @@ JThread::JThread(int aThreadID, JApplication* aApplication, JQueueSet* aQueueSet
 		mEventSource(aSource), mEventQueue(mQueueSet->GetQueue(JQueueSet::JQueueType::Events)), mRotateEventSources(aRotateEventSources),
 		mThreadID(aThreadID)
 {
-	_thread = new std::thread( &JThread::Loop, this );
 	mDebugLevel = 40;
-	mLogger = new JLog(0); //std::cout
+	_thread = new std::thread( &JThread::Loop, this );
 }
 
 //---------------------------------
@@ -203,6 +202,9 @@ void JThread::Loop(void)
 	// Set thread_local global variable
 	JTHREAD = this;
 
+	//Set logger
+	mLogger = new JLog(0); //std::cout
+
 	/// Loop continuously, processing events
 	try{
 		while( mRunStateTarget != kRUN_STATE_ENDED )
@@ -213,13 +215,16 @@ void JThread::Loop(void)
 			// If not running, sleep and loop again
 			if(mRunState != kRUN_STATE_RUNNING)
 			{
-				std::this_thread::sleep_for( std::chrono::nanoseconds(100) ); //Sleep a minimal amount.
+				std::this_thread::sleep_for(mSleepTime); //Sleep a minimal amount.
 				continue;
 			}
 
 			//Check if not enough event-tasks queued
 			if(CheckEventQueue())
-				continue; //we buffered more event-tasks, redo the loop
+			{
+				//Process-event task is submitted, redo the loop in case we want to buffer more
+				continue;
+			}
 
 			// Grab the next task
 			if(mDebugLevel >= 50)
@@ -276,7 +281,7 @@ void JThread::Loop(void)
 				{
 					std::tie(mEventSource, mQueueSet) = mThreadManager->GetNextSourceQueues(mQueueSetIndex);
 					if(mDebugLevel >= 20)
-						*mLogger << "Thread " << mThreadID << ": Rotated sources to: " << mQueueSetIndex << "\n" << JLogEnd();
+						*mLogger << "Thread " << mThreadID << ": Rotated sources to: " << mQueueSetIndex << ", rotation check = " << mFullRotationCheckIndex << "\n" << JLogEnd();
 					mEventQueue = mQueueSet->GetQueue(JQueueSet::JQueueType::Events);
 					mSourceEmpty = false;
 				}
@@ -319,7 +324,21 @@ bool JThread::CheckEventQueue(void)
 			*mLogger << "Thread " << mThreadID << ": Success, add task\n" << JLogEnd();
 
 		//Add the process-event task to the event queue.
-		mEventQueue->AddTask(std::move(sEventTask));
+		//We have no where else to put this task if it doesn't fit in the queue.
+		//So just continually try to add it
+		while(mEventQueue->AddTask(std::move(sEventTask)) != JQueueInterface::Flags_t::kNO_ERROR)
+		{
+			//Add failed, queue must be full.
+			//This shouldn't happen if the relationship between the
+			//queue size and the buffer size is reasonable.
+
+			//Oh well. Take a task and execute it, freeing up a slot
+			auto sWhileWaitingTask = mEventQueue->GetTask();
+			if(sWhileWaitingTask != nullptr)
+				(*sWhileWaitingTask)();
+		}
+
+		//Process-event task is submitted
 		return true;
 	}
 	else if(sReturnStatus == JEventSource::RETURN_STATUS::kNO_MORE_EVENTS)
@@ -371,9 +390,11 @@ void JThread::HandleNullTask(void)
 
 		std::tie(mEventSource, mQueueSet) = mThreadManager->RegisterSourceFinished(mEventSource, mQueueSetIndex);
 		if(mQueueSet != nullptr)
+		{
 			mEventQueue = mQueueSet->GetQueue(JQueueSet::JQueueType::Events);
-		mSourceEmpty = false;
-		mFullRotationCheckIndex = mQueueSetIndex; //reset for full-rotation-with-no-action check
+			mSourceEmpty = false;
+			mFullRotationCheckIndex = mQueueSetIndex; //reset for full-rotation-with-no-action check
+		}
 		return;
 	}
 
@@ -383,15 +404,15 @@ void JThread::HandleNullTask(void)
 		mEventQueue = mQueueSet->GetQueue(JQueueSet::JQueueType::Events);
 		mSourceEmpty = false;
 		if(mDebugLevel >= 20)
-			*mLogger << "Thread " << mThreadID << ": Rotated sources to: " << mQueueSetIndex << "\n" << JLogEnd();
+			*mLogger << "Thread " << mThreadID << ": Rotated sources to " << mQueueSetIndex << ", rotation check = " << mFullRotationCheckIndex << "\n" << JLogEnd();
 
 		//Check if we have rotated through all open event sources without doing anything
 		//If so, we are probably waiting for another thread to finish a task, or for more events to be ready.
 		if(mQueueSetIndex == mFullRotationCheckIndex) //yep
-			std::this_thread::sleep_for( std::chrono::nanoseconds(100) ); //Sleep a minimal amount.
+			std::this_thread::sleep_for(mSleepTime); //Sleep a minimal amount.
 	}
 	else //No tasks, wait a bit for this event source to be ready
-		std::this_thread::sleep_for( std::chrono::nanoseconds(100) ); //Sleep a minimal amount.
+		std::this_thread::sleep_for(mSleepTime); //Sleep a minimal amount.
 }
 
 //---------------------------------
