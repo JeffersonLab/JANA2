@@ -57,6 +57,8 @@
 #include "JEventSource.h"
 #include "JApplication.h"
 #include "JThreadManager.h"
+#include "JLog.h"
+#include "JThread.h"
 
 class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 {
@@ -97,6 +99,7 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 		JThreadManager* mThreadManager = nullptr;
 		uint32_t mRunNumber = 0;
 		uint64_t mEventNumber = 0;
+		int mDebugLevel = 0;
 };
 
 //---------------------------------
@@ -114,12 +117,15 @@ inline const JFactory<DataType>* JEvent::GetFactory(const std::string& aTag) con
 template<class DataType>
 typename JFactory<DataType>::PairType JEvent::Get(const std::string& aTag) const
 {
+	if(mDebugLevel > 0)
+		JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Type = " << typeid(DataType).name() << ", tag = " << aTag << ".\n" << JLogEnd();
+
 	//First get the factory
 	auto sFactoryBase = mFactorySet->GetFactory(std::type_index(typeid(DataType)), aTag);
 	if(sFactoryBase == nullptr)
 	{
 		//Uh oh, No factory exists for this type.
-		jerr << "ERROR: No factory found for type = " << typeid(DataType).name() << ", tag = " << aTag << "\n";
+		jerr << "ERROR: No factory found for type = " << typeid(DataType).name() << ", tag = " << aTag << ".\n";
 		japp->SetExitCode(-1);
 		japp->Quit();
 		//TODO: Throw exception??
@@ -134,6 +140,9 @@ typename JFactory<DataType>::PairType JEvent::Get(const std::string& aTag) const
 	//Attempt to acquire the "creating" lock for the factory
 	if(!sFactory->AcquireCreatingLock())
 	{
+		if(mDebugLevel >= 10)
+			JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Another thread is creating objects, do work while waiting.\n" << JLogEnd();
+
 		//We failed: Another thread is currently creating the objects.
 		//Instead, execute queued tasks until the objects are ready
 		mThreadManager->DoWorkWhileWaiting(sFactory->GetCreatingLock(), mEventSource);
@@ -142,21 +151,30 @@ typename JFactory<DataType>::PairType JEvent::Get(const std::string& aTag) const
 		return sFactory->Get();
 	}
 
+	if(mDebugLevel >= 10)
+		JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Create lock acquired.\n" << JLogEnd();
+
 	//If we throw exception within here we may not release the lock, unless we do try/catch:
 	try
 	{
 		//Lock acquired. First check to see if they were created since the last check.
 		if(sFactory->GetCreated())
 		{
+			if(mDebugLevel >= 10)
+				JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Objects created in meantime.\n" << JLogEnd();
 			sFactory->ReleaseCreatingLock();
 			return sFactory->Get();
 		}
 
 		//Not yet: We need to create the objects.
 		//First try to get from the event source
+		if(mDebugLevel >= 10)
+			JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Try to get " << typeid(DataType).name() << " (tag = " << aTag << ") objects from JEventSource.\n" << JLogEnd();
 		auto sSharedThis = this->shared_from_this();
 		if(mEventSource->GetObjects(sSharedThis, static_cast<JFactoryBase*>(sFactory)))
 		{
+			if(mDebugLevel >= 10)
+				JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): " << typeid(DataType).name() << " (tag = " << aTag << ") retrieved from JEventSource.\n" << JLogEnd();
 			sFactory->SetCreated(true);
 			sFactory->ReleaseCreatingLock();
 			return sFactory->Get();
@@ -166,11 +184,15 @@ typename JFactory<DataType>::PairType JEvent::Get(const std::string& aTag) const
 		//First compare current run # to previous run. If different, call ChangeRun()
 		if(sFactory->GetPreviousRunNumber() != mRunNumber)
 		{
+			if(mDebugLevel >= 10)
+				JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Change run.\n" << JLogEnd();
 			sFactory->ChangeRun(sSharedThis);
 			sFactory->SetPreviousRunNumber(mRunNumber);
 		}
 
 		//Create the objects
+		if(mDebugLevel >= 10)
+			JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Create " << typeid(DataType).name() << " (tag = " << aTag << ") with factory.\n" << JLogEnd();
 		sFactory->Create(sSharedThis);
 		sFactory->SetCreated(true);
 		sFactory->ReleaseCreatingLock();
@@ -183,8 +205,13 @@ typename JFactory<DataType>::PairType JEvent::Get(const std::string& aTag) const
 		std::rethrow_exception(sException);
 	}
 
+	//Get the object iterators
+	auto sIteratorPair = sFactory->Get();
+	if(mDebugLevel > 0)
+		JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Getting " << std::distance(sIteratorPair.first, sIteratorPair.second) << " " << typeid(DataType).name() << " objects, tag = " << aTag << ".\n" << JLogEnd();
+
 	//Return the objects
-	return sFactory->Get();
+	return sIteratorPair;
 }
 
 #endif // _JEvent_h_

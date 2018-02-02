@@ -38,7 +38,9 @@ JEventProcessor_jana_test::JEventProcessor_jana_test(void)
 	//This is the new init()
 
 	//Add queue for subtasks (not supplied by default!)
-	japp->GetJThreadManager()->AddQueue(JQueueSet::JQueueType::SubTasks, new JQueue("Subtasks", 2000));
+	auto sSubtaskQueue = new JQueue("Subtasks", 2000);
+	JLog() << "Thread 0 JEventProcessor_jana_test constructor: Created subtask queue " << sSubtaskQueue << ".\n" << JLogEnd();
+	japp->GetJThreadManager()->AddQueue(JQueueSet::JQueueType::SubTasks, sSubtaskQueue);
 }
 
 //------------------
@@ -69,9 +71,9 @@ void JEventProcessor_jana_test::AnalyzeEvent(const std::shared_ptr<const JEvent>
 	// since multiple threads may call this method at the same time.
 
 	//Get objects
+	auto sIterators_SourceObject2 = aEvent->Get<JSourceObject2>(); //Will get from file, and will submit jobs to generate random #'s
 	auto sIterators_JanaTest = aEvent->Get<jana_test>(); //Will get from factory
 	auto sIterators_SourceObject = aEvent->Get<JSourceObject>(); //Will get from file
-	auto sIterators_SourceObject2 = aEvent->Get<JSourceObject2>(); //Will get from file, and will submit jobs to generate random #'s
 
 	//Print JSourceObject's inline-style
 	while(sIterators_SourceObject.first != sIterators_SourceObject.second)

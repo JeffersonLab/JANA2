@@ -47,6 +47,10 @@
 #include "JThreadManager.h"
 #include "JEventSource.h"
 #include "JApplication.h"
+#include "JQueueInterface.h"
+#include "JQueueSet.h"
+#include "JLog.h"
+
 
 thread_local JThread *JTHREAD = nullptr;
 
@@ -228,12 +232,12 @@ void JThread::Loop(void)
 
 			// Grab the next task
 			if(mDebugLevel >= 50)
-				*mLogger << "Thread " << mThreadID << ": Grab task\n" << JLogEnd();
+				*mLogger << "Thread " << mThreadID << " JThread::Loop(): Grab task\n" << JLogEnd();
 			auto sQueueType = JQueueSet::JQueueType::Events;
 			auto sTask = std::shared_ptr<JTaskBase>(nullptr);
 			std::tie(sQueueType, sTask) = mQueueSet->GetTask();
 			if(mDebugLevel >= 50)
-				*mLogger << "Thread " << mThreadID << ": Task pointer: " << sTask << "\n" << JLogEnd();
+				*mLogger << "Thread " << mThreadID << " JThread::Loop(): Task pointer: " << sTask << "\n" << JLogEnd();
 
 			//Do we have a task?
 			if(sTask == nullptr)
@@ -281,7 +285,7 @@ void JThread::Loop(void)
 				{
 					std::tie(mEventSource, mQueueSet) = mThreadManager->GetNextSourceQueues(mQueueSetIndex);
 					if(mDebugLevel >= 20)
-						*mLogger << "Thread " << mThreadID << ": Rotated sources to: " << mQueueSetIndex << ", rotation check = " << mFullRotationCheckIndex << "\n" << JLogEnd();
+						*mLogger << "Thread " << mThreadID << " JThread::Loop(): Rotated sources to: " << mQueueSetIndex << ", rotation check = " << mFullRotationCheckIndex << "\n" << JLogEnd();
 					mEventQueue = mQueueSet->GetQueue(JQueueSet::JQueueType::Events);
 					mSourceEmpty = false;
 				}
@@ -306,12 +310,12 @@ bool JThread::CheckEventQueue(void)
 	//Otherwise (buffer is high enough or there are no events) return false
 
 	if(mDebugLevel >= 50)
-		*mLogger << "Thread " << mThreadID << ": Is-empty, enough buffered: " << mSourceEmpty << ", " << mEventQueue->AreEnoughTasksBuffered() << "\n" << JLogEnd();
+		*mLogger << "Thread " << mThreadID << " JThread::CheckEventQueue(): Is-empty, enough buffered: " << mSourceEmpty << ", " << mEventQueue->AreEnoughTasksBuffered() << "\n" << JLogEnd();
 	if(mSourceEmpty || mEventQueue->AreEnoughTasksBuffered())
 		return false; //Didn't buffer more events, just execute the next available task
 
 	if(mDebugLevel >= 20)
-		*mLogger << "Thread " << mThreadID << ": Get process event task\n" << JLogEnd();
+		*mLogger << "Thread " << mThreadID << " JThread::CheckEventQueue(): Get process event task\n" << JLogEnd();
 
 	//Not enough queued. Get the next event from the source, and get a task to process it (unless another thread has locked access)
 	auto sReturnStatus = JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
@@ -321,7 +325,7 @@ bool JThread::CheckEventQueue(void)
 	if(sReturnStatus == JEventSource::RETURN_STATUS::kSUCCESS)
 	{
 		if(mDebugLevel >= 40)
-			*mLogger << "Thread " << mThreadID << ": Success, add task\n" << JLogEnd();
+			*mLogger << "Thread " << mThreadID << " JThread::CheckEventQueue(): Success, add task\n" << JLogEnd();
 
 		//Add the process-event task to the event queue.
 		//We have no where else to put this task if it doesn't fit in the queue.
@@ -344,7 +348,7 @@ bool JThread::CheckEventQueue(void)
 	else if(sReturnStatus == JEventSource::RETURN_STATUS::kNO_MORE_EVENTS)
 	{
 		if(mDebugLevel >= 10)
-			*mLogger << "Thread " << mThreadID << ": No more events\n" << JLogEnd();
+			*mLogger << "Thread " << mThreadID << " JThread::CheckEventQueue(): No more events\n" << JLogEnd();
 
 		//The source has been emptied.
 		//Continue processing jobs from this source until there aren't any more
@@ -354,7 +358,7 @@ bool JThread::CheckEventQueue(void)
 	else if(sReturnStatus == JEventSource::RETURN_STATUS::kTRY_AGAIN)
 	{
 		if(mDebugLevel >= 10)
-			*mLogger << "Thread " << mThreadID << ": Try again later\n" << JLogEnd();
+			*mLogger << "Thread " << mThreadID << " JThread::CheckEventQueue(): Try again later\n" << JLogEnd();
 		return false;
 	}
 
@@ -381,7 +385,7 @@ void JThread::HandleNullTask(void)
 	//We track this by counting the number of open JEvent's in each JEventSource.
 
 	if(mDebugLevel >= 10)
-		*mLogger << "Thread " << mThreadID << ": Null task: is empty, # outstanding = " << mSourceEmpty << ", " << mEventSource->GetNumOutstandingEvents() << "\n" << JLogEnd();
+		*mLogger << "Thread " << mThreadID << " JThread::HandleNullTask(): Null task: is empty, # outstanding = " << mSourceEmpty << ", " << mEventSource->GetNumOutstandingEvents() << "\n" << JLogEnd();
 	if(mSourceEmpty && (mEventSource->GetNumOutstandingEvents() == 0))
 	{
 		//Tell the thread manager that the source is finished (in case it didn't know already)
@@ -404,7 +408,7 @@ void JThread::HandleNullTask(void)
 		mEventQueue = mQueueSet->GetQueue(JQueueSet::JQueueType::Events);
 		mSourceEmpty = false;
 		if(mDebugLevel >= 20)
-			*mLogger << "Thread " << mThreadID << ": Rotated sources to " << mQueueSetIndex << ", rotation check = " << mFullRotationCheckIndex << "\n" << JLogEnd();
+			*mLogger << "Thread " << mThreadID << " JThread::HandleNullTask(): Rotated sources to " << mQueueSetIndex << ", rotation check = " << mFullRotationCheckIndex << "\n" << JLogEnd();
 
 		//Check if we have rotated through all open event sources without doing anything
 		//If so, we are probably waiting for another thread to finish a task, or for more events to be ready.

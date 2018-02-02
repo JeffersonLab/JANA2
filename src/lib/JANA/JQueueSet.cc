@@ -43,6 +43,7 @@
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 #include "JQueueSet.h"
+#include "JLog.h"
 
 #include <algorithm>
 
@@ -109,7 +110,7 @@ void JQueueSet::RemoveQueues(void)
 //---------------------------------
 JQueueSet* JQueueSet::Clone(void) const
 {
-	auto sClone = new JQueueSet();
+	auto sClonedSet = new JQueueSet();
 
 	//Loop through queue types
 	for(auto& sQueuePair : mQueues)
@@ -119,10 +120,15 @@ JQueueSet* JQueueSet::Clone(void) const
 
 		//Loop through queues of this type
 		for(auto& sQueue : sQueueVector)
-			sClone->AddQueue(sQueueType, sQueue->Clone());
+		{
+			auto sClonedQueue = sQueue->CloneEmpty();
+			JLog() << "Thread 0 JQueueSet::Clone(): Queue type " << static_cast<std::underlying_type<JQueueSet::JQueueType>::type>(sQueueType) <<
+					", Old queue = " << sQueue << ", New queue = " << sClonedQueue << ".\n" << JLogEnd();
+			sClonedSet->AddQueue(sQueueType, sClonedQueue);
+		}
 	}
 
-	return sClone;
+	return sClonedSet;
 }
 
 //---------------------------------

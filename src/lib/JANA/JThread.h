@@ -45,15 +45,15 @@
 #define _JThread_h_
 
 #include <thread>
+#include <map>
 #include <atomic>
-
-#include "JQueueInterface.h"
-#include "JQueueSet.h"
-#include "JLog.h"
 
 class JThreadManager;
 class JEventSource;
 class JApplication;
+class JQueueSet;
+class JQueueInterface;
+class JLog;
 
 class JThread{
 	public:

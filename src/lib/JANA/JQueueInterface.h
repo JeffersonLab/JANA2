@@ -82,7 +82,7 @@ class JQueueInterface
 		virtual uint64_t GetNumTasksProcessed(void) = 0;
 
 		std::string GetName(void) const;
-		virtual JQueueInterface* Clone(void) const = 0;
+		virtual JQueueInterface* CloneEmpty(void) const = 0; //Create an empty clone of the queue (no tasks copied)
 
 	private:
 		std::string mName;

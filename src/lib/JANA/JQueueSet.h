@@ -56,7 +56,7 @@ class JQueueSet
 
 	public:
 
-		//In order of execution priority. For example:
+		//Enum is in order of execution priority. For example:
 		//Could be I/O bound:
 			//If not enough events buffered (in queue) from current input, buffer another event
 			//If too many events in output buffers (queues), execute output tasks

@@ -73,11 +73,13 @@ class JQueue : public JQueueInterface
 		uint32_t GetNumTasks(void);
 		uint64_t GetNumTasksProcessed(void);
 	
-		JQueueInterface* Clone(void) const;
+		JQueueInterface* CloneEmpty(void) const;
 
 	private:
 
 		std::size_t mTaskBufferSize = 0;
+		int mDebugLevel = 0;
+		uint32_t mLogTarget = 0; //cout
 
 		std::vector<std::shared_ptr<JTaskBase>> mQueue;
 		std::atomic<uint64_t> mTasksProcessed{0};

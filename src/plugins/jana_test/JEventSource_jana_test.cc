@@ -146,6 +146,7 @@ bool JEventSource_jana_test::GetObjects(const std::shared_ptr<const JEvent>& aEv
 	//TODO: Consider improving JTask class to allow no JEvent (specialize)
 	auto sGenerateRandoms = [sMinNumRandoms, sMaxNumRandoms](const std::shared_ptr<const JEvent>&) -> std::vector<double>
 	{
+return {};
 		//Define our own random # generator
 		//Don't use the one in the JEventSource: Not thread safe
 		std::mt19937 sRandomGenerator;
@@ -182,7 +183,9 @@ bool JEventSource_jana_test::GetObjects(const std::shared_ptr<const JEvent>& aEv
 		sTask->SetEvent(aEvent);
 		sTask->SetTask(std::move(sPackagedTask));
 
-		//Move the task onto the vector (to avoid changing ref count)
+		//Move the task onto the vector (to avoid changing ref count) //casts at the same time
+//		auto sCastedTask = std::static_pointer_cast<JTaskBase>(sTask);
+//		sTasks.push_back(std::move(sCastedTask));
 		sTasks.push_back(std::move(sTask));
 	}
 
@@ -190,6 +193,7 @@ bool JEventSource_jana_test::GetObjects(const std::shared_ptr<const JEvent>& aEv
 	//This function won't return until all of the tasks are finished.
 	//This thread will execute tasks (hopefully these) in the meantime.
 	mApplication->GetJThreadManager()->SubmitTasks(sTasks);
+//	mApplication->GetJThreadManager()->SubmitTasks({});
 
 	//Prepare the object vector
 	std::vector<JSourceObject2> sObjects;
@@ -200,6 +204,7 @@ bool JEventSource_jana_test::GetObjects(const std::shared_ptr<const JEvent>& aEv
 	{
 		//Emplace new object onto the back of the data vector
 		sObjects.emplace_back(mRandomGenerator(), si); //Random energy, id = object#
+continue;
 		auto& sObject = sObjects.back(); //Get reference to new object
 
 		//Move the randoms into the object

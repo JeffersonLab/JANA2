@@ -39,12 +39,15 @@
 
 #include <iostream>
 #include "JQueue.h"
+#include "JLog.h"
+#include "JThread.h"
 
 //---------------------------------
 // JQueue    (Constructor)
 //---------------------------------
 JQueue::JQueue(const std::string& aName, std::size_t aQueueSize, std::size_t aTaskBufferSize) : JQueueInterface(aName), mTaskBufferSize(aTaskBufferSize)
 {
+	mDebugLevel = 500;
 	mQueue.resize(aQueueSize);
 }
 
@@ -84,6 +87,9 @@ JQueueInterface::Flags_t JQueue::AddTask(const std::shared_ptr<JTaskBase>& aTask
 	//The additional move into the queue is cheap (2 pointers),
 	//and is worth avoiding the code duplication (or confusion of other tricks)
 
+	if(mDebugLevel > 0)
+		JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JQueue::AddTask(): Copy-add task " << aTask.get() << "\n" << JLogEnd();
+
 	auto sTempTask = aTask;
 	return AddTask(std::move(sTempTask));
 }
@@ -106,6 +112,12 @@ JQueueInterface::Flags_t JQueue::AddTask(std::shared_ptr<JTaskBase>&& aTask)
 	// calling thread a chance to do something else or call this again.
 	// for another try.)
 
+	if(mDebugLevel > 0)
+		JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JQueue::AddTask(): Move-add task " << aTask.get() << ".\n" << JLogEnd();
+	if(mDebugLevel >= 10)
+		JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JQueue::AddTask(): begin/end/read/write = " <<
+				ibegin << ", " << iend << ", " << iread << ", " << iwrite << "\n" << JLogEnd();
+
 	while(true)
 	{
 		uint32_t idx = iwrite;
@@ -126,10 +138,14 @@ JQueueInterface::Flags_t JQueue::AddTask(std::shared_ptr<JTaskBase>&& aTask)
 			//OK, we've claimed exclusive access to the slot. Insert the task.
 			mQueue[idx] = std::move(aTask);
 
+			if(mDebugLevel > 0)
+				JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JQueue::AddTask(): Task added to slot " << idx << ".\n" << JLogEnd();
+
 			//Now that we've inserted the task, indicate to readers that this slot can now be read (by incrementing iend)
 			uint32_t save_idx = idx;
 			while(!iend.compare_exchange_weak(idx, inext))
 				idx = save_idx;
+
 			return Flags_t::kNO_ERROR;
 		}
 	}
@@ -227,7 +243,8 @@ bool JQueue::AreEnoughTasksBuffered(void)
 //---------------------------------
 // Clone
 //---------------------------------
-JQueueInterface* JQueue::Clone(void) const
+JQueueInterface* JQueue::CloneEmpty(void) const
 {
+	//Create an empty clone of the queue (no tasks copied)
 	return (new JQueue(*this));
 }
