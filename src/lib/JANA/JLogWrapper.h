@@ -29,7 +29,7 @@ class JLogWrapper
 inline void JLogWrapper::Stream(const std::string& aContent)
 {
 	std::lock_guard<std::mutex> sLock(mMutex);
-	mStream << mLogPrefix << aContent << mLogSuffix;
+	mStream << mLogPrefix << aContent << mLogSuffix << std::flush;
 }
 
 #endif

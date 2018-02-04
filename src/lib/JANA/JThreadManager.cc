@@ -396,6 +396,66 @@ std::pair<JEventSource*, JQueueSet*> JThreadManager::CheckAllSourcesDone(std::si
 }
 
 //---------------------------------
+// ExecuteTask
+//---------------------------------
+void JThreadManager::ExecuteTask(std::shared_ptr<JTaskBase>& aTask, JQueueSet::JQueueType aQueueType)
+{
+	//If task is from the event queue, prepare it for execution
+	//See function for details
+	if(aQueueType == JQueueSet::JQueueType::Events)
+		PrepareEventTask(aTask);
+
+	try
+	{
+		(*aTask)(); //Execute task
+	}
+	catch(...)
+	{
+		//Catch the exception
+		auto sException = std::current_exception();
+
+		if(mDebugLevel > 0)
+			JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JThreadManager::ExecuteTask(): Caught exception!\n" << JLogEnd();
+
+		//Rethrow the exception
+		std::rethrow_exception(sException);
+	}
+	if(mDebugLevel >= 10)
+		JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JThreadManager::ExecuteTask(): Task executed successfully.\n" << JLogEnd();
+}
+
+//---------------------------------
+// PrepareEventTask
+//---------------------------------
+void JThreadManager::PrepareEventTask(const std::shared_ptr<JTaskBase>& aTask) const
+{
+	//If from the event queue, add factories to the event (JFactorySet)
+	//We don't add them earlier (e.g. in the event source) because it would take too much memory
+	//E.g. if 200 events in the queue, we'd have 200 factories of each type
+	//Instead, only the events that are actively being analyzed have factories
+	//Once the JEvent goes out of scope and releases the JFactorySet, it returns to the pool
+
+	//OK, this is a bit ugly
+	//The problem is that JTask holds a shared_ptr of const JEvent*, and we need to modify it.
+	//Why not just hold a non-const shared_ptr?
+	//Because we don't want the user calling things like JEvent::SetEventNumber() in their factories.
+
+	//So what do we do? The dreaded const_cast.
+	auto sEvent = const_cast<JEvent*>(aTask->GetEvent());
+
+	//Is there something else we can do instead?
+	//We could pass the JFactorySet alongside the JEvent instead of as a member of it.
+	//But the user is not intended to ever directly interact with the JFactorySet
+	//And we'll also have to deal with this again for sending along barrier-event data.
+	//This ends up requiring a lot of arguments to factory/processor/task methods.
+
+	//Finally, by having the JEvent Release() function recycle the JFactorySet, it doesn't have to be shared_ptr
+	//If it's shared_ptr: more (slow) atomic operations
+	//Just make the JFactorySet a member and cheat a little bit. It's a controlled environment.
+	sEvent->SetFactorySet(mApplication->GetFactorySet());
+}
+
+//---------------------------------
 // SubmitAsyncTasks
 //---------------------------------
 void JThreadManager::SubmitAsyncTasks(const std::vector<std::shared_ptr<JTaskBase>>& aTasks, JQueueSet::JQueueType aQueueType, const std::string& aQueueName)
@@ -416,7 +476,7 @@ void JThreadManager::SubmitAsyncTasks(const std::vector<std::shared_ptr<JTaskBas
 	auto sQueue = sQueueSet->GetQueue(aQueueType, aQueueName);
 
 	//Submit tasks
-	SubmitTasks(aTasks, sQueueSet, sQueue);
+	SubmitTasks(aTasks, sQueueSet, sQueue, aQueueType);
 }
 
 //---------------------------------
@@ -435,26 +495,21 @@ void JThreadManager::SubmitTasks(const std::vector<std::shared_ptr<JTaskBase>>& 
 		return;
 
 	//Get queue
-	JLog(mLogTarget) << "task = " << aTasks[0].get() << "\n" << JLogEnd();
-	JLog(mLogTarget) << "event = " << aTasks[0]->GetEvent() << "\n" << JLogEnd();
 	auto sEventSource = aTasks[0]->GetEvent()->GetEventSource();
-	JLog(mLogTarget) << "event source = " << sEventSource << "\n" << JLogEnd();
 	auto sQueueSet = GetQueueSet(sEventSource);
-	JLog(mLogTarget) << "queue set = " << sQueueSet << "\n" << JLogEnd();
 	auto sQueue = sQueueSet->GetQueue(aQueueType, aQueueName);
-	JLog(mLogTarget) << "queue = " << sQueue << "\n" << JLogEnd();
 
 	//Submit tasks
-	SubmitTasks(aTasks, sQueueSet, sQueue);
+	SubmitTasks(aTasks, sQueueSet, sQueue, aQueueType);
 
 	//While waiting for results, execute tasks from the queue we submitted to
-	DoWorkWhileWaitingForTasks(aTasks, sQueueSet, sQueue);
+	DoWorkWhileWaitingForTasks(aTasks, sQueueSet, sQueue, aQueueType);
 }
 
 //---------------------------------
 // SubmitTasks
 //---------------------------------
-void JThreadManager::SubmitTasks(const std::vector<std::shared_ptr<JTaskBase>>& aTasks, JQueueSet* aQueueSet, JQueueInterface* aQueue)
+void JThreadManager::SubmitTasks(const std::vector<std::shared_ptr<JTaskBase>>& aTasks, JQueueSet* aQueueSet, JQueueInterface* aQueue, JQueueSet::JQueueType aQueueType)
 {
 	//You would think submitting tasks would be easy.
 	//However, the task JQueue can fill up, and we may not be able to put all of our tasks in.
@@ -469,16 +524,12 @@ void JThreadManager::SubmitTasks(const std::vector<std::shared_ptr<JTaskBase>>& 
 	while(sIterator != sEnd)
 	{
 		//Try to submit task
-std::cout << "try to add " << (*sIterator).get() << "\n";
 		if(aQueue->AddTask(*sIterator) != JQueueInterface::Flags_t::kNO_ERROR)
 		{
-std::cout << "failed\n";
 			//Failed (queue probably full): Execute a task in the meantime
 			auto sTask = aQueue->GetTask();
-			std::cout << "execute\n";
 			if(sTask != nullptr)
-				(*sTask)(); //Execute task
-			std::cout << "executed\n";
+				ExecuteTask(sTask, aQueueType);
 		}
 		else
 			sIterator++; //advance to the next task
@@ -510,7 +561,7 @@ void JThreadManager::DoWorkWhileWaiting(const std::atomic<bool>& aWaitFlag, cons
 	auto sWaitFunction = [&aWaitFlag](void) -> bool {return aWaitFlag;};
 
 	//Execute tasks while waiting
-	DoWorkWhileWaitingForTasks(sWaitFunction, sQueueSet, sQueue);
+	DoWorkWhileWaitingForTasks(sWaitFunction, sQueueSet, sQueue, aQueueType);
 }
 
 //---------------------------------
@@ -529,13 +580,13 @@ void JThreadManager::DoWorkWhileWaitingForTasks(const std::vector<std::shared_pt
 	auto sQueue = sQueueSet->GetQueue(aQueueType, aQueueName);
 
 	//Defer to next function
-	DoWorkWhileWaitingForTasks(aSubmittedTasks, sQueueSet, sQueue);
+	DoWorkWhileWaitingForTasks(aSubmittedTasks, sQueueSet, sQueue, aQueueType);
 }
 
 //---------------------------------
 // DoWorkWhileWaitingForTasks
 //---------------------------------
-void JThreadManager::DoWorkWhileWaitingForTasks(const std::vector<std::shared_ptr<JTaskBase>>& aSubmittedTasks, JQueueSet* aQueueSet, JQueueInterface* aQueue)
+void JThreadManager::DoWorkWhileWaitingForTasks(const std::vector<std::shared_ptr<JTaskBase>>& aSubmittedTasks, JQueueSet* aQueueSet, JQueueInterface* aQueue, JQueueSet::JQueueType aQueueType)
 {
 	//The passed-in tasks have already been submitted (e.g. via SubmitTasks or SubmitAsyncTasks).
 	//While waiting for those to finish, we get tasks from the queues and execute those.
@@ -550,13 +601,13 @@ void JThreadManager::DoWorkWhileWaitingForTasks(const std::vector<std::shared_pt
 		return !std::all_of(std::begin(aSubmittedTasks), std::end(aSubmittedTasks), sTaskCompleteChecker);};
 
 	//Execute tasks while waiting
-	DoWorkWhileWaitingForTasks(sWaitFunction, aQueueSet, aQueue);
+	DoWorkWhileWaitingForTasks(sWaitFunction, aQueueSet, aQueue, aQueueType);
 }
 
 //---------------------------------
 // DoWorkWhileWaitingForTasks
 //---------------------------------
-void JThreadManager::DoWorkWhileWaitingForTasks(const std::function<bool(void)>& aWaitFunction, JQueueSet* aQueueSet, JQueueInterface* aQueue)
+void JThreadManager::DoWorkWhileWaitingForTasks(const std::function<bool(void)>& aWaitFunction, JQueueSet* aQueueSet, JQueueInterface* aQueue, JQueueSet::JQueueType aQueueType)
 {
 	//Won't return until aWaitFunction returns true.
 	//In the meantime, executes tasks (or sleeps if none available)
@@ -566,9 +617,11 @@ void JThreadManager::DoWorkWhileWaitingForTasks(const std::function<bool(void)>&
 	while(aWaitFunction())
 	{
 		//Get task and execute it
-		auto sTask = GetTask(aQueueSet, aQueue);
+		auto sQueueType = JQueueSet::JQueueType::Events;
+		auto sTask = std::shared_ptr<JTaskBase>(nullptr);
+		std::tie(sQueueType, sTask) = GetTask(aQueueSet, aQueue, aQueueType);
 		if(sTask != nullptr)
-			(*sTask)(); //Execute task
+			ExecuteTask(sTask, sQueueType);
 		else
 			std::this_thread::sleep_for(mSleepTime); //Sleep a minimal amount.
 	}
@@ -580,7 +633,7 @@ void JThreadManager::DoWorkWhileWaitingForTasks(const std::function<bool(void)>&
 //---------------------------------
 // GetTask
 //---------------------------------
-std::shared_ptr<JTaskBase> JThreadManager::GetTask(JQueueSet* aQueueSet, JQueueInterface* aQueue) const
+std::pair<JQueueSet::JQueueType, std::shared_ptr<JTaskBase>> JThreadManager::GetTask(JQueueSet* aQueueSet, JQueueInterface* aQueue, JQueueSet::JQueueType aQueueType) const
 {
 	//This is called by threads who have just submitted (or are waiting on) tasks to complete,
 	//and want work to do in the meantime.
@@ -591,13 +644,19 @@ std::shared_ptr<JTaskBase> JThreadManager::GetTask(JQueueSet* aQueueSet, JQueueI
 	//Prefer executing tasks from the input queue
 	auto sTask = aQueue->GetTask();
 	if(sTask != nullptr)
-		return sTask;
+		return std::make_pair(aQueueType, sTask);
+
+	if(mDebugLevel > 0)
+		JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JThreadManager::GetTask(): Queue empty.\n" << JLogEnd();
 
 	//Next, prefer executing tasks from the same event source (input queue set)
 	JQueueSet::JQueueType sQueueType;
 	std::tie(sQueueType, sTask) = aQueueSet->GetTask();
 	if(sTask != nullptr)
-		return sTask;
+		return std::make_pair(sQueueType, sTask);
+
+	if(mDebugLevel > 0)
+		JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JThreadManager::GetTask(): Event source tasks empty.\n" << JLogEnd();
 
 	//Finally, loop over all active queue sets (different event sources)
 	LockQueueSets();
@@ -610,13 +669,16 @@ std::shared_ptr<JTaskBase> JThreadManager::GetTask(JQueueSet* aQueueSet, JQueueI
 		if(sTask != nullptr)
 		{
 			mQueueSetsLock = false; //UNLOCK
-			return sTask;
+			return std::make_pair(sQueueType, sTask);
 		}
 	}
 
+	if(mDebugLevel > 0)
+		JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JThreadManager::GetTask(): No tasks.\n" << JLogEnd();
+
 	//No tasks in any queues, return nullptr
 	mQueueSetsLock = false; //UNLOCK
-	return nullptr;
+	return std::make_pair(JQueueSet::JQueueType::Events, std::shared_ptr<JTaskBase>(nullptr));
 }
 
 //---------------------------------
@@ -637,19 +699,20 @@ void JThreadManager::SetThreadAffinity(int affinity_algorithm)
 
 	// The default algorithm does not set the affinity at all
 	if( affinity_algorithm==0 ){
-		jout << "Thread affinity not set" << std::endl;
+		if(mDebugLevel > 0)
+			JLog(mLogTarget) << "JThreadManager::SetThreadAffinity(): Thread affinity not set.\n" << JLogEnd();
 		return;
 	}
 
 	if( typeid(std::thread::native_handle_type) != typeid(pthread_t) ){
-		jout << std::endl;
-		jout << "WARNING: AFFINITY is set, but thread system is not pthreads." << std::endl;
-		jout << "         Thread affinity will not be set by JANA." << std::endl;
-		jout << std::endl;
+		JLog(mLogTarget) << "\n";
+		JLog(mLogTarget) << "WARNING: AFFINITY is set, but thread system is not pthreads.\n";
+		JLog(mLogTarget) << "         Thread affinity will not be set by JANA.\n";
+		JLog(mLogTarget) << "\n" << JLogEnd();
 		return;
 	}
 
-	jout << "Setting affinity for all threads using algorithm " << affinity_algorithm << std::endl;
+	JLog(mLogTarget) << "JThreadManager::SetThreadAffinity(): Setting affinity for all threads using algorithm " << affinity_algorithm << "\n" << JLogEnd();
 
 	uint32_t ithread = 0;
 	uint32_t ncores = GetNcores();
@@ -675,7 +738,7 @@ void JThreadManager::SetThreadAffinity(int affinity_algorithm)
 				icpu %= ncores;
 				break;
 			default:
-				jerr << "Unknown affinity algorithm " << affinity_algorithm << std::endl;
+				JLog(1) << "Unknown affinity algorithm " << affinity_algorithm << "\n" << JLogEnd(); //1: std::cerr
 				exit( -1 );
 				break;
 		}
@@ -693,7 +756,8 @@ void JThreadManager::SetThreadAffinity(int affinity_algorithm)
     	CPU_ZERO(&cpuset);
     	CPU_SET( icpu, &cpuset);
     	int rc = pthread_setaffinity_np( t, sizeof(cpu_set_t), &cpuset);
-		if( rc !=0 ) jerr << "ERROR: pthread_setaffinity_np returned " << rc << " for thread " << ithread << std::endl;
+		if( rc !=0 )
+			JLog(1) << "ERROR: pthread_setaffinity_np returned " << rc << " for thread " << ithread << "\n" << JLogEnd(); //1: std::cerr
 #endif
 	}
 }

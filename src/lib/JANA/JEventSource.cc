@@ -83,14 +83,14 @@ std::pair<std::shared_ptr<JTaskBase>, JEventSource::RETURN_STATUS> JEventSource:
 
 	//Attempt to acquire atomic lock
 	bool sExpected = false;
-	if(!mInUse.compare_exchange_strong(sExpected, true)) //failed, return busy
+	if(!mGettingEvent.compare_exchange_strong(sExpected, true)) //failed, return busy
 		return std::make_pair(std::shared_ptr<JTaskBase>(nullptr), RETURN_STATUS::kBUSY);
 
 	//Get the event from the input file
 	auto sEventPair = GetEvent();
 
 	//Done with the lock: Unlock
-	mInUse = false;
+	mGettingEvent = false;
 
 	//Return if no event
 	if(sEventPair.first == nullptr)

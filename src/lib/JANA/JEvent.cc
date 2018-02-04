@@ -87,7 +87,7 @@ void JEvent::SetFactorySet(JFactorySet* aFactorySet)
 void JEvent::Release(void)
 {
 	//Release all (pointers to) resources, called when recycled to pool
-	mApplication->Recycle(mFactorySet);
+	mApplication->Recycle(const_cast<JFactorySet*>(mFactorySet));
 	mFactorySet = nullptr;
 	mEventSource->DecrementEventCount();
 	mEventSource = nullptr;

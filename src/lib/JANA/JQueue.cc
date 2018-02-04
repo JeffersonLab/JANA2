@@ -47,7 +47,7 @@
 //---------------------------------
 JQueue::JQueue(const std::string& aName, std::size_t aQueueSize, std::size_t aTaskBufferSize) : JQueueInterface(aName), mTaskBufferSize(aTaskBufferSize)
 {
-	mDebugLevel = 500;
+	mDebugLevel = 0;
 	mQueue.resize(aQueueSize);
 }
 
@@ -56,8 +56,11 @@ JQueue::JQueue(const std::string& aName, std::size_t aQueueSize, std::size_t aTa
 //---------------------------------
 JQueue::JQueue(const JQueue& aQueue) : JQueueInterface(aQueue)
 {
-	//Assume this is called by Clone() or similar on an empty queue (ugh, can improve later)
+	//Assume this is called by CloneEmpty() or similar on an empty queue (ugh, can improve later)
 	mTaskBufferSize = aQueue.mTaskBufferSize;
+	mDebugLevel = aQueue.mDebugLevel;
+	mLogTarget = aQueue.mLogTarget;
+	mQueue.resize(aQueue.mQueue.size());
 }
 
 //---------------------------------

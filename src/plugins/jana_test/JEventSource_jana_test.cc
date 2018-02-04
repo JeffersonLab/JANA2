@@ -9,13 +9,14 @@
 #include "JEvent_test.h"
 #include "JSourceFactoryGenerator.h"
 #include "JTask.h"
+#include "JLog.h"
 
 //----------------
 // Constructor
 //----------------
 JEventSource_jana_test::JEventSource_jana_test(const char* source_name) : JEventSource(source_name, japp)
 {
-	mNumEventsToGenerate = 20000;
+	mNumEventsToGenerate = 200;
 
 	//Seed random number generator //not ideal!
 	auto sTime = std::chrono::high_resolution_clock::now().time_since_epoch().count();
@@ -28,6 +29,9 @@ JEventSource_jana_test::JEventSource_jana_test(const char* source_name) : JEvent
 	//Event queue:
 	//If not created, a default will be supplied
 	mEventQueue = new JQueue("Events", 200, 50); //max size of 200, keep at least 50 buffered
+
+	//Debug:
+	mDebugLevel = 500;
 }
 
 //----------------
@@ -72,6 +76,16 @@ void JEventSource_jana_test::Open(void)
 	//Open the file/stream handle
 }
 
+//---------------------------------
+// LockGenerator
+//---------------------------------
+void JEventSource_jana_test::LockGenerator(void) const
+{
+	bool sExpected = false;
+	while(!mGeneratorLock.compare_exchange_weak(sExpected, true))
+		sExpected = false;
+}
+
 //----------------
 // GetObjects
 //----------------
@@ -99,6 +113,9 @@ bool JEventSource_jana_test::GetObjects(const std::shared_ptr<const JEvent>& aEv
 	if(aFactory->GetTag() != "")
 		return false; //Only default tag here
 
+	//Lock on random # generator
+	LockGenerator();
+
 	//Generate a random # of objects
 	auto sNumObjectsDistribution = std::uniform_int_distribution<std::size_t>(1, 20);
 	auto sNumObjects = sNumObjectsDistribution(mRandomGenerator);
@@ -121,6 +138,9 @@ bool JEventSource_jana_test::GetObjects(const std::shared_ptr<const JEvent>& aEv
 			sObject.AddRandom(mRandomGenerator());
 	}
 
+	//Unlock generator
+	mGeneratorLock = false;
+
 	//Set the objects in the factory
 	aFactory->Set(std::move(sObjects));
 	return true;
@@ -137,7 +157,18 @@ bool JEventSource_jana_test::GetObjects(const std::shared_ptr<const JEvent>& aEv
 
 	//Generate a random # of objects
 	auto sNumObjectsDistribution = std::uniform_int_distribution<std::size_t>(1, 100);
+
+	//Lock on random # generator
+	LockGenerator();
+
+	//Generate
 	auto sNumObjects = sNumObjectsDistribution(mRandomGenerator);
+
+	//Unlock generator
+	mGeneratorLock = false;
+
+	if(mDebugLevel > 0)
+		JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JEventSource_jana_test::GetObjects(): Get " << sNumObjects << " JSourceObject2's.\n" << JLogEnd();
 
 	//Make lambda (and std::packaged_task wrapping it) for generating random #'s
 	//We will submit these in JTask's for multithreading work
@@ -146,7 +177,6 @@ bool JEventSource_jana_test::GetObjects(const std::shared_ptr<const JEvent>& aEv
 	//TODO: Consider improving JTask class to allow no JEvent (specialize)
 	auto sGenerateRandoms = [sMinNumRandoms, sMaxNumRandoms](const std::shared_ptr<const JEvent>&) -> std::vector<double>
 	{
-return {};
 		//Define our own random # generator
 		//Don't use the one in the JEventSource: Not thread safe
 		std::mt19937 sRandomGenerator;
@@ -169,7 +199,9 @@ return {};
 		//Compiler can auto-move, and even use return value optimization (RVO) to optimize-away the move!
 		return sRandoms;
 	};
-	auto sPackagedTask = std::packaged_task<std::vector<double>(const std::shared_ptr<const JEvent>&)>(sGenerateRandoms);
+
+	if(mDebugLevel > 0)
+		JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JEventSource_jana_test::GetObjects(): Create tasks.\n" << JLogEnd();
 
 	//Create tasks to create the random #'s for the objects
 	std::vector<std::shared_ptr<JTaskBase>> sTasks;
@@ -181,30 +213,31 @@ return {};
 
 		//Set the event and the lambda
 		sTask->SetEvent(aEvent);
-		sTask->SetTask(std::move(sPackagedTask));
+		sTask->SetTask(std::packaged_task<std::vector<double>(const std::shared_ptr<const JEvent>&)>(sGenerateRandoms));
 
 		//Move the task onto the vector (to avoid changing ref count) //casts at the same time
-//		auto sCastedTask = std::static_pointer_cast<JTaskBase>(sTask);
-//		sTasks.push_back(std::move(sCastedTask));
 		sTasks.push_back(std::move(sTask));
 	}
 
 	//Submit the tasks to the queues in the thread manager.
 	//This function won't return until all of the tasks are finished.
 	//This thread will execute tasks (hopefully these) in the meantime.
+	if(mDebugLevel > 0)
+		JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JEventSource_jana_test::GetObjects(): Submit JSourceObject2 tasks.\n" << JLogEnd();
 	mApplication->GetJThreadManager()->SubmitTasks(sTasks);
-//	mApplication->GetJThreadManager()->SubmitTasks({});
 
 	//Prepare the object vector
 	std::vector<JSourceObject2> sObjects;
 	sObjects.reserve(sNumObjects);
+
+	//Lock on random # generator
+	LockGenerator();
 
 	//Make the objects
 	for(std::size_t si = 0; si < sNumObjects; si++)
 	{
 		//Emplace new object onto the back of the data vector
 		sObjects.emplace_back(mRandomGenerator(), si); //Random energy, id = object#
-continue;
 		auto& sObject = sObjects.back(); //Get reference to new object
 
 		//Move the randoms into the object
@@ -212,6 +245,9 @@ continue;
 		auto sTask = static_cast<JTask<std::vector<double>>*>(sTasks[si].get());
 		sObject.MoveRandoms(std::move(sTask->GetResult()));
 	}
+
+	//Unlock generator
+	mGeneratorLock = false;
 
 	//Set the objects in the factory
 	aFactory->Set(std::move(sObjects));

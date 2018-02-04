@@ -246,35 +246,8 @@ void JThread::Loop(void)
 				continue;
 			}
 
-			//If from the event queue, add factories to the event (JFactorySet)
-			//We don't add them earlier (e.g. in the event source) because it would take too much memory
-			//E.g. if 200 events in the queue, we'd have 200 factories of each type
-			//Instead, only the events that are actively being analyzed have factories
-			//Once the JEvent goes out of scope and releases the JFactorySet, it returns to the pool
-			if(sQueueType == JQueueSet::JQueueType::Events)
-			{
-				//OK, this is a bit ugly
-				//The problem is that JTask holds a shared_ptr of const JEvent*, and we need to modify it.
-				//Why not just hold a non-const shared_ptr?
-				//Because we don't want the user calling things like JEvent::SetEventNumber() in their factories.
-
-				//So what do we do? The dreaded const_cast.
-				auto sEvent = const_cast<JEvent*>(sTask->GetEvent());
-
-				//Is there something else we can do instead?
-				//We could pass the JFactorySet alongside the JEvent instead of as a member of it.
-				//But the user is not intended to ever directly interact with the JFactorySet
-				//And we'll also have to deal with this again for sending along barrier-event data.
-				//This ends up requiring a lot of arguments to factory/processor/task methods.
-
-				//Finally, by having the JEvent Release() function recycle the JFactorySet, it doesn't have to be shared_ptr
-				//If it's shared_ptr: more (slow) atomic operations
-				//Just make the JFactorySet a member and cheat a little bit. It's a controlled environment.
-				sEvent->SetFactorySet(mApplication->GetFactorySet());
-			}
-
 			//Execute task
-			(*sTask)();
+			mThreadManager->ExecuteTask(sTask, sQueueType);
 
 			//Task complete.  If this was an event task, rotate to next open file (if desired)
 			//Don't rotate if it was a subtask or output task, because many of these may have submitted at once and we want to finish those first

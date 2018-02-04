@@ -110,7 +110,7 @@ class JEventSource{
 
 		//Keep track of file/event status
 		std::atomic<bool> mFileClosed{false};
-		std::atomic<bool> mInUse{false};
+		std::atomic<bool> mGettingEvent{false};
 		std::atomic<std::size_t> mEventsProcessed{0};
 		std::atomic<std::size_t> mNumOutstandingEvents{0}; //Number of JEvents still be analyzed from this event source (source done when 0)
 };

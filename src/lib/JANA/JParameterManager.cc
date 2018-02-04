@@ -38,6 +38,7 @@
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 #include "JParameterManager.h"
+#include "JLog.h"
 
 using namespace std;
 
@@ -104,7 +105,7 @@ void JParameterManager::PrintParameters(bool all)
 	// If all params are set to default values, then print a one line
 	// summary
 	if(keys.empty()){
-		jout << "All configuration parameters set to default values." << endl;
+		JLog() << "All configuration parameters set to default values." << JLogEnd();
 		return;
 	}
 
@@ -112,18 +113,18 @@ void JParameterManager::PrintParameters(bool all)
 	string title("Config. Parameters");
 	uint32_t half_title_len = 1+title.length()/2;
 	if( max_key_len < half_title_len ) max_key_len = half_title_len;
-	cout << endl;
-	cout << string(max_key_len+4-half_title_len, ' ') << title << endl;
-	cout << "  " << string(2*max_key_len + 3, '=') << endl;
-	cout << string(max_key_len/2, ' ') << "name" << string(max_key_len, ' ') << "value" <<endl;
-	cout << "  " << string(max_key_len, '-') << "   " << string(max_key_len, '-') << endl;
+	JLog() << "\n" << JLogEnd();
+	JLog() << string(max_key_len+4-half_title_len, ' ') << title << "\n" << JLogEnd();
+	JLog() << "  " << string(2*max_key_len + 3, '=') << "\n" << JLogEnd();
+	JLog() << string(max_key_len/2, ' ') << "name" << string(max_key_len, ' ') << "value" << "\n" << JLogEnd();
+	JLog() << "  " << string(max_key_len, '-') << "   " << string(max_key_len, '-') << "\n" << JLogEnd();
 
 	// Print all parameters
 	for(string &key : keys){
 		string val = _jparameters[key]->GetValue<string>();
-		cout << string(max_key_len+2-key.length(),' ') << key << " = " << val <<endl;
+		JLog() << string(max_key_len+2-key.length(),' ') << key << " = " << val << "\n" << JLogEnd();
 	}
-	cout << endl;
+	JLog() << "\n" << JLogEnd();
 }
 
 

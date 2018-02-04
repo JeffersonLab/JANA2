@@ -99,6 +99,13 @@ JLog& operator<<(JLog& aLog, const ArgType& aArg)
 			aLog.mStream << ", ";
 		aLog.mStream << aLog.mHeaders[aLog.mHeaderIndex++] << ": ";
 	}
+	else
+	{
+		//We've used up the headers, clear them so that future calls aren't confused
+		aLog.mHeaders.clear();
+		aLog.mHeaderIndex = 0; //reset for next object
+	}
+
 	aLog.mStream << aArg;
 	return aLog;
 }
@@ -128,7 +135,10 @@ inline void operator<<(JLog& aLog, const JLogEnd&)
 	//Add content & Send message
 	sStream << aLog.mStream.str();
 	aLog.mLogWrapper->Stream(sStream.str());
-	aLog.mStream.str(""); //in case re-used
+
+	//Reset in case re-used
+	aLog.mStream.str("");
+	aLog.mHeaderIndex = 0;
 }
 
 #endif

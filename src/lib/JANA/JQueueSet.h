@@ -64,7 +64,6 @@ class JQueueSet
 			//Process tasks in user-provided queues first (finish analyzing an open event)
 			//Process events (Execute all processors on new event)
 			//Process remaining tasks in output queue
-
 		enum class JQueueType { Output = 0, SubTasks, Events };
 
 		~JQueueSet(void);

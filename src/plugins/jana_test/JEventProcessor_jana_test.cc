@@ -39,7 +39,7 @@ JEventProcessor_jana_test::JEventProcessor_jana_test(void)
 
 	//Add queue for subtasks (not supplied by default!)
 	auto sSubtaskQueue = new JQueue("Subtasks", 2000);
-	JLog() << "Thread 0 JEventProcessor_jana_test constructor: Created subtask queue " << sSubtaskQueue << ".\n" << JLogEnd();
+	JLog() << "JEventProcessor_jana_test constructor: Created subtask queue " << sSubtaskQueue << ".\n" << JLogEnd();
 	japp->GetJThreadManager()->AddQueue(JQueueSet::JQueueType::SubTasks, sSubtaskQueue);
 }
 
@@ -71,26 +71,14 @@ void JEventProcessor_jana_test::AnalyzeEvent(const std::shared_ptr<const JEvent>
 	// since multiple threads may call this method at the same time.
 
 	//Get objects
-	auto sIterators_SourceObject2 = aEvent->Get<JSourceObject2>(); //Will get from file, and will submit jobs to generate random #'s
 	auto sIterators_JanaTest = aEvent->Get<jana_test>(); //Will get from factory
 	auto sIterators_SourceObject = aEvent->Get<JSourceObject>(); //Will get from file
-
-	//Print JSourceObject's inline-style
-	while(sIterators_SourceObject.first != sIterators_SourceObject.second)
-	{
-		//Can do this in one line, but being explicit to make it easier to read
-		auto& sObject = *(sIterators_SourceObject.first);
-		JLog() << sObject << JLogEnd(); //One object at a time
-		sIterators_SourceObject.first++;
-	}
-
-	//Print JSourceObject2's inline-style
-	while(sIterators_SourceObject2.first != sIterators_SourceObject2.second)
-		JLog() << *(sIterators_SourceObject2.first++) << JLogEnd(); //One-liner version
+	auto sIterators_SourceObject2 = aEvent->Get<JSourceObject2>(); //Will get from file, and will submit jobs to generate random #'s
 
 	//Print jana_test objects hd_dump-style
 		//(arg = 2 (should probably replace with enum))
 	JLog sDumpLogger(2); //all objects at once: this way other threads can't interleave output in between rows
+	sDumpLogger << "Thread " << JTHREAD->GetThreadID() << " JEventProcessor_jana_test::AnalyzeEvent(): jana_test's:\n" << JLogEnd();
 	while(sIterators_JanaTest.first != sIterators_JanaTest.second)
 	{
 		auto& sObject = *(sIterators_JanaTest.first);
@@ -98,4 +86,22 @@ void JEventProcessor_jana_test::AnalyzeEvent(const std::shared_ptr<const JEvent>
 		sIterators_JanaTest.first++;
 	}
 	sDumpLogger << JLogEnd(); //only now is it dumped to screen
+
+	//Print JSourceObject's inline-style
+	JLog sPrintLogger(0);
+	sPrintLogger << "Thread " << JTHREAD->GetThreadID() << " JEventProcessor_jana_test::AnalyzeEvent(): JSourceObject's:\n" << JLogEnd();
+	while(sIterators_SourceObject.first != sIterators_SourceObject.second)
+	{
+		//Can do this in one line, but being explicit to make it easier to read
+		auto& sObject = *(sIterators_SourceObject.first);
+		sPrintLogger << sObject << "\n";
+		sIterators_SourceObject.first++;
+	}
+	sPrintLogger << JLogEnd();
+
+	//Print JSourceObject2's inline-style
+	sPrintLogger << "Thread " << JTHREAD->GetThreadID() << " JEventProcessor_jana_test::AnalyzeEvent(): JSourceObject2's:\n" << JLogEnd();
+	while(sIterators_SourceObject2.first != sIterators_SourceObject2.second)
+		sPrintLogger << *(sIterators_SourceObject2.first++) << "\n"; //One-liner version
+	sPrintLogger << JLogEnd();
 }

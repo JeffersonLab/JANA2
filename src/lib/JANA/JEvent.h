@@ -91,7 +91,7 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 
 	protected:
 	
-		JFactorySet* mFactorySet = nullptr;
+		const JFactorySet* mFactorySet = nullptr;
 		JEventSource* mEventSource = nullptr;
 
 	private:

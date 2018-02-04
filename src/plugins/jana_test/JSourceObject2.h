@@ -48,7 +48,7 @@ class JSourceObject2 : public JObject
 inline JLog& operator<<(JLog& aLog, const JSourceObject2& aObject)
 {
 	aLog.SetHeaders({"Hit2 ID", "Hit2 E", "Hit2 #Randoms"});
-	aLog << aObject.GetHitID() << aObject.GetHitE() << aObject.GetRandoms().size() << "\n";
+	aLog << aObject.GetHitID() << aObject.GetHitE() << aObject.GetRandoms().size();
 	return aLog;
 }
 

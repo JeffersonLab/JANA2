@@ -133,7 +133,7 @@ JApplication::JApplication(int narg, char *argv[])
 	//Loggers //Switch to enum!! //Must be done before any code that uses a logger!
 	SetLogWrapper(0, new JLogWrapper(std::cout)); //stdout
 	SetLogWrapper(1, new JLogWrapper(std::cerr)); //stderr
-	SetLogWrapper(2, new JLogWrapper(std::cout)); //hd_dump
+	SetLogWrapper(2, mLogWrappers[0]); //hd_dump
 
 	_exit_code = 0;
 	_quitting = false;
@@ -383,10 +383,6 @@ int JApplication::GetExitCode(void)
 //---------------------------------
 void JApplication::Initialize(void)
 {
-	// Create default JQueue for task processing (plugins may replace this)
-	// Event queues are defined by the event source
-	_threadManager->AddQueue(JQueueSet::JQueueType::SubTasks, new JQueue("SubTasks"));
-
 	// Attach all plugins
 	AttachPlugins();
 

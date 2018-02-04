@@ -46,9 +46,15 @@ class JEventSource_jana_test: public JEventSource
 		bool GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactory<JSourceObject>* aFactory);
 		bool GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactory<JSourceObject2>* aFactory);
 
+		void LockGenerator(void) const;
+
 		std::size_t mNumEventsToGenerate;
 		std::size_t mNumEventsGenerated = 0;
 		std::mt19937 mRandomGenerator;
+		mutable std::atomic<bool> mGeneratorLock{false};
+
+		int mDebugLevel = 0;
+		int mLogTarget = 0; //std::cout
 
 		//Resource pool for events
 		JResourcePool<JEvent_test> mEventPool;
