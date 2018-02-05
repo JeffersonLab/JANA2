@@ -38,6 +38,7 @@
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 #include <algorithm>
+#include <numeric>
 
 #include "JEventSourceManager.h"
 #include "JEventSource.h"
