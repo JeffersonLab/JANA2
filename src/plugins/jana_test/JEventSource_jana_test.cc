@@ -16,7 +16,7 @@
 //----------------
 JEventSource_jana_test::JEventSource_jana_test(const char* source_name) : JEventSource(source_name, japp)
 {
-	mNumEventsToGenerate = 200;
+	mNumEventsToGenerate = 20000;
 
 	//Seed random number generator //not ideal!
 	auto sTime = std::chrono::high_resolution_clock::now().time_since_epoch().count();
