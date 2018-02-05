@@ -68,6 +68,7 @@ using namespace std;
 #include <JANA/JException.h>
 #include <JANA/JEvent.h>
 #include <JANA/JVersion.h>
+#include <JANA/JLog.h>
 #include <JANA/JStatus.h>
 #include <JANA/JResourcePool.h>
 #include <JANA/JLogWrapper.h>
@@ -84,15 +85,15 @@ std::mutex DBG_MUTEX;
 void ctrlCHandle(int x)
 {
 	SIGINT_RECEIVED++;
-	jerr<<endl<<"SIGINT received ("<<SIGINT_RECEIVED<<")....."<<endl;
+	JLog(1) << "\nSIGINT received (" << SIGINT_RECEIVED << ").....\n" << JLogEnd();
 	
 	if(japp) japp->Quit();
 	
 	if(SIGINT_RECEIVED == 3){
-		jerr<<endl<<"Three SIGINTS received! Still attempting graceful exit ..."<<endl<<endl;
+		JLog(1) << "\nThree SIGINTS received! Still attempting graceful exit ...\n" << JLogEnd();
 	}
 	if(SIGINT_RECEIVED == 6){
-		jerr<<endl<<"Six SIGINTS received! OK, I get it! ..."<<endl<<endl;
+		JLog(1) << "\nTSix SIGINTS received! OK, I get it! ...\n" << JLogEnd();
 		exit(-2);
 	}
 }
@@ -114,7 +115,6 @@ void USR2Handle(int x)
 	JStatus::RecordBackTrace();
 }
 
-
 //---------------------------------
 // JApplication    (Constructor)
 //---------------------------------
@@ -123,6 +123,11 @@ JApplication::JApplication(int narg, char *argv[])
 	//Must do before setting loggers
 	japp = this;
 
+	//Loggers //Switch to enum!! //Must be done before any code that uses a logger!
+	SetLogWrapper(0, new JLogWrapper(std::cout)); //stdout
+	SetLogWrapper(1, new JLogWrapper(std::cerr)); //stderr
+	SetLogWrapper(2, mLogWrappers[0]); //hd_dump
+
 	// Set up to catch SIGINTs for graceful exits
 	signal(SIGINT,ctrlCHandle);
 
@@ -130,11 +135,6 @@ JApplication::JApplication(int narg, char *argv[])
 	signal(SIGUSR1,USR1Handle);
 	signal(SIGUSR2,USR2Handle);
 	
-	//Loggers //Switch to enum!! //Must be done before any code that uses a logger!
-	SetLogWrapper(0, new JLogWrapper(std::cout)); //stdout
-	SetLogWrapper(1, new JLogWrapper(std::cerr)); //stderr
-	SetLogWrapper(2, mLogWrappers[0]); //hd_dump
-
 	_exit_code = 0;
 	_quitting = false;
 	_draining_queues = false;
@@ -192,16 +192,16 @@ JApplication::JApplication(int narg, char *argv[])
 			continue;
 		}
 		if( arg == "--janaversion" ) {
-			cout<<"          JANA version: "<<JVersion::GetVersion()<<endl;
-			cout<<"        JANA ID string: "<<JVersion::GetIDstring()<<endl;
-			cout<<"     JANA SVN revision: "<<JVersion::GetRevision()<<endl;
-			cout<<"JANA last changed date: "<<JVersion::GetDate()<<endl;
-			cout<<"              JANA URL: "<<JVersion::GetSource()<<endl;
+			JLog() << "          JANA version: "<<JVersion::GetVersion()<< "\n" <<
+			          "        JANA ID string: "<<JVersion::GetIDstring()<< "\n" <<
+			          "     JANA SVN revision: "<<JVersion::GetRevision()<< "\n" <<
+			          "JANA last changed date: "<<JVersion::GetDate()<< "\n" <<
+			          "              JANA URL: "<<JVersion::GetSource()<< "\n" << JLogEnd();
 			continue;
 		}
 		if( arg.find("-") == 0 )continue;
 
-		std::cout << "add source: " << arg << "\n";
+		JLog() << "add source: "<< arg << "\n" << JLogEnd();
 		_eventSourceManager->AddEventSource(arg);
 	}
 }
@@ -276,9 +276,11 @@ void JApplication::AttachPlugins(void)
 		bool found_plugin=false;
 		for(string path : _plugin_paths){
 			string fullpath = path + "/" + plugin;
-			if(printPaths) jout<<"Looking for \""<<fullpath<<"\" ...."; cout.flush();
+			if(printPaths)
+				JLog() << "Looking for \""<<fullpath<<"\" ....\n" << JLogEnd();
 			if( access( fullpath.c_str(), F_OK ) != -1 ){
-				if(printPaths) jout<<"found." << endl;
+				if(printPaths)
+					JLog() << "Found\n" << JLogEnd();
 				try{
 					AttachPlugin(fullpath.c_str(), printPaths);
 					found_plugin=true;
@@ -287,14 +289,15 @@ void JApplication::AttachPlugins(void)
 					continue;
 				}
 			}
-			if(printPaths) jout<<"Failed to attach \""<<fullpath<<"\""<<endl;
+			if(printPaths)
+				JLog() << "Failed to attach \""<<fullpath<<"\"\n" << JLogEnd();
 		}
 		
 		// If we didn't find the plugin, then complain and quit
 		if(!found_plugin){
-			jerr<<endl<<"***ERROR : Couldn't find plugin \""<<plugin<<"\"!***"<<endl;
-			jerr<<"***        make sure the JANA_PLUGIN_PATH environment variable is set correctly."<<endl;
-			jerr<<"***        To see paths checked, set PRINT_PLUGIN_PATHS config. parameter"<<endl;
+			JLog(1) << "\n***ERROR : Couldn't find plugin \""<<plugin<<"\"!***\n" <<
+			             "***        make sure the JANA_PLUGIN_PATH environment variable is set correctly.\n"<<
+			             "***        To see paths checked, set PRINT_PLUGIN_PATHS config. parameter\n"<< JLogEnd();
 			exit(-1);
 		}
 	}
@@ -314,7 +317,7 @@ void JApplication::AttachPlugin(string soname, bool verbose)
 	// Open shared object
 	void* handle = dlopen(soname.c_str(), RTLD_LAZY | RTLD_GLOBAL | RTLD_NODELETE);
 	if(!handle){
-		if(verbose)jerr<<dlerror()<<endl;
+		if(verbose)JLog(1)<<dlerror()<<"\n" << JLogEnd();
 		return;
 	}
 	
@@ -322,12 +325,13 @@ void JApplication::AttachPlugin(string soname, bool verbose)
 	typedef void InitPlugin_t(JApplication* app);
 	InitPlugin_t *plugin = (InitPlugin_t*)dlsym(handle, "InitPlugin");
 	if(plugin){
-		jout<<"Initializing plugin \""<<soname<<"\" ..."<<endl;
+		JLog() << "Initializing plugin \""<<soname<<"\" ...\n" << JLogEnd();
 		(*plugin)(this);
 		_sohandles.push_back(handle);
 	}else{
 		dlclose(handle);
-		if(verbose)jout<<" --- Nothing useful found in "<<soname<<" ---"<<endl;
+		if(verbose)
+			JLog() << " --- Nothing useful found in" << soname << " ---\n" << JLogEnd();
 	}
 }
 
@@ -415,20 +419,20 @@ void JApplication::Initialize(void)
 void JApplication::PrintFinalReport(void)
 {
 	//Get queues
-	std::vector<std::pair<JEventSource*, JQueueSet*>> sAllQueues;
+	std::vector<JThreadManager::JEventSourceInfo*> sAllQueues;
 	_threadManager->GetRetiredQueues(sAllQueues);
 
 	// Get longest JQueue name
 	uint32_t sSourceMaxNameLength = 0, sQueueMaxNameLength = 0;
-	for(auto& sSourcePair : sAllQueues)
+	for(auto& sSourceInfo : sAllQueues)
 	{
-		auto sSource = sSourcePair.first;
+		auto sSource = sSourceInfo->mEventSource;
 		auto sSourceLength = sSource->GetName().size();
 		if(sSourceLength > sSourceMaxNameLength)
 			sSourceMaxNameLength = sSourceLength;
 
 		std::map<JQueueSet::JQueueType, std::vector<JQueueInterface*>> sSourceQueues;
-		sSourcePair.second->GetQueues(sSourceQueues);
+		sSourceInfo->mQueueSet->GetQueues(sSourceQueues);
 		for(auto& sTypePair : sSourceQueues)
 		{
 			for(auto sQueue : sTypePair.second)
@@ -451,11 +455,11 @@ void JApplication::PrintFinalReport(void)
 	jout << std::string(sSourceMaxNameLength + sQueueMaxNameLength + 9, '-') << std::endl;
 	jout << "Source" << std::string(sSourceMaxNameLength - 6, ' ') << "Queue" << std::string(sQueueMaxNameLength - 5, ' ') << "NTasks" << std::endl;
 	jout << std::string(sSourceMaxNameLength + sQueueMaxNameLength + 9, '-') << std::endl;
-	for(auto& sSourcePair : sAllQueues)
+	for(auto& sSourceInfo : sAllQueues)
 	{
-		auto sSource = sSourcePair.first;
+		auto sSource = sSourceInfo->mEventSource;
 		std::map<JQueueSet::JQueueType, std::vector<JQueueInterface*>> sSourceQueues;
-		sSourcePair.second->GetQueues(sSourceQueues);
+		sSourceInfo->mQueueSet->GetQueues(sSourceQueues);
 		for(auto& sTypePair : sSourceQueues)
 		{
 			for(auto sQueue : sTypePair.second)
@@ -561,6 +565,10 @@ void JApplication::Run(uint32_t nthreads)
 		_threadManager->JoinThreads();
 	}
 	
+	// Delete event processors
+	for(auto sProcessor : _eventProcessors)
+		delete sProcessor;
+
 	// Report Final numbers
 	PrintFinalReport();
 }

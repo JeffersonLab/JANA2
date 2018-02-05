@@ -91,4 +91,6 @@ void JEvent::Release(void)
 	mFactorySet = nullptr;
 	mEventSource->DecrementEventCount();
 	mEventSource = nullptr;
+	mLatestBarrierEvent = nullptr;
+	mIsBarrierEvent = false; //In case user forgets to clear it
 }

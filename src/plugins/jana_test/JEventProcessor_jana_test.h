@@ -8,6 +8,8 @@
 #ifndef _JEventProcessor_jana_test_
 #define _JEventProcessor_jana_test_
 
+#include <atomic>
+
 #include <JANA/JEventProcessor.h>
 #include <JANA/JEvent.h>
 
@@ -21,6 +23,7 @@ class JEventProcessor_jana_test:public JEventProcessor{
 		void ChangeRun(const std::shared_ptr<const JEvent>& aEvent);
 
 	private:
+		std::atomic<std::size_t> mNumObjects{0};
 };
 
 #endif // _JEventProcessor_jana_test_

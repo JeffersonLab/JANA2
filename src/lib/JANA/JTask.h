@@ -38,7 +38,9 @@ class JTaskBase : public JResettable
 
 		void SetEvent(const std::shared_ptr<const JEvent>& aEvent){mEvent = aEvent;}
 		void SetEvent(std::shared_ptr<const JEvent>&& aEvent){mEvent = std::move(aEvent);}
-		const JEvent* GetEvent(void) {return mEvent.get();} //don't increase ref count
+
+		const JEvent* GetEvent(void) {return mEvent.get();} //don't increase ref count //default
+		std::shared_ptr<const JEvent> GetSharedEvent(void) {return mEvent;} //increase ref count
 
 		virtual bool IsFinished(void) const = 0;
 

@@ -16,7 +16,7 @@
 //----------------
 JEventSource_jana_test::JEventSource_jana_test(const char* source_name) : JEventSource(source_name, japp)
 {
-	mNumEventsToGenerate = 200;
+	mNumEventsToGenerate = 5000;
 
 	//Seed random number generator //not ideal!
 	auto sTime = std::chrono::high_resolution_clock::now().time_since_epoch().count();
@@ -57,12 +57,14 @@ std::pair<std::shared_ptr<const JEvent>, JEventSource::RETURN_STATUS> JEventSour
 	if(mNumEventsToGenerate == mNumEventsGenerated)
 		return std::make_pair(std::shared_ptr<JEvent>(nullptr), JEventSource::RETURN_STATUS::kNO_MORE_EVENTS);
 
+	//These are recycled, so be sure to re-set EVERY member variable
 	auto sEvent = mEventPool.Get_SharedResource(mApplication);
 	mNumEventsGenerated++;
 	
 	sEvent->SetEventSource(this);
 	sEvent->SetEventNumber(mNumEventsGenerated);
 	sEvent->SetRunNumber(1234);
+	sEvent->SetIsBarrierEvent(false); //mNumEventsGenerated % 1000 == 0
 //	sEvent->SetRef(nullptr);
 	
 	return std::make_pair(std::static_pointer_cast<JEvent>(sEvent), JEventSource::RETURN_STATUS::kSUCCESS);

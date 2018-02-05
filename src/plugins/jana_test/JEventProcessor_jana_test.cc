@@ -39,7 +39,6 @@ JEventProcessor_jana_test::JEventProcessor_jana_test(void)
 
 	//Add queue for subtasks (not supplied by default!)
 	auto sSubtaskQueue = new JQueue("Subtasks", 2000);
-	JLog() << "JEventProcessor_jana_test constructor: Created subtask queue " << sSubtaskQueue << ".\n" << JLogEnd();
 	japp->GetJThreadManager()->AddQueue(JQueueSet::JQueueType::SubTasks, sSubtaskQueue);
 }
 
@@ -49,6 +48,7 @@ JEventProcessor_jana_test::JEventProcessor_jana_test(void)
 JEventProcessor_jana_test::~JEventProcessor_jana_test(void)
 {
 	//This is the new fini()
+	std::cout << "Total # objects = " << mNumObjects << "\n";
 }
 
 //------------------
@@ -72,9 +72,12 @@ void JEventProcessor_jana_test::AnalyzeEvent(const std::shared_ptr<const JEvent>
 
 	//Get objects
 	auto sIterators_JanaTest = aEvent->Get<jana_test>(); //Will get from factory
+	mNumObjects += std::distance(sIterators_JanaTest.first, sIterators_JanaTest.second);
 	auto sIterators_SourceObject = aEvent->Get<JSourceObject>(); //Will get from file
+	mNumObjects += std::distance(sIterators_SourceObject.first, sIterators_SourceObject.second);
 	auto sIterators_SourceObject2 = aEvent->Get<JSourceObject2>(); //Will get from file, and will submit jobs to generate random #'s
-
+	mNumObjects += std::distance(sIterators_SourceObject2.first, sIterators_SourceObject2.second);
+/*
 	//Print jana_test objects hd_dump-style
 		//(arg = 2 (should probably replace with enum))
 	JLog sDumpLogger(2); //all objects at once: this way other threads can't interleave output in between rows
@@ -104,4 +107,5 @@ void JEventProcessor_jana_test::AnalyzeEvent(const std::shared_ptr<const JEvent>
 	while(sIterators_SourceObject2.first != sIterators_SourceObject2.second)
 		sPrintLogger << *(sIterators_SourceObject2.first++) << "\n"; //One-liner version
 	sPrintLogger << JLogEnd();
+	*/
 }

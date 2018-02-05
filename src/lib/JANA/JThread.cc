@@ -57,9 +57,9 @@ thread_local JThread *JTHREAD = nullptr;
 //---------------------------------
 // JThread    (Constructor)
 //---------------------------------
-JThread::JThread(int aThreadID, JApplication* aApplication, JQueueSet* aQueueSet, std::size_t aQueueSetIndex, JEventSource* aSource, bool aRotateEventSources) :
-		mApplication(aApplication), mThreadManager(mApplication->GetJThreadManager()), mQueueSet(aQueueSet), mQueueSetIndex(aQueueSetIndex),
-		mEventSource(aSource), mEventQueue(mQueueSet->GetQueue(JQueueSet::JQueueType::Events)), mRotateEventSources(aRotateEventSources),
+JThread::JThread(int aThreadID, JApplication* aApplication, JThreadManager::JEventSourceInfo* aSourceInfo, std::size_t aQueueSetIndex, bool aRotateEventSources) :
+		mApplication(aApplication), mThreadManager(mApplication->GetJThreadManager()), mEventSourceInfo(aSourceInfo), mQueueSetIndex(aQueueSetIndex),
+		mEventQueue(mEventSourceInfo->mQueueSet->GetQueue(JQueueSet::JQueueType::Events)), mRotateEventSources(aRotateEventSources),
 		mThreadID(aThreadID)
 {
 	mDebugLevel = 40;
@@ -235,14 +235,15 @@ void JThread::Loop(void)
 				*mLogger << "Thread " << mThreadID << " JThread::Loop(): Grab task\n" << JLogEnd();
 			auto sQueueType = JQueueSet::JQueueType::Events;
 			auto sTask = std::shared_ptr<JTaskBase>(nullptr);
-			std::tie(sQueueType, sTask) = mQueueSet->GetTask();
+			std::tie(sQueueType, sTask) = mEventSourceInfo->mQueueSet->GetTask();
 			if(mDebugLevel >= 50)
 				*mLogger << "Thread " << mThreadID << " JThread::Loop(): Task pointer: " << sTask << "\n" << JLogEnd();
 
 			//Do we have a task?
 			if(sTask == nullptr)
 			{
-				HandleNullTask();
+				if(!HandleNullTask())
+					break; //No more tasks, end the loop
 				continue;
 			}
 
@@ -256,10 +257,10 @@ void JThread::Loop(void)
 				mFullRotationCheckIndex = mQueueSetIndex; //reset for full-rotation-with-no-action check
 				if(sQueueType == JQueueSet::JQueueType::Events)
 				{
-					std::tie(mEventSource, mQueueSet) = mThreadManager->GetNextSourceQueues(mQueueSetIndex);
+					mEventSourceInfo = mThreadManager->GetNextSourceQueues(mQueueSetIndex);
 					if(mDebugLevel >= 20)
 						*mLogger << "Thread " << mThreadID << " JThread::Loop(): Rotated sources to: " << mQueueSetIndex << ", rotation check = " << mFullRotationCheckIndex << "\n" << JLogEnd();
-					mEventQueue = mQueueSet->GetQueue(JQueueSet::JQueueType::Events);
+					mEventQueue = mEventSourceInfo->mQueueSet->GetQueue(JQueueSet::JQueueType::Events);
 					mSourceEmpty = false;
 				}
 			}
@@ -293,7 +294,7 @@ bool JThread::CheckEventQueue(void)
 	//Not enough queued. Get the next event from the source, and get a task to process it (unless another thread has locked access)
 	auto sReturnStatus = JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
 	auto sEventTask = std::shared_ptr<JTaskBase>(nullptr);
-	std::tie(sEventTask, sReturnStatus) = mEventSource->GetProcessEventTask();
+	std::tie(sEventTask, sReturnStatus) = mEventSourceInfo->mEventSource->GetProcessEventTask();
 
 	if(sReturnStatus == JEventSource::RETURN_STATUS::kSUCCESS)
 	{
@@ -343,7 +344,7 @@ bool JThread::CheckEventQueue(void)
 //---------------------------------
 // HandleNullTask
 //---------------------------------
-void JThread::HandleNullTask(void)
+bool JThread::HandleNullTask(void)
 {
 	//There are no tasks in the queue for this event source.  Are we done with the source?
 	//We are not done with a source until all tasks referencing it have completed.
@@ -357,28 +358,30 @@ void JThread::HandleNullTask(void)
 	//When all JEvent's associated with that file are destroyed/recycled.
 	//We track this by counting the number of open JEvent's in each JEventSource.
 
+	//This returns false if there are no tasks left to process. Otherwise returns true.
+
 	if(mDebugLevel >= 10)
-		*mLogger << "Thread " << mThreadID << " JThread::HandleNullTask(): Null task: is empty, # outstanding = " << mSourceEmpty << ", " << mEventSource->GetNumOutstandingEvents() << "\n" << JLogEnd();
-	if(mSourceEmpty && (mEventSource->GetNumOutstandingEvents() == 0))
+		*mLogger << "Thread " << mThreadID << " JThread::HandleNullTask(): Null task: is empty, # outstanding = " << mSourceEmpty << ", " << mEventSourceInfo->mEventSource->GetNumOutstandingEvents() << "\n" << JLogEnd();
+	if(mSourceEmpty && (mEventSourceInfo->mEventSource->GetNumOutstandingEvents() == 0))
 	{
 		//Tell the thread manager that the source is finished (in case it didn't know already)
 		//Use the existing queues for the next event source
 		//If all sources are done, then all tasks are done, and this call will tell the program to end.
 
-		std::tie(mEventSource, mQueueSet) = mThreadManager->RegisterSourceFinished(mEventSource, mQueueSetIndex);
-		if(mQueueSet != nullptr)
-		{
-			mEventQueue = mQueueSet->GetQueue(JQueueSet::JQueueType::Events);
-			mSourceEmpty = false;
-			mFullRotationCheckIndex = mQueueSetIndex; //reset for full-rotation-with-no-action check
-		}
-		return;
+		mEventSourceInfo = mThreadManager->RegisterSourceFinished(mEventSourceInfo->mEventSource, mQueueSetIndex);
+		if(mEventSourceInfo == nullptr)
+			return false; //No tasks left: We're done processing
+
+		mEventQueue = mEventSourceInfo->mQueueSet->GetQueue(JQueueSet::JQueueType::Events);
+		mSourceEmpty = false;
+		mFullRotationCheckIndex = mQueueSetIndex; //reset for full-rotation-with-no-action check
+		return true;
 	}
 
 	if(mRotateEventSources) //No tasks, try to rotate to a different input file
 	{
-		std::tie(mEventSource, mQueueSet) = mThreadManager->GetNextSourceQueues(mQueueSetIndex);
-		mEventQueue = mQueueSet->GetQueue(JQueueSet::JQueueType::Events);
+		mEventSourceInfo = mThreadManager->GetNextSourceQueues(mQueueSetIndex);
+		mEventQueue = mEventSourceInfo->mQueueSet->GetQueue(JQueueSet::JQueueType::Events);
 		mSourceEmpty = false;
 		if(mDebugLevel >= 20)
 			*mLogger << "Thread " << mThreadID << " JThread::HandleNullTask(): Rotated sources to " << mQueueSetIndex << ", rotation check = " << mFullRotationCheckIndex << "\n" << JLogEnd();
@@ -390,6 +393,8 @@ void JThread::HandleNullTask(void)
 	}
 	else //No tasks, wait a bit for this event source to be ready
 		std::this_thread::sleep_for(mSleepTime); //Sleep a minimal amount.
+
+	return true;
 }
 
 //---------------------------------

@@ -122,8 +122,6 @@ JQueueSet* JQueueSet::Clone(void) const
 		for(auto& sQueue : sQueueVector)
 		{
 			auto sClonedQueue = sQueue->CloneEmpty();
-			JLog() << "Thread 0 JQueueSet::Clone(): Queue type " << static_cast<std::underlying_type<JQueueSet::JQueueType>::type>(sQueueType) <<
-					", Old queue = " << sQueue << ", New queue = " << sClonedQueue << ".\n" << JLogEnd();
 			sClonedSet->AddQueue(sQueueType, sClonedQueue);
 		}
 	}

@@ -48,7 +48,8 @@
 #include <map>
 #include <atomic>
 
-class JThreadManager;
+#include "JThreadManager.h"
+
 class JEventSource;
 class JApplication;
 class JQueueSet;
@@ -66,7 +67,7 @@ class JThread{
 			kRUN_STATE_OTHER
 		};
 
-		JThread(int aThreadID, JApplication* aApplication, JQueueSet* aQueueSet, std::size_t aQueueSetIndex, JEventSource* aSource, bool aRotateEventSources);
+		JThread(int aThreadID, JApplication* aApplication, JThreadManager::JEventSourceInfo* aQueueSet, std::size_t aQueueSetIndex, bool aRotateEventSources);
 		virtual ~JThread();
 
 		uint64_t GetNumEventsProcessed(void);
@@ -88,9 +89,8 @@ class JThread{
 		
 		JApplication* mApplication = nullptr;
 		JThreadManager* mThreadManager = nullptr;
-		JQueueSet* mQueueSet = nullptr;
+		JThreadManager::JEventSourceInfo* mEventSourceInfo = nullptr;
 		std::size_t mQueueSetIndex = 0;
-		JEventSource* mEventSource = nullptr;
 
 		JQueueInterface* mEventQueue = nullptr;
 		bool mRotateEventSources = false;
@@ -113,7 +113,7 @@ class JThread{
 
 		//INTERNAL CALLS
 		bool CheckEventQueue(void);
-		void HandleNullTask(void);
+		bool HandleNullTask(void);
 };
 
 extern thread_local JThread *JTHREAD;
