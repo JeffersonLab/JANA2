@@ -248,7 +248,7 @@ void JThread::Loop(void)
 			}
 
 			//Execute task
-			mThreadManager->ExecuteTask(sTask, sQueueType);
+			mThreadManager->ExecuteTask(sTask, mEventSourceInfo, sQueueType);
 
 			//Task complete.  If this was an event task, rotate to next open file (if desired)
 			//Don't rotate if it was a subtask or output task, because many of these may have submitted at once and we want to finish those first

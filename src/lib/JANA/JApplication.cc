@@ -420,7 +420,7 @@ void JApplication::PrintFinalReport(void)
 {
 	//Get queues
 	std::vector<JThreadManager::JEventSourceInfo*> sAllQueues;
-	_threadManager->GetRetiredQueues(sAllQueues);
+	_threadManager->GetRetiredSourceInfos(sAllQueues);
 
 	// Get longest JQueue name
 	uint32_t sSourceMaxNameLength = 0, sQueueMaxNameLength = 0;

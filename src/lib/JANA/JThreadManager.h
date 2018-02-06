@@ -104,8 +104,8 @@ class JThreadManager
 		JQueueInterface* GetQueue(const JEventSource* aEventSource, JQueueSet::JQueueType aQueueType, const std::string& aQueueName) const;
 		void AddQueue(JQueueSet::JQueueType aQueueType, JQueueInterface* aQueue);
 		void PrepareQueues(void);
-		void GetRetiredQueues(std::vector<JEventSourceInfo*>& aQueues) const;
-		void GetActiveQueues(std::vector<JEventSourceInfo*>& aQueues) const;
+		void GetRetiredSourceInfos(std::vector<JEventSourceInfo*>& aSourceInfos) const;
+		void GetActiveSourceInfos(std::vector<JEventSourceInfo*>& aSourceInfos) const;
 
 		//CONFIG
 		void SetThreadAffinity(int affinity_algorithm);
@@ -130,17 +130,17 @@ class JThreadManager
 		JEventSourceInfo* GetEventSourceInfo(const JEventSource* aEventSource) const;
 		JQueueInterface* GetQueue(const std::shared_ptr<JTaskBase>& aTask, JQueueSet::JQueueType aQueueType, const std::string& aQueueName) const;
 		JEventSourceInfo* RegisterSourceFinished(const JEventSource* aFinishedEventSource, std::size_t& aQueueSetIndex);
-		void ExecuteTask(std::shared_ptr<JTaskBase>& aTask, JQueueSet::JQueueType aQueueType);
+		void ExecuteTask(std::shared_ptr<JTaskBase>& aTask, const JEventSourceInfo* aSourceInfo, JQueueSet::JQueueType aQueueType);
 
 		//INTERNAL CALLS
 		JQueueSet* MakeQueueSet(JEventSource* sEventSource);
 		void LockQueueSets(void) const;
 		JEventSourceInfo* CheckAllSourcesDone(std::size_t& aQueueSetIndex);
 		std::pair<JQueueSet::JQueueType, std::shared_ptr<JTaskBase>> GetTask(JQueueSet* aQueueSet, JQueueInterface* aQueue, JQueueSet::JQueueType aQueueType) const;
-		void SubmitTasks(const std::vector<std::shared_ptr<JTaskBase>>& aTasks, JEventSourceInfo* aSourceInfo, JQueueInterface* aQueue, JQueueSet::JQueueType aQueueType);
-		void DoWorkWhileWaitingForTasks(const std::function<bool(void)>& aWaitFunction, JQueueSet* aQueueSet, JQueueInterface* aQueue, JQueueSet::JQueueType aQueueType);
-		void DoWorkWhileWaitingForTasks(const std::vector<std::shared_ptr<JTaskBase>>& aSubmittedTasks, JQueueSet* aQueueSet, JQueueInterface* aQueue, JQueueSet::JQueueType aQueueType);
-		void PrepareEventTask(const std::shared_ptr<JTaskBase>& aTask, const std::shared_ptr<JEvent>& aBarrierEvent = nullptr) const;
+		void SubmitTasks(const std::vector<std::shared_ptr<JTaskBase>>& aTasks, const JEventSourceInfo* aSourceInfo, JQueueInterface* aQueue, JQueueSet::JQueueType aQueueType);
+		void DoWorkWhileWaitingForTasks(const std::function<bool(void)>& aWaitFunction, const JEventSourceInfo* aSourceInfo, JQueueInterface* aQueue, JQueueSet::JQueueType aQueueType);
+		void DoWorkWhileWaitingForTasks(const std::vector<std::shared_ptr<JTaskBase>>& aSubmittedTasks, const JEventSourceInfo* aSourceInfo, JQueueInterface* aQueue, JQueueSet::JQueueType aQueueType);
+		void PrepareEventTask(const std::shared_ptr<JTaskBase>& aTask, const JEventSourceInfo* aSourceInfo) const;
 
 		//CONTROL
 		JApplication* mApplication;
@@ -156,8 +156,8 @@ class JThreadManager
 		//QUEUES
 		mutable std::atomic<bool> mQueueSetsLock{false};
 		JQueueSet mTemplateQueueSet; //When a new source is opened, these queues are cloned for it //e.g. user-provided queues
-		std::vector<JEventSourceInfo*> mActiveQueueSets; //if no new open sources, nullptr inserted on retirement!!
-		std::vector<JEventSourceInfo*> mRetiredQueueSets; //source already finished
+		std::vector<JEventSourceInfo*> mActiveSourceInfos; //if no new open sources, nullptr inserted on retirement!!
+		std::vector<JEventSourceInfo*> mRetiredSourceInfos; //source already finished
 };
 
 #endif
