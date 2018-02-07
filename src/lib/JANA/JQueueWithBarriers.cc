@@ -124,8 +124,15 @@ void JQueueWithBarriers::ThreadLoop(void)
 	//It will do so until it encounters a barrier event.
 	//At that point, no further tasks are moved into the output queue until the task with the barrier event is done.
 
-	//This way, future events from this event source have the complete set of data from the barrier event
+	//This way, future events from this event source have the complete set of data from the barrier event.
+	//Otherwise, another thread could analyze the next event and not have the complete set of information.
 	//Note that every task in this queue is from the same event source.
+
+	//Unforunately, we can't use a single JQueue to do this.
+	//This is because, when getting tasks, once we get exclusive access to a slot, another thread
+		//is able to get the task from the following slot.
+		//We would need to check whether we had a barrier event and prevent the subsequent GetTask in a single operation
+		//which is impossible. Otherwise, we'd have to lock a mutex in JQueue.
 	while(!mEndThread)
 	{
 		//Move all tasks from the input queue to the output queue, until we hit a barrier
