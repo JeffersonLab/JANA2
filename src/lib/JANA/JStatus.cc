@@ -138,23 +138,23 @@ void JStatus::GenerateReport(std::stringstream &ss)
 	vector<JEventSource*> sources;
 	vector<JEventSourceGenerator*> source_generators;
 	vector<JFactoryGenerator*> factory_generators;
-	std::vector<std::pair<JEventSource*, JQueueSet*>> active_queues;
-	std::vector<std::pair<JEventSource*, JQueueSet*>> retired_queues;
+	std::vector<JThreadManager::JEventSourceInfo*> active_source_infos;
+	std::vector<JThreadManager::JEventSourceInfo*> retired_source_infos;
 	vector<JThread*> threads;
 
 	japp->GetJEventProcessors(processors);
 	japp->GetJEventSourceManager()->GetActiveJEventSources(sources); //ignores exhausted sources!!
 	japp->GetJEventSourceManager()->GetJEventSourceGenerators(source_generators);
 	japp->GetJFactoryGenerators(factory_generators);
-	japp->GetJThreadManager()->GetActiveQueues(active_queues);
-	japp->GetJThreadManager()->GetRetiredQueues(retired_queues); //assumes one didn't retire in between calls!
+	japp->GetJThreadManager()->GetActiveSourceInfos(active_source_infos);
+	japp->GetJThreadManager()->GetRetiredSourceInfos(retired_source_infos); //assumes one didn't retire in between calls!
 	japp->GetJThreadManager()->GetJThreads(threads);
 
 	std::size_t sNumQueues = 0;
-	for(auto& sQueuePair : active_queues)
-		sNumQueues += sQueuePair.second->GetNumQueues();
-	for(auto& sQueuePair : retired_queues)
-		sNumQueues += sQueuePair.second->GetNumQueues();
+	for(auto& sSourceInfo : active_source_infos)
+		sNumQueues += sSourceInfo->mQueueSet->GetNumQueues();
+	for(auto& sSourceInfo : retired_source_infos)
+		sNumQueues += sSourceInfo->mQueueSet->GetNumQueues();
 
 	ss << "------ JANA STATUS REPORT -------" << endl;
 	ss << "generated: " << ctime(&t);
@@ -168,9 +168,9 @@ void JStatus::GenerateReport(std::stringstream &ss)
 	ss << "              Nqueues: " << sNumQueues << endl;
 	ss << endl;
 	
-	for(auto& sQueuePair : active_queues)
+	for(auto& sSourceInfo : active_source_infos)
 	{
-		auto sQueueSet = sQueuePair.second;
+		auto sQueueSet = sSourceInfo->mQueueSet;
 		std::map<JQueueSet::JQueueType, std::vector<JQueueInterface*>> sQueuesByType;
 		sQueueSet->GetQueues(sQueuesByType);
 		for(auto& sQueueTypePair : sQueuesByType)
@@ -179,7 +179,7 @@ void JStatus::GenerateReport(std::stringstream &ss)
 			for(auto sQueue : sQueues)
 			{
 				ss << "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - " << endl;
-				ss << "  active source, queue: " << sQueuePair.first->GetName() << ", " << sQueue->GetName() << ": " << endl;
+				ss << "  active source, queue: " << sSourceInfo->mEventSource->GetName() << ", " << sQueue->GetName() << ": " << endl;
 				ss << "                       Ntasks: " << sQueue->GetNumTasks() <<endl;
 				ss << "             Ntasks processed: " << sQueue->GetNumTasksProcessed() << endl;
 				ss << "          Max allowed in queue: " << sQueue->GetMaxTasks() << endl;

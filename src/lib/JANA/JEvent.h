@@ -83,16 +83,20 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 		void SetRunNumber(uint32_t aRunNumber){mRunNumber = aRunNumber;}
 		void SetEventNumber(uint64_t aEventNumber){mEventNumber = aEventNumber;}
 		void SetEventSource(JEventSource* aSource);
+		void SetIsBarrierEvent(bool aIsBarrierEvent){mIsBarrierEvent = aIsBarrierEvent;}
+		void SetLatestBarrierEvent(const std::shared_ptr<JEvent>& aBarrierEvent){mLatestBarrierEvent = aBarrierEvent;}
 
 		//GETTERS
 		uint32_t GetRunNumber(void) const{return mRunNumber;}
 		uint64_t GetEventNumber(void) const{return mEventNumber;}
 		JEventSource* GetEventSource(void) const;
+		bool GetIsBarrierEvent(void) const{return mIsBarrierEvent;}
 
 	protected:
 	
 		const JFactorySet* mFactorySet = nullptr;
 		JEventSource* mEventSource = nullptr;
+		bool mIsBarrierEvent = false;
 
 	private:
 		JApplication* mApplication = nullptr;
@@ -100,6 +104,7 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 		uint32_t mRunNumber = 0;
 		uint64_t mEventNumber = 0;
 		int mDebugLevel = 0;
+		std::shared_ptr<JEvent> mLatestBarrierEvent = nullptr;
 };
 
 //---------------------------------
@@ -120,6 +125,27 @@ typename JFactory<DataType>::PairType JEvent::Get(const std::string& aTag) const
 	if(mDebugLevel > 0)
 		JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Type = " << typeid(DataType).name() << ", tag = " << aTag << ".\n" << JLogEnd();
 
+	//First check to see if the information should come from the previous barrier event
+	if(!mIsBarrierEvent && (mLatestBarrierEvent != nullptr))
+	{
+		//Get the factory
+		auto sFactoryBase = mFactorySet->GetFactory(std::type_index(typeid(DataType)), aTag);
+		if(sFactoryBase == nullptr)
+		{
+			//Uh oh, No factory exists for this type.
+			jerr << "ERROR: No factory found for type = " << typeid(DataType).name() << ", tag = " << aTag << ".\n";
+			japp->SetExitCode(-1);
+			japp->Quit();
+			return {};
+		}
+		auto sFactory = static_cast<JFactory<DataType>*>(sFactoryBase);
+
+		//If the factory created the objects, then yes, use the event barrier data.
+		//If not, the information must come from the current event instead.
+		if(sFactory->GetCreated())
+			return sFactory->Get();
+	}
+
 	//First get the factory
 	auto sFactoryBase = mFactorySet->GetFactory(std::type_index(typeid(DataType)), aTag);
 	if(sFactoryBase == nullptr)
@@ -128,7 +154,6 @@ typename JFactory<DataType>::PairType JEvent::Get(const std::string& aTag) const
 		jerr << "ERROR: No factory found for type = " << typeid(DataType).name() << ", tag = " << aTag << ".\n";
 		japp->SetExitCode(-1);
 		japp->Quit();
-		//TODO: Throw exception??
 		return {};
 	}
 	auto sFactory = static_cast<JFactory<DataType>*>(sFactoryBase);

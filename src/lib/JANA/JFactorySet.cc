@@ -76,7 +76,6 @@ JFactorySet::~JFactorySet()
 //---------------------------------
 JFactoryBase* JFactorySet::GetFactory(std::type_index aObjectType, const std::string& aFactoryTag) const
 {
-	std::cout << "key type, tag = " << aObjectType.name() << ", " << aFactoryTag << std::endl;
 	auto sKeyPair = std::make_pair(aObjectType, aFactoryTag);
 	auto sIterator = mFactories.find(sKeyPair);
 	return (sIterator != std::end(mFactories)) ? sIterator->second : nullptr;

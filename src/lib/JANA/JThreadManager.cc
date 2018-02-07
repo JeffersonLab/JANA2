@@ -46,12 +46,18 @@
 #include <unistd.h>
 #include <tuple>
 
+#ifdef __APPLE__
+#include <mach/thread_policy.h>
+#include <mach/thread_act.h>
+#endif
+
 #include "JThreadManager.h"
 #include "JEventSource.h"
 #include "JApplication.h"
 #include "JEventSourceManager.h"
 #include "JQueue.h"
 #include "JEvent.h"
+#include "JThread.h"
 
 //---------------------------------
 // JThreadManager
@@ -82,8 +88,8 @@ void JThreadManager::CreateThreads(std::size_t aNumThreads)
 	mThreads.reserve(aNumThreads);
 	for(decltype(aNumThreads) si = 0; si < aNumThreads; si++)
 	{
-		auto sQueueSetIndex = si % mActiveQueueSets.size();
-		mThreads.push_back(new JThread(si + 1, mApplication, mActiveQueueSets[sQueueSetIndex].second, sQueueSetIndex, mActiveQueueSets[sQueueSetIndex].first, mRotateEventSources));
+		auto sQueueSetIndex = si % mActiveSourceInfos.size();
+		mThreads.push_back(new JThread(si + 1, mApplication, mActiveSourceInfos[sQueueSetIndex], sQueueSetIndex, mRotateEventSources));
 	}
 }
 
@@ -101,7 +107,7 @@ void JThreadManager::PrepareQueues(void)
 	if(mDebugLevel > 0)
 		JLog(mLogTarget) << "#sources: " << sSources.size() << "\n" << JLogEnd();
 	for(auto sSource : sSources)
-		mActiveQueueSets.emplace_back(sSource, MakeQueueSet(sSource));
+		mActiveSourceInfos.push_back(new JEventSourceInfo(sSource, MakeQueueSet(sSource)));
 
 	if(sSources.size() < 2)
 		mRotateEventSources = false; //nothing to rotate to
@@ -179,19 +185,19 @@ JQueueInterface* JThreadManager::GetQueue(const std::shared_ptr<JTaskBase>& aTas
 //---------------------------------
 JQueueInterface* JThreadManager::GetQueue(const JEventSource* aEventSource, JQueueSet::JQueueType aQueueType, const std::string& aQueueName) const
 {
-	auto sQueueSet = GetQueueSet(aEventSource);
+	auto sQueueSet = GetEventSourceInfo(aEventSource)->mQueueSet;
 	return sQueueSet->GetQueue(aQueueType, aQueueName);
 }
 
 //---------------------------------
 // GetRetiredQueues
 //---------------------------------
-void JThreadManager::GetRetiredQueues(std::vector<std::pair<JEventSource*, JQueueSet*>>& aQueues) const
+void JThreadManager::GetRetiredSourceInfos(std::vector<JEventSourceInfo*>& aSourceInfos) const
 {
 	//LOCK
 	LockQueueSets();
 
-	aQueues = mRetiredQueueSets;
+	aSourceInfos = mRetiredSourceInfos;
 
 	//UNLOCK
 	mQueueSetsLock = false;
@@ -200,19 +206,19 @@ void JThreadManager::GetRetiredQueues(std::vector<std::pair<JEventSource*, JQueu
 //---------------------------------
 // GetActiveQueues
 //---------------------------------
-void JThreadManager::GetActiveQueues(std::vector<std::pair<JEventSource*, JQueueSet*>>& aQueues) const
+void JThreadManager::GetActiveSourceInfos(std::vector<JEventSourceInfo*>& aSourceInfos) const
 {
 	//LOCK
 	LockQueueSets();
 
-	aQueues = mActiveQueueSets;
+	aSourceInfos = mActiveSourceInfos;
 
 	//UNLOCK
 	mQueueSetsLock = false;
 
 	//filter out nullptr queues
-	auto sNullChecker = [](const std::pair<JEventSource*, JQueueSet*>& sPair) -> bool {return (sPair.second == nullptr);};
-	aQueues.erase(std::remove_if(std::begin(aQueues), std::end(aQueues), sNullChecker), std::end(aQueues));
+	auto sNullChecker = [](const JEventSourceInfo* sInfo) -> bool {return (sInfo == nullptr);};
+	aSourceInfos.erase(std::remove_if(std::begin(aSourceInfos), std::end(aSourceInfos), sNullChecker), std::end(aSourceInfos));
 }
 
 //---------------------------------
@@ -227,18 +233,23 @@ void JThreadManager::AddQueue(JQueueSet::JQueueType aQueueType, JQueueInterface*
 }
 
 //---------------------------------
-// GetQueueSet
+// GetEventSourceInfo
 //---------------------------------
-JQueueSet* JThreadManager::GetQueueSet(const JEventSource* aEventSource) const
+JThreadManager::JEventSourceInfo* JThreadManager::GetEventSourceInfo(const JEventSource* aEventSource) const
 {
-	auto sFind_Key = [aEventSource](const std::pair<JEventSource*, JQueueSet*>& aPair) -> bool { return (aPair.first == aEventSource); };
+	auto sFind_Key = [aEventSource](const JEventSourceInfo* aSourceInfo) -> bool
+	{
+		if(aSourceInfo == nullptr)
+			return false;
+		return (aSourceInfo->mEventSource == aEventSource);
+	};
 
 	//LOCK
 	LockQueueSets();
 
-	auto sEnd = std::end(mActiveQueueSets);
-	auto sIterator = std::find_if(std::begin(mActiveQueueSets), sEnd, sFind_Key);
-	auto sResult = (sIterator != sEnd) ? (*sIterator).second : nullptr;
+	auto sEnd = std::end(mActiveSourceInfos);
+	auto sIterator = std::find_if(std::begin(mActiveSourceInfos), sEnd, sFind_Key);
+	auto sResult = (sIterator != sEnd) ? *sIterator : nullptr;
 
 	//UNLOCK
 	mQueueSetsLock = false;
@@ -249,7 +260,7 @@ JQueueSet* JThreadManager::GetQueueSet(const JEventSource* aEventSource) const
 //---------------------------------
 // GetNextQueueSet
 //---------------------------------
-std::pair<JEventSource*, JQueueSet*> JThreadManager::GetNextSourceQueues(std::size_t& aCurrentSetIndex)
+JThreadManager::JEventSourceInfo* JThreadManager::GetNextSourceQueues(std::size_t& aCurrentSetIndex)
 {
 	//Rotate to the next event source (and corresponding queue set)
 	//Increment the current set index, and if past the end, loop back to 0
@@ -260,25 +271,25 @@ std::pair<JEventSource*, JQueueSet*> JThreadManager::GetNextSourceQueues(std::si
 
 	while(true)
 	{
-		if(aCurrentSetIndex >= mActiveQueueSets.size())
+		if(aCurrentSetIndex >= mActiveSourceInfos.size())
 			aCurrentSetIndex = 0;
-		if(mActiveQueueSets[aCurrentSetIndex].second == nullptr)
+		if(mActiveSourceInfos[aCurrentSetIndex] == nullptr)
 			aCurrentSetIndex++;
 		else
 			break;
 	}
-	auto sQueuePair = mActiveQueueSets[aCurrentSetIndex];
+	auto sInfo = mActiveSourceInfos[aCurrentSetIndex];
 
 	//UNLOCK
 	mQueueSetsLock = false;
 
-	return sQueuePair;
+	return sInfo;
 }
 
 //---------------------------------
 // RegisterSourceFinished
 //---------------------------------
-std::pair<JEventSource*, JQueueSet*> JThreadManager::RegisterSourceFinished(const JEventSource* aFinishedEventSource, std::size_t& aQueueSetIndex)
+JThreadManager::JEventSourceInfo* JThreadManager::RegisterSourceFinished(const JEventSource* aFinishedEventSource, std::size_t& aQueueSetIndex)
 {
 	//Open the next source (if not done already)
 	//If two threads reach here at the same time, only one will open the source.
@@ -299,13 +310,14 @@ std::pair<JEventSource*, JQueueSet*> JThreadManager::RegisterSourceFinished(cons
 			JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JThreadManager::RegisterSourceFinished(): New source opened\n" << JLogEnd();
 
 		//Retire the current queue set, insert a new one in its place
-		mRetiredQueueSets.push_back(mActiveQueueSets[aQueueSetIndex]);
-		mActiveQueueSets[aQueueSetIndex] = std::make_pair(sNextSource, MakeQueueSet(sNextSource));
+		mActiveSourceInfos[aQueueSetIndex]->mLatestBarrierEvent = nullptr; //let it recycle the barrier event! //Thread safe: no outstanding events
+		mRetiredSourceInfos.push_back(mActiveSourceInfos[aQueueSetIndex]);
+		auto sInfo = new JEventSourceInfo(sNextSource, MakeQueueSet(sNextSource));
+		mActiveSourceInfos[aQueueSetIndex] = sInfo;
 
-		//Get and return the new queue set and source (don't forget to unlock!)
-		auto sQueuePair = mActiveQueueSets[aQueueSetIndex];
+		//Unlock and return
 		mQueueSetsLock = false;
-		return sQueuePair;
+		return sInfo;
 	}
 
 	//OK, the "next" source is null. Either another thread opened a new source, or there are no more sources to open.
@@ -316,16 +328,16 @@ std::pair<JEventSource*, JQueueSet*> JThreadManager::RegisterSourceFinished(cons
 		//So either:
 			//Another thread opened a new source, and installed it into mActiveQueueSets at the same slot
 			//There were no other sources to open, and installed nullptr in its place
-		if(mActiveQueueSets[aQueueSetIndex].second != nullptr)
+		auto sInfo = mActiveSourceInfos[aQueueSetIndex];
+		if(sInfo != nullptr)
 		{
 			//Another thread opened a new source, and installed it into mActiveQueueSets at the same slot
 			if(mDebugLevel > 0)
 				JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JThreadManager::RegisterSourceFinished(): Another thread opened a new source\n" << JLogEnd();
 
 			//Get and return the new queue set and source (don't forget to unlock!)
-			auto sQueuePair = mActiveQueueSets[aQueueSetIndex];
 			mQueueSetsLock = false;
-			return sQueuePair;
+			return sInfo;
 		}
 
 		//There were no new sources to open, so the other thread retired the queue set and put nullptr in its place
@@ -339,13 +351,13 @@ std::pair<JEventSource*, JQueueSet*> JThreadManager::RegisterSourceFinished(cons
 	if(mDebugLevel > 0)
 		JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JThreadManager::RegisterSourceFinished(): No new sources to open\n" << JLogEnd();
 
-	//Retire the current queue set and remove it from the active queue
+	//Retire the current source info and remove it from the active queue
 	//Note that we can't actually erase it: It would invalidate the queue set indices of other threads
 	//Instead, we replace it with nullptr
-	if(mActiveQueueSets[aQueueSetIndex].second != nullptr) //if not done already by another thread
+	if(mActiveSourceInfos[aQueueSetIndex] != nullptr) //if not done already by another thread
 	{
-		mRetiredQueueSets.push_back(mActiveQueueSets[aQueueSetIndex]);
-		mActiveQueueSets[aQueueSetIndex].second = nullptr;
+		mRetiredSourceInfos.push_back(mActiveSourceInfos[aQueueSetIndex]);
+		mActiveSourceInfos[aQueueSetIndex] = nullptr;
 	}
 
 	//If done, tell all threads to end
@@ -356,7 +368,7 @@ std::pair<JEventSource*, JQueueSet*> JThreadManager::RegisterSourceFinished(cons
 //---------------------------------
 // CheckAllSourcesDone
 //---------------------------------
-std::pair<JEventSource*, JQueueSet*> JThreadManager::CheckAllSourcesDone(std::size_t& aQueueSetIndex)
+JThreadManager::JEventSourceInfo* JThreadManager::CheckAllSourcesDone(std::size_t& aQueueSetIndex)
 {
 	//Only called by RegisterSourceFinished, and already within a lock on mQueueSetsLock
 		//This is only called once there are no more files to open, and we want to see if all jobs are done.
@@ -364,8 +376,8 @@ std::pair<JEventSource*, JQueueSet*> JThreadManager::CheckAllSourcesDone(std::si
 	//If not, rotate this thread to the next open source and return the next queue set
 
 	//Check if all sources are done
-	auto sNullChecker = [](const std::pair<JEventSource*, JQueueSet*>& sPair) -> bool {return (sPair.second == nullptr);};
-	if(std::all_of(std::begin(mActiveQueueSets), std::end(mActiveQueueSets), sNullChecker))
+	auto sNullChecker = [](const JEventSourceInfo* sInfo) -> bool {return (sInfo == nullptr);};
+	if(std::all_of(std::begin(mActiveSourceInfos), std::end(mActiveSourceInfos), sNullChecker))
 	{
 		//The last event source is done.
 		if(mDebugLevel > 0)
@@ -376,7 +388,7 @@ std::pair<JEventSource*, JQueueSet*> JThreadManager::CheckAllSourcesDone(std::si
 
 		//Tell all threads to end.
 		EndThreads();
-		return std::pair<JEventSource*, JQueueSet*>(nullptr, nullptr);
+		return nullptr;
 	}
 
 	//Not all sources are done yet.
@@ -384,26 +396,26 @@ std::pair<JEventSource*, JQueueSet*> JThreadManager::CheckAllSourcesDone(std::si
 	do
 	{
 		aQueueSetIndex++;
-		if(aQueueSetIndex >= mActiveQueueSets.size())
+		if(aQueueSetIndex >= mActiveSourceInfos.size())
 			aQueueSetIndex = 0;
 	}
-	while(mActiveQueueSets[aQueueSetIndex].second == nullptr);
+	while(mActiveSourceInfos[aQueueSetIndex] == nullptr);
 
 	//Get and return the next queue set and source (don't forget to unlock!)
-	auto sQueuePair = mActiveQueueSets[aQueueSetIndex];
+	auto sInfo = mActiveSourceInfos[aQueueSetIndex];
 	mQueueSetsLock = false;
-	return sQueuePair;
+	return sInfo;
 }
 
 //---------------------------------
 // ExecuteTask
 //---------------------------------
-void JThreadManager::ExecuteTask(std::shared_ptr<JTaskBase>& aTask, JQueueSet::JQueueType aQueueType)
+void JThreadManager::ExecuteTask(std::shared_ptr<JTaskBase>& aTask, const JEventSourceInfo* aSourceInfo, JQueueSet::JQueueType aQueueType)
 {
 	//If task is from the event queue, prepare it for execution
 	//See function for details
 	if(aQueueType == JQueueSet::JQueueType::Events)
-		PrepareEventTask(aTask);
+		PrepareEventTask(aTask, aSourceInfo);
 
 	try
 	{
@@ -427,7 +439,7 @@ void JThreadManager::ExecuteTask(std::shared_ptr<JTaskBase>& aTask, JQueueSet::J
 //---------------------------------
 // PrepareEventTask
 //---------------------------------
-void JThreadManager::PrepareEventTask(const std::shared_ptr<JTaskBase>& aTask) const
+void JThreadManager::PrepareEventTask(const std::shared_ptr<JTaskBase>& aTask, const JEventSourceInfo* aSourceInfo) const
 {
 	//If from the event queue, add factories to the event (JFactorySet)
 	//We don't add them earlier (e.g. in the event source) because it would take too much memory
@@ -449,10 +461,19 @@ void JThreadManager::PrepareEventTask(const std::shared_ptr<JTaskBase>& aTask) c
 	//And we'll also have to deal with this again for sending along barrier-event data.
 	//This ends up requiring a lot of arguments to factory/processor/task methods.
 
-	//Finally, by having the JEvent Release() function recycle the JFactorySet, it doesn't have to be shared_ptr
+	//Now, let's set some stuff. Starting with the JFactorySet:
+	//By having the JEvent Release() function recycle the JFactorySet, it doesn't have to be shared_ptr
 	//If it's shared_ptr: more (slow) atomic operations
 	//Just make the JFactorySet a member and cheat a little bit. It's a controlled environment.
 	sEvent->SetFactorySet(mApplication->GetFactorySet());
+
+	//Now set the latest barrier event
+	//If the current event is a barrier event, set nullptr
+	//(if store shared_ptr to self, will never go out of scope)
+	if(sEvent->GetIsBarrierEvent())
+		sEvent->SetLatestBarrierEvent(nullptr);
+	else //set it
+		sEvent->SetLatestBarrierEvent(aSourceInfo->mLatestBarrierEvent);
 }
 
 //---------------------------------
@@ -472,11 +493,12 @@ void JThreadManager::SubmitAsyncTasks(const std::vector<std::shared_ptr<JTaskBas
 
 	//Get queue
 	auto sEventSource = aTasks[0]->GetEvent()->GetEventSource();
-	auto sQueueSet = GetQueueSet(sEventSource);
+	auto sSourceInfo = GetEventSourceInfo(sEventSource);
+	auto sQueueSet = sSourceInfo->mQueueSet;
 	auto sQueue = sQueueSet->GetQueue(aQueueType, aQueueName);
 
 	//Submit tasks
-	SubmitTasks(aTasks, sQueueSet, sQueue, aQueueType);
+	SubmitTasks(aTasks, sSourceInfo, sQueue, aQueueType);
 }
 
 //---------------------------------
@@ -496,20 +518,21 @@ void JThreadManager::SubmitTasks(const std::vector<std::shared_ptr<JTaskBase>>& 
 
 	//Get queue
 	auto sEventSource = aTasks[0]->GetEvent()->GetEventSource();
-	auto sQueueSet = GetQueueSet(sEventSource);
+	auto sSourceInfo = GetEventSourceInfo(sEventSource);
+	auto sQueueSet = sSourceInfo->mQueueSet;
 	auto sQueue = sQueueSet->GetQueue(aQueueType, aQueueName);
 
 	//Submit tasks
-	SubmitTasks(aTasks, sQueueSet, sQueue, aQueueType);
+	SubmitTasks(aTasks, sSourceInfo, sQueue, aQueueType);
 
 	//While waiting for results, execute tasks from the queue we submitted to
-	DoWorkWhileWaitingForTasks(aTasks, sQueueSet, sQueue, aQueueType);
+	DoWorkWhileWaitingForTasks(aTasks, sSourceInfo, sQueue, aQueueType);
 }
 
 //---------------------------------
 // SubmitTasks
 //---------------------------------
-void JThreadManager::SubmitTasks(const std::vector<std::shared_ptr<JTaskBase>>& aTasks, JQueueSet* aQueueSet, JQueueInterface* aQueue, JQueueSet::JQueueType aQueueType)
+void JThreadManager::SubmitTasks(const std::vector<std::shared_ptr<JTaskBase>>& aTasks, const JEventSourceInfo* aSourceInfo, JQueueInterface* aQueue, JQueueSet::JQueueType aQueueType)
 {
 	//You would think submitting tasks would be easy.
 	//However, the task JQueue can fill up, and we may not be able to put all of our tasks in.
@@ -529,7 +552,7 @@ void JThreadManager::SubmitTasks(const std::vector<std::shared_ptr<JTaskBase>>& 
 			//Failed (queue probably full): Execute a task in the meantime
 			auto sTask = aQueue->GetTask();
 			if(sTask != nullptr)
-				ExecuteTask(sTask, aQueueType);
+				ExecuteTask(sTask, aSourceInfo, aQueueType);
 		}
 		else
 			sIterator++; //advance to the next task
@@ -554,14 +577,15 @@ void JThreadManager::DoWorkWhileWaiting(const std::atomic<bool>& aWaitFlag, cons
 	//so waiting threads should execute tasks from that queue to minimize the wait time.
 
 	//Get queue for executing tasks
-	auto sQueueSet = GetQueueSet(aEventSource);
+	auto sSourceInfo = GetEventSourceInfo(aEventSource);
+	auto sQueueSet = sSourceInfo->mQueueSet;
 	auto sQueue = sQueueSet->GetQueue(aQueueType, aQueueName);
 
 	//Build is-it-done checker
 	auto sWaitFunction = [&aWaitFlag](void) -> bool {return aWaitFlag;};
 
 	//Execute tasks while waiting
-	DoWorkWhileWaitingForTasks(sWaitFunction, sQueueSet, sQueue, aQueueType);
+	DoWorkWhileWaitingForTasks(sWaitFunction, sSourceInfo, sQueue, aQueueType);
 }
 
 //---------------------------------
@@ -576,17 +600,18 @@ void JThreadManager::DoWorkWhileWaitingForTasks(const std::vector<std::shared_pt
 
 	//Get queue
 	auto sEventSource = aSubmittedTasks[0]->GetEvent()->GetEventSource();
-	auto sQueueSet = GetQueueSet(sEventSource);
+	auto sSourceInfo = GetEventSourceInfo(sEventSource);
+	auto sQueueSet = sSourceInfo->mQueueSet;
 	auto sQueue = sQueueSet->GetQueue(aQueueType, aQueueName);
 
 	//Defer to next function
-	DoWorkWhileWaitingForTasks(aSubmittedTasks, sQueueSet, sQueue, aQueueType);
+	DoWorkWhileWaitingForTasks(aSubmittedTasks, sSourceInfo, sQueue, aQueueType);
 }
 
 //---------------------------------
 // DoWorkWhileWaitingForTasks
 //---------------------------------
-void JThreadManager::DoWorkWhileWaitingForTasks(const std::vector<std::shared_ptr<JTaskBase>>& aSubmittedTasks, JQueueSet* aQueueSet, JQueueInterface* aQueue, JQueueSet::JQueueType aQueueType)
+void JThreadManager::DoWorkWhileWaitingForTasks(const std::vector<std::shared_ptr<JTaskBase>>& aSubmittedTasks, const JEventSourceInfo* aSourceInfo, JQueueInterface* aQueue, JQueueSet::JQueueType aQueueType)
 {
 	//The passed-in tasks have already been submitted (e.g. via SubmitTasks or SubmitAsyncTasks).
 	//While waiting for those to finish, we get tasks from the queues and execute those.
@@ -601,13 +626,13 @@ void JThreadManager::DoWorkWhileWaitingForTasks(const std::vector<std::shared_pt
 		return !std::all_of(std::begin(aSubmittedTasks), std::end(aSubmittedTasks), sTaskCompleteChecker);};
 
 	//Execute tasks while waiting
-	DoWorkWhileWaitingForTasks(sWaitFunction, aQueueSet, aQueue, aQueueType);
+	DoWorkWhileWaitingForTasks(sWaitFunction, aSourceInfo, aQueue, aQueueType);
 }
 
 //---------------------------------
 // DoWorkWhileWaitingForTasks
 //---------------------------------
-void JThreadManager::DoWorkWhileWaitingForTasks(const std::function<bool(void)>& aWaitFunction, JQueueSet* aQueueSet, JQueueInterface* aQueue, JQueueSet::JQueueType aQueueType)
+void JThreadManager::DoWorkWhileWaitingForTasks(const std::function<bool(void)>& aWaitFunction, const JEventSourceInfo* aSourceInfo, JQueueInterface* aQueue, JQueueSet::JQueueType aQueueType)
 {
 	//Won't return until aWaitFunction returns true.
 	//In the meantime, executes tasks (or sleeps if none available)
@@ -619,9 +644,9 @@ void JThreadManager::DoWorkWhileWaitingForTasks(const std::function<bool(void)>&
 		//Get task and execute it
 		auto sQueueType = JQueueSet::JQueueType::Events;
 		auto sTask = std::shared_ptr<JTaskBase>(nullptr);
-		std::tie(sQueueType, sTask) = GetTask(aQueueSet, aQueue, aQueueType);
+		std::tie(sQueueType, sTask) = GetTask(aSourceInfo->mQueueSet, aQueue, aQueueType);
 		if(sTask != nullptr)
-			ExecuteTask(sTask, sQueueType);
+			ExecuteTask(sTask, aSourceInfo, sQueueType);
 		else
 			std::this_thread::sleep_for(mSleepTime); //Sleep a minimal amount.
 	}
@@ -660,9 +685,11 @@ std::pair<JQueueSet::JQueueType, std::shared_ptr<JTaskBase>> JThreadManager::Get
 
 	//Finally, loop over all active queue sets (different event sources)
 	LockQueueSets();
-	for(auto sQueueSetPair : mActiveQueueSets)
+	for(auto sQueueSetInfo : mActiveSourceInfos)
 	{
-		auto sQueueSet = sQueueSetPair.second;
+		if(sQueueSetInfo == nullptr)
+			continue;
+		auto sQueueSet = sQueueSetInfo->mQueueSet;
 		if(sQueueSet == aQueueSet)
 			continue; //already checked that one
 		std::tie(sQueueType, sTask) = aQueueSet->GetTask();
@@ -749,7 +776,7 @@ void JThreadManager::SetThreadAffinity(int affinity_algorithm)
 		thread_affinity_policy_data_t policy = { (int)icpu };
 		thread_port_t mach_thread = pthread_mach_thread_np( t );
 		thread_policy_set(mach_thread, THREAD_AFFINITY_POLICY, (thread_policy_t)&policy, THREAD_AFFINITY_POLICY_COUNT);
-		_DBG_<<"CPU: " << GetCPU() << "  (mach_thread="<<mach_thread<<", icpu=" << icpu <<")" << std::endl;
+		_DBG_<<"CPU: " << mApplication->GetCPU() << "  (mach_thread="<<mach_thread<<", icpu=" << icpu <<")" << std::endl;
 #else
 		// Linux
 		cpu_set_t cpuset;
