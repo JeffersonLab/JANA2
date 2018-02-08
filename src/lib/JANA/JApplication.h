@@ -105,6 +105,7 @@ class JApplication{
 		JApplication(int narg, char *argv[]);
 		virtual ~JApplication();
 
+		void AddSignalHandlers(void);
 		int GetExitCode(void);
 		void Initialize(void);
 		void PrintFinalReport(void);

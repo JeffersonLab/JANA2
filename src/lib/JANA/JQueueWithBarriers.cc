@@ -203,7 +203,15 @@ bool JQueueWithBarriers::AreEnoughTasksBuffered(void)
 {
 	//This function is only called for the Event queue
 	//If not enough tasks (events) are buffered, we will read in more events
-	return mInputQueue->GetNumTasksProcessed();
+	return mInputQueue->AreEnoughTasksBuffered();
+}
+
+//---------------------------------
+// GetTaskBufferSize
+//---------------------------------
+std::size_t JQueueWithBarriers::GetTaskBufferSize(void)
+{
+	return mInputQueue->GetTaskBufferSize();
 }
 
 //---------------------------------

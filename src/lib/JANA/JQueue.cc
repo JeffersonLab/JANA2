@@ -215,7 +215,6 @@ std::shared_ptr<JTaskBase> JQueue::GetTask(void)
 uint32_t JQueue::GetNumTasks(void)
 {
 	/// Returns the number of tasks currently in this queue.
-	//size 10, end = 2, begin = 9: -7
 	auto sDifference = (int)iend - (int)ibegin;
 	return (sDifference >= 0) ? sDifference : sDifference + mQueue.size();
 }
@@ -230,6 +229,14 @@ uint64_t JQueue::GetNumTasksProcessed(void)
 	/// GetNumTasks for that).
 	
 	return mTasksProcessed;
+}
+
+//---------------------------------
+// GetTaskBufferSize
+//---------------------------------
+std::size_t JQueue::GetTaskBufferSize(void)
+{
+	return mTaskBufferSize;
 }
 
 //---------------------------------

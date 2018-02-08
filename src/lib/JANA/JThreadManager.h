@@ -116,6 +116,8 @@ class JThreadManager
 		void EndThreads(void);
 		void JoinThreads(void);
 		bool HaveAllThreadsEnded(void);
+		void AddThread(void);
+		void RemoveThread(void);
 
 		// SUBMIT / EXECUTE TASKS
 		void SubmitTasks(const std::vector<std::shared_ptr<JTaskBase>>& aTasks, JQueueSet::JQueueType aQueueType = JQueueSet::JQueueType::SubTasks, const std::string& aQueueName = "");
@@ -130,11 +132,12 @@ class JThreadManager
 		JEventSourceInfo* GetEventSourceInfo(const JEventSource* aEventSource) const;
 		JQueueInterface* GetQueue(const std::shared_ptr<JTaskBase>& aTask, JQueueSet::JQueueType aQueueType, const std::string& aQueueName) const;
 		JEventSourceInfo* RegisterSourceFinished(const JEventSource* aFinishedEventSource, std::size_t& aQueueSetIndex);
-		void ExecuteTask(std::shared_ptr<JTaskBase>& aTask, const JEventSourceInfo* aSourceInfo, JQueueSet::JQueueType aQueueType);
+		void ExecuteTask(const std::shared_ptr<JTaskBase>& aTask, const JEventSourceInfo* aSourceInfo, JQueueSet::JQueueType aQueueType);
 
 		//INTERNAL CALLS
 		JQueueSet* MakeQueueSet(JEventSource* sEventSource);
-		void LockQueueSets(void) const;
+		void LockScourceInfos(void) const;
+		void LockThreadPool(void) const;
 		JEventSourceInfo* CheckAllSourcesDone(std::size_t& aQueueSetIndex);
 		std::pair<JQueueSet::JQueueType, std::shared_ptr<JTaskBase>> GetTask(JQueueSet* aQueueSet, JQueueInterface* aQueue, JQueueSet::JQueueType aQueueType) const;
 		void SubmitTasks(const std::vector<std::shared_ptr<JTaskBase>>& aTasks, const JEventSourceInfo* aSourceInfo, JQueueInterface* aQueue, JQueueSet::JQueueType aQueueType);
@@ -154,7 +157,8 @@ class JThreadManager
 		std::vector<JThread*> mThreads;
 
 		//QUEUES
-		mutable std::atomic<bool> mQueueSetsLock{false};
+		mutable std::atomic<bool> mScourceInfosLock{false};
+		mutable std::atomic<bool> mThreadPoolLock{false}; //Lock on mThreads
 		JQueueSet mTemplateQueueSet; //When a new source is opened, these queues are cloned for it //e.g. user-provided queues
 		std::vector<JEventSourceInfo*> mActiveSourceInfos; //if no new open sources, nullptr inserted on retirement!!
 		std::vector<JEventSourceInfo*> mRetiredSourceInfos; //source already finished

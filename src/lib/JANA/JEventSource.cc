@@ -73,44 +73,78 @@ void JEventSource::Open(void)
 //---------------------------------
 // GetProcessEventTask
 //---------------------------------
-std::pair<std::shared_ptr<JTaskBase>, JEventSource::RETURN_STATUS> JEventSource::GetProcessEventTask(void)
+std::pair<std::vector<std::shared_ptr<JTaskBase>>, JEventSource::RETURN_STATUS> JEventSource::GetProcessEventTasks(std::size_t aNumTasks)
 {
 	//This version is called by JThread
 
 	//If file closed, return dummy pair
 	if(mFileClosed)
-		return std::make_pair(std::shared_ptr<JTaskBase>(nullptr), RETURN_STATUS::kNO_MORE_EVENTS);
+		return std::make_pair(std::vector<std::shared_ptr<JTaskBase>>(), RETURN_STATUS::kNO_MORE_EVENTS);
 
 	//Attempt to acquire atomic lock
 	bool sExpected = false;
 	if(!mGettingEvent.compare_exchange_strong(sExpected, true)) //failed, return busy
-		return std::make_pair(std::shared_ptr<JTaskBase>(nullptr), RETURN_STATUS::kBUSY);
+		return std::make_pair(std::vector<std::shared_ptr<JTaskBase>>(), RETURN_STATUS::kBUSY);
 
-	//Get the event from the input file
-	auto sEventPair = GetEvent();
+	//Lock aquired, get the events
+	std::vector<std::shared_ptr<const JEvent>> sEvents;
+	auto sFailureStatus = JEventSource::RETURN_STATUS::kSUCCESS;
+	for(std::size_t si = 0; si < aNumTasks; si++)
+	{
+		//Get an event from the input file
+		auto sEventPair = GetEvent();
+
+		//Save the event if we succeeded
+		if(sEventPair.first != nullptr)
+			sEvents.push_back(std::move(sEventPair.first));
+		else //Break if there's an issue
+		{
+			sFailureStatus = sEventPair.second;
+			break;
+		}
+	}
 
 	//Done with the lock: Unlock
 	mGettingEvent = false;
 
-	//Return if no event
-	if(sEventPair.first == nullptr)
-	{
-		if(sEventPair.second == RETURN_STATUS::kNO_MORE_EVENTS)
-			mFileClosed = true;
-		return std::make_pair(std::shared_ptr<JTaskBase>(nullptr), sEventPair.second);
-	}
+	//Make tasks for analyzing the events
+	std::pair<std::vector<std::shared_ptr<JTaskBase>>, JEventSource::RETURN_STATUS> sTasks;
+	sTasks.second = sFailureStatus; //is kSuccess if nothing went wrong
+	for(auto& sEvent : sEvents)
+		sTasks.first.push_back(GetProcessEventTask(std::move(sEvent)));
 
-	//Then make the task for analyzing it (default: running the processors) and return it
-	return GetProcessEventTask(sEventPair.first);
+	//If the file is empty, note it
+	if(sFailureStatus == RETURN_STATUS::kNO_MORE_EVENTS)
+		mFileClosed = true;
+
+	//Return the tasks
+	return sTasks;
+}
+
+//---------------------------------
+// SetNumEventsToGetAtOnce
+//---------------------------------
+void JEventSource::SetNumEventsToGetAtOnce(std::size_t aMinNumEvents, std::size_t aMaxNumEvents)
+{
+	mMinNumEventsToGetAtOnce = aMinNumEvents;
+	mMaxNumEventsToGetAtOnce = aMaxNumEvents;
+}
+
+//---------------------------------
+// GetNumEventsToGetAtOnce
+//---------------------------------
+std::pair<std::size_t, std::size_t> JEventSource::GetNumEventsToGetAtOnce(void) const
+{
+	return std::make_pair(mMinNumEventsToGetAtOnce, mMaxNumEventsToGetAtOnce);
 }
 
 //---------------------------------
 // GetProcessEventTask
 //---------------------------------
-std::pair<std::shared_ptr<JTaskBase>, JEventSource::RETURN_STATUS> JEventSource::GetProcessEventTask(std::shared_ptr<const JEvent>& aEvent)
+std::shared_ptr<JTaskBase> JEventSource::GetProcessEventTask(std::shared_ptr<const JEvent>&& aEvent)
 {
 	//This version creates the task (default: run the processors), and can be overridden in derived classes (but cannot be called)
-	return std::make_pair(JMakeAnalyzeEventTask(std::move(aEvent), mApplication), RETURN_STATUS::kSUCCESS); //From JFunctions
+	return JMakeAnalyzeEventTask(std::move(aEvent), mApplication);
 }
 
 //---------------------------------

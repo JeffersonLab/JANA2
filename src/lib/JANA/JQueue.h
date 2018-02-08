@@ -72,6 +72,7 @@ class JQueue : public JQueueInterface
 		uint32_t GetMaxTasks(void);
 		uint32_t GetNumTasks(void);
 		uint64_t GetNumTasksProcessed(void);
+		std::size_t GetTaskBufferSize(void);
 	
 		JQueueInterface* CloneEmpty(void) const;
 

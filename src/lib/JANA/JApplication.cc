@@ -73,7 +73,6 @@ using namespace std;
 #include <JANA/JResourcePool.h>
 #include <JANA/JLogWrapper.h>
 
-
 JApplication *japp = NULL;
 
 int SIGINT_RECEIVED = 0;
@@ -115,6 +114,38 @@ void USR2Handle(int x)
 	JStatus::RecordBackTrace();
 }
 
+//-----------------------------------------------------------------
+// SIGSEGVHandle
+//-----------------------------------------------------------------
+void SIGSEGVHandle(int aSignalNumber, siginfo_t* aSignalInfo, void* aContext)
+{
+	JStatus::RecordBackTrace(); //For the segfaulting thread
+	thread th( JStatus::Report );
+	th.detach();
+}
+
+//-----------------------------------------------------------------
+// AddSignalHandlers
+//-----------------------------------------------------------------
+void JApplication::AddSignalHandlers(void)
+{
+	//Define signal action
+	struct sigaction sSignalAction;
+	sSignalAction.sa_sigaction = SIGSEGVHandle;
+	sSignalAction.sa_flags = SA_RESTART | SA_SIGINFO;
+
+	//Clear and set signals
+	sigemptyset(&sSignalAction.sa_mask);
+	sigaction(SIGSEGV, &sSignalAction, nullptr);
+
+	// Set up to catch SIGINTs for graceful exits
+	signal(SIGINT,ctrlCHandle);
+
+	// Set up to catch USR1's and USR2's for status reporting
+	signal(SIGUSR1,USR1Handle);
+	signal(SIGUSR2,USR2Handle);
+}
+
 //---------------------------------
 // JApplication    (Constructor)
 //---------------------------------
@@ -128,13 +159,9 @@ JApplication::JApplication(int narg, char *argv[])
 	SetLogWrapper(1, new JLogWrapper(std::cerr)); //stderr
 	SetLogWrapper(2, mLogWrappers[0]); //hd_dump
 
-	// Set up to catch SIGINTs for graceful exits
-	signal(SIGINT,ctrlCHandle);
+	//Add to catch seg faults
+	AddSignalHandlers();
 
-	// Set up to catch USR1's and USR2's for status reporting
-	signal(SIGUSR1,USR1Handle);
-	signal(SIGUSR2,USR2Handle);
-	
 	_exit_code = 0;
 	_quitting = false;
 	_draining_queues = false;

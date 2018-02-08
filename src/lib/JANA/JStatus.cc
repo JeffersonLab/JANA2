@@ -124,6 +124,7 @@ void JStatus::Report(void){
 	// Generate a report
 	std::stringstream ss;
 	gJSTATUS->GenerateReport( ss );
+std::cerr << ss.str(); //TODO: FIX ME: This is a hack because I couldn't seem to get an output file
 	gJSTATUS->SendReport( ss );
 }
 
@@ -335,13 +336,15 @@ string JStatus::BackTraceToString(BACKTRACE_INFO_t &btinfo)
 		abi::__cxa_demangle(name.c_str(), dname, &dlen, &status);
 		string demangled_name(status ? "":dname);
 		if(status==0) name = demangled_name;
-		
+
+/*
+		//NO!!!! THIS IS NEEDED!!!!
 		// Truncate really long names since they are usually indiscernable
 		if( name.length()>40 ) {
 			name.erase(40);
 			name += " ...";
 		}
-		
+*/
 		// Ignore frames where the name seems un-useful
 		if( FILTER_TRACES ){
 			// OS X

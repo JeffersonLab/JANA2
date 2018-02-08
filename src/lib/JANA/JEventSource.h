@@ -48,6 +48,7 @@
 #include <utility>
 #include <atomic>
 #include <memory>
+#include <vector>
 #include <typeindex>
 
 class JTaskBase;
@@ -81,7 +82,10 @@ class JEventSource{
 		virtual void Open(void);
 		virtual bool GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactoryBase* aFactory){return false;}
 
-		std::pair<std::shared_ptr<JTaskBase>, JEventSource::RETURN_STATUS> GetProcessEventTask(void);
+		void SetNumEventsToGetAtOnce(std::size_t aMinNumEvents, std::size_t aMaxNumEvents);
+		std::pair<std::size_t, std::size_t> GetNumEventsToGetAtOnce(void) const; //returns min, max
+
+		std::pair<std::vector<std::shared_ptr<JTaskBase>>, JEventSource::RETURN_STATUS> GetProcessEventTasks(std::size_t aNumTasks = 1);
 		bool IsFileClosed(void) const;
 		std::size_t GetNumEventsProcessed(void) const{return mEventsProcessed;}
 		
@@ -106,13 +110,16 @@ class JEventSource{
 		void IncrementEventCount(void){mNumOutstandingEvents++;}
 		void DecrementEventCount(void){mNumOutstandingEvents--; mEventsProcessed++;}
 
-		virtual std::pair<std::shared_ptr<JTaskBase>, JEventSource::RETURN_STATUS> GetProcessEventTask(std::shared_ptr<const JEvent>& aEvent);
+		virtual std::shared_ptr<JTaskBase> GetProcessEventTask(std::shared_ptr<const JEvent>&& aEvent);
 
 		//Keep track of file/event status
 		std::atomic<bool> mFileClosed{false};
 		std::atomic<bool> mGettingEvent{false};
 		std::atomic<std::size_t> mEventsProcessed{0};
 		std::atomic<std::size_t> mNumOutstandingEvents{0}; //Number of JEvents still be analyzed from this event source (source done when 0)
+
+		std::size_t mMinNumEventsToGetAtOnce = 1;
+		std::size_t mMaxNumEventsToGetAtOnce = 1;
 };
 
 #endif // _JEventSource_h_

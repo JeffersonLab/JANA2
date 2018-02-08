@@ -62,7 +62,7 @@ JThread::JThread(int aThreadID, JApplication* aApplication, JThreadManager::JEve
 		mEventQueue(mEventSourceInfo->mQueueSet->GetQueue(JQueueSet::JQueueType::Events)), mRotateEventSources(aRotateEventSources),
 		mThreadID(aThreadID)
 {
-	mDebugLevel = 40;
+	mDebugLevel = 500;
 	_thread = new std::thread( &JThread::Loop, this );
 }
 
@@ -258,6 +258,11 @@ void JThread::Loop(void)
 				if(sQueueType == JQueueSet::JQueueType::Events)
 				{
 					mEventSourceInfo = mThreadManager->GetNextSourceQueues(mQueueSetIndex);
+					if(mEventSourceInfo == nullptr)
+					{
+						mRunStateTarget = kRUN_STATE_ENDED;
+						continue; //Somehow down to no tasks left: We're done processing
+					}
 					if(mDebugLevel >= 20)
 						*mLogger << "Thread " << mThreadID << " JThread::Loop(): Rotated sources to: " << mQueueSetIndex << ", rotation check = " << mFullRotationCheckIndex << "\n" << JLogEnd();
 					mEventQueue = mEventSourceInfo->mQueueSet->GetQueue(JQueueSet::JQueueType::Events);
@@ -288,32 +293,61 @@ bool JThread::CheckEventQueue(void)
 	if(mSourceEmpty || mEventQueue->AreEnoughTasksBuffered())
 		return false; //Didn't buffer more events, just execute the next available task
 
+	//Figure out how many event (tasks) to get
+	auto sNumEventsToGetRange = mEventSourceInfo->mEventSource->GetNumEventsToGetAtOnce();
+	auto sNumEventsRangeSize = sNumEventsToGetRange.second - sNumEventsToGetRange.first;
+
+	//The default is to get range max, unless the range size is non-zero or there are many threads
+		//If only one thread: Get the max: maximize cache coherency, keep the disk hot
+		//Or else we'll just have to keep getting from file one at a time over and over again
+	auto sNumEventsToGet = sNumEventsToGetRange.second;
+	if((sNumEventsRangeSize > 0) && (mThreadManager->GetNJThreads() > 1))
+	{
+		//The # of events we'll get is based on how full the buffer is.
+		//If the buffer is nearly empty, we'll get very few events.
+			//Why? So that way the other threads won't have to wait as long for something to do
+		//If the buffer is nearly full, we'll get a lot of events
+			//Why? Because the other threads have plenty of work to keep them busy.
+			//We only want one thread worried about reading from the source.
+			//Minimizes contention, keeps the disk hot, maximizes cache coherency
+		//Note that the buffer shouldn't be thought of as a MAX, but as a MIN.
+			//Thus we can skyrocket over it
+		auto sBufferFillFraction = double(mEventQueue->GetNumTasks()) / double(mEventQueue->GetTaskBufferSize());
+		if(sBufferFillFraction > 1.0)
+			sBufferFillFraction = 1.0;
+		sNumEventsToGet = sNumEventsToGetRange.first + sBufferFillFraction*(double(sNumEventsRangeSize));
+	}
+
 	if(mDebugLevel >= 20)
-		*mLogger << "Thread " << mThreadID << " JThread::CheckEventQueue(): Get process event task\n" << JLogEnd();
+		*mLogger << "Thread " << mThreadID << " JThread::CheckEventQueue(): Get " << sNumEventsToGet << " process event tasks\n" << JLogEnd();
 
-	//Not enough queued. Get the next event from the source, and get a task to process it (unless another thread has locked access)
-	auto sReturnStatus = JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
-	auto sEventTask = std::shared_ptr<JTaskBase>(nullptr);
-	std::tie(sEventTask, sReturnStatus) = mEventSourceInfo->mEventSource->GetProcessEventTask();
+	//Get the next event(s) from the source, and get task(s) to process it/them (unless another thread has locked access)
+	auto sTasksPair = mEventSourceInfo->mEventSource->GetProcessEventTasks(sNumEventsToGet);
+	auto sReturnStatus = sTasksPair.second;
+	auto& sEventTasks = sTasksPair.first;
 
+	//Check if successful. If so, add tasks to queue
 	if(sReturnStatus == JEventSource::RETURN_STATUS::kSUCCESS)
 	{
 		if(mDebugLevel >= 40)
-			*mLogger << "Thread " << mThreadID << " JThread::CheckEventQueue(): Success, add task\n" << JLogEnd();
+			*mLogger << "Thread " << mThreadID << " JThread::CheckEventQueue(): Success, add task(s)\n" << JLogEnd();
 
-		//Add the process-event task to the event queue.
-		//We have no where else to put this task if it doesn't fit in the queue.
-		//So just continually try to add it
-		while(mEventQueue->AddTask(std::move(sEventTask)) != JQueueInterface::Flags_t::kNO_ERROR)
+		//Loop over tasks
+		for(auto& sEventTask : sEventTasks)
 		{
-			//Add failed, queue must be full.
-			//This shouldn't happen if the relationship between the
-			//queue size and the buffer size is reasonable.
+			//Add this process-event task to the event queue.
+			//We have no where else to put this task if it doesn't fit in the queue.
+			//So just continually try to add it
+			if(mEventQueue->AddTask(std::move(sEventTask)) != JQueueInterface::Flags_t::kNO_ERROR)
+			{
+				//Add failed, queue must be full.
+				//This (probably) shouldn't happen if the relationship between the
+				//queue size and the buffer size is reasonable.
 
-			//Oh well. Take a task and execute it, freeing up a slot
-			auto sWhileWaitingTask = mEventQueue->GetTask();
-			if(sWhileWaitingTask != nullptr)
-				(*sWhileWaitingTask)();
+				//Oh well. Just execute this task directly instead
+				//This is faster than pulling an event off the front of the queue
+				(*sEventTask)();
+			}
 		}
 
 		//Process-event task is submitted
@@ -381,6 +415,8 @@ bool JThread::HandleNullTask(void)
 	if(mRotateEventSources) //No tasks, try to rotate to a different input file
 	{
 		mEventSourceInfo = mThreadManager->GetNextSourceQueues(mQueueSetIndex);
+		if(mEventSourceInfo == nullptr)
+			return false; //Somehow in between, down to no tasks left: We're done processing
 		mEventQueue = mEventSourceInfo->mQueueSet->GetQueue(JQueueSet::JQueueType::Events);
 		mSourceEmpty = false;
 		if(mDebugLevel >= 20)
