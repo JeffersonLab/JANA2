@@ -18,6 +18,7 @@
 #include "JEvent.h"
 #include "JLog.h"
 #include "JSourceObject.h"
+#include "JQueueWithLock.h"
 
 // Routine used to create our JEventProcessor
 #include <JANA/JApplication.h>
@@ -38,7 +39,7 @@ JEventProcessor_jana_test::JEventProcessor_jana_test(void)
 	//This is the new init()
 
 	//Add queue for subtasks (not supplied by default!)
-	auto sSubtaskQueue = new JQueue("Subtasks", 2000);
+	auto sSubtaskQueue = new JQueueWithLock("Subtasks", 2000);
 	japp->GetJThreadManager()->AddQueue(JQueueSet::JQueueType::SubTasks, sSubtaskQueue);
 }
 

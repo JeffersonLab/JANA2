@@ -692,8 +692,11 @@ void JThreadManager::DoWorkWhileWaitingForTasks(const std::vector<std::shared_pt
 	auto sTaskCompleteChecker = [](const std::shared_ptr<JTaskBase>& sTask) -> bool {return sTask->IsFinished();};
 
 	//Wait if all tasks aren't finished
-	auto sWaitFunction = [aSubmittedTasks, sTaskCompleteChecker](void) -> bool {
-		return !std::all_of(std::begin(aSubmittedTasks), std::end(aSubmittedTasks), sTaskCompleteChecker);};
+	//Pass in iterators instead of vector to avoid copying the vector (and ref counting)
+	auto sBegin = std::begin(aSubmittedTasks);
+	auto sEnd = std::end(aSubmittedTasks);
+	auto sWaitFunction = [sBegin, sEnd, sTaskCompleteChecker](void) -> bool {
+		return !std::all_of(sBegin, sEnd, sTaskCompleteChecker);};
 
 	//Execute tasks while waiting
 	DoWorkWhileWaitingForTasks(sWaitFunction, aSourceInfo, aQueue, aQueueType);

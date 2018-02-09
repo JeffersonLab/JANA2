@@ -23,12 +23,13 @@ JEventSource_jana_test::JEventSource_jana_test(const char* source_name) : JEvent
 	mRandomGenerator.seed(sTime);
 
 	//Make factory generator that will make factories for all types provided by the event source
+	//This is necessary because the JFactorySet needs all factories ahead of time
 	//Make sure that all types are listed as template arguments here!!
 	mFactoryGenerator = new JSourceFactoryGenerator<JSourceObject, JSourceObject2>();
 
 	//Event queue:
 	//If not created, a default will be supplied
-	mEventQueue = new JQueue("Events", 200, 50); //max size of 200, keep at least 50 buffered
+	mEventQueue = new JQueueWithLock("Events", 200, 50); //max size of 200, keep at least 50 buffered
 
 	//Debug:
 //	mDebugLevel = 500;

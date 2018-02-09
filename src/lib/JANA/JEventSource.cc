@@ -81,14 +81,17 @@ std::pair<std::vector<std::shared_ptr<JTaskBase>>, JEventSource::RETURN_STATUS> 
 	if(mFileClosed)
 		return std::make_pair(std::vector<std::shared_ptr<JTaskBase>>(), RETURN_STATUS::kNO_MORE_EVENTS);
 
+	//Initialize things before locking
+	std::vector<std::shared_ptr<const JEvent>> sEvents;
+	sEvents.reserve(aNumTasks);
+	auto sFailureStatus = JEventSource::RETURN_STATUS::kSUCCESS;
+
 	//Attempt to acquire atomic lock
 	bool sExpected = false;
 	if(!mGettingEvent.compare_exchange_strong(sExpected, true)) //failed, return busy
 		return std::make_pair(std::vector<std::shared_ptr<JTaskBase>>(), RETURN_STATUS::kBUSY);
 
 	//Lock aquired, get the events
-	std::vector<std::shared_ptr<const JEvent>> sEvents;
-	auto sFailureStatus = JEventSource::RETURN_STATUS::kSUCCESS;
 	for(std::size_t si = 0; si < aNumTasks; si++)
 	{
 		//Get an event from the input file
