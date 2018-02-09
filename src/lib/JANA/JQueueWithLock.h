@@ -46,6 +46,7 @@
 
 #include <cstdint>
 #include <atomic>
+#include <mutex>
 #include <deque>
 
 #include "JQueueInterface.h"
