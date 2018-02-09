@@ -70,7 +70,6 @@ JThreadManager::JThreadManager(JApplication* aApplication) : mApplication(aAppli
 	gPARMS->SetDefaultParameter("JANA:THREAD_DEBUG_LEVEL", mDebugLevel, "JThread(Manager) debug level");
 	gPARMS->SetDefaultParameter("JANA:THREAD_ROTATE_SOURCES", mRotateEventSources, "Should threads rotate between event sources?");
 
-
 	auto sSleepTimeNanoseconds = mSleepTime.count();
 	gPARMS->SetDefaultParameter("JANA:THREAD_SLEEP_TIME_NS", sSleepTimeNanoseconds, "Thread sleep time (in nanoseconds) when nothing to do.");
 	if(sSleepTimeNanoseconds != mSleepTime.count())

@@ -62,13 +62,15 @@ JThread::JThread(int aThreadID, JApplication* aApplication, JThreadManager::JEve
 		mEventQueue(mEventSourceInfo->mQueueSet->GetQueue(JQueueSet::JQueueType::Events)), mRotateEventSources(aRotateEventSources),
 		mThreadID(aThreadID)
 {
+	//Apparently segfaults
+	/*
 	gPARMS->SetDefaultParameter("JANA:THREAD_DEBUG_LEVEL", mDebugLevel, "JThread(Manager) debug level");
 
 	auto sSleepTimeNanoseconds = mSleepTime.count();
 	gPARMS->SetDefaultParameter("JANA:THREAD_SLEEP_TIME_NS", sSleepTimeNanoseconds, "Thread sleep time (in nanoseconds) when nothing to do.");
 	if(sSleepTimeNanoseconds != mSleepTime.count())
 		mSleepTime = std::chrono::nanoseconds(sSleepTimeNanoseconds);
-
+*/
 	_thread = new std::thread( &JThread::Loop, this );
 }
 

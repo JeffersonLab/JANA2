@@ -53,7 +53,7 @@ class JEventSourceManager
 		JEventSource* CreateSource(const std::string& source_name);
 
 		JApplication* mApplication = nullptr;
-		std::size_t mMaxNumOpenFiles = 1;
+		std::size_t mMaxNumOpenFiles = 2;
 
 		std::vector<std::string> _source_names;
 

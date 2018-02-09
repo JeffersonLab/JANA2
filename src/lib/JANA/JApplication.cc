@@ -151,6 +151,7 @@ JApplication::JApplication(int narg, char *argv[])
 {
 	//Must do before setting loggers
 	japp = this;
+	_pmanager = new JParameterManager();
 
 	//Loggers //Switch to enum!! //Must be done before any code that uses a logger!
 	SetLogWrapper(0, new JLogWrapper(std::cout)); //stdout
@@ -167,6 +168,7 @@ JApplication::JApplication(int narg, char *argv[])
 	_rmanager = NULL;
 	_eventSourceManager = new JEventSourceManager(this);
 	_threadManager = new JThreadManager(this);
+
 	mVoidTaskPool.Set_ControlParams(200, 0); //TODO: Config these!!
 
 	// Loop over arguments
