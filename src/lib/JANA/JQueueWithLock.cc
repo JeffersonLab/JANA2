@@ -143,6 +143,8 @@ std::shared_ptr<JTaskBase> JQueueWithLock::GetTask(void)
 	/// the call is interrupted. This operates without locks.	
 
 	std::lock_guard<std::mutex> sLock(mQueueLock);
+	if(mQueue.empty())
+		return nullptr;
 	auto sTask = std::move(mQueue.front());
 	mQueue.pop_front();
 
