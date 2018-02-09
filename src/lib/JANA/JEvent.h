@@ -82,9 +82,8 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 		//SETTERS
 		void SetRunNumber(uint32_t aRunNumber){mRunNumber = aRunNumber;}
 		void SetEventNumber(uint64_t aEventNumber){mEventNumber = aEventNumber;}
-		void SetEventSource(JEventSource* aSource);
-		void SetIsBarrierEvent(bool aIsBarrierEvent){mIsBarrierEvent = aIsBarrierEvent;}
-		void SetLatestBarrierEvent(const std::shared_ptr<JEvent>& aBarrierEvent){mLatestBarrierEvent = aBarrierEvent;}
+		void SetEventSource(JEventSource* aSource, bool aIsBarrierEvent);
+		void SetLatestBarrierEvent(const std::shared_ptr<const JEvent>& aBarrierEvent){mLatestBarrierEvent = aBarrierEvent;}
 
 		//GETTERS
 		uint32_t GetRunNumber(void) const{return mRunNumber;}
@@ -104,7 +103,7 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 		uint32_t mRunNumber = 0;
 		uint64_t mEventNumber = 0;
 		int mDebugLevel = 0;
-		std::shared_ptr<JEvent> mLatestBarrierEvent = nullptr;
+		std::shared_ptr<const JEvent> mLatestBarrierEvent = nullptr;
 };
 
 //---------------------------------

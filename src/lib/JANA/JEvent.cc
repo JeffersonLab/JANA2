@@ -68,10 +68,13 @@ JEventSource* JEvent::GetEventSource(void) const
 //---------------------------------
 // SetEventSource
 //---------------------------------
-void JEvent::SetEventSource(JEventSource* aSource)
+void JEvent::SetEventSource(JEventSource* aSource, bool aIsBarrierEvent)
 {
 	mEventSource = aSource;
 	mEventSource->IncrementEventCount();
+	mIsBarrierEvent = aIsBarrierEvent;
+	if(mIsBarrierEvent)
+		mEventSource->IncrementBarrierCount();
 }
 
 //---------------------------------
@@ -93,5 +96,8 @@ void JEvent::Release(void)
 	mEventSource->DecrementEventCount();
 	mEventSource = nullptr;
 	mLatestBarrierEvent = nullptr;
+
+	if(mIsBarrierEvent)
+		mEventSource->DecrementBarrierCount();
 	mIsBarrierEvent = false; //In case user forgets to clear it
 }

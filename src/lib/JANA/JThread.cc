@@ -396,28 +396,43 @@ bool JThread::HandleNullTask(void)
 	//Also, that thread may spawn a bunch of sub-tasks, so we still want all threads
 	//to be available to process them.
 
-	//So, how can we tell if all threads are done processing tasks from a given file?
-	//When all JEvent's associated with that file are destroyed/recycled.
-	//We track this by counting the number of open JEvent's in each JEventSource.
-
 	//This returns false if there are no tasks left to process. Otherwise returns true.
 
 	if(mDebugLevel >= 10)
 		*mLogger << "Thread " << mThreadID << " JThread::HandleNullTask(): Null task: is empty, # outstanding = " << mSourceEmpty << ", " << mEventSourceInfo->mEventSource->GetNumOutstandingEvents() << "\n" << JLogEnd();
-	if(mSourceEmpty && (mEventSourceInfo->mEventSource->GetNumOutstandingEvents() == 0))
+
+	if(mSourceEmpty)
 	{
-		//Tell the thread manager that the source is finished (in case it didn't know already)
-		//Use the existing queues for the next event source
-		//If all sources are done, then all tasks are done, and this call will tell the program to end.
+		//So, how can we tell if all threads are done processing tasks from a given file?
+		//When all JEvent's associated with that file are destroyed/recycled.
+		//We track this by counting the number of open JEvent's in each JEventSource.
 
-		mEventSourceInfo = mThreadManager->RegisterSourceFinished(mEventSourceInfo->mEventSource, mQueueSetIndex);
-		if(mEventSourceInfo == nullptr)
-			return false; //No tasks left: We're done processing
+		auto sEventSource = mEventSourceInfo->mEventSource;
+		auto sNumOutstandingEvents = sEventSource->GetNumOutstandingEvents();
+		auto sEventsCheck = (sNumOutstandingEvents == 0);
 
-		mEventQueue = mEventSourceInfo->mQueueSet->GetQueue(JQueueSet::JQueueType::Events);
-		mSourceEmpty = false;
-		mFullRotationCheckIndex = mQueueSetIndex; //reset for full-rotation-with-no-action check
-		return true;
+		//The tricky part: There may be one event left, and it may be a barrier event.
+		//Even trickier: We may be still analyzing this event rather than finished with it.
+		//So, we are done if: 1 event left, 1 barrier event left, barrier shared_ptr use count = 1
+		auto sBarrierCheck = false;
+		if(!sEventsCheck) //don't bother checking if events check is already true
+			sBarrierCheck = (sNumOutstandingEvents == 1) && (sEventSource->GetNumOutstandingBarrierEvents() == 1) && (mEventQueue->GetLatestBarrierEventUseCount() == 1);
+
+		if(sEventsCheck || sBarrierCheck)
+		{
+			//Tell the thread manager that the source is finished (in case it didn't know already)
+			//Use the existing queues for the next event source
+			//If all sources are done, then all tasks are done, and this call will tell the program to end.
+
+			mEventSourceInfo = mThreadManager->RegisterSourceFinished(mEventSourceInfo->mEventSource, mQueueSetIndex);
+			if(mEventSourceInfo == nullptr)
+				return false; //No tasks left: We're done processing
+
+			mEventQueue = mEventSourceInfo->mQueueSet->GetQueue(JQueueSet::JQueueType::Events);
+			mSourceEmpty = false;
+			mFullRotationCheckIndex = mQueueSetIndex; //reset for full-rotation-with-no-action check
+			return true;
+		}
 	}
 
 	if(mRotateEventSources) //No tasks, try to rotate to a different input file

@@ -47,8 +47,8 @@
 // JQueueWithBarriers    (Constructor)
 //---------------------------------
 JQueueWithBarriers::JQueueWithBarriers(const std::string& aName, std::size_t aQueueSize, std::size_t aTaskBufferSize) :
-	JQueueInterface(aName), mTaskBufferSize(aTaskBufferSize), mInputQueue(new JQueue(aName + " Input", aQueueSize, aTaskBufferSize)),
-	mOutputQueue(new JQueue(aName + " Output", aQueueSize, aTaskBufferSize))
+	JQueueInterface(aName), mTaskBufferSize(aTaskBufferSize), mInputQueue(new JQueueWithLock(aName + " Input", aQueueSize, aTaskBufferSize)),
+	mOutputQueue(new JQueueWithLock(aName + " Output", aQueueSize, aTaskBufferSize))
 {
 	//Apparently segfaults
 	//gPARMS->SetDefaultParameter("JANA:QUEUE_DEBUG_LEVEL", mDebugLevel, "JQueue debug level");
@@ -64,8 +64,8 @@ JQueueWithBarriers::JQueueWithBarriers(const JQueueWithBarriers& aQueue) : JQueu
 	mTaskBufferSize = aQueue.mTaskBufferSize;
 	mDebugLevel = aQueue.mDebugLevel;
 	mLogTarget = aQueue.mLogTarget;
-	mInputQueue = static_cast<JQueue*>(aQueue.mInputQueue->CloneEmpty());
-	mOutputQueue = static_cast<JQueue*>(aQueue.mOutputQueue->CloneEmpty());
+	mInputQueue = static_cast<JQueueWithLock*>(aQueue.mInputQueue->CloneEmpty());
+	mOutputQueue = static_cast<JQueueWithLock*>(aQueue.mOutputQueue->CloneEmpty());
 
 	mThread = new std::thread(&JQueueWithBarriers::ThreadLoop, this);
 }
@@ -144,18 +144,31 @@ void JQueueWithBarriers::ThreadLoop(void)
 			if(sTask == nullptr)
 				break; //No more tasks to move
 
+			//Get a non-const version of the event.
+			//Why non-const? So we can set the latest barrier event
+			auto sEvent = const_cast<JEvent*>(sTask->GetEvent());
+
 			//Is it a barrier event?
-			auto sIsBarrierEvent = sTask->GetEvent()->GetIsBarrierEvent();
+			auto sIsBarrierEvent = sEvent->GetIsBarrierEvent();
 			if(sIsBarrierEvent)
 			{
 				//Hold a weak pointer to the task that is responsible for running the plugins over this event
 				mAnalyzeBarrierEventTask = sTask;
+
+				//Also, keep hold of the event so we can add it to subsequent events
+				mLatestBarrierEvent = sTask->GetSharedEvent();
+
+				//For the barrier event, set the latest barrier event to nullptr
+				//(if we store shared_ptr to self, it will never go out of scope)
+				sEvent->SetLatestBarrierEvent(nullptr);
 			}
+			else //Set the latest barrier event
+				sEvent->SetLatestBarrierEvent(mLatestBarrierEvent);
 
 			//Move task to output queue
 			mOutputQueue->AddTask(std::move(sTask));
 
-			//Don't move any more tasks to the output queue until the barrier event is finished being analyzed.
+			//If barrier, Don't move any more tasks to the output queue until the barrier event is finished being analyzed.
 			if(sIsBarrierEvent)
 			{
 				//When is it done being analyzed? When the weak_ptr has expired

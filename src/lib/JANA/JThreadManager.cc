@@ -69,6 +69,7 @@ JThreadManager::JThreadManager(JApplication* aApplication) : mApplication(aAppli
 {
 	gPARMS->SetDefaultParameter("JANA:THREAD_DEBUG_LEVEL", mDebugLevel, "JThread(Manager) debug level");
 	gPARMS->SetDefaultParameter("JANA:THREAD_ROTATE_SOURCES", mRotateEventSources, "Should threads rotate between event sources?");
+	mDebugLevel = 500;
 
 	auto sSleepTimeNanoseconds = mSleepTime.count();
 	gPARMS->SetDefaultParameter("JANA:THREAD_SLEEP_TIME_NS", sSleepTimeNanoseconds, "Thread sleep time (in nanoseconds) when nothing to do.");
@@ -383,7 +384,6 @@ JThreadManager::JEventSourceInfo* JThreadManager::RegisterSourceFinished(const J
 			JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JThreadManager::RegisterSourceFinished(): New source opened\n" << JLogEnd();
 
 		//Retire the current queue set, insert a new one in its place
-		mActiveSourceInfos[aQueueSetIndex]->mLatestBarrierEvent = nullptr; //let it recycle the barrier event! //Thread safe: no outstanding events
 		mRetiredSourceInfos.push_back(mActiveSourceInfos[aQueueSetIndex]);
 		auto sInfo = new JEventSourceInfo(sNextSource, MakeQueueSet(sNextSource));
 		mActiveSourceInfos[aQueueSetIndex] = sInfo;
@@ -483,7 +483,7 @@ JThreadManager::JEventSourceInfo* JThreadManager::CheckAllSourcesDone(std::size_
 //---------------------------------
 // ExecuteTask
 //---------------------------------
-void JThreadManager::ExecuteTask(const std::shared_ptr<JTaskBase>& aTask, const JEventSourceInfo* aSourceInfo, JQueueSet::JQueueType aQueueType)
+void JThreadManager::ExecuteTask(const std::shared_ptr<JTaskBase>& aTask, JEventSourceInfo* aSourceInfo, JQueueSet::JQueueType aQueueType)
 {
 	//If task is from the event queue, prepare it for execution
 	//See function for details
@@ -534,19 +534,11 @@ void JThreadManager::PrepareEventTask(const std::shared_ptr<JTaskBase>& aTask, c
 	//And we'll also have to deal with this again for sending along barrier-event data.
 	//This ends up requiring a lot of arguments to factory/processor/task methods.
 
-	//Now, let's set some stuff. Starting with the JFactorySet:
+	//Now, let's set the JFactorySet:
 	//By having the JEvent Release() function recycle the JFactorySet, it doesn't have to be shared_ptr
 	//If it's shared_ptr: more (slow) atomic operations
 	//Just make the JFactorySet a member and cheat a little bit. It's a controlled environment.
 	sEvent->SetFactorySet(mApplication->GetFactorySet());
-
-	//Now set the latest barrier event
-	//If the current event is a barrier event, set nullptr
-	//(if store shared_ptr to self, will never go out of scope)
-	if(sEvent->GetIsBarrierEvent())
-		sEvent->SetLatestBarrierEvent(nullptr);
-	else //set it
-		sEvent->SetLatestBarrierEvent(aSourceInfo->mLatestBarrierEvent);
 }
 
 //---------------------------------
@@ -605,7 +597,7 @@ void JThreadManager::SubmitTasks(const std::vector<std::shared_ptr<JTaskBase>>& 
 //---------------------------------
 // SubmitTasks
 //---------------------------------
-void JThreadManager::SubmitTasks(const std::vector<std::shared_ptr<JTaskBase>>& aTasks, const JEventSourceInfo* aSourceInfo, JQueueInterface* aQueue, JQueueSet::JQueueType aQueueType)
+void JThreadManager::SubmitTasks(const std::vector<std::shared_ptr<JTaskBase>>& aTasks, JEventSourceInfo* aSourceInfo, JQueueInterface* aQueue, JQueueSet::JQueueType aQueueType)
 {
 	//You would think submitting tasks would be easy.
 	//However, the task JQueue can fill up, and we may not be able to put all of our tasks in.
@@ -681,7 +673,7 @@ void JThreadManager::DoWorkWhileWaitingForTasks(const std::vector<std::shared_pt
 //---------------------------------
 // DoWorkWhileWaitingForTasks
 //---------------------------------
-void JThreadManager::DoWorkWhileWaitingForTasks(const std::vector<std::shared_ptr<JTaskBase>>& aSubmittedTasks, const JEventSourceInfo* aSourceInfo, JQueueInterface* aQueue, JQueueSet::JQueueType aQueueType)
+void JThreadManager::DoWorkWhileWaitingForTasks(const std::vector<std::shared_ptr<JTaskBase>>& aSubmittedTasks, JEventSourceInfo* aSourceInfo, JQueueInterface* aQueue, JQueueSet::JQueueType aQueueType)
 {
 	//The passed-in tasks have already been submitted (e.g. via SubmitTasks or SubmitAsyncTasks).
 	//While waiting for those to finish, we get tasks from the queues and execute those.
@@ -705,7 +697,7 @@ void JThreadManager::DoWorkWhileWaitingForTasks(const std::vector<std::shared_pt
 //---------------------------------
 // DoWorkWhileWaitingForTasks
 //---------------------------------
-void JThreadManager::DoWorkWhileWaitingForTasks(const std::function<bool(void)>& aWaitFunction, const JEventSourceInfo* aSourceInfo, JQueueInterface* aQueue, JQueueSet::JQueueType aQueueType)
+void JThreadManager::DoWorkWhileWaitingForTasks(const std::function<bool(void)>& aWaitFunction, JEventSourceInfo* aSourceInfo, JQueueInterface* aQueue, JQueueSet::JQueueType aQueueType)
 {
 	//Won't return until aWaitFunction returns true.
 	//In the meantime, executes tasks (or sleeps if none available)

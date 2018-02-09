@@ -50,9 +50,10 @@
 #include <vector>
 
 #include "JQueueInterface.h"
-#include "JQueue.h"
+#include "JQueueWithLock.h"
 
 class JTaskBase;
+class JEvent;
 
 class JQueueWithBarriers : public JQueueInterface
 {
@@ -79,6 +80,7 @@ class JQueueWithBarriers : public JQueueInterface
 		uint32_t GetNumTasks(void);
 		uint64_t GetNumTasksProcessed(void);
 		std::size_t GetTaskBufferSize(void);
+		std::size_t GetLatestBarrierEventUseCount(void) const{return mLatestBarrierEvent.use_count();}
 
 		JQueueInterface* CloneEmpty(void) const;
 
@@ -94,9 +96,10 @@ class JQueueWithBarriers : public JQueueInterface
 		int mDebugLevel = 0;
 		uint32_t mLogTarget = 0; //cout
 
-		JQueue* mInputQueue = nullptr;
-		JQueue* mOutputQueue = nullptr;
+		JQueueWithLock* mInputQueue = nullptr;
+		JQueueWithLock* mOutputQueue = nullptr;
 
+		std::shared_ptr<const JEvent> mLatestBarrierEvent = nullptr;
 		std::weak_ptr<JTaskBase> mAnalyzeBarrierEventTask;
 		std::chrono::nanoseconds mSleepTime = std::chrono::nanoseconds(1000);
 		std::chrono::nanoseconds mSleepTimeIfBarrier = std::chrono::nanoseconds(100);

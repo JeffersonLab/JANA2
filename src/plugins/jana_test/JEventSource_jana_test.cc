@@ -11,6 +11,7 @@
 #include "JTask.h"
 #include "JLog.h"
 #include "JQueueWithLock.h"
+#include "JQueueWithBarriers.h"
 
 //----------------
 // Constructor
@@ -30,7 +31,7 @@ JEventSource_jana_test::JEventSource_jana_test(const char* source_name) : JEvent
 
 	//Event queue:
 	//If not created, a default will be supplied
-	mEventQueue = new JQueueWithLock("Events", 200, 50); //max size of 200, keep at least 50 buffered
+	mEventQueue = new JQueueWithBarriers("Events", 200, 50); //max size of 200, keep at least 50 buffered
 
 	//Debug:
 //	mDebugLevel = 500;
@@ -63,10 +64,11 @@ std::pair<std::shared_ptr<const JEvent>, JEventSource::RETURN_STATUS> JEventSour
 	auto sEvent = mEventPool.Get_SharedResource(mApplication);
 	mNumEventsGenerated++;
 	
-	sEvent->SetEventSource(this);
+	auto sIsBarrierEvent = (mNumEventsToGenerate % 10000) == 0;
+	sEvent->SetEventSource(this, sIsBarrierEvent); //Set at same time, so can keep track of #barrier events
 	sEvent->SetEventNumber(mNumEventsGenerated);
 	sEvent->SetRunNumber(1234);
-	sEvent->SetIsBarrierEvent(false); //mNumEventsGenerated % 1000 == 0
+
 //	sEvent->SetRef(nullptr);
 	
 	return std::make_pair(std::static_pointer_cast<JEvent>(sEvent), JEventSource::RETURN_STATUS::kSUCCESS);
