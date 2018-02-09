@@ -67,9 +67,9 @@
 //---------------------------------
 JThreadManager::JThreadManager(JApplication* aApplication) : mApplication(aApplication), mEventSourceManager(mApplication->GetJEventSourceManager())
 {
-	gPARMS->SetDefaultParameter("JANA:THREAD_DEBUG_LEVEL", mDebugLevel, "JThread(Manager) debug level");
+	gPARMS->SetDefaultParameter("JANA:THREAD_DEBUG_LEVEL", mDebugLevel, "JThread(Manager) debug level"); //Doesn't work??
 	gPARMS->SetDefaultParameter("JANA:THREAD_ROTATE_SOURCES", mRotateEventSources, "Should threads rotate between event sources?");
-	mDebugLevel = 500;
+//	mDebugLevel = 500;
 
 	auto sSleepTimeNanoseconds = mSleepTime.count();
 	gPARMS->SetDefaultParameter("JANA:THREAD_SLEEP_TIME_NS", sSleepTimeNanoseconds, "Thread sleep time (in nanoseconds) when nothing to do.");
@@ -384,6 +384,7 @@ JThreadManager::JEventSourceInfo* JThreadManager::RegisterSourceFinished(const J
 			JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JThreadManager::RegisterSourceFinished(): New source opened\n" << JLogEnd();
 
 		//Retire the current queue set, insert a new one in its place
+		mActiveSourceInfos[aQueueSetIndex]->mQueueSet->FinishedWithQueues();
 		mRetiredSourceInfos.push_back(mActiveSourceInfos[aQueueSetIndex]);
 		auto sInfo = new JEventSourceInfo(sNextSource, MakeQueueSet(sNextSource));
 		mActiveSourceInfos[aQueueSetIndex] = sInfo;

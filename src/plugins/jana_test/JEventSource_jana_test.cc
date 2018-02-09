@@ -64,7 +64,7 @@ std::pair<std::shared_ptr<const JEvent>, JEventSource::RETURN_STATUS> JEventSour
 	auto sEvent = mEventPool.Get_SharedResource(mApplication);
 	mNumEventsGenerated++;
 	
-	auto sIsBarrierEvent = (mNumEventsToGenerate % 10000) == 0;
+	auto sIsBarrierEvent = (mNumEventsGenerated % 100) == 0;
 	sEvent->SetEventSource(this, sIsBarrierEvent); //Set at same time, so can keep track of #barrier events
 	sEvent->SetEventNumber(mNumEventsGenerated);
 	sEvent->SetRunNumber(1234);

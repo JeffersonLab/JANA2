@@ -71,6 +71,7 @@ JThread::JThread(int aThreadID, JApplication* aApplication, JThreadManager::JEve
 	if(sSleepTimeNanoseconds != mSleepTime.count())
 		mSleepTime = std::chrono::nanoseconds(sSleepTimeNanoseconds);
 */
+//	mDebugLevel = 500;
 	_thread = new std::thread( &JThread::Loop, this );
 }
 

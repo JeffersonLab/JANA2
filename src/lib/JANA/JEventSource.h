@@ -120,7 +120,7 @@ class JEventSource{
 		std::atomic<bool> mGettingEvent{false};
 		std::atomic<std::size_t> mEventsProcessed{0};
 		std::atomic<std::size_t> mNumOutstandingEvents{0}; //Number of JEvents still be analyzed from this event source (source done when 0 (OR 1 and below is 1))
-		std::atomic<std::size_t> mNumOutstandingBarrierEvents{1}; //Number of BARRIER JEvents still be analyzed from this event source (source done when 1)
+		std::atomic<std::size_t> mNumOutstandingBarrierEvents{0}; //Number of BARRIER JEvents still be analyzed from this event source (source done when 1)
 
 		std::size_t mMinNumEventsToGetAtOnce = 1;
 		std::size_t mMaxNumEventsToGetAtOnce = 1;

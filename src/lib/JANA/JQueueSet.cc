@@ -130,6 +130,23 @@ JQueueSet* JQueueSet::Clone(void) const
 }
 
 //---------------------------------
+// FinishedWithQueues
+//---------------------------------
+void JQueueSet::FinishedWithQueues(void)
+{
+	//This method is primarily used to halt any internal threads that the queues may be using
+
+	//Loop through queue types
+	for(auto& sQueuePair : mQueues)
+	{
+		//Loop through queues of this type
+		auto& sQueueVector = sQueuePair.second;
+		for(auto& sQueue : sQueueVector)
+			sQueue->FinishedWithQueue();
+	}
+}
+
+//---------------------------------
 // GetQueues
 //---------------------------------
 void JQueueSet::GetQueues(std::map<JQueueSet::JQueueType, std::vector<JQueueInterface*>>& aQueues) const

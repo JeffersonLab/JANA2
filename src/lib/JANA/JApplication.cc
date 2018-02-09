@@ -153,7 +153,7 @@ JApplication::JApplication(int narg, char *argv[])
 	japp = this;
 	_pmanager = new JParameterManager();
 
-	//Loggers //Switch to enum!! //Must be done before any code that uses a logger!
+	//Loggers //TODO: Switch to enum!! //Must be done before any code that uses a logger!
 	SetLogWrapper(0, new JLogWrapper(std::cout)); //stdout
 	SetLogWrapper(1, new JLogWrapper(std::cerr)); //stderr
 	SetLogWrapper(2, mLogWrappers[0]); //hd_dump

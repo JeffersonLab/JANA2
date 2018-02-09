@@ -83,6 +83,8 @@ class JQueueInterface
 		virtual std::size_t GetTaskBufferSize(void) = 0;
 		virtual std::size_t GetLatestBarrierEventUseCount(void) const{return 0;}
 
+		virtual void FinishedWithQueue(void){} //Call this when finished with the queue
+
 		std::string GetName(void) const;
 		virtual JQueueInterface* CloneEmpty(void) const = 0; //Create an empty clone of the queue (no tasks copied)
 

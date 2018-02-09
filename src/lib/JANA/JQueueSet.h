@@ -81,6 +81,8 @@ class JQueueSet
 		std::pair<JQueueType, std::shared_ptr<JTaskBase>> GetTask(void) const;
 		std::shared_ptr<JTaskBase> GetTask(JQueueType aQueueType, const std::string& aQueueName) const;
 
+		void FinishedWithQueues(void); //Call this when finished with the event source
+
 	private:
 		std::map<JQueueType, std::vector<JQueueInterface*>> mQueues;
 };

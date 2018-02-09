@@ -47,6 +47,7 @@ JEvent::JEvent(JApplication* aApplication) : mApplication(aApplication), mThread
 {
 	//Apparently segfaults
 //	gPARMS->SetDefaultParameter("JANA:EVENT_DEBUG_LEVEL", mDebugLevel, "JEvent debug level");
+//	mDebugLevel = 500;
 }
 
 //---------------------------------
@@ -93,11 +94,12 @@ void JEvent::Release(void)
 	//Release all (pointers to) resources, called when recycled to pool
 	mApplication->Recycle(const_cast<JFactorySet*>(mFactorySet));
 	mFactorySet = nullptr;
-	mEventSource->DecrementEventCount();
-	mEventSource = nullptr;
-	mLatestBarrierEvent = nullptr;
 
+	mEventSource->DecrementEventCount();
 	if(mIsBarrierEvent)
 		mEventSource->DecrementBarrierCount();
+	mEventSource = nullptr;
+
+	mLatestBarrierEvent = nullptr;
 	mIsBarrierEvent = false; //In case user forgets to clear it
 }

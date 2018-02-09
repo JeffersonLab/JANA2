@@ -83,6 +83,7 @@ class JQueueWithBarriers : public JQueueInterface
 		std::size_t GetLatestBarrierEventUseCount(void) const{return mLatestBarrierEvent.use_count();}
 
 		JQueueInterface* CloneEmpty(void) const;
+		void FinishedWithQueue(void){mEndThread = true; mThread->join(); mLatestBarrierEvent = nullptr;} //Call this when finished with the queue
 
 		void EndThread(void){mEndThread = true;}
 		void ThreadLoop(void);

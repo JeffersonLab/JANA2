@@ -129,11 +129,17 @@ void JQueueWithBarriers::ThreadLoop(void)
 	//Otherwise, another thread could analyze the next event and not have the complete set of information.
 	//Note that every task in this queue is from the same event source.
 
+	//We also hold onto a pointer to this barrier event, so that we can set it as a member of future events.
+	//That way we don't have to wait for events to flush out of the system before analyzing the barrier event:
+		//We are setting the data right here, where only this thread has access.
+
 	//Unforunately, we can't use a single JQueue to do this.
 	//This is because, when getting tasks, once we get exclusive access to a slot, another thread
 		//is able to get the task from the following slot.
 		//We would need to check whether we had a barrier event and prevent the subsequent GetTask in a single operation
 		//which is impossible. Otherwise, we'd have to lock a mutex in JQueue.
+	//Thus we have this thread, which moves tasks between two queues.
+
 	while(!mEndThread)
 	{
 		//Move all tasks from the input queue to the output queue, until we hit a barrier
@@ -150,6 +156,7 @@ void JQueueWithBarriers::ThreadLoop(void)
 
 			//Is it a barrier event?
 			auto sIsBarrierEvent = sEvent->GetIsBarrierEvent();
+//			std::cout << "sIsBarrierEvent = " << sIsBarrierEvent << std::endl;
 			if(sIsBarrierEvent)
 			{
 				//Hold a weak pointer to the task that is responsible for running the plugins over this event
@@ -158,7 +165,7 @@ void JQueueWithBarriers::ThreadLoop(void)
 				//Also, keep hold of the event so we can add it to subsequent events
 				mLatestBarrierEvent = sTask->GetSharedEvent();
 
-				//For the barrier event, set the latest barrier event to nullptr
+				//For the barrier event itself, set the latest barrier event to nullptr
 				//(if we store shared_ptr to self, it will never go out of scope)
 				sEvent->SetLatestBarrierEvent(nullptr);
 			}
@@ -174,6 +181,8 @@ void JQueueWithBarriers::ThreadLoop(void)
 				//When is it done being analyzed? When the weak_ptr has expired
 				while(!mAnalyzeBarrierEventTask.expired() && !mEndThread)
 					std::this_thread::sleep_for(mSleepTimeIfBarrier); //Wait
+				mAnalyzeBarrierEventTask.reset();
+//				std::cout << "COUNT IS ZERO!!!" << std::endl;
 			}
 		}
 
