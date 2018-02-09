@@ -204,10 +204,16 @@ void JStatus::GenerateReport(std::stringstream &ss)
 	if( typeid(thread::native_handle_type) == typeid(pthread_t) ){
 		ss << "underlying thread model: pthreads" << endl;
 	
-		// Get list of pthreads, including this one which is hopefully the main thread
-		set<pthread_t> pthreads;
-		for(auto t : threads) pthreads.insert( t->GetThread()->native_handle() );
-		pthreads.insert(pthread_self());
+		// Get list of pthreads, including this one (which is hopefully the main thread)
+		map<std::thread::id, pthread_t> pthreads;
+		auto sThisThreadID = std::this_thread::get_id();
+		for(auto t : threads)
+		{
+			auto sID = t->GetThread()->get_id();
+			if(sID != sThisThreadID)
+				pthreads.emplace(sID, t->GetThread()->native_handle());
+		}
+		pthreads.emplace(sThisThreadID, pthread_self());
 		
 		// Pre-allocate memory to hold the traces for all threads.
 		// We must do this here because the signals we send next
@@ -215,7 +221,8 @@ void JStatus::GenerateReport(std::stringstream &ss)
 		// while recording the trace, we'll become deadlocked.
 		BACKTRACES.clear();
 		BACKTRACES_COMPLETED = 0;
-		for(auto pthr : pthreads) {
+		for(auto& pthr_pair : pthreads) {
+			auto& pthr = pthr_pair.second;
 			auto &btinfo = BACKTRACES[pthr];
 			btinfo.cpuid = -1;
 			btinfo.bt.reserve(MAX_FRAMES);
@@ -224,9 +231,20 @@ void JStatus::GenerateReport(std::stringstream &ss)
 		}
 		
 		// Loop over all threads, signaling them to generate a backtrace
-		for(auto pthr : pthreads) pthread_kill( pthr, SIGUSR2 );
+		// Except the current thread!  We'll call it directly here.
+		// E.g. if a thread segfault's then gets the SIGUSR2 signal, I think the full stack trace is lost??
+		for(auto& pthr_pair : pthreads)
+		{
+			if(pthr_pair.first == sThisThreadID)
+				continue;
+			auto& pthr = pthr_pair.second;
+			pthread_kill( pthr, SIGUSR2 );
+		}
 		
-		// Wait for all threads to finish their backtraces. Limit how long we'll wait
+		//Record the back trace for THIS thread
+		JStatus::RecordBackTrace();
+
+		// Wait for all other threads to finish their backtraces. Limit how long we'll wait
 		for(int i=0; i<1000; i++){
 
 			this_thread::sleep_for( chrono::microseconds(1000) );
@@ -237,7 +255,8 @@ void JStatus::GenerateReport(std::stringstream &ss)
 		
 		// Loop over threads, printing backtrace results
 		lock_guard<mutex> lg(BT_MUTEX);
-		for(auto pthr : pthreads){
+		for(auto& pthr_pair : pthreads) {
+			auto& pthr = pthr_pair.second;
 			ss << endl;
 			ss << "native handle: " << hex << pthr << dec;
 			if( pthr==pthread_self() ) ss << "  (probably main thread)";

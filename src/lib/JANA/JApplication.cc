@@ -119,9 +119,7 @@ void USR2Handle(int x)
 //-----------------------------------------------------------------
 void SIGSEGVHandle(int aSignalNumber, siginfo_t* aSignalInfo, void* aContext)
 {
-	JStatus::RecordBackTrace(); //For the segfaulting thread
-	thread th( JStatus::Report );
-	th.detach();
+	JStatus::Report();
 }
 
 //-----------------------------------------------------------------

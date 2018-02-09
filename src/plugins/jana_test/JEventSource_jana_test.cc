@@ -226,6 +226,9 @@ bool JEventSource_jana_test::GetObjects(const std::shared_ptr<const JEvent>& aEv
 	//This thread will execute tasks (hopefully these) in the meantime.
 	if(mDebugLevel > 0)
 		JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JEventSource_jana_test::GetObjects(): Submit JSourceObject2 tasks.\n" << JLogEnd();
+	//DO NOT CALL THIS WHILE HOLDING ANY LOCKS, UNLESS THEY ARE EVENT-SPECIFIC
+		//E.g. If you hold the generator lock, this can cause blocking
+		//But if you hold the factory Creating lock for this event, it's OK
 	mApplication->GetJThreadManager()->SubmitTasks(sTasks);
 
 	//Prepare the object vector

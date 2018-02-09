@@ -82,7 +82,7 @@ JThreadManager::~JThreadManager(void)
 }
 
 //---------------------------------
-// LaunchThreads
+// CreateThreads
 //---------------------------------
 void JThreadManager::CreateThreads(std::size_t aNumThreads)
 {
