@@ -10,6 +10,7 @@
 #include "JSourceFactoryGenerator.h"
 #include "JTask.h"
 #include "JLog.h"
+#include "JQueueWithLock.h"
 
 //----------------
 // Constructor
