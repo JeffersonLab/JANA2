@@ -31,7 +31,7 @@ JEventSource_jana_test::JEventSource_jana_test(const char* source_name) : JEvent
 	mEventQueue = new JQueue("Events", 200, 50); //max size of 200, keep at least 50 buffered
 
 	//Debug:
-	mDebugLevel = 500;
+//	mDebugLevel = 500;
 }
 
 //----------------

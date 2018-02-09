@@ -50,7 +50,7 @@ using namespace std;
 //---------------------------------
 JEventSourceManager::JEventSourceManager(JApplication* aApp) : mApplication(aApp)
 {
-
+	gPARMS->SetDefaultParameter("JANA:MAX_NUM_OPEN_SOURCES", mMaxNumOpenFiles, "Max # input sources that can be open simultaneously");
 }
 
 //---------------------------------

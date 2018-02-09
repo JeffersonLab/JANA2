@@ -45,7 +45,7 @@
 //---------------------------------
 JEvent::JEvent(JApplication* aApplication) : mApplication(aApplication), mThreadManager(mApplication->GetJThreadManager())
 {
-	mDebugLevel = 500;
+	gPARMS->SetDefaultParameter("JANA:EVENT_DEBUG_LEVEL", mDebugLevel, "JEvent debug level");
 }
 
 //---------------------------------

@@ -50,7 +50,7 @@ JQueueWithBarriers::JQueueWithBarriers(const std::string& aName, std::size_t aQu
 	JQueueInterface(aName), mTaskBufferSize(aTaskBufferSize), mInputQueue(new JQueue(aName + " Input", aQueueSize, aTaskBufferSize)),
 	mOutputQueue(new JQueue(aName + " Output", aQueueSize, aTaskBufferSize))
 {
-	mDebugLevel = 0;
+	gPARMS->SetDefaultParameter("JANA:QUEUE_DEBUG_LEVEL", mDebugLevel, "JQueue debug level");
 	mThread = new std::thread(&JQueueWithBarriers::ThreadLoop, this);
 }
 
