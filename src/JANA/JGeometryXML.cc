@@ -15,7 +15,6 @@ using namespace std;
 #include "JApplication.h"
 #include "JGeometryXML.h"
 #include "JParameterManager.h"
-#include "JCalibrationCCDB.h"
 using namespace jana;
 
 #if HAVE_XERCES
