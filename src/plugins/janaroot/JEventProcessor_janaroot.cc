@@ -41,20 +41,6 @@ static inline void Tokenize(string str, vector<string> &tokens, const char delim
 //-----------------------------------------
 JEventProcessor_janaroot::JEventProcessor_janaroot()
 {
-	// Lock ROOT global for reading
-	japp->RootWriteLock();
-	
-	// Remember current working directory. We do this so we can restore it
-	// and keep ROOT objects from other parts of the program from
-	// showing up in out file.
-	TDirectory *cwd = gDirectory;
-	
-	// Create ROOT file
-	file = new TFile("janaroot.root","RECREATE");
-	
-	// Restore original ROOT directory
-	cwd->cd();
-	
 	// Set maximum number of objects a factory can store in an event.
 	// Note that this determines the size of the block in memory needed
 	// for the the event so be conservative! (This may be overwritten
@@ -68,8 +54,9 @@ JEventProcessor_janaroot::JEventProcessor_janaroot()
 	Nwarnings = 0;
 	MaxWarnings=50;
 	
-	// Release ROOT lock
-	japp->RootUnLock();
+	// Set TFile pointert to NULL. It will be created in evnt
+	file = NULL;
+	
 }
 
 //------------------
@@ -92,7 +79,7 @@ jerror_t JEventProcessor_janaroot::brun(JEventLoop *eventLoop, int32_t runnumber
 {
 	// Use the ROOT mutex to guarantee that other JEventLoops don't start
 	// processing event before we have filled in the nametags_to_write_out member
-	japp->RootWriteLock();
+	app->RootWriteLock();
 
 	// Allow user to specify factories to write out via configuration parameter
 	string factories_to_write_out="";
@@ -159,7 +146,7 @@ jerror_t JEventProcessor_janaroot::brun(JEventLoop *eventLoop, int32_t runnumber
 		}
 	}
 	
-	japp->RootUnLock();
+	app->RootUnLock();
 
 	return NOERROR;
 }
@@ -176,7 +163,21 @@ jerror_t JEventProcessor_janaroot::evnt(JEventLoop *loop, uint64_t eventnumber)
 	// buffers and writing to the ROOT file while we do. Note that
 	// this does not prevent other threads from accessing the ROOT
 	// globals and mucking things up for us there.
-	japp->RootWriteLock();
+	app->RootWriteLock();
+
+	// Create ROOT file if not already done
+	if( !file ){
+		// Remember current working directory. We do this so we can restore it
+		// and keep ROOT objects from other parts of the program from
+		// showing up in out file.
+		TDirectory *cwd = gDirectory;
+	
+		// Create ROOT file
+		file = new TFile("janaroot.root","RECREATE");
+	
+		// Restore original ROOT directory
+		cwd->cd();
+	}
 
 	// Get list of all foctories for this JEventLoop to be written out
 	vector<JFactory_base*> allfactories = loop->GetFactories();
@@ -229,7 +230,7 @@ jerror_t JEventProcessor_janaroot::evnt(JEventLoop *loop, uint64_t eventnumber)
 	Nevents++;
 	
 	// Release the ROOT mutex lock
-	japp->RootUnLock();	
+	app->RootUnLock();	
 
 	return NOERROR;
 }
@@ -247,9 +248,9 @@ jerror_t JEventProcessor_janaroot::erun(void)
 //------------------
 jerror_t JEventProcessor_janaroot::fini(void)
 {
-	japp->RootWriteLock();
+	app->RootWriteLock();
 	if(!file){
-		japp->RootUnLock();
+		app->RootUnLock();
 		return NOERROR;
 	}
 
@@ -274,7 +275,7 @@ jerror_t JEventProcessor_janaroot::fini(void)
 	delete file;
 	file=NULL;
 
-	japp->RootUnLock();
+	app->RootUnLock();
 
 	return NOERROR;
 }
