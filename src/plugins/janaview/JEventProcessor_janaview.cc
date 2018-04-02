@@ -130,8 +130,8 @@ jerror_t JEventProcessor_janaview::evnt(JEventLoop *loop, uint64_t eventnumber)
 {
 	// We need to wait here in order to allow the GUI to control when to
 	// go to the next event. Lock the mutex and wait for the GUI to wake us
-	japp->monitor_heartbeat = false;
-	japp->SetShowTicker(false);
+	app->monitor_heartbeat = false;
+	app->SetShowTicker(false);
 
 	pthread_mutex_lock(&mutex);
 
