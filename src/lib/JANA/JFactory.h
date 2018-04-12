@@ -44,22 +44,75 @@
 #ifndef _JFactory_h_
 #define _JFactory_h_
 
-#include <string>
+#include <vector>
 
-class JFactory{
+#include "JFactoryBase.h"
+
+template <typename DataType>
+class JFactory : public JFactoryBase
+{
 	public:
-		JFactory();
-		virtual ~JFactory();
 
-		std::string GetName(void);
+		using IteratorType = typename std::vector<DataType>::const_iterator;
+		using PairType = std::pair<IteratorType, IteratorType>;
+
+		JFactory(const std::string& aName = typeid(DataType).name(), const std::string& aTag = "");
+		virtual ~JFactory() = default;
+
+		void Set(std::vector<DataType>&& aData);
+		PairType Get(void) const;
+		std::type_index GetObjectType(void) const;
 		
+		void ClearData(void);
+
 	protected:
 
-		std::string _name;
-	
-	private:
-
+		std::vector<DataType> mData;
 };
+
+//---------------------------------
+// JFactory
+//---------------------------------
+template <typename DataType>
+inline JFactory<DataType>::JFactory(const std::string& aName, const std::string& aTag) : JFactoryBase(aName, aTag)
+{
+}
+
+//---------------------------------
+// GetObjectType
+//---------------------------------
+template <typename DataType>
+inline std::type_index JFactory<DataType>::GetObjectType(void) const
+{
+	return std::type_index(typeid(DataType));
+}
+
+//---------------------------------
+// Set
+//---------------------------------
+template <typename DataType>
+inline void JFactory<DataType>::Set(std::vector<DataType>&& aData)
+{
+	mData = std::move(aData);
+}
+
+//---------------------------------
+// Get
+//---------------------------------
+template <typename DataType>
+inline typename JFactory<DataType>::PairType JFactory<DataType>::Get(void) const
+{
+	return std::make_pair(mData.cbegin(), mData.cend());
+}
+
+//---------------------------------
+// ClearData
+//---------------------------------
+template <typename DataType>
+inline void JFactory<DataType>::ClearData(void)
+{
+	mData.clear();
+}
 
 #endif // _JFactory_h_
 

@@ -44,24 +44,44 @@
 #ifndef _JFactorySet_h_
 #define _JFactorySet_h_
 
-#include <vector>
+#include <string>
+#include <typeindex>
+#include <map>
 
-#include <JFactory.h>
+#include "JFactoryGenerator.h"
+#include "JResettable.h"
 
-class JFactorySet{
+class JFactoryBase;
+template <typename DataType>
+class JFactory;
+
+class JFactorySet : public JResettable
+{
 	public:
-		JFactorySet();
+		JFactorySet(const std::vector<JFactoryGenerator*>& aFactoryGenerators);
 		virtual ~JFactorySet();
 		
-		std::vector<JFactory*> GetJFactories(void);
+		template <typename DataType>
+		void AddFactory(JFactory<DataType>* aFactory, const std::string& aFactoryTag);
+		JFactoryBase* GetFactory(std::type_index aObjectType, const std::string& aFactoryTag) const;
 		
+		void Release(void);
+
 	protected:
 	
-		std::vector<JFactory*> _factories;
-	
-	private:
-
+		//string: tag
+		std::map<std::pair<std::type_index, std::string>, JFactoryBase*> mFactories;
 };
+
+//---------------------------------
+// AddFactory
+//---------------------------------
+template <typename DataType>
+inline void JFactorySet::AddFactory(JFactory<DataType>* aFactory, const std::string& aFactoryTag)
+{
+	auto sKey = std::make_pair(std::type_index(typeid(DataType)), aFactoryTag);
+	mFactories.emplace(sKey, static_cast<JFactoryBase*>(aFactory));
+}
 
 #endif // _JFactorySet_h_
 

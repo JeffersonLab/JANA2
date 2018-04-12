@@ -1,5 +1,5 @@
 //
-//    File: JQueue.cc
+//    File: JQueueWithLock.cc
 // Created: Wed Oct 11 22:51:32 EDT 2017
 // Creator: davidl (on Darwin harriet 15.6.0 i386)
 //
@@ -38,36 +38,34 @@
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 #include <iostream>
-#include "JQueue.h"
+#include "JQueueWithLock.h"
 #include "JLog.h"
 #include "JThread.h"
 
 //---------------------------------
-// JQueue    (Constructor)
+// JQueueWithLock    (Constructor)
 //---------------------------------
-JQueue::JQueue(const std::string& aName, std::size_t aQueueSize, std::size_t aTaskBufferSize) : JQueueInterface(aName), mTaskBufferSize(aTaskBufferSize)
+JQueueWithLock::JQueueWithLock(const std::string& aName, std::size_t aQueueSize, std::size_t aTaskBufferSize) : JQueueInterface(aName), mTaskBufferSize(aTaskBufferSize)
 {
 	//Apparently segfaults
-//	gPARMS->SetDefaultParameter("JANA:QUEUE_DEBUG_LEVEL", mDebugLevel, "JQueue debug level");
-	mQueue.resize(aQueueSize);
+//	gPARMS->SetDefaultParameter("JANA:QUEUE_DEBUG_LEVEL", mDebugLevel, "JQueueWithLock debug level");
 }
 
 //---------------------------------
-// JQueue    (Copy Constructor)
+// JQueueWithLock    (Copy Constructor)
 //---------------------------------
-JQueue::JQueue(const JQueue& aQueue) : JQueueInterface(aQueue)
+JQueueWithLock::JQueueWithLock(const JQueueWithLock& aQueue) : JQueueInterface(aQueue)
 {
 	//Assume this is called by CloneEmpty() or similar on an empty queue (ugh, can improve later)
 	mTaskBufferSize = aQueue.mTaskBufferSize;
 	mDebugLevel = aQueue.mDebugLevel;
 	mLogTarget = aQueue.mLogTarget;
-	mQueue.resize(aQueue.mQueue.size());
 }
 
 //---------------------------------
 // operator=
 //---------------------------------
-JQueue& JQueue::operator=(const JQueue& aQueue)
+JQueueWithLock& JQueueWithLock::operator=(const JQueueWithLock& aQueue)
 {
 	//Assume this is called by Clone() or similar on an empty queue (ugh, can improve later)
 	JQueueInterface::operator=(aQueue);
@@ -78,7 +76,7 @@ JQueue& JQueue::operator=(const JQueue& aQueue)
 //---------------------------------
 // AddTask
 //---------------------------------
-JQueueInterface::Flags_t JQueue::AddTask(const std::shared_ptr<JTaskBase>& aTask)
+JQueueInterface::Flags_t JQueueWithLock::AddTask(const std::shared_ptr<JTaskBase>& aTask)
 {
 	//We want to copy the task into the queue instead of moving it.
 	//However, we don't want to duplicate the complicated code in both functions.
@@ -92,7 +90,7 @@ JQueueInterface::Flags_t JQueue::AddTask(const std::shared_ptr<JTaskBase>& aTask
 	//and is worth avoiding the code duplication (or confusion of other tricks)
 
 	if(mDebugLevel > 0)
-		JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JQueue::AddTask(): Copy-add task " << aTask.get() << "\n" << JLogEnd();
+		JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JQueueWithLock::AddTask(): Copy-add task " << aTask.get() << "\n" << JLogEnd();
 
 	auto sTempTask = aTask;
 	return AddTask(std::move(sTempTask));
@@ -101,11 +99,11 @@ JQueueInterface::Flags_t JQueue::AddTask(const std::shared_ptr<JTaskBase>& aTask
 //---------------------------------
 // AddTask
 //---------------------------------
-JQueueInterface::Flags_t JQueue::AddTask(std::shared_ptr<JTaskBase>&& aTask)
+JQueueInterface::Flags_t JQueueWithLock::AddTask(std::shared_ptr<JTaskBase>&& aTask)
 {
 	/// Add the given JTaskBase to this queue. This will do so without locks.
 	/// If the queue is full, it will return immediately with a value
-	/// of JQueue::kQUEUE_FULL. Upon success, it will return JQueue::NO_ERROR.
+	/// of JQueueWithLock::kQUEUE_FULL. Upon success, it will return JQueueWithLock::NO_ERROR.
 
 	// The queue is maintained by 4 atomic indices. The goal of this
 	// method is to increment both the iwrite and iend indices so
@@ -117,42 +115,10 @@ JQueueInterface::Flags_t JQueue::AddTask(std::shared_ptr<JTaskBase>&& aTask)
 	// for another try.)
 
 	if(mDebugLevel > 0)
-		JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JQueue::AddTask(): Move-add task " << aTask.get() << ".\n" << JLogEnd();
-	if(mDebugLevel >= 10)
-		JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JQueue::AddTask(): begin/end/read/write = " <<
-				ibegin << ", " << iend << ", " << iread << ", " << iwrite << "\n" << JLogEnd();
+		JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JQueueWithLock::AddTask(): Move-add task " << aTask.get() << ".\n" << JLogEnd();
 
-	while(true)
-	{
-		uint32_t idx = iwrite;
-		uint32_t inext = (idx + 1) % mQueue.size();
-		if(inext == ibegin)
-			return Flags_t::kQUEUE_FULL;
-
-		//The queue is not full: iwrite is pointing to an empty slot: idx
-		//If we can increment iwrite before someone else does, then we have exclusive access to slot idx
-		//Why is access exclusive?:
-			//Once we increment, the next writer will try to write to a following slot
-			//The next writer can write to the next slot, but it can't increment iend until this thread does (so it will spin)
-			//The next reader can't read past iend (which is before this slot), and we haven't incremented iend yet
-			//And even if #threads > #slots, eventually the queue will be full and it won't get past the above check (ibegin isn't incrementing)
-
-		if(iwrite.compare_exchange_weak(idx, inext))
-		{
-			//OK, we've claimed exclusive access to the slot. Insert the task.
-			mQueue[idx] = std::move(aTask);
-
-			if(mDebugLevel > 0)
-				JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JQueue::AddTask(): Task added to slot " << idx << ".\n" << JLogEnd();
-
-			//Now that we've inserted the task, indicate to readers that this slot can now be read (by incrementing iend)
-			uint32_t save_idx = idx;
-			while(!iend.compare_exchange_weak(idx, inext))
-				idx = save_idx;
-
-			return Flags_t::kNO_ERROR;
-		}
-	}
+	std::lock_guard<std::mutex> sLock(mQueueLock);
+	mQueue.push_back(std::move(aTask));
 
 	return Flags_t::kNO_ERROR; //can never happen
 }
@@ -160,70 +126,45 @@ JQueueInterface::Flags_t JQueue::AddTask(std::shared_ptr<JTaskBase>&& aTask)
 //---------------------------------
 // GetMaxTasks
 //---------------------------------
-uint32_t JQueue::GetMaxTasks(void)
+uint32_t JQueueWithLock::GetMaxTasks(void)
 {
 	/// Returns maximum number of Tasks queue can hold at one time.
-	return mQueue.size();
+	return 9999999; //too lazy to put right #
 }
 
 //---------------------------------
 // GetEvent
 //---------------------------------
-std::shared_ptr<JTaskBase> JQueue::GetTask(void)
+std::shared_ptr<JTaskBase> JQueueWithLock::GetTask(void)
 {
 	/// Retrieve the next JTaskBase from this queue. Upon success, a shared pointer to
 	/// a JTaskBase object is returned (ownership is then considered transferred
 	/// to the caller). A nullptr pointer is returned if the queue is empty or
 	/// the call is interrupted. This operates without locks.	
 
-	while(true)
-	{
-		uint32_t idx = iread;
-		if(idx == iend)
-			return nullptr;
+	std::lock_guard<std::mutex> sLock(mQueueLock);
+	if(mQueue.empty())
+		return nullptr;
+	auto sTask = std::move(mQueue.front());
+	mQueue.pop_front();
 
-		//The queue is not empty: iread is pointing to a used slot: idx
-		//If we can increment iread before someone else does, then we have exclusive read access to slot idx
-		//Why is access exclusive?:
-			//Once we increment, the next reader will try to read a following slot
-			//The next reader can read the next slot, but it can't increment ibegin until this thread does (so it will spin)
-			//The next writer can't write past ibegin (which is this slot), and we haven't incremented ibegin yet
-			//And even if #threads > #slots, eventually the queue will be full and it won't get past the above check (iend isn't incrementing)
-
-		auto sTask = mQueue[idx];
-		uint32_t inext = (idx + 1) % mQueue.size();
-		if( iread.compare_exchange_weak(idx, inext) )
-		{
-			//OK, we've claimed exclusive access to the slot. Move out the task (doesn't increase reference count).
-			auto sTask = std::move(mQueue[idx]);
-			mTasksProcessed++;
-
-			//Now that we've retrieved the task, indicate to writers that this slot can now be written-to (by incrementing ibegin)
-			uint32_t save_idx = idx;
-			while(!ibegin.compare_exchange_weak(idx, inext))
-				idx = save_idx;
-
-			return sTask; //should be copy-elided
-		}
-	}
-
-	return nullptr; //can never happen
+	return sTask;
 }
 
 //---------------------------------
 // GetNumTasks
 //---------------------------------
-uint32_t JQueue::GetNumTasks(void)
+uint32_t JQueueWithLock::GetNumTasks(void)
 {
 	/// Returns the number of tasks currently in this queue.
-	auto sDifference = (int)iend - (int)ibegin;
-	return (sDifference >= 0) ? sDifference : sDifference + mQueue.size();
+	std::lock_guard<std::mutex> sLock(mQueueLock);
+	return mQueue.size();
 }
 
 //---------------------------------
 // GetNumTasksProcessed
 //---------------------------------
-uint64_t JQueue::GetNumTasksProcessed(void)
+uint64_t JQueueWithLock::GetNumTasksProcessed(void)
 {
 	/// Returns number of events that have been taken out of this
 	/// queue. Does not include events still in the queue (see
@@ -235,7 +176,7 @@ uint64_t JQueue::GetNumTasksProcessed(void)
 //---------------------------------
 // GetTaskBufferSize
 //---------------------------------
-std::size_t JQueue::GetTaskBufferSize(void)
+std::size_t JQueueWithLock::GetTaskBufferSize(void)
 {
 	return mTaskBufferSize;
 }
@@ -243,7 +184,7 @@ std::size_t JQueue::GetTaskBufferSize(void)
 //---------------------------------
 // AreEnoughTasksBuffered
 //---------------------------------
-bool JQueue::AreEnoughTasksBuffered(void)
+bool JQueueWithLock::AreEnoughTasksBuffered(void)
 {
 	//This function is only called for the Event queue
 	//If not enough tasks (events) are buffered, we will read in more events
@@ -254,8 +195,8 @@ bool JQueue::AreEnoughTasksBuffered(void)
 //---------------------------------
 // Clone
 //---------------------------------
-JQueueInterface* JQueue::CloneEmpty(void) const
+JQueueInterface* JQueueWithLock::CloneEmpty(void) const
 {
 	//Create an empty clone of the queue (no tasks copied)
-	return (new JQueue(*this));
+	return (new JQueueWithLock(*this));
 }

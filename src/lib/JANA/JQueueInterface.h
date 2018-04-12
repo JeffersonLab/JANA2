@@ -1,6 +1,6 @@
 //
-//    File: JTask.cc
-// Created: Wed Oct 11 22:41:08 EDT 2017
+//    File: JQueueInterface.h
+// Created: Wed Oct 11 22:51:32 EDT 2017
 // Creator: davidl (on Darwin harriet 15.6.0 i386)
 //
 // ------ Last repository commit info -----
@@ -36,21 +36,67 @@
 // OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+//
+// Description:
+//
+//
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+#ifndef _JQueueInterface_h_
+#define _JQueueInterface_h_
 
-#include "JTask.h"
+#include <cstdint>
+#include <string>
+#include <memory>
 
-//---------------------------------
-// JTask    (Constructor)
-//---------------------------------
-JTask::JTask(JQueue *queue)
+class JTaskBase;
+
+class JQueueInterface
 {
+	public:
+	
+		enum class Flags_t {
+			kNone,
+			kQUEUE_FULL,
+			kNO_ERROR
+		};
 
+		//STRUCTORS
+		JQueueInterface(const std::string& aName);
+		virtual ~JQueueInterface() = default;
+
+		//COPIERS //needed because movers specified
+		JQueueInterface(const JQueueInterface& aQueue) = default;
+		JQueueInterface& operator=(const JQueueInterface& aQueue) = default;
+
+		//MOVERS //needed because destructor specified
+		JQueueInterface(JQueueInterface&&) = default;
+		JQueueInterface& operator=(JQueueInterface&&) = default;
+
+		virtual Flags_t AddTask(const std::shared_ptr<JTaskBase>& aTask) = 0;
+		virtual Flags_t AddTask(std::shared_ptr<JTaskBase>&& aTask) = 0;
+		virtual std::shared_ptr<JTaskBase> GetTask(void) = 0;
+		virtual bool AreEnoughTasksBuffered(void){return true;} //Only used for the event queue
+
+		virtual uint32_t GetMaxTasks(void) = 0;
+		virtual uint32_t GetNumTasks(void) = 0;
+		virtual uint64_t GetNumTasksProcessed(void) = 0;
+		virtual std::size_t GetTaskBufferSize(void) = 0;
+		virtual std::size_t GetLatestBarrierEventUseCount(void) const{return 0;}
+
+		virtual void FinishedWithQueue(void){} //Call this when finished with the queue
+
+		std::string GetName(void) const;
+		virtual JQueueInterface* CloneEmpty(void) const = 0; //Create an empty clone of the queue (no tasks copied)
+
+	private:
+		std::string mName;
+};
+
+inline JQueueInterface::JQueueInterface(const std::string& aName) : mName(aName) { }
+
+inline std::string JQueueInterface::GetName(void) const
+{
+	return mName;
 }
 
-//---------------------------------
-// ~JTask    (Destructor)
-//---------------------------------
-JTask::~JTask()
-{
-
-}
+#endif // _JQueueInterface_h_

@@ -1,7 +1,7 @@
 //
-//    File: JQueueT.h
-// Created: Mon Oct 16 08:41:13 CDT 2017
-// Creator: davidl (on Darwin visitor097-233.wl.anl-external.org 15.6.0 i386)
+//    File: JQueueWithLock.h
+// Created: Wed Oct 11 22:51:32 EDT 2017
+// Creator: davidl (on Darwin harriet 15.6.0 i386)
 //
 // ------ Last repository commit info -----
 // [ Date ]
@@ -41,28 +41,51 @@
 //
 //
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-#ifndef _JQueueT_h_
-#define _JQueueT_h_
+#ifndef _JQueueWithLock_h_
+#define _JQueueWithLock_h_
 
-#include <JQueue.h>
+#include <cstdint>
+#include <atomic>
+#include <mutex>
+#include <deque>
 
-template<class T>
-class JQueueT:public JQueue {
+#include "JQueueInterface.h"
+
+class JQueueWithLock : public JQueueInterface
+{
 	public:
-		JQueueT();
-		virtual ~JQueueT();
-		
-		virtual const char* dataClassName(void) { return T::className(); }
-
-		virtual int AddEvent(JEvent *jevent); ///< User must implement
-
-	protected:
 	
+		JQueueWithLock(const std::string& aName, std::size_t aQueueSize = 200, std::size_t aTaskBufferSize = 0);
+
+		//COPIERS //needed because atomic not copyable
+		JQueueWithLock(const JQueueWithLock& aQueue);
+		JQueueWithLock& operator=(const JQueueWithLock& aQueue);
+
+		//MOVERS //specify because deleted by default if copiers specified
+		JQueueWithLock(JQueueWithLock&&) = default;
+		JQueueWithLock& operator=(JQueueWithLock&&) = default;
+
+		Flags_t AddTask(const std::shared_ptr<JTaskBase>& aTask);
+		Flags_t AddTask(std::shared_ptr<JTaskBase>&& aTask);
+		std::shared_ptr<JTaskBase> GetTask(void);
+		bool AreEnoughTasksBuffered(void);
+
+		uint32_t GetMaxTasks(void);
+		uint32_t GetNumTasks(void);
+		uint64_t GetNumTasksProcessed(void);
+		std::size_t GetTaskBufferSize(void);
 	
+		JQueueInterface* CloneEmpty(void) const;
+
 	private:
 
+		std::size_t mTaskBufferSize = 0; //min event task buffer (only checked for Events queue) //will get more events if # tasks < this
+		int mDebugLevel = 0;
+		uint32_t mLogTarget = 0; //cout
+
+		std::deque<std::shared_ptr<JTaskBase>> mQueue;
+		mutable std::mutex mQueueLock;
+		std::atomic<uint64_t> mTasksProcessed{0};
 };
 
-
-#endif // _JQueueT_h_
-
+#endif // _JQueueWithLock_h_

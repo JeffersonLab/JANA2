@@ -5,75 +5,64 @@
 // Creator: davidl (on Darwin harriet 15.6.0 i386)
 //
 
-
-#include <iostream>
-#include <iomanip>
-using namespace std;
-
 #include "jana_test_factory.h"
-#include "JEventSourceGenerator_jana_test.h"
-#include "JFactoryGenerator_jana_test.h"
-#include "JEventProcessor_jana_test.h"
 
-// Routine used to create our JEventProcessor
-#include <JANA/JApplication.h>
-extern "C"{
-void InitPlugin(JApplication *app){
-	InitJANAPlugin(app);
-	app->AddJEventSourceGenerator(new JEventSourceGenerator_jana_test());
-	app->AddJFactoryGenerator(new JFactoryGenerator_jana_test());
-	app->AddJEventProcessor(new JEventProcessor_jana_test());
+#include <chrono>
+#include <iostream>
+
+//------------------
+// Constructor
+//------------------
+jana_test_factory::jana_test_factory(void) : JFactory<jana_test>("jana_test_factory")
+{
+	//This is the new "init()" function
+
+	//Seed random number generator //not ideal!
+	auto sTime = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+	mRandomGenerator.seed(sTime);
 }
-} // "C"
 
 //------------------
-// init
+// Destructor
 //------------------
-void jana_test_factory::init(void)
+jana_test_factory::~jana_test_factory(void)
+{
+	//This is the new "fini()" function
+}
+
+//------------------
+// ChangeRun
+//------------------
+void jana_test_factory::ChangeRun(const std::shared_ptr<const JEvent>& aEvent)
 {
 
 }
 
 //------------------
-// brun
+// Create
 //------------------
-void jana_test_factory::brun(JEvent *jevent, int32_t runnumber)
+void jana_test_factory::Create(const std::shared_ptr<const JEvent>& aEvent)
 {
-
-}
-
-//------------------
-// evnt
-//------------------
-void jana_test_factory::evnt(JEvent *jevent, uint64_t eventnumber)
-{
-
 	// Code to generate factory data goes here. Add it like:
 	//
-	// jana_test *myjana_test = new jana_test;
-	// myjana_test->x = x;
-	// myjana_test->y = y;
-	// ...
-	// _data.push_back(myjana_test);
+	// mData.emplace_back(/* jana_test constructor arguments */);
 	//
 	// Note that the objects you create here will be deleted later
-	// by the system and the _data vector will be cleared automatically.
+	// by the system and the mData vector will be cleared automatically.
 
+	//Generate a random # of objects
+	auto sNumObjectsDistribution = std::uniform_int_distribution<std::size_t>(1, 20);
+	auto sNumObjects = sNumObjectsDistribution(mRandomGenerator);
+	for(std::size_t si = 0; si < sNumObjects; si++)
+	{
+		//Emplace new object onto the back of the data vector
+		mData.emplace_back(mRandomGenerator(), si); //Random energy, id = object#
+		auto& sObject = mData.back(); //Get reference to new object
+
+		//Supply busy work to take time: Generate a bunch of randoms
+		auto sNumRandomsDistribution = std::uniform_int_distribution<std::size_t>(1000, 2000);
+		auto sNumRandoms = sNumRandomsDistribution(mRandomGenerator);
+		for(std::size_t sj = 0; sj < sNumRandoms; sj++)
+			sObject.AddRandom(mRandomGenerator());
+	}
 }
-
-//------------------
-// erun
-//------------------
-void jana_test_factory::erun(void)
-{
-
-}
-
-//------------------
-// fini
-//------------------
-void jana_test_factory::fini(void)
-{
-
-}
-

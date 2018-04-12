@@ -45,74 +45,50 @@
 #define _JQueue_h_
 
 #include <cstdint>
-#include <string>
 #include <atomic>
 #include <vector>
-#include <mutex>
-#include <set>
 
-class JEvent;
+#include "JQueueInterface.h"
 
-class JQueue{
+class JQueue : public JQueueInterface
+{
 	public:
 	
-		enum{
-			kNone,
-			kQUEUE_FULL,
-			kNO_ERROR
-		}Flags_t;
-		
-		// The following taken from https://stackoverflow.com/questions/13193484/how-to-declare-a-vector-of-atomic-in-c
-		// It allows us to use a vector of atomics
-		template <typename T>
-		class atomwrapper{
-			public:
-			  std::atomic<T> _a;
-			  atomwrapper():_a(){}
-			  atomwrapper(const std::atomic<T> &a):_a(a.load()){}
-			  atomwrapper(const atomwrapper &other):_a(other._a.load()){}
-			  atomwrapper &operator=(const atomwrapper &other){_a.store(other._a.load());}
-			  atomwrapper &operator=(T &other){_a.store(other); return *this;}
-		};
+		JQueue(const std::string& aName, std::size_t aQueueSize = 200, std::size_t aTaskBufferSize = 0);
 
+		//COPIERS //needed because atomic not copyable
+		JQueue(const JQueue& aQueue);
+		JQueue& operator=(const JQueue& aQueue);
+
+		//MOVERS //specify because deleted by default if copiers specified
+		JQueue(JQueue&&) = default;
+		JQueue& operator=(JQueue&&) = default;
+
+		Flags_t AddTask(const std::shared_ptr<JTaskBase>& aTask);
+		Flags_t AddTask(std::shared_ptr<JTaskBase>&& aTask);
+		std::shared_ptr<JTaskBase> GetTask(void);
+		bool AreEnoughTasksBuffered(void);
+
+		uint32_t GetMaxTasks(void);
+		uint32_t GetNumTasks(void);
+		uint64_t GetNumTasksProcessed(void);
+		std::size_t GetTaskBufferSize(void);
 	
-		JQueue(std::string name, bool run_processors=true);
-		virtual ~JQueue();
-		
-		                   void AddConvertFromType(std::string name);
-		                   void AddConvertFromTypes(std::set<std::string> names);
-		            virtual int AddEvent(JEvent*);
-			                int AddToQueue(JEvent *jevent);
-		                   bool GetCanSink(void);
-		   const std::set<std::string> GetConvertFromTypes(void);
-		               uint32_t GetMaxEvents(void);
-		            std::string GetName();
-		                JEvent* GetEvent(void);
-		               uint32_t GetNumEvents(void);
-		               uint64_t GetNumEventsProcessed(void);
-		                   bool GetRunProcessors(void);
-		                   void SetPassThrough(bool pass_through=true);
-		                   void SetRunProcessors(bool run_processors=true);
-		                   void SetCanSink(bool can_sink=true);
-		
-	protected:
-		std::string _name;
-		bool _run_processors;
-		bool _done;
-		bool _pass_through;
-		bool _can_sink;
-		std::set<std::string> _convert_from_types;
-		
-		std::vector< JEvent* > _queue;
-		std::atomic<uint64_t> _nevents_processed;
+		JQueueInterface* CloneEmpty(void) const;
 
-		std::atomic<uint32_t> iread;
-		std::atomic<uint32_t> iwrite;
-		std::atomic<uint32_t> iend;
-		std::mutex _mutex;
 	private:
 
+		std::size_t mTaskBufferSize = 0; //min event task buffer (only checked for Events queue) //will get more events if # tasks < this
+		int mDebugLevel = 0;
+		uint32_t mLogTarget = 0; //cout
+
+		std::vector<std::shared_ptr<JTaskBase>> mQueue;
+		std::atomic<uint64_t> mTasksProcessed{0};
+
+		std::atomic<uint32_t> iread{0};		//The slot that the next thread will try to read from
+		std::atomic<uint32_t> iwrite{0};	//The slot that the next thread will try to write to
+		std::atomic<uint32_t> ibegin{0};	//The slot indicating the beginning of the read region //is separate from iread in order to get exclusive access to iread
+		std::atomic<uint32_t> iend{0};		//The slot indicating one-past-the-end of the read region
 };
 
 #endif // _JQueue_h_
-

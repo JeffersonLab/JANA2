@@ -44,16 +44,24 @@
 #ifndef _JEventProcessor_h_
 #define _JEventProcessor_h_
 
+#include <memory>
+#include <cstddef>
+#include <limits>
+#include <atomic>
+
+class JEvent;
+
 class JEventProcessor{
 	public:
-		JEventProcessor();
-		virtual ~JEventProcessor();
-		
-	protected:
-	
+
+		virtual ~JEventProcessor(void) = 0;
+
+		void Process(const std::shared_ptr<const JEvent>& aEvent);
+		virtual void AnalyzeEvent(const std::shared_ptr<const JEvent>& aEvent){};
+		virtual void ChangeRun(const std::shared_ptr<const JEvent>& aEvent){};
 	
 	private:
-
+		std::atomic<uint32_t> mPreviousRunNumber{std::numeric_limits<uint32_t>::max()};
 };
 
 #endif // _JEventProcessor_h_

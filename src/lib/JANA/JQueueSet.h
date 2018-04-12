@@ -1,7 +1,7 @@
 //
-//    File: JEventProcessor.cc
-// Created: Thu Oct 12 08:15:32 EDT 2017
-// Creator: davidl (on Darwin harriet.jlab.org 15.6.0 i386)
+//    File: JQueueSet.h
+// Created: Wed Oct 11 22:51:32 EDT 2017
+// Creator: davidl (on Darwin harriet 15.6.0 i386)
 //
 // ------ Last repository commit info -----
 // [ Date ]
@@ -36,28 +36,55 @@
 // OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+//
+// Description:
+//
+//
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+#ifndef _JQueueSet_h_
+#define _JQueueSet_h_
 
-#include "JEventProcessor.h"
-#include "JEvent.h"
+#include <map>
+#include <vector>
+#include <string>
 
-//---------------------------------
-// Process
-//---------------------------------
-void JEventProcessor::Process(const std::shared_ptr<const JEvent>& aEvent)
+#include "JQueueInterface.h"
+
+class JQueueSet
 {
-	auto sRunNumber = aEvent->GetRunNumber();
-	if(sRunNumber != mPreviousRunNumber)
-	{
-		ChangeRun(aEvent);
-		mPreviousRunNumber = sRunNumber;
-	}
-	AnalyzeEvent(aEvent);
-}
+	//The JQueueSet OWNS the queues it contains, and deletes them upon destruction.
 
-//---------------------------------
-// ~JEventProcessor    (Destructor)
-//---------------------------------
-JEventProcessor::~JEventProcessor()
-{
+	public:
 
-}
+		//Enum is in order of execution priority. For example:
+		//Could be I/O bound:
+			//If not enough events buffered (in queue) from current input, buffer another event
+			//If too many events in output buffers (queues), execute output tasks
+		//Otherwise:
+			//Process tasks in user-provided queues first (finish analyzing an open event)
+			//Process events (Execute all processors on new event)
+			//Process remaining tasks in output queue
+		enum class JQueueType { Output = 0, SubTasks, Events };
+
+		~JQueueSet(void);
+		JQueueSet* Clone(void) const;
+
+		std::size_t GetNumQueues(void) const;
+		void SetQueues(JQueueType aQueueType, const std::vector<JQueueInterface*>& aQueues);
+		void AddQueue(JQueueType aQueueType, JQueueInterface* aQueue);
+		void RemoveQueues(JQueueType aQueueType);
+		void RemoveQueues(void);
+
+		JQueueInterface* GetQueue(JQueueType aQueueType, const std::string& aName = "") const;
+		void GetQueues(std::map<JQueueType, std::vector<JQueueInterface*>>& aQueues) const;
+
+		std::pair<JQueueType, std::shared_ptr<JTaskBase>> GetTask(void) const;
+		std::shared_ptr<JTaskBase> GetTask(JQueueType aQueueType, const std::string& aQueueName) const;
+
+		void FinishedWithQueues(void); //Call this when finished with the event source
+
+	private:
+		std::map<JQueueType, std::vector<JQueueInterface*>> mQueues;
+};
+
+#endif // _JQueueSet_h_

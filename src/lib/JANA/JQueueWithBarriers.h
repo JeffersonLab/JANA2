@@ -1,7 +1,7 @@
 //
-//    File: JFactory.cc
-// Created: Fri Oct 20 09:44:48 EDT 2017
-// Creator: davidl (on Darwin harriet.jlab.org 15.6.0 i386)
+//    File: JQueueWithBarriers.h
+// Created: Wed Oct 11 22:51:32 EDT 2017
+// Creator: davidl (on Darwin harriet 15.6.0 i386)
 //
 // ------ Last repository commit info -----
 // [ Date ]
@@ -36,21 +36,74 @@
 // OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+//
+// Description:
+//
+//
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+#ifndef _JQueueWithBarriers_h_
+#define _JQueueWithBarriers_h_
 
-#include "JFactory.h"
+#include <cstdint>
+#include <atomic>
+#include <thread>
+#include <vector>
 
-//---------------------------------
-// JFactory    (Constructor)
-//---------------------------------
-JFactory::JFactory()
+#include "JQueueInterface.h"
+#include "JQueueWithLock.h"
+
+class JTaskBase;
+class JEvent;
+
+class JQueueWithBarriers : public JQueueInterface
 {
+	public:
+	
+		//STRUCTORS
+		JQueueWithBarriers(const std::string& aName, std::size_t aQueueSize = 200, std::size_t aTaskBufferSize = 0);
+		~JQueueWithBarriers(void);
 
-}
+		//COPIERS //needed because atomic not copyable
+		JQueueWithBarriers(const JQueueWithBarriers& aQueue);
+		JQueueWithBarriers& operator=(const JQueueWithBarriers& aQueue);
 
-//---------------------------------
-// ~JFactory    (Destructor)
-//---------------------------------
-JFactory::~JFactory()
-{
+		//MOVERS //specify because deleted by default if copiers specified
+		JQueueWithBarriers(JQueueWithBarriers&&) = default;
+		JQueueWithBarriers& operator=(JQueueWithBarriers&&) = default;
 
-}
+		Flags_t AddTask(const std::shared_ptr<JTaskBase>& aTask);
+		Flags_t AddTask(std::shared_ptr<JTaskBase>&& aTask);
+		std::shared_ptr<JTaskBase> GetTask(void);
+		bool AreEnoughTasksBuffered(void);
+
+		uint32_t GetMaxTasks(void);
+		uint32_t GetNumTasks(void);
+		uint64_t GetNumTasksProcessed(void);
+		std::size_t GetTaskBufferSize(void);
+		std::size_t GetLatestBarrierEventUseCount(void) const{return mLatestBarrierEvent.use_count();}
+
+		JQueueInterface* CloneEmpty(void) const;
+		void FinishedWithQueue(void){mEndThread = true; mThread->join(); mLatestBarrierEvent = nullptr;} //Call this when finished with the queue
+
+		void EndThread(void){mEndThread = true;}
+		void ThreadLoop(void);
+
+	private:
+
+		std::thread* mThread;
+		std::atomic<bool> mEndThread{false};
+
+		std::size_t mTaskBufferSize = 0;
+		int mDebugLevel = 0;
+		uint32_t mLogTarget = 0; //cout
+
+		JQueueWithLock* mInputQueue = nullptr;
+		JQueueWithLock* mOutputQueue = nullptr;
+
+		std::shared_ptr<const JEvent> mLatestBarrierEvent = nullptr;
+		std::weak_ptr<JTaskBase> mAnalyzeBarrierEventTask;
+		std::chrono::nanoseconds mSleepTime = std::chrono::nanoseconds(1000);
+		std::chrono::nanoseconds mSleepTimeIfBarrier = std::chrono::nanoseconds(100);
+};
+
+#endif // _JQueueWithBarriers_h_

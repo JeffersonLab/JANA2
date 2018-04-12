@@ -45,12 +45,20 @@
 #define _JThread_h_
 
 #include <thread>
+#include <map>
+#include <atomic>
 
-#include <JApplication.h>
+#include "JThreadManager.h"
+
+class JEventSource;
+class JApplication;
+class JQueueSet;
+class JQueueInterface;
+class JLog;
 
 class JThread{
-public:
-	
+	public:
+
 		enum RUN_STATE_t {
 			kRUN_STATE_INITIALIZING,
 			kRUN_STATE_IDLE,
@@ -58,13 +66,14 @@ public:
 			kRUN_STATE_ENDED,
 			kRUN_STATE_OTHER
 		};
-	
-		JThread(JApplication *app=NULL);
+
+		JThread(int aThreadID, JApplication* aApplication, JThreadManager::JEventSourceInfo* aQueueSet, std::size_t aQueueSetIndex, bool aRotateEventSources);
 		virtual ~JThread();
 
 		uint64_t GetNumEventsProcessed(void);
-		void GetNumEventsProcessed(map<string,uint64_t> &Nevents);
+		void GetNumEventsProcessed(std::map<std::string,uint64_t> &Nevents);
 		std::thread* GetThread(void);
+		int GetThreadID(void) const;
 		void Join(void);
 
 		void End(void);
@@ -72,22 +81,39 @@ public:
 		bool IsEnded(void);
 		bool IsJoined(void);
 		void Loop(void);
+		void Loop_Body(void);
 		void Run(void);
-		void SetQueues(const vector<JQueue*> *queues=NULL);
 		void Stop(bool wait_until_idle = false);
 		
-protected:
+	protected:
 		
+		JApplication* mApplication = nullptr;
+		JThreadManager* mThreadManager = nullptr;
+		JThreadManager::JEventSourceInfo* mEventSourceInfo = nullptr;
+		std::size_t mQueueSetIndex = 0;
+
+		JQueueInterface* mEventQueue = nullptr;
+		bool mRotateEventSources = false;
+		bool mSourceEmpty = false;
+		std::size_t mFullRotationCheckIndex = 0; //For detecting when we are simply rotating and not executing
+		std::chrono::nanoseconds mSleepTime = std::chrono::nanoseconds(100);
+
+		int mDebugLevel = 0;
+		JLog* mLogger = nullptr;
+
 		std::thread *_thread;
-		RUN_STATE_t _run_state;           ///< Current state
-		RUN_STATE_t _run_state_target;    ///< State to transtion to after current event
-		bool _isjoined;
-		JApplication *_japp;
-		map<std::string, uint64_t> _events_processed;
-		vector<JQueue*> _queues;
+		std::atomic<RUN_STATE_t> mRunState{kRUN_STATE_IDLE};           ///< Current state
+		std::atomic<RUN_STATE_t> mRunStateTarget{kRUN_STATE_IDLE};    ///< State to transtion to after current event
+		bool _isjoined = false;
+		std::map<std::string, uint64_t> _events_processed;
 		
+		int mThreadID;
+
 	private:
 
+		//INTERNAL CALLS
+		bool CheckEventQueue(void);
+		bool HandleNullTask(void);
 };
 
 extern thread_local JThread *JTHREAD;

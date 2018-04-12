@@ -60,7 +60,7 @@ JEventSourceGenerator::~JEventSourceGenerator()
 //---------------------------------
 // GetName
 //---------------------------------
-string JEventSourceGenerator::GetName(void)
+string JEventSourceGenerator::GetName(void) const
 {
 	return _name;
 }

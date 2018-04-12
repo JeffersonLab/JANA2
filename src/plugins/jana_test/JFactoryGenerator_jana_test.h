@@ -8,22 +8,24 @@
 #ifndef _JFactoryGenerator_jana_test_
 #define _JFactoryGenerator_jana_test_
 
+#include <vector>
+
 #include <JANA/JFactoryGenerator.h>
+#include "JResourcePool.h"
 
 #include "jana_test_factory.h"
 
-class JFactoryGenerator_jana_test: public JFactoryGenerator{
+class JFactoryGenerator_jana_test : public JFactoryGenerator
+{
 	public:
 		JFactoryGenerator_jana_test(){}
 		virtual ~JFactoryGenerator_jana_test(){}
 		virtual const char* className(void){return static_className();}
 		static const char* static_className(void){return "JFactoryGenerator_jana_test";}
 		
-		void GenerateFactories(JEvent *jevent){
-//			jevent->AddFactory(new jana_test_factory());
-//			return NOERROR;
+		std::vector<JFactoryBase*> GenerateFactories(void){
+			return {static_cast<JFactoryBase*>(new jana_test_factory())};
 		}
-
 };
 
 #endif // _JFactoryGenerator_jana_test_

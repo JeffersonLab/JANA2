@@ -38,13 +38,16 @@
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 #include "JEvent.h"
+#include "JEventSource.h"
 
 //---------------------------------
 // JEvent    (Constructor)
 //---------------------------------
-JEvent::JEvent()
+JEvent::JEvent(JApplication* aApplication) : mApplication(aApplication), mThreadManager(mApplication->GetJThreadManager())
 {
-
+	//Apparently segfaults
+//	gPARMS->SetDefaultParameter("JANA:EVENT_DEBUG_LEVEL", mDebugLevel, "JEvent debug level");
+//	mDebugLevel = 500;
 }
 
 //---------------------------------
@@ -56,18 +59,47 @@ JEvent::~JEvent()
 }
 
 //---------------------------------
-// Recycle
+// GetEventSource
 //---------------------------------
-void JEvent::Recycle(void)
+JEventSource* JEvent::GetEventSource(void) const
 {
-	/// Recycle this event. This virtual method should take care
-	/// of either deleting this JEvent object or returning it to
-	/// a pool for reuse. The expectation is that the subclass will
-	/// store sufficient information regarding the location of the 
-	/// pool for it to be returned. For very simple applications
-	/// where the highest levels of efficiency are not required,
-	/// deleting the object is OK.
-
-	delete this; // Yes, this is OK by the C++ standard
+	return mEventSource;
 }
 
+//---------------------------------
+// SetEventSource
+//---------------------------------
+void JEvent::SetEventSource(JEventSource* aSource, bool aIsBarrierEvent)
+{
+	mEventSource = aSource;
+	mEventSource->IncrementEventCount();
+	mIsBarrierEvent = aIsBarrierEvent;
+	if(mIsBarrierEvent)
+		mEventSource->IncrementBarrierCount();
+}
+
+//---------------------------------
+// SetFactorySet
+//---------------------------------
+void JEvent::SetFactorySet(JFactorySet* aFactorySet)
+{
+	mFactorySet = aFactorySet;
+}
+
+//---------------------------------
+// Release
+//---------------------------------
+void JEvent::Release(void)
+{
+	//Release all (pointers to) resources, called when recycled to pool
+	mApplication->Recycle(const_cast<JFactorySet*>(mFactorySet));
+	mFactorySet = nullptr;
+
+	mEventSource->DecrementEventCount();
+	if(mIsBarrierEvent)
+		mEventSource->DecrementBarrierCount();
+	mEventSource = nullptr;
+
+	mLatestBarrierEvent = nullptr;
+	mIsBarrierEvent = false; //In case user forgets to clear it
+}

@@ -9,26 +9,46 @@
 #define _jana_test_
 
 #include <vector>
+#include <utility>
+#include <string>
+#include <array>
 
 #include <JANA/JObject.h>
-#include <JANA/JFactory.h>
+#include "JLog.h"
 
-class jana_test:public JObject{
+class jana_test : public JObject
+{
 	public:
 		JOBJECT_PUBLIC(jana_test);
 		
-		// Add data members here. For example:
-		// int id;
-		// double E;
-		
-		// This method is used primarily for pretty printing
-		// the second argument to AddString is printf style format
-		void toStrings(std::vector<pair<string,string> > &items)const{
-			// AddString(items, "id", "%4d", id);
-			// AddString(items, "E", "%f", E);
-		}
-		
+		//STRUCTORS
+		jana_test(double aE, int aID) : mE(aE), mID(aID) { }
+
+		//GETTERS
+		int GetID(void) const{return mID;}
+		double GetE(void) const{return mE;}
+		std::vector<double> GetRandoms(void) const{return mRandoms;}
+
+		//SETTERS
+		void SetID(int aID){mID = aID;}
+		void SetE(double aE){mE = aE;}
+		void AddRandom(double aRandom){mRandoms.push_back(aRandom);}
+
+	private:
+
+		std::vector<double> mRandoms;
+		std::array<double, 20> mGarbage = {}; //Simulate a "large" object
+
+		double mE;
+		int mID;
 };
 
-#endif // _jana_test_
+//STREAM OPERATOR
+inline JLog& operator<<(JLog& aLog, const jana_test& aObject)
+{
+	aLog.SetHeaders({"ID", "E", "#Randoms"});
+	aLog << aObject.GetID() << aObject.GetE() << aObject.GetRandoms().size() << "\n";
+	return aLog;
+}
 
+#endif // _jana_test_

@@ -1,68 +1,82 @@
-//
-//    File: JTask.h
-// Created: Wed Oct 11 22:41:08 EDT 2017
-// Creator: davidl (on Darwin harriet 15.6.0 i386)
-//
-// ------ Last repository commit info -----
-// [ Date ]
-// [ Author ]
-// [ Source ]
-// [ Revision ]
-//
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-// Jefferson Science Associates LLC Copyright Notice:  
-// Copyright 251 2014 Jefferson Science Associates LLC All Rights Reserved. Redistribution
-// and use in source and binary forms, with or without modification, are permitted as a
-// licensed user provided that the following conditions are met:  
-// 1. Redistributions of source code must retain the above copyright notice, this
-//    list of conditions and the following disclaimer. 
-// 2. Redistributions in binary form must reproduce the above copyright notice, this
-//    list of conditions and the following disclaimer in the documentation and/or other
-//    materials provided with the distribution.  
-// 3. The name of the author may not be used to endorse or promote products derived
-//    from this software without specific prior written permission.  
-// This material resulted from work developed under a United States Government Contract.
-// The Government retains a paid-up, nonexclusive, irrevocable worldwide license in such
-// copyrighted data to reproduce, distribute copies to the public, prepare derivative works,
-// perform publicly and display publicly and to permit others to do so.   
-// THIS SOFTWARE IS PROVIDED BY JEFFERSON SCIENCE ASSOCIATES LLC "AS IS" AND ANY EXPRESS
-// OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-// MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
-// JEFFERSON SCIENCE ASSOCIATES, LLC OR THE U.S. GOVERNMENT BE LIABLE TO LICENSEE OR ANY
-// THIRD PARTES FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
-// OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
-// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-//
-// Description:
-//
-//   Base class for a task to be run by a JThread. User code will create
-// objects derived from JTask and add them to one of the JQueue's. When 
-// a JThread becomes idle, it will pull the next available JTask from 
-// one of the JQueue objects and run its Run method.
-//
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 #ifndef _JTask_h_
 #define _JTask_h_
 
-#include <JANA/JQueue.h>
+#include <future>
+#include <memory>
 
-class JTask{
+#include "JResettable.h"
+
+//JTaskBase is used to erase the return-type of the packaged_task
+
+//JTask must be used in a shared_ptr
+//This is because std::future and std::packaged_task are non-copyable (only movable)
+//And often two pieces of code want to use the JTask (the JQueue and the code waiting for the result)
+//We could use a normal pointer, but the thread executing the JTask doesn't know if anyone is waiting for the result or not.
+//Thus we must use shared_ptr to ensure that it is delted (or recycled) when it goes out of scope.
+
+/**************************************************************** TYPE DECLARATIONS ****************************************************************/
+
+class JTaskBase;
+class JEvent;
+
+template <typename ReturnType>
+class JTask;
+
+/**************************************************************** TYPE DEFINITIONS ****************************************************************/
+
+class JTaskBase : public JResettable
+{
 	public:
-		JTask(JQueue *queue=NULL);
-		virtual ~JTask();
-		
-		virtual int Run(void) ;
-		
-	protected:
-	
-	
-	private:
 
+		//STRUCTORS
+		JTaskBase(void) = default;
+		virtual ~JTaskBase(void) = default;
+
+		//MOVERS
+		JTaskBase(JTaskBase&&) = default;
+		JTaskBase& operator=(JTaskBase&&) = default;
+
+		void SetEvent(const std::shared_ptr<const JEvent>& aEvent){mEvent = aEvent;}
+		void SetEvent(std::shared_ptr<const JEvent>&& aEvent){mEvent = std::move(aEvent);}
+
+		const JEvent* GetEvent(void) {return mEvent.get();} //don't increase ref count //default
+		std::shared_ptr<const JEvent> GetSharedEvent(void) {return mEvent;} //increase ref count
+
+		virtual bool IsFinished(void) const = 0;
+
+		//OPERATORS
+		virtual void operator()(void) = 0;
+
+		//RESOURCES
+		void Release(void){mEvent = nullptr;} 	//Release all (pointers to) resources, called when recycled to pool
+		void Reset(void){}; 					//Re-initialize the object, called when retrieved from pool
+
+	protected:
+		std::shared_ptr<const JEvent> mEvent;
+};
+
+template <typename ReturnType>
+class JTask : public JTaskBase
+{
+	public:
+		//STRUCTORS
+		JTask(void) = default;
+
+		//MOVERS
+		JTask(JTask&&) = default;
+		JTask& operator=(JTask&&) = default;
+
+		void SetTask(std::packaged_task<ReturnType(const std::shared_ptr<const JEvent>&)>&& aTask){mTask = std::move(aTask); mFuture = mTask.get_future();}
+
+		bool IsFinished(void) const{return (mFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready);}
+		ReturnType GetResult(void){return mFuture.get();}
+
+		//EXECUTE
+		void operator()(void){mTask(mEvent);}
+
+	private:
+		std::packaged_task<ReturnType(const std::shared_ptr<const JEvent>&)> mTask;
+		std::future<ReturnType> mFuture;
 };
 
 #endif // _JTask_h_
-

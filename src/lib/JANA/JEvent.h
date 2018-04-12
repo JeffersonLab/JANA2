@@ -45,41 +45,197 @@
 #define _JEvent_h_
 
 #include <vector>
+#include <cstddef>
+#include <memory>
+#include <exception>
 
 #include <JObject.h>
 #include <JException.h>
 #include <JFactorySet.h>
+#include "JResettable.h"
+#include "JFactory.h"
+#include "JEventSource.h"
+#include "JApplication.h"
+#include "JThreadManager.h"
+#include "JLog.h"
+#include "JThread.h"
 
-
-class JEvent{
+class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
+{
 	public:
-		JEvent();
+
+		JEvent(JApplication* aApplication);
 		virtual ~JEvent();
 		
-		virtual void Recycle(void);
-		
-		template<class T>
-		JFactory* Get(std::vector<const T*> &v);
-		
+		//FACTORIES
+		void SetFactorySet(JFactorySet* aFactorySet);
+		template<class DataType>
+		const JFactory<DataType>* GetFactory(const std::string& aTag = "") const;
+
+		//OBJECTS
+		template<class DataType>
+		typename JFactory<DataType>::PairType Get(const std::string& aTag = "") const;
+
+		//RESOURCES
+		void Release(void);
+
+		//SETTERS
+		void SetRunNumber(uint32_t aRunNumber){mRunNumber = aRunNumber;}
+		void SetEventNumber(uint64_t aEventNumber){mEventNumber = aEventNumber;}
+		void SetEventSource(JEventSource* aSource, bool aIsBarrierEvent);
+		void SetLatestBarrierEvent(const std::shared_ptr<const JEvent>& aBarrierEvent){mLatestBarrierEvent = aBarrierEvent;}
+
+		//GETTERS
+		uint32_t GetRunNumber(void) const{return mRunNumber;}
+		uint64_t GetEventNumber(void) const{return mEventNumber;}
+		JEventSource* GetEventSource(void) const;
+		bool GetIsBarrierEvent(void) const{return mIsBarrierEvent;}
+
 	protected:
 	
-		JFactorySet *_factory_set;
+		const JFactorySet* mFactorySet = nullptr;
+		JEventSource* mEventSource = nullptr;
+		bool mIsBarrierEvent = false;
 
 	private:
-
+		JApplication* mApplication = nullptr;
+		JThreadManager* mThreadManager = nullptr;
+		uint32_t mRunNumber = 0;
+		uint64_t mEventNumber = 0;
+		int mDebugLevel = 0;
+		std::shared_ptr<const JEvent> mLatestBarrierEvent = nullptr;
 };
 
-template<class T> 
-JFactory* JEvent::Get(std::vector<const T*> &v)
+//---------------------------------
+// GetFactory
+//---------------------------------
+template<class DataType>
+inline const JFactory<DataType>* JEvent::GetFactory(const std::string& aTag) const
 {
-	if( !_factory_set) throw JException("_factory_set not set before JEvent::Get called");
+	return mFactorySet->GetFactory(std::type_index(typeid(DataType)), aTag);
+}
 
-	for(auto *fac : _factory_set->GetJFactories() ){
-		if( fac->GetName() != T::static_className() ) continue;
-		return fac;
+//---------------------------------
+// Get
+//---------------------------------
+template<class DataType>
+typename JFactory<DataType>::PairType JEvent::Get(const std::string& aTag) const
+{
+	if(mDebugLevel > 0)
+		JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Type = " << typeid(DataType).name() << ", tag = " << aTag << ".\n" << JLogEnd();
+
+	//First check to see if the information should come from the previous barrier event
+	if(!mIsBarrierEvent && (mLatestBarrierEvent != nullptr))
+	{
+		//Get the factory
+		auto sFactoryBase = mFactorySet->GetFactory(std::type_index(typeid(DataType)), aTag);
+		if(sFactoryBase == nullptr)
+		{
+			//Uh oh, No factory exists for this type.
+			jerr << "ERROR: No factory found for type = " << typeid(DataType).name() << ", tag = " << aTag << ".\n";
+			japp->SetExitCode(-1);
+			japp->Quit();
+			return {};
+		}
+		auto sFactory = static_cast<JFactory<DataType>*>(sFactoryBase);
+
+		//If the factory created the objects, then yes, use the event barrier data.
+		//If not, the information must come from the current event instead.
+		if(sFactory->GetCreated())
+			return sFactory->Get();
 	}
-	
-	return NULL;
+
+	//First get the factory
+	auto sFactoryBase = mFactorySet->GetFactory(std::type_index(typeid(DataType)), aTag);
+	if(sFactoryBase == nullptr)
+	{
+		//Uh oh, No factory exists for this type.
+		jerr << "ERROR: No factory found for type = " << typeid(DataType).name() << ", tag = " << aTag << ".\n";
+		japp->SetExitCode(-1);
+		japp->Quit();
+		return {};
+	}
+	auto sFactory = static_cast<JFactory<DataType>*>(sFactoryBase);
+
+	//If objects previously created, just return them
+	if(sFactory->GetCreated())
+		return sFactory->Get();
+
+	//Attempt to acquire the "creating" lock for the factory
+	if(!sFactory->AcquireCreatingLock())
+	{
+		if(mDebugLevel >= 10)
+			JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Another thread is creating objects, do work while waiting.\n" << JLogEnd();
+
+		//We failed: Another thread is currently creating the objects.
+		//Instead, execute queued tasks until the objects are ready
+		mThreadManager->DoWorkWhileWaiting(sFactory->GetCreatingLock(), mEventSource);
+
+		//It's done, return the results
+		return sFactory->Get();
+	}
+
+	if(mDebugLevel >= 10)
+		JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Create lock acquired.\n" << JLogEnd();
+
+	//If we throw exception within here we may not release the lock, unless we do try/catch:
+	try
+	{
+		//Lock acquired. First check to see if they were created since the last check.
+		if(sFactory->GetCreated())
+		{
+			if(mDebugLevel >= 10)
+				JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Objects created in meantime.\n" << JLogEnd();
+			sFactory->ReleaseCreatingLock();
+			return sFactory->Get();
+		}
+
+		//Not yet: We need to create the objects.
+		//First try to get from the event source
+		if(mDebugLevel >= 10)
+			JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Try to get " << typeid(DataType).name() << " (tag = " << aTag << ") objects from JEventSource.\n" << JLogEnd();
+		auto sSharedThis = this->shared_from_this();
+		if(mEventSource->GetObjects(sSharedThis, static_cast<JFactoryBase*>(sFactory)))
+		{
+			if(mDebugLevel >= 10)
+				JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): " << typeid(DataType).name() << " (tag = " << aTag << ") retrieved from JEventSource.\n" << JLogEnd();
+			sFactory->SetCreated(true);
+			sFactory->ReleaseCreatingLock();
+			return sFactory->Get();
+		}
+
+		//Not in the file: have the factory make them
+		//First compare current run # to previous run. If different, call ChangeRun()
+		if(sFactory->GetPreviousRunNumber() != mRunNumber)
+		{
+			if(mDebugLevel >= 10)
+				JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Change run.\n" << JLogEnd();
+			sFactory->ChangeRun(sSharedThis);
+			sFactory->SetPreviousRunNumber(mRunNumber);
+		}
+
+		//Create the objects
+		if(mDebugLevel >= 10)
+			JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Create " << typeid(DataType).name() << " (tag = " << aTag << ") with factory.\n" << JLogEnd();
+		sFactory->Create(sSharedThis);
+		sFactory->SetCreated(true);
+		sFactory->ReleaseCreatingLock();
+	}
+	catch(...)
+	{
+		//Catch the exception, unlock, rethrow
+		auto sException = std::current_exception();
+		sFactory->ReleaseCreatingLock();
+		std::rethrow_exception(sException);
+	}
+
+	//Get the object iterators
+	auto sIteratorPair = sFactory->Get();
+	if(mDebugLevel > 0)
+		JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Getting " << std::distance(sIteratorPair.first, sIteratorPair.second) << " " << typeid(DataType).name() << " objects, tag = " << aTag << ".\n" << JLogEnd();
+
+	//Return the objects
+	return sIteratorPair;
 }
 
 #endif // _JEvent_h_

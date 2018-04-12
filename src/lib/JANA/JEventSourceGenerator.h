@@ -47,6 +47,7 @@
 #include <string>
 
 #include <JEventSource.h>
+#include "JQueueInterface.h"
 
 /// This is a base class for all event source generators. JANA implements
 /// event sources in a modular way so that new types of sources can be
@@ -86,11 +87,10 @@ class JEventSourceGenerator{
 		virtual double CheckOpenable(std::string source)=0; ///< Test probability of opening the given source
 		virtual JEventSource* MakeJEventSource(std::string source)=0; ///< Instantiate an JEventSource object (subclass)
 
-		std::string GetName(void);
+		std::string GetName(void) const;
 		
 	protected:
 		std::string _name;
-	
 };
 
 #endif // _JEventSourceGenerator_h_

@@ -1,7 +1,7 @@
 //
-//    File: JQueueT.cc
-// Created: Mon Oct 16 08:41:13 CDT 2017
-// Creator: davidl (on Darwin visitor097-233.wl.anl-external.org 15.6.0 i386)
+//    File: JFactoryBase.h
+// Created: Fri Oct 20 09:44:48 EDT 2017
+// Creator: davidl (on Darwin harriet.jlab.org 15.6.0 i386)
 //
 // ------ Last repository commit info -----
 // [ Date ]
@@ -36,6 +36,75 @@
 // OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+//
+// Description:
+//
+//
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+#ifndef _JFactoryBase_h_
+#define _JFactoryBase_h_
 
-#include "JQueueT.h"
+#include <string>
+#include <typeindex>
+#include <memory>
+#include <limits>
+#include <atomic>
 
+class JEvent;
+
+class JFactoryBase
+{
+	public:
+
+		JFactoryBase(std::string aName, std::string aTag = "") : mName(aName), mTag(aTag) { };
+		virtual ~JFactoryBase() = default;
+
+		std::string GetName(void) const{return mName;}
+		std::string GetTag(void) const{return mTag;}
+
+		//VIRTUAL METHODS OVERLOADED BY JFactory
+		virtual std::type_index GetObjectType(void) const = 0;
+		virtual void ClearData(void) = 0;
+
+		//VIRTUAL METHODS TO BE OVERLOADED BY USER FACTORIES
+		virtual void ChangeRun(const std::shared_ptr<const JEvent>& aEvent){};
+		virtual void Create(const std::shared_ptr<const JEvent>& aEvent){};
+
+		uint32_t GetPreviousRunNumber(void) const{return mPreviousRunNumber;}
+		void SetPreviousRunNumber(uint32_t aRunNumber){mPreviousRunNumber = aRunNumber;}
+
+		//Have objects already been created?
+		bool GetCreated(void) const{return mCreated;}
+		void SetCreated(bool aCreated){mCreated = aCreated;}
+
+		bool AcquireCreatingLock(void);
+		const std::atomic<bool>& GetCreatingLock(void) const;
+		void ReleaseCreatingLock(void);
+
+	private:
+		std::string mName;
+		std::string mTag;
+		std::atomic<bool> mCreating{false}; //true if a thread is currently creating objects (effectively a lock)
+		std::atomic<bool> mCreated{false}; //true if created previously, false if not
+		uint32_t mPreviousRunNumber = std::numeric_limits<uint32_t>::max();
+};
+
+#endif // _JFactoryBase_h_
+
+inline const std::atomic<bool>& JFactoryBase::GetCreatingLock(void) const
+{
+	//Get a reference to the lock. This is so that threads can do other things in the meantime while waiting for this
+	return mCreating;
+}
+
+inline bool JFactoryBase::AcquireCreatingLock(void)
+{
+	bool sExpected = false;
+	return mCreating.compare_exchange_weak(sExpected, true);
+}
+
+inline void JFactoryBase::ReleaseCreatingLock(void)
+{
+	//Only call with thread used to acquire!
+	mCreating = false;
+}

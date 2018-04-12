@@ -40,7 +40,11 @@
 #include "JParameterManager.h"
 #include "JStatus.h"
 #include "JThread.h"
-#include "JQueue.h"
+#include "JQueueInterface.h"
+#include "JQueueSet.h"
+#include "JEventSourceManager.h"
+#include "JEventSource.h"
+#include "JThreadManager.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -120,6 +124,7 @@ void JStatus::Report(void){
 	// Generate a report
 	std::stringstream ss;
 	gJSTATUS->GenerateReport( ss );
+std::cerr << ss.str(); //TODO: FIX ME: This is a hack because I couldn't seem to get an output file
 	gJSTATUS->SendReport( ss );
 }
 
@@ -134,37 +139,54 @@ void JStatus::GenerateReport(std::stringstream &ss)
 	vector<JEventSource*> sources;
 	vector<JEventSourceGenerator*> source_generators;
 	vector<JFactoryGenerator*> factory_generators;
-	vector<JQueue*> queues;
+	std::vector<JThreadManager::JEventSourceInfo*> active_source_infos;
+	std::vector<JThreadManager::JEventSourceInfo*> retired_source_infos;
 	vector<JThread*> threads;
 
 	japp->GetJEventProcessors(processors);
-	japp->GetJEventSources(sources);
-	japp->GetJEventSourceGenerators(source_generators);
+	japp->GetJEventSourceManager()->GetActiveJEventSources(sources); //ignores exhausted sources!!
+	japp->GetJEventSourceManager()->GetJEventSourceGenerators(source_generators);
 	japp->GetJFactoryGenerators(factory_generators);
-	japp->GetJQueues(queues);
-	japp->GetJThreads(threads);
+	japp->GetJThreadManager()->GetActiveSourceInfos(active_source_infos);
+	japp->GetJThreadManager()->GetRetiredSourceInfos(retired_source_infos); //assumes one didn't retire in between calls!
+	japp->GetJThreadManager()->GetJThreads(threads);
+
+	std::size_t sNumQueues = 0;
+	for(auto& sSourceInfo : active_source_infos)
+		sNumQueues += sSourceInfo->mQueueSet->GetNumQueues();
+	for(auto& sSourceInfo : retired_source_infos)
+		sNumQueues += sSourceInfo->mQueueSet->GetNumQueues();
 
 	ss << "------ JANA STATUS REPORT -------" << endl;
 	ss << "generated: " << ctime(&t);
 	ss << endl;
-	ss << "      Nthreads/Ncores: " << japp->GetNJThreads() << " / " << japp->GetNcores() << endl;
+	ss << "      Nthreads/Ncores: " << japp->GetJThreadManager()->GetNJThreads() << " / " << japp->GetJThreadManager()->GetNcores() << endl;
 	ss << "    Nevents processed: " << japp->GetNeventsProcessed() << endl;
 	ss << "          Nprocessors: " << processors.size() << endl;
 	ss << "             Nsources: " << sources.size() << endl;
 	ss << "    Nsourcegenerators: " << source_generators.size() << endl;
 	ss << "   Nfactorygenerators: " << factory_generators.size() << endl;
-	ss << "              Nqueues: " << queues.size() << endl;
+	ss << "              Nqueues: " << sNumQueues << endl;
 	ss << endl;
 	
-	for(auto q : queues){
-		ss << "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - " << endl;
-		ss << "  queue " << q->GetName() << ":" << endl;
-		ss << "                       Nevents: " << q->GetNumEvents() <<endl;
-		ss << "             Nevents processed: " << q->GetNumEventsProcessed() << endl;
-		ss << "          Max allowed in queue: " << q->GetMaxEvents() << endl;
-		ss << "             ConvertFrom types: ";
-		for( auto s : q->GetConvertFromTypes() ) ss << s << ", ";
-		ss << endl;
+	for(auto& sSourceInfo : active_source_infos)
+	{
+		auto sQueueSet = sSourceInfo->mQueueSet;
+		std::map<JQueueSet::JQueueType, std::vector<JQueueInterface*>> sQueuesByType;
+		sQueueSet->GetQueues(sQueuesByType);
+		for(auto& sQueueTypePair : sQueuesByType)
+		{
+			auto& sQueues = sQueueTypePair.second;
+			for(auto sQueue : sQueues)
+			{
+				ss << "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - " << endl;
+				ss << "  active source, queue: " << sSourceInfo->mEventSource->GetName() << ", " << sQueue->GetName() << ": " << endl;
+				ss << "                       Ntasks: " << sQueue->GetNumTasks() <<endl;
+				ss << "             Ntasks processed: " << sQueue->GetNumTasksProcessed() << endl;
+				ss << "          Max allowed in queue: " << sQueue->GetMaxTasks() << endl;
+				ss << endl;
+			}
+		}
 	}
 	
 	// The only way to get a stack trace for a thread is from within the thread
@@ -182,10 +204,16 @@ void JStatus::GenerateReport(std::stringstream &ss)
 	if( typeid(thread::native_handle_type) == typeid(pthread_t) ){
 		ss << "underlying thread model: pthreads" << endl;
 	
-		// Get list of pthreads, including this one which is hopefully the main thread
-		set<pthread_t> pthreads;
-		for(auto t : threads) pthreads.insert( t->GetThread()->native_handle() );
-		pthreads.insert(pthread_self());
+		// Get list of pthreads, including this one (which is hopefully the main thread)
+		map<std::thread::id, pthread_t> pthreads;
+		auto sThisThreadID = std::this_thread::get_id();
+		for(auto t : threads)
+		{
+			auto sID = t->GetThread()->get_id();
+			if(sID != sThisThreadID)
+				pthreads.emplace(sID, t->GetThread()->native_handle());
+		}
+		pthreads.emplace(sThisThreadID, pthread_self());
 		
 		// Pre-allocate memory to hold the traces for all threads.
 		// We must do this here because the signals we send next
@@ -193,7 +221,8 @@ void JStatus::GenerateReport(std::stringstream &ss)
 		// while recording the trace, we'll become deadlocked.
 		BACKTRACES.clear();
 		BACKTRACES_COMPLETED = 0;
-		for(auto pthr : pthreads) {
+		for(auto& pthr_pair : pthreads) {
+			auto& pthr = pthr_pair.second;
 			auto &btinfo = BACKTRACES[pthr];
 			btinfo.cpuid = -1;
 			btinfo.bt.reserve(MAX_FRAMES);
@@ -202,9 +231,20 @@ void JStatus::GenerateReport(std::stringstream &ss)
 		}
 		
 		// Loop over all threads, signaling them to generate a backtrace
-		for(auto pthr : pthreads) pthread_kill( pthr, SIGUSR2 );
+		// Except the current thread!  We'll call it directly here.
+		// E.g. if a thread segfault's then gets the SIGUSR2 signal, I think the full stack trace is lost??
+		for(auto& pthr_pair : pthreads)
+		{
+			if(pthr_pair.first == sThisThreadID)
+				continue;
+			auto& pthr = pthr_pair.second;
+			pthread_kill( pthr, SIGUSR2 );
+		}
 		
-		// Wait for all threads to finish their backtraces. Limit how long we'll wait
+		//Record the back trace for THIS thread
+		JStatus::RecordBackTrace();
+
+		// Wait for all other threads to finish their backtraces. Limit how long we'll wait
 		for(int i=0; i<1000; i++){
 
 			this_thread::sleep_for( chrono::microseconds(1000) );
@@ -215,7 +255,8 @@ void JStatus::GenerateReport(std::stringstream &ss)
 		
 		// Loop over threads, printing backtrace results
 		lock_guard<mutex> lg(BT_MUTEX);
-		for(auto pthr : pthreads){
+		for(auto& pthr_pair : pthreads) {
+			auto& pthr = pthr_pair.second;
 			ss << endl;
 			ss << "native handle: " << hex << pthr << dec;
 			if( pthr==pthread_self() ) ss << "  (probably main thread)";
@@ -314,13 +355,15 @@ string JStatus::BackTraceToString(BACKTRACE_INFO_t &btinfo)
 		abi::__cxa_demangle(name.c_str(), dname, &dlen, &status);
 		string demangled_name(status ? "":dname);
 		if(status==0) name = demangled_name;
-		
+
+/*
+		//NO!!!! THIS IS NEEDED!!!!
 		// Truncate really long names since they are usually indiscernable
 		if( name.length()>40 ) {
 			name.erase(40);
 			name += " ...";
 		}
-		
+*/
 		// Ignore frames where the name seems un-useful
 		if( FILTER_TRACES ){
 			// OS X
