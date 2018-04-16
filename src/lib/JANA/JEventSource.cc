@@ -71,7 +71,7 @@ void JEventSource::Open(void)
 }
 
 //---------------------------------
-// GetProcessEventTask
+// GetProcessEventTasks
 //---------------------------------
 std::pair<std::vector<std::shared_ptr<JTaskBase>>, JEventSource::RETURN_STATUS> JEventSource::GetProcessEventTasks(std::size_t aNumTasks)
 {
