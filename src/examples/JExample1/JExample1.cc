@@ -40,7 +40,10 @@ class JEventSource_example1: public JEventSource{
 		std::type_index GetDerivedType(void) const {return std::type_index(typeid(JEventSource_example1));}; //So that we only execute factory generator once per type
 
 		std::pair<std::shared_ptr<const JEvent>, RETURN_STATUS> GetEvent(void){
-			return std::make_pair(std::make_shared<const JEvent_example1>(1.0, 2), JEventSource::RETURN_STATUS::kSUCCESS);
+			auto jevent = new JEvent_example1(1.0, 2);
+			jevent->SetEventSource(this);
+			std::shared_ptr<const JEvent_example1> sjevent(jevent);
+			return std::make_pair(sjevent, JEventSource::RETURN_STATUS::kSUCCESS);
 		}
 };
 
