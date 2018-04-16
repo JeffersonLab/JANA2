@@ -167,7 +167,7 @@ uint32_t JQueue::GetMaxTasks(void)
 }
 
 //---------------------------------
-// GetEvent
+// GetTask
 //---------------------------------
 std::shared_ptr<JTaskBase> JQueue::GetTask(void)
 {
@@ -179,8 +179,7 @@ std::shared_ptr<JTaskBase> JQueue::GetTask(void)
 	while(true)
 	{
 		uint32_t idx = iread;
-		if(idx == iend)
-			return nullptr;
+		if(idx == iend) return nullptr;
 
 		//The queue is not empty: iread is pointing to a used slot: idx
 		//If we can increment iread before someone else does, then we have exclusive read access to slot idx
@@ -190,7 +189,6 @@ std::shared_ptr<JTaskBase> JQueue::GetTask(void)
 			//The next writer can't write past ibegin (which is this slot), and we haven't incremented ibegin yet
 			//And even if #threads > #slots, eventually the queue will be full and it won't get past the above check (iend isn't incrementing)
 
-		auto sTask = mQueue[idx];
 		uint32_t inext = (idx + 1) % mQueue.size();
 		if( iread.compare_exchange_weak(idx, inext) )
 		{
@@ -200,8 +198,7 @@ std::shared_ptr<JTaskBase> JQueue::GetTask(void)
 
 			//Now that we've retrieved the task, indicate to writers that this slot can now be written-to (by incrementing ibegin)
 			uint32_t save_idx = idx;
-			while(!ibegin.compare_exchange_weak(idx, inext))
-				idx = save_idx;
+			while(!ibegin.compare_exchange_weak(idx, inext)) idx = save_idx;
 
 			return sTask; //should be copy-elided
 		}
