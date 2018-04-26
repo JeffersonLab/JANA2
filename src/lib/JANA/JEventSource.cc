@@ -73,37 +73,47 @@ void JEventSource::Open(void)
 //---------------------------------
 // GetProcessEventTasks
 //---------------------------------
-std::pair<std::vector<std::shared_ptr<JTaskBase>>, JEventSource::RETURN_STATUS> JEventSource::GetProcessEventTasks(std::size_t aNumTasks)
+std::vector<std::shared_ptr<JTaskBase> > JEventSource::GetProcessEventTasks(std::size_t aNumTasks)
 {
 	//This version is called by JThread
 
 	//If file closed, return dummy pair
-	if(mFileClosed)
-		return std::make_pair(std::vector<std::shared_ptr<JTaskBase>>(), RETURN_STATUS::kNO_MORE_EVENTS);
+	if(mExhausted) return std::vector<std::shared_ptr<JTaskBase>>();
 
 	//Initialize things before locking
 	std::vector<std::shared_ptr<const JEvent>> sEvents;
 	sEvents.reserve(aNumTasks);
-	auto sFailureStatus = JEventSource::RETURN_STATUS::kSUCCESS;
 
 	//Attempt to acquire atomic lock
 	bool sExpected = false;
-	if(!mGettingEvent.compare_exchange_strong(sExpected, true)) //failed, return busy
-		return std::make_pair(std::vector<std::shared_ptr<JTaskBase>>(), RETURN_STATUS::kBUSY);
+	if(!mGettingEvent.compare_exchange_strong(sExpected, true)){
+		// failed to get lock. Return empty container
+		return std::vector<std::shared_ptr<JTaskBase> >();
+	}
 
 	//Lock aquired, get the events
 	for(std::size_t si = 0; si < aNumTasks; si++)
 	{
-		//Get an event from the input file
-		auto sEventPair = GetEvent();
-
-		//Save the event if we succeeded
-		if(sEventPair.first != nullptr)
-			sEvents.push_back(std::move(sEventPair.first));
-		else //Break if there's an issue
-		{
-			sFailureStatus = sEventPair.second;
-			break;
+		// Read an event from the source. Anything other than a successful read
+		// throws an exception (we never need to check for kSUCCESS)
+		try{
+			std::shared_ptr<const JEvent> jevent = GetEvent();
+			std::const_pointer_cast<JEvent>(jevent)->SetJEventSource(this);         // don't tell the C++ police!
+			std::const_pointer_cast<JEvent>(jevent)->SetJApplication(mApplication); // don't tell the C++ police!
+			sEvents.push_back(std::move(jevent));
+		}catch(RETURN_STATUS ret_status){
+			switch(ret_status){
+				case RETURN_STATUS::kNO_MORE_EVENTS:
+					mExhausted = true;
+					break;
+				case RETURN_STATUS::kBUSY:
+				case RETURN_STATUS::kTRY_AGAIN:
+				default:
+					break;
+			}
+			break; // exception caught so don't try reading any more events right now
+		}catch(...){
+			break; // un-expected exception caught
 		}
 	}
 
@@ -111,14 +121,11 @@ std::pair<std::vector<std::shared_ptr<JTaskBase>>, JEventSource::RETURN_STATUS> 
 	mGettingEvent = false;
 
 	//Make tasks for analyzing the events
-	std::pair<std::vector<std::shared_ptr<JTaskBase>>, JEventSource::RETURN_STATUS> sTasks;
-	sTasks.second = sFailureStatus; //is kSuccess if nothing went wrong
-	for(auto& sEvent : sEvents)
-		sTasks.first.push_back(GetProcessEventTask(std::move(sEvent)));
+	std::vector<std::shared_ptr<JTaskBase> > sTasks;
+	mEventsRead.fetch_add(sEvents.size());
+	for(auto& sEvent : sEvents) sTasks.push_back(GetProcessEventTask(std::move(sEvent)));
+	mTasksCreated.fetch_add(sTasks.size());
 
-	//If the file is empty, note it
-	if(sFailureStatus == RETURN_STATUS::kNO_MORE_EVENTS)
-		mFileClosed = true;
 
 	//Return the tasks
 	return sTasks;
@@ -151,11 +158,11 @@ std::shared_ptr<JTaskBase> JEventSource::GetProcessEventTask(std::shared_ptr<con
 }
 
 //---------------------------------
-// IsDone
+// IsExhausted
 //---------------------------------
-bool JEventSource::IsFileClosed(void) const
+bool JEventSource::IsExhausted(void) const
 {
-	return mFileClosed;
+	return mExhausted;
 }
 
 

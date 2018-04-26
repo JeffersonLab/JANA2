@@ -66,12 +66,15 @@ class JQueue : public JQueueInterface
 
 		Flags_t AddTask(const std::shared_ptr<JTaskBase>& aTask);
 		Flags_t AddTask(std::shared_ptr<JTaskBase>&& aTask);
+		void AddTasksProcessedOutsideQueue(std::size_t nTasks);
 		std::shared_ptr<JTaskBase> GetTask(void);
 		bool AreEnoughTasksBuffered(void);
 
 		uint32_t GetMaxTasks(void);
 		uint32_t GetNumTasks(void);
+		uint64_t GetNumTasksInserted(void);
 		uint64_t GetNumTasksProcessed(void);
+		uint64_t GetNumTasksProcessedOutsideQueue(void);
 		std::size_t GetTaskBufferSize(void);
 	
 		JQueueInterface* CloneEmpty(void) const;
@@ -84,6 +87,8 @@ class JQueue : public JQueueInterface
 
 		std::vector<std::shared_ptr<JTaskBase>> mQueue;
 		std::atomic<uint64_t> mTasksProcessed{0};
+		std::atomic<uint64_t> mTasksInserted{0};
+		std::atomic<uint64_t> mTasksRunOutsideQueue{0};
 
 		std::atomic<uint32_t> iread{0};		//The slot that the next thread will try to read from
 		std::atomic<uint32_t> iwrite{0};	//The slot that the next thread will try to write to

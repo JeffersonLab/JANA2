@@ -64,7 +64,7 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 {
 	public:
 
-		JEvent(JApplication* aApplication);
+		JEvent(JApplication* aApplication=nullptr);
 		virtual ~JEvent();
 		
 		//FACTORIES
@@ -82,7 +82,8 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 		//SETTERS
 		void SetRunNumber(uint32_t aRunNumber){mRunNumber = aRunNumber;}
 		void SetEventNumber(uint64_t aEventNumber){mEventNumber = aEventNumber;}
-		void SetEventSource(JEventSource* aSource, bool aIsBarrierEvent=false);
+		void SetJApplication(JApplication* app);
+		void SetJEventSource(JEventSource* aSource, bool aIsBarrierEvent=false);
 		void SetLatestBarrierEvent(const std::shared_ptr<const JEvent>& aBarrierEvent){mLatestBarrierEvent = aBarrierEvent;}
 
 		//GETTERS
@@ -121,6 +122,11 @@ inline const JFactory<DataType>* JEvent::GetFactory(const std::string& aTag) con
 template<class DataType>
 typename JFactory<DataType>::PairType JEvent::Get(const std::string& aTag) const
 {
+	// mThreadManager is set either in constructor or in SetJApplication. 
+	// It actually should always be set by the latter which is called from
+	// JEventSource::GetProcessEventTasks after calling GetEvent.
+	assert(mThreadManager!=nullptr);
+
 	if(mDebugLevel > 0)
 		JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Type = " << typeid(DataType).name() << ", tag = " << aTag << ".\n" << JLogEnd();
 

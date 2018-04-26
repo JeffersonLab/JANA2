@@ -141,6 +141,7 @@ JQueueInterface::Flags_t JQueue::AddTask(std::shared_ptr<JTaskBase>&& aTask)
 		{
 			//OK, we've claimed exclusive access to the slot. Insert the task.
 			mQueue[idx] = std::move(aTask);
+			mTasksInserted++;
 
 			if(mDebugLevel > 0)
 				JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JQueue::AddTask(): Task added to slot " << idx << ".\n" << JLogEnd();
@@ -155,6 +156,14 @@ JQueueInterface::Flags_t JQueue::AddTask(std::shared_ptr<JTaskBase>&& aTask)
 	}
 
 	return Flags_t::kNO_ERROR; //can never happen
+}
+
+//---------------------------------
+// AddTasksProcessedOutsideQueue
+//---------------------------------
+void JQueue::AddTasksProcessedOutsideQueue(std::size_t nTasks)
+{
+	mTasksRunOutsideQueue.fetch_add( nTasks );
 }
 
 //---------------------------------
@@ -218,6 +227,18 @@ uint32_t JQueue::GetNumTasks(void)
 }
 
 //---------------------------------
+// GetNumTasksInserted
+//---------------------------------
+uint64_t JQueue::GetNumTasksInserted(void)
+{
+	/// Returns number of events that have been taken out of this
+	/// queue. Does not include events still in the queue (see
+	/// GetNumTasks for that).
+
+	return mTasksInserted;
+}
+
+//---------------------------------
 // GetNumTasksProcessed
 //---------------------------------
 uint64_t JQueue::GetNumTasksProcessed(void)
@@ -226,7 +247,7 @@ uint64_t JQueue::GetNumTasksProcessed(void)
 	/// queue. Does not include events still in the queue (see
 	/// GetNumTasks for that).
 	
-	return mTasksProcessed;
+	return mTasksProcessed + mTasksRunOutsideQueue;
 }
 
 //---------------------------------

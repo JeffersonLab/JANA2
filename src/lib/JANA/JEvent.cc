@@ -43,11 +43,9 @@
 //---------------------------------
 // JEvent    (Constructor)
 //---------------------------------
-JEvent::JEvent(JApplication* aApplication) : mApplication(aApplication), mThreadManager(mApplication->GetJThreadManager())
+JEvent::JEvent(JApplication* aApplication) : mApplication(aApplication), mThreadManager(nullptr)
 {
-	//Apparently segfaults
-//	gPARMS->SetDefaultParameter("JANA:EVENT_DEBUG_LEVEL", mDebugLevel, "JEvent debug level");
-//	mDebugLevel = 500;
+	if(mApplication != nullptr) mThreadManager = mApplication->GetJThreadManager();
 }
 
 //---------------------------------
@@ -67,9 +65,18 @@ JEventSource* JEvent::GetEventSource(void) const
 }
 
 //---------------------------------
-// SetEventSource
+// SetJApplication
 //---------------------------------
-void JEvent::SetEventSource(JEventSource* aSource, bool aIsBarrierEvent)
+void JEvent::SetJApplication(JApplication* app)
+{
+	mApplication = app;
+	if(mApplication != nullptr) mThreadManager = mApplication->GetJThreadManager();
+}
+
+//---------------------------------
+// SetJEventSource
+//---------------------------------
+void JEvent::SetJEventSource(JEventSource* aSource, bool aIsBarrierEvent)
 {
 	mEventSource = aSource;
 	mEventSource->IncrementEventCount();

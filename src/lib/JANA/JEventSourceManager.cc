@@ -347,6 +347,6 @@ bool JEventSourceManager::AreAllFilesClosed(void) const
 	if(!_sources_unopened.empty())
 		return false;
 
-	auto sClosedChecker = [](JEventSource* aSource) -> bool {return aSource->IsFileClosed();};
+	auto sClosedChecker = [](JEventSource* aSource) -> bool {return aSource->IsExhausted();};
 	return std::all_of(std::begin(_sources_active), std::end(_sources_active), sClosedChecker);
 }

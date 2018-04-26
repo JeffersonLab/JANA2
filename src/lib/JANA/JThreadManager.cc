@@ -842,7 +842,7 @@ void JThreadManager::SetThreadAffinity(int affinity_algorithm)
 		thread_affinity_policy_data_t policy = { (int)icpu };
 		thread_port_t mach_thread = pthread_mach_thread_np( t );
 		thread_policy_set(mach_thread, THREAD_AFFINITY_POLICY, (thread_policy_t)&policy, THREAD_AFFINITY_POLICY_COUNT);
-		_DBG_<<"CPU: " << mApplication->GetCPU() << "  (mach_thread="<<mach_thread<<", icpu=" << icpu <<")" << std::endl;
+		_DBG_<<"CPU: " << mApplication->GetCPU() << "  (mach_thread="<<mach_thread<<", icpu=" << icpu <<")" << _DBG_ENDL_;
 #else
 		// Linux
 		cpu_set_t cpuset;

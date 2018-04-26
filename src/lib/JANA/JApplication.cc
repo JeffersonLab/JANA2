@@ -50,6 +50,7 @@
 #include <cstdlib>
 #include <sstream>
 #include <iostream>
+#include <iomanip>
 #include <unordered_set>
 using namespace std;
 
@@ -214,7 +215,7 @@ JApplication::JApplication(int narg, char *argv[])
 				string val = arg.substr(pos+1);
 				GetJParameterManager()->SetParameter(key, val);
 			}else{
-				_DBG_ << " bad parameter argument (" << arg << ") should be of form -Pkey=value" << endl;
+				_DBG_ << " bad parameter argument (" << arg << ") should be of form -Pkey=value" << _DBG_ENDL_;
 			}
 			continue;
 		}
@@ -377,7 +378,7 @@ void JApplication::AddPlugin(string plugin_name)
 	/// of plugins is important. It is left to the user to handle
 	/// in those cases.
 	for( string &n : _plugins) if( n == plugin_name ) return;
-_DBG_<<"Adding plugin " << plugin_name << endl;
+_DBG_<<"Adding plugin " << plugin_name << _DBG_ENDL_;
 	_plugins.push_back(plugin_name);
 }
 
@@ -471,17 +472,15 @@ void JApplication::PrintFinalReport(void)
 		}
 	}
 	sSourceMaxNameLength += 2;
-	if(sSourceMaxNameLength < 8)
-		sSourceMaxNameLength = 8;
+	if(sSourceMaxNameLength < 8) sSourceMaxNameLength = 8;
 	sQueueMaxNameLength += 2;
-	if(sQueueMaxNameLength < 7)
-		sQueueMaxNameLength = 7;
+	if(sQueueMaxNameLength < 7) sQueueMaxNameLength = 7;
 
 	jout << std::endl;
 	jout << "Final Report" << std::endl;
-	jout << std::string(sSourceMaxNameLength + sQueueMaxNameLength + 9, '-') << std::endl;
-	jout << "Source" << std::string(sSourceMaxNameLength - 6, ' ') << "Queue" << std::string(sQueueMaxNameLength - 5, ' ') << "NTasks" << std::endl;
-	jout << std::string(sSourceMaxNameLength + sQueueMaxNameLength + 9, '-') << std::endl;
+	jout << std::string(sSourceMaxNameLength + 12 + sQueueMaxNameLength + 9, '-') << std::endl;
+	jout << "Source" << std::string(sSourceMaxNameLength - 6, ' ') << "   Nevents  " << "Queue" << std::string(sQueueMaxNameLength - 5, ' ') << "NTasks" << std::endl;
+	jout << std::string(sSourceMaxNameLength + 12 + sQueueMaxNameLength + 9, '-') << std::endl;
 	for(auto& sSourceInfo : sAllQueues)
 	{
 		auto sSource = sSourceInfo->mEventSource;
@@ -492,6 +491,7 @@ void JApplication::PrintFinalReport(void)
 			for(auto sQueue : sTypePair.second)
 			{
 				jout << sSource->GetName() << string(sSourceMaxNameLength - sSource->GetName().size(), ' ')
+						<< std::setw(10) << sSource->GetNumEventsProcessed() << "  "
 						<< sQueue->GetName() << string(sQueueMaxNameLength - sQueue->GetName().size(), ' ')
 						<< sQueue->GetNumTasksProcessed() << std::endl;
 			}

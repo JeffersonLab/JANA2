@@ -59,10 +59,11 @@ using std::map;
 extern std::mutex DBG_MUTEX;
 //#define _DBG_LOCK_ DBG_MUTEX.lock()
 //#define _DBG_RELEASE_ DBG_MUTEX.unlock()
-//#define _DBG__ _DBG_LOCK_;std::cerr<<__FILE__<<":"<<__LINE__<<std::endl;_DBG_RELEASE_
-//#define _DBG_ _DBG_LOCK_;std::cerr<<__FILE__<<":"<<__LINE__<<" "
-#define _DBG__ std::cerr<<__FILE__<<":"<<__LINE__<<std::endl;
-#define _DBG_  std::cerr<<__FILE__<<":"<<__LINE__<<" "
+//#define _DBG__ std::cerr<<__FILE__<<":"<<__LINE__<<std::endl
+//#define _DBG_  std::cerr<<__FILE__<<":"<<__LINE__<<" "
+#define _DBG_ {DBG_MUTEX.lock();std::cerr<<__FILE__<<":"<<__LINE__<<" "
+#define _DBG_ENDL_ std::endl;DBG_MUTEX.unlock();}
+#define _DBG__ _DBG_<<_DBG_ENDL_
 #endif
 
 #define jout std::cout

@@ -74,11 +74,13 @@ class JQueueInterface
 
 		virtual Flags_t AddTask(const std::shared_ptr<JTaskBase>& aTask) = 0;
 		virtual Flags_t AddTask(std::shared_ptr<JTaskBase>&& aTask) = 0;
+		virtual void AddTasksProcessedOutsideQueue(std::size_t nTasks) {}
 		virtual std::shared_ptr<JTaskBase> GetTask(void) = 0;
 		virtual bool AreEnoughTasksBuffered(void){return true;} //Only used for the event queue
 
 		virtual uint32_t GetMaxTasks(void) = 0;
 		virtual uint32_t GetNumTasks(void) = 0;
+		virtual uint64_t GetNumTasksInserted(void){ return 0.0;}
 		virtual uint64_t GetNumTasksProcessed(void) = 0;
 		virtual std::size_t GetTaskBufferSize(void) = 0;
 		virtual std::size_t GetLatestBarrierEventUseCount(void) const{return 0;}

@@ -16,11 +16,12 @@
 #include <JANA/JEvent.h>
 #include <JANA/JEventSource.h>
 
+
 //-------------------------------------------------------------------------
 // This class represents a single, complete "event" read from the source
 class JEvent_example1:public JEvent {
 	public:	
-		JEvent_example1(double a, int b): JEvent(japp), A(a),B(b){}
+//		JEvent_example1(double a, int b): JEvent(japp), A(a),B(b){}
 
 		double A;
 		int B;		
@@ -37,13 +38,19 @@ class JEventSource_example1: public JEventSource{
 	public:
 		JEventSource_example1(const char* source_name):JEventSource(source_name, japp){}
 
-		std::type_index GetDerivedType(void) const {return std::type_index(typeid(JEventSource_example1));}; //So that we only execute factory generator once per type
+		std::shared_ptr<const JEvent> GetEvent(void){
+		
+			// Throw exception if we have exhausted the source of events
+			static size_t Nevents = 0; // by way of example, just count 1000000 events
+			if( ++Nevents > 100000000 ) throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
+			
+			// Create a JEvent object and fill in important info
+			auto jevent = new JEvent_example1();
+			jevent->A = 1.0;
+			jevent->B = 2;
 
-		std::pair<std::shared_ptr<const JEvent>, RETURN_STATUS> GetEvent(void){
-			auto jevent = new JEvent_example1(1.0, 2);
-			jevent->SetEventSource(this);
-			std::shared_ptr<const JEvent_example1> sjevent(jevent);
-			return std::make_pair(sjevent, JEventSource::RETURN_STATUS::kSUCCESS);
+			// Return the JEvent as a shared_ptr
+			return std::shared_ptr<const JEvent>(jevent);
 		}
 };
 
@@ -65,6 +72,7 @@ class JEventSourceGenerator_example1: public JEventSourceGenerator{
 
 		JEventSource* MakeJEventSource(string source){ return new JEventSource_example1(source.c_str()); }
 };
+
 //-------------------------------------------------------------------------
 // This little piece of code is executed when the plugin is attached.
 // It should always call "InitJANAPlugin(app)" first, and then register
@@ -76,5 +84,4 @@ void InitPlugin(JApplication *app){
 	app->GetJEventSourceManager()->AddJEventSourceGenerator(new JEventSourceGenerator_example1());
 }
 } // "C"
-
 

@@ -251,8 +251,7 @@ void JThread::Loop(void)
 			//Do we have a task?
 			if(sTask == nullptr)
 			{
-				if(!HandleNullTask())
-					break; //No more tasks, end the loop
+				if(!HandleNullTask()) break; //No more tasks, end the loop
 				continue;
 			}
 
@@ -331,13 +330,10 @@ bool JThread::CheckEventQueue(void)
 		*mLogger << "Thread " << mThreadID << " JThread::CheckEventQueue(): Get " << sNumEventsToGet << " process event tasks\n" << JLogEnd();
 
 	//Get the next event(s) from the source, and get task(s) to process it/them (unless another thread has locked access)
-	auto sTasksPair = mEventSourceInfo->mEventSource->GetProcessEventTasks(sNumEventsToGet);
-	auto sReturnStatus = sTasksPair.second;
-	auto& sEventTasks = sTasksPair.first;
-
-	//Check if successful. If so, add tasks to queue
-	if(sReturnStatus == JEventSource::RETURN_STATUS::kSUCCESS)
-	{
+//	auto sTasksPair = mEventSourceInfo->mEventSource->GetProcessEventTasks(sNumEventsToGet);
+//	auto sReturnStatus = sTasksPair.second;
+	auto sEventTasks = mEventSourceInfo->mEventSource->GetProcessEventTasks(sNumEventsToGet);
+	if( !sEventTasks.empty() ){
 		if(mDebugLevel >= 40)
 			*mLogger << "Thread " << mThreadID << " JThread::CheckEventQueue(): Success, add task(s)\n" << JLogEnd();
 
@@ -356,31 +352,20 @@ bool JThread::CheckEventQueue(void)
 				//Oh well. Just execute this task directly instead
 				//This is faster than pulling an event off the front of the queue
 				(*sEventTask)();
+				mEventQueue->AddTasksProcessedOutsideQueue(1);
 			}
 		}
 
-		//Process-event task is submitted
+		//Process-event task(s) submitted
 		return true;
 	}
-	else if(sReturnStatus == JEventSource::RETURN_STATUS::kNO_MORE_EVENTS)
-	{
-		if(mDebugLevel >= 10)
-			*mLogger << "Thread " << mThreadID << " JThread::CheckEventQueue(): No more events\n" << JLogEnd();
-
-		//The source has been emptied.
-		//Continue processing jobs from this source until there aren't any more
-		mSourceEmpty = true;
-		return false;
-	}
-	else if(sReturnStatus == JEventSource::RETURN_STATUS::kTRY_AGAIN)
-	{
-		if(mDebugLevel >= 10)
-			*mLogger << "Thread " << mThreadID << " JThread::CheckEventQueue(): Try again later\n" << JLogEnd();
-		return false;
-	}
-
-	//Else: Another thread has exclusive access to this event source
-	//In this case, try to execute other jobs for this source (if none, will rotate-sources/sleep after check
+	
+	// No event tasks were read from the source
+	if( mEventSourceInfo->mEventSource->IsExhausted() ) mSourceEmpty = true;
+	
+	// We may get here for a variety of reasons. All of them though indicate
+	// that no events were obtained so return false to let the caller know that
+	// nothing was added to any queues.
 	return false;
 }
 
