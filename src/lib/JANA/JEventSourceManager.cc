@@ -81,6 +81,7 @@ void JEventSourceManager::AddJEventSource(JEventSource *source)
 void JEventSourceManager::AddJEventSourceGenerator(JEventSourceGenerator *source_generator)
 {
 	/// Add the given JEventSourceGenerator to the list of queues
+	source_generator->SetJApplication( mApplication );
 	_eventSourceGenerators.push_back( source_generator );
 }
 
@@ -192,8 +193,10 @@ JEventSource* JEventSourceManager::CreateSource(const std::string& source_name)
 		new_source = gen->MakeJEventSource(source_name);
 	}
 
-	if(new_source)
+	if(new_source != nullptr){
+		new_source->SetJApplication(mApplication);
 		return new_source;
+	}
 
 	// Problem opening source. Notify user
 	jerr<<std::endl;

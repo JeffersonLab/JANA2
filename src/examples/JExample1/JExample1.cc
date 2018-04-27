@@ -18,10 +18,10 @@
 
 
 //-------------------------------------------------------------------------
-// This class represents a single, complete "event" read from the source
+// This class represents a single, complete "event" read from the source.
+// The only requirement here is that it inherit from JEvent.
 class JEvent_example1:public JEvent {
 	public:	
-//		JEvent_example1(double a, int b): JEvent(japp), A(a),B(b){}
 
 		double A;
 		int B;		
@@ -30,19 +30,19 @@ class JEvent_example1:public JEvent {
 
 //-------------------------------------------------------------------------
 // This class would be responsible for opening and reading from the source
-// of events (e.g. a file or network socket). It should read one or more
-// events every time the GetEvent() method is called. The actual data read
-// should be encapsulated in a JEvent object and placed in the appropriate
-// JQueue.
+// of events (e.g. a file or network socket). It should read an event every
+// time the GetEvent() method is called. The actual data read should be
+// encapsulated in the form of a JEvent object.
 class JEventSource_example1: public JEventSource{
 	public:
-		JEventSource_example1(const char* source_name):JEventSource(source_name, japp){}
+		JEventSource_example1(const char* source_name):JEventSource(source_name){}
 
+		// This method is called to read in a single "event"
 		std::shared_ptr<const JEvent> GetEvent(void){
 		
 			// Throw exception if we have exhausted the source of events
 			static size_t Nevents = 0; // by way of example, just count 1000000 events
-			if( ++Nevents > 100000000 ) throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
+			if( ++Nevents > 1000000 ) throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
 			
 			// Create a JEvent object and fill in important info
 			auto jevent = new JEvent_example1();
@@ -57,19 +57,22 @@ class JEventSource_example1: public JEventSource{
 //-------------------------------------------------------------------------
 // This class is used to allow JANA to intelligently select which type
 // of JEventSource object to make in order to read from a given source
-// specified by the user. The value returned by CheckOpenable() should
-// be between 0-1 with larger values indicating greater confidence that
-// its JEventSource class can read from that source. For this simple 
-// example, 0.5 is always returned and since it is the only JEventSourceGenerator
-// registered, it will always be chosen.
+// specified by the user. This allows multiple types of file formats
+// or network sources to be supported in a single executable.
 class JEventSourceGenerator_example1: public JEventSourceGenerator{
 	public:
 		JEventSourceGenerator_example1():JEventSourceGenerator("example1"){}
 		
 		const char* Description(void){ return "example1"; }
 
+		// The value returned by CheckOpenable() should be between 0-1 with
+		// larger values indicating greater confidence that this JEventSource
+		// class can read from the given source. For this simple example, 0.5
+		// is always returned and since it is the only JEventSourceGenerator
+		// registered, it will always be chosen.
 		double CheckOpenable(string source){ return 0.5; }
 
+		// This is called to instantiate a JEventSource object
 		JEventSource* MakeJEventSource(string source){ return new JEventSource_example1(source.c_str()); }
 };
 
@@ -81,7 +84,9 @@ class JEventSourceGenerator_example1: public JEventSourceGenerator{
 extern "C"{
 void InitPlugin(JApplication *app){
 	InitJANAPlugin(app);
-	app->GetJEventSourceManager()->AddJEventSourceGenerator(new JEventSourceGenerator_example1());
+	
+	auto source_generator = new JEventSourceGenerator_example1();
+	app->GetJEventSourceManager()->AddJEventSourceGenerator( source_generator );
 }
 } // "C"
 

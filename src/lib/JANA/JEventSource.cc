@@ -71,6 +71,14 @@ void JEventSource::Open(void)
 }
 
 //---------------------------------
+// SetJApplication
+//---------------------------------
+void JEventSource::SetJApplication(JApplication *app)
+{
+	mApplication = app;
+}
+
+//---------------------------------
 // GetProcessEventTasks
 //---------------------------------
 std::vector<std::shared_ptr<JTaskBase> > JEventSource::GetProcessEventTasks(std::size_t aNumTasks)

@@ -55,6 +55,7 @@ class JTaskBase;
 class JApplication;
 class JQueueInterface;
 class JEvent;
+class JEventSourceManager;
 class JFactoryBase;
 class JFactoryGenerator;
 
@@ -65,6 +66,7 @@ class JFactoryGenerator;
 class JEventSource{
 
 	friend JEvent;
+	friend JEventSourceManager;
 
 	public:
 	
@@ -76,7 +78,7 @@ class JEventSource{
 			kUNKNOWN
 		};
 
-		JEventSource(std::string name, JApplication* aApplication);
+		JEventSource(std::string name, JApplication* aApplication=nullptr);
 		virtual ~JEventSource();
 		
 		virtual void Open(void);
@@ -104,6 +106,7 @@ class JEventSource{
 	
 //		virtual std::pair<std::shared_ptr<const JEvent>, RETURN_STATUS> GetEvent(void) = 0;
 //		virtual RETURN_STATUS GetEvent(std::shared_ptr<const JEvent> &jevent) = 0;
+		void SetJApplication(JApplication *app);
 		virtual std::shared_ptr<const JEvent> GetEvent(void) = 0;
 		JApplication* mApplication = nullptr;
 		std::string mName;

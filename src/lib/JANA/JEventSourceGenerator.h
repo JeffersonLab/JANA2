@@ -47,6 +47,7 @@
 #include <string>
 
 #include <JEventSource.h>
+#include <JEventSourceManager.h>
 #include "JQueueInterface.h"
 
 /// This is a base class for all event source generators. JANA implements
@@ -80,7 +81,10 @@
 
 class JEventSourceGenerator{
 	public:
-		JEventSourceGenerator(std::string name);
+	
+		friend JEventSourceManager;
+	
+		JEventSourceGenerator(std::string name, JApplication *app=nullptr);
 		virtual ~JEventSourceGenerator();
 		
 		virtual const char* Description(void)=0; ///< Get string indicating type of source this handles
@@ -90,7 +94,11 @@ class JEventSourceGenerator{
 		std::string GetName(void) const;
 		
 	protected:
+	
+		void SetJApplication(JApplication *app);
+	
 		std::string _name;
+		JApplication* mApplication{nullptr};
 };
 
 #endif // _JEventSourceGenerator_h_

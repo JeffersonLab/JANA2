@@ -44,7 +44,7 @@ using namespace std;
 //---------------------------------
 // JEventSourceGenerator    (Constructor)
 //---------------------------------
-JEventSourceGenerator::JEventSourceGenerator(std::string name):_name(name)
+JEventSourceGenerator::JEventSourceGenerator(std::string name, JApplication *app):_name(name),mApplication(app)
 {
 
 }
@@ -63,4 +63,12 @@ JEventSourceGenerator::~JEventSourceGenerator()
 string JEventSourceGenerator::GetName(void) const
 {
 	return _name;
+}
+
+//---------------------------------
+// SetJApplication
+//---------------------------------
+void JEventSourceGenerator::SetJApplication(JApplication *app)
+{
+	mApplication = app;
 }
