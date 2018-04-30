@@ -107,7 +107,7 @@ class JApplication{
 		virtual ~JApplication();
 
 		void AddSignalHandlers(void);
-		int GetExitCode(void);
+		int  GetExitCode(void);
 		void Initialize(void);
 		void PrintFinalReport(void);
 		void PrintStatus(void);
@@ -118,8 +118,10 @@ class JApplication{
 		void SetTicker(bool ticker_on=true);
 		void Stop(void);
 		
-		void AddJEventProcessor(JEventProcessor *processor);
-		void AddJFactoryGenerator(JFactoryGenerator *factory_generator);
+		void Add(JEventSourceGenerator *source_generator);
+		void Add(JFactoryGenerator *factory_generator);
+		void Add(JEventProcessor *processor);
+
 		void AddPlugin(string plugin_name);
 		void AddPluginPath(string path);
 		

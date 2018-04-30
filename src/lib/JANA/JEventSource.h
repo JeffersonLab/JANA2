@@ -56,6 +56,7 @@ class JApplication;
 class JQueueInterface;
 class JEvent;
 class JEventSourceManager;
+class JEventSourceGenerator;
 class JFactoryBase;
 class JFactoryGenerator;
 
@@ -67,6 +68,7 @@ class JEventSource{
 
 	friend JEvent;
 	friend JEventSourceManager;
+	friend JEventSourceGenerator;
 
 	public:
 	
@@ -91,6 +93,9 @@ class JEventSource{
 		bool IsExhausted(void) const;
 		std::size_t GetNumEventsProcessed(void) const{return mEventsProcessed;}
 		
+		virtual std::string GetType(void) const; ///< Returns name of subclass
+		virtual std::string GetVDescription(void) const {return "<description unavailable>";} ///< Optional for getting description via source rather than JEventSourceGenerator
+
 		std::string GetName(void) const{return mName;}
 		std::size_t GetNumOutstandingEvents(void) const{return mNumOutstandingEvents;}
 		std::size_t GetNumOutstandingBarrierEvents(void) const{return mNumOutstandingBarrierEvents;}

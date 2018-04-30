@@ -53,51 +53,35 @@
 /// This is a base class for all event source generators. JANA implements
 /// event sources in a modular way so that new types of sources can be
 /// easily added. Typically, this just means different file formats, but
-/// an also be networked or shared memory sources. To provide a new
-/// source type, a class must inherit from JEventSourceGenerator and
-/// implement the three virtual methods it defines:
+/// can also be networked or shared memory sources.
 ///
-/// Description:
-/// 	This method should just return a short string that can be used to
-/// 	inform the user what type of source this implements. It is purely
-/// 	informational in that the framework never looks at its contents.
-///
-/// CheckOpenable:
-/// 	This method should "peek" at the source to see if it is one that
-/// 	it can open. It should return a value between 0 and 1 inclusive
-/// 	with 0 meaning "cannot open" and 1 meaning "absolutely can open".
-/// 	The check can be as simple as looking at the source name (e.g.
-/// 	does it have a specific suffix) or more involved (e.g. opening
-/// 	the file and checking for a magic header). Note that it should
-/// 	not be assumed that the source represents a file name. It could
-/// 	indicate a URL or how to connect to some other non-file source.
-///
-/// MakeJEventSource:
-/// 	This will be called when the value of CheckOpenable returned
-/// 	by this object is larger than that returned by all other
-/// 	JEventSourceGenerator objects. This should simply instantiate
-/// 	an object of the JEventSource based class that does the actual
-/// 	work of reading objects from the source.
+/// One may subclass the JEventSource class directly, but it is recommended
+/// to use the template class JEventSourceGeneratorT instead. That defines
+/// defaults for the required methods based on the JEventSource class
+/// the generator is for while still allowing to customization where
+/// needed. See the JEventSourceGeneratorT documentation for details.
 
 class JEventSourceGenerator{
 	public:
 	
 		friend JEventSourceManager;
 	
-		JEventSourceGenerator(std::string name, JApplication *app=nullptr);
-		virtual ~JEventSourceGenerator();
-		
-		virtual const char* Description(void)=0; ///< Get string indicating type of source this handles
-		virtual double CheckOpenable(std::string source)=0; ///< Test probability of opening the given source
-		virtual JEventSource* MakeJEventSource(std::string source)=0; ///< Instantiate an JEventSource object (subclass)
+		JEventSourceGenerator(JApplication *app=nullptr):mApplication(app){}
+		virtual ~JEventSourceGenerator(){}
 
-		std::string GetName(void) const;
-		
+		// Default versions of these are defined in JEventSourceGeneratorT.h
+		virtual std::string GetType(void) const = 0; ///< Return name of the source type this will generate
+		virtual std::string GetDescription(void) const = 0; ///< Return description of the source type this will generate
+		virtual JEventSource* MakeJEventSource( std::string source ) = 0; ///< Create an instance of the source type this generates
+		virtual double CheckOpenable( std::string source ) = 0; ///< See JEventSourceGeneratorT for description
+	
 	protected:
 	
-		void SetJApplication(JApplication *app);
-	
-		std::string _name;
+		/// This is called by JEventSourceManager::AddJEventSourceGenerator which
+		/// itself is called by JApplication::Add(JEventSourceGenerator*). There
+		/// should be no need to call it from anywhere else.
+		void SetJApplication(JApplication *app){ mApplication = app; }
+
 		JApplication* mApplication{nullptr};
 };
 

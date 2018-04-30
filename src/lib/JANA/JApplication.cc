@@ -641,21 +641,31 @@ void JApplication::Stop(void)
 }
 
 //---------------------------------
-// AddJEventProcessor
+// Add - JEventSourceGenerator
 //---------------------------------
-void JApplication::AddJEventProcessor(JEventProcessor *processor)
+void JApplication::Add(JEventSourceGenerator *source_generator)
 {
-	_eventProcessors.push_back( processor );
+	/// Add the given JFactoryGenerator to the list of queues
+
+	GetJEventSourceManager()->AddJEventSourceGenerator( source_generator );
 }
 
 //---------------------------------
-// AddJFactoryGenerator
+// Add - JFactoryGenerator
 //---------------------------------
-void JApplication::AddJFactoryGenerator(JFactoryGenerator *factory_generator)
+void JApplication::Add(JFactoryGenerator *factory_generator)
 {
 	/// Add the given JFactoryGenerator to the list of queues
 
 	_factoryGenerators.push_back( factory_generator );
+}
+
+//---------------------------------
+// Add - JEventProcessor
+//---------------------------------
+void JApplication::Add(JEventProcessor *processor)
+{
+	_eventProcessors.push_back( processor );
 }
 
 //---------------------------------

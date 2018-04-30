@@ -189,7 +189,7 @@ JEventSource* JEventSourceManager::CreateSource(const std::string& source_name)
 	// Try opening the source using the chosen generator
 	JEventSource *new_source = nullptr;
 	if(gen != nullptr){
-		jout << "Opening source \"" << source_name << "\" of type: "<< gen->Description() << endl;
+		jout << "Opening source \"" << source_name << "\" - "<< gen->GetType() << " : " << gen->GetDescription() << endl;
 		new_source = gen->MakeJEventSource(source_name);
 	}
 
@@ -300,7 +300,7 @@ JEventSourceGenerator* JEventSourceManager::GetUserEventSourceGenerator(void)
 	try{
 		std::string EVENT_SOURCE_TYPE = mApplication->GetParameterValue<string>("EVENT_SOURCE_TYPE");
 		for( auto sg : _eventSourceGenerators ){
-			if( sg->GetName() == EVENT_SOURCE_TYPE ){
+			if( sg->GetType() == EVENT_SOURCE_TYPE ){
 				gen = sg;
 				jout << "Forcing use of event source type: " << EVENT_SOURCE_TYPE << endl;
 				break;
@@ -313,7 +313,7 @@ JEventSourceGenerator* JEventSourceManager::GetUserEventSourceGenerator(void)
 			jerr << " be used to read the event sources but no such type exists." << endl;
 			jerr << " Here is a list of available source types:" << endl;
 			jerr << endl;
-			for( auto sg : _eventSourceGenerators ) jerr << "   " << sg->GetName() << endl;
+			for( auto sg : _eventSourceGenerators ) jerr << "   " << sg->GetType() << endl;
 			jerr << endl;
 			jerr << "-----------------------------------------------------------------" << endl;
 			mApplication->SetExitCode(-1);

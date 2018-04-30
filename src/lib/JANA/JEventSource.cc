@@ -37,6 +37,8 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
+#include <cxxabi.h>
+
 #include "JEventSource.h"
 #include "JFunctions.h"
 #include "JApplication.h"
@@ -47,11 +49,12 @@
 //---------------------------------
 JEventSource::JEventSource(string name, JApplication* aApplication) : mApplication(aApplication), mName(name)
 {
-	//Do not open the source here!
-	//It will be opened in the Open() method
-
-	//Create JEventQueue here!
-	//Create JFactoryGenerator here! (for all types in the files)
+	/// Do not open the source here!
+	/// It will be opened in the Open() method
+	///
+	/// If anything more than the default JEventQueue structure is needed then create it here.
+	/// You may also add JFactoryGenerator objects to the JApplication to generate factories
+	/// for holding object types created by this source.
 }
 
 //---------------------------------
@@ -76,6 +79,16 @@ void JEventSource::Open(void)
 void JEventSource::SetJApplication(JApplication *app)
 {
 	mApplication = app;
+}
+
+//---------------------------------
+// GetType
+//---------------------------------
+std::string JEventSource::GetType(void) const
+{
+	int status=-1;
+	string type = abi::__cxa_demangle(typeid(*this).name(), NULL, NULL, &status);
+	return status==0 ? type:string(typeid(*this).name());
 }
 
 //---------------------------------
