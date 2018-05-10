@@ -38,13 +38,14 @@
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 #include "JObject.h"
+#include "JFunctions.h"
 
 //---------------------------------
 // JObject    (Constructor)
 //---------------------------------
 JObject::JObject()
 {
-
+	mName = GetDemangledName< decltype(*this) >();
 }
 
 //---------------------------------

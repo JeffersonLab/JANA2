@@ -593,8 +593,10 @@ void JApplication::Run(uint32_t nthreads)
 	}
 	
 	// Delete event processors
-	for(auto sProcessor : _eventProcessors)
+	for(auto sProcessor : _eventProcessors){
+		sProcessor->Finish(); // (this may not be necessary since it is always next to destructor)
 		delete sProcessor;
+	}
 
 	// Report Final numbers
 	PrintFinalReport();

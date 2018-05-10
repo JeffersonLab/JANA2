@@ -41,24 +41,26 @@
 //
 //
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-#ifndef _JEvent_h_
-#define _JEvent_h_
 
 #include <vector>
 #include <cstddef>
 #include <memory>
 #include <exception>
 
-#include <JObject.h>
-#include <JException.h>
-#include <JFactorySet.h>
-#include "JResettable.h"
-#include "JFactory.h"
-#include "JEventSource.h"
-#include "JApplication.h"
-#include "JThreadManager.h"
-#include "JLog.h"
-#include "JThread.h"
+#include <JANA/JObject.h>
+#include <JANA/JException.h>
+#include <JANA/JFactoryT.h>
+#include <JANA/JFactorySet.h>
+#include <JANA/JResettable.h>
+#include <JANA/JEventSource.h>
+#include <JANA/JFunctions.h>
+#include <JANA/JApplication.h>
+#include <JANA/JThreadManager.h>
+#include <JANA/JLog.h>
+#include <JANA/JThread.h>
+
+#ifndef _JEvent_h_
+#define _JEvent_h_
 
 class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 {
@@ -70,11 +72,12 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 		//FACTORIES
 		void SetFactorySet(JFactorySet* aFactorySet);
 		template<class DataType>
-		const JFactory<DataType>* GetFactory(const std::string& aTag = "") const;
+		JFactory* GetFactory(const std::string& aTag = "") const;
 
 		//OBJECTS
-		template<class DataType>
-		typename JFactory<DataType>::PairType Get(const std::string& aTag = "") const;
+		template<class T> JFactory* Get(vector<const T*> &vec, const std::string& aTag = "") const;
+		template<class T> vector<const T*> GetT(const std::string& aTag = "") const;
+		template<class T> typename JFactoryT<T>::PairType Get(const std::string& aTag = "") const;
 
 		//RESOURCES
 		void Release(void);
@@ -111,7 +114,7 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 // GetFactory
 //---------------------------------
 template<class DataType>
-inline const JFactory<DataType>* JEvent::GetFactory(const std::string& aTag) const
+inline JFactory* JEvent::GetFactory(const std::string& aTag) const
 {
 	return mFactorySet->GetFactory(std::type_index(typeid(DataType)), aTag);
 }
@@ -119,8 +122,40 @@ inline const JFactory<DataType>* JEvent::GetFactory(const std::string& aTag) con
 //---------------------------------
 // Get
 //---------------------------------
+template<class T>
+JFactory* JEvent::Get(vector<const T*> &vec, const std::string& aTag) const
+{
+	// Temporary wrapper for method below. The method below returns a beginning and
+	// ending iterator indicating the objects. This was a design change by Paul that
+	// I'm not sure I'm happy with, though I can see what he was trying to do and
+	// understand the appeal. I'm just too lazy at the moment to change the whole
+	// thing.
+
+	auto pt = Get<T>( aTag );
+	for(auto it=pt.first; it!=pt.second; it++) vec.push_back( *it );
+	
+	return const_cast<JFactory*>( GetFactory<T>( aTag ) );
+}
+
+//---------------------------------
+// GetT
+//---------------------------------
+template<class T>
+vector<const T*> JEvent::GetT(const std::string& aTag) const
+{
+	auto pt = Get<T>( aTag );
+	
+	vector<const T*> vec;
+	for(auto it=pt.first; it!=pt.second; it++) vec.push_back( *it );
+	
+	return vec; // should get moved by Return Value Optimization
+}
+
+//---------------------------------
+// Get
+//---------------------------------
 template<class DataType>
-typename JFactory<DataType>::PairType JEvent::Get(const std::string& aTag) const
+typename JFactoryT<DataType>::PairType JEvent::Get(const std::string& aTag) const
 {
 	// mThreadManager is set either in constructor or in SetJApplication. 
 	// It actually should always be set by the latter which is called from
@@ -128,7 +163,7 @@ typename JFactory<DataType>::PairType JEvent::Get(const std::string& aTag) const
 	assert(mThreadManager!=nullptr);
 
 	if(mDebugLevel > 0)
-		JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Type = " << typeid(DataType).name() << ", tag = " << aTag << ".\n" << JLogEnd();
+		JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Type = " << GetDemangledName<DataType>() << ", tag = " << aTag << ".\n" << JLogEnd();
 
 	//First check to see if the information should come from the previous barrier event
 	if(!mIsBarrierEvent && (mLatestBarrierEvent != nullptr))
@@ -138,12 +173,12 @@ typename JFactory<DataType>::PairType JEvent::Get(const std::string& aTag) const
 		if(sFactoryBase == nullptr)
 		{
 			//Uh oh, No factory exists for this type.
-			jerr << "ERROR: No factory found for type = " << typeid(DataType).name() << ", tag = " << aTag << ".\n";
+			jerr << "ERROR: No factory found for type = " << GetDemangledName<DataType>() << ", tag = \"" << aTag << "\\n";
 			japp->SetExitCode(-1);
 			japp->Quit();
 			return {};
 		}
-		auto sFactory = static_cast<JFactory<DataType>*>(sFactoryBase);
+		auto sFactory = static_cast<JFactoryT<DataType>*>(sFactoryBase);
 
 		//If the factory created the objects, then yes, use the event barrier data.
 		//If not, the information must come from the current event instead.
@@ -156,12 +191,12 @@ typename JFactory<DataType>::PairType JEvent::Get(const std::string& aTag) const
 	if(sFactoryBase == nullptr)
 	{
 		//Uh oh, No factory exists for this type.
-		jerr << "ERROR: No factory found for type = " << typeid(DataType).name() << ", tag = " << aTag << ".\n";
+		jerr << "ERROR: No factory found for type = " << GetDemangledName<DataType>() << ", tag = \"" << aTag << "\"\n";
 		japp->SetExitCode(-1);
 		japp->Quit();
 		return {};
 	}
-	auto sFactory = static_cast<JFactory<DataType>*>(sFactoryBase);
+	auto sFactory = static_cast<JFactoryT<DataType>*>(sFactoryBase);
 
 	//If objects previously created, just return them
 	if(sFactory->GetCreated())
@@ -199,12 +234,12 @@ typename JFactory<DataType>::PairType JEvent::Get(const std::string& aTag) const
 		//Not yet: We need to create the objects.
 		//First try to get from the event source
 		if(mDebugLevel >= 10)
-			JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Try to get " << typeid(DataType).name() << " (tag = " << aTag << ") objects from JEventSource.\n" << JLogEnd();
+			JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Try to get " << GetDemangledName<DataType>() << " (tag = " << aTag << ") objects from JEventSource.\n" << JLogEnd();
 		auto sSharedThis = this->shared_from_this();
-		if(mEventSource->GetObjects(sSharedThis, static_cast<JFactoryBase*>(sFactory)))
+		if(mEventSource->GetObjects(sSharedThis, static_cast<JFactory*>(sFactory)))
 		{
 			if(mDebugLevel >= 10)
-				JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): " << typeid(DataType).name() << " (tag = " << aTag << ") retrieved from JEventSource.\n" << JLogEnd();
+				JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): " << GetDemangledName<DataType>() << " (tag = " << aTag << ") retrieved from JEventSource.\n" << JLogEnd();
 			sFactory->SetCreated(true);
 			sFactory->ReleaseCreatingLock();
 			return sFactory->Get();
@@ -222,8 +257,8 @@ typename JFactory<DataType>::PairType JEvent::Get(const std::string& aTag) const
 
 		//Create the objects
 		if(mDebugLevel >= 10)
-			JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Create " << typeid(DataType).name() << " (tag = " << aTag << ") with factory.\n" << JLogEnd();
-		sFactory->Create(sSharedThis);
+			JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Create " << GetDemangledName<DataType>() << " (tag = " << aTag << ") with factory.\n" << JLogEnd();
+		sFactory->Process(sSharedThis);
 		sFactory->SetCreated(true);
 		sFactory->ReleaseCreatingLock();
 	}
@@ -238,7 +273,7 @@ typename JFactory<DataType>::PairType JEvent::Get(const std::string& aTag) const
 	//Get the object iterators
 	auto sIteratorPair = sFactory->Get();
 	if(mDebugLevel > 0)
-		JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Getting " << std::distance(sIteratorPair.first, sIteratorPair.second) << " " << typeid(DataType).name() << " objects, tag = " << aTag << ".\n" << JLogEnd();
+		JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Getting " << std::distance(sIteratorPair.first, sIteratorPair.second) << " " << GetDemangledName<DataType>() << " objects, tag = " << aTag << ".\n" << JLogEnd();
 
 	//Return the objects
 	return sIteratorPair;

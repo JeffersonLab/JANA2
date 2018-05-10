@@ -44,6 +44,9 @@
 #ifndef _JObject_h_
 #define _JObject_h_
 
+#include <string>
+#include <set>
+
 /// The JObject class is a base class for all data classes.
 /// (See JFactory and JFactory_base for algorithm classes.)
 ///
@@ -69,13 +72,88 @@ class JObject{
 	public:
 		JObject();
 		virtual ~JObject();
-		
-	protected:
 	
+		virtual const std::string& className(void) const { return mName; }
+	
+		// Associated objects
+		inline void AddAssociatedObject(const JObject *obj);
+		inline void AddAssociatedObjectAutoDelete(JObject *obj, bool auto_delete=true);
+		inline void RemoveAssociatedObject(const JObject *obj);
+		inline void ClearAssociatedObjects(void);
+		inline bool IsAssociated(const JObject* locObject) const {return (associated.find(locObject) != associated.end());}
+
+	protected:
+		std::string mName;
+		std::set<const JObject*> associated;
+		std::set<JObject*> auto_delete;
 	
 	private:
 
 };
+
+//--------------------------
+// AddAssociatedObject
+//--------------------------
+void JObject::AddAssociatedObject(const JObject *obj)
+{
+	/// Add a JObject to the list of associated objects
+	assert(obj!=NULL);
+	associated.insert(obj);
+}
+
+//--------------------------
+// AddAssociatedObjectAutoDelete
+//--------------------------
+void JObject::AddAssociatedObjectAutoDelete(JObject *obj, bool auto_delete)
+{
+	/// Add a JObject to the list of associated objects. If the auto_delete
+	/// flag is true, then automatically delete it when this object is
+	/// deleted. Otherwise, this behaves identically to the AddAssociatedObject
+	/// method.
+	///
+	/// Note that if the object is removed via RemoveAssociatedObject(...)
+	/// then the object is NOT deleted. BUT, if the entire list of associated
+	/// objects is cleared via ClearAssociatedObjects, then the object will
+	/// be deleted.
+
+	AddAssociatedObject(obj);
+	if(auto_delete) this->auto_delete.insert(obj);
+}
+
+//--------------------------
+// RemoveAssociatedObject
+//--------------------------
+void JObject::RemoveAssociatedObject(const JObject *obj)
+{
+	/// Remove the specified JObject from the list of associated
+	/// objects. This will NOT delete the object even if the
+	/// object was added with the AddAssociatedObjectAutoDelete(...)
+	/// method with the auto_delete flag set.
+
+	auto iter = associated.find(obj);
+	
+	if(iter!=associated.end()){
+		associated.erase(iter);
+	}
+}
+
+//--------------------------
+// ClearAssociatedObjects
+//--------------------------
+void JObject::ClearAssociatedObjects(void)
+{
+	/// Remove all associated objects from the associated objects list.
+	/// This will also delete any objects that were added via the
+	/// AddAssociatedObjectAutoDelete(...) method with the auto_delete
+	/// flag set.
+	
+	// Clear pointers to associated objects
+	associated.clear();
+	
+	// Delete objects in the auto_delete list
+	for( auto p : auto_delete ) delete p;
+	auto_delete.clear();
+}
 
 #endif // _JObject_h_
 

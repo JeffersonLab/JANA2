@@ -41,8 +41,6 @@
 //
 //
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-#ifndef _JEventSource_h_
-#define _JEventSource_h_
 
 #include <string>
 #include <utility>
@@ -57,12 +55,16 @@ class JQueueInterface;
 class JEvent;
 class JEventSourceManager;
 class JEventSourceGenerator;
-class JFactoryBase;
+class JFactory;
+template<typename T> class JFactoryT;
 class JFactoryGenerator;
 
 //Deriving classes should:
 //Overload all virtual methods (as needed)
 //Create their own JFactoryGenerator and JQueueInterface and store in the member variables (as needed)
+
+#ifndef _JEventSource_h_
+#define _JEventSource_h_
 
 class JEventSource{
 
@@ -84,7 +86,7 @@ class JEventSource{
 		virtual ~JEventSource();
 		
 		virtual void Open(void);
-		virtual bool GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactoryBase* aFactory){return false;}
+		virtual bool GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactory* aFactory){return false;}
 
 		void SetNumEventsToGetAtOnce(std::size_t aMinNumEvents, std::size_t aMaxNumEvents);
 		std::pair<std::size_t, std::size_t> GetNumEventsToGetAtOnce(void) const; //returns min, max

@@ -41,27 +41,39 @@
 //
 //
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-#ifndef _JEventProcessor_h_
-#define _JEventProcessor_h_
 
 #include <memory>
 #include <cstddef>
 #include <limits>
 #include <atomic>
+#include <mutex>
 
 class JEvent;
 
+#ifndef _JEventProcessor_h_
+#define _JEventProcessor_h_
+
 class JEventProcessor{
 	public:
-
-		virtual ~JEventProcessor(void) = 0;
-
-		void Process(const std::shared_ptr<const JEvent>& aEvent);
-		virtual void AnalyzeEvent(const std::shared_ptr<const JEvent>& aEvent){};
-		virtual void ChangeRun(const std::shared_ptr<const JEvent>& aEvent){};
 	
-	private:
-		std::atomic<uint32_t> mPreviousRunNumber{std::numeric_limits<uint32_t>::max()};
+		friend JApplication;
+	
+		JEventProcessor(JApplication *app=nullptr):mApplication(app){}
+		virtual ~JEventProcessor(void){}
+
+		virtual void Init(void){}
+		virtual void Process(const std::shared_ptr<const JEvent>& aEvent){}
+		virtual void Finish(void){}
+
+		std::once_flag init_flag; // Used to make sure Init is called only once (see JFunctions.cc:JMakeAnalyzeEventTask)
+
+	protected:
+
+		/// This is called by JApplication::Add(JEventProcessor*). There
+		/// should be no need to call it from anywhere else.
+		void SetJApplication(JApplication *app){ mApplication = app; }
+
+		JApplication *mApplication = nullptr;
 };
 
 #endif // _JEventProcessor_h_

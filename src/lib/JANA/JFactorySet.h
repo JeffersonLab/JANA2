@@ -48,40 +48,32 @@
 #include <typeindex>
 #include <map>
 
-#include "JFactoryGenerator.h"
 #include "JResettable.h"
 
-class JFactoryBase;
-template <typename DataType>
+class JFactoryGenerator;
 class JFactory;
+
 
 class JFactorySet : public JResettable
 {
 	public:
+		JFactorySet(void);
 		JFactorySet(const std::vector<JFactoryGenerator*>& aFactoryGenerators);
 		virtual ~JFactorySet();
 		
-		template <typename DataType>
-		void AddFactory(JFactory<DataType>* aFactory, const std::string& aFactoryTag);
-		JFactoryBase* GetFactory(std::type_index aObjectType, const std::string& aFactoryTag) const;
-		
+		bool Add(JFactory* aFactory);
+		JFactory* GetFactory(std::type_index aObjectType, const std::string& aFactoryTag="") const;
+		void Merge(JFactorySet &aFactorySet);
+		void Print(void) const;
+
 		void Release(void);
 
 	protected:
 	
 		//string: tag
-		std::map<std::pair<std::type_index, std::string>, JFactoryBase*> mFactories;
+		std::map<std::pair<std::type_index, std::string>, JFactory*> mFactories;
 };
 
-//---------------------------------
-// AddFactory
-//---------------------------------
-template <typename DataType>
-inline void JFactorySet::AddFactory(JFactory<DataType>* aFactory, const std::string& aFactoryTag)
-{
-	auto sKey = std::make_pair(std::type_index(typeid(DataType)), aFactoryTag);
-	mFactories.emplace(sKey, static_cast<JFactoryBase*>(aFactory));
-}
 
 #endif // _JFactorySet_h_
 

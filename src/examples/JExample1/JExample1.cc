@@ -46,7 +46,7 @@ class JEventSource_example1: public JEventSource{
 		// This method is called to read in a single "event"
 		std::shared_ptr<const JEvent> GetEvent(void){
 		
-			// Throw exception if we have exhausted the source of events
+			// Throw exception if we have exhausted the source of events.
 			static size_t Nevents = 0; // by way of example, just count 1000000 events
 			if( ++Nevents > 1000000 ) throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
 			

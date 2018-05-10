@@ -41,18 +41,19 @@
 //
 //
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-#ifndef _JFactoryGenerator_h_
-#define _JFactoryGenerator_h_
 
 #include <vector>
 
-class JFactoryBase;
+#include <JANA/JFactorySet.h>
+
+#ifndef _JFactoryGenerator_h_
+#define _JFactoryGenerator_h_
 
 class JFactoryGenerator{
 	public:
 		virtual ~JFactoryGenerator() = 0;
 		
-		virtual std::vector<JFactoryBase*> GenerateFactories(void) = 0;
+		virtual void GenerateFactories(JFactorySet *factory_set) = 0;
 };
 
 #endif // _JFactoryGenerator_h_

@@ -1,5 +1,3 @@
-#ifndef JEventSourceManager_h
-#define JEventSourceManager_h
 
 #include <vector>
 #include <deque>
@@ -16,6 +14,9 @@
 class JEventSourceManager;
 
 /**************************************************************** TYPE DEFINITIONS ****************************************************************/
+
+#ifndef JEventSourceManager_h
+#define JEventSourceManager_h
 
 class JEventSourceManager
 {

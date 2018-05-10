@@ -1,6 +1,6 @@
 //
-//    File: JEventProcessor.cc
-// Created: Thu Oct 12 08:15:32 EDT 2017
+//    File: JFactory.h
+// Created: Fri Oct 20 09:44:48 EDT 2017
 // Creator: davidl (on Darwin harriet.jlab.org 15.6.0 i386)
 //
 // ------ Last repository commit info -----
@@ -36,28 +36,75 @@
 // OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+//
+// Description:
+//
+//
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-#include "JEventProcessor.h"
-#include "JEvent.h"
+#include <vector>
 
-//---------------------------------
-// Process
-//---------------------------------
-void JEventProcessor::Process(const std::shared_ptr<const JEvent>& aEvent)
+#include <JANA/JApplication.h>
+#include <JANA/JFactory.h>
+#include <JANA/JFunctions.h>
+#include <JANA/JObject.h>
+
+#ifndef _JFactoryT_h_
+#define _JFactoryT_h_
+
+template <typename T>
+class JFactoryT : public JFactory
 {
-	auto sRunNumber = aEvent->GetRunNumber();
-	if(sRunNumber != mPreviousRunNumber)
-	{
-		ChangeRun(aEvent);
-		mPreviousRunNumber = sRunNumber;
-	}
-	AnalyzeEvent(aEvent);
-}
+	public:
 
-//---------------------------------
-// ~JEventProcessor    (Destructor)
-//---------------------------------
-JEventProcessor::~JEventProcessor()
-{
+		using IteratorType = typename std::vector<T*>::const_iterator;
+		using PairType = std::pair<IteratorType, IteratorType>;
 
-}
+		JFactoryT(const std::string& aName = GetDemangledName<T>(), const std::string& aTag = "") : JFactory(aName, aTag){}
+		virtual ~JFactoryT() = default;
+
+		virtual void Init(void){}
+		virtual void ChangeRun(const std::shared_ptr<const JEvent>& aEvent){}
+		virtual void Process(const std::shared_ptr<const JEvent>& aEvent){}
+
+		//---------------------------------
+		// GetObjectType
+		std::type_index GetObjectType(void) const {
+			return std::type_index(typeid(T));
+		}
+
+		//---------------------------------
+		// Get
+		PairType Get(void) const {
+			return std::make_pair(mData.cbegin(), mData.cend());
+		}
+
+		//---------------------------------
+		// Set
+		void Set(std::vector<JObject*>& aData){
+			for( auto jobj : aData) {
+//_DBG_<<" jobj->className():" << jobj->className() << "  mName:"<<mName<<_DBG_ENDL_;
+//				assert( jobj->className() == mName );
+				mData.push_back( static_cast<T*>(jobj) );
+			}
+		}
+
+		//---------------------------------
+		// Set
+		void Set(std::vector<T*>&& aData){
+			mData = std::move(aData);
+		}
+
+		//---------------------------------
+		// ClearData
+		void ClearData(void){
+			mData.clear();
+		}
+
+	protected:
+
+		std::vector<T*> mData;
+};
+
+#endif // _JFactoryT_h_
+

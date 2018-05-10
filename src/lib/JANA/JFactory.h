@@ -41,77 +41,87 @@
 //
 //
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+#include <string>
+#include <typeindex>
+#include <memory>
+#include <limits>
+#include <atomic>
+
+class JEvent;
+class JObject;
+
 #ifndef _JFactory_h_
 #define _JFactory_h_
 
-#include <vector>
-
-#include "JFactoryBase.h"
-
-template <typename DataType>
-class JFactory : public JFactoryBase
+class JFactory
 {
 	public:
 
-		using IteratorType = typename std::vector<DataType>::const_iterator;
-		using PairType = std::pair<IteratorType, IteratorType>;
-
-		JFactory(const std::string& aName = typeid(DataType).name(), const std::string& aTag = "");
+		JFactory(std::string aName, std::string aTag = "") : mName(aName), mTag(aTag) { };
 		virtual ~JFactory() = default;
 
-		void Set(std::vector<DataType>&& aData);
-		PairType Get(void) const;
-		std::type_index GetObjectType(void) const;
-		
-		void ClearData(void);
+		std::string GetName(void) const{return mName;}
+		std::string GetTag(void) const{return mTag;}
+
+		//VIRTUAL METHODS OVERLOADED BY JFactoryT
+		virtual std::type_index GetObjectType(void) const = 0;
+		virtual void ClearData(void) = 0;
+
+		//VIRTUAL METHODS TO BE OVERLOADED BY USER FACTORIES
+		virtual void Init(void){}
+		virtual void ChangeRun(const std::shared_ptr<const JEvent>& aEvent){}
+		virtual void Process(const std::shared_ptr<const JEvent>& aEvent){}
+//		virtual void Create(const std::shared_ptr<const JEvent>& aEvent){}
+
+		uint32_t GetPreviousRunNumber(void) const{return mPreviousRunNumber;}
+		void SetPreviousRunNumber(uint32_t aRunNumber){mPreviousRunNumber = aRunNumber;}
+
+		//Have objects already been created?
+		bool GetCreated(void) const{return mCreated;}
+		void SetCreated(bool aCreated){mCreated = aCreated;}
+
+		bool AcquireCreatingLock(void);
+		const std::atomic<bool>& GetCreatingLock(void) const;
+		void ReleaseCreatingLock(void);
+
+		// Copy/Move objects into factory
+		template<typename T>
+		void Set(std::vector<T*>& aData){
+//			std::vector<JObject*> vvec( aData.begin(), aData.end() );
+			std::vector<JObject*> vvec;
+			vvec.reserve( aData.size());
+			for( auto p : aData ) vvec.push_back( static_cast<JObject*>( p ) );
+			Set( vvec ); // call JFactoryT::Set
+		}
+
 
 	protected:
+		virtual void Set( std::vector<JObject*> &vvec ) = 0;
 
-		std::vector<DataType> mData;
+		std::string mName;
+		std::string mTag;
+		std::atomic<bool> mCreating{false}; //true if a thread is currently creating objects (effectively a lock)
+		std::atomic<bool> mCreated{false}; //true if created previously, false if not
+		uint32_t mPreviousRunNumber = std::numeric_limits<uint32_t>::max();
 };
 
-//---------------------------------
-// JFactory
-//---------------------------------
-template <typename DataType>
-inline JFactory<DataType>::JFactory(const std::string& aName, const std::string& aTag) : JFactoryBase(aName, aTag)
+inline const std::atomic<bool>& JFactory::GetCreatingLock(void) const
 {
+	//Get a reference to the lock. This is so that threads can do other things in the meantime while waiting for this
+	return mCreating;
 }
 
-//---------------------------------
-// GetObjectType
-//---------------------------------
-template <typename DataType>
-inline std::type_index JFactory<DataType>::GetObjectType(void) const
+inline bool JFactory::AcquireCreatingLock(void)
 {
-	return std::type_index(typeid(DataType));
+	bool sExpected = false;
+	return mCreating.compare_exchange_weak(sExpected, true);
 }
 
-//---------------------------------
-// Set
-//---------------------------------
-template <typename DataType>
-inline void JFactory<DataType>::Set(std::vector<DataType>&& aData)
+inline void JFactory::ReleaseCreatingLock(void)
 {
-	mData = std::move(aData);
-}
-
-//---------------------------------
-// Get
-//---------------------------------
-template <typename DataType>
-inline typename JFactory<DataType>::PairType JFactory<DataType>::Get(void) const
-{
-	return std::make_pair(mData.cbegin(), mData.cend());
-}
-
-//---------------------------------
-// ClearData
-//---------------------------------
-template <typename DataType>
-inline void JFactory<DataType>::ClearData(void)
-{
-	mData.clear();
+	//Only call with thread used to acquire!
+	mCreating = false;
 }
 
 #endif // _JFactory_h_

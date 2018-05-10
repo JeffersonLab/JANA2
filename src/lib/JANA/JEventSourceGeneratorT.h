@@ -41,8 +41,6 @@
 //
 //
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-#ifndef _JEventSourceGeneratorT_h_
-#define _JEventSourceGeneratorT_h_
 
 #include <string>
 #include <cxxabi.h>
@@ -83,6 +81,9 @@
 /// 	not be assumed that the source represents a file name. It could
 /// 	indicate a URL or how to connect to some other non-file source.
 ///
+
+#ifndef _JEventSourceGeneratorT_h_
+#define _JEventSourceGeneratorT_h_
 
 template <typename T>
 class JEventSourceGeneratorT:public JEventSourceGenerator{

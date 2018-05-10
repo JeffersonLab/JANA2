@@ -72,7 +72,7 @@ template <typename... DataTypes>
 class JSourceFactoryGenerator : public JFactoryGenerator
 {
 	public:
-		std::vector<JFactoryBase*> GenerateFactories(void);
+		std::vector<JFactory*> GenerateFactories(void);
 
 		template <typename ContainerType>
 		static void MakeFactories(std::back_insert_iterator<ContainerType> aIterator);
@@ -85,7 +85,7 @@ template <typename HeadType, typename... TailTypes>
 struct JSourceFactoryGenerator<HeadType, TailTypes...> : public JFactoryGenerator
 {
 	public:
-		std::vector<JFactoryBase*> GenerateFactories(void);
+		std::vector<JFactory*> GenerateFactories(void);
 
 		template <typename ContainerType>
 		static void MakeFactories(std::back_insert_iterator<ContainerType> aIterator);
@@ -94,7 +94,7 @@ struct JSourceFactoryGenerator<HeadType, TailTypes...> : public JFactoryGenerato
 /*********************************************************** MEMBER FUNCTION DEFINITIONS: DEFAULT ***********************************************************/
 
 template <typename... DataTypes>
-std::vector<JFactoryBase*> JSourceFactoryGenerator<DataTypes...>::GenerateFactories(void)
+std::vector<JFactory*> JSourceFactoryGenerator<DataTypes...>::GenerateFactories(void)
 {
 	//Do nothing: This is only called when DataTypes is empty.
 	//If DataTypes is not empty, template deduction extracts HeadType and thus uses the JSourceFactoryGenerator specialization.
@@ -112,10 +112,10 @@ void JSourceFactoryGenerator<DataTypes...>::MakeFactories(std::back_insert_itera
 /******************************************************** MEMBER FUNCTION DEFINITIONS: SPECIALIZATION ********************************************************/
 
 template <typename HeadType, typename... TailTypes>
-std::vector<JFactoryBase*> JSourceFactoryGenerator<HeadType, TailTypes...>::GenerateFactories(void)
+std::vector<JFactory*> JSourceFactoryGenerator<HeadType, TailTypes...>::GenerateFactories(void)
 {
 	//Initialize vector
-	std::vector<JFactoryBase*> sFactories;
+	std::vector<JFactory*> sFactories;
 	sFactories.reserve(sizeof...(TailTypes) + 1);
 
 	//Make factories and return
@@ -128,7 +128,7 @@ template <typename ContainerType>
 void JSourceFactoryGenerator<HeadType, TailTypes...>::MakeFactories(std::back_insert_iterator<ContainerType> aIterator)
 {
 	//Create the factory for the head type
-	aIterator = static_cast<JFactoryBase*>(new JFactory<HeadType>);
+	aIterator = static_cast<JFactory*>(new JFactory<HeadType>);
 	//Continue making factories for tail types (unless tail is empty)
 	JSourceFactoryGenerator<TailTypes...>::MakeFactories(aIterator);
 }
