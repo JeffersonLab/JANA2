@@ -1,3 +1,7 @@
+---
+layout: post
+title: JANA: Multi-threaded HENP Event Reconstruction
+---
 ## Welcome to JANA!
 
 JANA is a framework for multi-threaded processing of event based data from accelerator based nuclear physics experiments.
