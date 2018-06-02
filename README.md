@@ -5,8 +5,7 @@ JANA is a framework for multi-threaded processing of event based data from accel
 JANA is currently undergoing a complete rewrite. the new version will be JANA 2. The code is not ready for actual use yet, but you are free to browse around to see how progress is going. 
 
 ```
-vector<const DTrack*> tracks;
-jevent->Get(tracks);
+auto tracks = jevent->Get<DTrack>(tracks);
 
 for(auto t : tracks){
   // ... do something with a track
