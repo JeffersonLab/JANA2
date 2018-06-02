@@ -1,7 +1,5 @@
 ---
-layout: post
-title: JANA
-theme: jekyll-theme-architect
+title: JANA: Multi-threaded HEP Event Reconstruction
 ---
 
 ## Welcome to JANA!
