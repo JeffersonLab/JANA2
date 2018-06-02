@@ -1,6 +1,7 @@
 ---
 layout: post
 title: JANA
+theme: jekyll-theme-architect
 ---
 
 ## Welcome to JANA!
