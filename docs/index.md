@@ -12,11 +12,11 @@ do partial or full reconstruction, fully maximizing the available cores for the 
 It's design strives to be extremely easy to setup when first getting started, yet have a depth of customization
 options that allow for more complicated reconstruction as your project grows. The itent is to make it easy to
 run on a laptop for local code development, but to be highly efficent when deploying to large computing
-sites like [NERSC](http://www.nersc.gov/).
+sites like [NERSC](http://www.nersc.gov/){:target="_blank"}.
 
 JANA is currently undergoing a complete rewrite. The new version will be JANA 2. The code is not quite ready
 for actual use yet, but you are free to browse around to see how progress is going. The project is 
-[hosted on GitHub]()
+[hosted on GitHub](https://github.com/JeffersonLab/JANA2)
 
 ```
 auto tracks = jevent->Get<DTrack>(tracks);
