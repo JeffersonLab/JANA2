@@ -3,7 +3,7 @@ title: JANA: Multi-threaded HENP Event Reconstruction
 ---
 
 <center>
-<table border="0" width="90%" align="center">
+<table border="0" width="100%" align="center">
 <TH width="25%"><A href="index.html">Home</A></TH>
 <TH width="25%"><A href="GettingStarted.html">Getting Started</A></TH>
 <TH width="25%"><A href="Download.html">Download</A></TH>
@@ -19,8 +19,8 @@ to contribute pieces to the larger reconstruction project. The same JANA program
 do partial or full reconstruction, fully maximizing the available cores for the current job.
 
 It's design strives to be extremely easy to setup when first getting started, yet have a depth of customization
-options that allow for more complicated reconstruction as your project grows. The itent is to make it easy to
-run on a laptop for local code development, but to be highly efficent when deploying to large computing
+options that allow for more complicated reconstruction as your project grows. The intent is to make it easy to
+run on a laptop for local code development, but to also be highly efficent when deploying to large computing
 sites like [NERSC](http://www.nersc.gov/){:target="_blank"}.
 
 JANA is currently undergoing a complete rewrite. The new version will be JANA 2. The code is not quite ready
