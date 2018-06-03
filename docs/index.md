@@ -13,7 +13,7 @@ title: JANA: Multi-threaded HENP Event Reconstruction
 
 ## Welcome to JANA!
 
-JANA is a framework for multi-threaded HENP (High Energy and Nuclear Physics)  event reconstruction.
+JANA is a C++ framework for multi-threaded HENP (High Energy and Nuclear Physics)  event reconstruction.
 It is very efficient at multi-threading with a design that makes it easy for less experienced programmers
 to contribute pieces to the larger reconstruction project. The same JANA program can be used to easily
 do partial or full reconstruction, fully maximizing the available cores for the current job.
