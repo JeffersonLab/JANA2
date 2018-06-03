@@ -1,8 +1,10 @@
 ## Welcome to JANA!
 
-JANA is a framework for multi-threaded processing of event based data from accelerator based nuclear physics experiments.
+JANA is a C++ framework for multi-threaded HENP (High Energy and Nuclear Physics)  event reconstruction.
+Please see the [JANA website](https://jeffersonlab.github.io/JANA2/) for full documentation.
 
-JANA is currently undergoing a complete rewrite. the new version will be JANA 2. The code is not ready for actual use yet, but you are free to browse around to see how progress is going. 
+JANA is currently undergoing a complete rewrite. the new version will be JANA 2. The code is not ready for actual use yet, but you are free to 
+check it out give feedback as the project progresses.
 
 ```
 auto tracks = jevent->Get<DTrack>(tracks);
