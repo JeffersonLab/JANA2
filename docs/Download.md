@@ -11,5 +11,5 @@ title: JANA: Multi-threaded HENP Event Reconstruction
 </table>
 </center>
 
-## Downloading and Installation of JANA
+## Download and Installation of JANA
 
