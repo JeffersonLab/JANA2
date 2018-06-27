@@ -79,6 +79,7 @@ class JEventSource{
 			kNO_MORE_EVENTS,
 			kBUSY,
 			kTRY_AGAIN,
+			kERROR,
 			kUNKNOWN
 		};
 

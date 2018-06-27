@@ -284,7 +284,7 @@ void JThreadManager::GetActiveSourceInfos(std::vector<JEventSourceInfo*>& aSourc
 }
 
 //---------------------------------
-// SetQueue
+// AddQueue
 //---------------------------------
 void JThreadManager::AddQueue(JQueueSet::JQueueType aQueueType, JQueueInterface* aQueue)
 {

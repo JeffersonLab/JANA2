@@ -53,6 +53,8 @@ class JEvent;
 #ifndef _JEventProcessor_h_
 #define _JEventProcessor_h_
 
+#include <JANA/JApplication.h>
+
 class JEventProcessor{
 	public:
 	

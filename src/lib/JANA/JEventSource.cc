@@ -96,7 +96,9 @@ std::string JEventSource::GetType(void) const
 //---------------------------------
 std::vector<std::shared_ptr<JTaskBase> > JEventSource::GetProcessEventTasks(std::size_t aNumTasks)
 {
-	//This version is called by JThread
+	/// This version is called by JThread.
+	/// This will attempt to read aNumTasks from the source, wrapping each in a JTask
+	/// so it can be added to this source's Event queue.
 
 	//If file closed, return dummy pair
 	if(mExhausted) return std::vector<std::shared_ptr<JTaskBase>>();
@@ -129,6 +131,7 @@ std::vector<std::shared_ptr<JTaskBase> > JEventSource::GetProcessEventTasks(std:
 					break;
 				case RETURN_STATUS::kBUSY:
 				case RETURN_STATUS::kTRY_AGAIN:
+				case RETURN_STATUS::kERROR:
 				default:
 					break;
 			}

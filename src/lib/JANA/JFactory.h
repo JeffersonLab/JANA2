@@ -47,6 +47,7 @@
 #include <memory>
 #include <limits>
 #include <atomic>
+#include <vector>
 
 class JEvent;
 class JObject;
