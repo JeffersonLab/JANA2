@@ -23,8 +23,8 @@ class JFactoryGenerator_jana_test : public JFactoryGenerator
 		virtual const char* className(void){return static_className();}
 		static const char* static_className(void){return "JFactoryGenerator_jana_test";}
 		
-		std::vector<JFactoryBase*> GenerateFactories(void){
-			return {static_cast<JFactoryBase*>(new jana_test_factory())};
+		void GenerateFactories(JFactorySet *factory_set){
+			factory_set->Add( new jana_test_factory() );
 		}
 };
 

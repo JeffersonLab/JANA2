@@ -8,13 +8,13 @@
 #ifndef _jana_test_factory_
 #define _jana_test_factory_
 
-#include <JANA/JFactory.h>
+#include <JANA/JFactoryT.h>
 #include <JANA/JEvent.h>
 #include "jana_test.h"
 
 #include <random>
 
-class jana_test_factory : public JFactory<jana_test>
+class jana_test_factory : public JFactoryT<jana_test>
 {
 	public:
 		//STRUCTORS

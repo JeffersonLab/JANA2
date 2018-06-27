@@ -27,24 +27,24 @@ class JEvent;
 class JEventSource_jana_test: public JEventSource
 {
 	public:
-		JEventSource_jana_test(const char* source_name);
+		JEventSource_jana_test(string source_name, JApplication *japp);
 		virtual ~JEventSource_jana_test();
-		virtual const char* className(void){return static_className();}
-		static const char* static_className(void){return "JEventSource_jana_test";}
-		
+
+
+		static std::string GetDescription(void) { return "JTest Fake Event Source"; }
 		void Open(void);
 
 		//Public get interface
-		bool GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactoryBase* aFactory);
+		bool GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactory* aFactory);
 
-		std::pair<std::shared_ptr<const JEvent>, RETURN_STATUS> GetEvent(void);
+		std::shared_ptr<const JEvent> GetEvent(void);
 		std::type_index GetDerivedType(void) const{return std::type_index(typeid(JEventSource_jana_test));} //So that we only execute factory generator once per type
 
 	private:
 
 		//Getter functions for each type
-		bool GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactory<JSourceObject>* aFactory);
-		bool GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactory<JSourceObject2>* aFactory);
+		bool GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactoryT<JSourceObject>* aFactory);
+		bool GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactoryT<JSourceObject2>* aFactory);
 
 		void LockGenerator(void) const;
 

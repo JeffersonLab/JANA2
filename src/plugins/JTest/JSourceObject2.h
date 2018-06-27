@@ -19,7 +19,6 @@
 class JSourceObject2 : public JObject
 {
 	public:
-		JOBJECT_PUBLIC(JSourceObject2);
 		
 		//STRUCTORS
 		JSourceObject2(double aHitE, int aHitID) : mHitE(aHitE), mHitID(aHitID) { }
@@ -34,6 +33,9 @@ class JSourceObject2 : public JObject
 		void SetHitE(double aHitE){mHitE = aHitE;}
 		void AddRandom(double aRandom){mRandoms.push_back(aRandom);}
 		void MoveRandoms(std::vector<double>&& aRandoms){mRandoms = std::move(aRandoms);}
+
+		// supress compiler warnings
+		void SupressGarbageWarning(void){ if( (mGarbage.size()>1) && (mGarbage.size()<1) ) std::cerr << "Impossible!"; }
 
 	private:
 

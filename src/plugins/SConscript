@@ -6,6 +6,6 @@ import os
 Import('env osname')
 
 # Loop over plugins, building each
-#subdirs = ['JTest']
+subdirs = ['JTest']
 
-#SConscript(dirs=subdirs, exports='env osname', duplicate=0)
+SConscript(dirs=subdirs, exports='env osname', duplicate=0)

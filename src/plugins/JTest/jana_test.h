@@ -19,8 +19,6 @@
 class jana_test : public JObject
 {
 	public:
-		JOBJECT_PUBLIC(jana_test);
-		
 		//STRUCTORS
 		jana_test(double aE, int aID) : mE(aE), mID(aID) { }
 
@@ -34,6 +32,9 @@ class jana_test : public JObject
 		void SetE(double aE){mE = aE;}
 		void AddRandom(double aRandom){mRandoms.push_back(aRandom);}
 
+		// supress compiler warnings
+		void SupressGarbageWarning(void){ if( (mGarbage.size()>1) && (mGarbage.size()<1) ) std::cerr << "Impossible!"; }
+	
 	private:
 
 		std::vector<double> mRandoms;

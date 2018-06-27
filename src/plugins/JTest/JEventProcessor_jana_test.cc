@@ -8,10 +8,11 @@
 #include <iostream>
 #include <algorithm>
 
-#include "JEventProcessor_jana_test.h"
+#include <JANA/JApplication.h>
+#include <JANA/JEventSourceGeneratorT.h>
 
-#include "JEventSourceManager.h"
-#include "JEventSourceGenerator_jana_test.h"
+#include "JEventSource_jana_test.h"
+#include "JEventProcessor_jana_test.h"
 #include "JFactoryGenerator_jana_test.h"
 
 #include "jana_test.h"
@@ -25,9 +26,9 @@
 extern "C"{
 void InitPlugin(JApplication *app){
 	InitJANAPlugin(app);
-	app->GetJEventSourceManager()->AddJEventSourceGenerator(new JEventSourceGenerator_jana_test());
-	app->AddJFactoryGenerator(new JFactoryGenerator_jana_test());
-	app->AddJEventProcessor(new JEventProcessor_jana_test());
+	app->Add(new JEventSourceGeneratorT<JEventSource_jana_test>());
+	app->Add(new JFactoryGenerator_jana_test());
+	app->Add(new JEventProcessor_jana_test());
 }
 } // "C"
 

@@ -16,7 +16,7 @@
 //----------------
 // Constructor
 //----------------
-JEventSource_jana_test::JEventSource_jana_test(const char* source_name) : JEventSource(source_name, japp)
+JEventSource_jana_test::JEventSource_jana_test(string source_name, JApplication *japp) : JEventSource(source_name, japp)
 {
 	mNumEventsToGenerate = 20000;
 
@@ -48,7 +48,7 @@ JEventSource_jana_test::~JEventSource_jana_test()
 //----------------
 // GetEvent
 //----------------
-std::pair<std::shared_ptr<const JEvent>, JEventSource::RETURN_STATUS> JEventSource_jana_test::GetEvent(void)
+std::shared_ptr<const JEvent> JEventSource_jana_test::GetEvent(void)
 {
 	/// Read an event (or possibly block of events) from the source return it.
 	
@@ -57,21 +57,21 @@ std::pair<std::shared_ptr<const JEvent>, JEventSource::RETURN_STATUS> JEventSour
 	// If the source has no events at the moment, but may later (e.g.
 	// a live stream) then return kTRY_AGAIN;
 
-	if(mNumEventsToGenerate == mNumEventsGenerated)
-		return std::make_pair(std::shared_ptr<JEvent>(nullptr), JEventSource::RETURN_STATUS::kNO_MORE_EVENTS);
+	if(mNumEventsToGenerate == mNumEventsGenerated) throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
 
 	//These are recycled, so be sure to re-set EVERY member variable
 	auto sEvent = mEventPool.Get_SharedResource(mApplication);
 	mNumEventsGenerated++;
 	
 	auto sIsBarrierEvent = (mNumEventsGenerated % 100) == 0;
-	sEvent->SetEventSource(this, sIsBarrierEvent); //Set at same time, so can keep track of #barrier events
+	sEvent->SetJEventSource(this, sIsBarrierEvent); //Set at same time, so can keep track of #barrier events
 	sEvent->SetEventNumber(mNumEventsGenerated);
 	sEvent->SetRunNumber(1234);
 
 //	sEvent->SetRef(nullptr);
 	
-	return std::make_pair(std::static_pointer_cast<JEvent>(sEvent), JEventSource::RETURN_STATUS::kSUCCESS);
+	return sEvent;
+//	return std::static_pointer_cast<JEvent>(sEvent);
 }
 
 //----------------
@@ -95,7 +95,7 @@ void JEventSource_jana_test::LockGenerator(void) const
 //----------------
 // GetObjects
 //----------------
-bool JEventSource_jana_test::GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactoryBase* aFactory)
+bool JEventSource_jana_test::GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactory* aFactory)
 {
 	//Get objects of the specified type, and set them in the factory
 	//If this type is not supplied by the file, return false. Else return true.
@@ -103,9 +103,9 @@ bool JEventSource_jana_test::GetObjects(const std::shared_ptr<const JEvent>& aEv
 	//For all of the objects retrievable from the file, we MUST generate factories via our own JFactoryGenerator
 	auto sTypeIndex = aFactory->GetObjectType();
 	if(sTypeIndex == std::type_index(typeid(JSourceObject)))
-		return GetObjects(aEvent, static_cast<JFactory<JSourceObject>*>(aFactory));
+		return GetObjects(aEvent, static_cast<JFactoryT<JSourceObject>*>(aFactory));
 	else if(sTypeIndex == std::type_index(typeid(JSourceObject2)))
-		return GetObjects(aEvent, static_cast<JFactory<JSourceObject2>*>(aFactory));
+		return GetObjects(aEvent, static_cast<JFactoryT<JSourceObject2>*>(aFactory));
 	else
 		return false;
 }
@@ -113,7 +113,7 @@ bool JEventSource_jana_test::GetObjects(const std::shared_ptr<const JEvent>& aEv
 //----------------
 // GetObjects
 //----------------
-bool JEventSource_jana_test::GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactory<JSourceObject>* aFactory)
+bool JEventSource_jana_test::GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactoryT<JSourceObject>* aFactory)
 {
 	//You may need to lock on your event source here, depending on
 	if(aFactory->GetTag() != "")
@@ -127,21 +127,24 @@ bool JEventSource_jana_test::GetObjects(const std::shared_ptr<const JEvent>& aEv
 	auto sNumObjects = sNumObjectsDistribution(mRandomGenerator);
 
 	//Prepare the vector
-	std::vector<JSourceObject> sObjects;
-	sObjects.reserve(sNumObjects);
+	std::vector<JSourceObject*> sObjects;
+//	sObjects.reserve(sNumObjects);
 
 	//Make the objects
 	for(std::size_t si = 0; si < sNumObjects; si++)
 	{
-		//Emplace new object onto the back of the data vector
-		sObjects.emplace_back(mRandomGenerator(), si); //Random energy, id = object#
-		auto& sObject = sObjects.back(); //Get reference to new object
+		// Create new JSourceObject
+		auto sObject = new JSourceObject(mRandomGenerator(), si);
+		sObjects.push_back( sObject );
+//		//Emplace new object onto the back of the data vector
+//		sObjects.emplace_back(mRandomGenerator(), si); //Random energy, id = object#
+//		auto& sObject = sObjects.back(); //Get reference to new object
 
 		//Supply busy work to take time: Generate a bunch of randoms
 		auto sNumRandomsDistribution = std::uniform_int_distribution<std::size_t>(1000, 2000);
 		auto sNumRandoms = sNumRandomsDistribution(mRandomGenerator);
 		for(std::size_t sj = 0; sj < sNumRandoms; sj++)
-			sObject.AddRandom(mRandomGenerator());
+			sObject->AddRandom(mRandomGenerator());
 	}
 
 	//Unlock generator
@@ -155,7 +158,7 @@ bool JEventSource_jana_test::GetObjects(const std::shared_ptr<const JEvent>& aEv
 //----------------
 // GetObjects
 //----------------
-bool JEventSource_jana_test::GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactory<JSourceObject2>* aFactory)
+bool JEventSource_jana_test::GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactoryT<JSourceObject2>* aFactory)
 {
 	//You may need to lock on your event source here, depending on
 	if(aFactory->GetTag() != "")
@@ -236,8 +239,8 @@ bool JEventSource_jana_test::GetObjects(const std::shared_ptr<const JEvent>& aEv
 	mApplication->GetJThreadManager()->SubmitTasks(sTasks);
 
 	//Prepare the object vector
-	std::vector<JSourceObject2> sObjects;
-	sObjects.reserve(sNumObjects);
+	std::vector<JSourceObject2*> sObjects;
+//	sObjects.reserve(sNumObjects);
 
 	//Lock on random # generator
 	LockGenerator();
@@ -245,14 +248,17 @@ bool JEventSource_jana_test::GetObjects(const std::shared_ptr<const JEvent>& aEv
 	//Make the objects
 	for(std::size_t si = 0; si < sNumObjects; si++)
 	{
-		//Emplace new object onto the back of the data vector
-		sObjects.emplace_back(mRandomGenerator(), si); //Random energy, id = object#
-		auto& sObject = sObjects.back(); //Get reference to new object
+		// Create new JSourceObject2
+		auto sObject = new JSourceObject2(mRandomGenerator(), si);
+		sObjects.push_back( sObject );
+//		//Emplace new object onto the back of the data vector
+//		sObjects.emplace_back(mRandomGenerator(), si); //Random energy, id = object#
+//		auto& sObject = sObjects.back(); //Get reference to new object
 
 		//Move the randoms into the object
 		//First get the raw JTaskBase* and cast it to the original, derived type
 		auto sTask = static_cast<JTask<std::vector<double>>*>(sTasks[si].get());
-		sObject.MoveRandoms(std::move(sTask->GetResult()));
+		sObject->MoveRandoms(sTask->GetResult());
 	}
 
 	//Unlock generator
