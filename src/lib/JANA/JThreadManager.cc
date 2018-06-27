@@ -84,8 +84,9 @@ JThreadManager::~JThreadManager(void)
 {
 	EndThreads();
 	JoinThreads();
-	for(auto p : mThreads          ) delete p;
-	for(auto p : mActiveSourceInfos) delete p;
+	for(auto p : mThreads           ) delete p;
+	for(auto p : mActiveSourceInfos ) delete p;
+	for(auto p : mRetiredSourceInfos) delete p;
 }
 
 //---------------------------------
