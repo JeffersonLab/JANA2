@@ -47,6 +47,7 @@
 
 #include <thread>
 #include <vector>
+#include <list>
 #include <memory>
 #include <atomic>
 #include <functional>
@@ -161,6 +162,7 @@ class JThreadManager
 		JQueueSet mTemplateQueueSet; //When a new source is opened, these queues are cloned for it //e.g. user-provided queues
 		std::vector<JEventSourceInfo*> mActiveSourceInfos; //if no new open sources, nullptr inserted on retirement!!
 		std::vector<JEventSourceInfo*> mRetiredSourceInfos; //source already finished
+		std::list< std::shared_ptr<JQueueSet> > mAllocatedQueueSets; // for garbage collection when this is destroyed
 };
 
 #endif

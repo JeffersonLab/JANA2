@@ -98,6 +98,7 @@ class JFactoryT : public JFactory
 		//---------------------------------
 		// ClearData
 		void ClearData(void){
+			for( auto p : mData ) delete p;
 			mData.clear();
 		}
 

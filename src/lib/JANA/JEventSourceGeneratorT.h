@@ -43,9 +43,9 @@
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 #include <string>
-#include <cxxabi.h>
 
 #include <JApplication.h>
+#include <JFunctions.h>
 #include <JEventSourceGenerator.h>
 #include <JEventSourceManager.h>
 
@@ -96,9 +96,7 @@ class JEventSourceGeneratorT:public JEventSourceGenerator{
 
 		/// Return name of the source type this will generate
 		std::string GetType(void) const {
-			int status=-1;
-			string type = abi::__cxa_demangle(typeid(T).name(), NULL, NULL, &status);
-			return status==0 ? type:string(typeid(T).name());
+			return GetDemangledName<T>();
 		}
 
 		/// Return description of the source type this will generate

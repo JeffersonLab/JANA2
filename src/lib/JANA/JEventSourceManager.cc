@@ -54,6 +54,14 @@ JEventSourceManager::JEventSourceManager(JApplication* aApp) : mApplication(aApp
 }
 
 //---------------------------------
+// Destructor
+//---------------------------------
+JEventSourceManager::~JEventSourceManager()
+{
+	for(auto p : _eventSourceGenerators) delete p;
+}
+
+//---------------------------------
 // AddEventSource
 //---------------------------------
 void JEventSourceManager::AddEventSource(const std::string& source_name)
@@ -195,6 +203,7 @@ JEventSource* JEventSourceManager::CreateSource(const std::string& source_name)
 
 	if(new_source != nullptr){
 		new_source->SetJApplication(mApplication);
+		_sources_allocated.push_back(std::shared_ptr<JEventSource>(new_source)); // ensure destruction
 		return new_source;
 	}
 

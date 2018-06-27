@@ -86,9 +86,7 @@ void JEventSource::SetJApplication(JApplication *app)
 //---------------------------------
 std::string JEventSource::GetType(void) const
 {
-	int status=-1;
-	string type = abi::__cxa_demangle(typeid(*this).name(), NULL, NULL, &status);
-	return status==0 ? type:string(typeid(*this).name());
+	return GetDemangledName<decltype(*this)>();
 }
 
 //---------------------------------

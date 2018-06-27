@@ -6,6 +6,12 @@
 #include <sstream>
 #include <cstddef>
 
+// The following is here since it defines an operator<< that causes
+// a "note" to be printed from the compiler if the below JLog&&
+// operator<< is defined first.
+#include <cxxabi.h>
+
+
 #include "JApplication.h"
 #include "JLogWrapper.h"
 

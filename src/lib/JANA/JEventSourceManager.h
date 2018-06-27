@@ -24,6 +24,7 @@ class JEventSourceManager
 
 		//STRUCTORS
 		JEventSourceManager(JApplication* aApp);
+		~JEventSourceManager();
 
 		void AddEventSource(const std::string& source_name);
 		void AddJEventSource(JEventSource *source);
@@ -62,6 +63,10 @@ class JEventSourceManager
 		std::deque<JEventSource*> _sources_unopened;
 		std::vector<JEventSource*> _sources_active;
 		std::vector<JEventSource*> _sources_exhausted;
+		
+		// This will automatically destroy any JEventSource objects
+		// we created upon destruction of this object.
+		std::vector<std::shared_ptr<JEventSource> > _sources_allocated;
 
 		mutable std::mutex mSourcesMutex;
 };

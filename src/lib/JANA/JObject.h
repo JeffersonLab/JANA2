@@ -48,6 +48,8 @@
 #include <sstream>
 #include <set>
 #include <vector>
+#include <cassert>
+#include <typeinfo>
 
 /// The JObject class is a base class for all data classes.
 /// (See JFactory for algorithm classes.)

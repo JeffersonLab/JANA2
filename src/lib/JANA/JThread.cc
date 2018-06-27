@@ -80,6 +80,7 @@ JThread::JThread(int aThreadID, JApplication* aApplication, JThreadManager::JEve
 //---------------------------------
 JThread::~JThread()
 {
+	if( mLogger ) delete mLogger;
 //extern void WriteBuff(void);
 //WriteBuff();
 }
@@ -148,12 +149,13 @@ void JThread::Join(void)
 	/// state then this will call End() and wait for it to do so
 	/// before calling join. This should generally only be called 
 	/// from a method JThreadManager.
-	if(_isjoined)
-		return;
+	if(_isjoined) return;
 	if( mRunStateTarget != kRUN_STATE_ENDED ) End();
 	while( mRunState != kRUN_STATE_ENDED ) std::this_thread::sleep_for( std::chrono::microseconds(100) );
 	_thread->join();
 	_isjoined = true;
+	delete _thread;
+	_thread = nullptr;
 }
 
 //---------------------------------

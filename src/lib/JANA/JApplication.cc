@@ -165,7 +165,6 @@ JApplication::JApplication(int narg, char *argv[])
 	_exit_code = 0;
 	_quitting = false;
 	_draining_queues = false;
-	_pmanager = NULL;
 	_rmanager = NULL;
 	_eventSourceManager = new JEventSourceManager(this);
 	_threadManager = new JThreadManager(this);
@@ -239,7 +238,15 @@ JApplication::JApplication(int narg, char *argv[])
 //---------------------------------
 JApplication::~JApplication()
 {
-
+	for( auto p: _jthreads              ) delete p;
+	for( auto p: _factoryGenerators     ) delete p;
+	for( auto p: _eventProcessors       ) delete p;
+	if( mLogWrappers[0]     ) delete mLogWrappers[0];
+	if( mLogWrappers[1]     ) delete mLogWrappers[1]; // n.b. [2] points to [0] so don't delete it!
+	if( _pmanager           ) delete _pmanager;
+	if( _rmanager           ) delete _rmanager;
+	if( _eventSourceManager ) delete _eventSourceManager;
+	if( _threadManager      ) delete _threadManager;
 }
 
 //---------------------------------
@@ -597,6 +604,7 @@ void JApplication::Run(uint32_t nthreads)
 		sProcessor->Finish(); // (this may not be necessary since it is always next to destructor)
 		delete sProcessor;
 	}
+	_eventProcessors.clear();
 
 	// Report Final numbers
 	PrintFinalReport();

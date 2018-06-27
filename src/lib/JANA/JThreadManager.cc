@@ -84,8 +84,8 @@ JThreadManager::~JThreadManager(void)
 {
 	EndThreads();
 	JoinThreads();
-	for(auto sThread : mThreads)
-		delete sThread;
+	for(auto p : mThreads          ) delete p;
+	for(auto p : mActiveSourceInfos) delete p;
 }
 
 //---------------------------------
@@ -181,11 +181,14 @@ JQueueSet* JThreadManager::MakeQueueSet(JEventSource* sEventSource)
 		//However, we can still analyze events from other sources,
 		//and don't want to block those: Separate queues
 	auto sQueueSet = mTemplateQueueSet.Clone();
+	mAllocatedQueueSets.push_back( std::shared_ptr<JQueueSet>(sQueueSet)); // ensure destructor is called later
 
 	//get source-specific event queue (e.g. disentangle events)
 	auto sEventQueue = sEventSource->GetEventQueue();
-	if(sEventQueue == nullptr) //unspecified by source, use default
+	if(sEventQueue == nullptr){
+		//unspecified by source, use default
 		sEventQueue = new JQueue("Events");
+	}
 	sQueueSet->AddQueue(JQueueSet::JQueueType::Events, sEventQueue);
 
 	return sQueueSet;
