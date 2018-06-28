@@ -183,7 +183,7 @@ void JStatus::GenerateReport(std::stringstream &ss)
 				ss << "  active source, queue: " << sSourceInfo->mEventSource->GetName() << ", " << sQueue->GetName() << ": " << endl;
 				ss << "                       Ntasks: " << sQueue->GetNumTasks() <<endl;
 				ss << "             Ntasks processed: " << sQueue->GetNumTasksProcessed() << endl;
-				ss << "          Max allowed in queue: " << sQueue->GetMaxTasks() << endl;
+				ss << "         Max allowed in queue: " << sQueue->GetMaxTasks() << endl;
 				ss << endl;
 			}
 		}

@@ -79,6 +79,7 @@ class JQueueWithLock : public JQueueInterface
 
 	private:
 
+		std::size_t mQueueSize = 0;
 		std::size_t mTaskBufferSize = 0; //min event task buffer (only checked for Events queue) //will get more events if # tasks < this
 		int mDebugLevel = 0;
 		uint32_t mLogTarget = 0; //cout

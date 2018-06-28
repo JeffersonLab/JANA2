@@ -52,6 +52,9 @@ JQueueWithBarriers::JQueueWithBarriers(const std::string& aName, std::size_t aQu
 {
 	//Apparently segfaults
 	//gPARMS->SetDefaultParameter("JANA:QUEUE_DEBUG_LEVEL", mDebugLevel, "JQueue debug level");
+
+_DBG_ << "mInputQueue.GetMaxTasks()=" << mInputQueue->GetMaxTasks() << "  mOutputQueue.GetMaxTasks()=" << mOutputQueue->GetMaxTasks() << _DBG_ENDL_;
+
 	mThread = new std::thread(&JQueueWithBarriers::ThreadLoop, this);
 }
 

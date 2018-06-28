@@ -94,6 +94,7 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 		uint64_t GetEventNumber(void) const{return mEventNumber;}
 		JEventSource* GetEventSource(void) const;
 		bool GetIsBarrierEvent(void) const{return mIsBarrierEvent;}
+		JApplication* GetJApplication(void){return mApplication;}
 
 	protected:
 	

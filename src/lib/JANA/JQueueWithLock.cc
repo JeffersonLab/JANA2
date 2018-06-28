@@ -45,7 +45,7 @@
 //---------------------------------
 // JQueueWithLock    (Constructor)
 //---------------------------------
-JQueueWithLock::JQueueWithLock(const std::string& aName, std::size_t aQueueSize, std::size_t aTaskBufferSize) : JQueueInterface(aName), mTaskBufferSize(aTaskBufferSize)
+JQueueWithLock::JQueueWithLock(const std::string& aName, std::size_t aQueueSize, std::size_t aTaskBufferSize) : JQueueInterface(aName), mQueueSize(aQueueSize), mTaskBufferSize(aTaskBufferSize)
 {
 	//Apparently segfaults
 //	gPARMS->SetDefaultParameter("JANA:QUEUE_DEBUG_LEVEL", mDebugLevel, "JQueueWithLock debug level");
@@ -118,6 +118,9 @@ JQueueInterface::Flags_t JQueueWithLock::AddTask(std::shared_ptr<JTaskBase>&& aT
 		JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JQueueWithLock::AddTask(): Move-add task " << aTask.get() << ".\n" << JLogEnd();
 
 	std::lock_guard<std::mutex> sLock(mQueueLock);
+
+	if( mQueue.size() >= mQueueSize ) return Flags_t::kQUEUE_FULL;  // Queue is already full
+
 	mQueue.push_back(std::move(aTask));
 
 	return Flags_t::kNO_ERROR; //can never happen
@@ -129,7 +132,7 @@ JQueueInterface::Flags_t JQueueWithLock::AddTask(std::shared_ptr<JTaskBase>&& aT
 uint32_t JQueueWithLock::GetMaxTasks(void)
 {
 	/// Returns maximum number of Tasks queue can hold at one time.
-	return 9999999; //too lazy to put right #
+	return mQueueSize;
 }
 
 //---------------------------------
