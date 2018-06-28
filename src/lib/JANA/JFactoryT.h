@@ -57,6 +57,7 @@ class JFactoryT : public JFactory
 {
 	public:
 
+
 		using IteratorType = typename std::vector<T*>::const_iterator;
 		using PairType = std::pair<IteratorType, IteratorType>;
 

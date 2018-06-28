@@ -59,6 +59,13 @@ class JFactory
 {
 	public:
 
+		enum JFactory_Flags_t{
+			JFACTORY_NULL		=0x00,
+			PERSISTANT			=0x01,
+			WRITE_TO_OUTPUT	=0x02,
+			NOT_OBJECT_OWNER	=0x04
+		};
+
 		JFactory(std::string aName, std::string aTag = "") : mName(aName), mTag(aTag) { };
 		virtual ~JFactory() = default;
 
@@ -96,12 +103,31 @@ class JFactory
 			Set( vvec ); // call JFactoryT::Set
 		}
 
+		/// Get all flags in the form of a single word
+		inline uint32_t GetFactoryFlags(void){return mFlags;}
+	
+		/// Set a flag (or flags)
+		inline void SetFactoryFlag(JFactory_Flags_t f){
+			mFlags |= (uint32_t)f;
+		}
+
+		/// Clear a flag (or flags)
+		inline void ClearFactoryFlag(JFactory_Flags_t f){
+			mFlags &= ~(uint32_t)f;
+		}
+
+		/// Test if a flag (or set of flags) is set
+		inline bool TestFactoryFlag(JFactory_Flags_t f){
+			return (mFlags & (uint32_t)f) == (uint32_t)f;
+		}
+
 
 	protected:
 		virtual void Set( std::vector<JObject*> &vvec ) = 0;
 
 		std::string mName;
 		std::string mTag;
+		uint32_t    mFlags;
 		std::atomic<bool> mCreating{false}; //true if a thread is currently creating objects (effectively a lock)
 		std::atomic<bool> mCreated{false}; //true if created previously, false if not
 		uint32_t mPreviousRunNumber = std::numeric_limits<uint32_t>::max();
