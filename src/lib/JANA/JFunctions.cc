@@ -14,7 +14,6 @@ std::shared_ptr<JTaskBase> JMakeAnalyzeEventTask(std::shared_ptr<const JEvent>&&
 	//Define function that will be executed by the task (running processors on the event)
 	auto sRunProcessors = [sProcessors](const std::shared_ptr<const JEvent>& aEvent) -> void
 	{
-//		std::cout << "Executing # processors = " << sProcessors.size() << "\n";
 		for(auto sProcessor : sProcessors){
 		
 			// Make sure Init function is called for this processor, but only once.

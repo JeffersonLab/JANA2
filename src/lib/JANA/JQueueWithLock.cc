@@ -125,7 +125,7 @@ JQueueInterface::Flags_t JQueueWithLock::AddTask(std::shared_ptr<JTaskBase>&& aT
 
 	mQueue.push_back(std::move(aTask));
 
-	return Flags_t::kNO_ERROR; //can never happen
+	return Flags_t::kNO_ERROR;
 }
 
 //---------------------------------
@@ -138,7 +138,7 @@ uint32_t JQueueWithLock::GetMaxTasks(void)
 }
 
 //---------------------------------
-// GetEvent
+// GetTask
 //---------------------------------
 std::shared_ptr<JTaskBase> JQueueWithLock::GetTask(void)
 {
@@ -152,6 +152,7 @@ std::shared_ptr<JTaskBase> JQueueWithLock::GetTask(void)
 		return nullptr;
 	auto sTask = std::move(mQueue.front());
 	mQueue.pop_front();
+	mTasksProcessed++;
 
 	return sTask;
 }

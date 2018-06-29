@@ -71,7 +71,7 @@ class JQueueSet
 
 		std::size_t GetNumQueues(void) const;
 		void SetQueues(JQueueType aQueueType, const std::vector<JQueueInterface*>& aQueues);
-		void AddQueue(JQueueType aQueueType, JQueueInterface* aQueue);
+		void AddQueue(JQueueType aQueueType, JQueueInterface* aQueue, bool aAddToFront=false);
 		void RemoveQueues(JQueueType aQueueType);
 		void RemoveQueues(void);
 

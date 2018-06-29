@@ -101,6 +101,11 @@ std::vector<std::shared_ptr<JTaskBase> > JEventSource::GetProcessEventTasks(std:
 	//If file closed, return dummy pair
 	if(mExhausted) return std::vector<std::shared_ptr<JTaskBase>>();
 
+	// Optionally limit number of events read from this source
+	if( (mMaxEventsToRead!=0) && ((mEventsRead + aNumTasks)>mMaxEventsToRead) ){
+		aNumTasks = mMaxEventsToRead - mEventsRead;
+	}
+
 	//Initialize things before locking
 	std::vector<std::shared_ptr<const JEvent>> sEvents;
 	sEvents.reserve(aNumTasks);

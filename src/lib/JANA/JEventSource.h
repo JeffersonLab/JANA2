@@ -106,7 +106,10 @@ class JEventSource{
 		JQueueInterface* GetEventQueue(void) const{return mEventQueue;}
 		JFactoryGenerator* GetFactoryGenerator(void) const{return mFactoryGenerator;}
 		std::type_index GetDerivedType(void) const {return std::type_index(typeid(*this));}
-		
+
+		void SetMaxEventsToRead(std::size_t aMaxEventsToRead){mMaxEventsToRead = aMaxEventsToRead;}
+		std::size_t GetMaxEventsToRead(void){return mMaxEventsToRead;}
+
 		std::atomic<std::size_t> mEventsRead{0};
 		std::atomic<std::size_t> mTasksCreated{0};
 
@@ -141,6 +144,7 @@ class JEventSource{
 
 		std::size_t mMinNumEventsToGetAtOnce = 1;
 		std::size_t mMaxNumEventsToGetAtOnce = 1;
+		std::size_t mMaxEventsToRead = 0;
 };
 
 #endif // _JEventSource_h_

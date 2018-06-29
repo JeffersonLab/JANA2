@@ -53,8 +53,6 @@ JQueueWithBarriers::JQueueWithBarriers(const std::string& aName, std::size_t aQu
 	//Apparently segfaults
 	//gPARMS->SetDefaultParameter("JANA:QUEUE_DEBUG_LEVEL", mDebugLevel, "JQueue debug level");
 
-_DBG_ << "mInputQueue.GetMaxTasks()=" << mInputQueue->GetMaxTasks() << "  mOutputQueue.GetMaxTasks()=" << mOutputQueue->GetMaxTasks() << _DBG_ENDL_;
-
 	mThread = new std::thread(&JQueueWithBarriers::ThreadLoop, this);
 }
 
@@ -92,6 +90,8 @@ JQueueWithBarriers::~JQueueWithBarriers(void)
 	mEndThread = true;
 	mThread->join();
 	delete mThread;
+	delete mInputQueue;
+	delete mOutputQueue;
 }
 
 //---------------------------------
@@ -176,7 +176,15 @@ void JQueueWithBarriers::ThreadLoop(void)
 				sEvent->SetLatestBarrierEvent(mLatestBarrierEvent);
 
 			//Move task to output queue
-			mOutputQueue->AddTask(std::move(sTask));
+			while( mOutputQueue->AddTask( std::move(sTask) ) == JQueueInterface::Flags_t::kQUEUE_FULL ){
+				// Crap, the queue is full. Try pulling a task off and running it here.
+				// Then we can try adding our task again.
+				auto sEventTask = mOutputQueue->GetTask();
+				if( sEventTask != nullptr ){
+					(*sEventTask)();
+					mOutputQueue->AddTasksProcessedOutsideQueue(1);
+				}
+			}
 
 			//If barrier, Don't move any more tasks to the output queue until the barrier event is finished being analyzed.
 			if(sIsBarrierEvent)
@@ -195,7 +203,7 @@ void JQueueWithBarriers::ThreadLoop(void)
 }
 
 //---------------------------------
-// GetEvent
+// GetTask
 //---------------------------------
 std::shared_ptr<JTaskBase> JQueueWithBarriers::GetTask(void)
 {
@@ -219,6 +227,7 @@ uint64_t JQueueWithBarriers::GetNumTasksProcessed(void)
 	/// Returns number of events that have been taken out of this
 	/// queue. Does not include events still in the queue (see
 	/// GetNumTasks for that).
+//	return mInputQueue->GetNumTasksProcessed();
 	return mOutputQueue->GetNumTasksProcessed();
 }
 

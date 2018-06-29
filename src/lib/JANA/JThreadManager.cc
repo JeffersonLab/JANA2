@@ -190,7 +190,10 @@ JQueueSet* JThreadManager::MakeQueueSet(JEventSource* sEventSource)
 		//unspecified by source, use default
 		sEventQueue = new JQueue("Events");
 	}
-	sQueueSet->AddQueue(JQueueSet::JQueueType::Events, sEventQueue);
+
+	// The first Events queue is used by JEventSource for events obtained via GetEvent
+	// Make sure this Events queue shows up as the first
+	sQueueSet->AddQueue(JQueueSet::JQueueType::Events, sEventQueue, true);
 
 	return sQueueSet;
 }

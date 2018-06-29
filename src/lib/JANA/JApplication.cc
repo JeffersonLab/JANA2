@@ -245,8 +245,8 @@ JApplication::~JApplication()
 	if( mLogWrappers[1]     ) delete mLogWrappers[1]; // n.b. [2] points to [0] so don't delete it!
 	if( _pmanager           ) delete _pmanager;
 	if( _rmanager           ) delete _rmanager;
-	if( _eventSourceManager ) delete _eventSourceManager;
 	if( _threadManager      ) delete _threadManager;
+	if( _eventSourceManager ) delete _eventSourceManager;
 }
 
 //---------------------------------
@@ -454,8 +454,13 @@ void JApplication::Initialize(void)
 void JApplication::PrintFinalReport(void)
 {
 	//Get queues
-	std::vector<JThreadManager::JEventSourceInfo*> sAllQueues;
-	_threadManager->GetRetiredSourceInfos(sAllQueues);
+	std::vector<JThreadManager::JEventSourceInfo*> sRetiredQueues;
+	_threadManager->GetRetiredSourceInfos(sRetiredQueues);
+	std::vector<JThreadManager::JEventSourceInfo*> sActiveQueues;
+	_threadManager->GetActiveSourceInfos(sActiveQueues);
+	auto sAllQueues = sRetiredQueues;
+	sAllQueues.insert(sAllQueues.end(), sActiveQueues.begin(), sActiveQueues.end());
+
 
 	// Get longest JQueue name
 	uint32_t sSourceMaxNameLength = 0, sQueueMaxNameLength = 0;
@@ -488,8 +493,17 @@ void JApplication::PrintFinalReport(void)
 	jout << std::string(sSourceMaxNameLength + 12 + sQueueMaxNameLength + 9, '-') << std::endl;
 	jout << "Source" << std::string(sSourceMaxNameLength - 6, ' ') << "   Nevents  " << "Queue" << std::string(sQueueMaxNameLength - 5, ' ') << "NTasks" << std::endl;
 	jout << std::string(sSourceMaxNameLength + 12 + sQueueMaxNameLength + 9, '-') << std::endl;
+	std::size_t sSrcIdx = 0;
 	for(auto& sSourceInfo : sAllQueues)
 	{
+		// Flag to prevent source name and number of events from
+		// printing more than once.
+		bool sSourceNamePrinted = false;
+
+		// Place "*" next to names of active sources
+		string sFlag;
+		if( sSrcIdx++ >= sRetiredQueues.size() ) sFlag="*";
+
 		auto sSource = sSourceInfo->mEventSource;
 		std::map<JQueueSet::JQueueType, std::vector<JQueueInterface*>> sSourceQueues;
 		sSourceInfo->mQueueSet->GetQueues(sSourceQueues);
@@ -497,13 +511,27 @@ void JApplication::PrintFinalReport(void)
 		{
 			for(auto sQueue : sTypePair.second)
 			{
-				jout << sSource->GetName() << string(sSourceMaxNameLength - sSource->GetName().size(), ' ')
-						<< std::setw(10) << sSource->GetNumEventsProcessed() << "  "
-						<< sQueue->GetName() << string(sQueueMaxNameLength - sQueue->GetName().size(), ' ')
-						<< sQueue->GetNumTasksProcessed() << std::endl;
+				string sSourceName = sSource->GetName()+sFlag;
+
+				if( sSourceNamePrinted ){
+					jout << string(sSourceMaxNameLength + 12, ' ');
+				}else{
+					sSourceNamePrinted = true;
+					jout << sSourceName << string(sSourceMaxNameLength - sSourceName.size(), ' ')
+					     << std::setw(10) << sSource->GetNumEventsProcessed() << "  ";
+				}
+
+
+					jout << sQueue->GetName() << string(sQueueMaxNameLength - sQueue->GetName().size(), ' ')
+						 << sQueue->GetNumTasksProcessed() << std::endl;
 			}
 		}
 	}
+	if( !sActiveQueues.empty() ){
+		jout << std::endl;
+		jout << "(*) indicates sources that were still active" << std::endl;
+	}
+
 	jout << std::endl;
 	jout << "Integrated Rate: " << Val2StringWithPrefix( GetIntegratedRate() ) << "Hz" << std::endl;
 	jout << std::endl;

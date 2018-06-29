@@ -84,9 +84,14 @@ void JQueueSet::SetQueues(JQueueSet::JQueueType aQueueType, const std::vector<JQ
 //---------------------------------
 // AddQueue
 //---------------------------------
-void JQueueSet::AddQueue(JQueueSet::JQueueType aQueueType, JQueueInterface* aQueue)
+void JQueueSet::AddQueue(JQueueSet::JQueueType aQueueType, JQueueInterface* aQueue, bool aAddToFront)
 {
-	mQueues[aQueueType].push_back(aQueue);
+	auto &v = mQueues[aQueueType];
+	if( aAddToFront ){
+		v.insert(v.begin(), aQueue);
+	}else{
+		v.push_back(aQueue);
+	}
 }
 
 //---------------------------------
@@ -193,8 +198,10 @@ std::pair<JQueueSet::JQueueType, std::shared_ptr<JTaskBase>> JQueueSet::GetTask(
 		{
 			//Get task if any
 			auto sTask = sQueue->GetTask();
-			if(sTask != nullptr)
+			if(sTask != nullptr){
+_DBG_<<"Grabbed task from queue: " << sQueue->GetName() << _DBG_ENDL_;
 				return std::make_pair(sQueueType, std::move(sTask));
+			}
 		}
 	}
 
