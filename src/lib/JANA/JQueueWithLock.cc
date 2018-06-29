@@ -58,6 +58,7 @@ JQueueWithLock::JQueueWithLock(const JQueueWithLock& aQueue) : JQueueInterface(a
 {
 	//Assume this is called by CloneEmpty() or similar on an empty queue (ugh, can improve later)
 	mTaskBufferSize = aQueue.mTaskBufferSize;
+	mQueueSize = aQueue.mQueueSize;
 	mDebugLevel = aQueue.mDebugLevel;
 	mLogTarget = aQueue.mLogTarget;
 }
@@ -70,6 +71,7 @@ JQueueWithLock& JQueueWithLock::operator=(const JQueueWithLock& aQueue)
 	//Assume this is called by Clone() or similar on an empty queue (ugh, can improve later)
 	JQueueInterface::operator=(aQueue);
 	mTaskBufferSize = aQueue.mTaskBufferSize;
+	mQueueSize = aQueue.mQueueSize;
 	return *this;
 }
 
