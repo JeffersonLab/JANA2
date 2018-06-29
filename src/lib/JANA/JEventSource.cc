@@ -125,16 +125,17 @@ std::vector<std::shared_ptr<JTaskBase> > JEventSource::GetProcessEventTasks(std:
 		}catch(RETURN_STATUS ret_status){
 			switch(ret_status){
 				case RETURN_STATUS::kNO_MORE_EVENTS:
+				case RETURN_STATUS::kERROR:
 					mExhausted = true;
 					break;
 				case RETURN_STATUS::kBUSY:
 				case RETURN_STATUS::kTRY_AGAIN:
-				case RETURN_STATUS::kERROR:
 				default:
 					break;
 			}
 			break; // exception caught so don't try reading any more events right now
 		}catch(...){
+			mExhausted = true;
 			break; // un-expected exception caught
 		}
 	}
