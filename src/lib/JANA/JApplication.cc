@@ -521,9 +521,8 @@ void JApplication::PrintFinalReport(void)
 					     << std::setw(10) << sSource->GetNumEventsProcessed() << "  ";
 				}
 
-
-					jout << sQueue->GetName() << string(sQueueMaxNameLength - sQueue->GetName().size(), ' ')
-						 << sQueue->GetNumTasksProcessed() << std::endl;
+				jout << sQueue->GetName() << string(sQueueMaxNameLength - sQueue->GetName().size(), ' ')
+					 << sQueue->GetNumTasksProcessed() << std::endl;
 			}
 		}
 	}
@@ -533,6 +532,7 @@ void JApplication::PrintFinalReport(void)
 	}
 
 	jout << std::endl;
+	jout << "Total events processed: " << GetNeventsProcessed() << " (~" << Val2StringWithPrefix( GetNeventsProcessed() ) << "evt)" << std::endl;
 	jout << "Integrated Rate: " << Val2StringWithPrefix( GetIntegratedRate() ) << "Hz" << std::endl;
 	jout << std::endl;
 
