@@ -82,6 +82,33 @@ void JEventSource::SetJApplication(JApplication *app)
 }
 
 //---------------------------------
+// GetNumEventsProcessed
+//---------------------------------
+std::size_t JEventSource::GetNumEventsProcessed(void) const
+{
+	/// Return total number of events processed by this source.
+	/// This is a little tricky. A source may consist of multiple
+	/// queues that expand one "event" into many. This returns
+	/// the count returned by the GetNumEventsProcessed() of the
+	/// queue pointed to by the mEventQueue member of this source
+	/// if it is set. This presumably is the last queue in the
+	/// chain and what the caller is most interested in. If that
+	/// is not set, then the value of the member mEventsProcessed
+	/// is returned. This is a count of the number of events
+	/// processed through all queues, including any internal ones.
+	/// In those situations, this will likely be double counting.
+	///
+	/// Note that in the first case, the number is how many events
+	/// were removed from the last queue, but some of those may
+	/// still be processing. Thus, it might overcount how many were
+	/// actually completed. This is only a problem if this is called
+	/// while event processing is still ongoing.
+	if( mEventQueue != nullptr ) return mEventQueue->GetNumTasksProcessed();
+
+	return mEventsProcessed;
+}
+
+//---------------------------------
 // GetType
 //---------------------------------
 std::string JEventSource::GetType(void) const

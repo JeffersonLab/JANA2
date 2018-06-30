@@ -94,7 +94,7 @@ class JEventSource{
 
 		std::vector<std::shared_ptr<JTaskBase> > GetProcessEventTasks(std::size_t aNumTasks = 1);
 		bool IsExhausted(void) const;
-		std::size_t GetNumEventsProcessed(void) const{return mEventsProcessed;}
+		std::size_t GetNumEventsProcessed(void) const;
 		
 		virtual std::string GetType(void) const; ///< Returns name of subclass
 		virtual std::string GetVDescription(void) const {return "<description unavailable>";} ///< Optional for getting description via source rather than JEventSourceGenerator
