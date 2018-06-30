@@ -24,7 +24,8 @@ std::string GetDemangledName(void)
 	auto cstr = abi::__cxa_demangle(typeid(T).name(), NULL, NULL, &status);
 	std::string type(cstr);
 	free(cstr);
-	return status==0 ? type:std::string(typeid(T).name());
+	if( status != 0 ) type = typeid(T).name();
+	return type;
 }
 
 #endif // _JFunctions_h_
