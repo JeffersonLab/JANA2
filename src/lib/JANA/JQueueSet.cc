@@ -199,7 +199,7 @@ std::pair<JQueueSet::JQueueType, std::shared_ptr<JTaskBase>> JQueueSet::GetTask(
 			//Get task if any
 			auto sTask = sQueue->GetTask();
 			if(sTask != nullptr){
-_DBG_<<"Grabbed task from queue: " << sQueue->GetName() << _DBG_ENDL_;
+//_DBG_<<"Grabbed task from queue: " << sQueue->GetName() << _DBG_ENDL_;
 				return std::make_pair(sQueueType, std::move(sTask));
 			}
 		}
