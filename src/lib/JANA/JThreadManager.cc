@@ -191,9 +191,11 @@ JQueueSet* JThreadManager::MakeQueueSet(JEventSource* sEventSource)
 		sEventQueue = new JQueue("Events");
 	}
 
-	// The first Events queue is used by JEventSource for events obtained via GetEvent
-	// Make sure this Events queue shows up as the first
-	sQueueSet->AddQueue(JQueueSet::JQueueType::Events, sEventQueue, true);
+	// This will add the queue used by the JEventSource to output completed
+	// (parsed) events. The source may use other queues internally ahead of
+	// this one. n.b. JANA will place events obtained from the source via
+	// GetEvent into the first "Events" type queue in the set.
+	sQueueSet->AddQueue(JQueueSet::JQueueType::Events, sEventQueue);
 
 	return sQueueSet;
 }
@@ -903,7 +905,7 @@ void JThreadManager::JoinThreads(void)
 }
 
 //---------------------------------
-// JoinThreads
+// HaveAllThreadsEnded
 //---------------------------------
 bool JThreadManager::HaveAllThreadsEnded(void)
 {
