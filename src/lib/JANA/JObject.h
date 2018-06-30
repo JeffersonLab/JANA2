@@ -63,7 +63,7 @@ class JObject{
 		JObject();
 		virtual ~JObject();
 	
-		virtual const std::string& className(void) const { return mName; }
+		virtual const std::string& className(void) const;
 	
 		// Associated objects
 		inline void AddAssociatedObject(const JObject *obj);
@@ -78,7 +78,7 @@ class JObject{
 		template<typename T> void AddString(std::vector<std::pair<std::string, std::string> > &items, const char *name, const char *format, const T &val) const;
 
 	protected:
-		std::string mName;
+		mutable std::string mName;
 		std::set<const JObject*> associated;
 		std::set<JObject*> auto_delete;
 	
