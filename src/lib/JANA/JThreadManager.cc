@@ -69,7 +69,7 @@ JThreadManager::JThreadManager(JApplication* aApplication) : mApplication(aAppli
 {
 	gPARMS->SetDefaultParameter("JANA:THREAD_DEBUG_LEVEL", mDebugLevel, "JThread(Manager) debug level"); //Doesn't work??
 	gPARMS->SetDefaultParameter("JANA:THREAD_ROTATE_SOURCES", mRotateEventSources, "Should threads rotate between event sources?");
-//	mDebugLevel = 500;
+	//mDebugLevel = 500;
 
 	auto sSleepTimeNanoseconds = mSleepTime.count();
 	gPARMS->SetDefaultParameter("JANA:THREAD_SLEEP_TIME_NS", sSleepTimeNanoseconds, "Thread sleep time (in nanoseconds) when nothing to do.");
@@ -500,13 +500,20 @@ void JThreadManager::ExecuteTask(const std::shared_ptr<JTaskBase>& aTask, JEvent
 	if(aQueueType == JQueueSet::JQueueType::Events)
 		PrepareEventTask(aTask, aSourceInfo);
 
-	try
-	{
-		(*aTask)(); //Execute task
-	}
-	catch(...)
-	{
+	try{
+		//Execute task
+		(*aTask)();
+		if(mDebugLevel >= 10) JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JThreadManager::ExecuteTask(): Task executed successfully.\n" << JLogEnd();
+
+		// Release the JEvent
+		if(aQueueType == JQueueSet::JQueueType::Events){
+			auto sEvent = const_cast<JEvent*>(aTask->GetEvent());
+			sEvent->Release();
+		}
+
+	}catch(...){
 		//Catch the exception
+
 		auto sException = std::current_exception();
 
 		if(mDebugLevel > 0)
@@ -515,8 +522,6 @@ void JThreadManager::ExecuteTask(const std::shared_ptr<JTaskBase>& aTask, JEvent
 		//Rethrow the exception
 		std::rethrow_exception(sException);
 	}
-	if(mDebugLevel >= 10)
-		JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JThreadManager::ExecuteTask(): Task executed successfully.\n" << JLogEnd();
 }
 
 //---------------------------------
