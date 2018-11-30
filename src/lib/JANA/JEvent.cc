@@ -76,13 +76,11 @@ void JEvent::SetJApplication(JApplication* app)
 //---------------------------------
 // SetJEventSource
 //---------------------------------
-void JEvent::SetJEventSource(JEventSource* aSource, bool aIsBarrierEvent)
+void JEvent::SetJEventSource(JEventSource* aSource)
 {
 	mEventSource = aSource;
 	mEventSource->IncrementEventCount();
-	mIsBarrierEvent = aIsBarrierEvent;
-	if(mIsBarrierEvent)
-		mEventSource->IncrementBarrierCount();
+	if( mIsBarrierEvent ) mEventSource->IncrementBarrierCount();
 }
 
 //---------------------------------
@@ -106,8 +104,7 @@ void JEvent::Release(void)
 
 	if(mEventSource != nullptr ){
 		mEventSource->DecrementEventCount();
-		if(mIsBarrierEvent)
-			mEventSource->DecrementBarrierCount();
+		if(mIsBarrierEvent) mEventSource->DecrementBarrierCount();
 		mEventSource = nullptr;
 	}
 

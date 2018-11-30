@@ -46,6 +46,8 @@
 #include <cstddef>
 #include <memory>
 #include <exception>
+#include <atomic>
+#include <mutex>
 
 #include <JANA/JObject.h>
 #include <JANA/JException.h>
@@ -85,8 +87,9 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 		//SETTERS
 		void SetRunNumber(uint32_t aRunNumber){mRunNumber = aRunNumber;}
 		void SetEventNumber(uint64_t aEventNumber){mEventNumber = aEventNumber;}
+		void SetIsBarrierEvent(bool aIsBarrierEvent=true){mIsBarrierEvent = aIsBarrierEvent;}
 		void SetJApplication(JApplication* app);
-		void SetJEventSource(JEventSource* aSource, bool aIsBarrierEvent=false);
+		void SetJEventSource(JEventSource* aSource);
 		void SetLatestBarrierEvent(const std::shared_ptr<const JEvent>& aBarrierEvent){mLatestBarrierEvent = aBarrierEvent;}
 
 		//GETTERS
@@ -166,26 +169,37 @@ typename JFactoryT<DataType>::PairType JEvent::Get(const std::string& aTag) cons
 	if(mDebugLevel > 0)
 		JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Type = " << GetDemangledName<DataType>() << ", tag = " << aTag << ".\n" << JLogEnd();
 
-	//First check to see if the information should come from the previous barrier event
-	if(!mIsBarrierEvent && (mLatestBarrierEvent != nullptr))
-	{
-		//Get the factory
-		auto sFactoryBase = mFactorySet->GetFactory(std::type_index(typeid(DataType)), aTag);
-		if(sFactoryBase == nullptr)
-		{
-			//Uh oh, No factory exists for this type.
-			jerr << "ERROR: No factory found for type = " << GetDemangledName<DataType>() << ", tag = \"" << aTag << "\\n";
-			japp->SetExitCode(-1);
-			japp->Quit();
-			return {};
-		}
-		auto sFactory = static_cast<JFactoryT<DataType>*>(sFactoryBase);
 
-		//If the factory created the objects, then yes, use the event barrier data.
-		//If not, the information must come from the current event instead.
-		if(sFactory->GetCreated())
-			return sFactory->Get();
-	}
+	//--------------------------------------------------------------------------------------------
+	// Something is amiss below. It looks like the following block was intended to
+	// pull objects from a previous barrier event. However, it does not actually
+	// access the mLatestBarrierEvent (excpet to check that it is not nullptr)
+	// The code block after this is identical which means this is redundant.
+	// This may have been something Paul was working on but didn't quite complete.
+	// I'm commenting it out for now as the handling of barrier event data
+	// is better fleshed out.
+
+// 	//First check to see if the information should come from the previous barrier event
+// 	if(!mIsBarrierEvent && (mLatestBarrierEvent != nullptr))
+// 	{
+// 		//Get the factory
+// 		auto sFactoryBase = mFactorySet->GetFactory(std::type_index(typeid(DataType)), aTag);
+// 		if(sFactoryBase == nullptr)
+// 		{
+// 			//Uh oh, No factory exists for this type.
+// 			jerr << "ERROR: No factory found for type = " << GetDemangledName<DataType>() << ", tag = \"" << aTag << "\\n";
+// 			japp->SetExitCode(-1);
+// 			japp->Quit();
+// 			return {};
+// 		}
+// 		auto sFactory = static_cast<JFactoryT<DataType>*>(sFactoryBase);
+// 
+// 		//If the factory created the objects, then yes, use the event barrier data.
+// 		//If not, the information must come from the current event instead.
+// 		if(sFactory->GetCreated())
+// 			return sFactory->Get();
+// 	}
+	//--------------------------------------------------------------------------------------------
 
 	//First get the factory
 	auto sFactoryBase = mFactorySet->GetFactory(std::type_index(typeid(DataType)), aTag);
@@ -200,8 +214,11 @@ typename JFactoryT<DataType>::PairType JEvent::Get(const std::string& aTag) cons
 	auto sFactory = static_cast<JFactoryT<DataType>*>(sFactoryBase);
 
 	//If objects previously created, just return them
-	if(sFactory->GetCreated())
-		return sFactory->Get();
+	if(sFactory->GetCreated()) return sFactory->Get();
+	
+	// Objects are not already created so we may need to create them.
+	// Ensure the Init method has been called for the factory.
+	std::call_once(sFactory->init_flag, &JFactory::Init, sFactory);
 
 	//Attempt to acquire the "creating" lock for the factory
 	if(!sFactory->AcquireCreatingLock())

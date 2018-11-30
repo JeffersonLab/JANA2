@@ -49,6 +49,8 @@
 #include <vector>
 #include <typeindex>
 
+#include <JApplication.h>
+
 class JTaskBase;
 class JApplication;
 class JQueueInterface;

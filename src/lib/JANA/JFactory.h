@@ -121,6 +121,8 @@ class JFactory
 			return (mFlags & (uint32_t)f) == (uint32_t)f;
 		}
 
+		// Used to make sure Init is called only once
+		std::once_flag init_flag; 
 
 	protected:
 		virtual void Set( std::vector<JObject*> &vvec ) = 0;
@@ -130,7 +132,8 @@ class JFactory
 		uint32_t    mFlags;
 		std::atomic<bool> mCreating{false}; //true if a thread is currently creating objects (effectively a lock)
 		std::atomic<bool> mCreated{false}; //true if created previously, false if not
-		uint32_t mPreviousRunNumber = std::numeric_limits<uint32_t>::max();
+		uint32_t mPreviousRunNumber = 0;
+
 };
 
 inline const std::atomic<bool>& JFactory::GetCreatingLock(void) const
