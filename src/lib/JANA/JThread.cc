@@ -71,7 +71,7 @@ JThread::JThread(int aThreadID, JApplication* aApplication, JThreadManager::JEve
 	if(sSleepTimeNanoseconds != mSleepTime.count())
 		mSleepTime = std::chrono::nanoseconds(sSleepTimeNanoseconds);
 */
-//	mDebugLevel = 500;
+	//mDebugLevel = 500;
 	_thread = new std::thread( &JThread::Loop, this );
 }
 
@@ -242,8 +242,7 @@ void JThread::Loop(void)
 			}
 
 			// Grab the next task
-			if(mDebugLevel >= 50)
-				*mLogger << "Thread " << mThreadID << " JThread::Loop(): Grab task\n" << JLogEnd();
+			if(mDebugLevel >= 50) *mLogger << "Thread " << mThreadID << " JThread::Loop(): Grab task\n" << JLogEnd();
 			auto sQueueType = JQueueSet::JQueueType::Events;
 			auto sTask = std::shared_ptr<JTaskBase>(nullptr);
 			std::tie(sQueueType, sTask) = mEventSourceInfo->mQueueSet->GetTask();
@@ -350,6 +349,8 @@ bool JThread::CheckEventQueue(void)
 				//Add failed, queue must be full.
 				//This (probably) shouldn't happen if the relationship between the
 				//queue size and the buffer size is reasonable.
+				
+				if(mDebugLevel >= 40) *mLogger << "Thread " << mThreadID << " JThread::CheckEventQueue(): Unable to add task, executing... \n" << JLogEnd();
 
 				//Oh well. Just execute this task directly instead
 				//This is faster than pulling an event off the front of the queue
@@ -361,7 +362,9 @@ bool JThread::CheckEventQueue(void)
 		//Process-event task(s) submitted
 		return true;
 	}
-	
+
+	if(mDebugLevel >= 40) *mLogger << "Thread " << mThreadID << " JThread::CheckEventQueue(): No task(s) added\n" << JLogEnd();
+
 	// No event tasks were read from the source
 	if( mEventSourceInfo->mEventSource->IsExhausted() ) mSourceEmpty = true;
 	
