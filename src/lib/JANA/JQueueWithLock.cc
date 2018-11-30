@@ -194,7 +194,7 @@ bool JQueueWithLock::AreEnoughTasksBuffered(void)
 {
 	//This function is only called for the Event queue
 	//If not enough tasks (events) are buffered, we will read in more events
-//	std::cout << "num tasks, buffer size = " << GetNumTasks() << ", " << mTaskBufferSize << "\n";
+	//_DBG_ << "num tasks, buffer size = " << GetNumTasks() << ", " << mTaskBufferSize << _DBG_ENDL_;
 	return (mTaskBufferSize == 0) ? (GetNumTasks() >= 1) : (GetNumTasks() >= mTaskBufferSize);
 }
 
