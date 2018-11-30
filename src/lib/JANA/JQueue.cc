@@ -49,7 +49,20 @@ JQueue::JQueue(const std::string& aName, std::size_t aQueueSize, std::size_t aTa
 {
 	//Apparently segfaults
 //	gPARMS->SetDefaultParameter("JANA:QUEUE_DEBUG_LEVEL", mDebugLevel, "JQueue debug level");
-	mQueue.resize(aQueueSize);
+	mNslots = aQueueSize;
+	mQueue.resize(mNslots);
+	
+	mWriteSlotptr = new std::atomic<uint32_t>[mNslots];
+	mReadSlotptr  = new std::atomic<uint32_t>[mNslots];
+}
+
+//---------------------------------
+// ~JQueue    (Destructor)
+//---------------------------------
+JQueue::~JQueue()
+{
+	if( mWriteSlotptr != nullptr ) delete[] mWriteSlotptr;
+	if( mReadSlotptr  != nullptr ) delete[] mReadSlotptr;
 }
 
 //---------------------------------
@@ -61,7 +74,13 @@ JQueue::JQueue(const JQueue& aQueue) : JQueueInterface(aQueue)
 	mTaskBufferSize = aQueue.mTaskBufferSize;
 	mDebugLevel = aQueue.mDebugLevel;
 	mLogTarget = aQueue.mLogTarget;
-	mQueue.resize(aQueue.mQueue.size());
+	mNslots = aQueue.mNslots;
+	mQueue.resize(mNslots);
+	
+	if( mWriteSlotptr != nullptr ) delete[] mWriteSlotptr;
+	if( mReadSlotptr  != nullptr ) delete[] mReadSlotptr;
+	mWriteSlotptr = new std::atomic<uint32_t>[mNslots];
+	mReadSlotptr  = new std::atomic<uint32_t>[mNslots];
 }
 
 //---------------------------------
@@ -72,6 +91,16 @@ JQueue& JQueue::operator=(const JQueue& aQueue)
 	//Assume this is called by Clone() or similar on an empty queue (ugh, can improve later)
 	JQueueInterface::operator=(aQueue);
 	mTaskBufferSize = aQueue.mTaskBufferSize;
+	mDebugLevel = aQueue.mDebugLevel;
+	mLogTarget = aQueue.mLogTarget;
+	mNslots = aQueue.mNslots;
+	mQueue.resize(mNslots);
+	
+	if( mWriteSlotptr != nullptr ) delete[] mWriteSlotptr;
+	if( mReadSlotptr  != nullptr ) delete[] mReadSlotptr;
+	mWriteSlotptr = new std::atomic<uint32_t>[mNslots];
+	mReadSlotptr  = new std::atomic<uint32_t>[mNslots];
+
 	return *this;
 }
 
@@ -103,59 +132,27 @@ JQueueInterface::Flags_t JQueue::AddTask(const std::shared_ptr<JTaskBase>& aTask
 //---------------------------------
 JQueueInterface::Flags_t JQueue::AddTask(std::shared_ptr<JTaskBase>&& aTask)
 {
-	/// Add the given JTaskBase to this queue. This will do so without locks.
-	/// If the queue is full, it will return immediately with a value
-	/// of JQueue::kQUEUE_FULL. Upon success, it will return JQueue::NO_ERROR.
+	// Loop over write slots to get exclusive write access to one
+	auto sptr = mWriteSlotptr;
+	for(uint32_t idx=0; idx<mNslots; idx++, sptr++){
+		uint32_t in_use = false;
+		if( sptr->compare_exchange_weak(in_use, true) ){
 
-	// The queue is maintained by 4 atomic indices. The goal of this
-	// method is to increment both the iwrite and iend indices so
-	// they point to the same slot upon exit. The JTaskBase pointer will
-	// be copied into the slot just in front of the one these point
-	// to, making it available to the GetEvent method. If it sees that
-	// the queue is full, it returns immediately. (This is to give the
-	// calling thread a chance to do something else or call this again.
-	// for another try.)
-
-	if(mDebugLevel > 0)
-		JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JQueue::AddTask(): Move-add task " << aTask.get() << ".\n" << JLogEnd();
-	if(mDebugLevel >= 10)
-		JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JQueue::AddTask(): begin/end/read/write = " <<
-				ibegin << ", " << iend << ", " << iread << ", " << iwrite << "\n" << JLogEnd();
-
-	while(true)
-	{
-		uint32_t idx = iwrite;
-		uint32_t inext = (idx + 1) % mQueue.size();
-		if(inext == ibegin)
-			return Flags_t::kQUEUE_FULL;
-
-		//The queue is not full: iwrite is pointing to an empty slot: idx
-		//If we can increment iwrite before someone else does, then we have exclusive access to slot idx
-		//Why is access exclusive?:
-			//Once we increment, the next writer will try to write to a following slot
-			//The next writer can write to the next slot, but it can't increment iend until this thread does (so it will spin)
-			//The next reader can't read past iend (which is before this slot), and we haven't incremented iend yet
-			//And even if #threads > #slots, eventually the queue will be full and it won't get past the above check (ibegin isn't incrementing)
-
-		if(iwrite.compare_exchange_weak(idx, inext))
-		{
-			//OK, we've claimed exclusive access to the slot. Insert the task.
+			// We now have exclusive access to slot.
+			// Move task into slot and flag it as ready
+			// to be read.
 			mQueue[idx] = std::move(aTask);
+			mReadSlotptr[idx] = true;
 			mTasksInserted++;
 
-			if(mDebugLevel > 0)
-				JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JQueue::AddTask(): Task added to slot " << idx << ".\n" << JLogEnd();
-
-			//Now that we've inserted the task, indicate to readers that this slot can now be read (by incrementing iend)
-			uint32_t save_idx = idx;
-			while(!iend.compare_exchange_weak(idx, inext))
-				idx = save_idx;
-
+			if(mDebugLevel > 0) JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JQueue::AddTask(): Task added to slot " << idx << ".\n" << JLogEnd();
+			
 			return Flags_t::kNO_ERROR;
 		}
 	}
 
-	return Flags_t::kNO_ERROR; //can never happen
+	// No slots were available. Let caller know
+	return Flags_t::kQUEUE_FULL;
 }
 
 //---------------------------------
@@ -180,41 +177,28 @@ uint32_t JQueue::GetMaxTasks(void)
 //---------------------------------
 std::shared_ptr<JTaskBase> JQueue::GetTask(void)
 {
-	/// Retrieve the next JTaskBase from this queue. Upon success, a shared pointer to
-	/// a JTaskBase object is returned (ownership is then considered transferred
-	/// to the caller). A nullptr pointer is returned if the queue is empty or
-	/// the call is interrupted. This operates without locks.	
+	// Loop over read slots to get exclusive write access to one
+	auto sptr = mReadSlotptr;
+	for(uint32_t idx=0; idx<mNslots; idx++, sptr++){
+		uint32_t has_data = true;
+		if( sptr->compare_exchange_weak(has_data, false) ){
 
-	while(true)
-	{
-		uint32_t idx = iread;
-		if(idx == iend) return nullptr;
-
-		//The queue is not empty: iread is pointing to a used slot: idx
-		//If we can increment iread before someone else does, then we have exclusive read access to slot idx
-		//Why is access exclusive?:
-			//Once we increment, the next reader will try to read a following slot
-			//The next reader can read the next slot, but it can't increment ibegin until this thread does (so it will spin)
-			//The next writer can't write past ibegin (which is this slot), and we haven't incremented ibegin yet
-			//And even if #threads > #slots, eventually the queue will be full and it won't get past the above check (iend isn't incrementing)
-
-		uint32_t inext = (idx + 1) % mQueue.size();
-		if( iread.compare_exchange_weak(idx, inext) )
-		{
-			//OK, we've claimed exclusive access to the slot. Move out the task (doesn't increase reference count).
+			// We now have exclusive access to slot.
+			// Move task out of slot and flag it as available
 			auto sTask = std::move(mQueue[idx]);
-			mTasksProcessed++;
+			mWriteSlotptr[idx] = false;
+ 			mTasksProcessed++;
 
-			//Now that we've retrieved the task, indicate to writers that this slot can now be written-to (by incrementing ibegin)
-			uint32_t save_idx = idx;
-			while(!ibegin.compare_exchange_weak(idx, inext)) idx = save_idx;
-
+			if(mDebugLevel > 0) JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JQueue::GetTask(): Task removed from slot " << idx << ".\n" << JLogEnd();
+			
 			return sTask; //should be copy-elided
 		}
 	}
 
-	return nullptr; //can never happen
+	// No slots had tasks. Let caller know
+	return nullptr;
 }
+
 
 //---------------------------------
 // GetNumTasks
@@ -222,8 +206,12 @@ std::shared_ptr<JTaskBase> JQueue::GetTask(void)
 uint32_t JQueue::GetNumTasks(void)
 {
 	/// Returns the number of tasks currently in this queue.
-	auto sDifference = (int)iend - (int)ibegin;
-	return (sDifference >= 0) ? sDifference : sDifference + mQueue.size();
+	
+	uint32_t nTasks = 0;
+	auto sptr = mReadSlotptr;
+	for(std::size_t islot=0; islot<mNslots; islot++, sptr++) if( *sptr ) nTasks++;
+	
+	return nTasks;
 }
 
 //---------------------------------

@@ -55,6 +55,7 @@ class JQueue : public JQueueInterface
 	public:
 	
 		JQueue(const std::string& aName, std::size_t aQueueSize = 200, std::size_t aTaskBufferSize = 0);
+		~JQueue();
 
 		//COPIERS //needed because atomic not copyable
 		JQueue(const JQueue& aQueue);
@@ -90,10 +91,11 @@ class JQueue : public JQueueInterface
 		std::atomic<uint64_t> mTasksInserted{0};
 		std::atomic<uint64_t> mTasksRunOutsideQueue{0};
 
-		std::atomic<uint32_t> iread{0};		//The slot that the next thread will try to read from
-		std::atomic<uint32_t> iwrite{0};	//The slot that the next thread will try to write to
-		std::atomic<uint32_t> ibegin{0};	//The slot indicating the beginning of the read region //is separate from iread in order to get exclusive access to iread
-		std::atomic<uint32_t> iend{0};		//The slot indicating one-past-the-end of the read region
+		std::size_t mNslots = 0;
+		std::vector< std::atomic<uint32_t> > mWriteSlots;
+		std::vector< std::atomic<uint32_t> > mReadSlots;
+		std::atomic<uint32_t> *mWriteSlotptr = nullptr;
+		std::atomic<uint32_t> *mReadSlotptr = nullptr;
 };
 
 #endif // _JQueue_h_
