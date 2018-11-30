@@ -30,18 +30,28 @@ jana_test_factory::~jana_test_factory(void)
 	//This is the new "fini()" function
 }
 
+
+//------------------
+// Init
+//------------------
+void jana_test_factory::Init(void)
+{
+	std::cout << "jana_test_factory::Init() called" << std::endl;
+}
+
 //------------------
 // ChangeRun
 //------------------
 void jana_test_factory::ChangeRun(const std::shared_ptr<const JEvent>& aEvent)
 {
-
+	if( GetPreviousRunNumber() != 0 )
+		std::cout << "jana_test_factory::ChangeRun() called: run=" << aEvent->GetRunNumber() << "  (previous=" << GetPreviousRunNumber() << ")" << std::endl;
 }
 
 //------------------
-// Create
+// Process
 //------------------
-void jana_test_factory::Create(const std::shared_ptr<const JEvent>& aEvent)
+void jana_test_factory::Process(const std::shared_ptr<const JEvent>& aEvent)
 {
 	// Code to generate factory data goes here. Add it like:
 	//

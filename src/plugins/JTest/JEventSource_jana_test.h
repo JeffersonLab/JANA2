@@ -32,6 +32,7 @@ class JEventSource_jana_test: public JEventSource
 
 
 		static std::string GetDescription(void) { return "JTest Fake Event Source"; }
+		std::string GetType(void) const {return GetDemangledName<decltype(*this)>();}
 		void Open(void);
 
 		//Public get interface

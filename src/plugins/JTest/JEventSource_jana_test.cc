@@ -19,6 +19,7 @@
 JEventSource_jana_test::JEventSource_jana_test(string source_name, JApplication *japp) : JEventSource(source_name, japp)
 {
 	mNumEventsToGenerate = 20000;
+	gPARMS->SetDefaultParameter("NEVENTS", mNumEventsToGenerate, "Number of events for fake event source to generate");
 
 	//Seed random number generator //not ideal!
 	auto sTime = std::chrono::high_resolution_clock::now().time_since_epoch().count();
@@ -64,7 +65,7 @@ std::shared_ptr<const JEvent> JEventSource_jana_test::GetEvent(void)
 	mNumEventsGenerated++;
 	
 	auto sIsBarrierEvent = (mNumEventsGenerated % 100) == 0;
-	sEvent->SetJEventSource(this, sIsBarrierEvent); //Set at same time, so can keep track of #barrier events
+	sEvent->SetIsBarrierEvent(sIsBarrierEvent);
 	sEvent->SetEventNumber(mNumEventsGenerated);
 	sEvent->SetRunNumber(1234);
 

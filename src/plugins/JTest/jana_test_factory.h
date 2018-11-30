@@ -21,9 +21,11 @@ class jana_test_factory : public JFactoryT<jana_test>
 		jana_test_factory(void);
 		~jana_test_factory(void);
 
+		virtual void Init(void);
+		virtual void ChangeRun(const std::shared_ptr<const JEvent>& aEvent);
+		virtual void Process(const std::shared_ptr<const JEvent>& aEvent);
+
 	private:
-		void ChangeRun(const std::shared_ptr<const JEvent>& aEvent);
-		void Create(const std::shared_ptr<const JEvent>& aEvent);
 
 		std::mt19937 mRandomGenerator;
 };
