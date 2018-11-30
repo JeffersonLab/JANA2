@@ -171,6 +171,16 @@ void JStatus::GenerateReport(std::stringstream &ss)
 	
 	for(auto& sSourceInfo : active_source_infos)
 	{
+		auto sEventSource = sSourceInfo->mEventSource;
+		ss << "= = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = " << endl;
+		ss << "Event Source: " << sEventSource->GetName() << " [" << sEventSource->GetType() << "]" << endl;
+		ss << "                      Description: " << sEventSource->GetVDescription() << endl;
+		ss << "                      IsExhausted: " << sEventSource->IsExhausted() << endl;
+		ss << "             Num events processed: " << sEventSource->GetNumEventsProcessed() << endl;
+		ss << "           Num outstanding events: " << sEventSource->GetNumOutstandingEvents() << endl;
+		ss << "   Num outstanding barrier events: " << sEventSource->GetNumOutstandingBarrierEvents() << endl;
+		ss << endl;
+	
 		auto sQueueSet = sSourceInfo->mQueueSet;
 		std::map<JQueueSet::JQueueType, std::vector<JQueueInterface*>> sQueuesByType;
 		sQueueSet->GetQueues(sQueuesByType);
@@ -181,6 +191,26 @@ void JStatus::GenerateReport(std::stringstream &ss)
 			{
 				ss << "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - " << endl;
 				ss << "  active source, queue: " << sSourceInfo->mEventSource->GetName() << ", " << sQueue->GetName() << ": " << endl;
+				ss << "                       Ntasks: " << sQueue->GetNumTasks() <<endl;
+				ss << "             Ntasks processed: " << sQueue->GetNumTasksProcessed() << endl;
+				ss << "         Max allowed in queue: " << sQueue->GetMaxTasks() << endl;
+				ss << endl;
+			}
+		}
+	}
+
+	for(auto& sSourceInfo : retired_source_infos)
+	{
+		auto sQueueSet = sSourceInfo->mQueueSet;
+		std::map<JQueueSet::JQueueType, std::vector<JQueueInterface*>> sQueuesByType;
+		sQueueSet->GetQueues(sQueuesByType);
+		for(auto& sQueueTypePair : sQueuesByType)
+		{
+			auto& sQueues = sQueueTypePair.second;
+			for(auto sQueue : sQueues)
+			{
+				ss << "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - " << endl;
+				ss << " retired source, queue: " << sSourceInfo->mEventSource->GetName() << ", " << sQueue->GetName() << ": " << endl;
 				ss << "                       Ntasks: " << sQueue->GetNumTasks() <<endl;
 				ss << "             Ntasks processed: " << sQueue->GetNumTasksProcessed() << endl;
 				ss << "         Max allowed in queue: " << sQueue->GetMaxTasks() << endl;
