@@ -96,7 +96,6 @@ class JFactory
 		// Copy/Move objects into factory
 		template<typename T>
 		void Set(std::vector<T*>& aData){
-//			std::vector<JObject*> vvec( aData.begin(), aData.end() );
 			std::vector<JObject*> vvec;
 			vvec.reserve( aData.size());
 			for( auto p : aData ) vvec.push_back( static_cast<JObject*>( p ) );
