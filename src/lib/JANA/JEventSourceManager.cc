@@ -272,7 +272,7 @@ void JEventSourceManager::RemoveJEventSourceGenerator(JEventSourceGenerator *sou
 }
 
 //---------------------------------
-// GetUserEventSourceGenerator
+// GetEventSourceGenerator
 //---------------------------------
 JEventSourceGenerator* JEventSourceManager::GetEventSourceGenerator(const std::string& source_name)
 {
