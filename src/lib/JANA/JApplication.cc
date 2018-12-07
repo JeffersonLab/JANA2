@@ -302,6 +302,7 @@ void JApplication::AttachPlugins(void)
 	}catch(...){}
 	
 	// Loop over plugins
+	stringstream err_mess;
 	for(string plugin : _plugins){
 		// Sometimes, the user will include the ".so" suffix in the
 		// plugin name. If they don't, then we add it here.
@@ -321,6 +322,8 @@ void JApplication::AttachPlugins(void)
 					found_plugin=true;
 					break;
 				}catch(...){
+					err_mess << "Tried to attach: \"" << fullpath << "\"" << endl;
+					err_mess << "  -- error message: " << dlerror() << endl;
 					continue;
 				}
 			}
@@ -332,7 +335,10 @@ void JApplication::AttachPlugins(void)
 		if(!found_plugin){
 			JLog(1) << "\n***ERROR : Couldn't find plugin \""<<plugin<<"\"!***\n" <<
 			             "***        make sure the JANA_PLUGIN_PATH environment variable is set correctly.\n"<<
-			             "***        To see paths checked, set PRINT_PLUGIN_PATHS config. parameter\n"<< JLogEnd();
+			             "***        To see paths checked, set PRINT_PLUGIN_PATHS config. parameter.\n"<<
+						 "***        Some hints to the error follow:\n"<<
+						 err_mess.str()<< JLogEnd();
+
 			exit(-1);
 		}
 	}
@@ -353,7 +359,7 @@ void JApplication::AttachPlugin(string soname, bool verbose)
 	void* handle = dlopen(soname.c_str(), RTLD_LAZY | RTLD_GLOBAL | RTLD_NODELETE);
 	if(!handle){
 		if(verbose)JLog(1)<<dlerror()<<"\n" << JLogEnd();
-		return;
+		throw "dlopen failed";
 	}
 	
 	// Look for an InitPlugin symbol
@@ -578,6 +584,9 @@ void JApplication::Run(uint32_t nthreads)
 
 	// Setup all queues and attach plugins
 	Initialize();
+
+	// If something went wrong in Initialize() then we may be quitting early.
+	if(_quitting) return;
 
 	// Create all remaining threads (one may have been created in Init)
 	jout << "Creating " << nthreads << " processing threads ..." << endl;
