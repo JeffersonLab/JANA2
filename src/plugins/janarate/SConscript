@@ -6,7 +6,7 @@ import sbms
 Import('*')
 env = env.Clone()
 
-if 'ROOTSY' in os.environ :
+if 'ROOTSYS' in os.environ :
 	sbms.AddJANA(env)
 	sbms.AddROOT(env)
 	sbms.plugin(env)
