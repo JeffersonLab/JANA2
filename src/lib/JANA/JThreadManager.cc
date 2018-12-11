@@ -147,6 +147,29 @@ void JThreadManager::RemoveThread(void)
 }
 
 //---------------------------------
+// SetNJThreads
+//---------------------------------
+void JThreadManager::SetNJThreads(std::size_t nthreads)
+{
+	// Force reasonable limit to number of threads
+	if( nthreads<1 || nthreads>4096 )throw JException("nthreads (%d) out of range! must be between 1-4096", nthreads);
+
+	// Increase to desired number of threads
+	std::size_t sSourceIndex = 0;
+	while( GetNJThreads() < nthreads ) {
+		if( GetNextSourceQueues(sSourceIndex) == nullptr ) return; // Thread won't be added if this is null
+		AddThread();
+	}
+
+	// Decrease to desired number of threads
+	while( GetNJThreads() > nthreads ) {
+		RemoveThread();
+	}
+
+	RunThreads();
+}
+
+//---------------------------------
 // PrepareQueues
 //---------------------------------
 void JThreadManager::PrepareQueues(void)

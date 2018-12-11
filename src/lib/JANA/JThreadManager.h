@@ -118,6 +118,7 @@ class JThreadManager
 		bool HaveAllThreadsEnded(void);
 		void AddThread(void);
 		void RemoveThread(void);
+		void SetNJThreads(std::size_t nthreads);
 
 		// SUBMIT / EXECUTE TASKS
 		void SubmitTasks(const std::vector<std::shared_ptr<JTaskBase>>& aTasks, JQueueSet::JQueueType aQueueType = JQueueSet::JQueueType::SubTasks, const std::string& aQueueName = "");
