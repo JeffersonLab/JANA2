@@ -20,6 +20,7 @@ jana_test_factory::jana_test_factory(void) : JFactoryT<jana_test>("jana_test_fac
 	//Seed random number generator //not ideal!
 	auto sTime = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 	mRandomGenerator.seed(sTime);
+
 }
 
 //------------------
@@ -36,7 +37,7 @@ jana_test_factory::~jana_test_factory(void)
 //------------------
 void jana_test_factory::Init(void)
 {
-	std::cout << "jana_test_factory::Init() called" << std::endl;
+	jout << "jana_test_factory::Init() called " << std::endl;
 }
 
 //------------------
