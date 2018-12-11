@@ -46,6 +46,7 @@
 
 #include <set>
 #include <cstdint>
+#include <string>
 
 #include <JApplication.h>
 
@@ -69,6 +70,7 @@ class JTestMain{
 		uint32_t mNsamples = 100;
 		std::thread *mThread = nullptr;
 		bool mQuit = false;
+		std::string mOutputDirName;
 
 		void TestThread(void);
 	

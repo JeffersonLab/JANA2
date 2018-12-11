@@ -44,9 +44,14 @@
 // class, but I decided to put it here to make things a little cleaner.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+#include <sys/types.h>
+#include <sys/stat.h>
+
 #include <thread>
 #include <chrono>
 #include <iostream>
+#include <fstream>
+#include <iomanip>
 using std::cout;
 using std::cerr;
 using std::endl;
@@ -82,11 +87,20 @@ JTestMain::JTestMain(JApplication *app)
 	uint32_t kMinThreads=0;
 	uint32_t kMaxThreads=0;
 	string kThreadSet;
+	mOutputDirName="JANA_Test_Results";
 
 	gPARMS->SetDefaultParameter("JTEST:MODE", mMode, "JTest plugin Testing mode. 0=basic, 1=scaling");
 	gPARMS->SetDefaultParameter("JTEST:NSAMPLES", mNsamples, "JTest plugin number of samples to take for each test");
 	gPARMS->SetDefaultParameter("JTEST:MINTHREADS", kMinThreads, "JTest plugin minimum number of threads to test");
 	gPARMS->SetDefaultParameter("JTEST:MAXTHREADS", kMaxThreads, "JTest plugin maximum number of threads to test");
+	gPARMS->SetDefaultParameter("JTEST:RESULTSDIR", mOutputDirName, "JTest output directory name for sampling test results");
+
+	// If sampling mode is specified and min/max threads are not, then set them
+	// to be 1 to Ncores
+	if( mMode==MODE_SCALING && kMinThreads==0 && kMaxThreads==0 ){
+		kMinThreads = 1;
+		kMaxThreads = mApp->GetJThreadManager()->GetNcores();
+	}
 
 	// insert continuous range of NThreads to test
 	if( kMinThreads>0 && kMaxThreads>0){
@@ -146,7 +160,8 @@ void JTestMain::TestThread(void)
 
 	// Loop over all thread settings in set
 	cout << "Testing " << mThreadSet.size() << " Nthread settings with " << mNsamples << " samples each" << endl;
-	map< uint32_t, vector<float> > rates;
+	map< uint32_t, vector<float> > samples;
+	map< uint32_t, std::pair<float,float> > rates; // key=nthreads  val.first=rate in Hz, val.second=rms of rate in Hz
 	for( auto nthreads : mThreadSet ){
 		cout << "Setting NTHREADS = " << nthreads << " ..." <<endl;
 		tm->SetNJThreads( nthreads );
@@ -166,19 +181,46 @@ void JTestMain::TestThread(void)
 		for(uint32_t isample=0; isample<mNsamples; isample++){
 			std::this_thread::sleep_for( std::chrono::milliseconds(1000) );
 			auto rate = mApp->GetInstantaneousRate();
-			rates[nthreads].push_back(rate);
+			samples[nthreads].push_back(rate);
 
 			sum  += rate;
 			sum2 += rate*rate;
 			double N = (double)(isample+1);
 			double avg = sum/N;
 			double rms = sqrt( (sum2 + N*avg*avg - 2.0*avg*sum)/N );
+			rates[nthreads].first  = avg;  // overwrite with updated value after each sample
+			rates[nthreads].second = rms;  // overwrite with updated value after each sample
 
 			cout << "nthreads=" << tm->GetNJThreads() << "  rate=" << rate << "Hz";
 			if( N>1 ) cout << "  (avg = " << avg << " +/- " << rms/sqrt(N) << " Hz)";
 			cout << endl;
 		}
 	}
+
+	// Write results to files
+	jout << endl;
+	jout << "Writing test results to: " << mOutputDirName << endl;
+	mkdir(mOutputDirName.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+
+	std::ofstream ofs1(mOutputDirName+"/samples.dat");
+	ofs1 << "# nthreads     rate" << endl;
+	for( auto p : samples ){
+		auto nthreads = p.first;
+		for( auto rate: p.second ) ofs1 << std::setw(7) << nthreads << " " << std::setw(12) << std::setprecision(1) << std::fixed << rate << endl;
+	}
+	ofs1.close();
+
+	std::ofstream ofs2(mOutputDirName+"/rates.dat");
+	ofs2 << "# nthreads  avg_rate       rms" << endl;
+	for( auto p : rates ){
+		auto nthreads = p.first;
+		auto avg_rate = p.second.first;
+		auto rms      = p.second.second;
+		ofs2 << std::setw(7 ) << nthreads << " ";
+		ofs2 << std::setw(12) << std::setprecision(1) << std::fixed << avg_rate << " ";
+		ofs2 << std::setw(10) << std::setprecision(1) << std::fixed << rms << endl;
+	}
+	ofs2.close();
 
 	cout << "Testing finished" << endl;
 	mApp->Quit();
