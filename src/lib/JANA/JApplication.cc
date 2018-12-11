@@ -165,6 +165,7 @@ JApplication::JApplication(int narg, char *argv[])
 	_exit_code = 0;
 	_quitting = false;
 	_draining_queues = false;
+	_ticker_on = true;
 	_rmanager = NULL;
 	_eventSourceManager = new JEventSourceManager(this);
 	_threadManager = new JThreadManager(this);
@@ -626,7 +627,7 @@ void JApplication::Run(uint32_t nthreads)
 		std::this_thread::sleep_for( std::chrono::milliseconds(500) );
 		
 		// Print status
-		PrintStatus();
+		if( _ticker_on ) PrintStatus();
 	}
 	
 	// Join all threads
@@ -674,7 +675,7 @@ void JApplication::SetMaxThreads(uint32_t)
 //---------------------------------
 void JApplication::SetTicker(bool ticker_on)
 {
-	
+	_ticker_on = ticker_on;
 }
 
 

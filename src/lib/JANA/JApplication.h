@@ -162,6 +162,7 @@ class JApplication{
 		int _exit_code;
 		bool _quitting;
 		bool _draining_queues;
+		bool _ticker_on;
 		std::vector<string> _plugins;
 		std::vector<string> _plugin_paths;
 		std::vector<void*> _sohandles;
