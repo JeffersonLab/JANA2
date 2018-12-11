@@ -90,8 +90,10 @@ void JEventSource_jana_test::Open(void)
 void JEventSource_jana_test::LockGenerator(void) const
 {
 	bool sExpected = false;
-	while(!mGeneratorLock.compare_exchange_weak(sExpected, true))
+	while(!mGeneratorLock.compare_exchange_weak(sExpected, true)){
 		sExpected = false;
+       		std::this_thread::sleep_for( std::chrono::nanoseconds(1) );
+	}
 }
 
 //----------------
