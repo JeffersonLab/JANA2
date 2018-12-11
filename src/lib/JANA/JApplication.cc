@@ -163,12 +163,15 @@ JApplication::JApplication(int narg, char *argv[])
 	AddSignalHandlers();
 
 	_exit_code = 0;
+	_verbose = 1;
 	_quitting = false;
 	_draining_queues = false;
 	_ticker_on = true;
 	_rmanager = NULL;
 	_eventSourceManager = new JEventSourceManager(this);
 	_threadManager = new JThreadManager(this);
+
+	mNumProcessorsAdded = 0;
 
 	mVoidTaskPool.Set_ControlParams(200, 0); //TODO: Config these!!
 
@@ -239,7 +242,6 @@ JApplication::JApplication(int narg, char *argv[])
 //---------------------------------
 JApplication::~JApplication()
 {
-	for( auto p: _jthreads              ) delete p;
 	for( auto p: _factoryGenerators     ) delete p;
 	for( auto p: _eventProcessors       ) delete p;
 	if( mLogWrappers[0]     ) delete mLogWrappers[0];
@@ -392,7 +394,6 @@ void JApplication::AddPlugin(string plugin_name)
 	/// of plugins is important. It is left to the user to handle
 	/// in those cases.
 	for( string &n : _plugins) if( n == plugin_name ) return;
-_DBG_<<"Adding plugin " << plugin_name << _DBG_ENDL_;
 	_plugins.push_back(plugin_name);
 }
 
@@ -539,10 +540,26 @@ void JApplication::PrintFinalReport(void)
 	}
 
 	jout << std::endl;
-	jout << "Total events processed: " << GetNeventsProcessed() << " (~" << Val2StringWithPrefix( GetNeventsProcessed() ) << "evt)" << std::endl;
+	jout << "Total events processed: " << GetNeventsProcessed() << " (~ " << Val2StringWithPrefix( GetNeventsProcessed() ) << "evt)" << std::endl;
 	jout << "Integrated Rate: " << Val2StringWithPrefix( GetIntegratedRate() ) << "Hz" << std::endl;
 	jout << std::endl;
 
+	// Optionally print more info if user requested it:
+	bool print_extended_report = false;
+	_pmanager->SetDefaultParameter("JANA:EXTENDED_REPORT", print_extended_report);
+	if( print_extended_report ){
+		jout << std::endl;
+		jout << "Extended Report" << std::endl;
+		jout << std::string(sSourceMaxNameLength + 12 + sQueueMaxNameLength + 9, '-') << std::endl;
+		jout << "               Num. plugins: " << _plugins.size() <<std::endl;
+		jout << "          Num. plugin paths: " << _plugin_paths.size() <<std::endl;
+		jout << "    Num. factory generators: " << _factoryGenerators.size() <<std::endl;
+		jout << "Num. calibration generators: " << _calibrationGenerators.size() <<std::endl;
+		jout << "      Num. event processors: " << mNumProcessorsAdded <<std::endl;
+		jout << "          Num. factory sets: " << mFactorySetPool.Get_PoolSize() << " (max. " << mFactorySetPool.Get_MaxPoolSize() << ")" << std::endl;
+		jout << "       Num. config. params.: " << _pmanager->GetNumParameters() <<std::endl;
+		jout << "               Num. threads: " << _threadManager->GetNJThreads() <<std::endl;
+	}
 }
 
 //---------------------------------
@@ -714,6 +731,7 @@ void JApplication::Add(JFactoryGenerator *factory_generator)
 void JApplication::Add(JEventProcessor *processor)
 {
 	_eventProcessors.push_back( processor );
+	mNumProcessorsAdded++;
 }
 
 //---------------------------------
@@ -853,6 +871,28 @@ JFactorySet* JApplication::GetFactorySet(void)
 void JApplication::Recycle(JFactorySet* aFactorySet)
 {
 	return mFactorySetPool.Recycle(aFactorySet);
+}
+
+//---------------------------------
+// UpdateResourceLimits
+//
+// Used internally by JANA to adjust the maximum size of resource
+// pools after changing the number of threads
+//---------------------------------
+void JApplication::UpdateResourceLimits(void)
+{
+	// OK, this is tricky. The max size of the JFactorySet resource pool should
+	// be at least as big as how many threads we have. Factory sets may also be
+	// attached to JEvent objects in queues that are not currently being acted
+	// on by a thread so we actually need the maximum to be larger if we wish to
+	// prevent constant allocation/deallocation of factory sets. If the factory
+	// sets are large, this will cost more memory, but should save on CPU from
+	// allocating less often and not having to call the constructors repeatedly.
+	// The exact maximum is hard to determine here. We set it to twice the number
+	// of threads which should be sufficient. The user should be given control to
+	// adjust this themselves in the future, but or now, this should be OK.
+	auto nthreads = _threadManager->GetNJThreads();
+	mFactorySetPool.Set_ControlParams( nthreads*2, 0 );
 }
 
 //---------------------------------

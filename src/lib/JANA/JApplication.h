@@ -136,6 +136,7 @@ class JApplication{
 		std::shared_ptr<JTask<void>> GetVoidTask(void);
 		JFactorySet* GetFactorySet(void);
 		void Recycle(JFactorySet* aFactorySet);
+		void UpdateResourceLimits(void);
 
 		uint32_t GetCPU(void);
 		uint64_t GetNtasksCompleted(string name="");
@@ -161,12 +162,12 @@ class JApplication{
 		vector<string> _args;	///< Argument list passed in to JApplication Constructor
 		int _exit_code;
 		bool _quitting;
+		int _verbose;
 		bool _draining_queues;
 		bool _ticker_on;
 		std::vector<string> _plugins;
 		std::vector<string> _plugin_paths;
 		std::vector<void*> _sohandles;
-		std::vector<JThread*> _jthreads;
 		std::vector<JFactoryGenerator*> _factoryGenerators;
 		std::vector<JCalibrationGenerator*> _calibrationGenerators;
 		std::vector<JEventProcessor*> _eventProcessors;
@@ -175,7 +176,8 @@ class JApplication{
 		JEventSourceManager* _eventSourceManager;
 		JThreadManager* _threadManager;
 		std::map<uint32_t, JLogWrapper*> mLogWrappers;
-	
+		std::size_t mNumProcessorsAdded;
+
 		void AttachPlugins(void);
 		void AttachPlugin(string name, bool verbose=false);
 		
