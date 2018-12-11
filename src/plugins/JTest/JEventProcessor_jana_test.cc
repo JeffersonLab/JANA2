@@ -8,12 +8,10 @@
 #include <iostream>
 #include <algorithm>
 
-#include <JANA/JApplication.h>
-#include <JANA/JEventSourceGeneratorT.h>
+#include <JApplication.h>
 
 #include "JEventSource_jana_test.h"
 #include "JEventProcessor_jana_test.h"
-#include "JFactoryGenerator_jana_test.h"
 
 #include "jana_test.h"
 #include "JEvent.h"
@@ -21,16 +19,6 @@
 #include "JSourceObject.h"
 #include "JQueueWithLock.h"
 
-// Routine used to create our JEventProcessor
-#include <JANA/JApplication.h>
-extern "C"{
-void InitPlugin(JApplication *app){
-	InitJANAPlugin(app);
-	app->Add(new JEventSourceGeneratorT<JEventSource_jana_test>());
-	app->Add(new JFactoryGenerator_jana_test());
-	app->Add(new JEventProcessor_jana_test());
-}
-} // "C"
 
 //------------------
 // JEventProcessor_jana_test (Constructor)
