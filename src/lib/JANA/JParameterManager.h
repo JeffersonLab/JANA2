@@ -64,6 +64,7 @@ class JParameterManager{
 		bool Exists(std::string name);
 		JParameter* FindParameter(std::string);
 		void PrintParameters(bool all=false);
+		std::size_t GetNumParameters(void){ return _jparameters.size(); }
 
 		template<typename T>
 		JParameter* GetParameter(std::string name, T &val);
