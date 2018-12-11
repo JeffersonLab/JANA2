@@ -63,6 +63,7 @@ template <typename DType> class JResourcePool
 		JResourcePool& operator=(JResourcePool&&) = delete;
 
 		void Set_ControlParams(std::size_t sMaxPoolSize, std::size_t sDebugLevel);
+		std::size_t Get_MaxPoolSize(void){ return dMaxPoolSize; }
 
 		//GET RESOURCES
 		template <typename... ConstructorArgTypes>
