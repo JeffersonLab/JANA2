@@ -102,6 +102,9 @@ void JThreadManager::CreateThreads(std::size_t aNumThreads)
 		auto sQueueSetIndex = si % mActiveSourceInfos.size();
 		mThreads.push_back(new JThread(si + 1, mApplication, mActiveSourceInfos[sQueueSetIndex], sQueueSetIndex, mRotateEventSources));
 	}
+
+	// Tell JApplication to adjust maximum size of JFactorySet resource pool
+	mApplication->UpdateResourceLimits();
 }
 
 //---------------------------------
@@ -123,6 +126,9 @@ void JThreadManager::AddThread(void)
 
 	//UNLOCK
 	mThreadPoolLock = false;
+
+	// Tell JApplication to adjust maximum size of JFactorySet resource pool
+	mApplication->UpdateResourceLimits();
 }
 
 //---------------------------------
@@ -144,6 +150,9 @@ void JThreadManager::RemoveThread(void)
 	sThread->End();
 	sThread->Join();
 	delete sThread;
+
+	// Tell JApplication to adjust maximum size of JFactorySet resource pool
+	mApplication->UpdateResourceLimits();
 }
 
 //---------------------------------
@@ -166,6 +175,10 @@ void JThreadManager::SetNJThreads(std::size_t nthreads)
 		RemoveThread();
 	}
 
+	// Tell JApplication to adjust maximum size of JFactorySet resource pool
+	mApplication->UpdateResourceLimits();
+
+	// Make sure all threads are running
 	RunThreads();
 }
 
