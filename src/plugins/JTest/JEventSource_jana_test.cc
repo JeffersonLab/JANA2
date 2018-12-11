@@ -58,7 +58,8 @@ std::shared_ptr<const JEvent> JEventSource_jana_test::GetEvent(void)
 	// If the source has no events at the moment, but may later (e.g.
 	// a live stream) then return kTRY_AGAIN;
 
-	if(mNumEventsToGenerate == mNumEventsGenerated) throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
+	if( mNumEventsToGenerate != 0 )
+		if(mNumEventsToGenerate == mNumEventsGenerated) throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
 
 	//These are recycled, so be sure to re-set EVERY member variable
 	auto sEvent = mEventPool.Get_SharedResource(mApplication);
