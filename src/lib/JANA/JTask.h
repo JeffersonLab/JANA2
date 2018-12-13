@@ -12,7 +12,7 @@
 //This is because std::future and std::packaged_task are non-copyable (only movable)
 //And often two pieces of code want to use the JTask (the JQueue and the code waiting for the result)
 //We could use a normal pointer, but the thread executing the JTask doesn't know if anyone is waiting for the result or not.
-//Thus we must use shared_ptr to ensure that it is delted (or recycled) when it goes out of scope.
+//Thus we must use shared_ptr to ensure that it is deleted (or recycled) when it goes out of scope.
 
 /**************************************************************** TYPE DECLARATIONS ****************************************************************/
 

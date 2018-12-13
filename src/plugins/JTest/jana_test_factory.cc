@@ -6,6 +6,8 @@
 //
 
 #include "jana_test_factory.h"
+#include "JSourceObject.h"
+#include "JSourceObject2.h"
 
 #include <chrono>
 #include <iostream>
@@ -54,29 +56,72 @@ void jana_test_factory::ChangeRun(const std::shared_ptr<const JEvent>& aEvent)
 //------------------
 void jana_test_factory::Process(const std::shared_ptr<const JEvent>& aEvent)
 {
-	// Code to generate factory data goes here. Add it like:
-	//
-	// mData.emplace_back(/* jana_test constructor arguments */);
-	//
-	// Note that the objects you create here will be deleted later
-	// by the system and the mData vector will be cleared automatically.
+	// This factory will grab the JSourceObject and JSourceObject2 types created by
+	// the source. For each JSourceObject2 objects, it will create a jana_test
+	// object (product of this factory). For each of those, it submits a JTask which
+	// implements some busy work to represent calculations done to produce the jana_test
+	// objects.
 
-	//Generate a random # of objects
-	auto sNumObjectsDistribution = std::uniform_int_distribution<std::size_t>(1, 20);
-	auto sNumObjects = sNumObjectsDistribution(mRandomGenerator);
-	for(std::size_t si = 0; si < sNumObjects; si++)
+	// Get the JSourceObject and JSourceObject2 objects
+	auto sobjs  = aEvent->GetT<JSourceObject >();
+	auto sobj2s = aEvent->GetT<JSourceObject2>();
+
+	// Create a jana_test object for each JSourceObject2 object
+	std::vector< std::shared_ptr<JTaskBase> > sTasks;
+	sTasks.reserve(sobj2s.size());
+	for( auto sobj2 : sobj2s )
 	{
-		auto sObject = new jana_test( mRandomGenerator(), si );
-		mData.push_back( sObject );
-			
-//		//Emplace new object onto the back of the data vector
-//		mData.emplace_back(mRandomGenerator(), si); //Random energy, id = object#
-//		auto& sObject = mData.back(); //Get reference to new object
+		auto jtest = new jana_test();
+		mData.push_back( jtest );
 
-		//Supply busy work to take time: Generate a bunch of randoms
-		auto sNumRandomsDistribution = std::uniform_int_distribution<std::size_t>(1000, 2000);
-		auto sNumRandoms = sNumRandomsDistribution(mRandomGenerator);
-		for(std::size_t sj = 0; sj < sNumRandoms; sj++)
-			sObject->AddRandom(mRandomGenerator());
+#if 0
+		// Make a lambda that does busy work representing what would be done to
+		// to calculate the jana_test objects from the inout objects.
+		//
+		// n.b. The JTask mechanism is hardwired to pass only the JEvent reference
+		// as an argument. All other parameters must be passed as capture variables.
+		// (e.g. the jtest and sObj2 objects)
+		auto sMyLambda = [=](const std::shared_ptr<const JEvent> &aEvent) -> double
+		{
+			// Busy work
+			std::mt19937 sRandomGenerator; // need dedicated generator to avoid thread conflict
+			auto sTime = std::chrono::high_resolution_clock::now().time_since_epoch().count();
+			sRandomGenerator.seed(sTime);
+			double c = sobj2->GetHitE();
+			for(int i=0; i<1000; i++){
+				double a = sRandomGenerator();
+				double b = sqrt( a*pow(1.23, -a))/a;
+				c += b;
+				jtest->AddRandom(a); // add to jana_test object
+			}
+			jtest->SetE( c ); // set energy of jana_test object
+
+			return c/10.0; // more complicated than one normally needs but demonstrates use of a return value
+		};
+
+		// Make task shared_ptr (Return type of lambda is double)
+		auto sTask = std::make_shared< JTask<double> >();
+
+		// Set the event and the lambda
+		sTask->SetEvent(aEvent);
+		sTask->SetTask(std::packaged_task< double(const std::shared_ptr<const JEvent>&) >(sMyLambda));
+
+		// Move the task onto the vector (to avoid changing shptr ref count). casts at the same time
+		sTasks.push_back(std::move(sTask));
+#endif
 	}
+
+#if 0
+	// Submit the tasks to the queues in the thread manager.
+	// This function won't return until all of the tasks are finished.
+	// This thread will help execute tasks (hopefully these) in the meantime.
+	(*aEvent).GetJApplication()->GetJThreadManager()->SubmitTasks(sTasks);
+
+	// For purposes of example, we grab the return values from the tasks
+	double sSum = 0.0;
+	for( auto sTask : sTasks ){
+		auto &st = static_cast< JTask<double>& >(*sTask);
+		sSum += st.GetResult();
+	}
+#endif
 }

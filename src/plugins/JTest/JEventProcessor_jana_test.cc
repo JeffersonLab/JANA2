@@ -51,13 +51,11 @@ void JEventProcessor_jana_test::Init(void)
 //------------------
 void JEventProcessor_jana_test::Process(const std::shared_ptr<const JEvent>& aEvent)
 {
-	// This is called for every event. Use of common resources like writing
-	// to a file or filling a histogram should be mutex protected. Using
-	// loop->Get(...) to get reconstructed objects (and thereby activating the
-	// reconstruction algorithm) should be done outside of any mutex lock
-	// since multiple threads may call this method at the same time.
+	// Grab all objects, but don't do anything with them. The jana_test factory
+	// will also grab the two types of source objects and then so some busy work
+	// to use up CPU.
 
-	//Get objects
+	// Get objects
 	auto sIterators_JanaTest = aEvent->Get<jana_test>(); //Will get from factory
 	auto sIterators_SourceObject = aEvent->Get<JSourceObject>(); //Will get from file
 	auto sIterators_SourceObject2 = aEvent->Get<JSourceObject2>(); //Will get from file, and will submit jobs to generate random #'s

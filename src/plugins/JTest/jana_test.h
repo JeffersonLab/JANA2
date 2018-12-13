@@ -20,7 +20,7 @@ class jana_test : public JObject
 {
 	public:
 		//STRUCTORS
-		jana_test(double aE, int aID) : mE(aE), mID(aID) { }
+		jana_test(void) : mE(0.0), mID(0) { }
 
 		//GETTERS
 		int GetID(void) const{return mID;}
