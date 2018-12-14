@@ -72,6 +72,7 @@ class JQueueWithLock : public JQueueInterface
 
 		uint32_t GetMaxTasks(void);
 		uint32_t GetNumTasks(void);
+		uint32_t GetNumTasksWithLock(void);
 		uint64_t GetNumTasksProcessed(void);
 		std::size_t GetTaskBufferSize(void);
 	

@@ -163,6 +163,16 @@ std::shared_ptr<JTaskBase> JQueueWithLock::GetTask(void)
 uint32_t JQueueWithLock::GetNumTasks(void)
 {
 	/// Returns the number of tasks currently in this queue.
+	/// n.b. this is an estimate since no lock is used
+	return mQueue.size();
+}
+
+//---------------------------------
+// GetNumTasksWithLock
+//---------------------------------
+uint32_t JQueueWithLock::GetNumTasksWithLock(void)
+{
+	/// Returns the number of tasks currently in this queue.
 	std::lock_guard<std::mutex> sLock(mQueueLock);
 	return mQueue.size();
 }
