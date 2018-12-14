@@ -36,8 +36,11 @@ JEventSource_jana_test::JEventSource_jana_test(string source_name, JApplication 
 
 	//Event queue:
 	//If not created, a default will be supplied
-	if( mIncludeBarriers ) mEventQueue = new JQueueWithBarriers("Events", 200, 50); //max size of 200, keep at least 50 buffered
-
+	if( mIncludeBarriers ) {
+	  mEventQueue = new JQueueWithBarriers("Events", 200, 50); //max size of 200, keep at least 50 buffered
+	}else{
+	  mEventQueue = new JQueue("Events", 200, 50);
+	}
 	//Debug:
 //	mDebugLevel = 500;
 }
