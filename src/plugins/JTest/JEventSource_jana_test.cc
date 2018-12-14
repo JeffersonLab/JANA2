@@ -23,6 +23,8 @@ JEventSource_jana_test::JEventSource_jana_test(string source_name, JApplication 
 	mNumEventsToGenerate = 20000;
 	gPARMS->SetDefaultParameter("NEVENTS", mNumEventsToGenerate, "Number of events for fake event source to generate");
 
+	gPARMS->SetDefaultParameter("JTEST:INCLUDE_BARRIER_EVENTS", mIncludeBarriers, "Include barrier events");
+
 	//Seed random number generator //not ideal!
 	auto sTime = std::chrono::high_resolution_clock::now().time_since_epoch().count();
 	mRandomGenerator.seed(sTime);
@@ -34,7 +36,7 @@ JEventSource_jana_test::JEventSource_jana_test(string source_name, JApplication 
 
 	//Event queue:
 	//If not created, a default will be supplied
-	mEventQueue = new JQueueWithBarriers("Events", 200, 50); //max size of 200, keep at least 50 buffered
+	if( mIncludeBarriers ) mEventQueue = new JQueueWithBarriers("Events", 200, 50); //max size of 200, keep at least 50 buffered
 
 	//Debug:
 //	mDebugLevel = 500;
@@ -67,8 +69,10 @@ std::shared_ptr<const JEvent> JEventSource_jana_test::GetEvent(void)
 	auto sEvent = mEventPool.Get_SharedResource(mApplication);
 	mNumEventsGenerated++;
 	
-	auto sIsBarrierEvent = (mNumEventsGenerated % 100) == 0;
-	sEvent->SetIsBarrierEvent(sIsBarrierEvent);
+	if( mIncludeBarriers ){
+		auto sIsBarrierEvent = (mNumEventsGenerated % 100) == 0;
+		sEvent->SetIsBarrierEvent(sIsBarrierEvent);
+	}
 	sEvent->SetEventNumber(mNumEventsGenerated);
 	sEvent->SetRunNumber(1234);
 
