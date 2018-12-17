@@ -35,6 +35,7 @@
 # Build system generated files
 .externalToolBuilders
 .project
+.pydevproject
 .sconsign.dblite
 SBMS
 Linux_*
