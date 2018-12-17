@@ -186,8 +186,8 @@ bool JEventSource_jana_test::GetObjects(const std::shared_ptr<const JEvent>& aEv
 			sObject->AddRandom(c);
 			sSum += c;
 		}
-		sObject->SetHitE(sSum);
 #endif
+		sObject->SetHitE(sSum);
 	}
 
 	//Set the objects in the factory
