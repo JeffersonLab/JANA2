@@ -45,7 +45,7 @@
 //---------------------------------
 // JQueueWithLock    (Constructor)
 //---------------------------------
-JQueueWithLock::JQueueWithLock(const std::string& aName, std::size_t aQueueSize, std::size_t aTaskBufferSize) : JQueueInterface(aName), mQueueSize(aQueueSize), mTaskBufferSize(aTaskBufferSize)
+JQueueWithLock::JQueueWithLock(const std::string& aName, std::size_t aQueueSize, std::size_t aTaskBufferSize) : JQueue(aName), mQueueSize(aQueueSize), mTaskBufferSize(aTaskBufferSize)
 {
 	//Apparently segfaults
 //	gPARMS->SetDefaultParameter("JANA:QUEUE_DEBUG_LEVEL", mDebugLevel, "JQueueWithLock debug level");
@@ -54,7 +54,7 @@ JQueueWithLock::JQueueWithLock(const std::string& aName, std::size_t aQueueSize,
 //---------------------------------
 // JQueueWithLock    (Copy Constructor)
 //---------------------------------
-JQueueWithLock::JQueueWithLock(const JQueueWithLock& aQueue) : JQueueInterface(aQueue)
+JQueueWithLock::JQueueWithLock(const JQueueWithLock& aQueue) : JQueue(aQueue)
 {
 	//Assume this is called by CloneEmpty() or similar on an empty queue (ugh, can improve later)
 	mTaskBufferSize = aQueue.mTaskBufferSize;
@@ -69,7 +69,7 @@ JQueueWithLock::JQueueWithLock(const JQueueWithLock& aQueue) : JQueueInterface(a
 JQueueWithLock& JQueueWithLock::operator=(const JQueueWithLock& aQueue)
 {
 	//Assume this is called by Clone() or similar on an empty queue (ugh, can improve later)
-	JQueueInterface::operator=(aQueue);
+	JQueue::operator=(aQueue);
 	mTaskBufferSize = aQueue.mTaskBufferSize;
 	mQueueSize = aQueue.mQueueSize;
 	return *this;
@@ -78,7 +78,7 @@ JQueueWithLock& JQueueWithLock::operator=(const JQueueWithLock& aQueue)
 //---------------------------------
 // AddTask
 //---------------------------------
-JQueueInterface::Flags_t JQueueWithLock::AddTask(const std::shared_ptr<JTaskBase>& aTask)
+JQueue::Flags_t JQueueWithLock::AddTask(const std::shared_ptr<JTaskBase>& aTask)
 {
 	//We want to copy the task into the queue instead of moving it.
 	//However, we don't want to duplicate the complicated code in both functions.
@@ -101,7 +101,7 @@ JQueueInterface::Flags_t JQueueWithLock::AddTask(const std::shared_ptr<JTaskBase
 //---------------------------------
 // AddTask
 //---------------------------------
-JQueueInterface::Flags_t JQueueWithLock::AddTask(std::shared_ptr<JTaskBase>&& aTask)
+JQueue::Flags_t JQueueWithLock::AddTask(std::shared_ptr<JTaskBase>&& aTask)
 {
 	/// Add the given JTaskBase to this queue. This will do so without locks.
 	/// If the queue is full, it will return immediately with a value
@@ -211,7 +211,7 @@ bool JQueueWithLock::AreEnoughTasksBuffered(void)
 //---------------------------------
 // Clone
 //---------------------------------
-JQueueInterface* JQueueWithLock::CloneEmpty(void) const
+JQueue* JQueueWithLock::CloneEmpty(void) const
 {
 	//Create an empty clone of the queue (no tasks copied)
 	return (new JQueueWithLock(*this));

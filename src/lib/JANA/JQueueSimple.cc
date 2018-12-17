@@ -45,7 +45,7 @@
 //---------------------------------
 // JQueueSimple    (Constructor)
 //---------------------------------
-JQueueSimple::JQueueSimple(const std::string& aName, std::size_t aQueueSize, std::size_t aTaskBufferSize) : JQueueInterface(aName), mTaskBufferSize(aTaskBufferSize)
+JQueueSimple::JQueueSimple(const std::string& aName, std::size_t aQueueSize, std::size_t aTaskBufferSize) : JQueue(aName), mTaskBufferSize(aTaskBufferSize)
 {
 	//Apparently segfaults
 //	gPARMS->SetDefaultParameter("JANA:QUEUE_DEBUG_LEVEL", mDebugLevel, "JQueueSimple debug level");
@@ -68,7 +68,7 @@ JQueueSimple::~JQueueSimple()
 //---------------------------------
 // JQueueSimple    (Copy Constructor)
 //---------------------------------
-JQueueSimple::JQueueSimple(const JQueueSimple& aQueue) : JQueueInterface(aQueue)
+JQueueSimple::JQueueSimple(const JQueueSimple& aQueue) : JQueue(aQueue)
 {
 	//Assume this is called by CloneEmpty() or similar on an empty queue (ugh, can improve later)
 	mTaskBufferSize = aQueue.mTaskBufferSize;
@@ -89,7 +89,7 @@ JQueueSimple::JQueueSimple(const JQueueSimple& aQueue) : JQueueInterface(aQueue)
 JQueueSimple& JQueueSimple::operator=(const JQueueSimple& aQueue)
 {
 	//Assume this is called by Clone() or similar on an empty queue (ugh, can improve later)
-	JQueueInterface::operator=(aQueue);
+	JQueue::operator=(aQueue);
 	mTaskBufferSize = aQueue.mTaskBufferSize;
 	mDebugLevel = aQueue.mDebugLevel;
 	mLogTarget = aQueue.mLogTarget;
@@ -107,7 +107,7 @@ JQueueSimple& JQueueSimple::operator=(const JQueueSimple& aQueue)
 //---------------------------------
 // AddTask
 //---------------------------------
-JQueueInterface::Flags_t JQueueSimple::AddTask(const std::shared_ptr<JTaskBase>& aTask)
+JQueue::Flags_t JQueueSimple::AddTask(const std::shared_ptr<JTaskBase>& aTask)
 {
 	//We want to copy the task into the queue instead of moving it.
 	//However, we don't want to duplicate the complicated code in both functions.
@@ -130,7 +130,7 @@ JQueueInterface::Flags_t JQueueSimple::AddTask(const std::shared_ptr<JTaskBase>&
 //---------------------------------
 // AddTask
 //---------------------------------
-JQueueInterface::Flags_t JQueueSimple::AddTask(std::shared_ptr<JTaskBase>&& aTask)
+JQueue::Flags_t JQueueSimple::AddTask(std::shared_ptr<JTaskBase>&& aTask)
 {
 	// Loop over write slots to get exclusive write access to one
 	auto sptr = mWriteSlotptr;
@@ -260,7 +260,7 @@ bool JQueueSimple::AreEnoughTasksBuffered(void)
 //---------------------------------
 // Clone
 //---------------------------------
-JQueueInterface* JQueueSimple::CloneEmpty(void) const
+JQueue* JQueueSimple::CloneEmpty(void) const
 {
 	//Create an empty clone of the queue (no tasks copied)
 	return (new JQueueSimple(*this));

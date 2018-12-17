@@ -49,9 +49,9 @@
 #include <mutex>
 #include <deque>
 
-#include "JQueueInterface.h"
+#include "JQueue.h"
 
-class JQueueWithLock : public JQueueInterface
+class JQueueWithLock : public JQueue
 {
 	public:
 	
@@ -76,7 +76,7 @@ class JQueueWithLock : public JQueueInterface
 		uint64_t GetNumTasksProcessed(void);
 		std::size_t GetTaskBufferSize(void);
 	
-		JQueueInterface* CloneEmpty(void) const;
+		JQueue* CloneEmpty(void) const;
 
 	private:
 

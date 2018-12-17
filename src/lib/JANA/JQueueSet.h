@@ -48,7 +48,7 @@
 #include <vector>
 #include <string>
 
-#include "JQueueInterface.h"
+#include "JQueue.h"
 
 class JQueueSet
 {
@@ -70,13 +70,13 @@ class JQueueSet
 		JQueueSet* Clone(void) const;
 
 		std::size_t GetNumQueues(void) const;
-		void SetQueues(JQueueType aQueueType, const std::vector<JQueueInterface*>& aQueues);
-		void AddQueue(JQueueType aQueueType, JQueueInterface* aQueue, bool aAddToFront=false);
+		void SetQueues(JQueueType aQueueType, const std::vector<JQueue*>& aQueues);
+		void AddQueue(JQueueType aQueueType, JQueue* aQueue, bool aAddToFront=false);
 		void RemoveQueues(JQueueType aQueueType);
 		void RemoveQueues(void);
 
-		JQueueInterface* GetQueue(JQueueType aQueueType, const std::string& aName = "") const;
-		void GetQueues(std::map<JQueueType, std::vector<JQueueInterface*>>& aQueues) const;
+		JQueue* GetQueue(JQueueType aQueueType, const std::string& aName = "") const;
+		void GetQueues(std::map<JQueueType, std::vector<JQueue*>>& aQueues) const;
 
 		std::pair<JQueueType, std::shared_ptr<JTaskBase>> GetTask(void) const;
 		std::shared_ptr<JTaskBase> GetTask(JQueueType aQueueType, const std::string& aQueueName) const;
@@ -84,7 +84,7 @@ class JQueueSet
 		void FinishedWithQueues(void); //Call this when finished with the event source
 
 	private:
-		std::map<JQueueType, std::vector<JQueueInterface*>> mQueues;
+		std::map<JQueueType, std::vector<JQueue*>> mQueues;
 };
 
 #endif // _JQueueSet_h_

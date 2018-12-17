@@ -46,6 +46,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <stdlib.h>
 
 #include <thread>
 #include <chrono>
@@ -222,8 +223,49 @@ void JTestMain::TestThread(void)
 	}
 	ofs2.close();
 
+	CopyToOutputDir("${JANA_HOME}/src/plugins/JTest/plot_rate_vs_nthreads.py");
+
 	cout << "Testing finished" << endl;
 	mApp->Quit();
 }
 
+//---------------------------------
+// CopyToOutputDir
+//
+// Copy the specified output file to the currently set mOutputDirName.
+// Strings with a format of ${Name} will be substituted with the
+// corresponding environment variable.
+//---------------------------------
+void JTestMain::CopyToOutputDir(std::string filename)
+{
+	// Substitute environment variables in given filename
+	string new_fname = filename;
+	while( auto pos_start=new_fname.find("${") != new_fname.npos ){
+		auto pos_end = new_fname.find( "}", pos_start+3 );
+		if( pos_end != new_fname.npos ){
+
+			string envar_name = new_fname.substr(pos_start+1, pos_end-pos_start-1);
+			_DBG_<< " Looking for envar \"" << envar_name << "\"" << _DBG_ENDL_;
+			auto envar = getenv( envar_name.c_str() );
+			if( envar ) {
+				new_fname.replace( pos_start-1, pos_end+2-pos_start, envar);
+			}else{
+				jout << "Environment variable \"" << envar_name << "\" not set. Cannot copy " << filename << endl;
+				return;
+			}
+		}else{
+			_DBG_ << "Error in string format: " << filename << _DBG_ENDL_;
+		}
+	}
+
+	// Extract filename without path
+	string base_fname = new_fname;
+	if( auto pos = base_fname.rfind("/") ) base_fname.erase(0, pos);
+
+	// Copy file
+	jout << "Copying " << new_fname << " -> " << mOutputDirName << endl;
+	std::ifstream src(new_fname, std::ios::binary);
+	std::ofstream dst(mOutputDirName + "/" + base_fname, std::ios::binary);
+	dst << src.rdbuf();
+}
 

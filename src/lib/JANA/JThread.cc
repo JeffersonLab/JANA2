@@ -47,7 +47,7 @@
 #include "JThreadManager.h"
 #include "JEventSource.h"
 #include "JApplication.h"
-#include "JQueueInterface.h"
+#include "JQueue.h"
 #include "JQueueSet.h"
 #include "JLog.h"
 
@@ -344,7 +344,7 @@ bool JThread::CheckEventQueue(void)
 			//Add this process-event task to the event queue.
 			//We have no where else to put this task if it doesn't fit in the queue.
 			//So just continually try to add it
-			if(mEventQueue->AddTask(std::move(sEventTask)) != JQueueInterface::Flags_t::kNO_ERROR)
+			if(mEventQueue->AddTask(std::move(sEventTask)) != JQueue::Flags_t::kNO_ERROR)
 			{
 				//Add failed, queue must be full.
 				//This (probably) shouldn't happen if the relationship between the

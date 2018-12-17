@@ -48,9 +48,9 @@
 #include <atomic>
 #include <vector>
 
-#include "JQueueInterface.h"
+#include "JQueue.h"
 
-class JQueueSimple : public JQueueInterface
+class JQueueSimple : public JQueue
 {
 	public:
 	
@@ -78,7 +78,7 @@ class JQueueSimple : public JQueueInterface
 		uint64_t GetNumTasksProcessedOutsideQueue(void);
 		std::size_t GetTaskBufferSize(void);
 	
-		JQueueInterface* CloneEmpty(void) const;
+		JQueue* CloneEmpty(void) const;
 
 	private:
 

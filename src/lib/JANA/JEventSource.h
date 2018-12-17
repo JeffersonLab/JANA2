@@ -53,7 +53,7 @@
 
 class JTaskBase;
 class JApplication;
-class JQueueInterface;
+class JQueue;
 class JEvent;
 class JEventSourceManager;
 class JEventSourceGenerator;
@@ -63,7 +63,7 @@ class JFactoryGenerator;
 
 //Deriving classes should:
 //Overload all virtual methods (as needed)
-//Create their own JFactoryGenerator and JQueueInterface and store in the member variables (as needed)
+//Create their own JFactoryGenerator and JQueue and store in the member variables (as needed)
 
 #ifndef _JEventSource_h_
 #define _JEventSource_h_
@@ -105,7 +105,7 @@ class JEventSource{
 		std::size_t GetNumOutstandingEvents(void) const{return mNumOutstandingEvents;}
 		std::size_t GetNumOutstandingBarrierEvents(void) const{return mNumOutstandingBarrierEvents;}
 
-		JQueueInterface* GetEventQueue(void) const{return mEventQueue;}
+		JQueue* GetEventQueue(void) const{return mEventQueue;}
 		JFactoryGenerator* GetFactoryGenerator(void) const{return mFactoryGenerator;}
 		std::type_index GetDerivedType(void) const {return std::type_index(typeid(*this));}
 
@@ -123,7 +123,7 @@ class JEventSource{
 		virtual std::shared_ptr<const JEvent> GetEvent(void) = 0;
 		JApplication* mApplication = nullptr;
 		std::string mName;
-		JQueueInterface* mEventQueue = nullptr; //For handling event-source-specific logic (such as disentangling events, dealing with barriers, etc.)
+		JQueue* mEventQueue = nullptr; //For handling event-source-specific logic (such as disentangling events, dealing with barriers, etc.)
 		JFactoryGenerator* mFactoryGenerator = nullptr; //This should create default factories for all types available in the event source
 
 	private:

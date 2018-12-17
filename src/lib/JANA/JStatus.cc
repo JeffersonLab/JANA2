@@ -40,7 +40,7 @@
 #include "JParameterManager.h"
 #include "JStatus.h"
 #include "JThread.h"
-#include "JQueueInterface.h"
+#include "JQueue.h"
 #include "JQueueSet.h"
 #include "JEventSourceManager.h"
 #include "JEventSource.h"
@@ -182,7 +182,7 @@ void JStatus::GenerateReport(std::stringstream &ss)
 		ss << endl;
 	
 		auto sQueueSet = sSourceInfo->mQueueSet;
-		std::map<JQueueSet::JQueueType, std::vector<JQueueInterface*>> sQueuesByType;
+		std::map<JQueueSet::JQueueType, std::vector<JQueue*>> sQueuesByType;
 		sQueueSet->GetQueues(sQueuesByType);
 		for(auto& sQueueTypePair : sQueuesByType)
 		{
@@ -202,7 +202,7 @@ void JStatus::GenerateReport(std::stringstream &ss)
 	for(auto& sSourceInfo : retired_source_infos)
 	{
 		auto sQueueSet = sSourceInfo->mQueueSet;
-		std::map<JQueueSet::JQueueType, std::vector<JQueueInterface*>> sQueuesByType;
+		std::map<JQueueSet::JQueueType, std::vector<JQueue*>> sQueuesByType;
 		sQueueSet->GetQueues(sQueuesByType);
 		for(auto& sQueueTypePair : sQueuesByType)
 		{

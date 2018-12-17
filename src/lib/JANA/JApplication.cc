@@ -479,7 +479,7 @@ void JApplication::PrintFinalReport(void)
 		if(sSourceLength > sSourceMaxNameLength)
 			sSourceMaxNameLength = sSourceLength;
 
-		std::map<JQueueSet::JQueueType, std::vector<JQueueInterface*>> sSourceQueues;
+		std::map<JQueueSet::JQueueType, std::vector<JQueue*>> sSourceQueues;
 		sSourceInfo->mQueueSet->GetQueues(sSourceQueues);
 		for(auto& sTypePair : sSourceQueues)
 		{
@@ -513,7 +513,7 @@ void JApplication::PrintFinalReport(void)
 		if( sSrcIdx++ >= sRetiredQueues.size() ) sFlag="*";
 
 		auto sSource = sSourceInfo->mEventSource;
-		std::map<JQueueSet::JQueueType, std::vector<JQueueInterface*>> sSourceQueues;
+		std::map<JQueueSet::JQueueType, std::vector<JQueue*>> sSourceQueues;
 		sSourceInfo->mQueueSet->GetQueues(sSourceQueues);
 		for(auto& sTypePair : sSourceQueues)
 		{

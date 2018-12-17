@@ -47,7 +47,7 @@
 // JQueueWithBarriers    (Constructor)
 //---------------------------------
 JQueueWithBarriers::JQueueWithBarriers(const std::string& aName, std::size_t aQueueSize, std::size_t aTaskBufferSize) :
-	JQueueInterface(aName), mTaskBufferSize(aTaskBufferSize), mInputQueue(new JQueueWithLock(aName + " Input", aQueueSize, aTaskBufferSize)),
+	JQueue(aName), mTaskBufferSize(aTaskBufferSize), mInputQueue(new JQueueWithLock(aName + " Input", aQueueSize, aTaskBufferSize)),
 	mOutputQueue(new JQueueWithLock(aName + " Output", aQueueSize, aTaskBufferSize))
 {
 	//Apparently segfaults
@@ -59,7 +59,7 @@ JQueueWithBarriers::JQueueWithBarriers(const std::string& aName, std::size_t aQu
 //---------------------------------
 // JQueueWithBarriers    (Copy Constructor)
 //---------------------------------
-JQueueWithBarriers::JQueueWithBarriers(const JQueueWithBarriers& aQueue) : JQueueInterface(aQueue)
+JQueueWithBarriers::JQueueWithBarriers(const JQueueWithBarriers& aQueue) : JQueue(aQueue)
 {
 	//Assume this is called by CloneEmpty() or similar on an empty queue (ugh, can improve later)
 	mTaskBufferSize = aQueue.mTaskBufferSize;
@@ -77,7 +77,7 @@ JQueueWithBarriers::JQueueWithBarriers(const JQueueWithBarriers& aQueue) : JQueu
 JQueueWithBarriers& JQueueWithBarriers::operator=(const JQueueWithBarriers& aQueue)
 {
 	//Assume this is called by Clone() or similar on an empty queue (ugh, can improve later)
-	JQueueInterface::operator=(aQueue);
+	JQueue::operator=(aQueue);
 	mTaskBufferSize = aQueue.mTaskBufferSize;
 	return *this;
 }
@@ -97,7 +97,7 @@ JQueueWithBarriers::~JQueueWithBarriers(void)
 //---------------------------------
 // AddTask
 //---------------------------------
-JQueueInterface::Flags_t JQueueWithBarriers::AddTask(const std::shared_ptr<JTaskBase>& aTask)
+JQueue::Flags_t JQueueWithBarriers::AddTask(const std::shared_ptr<JTaskBase>& aTask)
 {
 	return mInputQueue->AddTask(aTask);
 }
@@ -105,7 +105,7 @@ JQueueInterface::Flags_t JQueueWithBarriers::AddTask(const std::shared_ptr<JTask
 //---------------------------------
 // AddTask
 //---------------------------------
-JQueueInterface::Flags_t JQueueWithBarriers::AddTask(std::shared_ptr<JTaskBase>&& aTask)
+JQueue::Flags_t JQueueWithBarriers::AddTask(std::shared_ptr<JTaskBase>&& aTask)
 {
 	return mInputQueue->AddTask(std::move(aTask));
 }
@@ -176,7 +176,7 @@ void JQueueWithBarriers::ThreadLoop(void)
 				sEvent->SetLatestBarrierEvent(mLatestBarrierEvent);
 
 			//Move task to output queue
-			while( mOutputQueue->AddTask( std::move(sTask) ) == JQueueInterface::Flags_t::kQUEUE_FULL ){
+			while( mOutputQueue->AddTask( std::move(sTask) ) == JQueue::Flags_t::kQUEUE_FULL ){
 				// Crap, the queue is full. Try pulling a task off and running it here.
 				// Then we can try adding our task again.
 				auto sEventTask = mOutputQueue->GetTask();
@@ -252,7 +252,7 @@ std::size_t JQueueWithBarriers::GetTaskBufferSize(void)
 //---------------------------------
 // Clone
 //---------------------------------
-JQueueInterface* JQueueWithBarriers::CloneEmpty(void) const
+JQueue* JQueueWithBarriers::CloneEmpty(void) const
 {
 	//Create an empty clone of the queue (no tasks copied)
 	return (new JQueueWithBarriers(*this));

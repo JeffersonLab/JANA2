@@ -76,7 +76,7 @@ std::size_t JQueueSet::GetNumQueues(void) const
 //---------------------------------
 // SetQueues
 //---------------------------------
-void JQueueSet::SetQueues(JQueueSet::JQueueType aQueueType, const std::vector<JQueueInterface*>& aQueues)
+void JQueueSet::SetQueues(JQueueSet::JQueueType aQueueType, const std::vector<JQueue*>& aQueues)
 {
 	mQueues.emplace(aQueueType, aQueues);
 }
@@ -84,7 +84,7 @@ void JQueueSet::SetQueues(JQueueSet::JQueueType aQueueType, const std::vector<JQ
 //---------------------------------
 // AddQueue
 //---------------------------------
-void JQueueSet::AddQueue(JQueueSet::JQueueType aQueueType, JQueueInterface* aQueue, bool aAddToFront)
+void JQueueSet::AddQueue(JQueueSet::JQueueType aQueueType, JQueue* aQueue, bool aAddToFront)
 {
 	auto &v = mQueues[aQueueType];
 	if( aAddToFront ){
@@ -154,7 +154,7 @@ void JQueueSet::FinishedWithQueues(void)
 //---------------------------------
 // GetQueues
 //---------------------------------
-void JQueueSet::GetQueues(std::map<JQueueSet::JQueueType, std::vector<JQueueInterface*>>& aQueues) const
+void JQueueSet::GetQueues(std::map<JQueueSet::JQueueType, std::vector<JQueue*>>& aQueues) const
 {
 	aQueues = mQueues;
 }
@@ -162,7 +162,7 @@ void JQueueSet::GetQueues(std::map<JQueueSet::JQueueType, std::vector<JQueueInte
 //---------------------------------
 // GetQueue
 //---------------------------------
-JQueueInterface* JQueueSet::GetQueue(JQueueSet::JQueueType aQueueType, const std::string& aName) const
+JQueue* JQueueSet::GetQueue(JQueueSet::JQueueType aQueueType, const std::string& aName) const
 {
 	//Check if any queues of the desired type
 	auto sMapIterator = mQueues.find(aQueueType);
@@ -175,7 +175,7 @@ JQueueInterface* JQueueSet::GetQueue(JQueueSet::JQueueType aQueueType, const std
 		return sQueues[0];
 
 	//Try to find the queue with the given name
-	auto sFindQueue = [aName](const JQueueInterface* aQueue) -> bool { return (aQueue->GetName() == aName); };
+	auto sFindQueue = [aName](const JQueue* aQueue) -> bool { return (aQueue->GetName() == aName); };
 
 	auto sEnd = std::end(sQueues);
 	auto sVectorIterator = std::find_if(std::begin(sQueues), sEnd, sFindQueue);

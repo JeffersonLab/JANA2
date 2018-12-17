@@ -281,7 +281,7 @@ void JThreadManager::LockThreadPool(void) const
 //---------------------------------
 // GetQueue
 //---------------------------------
-JQueueInterface* JThreadManager::GetQueue(const std::shared_ptr<JTaskBase>& aTask, JQueueSet::JQueueType aQueueType, const std::string& aQueueName) const
+JQueue* JThreadManager::GetQueue(const std::shared_ptr<JTaskBase>& aTask, JQueueSet::JQueueType aQueueType, const std::string& aQueueName) const
 {
 	auto sEventSource = aTask->GetEvent()->GetEventSource();
 	return GetQueue(sEventSource, aQueueType, aQueueName);
@@ -290,7 +290,7 @@ JQueueInterface* JThreadManager::GetQueue(const std::shared_ptr<JTaskBase>& aTas
 //---------------------------------
 // GetQueue
 //---------------------------------
-JQueueInterface* JThreadManager::GetQueue(const JEventSource* aEventSource, JQueueSet::JQueueType aQueueType, const std::string& aQueueName) const
+JQueue* JThreadManager::GetQueue(const JEventSource* aEventSource, JQueueSet::JQueueType aQueueType, const std::string& aQueueName) const
 {
 	auto sQueueSet = GetEventSourceInfo(aEventSource)->mQueueSet;
 	return sQueueSet->GetQueue(aQueueType, aQueueName);
@@ -331,7 +331,7 @@ void JThreadManager::GetActiveSourceInfos(std::vector<JEventSourceInfo*>& aSourc
 //---------------------------------
 // AddQueue
 //---------------------------------
-void JThreadManager::AddQueue(JQueueSet::JQueueType aQueueType, JQueueInterface* aQueue)
+void JThreadManager::AddQueue(JQueueSet::JQueueType aQueueType, JQueue* aQueue)
 {
 	//Set a template queue that will be used (cloned) for each event source.
 	//Doesn't lock: Assumes no one is crazy enough to call this while in the middle of running.
@@ -648,7 +648,7 @@ void JThreadManager::SubmitTasks(const std::vector<std::shared_ptr<JTaskBase>>& 
 //---------------------------------
 // SubmitTasks
 //---------------------------------
-void JThreadManager::SubmitTasks(const std::vector<std::shared_ptr<JTaskBase>>& aTasks, JEventSourceInfo* aSourceInfo, JQueueInterface* aQueue, JQueueSet::JQueueType aQueueType)
+void JThreadManager::SubmitTasks(const std::vector<std::shared_ptr<JTaskBase>>& aTasks, JEventSourceInfo* aSourceInfo, JQueue* aQueue, JQueueSet::JQueueType aQueueType)
 {
 	//You would think submitting tasks would be easy.
 	//However, the task JQueue can fill up, and we may not be able to put all of our tasks in.
@@ -663,7 +663,7 @@ void JThreadManager::SubmitTasks(const std::vector<std::shared_ptr<JTaskBase>>& 
 	while(sIterator != sEnd)
 	{
 		//Try to submit task
-		if(aQueue->AddTask(*sIterator) != JQueueInterface::Flags_t::kNO_ERROR)
+		if(aQueue->AddTask(*sIterator) != JQueue::Flags_t::kNO_ERROR)
 		{
 			//Failed (queue probably full): Execute a task in the meantime
 			ExecuteTask(*sIterator, aSourceInfo, aQueueType);
@@ -724,7 +724,7 @@ void JThreadManager::DoWorkWhileWaitingForTasks(const std::vector<std::shared_pt
 //---------------------------------
 // DoWorkWhileWaitingForTasks
 //---------------------------------
-void JThreadManager::DoWorkWhileWaitingForTasks(const std::vector<std::shared_ptr<JTaskBase>>& aSubmittedTasks, JEventSourceInfo* aSourceInfo, JQueueInterface* aQueue, JQueueSet::JQueueType aQueueType)
+void JThreadManager::DoWorkWhileWaitingForTasks(const std::vector<std::shared_ptr<JTaskBase>>& aSubmittedTasks, JEventSourceInfo* aSourceInfo, JQueue* aQueue, JQueueSet::JQueueType aQueueType)
 {
 	//The passed-in tasks have already been submitted (e.g. via SubmitTasks or SubmitAsyncTasks).
 	//While waiting for those to finish, we get tasks from the queues and execute those.
@@ -748,7 +748,7 @@ void JThreadManager::DoWorkWhileWaitingForTasks(const std::vector<std::shared_pt
 //---------------------------------
 // DoWorkWhileWaitingForTasks
 //---------------------------------
-void JThreadManager::DoWorkWhileWaitingForTasks(const std::function<bool(void)>& aWaitFunction, JEventSourceInfo* aSourceInfo, JQueueInterface* aQueue, JQueueSet::JQueueType aQueueType)
+void JThreadManager::DoWorkWhileWaitingForTasks(const std::function<bool(void)>& aWaitFunction, JEventSourceInfo* aSourceInfo, JQueue* aQueue, JQueueSet::JQueueType aQueueType)
 {
 	//Won't return until aWaitFunction returns true.
 	//In the meantime, executes tasks (or sleeps if none available)
@@ -774,7 +774,7 @@ void JThreadManager::DoWorkWhileWaitingForTasks(const std::function<bool(void)>&
 //---------------------------------
 // GetTask
 //---------------------------------
-std::pair<JQueueSet::JQueueType, std::shared_ptr<JTaskBase>> JThreadManager::GetTask(JQueueSet* aQueueSet, JQueueInterface* aQueue, JQueueSet::JQueueType aQueueType) const
+std::pair<JQueueSet::JQueueType, std::shared_ptr<JTaskBase>> JThreadManager::GetTask(JQueueSet* aQueueSet, JQueue* aQueue, JQueueSet::JQueueType aQueueType) const
 {
 	//This is called by threads who have just submitted (or are waiting on) tasks to complete,
 	//and want work to do in the meantime.

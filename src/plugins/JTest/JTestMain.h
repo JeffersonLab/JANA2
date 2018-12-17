@@ -50,16 +50,19 @@
 
 #include <JApplication.h>
 
-class JTestMain{
+class JTestMain {
 	public:
-		JTestMain(JApplication *app);
-		virtual ~JTestMain();
-		
-		enum{
+
+		enum {
 			MODE_BASIC,
 			MODE_SCALING,
 			MODE_NULL
-		}mode_t;
+		} mode_t;
+
+		JTestMain(JApplication *app);
+		virtual ~JTestMain();
+
+		void CopyToOutputDir(std::string filename);
 
 	protected:
 		JApplication *mApp = nullptr;
@@ -67,13 +70,13 @@ class JTestMain{
 
 		// For MODE_SCALING
 		std::set<uint32_t> mThreadSet;
-		uint32_t mNsamples = 100;
+		uint32_t mNsamples = 15;
 		std::thread *mThread = nullptr;
 		bool mQuit = false;
 		std::string mOutputDirName;
 
 		void TestThread(void);
-	
+
 	private:
 
 };
