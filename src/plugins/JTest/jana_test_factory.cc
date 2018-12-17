@@ -74,7 +74,7 @@ void jana_test_factory::Process(const std::shared_ptr<const JEvent>& aEvent)
 		auto jtest = new jana_test();
 		mData.push_back( jtest );
 
-#if 0
+#if 1
 		// Make a lambda that does busy work representing what would be done to
 		// to calculate the jana_test objects from the inout objects.
 		//
@@ -111,7 +111,7 @@ void jana_test_factory::Process(const std::shared_ptr<const JEvent>& aEvent)
 #endif
 	}
 
-#if 0
+#if 1
 	// Submit the tasks to the queues in the thread manager.
 	// This function won't return until all of the tasks are finished.
 	// This thread will help execute tasks (hopefully these) in the meantime.
