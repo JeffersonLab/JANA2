@@ -8,12 +8,19 @@
 #include "JEventSource_jana_test.h"
 #include "JEvent_test.h"
 #include "JSourceFactoryGenerator.h"
+#include "JEventSourceGeneratorT.h"
 #include "JTask.h"
 #include "JLog.h"
 #include "JQueueWithLock.h"
 #include "JQueueWithBarriers.h"
 
 thread_local std::mt19937 gRandomGenerator;
+
+
+// This ensures sources supplied by other plugins that use the default CheckOpenable
+// which returns 0.01 will still win out over this one.
+template<> double JEventSourceGeneratorT<JEventSource_jana_test>::CheckOpenable(std::string source) { return 1.0E-6; }
+
 
 //----------------
 // Constructor

@@ -51,6 +51,12 @@ void JEventProcessor_jana_test::Init(void)
 //------------------
 void JEventProcessor_jana_test::Process(const std::shared_ptr<const JEvent>& aEvent)
 {
+
+	// Check if this event came from the JTest event source. If not, then assume
+	// the user is testing their own code and return right away.
+	auto event_source_type = aEvent->GetEventSource()->GetType();
+	if( event_source_type != "JEventSource_jana_test" ) return;
+
 	// Grab all objects, but don't do anything with them. The jana_test factory
 	// will also grab the two types of source objects and then so some busy work
 	// to use up CPU.

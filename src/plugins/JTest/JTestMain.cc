@@ -71,7 +71,6 @@ void InitPlugin(JApplication *app){
 	app->Add(new JEventSourceGeneratorT<JEventSource_jana_test>());
 	app->Add(new JFactoryGenerator_jana_test());
 	app->Add(new JEventProcessor_jana_test());
-	app->GetJEventSourceManager()->AddEventSource("dummy");
 
 	new JTestMain(app);
 }
@@ -107,6 +106,13 @@ JTestMain::JTestMain(JApplication *app)
 	if( kMinThreads>0 && kMaxThreads>0){
 		for(uint32_t nthreads=kMinThreads; nthreads<=kMaxThreads; nthreads++) mThreadSet.insert(nthreads);
 	}
+
+	// If no source has been specified, then add a dummy source
+	auto jesm = app->GetJEventSourceManager();
+	std::deque<JEventSource*> sSources;
+	jesm->GetUnopenedJEventSources(sSources);
+	if( sSources.empty() ) jesm->AddEventSource("dummy");
+
 
 	switch( mMode ){
 		case MODE_BASIC:
