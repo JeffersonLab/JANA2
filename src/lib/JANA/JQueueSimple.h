@@ -1,5 +1,5 @@
 //
-//    File: JQueue.h
+//    File: JQueueSimple.h
 // Created: Wed Oct 11 22:51:32 EDT 2017
 // Creator: davidl (on Darwin harriet 15.6.0 i386)
 //
@@ -41,8 +41,8 @@
 //
 //
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-#ifndef _JQueue_h_
-#define _JQueue_h_
+#ifndef _JQueueSimple_h_
+#define _JQueueSimple_h_
 
 #include <cstdint>
 #include <atomic>
@@ -50,20 +50,20 @@
 
 #include "JQueueInterface.h"
 
-class JQueue : public JQueueInterface
+class JQueueSimple : public JQueueInterface
 {
 	public:
 	
-		JQueue(const std::string& aName, std::size_t aQueueSize = 200, std::size_t aTaskBufferSize = 0);
-		~JQueue();
+		JQueueSimple(const std::string& aName, std::size_t aQueueSize = 200, std::size_t aTaskBufferSize = 0);
+		~JQueueSimple();
 
 		//COPIERS //needed because atomic not copyable
-		JQueue(const JQueue& aQueue);
-		JQueue& operator=(const JQueue& aQueue);
+		JQueueSimple(const JQueueSimple& aQueue);
+		JQueueSimple& operator=(const JQueueSimple& aQueue);
 
 		//MOVERS //specify because deleted by default if copiers specified
-		JQueue(JQueue&&) = default;
-		JQueue& operator=(JQueue&&) = default;
+		JQueueSimple(JQueueSimple&&) = default;
+		JQueueSimple& operator=(JQueueSimple&&) = default;
 
 		Flags_t AddTask(const std::shared_ptr<JTaskBase>& aTask);
 		Flags_t AddTask(std::shared_ptr<JTaskBase>&& aTask);
@@ -98,4 +98,4 @@ class JQueue : public JQueueInterface
 		std::atomic<uint32_t> *mReadSlotptr = nullptr;
 };
 
-#endif // _JQueue_h_
+#endif // _JQueueSimple_h_

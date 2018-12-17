@@ -60,7 +60,7 @@ using namespace std;
 #include <JANA/JEventSource.h>
 #include <JANA/JEventSourceGenerator.h>
 #include <JANA/JFactoryGenerator.h>
-#include <JANA/JQueue.h>
+#include <JANA/JQueueSimple.h>
 #include <JANA/JParameterManager.h>
 #include <JANA/JResourceManager.h>
 #include <JANA/JEventSourceManager.h>

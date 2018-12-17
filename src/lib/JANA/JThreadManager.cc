@@ -55,7 +55,7 @@
 #include "JEventSource.h"
 #include "JApplication.h"
 #include "JEventSourceManager.h"
-#include "JQueue.h"
+#include "JQueueSimple.h"
 #include "JEvent.h"
 #include "JThread.h"
 
@@ -224,7 +224,7 @@ JQueueSet* JThreadManager::MakeQueueSet(JEventSource* sEventSource)
 	auto sEventQueue = sEventSource->GetEventQueue();
 	if(sEventQueue == nullptr){
 		//unspecified by source, use default
-		sEventQueue = new JQueue("Events");
+		sEventQueue = new JQueueSimple("Events");
 	}
 
 	// This will add the queue used by the JEventSource to output completed

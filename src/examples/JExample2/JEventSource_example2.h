@@ -14,7 +14,7 @@
 #include <JANA/JEventSourceGenerator.h>
 #include <JANA/JEventSource.h>
 #include <JANA/JEventSourceManager.h>
-#include <JANA/JQueue.h>
+#include <JANA/JQueueSimple.h>
 #include <JANA/JEvent.h>
 #include <JANA/JEventSource.h>
 

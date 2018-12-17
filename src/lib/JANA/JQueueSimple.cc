@@ -38,17 +38,17 @@
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 #include <iostream>
-#include "JQueue.h"
+#include "JQueueSimple.h"
 #include "JLog.h"
 #include "JThread.h"
 
 //---------------------------------
-// JQueue    (Constructor)
+// JQueueSimple    (Constructor)
 //---------------------------------
-JQueue::JQueue(const std::string& aName, std::size_t aQueueSize, std::size_t aTaskBufferSize) : JQueueInterface(aName), mTaskBufferSize(aTaskBufferSize)
+JQueueSimple::JQueueSimple(const std::string& aName, std::size_t aQueueSize, std::size_t aTaskBufferSize) : JQueueInterface(aName), mTaskBufferSize(aTaskBufferSize)
 {
 	//Apparently segfaults
-//	gPARMS->SetDefaultParameter("JANA:QUEUE_DEBUG_LEVEL", mDebugLevel, "JQueue debug level");
+//	gPARMS->SetDefaultParameter("JANA:QUEUE_DEBUG_LEVEL", mDebugLevel, "JQueueSimple debug level");
 	mNslots = aQueueSize;
 	mQueue.resize(mNslots);
 	
@@ -57,18 +57,18 @@ JQueue::JQueue(const std::string& aName, std::size_t aQueueSize, std::size_t aTa
 }
 
 //---------------------------------
-// ~JQueue    (Destructor)
+// ~JQueueSimple    (Destructor)
 //---------------------------------
-JQueue::~JQueue()
+JQueueSimple::~JQueueSimple()
 {
 	if( mWriteSlotptr != nullptr ) delete[] mWriteSlotptr;
 	if( mReadSlotptr  != nullptr ) delete[] mReadSlotptr;
 }
 
 //---------------------------------
-// JQueue    (Copy Constructor)
+// JQueueSimple    (Copy Constructor)
 //---------------------------------
-JQueue::JQueue(const JQueue& aQueue) : JQueueInterface(aQueue)
+JQueueSimple::JQueueSimple(const JQueueSimple& aQueue) : JQueueInterface(aQueue)
 {
 	//Assume this is called by CloneEmpty() or similar on an empty queue (ugh, can improve later)
 	mTaskBufferSize = aQueue.mTaskBufferSize;
@@ -86,7 +86,7 @@ JQueue::JQueue(const JQueue& aQueue) : JQueueInterface(aQueue)
 //---------------------------------
 // operator=
 //---------------------------------
-JQueue& JQueue::operator=(const JQueue& aQueue)
+JQueueSimple& JQueueSimple::operator=(const JQueueSimple& aQueue)
 {
 	//Assume this is called by Clone() or similar on an empty queue (ugh, can improve later)
 	JQueueInterface::operator=(aQueue);
@@ -107,7 +107,7 @@ JQueue& JQueue::operator=(const JQueue& aQueue)
 //---------------------------------
 // AddTask
 //---------------------------------
-JQueueInterface::Flags_t JQueue::AddTask(const std::shared_ptr<JTaskBase>& aTask)
+JQueueInterface::Flags_t JQueueSimple::AddTask(const std::shared_ptr<JTaskBase>& aTask)
 {
 	//We want to copy the task into the queue instead of moving it.
 	//However, we don't want to duplicate the complicated code in both functions.
@@ -121,7 +121,7 @@ JQueueInterface::Flags_t JQueue::AddTask(const std::shared_ptr<JTaskBase>& aTask
 	//and is worth avoiding the code duplication (or confusion of other tricks)
 
 	if(mDebugLevel > 0)
-		JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JQueue::AddTask(): Copy-add task " << aTask.get() << "\n" << JLogEnd();
+		JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JQueueSimple::AddTask(): Copy-add task " << aTask.get() << "\n" << JLogEnd();
 
 	auto sTempTask = aTask;
 	return AddTask(std::move(sTempTask));
@@ -130,7 +130,7 @@ JQueueInterface::Flags_t JQueue::AddTask(const std::shared_ptr<JTaskBase>& aTask
 //---------------------------------
 // AddTask
 //---------------------------------
-JQueueInterface::Flags_t JQueue::AddTask(std::shared_ptr<JTaskBase>&& aTask)
+JQueueInterface::Flags_t JQueueSimple::AddTask(std::shared_ptr<JTaskBase>&& aTask)
 {
 	// Loop over write slots to get exclusive write access to one
 	auto sptr = mWriteSlotptr;
@@ -145,7 +145,7 @@ JQueueInterface::Flags_t JQueue::AddTask(std::shared_ptr<JTaskBase>&& aTask)
 			mReadSlotptr[idx] = true;
 			mTasksInserted++;
 
-			if(mDebugLevel > 0) JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JQueue::AddTask(): Task added to slot " << idx << ".\n" << JLogEnd();
+			if(mDebugLevel > 0) JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JQueueSimple::AddTask(): Task added to slot " << idx << ".\n" << JLogEnd();
 			
 			return Flags_t::kNO_ERROR;
 		}
@@ -158,7 +158,7 @@ JQueueInterface::Flags_t JQueue::AddTask(std::shared_ptr<JTaskBase>&& aTask)
 //---------------------------------
 // AddTasksProcessedOutsideQueue
 //---------------------------------
-void JQueue::AddTasksProcessedOutsideQueue(std::size_t nTasks)
+void JQueueSimple::AddTasksProcessedOutsideQueue(std::size_t nTasks)
 {
 	mTasksRunOutsideQueue.fetch_add( nTasks );
 }
@@ -166,7 +166,7 @@ void JQueue::AddTasksProcessedOutsideQueue(std::size_t nTasks)
 //---------------------------------
 // GetMaxTasks
 //---------------------------------
-uint32_t JQueue::GetMaxTasks(void)
+uint32_t JQueueSimple::GetMaxTasks(void)
 {
 	/// Returns maximum number of Tasks queue can hold at one time.
 	return mQueue.size();
@@ -175,7 +175,7 @@ uint32_t JQueue::GetMaxTasks(void)
 //---------------------------------
 // GetTask
 //---------------------------------
-std::shared_ptr<JTaskBase> JQueue::GetTask(void)
+std::shared_ptr<JTaskBase> JQueueSimple::GetTask(void)
 {
 	// Loop over read slots to get exclusive write access to one
 	auto sptr = mReadSlotptr;
@@ -189,7 +189,7 @@ std::shared_ptr<JTaskBase> JQueue::GetTask(void)
 			mWriteSlotptr[idx] = false;
  			mTasksProcessed++;
 
-			if(mDebugLevel > 0) JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JQueue::GetTask(): Task removed from slot " << idx << ".\n" << JLogEnd();
+			if(mDebugLevel > 0) JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JQueueSimple::GetTask(): Task removed from slot " << idx << ".\n" << JLogEnd();
 			
 			return sTask; //should be copy-elided
 		}
@@ -203,7 +203,7 @@ std::shared_ptr<JTaskBase> JQueue::GetTask(void)
 //---------------------------------
 // GetNumTasks
 //---------------------------------
-uint32_t JQueue::GetNumTasks(void)
+uint32_t JQueueSimple::GetNumTasks(void)
 {
 	/// Returns the number of tasks currently in this queue.
 	
@@ -217,7 +217,7 @@ uint32_t JQueue::GetNumTasks(void)
 //---------------------------------
 // GetNumTasksInserted
 //---------------------------------
-uint64_t JQueue::GetNumTasksInserted(void)
+uint64_t JQueueSimple::GetNumTasksInserted(void)
 {
 	/// Returns number of events that have been taken out of this
 	/// queue. Does not include events still in the queue (see
@@ -229,7 +229,7 @@ uint64_t JQueue::GetNumTasksInserted(void)
 //---------------------------------
 // GetNumTasksProcessed
 //---------------------------------
-uint64_t JQueue::GetNumTasksProcessed(void)
+uint64_t JQueueSimple::GetNumTasksProcessed(void)
 {
 	/// Returns number of events that have been taken out of this
 	/// queue. Does not include events still in the queue (see
@@ -241,7 +241,7 @@ uint64_t JQueue::GetNumTasksProcessed(void)
 //---------------------------------
 // GetTaskBufferSize
 //---------------------------------
-std::size_t JQueue::GetTaskBufferSize(void)
+std::size_t JQueueSimple::GetTaskBufferSize(void)
 {
 	return mTaskBufferSize;
 }
@@ -249,7 +249,7 @@ std::size_t JQueue::GetTaskBufferSize(void)
 //---------------------------------
 // AreEnoughTasksBuffered
 //---------------------------------
-bool JQueue::AreEnoughTasksBuffered(void)
+bool JQueueSimple::AreEnoughTasksBuffered(void)
 {
 	//This function is only called for the Event queue
 	//If not enough tasks (events) are buffered, we will read in more events
@@ -260,8 +260,8 @@ bool JQueue::AreEnoughTasksBuffered(void)
 //---------------------------------
 // Clone
 //---------------------------------
-JQueueInterface* JQueue::CloneEmpty(void) const
+JQueueInterface* JQueueSimple::CloneEmpty(void) const
 {
 	//Create an empty clone of the queue (no tasks copied)
-	return (new JQueue(*this));
+	return (new JQueueSimple(*this));
 }

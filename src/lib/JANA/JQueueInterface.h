@@ -1,5 +1,5 @@
 //
-//    File: JQueueInterface.h
+//    File: JQueue.h
 // Created: Wed Oct 11 22:51:32 EDT 2017
 // Creator: davidl (on Darwin harriet 15.6.0 i386)
 //
@@ -41,8 +41,8 @@
 //
 //
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-#ifndef _JQueueInterface_h_
-#define _JQueueInterface_h_
+#ifndef _JQueue_h_
+#define _JQueue_h_
 
 #include <cstdint>
 #include <string>
@@ -50,7 +50,7 @@
 
 class JTaskBase;
 
-class JQueueInterface
+class JQueue
 {
 	public:
 	
@@ -61,16 +61,16 @@ class JQueueInterface
 		};
 
 		//STRUCTORS
-		JQueueInterface(const std::string& aName);
-		virtual ~JQueueInterface() = default;
+		JQueue(const std::string& aName);
+		virtual ~JQueue() = default;
 
 		//COPIERS //needed because movers specified
-		JQueueInterface(const JQueueInterface& aQueue) = default;
-		JQueueInterface& operator=(const JQueueInterface& aQueue) = default;
+		JQueue(const JQueue& aQueue) = default;
+		JQueue& operator=(const JQueue& aQueue) = default;
 
 		//MOVERS //needed because destructor specified
-		JQueueInterface(JQueueInterface&&) = default;
-		JQueueInterface& operator=(JQueueInterface&&) = default;
+		JQueue(JQueue&&) = default;
+		JQueue& operator=(JQueue&&) = default;
 
 		virtual Flags_t AddTask(const std::shared_ptr<JTaskBase>& aTask) = 0;
 		virtual Flags_t AddTask(std::shared_ptr<JTaskBase>&& aTask) = 0;
@@ -88,17 +88,17 @@ class JQueueInterface
 		virtual void FinishedWithQueue(void){} //Call this when finished with the queue
 
 		std::string GetName(void) const;
-		virtual JQueueInterface* CloneEmpty(void) const = 0; //Create an empty clone of the queue (no tasks copied)
+		virtual JQueue* CloneEmpty(void) const = 0; //Create an empty clone of the queue (no tasks copied)
 
 	private:
 		std::string mName;
 };
 
-inline JQueueInterface::JQueueInterface(const std::string& aName) : mName(aName) { }
+inline JQueue::JQueue(const std::string& aName) : mName(aName) { }
 
-inline std::string JQueueInterface::GetName(void) const
+inline std::string JQueue::GetName(void) const
 {
 	return mName;
 }
 
-#endif // _JQueueInterface_h_
+#endif // _JQueue_h_

@@ -14,7 +14,7 @@
 
 #include <JANA/JEventSource.h>
 #include <JANA/JEvent.h>
-#include <JANA/JQueue.h>
+#include <JANA/JQueueSimple.h>
 #include <JANA/JApplication.h>
 #include "JResourcePool.h"
 

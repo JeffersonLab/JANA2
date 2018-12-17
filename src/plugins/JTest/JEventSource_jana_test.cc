@@ -39,7 +39,7 @@ JEventSource_jana_test::JEventSource_jana_test(string source_name, JApplication 
 	if( mIncludeBarriers ) {
 	  mEventQueue = new JQueueWithBarriers("Events", 200, 50); //max size of 200, keep at least 50 buffered
 	}else{
-	  mEventQueue = new JQueue("Events", 200, 50);
+	  mEventQueue = new JQueueSimple("Events", 200, 50);
 	}
 	//Debug:
 //	mDebugLevel = 500;
