@@ -82,9 +82,16 @@ class JQueueSimple : public JQueue
 
 	private:
 
+		// mTaskBufferSize is the used to hold the minimum number of events
+		// needed for the the AreEnoughTasksBuffered() method to return true.
+		// It is used when this queue holds "Events" from a source and JANA
+		// wants to be efficient at reading them by keeping the disk spinning.
+		// It is set in the constructor with a default of "0" which is the
+		// equivalent to setting it to "1".
 		std::size_t mTaskBufferSize = 0; //min event task buffer (only checked for Events queue) //will get more events if # tasks < this
+
 		int mDebugLevel = 0;
-		uint32_t mLogTarget = 0; //cout
+		uint32_t mLogTarget = 0;
 
 		std::vector<std::shared_ptr<JTaskBase>> mQueue;
 		std::atomic<uint64_t> mTasksProcessed{0};
@@ -92,8 +99,6 @@ class JQueueSimple : public JQueue
 		std::atomic<uint64_t> mTasksRunOutsideQueue{0};
 
 		std::size_t mNslots = 0;
-		std::vector< std::atomic<uint32_t> > mWriteSlots;
-		std::vector< std::atomic<uint32_t> > mReadSlots;
 		std::atomic<uint32_t> *mWriteSlotptr = nullptr;
 		std::atomic<uint32_t> *mReadSlotptr = nullptr;
 };

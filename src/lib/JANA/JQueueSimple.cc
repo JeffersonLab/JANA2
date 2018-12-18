@@ -54,6 +54,9 @@ JQueueSimple::JQueueSimple(const std::string& aName, std::size_t aQueueSize, std
 	
 	mWriteSlotptr = new std::atomic<uint32_t>[mNslots];
 	mReadSlotptr  = new std::atomic<uint32_t>[mNslots];
+
+	// Clear all flags indicating all slots available
+	for(uint32_t i=0; i<mNslots; i++) mWriteSlotptr[i] = mReadSlotptr[i] = false;
 }
 
 //---------------------------------
@@ -81,6 +84,9 @@ JQueueSimple::JQueueSimple(const JQueueSimple& aQueue) : JQueue(aQueue)
 	if( mReadSlotptr  != nullptr ) delete[] mReadSlotptr;
 	mWriteSlotptr = new std::atomic<uint32_t>[mNslots];
 	mReadSlotptr  = new std::atomic<uint32_t>[mNslots];
+
+	// Clear all flags indicating all slots available
+	for(uint32_t i=0; i<mNslots; i++) mWriteSlotptr[i] = mReadSlotptr[i] = false;
 }
 
 //---------------------------------
@@ -100,6 +106,9 @@ JQueueSimple& JQueueSimple::operator=(const JQueueSimple& aQueue)
 	if( mReadSlotptr  != nullptr ) delete[] mReadSlotptr;
 	mWriteSlotptr = new std::atomic<uint32_t>[mNslots];
 	mReadSlotptr  = new std::atomic<uint32_t>[mNslots];
+
+	// Clear all flags indicating all slots available
+	for(uint32_t i=0; i<mNslots; i++) mWriteSlotptr[i] = mReadSlotptr[i] = false;
 
 	return *this;
 }
@@ -169,7 +178,7 @@ void JQueueSimple::AddTasksProcessedOutsideQueue(std::size_t nTasks)
 uint32_t JQueueSimple::GetMaxTasks(void)
 {
 	/// Returns maximum number of Tasks queue can hold at one time.
-	return mQueue.size();
+	return mNslots;
 }
 
 //---------------------------------
@@ -206,6 +215,8 @@ std::shared_ptr<JTaskBase> JQueueSimple::GetTask(void)
 uint32_t JQueueSimple::GetNumTasks(void)
 {
 	/// Returns the number of tasks currently in this queue.
+	/// No locks are used so this value may have changed even
+	/// before returning from this call.
 	
 	uint32_t nTasks = 0;
 	auto sptr = mReadSlotptr;
