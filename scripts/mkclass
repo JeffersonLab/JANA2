@@ -90,14 +90,16 @@ def PrintFileHeader(f):
 #-----------------
 def PrintClassDef(f):
 
-	content = """//
-// Description:
-//
-//
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+	content = """
+
 #ifndef _"""+classname+"""_h_
 #define _"""+classname+"""_h_
 
+//////////////////////////////////////////////////////////////////////////////////////////////////
+/// Brief class description.
+///
+/// Detailed class description.
+//////////////////////////////////////////////////////////////////////////////////////////////////
 class """+classname+"""{
 	public:
 		"""+classname+"""();
