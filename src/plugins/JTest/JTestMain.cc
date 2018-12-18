@@ -83,7 +83,6 @@ JTestMain::JTestMain(JApplication *app)
 {
 	mApp = app;
 
-
 	uint32_t kMinThreads=0;
 	uint32_t kMaxThreads=0;
 	string kThreadSet;
