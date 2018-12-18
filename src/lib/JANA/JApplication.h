@@ -92,8 +92,20 @@ class JTask;
 
 extern JApplication *japp;
 
-
+//////////////////////////////////////////////////////////////////////////////////////////////////
+/// JANA application class (singleton).
+///
+/// The JApplication class serves as a central access point for getting to most things
+/// in the JANA application. It owns the JThreadManager, JResourceManager, JParameterManager,
+/// etc. It is also responsible for making sure all of the plugins are attached and other
+/// user specified configurations for the run are implemented before starting the processing
+/// of the data. User code (e.g. plugins) will generally register things like event sources
+/// and processors with the JApplication so they can be called up later at the approprite time.
+//////////////////////////////////////////////////////////////////////////////////////////////////
 class JApplication{
+
+
+
 	public:
 	
 		enum RETURN_STATUS{

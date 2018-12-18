@@ -128,6 +128,17 @@ void SIGSEGVHandle(int aSignalNumber, siginfo_t* aSignalInfo, void* aContext)
 //-----------------------------------------------------------------
 void JApplication::AddSignalHandlers(void)
 {
+	/// Add special handles for system signals. The handlers will catch SIGINT
+	/// signals that the user may send (e.g. by hitting ctl-C) to indicate
+	/// they want data processing to stop and the program to end. When a SIGINT
+	/// is received, JANA will try and shutdown the program cleanly, allowing
+	/// the processing threads to finish up the events they are working on.
+	/// The first 5 SIGINT signals received will tell JANA to shutdown gracefully.
+	/// On the 6th SIGINT, the program will try to exit immediately.
+	///
+	/// This is called from the JApplication constructor.
+
+
 	//Define signal action
 	struct sigaction sSignalAction;
 	sSignalAction.sa_sigaction = SIGSEGVHandle;
@@ -358,6 +369,20 @@ void JApplication::AttachPlugins(void)
 //---------------------------------
 void JApplication::AttachPlugin(string soname, bool verbose)
 {
+	/// Attach a plugin by opening the shared object file and running the
+	/// InitPlugin_t(JApplication* app) global C-style routine in it.
+	/// An exception will be thrown if the plugin is not successfully opened.
+	/// Users will not need to call this directly since it is called automatically
+	/// from Initialize().
+	///
+	/// @param soname name of shared object file to attach. This may include
+	///               an absolute or relative path.
+	///
+	/// @param verbose if set to true, failed attempts will be recorded via the
+	///                JLog. Default is false so JANA can silently ignore files
+	///                that are not valid plugins.
+	///
+
 	// Open shared object
 	void* handle = dlopen(soname.c_str(), RTLD_LAZY | RTLD_GLOBAL | RTLD_NODELETE);
 	if(!handle){
@@ -393,6 +418,12 @@ void JApplication::AddPlugin(string plugin_name)
 	/// if it is already there. This may be important if the order
 	/// of plugins is important. It is left to the user to handle
 	/// in those cases.
+	///
+	/// @param plugin_name name of the plugin. Do not include the
+	///                    ".so" or ".dylib" suffix in the name.
+	///                    The path to the plugin will be searched
+	///                    from the JANA_PLUGIN_PATH envar.
+	///
 	for( string &n : _plugins) if( n == plugin_name ) return;
 	_plugins.push_back(plugin_name);
 }
@@ -404,10 +435,17 @@ void JApplication::AddPluginPath(string path)
 {
 	/// Add a path to the directories searched for plugins. This
 	/// should not include the plugin name itself. This only has
-	/// an effect when called before AttchPlugins is called
+	/// an effect when called before AttachPlugins is called
 	/// (i.e. before Run is called).
 	/// n.b. if this is called with a path already in the list,
 	/// then the call is silently ignored.
+	///
+	/// Generally, users will set the path via the JANA_PLUGIN_PATH
+	/// environment variable and won't need to call this method. This
+	/// may be called if it needs to be done programmatically.
+	///
+	/// @param path directory to search fpr plugins.
+	///
 	for( string &n : _plugin_paths) if( n == path ) return;
 	_plugin_paths.push_back(path);
 }
@@ -430,6 +468,10 @@ int JApplication::GetExitCode(void)
 //---------------------------------
 void JApplication::Initialize(void)
 {
+	/// Initialize the application in preparation for data processing.
+	/// This is called by the Run method so users will usually not
+	/// need to call this directly.
+
 	// Attach all plugins
 	AttachPlugins();
 
@@ -711,6 +753,8 @@ void JApplication::Stop(void)
 void JApplication::Add(JEventSourceGenerator *source_generator)
 {
 	/// Add the given JFactoryGenerator to the list of queues
+	///
+	/// @param source_generator pointer to source generator to add. Ownership is passed to JApplication
 
 	GetJEventSourceManager()->AddJEventSourceGenerator( source_generator );
 }
@@ -721,6 +765,8 @@ void JApplication::Add(JEventSourceGenerator *source_generator)
 void JApplication::Add(JFactoryGenerator *factory_generator)
 {
 	/// Add the given JFactoryGenerator to the list of queues
+	///
+	/// @param factory_generator pointer to factory generator to add. Ownership is passed to JApplication
 
 	_factoryGenerators.push_back( factory_generator );
 }
