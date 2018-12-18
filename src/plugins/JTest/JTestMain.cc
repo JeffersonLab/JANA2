@@ -108,11 +108,7 @@ JTestMain::JTestMain(JApplication *app)
 	}
 
 	// If no source has been specified, then add a dummy source
-	auto jesm = app->GetJEventSourceManager();
-	std::deque<JEventSource*> sSources;
-	jesm->GetUnopenedJEventSources(sSources);
-	if( sSources.empty() ) jesm->AddEventSource("dummy");
-
+	if( app->GetJEventSourceManager()->GetSourceNames().empty() ) app->GetJEventSourceManager()->AddEventSource("dummy");
 
 	switch( mMode ){
 		case MODE_BASIC:

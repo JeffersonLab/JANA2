@@ -45,6 +45,8 @@ class JEventSourceManager
 		void RemoveJEventSource(JEventSource *source);
 		void RemoveJEventSourceGenerator(JEventSourceGenerator *source_generator);
 
+		std::vector<std::string> GetSourceNames(void) { return _source_names; }
+
 		std::pair<JEventSource::RETURN_STATUS, JEventSource*> OpenNext(const JEventSource* aPreviousSource);
 
 	private:
