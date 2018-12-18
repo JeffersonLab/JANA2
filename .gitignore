@@ -36,6 +36,8 @@
 .externalToolBuilders
 .project
 .pydevproject
+.cproject
+.settings
 .sconsign.dblite
 SBMS
 Linux_*
@@ -43,3 +45,6 @@ Darwin_*
 src/.Linux_*
 src/.Darwin_*
 
+# Doxygen generated files
+docs/html/*
+docs/latex/*
