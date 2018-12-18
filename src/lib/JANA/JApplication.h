@@ -177,6 +177,7 @@ class JApplication{
 		int _verbose;
 		bool _draining_queues;
 		bool _ticker_on;
+		std::chrono::time_point<std::chrono::high_resolution_clock> mRunStartTime;
 		std::vector<string> _plugins;
 		std::vector<string> _plugin_paths;
 		std::vector<void*> _sohandles;

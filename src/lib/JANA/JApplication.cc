@@ -664,6 +664,7 @@ void JApplication::Run(uint32_t nthreads)
 
 	// Start all threads running
 	jout << "Start processing ..." << endl;
+	mRunStartTime = std::chrono::high_resolution_clock::now();
 	_threadManager->RunThreads();
 
 	// Monitor status of all threads
@@ -921,12 +922,12 @@ void JApplication::Recycle(JFactorySet* aFactorySet)
 
 //---------------------------------
 // UpdateResourceLimits
-//
-// Used internally by JANA to adjust the maximum size of resource
-// pools after changing the number of threads
 //---------------------------------
 void JApplication::UpdateResourceLimits(void)
 {
+	/// Used internally by JANA to adjust the maximum size of resource
+	/// pools after changing the number of threads.
+
 	// OK, this is tricky. The max size of the JFactorySet resource pool should
 	// be at least as big as how many threads we have. Factory sets may also be
 	// attached to JEvent objects in queues that are not currently being acted
@@ -963,19 +964,15 @@ uint64_t JApplication::GetNeventsProcessed(void)
 //---------------------------------
 float JApplication::GetIntegratedRate(void)
 {
-	// Once we start draining the queues, freez the integrated
-	// rate so it is not distorted by the wind down
+	/// Returns the total integrated rate so far in Hz since
+	/// Run was called.
+
 	static float last_R = 0.0;
-	if( _draining_queues ) return last_R;
 
 	auto now = std::chrono::high_resolution_clock::now();
-	uint64_t N = GetNeventsProcessed();
-	static auto start_t = now;
-	static uint64_t start_N = N;
-
-	std::chrono::duration<float> delta_t = now - start_t;
+	std::chrono::duration<float> delta_t = now - mRunStartTime;
 	float delta_t_seconds = delta_t.count();
-	float delta_N = (float)(GetNeventsProcessed() - start_N);
+	float delta_N = (float)GetNeventsProcessed();
 
 	if( delta_t_seconds >= 0.5) {
 		last_R = delta_N / delta_t_seconds;
