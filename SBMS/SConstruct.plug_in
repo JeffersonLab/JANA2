@@ -94,8 +94,8 @@ if SHOWBUILD==0:
 
 
 # Get compiler from environment variables (if set)
-env.Replace( CXX = os.getenv('CXX', 'g++'),
-             CC  = os.getenv('CC' , 'gcc'),
+env.Replace( CXX = os.getenv('CXX', 'c++'),
+             CC  = os.getenv('CC' , 'cc'),
              FC  = os.getenv('FC' , 'gfortran') )
 
 # Add local directory, directories from HALLD_MY and HALLD_HOME to include search path
@@ -103,7 +103,7 @@ env.PrependUnique(CPPPATH = ['%s/../src' % jana_home, '%s/../src/JANA' % jana_ho
 env.PrependUnique(CPPPATH = ['%s/../src' % jana_my, '%s/../src/JANA' % jana_my])
 
 # Turn on debug symbols and warnings
-env.PrependUnique(      CFLAGS = ['-g', '-fPIC', '-Wall'])
+env.PrependUnique(      CFLAGS = ['-g', '-fPIC', '-Wall', '-std=c++11'])
 env.PrependUnique(    CXXFLAGS = ['-g', '-fPIC', '-Wall'])
 env.PrependUnique(FORTRANFLAGS = ['-g', '-fPIC', '-Wall'])
 
