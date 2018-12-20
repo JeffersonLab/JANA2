@@ -44,10 +44,10 @@
 
 #include <string>
 
-#include <JApplication.h>
-#include <JFunctions.h>
-#include <JEventSourceGenerator.h>
-#include <JEventSourceManager.h>
+#include <JANA/JApplication.h>
+#include <JANA/JFunctions.h>
+#include <JANA/JEventSourceGenerator.h>
+#include <JANA/JEventSourceManager.h>
 
 /// This templated class is used to generate JEventSource based objects
 /// to handle reading events into JANA. Multiple JEventSourceGenerator
@@ -61,7 +61,7 @@
 ///
 /// A new instance of the JEventSource subclass will be created for each
 /// input source in the job. For example, if two files of the same type,
-/// are specified then the JEventSourceGenerator correpsonding to that
+/// are specified then the JEventSourceGenerator corresponding to that
 /// file type will be used to create two JEventSource objects.
 ///
 /// REQUIREMENTS OF JEventSource SUBCLASS:
