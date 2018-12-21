@@ -288,11 +288,6 @@ std::shared_ptr<const JEvent> """+classname+"""::GetEvent(void)
 	auto jevent = new JEvent_"""+pluginname+"""();
 	// ... add event data to jevent ...
 	return std::shared_ptr<JEvent>( (JEvent*)jevent );
-
-	// n.b. For maximum efficiency you can use a pool of event objects and
-	// set a custom deleter in the shared pointer to return the event to
-	// the pool. e.g.:
-	// return std::shared_ptr<JEvent>( (JEvent*)jevent, [this,jevent](JEvent*evt){ this->ReturnJEventToPool(jevent); } );
 }
 
 //------------------
@@ -302,15 +297,16 @@ bool """+classname+"""::GetObjects(const std::shared_ptr<const JEvent>& aEvent, 
 {
 	// This should create objects that are of the type aFactory holds using
 	// data from aEvent. The objects should be transferred to aFactory which
-	// serves simply as a container.
+	// serves simply as a container. Two possible paradigms are shown below
+	// as OPTION 1 and OPTION 2
 	
 	auto name = aFactory->GetName();   // name of class aFactory holds
 	auto tag  = aFactory->GetTag();    // aFactory tag
 	
 	// Most implementations will not fill tagged factories from event sources.
 	// Your implementation should verify that the name, tag combo for this
-	// aFactory is one we can provide objects for.
-	if( tag.empty() ) return false; // aFactory does not hold a type produced by this source
+	// aFactory is one it can provide objects for.
+	if( !tag.empty() ) return false; // aFactory does not hold a type produced by this source
 	
 	// OPTION 1 ------------------------------------------------------------------
 	// Check the type of data being requested is one we can provide. If so,
@@ -353,24 +349,25 @@ bool """+classname+"""::GetObjects(const std::shared_ptr<const JEvent>& aEvent, 
 	// return name=="MyHit" || name=="MyTrigger";
 }
 
+// The following method is optional in case you need to implement a more 
+// complicated scheme. If not defined, a default JTask will be created for
+// each event that simply runs all event processors on it. (This is
+// probably what you want so feel free to delete this section.)
+//
+// An example of when you would implement this method is if you wanted
+// to split the parsing of the input data  through multiple stages.
+// For example, the first stage might simply split the larger buffer
+// which contains many events into smaller buffers containing single
+// events (e.g. disentangling). The JEventProcessor tasks should only
+// be attached to single events rather than blocks so it makes sense
+// to make the parsing of the blocks a different flavor of JTask.
+// See the documentation for more details.
 //------------------
 // GetProcessEventTask
 //------------------
 // std::shared_ptr<JTaskBase> """+classname+"""::GetProcessEventTask(std::shared_ptr<const JEvent>&& aEvent)
 //{
-//	// This method is optional if you need to implement a more complicated
-//  // scheme. If not defined, a default JTask will be created for
-//  // each event that simply runs all event processors on it. (This is
-//  // probably what you want. At least to start with).
-//  //
-//  // An example of when you would implement this method is if you wanted
-//  // to split the parsing of the input data  through multiple stages.
-//  // For example, the first stage might simply split the larger buffer
-//  // which contains many events into smaller buffers containing single
-//  // events. This would then return a JTask for parsing the smaller buffers
-//  // which itself would create new a JTask for each to run the event processors
-//  // on. A second JQueue would need to be added by this source in that case to
-//  // hold the single events. See the documentation for more details.
+// 
 //}
 """
 	f.write(content)
