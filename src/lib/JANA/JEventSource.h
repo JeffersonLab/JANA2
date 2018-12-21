@@ -50,16 +50,15 @@
 #include <typeindex>
 
 #include <JANA/JApplication.h>
+#include <JANA/JFactoryGenerator.h>
 
 class JTaskBase;
-class JApplication;
 class JQueue;
 class JEvent;
 class JEventSourceManager;
 class JEventSourceGenerator;
 class JFactory;
 template<typename T> class JFactoryT;
-class JFactoryGenerator;
 
 //Deriving classes should:
 //Overload all virtual methods (as needed)

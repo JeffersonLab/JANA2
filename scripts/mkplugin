@@ -248,6 +248,13 @@ def PrintJEventSourceClassMethods(f):
 """+classname+"""::"""+classname+"""(std::string source_name, JApplication *app):JEventSource(source_name, app)
 {
 	// Don't open the file/stream here. Do it in the Open() method below.
+	
+	// Uncomment the line below and modify it to specify all of the data types this source
+	// provides. The "MyHit" and "MyTrigger" are just examples of JObject types you might
+	// define (they don't actually exist). The purpose of this is to create empty JFactory
+	// objects that will serve as containers for the data the source produces.
+	// Make sure that all types are listed as template arguments here!!
+	// mFactoryGenerator = new JSourceFactoryGenerator<MyHit, MyTrigger>();
 }
 
 //---------------------------------
@@ -255,6 +262,9 @@ def PrintJEventSourceClassMethods(f):
 //---------------------------------
 """+classname+"""::~"""+classname+"""()
 {
+	// Delete JFactoryGenerator if we created one
+	if( mFactoryGenerator != nullptr ) delete mFactoryGenerator;
+
 	// Close the file/stream here.
 }
 
