@@ -6,6 +6,6 @@ import os
 Import('env osname')
 
 # Loop over plugins, building each
-subdirs = ['JTest', 'janarate']
+subdirs = ['JTest', 'janarate', 'janapy']
 
 SConscript(dirs=subdirs, exports='env osname', duplicate=0)

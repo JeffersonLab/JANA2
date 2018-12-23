@@ -1,0 +1,20 @@
+
+
+import sbms
+import subprocess
+
+# get env object and clone it
+Import('*')
+env = env.Clone()
+
+PYTHON_CFLAGS = subprocess.Popen(["python-config", "--cflags"], stdout=subprocess.PIPE).communicate()[0]
+PYTHON_LINKFLAGS = subprocess.Popen(["python-config", "--libs"], stdout=subprocess.PIPE).communicate()[0]
+
+sbms.AddCompileFlags(env, PYTHON_CFLAGS)
+sbms.AddLinkFlags(env, PYTHON_LINKFLAGS)
+
+
+sbms.AddJANA(env)
+sbms.plugin(env)
+
+
