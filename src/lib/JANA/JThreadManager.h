@@ -113,9 +113,15 @@ class JThreadManager
 		//CREATE/DESTROY
 		void CreateThreads(std::size_t aNumThreads);
 		void RunThreads(void);
+		void StopThreads(bool wait_until_idle = false);
 		void EndThreads(void);
 		void JoinThreads(void);
-		bool HaveAllThreadsEnded(void);
+		bool AreAllThreadsIdle(void);
+		bool AreAllThreadsRunning(void);
+		bool AreAllThreadsEnded(void);
+		void WaitUntilAllThreadsIdle(void);
+		void WaitUntilAllThreadsRunning(void);
+		void WaitUntilAllThreadsEnded(void);
 		void AddThread(void);
 		void RemoveThread(void);
 		void SetNJThreads(std::size_t nthreads);

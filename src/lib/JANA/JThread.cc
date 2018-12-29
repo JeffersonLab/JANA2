@@ -194,10 +194,27 @@ bool JThread::IsIdle(void)
 }
 
 //---------------------------------
+// IsRunning
+//---------------------------------
+bool JThread::IsRunning(void)
+{
+	/// Return true if the thread is currently in the running state.
+	/// Being in the running state means the thread is currently
+	/// able to process tasks. The thread may not be actively processing
+	/// a task at the moment (e.g. stuck waiting for a task due to
+	/// being an I/O bound job.)
+	
+	return mRunState == kRUN_STATE_RUNNING;
+}
+
+//---------------------------------
 // IsEnded
 //---------------------------------
 bool JThread::IsEnded(void)
 {
+	/// Return true if the thread is in the ended state and will not
+	/// process any more events. The thread will only enter this state
+	/// when exiting the Loop method.
 	return mRunState == kRUN_STATE_ENDED;
 }
 
@@ -480,5 +497,7 @@ void JThread::Stop(bool wait_until_idle)
 	// That should only be for the duration of processing of the current
 	// event though and this method is expected to be used rarely so
 	// this should be OK.
-	if( wait_until_idle ) while( mRunState == kRUN_STATE_RUNNING ) std::this_thread::yield();
+	if( wait_until_idle ){
+		while( (mRunState==kRUN_STATE_RUNNING) && (mRunStateTarget==kRUN_STATE_IDLE) ) std::this_thread::yield();
+	}
 }

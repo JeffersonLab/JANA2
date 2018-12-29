@@ -128,7 +128,7 @@ class JApplication{
 		void SetExitCode(int exit_code);
 		void SetMaxThreads(uint32_t);
 		void SetTicker(bool ticker_on=true);
-		void Stop(void);
+		void Stop(bool wait_until_idle=false);
 		
 		void Add(JEventSourceGenerator *source_generator);
 		void Add(JFactoryGenerator *factory_generator);

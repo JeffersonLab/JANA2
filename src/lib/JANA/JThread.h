@@ -77,6 +77,7 @@ class JThread{
 		void Join(void);
 
 		void End(void);
+		bool IsRunning(void);
 		bool IsIdle(void);
 		bool IsEnded(void);
 		bool IsJoined(void);

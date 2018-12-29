@@ -677,7 +677,7 @@ void JApplication::Run(uint32_t nthreads)
 			_draining_queues = _eventSourceManager->AreAllFilesClosed();
 		
 		// Check if all threads have finished
-		if(_threadManager->HaveAllThreadsEnded())
+		if(_threadManager->AreAllThreadsEnded())
 		{
 			std::cout << "All threads have ended.\n";
 			break;
@@ -743,9 +743,13 @@ void JApplication::SetTicker(bool ticker_on)
 //---------------------------------
 // Stop
 //---------------------------------
-void JApplication::Stop(void)
+void JApplication::Stop(bool wait_until_idle)
 {
-	
+	/// Tell all JThread objects to go into the idle state after completing
+	/// their current task. If wait_until_idle is true, this will block until
+	/// all threads are in the idle state. If false (the default), it will return
+	/// immediately after telling all threads to go into the idle state
+	_threadManager->StopThreads(wait_until_idle);
 }
 
 //---------------------------------

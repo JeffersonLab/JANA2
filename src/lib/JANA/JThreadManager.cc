@@ -45,6 +45,8 @@
 #include <algorithm>
 #include <unistd.h>
 #include <tuple>
+#include <chrono>
+#include <thread>
 
 #ifdef __APPLE__
 #include <mach/thread_policy.h>
@@ -922,8 +924,39 @@ uint32_t JThreadManager::GetNcores(void)
 //---------------------------------
 void JThreadManager::RunThreads(void)
 {
-	for(auto sThread : mThreads)
-		sThread->Run();
+	/// Tell all threads to enter the running state. This is called from JApplication::Run
+	/// after the threads have been created and it is ready to proceed with data processing.
+	/// It may also be called to resume data processing after a call to StopThreads() has
+	/// paused it.
+
+	for(auto sThread : mThreads) sThread->Run();
+}
+
+//---------------------------------
+// StopThreads
+//---------------------------------
+void JThreadManager::StopThreads(bool wait_until_idle)
+{
+	/// Stop all threads from processing. This will allow the threads to complete
+	/// their current task before dropping into the idle state. This will call
+	/// the Stop() method for all JThread objects.
+	///
+	/// Note that JThread::Stop() will be called with no arguments first which should
+	/// flag the thread to stop, but return right away. If the wait_until_idle flag
+	/// is set, then this will call JThread::Stop a second time, passing an argument
+	/// of "true" which will block until the thread is in the idle state. By calling
+	/// the Stop method twice, it will more quickly get to the state where all threads
+	/// are idle.
+	///
+	/// Note also that if RunThreads() is called (or JThread::Run()) before a thread has
+	/// gone into the idle state then that will effectively cancel this call and it may
+	/// return with one of more threads never having gone into the idle state. In other
+	/// words, calling this with wait_until_idle==true does no necessarily guarrantee that
+	/// all threads are idle upon return.
+
+	for(auto sThread : mThreads) sThread->Stop();
+	
+	if( wait_until_idle ) for(auto sThread : mThreads) sThread->Stop( true );
 }
 
 //---------------------------------
@@ -946,10 +979,56 @@ void JThreadManager::JoinThreads(void)
 }
 
 //---------------------------------
-// HaveAllThreadsEnded
+// AreAllThreadsIdle
 //---------------------------------
-bool JThreadManager::HaveAllThreadsEnded(void)
+bool JThreadManager::AreAllThreadsIdle(void)
 {
+	/// Returns true if all JThread objects are currently in the idle state.
+	auto sEndChecker = [](JThread* aThread) -> bool {return aThread->IsIdle();};
+	return std::all_of(std::begin(mThreads), std::end(mThreads), sEndChecker);
+}
+
+//---------------------------------
+// AreAllThreadsRunning
+//---------------------------------
+bool JThreadManager::AreAllThreadsRunning(void)
+{
+	/// Returns true if all JThread objects are currently in the running state.
+	auto sEndChecker = [](JThread* aThread) -> bool {return aThread->IsRunning();};
+	return std::all_of(std::begin(mThreads), std::end(mThreads), sEndChecker);
+}
+
+//---------------------------------
+// AreAllThreadsEnded
+//---------------------------------
+bool JThreadManager::AreAllThreadsEnded(void)
+{
+	/// Returns true if all JThread objects are currently in the ended state.
 	auto sEndChecker = [](JThread* aThread) -> bool {return aThread->IsEnded();};
 	return std::all_of(std::begin(mThreads), std::end(mThreads), sEndChecker);
+}
+
+//---------------------------------
+// WaitUntilAllThreadsIdle
+//---------------------------------
+void JThreadManager::WaitUntilAllThreadsIdle(void)
+{
+	/// This is equivalent to calling StopThreads(true).
+	StopThreads( true );
+}
+
+//---------------------------------
+// WaitUntilAllThreadsRunning
+//---------------------------------
+void JThreadManager::WaitUntilAllThreadsRunning(void)
+{
+	while( !AreAllThreadsRunning() ) std::this_thread::sleep_for( std::chrono::milliseconds(100) );
+}
+
+//---------------------------------
+// WaitUntilAllThreadsEnded
+//---------------------------------
+void JThreadManager::WaitUntilAllThreadsEnded(void)
+{
+	while( !AreAllThreadsEnded() ) std::this_thread::sleep_for( std::chrono::milliseconds(100) );
 }
