@@ -3,6 +3,7 @@
 import time
 import jana
 
+jana.SetTicker( False )
 jana.WaitUntilAllThreadsRunning()
 
 for i in range(0,20):

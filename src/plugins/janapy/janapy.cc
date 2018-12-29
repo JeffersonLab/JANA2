@@ -203,24 +203,50 @@ static PyObject* janapy_GetParameterValue(PyObject *self, PyObject *args)
 {
 	char str[256];
 	if(!PyArg_ParseTuple(args, "s:GetParameterValue",str)) return NULL;
-	return PV( japp->GetParameterValue<string>( str) );
+	return PV( japp->GetParameterValue<string>( str ) );
 }
+
+//-------------------------------------
+// janapy_SetParameterValue
+//-------------------------------------
+static PyObject* janapy_SetParameterValue(PyObject *self, PyObject *args)
+{
+	char key[256];
+	char val[256];
+	if(!PyArg_ParseTuple(args, "ss:SetParameterValue",key, val)) return NULL;
+	japp->SetParameterValue<string>( key, val );
+	return PV( "" );
+}
+
+//-------------------------------------
+// janapy_SetTicker
+//-------------------------------------
+static PyObject* janapy_SetTicker(PyObject *self, PyObject *args)
+{
+	int ticker_on = true;
+	if(!PyArg_ParseTuple(args, "|i:SetTicker", &ticker_on)) return NULL;
+	japp->SetTicker( ticker_on );
+	return PV( "" );
+}
+
 
 //.....................................................
 // Define python methods
 static PyMethodDef JANAPYMethods[] = {
-    {"Start",                       janapy_Start,                       METH_VARARGS, "Allow JANA system to start processing data. (Not needed for short scripts.)"},
-    {"WaitUntilAllThreadsRunning",  janapy_WaitUntilAllThreadsRunning,  METH_VARARGS, "Wait until all threads have entered the running state."},
-    {"WaitUntilAllThreadsIdle",     janapy_WaitUntilAllThreadsIdle,     METH_VARARGS, "Wait until all threads have entered the idle state."},
-    {"WaitUntilAllThreadsEnded",    janapy_WaitUntilAllThreadsEnded,    METH_VARARGS, "Wait until all threads have entered the ended state."},
-    {"GetNtasksCompleted",          janapy_GetNtasksCompleted,          METH_VARARGS, "Return the number of tasks completed. If specified, only count tasks for that JQueue."},
-    {"GetNeventsProcessed",         janapy_GetNeventsProcessed,         METH_VARARGS, "Return the number of events processed so far."},
-    {"GetIntegratedRate",           janapy_GetIntegratedRate,           METH_VARARGS, "Return integrated rate."},
-    {"GetIntegratedRates",          janapy_GetIntegratedRates,          METH_VARARGS, "Return integrated rates for each thread."},
-    {"GetInstantaneousRate",        janapy_GetInstantaneousRate,        METH_VARARGS, "Return instantaneous rate."},
-    {"GetInstantaneousRates",       janapy_GetInstantaneousRates,       METH_VARARGS, "Return instantaneous rates for each thread."},
-    {"GetParameterValue",           janapy_GetParameterValue,           METH_VARARGS, "Return value of given configuration parameter."},
-    {NULL, NULL, 0, NULL}
+	{"Start",                       janapy_Start,                       METH_VARARGS, "Allow JANA system to start processing data. (Not needed for short scripts.)"},
+	{"WaitUntilAllThreadsRunning",  janapy_WaitUntilAllThreadsRunning,  METH_VARARGS, "Wait until all threads have entered the running state."},
+	{"WaitUntilAllThreadsIdle",     janapy_WaitUntilAllThreadsIdle,     METH_VARARGS, "Wait until all threads have entered the idle state."},
+	{"WaitUntilAllThreadsEnded",    janapy_WaitUntilAllThreadsEnded,    METH_VARARGS, "Wait until all threads have entered the ended state."},
+	{"GetNtasksCompleted",          janapy_GetNtasksCompleted,          METH_VARARGS, "Return the number of tasks completed. If specified, only count tasks for that JQueue."},
+	{"GetNeventsProcessed",         janapy_GetNeventsProcessed,         METH_VARARGS, "Return the number of events processed so far."},
+	{"GetIntegratedRate",           janapy_GetIntegratedRate,           METH_VARARGS, "Return integrated rate."},
+	{"GetIntegratedRates",          janapy_GetIntegratedRates,          METH_VARARGS, "Return integrated rates for each thread."},
+	{"GetInstantaneousRate",        janapy_GetInstantaneousRate,        METH_VARARGS, "Return instantaneous rate."},
+	{"GetInstantaneousRates",       janapy_GetInstantaneousRates,       METH_VARARGS, "Return instantaneous rates for each thread."},
+	{"GetParameterValue",           janapy_GetParameterValue,           METH_VARARGS, "Return value of given configuration parameter."},
+	{"SetParameterValue",           janapy_SetParameterValue,           METH_VARARGS, "Set configuration parameter."},
+	{"SetTicker",                   janapy_SetTicker,                   METH_VARARGS, "Set ticker on/off that updates at bottom of screen."},
+	{NULL, NULL, 0, NULL}
 };
 //.....................................................
 
