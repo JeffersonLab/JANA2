@@ -164,7 +164,8 @@ class JApplication{
 
 		string Val2StringWithPrefix(float val);
 		template<typename T> T GetParameterValue(std::string name);
-
+		template<typename T> JParameter* SetParameterValue(std::string name, T val);
+	
 		//LOG WRAPPERS
 		JLogWrapper* GetLogWrapper(uint32_t aLogIndex) const;
 		void SetLogWrapper(uint32_t aLogIndex, JLogWrapper* aLogWrapper);
@@ -213,6 +214,17 @@ T JApplication::GetParameterValue(std::string name)
 	/// of the same name in JParameterManager.	
 	return GetJParameterManager()->GetParameterValue<T>(name);
 }		
+
+//---------------------------------
+// SetParameterValue
+//---------------------------------
+template<typename T>
+JParameter* JApplication::SetParameterValue(std::string name, T val)
+{
+	/// This is a convenience function that just calls the SetParameter
+	/// of JParameterManager.
+	return GetJParameterManager()->SetParameter(name, val);
+}
 
 
 // This routine is used to bootstrap plugins. It is done outside
