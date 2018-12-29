@@ -43,6 +43,7 @@
 #include <Python.h>
 
 #include <JANA/JApplication.h>
+#include <JANA/JThreadManager.h>
 
 void JANA_PythonModuleInit(JApplication *sApp);
 
@@ -56,7 +57,10 @@ void InitPlugin(JApplication *app){
 	std::thread thr(JANA_PythonModuleInit, app);
 	thr.detach();
 
-	// Wait for interpreter to initialize and possibly run script
+	// Wait for interpreter to initialize and possibly run script.
+	// This allows more control from python by stalling the initialization
+	// so it has a chance to modify things a bit before initialization
+	// completes and data processing starts.
 	while( !PY_INITIALIZED ) std::this_thread::sleep_for (std::chrono::milliseconds(100));
 }
 } // "C"
@@ -91,13 +95,45 @@ PyObject* PVdict( std::map<K,V> &m ){
 //..........................................................
 
 //-------------------------------------
-// janapy_Run
+// janapy_Start
 //-------------------------------------
-static PyObject* janapy_Run(PyObject *self, PyObject *args)
+static PyObject* janapy_Start(PyObject *self, PyObject *args)
 {
-	char name[512] = "";
-	if(!PyArg_ParseTuple(args, ":Run")) return NULL;
+	if(!PyArg_ParseTuple(args, ":Start")) return NULL;
 	PY_INITIALIZED = true;
+	return PV("");
+}
+
+//-------------------------------------
+// janapy_WaitUntilAllThreadsRunning
+//-------------------------------------
+static PyObject* janapy_WaitUntilAllThreadsRunning(PyObject *self, PyObject *args)
+{
+	if(!PyArg_ParseTuple(args, ":WaitUntilAllThreadsRunning")) return NULL;
+	PY_INITIALIZED = true; // (in case user doesn't call Start before calling this)
+	japp->GetJThreadManager()->WaitUntilAllThreadsRunning();
+	return PV("");
+}
+
+//-------------------------------------
+// janapy_WaitUntilAllThreadsIdle
+//-------------------------------------
+static PyObject* janapy_WaitUntilAllThreadsIdle(PyObject *self, PyObject *args)
+{
+	if(!PyArg_ParseTuple(args, ":WaitUntilAllThreadsIdle")) return NULL;
+	PY_INITIALIZED = true; // (in case user doesn't call Start before calling this)
+	japp->GetJThreadManager()->WaitUntilAllThreadsIdle();
+	return PV("");
+}
+
+//-------------------------------------
+// janapy_WaitUntilAllThreadsEnded
+//-------------------------------------
+static PyObject* janapy_WaitUntilAllThreadsEnded(PyObject *self, PyObject *args)
+{
+	if(!PyArg_ParseTuple(args, ":WaitUntilAllThreadsEnded")) return NULL;
+	PY_INITIALIZED = true; // (in case user doesn't call Start before calling this)
+	japp->GetJThreadManager()->WaitUntilAllThreadsEnded();
 	return PV("");
 }
 
@@ -173,14 +209,17 @@ static PyObject* janapy_GetParameterValue(PyObject *self, PyObject *args)
 //.....................................................
 // Define python methods
 static PyMethodDef JANAPYMethods[] = {
-    {"Run",                    janapy_Run,                    METH_VARARGS, "Allow JANA system to start processing data. (Not needed for short scripts.)"},
-    {"GetNtasksCompleted",     janapy_GetNtasksCompleted,     METH_VARARGS, "Return the number of tasks completed. If specified, only count tasks for that JQueue."},
-    {"GetNeventsProcessed",    janapy_GetNeventsProcessed,    METH_VARARGS, "Return the number of events processed so far."},
-    {"GetIntegratedRate",      janapy_GetIntegratedRate,      METH_VARARGS, "Return integrated rate."},
-    {"GetIntegratedRates",     janapy_GetIntegratedRates,     METH_VARARGS, "Return integrated rates for each thread."},
-    {"GetInstantaneousRate",   janapy_GetInstantaneousRate,   METH_VARARGS, "Return instantaneous rate."},
-    {"GetInstantaneousRates",  janapy_GetInstantaneousRates,  METH_VARARGS, "Return instantaneous rates for each thread."},
-    {"GetParameterValue",      janapy_GetParameterValue,      METH_VARARGS, "Return value of given configuration parameter."},
+    {"Start",                       janapy_Start,                       METH_VARARGS, "Allow JANA system to start processing data. (Not needed for short scripts.)"},
+    {"WaitUntilAllThreadsRunning",  janapy_WaitUntilAllThreadsRunning,  METH_VARARGS, "Wait until all threads have entered the running state."},
+    {"WaitUntilAllThreadsIdle",     janapy_WaitUntilAllThreadsIdle,     METH_VARARGS, "Wait until all threads have entered the idle state."},
+    {"WaitUntilAllThreadsEnded",    janapy_WaitUntilAllThreadsEnded,    METH_VARARGS, "Wait until all threads have entered the ended state."},
+    {"GetNtasksCompleted",          janapy_GetNtasksCompleted,          METH_VARARGS, "Return the number of tasks completed. If specified, only count tasks for that JQueue."},
+    {"GetNeventsProcessed",         janapy_GetNeventsProcessed,         METH_VARARGS, "Return the number of events processed so far."},
+    {"GetIntegratedRate",           janapy_GetIntegratedRate,           METH_VARARGS, "Return integrated rate."},
+    {"GetIntegratedRates",          janapy_GetIntegratedRates,          METH_VARARGS, "Return integrated rates for each thread."},
+    {"GetInstantaneousRate",        janapy_GetInstantaneousRate,        METH_VARARGS, "Return instantaneous rate."},
+    {"GetInstantaneousRates",       janapy_GetInstantaneousRates,       METH_VARARGS, "Return instantaneous rates for each thread."},
+    {"GetParameterValue",           janapy_GetParameterValue,           METH_VARARGS, "Return value of given configuration parameter."},
     {NULL, NULL, 0, NULL}
 };
 //.....................................................
@@ -218,12 +257,13 @@ void JANA_PythonModuleInit(JApplication *sApp)
 		PY_INITIALIZED = true;
 		return;
 	}
-	
+
 	// Initialize interpreter and register the jana module
 	jout << "Initializing embedded Python ... " << std::endl;
+	PyEval_InitThreads();
 	Py_Initialize();
 	Py_InitModule("jana", JANAPYMethods);
-	
+
 	// Get name of python file to execute
 	string fname = "jana.py";
 	try{
@@ -233,9 +273,16 @@ void JANA_PythonModuleInit(JApplication *sApp)
 		if( JANA_PYTHON_FILE ) fname = JANA_PYTHON_FILE;
 	}
 	
+//	PyGILState_STATE gstate = PyGILState_Ensure();
+//	PyEval_ReleaseLock();
+//	PyThreadState *_save = PyEval_SaveThread();
+//	Py_BEGIN_ALLOW_THREADS
+	
 	auto fil = std::fopen(fname.c_str(), "r");
 	if( fil ) {
 		jout << "Executing Python script: " << fname << " ..." << std::endl;
+		const char *argv = fname.c_str();
+		PySys_SetArgv( 1, (char**)&argv );
 		PyRun_AnyFileEx( fil, NULL, 1 );
 	}else if( fname != "jana.py" ){
 		jerr << std::endl << "Unable to open \"" << fname << "\"! Quitting." << std::endl << std::endl;
@@ -244,6 +291,8 @@ void JANA_PythonModuleInit(JApplication *sApp)
 		std::this_thread::sleep_for(std::chrono::seconds(1));
 		exit(-1);
 	}
+	
+//	Py_END_ALLOW_THREADS
 	
 	PY_INITIALIZED = true;
 }

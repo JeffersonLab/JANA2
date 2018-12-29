@@ -3,7 +3,7 @@
 import time
 import jana
 
-jana.Run()
+jana.WaitUntilAllThreadsRunning()
 
 for i in range(0,20):
 	time.sleep(1)
