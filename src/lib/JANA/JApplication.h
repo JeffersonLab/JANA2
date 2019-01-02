@@ -129,7 +129,8 @@ class JApplication{
 		void SetMaxThreads(uint32_t);
 		void SetTicker(bool ticker_on=true);
 		void Stop(bool wait_until_idle=false);
-		
+		void Resume(void);
+
 		void Add(JEventSourceGenerator *source_generator);
 		void Add(JFactoryGenerator *factory_generator);
 		void Add(JEventProcessor *processor);
@@ -157,7 +158,10 @@ class JApplication{
 		float GetInstantaneousRate(void);
 		void GetInstantaneousRates(vector<double> &rates_by_queue);
 		void GetIntegratedRates(map<string,double> &rates_by_thread);
-		
+	
+		bool IsQuitting(void){ return _quitting; }
+		bool IsDrainingQueues(void){ return _draining_queues; }
+
 		void RemoveJEventProcessor(JEventProcessor *processor);
 		void RemoveJFactoryGenerator(JFactoryGenerator *factory_generator);
 		void RemovePlugin(string &plugin_name);

@@ -738,8 +738,6 @@ void JApplication::SetTicker(bool ticker_on)
 	_ticker_on = ticker_on;
 }
 
-
-
 //---------------------------------
 // Stop
 //---------------------------------
@@ -750,6 +748,16 @@ void JApplication::Stop(bool wait_until_idle)
 	/// all threads are in the idle state. If false (the default), it will return
 	/// immediately after telling all threads to go into the idle state
 	_threadManager->StopThreads(wait_until_idle);
+}
+
+//---------------------------------
+// Resume
+//---------------------------------
+void JApplication::Resume(void)
+{
+	/// Tell all JThread objects to go into the running state (if not already
+	/// there).
+	_threadManager->RunThreads();
 }
 
 //---------------------------------

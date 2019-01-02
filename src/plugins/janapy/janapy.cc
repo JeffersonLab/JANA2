@@ -105,6 +105,37 @@ static PyObject* janapy_Start(PyObject *self, PyObject *args)
 }
 
 //-------------------------------------
+// janapy_Quit
+//-------------------------------------
+static PyObject* janapy_Quit(PyObject *self, PyObject *args)
+{
+	if(!PyArg_ParseTuple(args, ":Quit")) return NULL;
+	japp->Quit();
+	return PV("");
+}
+
+//-------------------------------------
+// janapy_Stop
+//-------------------------------------
+static PyObject* janapy_Stop(PyObject *self, PyObject *args)
+{
+	int wait_until_idle=false;
+	if(!PyArg_ParseTuple(args, "|i:Stop", &wait_until_idle)) return NULL;
+	japp->Stop(wait_until_idle);
+	return PV("");
+}
+
+//-------------------------------------
+// janapy_Resume
+//-------------------------------------
+static PyObject* janapy_Resume(PyObject *self, PyObject *args)
+{
+	if(!PyArg_ParseTuple(args, ":Resume")) return NULL;
+	japp->Resume();
+	return PV("");
+}
+
+//-------------------------------------
 // janapy_WaitUntilAllThreadsRunning
 //-------------------------------------
 static PyObject* janapy_WaitUntilAllThreadsRunning(PyObject *self, PyObject *args)
@@ -197,13 +228,36 @@ static PyObject* janapy_GetInstantaneousRates(PyObject *self, PyObject *args)
 }
 
 //-------------------------------------
+// janapy_GetNJThreads
+//-------------------------------------
+static PyObject* janapy_GetNJThreads(PyObject *self, PyObject *args)
+{
+	if(!PyArg_ParseTuple(args, ":GetNJThreads")) return NULL;
+	return PV( japp->GetJThreadManager()->GetNJThreads() );
+}
+
+//-------------------------------------
+// janapy_GetNcores
+//-------------------------------------
+static PyObject* janapy_GetNcores(PyObject *self, PyObject *args)
+{
+	if(!PyArg_ParseTuple(args, ":GetNcores")) return NULL;
+	return PV( japp->GetJThreadManager()->GetNcores() );
+}
+
+//-------------------------------------
 // janapy_GetParameterValue
 //-------------------------------------
 static PyObject* janapy_GetParameterValue(PyObject *self, PyObject *args)
 {
-	char str[256];
-	if(!PyArg_ParseTuple(args, "s:GetParameterValue",str)) return NULL;
-	return PV( japp->GetParameterValue<string>( str ) );
+	char *str;
+	if(!PyArg_ParseTuple(args, "s:GetParameterValue", &str)) return NULL;
+	try{
+		std::cout << "\n\rLooking for parameter: " << str << "\n\r";
+		return PV( japp->GetParameterValue<string>( str ) );
+	}catch(...){
+		return PV("Not Defined");
+	}
 }
 
 //-------------------------------------
@@ -211,9 +265,9 @@ static PyObject* janapy_GetParameterValue(PyObject *self, PyObject *args)
 //-------------------------------------
 static PyObject* janapy_SetParameterValue(PyObject *self, PyObject *args)
 {
-	char key[256];
-	char val[256];
-	if(!PyArg_ParseTuple(args, "ss:SetParameterValue",key, val)) return NULL;
+	char *key;
+	char *val;
+	if(!PyArg_ParseTuple(args, "ss:SetParameterValue", &key, &val)) return NULL;
 	japp->SetParameterValue<string>( key, val );
 	return PV( "" );
 }
@@ -229,11 +283,66 @@ static PyObject* janapy_SetTicker(PyObject *self, PyObject *args)
 	return PV( "" );
 }
 
+//-------------------------------------
+// janapy_SetNJThreads
+//-------------------------------------
+static PyObject* janapy_SetNJThreads(PyObject *self, PyObject *args)
+{
+	int mynthreads=4;
+	char *s;
+//	if(!PyArg_ParseTuple(args, "i:SetNJThreads"), &mynthreads) return NULL;
+	if(!PyArg_ParseTuple(args, "s:SetNJThreads"), &s) return NULL;
+	japp->GetJThreadManager()->SetNJThreads( mynthreads );
+	return PV( japp->GetJThreadManager()->GetNJThreads() );
+}
+
+//-------------------------------------
+// janapy_IsQuitting
+//-------------------------------------
+static PyObject* janapy_IsQuitting(PyObject *self, PyObject *args)
+{
+	if(!PyArg_ParseTuple(args, ":IsQuitting")) return NULL;
+	return PV( japp->IsQuitting() );
+}
+
+//-------------------------------------
+// janapy_IsDrainingQueues
+//-------------------------------------
+static PyObject* janapy_IsDrainingQueues(PyObject *self, PyObject *args)
+{
+	if(!PyArg_ParseTuple(args, ":IsDrainingQueues")) return NULL;
+	return PV( japp->IsDrainingQueues() );
+}
+
+//-------------------------------------
+// janapy_PrintStatus
+//-------------------------------------
+static PyObject* janapy_PrintStatus(PyObject *self, PyObject *args)
+{
+	if(!PyArg_ParseTuple(args, ":PrintStatus")) return NULL;
+	japp->PrintStatus();
+	return PV( "" );
+}
+
+//-------------------------------------
+// janapy_PrintParameters
+//-------------------------------------
+static PyObject* janapy_PrintParameters(PyObject *self, PyObject *args)
+{
+	int print_all = 0;
+	if(!PyArg_ParseTuple(args, "|i:PrintParameters", &print_all)) return NULL;
+	japp->GetJParameterManager()->PrintParameters( print_all );
+	return PV( "" );
+}
+
 
 //.....................................................
 // Define python methods
 static PyMethodDef JANAPYMethods[] = {
 	{"Start",                       janapy_Start,                       METH_VARARGS, "Allow JANA system to start processing data. (Not needed for short scripts.)"},
+	{"Quit",                        janapy_Quit,                        METH_VARARGS, "Tell JANA to quit gracefully"},
+	{"Stop",                        janapy_Stop,                        METH_VARARGS, "Tell JANA to (temporarily) stop event processing. If optional agrument is True then block until all threads are stopped."},
+	{"Resume",                      janapy_Resume,                      METH_VARARGS, "Tell JANA to resume event processing."},
 	{"WaitUntilAllThreadsRunning",  janapy_WaitUntilAllThreadsRunning,  METH_VARARGS, "Wait until all threads have entered the running state."},
 	{"WaitUntilAllThreadsIdle",     janapy_WaitUntilAllThreadsIdle,     METH_VARARGS, "Wait until all threads have entered the idle state."},
 	{"WaitUntilAllThreadsEnded",    janapy_WaitUntilAllThreadsEnded,    METH_VARARGS, "Wait until all threads have entered the ended state."},
@@ -243,9 +352,16 @@ static PyMethodDef JANAPYMethods[] = {
 	{"GetIntegratedRates",          janapy_GetIntegratedRates,          METH_VARARGS, "Return integrated rates for each thread."},
 	{"GetInstantaneousRate",        janapy_GetInstantaneousRate,        METH_VARARGS, "Return instantaneous rate."},
 	{"GetInstantaneousRates",       janapy_GetInstantaneousRates,       METH_VARARGS, "Return instantaneous rates for each thread."},
+	{"GetNJThreads",                janapy_GetNJThreads,                METH_VARARGS, "Return current number of JThread objects."},
+	{"GetNcores",                   janapy_GetNcores,                   METH_VARARGS, "Return number of cores reported by system (full + logical)."},
 	{"GetParameterValue",           janapy_GetParameterValue,           METH_VARARGS, "Return value of given configuration parameter."},
 	{"SetParameterValue",           janapy_SetParameterValue,           METH_VARARGS, "Set configuration parameter."},
 	{"SetTicker",                   janapy_SetTicker,                   METH_VARARGS, "Set ticker on/off that updates at bottom of screen."},
+	{"SetNJThreads",                janapy_SetNJThreads,                METH_VARARGS, "Set the number of JThread objects by creating or deleting."},
+	{"IsQuitting",                  janapy_IsQuitting,                  METH_VARARGS, "Returns true if the application quit flag has been set."},
+	{"IsDrainingQueues",            janapy_IsDrainingQueues,            METH_VARARGS, "Returns true if the application draining queues flag is set indicating all events have been read in."},
+	{"PrintStatus",                 janapy_PrintStatus,                 METH_VARARGS, "Print current JANA status."},
+	{"PrintParameters",             janapy_PrintParameters,             METH_VARARGS, "Print configuration parameters. Pass True to print all. Otherwise, only non-default ones will be printed."},
 	{NULL, NULL, 0, NULL}
 };
 //.....................................................
