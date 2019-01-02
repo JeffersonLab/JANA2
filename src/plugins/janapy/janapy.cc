@@ -288,11 +288,9 @@ static PyObject* janapy_SetTicker(PyObject *self, PyObject *args)
 //-------------------------------------
 static PyObject* janapy_SetNJThreads(PyObject *self, PyObject *args)
 {
-	int mynthreads=4;
-	char *s;
-//	if(!PyArg_ParseTuple(args, "i:SetNJThreads"), &mynthreads) return NULL;
-	if(!PyArg_ParseTuple(args, "s:SetNJThreads"), &s) return NULL;
-	japp->GetJThreadManager()->SetNJThreads( mynthreads );
+	int nthreads=1;
+	if(!PyArg_ParseTuple(args, "i:SetNJThreads", &nthreads)) return NULL;
+	japp->GetJThreadManager()->SetNJThreads( nthreads );
 	return PV( japp->GetJThreadManager()->GetNJThreads() );
 }
 

@@ -154,9 +154,7 @@ def process_command( input ):
 		if len(args) == 0:
 			print 'Number of JThreads: %d' % jana.GetNJThreads()
 		elif len(args)==1:
-			print 'Setting NJThreads to: %d' % int(args[0])
-			jana.SetNJThreads( '2' )
-#			print 'Number of JThreads now at: %d' % jana.SetNJThreads( int(args[0]) )
+			print 'Number of JThreads now at: %d' % jana.SetNJThreads( int(args[0]) )
 		else:
 			print 'njthreads takes either 0 or 1 argument (see help for details)'
 	#--- parameter
@@ -332,7 +330,10 @@ def command_line():
 jana.SetTicker( False )
 jana.WaitUntilAllThreadsRunning()
 
-
+# print '=================================================================================='
+# import inspect
+# for m in inspect.getmembers(jana): print str(m)
+# print '=================================================================================='
 command_line()
 
 
