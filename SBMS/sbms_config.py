@@ -140,12 +140,12 @@ def mk_jana_config_h(env):
 # mk_jana_config_script
 ##################################
 def mk_jana_config_script(env):
-	ofdirname = '#%s/bin' % env['OSNAME']
+	ofdirname = '%s/bin' % env.subst('$INSTALLDIR')
 	ofdir = '%s' % env.Dir(ofdirname)
 	ofname = '%s/jana-config' % ofdir
 	print 'sbms : Making jana-config in %s' % ofdir
 
-	JANA_INSTALL_DIR = '%s' % env.Dir("#/%s" % env['OSNAME']).abspath
+	JANA_INSTALL_DIR = '%s' % env.Dir(env.subst('$INSTALLDIR')).abspath
 	
 	# ROOT
 	HAVE_ROOT = 0
