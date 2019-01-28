@@ -25,21 +25,25 @@ if(osname == None): 	osname = subprocess.Popen(["./SBMS/osrelease.pl"], stdout=s
 if BITNESS32!=0 : osname = osname.replace('x86_64','i686')
 if BITNESS64!=0 : osname = osname.replace('i686','x86_64')
 
+# Finish with command line arguments
+# Both PREFIX and VARIANT_DIR require osname set to get default values
+PREFIX = ARGUMENTS.get('PREFIX',"#%s" %(osname))
+VARIANT_DIR = ARGUMENTS.get('VARIANT-DIR',".%s" % (osname))
 
 # Get architecture name
 arch = ROOT_CFLAGS = subprocess.Popen(["uname"], stdout=subprocess.PIPE).communicate()[0].strip()
 
 # Setup initial environment
-installdir = "#" + osname
-variantdir = "." + osname
+installdir = PREFIX
+
 include = "%s/include" % (installdir)
 bin = "%s/bin" % (installdir)
 lib = "%s/lib" % (installdir)
 plugins = "%s/plugins" % (installdir)
 env = Environment(        ENV = os.environ,  # Bring in full environement, including PATH
-                      CPPPATH = ["#src/lib"],
+                      CPPPATH = [include],
                       LIBPATH = [lib],
-                  variant_dir = variantdir)
+                  variant_dir = VARIANT_DIR)
 
 # These are SBMS-specific variables (i.e. not default scons ones)
 env.Replace(    INSTALLDIR    = installdir,
@@ -130,7 +134,7 @@ sbms_config.mk_jana_config_h(env)
 sbms_config.mk_jana_config_script(env)
 
 # build all src
-SConscript('src/SConscript', variant_dir="src/.%s" % (osname), exports='env osname', duplicate=0)
+SConscript('src/SConscript', variant_dir=VARIANT_DIR, exports='env osname', duplicate=0)
 
 # install scripts
 SConscript('scripts/SConscript', exports='env osname', duplicate=0)
