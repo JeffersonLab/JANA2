@@ -13,3 +13,6 @@ title: JANA: Multi-threaded HENP Event Reconstruction
 
 ## Getting Started With JANA
 
+![Alt JANA Factory Model](images/factory_model.png)
+![Alt JANA Simple system with a single queue](images/queues1.png)
+![Alt JANA system with multiple queues](images/queues2.png)
