@@ -42,8 +42,8 @@
 SBMS
 Linux_*
 Darwin_*
-src/.Linux_*
-src/.Darwin_*
+.Linux_*
+.Darwin_*
 
 # Doxygen generated files
 docs/html/*
