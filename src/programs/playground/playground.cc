@@ -87,7 +87,15 @@ class ClusterFactory : public JFactoryT<Cluster> {
 };
 
 
+#include<JANA/JLogNew.h>
+
 int main(int narg, char *argv[]) {
+
+	global_logger.level = JLogLevel::INFO;
+
+	LOG_INFO("Launching a minimal JANA instance!");
+	LOG_DEBUG("You shouldn't see this");
+	LOG_ERROR("This program is doomed to crash now that I've reenabled old-style logging because JTHREAD is NULL");
 
 	auto app = new JApplication(narg, argv);
 	InitJANAPlugin(app);
@@ -102,5 +110,9 @@ int main(int narg, char *argv[]) {
 	Cluster* result = *(event->Get<Cluster>().first);
 	cout << *result << endl;
 	delete app;
+	return 0;
 }
+
+
+
 
