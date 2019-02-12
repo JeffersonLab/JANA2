@@ -59,6 +59,7 @@
 #include <JANA/JApplication.h>
 #include <JANA/JThreadManager.h>
 #include <JANA/JLog.h>
+#include <JANA/JLogNew.h>
 #include <JANA/JThread.h>
 
 #ifndef _JEvent_h_
@@ -165,8 +166,9 @@ typename JFactoryT<DataType>::PairType JEvent::Get(const std::string& aTag) cons
 	// It actually should always be set by the latter which is called from
 	// JEventSource::GetProcessEventTasks after calling GetEvent.
 	assert(mThreadManager!=nullptr);
-	std::cout << "Calling Get(" << aTag << std::endl;
 
+	std::shared_ptr<JLogNew> logger(new JLogNew());
+	LOG_WARN(logger) << "Secret message from JEvent" << JLogNewEnd();
 	if(mDebugLevel > 0)
 		JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Type = " << GetDemangledName<DataType>() << ", tag = " << aTag << ".\n" << JLogEnd();
 
@@ -214,7 +216,6 @@ typename JFactoryT<DataType>::PairType JEvent::Get(const std::string& aTag) cons
 	}
 	auto sFactory = static_cast<JFactoryT<DataType>*>(sFactoryBase);
 
-	std::cout << "Calling sFactory->GetCreated(" << std::endl;
 	//If objects previously created, just return them
 	if(sFactory->GetCreated()) return sFactory->Get();
 	
@@ -222,11 +223,9 @@ typename JFactoryT<DataType>::PairType JEvent::Get(const std::string& aTag) cons
 	// Ensure the Init method has been called for the factory.
 	std::call_once(sFactory->init_flag, &JFactory::Init, sFactory);
 
-	std::cout << "Calling sFactory->AcquireCreatingLock(" << std::endl;
 	//Attempt to acquire the "creating" lock for the factory
 	if(!sFactory->AcquireCreatingLock())
 	{
-		std::cout << "Waiting for lock!, about to call doworkwhilewaiting" << std::endl;
 		if(mDebugLevel >= 10)
 			JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Another thread is creating objects, do work while waiting.\n" << JLogEnd();
 
@@ -234,7 +233,6 @@ typename JFactoryT<DataType>::PairType JEvent::Get(const std::string& aTag) cons
 		//Instead, execute queued tasks until the objects are ready
 		mThreadManager->DoWorkWhileWaiting(sFactory->GetCreatingLock(), mEventSource);
 
-		std::cout << "Finished doworkwhilewaiting" << std::endl;
 		//It's done, return the results
 		return sFactory->Get();
 	}
@@ -246,14 +244,11 @@ typename JFactoryT<DataType>::PairType JEvent::Get(const std::string& aTag) cons
 	try
 	{
 		//Lock acquired. First check to see if they were created since the last check.
-		std::cout << "Acquired lock, checking to see if created in meantime" << std::endl;
 		if(sFactory->GetCreated())
 		{
-			std::cout << "Created!" << std::endl;
 			if(mDebugLevel >= 10)
 				JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Objects created in meantime.\n" << JLogEnd();
 			sFactory->ReleaseCreatingLock();
-			std::cout << "Done with Get()!" << std::endl;
 			return sFactory->Get();
 		}
 
@@ -261,23 +256,17 @@ typename JFactoryT<DataType>::PairType JEvent::Get(const std::string& aTag) cons
 		//First try to get from the event source
 		if(mDebugLevel >= 10)
 			JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Try to get " << GetDemangledName<DataType>() << " (tag = " << aTag << ") objects from JEventSource.\n" << JLogEnd();
-		std::cout << "Calling sharedFromThis" << std::endl;
 		auto sSharedThis = this->shared_from_this();
-		std::cout << "Calling eventSource.getObjects" << std::endl;
-		if (mEventSource == nullptr) std::cout << "Oh no, NULL!!!" << std::endl;
 		if (mEventSource != nullptr &&
 		    mEventSource->GetObjects(sSharedThis, static_cast<JFactory*>(sFactory)))
 		{
-			std::cout << "GetObjects returned true" << std::endl;
 			if(mDebugLevel >= 10)
 				JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): " << GetDemangledName<DataType>() << " (tag = " << aTag << ") retrieved from JEventSource.\n" << JLogEnd();
 			sFactory->SetCreated(true);
 			sFactory->ReleaseCreatingLock();
-			std::cout << "Returning from Get() via eventSrc.GetObjects" << std::endl;
 			return sFactory->Get();
 		}
 
-		std::cout << "Not in eventsrc, calculating" << std::endl;
 		//Not in the file: have the factory make them
 		//First compare current run # to previous run. If different, call ChangeRun()
 		if(sFactory->GetPreviousRunNumber() != mRunNumber)
@@ -302,14 +291,12 @@ typename JFactoryT<DataType>::PairType JEvent::Get(const std::string& aTag) cons
 		sFactory->ReleaseCreatingLock();
 		std::rethrow_exception(sException);
 	}
-	std::cout << "Done with Get() complicated stuff" << std::endl;
 
 	//Get the object iterators
 	auto sIteratorPair = sFactory->Get();
 	if(mDebugLevel > 0)
 		JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Getting " << std::distance(sIteratorPair.first, sIteratorPair.second) << " " << GetDemangledName<DataType>() << " objects, tag = " << aTag << ".\n" << JLogEnd();
 
-	std::cout << "Get() is returning" << std::endl;
 	//Return the objects
 	return sIteratorPair;
 }

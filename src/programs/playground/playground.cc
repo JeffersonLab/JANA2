@@ -91,11 +91,15 @@ class ClusterFactory : public JFactoryT<Cluster> {
 
 int main(int narg, char *argv[]) {
 
-	global_logger.level = JLogLevel::INFO;
+	std::shared_ptr<JLogNew> logger(new JLogNew());
 
-	LOG_INFO("Launching a minimal JANA instance!");
-	LOG_DEBUG("You shouldn't see this");
-	LOG_ERROR("This program is doomed to crash now that I've reenabled old-style logging because JTHREAD is NULL");
+	LOG_INFO(logger) << "Launching a minimal JANA instance!" << JLogNewEnd();
+	LOG_DEBUG(logger) << "You shouldn't see this" << JLogNewEnd();
+	LOG_ERROR(logger) << "This program is doomed to crash now that I've reenabled old-style logging because JTHREAD is NULL" << JLogNewEnd();
+
+	JLogMessage(logger, JLogLevel::WARN) << "This is another way of using me" << JLogNewEnd();
+	LOG_FATAL(std::shared_ptr<JLogNew>(new JLogNew())) << "Exiting now!" << JLogNewEnd();
+	return 0;
 
 	auto app = new JApplication(narg, argv);
 	InitJANAPlugin(app);

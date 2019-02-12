@@ -4,14 +4,14 @@
 #define JANA_JLOGNEW_H_
 
 #include <iostream>
-#include <iomanip>
+#include <sstream>
 #include <mutex>
+#include <memory>
+#include <iomanip>
 
-
-// JLogLevel provides 
 enum class JLogLevel { TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF };
 
-ostream& operator<<(ostream& s, JLogLevel l) {
+inline std::ostream& operator<<(std::ostream& s, JLogLevel l) {
 	switch (l) {
 		case JLogLevel::TRACE: return s << "TRACE";
 		case JLogLevel::DEBUG: return s << "DEBUG";
@@ -25,74 +25,90 @@ ostream& operator<<(ostream& s, JLogLevel l) {
 }
 
 
-
-// JLog is a very thin abstraction over an output stream, adding information 
-// such as log levels, threadID, etc. It is the responsibility of the caller to 
-// provide an alternative output stream, which decouples JLog from JApplication, etc. 
-// For the time being there is no encapsulation, although this may change 
-// depending on human factors considerations.
 struct JLogNew {
-	
 	JLogLevel level = JLogLevel::INFO;
-	std::ostream& dest = std::cout;
+	std::ostream& destination = std::cout;
 	std::mutex mutex;
+};
+
+struct JLogNewEnd {};
+
+struct JLogMessage {
+
+	std::shared_ptr<JLogNew> logger;
+	JLogLevel level;
+	std::ostringstream builder;
+	
+	JLogMessage(std::shared_ptr<JLogNew> logger_, JLogLevel level_) : 
+		logger(logger_), level(level_) {
+		
+		builder << "[" << level << "] ";
+	}
 
 	// Helper function for truncating long strings to keep our log readable
 	// This should probably live somewhere else
-	string ltruncate(string original, size_t desired_length) {
+	std::string ltrunc(std::string original, size_t desired_length) {
 		auto n = original.length();
 		if (n <= desired_length) return original;
 		return "\u2026" + original.substr(n-desired_length, desired_length-1);
 	}
 
-	// Append takes semistructured logging info and emits it into the ostream.
-	// Use the macros below instead of calling this directly
-	void append(JLogLevel messageLevel, int threadId, const string& filename, 
-		    const string& funcname, const int line, const string& message) {
-
-		if (messageLevel < level) return;
-
-		std::lock_guard<std::mutex> lock(mutex);
-
-		dest << setw(5) << std::left << messageLevel << " " 
-		     << "[" << setw(2) << std::right << threadId << "] " 
-		     << setw(12) << std::right << ltruncate(funcname,12) << " "
-		     << setw(20) << std::right << ltruncate(filename,20) << ":"
-		     << setw(5) << std::left << line
-		     << message << std::endl;
+	JLogMessage(std::shared_ptr<JLogNew> logger_, 
+		    JLogLevel level_,
+		    int thread,
+		    std::string file,
+		    int line,
+		    std::string func,
+		    long timestamp 
+		) : logger(logger_), level(level_) {
+		
+		builder << std::setw(5) << std::left << level << " " 
+	     		<< "[" << std::setw(2) << std::right << thread << "] " 
+	     		<< std::setw(12) << std::right << ltrunc(func,12) << " "
+	     		<< std::setw(20) << std::right << ltrunc(file,20) << ":"
+	     		<< std::setw(5) << std::left << line << " ";
 	}
+
 };
 
-// Since logging cuts horizontally across the entire program, it makes 
-// sense to maintain a bit of global state just like std::cout, in lieu of 
-// introducing dependency injection. 
-JLogNew global_logger;
+template<typename T>
+inline JLogMessage& operator<<(JLogMessage& m, T t) {
+	m.builder << t;
+	return m;
+}
+
+template<typename T>
+inline JLogMessage&& operator<<(JLogMessage&& m, T t) {
+	m.builder << t;
+	return std::move(m);
+}
+
+inline void operator<<(JLogMessage && m, JLogNewEnd const & end) {
+
+	if (m.logger->level > m.level) return;
+	std::lock_guard<std::mutex> lock(m.logger->mutex);
+	m.logger->destination << m.builder.str() << std::endl; 
+}
 
 
-// Logging introduces a significant overhead unless the string operations 
-// are protected by an if-statement. Similarly, figuring out the current 
-// threadID is very weird. We wish to insulate the user from these
-// worries, so we direct them to use these macros instead of JLogNew::append()
-//
-// TODO: This still has a dependency on the JTHREAD global variable. Ideally
-// we can make our logger independent of our threading internals, but that 
-// will have to come later.
-#define JLOG(msglevel, msgbody) \
-	{ \
-	JLogLevel temp = (msglevel); \
-	if(global_logger.level <= temp) { \
-		int threadId = (JTHREAD == nullptr) ? -1 : JTHREAD->GetThreadID(); \
-		global_logger.append(temp, threadId, __FILE__, __func__, __LINE__, (msgbody)); \
-	}} 
+#define VLOG(logger, msglevel) if (logger->level <= msglevel) JLogMessage(logger, msglevel, JTHREAD != nullptr ? JTHREAD->GetThreadID() : -1, __FILE__, __LINE__, __func__, 0) 
 
-#define LOG_TRACE(message) JLOG(JLogLevel::TRACE, message)
-#define LOG_DEBUG(message) JLOG(JLogLevel::DEBUG, message)
-#define LOG_INFO(message)  JLOG(JLogLevel::INFO, message)
-#define LOG_WARN(message)  JLOG(JLogLevel::WARN, message)
-#define LOG_ERROR(message) JLOG(JLogLevel::ERROR, message)
-#define LOG_FATAL(message) JLOG(JLogLevel::FATAL, message)
+
+#define VLOG_FATAL(logger) VLOG(logger, JLogLevel::FATAL)
+#define VLOG_ERROR(logger) VLOG(logger, JLogLevel::ERROR)
+#define VLOG_WARN(logger)  VLOG(logger, JLogLevel::WARN)
+#define VLOG_INFO(logger)  VLOG(logger, JLogLevel::INFO)
+#define VLOG_DEBUG(logger) VLOG(logger, JLogLevel::DEBUG)
+#define VLOG_TRACE(logger) VLOG(logger, JLogLevel::TRACE)
+
+
+#define LOG(logger, msglevel) if (logger->level <= msglevel) JLogMessage(logger, msglevel) 
+
+#define LOG_FATAL(logger) LOG(logger, JLogLevel::FATAL)
+#define LOG_ERROR(logger) LOG(logger, JLogLevel::ERROR)
+#define LOG_WARN(logger)  LOG(logger, JLogLevel::WARN)
+#define LOG_INFO(logger)  LOG(logger, JLogLevel::INFO)
+#define LOG_DEBUG(logger) LOG(logger, JLogLevel::DEBUG)
+#define LOG_TRACE(logger) LOG(logger, JLogLevel::TRACE)
 
 #endif
-
-
-
