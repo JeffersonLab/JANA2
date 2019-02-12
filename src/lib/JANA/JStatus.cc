@@ -89,7 +89,10 @@ JStatus::JStatus()
 	// conflicts don't occur between multiple processes trying to use this feature
 	// simultaneously.
 	path = "/tmp/jana_status";
-	gPARMS->SetDefaultParameter("JANA:STATUS_FNAME", path, "Filename of named pipe that can be used to get instantaneous status info. of running proccess.");
+	japp->GetJParameterManager()->SetDefaultParameter(
+		"JANA:STATUS_FNAME", 
+		path, 
+		"Filename of named pipe that can be used to get instantaneous status info. of running proccess.");
 
 	jout << "Creating pipe named \"" << path << "\" for status info." << endl;
 	mkfifo( path.c_str(), 0666);

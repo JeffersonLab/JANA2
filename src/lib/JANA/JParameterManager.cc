@@ -39,18 +39,15 @@
 
 #include "JParameterManager.h"
 #include "JLog.h"
+#include "JLogNew.h"
 
 using namespace std;
 
-JParameterManager *gPARMS = nullptr;
 
 //---------------------------------
 // JParameterManager    (Constructor)
 //---------------------------------
-JParameterManager::JParameterManager()
-{
-	gPARMS = this;
-}
+JParameterManager::JParameterManager() { }
 
 //---------------------------------
 // ~JParameterManager    (Destructor)
@@ -110,6 +107,8 @@ void JParameterManager::PrintParameters(bool all)
 	}
 
 	// Print title/header
+	std::shared_ptr<JLogNew> logger(new JLogNew());
+	LOG_WARN(logger) << "CONFIGURATION STUFF" << JLogNewEnd();
 	string title("Config. Parameters");
 	uint32_t half_title_len = 1+title.length()/2;
 	if( max_key_len < half_title_len ) max_key_len = half_title_len;

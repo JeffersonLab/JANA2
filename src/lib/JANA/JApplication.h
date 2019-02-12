@@ -239,7 +239,6 @@ inline void InitJANAPlugin(JApplication *app)
 	// Make sure global pointers are pointing to the 
 	// same ones being used by executable
 	japp = app;
-	gPARMS = app->GetJParameterManager();
 }
 
 #endif // _JApplication_h_

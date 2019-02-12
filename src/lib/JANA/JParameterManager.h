@@ -54,7 +54,6 @@
 #include <JANA/JException.h>
 
 class JParameterManager;
-extern JParameterManager *gPARMS;
 
 class JParameterManager{
 	public:

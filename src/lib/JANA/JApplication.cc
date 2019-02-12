@@ -85,15 +85,12 @@ std::mutex DBG_MUTEX;
 void ctrlCHandle(int x)
 {
 	SIGINT_RECEIVED++;
-	JLog(1) << "\nSIGINT received (" << SIGINT_RECEIVED << ").....\n" << JLogEnd();
+	JLog(1) << "\nSIGINT received (" << SIGINT_RECEIVED << ")! Attempting graceful exit...\n" << JLogEnd();
 	
 	if(japp) japp->Quit();
 	
 	if(SIGINT_RECEIVED == 3){
-		JLog(1) << "\nThree SIGINTS received! Still attempting graceful exit ...\n" << JLogEnd();
-	}
-	if(SIGINT_RECEIVED == 6){
-		JLog(1) << "\nTSix SIGINTS received! OK, I get it! ...\n" << JLogEnd();
+		JLog(1) << "\nThree SIGINTS received! OK, I get it! ...\n" << JLogEnd();
 		exit(-2);
 	}
 }
@@ -659,8 +656,8 @@ void JApplication::Run(uint32_t nthreads)
 		_threadManager->SetThreadAffinity( affinity_algorithm );
 	}catch(...){}
 	
-	// Print summary of config. parameters (if any aren't default)
-	GetJParameterManager()->PrintParameters();
+	// Print summary of all config parameters (if any aren't default)
+	GetJParameterManager()->PrintParameters(true);
 
 	// Start all threads running
 	jout << "Start processing ..." << endl;

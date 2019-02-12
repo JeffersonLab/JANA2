@@ -28,9 +28,15 @@ template<> double JEventSourceGeneratorT<JEventSource_jana_test>::CheckOpenable(
 JEventSource_jana_test::JEventSource_jana_test(string source_name, JApplication *japp) : JEventSource(source_name, japp)
 {
 	mNumEventsToGenerate = 20000;
-	gPARMS->SetDefaultParameter("NEVENTS", mNumEventsToGenerate, "Number of events for fake event source to generate");
+	japp->GetJParameterManager()->SetDefaultParameter(
+		"NEVENTS", 
+		mNumEventsToGenerate, 
+		"Number of events for fake event source to generate");
 
-	gPARMS->SetDefaultParameter("JTEST:INCLUDE_BARRIER_EVENTS", mIncludeBarriers, "Include barrier events");
+	japp->GetJParameterManager()->SetDefaultParameter(
+		"JTEST:INCLUDE_BARRIER_EVENTS", 
+		mIncludeBarriers, 
+		"Include barrier events");
 
 	//Seed random number generator //not ideal!
 	auto sTime = std::chrono::high_resolution_clock::now().time_since_epoch().count();

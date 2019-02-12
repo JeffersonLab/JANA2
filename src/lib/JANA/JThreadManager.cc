@@ -67,14 +67,24 @@
 //---------------------------------
 // JThreadManager
 //---------------------------------
-JThreadManager::JThreadManager(JApplication* aApplication) : mApplication(aApplication), mEventSourceManager(mApplication->GetJEventSourceManager())
+JThreadManager::JThreadManager(JApplication* app) : mApplication(app), mEventSourceManager(mApplication->GetJEventSourceManager())
 {
-	gPARMS->SetDefaultParameter("JANA:THREAD_DEBUG_LEVEL", mDebugLevel, "JThread(Manager) debug level"); //Doesn't work??
-	gPARMS->SetDefaultParameter("JANA:THREAD_ROTATE_SOURCES", mRotateEventSources, "Should threads rotate between event sources?");
-	//mDebugLevel = 500;
+	app->GetJParameterManager()->SetDefaultParameter(
+		"JANA:THREAD_DEBUG_LEVEL", 
+		mDebugLevel, 
+		"JThread(Manager) debug level");
+
+	app->GetJParameterManager()->SetDefaultParameter(
+		"JANA:THREAD_ROTATE_SOURCES", 
+		mRotateEventSources, 
+		"Should threads rotate between event sources?");
 
 	auto sSleepTimeNanoseconds = mSleepTime.count();
-	gPARMS->SetDefaultParameter("JANA:THREAD_SLEEP_TIME_NS", sSleepTimeNanoseconds, "Thread sleep time (in nanoseconds) when nothing to do.");
+	app->GetJParameterManager()->SetDefaultParameter(
+		"JANA:THREAD_SLEEP_TIME_NS", 
+		sSleepTimeNanoseconds, 
+		"Thread sleep time (in nanoseconds) when nothing to do.");
+
 	if(sSleepTimeNanoseconds != mSleepTime.count())
 		mSleepTime = std::chrono::nanoseconds(sSleepTimeNanoseconds);
 }

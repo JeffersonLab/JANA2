@@ -88,11 +88,32 @@ JTestMain::JTestMain(JApplication *app)
 	string kThreadSet;
 	mOutputDirName="JANA_Test_Results";
 
-	gPARMS->SetDefaultParameter("JTEST:MODE", mMode, "JTest plugin Testing mode. 0=basic, 1=scaling");
-	gPARMS->SetDefaultParameter("JTEST:NSAMPLES", mNsamples, "JTest plugin number of samples to take for each test");
-	gPARMS->SetDefaultParameter("JTEST:MINTHREADS", kMinThreads, "JTest plugin minimum number of threads to test");
-	gPARMS->SetDefaultParameter("JTEST:MAXTHREADS", kMaxThreads, "JTest plugin maximum number of threads to test");
-	gPARMS->SetDefaultParameter("JTEST:RESULTSDIR", mOutputDirName, "JTest output directory name for sampling test results");
+	auto params = app->GetJParameterManager();
+
+	params->SetDefaultParameter(
+		"JTEST:MODE", 
+		mMode, 
+		"JTest plugin Testing mode. 0=basic, 1=scaling");
+
+	params->SetDefaultParameter(
+		"JTEST:NSAMPLES", 
+		mNsamples, 
+		"JTest plugin number of samples to take for each test");
+
+	params->SetDefaultParameter(
+		"JTEST:MINTHREADS", 
+		kMinThreads, 
+		"JTest plugin minimum number of threads to test");
+
+	params->SetDefaultParameter(
+		"JTEST:MAXTHREADS", 
+		kMaxThreads, 
+		"JTest plugin maximum number of threads to test");
+
+	params->SetDefaultParameter(
+		"JTEST:RESULTSDIR", 
+		mOutputDirName, 
+		"JTest output directory name for sampling test results");
 
 	// If sampling mode is specified and min/max threads are not, then set them
 	// to be 1 to Ncores
@@ -113,7 +134,7 @@ JTestMain::JTestMain(JApplication *app)
 		case MODE_BASIC:
 			break;
 		case MODE_SCALING:
-			gPARMS->SetParameter("NEVENTS", 0);
+			params->SetParameter("NEVENTS", 0);
 			mThread = new std::thread(&JTestMain::TestThread, this);
 			break;
 	}

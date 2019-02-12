@@ -23,7 +23,7 @@ mutex mtxroot;
 extern "C"{
 void InitPlugin(JApplication *app){
 	InitJANAPlugin(app);
-	app->Add(new JEventProcessorJANARATE());
+	app->Add(new JEventProcessorJANARATE(app));
 }
 } // "C"
 
@@ -39,8 +39,11 @@ void JEventProcessorJANARATE::Init(void)
 	finalized = false;
 	Ncalls = 0;
 	prescale = 100;
-	
-	gPARMS->SetDefaultParameter("RATE:PRESCALE", prescale, "Prescale entries in rate tree by this");
+
+	mApplication->GetJParameterManager()->SetDefaultParameter(
+		"RATE:PRESCALE", 
+		prescale, 
+		"Prescale entries in rate tree by this");
 	
 	getitimer(ITIMER_REAL, &start_tmr);
 	if(start_tmr.it_value.tv_sec==0 && start_tmr.it_value.tv_usec==0){
