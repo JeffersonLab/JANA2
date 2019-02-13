@@ -155,6 +155,8 @@ class JThreadManager
 		//CONTROL
 		JApplication* mApplication;
 		JEventSourceManager* mEventSourceManager = nullptr;
+		std::shared_ptr<JLogger> mLogger;
+
 		bool mRotateEventSources = true;
 		int mDebugLevel = 0;
 		uint32_t mLogTarget = 0; //std::cout

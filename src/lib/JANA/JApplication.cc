@@ -77,7 +77,6 @@ using namespace std;
 JApplication *japp = NULL;
 
 int SIGINT_RECEIVED = 0;
-std::mutex DBG_MUTEX;
 
 //-----------------------------------------------------------------
 // ctrlCHandle
@@ -161,8 +160,8 @@ JApplication::JApplication(int narg, char *argv[])
 	//Must do before setting loggers
 	japp = this;
 	_pmanager = new JParameterManager();
+	_logger = std::shared_ptr<JLogger>(new JLogger());
 
-	//Loggers //TODO: Switch to enum!! //Must be done before any code that uses a logger!
 	SetLogWrapper(0, new JLogWrapper(std::cout)); //stdout
 	SetLogWrapper(1, new JLogWrapper(std::cerr)); //stderr
 	SetLogWrapper(2, mLogWrappers[0]); //hd_dump
@@ -226,21 +225,25 @@ JApplication::JApplication(int narg, char *argv[])
 				string val = arg.substr(pos+1);
 				GetJParameterManager()->SetParameter(key, val);
 			}else{
-				_DBG_ << " bad parameter argument (" << arg << ") should be of form -Pkey=value" << _DBG_ENDL_;
+				LOG_ERROR(_logger) 
+					<< " Bad parameter argument '" << arg
+					<< "': Expected format -Pkey=value" 
+					<< LOG_END;
 			}
 			continue;
 		}
 		if( arg == "--janaversion" ) {
-			JLog() << "          JANA version: "<<JVersion::GetVersion()<< "\n" <<
-			          "        JANA ID string: "<<JVersion::GetIDstring()<< "\n" <<
-			          "     JANA SVN revision: "<<JVersion::GetRevision()<< "\n" <<
-			          "JANA last changed date: "<<JVersion::GetDate()<< "\n" <<
-			          "              JANA URL: "<<JVersion::GetSource()<< "\n" << JLogEnd();
+			LOG_INFO(_logger) << 
+				"\n\n          JANA version: "<<JVersion::GetVersion()<< "\n" <<
+			        "        JANA ID string: "<<JVersion::GetIDstring()<< "\n" <<
+			        "     JANA SVN revision: "<<JVersion::GetRevision()<< "\n" <<
+			        "JANA last changed date: "<<JVersion::GetDate()<< "\n" <<
+			        "              JANA URL: "<<JVersion::GetSource()<< "\n" << LOG_END;
 			continue;
 		}
 		if( arg.find("-") == 0 )continue;
 
-		JLog() << "add source: "<< arg << "\n" << JLogEnd();
+		LOG_INFO(_logger) << "Adding source: " << arg << "\n" << LOG_END;
 		_eventSourceManager->AddEventSource(arg);
 	}
 }
@@ -805,6 +808,15 @@ void JApplication::GetJFactoryGenerators(vector<JFactoryGenerator*> &factory_gen
 {
 	factory_generators = _factoryGenerators;
 }
+
+//---------------------------------
+// GetJLogger
+//---------------------------------
+std::shared_ptr<JLogger> JApplication::GetJLogger(void) 
+{
+	return _logger;
+}
+
 
 //---------------------------------
 // GetJParameterManager

@@ -66,6 +66,7 @@ class JTestMain {
 
 	protected:
 		JApplication *mApp = nullptr;
+		std::shared_ptr<JLogger> mLogger;
 		uint32_t mMode = MODE_BASIC;
 
 		// For MODE_SCALING

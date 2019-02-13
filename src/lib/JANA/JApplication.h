@@ -54,23 +54,12 @@ using std::string;
 using std::deque;
 using std::map;
 
-#ifndef _DBG__
-#include <mutex>
-extern std::mutex DBG_MUTEX;
-//#define _DBG_LOCK_ DBG_MUTEX.lock()
-//#define _DBG_RELEASE_ DBG_MUTEX.unlock()
-//#define _DBG__ std::cerr<<__FILE__<<":"<<__LINE__<<std::endl
-//#define _DBG_  std::cerr<<__FILE__<<":"<<__LINE__<<" "
-#define _DBG_ {DBG_MUTEX.lock();std::cerr<<__FILE__<<":"<<__LINE__<<" "
-#define _DBG_ENDL_ std::endl;DBG_MUTEX.unlock();}
-#define _DBG__ _DBG_<<_DBG_ENDL_
-#endif
-
 #define jout std::cout
 #define jerr std::cerr
 
 #include "JResourcePool.h"
 #include <JANA/JParameterManager.h>
+#include <JANA/JLogger.h>
 
 class JApplication;
 class JEventProcessor;
@@ -79,14 +68,12 @@ class JEventSourceGenerator;
 class JFactoryGenerator;
 class JCalibrationGenerator;
 class JQueue;
-class JParameterManager;
 class JResourceManager;
 class JThread;
 class JEventSourceManager;
 class JThreadManager;
 class JFactorySet;
 class JLogWrapper;
-class JLogger;
 
 template <typename ReturnType>
 class JTask;
@@ -141,11 +128,11 @@ class JApplication{
 		
 		void GetJEventProcessors(vector<JEventProcessor*>& aProcessors);
 		void GetJFactoryGenerators(vector<JFactoryGenerator*> &factory_generators);
+		std::shared_ptr<JLogger> GetJLogger(void);
 		JParameterManager* GetJParameterManager(void);
 		JResourceManager* GetJResourceManager(void);
 		JThreadManager* GetJThreadManager(void) const;
 		JEventSourceManager* GetJEventSourceManager(void) const;
-		JLogger* GetJLogger(void);
 		
 		//GET/RECYCLE POOL RESOURCES
 		std::shared_ptr<JTask<void>> GetVoidTask(void);
@@ -191,6 +178,8 @@ class JApplication{
 		std::vector<JFactoryGenerator*> _factoryGenerators;
 		std::vector<JCalibrationGenerator*> _calibrationGenerators;
 		std::vector<JEventProcessor*> _eventProcessors;
+
+		std::shared_ptr<JLogger> _logger;
 		JParameterManager *_pmanager;
 		JResourceManager *_rmanager;
 		JEventSourceManager* _eventSourceManager;

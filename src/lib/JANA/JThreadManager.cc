@@ -67,8 +67,11 @@
 //---------------------------------
 // JThreadManager
 //---------------------------------
-JThreadManager::JThreadManager(JApplication* app) : mApplication(app), mEventSourceManager(mApplication->GetJEventSourceManager())
+JThreadManager::JThreadManager(JApplication* app) 
+  : mApplication(app), mEventSourceManager(mApplication->GetJEventSourceManager()),
+    mLogger(app->GetJLogger())
 {
+
 	app->GetJParameterManager()->SetDefaultParameter(
 		"JANA:THREAD_DEBUG_LEVEL", 
 		mDebugLevel, 
@@ -902,18 +905,27 @@ void JThreadManager::SetThreadAffinity(int affinity_algorithm)
 
 #ifdef __APPLE__
 		// Mac OS X
-		thread_affinity_policy_data_t policy = { (int)icpu };
-		thread_port_t mach_thread = pthread_mach_thread_np( t );
-		thread_policy_set(mach_thread, THREAD_AFFINITY_POLICY, (thread_policy_t)&policy, THREAD_AFFINITY_POLICY_COUNT);
-		_DBG_<<"CPU: " << mApplication->GetCPU() << "  (mach_thread="<<mach_thread<<", icpu=" << icpu <<")" << _DBG_ENDL_;
+		thread_affinity_policy_data_t policy = { (int) icpu };
+		thread_port_t mach_thread = pthread_mach_thread_np(t);
+		thread_policy_set(mach_thread, THREAD_AFFINITY_POLICY, 
+				  (thread_policy_t)&policy, 
+				  THREAD_AFFINITY_POLICY_COUNT);
+
+		LOG_DEBUG(mLogger) << "CPU=" << mApplication->GetCPU() 
+			           << " (mach_thread="<< mach_thread
+				   << ", icpu=" << icpu << ")" << LOG_END;
 #else
 		// Linux
 		cpu_set_t cpuset;
-    	CPU_ZERO(&cpuset);
-    	CPU_SET( icpu, &cpuset);
-    	int rc = pthread_setaffinity_np( t, sizeof(cpu_set_t), &cpuset);
-		if( rc !=0 )
-			JLog(1) << "ERROR: pthread_setaffinity_np returned " << rc << " for thread " << ithread << "\n" << JLogEnd(); //1: std::cerr
+    		CPU_ZERO(&cpuset);
+    		CPU_SET(icpu, &cpuset);
+    		int rc = pthread_setaffinity_np(t, sizeof(cpu_set_t), &cpuset);
+		if (rc != 0) {
+			LOG_ERROR(mLogger) << "pthread_setaffinity_np returned " 
+				           << rc << " for thread " << ithread 
+					   << LOG_END;
+		}
+
 #endif
 	}
 }

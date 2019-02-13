@@ -82,6 +82,7 @@ void InitPlugin(JApplication *app){
 JTestMain::JTestMain(JApplication *app)
 {
 	mApp = app;
+	mLogger = app->GetJLogger();
 
 	uint32_t kMinThreads=0;
 	uint32_t kMaxThreads=0;
@@ -267,16 +268,22 @@ void JTestMain::CopyToOutputDir(std::string filename)
 		if( pos_end != new_fname.npos ){
 
 			string envar_name = new_fname.substr(pos_start+1, pos_end-pos_start-1);
-			_DBG_<< " Looking for envar \"" << envar_name << "\"" << _DBG_ENDL_;
+			LOG_DEBUG(mLogger) << "Looking for env var '" << envar_name 
+				           << "'" << LOG_END;
+
 			auto envar = getenv( envar_name.c_str() );
 			if( envar ) {
 				new_fname.replace( pos_start-1, pos_end+2-pos_start, envar);
 			}else{
-				jout << "Environment variable \"" << envar_name << "\" not set. Cannot copy " << filename << endl;
+				LOG_ERROR(mLogger) << "Environment variable '" 
+					           << envar_name 
+						   << "' not set. Cannot copy " 
+						   << filename << LOG_END;
 				return;
 			}
 		}else{
-			_DBG_ << "Error in string format: " << filename << _DBG_ENDL_;
+			LOG_ERROR(mLogger) << "Error in string format: " 
+				           << filename << LOG_END;
 		}
 	}
 

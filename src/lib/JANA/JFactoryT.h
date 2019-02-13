@@ -84,7 +84,7 @@ class JFactoryT : public JFactory
 		// Set
 		void Set(std::vector<JObject*>& aData){
 			for( auto jobj : aData) {
-//_DBG_<<" jobj->className():" << jobj->className() << "  mName:"<<mName<<_DBG_ENDL_;
+//std::cout << "jobj->className():" << jobj->className() << "  mName:"<<mName<<std::endl;
 //				assert( jobj->className() == mName );
 				mData.push_back( static_cast<T*>(jobj) );
 			}
