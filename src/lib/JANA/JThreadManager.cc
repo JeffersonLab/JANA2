@@ -236,7 +236,8 @@ JQueueSet* JThreadManager::MakeQueueSet(JEventSource* sEventSource)
 	auto sEventQueue = sEventSource->GetEventQueue();
 	if(sEventQueue == nullptr){
 		//unspecified by source, use default
-		sEventQueue = new JQueueSimple("Events");
+		sEventQueue = new JQueueSimple(mApplication->GetJParameterManager(), 
+				               "Events");
 	}
 
 	// This will add the queue used by the JEventSource to output completed

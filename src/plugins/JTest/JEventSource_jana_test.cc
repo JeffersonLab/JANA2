@@ -47,15 +47,15 @@ JEventSource_jana_test::JEventSource_jana_test(string source_name, JApplication 
 	//Make sure that all types are listed as template arguments here!!
 	mFactoryGenerator = new JSourceFactoryGenerator<JSourceObject, JSourceObject2>();
 
-	//Event queue:
-	//If not created, a default will be supplied
-	if( mIncludeBarriers ) {
-	  mEventQueue = new JQueueWithBarriers("Events", 200, 50); //max size of 200, keep at least 50 buffered
-	}else{
-	  mEventQueue = new JQueueSimple("Events", 200, 50);
+	auto params = mApplication->GetJParameterManager();
+
+	// Event queue: max size of 200, keep at least 50 buffered
+	if (mIncludeBarriers) {
+		mEventQueue = new JQueueWithBarriers(params, "Events", 200, 50); 
 	}
-	//Debug:
-//	mDebugLevel = 500;
+       	else {
+		mEventQueue = new JQueueSimple(params ,"Events", 200, 50);
+	}
 }
 
 //----------------

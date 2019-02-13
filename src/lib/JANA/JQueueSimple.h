@@ -49,12 +49,17 @@
 #include <vector>
 
 #include "JQueue.h"
+#include "JParameterManager.h"
 
 class JQueueSimple : public JQueue
 {
 	public:
 	
-		JQueueSimple(const std::string& aName, std::size_t aQueueSize = 200, std::size_t aTaskBufferSize = 0);
+		JQueueSimple(JParameterManager* aParams, 
+			     const std::string& aName, 
+			     std::size_t aQueueSize = 200, 
+			     std::size_t aTaskBufferSize = 0);
+
 		~JQueueSimple();
 
 		//COPIERS //needed because atomic not copyable

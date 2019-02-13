@@ -70,7 +70,7 @@ void InitPlugin(JApplication *app){
 	InitJANAPlugin(app);
 	app->Add(new JEventSourceGeneratorT<JEventSource_jana_test>());
 	app->Add(new JFactoryGenerator_jana_test());
-	app->Add(new JEventProcessor_jana_test());
+	app->Add(new JEventProcessor_jana_test(app));
 
 	new JTestMain(app);
 }

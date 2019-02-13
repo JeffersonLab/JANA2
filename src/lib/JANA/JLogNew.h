@@ -64,9 +64,9 @@ struct JLogMessage {
 		
 		builder << std::setw(5) << std::left << level << " " 
 	     		<< "[" << std::setw(2) << std::right << thread << "] " 
-	     		<< std::setw(12) << std::right << ltrunc(func,12) << " "
 	     		<< std::setw(20) << std::right << ltrunc(file,20) << ":"
-	     		<< std::setw(5) << std::left << line << " ";
+	     		<< std::setw(5) << std::left << line << " "
+	     		<< std::setw(12) << std::left << ltrunc(func,12) << " ";
 	}
 
 };

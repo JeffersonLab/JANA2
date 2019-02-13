@@ -45,10 +45,16 @@
 //---------------------------------
 // JQueueSimple    (Constructor)
 //---------------------------------
-JQueueSimple::JQueueSimple(const std::string& aName, std::size_t aQueueSize, std::size_t aTaskBufferSize) : JQueue(aName), mTaskBufferSize(aTaskBufferSize)
-{
-	//Apparently segfaults
-//	gPARMS->SetDefaultParameter("JANA:QUEUE_DEBUG_LEVEL", mDebugLevel, "JQueueSimple debug level");
+JQueueSimple::JQueueSimple(JParameterManager* aParams, 
+		           const std::string& aName, 
+			   std::size_t aQueueSize, 
+			   std::size_t aTaskBufferSize)
+
+  : JQueue(aName), mTaskBufferSize(aTaskBufferSize) {
+
+	aParams->SetDefaultParameter("JANA:QUEUE_DEBUG_LEVEL", 
+				    mDebugLevel, 
+				    "JQueueSimple debug level");
 	mNslots = aQueueSize;
 	mQueue.resize(mNslots);
 	
