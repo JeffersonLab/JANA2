@@ -59,7 +59,7 @@
 #include <JANA/JApplication.h>
 #include <JANA/JThreadManager.h>
 #include <JANA/JLog.h>
-#include <JANA/JLogNew.h>
+#include <JANA/JLogger.h>
 #include <JANA/JThread.h>
 
 #ifndef _JEvent_h_
@@ -167,8 +167,6 @@ typename JFactoryT<DataType>::PairType JEvent::Get(const std::string& aTag) cons
 	// JEventSource::GetProcessEventTasks after calling GetEvent.
 	assert(mThreadManager!=nullptr);
 
-	std::shared_ptr<JLogNew> logger(new JLogNew());
-	LOG_WARN(logger) << "Secret message from JEvent" << JLogNewEnd();
 	if(mDebugLevel > 0)
 		JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Type = " << GetDemangledName<DataType>() << ", tag = " << aTag << ".\n" << JLogEnd();
 

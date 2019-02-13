@@ -86,6 +86,7 @@ class JEventSourceManager;
 class JThreadManager;
 class JFactorySet;
 class JLogWrapper;
+class JLogger;
 
 template <typename ReturnType>
 class JTask;
@@ -144,6 +145,7 @@ class JApplication{
 		JResourceManager* GetJResourceManager(void);
 		JThreadManager* GetJThreadManager(void) const;
 		JEventSourceManager* GetJEventSourceManager(void) const;
+		JLogger* GetJLogger(void);
 		
 		//GET/RECYCLE POOL RESOURCES
 		std::shared_ptr<JTask<void>> GetVoidTask(void);

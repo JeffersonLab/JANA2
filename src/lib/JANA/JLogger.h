@@ -1,7 +1,7 @@
 
 
-#ifndef JANA_JLOGNEW_H_
-#define JANA_JLOGNEW_H_
+#ifndef JANA_JLOGGER_H_
+#define JANA_JLOGGER_H_
 
 #include <iostream>
 #include <sstream>
@@ -25,21 +25,21 @@ inline std::ostream& operator<<(std::ostream& s, JLogLevel l) {
 }
 
 
-struct JLogNew {
+struct JLogger {
 	JLogLevel level = JLogLevel::INFO;
 	std::ostream& destination = std::cout;
 	std::mutex mutex;
 };
 
-struct JLogNewEnd {};
+struct JLogMessageEnd {};
 
 struct JLogMessage {
 
-	std::shared_ptr<JLogNew> logger;
+	std::shared_ptr<JLogger> logger;
 	JLogLevel level;
 	std::ostringstream builder;
 	
-	JLogMessage(std::shared_ptr<JLogNew> logger_, JLogLevel level_) : 
+	JLogMessage(std::shared_ptr<JLogger> logger_, JLogLevel level_) : 
 		logger(logger_), level(level_) {
 		
 		builder << "[" << level << "] ";
@@ -53,7 +53,7 @@ struct JLogMessage {
 		return "\u2026" + original.substr(n-desired_length, desired_length-1);
 	}
 
-	JLogMessage(std::shared_ptr<JLogNew> logger_, 
+	JLogMessage(std::shared_ptr<JLogger> logger_, 
 		    JLogLevel level_,
 		    int thread,
 		    std::string file,
@@ -83,7 +83,7 @@ inline JLogMessage&& operator<<(JLogMessage&& m, T t) {
 	return std::move(m);
 }
 
-inline void operator<<(JLogMessage && m, JLogNewEnd const & end) {
+inline void operator<<(JLogMessage && m, JLogMessageEnd const & end) {
 
 	if (m.logger->level > m.level) return;
 	std::lock_guard<std::mutex> lock(m.logger->mutex);
@@ -111,4 +111,7 @@ inline void operator<<(JLogMessage && m, JLogNewEnd const & end) {
 #define LOG_DEBUG(logger) LOG(logger, JLogLevel::DEBUG)
 #define LOG_TRACE(logger) LOG(logger, JLogLevel::TRACE)
 
+#define LOG_END JLogMessageEnd()
 #endif
+
+

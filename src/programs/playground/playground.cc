@@ -87,18 +87,18 @@ class ClusterFactory : public JFactoryT<Cluster> {
 };
 
 
-#include<JANA/JLogNew.h>
+#include<JANA/JLogger.h>
 
 int main(int narg, char *argv[]) {
 
-	std::shared_ptr<JLogNew> logger(new JLogNew());
+	std::shared_ptr<JLogger> logger(new JLogger());
 
-	LOG_INFO(logger) << "Launching a minimal JANA instance!" << JLogNewEnd();
-	LOG_DEBUG(logger) << "You shouldn't see this" << JLogNewEnd();
-	LOG_ERROR(logger) << "This program is doomed to crash now that I've reenabled old-style logging because JTHREAD is NULL" << JLogNewEnd();
+	LOG_INFO(logger) << "Launching a minimal JANA instance!" << LOG_END;
+	LOG_DEBUG(logger) << "You shouldn't see this" << LOG_END;
+	LOG_ERROR(logger) << "Here is an error message!" << LOG_END;
 
-	JLogMessage(logger, JLogLevel::WARN) << "This is another way of using me" << JLogNewEnd();
-	LOG_FATAL(std::shared_ptr<JLogNew>(new JLogNew())) << "Exiting now!" << JLogNewEnd();
+	JLogMessage(logger, JLogLevel::WARN) << "This also works" << JLogMessageEnd();
+	LOG_FATAL(shared_ptr<JLogger>(new JLogger())) << "Exiting now!" << LOG_END;
 	return 0;
 
 	auto app = new JApplication(narg, argv);
