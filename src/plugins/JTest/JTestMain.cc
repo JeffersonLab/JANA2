@@ -222,8 +222,7 @@ void JTestMain::TestThread(void)
 	}
 
 	// Write results to files
-	jout << endl;
-	jout << "Writing test results to: " << mOutputDirName << endl;
+	LOG_INFO(mLogger) << "Writing test results to: " << mOutputDirName << LOG_END;
 	mkdir(mOutputDirName.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
 	std::ofstream ofs1(mOutputDirName+"/samples.dat");
@@ -292,7 +291,7 @@ void JTestMain::CopyToOutputDir(std::string filename)
 	if( auto pos = base_fname.rfind("/") ) base_fname.erase(0, pos);
 
 	// Copy file
-	jout << "Copying " << new_fname << " -> " << mOutputDirName << endl;
+	LOG_INFO(mLogger) << "Copying " << new_fname << " -> " << mOutputDirName << LOG_END;
 	std::ifstream src(new_fname, std::ios::binary);
 	std::ofstream dst(mOutputDirName + "/" + base_fname, std::ios::binary);
 	dst << src.rdbuf();

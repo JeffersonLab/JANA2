@@ -84,15 +84,12 @@ inline JLogMessage&& operator<<(JLogMessage&& m, T t) {
 }
 
 inline void operator<<(JLogMessage && m, JLogMessageEnd const & end) {
-
-	if (m.logger->level > m.level) return;
 	std::lock_guard<std::mutex> lock(m.logger->mutex);
 	m.logger->destination << m.builder.str() << std::endl; 
 }
 
 
 #define VLOG(logger, msglevel) if (logger->level <= msglevel) JLogMessage(logger, msglevel, JTHREAD != nullptr ? JTHREAD->GetThreadID() : -1, __FILE__, __LINE__, __func__, 0) 
-
 
 #define VLOG_FATAL(logger) VLOG(logger, JLogLevel::FATAL)
 #define VLOG_ERROR(logger) VLOG(logger, JLogLevel::ERROR)
@@ -109,7 +106,7 @@ inline void operator<<(JLogMessage && m, JLogMessageEnd const & end) {
 #define LOG_WARN(logger)  LOG(logger, JLogLevel::WARN)
 #define LOG_INFO(logger)  LOG(logger, JLogLevel::INFO)
 #define LOG_DEBUG(logger) LOG(logger, JLogLevel::DEBUG)
-#define LOG_TRACE(logger) LOG(logger, JLogLevel::TRACE)
+#define LOG_TRACE(logger, flag) if (logger->level <= JLogLevel::TRACE || flag) JLogMessage(logger, JLogLevel::TRACE) 
 
 #define LOG_END JLogMessageEnd()
 #endif

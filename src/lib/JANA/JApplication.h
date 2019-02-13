@@ -192,8 +192,8 @@ class JApplication{
 		
 	private:
 
-		//Resource pools
-		//TODO: Add methods to set control parameters
+		// Resource pools
+		// TODO: Add methods to set control parameters
 		JResourcePool<JTask<void>> mVoidTaskPool;
 		JResourcePool<JFactorySet> mFactorySetPool;
 

@@ -84,12 +84,12 @@ int SIGINT_RECEIVED = 0;
 void ctrlCHandle(int x)
 {
 	SIGINT_RECEIVED++;
-	JLog(1) << "\nSIGINT received (" << SIGINT_RECEIVED << ")! Attempting graceful exit...\n" << JLogEnd();
+	jout << "\nSIGINT received (" << SIGINT_RECEIVED << ")! Attempting graceful exit...\n";
 	
-	if(japp) japp->Quit();
+	if (japp) japp->Quit();
 	
-	if(SIGINT_RECEIVED == 3){
-		JLog(1) << "\nThree SIGINTS received! OK, I get it! ...\n" << JLogEnd();
+	if (SIGINT_RECEIVED == 3){
+		jout << "\nThree SIGINTS received! OK, I get it! ...\n";
 		exit(-2);
 	}
 }
@@ -245,6 +245,7 @@ JApplication::JApplication(int narg, char *argv[])
 
 		LOG_INFO(_logger) << "Adding source: " << arg << "\n" << LOG_END;
 		_eventSourceManager->AddEventSource(arg);
+
 	}
 }
 
@@ -272,10 +273,11 @@ void JApplication::AttachPlugins(void)
 	/// actually attach and intiailize them. See AddPlugin method
 	/// for more.
 	
-	bool printPaths=false;
-	try{
-		GetJParameterManager()->GetParameter("PRINT_PLUGIN_PATHS", printPaths);
-	}catch(...){}
+	bool printPaths = false;
+	GetJParameterManager()->SetDefaultParameter(
+		"JANA:DEBUG_PLUGIN_LOADING", 
+		printPaths, 
+		"Trace the plugin search path and display any loading errors");
 	
 	// In order to give priority to factories added via plugins,
 	// the list of factory generators needs to be cleared so
@@ -326,32 +328,29 @@ void JApplication::AttachPlugins(void)
 		bool found_plugin=false;
 		for(string path : _plugin_paths){
 			string fullpath = path + "/" + plugin;
-			if(printPaths)
-				JLog() << "Looking for \""<<fullpath<<"\" ....\n" << JLogEnd();
-			if( access( fullpath.c_str(), F_OK ) != -1 ){
-				if(printPaths)
-					JLog() << "Found\n" << JLogEnd();
+			LOG_TRACE(_logger, printPaths) << "Looking for '" << fullpath << "' ...." << LOG_END;
+			if (access(fullpath.c_str(), F_OK) != -1) {
+				LOG_TRACE(_logger, printPaths) << "Found!" << LOG_END;
 				try{
 					AttachPlugin(fullpath.c_str(), printPaths);
 					found_plugin=true;
 					break;
-				}catch(...){
+				} catch(...) {
 					err_mess << "Tried to attach: \"" << fullpath << "\"" << endl;
 					err_mess << "  -- error message: " << dlerror() << endl;
 					continue;
 				}
 			}
-			if(printPaths)
-				JLog() << "Failed to attach \""<<fullpath<<"\"\n" << JLogEnd();
+			LOG_TRACE(_logger, printPaths) << "Failed to attach '" << fullpath << "'" << LOG_END;
 		}
 		
 		// If we didn't find the plugin, then complain and quit
 		if(!found_plugin){
-			JLog(1) << "\n***ERROR : Couldn't find plugin \""<<plugin<<"\"!***\n" <<
-			             "***        make sure the JANA_PLUGIN_PATH environment variable is set correctly.\n"<<
-			             "***        To see paths checked, set PRINT_PLUGIN_PATHS config. parameter.\n"<<
-						 "***        Some hints to the error follow:\n"<<
-						 err_mess.str()<< JLogEnd();
+
+			LOG_FATAL(_logger) << "\n*** Couldn't find plugin '" << plugin << "'! ***\n" <<
+			             "***        Make sure the JANA_PLUGIN_PATH environment variable is set correctly.\n" <<
+			             "***        To see paths checked, set JANA:DEBUG_PLUGIN_LOADING=1\n"<<
+				     "***        Some hints to the error follow:\n\n" << err_mess.str() << LOG_END;
 
 			exit(-1);
 		}
@@ -386,7 +385,7 @@ void JApplication::AttachPlugin(string soname, bool verbose)
 	// Open shared object
 	void* handle = dlopen(soname.c_str(), RTLD_LAZY | RTLD_GLOBAL | RTLD_NODELETE);
 	if(!handle){
-		if(verbose)JLog(1)<<dlerror()<<"\n" << JLogEnd();
+		LOG_TRACE(_logger, verbose) << dlerror() << LOG_END;
 		throw "dlopen failed";
 	}
 	
@@ -394,13 +393,12 @@ void JApplication::AttachPlugin(string soname, bool verbose)
 	typedef void InitPlugin_t(JApplication* app);
 	InitPlugin_t *plugin = (InitPlugin_t*)dlsym(handle, "InitPlugin");
 	if(plugin){
-		JLog() << "Initializing plugin \""<<soname<<"\" ...\n" << JLogEnd();
+		LOG_INFO(_logger) << "Initializing plugin \"" << soname << "\"" << LOG_END;
 		(*plugin)(this);
 		_sohandles.push_back(handle);
 	}else{
 		dlclose(handle);
-		if(verbose)
-			JLog() << " --- Nothing useful found in" << soname << " ---\n" << JLogEnd();
+		LOG_TRACE(_logger, verbose) << "Nothing useful found in " << soname << LOG_END;
 	}
 }
 
