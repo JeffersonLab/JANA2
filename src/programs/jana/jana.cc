@@ -13,6 +13,7 @@ using namespace std;
 #include "MyProcessor.h"
 #include <JANA/JApplication.h>
 #include <JANA/JVersion.h>
+#include <JANA/JSignalHandler.h>
 
 using namespace std;
 
@@ -29,11 +30,12 @@ int main(int narg, char *argv[])
 	// Parse the command line
 	ParseCommandLineArguments(narg, argv);
 
-	// Instantiate our event processor
-	//MyProcessor myproc;
-
 	// Instantiate an event loop object
 	JApplication app(narg, argv);
+
+	japp = &app;
+
+	AddSignalHandlers();
 
 	// Run though all events, calling our event processor's methods
 	app.Run();

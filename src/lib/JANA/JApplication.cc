@@ -39,7 +39,6 @@
 
 #include <unistd.h>
 #include <dlfcn.h>
-#include <signal.h>
 #include <sched.h>
 
 #ifdef __APPLE__
@@ -70,104 +69,24 @@ using namespace std;
 #include <JANA/JEvent.h>
 #include <JANA/JVersion.h>
 #include <JANA/JLog.h>
-#include <JANA/JStatus.h>
 #include <JANA/JResourcePool.h>
 #include <JANA/JLogWrapper.h>
 
 JApplication *japp = NULL;
 
-int SIGINT_RECEIVED = 0;
 
-//-----------------------------------------------------------------
-// ctrlCHandle
-//-----------------------------------------------------------------
-void ctrlCHandle(int x)
-{
-	SIGINT_RECEIVED++;
-	jout << "\nSIGINT received (" << SIGINT_RECEIVED << ")! Attempting graceful exit...\n";
-	
-	if (japp) japp->Quit();
-	
-	if (SIGINT_RECEIVED == 3){
-		jout << "\nThree SIGINTS received! OK, I get it! ...\n";
-		exit(-2);
-	}
-}
-
-//-----------------------------------------------------------------
-// USR1Handle
-//-----------------------------------------------------------------
-void USR1Handle(int x)
-{
-	thread th( JStatus::Report );
-	th.detach();
-}
-
-//-----------------------------------------------------------------
-// USR2Handle
-//-----------------------------------------------------------------
-void USR2Handle(int x)
-{
-	JStatus::RecordBackTrace();
-}
-
-//-----------------------------------------------------------------
-// SIGSEGVHandle
-//-----------------------------------------------------------------
-void SIGSEGVHandle(int aSignalNumber, siginfo_t* aSignalInfo, void* aContext)
-{
-	JStatus::Report();
-}
-
-//-----------------------------------------------------------------
-// AddSignalHandlers
-//-----------------------------------------------------------------
-void JApplication::AddSignalHandlers(void)
-{
-	/// Add special handles for system signals. The handlers will catch SIGINT
-	/// signals that the user may send (e.g. by hitting ctl-C) to indicate
-	/// they want data processing to stop and the program to end. When a SIGINT
-	/// is received, JANA will try and shutdown the program cleanly, allowing
-	/// the processing threads to finish up the events they are working on.
-	/// The first 5 SIGINT signals received will tell JANA to shutdown gracefully.
-	/// On the 6th SIGINT, the program will try to exit immediately.
-	///
-	/// This is called from the JApplication constructor.
-
-
-	//Define signal action
-	struct sigaction sSignalAction;
-	sSignalAction.sa_sigaction = SIGSEGVHandle;
-	sSignalAction.sa_flags = SA_RESTART | SA_SIGINFO;
-
-	//Clear and set signals
-	sigemptyset(&sSignalAction.sa_mask);
-	sigaction(SIGSEGV, &sSignalAction, nullptr);
-
-	// Set up to catch SIGINTs for graceful exits
-	signal(SIGINT,ctrlCHandle);
-
-	// Set up to catch USR1's and USR2's for status reporting
-	signal(SIGUSR1,USR1Handle);
-	signal(SIGUSR2,USR2Handle);
-}
 
 //---------------------------------
 // JApplication    (Constructor)
 //---------------------------------
 JApplication::JApplication(int narg, char *argv[])
 {
-	//Must do before setting loggers
-	japp = this;
 	_pmanager = new JParameterManager();
 	_logger = std::shared_ptr<JLogger>(new JLogger());
 
 	SetLogWrapper(0, new JLogWrapper(std::cout)); //stdout
 	SetLogWrapper(1, new JLogWrapper(std::cerr)); //stderr
 	SetLogWrapper(2, mLogWrappers[0]); //hd_dump
-
-	//Add to catch seg faults
-	AddSignalHandlers();
 
 	_exit_code = 0;
 	_verbose = 1;
@@ -617,10 +536,12 @@ void JApplication::PrintStatus(void)
 //---------------------------------
 // Quit
 //---------------------------------
-void JApplication::Quit(void)
+void JApplication::Quit(bool skip_join)
 {
 	_threadManager->EndThreads();
+	_skip_join = skip_join;
 	_quitting = true;
+
 }
 
 //---------------------------------
@@ -690,7 +611,7 @@ void JApplication::Run(uint32_t nthreads)
 	
 	// Join all threads
 	jout << "Event processing ended. " << endl;
-	if( SIGINT_RECEIVED <= 1 ){
+	if (!_skip_join) {
 		cout << "Merging threads ..." << endl;
 		_threadManager->JoinThreads();
 	}

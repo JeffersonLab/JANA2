@@ -111,7 +111,7 @@ class JApplication{
 		void Initialize(void);
 		void PrintFinalReport(void);
 		void PrintStatus(void);
-		void Quit(void);
+		void Quit(bool skip_join=false);
 		void Run(uint32_t nthreads=0);
 		void SetExitCode(int exit_code);
 		void SetMaxThreads(uint32_t);
@@ -167,6 +167,7 @@ class JApplication{
 	
 		vector<string> _args;	///< Argument list passed in to JApplication Constructor
 		int _exit_code;
+		bool _skip_join;
 		bool _quitting;
 		int _verbose;
 		bool _draining_queues;
