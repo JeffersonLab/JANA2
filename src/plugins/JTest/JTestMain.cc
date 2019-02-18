@@ -84,8 +84,6 @@ JTestMain::JTestMain(JApplication *app)
 	mApp = app;
 	mLogger = app->GetJLogger();
 
-	uint32_t kMinThreads=0;
-	uint32_t kMaxThreads=0;
 	string kThreadSet;
 	mOutputDirName="JANA_Test_Results";
 
@@ -101,31 +99,32 @@ JTestMain::JTestMain(JApplication *app)
 		mNsamples, 
 		"JTest plugin number of samples to take for each test");
 
+	uint32_t kMinThreads=1;
 	params->SetDefaultParameter(
 		"JTEST:MINTHREADS", 
 		kMinThreads, 
 		"JTest plugin minimum number of threads to test");
 
+	uint32_t kMaxThreads = mApp->GetJThreadManager()->GetNcores();
 	params->SetDefaultParameter(
 		"JTEST:MAXTHREADS", 
 		kMaxThreads, 
 		"JTest plugin maximum number of threads to test");
+
+	uint32_t kThreadStep=1;
+	params->SetDefaultParameter(
+		"JTEST:THREADSTEP",
+		kThreadStep,
+		"JTest plugin number of threads step size");
 
 	params->SetDefaultParameter(
 		"JTEST:RESULTSDIR", 
 		mOutputDirName, 
 		"JTest output directory name for sampling test results");
 
-	// If sampling mode is specified and min/max threads are not, then set them
-	// to be 1 to Ncores
-	if( mMode==MODE_SCALING && kMinThreads==0 && kMaxThreads==0 ){
-		kMinThreads = 1;
-		kMaxThreads = mApp->GetJThreadManager()->GetNcores();
-	}
-
 	// insert continuous range of NThreads to test
-	if( kMinThreads>0 && kMaxThreads>0){
-		for(uint32_t nthreads=kMinThreads; nthreads<=kMaxThreads; nthreads++) mThreadSet.insert(nthreads);
+	if (mMode == 1) {
+		for(uint32_t nthreads=kMinThreads; nthreads<=kMaxThreads; nthreads+=kThreadStep) mThreadSet.insert(nthreads);
 	}
 
 	// If no source has been specified, then add a dummy source
