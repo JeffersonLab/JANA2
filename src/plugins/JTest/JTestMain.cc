@@ -83,10 +83,6 @@ JTestMain::JTestMain(JApplication *app)
 {
 	mApp = app;
 	mLogger = app->GetJLogger();
-
-	string kThreadSet;
-	mOutputDirName="JANA_Test_Results";
-
 	auto params = app->GetJParameterManager();
 
 	params->SetDefaultParameter(
@@ -99,44 +95,36 @@ JTestMain::JTestMain(JApplication *app)
 		mNsamples, 
 		"JTest plugin number of samples to take for each test");
 
-	uint32_t kMinThreads=1;
 	params->SetDefaultParameter(
 		"JTEST:MINTHREADS", 
-		kMinThreads, 
+		mMinThreads, 
 		"JTest plugin minimum number of threads to test");
 
-	uint32_t kMaxThreads = mApp->GetJThreadManager()->GetNcores();
+	mMaxThreads = mApp->GetJThreadManager()->GetNcores();
 	params->SetDefaultParameter(
 		"JTEST:MAXTHREADS", 
-		kMaxThreads, 
+		mMaxThreads, 
 		"JTest plugin maximum number of threads to test");
 
-	uint32_t kThreadStep=1;
 	params->SetDefaultParameter(
 		"JTEST:THREADSTEP",
-		kThreadStep,
+		mThreadStep,
 		"JTest plugin number of threads step size");
 
+	mOutputDirName = "JANA_Test_Results";
 	params->SetDefaultParameter(
 		"JTEST:RESULTSDIR", 
 		mOutputDirName, 
 		"JTest output directory name for sampling test results");
 
-	// insert continuous range of NThreads to test
-	if (mMode == 1) {
-		for(uint32_t nthreads=kMinThreads; nthreads<=kMaxThreads; nthreads+=kThreadStep) mThreadSet.insert(nthreads);
+	// If no source has been specified, then add a dummy source
+	if (app->GetJEventSourceManager()->GetSourceNames().empty()) {
+		app->GetJEventSourceManager()->AddEventSource("dummy");
 	}
 
-	// If no source has been specified, then add a dummy source
-	if( app->GetJEventSourceManager()->GetSourceNames().empty() ) app->GetJEventSourceManager()->AddEventSource("dummy");
-
-	switch( mMode ){
-		case MODE_BASIC:
-			break;
-		case MODE_SCALING:
-			params->SetParameter("NEVENTS", 0);
-			mThread = new std::thread(&JTestMain::TestThread, this);
-			break;
+	if (mMode == MODE_SCALING) {
+		params->SetParameter("NEVENTS", 0);
+		mThread = new std::thread(&JTestMain::TestThread, this);
 	}
 }
 
@@ -182,10 +170,9 @@ void JTestMain::TestThread(void)
 	}
 
 	// Loop over all thread settings in set
-	cout << "Testing " << mThreadSet.size() << " Nthread settings with " << mNsamples << " samples each" << endl;
 	map< uint32_t, vector<float> > samples;
 	map< uint32_t, std::pair<float,float> > rates; // key=nthreads  val.first=rate in Hz, val.second=rms of rate in Hz
-	for( auto nthreads : mThreadSet ){
+	for (uint32_t nthreads=mMinThreads; nthreads<=mMaxThreads; nthreads+=mThreadStep){
 		cout << "Setting NTHREADS = " << nthreads << " ..." <<endl;
 		tm->SetNJThreads( nthreads );
 

@@ -67,14 +67,16 @@ class JTestMain {
 	protected:
 		JApplication *mApp = nullptr;
 		std::shared_ptr<JLogger> mLogger;
-		uint32_t mMode = MODE_BASIC;
 
-		// For MODE_SCALING
-		std::set<uint32_t> mThreadSet;
+		uint32_t mMode = MODE_BASIC;
+		uint32_t mMinThreads=1;
+		uint32_t mMaxThreads;
+		uint32_t mThreadStep=1;
 		uint32_t mNsamples = 15;
+
+		std::string mOutputDirName;
 		std::thread *mThread = nullptr;
 		bool mQuit = false;
-		std::string mOutputDirName;
 
 		void TestThread(void);
 
