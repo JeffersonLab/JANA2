@@ -4,6 +4,8 @@
 #include <mutex>
 #include <thread>
 
+#include <JANA/JLogger.h>
+
 template <typename T>
 class JResourcePoolSimple {
 
@@ -16,6 +18,7 @@ class JResourcePoolSimple {
 	size_t mCheckedOut = 0;
 	size_t mPoolSize = 0;
 	size_t mMaxPoolSize;
+	std::shared_ptr<JLogger> mLogger;
 
 
 	bucket_t Get_Bucket() {
@@ -25,7 +28,11 @@ class JResourcePoolSimple {
 
 	public:
 
-	JResourcePoolSimple(size_t aMaxPoolSize = 16) : mMaxPoolSize(aMaxPoolSize) {}
+	JResourcePoolSimple(size_t aMaxPoolSize = 16) 
+		: mMaxPoolSize(aMaxPoolSize), mLogger(new JLogger) {
+
+		mLogger->level = JLogLevel::DEBUG;
+	}
 
 	JResourcePoolSimple(const JResourcePoolSimple& other) = delete;
 
@@ -45,9 +52,9 @@ class JResourcePoolSimple {
 			delete item.second;
 		}
 		mPool.clear();
-		jout << "JResourcePoolSimple<" << typeid(T).name() << ">::~JResourcePool: " 
-		     << "Deleted " << deleteCount << " items (" << mPoolSize << " expected)." 
-		     << std::endl;
+		LOG_INFO(mLogger) << "JResourcePoolSimple<" << typeid(T).name() 
+			   << ">::~JResourcePool: " << "Deleted " << deleteCount 
+			   << " items (" << mPoolSize << " expected)." << LOG_END;
 	}
 
 
@@ -59,9 +66,10 @@ class JResourcePoolSimple {
 		auto search = mPool.find(bucket);
 
 		if (search != mPool.end()) {
-			jout << "JResourcePoolSimple<" << typeid(T).name() << "::Get_Resource: " 
-			     << "Returning pre-existing resource from pool for bucket " << bucket 
-			     << std::endl;
+			LOG_DEBUG(mLogger)
+			      << "JResourcePoolSimple<" << typeid(T).name() << ">::Get_Resource: " 
+			      << "Acquired resource from bucket=" << bucket 
+			      << LOG_END;
 
 			T* result = search->second;
 			mPool.erase(search);
@@ -70,8 +78,9 @@ class JResourcePoolSimple {
 			return result;
 		}
 		else {
-			jout << "JResourcePoolSimple<" << typeid(T).name() << "::Get_Resource: " 
-			     << "Creating new resource" << std::endl;
+			LOG_DEBUG(mLogger)
+			      << "JResourcePoolSimple<" << typeid(T).name() << ">::Get_Resource: " 
+			      << "Creating new resource; bucket=" << bucket << LOG_END;
 
 			++mCheckedOut;
 			return new T(std::forward<CtorArgTypes>(args)...);
@@ -90,8 +99,9 @@ class JResourcePoolSimple {
 			mMutex.unlock();
 			delete resource;
 
-			jout << "JResourcePoolSimple<" << typeid(T).name() << "::Recycle: " 
-			     << "Pool is already full. Deleting resource outright." << std::endl;
+			LOG_DEBUG(mLogger) 
+				<< "JResourcePoolSimple<" << typeid(T).name() << ">::Recycle: " 
+				<< "Pool is full; deleting resource." << LOG_END;
 
 			return;
 		} 
@@ -103,8 +113,9 @@ class JResourcePoolSimple {
 			--mCheckedOut;
 			mMutex.unlock();
 
-			jout << "JResourcePoolSimple<" << typeid(T).name() << "::Recycle: " 
-			     << "Returning resource to pool for bucket " << bucket << std::endl;
+			LOG_DEBUG(mLogger) 
+				<< "JResourcePoolSimple<" << typeid(T).name() << ">::Recycle: " 
+			        << "Returning resource to pool; bucket=" << bucket << LOG_END;
 
 			return;
 		}
