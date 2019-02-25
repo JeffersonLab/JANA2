@@ -70,6 +70,7 @@ using namespace std;
 #include <JANA/JVersion.h>
 #include <JANA/JLog.h>
 #include <JANA/JResourcePool.h>
+#include <JANA/JResourcePoolSimple.h>
 #include <JANA/JLogWrapper.h>
 
 JApplication *japp = NULL;
@@ -879,7 +880,7 @@ void JApplication::UpdateResourceLimits(void)
 	// of threads which should be sufficient. The user should be given control to
 	// adjust this themselves in the future, but or now, this should be OK.
 	auto nthreads = _threadManager->GetNJThreads();
-	mFactorySetPool.Set_ControlParams( nthreads*2, 0 );
+	mFactorySetPool.Set_ControlParams( nthreads*2, 10 );
 }
 
 //---------------------------------

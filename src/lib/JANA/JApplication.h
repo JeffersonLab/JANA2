@@ -57,9 +57,10 @@ using std::map;
 #define jout std::cout
 #define jerr std::cerr
 
-#include "JResourcePool.h"
 #include <JANA/JParameterManager.h>
 #include <JANA/JLogger.h>
+#include <JANA/JResourcePool.h>
+#include <JANA/JResourcePoolSimple.h>
 
 class JApplication;
 class JEventProcessor;
@@ -196,7 +197,7 @@ class JApplication{
 		// Resource pools
 		// TODO: Add methods to set control parameters
 		JResourcePool<JTask<void>> mVoidTaskPool;
-		JResourcePool<JFactorySet> mFactorySetPool;
+		JResourcePoolSimple<JFactorySet> mFactorySetPool;
 
 };
 
