@@ -40,12 +40,6 @@
 #include <unistd.h>
 #include <dlfcn.h>
 #include <sched.h>
-
-#ifdef __APPLE__
-#import <mach/thread_act.h>
-#include <cpuid.h>
-#endif  // __APPLE__
-
 #include <cstdlib>
 #include <sstream>
 #include <iostream>
@@ -70,6 +64,7 @@ using namespace std;
 #include <JANA/JLog.h>
 #include <JANA/JResourcePool.h>
 #include <JANA/JResourcePoolSimple.h>
+#include <JANA/JCpuInfo.h>
 
 JApplication *japp = NULL;
 
@@ -543,8 +538,8 @@ void JApplication::Run(uint32_t nthreads)
 	// Set number of threads
 	try{
 		string snthreads = GetParameterValue<string>("NTHREADS");
-		if( snthreads == "Ncores" ){
-			nthreads = _threadManager->GetNcores();
+		if( snthreads == "Ncores" ) {
+			nthreads = JCpuInfo::GetNumCpus();
 		}else{
 			stringstream ss(snthreads);
 			ss >> nthreads;
@@ -757,49 +752,6 @@ JEventSourceManager* JApplication::GetJEventSourceManager(void) const
 	return _eventSourceManager;
 }
 
-//---------------------------------
-// GetCPU
-//---------------------------------
-uint32_t JApplication::GetCPU(void)
-{
-	/// Returns the current CPU the calling thread is running on.
-	/// Note that unless the thread affinity has been set, this may 
-	/// change, even before returning from this call. The thread
-	/// affinity of all threads may be fixed by setting the AFFINITY
-	/// configuration parameter at program start up.
-
-	int cpuid;
-
-#ifdef __APPLE__
-
-	//--------- Mac OS X ---------
-
-// From https://stackoverflow.com/questions/33745364/sched-getcpu-equivalent-for-os-x
-#define CPUID(INFO, LEAF, SUBLEAF) __cpuid_count(LEAF, SUBLEAF, INFO[0], INFO[1], INFO[2], INFO[3])
-#define GETCPU(CPU) {                              \
-        uint32_t CPUInfo[4];                           \
-        CPUID(CPUInfo, 1, 0);                          \
-        /* CPUInfo[1] is EBX, bits 24-31 are APIC ID */ \
-        if ( (CPUInfo[3] & (1 << 9)) == 0) {           \
-          CPU = -1;  /* no APIC on chip */             \
-        }                                              \
-        else {                                         \
-          CPU = (unsigned)CPUInfo[1] >> 24;                    \
-        }                                              \
-        if (CPU < 0) CPU = 0;                          \
-      }
-
-	GETCPU(cpuid);
-#else  // __APPLE__
-
-	//--------- Linux ---------
-	cpuid = sched_getcpu();
-
-#endif // __APPLE__
-
-
-	return cpuid;
-}
 
 //---------------------------------
 // GetVoidTask

@@ -37,14 +37,6 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-#include "JParameterManager.h"
-#include "JStatus.h"
-#include "JThread.h"
-#include "JQueue.h"
-#include "JQueueSet.h"
-#include "JEventSourceManager.h"
-#include "JEventSource.h"
-#include "JThreadManager.h"
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -58,6 +50,17 @@
 
 #include <set>
 #include <map>
+
+#include "JParameterManager.h"
+#include "JStatus.h"
+#include "JThread.h"
+#include "JQueue.h"
+#include "JQueueSet.h"
+#include "JEventSourceManager.h"
+#include "JEventSource.h"
+#include "JThreadManager.h"
+#include "JCpuInfo.h"
+
 using namespace std;
 
 #define MAX_FRAMES 256
@@ -163,7 +166,7 @@ void JStatus::GenerateReport(std::stringstream &ss)
 	ss << "------ JANA STATUS REPORT -------" << endl;
 	ss << "generated: " << ctime(&t);
 	ss << endl;
-	ss << "      Nthreads/Ncores: " << japp->GetJThreadManager()->GetNJThreads() << " / " << japp->GetJThreadManager()->GetNcores() << endl;
+	ss << "      Nthreads/Ncores: " << japp->GetJThreadManager()->GetNJThreads() << " / " << JCpuInfo::GetNumCpus() << endl;
 	ss << "    Nevents processed: " << japp->GetNeventsProcessed() << endl;
 	ss << "          Nprocessors: " << processors.size() << endl;
 	ss << "             Nsources: " << sources.size() << endl;
@@ -340,7 +343,7 @@ void JStatus::RecordBackTrace(void)
 
 	// Write trace info to pre-allocated containers
 	auto &btinfo = BACKTRACES[pthread_self()];
-	btinfo.cpuid = japp->GetCPU();
+	btinfo.cpuid = JCpuInfo::GetCpuID();
 	btinfo.bt_symbols.resize(trace_size, char_str_empty);
 	btinfo.bt_fnames.resize(trace_size, char_str_empty);
 	for(int i=0; i<trace_size; i++){

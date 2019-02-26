@@ -44,6 +44,7 @@
 
 #include <JANA/JApplication.h>
 #include <JANA/JThreadManager.h>
+#include <JANA/JCpuInfo.h>
 
 void JANA_PythonModuleInit(JApplication *sApp);
 
@@ -242,7 +243,7 @@ static PyObject* janapy_GetNJThreads(PyObject *self, PyObject *args)
 static PyObject* janapy_GetNcores(PyObject *self, PyObject *args)
 {
 	if(!PyArg_ParseTuple(args, ":GetNcores")) return NULL;
-	return PV( japp->GetJThreadManager()->GetNcores() );
+	return PV(JCpuInfo::GetNumCpus());
 }
 
 //-------------------------------------

@@ -60,6 +60,7 @@
 #include "JQueueSimple.h"
 #include "JEvent.h"
 #include "JThread.h"
+#include "JCpuInfo.h"
 
 #include <pthread.h>
 #include <signal.h>
@@ -869,7 +870,7 @@ void JThreadManager::SetThreadAffinity(int affinity_algorithm)
 	LOG_TRACE(mLogger, mLogTarget) << "JThreadManager::SetThreadAffinity(): Setting affinity for all threads using algorithm " << affinity_algorithm << LOG_END;
 
 	uint32_t ithread = 0;
-	uint32_t ncores = GetNcores();
+	uint32_t ncores = JCpuInfo::GetNumCpus();
 	for( auto jt : mThreads ){
 		pthread_t t = jt->GetThread()->native_handle();
 
@@ -906,7 +907,7 @@ void JThreadManager::SetThreadAffinity(int affinity_algorithm)
 				  (thread_policy_t)&policy, 
 				  THREAD_AFFINITY_POLICY_COUNT);
 
-		LOG_DEBUG(mLogger) << "CPU=" << mApplication->GetCPU() 
+		LOG_DEBUG(mLogger) << "CPU=" << JCpuInfo::GetCpuID()
 			           << " (mach_thread="<< mach_thread
 				   << ", icpu=" << icpu << ")" << LOG_END;
 #else
@@ -924,18 +925,6 @@ void JThreadManager::SetThreadAffinity(int affinity_algorithm)
 #endif
 	}
 }
-
-//---------------------------------
-// GetNcores
-//---------------------------------
-uint32_t JThreadManager::GetNcores(void)
-{
-	/// Returns the number of cores that are on the computer.
-	/// The count will be full cores+hyperthreads (or equivalent)
-
-	return sysconf(_SC_NPROCESSORS_ONLN);
-}
-
 
 //---------------------------------
 // RunThreads

@@ -59,6 +59,7 @@ using std::endl;
 
 #include <JApplication.h>
 #include <JEventSourceGeneratorT.h>
+#include <JCpuInfo.h>
 
 #include "JTestMain.h"
 #include "JEventSource_jana_test.h"
@@ -100,7 +101,7 @@ JTestMain::JTestMain(JApplication *app)
 		mMinThreads, 
 		"JTest plugin minimum number of threads to test");
 
-	mMaxThreads = mApp->GetJThreadManager()->GetNcores();
+	mMaxThreads = JCpuInfo::GetNumCpus();
 	params->SetDefaultParameter(
 		"JTEST:MAXTHREADS", 
 		mMaxThreads, 

@@ -88,9 +88,15 @@ class ClusterFactory : public JFactoryT<Cluster> {
 
 
 #include<JANA/JLogger.h>
+#include<JANA/JCpuInfo.h>
 
 int main(int narg, char *argv[]) {
 
+	std::cout << "Core id: " << JCpuInfo::GetCpuID() 
+		  << " of " << JCpuInfo::GetNumCpus() << std::endl;
+	std::cout << "Numa node: " << JCpuInfo::GetNumaNodeID() 
+		  << " of " << JCpuInfo::GetNumNumaNodes() << std::endl;
+	return 0;
 	std::shared_ptr<JLogger> logger(new JLogger());
 
 	LOG_INFO(logger) << "Launching a minimal JANA instance!" << LOG_END;
@@ -99,7 +105,6 @@ int main(int narg, char *argv[]) {
 
 	JLogMessage(logger, JLogLevel::WARN) << "This also works" << JLogMessageEnd();
 	LOG_FATAL(shared_ptr<JLogger>(new JLogger())) << "Exiting now!" << LOG_END;
-	return 0;
 
 	auto app = new JApplication(narg, argv);
 	InitJANAPlugin(app);

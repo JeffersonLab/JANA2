@@ -138,7 +138,6 @@ class JApplication{
 		void Recycle(JFactorySet* aFactorySet);
 		void UpdateResourceLimits(void);
 
-		uint32_t GetCPU(void);
 		uint64_t GetNtasksCompleted(string name="");
 		uint64_t GetNeventsProcessed(void);
 		float GetIntegratedRate(void);

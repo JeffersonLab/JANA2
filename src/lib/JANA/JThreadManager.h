@@ -95,7 +95,6 @@ class JThreadManager
 
 		//INFORMATION
 		uint32_t GetNJThreads(void);
-		uint32_t GetNcores(void);
 
 		//GETTERS
 		void GetJThreads(std::vector<JThread*>& aThreads) const;
