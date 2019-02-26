@@ -61,7 +61,6 @@ using namespace std;
 #include <JANA/JFactoryGenerator.h>
 #include <JANA/JQueueSimple.h>
 #include <JANA/JParameterManager.h>
-#include <JANA/JResourceManager.h>
 #include <JANA/JEventSourceManager.h>
 #include <JANA/JThreadManager.h>
 #include <JANA/JThread.h>
@@ -89,7 +88,6 @@ JApplication::JApplication(int narg, char *argv[])
 	_quitting = false;
 	_draining_queues = false;
 	_ticker_on = true;
-	_rmanager = NULL;
 	_eventSourceManager = new JEventSourceManager(this);
 	_threadManager = new JThreadManager(this);
 
@@ -172,7 +170,6 @@ JApplication::~JApplication()
 	for( auto p: _factoryGenerators     ) delete p;
 	for( auto p: _eventProcessors       ) delete p;
 	if( _pmanager           ) delete _pmanager;
-	if( _rmanager           ) delete _rmanager;
 	if( _threadManager      ) delete _threadManager;
 	if( _eventSourceManager ) delete _eventSourceManager;
 }
@@ -743,15 +740,6 @@ JParameterManager* JApplication::GetJParameterManager(void)
 	return _pmanager;
 }
 
-//---------------------------------
-// GetJResourceManager
-//---------------------------------
-JResourceManager* JApplication::GetJResourceManager(void)
-{
-	/// Return pointer to the JResourceManager object.
-
-	return _rmanager;
-}
 
 //---------------------------------
 // GetJThreadManager

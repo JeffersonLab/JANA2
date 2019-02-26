@@ -69,7 +69,6 @@ class JEventSourceGenerator;
 class JFactoryGenerator;
 class JCalibrationGenerator;
 class JQueue;
-class JResourceManager;
 class JThread;
 class JEventSourceManager;
 class JThreadManager;
@@ -84,11 +83,11 @@ extern JApplication *japp;
 /// JANA application class (singleton).
 ///
 /// The JApplication class serves as a central access point for getting to most things
-/// in the JANA application. It owns the JThreadManager, JResourceManager, JParameterManager,
-/// etc. It is also responsible for making sure all of the plugins are attached and other
+/// in the JANA application. It owns the JThreadManager, JParameterManager, etc.
+/// It is also responsible for making sure all of the plugins are attached and other
 /// user specified configurations for the run are implemented before starting the processing
 /// of the data. User code (e.g. plugins) will generally register things like event sources
-/// and processors with the JApplication so they can be called up later at the approprite time.
+/// and processors with the JApplication so they can be called up later at the appropriate time.
 //////////////////////////////////////////////////////////////////////////////////////////////////
 class JApplication{
 
@@ -130,7 +129,6 @@ class JApplication{
 		void GetJFactoryGenerators(vector<JFactoryGenerator*> &factory_generators);
 		std::shared_ptr<JLogger> GetJLogger(void);
 		JParameterManager* GetJParameterManager(void);
-		JResourceManager* GetJResourceManager(void);
 		JThreadManager* GetJThreadManager(void) const;
 		JEventSourceManager* GetJEventSourceManager(void) const;
 		
@@ -178,7 +176,6 @@ class JApplication{
 
 		std::shared_ptr<JLogger> _logger;
 		JParameterManager *_pmanager;
-		JResourceManager *_rmanager;
 		JEventSourceManager* _eventSourceManager;
 		JThreadManager* _threadManager;
 		std::size_t mNumProcessorsAdded;
