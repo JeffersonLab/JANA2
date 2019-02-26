@@ -71,7 +71,6 @@ using namespace std;
 #include <JANA/JLog.h>
 #include <JANA/JResourcePool.h>
 #include <JANA/JResourcePoolSimple.h>
-#include <JANA/JLogWrapper.h>
 
 JApplication *japp = NULL;
 
@@ -84,10 +83,6 @@ JApplication::JApplication(int narg, char *argv[])
 {
 	_pmanager = new JParameterManager();
 	_logger = std::shared_ptr<JLogger>(new JLogger());
-
-	SetLogWrapper(0, new JLogWrapper(std::cout)); //stdout
-	SetLogWrapper(1, new JLogWrapper(std::cerr)); //stderr
-	SetLogWrapper(2, mLogWrappers[0]); //hd_dump
 
 	_exit_code = 0;
 	_verbose = 1;
@@ -176,8 +171,6 @@ JApplication::~JApplication()
 {
 	for( auto p: _factoryGenerators     ) delete p;
 	for( auto p: _eventProcessors       ) delete p;
-	if( mLogWrappers[0]     ) delete mLogWrappers[0];
-	if( mLogWrappers[1]     ) delete mLogWrappers[1]; // n.b. [2] points to [0] so don't delete it!
 	if( _pmanager           ) delete _pmanager;
 	if( _rmanager           ) delete _rmanager;
 	if( _threadManager      ) delete _threadManager;
@@ -818,23 +811,6 @@ uint32_t JApplication::GetCPU(void)
 
 
 	return cpuid;
-}
-
-//---------------------------------
-// SetLogWrapper
-//---------------------------------
-void JApplication::SetLogWrapper(uint32_t aLogIndex, JLogWrapper* aLogWrapper)
-{
-	mLogWrappers.emplace(aLogIndex, aLogWrapper);
-}
-
-//---------------------------------
-// GetLogWrapper
-//---------------------------------
-JLogWrapper* JApplication::GetLogWrapper(uint32_t aLogIndex) const
-{
-	auto sIterator = mLogWrappers.find(aLogIndex);
-	return ((sIterator != std::end(mLogWrappers)) ? sIterator->second : nullptr);
 }
 
 //---------------------------------
