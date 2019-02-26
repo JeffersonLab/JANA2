@@ -1,0 +1,9 @@
+digraph "src/programs/jana" {
+  compound=true
+  node [ fontsize="10", fontname="Helvetica"];
+  edge [ labelfontsize="10", labelfontname="Helvetica"];
+  subgraph clusterdir_7156828c8d148b9c7ab68f09210221be {
+    graph [ bgcolor="#ddddee", pencolor="black", label="programs" fontname="Helvetica", fontsize="10", URL="dir_7156828c8d148b9c7ab68f09210221be.html"]
+  dir_7c0334e507933f8e2ea6903b1ffa5c10 [shape=box, label="jana", style="filled", fillcolor="#eeeeff", pencolor="black", URL="dir_7c0334e507933f8e2ea6903b1ffa5c10.html"];
+  }
+}

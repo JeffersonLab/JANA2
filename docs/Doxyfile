@@ -28,7 +28,7 @@ ABBREVIATE_BRIEF       = "The $name class" \
 ALWAYS_DETAILED_SEC    = NO
 INLINE_INHERITED_MEMB  = NO
 FULL_PATH_NAMES        = YES
-STRIP_FROM_PATH        =
+STRIP_FROM_PATH        = /u/home/nbrei/src/JANA2
 STRIP_FROM_INC_PATH    =
 SHORT_NAMES            = NO
 JAVADOC_AUTOBRIEF      = YES
@@ -175,15 +175,15 @@ USE_MDFILE_AS_MAINPAGE =
 #---------------------------------------------------------------------------
 # Configuration options related to source browsing
 #---------------------------------------------------------------------------
-SOURCE_BROWSER         = YES
+SOURCE_BROWSER         = NO
 INLINE_SOURCES         = NO
 STRIP_CODE_COMMENTS    = NO
-REFERENCED_BY_RELATION = NO
-REFERENCES_RELATION    = NO
-REFERENCES_LINK_SOURCE = YES
+REFERENCED_BY_RELATION = YES 
+REFERENCES_RELATION    = YES
+REFERENCES_LINK_SOURCE = YES 
 SOURCE_TOOLTIPS        = YES
 USE_HTAGS              = NO
-VERBATIM_HEADERS       = YES
+VERBATIM_HEADERS       = NO
 #---------------------------------------------------------------------------
 # Configuration options related to the alphabetical class index
 #---------------------------------------------------------------------------

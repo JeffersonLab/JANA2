@@ -46,7 +46,7 @@ Darwin_*
 .Darwin_*
 
 # Doxygen generated files
-docs/html/*
+#docs/html/*
 docs/latex/*
 
 # Vim swap files

@@ -1,0 +1,13 @@
+digraph "/u/home/nbrei" {
+  compound=true
+  node [ fontsize="10", fontname="Helvetica"];
+  edge [ labelfontsize="10", labelfontname="Helvetica"];
+  subgraph clusterdir_8a2523d18e95cc3dfc32c2e9d2c22b0a {
+    graph [ bgcolor="#ddddee", pencolor="black", label="home" fontname="Helvetica", fontsize="10", URL="dir_8a2523d18e95cc3dfc32c2e9d2c22b0a.html"]
+  subgraph clusterdir_3ea32555f84cbd8303a0c188a5be2a83 {
+    graph [ bgcolor="#eeeeff", pencolor="black", label="" URL="dir_3ea32555f84cbd8303a0c188a5be2a83.html"];
+    dir_3ea32555f84cbd8303a0c188a5be2a83 [shape=plaintext label="nbrei"];
+    dir_2ba61eee506a6fbba6670067ef46dc4e [shape=box label="src" color="red" fillcolor="white" style="filled" URL="dir_2ba61eee506a6fbba6670067ef46dc4e.html"];
+  }
+  }
+}

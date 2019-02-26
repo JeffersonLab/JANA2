@@ -1,0 +1,9 @@
+digraph "/u/home/nbrei/src/JANA2/src/examples/JExample2" {
+  compound=true
+  node [ fontsize="10", fontname="Helvetica"];
+  edge [ labelfontsize="10", labelfontname="Helvetica"];
+  subgraph clusterdir_2d88f26bc5f1b202205889007c6746e3 {
+    graph [ bgcolor="#ddddee", pencolor="black", label="examples" fontname="Helvetica", fontsize="10", URL="dir_2d88f26bc5f1b202205889007c6746e3.html"]
+  dir_40d32860c3c3849a7053f27fabb4d2a2 [shape=box, label="JExample2", style="filled", fillcolor="#eeeeff", pencolor="black", URL="dir_40d32860c3c3849a7053f27fabb4d2a2.html"];
+  }
+}
