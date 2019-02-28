@@ -1,0 +1,10 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" href="$class_j_object.html" title="JObject" alt="" coords="5,157,72,184"/>
+<area shape="rect" id="node2" href="$struct_cluster.html" title="Cluster" alt="" coords="145,5,209,32"/>
+<area shape="rect" id="node3" href="$struct_hit.html" title="Hit" alt="" coords="158,56,197,83"/>
+<area shape="rect" id="node4" href="$classjana__test.html" title="jana_test" alt="" coords="140,107,215,133"/>
+<area shape="rect" id="node5" href="$class_j_source_object.html" title="JSourceObject" alt="" coords="123,157,231,184"/>
+<area shape="rect" id="node6" href="$class_j_source_object2.html" title="JSourceObject2" alt="" coords="120,208,235,235"/>
+<area shape="rect" id="node7" href="$class_my_cluster.html" title="MyCluster" alt="" coords="136,259,219,285"/>
+<area shape="rect" id="node8" href="$class_my_hit.html" title="MyHit" alt="" coords="149,309,206,336"/>
+</map>

@@ -14,7 +14,6 @@ var class_j_thread_manager =
     [ "EndThreads", "class_j_thread_manager.html#ac645df698adeee956bc69b0c5bce0f24", null ],
     [ "GetActiveSourceInfos", "class_j_thread_manager.html#a30f8b30f222e47974a019d253688b542", null ],
     [ "GetJThreads", "class_j_thread_manager.html#a2aa1adf39a3027b94fe399cf6f8368e7", null ],
-    [ "GetNcores", "class_j_thread_manager.html#ac8cf03d44a61510548798619f5e32ab9", null ],
     [ "GetNJThreads", "class_j_thread_manager.html#af4c32238a2e2110db316b215988eb2af", null ],
     [ "GetQueue", "class_j_thread_manager.html#a64604f9b29f25e4c46c2b86eb1e4eec7", null ],
     [ "GetRetiredSourceInfos", "class_j_thread_manager.html#a9e3caffd582751e12e820b508376f800", null ],

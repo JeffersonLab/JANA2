@@ -1,9 +1,0 @@
-digraph "JEventSourceGenerator::SetJApplication"
-{
-  edge [fontname="Helvetica",fontsize="10",labelfontname="Helvetica",labelfontsize="10"];
-  node [fontname="Helvetica",fontsize="10",shape=record];
-  rankdir="LR";
-  Node1 [label="JEventSourceGenerator\l::SetJApplication",height=0.2,width=0.4,color="black", fillcolor="grey75", style="filled" fontcolor="black"];
-  Node1 -> Node2 [dir="back",color="midnightblue",fontsize="10",style="solid",fontname="Helvetica"];
-  Node2 [label="JEventSourceManager\l::AddJEventSourceGenerator",height=0.2,width=0.4,color="black", fillcolor="white", style="filled",URL="$class_j_event_source_manager.html#a7c0fec20e8b5b03ed3e21f2abf886708"];
-}

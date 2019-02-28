@@ -1,0 +1,4 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" href="$class_j_event_source_generator.html" title="This is a base class for all event source generators. " alt="" coords="6,5,167,32"/>
+<area shape="rect" id="node2" href="$class_j_event_source_generator_t.html" title="This templated class is used to generate JEventSource based objects to handle reading events into JAN..." alt="" coords="217,5,418,32"/>
+</map>

@@ -1,0 +1,10 @@
+<map id="JThreadManager::JEventSourceInfo" name="JThreadManager::JEventSourceInfo">
+<area shape="rect" id="node2" href="$class_j_queue_set.html" title="JQueueSet" alt="" coords="207,187,293,213"/>
+<area shape="rect" id="node3" href="$class_j_event_source.html" title="JEventSource" alt="" coords="319,187,423,213"/>
+<area shape="rect" id="node4" href="$class_j_factory_generator.html" title="JFactoryGenerator" alt="" coords="103,96,233,123"/>
+<area shape="rect" id="node5" href="$class_j_application.html" title="JANA application class (singleton). " alt="" coords="269,96,363,123"/>
+<area shape="rect" id="node6" href="$class_j_event_source_manager.html" title="JEventSourceManager" alt="" coords="5,5,160,32"/>
+<area shape="rect" id="node8" href="$class_j_thread_manager.html" title="JThreadManager" alt="" coords="326,5,444,32"/>
+<area shape="rect" id="node9" href="$class_j_parameter_manager.html" title="JParameterManager" alt="" coords="469,5,608,32"/>
+<area shape="rect" id="node10" href="$class_j_queue.html" title="JQueue" alt="" coords="393,96,460,123"/>
+</map>

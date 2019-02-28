@@ -123,8 +123,6 @@ Public Member Functions</h2></td></tr>
 <tr class="separator:a9aefa120449a1d937e2af686f6aaa155"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af4c32238a2e2110db316b215988eb2af"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_j_thread_manager.html#af4c32238a2e2110db316b215988eb2af">GetNJThreads</a> (void)</td></tr>
 <tr class="separator:af4c32238a2e2110db316b215988eb2af"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac8cf03d44a61510548798619f5e32ab9"><td class="memItemLeft" align="right" valign="top">uint32_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_j_thread_manager.html#ac8cf03d44a61510548798619f5e32ab9">GetNcores</a> (void)</td></tr>
-<tr class="separator:ac8cf03d44a61510548798619f5e32ab9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2aa1adf39a3027b94fe399cf6f8368e7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_j_thread_manager.html#a2aa1adf39a3027b94fe399cf6f8368e7">GetJThreads</a> (std::vector&lt; <a class="el" href="class_j_thread.html">JThread</a> * &gt; &amp;aThreads) const </td></tr>
 <tr class="separator:a2aa1adf39a3027b94fe399cf6f8368e7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a64604f9b29f25e4c46c2b86eb1e4eec7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a64604f9b29f25e4c46c2b86eb1e4eec7"></a>
@@ -262,34 +260,6 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>DoWorkWhileWaitingFor
 
 </div>
 </div>
-<a class="anchor" id="ac8cf03d44a61510548798619f5e32ab9"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">uint32_t JThreadManager::GetNcores </td>
-          <td>(</td>
-          <td class="paramtype">void&#160;</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Returns the number of cores that are on the computer. The count will be full cores+hyperthreads (or equivalent) </p>
-
-<p>Referenced by <a class="el" href="class_j_thread_manager.html#ab4775b2f00e3be1dd3b99e5e8d249d95">SetThreadAffinity()</a>.</p>
-
-<p><div class="dynheader">
-Here is the caller graph for this function:</div>
-<div class="dyncontent">
-<div class="center"><img src="class_j_thread_manager_ac8cf03d44a61510548798619f5e32ab9_icgraph.png" border="0" usemap="#class_j_thread_manager_ac8cf03d44a61510548798619f5e32ab9_icgraph" alt=""/></div>
-<map name="class_j_thread_manager_ac8cf03d44a61510548798619f5e32ab9_icgraph" id="class_j_thread_manager_ac8cf03d44a61510548798619f5e32ab9_icgraph">
-</map>
-</div>
-</p>
-
-</div>
-</div>
 <a class="anchor" id="af4c32238a2e2110db316b215988eb2af"></a>
 <div class="memitem">
 <div class="memproto">
@@ -340,17 +310,6 @@ Here is the caller graph for this function:</div>
 <p>Set the affinity of each thread. This will force each <a class="el" href="class_j_thread.html">JThread</a> to be assigned to a specific HW thread. At this point, it just assigns them sequentially. More sophisticated assignments should be done by the user by getting a list of JThreads and then getting a pointer to the std::thread object via the GetThread method.</p>
 <p>Note that setting the thread affinity is not something that can be done through the C++ standard. It is done here only for pthreads which is the underlying thread package for Linux and Mac OS X (at least at the moment). </p>
 
-<p>References <a class="el" href="class_j_application.html#a5517a6d78136ec55eeced35096e55ad2">JApplication::GetCPU()</a>, and <a class="el" href="class_j_thread_manager.html#ac8cf03d44a61510548798619f5e32ab9">GetNcores()</a>.</p>
-
-<p><div class="dynheader">
-Here is the call graph for this function:</div>
-<div class="dyncontent">
-<div class="center"><img src="class_j_thread_manager_ab4775b2f00e3be1dd3b99e5e8d249d95_cgraph.png" border="0" usemap="#class_j_thread_manager_ab4775b2f00e3be1dd3b99e5e8d249d95_cgraph" alt=""/></div>
-<map name="class_j_thread_manager_ab4775b2f00e3be1dd3b99e5e8d249d95_cgraph" id="class_j_thread_manager_ab4775b2f00e3be1dd3b99e5e8d249d95_cgraph">
-</map>
-</div>
-</p>
-
 </div>
 </div>
 <a class="anchor" id="aac5480ff66fbd8cbe1cda91974385b4f"></a>
@@ -377,7 +336,7 @@ Here is the caller graph for this function:</div>
 <div class="dyncontent">
 <div class="center"><img src="class_j_thread_manager_aac5480ff66fbd8cbe1cda91974385b4f_icgraph.png" border="0" usemap="#class_j_thread_manager_aac5480ff66fbd8cbe1cda91974385b4f_icgraph" alt=""/></div>
 <map name="class_j_thread_manager_aac5480ff66fbd8cbe1cda91974385b4f_icgraph" id="class_j_thread_manager_aac5480ff66fbd8cbe1cda91974385b4f_icgraph">
-</map>
+<area shape="rect" id="node2" href="class_j_thread_manager.html#a8d7ea5cb5fb9bf511dd4ffc0e7d2c138" title="JThreadManager::WaitUntil\lAllThreadsIdle" alt="" coords="256,5,437,46"/></map>
 </div>
 </p>
 
@@ -405,7 +364,7 @@ Here is the call graph for this function:</div>
 <div class="dyncontent">
 <div class="center"><img src="class_j_thread_manager_a8d7ea5cb5fb9bf511dd4ffc0e7d2c138_cgraph.png" border="0" usemap="#class_j_thread_manager_a8d7ea5cb5fb9bf511dd4ffc0e7d2c138_cgraph" alt=""/></div>
 <map name="class_j_thread_manager_a8d7ea5cb5fb9bf511dd4ffc0e7d2c138_cgraph" id="class_j_thread_manager_a8d7ea5cb5fb9bf511dd4ffc0e7d2c138_cgraph">
-</map>
+<area shape="rect" id="node2" href="class_j_thread_manager.html#aac5480ff66fbd8cbe1cda91974385b4f" title="JThreadManager::StopThreads" alt="" coords="235,12,437,39"/></map>
 </div>
 </p>
 
@@ -421,7 +380,7 @@ Here is the call graph for this function:</div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="class_j_thread_manager.html">JThreadManager</a></li>
-    <li class="footer">Generated on Tue Feb 26 2019 15:15:18 for JANA2 by
+    <li class="footer">Generated on Thu Feb 28 2019 13:28:37 for JANA2 by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.5 </li>
   </ul>

@@ -16,7 +16,6 @@ var class_j_application =
     [ "AddSignalHandlers", "class_j_application.html#a9c1066ca554a7934d05f55c57ee398ea", null ],
     [ "AttachPlugin", "class_j_application.html#aec335a80b81db4431fd1fae785127ad8", null ],
     [ "AttachPlugins", "class_j_application.html#aa4e6d4d8e2248dd8bde53a724c508f47", null ],
-    [ "GetCPU", "class_j_application.html#a5517a6d78136ec55eeced35096e55ad2", null ],
     [ "GetExitCode", "class_j_application.html#abd523beb83769b722dfb3134d4d219e6", null ],
     [ "GetFactorySet", "class_j_application.html#afe5afe68b729d13bf1654f05b5c86b12", null ],
     [ "GetInstantaneousRate", "class_j_application.html#ae501f780287571ccb6ccef119428c20e", null ],

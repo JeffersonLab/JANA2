@@ -1,7 +1,6 @@
 var searchData=
 [
   ['get_5fcachelinesize',['Get_CacheLineSize',['../class_j_resource_pool.html#a6a0c1c5dc69ef995422cc00baa5e501d',1,'JResourcePool']]],
-  ['getcpu',['GetCPU',['../class_j_application.html#a5517a6d78136ec55eeced35096e55ad2',1,'JApplication']]],
   ['getdescription',['GetDescription',['../class_j_event_source_generator.html#ad8ecb8ee0635daf9e3c70f2f37739f07',1,'JEventSourceGenerator::GetDescription()'],['../class_j_event_source_generator_t.html#a87fd3d4b14971b7909f04caf13c6af29',1,'JEventSourceGeneratorT::GetDescription()']]],
   ['getevent',['GetEvent',['../class_j_event_source__jana__test.html#a7a8d7da777ae14dda8269bd2cbb8a7bd',1,'JEventSource_jana_test']]],
   ['getexitcode',['GetExitCode',['../class_j_application.html#abd523beb83769b722dfb3134d4d219e6',1,'JApplication']]],
@@ -11,7 +10,6 @@ var searchData=
   ['getjparametermanager',['GetJParameterManager',['../class_j_application.html#aa633f70fe381eca46ae6b6b1a4ee0563',1,'JApplication']]],
   ['getjthreads',['GetJThreads',['../class_j_thread_manager.html#a2aa1adf39a3027b94fe399cf6f8368e7',1,'JThreadManager']]],
   ['getmaxtasks',['GetMaxTasks',['../class_j_queue_simple.html#ae07ac2b3461062a59c033ae0a4bc22dd',1,'JQueueSimple::GetMaxTasks()'],['../class_j_queue_with_barriers.html#afb2a662bf4f243c85b2be8748b0a756d',1,'JQueueWithBarriers::GetMaxTasks()'],['../class_j_queue_with_lock.html#afbabfc9a9e58b2d89117a7b1fdd8096a',1,'JQueueWithLock::GetMaxTasks()']]],
-  ['getncores',['GetNcores',['../class_j_thread_manager.html#ac8cf03d44a61510548798619f5e32ab9',1,'JThreadManager']]],
   ['getneventsprocessed',['GetNeventsProcessed',['../class_j_application.html#a433a3e01e3a1e8b7f75b043b3ff1fb1e',1,'JApplication']]],
   ['getnjthreads',['GetNJThreads',['../class_j_thread_manager.html#af4c32238a2e2110db316b215988eb2af',1,'JThreadManager']]],
   ['getnumeventsprocessed',['GetNumEventsProcessed',['../class_j_event_source.html#a0cbc60046fa819529294ef017f45261c',1,'JEventSource::GetNumEventsProcessed()'],['../class_j_thread.html#a7bc7972f4fe542e9ac011a76f0eef10f',1,'JThread::GetNumEventsProcessed(void)'],['../class_j_thread.html#aace62640f55c0fe5f358dea4c6e16730',1,'JThread::GetNumEventsProcessed(std::map&lt; std::string, uint64_t &gt; &amp;Nevents)']]],

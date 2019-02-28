@@ -1,9 +1,0 @@
-digraph "src/plugins/janapy" {
-  compound=true
-  node [ fontsize="10", fontname="Helvetica"];
-  edge [ labelfontsize="10", labelfontname="Helvetica"];
-  subgraph clusterdir_7020b8b7abcceffa3f9f7a2d24718f16 {
-    graph [ bgcolor="#ddddee", pencolor="black", label="plugins" fontname="Helvetica", fontsize="10", URL="dir_7020b8b7abcceffa3f9f7a2d24718f16.html"]
-  dir_5aa1118bfc13bddb3afddc7bb3f39520 [shape=box, label="janapy", style="filled", fillcolor="#eeeeff", pencolor="black", URL="dir_5aa1118bfc13bddb3afddc7bb3f39520.html"];
-  }
-}
