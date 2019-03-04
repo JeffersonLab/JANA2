@@ -58,7 +58,6 @@
 #include <JANA/JFunctions.h>
 #include <JANA/JApplication.h>
 #include <JANA/JThreadManager.h>
-#include <JANA/JLog.h>
 #include <JANA/JLogger.h>
 #include <JANA/JThread.h>
 

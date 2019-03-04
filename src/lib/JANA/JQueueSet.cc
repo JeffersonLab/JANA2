@@ -43,7 +43,7 @@
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 #include "JQueueSet.h"
-#include "JLog.h"
+#include "JLogger.h"
 
 #include <algorithm>
 

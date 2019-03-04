@@ -57,7 +57,7 @@
 #include "JQueueSet.h"
 #include "JResourcePool.h"
 #include "JFactorySet.h"
-#include "JLog.h"
+#include "JLogger.h"
 
 /**************************************************************** TYPE DECLARATIONS ****************************************************************/
 

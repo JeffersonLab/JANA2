@@ -15,7 +15,7 @@
 
 #include "jana_test.h"
 #include "JEvent.h"
-#include "JLog.h"
+#include "JLogger.h"
 #include "JSourceObject.h"
 #include "JQueueWithLock.h"
 

@@ -49,7 +49,7 @@
 #include "JApplication.h"
 #include "JQueue.h"
 #include "JQueueSet.h"
-#include "JLog.h"
+#include "JLogger.h"
 
 
 thread_local JThread *JTHREAD = nullptr;

@@ -39,7 +39,7 @@
 
 #include <iostream>
 #include "JQueueWithBarriers.h"
-#include "JLog.h"
+#include "JLogger.h"
 #include "JThread.h"
 #include "JEvent.h"
 

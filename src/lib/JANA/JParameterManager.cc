@@ -38,7 +38,6 @@
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 #include "JParameterManager.h"
-#include "JLog.h"
 #include "JLogger.h"
 
 using namespace std;

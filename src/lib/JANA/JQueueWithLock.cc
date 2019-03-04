@@ -39,7 +39,7 @@
 
 #include <iostream>
 #include "JQueueWithLock.h"
-#include "JLog.h"
+#include "JLogger.h"
 #include "JThread.h"
 
 //---------------------------------

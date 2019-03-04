@@ -14,7 +14,7 @@
 #include <array>
 
 #include <JANA/JObject.h>
-#include "JLog.h"
+#include "JLogger.h"
 
 class jana_test : public JObject
 {
@@ -47,8 +47,8 @@ class jana_test : public JObject
 //STREAM OPERATOR
 inline JLog& operator<<(JLog& aLog, const jana_test& aObject)
 {
-	aLog.SetHeaders({"ID", "E", "#Randoms"});
-	aLog << aObject.GetID() << aObject.GetE() << aObject.GetRandoms().size() << "\n";
+  aLog << "Hit: ID=" << aObject.GetID() << ", E=" << aObject.GetE()
+       << ", nrandoms=" << aObject.GetRandoms().size();
 	return aLog;
 }
 

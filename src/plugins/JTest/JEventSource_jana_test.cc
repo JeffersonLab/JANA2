@@ -10,7 +10,7 @@
 #include "JSourceFactoryGenerator.h"
 #include "JEventSourceGeneratorT.h"
 #include "JTask.h"
-#include "JLog.h"
+#include "JLogger.h"
 #include "JQueueWithLock.h"
 #include "JQueueWithBarriers.h"
 

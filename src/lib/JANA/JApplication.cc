@@ -61,7 +61,6 @@ using namespace std;
 #include <JANA/JException.h>
 #include <JANA/JEvent.h>
 #include <JANA/JVersion.h>
-#include <JANA/JLog.h>
 #include <JANA/JResourcePool.h>
 #include <JANA/JResourcePoolSimple.h>
 #include <JANA/JCpuInfo.h>
