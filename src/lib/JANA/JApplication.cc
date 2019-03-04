@@ -73,88 +73,30 @@ JApplication *japp = NULL;
 //---------------------------------
 // JApplication    (Constructor)
 //---------------------------------
-JApplication::JApplication(int narg, char *argv[])
+JApplication::JApplication(JParameterManager* params,
+                           std::vector<string>* eventSources)
 {
-	_pmanager = new JParameterManager();
-	_logger = std::shared_ptr<JLogger>(new JLogger());
-
 	_exit_code = 0;
 	_verbose = 1;
 	_quitting = false;
 	_draining_queues = false;
 	_ticker_on = true;
+	mNumProcessorsAdded = 0;
+
+  _pmanager = (params == nullptr) ? new JParameterManager() : params;
+	_logger = std::shared_ptr<JLogger>(new JLogger());
 	_eventSourceManager = new JEventSourceManager(this);
 	_threadManager = new JThreadManager(this);
 
-	mNumProcessorsAdded = 0;
-
+  // TODO: Put this somewhere that makes sense
 	mVoidTaskPool.Set_ControlParams(200, 0); //TODO: Config these!!
 
-	// Loop over arguments
-	if(narg>0) _args.push_back(string(argv[0]));
-	for(int i=1; i<narg; i++){
-	
-		string arg  = argv[i];
-		string next = (i+1)<narg ? argv[i+1]:"";
-	
-		// Record arguments
-		_args.push_back( arg );
-	
-//		arg="--config=";
-//		if(!strncmp(arg, argv[i],strlen(arg))){
-//			string fname(&argv[i][strlen(arg)]);
-//			jparms->ReadConfigFile(fname);
-//			continue;
-//		}
-//		arg="--dumpcalibrations";
-//		if(!strncmp(arg, argv[i],strlen(arg))){
-//			dump_calibrations = true;
-//			continue;
-//		}
-//		arg="--dumpconfig";
-//		if(!strncmp(arg, argv[i],strlen(arg))){
-//			dump_configurations = true;
-//			continue;
-//		}
-//		arg="--listconfig";
-//		if(!strncmp(arg, argv[i],strlen(arg))){
-//			list_configurations = true;
-//			continue;
-//		}
-//		arg="--resourcereport";
-//		if(!strncmp(arg, argv[i],strlen(arg))){
-//			print_resource_report = true;
-//			continue;
-//		}
-		if( arg.find("-P") == 0 ){
-			auto pos = arg.find("=");
-			if( (pos!= string::npos) && (pos>2) ){
-				string key = arg.substr(2, pos-2);
-				string val = arg.substr(pos+1);
-				GetJParameterManager()->SetParameter(key, val);
-			}else{
-				LOG_ERROR(_logger) 
-					<< " Bad parameter argument '" << arg
-					<< "': Expected format -Pkey=value" 
-					<< LOG_END;
-			}
-			continue;
-		}
-		if( arg == "--janaversion" ) {
-			LOG_INFO(_logger) << 
-				"\n\n          JANA version: "<<JVersion::GetVersion()<< "\n" <<
-			        "        JANA ID string: "<<JVersion::GetIDstring()<< "\n" <<
-			        "     JANA SVN revision: "<<JVersion::GetRevision()<< "\n" <<
-			        "JANA last changed date: "<<JVersion::GetDate()<< "\n" <<
-			        "              JANA URL: "<<JVersion::GetSource()<< "\n" << LOG_END;
-			continue;
-		}
-		if( arg.find("-") == 0 )continue;
-
-		LOG_INFO(_logger) << "Adding source: " << arg << "\n" << LOG_END;
-		_eventSourceManager->AddEventSource(arg);
-
-	}
+  if (eventSources != nullptr) {
+    for (string & e : *eventSources) {
+      LOG_INFO(_logger) << "Adding source: " << e << "\n" << LOG_END;
+      _eventSourceManager->AddEventSource(e);
+    }
+  }
 }
 
 //---------------------------------

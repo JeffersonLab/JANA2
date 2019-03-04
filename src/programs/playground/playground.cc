@@ -106,7 +106,7 @@ int main(int narg, char *argv[]) {
 	JLogMessage(logger, JLogLevel::WARN) << "This also works" << JLogMessageEnd();
 	LOG_FATAL(shared_ptr<JLogger>(new JLogger())) << "Exiting now!" << LOG_END;
 
-	auto app = new JApplication(narg, argv);
+	auto app = new JApplication();
 	InitJANAPlugin(app);
 	auto event = make_shared<JEvent>(app);
 

@@ -101,8 +101,8 @@ class JApplication{
 			kTRY_AGAIN,
 			kUNKNOWN
 		};
-	
-		JApplication(int narg, char *argv[]);
+
+    JApplication(JParameterManager* params = nullptr, std::vector<string>* eventSources = nullptr);
 		virtual ~JApplication();
 
 		void AddSignalHandlers(void);
@@ -158,7 +158,6 @@ class JApplication{
 	
 	protected:
 	
-		vector<string> _args;	///< Argument list passed in to JApplication Constructor
 		int _exit_code;
 		bool _skip_join;
 		bool _quitting;
