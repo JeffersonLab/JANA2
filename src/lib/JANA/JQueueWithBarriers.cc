@@ -39,19 +39,28 @@
 
 #include <iostream>
 #include "JQueueWithBarriers.h"
-#include "JLog.h"
+#include "JLogger.h"
 #include "JThread.h"
 #include "JEvent.h"
 
 //---------------------------------
 // JQueueWithBarriers    (Constructor)
 //---------------------------------
-JQueueWithBarriers::JQueueWithBarriers(const std::string& aName, std::size_t aQueueSize, std::size_t aTaskBufferSize) :
-	JQueue(aName), mTaskBufferSize(aTaskBufferSize), mInputQueue(new JQueueWithLock(aName + " Input", aQueueSize, aTaskBufferSize)),
-	mOutputQueue(new JQueueWithLock(aName + " Output", aQueueSize, aTaskBufferSize))
-{
-	//Apparently segfaults
-	//gPARMS->SetDefaultParameter("JANA:QUEUE_DEBUG_LEVEL", mDebugLevel, "JQueue debug level");
+JQueueWithBarriers::JQueueWithBarriers(JParameterManager* aParams, 
+		                       const std::string& aName, 
+				       std::size_t aQueueSize, 
+				       std::size_t aTaskBufferSize)
+  : JQueue(aName), 
+    mTaskBufferSize(aTaskBufferSize), 
+    mInputQueue(new JQueueWithLock(aParams, aName + " Input", 
+			           aQueueSize, aTaskBufferSize)),
+    mOutputQueue(new JQueueWithLock(aParams, aName + " Output", 
+			            aQueueSize, aTaskBufferSize)) {
+
+
+	aParams->SetDefaultParameter("JANA:QUEUE_DEBUG_LEVEL", 
+			            mDebugLevel, 
+				    "JQueue debug level");
 
 	mThread = new std::thread(&JQueueWithBarriers::ThreadLoop, this);
 }

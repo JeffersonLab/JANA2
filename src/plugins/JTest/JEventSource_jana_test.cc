@@ -10,7 +10,7 @@
 #include "JSourceFactoryGenerator.h"
 #include "JEventSourceGeneratorT.h"
 #include "JTask.h"
-#include "JLog.h"
+#include "JLogger.h"
 #include "JQueueWithLock.h"
 #include "JQueueWithBarriers.h"
 
@@ -28,9 +28,15 @@ template<> double JEventSourceGeneratorT<JEventSource_jana_test>::CheckOpenable(
 JEventSource_jana_test::JEventSource_jana_test(string source_name, JApplication *japp) : JEventSource(source_name, japp)
 {
 	mNumEventsToGenerate = 20000;
-	gPARMS->SetDefaultParameter("NEVENTS", mNumEventsToGenerate, "Number of events for fake event source to generate");
+	japp->GetJParameterManager()->SetDefaultParameter(
+		"NEVENTS", 
+		mNumEventsToGenerate, 
+		"Number of events for fake event source to generate");
 
-	gPARMS->SetDefaultParameter("JTEST:INCLUDE_BARRIER_EVENTS", mIncludeBarriers, "Include barrier events");
+	japp->GetJParameterManager()->SetDefaultParameter(
+		"JTEST:INCLUDE_BARRIER_EVENTS", 
+		mIncludeBarriers, 
+		"Include barrier events");
 
 	//Seed random number generator //not ideal!
 	auto sTime = std::chrono::high_resolution_clock::now().time_since_epoch().count();
@@ -41,15 +47,15 @@ JEventSource_jana_test::JEventSource_jana_test(string source_name, JApplication 
 	//Make sure that all types are listed as template arguments here!!
 	mFactoryGenerator = new JSourceFactoryGenerator<JSourceObject, JSourceObject2>();
 
-	//Event queue:
-	//If not created, a default will be supplied
-	if( mIncludeBarriers ) {
-	  mEventQueue = new JQueueWithBarriers("Events", 200, 50); //max size of 200, keep at least 50 buffered
-	}else{
-	  mEventQueue = new JQueueSimple("Events", 200, 50);
+	auto params = mApplication->GetJParameterManager();
+
+	// Event queue: max size of 200, keep at least 50 buffered
+	if (mIncludeBarriers) {
+		mEventQueue = new JQueueWithBarriers(params, "Events", 200, 50); 
 	}
-	//Debug:
-//	mDebugLevel = 500;
+       	else {
+		mEventQueue = new JQueueSimple(params ,"Events", 200, 50);
+	}
 }
 
 //----------------

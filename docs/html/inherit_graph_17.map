@@ -1,0 +1,6 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" href="$class_j_queue.html" title="JQueue" alt="" coords="5,56,72,83"/>
+<area shape="rect" id="node2" href="$class_j_queue_simple.html" title="JQueueSimple" alt="" coords="136,5,243,32"/>
+<area shape="rect" id="node3" href="$class_j_queue_with_barriers.html" title="JQueueWithBarriers" alt="" coords="120,56,259,83"/>
+<area shape="rect" id="node4" href="$class_j_queue_with_lock.html" title="JQueueWithLock" alt="" coords="128,107,251,133"/>
+</map>

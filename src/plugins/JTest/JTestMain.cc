@@ -59,6 +59,7 @@ using std::endl;
 
 #include <JApplication.h>
 #include <JEventSourceGeneratorT.h>
+#include <JCpuInfo.h>
 
 #include "JTestMain.h"
 #include "JEventSource_jana_test.h"
@@ -70,7 +71,7 @@ void InitPlugin(JApplication *app){
 	InitJANAPlugin(app);
 	app->Add(new JEventSourceGeneratorT<JEventSource_jana_test>());
 	app->Add(new JFactoryGenerator_jana_test());
-	app->Add(new JEventProcessor_jana_test());
+	app->Add(new JEventProcessor_jana_test(app));
 
 	new JTestMain(app);
 }
@@ -82,40 +83,49 @@ void InitPlugin(JApplication *app){
 JTestMain::JTestMain(JApplication *app)
 {
 	mApp = app;
+	mLogger = app->GetJLogger();
+	auto params = app->GetJParameterManager();
 
-	uint32_t kMinThreads=0;
-	uint32_t kMaxThreads=0;
-	string kThreadSet;
-	mOutputDirName="JANA_Test_Results";
+	params->SetDefaultParameter(
+		"JTEST:MODE", 
+		mMode, 
+		"JTest plugin Testing mode. 0=basic, 1=scaling");
 
-	gPARMS->SetDefaultParameter("JTEST:MODE", mMode, "JTest plugin Testing mode. 0=basic, 1=scaling");
-	gPARMS->SetDefaultParameter("JTEST:NSAMPLES", mNsamples, "JTest plugin number of samples to take for each test");
-	gPARMS->SetDefaultParameter("JTEST:MINTHREADS", kMinThreads, "JTest plugin minimum number of threads to test");
-	gPARMS->SetDefaultParameter("JTEST:MAXTHREADS", kMaxThreads, "JTest plugin maximum number of threads to test");
-	gPARMS->SetDefaultParameter("JTEST:RESULTSDIR", mOutputDirName, "JTest output directory name for sampling test results");
+	params->SetDefaultParameter(
+		"JTEST:NSAMPLES", 
+		mNsamples, 
+		"JTest plugin number of samples to take for each test");
 
-	// If sampling mode is specified and min/max threads are not, then set them
-	// to be 1 to Ncores
-	if( mMode==MODE_SCALING && kMinThreads==0 && kMaxThreads==0 ){
-		kMinThreads = 1;
-		kMaxThreads = mApp->GetJThreadManager()->GetNcores();
-	}
+	params->SetDefaultParameter(
+		"JTEST:MINTHREADS", 
+		mMinThreads, 
+		"JTest plugin minimum number of threads to test");
 
-	// insert continuous range of NThreads to test
-	if( kMinThreads>0 && kMaxThreads>0){
-		for(uint32_t nthreads=kMinThreads; nthreads<=kMaxThreads; nthreads++) mThreadSet.insert(nthreads);
-	}
+	mMaxThreads = JCpuInfo::GetNumCpus();
+	params->SetDefaultParameter(
+		"JTEST:MAXTHREADS", 
+		mMaxThreads, 
+		"JTest plugin maximum number of threads to test");
+
+	params->SetDefaultParameter(
+		"JTEST:THREADSTEP",
+		mThreadStep,
+		"JTest plugin number of threads step size");
+
+	mOutputDirName = "JANA_Test_Results";
+	params->SetDefaultParameter(
+		"JTEST:RESULTSDIR", 
+		mOutputDirName, 
+		"JTest output directory name for sampling test results");
 
 	// If no source has been specified, then add a dummy source
-	if( app->GetJEventSourceManager()->GetSourceNames().empty() ) app->GetJEventSourceManager()->AddEventSource("dummy");
+	if (app->GetJEventSourceManager()->GetSourceNames().empty()) {
+		app->GetJEventSourceManager()->AddEventSource("dummy");
+	}
 
-	switch( mMode ){
-		case MODE_BASIC:
-			break;
-		case MODE_SCALING:
-			gPARMS->SetParameter("NEVENTS", 0);
-			mThread = new std::thread(&JTestMain::TestThread, this);
-			break;
+	if (mMode == MODE_SCALING) {
+		params->SetParameter("NEVENTS", 0);
+		mThread = new std::thread(&JTestMain::TestThread, this);
 	}
 }
 
@@ -161,10 +171,9 @@ void JTestMain::TestThread(void)
 	}
 
 	// Loop over all thread settings in set
-	cout << "Testing " << mThreadSet.size() << " Nthread settings with " << mNsamples << " samples each" << endl;
 	map< uint32_t, vector<float> > samples;
 	map< uint32_t, std::pair<float,float> > rates; // key=nthreads  val.first=rate in Hz, val.second=rms of rate in Hz
-	for( auto nthreads : mThreadSet ){
+	for (uint32_t nthreads=mMinThreads; nthreads<=mMaxThreads; nthreads+=mThreadStep){
 		cout << "Setting NTHREADS = " << nthreads << " ..." <<endl;
 		tm->SetNJThreads( nthreads );
 
@@ -200,8 +209,7 @@ void JTestMain::TestThread(void)
 	}
 
 	// Write results to files
-	jout << endl;
-	jout << "Writing test results to: " << mOutputDirName << endl;
+	LOG_INFO(mLogger) << "Writing test results to: " << mOutputDirName << LOG_END;
 	mkdir(mOutputDirName.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
 	std::ofstream ofs1(mOutputDirName+"/samples.dat");
@@ -246,16 +254,22 @@ void JTestMain::CopyToOutputDir(std::string filename)
 		if( pos_end != new_fname.npos ){
 
 			string envar_name = new_fname.substr(pos_start+1, pos_end-pos_start-1);
-			_DBG_<< " Looking for envar \"" << envar_name << "\"" << _DBG_ENDL_;
+			LOG_DEBUG(mLogger) << "Looking for env var '" << envar_name 
+				           << "'" << LOG_END;
+
 			auto envar = getenv( envar_name.c_str() );
 			if( envar ) {
 				new_fname.replace( pos_start-1, pos_end+2-pos_start, envar);
 			}else{
-				jout << "Environment variable \"" << envar_name << "\" not set. Cannot copy " << filename << endl;
+				LOG_ERROR(mLogger) << "Environment variable '" 
+					           << envar_name 
+						   << "' not set. Cannot copy " 
+						   << filename << LOG_END;
 				return;
 			}
 		}else{
-			_DBG_ << "Error in string format: " << filename << _DBG_ENDL_;
+			LOG_ERROR(mLogger) << "Error in string format: " 
+				           << filename << LOG_END;
 		}
 	}
 
@@ -264,7 +278,7 @@ void JTestMain::CopyToOutputDir(std::string filename)
 	if( auto pos = base_fname.rfind("/") ) base_fname.erase(0, pos);
 
 	// Copy file
-	jout << "Copying " << new_fname << " -> " << mOutputDirName << endl;
+	LOG_INFO(mLogger) << "Copying " << new_fname << " -> " << mOutputDirName << LOG_END;
 	std::ifstream src(new_fname, std::ios::binary);
 	std::ofstream dst(mOutputDirName + "/" + base_fname, std::ios::binary);
 	dst << src.rdbuf();

@@ -1,1 +1,2 @@
 theme: jekyll-theme-architect
+include: ["html/_*"]

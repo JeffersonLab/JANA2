@@ -14,7 +14,7 @@
 #include <array>
 
 #include <JANA/JObject.h>
-#include "JLog.h"
+#include "JLogger.h"
 
 class JSourceObject : public JObject
 {
@@ -48,8 +48,8 @@ class JSourceObject : public JObject
 //STREAM OPERATOR
 inline JLog& operator<<(JLog& aLog, const JSourceObject& aObject)
 {
-	aLog.SetHeaders({"Hit ID", "Hit E", "Hit #Randoms"});
-	aLog << aObject.GetHitID() << aObject.GetHitE() << aObject.GetRandoms().size();
+  aLog << "Hit: ID=" << aObject.GetHitID() << ", E=" << aObject.GetHitE()
+       << ", nrandoms=" << aObject.GetRandoms().size();
 	return aLog;
 }
 

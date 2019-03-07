@@ -13,10 +13,13 @@ using namespace std;
 #include "MyProcessor.h"
 #include <JANA/JApplication.h>
 #include <JANA/JVersion.h>
+#include <JANA/JSignalHandler.h>
 
 using namespace std;
 
-void ParseCommandLineArguments(int &narg, char *argv[]);
+void ParseCommandLineArguments(int &narg, char *argv[],
+                               JParameterManager* params,
+                               std::vector<string>* eventSources);
 void Usage(void);
 
 
@@ -26,37 +29,66 @@ void Usage(void);
 //-----------
 int main(int narg, char *argv[])
 {
-	// Parse the command line
-	ParseCommandLineArguments(narg, argv);
 
-	// Instantiate our event processor
-	//MyProcessor myproc;
+	// Parse the command line
+  auto params = new JParameterManager;
+  auto eventSources = new std::vector<string>;
+	ParseCommandLineArguments(narg, argv, params, eventSources);
 
 	// Instantiate an event loop object
-	JApplication app(narg, argv);
+	JApplication app(params, eventSources);
+
+	japp = &app;
+	AddSignalHandlers();
 
 	// Run though all events, calling our event processor's methods
 	app.Run();
-	
+
 	return app.GetExitCode();
 }
 
 //-----------
 // ParseCommandLineArguments
 //-----------
-void ParseCommandLineArguments(int &narg, char *argv[])
+// Other args we might want:
+// --config, --dumpcalibrations, --dumpconfig, --listconfig, --resourcereport
+
+void ParseCommandLineArguments(int &narg, char *argv[],
+                               JParameterManager* params,
+                               std::vector<string>* eventSources)
 {
-	if(narg==1)Usage();
+	if(narg==1) Usage();
 
 	for(int i=1;i<narg;i++){
-		if(argv[i][0] != '-')continue;
-		
+
+		if(argv[i][0] != '-') {
+      string arg = argv[i];
+      eventSources->push_back(arg);
+      // TODO: Consider making eventSources be a normal parameter
+      continue;
+    }
+
 		string name, tag;
 		unsigned int pos;
+    string arg = argv[i];
 		switch(argv[i][1]){
+
+      case 'P':
+        pos = arg.find("=");
+        if( (pos!= string::npos) && (pos>2) ){
+          string key = arg.substr(2, pos-2);
+          string val = arg.substr(pos+1);
+          params->SetParameter(key, val);
+        }else{
+          cout << " Bad parameter argument '" << arg
+               << "': Expected format -Pkey=value" << endl;
+        }
+        break;
+
 			case 'h':
 				Usage();
 				break;
+
 			case 'v':
 				cout<<"          JANA version: "<<JVersion::GetVersion()<<endl;
 				cout<<"        JANA ID string: "<<JVersion::GetIDstring()<<endl;
@@ -65,6 +97,7 @@ void ParseCommandLineArguments(int &narg, char *argv[])
 				cout<<"           JANA source: "<<JVersion::GetSource()<<endl;
 				exit(0);
 				break;
+
 			case 'D':
 				name = &argv[i][2];
 				tag = "";

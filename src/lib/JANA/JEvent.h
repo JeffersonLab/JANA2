@@ -58,7 +58,7 @@
 #include <JANA/JFunctions.h>
 #include <JANA/JApplication.h>
 #include <JANA/JThreadManager.h>
-#include <JANA/JLog.h>
+#include <JANA/JLogger.h>
 #include <JANA/JThread.h>
 
 #ifndef _JEvent_h_
@@ -254,7 +254,8 @@ typename JFactoryT<DataType>::PairType JEvent::Get(const std::string& aTag) cons
 		if(mDebugLevel >= 10)
 			JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Try to get " << GetDemangledName<DataType>() << " (tag = " << aTag << ") objects from JEventSource.\n" << JLogEnd();
 		auto sSharedThis = this->shared_from_this();
-		if(mEventSource->GetObjects(sSharedThis, static_cast<JFactory*>(sFactory)))
+		if (mEventSource != nullptr &&
+		    mEventSource->GetObjects(sSharedThis, static_cast<JFactory*>(sFactory)))
 		{
 			if(mDebugLevel >= 10)
 				JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): " << GetDemangledName<DataType>() << " (tag = " << aTag << ") retrieved from JEventSource.\n" << JLogEnd();

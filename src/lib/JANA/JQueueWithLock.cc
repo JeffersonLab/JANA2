@@ -39,16 +39,22 @@
 
 #include <iostream>
 #include "JQueueWithLock.h"
-#include "JLog.h"
+#include "JLogger.h"
 #include "JThread.h"
 
 //---------------------------------
 // JQueueWithLock    (Constructor)
 //---------------------------------
-JQueueWithLock::JQueueWithLock(const std::string& aName, std::size_t aQueueSize, std::size_t aTaskBufferSize) : JQueue(aName), mQueueSize(aQueueSize), mTaskBufferSize(aTaskBufferSize)
-{
-	//Apparently segfaults
-//	gPARMS->SetDefaultParameter("JANA:QUEUE_DEBUG_LEVEL", mDebugLevel, "JQueueWithLock debug level");
+JQueueWithLock::JQueueWithLock(JParameterManager* aParams, 
+		               const std::string& aName, 
+			       std::size_t aQueueSize, 
+			       std::size_t aTaskBufferSize) 
+
+  : JQueue(aName), mQueueSize(aQueueSize), mTaskBufferSize(aTaskBufferSize) {
+
+	aParams->SetDefaultParameter("JANA:QUEUE_DEBUG_LEVEL", 
+				     mDebugLevel, 
+				     "JQueueWithLock debug level");
 }
 
 //---------------------------------
@@ -204,7 +210,7 @@ bool JQueueWithLock::AreEnoughTasksBuffered(void)
 {
 	//This function is only called for the Event queue
 	//If not enough tasks (events) are buffered, we will read in more events
-	//_DBG_ << "num tasks, buffer size = " << GetNumTasks() << ", " << mTaskBufferSize << _DBG_ENDL_;
+	//std::cout << "num tasks, buffer size = " << GetNumTasks() << ", " << mTaskBufferSize << std::endl;
 	return (mTaskBufferSize == 0) ? (GetNumTasks() >= 1) : (GetNumTasks() >= mTaskBufferSize);
 }
 

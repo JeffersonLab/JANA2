@@ -54,7 +54,6 @@ class JEventSource;
 class JApplication;
 class JQueueSet;
 class JQueue;
-class JLog;
 
 class JThread{
 	public:

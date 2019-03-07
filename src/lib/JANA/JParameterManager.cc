@@ -38,19 +38,15 @@
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 #include "JParameterManager.h"
-#include "JLog.h"
+#include "JLogger.h"
 
 using namespace std;
 
-JParameterManager *gPARMS = nullptr;
 
 //---------------------------------
 // JParameterManager    (Constructor)
 //---------------------------------
-JParameterManager::JParameterManager()
-{
-	gPARMS = this;
-}
+JParameterManager::JParameterManager() { }
 
 //---------------------------------
 // ~JParameterManager    (Destructor)

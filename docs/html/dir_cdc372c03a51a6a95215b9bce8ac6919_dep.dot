@@ -1,0 +1,13 @@
+digraph "/u/home/nbrei/src/JANA2/src/lib" {
+  compound=true
+  node [ fontsize="10", fontname="Helvetica"];
+  edge [ labelfontsize="10", labelfontname="Helvetica"];
+  subgraph clusterdir_48694817daaf908aa29b55d1d10fa988 {
+    graph [ bgcolor="#ddddee", pencolor="black", label="src" fontname="Helvetica", fontsize="10", URL="dir_48694817daaf908aa29b55d1d10fa988.html"]
+  subgraph clusterdir_cdc372c03a51a6a95215b9bce8ac6919 {
+    graph [ bgcolor="#eeeeff", pencolor="black", label="" URL="dir_cdc372c03a51a6a95215b9bce8ac6919.html"];
+    dir_cdc372c03a51a6a95215b9bce8ac6919 [shape=plaintext label="lib"];
+    dir_c2e06ff4f645a7df1ba6367521af41f1 [shape=box label="JANA" color="black" fillcolor="white" style="filled" URL="dir_c2e06ff4f645a7df1ba6367521af41f1.html"];
+  }
+  }
+}

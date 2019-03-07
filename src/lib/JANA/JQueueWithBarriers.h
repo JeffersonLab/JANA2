@@ -51,6 +51,7 @@
 
 #include "JQueue.h"
 #include "JQueueWithLock.h"
+#include "JParameterManager.h"
 
 class JTaskBase;
 class JEvent;
@@ -60,7 +61,11 @@ class JQueueWithBarriers : public JQueue
 	public:
 	
 		//STRUCTORS
-		JQueueWithBarriers(const std::string& aName, std::size_t aQueueSize = 200, std::size_t aTaskBufferSize = 0);
+		JQueueWithBarriers(JParameterManager* aParams, 
+				   const std::string& aName, 
+				   std::size_t aQueueSize = 200, 
+				   std::size_t aTaskBufferSize = 0);
+
 		~JQueueWithBarriers(void);
 
 		//COPIERS //needed because atomic not copyable

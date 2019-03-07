@@ -15,7 +15,7 @@
 
 class JEventProcessor_jana_test:public JEventProcessor{
 	public:
-		JEventProcessor_jana_test();
+		JEventProcessor_jana_test(JApplication*);
 		~JEventProcessor_jana_test();
 		const char* className(void){return "JEventProcessor_jana_test";}
 

@@ -15,7 +15,7 @@
 
 #include "jana_test.h"
 #include "JEvent.h"
-#include "JLog.h"
+#include "JLogger.h"
 #include "JSourceObject.h"
 #include "JQueueWithLock.h"
 
@@ -23,11 +23,11 @@
 //------------------
 // JEventProcessor_jana_test (Constructor)
 //------------------
-JEventProcessor_jana_test::JEventProcessor_jana_test(void)
+JEventProcessor_jana_test::JEventProcessor_jana_test(JApplication* aApp) : JEventProcessor(aApp)
 {
 	//Add queue for subtasks (not supplied by default!)
-	auto sSubtaskQueue = new JQueueWithLock("Subtasks", 2000);
-	japp->GetJThreadManager()->AddQueue(JQueueSet::JQueueType::SubTasks, sSubtaskQueue);
+	auto sSubtaskQueue = new JQueueWithLock(aApp->GetJParameterManager(), "Subtasks", 2000);
+	aApp->GetJThreadManager()->AddQueue(JQueueSet::JQueueType::SubTasks, sSubtaskQueue);
 }
 
 //------------------

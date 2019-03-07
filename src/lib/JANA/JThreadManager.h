@@ -57,7 +57,7 @@
 #include "JQueueSet.h"
 #include "JResourcePool.h"
 #include "JFactorySet.h"
-#include "JLog.h"
+#include "JLogger.h"
 
 /**************************************************************** TYPE DECLARATIONS ****************************************************************/
 
@@ -95,7 +95,6 @@ class JThreadManager
 
 		//INFORMATION
 		uint32_t GetNJThreads(void);
-		uint32_t GetNcores(void);
 
 		//GETTERS
 		void GetJThreads(std::vector<JThread*>& aThreads) const;
@@ -155,6 +154,8 @@ class JThreadManager
 		//CONTROL
 		JApplication* mApplication;
 		JEventSourceManager* mEventSourceManager = nullptr;
+		std::shared_ptr<JLogger> mLogger;
+
 		bool mRotateEventSources = true;
 		int mDebugLevel = 0;
 		uint32_t mLogTarget = 0; //std::cout

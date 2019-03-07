@@ -43,7 +43,7 @@
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 #include "JQueueSet.h"
-#include "JLog.h"
+#include "JLogger.h"
 
 #include <algorithm>
 
@@ -199,7 +199,7 @@ std::pair<JQueueSet::JQueueType, std::shared_ptr<JTaskBase>> JQueueSet::GetTask(
 			//Get task if any
 			auto sTask = sQueue->GetTask();
 			if(sTask != nullptr){
-//_DBG_<<"Grabbed task from queue: " << sQueue->GetName() << _DBG_ENDL_;
+//std::cout << "Grabbed task from queue: " << sQueue->GetName() << std::endl;
 				return std::make_pair(sQueueType, std::move(sTask));
 			}
 		}
