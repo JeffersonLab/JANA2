@@ -48,8 +48,8 @@ CCDB_CPPFLAGS="@CCDB_CPPFLAGS@"
 CCDB_LDFLAGS="@CCDB_LDFLAGS@"
 CCDB_LIBS="@CCDB_LIBS@"
 
-
 JANA_INSTALL_DIR="@JANA_INSTALL_DIR@"
+JANA_ONLY_LIBS="@JANA_ONLY_LIBS@"
 
 # Add flags and libraries from all 3rd party packages
 CPPFLAGS="${MYSQL_CFLAGS} ${XERCES_CPPFLAGS} ${ROOTCFLAGS} ${CMSG_CPPFLAGS} ${CURL_CFLAGS} ${CCDB_CPPFLAGS}"
@@ -75,7 +75,7 @@ while test $# -gt 0; do
 	esac
 	case $1 in
 		--libs)
-			mess="$mess -L${JANA_INSTALL_DIR}/lib -lJANA ${LDFLAGS} ${LIBS}"
+			mess="$mess -L${JANA_INSTALL_DIR}/lib -lJANA ${LDFLAGS} ${JANA_ONLY_LIBS} ${LIBS}"
 			;;
 	esac
 	case $1 in
