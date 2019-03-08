@@ -71,3 +71,11 @@ bool JParameter::IsDefault(void)
 	
 	return _val == _default;
 }
+
+//---------------------------------
+// GetName
+//---------------------------------
+const std::string& JParameter::GetName(void)
+{
+	return _name;
+}

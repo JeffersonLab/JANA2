@@ -22,6 +22,14 @@ MAGENTA = u'\u001b[35m'
 CYAN    = u'\u001b[36m'
 WHITE   = u'\u001b[37m'
 
+BRIGHT_BLACK   = u'\u001b[90m'
+BRIGHT_RED     = u'\u001b[91m'
+BRIGHT_GREEN   = u'\u001b[92m'
+BRIGHT_YELLOW  = u'\u001b[93m'
+BRIGHT_BLUE    = u'\u001b[94m'
+BRIGHT_MAGENTA = u'\u001b[95m'
+BRIGHT_CYAN    = u'\u001b[96m'
+BRIGHT_WHITE   = u'\u001b[97m'
 
 BACKGROUND_BLACK   = u'\u001b[40m'
 BACKGROUND_RED     = u'\u001b[41m'
@@ -80,7 +88,7 @@ def draw_banner():
 		return
 
 	# Draw border/background
-	sys.stdout.write( REVERESED )
+	sys.stdout.write( BACKGROUND_MAGENTA + BRIGHT_WHITE + BOLD  )
 	PRINTAT( 1, 1, '-'*NCOLS)
 	for i in range(2, banner_height): PRINTAT( 1, i, '|' + ' '*(NCOLS-2) + '|')
 	PRINTAT( 1, banner_height, '-'*NCOLS)

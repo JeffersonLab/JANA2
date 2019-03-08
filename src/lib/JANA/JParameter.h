@@ -57,6 +57,8 @@ class JParameter{
 		T GetDefault(void);
 		
 		bool GetHasDefault(void);
+	
+		const std::string& GetName(void);
 
 		template<typename T>
 		T GetValue(void);
