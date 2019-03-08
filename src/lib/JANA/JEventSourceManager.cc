@@ -331,8 +331,9 @@ JEventSourceGenerator* JEventSourceManager::GetUserEventSourceGenerator(void)
 			mApplication->SetExitCode(-1);
 			mApplication->Quit();
 		}
-	}catch(...){}
-
+	}catch(...){
+		jerr << "Suppressed exception in JEventSourceManager::GetUserEventSourceGenerator!" << std::endl;
+	}
 	return gen;
 }
 

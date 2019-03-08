@@ -161,7 +161,11 @@ void JApplication::AttachPlugins(void)
 		stringstream ss(plugins);
 		string p;
 		while(getline(ss, p, ',')) _plugins.push_back(p);
-	}catch(...){}
+	}catch(...){
+		LOG_FATAL(_logger) << "Unknown exception while parsing PLUGINS parameter" << LOG_END;
+		SetExitCode(-1);
+		Quit();
+  }
 	
 	// Loop over plugins
 	stringstream err_mess;
@@ -477,16 +481,9 @@ void JApplication::Quit(bool skip_join)
 void JApplication::Run(uint32_t nthreads)
 {
 	// Set number of threads
-	try{
-		string snthreads = GetParameterValue<string>("NTHREADS");
-		if( snthreads == "Ncores" ) {
-			nthreads = JCpuInfo::GetNumCpus();
-		}else{
-			stringstream ss(snthreads);
-			ss >> nthreads;
-		}
-	}catch(...){}
-	if( nthreads==0 ) nthreads=1;
+	nthreads = JCpuInfo::GetNumCpus();
+	_pmanager->SetDefaultParameter("NTHREADS", nthreads, "The total number of worker threads");
+	if (nthreads<=0) nthreads=1;
 
 	// Setup all queues and attach plugins
 	Initialize();
@@ -495,7 +492,7 @@ void JApplication::Run(uint32_t nthreads)
 	if(_quitting) return;
 
 	// Create all remaining threads (one may have been created in Init)
-	jout << "Creating " << nthreads << " processing threads ..." << endl;
+	LOG_INFO(_logger) << "Creating " << nthreads << " processing threads ..." << LOG_END;
 	_threadManager->CreateThreads(nthreads);
 
 	// Optionally set thread affinity
@@ -503,7 +500,9 @@ void JApplication::Run(uint32_t nthreads)
 		int affinity_algorithm = 0;
 		_pmanager->SetDefaultParameter("AFFINITY", affinity_algorithm, "Set the thread affinity algorithm. 0=none, 1=sequential, 2=core fill");
 		_threadManager->SetThreadAffinity( affinity_algorithm );
-	}catch(...){}
+	}catch(...){
+		LOG_ERROR(_logger) << "Unknown exception in JApplication::Run attempting to set thread affinity" << LOG_END;
+	}
 	
 	// Print summary of all config parameters (if any aren't default)
 	GetJParameterManager()->PrintParameters(true);

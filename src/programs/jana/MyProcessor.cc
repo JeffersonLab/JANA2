@@ -97,7 +97,7 @@ jerror_t MyProcessor::evnt(JEventLoop *eventLoop, uint64_t eventnumber)
 			try{
 				factory->GetNrows();
 			}catch(...){
-				// someone threw an exception
+				cout << "Suppressing unknown exception in MyProcessor::evnt" << endl;
 			}
 		}
 	}
