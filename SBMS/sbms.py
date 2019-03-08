@@ -424,19 +424,29 @@ def Add_pthread(env):
 			if(TestCompile(env, 'pthread', includes, content, ['-lpthread']) != None):
 				env.AppendUnique(LIBS=['pthread'])
 			
+  
+
 
 
 ##################################
 # NUMA
 ##################################
-def Add_numa(env):
+def CheckForNUMA(env):
+
 	includes = ['numa.h']
 	content = 'numa_available();'
-	if TestCompile(env, 'numa', includes, content, ['-lnuma']) != None:
-		env.AppendUnique(LIBS = ['numa'],
-			 	 CPPDEFINES = ['HAVE_NUMA'])
-		#print("NUMA support detected!")
+	libs = ['-lnuma']
+	if TestCompile(env, 'numa', includes, content, libs) != None:
+		env['HAVE_NUMA'] = 1
+	else:
+		env['HAVE_NUMA'] = 0
 
+def AddNUMA(env):
+	if 'HAVE_NUMA' not in env:
+		CheckForNUMA(env)
+
+	if env['HAVE_NUMA'] == 1:
+		env.AppendUnique(LIBS = ['numa'])
 
 ##################################
 # JANA
@@ -444,7 +454,7 @@ def Add_numa(env):
 def AddJANA(env):
 	AddXERCES(env)
 	AddCCDB(env)
-	Add_numa(env)
+	AddNUMA(env)
 	env.AppendUnique(LIBS=['JANA','dl'])
 
 

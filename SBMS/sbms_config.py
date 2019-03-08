@@ -83,12 +83,19 @@ def mk_jana_config_h(env):
 	# CCDB
 	HAVE_CCDB = 0
 	if(os.getenv('CCDB_HOME') != None): HAVE_CCDB = 1
-	
+
+	# NUMA
+	if 'HAVE_NUMA' not in env:
+		sbms.CheckForNUMA(env)
+	HAVE_NUMA = env['HAVE_NUMA']
+
+
 	# Copy results into build environment for use by other scons scripts
 	env['HAVE_ROOT']   = HAVE_ROOT
 	env['HAVE_XERCES'] = HAVE_XERCES
 	env['XERCES3']     = XERCES3
 	env['HAVE_CCDB']   = HAVE_CCDB
+	env['HAVE_NUMA']   = HAVE_NUMA
 
 	# If showing build, print config. results
 	if(env['SHOWBUILD']>0):
@@ -97,6 +104,7 @@ def mk_jana_config_h(env):
 		print '  HAVE_XERCES = %d' % HAVE_XERCES
 		print '      XERCES3 = %d' % XERCES3
 		print '    HAVE_CCDB = %d' % HAVE_CCDB
+		print '    HAVE_NUMA = %d' % HAVE_NUMA
 		print '------------------------------'
 		
 	str = ''
@@ -118,6 +126,7 @@ def mk_jana_config_h(env):
 	str += '#define HAVE_XERCES   %d\n' % HAVE_XERCES
 	str += '#define XERCES3       %d\n' % XERCES3
 	str += '#define HAVE_CCDB     %d\n' % HAVE_CCDB
+	str += '#define HAVE_NUMA     %d\n' % HAVE_NUMA
 
 	str += '\n'
 	str += '\n'
@@ -214,6 +223,16 @@ def mk_jana_config_script(env):
 		CCDB_LDFLAGS = "-L%s/lib" % (ccdb_home)
 		CCDB_LIBS = "-lccdb"
 
+
+	# NUMA
+	if 'HAVE_NUMA' not in env:
+		sbms.CheckForNUMA(env)
+	if (env['HAVE_NUMA'] == 1):
+		JANA_ONLY_LIBS = '-lnuma'
+	else:
+		JANA_ONLY_LIBS = ''
+
+
 	# Read in entire jana-congfig.in file as a single string
 	ifname = env.File("#/SBMS/jana-config.in").abspath
 	with open (ifname, "r") as myfile:
@@ -254,6 +273,7 @@ def mk_jana_config_script(env):
 		str = str.replace("@CCDB_LIBS@", '%s' % CCDB_LIBS)
 
 		str = str.replace("@JANA_INSTALL_DIR@", '%s' % JANA_INSTALL_DIR)
+		str = str.replace("@JANA_ONLY_LIBS@", '%s' % JANA_ONLY_LIBS)
 
 		# Make sure output directory eists
 		try:
