@@ -5,11 +5,14 @@
 #include <thread>
 
 #include <JANA/JLogger.h>
+#include <JANA/JCpuInfo.h>
+#include <JANA/JTypeInfo.h>
+
 
 template <typename T>
 class JResourcePoolSimple {
 
-	typedef std::thread::id bucket_t;
+	typedef int bucket_t;
 
 	private:
 
@@ -21,8 +24,8 @@ class JResourcePoolSimple {
 	std::shared_ptr<JLogger> mLogger;
 
 
-	bucket_t Get_Bucket() {
-		return std::this_thread::get_id();
+	inline bucket_t Get_Bucket() {
+		return JCpuInfo::GetNumaNodeID();
 	}
 
 
@@ -31,7 +34,7 @@ class JResourcePoolSimple {
 	JResourcePoolSimple(size_t aMaxPoolSize = 16) 
 		: mMaxPoolSize(aMaxPoolSize), mLogger(new JLogger) {
 
-		mLogger->level = JLogLevel::DEBUG;
+		mLogger->level = JLogLevel::INFO;
 	}
 
 	JResourcePoolSimple(const JResourcePoolSimple& other) = delete;
@@ -52,7 +55,7 @@ class JResourcePoolSimple {
 			delete item.second;
 		}
 		mPool.clear();
-		LOG_INFO(mLogger) << "JResourcePoolSimple<" << typeid(T).name() 
+    LOG_INFO(mLogger) << "JResourcePoolSimple<" << JTypeInfo::demangle<T>()
 			   << ">::~JResourcePool: " << "Deleted " << deleteCount 
 			   << " items (" << mPoolSize << " expected)." << LOG_END;
 	}
@@ -67,9 +70,9 @@ class JResourcePoolSimple {
 
 		if (search != mPool.end()) {
 			LOG_DEBUG(mLogger)
-			      << "JResourcePoolSimple<" << typeid(T).name() << ">::Get_Resource: " 
-			      << "Acquired resource from bucket=" << bucket 
-			      << LOG_END;
+        << "JResourcePoolSimple<" << JTypeInfo::demangle<T>() << ">::Get_Resource: "
+			  << "Acquired resource from bucket=" << bucket
+			  << LOG_END;
 
 			T* result = search->second;
 			mPool.erase(search);
@@ -79,8 +82,8 @@ class JResourcePoolSimple {
 		}
 		else {
 			LOG_DEBUG(mLogger)
-			      << "JResourcePoolSimple<" << typeid(T).name() << ">::Get_Resource: " 
-			      << "Creating new resource; bucket=" << bucket << LOG_END;
+        << "JResourcePoolSimple<" << JTypeInfo::demangle<T>() << ">::Get_Resource: "
+			  << "Creating new resource; bucket=" << bucket << LOG_END;
 
 			++mCheckedOut;
 			return new T(std::forward<CtorArgTypes>(args)...);
@@ -88,6 +91,15 @@ class JResourcePoolSimple {
 	}
 
 	void Recycle(T* resource) {
+
+    resource->Release();
+    // TODO: Reconsider this
+    // This resource release is what "clears" a factory after an Event
+    // is finished. However, not all data is meant to be cleared after
+    // each event. There are two phases of clearing data in a factory:
+    // change of event number, and change of run number. Neither of these
+    // really correspond to the concept of "releasing the
+    // factory's resources"
 
 		mMutex.lock();
 
@@ -100,7 +112,7 @@ class JResourcePoolSimple {
 			delete resource;
 
 			LOG_DEBUG(mLogger) 
-				<< "JResourcePoolSimple<" << typeid(T).name() << ">::Recycle: " 
+				<< "JResourcePoolSimple<" << JTypeInfo::demangle<T>() << ">::Recycle: " 
 				<< "Pool is full; deleting resource." << LOG_END;
 
 			return;
@@ -114,8 +126,8 @@ class JResourcePoolSimple {
 			mMutex.unlock();
 
 			LOG_DEBUG(mLogger) 
-				<< "JResourcePoolSimple<" << typeid(T).name() << ">::Recycle: " 
-			        << "Returning resource to pool; bucket=" << bucket << LOG_END;
+				<< "JResourcePoolSimple<" << JTypeInfo::demangle<T>() << ">::Recycle: " 
+			  << "Returning resource to pool; bucket=" << bucket << LOG_END;
 
 			return;
 		}
