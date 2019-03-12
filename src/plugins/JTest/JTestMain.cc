@@ -62,16 +62,16 @@ using std::endl;
 #include <JCpuInfo.h>
 
 #include "JTestMain.h"
-#include "JEventSource_jana_test.h"
-#include "JEventProcessor_jana_test.h"
-#include "JFactoryGenerator_jana_test.h"
+#include "JTestEventSource.h"
+#include "JTestEventProcessor.h"
+#include "JTestDummyDataFactoryGenerator.h"
 
 extern "C"{
 void InitPlugin(JApplication *app){
 	InitJANAPlugin(app);
-	app->Add(new JEventSourceGeneratorT<JEventSource_jana_test>());
-	app->Add(new JFactoryGenerator_jana_test());
-	app->Add(new JEventProcessor_jana_test(app));
+	app->Add(new JEventSourceGeneratorT<JTestEventSource>());
+	app->Add(new JTestDummyDataFactoryGenerator());
+	app->Add(new JTestEventProcessor(app));
 
 	new JTestMain(app);
 }

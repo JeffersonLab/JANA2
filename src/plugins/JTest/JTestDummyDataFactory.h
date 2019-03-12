@@ -10,16 +10,16 @@
 
 #include <JANA/JFactoryT.h>
 #include <JANA/JEvent.h>
-#include "jana_test.h"
+#include "JTestDummyData.h"
 
 #include <random>
 
-class jana_test_factory : public JFactoryT<jana_test>
+class JTestDummyDataFactory : public JFactoryT<JTestDummyData>
 {
 	public:
 		//STRUCTORS
-		jana_test_factory(void);
-		~jana_test_factory(void);
+		JTestDummyDataFactory(void);
+		~JTestDummyDataFactory(void);
 
 		virtual void Init(void);
 		virtual void ChangeRun(const std::shared_ptr<const JEvent>& aEvent);

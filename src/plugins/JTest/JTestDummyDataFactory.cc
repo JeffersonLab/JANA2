@@ -5,9 +5,9 @@
 // Creator: davidl (on Darwin harriet 15.6.0 i386)
 //
 
-#include "jana_test_factory.h"
-#include "JSourceObject.h"
-#include "JSourceObject2.h"
+#include "JTestDummyDataFactory.h"
+#include "JTestSourceData1.h"
+#include "JTestSourceData2.h"
 
 #include <chrono>
 #include <iostream>
@@ -15,7 +15,7 @@
 //------------------
 // Constructor
 //------------------
-jana_test_factory::jana_test_factory(void) : JFactoryT<jana_test>("jana_test_factory")
+JTestDummyDataFactory::JTestDummyDataFactory(void) : JFactoryT<JTestDummyData>("jana_test_factory")
 {
 	//This is the new "init()" function
 
@@ -28,7 +28,7 @@ jana_test_factory::jana_test_factory(void) : JFactoryT<jana_test>("jana_test_fac
 //------------------
 // Destructor
 //------------------
-jana_test_factory::~jana_test_factory(void)
+JTestDummyDataFactory::~JTestDummyDataFactory(void)
 {
 	//This is the new "fini()" function
 }
@@ -37,7 +37,7 @@ jana_test_factory::~jana_test_factory(void)
 //------------------
 // Init
 //------------------
-void jana_test_factory::Init(void)
+void JTestDummyDataFactory::Init(void)
 {
 	jout << "jana_test_factory::Init() called " << std::endl;
 }
@@ -45,7 +45,7 @@ void jana_test_factory::Init(void)
 //------------------
 // ChangeRun
 //------------------
-void jana_test_factory::ChangeRun(const std::shared_ptr<const JEvent>& aEvent)
+void JTestDummyDataFactory::ChangeRun(const std::shared_ptr<const JEvent>& aEvent)
 {
 	if( GetPreviousRunNumber() != 0 )
 		std::cout << "jana_test_factory::ChangeRun() called: run=" << aEvent->GetRunNumber() << "  (previous=" << GetPreviousRunNumber() << ")" << std::endl;
@@ -54,7 +54,7 @@ void jana_test_factory::ChangeRun(const std::shared_ptr<const JEvent>& aEvent)
 //------------------
 // Process
 //------------------
-void jana_test_factory::Process(const std::shared_ptr<const JEvent>& aEvent)
+void JTestDummyDataFactory::Process(const std::shared_ptr<const JEvent>& aEvent)
 {
 	// This factory will grab the JSourceObject and JSourceObject2 types created by
 	// the source. For each JSourceObject2 objects, it will create a jana_test
@@ -63,15 +63,15 @@ void jana_test_factory::Process(const std::shared_ptr<const JEvent>& aEvent)
 	// objects.
 
 	// Get the JSourceObject and JSourceObject2 objects
-	auto sobjs  = aEvent->GetT<JSourceObject >();
-	auto sobj2s = aEvent->GetT<JSourceObject2>();
+	auto sobjs  = aEvent->GetT<JTestSourceData1 >();
+	auto sobj2s = aEvent->GetT<JTestSourceData2>();
 
 	// Create a jana_test object for each JSourceObject2 object
 	std::vector< std::shared_ptr<JTaskBase> > sTasks;
 	sTasks.reserve(sobj2s.size());
 	for( auto sobj2 : sobj2s )
 	{
-		auto jtest = new jana_test();
+		auto jtest = new JTestDummyData();
 		mData.push_back( jtest );
 
 #if 1

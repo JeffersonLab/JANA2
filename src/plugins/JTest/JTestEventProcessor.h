@@ -13,10 +13,10 @@
 #include <JANA/JEventProcessor.h>
 #include <JANA/JEvent.h>
 
-class JEventProcessor_jana_test:public JEventProcessor{
+class JTestEventProcessor:public JEventProcessor{
 	public:
-		JEventProcessor_jana_test(JApplication*);
-		~JEventProcessor_jana_test();
+		JTestEventProcessor(JApplication*);
+		~JTestEventProcessor();
 		const char* className(void){return "JEventProcessor_jana_test";}
 
 		virtual void Init(void);

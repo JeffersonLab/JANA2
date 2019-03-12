@@ -13,18 +13,18 @@
 #include <JANA/JFactoryGenerator.h>
 #include "JResourcePool.h"
 
-#include "jana_test_factory.h"
+#include "JTestDummyDataFactory.h"
 
-class JFactoryGenerator_jana_test : public JFactoryGenerator
+class JTestDummyDataFactoryGenerator : public JFactoryGenerator
 {
 	public:
-		JFactoryGenerator_jana_test(){}
-		virtual ~JFactoryGenerator_jana_test(){}
+		JTestDummyDataFactoryGenerator(){}
+		virtual ~JTestDummyDataFactoryGenerator(){}
 		virtual const char* className(void){return static_className();}
 		static const char* static_className(void){return "JFactoryGenerator_jana_test";}
 		
 		void GenerateFactories(JFactorySet *factory_set){
-			factory_set->Add( new jana_test_factory() );
+			factory_set->Add( new JTestDummyDataFactory() );
 		}
 };
 

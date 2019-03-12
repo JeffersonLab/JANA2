@@ -16,13 +16,11 @@
 #include <JANA/JObject.h>
 #include "JLogger.h"
 
-class jana_test : public JObject
+class JTestDummyData : public JObject
 {
 	public:
-		//STRUCTORS
-		jana_test(void) : mE(0.0), mID(0) { }
+		JTestDummyData(void) : mE(0.0), mID(0) { }
 
-		//GETTERS
 		int GetID(void) const{return mID;}
 		double GetE(void) const{return mE;}
 		std::vector<double> GetRandoms(void) const{return mRandoms;}
@@ -32,9 +30,6 @@ class jana_test : public JObject
 		void SetE(double aE){mE = aE;}
 		void AddRandom(double aRandom){mRandoms.push_back(aRandom);}
 
-		// supress compiler warnings
-		void SupressGarbageWarning(void){ if( (mGarbage.size()>1) && (mGarbage.size()<1) ) std::cerr << "Impossible!"; }
-	
 	private:
 
 		std::vector<double> mRandoms;
@@ -44,8 +39,7 @@ class jana_test : public JObject
 		int mID;
 };
 
-//STREAM OPERATOR
-inline JLog& operator<<(JLog& aLog, const jana_test& aObject)
+inline JLog& operator<<(JLog& aLog, const JTestDummyData& aObject)
 {
   aLog << "Hit: ID=" << aObject.GetID() << ", E=" << aObject.GetE()
        << ", nrandoms=" << aObject.GetRandoms().size();
