@@ -131,13 +131,9 @@ class JApplication{
 		float GetInstantaneousRate(void);
 		void GetInstantaneousRates(vector<double> &rates_by_queue);
 		void GetIntegratedRates(map<string,double> &rates_by_thread);
-	
+
 		bool IsQuitting(void){ return _quitting; }
 		bool IsDrainingQueues(void){ return _draining_queues; }
-
-		void RemoveJEventProcessor(JEventProcessor *processor);
-		void RemoveJFactoryGenerator(JFactoryGenerator *factory_generator);
-		void RemovePlugin(string &plugin_name);
 
 		string Val2StringWithPrefix(float val);
 		template<typename T> T GetParameterValue(std::string name);
@@ -150,7 +146,6 @@ class JApplication{
 		int _exit_code;
 		bool _skip_join;
 		bool _quitting;
-		int _verbose;
 		bool _draining_queues;
 		bool _ticker_on;
 		std::chrono::time_point<std::chrono::high_resolution_clock> mRunStartTime;
@@ -173,7 +168,6 @@ class JApplication{
 	private:
 
 		// Resource pools
-		// TODO: Add methods to set control parameters
 		JResourcePool<JTask<void>> mVoidTaskPool;
 		JResourcePoolSimple<JFactorySet> mFactorySetPool;
 
