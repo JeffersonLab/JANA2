@@ -1,15 +1,4 @@
-//
-//    File: JApplication.h
-// Created: Wed Oct 11 13:09:35 EDT 2017
-// Creator: davidl (on Darwin harriet.jlab.org 15.6.0 i386)
-//
-// ------ Last repository commit info -----
-// [ Date ]
-// [ Author ]
-// [ Source ]
-// [ Revision ]
-//
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Jefferson Science Associates LLC Copyright Notice:  
 // Copyright 251 2014 Jefferson Science Associates LLC All Rights Reserved. Redistribution
 // and use in source and binary forms, with or without modification, are permitted as a
@@ -105,15 +94,13 @@ class JApplication{
     JApplication(JParameterManager* params = nullptr, std::vector<string>* eventSources = nullptr);
 		virtual ~JApplication();
 
-		void AddSignalHandlers(void);
 		int  GetExitCode(void);
 		void Initialize(void);
 		void PrintFinalReport(void);
 		void PrintStatus(void);
 		void Quit(bool skip_join=false);
-		void Run(uint32_t nthreads=0);
+		void Run();
 		void SetExitCode(int exit_code);
-		void SetMaxThreads(uint32_t);
 		void SetTicker(bool ticker_on=true);
 		void Stop(bool wait_until_idle=false);
 		void Resume(void);
@@ -157,7 +144,9 @@ class JApplication{
 		template<typename T> JParameter* SetParameterValue(std::string name, T val);
 	
 	protected:
-	
+
+		bool _initialized = false;
+		size_t _nthreads;
 		int _exit_code;
 		bool _skip_join;
 		bool _quitting;

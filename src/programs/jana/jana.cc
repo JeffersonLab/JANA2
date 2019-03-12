@@ -35,20 +35,6 @@
 #include <JANA/JSignalHandler.h>
 
 
-enum CmdLineOpt {Unrecognized, ShowUsage, ShowVersion, ShowConfigs, LoadConfigs, DumpConfigs, Benchmark};
-
-struct UserOptions {
-	/// Code representation of all user options.
-	/// This lets us cleanly separate args parsing from execution.
-
-	std::map<CmdLineOpt, bool> flags;
-	JParameterManager params;
-	std::vector<std::string> eventSources;
-	std::string load_config_file;
-	std::string dump_config_file;
-};
-
-
 void PrintUsage() {
 	/// Prints jana.cc command-line options to stdout, for use by the CLI.
 	/// This does not include JANA parameters, which come from
@@ -90,6 +76,20 @@ void PrintVersion() {
 }
 
 
+enum Flag {Unknown, ShowUsage, ShowVersion, ShowConfigs, LoadConfigs, DumpConfigs, Benchmark};
+
+struct UserOptions {
+	/// Code representation of all user options.
+	/// This lets us cleanly separate args parsing from execution.
+
+	std::map<Flag, bool> flags;
+	JParameterManager params;
+	std::vector<std::string> eventSources;
+	std::string load_config_file;
+	std::string dump_config_file;
+};
+
+
 int Execute(UserOptions& options) {
 
 	int exitStatus = 0;
@@ -117,12 +117,14 @@ int Execute(UserOptions& options) {
 
 		if (options.flags[ShowConfigs]) {
 			// Load all plugins, collect all parameters, exit without running anything
-			options.params.PrintParameters(true);
+			app.Initialize();
+			app.GetJParameterManager()->PrintParameters(true);
 			exitStatus = -1;
 		}
 		else if (options.flags[DumpConfigs]) {
 		    // Load all plugins, dump parameters to file, exit without running anything
 			std::cout << "Dumping functionality is coming soon! File=" << options.dump_config_file << std::endl;
+			app.Initialize();
 		}
 		else if (options.flags[Benchmark]) {
 			// Run JANA in benchmark mode
@@ -144,7 +146,7 @@ int main(int nargs, char *argv[]) {
 
 	UserOptions options;
 
-	map<std::string, CmdLineOpt> tokenizer;
+	map<std::string, Flag> tokenizer;
 	tokenizer["-h"] = ShowUsage;
 	tokenizer["--help"] = ShowUsage;
 	tokenizer["-v"] = ShowVersion;
@@ -212,7 +214,7 @@ int main(int nargs, char *argv[]) {
 				}
 				break;
 
-			case Unrecognized:
+			case Unknown:
 				if (argv[i][0] == '-' && argv[i][1] == 'P') {
 
 					size_t pos = arg.find("=");

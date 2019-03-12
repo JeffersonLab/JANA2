@@ -320,6 +320,12 @@ void JApplication::Initialize(void)
 	/// This is called by the Run method so users will usually not
 	/// need to call this directly.
 
+	if (_initialized) return;
+
+	// Set number of threads
+	_nthreads = JCpuInfo::GetNumCpus();
+	_pmanager->SetDefaultParameter("NTHREADS", _nthreads, "The total number of worker threads");
+
 	// Attach all plugins
 	AttachPlugins();
 
@@ -478,12 +484,8 @@ void JApplication::Quit(bool skip_join)
 //---------------------------------
 // Run
 //---------------------------------
-void JApplication::Run(uint32_t nthreads)
+void JApplication::Run()
 {
-	// Set number of threads
-	nthreads = JCpuInfo::GetNumCpus();
-	_pmanager->SetDefaultParameter("NTHREADS", nthreads, "The total number of worker threads");
-	if (nthreads<=0) nthreads=1;
 
 	// Setup all queues and attach plugins
 	Initialize();
@@ -492,8 +494,8 @@ void JApplication::Run(uint32_t nthreads)
 	if(_quitting) return;
 
 	// Create all remaining threads (one may have been created in Init)
-	LOG_INFO(_logger) << "Creating " << nthreads << " processing threads ..." << LOG_END;
-	_threadManager->CreateThreads(nthreads);
+	LOG_INFO(_logger) << "Creating " << _nthreads << " processing threads ..." << LOG_END;
+	_threadManager->CreateThreads(_nthreads);
 
 	// Optionally set thread affinity
 	try{
@@ -565,14 +567,6 @@ void JApplication::SetExitCode(int exit_code)
 	/// exit. See also GetExitCode.
 	
 	_exit_code = exit_code;
-}
-
-//---------------------------------
-// SetMaxThreads
-//---------------------------------
-void JApplication::SetMaxThreads(uint32_t)
-{
-	
 }
 
 //---------------------------------
