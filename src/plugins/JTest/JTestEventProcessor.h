@@ -9,8 +9,7 @@
 #include "JTestEventSource.h"
 #include "JEvent.h"
 #include "JLogger.h"
-#include "JTestDummyData.h"
-#include "JTestSourceData1.h"
+#include "JTestDataObject.h"
 #include "JQueueWithLock.h"
 
 
@@ -45,10 +44,10 @@ class JTestEventProcessor : public JEventProcessor{
 			// will also grab the two types of source objects and then so some busy work
 			// to use up CPU.
 
-			// Get objects
-			auto sIterators_JanaTest = aEvent->Get<JTestDummyData>(); //Will get from factory
+			auto sIterators_JanaTest = aEvent->Get<JTestDataObject>(); //Will get from factory
 			auto sIterators_SourceObject = aEvent->Get<JTestSourceData1>(); //Will get from file
 			auto sIterators_SourceObject2 = aEvent->Get<JTestSourceData2>(); //Will get from file, and will submit jobs to generate random #'s
+
 			mNumObjects += std::distance(sIterators_JanaTest.first, sIterators_JanaTest.second);
 			mNumObjects += std::distance(sIterators_SourceObject.first, sIterators_SourceObject.second);
 			mNumObjects += std::distance(sIterators_SourceObject2.first, sIterators_SourceObject2.second);

@@ -3,29 +3,22 @@
 
 #include <JANA/JFactoryT.h>
 #include <JANA/JEvent.h>
-#include "JTestDummyData.h"
-#include "JTestSourceData1.h"
-#include "JTestSourceData2.h"
+#include "JTestDataObject.h"
+#include "JTestHelpers.h"
 
 #include <random>
 #include <chrono>
 #include <iostream>
 
-class JTestDummyDataFactory : public JFactoryT<JTestDummyData> {
-
-    std::mt19937 mRandomGenerator;
+class JTestDummyDataFactory : public JFactoryT<JTestDataObject> {
 
 public:
-    JTestDummyDataFactory() : JFactoryT<JTestDummyData>("jana_test_factory") {
-        // Seed random number generator // TODO: Move this to JTestHelpers
-        auto sTime = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-        mRandomGenerator.seed(sTime);
-    }
+    JTestDummyDataFactory() : JFactoryT<JTestDataObject>("JTestDummyDataFactory") {}
 
     ~JTestDummyDataFactory() {};
 
     void Init() {
-        jout << "jana_test_factory::Init() called " << std::endl;
+        jout << "JTestDummyDataFactory::Init() called " << std::endl;
     }
 
     void ChangeRun(const std::shared_ptr<const JEvent> &aEvent) {
@@ -52,7 +45,7 @@ public:
         std::vector<std::shared_ptr<JTaskBase> > sTasks;
         sTasks.reserve(sobj2s.size());
         for (auto sobj2 : sobj2s) {
-            auto jtest = new JTestDummyData();
+            auto jtest = new JTestDataObject();
             mData.push_back(jtest);
 
             // Make a lambda that does busy work representing what would be done to
@@ -62,21 +55,9 @@ public:
             // as an argument. All other parameters must be passed as capture variables.
             // (e.g. the jtest and sObj2 objects)
             auto sMyLambda = [=](const std::shared_ptr<const JEvent> &aEvent) -> double {
-
-                // Busy work
-                std::mt19937 sRandomGenerator; // need dedicated generator to avoid thread conflict
-                auto sTime = std::chrono::high_resolution_clock::now().time_since_epoch().count();
-                sRandomGenerator.seed(sTime);
-                double c = sobj2->GetHitE();
-                for (int i = 0; i < 1000; i++) {
-                    double a = sRandomGenerator();
-                    double b = sqrt(a * pow(1.23, -a)) / a;
-                    c += b;
-                    jtest->AddRandom(a); // add to jana_test object
-                }
-                jtest->SetE(c); // set energy of jana_test object
-
-                return c / 10.0; // more complicated than one normally needs but demonstrates use of a return value
+                double c = doBusyWork(jtest->mRandoms, sobj2->mE);
+                jtest->mE = c;
+                return c / 10.0;
             };
 
             // Make task shared_ptr (Return type of lambda is double)
