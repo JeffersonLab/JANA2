@@ -1,10 +1,3 @@
-// $Id$
-//
-//    File: JSourceObject2.h
-// Created: Mon Oct 23 22:39:14 EDT 2017
-// Creator: davidl (on Darwin harriet 15.6.0 i386)
-//
-
 #ifndef _JSourceObject2_
 #define _JSourceObject2_
 
@@ -13,13 +6,13 @@
 #include <string>
 #include <array>
 
-#include <JANA/JObject.h>
+#include "JObject.h"
 #include "JLogger.h"
 
 class JTestSourceData2 : public JObject
 {
 	public:
-		
+
 		//STRUCTORS
 		JTestSourceData2(double aHitE, int aHitID) : mHitE(aHitE), mHitID(aHitID) { }
 
@@ -32,7 +25,6 @@ class JTestSourceData2 : public JObject
 		void SetHitID(int aHitID){mHitID = aHitID;}
 		void SetHitE(double aHitE){mHitE = aHitE;}
 		void AddRandom(double aRandom){mRandoms.push_back(aRandom);}
-		void MoveRandoms(std::vector<double>&& aRandoms){mRandoms = std::move(aRandoms);}
 
 		// supress compiler warnings
 		void SupressGarbageWarning(void){ if( (mGarbage.size()>1) && (mGarbage.size()<1) ) std::cerr << "Impossible!"; }

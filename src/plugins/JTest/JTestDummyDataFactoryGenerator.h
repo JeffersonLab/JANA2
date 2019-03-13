@@ -1,31 +1,25 @@
-// $Id$
-//
-//    File: JFactoryGenerator_jana_test.h
-// Created: Mon Oct 23 22:39:33 EDT 2017
-// Creator: davidl (on Darwin harriet 15.6.0 i386)
-//
-
 #ifndef _JFactoryGenerator_jana_test_
 #define _JFactoryGenerator_jana_test_
-
-#include <vector>
 
 #include <JANA/JFactoryGenerator.h>
 #include "JResourcePool.h"
 
 #include "JTestDummyDataFactory.h"
 
-class JTestDummyDataFactoryGenerator : public JFactoryGenerator
-{
-	public:
-		JTestDummyDataFactoryGenerator(){}
-		virtual ~JTestDummyDataFactoryGenerator(){}
-		virtual const char* className(void){return static_className();}
-		static const char* static_className(void){return "JFactoryGenerator_jana_test";}
-		
-		void GenerateFactories(JFactorySet *factory_set){
-			factory_set->Add( new JTestDummyDataFactory() );
-		}
+class JTestDummyDataFactoryGenerator : public JFactoryGenerator {
+public:
+
+    virtual const char *className(void) {
+        return static_className();
+    }
+
+    static const char *static_className(void) {
+        return "JTestDummyDataFactoryGenerator";
+    }
+
+    void GenerateFactories(JFactorySet *factory_set) {
+        factory_set->Add(new JTestDummyDataFactory());
+    }
 };
 
 #endif // _JFactoryGenerator_jana_test_

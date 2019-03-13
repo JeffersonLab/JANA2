@@ -1,10 +1,3 @@
-// $Id$
-//
-//    File: JSourceObject.h
-// Created: Mon Oct 23 22:39:14 EDT 2017
-// Creator: davidl (on Darwin harriet 15.6.0 i386)
-//
-
 #ifndef _JSourceObject_
 #define _JSourceObject_
 
@@ -13,7 +6,7 @@
 #include <string>
 #include <array>
 
-#include <JANA/JObject.h>
+#include "JObject.h"
 #include "JLogger.h"
 
 class JTestSourceData1 : public JObject
