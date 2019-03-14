@@ -4,45 +4,69 @@
 #include <vector>
 #include <queue>
 
+enum class SchedulerHint {KeepGoing, ComeBackLater, Finished};
+
 template <typename T>
 class Queue {
 
+private:
     std::mutex _mutex;
-    std::queue<T> _underlying;
+    std::deque<T> _underlying;
+
+    std::atomic<size_t> _threshold {128};
+    std::atomic<bool> _is_finished {false};
 
 public:
-    const size_t empty_threshold = 16;
-    const size_t full_threshold = 128;
-    std::atomic<size_t> item_count {0};
-    std::atomic<bool> is_finished {false};
+    bool is_finished() { return _is_finished; }
+    size_t get_item_count() { return _underlying.size(); }
+    size_t get_threshold() { return _threshold; }
+    void set_threshold(size_t threshold) { _threshold = threshold; }
+    void set_finished(bool is_finished) { _is_finished = is_finished; }
 
 
-    void push(std::vector<T> items) {
-        _underlying.push();
+    SchedulerHint push(T& t) {
+        _mutex.lock();
+        assert(_is_finished == false);
+        _underlying.push_back(t);
     }
-    // We could also have this return a size_t of _buffer_size - _item_count
-    // Or we could have it return a bool indicating "keep going" or not.
-    // However, this info gets stale and we want to make decisions about thread assignments
-    // at a higher level
 
+    SchedulerHint push(std::vector<T>& buffer) {
+        _mutex.lock();
+        assert(_is_finished == false);
+        for (T& t : buffer) {
+            _underlying.push_back(t);
+        }
+        size_t item_count = _underlying.size();
+        _mutex.unlock();
 
-    std::vector<T> pop(size_t item_count) {
-        _underlying.top();
-        _underlying.pop();
-    };
+        if (item_count > _threshold) {
+            return SchedulerHint::ComeBackLater;
+        }
+        return SchedulerHint::KeepGoing;
+    }
 
+    SchedulerHint pop(std::vector<T>& buffer, size_t count) {
+        buffer.clear();
+        _mutex.lock();
+        size_t nitems = std::min(count, _underlying.size());
+        buffer.reserve(nitems);
+        for (int i=0; i<nitems; ++i) {
+            buffer.push_back(std::move(_underlying.front()));
+            _underlying.pop_front();
+        }
+        size_t size = _underlying.size();
+        _mutex.unlock();
 
-    // Idea: Queue size >> nthreads: Each worker only needs to check that there is enough
-    // room in the queue for all threads to add one more chunk. If not, then he doesn't take another
-    // chunk from . Problem: Variable chunk output
-
-    // TODO: Think about interface for put and get. Use iterators? Use move semantics?
-
-    // TODO: Think about T. Do we want a custom Task, or a std::packaged_task, or a simple Event?
-
-    // TODO: getProducerTask() ? How does the ThreadManager know how to refill the queue?
-
+        if (size != 0) {
+            return SchedulerHint::KeepGoing;
+        }
+        if (_is_finished) {
+            return SchedulerHint::Finished;
+        }
+        return SchedulerHint::ComeBackLater;
+    }
 };
+
 
 
 
