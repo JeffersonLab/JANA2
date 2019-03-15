@@ -3,37 +3,54 @@
 #include <mutex>
 #include <vector>
 #include <queue>
+#include <assert.h>
 
 enum class SchedulerHint {KeepGoing, ComeBackLater, Finished};
 
+class QueueBase {
+
+protected:
+    size_t _threshold = 128;
+    bool _is_finished = false;
+
+public:
+    size_t get_threshold() { return _threshold; }
+    void set_threshold(size_t threshold) { _threshold = threshold; }
+
+    bool is_finished() { return _is_finished; }
+    void set_finished(bool is_finished) { _is_finished = is_finished; }
+
+    virtual size_t get_item_count() = 0;
+};
+
+
 template <typename T>
-class Queue {
+class Queue : public QueueBase {
 
 private:
     std::mutex _mutex;
     std::deque<T> _underlying;
 
-    std::atomic<size_t> _threshold {128};
-    std::atomic<bool> _is_finished {false};
-
 public:
-    bool is_finished() { return _is_finished; }
-    size_t get_item_count() { return _underlying.size(); }
-    size_t get_threshold() { return _threshold; }
-    void set_threshold(size_t threshold) { _threshold = threshold; }
-    void set_finished(bool is_finished) { _is_finished = is_finished; }
+    size_t get_item_count() final { return _underlying.size(); }
 
-
-    SchedulerHint push(T& t) {
+    SchedulerHint push(const T& t) {
         _mutex.lock();
         assert(_is_finished == false);
         _underlying.push_back(t);
+        size_t size = _underlying.size();
+        _mutex.unlock();
+
+        if (size > _threshold) {
+            return SchedulerHint::ComeBackLater;
+        }
+        return SchedulerHint::KeepGoing;
     }
 
-    SchedulerHint push(std::vector<T>& buffer) {
+    SchedulerHint push(const std::vector<T>& buffer) {
         _mutex.lock();
         assert(_is_finished == false);
-        for (T& t : buffer) {
+        for (const T& t : buffer) {
             _underlying.push_back(t);
         }
         size_t item_count = _underlying.size();

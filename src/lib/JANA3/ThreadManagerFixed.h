@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <JANA3/ThreadManager.h>
+#include <greenfield/ThreadManager.h>
 
 
 namespace futurejana {

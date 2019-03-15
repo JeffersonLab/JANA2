@@ -1,5 +1,6 @@
 
 #pragma once
+
 #include <vector>
 #include <map>
 #include <atomic>
@@ -22,6 +23,8 @@ namespace greenfield {
 
         explicit Arrow(bool is_parallel) : _is_parallel(is_parallel) {};
         virtual SchedulerHint execute() = 0;
+        virtual std::vector<QueueBase*> get_input_queues() = 0;
+        virtual std::vector<QueueBase*> get_output_queues() = 0;
     };
 
 
@@ -61,6 +64,9 @@ namespace greenfield {
             }
             return SchedulerHint::ComeBackLater;
         }
+
+        std::vector<QueueBase*> get_input_queues() final { return {}; }
+        std::vector<QueueBase*> get_output_queues() final { return {_output_queue}; }
     };
 
     template <typename T>
@@ -97,6 +103,8 @@ namespace greenfield {
             }
             return result;
         }
+        std::vector<QueueBase*> get_input_queues() final { return {_input_queue}; }
+        std::vector<QueueBase*> get_output_queues() final { return {}; }
     };
 
     template <typename S, typename T>
@@ -131,6 +139,9 @@ namespace greenfield {
                 return SchedulerHint::ComeBackLater;
             }
         }
+
+        std::vector<QueueBase*> get_input_queues() final { return {_input_queue}; }
+        std::vector<QueueBase*> get_output_queues() final { return {_output_queue}; }
     };
 
     template<typename T>
@@ -163,6 +174,8 @@ namespace greenfield {
                 return SchedulerHint::ComeBackLater;
             }
         }
+        std::vector<QueueBase*> get_input_queues() final { return {_input_queue}; }
+        std::vector<QueueBase*> get_output_queues() final { return _output_queues; }
     };
 
     template <typename S, typename T>
@@ -188,6 +201,8 @@ namespace greenfield {
             }
             return in_status;
         }
+        std::vector<QueueBase*> get_input_queues() final { return {_input_queue}; }
+        std::vector<QueueBase*> get_output_queues() final { return _output_queues; }
     };
 
 

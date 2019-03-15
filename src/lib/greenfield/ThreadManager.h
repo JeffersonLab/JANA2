@@ -2,7 +2,7 @@
 
 using std::string;
 
-namespace futurejana {
+namespace greenfield {
 
 
   struct ThreadStatus {
