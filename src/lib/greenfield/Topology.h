@@ -45,6 +45,16 @@ namespace greenfield {
 
             arrows[name] = arrow;
         };
+
+        /// The user may want to pause the topology and interact with it manually.
+        /// This is particularly powerful when used from inside GDB.
+        SchedulerHint step(const std::string& arrow_name) {
+            Arrow* arrow = arrows[arrow_name];
+            if (arrow == nullptr) {
+                return SchedulerHint::Error;
+            }
+            return arrow->execute();
+        }
     };
 }
 

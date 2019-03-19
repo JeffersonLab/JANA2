@@ -1,151 +1,127 @@
 #pragma once
 
 #include <list>
+#include <vector>
+#include <map>
+#include <mutex>
 
 #include <greenfield/Topology.h>
 
-
 using std::string;
+using std::vector;
+using std::list;
+using std::map;
+using std::mutex;
 
 namespace greenfield {
 
-
-    struct ArrowStatus {
-
-        /// A view of how many threads are running each arrow,
-        /// and how they are performing wrt latency and throughput.
-        /// Queue status should be read from the Topology instead,
-        /// because it does NOT depend on the ThreadManager implementation.
-
-        string arrow_name;
-        int nthreads;
-        bool is_parallel;
-        bool is_finished;
-        int events_completed;
-        double short_term_avg_latency;
-        double long_term_avg_latency;
-    };
-
-    struct Worker {
-        /// Designed so that the Worker checks in with the manager on his own terms;
-        /// i.e. the manager will never update the worker's assignment without
-        /// him knowing. This eliminates a whole lot of synchronization since we can assume
-        /// that . The manager is still responsible for changing the worker's
-        /// assignment and checkin period.
-
-        ThreadManager* manager;
-        Arrow* assignment;
-
-        int event_count = 0;
-        double latency_sum = 0.0;
-        double checkin_time = 100;
-        bool shutdown_requested = false;
-        bool shutdown_achieved = false;
-        SchedulerHint last_result = SchedulerHint::KeepGoing;
-
-        void loop() {
-
-            while (!shutdown_requested) {
-                while (last_result == SchedulerHint::KeepGoing && latency_sum < checkin_time) {
-                    // TODO: start clock
-                    last_result = assignment->execute();
-                    // stop clock
-                    // latency_sum += end_time - start_time;
-                    ++event_count;
-                }
-                manager->checkin(this);
-            }
-        }
-    };
-
+    class Worker;
 
     class ThreadManager {
 
-        /// ThreadManager maintains a bunch of state around a Topology.
-        /// A ThreadManager has exactly one Topology,
-        /// (Note that this Topology need not be a connected graph)
-        /// For now, the ThreadManager does not own the Topology; instead
-        /// the caller does, so that the caller may inspect the topology,
-        /// issue commands to the ThreadManager (e.g. move one worker from
-        /// arrow A to arrow B), pause execution, and possibly even resume
-        /// execution using a different ThreadManager.
-        /// This may change.
+        /// ThreadManager assigns a Topology to a team of Worker threads.
+        /// A ThreadManager has exactly one Topology for its lifetime,
+        /// which it does not own. (The caller may want to inspect the
+        /// internals of the Topology, and it may be paused and re-run
+        /// on a different ThreadManager.
 
-        /// ThreadManager launches a team of threads and assigns them arrows,
-        /// implementing some kind of rebalancing strategy.
-        /// This is designed with the aim of separating concerns
-        /// so that that many different rebalancing strategies
-        /// (or even multithreading technologies) can be transparently
-        /// applied to the same Topology.
+        /// ThreadManager maintains state for tracking performance and
+        /// rebalancing work as needed. It completely encapsulates (and
+        /// thereby owns) its Worker team.
 
-        int _nthreads;
+        /// ThreadManager provides the user with a high-level interface
+        /// for controlling the thread team and examining its performance.
+        /// The user may start, stop, kill, scale, and rebalance
+
+        /// ThreadManager provides Workers with a checkin() method that
+        /// updates their assignments according to some rebalancing algorithm.
+        /// This algorithm may eventually be made into a Strategy or Policy.
+
+
+        // ThreadManager-specific types are defined here in order to keep namespaces clean
+
+        enum class Response { Success, NotRunning, AlreadyRunning, TooManyWorkers,
+            TooFewWorkers, ArrowNotFound, ArrowFinished, InProgress };
+
+        enum class Status { Idle, Running, Stopping };
+
+        struct Metric {
+
+            /// A view of how many threads are running each arrow,
+            /// and how they are performing wrt latency and throughput.
+            /// Queue status should be read from the Topology instead,
+            /// because it does NOT depend on the ThreadManager implementation.
+
+            string arrow_name;
+            int nthreads;
+            bool is_parallel;
+            bool is_finished;
+            int events_completed;
+            double short_term_avg_latency;
+            double long_term_avg_latency;
+        };
+
+
+    private:
+
         Topology& _topology;
-        std::list<Arrow*> _pending_assignments;
-        std::map<Arrow*, ArrowStatus> _arrow_statuses;
-        std::vector<Worker> _workers;
-        std::mutex _mutex; // Controls access to checkin()
+        Status _status;             // Written by master thread, read by all threads during checkin(),
+        vector<Worker> _workers;    // After construction, only accessed from within own thread
+
+        list<Arrow*> _upcoming_assignments;  // Written to by workers, read by master
+        map<Arrow*, Metric> _metrics;        // Written to by workers, read by master
+
+        mutex _mutex;
+
 
     public:
 
-        ThreadManager(Topology& topology, int nthreads) : _topology(topology), _nthreads(nthreads) {
-            for (Arrow* arrow : topology.arrows) {
-                //    Add to pending assignments
-                //    Add to arrow statuses
-            }
-        }
+        // Public API
 
-        void run() {
-            // Create workers
-            // For each worker, have them check in with manager to get first assignment
-            // Spawn threads for each worker
-        }
+        /// A ThreadManager has exactly one Topology in its lifetime, which it does _not_ own.
+        ThreadManager(Topology& topology);
 
-        // Tools for manually interacting with a paused topology
-        SchedulerHint step(std::string arrow_name) {
-            // Find arrow with corresponding name
-            // Call arrow.execute
-            // Maybe we want some kind of Queue.peek() as well?
-        }
+        /// The ThreadManager is idle until start() is called. start() is nonblocking.
+        /// This can fail: AlreadyRunning
+        Response run(int nthreads);
 
-        // Tools for manually interacting with a running topology
-        void spawn_worker(std::string arrow_name) {
-            // Find arrow with corresponding name.
-            // Look for a worker who has been told to stop and who has actually stopped.
-            // Spawn a new thread for this worker, giving him that assignment
+        /// Pause a running Topology, leaving it in a well-defined state
+        /// that can be restarted and experiences no data loss. pause is nonblocking.
+        /// There are three outcomes: Success | InProgress | NotRunning
+        Response stop();
 
-        }
+        /// Block until ThreadManager is back at Status::Idle and all Worker threads have joined.
+        /// This will wait until all Queues are empty and all Arrows are finished unless
+        /// stop() is called first. Returns NotRunning if already joined, otherwise Success.
+        Response join();
 
-        void kill_worker(std::string arrow_name) {
-            // Find the first worker assigned to this arrow who
-            // Set worker.is_finished = true; (this requires synchronization :/ )
-        }
+        /// Manually scale up by adding more workers to a given arrow.
+        /// This can fail: ArrowNotFound | TooManyWorkers | TooFewWorkers | ArrowFinished
+        Response scale(string arrow_name, int delta);
 
-        void pause() {
-            /// pause should leave the Topology in a well-defined state
-            /// (i.e. no messages get lost) so that it can be continued later,
-            /// possibly with a different ThreadManager.
+        /// Manually rebalance by moving workers from one arrow to another
+        /// This can fail: ArrowNotFound | TooFewWorkers | TooManyWorkers | ArrowFinished
+        Response rebalance(string prev_arrow_name, string next_arrow_name, int delta);
 
-            for (Worker& worker : _workers) {
-                worker.shutdown_requested = true;  // This requires synchronization
-            }
-        }
+        /// Returns the current state of the TopologyManager
+        Status get_status();
 
-        void kill() {
-            /// kill should kill all threads immediately without worrying
-            /// about data loss.
-        }
-
-        std::vector<ArrowStatus> get_status() {
-            /// This is doing a complete copy of _arrow_statuses because
-            /// ThreadManager is also using that information for scheduling,
-            /// so we don't want the user to be able to modify it
-            return _arrow_statuses;
-        }
-
-        void checkin(Worker* worker) {
+        /// Provide a copy of performance statistics for all Arrows in the Topology
+        vector<Metric> get_metrics();
 
 
-        }
+        // For internal use only
+
+        /// Receive performance information from Worker, update _arrow_statuses,
+        /// and give the Worker a new assignment and checkin_time.
+        /// This is meant to be called from Worker::loop()
+        void checkin(Worker* worker);
+
+
+    private:
+
+        /// Figure out the next assignment.
+        Arrow * next_assignment();
 
     };
 

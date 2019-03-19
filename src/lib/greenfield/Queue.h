@@ -5,7 +5,7 @@
 #include <queue>
 #include <assert.h>
 
-enum class SchedulerHint {KeepGoing, ComeBackLater, Finished};
+enum class SchedulerHint {KeepGoing, ComeBackLater, Finished, Error};
 
 class QueueBase {
 
