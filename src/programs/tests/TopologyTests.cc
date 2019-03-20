@@ -1,7 +1,7 @@
 
 #include "catch.hpp"
 #include <greenfield/Topology.h>
-#include "TopologyTestFixtures.h"
+#include "greenfield/TopologyTestFixtures.h"
 
 
 namespace greenfield {
@@ -19,5 +19,10 @@ namespace greenfield {
         topology.addArrow("emit_rand_ints", new RandIntSourceArrow(q0));
         topology.addArrow("multiply_by_two", new MultByTwoArrow(q0, q1));
         topology.addArrow("sum_everything", new SumArrow<double>(q1));
+
+        topology.arrows["emit_rand_ints"]->execute();
+        topology.arrows["multiply_by_two"]->execute();
+        topology.arrows["sum_everything"]->execute();
+
     }
 }

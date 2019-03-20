@@ -27,7 +27,6 @@ TEST_CASE("greenfield::Queue: Basic functionality") {
     REQUIRE(items.size() == 2);
     REQUIRE(q.get_item_count() == 1);
     REQUIRE(result == SchedulerHint::KeepGoing);
-    REQUIRE(false == true);
 
 }
 }

@@ -1,7 +1,10 @@
+#pragma once
 
 #include <thread>
 #include <cmath>
-
+#include <iostream>
+#include <greenfield/JLogger.h>
+#include <greenfield/Scheduler.h>
 
 namespace greenfield {
 
@@ -13,69 +16,92 @@ namespace greenfield {
         /// The manager is still responsible for changing the worker's
         /// assignment and checkin period.
 
-
     private:
-        ThreadManager * manager;
-        std::thread* thread;
+        std::thread* _thread;
+        std::shared_ptr<JLogger> _logger;
+        Scheduler & _scheduler;
 
     public:
-        // Updated by scheduler
-        Arrow * assignment; // nullptr => idle state
-        double checkin_time;
-        bool shutdown_requested;
+        const int worker_id;
+        double checkin_time = 1;   // TODO: Determine who should set this and when
 
-        // Updated by worker
-        int event_count;
-        double latency_sum;
-        SchedulerHint last_result;
-        bool shutdown_achieved;
+        bool shutdown_requested = false;   // For communicating with ThreadManager
+        bool shutdown_achieved = false;
+
+        Scheduler::Report report;  // For communicating with Scheduler
 
 
-        Worker(ThreadManager * manager, Arrow * assignment, double checkin_time) :
-            manager(manager), assignment(assignment), checkin_time(checkin_time) {
+        Worker(int id, Scheduler & scheduler, std::shared_ptr<JLogger> logger) :
+            _logger(logger), _scheduler(scheduler), worker_id(id) {
 
-            assert(manager != nullptr);
-            assert(assignment != nullptr);
+            report.worker_id = worker_id;
+            report.last_result = SchedulerHint::KeepGoing;
 
-            shutdown_requested = false;
-            shutdown_achieved = false;
-
-            thread = new std::thread(&Worker::loop, this);
+            _thread = new std::thread(&Worker::loop, this);
+            LOG_DEBUG(logger) << "Worker " << worker_id << " constructed." << LOG_END;
         }
+
+        // If we copy or move the Worker, the underlying std::thread will be left with a
+        // dangling pointer back to `this`. So we forbid copying, assigning, and moving.
+
+        Worker(const Worker & other) = delete;
+        Worker(Worker&& other) = delete;
+        Worker& operator=(const Worker & other) = delete;
 
 
         ~Worker() {
+            // We have to be careful here because this Worker might be being concurrently
+            // read/modified by Worker.thread. Don't do anything except set
+            // shutdown_requested until thread has joined.
+
+            LOG_DEBUG(_logger) << "Worker " << worker_id << " destruction has begun." << LOG_END;
             shutdown_requested = true; // Probably a race condition here
-            thread->join();            // Does this throw? Can we guarantee this terminates?
-            delete thread;             // Should Worker lifetime really match thread lifetime?
+            if (_thread == nullptr) {
+                LOG_ERROR(_logger) << "Worker " << worker_id << " thread is null. This means we have a problem!" << LOG_END;
+            }
+            else {
+                LOG_DEBUG(_logger) << "Worker " << worker_id << " joining thread." << LOG_END;
+                _thread->join();            // Does this throw? Can we guarantee this terminates?
+                delete _thread;             // Should Worker lifetime really match thread lifetime?
+                _thread = nullptr;
+            }
+            LOG_DEBUG(_logger) << "Worker " << worker_id << " destruction has completed." << LOG_END;
         }
 
 
         void loop() {
 
+            LOG_DEBUG(_logger) << "Worker " << worker_id << " has entered loop()." << LOG_END;
             while (!shutdown_requested) {
-                latency_sum = 0;
-                event_count = 0;
-                last_result = SchedulerHint::KeepGoing;
+
+
+                Arrow* assignment = _scheduler.next_assignment(report);
+
+                report.assignment = assignment;
+                report.latency_sum = 0;
+                report.event_count = 0;
 
                 if (assignment == nullptr) {
+                    LOG_TRACE(_logger, true) << "Worker " << worker_id << " is idling." << LOG_END;
                     std::chrono::duration<double, std::ratio<1>> checkin_secs(checkin_time);
                     std::this_thread::sleep_for(checkin_secs);
                 }
                 else {
-                    while (last_result == SchedulerHint::KeepGoing &&
-                           latency_sum < checkin_time &&
+                    LOG_TRACE(_logger, true) << "Worker " << worker_id << " is performing assignment!" << LOG_END;
+                    while (report.last_result == SchedulerHint::KeepGoing &&
+                           report.latency_sum < checkin_time &&
                            !shutdown_requested) {
 
                         auto start_time = std::chrono::steady_clock::now();
-                        last_result = assignment->execute();
+                        report.last_result = assignment->execute();
                         auto stop_time = std::chrono::steady_clock::now();
-                        latency_sum += (stop_time - start_time).count();
-                        ++event_count;
+                        report.latency_sum += (stop_time - start_time).count();
+                        ++report.event_count;
                     }
                 }
-                manager->checkin(this);
+                LOG_TRACE(_logger, true) << "Worker " << worker_id << " is checking in" << LOG_END;
             }
+            LOG_DEBUG(_logger) << "Worker " << worker_id << " is exiting loop()" << LOG_END;
             shutdown_achieved = true;
         }
     };
