@@ -22,7 +22,7 @@ namespace greenfield {
         Scheduler & _scheduler;
 
     public:
-        const int worker_id;
+        const uint32_t worker_id;
         double checkin_time = 1;   // TODO: Determine who should set this and when
 
         bool shutdown_requested = false;   // For communicating with ThreadManager
@@ -31,7 +31,7 @@ namespace greenfield {
         Scheduler::Report report;  // For communicating with Scheduler
 
 
-        Worker(int id, Scheduler & scheduler, std::shared_ptr<JLogger> logger) :
+        Worker(uint32_t id, Scheduler & scheduler, std::shared_ptr<JLogger> logger) :
             _logger(logger), _scheduler(scheduler), worker_id(id) {
 
             report.worker_id = worker_id;
@@ -74,6 +74,8 @@ namespace greenfield {
             LOG_DEBUG(_logger) << "Worker " << worker_id << " has entered loop()." << LOG_END;
             while (!shutdown_requested) {
 
+                report.assignment = nullptr;
+                report.last_result = SchedulerHint::ComeBackLater;
 
                 Arrow* assignment = _scheduler.next_assignment(report);
 
@@ -87,7 +89,8 @@ namespace greenfield {
                     std::this_thread::sleep_for(checkin_secs);
                 }
                 else {
-                    LOG_TRACE(_logger, true) << "Worker " << worker_id << " is performing assignment!" << LOG_END;
+                    LOG_TRACE(_logger, true) << "Worker " << worker_id << " is executing "
+                                             << report.assignment->get_name() << LOG_END;
                     while (report.last_result == SchedulerHint::KeepGoing &&
                            report.latency_sum < checkin_time &&
                            !shutdown_requested) {

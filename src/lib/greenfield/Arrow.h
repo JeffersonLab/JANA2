@@ -14,12 +14,18 @@ namespace greenfield {
         const bool _is_parallel = false;
         std::atomic<size_t> _chunksize {1};
         std::atomic<bool> _is_finished {false};
+        std::string _name = "empty_arrow";
 
     public:
         bool is_finished() { return _is_finished; }
         bool is_parallel() { return _is_parallel; }
         void set_chunksize(int chunksize) { _chunksize = chunksize; }
         size_t get_chunksize() { return _chunksize; }
+        void set_name(std::string name) { _name = name; }
+        std::string get_name() { return _name; }
+
+        // Arrow names are decided when the Arrow is tied to a Topology, and _not_
+        // made constant for a derived class no matter how badly the user wants to
 
         explicit Arrow(bool is_parallel) : _is_parallel(is_parallel) {};
         virtual SchedulerHint execute() = 0;

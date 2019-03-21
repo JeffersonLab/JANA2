@@ -1,13 +1,15 @@
+#pragma once
+
 #include <iostream>
 
-#include<greenfield/Arrow.h>
+#include <greenfield/Arrow.h>
 
 namespace greenfield {
 
     class RandIntSourceArrow : public SourceArrow<int> {
 
     public:
-        size_t emit_limit = 10;  // How many to emit
+        size_t emit_limit = 20;  // How many to emit
         size_t emit_count = 0;   // How many emitted so far
         int emit_sum = 0;     // Sum of all ints emitted so far
 
@@ -24,6 +26,9 @@ namespace greenfield {
             if (emit_count >= emit_limit) {
                 return SchedulerHint::Finished;
             }
+            else if (emit_count % 5 == 0) {
+                return SchedulerHint::ComeBackLater;
+            }
             return SchedulerHint::KeepGoing;
         }
 
@@ -37,6 +42,18 @@ namespace greenfield {
     private:
         double transform(int x) override {
             return x * 2.0;
+        }
+
+    public:
+        using MapArrow::MapArrow;
+    };
+
+
+    class SubOneArrow : public MapArrow<double, double> {
+
+    private:
+        double transform(double x) override {
+            return x-1;
         }
 
     public:

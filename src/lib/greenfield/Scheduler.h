@@ -18,11 +18,11 @@ namespace greenfield {
             /// Information collected by a Worker during the course of execution,
             /// which helps the Scheduler make its decision re what to do next
 
-            int worker_id;
-            Arrow* assignment;
-            int event_count;
-            double latency_sum;
-            SchedulerHint last_result;
+            uint32_t worker_id = 0;
+            Arrow* assignment = nullptr;
+            uint64_t event_count = 0;
+            double latency_sum = 0.0;
+            SchedulerHint last_result = SchedulerHint::ComeBackLater;
         };
 
 

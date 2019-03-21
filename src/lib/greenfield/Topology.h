@@ -44,6 +44,7 @@ namespace greenfield {
             // them to do it correctly.
 
             arrows[name] = arrow;
+            arrow->set_name(name);
         };
 
         /// The user may want to pause the topology and interact with it manually.

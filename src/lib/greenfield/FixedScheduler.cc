@@ -24,7 +24,7 @@ namespace greenfield {
         Arrow* to_arrow = _topology.arrows[to];
         size_t nworkers = _assignments.size();
 
-        for (int i=0; i < nworkers && delta > 0; ++i) {
+        for (uint32_t i=0; i < nworkers && delta > 0; ++i) {
             if (_assignments[i] == from_arrow) {
                 _assignments[i] = to_arrow;
             }
@@ -35,7 +35,7 @@ namespace greenfield {
 
     Arrow* FixedScheduler::next_assignment(const Report &report) {
         // TODO: Do something with report
-        int worker_id = report.worker_id;
+        uint32_t worker_id = report.worker_id;
         if (worker_id < _assignments.size()) {
             return _assignments[report.worker_id];
         } else {

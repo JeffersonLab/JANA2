@@ -2,7 +2,7 @@
 #include "catch.hpp"
 #include <greenfield/Topology.h>
 #include <greenfield/ThreadManager.h>
-#include "greenfield/TopologyTestFixtures.h"
+#include <greenfield/TopologyTestFixtures.h>
 
 using namespace std;
 namespace greenfield {

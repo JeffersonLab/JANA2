@@ -7,6 +7,16 @@
 
 enum class SchedulerHint {KeepGoing, ComeBackLater, Finished, Error};
 
+inline std::string to_string(SchedulerHint h) {
+    switch (h) {
+        case SchedulerHint::KeepGoing:     return "KeepGoing";
+        case SchedulerHint::ComeBackLater: return "ComeBackLater";
+        case SchedulerHint::Finished:      return "Finished";
+        default:                           return "Error";
+    }
+}
+
+
 class QueueBase {
 
 protected:
