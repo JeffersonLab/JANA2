@@ -5,6 +5,7 @@
 #include <mutex>
 
 #include <greenfield/Topology.h>
+#include "JLogger.h"
 
 
 namespace greenfield {
@@ -118,6 +119,7 @@ namespace greenfield {
         Arrow* next_assignment();
 
     public:
+        std::shared_ptr<JLogger> _logger;
         RoundRobinScheduler(Topology& topology);
         Arrow* next_assignment(const Report& report);
     };

@@ -11,17 +11,15 @@ namespace greenfield {
 
     ThreadManager::ThreadManager(Scheduler& scheduler) : _scheduler(scheduler) {
 
-        _logger = std::make_shared<JLogger>();
-        _logger->level = JLogLevel::TRACE;
         _status = Status::Idle;
     };
 
 
     ThreadManager::~ThreadManager() {
-        LOG_DEBUG(_logger) << "ThreadManager destruction started." << LOG_END;
+        LOG_DEBUG(logger) << "ThreadManager destruction started." << LOG_END;
         stop();
         join();
-        LOG_DEBUG(_logger) << "ThreadManager destruction finished." << LOG_END;
+        LOG_DEBUG(logger) << "ThreadManager destruction finished." << LOG_END;
     }
 
 
@@ -32,6 +30,7 @@ namespace greenfield {
 
     ThreadManager::Response ThreadManager::run(int nthreads) {
 
+        LOG_DEBUG(logger) << "ThreadManager::run() called." << LOG_END;
         if (_status != Status::Idle) {
             return Response::AlreadyRunning;
         }
@@ -39,10 +38,10 @@ namespace greenfield {
         _workers.reserve(nthreads);
 
         for (int i=0; i<nthreads; ++i) {
-            Worker * worker = new Worker(i, _scheduler, _logger);
+            Worker * worker = new Worker(i, _scheduler, logger);
             _workers.push_back(worker);
         }
-        LOG_INFO(_logger) << "ThreadManager status changed to RUNNING" << LOG_END;
+        LOG_INFO(logger) << "ThreadManager status changed to RUNNING." << LOG_END;
         return Response::Success;
     }
 
@@ -68,7 +67,7 @@ namespace greenfield {
 
     ThreadManager::Response ThreadManager::join() {
 
-        LOG_DEBUG(_logger) << "ThreadManager::join() called." << LOG_END;
+        LOG_DEBUG(logger) << "ThreadManager::join() called." << LOG_END;
         if (_status == Status::Idle) {
             return Response::NotRunning;
         }
@@ -81,10 +80,9 @@ namespace greenfield {
         }
 
         _status = Status::Idle;
-        LOG_INFO(_logger) << "ThreadManager status changed to IDLE" << LOG_END;
+        LOG_INFO(logger) << "ThreadManager status changed to IDLE" << LOG_END;
         return Response::Success;
     }
-
 
 }
 

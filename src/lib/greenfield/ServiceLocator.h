@@ -7,6 +7,7 @@
 #include <typeinfo>
 #include <typeindex>
 #include <iostream>
+#include <assert.h>
 
 namespace greenfield {
 

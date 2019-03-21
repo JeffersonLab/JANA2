@@ -1,18 +1,17 @@
-
-
-#ifndef JANA_JLOGGER_H_
-#define JANA_JLOGGER_H_
+#pragma once
 
 #include <iostream>
 #include <sstream>
-#include <mutex>
 #include <memory>
 #include <iomanip>
 
 #include <cxxabi.h>
+#include <map>
 // This is here to prevent the compiler from getting confused
 // while trying to instantiate operator<< templates.
 // It has to be included _before_ operator<<(JLog&&, T) gets defined
+
+#include <greenfield/ServiceLocator.h>
 
 
 enum class JLogLevel { TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF };
@@ -26,15 +25,14 @@ inline std::ostream& operator<<(std::ostream& s, JLogLevel l) {
 		case JLogLevel::ERROR: return s << "ERROR";
 		case JLogLevel::FATAL: return s << "FATAL";
 		case JLogLevel::OFF:   return s << "OFF";
+		default:               return s << "UNKNOWN";
 	}
-	return s << "UNKNOWN";
 }
 
 
 struct JLogger {
 	JLogLevel level = JLogLevel::INFO;
 	std::ostream& destination = std::cout;
-	std::mutex mutex;
 };
 
 struct JLogMessageEnd {};
@@ -94,7 +92,6 @@ inline JLogMessage&& operator<<(JLogMessage&& m, T t) {
 }
 
 inline void operator<<(JLogMessage && m, JLogMessageEnd const & end) {
-	std::lock_guard<std::mutex> lock(m.logger->mutex);
 	m.builder << std::endl;
   if (m.logger == nullptr) {
     std::cout << m.builder.str();
@@ -114,14 +111,14 @@ inline void operator<<(JLogMessage && m, JLogMessageEnd const & end) {
 #define VLOG_TRACE(logger) VLOG(logger, JLogLevel::TRACE)
 
 
-#define LOG(logger, msglevel) if (logger->level <= msglevel) JLogMessage(logger, msglevel)
+#define LOG(logger, msglevel) if (logger != nullptr && logger->level <= msglevel) JLogMessage(logger, msglevel)
 
 #define LOG_FATAL(logger) LOG(logger, JLogLevel::FATAL)
 #define LOG_ERROR(logger) LOG(logger, JLogLevel::ERROR)
 #define LOG_WARN(logger)  LOG(logger, JLogLevel::WARN)
 #define LOG_INFO(logger)  LOG(logger, JLogLevel::INFO)
 #define LOG_DEBUG(logger) LOG(logger, JLogLevel::DEBUG)
-#define LOG_TRACE(logger, flag) if (logger->level <= JLogLevel::TRACE || flag) JLogMessage(logger, JLogLevel::TRACE)
+#define LOG_TRACE(logger) LOG(logger, JLogLevel::TRACE)
 
 #define LOG_END JLogMessageEnd()
 
@@ -141,7 +138,44 @@ inline void operator<<(JLogMessage & m, JLogEnd const & end) {
   std::cout << m.builder.str();
 }
 
-#endif
+
+
+class LoggingService : public greenfield::Service {
+
+	JLogLevel _global_log_level = JLogLevel::INFO;
+	std::map<std::string, JLogLevel> _local_log_levels;
+
+public:
+	void set_level(JLogLevel level) { _global_log_level=level; }
+	void set_level(std::string className, JLogLevel level) {
+		_local_log_levels[className] = level;
+	}
+
+	void acquire_services(greenfield::ServiceLocator* serviceLocator) override {
+	    // serviceLocator.get<ParameterService>()
+	    // Add loglevels to
+	}
+
+	std::shared_ptr<JLogger> get_logger() {
+		auto logger = std::make_shared<JLogger>();
+		logger->level = _global_log_level;
+		return logger;
+	}
+
+	std::shared_ptr<JLogger> get_logger(std::string className) {
+
+		auto logger = std::make_shared<JLogger>();
+		auto search = _local_log_levels.find(className);
+		if (search != _local_log_levels.end()) {
+			logger->level = search->second;
+		} else {
+			logger->level = _global_log_level;
+		}
+		return logger;
+	}
+};
+
+
 
 
 

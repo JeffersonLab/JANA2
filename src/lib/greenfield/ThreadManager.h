@@ -38,7 +38,6 @@ namespace greenfield {
         Status _status;
         std::vector<Worker*> _workers;
         Scheduler& _scheduler;
-        std::shared_ptr<JLogger> _logger;
 
 
     public:
@@ -65,6 +64,8 @@ namespace greenfield {
         /// stop() is called first. Returns NotRunning if already joined, otherwise Success.
         Response join();
 
+        /// Logger is public so that it can be injected by anyone who needs it
+        std::shared_ptr<JLogger> logger;
     };
 
 }

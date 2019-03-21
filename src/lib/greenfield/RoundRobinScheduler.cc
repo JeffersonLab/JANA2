@@ -1,9 +1,12 @@
+
+
 #include <greenfield/Scheduler.h>
+#include <greenfield/JLogger.h>
 
 namespace greenfield {
 
 
-    RoundRobinScheduler::RoundRobinScheduler(greenfield::Topology &topology) :
+    RoundRobinScheduler::RoundRobinScheduler(Topology &topology) :
         _topology(topology) {
 
         for (auto &pair : topology.arrows) {
@@ -29,6 +32,11 @@ namespace greenfield {
             if (next != nullptr) { _metrics[next].nthreads++; }
         }
         _mutex.unlock();
+        LOG_DEBUG(_logger) << "Scheduler: (" << report.worker_id << ", "
+                     << ((report.assignment == nullptr) ? "nullptr" : report.assignment->get_name())
+                     << ", " << to_string(report.last_result) << ") => "
+                     << ((next == nullptr) ? "nullptr" : next->get_name())
+                     << "  [" << _metrics[next].nthreads << "]" << LOG_END;
         return next;
 
     }

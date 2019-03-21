@@ -72,10 +72,10 @@ namespace greenfield {
         void loop() {
 
             LOG_DEBUG(_logger) << "Worker " << worker_id << " has entered loop()." << LOG_END;
-            while (!shutdown_requested) {
+            report.assignment = nullptr;
+            report.last_result = SchedulerHint::ComeBackLater;
 
-                report.assignment = nullptr;
-                report.last_result = SchedulerHint::ComeBackLater;
+            while (!shutdown_requested) {
 
                 Arrow* assignment = _scheduler.next_assignment(report);
 
@@ -84,12 +84,12 @@ namespace greenfield {
                 report.event_count = 0;
 
                 if (assignment == nullptr) {
-                    LOG_TRACE(_logger, true) << "Worker " << worker_id << " is idling." << LOG_END;
+                    LOG_TRACE(_logger) << "Worker " << worker_id << " is idling." << LOG_END;
                     std::chrono::duration<double, std::ratio<1>> checkin_secs(checkin_time);
                     std::this_thread::sleep_for(checkin_secs);
                 }
                 else {
-                    LOG_TRACE(_logger, true) << "Worker " << worker_id << " is executing "
+                    LOG_TRACE(_logger) << "Worker " << worker_id << " is executing "
                                              << report.assignment->get_name() << LOG_END;
                     while (report.last_result == SchedulerHint::KeepGoing &&
                            report.latency_sum < checkin_time &&
@@ -102,7 +102,7 @@ namespace greenfield {
                         ++report.event_count;
                     }
                 }
-                LOG_TRACE(_logger, true) << "Worker " << worker_id << " is checking in" << LOG_END;
+                LOG_TRACE(_logger) << "Worker " << worker_id << " is checking in" << LOG_END;
             }
             LOG_DEBUG(_logger) << "Worker " << worker_id << " is exiting loop()" << LOG_END;
             shutdown_achieved = true;

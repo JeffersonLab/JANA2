@@ -18,18 +18,13 @@ std::string stringify(ThreadManager::Response response) {
 
 }
 
-void log_scheduler_decision(uint32_t worker, Arrow* before, SchedulerHint feedback, Arrow* after) {
-    auto logger = make_shared<JLogger>();
-    LOG_INFO(logger) << "Scheduler: (" << worker << ", "
-                     << ((before == nullptr) ? "nullptr" : before->get_name())
-                     << ", " << to_string(feedback) << ") => "
-                     << ((after == nullptr) ? "nullptr" : after->get_name())
-                     << LOG_END;
-
-}
-
 int main() {
-    auto logger = make_shared<JLogger>();
+    LoggingService loggingService;
+    loggingService.set_level(JLogLevel::INFO);
+    loggingService.set_level("RoundRobinScheduler", JLogLevel::TRACE);
+    loggingService.set_level("ThreadManager", JLogLevel::TRACE);
+
+    auto logger = loggingService.get_logger();
 
     Topology topology;
 
@@ -47,13 +42,13 @@ int main() {
     topology.addArrow("sum_everything", new SumArrow<double>(q2));
 
     RoundRobinScheduler scheduler(topology);
+    scheduler._logger = loggingService.get_logger("RoundRobinScheduler");
     Scheduler::Report report;
 
     // If we only have one worker and it always gets comebacklater, we do round-robin
     report.last_result = SchedulerHint::ComeBackLater;
     for (int i=0; i<10; ++i) {
         Arrow* assignment = scheduler.next_assignment(report);
-        log_scheduler_decision(report.worker_id, report.assignment, report.last_result, assignment);
         report.assignment = assignment;
     }
 
@@ -64,7 +59,6 @@ int main() {
     for (int i=0; i<10; ++i) {
         report.assignment = nullptr;
         Arrow* assignment = scheduler.next_assignment(report);
-        log_scheduler_decision(report.worker_id, report.assignment, report.last_result, assignment);
         report.assignment = assignment;
     }
 
@@ -76,8 +70,7 @@ int main() {
     report.last_result = SchedulerHint::ComeBackLater;
 
     for (int i=0; i<8; ++i) {
-        Arrow* assignment = scheduler.next_assignment(report);
-        log_scheduler_decision(report.worker_id, report.assignment, report.last_result, assignment);
+        scheduler.next_assignment(report);
         report.assignment = nullptr;
         // assert that scheduler does something sensible with sum_everything
     }
@@ -89,13 +82,13 @@ int main() {
 
     for (int i=0; i<4; ++i) {
         Arrow* assignment = scheduler.next_assignment(report);
-        log_scheduler_decision(report.worker_id, report.assignment, report.last_result, assignment);
         report.assignment = assignment;
         // assert that scheduler keeps going with this assignment
     }
 
 
     ThreadManager threadManager(scheduler);
+    threadManager.logger = loggingService.get_logger("ThreadManager");
     threadManager.run(5);
     threadManager.join();
 }
