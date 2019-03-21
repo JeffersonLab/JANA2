@@ -4,7 +4,9 @@
 #include <vector>
 #include <map>
 #include <atomic>
+#include <iostream>
 #include "Queue.h"
+
 
 namespace greenfield {
 
@@ -130,10 +132,12 @@ namespace greenfield {
             std::vector<S> xs(_chunksize);
             std::vector<T> ys(_chunksize);
             SchedulerHint in_status = _input_queue->pop(xs, _chunksize);
+            std::cout << this->get_name() << "arrow.execute saw xs size=" << xs.size() << std::endl;
 
             for (S& x : xs) {
                 ys.push_back(transform(x));
             }
+            std::cout << this->get_name() << "arrow.execute saw ys size=" << xs.size() << std::endl;
             SchedulerHint out_status = _output_queue->push(ys);
             if (in_status == SchedulerHint::Finished) {
                 return SchedulerHint::Finished;

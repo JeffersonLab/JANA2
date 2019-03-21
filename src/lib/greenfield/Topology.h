@@ -2,23 +2,49 @@
 
 #include <greenfield/Arrow.h>
 #include <greenfield/Queue.h>
+#include <greenfield/JLogger.h>
 
 
 namespace greenfield {
 
     struct Topology {
 
-        // Usage:
 
-        // auto q0 = topology.addQueue(new Queue<int>);
-        // auto q1 = topology.addQueue(new Queue<double>);
+        struct QueueStatus {
+            uint32_t queue_id;
+            uint64_t height;
+            uint64_t threshold;
+            bool is_finished;
+        };
 
-        // topology.addArrow("emit_rand_ints", new RandIntSourceArrow(q0));
-        // topology.addArrow("multiply_by_two", new MultByTwoArrow(q0, q1));
-        // topology.addArrow("sum_everything", new SumArrow<double>(q1));
 
-        // ThreadManager.submit(topology);
+        std::vector<QueueStatus> get_queue_status() {
+            std::vector<QueueStatus> statuses;
+            int i=0;
+            for (QueueBase* q : queues) {
+                QueueStatus qs;
+                qs.queue_id = i++;
+                qs.is_finished = q->is_finished();
+                qs.height = q->get_item_count();
+                qs.threshold = q->get_threshold();
+                statuses.push_back(qs);
+            }
+            return statuses;
+        }
 
+        void log_queue_status() {
+            LOG_INFO(logger) << "  +------+----------+-----------+----------+" << LOG_END;
+            LOG_INFO(logger) << "  |  ID  |  Height  | Threshold | Finished |" << LOG_END;
+            LOG_INFO(logger) << "  +------+----------+-----------+----------+" << LOG_END;
+            for (QueueStatus& qs : get_queue_status()) {
+                LOG_INFO(logger) << "  | "
+                                 << std::setw(4) << qs.queue_id << " | "
+                                 << std::setw(8) << qs.height << " | "
+                                 << std::setw(9) << qs.threshold << " | "
+                                 << std::setw(8) << qs.is_finished << " |" << LOG_END;
+            }
+            LOG_INFO(logger) << "  +------+----------+-----------+----------+" << LOG_END;
+        }
 
         // TODO: Consider using shared_ptr instead of raw pointer
         // TODO: Figure out access control
@@ -30,6 +56,9 @@ namespace greenfield {
 
         // #####################################################
         // These are meant to be used by the user
+
+        std::shared_ptr<JLogger> logger;
+
         QueueBase* addQueue(QueueBase* queue) {
             queues.push_back(queue);
             return queue;
@@ -56,6 +85,8 @@ namespace greenfield {
             }
             return arrow->execute();
         }
+
+
     };
 }
 

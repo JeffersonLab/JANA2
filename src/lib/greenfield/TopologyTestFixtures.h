@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include <greenfield/JLogger.h>
 #include <greenfield/Arrow.h>
 
 namespace greenfield {
@@ -12,6 +13,7 @@ namespace greenfield {
         size_t emit_limit = 20;  // How many to emit
         size_t emit_count = 0;   // How many emitted so far
         int emit_sum = 0;     // Sum of all ints emitted so far
+        std::shared_ptr<JLogger> logger;
 
         using SourceArrow::SourceArrow;
 
@@ -20,9 +22,12 @@ namespace greenfield {
             for (size_t i=0; i<count && emit_count<emit_limit; ++i) {
                 int x = 7;
                 items.push_back(x);
-                emit_limit += 1;
+                emit_count += 1;
                 emit_sum += x;
             }
+            LOG_TRACE(logger) << "Arrow " << this->get_name() << " emitted "
+                              << emit_count << " events" << LOG_END;
+
             if (emit_count >= emit_limit) {
                 return SchedulerHint::Finished;
             }
