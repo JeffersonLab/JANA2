@@ -33,6 +33,20 @@ inline std::ostream& operator<<(std::ostream& s, JLogLevel l) {
 struct JLogger {
 	JLogLevel level = JLogLevel::INFO;
 	std::ostream& destination = std::cout;
+
+	// Convenience function for obtaining a logger that will print everything
+	static std::shared_ptr<JLogger> everything() {
+		JLogger logger;
+		logger.level = JLogLevel::TRACE;
+		return std::make_shared<JLogger>(logger);
+	}
+
+	static std::shared_ptr<JLogger> nothing() {
+		JLogger logger;
+		logger.level = JLogLevel::OFF;
+		return std::make_shared<JLogger>(logger);
+	}
+
 };
 
 struct JLogMessageEnd {};

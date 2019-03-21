@@ -32,7 +32,7 @@ namespace greenfield {
             if (next != nullptr) { _metrics[next].nthreads++; }
         }
         _mutex.unlock();
-        LOG_DEBUG(_logger) << "Scheduler: (" << report.worker_id << ", "
+        LOG_DEBUG(logger) << "Scheduler: (" << report.worker_id << ", "
                      << ((report.assignment == nullptr) ? "nullptr" : report.assignment->get_name())
                      << ", " << to_string(report.last_result) << ") => "
                      << ((next == nullptr) ? "nullptr" : next->get_name())

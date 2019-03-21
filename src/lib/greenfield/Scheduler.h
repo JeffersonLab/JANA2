@@ -119,7 +119,7 @@ namespace greenfield {
         Arrow* next_assignment();
 
     public:
-        std::shared_ptr<JLogger> _logger;
+        std::shared_ptr<JLogger> logger;
         RoundRobinScheduler(Topology& topology);
         Arrow* next_assignment(const Report& report);
     };
