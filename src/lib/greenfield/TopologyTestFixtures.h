@@ -31,9 +31,9 @@ namespace greenfield {
             if (emit_count >= emit_limit) {
                 return SchedulerHint::Finished;
             }
-            else if (emit_count % 5 == 0) {
-                return SchedulerHint::ComeBackLater;
-            }
+//            else if (emit_count % 5 == 0) {
+//                return SchedulerHint::ComeBackLater;
+//            }
             return SchedulerHint::KeepGoing;
         }
 

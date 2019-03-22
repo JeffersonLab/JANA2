@@ -58,7 +58,7 @@ namespace greenfield {
                 initialize();
                 _is_initialized = true;
             }
-            std::vector<T> items(_chunksize);
+            std::vector<T> items;
             SchedulerHint in_status = inprocess(items, _chunksize);
             SchedulerHint out_status = _output_queue->push(std::move(items));
 
@@ -100,7 +100,8 @@ namespace greenfield {
                 initialize();
                 _is_initialized = true;
             }
-            std::vector<T> items(_chunksize);
+            std::vector<T> items;
+            items.reserve(_chunksize);
             SchedulerHint result = _input_queue->pop(items, _chunksize);
             for (T item : items) {
                 outprocess(item);
@@ -129,15 +130,15 @@ namespace greenfield {
             Arrow(true), _input_queue(input_queue), _output_queue(output_queue) {};
 
         SchedulerHint execute() final {
-            std::vector<S> xs(_chunksize);
-            std::vector<T> ys(_chunksize);
-            SchedulerHint in_status = _input_queue->pop(xs, _chunksize);
-            std::cout << this->get_name() << "arrow.execute saw xs size=" << xs.size() << std::endl;
+            std::vector<S> xs;
+            std::vector<T> ys;
+            xs.reserve(_chunksize);
+            ys.reserve(_chunksize);
 
+            SchedulerHint in_status = _input_queue->pop(xs, _chunksize);
             for (S& x : xs) {
                 ys.push_back(transform(x));
             }
-            std::cout << this->get_name() << "arrow.execute saw ys size=" << xs.size() << std::endl;
             SchedulerHint out_status = _output_queue->push(ys);
             if (in_status == SchedulerHint::Finished) {
                 return SchedulerHint::Finished;
@@ -166,7 +167,8 @@ namespace greenfield {
             Arrow(true), _input_queue(input_queue), _output_queues(output_queues) {};
 
         SchedulerHint execute() final {
-            std::vector<T> items(_chunksize);
+            std::vector<T> items;
+            items.reserve(_chunksize);
             SchedulerHint in_status = _input_queue->pop(items, _chunksize);
             bool output_status_keepgoing = true;
 
