@@ -20,32 +20,11 @@ namespace greenfield {
             /// which helps the Scheduler make its decision re what to do next
 
             uint32_t worker_id = 0;
-            Arrow* assignment = nullptr;
+            Arrow *assignment = nullptr;
             uint64_t event_count = 0;
             double latency_sum = 0.0;
             SchedulerHint last_result = SchedulerHint::ComeBackLater;
         };
-
-
-        struct Metric {
-
-            /// A view of how many threads are running each arrow,
-            /// and how they are performing wrt latency and throughput.
-            /// Queue status should be read from the Topology instead,
-            /// because it does NOT depend on the ThreadManager implementation.
-
-            std::string arrow_name;
-            int nthreads;
-            bool is_parallel;
-            bool is_finished;
-            int events_completed;
-            double short_term_avg_latency;
-            double long_term_avg_latency;
-        };
-
-
-    protected:
-        std::map<Arrow*, Metric> _metrics;
 
 
     public:
@@ -53,43 +32,7 @@ namespace greenfield {
         /// If no assignments are available, return nullptr.
         /// This is called by all of the workers and updates Metrics and Topology,
         /// so it must be kept threadsafe
-        virtual Arrow* next_assignment(const Report& report) = 0;
-
-
-        /// Provide a copy of performance statistics for all Arrows in the Topology
-        std::vector<Metric> get_metrics() {
-
-            std::vector<Metric> metrics(_metrics.size());
-
-            for (auto & pair : _metrics) {
-                auto metric = pair.second;
-                metrics.push_back(metric);  // This copies the metric
-            }
-
-            for (auto & metric : metrics) {
-                // Convert from running total to average
-                metric.long_term_avg_latency /= metric.events_completed;
-            }
-            return metrics;
-        }
-
-
-        /// Given a report, update the metrics information
-        // TODO: Currently, the caller needs to be synchronized, which isn't great.
-        // TODO: Can report.last_result() ever diverge from arrow->is_finished() ??
-        void updateMetrics(const Report& report) {
-
-            Arrow* arrow = report.assignment;
-            Metric& metric = _metrics[arrow];
-
-            metric.events_completed += report.event_count;
-            metric.long_term_avg_latency += report.latency_sum;
-            metric.short_term_avg_latency = report.latency_sum / report.event_count;
-
-            if (report.last_result == SchedulerHint::Finished) {
-                metric.is_finished = true;
-            }
-        }
+        virtual Arrow *next_assignment(const Report &report) = 0;
     };
 
 

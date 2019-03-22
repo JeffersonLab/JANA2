@@ -84,9 +84,9 @@ namespace greenfield {
                 report.event_count = 0;
 
                 if (assignment == nullptr) {
-                    LOG_TRACE(_logger) << "Worker " << worker_id << " is idling." << LOG_END;
-                    std::chrono::duration<double, std::ratio<1>> checkin_secs(checkin_time);
-                    std::this_thread::sleep_for(checkin_secs);
+                    LOG_TRACE(_logger) << "Worker " << worker_id
+                                       << " shutting down due to lack of assignments" << LOG_END;
+                    shutdown_requested = true;
                 }
                 else {
                     LOG_TRACE(_logger) << "Worker " << worker_id << " is executing "

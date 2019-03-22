@@ -17,6 +17,7 @@ namespace greenfield {
         std::atomic<size_t> _chunksize {1};
         std::atomic<bool> _is_finished {false};
         std::string _name = "empty_arrow";
+        uint32_t _id;
 
     public:
         bool is_finished() { return _is_finished; }
@@ -25,6 +26,8 @@ namespace greenfield {
         size_t get_chunksize() { return _chunksize; }
         void set_name(std::string name) { _name = name; }
         std::string get_name() { return _name; }
+        void set_id(uint32_t id) { _id = id; }
+        uint32_t get_id() { return _id; }
 
         // Arrow names are decided when the Arrow is tied to a Topology, and _not_
         // made constant for a derived class no matter how badly the user wants to

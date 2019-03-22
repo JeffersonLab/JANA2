@@ -69,7 +69,7 @@ namespace greenfield {
     template <typename T>
     class SumArrow : public SinkArrow<T> {
     public:
-        T sum;
+        T sum = 0;
         using SinkArrow<T>::SinkArrow;
 
     private:

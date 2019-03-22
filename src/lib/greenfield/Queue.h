@@ -21,9 +21,14 @@ class QueueBase {
 
 protected:
     size_t _threshold = 128;
+    uint32_t _id;
     bool _is_finished = false;
 
 public:
+
+    uint32_t get_id() { return _id; }
+    void set_id(uint32_t id) { _id = id; }
+
     size_t get_threshold() { return _threshold; }
     void set_threshold(size_t threshold) { _threshold = threshold; }
 

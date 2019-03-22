@@ -2,6 +2,7 @@
 #include "catch.hpp"
 
 #include <thread>
+#include <random>
 #include <greenfield/Topology.h>
 #include "greenfield/TopologyTestFixtures.h"
 
