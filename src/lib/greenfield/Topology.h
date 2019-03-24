@@ -58,7 +58,7 @@ namespace greenfield {
         std::vector<QueueBase*> queues;
         std::shared_ptr<JLogger> logger;
 
-        std::map<Arrow*, ArrowStatus> _arrow_statuses;
+        std::vector<ArrowStatus> _arrow_statuses;
         std::vector<bool> finished_queues;
         std::vector<bool> finished_matrix;
         uint32_t arrow_count;
@@ -70,17 +70,6 @@ namespace greenfield {
             queue_count = queues.size();
             arrow_count = arrows.size();
 
-            for (auto & pair : arrows) {
-                auto arrow = pair.second;
-                _arrow_statuses[arrow].arrow_name = arrow->get_name();
-                _arrow_statuses[arrow].arrow_id = arrow->get_id();
-                _arrow_statuses[arrow].is_parallel = arrow->is_parallel();
-                _arrow_statuses[arrow].is_finished = arrow->is_finished();
-                _arrow_statuses[arrow].short_term_avg_latency = 0;
-                _arrow_statuses[arrow].long_term_avg_latency = 0;
-                _arrow_statuses[arrow].thread_count = 0;
-                _arrow_statuses[arrow].messages_completed = 0;
-            }
 
             for (int i=0; i<queue_count; ++i) {
                 finished_queues.push_back(false);
@@ -89,19 +78,25 @@ namespace greenfield {
                 finished_matrix.push_back(true);
             }
 
+            LOG_INFO(logger) << "Set up finished queues, matrix data structures" << LOG_END;
+
             for (auto & pair : arrows) {
                 auto arrow = pair.second;
                 if (!arrow->is_finished()) {
                     for (QueueBase* queue : arrow->get_output_queues()) {
+                        LOG_INFO(logger) << "Found queue " << queue->get_id() << LOG_END;
                         finished_matrix[arrow->get_id()*queue_count + queue->get_id()] = false;
                     }
                 }
             }
+            LOG_INFO(logger) << "Traversed graph" << LOG_END;
         }
         void report_arrow_finished(Arrow* arrow) {
 
+            LOG_DEBUG(logger) << "Arrow reported finished: " << arrow->get_name() << LOG_END;
             // once an arrow is finished, any downstream queues may finish once they empty
             int arrow_id = arrow->get_id();
+            _arrow_statuses[arrow_id].is_finished = true; // TODO: Can I please get rid of arrow->is_finished()?
             for (int qi = 0; qi < queue_count; ++qi) {
                 finished_matrix[arrow_id*queue_count + qi] = true;
             }
@@ -122,12 +117,12 @@ namespace greenfield {
 
         void update(Arrow* arrow, SchedulerHint last_result, double latency, uint64_t messages_completed) {
 
-            ArrowStatus& arrowStatus = _arrow_statuses[arrow];
+            ArrowStatus& arrowStatus = _arrow_statuses[arrow->get_id()];
             arrowStatus.messages_completed += messages_completed;
             arrowStatus.long_term_avg_latency += latency;
             arrowStatus.short_term_avg_latency = latency / messages_completed;
-            if (last_result == SchedulerHint::Finished) {
-                arrowStatus.is_finished = true;
+            if (last_result == SchedulerHint::Finished && arrowStatus.thread_count == 0) {
+                report_arrow_finished(arrow);
             }
         }
 
@@ -169,11 +164,10 @@ namespace greenfield {
 
         std::vector<ArrowStatus> get_arrow_status() {
 
-            std::vector<ArrowStatus> metrics(_arrow_statuses.size());
+            std::vector<ArrowStatus> metrics;
 
-            for (auto & pair : _arrow_statuses) {
-                auto metric = pair.second;
-                metrics.push_back(metric);  // This copies the metric
+            for (auto & status : _arrow_statuses) {
+                metrics.push_back(status);
             }
 
             for (auto & metric : metrics) {
@@ -185,25 +179,26 @@ namespace greenfield {
 
 
         void log_arrow_status() {
-            LOG_INFO(logger) << "  +------+-------------------------------+----------+---------+--------------------+-----------------+----------------+----------+" << LOG_END;
-            LOG_INFO(logger) << "  |  ID  |             Name              | Parallel | Threads | Messages completed | Latency (short) | Latency (long) | Finished |" << LOG_END;
-            LOG_INFO(logger) << "  +------+-------------------------------+----------+---------+--------------------+-----------------+----------------+----------+" << LOG_END;
+            LOG_INFO(logger) << "  +------+--------------------------------+----------+---------+--------------------+-----------------+----------------+----------+" << LOG_END;
+            LOG_INFO(logger) << "  |  ID  |              Name              | Parallel | Threads | Messages completed | Latency (short) | Latency (long) | Finished |" << LOG_END;
+            LOG_INFO(logger) << "  +------+--------------------------------+----------+---------+--------------------+-----------------+----------------+----------+" << LOG_END;
             for (ArrowStatus& as : get_arrow_status()) {
                 LOG_INFO(logger) << "  | "
                                  << std::setw(4) << as.arrow_id << " | "
-                                 << std::setw(30) << as.arrow_name << " | "
-                                 << std::setw(9) << as.is_parallel << " | "
-                                 << std::setw(8) << as.thread_count << " |"
-                                 << std::setw(8) << as.messages_completed << " |"
-                                 << std::setw(8) << as.short_term_avg_latency << " |"
-                                 << std::setw(8) << as.long_term_avg_latency << " |"
-                                 << std::setw(8) << as.is_finished << " |" << LOG_END;
+                                 << std::setw(30) << std::left << as.arrow_name << " | "
+                                 << std::setw(8) << std::right << as.is_parallel << " | "
+                                 << std::setw(7) << as.thread_count << " |"
+                                 << std::setw(19) << as.messages_completed << " |"
+                                 << std::setw(16) << as.short_term_avg_latency << " |"
+                                 << std::setw(15) << as.long_term_avg_latency << " |"
+                                 << std::setw(9) << as.is_finished << " |" << LOG_END;
             }
-            LOG_INFO(logger) << "  +------+-------------------------------+----------+---------+--------------------+-----------------+----------------+----------+" << LOG_END;
+            LOG_INFO(logger) << "  +------+--------------------------------+----------+---------+--------------------+-----------------+----------------+----------+" << LOG_END;
         }
 
 
         QueueBase* addQueue(QueueBase* queue) {
+            queue->set_id(queues.size());
             queues.push_back(queue);
             return queue;
         }
@@ -217,8 +212,21 @@ namespace greenfield {
             // name be constant w.r.t to the Arrow class unless we force
             // them to do it correctly.
 
-            arrows[name] = arrow;
             arrow->set_name(name);
+            arrow->set_id(arrows.size());
+
+            arrows[name] = arrow;
+            _arrow_statuses.emplace_back();
+            ArrowStatus& status = _arrow_statuses.back();
+
+            status.arrow_name = arrow->get_name();
+            status.arrow_id = arrow->get_id();
+            status.is_parallel = arrow->is_parallel();
+            status.is_finished = arrow->is_finished();
+            status.short_term_avg_latency = 0;
+            status.long_term_avg_latency = 0;
+            status.thread_count = 0;
+            status.messages_completed = 0;
         };
 
         /// The user may want to pause the topology and interact with it manually.
@@ -228,10 +236,12 @@ namespace greenfield {
             if (arrow == nullptr) {
                 return SchedulerHint::Error;
             }
-            return arrow->execute();
+            SchedulerHint result = arrow->execute();
+            if (result == SchedulerHint::Finished && _arrow_statuses[arrow->get_id()].thread_count == 0) {
+                report_arrow_finished(arrow);
+            }
+            return result;
         }
-
-
     };
 }
 

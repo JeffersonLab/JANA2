@@ -166,5 +166,48 @@ namespace greenfield {
             //topology.log_queue_status();
             REQUIRE(sumArrow->sum == (7 * 2.0 - 1) * 20);
         }
+        SECTION("Finished flag propagates") {
+
+            topology.finalize();
+
+            REQUIRE(topology.arrows["emit_rand_ints"]->is_finished() == false);
+            REQUIRE(topology.arrows["multiply_by_two"]->is_finished() == false);
+            REQUIRE(topology.arrows["subtract_one"]->is_finished() == false);
+            REQUIRE(topology.arrows["sum_everything"]->is_finished() == false);
+
+            for (int i=0; i<20; ++i) {
+                topology.step("emit_rand_ints");
+            }
+
+            REQUIRE(topology.arrows["emit_rand_ints"]->is_finished() == true);
+            REQUIRE(topology.arrows["multiply_by_two"]->is_finished() == false);
+            REQUIRE(topology.arrows["subtract_one"]->is_finished() == false);
+            REQUIRE(topology.arrows["sum_everything"]->is_finished() == false);
+
+
+            for (int i=0; i<20; ++i) {
+                topology.step("multiply_by_two");
+            }
+
+            auto arrow_statuses = topology.get_arrow_status();
+            REQUIRE(arrow_statuses[0].is_finished == true);
+            REQUIRE(arrow_statuses[1].is_finished == true);
+            REQUIRE(arrow_statuses[2].is_finished == false);
+            REQUIRE(arrow_statuses[3].is_finished == false);
+
+            for (int i=0; i<20; ++i) {
+                topology.step("subtract_one");
+            }
+
+            topology.log_arrow_status();
+            topology.log_queue_status();
+
+
+            arrow_statuses = topology.get_arrow_status();
+            REQUIRE(arrow_statuses[0].is_finished == true);
+            REQUIRE(arrow_statuses[1].is_finished == true);
+            REQUIRE(arrow_statuses[2].is_finished == true);
+            REQUIRE(arrow_statuses[3].is_finished == false);
+        }
     }
 }

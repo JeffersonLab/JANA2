@@ -19,20 +19,22 @@ namespace greenfield {
 
         _mutex.lock();
         Arrow* next = report.assignment;
-        _topology.update(report.assignment, report.last_result, report.latency_sum, report.event_count);
+        if (next != nullptr) {
+            _topology.update(report.assignment, report.last_result, report.latency_sum, report.event_count);
+        }
 
         if (report.last_result != SchedulerHint::KeepGoing) {
 
-            if (next != nullptr) { _topology._arrow_statuses[next].thread_count--; }
+            if (next != nullptr) { _topology._arrow_statuses[next->get_id()].thread_count--; }
             next = next_assignment();
-            if (next != nullptr) { _topology._arrow_statuses[next].thread_count++; }
+            if (next != nullptr) { _topology._arrow_statuses[next->get_id()].thread_count++; }
         }
         _mutex.unlock();
         LOG_DEBUG(logger) << "Scheduler: (" << report.worker_id << ", "
                      << ((report.assignment == nullptr) ? "nullptr" : report.assignment->get_name())
                      << ", " << to_string(report.last_result) << ") => "
                      << ((next == nullptr) ? "nullptr" : next->get_name())
-                     << "  [" << _topology._arrow_statuses[next].thread_count << "]" << LOG_END;
+                     << "  [" << _topology._arrow_statuses[next->get_id()].thread_count << "]" << LOG_END;
         return next;
 
     }
@@ -55,7 +57,7 @@ namespace greenfield {
                 // Removes arrow from the queue completely and tries the next one
                 continue;
             }
-            else if (!arrow->is_parallel() && _topology._arrow_statuses[arrow].thread_count != 0) {
+            else if (!arrow->is_parallel() && _topology._arrow_statuses[arrow->get_id()].thread_count != 0) {
                 // Arrow is sequential and is already assigned to a thread,
                 // so we send it to the back of the queue and try again
                 _assignments.push(arrow);
