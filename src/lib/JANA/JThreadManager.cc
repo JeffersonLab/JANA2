@@ -558,6 +558,7 @@ void JThreadManager::ExecuteTask(const std::shared_ptr<JTaskBase>& aTask, JEvent
 	try{
 		//Execute task
 		(*aTask)();
+		aTask->GetFuture(); // if task threw an exception, it will have been caught by the future and this will cause it to be re-thrown
 		LOG_TRACE(mLogger, mDebugLevel) << "Thread " << JTHREAD->GetThreadID() << " JThreadManager::ExecuteTask(): Task executed successfully." << LOG_END;
 
 		// Release the JEvent
