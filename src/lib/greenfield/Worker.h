@@ -35,7 +35,7 @@ namespace greenfield {
             _logger(logger), _scheduler(scheduler), worker_id(id) {
 
             report.worker_id = worker_id;
-            report.last_result = SchedulerHint::KeepGoing;
+            report.last_result = StreamStatus::KeepGoing;
 
             _thread = new std::thread(&Worker::loop, this);
             LOG_DEBUG(logger) << "Worker " << worker_id << " constructed." << LOG_END;
@@ -73,7 +73,7 @@ namespace greenfield {
 
             LOG_DEBUG(_logger) << "Worker " << worker_id << " has entered loop()." << LOG_END;
             report.assignment = nullptr;
-            report.last_result = SchedulerHint::ComeBackLater;
+            report.last_result = StreamStatus::ComeBackLater;
 
             while (!shutdown_requested) {
 
@@ -91,7 +91,7 @@ namespace greenfield {
                 else {
                     LOG_TRACE(_logger) << "Worker " << worker_id << " is executing "
                                              << report.assignment->get_name() << LOG_END;
-                    while (report.last_result == SchedulerHint::KeepGoing &&
+                    while (report.last_result == StreamStatus::KeepGoing &&
                            report.latency_sum < checkin_time &&
                            !shutdown_requested) {
 

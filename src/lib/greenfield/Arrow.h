@@ -1,268 +1,159 @@
+//
+// Created by nbrei on 3/25/19.
+//
 
-#pragma once
+#ifndef GREENFIELD_ARROW_H
+#define GREENFIELD_ARROW_H
 
 #include <vector>
-#include <map>
-#include <atomic>
-#include <iostream>
-#include "Queue.h"
+
+#include <greenfield/Queue.h>
 
 
 namespace greenfield {
 
-    class Arrow {
 
-    protected:
-        const bool _is_parallel = false;
-        std::atomic<size_t> _chunksize {1};
-        std::atomic<bool> _is_finished {false};
-        std::string _name = "empty_arrow";
-        uint32_t _id;
+class Arrow {
 
-    public:
-        bool is_finished() { return _is_finished; }
-        bool is_parallel() { return _is_parallel; }
-        void set_chunksize(int chunksize) { _chunksize = chunksize; }
-        size_t get_chunksize() { return _chunksize; }
-        void set_name(std::string name) { _name = name; }
-        std::string get_name() { return _name; }
-        void set_id(uint32_t id) { _id = id; }
-        uint32_t get_id() { return _id; }
+private:
+    // Constants
+    const std::string _name;           // Used for human understanding
+    const size_t _index;               // Used as an array index
+    const bool _is_parallel;           // Whether or not it is safe to parallelize
 
-        // Arrow names are decided when the Arrow is tied to a Topology, and _not_
-        // made constant for a derived class no matter how badly the user wants to
+    // Written internally, read externally
+    bool _is_finished = false;   // Whether or not this arrow expects future work
+    double _total_latency = 0;   // Total time spent doing actual work (across all cpus)
+    double _total_overhead = 0;  // Total time spent pushing and popping from queues
+    double _last_latency = 0;    // Most recent latency measurement (from a single cpu)
+    double _last_overhead = 0;   // Most recent time spent pushing and popping from queues
 
-        explicit Arrow(bool is_parallel) : _is_parallel(is_parallel) {};
-        virtual SchedulerHint execute() = 0;
-        virtual std::vector<QueueBase*> get_input_queues() = 0;
-        virtual std::vector<QueueBase*> get_output_queues() = 0;
-    };
+    // Written externally
+    int _chunksize = 1;          // Number of items to pop off the input queue at once
+    int _thread_count = 0;       // Current number of threads assigned to this arrow
+
+    std::mutex _mutex;       // Protects access to arrow properties.
+    // TODO: Replace with atomics when the time is right
 
 
-    template <typename T>
-    class SourceArrow : public Arrow {
-
-    private:
-        Queue<T>* _output_queue;
-        bool _is_initialized = false;
-
-        virtual void initialize() = 0;
-        virtual void finalize() = 0;
-        virtual SchedulerHint inprocess(std::vector<T>& ts, size_t count) = 0;
-
-    public:
-        explicit SourceArrow(Queue<T>* output_queue) : Arrow(false), _output_queue(output_queue) {};
-
-        SchedulerHint execute() final {
-            if (_is_finished) {
-                return SchedulerHint::Finished;
-            }
-            if (!_is_initialized) {
-                initialize();
-                _is_initialized = true;
-            }
-            std::vector<T> items;
-            SchedulerHint in_status = inprocess(items, _chunksize);
-            SchedulerHint out_status = _output_queue->push(std::move(items));
-
-            if (in_status == SchedulerHint::Finished) {
-                finalize();
-                _is_finished = true; // prevent race conditions on _is_finished
-                return SchedulerHint::Finished;
-            }
-            if (in_status == SchedulerHint::KeepGoing && out_status == SchedulerHint::KeepGoing) {
-                return SchedulerHint::KeepGoing;
-            }
-            return SchedulerHint::ComeBackLater;
-        }
-
-        std::vector<QueueBase*> get_input_queues() final { return {}; }
-        std::vector<QueueBase*> get_output_queues() final { return {_output_queue}; }
-    };
-
-    template <typename T>
-    class SinkArrow : public Arrow {
-
-    private:
-        Queue<T>* _input_queue;
-        bool _is_initialized = false;
-
-        virtual void initialize() = 0;
-        virtual void finalize() = 0;
-        virtual void outprocess(T t) = 0;
-
-    public:
-        explicit SinkArrow(Queue<T>* input_queue) :
-            Arrow(false), _input_queue(input_queue) {};
-
-        SchedulerHint execute() final {
-            if (_is_finished) {
-                return SchedulerHint::Finished;
-            }
-            if (!_is_initialized) {
-                initialize();
-                _is_initialized = true;
-            }
-            std::vector<T> items;
-            items.reserve(_chunksize);
-            SchedulerHint result = _input_queue->pop(items, _chunksize);
-            for (T item : items) {
-                outprocess(item);
-            }
-            if (result == SchedulerHint::Finished) {
-                _is_finished = true;
-                finalize();
-            }
-            return result;
-        }
-        std::vector<QueueBase*> get_input_queues() final { return {_input_queue}; }
-        std::vector<QueueBase*> get_output_queues() final { return {}; }
-    };
-
-    template <typename S, typename T>
-    class MapArrow : public Arrow {
-
-    private:
-        Queue<S>* _input_queue;
-        Queue<T>* _output_queue;
-
-        virtual T transform(S s) = 0;
-
-    public:
-        MapArrow(Queue<S>* input_queue, Queue<T>* output_queue) :
-            Arrow(true), _input_queue(input_queue), _output_queue(output_queue) {};
-
-        SchedulerHint execute() final {
-            std::vector<S> xs;
-            std::vector<T> ys;
-            xs.reserve(_chunksize);
-            ys.reserve(_chunksize);
-
-            SchedulerHint in_status = _input_queue->pop(xs, _chunksize);
-            for (S& x : xs) {
-                ys.push_back(transform(x));
-            }
-            SchedulerHint out_status = _output_queue->push(ys);
-            if (in_status == SchedulerHint::Finished) {
-                return SchedulerHint::Finished;
-            }
-            else if (in_status == SchedulerHint::KeepGoing && out_status == SchedulerHint::KeepGoing) {
-                return SchedulerHint::KeepGoing;
-            }
-            else {
-                return SchedulerHint::ComeBackLater;
-            }
-        }
-
-        std::vector<QueueBase*> get_input_queues() final { return {_input_queue}; }
-        std::vector<QueueBase*> get_output_queues() final { return {_output_queue}; }
-    };
-
-    template<typename T>
-    class BroadcastArrow : public Arrow {
-
-    private:
-        Queue<T>* _input_queue;
-        std::vector<Queue<T>*> _output_queues;
-
-    public:
-        BroadcastArrow(Queue<T>* input_queue, std::vector<Queue<T>*> output_queues) :
-            Arrow(true), _input_queue(input_queue), _output_queues(output_queues) {};
-
-        SchedulerHint execute() final {
-            std::vector<T> items;
-            items.reserve(_chunksize);
-            SchedulerHint in_status = _input_queue->pop(items, _chunksize);
-            bool output_status_keepgoing = true;
-
-            for (Queue<T>* queue : _output_queues) {
-                SchedulerHint out_status = queue->push(items);
-                output_status_keepgoing &= (out_status == SchedulerHint::KeepGoing);
-            }
-            if (in_status == SchedulerHint::Finished) {
-                return SchedulerHint::Finished;
-            }
-            else if (in_status == SchedulerHint::KeepGoing && output_status_keepgoing){
-                return SchedulerHint::KeepGoing;
-            }
-            else {
-                return SchedulerHint::ComeBackLater;
-            }
-        }
-        std::vector<QueueBase*> get_input_queues() final { return {_input_queue}; }
-        std::vector<QueueBase*> get_output_queues() final { return _output_queues; }
-    };
-
-    template <typename S, typename T>
-    class ScatterArrow : public Arrow {
-
-    private:
-        Queue<S>* _input_queue;
-        std::vector<Queue<T>*> _output_queues;
-
-        virtual std::pair<size_t, T> scatter(S s) = 0;
-
-    public:
-        ScatterArrow(Queue<T>* input_queue, std::vector<Queue<T>*> output_queues) :
-                Arrow(true), _input_queue(input_queue), _output_queues(output_queues) {};
-
-        SchedulerHint execute() final {
-            std::vector<S> items(_chunksize);
-            SchedulerHint in_status = _input_queue->pop(items, _chunksize);
-            for (S& item : items) {
-                auto result = scatter(item);
-                Queue<T>* output_queue = _output_queues[result.first];
-                SchedulerHint out_status = output_queue->push({item}); // TODO: Add push(T t)
-            }
-            return in_status;
-        }
-        std::vector<QueueBase*> get_input_queues() final { return {_input_queue}; }
-        std::vector<QueueBase*> get_output_queues() final { return _output_queues; }
-    };
+protected:
+    // Constants
+    std::vector<QueueBase *> _input_queues;    // Express the graph explicitly
+    std::vector<QueueBase *> _output_queues;
+    // These are set by Arrow subclasses. If we want these to be const,
+    // we need to make them be ctor args on Arrow
 
 
-#if 0
-    template <typename S, typename T>
-    struct ReduceArrow : public Arrow {
+public:
 
-        Queue<S>* input_queue;
-        Queue<T>* output_queue;
+    // Constants
 
-        virtual void init() = 0;
-        virtual std::vector<T> finish() = 0;
-        virtual std::vector<T> reduce(std::vector<S> ss) = 0;
-    };
+    bool is_parallel() { return _is_parallel; }
 
-    // SplitWrapper is one interesting option if we choose to make queues typed.
-    // The main downside is that if we have multiple splits, we end up with
-    // SplitWrapper<SplitWrapper<...>>
+    std::string get_name() { return _name; }
 
-    template <typename T>
-    struct SplitWrapper {
-        T parent;
-        int parent_id;
-        int sibling_id;
-        int sibling_count;
-    };
+    size_t get_index() { return _index; }
 
-    // Split has to be defined in terms of concrete types, or in terms of some SplitWrapper<T> which Merge undoes
-    template <typename S, typename T>
-    struct SplitArrow : public Arrow {
+    std::vector<QueueBase *> get_input_queues() { return _input_queues; }
 
-        Queue<S>* input_queue;
-        Queue<SplitWrapper<T>>* output_queue;
+    std::vector<QueueBase *> get_output_queues() { return _output_queues; }
+    // For use by users and visualization tools. Since these are constant, small
+    // vectors of pointers accessed just once or twice, we'll just make copies
 
-        virtual T transform(S s) = 0;
-    };
 
-    template <typename S, typename T>
-    struct MergeArrow : public Arrow {
+    // Written internally, read externally
 
-        Queue<SplitWrapper<S>>* input_queue;
-        Queue<T>* output_queue;
+    bool is_finished() {
+        std::lock_guard<std::mutex> lock(_mutex);
+        return _is_finished;
+    }
 
-        virtual S merge(std::vector<T>) = 0;
-    };
+    double get_total_latency() {
+        std::lock_guard<std::mutex> lock(_mutex);
+        return _total_latency;
+    }
 
-#endif
-}
+    double get_total_overhead() {
+        std::lock_guard<std::mutex> lock(_mutex);
+        return _total_overhead;
+    }
+
+    double get_last_latency() {
+        std::lock_guard<std::mutex> lock(_mutex);
+        return _last_latency;
+    }
+
+    double get_last_overhead() {
+        std::lock_guard<std::mutex> lock(_mutex);
+        return _last_overhead;
+    }
+
+
+protected:
+
+    // Written internally, read externally
+
+    void set_finished(bool is_finished) {
+        std::lock_guard<std::mutex> lock(_mutex);
+        _is_finished = is_finished;
+    }
+
+    void set_total_latency(double total_latency) {
+        std::lock_guard<std::mutex> lock(_mutex);
+        _total_latency = total_latency;
+    }
+
+    void set_total_overhead(double total_overhead) {
+        std::lock_guard<std::mutex> lock(_mutex);
+        _total_overhead = total_overhead;
+    }
+
+    void set_last_latency(double last_latency) {
+        std::lock_guard<std::mutex> lock(_mutex);
+        _last_latency = last_latency;
+    }
+
+    void set_last_overhead(double last_overhead) {
+        std::lock_guard<std::mutex> lock(_mutex);
+        _last_overhead = last_overhead;
+    }
+
+
+public:
+
+    // Written externally
+
+    void set_chunksize(int chunksize) {
+        std::lock_guard<std::mutex> lock(_mutex);
+        _chunksize = chunksize;
+    }
+
+    int get_chunksize() {
+        std::lock_guard<std::mutex> lock(_mutex);
+        return _chunksize;
+    }
+
+    void set_thread_count(int thread_count) {
+        std::lock_guard<std::mutex> lock(_mutex);
+        _thread_count = thread_count;
+    }
+
+    int get_thread_count() {
+        std::lock_guard<std::mutex> lock(_mutex);
+        return _thread_count;
+    }
+
+
+    Arrow(std::string name, size_t index, bool is_parallel) :
+            _name(name), _index(index), _is_parallel(is_parallel) {};
+
+
+    virtual StreamStatus execute() = 0;
+
+};
+
+
+} // namespace greenfield
+
+
+#endif // GREENFIELD_ARROW_H

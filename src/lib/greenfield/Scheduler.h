@@ -23,7 +23,7 @@ namespace greenfield {
             Arrow *assignment = nullptr;
             uint64_t event_count = 0;
             double latency_sum = 0.0;
-            SchedulerHint last_result = SchedulerHint::ComeBackLater;
+            StreamStatus last_result = StreamStatus::ComeBackLater;
         };
 
 

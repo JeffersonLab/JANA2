@@ -4,7 +4,8 @@
 #include <thread>
 #include <random>
 #include <greenfield/Topology.h>
-#include "greenfield/TopologyTestFixtures.h"
+#include <greenfield/LinearTopologyBuilder.h>
+#include "greenfield/ExampleComponents.h"
 
 
 namespace greenfield {
@@ -23,25 +24,22 @@ namespace greenfield {
 
     TEST_CASE("greenfield::Topology: Basic functionality") {
 
-        Topology topology;
+        LinearTopologyBuilder b;
+        RandIntSource source;
+        MultByTwoProcessor p1;
+        SubOneProcessor p2;
+        SumSink<double> sink;
 
-        auto q0 = new Queue<int>;
-        auto q1 = new Queue<double>;
-        auto q2 = new Queue<double>;
+        b.addSource("emit_rand_ints", source);
+        b.addProcessor("multiply_by_two", p1);
+        b.addProcessor("subtract_one", p2);
+        b.addSink("sum_everything", sink);
 
-        topology.addQueue(q0);
-        topology.addQueue(q1);
-        topology.addQueue(q2);
+        auto topology = b.get();
 
-        topology.addArrow("emit_rand_ints", new RandIntSourceArrow(q0));
-        topology.addArrow("multiply_by_two", new MultByTwoArrow(q0, q1));
-        topology.addArrow("subtract_one", new SubOneArrow(q1, q2));
-
-        auto sumArrow = new SumArrow<double>(q2);
-        topology.addArrow("sum_everything", sumArrow);
-
-        auto logger = JLogger::everything();
-        topology.logger = logger;
+        auto logger = JLogger::nothing();
+        //topology.logger = JLogger::everything();
+        //source.logger = JLogger::everything();
 
 
         SECTION("Before anything runs...") {
@@ -121,7 +119,7 @@ namespace greenfield {
                 REQUIRE(topology.queues[2]->get_item_count() == 0);
             }
 
-            REQUIRE(sumArrow->sum == (7 * 2.0 - 1) * 20);
+            REQUIRE(sink.sum == (7 * 2.0 - 1) * 20);
         }
 
         SECTION("Running each stage in random order (sequentially) yields the correct results") {
@@ -132,11 +130,11 @@ namespace greenfield {
                                topology.arrows["subtract_one"],
                                topology.arrows["sum_everything"]};
 
-            std::map<std::string, SchedulerHint> results;
-            results["emit_rand_ints"] = SchedulerHint::KeepGoing;
-            results["multiply_by_two"] = SchedulerHint::KeepGoing;
-            results["subtract_one"] = SchedulerHint::KeepGoing;
-            results["sum_everything"] = SchedulerHint::KeepGoing;
+            std::map<std::string, StreamStatus> results;
+            results["emit_rand_ints"] = StreamStatus::KeepGoing;
+            results["multiply_by_two"] = StreamStatus::KeepGoing;
+            results["subtract_one"] = StreamStatus::KeepGoing;
+            results["sum_everything"] = StreamStatus::KeepGoing;
 
             // Put something in the queue to get started
             topology.arrows["emit_rand_ints"]->execute();
@@ -159,12 +157,12 @@ namespace greenfield {
                     }
                 }
                 for (auto pair : results) {
-                    if (pair.second == SchedulerHint::KeepGoing) { work_left = true; }
+                    if (pair.second == StreamStatus::KeepGoing) { work_left = true; }
                 }
             }
 
             //topology.log_queue_status();
-            REQUIRE(sumArrow->sum == (7 * 2.0 - 1) * 20);
+            REQUIRE(sink.sum == (7 * 2.0 - 1) * 20);
         }
         SECTION("Finished flag propagates") {
 
@@ -188,6 +186,9 @@ namespace greenfield {
             for (int i=0; i<20; ++i) {
                 topology.step("multiply_by_two");
             }
+
+            topology.log_arrow_status();
+            topology.log_queue_status();
 
             auto arrow_statuses = topology.get_arrow_status();
             REQUIRE(arrow_statuses[0].is_finished == true);

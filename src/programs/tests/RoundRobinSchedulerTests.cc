@@ -2,30 +2,28 @@
 #include "catch.hpp"
 
 #include <greenfield/Scheduler.h>
-#include <greenfield/TopologyTestFixtures.h>
+#include <greenfield/ExampleComponents.h>
+#include <greenfield/LinearTopologyBuilder.h>
 
 namespace greenfield {
 
     TEST_CASE("greenfield::RoundRobinScheduler") {
 
-        auto logger = JLogger::nothing(); // everything();
+        LinearTopologyBuilder b;
+        RandIntSource source;
+        MultByTwoProcessor p1;
+        SubOneProcessor p2;
+        SumSink<double> sink;
 
-        Topology topology;
+        b.addSource("emit_rand_ints", source);
+        b.addProcessor("multiply_by_two", p1);
+        b.addProcessor("subtract_one", p2);
+        b.addSink("sum_everything", sink);
 
-        auto q0 = new Queue<int>;
-        auto q1 = new Queue<double>;
-        auto q2 = new Queue<double>;
-
-        topology.addQueue(q0);
-        topology.addQueue(q1);
-        topology.addQueue(q2);
-
-        topology.addArrow("emit_rand_ints", new RandIntSourceArrow(q0));
-        topology.addArrow("multiply_by_two", new MultByTwoArrow(q0, q1));
-        topology.addArrow("subtract_one", new SubOneArrow(q1, q2));
-        topology.addArrow("sum_everything", new SumArrow<double>(q2));
-
+        auto topology = b.get();
         RoundRobinScheduler scheduler(topology);
+
+        auto logger = JLogger::nothing(); // everything();
         scheduler.logger = JLogger::nothing(); // everything();
         Scheduler::Report report;
 
@@ -37,7 +35,7 @@ namespace greenfield {
                                       "subtract_one",
                                       "sum_everything"};
 
-            report.last_result = SchedulerHint::ComeBackLater;
+            report.last_result = StreamStatus::ComeBackLater;
             for (int i = 0; i < 10; ++i) {
                 Arrow *assignment = scheduler.next_assignment(report);
                 report.assignment = assignment;
@@ -55,7 +53,7 @@ namespace greenfield {
 
             for (int i = 0; i < 10; ++i) {
                 report.assignment = nullptr;
-                report.last_result = SchedulerHint::ComeBackLater;
+                report.last_result = StreamStatus::ComeBackLater;
                 Arrow *assignment = scheduler.next_assignment(report);
                 assignment_counts[assignment->get_name()]++;
 
@@ -79,7 +77,7 @@ namespace greenfield {
 
             LOG_INFO(logger) << "---------------------------------------" << LOG_END;
             report.assignment = nullptr;
-            report.last_result = SchedulerHint::ComeBackLater;
+            report.last_result = StreamStatus::ComeBackLater;
 
             scheduler.next_assignment(report);
             scheduler.next_assignment(report);
@@ -93,14 +91,14 @@ namespace greenfield {
 
             // We return the sequential arrow to the scheduler
             report.assignment = sum_everything_arrow;
-            report.last_result = SchedulerHint::ComeBackLater;
+            report.last_result = StreamStatus::ComeBackLater;
             auto arrow = scheduler.next_assignment(report);
 
             assignment_counts[arrow->get_name()]++;
 
             for (int i = 0; i < 8; ++i) {
                 report.assignment = nullptr;
-                report.last_result = SchedulerHint::ComeBackLater;
+                report.last_result = StreamStatus::ComeBackLater;
                 arrow = scheduler.next_assignment(report);
                 assignment_counts[arrow->get_name()]++;
             }
@@ -114,7 +112,7 @@ namespace greenfield {
         SECTION("When an arrow encountered KeepGoing...") {
 
             LOG_INFO(logger) << "---------------------------------------" << LOG_END;
-            report.last_result = SchedulerHint::KeepGoing;
+            report.last_result = StreamStatus::KeepGoing;
             report.assignment = topology.arrows["subtract_one"];
 
             for (int i = 0; i < 4; ++i) {

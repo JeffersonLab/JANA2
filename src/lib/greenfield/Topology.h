@@ -61,8 +61,8 @@ namespace greenfield {
         std::vector<ArrowStatus> _arrow_statuses;
         std::vector<bool> finished_queues;
         std::vector<bool> finished_matrix;
-        uint32_t arrow_count;
-        uint32_t queue_count;
+        int arrow_count;
+        int queue_count;
 
 
 
@@ -85,7 +85,7 @@ namespace greenfield {
                 if (!arrow->is_finished()) {
                     for (QueueBase* queue : arrow->get_output_queues()) {
                         LOG_INFO(logger) << "Found queue " << queue->get_id() << LOG_END;
-                        finished_matrix[arrow->get_id()*queue_count + queue->get_id()] = false;
+                        finished_matrix[arrow->get_index()*queue_count + queue->get_id()] = false;
                     }
                 }
             }
@@ -95,7 +95,7 @@ namespace greenfield {
 
             LOG_DEBUG(logger) << "Arrow reported finished: " << arrow->get_name() << LOG_END;
             // once an arrow is finished, any downstream queues may finish once they empty
-            int arrow_id = arrow->get_id();
+            int arrow_id = arrow->get_index();
             _arrow_statuses[arrow_id].is_finished = true; // TODO: Can I please get rid of arrow->is_finished()?
             for (int qi = 0; qi < queue_count; ++qi) {
                 finished_matrix[arrow_id*queue_count + qi] = true;
@@ -115,13 +115,13 @@ namespace greenfield {
 
         }
 
-        void update(Arrow* arrow, SchedulerHint last_result, double latency, uint64_t messages_completed) {
+        void update(Arrow* arrow, StreamStatus last_result, double latency, uint64_t messages_completed) {
 
-            ArrowStatus& arrowStatus = _arrow_statuses[arrow->get_id()];
+            ArrowStatus& arrowStatus = _arrow_statuses[arrow->get_index()];
             arrowStatus.messages_completed += messages_completed;
             arrowStatus.long_term_avg_latency += latency;
             arrowStatus.short_term_avg_latency = latency / messages_completed;
-            if (last_result == SchedulerHint::Finished && arrowStatus.thread_count == 0) {
+            if (last_result == StreamStatus::Finished && arrowStatus.thread_count == 0) {
                 report_arrow_finished(arrow);
             }
         }
@@ -212,15 +212,16 @@ namespace greenfield {
             // name be constant w.r.t to the Arrow class unless we force
             // them to do it correctly.
 
-            arrow->set_name(name);
-            arrow->set_id(arrows.size());
+            // TODO: Commenting out these lines is going to cause problems
+            //arrow->set_name(name);
+            //arrow->set_id(arrows.size());
 
             arrows[name] = arrow;
             _arrow_statuses.emplace_back();
             ArrowStatus& status = _arrow_statuses.back();
 
             status.arrow_name = arrow->get_name();
-            status.arrow_id = arrow->get_id();
+            status.arrow_id = arrow->get_index();
             status.is_parallel = arrow->is_parallel();
             status.is_finished = arrow->is_finished();
             status.short_term_avg_latency = 0;
@@ -231,13 +232,13 @@ namespace greenfield {
 
         /// The user may want to pause the topology and interact with it manually.
         /// This is particularly powerful when used from inside GDB.
-        SchedulerHint step(const std::string& arrow_name) {
+        StreamStatus step(const std::string& arrow_name) {
             Arrow* arrow = arrows[arrow_name];
             if (arrow == nullptr) {
-                return SchedulerHint::Error;
+                return StreamStatus::Error;
             }
-            SchedulerHint result = arrow->execute();
-            if (result == SchedulerHint::Finished && _arrow_statuses[arrow->get_id()].thread_count == 0) {
+            StreamStatus result = arrow->execute();
+            if (result == StreamStatus::Finished && _arrow_statuses[arrow->get_index()].thread_count == 0) {
                 report_arrow_finished(arrow);
             }
             return result;

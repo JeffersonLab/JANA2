@@ -5,14 +5,16 @@
 #include <queue>
 #include <assert.h>
 
-enum class SchedulerHint {KeepGoing, ComeBackLater, Finished, Error};
+namespace greenfield {
 
-inline std::string to_string(SchedulerHint h) {
+enum class StreamStatus {KeepGoing, ComeBackLater, Finished, Error};
+
+inline std::string to_string(StreamStatus h) {
     switch (h) {
-        case SchedulerHint::KeepGoing:     return "KeepGoing";
-        case SchedulerHint::ComeBackLater: return "ComeBackLater";
-        case SchedulerHint::Finished:      return "Finished";
-        default:                           return "Error";
+        case StreamStatus::KeepGoing:     return "KeepGoing";
+        case StreamStatus::ComeBackLater: return "ComeBackLater";
+        case StreamStatus::Finished:      return "Finished";
+        default:                          return "Error";
     }
 }
 
@@ -49,7 +51,7 @@ private:
 public:
     size_t get_item_count() final { return _underlying.size(); }
 
-    SchedulerHint push(const T& t) {
+    StreamStatus push(const T& t) {
         _mutex.lock();
         assert(_is_finished == false);
         _underlying.push_back(t);
@@ -57,12 +59,12 @@ public:
         _mutex.unlock();
 
         if (size > _threshold) {
-            return SchedulerHint::ComeBackLater;
+            return StreamStatus::ComeBackLater;
         }
-        return SchedulerHint::KeepGoing;
+        return StreamStatus::KeepGoing;
     }
 
-    SchedulerHint push(const std::vector<T>& buffer) {
+    StreamStatus push(const std::vector<T>& buffer) {
         _mutex.lock();
         assert(_is_finished == false);
         for (const T& t : buffer) {
@@ -72,12 +74,12 @@ public:
         _mutex.unlock();
 
         if (item_count > _threshold) {
-            return SchedulerHint::ComeBackLater;
+            return StreamStatus::ComeBackLater;
         }
-        return SchedulerHint::KeepGoing;
+        return StreamStatus::KeepGoing;
     }
 
-    SchedulerHint pop(std::vector<T>& buffer, size_t count) {
+    StreamStatus pop(std::vector<T>& buffer, size_t count) {
         buffer.clear();
         _mutex.lock();
         size_t nitems = std::min(count, _underlying.size());
@@ -90,15 +92,16 @@ public:
         _mutex.unlock();
 
         if (size != 0) {
-            return SchedulerHint::KeepGoing;
+            return StreamStatus::KeepGoing;
         }
         if (_is_finished) {
-            return SchedulerHint::Finished;
+            return StreamStatus::Finished;
         }
-        return SchedulerHint::ComeBackLater;
+        return StreamStatus::ComeBackLater;
     }
 };
 
 
+} // namespace greenfield
 
 

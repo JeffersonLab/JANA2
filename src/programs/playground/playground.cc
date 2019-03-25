@@ -3,7 +3,8 @@
 #include <greenfield/Topology.h>
 #include <greenfield/ThreadManager.h>
 #include <greenfield/Worker.h>
-#include <greenfield/TopologyTestFixtures.h>
+#include <greenfield/ExampleComponents.h>
+#include <greenfield/LinearTopologyBuilder.h>
 
 using namespace std;
 using namespace greenfield;
@@ -25,20 +26,19 @@ int main() {
     loggingService.set_level("ThreadManager", JLogLevel::TRACE);
     auto logger = loggingService.get_logger();
 
-    Topology topology;
 
-    auto q0 = new Queue<int>;
-    auto q1 = new Queue<double>;
-    auto q2 = new Queue<double>;
+    LinearTopologyBuilder b;
+    RandIntSource source;
+    MultByTwoProcessor p1;
+    SubOneProcessor p2;
+    SumSink<double> sink;
 
-    topology.addQueue(q0);
-    topology.addQueue(q1);
-    topology.addQueue(q2);
+    b.addSource("emit_rand_ints", source);
+    b.addProcessor("multiply_by_two", p1);
+    b.addProcessor("subtract_one", p2);
+    b.addSink("sum_everything", sink);
 
-    topology.addArrow("emit_rand_ints", new RandIntSourceArrow(q0));
-    topology.addArrow("multiply_by_two", new MultByTwoArrow(q0, q1));
-    topology.addArrow("subtract_one", new SubOneArrow(q1, q2));
-    topology.addArrow("sum_everything", new SumArrow<double>(q2));
+    auto topology = b.get();
 
     RoundRobinScheduler scheduler(topology);
     scheduler.logger = loggingService.get_logger("RoundRobinScheduler");
