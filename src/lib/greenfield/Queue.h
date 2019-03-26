@@ -28,6 +28,8 @@ protected:
 
 public:
 
+    virtual ~QueueBase() = default;
+
     uint32_t get_id() { return _id; }
     void set_id(uint32_t id) { _id = id; }
 

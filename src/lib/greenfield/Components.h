@@ -23,6 +23,10 @@ namespace greenfield {
 ///    on multiple threads at first. The only thing they will need to mock is a JEvent.
 
 
+/// Common base class for all components
+struct Component {};
+
+
 /// Return codes for Sources. These are identical to Queue::StreamStatus (on purpose, because
 /// it is convenient to model a Source as a stream) but we keep them separate because one is part
 /// of the API and the other is an internal implementation detail.
@@ -38,7 +42,7 @@ enum class SourceStatus {KeepGoing, ComeBackLater, Finished, Error};
 ///    - The user is given the opportunity to implement their own rate-limiting
 
 template <typename T>
-struct Source {
+struct Source : Component {
     virtual void initialize() = 0;
     virtual void finalize() = 0;
     virtual SourceStatus inprocess(std::vector<T>& ts, size_t count) = 0;
@@ -54,7 +58,7 @@ struct Source {
 /// after the lock is acquired.
 
 template <typename T>
-struct Sink {
+struct Sink : Component {
     virtual void initialize() = 0;
     virtual void finalize() = 0;
     virtual void outprocess(T t) = 0;
@@ -69,7 +73,7 @@ struct Sink {
 /// proceeding to the (sequential) Sink.
 
 template <typename S, typename T>
-struct ParallelProcessor {
+struct ParallelProcessor : Component {
     virtual T process(S s) = 0;
 };
 
@@ -81,7 +85,7 @@ struct ParallelProcessor {
 /// instead.
 
 template <typename S, typename T>
-struct SequentialProcessor {
+struct SequentialProcessor : Component {
 
     virtual void initialize() = 0;
     virtual void finalize() = 0;
@@ -101,7 +105,7 @@ struct SequentialProcessor {
 /// want to split this into three separate classes (one for each arrow).
 
 template <typename S, typename T, typename U, typename V>
-struct SubtaskProcessor {
+struct SubtaskProcessor : Component {
 
     virtual void split(S s, std::vector<T>& ts) = 0;
     virtual U process(T& t) = 0;

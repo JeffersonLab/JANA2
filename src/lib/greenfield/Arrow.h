@@ -147,6 +147,7 @@ public:
     Arrow(std::string name, size_t index, bool is_parallel) :
             _name(name), _index(index), _is_parallel(is_parallel) {};
 
+    virtual ~Arrow() = default;
 
     virtual StreamStatus execute() = 0;
 

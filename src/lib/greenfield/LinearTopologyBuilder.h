@@ -68,6 +68,29 @@ public:
         return *this;
     }
 
+    // "Generated" adders
+
+    template <typename SourceT>
+    LinearTopologyBuilder& addSource(std::string name) {
+        auto source = new SourceT;
+        topology->addManagedComponent(source);
+        return addSource(name, *source);
+    }
+
+    template <typename ProcessorT>
+    LinearTopologyBuilder& addProcessor(std::string name) {
+        auto processor = new ProcessorT;
+        topology->addManagedComponent(processor);
+        return addProcessor(name, *processor);
+    }
+
+    template <typename SinkT>
+    LinearTopologyBuilder& addSink(std::string name) {
+        auto sink = new SinkT;
+        topology->addManagedComponent(sink);
+        return addSink(name, *sink);
+    }
+
     Topology get() {
         assert(have_source);
         assert(have_sink);

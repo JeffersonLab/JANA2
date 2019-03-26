@@ -2,6 +2,7 @@
 
 #include <greenfield/Arrow.h>
 #include <greenfield/Queue.h>
+#include <greenfield/Components.h>
 #include <greenfield/JLogger.h>
 
 
@@ -56,6 +57,7 @@ namespace greenfield {
 
         std::map<std::string, Arrow*> arrows;
         std::vector<QueueBase*> queues;
+        std::vector<Component*> components;
         std::shared_ptr<JLogger> logger;
 
         std::vector<ArrowStatus> _arrow_statuses;
@@ -63,6 +65,23 @@ namespace greenfield {
         std::vector<bool> finished_matrix;
         int arrow_count;
         int queue_count;
+
+
+        ~Topology() {
+
+            for (auto component : components) {
+                // Topology owns _some_ components, but not necessarily all.
+                delete component;
+            }
+            for (auto pair : arrows) {
+                // Topology owns all arrows.
+                delete pair.second;
+            }
+            for (auto queue : queues) {
+                // Topology owns all queues.
+                delete queue;
+            }
+        }
 
 
 
@@ -229,6 +248,10 @@ namespace greenfield {
             status.thread_count = 0;
             status.messages_completed = 0;
         };
+
+        void addManagedComponent(Component * component) {
+            components.push_back(component);
+        }
 
         /// The user may want to pause the topology and interact with it manually.
         /// This is particularly powerful when used from inside GDB.

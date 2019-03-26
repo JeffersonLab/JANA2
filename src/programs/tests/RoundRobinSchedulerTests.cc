@@ -9,18 +9,17 @@ namespace greenfield {
 
     TEST_CASE("greenfield::RoundRobinScheduler") {
 
-        LinearTopologyBuilder b;
-        RandIntSource source;
-        MultByTwoProcessor p1;
-        SubOneProcessor p2;
         SumSink<double> sink;
 
-        b.addSource("emit_rand_ints", source);
-        b.addProcessor("multiply_by_two", p1);
-        b.addProcessor("subtract_one", p2);
-        b.addSink("sum_everything", sink);
+        LinearTopologyBuilder builder;
 
-        auto topology = b.get();
+        builder.addSource<RandIntSource>("emit_rand_ints");
+        builder.addProcessor<MultByTwoProcessor>("multiply_by_two");
+        builder.addProcessor<SubOneProcessor>("subtract_one");
+        builder.addSink("sum_everything", sink);
+
+        auto topology = builder.get();
+
         RoundRobinScheduler scheduler(topology);
 
         auto logger = JLogger::nothing(); // everything();
