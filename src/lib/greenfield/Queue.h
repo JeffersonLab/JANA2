@@ -4,6 +4,7 @@
 #include <vector>
 #include <queue>
 #include <assert.h>
+#include "Activable.h"
 
 namespace greenfield {
 
@@ -19,12 +20,11 @@ inline std::string to_string(StreamStatus h) {
 }
 
 
-class QueueBase {
+class QueueBase : public Activable {
 
 protected:
     size_t _threshold = 128;
     uint32_t _id;
-    bool _is_finished = false;
 
 public:
 
@@ -35,9 +35,6 @@ public:
 
     size_t get_threshold() { return _threshold; }
     void set_threshold(size_t threshold) { _threshold = threshold; }
-
-    bool is_finished() { return _is_finished; }
-    void set_finished(bool is_finished) { _is_finished = is_finished; }
 
     virtual size_t get_item_count() = 0;
 };
@@ -53,9 +50,12 @@ private:
 public:
     size_t get_item_count() final { return _underlying.size(); }
 
-    StreamStatus push(const T& t) {
+    StreamStatus push(const T& t, bool autoactivate = true) {
+        if (autoactivate && !is_active()) {
+            set_active(true);
+            notify_downstream();
+        }
         _mutex.lock();
-        assert(_is_finished == false);
         _underlying.push_back(t);
         size_t size = _underlying.size();
         _mutex.unlock();
@@ -66,9 +66,12 @@ public:
         return StreamStatus::KeepGoing;
     }
 
-    StreamStatus push(const std::vector<T>& buffer) {
+    StreamStatus push(const std::vector<T>& buffer, bool autoactivate = true) {
+        if (autoactivate && !is_active()) {
+            set_active(true);
+            notify_downstream();
+        }
         _mutex.lock();
-        assert(_is_finished == false);
         for (const T& t : buffer) {
             _underlying.push_back(t);
         }
@@ -96,7 +99,7 @@ public:
         if (size != 0) {
             return StreamStatus::KeepGoing;
         }
-        if (_is_finished) {
+        if (!is_active()) {
             return StreamStatus::Finished;
         }
         return StreamStatus::ComeBackLater;

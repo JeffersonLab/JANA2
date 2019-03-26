@@ -27,8 +27,10 @@ public:
            , _input_queue(input_queue)
            , _output_queue(output_queue) {
 
-        _input_queues.push_back(input_queue);
-        _output_queues.push_back(output_queue);
+        _input_queue->attach_downstream(this);
+        _output_queue->attach_upstream(this);
+        attach_upstream(_input_queue);
+        attach_downstream(_output_queue);
     };
 
     StreamStatus execute() {
@@ -44,10 +46,12 @@ public:
         for (S &x : xs) {
             ys.push_back(_processor.process(x));
         }
-
-        StreamStatus out_status = _output_queue->push(ys);
-
+        StreamStatus out_status = StreamStatus::Finished;
+        if (!ys.empty()) {
+            out_status = _output_queue->push(ys);
+        }
         if (in_status == StreamStatus::Finished) {
+            notify_downstream();
             return StreamStatus::Finished;
         }
         else if (in_status == StreamStatus::KeepGoing && out_status == StreamStatus::KeepGoing) {

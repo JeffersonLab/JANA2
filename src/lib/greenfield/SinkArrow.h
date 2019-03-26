@@ -25,11 +25,12 @@ public:
         , _sink(sink)
         , _input_queue(input_queue) {
 
-        _input_queues.push_back(input_queue);
+        _input_queue->attach_downstream(this);
+        attach_upstream(_input_queue);
     };
 
     StreamStatus execute() {
-        if (is_finished()) {
+        if (!is_active()) {
             return StreamStatus::Finished;
         }
         if (!_is_initialized) {
@@ -43,7 +44,8 @@ public:
         }
         _chunk_buffer.clear();
         if (result == StreamStatus::Finished) {
-            set_finished(true);
+            set_active(false);
+            notify_downstream();
             _sink.finalize();
         }
         return result;

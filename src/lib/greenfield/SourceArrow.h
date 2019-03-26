@@ -28,11 +28,12 @@ public:
         , _source(source)
         , _output_queue(output_queue) {
 
-        _output_queues.push_back(output_queue);
+        _output_queue->attach_upstream(this);
+        attach_downstream(_output_queue);
     }
 
     StreamStatus execute() {
-        if (is_finished()) {
+        if (!is_active()) {
             return StreamStatus::Finished;
         }
         if (!_is_initialized) {
@@ -45,7 +46,11 @@ public:
 
         if (in_status == SourceStatus::Finished) {
             _source.finalize();
-            set_finished(true);
+            set_active(false);
+            notify_downstream();
+            // TODO: We may need to have scheduler check that _all_ threads running
+            // this arrow have finished before notifying downstream, otherwise
+            // a couple of straggler events ~might~ get stranded on an inactive queue
             return StreamStatus::Finished;
         }
         if (in_status == SourceStatus::KeepGoing && out_status == StreamStatus::KeepGoing) {

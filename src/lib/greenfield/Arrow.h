@@ -13,7 +13,7 @@
 namespace greenfield {
 
 
-class Arrow {
+class Arrow : public Activable {
 
 private:
     // Constants
@@ -22,7 +22,7 @@ private:
     const bool _is_parallel;           // Whether or not it is safe to parallelize
 
     // Written internally, read externally
-    bool _is_finished = false;   // Whether or not this arrow expects future work
+    size_t _message_count = 0;    // Total number of messages completed by this arrow
     double _total_latency = 0;   // Total time spent doing actual work (across all cpus)
     double _total_overhead = 0;  // Total time spent pushing and popping from queues
     double _last_latency = 0;    // Most recent latency measurement (from a single cpu)
@@ -36,14 +36,6 @@ private:
     // TODO: Replace with atomics when the time is right
 
 
-protected:
-    // Constants
-    std::vector<QueueBase *> _input_queues;    // Express the graph explicitly
-    std::vector<QueueBase *> _output_queues;
-    // These are set by Arrow subclasses. If we want these to be const,
-    // we need to make them be ctor args on Arrow
-
-
 public:
 
     // Constants
@@ -54,18 +46,12 @@ public:
 
     size_t get_index() { return _index; }
 
-    std::vector<QueueBase *> get_input_queues() { return _input_queues; }
-
-    std::vector<QueueBase *> get_output_queues() { return _output_queues; }
-    // For use by users and visualization tools. Since these are constant, small
-    // vectors of pointers accessed just once or twice, we'll just make copies
-
 
     // Written internally, read externally
 
-    bool is_finished() {
+    size_t get_message_count() {
         std::lock_guard<std::mutex> lock(_mutex);
-        return _is_finished;
+        return _message_count;
     }
 
     double get_total_latency() {
@@ -93,19 +79,19 @@ protected:
 
     // Written internally, read externally
 
-    void set_finished(bool is_finished) {
+    void update_message_count(size_t message_count_delta) {
         std::lock_guard<std::mutex> lock(_mutex);
-        _is_finished = is_finished;
+        _message_count += message_count_delta;
     }
 
-    void set_total_latency(double total_latency) {
+    void update_total_latency(double total_latency_delta) {
         std::lock_guard<std::mutex> lock(_mutex);
-        _total_latency = total_latency;
+        _total_latency += total_latency_delta;
     }
 
-    void set_total_overhead(double total_overhead) {
+    void update_total_overhead(double total_overhead_delta) {
         std::lock_guard<std::mutex> lock(_mutex);
-        _total_overhead = total_overhead;
+        _total_overhead += total_overhead_delta;
     }
 
     void set_last_latency(double last_latency) {

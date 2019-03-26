@@ -62,6 +62,9 @@ public:
     void addQueue(QueueBase *queue);
     void finalize();  // TODO: get rid of finalize so that we can dynamically add arrows
 
+    void activate(std::string arrow_name);
+    void deactivate(std::string arrow_name);
+
     void update(Arrow *arrow, StreamStatus last_result, double latency, uint64_t messages_completed);
 
     std::vector<ArrowStatus> get_arrow_status();

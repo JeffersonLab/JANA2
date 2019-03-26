@@ -53,7 +53,7 @@ namespace greenfield {
         while (_assignments.size() > 0) {
             Arrow *arrow = _assignments.front();
             _assignments.pop();
-            if (arrow->is_finished()) {
+            if (!arrow->is_active()) {
                 // Removes arrow from the queue completely and tries the next one
                 continue;
             }

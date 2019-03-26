@@ -26,6 +26,12 @@ namespace greenfield {
         scheduler.logger = JLogger::nothing(); // everything();
         Scheduler::Report report;
 
+        // Assume everything is active for now
+        topology.activate("emit_rand_ints");
+        topology.activate("multiply_by_two");
+        topology.activate("subtract_one");
+        topology.activate("sum_everything");
+
         SECTION("When there is only one worker, who always encounters ComeBackLater...") {
 
             LOG_INFO(logger) << "---------------------------------------" << LOG_END;
@@ -40,6 +46,7 @@ namespace greenfield {
                 report.assignment = assignment;
 
                 // The assignments go round-robin
+                REQUIRE(assignment != nullptr);
                 REQUIRE(assignment->get_name() == ordering[i % 4]);
             }
         }
@@ -50,14 +57,16 @@ namespace greenfield {
             LOG_INFO(logger) << "---------------------------------------" << LOG_END;
             std::map<std::string, int> assignment_counts;
 
+
             for (int i = 0; i < 10; ++i) {
                 report.assignment = nullptr;
                 report.last_result = StreamStatus::ComeBackLater;
                 Arrow *assignment = scheduler.next_assignment(report);
-                assignment_counts[assignment->get_name()]++;
 
                 // They all receive a nonnull assignment
                 REQUIRE (assignment != nullptr);
+
+                assignment_counts[assignment->get_name()]++;
             }
 
             // The sequential arrows only get assigned once
@@ -75,6 +84,7 @@ namespace greenfield {
 
 
             LOG_INFO(logger) << "---------------------------------------" << LOG_END;
+
             report.assignment = nullptr;
             report.last_result = StreamStatus::ComeBackLater;
 

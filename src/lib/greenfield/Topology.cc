@@ -54,7 +54,7 @@ void Topology::addArrow(Arrow *arrow) {
     status.arrow_name = arrow->get_name();
     status.arrow_id = arrow->get_index();
     status.is_parallel = arrow->is_parallel();
-    status.is_finished = arrow->is_finished();
+    status.is_finished = !arrow->is_active();
     status.short_term_avg_latency = 0;
     status.long_term_avg_latency = 0;
     status.thread_count = 0;
@@ -62,52 +62,19 @@ void Topology::addArrow(Arrow *arrow) {
 };
 
 void Topology::finalize() {
-    queue_count = queues.size();
-    arrow_count = arrows.size();
+}
 
-    for (int i = 0; i < queue_count; ++i) {
-        finished_queues.push_back(false);
-    }
-    for (int i = 0; i < queue_count * arrow_count; ++i) {
-        finished_matrix.push_back(true);
-    }
+void Topology::activate(std::string arrow_name) {
+    arrows[arrow_name]->set_active(true);
+}
 
-    LOG_INFO(logger) << "Set up finished queues, matrix data structures" << LOG_END;
-
-    for (auto &pair : arrows) {
-        auto arrow = pair.second;
-        if (!arrow->is_finished()) {
-            for (QueueBase *queue : arrow->get_output_queues()) {
-                LOG_INFO(logger) << "Found queue " << queue->get_id() << LOG_END;
-                finished_matrix[arrow->get_index() * queue_count + queue->get_id()] = false;
-            }
-        }
-    }
-    LOG_INFO(logger) << "Traversed graph" << LOG_END;
+void Topology::deactivate(std::string arrow_name) {
+    arrows[arrow_name]->set_active(false);
 }
 
 void Topology::report_arrow_finished(Arrow *arrow) {
 
     LOG_DEBUG(logger) << "Arrow reported finished: " << arrow->get_name() << LOG_END;
-    // once an arrow is finished, any downstream queues may finish once they empty
-    int arrow_id = arrow->get_index();
-    _arrow_statuses[arrow_id].is_finished = true; // TODO: Can I please get rid of arrow->is_finished()?
-    for (int qi = 0; qi < queue_count; ++qi) {
-        finished_matrix[arrow_id * queue_count + qi] = true;
-    }
-    // for each unfinished queue, check if finished (forall arrows)
-    for (int qi = 0; qi < queue_count; ++qi) {
-        bool finished = true;
-        for (int ai = 0; ai < arrow_count; ++ai) {
-            finished &= finished_matrix[ai * queue_count + qi];
-        }
-        if (finished) {
-            LOG_INFO(logger) << "Topology determined that a queue is finished: " << qi << LOG_END;
-            queues[qi]->set_finished(true);
-            finished_queues[qi] = true;
-        }
-    }
-
 }
 
 void Topology::update(Arrow *arrow, StreamStatus last_result, double latency, uint64_t messages_completed) {
@@ -125,10 +92,19 @@ std::vector<Topology::ArrowStatus> Topology::get_arrow_status() {
 
     std::vector<ArrowStatus> metrics;
 
-    for (auto &status : _arrow_statuses) {
+    for (auto pair : arrows) {
+        Arrow* arrow = pair.second;
+        ArrowStatus status;
+        status.arrow_name = arrow->get_name();
+        status.arrow_id = arrow->get_index();
+        status.is_finished = !arrow->is_active();
+        status.thread_count = arrow->get_thread_count();
+        status.messages_completed = arrow->get_message_count();
+        status.is_parallel = arrow->is_parallel();
+        // TODO: Add latency and overhead calculations back
         metrics.push_back(status);
-    }
 
+    }
     for (auto &metric : metrics) {
         // Convert from running total to average
         metric.long_term_avg_latency /= metric.messages_completed;
@@ -142,7 +118,7 @@ std::vector<Topology::QueueStatus> Topology::get_queue_status() {
     for (QueueBase *q : queues) {
         QueueStatus qs;
         qs.queue_id = i++;
-        qs.is_finished = q->is_finished();
+        qs.is_finished = !q->is_active();
         qs.message_count = q->get_item_count();
         qs.message_count_threshold = q->get_threshold();
         statuses.push_back(qs);
