@@ -130,6 +130,60 @@ namespace greenfield {
             }
 
         }
+
+        SECTION("When run sequentially, RRS returns nullptr => topology finished") {
+
+            logger = JLogger::nothing();
+            scheduler.logger = logger;
+            report.last_result = StreamStatus::ComeBackLater;
+            report.assignment = nullptr;
+            Arrow * assignment = nullptr;
+
+            while (true) {
+                assignment = scheduler.next_assignment(report);
+                if (assignment == nullptr) {
+                    break;
+                }
+                else {
+                    report.assignment = assignment;
+                    report.last_result = assignment->execute();
+                }
+            }
+
+            auto statuses = topology.get_arrow_status();
+
+            REQUIRE(statuses[0].is_active == false);
+            REQUIRE(statuses[0].is_active == false);
+            REQUIRE(statuses[0].is_active == false);
+            REQUIRE(statuses[0].is_active == false);
+        }
+
+        SECTION("When run sequentially, topology finished => RRS returns nullptr") {
+
+            logger = JLogger::nothing();
+            scheduler.logger = logger;
+            report.last_result = StreamStatus::ComeBackLater;
+            report.assignment = nullptr;
+            Arrow * assignment = nullptr;
+
+            bool keep_going = true;
+            while (keep_going) {
+
+                keep_going = false;
+                auto statuses = topology.get_arrow_status();
+                for (auto status : statuses) {
+                    keep_going |= status.is_active;
+                }
+
+                if (keep_going) {
+                    assignment = scheduler.next_assignment(report);
+                    report.assignment = assignment;
+                    report.last_result = assignment->execute();
+                }
+            }
+            assignment = scheduler.next_assignment(report);
+            REQUIRE(assignment == nullptr);
+        }
     }
 }
 
