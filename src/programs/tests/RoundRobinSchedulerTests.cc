@@ -28,9 +28,6 @@ namespace greenfield {
 
         // Assume everything is active for now
         topology.activate("emit_rand_ints");
-        topology.activate("multiply_by_two");
-        topology.activate("subtract_one");
-        topology.activate("sum_everything");
 
         SECTION("When there is only one worker, who always encounters ComeBackLater...") {
 

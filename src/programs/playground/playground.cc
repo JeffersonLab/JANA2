@@ -38,15 +38,19 @@ int main() {
 
     auto topology = b.get();
     topology.logger = logger;
+    source.logger = logger;
+    topology.activate("emit_rand_ints");
     topology.log_status();
 
-//    RoundRobinScheduler scheduler(topology);
-//    scheduler.logger = loggingService.get_logger("RoundRobinScheduler");
-//
-//    ThreadManager threadManager(scheduler);
-//    threadManager.logger = loggingService.get_logger("ThreadManager");
-//    threadManager.run(5);
-//    threadManager.join();
+    RoundRobinScheduler scheduler(topology);
+    scheduler.logger = loggingService.get_logger("RoundRobinScheduler");
+
+    ThreadManager threadManager(scheduler);
+    threadManager.logger = loggingService.get_logger("ThreadManager");
+    threadManager.run(5);
+    threadManager.join();
+
+    topology.log_status();
 }
 
 
