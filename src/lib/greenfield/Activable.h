@@ -32,19 +32,27 @@ public:
         _is_active = is_active;
     }
 
-    void update_activeness() {
-        bool any_active = false;
-        for (auto activable : _upstream) {
-            any_active |= activable->is_active();
-        }
-        if (any_active) {
+    void update_activeness(bool is_active) {
+        if (is_active) {
             set_active(true);
+            notify_downstream(true);
+            // propagate this immediately
+        }
+        else {
+            bool any_active = false;
+            for (auto activable : _upstream) {
+                any_active |= activable->is_active();
+            }
+            if (!any_active) {
+                set_active(false);
+                // defer propagating
+            }
         }
     }
 
-    void notify_downstream() {
+    void notify_downstream(bool is_active) {
         for (auto activable : _downstream) {
-            activable->update_activeness();
+            activable->update_activeness(is_active);
         }
     }
 

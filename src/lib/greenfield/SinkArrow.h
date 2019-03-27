@@ -45,7 +45,7 @@ public:
         _chunk_buffer.clear();
         if (result == StreamStatus::Finished) {
             set_active(false);
-            notify_downstream();
+            notify_downstream(false);
             _sink.finalize();
         }
         return result;

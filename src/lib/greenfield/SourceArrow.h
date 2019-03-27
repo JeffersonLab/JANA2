@@ -47,7 +47,7 @@ public:
         if (in_status == SourceStatus::Finished) {
             _source.finalize();
             set_active(false);
-            notify_downstream();
+            notify_downstream(false);
             // TODO: We may need to have scheduler check that _all_ threads running
             // this arrow have finished before notifying downstream, otherwise
             // a couple of straggler events ~might~ get stranded on an inactive queue

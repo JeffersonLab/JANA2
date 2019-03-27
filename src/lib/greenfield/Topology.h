@@ -25,7 +25,8 @@ public:
     /// This helps separate the external API from the internal implementation.
     struct ArrowStatus {
         std::string arrow_name;
-        bool is_finished;
+        bool is_finished;  // Deprecated in favor of is_active
+        bool is_active;
         bool is_parallel;
         uint32_t thread_count;
         uint64_t messages_completed;
@@ -57,11 +58,9 @@ public:
     void activate(std::string arrow_name);
     void deactivate(std::string arrow_name);
 
-    void update(Arrow *arrow, StreamStatus last_result, double latency, uint64_t messages_completed);
-
     std::vector<ArrowStatus> get_arrow_status();
     std::vector<QueueStatus> get_queue_status();
-
+    ArrowStatus get_arrow_status(const std::string & arrow_name);
     void log_arrow_status();
     void log_queue_status();
 

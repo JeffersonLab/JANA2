@@ -15,6 +15,7 @@ inline std::string to_string(StreamStatus h) {
         case StreamStatus::KeepGoing:     return "KeepGoing";
         case StreamStatus::ComeBackLater: return "ComeBackLater";
         case StreamStatus::Finished:      return "Finished";
+        case StreamStatus::Error:
         default:                          return "Error";
     }
 }
@@ -50,11 +51,7 @@ private:
 public:
     size_t get_item_count() final { return _underlying.size(); }
 
-    StreamStatus push(const T& t, bool autoactivate = true) {
-        if (autoactivate && !is_active()) {
-            set_active(true);
-            notify_downstream();
-        }
+    StreamStatus push(const T& t) {
         _mutex.lock();
         _underlying.push_back(t);
         size_t size = _underlying.size();
@@ -66,11 +63,7 @@ public:
         return StreamStatus::KeepGoing;
     }
 
-    StreamStatus push(const std::vector<T>& buffer, bool autoactivate = true) {
-        if (autoactivate && !is_active()) {
-            set_active(true);
-            notify_downstream();
-        }
+    StreamStatus push(const std::vector<T>& buffer) {
         _mutex.lock();
         for (const T& t : buffer) {
             _underlying.push_back(t);

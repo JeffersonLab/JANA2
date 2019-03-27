@@ -15,7 +15,7 @@
 namespace greenfield {
 
 
-TEST_CASE("greenfield:ActivableTests") {
+TEST_CASE("greenfield:ActivableActivationTests") {
 
     LinearTopologyBuilder builder;
 
@@ -46,42 +46,73 @@ TEST_CASE("greenfield:ActivableTests") {
     }
     SECTION("As a message propagates, arrows and queues downstream automatically activate") {
 
+        auto arrow_statuses = topology.get_arrow_status();
+        REQUIRE(arrow_statuses[0].is_active == false);
+        REQUIRE(arrow_statuses[1].is_active == false);
+        REQUIRE(arrow_statuses[2].is_active == false);
+        REQUIRE(arrow_statuses[3].is_active == false);
+
         topology.activate("emit_rand_ints");
 
         // Activation worked
-        auto arrow_statuses = topology.get_arrow_status();
-        REQUIRE(arrow_statuses[0].is_finished == false);
-        REQUIRE(arrow_statuses[1].is_finished == true);
-        REQUIRE(arrow_statuses[2].is_finished == true);
-        REQUIRE(arrow_statuses[3].is_finished == true);
-
-        topology.step("emit_rand_ints");
-
-        // Pushing to the queue caused the next arrow to activate
         arrow_statuses = topology.get_arrow_status();
-        REQUIRE(arrow_statuses[0].is_finished == false);
-        REQUIRE(arrow_statuses[1].is_finished == false);
-        REQUIRE(arrow_statuses[2].is_finished == true);
-        REQUIRE(arrow_statuses[3].is_finished == true);
-
-        auto queue_statuses = topology.get_queue_status();
-        REQUIRE(queue_statuses[0].is_finished == false);
-        REQUIRE(queue_statuses[1].is_finished == true);
-        REQUIRE(queue_statuses[2].is_finished == true);
-
-        topology.step("multiply_by_two");
-
-        arrow_statuses = topology.get_arrow_status();
-        REQUIRE(arrow_statuses[0].is_finished == false);
-        REQUIRE(arrow_statuses[1].is_finished == false);
-        REQUIRE(arrow_statuses[2].is_finished == false);
-        REQUIRE(arrow_statuses[3].is_finished == true);
-
-        queue_statuses = topology.get_queue_status();
-        REQUIRE(queue_statuses[0].is_finished == false);
-        REQUIRE(queue_statuses[1].is_finished == false);
-        REQUIRE(queue_statuses[2].is_finished == true);
+        REQUIRE(arrow_statuses[0].is_active == true);
+        REQUIRE(arrow_statuses[1].is_active == true);
+        REQUIRE(arrow_statuses[2].is_active == true);
+        REQUIRE(arrow_statuses[3].is_active == true);
 
     }
 } // TEST_CASE
+
+
+TEST_CASE("greenfield:ActivableDeactivationTests") {
+
+    LinearTopologyBuilder builder;
+
+    RandIntSource source;
+    source.emit_limit = 1;
+    SumSink<double> sink;
+
+    builder.addSource("a", source);
+    builder.addProcessor<MultByTwoProcessor>("b");
+    builder.addProcessor<SubOneProcessor>("c");
+    builder.addSink("d", sink);
+
+    auto topology = builder.get();
+    auto logger = JLogger::nothing();
+    topology.logger = logger;
+    source.logger = logger;
+
+    REQUIRE(topology.get_arrow_status("a").is_active == false);
+    REQUIRE(topology.get_arrow_status("b").is_active == false);
+    REQUIRE(topology.get_arrow_status("c").is_active == false);
+    REQUIRE(topology.get_arrow_status("d").is_active == false);
+
+    topology.activate("a");
+
+    REQUIRE(topology.get_arrow_status("a").is_active == true);
+    REQUIRE(topology.get_arrow_status("b").is_active == true);
+    REQUIRE(topology.get_arrow_status("c").is_active == true);
+    REQUIRE(topology.get_arrow_status("d").is_active == true);
+
+    topology.step("a");
+
+    REQUIRE(topology.get_arrow_status("a").is_active == false);
+    REQUIRE(topology.get_arrow_status("b").is_active == true);
+    REQUIRE(topology.get_arrow_status("c").is_active == true);
+    REQUIRE(topology.get_arrow_status("d").is_active == true);
+
+    topology.log_arrow_status();
+    topology.log_queue_status();
+
+
+} // TEST_CASE
 } // namespace greenfield
+
+
+
+
+
+
+
+

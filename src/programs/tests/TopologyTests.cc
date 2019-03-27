@@ -171,9 +171,9 @@ namespace greenfield {
         }
         SECTION("Finished flag propagates") {
 
-            logger = JLogger::everything();
-            topology.logger = JLogger::everything();
-            source.logger = JLogger::everything();
+            logger = JLogger::nothing();
+            topology.logger = logger;
+            source.logger = logger;
 
             topology.finalize();
             topology.activate("emit_rand_ints");
@@ -202,27 +202,37 @@ namespace greenfield {
 
             topology.log_arrow_status();
             topology.log_queue_status();
-            // TODO: Finished flag doesn't propagate correctly past this point yet
-//
-//            auto arrow_statuses = topology.get_arrow_status();
-//            REQUIRE(arrow_statuses[0].is_finished == true);
-//            REQUIRE(arrow_statuses[1].is_finished == true);
-//            REQUIRE(arrow_statuses[2].is_finished == false);
-//            REQUIRE(arrow_statuses[3].is_finished == false);
-//
-//            for (int i=0; i<20; ++i) {
-//                topology.step("subtract_one");
-//            }
-//
-//            topology.log_arrow_status();
-//            topology.log_queue_status();
-//
-//
-//            arrow_statuses = topology.get_arrow_status();
-//            REQUIRE(arrow_statuses[0].is_finished == true);
-//            REQUIRE(arrow_statuses[1].is_finished == true);
-//            REQUIRE(arrow_statuses[2].is_finished == true);
-//            REQUIRE(arrow_statuses[3].is_finished == false);
+
+            auto arrow_statuses = topology.get_arrow_status();
+            REQUIRE(arrow_statuses[0].is_finished == true);
+            REQUIRE(arrow_statuses[1].is_finished == true);
+            REQUIRE(arrow_statuses[2].is_finished == false);
+            REQUIRE(arrow_statuses[3].is_finished == false);
+
+            for (int i=0; i<20; ++i) {
+                topology.step("subtract_one");
+            }
+
+            topology.log_arrow_status();
+            topology.log_queue_status();
+
+            arrow_statuses = topology.get_arrow_status();
+            REQUIRE(arrow_statuses[0].is_finished == true);
+            REQUIRE(arrow_statuses[1].is_finished == true);
+            REQUIRE(arrow_statuses[2].is_finished == true);
+            REQUIRE(arrow_statuses[3].is_finished == false);
+
+            for (int i=0; i<20; ++i) {
+                topology.step("sum_everything");
+            }
+            arrow_statuses = topology.get_arrow_status();
+            REQUIRE(arrow_statuses[0].is_finished == true);
+            REQUIRE(arrow_statuses[1].is_finished == true);
+            REQUIRE(arrow_statuses[2].is_finished == true);
+            REQUIRE(arrow_statuses[3].is_finished == true);
+
+            topology.log_arrow_status();
+            topology.log_queue_status();
         }
     }
 }

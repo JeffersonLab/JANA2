@@ -49,7 +49,8 @@ public:
             out_status = _output_queue->push(ys);
         }
         if (in_status == StreamStatus::Finished) {
-            notify_downstream();
+            set_active(false);
+            notify_downstream(false);
             return StreamStatus::Finished;
         }
         else if (in_status == StreamStatus::KeepGoing && out_status == StreamStatus::KeepGoing) {
