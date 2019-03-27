@@ -22,10 +22,6 @@ Topology::~Topology() {
     }
 }
 
-int Topology::next_index() {
-    return arrows.size();
-}
-
 void Topology::addManagedComponent(Component *component) {
     components.push_back(component);
 }
@@ -36,29 +32,7 @@ void Topology::addQueue(QueueBase *queue) {
 }
 
 void Topology::addArrow(Arrow *arrow) {
-    // Note that arrow name lives on the Topology, not on the Arrow
-    // itself: different instances of the same Arrow can
-    // be assigned different places in the same Topology, but
-    // the users are inevitably going to make the Arrow
-    // name be constant w.r.t to the Arrow class unless we force
-    // them to do it correctly.
-
-    // TODO: Commenting out these lines is going to cause problems
-    //arrow->set_name(name);
-    //arrow->set_id(arrows.size());
-
     arrows[arrow->get_name()] = arrow;
-    _arrow_statuses.emplace_back();
-    ArrowStatus &status = _arrow_statuses.back();
-
-    status.arrow_name = arrow->get_name();
-    status.arrow_id = arrow->get_index();
-    status.is_parallel = arrow->is_parallel();
-    status.is_finished = !arrow->is_active();
-    status.short_term_avg_latency = 0;
-    status.long_term_avg_latency = 0;
-    status.thread_count = 0;
-    status.messages_completed = 0;
 };
 
 void Topology::finalize() {
@@ -72,22 +46,6 @@ void Topology::deactivate(std::string arrow_name) {
     arrows[arrow_name]->set_active(false);
 }
 
-void Topology::report_arrow_finished(Arrow *arrow) {
-
-    LOG_DEBUG(logger) << "Arrow reported finished: " << arrow->get_name() << LOG_END;
-}
-
-void Topology::update(Arrow *arrow, StreamStatus last_result, double latency, uint64_t messages_completed) {
-
-    ArrowStatus &arrowStatus = _arrow_statuses[arrow->get_index()];
-    arrowStatus.messages_completed += messages_completed;
-    arrowStatus.long_term_avg_latency += latency;
-    arrowStatus.short_term_avg_latency = latency / messages_completed;
-    if (last_result == StreamStatus::Finished && arrowStatus.thread_count == 0) {
-        report_arrow_finished(arrow);
-    }
-}
-
 std::vector<Topology::ArrowStatus> Topology::get_arrow_status() {
 
     std::vector<ArrowStatus> metrics;
@@ -96,18 +54,13 @@ std::vector<Topology::ArrowStatus> Topology::get_arrow_status() {
         Arrow* arrow = pair.second;
         ArrowStatus status;
         status.arrow_name = arrow->get_name();
-        status.arrow_id = arrow->get_index();
         status.is_finished = !arrow->is_active();
         status.thread_count = arrow->get_thread_count();
         status.messages_completed = arrow->get_message_count();
         status.is_parallel = arrow->is_parallel();
-        // TODO: Add latency and overhead calculations back
+        status.long_term_avg_latency = arrow->get_total_latency() / status.messages_completed;
+        status.short_term_avg_latency = arrow->get_last_latency();
         metrics.push_back(status);
-
-    }
-    for (auto &metric : metrics) {
-        // Convert from running total to average
-        metric.long_term_avg_latency /= metric.messages_completed;
     }
     return metrics;
 }
@@ -128,17 +81,16 @@ std::vector<Topology::QueueStatus> Topology::get_queue_status() {
 
 void Topology::log_arrow_status() {
     LOG_INFO(logger)
-        << "  +------+--------------------------------+----------+---------+--------------------+-----------------+----------------+----------+"
+        << "  +--------------------------------+----------+---------+--------------------+-----------------+----------------+----------+"
         << LOG_END;
     LOG_INFO(logger)
-        << "  |  ID  |              Name              | Parallel | Threads | Messages completed | Latency (short) | Latency (long) | Finished |"
+        << "  |              Name              | Parallel | Threads | Messages completed | Latency (short) | Latency (long) | Finished |"
         << LOG_END;
     LOG_INFO(logger)
-        << "  +------+--------------------------------+----------+---------+--------------------+-----------------+----------------+----------+"
+        << "  +--------------------------------+----------+---------+--------------------+-----------------+----------------+----------+"
         << LOG_END;
     for (ArrowStatus &as : get_arrow_status()) {
         LOG_INFO(logger) << "  | "
-                         << std::setw(4) << as.arrow_id << " | "
                          << std::setw(30) << std::left << as.arrow_name << " | "
                          << std::setw(8) << std::right << as.is_parallel << " | "
                          << std::setw(7) << as.thread_count << " |"
@@ -148,7 +100,7 @@ void Topology::log_arrow_status() {
                          << std::setw(9) << as.is_finished << " |" << LOG_END;
     }
     LOG_INFO(logger)
-        << "  +------+--------------------------------+----------+---------+--------------------+-----------------+----------------+----------+"
+        << "  +--------------------------------+----------+---------+--------------------+-----------------+----------------+----------+"
         << LOG_END;
 }
 
@@ -174,9 +126,6 @@ StreamStatus Topology::step(const std::string &arrow_name) {
         return StreamStatus::Error;
     }
     StreamStatus result = arrow->execute();
-    if (result == StreamStatus::Finished && _arrow_statuses[arrow->get_index()].thread_count == 0) {
-        report_arrow_finished(arrow);
-    }
     return result;
 }
 

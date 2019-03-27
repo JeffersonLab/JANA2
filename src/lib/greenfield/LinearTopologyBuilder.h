@@ -34,7 +34,7 @@ public:
         have_source = true;
         auto output_queue = new Queue<T>;
         last_queue = output_queue;
-        auto arrow = new SourceArrow<T>(name, 0, source, output_queue);
+        auto arrow = new SourceArrow<T>(name, source, output_queue);
         topology->addArrow(arrow);
         topology->addQueue(output_queue);
         return *this;
@@ -49,7 +49,7 @@ public:
         auto output_queue = new Queue<T>;
         assert(input_queue != nullptr);
         last_queue = output_queue;
-        auto arrow = new MapArrow<S,T>(name, topology->next_index(), processor, input_queue, output_queue);
+        auto arrow = new MapArrow<S,T>(name, processor, input_queue, output_queue);
         topology->addArrow(arrow);
         topology->addQueue(output_queue);
         return *this;
@@ -63,7 +63,7 @@ public:
         have_sink = true;
         auto input_queue = dynamic_cast<Queue<S>*>(last_queue);
         assert(input_queue != nullptr);
-        auto arrow = new SinkArrow<S>(name, topology->next_index(), sink, input_queue);
+        auto arrow = new SinkArrow<S>(name, sink, input_queue);
         topology->addArrow(arrow);
         return *this;
     }

@@ -19,10 +19,8 @@ private:
     Queue<T> *_output_queue;
 
 public:
-    MapArrow(std::string name, size_t index, ParallelProcessor<S,T>& processor,
-             Queue<S> *input_queue, Queue<T> *output_queue)
-
-           : Arrow(name, index, true)
+    MapArrow(std::string name, ParallelProcessor<S,T>& processor, Queue<S> *input_queue, Queue<T> *output_queue)
+           : Arrow(name, true)
            , _processor(processor)
            , _input_queue(input_queue)
            , _output_queue(output_queue) {

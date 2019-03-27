@@ -23,8 +23,8 @@ private:
 
 
 public:
-    SourceArrow(std::string name, size_t index, Source<T>& source, Queue<T> *output_queue)
-        : Arrow(name, index, false)
+    SourceArrow(std::string name, Source<T>& source, Queue<T> *output_queue)
+        : Arrow(name, false)
         , _source(source)
         , _output_queue(output_queue) {
 

@@ -42,7 +42,6 @@ int main() {
 
     RoundRobinScheduler scheduler(topology);
     scheduler.logger = loggingService.get_logger("RoundRobinScheduler");
-    Scheduler::Report report;
 
     ThreadManager threadManager(scheduler);
     threadManager.logger = loggingService.get_logger("ThreadManager");

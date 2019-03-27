@@ -20,8 +20,8 @@ private:
     bool _is_initialized = false;
 
 public:
-    SinkArrow(std::string name, size_t index, Sink<T>& sink, Queue<T>* input_queue)
-        : Arrow(name, index, false)
+    SinkArrow(std::string name, Sink<T>& sink, Queue<T>* input_queue)
+        : Arrow(name, false)
         , _sink(sink)
         , _input_queue(input_queue) {
 

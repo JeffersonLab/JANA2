@@ -24,7 +24,6 @@ public:
     /// POD type used for inspecting arrows.
     /// This helps separate the external API from the internal implementation.
     struct ArrowStatus {
-        uint32_t arrow_id;
         std::string arrow_name;
         bool is_finished;
         bool is_parallel;
@@ -42,12 +41,6 @@ public:
 private:
     std::vector<Component *> components;
 
-    std::vector<ArrowStatus> _arrow_statuses;
-    std::vector<bool> finished_queues;
-    std::vector<bool> finished_matrix;
-    int arrow_count;
-    int queue_count;
-
 
 public:
     /// Leave the logger accessible for now so we can potentially inject it during testing
@@ -56,7 +49,6 @@ public:
     Topology() = default;
     ~Topology();
 
-    int next_index();  // TODO: get rid of this
     void addManagedComponent(Component *component);
     void addArrow(Arrow *arrow);
     void addQueue(QueueBase *queue);
@@ -81,9 +73,6 @@ public:
     // run_message(string source_name)
     // run_sequentially()
     // run()
-
-private:
-    void report_arrow_finished(Arrow *arrow);
 
 };
 

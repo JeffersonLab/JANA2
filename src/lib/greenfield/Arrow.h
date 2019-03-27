@@ -18,7 +18,6 @@ class Arrow : public Activable {
 private:
     // Constants
     const std::string _name;           // Used for human understanding
-    const size_t _index;               // Used as an array index
     const bool _is_parallel;           // Whether or not it is safe to parallelize
 
     // Written internally, read externally
@@ -44,7 +43,6 @@ public:
 
     std::string get_name() { return _name; }
 
-    size_t get_index() { return _index; }
 
 
     // Written internally, read externally
@@ -119,9 +117,9 @@ public:
         return _chunksize;
     }
 
-    void set_thread_count(int thread_count) {
+    void update_thread_count(int thread_count_delta) {
         std::lock_guard<std::mutex> lock(_mutex);
-        _thread_count = thread_count;
+        _thread_count += thread_count_delta;
     }
 
     int get_thread_count() {
@@ -130,8 +128,8 @@ public:
     }
 
 
-    Arrow(std::string name, size_t index, bool is_parallel) :
-            _name(name), _index(index), _is_parallel(is_parallel) {};
+    Arrow(std::string name, bool is_parallel) :
+            _name(name), _is_parallel(is_parallel) {};
 
     virtual ~Arrow() = default;
 
