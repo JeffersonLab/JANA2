@@ -23,12 +23,13 @@ int main() {
     LoggingService loggingService;
     loggingService.set_level(JLogLevel::INFO);
     loggingService.set_level("RoundRobinScheduler", JLogLevel::TRACE);
-    loggingService.set_level("ThreadManager", JLogLevel::TRACE);
+    loggingService.set_level("ThreadManager", JLogLevel::INFO);
     auto logger = loggingService.get_logger();
 
 
     LinearTopologyBuilder b;
     RandIntSource source;
+    source.emit_limit = 10;
     SumSink<double> sink;
 
     b.addSource("emit_rand_ints", source);
@@ -48,9 +49,12 @@ int main() {
     ThreadManager threadManager(scheduler);
     threadManager.logger = loggingService.get_logger("ThreadManager");
     threadManager.run(5);
+    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    threadManager.stop();
     threadManager.join();
 
     topology.log_status();
+    assert(sink.sum == (7 * 2.0 - 1) * 10);
 }
 
 

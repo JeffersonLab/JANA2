@@ -42,6 +42,7 @@ public:
         for (T item : _chunk_buffer) {
             _sink.outprocess(item);
         }
+        update_message_count(_chunk_buffer.size());
         _chunk_buffer.clear();
         if (result == StreamStatus::Finished) {
             set_active(false);

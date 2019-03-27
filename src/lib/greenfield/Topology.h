@@ -35,6 +35,8 @@ public:
         double avg_overhead;
         double inst_overhead;
         double throughput;
+
+        ArrowStatus(Arrow* arrow);
     };
 
 

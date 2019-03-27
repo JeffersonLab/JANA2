@@ -40,9 +40,26 @@ public:
             _source.initialize();
             _is_initialized = true;
         }
+
+        auto start_time = std::chrono::steady_clock::now();
         SourceStatus in_status = _source.inprocess(_chunk_buffer, get_chunksize());
+        auto latency_time = std::chrono::steady_clock::now();
         StreamStatus out_status = _output_queue->push(std::move(_chunk_buffer));
+        auto message_count = _chunk_buffer.size();
         _chunk_buffer.clear();
+        auto finished_time = std::chrono::steady_clock::now();
+
+        auto latency = (latency_time - start_time).count();
+        auto overhead = (finished_time - latency_time).count();
+
+        update_message_count(message_count);
+        update_total_latency(latency);
+        update_total_overhead(overhead);
+        set_last_latency(latency/message_count);
+        set_last_overhead(overhead/message_count);
+
+        //auto metrics_time = std::chrono::steady_clock::now();
+        // TODO: This is only queue overhead. Measure metrics, scheduler overhead later.
 
         if (in_status == SourceStatus::Finished) {
             _source.finalize();

@@ -6,6 +6,20 @@
 
 namespace greenfield {
 
+Topology::ArrowStatus::ArrowStatus(Arrow* arrow) {
+    arrow_name = arrow->get_name();
+    is_parallel = arrow->is_parallel();
+    is_active = arrow->is_active();
+    thread_count = arrow->get_thread_count();
+    chunksize = arrow->get_chunksize();
+    messages_completed = arrow->get_message_count();
+    throughput = thread_count / inst_latency;
+    avg_latency = arrow->get_total_latency() / messages_completed;
+    inst_latency = arrow->get_last_latency();
+    avg_overhead = arrow->get_total_overhead() / messages_completed;
+    inst_overhead = arrow->get_last_overhead();
+}
+
 Topology::~Topology() {
 
     for (auto component : components) {
@@ -51,22 +65,12 @@ void Topology::deactivate(std::string arrow_name) {
     arrows[arrow_name]->set_active(false);
 }
 
+
 std::vector<Topology::ArrowStatus> Topology::get_arrow_status() {
 
     std::vector<ArrowStatus> metrics;
-
     for (auto pair : arrows) {
-        Arrow* arrow = pair.second;
-        ArrowStatus status;
-        status.arrow_name = arrow->get_name();
-        status.is_active = arrow->is_active();
-        status.thread_count = arrow->get_thread_count();
-        status.messages_completed = arrow->get_message_count();
-        status.is_parallel = arrow->is_parallel();
-        status.chunksize = arrow->get_chunksize();
-        status.avg_latency = arrow->get_total_latency() / status.messages_completed;
-        status.inst_latency = arrow->get_last_latency();
-        metrics.push_back(status);
+        metrics.push_back(ArrowStatus(pair.second));
     }
     return metrics;
 }
@@ -90,16 +94,7 @@ Topology::ArrowStatus Topology::get_status(const std::string &arrow_name) {
     if (search == arrows.end()) {
         throw std::runtime_error(arrow_name);
     }
-    auto arrow = arrows[arrow_name];
-    ArrowStatus status;
-    status.arrow_name = arrow->get_name();
-    status.is_active = arrow->is_active();
-    status.thread_count = arrow->get_thread_count();
-    status.messages_completed = arrow->get_message_count();
-    status.is_parallel = arrow->is_parallel();
-    status.avg_latency = arrow->get_total_latency() / status.messages_completed;
-    status.inst_latency = arrow->get_last_latency();
-    return status;
+    return ArrowStatus(search->second);
 }
 
 void Topology::log_status() {
@@ -129,11 +124,11 @@ void Topology::log_status() {
     for (ArrowStatus &as : get_arrow_status()) {
         LOG_INFO(logger) << " | "
                          << std::setw(24) << std::left << as.arrow_name << " | "
-                         << std::setw(10) << std::right << 0 << " |"
-                         << std::setw(12) << 0 << " |"
-                         << std::setw(13) << 0 << " |"
-                         << std::setw(13) << 0 << " |"
-                         << std::setw(14) << 0 << " |"
+                         << std::setw(10) << std::right << as.throughput << " |"
+                         << std::setw(12) << as.avg_latency << " |"
+                         << std::setw(13) << as.inst_latency << " |"
+                         << std::setw(13) << as.avg_overhead << " |"
+                         << std::setw(14) << as.inst_overhead << " |"
                          << LOG_END;
     }
     LOG_INFO(logger)

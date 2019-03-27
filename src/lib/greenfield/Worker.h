@@ -51,11 +51,9 @@ namespace greenfield {
 
         ~Worker() {
             // We have to be careful here because this Worker might be being concurrently
-            // read/modified by Worker.thread. Don't do anything except set
-            // shutdown_requested until thread has joined.
+            // read/modified by Worker.thread. Join with thread before doing anything else.
 
             LOG_DEBUG(_logger) << "Worker " << worker_id << " destruction has begun." << LOG_END;
-            shutdown_requested = true; // Probably a race condition here
             if (_thread == nullptr) {
                 LOG_ERROR(_logger) << "Worker " << worker_id << " thread is null. This means we have a problem!" << LOG_END;
             }
@@ -77,9 +75,11 @@ namespace greenfield {
 
             while (!shutdown_requested) {
 
+                LOG_TRACE(_logger) << "Worker " << worker_id << " is checking in" << LOG_END;
                 Arrow* assignment = _scheduler.next_assignment(report);
 
                 report.assignment = assignment;
+                report.last_result = StreamStatus::KeepGoing;
                 report.latency_sum = 0;
                 report.event_count = 0;
 
@@ -89,12 +89,12 @@ namespace greenfield {
                     shutdown_requested = true;
                 }
                 else {
-                    LOG_TRACE(_logger) << "Worker " << worker_id << " is executing "
-                                             << report.assignment->get_name() << LOG_END;
                     while (report.last_result == StreamStatus::KeepGoing &&
                            report.latency_sum < checkin_time &&
                            !shutdown_requested) {
 
+                        LOG_TRACE(_logger) << "Worker " << worker_id << " is executing "
+                                           << report.assignment->get_name() << LOG_END;
                         auto start_time = std::chrono::steady_clock::now();
                         report.last_result = assignment->execute();
                         auto stop_time = std::chrono::steady_clock::now();
@@ -102,7 +102,12 @@ namespace greenfield {
                         ++report.event_count;
                     }
                 }
-                LOG_TRACE(_logger) << "Worker " << worker_id << " is checking in" << LOG_END;
+            }
+            if (report.assignment != nullptr) {
+                // If we were shut down by the ThreadManager and never had a chance to
+                // check back in with the scheduler, we should update our arrow's thread count
+                // ourselves (otherwise the Scheduler would do it). TODO: Make this cleaner
+                report.assignment->update_thread_count(-1);
             }
             LOG_DEBUG(_logger) << "Worker " << worker_id << " is exiting loop()" << LOG_END;
             shutdown_achieved = true;
