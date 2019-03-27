@@ -76,10 +76,10 @@ namespace greenfield {
 
             //LOG_INFO(logger) << "After emitting; should be something in q0" << LOG_END;
 
-            topology.log_queue_status();
+            topology.log_status();
             topology.activate("emit_rand_ints");
             topology.step("emit_rand_ints");
-            topology.log_queue_status();
+            topology.log_status();
 
             REQUIRE(topology.queues[0]->get_item_count() == 1);
             REQUIRE(topology.queues[1]->get_item_count() == 0);
@@ -89,7 +89,7 @@ namespace greenfield {
             topology.step("emit_rand_ints");
             topology.step("emit_rand_ints");
             topology.step("emit_rand_ints");
-            topology.log_queue_status();
+            topology.log_status();
 
             REQUIRE(topology.queues[0]->get_item_count() == 5);
             REQUIRE(topology.queues[1]->get_item_count() == 0);
@@ -175,64 +175,51 @@ namespace greenfield {
             topology.logger = logger;
             source.logger = logger;
 
-            topology.finalize();
             topology.activate("emit_rand_ints");
-            topology.activate("multiply_by_two");
-            topology.activate("subtract_one");
-            topology.activate("sum_everything");
 
-            REQUIRE(topology.arrows["emit_rand_ints"]->is_active() == true);
-            REQUIRE(topology.arrows["multiply_by_two"]->is_active() == true);
-            REQUIRE(topology.arrows["subtract_one"]->is_active() == true);
-            REQUIRE(topology.arrows["sum_everything"]->is_active() == true);
+            REQUIRE(topology.get_status("emit_rand_ints").is_active == true);
+            REQUIRE(topology.get_status("multiply_by_two").is_active == true);
+            REQUIRE(topology.get_status("subtract_one").is_active == true);
+            REQUIRE(topology.get_status("sum_everything").is_active == true);
 
             for (int i=0; i<20; ++i) {
                 topology.step("emit_rand_ints");
             }
 
-            REQUIRE(topology.arrows["emit_rand_ints"]->is_active() == false);
-            REQUIRE(topology.arrows["multiply_by_two"]->is_active() == true);
-            REQUIRE(topology.arrows["subtract_one"]->is_active() == true);
-            REQUIRE(topology.arrows["sum_everything"]->is_active() == true);
-
+            REQUIRE(topology.get_status("emit_rand_ints").is_active == false);
+            REQUIRE(topology.get_status("multiply_by_two").is_active == true);
+            REQUIRE(topology.get_status("subtract_one").is_active == true);
+            REQUIRE(topology.get_status("sum_everything").is_active == true);
 
             for (int i=0; i<20; ++i) {
                 topology.step("multiply_by_two");
             }
 
-            topology.log_arrow_status();
-            topology.log_queue_status();
-
-            auto arrow_statuses = topology.get_arrow_status();
-            REQUIRE(arrow_statuses[0].is_finished == true);
-            REQUIRE(arrow_statuses[1].is_finished == true);
-            REQUIRE(arrow_statuses[2].is_finished == false);
-            REQUIRE(arrow_statuses[3].is_finished == false);
+            REQUIRE(topology.get_status("emit_rand_ints").is_active == false);
+            REQUIRE(topology.get_status("multiply_by_two").is_active == false);
+            REQUIRE(topology.get_status("subtract_one").is_active == true);
+            REQUIRE(topology.get_status("sum_everything").is_active == true);
 
             for (int i=0; i<20; ++i) {
                 topology.step("subtract_one");
             }
 
-            topology.log_arrow_status();
-            topology.log_queue_status();
-
-            arrow_statuses = topology.get_arrow_status();
-            REQUIRE(arrow_statuses[0].is_finished == true);
-            REQUIRE(arrow_statuses[1].is_finished == true);
-            REQUIRE(arrow_statuses[2].is_finished == true);
-            REQUIRE(arrow_statuses[3].is_finished == false);
+            REQUIRE(topology.get_status("emit_rand_ints").is_active == false);
+            REQUIRE(topology.get_status("multiply_by_two").is_active == false);
+            REQUIRE(topology.get_status("subtract_one").is_active == false);
+            REQUIRE(topology.get_status("sum_everything").is_active == true);
 
             for (int i=0; i<20; ++i) {
                 topology.step("sum_everything");
             }
-            arrow_statuses = topology.get_arrow_status();
-            REQUIRE(arrow_statuses[0].is_finished == true);
-            REQUIRE(arrow_statuses[1].is_finished == true);
-            REQUIRE(arrow_statuses[2].is_finished == true);
-            REQUIRE(arrow_statuses[3].is_finished == true);
 
-            topology.log_arrow_status();
-            topology.log_queue_status();
+            REQUIRE(topology.get_status("emit_rand_ints").is_active == false);
+            REQUIRE(topology.get_status("multiply_by_two").is_active == false);
+            REQUIRE(topology.get_status("subtract_one").is_active == false);
+            REQUIRE(topology.get_status("sum_everything").is_active == false);
+
+            topology.log_status();
+
         }
     }
 }

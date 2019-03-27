@@ -27,16 +27,12 @@ void Topology::addManagedComponent(Component *component) {
 }
 
 void Topology::addQueue(QueueBase *queue) {
-    queue->set_id(queues.size());
     queues.push_back(queue);
 }
 
 void Topology::addArrow(Arrow *arrow) {
     arrows[arrow->get_name()] = arrow;
 };
-
-void Topology::finalize() {
-}
 
 void Topology::activate(std::string arrow_name) {
     auto search = arrows.find(arrow_name);
@@ -63,13 +59,13 @@ std::vector<Topology::ArrowStatus> Topology::get_arrow_status() {
         Arrow* arrow = pair.second;
         ArrowStatus status;
         status.arrow_name = arrow->get_name();
-        status.is_finished = !arrow->is_active();
         status.is_active = arrow->is_active();
         status.thread_count = arrow->get_thread_count();
         status.messages_completed = arrow->get_message_count();
         status.is_parallel = arrow->is_parallel();
-        status.long_term_avg_latency = arrow->get_total_latency() / status.messages_completed;
-        status.short_term_avg_latency = arrow->get_last_latency();
+        status.chunksize = arrow->get_chunksize();
+        status.avg_latency = arrow->get_total_latency() / status.messages_completed;
+        status.inst_latency = arrow->get_last_latency();
         metrics.push_back(status);
     }
     return metrics;
@@ -77,19 +73,18 @@ std::vector<Topology::ArrowStatus> Topology::get_arrow_status() {
 
 std::vector<Topology::QueueStatus> Topology::get_queue_status() {
     std::vector<QueueStatus> statuses;
-    int i = 0;
     for (QueueBase *q : queues) {
         QueueStatus qs;
-        qs.queue_id = i++;
-        qs.is_finished = !q->is_active();
+        qs.queue_name = q->get_name();
+        qs.is_active = q->is_active();
         qs.message_count = q->get_item_count();
-        qs.message_count_threshold = q->get_threshold();
+        qs.threshold = q->get_threshold();
         statuses.push_back(qs);
     }
     return statuses;
 }
 
-Topology::ArrowStatus Topology::get_arrow_status(const std::string & arrow_name) {
+Topology::ArrowStatus Topology::get_status(const std::string &arrow_name) {
 
     auto search = arrows.find(arrow_name);
     if (search == arrows.end()) {
@@ -99,53 +94,64 @@ Topology::ArrowStatus Topology::get_arrow_status(const std::string & arrow_name)
     ArrowStatus status;
     status.arrow_name = arrow->get_name();
     status.is_active = arrow->is_active();
-    status.is_finished = !arrow->is_active();
     status.thread_count = arrow->get_thread_count();
     status.messages_completed = arrow->get_message_count();
     status.is_parallel = arrow->is_parallel();
-    status.long_term_avg_latency = arrow->get_total_latency() / status.messages_completed;
-    status.short_term_avg_latency = arrow->get_last_latency();
+    status.avg_latency = arrow->get_total_latency() / status.messages_completed;
+    status.inst_latency = arrow->get_last_latency();
     return status;
 }
 
-void Topology::log_arrow_status() {
+void Topology::log_status() {
+    LOG_INFO(logger) << " +--------------------------+-----+-----+---------+-------+-------------+" << LOG_END;
+    LOG_INFO(logger) << " |           Name           | Par | Act | Threads | Chunk |  Completed  |" << LOG_END;
+    LOG_INFO(logger) << " +--------------------------+-----+-----+---------+-------+-------------+" << LOG_END;
+    for (ArrowStatus &as : get_arrow_status()) {
+        LOG_INFO(logger) << " | "
+                         << std::setw(24) << std::left << as.arrow_name << " | "
+                         << std::setw(3) << std::right << (as.is_parallel ? " T " : " F ") << " | "
+                         << std::setw(3) << (as.is_active ? " T " : " F ") << " | "
+                         << std::setw(7) << as.thread_count << " |"
+                         << std::setw(6) << as.chunksize << " |"
+                         << std::setw(12) << as.messages_completed << " |"
+                         << LOG_END;
+    }
+    LOG_INFO(logger) << " +--------------------------+-----+-----+---------+-------+-------------+" << LOG_END;
     LOG_INFO(logger)
-        << "  +--------------------------------+----------+---------+--------------------+-----------------+----------------+----------+"
+        << " +--------------------------+------------+-------------+--------------+--------------+---------------+"
         << LOG_END;
     LOG_INFO(logger)
-        << "  |              Name              | Parallel | Threads | Messages completed | Latency (short) | Latency (long) | Finished |"
+        << " |           Name           | Throughput | Avg latency | Inst latency | Avg overhead | Inst overhead |"
         << LOG_END;
     LOG_INFO(logger)
-        << "  +--------------------------------+----------+---------+--------------------+-----------------+----------------+----------+"
+        << " +--------------------------+------------+-------------+--------------+--------------+---------------+"
         << LOG_END;
     for (ArrowStatus &as : get_arrow_status()) {
-        LOG_INFO(logger) << "  | "
-                         << std::setw(30) << std::left << as.arrow_name << " | "
-                         << std::setw(8) << std::right << as.is_parallel << " | "
-                         << std::setw(7) << as.thread_count << " |"
-                         << std::setw(19) << as.messages_completed << " |"
-                         << std::setw(16) << as.short_term_avg_latency << " |"
-                         << std::setw(15) << as.long_term_avg_latency << " |"
-                         << std::setw(9) << as.is_finished << " |" << LOG_END;
+        LOG_INFO(logger) << " | "
+                         << std::setw(24) << std::left << as.arrow_name << " | "
+                         << std::setw(10) << std::right << 0 << " |"
+                         << std::setw(12) << 0 << " |"
+                         << std::setw(13) << 0 << " |"
+                         << std::setw(13) << 0 << " |"
+                         << std::setw(14) << 0 << " |"
+                         << LOG_END;
     }
     LOG_INFO(logger)
-        << "  +--------------------------------+----------+---------+--------------------+-----------------+----------------+----------+"
+        << " +--------------------------+------------+-------------+--------------+--------------+---------------+"
         << LOG_END;
+    LOG_INFO(logger) << " +--------------------------+---------+-----------+------+" << LOG_END;
+    LOG_INFO(logger) << " |           Name           | Pending | Threshold | More |" << LOG_END;
+    LOG_INFO(logger) << " +--------------------------+---------+-----------+------+" << LOG_END;
+    for (QueueStatus &qs : get_queue_status()) {
+        LOG_INFO(logger) << " | "
+                         << std::setw(24) << std::left << qs.queue_name << " |"
+                         << std::setw(8) << std::right << qs.message_count << " |"
+                         << std::setw(10) << qs.threshold << " |  "
+                         << std::setw(1) << (qs.is_active ? "T" : "F") << "   |" << LOG_END;
+    }
+    LOG_INFO(logger) << " +--------------------------+---------+-----------+------+" << LOG_END;
 }
 
-void Topology::log_queue_status() {
-    LOG_INFO(logger) << "  +------+----------+-----------+----------+" << LOG_END;
-    LOG_INFO(logger) << "  |  ID  |  Height  | Threshold | Finished |" << LOG_END;
-    LOG_INFO(logger) << "  +------+----------+-----------+----------+" << LOG_END;
-    for (QueueStatus &qs : get_queue_status()) {
-        LOG_INFO(logger) << "  | "
-                         << std::setw(4) << qs.queue_id << " | "
-                         << std::setw(8) << qs.message_count << " | "
-                         << std::setw(9) << qs.message_count_threshold << " | "
-                         << std::setw(8) << qs.is_finished << " |" << LOG_END;
-    }
-    LOG_INFO(logger) << "  +------+----------+-----------+----------+" << LOG_END;
-}
 
 /// The user may want to pause the topology and interact with it manually.
 /// This is particularly powerful when used from inside GDB.

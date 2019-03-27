@@ -25,14 +25,14 @@ class QueueBase : public Activable {
 
 protected:
     size_t _threshold = 128;
-    uint32_t _id;
+    std::string _name = "anon_queue";
 
 public:
 
     virtual ~QueueBase() = default;
 
-    uint32_t get_id() { return _id; }
-    void set_id(uint32_t id) { _id = id; }
+    std::string get_name() { return _name; }
+    void set_name(std::string name) { _name = name; }
 
     size_t get_threshold() { return _threshold; }
     void set_threshold(size_t threshold) { _threshold = threshold; }

@@ -37,11 +37,11 @@ TEST_CASE("greenfield:ActivableActivationTests") {
     SECTION("At first, everything is deactivated and all queues are empty") {
 
         for (auto status : topology.get_queue_status()) {
-            REQUIRE(status.is_finished == 1);
+            REQUIRE(status.is_active == false);
             REQUIRE(status.message_count == 0);
         }
         for (auto status : topology.get_arrow_status()) {
-            REQUIRE(status.is_finished == 1);
+            REQUIRE(status.is_active == false);
         }
     }
     SECTION("As a message propagates, arrows and queues downstream automatically activate") {
@@ -83,27 +83,26 @@ TEST_CASE("greenfield:ActivableDeactivationTests") {
     topology.logger = logger;
     source.logger = logger;
 
-    REQUIRE(topology.get_arrow_status("a").is_active == false);
-    REQUIRE(topology.get_arrow_status("b").is_active == false);
-    REQUIRE(topology.get_arrow_status("c").is_active == false);
-    REQUIRE(topology.get_arrow_status("d").is_active == false);
+    REQUIRE(topology.get_status("a").is_active == false);
+    REQUIRE(topology.get_status("b").is_active == false);
+    REQUIRE(topology.get_status("c").is_active == false);
+    REQUIRE(topology.get_status("d").is_active == false);
 
     topology.activate("a");
 
-    REQUIRE(topology.get_arrow_status("a").is_active == true);
-    REQUIRE(topology.get_arrow_status("b").is_active == true);
-    REQUIRE(topology.get_arrow_status("c").is_active == true);
-    REQUIRE(topology.get_arrow_status("d").is_active == true);
+    REQUIRE(topology.get_status("a").is_active == true);
+    REQUIRE(topology.get_status("b").is_active == true);
+    REQUIRE(topology.get_status("c").is_active == true);
+    REQUIRE(topology.get_status("d").is_active == true);
 
     topology.step("a");
 
-    REQUIRE(topology.get_arrow_status("a").is_active == false);
-    REQUIRE(topology.get_arrow_status("b").is_active == true);
-    REQUIRE(topology.get_arrow_status("c").is_active == true);
-    REQUIRE(topology.get_arrow_status("d").is_active == true);
+    REQUIRE(topology.get_status("a").is_active == false);
+    REQUIRE(topology.get_status("b").is_active == true);
+    REQUIRE(topology.get_status("c").is_active == true);
+    REQUIRE(topology.get_status("d").is_active == true);
 
-    topology.log_arrow_status();
-    topology.log_queue_status();
+    topology.log_status();
 
 
 } // TEST_CASE

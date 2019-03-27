@@ -15,23 +15,26 @@ public:
     /// POD type used for inspecting queues.
     /// This helps separate the external API from the internal implementation.
     struct QueueStatus {
-        uint32_t queue_id;
+        std::string queue_name;
         uint64_t message_count;
-        uint64_t message_count_threshold;
-        bool is_finished;
+        uint64_t threshold;
+        bool is_active;
     };
 
     /// POD type used for inspecting arrows.
     /// This helps separate the external API from the internal implementation.
     struct ArrowStatus {
         std::string arrow_name;
-        bool is_finished;  // Deprecated in favor of is_active
         bool is_active;
         bool is_parallel;
         uint32_t thread_count;
         uint64_t messages_completed;
-        double short_term_avg_latency;
-        double long_term_avg_latency;
+        uint32_t chunksize;
+        double avg_latency;
+        double inst_latency;
+        double avg_overhead;
+        double inst_overhead;
+        double throughput;
     };
 
 
@@ -60,9 +63,8 @@ public:
 
     std::vector<ArrowStatus> get_arrow_status();
     std::vector<QueueStatus> get_queue_status();
-    ArrowStatus get_arrow_status(const std::string & arrow_name);
-    void log_arrow_status();
-    void log_queue_status();
+    ArrowStatus get_status(const std::string &arrow_name);
+    void log_status();
 
     // get_graph()              // perhaps build an interactive visual someday
 

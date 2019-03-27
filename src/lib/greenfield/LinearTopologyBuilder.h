@@ -46,6 +46,7 @@ public:
         assert(!have_sink);
         assert(!finished);
         auto input_queue = dynamic_cast<Queue<S>*>(last_queue);
+        input_queue->set_name(name + "_queue");
         auto output_queue = new Queue<T>;
         assert(input_queue != nullptr);
         last_queue = output_queue;
@@ -62,6 +63,7 @@ public:
         assert(!finished);
         have_sink = true;
         auto input_queue = dynamic_cast<Queue<S>*>(last_queue);
+        input_queue->set_name(name + "_queue");
         assert(input_queue != nullptr);
         auto arrow = new SinkArrow<S>(name, sink, input_queue);
         topology->addArrow(arrow);
