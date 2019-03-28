@@ -19,9 +19,10 @@ add_library(greenfield STATIC
         src/lib/greenfield/RoundRobinScheduler.cc
         src/lib/greenfield/ThreadManager.cc
         src/lib/greenfield/Topology.cc
+        src/lib/greenfield/PerfUtils.cc
         )
 
-add_executable(greenfield-tests
+add_executable(tests
         src/programs/tests/catch.hpp
         src/programs/tests/ActivableTests.cc
         src/programs/tests/JServiceLocatorTests.cc
@@ -30,8 +31,9 @@ add_executable(greenfield-tests
         src/programs/tests/TopologyTests.cc
         )
 
-add_executable(greenfield-playground
+add_executable(playground
         src/programs/playground/playground.cc
+        src/lib/greenfield/PerfUtils.cc
         )
 
 add_library(jana2 STATIC
@@ -113,8 +115,8 @@ target_link_libraries(jana jana2)
 target_link_libraries(jtest jana2)
 
 # Add greenfield static lib
-target_link_libraries(greenfield-tests greenfield)
-target_link_libraries(greenfield-playground greenfield)
+target_link_libraries(tests greenfield)
+target_link_libraries(playground greenfield)
 
 # Add libdl
 target_link_libraries(jana2 ${CMAKE_DL_LIBS})
@@ -125,8 +127,8 @@ find_package(Threads REQUIRED)
 target_link_libraries(jana2 Threads::Threads)
 target_link_libraries(jana Threads::Threads)
 target_link_libraries(jtest Threads::Threads)
-target_link_libraries(greenfield-playground Threads::Threads)
-target_link_libraries(greenfield-tests Threads::Threads)
+target_link_libraries(playground Threads::Threads)
+target_link_libraries(tests Threads::Threads)
 
 
 

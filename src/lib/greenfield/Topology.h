@@ -53,7 +53,7 @@ public:
     Logger logger;
 
     Topology() = default;
-    ~Topology();
+    virtual ~Topology();
 
     void addManagedComponent(Component *component);
     void addArrow(Arrow *arrow);

@@ -5,6 +5,7 @@
 #include <greenfield/Worker.h>
 #include <greenfield/ExampleComponents.h>
 #include <greenfield/LinearTopologyBuilder.h>
+#include <greenfield/PerfTestTopology.h>
 
 using namespace std;
 using namespace greenfield;
@@ -26,20 +27,9 @@ int main() {
     loggingService.set_level("ThreadManager", JLogLevel::INFO);
     auto logger = loggingService.get_logger();
 
-    LinearTopologyBuilder b;
-    RandIntSource source;
-    source.emit_limit = 10;
-    SumSink<double> sink;
-
-    b.addSource("emit_rand_ints", source);
-    b.addProcessor<MultByTwoProcessor>("multiply_by_two");
-    b.addProcessor<SubOneProcessor>("subtract_one");
-    b.addSink("sum_everything", sink);
-
-    auto topology = b.get();
+    PerfTestTopology topology;
     topology.logger = logger;
-    source.logger = logger;
-    topology.activate("emit_rand_ints");
+    topology.activate("parse");
     topology.log_status();
 
     RoundRobinScheduler scheduler(topology);
@@ -49,15 +39,18 @@ int main() {
     threadManager.logger = loggingService.get_logger("ThreadManager");
     threadManager.run(5);
 
-    while (topology.is_active()) {
 
+//    while (topology.is_active()) {
+    for (int i=0; i<100; ++i) {  // This topology will run indefinitely
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         std::cout << "\033[2J";
         topology.log_status();
     }
 
+    LOG_INFO(logger) << "Stopping ..." << LOG_END;
+    threadManager.stop();
     threadManager.join();
-    assert(sink.sum == (7 * 2.0 - 1) * 10);
+    LOG_INFO(logger) << "... Stopped." << LOG_END;
 }
 
 
