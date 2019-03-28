@@ -3,17 +3,38 @@ project(jana2)
 
 set(CMAKE_CXX_STANDARD 14)
 
-#include_directories(src/lib/greenfield)
-include_directories(src/lib/JANA)
+# Enable -fPIC for all targets
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+
 include_directories(src/lib)
+include_directories(src/lib/JANA)
+include_directories(src/lib/greenfield)
 include_directories(src/plugins/JTest)
 include_directories(src/programs/jana)
 include_directories(src/programs/tests)
 
-add_executable(jana2
-        #src/lib/greenfield/Greenfield.cc
-        #src/lib/greenfield/ServiceLocator.h
-        #src/lib/greenfield/Arrow.h
+add_library(greenfield STATIC
+        src/lib/greenfield/FixedScheduler.cc
+        src/lib/greenfield/RoundRobinScheduler.cc
+        src/lib/greenfield/ThreadManager.cc
+        src/lib/greenfield/Topology.cc
+        )
+
+add_executable(greenfield-tests
+        src/programs/tests/catch.hpp
+        src/programs/tests/ActivableTests.cc
+        src/programs/tests/JServiceLocatorTests.cc
+        src/programs/tests/QueueTests.cc
+        src/programs/tests/RoundRobinSchedulerTests.cc
+        src/programs/tests/TopologyTests.cc
+        )
+
+add_executable(greenfield-playground
+        src/programs/playground/playground.cc
+        )
+
+add_library(jana2 STATIC
         src/lib/JANA/JApplication.cc
         src/lib/JANA/JApplication.h
         src/lib/JANA/JCpuInfo.cc
@@ -66,6 +87,9 @@ add_executable(jana2
         src/lib/JANA/JThreadManager.h
         src/lib/JANA/JTypeInfo.h
         src/lib/JANA/JVersion.h
+        )
+
+add_library(jtest SHARED
         src/plugins/JTest/JTestDataObject.h
         src/plugins/JTest/JTestDummyDataFactory.h
         src/plugins/JTest/JTestEventProcessor.h
@@ -74,11 +98,37 @@ add_executable(jana2
         src/plugins/JTest/JTestMain.cc
         src/plugins/JTest/JTestMain.h
         src/plugins/JTest/JTestHelpers.h
+        )
+
+add_executable(jana
         src/programs/jana/jana.cc
         src/programs/jana/JBenchmarking.h
         src/programs/jana/MyProcessor.cc
         src/programs/jana/MyProcessor.h
-        src/programs/playground/playground.cc)
-        #src/programs/tests/catch.hpp
-        #src/programs/tests/JServiceLocatorDummies.h
-        #src/programs/tests/JServiceLocatorTests.cc)
+        )
+
+
+# Add jana static lib
+target_link_libraries(jana jana2)
+target_link_libraries(jtest jana2)
+
+# Add greenfield static lib
+target_link_libraries(greenfield-tests greenfield)
+target_link_libraries(greenfield-playground greenfield)
+
+# Add libdl
+target_link_libraries(jana2 ${CMAKE_DL_LIBS})
+
+# Add pthreads
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
+target_link_libraries(jana2 Threads::Threads)
+target_link_libraries(jana Threads::Threads)
+target_link_libraries(jtest Threads::Threads)
+target_link_libraries(greenfield-playground Threads::Threads)
+target_link_libraries(greenfield-tests Threads::Threads)
+
+
+
+
+
