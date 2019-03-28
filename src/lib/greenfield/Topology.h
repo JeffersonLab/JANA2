@@ -4,7 +4,7 @@
 #include <greenfield/Arrow.h>
 #include <greenfield/Queue.h>
 #include <greenfield/Components.h>
-#include <greenfield/JLogger.h>
+#include <greenfield/Logger.h>
 
 namespace greenfield {
 
@@ -50,7 +50,7 @@ private:
 
 public:
     /// Leave the logger accessible for now so we can potentially inject it during testing
-    std::shared_ptr<JLogger> logger;
+    Logger logger;
 
     Topology() = default;
     ~Topology();

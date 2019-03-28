@@ -29,7 +29,7 @@ TEST_CASE("greenfield:ActivableActivationTests") {
 
     auto topology = builder.get();
 
-    auto logger = JLogger::nothing(); //everything();
+    auto logger = Logger::nothing(); //everything();
     topology.logger = logger;
     source.logger = logger;
 
@@ -79,7 +79,7 @@ TEST_CASE("greenfield:ActivableDeactivationTests") {
     builder.addSink("d", sink);
 
     auto topology = builder.get();
-    auto logger = JLogger::nothing();
+    auto logger = Logger::nothing();
     topology.logger = logger;
     source.logger = logger;
 

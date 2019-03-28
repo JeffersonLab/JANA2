@@ -1,7 +1,7 @@
 
 
 #include <greenfield/Scheduler.h>
-#include <greenfield/JLogger.h>
+#include <greenfield/Logger.h>
 
 namespace greenfield {
 

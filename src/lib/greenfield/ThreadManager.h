@@ -5,7 +5,7 @@
 
 #include <greenfield/Worker.h>
 #include <greenfield/Scheduler.h>
-#include <greenfield/JLogger.h>
+#include <greenfield/Logger.h>
 
 
 namespace greenfield {
@@ -65,7 +65,7 @@ namespace greenfield {
         Response join();
 
         /// Logger is public so that it can be injected by anyone who needs it
-        std::shared_ptr<JLogger> logger;
+        Logger logger;
     };
 
 }

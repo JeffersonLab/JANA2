@@ -2,7 +2,7 @@
 
 #include <greenfield/ThreadManager.h>
 #include <greenfield/Worker.h>
-#include <greenfield/JLogger.h>
+#include <greenfield/Logger.h>
 
 using std::string;
 
@@ -38,7 +38,8 @@ namespace greenfield {
         _workers.reserve(nthreads);
 
         for (int i=0; i<nthreads; ++i) {
-            Worker * worker = new Worker(i, _scheduler, logger);
+            Worker * worker = new Worker(i, _scheduler);
+            worker->_logger = logger;
             _workers.push_back(worker);
         }
         LOG_INFO(logger) << "ThreadManager status changed to RUNNING." << LOG_END;

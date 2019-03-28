@@ -37,9 +37,9 @@ namespace greenfield {
 
         auto topology = b.get();
 
-        auto logger = JLogger::nothing();
-        //topology.logger = JLogger::everything();
-        //source.logger = JLogger::everything();
+        auto logger = Logger::nothing();
+        //topology.logger = Logger::everything();
+        //source.logger = Logger::everything();
 
 
         SECTION("Before anything runs...") {
@@ -70,7 +70,7 @@ namespace greenfield {
         }
 
         SECTION("After emitting") {
-            logger = JLogger::nothing();
+            logger = Logger::nothing();
             topology.logger = logger;
             source.logger = logger;
 
@@ -171,7 +171,7 @@ namespace greenfield {
         }
         SECTION("Finished flag propagates") {
 
-            logger = JLogger::nothing();
+            logger = Logger::nothing();
             topology.logger = logger;
             source.logger = logger;
 

@@ -22,8 +22,8 @@ namespace greenfield {
 
         RoundRobinScheduler scheduler(topology);
 
-        auto logger = JLogger::nothing(); // everything();
-        scheduler.logger = JLogger::nothing(); // everything();
+        auto logger = Logger::nothing(); // everything();
+        scheduler.logger = Logger::nothing(); // everything();
         Scheduler::Report report;
 
         // Assume everything is active for now
@@ -133,7 +133,7 @@ namespace greenfield {
 
         SECTION("When run sequentially, RRS returns nullptr => topology finished") {
 
-            logger = JLogger::nothing();
+            logger = Logger::nothing();
             scheduler.logger = logger;
             report.last_result = StreamStatus::ComeBackLater;
             report.assignment = nullptr;
@@ -160,7 +160,7 @@ namespace greenfield {
 
         SECTION("When run sequentially, topology finished => RRS returns nullptr") {
 
-            logger = JLogger::nothing();
+            logger = Logger::nothing();
             scheduler.logger = logger;
             report.last_result = StreamStatus::ComeBackLater;
             report.assignment = nullptr;

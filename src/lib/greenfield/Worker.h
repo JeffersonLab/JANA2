@@ -3,7 +3,7 @@
 #include <thread>
 #include <cmath>
 #include <iostream>
-#include <greenfield/JLogger.h>
+#include <greenfield/Logger.h>
 #include <greenfield/Scheduler.h>
 
 namespace greenfield {
@@ -18,7 +18,6 @@ namespace greenfield {
 
     private:
         std::thread* _thread;
-        std::shared_ptr<JLogger> _logger;
         Scheduler & _scheduler;
 
     public:
@@ -27,18 +26,19 @@ namespace greenfield {
 
         bool shutdown_requested = false;   // For communicating with ThreadManager
         bool shutdown_achieved = false;
+        Logger _logger;
 
         Scheduler::Report report;  // For communicating with Scheduler
 
 
-        Worker(uint32_t id, Scheduler & scheduler, std::shared_ptr<JLogger> logger) :
-            _logger(logger), _scheduler(scheduler), worker_id(id) {
+        Worker(uint32_t id, Scheduler & scheduler) :
+            _scheduler(scheduler), worker_id(id) {
 
             report.worker_id = worker_id;
             report.last_result = StreamStatus::KeepGoing;
 
             _thread = new std::thread(&Worker::loop, this);
-            LOG_DEBUG(logger) << "Worker " << worker_id << " constructed." << LOG_END;
+            LOG_DEBUG(_logger) << "Worker " << worker_id << " constructed." << LOG_END;
         }
 
         // If we copy or move the Worker, the underlying std::thread will be left with a

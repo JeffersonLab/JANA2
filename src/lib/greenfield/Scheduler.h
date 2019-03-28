@@ -5,7 +5,7 @@
 #include <mutex>
 
 #include <greenfield/Topology.h>
-#include "JLogger.h"
+#include "Logger.h"
 
 
 namespace greenfield {
@@ -33,6 +33,8 @@ namespace greenfield {
         /// This is called by all of the workers and updates Metrics and Topology,
         /// so it must be kept threadsafe
         virtual Arrow *next_assignment(const Report &report) = 0;
+
+        Logger logger; // Control verbosity of scheduler without knowing which impl is in use
     };
 
 
@@ -62,7 +64,6 @@ namespace greenfield {
         Arrow* next_assignment();
 
     public:
-        std::shared_ptr<JLogger> logger;
         RoundRobinScheduler(Topology& topology);
         Arrow* next_assignment(const Report& report);
     };

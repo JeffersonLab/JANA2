@@ -1,5 +1,5 @@
 
-#include <greenfield/JLogger.h>
+#include <greenfield/Logger.h>
 #include <greenfield/Topology.h>
 #include <greenfield/ThreadManager.h>
 #include <greenfield/Worker.h>
