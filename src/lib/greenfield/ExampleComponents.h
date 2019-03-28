@@ -4,6 +4,7 @@
 
 #include <greenfield/JLogger.h>
 #include <greenfield/Components.h>
+#include <thread>
 
 namespace greenfield {
 
@@ -17,10 +18,7 @@ struct RandIntSource : public Source<int> {
     SourceStatus inprocess(std::vector<int> &items, size_t count) override {
 
         for (size_t i = 0; i < count && emit_count < emit_limit; ++i) {
-            int y;
-            for (int i=0; i<100000; ++i) {
-                y += 1;
-            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(2000));
             int x = 7;
             items.push_back(x);
             emit_count += 1;

@@ -22,10 +22,9 @@ std::string stringify(ThreadManager::Response response) {
 int main() {
     LoggingService loggingService;
     loggingService.set_level(JLogLevel::INFO);
-    loggingService.set_level("RoundRobinScheduler", JLogLevel::TRACE);
+    loggingService.set_level("RoundRobinScheduler", JLogLevel::INFO);
     loggingService.set_level("ThreadManager", JLogLevel::INFO);
     auto logger = loggingService.get_logger();
-
 
     LinearTopologyBuilder b;
     RandIntSource source;
@@ -49,11 +48,15 @@ int main() {
     ThreadManager threadManager(scheduler);
     threadManager.logger = loggingService.get_logger("ThreadManager");
     threadManager.run(5);
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
-    threadManager.stop();
-    threadManager.join();
 
-    topology.log_status();
+    while (topology.is_active()) {
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+        std::cout << "\033[2J";
+        topology.log_status();
+    }
+
+    threadManager.join();
     assert(sink.sum == (7 * 2.0 - 1) * 10);
 }
 

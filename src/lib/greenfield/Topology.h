@@ -71,6 +71,7 @@ public:
     // get_graph()              // perhaps build an interactive visual someday
 
     // TODO: These don't belong here. Maybe in a TopologyDebugger instead?
+    bool is_active();
     StreamStatus step(const std::string &arrow_name);
     // run_arrow(string arrow_name)
     // run_message(string source_name)

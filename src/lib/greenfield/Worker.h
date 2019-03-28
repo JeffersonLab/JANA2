@@ -23,7 +23,7 @@ namespace greenfield {
 
     public:
         const uint32_t worker_id;
-        double checkin_time = 1;   // TODO: Determine who should set this and when
+        double checkin_time = 1000000;   // TODO: Determine who should set this and when
 
         bool shutdown_requested = false;   // For communicating with ThreadManager
         bool shutdown_achieved = false;

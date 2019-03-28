@@ -13,11 +13,11 @@ Topology::ArrowStatus::ArrowStatus(Arrow* arrow) {
     thread_count = arrow->get_thread_count();
     chunksize = arrow->get_chunksize();
     messages_completed = arrow->get_message_count();
-    throughput = thread_count / inst_latency;
-    avg_latency = arrow->get_total_latency() / messages_completed;
-    inst_latency = arrow->get_last_latency();
-    avg_overhead = arrow->get_total_overhead() / messages_completed;
-    inst_overhead = arrow->get_last_overhead();
+    avg_latency = arrow->get_total_latency() / messages_completed / 1.0e9;
+    inst_latency = arrow->get_last_latency() / 1.0e9;
+    avg_overhead = arrow->get_total_overhead() / messages_completed / 1.0e9;
+    inst_overhead = arrow->get_last_overhead() / 1.0e9;
+    throughput = messages_completed / inst_latency;
 }
 
 Topology::~Topology() {
@@ -122,7 +122,7 @@ void Topology::log_status() {
         << " +--------------------------+------------+-------------+--------------+--------------+---------------+"
         << LOG_END;
     for (ArrowStatus &as : get_arrow_status()) {
-        LOG_INFO(logger) << " | "
+        LOG_INFO(logger) << " | " << std::setprecision(3)
                          << std::setw(24) << std::left << as.arrow_name << " | "
                          << std::setw(10) << std::right << as.throughput << " |"
                          << std::setw(12) << as.avg_latency << " |"
@@ -158,6 +158,15 @@ StreamStatus Topology::step(const std::string &arrow_name) {
     Arrow *arrow = search->second;
     StreamStatus result = arrow->execute();
     return result;
+}
+
+bool Topology::is_active() {
+    for (auto pair : arrows) {
+        if (pair.second->is_active()) {
+            return true;
+        }
+    }
+    return false;
 }
 
 
