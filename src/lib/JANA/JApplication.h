@@ -1,15 +1,4 @@
-//
-//    File: JApplication.h
-// Created: Wed Oct 11 13:09:35 EDT 2017
-// Creator: davidl (on Darwin harriet.jlab.org 15.6.0 i386)
-//
-// ------ Last repository commit info -----
-// [ Date ]
-// [ Author ]
-// [ Source ]
-// [ Revision ]
-//
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Jefferson Science Associates LLC Copyright Notice:  
 // Copyright 251 2014 Jefferson Science Associates LLC All Rights Reserved. Redistribution
 // and use in source and binary forms, with or without modification, are permitted as a
@@ -105,15 +94,13 @@ class JApplication{
     JApplication(JParameterManager* params = nullptr, std::vector<string>* eventSources = nullptr);
 		virtual ~JApplication();
 
-		void AddSignalHandlers(void);
 		int  GetExitCode(void);
 		void Initialize(void);
 		void PrintFinalReport(void);
 		void PrintStatus(void);
 		void Quit(bool skip_join=false);
-		void Run(uint32_t nthreads=0);
+		void Run();
 		void SetExitCode(int exit_code);
-		void SetMaxThreads(uint32_t);
 		void SetTicker(bool ticker_on=true);
 		void Stop(bool wait_until_idle=false);
 		void Resume(void);
@@ -144,24 +131,21 @@ class JApplication{
 		float GetInstantaneousRate(void);
 		void GetInstantaneousRates(vector<double> &rates_by_queue);
 		void GetIntegratedRates(map<string,double> &rates_by_thread);
-	
+
 		bool IsQuitting(void){ return _quitting; }
 		bool IsDrainingQueues(void){ return _draining_queues; }
-
-		void RemoveJEventProcessor(JEventProcessor *processor);
-		void RemoveJFactoryGenerator(JFactoryGenerator *factory_generator);
-		void RemovePlugin(string &plugin_name);
 
 		string Val2StringWithPrefix(float val);
 		template<typename T> T GetParameterValue(std::string name);
 		template<typename T> JParameter* SetParameterValue(std::string name, T val);
 	
 	protected:
-	
+
+		bool _initialized = false;
+		size_t _nthreads;
 		int _exit_code;
 		bool _skip_join;
 		bool _quitting;
-		int _verbose;
 		bool _draining_queues;
 		bool _ticker_on;
 		std::chrono::time_point<std::chrono::high_resolution_clock> mRunStartTime;
@@ -184,7 +168,6 @@ class JApplication{
 	private:
 
 		// Resource pools
-		// TODO: Add methods to set control parameters
 		JResourcePool<JTask<void>> mVoidTaskPool;
 		JResourcePoolSimple<JFactorySet> mFactorySetPool;
 

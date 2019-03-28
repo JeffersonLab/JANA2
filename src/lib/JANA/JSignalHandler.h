@@ -39,7 +39,7 @@ void ctrlCHandle(int x)
 //-----------------------------------------------------------------
 void USR1Handle(int x)
 {
-	thread th( JStatus::Report );
+	std::thread th( JStatus::Report );
 	th.detach();
 }
 

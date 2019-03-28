@@ -1,16 +1,5 @@
-//
-//    File: JTestMain.h
-// Created: Fri Dec  7 08:42:59 EST 2018
-// Creator: davidl (on Linux jana2.jlab.org 3.10.0-957.el7.x86_64 x86_64)
-//
-// ------ Last repository commit info -----
-// [ Date ]
-// [ Author ]
-// [ Source ]
-// [ Revision ]
-//
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-// Jefferson Science Associates LLC Copyright Notice:  
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Jefferson Science Associates LLC Copyright Notice:
 // Copyright 251 2014 Jefferson Science Associates LLC All Rights Reserved. Redistribution
 // and use in source and binary forms, with or without modification, are permitted as a
 // licensed user provided that the following conditions are met:  
@@ -35,12 +24,8 @@
 // LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 // OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-//
-// Description:
-//
-//
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
 #ifndef _JTestMain_h_
 #define _JTestMain_h_
 

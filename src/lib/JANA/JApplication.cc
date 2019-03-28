@@ -1,15 +1,4 @@
-//
-//    File: JApplication.cc
-// Created: Wed Oct 11 13:09:35 EDT 2017
-// Creator: davidl (on Darwin harriet.jlab.org 15.6.0 i386)
-//
-// ------ Last repository commit info -----
-// [ Date ]
-// [ Author ]
-// [ Source ]
-// [ Revision ]
-//
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Jefferson Science Associates LLC Copyright Notice:  
 // Copyright 251 2014 Jefferson Science Associates LLC All Rights Reserved. Redistribution
 // and use in source and binary forms, with or without modification, are permitted as a
@@ -73,29 +62,25 @@ JApplication *japp = NULL;
 // JApplication    (Constructor)
 //---------------------------------
 JApplication::JApplication(JParameterManager* params,
-                           std::vector<string>* eventSources)
+						   std::vector<string>* eventSources)
 {
 	_exit_code = 0;
-	_verbose = 1;
 	_quitting = false;
 	_draining_queues = false;
 	_ticker_on = true;
 	mNumProcessorsAdded = 0;
 
-  _pmanager = (params == nullptr) ? new JParameterManager() : params;
+	_pmanager = (params == nullptr) ? new JParameterManager() : params;
 	_logger = std::shared_ptr<JLogger>(new JLogger());
 	_eventSourceManager = new JEventSourceManager(this);
 	_threadManager = new JThreadManager(this);
 
-  // TODO: Put this somewhere that makes sense
-	mVoidTaskPool.Set_ControlParams(200, 0); //TODO: Config these!!
-
-  if (eventSources != nullptr) {
-    for (string & e : *eventSources) {
-      LOG_INFO(_logger) << "Adding source: " << e << "\n" << LOG_END;
-      _eventSourceManager->AddEventSource(e);
-    }
-  }
+	if (eventSources != nullptr) {
+		for (string & e : *eventSources) {
+			LOG_INFO(_logger) << "Adding source: " << e << "\n" << LOG_END;
+			_eventSourceManager->AddEventSource(e);
+		}
+	}
 }
 
 //---------------------------------
@@ -118,13 +103,13 @@ void JApplication::AttachPlugins(void)
 	/// Loop over list of plugin names added via AddPlugin() and
 	/// actually attach and intiailize them. See AddPlugin method
 	/// for more.
-	
+
 	bool printPaths = false;
 	GetJParameterManager()->SetDefaultParameter(
-		"JANA:DEBUG_PLUGIN_LOADING", 
-		printPaths, 
-		"Trace the plugin search path and display any loading errors");
-	
+			"JANA:DEBUG_PLUGIN_LOADING",
+			printPaths,
+			"Trace the plugin search path and display any loading errors");
+
 	// In order to give priority to factories added via plugins,
 	// the list of factory generators needs to be cleared so
 	// those added from plugins will be at the front of the list.
@@ -148,11 +133,11 @@ void JApplication::AttachPlugins(void)
 		string path;
 		while(getline(ss, path, ':')) AddPluginPath( path );
 	}
-	
+
 	// Default plugin search path
 	AddPluginPath(".");
 	if(const char *ptr = getenv("JANA_HOME")) AddPluginPath(string(ptr) + "/plugins");
-	
+
 	// Add plugins specified via PLUGINS configuration parameter
 	// (comma separated list).
 	try{
@@ -165,15 +150,15 @@ void JApplication::AttachPlugins(void)
 		LOG_FATAL(_logger) << "Unknown exception while parsing PLUGINS parameter" << LOG_END;
 		SetExitCode(-1);
 		Quit();
-  }
-	
+	}
+
 	// Loop over plugins
 	stringstream err_mess;
 	for(string plugin : _plugins){
 		// Sometimes, the user will include the ".so" suffix in the
 		// plugin name. If they don't, then we add it here.
 		if(plugin.substr(plugin.size()-3)!=".so")plugin = plugin+".so";
-	
+
 		// Loop over paths
 		bool found_plugin=false;
 		for(string path : _plugin_paths){
@@ -193,19 +178,19 @@ void JApplication::AttachPlugins(void)
 			}
 			LOG_TRACE(_logger, printPaths) << "Failed to attach '" << fullpath << "'" << LOG_END;
 		}
-		
+
 		// If we didn't find the plugin, then complain and quit
 		if(!found_plugin){
 
 			LOG_FATAL(_logger) << "\n*** Couldn't find plugin '" << plugin << "'! ***\n" <<
-			             "***        Make sure the JANA_PLUGIN_PATH environment variable is set correctly.\n" <<
-			             "***        To see paths checked, set JANA:DEBUG_PLUGIN_LOADING=1\n"<<
-				     "***        Some hints to the error follow:\n\n" << err_mess.str() << LOG_END;
+							   "***        Make sure the JANA_PLUGIN_PATH environment variable is set correctly.\n" <<
+							   "***        To see paths checked, set JANA:DEBUG_PLUGIN_LOADING=1\n"<<
+							   "***        Some hints to the error follow:\n\n" << err_mess.str() << LOG_END;
 
 			exit(-1);
 		}
 	}
-	
+
 	// Append generators back onto appropriate lists
 	for(auto sGenerator : my_eventSourceGenerators)
 		_eventSourceManager->AddJEventSourceGenerator(sGenerator);
@@ -238,7 +223,7 @@ void JApplication::AttachPlugin(string soname, bool verbose)
 		LOG_TRACE(_logger, verbose) << dlerror() << LOG_END;
 		throw "dlopen failed";
 	}
-	
+
 	// Look for an InitPlugin symbol
 	typedef void InitPlugin_t(JApplication* app);
 	InitPlugin_t *plugin = (InitPlugin_t*)dlsym(handle, "InitPlugin");
@@ -307,7 +292,7 @@ int JApplication::GetExitCode(void)
 	/// JProcessor/JFactory classes to communicate an appropriate
 	/// exit code that a jana program can return upon exit. The
 	/// value can be set via the SetExitCode method.
-	
+
 	return _exit_code;
 }
 
@@ -319,6 +304,19 @@ void JApplication::Initialize(void)
 	/// Initialize the application in preparation for data processing.
 	/// This is called by the Run method so users will usually not
 	/// need to call this directly.
+
+	if (_initialized) return;
+
+	// Set number of threads
+	_nthreads = JCpuInfo::GetNumCpus();
+	_pmanager->SetDefaultParameter("NTHREADS", _nthreads, "The total number of worker threads");
+
+	// Set task pool size
+	int task_pool_size = 200;
+	int task_pool_debuglevel = 0;
+	_pmanager->SetDefaultParameter("JANA:TASK_POOL_SIZE", task_pool_size, "Task pool size");
+	_pmanager->SetDefaultParameter("JANA:TASK_POOL_DEBUGLEVEL", task_pool_debuglevel, "Task pool debug level");
+	mVoidTaskPool.Set_ControlParams(task_pool_size, task_pool_debuglevel);
 
 	// Attach all plugins
 	AttachPlugins();
@@ -416,7 +414,7 @@ void JApplication::PrintFinalReport(void)
 				}else{
 					sSourceNamePrinted = true;
 					jout << sSourceName << string(sSourceMaxNameLength - sSourceName.size(), ' ')
-					     << std::setw(10) << sSource->GetNumEventsProcessed() << "  ";
+						 << std::setw(10) << sSource->GetNumEventsProcessed() << "  ";
 				}
 
 				jout << sQueue->GetName() << string(sQueueMaxNameLength - sQueue->GetName().size(), ' ')
@@ -478,12 +476,8 @@ void JApplication::Quit(bool skip_join)
 //---------------------------------
 // Run
 //---------------------------------
-void JApplication::Run(uint32_t nthreads)
+void JApplication::Run()
 {
-	// Set number of threads
-	nthreads = JCpuInfo::GetNumCpus();
-	_pmanager->SetDefaultParameter("NTHREADS", nthreads, "The total number of worker threads");
-	if (nthreads<=0) nthreads=1;
 
 	// Setup all queues and attach plugins
 	Initialize();
@@ -492,8 +486,8 @@ void JApplication::Run(uint32_t nthreads)
 	if(_quitting) return;
 
 	// Create all remaining threads (one may have been created in Init)
-	LOG_INFO(_logger) << "Creating " << nthreads << " processing threads ..." << LOG_END;
-	_threadManager->CreateThreads(nthreads);
+	LOG_INFO(_logger) << "Creating " << _nthreads << " processing threads ..." << LOG_END;
+	_threadManager->CreateThreads(_nthreads);
 
 	// Optionally set thread affinity
 	try{
@@ -503,7 +497,7 @@ void JApplication::Run(uint32_t nthreads)
 	}catch(...){
 		LOG_ERROR(_logger) << "Unknown exception in JApplication::Run attempting to set thread affinity" << LOG_END;
 	}
-	
+
 	// Print summary of all config parameters (if any aren't default)
 	GetJParameterManager()->PrintParameters(true);
 
@@ -514,13 +508,13 @@ void JApplication::Run(uint32_t nthreads)
 
 	// Monitor status of all threads
 	while( !_quitting ){
-		
+
 		// If we are finishing up (all input sources are closed, and are waiting for all events to finish processing)
 		// This flag is used by the integrated rate calculator
 		// The JThreadManager is in charge of telling all the threads to end
 		if(!_draining_queues)
 			_draining_queues = _eventSourceManager->AreAllFilesClosed();
-		
+
 		// Check if all threads have finished
 		if(_threadManager->AreAllThreadsEnded())
 		{
@@ -530,18 +524,18 @@ void JApplication::Run(uint32_t nthreads)
 
 		// Sleep a few cycles
 		std::this_thread::sleep_for( std::chrono::milliseconds(500) );
-		
+
 		// Print status
 		if( _ticker_on ) PrintStatus();
 	}
-	
+
 	// Join all threads
 	jout << "Event processing ended. " << endl;
 	if (!_skip_join) {
 		cout << "Merging threads ..." << endl;
 		_threadManager->JoinThreads();
 	}
-	
+
 	// Delete event processors
 	for(auto sProcessor : _eventProcessors){
 		sProcessor->Finish(); // (this may not be necessary since it is always next to destructor)
@@ -563,16 +557,8 @@ void JApplication::SetExitCode(int exit_code)
 	/// a meaningful error code if processing is stopped prematurely,
 	/// but the program is able to stop gracefully without a hard 
 	/// exit. See also GetExitCode.
-	
-	_exit_code = exit_code;
-}
 
-//---------------------------------
-// SetMaxThreads
-//---------------------------------
-void JApplication::SetMaxThreads(uint32_t)
-{
-	
+	_exit_code = exit_code;
 }
 
 //---------------------------------
@@ -657,7 +643,7 @@ void JApplication::GetJFactoryGenerators(vector<JFactoryGenerator*> &factory_gen
 //---------------------------------
 // GetJLogger
 //---------------------------------
-std::shared_ptr<JLogger> JApplication::GetJLogger(void) 
+std::shared_ptr<JLogger> JApplication::GetJLogger(void)
 {
 	return _logger;
 }
@@ -669,9 +655,9 @@ std::shared_ptr<JLogger> JApplication::GetJLogger(void)
 JParameterManager* JApplication::GetJParameterManager(void)
 {
 	/// Return pointer to the JParameterManager object.
-	
+
 	if( !_pmanager ) _pmanager = new JParameterManager();
-	
+
 	return _pmanager;
 }
 
@@ -807,7 +793,7 @@ float JApplication::GetInstantaneousRate(void)
 //---------------------------------
 void JApplication::GetInstantaneousRates(vector<double> &rates_by_queue)
 {
-	
+
 }
 
 //---------------------------------
@@ -815,24 +801,7 @@ void JApplication::GetInstantaneousRates(vector<double> &rates_by_queue)
 //---------------------------------
 void JApplication::GetIntegratedRates(map<string,double> &rates_by_thread)
 {
-	
-}
 
-//---------------------------------
-// RemoveJEventProcessor
-//---------------------------------
-void JApplication::RemoveJEventProcessor(JEventProcessor *processor)
-{
-	
-}
-
-
-//---------------------------------
-// RemoveJFactoryGenerator
-//---------------------------------
-void JApplication::RemoveJFactoryGenerator(JFactoryGenerator *factory_generator)
-{
-	
 }
 
 //----------------
@@ -864,7 +833,7 @@ string JApplication::Val2StringWithPrefix(float val)
 		val/=1.0E3;
 		units = "m";
 	}
-	
+
 	char str[256];
 	sprintf(str,"%3.1f %s", val, units);
 

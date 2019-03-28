@@ -12,10 +12,20 @@ title: JANA: Multi-threaded HENP Event Reconstruction
 </table>
 </center>
 
-## Frequently Asked Questions
+## Problem domain
 
-Have a question? [File an issue!](https://github.com/JeffersonLab/JANA2/issues)
+![Alt JANA Simple system with a single queue](images/queues1.png)
+![Alt JANA system with multiple queues](images/queues2.png)
 
-### How can I compile JANA using my own build system?
-> Coming soon!
+## Parallelism concept
+
+## Factories
+
+![Alt JANA Factory Model](images/factory_model.png)
+
+## Event sources
+
+## Event processors
+
+## More complex topologies
 

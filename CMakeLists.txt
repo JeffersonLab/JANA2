@@ -1,0 +1,84 @@
+cmake_minimum_required(VERSION 3.13)
+project(jana2)
+
+set(CMAKE_CXX_STANDARD 14)
+
+#include_directories(src/lib/greenfield)
+include_directories(src/lib/JANA)
+include_directories(src/lib)
+include_directories(src/plugins/JTest)
+include_directories(src/programs/jana)
+include_directories(src/programs/tests)
+
+add_executable(jana2
+        #src/lib/greenfield/Greenfield.cc
+        #src/lib/greenfield/ServiceLocator.h
+        #src/lib/greenfield/Arrow.h
+        src/lib/JANA/JApplication.cc
+        src/lib/JANA/JApplication.h
+        src/lib/JANA/JCpuInfo.cc
+        src/lib/JANA/JCpuInfo.h
+        src/lib/JANA/JEvent.cc
+        src/lib/JANA/JEvent.h
+        src/lib/JANA/JEventProcessor.h
+        src/lib/JANA/JEventSource.cc
+        src/lib/JANA/JEventSource.h
+        src/lib/JANA/JEventSourceGenerator.h
+        src/lib/JANA/JEventSourceGeneratorT.h
+        src/lib/JANA/JEventSourceManager.cc
+        src/lib/JANA/JEventSourceManager.h
+        src/lib/JANA/JException.cc
+        src/lib/JANA/JException.h
+        src/lib/JANA/JFactory.h
+        src/lib/JANA/JFactoryGenerator.h
+        src/lib/JANA/JFactorySet.cc
+        src/lib/JANA/JFactorySet.h
+        src/lib/JANA/JFactoryT.h
+        src/lib/JANA/JFunctions.cc
+        src/lib/JANA/JFunctions.h
+        src/lib/JANA/JLogger.h
+        src/lib/JANA/JObject.cc
+        src/lib/JANA/JObject.h
+        src/lib/JANA/JParameter.cc
+        src/lib/JANA/JParameter.h
+        src/lib/JANA/JParameterManager.cc
+        src/lib/JANA/JParameterManager.h
+        src/lib/JANA/JQueue.h
+        src/lib/JANA/JQueueSet.cc
+        src/lib/JANA/JQueueSet.h
+        src/lib/JANA/JQueueSimple.cc
+        src/lib/JANA/JQueueSimple.h
+        src/lib/JANA/JQueueWithBarriers.cc
+        src/lib/JANA/JQueueWithBarriers.h
+        src/lib/JANA/JQueueWithLock.cc
+        src/lib/JANA/JQueueWithLock.h
+        src/lib/JANA/JResettable.h
+        src/lib/JANA/JResourcePool.h
+        src/lib/JANA/JResourcePoolSimple.h
+        src/lib/JANA/JSignalHandler.h
+        src/lib/JANA/JSourceFactoryGenerator.h
+        src/lib/JANA/JStatus.cc
+        src/lib/JANA/JStatus.h
+        src/lib/JANA/JTask.h
+        src/lib/JANA/JThread.cc
+        src/lib/JANA/JThread.h
+        src/lib/JANA/JThreadManager.cc
+        src/lib/JANA/JThreadManager.h
+        src/lib/JANA/JTypeInfo.h
+        src/lib/JANA/JVersion.h
+        src/plugins/JTest/JTestDataObject.h
+        src/plugins/JTest/JTestDummyDataFactory.h
+        src/plugins/JTest/JTestEventProcessor.h
+        src/plugins/JTest/JTestEventSource.h
+        src/plugins/JTest/JTestDummyDataFactoryGenerator.h
+        src/plugins/JTest/JTestMain.cc
+        src/plugins/JTest/JTestMain.h
+        src/plugins/JTest/JTestHelpers.h
+        src/programs/jana/jana.cc
+        src/programs/jana/JBenchmarking.h
+        src/programs/jana/MyProcessor.cc
+        src/programs/jana/MyProcessor.h
+        src/programs/playground/playground.cc)
+        #src/programs/tests/catch.hpp
+        #src/programs/tests/JServiceLocatorDummies.h
+        #src/programs/tests/JServiceLocatorTests.cc)
