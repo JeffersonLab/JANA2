@@ -39,7 +39,7 @@ namespace greenfield {
 
         auto next = _assignment;
         do {
-            Arrow *candidate = next->second;
+            Arrow *candidate = *next;
             //LOG_TRACE(logger) << "RRS: Examining candidate " << candidate->get_name() << LOG_END;
 
             ++next; // Move the iterator forward

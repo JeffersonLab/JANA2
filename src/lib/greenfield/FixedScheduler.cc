@@ -9,7 +9,7 @@ namespace greenfield {
 
         for (auto& pair : nthreads) {
             auto arrow_name = pair.first;
-            auto arrow = topology.arrows[arrow_name]; // TODO: Safety
+            auto arrow = topology.get_arrow(arrow_name);
             auto threads = pair.second;
             for (int i = 0; i < threads; ++i) {
                 _assignments.push_back(arrow);
@@ -20,8 +20,8 @@ namespace greenfield {
 
     bool FixedScheduler::rebalance(std::string from, std::string to, int delta) {
 
-        Arrow* from_arrow = _topology.arrows[from];
-        Arrow* to_arrow = _topology.arrows[to];
+        Arrow* from_arrow = _topology.get_arrow(from);
+        Arrow* to_arrow = _topology.get_arrow(to);
         size_t nworkers = _assignments.size();
 
         for (uint32_t i=0; i < nworkers && delta > 0; ++i) {

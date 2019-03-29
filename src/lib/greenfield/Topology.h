@@ -41,7 +41,8 @@ public:
 
 
     // TODO: Make these private
-    std::map<std::string, Arrow *> arrows;
+    std::map<std::string, Arrow *> arrow_lookup;
+    std::vector<Arrow *> arrows;
     std::vector<QueueBase *> queues;
 
 private:
@@ -59,6 +60,7 @@ public:
     void addArrow(Arrow *arrow);
     void addQueue(QueueBase *queue);
     void finalize();  // TODO: get rid of finalize so that we can dynamically add arrows
+    Arrow* get_arrow(std::string arrow_name);  // TODO: Should be used internally, not as part of API
 
     void activate(std::string arrow_name);
     void deactivate(std::string arrow_name);

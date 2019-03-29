@@ -22,13 +22,15 @@ Topology::ArrowStatus::ArrowStatus(Arrow* arrow) {
 
 Topology::~Topology() {
 
+    arrow_lookup.clear();
+
     for (auto component : components) {
         // Topology owns _some_ components, but not necessarily all.
         delete component;
     }
-    for (auto pair : arrows) {
+    for (auto arrow : arrows) {
         // Topology owns all arrows.
-        delete pair.second;
+        delete arrow;
     }
     for (auto queue : queues) {
         // Topology owns all queues.
@@ -45,32 +47,36 @@ void Topology::addQueue(QueueBase *queue) {
 }
 
 void Topology::addArrow(Arrow *arrow) {
-    arrows[arrow->get_name()] = arrow;
+    arrows.push_back(arrow);
+    arrow_lookup[arrow->get_name()] = arrow;
 };
 
-void Topology::activate(std::string arrow_name) {
-    auto search = arrows.find(arrow_name);
-    if (search == arrows.end()) {
+Arrow* Topology::get_arrow(std::string arrow_name) {
+
+    auto search = arrow_lookup.find(arrow_name);
+    if (search == arrow_lookup.end()) {
         throw std::runtime_error(arrow_name);
     }
-    arrows[arrow_name]->set_active(true);
-    arrows[arrow_name]->notify_downstream(true);
+    return search->second;
+}
+
+void Topology::activate(std::string arrow_name) {
+    auto arrow = get_arrow(arrow_name);
+    arrow->set_active(true);
+    arrow->notify_downstream(true);
 }
 
 void Topology::deactivate(std::string arrow_name) {
-    auto search = arrows.find(arrow_name);
-    if (search == arrows.end()) {
-        throw std::runtime_error(arrow_name);
-    }
-    arrows[arrow_name]->set_active(false);
+    auto arrow = get_arrow(arrow_name);
+    arrow->set_active(false);
 }
 
 
 std::vector<Topology::ArrowStatus> Topology::get_arrow_status() {
 
     std::vector<ArrowStatus> metrics;
-    for (auto pair : arrows) {
-        metrics.push_back(ArrowStatus(pair.second));
+    for (auto arrow : arrows) {
+        metrics.push_back(ArrowStatus(arrow));
     }
     return metrics;
 }
@@ -90,11 +96,7 @@ std::vector<Topology::QueueStatus> Topology::get_queue_status() {
 
 Topology::ArrowStatus Topology::get_status(const std::string &arrow_name) {
 
-    auto search = arrows.find(arrow_name);
-    if (search == arrows.end()) {
-        throw std::runtime_error(arrow_name);
-    }
-    return ArrowStatus(search->second);
+    return ArrowStatus(get_arrow(arrow_name));
 }
 
 void Topology::log_status() {
@@ -151,18 +153,14 @@ void Topology::log_status() {
 /// The user may want to pause the topology and interact with it manually.
 /// This is particularly powerful when used from inside GDB.
 StreamStatus Topology::step(const std::string &arrow_name) {
-    auto search = arrows.find(arrow_name);
-    if (search == arrows.end()) {
-        throw std::runtime_error(arrow_name);
-    }
-    Arrow *arrow = search->second;
+    Arrow *arrow = get_arrow(arrow_name);
     StreamStatus result = arrow->execute();
     return result;
 }
 
 bool Topology::is_active() {
-    for (auto pair : arrows) {
-        if (pair.second->is_active()) {
+    for (auto arrow : arrows) {
+        if (arrow->is_active()) {
             return true;
         }
     }

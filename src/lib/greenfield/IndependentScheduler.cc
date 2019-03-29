@@ -19,12 +19,7 @@ Arrow* IndependentScheduler::next_assignment (const Report& report) {
     }
     size_t current = next_idx;
     do {
-        // TODO: Fix this after changing topology.arrows to vector
-        auto it = _topology.arrows.begin();
-        for (size_t i=0; i<next_idx; ++i) {
-            it++;
-        }
-        Arrow *candidate = it->second;
+        Arrow *candidate = _topology.arrows[next_idx];
         current += 1;
         current %= _topology.arrows.size();
 

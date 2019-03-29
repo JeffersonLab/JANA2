@@ -84,7 +84,7 @@ namespace greenfield {
 
     private:
         Topology& _topology;
-        std::map<std::string, Arrow*>::iterator _assignment;
+        std::vector<Arrow*>::iterator _assignment;
         std::mutex _mutex;
 
         Arrow* next_assignment();

@@ -55,12 +55,12 @@ namespace greenfield {
             //LOG_INFO(logger) << "Nothing has run yet; should be empty" << LOG_END;
 
             //topology.log_queue_status();
-            topology.arrows["multiply_by_two"]->execute();
-            topology.arrows["subtract_one"]->execute();
-            topology.arrows["sum_everything"]->execute();
-            topology.arrows["multiply_by_two"]->execute();
-            topology.arrows["subtract_one"]->execute();
-            topology.arrows["sum_everything"]->execute();
+            topology.step("multiply_by_two");
+            topology.step("subtract_one");
+            topology.step("sum_everything");
+            topology.step("multiply_by_two");
+            topology.step("subtract_one");
+            topology.step("sum_everything");
             //topology.log_queue_status();
 
             // All `execute` operations are no-ops
@@ -129,10 +129,10 @@ namespace greenfield {
         SECTION("Running each stage in random order (sequentially) yields the correct results") {
             //LOG_INFO(logger) << "Running each stage in arbitrary order yields the correct results" << LOG_END;
 
-            Arrow* arrows[] = {topology.arrows["emit_rand_ints"],
-                               topology.arrows["multiply_by_two"],
-                               topology.arrows["subtract_one"],
-                               topology.arrows["sum_everything"]};
+            Arrow* arrows[] = {topology.get_arrow("emit_rand_ints"),
+                               topology.get_arrow("multiply_by_two"),
+                               topology.get_arrow("subtract_one"),
+                               topology.get_arrow("sum_everything")};
 
             std::map<std::string, StreamStatus> results;
             results["emit_rand_ints"] = StreamStatus::KeepGoing;

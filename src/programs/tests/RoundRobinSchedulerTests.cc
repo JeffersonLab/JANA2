@@ -91,7 +91,7 @@ TEST_CASE("greenfield::RoundRobinScheduler") {
         auto sum_everything_arrow = scheduler.next_assignment(report);
 
         // Last assignment returned sequential arrow "sum_everything"
-        REQUIRE(sum_everything_arrow == topology.arrows["sum_everything"]);
+        REQUIRE(sum_everything_arrow->get_name() == "sum_everything");
 
         std::map<std::string, int> assignment_counts;
 
@@ -119,7 +119,7 @@ TEST_CASE("greenfield::RoundRobinScheduler") {
 
         LOG_INFO(logger) << "---------------------------------------" << LOG_END;
         report.last_result = StreamStatus::KeepGoing;
-        report.assignment = topology.arrows["subtract_one"];
+        report.assignment = topology.get_arrow("subtract_one");
 
         for (int i = 0; i < 4; ++i) {
             Arrow *assignment = scheduler.next_assignment(report);
