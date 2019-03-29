@@ -17,6 +17,7 @@ include_directories(src/programs/tests)
 add_library(greenfield STATIC
         src/lib/greenfield/FixedScheduler.cc
         src/lib/greenfield/RoundRobinScheduler.cc
+        src/lib/greenfield/IndependentScheduler.cc
         src/lib/greenfield/ThreadManager.cc
         src/lib/greenfield/Topology.cc
         src/lib/greenfield/PerfUtils.cc
@@ -29,11 +30,11 @@ add_executable(tests
         src/programs/tests/QueueTests.cc
         src/programs/tests/RoundRobinSchedulerTests.cc
         src/programs/tests/TopologyTests.cc
+        src/programs/tests/SchedulerTests.cc
         )
 
 add_executable(playground
         src/programs/playground/playground.cc
-        src/lib/greenfield/PerfUtils.cc
         )
 
 add_library(jana2 STATIC

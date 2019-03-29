@@ -27,6 +27,7 @@ namespace greenfield {
         for (uint32_t i=0; i < nworkers && delta > 0; ++i) {
             if (_assignments[i] == from_arrow) {
                 _assignments[i] = to_arrow;
+                delta--;
             }
         }
         return delta == 0;
@@ -34,13 +35,18 @@ namespace greenfield {
 
 
     Arrow* FixedScheduler::next_assignment(const Report &report) {
-        // TODO: Do something with report
-        uint32_t worker_id = report.worker_id;
-        if (worker_id < _assignments.size()) {
-            return _assignments[report.worker_id];
-        } else {
+
+        if (report.worker_id >= _assignments.size()) {
             return nullptr;
         }
+        else if (report.last_result == StreamStatus::Finished) {
+            LOG_DEBUG(logger) << "FixedScheduler: Worker " << report.worker_id << " finished => Idling." << LOG_END;
+            return nullptr;
+        }
+        LOG_DEBUG(logger) << "FixedScheduler: Worker " << report.worker_id << " => "
+                          << _assignments[report.worker_id]->get_name() << LOG_END;
+
+        return _assignments[report.worker_id];
     }
 
 
