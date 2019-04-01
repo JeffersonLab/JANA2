@@ -29,6 +29,7 @@ namespace greenfield {
         Logger _logger;
 
         Scheduler::Report report;  // For communicating with Scheduler
+        Arrow* assignment = nullptr;
 
 
         Worker(uint32_t id, Scheduler & scheduler) :
@@ -76,7 +77,7 @@ namespace greenfield {
             while (!shutdown_requested) {
 
                 LOG_TRACE(_logger) << "Worker " << worker_id << " is checking in" << LOG_END;
-                Arrow* assignment = _scheduler.next_assignment(report);
+                assignment = _scheduler.next_assignment(report);
 
                 report.assignment = assignment;
                 report.last_result = StreamStatus::KeepGoing;
@@ -101,6 +102,7 @@ namespace greenfield {
                         report.latency_sum += (stop_time - start_time).count();
                         ++report.event_count;
                     }
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 }
             }
             if (report.assignment != nullptr) {
@@ -114,3 +116,6 @@ namespace greenfield {
         }
     };
 }
+
+
+

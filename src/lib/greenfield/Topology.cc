@@ -3,6 +3,7 @@
 //
 
 #include <greenfield/Topology.h>
+#include "ThreadManager.h"
 
 namespace greenfield {
 
@@ -13,11 +14,14 @@ Topology::ArrowStatus::ArrowStatus(Arrow* arrow) {
     thread_count = arrow->get_thread_count();
     chunksize = arrow->get_chunksize();
     messages_completed = arrow->get_message_count();
-    avg_latency = arrow->get_total_latency() / messages_completed / 1.0e9;
+
+    auto latency = arrow->get_total_latency();
+    avg_latency = latency / messages_completed / 1.0e9;
     inst_latency = arrow->get_last_latency() / 1.0e9;
-    avg_overhead = arrow->get_total_overhead() / messages_completed / 1.0e9;
-    inst_overhead = arrow->get_last_overhead() / 1.0e9;
-    throughput = messages_completed / inst_latency;
+
+    auto overhead = arrow->get_total_overhead();
+    queue_overhead = overhead/(overhead+latency);
+    queue_visits = arrow->get_queue_visits();
 }
 
 Topology::~Topology() {
@@ -46,9 +50,12 @@ void Topology::addQueue(QueueBase *queue) {
     queues.push_back(queue);
 }
 
-void Topology::addArrow(Arrow *arrow) {
+void Topology::addArrow(Arrow *arrow, bool sink) {
     arrows.push_back(arrow);
     arrow_lookup[arrow->get_name()] = arrow;
+    if (sink) {
+        sinks.push_back(arrow);
+    }
 };
 
 Arrow* Topology::get_arrow(std::string arrow_name) {
@@ -69,6 +76,51 @@ void Topology::activate(std::string arrow_name) {
 void Topology::deactivate(std::string arrow_name) {
     auto arrow = get_arrow(arrow_name);
     arrow->set_active(false);
+}
+
+
+Topology::TopologyStatus Topology::get_topology_status() {
+    TopologyStatus result;
+
+    // Messages completed
+    result.messages_completed = 0;
+    for (Arrow* arrow : sinks) {
+        result.messages_completed += arrow->get_message_count();
+    }
+    uint64_t message_delta = result.messages_completed - _last_message_count;
+    _last_message_count = result.messages_completed;
+
+    // Uptime
+    auto current_time = std::chrono::steady_clock::now();
+    uint64_t time_delta = (current_time - _last_time).count();
+    _last_time = current_time;
+    result.uptime = (current_time - _start_time).count() / 1e9;
+
+    // Throughput
+    result.avg_throughput = result.messages_completed / result.uptime / 1e3;
+    result.inst_throughput = message_delta / time_delta / 1e3;
+
+    // Sequential bottleneck
+    double worst_seq_latency = 0;
+    for (Arrow* arrow : arrows) {
+        if (!arrow->is_parallel()) {
+            worst_seq_latency = std::max(worst_seq_latency, arrow->get_total_latency()/arrow->get_message_count());
+        }
+    }
+    result.seq_bottleneck = 1 / worst_seq_latency;
+    result.efficiency = result.avg_throughput/result.seq_bottleneck;
+
+    // Scheduler visits
+    result.scheduler_visits = _scheduler_visits;
+    if (result.uptime == 0) {
+        result.scheduler_overhead = 0;
+    }
+    else {
+        result.scheduler_overhead = _scheduler_time.count() / (result.uptime * _ncpus);
+    }
+
+    return result;
+
 }
 
 
@@ -100,11 +152,28 @@ Topology::ArrowStatus Topology::get_status(const std::string &arrow_name) {
 }
 
 void Topology::log_status() {
-    LOG_INFO(logger) << " +--------------------------+-----+-----+---------+-------+-------------+" << LOG_END;
-    LOG_INFO(logger) << " |           Name           | Par | Act | Threads | Chunk |  Completed  |" << LOG_END;
-    LOG_INFO(logger) << " +--------------------------+-----+-----+---------+-------+-------------+" << LOG_END;
-    for (ArrowStatus &as : get_arrow_status()) {
-        LOG_INFO(logger) << " | "
+
+    auto s = get_topology_status();
+
+    LOG_INFO(logger) << "TOPOLOGY STATUS" << LOG_END;
+    LOG_INFO(logger) << "---------------" << LOG_END;
+    LOG_INFO(logger) << "Uptime [s]:                        " << std::setprecision(3) << s.uptime << LOG_END;
+    LOG_INFO(logger) << "Completed events [count]:          " << s.messages_completed << LOG_END;
+    LOG_INFO(logger) << "Avg throughput [kEvent/sec]:       " << s.avg_throughput << LOG_END;
+    LOG_INFO(logger) << "Inst throughput [kEvent/sec]:      " << s.inst_throughput << LOG_END;
+    LOG_INFO(logger) << "Optimal throughput [kEvent/sec]:   " << s.seq_bottleneck << LOG_END;
+    LOG_INFO(logger) << "Throughput efficiency [0..1]:      " << s.efficiency << LOG_END;
+    LOG_INFO(logger) << LOG_END;
+    LOG_INFO(logger) << "Scheduler visits [count]:          " << s.scheduler_visits << LOG_END;
+    LOG_INFO(logger) << "Scheduler overhead [0..1]:         " << s.scheduler_overhead << LOG_END;
+    LOG_INFO(logger) << LOG_END;
+    LOG_INFO(logger) << "ARROW STATUS" << LOG_END;
+    auto statuses = get_arrow_status();
+    LOG_INFO(logger) << "+--------------------------+-----+-----+---------+-------+-------------+" << LOG_END;
+    LOG_INFO(logger) << "|           Name           | Par | Act | Threads | Chunk |  Completed  |" << LOG_END;
+    LOG_INFO(logger) << "+--------------------------+-----+-----+---------+-------+-------------+" << LOG_END;
+    for (ArrowStatus &as : statuses) {
+        LOG_INFO(logger) << "| "
                          << std::setw(24) << std::left << as.arrow_name << " | "
                          << std::setw(3) << std::right << (as.is_parallel ? " T " : " F ") << " | "
                          << std::setw(3) << (as.is_active ? " T " : " F ") << " | "
@@ -113,40 +182,57 @@ void Topology::log_status() {
                          << std::setw(12) << as.messages_completed << " |"
                          << LOG_END;
     }
-    LOG_INFO(logger) << " +--------------------------+-----+-----+---------+-------+-------------+" << LOG_END;
+    LOG_INFO(logger) << "+--------------------------+-----+-----+---------+-------+-------------+" << LOG_END;
     LOG_INFO(logger)
-        << " +--------------------------+------------+-------------+--------------+--------------+---------------+"
+        << "+--------------------------+-------------+--------------+----------------+--------------+" << LOG_END;
+    LOG_INFO(logger)
+        << "|           Name           | Avg latency | Inst latency | Queue overhead | Queue visits | " << LOG_END;
+    LOG_INFO(logger)
+        << "|                          | [ms/event]  |  [ms/event]  |     [0..1]     |    [count]   | "
         << LOG_END;
     LOG_INFO(logger)
-        << " |           Name           | Throughput | Avg latency | Inst latency | Avg overhead | Inst overhead |"
-        << LOG_END;
-    LOG_INFO(logger)
-        << " +--------------------------+------------+-------------+--------------+--------------+---------------+"
-        << LOG_END;
-    for (ArrowStatus &as : get_arrow_status()) {
-        LOG_INFO(logger) << " | " << std::setprecision(3)
+        << "+--------------------------+-------------+--------------+----------------+--------------+" << LOG_END;
+
+    for (ArrowStatus &as : statuses) {
+        LOG_INFO(logger) << "| " << std::setprecision(3)
                          << std::setw(24) << std::left << as.arrow_name << " | "
-                         << std::setw(10) << std::right << as.throughput << " |"
-                         << std::setw(12) << as.avg_latency << " |"
+                         << std::setw(11) << as.avg_latency << " |"
                          << std::setw(13) << as.inst_latency << " |"
-                         << std::setw(13) << as.avg_overhead << " |"
-                         << std::setw(14) << as.inst_overhead << " |"
+                         << std::setw(15) << as.queue_overhead << " |"
+                         << std::setw(12) << as.queue_visits << " |"
                          << LOG_END;
     }
     LOG_INFO(logger)
-        << " +--------------------------+------------+-------------+--------------+--------------+---------------+"
-        << LOG_END;
-    LOG_INFO(logger) << " +--------------------------+---------+-----------+------+" << LOG_END;
-    LOG_INFO(logger) << " |           Name           | Pending | Threshold | More |" << LOG_END;
-    LOG_INFO(logger) << " +--------------------------+---------+-----------+------+" << LOG_END;
+        << "+--------------------------+-------------+--------------+----------------+--------------+" << LOG_END;
+
+    LOG_INFO(logger) << "QUEUE STATUS" << LOG_END;
+    LOG_INFO(logger) << "+--------------------------+---------+-----------+------+" << LOG_END;
+    LOG_INFO(logger) << "|           Name           | Pending | Threshold | More |" << LOG_END;
+    LOG_INFO(logger) << "+--------------------------+---------+-----------+------+" << LOG_END;
     for (QueueStatus &qs : get_queue_status()) {
-        LOG_INFO(logger) << " | "
+        LOG_INFO(logger) << "| "
                          << std::setw(24) << std::left << qs.queue_name << " |"
                          << std::setw(8) << std::right << qs.message_count << " |"
                          << std::setw(10) << qs.threshold << " |  "
                          << std::setw(1) << (qs.is_active ? "T" : "F") << "   |" << LOG_END;
     }
-    LOG_INFO(logger) << " +--------------------------+---------+-----------+------+" << LOG_END;
+    LOG_INFO(logger) << "+--------------------------+---------+-----------+------+" << LOG_END;
+
+    LOG_INFO(logger) << LOG_END;
+
+    if (_threadManager != nullptr) {
+        LOG_INFO(logger) << "WORKER STATUS" << LOG_END;
+        LOG_INFO(logger) << "+----+---------+---------------------+" << LOG_END;
+        LOG_INFO(logger) << "| ID | Running | Arrow name          |" << LOG_END;
+        LOG_INFO(logger) << "+----+---------+---------------------+" << LOG_END;
+        for (ThreadManager::WorkerStatus ws : _threadManager->get_worker_statuses()) {
+            LOG_INFO(logger) << " | "
+                             << std::setw(4) << ws.worker_id << " |"
+                             << std::setw(7) << ((ws.is_running) ? "   T   " : "   F   ") << " | "
+                             << std::setw(24) << std::left << ws.arrow_name << " |" << LOG_END;
+        }
+        LOG_INFO(logger) << "+----+---------+---------------------+" << LOG_END;
+    }
 }
 
 
@@ -166,6 +252,21 @@ bool Topology::is_active() {
     }
     return false;
 }
+
+class RoundRobinScheduler;
+
+void Topology::run(int nthreads) {
+
+    _scheduler = new RoundRobinScheduler(*this);
+    //_scheduler->logger = Logger::everything();
+    _threadManager = new ThreadManager(*_scheduler);
+    //_threadManager->logger = Logger::everything();
+    _threadManager->run(nthreads);
+    _start_time = std::chrono::steady_clock::now();
+    _last_time = _start_time;
+    _ncpus = nthreads;
+}
+
 
 
 } // namespace greenfield

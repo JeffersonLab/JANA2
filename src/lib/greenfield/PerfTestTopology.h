@@ -23,12 +23,12 @@ struct Event {
 
 class PerfTestSource : public Source<Event*> {
     std::string write_key;
-    long latency;
-    long latency_spread;
-    long size;
-    long size_spread;
-    long next_event_index;
-    double sum_over_all_events;
+    long latency = 200000;
+    long latency_spread = 0;
+    long size = 10;
+    long size_spread = 0;
+    long next_event_index = 0;
+    double sum_over_all_events = 0;
 
     virtual void initialize() {}
     virtual void finalize() {}
@@ -47,12 +47,12 @@ class PerfTestSource : public Source<Event*> {
 };
 
 class PerfTestMapper : public ParallelProcessor<Event*, Event*> {
-    std::string read_key;
-    std::string write_key;
-    long latency;
-    long latency_spread;
-    long size;
-    long size_spread;
+    std::string read_key = "disentangled";
+    std::string write_key = "processed";
+    long latency = 4000000;
+    long latency_spread = 0;
+    long size = 100;
+    long size_spread = 0;
 
     virtual Event* process(Event* event) {
         consumeCPU(randint(latency-latency_spread, latency+latency_spread));
@@ -66,14 +66,15 @@ class PerfTestMapper : public ParallelProcessor<Event*, Event*> {
 };
 
 class PerfTestReducer : public Sink<Event*> {
-    std::string read_key;
-    long latency;
-    long latency_spread;
-    double sum_over_all_events;
+    std::string read_key = "processed";
+    long latency = 500000;
+    long latency_spread = 0;
+    double sum_over_all_events = 0;
 
     virtual void initialize() {}
     virtual void finalize() {}
     virtual void outprocess(Event* event) {
+        std::cout << "Performing reduction" << std::endl;
         consumeCPU(randint(latency-latency_spread, latency+latency_spread));
         event->reduce_sum = readMemory(event->data[read_key], event->data[read_key].size());
         sum_over_all_events += event->reduce_sum;
@@ -109,10 +110,11 @@ public:
         addManagedComponent(mapper2);
         addManagedComponent(sink);
 
+
         addArrow(new SourceArrow<Event*>("parse", *source, q1));
         addArrow(new MapArrow<Event*, Event*>("disentangle", *mapper1, q1, q2));
         addArrow(new MapArrow<Event*, Event*>("process", *mapper2, q2, q3));
-        addArrow(new SinkArrow<Event*>("plot", *sink, q3));
+        addArrow(new SinkArrow<Event*>("plot", *sink, q3), true);
 
     }
 };

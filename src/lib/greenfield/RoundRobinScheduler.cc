@@ -20,6 +20,7 @@ namespace greenfield {
             // We need a new assignment
 
             _mutex.lock();
+            _topology._scheduler_visits ++; // TODO: Do this more generally
             if (next != nullptr) { next->update_thread_count(-1); }
             next = next_assignment();
             if (next != nullptr) { next->update_thread_count(1); }
@@ -37,6 +38,7 @@ namespace greenfield {
 
     Arrow* RoundRobinScheduler::next_assignment() {
 
+        auto start_time = std::chrono::steady_clock::now();
         auto next = _assignment;
         do {
             Arrow *candidate = *next;
@@ -52,6 +54,8 @@ namespace greenfield {
 
                 // Found a plausible candidate; done
                 _assignment = next; // Next time, continue right where we left off
+                auto stop_time = std::chrono::steady_clock::now();
+                _topology._scheduler_time += (stop_time-start_time);
                 return candidate;
             }
 

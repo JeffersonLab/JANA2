@@ -21,7 +21,8 @@ private:
     const bool _is_parallel;           // Whether or not it is safe to parallelize
 
     // Written internally, read externally
-    size_t _message_count = 0;    // Total number of messages completed by this arrow
+    size_t _message_count = 0;   // Total number of messages completed by this arrow
+    size_t _queue_visits = 0;    // Total number of times execute() calls inqueue.pop()
     double _total_latency = 0;   // Total time spent doing actual work (across all cpus)
     double _total_overhead = 0;  // Total time spent pushing and popping from queues
     double _last_latency = 0;    // Most recent latency measurement (from a single cpu)
@@ -52,6 +53,11 @@ public:
         return _message_count;
     }
 
+    size_t get_queue_visits() {
+        std::lock_guard<std::mutex> lock(_mutex);
+        return _queue_visits;
+    }
+
     double get_total_latency() {
         std::lock_guard<std::mutex> lock(_mutex);
         return _total_latency;
@@ -80,6 +86,11 @@ protected:
     void update_message_count(size_t message_count_delta) {
         std::lock_guard<std::mutex> lock(_mutex);
         _message_count += message_count_delta;
+    }
+
+    void update_queue_visits(size_t queue_visits_delta) {
+        std::lock_guard<std::mutex> lock(_mutex);
+        _queue_visits += queue_visits_delta;
     }
 
     void update_total_latency(double total_latency_delta) {

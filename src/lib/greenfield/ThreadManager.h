@@ -32,6 +32,12 @@ namespace greenfield {
 
         enum class Response { Success, InProgress, NotRunning, AlreadyRunning };
 
+        struct WorkerStatus {
+            int worker_id;
+            bool is_running;
+            std::string arrow_name;
+        };
+
 
     private:
 
@@ -49,6 +55,9 @@ namespace greenfield {
 
         /// Returns the current state of the TopologyManager
         Status get_status();
+
+        /// Reports the current activity of each Worker
+        std::vector<WorkerStatus> get_worker_statuses();
 
         /// The ThreadManager is idle until start() is called. run() is nonblocking.
         /// This can fail: AlreadyRunning

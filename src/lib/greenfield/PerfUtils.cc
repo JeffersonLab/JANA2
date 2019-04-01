@@ -15,10 +15,14 @@ thread_local std::mt19937* generator = nullptr;
 uint64_t consumeCPU(long microsecs) {
 
     auto start_time = std::chrono::steady_clock::now();
-    auto stop_time = start_time;
+    auto duration = std::chrono::microseconds(microsecs);
     uint64_t result = 0;
-    while ((stop_time - start_time).count() < microsecs) {
-        ++result;
+
+    while ((std::chrono::steady_clock::now() - start_time) < duration) {
+
+        for (int x=0; x<randint(10,1000); ++x) {
+            result++;
+        }
     }
     return result;
 }

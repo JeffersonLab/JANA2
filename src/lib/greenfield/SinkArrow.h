@@ -58,6 +58,7 @@ public:
         auto overhead = (stop_time - start_time).count() - latency;
 
         update_total_overhead(overhead);
+        update_queue_visits(1);
 
         if (message_count != 0) {
             update_message_count(message_count);
