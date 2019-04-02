@@ -16,19 +16,19 @@ namespace greenfield {
 
 struct Event {
     long event_index;
-    std::map<std::string, std::vector<double>> data;
-    double emit_sum;
-    double reduce_sum;
+    std::map<std::string, std::vector<char>> data;
+    long emit_sum;
+    long reduce_sum;
 };
 
-class PerfTestSource : public Source<Event*> {
+struct PerfTestSource : public Source<Event*> {
     std::string write_key;
-    long latency = 200000;
-    long latency_spread = 0;
-    long size = 10;
-    long size_spread = 0;
+    int latency_ms = 100;
+    int latency_spread = 0;
+    int write_bytes = 100;
+    int write_spread = 0;
     long next_event_index = 0;
-    double sum_over_all_events = 0;
+    long sum_over_all_events = 0;
 
     virtual void initialize() {}
     virtual void finalize() {}
@@ -36,9 +36,9 @@ class PerfTestSource : public Source<Event*> {
     virtual SourceStatus inprocess(std::vector<Event*>& ts, size_t count) {
         for (size_t i=0; i<count; ++i) {
             Event* e = new Event;
-            consumeCPU(randint(latency-latency_spread, latency+latency_spread));
-            long nitems = randint(size-size_spread, size+size_spread);
-            e->emit_sum = writeMemory(e->data[write_key], nitems);
+            consume_cpu_ms(randint(latency_ms-latency_spread, latency_ms+latency_spread));
+            int bytes = randint(write_bytes-write_spread, write_bytes+write_spread);
+            e->emit_sum = writeMemory(e->data[write_key], bytes);
             e->event_index = next_event_index++;
             ts.push_back(e);
         }
@@ -46,36 +46,36 @@ class PerfTestSource : public Source<Event*> {
     }
 };
 
-class PerfTestMapper : public ParallelProcessor<Event*, Event*> {
+struct PerfTestMapper : public ParallelProcessor<Event*, Event*> {
     std::string read_key = "disentangled";
     std::string write_key = "processed";
-    long latency = 4000000;
+    long latency_ms = 100;
     long latency_spread = 0;
-    long size = 100;
-    long size_spread = 0;
+    long write_bytes = 100;
+    long write_spread = 0;
 
     virtual Event* process(Event* event) {
-        consumeCPU(randint(latency-latency_spread, latency+latency_spread));
+        consume_cpu_ms(randint(latency_ms-latency_spread, latency_ms+latency_spread));
         long sum = readMemory(event->data[read_key], event->data[read_key].size());
-        long nitems = randint(size-size_spread, size+size_spread);
-        writeMemory(event->data[write_key], nitems);
+        sum++; // Suppress compiler warning
+        long bytes = randint(write_bytes-write_spread, write_bytes+write_spread);
+        writeMemory(event->data[write_key], bytes);
         return event;
     };
 
 
 };
 
-class PerfTestReducer : public Sink<Event*> {
+struct PerfTestReducer : public Sink<Event*> {
     std::string read_key = "processed";
-    long latency = 500000;
+    long latency_ms = 100;
     long latency_spread = 0;
     double sum_over_all_events = 0;
 
     virtual void initialize() {}
     virtual void finalize() {}
     virtual void outprocess(Event* event) {
-        std::cout << "Performing reduction" << std::endl;
-        consumeCPU(randint(latency-latency_spread, latency+latency_spread));
+        consume_cpu_ms(randint(latency_ms-latency_spread, latency_ms+latency_spread));
         event->reduce_sum = readMemory(event->data[read_key], event->data[read_key].size());
         sum_over_all_events += event->reduce_sum;
     }

@@ -12,10 +12,10 @@ namespace greenfield {
 
 thread_local std::mt19937* generator = nullptr;
 
-uint64_t consumeCPU(long microsecs) {
+uint64_t consume_cpu_ms(long millisecs) {
 
     auto start_time = std::chrono::steady_clock::now();
-    auto duration = std::chrono::microseconds(microsecs);
+    auto duration = std::chrono::milliseconds(millisecs);
     uint64_t result = 0;
 
     while ((std::chrono::steady_clock::now() - start_time) < duration) {
@@ -37,17 +37,25 @@ int randint(int min, int max) {
     return distribution(*generator);
 }
 
+int randchar(char min, char max) {
+
+    std::hash<std::thread::id> hasher;
+    long seed = clock() + hasher(std::this_thread::get_id());
+    if (!generator) generator = new std::mt19937(seed);
+    std::uniform_int_distribution<char> distribution(min, max);
+    return distribution(*generator);
+}
 
 double randdouble() {
     return (*generator)();
 }
 
 
-size_t writeMemory(std::vector<double> &buffer, size_t count) {
+size_t writeMemory(std::vector<char> &buffer, size_t count) {
 
-    size_t sum;
-    for (int i = 0; i < count; ++i) {
-        int x = randint(0, 100);
+    size_t sum = 0;
+    for (size_t i = 0; i < count; ++i) {
+        char x = randchar(-128, 127);
         buffer.push_back(x);
         sum += x;
     }
@@ -55,7 +63,7 @@ size_t writeMemory(std::vector<double> &buffer, size_t count) {
 }
 
 
-size_t readMemory(std::vector<double> &buffer, size_t count) {
+size_t readMemory(std::vector<char> &buffer, size_t count) {
 
     count = std::min(count, buffer.size());
     size_t sum = 0;

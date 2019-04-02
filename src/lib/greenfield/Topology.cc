@@ -199,7 +199,7 @@ void Topology::log_status() {
                          << std::setw(11) << as.avg_latency << " |"
                          << std::setw(13) << as.inst_latency << " |"
                          << std::setw(15) << as.queue_overhead << " |"
-                         << std::setw(12) << as.queue_visits << " |"
+                         << std::setw(13) << as.queue_visits << " |"
                          << LOG_END;
     }
     LOG_INFO(logger)
@@ -226,10 +226,10 @@ void Topology::log_status() {
         LOG_INFO(logger) << "| ID | Running | Arrow name          |" << LOG_END;
         LOG_INFO(logger) << "+----+---------+---------------------+" << LOG_END;
         for (ThreadManager::WorkerStatus ws : _threadManager->get_worker_statuses()) {
-            LOG_INFO(logger) << " | "
-                             << std::setw(4) << ws.worker_id << " |"
+            LOG_INFO(logger) << "|"
+                             << std::setw(3) << ws.worker_id << " |"
                              << std::setw(7) << ((ws.is_running) ? "   T   " : "   F   ") << " | "
-                             << std::setw(24) << std::left << ws.arrow_name << " |" << LOG_END;
+                             << std::setw(20) << std::left << ws.arrow_name << " |" << LOG_END;
         }
         LOG_INFO(logger) << "+----+---------+---------------------+" << LOG_END;
     }

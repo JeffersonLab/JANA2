@@ -86,7 +86,7 @@ public:
     virtual ~Topology();
 
     void addManagedComponent(Component *component);
-    void addArrow(Arrow *arrow, bool sink=true);
+    void addArrow(Arrow *arrow, bool sink=false);
     void addQueue(QueueBase *queue);
     void finalize();  // TODO: get rid of finalize so that we can dynamically add arrows
     Arrow* get_arrow(std::string arrow_name);  // TODO: Should be used internally, not as part of API

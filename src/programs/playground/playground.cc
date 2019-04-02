@@ -12,7 +12,24 @@ using namespace greenfield;
 
 
 int main() {
-    PerfTestTopology topology;
+
+    PerfTestSource parse;
+    PerfTestMapper disentangle;
+    PerfTestMapper track;
+    PerfTestReducer plot;
+
+    parse.latency_ms = 200;
+    disentangle.latency_ms = 200;
+    track.latency_ms = 200;
+    plot.latency_ms = 200;
+
+    LinearTopologyBuilder builder;
+    builder.addSource("parse", parse);
+    builder.addProcessor("disentangle", disentangle);
+    builder.addProcessor("track", track);
+    builder.addSink("plot", plot);
+
+    Topology topology = builder.get();
     topology.logger = Logger(JLogLevel::TRACE, &std::cout);
     topology.activate("parse");
     topology.log_status();
@@ -20,11 +37,13 @@ int main() {
     topology.run(4);
 
 //    while (topology.is_active()) {
-    for (int i=0; i<100; ++i) {  // This topology will run indefinitely
+    for (int i=0; i<10; ++i) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1000));
         std::cout << "\033[2J";
         topology.log_status();
     }
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    topology.log_status();
 }
 
 

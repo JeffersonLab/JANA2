@@ -66,7 +66,7 @@ public:
         input_queue->set_name(name + "_queue");
         assert(input_queue != nullptr);
         auto arrow = new SinkArrow<S>(name, sink, input_queue);
-        topology->addArrow(arrow);
+        topology->addArrow(arrow, true);
         return *this;
     }
 
