@@ -92,7 +92,7 @@ Topology::TopologyStatus Topology::get_topology_status() {
 
     // Uptime
     auto current_time = std::chrono::steady_clock::now();
-    double time_delta = std::chrono::duration<float>(current_time - _last_time).count();
+    double time_delta = std::chrono::duration<double>(current_time - _last_time).count();
     _last_time = current_time;
     result.uptime_s = (current_time - _start_time).count() / 1e9;
 
@@ -100,15 +100,21 @@ Topology::TopologyStatus Topology::get_topology_status() {
     result.avg_throughput_hz = result.messages_completed / result.uptime_s;
     result.inst_throughput_hz = (message_delta * 1.0) / time_delta;
 
-    // Sequential bottleneck
+    // bottlenecks
     double worst_seq_latency = 0;
+    double worst_par_latency = 0;
     for (Arrow* arrow : arrows) {
-        if (!arrow->is_parallel()) {
+        if (arrow->is_parallel()) {
+            worst_par_latency = std::max(worst_par_latency, arrow->get_total_latency()/arrow->get_message_count());
+        } else {
             worst_seq_latency = std::max(worst_seq_latency, arrow->get_total_latency()/arrow->get_message_count());
         }
     }
     result.seq_bottleneck_hz = 1e9 / worst_seq_latency;
-    result.efficiency_frac = result.avg_throughput_hz/result.seq_bottleneck_hz;
+    result.par_bottleneck_hz = 1e9 * _ncpus / worst_par_latency;
+
+    auto tighter_bottleneck = std::min(result.seq_bottleneck_hz, result.par_bottleneck_hz);
+    result.efficiency_frac = result.avg_throughput_hz/tighter_bottleneck;
 
     // Scheduler visits
     result.scheduler_visit_count = _scheduler_visits;
@@ -163,6 +169,7 @@ void Topology::log_status() {
     LOG_INFO(logger) << "Avg throughput [Hz]:         " << std::setprecision(3) << s.avg_throughput_hz << LOG_END;
     LOG_INFO(logger) << "Inst throughput [Hz]:        " << std::setprecision(3) << s.inst_throughput_hz << LOG_END;
     LOG_INFO(logger) << "Sequential bottleneck [Hz]:  " << std::setprecision(3) << s.seq_bottleneck_hz << LOG_END;
+    LOG_INFO(logger) << "Parallel bottleneck [Hz]:    " << std::setprecision(3) << s.par_bottleneck_hz << LOG_END;
     LOG_INFO(logger) << "Efficiency [0..1]:           " << std::setprecision(3) << s.efficiency_frac << LOG_END;
     LOG_INFO(logger) << LOG_END;
     LOG_INFO(logger) << "Scheduler visits [count]:          " << s.scheduler_visit_count << LOG_END;

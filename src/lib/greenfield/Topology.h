@@ -24,6 +24,7 @@ public:
         double avg_throughput_hz;
         double inst_throughput_hz;
         double seq_bottleneck_hz;
+        double par_bottleneck_hz;
         double efficiency_frac;
         uint64_t scheduler_visit_count;
         double scheduler_overhead_frac;
