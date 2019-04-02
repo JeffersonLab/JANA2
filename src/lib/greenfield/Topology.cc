@@ -16,12 +16,12 @@ Topology::ArrowStatus::ArrowStatus(Arrow* arrow) {
     messages_completed = arrow->get_message_count();
 
     auto latency = arrow->get_total_latency();
-    avg_latency = latency / messages_completed / 1.0e9;
-    inst_latency = arrow->get_last_latency() / 1.0e9;
+    avg_latency_ms = latency / messages_completed / 1.0e6;
+    inst_latency_ms = arrow->get_last_latency() / 1.0e6;
 
     auto overhead = arrow->get_total_overhead();
-    queue_overhead = overhead/(overhead+latency);
-    queue_visits = arrow->get_queue_visits();
+    queue_overhead_frac = overhead/(overhead+latency);
+    queue_visit_count = arrow->get_queue_visits();
 }
 
 Topology::~Topology() {
@@ -92,13 +92,13 @@ Topology::TopologyStatus Topology::get_topology_status() {
 
     // Uptime
     auto current_time = std::chrono::steady_clock::now();
-    uint64_t time_delta = (current_time - _last_time).count();
+    double time_delta = std::chrono::duration<float>(current_time - _last_time).count();
     _last_time = current_time;
-    result.uptime = (current_time - _start_time).count() / 1e9;
+    result.uptime_s = (current_time - _start_time).count() / 1e9;
 
     // Throughput
-    result.avg_throughput = result.messages_completed / result.uptime / 1e3;
-    result.inst_throughput = message_delta / time_delta / 1e3;
+    result.avg_throughput_hz = result.messages_completed / result.uptime_s;
+    result.inst_throughput_hz = (message_delta * 1.0) / time_delta;
 
     // Sequential bottleneck
     double worst_seq_latency = 0;
@@ -107,16 +107,17 @@ Topology::TopologyStatus Topology::get_topology_status() {
             worst_seq_latency = std::max(worst_seq_latency, arrow->get_total_latency()/arrow->get_message_count());
         }
     }
-    result.seq_bottleneck = 1 / worst_seq_latency;
-    result.efficiency = result.avg_throughput/result.seq_bottleneck;
+    result.seq_bottleneck_hz = 1e9 / worst_seq_latency;
+    result.efficiency_frac = result.avg_throughput_hz/result.seq_bottleneck_hz;
 
     // Scheduler visits
-    result.scheduler_visits = _scheduler_visits;
-    if (result.uptime == 0) {
-        result.scheduler_overhead = 0;
+    result.scheduler_visit_count = _scheduler_visits;
+    if (result.uptime_s == 0) {
+        result.scheduler_overhead_frac = 0;
     }
     else {
-        result.scheduler_overhead = _scheduler_time.count() / (result.uptime * _ncpus);
+        auto scheduler_time = std::chrono::duration<double>(_scheduler_time);
+        result.scheduler_overhead_frac = scheduler_time.count() / (result.uptime_s * _ncpus);
     }
 
     return result;
@@ -157,15 +158,15 @@ void Topology::log_status() {
 
     LOG_INFO(logger) << "TOPOLOGY STATUS" << LOG_END;
     LOG_INFO(logger) << "---------------" << LOG_END;
-    LOG_INFO(logger) << "Uptime [s]:                        " << std::setprecision(3) << s.uptime << LOG_END;
-    LOG_INFO(logger) << "Completed events [count]:          " << s.messages_completed << LOG_END;
-    LOG_INFO(logger) << "Avg throughput [kEvent/sec]:       " << s.avg_throughput << LOG_END;
-    LOG_INFO(logger) << "Inst throughput [kEvent/sec]:      " << s.inst_throughput << LOG_END;
-    LOG_INFO(logger) << "Optimal throughput [kEvent/sec]:   " << s.seq_bottleneck << LOG_END;
-    LOG_INFO(logger) << "Throughput efficiency [0..1]:      " << s.efficiency << LOG_END;
+    LOG_INFO(logger) << "Uptime [s]:                  " << std::setprecision(4) << s.uptime_s << LOG_END;
+    LOG_INFO(logger) << "Completed events [count]:    " << s.messages_completed << LOG_END;
+    LOG_INFO(logger) << "Avg throughput [Hz]:         " << std::setprecision(3) << s.avg_throughput_hz << LOG_END;
+    LOG_INFO(logger) << "Inst throughput [Hz]:        " << std::setprecision(3) << s.inst_throughput_hz << LOG_END;
+    LOG_INFO(logger) << "Sequential bottleneck [Hz]:  " << std::setprecision(3) << s.seq_bottleneck_hz << LOG_END;
+    LOG_INFO(logger) << "Efficiency [0..1]:           " << std::setprecision(3) << s.efficiency_frac << LOG_END;
     LOG_INFO(logger) << LOG_END;
-    LOG_INFO(logger) << "Scheduler visits [count]:          " << s.scheduler_visits << LOG_END;
-    LOG_INFO(logger) << "Scheduler overhead [0..1]:         " << s.scheduler_overhead << LOG_END;
+    LOG_INFO(logger) << "Scheduler visits [count]:          " << s.scheduler_visit_count << LOG_END;
+    LOG_INFO(logger) << "Scheduler overhead [0..1]:         " << std::setprecision(3) << s.scheduler_overhead_frac << LOG_END;
     LOG_INFO(logger) << LOG_END;
     LOG_INFO(logger) << "ARROW STATUS" << LOG_END;
     auto statuses = get_arrow_status();
@@ -196,10 +197,10 @@ void Topology::log_status() {
     for (ArrowStatus &as : statuses) {
         LOG_INFO(logger) << "| " << std::setprecision(3)
                          << std::setw(24) << std::left << as.arrow_name << " | "
-                         << std::setw(11) << as.avg_latency << " |"
-                         << std::setw(13) << as.inst_latency << " |"
-                         << std::setw(15) << as.queue_overhead << " |"
-                         << std::setw(13) << as.queue_visits << " |"
+                         << std::setw(11) << std::right << as.avg_latency_ms << " |"
+                         << std::setw(13) << as.inst_latency_ms << " |"
+                         << std::setw(15) << as.queue_overhead_frac << " |"
+                         << std::setw(13) << as.queue_visit_count << " |"
                          << LOG_END;
     }
     LOG_INFO(logger)
@@ -228,8 +229,8 @@ void Topology::log_status() {
         for (ThreadManager::WorkerStatus ws : _threadManager->get_worker_statuses()) {
             LOG_INFO(logger) << "|"
                              << std::setw(3) << ws.worker_id << " |"
-                             << std::setw(7) << ((ws.is_running) ? "   T   " : "   F   ") << " | "
-                             << std::setw(20) << std::left << ws.arrow_name << " |" << LOG_END;
+                             << std::setw(7) << ((ws.is_running) ? "    T   " : "    F   ") << " | "
+                             << std::setw(19) << std::left << ws.arrow_name << " |" << LOG_END;
         }
         LOG_INFO(logger) << "+----+---------+---------------------+" << LOG_END;
     }

@@ -57,7 +57,7 @@ public:
 
 
         auto latency = (end_latency_time - start_latency_time).count();
-        auto overhead = (end_queue_time - start_total_time).count();
+        auto overhead = (end_queue_time - start_total_time).count() - latency;
 
         update_queue_visits(1);
         update_total_overhead(overhead);

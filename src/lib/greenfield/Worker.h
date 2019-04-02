@@ -102,7 +102,6 @@ namespace greenfield {
                         report.latency_sum += (stop_time - start_time).count();
                         ++report.event_count;
                     }
-                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
                 }
             }
             if (report.assignment != nullptr) {

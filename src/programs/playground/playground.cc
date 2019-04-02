@@ -18,10 +18,10 @@ int main() {
     PerfTestMapper track;
     PerfTestReducer plot;
 
-    parse.latency_ms = 200;
-    disentangle.latency_ms = 200;
-    track.latency_ms = 200;
-    plot.latency_ms = 200;
+    parse.latency_ms = 10;
+    disentangle.latency_ms = 10;
+    track.latency_ms = 10;
+    plot.latency_ms = 10;
 
     LinearTopologyBuilder builder;
     builder.addSource("parse", parse);
@@ -37,8 +37,8 @@ int main() {
     topology.run(4);
 
 //    while (topology.is_active()) {
-    for (int i=0; i<10; ++i) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    for (int i=0; i<50; ++i) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
         std::cout << "\033[2J";
         topology.log_status();
     }

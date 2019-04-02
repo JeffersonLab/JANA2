@@ -78,6 +78,7 @@ struct PerfTestReducer : public Sink<Event*> {
         consume_cpu_ms(randint(latency_ms-latency_spread, latency_ms+latency_spread));
         event->reduce_sum = readMemory(event->data[read_key], event->data[read_key].size());
         sum_over_all_events += event->reduce_sum;
+        delete event; // Don't do this in the general case
     }
 };
 

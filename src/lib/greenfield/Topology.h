@@ -20,13 +20,13 @@ public:
     /// This helps separate the external API from the internal implementation.
     struct TopologyStatus {
         uint64_t messages_completed;
-        double uptime;
-        double avg_throughput;
-        double inst_throughput;
-        double seq_bottleneck;
-        double efficiency;
-        uint64_t scheduler_visits;
-        double scheduler_overhead;
+        double uptime_s;
+        double avg_throughput_hz;
+        double inst_throughput_hz;
+        double seq_bottleneck_hz;
+        double efficiency_frac;
+        uint64_t scheduler_visit_count;
+        double scheduler_overhead_frac;
     };
 
     /// POD type used for inspecting queue performance.
@@ -47,10 +47,10 @@ public:
         uint32_t thread_count;
         uint64_t messages_completed;
         uint32_t chunksize;
-        double avg_latency;
-        double inst_latency;
-        double queue_overhead;
-        uint64_t queue_visits;
+        double avg_latency_ms;
+        double inst_latency_ms;
+        double queue_overhead_frac;
+        uint64_t queue_visit_count;
 
         ArrowStatus(Arrow* arrow);
     };
