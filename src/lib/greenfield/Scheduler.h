@@ -13,27 +13,17 @@ namespace greenfield {
     class Scheduler {
 
     public:
-
-        struct Report {
-
-            /// Information collected by a Worker during the course of execution,
-            /// which helps the Scheduler make its decision re what to do next
-
-            uint32_t worker_id = 0;
-            Arrow *assignment = nullptr;
-            uint64_t event_count = 0;
-            double latency_sum = 0.0;
-            StreamStatus last_result = StreamStatus::ComeBackLater;
-        };
-
-
-    public:
-        /// Tell someone (presumably a Worker) what arrow they should execute next.
-        /// If no assignments are available, return nullptr. For now, nullptr tells the thread
-        /// to shut down, which is simple to implement at least but not quite what we want going forward.
-        /// If next_assignment() makes any changes to internal Scheduler state or to the Topology,
+        /// Lets a Worker ask the Scheduler for another assignment. If no assignments make sense,
+        /// Scheduler returns nullptr, which tells that Worker to idle until his next checkin.
+        /// If next_assignment() makes any changes to internal Scheduler state or to any of its arrows,
         /// it must be synchronized.
-        virtual Arrow *next_assignment(const Report &report) = 0;
+        virtual Arrow *next_assignment(uint32_t worker_id, Arrow* assignment, StreamStatus result) = 0;
+
+        /// Lets a Worker tell the scheduler that he is shutting down and won't be working on his assignment
+        /// any more. The scheduler is thus free to reassign the arrow to one of the remaining workers.
+        virtual void last_assignment(uint32_t worker_id, Arrow* assignment, StreamStatus result) {
+            assignment->update_thread_count(-1);
+        }
 
         Logger logger; // Control verbosity of scheduler without knowing which impl is in use
     };
@@ -69,7 +59,7 @@ namespace greenfield {
     public:
         FixedScheduler(Topology& topology, std::map<std::string, int> nthreads);
         bool rebalance(std::string, std::string, int);
-        Arrow* next_assignment(const Report& report) override;
+        Arrow* next_assignment(uint32_t, Arrow*, StreamStatus) override;
     };
 
 
@@ -91,7 +81,7 @@ namespace greenfield {
 
     public:
         explicit RoundRobinScheduler(Topology& topology);
-        Arrow* next_assignment(const Report& report) override;
+        Arrow* next_assignment(uint32_t, Arrow*, StreamStatus) override;
     };
 
     class IndependentScheduler : public Scheduler {
@@ -119,7 +109,7 @@ namespace greenfield {
 
     public:
         IndependentScheduler(Topology& topology);
-        Arrow* next_assignment (const Report& report) override;
+        Arrow* next_assignment(uint32_t, Arrow*, StreamStatus) override;
     };
 
 }

@@ -34,20 +34,19 @@ namespace greenfield {
     };
 
 
-    Arrow* FixedScheduler::next_assignment(const Report &report) {
+    Arrow* FixedScheduler::next_assignment(uint32_t worker_id, Arrow* assignment, StreamStatus last_result) {
 
-        if (report.worker_id >= _assignments.size()) {
+        if (worker_id >= _assignments.size()) {
             return nullptr;
         }
-        else if (report.last_result == StreamStatus::Finished) {
-            LOG_DEBUG(logger) << "FixedScheduler: Worker " << report.worker_id << " finished => Idling." << LOG_END;
+        else if (last_result == StreamStatus::Finished) {
+            LOG_DEBUG(logger) << "FixedScheduler: Worker " << worker_id << " finished => Idling." << LOG_END;
             return nullptr;
         }
-        LOG_DEBUG(logger) << "FixedScheduler: Worker " << report.worker_id << " => "
-                          << _assignments[report.worker_id]->get_name() << LOG_END;
+        LOG_DEBUG(logger) << "FixedScheduler: Worker " << worker_id << " => "
+                          << _assignments[worker_id]->get_name() << LOG_END;
 
-        return _assignments[report.worker_id];
+        return _assignments[worker_id];
     }
-
 
 }

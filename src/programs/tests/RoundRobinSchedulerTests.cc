@@ -24,10 +24,12 @@ TEST_CASE("greenfield::RoundRobinScheduler") {
 
     auto logger = Logger::nothing(); // everything();
     scheduler.logger = Logger::nothing(); // everything();
-    Scheduler::Report report;
 
     // Assume everything is active for now
     topology.activate("emit_rand_ints");
+
+    StreamStatus last_result = StreamStatus::ComeBackLater;
+    Arrow* assignment = nullptr;
 
     SECTION("When there is only one worker, who always encounters ComeBackLater...") {
 
@@ -37,10 +39,8 @@ TEST_CASE("greenfield::RoundRobinScheduler") {
                                   "subtract_one",
                                   "sum_everything"};
 
-        report.last_result = StreamStatus::ComeBackLater;
         for (int i = 0; i < 10; ++i) {
-            Arrow *assignment = scheduler.next_assignment(report);
-            report.assignment = assignment;
+            assignment = scheduler.next_assignment(0, assignment, last_result);
 
             // The assignments go round-robin
             REQUIRE(assignment != nullptr);
@@ -56,9 +56,9 @@ TEST_CASE("greenfield::RoundRobinScheduler") {
 
 
         for (int i = 0; i < 10; ++i) {
-            report.assignment = nullptr;
-            report.last_result = StreamStatus::ComeBackLater;
-            Arrow *assignment = scheduler.next_assignment(report);
+            assignment = nullptr;
+            last_result = StreamStatus::ComeBackLater;
+            assignment = scheduler.next_assignment(i, assignment, last_result);
 
             // They all receive a nonnull assignment
             REQUIRE (assignment != nullptr);
@@ -80,15 +80,12 @@ TEST_CASE("greenfield::RoundRobinScheduler") {
     SECTION("When all arrows are assigned, and a sequential arrow comes back...") {
 
 
-        LOG_INFO(logger) << "---------------------------------------" << LOG_END;
+        LOG_INFO(logger) << "--------------------------------------" << LOG_END;
 
-        report.assignment = nullptr;
-        report.last_result = StreamStatus::ComeBackLater;
-
-        scheduler.next_assignment(report);
-        scheduler.next_assignment(report);
-        scheduler.next_assignment(report);
-        auto sum_everything_arrow = scheduler.next_assignment(report);
+        scheduler.next_assignment(0, nullptr, StreamStatus::ComeBackLater);
+        scheduler.next_assignment(1, nullptr, StreamStatus::ComeBackLater);
+        scheduler.next_assignment(2, nullptr, StreamStatus::ComeBackLater);
+        auto sum_everything_arrow = scheduler.next_assignment(3, nullptr, StreamStatus::ComeBackLater);
 
         // Last assignment returned sequential arrow "sum_everything"
         REQUIRE(sum_everything_arrow->get_name() == "sum_everything");
@@ -96,16 +93,16 @@ TEST_CASE("greenfield::RoundRobinScheduler") {
         std::map<std::string, int> assignment_counts;
 
         // We return the sequential arrow to the scheduler
-        report.assignment = sum_everything_arrow;
-        report.last_result = StreamStatus::ComeBackLater;
-        auto arrow = scheduler.next_assignment(report);
+        assignment = sum_everything_arrow;
+        last_result = StreamStatus::ComeBackLater;
+        auto arrow = scheduler.next_assignment(3, assignment, last_result);
 
         assignment_counts[arrow->get_name()]++;
 
         for (int i = 0; i < 8; ++i) {
-            report.assignment = nullptr;
-            report.last_result = StreamStatus::ComeBackLater;
-            arrow = scheduler.next_assignment(report);
+            assignment = nullptr;
+            last_result = StreamStatus::ComeBackLater;
+            arrow = scheduler.next_assignment(i, assignment, last_result);
             assignment_counts[arrow->get_name()]++;
         }
 
@@ -117,13 +114,12 @@ TEST_CASE("greenfield::RoundRobinScheduler") {
 
     SECTION("When an arrow encountered KeepGoing...") {
 
-        LOG_INFO(logger) << "---------------------------------------" << LOG_END;
-        report.last_result = StreamStatus::KeepGoing;
-        report.assignment = topology.get_arrow("subtract_one");
+        LOG_INFO(logger) << "--------------------------------------" << LOG_END;
+        last_result = StreamStatus::KeepGoing;
+        assignment = topology.get_arrow("subtract_one");
 
         for (int i = 0; i < 4; ++i) {
-            Arrow *assignment = scheduler.next_assignment(report);
-            report.assignment = assignment;
+            assignment = scheduler.next_assignment(0, assignment, last_result);
 
             REQUIRE(assignment->get_name() == "subtract_one");
             // That scheduler lets the worker continue with this assignment

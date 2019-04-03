@@ -19,7 +19,9 @@ TEST_CASE("SchedulerTests") {
     builder.addSink("sum_everything", sink);
     auto topology = builder.get();
     topology.activate("emit_rand_ints");
-    Scheduler::Report report;
+
+    Arrow* assignment;
+    StreamStatus last_result;
 
 
     SECTION("When run sequentially, RRS returns nullptr => topology finished") {
@@ -29,14 +31,14 @@ TEST_CASE("SchedulerTests") {
         RoundRobinScheduler scheduler(topology);
         scheduler.logger = logger;
 
-        report.last_result = StreamStatus::ComeBackLater;
-        report.assignment = nullptr;
+        last_result = StreamStatus::ComeBackLater;
+        assignment = nullptr;
         do {
-            report.assignment = scheduler.next_assignment(report);
-            if (report.assignment != nullptr) {
-                report.last_result = report.assignment->execute();
+            assignment = scheduler.next_assignment(0, assignment, last_result);
+            if (assignment != nullptr) {
+                last_result = assignment->execute();
             }
-        } while (report.assignment != nullptr);
+        } while (assignment != nullptr);
 
         REQUIRE(topology.get_status("emit_rand_ints").is_active == false);
         REQUIRE(topology.get_status("multiply_by_two").is_active == false);
@@ -49,9 +51,8 @@ TEST_CASE("SchedulerTests") {
         auto logger = Logger::nothing();
         RoundRobinScheduler scheduler(topology);
         scheduler.logger = logger;
-        report.last_result = StreamStatus::ComeBackLater;
-        report.assignment = nullptr;
-        Arrow *assignment = nullptr;
+        last_result = StreamStatus::ComeBackLater;
+        assignment = nullptr;
 
         bool keep_going = true;
         while (keep_going) {
@@ -63,12 +64,11 @@ TEST_CASE("SchedulerTests") {
             }
 
             if (keep_going) {
-                assignment = scheduler.next_assignment(report);
-                report.assignment = assignment;
-                report.last_result = assignment->execute();
+                assignment = scheduler.next_assignment(0, assignment, last_result);
+                last_result = assignment->execute();
             }
         }
-        assignment = scheduler.next_assignment(report);
+        assignment = scheduler.next_assignment(0, assignment, last_result);
         REQUIRE(assignment == nullptr);
     }
 
@@ -79,14 +79,14 @@ TEST_CASE("SchedulerTests") {
         RoundRobinScheduler scheduler(topology);
         scheduler.logger = logger;
 
-        report.last_result = StreamStatus::ComeBackLater;
-        report.assignment = nullptr;
+        last_result = StreamStatus::ComeBackLater;
+        assignment = nullptr;
         do {
-            report.assignment = scheduler.next_assignment(report);
-            if (report.assignment != nullptr) {
-                report.last_result = report.assignment->execute();
+            assignment = scheduler.next_assignment(0, assignment, last_result);
+            if (assignment != nullptr) {
+                last_result = assignment->execute();
             }
-        } while (report.assignment != nullptr);
+        } while (assignment != nullptr);
 
         REQUIRE(topology.get_status("emit_rand_ints").is_active == false);
         REQUIRE(topology.get_status("multiply_by_two").is_active == false);
@@ -101,14 +101,14 @@ TEST_CASE("SchedulerTests") {
         IndependentScheduler scheduler(topology);
         scheduler.logger = logger;
 
-        report.last_result = StreamStatus::ComeBackLater;
-        report.assignment = nullptr;
+        last_result = StreamStatus::ComeBackLater;
+        assignment = nullptr;
         do {
-            report.assignment = scheduler.next_assignment(report);
-            if (report.assignment != nullptr) {
-                report.last_result = report.assignment->execute();
+            assignment = scheduler.next_assignment(0, assignment, last_result);
+            if (assignment != nullptr) {
+                last_result = assignment->execute();
             }
-        } while (report.assignment != nullptr);
+        } while (assignment != nullptr);
 
         REQUIRE(topology.get_status("emit_rand_ints").is_active == false);
         REQUIRE(topology.get_status("multiply_by_two").is_active == false);
@@ -120,8 +120,8 @@ TEST_CASE("SchedulerTests") {
         auto logger = Logger::nothing();
         IndependentScheduler scheduler(topology);
         scheduler.logger = logger;
-        report.last_result = StreamStatus::ComeBackLater;
-        report.assignment = nullptr;
+        last_result = StreamStatus::ComeBackLater;
+        assignment = nullptr;
         Arrow *assignment = nullptr;
 
         bool keep_going = true;
@@ -134,12 +134,11 @@ TEST_CASE("SchedulerTests") {
             }
 
             if (keep_going) {
-                assignment = scheduler.next_assignment(report);
-                report.assignment = assignment;
-                report.last_result = assignment->execute();
+                assignment = scheduler.next_assignment(0, assignment, last_result);
+                last_result = assignment->execute();
             }
         }
-        assignment = scheduler.next_assignment(report);
+        assignment = scheduler.next_assignment(0, assignment, last_result);
         REQUIRE(assignment == nullptr);
     }
 
@@ -157,26 +156,28 @@ TEST_CASE("SchedulerTests") {
         scheduler.logger = logger;
         topology.logger = logger;
 
-        Scheduler::Report reports[4];
+        Arrow* worker_assignments[4];
+        StreamStatus worker_results[4];
+
         for (int worker=0; worker<4; worker++) {
-            reports[worker].worker_id = worker;
-            reports[worker].assignment = nullptr;
-            reports[worker].last_result = StreamStatus::ComeBackLater;
+            worker_assignments[worker] = nullptr;
+            worker_results[worker] = StreamStatus::ComeBackLater;
         }
 
         for (int i=0; i<80; ++i) {
             REQUIRE(topology.is_active());
 
             topology.log_status();
-            Arrow *assignment = scheduler.next_assignment(reports[i%4]);
-            if (reports[i%4].assignment != nullptr) {
-                REQUIRE(reports[i%4].assignment->is_active());
-                REQUIRE(assignment != nullptr);
+            int worker = i % 4;
+            Arrow *arr = scheduler.next_assignment(worker, worker_assignments[worker], worker_results[worker]);
+            if (worker_assignments[worker] != nullptr) {
+                REQUIRE(worker_assignments[worker]->is_active());
+                REQUIRE(arr != nullptr);
             }
 
-            if (assignment != nullptr) {
-                reports[i%4].last_result = assignment->execute();
-                reports[i%4].assignment = assignment;
+            if (arr != nullptr) {
+                worker_assignments[worker] = arr;
+                worker_results[worker] = arr->execute();
             }
         }
 
@@ -184,15 +185,16 @@ TEST_CASE("SchedulerTests") {
             REQUIRE(!topology.is_active());
 
             topology.log_status();
-            Arrow *assignment = scheduler.next_assignment(reports[i%4]);
-            if (reports[i%4].assignment != nullptr) {
-                REQUIRE(!reports[i%4].assignment->is_active());
-                REQUIRE(assignment == nullptr);
+            int worker = i%4;
+            Arrow *arr = scheduler.next_assignment(worker, worker_assignments[worker], worker_results[worker]);
+            if (worker_assignments[worker] != nullptr) {
+                REQUIRE(!worker_assignments[worker]->is_active());
+                REQUIRE(arr == nullptr);
             }
 
-            if (assignment != nullptr) {
-                reports[i%4].last_result = assignment->execute();
-                reports[i%4].assignment = assignment;
+            if (arr != nullptr) {
+                worker_results[worker] = arr->execute();
+                worker_assignments[worker] = arr;
             }
         }
 

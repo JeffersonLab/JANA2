@@ -23,6 +23,14 @@ int main() {
     track.latency_ms = 10;
     plot.latency_ms = 10;
 
+//    5Hz for full reconstruction
+//    20kHz for stripped-down reconstruction (not per-core)
+//    Base memory allcation: 100 MB/core + 600MB
+//    1 thread/event, disentangle 1 event, turn into 40.
+//    disentangled (single event size) : 12.5 kB / event (before blown up)
+//    entangled "block of 40": dis * 40
+//
+
     LinearTopologyBuilder builder;
     builder.addSource("parse", parse);
     builder.addProcessor("disentangle", disentangle);

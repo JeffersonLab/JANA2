@@ -12,11 +12,11 @@ namespace greenfield {
     {}
 
 
-    Arrow* RoundRobinScheduler::next_assignment(const greenfield::Scheduler::Report &report) {
+    Arrow* RoundRobinScheduler::next_assignment(uint32_t worker_id, Arrow* assignment, StreamStatus last_result) {
 
-        Arrow* next = report.assignment;
+        Arrow* next = assignment;
 
-        if (report.last_result != StreamStatus::KeepGoing) {
+        if (last_result != StreamStatus::KeepGoing) {
             // We need a new assignment
 
             _mutex.lock();
@@ -26,10 +26,10 @@ namespace greenfield {
             if (next != nullptr) { next->update_thread_count(1); }
             _mutex.unlock();
         }
-        LOG_DEBUG(logger) << "Scheduler: (" << report.worker_id << ", "
-                     << ((report.assignment == nullptr) ? "nullptr" : report.assignment->get_name())
-                     << ", " << to_string(report.last_result) << ") => "
-                     << ((next == nullptr) ? "nullptr" : next->get_name())
+        LOG_DEBUG(logger) << "Scheduler: (" << worker_id << ", "
+                     << ((assignment == nullptr) ? "idle" : assignment->get_name())
+                     << ", " << to_string(last_result) << ") => "
+                     << ((next == nullptr) ? "idle" : next->get_name())
                      << "  [" << ((next == nullptr) ? 0 : next->get_thread_count()) << "]" << LOG_END;
         return next;
 
@@ -64,6 +64,7 @@ namespace greenfield {
         // Since there were no plausible candidates, return a nullptr, which tells Worker to shut down
         return nullptr;
     }
+
 }
 
 
