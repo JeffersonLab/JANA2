@@ -19,14 +19,14 @@ public:
     /// POD type used for inspecting topology performance.
     /// This helps separate the external API from the internal implementation.
     struct TopologyStatus {
-        uint64_t messages_completed;
+        size_t messages_completed;
+        size_t scheduler_visit_count;
         double uptime_s;
         double avg_throughput_hz;
         double inst_throughput_hz;
         double seq_bottleneck_hz;
         double par_bottleneck_hz;
         double efficiency_frac;
-        uint64_t scheduler_visit_count;
         double scheduler_overhead_frac;
     };
 
@@ -34,8 +34,8 @@ public:
     /// This helps separate the external API from the internal implementation.
     struct QueueStatus {
         std::string queue_name;
-        uint64_t message_count;
-        uint64_t threshold;
+        size_t message_count;
+        size_t threshold;
         bool is_active;
     };
 
@@ -45,13 +45,13 @@ public:
         std::string arrow_name;
         bool is_active;
         bool is_parallel;
-        uint32_t thread_count;
-        uint64_t messages_completed;
-        uint32_t chunksize;
+        size_t thread_count;
+        size_t messages_completed;
+        size_t chunksize;
         double avg_latency_ms;
         double inst_latency_ms;
         double queue_overhead_frac;
-        uint64_t queue_visit_count;
+        size_t queue_visit_count;
 
         ArrowStatus(Arrow* arrow);
     };
@@ -75,9 +75,10 @@ private:
     std::chrono::time_point<std::chrono::steady_clock> _start_time;
     std::chrono::time_point<std::chrono::steady_clock> _last_time;
     std::chrono::steady_clock::duration _scheduler_time;
-    uint64_t _last_message_count = 0;
-    uint64_t _scheduler_visits = 0;  // TODO: These belong on Scheduler instead?
+    size_t _last_message_count = 0;
+    size_t _scheduler_visits = 0;  // TODO: These belong on Scheduler instead?
 
+    TopologyStatus get_topology_status(std::map<Arrow*,ArrowStatus>& statuses);
 
 public:
     /// Leave the logger accessible for now so we can potentially inject it during testing

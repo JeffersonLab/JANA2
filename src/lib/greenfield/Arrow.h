@@ -12,28 +12,31 @@
 
 namespace greenfield {
 
+using duration_t = std::chrono::steady_clock::duration;
 
 class Arrow : public Activable {
 
+
 private:
     // Constants
-    const std::string _name;           // Used for human understanding
-    const bool _is_parallel;           // Whether or not it is safe to parallelize
+    const std::string _name;     // Used for human understanding
+    const bool _is_parallel;     // Whether or not it is safe to parallelize
 
     // Written internally, read externally
     size_t _message_count = 0;   // Total number of messages completed by this arrow
     size_t _queue_visits = 0;    // Total number of times execute() calls inqueue.pop()
-    double _total_latency = 0;   // Total time spent doing actual work (across all cpus)
-    double _total_overhead = 0;  // Total time spent pushing and popping from queues
-    double _last_latency = 0;    // Most recent latency measurement (from a single cpu)
-    double _last_overhead = 0;   // Most recent time spent pushing and popping from queues
+    duration_t _total_latency;   // Total time spent doing actual work (across all cpus)
+    duration_t _last_latency;    // Most recent latency measurement (from a single cpu)
+    duration_t _queue_overhead;  // Total time spent pushing and popping from queues
 
     // Written externally
-    int _chunksize = 1;          // Number of items to pop off the input queue at once
-    int _thread_count = 0;       // Current number of threads assigned to this arrow
+    size_t _chunksize = 1;       // Number of items to pop off the input queue at once
+    size_t _thread_count = 0;    // Current number of threads assigned to this arrow
 
-    std::mutex _mutex;       // Protects access to arrow properties.
-    // TODO: Replace with atomics when the time is right
+    std::mutex _mutex;           // Protects access to arrow properties.
+                                 // TODO: Consider storing and protect thread count differently,
+                                 // so that (number of workers) = (sum of thread counts for all arrows)
+                                 // This is not so simple if we also want our WorkerStatus::arrow_name to match
 
 
 public:
@@ -45,72 +48,43 @@ public:
     std::string get_name() { return _name; }
 
 
-
     // Written internally, read externally
 
-    size_t get_message_count() {
+    void get_metrics(size_t& message_count,
+                     size_t& queue_visits,
+                     duration_t& total_latency,
+                     duration_t& queue_overhead,
+                     duration_t& last_latency) {
+
         std::lock_guard<std::mutex> lock(_mutex);
-        return _message_count;
+        message_count = _message_count;
+        queue_visits = _queue_visits;
+        total_latency = _total_latency;
+        queue_overhead = _queue_overhead;
+        last_latency = _last_latency;
     }
 
-    size_t get_queue_visits() {
-        std::lock_guard<std::mutex> lock(_mutex);
-        return _queue_visits;
-    }
-
-    double get_total_latency() {
-        std::lock_guard<std::mutex> lock(_mutex);
-        return _total_latency;
-    }
-
-    double get_total_overhead() {
-        std::lock_guard<std::mutex> lock(_mutex);
-        return _total_overhead;
-    }
-
-    double get_last_latency() {
-        std::lock_guard<std::mutex> lock(_mutex);
-        return _last_latency;
-    }
-
-    double get_last_overhead() {
-        std::lock_guard<std::mutex> lock(_mutex);
-        return _last_overhead;
-    }
 
 
 protected:
 
     // Written internally, read externally
 
-    void update_message_count(size_t message_count_delta) {
-        std::lock_guard<std::mutex> lock(_mutex);
-        _message_count += message_count_delta;
-    }
+    void update_metrics(size_t message_count_delta,
+                        size_t queue_visits_delta,
+                        duration_t latency,
+                        duration_t queue_overhead) {
 
-    void update_queue_visits(size_t queue_visits_delta) {
         std::lock_guard<std::mutex> lock(_mutex);
+
         _queue_visits += queue_visits_delta;
-    }
+        _queue_overhead += queue_overhead;
 
-    void update_total_latency(double total_latency_delta) {
-        std::lock_guard<std::mutex> lock(_mutex);
-        _total_latency += total_latency_delta;
-    }
-
-    void update_total_overhead(double total_overhead_delta) {
-        std::lock_guard<std::mutex> lock(_mutex);
-        _total_overhead += total_overhead_delta;
-    }
-
-    void set_last_latency(double last_latency) {
-        std::lock_guard<std::mutex> lock(_mutex);
-        _last_latency = last_latency;
-    }
-
-    void set_last_overhead(double last_overhead) {
-        std::lock_guard<std::mutex> lock(_mutex);
-        _last_overhead = last_overhead;
+        if (message_count_delta != 0) {
+            _message_count += message_count_delta;
+            _total_latency += latency;
+            _last_latency = latency;
+        }
     }
 
 
@@ -118,29 +92,33 @@ public:
 
     // Written externally
 
-    void set_chunksize(int chunksize) {
+    void set_chunksize(size_t chunksize) {
         std::lock_guard<std::mutex> lock(_mutex);
         _chunksize = chunksize;
     }
 
-    int get_chunksize() {
+    size_t get_chunksize() {
         std::lock_guard<std::mutex> lock(_mutex);
         return _chunksize;
     }
 
-    void update_thread_count(int thread_count_delta) {
+    void update_thread_count(size_t thread_count_delta) {
         std::lock_guard<std::mutex> lock(_mutex);
         _thread_count += thread_count_delta;
     }
 
-    int get_thread_count() {
+    size_t get_thread_count() {
         std::lock_guard<std::mutex> lock(_mutex);
         return _thread_count;
     }
 
 
     Arrow(std::string name, bool is_parallel) :
-            _name(name), _is_parallel(is_parallel) {};
+            _name(std::move(name)),
+            _is_parallel(is_parallel),
+            _total_latency(duration_t::zero()),
+            _last_latency(duration_t::zero()),
+            _queue_overhead(duration_t::zero()){};
 
     virtual ~Arrow() = default;
 

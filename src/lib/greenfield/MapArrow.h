@@ -56,22 +56,10 @@ public:
         auto end_queue_time = std::chrono::steady_clock::now();
 
 
-        auto latency = (end_latency_time - start_latency_time).count();
-        auto overhead = (end_queue_time - start_total_time).count() - latency;
+        auto latency = (end_latency_time - start_latency_time);
+        auto overhead = (end_queue_time - start_total_time) - latency;
+        update_metrics(message_count, 1, latency, overhead);
 
-        update_queue_visits(1);
-        update_total_overhead(overhead);
-
-        if (message_count != 0) {
-
-            update_message_count(message_count);
-            update_total_latency(latency);
-            set_last_latency(latency/message_count);
-            set_last_overhead(overhead/message_count);
-        }
-
-        // TODO: Measure metrics overhead
-        //auto end_metrics_time = std::chrono::steady_clock::now();
 
         if (in_status == StreamStatus::Finished) {
             set_active(false);

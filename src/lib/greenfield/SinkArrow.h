@@ -38,6 +38,7 @@ public:
             _chunk_buffer.reserve(get_chunksize());
             _is_initialized = true;
         }
+
         auto start_time = std::chrono::steady_clock::now();
 
         StreamStatus result = _input_queue->pop(_chunk_buffer, get_chunksize());
@@ -54,18 +55,9 @@ public:
 
         auto stop_time = std::chrono::steady_clock::now();
 
-        auto latency = (latency_stop_time - latency_start_time).count();
-        auto overhead = (stop_time - start_time).count() - latency;
-
-        update_total_overhead(overhead);
-        update_queue_visits(1);
-
-        if (message_count != 0) {
-            update_message_count(message_count);
-            update_total_latency(latency);
-            set_last_latency(latency/message_count);
-            set_last_overhead(overhead/message_count);
-        }
+        auto latency = latency_stop_time - latency_start_time;
+        auto overhead = (stop_time - start_time) - latency;
+        update_metrics(message_count, 1, latency, overhead);
 
         if (result == StreamStatus::Finished) {
             set_active(false);

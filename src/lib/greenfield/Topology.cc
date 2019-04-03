@@ -13,15 +13,19 @@ Topology::ArrowStatus::ArrowStatus(Arrow* arrow) {
     is_active = arrow->is_active();
     thread_count = arrow->get_thread_count();
     chunksize = arrow->get_chunksize();
-    messages_completed = arrow->get_message_count();
 
-    auto latency = arrow->get_total_latency();
-    avg_latency_ms = latency / messages_completed / 1.0e6;
-    inst_latency_ms = arrow->get_last_latency() / 1.0e6;
+    duration_t total_latency;
+    duration_t queue_overhead;
+    duration_t last_latency;
+    arrow->get_metrics(messages_completed,
+                       queue_visit_count,
+                       total_latency,
+                       queue_overhead,
+                       last_latency);
 
-    auto overhead = arrow->get_total_overhead();
-    queue_overhead_frac = overhead/(overhead+latency);
-    queue_visit_count = arrow->get_queue_visits();
+    avg_latency_ms = total_latency.count() / (messages_completed * 1.0e6);
+    inst_latency_ms = last_latency.count() / 1.0e6;
+    queue_overhead_frac = queue_overhead/std::chrono::duration<double>(queue_overhead+total_latency);
 }
 
 Topology::~Topology() {
@@ -79,13 +83,14 @@ void Topology::deactivate(std::string arrow_name) {
 }
 
 
-Topology::TopologyStatus Topology::get_topology_status() {
+Topology::TopologyStatus Topology::get_topology_status(std::map<Arrow*,ArrowStatus>& arrow_statuses) {
+
     TopologyStatus result;
 
     // Messages completed
     result.messages_completed = 0;
     for (Arrow* arrow : sinks) {
-        result.messages_completed += arrow->get_message_count();
+        result.messages_completed += arrow_statuses.at(arrow).messages_completed;
     }
     uint64_t message_delta = result.messages_completed - _last_message_count;
     _last_message_count = result.messages_completed;
@@ -105,13 +110,13 @@ Topology::TopologyStatus Topology::get_topology_status() {
     double worst_par_latency = 0;
     for (Arrow* arrow : arrows) {
         if (arrow->is_parallel()) {
-            worst_par_latency = std::max(worst_par_latency, arrow->get_total_latency()/arrow->get_message_count());
+            worst_par_latency = std::max(worst_par_latency, arrow_statuses.at(arrow).avg_latency_ms);
         } else {
-            worst_seq_latency = std::max(worst_seq_latency, arrow->get_total_latency()/arrow->get_message_count());
+            worst_seq_latency = std::max(worst_seq_latency, arrow_statuses.at(arrow).avg_latency_ms);
         }
     }
-    result.seq_bottleneck_hz = 1e9 / worst_seq_latency;
-    result.par_bottleneck_hz = 1e9 * _ncpus / worst_par_latency;
+    result.seq_bottleneck_hz = 1e3 / worst_seq_latency;
+    result.par_bottleneck_hz = 1e3 * _ncpus / worst_par_latency;
 
     auto tighter_bottleneck = std::min(result.seq_bottleneck_hz, result.par_bottleneck_hz);
     result.efficiency_frac = result.avg_throughput_hz/tighter_bottleneck;
@@ -128,6 +133,14 @@ Topology::TopologyStatus Topology::get_topology_status() {
 
     return result;
 
+}
+
+Topology::TopologyStatus Topology::get_topology_status() {
+    std::map<Arrow*, ArrowStatus> statuses;
+    for (Arrow* arrow : arrows) {
+        statuses.insert({arrow, ArrowStatus(arrow)});
+    }
+    return get_topology_status(statuses);
 }
 
 
@@ -160,7 +173,11 @@ Topology::ArrowStatus Topology::get_status(const std::string &arrow_name) {
 
 void Topology::log_status() {
 
-    auto s = get_topology_status();
+    std::map<Arrow*, ArrowStatus> statuses;
+    for (Arrow* arrow : arrows) {
+        statuses.insert({arrow, ArrowStatus(arrow)});
+    }
+    auto s = get_topology_status(statuses);
 
     LOG_INFO(logger) << "TOPOLOGY STATUS" << LOG_END;
     LOG_INFO(logger) << "---------------" << LOG_END;
@@ -176,11 +193,11 @@ void Topology::log_status() {
     LOG_INFO(logger) << "Scheduler overhead [0..1]:         " << std::setprecision(3) << s.scheduler_overhead_frac << LOG_END;
     LOG_INFO(logger) << LOG_END;
     LOG_INFO(logger) << "ARROW STATUS" << LOG_END;
-    auto statuses = get_arrow_status();
     LOG_INFO(logger) << "+--------------------------+-----+-----+---------+-------+-------------+" << LOG_END;
     LOG_INFO(logger) << "|           Name           | Par | Act | Threads | Chunk |  Completed  |" << LOG_END;
     LOG_INFO(logger) << "+--------------------------+-----+-----+---------+-------+-------------+" << LOG_END;
-    for (ArrowStatus &as : statuses) {
+    for (Arrow* arrow : arrows) {
+        ArrowStatus& as = statuses.at(arrow);
         LOG_INFO(logger) << "| "
                          << std::setw(24) << std::left << as.arrow_name << " | "
                          << std::setw(3) << std::right << (as.is_parallel ? " T " : " F ") << " | "
@@ -201,7 +218,8 @@ void Topology::log_status() {
     LOG_INFO(logger)
         << "+--------------------------+-------------+--------------+----------------+--------------+" << LOG_END;
 
-    for (ArrowStatus &as : statuses) {
+    for (Arrow* arrow : arrows) {
+        ArrowStatus& as = statuses.at(arrow);
         LOG_INFO(logger) << "| " << std::setprecision(3)
                          << std::setw(24) << std::left << as.arrow_name << " | "
                          << std::setw(11) << std::right << as.avg_latency_ms << " |"

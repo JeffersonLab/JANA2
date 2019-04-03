@@ -49,20 +49,10 @@ public:
         _chunk_buffer.clear();
         auto finished_time = std::chrono::steady_clock::now();
 
-        auto latency = (latency_time - start_time).count();
-        auto overhead = (finished_time - latency_time).count();
+        auto latency = (latency_time - start_time);
+        auto overhead = (finished_time - latency_time);
+        update_metrics(message_count, 1, latency, overhead);
 
-        update_total_overhead(overhead);
-        update_queue_visits(1);
-
-        if (message_count > 0) {
-            update_message_count(message_count);
-            update_total_latency(latency);
-            set_last_latency(latency/message_count);
-            set_last_overhead(overhead/message_count);
-        }
-        //auto metrics_time = std::chrono::steady_clock::now();
-        // TODO: This is only queue overhead. Measure metrics, scheduler overhead later.
 
         if (in_status == SourceStatus::Finished) {
             _source.finalize();
