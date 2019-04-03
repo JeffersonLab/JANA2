@@ -11,10 +11,13 @@ namespace greenfield {
 class ThreadManager;
 class Scheduler;
 
+using clock_t = std::chrono::steady_clock;
+
 class Topology {
 friend class RoundRobinScheduler;
 
 public:
+
 
     /// POD type used for inspecting topology performance.
     /// This helps separate the external API from the internal implementation.
@@ -62,23 +65,27 @@ public:
     std::vector<QueueBase *> queues;
 
 private:
-    std::map<std::string, Arrow *> arrow_lookup;
-    std::vector<Component *> components;
-    std::vector<Arrow*> sinks;  // Used to get total finished messages
 
-    bool _is_running = false;
+    enum class RunState { BeforeRun, DuringRun, AfterRun };
+
+    std::map<std::string, Arrow *> arrow_lookup;
+    std::vector<Component *> components;  // So we can delete Components which we own
+    std::vector<Arrow*> sinks;            // So we can get total finished messages
+
     Scheduler* _scheduler = nullptr;
     ThreadManager* _threadManager = nullptr;
 
 
-    uint32_t _ncpus;
-    std::chrono::time_point<std::chrono::steady_clock> _start_time;
-    std::chrono::time_point<std::chrono::steady_clock> _last_time;
-    std::chrono::steady_clock::duration _scheduler_time;
+    RunState _run_state = RunState::BeforeRun;
+    clock_t::time_point _start_time;
+    clock_t::time_point _last_time;
+    clock_t::time_point _stop_time;
+    clock_t::duration _scheduler_time = clock_t::duration::zero();
     size_t _last_message_count = 0;
     size_t _scheduler_visits = 0;  // TODO: These belong on Scheduler instead?
+    uint32_t _ncpus;
 
-    TopologyStatus get_topology_status(std::map<Arrow*,ArrowStatus>& statuses);
+    TopologyStatus get_topology_status(std::map<Arrow*, ArrowStatus>& statuses);
 
 public:
     /// Leave the logger accessible for now so we can potentially inject it during testing
@@ -90,7 +97,7 @@ public:
     void addManagedComponent(Component *component);
     void addArrow(Arrow *arrow, bool sink=false);
     void addQueue(QueueBase *queue);
-    void finalize();  // TODO: get rid of finalize so that we can dynamically add arrows
+
     Arrow* get_arrow(std::string arrow_name);  // TODO: Should be used internally, not as part of API
 
     void activate(std::string arrow_name);
@@ -104,14 +111,12 @@ public:
 
     // get_graph()              // perhaps build an interactive visual someday
 
-    // TODO: These don't belong here. Maybe in a TopologyDebugger instead?
     bool is_active();
     StreamStatus step(const std::string &arrow_name);
     void run(int threads);
-    // run_arrow(string arrow_name)
+    void wait_until_finished();
     // run_message(string source_name)
     // run_sequentially()
-    // run()
 
 };
 

@@ -29,18 +29,26 @@ struct PerfTestSource : public Source<Event*> {
     int write_spread = 0;
     long next_event_index = 0;
     long sum_over_all_events = 0;
+    long message_count = 0;
+    long message_count_limit = -1; // Only used when > 0
 
     virtual void initialize() {}
     virtual void finalize() {}
 
     virtual SourceStatus inprocess(std::vector<Event*>& ts, size_t count) {
-        for (size_t i=0; i<count; ++i) {
+
+        for (size_t i=0; i<count && (message_count_limit <= 0 || message_count < message_count_limit); ++i) {
             Event* e = new Event;
             consume_cpu_ms(randint(latency_ms-latency_spread, latency_ms+latency_spread));
             int bytes = randint(write_bytes-write_spread, write_bytes+write_spread);
             e->emit_sum = writeMemory(e->data[write_key], bytes);
+            sum_over_all_events += e->emit_sum;
             e->event_index = next_event_index++;
             ts.push_back(e);
+            message_count++;
+        }
+        if (message_count_limit > 0 && message_count >= message_count_limit) {
+            return SourceStatus::Finished;
         }
         return SourceStatus::KeepGoing;
     }

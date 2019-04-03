@@ -18,6 +18,7 @@ int main() {
     PerfTestMapper track;
     PerfTestReducer plot;
 
+    parse.message_count_limit = 500;
     parse.latency_ms = 10;
     disentangle.latency_ms = 10;
     track.latency_ms = 10;
@@ -40,17 +41,16 @@ int main() {
     Topology topology = builder.get();
     topology.logger = Logger(JLogLevel::TRACE, &std::cout);
     topology.activate("parse");
-    topology.log_status();
 
+    topology.log_status();
     topology.run(4);
 
-//    while (topology.is_active()) {
-    for (int i=0; i<50; ++i) {
+    while (topology.is_active()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
         std::cout << "\033[2J";
         topology.log_status();
     }
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+    topology.wait_until_finished();
     topology.log_status();
 }
 

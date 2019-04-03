@@ -22,7 +22,9 @@ namespace greenfield {
         /// Lets a Worker tell the scheduler that he is shutting down and won't be working on his assignment
         /// any more. The scheduler is thus free to reassign the arrow to one of the remaining workers.
         virtual void last_assignment(uint32_t worker_id, Arrow* assignment, StreamStatus result) {
-            assignment->update_thread_count(-1);
+            if (assignment != nullptr) {
+                assignment->update_thread_count(-1);
+            }
         }
 
         Logger logger; // Control verbosity of scheduler without knowing which impl is in use
