@@ -9,7 +9,9 @@ namespace greenfield {
     RoundRobinScheduler::RoundRobinScheduler(Topology &topology)
         : _topology(topology)
         , _assignment(_topology.arrows.begin())
-    {}
+    {
+        logger = LoggingService::logger("Scheduler");
+    }
 
 
     Arrow* RoundRobinScheduler::next_assignment(uint32_t worker_id, Arrow* assignment, StreamStatus last_result) {

@@ -45,6 +45,10 @@ namespace greenfield {
         std::vector<Worker*> _workers;
         Scheduler& _scheduler;
 
+        int backoff_tries;
+        duration_t backoff_time;
+        duration_t checkin_time;
+
 
     public:
 

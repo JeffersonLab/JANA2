@@ -13,6 +13,7 @@
 
 #include <greenfield/ServiceLocator.h>
 
+namespace greenfield {
 
 enum class JLogLevel {
     TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF
@@ -202,9 +203,19 @@ public:
         }
         return logger;
     }
+
+    /// This is a convenience function to get a correctly configured Logger via a ServiceLocator global.
+    /// If we could use singletons, we wouldn't have to do things like this.
+    static Logger logger(std::string className) {
+
+        if (serviceLocator != nullptr) {
+            auto loggingService = serviceLocator->get<LoggingService>();
+            if (loggingService != nullptr) {
+                return loggingService->get_logger(className);
+            }
+        }
+        return Logger::nothing();
+    }
 };
 
-
-
-
-
+}

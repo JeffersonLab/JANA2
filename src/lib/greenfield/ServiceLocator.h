@@ -8,6 +8,7 @@
 #include <typeindex>
 #include <iostream>
 #include <assert.h>
+#include <chrono>
 
 namespace greenfield {
 
@@ -16,7 +17,7 @@ namespace greenfield {
     struct Service {
         // InitPlugin() provides Services to the ServiceLocator.
 
-        virtual void acquire_services(ServiceLocator *sl) = 0;
+        virtual void acquire_services(ServiceLocator *sl) {};
         // Do not ask for services from the ServiceLocator in the constructor,
         // because they might not have been provided yet. (We can't really control
         // the order in which plugins get loaded) Instead, put all code that retrieves
@@ -82,5 +83,22 @@ namespace greenfield {
         // This helps deal with problems of circular dependencies between Services, but doesn't 100% resolve them.
 
     };
+
+    /// To be replaced with the real JParameterManager when the time is right
+    struct ParameterManager : public Service {
+        using duration_t = std::chrono::steady_clock::duration;
+
+        int chunksize;
+        int backoff_tries;
+        duration_t backoff_time;
+        duration_t checkin_time;
+
+
+    };
+
+    // Global variable which serves as a replacement for japp
+    // Ideally we would make this be a singleton instead, but until we figure out
+    // how to merge our plugins' symbol tables correctly, singletons are broken.
+    extern ServiceLocator* serviceLocator;
 
 }

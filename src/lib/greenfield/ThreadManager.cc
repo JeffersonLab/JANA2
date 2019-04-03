@@ -11,6 +11,7 @@ namespace greenfield {
 
     ThreadManager::ThreadManager(Scheduler& scheduler) : _scheduler(scheduler) {
 
+        logger = LoggingService::logger("ThreadManager");
         _status = Status::Idle;
     };
 
@@ -54,7 +55,6 @@ namespace greenfield {
 
         for (int i=0; i<nthreads; ++i) {
             Worker * worker = new Worker(i, _scheduler);
-            worker->_logger = logger;
             _workers.push_back(worker);
         }
         LOG_INFO(logger) << "ThreadManager status changed to RUNNING." << LOG_END;

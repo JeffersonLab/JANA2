@@ -91,7 +91,10 @@ public:
     /// Leave the logger accessible for now so we can potentially inject it during testing
     Logger logger;
 
-    Topology() = default;
+    Topology() {
+        logger = LoggingService::logger("Topology");
+    }
+
     virtual ~Topology();
 
     void addManagedComponent(Component *component);

@@ -13,6 +13,23 @@ using namespace greenfield;
 
 int main() {
 
+    serviceLocator = new ServiceLocator();
+
+    auto loggingService = new LoggingService;
+    serviceLocator->provide(loggingService);
+
+    loggingService->set_level("ThreadManager", JLogLevel::INFO);
+    loggingService->set_level("Scheduler", JLogLevel::DEBUG);
+    loggingService->set_level("Topology", JLogLevel::INFO);
+
+    auto params = new ParameterManager;
+    serviceLocator->provide(params);
+
+    params->chunksize = 10;
+    params->backoff_tries = 4;
+    params->backoff_time = std::chrono::microseconds(100);
+    params->checkin_time = std::chrono::milliseconds(200);
+
     PerfTestSource parse;
     PerfTestMapper disentangle;
     PerfTestMapper track;
@@ -46,6 +63,7 @@ int main() {
 
     topology.log_status();
     topology.run(4);
+
 
     //while (topology.is_active()) {
         //std::this_thread::sleep_for(std::chrono::milliseconds(500));

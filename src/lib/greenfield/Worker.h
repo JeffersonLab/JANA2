@@ -11,12 +11,10 @@ namespace greenfield {
     using clock_t = std::chrono::steady_clock;
 
     class Worker {
-        /// Designed so that the Worker checks in with the manager on his own terms;
-        /// i.e. the manager will never update the worker's assignment without
-        /// him knowing. This eliminates a whole lot of synchronization since we can assume
+        /// Designed so that the Worker checks in with the scheduler on his own terms;
+        /// i.e. nobody will update the worker's assignment externally. This eliminates
+        /// a whole lot of synchronization since we can assume
         /// that the Worker's internal state won't be updated by another thread.
-        /// The manager is still responsible for changing the worker's
-        /// assignment and checkin period.
 
     private:
         std::thread* _thread;
@@ -42,6 +40,14 @@ namespace greenfield {
             _scheduler(scheduler), worker_id(id) {
 
             _thread = new std::thread(&Worker::loop, this);
+            if (serviceLocator != nullptr) {
+                LOG_DEBUG(_logger) << "Worker " << worker_id << " found parameters from serviceLocator." << LOG_END;
+                auto params = serviceLocator->get<ParameterManager>();
+                checkin_time = params->checkin_time;
+                initial_backoff_duration = params->backoff_time;
+                backoff_tries = params->backoff_tries;
+            }
+            _logger = LoggingService::logger("Worker");
             LOG_DEBUG(_logger) << "Worker " << worker_id << " constructed." << LOG_END;
         }
 

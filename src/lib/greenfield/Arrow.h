@@ -8,6 +8,7 @@
 #include <vector>
 
 #include <greenfield/Queue.h>
+#include "ServiceLocator.h"
 
 
 namespace greenfield {
@@ -118,7 +119,13 @@ public:
             _is_parallel(is_parallel),
             _total_latency(duration_t::zero()),
             _last_latency(duration_t::zero()),
-            _queue_overhead(duration_t::zero()){};
+            _queue_overhead(duration_t::zero()) {
+
+        if (serviceLocator != nullptr) {
+            auto params = serviceLocator->get<ParameterManager>();
+            _chunksize = params->chunksize;
+        }
+    };
 
     virtual ~Arrow() = default;
 
