@@ -15,16 +15,14 @@ namespace greenfield {
 
 class LinearTopologyBuilder {
 
-    Topology* topology;
+    Topology& topology;
     QueueBase* last_queue;
     bool have_source = false;
     bool have_sink = false;
     bool finished = false;
 
 public:
-    LinearTopologyBuilder() {
-        topology = new Topology;
-    }
+    LinearTopologyBuilder(Topology& topology): topology(topology) {}
 
     template <typename T>
     LinearTopologyBuilder& addSource(std::string name, Source<T>& source) {
@@ -35,8 +33,8 @@ public:
         auto output_queue = new Queue<T>;
         last_queue = output_queue;
         auto arrow = new SourceArrow<T>(name, source, output_queue);
-        topology->addArrow(arrow);
-        topology->addQueue(output_queue);
+        topology.addArrow(arrow);
+        topology.addQueue(output_queue);
         return *this;
     }
 
@@ -51,8 +49,8 @@ public:
         assert(input_queue != nullptr);
         last_queue = output_queue;
         auto arrow = new MapArrow<S,T>(name, processor, input_queue, output_queue);
-        topology->addArrow(arrow);
-        topology->addQueue(output_queue);
+        topology.addArrow(arrow);
+        topology.addQueue(output_queue);
         return *this;
     }
 
@@ -66,7 +64,7 @@ public:
         input_queue->set_name(name + "_queue");
         assert(input_queue != nullptr);
         auto arrow = new SinkArrow<S>(name, sink, input_queue);
-        topology->addArrow(arrow, true);
+        topology.addArrow(arrow, true);
         return *this;
     }
 
@@ -75,33 +73,24 @@ public:
     template <typename SourceT>
     LinearTopologyBuilder& addSource(std::string name) {
         auto source = new SourceT;
-        topology->addManagedComponent(source);
+        topology.addManagedComponent(source);
         return addSource(name, *source);
     }
 
     template <typename ProcessorT>
     LinearTopologyBuilder& addProcessor(std::string name) {
         auto processor = new ProcessorT;
-        topology->addManagedComponent(processor);
+        topology.addManagedComponent(processor);
         return addProcessor(name, *processor);
     }
 
     template <typename SinkT>
     LinearTopologyBuilder& addSink(std::string name) {
         auto sink = new SinkT;
-        topology->addManagedComponent(sink);
+        topology.addManagedComponent(sink);
         return addSink(name, *sink);
     }
 
-    Topology get() {
-        assert(have_source);
-        assert(have_sink);
-        assert(!finished);
-        finished = true;
-        auto temp = topology;
-        topology = nullptr;
-        return std::move(*temp);
-    }
 };
 
 

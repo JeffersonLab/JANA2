@@ -11,14 +11,13 @@ TEST_CASE("greenfield::RoundRobinScheduler") {
 
     SumSink<double> sink;
 
-    LinearTopologyBuilder builder;
+    Topology topology;
+    LinearTopologyBuilder builder(topology);
 
     builder.addSource<RandIntSource>("emit_rand_ints");
     builder.addProcessor<MultByTwoProcessor>("multiply_by_two");
     builder.addProcessor<SubOneProcessor>("subtract_one");
     builder.addSink("sum_everything", sink);
-
-    auto topology = builder.get();
 
     RoundRobinScheduler scheduler(topology);
 

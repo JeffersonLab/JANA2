@@ -13,7 +13,7 @@ class Scheduler;
 
 using clock_t = std::chrono::steady_clock;
 
-class Topology {
+class Topology : public Activable {
 friend class RoundRobinScheduler;
 
 public:
@@ -111,7 +111,9 @@ public:
 
     // get_graph()              // perhaps build an interactive visual someday
 
-    bool is_active();
+    bool is_active() override;
+    void set_active(bool is_active) override;
+
     StreamStatus step(const std::string &arrow_name);
     void run(int threads);
     void wait_until_finished();

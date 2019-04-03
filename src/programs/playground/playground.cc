@@ -32,24 +32,27 @@ int main() {
 //    entangled "block of 40": dis * 40
 //
 
-    LinearTopologyBuilder builder;
+    Topology topology;
+
+    LinearTopologyBuilder builder(topology);
+
     builder.addSource("parse", parse);
     builder.addProcessor("disentangle", disentangle);
     builder.addProcessor("track", track);
     builder.addSink("plot", plot);
 
-    Topology topology = builder.get();
     topology.logger = Logger(JLogLevel::TRACE, &std::cout);
     topology.activate("parse");
 
     topology.log_status();
     topology.run(4);
 
-    while (topology.is_active()) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
-        std::cout << "\033[2J";
-        topology.log_status();
-    }
+    //while (topology.is_active()) {
+        //std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        //std::cout << "\033[2J";
+        //topology.log_status();
+    //}
+
     topology.wait_until_finished();
     topology.log_status();
 }

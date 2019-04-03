@@ -17,7 +17,8 @@ namespace greenfield {
 
 TEST_CASE("greenfield:ActivableActivationTests") {
 
-    LinearTopologyBuilder builder;
+    Topology topology;
+    LinearTopologyBuilder builder(topology);
 
     RandIntSource source;
     SumSink<double> sink;
@@ -26,8 +27,6 @@ TEST_CASE("greenfield:ActivableActivationTests") {
     builder.addProcessor<MultByTwoProcessor>("multiply_by_two");
     builder.addProcessor<SubOneProcessor>("subtract_one");
     builder.addSink("sum_everything", sink);
-
-    auto topology = builder.get();
 
     auto logger = Logger::nothing(); //everything();
     topology.logger = logger;
@@ -67,7 +66,8 @@ TEST_CASE("greenfield:ActivableActivationTests") {
 
 TEST_CASE("greenfield:ActivableDeactivationTests") {
 
-    LinearTopologyBuilder builder;
+    Topology topology;
+    LinearTopologyBuilder builder(topology);
 
     RandIntSource source;
     source.emit_limit = 1;
@@ -78,7 +78,6 @@ TEST_CASE("greenfield:ActivableDeactivationTests") {
     builder.addProcessor<SubOneProcessor>("c");
     builder.addSink("d", sink);
 
-    auto topology = builder.get();
     auto logger = Logger::nothing();
     topology.logger = logger;
     source.logger = logger;

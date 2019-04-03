@@ -24,11 +24,11 @@ private:
     std::vector<Activable *> _downstream;
 
 public:
-    bool is_active() {
+    virtual bool is_active() {
         return _is_active;
     }
 
-    void set_active(bool is_active) {
+    virtual void set_active(bool is_active) {
         _is_active = is_active;
     }
 

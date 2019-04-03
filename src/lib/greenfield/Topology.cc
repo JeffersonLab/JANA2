@@ -66,7 +66,9 @@ void Topology::addArrow(Arrow *arrow, bool sink) {
     arrows.push_back(arrow);
     arrow_lookup[arrow->get_name()] = arrow;
     if (sink) {
-        sinks.push_back(arrow);
+        sinks.push_back(arrow); // So that we can check message_count, is_finished
+        attach_upstream(arrow); // So that we can be notified when finish happens
+        arrow->attach_downstream(this);
     }
 };
 
@@ -302,6 +304,19 @@ bool Topology::is_active() {
     return false;
 }
 
+void Topology::set_active(bool active) {
+
+    if (active) {
+        // activate any sources, eventually
+    }
+    else {
+        if (_run_state == RunState::DuringRun) {
+            _stop_time = clock_t::now();
+            _run_state = RunState::AfterRun;
+        }
+    }
+}
+
 class RoundRobinScheduler;
 
 void Topology::run(int nthreads) {
@@ -322,8 +337,16 @@ void Topology::wait_until_finished() {
         while (is_active()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
         }
-        _stop_time = clock_t::now();
-        _run_state = RunState::AfterRun;
+        if (_run_state == RunState::DuringRun) {
+            // We shouldn't usually end up here because sinks notify us when
+            // they deactivate, automatically calling Topology::set_active(false),
+            // which stops the clock as soon as possible.
+            // However, if for unknown reasons nobody notifies us, we still want to change
+            // run state in an orderly fashion. If we do end up here, though, our _stop_time
+            // will be late, throwing our metrics off.
+            _run_state = RunState::AfterRun;
+            _stop_time = clock_t::now();
+        }
         _threadManager->stop();
         _threadManager->join();
     }

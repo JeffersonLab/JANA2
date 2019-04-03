@@ -12,12 +12,13 @@ namespace greenfield {
 TEST_CASE("SchedulerTests") {
 
     SumSink<double> sink;
-    LinearTopologyBuilder builder;
+    Topology topology;
+    LinearTopologyBuilder builder(topology);
     builder.addSource<RandIntSource>("emit_rand_ints");
     builder.addProcessor<MultByTwoProcessor>("multiply_by_two");
     builder.addProcessor<SubOneProcessor>("subtract_one");
     builder.addSink("sum_everything", sink);
-    auto topology = builder.get();
+
     topology.activate("emit_rand_ints");
 
     Arrow* assignment;

@@ -24,7 +24,8 @@ namespace greenfield {
 
     TEST_CASE("greenfield::Topology: Basic functionality") {
 
-        LinearTopologyBuilder b;
+        Topology topology;
+        LinearTopologyBuilder b(topology);
         RandIntSource source;
         MultByTwoProcessor p1;
         SubOneProcessor p2;
@@ -34,8 +35,6 @@ namespace greenfield {
         b.addProcessor("multiply_by_two", p1);
         b.addProcessor("subtract_one", p2);
         b.addSink("sum_everything", sink);
-
-        auto topology = b.get();
 
         auto logger = Logger::nothing();
         //topology.logger = Logger::everything();
