@@ -7,6 +7,10 @@
 
 namespace greenfield {
 
+using millisecs = std::chrono::duration<double, std::milli>;
+using secs = std::chrono::duration<double>;
+
+
 Topology::ArrowStatus::ArrowStatus(Arrow* arrow) {
     arrow_name = arrow->get_name();
     is_parallel = arrow->is_parallel();
@@ -14,18 +18,22 @@ Topology::ArrowStatus::ArrowStatus(Arrow* arrow) {
     thread_count = arrow->get_thread_count();
     chunksize = arrow->get_chunksize();
 
-    duration_t total_latency;
-    duration_t queue_overhead;
-    duration_t last_latency;
+    clock_t::duration total_latency;
+    clock_t::duration queue_overhead;
+    clock_t::duration last_latency;
     arrow->get_metrics(messages_completed,
                        queue_visit_count,
                        total_latency,
                        queue_overhead,
                        last_latency);
 
-    avg_latency_ms = total_latency.count() / (messages_completed * 1.0e6);
-    inst_latency_ms = last_latency.count() / 1.0e6;
-    queue_overhead_frac = queue_overhead/std::chrono::duration<double>(queue_overhead+total_latency);
+    double l_total = millisecs(total_latency).count();
+    double l_queue = millisecs(queue_overhead).count();
+    double l_last = millisecs(last_latency).count();
+
+    avg_latency_ms = l_total / messages_completed;
+    inst_latency_ms = l_last;
+    queue_overhead_frac = l_queue / (l_queue+l_total);
 }
 
 Topology::~Topology() {
@@ -100,13 +108,13 @@ Topology::TopologyStatus Topology::get_topology_status(std::map<Arrow*,ArrowStat
     double time_delta;
 
     if (_run_state == RunState::AfterRun) {
-        time_delta = std::chrono::duration<double>(_stop_time - _last_time).count();
-        result.uptime_s = std::chrono::duration<double>(_stop_time - _start_time).count();
+        time_delta = secs(_stop_time - _last_time).count();
+        result.uptime_s = secs(_stop_time - _start_time).count();
     }
     else { // RunState::DuringRun
         auto current_time = clock_t::now();
-        time_delta = std::chrono::duration<double>(current_time - _last_time).count();
-        result.uptime_s = std::chrono::duration<double>(current_time - _start_time).count();
+        time_delta = secs(current_time - _last_time).count();
+        result.uptime_s = secs(current_time - _start_time).count();
         _last_time = current_time;
         _last_message_count = result.messages_completed;
     }
@@ -137,7 +145,7 @@ Topology::TopologyStatus Topology::get_topology_status(std::map<Arrow*,ArrowStat
         result.scheduler_overhead_frac = 0;
     }
     else {
-        auto scheduler_time = std::chrono::duration<double>(_scheduler_time);
+        auto scheduler_time = secs(_scheduler_time);
         result.scheduler_overhead_frac = scheduler_time.count() / (result.uptime_s * _ncpus);
     }
 

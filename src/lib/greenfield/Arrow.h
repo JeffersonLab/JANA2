@@ -83,7 +83,7 @@ protected:
         if (message_count_delta != 0) {
             _message_count += message_count_delta;
             _total_latency += latency;
-            _last_latency = latency;
+            _last_latency = latency/message_count_delta;
         }
     }
 
