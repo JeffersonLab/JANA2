@@ -8,6 +8,8 @@
 
 namespace greenfield {
 
+    using clock_t = std::chrono::steady_clock;
+
     class Worker {
         /// Designed so that the Worker checks in with the manager on his own terms;
         /// i.e. the manager will never update the worker's assignment without
@@ -23,9 +25,11 @@ namespace greenfield {
 
     public:
         const uint32_t worker_id;
-        std::chrono::duration<long,std::ratio<1,1000>> checkin_time = std::chrono::milliseconds(500);
-        std::chrono::steady_clock::duration total_loop_time;
-        std::chrono::steady_clock::duration total_scheduler_time;
+        uint32_t backoff_tries = 4;
+        duration_t checkin_time = std::chrono::milliseconds(500);
+        duration_t initial_backoff_duration = std::chrono::microseconds(1000);
+        duration_t total_loop_time = duration_t::zero();
+        duration_t total_scheduler_time = duration_t::zero();
 
         bool shutdown_requested = false;   // For communicating with ThreadManager
         bool shutdown_achieved = false;
@@ -76,33 +80,58 @@ namespace greenfield {
             while (!shutdown_requested) {
 
                 LOG_TRACE(_logger) << "Worker " << worker_id << " is checking in" << LOG_END;
-                auto start_time = std::chrono::steady_clock::now();
+                auto start_time = clock_t::now();
 
                 assignment = _scheduler.next_assignment(worker_id, assignment, last_result);
-                last_result = StreamStatus::KeepGoing;
 
-                auto scheduler_duration = std::chrono::steady_clock::now() - start_time;
-                auto loop_duration = std::chrono::steady_clock::now() - start_time;
-
+                auto scheduler_duration = clock_t::now() - start_time;
+                auto loop_duration = duration_t::zero();
+                    // We want to execute arrow at least once even if scheduler
+                    // took longer than checkin_time
 
                 if (assignment == nullptr) {
                     LOG_TRACE(_logger) << "Worker " << worker_id
                                        << " idling due to lack of assignments" << LOG_END;
                     std::this_thread::sleep_for(checkin_time);
+                    loop_duration = clock_t::now() - start_time;
+                    // Loop duration includes idle time, until we decide to track idle time separately
                 }
                 else {
-                    while (last_result == StreamStatus::KeepGoing &&
+
+                    uint32_t current_tries = 0;
+                    auto backoff_duration = initial_backoff_duration;
+
+                    while (current_tries <= backoff_tries &&
+                           (last_result == StreamStatus::KeepGoing || last_result == StreamStatus::ComeBackLater) &&
                            !shutdown_requested &&
                            loop_duration<checkin_time ) {
 
                         LOG_TRACE(_logger) << "Worker " << worker_id << " is executing "
                                            << assignment->get_name() << LOG_END;
                         last_result = assignment->execute();
-                        loop_duration = std::chrono::steady_clock::now() - start_time;
+                        if (last_result == StreamStatus::KeepGoing) {
+                            LOG_TRACE(_logger) << "Worker " << worker_id << " succeeded at "
+                                               << assignment->get_name() << LOG_END;
+                            current_tries = 0;
+                            backoff_duration = initial_backoff_duration;
+                        }
+                        else {
+                            current_tries++;
+                            if (backoff_tries != 0) {
+                                backoff_duration *= 2;
+                                LOG_TRACE(_logger) << "Worker " << worker_id << " backing off with "
+                                                   << assignment->get_name() << ", tries = " << current_tries
+                                                   << LOG_END;
+
+                                std::this_thread::sleep_for(backoff_duration);
+                                // TODO: Randomize backoff duration?
+                            }
+                        }
+                        loop_duration = clock_t::now() - start_time;
                     }
                 }
                 _mutex.lock();
-                total_loop_time += std::chrono::steady_clock::now() - start_time;
+                total_loop_time += loop_duration;
                 total_scheduler_time += scheduler_duration;
                 _mutex.unlock();
             }
