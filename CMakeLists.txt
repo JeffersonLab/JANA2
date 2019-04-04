@@ -21,7 +21,9 @@ add_library(greenfield STATIC
         src/lib/greenfield/ThreadManager.cc
         src/lib/greenfield/Topology.cc
         src/lib/greenfield/PerfUtils.cc
-        src/lib/greenfield/ServiceLocator.cc)
+        src/lib/greenfield/ServiceLocator.cc
+        src/lib/greenfield/Worker.cc
+        )
 
 add_executable(tests
         src/programs/tests/catch.hpp
