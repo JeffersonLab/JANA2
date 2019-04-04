@@ -22,8 +22,16 @@ namespace greenfield {
             // We need a new assignment
 
             _mutex.lock();
-            _topology._scheduler_visits ++; // TODO: Do this more generally
-            if (next != nullptr) { next->update_thread_count(-1); }
+            if (next != nullptr) {
+                next->update_thread_count(-1);
+
+                if (next->is_upstream_finished() && next->get_thread_count()==0) {
+                    // This was the last thread, arrow can now deactivate
+                    next->set_active(false);
+                    next->notify_downstream(false);
+                    LOG_INFO(logger) << "Scheduler: Deactivating arrow " << next->get_name() << LOG_END;
+                }
+            }
             next = next_assignment();
             if (next != nullptr) { next->update_thread_count(1); }
             _mutex.unlock();
@@ -40,7 +48,6 @@ namespace greenfield {
 
     Arrow* RoundRobinScheduler::next_assignment() {
 
-        auto start_time = std::chrono::steady_clock::now();
         auto next = _assignment;
         do {
             Arrow *candidate = *next;
@@ -51,13 +58,11 @@ namespace greenfield {
                 next = _topology.arrows.begin(); // Start again at the beginning
             }
 
-            if (candidate->is_active() &&
+            if (!candidate->is_upstream_finished() &&
                 (candidate->is_parallel() || candidate->get_thread_count() == 0)) {
 
                 // Found a plausible candidate; done
                 _assignment = next; // Next time, continue right where we left off
-                auto stop_time = std::chrono::steady_clock::now();
-                _topology._scheduler_time += (stop_time-start_time);
                 return candidate;
             }
 

@@ -39,6 +39,7 @@ public:
         duration_t _retry_time;
         duration_t _scheduler_time;
         duration_t _idle_time;
+        long _scheduler_visits;
         std::mutex _mutex;
 
     public:
@@ -50,12 +51,14 @@ public:
         void update(const duration_t& useful_time,
                     const duration_t& retry_time,
                     const duration_t& scheduler_time,
-                    const duration_t& idle_time);
+                    const duration_t& idle_time,
+                    const long& scheduler_visits);
 
         void get(duration_t& useful_time,
                  duration_t& retry_time,
                  duration_t& scheduler_time,
-                 duration_t& idle_time);
+                 duration_t& idle_time,
+                 long& scheduler_visits);
     };
 
     /// Exposes a view of this Worker's performance to the outside world.
@@ -68,6 +71,7 @@ public:
         double retry_time_frac;
         double idle_time_frac;
         double scheduler_time_frac;
+        long scheduler_visits;
     };
 
 

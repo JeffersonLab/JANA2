@@ -11,7 +11,8 @@ Worker::Metrics::Metrics()
         : _useful_time(duration_t::zero())
         , _retry_time(duration_t::zero())
         , _scheduler_time(duration_t::zero())
-        , _idle_time(duration_t::zero()) {}
+        , _idle_time(duration_t::zero())
+        , _scheduler_visits(0) {}
 
 
 void Worker::Metrics::update(const Worker::Metrics& other) {
@@ -21,6 +22,7 @@ void Worker::Metrics::update(const Worker::Metrics& other) {
     _retry_time += other._retry_time;
     _scheduler_time += other._scheduler_time;
     _idle_time += other._idle_time;
+    _scheduler_visits += other._scheduler_visits;
     _mutex.unlock();
 }
 
@@ -28,12 +30,14 @@ void Worker::Metrics::update(const Worker::Metrics& other) {
 void Worker::Metrics::update(const duration_t& useful_time,
                              const duration_t& retry_time,
                              const duration_t& scheduler_time,
-                             const duration_t& idle_time) {
+                             const duration_t& idle_time,
+                             const long& scheduler_visits) {
     _mutex.lock();
     _useful_time += useful_time;
     _retry_time += retry_time;
     _scheduler_time += scheduler_time;
     _idle_time = idle_time;
+    _scheduler_visits += scheduler_visits;
     _mutex.unlock();
 }
 
@@ -41,12 +45,14 @@ void Worker::Metrics::update(const duration_t& useful_time,
 void Worker::Metrics::get(duration_t& useful_time,
                           duration_t& retry_time,
                           duration_t& scheduler_time,
-                          duration_t& idle_time) {
+                          duration_t& idle_time,
+                          long& scheduler_visits) {
     _mutex.lock();
     useful_time = _useful_time;
     retry_time = _retry_time;
     scheduler_time = _scheduler_time;
     idle_time = _idle_time;
+    scheduler_visits = _scheduler_visits;
     _mutex.unlock();
 }
 
@@ -59,13 +65,15 @@ Worker::Summary Worker::get_summary() {
     summary.last_arrow_name = ((assignment == nullptr) ? "idle" : assignment->get_name());
 
     duration_t useful_time, retry_time, scheduler_time, idle_time;
-    metrics.get(useful_time, retry_time, scheduler_time, idle_time);
+    long scheduler_visits;
+    metrics.get(useful_time, retry_time, scheduler_time, idle_time, scheduler_visits);
     duration_t total_time = useful_time + retry_time + scheduler_time + idle_time;
 
     summary.useful_time_frac = millis(useful_time)/millis(total_time);
     summary.retry_time_frac = millis(retry_time)/millis(total_time);
     summary.idle_time_frac = millis(idle_time)/millis(total_time);
     summary.scheduler_time_frac = millis(scheduler_time)/millis(total_time);
+    summary.scheduler_visits = scheduler_visits;
     return summary;
 }
 
@@ -114,6 +122,7 @@ void Worker::loop() {
         auto start_time = clock_t::now();
 
         assignment = _scheduler.next_assignment(worker_id, assignment, last_result);
+        last_result = StreamStatus::KeepGoing;
 
         auto scheduler_time = clock_t::now();
 
@@ -171,7 +180,7 @@ void Worker::loop() {
                 }
             }
         }
-        metrics.update(useful_duration, retry_duration, scheduler_duration, idle_duration);
+        metrics.update(useful_duration, retry_duration, scheduler_duration, idle_duration, 1);
     }
 
     _scheduler.last_assignment(worker_id, assignment, last_result);

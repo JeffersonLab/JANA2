@@ -33,6 +33,7 @@ private:
     // Written externally
     size_t _chunksize = 1;       // Number of items to pop off the input queue at once
     size_t _thread_count = 0;    // Current number of threads assigned to this arrow
+    bool _is_upstream_finished = false;
 
     std::mutex _mutex;           // Protects access to arrow properties.
                                  // TODO: Consider storing and protect thread count differently,
@@ -49,7 +50,11 @@ public:
     std::string get_name() { return _name; }
 
 
+
     // Written internally, read externally
+
+    bool is_upstream_finished() { return _is_upstream_finished; }
+
 
     void get_metrics(size_t& message_count,
                      size_t& queue_visits,
@@ -70,6 +75,9 @@ public:
 protected:
 
     // Written internally, read externally
+
+    void set_upstream_finished(bool upstream_finished) { _is_upstream_finished = upstream_finished; }
+
 
     void update_metrics(size_t message_count_delta,
                         size_t queue_visits_delta,

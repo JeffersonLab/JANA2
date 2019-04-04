@@ -62,8 +62,7 @@ public:
 
 
         if (in_status == StreamStatus::Finished) {
-            set_active(false);
-            notify_downstream(false);
+            set_upstream_finished(true);
             return StreamStatus::Finished;
         }
         else if (in_status == StreamStatus::KeepGoing && out_status == StreamStatus::KeepGoing) {

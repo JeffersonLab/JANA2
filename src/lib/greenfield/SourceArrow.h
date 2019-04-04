@@ -56,6 +56,7 @@ public:
 
         if (in_status == Source<T>::Status::Finished) {
             _source.finalize();
+            set_upstream_finished(true);
             set_active(false);
             notify_downstream(false);
             // TODO: We may need to have scheduler check that _all_ threads running

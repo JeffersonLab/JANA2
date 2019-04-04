@@ -260,10 +260,10 @@ void Topology::log_status() {
 
     if (_run_state == RunState::DuringRun) {
         os << " WORKER STATUS" << std::endl;
-        os << " +----+----------------------+-------------+------------+-----------+----------------+" << std::endl;
-        os << " | ID | Last arrow name      | Useful time | Retry time | Idle time | Scheduler time |" << std::endl;
-        os << " |    |                      |    [0..1]   |   [0..1]   |   [0..1]  |     [0..1]     |" << std::endl;
-        os << " +----+----------------------+-------------+------------+-----------+----------------+" << std::endl;
+        os << " +----+----------------------+-------------+------------+-----------+----------------+------------------+" << std::endl;
+        os << " | ID | Last arrow name      | Useful time | Retry time | Idle time | Scheduler time | Scheduler visits |" << std::endl;
+        os << " |    |                      |    [0..1]   |   [0..1]   |   [0..1]  |     [0..1]     |     [count]      |" << std::endl;
+        os << " +----+----------------------+-------------+------------+-----------+----------------+------------------+" << std::endl;
         for (Worker::Summary ws : _threadManager->get_worker_summaries()) {
             os << " |"
                << std::setw(3) << std::right << ws.worker_id << " | "
@@ -272,9 +272,10 @@ void Topology::log_status() {
                << std::setw(11) << ws.retry_time_frac << " |"
                << std::setw(10) << ws.idle_time_frac << " |"
                << std::setw(15) << ws.scheduler_time_frac << " |"
+               << std::setw(17) << ws.scheduler_visits << " |"
                << std::endl;
         }
-        os << " +----+----------------------+-------------+------------+-----------+----------------+" << std::endl;
+        os << " +----+----------------------+-------------+------------+-----------+----------------+------------------+" << std::endl;
     }
     LOG_INFO(logger) << os.str() << LOG_END;
 }

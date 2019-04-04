@@ -60,6 +60,7 @@ public:
         update_metrics(message_count, 1, latency, overhead);
 
         if (result == StreamStatus::Finished) {
+            set_upstream_finished(true);
             set_active(false);
             notify_downstream(false);
             _sink.finalize();
