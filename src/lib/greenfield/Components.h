@@ -27,13 +27,6 @@ namespace greenfield {
 struct Component {};
 
 
-/// Return codes for Sources. These are identical to Queue::StreamStatus (on purpose, because
-/// it is convenient to model a Source as a stream) but we keep them separate because one is part
-/// of the API and the other is an internal implementation detail.
-
-enum class SourceStatus {KeepGoing, ComeBackLater, Finished, Error};
-
-
 /// Source stands in for (and improves upon) JEventSource.
 /// The type signature of inprocess() is chosen with the following goals:
 ///    - Chunking data in order to increase parallelism coarseness
@@ -43,9 +36,15 @@ enum class SourceStatus {KeepGoing, ComeBackLater, Finished, Error};
 
 template <typename T>
 struct Source : Component {
+
+    /// Return codes for Sources. These are identical to Queue::StreamStatus (on purpose, because
+    /// it is convenient to model a Source as a stream) but we keep them separate because one is part
+    /// of the API and the other is an internal implementation detail.
+    enum class Status {KeepGoing, ComeBackLater, Finished, Error};
+
     virtual void initialize() = 0;
     virtual void finalize() = 0;
-    virtual SourceStatus inprocess(std::vector<T>& ts, size_t count) = 0;
+    virtual Status inprocess(std::vector<T>& ts, size_t count) = 0;
 };
 
 

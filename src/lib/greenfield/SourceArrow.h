@@ -42,7 +42,7 @@ public:
         }
 
         auto start_time = std::chrono::steady_clock::now();
-        SourceStatus in_status = _source.inprocess(_chunk_buffer, get_chunksize());
+        auto in_status = _source.inprocess(_chunk_buffer, get_chunksize());
         auto latency_time = std::chrono::steady_clock::now();
         StreamStatus out_status = _output_queue->push(std::move(_chunk_buffer));
         auto message_count = _chunk_buffer.size();
@@ -54,7 +54,7 @@ public:
         update_metrics(message_count, 1, latency, overhead);
 
 
-        if (in_status == SourceStatus::Finished) {
+        if (in_status == Source<T>::Status::Finished) {
             _source.finalize();
             set_active(false);
             notify_downstream(false);
@@ -63,7 +63,7 @@ public:
             // a couple of straggler events ~might~ get stranded on an inactive queue
             return StreamStatus::Finished;
         }
-        if (in_status == SourceStatus::KeepGoing && out_status == StreamStatus::KeepGoing) {
+        if (in_status == Source<T>::Status::KeepGoing && out_status == StreamStatus::KeepGoing) {
             return StreamStatus::KeepGoing;
         }
         return StreamStatus::ComeBackLater;

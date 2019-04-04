@@ -35,7 +35,7 @@ struct PerfTestSource : public Source<Event*> {
     virtual void initialize() {}
     virtual void finalize() {}
 
-    virtual SourceStatus inprocess(std::vector<Event*>& ts, size_t count) {
+    virtual Status inprocess(std::vector<Event*>& ts, size_t count) {
 
         for (size_t i=0; i<count && (message_count_limit <= 0 || message_count < message_count_limit); ++i) {
             Event* e = new Event;
@@ -48,9 +48,9 @@ struct PerfTestSource : public Source<Event*> {
             message_count++;
         }
         if (message_count_limit > 0 && message_count >= message_count_limit) {
-            return SourceStatus::Finished;
+            return Status::Finished;
         }
-        return SourceStatus::KeepGoing;
+        return Status::KeepGoing;
     }
 };
 

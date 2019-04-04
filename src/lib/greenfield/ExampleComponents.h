@@ -15,7 +15,7 @@ struct RandIntSource : public Source<int> {
     int emit_sum = 0;        // Sum of all ints emitted so far
     Logger logger;
 
-    SourceStatus inprocess(std::vector<int> &items, size_t count) override {
+    Status inprocess(std::vector<int> &items, size_t count) override {
 
         for (size_t i = 0; i < count && emit_count < emit_limit; ++i) {
             //std::this_thread::sleep_for(std::chrono::milliseconds(2000));
@@ -27,12 +27,12 @@ struct RandIntSource : public Source<int> {
         LOG_TRACE(logger) << "RandIntSource emitted " << emit_count << " events" << LOG_END;
 
         if (emit_count >= emit_limit) {
-            return SourceStatus::Finished;
+            return Status::Finished;
         }
 //      else if (emit_count % 5 == 0) {
 //          return StreamStatus::ComeBackLater;
 //      }
-        return SourceStatus::KeepGoing;
+        return Status::KeepGoing;
     }
 
     void initialize() override {
