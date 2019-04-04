@@ -58,6 +58,18 @@ public:
                  duration_t& idle_time);
     };
 
+    /// Exposes a view of this Worker's performance to the outside world.
+    /// This is deliberately a POD type.
+    struct Summary {
+
+        int worker_id;
+        std::string last_arrow_name;
+        double useful_time_frac;
+        double retry_time_frac;
+        double idle_time_frac;
+        double scheduler_time_frac;
+    };
+
 
     /// The Worker may be configured to try different backoff strategies
     enum class BackoffStrategy {
@@ -97,8 +109,10 @@ public:
 
 
     /// This is what the encapsulated thread is supposed to be doing
-
     void loop();
+
+    /// Summarize what/how this Worker is doing
+    Summary get_summary();
 };
 
 } // namespace greenfield

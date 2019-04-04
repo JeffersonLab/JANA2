@@ -51,6 +51,25 @@ void Worker::Metrics::get(duration_t& useful_time,
 }
 
 
+Worker::Summary Worker::get_summary() {
+
+    using millis = std::chrono::duration<double, std::milli>;
+    Worker::Summary summary;
+    summary.worker_id = worker_id;
+    summary.last_arrow_name = ((assignment == nullptr) ? "idle" : assignment->get_name());
+
+    duration_t useful_time, retry_time, scheduler_time, idle_time;
+    metrics.get(useful_time, retry_time, scheduler_time, idle_time);
+    duration_t total_time = useful_time + retry_time + scheduler_time + idle_time;
+
+    summary.useful_time_frac = millis(useful_time)/millis(total_time);
+    summary.retry_time_frac = millis(retry_time)/millis(total_time);
+    summary.idle_time_frac = millis(idle_time)/millis(total_time);
+    summary.scheduler_time_frac = millis(scheduler_time)/millis(total_time);
+    return summary;
+}
+
+
 Worker::Worker(uint32_t id, Scheduler& scheduler) :
         _scheduler(scheduler), worker_id(id), assignment(nullptr) {
 

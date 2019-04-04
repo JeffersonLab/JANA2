@@ -19,7 +19,7 @@ int main() {
     serviceLocator->provide(loggingService);
 
     loggingService->set_level("ThreadManager", JLogLevel::INFO);
-    loggingService->set_level("Scheduler", JLogLevel::DEBUG);
+    loggingService->set_level("Scheduler", JLogLevel::INFO);
     loggingService->set_level("Topology", JLogLevel::INFO);
 
     auto params = new ParameterManager;
@@ -65,11 +65,11 @@ int main() {
     topology.run(4);
 
 
-    //while (topology.is_active()) {
-        //std::this_thread::sleep_for(std::chrono::milliseconds(500));
-        //std::cout << "\033[2J";
-        //topology.log_status();
-    //}
+    while (topology.is_active()) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        std::cout << "\033[2J";
+        topology.log_status();
+    }
 
     topology.wait_until_finished();
     topology.log_status();

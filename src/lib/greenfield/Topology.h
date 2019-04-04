@@ -23,14 +23,12 @@ public:
     /// This helps separate the external API from the internal implementation.
     struct TopologyStatus {
         size_t messages_completed;
-        size_t scheduler_visit_count;
         double uptime_s;
         double avg_throughput_hz;
         double inst_throughput_hz;
         double seq_bottleneck_hz;
         double par_bottleneck_hz;
         double efficiency_frac;
-        double scheduler_overhead_frac;
     };
 
     /// POD type used for inspecting queue performance.

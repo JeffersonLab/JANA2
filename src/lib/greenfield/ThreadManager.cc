@@ -29,18 +29,13 @@ namespace greenfield {
     }
 
 
-    std::vector<ThreadManager::WorkerStatus> ThreadManager::get_worker_statuses() {
-        std::vector<WorkerStatus> statuses;
+    std::vector<Worker::Summary> ThreadManager::get_worker_summaries() {
+
+        std::vector<Worker::Summary> summaries;
         for (Worker* worker : _workers) {
-            if (worker != nullptr) {  // TODO: Get rid of this when idle state no longer = shutdown
-                WorkerStatus status;
-                status.worker_id = worker->worker_id;
-                status.arrow_name = ((worker->assignment == nullptr) ? "idle" : worker->assignment->get_name());
-                status.is_running = !worker->shutdown_achieved;
-                statuses.push_back(status);
-            }
+            summaries.push_back(worker->get_summary());
         }
-        return statuses;
+        return summaries;
     }
 
 

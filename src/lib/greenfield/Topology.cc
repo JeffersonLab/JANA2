@@ -141,16 +141,6 @@ Topology::TopologyStatus Topology::get_topology_status(std::map<Arrow*,ArrowStat
     auto tighter_bottleneck = std::min(result.seq_bottleneck_hz, result.par_bottleneck_hz);
     result.efficiency_frac = result.avg_throughput_hz/tighter_bottleneck;
 
-    // Scheduler visits
-    result.scheduler_visit_count = _scheduler_visits;
-    if (result.uptime_s == 0) {
-        result.scheduler_overhead_frac = 0;
-    }
-    else {
-        auto scheduler_time = secs(_scheduler_time);
-        result.scheduler_overhead_frac = scheduler_time.count() / (result.uptime_s * _ncpus);
-    }
-
     return result;
 
 }
@@ -215,9 +205,6 @@ void Topology::log_status() {
         os << " Parallel bottleneck [Hz]:    " << std::setprecision(3) << s.par_bottleneck_hz << std::endl;
         os << " Efficiency [0..1]:           " << std::setprecision(3) << s.efficiency_frac << std::endl;
         os << std::endl;
-        os << " Scheduler visits [count]:          " << s.scheduler_visit_count << std::endl;
-        os << " Scheduler overhead [0..1]:         " << std::setprecision(3) << s.scheduler_overhead_frac << std::endl;
-        os << std::endl;
     }
 
     os << " ARROW STATUS" << std::endl;
@@ -257,6 +244,7 @@ void Topology::log_status() {
         os << " +--------------------------+-------------+--------------+----------------+--------------+" << std::endl;
 
     }
+    os << std::endl;
     os << " QUEUE STATUS" << std::endl;
     os << " +--------------------------+---------+-----------+------+" << std::endl;
     os << " |           Name           | Pending | Threshold | More |" << std::endl;
@@ -272,16 +260,21 @@ void Topology::log_status() {
 
     if (_run_state == RunState::DuringRun) {
         os << " WORKER STATUS" << std::endl;
-        os << " +----+---------+---------------------+" << std::endl;
-        os << " | ID | Running | Arrow name          |" << std::endl;
-        os << " +----+---------+---------------------+" << std::endl;
-        for (ThreadManager::WorkerStatus ws : _threadManager->get_worker_statuses()) {
+        os << " +----+----------------------+-------------+------------+-----------+----------------+" << std::endl;
+        os << " | ID | Last arrow name      | Useful time | Retry time | Idle time | Scheduler time |" << std::endl;
+        os << " |    |                      |    [0..1]   |   [0..1]   |   [0..1]  |     [0..1]     |" << std::endl;
+        os << " +----+----------------------+-------------+------------+-----------+----------------+" << std::endl;
+        for (Worker::Summary ws : _threadManager->get_worker_summaries()) {
             os << " |"
-               << std::setw(3) << std::right << ws.worker_id << " |"
-               << std::setw(7) << ((ws.is_running) ? "    T   " : "    F   ") << " | "
-               << std::setw(19) << std::left << ws.arrow_name << " |" << std::endl;
+               << std::setw(3) << std::right << ws.worker_id << " | "
+               << std::setw(20) << std::left << ws.last_arrow_name << " |"
+               << std::setw(12) << std::right << ws.useful_time_frac << " |"
+               << std::setw(11) << ws.retry_time_frac << " |"
+               << std::setw(10) << ws.idle_time_frac << " |"
+               << std::setw(15) << ws.scheduler_time_frac << " |"
+               << std::endl;
         }
-        os << " +----+---------+---------------------+" << std::endl;
+        os << " +----+----------------------+-------------+------------+-----------+----------------+" << std::endl;
     }
     LOG_INFO(logger) << os.str() << LOG_END;
 }
