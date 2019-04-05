@@ -18,8 +18,8 @@ int main() {
     auto loggingService = new LoggingService;
     serviceLocator->provide(loggingService);
 
-    loggingService->set_level("ThreadManager", JLogLevel::INFO);
-    loggingService->set_level("Scheduler", JLogLevel::INFO);
+    loggingService->set_level("ThreadManager", JLogLevel::OFF);
+    loggingService->set_level("Scheduler", JLogLevel::OFF);
     loggingService->set_level("Topology", JLogLevel::INFO);
 
     auto params = new ParameterManager;
@@ -27,15 +27,15 @@ int main() {
 
     params->chunksize = 10;
     params->backoff_tries = 4;
-    params->backoff_time = std::chrono::microseconds(100);
-    params->checkin_time = std::chrono::milliseconds(200);
+    params->backoff_time = std::chrono::microseconds(50);
+    params->checkin_time = std::chrono::milliseconds(400);
 
     PerfTestSource parse;
     PerfTestMapper disentangle;
     PerfTestMapper track;
     PerfTestReducer plot;
 
-    parse.message_count_limit = 500;
+    parse.message_count_limit = 5000;
     parse.latency_ms = 10;
     disentangle.latency_ms = 10;
     track.latency_ms = 10;
@@ -58,15 +58,12 @@ int main() {
     builder.addProcessor("track", track);
     builder.addSink("plot", plot);
 
-    topology.logger = Logger(JLogLevel::TRACE, &std::cout);
     topology.activate("parse");
-
-    topology.log_status();
+    //topology.log_status();
     topology.run(4);
 
-
     while (topology.is_active()) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
         std::cout << "\033[2J";
         topology.log_status();
     }

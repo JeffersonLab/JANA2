@@ -7,7 +7,7 @@
 
 namespace greenfield {
 
-TEST_CASE("greenfield::RoundRobinScheduler") {
+TEST_CASE("greenfield::Scheduler") {
 
     SumSink<double> sink;
 
@@ -19,10 +19,9 @@ TEST_CASE("greenfield::RoundRobinScheduler") {
     builder.addProcessor<SubOneProcessor>("subtract_one");
     builder.addSink("sum_everything", sink);
 
-    RoundRobinScheduler scheduler(topology);
+    Scheduler scheduler(topology.arrows, 1);
 
     auto logger = Logger::nothing(); // everything();
-    scheduler.logger = Logger::nothing(); // everything();
 
     // Assume everything is active for now
     topology.activate("emit_rand_ints");

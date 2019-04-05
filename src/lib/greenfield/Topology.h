@@ -14,7 +14,6 @@ class Scheduler;
 using clock_t = std::chrono::steady_clock;
 
 class Topology : public Activable {
-friend class RoundRobinScheduler;
 
 public:
 
@@ -78,9 +77,7 @@ private:
     clock_t::time_point _start_time;
     clock_t::time_point _last_time;
     clock_t::time_point _stop_time;
-    clock_t::duration _scheduler_time = clock_t::duration::zero();
     size_t _last_message_count = 0;
-    size_t _scheduler_visits = 0;  // TODO: These belong on Scheduler instead?
     uint32_t _ncpus;
 
     TopologyStatus get_topology_status(std::map<Arrow*, ArrowStatus>& statuses);

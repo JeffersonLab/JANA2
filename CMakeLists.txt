@@ -15,9 +15,7 @@ include_directories(src/programs/jana)
 include_directories(src/programs/tests)
 
 add_library(greenfield STATIC
-        src/lib/greenfield/FixedScheduler.cc
-        src/lib/greenfield/RoundRobinScheduler.cc
-        src/lib/greenfield/IndependentScheduler.cc
+        src/lib/greenfield/Scheduler.cc
         src/lib/greenfield/ThreadManager.cc
         src/lib/greenfield/Topology.cc
         src/lib/greenfield/PerfUtils.cc

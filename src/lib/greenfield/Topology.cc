@@ -286,6 +286,10 @@ void Topology::log_status() {
 StreamStatus Topology::step(const std::string &arrow_name) {
     Arrow *arrow = get_arrow(arrow_name);
     StreamStatus result = arrow->execute();
+    if (result == StreamStatus::Finished) {
+        arrow->set_active(false);
+        arrow->notify_downstream(false);
+    }
     return result;
 }
 
@@ -311,11 +315,10 @@ void Topology::set_active(bool active) {
     }
 }
 
-class RoundRobinScheduler;
 
 void Topology::run(int nthreads) {
 
-    _scheduler = new RoundRobinScheduler(*this);
+    _scheduler = new Scheduler(arrows, nthreads);
     //_scheduler->logger = Logger::everything();
     _threadManager = new ThreadManager(*_scheduler);
     //_threadManager->logger = Logger::everything();
