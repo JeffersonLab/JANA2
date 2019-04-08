@@ -32,9 +32,9 @@ public:
         attach_downstream(_output_queue);
     }
 
-    StreamStatus execute() {
+    Arrow::Status execute() {
         if (!is_active()) {
-            return StreamStatus::Finished;
+            return Arrow::Status::Finished;
         }
         if (!_is_initialized) {
             _source.initialize();
@@ -44,7 +44,7 @@ public:
         auto start_time = std::chrono::steady_clock::now();
         auto in_status = _source.inprocess(_chunk_buffer, get_chunksize());
         auto latency_time = std::chrono::steady_clock::now();
-        StreamStatus out_status = _output_queue->push(std::move(_chunk_buffer));
+        auto out_status = _output_queue->push(std::move(_chunk_buffer));
         auto message_count = _chunk_buffer.size();
         _chunk_buffer.clear();
         auto finished_time = std::chrono::steady_clock::now();
@@ -62,12 +62,12 @@ public:
             // TODO: We may need to have scheduler check that _all_ threads running
             // this arrow have finished before notifying downstream, otherwise
             // a couple of straggler events ~might~ get stranded on an inactive queue
-            return StreamStatus::Finished;
+            return Arrow::Status::Finished;
         }
-        if (in_status == Source<T>::Status::KeepGoing && out_status == StreamStatus::KeepGoing) {
-            return StreamStatus::KeepGoing;
+        if (in_status == Source<T>::Status::KeepGoing && out_status == QueueBase::Status::Ready) {
+            return Arrow::Status::KeepGoing;
         }
-        return StreamStatus::ComeBackLater;
+        return Arrow::Status::ComeBackLater;
     }
 };
 

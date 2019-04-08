@@ -31,7 +31,7 @@ public:
         attach_downstream(_output_queue);
     };
 
-    StreamStatus execute() {
+    Arrow::Status execute() {
 
         auto start_total_time = std::chrono::steady_clock::now();
         std::vector<S> xs;
@@ -40,7 +40,7 @@ public:
         ys.reserve(get_chunksize());
         // TODO: These allocations are unnecessary and should be eliminated
 
-        StreamStatus in_status = _input_queue->pop(xs, get_chunksize());
+        auto in_status = _input_queue->pop(xs, get_chunksize());
 
         auto start_latency_time = std::chrono::steady_clock::now();
         for (S &x : xs) {
@@ -49,7 +49,7 @@ public:
         auto message_count = xs.size();
         auto end_latency_time = std::chrono::steady_clock::now();
 
-        StreamStatus out_status = StreamStatus::Finished;
+        auto out_status = QueueBase::Status::Ready;
         if (!ys.empty()) {
             out_status = _output_queue->push(ys);
         }
@@ -61,15 +61,15 @@ public:
         update_metrics(message_count, 1, latency, overhead);
 
 
-        if (in_status == StreamStatus::Finished) {
+        if (in_status == QueueBase::Status::Finished) {
             set_upstream_finished(true);
-            return StreamStatus::Finished;
+            return Arrow::Status::Finished;
         }
-        else if (in_status == StreamStatus::KeepGoing && out_status == StreamStatus::KeepGoing) {
-            return StreamStatus::KeepGoing;
+        else if (in_status == QueueBase::Status::Ready && out_status == QueueBase::Status::Ready) {
+            return Arrow::Status::KeepGoing;
         }
         else {
-            return StreamStatus::ComeBackLater;
+            return Arrow::Status::ComeBackLater;
         }
     }
 };

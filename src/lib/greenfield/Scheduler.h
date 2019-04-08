@@ -28,11 +28,11 @@ namespace greenfield {
         /// Scheduler returns nullptr, which tells that Worker to idle until his next checkin.
         /// If next_assignment() makes any changes to internal Scheduler state or to any of its arrows,
         /// it must be synchronized.
-        Arrow* next_assignment(uint32_t worker_id, Arrow* assignment, StreamStatus result);
+        Arrow* next_assignment(uint32_t worker_id, Arrow* assignment, Arrow::Status result);
 
         /// Lets a Worker tell the scheduler that he is shutting down and won't be working on his assignment
         /// any more. The scheduler is thus free to reassign the arrow to one of the remaining workers.
-        void last_assignment(uint32_t worker_id, Arrow* assignment, StreamStatus result);
+        void last_assignment(uint32_t worker_id, Arrow* assignment, Arrow::Status result);
 
     };
 

@@ -283,10 +283,10 @@ void Topology::log_status() {
 
 /// The user may want to pause the topology and interact with it manually.
 /// This is particularly powerful when used from inside GDB.
-StreamStatus Topology::step(const std::string &arrow_name) {
+Arrow::Status Topology::step(const std::string &arrow_name) {
     Arrow *arrow = get_arrow(arrow_name);
-    StreamStatus result = arrow->execute();
-    if (result == StreamStatus::Finished) {
+    auto result = arrow->execute();
+    if (result == Arrow::Status::Finished) {
         arrow->set_active(false);
         arrow->notify_downstream(false);
     }

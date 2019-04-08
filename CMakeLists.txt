@@ -15,12 +15,16 @@ include_directories(src/programs/jana)
 include_directories(src/programs/tests)
 
 add_library(greenfield STATIC
+        src/lib/greenfield/MapArrow.h
+        src/lib/greenfield/SourceArrow.h
+        src/lib/greenfield/SinkArrow.h
         src/lib/greenfield/Scheduler.cc
         src/lib/greenfield/ThreadManager.cc
         src/lib/greenfield/Topology.cc
         src/lib/greenfield/PerfUtils.cc
         src/lib/greenfield/ServiceLocator.cc
         src/lib/greenfield/Worker.cc
+
         )
 
 add_executable(tests

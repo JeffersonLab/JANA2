@@ -114,7 +114,7 @@ Worker::~Worker() {
 void Worker::loop() {
 
     LOG_DEBUG(_logger) << "Worker " << worker_id << " has entered loop()." << LOG_END;
-    StreamStatus last_result = StreamStatus::ComeBackLater;
+    Arrow::Status last_result = Arrow::Status::ComeBackLater;
 
     while (!shutdown_requested) {
 
@@ -122,7 +122,7 @@ void Worker::loop() {
         auto start_time = clock_t::now();
 
         assignment = _scheduler.next_assignment(worker_id, assignment, last_result);
-        last_result = StreamStatus::KeepGoing;
+        last_result = Arrow::Status::KeepGoing;
 
         auto scheduler_time = clock_t::now();
 
@@ -143,7 +143,7 @@ void Worker::loop() {
             auto backoff_duration = initial_backoff_time;
 
             while (current_tries <= backoff_tries &&
-                   (last_result == StreamStatus::KeepGoing || last_result == StreamStatus::ComeBackLater) &&
+                   (last_result == Arrow::Status::KeepGoing || last_result == Arrow::Status::ComeBackLater) &&
                    !shutdown_requested &&
                    (clock_t::now() - start_time) < checkin_time) {
 
@@ -154,7 +154,7 @@ void Worker::loop() {
                 useful_duration += (clock_t::now() - before_execute_time);
 
 
-                if (last_result == StreamStatus::KeepGoing) {
+                if (last_result == Arrow::Status::KeepGoing) {
                     LOG_TRACE(_logger) << "Worker " << worker_id << " succeeded at "
                                        << assignment->get_name() << LOG_END;
                     current_tries = 0;

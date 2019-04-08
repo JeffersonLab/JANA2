@@ -133,11 +133,11 @@ namespace greenfield {
                                topology.get_arrow("subtract_one"),
                                topology.get_arrow("sum_everything")};
 
-            std::map<std::string, StreamStatus> results;
-            results["emit_rand_ints"] = StreamStatus::KeepGoing;
-            results["multiply_by_two"] = StreamStatus::KeepGoing;
-            results["subtract_one"] = StreamStatus::KeepGoing;
-            results["sum_everything"] = StreamStatus::KeepGoing;
+            std::map<std::string, Arrow::Status> results;
+            results["emit_rand_ints"] = Arrow::Status::KeepGoing;
+            results["multiply_by_two"] = Arrow::Status::KeepGoing;
+            results["subtract_one"] = Arrow::Status::KeepGoing;
+            results["sum_everything"] = Arrow::Status::KeepGoing;
 
             // Put something in the queue to get started
             topology.activate("emit_rand_ints");
@@ -161,7 +161,7 @@ namespace greenfield {
                     }
                 }
                 for (auto pair : results) {
-                    if (pair.second == StreamStatus::KeepGoing) { work_left = true; }
+                    if (pair.second == Arrow::Status::KeepGoing) { work_left = true; }
                 }
             }
 

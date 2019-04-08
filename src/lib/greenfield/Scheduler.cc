@@ -13,10 +13,10 @@ Scheduler::Scheduler(const std::vector<Arrow*>& arrows, size_t worker_count)
     }
 
 
-Arrow* Scheduler::next_assignment(uint32_t worker_id, Arrow* assignment, StreamStatus last_result) {
+Arrow* Scheduler::next_assignment(uint32_t worker_id, Arrow* assignment, Arrow::Status last_result) {
 
     // Short-circuit our scheduler visit if everything is in order.
-    if (last_result == StreamStatus::KeepGoing && assignment != nullptr) {
+    if (last_result == Arrow::Status::KeepGoing && assignment != nullptr) {
         return assignment;
     }
 
@@ -71,7 +71,7 @@ Arrow* Scheduler::next_assignment(uint32_t worker_id, Arrow* assignment, StreamS
 }
 
 
-void Scheduler::last_assignment(uint32_t worker_id, Arrow* assignment, StreamStatus result) {
+void Scheduler::last_assignment(uint32_t worker_id, Arrow* assignment, Arrow::Status result) {
 
     _worker_count--;
     if (assignment != nullptr) {

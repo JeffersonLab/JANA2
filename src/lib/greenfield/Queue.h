@@ -8,18 +8,6 @@
 
 namespace greenfield {
 
-enum class StreamStatus {KeepGoing, ComeBackLater, Finished, Error};
-
-inline std::string to_string(StreamStatus h) {
-    switch (h) {
-        case StreamStatus::KeepGoing:     return "KeepGoing";
-        case StreamStatus::ComeBackLater: return "ComeBackLater";
-        case StreamStatus::Finished:      return "Finished";
-        case StreamStatus::Error:
-        default:                          return "Error";
-    }
-}
-
 
 class QueueBase : public Activable {
 
@@ -28,6 +16,8 @@ protected:
     std::string _name = "anon_queue";
 
 public:
+
+    enum class Status { Ready, Congested, Empty, Full, Finished };
 
     virtual ~QueueBase() = default;
 
@@ -49,21 +39,22 @@ private:
     std::deque<T> _underlying;
 
 public:
+
     size_t get_item_count() final { return _underlying.size(); }
 
-    StreamStatus push(const T& t) {
+    Status push(const T& t) {
         _mutex.lock();
         _underlying.push_back(t);
         size_t size = _underlying.size();
         _mutex.unlock();
 
         if (size > _threshold) {
-            return StreamStatus::ComeBackLater;
+            return Status::Full;
         }
-        return StreamStatus::KeepGoing;
+        return Status::Ready;
     }
 
-    StreamStatus push(const std::vector<T>& buffer) {
+    Status push(const std::vector<T>& buffer) {
         _mutex.lock();
         for (const T& t : buffer) {
             _underlying.push_back(t);
@@ -72,14 +63,17 @@ public:
         _mutex.unlock();
 
         if (item_count > _threshold) {
-            return StreamStatus::ComeBackLater;
+            return Status::Full;
         }
-        return StreamStatus::KeepGoing;
+        return Status::Ready;
     }
 
-    StreamStatus pop(std::vector<T>& buffer, size_t count) {
+    Status pop(std::vector<T>& buffer, size_t count) {
+
         buffer.clear();
-        _mutex.lock();
+        if (!_mutex.try_lock()) {
+            return Status::Congested;
+        }
         size_t nitems = std::min(count, _underlying.size());
         buffer.reserve(nitems);
         for (int i=0; i<nitems; ++i) {
@@ -90,12 +84,12 @@ public:
         _mutex.unlock();
 
         if (size != 0) {
-            return StreamStatus::KeepGoing;
+            return Status::Ready;
         }
-        if (!is_active()) {
-            return StreamStatus::Finished;
+        if (is_active()) {
+            return Status::Empty;
         }
-        return StreamStatus::ComeBackLater;
+        return Status::Finished;
     }
 };
 

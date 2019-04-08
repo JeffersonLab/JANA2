@@ -29,9 +29,9 @@ public:
         attach_upstream(_input_queue);
     };
 
-    StreamStatus execute() {
+    Arrow::Status execute() {
         if (!is_active()) {
-            return StreamStatus::Finished;
+            return Arrow::Status::Finished;
         }
         if (!_is_initialized) {
             _sink.initialize();
@@ -41,7 +41,7 @@ public:
 
         auto start_time = std::chrono::steady_clock::now();
 
-        StreamStatus result = _input_queue->pop(_chunk_buffer, get_chunksize());
+        auto result = _input_queue->pop(_chunk_buffer, get_chunksize());
 
         auto latency_start_time = std::chrono::steady_clock::now();
 
@@ -59,13 +59,17 @@ public:
         auto overhead = (stop_time - start_time) - latency;
         update_metrics(message_count, 1, latency, overhead);
 
-        if (result == StreamStatus::Finished) {
+        if (result == Queue<T>::Status::Finished) {
             set_upstream_finished(true);
             set_active(false);
             notify_downstream(false);
             _sink.finalize();
+            return Arrow::Status::Finished;
         }
-        return result;
+        else if (result == Queue<T>::Status::Empty) {
+            return Arrow::Status::ComeBackLater;
+        }
+        return Arrow::Status::KeepGoing;
     }
 };
 

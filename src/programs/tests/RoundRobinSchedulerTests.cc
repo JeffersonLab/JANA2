@@ -26,7 +26,7 @@ TEST_CASE("greenfield::Scheduler") {
     // Assume everything is active for now
     topology.activate("emit_rand_ints");
 
-    StreamStatus last_result = StreamStatus::ComeBackLater;
+    auto last_result = Arrow::Status::ComeBackLater;
     Arrow* assignment = nullptr;
 
     SECTION("When there is only one worker, who always encounters ComeBackLater...") {
@@ -55,7 +55,7 @@ TEST_CASE("greenfield::Scheduler") {
 
         for (int i = 0; i < 10; ++i) {
             assignment = nullptr;
-            last_result = StreamStatus::ComeBackLater;
+            last_result = Arrow::Status::ComeBackLater;
             assignment = scheduler.next_assignment(i, assignment, last_result);
 
             // They all receive a nonnull assignment
@@ -80,10 +80,10 @@ TEST_CASE("greenfield::Scheduler") {
 
         LOG_INFO(logger) << "--------------------------------------" << LOG_END;
 
-        scheduler.next_assignment(0, nullptr, StreamStatus::ComeBackLater);
-        scheduler.next_assignment(1, nullptr, StreamStatus::ComeBackLater);
-        scheduler.next_assignment(2, nullptr, StreamStatus::ComeBackLater);
-        auto sum_everything_arrow = scheduler.next_assignment(3, nullptr, StreamStatus::ComeBackLater);
+        scheduler.next_assignment(0, nullptr, Arrow::Status::ComeBackLater);
+        scheduler.next_assignment(1, nullptr, Arrow::Status::ComeBackLater);
+        scheduler.next_assignment(2, nullptr, Arrow::Status::ComeBackLater);
+        auto sum_everything_arrow = scheduler.next_assignment(3, nullptr, Arrow::Status::ComeBackLater);
 
         // Last assignment returned sequential arrow "sum_everything"
         REQUIRE(sum_everything_arrow->get_name() == "sum_everything");
@@ -92,14 +92,14 @@ TEST_CASE("greenfield::Scheduler") {
 
         // We return the sequential arrow to the scheduler
         assignment = sum_everything_arrow;
-        last_result = StreamStatus::ComeBackLater;
+        last_result = Arrow::Status::ComeBackLater;
         auto arrow = scheduler.next_assignment(3, assignment, last_result);
 
         assignment_counts[arrow->get_name()]++;
 
         for (int i = 0; i < 8; ++i) {
             assignment = nullptr;
-            last_result = StreamStatus::ComeBackLater;
+            last_result = Arrow::Status::ComeBackLater;
             arrow = scheduler.next_assignment(i, assignment, last_result);
             assignment_counts[arrow->get_name()]++;
         }
@@ -113,7 +113,7 @@ TEST_CASE("greenfield::Scheduler") {
     SECTION("When an arrow encountered KeepGoing...") {
 
         LOG_INFO(logger) << "--------------------------------------" << LOG_END;
-        last_result = StreamStatus::KeepGoing;
+        last_result = Arrow::Status::KeepGoing;
         assignment = topology.get_arrow("subtract_one");
 
         for (int i = 0; i < 4; ++i) {

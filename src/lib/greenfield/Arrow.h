@@ -43,6 +43,9 @@ private:
 
 public:
 
+    /// Status enum for communicating
+    enum class Status {KeepGoing, ComeBackLater, Finished, Error};
+
     // Constants
 
     bool is_parallel() { return _is_parallel; }
@@ -137,9 +140,19 @@ public:
 
     virtual ~Arrow() = default;
 
-    virtual StreamStatus execute() = 0;
+    virtual Status execute() = 0;
 
 };
+
+inline std::string to_string(Arrow::Status h) {
+    switch (h) {
+        case Arrow::Status::KeepGoing:     return "KeepGoing";
+        case Arrow::Status::ComeBackLater: return "ComeBackLater";
+        case Arrow::Status::Finished:      return "Finished";
+        case Arrow::Status::Error:
+        default:                          return "Error";
+    }
+}
 
 
 } // namespace greenfield

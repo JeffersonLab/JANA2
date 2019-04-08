@@ -22,7 +22,7 @@ TEST_CASE("SchedulerTests") {
     topology.activate("emit_rand_ints");
 
     Arrow* assignment;
-    StreamStatus last_result;
+    Arrow::Status last_result;
 
 
     SECTION("When run sequentially, RRS returns nullptr => topology finished") {
@@ -31,7 +31,7 @@ TEST_CASE("SchedulerTests") {
 
         Scheduler scheduler(topology.arrows, 1);
 
-        last_result = StreamStatus::ComeBackLater;
+        last_result = Arrow::Status::ComeBackLater;
         assignment = nullptr;
         do {
             assignment = scheduler.next_assignment(0, assignment, last_result);
@@ -50,7 +50,7 @@ TEST_CASE("SchedulerTests") {
 
         auto logger = Logger::nothing();
         Scheduler scheduler(topology.arrows, 1);
-        last_result = StreamStatus::ComeBackLater;
+        last_result = Arrow::Status::ComeBackLater;
         assignment = nullptr;
 
         bool keep_going = true;

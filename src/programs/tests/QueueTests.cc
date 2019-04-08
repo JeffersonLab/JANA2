@@ -16,10 +16,10 @@ TEST_CASE("greenfield::Queue: Basic functionality") {
     REQUIRE(q.get_item_count() == 1);
 
     std::vector<int> items;
-    StreamStatus result = q.pop(items, 22);
+    auto result = q.pop(items, 22);
     REQUIRE(items.size() == 1);
     REQUIRE(q.get_item_count() == 0);
-    REQUIRE(result == StreamStatus::ComeBackLater);
+    REQUIRE(result == QueueBase::Status::Empty);
 
     q.push({1,2,3});
     REQUIRE(q.get_item_count() == 3);
@@ -28,7 +28,7 @@ TEST_CASE("greenfield::Queue: Basic functionality") {
     result = q.pop(items, 2);
     REQUIRE(items.size() == 2);
     REQUIRE(q.get_item_count() == 1);
-    REQUIRE(result == StreamStatus::KeepGoing);
+    REQUIRE(result == QueueBase::Status::Ready);
 
 }
 }
