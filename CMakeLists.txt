@@ -94,7 +94,9 @@ add_library(jana2 STATIC
         src/lib/JANA/JThreadManager.h
         src/lib/JANA/JTypeInfo.h
         src/lib/JANA/JVersion.h
-        )
+        src/lib/JANA/JEventProcessorArrow.cc
+        src/lib/JANA/JEventProcessorArrow.h
+        src/lib/JANA/JEventSourceArrow.cc src/lib/JANA/JEventSourceArrow.h)
 
 add_library(jtest SHARED
         src/plugins/JTest/JTestDataObject.h
@@ -120,6 +122,7 @@ target_link_libraries(jana jana2)
 target_link_libraries(jtest jana2)
 
 # Add greenfield static lib
+target_link_libraries(jana2 greenfield)
 target_link_libraries(tests greenfield)
 target_link_libraries(playground greenfield)
 
