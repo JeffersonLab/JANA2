@@ -10,10 +10,11 @@
 #include <JANA/JEvent.h>
 
 using Arrow = greenfield::Arrow;
-using Event = std::shared_ptr<JEvent>;
+using Event = std::shared_ptr<const JEvent>;
 using EventQueue = greenfield::Queue<Event>;
 
 class JEventSourceArrow : public Arrow {
+
 private:
     JEventSource& _source;
     EventQueue* _output_queue;
