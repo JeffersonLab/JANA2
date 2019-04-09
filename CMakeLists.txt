@@ -96,7 +96,9 @@ add_library(jana2 STATIC
         src/lib/JANA/JVersion.h
         src/lib/JANA/JEventProcessorArrow.cc
         src/lib/JANA/JEventProcessorArrow.h
-        src/lib/JANA/JEventSourceArrow.cc src/lib/JANA/JEventSourceArrow.h)
+        src/lib/JANA/JEventSourceArrow.cc
+        src/lib/JANA/JEventSourceArrow.h
+        src/lib/JANA/JApplicationOld.cc src/lib/JANA/JApplicationOld.h src/lib/JANA/JApplicationNew.cc src/lib/JANA/JApplicationNew.h)
 
 add_library(jtest SHARED
         src/plugins/JTest/JTestDataObject.h

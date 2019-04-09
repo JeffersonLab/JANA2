@@ -6,9 +6,9 @@
 #define JANA2_JEVENTPROCESSORARROW_H
 
 
-#include "JEvent.h"
-#include "Arrow.h"
-#include "Queue.h"
+#include <JANA/JEvent.h>
+#include <greenfield/Arrow.h>
+#include <greenfield/Queue.h>
 
 using Arrow = greenfield::Arrow;
 using Event = std::shared_ptr<JEvent>;

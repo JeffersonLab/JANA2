@@ -499,7 +499,7 @@ void JApplication::Run()
 	}
 
 	// Print summary of all config parameters (if any aren't default)
-	GetJParameterManager()->PrintParameters(true);
+	GetJParameterManager()->PrintParameters(false);
 
 	// Start all threads running
 	jout << "Start processing ..." << endl;

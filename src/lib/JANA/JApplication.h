@@ -99,7 +99,7 @@ class JApplication{
 		void PrintFinalReport(void);
 		void PrintStatus(void);
 		void Quit(bool skip_join=false);
-		void Run();
+		virtual void Run();
 		void SetExitCode(int exit_code);
 		void SetTicker(bool ticker_on=true);
 		void Stop(bool wait_until_idle=false);

@@ -30,7 +30,8 @@
 //
 
 #include <iostream>
-#include <JANA/JApplication.h>
+#include <JANA/JApplicationNew.h>
+#include <JANA/JApplicationOld.h>
 #include <JANA/JVersion.h>
 #include <JANA/JSignalHandler.h>
 
@@ -110,33 +111,39 @@ int Execute(UserOptions& options) {
 			std::cout << "Loading functionality is coming soon! File=" << options.load_config_file << std::endl;
 		}
 
-	    auto params_copy = new JParameterManager(options.params); // JApplication owns params_copy
-		JApplication app(params_copy, &options.eventSources);     // JApplication does not own eventSources
-		japp = &app;
+		bool legacy_mode = true;
+		options.params.SetDefaultParameter("JANA:LEGACY_MODE", legacy_mode, "");
+	    auto params_copy = new JParameterManager(options.params); // JApplication owns params_copy, does not own eventSources
+
+		if (legacy_mode) {
+			japp = new JApplicationOld(params_copy, &options.eventSources);
+		} else {
+			japp = new JApplicationNew(params_copy, &options.eventSources);
+		}
 		AddSignalHandlers();
 
 		if (options.flags[ShowConfigs]) {
 			// Load all plugins, collect all parameters, exit without running anything
-			app.Initialize();
-			app.GetJParameterManager()->PrintParameters(true);
+			japp->Initialize();
+			japp->GetJParameterManager()->PrintParameters(true);
 			exitStatus = -1;
 		}
 		else if (options.flags[DumpConfigs]) {
 		    // Load all plugins, dump parameters to file, exit without running anything
 			std::cout << "Dumping functionality is coming soon! File=" << options.dump_config_file << std::endl;
-			app.Initialize();
+			japp->Initialize();
 		}
 		else if (options.flags[Benchmark]) {
 			// Run JANA in benchmark mode
 	    	std::cout << "Benchmark functionality is coming soon!" << std::endl;
-			exitStatus = app.GetExitCode();
+			exitStatus = japp->GetExitCode();
 		}
 		else {
 			// Run JANA in normal mode
-			app.Run();
-			exitStatus = app.GetExitCode();
+			japp->Run();
+			exitStatus = japp->GetExitCode();
 		}
-
+		delete japp;
 	}
 	exit(exitStatus);
 }
