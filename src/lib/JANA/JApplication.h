@@ -34,13 +34,11 @@
 #include <vector>
 #include <string>
 #include <atomic>
-#include <deque>
 #include <mutex>
 #include <memory>
 #include <map>
 using std::vector;
 using std::string;
-using std::deque;
 using std::map;
 
 #define jout std::cout
@@ -95,19 +93,19 @@ class JApplication{
 		virtual ~JApplication();
 
 		int  GetExitCode(void);
-		void Initialize(void);
-		void PrintFinalReport(void);
-		void PrintStatus(void);
-		void Quit(bool skip_join=false);
-		virtual void Run();
+		virtual void Initialize(void) = 0;
+		virtual void PrintFinalReport(void) = 0;
+		virtual void PrintStatus(void);
+		virtual void Quit(bool skip_join=false) = 0;
+		virtual void Run() = 0;
+		virtual void Stop(bool wait_until_idle=false) = 0;
+		virtual void Resume() = 0;
 		void SetExitCode(int exit_code);
 		void SetTicker(bool ticker_on=true);
-		void Stop(bool wait_until_idle=false);
-		void Resume(void);
 
-		void Add(JEventSourceGenerator *source_generator);
-		void Add(JFactoryGenerator *factory_generator);
-		void Add(JEventProcessor *processor);
+		virtual void Add(JEventSourceGenerator *source_generator);
+		virtual void Add(JFactoryGenerator *factory_generator);
+		virtual void Add(JEventProcessor *processor);
 
 		void AddPlugin(string plugin_name);
 		void AddPluginPath(string path);
@@ -116,14 +114,14 @@ class JApplication{
 		void GetJFactoryGenerators(vector<JFactoryGenerator*> &factory_generators);
 		std::shared_ptr<JLogger> GetJLogger(void);
 		JParameterManager* GetJParameterManager(void);
-		JThreadManager* GetJThreadManager(void) const;
+		virtual JThreadManager* GetJThreadManager(void) const = 0;
 		JEventSourceManager* GetJEventSourceManager(void) const;
 		
 		//GET/RECYCLE POOL RESOURCES
-		std::shared_ptr<JTask<void>> GetVoidTask(void);
+		virtual void UpdateResourceLimits(void) = 0;
+		virtual std::shared_ptr<JTask<void>> GetVoidTask(void) = 0;
 		JFactorySet* GetFactorySet(void);
 		void Recycle(JFactorySet* aFactorySet);
-		void UpdateResourceLimits(void);
 
 		uint64_t GetNtasksCompleted(string name="");
 		uint64_t GetNeventsProcessed(void);
@@ -159,18 +157,12 @@ class JApplication{
 		std::shared_ptr<JLogger> _logger;
 		JParameterManager *_pmanager;
 		JEventSourceManager* _eventSourceManager;
-		JThreadManager* _threadManager;
 		std::size_t mNumProcessorsAdded;
 
-		void AttachPlugins(void);
-		void AttachPlugin(string name, bool verbose=false);
-		
-	private:
-
-		// Resource pools
-		JResourcePool<JTask<void>> mVoidTaskPool;
 		JResourcePoolSimple<JFactorySet> mFactorySetPool;
 
+    	void AttachPlugins(void);
+    	void AttachPlugin(string name, bool verbose=false);
 };
 
 //---------------------------------

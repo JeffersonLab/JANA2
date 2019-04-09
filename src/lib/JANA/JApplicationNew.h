@@ -34,13 +34,30 @@
 #define JANA2_JAPPLICATIONNEW_H
 
 
+#include <greenfield/LinearTopologyBuilder.h>
 #include "JApplication.h"
+
+//using namespace greenfield;
 
 class JApplicationNew : public JApplication {
 
+private:
+    //Topology _topology;
+    //LinearTopologyBuilder _builder;
+
 public:
     JApplicationNew(JParameterManager* params, std::vector<std::string>* event_sources);
-    void Run();
+    void Initialize() override;
+    void Run() override;
+    void Stop(bool wait_until_idle) override;
+    void Resume() override;
+    void Quit(bool skip_join) override;
+    void UpdateResourceLimits() override;
+    void PrintFinalReport() override;
+
+    // Abstraction-breaking methods
+    JThreadManager* GetJThreadManager() const override;
+    std::shared_ptr<JTask<void>> GetVoidTask() override;
 
 };
 

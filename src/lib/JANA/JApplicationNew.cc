@@ -33,14 +33,49 @@
 #include "JApplicationNew.h"
 
 JApplicationNew::JApplicationNew(JParameterManager* params, std::vector<std::string>* event_sources)
-    : JApplication(params, event_sources) {
+    : JApplication(params, event_sources)
+    //, _builder(_topology) {
+{
 
-    jout << "Instantiating JApplicationNew" << std::endl;
+    jout << "JApplicationNew::JApplicationNew" << std::endl;
 }
 
+void JApplicationNew::Initialize() {
+    jout << "JApplicationNew::Initialize" << std::endl;
+}
 
 void JApplicationNew::Run() {
     jout << "JApplicationNew::Run" << std::endl;
+}
+
+void JApplicationNew::Quit(bool skip_join) {
+    jout << "JApplicationNew::Quit" << std::endl;
+    _skip_join = skip_join;
+    _quitting = true;
+}
+
+void JApplicationNew::Stop(bool wait_until_idle) {
+    jout << "JApplicationNew::Stop" << std::endl;
+}
+
+void JApplicationNew::Resume() {
+    jout << "JApplicationNew::Resume" << std::endl;
+}
+
+void JApplicationNew::UpdateResourceLimits() {
+    jout << "JApplicationNew::UpdateResourceLimits" << std::endl;
+}
+
+void JApplicationNew::PrintFinalReport() {
+    jout << "JApplicationNew::PrintFinalReport" << std::endl;
+}
+
+JThreadManager* JApplicationNew::GetJThreadManager() const {
+    throw;
+}
+
+std::shared_ptr<JTask<void>> JApplicationNew::GetVoidTask() {
+    throw;
 }
 
 
