@@ -422,6 +422,10 @@ void JApplication::Recycle(JFactorySet* aFactorySet)
 	return mFactorySetPool.Recycle(aFactorySet);
 }
 
+uint64_t JApplication::GetNThreads() {
+	return _nthreads;
+}
+
 //---------------------------------
 // GetNtasksCompleted
 //---------------------------------

@@ -48,6 +48,10 @@ void JApplicationNew::Run() {
     jout << "JApplicationNew::Run" << std::endl;
 }
 
+void JApplicationNew::Scale(int nthreads) {
+    jout << "JApplicationNew::Scale" << std::endl;
+}
+
 void JApplicationNew::Quit(bool skip_join) {
     jout << "JApplicationNew::Quit" << std::endl;
     _skip_join = skip_join;

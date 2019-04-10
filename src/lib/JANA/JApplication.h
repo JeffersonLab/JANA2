@@ -98,6 +98,7 @@ class JApplication{
 		virtual void PrintStatus(void);
 		virtual void Quit(bool skip_join=false) = 0;
 		virtual void Run() = 0;
+		virtual void Scale(int nthreads) = 0;
 		virtual void Stop(bool wait_until_idle=false) = 0;
 		virtual void Resume() = 0;
 		void SetExitCode(int exit_code);
@@ -123,6 +124,7 @@ class JApplication{
 		JFactorySet* GetFactorySet(void);
 		void Recycle(JFactorySet* aFactorySet);
 
+		uint64_t GetNThreads();
 		uint64_t GetNtasksCompleted(string name="");
 		uint64_t GetNeventsProcessed(void);
 		float GetIntegratedRate(void);

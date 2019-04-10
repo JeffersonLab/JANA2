@@ -49,6 +49,7 @@ public:
     JApplicationNew(JParameterManager* params, std::vector<std::string>* event_sources);
     void Initialize() override;
     void Run() override;
+    void Scale(int nthreads) override;
     void Stop(bool wait_until_idle) override;
     void Resume() override;
     void Quit(bool skip_join) override;

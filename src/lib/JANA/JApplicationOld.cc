@@ -169,6 +169,9 @@ void JApplicationOld::Run() {
 	PrintFinalReport();
 }
 
+void JApplicationOld::Scale(int nthreads) {
+	_threadManager->SetNJThreads(nthreads);
+}
 
 void JApplicationOld::Quit(bool skip_join) {
 	_skip_join = skip_join;

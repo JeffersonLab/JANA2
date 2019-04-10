@@ -154,8 +154,6 @@ void JTestMain::TestThread(void)
 	//- - - - - - - - - - - - - - - - - - - - - - - -
 	// Scaling test
 
-	auto tm = mApp->GetJThreadManager();
-
 	// Turn ticker off so we can better control the screen
 	mApp->SetTicker( false );
 
@@ -175,12 +173,12 @@ void JTestMain::TestThread(void)
 	map< uint32_t, std::pair<float,float> > rates; // key=nthreads  val.first=rate in Hz, val.second=rms of rate in Hz
 	for (uint32_t nthreads=mMinThreads; nthreads<=mMaxThreads; nthreads+=mThreadStep){
 		cout << "Setting NTHREADS = " << nthreads << " ..." <<endl;
-		tm->SetNJThreads( nthreads );
+		mApp->Scale(nthreads);
 
 		// Loop for at most 60 seconds waiting for the number of threads to update
 		for(int i=0; i<60; i++){
 			std::this_thread::sleep_for( std::chrono::milliseconds(1000) );
-			if( tm->GetNJThreads() == nthreads ) break;
+			if( mApp->GetNThreads() == nthreads ) break;
 		}
 
 		// Acquire mNsamples instantaneous rate measurements. The
@@ -202,7 +200,7 @@ void JTestMain::TestThread(void)
 			rates[nthreads].first  = avg;  // overwrite with updated value after each sample
 			rates[nthreads].second = rms;  // overwrite with updated value after each sample
 
-			cout << "nthreads=" << tm->GetNJThreads() << "  rate=" << rate << "Hz";
+			cout << "nthreads=" << japp->GetNThreads() << "  rate=" << rate << "Hz";
 			if( N>1 ) cout << "  (avg = " << avg << " +/- " << rms/sqrt(N) << " Hz)";
 			cout << endl;
 		}

@@ -59,6 +59,8 @@ public:
 
     void Resume() override;
 
+    void Scale(int nthreads) override;
+
     void UpdateResourceLimits() override;
 
     void PrintFinalReport() override;
