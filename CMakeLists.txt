@@ -107,13 +107,13 @@ add_library(jtest SHARED
         src/plugins/JTest/JTestEventSource.h
         src/plugins/JTest/JTestDummyDataFactoryGenerator.h
         src/plugins/JTest/JTestMain.cc
-        src/plugins/JTest/JTestMain.h
         src/plugins/JTest/JTestHelpers.h
         )
 
 add_executable(jana
         src/programs/jana/jana.cc
-        src/programs/jana/JBenchmarking.h
+        src/programs/jana/JBenchmarker.h
+        src/programs/jana/JBenchmarker.cc
         src/programs/jana/MyProcessor.cc
         src/programs/jana/MyProcessor.h
         )

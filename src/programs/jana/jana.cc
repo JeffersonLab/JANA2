@@ -35,6 +35,8 @@
 #include <JANA/JVersion.h>
 #include <JANA/JSignalHandler.h>
 
+#include "JBenchmarker.h"
+
 
 void PrintUsage() {
 	/// Prints jana.cc command-line options to stdout, for use by the CLI.
@@ -126,7 +128,6 @@ int Execute(UserOptions& options) {
 			// Load all plugins, collect all parameters, exit without running anything
 			japp->Initialize();
 			japp->GetJParameterManager()->PrintParameters(true);
-			exitStatus = -1;
 		}
 		else if (options.flags[DumpConfigs]) {
 		    // Load all plugins, dump parameters to file, exit without running anything
@@ -135,14 +136,14 @@ int Execute(UserOptions& options) {
 		}
 		else if (options.flags[Benchmark]) {
 			// Run JANA in benchmark mode
-	    	std::cout << "Benchmark functionality is coming soon!" << std::endl;
-			exitStatus = japp->GetExitCode();
+			JBenchmarker benchmarker(japp);
+			japp->Run();
 		}
 		else {
 			// Run JANA in normal mode
 			japp->Run();
-			exitStatus = japp->GetExitCode();
 		}
+		exitStatus = japp->GetExitCode();
 		delete japp;
 	}
 	exit(exitStatus);

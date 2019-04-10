@@ -1,19 +1,20 @@
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Jefferson Science Associates LLC Copyright Notice:
+//
 // Copyright 251 2014 Jefferson Science Associates LLC All Rights Reserved. Redistribution
 // and use in source and binary forms, with or without modification, are permitted as a
-// licensed user provided that the following conditions are met:  
+// licensed user provided that the following conditions are met:
 // 1. Redistributions of source code must retain the above copyright notice, this
-//    list of conditions and the following disclaimer. 
+//    list of conditions and the following disclaimer.
 // 2. Redistributions in binary form must reproduce the above copyright notice, this
 //    list of conditions and the following disclaimer in the documentation and/or other
-//    materials provided with the distribution.  
+//    materials provided with the distribution.
 // 3. The name of the author may not be used to endorse or promote products derived
-//    from this software without specific prior written permission.  
+//    from this software without specific prior written permission.
 // This material resulted from work developed under a United States Government Contract.
 // The Government retains a paid-up, nonexclusive, irrevocable worldwide license in such
 // copyrighted data to reproduce, distribute copies to the public, prepare derivative works,
-// perform publicly and display publicly and to permit others to do so.   
+// perform publicly and display publicly and to permit others to do so.
 // THIS SOFTWARE IS PROVIDED BY JEFFERSON SCIENCE ASSOCIATES LLC "AS IS" AND ANY EXPRESS
 // OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
 // MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
@@ -25,49 +26,35 @@
 // OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//
+// Author: Nathan Brei
+//
 
-#ifndef _JTestMain_h_
-#define _JTestMain_h_
+#ifndef JANA2_JBENCHMARKER_H
+#define JANA2_JBENCHMARKER_H
 
-#include <set>
-#include <cstdint>
-#include <string>
+#include <JANA/JApplication.h>
 
-#include <JApplication.h>
+class JBenchmarker {
 
-class JTestMain {
-	public:
+    JApplication* _app;
+    std::shared_ptr<JLogger> _logger;
+    std::thread* _watcher_thread; // Won't be needed if we make japp.Run() nonblocking
 
-		enum {
-			MODE_BASIC,
-			MODE_SCALING,
-			MODE_NULL
-		} mode_t;
+    size_t _min_threads = 1;
+    size_t _max_threads = 0;
+    unsigned _thread_step = 1;
+    unsigned _nsamples = 15;
+    std::string _output_dir = "JANA_Test_Results";
 
-		JTestMain(JApplication *app);
-		virtual ~JTestMain();
+public:
+    JBenchmarker(JApplication* app);
+    ~JBenchmarker();
 
-		void CopyToOutputDir(std::string filename);
-
-	protected:
-		JApplication *mApp = nullptr;
-		std::shared_ptr<JLogger> mLogger;
-
-		uint32_t mMode = MODE_BASIC;
-		uint32_t mMinThreads=1;
-		uint32_t mMaxThreads;
-		uint32_t mThreadStep=1;
-		uint32_t mNsamples = 15;
-
-		std::string mOutputDirName;
-		std::thread *mThread = nullptr;
-		bool mQuit = false;
-
-		void TestThread(void);
-
-	private:
-
+private:
+    void run_thread();
+    void copy_to_output_dir(std::string filename);
 };
 
-#endif // _JTestMain_h_
 
+#endif //JANA2_JBENCHMARKER_H

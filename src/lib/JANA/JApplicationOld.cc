@@ -170,6 +170,7 @@ void JApplicationOld::Run() {
 }
 
 void JApplicationOld::Scale(int nthreads) {
+    _nthreads = nthreads;
 	_threadManager->SetNJThreads(nthreads);
 }
 
@@ -214,7 +215,6 @@ void JApplicationOld::UpdateResourceLimits() {
     // The exact maximum is hard to determine here. We set it to twice the number
     // of threads which should be sufficient. The user should be given control to
     // adjust this themselves in the future, but or now, this should be OK.
-    jout << "JApplicationNew::UpdateResourceLimits" << std::endl;
 	auto nthreads = _threadManager->GetNJThreads();
 	mFactorySetPool.Set_ControlParams( nthreads*2, 10 );
 }
