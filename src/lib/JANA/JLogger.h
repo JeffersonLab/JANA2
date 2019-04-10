@@ -103,7 +103,7 @@ inline void operator<<(JLogMessage && m, JLogMessageEnd const & end) {
 }
 
 
-#define VLOG(logger, msglevel) if (logger->level <= msglevel) JLogMessage(logger, msglevel, JTHREAD != nullptr ? JTHREAD->GetThreadID() : -1, __FILE__, __LINE__, __func__, 0)
+#define VLOG(logger, msglevel) if (logger->level <= msglevel) JLogMessage(logger, msglevel, THREAD_ID, __FILE__, __LINE__, __func__, 0)
 
 #define VLOG_FATAL(logger) VLOG(logger, JLogLevel::FATAL)
 #define VLOG_ERROR(logger) VLOG(logger, JLogLevel::ERROR)
