@@ -5,14 +5,13 @@
 #ifndef JANA2_PERFTESTTOPOLOGY_H
 #define JANA2_PERFTESTTOPOLOGY_H
 
-#include "Topology.h"
-#include "Components.h"
-#include "PerfUtils.h"
-#include "SourceArrow.h"
-#include "MapArrow.h"
-#include "SinkArrow.h"
+#include <JANA/JTopology.h>
+#include <JANA/JPerfUtils.h>
+#include <greenfield/Components.h>
+#include <greenfield/SourceArrow.h>
+#include <greenfield/MapArrow.h>
+#include <greenfield/SinkArrow.h>
 
-namespace greenfield {
 
 struct Event {
     long event_index;
@@ -89,47 +88,6 @@ struct PerfTestReducer : public Sink<Event*> {
         delete event; // Don't do this in the general case
     }
 };
-
-
-class PerfTestTopology : public Topology {
-
-public:
-
-    PerfTestTopology() {
-
-        auto q1 = new Queue<Event*>;
-        auto q2 = new Queue<Event*>;
-        auto q3 = new Queue<Event*>;
-
-        addQueue(q1);
-        addQueue(q2);
-        addQueue(q3);
-
-        q1->set_name("disentangled_event_queue");
-        q2->set_name("process_queue");
-        q3->set_name("histogram_queue");
-
-        auto source = new PerfTestSource;
-        auto mapper1 = new PerfTestMapper;
-        auto mapper2 = new PerfTestMapper;
-        auto sink = new PerfTestReducer;
-
-        addManagedComponent(source);
-        addManagedComponent(mapper1);
-        addManagedComponent(mapper2);
-        addManagedComponent(sink);
-
-
-        addArrow(new SourceArrow<Event*>("parse", *source, q1));
-        addArrow(new MapArrow<Event*, Event*>("disentangle", *mapper1, q1, q2));
-        addArrow(new MapArrow<Event*, Event*>("process", *mapper2, q2, q3));
-        addArrow(new SinkArrow<Event*>("plot", *sink, q3), true);
-
-    }
-};
-
-}
-
 
 
 #endif //JANA2_PERFTESTTOPOLOGY_H

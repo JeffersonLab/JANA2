@@ -5,9 +5,7 @@
 #include <thread>
 #include <algorithm>
 
-#include "PerfUtils.h"
-
-namespace greenfield {
+#include "JPerfUtils.h"
 
 
 thread_local std::mt19937* generator = nullptr;
@@ -95,4 +93,3 @@ double doBusyWork(std::vector<double> &buffer, double input) {
 }
 
 
-} // namespace greenfield

@@ -5,8 +5,6 @@
 #ifndef GREENFIELD_ACTIVABLE_H
 #define GREENFIELD_ACTIVABLE_H
 
-namespace greenfield {
-
 #include <vector>
 
 /// Activable provides a way of propagating information about whether a particular
@@ -16,12 +14,12 @@ namespace greenfield {
 
 /// Queues and arrows together form a bipartite graph. (Queue vertices only have edges
 /// to arrow vertices, and vice versa.) Activable acts like a common vertex type.
-class Activable {
+class JActivable {
 
 private:
     bool _is_active = false;
-    std::vector<Activable *> _upstream;
-    std::vector<Activable *> _downstream;
+    std::vector<JActivable *> _upstream;
+    std::vector<JActivable *> _downstream;
 
 public:
     virtual bool is_active() {
@@ -56,16 +54,15 @@ public:
         }
     }
 
-    void attach_upstream(Activable* activable) {
+    void attach_upstream(JActivable* activable) {
         _upstream.push_back(activable);
     };
 
-    void attach_downstream(Activable* activable) {
+    void attach_downstream(JActivable* activable) {
         _downstream.push_back(activable);
     };
 
 };
 
-} // namespace greenfield
 
 #endif //GREENFIELD_ACTIVABLE_H

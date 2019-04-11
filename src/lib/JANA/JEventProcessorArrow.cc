@@ -9,7 +9,7 @@ JEventProcessorArrow::JEventProcessorArrow(std::string name,
                                            JEventProcessor& processor,
                                            EventQueue *input_queue,
                                            EventQueue *output_queue)
-        : Arrow(std::move(name), true)
+        : JArrow(std::move(name), true)
         , _processor(processor)
         , _input_queue(input_queue)
         , _output_queue(output_queue)
@@ -21,7 +21,7 @@ JEventProcessorArrow::JEventProcessorArrow(std::string name,
 }
 
 
-Arrow::Status JEventProcessorArrow::execute() {
+JArrow::Status JEventProcessorArrow::execute() {
 
     auto start_total_time = std::chrono::steady_clock::now();
     std::vector<Event> xs;
@@ -49,10 +49,10 @@ Arrow::Status JEventProcessorArrow::execute() {
 
     if (in_status == EventQueue::Status::Finished) {
         set_upstream_finished(true);
-        return Arrow::Status::Finished;
+        return JArrow::Status::Finished;
     } else if (in_status == EventQueue::Status::Ready && out_status == EventQueue::Status::Ready) {
-        return Arrow::Status::KeepGoing;
+        return JArrow::Status::KeepGoing;
     } else {
-        return Arrow::Status::ComeBackLater;
+        return JArrow::Status::ComeBackLater;
     }
 }

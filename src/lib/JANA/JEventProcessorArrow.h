@@ -7,14 +7,13 @@
 
 
 #include <JANA/JEvent.h>
-#include <greenfield/Arrow.h>
-#include <greenfield/Queue.h>
+#include <JANA/JArrow.h>
+#include <JANA/Queue.h>
 
-using Arrow = greenfield::Arrow;
 using Event = std::shared_ptr<JEvent>;
-using EventQueue = greenfield::Queue<Event>;
+using EventQueue = Queue<Event>;
 
-class JEventProcessorArrow : public Arrow {
+class JEventProcessorArrow : public JArrow {
 
 private:
     JEventProcessor& _processor;
@@ -28,7 +27,7 @@ public:
                          EventQueue *input_queue,
                          EventQueue *output_queue);
 
-    Arrow::Status execute();
+    JArrow::Status execute();
 
 };
 

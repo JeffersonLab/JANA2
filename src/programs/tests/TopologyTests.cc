@@ -3,222 +3,218 @@
 
 #include <thread>
 #include <random>
-#include <greenfield/Topology.h>
+#include <JANA/JTopology.h>
 #include <greenfield/LinearTopologyBuilder.h>
-#include "greenfield/ExampleComponents.h"
+#include <greenfield/ExampleComponents.h>
 
 
-namespace greenfield {
+static thread_local std::mt19937* generator = nullptr;
+
+int randint(int min, int max) {
+
+    std::hash<std::thread::id> hasher;
+    long seed = clock() + hasher(std::this_thread::get_id());
+    if (!generator) generator = new std::mt19937(seed);
+    std::uniform_int_distribution<int> distribution(min, max);
+    return distribution(*generator);
+}
+
+TEST_CASE("JTopology: Basic functionality") {
+
+    JTopology topology;
+    LinearTopologyBuilder b(topology);
+    RandIntSource source;
+    MultByTwoProcessor p1;
+    SubOneProcessor p2;
+    SumSink<double> sink;
+
+    b.addSource("emit_rand_ints", source);
+    b.addProcessor("multiply_by_two", p1);
+    b.addProcessor("subtract_one", p2);
+    b.addSink("sum_everything", sink);
+
+    auto logger = JLogger::nothing();
+    //topology.logger = Logger::everything();
+    //source.logger = Logger::everything();
 
 
-    static thread_local std::mt19937* generator = nullptr;
+    SECTION("Before anything runs...") {
 
-    int randint(int min, int max) {
-
-        std::hash<std::thread::id> hasher;
-        long seed = clock() + hasher(std::this_thread::get_id());
-        if (!generator) generator = new std::mt19937(seed);
-        std::uniform_int_distribution<int> distribution(min, max);
-        return distribution(*generator);
+        // All queues are empty, none are finished
+        for (QueueBase* queue : topology.queues) {
+            REQUIRE (queue->get_item_count() == 0);
+        }
     }
 
-    TEST_CASE("greenfield::Topology: Basic functionality") {
+    SECTION("When nothing is in the input queue...") {
 
-        Topology topology;
-        LinearTopologyBuilder b(topology);
-        RandIntSource source;
-        MultByTwoProcessor p1;
-        SubOneProcessor p2;
-        SumSink<double> sink;
+        //LOG_INFO(logger) << "Nothing has run yet; should be empty" << LOG_END;
 
-        b.addSource("emit_rand_ints", source);
-        b.addProcessor("multiply_by_two", p1);
-        b.addProcessor("subtract_one", p2);
-        b.addSink("sum_everything", sink);
+        //topology.log_queue_status();
+        topology.step("multiply_by_two");
+        topology.step("subtract_one");
+        topology.step("sum_everything");
+        topology.step("multiply_by_two");
+        topology.step("subtract_one");
+        topology.step("sum_everything");
+        //topology.log_queue_status();
 
-        auto logger = Logger::nothing();
-        //topology.logger = Logger::everything();
-        //source.logger = Logger::everything();
-
-
-        SECTION("Before anything runs...") {
-
-            // All queues are empty, none are finished
-            for (QueueBase* queue : topology.queues) {
-                REQUIRE (queue->get_item_count() == 0);
-            }
+        // All `execute` operations are no-ops
+        for (QueueBase* queue : topology.queues) {
+            REQUIRE (queue->get_item_count() == 0);
         }
+    }
 
-        SECTION("When nothing is in the input queue...") {
+    SECTION("After emitting") {
+        logger = JLogger::nothing();
+        topology.logger = logger;
+        source.logger = logger;
 
-            //LOG_INFO(logger) << "Nothing has run yet; should be empty" << LOG_END;
+        //LOG_INFO(logger) << "After emitting; should be something in q0" << LOG_END;
 
-            //topology.log_queue_status();
-            topology.step("multiply_by_two");
-            topology.step("subtract_one");
-            topology.step("sum_everything");
-            topology.step("multiply_by_two");
-            topology.step("subtract_one");
-            topology.step("sum_everything");
-            //topology.log_queue_status();
+        topology.log_status();
+        topology.activate("emit_rand_ints");
+        topology.step("emit_rand_ints");
+        topology.log_status();
 
-            // All `execute` operations are no-ops
-            for (QueueBase* queue : topology.queues) {
-                REQUIRE (queue->get_item_count() == 0);
-            }
-        }
+        REQUIRE(topology.queues[0]->get_item_count() == 1);
+        REQUIRE(topology.queues[1]->get_item_count() == 0);
+        REQUIRE(topology.queues[2]->get_item_count() == 0);
 
-        SECTION("After emitting") {
-            logger = Logger::nothing();
-            topology.logger = logger;
-            source.logger = logger;
+        topology.step("emit_rand_ints");
+        topology.step("emit_rand_ints");
+        topology.step("emit_rand_ints");
+        topology.step("emit_rand_ints");
+        topology.log_status();
 
-            //LOG_INFO(logger) << "After emitting; should be something in q0" << LOG_END;
+        REQUIRE(topology.queues[0]->get_item_count() == 5);
+        REQUIRE(topology.queues[1]->get_item_count() == 0);
+        REQUIRE(topology.queues[2]->get_item_count() == 0);
+    }
 
-            topology.log_status();
-            topology.activate("emit_rand_ints");
+    SECTION("Running each stage sequentially yields the correct results") {
+
+        //LOG_INFO(logger) << "Running each stage sequentially yields the correct results" << LOG_END;
+        topology.activate("emit_rand_ints");
+
+        for (int i = 0; i < 20; ++i) {
             topology.step("emit_rand_ints");
-            topology.log_status();
-
             REQUIRE(topology.queues[0]->get_item_count() == 1);
             REQUIRE(topology.queues[1]->get_item_count() == 0);
             REQUIRE(topology.queues[2]->get_item_count() == 0);
 
-            topology.step("emit_rand_ints");
-            topology.step("emit_rand_ints");
-            topology.step("emit_rand_ints");
-            topology.step("emit_rand_ints");
-            topology.log_status();
+            topology.step("multiply_by_two");
+            REQUIRE(topology.queues[0]->get_item_count() == 0);
+            REQUIRE(topology.queues[1]->get_item_count() == 1);
+            REQUIRE(topology.queues[2]->get_item_count() == 0);
 
-            REQUIRE(topology.queues[0]->get_item_count() == 5);
+            topology.step("subtract_one");
+            REQUIRE(topology.queues[0]->get_item_count() == 0);
+            REQUIRE(topology.queues[1]->get_item_count() == 0);
+            REQUIRE(topology.queues[2]->get_item_count() == 1);
+
+            topology.step("sum_everything");
+            REQUIRE(topology.queues[0]->get_item_count() == 0);
             REQUIRE(topology.queues[1]->get_item_count() == 0);
             REQUIRE(topology.queues[2]->get_item_count() == 0);
         }
 
-        SECTION("Running each stage sequentially yields the correct results") {
+        REQUIRE(sink.sum == (7 * 2.0 - 1) * 20);
+    }
 
-            //LOG_INFO(logger) << "Running each stage sequentially yields the correct results" << LOG_END;
-            topology.activate("emit_rand_ints");
+    SECTION("Running each stage in random order (sequentially) yields the correct results") {
+        //LOG_INFO(logger) << "Running each stage in arbitrary order yields the correct results" << LOG_END;
 
-            for (int i=0; i<20; ++i) {
-                topology.step("emit_rand_ints");
-                REQUIRE(topology.queues[0]->get_item_count() == 1);
-                REQUIRE(topology.queues[1]->get_item_count() == 0);
-                REQUIRE(topology.queues[2]->get_item_count() == 0);
+        JArrow* arrows[] = {topology.get_arrow("emit_rand_ints"),
+                            topology.get_arrow("multiply_by_two"),
+                            topology.get_arrow("subtract_one"),
+                            topology.get_arrow("sum_everything")};
 
-                topology.step("multiply_by_two");
-                REQUIRE(topology.queues[0]->get_item_count() == 0);
-                REQUIRE(topology.queues[1]->get_item_count() == 1);
-                REQUIRE(topology.queues[2]->get_item_count() == 0);
+        std::map<std::string, JArrow::Status> results;
+        results["emit_rand_ints"] = JArrow::Status::KeepGoing;
+        results["multiply_by_two"] = JArrow::Status::KeepGoing;
+        results["subtract_one"] = JArrow::Status::KeepGoing;
+        results["sum_everything"] = JArrow::Status::KeepGoing;
 
-                topology.step("subtract_one");
-                REQUIRE(topology.queues[0]->get_item_count() == 0);
-                REQUIRE(topology.queues[1]->get_item_count() == 0);
-                REQUIRE(topology.queues[2]->get_item_count() == 1);
+        // Put something in the queue to get started
+        topology.activate("emit_rand_ints");
+        topology.step("emit_rand_ints");
 
-                topology.step("sum_everything");
-                REQUIRE(topology.queues[0]->get_item_count() == 0);
-                REQUIRE(topology.queues[1]->get_item_count() == 0);
-                REQUIRE(topology.queues[2]->get_item_count() == 0);
+        bool work_left = true;
+        while (work_left) {
+            // Pick a random arrow
+            JArrow* arrow = arrows[randint(0, 3)];
+
+            auto name = arrow->get_name();
+            auto res = arrow->execute();
+            results[name] = res;
+            //LOG_TRACE(logger) << name << " => "
+            //                  << to_string(res) << LOG_END;
+
+            work_left = false;
+            for (QueueBase* queue : topology.queues) {
+                if (queue->get_item_count() > 0) {
+                    work_left = true;
+                }
             }
-
-            REQUIRE(sink.sum == (7 * 2.0 - 1) * 20);
+            for (auto pair : results) {
+                if (pair.second == JArrow::Status::KeepGoing) { work_left = true; }
+            }
         }
 
-        SECTION("Running each stage in random order (sequentially) yields the correct results") {
-            //LOG_INFO(logger) << "Running each stage in arbitrary order yields the correct results" << LOG_END;
+        //topology.log_queue_status();
+        REQUIRE(sink.sum == (7 * 2.0 - 1) * 20);
+    }
+    SECTION("Finished flag propagates") {
 
-            Arrow* arrows[] = {topology.get_arrow("emit_rand_ints"),
-                               topology.get_arrow("multiply_by_two"),
-                               topology.get_arrow("subtract_one"),
-                               topology.get_arrow("sum_everything")};
+        logger = JLogger::nothing();
+        topology.logger = logger;
+        source.logger = logger;
 
-            std::map<std::string, Arrow::Status> results;
-            results["emit_rand_ints"] = Arrow::Status::KeepGoing;
-            results["multiply_by_two"] = Arrow::Status::KeepGoing;
-            results["subtract_one"] = Arrow::Status::KeepGoing;
-            results["sum_everything"] = Arrow::Status::KeepGoing;
+        topology.activate("emit_rand_ints");
 
-            // Put something in the queue to get started
-            topology.activate("emit_rand_ints");
+        REQUIRE(topology.get_status("emit_rand_ints").is_active == true);
+        REQUIRE(topology.get_status("multiply_by_two").is_active == true);
+        REQUIRE(topology.get_status("subtract_one").is_active == true);
+        REQUIRE(topology.get_status("sum_everything").is_active == true);
+
+        for (int i = 0; i < 20; ++i) {
             topology.step("emit_rand_ints");
-
-            bool work_left = true;
-            while (work_left) {
-                // Pick a random arrow
-                Arrow* arrow = arrows[randint(0,3)];
-
-                auto name = arrow->get_name();
-                auto res = arrow->execute();
-                results[name] = res;
-                //LOG_TRACE(logger) << name << " => "
-                //                  << to_string(res) << LOG_END;
-
-                work_left = false;
-                for (QueueBase * queue : topology.queues) {
-                    if (queue->get_item_count() > 0) {
-                        work_left = true;
-                    }
-                }
-                for (auto pair : results) {
-                    if (pair.second == Arrow::Status::KeepGoing) { work_left = true; }
-                }
-            }
-
-            //topology.log_queue_status();
-            REQUIRE(sink.sum == (7 * 2.0 - 1) * 20);
         }
-        SECTION("Finished flag propagates") {
 
-            logger = Logger::nothing();
-            topology.logger = logger;
-            source.logger = logger;
+        REQUIRE(topology.get_status("emit_rand_ints").is_active == false);
+        REQUIRE(topology.get_status("multiply_by_two").is_active == true);
+        REQUIRE(topology.get_status("subtract_one").is_active == true);
+        REQUIRE(topology.get_status("sum_everything").is_active == true);
 
-            topology.activate("emit_rand_ints");
-
-            REQUIRE(topology.get_status("emit_rand_ints").is_active == true);
-            REQUIRE(topology.get_status("multiply_by_two").is_active == true);
-            REQUIRE(topology.get_status("subtract_one").is_active == true);
-            REQUIRE(topology.get_status("sum_everything").is_active == true);
-
-            for (int i=0; i<20; ++i) {
-                topology.step("emit_rand_ints");
-            }
-
-            REQUIRE(topology.get_status("emit_rand_ints").is_active == false);
-            REQUIRE(topology.get_status("multiply_by_two").is_active == true);
-            REQUIRE(topology.get_status("subtract_one").is_active == true);
-            REQUIRE(topology.get_status("sum_everything").is_active == true);
-
-            for (int i=0; i<20; ++i) {
-                topology.step("multiply_by_two");
-            }
-
-            REQUIRE(topology.get_status("emit_rand_ints").is_active == false);
-            REQUIRE(topology.get_status("multiply_by_two").is_active == false);
-            REQUIRE(topology.get_status("subtract_one").is_active == true);
-            REQUIRE(topology.get_status("sum_everything").is_active == true);
-
-            for (int i=0; i<20; ++i) {
-                topology.step("subtract_one");
-            }
-
-            REQUIRE(topology.get_status("emit_rand_ints").is_active == false);
-            REQUIRE(topology.get_status("multiply_by_two").is_active == false);
-            REQUIRE(topology.get_status("subtract_one").is_active == false);
-            REQUIRE(topology.get_status("sum_everything").is_active == true);
-
-            for (int i=0; i<20; ++i) {
-                topology.step("sum_everything");
-            }
-
-            REQUIRE(topology.get_status("emit_rand_ints").is_active == false);
-            REQUIRE(topology.get_status("multiply_by_two").is_active == false);
-            REQUIRE(topology.get_status("subtract_one").is_active == false);
-            REQUIRE(topology.get_status("sum_everything").is_active == false);
-
-            topology.log_status();
-
+        for (int i = 0; i < 20; ++i) {
+            topology.step("multiply_by_two");
         }
+
+        REQUIRE(topology.get_status("emit_rand_ints").is_active == false);
+        REQUIRE(topology.get_status("multiply_by_two").is_active == false);
+        REQUIRE(topology.get_status("subtract_one").is_active == true);
+        REQUIRE(topology.get_status("sum_everything").is_active == true);
+
+        for (int i = 0; i < 20; ++i) {
+            topology.step("subtract_one");
+        }
+
+        REQUIRE(topology.get_status("emit_rand_ints").is_active == false);
+        REQUIRE(topology.get_status("multiply_by_two").is_active == false);
+        REQUIRE(topology.get_status("subtract_one").is_active == false);
+        REQUIRE(topology.get_status("sum_everything").is_active == true);
+
+        for (int i = 0; i < 20; ++i) {
+            topology.step("sum_everything");
+        }
+
+        REQUIRE(topology.get_status("emit_rand_ints").is_active == false);
+        REQUIRE(topology.get_status("multiply_by_two").is_active == false);
+        REQUIRE(topology.get_status("subtract_one").is_active == false);
+        REQUIRE(topology.get_status("sum_everything").is_active == false);
+
+        topology.log_status();
+
     }
 }

@@ -5,15 +5,14 @@
 #ifndef JANA2_JEVENTSOURCEARROW_H
 #define JANA2_JEVENTSOURCEARROW_H
 
-#include <greenfield/Arrow.h>
-#include <greenfield/Queue.h>
+#include <JANA/JArrow.h>
+#include <JANA/Queue.h>
 #include <JANA/JEvent.h>
 
-using Arrow = greenfield::Arrow;
 using Event = std::shared_ptr<const JEvent>;
-using EventQueue = greenfield::Queue<Event>;
+using EventQueue = Queue<Event>;
 
-class JEventSourceArrow : public Arrow {
+class JEventSourceArrow : public JArrow {
 
 private:
     JEventSource& _source;
@@ -23,7 +22,7 @@ private:
 
 public:
     JEventSourceArrow(std::string name, JEventSource& source, EventQueue* output_queue);
-    Arrow::Status execute();
+    JArrow::Status execute();
 };
 
 #endif //JANA2_JEVENTSOURCEARROW_H

@@ -67,7 +67,7 @@ JApplication::JApplication(JParameterManager* params,
 	mNumProcessorsAdded = 0;
 
 	_pmanager = (params == nullptr) ? new JParameterManager() : params;
-	_logger = std::shared_ptr<JLogger>(new JLogger());
+	_logger = JLoggingService::logger("JApplication");
 	_eventSourceManager = new JEventSourceManager(this);
 
 	if (eventSources != nullptr) {
@@ -372,14 +372,6 @@ void JApplication::GetJEventProcessors(vector<JEventProcessor*>& aProcessors)
 void JApplication::GetJFactoryGenerators(vector<JFactoryGenerator*> &factory_generators)
 {
 	factory_generators = _factoryGenerators;
-}
-
-//---------------------------------
-// GetJLogger
-//---------------------------------
-std::shared_ptr<JLogger> JApplication::GetJLogger(void)
-{
-	return _logger;
 }
 
 

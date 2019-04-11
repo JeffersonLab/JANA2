@@ -2,25 +2,24 @@
 // Created by nbrei on 3/26/19.
 //
 
-#include <greenfield/Topology.h>
-#include "ThreadManager.h"
+#include <JANA/JTopology.h>
+#include "JThreadTeam.h"
 
-namespace greenfield {
 
 using millisecs = std::chrono::duration<double, std::milli>;
 using secs = std::chrono::duration<double>;
 
 
-Topology::ArrowStatus::ArrowStatus(Arrow* arrow) {
+JTopology::ArrowStatus::ArrowStatus(JArrow* arrow) {
     arrow_name = arrow->get_name();
     is_parallel = arrow->is_parallel();
     is_active = arrow->is_active();
     thread_count = arrow->get_thread_count();
     chunksize = arrow->get_chunksize();
 
-    clock_t::duration total_latency;
-    clock_t::duration queue_overhead;
-    clock_t::duration last_latency;
+    duration_t total_latency;
+    duration_t queue_overhead;
+    duration_t last_latency;
     arrow->get_metrics(messages_completed,
                        queue_visit_count,
                        total_latency,
@@ -36,33 +35,25 @@ Topology::ArrowStatus::ArrowStatus(Arrow* arrow) {
     queue_overhead_frac = l_queue / (l_queue+l_total);
 }
 
-Topology::~Topology() {
+JTopology::~JTopology() {
 
     arrow_lookup.clear();
 
-    for (auto component : components) {
-        // Topology owns _some_ components, but not necessarily all.
-        delete component;
-    }
     for (auto arrow : arrows) {
-        // Topology owns all arrows.
+        // JTopology owns all arrows.
         delete arrow;
     }
     for (auto queue : queues) {
-        // Topology owns all queues.
+        // JTopology owns all queues.
         delete queue;
     }
 }
 
-void Topology::addManagedComponent(Component *component) {
-    components.push_back(component);
-}
-
-void Topology::addQueue(QueueBase *queue) {
+void JTopology::addQueue(QueueBase *queue) {
     queues.push_back(queue);
 }
 
-void Topology::addArrow(Arrow *arrow, bool sink) {
+void JTopology::addArrow(JArrow *arrow, bool sink) {
     arrows.push_back(arrow);
     arrow_lookup[arrow->get_name()] = arrow;
     if (sink) {
@@ -72,7 +63,7 @@ void Topology::addArrow(Arrow *arrow, bool sink) {
     }
 };
 
-Arrow* Topology::get_arrow(std::string arrow_name) {
+JArrow* JTopology::get_arrow(std::string arrow_name) {
 
     auto search = arrow_lookup.find(arrow_name);
     if (search == arrow_lookup.end()) {
@@ -81,19 +72,19 @@ Arrow* Topology::get_arrow(std::string arrow_name) {
     return search->second;
 }
 
-void Topology::activate(std::string arrow_name) {
+void JTopology::activate(std::string arrow_name) {
     auto arrow = get_arrow(arrow_name);
     arrow->set_active(true);
     arrow->notify_downstream(true);
 }
 
-void Topology::deactivate(std::string arrow_name) {
+void JTopology::deactivate(std::string arrow_name) {
     auto arrow = get_arrow(arrow_name);
     arrow->set_active(false);
 }
 
 
-Topology::TopologyStatus Topology::get_topology_status(std::map<Arrow*,ArrowStatus>& arrow_statuses) {
+JTopology::TopologyStatus JTopology::get_topology_status(std::map<JArrow*,ArrowStatus>& arrow_statuses) {
 
     assert(_run_state != RunState::BeforeRun);
 
@@ -101,7 +92,7 @@ Topology::TopologyStatus Topology::get_topology_status(std::map<Arrow*,ArrowStat
 
     // Messages completed
     result.messages_completed = 0;
-    for (Arrow* arrow : sinks) {
+    for (JArrow* arrow : sinks) {
         result.messages_completed += arrow_statuses.at(arrow).messages_completed;
     }
     uint64_t message_delta = result.messages_completed - _last_message_count;
@@ -114,7 +105,7 @@ Topology::TopologyStatus Topology::get_topology_status(std::map<Arrow*,ArrowStat
         result.uptime_s = secs(_stop_time - _start_time).count();
     }
     else { // RunState::DuringRun
-        auto current_time = clock_t::now();
+        auto current_time = jclock_t::now();
         time_delta = secs(current_time - _last_time).count();
         result.uptime_s = secs(current_time - _start_time).count();
         _last_time = current_time;
@@ -128,7 +119,7 @@ Topology::TopologyStatus Topology::get_topology_status(std::map<Arrow*,ArrowStat
     // bottlenecks
     double worst_seq_latency = 0;
     double worst_par_latency = 0;
-    for (Arrow* arrow : arrows) {
+    for (JArrow* arrow : arrows) {
         if (arrow->is_parallel()) {
             worst_par_latency = std::max(worst_par_latency, arrow_statuses.at(arrow).avg_latency_ms);
         } else {
@@ -145,16 +136,16 @@ Topology::TopologyStatus Topology::get_topology_status(std::map<Arrow*,ArrowStat
 
 }
 
-Topology::TopologyStatus Topology::get_topology_status() {
-    std::map<Arrow*, ArrowStatus> statuses;
-    for (Arrow* arrow : arrows) {
+JTopology::TopologyStatus JTopology::get_topology_status() {
+    std::map<JArrow*, ArrowStatus> statuses;
+    for (JArrow* arrow : arrows) {
         statuses.insert({arrow, ArrowStatus(arrow)});
     }
     return get_topology_status(statuses);
 }
 
 
-std::vector<Topology::ArrowStatus> Topology::get_arrow_status() {
+std::vector<JTopology::ArrowStatus> JTopology::get_arrow_status() {
 
     std::vector<ArrowStatus> metrics;
     for (auto arrow : arrows) {
@@ -163,7 +154,7 @@ std::vector<Topology::ArrowStatus> Topology::get_arrow_status() {
     return metrics;
 }
 
-std::vector<Topology::QueueStatus> Topology::get_queue_status() {
+std::vector<JTopology::QueueStatus> JTopology::get_queue_status() {
     std::vector<QueueStatus> statuses;
     for (QueueBase *q : queues) {
         QueueStatus qs;
@@ -176,15 +167,15 @@ std::vector<Topology::QueueStatus> Topology::get_queue_status() {
     return statuses;
 }
 
-Topology::ArrowStatus Topology::get_status(const std::string &arrow_name) {
+JTopology::ArrowStatus JTopology::get_status(const std::string &arrow_name) {
 
     return ArrowStatus(get_arrow(arrow_name));
 }
 
-void Topology::log_status() {
+void JTopology::log_status() {
 
-    std::map<Arrow*, ArrowStatus> statuses;
-    for (Arrow* arrow : arrows) {
+    std::map<JArrow*, ArrowStatus> statuses;
+    for (JArrow* arrow : arrows) {
         statuses.insert({arrow, ArrowStatus(arrow)});
     }
 
@@ -211,7 +202,7 @@ void Topology::log_status() {
     os << " +--------------------------+-----+-----+---------+-------+-------------+" << std::endl;
     os << " |           Name           | Par | Act | Threads | Chunk |  Completed  |" << std::endl;
     os << " +--------------------------+-----+-----+---------+-------+-------------+" << std::endl;
-    for (Arrow* arrow : arrows) {
+    for (JArrow* arrow : arrows) {
         ArrowStatus& as = statuses.at(arrow);
         os << " | "
                          << std::setw(24) << std::left << as.arrow_name << " | "
@@ -231,7 +222,7 @@ void Topology::log_status() {
         os << " |                          | [ms/event]  |  [ms/event]  |     [0..1]     |    [count]   | " << std::endl;
         os << " +--------------------------+-------------+--------------+----------------+--------------+" << std::endl;
 
-        for (Arrow* arrow : arrows) {
+        for (JArrow* arrow : arrows) {
             ArrowStatus& as = statuses.at(arrow);
             os << " | " << std::setprecision(3)
                              << std::setw(24) << std::left << as.arrow_name << " | "
@@ -261,10 +252,10 @@ void Topology::log_status() {
     if (_run_state == RunState::DuringRun) {
         os << " WORKER STATUS" << std::endl;
         os << " +----+----------------------+-------------+------------+-----------+----------------+------------------+" << std::endl;
-        os << " | ID | Last arrow name      | Useful time | Retry time | Idle time | Scheduler time | Scheduler visits |" << std::endl;
+        os << " | ID | Last arrow name      | Useful time | Retry time | Idle time | JScheduler time | JScheduler visits |" << std::endl;
         os << " |    |                      |    [0..1]   |   [0..1]   |   [0..1]  |     [0..1]     |     [count]      |" << std::endl;
         os << " +----+----------------------+-------------+------------+-----------+----------------+------------------+" << std::endl;
-        for (Worker::Summary ws : _threadManager->get_worker_summaries()) {
+        for (JWorker::Summary ws : _threadManager->get_worker_summaries()) {
             os << " |"
                << std::setw(3) << std::right << ws.worker_id << " | "
                << std::setw(20) << std::left << ws.last_arrow_name << " |"
@@ -283,17 +274,17 @@ void Topology::log_status() {
 
 /// The user may want to pause the topology and interact with it manually.
 /// This is particularly powerful when used from inside GDB.
-Arrow::Status Topology::step(const std::string &arrow_name) {
-    Arrow *arrow = get_arrow(arrow_name);
+JArrow::Status JTopology::step(const std::string &arrow_name) {
+    JArrow *arrow = get_arrow(arrow_name);
     auto result = arrow->execute();
-    if (result == Arrow::Status::Finished) {
+    if (result == JArrow::Status::Finished) {
         arrow->set_active(false);
         arrow->notify_downstream(false);
     }
     return result;
 }
 
-bool Topology::is_active() {
+bool JTopology::is_active() {
     for (auto arrow : arrows) {
         if (arrow->is_active()) {
             return true;
@@ -302,25 +293,25 @@ bool Topology::is_active() {
     return false;
 }
 
-void Topology::set_active(bool active) {
+void JTopology::set_active(bool active) {
 
     if (active) {
         // activate any sources, eventually
     }
     else {
         if (_run_state == RunState::DuringRun) {
-            _stop_time = clock_t::now();
+            _stop_time = jclock_t::now();
             _run_state = RunState::AfterRun;
         }
     }
 }
 
 
-void Topology::run(int nthreads) {
+void JTopology::run(int nthreads) {
 
-    _scheduler = new Scheduler(arrows, nthreads);
+    _scheduler = new JScheduler(arrows, nthreads);
     //_scheduler->logger = Logger::everything();
-    _threadManager = new ThreadManager(*_scheduler);
+    _threadManager = new JThreadTeam(*_scheduler);
     //_threadManager->logger = Logger::everything();
     _threadManager->run(nthreads);
     _run_state = RunState::DuringRun;
@@ -329,24 +320,23 @@ void Topology::run(int nthreads) {
     _ncpus = nthreads;
 }
 
-void Topology::wait_until_finished() {
+void JTopology::wait_until_finished() {
     if (_threadManager != nullptr) {
         while (is_active()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
         }
         if (_run_state == RunState::DuringRun) {
             // We shouldn't usually end up here because sinks notify us when
-            // they deactivate, automatically calling Topology::set_active(false),
+            // they deactivate, automatically calling JTopology::set_active(false),
             // which stops the clock as soon as possible.
             // However, if for unknown reasons nobody notifies us, we still want to change
             // run state in an orderly fashion. If we do end up here, though, our _stop_time
             // will be late, throwing our metrics off.
             _run_state = RunState::AfterRun;
-            _stop_time = clock_t::now();
+            _stop_time = jclock_t::now();
         }
         _threadManager->stop();
         _threadManager->join();
     }
 }
 
-} // namespace greenfield

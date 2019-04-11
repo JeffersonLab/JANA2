@@ -1,19 +1,17 @@
 #ifndef GREENFIELD_TOPOLOGY_H
 #define GREENFIELD_TOPOLOGY_H
 
-#include <greenfield/Arrow.h>
-#include <greenfield/Queue.h>
-#include <greenfield/Components.h>
-#include <greenfield/Logger.h>
+#include <JANA/JArrow.h>
+#include <JANA/Queue.h>
+#include <JANA/JLogger.h>
 
-namespace greenfield {
 
-class ThreadManager;
-class Scheduler;
+class JThreadTeam;
+class JScheduler;
 
-using clock_t = std::chrono::steady_clock;
+using jclock_t = std::chrono::steady_clock;
 
-class Topology : public Activable {
+class JTopology : public JActivable {
 
 public:
 
@@ -53,50 +51,48 @@ public:
         double queue_overhead_frac;
         size_t queue_visit_count;
 
-        ArrowStatus(Arrow* arrow);
+        ArrowStatus(JArrow* arrow);
     };
 
 
     // TODO: Make these private
-    std::vector<Arrow *> arrows;
+    std::vector<JArrow *> arrows;
     std::vector<QueueBase *> queues;
 
 private:
 
     enum class RunState { BeforeRun, DuringRun, AfterRun };
 
-    std::map<std::string, Arrow *> arrow_lookup;
-    std::vector<Component *> components;  // So we can delete Components which we own
-    std::vector<Arrow*> sinks;            // So we can get total finished messages
+    std::map<std::string, JArrow *> arrow_lookup;
+    std::vector<JArrow*> sinks;            // So we can get total finished messages
 
-    Scheduler* _scheduler = nullptr;
-    ThreadManager* _threadManager = nullptr;
+    JScheduler* _scheduler = nullptr;
+    JThreadTeam* _threadManager = nullptr;
 
 
     RunState _run_state = RunState::BeforeRun;
-    clock_t::time_point _start_time;
-    clock_t::time_point _last_time;
-    clock_t::time_point _stop_time;
+    jclock_t::time_point _start_time;
+    jclock_t::time_point _last_time;
+    jclock_t::time_point _stop_time;
     size_t _last_message_count = 0;
     uint32_t _ncpus;
 
-    TopologyStatus get_topology_status(std::map<Arrow*, ArrowStatus>& statuses);
+    TopologyStatus get_topology_status(std::map<JArrow*, ArrowStatus>& statuses);
 
 public:
     /// Leave the logger accessible for now so we can potentially inject it during testing
-    Logger logger;
+    JLogger logger;
 
-    Topology() {
-        logger = LoggingService::logger("Topology");
+    JTopology() {
+        logger = JLoggingService::logger("JTopology");
     }
 
-    virtual ~Topology();
+    virtual ~JTopology();
 
-    void addManagedComponent(Component *component);
-    void addArrow(Arrow *arrow, bool sink=false);
+    void addArrow(JArrow *arrow, bool sink=false);
     void addQueue(QueueBase *queue);
 
-    Arrow* get_arrow(std::string arrow_name);  // TODO: Should be used internally, not as part of API
+    JArrow* get_arrow(std::string arrow_name);  // TODO: Should be used internally, not as part of API
 
     void activate(std::string arrow_name);
     void deactivate(std::string arrow_name);
@@ -112,7 +108,7 @@ public:
     bool is_active() override;
     void set_active(bool is_active) override;
 
-    Arrow::Status step(const std::string &arrow_name);
+    JArrow::Status step(const std::string &arrow_name);
     void run(int threads);
     void wait_until_finished();
     // run_message(string source_name)
@@ -120,7 +116,6 @@ public:
 
 };
 
-} // namespace greenfield
 
 #endif // GREENFIELD_TOPOLOGY_H
 

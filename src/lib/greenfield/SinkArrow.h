@@ -5,13 +5,12 @@
 #ifndef GREENFIELD_SINKARROW_H
 #define GREENFIELD_SINKARROW_H
 
-#include <greenfield/Arrow.h>
-#include <greenfield/Components.h>
+#include <JANA/JArrow.h>
+#include "Components.h"
 
-namespace greenfield {
 
 template<typename T>
-class SinkArrow : public Arrow {
+class SinkArrow : public JArrow {
 
 private:
     Sink<T> & _sink;
@@ -21,7 +20,7 @@ private:
 
 public:
     SinkArrow(std::string name, Sink<T>& sink, Queue<T>* input_queue)
-        : Arrow(name, false)
+        : JArrow(name, false)
         , _sink(sink)
         , _input_queue(input_queue) {
 
@@ -29,9 +28,9 @@ public:
         attach_upstream(_input_queue);
     };
 
-    Arrow::Status execute() {
+    JArrow::Status execute() {
         if (!is_active()) {
-            return Arrow::Status::Finished;
+            return JArrow::Status::Finished;
         }
         if (!_is_initialized) {
             _sink.initialize();
@@ -64,15 +63,14 @@ public:
             set_active(false);
             notify_downstream(false);
             _sink.finalize();
-            return Arrow::Status::Finished;
+            return JArrow::Status::Finished;
         }
         else if (result == Queue<T>::Status::Empty) {
-            return Arrow::Status::ComeBackLater;
+            return JArrow::Status::ComeBackLater;
         }
-        return Arrow::Status::KeepGoing;
+        return JArrow::Status::KeepGoing;
     }
 };
 
-} // namespace greenfield
 
 #endif //GREENFIELD_SINKARROW_H

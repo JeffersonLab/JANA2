@@ -34,15 +34,13 @@
 #define JANA2_JAPPLICATIONNEW_H
 
 
-#include <greenfield/LinearTopologyBuilder.h>
 #include "JApplication.h"
 
-//using namespace greenfield;
 
 class JApplicationNew : public JApplication {
 
 private:
-    //Topology _topology;
+    //JTopology _topology;
     //LinearTopologyBuilder _builder;
 
 public:

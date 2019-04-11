@@ -113,7 +113,6 @@ class JApplication{
 		
 		void GetJEventProcessors(vector<JEventProcessor*>& aProcessors);
 		void GetJFactoryGenerators(vector<JFactoryGenerator*> &factory_generators);
-		std::shared_ptr<JLogger> GetJLogger(void);
 		JParameterManager* GetJParameterManager(void);
 		virtual JThreadManager* GetJThreadManager(void) const = 0;
 		JEventSourceManager* GetJEventSourceManager(void) const;
@@ -156,7 +155,7 @@ class JApplication{
 		std::vector<JCalibrationGenerator*> _calibrationGenerators;
 		std::vector<JEventProcessor*> _eventProcessors;
 
-		std::shared_ptr<JLogger> _logger;
+		JLogger _logger;
 		JParameterManager *_pmanager;
 		JEventSourceManager* _eventSourceManager;
 		std::size_t mNumProcessorsAdded;

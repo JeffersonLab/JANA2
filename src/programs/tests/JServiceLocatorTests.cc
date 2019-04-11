@@ -5,15 +5,13 @@
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 
-#include <greenfield/ServiceLocator.h>
-#include "JServiceLocatorDummies.h"
-
-using namespace greenfield;
+#include <JANA/JServiceLocator.h>
+#include <greenfield/JServiceLocatorDummies.h>
 
 
-TEST_CASE("ServiceLocator chicken-and-egg tests") {
+TEST_CASE("JServiceLocator chicken-and-egg tests") {
 
-    ServiceLocator sl;
+    JServiceLocator sl;
 
     // PHASE 1: jana.cc sets up params and logger services, which literally everything else needs
 
@@ -45,7 +43,7 @@ TEST_CASE("ServiceLocator chicken-and-egg tests") {
 
 
     // PHASE 5: Once all plugins are loaded and all Services are provided, we wire them all up _before_ any
-    // processing starts. This involves ServiceLocator calling acquire_services() on everything
+    // processing starts. This involves JServiceLocator calling acquire_services() on everything
     // MagneticFieldService retrieves its database URL or sets a default which the user can see.
     sl.wire_everything();
     REQUIRE(parameterSvc->get("EIC:MagneticFieldDatabaseURL") == "mysql://127.0.0.1");

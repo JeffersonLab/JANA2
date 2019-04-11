@@ -1,22 +1,20 @@
 
-#include <greenfield/Scheduler.h>
-
-namespace greenfield {
+#include <JANA/JScheduler.h>
 
 
-Scheduler::Scheduler(const std::vector<Arrow*>& arrows, size_t worker_count)
+JScheduler::JScheduler(const std::vector<JArrow*>& arrows, size_t worker_count)
     : _arrows(arrows)
     , _worker_count(worker_count)
     , _next_idx(0)
     {
-        _logger = LoggingService::logger("Scheduler");
+        _logger = JLoggingService::logger("JScheduler");
     }
 
 
-Arrow* Scheduler::next_assignment(uint32_t worker_id, Arrow* assignment, Arrow::Status last_result) {
+JArrow* JScheduler::next_assignment(uint32_t worker_id, JArrow* assignment, JArrow::Status last_result) {
 
     // Short-circuit our scheduler visit if everything is in order.
-    if (last_result == Arrow::Status::KeepGoing && assignment != nullptr) {
+    if (last_result == JArrow::Status::KeepGoing && assignment != nullptr) {
         return assignment;
     }
 
@@ -35,7 +33,7 @@ Arrow* Scheduler::next_assignment(uint32_t worker_id, Arrow* assignment, Arrow::
             assignment->set_active(false);
 
             _mutex.unlock();
-            LOG_INFO(_logger) << "Scheduler: Deactivating arrow " << assignment->get_name() << LOG_END;
+            LOG_INFO(_logger) << "JScheduler: Deactivating arrow " << assignment->get_name() << LOG_END;
             assignment->notify_downstream(false);
             _mutex.lock();
         }
@@ -45,7 +43,7 @@ Arrow* Scheduler::next_assignment(uint32_t worker_id, Arrow* assignment, Arrow::
     // arrow that works
     size_t current_idx = _next_idx;
     do {
-        Arrow* candidate = _arrows[current_idx];
+        JArrow* candidate = _arrows[current_idx];
         current_idx += 1;
         current_idx %= _arrows.size();
 
@@ -56,7 +54,7 @@ Arrow* Scheduler::next_assignment(uint32_t worker_id, Arrow* assignment, Arrow::
             _next_idx = current_idx; // Next time, continue right where we left off
             candidate->update_thread_count(1);
 
-            LOG_DEBUG(_logger) << "Scheduler: (" << worker_id << ", "
+            LOG_DEBUG(_logger) << "JScheduler: (" << worker_id << ", "
                               << ((assignment == nullptr) ? "idle" : assignment->get_name())
                               << ", " << to_string(last_result) << ") => "
                               << candidate->get_name() << "  [" << candidate->get_thread_count() << "]" << LOG_END;
@@ -71,7 +69,7 @@ Arrow* Scheduler::next_assignment(uint32_t worker_id, Arrow* assignment, Arrow::
 }
 
 
-void Scheduler::last_assignment(uint32_t worker_id, Arrow* assignment, Arrow::Status result) {
+void JScheduler::last_assignment(uint32_t worker_id, JArrow* assignment, JArrow::Status result) {
 
     _worker_count--;
     if (assignment != nullptr) {
@@ -79,7 +77,5 @@ void Scheduler::last_assignment(uint32_t worker_id, Arrow* assignment, Arrow::St
     }
 }
 
-
-} // namespace greenfield
 
 

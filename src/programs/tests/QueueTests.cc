@@ -1,12 +1,10 @@
 
 #include "catch.hpp"
 
-#include <greenfield/Queue.h>
-#include "JServiceLocatorDummies.h"
+#include <JANA/Queue.h>
 
-namespace greenfield {
 
-TEST_CASE("greenfield::Queue: Basic functionality") {
+TEST_CASE("Queue: Basic functionality") {
     Queue<int> q;
     q.set_active(true);
 
@@ -30,5 +28,4 @@ TEST_CASE("greenfield::Queue: Basic functionality") {
     REQUIRE(q.get_item_count() == 1);
     REQUIRE(result == QueueBase::Status::Ready);
 
-}
 }

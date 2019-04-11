@@ -7,15 +7,14 @@
 
 #include <vector>
 
-#include <greenfield/Queue.h>
-#include "ServiceLocator.h"
+#include <JANA/Queue.h>
+#include "JServiceLocator.h"
 
 
-namespace greenfield {
 
 using duration_t = std::chrono::steady_clock::duration;
 
-class Arrow : public Activable {
+class JArrow : public JActivable {
 
 
 private:
@@ -125,7 +124,7 @@ public:
     }
 
 
-    Arrow(std::string name, bool is_parallel) :
+    JArrow(std::string name, bool is_parallel) :
             _name(std::move(name)),
             _is_parallel(is_parallel),
             _total_latency(duration_t::zero()),
@@ -138,24 +137,23 @@ public:
         }
     };
 
-    virtual ~Arrow() = default;
+    virtual ~JArrow() = default;
 
     virtual Status execute() = 0;
 
 };
 
-inline std::string to_string(Arrow::Status h) {
+inline std::string to_string(JArrow::Status h) {
     switch (h) {
-        case Arrow::Status::KeepGoing:     return "KeepGoing";
-        case Arrow::Status::ComeBackLater: return "ComeBackLater";
-        case Arrow::Status::Finished:      return "Finished";
-        case Arrow::Status::Error:
+        case JArrow::Status::KeepGoing:     return "KeepGoing";
+        case JArrow::Status::ComeBackLater: return "ComeBackLater";
+        case JArrow::Status::Finished:      return "Finished";
+        case JArrow::Status::Error:
         default:                          return "Error";
     }
 }
 
 
-} // namespace greenfield
 
 
 #endif // GREENFIELD_ARROW_H

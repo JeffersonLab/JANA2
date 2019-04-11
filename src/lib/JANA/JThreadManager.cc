@@ -69,9 +69,9 @@
 // JThreadManager
 //---------------------------------
 JThreadManager::JThreadManager(JApplication* app) 
-  : mApplication(app), mEventSourceManager(mApplication->GetJEventSourceManager()),
-    mLogger(app->GetJLogger())
-{
+  : mApplication(app), mEventSourceManager(mApplication->GetJEventSourceManager()) {
+
+	mLogger = JLoggingService::logger("JThreadManager");
 
 	app->GetJParameterManager()->SetDefaultParameter(
 		"JANA:DEBUG_THREADMANAGER", 

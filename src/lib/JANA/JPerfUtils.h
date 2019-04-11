@@ -11,8 +11,6 @@
 extern thread_local std::mt19937* generator;
 
 
-namespace greenfield {
-
 
 uint64_t consume_cpu_ms(long millisecs);
 
@@ -28,7 +26,5 @@ void touchMemory(std::vector<char>* buffer, size_t count);
 
 double doBusyWork(std::vector<double>& buffer, double input);
 
-
-} // namespace greenfield
 
 #endif // JANA2_PERFUTILS_H

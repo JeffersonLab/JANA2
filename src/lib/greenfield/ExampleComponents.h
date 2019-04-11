@@ -2,18 +2,17 @@
 
 #include <iostream>
 
-#include <greenfield/Logger.h>
-#include <greenfield/Components.h>
+#include <JANA/JLogger.h>
+#include "Components.h"
 #include <thread>
 
-namespace greenfield {
 
 struct RandIntSource : public Source<int> {
 
     size_t emit_limit = 20;  // How many to emit
     size_t emit_count = 0;   // How many emitted so far
     int emit_sum = 0;        // Sum of all ints emitted so far
-    Logger logger;
+    JLogger logger;
 
     Status inprocess(std::vector<int> &items, size_t count) override {
 
@@ -24,7 +23,7 @@ struct RandIntSource : public Source<int> {
             emit_count += 1;
             emit_sum += x;
         }
-        LOG_TRACE(logger) << "RandIntSource emitted " << emit_count << " events" << LOG_END;
+        LOG_TRACE(logger, false) << "RandIntSource emitted " << emit_count << " events" << LOG_END;
 
         if (emit_count >= emit_limit) {
             return Status::Finished;
@@ -66,11 +65,11 @@ template<typename T>
 struct SumSink : public Sink<T> {
 
     T sum = 0;
-    Logger logger;
+    JLogger logger;
 
     void outprocess(T d) override {
         sum += d;
-        LOG_TRACE(logger) << "SumSink.outprocess() called!" << LOG_END;
+        LOG_TRACE(logger, false) << "SumSink.outprocess() called!" << LOG_END;
     }
 
     void initialize() override {
@@ -82,4 +81,3 @@ struct SumSink : public Sink<T> {
         LOG_INFO(logger) << "SumSink.finalize() called!" << LOG_END;
     };
 };
-}

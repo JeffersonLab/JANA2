@@ -18,13 +18,7 @@ add_library(greenfield STATIC
         src/lib/greenfield/MapArrow.h
         src/lib/greenfield/SourceArrow.h
         src/lib/greenfield/SinkArrow.h
-        src/lib/greenfield/Scheduler.cc
-        src/lib/greenfield/ThreadManager.cc
-        src/lib/greenfield/Topology.cc
-        src/lib/greenfield/PerfUtils.cc
-        src/lib/greenfield/ServiceLocator.cc
-        src/lib/greenfield/Worker.cc
-
+        src/lib/greenfield/Greenfield.cc
         )
 
 add_executable(tests
@@ -98,7 +92,16 @@ add_library(jana2 STATIC
         src/lib/JANA/JEventProcessorArrow.h
         src/lib/JANA/JEventSourceArrow.cc
         src/lib/JANA/JEventSourceArrow.h
-        src/lib/JANA/JApplicationOld.cc src/lib/JANA/JApplicationOld.h src/lib/JANA/JApplicationNew.cc src/lib/JANA/JApplicationNew.h)
+        src/lib/JANA/JApplicationOld.cc
+        src/lib/JANA/JApplicationOld.h
+        src/lib/JANA/JApplicationNew.cc
+        src/lib/JANA/JScheduler.cc
+        src/lib/JANA/JThreadTeam.cc
+        src/lib/JANA/JTopology.cc
+        src/lib/JANA/JPerfUtils.cc
+        src/lib/JANA/JServiceLocator.cc
+        src/lib/JANA/JWorker.cc
+        src/lib/JANA/JApplicationNew.h)
 
 add_library(jtest SHARED
         src/plugins/JTest/JTestDataObject.h
@@ -108,6 +111,7 @@ add_library(jtest SHARED
         src/plugins/JTest/JTestDummyDataFactoryGenerator.h
         src/plugins/JTest/JTestMain.cc
         src/plugins/JTest/JTestHelpers.h
+        src/lib/JANA/JThread.cc  #for THREAD_ID
         )
 
 add_executable(jana
@@ -122,9 +126,10 @@ add_executable(jana
 # Add jana static lib
 target_link_libraries(jana jana2)
 target_link_libraries(jtest jana2)
+target_link_libraries(tests jana2)
+target_link_libraries(playground jana2)
 
 # Add greenfield static lib
-target_link_libraries(jana2 greenfield)
 target_link_libraries(tests greenfield)
 target_link_libraries(playground greenfield)
 

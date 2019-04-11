@@ -21,7 +21,7 @@ class JResourcePoolSimple {
 	size_t mCheckedOut = 0;
 	size_t mPoolSize = 0;
 	size_t mMaxPoolSize;
-	std::shared_ptr<JLogger> mLogger;
+	JLogger mLogger;
 
 
 	inline bucket_t Get_Bucket() {
@@ -31,10 +31,8 @@ class JResourcePoolSimple {
 
 	public:
 
-	JResourcePoolSimple(size_t aMaxPoolSize = 16) 
-		: mMaxPoolSize(aMaxPoolSize), mLogger(new JLogger) {
-
-		mLogger->level = JLogLevel::INFO;
+	JResourcePoolSimple(size_t aMaxPoolSize = 16) : mMaxPoolSize(aMaxPoolSize) {
+	    mLogger = JLoggingService::logger("JResourcePoolSimple");
 	}
 
 	JResourcePoolSimple(const JResourcePoolSimple& other) = delete;

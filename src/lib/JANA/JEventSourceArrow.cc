@@ -2,15 +2,13 @@
 // Created by nbrei on 4/8/19.
 //
 
-#include <greenfield/Components.h>
 #include <JANA/JEventSourceArrow.h>
 
-using JEventSourceStatus = JEventSource::RETURN_STATUS;
-using SourceStatus = greenfield::Source<const Event>::Status;
+using SourceStatus = JEventSource::RETURN_STATUS;
 using ArrowStatus = JEventSourceArrow::Status;
 
 JEventSourceArrow::JEventSourceArrow(std::string name, JEventSource& source, EventQueue* output_queue)
-    : Arrow(name, false)
+    : JArrow(name, false)
     , _source(source)
     , _output_queue(output_queue) {
 
@@ -18,17 +16,17 @@ JEventSourceArrow::JEventSourceArrow(std::string name, JEventSource& source, Eve
     attach_downstream(_output_queue);
 }
 
-Arrow::Status JEventSourceArrow::execute() {
+JArrow::Status JEventSourceArrow::execute() {
 
     if (!is_active()) {
-        return Arrow::Status::Finished;
+        return JArrow::Status::Finished;
     }
     if (!_is_initialized) {
         _source.Open();
         _is_initialized = true;
     }
 
-    SourceStatus in_status = SourceStatus::KeepGoing;
+    SourceStatus in_status = SourceStatus::kSUCCESS;
     auto start_time = std::chrono::steady_clock::now();
     try {
         size_t item_count = get_chunksize();
@@ -36,18 +34,11 @@ Arrow::Status JEventSourceArrow::execute() {
             _chunk_buffer.push_back(_source.GetEvent());
         }
     }
-    catch (JEventSource::RETURN_STATUS rs) {
-        switch (rs) {
-            case JEventSourceStatus::kSUCCESS:        in_status = SourceStatus::KeepGoing; break;
-            case JEventSourceStatus::kNO_MORE_EVENTS: in_status = SourceStatus::Finished; break;
-            case JEventSourceStatus::kTRY_AGAIN:
-            case JEventSourceStatus::kBUSY:           in_status = SourceStatus::ComeBackLater; break;
-            case JEventSourceStatus::kERROR:
-            case JEventSourceStatus::kUNKNOWN:        in_status = SourceStatus::Error; break;
-        }
+    catch (SourceStatus rs) {
+        in_status = rs;
     }
     catch (...) {
-        in_status = SourceStatus::Error;
+        in_status = SourceStatus::kERROR;
     }
     auto latency_time = std::chrono::steady_clock::now();
     auto message_count = _chunk_buffer.size();
@@ -59,15 +50,15 @@ Arrow::Status JEventSourceArrow::execute() {
     auto overhead = finished_time - latency_time;
     update_metrics(message_count, 1, latency, overhead);
 
-    if (in_status == SourceStatus::Finished) {
+    if (in_status == SourceStatus::kNO_MORE_EVENTS) {
         // There should be a _source.Close() of some kind
         set_upstream_finished(true);
-        return Arrow::Status::Finished;
+        return JArrow::Status::Finished;
     }
 
-    if (in_status == SourceStatus::KeepGoing && out_status == EventQueue::Status::Ready) {
-        return Arrow::Status::KeepGoing;
+    if (in_status == SourceStatus::kSUCCESS && out_status == EventQueue::Status::Ready) {
+        return JArrow::Status::KeepGoing;
     }
 
-    return Arrow::Status::ComeBackLater;
+    return JArrow::Status::ComeBackLater;
 }

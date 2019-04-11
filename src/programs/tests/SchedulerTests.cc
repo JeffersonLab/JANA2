@@ -4,15 +4,14 @@
 
 #include "catch.hpp"
 
-#include <greenfield/Scheduler.h>
+#include <JANA/JScheduler.h>
 #include <greenfield/ExampleComponents.h>
 #include <greenfield/LinearTopologyBuilder.h>
 
-namespace greenfield {
 TEST_CASE("SchedulerTests") {
 
     SumSink<double> sink;
-    Topology topology;
+    JTopology topology;
     LinearTopologyBuilder builder(topology);
     builder.addSource<RandIntSource>("emit_rand_ints");
     builder.addProcessor<MultByTwoProcessor>("multiply_by_two");
@@ -21,17 +20,17 @@ TEST_CASE("SchedulerTests") {
 
     topology.activate("emit_rand_ints");
 
-    Arrow* assignment;
-    Arrow::Status last_result;
+    JArrow* assignment;
+    JArrow::Status last_result;
 
 
     SECTION("When run sequentially, RRS returns nullptr => topology finished") {
 
-        auto logger = Logger::nothing(); // everything();
+        auto logger = JLogger::nothing(); // everything();
 
-        Scheduler scheduler(topology.arrows, 1);
+        JScheduler scheduler(topology.arrows, 1);
 
-        last_result = Arrow::Status::ComeBackLater;
+        last_result = JArrow::Status::ComeBackLater;
         assignment = nullptr;
         do {
             assignment = scheduler.next_assignment(0, assignment, last_result);
@@ -48,9 +47,9 @@ TEST_CASE("SchedulerTests") {
 
     SECTION("When run sequentially, topology finished => RRS returns nullptr") {
 
-        auto logger = Logger::nothing();
-        Scheduler scheduler(topology.arrows, 1);
-        last_result = Arrow::Status::ComeBackLater;
+        auto logger = JLogger::nothing();
+        JScheduler scheduler(topology.arrows, 1);
+        last_result = JArrow::Status::ComeBackLater;
         assignment = nullptr;
 
         bool keep_going = true;
@@ -70,5 +69,4 @@ TEST_CASE("SchedulerTests") {
         assignment = scheduler.next_assignment(0, assignment, last_result);
         REQUIRE(assignment == nullptr);
     }
-}
 }

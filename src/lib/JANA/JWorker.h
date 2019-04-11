@@ -6,23 +6,22 @@
 #define GREENFIELD_WORKER_H
 
 #include <thread>
-#include <greenfield/Logger.h>
-#include <greenfield/Scheduler.h>
+#include <JANA/JLogger.h>
+#include <JANA/JScheduler.h>
 
-namespace greenfield {
 
-using clock_t = std::chrono::steady_clock;
+using jclock_t = std::chrono::steady_clock;
 using duration_t = std::chrono::steady_clock::duration;
 
-class Worker {
+class JWorker {
     /// Designed so that the Worker checks in with the Scheduler on his own terms;
     /// i.e. nobody will update the worker's assignment externally. This eliminates
     /// a whole lot of synchronization since we can assume
     /// that the Worker's internal state won't be updated by another thread.
 
 private:
-    std::thread *_thread;    // Worker encapsulates a thread of some kind. Nothing else should care how.
-    Scheduler &_scheduler;
+    std::thread *_thread;    // JWorker encapsulates a thread of some kind. Nothing else should care how.
+    JScheduler &_scheduler;
 
 public:
 
@@ -84,10 +83,10 @@ public:
     /// Machinery that nobody else should modify. These should be protected eventually.
     /// Probably simply make them private and expose via get_status() -> Worker::Status
     const uint32_t worker_id;
-    Arrow *assignment = nullptr;
-    bool shutdown_requested = false;   // For communicating with ThreadManager
+    JArrow *assignment = nullptr;
+    bool shutdown_requested = false;   // For communicating with JThreadTeam
     bool shutdown_achieved = false;    // TODO: Make these atomic
-    Logger _logger;
+    JLogger _logger;
     Metrics metrics;
 
 
@@ -101,15 +100,15 @@ public:
     /// Worker serves as an RAII wrapper around a thread of some kind,
     /// which runs for the lifetime of the Worker.
 
-    Worker(uint32_t id, Scheduler &scheduler);
-    ~Worker();
+    JWorker(uint32_t id, JScheduler &scheduler);
+    ~JWorker();
 
     /// If we copy or move the Worker, the underlying std::thread will be left with a
     /// dangling pointer back to `this`. So we forbid copying, assigning, and moving.
 
-    Worker(const Worker &other) = delete;
-    Worker(Worker &&other) = delete;
-    Worker &operator=(const Worker &other) = delete;
+    JWorker(const JWorker &other) = delete;
+    JWorker(JWorker &&other) = delete;
+    JWorker &operator=(const JWorker &other) = delete;
 
 
     /// This is what the encapsulated thread is supposed to be doing
@@ -119,6 +118,5 @@ public:
     Summary get_summary();
 };
 
-} // namespace greenfield
 
 #endif

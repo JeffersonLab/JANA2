@@ -5,15 +5,13 @@
 #ifndef GREENFIELD_SOURCEARROW_H
 #define GREENFIELD_SOURCEARROW_H
 
-#include <greenfield/Arrow.h>
-#include <greenfield/Components.h>
-
-namespace greenfield {
+#include <JANA/JArrow.h>
+#include "Components.h"
 
 /// SourceArrow wraps a reference to a Source and 'lifts' it into a Arrow
 /// that knows how to stream to and from queues, and is executable by a Worker
 template<typename T>
-class SourceArrow : public Arrow {
+class SourceArrow : public JArrow {
 
 private:
     Source<T> & _source;
@@ -24,7 +22,7 @@ private:
 
 public:
     SourceArrow(std::string name, Source<T>& source, Queue<T> *output_queue)
-        : Arrow(name, false)
+        : JArrow(name, false)
         , _source(source)
         , _output_queue(output_queue) {
 
@@ -32,9 +30,9 @@ public:
         attach_downstream(_output_queue);
     }
 
-    Arrow::Status execute() {
+    JArrow::Status execute() {
         if (!is_active()) {
-            return Arrow::Status::Finished;
+            return JArrow::Status::Finished;
         }
         if (!_is_initialized) {
             _source.initialize();
@@ -62,15 +60,14 @@ public:
             // TODO: We may need to have scheduler check that _all_ threads running
             // this arrow have finished before notifying downstream, otherwise
             // a couple of straggler events ~might~ get stranded on an inactive queue
-            return Arrow::Status::Finished;
+            return JArrow::Status::Finished;
         }
         if (in_status == Source<T>::Status::KeepGoing && out_status == QueueBase::Status::Ready) {
-            return Arrow::Status::KeepGoing;
+            return JArrow::Status::KeepGoing;
         }
-        return Arrow::Status::ComeBackLater;
+        return JArrow::Status::ComeBackLater;
     }
 };
 
-} // namespace greenfield
 
 #endif //GREENFIELD_SOURCEARROW_H

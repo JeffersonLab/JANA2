@@ -4,12 +4,10 @@
 #include <vector>
 #include <queue>
 #include <assert.h>
-#include "Activable.h"
-
-namespace greenfield {
+#include "JActivable.h"
 
 
-class QueueBase : public Activable {
+class QueueBase : public JActivable {
 
 protected:
     size_t _threshold = 128;
@@ -94,6 +92,5 @@ public:
 };
 
 
-} // namespace greenfield
 
 

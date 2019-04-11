@@ -5,24 +5,29 @@
 #ifndef GREENFIELD_LINEARTOPOLOGY_H
 #define GREENFIELD_LINEARTOPOLOGY_H
 
-#include "Topology.h"
+#include <JANA/JTopology.h>
 #include "Components.h"
 #include "SourceArrow.h"
 #include "MapArrow.h"
 #include "SinkArrow.h"
 
-namespace greenfield {
-
 class LinearTopologyBuilder {
 
-    Topology& topology;
+    JTopology& topology;
     QueueBase* last_queue;
     bool have_source = false;
     bool have_sink = false;
     bool finished = false;
+    std::vector<Component*> components;
 
 public:
-    LinearTopologyBuilder(Topology& topology): topology(topology) {}
+    LinearTopologyBuilder(JTopology& topology): topology(topology) {}
+
+    ~LinearTopologyBuilder() {
+        for (auto component : components) {
+            delete component;
+        }
+    }
 
     template <typename T>
     LinearTopologyBuilder& addSource(std::string name, Source<T>& source) {
@@ -73,26 +78,24 @@ public:
     template <typename SourceT>
     LinearTopologyBuilder& addSource(std::string name) {
         auto source = new SourceT;
-        topology.addManagedComponent(source);
+        components.push_back(source);
         return addSource(name, *source);
     }
 
     template <typename ProcessorT>
     LinearTopologyBuilder& addProcessor(std::string name) {
         auto processor = new ProcessorT;
-        topology.addManagedComponent(processor);
+        components.push_back(processor);
         return addProcessor(name, *processor);
     }
 
     template <typename SinkT>
     LinearTopologyBuilder& addSink(std::string name) {
         auto sink = new SinkT;
-        topology.addManagedComponent(sink);
+        components.push_back(sink);
         return addSink(name, *sink);
     }
 
 };
 
-
-}
 #endif //GREENFIELD_LINEARTOPOLOGY_H

@@ -38,7 +38,8 @@
 JBenchmarker::JBenchmarker(JApplication* app) : _app(app) {
 
     _max_threads = JCpuInfo::GetNumCpus();
-    _logger = app->GetJLogger();
+    _logger = JLoggingService::logger("JBenchmarker");
+
     auto params = app->GetJParameterManager();
 
     params->SetParameter("NEVENTS", 0);

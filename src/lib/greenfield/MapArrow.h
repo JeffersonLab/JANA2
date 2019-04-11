@@ -5,13 +5,12 @@
 #ifndef GREENFIELD_MAPARROW_H
 #define GREENFIELD_MAPARROW_H
 
-#include <greenfield/Components.h>
-#include <greenfield/Arrow.h>
+#include "Components.h"
+#include <JANA/JArrow.h>
 
-namespace greenfield {
 
 template<typename S, typename T>
-class MapArrow : public Arrow {
+class MapArrow : public JArrow {
 
 private:
     ParallelProcessor<S,T>& _processor;
@@ -20,7 +19,7 @@ private:
 
 public:
     MapArrow(std::string name, ParallelProcessor<S,T>& processor, Queue<S> *input_queue, Queue<T> *output_queue)
-           : Arrow(name, true)
+           : JArrow(name, true)
            , _processor(processor)
            , _input_queue(input_queue)
            , _output_queue(output_queue) {
@@ -31,7 +30,7 @@ public:
         attach_downstream(_output_queue);
     };
 
-    Arrow::Status execute() {
+    JArrow::Status execute() {
 
         auto start_total_time = std::chrono::steady_clock::now();
         std::vector<S> xs;
@@ -63,17 +62,16 @@ public:
 
         if (in_status == QueueBase::Status::Finished) {
             set_upstream_finished(true);
-            return Arrow::Status::Finished;
+            return JArrow::Status::Finished;
         }
         else if (in_status == QueueBase::Status::Ready && out_status == QueueBase::Status::Ready) {
-            return Arrow::Status::KeepGoing;
+            return JArrow::Status::KeepGoing;
         }
         else {
-            return Arrow::Status::ComeBackLater;
+            return JArrow::Status::ComeBackLater;
         }
     }
 };
 
-} // namespace greenfield
 
 #endif //GREENFIELD_MAPARROW_H

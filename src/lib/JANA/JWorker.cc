@@ -2,12 +2,10 @@
 // Created by nbrei on 4/4/19.
 //
 
-#include <greenfield/Worker.h>
-
-namespace greenfield {
+#include <JANA/JWorker.h>
 
 
-Worker::Metrics::Metrics()
+JWorker::Metrics::Metrics()
         : _useful_time(duration_t::zero())
         , _retry_time(duration_t::zero())
         , _scheduler_time(duration_t::zero())
@@ -15,7 +13,7 @@ Worker::Metrics::Metrics()
         , _scheduler_visits(0) {}
 
 
-void Worker::Metrics::update(const Worker::Metrics& other) {
+void JWorker::Metrics::update(const JWorker::Metrics& other) {
 
     _mutex.lock();
     _useful_time += other._useful_time;
@@ -27,7 +25,7 @@ void Worker::Metrics::update(const Worker::Metrics& other) {
 }
 
 
-void Worker::Metrics::update(const duration_t& useful_time,
+void JWorker::Metrics::update(const duration_t& useful_time,
                              const duration_t& retry_time,
                              const duration_t& scheduler_time,
                              const duration_t& idle_time,
@@ -42,7 +40,7 @@ void Worker::Metrics::update(const duration_t& useful_time,
 }
 
 
-void Worker::Metrics::get(duration_t& useful_time,
+void JWorker::Metrics::get(duration_t& useful_time,
                           duration_t& retry_time,
                           duration_t& scheduler_time,
                           duration_t& idle_time,
@@ -57,10 +55,10 @@ void Worker::Metrics::get(duration_t& useful_time,
 }
 
 
-Worker::Summary Worker::get_summary() {
+JWorker::Summary JWorker::get_summary() {
 
     using millis = std::chrono::duration<double, std::milli>;
-    Worker::Summary summary;
+    JWorker::Summary summary;
     summary.worker_id = worker_id;
     summary.last_arrow_name = ((assignment == nullptr) ? "idle" : assignment->get_name());
 
@@ -78,53 +76,53 @@ Worker::Summary Worker::get_summary() {
 }
 
 
-Worker::Worker(uint32_t id, Scheduler& scheduler) :
+JWorker::JWorker(uint32_t id, JScheduler& scheduler) :
         _scheduler(scheduler), worker_id(id), assignment(nullptr) {
 
-    _thread = new std::thread(&Worker::loop, this);
+    _thread = new std::thread(&JWorker::loop, this);
     if (serviceLocator != nullptr) {
-        LOG_DEBUG(_logger) << "Worker " << worker_id << " found parameters from serviceLocator." << LOG_END;
+        LOG_DEBUG(_logger) << "JWorker " << worker_id << " found parameters from serviceLocator." << LOG_END;
         auto params = serviceLocator->get<ParameterManager>();
         checkin_time = params->checkin_time;
         initial_backoff_time = params->backoff_time;
         backoff_tries = params->backoff_tries;
     }
-    _logger = LoggingService::logger("Worker");
-    LOG_DEBUG(_logger) << "Worker " << worker_id << " constructed." << LOG_END;
+    _logger = JLoggingService::logger("JWorker");
+    LOG_DEBUG(_logger) << "JWorker " << worker_id << " constructed." << LOG_END;
 }
 
 
-Worker::~Worker() {
+JWorker::~JWorker() {
     /// We have to be careful here because this Worker might be being concurrently
     /// read/modified by Worker.thread. Join with thread before doing anything else.
 
-    LOG_DEBUG(_logger) << "Worker " << worker_id << " destruction has begun." << LOG_END;
+    LOG_DEBUG(_logger) << "JWorker " << worker_id << " destruction has begun." << LOG_END;
     if (_thread == nullptr) {
-        LOG_ERROR(_logger) << "Worker " << worker_id << " thread is null. This means we deleted twice somehow!"
+        LOG_ERROR(_logger) << "JWorker " << worker_id << " thread is null. This means we deleted twice somehow!"
                            << LOG_END;
     } else {
         _thread->join();            // Does this throw? Can we guarantee this terminates?
-        delete _thread;             // Should Worker lifetime really match thread lifetime?
+        delete _thread;             // Should JWorker lifetime really match thread lifetime?
         _thread = nullptr;          // Catch and log error if somehow we try to delete twice
     }
-    LOG_DEBUG(_logger) << "Worker " << worker_id << " destruction has completed." << LOG_END;
+    LOG_DEBUG(_logger) << "JWorker " << worker_id << " destruction has completed." << LOG_END;
 }
 
 
-void Worker::loop() {
+void JWorker::loop() {
 
-    LOG_DEBUG(_logger) << "Worker " << worker_id << " has entered loop()." << LOG_END;
-    Arrow::Status last_result = Arrow::Status::ComeBackLater;
+    LOG_DEBUG(_logger) << "JWorker " << worker_id << " has entered loop()." << LOG_END;
+    JArrow::Status last_result = JArrow::Status::ComeBackLater;
 
     while (!shutdown_requested) {
 
-        LOG_TRACE(_logger) << "Worker " << worker_id << " is checking in" << LOG_END;
-        auto start_time = clock_t::now();
+        LOG_DEBUG(_logger) << "JWorker " << worker_id << " is checking in" << LOG_END;
+        auto start_time = jclock_t::now();
 
         assignment = _scheduler.next_assignment(worker_id, assignment, last_result);
-        last_result = Arrow::Status::KeepGoing;
+        last_result = JArrow::Status::KeepGoing;
 
-        auto scheduler_time = clock_t::now();
+        auto scheduler_time = jclock_t::now();
 
         auto scheduler_duration = scheduler_time - start_time;
         auto idle_duration = duration_t::zero();
@@ -132,10 +130,10 @@ void Worker::loop() {
         auto useful_duration = duration_t::zero();
 
         if (assignment == nullptr) {
-            LOG_TRACE(_logger) << "Worker " << worker_id
+            LOG_DEBUG(_logger) << "JWorker " << worker_id
                                << " idling due to lack of assignments" << LOG_END;
             std::this_thread::sleep_for(checkin_time);
-            idle_duration = clock_t::now() - scheduler_time;
+            idle_duration = jclock_t::now() - scheduler_time;
         }
         else {
 
@@ -143,19 +141,19 @@ void Worker::loop() {
             auto backoff_duration = initial_backoff_time;
 
             while (current_tries <= backoff_tries &&
-                   (last_result == Arrow::Status::KeepGoing || last_result == Arrow::Status::ComeBackLater) &&
+                   (last_result == JArrow::Status::KeepGoing || last_result == JArrow::Status::ComeBackLater) &&
                    !shutdown_requested &&
-                   (clock_t::now() - start_time) < checkin_time) {
+                   (jclock_t::now() - start_time) < checkin_time) {
 
-                LOG_TRACE(_logger) << "Worker " << worker_id << " is executing "
+                LOG_DEBUG(_logger) << "JWorker " << worker_id << " is executing "
                                    << assignment->get_name() << LOG_END;
-                auto before_execute_time = clock_t::now();
+                auto before_execute_time = jclock_t::now();
                 last_result = assignment->execute();
-                useful_duration += (clock_t::now() - before_execute_time);
+                useful_duration += (jclock_t::now() - before_execute_time);
 
 
-                if (last_result == Arrow::Status::KeepGoing) {
-                    LOG_TRACE(_logger) << "Worker " << worker_id << " succeeded at "
+                if (last_result == JArrow::Status::KeepGoing) {
+                    LOG_DEBUG(_logger) << "JWorker " << worker_id << " succeeded at "
                                        << assignment->get_name() << LOG_END;
                     current_tries = 0;
                     backoff_duration = initial_backoff_time;
@@ -169,7 +167,7 @@ void Worker::loop() {
                         else if (backoff_strategy == BackoffStrategy::Exponential) {
                             backoff_duration *= 2;
                         }
-                        LOG_TRACE(_logger) << "Worker " << worker_id << " backing off with "
+                        LOG_DEBUG(_logger) << "JWorker " << worker_id << " backing off with "
                                            << assignment->get_name() << ", tries = " << current_tries
                                            << LOG_END;
 
@@ -185,11 +183,10 @@ void Worker::loop() {
 
     _scheduler.last_assignment(worker_id, assignment, last_result);
 
-    LOG_DEBUG(_logger) << "Worker " << worker_id << " is exiting loop()" << LOG_END;
+    LOG_DEBUG(_logger) << "JWorker " << worker_id << " is exiting loop()" << LOG_END;
     shutdown_achieved = true;
 }
 
-} // namespace greenfield
 
 
 

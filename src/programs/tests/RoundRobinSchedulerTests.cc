@@ -1,17 +1,16 @@
 
 #include "catch.hpp"
 
-#include <greenfield/Scheduler.h>
+#include <JANA/JScheduler.h>
 #include <greenfield/ExampleComponents.h>
 #include <greenfield/LinearTopologyBuilder.h>
 
-namespace greenfield {
 
-TEST_CASE("greenfield::Scheduler") {
+TEST_CASE("JScheduler") {
 
     SumSink<double> sink;
 
-    Topology topology;
+    JTopology topology;
     LinearTopologyBuilder builder(topology);
 
     builder.addSource<RandIntSource>("emit_rand_ints");
@@ -19,15 +18,15 @@ TEST_CASE("greenfield::Scheduler") {
     builder.addProcessor<SubOneProcessor>("subtract_one");
     builder.addSink("sum_everything", sink);
 
-    Scheduler scheduler(topology.arrows, 1);
+    JScheduler scheduler(topology.arrows, 1);
 
-    auto logger = Logger::nothing(); // everything();
+    auto logger = JLogger::nothing(); // everything();
 
     // Assume everything is active for now
     topology.activate("emit_rand_ints");
 
-    auto last_result = Arrow::Status::ComeBackLater;
-    Arrow* assignment = nullptr;
+    auto last_result = JArrow::Status::ComeBackLater;
+    JArrow* assignment = nullptr;
 
     SECTION("When there is only one worker, who always encounters ComeBackLater...") {
 
@@ -55,7 +54,7 @@ TEST_CASE("greenfield::Scheduler") {
 
         for (int i = 0; i < 10; ++i) {
             assignment = nullptr;
-            last_result = Arrow::Status::ComeBackLater;
+            last_result = JArrow::Status::ComeBackLater;
             assignment = scheduler.next_assignment(i, assignment, last_result);
 
             // They all receive a nonnull assignment
@@ -80,10 +79,10 @@ TEST_CASE("greenfield::Scheduler") {
 
         LOG_INFO(logger) << "--------------------------------------" << LOG_END;
 
-        scheduler.next_assignment(0, nullptr, Arrow::Status::ComeBackLater);
-        scheduler.next_assignment(1, nullptr, Arrow::Status::ComeBackLater);
-        scheduler.next_assignment(2, nullptr, Arrow::Status::ComeBackLater);
-        auto sum_everything_arrow = scheduler.next_assignment(3, nullptr, Arrow::Status::ComeBackLater);
+        scheduler.next_assignment(0, nullptr, JArrow::Status::ComeBackLater);
+        scheduler.next_assignment(1, nullptr, JArrow::Status::ComeBackLater);
+        scheduler.next_assignment(2, nullptr, JArrow::Status::ComeBackLater);
+        auto sum_everything_arrow = scheduler.next_assignment(3, nullptr, JArrow::Status::ComeBackLater);
 
         // Last assignment returned sequential arrow "sum_everything"
         REQUIRE(sum_everything_arrow->get_name() == "sum_everything");
@@ -92,14 +91,14 @@ TEST_CASE("greenfield::Scheduler") {
 
         // We return the sequential arrow to the scheduler
         assignment = sum_everything_arrow;
-        last_result = Arrow::Status::ComeBackLater;
+        last_result = JArrow::Status::ComeBackLater;
         auto arrow = scheduler.next_assignment(3, assignment, last_result);
 
         assignment_counts[arrow->get_name()]++;
 
         for (int i = 0; i < 8; ++i) {
             assignment = nullptr;
-            last_result = Arrow::Status::ComeBackLater;
+            last_result = JArrow::Status::ComeBackLater;
             arrow = scheduler.next_assignment(i, assignment, last_result);
             assignment_counts[arrow->get_name()]++;
         }
@@ -113,7 +112,7 @@ TEST_CASE("greenfield::Scheduler") {
     SECTION("When an arrow encountered KeepGoing...") {
 
         LOG_INFO(logger) << "--------------------------------------" << LOG_END;
-        last_result = Arrow::Status::KeepGoing;
+        last_result = JArrow::Status::KeepGoing;
         assignment = topology.get_arrow("subtract_one");
 
         for (int i = 0; i < 4; ++i) {
@@ -124,7 +123,6 @@ TEST_CASE("greenfield::Scheduler") {
         }
 
     }
-}
 }
 
 

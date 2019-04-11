@@ -7,17 +7,15 @@
 
 #include <thread>
 #include <random>
-#include <greenfield/Topology.h>
+#include <JANA/JTopology.h>
 #include <greenfield/LinearTopologyBuilder.h>
-#include "greenfield/ExampleComponents.h"
+#include <greenfield/ExampleComponents.h>
 
 
-namespace greenfield {
 
+TEST_CASE("ActivableActivationTests") {
 
-TEST_CASE("greenfield:ActivableActivationTests") {
-
-    Topology topology;
+    JTopology topology;
     LinearTopologyBuilder builder(topology);
 
     RandIntSource source;
@@ -28,7 +26,7 @@ TEST_CASE("greenfield:ActivableActivationTests") {
     builder.addProcessor<SubOneProcessor>("subtract_one");
     builder.addSink("sum_everything", sink);
 
-    auto logger = Logger::nothing(); //everything();
+    auto logger = JLogger::nothing(); //everything();
     topology.logger = logger;
     source.logger = logger;
 
@@ -64,9 +62,9 @@ TEST_CASE("greenfield:ActivableActivationTests") {
 } // TEST_CASE
 
 
-TEST_CASE("greenfield:ActivableDeactivationTests") {
+TEST_CASE("ActivableDeactivationTests") {
 
-    Topology topology;
+    JTopology topology;
     LinearTopologyBuilder builder(topology);
 
     RandIntSource source;
@@ -78,7 +76,7 @@ TEST_CASE("greenfield:ActivableDeactivationTests") {
     builder.addProcessor<SubOneProcessor>("c");
     builder.addSink("d", sink);
 
-    auto logger = Logger::nothing();
+    auto logger = JLogger::nothing();
     topology.logger = logger;
     source.logger = logger;
 
@@ -105,7 +103,6 @@ TEST_CASE("greenfield:ActivableDeactivationTests") {
 
 
 } // TEST_CASE
-} // namespace greenfield
 
 
 

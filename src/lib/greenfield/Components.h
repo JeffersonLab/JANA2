@@ -8,7 +8,6 @@
 #include <vector>
 #include <cstddef>
 
-namespace greenfield {
 
 /// Abstract classes for very generic components that the user is expected to furnish.
 /// They do not contain any code specific to any parallelization paradigm whatsoever.
@@ -112,6 +111,5 @@ struct SubtaskProcessor : Component {
 };
 
 
-} // namespace greenfield
 
 #endif //GREENFIELD_COMPONENTS_H

@@ -1,26 +1,26 @@
 
-#include <greenfield/Logger.h>
-#include <greenfield/Topology.h>
-#include <greenfield/ThreadManager.h>
-#include <greenfield/Worker.h>
+#include <JANA/JLogger.h>
+#include <JANA/JTopology.h>
+#include <JANA/JThreadTeam.h>
+#include <JANA/JWorker.h>
+#include <JANA/JServiceLocator.h>
 #include <greenfield/ExampleComponents.h>
 #include <greenfield/LinearTopologyBuilder.h>
 #include <greenfield/PerfTestTopology.h>
 
 using namespace std;
-using namespace greenfield;
 
 
 int main() {
 
-    serviceLocator = new ServiceLocator();
+    serviceLocator = new JServiceLocator();
 
-    auto loggingService = new LoggingService;
+    auto loggingService = new JLoggingService;
     serviceLocator->provide(loggingService);
 
-    loggingService->set_level("ThreadManager", JLogLevel::OFF);
-    loggingService->set_level("Scheduler", JLogLevel::OFF);
-    loggingService->set_level("Topology", JLogLevel::INFO);
+    loggingService->set_level("JThreadTeam", JLogLevel::OFF);
+    loggingService->set_level("JScheduler", JLogLevel::OFF);
+    loggingService->set_level("JTopology", JLogLevel::INFO);
 
     auto params = new ParameterManager;
     serviceLocator->provide(params);
@@ -49,7 +49,7 @@ int main() {
 //    entangled "block of 40": dis * 40
 //
 
-    Topology topology;
+    JTopology topology;
 
     LinearTopologyBuilder builder(topology);
 
