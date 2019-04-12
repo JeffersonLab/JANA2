@@ -35,15 +35,40 @@
 
 
 #include "JApplication.h"
+#include "JActivable.h"
+#include "JArrow.h"
+#include "JScheduler.h"
+#include "JThreadTeam.h"
 
 
-class JApplicationNew : public JApplication {
+using jclock_t = std::chrono::steady_clock;
 
-private:
-    //JTopology _topology;
-    //LinearTopologyBuilder _builder;
+class JApplicationNew : public JApplication, public JActivable {
 
 public:
+    enum class RunState { BeforeRun, DuringRun, AfterRun };
+
+private:
+    std::vector<JArrow *> _arrows;
+    std::vector<QueueBase *> _queues;
+
+    std::vector<JArrow*> _sources;          // Sources needed for activation
+    std::vector<JArrow*> _sinks;            // Sinks needed for finished message count
+
+    JLogger _logger;
+    JScheduler* _scheduler = nullptr;
+    JThreadTeam* _threadManager = nullptr;
+
+    RunState _run_state = RunState::BeforeRun;
+    jclock_t::time_point _start_time;
+    jclock_t::time_point _last_time;
+    jclock_t::time_point _stop_time;
+    size_t _last_message_count = 0;
+    uint32_t _ncpus;
+
+
+public:
+
     JApplicationNew(JParameterManager* params, std::vector<std::string>* event_sources);
     void Initialize() override;
     void Run() override;
@@ -58,6 +83,9 @@ public:
     JThreadManager* GetJThreadManager() const override;
     std::shared_ptr<JTask<void>> GetVoidTask() override;
 
+    // Activable. TODO: Protect these from the user.
+    bool is_active() override;
+    void set_active(bool is_active) override;
 };
 
 

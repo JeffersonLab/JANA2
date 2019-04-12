@@ -4,13 +4,13 @@
 
 #include <JANA/JEventProcessorArrow.h>
 #include <JANA/JEventProcessor.h>
+#include "JEventProcessorArrow.h"
+
 
 JEventProcessorArrow::JEventProcessorArrow(std::string name,
-                                           JEventProcessor& processor,
                                            EventQueue *input_queue,
                                            EventQueue *output_queue)
         : JArrow(std::move(name), true)
-        , _processor(processor)
         , _input_queue(input_queue)
         , _output_queue(output_queue)
 {
@@ -20,6 +20,9 @@ JEventProcessorArrow::JEventProcessorArrow(std::string name,
     attach_downstream(_output_queue);
 }
 
+void JEventProcessorArrow::add_processor(JEventProcessor* processor) {
+    _processors.push_back(processor);
+}
 
 JArrow::Status JEventProcessorArrow::execute() {
 
@@ -31,7 +34,9 @@ JArrow::Status JEventProcessorArrow::execute() {
 
     auto start_latency_time = std::chrono::steady_clock::now();
     for (Event& x : xs) {
-        _processor.Process(x);
+        for (JEventProcessor* processor : _processors) {
+            processor->Process(x);
+        }
     }
     auto message_count = xs.size();
     auto end_latency_time = std::chrono::steady_clock::now();
@@ -56,3 +61,4 @@ JArrow::Status JEventProcessorArrow::execute() {
         return JArrow::Status::ComeBackLater;
     }
 }
+

@@ -15,13 +15,13 @@ using EventQueue = Queue<Event>;
 class JEventSourceArrow : public JArrow {
 
 private:
-    JEventSource& _source;
+    JEventSource* _source;
     EventQueue* _output_queue;
     std::vector<Event> _chunk_buffer;
     bool _is_initialized = false;
 
 public:
-    JEventSourceArrow(std::string name, JEventSource& source, EventQueue* output_queue);
+    JEventSourceArrow(std::string name, JEventSource* source, EventQueue* output_queue);
     JArrow::Status execute();
 };
 

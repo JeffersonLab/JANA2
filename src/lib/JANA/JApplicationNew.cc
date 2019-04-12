@@ -30,40 +30,144 @@
 // Authors: Nathan Brei
 //
 
+#include <unordered_set>
+
 #include "JApplicationNew.h"
+#include "JEventSourceManager.h"
+#include "JEventSourceArrow.h"
+#include "JEventProcessorArrow.h"
+
+using EventQueue = Queue<std::shared_ptr<const JEvent>>;
 
 JApplicationNew::JApplicationNew(JParameterManager* params, std::vector<std::string>* event_sources)
     : JApplication(params, event_sources)
     //, _builder(_topology) {
 {
-
     jout << "JApplicationNew::JApplicationNew" << std::endl;
 }
 
 void JApplicationNew::Initialize() {
     jout << "JApplicationNew::Initialize" << std::endl;
+
+    if (_initialized) return;
+    _initialized = true;
+    _nthreads = JCpuInfo::GetNumCpus();
+    _pmanager->SetDefaultParameter("nthreads", _nthreads, "The total number of worker threads");
+
+    AttachPlugins();
+    _run_state = RunState::BeforeRun;
+
+    std::deque<JEventSource*> sources;
+    _eventSourceManager->CreateSources();
+    _eventSourceManager->GetUnopenedJEventSources(sources);
+
+    // Not sure why we have to do this, will figure out later
+    // // Get factory generators from event sources
+    std::deque<JEventSource*> sEventSources;
+    _eventSourceManager->GetUnopenedJEventSources(sEventSources);
+    std::unordered_set<std::type_index> sSourceTypes;
+    for(auto sSource : sEventSources)
+    {
+        auto sTypeIndex = sSource->GetDerivedType();
+        if(sSourceTypes.find(sTypeIndex) != std::end(sSourceTypes))
+            continue; //same type as before: duplicate factories!
+
+        auto sGenerator = sSource->GetFactoryGenerator();
+        if(sGenerator != nullptr)
+            _factoryGenerators.push_back(sGenerator);
+    }
+
+    // Assume the simplest possible topology for now, complicate later
+    auto queue = new EventQueue();
+    _queues.push_back(queue);
+
+    for (auto src : sources) {
+
+        JArrow* arrow = new JEventSourceArrow(src->GetName(), src, queue);
+        _arrows.push_back(arrow);
+        _sources.push_back(arrow);
+        // create arrow for sources. Don't open until arrow.activate() called
+    }
+
+    auto finished_queue = new EventQueue();
+    _queues.push_back(finished_queue);
+
+    auto proc_arrow = new JEventProcessorArrow("processors", queue, finished_queue);
+    _arrows.push_back(proc_arrow);
+
+    for (auto proc :_eventProcessors) {
+        proc_arrow->add_processor(proc);
+        _sinks.push_back(proc_arrow);
+    }
 }
 
 void JApplicationNew::Run() {
     jout << "JApplicationNew::Run" << std::endl;
+    Initialize();
+    set_active(true);
+    _scheduler = new JScheduler(_arrows, _ncpus);
+    _threadManager = new JThreadTeam(*_scheduler);
+    _threadManager->run(_nthreads);
+
+    _run_state = RunState::DuringRun;
+    _start_time = jclock_t::now();
+    _last_time = _start_time;
+
+    // Run() blocks. Why?!
+    Stop(true);
 }
 
 void JApplicationNew::Scale(int nthreads) {
-    jout << "JApplicationNew::Scale" << std::endl;
+    if (_run_state == RunState::DuringRun) {
+        Stop(true); // Hope this blocks
+    }
+    _ncpus = nthreads;
+    Run();
 }
 
 void JApplicationNew::Quit(bool skip_join) {
     jout << "JApplicationNew::Quit" << std::endl;
     _skip_join = skip_join;
     _quitting = true;
+    Stop(skip_join);
 }
 
 void JApplicationNew::Stop(bool wait_until_idle) {
     jout << "JApplicationNew::Stop" << std::endl;
+    if (wait_until_idle) {
+        while (is_active()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        }
+    } else {
+        for (auto arrow : _arrows) {
+            arrow->set_active(false);
+        }
+        _threadManager->stop();
+    }
+    _threadManager->join();
+    if (_run_state == RunState::DuringRun) {
+        // We shouldn't usually end up here because sinks notify us when
+        // they deactivate, automatically calling JTopology::set_active(false),
+        // which stops the clock as soon as possible.
+        // However, if for unknown reasons nobody notifies us, we still want to change
+        // run state in an orderly fashion. If we do end up here, though, our _stop_time
+        // will be late, throwing our metrics off.
+        _stop_time = jclock_t::now();
+    }
+    if (_threadManager != nullptr) {
+        _threadManager->stop();
+        _threadManager->join();
+        delete _threadManager;
+        _threadManager = nullptr;
+        delete _scheduler;
+    }
+    _run_state = RunState::AfterRun;
 }
 
 void JApplicationNew::Resume() {
     jout << "JApplicationNew::Resume" << std::endl;
+    // for each source, setactive to true
+    //
 }
 
 void JApplicationNew::UpdateResourceLimits() {
@@ -74,6 +178,8 @@ void JApplicationNew::PrintFinalReport() {
     jout << "JApplicationNew::PrintFinalReport" << std::endl;
 }
 
+/// Abstraction-breaking methods we shouldn't be using and would like
+/// to get rid of
 JThreadManager* JApplicationNew::GetJThreadManager() const {
     throw;
 }
@@ -81,5 +187,43 @@ JThreadManager* JApplicationNew::GetJThreadManager() const {
 std::shared_ptr<JTask<void>> JApplicationNew::GetVoidTask() {
     throw;
 }
+
+
+/// Determine whether or not anything in our topology is running
+bool JApplicationNew::is_active() {
+    for (auto arrow : _arrows) {
+        if (arrow->is_active()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+/// Start processing by activating desired source arrows,
+/// and stop the clock as soon as all of the arrows have completed
+void JApplicationNew::set_active(bool active) {
+
+    if (active) {
+        for (auto arrow : _sources) {
+            arrow->set_active(true);
+            arrow->notify_downstream(true);
+        }
+    }
+    else {
+        if (_run_state == RunState::DuringRun) {
+            _stop_time = jclock_t::now();
+
+            _run_state = RunState::AfterRun;
+        }
+    }
+}
+
+
+
+
+
+
+
+
 
 

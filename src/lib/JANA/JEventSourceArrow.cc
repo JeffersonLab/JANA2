@@ -7,7 +7,7 @@
 using SourceStatus = JEventSource::RETURN_STATUS;
 using ArrowStatus = JEventSourceArrow::Status;
 
-JEventSourceArrow::JEventSourceArrow(std::string name, JEventSource& source, EventQueue* output_queue)
+JEventSourceArrow::JEventSourceArrow(std::string name, JEventSource* source, EventQueue* output_queue)
     : JArrow(name, false)
     , _source(source)
     , _output_queue(output_queue) {
@@ -22,7 +22,7 @@ JArrow::Status JEventSourceArrow::execute() {
         return JArrow::Status::Finished;
     }
     if (!_is_initialized) {
-        _source.Open();
+        _source->Open();
         _is_initialized = true;
     }
 
@@ -31,7 +31,7 @@ JArrow::Status JEventSourceArrow::execute() {
     try {
         size_t item_count = get_chunksize();
         while (item_count-- != 0) {
-            _chunk_buffer.push_back(_source.GetEvent());
+            _chunk_buffer.push_back(_source->GetEvent());
         }
     }
     catch (SourceStatus rs) {
