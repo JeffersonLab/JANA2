@@ -15,7 +15,7 @@
 #include "JQueueWithBarriers.h"
 
 #include "JTestDataObject.h"
-#include "JTestHelpers.h"
+#include "JPerfUtils.h"
 
 class JTestEventSource : public JEventSource {
 public:
@@ -107,9 +107,9 @@ public:
 
         if (aFactory->GetTag() != "") return false; //Only default tag here
 
-        auto sNumObjects = randint(1,20);
+        size_t sNumObjects = randint(1,20);
         std::vector<JTestSourceData1 *> sObjects;
-        for (std::size_t si = 0; si < sNumObjects; si++) {
+        for (size_t si = 0; si < sNumObjects; si++) {
 
             // Create new JSourceObject
             auto sObject = new JTestSourceData1(randdouble(), si);
@@ -130,10 +130,10 @@ public:
 
         if (aFactory->GetTag() != "") return false; //Only default tag here
 
-        auto sNumObjects = randint(1, 20);
+        int sNumObjects = randint(1, 20);
         std::vector<JTestSourceData2 *> sObjects;
         double sSum = 0.0;
-        for (std::size_t si = 0; si < sNumObjects; si++) {
+        for (int si = 0; si < sNumObjects; si++) {
 
             // Create new JSourceObject
             auto sObject = new JTestSourceData2(randdouble(), si);

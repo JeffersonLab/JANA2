@@ -4,8 +4,8 @@
 
 JScheduler::JScheduler(const std::vector<JArrow*>& arrows, size_t worker_count)
     : _arrows(arrows)
-    , _worker_count(worker_count)
     , _next_idx(0)
+    , _worker_count(worker_count)
     {
         _logger = JLoggingService::logger("JScheduler");
     }

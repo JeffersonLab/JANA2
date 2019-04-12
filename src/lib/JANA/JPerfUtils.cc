@@ -71,6 +71,26 @@ size_t readMemory(std::vector<char> &buffer, size_t count) {
     return sum;
 };
 
+double writeMemory(std::vector<double>& buffer, size_t count) {
+
+    double sum = 0;
+    for (unsigned i=0; i<count; ++i) {
+        int x = randint(0, 100);
+        buffer.push_back(x);
+        sum += x;
+    }
+    return sum;
+}
+
+double readMemory(std::vector<double>& buffer, size_t count) {
+
+    count = std::min(count, buffer.size());
+    double sum = 0;
+    for (unsigned i=0; i < count; ++i) {
+        sum += buffer[i];
+    }
+    return sum;
+};
 
 void touchMemory(std::vector<double> *buffer, size_t count) {
 

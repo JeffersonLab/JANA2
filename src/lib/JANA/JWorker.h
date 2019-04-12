@@ -91,7 +91,7 @@ public:
 
 
     /// Configuration options
-    int backoff_tries = 4;
+    unsigned backoff_tries = 4;
     BackoffStrategy backoff_strategy = BackoffStrategy::Exponential;
     duration_t initial_backoff_time = std::chrono::microseconds(1000);
     duration_t checkin_time = std::chrono::milliseconds(500);

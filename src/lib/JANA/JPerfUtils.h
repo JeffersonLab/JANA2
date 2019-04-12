@@ -20,7 +20,11 @@ double randdouble();
 
 size_t writeMemory(std::vector<char>& buffer, size_t count);
 
+double writeMemory(std::vector<double>& buffer, size_t count);
+
 size_t readMemory(std::vector<char>& buffer, size_t count);
+
+double readMemory(std::vector<double>& buffer, size_t count);
 
 void touchMemory(std::vector<char>* buffer, size_t count);
 

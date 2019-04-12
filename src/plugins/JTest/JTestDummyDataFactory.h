@@ -3,8 +3,8 @@
 
 #include <JANA/JFactoryT.h>
 #include <JANA/JEvent.h>
+#include <JANA/JPerfUtils.h>
 #include "JTestDataObject.h"
-#include "JTestHelpers.h"
 
 #include <random>
 #include <chrono>
