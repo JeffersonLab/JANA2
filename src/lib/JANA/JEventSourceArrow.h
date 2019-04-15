@@ -17,11 +17,12 @@ class JEventSourceArrow : public JArrow {
 private:
     JEventSource* _source;
     EventQueue* _output_queue;
+    JApplication* _app;
     std::vector<Event> _chunk_buffer;
     bool _is_initialized = false;
 
 public:
-    JEventSourceArrow(std::string name, JEventSource* source, EventQueue* output_queue);
+    JEventSourceArrow(std::string name, JEventSource* source, EventQueue* output_queue, JApplication* app);
     JArrow::Status execute();
 };
 

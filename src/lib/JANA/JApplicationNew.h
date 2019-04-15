@@ -77,6 +77,8 @@ public:
     void Resume() override;
     void Quit(bool skip_join) override;
     void UpdateResourceLimits() override;
+    uint64_t GetNeventsProcessed() override;
+    void PrintStatus() override;
     void PrintFinalReport() override;
 
     // Abstraction-breaking methods

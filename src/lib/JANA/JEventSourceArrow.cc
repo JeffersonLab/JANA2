@@ -7,10 +7,15 @@
 using SourceStatus = JEventSource::RETURN_STATUS;
 using ArrowStatus = JEventSourceArrow::Status;
 
-JEventSourceArrow::JEventSourceArrow(std::string name, JEventSource* source, EventQueue* output_queue)
+JEventSourceArrow::JEventSourceArrow(std::string name,
+                                     JEventSource* source,
+                                     EventQueue* output_queue,
+                                     JApplication* app
+                                     )
     : JArrow(name, false)
     , _source(source)
-    , _output_queue(output_queue) {
+    , _output_queue(output_queue)
+    , _app(app) {
 
     _output_queue->attach_upstream(this);
     attach_downstream(_output_queue);
@@ -31,7 +36,14 @@ JArrow::Status JEventSourceArrow::execute() {
     try {
         size_t item_count = get_chunksize();
         while (item_count-- != 0) {
-            _chunk_buffer.push_back(_source->GetEvent());
+            auto event = _source->GetEvent();
+            auto& underlying = const_cast<JEvent&>(*event);
+            auto factorySet = _app->GetFactorySet();
+            assert(factorySet != nullptr);
+            underlying.SetFactorySet(factorySet);
+            underlying.SetJApplication(_app);
+            underlying.SetJEventSource(_source);
+            _chunk_buffer.push_back(event);
         }
     }
     catch (SourceStatus rs) {

@@ -18,16 +18,16 @@ public:
     ~JTestDummyDataFactory() {};
 
     void Init() {
-        jout << "JTestDummyDataFactory::Init() called " << std::endl;
+        //jout << "JTestDummyDataFactory::Init() called " << std::endl;
     }
 
     void ChangeRun(const std::shared_ptr<const JEvent> &aEvent) {
 
-        auto prior_run = GetPreviousRunNumber();
-        auto current_run = aEvent->GetRunNumber();
+        //auto prior_run = GetPreviousRunNumber();
+        //auto current_run = aEvent->GetRunNumber();
 
-        std::cout << "JTestDummyDataFactory::ChangeRun(): " << prior_run
-                  << "=>" << current_run << std::endl;
+        //std::cout << "JTestDummyDataFactory::ChangeRun(): " << prior_run
+        //          << "=>" << current_run << std::endl;
     }
 
     void Process(const std::shared_ptr<const JEvent> &aEvent) {
@@ -74,12 +74,13 @@ public:
         // Submit the tasks to the queues in the thread manager.
         // This function won't return until all of the tasks are finished.
         // This thread will help execute tasks (hopefully these) in the meantime.
-        (*aEvent).GetJApplication()->GetJThreadManager()->SubmitTasks(sTasks);
+        //(*aEvent).GetJApplication()->GetJThreadManager()->SubmitTasks(sTasks);
 
         // For purposes of example, we grab the return values from the tasks
         double sSum = 0.0;
         for (auto sTask : sTasks) {
             auto &st = static_cast< JTask<double> & >(*sTask);
+            st();  // Actually evaluate the subtask
             sSum += st.GetResult();
         }
     }

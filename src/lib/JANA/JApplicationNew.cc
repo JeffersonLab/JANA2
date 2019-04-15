@@ -36,6 +36,7 @@
 #include "JEventSourceManager.h"
 #include "JEventSourceArrow.h"
 #include "JEventProcessorArrow.h"
+#include "JTopology.h"
 
 using EventQueue = Queue<std::shared_ptr<const JEvent>>;
 
@@ -83,16 +84,16 @@ void JApplicationNew::Initialize() {
 
     for (auto src : sources) {
 
-        JArrow* arrow = new JEventSourceArrow(src->GetName(), src, queue);
+        JArrow* arrow = new JEventSourceArrow(src->GetName(), src, queue, this);
         _arrows.push_back(arrow);
         _sources.push_back(arrow);
         // create arrow for sources. Don't open until arrow.activate() called
     }
 
-    auto finished_queue = new EventQueue();
-    _queues.push_back(finished_queue);
+    //auto finished_queue = new EventQueue();
+    //_queues.push_back(finished_queue);
 
-    auto proc_arrow = new JEventProcessorArrow("processors", queue, finished_queue);
+    auto proc_arrow = new JEventProcessorArrow("processors", queue, nullptr);
     _arrows.push_back(proc_arrow);
 
     for (auto proc :_eventProcessors) {
@@ -111,6 +112,7 @@ void JApplicationNew::Run() {
 
     _run_state = RunState::DuringRun;
     _start_time = jclock_t::now();
+    mRunStartTime = std::chrono::system_clock::now();
     _last_time = _start_time;
 
     // Run() blocks. Why?!
@@ -137,6 +139,7 @@ void JApplicationNew::Stop(bool wait_until_idle) {
     if (wait_until_idle) {
         while (is_active()) {
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
+            if( _ticker_on ) PrintStatus();
         }
     } else {
         for (auto arrow : _arrows) {
@@ -172,6 +175,33 @@ void JApplicationNew::Resume() {
 
 void JApplicationNew::UpdateResourceLimits() {
     jout << "JApplicationNew::UpdateResourceLimits" << std::endl;
+    mFactorySetPool.Set_ControlParams( _ncpus*2, 10 );
+}
+
+uint64_t JApplicationNew::GetNeventsProcessed() {
+    uint64_t message_count = 0;
+    for (JArrow* arrow : _sinks) {
+        auto status = JTopology::ArrowStatus(arrow);
+        message_count += status.messages_completed;
+    }
+    return message_count;
+}
+
+void JApplicationNew::PrintStatus() {
+    //for (QueueBase* queue : _queues) {
+    //    std::cout << queue->get_name() << ": " << queue->get_item_count() << std::endl;
+    //}
+
+    //std::cout << std::endl;
+    //for (JArrow* arrow : _arrows) {
+    //    auto summary = JTopology::ArrowStatus(arrow);
+    //    std::cout << summary.arrow_name << ": " << summary.messages_completed << " (" << summary.thread_count << " threads)" << std::endl;
+    //}
+
+    std::stringstream ss;
+    ss << "  " << GetNeventsProcessed() << " events processed  " << Val2StringWithPrefix( GetInstantaneousRate() ) << "Hz (" << Val2StringWithPrefix( GetIntegratedRate() ) << "Hz avg)             ";
+    std::cout << ss.str() << std::endl;
+    std::cout << std::endl;
 }
 
 void JApplicationNew::PrintFinalReport() {
@@ -181,7 +211,7 @@ void JApplicationNew::PrintFinalReport() {
 /// Abstraction-breaking methods we shouldn't be using and would like
 /// to get rid of
 JThreadManager* JApplicationNew::GetJThreadManager() const {
-    throw;
+    return nullptr;
 }
 
 std::shared_ptr<JTask<void>> JApplicationNew::GetVoidTask() {

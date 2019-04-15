@@ -125,7 +125,7 @@ class JApplication{
 
 		uint64_t GetNThreads();
 		uint64_t GetNtasksCompleted(string name="");
-		uint64_t GetNeventsProcessed(void);
+		virtual uint64_t GetNeventsProcessed(void);
 		float GetIntegratedRate(void);
 		float GetInstantaneousRate(void);
 		void GetInstantaneousRates(vector<double> &rates_by_queue);

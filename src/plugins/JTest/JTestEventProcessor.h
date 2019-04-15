@@ -23,8 +23,8 @@ class JTestEventProcessor : public JEventProcessor{
 		JTestEventProcessor(JApplication* app) : JEventProcessor(app) {
 
 			//Add queue for subtasks (not supplied by default!)
-			auto sSubtaskQueue = new JQueueWithLock(app->GetJParameterManager(), "Subtasks", 2000);
-			app->GetJThreadManager()->AddQueue(JQueueSet::JQueueType::SubTasks, sSubtaskQueue);
+			//auto sSubtaskQueue = new JQueueWithLock(app->GetJParameterManager(), "Subtasks", 2000);
+			//app->GetJThreadManager()->AddQueue(JQueueSet::JQueueType::SubTasks, sSubtaskQueue);
 		}
 
 		~JTestEventProcessor() {

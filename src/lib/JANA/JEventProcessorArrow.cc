@@ -15,9 +15,12 @@ JEventProcessorArrow::JEventProcessorArrow(std::string name,
         , _output_queue(output_queue)
 {
     _input_queue->attach_downstream(this);
-    _output_queue->attach_upstream(this);
     attach_upstream(_input_queue);
-    attach_downstream(_output_queue);
+
+    if (_output_queue != nullptr) {
+        _output_queue->attach_upstream(this);
+        attach_downstream(_output_queue);
+    }
 }
 
 void JEventProcessorArrow::add_processor(JEventProcessor* processor) {
@@ -34,15 +37,17 @@ JArrow::Status JEventProcessorArrow::execute() {
 
     auto start_latency_time = std::chrono::steady_clock::now();
     for (Event& x : xs) {
+        //std::cout << "Thread " << THREAD_ID << " starting event " << x->GetEventNumber() << std::endl;
         for (JEventProcessor* processor : _processors) {
             processor->Process(x);
         }
+        //std::cout << "Thread " << THREAD_ID << " finished event " << x->GetEventNumber() << std::endl;
     }
     auto message_count = xs.size();
     auto end_latency_time = std::chrono::steady_clock::now();
 
     auto out_status = EventQueue::Status::Ready;
-    if (message_count > 0) {
+    if (message_count > 0 && _output_queue != nullptr) {
         out_status = _output_queue->push(xs);
     }
     auto end_queue_time = std::chrono::steady_clock::now();
