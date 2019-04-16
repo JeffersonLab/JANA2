@@ -97,6 +97,10 @@ void JApplicationNew::Initialize() {
     auto proc_arrow = new JEventProcessorArrow("processors", queue, nullptr);
     _arrows.push_back(proc_arrow);
 
+    // Receive notifications when sinks finish
+    proc_arrow->attach_downstream(this);
+    attach_upstream(proc_arrow);
+
     for (auto proc :_eventProcessors) {
         proc_arrow->add_processor(proc);
         _sinks.push_back(proc_arrow);
@@ -234,7 +238,7 @@ bool JApplicationNew::is_active() {
 /// and stop the clock as soon as all of the arrows have completed
 void JApplicationNew::set_active(bool active) {
 
-    if (active) {
+    if (active && !is_active()) {
         for (auto arrow : _sources) {
             arrow->set_active(true);
             arrow->notify_downstream(true);
@@ -243,8 +247,8 @@ void JApplicationNew::set_active(bool active) {
     else {
         if (_run_state == RunState::DuringRun) {
             _stop_time = jclock_t::now();
-
             _run_state = RunState::AfterRun;
+            _threadManager->stop();
         }
     }
 }
