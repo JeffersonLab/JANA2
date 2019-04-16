@@ -16,6 +16,7 @@ JEventProcessorArrow::JEventProcessorArrow(std::string name,
 {
     _input_queue->attach_downstream(this);
     attach_upstream(_input_queue);
+    _logger = JLogger::nothing();
 
     if (_output_queue != nullptr) {
         _output_queue->attach_upstream(this);
@@ -30,32 +31,40 @@ void JEventProcessorArrow::add_processor(JEventProcessor* processor) {
 JArrow::Status JEventProcessorArrow::execute() {
 
     auto start_total_time = std::chrono::steady_clock::now();
-    std::vector<Event> xs;
-    xs.reserve(get_chunksize());
 
-    auto in_status = _input_queue->pop(xs, get_chunksize());
+    Event x;
+    bool success;
+    auto in_status = _input_queue->pop(x, success);
+    LOG_DEBUG(_logger) << "EventProcessorArrow '" << get_name() << "': "
+                       << "pop() returned " << ((success) ? "success" : "failure")
+                       << "; queue is now " << to_string(in_status) << LOG_END;
 
     auto start_latency_time = std::chrono::steady_clock::now();
-    for (Event& x : xs) {
-        //std::cout << "Thread " << THREAD_ID << " starting event " << x->GetEventNumber() << std::endl;
+    if (success) {
+        LOG_DEBUG(_logger) << "EventProcessorArrow '" << get_name() << "': Starting event# " << x->GetEventNumber() << LOG_END;
         for (JEventProcessor* processor : _processors) {
             processor->Process(x);
         }
-        //std::cout << "Thread " << THREAD_ID << " finished event " << x->GetEventNumber() << std::endl;
+        LOG_DEBUG(_logger) << "EventProcessorArrow '" << get_name() << "': Finished event# " << x->GetEventNumber() << LOG_END;
     }
-    auto message_count = xs.size();
     auto end_latency_time = std::chrono::steady_clock::now();
 
     auto out_status = EventQueue::Status::Ready;
-    if (message_count > 0 && _output_queue != nullptr) {
-        out_status = _output_queue->push(xs);
+
+    if (success) {
+        if (_output_queue != nullptr) {
+            out_status = _output_queue->push(x);
+        }
+        else {
+            JEvent& underlying = const_cast<JEvent&>(*x);
+            underlying.Release();
+        }
     }
     auto end_queue_time = std::chrono::steady_clock::now();
 
-
     auto latency = (end_latency_time - start_latency_time);
     auto overhead = (end_queue_time - start_total_time) - latency;
-    update_metrics(message_count, 1, latency, overhead);
+    update_metrics(success, 1, latency, overhead);
 
     if (in_status == EventQueue::Status::Finished) {
         set_upstream_finished(true);

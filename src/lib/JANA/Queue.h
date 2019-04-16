@@ -5,6 +5,7 @@
 #include <queue>
 #include <assert.h>
 #include "JActivable.h"
+#include "JLogger.h"
 
 
 class QueueBase : public JActivable {
@@ -29,12 +30,23 @@ public:
 };
 
 
+inline std::string to_string(QueueBase::Status status) {
+    switch (status) {
+        case QueueBase::Status::Ready: return "Ready";
+        case QueueBase::Status::Congested: return "Congested";
+        case QueueBase::Status::Empty: return "Empty";
+        case QueueBase::Status::Full: return "Full";
+        default:                      return "Finished";
+    }
+}
+
 template <typename T>
 class Queue : public QueueBase {
 
 private:
     std::mutex _mutex;
     std::deque<T> _underlying;
+    JLogger _logger;
 
 public:
 
@@ -64,6 +76,32 @@ public:
             return Status::Full;
         }
         return Status::Ready;
+    }
+
+    Status pop(T& item, bool& success) {
+
+        success = false;
+        size_t nitems;
+        if (!_mutex.try_lock()) {
+            return Status::Congested;
+        }
+        nitems = _underlying.size();
+        if (nitems == 0) {
+            _mutex.unlock();
+            return Status::Empty;
+        }
+        item = std::move(_underlying.front());
+        success = true;
+        _underlying.pop_front();
+        _mutex.unlock();
+
+        if (nitems != 1) {
+            return Status::Ready;
+        }
+        if (is_active()) {
+            return Status::Empty;
+        }
+        return Status::Finished;
     }
 
     Status pop(std::vector<T>& buffer, size_t count) {

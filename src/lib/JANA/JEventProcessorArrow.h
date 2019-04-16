@@ -19,6 +19,7 @@ private:
     std::vector<JEventProcessor*> _processors;
     EventQueue* _input_queue;
     EventQueue* _output_queue;
+    JLogger _logger;
 
 public:
 

@@ -80,6 +80,7 @@ void JApplicationNew::Initialize() {
 
     // Assume the simplest possible topology for now, complicate later
     auto queue = new EventQueue();
+    queue->set_threshold(500);  // JTest throughput increases with threshold size: WHY?
     _queues.push_back(queue);
 
     for (auto src : sources) {
@@ -188,15 +189,15 @@ uint64_t JApplicationNew::GetNeventsProcessed() {
 }
 
 void JApplicationNew::PrintStatus() {
-    //for (QueueBase* queue : _queues) {
-    //    std::cout << queue->get_name() << ": " << queue->get_item_count() << std::endl;
-    //}
+    for (QueueBase* queue : _queues) {
+        std::cout << queue->get_name() << ": " << queue->get_item_count() << std::endl;
+    }
 
-    //std::cout << std::endl;
-    //for (JArrow* arrow : _arrows) {
-    //    auto summary = JTopology::ArrowStatus(arrow);
-    //    std::cout << summary.arrow_name << ": " << summary.messages_completed << " (" << summary.thread_count << " threads)" << std::endl;
-    //}
+    std::cout << std::endl;
+    for (JArrow* arrow : _arrows) {
+        auto summary = JTopology::ArrowStatus(arrow);
+        std::cout << summary.arrow_name << ": " << summary.messages_completed << " (" << summary.thread_count << " threads)" << std::endl;
+    }
 
     std::stringstream ss;
     ss << "  " << GetNeventsProcessed() << " events processed  " << Val2StringWithPrefix( GetInstantaneousRate() ) << "Hz (" << Val2StringWithPrefix( GetIntegratedRate() ) << "Hz avg)             ";

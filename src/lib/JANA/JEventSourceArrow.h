@@ -20,6 +20,7 @@ private:
     JApplication* _app;
     std::vector<Event> _chunk_buffer;
     bool _is_initialized = false;
+    JLogger _logger;
 
 public:
     JEventSourceArrow(std::string name, JEventSource* source, EventQueue* output_queue, JApplication* app);
