@@ -3,7 +3,7 @@
 //
 
 #include <JANA/JTopology.h>
-#include "JThreadTeam.h"
+#include "JWorker.h"
 
 
 using millisecs = std::chrono::duration<double, std::milli>;
@@ -255,7 +255,8 @@ void JTopology::log_status() {
         os << " | ID | Last arrow name      | Useful time | Retry time | Idle time | JScheduler time | JScheduler visits |" << std::endl;
         os << " |    |                      |    [0..1]   |   [0..1]   |   [0..1]  |     [0..1]     |     [count]      |" << std::endl;
         os << " +----+----------------------+-------------+------------+-----------+----------------+------------------+" << std::endl;
-        for (JWorker::Summary ws : _threadManager->get_worker_summaries()) {
+        for (JWorker* worker : workers) {
+            auto ws = worker->get_summary();
             os << " |"
                << std::setw(3) << std::right << ws.worker_id << " | "
                << std::setw(20) << std::left << ws.last_arrow_name << " |"
@@ -310,10 +311,11 @@ void JTopology::set_active(bool active) {
 void JTopology::run(int nthreads) {
 
     _scheduler = new JScheduler(arrows, nthreads);
-    //_scheduler->logger = Logger::everything();
-    _threadManager = new JThreadTeam(*_scheduler);
-    //_threadManager->logger = Logger::everything();
-    _threadManager->run(nthreads);
+    for (int i=0; i<nthreads; ++i) {
+        auto worker = new JWorker(i, _scheduler);
+        worker->start();
+        workers.push_back(worker);
+    }
     _run_state = RunState::DuringRun;
     _start_time = std::chrono::steady_clock::now();
     _last_time = _start_time;
@@ -321,22 +323,26 @@ void JTopology::run(int nthreads) {
 }
 
 void JTopology::wait_until_finished() {
-    if (_threadManager != nullptr) {
-        while (is_active()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
-        }
-        if (_run_state == RunState::DuringRun) {
-            // We shouldn't usually end up here because sinks notify us when
-            // they deactivate, automatically calling JTopology::set_active(false),
-            // which stops the clock as soon as possible.
-            // However, if for unknown reasons nobody notifies us, we still want to change
-            // run state in an orderly fashion. If we do end up here, though, our _stop_time
-            // will be late, throwing our metrics off.
-            _run_state = RunState::AfterRun;
-            _stop_time = jclock_t::now();
-        }
-        _threadManager->stop();
-        _threadManager->join();
+    while (is_active()) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
+    if (_run_state == RunState::DuringRun) {
+        // We shouldn't usually end up here because sinks notify us when
+        // they deactivate, automatically calling JTopology::set_active(false),
+        // which stops the clock as soon as possible.
+        // However, if for unknown reasons nobody notifies us, we still want to change
+        // run state in an orderly fashion. If we do end up here, though, our _stop_time
+        // will be late, throwing our metrics off.
+        _run_state = RunState::AfterRun;
+        _stop_time = jclock_t::now();
+    }
+    for (JWorker* worker : workers) {
+        worker->request_stop();
+    }
+    for (JWorker* worker : workers) {
+        worker->wait_for_stop();
+        delete worker;
+    }
+    workers.clear();
 }
 

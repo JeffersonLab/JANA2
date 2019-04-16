@@ -6,8 +6,8 @@
 #include <JANA/JLogger.h>
 
 
-class JThreadTeam;
 class JScheduler;
+class JWorker;
 
 using jclock_t = std::chrono::steady_clock;
 
@@ -58,6 +58,7 @@ public:
     // TODO: Make these private
     std::vector<JArrow *> arrows;
     std::vector<QueueBase *> queues;
+    std::vector<JWorker *> workers;
 
 private:
 
@@ -67,7 +68,6 @@ private:
     std::vector<JArrow*> sinks;            // So we can get total finished messages
 
     JScheduler* _scheduler = nullptr;
-    JThreadTeam* _threadManager = nullptr;
 
 
     RunState _run_state = RunState::BeforeRun;

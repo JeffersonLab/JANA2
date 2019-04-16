@@ -38,7 +38,7 @@
 #include "JActivable.h"
 #include "JArrow.h"
 #include "JScheduler.h"
-#include "JThreadTeam.h"
+#include "JWorker.h"
 
 
 using jclock_t = std::chrono::steady_clock;
@@ -51,20 +51,19 @@ public:
 private:
     std::vector<JArrow *> _arrows;
     std::vector<QueueBase *> _queues;
+    std::vector<JWorker*> _workers;
 
     std::vector<JArrow*> _sources;          // Sources needed for activation
     std::vector<JArrow*> _sinks;            // Sinks needed for finished message count
 
     JLogger _logger;
-    JScheduler* _scheduler = nullptr;
-    JThreadTeam* _threadManager = nullptr;
 
     RunState _run_state = RunState::BeforeRun;
     jclock_t::time_point _start_time;
     jclock_t::time_point _last_time;
     jclock_t::time_point _stop_time;
     size_t _last_message_count = 0;
-    uint32_t _ncpus;
+    // uint32_t _ncpus; // Use JApplication::_nthreads instead
 
 
 public:

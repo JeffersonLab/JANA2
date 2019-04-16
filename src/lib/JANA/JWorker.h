@@ -2,8 +2,8 @@
 // Created by nbrei on 4/4/19.
 //
 
-#ifndef GREENFIELD_WORKER_H
-#define GREENFIELD_WORKER_H
+#ifndef JANA_JWORKER_H
+#define JANA_JWORKER_H
 
 #include <thread>
 #include <JANA/JLogger.h>
@@ -18,10 +18,6 @@ class JWorker {
     /// i.e. nobody will update the worker's assignment externally. This eliminates
     /// a whole lot of synchronization since we can assume
     /// that the Worker's internal state won't be updated by another thread.
-
-private:
-    std::thread *_thread;    // JWorker encapsulates a thread of some kind. Nothing else should care how.
-    JScheduler &_scheduler;
 
 public:
 
@@ -79,28 +75,30 @@ public:
         Constant, Linear, Exponential
     };
 
+    enum class Status { Running, Stopping, Stopped };
 
+private:
     /// Machinery that nobody else should modify. These should be protected eventually.
     /// Probably simply make them private and expose via get_status() -> Worker::Status
-    const uint32_t worker_id;
-    JArrow *assignment = nullptr;
-    bool shutdown_requested = false;   // For communicating with JThreadTeam
-    bool shutdown_achieved = false;    // TODO: Make these atomic
+    unsigned _worker_id;
+    unsigned _cpu_id;
+    bool _pin_to_cpu;
+    Status _status;
+    JArrow* _assignment;
     JLogger _logger;
-    Metrics metrics;
+    Metrics _metrics;
+    std::thread* _thread;    // JWorker encapsulates a thread of some kind. Nothing else should care how.
+    JScheduler* _scheduler;
 
-
+public:
     /// Configuration options
     unsigned backoff_tries = 4;
     BackoffStrategy backoff_strategy = BackoffStrategy::Exponential;
     duration_t initial_backoff_time = std::chrono::microseconds(1000);
     duration_t checkin_time = std::chrono::milliseconds(500);
 
-
-    /// Worker serves as an RAII wrapper around a thread of some kind,
-    /// which runs for the lifetime of the Worker.
-
-    JWorker(uint32_t id, JScheduler &scheduler);
+    JWorker(unsigned id, JScheduler* scheduler);
+    JWorker(unsigned id, unsigned cpuid, JScheduler* scheduler);
     ~JWorker();
 
     /// If we copy or move the Worker, the underlying std::thread will be left with a
@@ -110,9 +108,16 @@ public:
     JWorker(JWorker &&other) = delete;
     JWorker &operator=(const JWorker &other) = delete;
 
+    void start();
+    void request_stop();
+    void wait_for_stop();
 
     /// This is what the encapsulated thread is supposed to be doing
     void loop();
+
+    /// Worker accumulates Arrow-specific metrics. These need to propagate back to
+    /// one central place
+    void publish_arrow_metrics();
 
     /// Summarize what/how this Worker is doing
     Summary get_summary();

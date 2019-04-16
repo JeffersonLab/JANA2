@@ -36,13 +36,11 @@
 #include "JEventSourceManager.h"
 #include "JEventSourceArrow.h"
 #include "JEventProcessorArrow.h"
-#include "JTopology.h"
 
 using EventQueue = Queue<std::shared_ptr<const JEvent>>;
 
 JApplicationNew::JApplicationNew(JParameterManager* params, std::vector<std::string>* event_sources)
     : JApplication(params, event_sources)
-    //, _builder(_topology) {
 {
     jout << "JApplicationNew::JApplicationNew" << std::endl;
 }
@@ -52,8 +50,6 @@ void JApplicationNew::Initialize() {
 
     if (_initialized) return;
     _initialized = true;
-    _nthreads = JCpuInfo::GetNumCpus();
-    _pmanager->SetDefaultParameter("nthreads", _nthreads, "The total number of worker threads");
 
     AttachPlugins();
     _run_state = RunState::BeforeRun;
@@ -105,15 +101,23 @@ void JApplicationNew::Initialize() {
         proc_arrow->add_processor(proc);
         _sinks.push_back(proc_arrow);
     }
+
+    _nthreads = JCpuInfo::GetNumCpus();
+    _pmanager->SetDefaultParameter("nthreads", _nthreads, "The total number of worker threads");
+    auto scheduler = new JScheduler(_arrows, _nthreads);  // TODO: Save this so we can delete
+    for (int cpuid=0; cpuid<_nthreads; ++cpuid) {
+        _workers.push_back(new JWorker(cpuid, scheduler));
+    }
+
 }
 
 void JApplicationNew::Run() {
     jout << "JApplicationNew::Run" << std::endl;
     Initialize();
+    for (JWorker* worker : _workers) {
+        worker->start();
+    }
     set_active(true);
-    _scheduler = new JScheduler(_arrows, _ncpus);
-    _threadManager = new JThreadTeam(*_scheduler);
-    _threadManager->run(_nthreads);
 
     _run_state = RunState::DuringRun;
     _start_time = jclock_t::now();
@@ -125,11 +129,18 @@ void JApplicationNew::Run() {
 }
 
 void JApplicationNew::Scale(int nthreads) {
-    if (_run_state == RunState::DuringRun) {
-        Stop(true); // Hope this blocks
+
+    unsigned max_threads = _workers.size();
+    for (int i=0; i<nthreads; ++i) {
+        _workers.at(i)->start();
+    };
+    for (int i=nthreads; i<max_threads; ++i) {
+        _workers.at(i)->request_stop();
     }
-    _ncpus = nthreads;
-    Run();
+    for (int i=nthreads; i<max_threads; ++i) {
+        _workers.at(i)->wait_for_stop();
+    }
+    _nthreads = nthreads;
 }
 
 void JApplicationNew::Quit(bool skip_join) {
@@ -146,13 +157,13 @@ void JApplicationNew::Stop(bool wait_until_idle) {
             std::this_thread::sleep_for(std::chrono::milliseconds(500));
             if( _ticker_on ) PrintStatus();
         }
-    } else {
-        for (auto arrow : _arrows) {
-            arrow->set_active(false);
-        }
-        _threadManager->stop();
     }
-    _threadManager->join();
+    for (JWorker* worker : _workers) {
+        worker->request_stop();
+    }
+    for (JWorker* worker : _workers) {
+        worker->wait_for_stop();
+    }
     if (_run_state == RunState::DuringRun) {
         // We shouldn't usually end up here because sinks notify us when
         // they deactivate, automatically calling JTopology::set_active(false),
@@ -161,13 +172,6 @@ void JApplicationNew::Stop(bool wait_until_idle) {
         // run state in an orderly fashion. If we do end up here, though, our _stop_time
         // will be late, throwing our metrics off.
         _stop_time = jclock_t::now();
-    }
-    if (_threadManager != nullptr) {
-        _threadManager->stop();
-        _threadManager->join();
-        delete _threadManager;
-        _threadManager = nullptr;
-        delete _scheduler;
     }
     _run_state = RunState::AfterRun;
 }
@@ -180,28 +184,29 @@ void JApplicationNew::Resume() {
 
 void JApplicationNew::UpdateResourceLimits() {
     jout << "JApplicationNew::UpdateResourceLimits" << std::endl;
-    mFactorySetPool.Set_ControlParams( _ncpus*2, 10 );
+    mFactorySetPool.Set_ControlParams( _nthreads*2, 10 );
 }
 
 uint64_t JApplicationNew::GetNeventsProcessed() {
     uint64_t message_count = 0;
     for (JArrow* arrow : _sinks) {
-        auto status = JTopology::ArrowStatus(arrow);
-        message_count += status.messages_completed;
+        size_t arrow_message_count, v0;
+        duration_t v1,v2,v3;
+        arrow->get_metrics(arrow_message_count, v0,v1,v2,v3);
+        message_count += arrow_message_count;
     }
     return message_count;
 }
 
 void JApplicationNew::PrintStatus() {
-    for (QueueBase* queue : _queues) {
-        std::cout << queue->get_name() << ": " << queue->get_item_count() << std::endl;
-    }
-
-    std::cout << std::endl;
-    for (JArrow* arrow : _arrows) {
-        auto summary = JTopology::ArrowStatus(arrow);
-        std::cout << summary.arrow_name << ": " << summary.messages_completed << " (" << summary.thread_count << " threads)" << std::endl;
-    }
+    //for (QueueBase* queue : _queues) {
+    //    std::cout << queue->get_name() << ": " << queue->get_item_count() << std::endl;
+    //}
+    //std::cout << std::endl;
+    //for (JArrow* arrow : _arrows) {
+    //   auto summary = JTopology::ArrowStatus(arrow);
+    //   std::cout << summary.arrow_name << ": " << summary.messages_completed << " (" << summary.thread_count << " threads)" << std::endl;
+    //}
 
     std::stringstream ss;
     ss << "  " << GetNeventsProcessed() << " events processed  " << Val2StringWithPrefix( GetInstantaneousRate() ) << "Hz (" << Val2StringWithPrefix( GetIntegratedRate() ) << "Hz avg)             ";
@@ -248,12 +253,9 @@ void JApplicationNew::set_active(bool active) {
         if (_run_state == RunState::DuringRun) {
             _stop_time = jclock_t::now();
             _run_state = RunState::AfterRun;
-            _threadManager->stop();
         }
     }
 }
-
-
 
 
 
