@@ -319,7 +319,7 @@ void JTopology::run(int nthreads) {
     _run_state = RunState::DuringRun;
     _start_time = std::chrono::steady_clock::now();
     _last_time = _start_time;
-    _ncpus = nthreads;
+
 }
 
 void JTopology::wait_until_finished() {

@@ -51,7 +51,8 @@ public:
 private:
     std::vector<JArrow *> _arrows;
     std::vector<QueueBase *> _queues;
-    std::vector<JWorker*> _workers;
+    std::vector<JWorker*> _workers;         // One per cpu
+    std::vector<JScheduler*> _schedulers;    // One per NUMA domain
 
     std::vector<JArrow*> _sources;          // Sources needed for activation
     std::vector<JArrow*> _sinks;            // Sinks needed for finished message count

@@ -104,40 +104,45 @@ void JApplicationNew::Initialize() {
 
     _nthreads = JCpuInfo::GetNumCpus();
     _pmanager->SetDefaultParameter("nthreads", _nthreads, "The total number of worker threads");
-    auto scheduler = new JScheduler(_arrows, _nthreads);  // TODO: Save this so we can delete
-    for (int cpuid=0; cpuid<_nthreads; ++cpuid) {
-        _workers.push_back(new JWorker(cpuid, scheduler));
-    }
 
 }
 
 void JApplicationNew::Run() {
     jout << "JApplicationNew::Run" << std::endl;
     Initialize();
-    for (JWorker* worker : _workers) {
-        worker->start();
-    }
-    set_active(true);
+    Scale(_nthreads);
 
+    set_active(true);
     _run_state = RunState::DuringRun;
     _start_time = jclock_t::now();
     mRunStartTime = std::chrono::system_clock::now();
     _last_time = _start_time;
 
-    // Run() blocks. Why?!
-    Stop(true);
+    while (is_active()) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        if( _ticker_on ) PrintStatus();
+    }
+    Stop(false);
 }
 
 void JApplicationNew::Scale(int nthreads) {
 
-    unsigned max_threads = _workers.size();
+    if (_schedulers.empty()) {
+        _schedulers.push_back(new JScheduler(_arrows, _nthreads));
+    }
+
+    size_t current_workers = _workers.size();
+    while (current_workers < nthreads) {
+        _workers.push_back(new JWorker(current_workers, _schedulers[0]));
+        current_workers++;
+    }
     for (int i=0; i<nthreads; ++i) {
         _workers.at(i)->start();
     };
-    for (int i=nthreads; i<max_threads; ++i) {
+    for (size_t i=nthreads; i<current_workers; ++i) {
         _workers.at(i)->request_stop();
     }
-    for (int i=nthreads; i<max_threads; ++i) {
+    for (size_t i=nthreads; i<current_workers; ++i) {
         _workers.at(i)->wait_for_stop();
     }
     _nthreads = nthreads;
@@ -150,30 +155,29 @@ void JApplicationNew::Quit(bool skip_join) {
     Stop(skip_join);
 }
 
-void JApplicationNew::Stop(bool wait_until_idle) {
+void JApplicationNew::Stop(bool skip_join) {
     jout << "JApplicationNew::Stop" << std::endl;
-    if (wait_until_idle) {
-        while (is_active()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
-            if( _ticker_on ) PrintStatus();
-        }
+    for (JArrow* arrow : _arrows) {
+        arrow->set_active(false);
     }
     for (JWorker* worker : _workers) {
         worker->request_stop();
     }
-    for (JWorker* worker : _workers) {
-        worker->wait_for_stop();
+    if (!skip_join) {
+        for (JWorker* worker : _workers) {
+            worker->wait_for_stop();
+        }
+        if (_run_state == RunState::DuringRun) {
+            // We shouldn't usually end up here because sinks notify us when
+            // they deactivate, automatically calling JTopology::set_active(false),
+            // which stops the clock as soon as possible.
+            // However, if for unknown reasons nobody notifies us, we still want to change
+            // run state in an orderly fashion. If we do end up here, though, our _stop_time
+            // will be late, throwing our metrics off.
+            _stop_time = jclock_t::now();
+        }
+        _run_state = RunState::AfterRun;
     }
-    if (_run_state == RunState::DuringRun) {
-        // We shouldn't usually end up here because sinks notify us when
-        // they deactivate, automatically calling JTopology::set_active(false),
-        // which stops the clock as soon as possible.
-        // However, if for unknown reasons nobody notifies us, we still want to change
-        // run state in an orderly fashion. If we do end up here, though, our _stop_time
-        // will be late, throwing our metrics off.
-        _stop_time = jclock_t::now();
-    }
-    _run_state = RunState::AfterRun;
 }
 
 void JApplicationNew::Resume() {

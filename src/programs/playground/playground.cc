@@ -1,7 +1,6 @@
 
 #include <JANA/JLogger.h>
 #include <JANA/JTopology.h>
-#include <JANA/JThreadTeam.h>
 #include <JANA/JWorker.h>
 #include <JANA/JServiceLocator.h>
 #include <greenfield/ExampleComponents.h>
