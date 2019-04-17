@@ -7,11 +7,12 @@ import subprocess
 Import('*')
 env = env.Clone()
 
-PYTHON_CFLAGS = subprocess.Popen(["python-config", "--cflags"], stdout=subprocess.PIPE).communicate()[0]
-PYTHON_LINKFLAGS = subprocess.Popen(["python-config", "--libs"], stdout=subprocess.PIPE).communicate()[0]
+PYTHON_CFLAGS = subprocess.Popen(["python3-config", "--cflags"], stdout=subprocess.PIPE).communicate()[0].strip()
+PYTHON_PREFIX = subprocess.Popen(["python3-config", "--prefix"], stdout=subprocess.PIPE).communicate()[0].strip()
+PYTHON_LINKFLAGS = subprocess.Popen(["python3-config", "--libs"], stdout=subprocess.PIPE).communicate()[0].strip()
 
 sbms.AddCompileFlags(env, PYTHON_CFLAGS)
-sbms.AddLinkFlags(env, PYTHON_LINKFLAGS)
+sbms.AddLinkFlags(env, PYTHON_LINKFLAGS + " -L"+PYTHON_PREFIX+"/lib")
 
 
 sbms.AddJANA(env)
