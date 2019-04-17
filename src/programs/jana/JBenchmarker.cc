@@ -33,6 +33,7 @@
 #include "JBenchmarker.h"
 
 #include <fstream>
+#include <cmath>
 #include <sys/stat.h>
 
 JBenchmarker::JBenchmarker(JApplication* app) : _app(app) {
