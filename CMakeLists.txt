@@ -103,6 +103,8 @@ add_library(jana2 STATIC
         src/lib/JANA/JApplicationNew.h
         src/lib/JANA/JTopology.cc
         src/lib/JANA/JTopology.h
+        src/lib/JANA/JSubeventArrow.cc
+        src/lib/JANA/JSubeventArrow.h
         )
 
 add_library(jtest SHARED
