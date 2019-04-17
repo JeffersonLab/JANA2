@@ -19,7 +19,8 @@ std::shared_ptr<JTaskBase> JMakeAnalyzeEventTask(std::shared_ptr<const JEvent>&&
 			// Make sure Init function is called for this processor, but only once.
 			std::call_once(sProcessor->init_flag, &JEventProcessor::Init, sProcessor);
 
-			// Do not catch exceptions here. Allow them to propagate up to caller
+			// Don't try catching exception here. Any exception should
+			// be caught in JThreadManager::ExecuteTask which calls us.
 			sProcessor->Process(aEvent);
 		}
 	};
