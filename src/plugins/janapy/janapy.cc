@@ -43,9 +43,10 @@
 #include <Python.h>
 using namespace std;
 
-#include <JANA/JApplication.h>
+#include <JANA/JApplicationNew.h>
 #include <JANA/JThreadManager.h>
 #include <JANA/JCpuInfo.h>
+#include <JANA/JParameterManager.h>
 
 void JANA_PythonModuleInit(JApplication *sApp);
 
@@ -53,7 +54,8 @@ static bool PY_INITIALIZED = false; // See JANA_PythonModuleInit
 
 // This is temporary and will likely be changed once the new arrow
 // system is fully adopted.
-static JApplication *pyjapp = NULL;
+static JApplication *pyjapp = nullptr;
+static JParameterManager *pyparametermanager = nullptr;
 
 #ifndef _DBG__
 #define _DBG__ std::cout<<__FILE__<<":"<<__LINE__<<std::endl
@@ -411,7 +413,7 @@ static PyObject* janapy_SetNJThreads(PyObject *self, PyObject *args)
 {
 	int nthreads=1;
 	if(!PyArg_ParseTuple(args, "i:SetNJThreads", &nthreads)) return NULL;
-	pyjapp->GetJThreadManager()->SetNJThreads( nthreads );
+	pyjapp->Scale( nthreads );
 	return PV( pyjapp->GetJThreadManager()->GetNJThreads() );
 }
 
@@ -517,9 +519,10 @@ static struct PyModuleDef janapy__definition = {
 // Module entry point (for import)
 PyMODINIT_FUNC PyInit_janapy(void) {
 
-	// Create JApplication. This is temporary and will likely be replaced
-	// when the arrow system is fully integrated/
-	pyjapp = new JApplication();
+	// Create JApplication.
+	vector<string> eventsources;
+	pyparametermanager = new JParameterManager();
+	pyjapp = new JApplicationNew(pyparametermanager, &eventsources);
 
 	Py_Initialize();
 	return PyModule_Create(&janapy__definition);

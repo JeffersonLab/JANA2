@@ -115,7 +115,7 @@ void JApplicationNew::Run() {
     set_active(true);
     _run_state = RunState::DuringRun;
     _start_time = jclock_t::now();
-    mRunStartTime = std::chrono::system_clock::now();
+    mRunStartTime = std::chrono::high_resolution_clock::now();
     _last_time = _start_time;
 
     while (is_active()) {

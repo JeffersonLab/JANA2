@@ -1,4 +1,6 @@
-#pragma once
+
+#ifndef _JSCHEDULER_H_
+#define _JSCHEDULER_H_
 
 #include <mutex>
 
@@ -36,6 +38,6 @@
     };
 
 
-
+#endif // _JSCHEDULER_H_
 
 

@@ -1,7 +1,9 @@
 //
 // Created by Nathan W Brei on 2019-03-10.
 //
-#pragma once
+
+#ifndef _JSERVICELOCATOR_H_
+#define _JSERVICELOCATOR_H_
 
 #include <map>
 #include <typeinfo>
@@ -102,3 +104,5 @@ struct ParameterManager : public JService {
 // how to merge our plugins' symbol tables correctly, singletons are broken.
 extern JServiceLocator* serviceLocator;
 
+
+#endif // _JSERVICELOCATOR_H_

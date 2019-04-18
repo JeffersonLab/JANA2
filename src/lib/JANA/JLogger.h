@@ -30,6 +30,11 @@ inline std::ostream& operator<<(std::ostream& s, JLogLevel l) {
     }
 }
 
+// Convenience macros for temporary debugging statements.
+#ifndef _DBG__
+#define _DBG__ std::cerr<<__FILE__<<":"<<__LINE__<<std::endl
+#define _DBG_  std::cerr<<__FILE__<<":"<<__LINE__<<" "
+#endif // _DBG__
 
 struct JLogger {
     JLogLevel level;
