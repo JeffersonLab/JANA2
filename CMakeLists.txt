@@ -105,6 +105,11 @@ add_library(jana2 STATIC
         src/lib/JANA/JTopology.h
         src/lib/JANA/JSubeventArrow.cc
         src/lib/JANA/JSubeventArrow.h
+        src/lib/JANA/JProcessingController.cc
+        src/lib/JANA/JProcessingController.h
+        src/lib/JANA/JMetrics.h
+        src/lib/JANA/JArrowMetrics.h
+        src/lib/JANA/JWorkerMetrics.h
         )
 
 add_library(jtest SHARED
