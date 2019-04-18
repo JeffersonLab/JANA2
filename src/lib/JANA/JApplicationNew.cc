@@ -112,10 +112,15 @@ void JApplicationNew::Run() {
 
     _run_state = RunState::DuringRun;
     _start_time = jclock_t::now();
-    mRunStartTime = std::chrono::system_clock::now();
+    mRunStartTime = std::chrono::high_resolution_clock::now();
     _last_time = _start_time;
 
     // Run() blocks. Why?!
+    // -- In earlier versions the thread calling Run was used to monitor the program's
+    // -- progress and update the screen. It looks like some of this has been moved to
+    // -- Stop(). That actually confuses me since I would not think to look there for
+    // -- PrintStatus() to be called. I think the main question is whether Run() is used
+    // -- to simply change the state or to oversee running the main job of the program.
     Stop(true);
 }
 
