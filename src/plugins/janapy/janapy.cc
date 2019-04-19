@@ -43,7 +43,7 @@
 #include <Python.h>
 using namespace std;
 
-#include <JANA/JApplication.h>
+#include <JANA/JApplicationNew.h>
 #include <JANA/JThreadManager.h>
 #include <JANA/JCpuInfo.h>
 #include <JANA/JParameterManager.h>
@@ -413,7 +413,7 @@ static PyObject* janapy_SetNJThreads(PyObject *self, PyObject *args)
 {
 	int nthreads=1;
 	if(!PyArg_ParseTuple(args, "i:SetNJThreads", &nthreads)) return nullptr;
-	pyjapp->SetMaxThreads( nthreads );
+	pyjapp->Scale( nthreads );
 	return PV( pyjapp->GetJThreadManager()->GetNJThreads() );
 }
 
@@ -522,7 +522,7 @@ PyMODINIT_FUNC PyInit_janapy(void) {
 	// Create JApplication.
 	vector<string> eventsources;
 	pyparametermanager = new JParameterManager();
-	pyjapp = new JApplication(pyparametermanager, &eventsources);
+	pyjapp = new JApplicationNew(pyparametermanager, &eventsources);
 
 	Py_Initialize();
 	return PyModule_Create(&janapy__definition);
