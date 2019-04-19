@@ -1,131 +1,127 @@
 
 #include "catch.hpp"
 
-#include <greenfield/Scheduler.h>
-#include <greenfield/TopologyTestFixtures.h>
+#include <JANA/JScheduler.h>
+#include <greenfield/ExampleComponents.h>
+#include <greenfield/LinearTopologyBuilder.h>
 
-namespace greenfield {
 
-    TEST_CASE("greenfield::RoundRobinScheduler") {
+TEST_CASE("JScheduler") {
 
-        auto logger = JLogger::nothing(); // everything();
+    SumSink<double> sink;
 
-        Topology topology;
+    JTopology topology;
+    LinearTopologyBuilder builder(topology);
 
-        auto q0 = new Queue<int>;
-        auto q1 = new Queue<double>;
-        auto q2 = new Queue<double>;
+    builder.addSource<RandIntSource>("emit_rand_ints");
+    builder.addProcessor<MultByTwoProcessor>("multiply_by_two");
+    builder.addProcessor<SubOneProcessor>("subtract_one");
+    builder.addSink("sum_everything", sink);
 
-        topology.addQueue(q0);
-        topology.addQueue(q1);
-        topology.addQueue(q2);
+    JScheduler scheduler(topology.arrows, 1);
 
-        topology.addArrow("emit_rand_ints", new RandIntSourceArrow(q0));
-        topology.addArrow("multiply_by_two", new MultByTwoArrow(q0, q1));
-        topology.addArrow("subtract_one", new SubOneArrow(q1, q2));
-        topology.addArrow("sum_everything", new SumArrow<double>(q2));
+    auto logger = JLogger::nothing(); // everything();
 
-        RoundRobinScheduler scheduler(topology);
-        scheduler.logger = JLogger::nothing(); // everything();
-        Scheduler::Report report;
+    // Assume everything is active for now
+    topology.activate("emit_rand_ints");
 
-        SECTION("When there is only one worker, who always encounters ComeBackLater...") {
+    auto last_result = JArrow::Status::ComeBackLater;
+    JArrow* assignment = nullptr;
 
-            LOG_INFO(logger) << "---------------------------------------" << LOG_END;
-            std::string ordering[] = {"emit_rand_ints",
-                                      "multiply_by_two",
-                                      "subtract_one",
-                                      "sum_everything"};
+    SECTION("When there is only one worker, who always encounters ComeBackLater...") {
 
-            report.last_result = SchedulerHint::ComeBackLater;
-            for (int i = 0; i < 10; ++i) {
-                Arrow *assignment = scheduler.next_assignment(report);
-                report.assignment = assignment;
+        LOG_INFO(logger) << "---------------------------------------" << LOG_END;
+        std::string ordering[] = {"emit_rand_ints",
+                                  "multiply_by_two",
+                                  "subtract_one",
+                                  "sum_everything"};
 
-                // The assignments go round-robin
-                REQUIRE(assignment->get_name() == ordering[i % 4]);
-            }
+        for (int i = 0; i < 10; ++i) {
+            assignment = scheduler.next_assignment(0, assignment, last_result);
+
+            // The assignments go round-robin
+            REQUIRE(assignment != nullptr);
+            REQUIRE(assignment->get_name() == ordering[i % 4]);
+        }
+    }
+
+
+    SECTION("When a team of workers start off with (nullptr, ComeBackLater)...") {
+
+        LOG_INFO(logger) << "---------------------------------------" << LOG_END;
+        std::map<std::string, int> assignment_counts;
+
+
+        for (int i = 0; i < 10; ++i) {
+            assignment = nullptr;
+            last_result = JArrow::Status::ComeBackLater;
+            assignment = scheduler.next_assignment(i, assignment, last_result);
+
+            // They all receive a nonnull assignment
+            REQUIRE (assignment != nullptr);
+
+            assignment_counts[assignment->get_name()]++;
         }
 
+        // The sequential arrows only get assigned once
+        REQUIRE(assignment_counts["emit_rand_ints"] == 1);
+        REQUIRE(assignment_counts["sum_everything"] == 1);
 
-        SECTION("When a team of workers start off with (nullptr, ComeBackLater)...") {
+        // The parallel arrows get assigned many times, evenly
+        REQUIRE(assignment_counts["subtract_one"] == 4);
+        REQUIRE(assignment_counts["multiply_by_two"] == 4);
 
-            LOG_INFO(logger) << "---------------------------------------" << LOG_END;
-            std::map<std::string, int> assignment_counts;
-
-            for (int i = 0; i < 10; ++i) {
-                report.assignment = nullptr;
-                report.last_result = SchedulerHint::ComeBackLater;
-                Arrow *assignment = scheduler.next_assignment(report);
-                assignment_counts[assignment->get_name()]++;
-
-                // They all receive a nonnull assignment
-                REQUIRE (assignment != nullptr);
-            }
-
-            // The sequential arrows only get assigned once
-            REQUIRE(assignment_counts["emit_rand_ints"] == 1);
-            REQUIRE(assignment_counts["sum_everything"] == 1);
-
-            // The parallel arrows get assigned many times, evenly
-            REQUIRE(assignment_counts["subtract_one"] == 4);
-            REQUIRE(assignment_counts["multiply_by_two"] == 4);
-
-        }
+    }
 
 
-        SECTION("When all arrows are assigned, and a sequential arrow comes back...") {
+    SECTION("When all arrows are assigned, and a sequential arrow comes back...") {
 
 
-            LOG_INFO(logger) << "---------------------------------------" << LOG_END;
-            report.assignment = nullptr;
-            report.last_result = SchedulerHint::ComeBackLater;
+        LOG_INFO(logger) << "--------------------------------------" << LOG_END;
 
-            scheduler.next_assignment(report);
-            scheduler.next_assignment(report);
-            scheduler.next_assignment(report);
-            auto sum_everything_arrow = scheduler.next_assignment(report);
+        scheduler.next_assignment(0, nullptr, JArrow::Status::ComeBackLater);
+        scheduler.next_assignment(1, nullptr, JArrow::Status::ComeBackLater);
+        scheduler.next_assignment(2, nullptr, JArrow::Status::ComeBackLater);
+        auto sum_everything_arrow = scheduler.next_assignment(3, nullptr, JArrow::Status::ComeBackLater);
 
-            // Last assignment returned sequential arrow "sum_everything"
-            REQUIRE(sum_everything_arrow == topology.arrows["sum_everything"]);
+        // Last assignment returned sequential arrow "sum_everything"
+        REQUIRE(sum_everything_arrow->get_name() == "sum_everything");
 
-            std::map<std::string, int> assignment_counts;
+        std::map<std::string, int> assignment_counts;
 
-            // We return the sequential arrow to the scheduler
-            report.assignment = sum_everything_arrow;
-            report.last_result = SchedulerHint::ComeBackLater;
-            auto arrow = scheduler.next_assignment(report);
+        // We return the sequential arrow to the scheduler
+        assignment = sum_everything_arrow;
+        last_result = JArrow::Status::ComeBackLater;
+        auto arrow = scheduler.next_assignment(3, assignment, last_result);
 
+        assignment_counts[arrow->get_name()]++;
+
+        for (int i = 0; i < 8; ++i) {
+            assignment = nullptr;
+            last_result = JArrow::Status::ComeBackLater;
+            arrow = scheduler.next_assignment(i, assignment, last_result);
             assignment_counts[arrow->get_name()]++;
-
-            for (int i = 0; i < 8; ++i) {
-                report.assignment = nullptr;
-                report.last_result = SchedulerHint::ComeBackLater;
-                arrow = scheduler.next_assignment(report);
-                assignment_counts[arrow->get_name()]++;
-            }
-
-            // Once scheduler receives a sequential arrow back, it will offer it back out
-            // but only once, if we don't return it
-
-            REQUIRE(assignment_counts["sum_everything"] == 1);
         }
 
-        SECTION("When an arrow encountered KeepGoing...") {
+        // Once scheduler receives a sequential arrow back, it will offer it back out
+        // but only once, if we don't return it
 
-            LOG_INFO(logger) << "---------------------------------------" << LOG_END;
-            report.last_result = SchedulerHint::KeepGoing;
-            report.assignment = topology.arrows["subtract_one"];
+        REQUIRE(assignment_counts["sum_everything"] == 1);
+    }
 
-            for (int i = 0; i < 4; ++i) {
-                Arrow *assignment = scheduler.next_assignment(report);
-                report.assignment = assignment;
+    SECTION("When an arrow encountered KeepGoing...") {
 
-                REQUIRE(assignment->get_name() == "subtract_one");
-                // That scheduler lets the worker continue with this assignment
-            }
+        LOG_INFO(logger) << "--------------------------------------" << LOG_END;
+        last_result = JArrow::Status::KeepGoing;
+        assignment = topology.get_arrow("subtract_one");
 
+        for (int i = 0; i < 4; ++i) {
+            assignment = scheduler.next_assignment(0, assignment, last_result);
+
+            REQUIRE(assignment->get_name() == "subtract_one");
+            // That scheduler lets the worker continue with this assignment
         }
+
     }
 }
 

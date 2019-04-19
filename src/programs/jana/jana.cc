@@ -1,159 +1,249 @@
-// Author: Edward Brash February 15, 2005
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Jefferson Science Associates LLC Copyright Notice:
+// Copyright 251 2014 Jefferson Science Associates LLC All Rights Reserved. Redistribution
+// and use in source and binary forms, with or without modification, are permitted as a
+// licensed user provided that the following conditions are met:
+// 1. Redistributions of source code must retain the above copyright notice, this
+//    list of conditions and the following disclaimer.
+// 2. Redistributions in binary form must reproduce the above copyright notice, this
+//    list of conditions and the following disclaimer in the documentation and/or other
+//    materials provided with the distribution.
+// 3. The name of the author may not be used to endorse or promote products derived
+//    from this software without specific prior written permission.
+// This material resulted from work developed under a United States Government Contract.
+// The Government retains a paid-up, nonexclusive, irrevocable worldwide license in such
+// copyrighted data to reproduce, distribute copies to the public, prepare derivative works,
+// perform publicly and display publicly and to permit others to do so.
+// THIS SOFTWARE IS PROVIDED BY JEFFERSON SCIENCE ASSOCIATES LLC "AS IS" AND ANY EXPRESS
+// OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+// MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
+// JEFFERSON SCIENCE ASSOCIATES, LLC OR THE U.S. GOVERNMENT BE LIABLE TO LICENSEE OR ANY
+// THIRD PARTES FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+// OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //
-//
-// hd_root.cc
+// Authors: Nathan Brei, David Lawrence, Edward Brash
 //
 
 #include <iostream>
-using namespace std;
-
-#include <dlfcn.h>
-
-
-#include "MyProcessor.h"
-#include <JANA/JApplication.h>
+#include <JANA/JApplicationNew.h>
+#include <JANA/JApplicationOld.h>
 #include <JANA/JVersion.h>
 #include <JANA/JSignalHandler.h>
 
-using namespace std;
-
-void ParseCommandLineArguments(int &narg, char *argv[],
-                               JParameterManager* params,
-                               std::vector<string>* eventSources);
-void Usage(void);
+#include "JBenchmarker.h"
 
 
+void PrintUsage() {
+	/// Prints jana.cc command-line options to stdout, for use by the CLI.
+	/// This does not include JANA parameters, which come from
+	/// JParameterManager::PrintParameters() instead.
 
-//-----------
-// main
-//-----------
-int main(int narg, char *argv[])
-{
+	std::cout << std::endl;
+	std::cout << "Usage:" << std::endl;
+	std::cout << "    jana [options] source1 source2 ..." << std::endl << std::endl;
 
-	// Parse the command line
-  auto params = new JParameterManager;
-  auto eventSources = new std::vector<string>;
-	ParseCommandLineArguments(narg, argv, params, eventSources);
+	std::cout << "Description:" << std::endl;
+	std::cout << "    Command-line interface for running JANA plugins. This can be used to" << std::endl;
+	std::cout << "    read in events and process them. Command-line flags control configuration" << std::endl;
+	std::cout << "    while additional arguments denote input files, which are to be loaded and" << std::endl;
+	std::cout << "    processed by the appropriate EventSource plugin." << std::endl << std::endl;
 
-	// Instantiate an event loop object
-	JApplication app(params, eventSources);
+	std::cout << "Options:" << std::endl;
+	std::cout << "   -h   --help                  Display this message" << std::endl;
+	std::cout << "   -v   --version               Display version information" << std::endl;
+	std::cout << "   -c   --configs               Display configuration parameters" << std::endl;
+	std::cout << "   -l   --loadconfigs <file>    Load configuration parameters from file" << std::endl;
+	std::cout << "   -d   --dumpconfigs <file>    Dump configuration parameters to file" << std::endl;
+	std::cout << "   -b   --benchmark             Run in benchmark mode" << std::endl;
+	std::cout << "   -Pkey=value                  Specify a configuration parameter" << std::endl << std::endl;
 
-	japp = &app;
-	AddSignalHandlers();
+	std::cout << "Example:" << std::endl;
+	std::cout << "    jana -Pplugins=plugin1,plugin2,plugin3 -Pnthreads=8 inputfile1.txt" << std::endl << std::endl;
 
-	// Run though all events, calling our event processor's methods
-	app.Run();
-
-	return app.GetExitCode();
 }
 
-//-----------
-// ParseCommandLineArguments
-//-----------
-// Other args we might want:
-// --config, --dumpcalibrations, --dumpconfig, --listconfig, --resourcereport
 
-void ParseCommandLineArguments(int &narg, char *argv[],
-                               JParameterManager* params,
-                               std::vector<string>* eventSources)
-{
-	if(narg==1) Usage();
+void PrintVersion() {
+    /// Prints JANA version information to stdout, for use by the CLI.
 
-	for(int i=1;i<narg;i++){
+	std::cout << "          JANA version: " << JVersion::GetVersion()  << std::endl;
+	std::cout << "        JANA ID string: " << JVersion::GetIDstring() << std::endl;
+	std::cout << "     JANA git revision: " << JVersion::GetRevision() << std::endl;
+	std::cout << "JANA last changed date: " << JVersion::GetDate()     << std::endl;
+	std::cout << "           JANA source: " << JVersion::GetSource()   << std::endl;
+}
+
+
+enum Flag {Unknown, ShowUsage, ShowVersion, ShowConfigs, LoadConfigs, DumpConfigs, Benchmark};
+
+struct UserOptions {
+	/// Code representation of all user options.
+	/// This lets us cleanly separate args parsing from execution.
+
+	std::map<Flag, bool> flags;
+	JParameterManager params;
+	std::vector<std::string> eventSources;
+	std::string load_config_file;
+	std::string dump_config_file;
+};
+
+
+int Execute(UserOptions& options) {
+
+	int exitStatus = 0;
+
+	if (options.flags[ShowUsage]) {
+		// Show usage information and exit immediately
+		PrintUsage();
+		exitStatus = -1;
+	}
+	else if (options.flags[ShowVersion]) {
+		// Show version information and exit immediately
+		PrintVersion();
+	}
+	else {  // All modes which require a JApplication
+
+		if (options.flags[LoadConfigs]) {
+			// If the user specified an external config file, we should definitely use that
+			std::cout << "Loading functionality is coming soon! File=" << options.load_config_file << std::endl;
+		}
+
+		bool legacy_mode = true;
+		options.params.SetDefaultParameter("JANA:LEGACY_MODE", legacy_mode, "");
+	    auto params_copy = new JParameterManager(options.params); // JApplication owns params_copy, does not own eventSources
+
+		if (legacy_mode) {
+			japp = new JApplicationOld(params_copy, &options.eventSources);
+		} else {
+			japp = new JApplicationNew(params_copy, &options.eventSources);
+		}
+		AddSignalHandlers();
+
+		if (options.flags[ShowConfigs]) {
+			// Load all plugins, collect all parameters, exit without running anything
+			japp->Initialize();
+			japp->GetJParameterManager()->PrintParameters(true);
+		}
+		else if (options.flags[DumpConfigs]) {
+		    // Load all plugins, dump parameters to file, exit without running anything
+			std::cout << "Dumping functionality is coming soon! File=" << options.dump_config_file << std::endl;
+			japp->Initialize();
+		}
+		else if (options.flags[Benchmark]) {
+			// Run JANA in benchmark mode
+			JBenchmarker benchmarker(japp);
+			japp->Run();
+		}
+		else {
+			// Run JANA in normal mode
+			japp->Run();
+		}
+		exitStatus = japp->GetExitCode();
+		delete japp;
+	}
+	exit(exitStatus);
+}
+
+
+int main(int nargs, char *argv[]) {
+
+	UserOptions options;
+
+	map<std::string, Flag> tokenizer;
+	tokenizer["-h"] = ShowUsage;
+	tokenizer["--help"] = ShowUsage;
+	tokenizer["-v"] = ShowVersion;
+	tokenizer["--version"] = ShowVersion;
+	tokenizer["-c"] = ShowConfigs;
+	tokenizer["--configs"] = ShowConfigs;
+	tokenizer["-l"] = LoadConfigs;
+	tokenizer["--loadconfigs"] = LoadConfigs;
+	tokenizer["-d"] = DumpConfigs;
+	tokenizer["--dumpconfigs"] = DumpConfigs;
+	tokenizer["-b"] = Benchmark;
+	tokenizer["--benchmark"] = Benchmark;
+
+	if (nargs==1) {
+		options.flags[ShowUsage] = true;
+	}
+
+	for (int i=1; i<nargs; i++){
+
+		string arg = argv[i];
+		//std::cout << "Found arg " << arg << std::endl;
 
 		if(argv[i][0] != '-') {
-      string arg = argv[i];
-      eventSources->push_back(arg);
-      // TODO: Consider making eventSources be a normal parameter
-      continue;
-    }
+			options.eventSources.push_back(arg);
+			continue;
+		}
 
-		string name, tag;
-		unsigned int pos;
-    string arg = argv[i];
-		switch(argv[i][1]){
+		switch (tokenizer[arg]) {
 
-      case 'P':
-        pos = arg.find("=");
-        if( (pos!= string::npos) && (pos>2) ){
-          string key = arg.substr(2, pos-2);
-          string val = arg.substr(pos+1);
-          params->SetParameter(key, val);
-        }else{
-          cout << " Bad parameter argument '" << arg
-               << "': Expected format -Pkey=value" << endl;
-        }
-        break;
-
-			case 'h':
-				Usage();
+			case Benchmark:
+				options.flags[Benchmark] = true;
 				break;
 
-			case 'v':
-				cout<<"          JANA version: "<<JVersion::GetVersion()<<endl;
-				cout<<"        JANA ID string: "<<JVersion::GetIDstring()<<endl;
-				cout<<"     JANA git revision: "<<JVersion::GetRevision()<<endl;
-				cout<<"JANA last changed date: "<<JVersion::GetDate()<<endl;
-				cout<<"           JANA source: "<<JVersion::GetSource()<<endl;
-				exit(0);
+			case ShowUsage:
+				options.flags[ShowUsage] = true;
 				break;
 
-			case 'D':
-				name = &argv[i][2];
-				tag = "";
-				pos = name.rfind(":",name.size()-1);
-				if(pos != (unsigned int)string::npos){
-					tag = name.substr(pos+1,name.size());
-					name.erase(pos);
+			case ShowVersion:
+				options.flags[ShowVersion] = true;
+				break;
+
+			case ShowConfigs:
+				options.flags[ShowConfigs] = true;
+				break;
+
+			case LoadConfigs:
+				options.flags[LoadConfigs] = true;
+				if (i+1 < nargs && argv[i+1][0] != '-') {
+					options.load_config_file = argv[i + 1];
+					i += 1;
 				}
-				// autoactivate[name] = tag;
-				break;
-			case 'A':
-//				ACTIVATE_ALL = 1;
-				break;
-			case '-':
-				if(string(argv[i])=="--help"){
-					Usage();
-					break;
+				else {
+					options.load_config_file = "jana.config";
 				}
 				break;
+
+			case DumpConfigs:
+				options.flags[DumpConfigs] = true;
+				if (i+1 < nargs && argv[i+1][0] != '-') {
+					options.dump_config_file = argv[i + 1];
+					i += 1;
+				}
+				else {
+					options.dump_config_file = "jana.config";
+				}
+				break;
+
+			case Unknown:
+				if (argv[i][0] == '-' && argv[i][1] == 'P') {
+
+					size_t pos = arg.find("=");
+					if ((pos != string::npos) && (pos > 2)) {
+						string key = arg.substr(2, pos - 2);
+						string val = arg.substr(pos + 1);
+						options.params.SetParameter(key, val);
+					} else {
+						std::cout << "Invalid JANA parameter '" << arg
+								  << "': Expected format -Pkey=value" << std::endl;
+						options.flags[ShowConfigs] = true;
+					}
+				} else {
+					std::cout << "Invalid command line flag '" << arg << "'" << std::endl;
+					options.flags[ShowUsage] = true;
+				}
 		}
 	}
+	Execute(options);
 }
 
-//-----------
-// Usage
-//-----------
-void Usage(void)
-{
-	// To print the options from JApplication, we need a JApplication object
-	extern JApplication *japp;
-	if(japp==NULL)new JApplication(0,NULL);
 
-	cout<<"Usage:"<<endl;
-	cout<<"       jana [options] source1 source2 ..."<<endl;
-	cout<<endl;
-	cout<<"Empty jana executable. This can be used with plugins to"<<endl;
-	cout<<"read in events and process them. The -D and -A options can"<<endl;
-	cout<<"be used to activate factories every event, regardless of"<<endl;
-	cout<<"whether they are asked for by a JEventProcessor or JFactory."<<endl;
-	cout<<"To specify a tagged factory, append a colon and then the tag"<<endl;
-	cout<<"to the data class. e.g.  dataclassname:tag"<<endl;
-	cout<<endl;
-	cout<<"Base JANA options:"<<endl;
-	cout<<endl;
-//	if(japp)japp->Usage();
-	cout<<endl;
-	cout<<"Options for jana utility:"<<endl;
-	cout<<endl;
-	cout<<"   -h       Print this message"<<endl;
-	cout<<"   --help   Print this message"<<endl;
-	cout<<"   -v       Print the JANA version number"<<endl;
-	//cout<<"   -Dname   Activate factory for data of type \"name\" (can be used mult. times)"<<endl;
-	cout<<"   -A       Activate all factories"<<endl;
-	cout<<endl;
 
-	if(japp!=NULL)delete japp;
 
-	exit(0);
-}

@@ -164,10 +164,12 @@ typename JFactoryT<DataType>::PairType JEvent::Get(const std::string& aTag) cons
 	// mThreadManager is set either in constructor or in SetJApplication. 
 	// It actually should always be set by the latter which is called from
 	// JEventSource::GetProcessEventTasks after calling GetEvent.
-	assert(mThreadManager!=nullptr);
+	//assert(mThreadManager!=nullptr);
+	/// Nathan says: We _really_ don't want (or need!) to have JEvent dependent on JThreadManager at all,
+	/// TODO: Decouple when the time is right
 
 	if(mDebugLevel > 0)
-		JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Type = " << GetDemangledName<DataType>() << ", tag = " << aTag << ".\n" << JLogEnd();
+		JLog() << "Thread " << THREAD_ID << " JEvent::Get(): Type = " << GetDemangledName<DataType>() << ", tag = " << aTag << ".\n" << JLogEnd();
 
 
 	//--------------------------------------------------------------------------------------------
@@ -223,11 +225,19 @@ typename JFactoryT<DataType>::PairType JEvent::Get(const std::string& aTag) cons
 	//Attempt to acquire the "creating" lock for the factory
 	if(!sFactory->AcquireCreatingLock())
 	{
-		if(mDebugLevel >= 10)
-			JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Another thread is creating objects, do work while waiting.\n" << JLogEnd();
+		/// Nathan says:
+		/// This code is literally saying "if we have a race condition, pretend we don't by
+		/// waiting for the competing thread to finish and using their results instead."
+		/// Furthermore, it tightly couples Factory execution to our threading implementation,
+		/// when these things absolutely should be orthogonal.
+		/// Hopefully, this never happens in practice:
+		throw;
 
-		//We failed: Another thread is currently creating the objects.
-		//Instead, execute queued tasks until the objects are ready
+		if(mDebugLevel >= 10)
+			JLog() << "Thread " << THREAD_ID << " JEvent::Get(): Another thread is creating objects, do work while waiting.\n" << JLogEnd();
+
+		// //We failed: Another thread is currently creating the objects.
+		// //Instead, execute queued tasks until the objects are ready
 		mThreadManager->DoWorkWhileWaiting(sFactory->GetCreatingLock(), mEventSource);
 
 		//It's done, return the results
@@ -235,7 +245,7 @@ typename JFactoryT<DataType>::PairType JEvent::Get(const std::string& aTag) cons
 	}
 
 	if(mDebugLevel >= 10)
-		JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Create lock acquired.\n" << JLogEnd();
+		JLog() << "Thread " << THREAD_ID << " JEvent::Get(): Create lock acquired.\n" << JLogEnd();
 
 	//If we throw exception within here we may not release the lock, unless we do try/catch:
 	try
@@ -244,7 +254,7 @@ typename JFactoryT<DataType>::PairType JEvent::Get(const std::string& aTag) cons
 		if(sFactory->GetCreated())
 		{
 			if(mDebugLevel >= 10)
-				JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Objects created in meantime.\n" << JLogEnd();
+				JLog() << "Thread " << THREAD_ID << " JEvent::Get(): Objects created in meantime.\n" << JLogEnd();
 			sFactory->ReleaseCreatingLock();
 			return sFactory->Get();
 		}
@@ -252,13 +262,13 @@ typename JFactoryT<DataType>::PairType JEvent::Get(const std::string& aTag) cons
 		//Not yet: We need to create the objects.
 		//First try to get from the event source
 		if(mDebugLevel >= 10)
-			JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Try to get " << GetDemangledName<DataType>() << " (tag = " << aTag << ") objects from JEventSource.\n" << JLogEnd();
+			JLog() << "Thread " << THREAD_ID << " JEvent::Get(): Try to get " << GetDemangledName<DataType>() << " (tag = " << aTag << ") objects from JEventSource.\n" << JLogEnd();
 		auto sSharedThis = this->shared_from_this();
 		if (mEventSource != nullptr &&
 		    mEventSource->GetObjects(sSharedThis, static_cast<JFactory*>(sFactory)))
 		{
 			if(mDebugLevel >= 10)
-				JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): " << GetDemangledName<DataType>() << " (tag = " << aTag << ") retrieved from JEventSource.\n" << JLogEnd();
+				JLog() << "Thread " << THREAD_ID << " JEvent::Get(): " << GetDemangledName<DataType>() << " (tag = " << aTag << ") retrieved from JEventSource.\n" << JLogEnd();
 			sFactory->SetCreated(true);
 			sFactory->ReleaseCreatingLock();
 			return sFactory->Get();
@@ -269,14 +279,14 @@ typename JFactoryT<DataType>::PairType JEvent::Get(const std::string& aTag) cons
 		if(sFactory->GetPreviousRunNumber() != mRunNumber)
 		{
 			if(mDebugLevel >= 10)
-				JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Change run.\n" << JLogEnd();
+				JLog() << "Thread " << THREAD_ID << " JEvent::Get(): Change run.\n" << JLogEnd();
 			sFactory->ChangeRun(sSharedThis);
 			sFactory->SetPreviousRunNumber(mRunNumber);
 		}
 
 		//Create the objects
 		if(mDebugLevel >= 10)
-			JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Create " << GetDemangledName<DataType>() << " (tag = " << aTag << ") with factory.\n" << JLogEnd();
+			JLog() << "Thread " << THREAD_ID << " JEvent::Get(): Create " << GetDemangledName<DataType>() << " (tag = " << aTag << ") with factory.\n" << JLogEnd();
 		sFactory->Process(sSharedThis);
 		sFactory->SetCreated(true);
 		sFactory->ReleaseCreatingLock();
@@ -292,7 +302,7 @@ typename JFactoryT<DataType>::PairType JEvent::Get(const std::string& aTag) cons
 	//Get the object iterators
 	auto sIteratorPair = sFactory->Get();
 	if(mDebugLevel > 0)
-		JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Getting " << std::distance(sIteratorPair.first, sIteratorPair.second) << " " << GetDemangledName<DataType>() << " objects, tag = " << aTag << ".\n" << JLogEnd();
+		JLog() << "Thread " << THREAD_ID << " JEvent::Get(): Getting " << std::distance(sIteratorPair.first, sIteratorPair.second) << " " << GetDemangledName<DataType>() << " objects, tag = " << aTag << ".\n" << JLogEnd();
 
 	//Return the objects
 	return sIteratorPair;

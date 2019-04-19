@@ -49,9 +49,8 @@ Darwin_*
 #docs/html/*
 docs/latex/*
 
-# VIM, CLion, CMake artifacts
+# IDE artifacts
 *.swp
-.idea/
 cmake-build-debug/
-CMakeLists.txt
+.idea/
 

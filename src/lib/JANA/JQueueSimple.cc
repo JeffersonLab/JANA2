@@ -136,7 +136,7 @@ JQueue::Flags_t JQueueSimple::AddTask(const std::shared_ptr<JTaskBase>& aTask)
 	//and is worth avoiding the code duplication (or confusion of other tricks)
 
 	if(mDebugLevel > 0)
-		JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JQueueSimple::AddTask(): Copy-add task " << aTask.get() << "\n" << JLogEnd();
+		JLog(mLogTarget) << "Thread " << THREAD_ID << " JQueueSimple::AddTask(): Copy-add task " << aTask.get() << "\n" << JLogEnd();
 
 	auto sTempTask = aTask;
 	return AddTask(std::move(sTempTask));
@@ -160,7 +160,7 @@ JQueue::Flags_t JQueueSimple::AddTask(std::shared_ptr<JTaskBase>&& aTask)
 			mReadSlotptr[idx] = true;
 			mTasksInserted++;
 
-			if(mDebugLevel > 0) JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JQueueSimple::AddTask(): Task added to slot " << idx << ".\n" << JLogEnd();
+			if(mDebugLevel > 0) JLog(mLogTarget) << "Thread " << THREAD_ID << " JQueueSimple::AddTask(): Task added to slot " << idx << ".\n" << JLogEnd();
 			
 			return Flags_t::kNO_ERROR;
 		}
@@ -204,7 +204,7 @@ std::shared_ptr<JTaskBase> JQueueSimple::GetTask(void)
 			mWriteSlotptr[idx] = false;
  			mTasksProcessed++;
 
-			if(mDebugLevel > 0) JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JQueueSimple::GetTask(): Task removed from slot " << idx << ".\n" << JLogEnd();
+			if(mDebugLevel > 0) JLog(mLogTarget) << "Thread " << THREAD_ID << " JQueueSimple::GetTask(): Task removed from slot " << idx << ".\n" << JLogEnd();
 			
 			return sTask; //should be copy-elided
 		}

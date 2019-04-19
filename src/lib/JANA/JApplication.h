@@ -1,15 +1,4 @@
-//
-//    File: JApplication.h
-// Created: Wed Oct 11 13:09:35 EDT 2017
-// Creator: davidl (on Darwin harriet.jlab.org 15.6.0 i386)
-//
-// ------ Last repository commit info -----
-// [ Date ]
-// [ Author ]
-// [ Source ]
-// [ Revision ]
-//
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Jefferson Science Associates LLC Copyright Notice:  
 // Copyright 251 2014 Jefferson Science Associates LLC All Rights Reserved. Redistribution
 // and use in source and binary forms, with or without modification, are permitted as a
@@ -45,13 +34,11 @@
 #include <vector>
 #include <string>
 #include <atomic>
-#include <deque>
 #include <mutex>
 #include <memory>
 #include <map>
 using std::vector;
 using std::string;
-using std::deque;
 using std::map;
 
 #define jout std::cout
@@ -105,63 +92,59 @@ class JApplication{
     JApplication(JParameterManager* params = nullptr, std::vector<string>* eventSources = nullptr);
 		virtual ~JApplication();
 
-		void AddSignalHandlers(void);
 		int  GetExitCode(void);
-		void Initialize(void);
-		void PrintFinalReport(void);
-		void PrintStatus(void);
-		void Quit(bool skip_join=false);
-		void Run(uint32_t nthreads=0);
+		virtual void Initialize(void) = 0;
+		virtual void PrintFinalReport(void) = 0;
+		virtual void PrintStatus(void);
+		virtual void Quit(bool skip_join=false) = 0;
+		virtual void Run() = 0;
+		virtual void Scale(int nthreads) = 0;
+		virtual void Stop(bool wait_until_idle=false) = 0;
+		virtual void Resume() = 0;
 		void SetExitCode(int exit_code);
-		void SetMaxThreads(uint32_t);
 		void SetTicker(bool ticker_on=true);
-		void Stop(bool wait_until_idle=false);
-		void Resume(void);
 
-		void Add(JEventSourceGenerator *source_generator);
-		void Add(JFactoryGenerator *factory_generator);
-		void Add(JEventProcessor *processor);
+		virtual void Add(JEventSourceGenerator *source_generator);
+		virtual void Add(JFactoryGenerator *factory_generator);
+		virtual void Add(JEventProcessor *processor);
 
 		void AddPlugin(string plugin_name);
 		void AddPluginPath(string path);
 		
 		void GetJEventProcessors(vector<JEventProcessor*>& aProcessors);
 		void GetJFactoryGenerators(vector<JFactoryGenerator*> &factory_generators);
-		std::shared_ptr<JLogger> GetJLogger(void);
 		JParameterManager* GetJParameterManager(void);
-		JThreadManager* GetJThreadManager(void) const;
+		virtual JThreadManager* GetJThreadManager(void) const = 0;
 		JEventSourceManager* GetJEventSourceManager(void) const;
 		
 		//GET/RECYCLE POOL RESOURCES
-		std::shared_ptr<JTask<void>> GetVoidTask(void);
+		virtual void UpdateResourceLimits(void) = 0;
+		virtual std::shared_ptr<JTask<void>> GetVoidTask(void) = 0;
 		JFactorySet* GetFactorySet(void);
 		void Recycle(JFactorySet* aFactorySet);
-		void UpdateResourceLimits(void);
 
+		uint64_t GetNThreads();
 		uint64_t GetNtasksCompleted(string name="");
-		uint64_t GetNeventsProcessed(void);
+		virtual uint64_t GetNeventsProcessed(void);
 		float GetIntegratedRate(void);
 		float GetInstantaneousRate(void);
 		void GetInstantaneousRates(vector<double> &rates_by_queue);
 		void GetIntegratedRates(map<string,double> &rates_by_thread);
-	
+
 		bool IsQuitting(void){ return _quitting; }
 		bool IsDrainingQueues(void){ return _draining_queues; }
-
-		void RemoveJEventProcessor(JEventProcessor *processor);
-		void RemoveJFactoryGenerator(JFactoryGenerator *factory_generator);
-		void RemovePlugin(string &plugin_name);
 
 		string Val2StringWithPrefix(float val);
 		template<typename T> T GetParameterValue(std::string name);
 		template<typename T> JParameter* SetParameterValue(std::string name, T val);
 	
 	protected:
-	
+
+		bool _initialized = false;
+		size_t _nthreads;
 		int _exit_code;
 		bool _skip_join;
 		bool _quitting;
-		int _verbose;
 		bool _draining_queues;
 		bool _ticker_on;
 		std::chrono::time_point<std::chrono::high_resolution_clock> mRunStartTime;
@@ -172,22 +155,15 @@ class JApplication{
 		std::vector<JCalibrationGenerator*> _calibrationGenerators;
 		std::vector<JEventProcessor*> _eventProcessors;
 
-		std::shared_ptr<JLogger> _logger;
+		JLogger _logger;
 		JParameterManager *_pmanager;
 		JEventSourceManager* _eventSourceManager;
-		JThreadManager* _threadManager;
 		std::size_t mNumProcessorsAdded;
 
-		void AttachPlugins(void);
-		void AttachPlugin(string name, bool verbose=false);
-		
-	private:
-
-		// Resource pools
-		// TODO: Add methods to set control parameters
-		JResourcePool<JTask<void>> mVoidTaskPool;
 		JResourcePoolSimple<JFactorySet> mFactorySetPool;
 
+    	void AttachPlugins(void);
+    	void AttachPlugin(string name, bool verbose=false);
 };
 
 //---------------------------------

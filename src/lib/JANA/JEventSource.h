@@ -86,7 +86,8 @@ class JEventSource{
 
 		JEventSource(std::string name, JApplication* aApplication=nullptr);
 		virtual ~JEventSource();
-		
+
+		virtual std::shared_ptr<const JEvent> GetEvent(void) = 0;
 		virtual void Open(void);
 		virtual bool GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactory* aFactory){return false;}
 
@@ -117,7 +118,6 @@ class JEventSource{
 	protected:
 	
 		void SetJApplication(JApplication *app);
-		virtual std::shared_ptr<const JEvent> GetEvent(void) = 0;
 		JApplication* mApplication = nullptr;
 		std::string mName;
 		JQueue* mEventQueue = nullptr; //For handling event-source-specific logic (such as disentangling events, dealing with barriers, etc.)
