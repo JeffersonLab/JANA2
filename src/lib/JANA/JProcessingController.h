@@ -44,12 +44,13 @@ class JProcessingController {
 public:
 
     void initialize();
-    void run();
+    void run(size_t nthreads);
     void scale(size_t nthreads);
     void request_stop();
     void wait_until_finished();
     void wait_until_stopped();
-    void scale();
+
+    size_t get_nthreads();
 
     void measure_perf(JMetrics::TopologySummary& topology_perf);
 
@@ -60,7 +61,16 @@ public:
                       std::vector<JMetrics::ArrowSummary>& arrow_perf,
                       std::vector<JMetrics::WorkerSummary>& worker_perf);
 
+    void get_overall_perf(JMetrics::TopologySummary& topology_perf);
+
+    void get_overall_perf(JMetrics::TopologySummary& topology_perf,
+                      std::vector<JMetrics::ArrowSummary>& arrow_perf);
+
+    void get_overall_perf(JMetrics::TopologySummary& topology_perf,
+                      std::vector<JMetrics::ArrowSummary>& arrow_perf,
+                      std::vector<JMetrics::WorkerSummary>& worker_perf);
 
 };
 
 #endif //JANA2_JPROCESSINGCONTROLLER_H
+

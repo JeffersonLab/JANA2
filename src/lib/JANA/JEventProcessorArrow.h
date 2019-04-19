@@ -29,7 +29,7 @@ public:
 
     void add_processor(JEventProcessor* processor);
 
-    JArrow::Status execute();
+    void execute(JArrowMetrics& result);
 
 };
 

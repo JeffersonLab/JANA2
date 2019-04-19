@@ -37,10 +37,18 @@
 #include <mutex>
 
 class JWorkerMetrics {
+    /// Workers need to maintain metrics. Similar to Arrow::Metrics, these form a monoid
+    /// where the identity element is (0,0,0) and the combine operation accumulates totals
+    /// in a thread-safe way. Alas, the combine operation mutates state for performance reasons.
+    /// We've separated Metrics from the Worker itself because it is not always obvious
+    /// who should be performing the accumulation or when, and this gives us the freedom to
+    /// try different possibilities.
+
 
     using duration_t = std::chrono::steady_clock::duration;
 
-    std::mutex _mutex;
+    mutable std::mutex _mutex;
+    // mutex is mutable so that we can lock before reading from a const ref
 
     long _scheduler_visit_count;
 
@@ -55,6 +63,7 @@ class JWorkerMetrics {
 
 public:
     void clear() {
+        _mutex.lock();
         _scheduler_visit_count = 0;
 
         auto zero = duration_t::zero();
@@ -67,12 +76,14 @@ public:
         _last_retry_time = zero;
         _last_scheduler_time = zero;
         _last_idle_time = zero;
+        _mutex.unlock();
     }
 
 
     void update(const JWorkerMetrics &other) {
 
         _mutex.lock();
+        other._mutex.lock();
         _scheduler_visit_count += other._scheduler_visit_count;
         _total_useful_time += other._total_useful_time;
         _total_retry_time += other._total_retry_time;
@@ -82,8 +93,8 @@ public:
         _last_retry_time = other._last_retry_time;
         _last_scheduler_time = other._last_scheduler_time;
         _last_idle_time = other._last_idle_time;
+        other._mutex.unlock();
         _mutex.unlock();
-
     }
 
 

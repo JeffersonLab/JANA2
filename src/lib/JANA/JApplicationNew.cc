@@ -194,10 +194,7 @@ void JApplicationNew::UpdateResourceLimits() {
 uint64_t JApplicationNew::GetNeventsProcessed() {
     uint64_t message_count = 0;
     for (JArrow* arrow : _sinks) {
-        size_t arrow_message_count, v0;
-        duration_t v1,v2,v3;
-        arrow->get_metrics(arrow_message_count, v0,v1,v2,v3);
-        message_count += arrow_message_count;
+        message_count += arrow->get_metrics().get_total_message_count();
     }
     return message_count;
 }

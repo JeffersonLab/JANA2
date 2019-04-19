@@ -5,7 +5,6 @@
 #include <JANA/JEventSourceArrow.h>
 
 using SourceStatus = JEventSource::RETURN_STATUS;
-using ArrowStatus = JEventSourceArrow::Status;
 
 JEventSourceArrow::JEventSourceArrow(std::string name,
                                      JEventSource* source,
@@ -22,10 +21,11 @@ JEventSourceArrow::JEventSourceArrow(std::string name,
     _logger = JLogger::nothing();
 }
 
-JArrow::Status JEventSourceArrow::execute() {
+void JEventSourceArrow::execute(JArrowMetrics& result) {
 
     if (!is_active()) {
-        return JArrow::Status::Finished;
+        result.update_finished();
+        return;
     }
     if (!_is_initialized) {
         LOG_INFO(_logger) << "JEventSourceArrow '" << get_name() << "': "
@@ -68,19 +68,20 @@ JArrow::Status JEventSourceArrow::execute() {
 
     auto latency = latency_time - start_time;
     auto overhead = finished_time - latency_time;
-    update_metrics(message_count, 1, latency, overhead);
+    JArrowMetrics::Status status;
 
     if (in_status == SourceStatus::kNO_MORE_EVENTS) {
         // There should be a _source.Close() of some kind
         set_upstream_finished(true);
         LOG_DEBUG(_logger) << "JEventSourceArrow '" << get_name() << "': "
                            << "Finished!" << LOG_END;
-        return JArrow::Status::Finished;
+        status = JArrowMetrics::Status::Finished;
     }
-
-    if (in_status == SourceStatus::kSUCCESS && out_status == EventQueue::Status::Ready) {
-        return JArrow::Status::KeepGoing;
+    else if (in_status == SourceStatus::kSUCCESS && out_status == EventQueue::Status::Ready) {
+        status = JArrowMetrics::Status::KeepGoing;
     }
-
-    return JArrow::Status::ComeBackLater;
+    else {
+        status = JArrowMetrics::Status::ComeBackLater;
+    }
+    result.update(status, message_count, 1, latency, overhead);
 }

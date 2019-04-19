@@ -20,11 +20,7 @@ JTopology::ArrowStatus::ArrowStatus(JArrow* arrow) {
     duration_t total_latency;
     duration_t queue_overhead;
     duration_t last_latency;
-    arrow->get_metrics(messages_completed,
-                       queue_visit_count,
-                       total_latency,
-                       queue_overhead,
-                       last_latency);
+    //arrow->get_metrics(messages_completed, queue_visit_count, total_latency, queue_overhead, last_latency);
 
     double l_total = millisecs(total_latency).count();
     double l_queue = millisecs(queue_overhead).count();
@@ -255,18 +251,18 @@ void JTopology::log_status() {
         os << " | ID | Last arrow name      | Useful time | Retry time | Idle time | JScheduler time | JScheduler visits |" << std::endl;
         os << " |    |                      |    [0..1]   |   [0..1]   |   [0..1]  |     [0..1]     |     [count]      |" << std::endl;
         os << " +----+----------------------+-------------+------------+-----------+----------------+------------------+" << std::endl;
-        for (JWorker* worker : workers) {
-            auto ws = worker->get_summary();
-            os << " |"
-               << std::setw(3) << std::right << ws.worker_id << " | "
-               << std::setw(20) << std::left << ws.last_arrow_name << " |"
-               << std::setw(12) << std::right << ws.useful_time_frac << " |"
-               << std::setw(11) << ws.retry_time_frac << " |"
-               << std::setw(10) << ws.idle_time_frac << " |"
-               << std::setw(15) << ws.scheduler_time_frac << " |"
-               << std::setw(17) << ws.scheduler_visits << " |"
-               << std::endl;
-        }
+//        for (JWorker* worker : workers) {
+//            auto ws = worker->get_summary();
+//            os << " |"
+//               << std::setw(3) << std::right << ws.worker_id << " | "
+//               << std::setw(20) << std::left << ws.last_arrow_name << " |"
+//               << std::setw(12) << std::right << ws.useful_time_frac << " |"
+//               << std::setw(11) << ws.retry_time_frac << " |"
+//               << std::setw(10) << ws.idle_time_frac << " |"
+//               << std::setw(15) << ws.scheduler_time_frac << " |"
+//               << std::setw(17) << ws.scheduler_visits << " |"
+//               << std::endl;
+//        }
         os << " +----+----------------------+-------------+------------+-----------+----------------+------------------+" << std::endl;
     }
     LOG_INFO(logger) << os.str() << LOG_END;
@@ -275,14 +271,16 @@ void JTopology::log_status() {
 
 /// The user may want to pause the topology and interact with it manually.
 /// This is particularly powerful when used from inside GDB.
-JArrow::Status JTopology::step(const std::string &arrow_name) {
+JArrowMetrics::Status JTopology::step(const std::string &arrow_name) {
     JArrow *arrow = get_arrow(arrow_name);
-    auto result = arrow->execute();
-    if (result == JArrow::Status::Finished) {
+    JArrowMetrics result;
+    arrow->execute(result);
+    auto status = result.get_last_status();
+    if (status == JArrowMetrics::Status::Finished) {
         arrow->set_active(false);
         arrow->notify_downstream(false);
     }
-    return result;
+    return status;
 }
 
 bool JTopology::is_active() {

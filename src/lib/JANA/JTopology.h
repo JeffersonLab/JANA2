@@ -108,7 +108,7 @@ public:
     bool is_active() override;
     void set_active(bool is_active) override;
 
-    JArrow::Status step(const std::string &arrow_name);
+    JArrowMetrics::Status step(const std::string &arrow_name);
     void run(int threads);
     void wait_until_finished();
     // run_message(string source_name)

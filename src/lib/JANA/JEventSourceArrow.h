@@ -24,7 +24,7 @@ private:
 
 public:
     JEventSourceArrow(std::string name, JEventSource* source, EventQueue* output_queue, JApplication* app);
-    JArrow::Status execute();
+    void execute(JArrowMetrics& result);
 };
 
 #endif //JANA2_JEVENTSOURCEARROW_H

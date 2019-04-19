@@ -74,10 +74,10 @@ struct WorkerSummary {
     int worker_id;
     int cpu_id;
     bool is_pinned;
-    double avg_useful_time_ms;
-    double avg_retry_time_ms;
-    double avg_idle_time_ms;
-    double avg_scheduler_time_ms;
+    double total_useful_time_ms;
+    double total_retry_time_ms;
+    double total_idle_time_ms;
+    double total_scheduler_time_ms;
     double last_useful_time_ms;
     double last_retry_time_ms;
     double last_idle_time_ms;

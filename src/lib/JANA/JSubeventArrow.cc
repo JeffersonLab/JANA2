@@ -43,14 +43,13 @@ JSubeventArrow::JSubeventArrow(std::string name, JSubeventProcessor* processor,
 
 }
 
-JArrow::Status JSubeventArrow::execute() {
+void JSubeventArrow::execute(JArrowMetrics& results) {
     // auto in_result = _inbox.pop(in_buffer, get_chunksize());
     // for (JObject* item : in_buffer) {
     //    _processor.process(item);
     // }
     // auto out_result = _outbox.push(out_buffer);
     // measure everything
-    return Status::Finished;
 }
 
 JSplitArrow::JSplitArrow(std::string name, JSubeventProcessor* processor,
@@ -59,7 +58,7 @@ JSplitArrow::JSplitArrow(std::string name, JSubeventProcessor* processor,
 
 }
 
-JArrow::Status JSplitArrow::execute() {
+void JSplitArrow::execute(JArrowMetrics& results) {
     // input_queue.pop(in_buffer, get_chunksize());
     // _processor.split(event, in_buffer);
     // size_t count = in_buffer.size();
@@ -68,7 +67,6 @@ JArrow::Status JSplitArrow::execute() {
     // }
     // _outbox.push(out_buffer);
     // measure everything
-    return Status::Finished;
 }
 
 JMergeArrow::JMergeArrow(std::string name, JSubeventProcessor* processor, Queue<JSubevent>* inbox, Queue<Event>* outbox)
@@ -76,12 +74,11 @@ JMergeArrow::JMergeArrow(std::string name, JSubeventProcessor* processor, Queue<
 
 }
 
-JArrow::Status JMergeArrow::execute() {
+void JMergeArrow::execute(JArrowMetrics& results) {
     // This is the complicated one
     // For now, don't worry about allocations, or about queue overflow
     // Maintain a map of {parent, (count, [subevents])}
     // on each add, if subevents.size() = count, then
     //
     // Alternative: If item is not part of current event, then push back onto queue
-    return Status::Finished;
 }

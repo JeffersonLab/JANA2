@@ -28,7 +28,7 @@ void JEventProcessorArrow::add_processor(JEventProcessor* processor) {
     _processors.push_back(processor);
 }
 
-JArrow::Status JEventProcessorArrow::execute() {
+void JEventProcessorArrow::execute(JArrowMetrics& result) {
 
     auto start_total_time = std::chrono::steady_clock::now();
 
@@ -62,17 +62,19 @@ JArrow::Status JEventProcessorArrow::execute() {
     }
     auto end_queue_time = std::chrono::steady_clock::now();
 
-    auto latency = (end_latency_time - start_latency_time);
-    auto overhead = (end_queue_time - start_total_time) - latency;
-    update_metrics(success, 1, latency, overhead);
-
+    JArrowMetrics::Status status;
     if (in_status == EventQueue::Status::Finished) {
         set_upstream_finished(true);
-        return JArrow::Status::Finished;
-    } else if (in_status == EventQueue::Status::Ready && out_status == EventQueue::Status::Ready) {
-        return JArrow::Status::KeepGoing;
-    } else {
-        return JArrow::Status::ComeBackLater;
+        status = JArrowMetrics::Status::Finished;
     }
+    else if (in_status == EventQueue::Status::Ready && out_status == EventQueue::Status::Ready) {
+        status = JArrowMetrics::Status::KeepGoing;
+    }
+    else {
+        status = JArrowMetrics::Status::ComeBackLater;
+    }
+    auto latency = (end_latency_time - start_latency_time);
+    auto overhead = (end_queue_time - start_total_time) - latency;
+    result.update(status, success, 1, latency, overhead);
 }
 

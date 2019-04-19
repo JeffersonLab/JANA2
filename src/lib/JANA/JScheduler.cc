@@ -11,10 +11,10 @@ JScheduler::JScheduler(const std::vector<JArrow*>& arrows, size_t worker_count)
     }
 
 
-JArrow* JScheduler::next_assignment(uint32_t worker_id, JArrow* assignment, JArrow::Status last_result) {
+JArrow* JScheduler::next_assignment(uint32_t worker_id, JArrow* assignment, JArrowMetrics::Status last_result) {
 
     // Short-circuit our scheduler visit if everything is in order.
-    if (last_result == JArrow::Status::KeepGoing && assignment != nullptr) {
+    if (last_result == JArrowMetrics::Status::KeepGoing && assignment != nullptr) {
         return assignment;
     }
 
@@ -69,7 +69,7 @@ JArrow* JScheduler::next_assignment(uint32_t worker_id, JArrow* assignment, JArr
 }
 
 
-void JScheduler::last_assignment(uint32_t worker_id, JArrow* assignment, JArrow::Status result) {
+void JScheduler::last_assignment(uint32_t worker_id, JArrow* assignment, JArrowMetrics::Status result) {
 
     _worker_count--;
     if (assignment != nullptr) {

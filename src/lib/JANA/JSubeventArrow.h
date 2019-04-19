@@ -73,7 +73,7 @@ class JSubeventArrow : public JArrow {
 public:
     JSubeventArrow(std::string name, JSubeventProcessor* processor,
                    Queue<JSubevent>* inbox, Queue<JSubevent>* outbox);
-    Status execute() override;
+    void execute(JArrowMetrics&) override;
 };
 
 class JSplitArrow : public JArrow {
@@ -83,7 +83,7 @@ class JSplitArrow : public JArrow {
 public:
     JSplitArrow(std::string name, JSubeventProcessor* processor,
                 Queue<Event>* inbox, Queue<JSubevent>* outbox);
-    Status execute() override;
+    void execute(JArrowMetrics&) override;
 };
 
 class JMergeArrow : public JArrow {
@@ -93,7 +93,7 @@ class JMergeArrow : public JArrow {
 public:
     JMergeArrow(std::string name, JSubeventProcessor* processor,
                 Queue<JSubevent>* inbox, Queue<Event>* outbox);
-    Status execute() override;
+    void execute(JArrowMetrics&) override;
 };
 
 

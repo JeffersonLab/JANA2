@@ -5,79 +5,79 @@
 #include <JANA/JWorker.h>
 
 
-JWorker::Metrics::Metrics()
-        : _useful_time(duration_t::zero())
-        , _retry_time(duration_t::zero())
-        , _scheduler_time(duration_t::zero())
-        , _idle_time(duration_t::zero())
-        , _scheduler_visits(0) {}
+void JWorker::measure_perf(JMetrics::WorkerSummary& summary) {
+    // Read (do not clear) worker metrics
+    // Read and clear arrow metrics
+    // Push arrow metrics upstream
+
+    JArrowMetrics latest_arrow_metrics;
+    latest_arrow_metrics.clear();
+    latest_arrow_metrics.take(_arrow_metrics); // destructive
+    _assignment->get_metrics().update(latest_arrow_metrics);  // nondestructive
+    // Unpack latest_arrow_metrics, add to WorkerSummary
 
 
-void JWorker::Metrics::update(const JWorker::Metrics& other) {
+    // If we wanted to average over our measurement interval only, we would also do:
+    // From inside JProcessingController, do _after_ JWorker::measure_perf() for all workers:
+    // for all arrows:
+    //     arrow->overall_metrics.take(arrow->interval_metrics);
 
-    _mutex.lock();
-    _useful_time += other._useful_time;
-    _retry_time += other._retry_time;
-    _scheduler_time += other._scheduler_time;
-    _idle_time += other._idle_time;
-    _scheduler_visits += other._scheduler_visits;
-    _mutex.unlock();
-}
+    // From right here, at the very end:
+    //     worker->overall_metrics.take(worker->interval_metrics);
 
-
-void JWorker::Metrics::update(const duration_t& useful_time,
-                             const duration_t& retry_time,
-                             const duration_t& scheduler_time,
-                             const duration_t& idle_time,
-                             const long& scheduler_visits) {
-    _mutex.lock();
-    _useful_time += useful_time;
-    _retry_time += retry_time;
-    _scheduler_time += scheduler_time;
-    _idle_time = idle_time;
-    _scheduler_visits += scheduler_visits;
-    _mutex.unlock();
-}
-
-
-void JWorker::Metrics::get(duration_t& useful_time,
-                          duration_t& retry_time,
-                          duration_t& scheduler_time,
-                          duration_t& idle_time,
-                          long& scheduler_visits) {
-    _mutex.lock();
-    useful_time = _useful_time;
-    retry_time = _retry_time;
-    scheduler_time = _scheduler_time;
-    idle_time = _idle_time;
-    scheduler_visits = _scheduler_visits;
-    _mutex.unlock();
-}
-
-
-JWorker::Summary JWorker::get_summary() {
+    JWorkerMetrics latest_worker_metrics;
+    latest_worker_metrics.clear();
+    latest_worker_metrics.update(_worker_metrics); // nondestructive
+    // Unpack latest_worker_metrics, add to WorkerSummary
 
     using millis = std::chrono::duration<double, std::milli>;
-    JWorker::Summary summary;
+
+    long scheduler_visit_count;
+    duration_t total_useful_time, total_retry_time, total_scheduler_time, total_idle_time;
+    duration_t last_useful_time, last_retry_time, last_scheduler_time, last_idle_time;
+
+    latest_worker_metrics.get(scheduler_visit_count, total_useful_time, total_retry_time, total_scheduler_time,
+             total_idle_time, last_useful_time, last_retry_time, last_scheduler_time, last_idle_time);
+
+    summary.total_useful_time_ms = millis(total_useful_time).count();
+    summary.total_retry_time_ms = millis(total_retry_time).count();
+    summary.total_scheduler_time_ms = millis(total_scheduler_time).count();
+    summary.total_idle_time_ms = millis(total_idle_time).count();
+    summary.last_useful_time_ms = millis(last_useful_time).count();
+    summary.last_retry_time_ms = millis(last_retry_time).count();
+    summary.last_scheduler_time_ms = millis(last_scheduler_time).count();
+    summary.last_idle_time_ms = millis(last_idle_time).count();
+
     summary.worker_id = _worker_id;
+    summary.cpu_id = _cpu_id;
+    summary.is_pinned = _pin_to_cpu;
+    summary.scheduler_visit_count = scheduler_visit_count;
+
     summary.last_arrow_name = ((_assignment == nullptr) ? "idle" : _assignment->get_name());
 
-    duration_t useful_time, retry_time, scheduler_time, idle_time;
-    long scheduler_visits;
-    _metrics.get(useful_time, retry_time, scheduler_time, idle_time, scheduler_visits);
-    duration_t total_time = useful_time + retry_time + scheduler_time + idle_time;
+    JArrowMetrics::Status last_status;
+    size_t total_message_count, last_message_count, total_queue_visits, last_queue_visits;
+    duration_t total_latency, last_latency, total_queue_latency, last_queue_latency;
 
-    summary.useful_time_frac = millis(useful_time)/millis(total_time);
-    summary.retry_time_frac = millis(retry_time)/millis(total_time);
-    summary.idle_time_frac = millis(idle_time)/millis(total_time);
-    summary.scheduler_time_frac = millis(scheduler_time)/millis(total_time);
-    summary.scheduler_visits = scheduler_visits;
-    return summary;
+    latest_arrow_metrics.get(last_status, total_message_count, last_message_count, total_queue_visits,
+                             last_queue_visits, total_latency, last_latency, total_queue_latency, last_queue_latency);
+
+
+    summary.last_arrow_avg_latency_ms = millis(total_latency).count() / total_message_count;
+    summary.last_arrow_last_latency_ms = millis(last_latency).count();
+    summary.last_arrow_queue_visit_count = total_queue_visits; // TODO: Why do we have last_queue_visits?
+    summary.last_arrow_avg_queue_latency_ms = millis(total_queue_latency).count() / total_message_count;
+    summary.last_arrow_last_queue_latency_ms = millis(last_queue_latency).count();
+
+    // TODO: Do we even want last_message_count? This is in [0, chunksize], nothing to do with
+    //       measurement interval. total gives us the measurement interval here.
+    // What about Arrow::metrics::last_message_count? This would have to be the same...
+
 }
 
 
 JWorker::JWorker(uint32_t id, JScheduler* scheduler) :
-        _scheduler(scheduler), _worker_id(id), _cpu_id(0), _pin_to_cpu(false), _status(Status::Stopped),
+        _scheduler(scheduler), _worker_id(id), _cpu_id(0), _pin_to_cpu(false), _run_state(RunState::Stopped),
         _assignment(nullptr), _thread(nullptr) {
 
     _logger = JLoggingService::logger("JWorker");
@@ -85,7 +85,7 @@ JWorker::JWorker(uint32_t id, JScheduler* scheduler) :
 
 
 JWorker::JWorker(uint32_t id, uint32_t cpuid, JScheduler* scheduler) :
-        _scheduler(scheduler), _worker_id(id), _cpu_id(cpuid), _pin_to_cpu(true), _status(Status::Stopped),
+        _scheduler(scheduler), _worker_id(id), _cpu_id(cpuid), _pin_to_cpu(true), _run_state(RunState::Stopped),
         _assignment(nullptr), _thread(nullptr) {
 
     _logger = JLoggingService::logger("JWorker");
@@ -97,42 +97,42 @@ JWorker::~JWorker() {
 
 
 void JWorker::start() {
-    if (_status == Status::Stopped) {
-        _status = Status::Running;
+    if (_run_state == RunState::Stopped) {
+        _run_state = RunState::Running;
         _thread = new std::thread(&JWorker::loop, this);
     }
 }
 
 void JWorker::request_stop() {
-    if (_status == Status::Running) {
-        _status = Status::Stopping;
+    if (_run_state == RunState::Running) {
+        _run_state = RunState::Stopping;
     }
 }
 
 void JWorker::wait_for_stop() {
-    if (_status == Status::Running) {
-        _status = Status::Stopping;
+    if (_run_state == RunState::Running) {
+        _run_state = RunState::Stopping;
     }
     if (_thread != nullptr) {
         _thread->join();
         delete _thread;
         _thread = nullptr;
-        _status = Status::Stopped;
+        _run_state = RunState::Stopped;
     }
 }
 
 void JWorker::loop() {
 
     LOG_DEBUG(_logger) << "JWorker " << _worker_id << " has entered loop()." << LOG_END;
-    JArrow::Status last_result = JArrow::Status::ComeBackLater;
+    JArrowMetrics::Status last_result = JArrowMetrics::Status::NotRunYet;
 
-    while (_status == Status::Running) {
+    while (_run_state == RunState::Running) {
 
         LOG_DEBUG(_logger) << "JWorker " << _worker_id << " is checking in" << LOG_END;
         auto start_time = jclock_t::now();
 
         _assignment = _scheduler->next_assignment(_worker_id, _assignment, last_result);
-        last_result = JArrow::Status::KeepGoing;
+        last_result = JArrowMetrics::Status::NotRunYet;
 
         auto scheduler_time = jclock_t::now();
 
@@ -153,18 +153,19 @@ void JWorker::loop() {
             auto backoff_duration = initial_backoff_time;
 
             while (current_tries <= backoff_tries &&
-                   (last_result == JArrow::Status::KeepGoing || last_result == JArrow::Status::ComeBackLater) &&
-                   (_status == Status::Running) &&
+                   (last_result == JArrowMetrics::Status::KeepGoing || last_result == JArrowMetrics::Status::ComeBackLater || last_result == JArrowMetrics::Status::NotRunYet) &&
+                   (_run_state == RunState::Running) &&
                    (jclock_t::now() - start_time) < checkin_time) {
 
                 LOG_DEBUG(_logger) << "JWorker " << _worker_id << " is executing "
                                    << _assignment->get_name() << LOG_END;
                 auto before_execute_time = jclock_t::now();
-                last_result = _assignment->execute();
+                _assignment->execute(_arrow_metrics);
+                last_result = _arrow_metrics.get_last_status();
                 useful_duration += (jclock_t::now() - before_execute_time);
 
 
-                if (last_result == JArrow::Status::KeepGoing) {
+                if (last_result == JArrowMetrics::Status::KeepGoing) {
                     LOG_DEBUG(_logger) << "JWorker " << _worker_id << " succeeded at "
                                        << _assignment->get_name() << LOG_END;
                     current_tries = 0;
@@ -190,7 +191,7 @@ void JWorker::loop() {
                 }
             }
         }
-        _metrics.update(useful_duration, retry_duration, scheduler_duration, idle_duration, 1);
+        _worker_metrics.update(1, useful_duration, retry_duration, scheduler_duration, idle_duration);
     }
 
     _scheduler->last_assignment(_worker_id, _assignment, last_result);
