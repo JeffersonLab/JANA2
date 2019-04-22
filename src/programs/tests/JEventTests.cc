@@ -41,14 +41,16 @@
 TEST_CASE("JEventInsertTests") {
 
     JEvent event;
+    JFactorySet factorySet;
+    event.SetFactorySet(&factorySet);
 
     SECTION("Single-item JEvent::Insert() can be retrieved via JEvent::Get()") {
         auto input = new FakeJObject(22);
         event.Insert(input);
-        //auto output = event.GetSingle<FakeJObject>();
 
         std::vector<const FakeJObject*> output;
         event.Get(output);
+        //auto output = event.GetSingle<FakeJObject>();
 
         REQUIRE(output.size() == 1);
         REQUIRE(output[0]->datum == input->datum);

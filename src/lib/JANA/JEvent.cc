@@ -106,7 +106,7 @@ void JEvent::SetFactorySet(JFactorySet* aFactorySet)
 void JEvent::Release(void)
 {
 	//Release all (pointers to) resources, called when recycled to pool
-	if(mFactorySet != nullptr) {
+	if(mFactorySet != nullptr && mApplication != nullptr) {
 		mApplication->Recycle(const_cast<JFactorySet*>(mFactorySet));
 		mFactorySet = nullptr;
 	}
