@@ -83,11 +83,16 @@ add_executable(jana
         src/programs/jana/MyProcessor.h
         )
 
+add_executable(tests
+        src/programs/tests/JEventTests.cc
+        src/programs/tests/JEventTests.h
+        )
 
 # Add jana static lib
 target_link_libraries(jana jana2)
 target_link_libraries(jtest jana2)
 target_link_libraries(playground jana2)
+target_link_libraries(tests jana2)
 
 
 # Add libdl

@@ -81,8 +81,10 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 		template<class T> vector<const T*> GetT(const std::string& aTag = "") const;
 		template<class T> typename JFactoryT<T>::PairType Get(const std::string& aTag = "") const;
 
-		template <class T> void Insert(const T* item, const std::string tag = "") const;
-		template <class T> void Insert(const std::vector<const T*>& items, const std::string tag = "") const;
+		//template<class T> const T* GetSingle(const std::string& aTag = "") const;
+
+		template <class T> void Insert(T* item, const std::string aTag = "") const;
+		template <class T> void Insert(const std::vector<T*>& items, const std::string tag = "") const;
 
 		//RESOURCES
 		void Release(void);
@@ -125,7 +127,7 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 /// Note that Insert() shadows anything already created using Get(), so it is best to use this
 /// only in JEventSource::GetEvent(), where we know nothing has been Get'ted yet.
 template <class T>
-inline void JEvent::Insert(const T* item, const string tag) const {
+inline void JEvent::Insert(T* item, const string tag) const {
 
 	auto key = std::make_pair(std::type_index(typeid(T)), tag);
 	auto vec = mObjectMap[key]; // Will create if it doesn't exist yet
@@ -133,7 +135,7 @@ inline void JEvent::Insert(const T* item, const string tag) const {
 }
 
 template <class T>
-inline void JEvent::Insert(const vector<const T*>& items, const string tag) const {
+inline void JEvent::Insert(const vector<T*>& items, const string tag) const {
 
 	auto key = std::make_pair(std::type_index(typeid(T)), tag);
 	auto vec = mObjectMap[key]; // Will create if it doesn't exist yet
@@ -141,6 +143,12 @@ inline void JEvent::Insert(const vector<const T*>& items, const string tag) cons
 		vec.push_back(item);
 	}
 }
+
+//template<class T>
+//const T* JEvent::GetSingle(const std::string& tag) const {
+//	auto result = Get<T>(tag);
+//	return *result.second;
+//}
 
 //---------------------------------
 // GetFactory
@@ -189,10 +197,7 @@ vector<const T*> JEvent::GetT(const std::string& aTag) const
 template<class DataType>
 typename JFactoryT<DataType>::PairType JEvent::Get(const std::string& aTag) const
 {
-	// mThreadManager is set either in constructor or in SetJApplication. 
-	// It actually should always be set by the latter which is called from
-	// JEventSource::GetProcessEventTasks after calling GetEvent.
-	assert(mThreadManager!=nullptr);
+	//assert(mThreadManager!=nullptr);
 
 	if(mDebugLevel > 0)
 		JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Type = " << GetDemangledName<DataType>() << ", tag = " << aTag << ".\n" << JLogEnd();
@@ -231,12 +236,18 @@ typename JFactoryT<DataType>::PairType JEvent::Get(const std::string& aTag) cons
 
 
 	// First see if object has been Insert()
-	auto sPutObject = mObjectMap.find(std::make_pair(std::type_index(typeid(DataType)), aTag));
+	auto key = std::make_pair(std::type_index(typeid(DataType)), aTag);
+	auto sPutObject = mObjectMap.find(key);
 	if (sPutObject != mObjectMap.end()) {
 		if(mDebugLevel >= 10) {
 			JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Found item which had been Insert()\n" << JLogEnd();
 		}
-		return std::make_pair(sPutObject->second.begin(), sPutObject->second.end());
+		auto& vec = static_cast<std::vector<DataType*>>(sPutObject->second);
+		// cast from pair<iterator<JObject*  const*, vector<JObject* >>, iterator<JObject*  const*, vector<JObject*>>>
+		//        to pair<iterator<DataType* const*, vector<DataType*>>, iterator<DataType* const*, vector<DataType*>>>
+		//auto begin = static_cast<typename JFactoryT<DataType>::IteratorType>(sPutObject->second.cbegin());
+		//auto end = static_cast<typename JFactoryT<DataType>::IteratorType>(sPutObject->second.cend());
+		return std::make_pair(vec.cbegin(), vec.cend());
 	}
 
 	// Nathan says: Shouldn't most of the code below live in JFactorySet, so that JEvent.Get() proxies JFactorySet.Get()?
@@ -246,6 +257,8 @@ typename JFactoryT<DataType>::PairType JEvent::Get(const std::string& aTag) cons
 	//              (Unless we wanted to use JFactorySets for subevent parallelism as well...)
 
 	// If not, then try to construct it using Factories
+	assert(mFactorySet != nullptr);
+
 	auto sFactoryBase = mFactorySet->GetFactory(std::type_index(typeid(DataType)), aTag);
 	if(sFactoryBase == nullptr)
 	{
@@ -267,15 +280,24 @@ typename JFactoryT<DataType>::PairType JEvent::Get(const std::string& aTag) cons
 	//Attempt to acquire the "creating" lock for the factory
 	if(!sFactory->AcquireCreatingLock())
 	{
+		//We failed: Another thread is currently creating the objects.
+		//Instead, execute queued tasks until the objects are ready
+
 		if(mDebugLevel >= 10)
 			JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Another thread is creating objects, do work while waiting.\n" << JLogEnd();
 
-		//We failed: Another thread is currently creating the objects.
-		//Instead, execute queued tasks until the objects are ready
-		mThreadManager->DoWorkWhileWaiting(sFactory->GetCreatingLock(), mEventSource);
+		// mThreadManager is set either in constructor or in SetJApplication.
+		// It actually should always be set by the latter which is called from
+		// JEventSource::GetProcessEventTasks after calling GetEvent.
+		if (mThreadManager != nullptr) {
+			mThreadManager->DoWorkWhileWaiting(sFactory->GetCreatingLock(), mEventSource);
 
-		//It's done, return the results
-		return sFactory->Get();
+			//It's done, return the results
+			return sFactory->Get();
+		}
+		else {
+			throw JException("Race condition: Multiple threads are attempting to JEvent::Get() the same object");
+		}
 	}
 
 	if(mDebugLevel >= 10)
