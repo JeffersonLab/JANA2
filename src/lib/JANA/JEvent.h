@@ -81,6 +81,9 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 		template<class T> vector<const T*> GetT(const std::string& aTag = "") const;
 		template<class T> typename JFactoryT<T>::PairType Get(const std::string& aTag = "") const;
 
+		template <class T> void Insert(const T* item, const std::string tag = "") const;
+		template <class T> void Insert(const std::vector<const T*>& items, const std::string tag = "") const;
+
 		//RESOURCES
 		void Release(void);
 
@@ -100,7 +103,8 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 		JApplication* GetJApplication(void) const {return mApplication;}
 
 	protected:
-	
+
+		mutable std::map<std::pair<std::type_index, std::string>, std::vector<JObject*>> mObjectMap;
 		const JFactorySet* mFactorySet = nullptr;
 		JEventSource* mEventSource = nullptr;
 		bool mIsBarrierEvent = false;
@@ -113,6 +117,30 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 		int mDebugLevel = 0;
 		std::shared_ptr<const JEvent> mLatestBarrierEvent = nullptr;
 };
+
+/// Insert() allows an EventSource to insert items directly into the JEvent,
+/// removing the need for user-extended JEvents and/or JEventSource::GetObjects(...)
+/// Repeated calls to Insert() will append to the previous data rather than overwrite it,
+/// which saves the user from having to allocate a throwaway vector and requires less error handling.
+/// Note that Insert() shadows anything already created using Get(), so it is best to use this
+/// only in JEventSource::GetEvent(), where we know nothing has been Get'ted yet.
+template <class T>
+inline void JEvent::Insert(const T* item, const string tag) const {
+
+	auto key = std::make_pair(std::type_index(typeid(T)), tag);
+	auto vec = mObjectMap[key]; // Will create if it doesn't exist yet
+	vec.push_back(item);
+}
+
+template <class T>
+inline void JEvent::Insert(const vector<const T*>& items, const string tag) const {
+
+	auto key = std::make_pair(std::type_index(typeid(T)), tag);
+	auto vec = mObjectMap[key]; // Will create if it doesn't exist yet
+	for (auto item : items) {
+		vec.push_back(item);
+	}
+}
 
 //---------------------------------
 // GetFactory
@@ -201,7 +229,23 @@ typename JFactoryT<DataType>::PairType JEvent::Get(const std::string& aTag) cons
 // 	}
 	//--------------------------------------------------------------------------------------------
 
-	//First get the factory
+
+	// First see if object has been Insert()
+	auto sPutObject = mObjectMap.find(std::make_pair(std::type_index(typeid(DataType)), aTag));
+	if (sPutObject != mObjectMap.end()) {
+		if(mDebugLevel >= 10) {
+			JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Found item which had been Insert()\n" << JLogEnd();
+		}
+		return std::make_pair(sPutObject->second.begin(), sPutObject->second.end());
+	}
+
+	// Nathan says: Shouldn't most of the code below live in JFactorySet, so that JEvent.Get() proxies JFactorySet.Get()?
+	//              JFactorySet isn't providing very meaningful abstraction; its internals are leaking out all over here.
+	//              Alternatively, we could merge JEvent and JFactorySet, since instances of the two will have a solidly
+	//              one-to-one relationship once we move away from user-defined JEvents.
+	//              (Unless we wanted to use JFactorySets for subevent parallelism as well...)
+
+	// If not, then try to construct it using Factories
 	auto sFactoryBase = mFactorySet->GetFactory(std::type_index(typeid(DataType)), aTag);
 	if(sFactoryBase == nullptr)
 	{
