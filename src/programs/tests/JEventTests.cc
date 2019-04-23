@@ -41,19 +41,18 @@
 TEST_CASE("JEventInsertTests") {
 
     JEvent event;
-    JFactorySet factorySet;
-    event.SetFactorySet(&factorySet);
+    event.SetFactorySet(new JFactorySet);
 
     SECTION("Single-item JEvent::Insert() can be retrieved via JEvent::Get()") {
         auto input = new FakeJObject(22);
         event.Insert(input);
+        auto output = event.GetSingle<FakeJObject>();
+        REQUIRE(output->datum == input->datum);
 
-        std::vector<const FakeJObject*> output;
-        event.Get(output);
-        //auto output = event.GetSingle<FakeJObject>();
+        FakeJObject* alternative;
+        event.Get(&alternative);
+        REQUIRE(output->datum == alternative->datum);
 
-        REQUIRE(output.size() == 1);
-        REQUIRE(output[0]->datum == input->datum);
     }
 
     SECTION("Multi-item JEvent::Insert() can be retrieved via JEvent::Get()") {
@@ -109,14 +108,17 @@ TEST_CASE("JEventInsertTests") {
         REQUIRE(output[2]->datum == 618);
     }
 
-    //SECTION("JEvent::Insert() shadows JEvent::Get()") {
-        //JFactorySet factorySet;
-        //factorySet.Add(new FakeFactory);
-        //event.SetFactorySet(factorySet);
-
-    //}
-
-    //SECTION("Inserted JObjects get deleted when enclosing JEvent does")
+    SECTION("Inserted JObjects get deleted when enclosing JEvent does") {
+        FakeJObject* obj = new FakeJObject(618);
+        bool deleted = false;
+        obj->deleted = &deleted;
+        JEvent* event_ptr = new JEvent();
+        event_ptr->SetFactorySet(new JFactorySet);
+        event_ptr->Insert(obj, "tag");
+        REQUIRE(deleted == false);
+        delete event_ptr;
+        REQUIRE(deleted == true);
+    }
 
 }
 

@@ -34,10 +34,17 @@
 #define JANA2_JEVENTTESTS_H
 
 #include <JANA/JObject.h>
+#include <iostream>
 
 struct FakeJObject : public JObject {
     int datum;
+    bool* deleted = nullptr;
     FakeJObject(int datum) : datum(datum) {};
+    ~FakeJObject() {
+        if (deleted != nullptr) {
+            *deleted = true;
+        }
+    }
 };
 
 struct DifferentFakeJObject : public JObject {

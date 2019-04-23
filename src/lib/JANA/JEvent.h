@@ -79,7 +79,6 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 		// C style getters
 		template<class T> JFactory* Get(T** item, const std::string& tag="") const;
 		template<class T> JFactory* Get(vector<const T*> &vec, const std::string& tag = "") const;
-		template<class T> JFactory* Get(typename JFactoryT<T>::IteratorType& begin, typename JFactoryT<T>::IteratorType& end, const std::string& tag = "") const;
 
 		// C++ style getters
 		template<class T> const T* GetSingle(const std::string& tag = "") const;
@@ -128,7 +127,9 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 /// which saves the user from having to allocate a throwaway vector and requires less error handling.
 template <class T>
 inline void JEvent::Insert(T* item, const string& tag) const {
-    Insert<T>({item}, tag);
+	std::vector<T*> items;
+	items.push_back(item);
+    Insert<T>(items, tag);
 }
 
 template <class T>
@@ -155,36 +156,41 @@ inline JFactory* JEvent::GetFactory(const std::string& aTag) const
 	return mFactorySet->GetFactory(std::type_index(typeid(DataType)), aTag);
 }
 
-//---------------------------------
-// Get
-//---------------------------------
+
+/// C-style getters
 
 template<class T>
-JFactory* JEvent::Get(T** item, const std::string& tag) const
+JFactory* JEvent::Get(T** destination, const std::string& tag) const
 {
-    auto result = GetFactory<T>(tag);
-	return result;
+    auto factory = GetFactory<T>(tag);
+    auto iterators = GetIterators<T>(tag);
+    *destination = *iterators.first;
+	return factory;
 }
 
 template<class T>
-JFactory* JEvent::Get(vector<const T*> &vec, const std::string& aTag) const
+JFactory* JEvent::Get(vector<const T*>& destination, const std::string& tag) const
 {
-	auto pt = Get<T>( aTag );
-	for(auto it=pt.first; it!=pt.second; it++) vec.push_back( *it );
-	
-	return const_cast<JFactory*>( GetFactory<T>( aTag ) );
+	auto iterators = GetIterators<T>(tag);
+
+	for (auto it=iterators.first; it!=iterators.second; it++) {
+		destination.push_back(*it);
+	}
+	return GetFactory<T>(tag);
 }
 
+
+/// C++ style getters
 
 template<class T> const T* JEvent::GetSingle(const std::string& tag) const {
-    auto result = Get<T>(tag);
-    return *result.begin();
+    auto result = GetIterators<T>(tag);
+    return *result.first;
 }
 
 template<class T>
 vector<const T*> JEvent::Get(const std::string& aTag) const
 {
-	auto pt = Get<T>( aTag );
+	auto pt = GetIterators<T>( aTag );
 	
 	vector<const T*> vec;
 	for(auto it=pt.first; it!=pt.second; it++) vec.push_back( *it );
