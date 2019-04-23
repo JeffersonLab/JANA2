@@ -73,18 +73,22 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 		
 		//FACTORIES
 		void SetFactorySet(JFactorySet* aFactorySet);
-		template<class DataType>
-		JFactory* GetFactory(const std::string& aTag = "") const;
+		template<class DataType> JFactory* GetFactory(const std::string& aTag = "") const;
 
 		//OBJECTS
-		template<class T> JFactory* Get(vector<const T*> &vec, const std::string& aTag = "") const;
-		template<class T> vector<const T*> GetT(const std::string& aTag = "") const;
-		template<class T> typename JFactoryT<T>::PairType Get(const std::string& aTag = "") const;
+		// C style getters
+		template<class T> JFactory* Get(T** item, const std::string& tag="") const;
+		template<class T> JFactory* Get(vector<const T*> &vec, const std::string& tag = "") const;
+		template<class T> JFactory* Get(typename JFactoryT<T>::IteratorType& begin, typename JFactoryT<T>::IteratorType& end, const std::string& tag = "") const;
 
-		//template<class T> const T* GetSingle(const std::string& aTag = "") const;
+		// C++ style getters
+		template<class T> const T* GetSingle(const std::string& tag = "") const;
+		template<class T> vector<const T*> Get(const std::string& tag = "") const;
+        template<class T> typename JFactoryT<T>::PairType GetIterators(const std::string& aTag = "") const;
 
-		template <class T> void Insert(T* item, const std::string aTag = "") const;
-		template <class T> void Insert(std::vector<T*>& items, const std::string tag = "") const;
+        // Insert
+		template <class T> void Insert(T* item, const std::string& aTag = "") const;
+		template <class T> void Insert(std::vector<T*>& items, const std::string& tag = "") const;
 
 		//RESOURCES
 		void Release(void);
@@ -105,8 +109,6 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 		JApplication* GetJApplication(void) const {return mApplication;}
 
 	protected:
-
-		mutable std::map<std::pair<std::type_index, std::string>, std::vector<JObject*>> mObjectMap;
 		mutable JFactorySet* mFactorySet = nullptr;
 		JEventSource* mEventSource = nullptr;
 		bool mIsBarrierEvent = false;
@@ -125,14 +127,12 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 /// Repeated calls to Insert() will append to the previous data rather than overwrite it,
 /// which saves the user from having to allocate a throwaway vector and requires less error handling.
 template <class T>
-inline void JEvent::Insert(T* item, const string tag) const {
-
-    std::vector<T*> items = {item};
-    Insert(items, tag);
+inline void JEvent::Insert(T* item, const string& tag) const {
+    Insert<T>({item}, tag);
 }
 
 template <class T>
-inline void JEvent::Insert(vector<T*>& items, const string tag) const {
+inline void JEvent::Insert(vector<T*>& items, const string& tag) const {
 
 	auto factory = mFactorySet->GetFactory(std::type_index(typeid(T)), tag);
 	if (factory != nullptr) {
@@ -146,12 +146,6 @@ inline void JEvent::Insert(vector<T*>& items, const string tag) const {
 	}
 }
 
-//template<class T>
-//const T* JEvent::GetSingle(const std::string& tag) const {
-//	auto result = Get<T>(tag);
-//	return *result.second;
-//}
-
 //---------------------------------
 // GetFactory
 //---------------------------------
@@ -164,26 +158,31 @@ inline JFactory* JEvent::GetFactory(const std::string& aTag) const
 //---------------------------------
 // Get
 //---------------------------------
+
+template<class T>
+JFactory* JEvent::Get(T** item, const std::string& tag) const
+{
+    auto result = GetFactory<T>(tag);
+	return result;
+}
+
 template<class T>
 JFactory* JEvent::Get(vector<const T*> &vec, const std::string& aTag) const
 {
-	// Temporary wrapper for method below. The method below returns a beginning and
-	// ending iterator indicating the objects. This was a design change by Paul that
-	// I'm not sure I'm happy with, though I can see what he was trying to do and
-	// understand the appeal. I'm just too lazy at the moment to change the whole
-	// thing.
-
 	auto pt = Get<T>( aTag );
 	for(auto it=pt.first; it!=pt.second; it++) vec.push_back( *it );
 	
 	return const_cast<JFactory*>( GetFactory<T>( aTag ) );
 }
 
-//---------------------------------
-// GetT
-//---------------------------------
+
+template<class T> const T* JEvent::GetSingle(const std::string& tag) const {
+    auto result = Get<T>(tag);
+    return *result.begin();
+}
+
 template<class T>
-vector<const T*> JEvent::GetT(const std::string& aTag) const
+vector<const T*> JEvent::Get(const std::string& aTag) const
 {
 	auto pt = Get<T>( aTag );
 	
@@ -193,17 +192,11 @@ vector<const T*> JEvent::GetT(const std::string& aTag) const
 	return vec; // should get moved by Return Value Optimization
 }
 
-//---------------------------------
-// Get
-//---------------------------------
 template<class DataType>
-typename JFactoryT<DataType>::PairType JEvent::Get(const std::string& aTag) const
+typename JFactoryT<DataType>::PairType JEvent::GetIterators(const std::string& aTag) const
 {
-	//assert(mThreadManager!=nullptr);
-
 	if(mDebugLevel > 0)
 		JLog() << "Thread " << JTHREAD->GetThreadID() << " JEvent::Get(): Type = " << GetDemangledName<DataType>() << ", tag = " << aTag << ".\n" << JLogEnd();
-
 
 	//--------------------------------------------------------------------------------------------
 	// Something is amiss below. It looks like the following block was intended to
@@ -243,7 +236,6 @@ typename JFactoryT<DataType>::PairType JEvent::Get(const std::string& aTag) cons
 	//              one-to-one relationship once we move away from user-defined JEvents.
 	//              (Unless we wanted to use JFactorySets for subevent parallelism as well...)
 
-	// If not, then try to construct it using Factories
 	assert(mFactorySet != nullptr);
 
 	auto sFactoryBase = mFactorySet->GetFactory(std::type_index(typeid(DataType)), aTag);

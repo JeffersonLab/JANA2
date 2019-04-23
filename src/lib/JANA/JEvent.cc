@@ -55,14 +55,6 @@ JEvent::~JEvent()
 {
     // Return underlying FactorySets to pool and notify JEventSource
 	Release();
-
-	// Delete the JObjects which had been injected by the JEventSource
-	for( auto put_objects_pair : mObjectMap ) {
-		for ( auto put_object : put_objects_pair.second ) {
-			delete put_object;
-		}
-		put_objects_pair.second.clear();
-	}
 }
 
 //---------------------------------
