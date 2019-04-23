@@ -39,8 +39,8 @@ class JEventProcessor_example2:public JEventProcessor{
 			
 			// Get data objects for this event. Ordering doesn't matter.
 			// (n.b. Don't use a lock here!)
-			auto clusters = aEvent->GetT<MyCluster>();
-			auto hits     = aEvent->GetT<MyHit>();
+			auto clusters = aEvent->Get<MyCluster>();
+			auto hits     = aEvent->Get<MyHit>();
 			
 			//--------------------------------------------------------------
 			// ---- Do any potentially CPU intensive calculations here  ----

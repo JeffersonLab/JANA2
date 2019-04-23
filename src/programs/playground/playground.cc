@@ -67,7 +67,7 @@ class ClusterFactory : public JFactoryT<Cluster> {
 		cout << "ClusterFactory.process()" << endl;
 
 		auto cluster = new Cluster(); 
-		auto hits = event->Get<Hit>();
+		auto hits = event->GetIterators<Hit>();
 		int n = 0;
 		for (auto it = hits.first; it != hits.second; ++it) {
 			auto hit = *it;
@@ -116,7 +116,7 @@ int main(int narg, char *argv[]) {
 
 	event->SetFactorySet(&factories);
 
-	Cluster* result = *(event->Get<Cluster>().first);
+	Cluster* result = *(event->GetIterators<Cluster>().first);
 	cout << *result << endl;
 	delete app;
 	return 0;

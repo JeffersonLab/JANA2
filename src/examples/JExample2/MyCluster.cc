@@ -21,7 +21,7 @@ void JFactoryT<MyCluster>::Process(const std::shared_ptr<const JEvent>& aEvent)
 	// The type of the hits variable is a vector<const MyHit*> here. Using the
 	// "auto" type means we only need to type "MyHit" once, minimizing potential
 	// type conflicts from copy/paste errors.
-	auto hits = aEvent->GetT<MyHit>();
+	auto hits = aEvent->Get<MyHit>();
 
 	// For simplicity, split hits into 3 groups and we'll make a MyCluster from each
 	vector< decltype(hits) > sorted_hits(3); // i.e. vector< vector<const MyHit*> > with 3 elements
