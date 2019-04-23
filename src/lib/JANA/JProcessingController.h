@@ -61,14 +61,38 @@ public:
                       std::vector<JMetrics::ArrowSummary>& arrow_perf,
                       std::vector<JMetrics::WorkerSummary>& worker_perf);
 
-    void get_overall_perf(JMetrics::TopologySummary& topology_perf);
 
-    void get_overall_perf(JMetrics::TopologySummary& topology_perf,
-                      std::vector<JMetrics::ArrowSummary>& arrow_perf);
 
-    void get_overall_perf(JMetrics::TopologySummary& topology_perf,
-                      std::vector<JMetrics::ArrowSummary>& arrow_perf,
-                      std::vector<JMetrics::WorkerSummary>& worker_perf);
+private:
+
+    using jclock_t = std::chrono::steady_clock;
+    enum class RunState { BeforeRun, DuringRun, AfterRun };
+
+    class TopologyActivator : public JActivable {
+        bool is_active() override;
+        void set_active(bool is_active) override;
+    };
+
+    std::vector<JArrow*> _arrows;
+    std::vector<QueueBase*> _queues;
+    std::vector<JWorker*> _workers;         // One per cpu
+    std::vector<JScheduler*> _schedulers;   // One per NUMA domain
+    // TODO: How much NUMA stuff lives in ProcessingController vs TopologyBuilder?
+
+    std::vector<JArrow*> _sources;          // Sources needed for activation
+    std::vector<JArrow*> _sinks;            // Sinks needed for finished message count
+
+    JLogger _logger;
+
+    RunState _run_state = RunState::BeforeRun;
+    TopologyActivator _activator;
+    jclock_t::time_point _start_time;
+    jclock_t::time_point _last_time;
+    jclock_t::time_point _stop_time;
+    size_t _last_message_count = 0;
+    uint32_t _ncpus;
+
+
 
 };
 

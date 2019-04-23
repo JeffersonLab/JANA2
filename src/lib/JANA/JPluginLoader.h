@@ -30,59 +30,30 @@
 // Author: Nathan Brei
 //
 
-#include "JProcessingController.h"
+#ifndef JANA2_JPLUGINLOADER_H
+#define JANA2_JPLUGINLOADER_H
+
+#include <string>
+#include <vector>
+
+class JPluginLoader {
+
+public:
+
+    void add_plugin(std::string plugin_name);
+    void add_plugin_path(std::string path);
+    void attach_plugins(void);
+    void attach_plugin(std::string name, bool verbose=false);
+
+private:
+
+    std::vector<std::string> _plugins;
+    std::vector<std::string> _plugin_paths;
+    std::vector<void*> _sohandles;
+
+    JLogger _logger;
+    std::shared_ptr<JParameterManager> _params;
+};
 
 
-
-void JProcessingController::initialize() {
-    // Set exit code
-    // Set _quitting, _draining_queues
-
-}
-
-void JProcessingController::run(size_t nthreads) {
-
-}
-
-void JProcessingController::scale(size_t nthreads) {
-
-}
-
-void JProcessingController::request_stop() {
-
-}
-
-void JProcessingController::wait_until_finished() {
-
-}
-
-void JProcessingController::wait_until_stopped() {
-
-}
-
-size_t JProcessingController::get_nthreads() {
-    return 0;
-}
-
-void JProcessingController::measure_perf(JMetrics::TopologySummary& topology_perf) {
-
-}
-
-void JProcessingController::measure_perf(JMetrics::TopologySummary& topology_perf,
-                                         std::vector<JMetrics::ArrowSummary>& arrow_perf) {
-
-}
-
-void JProcessingController::measure_perf(JMetrics::TopologySummary& topology_perf,
-                                         std::vector<JMetrics::ArrowSummary>& arrow_perf,
-                                         std::vector<JMetrics::WorkerSummary>& worker_perf) {
-
-}
-
-bool JProcessingController::TopologyActivator::is_active() {
-    return JActivable::is_active();
-}
-
-void JProcessingController::TopologyActivator::set_active(bool is_active) {
-    JActivable::set_active(is_active);
-}
+#endif //JANA2_JPLUGINLOADER_H

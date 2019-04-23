@@ -30,59 +30,26 @@
 // Author: Nathan Brei
 //
 
-#include "JProcessingController.h"
+#ifndef JANA2_JTOPOLOGYBUILDER_H
+#define JANA2_JTOPOLOGYBUILDER_H
 
 
+#include "JEventSourceGenerator.h"
 
-void JProcessingController::initialize() {
-    // Set exit code
-    // Set _quitting, _draining_queues
+class JTopologyBuilder {
 
-}
+public:
+    void add(JEventSourceGenerator *source_generator);
+    void add(JFactoryGenerator *factory_generator);
+    void add(JEventProcessor *processor);
 
-void JProcessingController::run(size_t nthreads) {
+private:
+    std::vector<JFactoryGenerator*> _factoryGenerators;
+    std::vector<JCalibrationGenerator*> _calibrationGenerators;
+    std::vector<JEventProcessor*> _eventProcessors;
+    JEventSourceManager* _eventSourceManager;
 
-}
+};
 
-void JProcessingController::scale(size_t nthreads) {
 
-}
-
-void JProcessingController::request_stop() {
-
-}
-
-void JProcessingController::wait_until_finished() {
-
-}
-
-void JProcessingController::wait_until_stopped() {
-
-}
-
-size_t JProcessingController::get_nthreads() {
-    return 0;
-}
-
-void JProcessingController::measure_perf(JMetrics::TopologySummary& topology_perf) {
-
-}
-
-void JProcessingController::measure_perf(JMetrics::TopologySummary& topology_perf,
-                                         std::vector<JMetrics::ArrowSummary>& arrow_perf) {
-
-}
-
-void JProcessingController::measure_perf(JMetrics::TopologySummary& topology_perf,
-                                         std::vector<JMetrics::ArrowSummary>& arrow_perf,
-                                         std::vector<JMetrics::WorkerSummary>& worker_perf) {
-
-}
-
-bool JProcessingController::TopologyActivator::is_active() {
-    return JActivable::is_active();
-}
-
-void JProcessingController::TopologyActivator::set_active(bool is_active) {
-    JActivable::set_active(is_active);
-}
+#endif //JANA2_JTOPOLOGYBUILDER_H

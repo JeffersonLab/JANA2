@@ -34,7 +34,6 @@
 #include <vector>
 #include <string>
 #include <atomic>
-#include <mutex>
 #include <memory>
 #include <map>
 using std::vector;
@@ -55,8 +54,6 @@ class JEventSource;
 class JEventSourceGenerator;
 class JFactoryGenerator;
 class JCalibrationGenerator;
-class JQueue;
-class JThread;
 class JEventSourceManager;
 class JThreadManager;
 class JFactorySet;
@@ -82,13 +79,6 @@ class JApplication{
 
 	public:
 	
-		enum RETURN_STATUS{
-			kSUCCESS,
-			kNO_MORE_EVENTS,
-			kTRY_AGAIN,
-			kUNKNOWN
-		};
-
     JApplication(JParameterManager* params = nullptr, std::vector<string>* eventSources = nullptr);
 		virtual ~JApplication();
 
@@ -128,8 +118,6 @@ class JApplication{
 		virtual uint64_t GetNeventsProcessed(void);
 		float GetIntegratedRate(void);
 		float GetInstantaneousRate(void);
-		void GetInstantaneousRates(vector<double> &rates_by_queue);
-		void GetIntegratedRates(map<string,double> &rates_by_thread);
 
 		bool IsQuitting(void){ return _quitting; }
 		bool IsDrainingQueues(void){ return _draining_queues; }
@@ -141,29 +129,15 @@ class JApplication{
 	protected:
 
 		bool _initialized = false;
-		size_t _nthreads;
 		int _exit_code;
-		bool _skip_join;
-		bool _quitting;
-		bool _draining_queues;
 		bool _ticker_on;
 		std::chrono::time_point<std::chrono::high_resolution_clock> mRunStartTime;
-		std::vector<string> _plugins;
-		std::vector<string> _plugin_paths;
-		std::vector<void*> _sohandles;
-		std::vector<JFactoryGenerator*> _factoryGenerators;
-		std::vector<JCalibrationGenerator*> _calibrationGenerators;
-		std::vector<JEventProcessor*> _eventProcessors;
 
 		JLogger _logger;
 		JParameterManager *_pmanager;
-		JEventSourceManager* _eventSourceManager;
-		std::size_t mNumProcessorsAdded;
 
 		JResourcePoolSimple<JFactorySet> mFactorySetPool;
 
-    	void AttachPlugins(void);
-    	void AttachPlugin(string name, bool verbose=false);
 };
 
 //---------------------------------
