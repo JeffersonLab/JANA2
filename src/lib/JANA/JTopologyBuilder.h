@@ -39,14 +39,29 @@
 class JTopologyBuilder {
 
 public:
-    void add(JEventSourceGenerator *source_generator);
-    void add(JFactoryGenerator *factory_generator);
-    void add(JEventProcessor *processor);
+    void increase_priority();
+
+    void add(std::string event_source_name);
+    void add(JEventSourceGenerator* source_generator);
+    void add(std::string event_source_name, JEventSourceGenerator* source_generator);
+    void add(JFactoryGenerator* factory_generator);
+    void add(JEventProcessor* processor);
+
+    JProcessingTopology* build_topology();
 
 private:
-    std::vector<JFactoryGenerator*> _factoryGenerators;
-    std::vector<JCalibrationGenerator*> _calibrationGenerators;
-    std::vector<JEventProcessor*> _eventProcessors;
+    std::vector<JFactoryGenerator*> _fac_gens_front;
+    std::vector<JFactoryGenerator*> _fac_gens_back;
+
+    std::vector<JCalibrationGenerator*> _calib_gens_front;
+    std::vector<JCalibrationGenerator*> _calib_gens_back;
+
+    std::vector<JEventProcessor*> _evt_procs_front;
+    std::vector<JEventProcessor*> _evt_procs_back;
+
+    std::vector<JEventSourceGenerator*> _evt_src_gens_front;
+    std::vector<JEventSourceGenerator*> _evt_src_gens_back;
+
     JEventSourceManager* _eventSourceManager;
 
 };

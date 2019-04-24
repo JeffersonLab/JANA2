@@ -32,17 +32,47 @@
 
 #include "JTopologyBuilder.h"
 
-void JTopologyBuilder::add(JEventSourceGenerator* source_generator) {
 
-    GetJEventSourceManager()->AddJEventSourceGenerator( source_generator );
+void JTopologyBuilder::add(JEventSourceGenerator* source_generator) {
+    _evt_src_gens_front.push_back(source_generator);
 }
 
 void JTopologyBuilder::add(JFactoryGenerator* factory_generator) {
-
-    _factoryGenerators.push_back( factory_generator );
+    _fac_gens_front.push_back(factory_generator);
 }
 
 void JTopologyBuilder::add(JEventProcessor* processor) {
-
-    _eventProcessors.push_back( processor );
+    _evt_procs_front.push_back(processor);
 }
+
+void JTopologyBuilder::increase_priority() {
+
+    // Append everything low-priority to back of high-priority lists,
+    // clear the low-priority lists, and then swap the two
+
+    for (auto * factory_gen : _fac_gens_back) {
+        _fac_gens_front.push_back(factory_gen);
+    }
+    _fac_gens_back.clear();
+    _fac_gens_front.swap(_fac_gens_back);
+
+    for (auto * calib_gen : _calib_gens_back) {
+        _calib_gens_front.push_back(calib_gen);
+    }
+    _calib_gens_back.clear();
+    _calib_gens_front.swap(_calib_gens_back);
+
+    for (auto * event_proc : _evt_procs_back) {
+        _evt_procs_front.push_back(event_proc);
+    }
+    _evt_procs_back.clear();
+    _evt_procs_front.swap(_evt_procs_back);
+
+    for (auto * event_src_gen : _evt_src_gens_back) {
+        _evt_src_gens_front.push_back(event_src_gen);
+    }
+    _evt_src_gens_back.clear();
+    _evt_src_gens_front.swap(_evt_src_gens_back);
+
+}
+

@@ -60,7 +60,6 @@ JApplication::JApplication(JParameterManager* params,
 {
 	_exit_code = 0;
 	_ticker_on = true;
-	mNumProcessorsAdded = 0;
 
 	_pmanager = (params == nullptr) ? new JParameterManager() : params;
 	_logger = JLoggingService::logger("JApplication");
@@ -85,11 +84,12 @@ JApplication::~JApplication()
 	if( _eventSourceManager ) delete _eventSourceManager;
 }
 
-void JApplication::AddPlugin(string plugin_name)
-{
+void JApplication::AddPlugin(std::string plugin_name) {
+    _plugin_loader->add_plugin(plugin_name)
+}
 
-void JApplication::AddPluginPath(string path)
-{
+void JApplication::AddPluginPath(std::string path) {
+    _plugin_loader->add_plugin_path(path);
 }
 
 int JApplication::GetExitCode(void)
@@ -134,40 +134,32 @@ void JApplication::Add(JEventSourceGenerator *source_generator)
 	///
 	/// @param source_generator pointer to source generator to add. Ownership is passed to JApplication
 
+
 }
 
-void JApplication::Add(JFactoryGenerator *factory_generator)
-{
+void JApplication::Add(JFactoryGenerator *factory_generator) {
+    _topology_builder->add(factory_generator);
 	/// Add the given JFactoryGenerator to the list of queues
 	///
 	/// @param factory_generator pointer to factory generator to add. Ownership is passed to JApplication
-
-	_factoryGenerators.push_back( factory_generator );
 }
 
 
-void JApplication::Add(JEventProcessor *processor)
-{
-	mNumProcessorsAdded++;
+void JApplication::Add(JEventProcessor *processor) {
+    _topology_builder.add(processor);
 }
 
-void JApplication::GetJEventProcessors(vector<JEventProcessor*>& aProcessors)
-{
+void JApplication::GetJEventProcessors(vector<JEventProcessor*>& aProcessors) {
 	aProcessors = _eventProcessors;
 }
 
-void JApplication::GetJFactoryGenerators(vector<JFactoryGenerator*> &factory_generators)
-{
+void JApplication::GetJFactoryGenerators(vector<JFactoryGenerator*> &factory_generators) {
 	factory_generators = _factoryGenerators;
 }
 
-
-JParameterManager* JApplication::GetJParameterManager(void)
-{
-	/// Return pointer to the JParameterManager object.
+JParameterManager* JApplication::GetJParameterManager(void) {
 
 	if( !_pmanager ) _pmanager = new JParameterManager();
-
 	return _pmanager;
 }
 
@@ -177,35 +169,23 @@ JEventSourceManager* JApplication::GetJEventSourceManager(void) const
 	return _eventSourceManager;
 }
 
-
-
-JFactorySet* JApplication::GetFactorySet(void)
-{
+JFactorySet* JApplication::GetFactorySet(void) {
 	return mFactorySetPool.Get_Resource(_factoryGenerators);
 }
 
-void JApplication::Recycle(JFactorySet* aFactorySet)
-{
+void JApplication::Recycle(JFactorySet* aFactorySet) {
 	return mFactorySetPool.Recycle(aFactorySet);
 }
 
 uint64_t JApplication::GetNThreads() {
-	return _nthreads;
+	return _processing_controller->get_nthreads();
 }
 
-uint64_t JApplication::GetNtasksCompleted(string name)
-{
-	return 0;
-}
-
-uint64_t JApplication::GetNeventsProcessed(void)
-{
-	/// Return the total number of events processed.
+uint64_t JApplication::GetNeventsProcessed(void) {
 	return _eventSourceManager->GetNumEventsProcessed();
 }
 
-float JApplication::GetIntegratedRate(void)
-{
+float JApplication::GetIntegratedRate(void) {
 	/// Returns the total integrated rate so far in Hz since
 	/// Run was called.
 

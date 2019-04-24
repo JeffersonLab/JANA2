@@ -33,26 +33,34 @@
 #ifndef JANA2_JPLUGINLOADER_H
 #define JANA2_JPLUGINLOADER_H
 
+#include <JANA/JLogger.h>
+#include <JANA/JParameterManager.h>
+
 #include <string>
 #include <vector>
+#include "JTopologyBuilder.h"
 
-class JPluginLoader {
+class JPluginLoader : JService {
 
 public:
 
+    void acquire_services(JServiceLocator* service_locator);
+
     void add_plugin(std::string plugin_name);
     void add_plugin_path(std::string path);
-    void attach_plugins(void);
-    void attach_plugin(std::string name, bool verbose=false);
+    void attach_plugins(JTopologyBuilder* builder);
+    void attach_plugin(JTopologyBuilder* builder, std::string plugin_name);
 
 private:
 
-    std::vector<std::string> _plugins;
+    std::string _comma_separated_plugin_names;
     std::vector<std::string> _plugin_paths;
+    std::vector<std::string> _plugins;
     std::vector<void*> _sohandles;
 
+    bool _verbose;
     JLogger _logger;
-    std::shared_ptr<JParameterManager> _params;
+    JServiceLocator* _service_locator;
 };
 
 

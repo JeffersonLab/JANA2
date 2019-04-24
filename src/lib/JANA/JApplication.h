@@ -36,9 +36,6 @@
 #include <atomic>
 #include <memory>
 #include <map>
-using std::vector;
-using std::string;
-using std::map;
 
 #define jout std::cout
 #define jerr std::cerr
@@ -74,8 +71,6 @@ extern JApplication *japp;
 /// and processors with the JApplication so they can be called up later at the appropriate time.
 //////////////////////////////////////////////////////////////////////////////////////////////////
 class JApplication{
-
-
 
 	public:
 	
@@ -114,10 +109,9 @@ class JApplication{
 		void Recycle(JFactorySet* aFactorySet);
 
 		uint64_t GetNThreads();
-		uint64_t GetNtasksCompleted(string name="");
 		virtual uint64_t GetNeventsProcessed(void);
-		float GetIntegratedRate(void);
-		float GetInstantaneousRate(void);
+		float GetIntegratedRate();
+		float GetInstantaneousRate();
 
 		bool IsQuitting(void){ return _quitting; }
 		bool IsDrainingQueues(void){ return _draining_queues; }

@@ -91,108 +91,84 @@ void JPluginLoader::add_plugin_path(std::string path) {
 
 
 void JPluginLoader::attach_plugins(JTopologyBuilder* builder) {
-        /// Loop over list of plugin names added via AddPlugin() and
-        /// actually attach and initialize them. See AddPlugin method
-        /// for more.
+    /// Loop over list of plugin names added via AddPlugin() and
+    /// actually attach and initialize them. See AddPlugin method
+    /// for more.
 
-        bool printPaths = false;
-        _params->SetDefaultParameter(
-                "JANA:DEBUG_PLUGIN_LOADING",
-                printPaths,
-                "Trace the plugin search path and display any loading errors");
+    builder->increase_priority();
+    // Everything added to builder after this will have higher priority than everything added before.
 
-        // In order to give priority to factories added via plugins,
-        // the list of factory generators needs to be cleared so
-        // those added from plugins will be at the front of the list.
-        // We make a copy of the existing generators first so we can
-        // append them back to the end of the list before exiting.
-        // Similarly for event source generators and calibration generators.
-        vector<JEventSourceGenerator*> my_eventSourceGenerators;
-        _eventSourceManager->GetJEventSourceGenerators(my_eventSourceGenerators);
-        vector<JFactoryGenerator*> my_factoryGenerators = _factoryGenerators;
-        vector<JCalibrationGenerator*> my_calibrationGenerators = _calibrationGenerators;
-        _eventSourceManager->ClearJEventSourceGenerators();
-        _factoryGenerators.clear();
-        _calibrationGenerators.clear();
-
-        // The JANA_PLUGIN_PATH specifies directories to search
-        // for plugins that were explicitly added through AddPlugin(...).
-        // Multiple directories can be specified using a colon(:) separator.
-        const char *jpp = getenv("JANA_PLUGIN_PATH");
-        if(jpp){
-            std::stringstream ss(jpp);
-            string path;
-            while(getline(ss, path, ':')) add_plugin_path(path);
-        }
-
-        // Default plugin search path
-        add_plugin_path(".");
-        if(const char *ptr = getenv("JANA_HOME")) add_plugin_path(string(ptr) + "/plugins");
-
-        // Add plugins specified via PLUGINS configuration parameter
-        // (comma separated list).
-        try{
-            string plugins;
-            _params->GetParameter("PLUGINS", plugins);
-            std::stringstream ss(plugins);
-            string p;
-            while(getline(ss, p, ',')) _plugins.push_back(p);
-        }catch(...){
-            LOG_FATAL(_logger) << "Unknown exception while parsing PLUGINS parameter" << LOG_END;
-            SetExitCode(-1);
-            Quit();
-        }
-
-        // Loop over plugins
-        std::stringstream err_mess;
-        for(string plugin : _plugins){
-            // Sometimes, the user will include the ".so" suffix in the
-            // plugin name. If they don't, then we add it here.
-            if(plugin.substr(plugin.size()-3)!=".so")plugin = plugin+".so";
-
-            // Loop over paths
-            bool found_plugin=false;
-            for(string path : _plugin_paths){
-                string fullpath = path + "/" + plugin;
-                LOG_TRACE(_logger, printPaths) << "Looking for '" << fullpath << "' ...." << LOG_END;
-                if (access(fullpath.c_str(), F_OK) != -1) {
-                    LOG_TRACE(_logger, printPaths) << "Found!" << LOG_END;
-                    try{
-                        attach_plugin(fullpath.c_str(), printPaths);
-                        found_plugin=true;
-                        break;
-                    } catch(...) {
-                        err_mess << "Tried to attach: \"" << fullpath << "\"" << std::endl;
-                        err_mess << "  -- error message: " << dlerror() << std::endl;
-                        continue;
-                    }
-                }
-                LOG_TRACE(_logger, printPaths) << "Failed to attach '" << fullpath << "'" << LOG_END;
-            }
-
-            // If we didn't find the plugin, then complain and quit
-            if(!found_plugin){
-
-                LOG_FATAL(_logger) << "\n*** Couldn't find plugin '" << plugin << "'! ***\n" <<
-                                   "***        Make sure the JANA_PLUGIN_PATH environment variable is set correctly.\n" <<
-                                   "***        To see paths checked, set JANA:DEBUG_PLUGIN_LOADING=1\n"<<
-                                   "***        Some hints to the error follow:\n\n" << err_mess.str() << LOG_END;
-
-                exit(-1);
-            }
-        }
-
-        // Append generators back onto appropriate lists
-        for(auto sGenerator : my_eventSourceGenerators)
-            _eventSourceManager->AddJEventSourceGenerator(sGenerator);
-        _factoryGenerators.insert(_factoryGenerators.end(), my_factoryGenerators.begin(), my_factoryGenerators.end());
-        _calibrationGenerators.insert(_calibrationGenerators.end(), my_calibrationGenerators.begin(), my_calibrationGenerators.end());
+    // The JANA_PLUGIN_PATH specifies directories to search
+    // for plugins that were explicitly added through AddPlugin(...).
+    // Multiple directories can be specified using a colon(:) separator.
+    const char* jpp = getenv("JANA_PLUGIN_PATH");
+    if (jpp) {
+        std::stringstream ss(jpp);
+        string path;
+        while (getline(ss, path, ':')) add_plugin_path(path);
     }
 
+    // Default plugin search path
+    add_plugin_path(".");
+    if (const char* ptr = getenv("JANA_HOME")) add_plugin_path(string(ptr) + "/plugins");
+
+    // Add plugins specified via PLUGINS configuration parameter
+    // (comma separated list).
+    try {
+        std::stringstream ss(_comma_separated_plugin_names);
+        string p;
+        while (getline(ss, p, ',')) _plugins.push_back(p);
+    }
+    catch (...) {
+        LOG_ERROR(_logger) << "Unknown exception while parsing PLUGINS parameter" << LOG_END;
+        throw JException("Exception parsing PLUGINS parameter.");
+    }
+
+    // Loop over plugins
+    std::stringstream err_mess;
+    for (string plugin : _plugins) {
+        // Sometimes, the user will include the ".so" suffix in the
+        // plugin name. If they don't, then we add it here.
+        if (plugin.substr(plugin.size() - 3) != ".so")plugin = plugin + ".so";
+
+        // Loop over paths
+        bool found_plugin = false;
+        for (string path : _plugin_paths) {
+            string fullpath = path + "/" + plugin;
+            LOG_TRACE(_logger, _verbose) << "Looking for '" << fullpath << "' ...." << LOG_END;
+            if (access(fullpath.c_str(), F_OK) != -1) {
+                LOG_TRACE(_logger, _verbose) << "Found!" << LOG_END;
+                try {
+                    attach_plugin(builder, fullpath.c_str());
+                    found_plugin = true;
+                    break;
+                } catch (...) {
+                    err_mess << "Tried to attach: \"" << fullpath << "\"" << std::endl;
+                    err_mess << "  -- error message: " << dlerror() << std::endl;
+                    continue;
+                }
+            }
+            LOG_TRACE(_logger, _verbose) << "Failed to attach '" << fullpath << "'" << LOG_END;
+        }
+
+        // If we didn't find the plugin, then complain and quit
+        if (!found_plugin) {
+
+            LOG_FATAL(_logger) << "\n*** Couldn't find plugin '" << plugin << "'! ***\n" <<
+                               "***        Make sure the JANA_PLUGIN_PATH environment variable is set correctly.\n" <<
+                               "***        To see paths checked, set JANA:DEBUG_PLUGIN_LOADING=1\n" <<
+                               "***        Some hints to the error follow:\n\n" << err_mess.str() << LOG_END;
+
+            exit(-1);
+        }
+    }
+
+    builder->increase_priority();
+    // Push everything onto low-priority list, so future adds have higher priority
 }
 
 
-void JPluginLoader::attach_plugin(std::string soname, bool verbose, JTopologyBuilder* builder) {
+void JPluginLoader::attach_plugin(JTopologyBuilder* builder, std::string soname) {
 
     /// Attach a plugin by opening the shared object file and running the
     /// InitPlugin_t(JApplication* app) global C-style routine in it.
@@ -210,21 +186,40 @@ void JPluginLoader::attach_plugin(std::string soname, bool verbose, JTopologyBui
 
     // Open shared object
     void* handle = dlopen(soname.c_str(), RTLD_LAZY | RTLD_GLOBAL | RTLD_NODELETE);
-    if(!handle){
+    if (!handle) {
         LOG_DEBUG(_logger) << dlerror() << LOG_END;
         throw "dlopen failed";
     }
 
     // Look for an InitPlugin symbol
     typedef void InitPlugin_t(JTopologyBuilder* builder);
-    InitPlugin_t *plugin = (InitPlugin_t*) dlsym(handle, "InitPlugin");
+    InitPlugin_t* plugin = (InitPlugin_t*) dlsym(handle, "InitPlugin");
     if (plugin) {
         LOG_INFO(_logger) << "Initializing plugin \"" << soname << "\"" << LOG_END;
         (*plugin)(builder);
         _sohandles.push_back(handle);
-    }
-    else {
+    } else {
         dlclose(handle);
-        LOG_DEBUG(_logger) << "Plugin \"" << soname << "\" does not have an InitPlugin() function. Ignoring." << LOG_END;
+        LOG_TRACE(_logger, _verbose) << "Plugin \"" << soname << "\" does not have an InitPlugin() function. Ignoring."
+                                     << LOG_END;
     }
 }
+
+
+void JPluginLoader::acquire_services(JServiceLocator* service_locator) {
+
+    _logger = JLoggingService::logger("JPluginLoader");
+    _service_locator = service_locator;
+
+    auto params = service_locator->get<JParameterManager>();
+
+    _comma_separated_plugin_names = "JTest";
+
+    params->SetDefaultParameter("PLUGINS", _comma_separated_plugin_names, "");
+
+    params->SetDefaultParameter("JANA:DEBUG_PLUGIN_LOADING", _verbose,
+                                "Trace the plugin search path and display any loading errors");
+
+}
+
+
