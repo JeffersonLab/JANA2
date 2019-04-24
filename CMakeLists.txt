@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # For janapy plugin
+find_package(PythonInterp 3 REQUIRED)
 find_package(PythonLibs 3 REQUIRED)
 include_directories(${PYTHON_INCLUDE_DIRS})
 
@@ -156,6 +157,9 @@ target_link_libraries(jana Threads::Threads)
 target_link_libraries(jtest Threads::Threads)
 target_link_libraries(playground Threads::Threads)
 target_link_libraries(tests Threads::Threads)
+
+# janpy plugin needs libpython
+target_link_libraries(janapy ${PYTHON_LIBRARIES})
 
 # Remove "lib" prefix from plugins
 set_target_properties(jtest PROPERTIES PREFIX "")
