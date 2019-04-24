@@ -62,9 +62,9 @@ void JEventProcessor_jana_test::Process(const std::shared_ptr<const JEvent>& aEv
 	// to use up CPU.
 
 	// Get objects
-	auto sIterators_JanaTest = aEvent->Get<jana_test>(); //Will get from factory
-	auto sIterators_SourceObject = aEvent->Get<JSourceObject>(); //Will get from file
-	auto sIterators_SourceObject2 = aEvent->Get<JSourceObject2>(); //Will get from file, and will submit jobs to generate random #'s
+	auto sIterators_JanaTest = aEvent->GetIterators<jana_test>(); //Will get from factory
+	auto sIterators_SourceObject = aEvent->GetIterators<JSourceObject>(); //Will get from file
+	auto sIterators_SourceObject2 = aEvent->GetIterators<JSourceObject2>(); //Will get from file, and will submit jobs to generate random #'s
 	mNumObjects += std::distance(sIterators_JanaTest.first, sIterators_JanaTest.second);
 	mNumObjects += std::distance(sIterators_SourceObject.first, sIterators_SourceObject.second);
 	mNumObjects += std::distance(sIterators_SourceObject2.first, sIterators_SourceObject2.second);

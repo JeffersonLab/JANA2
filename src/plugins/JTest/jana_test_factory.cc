@@ -63,8 +63,8 @@ void jana_test_factory::Process(const std::shared_ptr<const JEvent>& aEvent)
 	// objects.
 
 	// Get the JSourceObject and JSourceObject2 objects
-	auto sobjs  = aEvent->GetT<JSourceObject >();
-	auto sobj2s = aEvent->GetT<JSourceObject2>();
+	auto sobjs  = aEvent->Get<JSourceObject >();
+	auto sobj2s = aEvent->Get<JSourceObject2>();
 
 	// Create a jana_test object for each JSourceObject2 object
 	std::vector< std::shared_ptr<JTaskBase> > sTasks;

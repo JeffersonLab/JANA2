@@ -53,6 +53,7 @@ JEvent::JEvent(JApplication* aApplication) : mApplication(aApplication), mThread
 //---------------------------------
 JEvent::~JEvent()
 {
+    // Return underlying FactorySets to pool and notify JEventSource
 	Release();
 }
 
@@ -98,8 +99,15 @@ void JEvent::Release(void)
 {
 	//Release all (pointers to) resources, called when recycled to pool
 	if(mFactorySet != nullptr) {
-		mApplication->Recycle(const_cast<JFactorySet*>(mFactorySet));
-		mFactorySet = nullptr;
+		if (mApplication != nullptr) {
+			mApplication->Recycle(const_cast<JFactorySet*>(mFactorySet));
+			mFactorySet = nullptr;
+		}
+		else {
+			mFactorySet->Release();
+			delete mFactorySet;
+			mFactorySet = nullptr;
+		}
 	}
 
 	if(mEventSource != nullptr ){

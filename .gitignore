@@ -51,3 +51,5 @@ docs/latex/*
 
 # Vim swap files
 *.swp
+cmake-build-debug/*
+.idea
