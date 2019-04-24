@@ -110,7 +110,7 @@ add_library(jana2 STATIC
         src/lib/JANA/JMetrics.h
         src/lib/JANA/JArrowMetrics.h
         src/lib/JANA/JWorkerMetrics.h
-        src/lib/JANA/JTopologyBuilder.cc src/lib/JANA/JTopologyBuilder.h src/lib/JANA/JPluginLoader.cc src/lib/JANA/JPluginLoader.h)
+        src/lib/JANA/JTopologyBuilder.cc src/lib/JANA/JTopologyBuilder.h src/lib/JANA/JPluginLoader.cc src/lib/JANA/JPluginLoader.h src/lib/JANA/JLegacyProcessingController.cc src/lib/JANA/JLegacyProcessingController.h)
 
 add_library(jtest SHARED
         src/plugins/JTest/JTestDataObject.h

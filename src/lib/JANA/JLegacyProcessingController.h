@@ -30,47 +30,40 @@
 // Author: Nathan Brei
 //
 
-#ifndef JANA2_JTOPOLOGYBUILDER_H
-#define JANA2_JTOPOLOGYBUILDER_H
+#ifndef JANA2_JLEGACYPROCESSINGCONTROLLER_H
+#define JANA2_JLEGACYPROCESSINGCONTROLLER_H
 
+#include <unistd.h>
+#include <JANA/JThreadManager.h>
+#include <JANA/JParameterManager.h>
 
-#include "JEventSourceGenerator.h"
-#include "JEventProcessor.h"
+class JApplication;
 
-class JTopologyBuilder {
+class JLegacyProcessingController {
 
 public:
-    void increase_priority();
 
-    void add(std::string event_source_name);
-    void add(JEventSourceGenerator* source_generator);
-    void add(JFactoryGenerator* factory_generator);
-    void add(JEventProcessor* processor);
+    JLegacyProcessingController(JApplication* app);
+    ~JLegacyProcessingController();
 
-    //JProcessingTopology* build_topology();
-    // TODO: Problem: What lives on JProcessingTopology as opposed to Builder?
-    //   - Everything that needs to be deleted eventually
-    //   - EventSourceManager: used by JStatus, JThreadManager
-    //   - Topology should contain everything needed for old
-    //   - Or not? GetJEventSourceManager is used by JTestMain,
-    //   Maybe builder also produces a LegacyController, passing it the JEventSourceManager.
-    //   - GetEventProcessor(), etc
+    void initialize();
+    void run(size_t nthreads);
+    void scale(size_t nthreads);
+    void request_stop();
+    void wait_until_finished();
+    void wait_until_stopped();
+
+    size_t get_nthreads();
+
+    JThreadManager* get_threadmanager();
 
 private:
-    std::vector<std::string> _evt_src_names;
-
-    std::vector<JFactoryGenerator*> _fac_gens_front;
-    std::vector<JFactoryGenerator*> _fac_gens_back;
-
-    std::vector<JEventProcessor*> _evt_procs_front;
-    std::vector<JEventProcessor*> _evt_procs_back;
-
-    std::vector<JEventSourceGenerator*> _evt_src_gens_front;
-    std::vector<JEventSourceGenerator*> _evt_src_gens_back;
-
-    JEventSourceManager* _eventSourceManager;
+    JThreadManager* _threadManager;
+    JParameterManager* _params;
+    bool _skip_join;
+    size_t _nthreads;
 
 };
 
 
-#endif //JANA2_JTOPOLOGYBUILDER_H
+#endif //JANA2_JLEGACYPROCESSINGCONTROLLER_H

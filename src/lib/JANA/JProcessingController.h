@@ -51,6 +51,10 @@ public:
     void wait_until_stopped();
 
     size_t get_nthreads();
+    size_t get_nevents_processed();
+    double get_inst_throughput_hz();
+    double get_avg_throughput_hz();
+
 
     void measure_perf(JMetrics::TopologySummary& topology_perf);
 
@@ -69,6 +73,7 @@ private:
     enum class RunState { BeforeRun, DuringRun, AfterRun };
 
     class TopologyActivator : public JActivable {
+    public:
         bool is_active() override;
         void set_active(bool is_active) override;
     };

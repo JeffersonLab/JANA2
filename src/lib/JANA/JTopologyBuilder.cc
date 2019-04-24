@@ -33,6 +33,10 @@
 #include "JTopologyBuilder.h"
 
 
+void JTopologyBuilder::add(std::string event_source_name) {
+    _evt_src_names.push_back(event_source_name);
+}
+
 void JTopologyBuilder::add(JEventSourceGenerator* source_generator) {
     _evt_src_gens_front.push_back(source_generator);
 }
@@ -55,12 +59,6 @@ void JTopologyBuilder::increase_priority() {
     }
     _fac_gens_back.clear();
     _fac_gens_front.swap(_fac_gens_back);
-
-    for (auto * calib_gen : _calib_gens_back) {
-        _calib_gens_front.push_back(calib_gen);
-    }
-    _calib_gens_back.clear();
-    _calib_gens_front.swap(_calib_gens_back);
 
     for (auto * event_proc : _evt_procs_back) {
         _evt_procs_front.push_back(event_proc);

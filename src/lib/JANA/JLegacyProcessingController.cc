@@ -30,47 +30,72 @@
 // Author: Nathan Brei
 //
 
-#ifndef JANA2_JTOPOLOGYBUILDER_H
-#define JANA2_JTOPOLOGYBUILDER_H
+#include <JANA/JLegacyProcessingController.h>
 
 
-#include "JEventSourceGenerator.h"
-#include "JEventProcessor.h"
+JLegacyProcessingController::JLegacyProcessingController(JApplication* app) {
+    _threadManager = new JThreadManager(app);
+}
 
-class JTopologyBuilder {
+JLegacyProcessingController::~JLegacyProcessingController() {
+    delete _threadManager;
+}
 
-public:
-    void increase_priority();
+void JLegacyProcessingController::initialize() {
+    _threadManager->PrepareQueues();
+}
 
-    void add(std::string event_source_name);
-    void add(JEventSourceGenerator* source_generator);
-    void add(JFactoryGenerator* factory_generator);
-    void add(JEventProcessor* processor);
+void JLegacyProcessingController::run(size_t nthreads) {
+    LOG_INFO(_logger) << "Creating " << _nthreads << " processing threads ..." << LOG_END;
+    _threadManager->CreateThreads(_nthreads);
 
-    //JProcessingTopology* build_topology();
-    // TODO: Problem: What lives on JProcessingTopology as opposed to Builder?
-    //   - Everything that needs to be deleted eventually
-    //   - EventSourceManager: used by JStatus, JThreadManager
-    //   - Topology should contain everything needed for old
-    //   - Or not? GetJEventSourceManager is used by JTestMain,
-    //   Maybe builder also produces a LegacyController, passing it the JEventSourceManager.
-    //   - GetEventProcessor(), etc
+    // Optionally set thread affinity
+    try{
+        int affinity_algorithm = 0;
+        _pmanager->SetDefaultParameter("AFFINITY", affinity_algorithm, "Set the thread affinity algorithm. 0=none, 1=sequential, 2=core fill");
+        _threadManager->SetThreadAffinity( affinity_algorithm );
+    }catch(...){
+        LOG_ERROR(_logger) << "Unknown exception in JApplication::Run attempting to set thread affinity" << LOG_END;
+    }
 
-private:
-    std::vector<std::string> _evt_src_names;
+    _nthreads = nthreads;
+    _threadManager->RunThreads();
+}
 
-    std::vector<JFactoryGenerator*> _fac_gens_front;
-    std::vector<JFactoryGenerator*> _fac_gens_back;
+void JLegacyProcessingController::scale(size_t nthreads) {
+    _nthreads = nthreads;
+    _threadManager->SetNJThreads(nthreads);
+}
 
-    std::vector<JEventProcessor*> _evt_procs_front;
-    std::vector<JEventProcessor*> _evt_procs_back;
+void JLegacyProcessingController::request_stop() {
+    _threadManager->StopThreads(false);
 
-    std::vector<JEventSourceGenerator*> _evt_src_gens_front;
-    std::vector<JEventSourceGenerator*> _evt_src_gens_back;
+}
 
-    JEventSourceManager* _eventSourceManager;
+void JLegacyProcessingController::wait_until_finished() {
 
-};
+}
 
+void JLegacyProcessingController::wait_until_stopped() {
+    _threadManager->StopThreads(true);
+    _threadManager->JoinThreads();
+    // Delete event processors
+    for(auto sProcessor : _eventProcessors){
+        sProcessor->Finish(); // (this may not be necessary since it is always next to destructor)
+        delete sProcessor;
+    }
+    _eventProcessors.clear();
 
-#endif //JANA2_JTOPOLOGYBUILDER_H
+}
+
+size_t JLegacyProcessingController::get_nthreads() {
+    return _nthreads;
+}
+
+JThreadManager* JLegacyProcessingController::get_threadmanager() {
+    return _threadManager;
+}
+
+bool JLegacyProcessingController::is_stopped() {
+    return _threadManager->AreAllThreadsEnded();
+}

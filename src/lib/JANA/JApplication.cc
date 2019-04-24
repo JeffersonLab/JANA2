@@ -26,15 +26,6 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-#include <unistd.h>
-#include <sched.h>
-#include <cstdlib>
-#include <sstream>
-#include <iostream>
-#include <iomanip>
-#include <unordered_set>
-using namespace std;
-
 #include "JApplication.h"
 
 #include <JANA/JEventProcessor.h>
@@ -43,26 +34,18 @@ using namespace std;
 #include <JANA/JFactoryGenerator.h>
 #include <JANA/JParameterManager.h>
 #include <JANA/JEventSourceManager.h>
-#include <JANA/JException.h>
-#include <JANA/JVersion.h>
-#include <JANA/JResourcePool.h>
-#include <JANA/JResourcePoolSimple.h>
-#include <JANA/JCpuInfo.h>
 
 JApplication *japp = nullptr;
 
 
-//---------------------------------
-// JApplication    (Constructor)
-//---------------------------------
-JApplication::JApplication(JParameterManager* params,
-						   std::vector<string>* eventSources)
-{
-	_exit_code = 0;
-	_ticker_on = true;
+JApplication::JApplication() {
 
-	_pmanager = (params == nullptr) ? new JParameterManager() : params;
 	_logger = JLoggingService::logger("JApplication");
+	_params = new JParameterManager();
+	_plugin_loader = new JPluginLoader();
+	_topology_builder = new JTopologyBuilder();
+	_processing_controller = new JProcessingController();
+
 	_eventSourceManager = new JEventSourceManager(this);
 
 	if (eventSources != nullptr) {
@@ -73,27 +56,22 @@ JApplication::JApplication(JParameterManager* params,
 	}
 }
 
-//---------------------------------
-// ~JApplication    (Destructor)
-//---------------------------------
-JApplication::~JApplication()
-{
-	for( auto p: _factoryGenerators     ) delete p;
-	for( auto p: _eventProcessors       ) delete p;
-	if( _pmanager           ) delete _pmanager;
-	if( _eventSourceManager ) delete _eventSourceManager;
+JApplication::~JApplication() {
+    delete _params;
+    delete _plugin_loader;
+    delete _topology_builder;
+    delete _processing_controller;
 }
 
 void JApplication::AddPlugin(std::string plugin_name) {
-    _plugin_loader->add_plugin(plugin_name)
+    _plugin_loader->add_plugin(plugin_name);
 }
 
 void JApplication::AddPluginPath(std::string path) {
     _plugin_loader->add_plugin_path(path);
 }
 
-int JApplication::GetExitCode(void)
-{
+int JApplication::GetExitCode(void) {
 	/// Returns the currently set exit code. This can be used by
 	/// JProcessor/JFactory classes to communicate an appropriate
 	/// exit code that a jana program can return upon exit. The
@@ -102,18 +80,15 @@ int JApplication::GetExitCode(void)
 	return _exit_code;
 }
 
-
-void JApplication::PrintStatus(void)
-{
+void JApplication::PrintStatus(void) {
 	// Print ticker
-	stringstream ss;
+	std::stringstream ss;
 	ss << "  " << GetNeventsProcessed() << " events processed  " << Val2StringWithPrefix( GetInstantaneousRate() ) << "Hz (" << Val2StringWithPrefix( GetIntegratedRate() ) << "Hz avg)             ";
 	jout << ss.str() << "\r";
 	jout.flush();
 }
 
-void JApplication::SetExitCode(int exit_code)
-{
+void JApplication::SetExitCode(int exit_code) {
 	/// Set a value of the exit code in that can be later retrieved
 	/// using GetExitCode. This is so the executable can return
 	/// a meaningful error code if processing is stopped prematurely,
@@ -123,49 +98,41 @@ void JApplication::SetExitCode(int exit_code)
 	_exit_code = exit_code;
 }
 
-void JApplication::SetTicker(bool ticker_on)
-{
+void JApplication::SetTicker(bool ticker_on) {
 	_ticker_on = ticker_on;
 }
 
-void JApplication::Add(JEventSourceGenerator *source_generator)
-{
-	/// Add the given JFactoryGenerator to the list of queues
-	///
-	/// @param source_generator pointer to source generator to add. Ownership is passed to JApplication
-
-
+void JApplication::Add(JEventSourceGenerator *source_generator) {
+    /// Add the given JFactoryGenerator to the list of queues
+    ///
+    /// @param source_generator pointer to source generator to add. Ownership is passed to JApplication
+    _topology_builder->add(source_generator);
 }
 
 void JApplication::Add(JFactoryGenerator *factory_generator) {
+    /// Add the given JFactoryGenerator to the list of queues
+    ///
+    /// @param factory_generator pointer to factory generator to add. Ownership is passed to JApplication
     _topology_builder->add(factory_generator);
-	/// Add the given JFactoryGenerator to the list of queues
-	///
-	/// @param factory_generator pointer to factory generator to add. Ownership is passed to JApplication
 }
 
-
-void JApplication::Add(JEventProcessor *processor) {
-    _topology_builder.add(processor);
+void JApplication::Add(JEventProcessor* processor) {
+    _topology_builder->add(processor);
 }
 
-void JApplication::GetJEventProcessors(vector<JEventProcessor*>& aProcessors) {
+void JApplication::GetJEventProcessors(std::vector<JEventProcessor*>& aProcessors) {
 	aProcessors = _eventProcessors;
 }
 
-void JApplication::GetJFactoryGenerators(vector<JFactoryGenerator*> &factory_generators) {
+void JApplication::GetJFactoryGenerators(std::vector<JFactoryGenerator*> &factory_generators) {
 	factory_generators = _factoryGenerators;
 }
 
-JParameterManager* JApplication::GetJParameterManager(void) {
-
-	if( !_pmanager ) _pmanager = new JParameterManager();
+JParameterManager* JApplication::GetJParameterManager() {
 	return _pmanager;
 }
 
-
-JEventSourceManager* JApplication::GetJEventSourceManager(void) const
-{
+JEventSourceManager* JApplication::GetJEventSourceManager() const {
 	return _eventSourceManager;
 }
 
@@ -182,7 +149,8 @@ uint64_t JApplication::GetNThreads() {
 }
 
 uint64_t JApplication::GetNeventsProcessed(void) {
-	return _eventSourceManager->GetNumEventsProcessed();
+    return _processing_controller->get_nevents_processed();
+	//return _eventSourceManager->GetNumEventsProcessed();
 }
 
 float JApplication::GetIntegratedRate(void) {
@@ -224,7 +192,7 @@ float JApplication::GetInstantaneousRate(void)
 	return last_R;
 }
 
-string JApplication::Val2StringWithPrefix(float val)
+std::string JApplication::Val2StringWithPrefix(float val)
 {
 	/// Return the value as a string with the appropriate latin unit prefix
 	/// appended.
@@ -254,6 +222,94 @@ string JApplication::Val2StringWithPrefix(float val)
 	char str[256];
 	sprintf(str,"%3.1f %s", val, units);
 
-	return string(str);
+	return std::string(str);
+}
+
+void JApplication::Initialize(void) {
+
+	if (_initialized) return;
+	_initialized = true;
+
+	// Attach all plugins
+	_plugin_loader->attach_plugins(_topology_builder);
+
+	// Set task pool size
+	int task_pool_size = 200;
+	int task_pool_debuglevel = 0;
+	_pmanager->SetDefaultParameter("JANA:TASK_POOL_SIZE", task_pool_size, "Task pool size");
+	_pmanager->SetDefaultParameter("JANA:TASK_POOL_DEBUGLEVEL", task_pool_debuglevel, "Task pool debug level");
+	mVoidTaskPool.Set_ControlParams(task_pool_size, task_pool_debuglevel);
+	// TODO: Move mVoidTaskPool into JThreadManager
+}
+
+void JApplication::PrintFinalReport(void) {
+
+}
+
+void JApplication::Quit(bool skip_join) {
+	_skip_join = skip_join;
+	_quitting = true;
+	Stop(skip_join);
+}
+
+void JApplication::Run() {
+    Initialize();
+    if(_quitting) return;
+
+	// Print summary of all config parameters (if any aren't default)
+	_params->PrintParameters(false);
+
+	jout << "Start processing ..." << std::endl;
+	mRunStartTime = std::chrono::high_resolution_clock::now();
+    _processing_controller->run(_nthreads);
+
+	// Monitor status of all threads
+	while( !_quitting ){
+
+		// If we are finishing up (all input sources are closed, and are waiting for all events to finish processing)
+		// This flag is used by the integrated rate calculator
+		// The JThreadManager is in charge of telling all the threads to end
+		if(!_draining_queues)
+			_draining_queues = _eventSourceManager->AreAllFilesClosed();
+
+
+		// Check if all threads have finished
+		if (_processing_controller->is_stopped()) {
+		    // TODO: Or do we want is_finished?
+			std::cout << "All threads have ended.\n";
+			break;
+		}
+
+		// Sleep a few cycles
+		std::this_thread::sleep_for( std::chrono::milliseconds(500) );
+
+		// Print status
+		if( _ticker_on ) PrintStatus();
+	}
+
+	// Join all threads
+	jout << "Event processing ended. " << std::endl;
+	if (!_skip_join) {
+		jout << "Merging threads ..." << std::endl;
+		_processing_controller->wait_until_stopped();
+	}
+
+	// Report Final numbers
+	PrintFinalReport();
+}
+
+void JApplication::Scale(int nthreads) {
+	_processing_controller->scale(nthreads);
+}
+
+void JApplication::Stop(bool wait_until_idle) {
+	_processing_controller->request_stop();
+	if (wait_until_idle) {
+		_processing_controller->wait_until_stopped();
+	}
+}
+
+void JApplication::Add(std::string event_source_name) {
+    _topology_builder->add(event_source_name);
 }
 
