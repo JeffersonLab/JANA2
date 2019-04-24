@@ -103,8 +103,8 @@ env.PrependUnique(CPPPATH = ['%s/../src' % jana_home, '%s/../src/JANA' % jana_ho
 env.PrependUnique(CPPPATH = ['%s/../src' % jana_my, '%s/../src/JANA' % jana_my])
 
 # Turn on debug symbols and warnings
-env.PrependUnique(      CFLAGS = ['-g', '-fPIC', '-Wall', '-std=c++11'])
-env.PrependUnique(    CXXFLAGS = ['-g', '-fPIC', '-Wall'])
+env.PrependUnique(      CFLAGS = ['-g', '-fPIC', '-Wall'])
+env.PrependUnique(    CXXFLAGS = ['-g', '-fPIC', '-Wall', '-std=c++11'])
 env.PrependUnique(FORTRANFLAGS = ['-g', '-fPIC', '-Wall'])
 
 # Apply any platform/architecture specific settings
