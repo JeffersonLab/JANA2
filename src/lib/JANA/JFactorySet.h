@@ -49,6 +49,7 @@
 #include <map>
 
 #include "JResettable.h"
+#include "JFactoryT.h"
 
 class JFactoryGenerator;
 class JFactory;
@@ -62,11 +63,12 @@ class JFactorySet : public JResettable
 		virtual ~JFactorySet();
 		
 		bool Add(JFactory* aFactory);
-		JFactory* GetFactory(std::type_index aObjectType, const std::string& aFactoryTag="") const;
 		void Merge(JFactorySet &aFactorySet);
 		void Print(void) const;
-
 		void Release(void);
+
+		JFactory* GetFactory(std::type_index aObjectType, const std::string& aFactoryTag="") const;
+		template<typename T> JFactoryT<T>* GetFactory(const std::string& tag = "") const;
 
 	protected:
 	
@@ -74,6 +76,13 @@ class JFactorySet : public JResettable
 		std::map<std::pair<std::type_index, std::string>, JFactory*> mFactories;
 };
 
+template<typename T>
+JFactoryT<T>* JFactorySet::GetFactory(const std::string& tag) const {
+
+	auto sKeyPair = std::make_pair(std::type_index(typeid(T)), tag);
+	auto sIterator = mFactories.find(sKeyPair);
+	return (sIterator != std::end(mFactories)) ? static_cast<JFactoryT<T>*>(sIterator->second) : nullptr;
+}
 
 #endif // _JFactorySet_h_
 

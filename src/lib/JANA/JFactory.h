@@ -95,12 +95,16 @@ class JFactory
 
 		// Copy/Move objects into factory
 		template<typename T>
-		void Set(std::vector<T*>& aData){
-			std::vector<JObject*> vvec;
-			vvec.reserve( aData.size());
-			for( auto p : aData ) vvec.push_back( static_cast<JObject*>( p ) );
-			Set( vvec ); // call JFactoryT::Set
+		void Set(std::vector<T*>& items) {
+		    for (T* item : items) {
+		    	Insert(item);
+		    }
 		}
+		// Another option:
+		// Get rid of Set(std::vector<JObject*>& items) completely.
+		// Have virtual Set<T>(std::vector<T*>& items) { throw JException("Wrong type!"); }
+		// When T matches JFactoryT<T>, then this dispatches to the JFactoryT<T>::Set()
+		// The main downside I see right now is a potentially huge vtable
 
 		/// Get all flags in the form of a single word
 		inline uint32_t GetFactoryFlags(void){return mFlags;}
@@ -124,7 +128,8 @@ class JFactory
 		std::once_flag init_flag; 
 
 	protected:
-		virtual void Set( std::vector<JObject*> &vvec ) = 0;
+		virtual void Set(std::vector<JObject*>& data) = 0;
+		virtual void Insert(JObject* data) = 0;
 
 		std::string mName;
 		std::string mTag;

@@ -73,12 +73,12 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 
 		//FACTORIES
 		void SetFactorySet(JFactorySet* aFactorySet);
-		template<class DataType> JFactory* GetFactory(const std::string& aTag = "") const;
+		template<class T> JFactoryT<T>* GetFactory(const std::string& tag = "") const;
 
 		//OBJECTS
 		// C style getters
-		template<class T> JFactory* Get(T** item, const std::string& tag="") const;
-		template<class T> JFactory* Get(vector<const T*> &vec, const std::string& tag = "") const;
+		template<class T> JFactoryT<T>* Get(T** item, const std::string& tag="") const;
+		template<class T> JFactoryT<T>* Get(vector<const T*> &vec, const std::string& tag = "") const;
 
 		// C++ style getters
 		template<class T> const T* GetSingle(const std::string& tag = "") const;
@@ -87,7 +87,7 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 
 		// Insert
 		template <class T> void Insert(T* item, const std::string& aTag = "") const;
-		template <class T> void Insert(std::vector<T*>& items, const std::string& tag = "") const;
+		template <class T> void Insert(const std::vector<T*>& items, const std::string& tag = "") const;
 
 		//RESOURCES
 		void Release(void);
@@ -127,40 +127,44 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 /// which saves the user from having to allocate a throwaway vector and requires less error handling.
 template <class T>
 inline void JEvent::Insert(T* item, const string& tag) const {
-	std::vector<T*> items;
-	items.push_back(item);
-	Insert<T>(items, tag);
+
+	auto factory = mFactorySet->GetFactory<T>(tag);
+	if (factory == nullptr) {
+		factory = new JFactoryT<T>(GetDemangledName<T>(), tag);
+		factory->SetCreated(true);
+		mFactorySet->Add(factory);
+	}
+	factory->Insert(item);
 }
 
 template <class T>
-inline void JEvent::Insert(vector<T*>& items, const string& tag) const {
+inline void JEvent::Insert(const vector<T*>& items, const string& tag) const {
 
-	auto factory = mFactorySet->GetFactory(std::type_index(typeid(T)), tag);
-	if (factory != nullptr) {
-		factory->Set(items);
-	}
-	else {
+	auto factory = mFactorySet->GetFactory<T>(tag);
+	if (factory == nullptr) {
 		factory = new JFactoryT<T>(GetDemangledName<T>(), tag);
-		factory->Set(items);   // This will push the items back, hopefully
 		factory->SetCreated(true);
 		mFactorySet->Add(factory);
+	}
+	for (T* item : items) {
+		factory->Insert(item);
 	}
 }
 
 //---------------------------------
 // GetFactory
 //---------------------------------
-template<class DataType>
-inline JFactory* JEvent::GetFactory(const std::string& aTag) const
+template<class T>
+inline JFactoryT<T>* JEvent::GetFactory(const std::string& tag) const
 {
-	return mFactorySet->GetFactory(std::type_index(typeid(DataType)), aTag);
+	return mFactorySet->GetFactory<T>(tag);
 }
 
 
 /// C-style getters
 
 template<class T>
-JFactory* JEvent::Get(T** destination, const std::string& tag) const
+JFactoryT<T>* JEvent::Get(T** destination, const std::string& tag) const
 {
 	auto factory = GetFactory<T>(tag);
 	auto iterators = GetIterators<T>(tag);
@@ -169,7 +173,7 @@ JFactory* JEvent::Get(T** destination, const std::string& tag) const
 }
 
 template<class T>
-JFactory* JEvent::Get(vector<const T*>& destination, const std::string& tag) const
+JFactoryT<T>* JEvent::Get(vector<const T*>& destination, const std::string& tag) const
 {
 	auto iterators = GetIterators<T>(tag);
 
