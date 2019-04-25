@@ -97,6 +97,18 @@ class JFactoryT : public JFactory
 		}
 
 		//---------------------------------
+		// Insert
+		void Insert(JObject* aDatum) {
+			mData.push_back(static_cast<T*>(aDatum));
+		}
+
+		//---------------------------------
+		// Insert
+		void Insert(T* aDatum) {
+		    mData.push_back(aDatum);
+		}
+
+		//---------------------------------
 		// ClearData
 		void ClearData(void){
 			for( auto p : mData ) delete p;
