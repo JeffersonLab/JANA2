@@ -32,6 +32,7 @@
 
 #include "JTopologyBuilder.h"
 #include "JProcessingTopology.h"
+#include "JEventProcessorArrow.h"
 
 
 void JTopologyBuilder::add(std::string event_source_name) {
@@ -85,6 +86,15 @@ JProcessingTopology *JTopologyBuilder::build_topology() {
 
     JProcessingTopology* topology;
 
+    // Add event processors to topology
+    for (auto * evt_proc : _evt_procs_front) {
+        topology->event_processors.push_back(evt_proc);
+    }
+    for (auto * evt_proc : _evt_procs_back) {
+        topology->event_processors.push_back(evt_proc);
+    }
+
+
     // Add event source generators to event source manager
     for (auto * event_src_gen : _evt_src_gens_front) {
         topology->event_source_manager.AddJEventSourceGenerator(event_src_gen);
@@ -114,9 +124,39 @@ JProcessingTopology *JTopologyBuilder::build_topology() {
 
         auto sGenerator = sSource->GetFactoryGenerator();
         if(sGenerator != nullptr) {
-            _factoryGenerators.push_back(sGenerator);
+            topology->factory_generators.push_back(sGenerator);
         }
     }
+
+    // Assume the simplest possible topology for now, complicate later
+    auto queue = new EventQueue();
+    queue->set_threshold(500);  // JTest throughput increases with threshold size: WHY?
+    _queues.push_back(queue);
+
+    for (auto src : sources) {
+
+        JArrow* arrow = new JEventSourceArrow(src->GetName(), src, queue, this);
+        _arrows.push_back(arrow);
+        _sources.push_back(arrow);
+        // create arrow for sources. Don't open until arrow.activate() called
+    }
+
+    //auto finished_queue = new EventQueue();
+    //_queues.push_back(finished_queue);
+
+    auto proc_arrow = new JEventProcessorArrow("processors", queue, nullptr);
+    _arrows.push_back(proc_arrow);
+
+    // Receive notifications when sinks finish
+    proc_arrow->attach_downstream(this);
+    attach_upstream(proc_arrow);
+
+    for (auto proc :_eventProcessors) {
+        proc_arrow->add_processor(proc);
+        _sinks.push_back(proc_arrow);
+    }
+
+
 
     return topology;
 }

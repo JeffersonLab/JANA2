@@ -58,6 +58,8 @@ public:
     JWorker(JWorker &&other) = delete;
     JWorker &operator=(const JWorker &other) = delete;
 
+    RunState get_runstate() { return _run_state; };
+
     void start();
     void request_stop();
     void wait_for_stop();

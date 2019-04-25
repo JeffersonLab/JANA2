@@ -58,6 +58,8 @@
 class JStatus;
 extern JStatus *gJSTATUS;
 
+using std::vector;
+
 class JStatus{
 	public:
 

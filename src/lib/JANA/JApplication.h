@@ -36,15 +36,6 @@
 #define jout std::cout
 #define jerr std::cerr
 
-#include <JANA/JLogger.h>
-#include <JANA/JParameterManager.h>
-#include <JANA/JPluginLoader.h>
-#include <JANA/JProcessingController.h>
-
-// TODO: Move these down one level
-#include <JANA/JResourcePool.h>
-#include <JANA/JResourcePoolSimple.h>
-
 class JApplication;
 class JEventProcessor;
 class JEventSource;
@@ -54,10 +45,19 @@ class JEventSourceManager;
 class JThreadManager;
 class JFactorySet;
 
-template<typename ReturnType>
-class JTask;
 
 extern JApplication* japp;
+
+#include <JANA/JLogger.h>
+#include <JANA/JParameterManager.h>
+#include <JANA/JPluginLoader.h>
+#include <JANA/JProcessingController.h>
+
+// TODO: Move these down one level
+#include <JANA/JResourcePool.h>
+#include <JANA/JResourcePoolSimple.h>
+#include <JANA/JTask.h>
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 /// JANA application class (singleton).
@@ -73,7 +73,7 @@ class JApplication {
 
 public:
 
-    JApplication();
+    JApplication(JParameterManager* params = nullptr);
     ~JApplication();
 
 
@@ -130,8 +130,8 @@ public:
     // Doesn't belong here
 
     void UpdateResourceLimits(void);
-    void GetJEventProcessors(vector<JEventProcessor*>& aProcessors);
-    void GetJFactoryGenerators(vector<JFactoryGenerator*>& factory_generators);
+    void GetJEventProcessors(std::vector<JEventProcessor*>& aProcessors);
+    void GetJFactoryGenerators(std::vector<JFactoryGenerator*>& factory_generators);
     JThreadManager* GetJThreadManager(void) const;
     JEventSourceManager* GetJEventSourceManager(void) const;
     std::shared_ptr<JTask<void>> GetVoidTask(void);
@@ -150,6 +150,7 @@ private:
     JProcessingController* _processing_controller;
 
     bool _quitting = false;
+    bool _draining_queues = false;
     bool _skip_join = false;
     bool _initialized = false;
     bool _ticker_on = true;
@@ -161,6 +162,7 @@ private:
     // TODO: Get rid of these
     JResourcePoolSimple<JFactorySet> mFactorySetPool;
     JResourcePool<JTask<void>> mVoidTaskPool;
+    JThreadManager* _threadManager; // Extract this from LegacyProcessingController
 
 };
 
@@ -179,11 +181,6 @@ JParameter* JApplication::SetParameterValue(std::string name, T val) {
     /// This is a convenience function that just calls the SetParameter
     /// of JParameterManager.
     return GetJParameterManager()->SetParameter(name, val);
-}
-
-JParameterManager* JApplication::GetJParameterManager() {
-    /// Convenience function to get full access to JParameterManager
-    return _params;
 }
 
 

@@ -95,7 +95,6 @@ JWorker::~JWorker() {
     wait_for_stop();
 }
 
-
 void JWorker::start() {
     if (_run_state == RunState::Stopped) {
         _run_state = RunState::Running;

@@ -42,7 +42,6 @@
 //
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-#include <JANA/JApplication.h>
 
 #ifndef _JParameterManager_h_
 #define _JParameterManager_h_
@@ -54,7 +53,7 @@
 #include <JANA/JParameter.h>
 #include <JANA/JException.h>
 
-class JParameterManager;
+using std::string;
 
 class JParameterManager{
 	public:

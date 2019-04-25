@@ -42,6 +42,7 @@
 
 class JProcessingController {
 public:
+    JProcessingController(JProcessingTopology* topology) : _topology(topology) {};
 
     void initialize();
     void run(size_t nthreads);
@@ -50,10 +51,11 @@ public:
     void wait_until_finished();
     void wait_until_stopped();
 
+    bool is_stopped();
+    bool is_finished();
+
     size_t get_nthreads();
     size_t get_nevents_processed();
-    double get_inst_throughput_hz();
-    double get_avg_throughput_hz();
 
 
     void measure_perf(JMetrics::TopologySummary& topology_perf);
@@ -77,6 +79,8 @@ private:
         bool is_active() override;
         void set_active(bool is_active) override;
     };
+
+    JProcessingTopology* _topology;  // TODO: Move a lot of the things below into here
 
     std::vector<JArrow*> _arrows;
     std::vector<QueueBase*> _queues;

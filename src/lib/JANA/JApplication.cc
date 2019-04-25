@@ -38,15 +38,17 @@
 JApplication *japp = nullptr;
 
 
-JApplication::JApplication() {
+JApplication::JApplication(JParameterManager* params) {
 
-	_logger = JLoggingService::logger("JApplication");
-	_params = new JParameterManager();
-	_plugin_loader = new JPluginLoader();
-	_topology_builder = new JTopologyBuilder();
-	_topology = nullptr;
-	_processing_controller = nullptr;
+    _params = (params == nullptr) ? new JParameterManager : params;
+
+    _logger = JLoggingService::logger("JApplication");
+    _plugin_loader = new JPluginLoader();
+    _topology_builder = new JTopologyBuilder();
+    _topology = nullptr;
+    _processing_controller = nullptr;
 }
+
 
 JApplication::~JApplication() {
     delete _params;
@@ -147,7 +149,7 @@ void JApplication::Run() {
         // This flag is used by the integrated rate calculator
         // The JThreadManager is in charge of telling all the threads to end
         if(!_draining_queues)
-            _draining_queues = _eventSourceManager->AreAllFilesClosed();
+            _draining_queues = _topology->event_source_manager.AreAllFilesClosed();
 
 
         // Check if all threads have finished
@@ -287,7 +289,7 @@ std::shared_ptr<JTask<void>> JApplication::GetVoidTask() {
 }
 
 JFactorySet* JApplication::GetFactorySet() {
-    return mFactorySetPool.Get_Resource(_factoryGenerators);
+    return mFactorySetPool.Get_Resource(_topology->factory_generators);
 }
 
 void JApplication::Recycle(JFactorySet* aFactorySet) {
@@ -299,11 +301,11 @@ JEventSourceManager* JApplication::GetJEventSourceManager() const {
 }
 
 void JApplication::GetJEventProcessors(std::vector<JEventProcessor*>& aProcessors) {
-    aProcessors = _eventProcessors;
+    aProcessors = _topology->event_processors;
 }
 
 void JApplication::GetJFactoryGenerators(std::vector<JFactoryGenerator*> &factory_generators) {
-    factory_generators = _factoryGenerators;
+    factory_generators = _topology->factory_generators;
 }
 
 std::string JApplication::Val2StringWithPrefix(float val)
@@ -341,6 +343,10 @@ std::string JApplication::Val2StringWithPrefix(float val)
 
 JThreadManager* JApplication::GetJThreadManager() const {
     return _threadManager;
+}
+
+void JApplication::UpdateResourceLimits(void) {
+
 }
 
 

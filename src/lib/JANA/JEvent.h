@@ -64,6 +64,8 @@
 #ifndef _JEvent_h_
 #define _JEvent_h_
 
+using std::vector;
+
 class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 {
 	public:

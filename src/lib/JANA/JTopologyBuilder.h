@@ -36,6 +36,7 @@
 
 #include "JEventSourceGenerator.h"
 #include "JEventProcessor.h"
+#include "JProcessingTopology.h"
 
 class JTopologyBuilder {
 

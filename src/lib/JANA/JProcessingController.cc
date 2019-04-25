@@ -130,7 +130,18 @@ size_t JProcessingController::get_nevents_processed() {
 }
 
 bool JProcessingController::is_stopped() {
-    return !is_active();
+    for (JWorker* worker : _workers) {
+        if (worker->get_runstate() != JWorker::RunState::Stopped) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// TODO: Topology doesn't really distinguish between finished and stopped correctly, yet
+//       Topology should remain active until finished, whereas stopped corresponds to Worker states
+bool JProcessingController::is_finished() {
+    return !_activator.is_active();
 }
 
 bool JProcessingController::TopologyActivator::is_active() {

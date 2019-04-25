@@ -36,6 +36,7 @@
 #include <unistd.h>
 #include <JANA/JThreadManager.h>
 #include <JANA/JParameterManager.h>
+#include "JProcessingTopology.h"
 
 class JApplication;
 
@@ -53,15 +54,23 @@ public:
     void wait_until_finished();
     void wait_until_stopped();
 
+    bool is_stopped();
+    bool is_finished();
+
     size_t get_nthreads();
 
+
+    void print_final_report();
     JThreadManager* get_threadmanager();
 
 private:
+    JLogger _logger;
+    JProcessingTopology* _topology;
     JThreadManager* _threadManager;
     JParameterManager* _params;
     bool _skip_join;
     size_t _nthreads;
+    int _affinity_algorithm = 0;
 
 };
 

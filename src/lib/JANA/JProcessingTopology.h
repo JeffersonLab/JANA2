@@ -7,12 +7,38 @@
 
 
 #include "JEventSourceManager.h"
+#include "JActivable.h"
 
 struct JProcessingTopology : public JActivable {
 
-    JEventSourceManager event_source_manager;
+    using jclock_t = std::chrono::steady_clock;
 
-    bool all_sources_closed();
+    enum class RunState {
+        BeforeRun, DuringRun, AfterRun
+    };
+    // TODO: How much timekeeping belongs on Topology as opposed to Controller?
+
+    JEventSourceManager event_source_manager;
+    std::vector<JFactoryGenerator*> factory_generators;
+    std::vector<JEventProcessor*> event_processors;
+
+    std::vector<JArrow*> arrows;
+    std::vector<QueueBase*> queues;
+    std::vector<JWorker*> workers;          // One per cpu
+    std::vector<JScheduler*> schedulers;    // One per NUMA domain
+
+    std::vector<JArrow*> sources;           // Sources needed for activation
+    std::vector<JArrow*> sinks;             // Sinks needed for finished message count
+
+    JLogger _logger;
+
+    RunState _run_state = RunState::BeforeRun;
+    jclock_t::time_point _start_time;
+    jclock_t::time_point _last_time;
+    jclock_t::time_point _stop_time;
+    size_t _last_message_count = 0;
+
+    bool all_sources_closed() { return !is_active(); }
 
 
 

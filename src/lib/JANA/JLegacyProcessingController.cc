@@ -35,6 +35,7 @@
 
 JLegacyProcessingController::JLegacyProcessingController(JApplication* app) {
     _threadManager = new JThreadManager(app);
+    _params = app->GetJParameterManager();
 }
 
 JLegacyProcessingController::~JLegacyProcessingController() {
@@ -53,9 +54,8 @@ void JLegacyProcessingController::run(size_t nthreads) {
 
     // Optionally set thread affinity
     try{
-        int affinity_algorithm = 0;
-        _pmanager->SetDefaultParameter("AFFINITY", affinity_algorithm, "Set the thread affinity algorithm. 0=none, 1=sequential, 2=core fill");
-        _threadManager->SetThreadAffinity( affinity_algorithm );
+        _params->SetDefaultParameter("AFFINITY", _affinity_algorithm, "Set the thread affinity algorithm. 0=none, 1=sequential, 2=core fill");
+        _threadManager->SetThreadAffinity(_affinity_algorithm);
     }catch(...){
         LOG_ERROR(_logger) << "Unknown exception in JApplication::Run attempting to set thread affinity" << LOG_END;
     }
@@ -81,13 +81,14 @@ void JLegacyProcessingController::wait_until_finished() {
 void JLegacyProcessingController::wait_until_stopped() {
     _threadManager->StopThreads(true);
     _threadManager->JoinThreads();
+
+    // TODO: Move this topology destructor
     // Delete event processors
-    for(auto sProcessor : _eventProcessors){
+    for(auto sProcessor : _topology->event_processors){
         sProcessor->Finish(); // (this may not be necessary since it is always next to destructor)
         delete sProcessor;
     }
-    _eventProcessors.clear();
-
+    _topology->event_processors.clear();
 }
 
 size_t JLegacyProcessingController::get_nthreads() {
@@ -96,6 +97,109 @@ size_t JLegacyProcessingController::get_nthreads() {
 
 JThreadManager* JLegacyProcessingController::get_threadmanager() {
     return _threadManager;
+}
+
+void JLegacyProcessingController::print_final_report() {
+
+    //Get queues
+    std::vector<JThreadManager::JEventSourceInfo*> sRetiredQueues;
+    _threadManager->GetRetiredSourceInfos(sRetiredQueues);
+    std::vector<JThreadManager::JEventSourceInfo*> sActiveQueues;
+    _threadManager->GetActiveSourceInfos(sActiveQueues);
+    auto sAllQueues = sRetiredQueues;
+    sAllQueues.insert(sAllQueues.end(), sActiveQueues.begin(), sActiveQueues.end());
+
+
+    // Get longest JQueue name
+    uint32_t sSourceMaxNameLength = 0, sQueueMaxNameLength = 0;
+    for(auto& sSourceInfo : sAllQueues)
+    {
+        auto sSource = sSourceInfo->mEventSource;
+        auto sSourceLength = sSource->GetName().size();
+        if(sSourceLength > sSourceMaxNameLength)
+            sSourceMaxNameLength = sSourceLength;
+
+        std::map<JQueueSet::JQueueType, std::vector<JQueue*>> sSourceQueues;
+        sSourceInfo->mQueueSet->GetQueues(sSourceQueues);
+        for(auto& sTypePair : sSourceQueues)
+        {
+            for(auto sQueue : sTypePair.second)
+            {
+                auto sLength = sQueue->GetName().size();
+                if(sLength > sQueueMaxNameLength)
+                    sQueueMaxNameLength = sLength;
+            }
+        }
+    }
+    sSourceMaxNameLength += 2;
+    if(sSourceMaxNameLength < 8) sSourceMaxNameLength = 8;
+    sQueueMaxNameLength += 2;
+    if(sQueueMaxNameLength < 7) sQueueMaxNameLength = 7;
+
+    jout << std::endl;
+    jout << "Final Report" << std::endl;
+    jout << std::string(sSourceMaxNameLength + 12 + sQueueMaxNameLength + 9, '-') << std::endl;
+    jout << "Source" << std::string(sSourceMaxNameLength - 6, ' ') << "   Nevents  " << "Queue" << std::string(sQueueMaxNameLength - 5, ' ') << "NTasks" << std::endl;
+    jout << std::string(sSourceMaxNameLength + 12 + sQueueMaxNameLength + 9, '-') << std::endl;
+    std::size_t sSrcIdx = 0;
+    for(auto& sSourceInfo : sAllQueues)
+    {
+        // Flag to prevent source name and number of events from
+        // printing more than once.
+        bool sSourceNamePrinted = false;
+
+        // Place "*" next to names of active sources
+        string sFlag;
+        if( sSrcIdx++ >= sRetiredQueues.size() ) sFlag="*";
+
+        auto sSource = sSourceInfo->mEventSource;
+        std::map<JQueueSet::JQueueType, std::vector<JQueue*>> sSourceQueues;
+        sSourceInfo->mQueueSet->GetQueues(sSourceQueues);
+        for(auto& sTypePair : sSourceQueues)
+        {
+            for(auto sQueue : sTypePair.second)
+            {
+                string sSourceName = sSource->GetName()+sFlag;
+
+                if( sSourceNamePrinted ){
+                    jout << string(sSourceMaxNameLength + 12, ' ');
+                }else{
+                    sSourceNamePrinted = true;
+                    jout << sSourceName << string(sSourceMaxNameLength - sSourceName.size(), ' ')
+                         << std::setw(10) << sSource->GetNumEventsProcessed() << "  ";
+                }
+
+                jout << sQueue->GetName() << string(sQueueMaxNameLength - sQueue->GetName().size(), ' ')
+                     << sQueue->GetNumTasksProcessed() << std::endl;
+            }
+        }
+    }
+    if( !sActiveQueues.empty() ){
+        jout << std::endl;
+        jout << "(*) indicates sources that were still active" << std::endl;
+    }
+
+    jout << std::endl;
+    jout << "Total events processed: " << GetNeventsProcessed() << " (~ " << Val2StringWithPrefix( GetNeventsProcessed() ) << "evt)" << std::endl;
+    jout << "Integrated Rate: " << Val2StringWithPrefix( GetIntegratedRate() ) << "Hz" << std::endl;
+    jout << std::endl;
+
+    // Optionally print more info if user requested it:
+    bool print_extended_report = false;
+    _pmanager->SetDefaultParameter("JANA:EXTENDED_REPORT", print_extended_report);
+    if( print_extended_report ){
+        jout << std::endl;
+        jout << "Extended Report" << std::endl;
+        jout << std::string(sSourceMaxNameLength + 12 + sQueueMaxNameLength + 9, '-') << std::endl;
+        jout << "               Num. plugins: " << _plugins.size() <<std::endl;
+        jout << "          Num. plugin paths: " << _plugin_paths.size() <<std::endl;
+        jout << "    Num. factory generators: " << _factoryGenerators.size() <<std::endl;
+        jout << "Num. calibration generators: " << _calibrationGenerators.size() <<std::endl;
+        jout << "      Num. event processors: " << mNumProcessorsAdded <<std::endl;
+        jout << "          Num. factory sets: " << mFactorySetPool.Get_PoolSize() << " (max. " << mFactorySetPool.Get_MaxPoolSize() << ")" << std::endl;
+        jout << "       Num. config. params.: " << _pmanager->GetNumParameters() <<std::endl;
+        jout << "               Num. threads: " << _threadManager->GetNJThreads() <<std::endl;
+    }
 }
 
 bool JLegacyProcessingController::is_stopped() {
