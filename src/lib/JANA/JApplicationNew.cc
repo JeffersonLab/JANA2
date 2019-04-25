@@ -43,7 +43,6 @@ void JApplicationNew::Initialize() {
 
 
     std::deque<JEventSource*> sources;
-    _eventSourceManager->CreateSources();
     _eventSourceManager->GetUnopenedJEventSources(sources);
 
     // Not sure why we have to do this, will figure out later
@@ -89,8 +88,6 @@ void JApplicationNew::Initialize() {
         proc_arrow->add_processor(proc);
         _sinks.push_back(proc_arrow);
     }
-
-    _pmanager->SetDefaultParameter("nthreads", _nthreads, "The total number of worker threads");
 
 }
 

@@ -41,62 +41,10 @@
 #include <JANA/JEventSource.h>
 #include <JANA/JEventSourceManager.h>
 
-void JApplicationOld::Initialize() {
-	/// Initialize the application in preparation for data processing.
-	/// This is called by the Run method so users will usually not
-	/// need to call this directly.
-
-	if (_initialized) return;
-
-	unsigned nthreads = JCpuInfo::GetNumCpus();
-	// Set number of threads
-	_pmanager->SetDefaultParameter("NTHREADS", nthreads, "The total number of worker threads");
-
-
-
-	// Create all event sources
-	_eventSourceManager->CreateSources();
-
-	// Get factory generators from event sources
-	std::deque<JEventSource*> sEventSources;
-	_eventSourceManager->GetUnopenedJEventSources(sEventSources);
-	std::unordered_set<std::type_index> sSourceTypes;
-	for(auto sSource : sEventSources)
-	{
-		auto sTypeIndex = sSource->GetDerivedType();
-		if(sSourceTypes.find(sTypeIndex) != std::end(sSourceTypes))
-			continue; //same type as before: duplicate factories!
-
-		auto sGenerator = sSource->GetFactoryGenerator();
-		if(sGenerator != nullptr)
-			_factoryGenerators.push_back(sGenerator);
-	}
-
-	//Prepare for running: Open event sources and prepare task queues for them
-	_eventSourceManager->OpenInitSources();
-	_processing_controller->initialize();
-
-}
-
-
-
 void JApplicationOld::Quit(bool skip_join) {
 	_skip_join = skip_join;
 	_threadManager->EndThreads();
 	_quitting = true;
-}
-
-void JApplicationOld::Resume() {
-	/// Tell all JThread objects to go into the running state (if not already there).
-	_threadManager->RunThreads();
-}
-
-JThreadManager* JApplicationOld::GetJThreadManager() const {
-    return _threadManager;
-}
-
-std::shared_ptr<JTask<void>> JApplicationOld::GetVoidTask() {
-	return mVoidTaskPool.Get_SharedResource();
 }
 
 

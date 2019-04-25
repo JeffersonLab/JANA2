@@ -74,73 +74,51 @@ class JApplication {
 public:
 
     JApplication();
+    ~JApplication();
 
-    virtual ~JApplication();
 
-    int GetExitCode(void);
-
-    virtual void Initialize(void);
-
-    virtual void PrintFinalReport(void);
-
-    virtual void PrintStatus(void);
-
-    virtual void Quit(bool skip_join = false);
-
-    virtual void Run();
-
-    virtual void Scale(int nthreads);
-
-    virtual void Stop(bool wait_until_idle = false);
-
-    void SetExitCode(int exit_code);
-
-    void SetTicker(bool ticker_on = true);
-
-    virtual void Add(std::string event_source_name);
-
-    virtual void Add(JEventSourceGenerator* source_generator);
-
-    virtual void Add(JFactoryGenerator* factory_generator);
-
-    virtual void Add(JEventProcessor* processor);
+    // Loading plugins
 
     void AddPlugin(string plugin_name);
-
     void AddPluginPath(string path);
 
-    void GetJEventProcessors(vector<JEventProcessor*>& aProcessors);
 
-    void GetJFactoryGenerators(vector<JFactoryGenerator*>& factory_generators);
+    // Building a JProcessingTopology
 
-    JParameterManager* GetJParameterManager(void);
+    void Add(std::string event_source_name);
+    void Add(JEventSourceGenerator* source_generator);
+    void Add(JFactoryGenerator* factory_generator);
+    void Add(JEventProcessor* processor);
 
-    virtual JThreadManager* GetJThreadManager(void) const = 0;
 
-    JEventSourceManager* GetJEventSourceManager(void) const;
+    // Controlling processing
 
-    //GET/RECYCLE POOL RESOURCES
-    virtual void UpdateResourceLimits(void) = 0;
+    void Initialize(void);
+    void Run();
+    void Scale(int nthreads);
+    void Stop(bool wait_until_idle = false);
+    void Quit(bool skip_join = false);
+    void SetExitCode(int exit_code);
+    int GetExitCode(void);
 
-    virtual std::shared_ptr<JTask<void>> GetVoidTask(void) = 0;
 
-    JFactorySet* GetFactorySet(void);
-
-    void Recycle(JFactorySet* aFactorySet);
-
-    uint64_t GetNThreads();
-
-    virtual uint64_t GetNeventsProcessed(void);
-
-    float GetIntegratedRate();
-
-    float GetInstantaneousRate();
+    // Performance/status monitoring
 
     bool IsQuitting(void) { return _quitting; }
-
     bool IsDrainingQueues(void) { return _draining_queues; }
 
-    string Val2StringWithPrefix(float val);
+    void SetTicker(bool ticker_on = true);
+    void PrintStatus();
+    void PrintFinalReport();
+    uint64_t GetNThreads();
+    uint64_t GetNeventsProcessed();
+    float GetIntegratedRate();
+    float GetInstantaneousRate();
+
+
+    // Parameter config
+
+    JParameterManager* GetJParameterManager() { return _params; }
 
     template<typename T>
     T GetParameterValue(std::string name);
@@ -148,32 +126,47 @@ public:
     template<typename T>
     JParameter* SetParameterValue(std::string name, T val);
 
-protected:
+
+    // Doesn't belong here
+
+    void UpdateResourceLimits(void);
+    void GetJEventProcessors(vector<JEventProcessor*>& aProcessors);
+    void GetJFactoryGenerators(vector<JFactoryGenerator*>& factory_generators);
+    JThreadManager* GetJThreadManager(void) const;
+    JEventSourceManager* GetJEventSourceManager(void) const;
+    std::shared_ptr<JTask<void>> GetVoidTask(void);
+    JFactorySet* GetFactorySet(void);
+    void Recycle(JFactorySet* aFactorySet);
+    string Val2StringWithPrefix(float val);
+
+
+private:
 
     JLogger _logger;
     JParameterManager* _params;
     JPluginLoader* _plugin_loader;
     JTopologyBuilder* _topology_builder;
+    JProcessingTopology* _topology;
     JProcessingController* _processing_controller;
-
 
     bool _quitting = false;
     bool _skip_join = false;
     bool _initialized = false;
-    int _exit_code = 0;
     bool _ticker_on = true;
+    int  _exit_code = 0;
+    int  _desired_nthreads;
+
     std::chrono::time_point<std::chrono::high_resolution_clock> mRunStartTime;
 
-    JLogger _logger;
-    JParameterManager* _pmanager;
-
+    // TODO: Get rid of these
     JResourcePoolSimple<JFactorySet> mFactorySetPool;
+    JResourcePool<JTask<void>> mVoidTaskPool;
 
 };
 
-//---------------------------------
-// GetParameterValue
-//---------------------------------
+
+
+// Templates
 template<typename T>
 T JApplication::GetParameterValue(std::string name) {
     /// This is a convenience function that just calls the method
@@ -181,14 +174,16 @@ T JApplication::GetParameterValue(std::string name) {
     return GetJParameterManager()->GetParameterValue<T>(name);
 }
 
-//---------------------------------
-// SetParameterValue
-//---------------------------------
 template<typename T>
 JParameter* JApplication::SetParameterValue(std::string name, T val) {
     /// This is a convenience function that just calls the SetParameter
     /// of JParameterManager.
     return GetJParameterManager()->SetParameter(name, val);
+}
+
+JParameterManager* JApplication::GetJParameterManager() {
+    /// Convenience function to get full access to JParameterManager
+    return _params;
 }
 
 

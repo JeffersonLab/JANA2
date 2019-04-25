@@ -37,38 +37,6 @@
 
 
 class JApplicationOld : public JApplication {
-
-private:
-
-    JThreadManager* _threadManager;
-    JResourcePool<JTask<void>> mVoidTaskPool;
-
-public:
-
-    JApplicationOld(JParameterManager* params, std::vector<std::string>* event_sources);
-
-    ~JApplicationOld() override;
-
-    void Run() override;
-
-    void Initialize() override;
-
-    void Quit(bool skip_join) override;
-
-    void Stop(bool wait_until_idle) override;
-
-    void Resume() override;
-
-    void Scale(int nthreads) override;
-
-    void UpdateResourceLimits() override;
-
-    void PrintFinalReport() override;
-
-    JThreadManager* GetJThreadManager() const override;
-
-    std::shared_ptr<JTask<void>> GetVoidTask() override;
-
 };
 
 

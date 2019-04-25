@@ -40,6 +40,7 @@
 class JTopologyBuilder {
 
 public:
+
     void increase_priority();
 
     void add(std::string event_source_name);
@@ -47,14 +48,9 @@ public:
     void add(JFactoryGenerator* factory_generator);
     void add(JEventProcessor* processor);
 
-    //JProcessingTopology* build_topology();
-    // TODO: Problem: What lives on JProcessingTopology as opposed to Builder?
-    //   - Everything that needs to be deleted eventually
-    //   - EventSourceManager: used by JStatus, JThreadManager
-    //   - Topology should contain everything needed for old
-    //   - Or not? GetJEventSourceManager is used by JTestMain,
-    //   Maybe builder also produces a LegacyController, passing it the JEventSourceManager.
-    //   - GetEventProcessor(), etc
+
+    JProcessingTopology* build_topology();
+
 
 private:
     std::vector<std::string> _evt_src_names;
@@ -68,7 +64,6 @@ private:
     std::vector<JEventSourceGenerator*> _evt_src_gens_front;
     std::vector<JEventSourceGenerator*> _evt_src_gens_back;
 
-    JEventSourceManager* _eventSourceManager;
 
 };
 

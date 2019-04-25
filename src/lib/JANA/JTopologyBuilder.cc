@@ -31,6 +31,7 @@
 //
 
 #include "JTopologyBuilder.h"
+#include "JProcessingTopology.h"
 
 
 void JTopologyBuilder::add(std::string event_source_name) {
@@ -73,4 +74,54 @@ void JTopologyBuilder::increase_priority() {
     _evt_src_gens_front.swap(_evt_src_gens_back);
 
 }
+
+/// build_topology() takes all of the components the user has provided up
+/// until this point and assembles them in the correct order into a
+/// JProcessingTopology object. Ownership of some components will probably
+/// get transferred into the JTopology, although this raises some interesting
+/// questions.
+
+JProcessingTopology *JTopologyBuilder::build_topology() {
+
+    JProcessingTopology* topology;
+
+    // Add event source generators to event source manager
+    for (auto * event_src_gen : _evt_src_gens_front) {
+        topology->event_source_manager.AddJEventSourceGenerator(event_src_gen);
+    }
+    for (auto * event_src_gen : _evt_src_gens_back) {
+        topology->event_source_manager.AddJEventSourceGenerator(event_src_gen);
+    }
+
+    // Add event source names to event source manager
+    for (std::string evt_src_name : _evt_src_names) {
+        topology->event_source_manager.AddEventSource(evt_src_name);
+    }
+    _evt_src_names.clear();
+
+    // Create all event sources
+    topology->event_source_manager.CreateSources();
+
+    // Get factory generators from event sources
+    std::deque<JEventSource*> sEventSources;
+    topology->event_source_manager.GetUnopenedJEventSources(sEventSources);
+    std::unordered_set<std::type_index> sSourceTypes;
+    for(auto sSource : sEventSources)
+    {
+        auto sTypeIndex = sSource->GetDerivedType();
+        if(sSourceTypes.find(sTypeIndex) != std::end(sSourceTypes))
+            continue; //same type as before: duplicate factories!
+
+        auto sGenerator = sSource->GetFactoryGenerator();
+        if(sGenerator != nullptr) {
+            _factoryGenerators.push_back(sGenerator);
+        }
+    }
+
+    return topology;
+}
+
+
+
+
 

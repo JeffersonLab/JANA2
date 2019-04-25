@@ -42,7 +42,9 @@ JLegacyProcessingController::~JLegacyProcessingController() {
 }
 
 void JLegacyProcessingController::initialize() {
+    _topology->event_source_manager.OpenInitSources();
     _threadManager->PrepareQueues();
+
 }
 
 void JLegacyProcessingController::run(size_t nthreads) {
