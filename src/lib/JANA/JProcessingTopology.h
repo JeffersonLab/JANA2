@@ -5,7 +5,7 @@
 #ifndef JANA2_JPROCESSINGTOPOLOGY_H
 #define JANA2_JPROCESSINGTOPOLOGY_H
 
-
+#include <JANA/JArrow.h>
 #include "JEventSourceManager.h"
 #include "JActivable.h"
 
@@ -24,9 +24,6 @@ struct JProcessingTopology : public JActivable {
 
     std::vector<JArrow*> arrows;
     std::vector<QueueBase*> queues;
-    std::vector<JWorker*> workers;          // One per cpu
-    std::vector<JScheduler*> schedulers;    // One per NUMA domain
-
     std::vector<JArrow*> sources;           // Sources needed for activation
     std::vector<JArrow*> sinks;             // Sinks needed for finished message count
 
@@ -39,6 +36,9 @@ struct JProcessingTopology : public JActivable {
     size_t _last_message_count = 0;
 
     bool all_sources_closed() { return !is_active(); }
+
+    bool is_active();
+    void set_active(bool is_active);
 
 
 

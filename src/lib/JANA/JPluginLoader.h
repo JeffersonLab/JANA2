@@ -38,7 +38,9 @@
 
 #include <string>
 #include <vector>
-#include "JTopologyBuilder.h"
+
+
+class JTopologyBuilder;
 
 class JPluginLoader : JService {
 

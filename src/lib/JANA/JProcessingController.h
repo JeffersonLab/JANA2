@@ -38,7 +38,7 @@
 #include <JANA/JArrow.h>
 #include <JANA/JWorker.h>
 #include <JANA/JMetrics.h>
-
+#include <JANA/JProcessingTopology.h>
 
 class JProcessingController {
 public:

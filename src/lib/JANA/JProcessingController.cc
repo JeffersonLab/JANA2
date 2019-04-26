@@ -144,37 +144,3 @@ bool JProcessingController::is_finished() {
     return !_activator.is_active();
 }
 
-bool JProcessingController::TopologyActivator::is_active() {
-    for (auto arrow : _arrows) {
-        if (arrow->is_active()) {
-            return true;
-        }
-    }
-    return false;
-}
-
-void JProcessingController::TopologyActivator::set_active(bool is_active) {
-    if (active && !is_active()) {
-        for (auto arrow : _sources) {
-            arrow->set_active(true);
-            arrow->notify_downstream(true);
-        }
-    }
-    else {
-        if (_run_state == RunState::DuringRun) {
-            _stop_time = jclock_t::now();
-            _run_state = RunState::AfterRun;
-        }
-    }
-}
-
-class JThreadManager;
-JThreadManager* JProcessingController::GetJThreadManager() const {
-    return nullptr;
-}
-
-template<typename T> class JTask;
-std::shared_ptr<JTask<void>> JProcessingController::GetVoidTask() {
-    throw;
-}
-

@@ -92,15 +92,11 @@ add_library(jana2 STATIC
         src/lib/JANA/JEventProcessorArrow.h
         src/lib/JANA/JEventSourceArrow.cc
         src/lib/JANA/JEventSourceArrow.h
-        src/lib/JANA/JApplicationOld.cc
-        src/lib/JANA/JApplicationOld.h
-        src/lib/JANA/JApplicationNew.cc
         src/lib/JANA/JScheduler.cc
         src/lib/JANA/JPerfUtils.cc
         src/lib/JANA/JServiceLocator.cc
         src/lib/JANA/JWorker.h
         src/lib/JANA/JWorker.cc
-        src/lib/JANA/JApplicationNew.h
         src/lib/JANA/JTopology.cc
         src/lib/JANA/JTopology.h
         src/lib/JANA/JSubeventArrow.cc

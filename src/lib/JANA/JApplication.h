@@ -45,13 +45,15 @@ class JEventSourceManager;
 class JThreadManager;
 class JFactorySet;
 
+class JPluginLoader;
+class JProcessingController;
+class JTopologyBuilder;
+class JProcessingTopology;
 
 extern JApplication* japp;
 
 #include <JANA/JLogger.h>
 #include <JANA/JParameterManager.h>
-#include <JANA/JPluginLoader.h>
-#include <JANA/JProcessingController.h>
 
 // TODO: Move these down one level
 #include <JANA/JResourcePool.h>

@@ -32,6 +32,8 @@
 
 #include <JANA/JLegacyProcessingController.h>
 
+#include <JANA/JEventProcessor.h>
+
 
 JLegacyProcessingController::JLegacyProcessingController(JApplication* app) {
     _threadManager = new JThreadManager(app);
@@ -76,6 +78,10 @@ void JLegacyProcessingController::request_stop() {
 
 void JLegacyProcessingController::wait_until_finished() {
 
+}
+
+size_t JLegacyProcessingController::get_nevents_processed() {
+    throw JException("Not implemented");
 }
 
 void JLegacyProcessingController::wait_until_stopped() {
@@ -180,13 +186,14 @@ void JLegacyProcessingController::print_final_report() {
     }
 
     jout << std::endl;
-    jout << "Total events processed: " << GetNeventsProcessed() << " (~ " << Val2StringWithPrefix( GetNeventsProcessed() ) << "evt)" << std::endl;
+    auto nevents = get_nevents_processed();
+    jout << "Total events processed: " << nevents << " (~ " << Val2StringWithPrefix( nevents ) << "evt)" << std::endl;
     jout << "Integrated Rate: " << Val2StringWithPrefix( GetIntegratedRate() ) << "Hz" << std::endl;
     jout << std::endl;
 
     // Optionally print more info if user requested it:
     bool print_extended_report = false;
-    _pmanager->SetDefaultParameter("JANA:EXTENDED_REPORT", print_extended_report);
+    _params->SetDefaultParameter("JANA:EXTENDED_REPORT", print_extended_report);
     if( print_extended_report ){
         jout << std::endl;
         jout << "Extended Report" << std::endl;
@@ -194,10 +201,9 @@ void JLegacyProcessingController::print_final_report() {
         jout << "               Num. plugins: " << _plugins.size() <<std::endl;
         jout << "          Num. plugin paths: " << _plugin_paths.size() <<std::endl;
         jout << "    Num. factory generators: " << _factoryGenerators.size() <<std::endl;
-        jout << "Num. calibration generators: " << _calibrationGenerators.size() <<std::endl;
         jout << "      Num. event processors: " << mNumProcessorsAdded <<std::endl;
         jout << "          Num. factory sets: " << mFactorySetPool.Get_PoolSize() << " (max. " << mFactorySetPool.Get_MaxPoolSize() << ")" << std::endl;
-        jout << "       Num. config. params.: " << _pmanager->GetNumParameters() <<std::endl;
+        jout << "       Num. config. params.: " << _params->GetNumParameters() <<std::endl;
         jout << "               Num. threads: " << _threadManager->GetNJThreads() <<std::endl;
     }
 }

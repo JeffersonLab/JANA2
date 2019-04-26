@@ -34,9 +34,9 @@
 #define JANA2_JTOPOLOGYBUILDER_H
 
 
-#include "JEventSourceGenerator.h"
-#include "JEventProcessor.h"
-#include "JProcessingTopology.h"
+#include <JANA/JEventSourceGenerator.h>
+#include <JANA/JEventProcessor.h>
+#include <JANA/JProcessingTopology.h>
 
 class JTopologyBuilder {
 

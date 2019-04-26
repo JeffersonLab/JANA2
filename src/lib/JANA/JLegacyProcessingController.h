@@ -58,7 +58,7 @@ public:
     bool is_finished();
 
     size_t get_nthreads();
-
+    size_t get_nevents_processed();
 
     void print_final_report();
     JThreadManager* get_threadmanager();

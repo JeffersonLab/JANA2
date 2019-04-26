@@ -34,6 +34,9 @@
 #include <JANA/JFactoryGenerator.h>
 #include <JANA/JParameterManager.h>
 #include <JANA/JEventSourceManager.h>
+#include <JANA/JPluginLoader.h>
+#include <JANA/JTopologyBuilder.h>
+#include <JANA/JProcessingController.h>
 
 JApplication *japp = nullptr;
 

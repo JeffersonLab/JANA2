@@ -34,6 +34,7 @@
 #include "JProcessingTopology.h"
 #include "JEventProcessorArrow.h"
 
+#include <unordered_set>
 
 void JTopologyBuilder::add(std::string event_source_name) {
     _evt_src_names.push_back(event_source_name);
@@ -127,11 +128,12 @@ JProcessingTopology *JTopologyBuilder::build_topology() {
             topology->factory_generators.push_back(sGenerator);
         }
     }
+    // TODO: We aren't actually adding anything to the unordered set
 
     // Assume the simplest possible topology for now, complicate later
     auto queue = new EventQueue();
     queue->set_threshold(500);  // JTest throughput increases with threshold size: WHY?
-    _queues.push_back(queue);
+    topology->queues.push_back(queue);
 
     for (auto src : sources) {
 
@@ -145,17 +147,19 @@ JProcessingTopology *JTopologyBuilder::build_topology() {
     //_queues.push_back(finished_queue);
 
     auto proc_arrow = new JEventProcessorArrow("processors", queue, nullptr);
-    _arrows.push_back(proc_arrow);
+    topology->arrows.push_back(proc_arrow);
 
     // Receive notifications when sinks finish
-    proc_arrow->attach_downstream(this);
-    attach_upstream(proc_arrow);
+    proc_arrow->attach_downstream(topology);
+    topology->attach_upstream(proc_arrow);
 
-    for (auto proc :_eventProcessors) {
+    for (auto proc :_evt_procs_front) {
         proc_arrow->add_processor(proc);
-        _sinks.push_back(proc_arrow);
     }
-
+    for (auto proc :_evt_procs_back) {
+        proc_arrow->add_processor(proc);
+    }
+    topology->sinks.push_back(proc_arrow);
 
 
     return topology;
