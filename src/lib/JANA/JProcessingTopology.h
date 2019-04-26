@@ -6,8 +6,10 @@
 #define JANA2_JPROCESSINGTOPOLOGY_H
 
 #include <JANA/JArrow.h>
-#include "JEventSourceManager.h"
-#include "JActivable.h"
+#include <JANA/JResourcePoolSimple.h>
+#include <JANA/JFactorySet.h>
+#include <JANA/JEventSourceManager.h>
+#include <JANA/JActivable.h>
 
 struct JProcessingTopology : public JActivable {
 
@@ -19,8 +21,10 @@ struct JProcessingTopology : public JActivable {
     // TODO: How much timekeeping belongs on Topology as opposed to Controller?
 
     JEventSourceManager event_source_manager;
+    JResourcePoolSimple<JFactorySet>* factoryset_pool;
     std::vector<JFactoryGenerator*> factory_generators;
     std::vector<JEventProcessor*> event_processors;
+
 
     std::vector<JArrow*> arrows;
     std::vector<QueueBase*> queues;

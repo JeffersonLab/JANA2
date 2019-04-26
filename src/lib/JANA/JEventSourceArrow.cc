@@ -9,12 +9,12 @@ using SourceStatus = JEventSource::RETURN_STATUS;
 JEventSourceArrow::JEventSourceArrow(std::string name,
                                      JEventSource* source,
                                      EventQueue* output_queue,
-                                     JApplication* app
+                                     JResourcePoolSimple<JFactorySet>* pool
                                      )
     : JArrow(name, false)
     , _source(source)
     , _output_queue(output_queue)
-    , _app(app) {
+    , _pool(pool) {
 
     _output_queue->attach_upstream(this);
     attach_downstream(_output_queue);
@@ -41,7 +41,8 @@ void JEventSourceArrow::execute(JArrowMetrics& result) {
         while (item_count-- != 0) {
             auto event = _source->GetEvent();
             auto& underlying = const_cast<JEvent&>(*event);
-            auto factorySet = _app->GetFactorySet();
+            auto factorySet =
+                    _pool->_app->GetFactorySet();
             assert(factorySet != nullptr);
             underlying.SetFactorySet(factorySet);
             underlying.SetJApplication(_app);

@@ -30,9 +30,10 @@
 // Author: Nathan Brei
 //
 
-#include "JTopologyBuilder.h"
-#include "JProcessingTopology.h"
-#include "JEventProcessorArrow.h"
+#include <JANA/JTopologyBuilder.h>
+#include <JANA/JProcessingTopology.h>
+#include <JANA/JEventProcessorArrow.h>
+#include <JANA/JEventSourceArrow.h>
 
 #include <unordered_set>
 
@@ -135,11 +136,11 @@ JProcessingTopology *JTopologyBuilder::build_topology() {
     queue->set_threshold(500);  // JTest throughput increases with threshold size: WHY?
     topology->queues.push_back(queue);
 
-    for (auto src : sources) {
+    for (auto src : sEventSources) {
 
-        JArrow* arrow = new JEventSourceArrow(src->GetName(), src, queue, this);
-        _arrows.push_back(arrow);
-        _sources.push_back(arrow);
+        JArrow* arrow = new JEventSourceArrow(src->GetName(), src, queue, topology->factoryset_pool);
+        topology->arrows.push_back(arrow);
+        topology->sources.push_back(arrow);
         // create arrow for sources. Don't open until arrow.activate() called
     }
 

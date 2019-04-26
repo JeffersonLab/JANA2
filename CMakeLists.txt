@@ -19,7 +19,7 @@ add_library(greenfield STATIC
         src/lib/greenfield/SourceArrow.h
         src/lib/greenfield/SinkArrow.h
         src/lib/greenfield/Greenfield.cc
-        )
+        src/lib/greenfield/WildAndCrazy.cc src/lib/greenfield/WildAndCrazy.h src/lib/Domain.cc src/lib/Domain.h)
 
 add_executable(tests
         src/programs/tests/catch.hpp
