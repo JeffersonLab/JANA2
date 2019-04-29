@@ -99,8 +99,8 @@ void JBenchmarker::run_thread() {
         }
     }
     // Loop over all thread settings in set
-    map<uint32_t, vector<float> > samples;
-    map<uint32_t, std::pair<float, float> > rates; // key=nthreads  val.first=rate in Hz, val.second=rms of rate in Hz
+    std::map<uint32_t, std::vector<float> > samples;
+    std::map<uint32_t, std::pair<float, float> > rates; // key=nthreads  val.first=rate in Hz, val.second=rms of rate in Hz
     for (uint32_t nthreads = _min_threads; nthreads <= _max_threads; nthreads += _thread_step) {
 
         std::cout << "Setting NTHREADS = " << nthreads << " ..." << std::endl;

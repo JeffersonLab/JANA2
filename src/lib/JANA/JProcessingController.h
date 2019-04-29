@@ -74,12 +74,6 @@ private:
     using jclock_t = std::chrono::steady_clock;
     enum class RunState { BeforeRun, DuringRun, AfterRun };
 
-    class TopologyActivator : public JActivable {
-    public:
-        bool is_active() override;
-        void set_active(bool is_active) override;
-    };
-
     JProcessingTopology* _topology;  // TODO: Move a lot of the things below into here
 
     std::vector<JArrow*> _arrows;
@@ -94,7 +88,6 @@ private:
     JLogger _logger;
 
     RunState _run_state = RunState::BeforeRun;
-    TopologyActivator _activator;
     jclock_t::time_point _start_time;
     jclock_t::time_point _last_time;
     jclock_t::time_point _stop_time;

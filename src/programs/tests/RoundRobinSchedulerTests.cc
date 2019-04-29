@@ -25,7 +25,7 @@ TEST_CASE("JScheduler") {
     // Assume everything is active for now
     topology.activate("emit_rand_ints");
 
-    auto last_result = JArrow::Status::ComeBackLater;
+    auto last_result = JArrowMetrics::Status::ComeBackLater;
     JArrow* assignment = nullptr;
 
     SECTION("When there is only one worker, who always encounters ComeBackLater...") {
@@ -54,7 +54,7 @@ TEST_CASE("JScheduler") {
 
         for (int i = 0; i < 10; ++i) {
             assignment = nullptr;
-            last_result = JArrow::Status::ComeBackLater;
+            last_result = JArrowMetrics::Status::ComeBackLater;
             assignment = scheduler.next_assignment(i, assignment, last_result);
 
             // They all receive a nonnull assignment
@@ -79,10 +79,10 @@ TEST_CASE("JScheduler") {
 
         LOG_INFO(logger) << "--------------------------------------" << LOG_END;
 
-        scheduler.next_assignment(0, nullptr, JArrow::Status::ComeBackLater);
-        scheduler.next_assignment(1, nullptr, JArrow::Status::ComeBackLater);
-        scheduler.next_assignment(2, nullptr, JArrow::Status::ComeBackLater);
-        auto sum_everything_arrow = scheduler.next_assignment(3, nullptr, JArrow::Status::ComeBackLater);
+        scheduler.next_assignment(0, nullptr, JArrowMetrics::Status::ComeBackLater);
+        scheduler.next_assignment(1, nullptr, JArrowMetrics::Status::ComeBackLater);
+        scheduler.next_assignment(2, nullptr, JArrowMetrics::Status::ComeBackLater);
+        auto sum_everything_arrow = scheduler.next_assignment(3, nullptr, JArrowMetrics::Status::ComeBackLater);
 
         // Last assignment returned sequential arrow "sum_everything"
         REQUIRE(sum_everything_arrow->get_name() == "sum_everything");
@@ -91,14 +91,14 @@ TEST_CASE("JScheduler") {
 
         // We return the sequential arrow to the scheduler
         assignment = sum_everything_arrow;
-        last_result = JArrow::Status::ComeBackLater;
+        last_result = JArrowMetrics::Status::ComeBackLater;
         auto arrow = scheduler.next_assignment(3, assignment, last_result);
 
         assignment_counts[arrow->get_name()]++;
 
         for (int i = 0; i < 8; ++i) {
             assignment = nullptr;
-            last_result = JArrow::Status::ComeBackLater;
+            last_result = JArrowMetrics::Status::ComeBackLater;
             arrow = scheduler.next_assignment(i, assignment, last_result);
             assignment_counts[arrow->get_name()]++;
         }
@@ -112,7 +112,7 @@ TEST_CASE("JScheduler") {
     SECTION("When an arrow encountered KeepGoing...") {
 
         LOG_INFO(logger) << "--------------------------------------" << LOG_END;
-        last_result = JArrow::Status::KeepGoing;
+        last_result = JArrowMetrics::Status::KeepGoing;
         assignment = topology.get_arrow("subtract_one");
 
         for (int i = 0; i < 4; ++i) {

@@ -21,12 +21,13 @@ private:
     JEventSource* _source;
     EventQueue* _output_queue;
     JResourcePoolSimple<JFactorySet>* _pool;
+    JApplication* _app;
     std::vector<Event> _chunk_buffer;
     bool _is_initialized = false;
     JLogger _logger;
 
 public:
-    JEventSourceArrow(std::string name, JEventSource* source, EventQueue* output_queue, JResourcePoolSimple<JFactorySet>* resourcePool);
+    JEventSourceArrow(std::string name, JEventSource* source, EventQueue* output_queue, JApplication* app, JResourcePoolSimple<JFactorySet>* resourcePool);
     void execute(JArrowMetrics& result);
 };
 

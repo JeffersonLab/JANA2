@@ -30,9 +30,10 @@ public:
         attach_downstream(_output_queue);
     }
 
-    JArrow::Status execute() {
+    void execute(JArrowMetrics& result) {
         if (!is_active()) {
-            return JArrow::Status::Finished;
+            result.update_finished();
+            return;
         }
         if (!_is_initialized) {
             _source.initialize();
@@ -49,9 +50,8 @@ public:
 
         auto latency = (latency_time - start_time);
         auto overhead = (finished_time - latency_time);
-        update_metrics(message_count, 1, latency, overhead);
 
-
+        JArrowMetrics::Status status;
         if (in_status == Source<T>::Status::Finished) {
             _source.finalize();
             set_upstream_finished(true);
@@ -60,12 +60,15 @@ public:
             // TODO: We may need to have scheduler check that _all_ threads running
             // this arrow have finished before notifying downstream, otherwise
             // a couple of straggler events ~might~ get stranded on an inactive queue
-            return JArrow::Status::Finished;
+            status = JArrowMetrics::Status::Finished;
         }
-        if (in_status == Source<T>::Status::KeepGoing && out_status == QueueBase::Status::Ready) {
-            return JArrow::Status::KeepGoing;
+        else if (in_status == Source<T>::Status::KeepGoing && out_status == QueueBase::Status::Ready) {
+            status = JArrowMetrics::Status::KeepGoing;
         }
-        return JArrow::Status::ComeBackLater;
+        else {
+            status = JArrowMetrics::Status::ComeBackLater;
+        }
+        result.update(status, message_count, 1, latency, overhead);
     }
 };
 

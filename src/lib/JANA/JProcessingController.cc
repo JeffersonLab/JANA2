@@ -45,7 +45,7 @@ void JProcessingController::initialize() {
 void JProcessingController::run(size_t nthreads) {
 
     scale(nthreads);
-    _activator.set_active(true);
+    _topology->set_active(true);
     _run_state = RunState::DuringRun;
     _start_time = jclock_t::now();
     _last_time = _start_time;
@@ -141,6 +141,6 @@ bool JProcessingController::is_stopped() {
 // TODO: Topology doesn't really distinguish between finished and stopped correctly, yet
 //       Topology should remain active until finished, whereas stopped corresponds to Worker states
 bool JProcessingController::is_finished() {
-    return !_activator.is_active();
+    return !_topology->is_active();
 }
 

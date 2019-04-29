@@ -21,7 +21,7 @@ TEST_CASE("SchedulerTests") {
     topology.activate("emit_rand_ints");
 
     JArrow* assignment;
-    JArrow::Status last_result;
+    JArrowMetrics::Status last_result;
 
 
     SECTION("When run sequentially, RRS returns nullptr => topology finished") {
@@ -30,12 +30,14 @@ TEST_CASE("SchedulerTests") {
 
         JScheduler scheduler(topology.arrows, 1);
 
-        last_result = JArrow::Status::ComeBackLater;
+        last_result = JArrowMetrics::Status::ComeBackLater;
         assignment = nullptr;
         do {
             assignment = scheduler.next_assignment(0, assignment, last_result);
             if (assignment != nullptr) {
-                last_result = assignment->execute();
+                JArrowMetrics metrics;
+                assignment->execute(metrics);
+                last_result = metrics.get_last_status();
             }
         } while (assignment != nullptr);
 
@@ -49,7 +51,7 @@ TEST_CASE("SchedulerTests") {
 
         auto logger = JLogger::nothing();
         JScheduler scheduler(topology.arrows, 1);
-        last_result = JArrow::Status::ComeBackLater;
+        last_result = JArrowMetrics::Status::ComeBackLater;
         assignment = nullptr;
 
         bool keep_going = true;
@@ -63,7 +65,9 @@ TEST_CASE("SchedulerTests") {
 
             if (keep_going) {
                 assignment = scheduler.next_assignment(0, assignment, last_result);
-                last_result = assignment->execute();
+                JArrowMetrics metrics;
+                assignment->execute(metrics);
+                last_result = metrics.get_last_status();
             }
         }
         assignment = scheduler.next_assignment(0, assignment, last_result);

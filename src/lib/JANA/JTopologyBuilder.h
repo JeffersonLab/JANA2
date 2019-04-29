@@ -42,6 +42,8 @@ class JTopologyBuilder {
 
 public:
 
+    JTopologyBuilder(JApplication* app);
+
     void increase_priority();
 
     void add(std::string event_source_name);
@@ -49,11 +51,15 @@ public:
     void add(JFactoryGenerator* factory_generator);
     void add(JEventProcessor* processor);
 
+    void print_report();
 
     JProcessingTopology* build_topology();
 
 
 private:
+
+    JApplication* _app;
+
     std::vector<std::string> _evt_src_names;
 
     std::vector<JFactoryGenerator*> _fac_gens_front;
@@ -64,7 +70,6 @@ private:
 
     std::vector<JEventSourceGenerator*> _evt_src_gens_front;
     std::vector<JEventSourceGenerator*> _evt_src_gens_back;
-
 
 };
 

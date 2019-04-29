@@ -30,7 +30,7 @@ public:
         attach_downstream(_output_queue);
     };
 
-    JArrow::Status execute() {
+    void execute(JArrowMetrics& result) override {
 
         auto start_total_time = std::chrono::steady_clock::now();
         std::vector<S> xs;
@@ -57,19 +57,19 @@ public:
 
         auto latency = (end_latency_time - start_latency_time);
         auto overhead = (end_queue_time - start_total_time) - latency;
-        update_metrics(message_count, 1, latency, overhead);
 
-
+        JArrowMetrics::Status status;
         if (in_status == QueueBase::Status::Finished) {
             set_upstream_finished(true);
-            return JArrow::Status::Finished;
+            status = JArrowMetrics::Status::Finished;
         }
         else if (in_status == QueueBase::Status::Ready && out_status == QueueBase::Status::Ready) {
-            return JArrow::Status::KeepGoing;
+            status = JArrowMetrics::Status::KeepGoing;
         }
         else {
-            return JArrow::Status::ComeBackLater;
+            status = JArrowMetrics::Status::ComeBackLater;
         }
+        result.update(status, message_count, 1, latency, overhead);
     }
 };
 

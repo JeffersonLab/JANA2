@@ -156,8 +156,10 @@ private:
     bool _skip_join = false;
     bool _initialized = false;
     bool _ticker_on = true;
+    bool _extended_report = true;
     int  _exit_code = 0;
     int  _desired_nthreads;
+
 
     std::chrono::time_point<std::chrono::high_resolution_clock> mRunStartTime;
 

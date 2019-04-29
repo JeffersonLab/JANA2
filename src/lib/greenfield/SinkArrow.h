@@ -28,9 +28,10 @@ public:
         attach_upstream(_input_queue);
     };
 
-    JArrow::Status execute() {
+    void execute(JArrowMetrics& result) override {
         if (!is_active()) {
-            return JArrow::Status::Finished;
+            result.update_finished();
+            return;
         }
         if (!_is_initialized) {
             _sink.initialize();
@@ -40,7 +41,7 @@ public:
 
         auto start_time = std::chrono::steady_clock::now();
 
-        auto result = _input_queue->pop(_chunk_buffer, get_chunksize());
+        auto in_status = _input_queue->pop(_chunk_buffer, get_chunksize());
 
         auto latency_start_time = std::chrono::steady_clock::now();
 
@@ -56,19 +57,22 @@ public:
 
         auto latency = latency_stop_time - latency_start_time;
         auto overhead = (stop_time - start_time) - latency;
-        update_metrics(message_count, 1, latency, overhead);
 
-        if (result == Queue<T>::Status::Finished) {
+        JArrowMetrics::Status status;
+        if (in_status == Queue<T>::Status::Finished) {
             set_upstream_finished(true);
             set_active(false);
             notify_downstream(false);
             _sink.finalize();
-            return JArrow::Status::Finished;
+            status = JArrowMetrics::Status::Finished;
         }
-        else if (result == Queue<T>::Status::Empty) {
-            return JArrow::Status::ComeBackLater;
+        else if (in_status == Queue<T>::Status::Empty) {
+            status = JArrowMetrics::Status::ComeBackLater;
         }
-        return JArrow::Status::KeepGoing;
+        else {
+            status = JArrowMetrics::Status::KeepGoing;
+        }
+        result.update(status, message_count, 1, latency, overhead);
     }
 };
 

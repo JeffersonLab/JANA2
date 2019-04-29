@@ -130,11 +130,11 @@ TEST_CASE("JTopology: Basic functionality") {
                             topology.get_arrow("subtract_one"),
                             topology.get_arrow("sum_everything")};
 
-        std::map<std::string, JArrow::Status> results;
-        results["emit_rand_ints"] = JArrow::Status::KeepGoing;
-        results["multiply_by_two"] = JArrow::Status::KeepGoing;
-        results["subtract_one"] = JArrow::Status::KeepGoing;
-        results["sum_everything"] = JArrow::Status::KeepGoing;
+        std::map<std::string, JArrowMetrics::Status> results;
+        results["emit_rand_ints"] = JArrowMetrics::Status::KeepGoing;
+        results["multiply_by_two"] = JArrowMetrics::Status::KeepGoing;
+        results["subtract_one"] = JArrowMetrics::Status::KeepGoing;
+        results["sum_everything"] = JArrowMetrics::Status::KeepGoing;
 
         // Put something in the queue to get started
         topology.activate("emit_rand_ints");
@@ -146,7 +146,9 @@ TEST_CASE("JTopology: Basic functionality") {
             JArrow* arrow = arrows[randint(0, 3)];
 
             auto name = arrow->get_name();
-            auto res = arrow->execute();
+            JArrowMetrics metrics;
+            arrow->execute(metrics);
+            auto res = metrics.get_last_status();
             results[name] = res;
             //LOG_TRACE(logger) << name << " => "
             //                  << to_string(res) << LOG_END;
@@ -158,7 +160,7 @@ TEST_CASE("JTopology: Basic functionality") {
                 }
             }
             for (auto pair : results) {
-                if (pair.second == JArrow::Status::KeepGoing) { work_left = true; }
+                if (pair.second == JArrowMetrics::Status::KeepGoing) { work_left = true; }
             }
         }
 

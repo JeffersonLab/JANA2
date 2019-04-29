@@ -36,6 +36,8 @@
 #include <JANA/JEventSourceArrow.h>
 
 #include <unordered_set>
+#include "JTopologyBuilder.h"
+
 
 void JTopologyBuilder::add(std::string event_source_name) {
     _evt_src_names.push_back(event_source_name);
@@ -138,7 +140,7 @@ JProcessingTopology *JTopologyBuilder::build_topology() {
 
     for (auto src : sEventSources) {
 
-        JArrow* arrow = new JEventSourceArrow(src->GetName(), src, queue, topology->factoryset_pool);
+        JArrow* arrow = new JEventSourceArrow(src->GetName(), src, queue, _app, topology->factoryset_pool);
         topology->arrows.push_back(arrow);
         topology->sources.push_back(arrow);
         // create arrow for sources. Don't open until arrow.activate() called
@@ -164,6 +166,14 @@ JProcessingTopology *JTopologyBuilder::build_topology() {
 
 
     return topology;
+}
+
+JTopologyBuilder::JTopologyBuilder(JApplication* app) :_app(app) {}
+
+void JTopologyBuilder::print_report() {
+
+    
+
 }
 
 

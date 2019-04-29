@@ -47,7 +47,7 @@ JApplication::JApplication(JParameterManager* params) {
 
     _logger = JLoggingService::logger("JApplication");
     _plugin_loader = new JPluginLoader();
-    _topology_builder = new JTopologyBuilder();
+    _topology_builder = new JTopologyBuilder(this);
     _topology = nullptr;
     _processing_controller = nullptr;
 }
@@ -126,6 +126,7 @@ void JApplication::Initialize() {
     _params->SetDefaultParameter("NTHREADS", _desired_nthreads,
                                  "The total number of worker threads");
 
+    _params->SetDefaultParameter("JANA:EXTENDED_REPORT", _extended_report);
 
     auto topology = _topology_builder->build_topology();
     _processing_controller = new JProcessingController(topology);
@@ -233,6 +234,23 @@ void JApplication::PrintStatus(void) {
 
 void JApplication::PrintFinalReport() {
 
+    jout << std::endl;
+    auto nevents = GetNeventsProcessed();
+    jout << "Number of threads: " << GetNThreads() << std::endl;
+    jout << "Total events processed: " << nevents << " (~ " << Val2StringWithPrefix( nevents ) << "evt)" << std::endl;
+    jout << "Integrated Rate: " << Val2StringWithPrefix( GetIntegratedRate() ) << "Hz" << std::endl;
+    jout << std::endl;
+
+    if (_extended_report) {
+        //_plugin_loader->print_report();
+        //_topology->print_report();
+        //jout << std::endl;
+        //jout << "               Num. plugins: " << _plugins.size() <<std::endl;
+        //jout << "          Num. plugin paths: " << _plugin_paths.size() <<std::endl;
+        //jout << "    Num. factory generators: " << _factoryGenerators.size() <<std::endl;
+        //jout << "      Num. event processors: " << mNumProcessorsAdded <<std::endl;
+        //jout << "          Num. factory sets: " << mFactorySetPool.Get_PoolSize() << " (max. " << mFactorySetPool.Get_MaxPoolSize() << ")" << std::endl;
+    }
 }
 
 uint64_t JApplication::GetNThreads() {

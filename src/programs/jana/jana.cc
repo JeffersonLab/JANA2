@@ -30,8 +30,7 @@
 //
 
 #include <iostream>
-#include <JANA/JApplicationNew.h>
-#include <JANA/JApplicationOld.h>
+#include <JANA/JApplication.h>
 #include <JANA/JVersion.h>
 #include <JANA/JSignalHandler.h>
 
@@ -116,12 +115,10 @@ int Execute(UserOptions& options) {
 		bool legacy_mode = true;
 		options.params.SetDefaultParameter("JANA:LEGACY_MODE", legacy_mode, "");
 	    auto params_copy = new JParameterManager(options.params); // JApplication owns params_copy, does not own eventSources
-
-		if (legacy_mode) {
-			japp = new JApplicationOld(params_copy, &options.eventSources);
-		} else {
-			japp = new JApplicationNew(params_copy, &options.eventSources);
-		}
+	    japp = new JApplication(params_copy);
+	    for (auto event_src : options.eventSources) {
+	    	japp->Add(event_src);
+	    }
 		AddSignalHandlers();
 
 		if (options.flags[ShowConfigs]) {
@@ -154,7 +151,7 @@ int main(int nargs, char *argv[]) {
 
 	UserOptions options;
 
-	map<std::string, Flag> tokenizer;
+	std::map<std::string, Flag> tokenizer;
 	tokenizer["-h"] = ShowUsage;
 	tokenizer["--help"] = ShowUsage;
 	tokenizer["-v"] = ShowVersion;
