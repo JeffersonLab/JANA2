@@ -27,6 +27,8 @@
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 #include "JApplication.h"
+#include "JLegacyProcessingController.h"
+#include "JArrowProcessingController.h"
 
 #include <JANA/JEventProcessor.h>
 #include <JANA/JEventSource.h>
@@ -129,9 +131,16 @@ void JApplication::Initialize() {
     _params->SetDefaultParameter("JANA:EXTENDED_REPORT", _extended_report);
 
     auto topology = _topology_builder->build_topology();
-    _processing_controller = new JProcessingController(topology);
-    _processing_controller->initialize();
 
+    bool legacy_mode = true;
+    _params->SetDefaultParameter("JANA:LEGACY_MODE", legacy_mode, "");
+    if (legacy_mode) {
+        _processing_controller = new JLegacyProcessingController(this, topology);
+    }
+    else {
+        _processing_controller = new JArrowProcessingController(topology);
+    }
+    _processing_controller->initialize();
 }
 
 void JApplication::Run() {

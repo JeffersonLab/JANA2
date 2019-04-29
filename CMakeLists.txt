@@ -101,7 +101,6 @@ add_library(jana2 STATIC
         src/lib/JANA/JTopology.h
         src/lib/JANA/JSubeventArrow.cc
         src/lib/JANA/JSubeventArrow.h
-        src/lib/JANA/JProcessingController.cc
         src/lib/JANA/JProcessingController.h
         src/lib/JANA/JMetrics.h
         src/lib/JANA/JArrowMetrics.h
@@ -113,7 +112,9 @@ add_library(jana2 STATIC
         src/lib/JANA/JLegacyProcessingController.cc
         src/lib/JANA/JLegacyProcessingController.h
         src/lib/JANA/JProcessingTopology.cpp
-        src/lib/JANA/JProcessingTopology.h)
+        src/lib/JANA/JProcessingTopology.h
+        src/lib/JANA/JArrowProcessingController.cc
+        src/lib/JANA/JArrowProcessingController.h)
 
 add_library(jtest SHARED
         src/plugins/JTest/JTestDataObject.h

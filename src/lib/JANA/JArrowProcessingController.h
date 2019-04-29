@@ -30,28 +30,74 @@
 // Author: Nathan Brei
 //
 
-#ifndef JANA2_JPROCESSINGCONTROLLER_H
-#define JANA2_JPROCESSINGCONTROLLER_H
+#ifndef JANA2_JARROWPROCESSINGCONTROLLER_H
+#define JANA2_JARROWPROCESSINGCONTROLLER_H
+
+#include <JANA/JProcessingController.h>
 
 #include <vector>
-#include <unistd.h>
 
-class JProcessingController {
+#include <JANA/JArrow.h>
+#include <JANA/JWorker.h>
+#include <JANA/JMetrics.h>
+#include <JANA/JProcessingTopology.h>
+
+class JArrowProcessingController : public JProcessingController {
 public:
+    JArrowProcessingController(JProcessingTopology* topology) : _topology(topology) {};
 
-    virtual void initialize() = 0;
-    virtual void run(size_t nthreads) = 0;
-    virtual void scale(size_t nthreads) = 0;
-    virtual void request_stop() = 0;
-    virtual void wait_until_finished() = 0;
-    virtual void wait_until_stopped() = 0;
+    void initialize();
+    void run(size_t nthreads) override;
+    void scale(size_t nthreads) override;
+    void request_stop() override;
+    void wait_until_finished() override;
+    void wait_until_stopped() override;
 
-    virtual bool is_stopped() = 0;
-    virtual bool is_finished() = 0;
+    bool is_stopped() override;
+    bool is_finished() override;
 
-    virtual size_t get_nthreads() = 0;
-    virtual size_t get_nevents_processed() = 0;
+    size_t get_nthreads() override;
+    size_t get_nevents_processed() override;
+
+
+    void measure_perf(JMetrics::TopologySummary& topology_perf);
+
+    void measure_perf(JMetrics::TopologySummary& topology_perf,
+                      std::vector<JMetrics::ArrowSummary>& arrow_perf);
+
+    void measure_perf(JMetrics::TopologySummary& topology_perf,
+                      std::vector<JMetrics::ArrowSummary>& arrow_perf,
+                      std::vector<JMetrics::WorkerSummary>& worker_perf);
+
+
+
+private:
+
+    using jclock_t = std::chrono::steady_clock;
+    enum class RunState { BeforeRun, DuringRun, AfterRun };
+
+    JProcessingTopology* _topology;  // TODO: Move a lot of the things below into here
+
+    std::vector<JArrow*> _arrows;
+    std::vector<QueueBase*> _queues;
+    std::vector<JWorker*> _workers;         // One per cpu
+    std::vector<JScheduler*> _schedulers;   // One per NUMA domain
+    // TODO: How much NUMA stuff lives in ProcessingController vs TopologyBuilder?
+
+    std::vector<JArrow*> _sources;          // Sources needed for activation
+    std::vector<JArrow*> _sinks;            // Sinks needed for finished message count
+
+    JLogger _logger;
+
+    RunState _run_state = RunState::BeforeRun;
+    jclock_t::time_point _start_time;
+    jclock_t::time_point _last_time;
+    jclock_t::time_point _stop_time;
+    size_t _last_message_count = 0;
+    uint32_t _ncpus;
+
+
+
 };
 
-#endif //JANA2_JPROCESSINGCONTROLLER_H
-
+#endif //JANA2_JARROWPROCESSINGCONTROLLER_H

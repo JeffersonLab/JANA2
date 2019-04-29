@@ -112,8 +112,6 @@ int Execute(UserOptions& options) {
 			std::cout << "Loading functionality is coming soon! File=" << options.load_config_file << std::endl;
 		}
 
-		bool legacy_mode = true;
-		options.params.SetDefaultParameter("JANA:LEGACY_MODE", legacy_mode, "");
 	    auto params_copy = new JParameterManager(options.params); // JApplication owns params_copy, does not own eventSources
 	    japp = new JApplication(params_copy);
 	    for (auto event_src : options.eventSources) {

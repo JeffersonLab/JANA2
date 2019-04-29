@@ -30,11 +30,11 @@
 // Author: Nathan Brei
 //
 
-#include "JProcessingController.h"
+#include "JArrowProcessingController.h"
 #include "JCpuInfo.h"
 
 
-void JProcessingController::initialize() {
+void JArrowProcessingController::initialize() {
     // Set exit code
     // Set _quitting, _draining_queues
 
@@ -42,7 +42,7 @@ void JProcessingController::initialize() {
     _ncpus = JCpuInfo::GetNumCpus();
 }
 
-void JProcessingController::run(size_t nthreads) {
+void JArrowProcessingController::run(size_t nthreads) {
 
     scale(nthreads);
     _topology->set_active(true);
@@ -51,7 +51,7 @@ void JProcessingController::run(size_t nthreads) {
     _last_time = _start_time;
 }
 
-void JProcessingController::scale(size_t nthreads) {
+void JArrowProcessingController::scale(size_t nthreads) {
 
     if (_schedulers.empty()) {
         _schedulers.push_back(new JScheduler(_arrows, _ncpus));
@@ -74,7 +74,7 @@ void JProcessingController::scale(size_t nthreads) {
     _ncpus = nthreads;
 }
 
-void JProcessingController::request_stop() {
+void JArrowProcessingController::request_stop() {
     for (JArrow* arrow : _arrows) {
         arrow->set_active(false);
     }
@@ -83,10 +83,10 @@ void JProcessingController::request_stop() {
     }
 }
 
-void JProcessingController::wait_until_finished() {
+void JArrowProcessingController::wait_until_finished() {
 }
 
-void JProcessingController::wait_until_stopped() {
+void JArrowProcessingController::wait_until_stopped() {
     for (JWorker* worker : _workers) {
         worker->wait_for_stop();
     }
@@ -102,26 +102,26 @@ void JProcessingController::wait_until_stopped() {
     _run_state = RunState::AfterRun;
 }
 
-size_t JProcessingController::get_nthreads() {
+size_t JArrowProcessingController::get_nthreads() {
     return 0;
 }
 
-void JProcessingController::measure_perf(JMetrics::TopologySummary& topology_perf) {
+void JArrowProcessingController::measure_perf(JMetrics::TopologySummary& topology_perf) {
 
 }
 
-void JProcessingController::measure_perf(JMetrics::TopologySummary& topology_perf,
+void JArrowProcessingController::measure_perf(JMetrics::TopologySummary& topology_perf,
                                          std::vector<JMetrics::ArrowSummary>& arrow_perf) {
 
 }
 
-void JProcessingController::measure_perf(JMetrics::TopologySummary& topology_perf,
+void JArrowProcessingController::measure_perf(JMetrics::TopologySummary& topology_perf,
                                          std::vector<JMetrics::ArrowSummary>& arrow_perf,
                                          std::vector<JMetrics::WorkerSummary>& worker_perf) {
 
 }
 
-size_t JProcessingController::get_nevents_processed() {
+size_t JArrowProcessingController::get_nevents_processed() {
     uint64_t message_count = 0;
     for (JArrow* arrow : _sinks) {
         message_count += arrow->get_metrics().get_total_message_count();
@@ -129,7 +129,7 @@ size_t JProcessingController::get_nevents_processed() {
     return message_count;
 }
 
-bool JProcessingController::is_stopped() {
+bool JArrowProcessingController::is_stopped() {
     for (JWorker* worker : _workers) {
         if (worker->get_runstate() != JWorker::RunState::Stopped) {
             return false;
@@ -140,7 +140,8 @@ bool JProcessingController::is_stopped() {
 
 // TODO: Topology doesn't really distinguish between finished and stopped correctly, yet
 //       Topology should remain active until finished, whereas stopped corresponds to Worker states
-bool JProcessingController::is_finished() {
+bool JArrowProcessingController::is_finished() {
     return !_topology->is_active();
 }
+
 

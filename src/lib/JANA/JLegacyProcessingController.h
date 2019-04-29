@@ -34,31 +34,32 @@
 #define JANA2_JLEGACYPROCESSINGCONTROLLER_H
 
 #include <unistd.h>
+#include <JANA/JProcessingController.h>
 #include <JANA/JThreadManager.h>
 #include <JANA/JParameterManager.h>
 #include "JProcessingTopology.h"
 
 class JApplication;
 
-class JLegacyProcessingController {
+class JLegacyProcessingController : public JProcessingController {
 
 public:
 
-    JLegacyProcessingController(JApplication* app);
+    JLegacyProcessingController(JApplication* app, JProcessingTopology* topology);
     ~JLegacyProcessingController();
 
-    void initialize();
-    void run(size_t nthreads);
-    void scale(size_t nthreads);
-    void request_stop();
-    void wait_until_finished();
-    void wait_until_stopped();
+    void initialize() override;
+    void run(size_t nthreads) override;
+    void scale(size_t nthreads) override;
+    void request_stop() override;
+    void wait_until_finished() override;
+    void wait_until_stopped() override;
 
-    bool is_stopped();
-    bool is_finished();
+    bool is_stopped() override;
+    bool is_finished() override;
 
-    size_t get_nthreads();
-    size_t get_nevents_processed();
+    size_t get_nthreads() override;
+    size_t get_nevents_processed() override;
 
     void print_final_report();
     JThreadManager* get_threadmanager();

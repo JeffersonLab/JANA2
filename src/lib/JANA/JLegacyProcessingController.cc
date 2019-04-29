@@ -33,10 +33,12 @@
 #include <JANA/JLegacyProcessingController.h>
 
 #include <JANA/JEventProcessor.h>
+#include "JLegacyProcessingController.h"
 
 
-JLegacyProcessingController::JLegacyProcessingController(JApplication* app) {
+JLegacyProcessingController::JLegacyProcessingController(JApplication* app, JProcessingTopology* topology) {
     _threadManager = new JThreadManager(app);
+    _topology = topology;
     _params = app->GetJParameterManager();
 }
 
@@ -189,4 +191,8 @@ void JLegacyProcessingController::print_final_report() {
 
 bool JLegacyProcessingController::is_stopped() {
     return _threadManager->AreAllThreadsEnded();
+}
+
+bool JLegacyProcessingController::is_finished() {
+    throw JException("How do we know when we are finished?");
 }
