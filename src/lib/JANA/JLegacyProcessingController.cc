@@ -47,24 +47,25 @@ JLegacyProcessingController::~JLegacyProcessingController() {
 }
 
 void JLegacyProcessingController::initialize() {
+
     _topology->event_source_manager.OpenInitSources();
+
+    try {
+        _params->SetDefaultParameter("AFFINITY", _affinity_algorithm, "Set the thread affinity algorithm. 0=none, 1=sequential, 2=core fill");
+        _threadManager->SetThreadAffinity(_affinity_algorithm);
+    }
+    catch(...) {
+        LOG_ERROR(_logger) << "Unknown exception in JApplication::Run attempting to set thread affinity" << LOG_END;
+    }
+
     _threadManager->PrepareQueues();
 
 }
 
 void JLegacyProcessingController::run(size_t nthreads) {
     LOG_INFO(_logger) << "Creating " << _nthreads << " processing threads ..." << LOG_END;
-    _threadManager->CreateThreads(_nthreads);
-
-    // Optionally set thread affinity
-    try{
-        _params->SetDefaultParameter("AFFINITY", _affinity_algorithm, "Set the thread affinity algorithm. 0=none, 1=sequential, 2=core fill");
-        _threadManager->SetThreadAffinity(_affinity_algorithm);
-    }catch(...){
-        LOG_ERROR(_logger) << "Unknown exception in JApplication::Run attempting to set thread affinity" << LOG_END;
-    }
-
     _nthreads = nthreads;
+    _threadManager->CreateThreads(_nthreads);
     _threadManager->RunThreads();
 }
 
@@ -75,7 +76,6 @@ void JLegacyProcessingController::scale(size_t nthreads) {
 
 void JLegacyProcessingController::request_stop() {
     _threadManager->StopThreads(false);
-
 }
 
 void JLegacyProcessingController::wait_until_finished() {
@@ -83,7 +83,7 @@ void JLegacyProcessingController::wait_until_finished() {
 }
 
 size_t JLegacyProcessingController::get_nevents_processed() {
-    throw JException("Not implemented");
+    return _topology->event_source_manager.GetNumEventsProcessed();
 }
 
 void JLegacyProcessingController::wait_until_stopped() {
@@ -194,5 +194,7 @@ bool JLegacyProcessingController::is_stopped() {
 }
 
 bool JLegacyProcessingController::is_finished() {
-    throw JException("How do we know when we are finished?");
+    return false;
 }
+
+

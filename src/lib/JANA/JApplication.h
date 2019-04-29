@@ -166,7 +166,7 @@ private:
     // TODO: Get rid of these
     JResourcePoolSimple<JFactorySet> mFactorySetPool;
     JResourcePool<JTask<void>> mVoidTaskPool;
-    JThreadManager* _threadManager; // Extract this from LegacyProcessingController
+    JThreadManager* _threadManager = nullptr; // Extract this from LegacyProcessingController
 
 };
 

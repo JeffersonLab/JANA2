@@ -139,7 +139,9 @@ void JApplication::Initialize() {
     bool legacy_mode = true;
     _params->SetDefaultParameter("JANA:LEGACY_MODE", legacy_mode, "");
     if (legacy_mode) {
-        _processing_controller = new JLegacyProcessingController(this, _topology);
+        auto * pc = new JLegacyProcessingController(this, _topology);
+        _threadManager = pc->get_threadmanager();
+        _processing_controller = pc;
     }
     else {
         _processing_controller = new JArrowProcessingController(_topology);
@@ -170,7 +172,7 @@ void JApplication::Run() {
 
 
         // Check if all threads have finished
-        if (_processing_controller->is_stopped()) {
+        if (_processing_controller->is_finished() || _processing_controller->is_stopped()) {
             // TODO: Or do we want is_finished?
             std::cout << "All threads have ended.\n";
             break;
@@ -243,7 +245,7 @@ void JApplication::PrintStatus(void) {
     // Print ticker
     std::stringstream ss;
     ss << "  " << GetNeventsProcessed() << " events processed  " << Val2StringWithPrefix( GetInstantaneousRate() ) << "Hz (" << Val2StringWithPrefix( GetIntegratedRate() ) << "Hz avg)             ";
-    jout << ss.str() << "\r";
+    jout << ss.str() << "\n";
     jout.flush();
 }
 

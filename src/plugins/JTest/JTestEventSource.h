@@ -22,7 +22,7 @@ public:
 
     JTestEventSource(string source_name, JApplication *japp) : JEventSource(source_name, japp)
     {
-        mNumEventsToGenerate = 20000;
+        mNumEventsToGenerate = 5000;
         japp->GetJParameterManager()->SetDefaultParameter(
                 "NEVENTS",
                 mNumEventsToGenerate,
