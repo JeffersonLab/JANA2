@@ -43,7 +43,7 @@
 class JTopologyBuilder;
 class JApplication;
 
-class JPluginLoader : JService {
+class JPluginLoader {
 
 public:
 

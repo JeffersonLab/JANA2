@@ -45,6 +45,7 @@
 class JArrowProcessingController : public JProcessingController {
 public:
     JArrowProcessingController(JProcessingTopology* topology) : _topology(topology) {};
+    ~JArrowProcessingController() override;
 
     void initialize();
     void run(size_t nthreads) override;

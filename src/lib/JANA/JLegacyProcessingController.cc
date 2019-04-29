@@ -44,6 +44,7 @@ JLegacyProcessingController::JLegacyProcessingController(JApplication* app, JPro
 
 JLegacyProcessingController::~JLegacyProcessingController() {
     delete _threadManager;
+    _threadManager = nullptr;
 }
 
 void JLegacyProcessingController::initialize() {

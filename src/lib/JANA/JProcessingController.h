@@ -39,6 +39,8 @@
 class JProcessingController {
 public:
 
+    virtual ~JProcessingController() = default;
+
     virtual void initialize() = 0;
     virtual void run(size_t nthreads) = 0;
     virtual void scale(size_t nthreads) = 0;

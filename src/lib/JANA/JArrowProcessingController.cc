@@ -35,9 +35,6 @@
 
 
 void JArrowProcessingController::initialize() {
-    // Set exit code
-    // Set _quitting, _draining_queues
-
     _run_state = RunState::BeforeRun;
     _ncpus = JCpuInfo::GetNumCpus();
     _scheduler = new JScheduler(_topology->arrows, _ncpus);
@@ -59,7 +56,7 @@ void JArrowProcessingController::scale(size_t nthreads) {
         _workers.push_back(new JWorker(current_workers, _scheduler));
         current_workers++;
     }
-    for (int i=0; i<nthreads; ++i) {
+    for (size_t i=0; i<nthreads; ++i) {
         _workers.at(i)->start();
     };
     for (size_t i=nthreads; i<current_workers; ++i) {
@@ -141,5 +138,14 @@ bool JArrowProcessingController::is_stopped() {
 bool JArrowProcessingController::is_finished() {
     return !_topology->is_active();
 }
+
+JArrowProcessingController::~JArrowProcessingController() {
+    request_stop();
+    wait_until_stopped();
+    for (JWorker* worker : _workers) {
+        delete worker;
+    }
+}
+
 
 

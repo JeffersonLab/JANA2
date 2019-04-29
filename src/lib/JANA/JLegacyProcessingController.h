@@ -46,7 +46,7 @@ class JLegacyProcessingController : public JProcessingController {
 public:
 
     JLegacyProcessingController(JApplication* app, JProcessingTopology* topology);
-    ~JLegacyProcessingController();
+    ~JLegacyProcessingController() override;
 
     void initialize() override;
     void run(size_t nthreads) override;

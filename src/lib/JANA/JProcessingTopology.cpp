@@ -34,3 +34,7 @@ JProcessingTopology::JProcessingTopology(JApplication* japp)
 
 }
 
+JProcessingTopology::~JProcessingTopology() {
+    // TODO: This should be responsible for deleting a whole bunch of stuff
+}
+

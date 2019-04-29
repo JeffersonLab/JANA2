@@ -43,7 +43,7 @@
 #include <Python.h>
 using namespace std;
 
-#include <JANA/JApplicationNew.h>
+#include <JANA/JApplication.h>
 #include <JANA/JThreadManager.h>
 #include <JANA/JCpuInfo.h>
 #include <JANA/JParameterManager.h>
@@ -55,7 +55,6 @@ static bool PY_INITIALIZED = false; // See JANA_PythonModuleInit
 // This is temporary and will likely be changed once the new arrow
 // system is fully adopted.
 static JApplication *pyjapp = nullptr;
-static JParameterManager *pyparametermanager = nullptr;
 
 #ifndef _DBG__
 #define _DBG__ std::cout<<__FILE__<<":"<<__LINE__<<std::endl
@@ -520,9 +519,7 @@ static struct PyModuleDef janapy__definition = {
 PyMODINIT_FUNC PyInit_janapy(void) {
 
 	// Create JApplication.
-	vector<string> eventsources;
-	pyparametermanager = new JParameterManager();
-	pyjapp = new JApplicationNew(pyparametermanager, &eventsources);
+	pyjapp = new JApplication;
 
 	Py_Initialize();
 	return PyModule_Create(&janapy__definition);

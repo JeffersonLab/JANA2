@@ -29,12 +29,12 @@ public:
 private:
     /// Machinery that nobody else should modify. These should be protected eventually.
     /// Probably simply make them private and expose via get_status() -> Worker::Status
+    JScheduler* _scheduler;
     unsigned _worker_id;
     unsigned _cpu_id;
     bool _pin_to_cpu;
     RunState _run_state;
     JArrow* _assignment;
-    JScheduler* _scheduler;
     std::thread* _thread;    // JWorker encapsulates a thread of some kind. Nothing else should care how.
     JWorkerMetrics _worker_metrics;
     JArrowMetrics _arrow_metrics;

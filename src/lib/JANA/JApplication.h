@@ -99,6 +99,7 @@ public:
     void Run();
     void Scale(int nthreads);
     void Stop(bool wait_until_idle = false);
+    void Resume() {};  // TODO: Do we need this?
     void Quit(bool skip_join = false);
     void SetExitCode(int exit_code);
     int GetExitCode(void);
@@ -116,7 +117,10 @@ public:
     uint64_t GetNeventsProcessed();
     float GetIntegratedRate();
     float GetInstantaneousRate();
-
+    // TODO: Do we really want these?
+    uint64_t GetNtasksCompleted(std::string name="") { return 0; }
+    void GetInstantaneousRates(std::vector<double> &rates_by_queue) {}
+    void GetIntegratedRates(std::map<std::string,double> &rates_by_thread) {}
 
     // Parameter config
 

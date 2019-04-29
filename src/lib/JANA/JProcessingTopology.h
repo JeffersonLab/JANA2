@@ -20,6 +20,7 @@ struct JProcessingTopology : public JActivable {
     // TODO: How much timekeeping belongs on Topology as opposed to Controller?
 
     explicit JProcessingTopology(JApplication* app);
+    virtual ~JProcessingTopology();
 
     JEventSourceManager event_source_manager;
     JResourcePoolSimple<JFactorySet>* factoryset_pool;

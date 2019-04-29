@@ -33,38 +33,8 @@
 #ifndef JANA2_WILDANDCRAZY_H
 #define JANA2_WILDANDCRAZY_H
 
+#if 0
 
-class Source<outputs> {
-    tuple<string> output_tags = {"mine"};
-
-    void open();
-    void close;
-    void process(outputs);
-};
-
-class Factory<inputs, output> {
-    tuple<string> input_tags = {"whatever"};
-
-    void process()
-};
-
-class Sink {
-
-};
-
-
-
-
-//-------- Option 2 -----------
-
-
-
-
-
-
-
-
-// ==========================
 // If we didn't have tags to worry about
 
 class Source<T> {
@@ -189,4 +159,5 @@ class WildAndCrazy {
 };
 
 
+#endif // ifdef 0
 #endif //JANA2_WILDANDCRAZY_H
