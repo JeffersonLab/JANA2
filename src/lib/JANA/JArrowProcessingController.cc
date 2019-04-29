@@ -40,6 +40,7 @@ void JArrowProcessingController::initialize() {
 
     _run_state = RunState::BeforeRun;
     _ncpus = JCpuInfo::GetNumCpus();
+    _scheduler = new JScheduler(_topology->arrows, _ncpus);
 }
 
 void JArrowProcessingController::run(size_t nthreads) {
@@ -53,13 +54,9 @@ void JArrowProcessingController::run(size_t nthreads) {
 
 void JArrowProcessingController::scale(size_t nthreads) {
 
-    if (_schedulers.empty()) {
-        _schedulers.push_back(new JScheduler(_arrows, _ncpus));
-    }
-
     size_t current_workers = _workers.size();
     while (current_workers < nthreads) {
-        _workers.push_back(new JWorker(current_workers, _schedulers[0]));
+        _workers.push_back(new JWorker(current_workers, _scheduler));
         current_workers++;
     }
     for (int i=0; i<nthreads; ++i) {
@@ -75,9 +72,6 @@ void JArrowProcessingController::scale(size_t nthreads) {
 }
 
 void JArrowProcessingController::request_stop() {
-    for (JArrow* arrow : _arrows) {
-        arrow->set_active(false);
-    }
     for (JWorker* worker : _workers) {
         worker->request_stop();
     }
@@ -103,7 +97,7 @@ void JArrowProcessingController::wait_until_stopped() {
 }
 
 size_t JArrowProcessingController::get_nthreads() {
-    return 0;
+    return _ncpus;
 }
 
 void JArrowProcessingController::measure_perf(JMetrics::TopologySummary& topology_perf) {
@@ -122,8 +116,12 @@ void JArrowProcessingController::measure_perf(JMetrics::TopologySummary& topolog
 }
 
 size_t JArrowProcessingController::get_nevents_processed() {
+    for (JWorker* worker : _workers) {
+        JMetrics::WorkerSummary summary;
+        worker->measure_perf(summary);
+    }
     uint64_t message_count = 0;
-    for (JArrow* arrow : _sinks) {
+    for (JArrow* arrow : _topology->sinks) {
         message_count += arrow->get_metrics().get_total_message_count();
     }
     return message_count;

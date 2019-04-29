@@ -48,7 +48,7 @@ JApplication::JApplication(JParameterManager* params) {
     _params = (params == nullptr) ? new JParameterManager : params;
 
     _logger = JLoggingService::logger("JApplication");
-    _plugin_loader = new JPluginLoader();
+    _plugin_loader = new JPluginLoader(this,_params);
     _topology_builder = new JTopologyBuilder(this);
     _topology = nullptr;
     _processing_controller = nullptr;
@@ -56,11 +56,15 @@ JApplication::JApplication(JParameterManager* params) {
 
 
 JApplication::~JApplication() {
+    if (_processing_controller != nullptr) {
+        delete _processing_controller;
+    }
     delete _params;
     delete _plugin_loader;
     delete _topology_builder;
-    delete _topology;
-    delete _processing_controller;
+    if (_topology != nullptr) {
+        delete _topology;
+    }
 }
 
 
@@ -130,15 +134,15 @@ void JApplication::Initialize() {
 
     _params->SetDefaultParameter("JANA:EXTENDED_REPORT", _extended_report);
 
-    auto topology = _topology_builder->build_topology();
+    _topology = _topology_builder->build_topology();
 
     bool legacy_mode = true;
     _params->SetDefaultParameter("JANA:LEGACY_MODE", legacy_mode, "");
     if (legacy_mode) {
-        _processing_controller = new JLegacyProcessingController(this, topology);
+        _processing_controller = new JLegacyProcessingController(this, _topology);
     }
     else {
-        _processing_controller = new JArrowProcessingController(topology);
+        _processing_controller = new JArrowProcessingController(_topology);
     }
     _processing_controller->initialize();
 }
@@ -204,7 +208,9 @@ void JApplication::Stop(bool wait_until_idle) {
 void JApplication::Quit(bool skip_join) {
     _skip_join = skip_join;
     _quitting = true;
-    Stop(skip_join);
+    if (_processing_controller != nullptr) {
+        Stop(skip_join);
+    }
 }
 
 void JApplication::SetExitCode(int exit_code) {

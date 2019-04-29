@@ -131,6 +131,7 @@ int Execute(UserOptions& options) {
 		}
 		else if (options.flags[Benchmark]) {
 			// Run JANA in benchmark mode
+			japp->Initialize();
 			JBenchmarker benchmarker(japp);
 			japp->Run();
 		}

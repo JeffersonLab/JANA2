@@ -78,14 +78,9 @@ private:
 
     JProcessingTopology* _topology;  // TODO: Move a lot of the things below into here
 
-    std::vector<JArrow*> _arrows;
-    std::vector<QueueBase*> _queues;
-    std::vector<JWorker*> _workers;         // One per cpu
-    std::vector<JScheduler*> _schedulers;   // One per NUMA domain
     // TODO: How much NUMA stuff lives in ProcessingController vs TopologyBuilder?
-
-    std::vector<JArrow*> _sources;          // Sources needed for activation
-    std::vector<JArrow*> _sinks;            // Sinks needed for finished message count
+    std::vector<JWorker*> _workers;
+    JScheduler* _scheduler;
 
     JLogger _logger;
 
@@ -94,7 +89,7 @@ private:
     jclock_t::time_point _last_time;
     jclock_t::time_point _stop_time;
     size_t _last_message_count = 0;
-    uint32_t _ncpus;
+    size_t _ncpus;
 
 
 

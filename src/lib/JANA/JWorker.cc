@@ -13,9 +13,8 @@ void JWorker::measure_perf(JMetrics::WorkerSummary& summary) {
     JArrowMetrics latest_arrow_metrics;
     latest_arrow_metrics.clear();
     latest_arrow_metrics.take(_arrow_metrics); // destructive
-    _assignment->get_metrics().update(latest_arrow_metrics);  // nondestructive
+    publish_arrow_metrics();
     // Unpack latest_arrow_metrics, add to WorkerSummary
-
 
     // If we wanted to average over our measurement interval only, we would also do:
     // From inside JProcessingController, do _after_ JWorker::measure_perf() for all workers:
@@ -191,6 +190,8 @@ void JWorker::loop() {
             }
         }
         _worker_metrics.update(1, useful_duration, retry_duration, scheduler_duration, idle_duration);
+        publish_arrow_metrics(); // Arrow metrics are updated either when the assignment changes,
+                                 // or when the ArrowProcessingController asks for them
     }
 
     _scheduler->last_assignment(_worker_id, _assignment, last_result);
@@ -199,9 +200,12 @@ void JWorker::loop() {
 
 }
 
-
 void JWorker::publish_arrow_metrics() {
-
+    if (_assignment != nullptr) {
+        auto& source = _arrow_metrics;
+        auto& destination = _assignment->get_metrics();
+        destination.update(source);
+    }
 }
 
 

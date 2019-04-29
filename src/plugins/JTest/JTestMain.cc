@@ -71,11 +71,7 @@ void InitPlugin(JApplication *app){
 	app->Add(new JEventSourceGeneratorT<JTestEventSource>());
 	app->Add(new JTestDummyDataFactoryGenerator());
 	app->Add(new JTestEventProcessor(app));
-
-	// If no source has been specified, then add a dummy source
-	if (app->GetJEventSourceManager()->GetSourceNames().empty()) {
-		app->GetJEventSourceManager()->AddEventSource("dummy");
-	}
+	app->Add("dummy"); // So that we don't need to specify a throwaway source on the command line
 }
 } // "C"
 

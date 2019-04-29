@@ -88,21 +88,15 @@ void JTopologyBuilder::increase_priority() {
 
 JProcessingTopology *JTopologyBuilder::build_topology() {
 
-    JProcessingTopology* topology;
+    increase_priority(); // Merges everything into *_back vectors
+    JProcessingTopology* topology = new JProcessingTopology(_app);
 
     // Add event processors to topology
-    for (auto * evt_proc : _evt_procs_front) {
-        topology->event_processors.push_back(evt_proc);
-    }
     for (auto * evt_proc : _evt_procs_back) {
         topology->event_processors.push_back(evt_proc);
     }
 
-
     // Add event source generators to event source manager
-    for (auto * event_src_gen : _evt_src_gens_front) {
-        topology->event_source_manager.AddJEventSourceGenerator(event_src_gen);
-    }
     for (auto * event_src_gen : _evt_src_gens_back) {
         topology->event_source_manager.AddJEventSourceGenerator(event_src_gen);
     }
@@ -120,6 +114,7 @@ JProcessingTopology *JTopologyBuilder::build_topology() {
     std::deque<JEventSource*> sEventSources;
     topology->event_source_manager.GetUnopenedJEventSources(sEventSources);
     std::unordered_set<std::type_index> sSourceTypes;
+    // TODO: We aren't actually adding anything to the unordered set
     for(auto sSource : sEventSources)
     {
         auto sTypeIndex = sSource->GetDerivedType();
@@ -131,7 +126,10 @@ JProcessingTopology *JTopologyBuilder::build_topology() {
             topology->factory_generators.push_back(sGenerator);
         }
     }
-    // TODO: We aren't actually adding anything to the unordered set
+
+    for (auto factory : _fac_gens_back) {
+        topology->factory_generators.push_back(factory);
+    }
 
     // Assume the simplest possible topology for now, complicate later
     auto queue = new EventQueue();
@@ -172,7 +170,11 @@ JTopologyBuilder::JTopologyBuilder(JApplication* app) :_app(app) {}
 
 void JTopologyBuilder::print_report() {
 
-    
+    jout << "Event sources: " << std::endl;
+    jout << "Event processors: " << std::endl;
+    jout << "Event factories: " << std::endl;
+
+
 
 }
 

@@ -41,10 +41,13 @@
 
 
 class JTopologyBuilder;
+class JApplication;
 
 class JPluginLoader : JService {
 
 public:
+
+    JPluginLoader(JApplication* app, JParameterManager* params = nullptr);
 
     void acquire_services(JServiceLocator* service_locator);
 
@@ -61,8 +64,9 @@ private:
     std::vector<void*> _sohandles;
 
     bool _verbose;
-    JLogger _logger;
+    JLogger _logger = JLogger::everything();
     JServiceLocator* _service_locator;
+    JApplication* _app;
 };
 
 

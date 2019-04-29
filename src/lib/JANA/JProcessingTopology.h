@@ -15,10 +15,11 @@ struct JProcessingTopology : public JActivable {
 
     using jclock_t = std::chrono::steady_clock;
 
-    enum class RunState {
-        BeforeRun, DuringRun, AfterRun
-    };
+    enum class RunState { BeforeRun, DuringRun, AfterRun };
+
     // TODO: How much timekeeping belongs on Topology as opposed to Controller?
+
+    explicit JProcessingTopology(JApplication* app);
 
     JEventSourceManager event_source_manager;
     JResourcePoolSimple<JFactorySet>* factoryset_pool;
@@ -41,10 +42,8 @@ struct JProcessingTopology : public JActivable {
 
     bool all_sources_closed() { return !is_active(); }
 
-    bool is_active();
-    void set_active(bool is_active);
-
-
+    bool is_active() override;
+    void set_active(bool is_active) override;
 
 };
 

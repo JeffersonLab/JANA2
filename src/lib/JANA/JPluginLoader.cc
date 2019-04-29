@@ -192,11 +192,13 @@ void JPluginLoader::attach_plugin(JTopologyBuilder* builder, std::string soname)
     }
 
     // Look for an InitPlugin symbol
-    typedef void InitPlugin_t(JTopologyBuilder* builder);
+    typedef void InitPlugin_t(JApplication* app);
+    //typedef void InitPlugin_t(JTopologyBuilder* builder, JServiceLocator* sl);
+    // TODO: Convert InitPlugin sig to (builder, servicelocator) -> void
     InitPlugin_t* plugin = (InitPlugin_t*) dlsym(handle, "InitPlugin");
     if (plugin) {
         LOG_INFO(_logger) << "Initializing plugin \"" << soname << "\"" << LOG_END;
-        (*plugin)(builder);
+        (*plugin)(_app);
         _sohandles.push_back(handle);
     } else {
         dlclose(handle);
@@ -221,5 +223,21 @@ void JPluginLoader::acquire_services(JServiceLocator* service_locator) {
                                 "Trace the plugin search path and display any loading errors");
 
 }
+
+JPluginLoader::JPluginLoader(JApplication* app, JParameterManager* params) {
+
+    _app = app;
+
+    if (params != nullptr) {
+
+        _comma_separated_plugin_names = "JTest";
+
+        params->SetDefaultParameter("PLUGINS", _comma_separated_plugin_names, "");
+
+        params->SetDefaultParameter("JANA:DEBUG_PLUGIN_LOADING", _verbose,
+                                    "Trace the plugin search path and display any loading errors");
+    }
+}
+
 
 
