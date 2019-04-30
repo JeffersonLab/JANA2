@@ -242,22 +242,30 @@ void JApplication::SetTicker(bool ticker_on) {
 }
 
 void JApplication::PrintStatus(void) {
-    // Print ticker
-    std::stringstream ss;
-    ss << "  " << GetNeventsProcessed() << " events processed  " << Val2StringWithPrefix( GetInstantaneousRate() ) << "Hz (" << Val2StringWithPrefix( GetIntegratedRate() ) << "Hz avg)             ";
-    jout << ss.str() << "\n";
-    jout.flush();
+    if (_extended_report) {
+        _processing_controller->print_report();
+    }
+    else {
+        std::stringstream ss;
+        ss << "  " << GetNeventsProcessed() << " events processed  " << Val2StringWithPrefix( GetInstantaneousRate() ) << "Hz (" << Val2StringWithPrefix( GetIntegratedRate() ) << "Hz avg)             ";
+        jout << ss.str() << "\n";
+        jout.flush();
+    }
 }
 
 void JApplication::PrintFinalReport() {
 
-    jout << std::endl;
-    auto nevents = GetNeventsProcessed();
-    jout << "Number of threads: " << GetNThreads() << std::endl;
-    jout << "Total events processed: " << nevents << " (~ " << Val2StringWithPrefix( nevents ) << "evt)" << std::endl;
-    jout << "Integrated Rate: " << Val2StringWithPrefix( GetIntegratedRate() ) << "Hz" << std::endl;
-    jout << std::endl;
-
+    if (_extended_report) {
+        _processing_controller->print_final_report();
+    }
+    else {
+        jout << std::endl;
+        auto nevents = GetNeventsProcessed();
+        jout << "Number of threads: " << GetNThreads() << std::endl;
+        jout << "Total events processed: " << nevents << " (~ " << Val2StringWithPrefix( nevents ) << "evt)" << std::endl;
+        jout << "Integrated Rate: " << Val2StringWithPrefix( GetIntegratedRate() ) << "Hz" << std::endl;
+        jout << std::endl;
+    }
     if (_extended_report) {
         //_plugin_loader->print_report();
         //_topology->print_report();

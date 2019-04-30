@@ -135,12 +135,18 @@ public:
 
         _mutex.lock();
         _last_status = last_status;
-        _total_message_count += message_count_delta;
-        _last_message_count = message_count_delta;
+
+        if (message_count_delta > 0) {
+            // We don't want to lose our most recent latency numbers
+            // when the most recent execute() encounters an empty
+            // queue and consequently processes zero items.
+            _total_message_count += message_count_delta;
+            _last_message_count = message_count_delta;
+            _last_latency = latency_delta;
+        }
         _total_queue_visits += queue_visit_delta;
         _last_queue_visits = queue_visit_delta;
         _total_latency += latency_delta;
-        _last_latency = latency_delta;
         _total_queue_latency += queue_latency_delta;
         _last_queue_latency = queue_latency_delta;
         _mutex.unlock();

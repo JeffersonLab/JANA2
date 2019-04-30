@@ -61,6 +61,9 @@ public:
     size_t get_nevents_processed() override;
 
 
+    void print_report();
+    void print_final_report();
+
     void measure_perf(JMetrics::TopologySummary& topology_perf);
 
     void measure_perf(JMetrics::TopologySummary& topology_perf,
@@ -85,6 +88,8 @@ private:
 
     JLogger _logger;
 
+
+    // TODO: Separate these into a TopologyMetrics just like ArrowMetrics?
     RunState _run_state = RunState::BeforeRun;
     jclock_t::time_point _start_time;
     jclock_t::time_point _last_time;

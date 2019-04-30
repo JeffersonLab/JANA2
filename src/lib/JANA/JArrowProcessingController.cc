@@ -33,6 +33,8 @@
 #include "JArrowProcessingController.h"
 #include "JCpuInfo.h"
 
+using millisecs = std::chrono::duration<double, std::milli>;
+using secs = std::chrono::duration<double>;
 
 void JArrowProcessingController::initialize() {
     _run_state = RunState::BeforeRun;
@@ -97,18 +99,100 @@ size_t JArrowProcessingController::get_nthreads() {
     return _ncpus;
 }
 
-void JArrowProcessingController::measure_perf(JMetrics::TopologySummary& topology_perf) {
+void JArrowProcessingController::measure_perf(JMetrics::TopologySummary& topology_summary) {
 
+    std::vector<JMetrics::ArrowSummary> arrow_summary; // TODO: we could make these stateful to save allocations
+    std::vector<JMetrics::WorkerSummary> worker_summary;
+    measure_perf(topology_summary, arrow_summary, worker_summary);
 }
 
-void JArrowProcessingController::measure_perf(JMetrics::TopologySummary& topology_perf,
-                                         std::vector<JMetrics::ArrowSummary>& arrow_perf) {
+void JArrowProcessingController::measure_perf(JMetrics::TopologySummary& topology_summary,
+                                              std::vector<JMetrics::ArrowSummary>& arrow_summary) {
 
+    std::vector<JMetrics::WorkerSummary> worker_summary;
+    measure_perf(topology_summary, arrow_summary, worker_summary);
 }
 
 void JArrowProcessingController::measure_perf(JMetrics::TopologySummary& topology_perf,
                                          std::vector<JMetrics::ArrowSummary>& arrow_perf,
                                          std::vector<JMetrics::WorkerSummary>& worker_perf) {
+
+    worker_perf.clear();
+    for (JWorker* worker : _workers) {
+        JMetrics::WorkerSummary summary;
+        worker->measure_perf(summary);
+        worker_perf.push_back(summary);
+    }
+
+    double worst_seq_latency = 0;
+    double worst_par_latency = 0;
+    arrow_perf.clear();
+    for (JArrow* arrow : _topology->arrows) {
+        JArrowMetrics::Status last_status;
+        size_t total_message_count;
+        size_t last_message_count;
+        size_t total_queue_visits;
+        size_t last_queue_visits;
+        duration_t total_latency;
+        duration_t last_latency;
+        duration_t total_queue_latency;
+        duration_t last_queue_latency;
+
+        arrow->get_metrics().get(last_status, total_message_count, last_message_count, total_queue_visits,
+                 last_queue_visits, total_latency, last_latency, total_queue_latency, last_queue_latency);
+
+        JMetrics::ArrowSummary summary;
+        summary.is_active = arrow->is_active();
+        summary.thread_count = arrow->get_thread_count();
+        summary.arrow_name = arrow->get_name();
+        summary.chunksize = arrow->get_chunksize();
+        summary.is_parallel = arrow->is_parallel();
+        summary.is_upstream_active = !arrow->is_upstream_finished();
+        summary.total_messages_completed = total_message_count;
+        summary.last_messages_completed = last_message_count;
+        summary.avg_latency_ms = millisecs(total_latency).count()/total_message_count;
+        summary.last_latency_ms = millisecs(last_latency).count()/last_message_count;
+        summary.messages_pending = 0; // TODO: Get this from arrow eventually
+        summary.queue_visit_count = total_queue_visits;
+
+        if (arrow->is_parallel()) {
+            worst_par_latency = std::max(worst_par_latency, summary.avg_latency_ms);
+        } else {
+            worst_seq_latency = std::max(worst_seq_latency, summary.avg_latency_ms);
+        }
+        arrow_perf.push_back(summary);
+    }
+
+    // Messages completed
+    topology_perf.messages_completed = 0;
+    for (JArrow* arrow : _topology->sinks) {
+        topology_perf.messages_completed += arrow->get_metrics().get_total_message_count();
+    }
+    uint64_t message_delta = topology_perf.messages_completed - _last_message_count;
+
+    // Uptime
+    if (_run_state == RunState::AfterRun) {
+        topology_perf.last_uptime_s = secs(_stop_time - _last_time).count();
+        topology_perf.total_uptime_s = secs(_stop_time - _start_time).count();
+    }
+    else { // RunState::DuringRun
+        auto current_time = jclock_t::now();
+        topology_perf.last_uptime_s = secs(current_time - _last_time).count();
+        topology_perf.total_uptime_s = secs(current_time - _start_time).count();
+        _last_time = current_time;
+        _last_message_count = topology_perf.messages_completed;
+    }
+
+    // Throughput
+    topology_perf.avg_throughput_hz = topology_perf.messages_completed / topology_perf.total_uptime_s;
+    topology_perf.last_throughput_hz = message_delta / topology_perf.last_uptime_s;
+
+    // bottlenecks
+    topology_perf.avg_seq_bottleneck_hz = 1e3 / worst_seq_latency;
+    topology_perf.avg_par_bottleneck_hz = 1e3 * _ncpus / worst_par_latency;
+
+    auto tighter_bottleneck = std::min(topology_perf.avg_seq_bottleneck_hz, topology_perf.avg_par_bottleneck_hz);
+    topology_perf.avg_efficiency_frac = topology_perf.avg_throughput_hz/tighter_bottleneck;
 
 }
 
@@ -145,6 +229,93 @@ JArrowProcessingController::~JArrowProcessingController() {
     for (JWorker* worker : _workers) {
         delete worker;
     }
+}
+
+void JArrowProcessingController::print_report() {
+    JMetrics::TopologySummary s;
+    std::vector<JMetrics::ArrowSummary> arrow_summary; // TODO: we could make these stateful to save allocations
+    std::vector<JMetrics::WorkerSummary> worker_summary;
+
+    measure_perf(s, arrow_summary, worker_summary);
+
+    std::ostringstream os;
+    if (_run_state == RunState::BeforeRun) {
+        os << "Nothing running!" << std::endl;
+    }
+    else {
+        os << std::endl;
+        os << " TOPOLOGY STATUS" << std::endl;
+        os << " ---------------" << std::endl;
+        os << " Thread team size [count]:    " << _ncpus << std::endl;
+        os << " Total uptime [s]:            " << std::setprecision(4) << s.total_uptime_s << std::endl;
+        os << " Uptime delta [s]:            " << std::setprecision(4) << s.last_uptime_s << std::endl;
+        os << " Completed events [count]:    " << s.messages_completed << std::endl;
+        os << " Inst throughput [Hz]:        " << std::setprecision(3) << s.last_throughput_hz << std::endl;
+        os << " Avg throughput [Hz]:         " << std::setprecision(3) << s.avg_throughput_hz << std::endl;
+        os << " Sequential bottleneck [Hz]:  " << std::setprecision(3) << s.avg_seq_bottleneck_hz << std::endl;
+        os << " Parallel bottleneck [Hz]:    " << std::setprecision(3) << s.avg_par_bottleneck_hz << std::endl;
+        os << " Efficiency [0..1]:           " << std::setprecision(3) << s.avg_efficiency_frac << std::endl;
+        os << std::endl;
+        os << " +--------------------------+-----+-----+---------+-------+-------------+" << std::endl;
+        os << " |           Name           | Par | Act | Threads | Chunk |  Completed  |" << std::endl;
+        os << " +--------------------------+-----+-----+---------+-------+-------------+" << std::endl;
+        for (auto as : arrow_summary) {
+            os << " | "
+               << std::setw(24) << std::left << as.arrow_name << " | "
+               << std::setw(3) << std::right << (as.is_parallel ? " T " : " F ") << " | "
+               << std::setw(3) << (as.is_active ? " T " : " F ") << " | "
+               << std::setw(7) << as.thread_count << " |"
+               << std::setw(6) << as.chunksize << " |"
+               << std::setw(12) << as.total_messages_completed << " |"
+               << std::endl;
+        }
+        os << " +--------------------------+-----+-----+---------+-------+-------------+" << std::endl;
+
+
+        os << " +--------------------------+-------------+--------------+----------------+--------------+" << std::endl;
+        os << " |           Name           | Avg latency | Inst latency | Queue overhead | Queue visits | " << std::endl;
+        os << " |                          | [ms/event]  |  [ms/event]  |     [0..1]     |    [count]   | " << std::endl;
+        os << " +--------------------------+-------------+--------------+----------------+--------------+" << std::endl;
+
+        for (auto as : arrow_summary) {
+            os << " | " << std::setprecision(3)
+               << std::setw(24) << std::left << as.arrow_name << " | "
+               << std::setw(11) << std::right << as.avg_latency_ms << " |"
+               << std::setw(13) << as.last_latency_ms << " |"
+               << std::setw(15) << as.avg_queue_latency_ms / (as.avg_queue_latency_ms + as.avg_latency_ms)
+               << " |"
+               << std::setw(13) << as.queue_visit_count << " |"
+               << std::endl;
+        }
+        os << " +--------------------------+-------------+--------------+----------------+--------------+"
+           << std::endl;
+
+
+        os << " +----+----------------------+-------------+------------+-----------+----------------+------------------+" << std::endl;
+        os << " | ID | Last arrow name      | Useful time | Retry time | Idle time | Scheduler time | Scheduler visits |" << std::endl;
+        os << " |    |                      |     [ms]    |    [ms]    |    [ms]   |      [ms]      |     [count]      |" << std::endl;
+        os << " +----+----------------------+-------------+------------+-----------+----------------+------------------+" << std::endl;
+
+        for (auto ws : worker_summary) {
+            os << " |"
+               << std::setw(3) << std::right << ws.worker_id << " | "
+               << std::setw(20) << std::left << ws.last_arrow_name << " |"
+               << std::setw(12) << std::right << ws.last_useful_time_ms << " |"
+               << std::setw(11) << ws.last_retry_time_ms << " |"
+               << std::setw(10) << ws.last_idle_time_ms << " |"
+               << std::setw(15) << ws.last_scheduler_time_ms << " |"
+               << std::setw(17) << ws.scheduler_visit_count << " |"
+               << std::endl;
+        }
+        os << " +----+----------------------+-------------+------------+-----------+----------------+------------------+" << std::endl;
+    }
+
+    jout << os.str();
+
+}
+
+void JArrowProcessingController::print_final_report() {
+    print_report();
 }
 
 
