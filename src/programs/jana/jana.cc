@@ -131,9 +131,10 @@ int Execute(UserOptions& options) {
 		}
 		else if (options.flags[Benchmark]) {
 			// Run JANA in benchmark mode
-			japp->Initialize();
-			JBenchmarker benchmarker(japp);
-			japp->Run();
+			JBenchmarker benchmarker(japp); // Benchmarking params override default params
+			japp->Initialize();             // Evt sources get initialized with benchmarking params
+			benchmarker.run();              // Benchmarker needs JApp to have figured out its ProcessingController
+			japp->Run();                    // JApp needs Benchmarker to run first, although I forget why now
 		}
 		else {
 			// Run JANA in normal mode

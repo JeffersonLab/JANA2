@@ -48,8 +48,9 @@ class JBenchmarker {
     std::string _output_dir = "JANA_Test_Results";
 
 public:
-    JBenchmarker(JApplication* app);
+    explicit JBenchmarker(JApplication* app);
     ~JBenchmarker();
+    void run();
 
 private:
     void run_thread();

@@ -38,6 +38,7 @@
 
 JBenchmarker::JBenchmarker(JApplication* app) : _app(app) {
 
+    _watcher_thread = nullptr;
     _max_threads = JCpuInfo::GetNumCpus();
     _logger = JLoggingService::logger("JBenchmarker");
 
@@ -70,8 +71,6 @@ JBenchmarker::JBenchmarker(JApplication* app) : _app(app) {
             "BENCHMARK:RESULTSDIR",
             _output_dir,
             "Output directory name for benchmark test results");
-
-    _watcher_thread = new std::thread(&JBenchmarker::run_thread, this);
 }
 
 
@@ -207,6 +206,10 @@ void JBenchmarker::copy_to_output_dir(std::string filename) {
     std::ifstream src(new_fname, std::ios::binary);
     std::ofstream dst(_output_dir + "/" + base_fname, std::ios::binary);
     dst << src.rdbuf();
+}
+
+void JBenchmarker::run() {
+    _watcher_thread = new std::thread(&JBenchmarker::run_thread, this);
 }
 
 
