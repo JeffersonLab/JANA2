@@ -112,16 +112,38 @@ void jana_test_factory::Process(const std::shared_ptr<const JEvent>& aEvent)
 	}
 
 #if 1
+    // ------------ DISABLED--------------
+    // This is related to the "DISABLED" note below so read that for more details.
+    // The bottom line here is there are still problems with subtasks even after
+    // commenting out the block at the bottom. Here, we don't use the subtasks
+    // feature in JANA and instead just call each task directly.
+
 	// Submit the tasks to the queues in the thread manager.
 	// This function won't return until all of the tasks are finished.
 	// This thread will help execute tasks (hopefully these) in the meantime.
-	(*aEvent).GetJApplication()->GetJThreadManager()->SubmitTasks(sTasks);
+	//(*aEvent).GetJApplication()->GetJThreadManager()->SubmitTasks(sTasks);
+	for( auto sTask : sTasks ) (*sTask)();
 
+	// ------------ DISABLED--------------
+	// A change that went in on 3/25/2019 caused the get() method of the future
+	// associated with each of the sTasks to be called right after the task
+	// was run. This was to fix a problem that the future was holding on to
+	// any exception thrown by the user's JEventProcessor causing it to be
+	// silently ignored. A consequence of that is that the packaged_task is
+	// left in an invalid state so when we call get() again (via JTask::GetResult)
+	// an exception is thrown to indicate the future no longer has an associated
+	// state.
+	//
+	// We disable this for now and will address the problem if it still exists
+	// after the greenfield merge.
+	//
+	//  4/30/2019 DL
+	//
 	// For purposes of example, we grab the return values from the tasks
-	double sSum = 0.0;
-	for( auto sTask : sTasks ){
-		auto &st = static_cast< JTask<double>& >(*sTask);
-		sSum += st.GetResult();
-	}
+	//double sSum = 0.0;
+	//for( auto sTask : sTasks ){
+	//	auto &st = static_cast< JTask<double>& >(*sTask);
+	//	sSum += st.GetResult();
+	//}
 #endif
 }
