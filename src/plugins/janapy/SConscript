@@ -7,15 +7,25 @@ import subprocess
 Import('*')
 env = env.Clone()
 
-PYTHON_CFLAGS = subprocess.Popen(["python3-config", "--cflags"], stdout=subprocess.PIPE).communicate()[0].strip()
-PYTHON_PREFIX = subprocess.Popen(["python3-config", "--prefix"], stdout=subprocess.PIPE).communicate()[0].strip()
-PYTHON_LINKFLAGS = subprocess.Popen(["python3-config", "--libs"], stdout=subprocess.PIPE).communicate()[0].strip()
+try:
+	PYTHON_CFLAGS = subprocess.Popen(["python3-config", "--cflags"], stdout=subprocess.PIPE).communicate()[0].strip()
+	PYTHON_PREFIX = subprocess.Popen(["python3-config", "--prefix"], stdout=subprocess.PIPE).communicate()[0].strip()
+	PYTHON_LINKFLAGS = subprocess.Popen(["python3-config", "--libs"], stdout=subprocess.PIPE).communicate()[0].strip()
+	
+	# address temporary issue with JLab /apps/python/3.4.3 build which adds an
+	# extra "/u" to the front of paths returned from python3-config
+	PYTHON_CFLAGS    = PYTHON_CFLAGS.replace('/u/u/', '/u/')
+	PYTHON_PREFIX    = PYTHON_PREFIX.replace('/u/u/', '/u/')
+	PYTHON_LINKFLAGS = PYTHON_LINKFLAGS.replace('/u/u/', '/u/')
 
-sbms.AddCompileFlags(env, PYTHON_CFLAGS)
-sbms.AddLinkFlags(env, PYTHON_LINKFLAGS + " -L"+PYTHON_PREFIX+"/lib")
+	sbms.AddCompileFlags(env, PYTHON_CFLAGS)
+	sbms.AddLinkFlags(env, PYTHON_LINKFLAGS + " -L"+PYTHON_PREFIX+"/lib")
 
 
-sbms.AddJANA(env)
-sbms.plugin(env)
-
+	sbms.AddJANA(env)
+	sbms.plugin(env)
+except:
+	print('--- WARNING:  Problem building janapy plugin.                         ---')
+	print('--- Python support will be unavailable. If you want python support    ---')
+	print('---  then make sure python3-config is in your PATH and try rebuilding ---')
 
