@@ -75,6 +75,11 @@ add_library(jana2 STATIC
 
 add_library(jtest SHARED
         src/lib/JANA/JThread.cc  #for THREAD_ID
+        src/plugins/JTest/JEventSource_jana_test.cc
+        src/plugins/JTest/JEventProcessor_jana_test.cc
+        src/plugins/JTest/JFactoryGenerator_jana_test.h
+        src/plugins/JTest/JTestMain.cc
+        src/plugins/JTest/TextEventRecord.h
         )
 
 add_executable(jana

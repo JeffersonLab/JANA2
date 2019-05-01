@@ -13,6 +13,7 @@
 #include "JLogger.h"
 #include "JQueueWithLock.h"
 #include "JQueueWithBarriers.h"
+#include "TextEventRecord.h"
 
 thread_local std::mt19937 gRandomGenerator;
 
@@ -45,7 +46,7 @@ JEventSource_jana_test::JEventSource_jana_test(string source_name, JApplication 
 	//Make factory generator that will make factories for all types provided by the event source
 	//This is necessary because the JFactorySet needs all factories ahead of time
 	//Make sure that all types are listed as template arguments here!!
-	mFactoryGenerator = new JSourceFactoryGenerator<JSourceObject, JSourceObject2>();
+	mFactoryGenerator = new JSourceFactoryGenerator<TextEventRecord, JSourceObject, JSourceObject2>();
 
 	auto params = mApplication->GetJParameterManager();
 
@@ -84,7 +85,11 @@ std::shared_ptr<const JEvent> JEventSource_jana_test::GetEvent(void)
 	//These are recycled, so be sure to re-set EVERY member variable
 	auto sEvent = mEventPool.Get_SharedResource(mApplication);
 	mNumEventsGenerated++;
-	
+
+	TextEventRecord* ter = new TextEventRecord;
+	ter->data = 11;
+	sEvent->Insert(ter);
+
 	if( mIncludeBarriers ){
 		auto sIsBarrierEvent = (mNumEventsGenerated % 100) == 0;
 		sEvent->SetIsBarrierEvent(sIsBarrierEvent);
@@ -171,6 +176,9 @@ bool JEventSource_jana_test::GetObjects(const std::shared_ptr<const JEvent>& aEv
 bool JEventSource_jana_test::GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactoryT<JSourceObject2>* aFactory)
 {
 	if(aFactory->GetTag() != "") return false; //Only default tag here
+	jout<< "Retrieving texteventrecord"<<std::endl;
+	auto ter = aEvent->GetSingle<TextEventRecord>();
+	jout << "Got " << ter->data << std::endl;
 
 	// Generate a random # of objects
 	auto sNumObjectsDistribution = std::uniform_int_distribution<std::size_t>(1, 20);
