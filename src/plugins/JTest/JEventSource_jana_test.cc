@@ -70,7 +70,7 @@ JEventSource_jana_test::~JEventSource_jana_test()
 //----------------
 // GetEvent
 //----------------
-std::shared_ptr<const JEvent> JEventSource_jana_test::GetEvent(void)
+void JEventSource_jana_test::GetEvent(std::shared_ptr<JEvent> aEvent)
 {
 	/// Read an event (or possibly block of events) from the source return it.
 	
@@ -83,24 +83,19 @@ std::shared_ptr<const JEvent> JEventSource_jana_test::GetEvent(void)
 		if(mNumEventsToGenerate == mNumEventsGenerated) throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
 
 	//These are recycled, so be sure to re-set EVERY member variable
-	auto sEvent = mEventPool.Get_SharedResource(mApplication);
 	mNumEventsGenerated++;
-
-	TextEventRecord* ter = new TextEventRecord;
-	ter->data = 11;
-	sEvent->Insert(ter);
 
 	if( mIncludeBarriers ){
 		auto sIsBarrierEvent = (mNumEventsGenerated % 100) == 0;
-		sEvent->SetIsBarrierEvent(sIsBarrierEvent);
+		aEvent->SetIsBarrierEvent(sIsBarrierEvent);
 	}
-	sEvent->SetEventNumber(mNumEventsGenerated);
-	sEvent->SetRunNumber(1234);
+	aEvent->SetEventNumber(mNumEventsGenerated);
+	aEvent->SetRunNumber(1234);
 
-//	sEvent->SetRef(nullptr);
-	
-	return sEvent;
-//	return std::static_pointer_cast<JEvent>(sEvent);
+	auto ter = new TextEventRecord;
+	ter->data = mNumEventsGenerated;
+	aEvent->Insert(ter);
+
 }
 
 //----------------
@@ -176,9 +171,8 @@ bool JEventSource_jana_test::GetObjects(const std::shared_ptr<const JEvent>& aEv
 bool JEventSource_jana_test::GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactoryT<JSourceObject2>* aFactory)
 {
 	if(aFactory->GetTag() != "") return false; //Only default tag here
-	jout<< "Retrieving texteventrecord"<<std::endl;
-	auto ter = aEvent->GetSingle<TextEventRecord>();
-	jout << "Got " << ter->data << std::endl;
+	//auto ter = aEvent->GetSingle<TextEventRecord>();
+	//jout << "texteventrecord " << ter->data << std::endl;
 
 	// Generate a random # of objects
 	auto sNumObjectsDistribution = std::uniform_int_distribution<std::size_t>(1, 20);

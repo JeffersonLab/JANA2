@@ -37,7 +37,7 @@
 #include <JANA/JObject.h>
 
 struct TextEventRecord: public JObject {
-    int data;
+    size_t data;
 
 };
 

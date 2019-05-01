@@ -37,10 +37,7 @@ jana_test_factory::~jana_test_factory(void)
 //------------------
 // Init
 //------------------
-void jana_test_factory::Init(void)
-{
-	jout << "jana_test_factory::Init() called " << std::endl;
-}
+void jana_test_factory::Init(void) {}
 
 //------------------
 // ChangeRun

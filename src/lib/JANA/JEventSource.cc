@@ -134,7 +134,7 @@ std::vector<std::shared_ptr<JTaskBase> > JEventSource::GetProcessEventTasks(std:
 	}
 
 	//Initialize things before locking
-	std::vector<std::shared_ptr<const JEvent>> sEvents;
+	std::vector<std::shared_ptr<JEvent>> sEvents;
 	sEvents.reserve(aNumTasks);
 
 	//Attempt to acquire atomic lock
@@ -150,11 +150,14 @@ std::vector<std::shared_ptr<JTaskBase> > JEventSource::GetProcessEventTasks(std:
 		// Read an event from the source. Anything other than a successful read
 		// throws an exception (we never need to check for kSUCCESS)
 		try{
-			std::shared_ptr<const JEvent> jevent = GetEvent();
-			std::const_pointer_cast<JEvent>(jevent)->SetJEventSource(this);         // don't tell the C++ police!
-			std::const_pointer_cast<JEvent>(jevent)->SetJApplication(mApplication); // don't tell the C++ police!
+			auto jevent = std::make_shared<JEvent>(mApplication);
+			jevent->SetJEventSource(this);
+			jevent->SetJApplication(mApplication);
+			jevent->SetFactorySet(mApplication->GetFactorySet());
+			GetEvent(jevent);
 			sEvents.push_back(std::move(jevent));
-		}catch(RETURN_STATUS ret_status){
+		}
+		catch(RETURN_STATUS ret_status){
 			switch(ret_status){
 				case RETURN_STATUS::kNO_MORE_EVENTS:
 				case RETURN_STATUS::kERROR:

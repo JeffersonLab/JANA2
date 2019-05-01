@@ -596,7 +596,7 @@ void JThreadManager::PrepareEventTask(const std::shared_ptr<JTaskBase>& aTask, c
 	//Because we don't want the user calling things like JEvent::SetEventNumber() in their factories.
 
 	//So what do we do? The dreaded const_cast.
-	auto sEvent = const_cast<JEvent*>(aTask->GetEvent());
+	//auto sEvent = const_cast<JEvent*>(aTask->GetEvent());
 
 	//Is there something else we can do instead?
 	//We could pass the JFactorySet alongside the JEvent instead of as a member of it.
@@ -608,7 +608,11 @@ void JThreadManager::PrepareEventTask(const std::shared_ptr<JTaskBase>& aTask, c
 	//By having the JEvent Release() function recycle the JFactorySet, it doesn't have to be shared_ptr
 	//If it's shared_ptr: more (slow) atomic operations
 	//Just make the JFactorySet a member and cheat a little bit. It's a controlled environment.
-	sEvent->SetFactorySet(mApplication->GetFactorySet());
+	//sEvent->SetFactorySet(mApplication->GetFactorySet());
+
+	// Nathan says:
+	// FactorySet is needed all the time now, for JEvent::Insert(). To control memory usage we will
+	// control the number of events in-flight at any given time, which is less cumbersome/constricting.
 }
 
 //---------------------------------

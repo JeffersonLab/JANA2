@@ -722,7 +722,7 @@ void JApplication::UpdateResourceLimits(void)
 	// of threads which should be sufficient. The user should be given control to
 	// adjust this themselves in the future, but or now, this should be OK.
 	auto nthreads = _threadManager->GetNJThreads();
-	mFactorySetPool.Set_ControlParams( nthreads*2, 10 );
+	mFactorySetPool.Set_ControlParams( nthreads*100, 10 );
 }
 
 //---------------------------------

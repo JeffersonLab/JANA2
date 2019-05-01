@@ -41,7 +41,7 @@ void JEventSource_example2::Open(void)
 //
 // This method is called to read in a single "event"
 //-------------------------------------------------------------------------
-std::shared_ptr<const JEvent> JEventSource_example2::GetEvent(void)
+void JEventSource_example2::GetEvent(std::shared_ptr<JEvent> jevent)
 {
 	// Throw exception if we have exhausted the source of events
 	static size_t Nevents = 0; // by way of example, just count 1000000 events
@@ -51,11 +51,10 @@ std::shared_ptr<const JEvent> JEventSource_example2::GetEvent(void)
 	// the most common operation will be to read in a buffer and store a pointer
 	// to it in the event object. You should not spend much effort here processing
 	// the data since this method is called serially. Defer as much as possible
-	// tp the GetObjects method below which may be called in parallel.
-	auto jevent = new MyEvent();
+	// to the GetObjects method below which may be called in parallel.
 
-	// Return the JEvent as a shared_ptr
-	return std::shared_ptr<const JEvent>(jevent);
+	// jevent->Insert(...); // buffer
+
 }
 
 //-------------------------------------------------------------------------

@@ -80,6 +80,9 @@ add_library(jtest SHARED
         src/plugins/JTest/JFactoryGenerator_jana_test.h
         src/plugins/JTest/JTestMain.cc
         src/plugins/JTest/TextEventRecord.h
+        src/plugins/JTest/JEvent_test.h
+        src/plugins/JTest/jana_test_factory.cc
+        src/lib/JANA/JFactoryGenerator.cc
         )
 
 add_executable(jana

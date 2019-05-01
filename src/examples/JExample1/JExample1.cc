@@ -10,19 +10,14 @@
 
 #include <JANA/JApplication.h>
 #include <JANA/JEventSourceGeneratorT.h>
-//#include <JANA/JEventSource.h>
-//#include <JANA/JEventSourceManager.h>
-//#include <JANA/JQueue.h>
 #include <JANA/JEvent.h>
-//#include <JANA/JEventSourceT.h>
 
 
 //-------------------------------------------------------------------------
 // This class represents a single, complete "event" read from the source.
-// The only requirement here is that it inherit from JEvent.
-class JEvent_example1:public JEvent {
+// The only requirement here is that it inherit from JObject.
+class JEventContext: public JObject {
 	public:	
-
 		double A;
 		int B;		
 };
@@ -33,7 +28,7 @@ class JEvent_example1:public JEvent {
 // of events (e.g. a file or network socket). It should read an event every
 // time the GetEvent() method is called. The actual data read should be
 // encapsulated in the form of a JEvent object.
-class JEventSource_example1: public JEventSource{
+class JEventSource_example1: public JEventSource {
 	public:
 	
 		// Constructor must take string and JApplication pointer as arguments
@@ -44,19 +39,18 @@ class JEventSource_example1: public JEventSource{
 		static std::string GetDescription(void){ return "Event source for JExample1"; }
 
 		// This method is called to read in a single "event"
-		std::shared_ptr<const JEvent> GetEvent(void){
+		void GetEvent(std::shared_ptr<JEvent> event) {
 		
 			// Throw exception if we have exhausted the source of events.
 			static size_t Nevents = 0; // by way of example, just count 1000000 events
 			if( ++Nevents > 1000000 ) throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
 			
 			// Create a JEvent object and fill in important info
-			auto jevent = new JEvent_example1();
-			jevent->A = 1.0;
-			jevent->B = 2;
+			auto jevent_context = new JEventContext();
+			jevent_context->A = 1.0;
+			jevent_context->B = 2;
 
-			// Return the JEvent as a shared_ptr
-			return std::shared_ptr<const JEvent>(jevent);
+			event->Insert(jevent_context);
 		}
 };
 

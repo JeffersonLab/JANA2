@@ -38,7 +38,7 @@ class JEventSource_jana_test: public JEventSource
 		//Public get interface
 		bool GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactory* aFactory);
 
-		std::shared_ptr<const JEvent> GetEvent(void);
+		void GetEvent(std::shared_ptr<JEvent>);
 		std::type_index GetDerivedType(void) const{return std::type_index(typeid(JEventSource_jana_test));} //So that we only execute factory generator once per type
 
 	private:
