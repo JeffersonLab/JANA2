@@ -52,72 +52,71 @@
 #ifndef _JFactoryT_h_
 #define _JFactoryT_h_
 
-template <typename T>
-class JFactoryT : public JFactory
-{
-	public:
+template<typename T>
+class JFactoryT : public JFactory {
+public:
 
 
-		using IteratorType = typename std::vector<T*>::const_iterator;
-		using PairType = std::pair<IteratorType, IteratorType>;
+    using IteratorType = typename std::vector<T*>::const_iterator;
+    using PairType = std::pair<IteratorType, IteratorType>;
 
-		JFactoryT(const std::string& aName = GetDemangledName<T>(), const std::string& aTag = "") : JFactory(aName, aTag){}
-		virtual ~JFactoryT() = default;
 
-		virtual void Init(void){}
-		virtual void ChangeRun(const std::shared_ptr<const JEvent>& aEvent){}
-		virtual void Process(const std::shared_ptr<const JEvent>& aEvent){}
+    JFactoryT(const std::string& aName = GetDemangledName<T>(), const std::string& aTag = "") : JFactory(aName, aTag) {}
+    virtual ~JFactoryT() = default;
 
-		//---------------------------------
-		// GetObjectType
-		std::type_index GetObjectType(void) const {
-			return std::type_index(typeid(T));
-		}
 
-		//---------------------------------
-		// Get
-		PairType Get(void) const {
-			return std::make_pair(mData.cbegin(), mData.cend());
-		}
+    virtual void Init() {}
+    virtual void ChangeRun(const std::shared_ptr<const JEvent>& aEvent) {}
+    virtual void Process(const std::shared_ptr<const JEvent>& aEvent) {}
 
-		//---------------------------------
-		// Set
-		void Set(std::vector<JObject*>& aData){
-			for( auto jobj : aData) {
-//std::cout << "jobj->className():" << jobj->className() << "  mName:"<<mName<<std::endl;
-//				assert( jobj->className() == mName );
-				mData.push_back( static_cast<T*>(jobj) );
-			}
-		}
 
-		//---------------------------------
-		// Set
-		void Set(std::vector<T*>&& aData){
-			mData = std::move(aData);
-		}
+    std::type_index GetObjectType(void) const {
+        return std::type_index(typeid(T));
+    }
 
-		//---------------------------------
-		// Insert
-		void Insert(JObject* aDatum) {
-			mData.push_back(static_cast<T*>(aDatum));
-		}
+    PairType Get() const {
+        return std::make_pair(mData.cbegin(), mData.cend());
+    }
 
-		//---------------------------------
-		// Insert
-		void Insert(T* aDatum) {
-		    mData.push_back(aDatum);
-		}
+    /// Please use the typed setters instead whenever possible
+    void Set(std::vector<JObject*>& aData) override {
+        ClearData();
+        for (auto jobj : aData) {
+            T* casted = dynamic_cast<T*>(jobj);
+            assert(casted != nullptr);
+            mData.push_back(casted);
+        }
+    }
 
-		//---------------------------------
-		// ClearData
-		void ClearData(void){
-			for( auto p : mData ) delete p;
-			mData.clear();
-		}
+    /// Please use the typed setters instead whenever possible
+    void Insert(JObject* aDatum) override {
+        T* casted = dynamic_cast<T*>(aDatum);
+        assert(casted != nullptr);
+        mData.push_back(casted);
+    }
 
-	protected:
+    void Set(const std::vector<T*>& aData) {
+        ClearData();
+        mData = aData;
+    }
 
-		std::vector<T*> mData;
+    void Set(std::vector<T*>&& aData) {
+        ClearData();
+        mData = std::move(aData);
+    }
+
+    void Insert(T* aDatum) {
+        mData.push_back(aDatum);
+    }
+
+    void ClearData() override {
+        for (auto p : mData) delete p;
+        mData.clear();
+    }
+
+protected:
+
+    std::vector<T*> mData;
 };
 
 #endif // _JFactoryT_h_
