@@ -17,7 +17,7 @@ struct JProcessingTopology : public JActivable {
 
     enum class RunState { BeforeRun, DuringRun, AfterRun };
 
-    explicit JProcessingTopology(JApplication* app);
+    explicit JProcessingTopology();
     virtual ~JProcessingTopology();
 
     JEventSourceManager event_source_manager;

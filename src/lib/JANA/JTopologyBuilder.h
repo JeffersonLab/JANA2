@@ -42,7 +42,7 @@ class JTopologyBuilder {
 
 public:
 
-    JTopologyBuilder(JApplication* app);
+    JTopologyBuilder();
 
     void increase_priority();
 
@@ -57,8 +57,6 @@ public:
 
 
 private:
-
-    JApplication* _app;
 
     std::vector<std::string> _evt_src_names;
 

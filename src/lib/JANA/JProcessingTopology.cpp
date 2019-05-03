@@ -28,11 +28,7 @@ void JProcessingTopology::set_active(bool active) {
     }
 }
 
-JProcessingTopology::JProcessingTopology(JApplication* japp)
-    : event_source_manager(japp)
-    {
-
-}
+JProcessingTopology::JProcessingTopology() : event_source_manager(japp) {}
 
 JProcessingTopology::~JProcessingTopology() {
     // TODO: This should be responsible for deleting a whole bunch of stuff

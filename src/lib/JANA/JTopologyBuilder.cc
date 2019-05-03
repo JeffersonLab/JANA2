@@ -34,9 +34,9 @@
 #include <JANA/JProcessingTopology.h>
 #include <JANA/JEventProcessorArrow.h>
 #include <JANA/JEventSourceArrow.h>
+#include <JANA/JTopologyBuilder.h>
 
 #include <unordered_set>
-#include "JTopologyBuilder.h"
 
 
 void JTopologyBuilder::add(std::string event_source_name) {
@@ -89,7 +89,7 @@ void JTopologyBuilder::increase_priority() {
 JProcessingTopology *JTopologyBuilder::build_topology() {
 
     increase_priority(); // Merges everything into *_back vectors
-    JProcessingTopology* topology = new JProcessingTopology(_app);
+    JProcessingTopology* topology = new JProcessingTopology();
 
     // Add event processors to topology
     for (auto * evt_proc : _evt_procs_back) {
@@ -138,7 +138,7 @@ JProcessingTopology *JTopologyBuilder::build_topology() {
 
     for (auto src : sEventSources) {
 
-        JArrow* arrow = new JEventSourceArrow(src->GetName(), src, queue, _app, topology->factoryset_pool);
+        JArrow* arrow = new JEventSourceArrow(src->GetName(), src, queue, topology->factoryset_pool);
         topology->arrows.push_back(arrow);
         topology->sources.push_back(arrow);
         // create arrow for sources. Don't open until arrow.activate() called
@@ -166,7 +166,7 @@ JProcessingTopology *JTopologyBuilder::build_topology() {
     return topology;
 }
 
-JTopologyBuilder::JTopologyBuilder(JApplication* app) :_app(app) {}
+JTopologyBuilder::JTopologyBuilder() {}
 
 void JTopologyBuilder::print_report() {
 
