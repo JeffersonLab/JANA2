@@ -138,7 +138,7 @@ JProcessingTopology *JTopologyBuilder::build_topology() {
 
     for (auto src : sEventSources) {
 
-        JArrow* arrow = new JEventSourceArrow(src->GetName(), src, queue, topology->factoryset_pool);
+        JArrow* arrow = new JEventSourceArrow(src->GetName(), src, queue, &topology->factoryset_pool);
         topology->arrows.push_back(arrow);
         topology->sources.push_back(arrow);
         // create arrow for sources. Don't open until arrow.activate() called

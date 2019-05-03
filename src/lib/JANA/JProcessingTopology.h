@@ -10,6 +10,7 @@
 #include <JANA/JFactorySet.h>
 #include <JANA/JEventSourceManager.h>
 #include <JANA/JActivable.h>
+#include <JANA/JEventProcessor.h>
 
 struct JProcessingTopology : public JActivable {
 
@@ -21,7 +22,7 @@ struct JProcessingTopology : public JActivable {
     virtual ~JProcessingTopology();
 
     JEventSourceManager event_source_manager;
-    JResourcePoolSimple<JFactorySet>* factoryset_pool;
+    JResourcePoolSimple<JFactorySet> factoryset_pool;
     std::vector<JFactoryGenerator*> factory_generators;
     std::vector<JEventProcessor*> event_processors;
 
@@ -40,11 +41,8 @@ struct JProcessingTopology : public JActivable {
     size_t _last_message_count = 0;
     size_t _ncpus;
 
-    bool all_sources_closed() { return !is_active(); } // TODO: This is wrong
-
     bool is_active() override;
     void set_active(bool is_active) override;
-
 };
 
 

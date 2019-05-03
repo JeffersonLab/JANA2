@@ -28,9 +28,25 @@ void JProcessingTopology::set_active(bool active) {
     }
 }
 
-JProcessingTopology::JProcessingTopology() : event_source_manager(japp) {}
+JProcessingTopology::JProcessingTopology() : event_source_manager(japp) {
+    //factoryset_pool = new JFactorySet
+    // TODO: FactorySetPools appear to be nullptr... huh?
+}
 
 JProcessingTopology::~JProcessingTopology() {
-    // TODO: This should be responsible for deleting a whole bunch of stuff
+    for (auto evt_proc : event_processors) {
+        delete evt_proc;
+    }
+    for (auto fac_gen : factory_generators) {
+        delete fac_gen;
+    }
+    for (auto arrow : arrows) {
+        delete arrow;
+    }
+    for (auto queue : queues) {
+        delete queue;
+    }
+    // TODO: Arrows and queues probably should be owned by JArrowProcessingController
 }
+
 
