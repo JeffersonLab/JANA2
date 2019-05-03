@@ -17,8 +17,6 @@ struct JProcessingTopology : public JActivable {
 
     enum class RunState { BeforeRun, DuringRun, AfterRun };
 
-    // TODO: How much timekeeping belongs on Topology as opposed to Controller?
-
     explicit JProcessingTopology(JApplication* app);
     virtual ~JProcessingTopology();
 
@@ -27,7 +25,6 @@ struct JProcessingTopology : public JActivable {
     std::vector<JFactoryGenerator*> factory_generators;
     std::vector<JEventProcessor*> event_processors;
 
-
     std::vector<JArrow*> arrows;
     std::vector<QueueBase*> queues;
     std::vector<JArrow*> sources;           // Sources needed for activation
@@ -35,13 +32,15 @@ struct JProcessingTopology : public JActivable {
 
     JLogger _logger;
 
+    // TODO: These constitute another Metrics object
     RunState _run_state = RunState::BeforeRun;
     jclock_t::time_point _start_time;
     jclock_t::time_point _last_time;
     jclock_t::time_point _stop_time;
     size_t _last_message_count = 0;
+    size_t _ncpus;
 
-    bool all_sources_closed() { return !is_active(); }
+    bool all_sources_closed() { return !is_active(); } // TODO: This is wrong
 
     bool is_active() override;
     void set_active(bool is_active) override;

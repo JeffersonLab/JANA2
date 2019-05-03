@@ -47,7 +47,7 @@ public:
     JArrowProcessingController(JProcessingTopology* topology) : _topology(topology) {};
     ~JArrowProcessingController() override;
 
-    void initialize();
+    void initialize() override;
     void run(size_t nthreads) override;
     void scale(size_t nthreads) override;
     void request_stop() override;
@@ -61,8 +61,8 @@ public:
     size_t get_nevents_processed() override;
 
 
-    void print_report();
-    void print_final_report();
+    void print_report() override;
+    void print_final_report() override;
 
     void measure_perf(JMetrics::TopologySummary& topology_perf);
 
@@ -72,7 +72,6 @@ public:
     void measure_perf(JMetrics::TopologySummary& topology_perf,
                       std::vector<JMetrics::ArrowSummary>& arrow_perf,
                       std::vector<JMetrics::WorkerSummary>& worker_perf);
-
 
 
 private:
@@ -86,18 +85,7 @@ private:
     std::vector<JWorker*> _workers;
     JScheduler* _scheduler;
 
-    JLogger _logger;
-
-
-    // TODO: Separate these into a TopologyMetrics just like ArrowMetrics?
-    RunState _run_state = RunState::BeforeRun;
-    jclock_t::time_point _start_time;
-    jclock_t::time_point _last_time;
-    jclock_t::time_point _stop_time;
-    size_t _last_message_count = 0;
-    size_t _ncpus;
-
-
+    JLogger _logger = JLogger::everything();
 
 };
 

@@ -37,18 +37,18 @@ using millisecs = std::chrono::duration<double, std::milli>;
 using secs = std::chrono::duration<double>;
 
 void JArrowProcessingController::initialize() {
-    _run_state = RunState::BeforeRun;
-    _ncpus = JCpuInfo::GetNumCpus();
-    _scheduler = new JScheduler(_topology->arrows, _ncpus);
+    _topology->_run_state = JProcessingTopology::RunState::BeforeRun;
+    _topology->_ncpus = JCpuInfo::GetNumCpus();
+    _scheduler = new JScheduler(_topology->arrows, _topology->_ncpus);
 }
 
 void JArrowProcessingController::run(size_t nthreads) {
 
     scale(nthreads);
     _topology->set_active(true);
-    _run_state = RunState::DuringRun;
-    _start_time = jclock_t::now();
-    _last_time = _start_time;
+    _topology->_run_state = JProcessingTopology::RunState::DuringRun;
+    _topology->_start_time = jclock_t::now();
+    _topology->_last_time = _topology->_start_time;
 }
 
 void JArrowProcessingController::scale(size_t nthreads) {
@@ -67,7 +67,7 @@ void JArrowProcessingController::scale(size_t nthreads) {
     for (size_t i=nthreads; i<current_workers; ++i) {
         _workers.at(i)->wait_for_stop();
     }
-    _ncpus = nthreads;
+    _topology->_ncpus = nthreads;
 }
 
 void JArrowProcessingController::request_stop() {
@@ -83,20 +83,21 @@ void JArrowProcessingController::wait_until_stopped() {
     for (JWorker* worker : _workers) {
         worker->wait_for_stop();
     }
-    if (_run_state == RunState::DuringRun) {
+    if (_topology->_run_state == JProcessingTopology::RunState::DuringRun) {
         // We shouldn't usually end up here because sinks notify us when
         // they deactivate, automatically calling JTopology::set_active(false),
         // which stops the clock as soon as possible.
         // However, if for unknown reasons nobody notifies us, we still want to change
         // run state in an orderly fashion. If we do end up here, though, our _stop_time
         // will be late, throwing our metrics off.
-        _stop_time = jclock_t::now();
+        _topology->_stop_time = jclock_t::now();
+        LOG_WARN(_logger) << "Processing stopped before topology finished: Final timing data may be inaccurate." << LOG_END;
     }
-    _run_state = RunState::AfterRun;
+    _topology->_run_state = JProcessingTopology::RunState::AfterRun;
 }
 
 size_t JArrowProcessingController::get_nthreads() {
-    return _ncpus;
+    return _topology->_ncpus;
 }
 
 void JArrowProcessingController::measure_perf(JMetrics::TopologySummary& topology_summary) {
@@ -168,19 +169,19 @@ void JArrowProcessingController::measure_perf(JMetrics::TopologySummary& topolog
     for (JArrow* arrow : _topology->sinks) {
         topology_perf.messages_completed += arrow->get_metrics().get_total_message_count();
     }
-    uint64_t message_delta = topology_perf.messages_completed - _last_message_count;
+    uint64_t message_delta = topology_perf.messages_completed - _topology->_last_message_count;
 
     // Uptime
-    if (_run_state == RunState::AfterRun) {
-        topology_perf.last_uptime_s = secs(_stop_time - _last_time).count();
-        topology_perf.total_uptime_s = secs(_stop_time - _start_time).count();
+    if (_topology->_run_state == JProcessingTopology::RunState::AfterRun) {
+        topology_perf.last_uptime_s = secs(_topology->_stop_time - _topology->_last_time).count();
+        topology_perf.total_uptime_s = secs(_topology->_stop_time - _topology->_start_time).count();
     }
     else { // RunState::DuringRun
         auto current_time = jclock_t::now();
-        topology_perf.last_uptime_s = secs(current_time - _last_time).count();
-        topology_perf.total_uptime_s = secs(current_time - _start_time).count();
-        _last_time = current_time;
-        _last_message_count = topology_perf.messages_completed;
+        topology_perf.last_uptime_s = secs(current_time - _topology->_last_time).count();
+        topology_perf.total_uptime_s = secs(current_time - _topology->_start_time).count();
+        _topology->_last_time = current_time;
+        _topology->_last_message_count = topology_perf.messages_completed;
     }
 
     // Throughput
@@ -189,7 +190,7 @@ void JArrowProcessingController::measure_perf(JMetrics::TopologySummary& topolog
 
     // bottlenecks
     topology_perf.avg_seq_bottleneck_hz = 1e3 / worst_seq_latency;
-    topology_perf.avg_par_bottleneck_hz = 1e3 * _ncpus / worst_par_latency;
+    topology_perf.avg_par_bottleneck_hz = 1e3 * _topology->_ncpus / worst_par_latency;
 
     auto tighter_bottleneck = std::min(topology_perf.avg_seq_bottleneck_hz, topology_perf.avg_par_bottleneck_hz);
     topology_perf.avg_efficiency_frac = topology_perf.avg_throughput_hz/tighter_bottleneck;
@@ -239,14 +240,14 @@ void JArrowProcessingController::print_report() {
     measure_perf(s, arrow_summary, worker_summary);
 
     std::ostringstream os;
-    if (_run_state == RunState::BeforeRun) {
+    if (_topology->_run_state == JProcessingTopology::RunState::BeforeRun) {
         os << "Nothing running!" << std::endl;
     }
     else {
         os << std::endl;
         os << " TOPOLOGY STATUS" << std::endl;
         os << " ---------------" << std::endl;
-        os << " Thread team size [count]:    " << _ncpus << std::endl;
+        os << " Thread team size [count]:    " << _topology->_ncpus << std::endl;
         os << " Total uptime [s]:            " << std::setprecision(4) << s.total_uptime_s << std::endl;
         os << " Uptime delta [s]:            " << std::setprecision(4) << s.last_uptime_s << std::endl;
         os << " Completed events [count]:    " << s.messages_completed << std::endl;
