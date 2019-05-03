@@ -52,11 +52,9 @@ public:
     void run(size_t nthreads) override;
     void scale(size_t nthreads) override;
     void request_stop() override;
-    void wait_until_finished() override;
     void wait_until_stopped() override;
 
     bool is_stopped() override;
-    bool is_finished() override;
 
     size_t get_nthreads() override;
     size_t get_nevents_processed() override;

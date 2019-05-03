@@ -159,6 +159,7 @@ target_link_libraries(playground Threads::Threads)
 target_link_libraries(tests Threads::Threads)
 
 
+set_property(TARGET jtest PROPERTY SUFFIX ".so")
 
 
 

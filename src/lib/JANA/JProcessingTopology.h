@@ -16,7 +16,7 @@ struct JProcessingTopology : public JActivable {
 
     using jclock_t = std::chrono::steady_clock;
 
-    enum class RunState { BeforeRun, DuringRun, AfterRun };
+    enum class StopwatchStatus { BeforeRun, DuringRun, AfterRun };
 
     explicit JProcessingTopology();
     virtual ~JProcessingTopology();
@@ -34,7 +34,7 @@ struct JProcessingTopology : public JActivable {
     JLogger _logger;
 
     // TODO: These constitute another Metrics object
-    RunState _run_state = RunState::BeforeRun;
+    StopwatchStatus _stopwatch_status = StopwatchStatus::BeforeRun;
     jclock_t::time_point _start_time;
     jclock_t::time_point _last_time;
     jclock_t::time_point _stop_time;

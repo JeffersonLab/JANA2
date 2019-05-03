@@ -37,7 +37,7 @@ using millisecs = std::chrono::duration<double, std::milli>;
 using secs = std::chrono::duration<double>;
 
 void JArrowProcessingController::initialize() {
-    _topology->_run_state = JProcessingTopology::RunState::BeforeRun;
+    _topology->_stopwatch_status = JProcessingTopology::StopwatchStatus::BeforeRun;
     _topology->_ncpus = JCpuInfo::GetNumCpus();
     _scheduler = new JScheduler(_topology->arrows, _topology->_ncpus);
 }
@@ -46,9 +46,6 @@ void JArrowProcessingController::run(size_t nthreads) {
 
     scale(nthreads);
     _topology->set_active(true);
-    _topology->_run_state = JProcessingTopology::RunState::DuringRun;
-    _topology->_start_time = jclock_t::now();
-    _topology->_last_time = _topology->_start_time;
 }
 
 void JArrowProcessingController::scale(size_t nthreads) {
@@ -74,26 +71,17 @@ void JArrowProcessingController::request_stop() {
     for (JWorker* worker : _workers) {
         worker->request_stop();
     }
-}
-
-void JArrowProcessingController::wait_until_finished() {
+    // Tell the topology to stop timers and deactivate arrows
+    _topology->set_active(false);
 }
 
 void JArrowProcessingController::wait_until_stopped() {
     for (JWorker* worker : _workers) {
+        worker->request_stop();
+    }
+    for (JWorker* worker : _workers) {
         worker->wait_for_stop();
     }
-    if (_topology->_run_state == JProcessingTopology::RunState::DuringRun) {
-        // We shouldn't usually end up here because sinks notify us when
-        // they deactivate, automatically calling JTopology::set_active(false),
-        // which stops the clock as soon as possible.
-        // However, if for unknown reasons nobody notifies us, we still want to change
-        // run state in an orderly fashion. If we do end up here, though, our _stop_time
-        // will be late, throwing our metrics off.
-        _topology->_stop_time = jclock_t::now();
-        LOG_WARN(_logger) << "Processing stopped before topology finished: Final timing data may be inaccurate." << LOG_END;
-    }
-    _topology->_run_state = JProcessingTopology::RunState::AfterRun;
 }
 
 size_t JArrowProcessingController::get_nthreads() {
@@ -172,11 +160,11 @@ void JArrowProcessingController::measure_perf(JMetrics::TopologySummary& topolog
     uint64_t message_delta = topology_perf.messages_completed - _topology->_last_message_count;
 
     // Uptime
-    if (_topology->_run_state == JProcessingTopology::RunState::AfterRun) {
+    if (_topology->_stopwatch_status == JProcessingTopology::StopwatchStatus::AfterRun) {
         topology_perf.last_uptime_s = secs(_topology->_stop_time - _topology->_last_time).count();
         topology_perf.total_uptime_s = secs(_topology->_stop_time - _topology->_start_time).count();
     }
-    else { // RunState::DuringRun
+    else { // StopwatchStatus::DuringRun
         auto current_time = jclock_t::now();
         topology_perf.last_uptime_s = secs(current_time - _topology->_last_time).count();
         topology_perf.total_uptime_s = secs(current_time - _topology->_start_time).count();
@@ -215,14 +203,10 @@ bool JArrowProcessingController::is_stopped() {
             return false;
         }
     }
+    // We have determined that all Workers have actually stopped
     return true;
 }
 
-// TODO: Topology doesn't really distinguish between finished and stopped correctly, yet
-//       Topology should remain active until finished, whereas stopped corresponds to Worker states
-bool JArrowProcessingController::is_finished() {
-    return !_topology->is_active();
-}
 
 JArrowProcessingController::~JArrowProcessingController() {
     request_stop();
@@ -240,7 +224,7 @@ void JArrowProcessingController::print_report() {
     measure_perf(s, arrow_summary, worker_summary);
 
     std::ostringstream os;
-    if (_topology->_run_state == JProcessingTopology::RunState::BeforeRun) {
+    if (_topology->_stopwatch_status == JProcessingTopology::StopwatchStatus::BeforeRun) {
         os << "Nothing running!" << std::endl;
     }
     else {

@@ -45,11 +45,8 @@ public:
     virtual void run(size_t nthreads) = 0;
     virtual void scale(size_t nthreads) = 0;
     virtual void request_stop() = 0;
-    virtual void wait_until_finished() = 0;
     virtual void wait_until_stopped() = 0;
-
     virtual bool is_stopped() = 0;
-    virtual bool is_finished() = 0;
 
     virtual size_t get_nthreads() = 0;
     virtual size_t get_nevents_processed() = 0;

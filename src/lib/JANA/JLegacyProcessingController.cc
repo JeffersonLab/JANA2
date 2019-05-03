@@ -79,10 +79,6 @@ void JLegacyProcessingController::request_stop() {
     _threadManager->StopThreads(false);
 }
 
-void JLegacyProcessingController::wait_until_finished() {
-
-}
-
 size_t JLegacyProcessingController::get_nevents_processed() {
     return _topology->event_source_manager.GetNumEventsProcessed();
 }
@@ -90,8 +86,8 @@ size_t JLegacyProcessingController::get_nevents_processed() {
 void JLegacyProcessingController::wait_until_stopped() {
     _threadManager->StopThreads(true);
     _threadManager->JoinThreads();
+    _threadManager->EndThreads();
 
-    // TODO: Move this topology destructor
     // Delete event processors
     for(auto sProcessor : _topology->event_processors){
         sProcessor->Finish(); // (this may not be necessary since it is always next to destructor)
@@ -193,9 +189,4 @@ void JLegacyProcessingController::print_final_report() {
 bool JLegacyProcessingController::is_stopped() {
     return _threadManager->AreAllThreadsEnded();
 }
-
-bool JLegacyProcessingController::is_finished() {
-    return false;
-}
-
 
