@@ -66,6 +66,7 @@ void JLegacyProcessingController::initialize() {
 void JLegacyProcessingController::run(size_t nthreads) {
     LOG_INFO(_logger) << "Creating " << _nthreads << " processing threads ..." << LOG_END;
     _nthreads = nthreads;
+    _topology->set_active(true);
     _threadManager->CreateThreads(_nthreads);
     _threadManager->RunThreads();
 }
@@ -102,6 +103,11 @@ size_t JLegacyProcessingController::get_nthreads() {
 
 JThreadManager* JLegacyProcessingController::get_threadmanager() {
     return _threadManager;
+}
+
+void JLegacyProcessingController::print_report() {
+    // If we want to present impl-specific information about how JLegacyProcessingController is performing,
+    // we can do this here.
 }
 
 void JLegacyProcessingController::print_final_report() {

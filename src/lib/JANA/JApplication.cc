@@ -132,7 +132,6 @@ void JApplication::Initialize() {
     _params->SetDefaultParameter("NTHREADS", _desired_nthreads,
                                  "The total number of worker threads");
 
-    _params->SetDefaultParameter("JANA:EXTENDED_REPORT", _extended_report);
 
     _topology = _topology_builder->build_topology();
 
@@ -142,10 +141,14 @@ void JApplication::Initialize() {
         auto * pc = new JLegacyProcessingController(this, _topology);
         _threadManager = pc->get_threadmanager();
         _processing_controller = pc;
+        _extended_report = false;
     }
     else {
         _processing_controller = new JArrowProcessingController(_topology);
+        _extended_report = true;
     }
+
+    _params->SetDefaultParameter("JANA:EXTENDED_REPORT", _extended_report);
     _processing_controller->initialize();
 }
 
@@ -172,7 +175,7 @@ void JApplication::Run() {
 
 
         // Run until topology is deactivated, either because it finished or because another thread called stop()
-        if (!_topology->is_active()) {
+        if (!_topology->is_active() || _processing_controller->is_stopped()) {
             std::cout << "All threads have ended.\n";
             break;
         }
