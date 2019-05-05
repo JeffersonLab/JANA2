@@ -65,23 +65,19 @@ public:
 
     void Open() {};
 
-    std::shared_ptr<const JEvent> GetEvent() {
+    void GetEvent(std::shared_ptr<JEvent> event) {
 
         if (mNumEventsToGenerate != 0 && mNumEventsToGenerate <= mNumEventsGenerated) {
             throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
         }
         mNumEventsGenerated++;
 
-        //These are recycled, so be sure to re-set EVERY member variable
-        auto sEvent = mEventPool.Get_SharedResource(mApplication);
-
         if (mIncludeBarriers) {
             auto sIsBarrierEvent = (mNumEventsGenerated % mBarrierFrequency) == 0;
-            sEvent->SetIsBarrierEvent(sIsBarrierEvent);
+            event->SetIsBarrierEvent(sIsBarrierEvent);
         }
-        sEvent->SetEventNumber(mNumEventsGenerated);
-        sEvent->SetRunNumber(1234);
-        return sEvent;
+        event->SetEventNumber(mNumEventsGenerated);
+        event->SetRunNumber(1234);
     }
 
 
@@ -130,24 +126,22 @@ public:
 
         if (aFactory->GetTag() != "") return false; //Only default tag here
 
-        int sNumObjects = randint(1, 20);
+        size_t sNumObjects = randint(1,20);
         std::vector<JTestSourceData2 *> sObjects;
-        double sSum = 0.0;
-        for (int si = 0; si < sNumObjects; si++) {
+        for (size_t si = 0; si < sNumObjects; si++) {
 
             // Create new JSourceObject
             auto sObject = new JTestSourceData2(randdouble(), si);
             sObjects.push_back(sObject);
 
-            // Busy work commented out for some reason
-            sObject->mE = sSum;
+            // Pretend to be parsing input data
+            writeMemory(sObject->mRandoms, randint(1000,2000));
         }
 
         //Set the objects in the factory
         aFactory->Set(std::move(sObjects));
         return true;
     }
-
 
 
 private:

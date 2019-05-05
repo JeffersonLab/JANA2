@@ -292,7 +292,6 @@ uint64_t JApplication::GetNeventsProcessed() {
 float JApplication::GetIntegratedRate() {
     /// Returns the total integrated rate so far in Hz since
     /// Run was called.
-
     static float last_R = 0.0;
 
     auto now = std::chrono::high_resolution_clock::now();
@@ -393,8 +392,23 @@ JThreadManager* JApplication::GetJThreadManager() const {
     return _threadManager;
 }
 
-void JApplication::UpdateResourceLimits(void) {
+void JApplication::UpdateResourceLimits() {
 
+    /// Used internally by JANA to adjust the maximum size of resource
+    /// pools after changing the number of threads.
+
+    // OK, this is tricky. The max size of the JFactorySet resource pool should
+    // be at least as big as how many threads we have. Factory sets may also be
+    // attached to JEvent objects in queues that are not currently being acted
+    // on by a thread so we actually need the maximum to be larger if we wish to
+    // prevent constant allocation/deallocation of factory sets. If the factory
+    // sets are large, this will cost more memory, but should save on CPU from
+    // allocating less often and not having to call the constructors repeatedly.
+    // The exact maximum is hard to determine here. We set it to twice the number
+    // of threads which should be sufficient. The user should be given control to
+    // adjust this themselves in the future, but or now, this should be OK.
+    auto nthreads = _threadManager->GetNJThreads();
+    mFactorySetPool.Set_ControlParams( nthreads*100, 10 );
 }
 
 

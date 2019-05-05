@@ -38,8 +38,8 @@ public:
         // objects.
 
         // Get the JSourceObject and JSourceObject2 objects
-        auto sobjs = aEvent->GetT<JTestSourceData1>();
-        auto sobj2s = aEvent->GetT<JTestSourceData2>();
+        auto sobjs = aEvent->Get<JTestSourceData1>();
+        auto sobj2s = aEvent->Get<JTestSourceData2>();
 
         // Create a jana_test object for each JSourceObject2 object
         std::vector<std::shared_ptr<JTaskBase> > sTasks;

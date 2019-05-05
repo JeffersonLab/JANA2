@@ -87,8 +87,8 @@ class JEventSource{
 		JEventSource(std::string name, JApplication* aApplication=nullptr);
 		virtual ~JEventSource();
 
-		virtual std::shared_ptr<const JEvent> GetEvent(void) = 0;
 		virtual void Open(void);
+        virtual void GetEvent(std::shared_ptr<JEvent>) = 0;
 		virtual bool GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactory* aFactory){return false;}
 
 		void SetNumEventsToGetAtOnce(std::size_t aMinNumEvents, std::size_t aMaxNumEvents);

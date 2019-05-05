@@ -43,6 +43,8 @@ class JTaskBase : public JResettable
 		std::shared_ptr<const JEvent> GetSharedEvent(void) {return mEvent;} //increase ref count
 
 		virtual bool IsFinished(void) const = 0;
+		
+		virtual void GetFuture(void) {}
 
 		//OPERATORS
 		virtual void operator()(void) = 0;
@@ -70,6 +72,7 @@ class JTask : public JTaskBase
 
 		bool IsFinished(void) const{return (mFuture.wait_for(std::chrono::seconds(0)) == std::future_status::ready);}
 		ReturnType GetResult(void){return mFuture.get();}
+		void GetFuture(void){ GetResult(); }
 
 		//EXECUTE
 		void operator()(void){mTask(mEvent);}

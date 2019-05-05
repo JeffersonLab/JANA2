@@ -39,6 +39,6 @@ class JEventSource_example2: public JEventSource{
 		// See JEventSource_example2.cc for details on these
 		void Open(void);
 		bool GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactory* aFactory);
-		std::shared_ptr<const JEvent> GetEvent(void);
+		void GetEvent(std::shared_ptr<JEvent>);
 };
 

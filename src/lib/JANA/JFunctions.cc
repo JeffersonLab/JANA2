@@ -19,15 +19,9 @@ std::shared_ptr<JTaskBase> JMakeAnalyzeEventTask(std::shared_ptr<const JEvent>&&
 			// Make sure Init function is called for this processor, but only once.
 			std::call_once(sProcessor->init_flag, &JEventProcessor::Init, sProcessor);
 
-			try {
-				sProcessor->Process(aEvent);
-			} catch (JException& e) {
-				jerr << "Exception in JEventProcessor: " << e.GetMessage() << std::endl;
-			} catch (std::exception& e) {
-				jerr << "Exception in JEventProcessor: " << e.what() << std::endl;
-			} catch (...) {
-				jerr << "Unknown exception in JEventProcessor!" << std::endl;
-			}
+			// Don't try catching exception here. Any exception should
+			// be caught in JThreadManager::ExecuteTask which calls us.
+			sProcessor->Process(aEvent);
 		}
 	};
 	auto sPackagedTask = std::packaged_task<void(const std::shared_ptr<const JEvent>&)>(sRunProcessors);

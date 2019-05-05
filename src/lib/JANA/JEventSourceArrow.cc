@@ -38,15 +38,12 @@ void JEventSourceArrow::execute(JArrowMetrics& result) {
     SourceStatus in_status = SourceStatus::kSUCCESS;
     auto start_time = std::chrono::steady_clock::now();
     try {
-        size_t item_count = 1;// get_chunksize();
+        size_t item_count = get_chunksize();
         while (item_count-- != 0) {
-            auto event = _source->GetEvent();
-            auto& underlying = const_cast<JEvent&>(*event);
-            auto factorySet = japp->GetFactorySet();
-            assert(factorySet != nullptr);
-            underlying.SetFactorySet(factorySet);
-            underlying.SetJApplication(japp);
-            underlying.SetJEventSource(_source);
+            auto event = std::make_shared<JEvent>(japp);
+            event->SetFactorySet(japp->GetFactorySet());
+            event->SetJEventSource(_source);
+            _source->GetEvent(event);
             _chunk_buffer.push_back(event);
         }
     }

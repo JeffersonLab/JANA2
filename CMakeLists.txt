@@ -33,6 +33,8 @@ add_executable(tests
         src/programs/tests/RoundRobinSchedulerTests.cc
         src/programs/tests/TopologyTests.cc
         src/programs/tests/SchedulerTests.cc
+        src/programs/tests/JEventTests.cc
+        src/programs/tests/JEventTests.h
         )
 
 add_executable(playground
@@ -118,16 +120,19 @@ add_library(jana2 STATIC
         src/lib/JANA/JProcessingTopology.cpp
         src/lib/JANA/JProcessingTopology.h
         src/lib/JANA/JArrowProcessingController.cc
-        src/lib/JANA/JArrowProcessingController.h)
+        src/lib/JANA/JArrowProcessingController.h
+        )
 
 add_library(jtest SHARED
-        src/plugins/JTest/JTestDataObject.h
+        src/plugins/JTest/JTestData.h
         src/plugins/JTest/JTestDummyDataFactory.h
         src/plugins/JTest/JTestEventProcessor.h
         src/plugins/JTest/JTestEventSource.h
         src/plugins/JTest/JTestDummyDataFactoryGenerator.h
         src/plugins/JTest/JTestMain.cc
         src/plugins/JTest/JTestHelpers.h
+        src/plugins/JTest/TextEventRecord.h
+        src/plugins/JTest/jana_test_factory.cc
         src/lib/JANA/JThread.cc  #for THREAD_ID
         )
 
