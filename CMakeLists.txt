@@ -6,6 +6,10 @@ set(CMAKE_CXX_STANDARD 14)
 # Enable -fPIC for all targets
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+# For janapy plugin
+find_package(PythonInterp 3 REQUIRED)
+find_package(PythonLibs 3 REQUIRED)
+include_directories(${PYTHON_INCLUDE_DIRS})
 
 include_directories(src/lib)
 include_directories(src/lib/JANA)
@@ -127,6 +131,10 @@ add_library(jtest SHARED
         src/lib/JANA/JThread.cc  #for THREAD_ID
         )
 
+add_library(janapy SHARED
+        src/plugins/janapy/janapy.cc
+        )
+
 add_executable(jana
         src/programs/jana/jana.cc
         src/programs/jana/JBenchmarker.h
@@ -139,6 +147,7 @@ add_executable(jana
 # Add jana static lib
 target_link_libraries(jana jana2)
 target_link_libraries(jtest jana2)
+target_link_libraries(janapy jana2)
 target_link_libraries(tests jana2)
 target_link_libraries(playground jana2)
 
@@ -158,8 +167,12 @@ target_link_libraries(jtest Threads::Threads)
 target_link_libraries(playground Threads::Threads)
 target_link_libraries(tests Threads::Threads)
 
+# janpy plugin needs libpython
+target_link_libraries(janapy ${PYTHON_LIBRARIES})
 
-set_property(TARGET jtest PROPERTY SUFFIX ".so")
+# Remove "lib" prefix from plugins
+set_target_properties(jtest PROPERTIES PREFIX "" SUFFIX ".so")
+set_target_properties(janapy PROPERTIES PREFIX "")
 
 
 
