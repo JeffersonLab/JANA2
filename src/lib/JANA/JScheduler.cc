@@ -2,12 +2,11 @@
 #include <JANA/JScheduler.h>
 
 
-JScheduler::JScheduler(const std::vector<JArrow*>& arrows, size_t worker_count)
+JScheduler::JScheduler(const std::vector<JArrow*>& arrows)
     : _arrows(arrows)
     , _next_idx(0)
     {
         _logger = JLoggingService::logger("JScheduler");
-        _workers_active.assign(worker_count, false);
     }
 
 
@@ -21,7 +20,6 @@ JArrow* JScheduler::next_assignment(uint32_t worker_id, JArrow* assignment, JArr
     }
 
     _mutex.lock();
-    _workers_active[worker_id] = true;
 
     // Check latest arrow back in
     if (assignment != nullptr) {
@@ -77,7 +75,6 @@ void JScheduler::last_assignment(uint32_t worker_id, JArrow* assignment, JArrowM
                        << ((assignment == nullptr) ? "idle" : assignment->get_name())
                        << ", " << to_string(result) << ") => Shutting down!" << LOG_END;
     _mutex.lock();
-    _workers_active[worker_id] = false;
     if (assignment != nullptr) {
         assignment->update_thread_count(-1);
     }

@@ -38,8 +38,7 @@ using secs = std::chrono::duration<double>;
 
 void JArrowProcessingController::initialize() {
     _topology->_stopwatch_status = JProcessingTopology::StopwatchStatus::BeforeRun;
-    _topology->_ncpus = JCpuInfo::GetNumCpus();
-    _scheduler = new JScheduler(_topology->arrows, _topology->_ncpus);
+    _scheduler = new JScheduler(_topology->arrows);
 }
 
 void JArrowProcessingController::run(size_t nthreads) {

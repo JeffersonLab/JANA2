@@ -15,7 +15,6 @@
 
     private:
         std::vector<JArrow*> _arrows;
-        std::vector<bool> _workers_active;
         size_t _next_idx;
         std::mutex _mutex;
         JLogger _logger;
@@ -23,7 +22,7 @@
     public:
 
         /// Constructor. Note that a Scheduler operates on a vector of Arrow*s.
-        JScheduler(const std::vector<JArrow*>& arrows, size_t worker_count);
+        JScheduler(const std::vector<JArrow*>& arrows);
 
         /// Lets a Worker ask the Scheduler for another assignment. If no assignments make sense,
         /// Scheduler returns nullptr, which tells that Worker to idle until his next checkin.

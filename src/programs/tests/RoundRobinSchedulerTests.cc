@@ -18,7 +18,7 @@ TEST_CASE("JScheduler") {
     builder.addProcessor<SubOneProcessor>("subtract_one");
     builder.addSink("sum_everything", sink);
 
-    JScheduler scheduler(topology.arrows, 1);
+    JScheduler scheduler(topology.arrows);
 
     auto logger = JLogger::nothing(); // everything();
 

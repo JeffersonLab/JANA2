@@ -188,12 +188,12 @@ void JApplication::Run() {
     }
 
     // Join all threads
-    jout << "Event processing ended. " << std::endl;
     if (!_skip_join) {
         jout << "Merging threads ..." << std::endl;
         _processing_controller->wait_until_stopped();
     }
 
+    jout << "Event processing ended. " << std::endl;
     // Report Final numbers
     PrintFinalReport();
 }

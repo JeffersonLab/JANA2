@@ -28,7 +28,7 @@ TEST_CASE("SchedulerTests") {
 
         auto logger = JLogger::nothing(); // everything();
 
-        JScheduler scheduler(topology.arrows, 1);
+        JScheduler scheduler(topology.arrows);
 
         last_result = JArrowMetrics::Status::ComeBackLater;
         assignment = nullptr;
@@ -50,7 +50,7 @@ TEST_CASE("SchedulerTests") {
     SECTION("When run sequentially, topology finished => RRS returns nullptr") {
 
         auto logger = JLogger::nothing();
-        JScheduler scheduler(topology.arrows, 1);
+        JScheduler scheduler(topology.arrows);
         last_result = JArrowMetrics::Status::ComeBackLater;
         assignment = nullptr;
 

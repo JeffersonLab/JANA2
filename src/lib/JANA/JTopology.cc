@@ -308,7 +308,7 @@ void JTopology::set_active(bool active) {
 
 void JTopology::run(int nthreads) {
 
-    _scheduler = new JScheduler(arrows, nthreads);
+    _scheduler = new JScheduler(arrows);
     for (int i=0; i<nthreads; ++i) {
         auto worker = new JWorker(i, _scheduler);
         worker->start();
