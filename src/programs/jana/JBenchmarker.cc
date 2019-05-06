@@ -100,7 +100,7 @@ void JBenchmarker::run_thread() {
     // Loop over all thread settings in set
     std::map<uint32_t, std::vector<float> > samples;
     std::map<uint32_t, std::pair<float, float> > rates; // key=nthreads  val.first=rate in Hz, val.second=rms of rate in Hz
-    for (uint32_t nthreads = _min_threads; nthreads <= _max_threads; nthreads += _thread_step) {
+    for (uint32_t nthreads = _min_threads; nthreads <= _max_threads && !_app->IsQuitting(); nthreads += _thread_step) {
 
         std::cout << "Setting NTHREADS = " << nthreads << " ..." << std::endl;
         _app->Scale(nthreads);
@@ -117,7 +117,7 @@ void JBenchmarker::run_thread() {
         // ensure independent measurements.
         double sum = 0;
         double sum2 = 0;
-        for (uint32_t isample = 0; isample < _nsamples; isample++) {
+        for (uint32_t isample = 0; isample < _nsamples && !_app->IsQuitting(); isample++) {
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             auto rate = _app->GetInstantaneousRate();
             samples[nthreads].push_back(rate);
@@ -137,7 +137,7 @@ void JBenchmarker::run_thread() {
     }
 
     // Write results to files
-    LOG_INFO(_logger) << "Writing test results to: " << _output_dir << LOG_END;
+    std::cout << "Writing test results to: " << _output_dir << std::endl;
     mkdir(_output_dir.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 
     std::ofstream ofs1(_output_dir + "/samples.dat");
