@@ -150,8 +150,7 @@ private:
     std::size_t mNumEventsGenerated = 0;
     std::size_t mBarrierFrequency = 100;
 
-    bool mIncludeBarriers = true;
-    JResourcePool<JEvent> mEventPool;
+    bool mIncludeBarriers = false;
 };
 
 

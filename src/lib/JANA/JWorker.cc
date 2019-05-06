@@ -198,6 +198,8 @@ void JWorker::loop() {
     }
 
     _scheduler->last_assignment(_worker_id, _assignment, last_result);
+    _assignment = nullptr; // Worker has 'handed in' the assignment
+    // TODO: Make _assignment unique_ptr?
 
     LOG_DEBUG(_logger) << "JWorker " << _worker_id << " is exiting loop()" << LOG_END;
 

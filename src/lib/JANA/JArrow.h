@@ -67,7 +67,7 @@ public:
         return _chunksize;
     }
 
-    void update_thread_count(size_t thread_count_delta) {
+    void update_thread_count(int thread_count_delta) {
         std::lock_guard<std::mutex> lock(_mutex);
         _thread_count += thread_count_delta;
     }

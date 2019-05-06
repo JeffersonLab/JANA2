@@ -141,6 +141,7 @@ JProcessingTopology *JTopologyBuilder::build_topology() {
         JArrow* arrow = new JEventSourceArrow(src->GetName(), src, queue, &topology->factoryset_pool);
         topology->arrows.push_back(arrow);
         topology->sources.push_back(arrow);
+        arrow->set_chunksize(16);
         // create arrow for sources. Don't open until arrow.activate() called
     }
 
@@ -148,6 +149,7 @@ JProcessingTopology *JTopologyBuilder::build_topology() {
     //_queues.push_back(finished_queue);
 
     auto proc_arrow = new JEventProcessorArrow("processors", queue, nullptr);
+    proc_arrow->set_chunksize(1);
     topology->arrows.push_back(proc_arrow);
 
     // Receive notifications when sinks finish

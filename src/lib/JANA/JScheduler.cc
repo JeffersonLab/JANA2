@@ -5,21 +5,23 @@
 JScheduler::JScheduler(const std::vector<JArrow*>& arrows, size_t worker_count)
     : _arrows(arrows)
     , _next_idx(0)
-    , _worker_count(worker_count)
     {
         _logger = JLoggingService::logger("JScheduler");
+        _workers_active.assign(worker_count, false);
     }
 
 
 JArrow* JScheduler::next_assignment(uint32_t worker_id, JArrow* assignment, JArrowMetrics::Status last_result) {
 
+
     // Short-circuit our scheduler visit if everything is in order.
-    if (last_result == JArrowMetrics::Status::KeepGoing && assignment != nullptr) {
+    if (assignment != nullptr && (last_result == JArrowMetrics::Status::KeepGoing ||
+                                  last_result == JArrowMetrics::Status::NotRunYet)) {
         return assignment;
     }
 
     _mutex.lock();
-
+    _workers_active[worker_id] = true;
 
     // Check latest arrow back in
     if (assignment != nullptr) {
@@ -71,10 +73,15 @@ JArrow* JScheduler::next_assignment(uint32_t worker_id, JArrow* assignment, JArr
 
 void JScheduler::last_assignment(uint32_t worker_id, JArrow* assignment, JArrowMetrics::Status result) {
 
-    _worker_count--;
+    LOG_DEBUG(_logger) << "JScheduler: (" << worker_id << ", "
+                       << ((assignment == nullptr) ? "idle" : assignment->get_name())
+                       << ", " << to_string(result) << ") => Shutting down!" << LOG_END;
+    _mutex.lock();
+    _workers_active[worker_id] = false;
     if (assignment != nullptr) {
         assignment->update_thread_count(-1);
     }
+    _mutex.unlock();
 }
 
 

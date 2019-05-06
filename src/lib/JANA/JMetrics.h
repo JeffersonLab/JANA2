@@ -67,6 +67,7 @@ struct ArrowSummary {
     double avg_queue_latency_ms;
     double last_latency_ms;
     double last_queue_latency_ms;
+    double avg_queue_overhead_frac;
     size_t queue_visit_count;
 };
 

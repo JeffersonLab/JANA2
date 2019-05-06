@@ -130,6 +130,9 @@ void JArrowProcessingController::measure_perf(JMetrics::TopologySummary& topolog
         arrow->get_metrics().get(last_status, total_message_count, last_message_count, total_queue_visits,
                  last_queue_visits, total_latency, last_latency, total_queue_latency, last_queue_latency);
 
+        auto total_latency_ms = millisecs(total_latency).count();
+        auto total_queue_latency_ms = millisecs(total_queue_latency).count();
+
         JMetrics::ArrowSummary summary;
         summary.is_active = arrow->is_active();
         summary.thread_count = arrow->get_thread_count();
@@ -139,10 +142,12 @@ void JArrowProcessingController::measure_perf(JMetrics::TopologySummary& topolog
         summary.is_upstream_active = !arrow->is_upstream_finished();
         summary.total_messages_completed = total_message_count;
         summary.last_messages_completed = last_message_count;
-        summary.avg_latency_ms = millisecs(total_latency).count()/total_message_count;
+        summary.avg_latency_ms = total_latency_ms/total_message_count;
         summary.last_latency_ms = millisecs(last_latency).count()/last_message_count;
         summary.messages_pending = 0; // TODO: Get this from arrow eventually
         summary.queue_visit_count = total_queue_visits;
+        summary.avg_queue_latency_ms = total_queue_latency_ms / total_queue_visits;
+        summary.avg_queue_overhead_frac = total_queue_latency_ms / (total_queue_latency_ms + total_latency_ms);
 
         if (arrow->is_parallel()) {
             worst_par_latency = std::max(worst_par_latency, summary.avg_latency_ms);
@@ -257,23 +262,22 @@ void JArrowProcessingController::print_report() {
         os << " +--------------------------+-----+-----+---------+-------+-------------+" << std::endl;
 
 
-        os << " +--------------------------+-------------+--------------+----------------+--------------+" << std::endl;
-        os << " |           Name           | Avg latency | Inst latency | Queue overhead | Queue visits | " << std::endl;
-        os << " |                          | [ms/event]  |  [ms/event]  |     [0..1]     |    [count]   | " << std::endl;
-        os << " +--------------------------+-------------+--------------+----------------+--------------+" << std::endl;
+        os << " +--------------------------+-------------+--------------+----------------+--------------+----------------+" << std::endl;
+        os << " |           Name           | Avg latency | Inst latency | Queue latency  | Queue visits | Queue overhead | " << std::endl;
+        os << " |                          | [ms/event]  |  [ms/event]  |   [ms/visit]   |    [count]   |     [0..1]     | " << std::endl;
+        os << " +--------------------------+-------------+--------------+----------------+--------------+----------------+" << std::endl;
 
         for (auto as : arrow_summary) {
             os << " | " << std::setprecision(3)
                << std::setw(24) << std::left << as.arrow_name << " | "
                << std::setw(11) << std::right << as.avg_latency_ms << " |"
                << std::setw(13) << as.last_latency_ms << " |"
-               << std::setw(15) << as.avg_queue_latency_ms / (as.avg_queue_latency_ms + as.avg_latency_ms)
-               << " |"
+               << std::setw(15) << as.avg_queue_latency_ms << " |"
                << std::setw(13) << as.queue_visit_count << " |"
+               << std::setw(15) << as.avg_queue_overhead_frac << " |"
                << std::endl;
         }
-        os << " +--------------------------+-------------+--------------+----------------+--------------+"
-           << std::endl;
+        os << " +--------------------------+-------------+--------------+----------------+--------------+----------------+" << std::endl;
 
 
         os << " +----+----------------------+-------------+------------+-----------+----------------+------------------+" << std::endl;

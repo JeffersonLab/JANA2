@@ -15,8 +15,8 @@
 
     private:
         std::vector<JArrow*> _arrows;
+        std::vector<bool> _workers_active;
         size_t _next_idx;
-        size_t _worker_count;
         std::mutex _mutex;
         JLogger _logger;
 

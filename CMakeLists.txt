@@ -124,7 +124,7 @@ add_library(jana2 STATIC
         )
 
 add_library(jtest SHARED
-        src/plugins/JTest/JTestData.h
+        src/plugins/JTest/JTestDataObject.h
         src/plugins/JTest/JTestDummyDataFactory.h
         src/plugins/JTest/JTestEventProcessor.h
         src/plugins/JTest/JTestEventSource.h
@@ -132,7 +132,6 @@ add_library(jtest SHARED
         src/plugins/JTest/JTestMain.cc
         src/plugins/JTest/JTestHelpers.h
         src/plugins/JTest/TextEventRecord.h
-        src/plugins/JTest/jana_test_factory.cc
         src/lib/JANA/JThread.cc  #for THREAD_ID
         )
 

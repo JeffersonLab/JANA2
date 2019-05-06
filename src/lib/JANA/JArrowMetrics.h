@@ -81,13 +81,17 @@ public:
 
         _mutex.lock();
         other._mutex.lock();
+
+        if (other._last_message_count != 0) {
+            _last_message_count = other._last_message_count;
+            _last_latency = other._last_latency;
+        }
+
         _last_status = other._last_status;
         _total_message_count += other._total_message_count;
-        _last_message_count = other._last_message_count;
         _total_queue_visits += other._total_queue_visits;
         _last_queue_visits = other._last_queue_visits;
         _total_latency += other._total_latency;
-        _last_latency = other._last_latency;
         _total_queue_latency += other._total_queue_latency;
         _last_queue_latency = other._last_queue_latency;
 
@@ -108,13 +112,16 @@ public:
 
         _mutex.lock();
         other._mutex.lock();
+
+        if (other._last_message_count != 0) {
+            _last_message_count = other._last_message_count;
+            _last_latency = other._last_latency;
+        }
+        _total_latency += other._total_latency;
         _last_status = other._last_status;
         _total_message_count += other._total_message_count;
-        _last_message_count = other._last_message_count;
         _total_queue_visits += other._total_queue_visits;
         _last_queue_visits = other._last_queue_visits;
-        _total_latency += other._total_latency;
-        _last_latency = other._last_latency;
         _total_queue_latency += other._total_queue_latency;
         _last_queue_latency = other._last_queue_latency;
         other._mutex.unlock();
@@ -140,10 +147,10 @@ public:
             // We don't want to lose our most recent latency numbers
             // when the most recent execute() encounters an empty
             // queue and consequently processes zero items.
-            _total_message_count += message_count_delta;
             _last_message_count = message_count_delta;
             _last_latency = latency_delta;
         }
+        _total_message_count += message_count_delta;
         _total_queue_visits += queue_visit_delta;
         _last_queue_visits = queue_visit_delta;
         _total_latency += latency_delta;
@@ -192,6 +199,7 @@ inline std::string to_string(JArrowMetrics::Status h) {
         case JArrowMetrics::Status::KeepGoing:     return "KeepGoing";
         case JArrowMetrics::Status::ComeBackLater: return "ComeBackLater";
         case JArrowMetrics::Status::Finished:      return "Finished";
+        case JArrowMetrics::Status::NotRunYet:     return "NotRunYet";
         case JArrowMetrics::Status::Error:
         default:                          return "Error";
     }
