@@ -1,7 +1,7 @@
 //
-//    File: JTestMain.cc
-// Created: Fri Dec  7 08:42:59 EST 2018
-// Creator: davidl (on Linux jana2.jlab.org 3.10.0-957.el7.x86_64 x86_64)
+//    File: JEvent_test.h
+// Created: Fri Dec 29 19:51:34 EST 2017
+// Creator: davidl (on Darwin harriet 15.6.0 i386)
 //
 // ------ Last repository commit info -----
 // [ Date ]
@@ -36,43 +36,24 @@
 // OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-// Description
 //
-// This is used as an overall orchestrator for the various testing modes of the JTest
-// plugin. This allows it to do more advanced testing by setting the JTEST:MODE and
-// other config. parameters. This could have all been embedded in the JEventProcessor
-// class, but I decided to put it here to make things a little cleaner.
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Description:
+//
+//
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+#ifndef _JEvent_test_h_
+#define _JEvent_test_h_
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <stdlib.h>
+#include "JEvent.h"
 
-#include <thread>
-#include <chrono>
-#include <iostream>
-#include <fstream>
-#include <iomanip>
-using std::cout;
-using std::cerr;
-using std::endl;
+class JThreadManager;
 
-#include <JApplication.h>
-#include <JEventSourceGeneratorT.h>
-#include <JCpuInfo.h>
+class JEvent_test:public JEvent {
+	public:
+		JEvent_test(JApplication* aApplication) : JEvent(aApplication) { }
 
-#include "JTestMain.h"
-#include "JEventSource_jana_test.h"
-#include "JEventProcessor_jana_test.h"
-#include "JFactoryGenerator_jana_test.h"
+		virtual ~JEvent_test(){}
+};
 
-extern "C"{
-void InitPlugin(JApplication *app){
-	InitJANAPlugin(app);
-	app->Add(new JEventSourceGeneratorT<JEventSource_jana_test>());
-	app->Add(new JFactoryGenerator_jana_test());
-	app->Add(new JEventProcessor_jana_test(app));
-	app->Add("dummy_evt_src");
-}
-} // "C"
+#endif // _JEvent_test_h_
 

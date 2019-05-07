@@ -1,5 +1,5 @@
 //
-//    File: JTestMain.cc
+//    File: JTestMain.h
 // Created: Fri Dec  7 08:42:59 EST 2018
 // Creator: davidl (on Linux jana2.jlab.org 3.10.0-957.el7.x86_64 x86_64)
 //
@@ -36,43 +36,53 @@
 // OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-// Description
 //
-// This is used as an overall orchestrator for the various testing modes of the JTest
-// plugin. This allows it to do more advanced testing by setting the JTEST:MODE and
-// other config. parameters. This could have all been embedded in the JEventProcessor
-// class, but I decided to put it here to make things a little cleaner.
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Description:
+//
+//
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+#ifndef _JTestMain_h_
+#define _JTestMain_h_
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <stdlib.h>
-
-#include <thread>
-#include <chrono>
-#include <iostream>
-#include <fstream>
-#include <iomanip>
-using std::cout;
-using std::cerr;
-using std::endl;
+#include <set>
+#include <cstdint>
+#include <string>
 
 #include <JApplication.h>
-#include <JEventSourceGeneratorT.h>
-#include <JCpuInfo.h>
 
-#include "JTestMain.h"
-#include "JEventSource_jana_test.h"
-#include "JEventProcessor_jana_test.h"
-#include "JFactoryGenerator_jana_test.h"
+class JTestMain {
+	public:
 
-extern "C"{
-void InitPlugin(JApplication *app){
-	InitJANAPlugin(app);
-	app->Add(new JEventSourceGeneratorT<JEventSource_jana_test>());
-	app->Add(new JFactoryGenerator_jana_test());
-	app->Add(new JEventProcessor_jana_test(app));
-	app->Add("dummy_evt_src");
-}
-} // "C"
+		enum {
+			MODE_BASIC,
+			MODE_SCALING,
+			MODE_NULL
+		} mode_t;
+
+		JTestMain(JApplication *app);
+		virtual ~JTestMain();
+
+		void CopyToOutputDir(std::string filename);
+
+	protected:
+		JApplication *mApp = nullptr;
+		std::shared_ptr<JLogger> mLogger;
+
+		uint32_t mMode = MODE_BASIC;
+		uint32_t mMinThreads=1;
+		uint32_t mMaxThreads;
+		uint32_t mThreadStep=1;
+		uint32_t mNsamples = 15;
+
+		std::string mOutputDirName;
+		std::thread *mThread = nullptr;
+		bool mQuit = false;
+
+		void TestThread(void);
+
+	private:
+
+};
+
+#endif // _JTestMain_h_
 
