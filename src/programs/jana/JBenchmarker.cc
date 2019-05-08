@@ -38,7 +38,6 @@
 
 JBenchmarker::JBenchmarker(JApplication* app) : _app(app) {
 
-    _watcher_thread = nullptr;
     _max_threads = JCpuInfo::GetNumCpus();
     _logger = JLoggingService::logger("JBenchmarker");
 
@@ -74,17 +73,13 @@ JBenchmarker::JBenchmarker(JApplication* app) : _app(app) {
 }
 
 
-JBenchmarker::~JBenchmarker() {
-    if (_watcher_thread != nullptr) {
-        _watcher_thread->join();
-        delete _watcher_thread;
-    }
-}
+JBenchmarker::~JBenchmarker() {}
 
 
-void JBenchmarker::run_thread() {
+void JBenchmarker::RunUntilFinished() {
 
     _app->SetTicker(false);
+    _app->Run(false);
 
     // Wait for events to start flowing indicating the source is primed
     for (int i = 0; i < 60; i++) {
@@ -98,8 +93,8 @@ void JBenchmarker::run_thread() {
         }
     }
     // Loop over all thread settings in set
-    std::map<uint32_t, std::vector<float> > samples;
-    std::map<uint32_t, std::pair<float, float> > rates; // key=nthreads  val.first=rate in Hz, val.second=rms of rate in Hz
+    std::map<uint32_t, std::vector<double> > samples;
+    std::map<uint32_t, std::pair<double, double> > rates; // key=nthreads  val.first=rate in Hz, val.second=rms of rate in Hz
     for (uint32_t nthreads = _min_threads; nthreads <= _max_threads && !_app->IsQuitting(); nthreads += _thread_step) {
 
         std::cout << "Setting NTHREADS = " << nthreads << " ..." << std::endl;
@@ -207,11 +202,6 @@ void JBenchmarker::copy_to_output_dir(std::string filename) {
     std::ofstream dst(_output_dir + "/" + base_fname, std::ios::binary);
     dst << src.rdbuf();
 }
-
-void JBenchmarker::run() {
-    _watcher_thread = new std::thread(&JBenchmarker::run_thread, this);
-}
-
 
 
 

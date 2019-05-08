@@ -39,7 +39,6 @@ class JBenchmarker {
 
     JApplication* _app;
     JLogger _logger = JLoggingService::logger("JBenchmarker");
-    std::thread* _watcher_thread; // Won't be needed if we make japp.Run() nonblocking
 
     size_t _min_threads = 1;
     size_t _max_threads = 0;
@@ -50,10 +49,9 @@ class JBenchmarker {
 public:
     explicit JBenchmarker(JApplication* app);
     ~JBenchmarker();
-    void run();
+    void RunUntilFinished();
 
 private:
-    void run_thread();
     void copy_to_output_dir(std::string filename);
 };
 

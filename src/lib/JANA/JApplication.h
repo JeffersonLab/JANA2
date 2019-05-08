@@ -96,7 +96,7 @@ public:
     // Controlling processing
 
     void Initialize(void);
-    void Run();
+    void Run(bool wait_until_finished = true);
     void Scale(int nthreads);
     void Stop(bool wait_until_idle = false);
     void Resume() {};  // TODO: Do we need this?

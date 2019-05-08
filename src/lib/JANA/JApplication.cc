@@ -152,7 +152,7 @@ void JApplication::Initialize() {
     _processing_controller->initialize();
 }
 
-void JApplication::Run() {
+void JApplication::Run(bool wait_until_finished) {
 
     Initialize();
     if(_quitting) return;
@@ -163,6 +163,10 @@ void JApplication::Run() {
     jout << "Start processing ..." << std::endl;
     mRunStartTime = std::chrono::high_resolution_clock::now();
     _processing_controller->run(_desired_nthreads);
+
+    if (!wait_until_finished) {
+        return;
+    }
 
     // Monitor status of all threads
     while( !_quitting ){
@@ -197,6 +201,7 @@ void JApplication::Run() {
     // Report Final numbers
     PrintFinalReport();
 }
+
 
 void JApplication::Scale(int nthreads) {
     _processing_controller->scale(nthreads);

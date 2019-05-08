@@ -132,6 +132,9 @@ add_library(jtest SHARED
         src/plugins/JTest/JTestMain.cc
         src/plugins/JTest/JTestHelpers.h
         src/plugins/JTest/TextEventRecord.h
+        src/plugins/JTest/JEventSource_jana_test.cc
+        src/plugins/JTest/JEventProcessor_jana_test.cc
+        src/plugins/JTest/jana_test_factory.cc
         src/lib/JANA/JThread.cc  #for THREAD_ID
         )
 
