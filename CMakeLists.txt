@@ -121,7 +121,7 @@ add_library(jana2 STATIC
         src/lib/JANA/JProcessingTopology.h
         src/lib/JANA/JArrowProcessingController.cc
         src/lib/JANA/JArrowProcessingController.h
-        )
+        src/lib/JANA/JStopwatch.cc src/lib/JANA/JStopwatch.h)
 
 add_library(jtest SHARED
         src/plugins/JTest/JTestDataObject.h
