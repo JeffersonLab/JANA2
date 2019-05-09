@@ -196,3 +196,8 @@ bool JLegacyProcessingController::is_stopped() {
     return _threadManager->AreAllThreadsEnded();
 }
 
+std::unique_ptr<const JPerfSummary> JLegacyProcessingController::measure_performance() {
+    _perf_summary.thread_count = _nthreads;
+    return std::unique_ptr<JPerfSummary>(new JPerfSummary(_perf_summary));
+}
+

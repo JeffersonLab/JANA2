@@ -35,6 +35,8 @@
 
 #include <vector>
 #include <unistd.h>
+#include <memory>
+#include "JPerfSummary.h"
 
 class JProcessingController {
 public:
@@ -48,6 +50,7 @@ public:
     virtual void wait_until_stopped() = 0;
     virtual bool is_stopped() = 0;
 
+    virtual std::unique_ptr<const JPerfSummary> measure_performance() = 0;
     virtual size_t get_nthreads() = 0;
     virtual size_t get_nevents_processed() = 0;
 

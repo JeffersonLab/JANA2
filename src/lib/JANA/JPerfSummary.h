@@ -30,51 +30,25 @@
 // Author: Nathan Brei
 //
 
-#ifndef JANA2_JLEGACYPROCESSINGCONTROLLER_H
-#define JANA2_JLEGACYPROCESSINGCONTROLLER_H
+#ifndef JANA2_JPERFORMANCESUMMARY_H
+#define JANA2_JPERFORMANCESUMMARY_H
 
-#include <unistd.h>
-#include <JANA/JProcessingController.h>
-#include <JANA/JThreadManager.h>
-#include <JANA/JParameterManager.h>
-#include "JProcessingTopology.h"
 
-class JApplication;
+#include <cstddef>
 
-class JLegacyProcessingController : public JProcessingController {
+/// JPerfSummary is a plain-old-data container for performance metrics.
+/// JProcessingControllers expose a JPerfSummary object, which they may
+/// extend in order to expose additional, implementation-specific information.
+struct JPerfSummary {
 
-public:
-
-    JLegacyProcessingController(JApplication* app, JProcessingTopology* topology);
-    ~JLegacyProcessingController() override;
-
-    void initialize() override;
-    void run(size_t nthreads) override;
-    void scale(size_t nthreads) override;
-    void request_stop() override;
-    void wait_until_stopped() override;
-
-    bool is_stopped() override;
-
-    std::unique_ptr<const JPerfSummary> measure_performance() override;
-    size_t get_nthreads() override;
-    size_t get_nevents_processed() override;
-
-    void print_report() override;
-    void print_final_report() override;
-    JThreadManager* get_threadmanager();
-
-private:
-    JLogger _logger;
-    JProcessingTopology* _topology;
-    JThreadManager* _threadManager;
-    JParameterManager* _params;
-    bool _skip_join;
-    JPerfSummary _perf_summary;
-    size_t _nthreads;
-    int _affinity_algorithm = 0;
-
+    size_t total_events_completed = 0;  // Since measuring started
+    size_t latest_events_completed = 0; // Since previous measurement
+    size_t thread_count = 0;
+    double total_uptime_s = 0;
+    double latest_uptime_s = 0;
+    double avg_throughput_hz = 0;
+    double latest_throughput_hz = 0;
 };
 
 
-#endif //JANA2_JLEGACYPROCESSINGCONTROLLER_H
+#endif //JANA2_JPERFORMANCESUMMARY_H

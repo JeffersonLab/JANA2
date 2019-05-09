@@ -30,51 +30,26 @@
 // Author: Nathan Brei
 //
 
-#ifndef JANA2_JLEGACYPROCESSINGCONTROLLER_H
-#define JANA2_JLEGACYPROCESSINGCONTROLLER_H
+#ifndef JANA2_JARROWPERFSUMMARY_H
+#define JANA2_JARROWPERFSUMMARY_H
 
-#include <unistd.h>
-#include <JANA/JProcessingController.h>
-#include <JANA/JThreadManager.h>
-#include <JANA/JParameterManager.h>
-#include "JProcessingTopology.h"
+#include "JPerfSummary.h"
+#include "JMetrics.h"
 
-class JApplication;
+#include <vector>
+#include <ostream>
 
-class JLegacyProcessingController : public JProcessingController {
+struct JArrowPerfSummary : public JPerfSummary {
 
-public:
+    double avg_seq_bottleneck_hz;
+    double avg_par_bottleneck_hz;
+    double avg_efficiency_frac;
 
-    JLegacyProcessingController(JApplication* app, JProcessingTopology* topology);
-    ~JLegacyProcessingController() override;
-
-    void initialize() override;
-    void run(size_t nthreads) override;
-    void scale(size_t nthreads) override;
-    void request_stop() override;
-    void wait_until_stopped() override;
-
-    bool is_stopped() override;
-
-    std::unique_ptr<const JPerfSummary> measure_performance() override;
-    size_t get_nthreads() override;
-    size_t get_nevents_processed() override;
-
-    void print_report() override;
-    void print_final_report() override;
-    JThreadManager* get_threadmanager();
-
-private:
-    JLogger _logger;
-    JProcessingTopology* _topology;
-    JThreadManager* _threadManager;
-    JParameterManager* _params;
-    bool _skip_join;
-    JPerfSummary _perf_summary;
-    size_t _nthreads;
-    int _affinity_algorithm = 0;
-
+    std::vector<JMetrics::WorkerSummary> workers;
+    std::vector<JMetrics::ArrowSummary> arrows;
 };
 
+std::ostream& operator<<(std::ostream& stream, const JArrowPerfSummary& data);
 
-#endif //JANA2_JLEGACYPROCESSINGCONTROLLER_H
+
+#endif //JANA2_JARROWPERFSUMMARY_H

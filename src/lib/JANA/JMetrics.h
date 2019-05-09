@@ -33,6 +33,8 @@
 #ifndef JANA2_JMETRICS_H
 #define JANA2_JMETRICS_H
 
+#include <string>
+
 namespace JMetrics {
 
 struct TopologySummary {

@@ -41,9 +41,11 @@
 #include <JANA/JWorker.h>
 #include <JANA/JMetrics.h>
 #include <JANA/JProcessingTopology.h>
+#include "JArrowPerfSummary.h"
 
 class JArrowProcessingController : public JProcessingController {
 public:
+
     JArrowProcessingController(JProcessingTopology* topology) : _topology(topology) {};
     ~JArrowProcessingController() override;
 
@@ -55,33 +57,25 @@ public:
 
     bool is_stopped() override;
 
+    std::unique_ptr<const JPerfSummary> measure_performance() override;
+    std::unique_ptr<const JArrowPerfSummary> measure_internal_performance();
+
+
+    // DEPRECATED:
     size_t get_nthreads() override;
     size_t get_nevents_processed() override;
-
-
     void print_report() override;
     void print_final_report() override;
-
-    void measure_perf(JMetrics::TopologySummary& topology_perf);
-
-    void measure_perf(JMetrics::TopologySummary& topology_perf,
-                      std::vector<JMetrics::ArrowSummary>& arrow_perf);
-
-    void measure_perf(JMetrics::TopologySummary& topology_perf,
-                      std::vector<JMetrics::ArrowSummary>& arrow_perf,
-                      std::vector<JMetrics::WorkerSummary>& worker_perf);
 
 
 private:
 
     using jclock_t = std::chrono::steady_clock;
-    enum class RunState { BeforeRun, DuringRun, AfterRun };
 
-    JProcessingTopology* _topology;  // TODO: Move a lot of the things below into here
-
-    // TODO: How much NUMA stuff lives in ProcessingController vs TopologyBuilder?
+    JArrowPerfSummary _perf_summary;
+    JProcessingTopology* _topology;
     std::vector<JWorker*> _workers;
-    JScheduler* _scheduler;
+    JScheduler* _scheduler = nullptr;
 
     JLogger _logger = JLogger::everything();
 
