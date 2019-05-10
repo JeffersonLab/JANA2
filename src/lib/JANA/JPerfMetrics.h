@@ -35,27 +35,24 @@
 
 #include <chrono>
 #include <mutex>
+#include "JPerfSummary.h"
 
-
-
-class JStopwatch { // Coarse basic essential high-level
+/// JPerfMetrics represents the highest-level metrics we can collect from a running JProcessingTopology.
+/// Conceptually, it resembles a stopwatch, which is meant to be reset when the thread count changes,
+/// started when processing starts, split every time a performance measurement should be made, and
+/// stopped when processing finished. At each interaction the caller provides the current event count.
+/// Timers are all managed internally.
+class JPerfMetrics {
 
 public:
 
     enum class Mode {Reset, Ticking, Stopped};
 
-    struct Summary {
-
-        size_t total_events_completed = 0;  // Since measuring started
-        size_t latest_events_completed = 0; // Since previous measurement
-        size_t thread_count = 0;
-        double total_uptime_s = 0;
-        double latest_uptime_s = 0;
-        double avg_throughput_hz = 0;
-        double latest_throughput_hz = 0;
-    };
+    Mode get_mode() { return mode_;};
 
     void reset();
+
+    void start(size_t current_thread_count);
 
     void start(size_t current_event_count, size_t current_thread_count);
 
@@ -63,16 +60,14 @@ public:
 
     void stop(size_t current_event_count);
 
-    Summary summarize();
+    void summarize(JPerfSummary& summary);
 
-    // This is a hack needed because the relationship between
-    // JProcessingTopology and JProcessingController is weird and bad.
+    // This is a hack needed because the relationship between JProcessingTopology and JProcessingController is weird and bad.
     // Ideally, we want either:
     //   - stopwatch managed wholly by JPC, which means that JPC needs to be the observer instead of JPT
     //   - stopwatch managed wholly by JPT, who would have to know their own event count (only JPC does)
     void set_final_event_count(size_t event_count);
 
-    Mode get_mode() { return mode_;};
 
 private:
 
@@ -87,7 +82,7 @@ private:
     size_t start_event_count_ = 0;
     size_t prev_event_count_ = 0;
     size_t last_event_count_ = 0;
-    size_t thread_count = 0;
+    size_t thread_count_ = 0;
     std::mutex mutex_;
 };
 

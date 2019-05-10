@@ -67,6 +67,8 @@ void JArrowProcessingController::scale(size_t nthreads) {
         _workers.at(i)->wait_for_stop();
     }
     _topology->_ncpus = nthreads;
+    _topology->_stopwatch.reset();
+    _topology->_stopwatch.start(nthreads);
 }
 
 void JArrowProcessingController::request_stop() {
@@ -125,15 +127,25 @@ std::unique_ptr<const JArrowPerfSummary> JArrowProcessingController::measure_int
         _perf_summary.workers.push_back(summary);
     }
 
-    _perf_summary.thread_count = _topology->_ncpus;
-
-    _perf_summary.total_events_completed = 0;
-    _perf_summary.latest_events_completed = 0;
+    size_t alltime_event_count = 0;
     for (JArrow* arrow : _topology->sinks) {
-        _perf_summary.total_events_completed += arrow->get_metrics().get_total_message_count();
-        //_perf_summary.latest_events_completed += arrow->get_metrics().get_latest_message_count();
-        // TODO: A lot of confusion surrounding Arrow total event count :(
+        alltime_event_count += arrow->get_metrics().get_total_message_count();
     }
+
+    // Uptime
+    if (_topology->_stopwatch.get_mode() == JPerfMetrics::Mode::Ticking) {
+        _topology->_stopwatch.split(alltime_event_count);
+    }
+    else if (_topology->_stopwatch.get_mode() == JPerfMetrics::Mode::Stopped) {
+        _topology->_stopwatch.set_final_event_count(alltime_event_count);
+        // This is a hack. The problem is that JProcessingTopology is responsible for
+        // being notified that the topology is finished and stopping the stopwatch,
+        // but it is not able to calculate the final event count, because that would require
+        // knowledge of the implementation of JProcessingController.
+    }
+
+    _topology->_stopwatch.summarize(_perf_summary);
+    jout << "                    Evtcount = " << _perf_summary.total_events_completed << std::endl;
 
     double worst_seq_latency = 0;
     double worst_par_latency = 0;
@@ -179,23 +191,6 @@ std::unique_ptr<const JArrowPerfSummary> JArrowProcessingController::measure_int
         }
         _perf_summary.arrows.push_back(summary);
     }
-
-    // Uptime
-    if (_topology->_stopwatch_status == JProcessingTopology::StopwatchStatus::AfterRun) {
-        _perf_summary.latest_uptime_s = secs(_topology->_stop_time - _topology->_last_time).count();
-        _perf_summary.total_uptime_s = secs(_topology->_stop_time - _topology->_start_time).count();
-    }
-    else { // StopwatchStatus::DuringRun
-        auto current_time = jclock_t::now();
-        _perf_summary.latest_uptime_s = secs(current_time - _topology->_last_time).count();
-        _perf_summary.total_uptime_s = secs(current_time - _topology->_start_time).count();
-        _topology->_last_time = current_time;
-        _topology->_last_message_count = _perf_summary.total_events_completed;
-    }
-
-    // Throughput
-    _perf_summary.avg_throughput_hz = _perf_summary.total_events_completed / _perf_summary.total_uptime_s;
-    _perf_summary.latest_throughput_hz = _perf_summary.latest_events_completed / _perf_summary.latest_uptime_s;
 
     // bottlenecks
     _perf_summary.avg_seq_bottleneck_hz = 1e3 / worst_seq_latency;

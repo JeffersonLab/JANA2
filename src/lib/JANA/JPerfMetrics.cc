@@ -30,16 +30,44 @@
 // Author: Nathan Brei
 //
 
-#include "JStopwatch.h"
+#include "JPerfMetrics.h"
 #include "JException.h"
 
 
-void JStopwatch::reset() {
+void JPerfMetrics::reset() {
     std::lock_guard<std::mutex> lock(mutex_);
+    auto now = Clock::now();
     mode_ = Mode::Reset;
+    start_time_ = now;
+    prev_time_ = now;
+    last_time_ = now;
+    start_event_count_ = last_event_count_;
+    prev_event_count_ = last_event_count_;
+    last_event_count_ = 0;
+    thread_count_ = 0;
 }
 
-void JStopwatch::start(size_t current_event_count, size_t current_thread_count) {
+/// This implementation of start() assumes that no processing has
+/// occurred while the stopwatch wasn't running. Thus it can reuse
+/// the last event count from the previous run. This is convenient
+/// because it means we don't have to recalculate it, which is
+/// awkward to do at the moment.
+void JPerfMetrics::start(size_t current_thread_count) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    auto now = Clock::now();
+    if (mode_ == Mode::Reset) {
+        mode_ = Mode::Ticking;
+        start_time_ = now;
+        last_time_ = now;
+        prev_time_ = now;
+        thread_count_ = current_thread_count;
+    }
+    else {
+        throw JException("Stopwatch must be reset before it can be started!");
+    }
+}
+
+void JPerfMetrics::start(size_t current_event_count, size_t current_thread_count) {
 
     std::lock_guard<std::mutex> lock(mutex_);
     auto now = Clock::now();
@@ -51,62 +79,57 @@ void JStopwatch::start(size_t current_event_count, size_t current_thread_count) 
         start_event_count_ = current_event_count;
         prev_event_count_ = current_event_count;
         last_event_count_ = current_event_count;
-        thread_count = current_thread_count;
+        thread_count_ = current_thread_count;
     }
     else {
-        throw JException("This is not how you use a stopwatch!");
+        throw JException("Stopwatch must be reset before it can be started!");
     }
 }
 
-void JStopwatch::split(size_t current_event_count) {
+void JPerfMetrics::split(size_t current_event_count) {
 
     std::lock_guard<std::mutex> lock(mutex_);
     if (mode_ == Mode::Ticking) {
         prev_time_ = last_time_;
         last_time_ = Clock::now();
+        prev_event_count_ = last_event_count_;
+        last_event_count_ = current_event_count;
     }
     else {
         throw JException("Stopwatch is not ticking!");
     }
-    if (mode_ != Mode::Reset) {
-        prev_event_count_ = last_event_count_;
-        last_event_count_ = current_event_count;
-    }
 }
 
-void JStopwatch::stop(size_t current_event_count) {
+void JPerfMetrics::stop(size_t current_event_count) {
 
     std::lock_guard<std::mutex> lock(mutex_);
     auto now = Clock::now();
-    if (mode_ != Mode::Reset) {
+    if (mode_ == Mode::Ticking) {
         mode_ = Mode::Stopped;
         prev_time_ = last_time_;
         last_time_ = now;
         prev_event_count_ = last_event_count_;
         last_event_count_ = current_event_count;
     }
-    else {
-        throw JException("This is not how you use a stopwatch!");
+    else if (mode_ != Mode::Stopped) {
+        throw JException("Stopwatch must be started before it can be stopped");
     }
 }
 
-JStopwatch::Summary JStopwatch::summarize() {
+void JPerfMetrics::summarize(JPerfSummary& summary) {
 
     std::lock_guard<std::mutex> lock(mutex_);
-    if (mode_ == Mode::Reset) {
-        throw JException("Stopwatch never ran!");
-    }
-    Summary summary;
+    summary.monotonic_events_completed = last_event_count_;
     summary.total_events_completed = last_event_count_ - start_event_count_;
     summary.latest_events_completed = last_event_count_ - prev_event_count_;
     summary.total_uptime_s  = secs(last_time_ - start_time_).count();
     summary.latest_uptime_s = secs(last_time_ - prev_time_).count();
     summary.avg_throughput_hz = summary.total_events_completed / summary.total_uptime_s;
     summary.latest_throughput_hz = summary.latest_events_completed / summary.latest_uptime_s;
-    return summary;
+    summary.thread_count = thread_count_;
 }
 
-void JStopwatch::set_final_event_count(size_t event_count) {
+void JPerfMetrics::set_final_event_count(size_t event_count) {
     std::lock_guard<std::mutex> lock(mutex_);
     if (mode_ != Mode::Stopped) {
         throw JException("Can only set the final event count on a stopwatch which has stopped!");

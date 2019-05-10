@@ -121,8 +121,8 @@ add_library(jana2 STATIC
         src/lib/JANA/JProcessingTopology.h
         src/lib/JANA/JArrowProcessingController.cc
         src/lib/JANA/JArrowProcessingController.h
-        src/lib/JANA/JStopwatch.cc
-        src/lib/JANA/JStopwatch.h
+        src/lib/JANA/JPerfMetrics.cc
+        src/lib/JANA/JPerfMetrics.h
         src/lib/JANA/JPerfSummary.h
         src/lib/JANA/JArrowPerfSummary.cc src/lib/JANA/JArrowPerfSummary.h)
 

@@ -50,6 +50,8 @@ void JProcessingTopology::set_active(bool active) {
                 arrow->set_active(false);
             }
         }
+        _stopwatch.stop(0);  // HACK: We don't know how to compute our event count from here, so
+                             // we do it later using set_final_event_count()
     }
 }
 

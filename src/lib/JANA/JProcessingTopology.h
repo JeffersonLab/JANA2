@@ -11,6 +11,7 @@
 #include <JANA/JEventSourceManager.h>
 #include <JANA/JActivable.h>
 #include <JANA/JEventProcessor.h>
+#include "JPerfMetrics.h"
 
 struct JProcessingTopology : public JActivable {
 
@@ -40,6 +41,8 @@ struct JProcessingTopology : public JActivable {
     jclock_t::time_point _stop_time;
     size_t _last_message_count = 0;
     size_t _ncpus;
+
+    JPerfMetrics _stopwatch;
 
     bool is_active() override;
     void set_active(bool is_active) override;
