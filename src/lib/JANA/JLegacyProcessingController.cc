@@ -80,10 +80,6 @@ void JLegacyProcessingController::request_stop() {
     _threadManager->StopThreads(false);
 }
 
-size_t JLegacyProcessingController::get_nevents_processed() {
-    return _topology->event_source_manager.GetNumEventsProcessed();
-}
-
 void JLegacyProcessingController::wait_until_stopped() {
     _threadManager->StopThreads(true);
     _threadManager->JoinThreads();
@@ -97,10 +93,6 @@ void JLegacyProcessingController::wait_until_stopped() {
     _topology->event_processors.clear();
 }
 
-size_t JLegacyProcessingController::get_nthreads() {
-    return _nthreads;
-}
-
 JThreadManager* JLegacyProcessingController::get_threadmanager() {
     return _threadManager;
 }
@@ -108,6 +100,8 @@ JThreadManager* JLegacyProcessingController::get_threadmanager() {
 void JLegacyProcessingController::print_report() {
     // If we want to present impl-specific information about how JLegacyProcessingController is performing,
     // we can do this here.
+    auto perf = measure_performance();
+    jout << *perf;
 }
 
 void JLegacyProcessingController::print_final_report() {
@@ -198,6 +192,7 @@ bool JLegacyProcessingController::is_stopped() {
 
 std::unique_ptr<const JPerfSummary> JLegacyProcessingController::measure_performance() {
     _perf_summary.thread_count = _nthreads;
+    _perf_summary.total_events_completed = _topology->event_source_manager.GetNumEventsProcessed();
     return std::unique_ptr<JPerfSummary>(new JPerfSummary(_perf_summary));
 }
 

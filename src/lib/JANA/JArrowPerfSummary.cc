@@ -32,6 +32,7 @@
 
 #include "JArrowPerfSummary.h"
 
+#include <ostream>
 #include <iomanip>
 
 std::ostream& operator<<(std::ostream& os, const JArrowPerfSummary& s) {

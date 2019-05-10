@@ -86,23 +86,6 @@ void JArrowProcessingController::wait_until_stopped() {
     }
 }
 
-size_t JArrowProcessingController::get_nthreads() {
-    return _topology->_ncpus;
-}
-
-
-size_t JArrowProcessingController::get_nevents_processed() {
-    for (JWorker* worker : _workers) {
-        JMetrics::WorkerSummary summary;
-        worker->measure_perf(summary);
-    }
-    uint64_t message_count = 0;
-    for (JArrow* arrow : _topology->sinks) {
-        message_count += arrow->get_metrics().get_total_message_count();
-    }
-    return message_count;
-}
-
 bool JArrowProcessingController::is_stopped() {
     for (JWorker* worker : _workers) {
         if (worker->get_runstate() != JWorker::RunState::Stopped) {

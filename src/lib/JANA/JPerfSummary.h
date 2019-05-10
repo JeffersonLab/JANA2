@@ -35,6 +35,8 @@
 
 
 #include <cstddef>
+#include <ostream>
+#include <iomanip>
 
 /// JPerfSummary is a plain-old-data container for performance metrics.
 /// JProcessingControllers expose a JPerfSummary object, which they may
@@ -49,6 +51,15 @@ struct JPerfSummary {
     double avg_throughput_hz = 0;
     double latest_throughput_hz = 0;
 };
+
+inline std::ostream& operator<<(std::ostream& os, const JPerfSummary& x) {
+    os << "Threads: " << std::setw(2) << x.thread_count
+       << ",  Events processed: " << std::setw(9) << x.total_events_completed
+       << ",  Inst throughput: " << std::setw(5) << std::setprecision(3) << x.latest_throughput_hz
+       << " Hz,  Avg throughput: " << std::setw(5) << x.avg_throughput_hz << " Hz" << std::endl;
+    return os;
+}
+
 
 
 #endif //JANA2_JPERFORMANCESUMMARY_H

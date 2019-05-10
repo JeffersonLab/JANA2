@@ -293,8 +293,6 @@ uint64_t JApplication::GetNThreads() {
 uint64_t JApplication::GetNeventsProcessed() {
     auto perf = _processing_controller->measure_performance();
     return perf->total_events_completed;
-    return _processing_controller->get_nevents_processed();
-    //return _eventSourceManager->GetNumEventsProcessed();
 }
 
 float JApplication::GetIntegratedRate() {

@@ -51,8 +51,6 @@ public:
     virtual bool is_stopped() = 0;
 
     virtual std::unique_ptr<const JPerfSummary> measure_performance() = 0;
-    virtual size_t get_nthreads() = 0;
-    virtual size_t get_nevents_processed() = 0;
 
     virtual void print_report() = 0;
     virtual void print_final_report() = 0;

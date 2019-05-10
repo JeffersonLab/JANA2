@@ -37,7 +37,6 @@
 #include "JMetrics.h"
 
 #include <vector>
-#include <ostream>
 
 struct JArrowPerfSummary : public JPerfSummary {
 

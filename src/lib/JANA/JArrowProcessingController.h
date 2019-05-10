@@ -60,10 +60,6 @@ public:
     std::unique_ptr<const JPerfSummary> measure_performance() override;
     std::unique_ptr<const JArrowPerfSummary> measure_internal_performance();
 
-
-    // DEPRECATED:
-    size_t get_nthreads() override;
-    size_t get_nevents_processed() override;
     void print_report() override;
     void print_final_report() override;
 
