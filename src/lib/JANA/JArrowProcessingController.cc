@@ -40,14 +40,13 @@ using millisecs = std::chrono::duration<double, std::milli>;
 using secs = std::chrono::duration<double>;
 
 void JArrowProcessingController::initialize() {
-    _topology->_stopwatch_status = JProcessingTopology::StopwatchStatus::BeforeRun;
     _scheduler = new JScheduler(_topology->arrows);
 }
 
 void JArrowProcessingController::run(size_t nthreads) {
 
-    scale(nthreads);
     _topology->set_active(true);
+    scale(nthreads);
 }
 
 void JArrowProcessingController::scale(size_t nthreads) {
@@ -66,9 +65,8 @@ void JArrowProcessingController::scale(size_t nthreads) {
     for (size_t i=nthreads; i<current_workers; ++i) {
         _workers.at(i)->wait_for_stop();
     }
-    _topology->_ncpus = nthreads;
-    _topology->_stopwatch.reset();
-    _topology->_stopwatch.start(nthreads);
+    _topology->metrics.reset();
+    _topology->metrics.start(nthreads);
 }
 
 void JArrowProcessingController::request_stop() {
@@ -127,25 +125,14 @@ std::unique_ptr<const JArrowPerfSummary> JArrowProcessingController::measure_int
         _perf_summary.workers.push_back(summary);
     }
 
-    size_t alltime_event_count = 0;
+    size_t monotonic_event_count = 0;
     for (JArrow* arrow : _topology->sinks) {
-        alltime_event_count += arrow->get_metrics().get_total_message_count();
+        monotonic_event_count += arrow->get_metrics().get_total_message_count();
     }
 
     // Uptime
-    if (_topology->_stopwatch.get_mode() == JPerfMetrics::Mode::Ticking) {
-        _topology->_stopwatch.split(alltime_event_count);
-    }
-    else if (_topology->_stopwatch.get_mode() == JPerfMetrics::Mode::Stopped) {
-        _topology->_stopwatch.set_final_event_count(alltime_event_count);
-        // This is a hack. The problem is that JProcessingTopology is responsible for
-        // being notified that the topology is finished and stopping the stopwatch,
-        // but it is not able to calculate the final event count, because that would require
-        // knowledge of the implementation of JProcessingController.
-    }
-
-    _topology->_stopwatch.summarize(_perf_summary);
-    jout << "                    Evtcount = " << _perf_summary.total_events_completed << std::endl;
+    _topology->metrics.split(monotonic_event_count);
+    _topology->metrics.summarize(_perf_summary);
 
     double worst_seq_latency = 0;
     double worst_par_latency = 0;

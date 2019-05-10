@@ -15,22 +15,13 @@ bool JProcessingTopology::is_active() {
 
 void JProcessingTopology::set_active(bool active) {
     if (active) {
-        // Someone told us to activate
-        if (_stopwatch_status == StopwatchStatus::BeforeRun) {
-            // We had not activated at all yet
-
-            _stopwatch_status = StopwatchStatus::DuringRun;
-            _start_time = jclock_t::now();
-            _last_time = _start_time;
+        if (status == Status::Inactive) {
+            status = Status::Running;
             for (auto arrow : sources) {
                 // We activate our eventsources, which activate components downstream.
                 arrow->set_active(true);
                 arrow->notify_downstream(true);
             }
-        }
-        else if (_stopwatch_status == StopwatchStatus::AfterRun) {
-            // TODO: We can clear and restart the timer, which we probably want to do on scale()
-            throw JException("Topology is already stopped");
         }
     }
     else {
@@ -38,20 +29,19 @@ void JProcessingTopology::set_active(bool active) {
         //   * The last JEventProcessorArrow notifies us that he is deactivating because the topology is finished
         //   * The JProcessingController is requesting us to stop regardless of whether the topology finished or not
 
-        if (_stopwatch_status == StopwatchStatus::DuringRun) {
-            // We make our final timekeeping measurement, and we only do this once regardless of who calls us or why
-            _stop_time = jclock_t::now();
-            _stopwatch_status = StopwatchStatus::AfterRun;
-        }
-
-        // Make sure all arrows have been deactivated
         if (is_active()) {
+            // Premature exit: Shut down any arrows which are still running
+            status = Status::Draining;
             for (auto arrow : arrows) {
                 arrow->set_active(false);
             }
         }
-        _stopwatch.stop(0);  // HACK: We don't know how to compute our event count from here, so
-                             // we do it later using set_final_event_count()
+        else {
+            // Arrows have all deactivated: Stop timer
+            metrics.stop();
+            status = Status::Inactive;
+            // TODO: Distinguish deactivation due to finishing from deactivation due to request_stop()
+        }
     }
 }
 

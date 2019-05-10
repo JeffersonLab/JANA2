@@ -13,11 +13,10 @@
 #include <JANA/JEventProcessor.h>
 #include "JPerfMetrics.h"
 
+
 struct JProcessingTopology : public JActivable {
 
-    using jclock_t = std::chrono::steady_clock;
-
-    enum class StopwatchStatus { BeforeRun, DuringRun, AfterRun };
+    enum Status { Inactive, Running, Draining, Finished };
 
     explicit JProcessingTopology();
     virtual ~JProcessingTopology();
@@ -26,6 +25,8 @@ struct JProcessingTopology : public JActivable {
     JResourcePoolSimple<JFactorySet> factoryset_pool;
     std::vector<JFactoryGenerator*> factory_generators;
     std::vector<JEventProcessor*> event_processors;
+    JPerfMetrics metrics;
+    Status status = Inactive; // TODO: Merge this concept with JActivable
 
     std::vector<JArrow*> arrows;
     std::vector<QueueBase*> queues;
@@ -33,16 +34,6 @@ struct JProcessingTopology : public JActivable {
     std::vector<JArrow*> sinks;             // Sinks needed for finished message count
 
     JLogger _logger;
-
-    // TODO: These constitute another Metrics object
-    StopwatchStatus _stopwatch_status = StopwatchStatus::BeforeRun;
-    jclock_t::time_point _start_time;
-    jclock_t::time_point _last_time;
-    jclock_t::time_point _stop_time;
-    size_t _last_message_count = 0;
-    size_t _ncpus;
-
-    JPerfMetrics _stopwatch;
 
     bool is_active() override;
     void set_active(bool is_active) override;

@@ -192,7 +192,8 @@ bool JLegacyProcessingController::is_stopped() {
 
 std::unique_ptr<const JPerfSummary> JLegacyProcessingController::measure_performance() {
     _perf_summary.thread_count = _nthreads;
-    _perf_summary.total_events_completed = _topology->event_source_manager.GetNumEventsProcessed();
+    _perf_summary.monotonic_events_completed = _topology->event_source_manager.GetNumEventsProcessed();
+
     return std::unique_ptr<JPerfSummary>(new JPerfSummary(_perf_summary));
 }
 

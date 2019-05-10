@@ -34,6 +34,9 @@
 #include "JException.h"
 
 
+/// Reset is meant to be called between separate run()s or scale()s.
+/// It sets everything in the metric back to zero or now(), except the start_event_count,
+/// which increases monotonically throughout the life of the program.
 void JPerfMetrics::reset() {
     std::lock_guard<std::mutex> lock(mutex_);
     auto now = Clock::now();
@@ -49,9 +52,8 @@ void JPerfMetrics::reset() {
 
 /// This implementation of start() assumes that no processing has
 /// occurred while the stopwatch wasn't running. Thus it can reuse
-/// the last event count from the previous run. This is convenient
-/// because it means we don't have to recalculate it, which is
-/// awkward to do at the moment.
+/// the event count from the previous run. This is convenient
+/// because that value can be annoying to calculate.
 void JPerfMetrics::start(size_t current_thread_count) {
     std::lock_guard<std::mutex> lock(mutex_);
     auto now = Clock::now();
@@ -67,6 +69,8 @@ void JPerfMetrics::start(size_t current_thread_count) {
     }
 }
 
+/// This is the preferred implementation of start(), which doesn't make
+/// dangerous assumptions about nothing happening in the meantime
 void JPerfMetrics::start(size_t current_event_count, size_t current_thread_count) {
 
     std::lock_guard<std::mutex> lock(mutex_);
@@ -86,6 +90,15 @@ void JPerfMetrics::start(size_t current_event_count, size_t current_thread_count
     }
 }
 
+
+/// Split accumulates another (monotonic) event count measurement.
+
+/// If the stopwatch has already been stopped, split will
+/// update the event count without updating the time.
+/// This is convenient because we sometimes don't have access
+/// to the current event count but still wish to stop the timer,
+/// but it is dangerous because it makes the caller responsible for ensuring
+/// that further events don't get processed after the stopwatch stops.
 void JPerfMetrics::split(size_t current_event_count) {
 
     std::lock_guard<std::mutex> lock(mutex_);
@@ -96,10 +109,29 @@ void JPerfMetrics::split(size_t current_event_count) {
         last_event_count_ = current_event_count;
     }
     else {
-        throw JException("Stopwatch is not ticking!");
+        // TODO: Reconsider this
+        last_event_count_ = current_event_count;
     }
 }
 
+
+/// Stop without recording a final measurement. This can be provided
+/// in a later call to split(). `void stop(current_event_count)` is preferred.
+void JPerfMetrics::stop() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    auto now = Clock::now();
+    if (mode_ == Mode::Ticking) {
+        mode_ = Mode::Stopped;
+        prev_time_ = last_time_;
+        last_time_ = now;
+    }
+    else if (mode_ != Mode::Stopped) {
+        throw JException("Stopwatch must be started before it can be stopped");
+    }
+}
+
+/// Stop, and record the final measurement at that time. This should be used
+/// instead of `void stop()` whenever possible.
 void JPerfMetrics::stop(size_t current_event_count) {
 
     std::lock_guard<std::mutex> lock(mutex_);
@@ -127,14 +159,6 @@ void JPerfMetrics::summarize(JPerfSummary& summary) {
     summary.avg_throughput_hz = summary.total_events_completed / summary.total_uptime_s;
     summary.latest_throughput_hz = summary.latest_events_completed / summary.latest_uptime_s;
     summary.thread_count = thread_count_;
-}
-
-void JPerfMetrics::set_final_event_count(size_t event_count) {
-    std::lock_guard<std::mutex> lock(mutex_);
-    if (mode_ != Mode::Stopped) {
-        throw JException("Can only set the final event count on a stopwatch which has stopped!");
-    }
-    last_event_count_ = event_count;
 }
 
 

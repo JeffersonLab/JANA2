@@ -60,14 +60,9 @@ public:
 
     void stop(size_t current_event_count);
 
+    void stop();
+
     void summarize(JPerfSummary& summary);
-
-    // This is a hack needed because the relationship between JProcessingTopology and JProcessingController is weird and bad.
-    // Ideally, we want either:
-    //   - stopwatch managed wholly by JPC, which means that JPC needs to be the observer instead of JPT
-    //   - stopwatch managed wholly by JPT, who would have to know their own event count (only JPC does)
-    void set_final_event_count(size_t event_count);
-
 
 private:
 
