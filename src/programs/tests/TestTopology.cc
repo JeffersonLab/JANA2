@@ -2,15 +2,15 @@
 // Created by nbrei on 3/26/19.
 //
 
-#include <JANA/JTopology.h>
-#include "JWorker.h"
+#include <JANA/JWorker.h>
+#include "TestTopology.h"
 
 
 using millisecs = std::chrono::duration<double, std::milli>;
 using secs = std::chrono::duration<double>;
 
 
-JTopology::ArrowStatus::ArrowStatus(JArrow* arrow) {
+TestTopology::ArrowStatus::ArrowStatus(JArrow* arrow) {
     arrow_name = arrow->get_name();
     is_parallel = arrow->is_parallel();
     is_active = arrow->is_active();
@@ -31,7 +31,7 @@ JTopology::ArrowStatus::ArrowStatus(JArrow* arrow) {
     queue_overhead_frac = l_queue / (l_queue+l_total);
 }
 
-JTopology::~JTopology() {
+TestTopology::~TestTopology() {
 
     arrow_lookup.clear();
 
@@ -45,11 +45,11 @@ JTopology::~JTopology() {
     }
 }
 
-void JTopology::addQueue(QueueBase *queue) {
+void TestTopology::addQueue(QueueBase *queue) {
     queues.push_back(queue);
 }
 
-void JTopology::addArrow(JArrow *arrow, bool sink) {
+void TestTopology::addArrow(JArrow *arrow, bool sink) {
     arrows.push_back(arrow);
     arrow_lookup[arrow->get_name()] = arrow;
     if (sink) {
@@ -59,7 +59,7 @@ void JTopology::addArrow(JArrow *arrow, bool sink) {
     }
 };
 
-JArrow* JTopology::get_arrow(std::string arrow_name) {
+JArrow* TestTopology::get_arrow(std::string arrow_name) {
 
     auto search = arrow_lookup.find(arrow_name);
     if (search == arrow_lookup.end()) {
@@ -68,19 +68,19 @@ JArrow* JTopology::get_arrow(std::string arrow_name) {
     return search->second;
 }
 
-void JTopology::activate(std::string arrow_name) {
+void TestTopology::activate(std::string arrow_name) {
     auto arrow = get_arrow(arrow_name);
     arrow->set_active(true);
     arrow->notify_downstream(true);
 }
 
-void JTopology::deactivate(std::string arrow_name) {
+void TestTopology::deactivate(std::string arrow_name) {
     auto arrow = get_arrow(arrow_name);
     arrow->set_active(false);
 }
 
 
-JTopology::TopologyStatus JTopology::get_topology_status(std::map<JArrow*,ArrowStatus>& arrow_statuses) {
+TestTopology::TopologyStatus TestTopology::get_topology_status(std::map<JArrow*,ArrowStatus>& arrow_statuses) {
 
     assert(_run_state != RunState::BeforeRun);
 
@@ -132,7 +132,7 @@ JTopology::TopologyStatus JTopology::get_topology_status(std::map<JArrow*,ArrowS
 
 }
 
-JTopology::TopologyStatus JTopology::get_topology_status() {
+TestTopology::TopologyStatus TestTopology::get_topology_status() {
     std::map<JArrow*, ArrowStatus> statuses;
     for (JArrow* arrow : arrows) {
         statuses.insert({arrow, ArrowStatus(arrow)});
@@ -141,7 +141,7 @@ JTopology::TopologyStatus JTopology::get_topology_status() {
 }
 
 
-std::vector<JTopology::ArrowStatus> JTopology::get_arrow_status() {
+std::vector<TestTopology::ArrowStatus> TestTopology::get_arrow_status() {
 
     std::vector<ArrowStatus> metrics;
     for (auto arrow : arrows) {
@@ -150,7 +150,7 @@ std::vector<JTopology::ArrowStatus> JTopology::get_arrow_status() {
     return metrics;
 }
 
-std::vector<JTopology::QueueStatus> JTopology::get_queue_status() {
+std::vector<TestTopology::QueueStatus> TestTopology::get_queue_status() {
     std::vector<QueueStatus> statuses;
     for (QueueBase *q : queues) {
         QueueStatus qs;
@@ -163,12 +163,12 @@ std::vector<JTopology::QueueStatus> JTopology::get_queue_status() {
     return statuses;
 }
 
-JTopology::ArrowStatus JTopology::get_status(const std::string &arrow_name) {
+TestTopology::ArrowStatus TestTopology::get_status(const std::string &arrow_name) {
 
     return ArrowStatus(get_arrow(arrow_name));
 }
 
-void JTopology::log_status() {
+void TestTopology::log_status() {
 
     std::map<JArrow*, ArrowStatus> statuses;
     for (JArrow* arrow : arrows) {
@@ -271,7 +271,7 @@ void JTopology::log_status() {
 
 /// The user may want to pause the topology and interact with it manually.
 /// This is particularly powerful when used from inside GDB.
-JArrowMetrics::Status JTopology::step(const std::string &arrow_name) {
+JArrowMetrics::Status TestTopology::step(const std::string &arrow_name) {
     JArrow *arrow = get_arrow(arrow_name);
     JArrowMetrics result;
     arrow->execute(result);
@@ -283,7 +283,7 @@ JArrowMetrics::Status JTopology::step(const std::string &arrow_name) {
     return status;
 }
 
-bool JTopology::is_active() {
+bool TestTopology::is_active() {
     for (auto arrow : arrows) {
         if (arrow->is_active()) {
             return true;
@@ -292,7 +292,7 @@ bool JTopology::is_active() {
     return false;
 }
 
-void JTopology::set_active(bool active) {
+void TestTopology::set_active(bool active) {
 
     if (active) {
         // activate any sources, eventually
@@ -306,7 +306,7 @@ void JTopology::set_active(bool active) {
 }
 
 
-void JTopology::run(int nthreads) {
+void TestTopology::run(int nthreads) {
 
     _scheduler = new JScheduler(arrows);
     for (int i=0; i<nthreads; ++i) {
@@ -320,7 +320,7 @@ void JTopology::run(int nthreads) {
 
 }
 
-void JTopology::wait_until_finished() {
+void TestTopology::wait_until_finished() {
     while (is_active()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }

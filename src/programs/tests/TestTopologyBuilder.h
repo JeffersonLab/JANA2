@@ -5,32 +5,26 @@
 #ifndef GREENFIELD_LINEARTOPOLOGY_H
 #define GREENFIELD_LINEARTOPOLOGY_H
 
-#include <JANA/JTopology.h>
-#include "Components.h"
-#include "SourceArrow.h"
-#include "MapArrow.h"
-#include "SinkArrow.h"
+#include "TestTopologyComponents.h"
+#include "TestTopology.h"
 
-class LinearTopologyBuilder {
+; // TODO: Find the missing semicolon
 
-    JTopology& topology;
+class TestTopologyBuilder {
+
+    TestTopology& topology;
     QueueBase* last_queue;
     bool have_source = false;
     bool have_sink = false;
     bool finished = false;
-    std::vector<Component*> components;
 
 public:
-    LinearTopologyBuilder(JTopology& topology): topology(topology) {}
+    TestTopologyBuilder(TestTopology& topology): topology(topology) {}
 
-    ~LinearTopologyBuilder() {
-        for (auto component : components) {
-            delete component;
-        }
-    }
+    ~TestTopologyBuilder() {}
 
     template <typename T>
-    LinearTopologyBuilder& addSource(std::string name, Source<T>& source) {
+    TestTopologyBuilder& addSource(std::string name, Source<T>& source) {
 
         assert(!have_sink);
         assert(!finished);
@@ -44,7 +38,7 @@ public:
     }
 
     template <typename S, typename T>
-    LinearTopologyBuilder& addProcessor(std::string name, ParallelProcessor<S,T>& processor) {
+    TestTopologyBuilder& addProcessor(std::string name, ParallelProcessor<S,T>& processor) {
         assert(have_source);
         assert(!have_sink);
         assert(!finished);
@@ -60,7 +54,7 @@ public:
     }
 
     template <typename S>
-    LinearTopologyBuilder& addSink(std::string name, Sink<S>& sink) {
+    TestTopologyBuilder& addSink(std::string name, Sink<S>& sink) {
         assert(have_source);
         assert(!have_sink);
         assert(!finished);
@@ -76,23 +70,20 @@ public:
     // "Generated" adders
 
     template <typename SourceT>
-    LinearTopologyBuilder& addSource(std::string name) {
+    TestTopologyBuilder& addSource(std::string name) {
         auto source = new SourceT;
-        components.push_back(source);
         return addSource(name, *source);
     }
 
     template <typename ProcessorT>
-    LinearTopologyBuilder& addProcessor(std::string name) {
+    TestTopologyBuilder& addProcessor(std::string name) {
         auto processor = new ProcessorT;
-        components.push_back(processor);
         return addProcessor(name, *processor);
     }
 
     template <typename SinkT>
-    LinearTopologyBuilder& addSink(std::string name) {
+    TestTopologyBuilder& addSink(std::string name) {
         auto sink = new SinkT;
-        components.push_back(sink);
         return addSink(name, *sink);
     }
 

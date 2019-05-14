@@ -7,16 +7,15 @@
 
 #include <thread>
 #include <random>
-#include <JANA/JTopology.h>
-#include <greenfield/LinearTopologyBuilder.h>
-#include <greenfield/ExampleComponents.h>
-
+#include <TestTopology.h>
+#include <TestTopologyComponents.h>
+#include <TestTopologyBuilder.h>
 
 
 TEST_CASE("ActivableActivationTests") {
 
-    JTopology topology;
-    LinearTopologyBuilder builder(topology);
+    TestTopology topology;
+    TestTopologyBuilder builder(topology);
 
     RandIntSource source;
     SumSink<double> sink;
@@ -64,8 +63,8 @@ TEST_CASE("ActivableActivationTests") {
 
 TEST_CASE("ActivableDeactivationTests") {
 
-    JTopology topology;
-    LinearTopologyBuilder builder(topology);
+    TestTopology topology;
+    TestTopologyBuilder builder(topology);
 
     RandIntSource source;
     source.emit_limit = 1;

@@ -5,13 +5,14 @@
 #include <JANA/Queue.h>
 #include <JANA/JLogger.h>
 
+; // TODO: Find the missing semicolon
 
 class JScheduler;
 class JWorker;
 
 using jclock_t = std::chrono::steady_clock;
 
-class JTopology : public JActivable {
+class TestTopology : public JActivable {
 
 public:
 
@@ -83,11 +84,11 @@ public:
     /// Leave the logger accessible for now so we can potentially inject it during testing
     JLogger logger;
 
-    JTopology() {
+    TestTopology() {
         logger = JLoggingService::logger("JTopology");
     }
 
-    virtual ~JTopology();
+    virtual ~TestTopology();
 
     void addArrow(JArrow *arrow, bool sink=false);
     void addQueue(QueueBase *queue);
@@ -111,9 +112,6 @@ public:
     JArrowMetrics::Status step(const std::string &arrow_name);
     void run(int threads);
     void wait_until_finished();
-    // run_message(string source_name)
-    // run_sequentially()
-
 };
 
 

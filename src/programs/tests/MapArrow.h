@@ -5,10 +5,23 @@
 #ifndef GREENFIELD_MAPARROW_H
 #define GREENFIELD_MAPARROW_H
 
-#include "Components.h"
 #include <JANA/JArrow.h>
 
 
+/// ParallelProcessor transforms S to T and it does so in a way which is thread-safe
+/// and ideally stateless. It is conceptually equivalent to the first part
+/// of JEventProcessor::Process, i.e. up until the lock is acquired. Alternatively, it could
+/// become a JFactorySet, in which case process() would call all Factories present, thereby
+/// making sure that everything which can be calculated in parallel has in fact been, before
+/// proceeding to the (sequential) Sink.
+
+template <typename S, typename T>
+struct ParallelProcessor {
+    virtual T process(S s) = 0;
+};
+
+
+/// MapArrow lifts a ParallelProcessor into a streaming async context
 template<typename S, typename T>
 class MapArrow : public JArrow {
 

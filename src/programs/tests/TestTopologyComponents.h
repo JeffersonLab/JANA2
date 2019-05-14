@@ -3,8 +3,10 @@
 #include <iostream>
 
 #include <JANA/JLogger.h>
-#include "Components.h"
 #include <thread>
+#include <SourceArrow.h>
+#include <MapArrow.h>
+#include <SinkArrow.h>
 
 
 struct RandIntSource : public Source<int> {
@@ -81,3 +83,7 @@ struct SumSink : public Sink<T> {
         LOG_INFO(logger) << "SumSink.finalize() called!" << LOG_END;
     };
 };
+
+
+std::vector<JArrow> make_linear_topology()
+

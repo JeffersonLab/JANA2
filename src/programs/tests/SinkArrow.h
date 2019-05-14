@@ -6,9 +6,24 @@
 #define GREENFIELD_SINKARROW_H
 
 #include <JANA/JArrow.h>
-#include "Components.h"
 
 
+/// Sink consumes events of type T, accumulating state along the way. This
+/// state is supposed to reside on the Sink itself.
+/// The final result of this accumulation is a side-effect which should be
+/// safe to retrieve after finalize() is called. (finalize() will be called
+/// automatically after all upstream events have been processed)
+/// This is conceptually equivalent to the part of JEventProcessor::Process
+/// after the lock is acquired.
+
+template <typename T>
+struct Sink {
+    virtual void initialize() = 0;
+    virtual void finalize() = 0;
+    virtual void outprocess(T t) = 0;
+};
+
+/// SinkArrow lifts a sink into a streaming, async context
 template<typename T>
 class SinkArrow : public JArrow {
 

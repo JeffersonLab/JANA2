@@ -3,26 +3,16 @@
 
 #include <thread>
 #include <random>
-#include <JANA/JTopology.h>
-#include <greenfield/LinearTopologyBuilder.h>
-#include <greenfield/ExampleComponents.h>
+#include <TestTopology.h>
+#include <TestTopologyBuilder.h>
+#include <TestTopologyComponents.h>
+#include <JANA/JPerfUtils.h>
 
-
-static thread_local std::mt19937* generator = nullptr;
-
-int randint(int min, int max) {
-
-    std::hash<std::thread::id> hasher;
-    long seed = clock() + hasher(std::this_thread::get_id());
-    if (!generator) generator = new std::mt19937(seed);
-    std::uniform_int_distribution<int> distribution(min, max);
-    return distribution(*generator);
-}
 
 TEST_CASE("JTopology: Basic functionality") {
 
-    JTopology topology;
-    LinearTopologyBuilder b(topology);
+    TestTopology topology;
+    TestTopologyBuilder b(topology);
     RandIntSource source;
     MultByTwoProcessor p1;
     SubOneProcessor p2;

@@ -6,7 +6,28 @@
 #define GREENFIELD_SOURCEARROW_H
 
 #include <JANA/JArrow.h>
-#include "Components.h"
+
+
+
+/// Source stands in for (and improves upon) JEventSource.
+/// The type signature of inprocess() is chosen with the following goals:
+///    - Chunking data in order to increase parallelism coarseness
+///    - The 'no more events' condition is handled automatically
+///    - Status information such as 'error' or 'finished' is decoupled from the actual stream of Events
+///    - The user is given the opportunity to implement their own rate-limiting
+template <typename T>
+struct Source {
+
+    /// Return codes for Sources. These are identical to Queue::StreamStatus (on purpose, because
+    /// it is convenient to model a Source as a stream) but we keep them separate because one is part
+    /// of the API and the other is an internal implementation detail.
+    enum class Status {KeepGoing, ComeBackLater, Finished, Error};
+
+    virtual void initialize() = 0;
+    virtual void finalize() = 0;
+    virtual Status inprocess(std::vector<T>& ts, size_t count) = 0;
+};
+
 
 /// SourceArrow wraps a reference to a Source and 'lifts' it into a Arrow
 /// that knows how to stream to and from queues, and is executable by a Worker

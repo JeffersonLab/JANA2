@@ -50,6 +50,17 @@ struct JSubevent {
     long subevent_count;
 };
 
+
+
+/// SubtaskProcessor offers sub-event-level parallelism. The idea is to split parent
+/// event S into independent subtasks T, and automatically bundling them with
+/// bookkeeping information X onto a Queue<pair<T,X>. process :: T -> U handles the stateless,
+/// parallel parts; its Arrow pushes messages on to a Queue<pair<U,X>, so that merge() :: S -> [U] -> V
+/// "joins" all completed "subtasks" of type U corresponding to one parent of type S, (i.e.
+/// a specific JEvent), back into a single entity of type V, (most likely the same JEvent as S,
+/// only now containing more data) which is pushed onto a Queue<V>, bookkeeping information now gone.
+/// Note that there is no blocking and that our streaming paradigm is not compromised.
+
 /// Abstract class which is meant to extended by the user to contain all
 /// subtask-related functions. (Data lives in a JObject instead)
 /// Future versions might be templated for two reasons:

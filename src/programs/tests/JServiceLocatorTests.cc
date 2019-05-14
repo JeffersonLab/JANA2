@@ -6,7 +6,7 @@
 #include "catch.hpp"
 
 #include <JANA/JServiceLocator.h>
-#include <greenfield/JServiceLocatorDummies.h>
+#include "JServiceLocatorTests.h"
 
 
 TEST_CASE("JServiceLocator chicken-and-egg tests") {

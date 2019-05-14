@@ -192,6 +192,10 @@ public:
         std::lock_guard<std::mutex> lock(_mutex);
         return _last_status;
     }
+
+    void summarize() {
+
+    }
 };
 
 inline std::string to_string(JArrowMetrics::Status h) {

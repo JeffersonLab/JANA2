@@ -19,9 +19,6 @@ include_directories(src/programs/jana)
 include_directories(src/programs/tests)
 
 add_library(greenfield STATIC
-        src/lib/greenfield/MapArrow.h
-        src/lib/greenfield/SourceArrow.h
-        src/lib/greenfield/SinkArrow.h
         src/lib/greenfield/Greenfield.cc
         )
 
@@ -29,12 +26,16 @@ add_executable(tests
         src/programs/tests/catch.hpp
         src/programs/tests/ActivableTests.cc
         src/programs/tests/JServiceLocatorTests.cc
+        src/programs/tests/JServiceLocatorTests.h
         src/programs/tests/QueueTests.cc
-        src/programs/tests/RoundRobinSchedulerTests.cc
         src/programs/tests/TopologyTests.cc
         src/programs/tests/SchedulerTests.cc
         src/programs/tests/JEventTests.cc
         src/programs/tests/JEventTests.h
+        src/programs/tests/PerformanceTests.cc
+        src/programs/tests/PerformanceTests.h
+        src/programs/tests/TestTopology.cc
+        src/programs/tests/TestTopology.h
         )
 
 add_executable(playground
@@ -103,8 +104,6 @@ add_library(jana2 STATIC
         src/lib/JANA/JServiceLocator.cc
         src/lib/JANA/JWorker.h
         src/lib/JANA/JWorker.cc
-        src/lib/JANA/JTopology.cc
-        src/lib/JANA/JTopology.h
         src/lib/JANA/JSubeventArrow.cc
         src/lib/JANA/JSubeventArrow.h
         src/lib/JANA/JProcessingController.h
@@ -124,7 +123,9 @@ add_library(jana2 STATIC
         src/lib/JANA/JPerfMetrics.cc
         src/lib/JANA/JPerfMetrics.h
         src/lib/JANA/JPerfSummary.h
-        src/lib/JANA/JArrowPerfSummary.cc src/lib/JANA/JArrowPerfSummary.h)
+        src/lib/JANA/JArrowPerfSummary.cc
+        src/lib/JANA/JArrowPerfSummary.h
+        )
 
 add_library(jtest SHARED
         src/plugins/JTest/JTestDataObject.h
