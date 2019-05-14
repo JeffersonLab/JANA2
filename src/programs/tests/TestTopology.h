@@ -5,8 +5,6 @@
 #include <JANA/Queue.h>
 #include <JANA/JLogger.h>
 
-; // TODO: Find the missing semicolon
-
 class JScheduler;
 class JWorker;
 

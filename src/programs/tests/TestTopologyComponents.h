@@ -85,5 +85,3 @@ struct SumSink : public Sink<T> {
 };
 
 
-std::vector<JArrow> make_linear_topology()
-

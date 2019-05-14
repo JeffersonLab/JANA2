@@ -31,8 +31,11 @@
 //
 #include "catch.hpp"
 
+#include <JANA/JProcessingTopology.h>
+#include <JANA/JArrowProcessingController.h>
 #include "PerformanceTests.h"
 #include "TestTopologyBuilder.h"
+#include "TestTopology.h"
 
 TEST_CASE("MemoryBottleneckTest", "[.][performance]") {
 
@@ -81,18 +84,26 @@ TEST_CASE("MemoryBottleneckTest", "[.][performance]") {
     builder.addProcessor("track", track);
     builder.addSink("plot", plot);
 
-    topology.activate("parse");
-    //topology.log_status();
-    topology.run(4);
+    japp = new JApplication; // TODO: Get rid of this
+    JProcessingTopology proctop;
+    proctop.arrows = std::move(topology.arrows);
+    proctop.sources.push_back(proctop.arrows[0]);
+    proctop.sinks.push_back(proctop.arrows[3]);
 
-    while (topology.is_active()) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-        std::cout << "\033[2J";
-        topology.log_status();
+    JArrowProcessingController controller(&proctop);
+    controller.initialize();
+
+    for (int nthreads=1; nthreads<6; nthreads++) {
+        controller.run(nthreads);
+        for (int secs=0; secs<10; secs++) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            controller.print_report();
+        }
+        controller.wait_until_stopped();
+        //auto result = controller.measure_internal_performance();
+        //std::cout << nthreads << ": " << result->avg_throughput_hz << " Hz" << std::endl;
+
     }
-
-    topology.wait_until_finished();
-    topology.log_status();
 }
 
 

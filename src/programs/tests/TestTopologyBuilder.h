@@ -5,11 +5,12 @@
 #ifndef GREENFIELD_LINEARTOPOLOGY_H
 #define GREENFIELD_LINEARTOPOLOGY_H
 
-#include "TestTopologyComponents.h"
 #include "TestTopology.h"
+#include "SourceArrow.h"
+#include "MapArrow.h"
+#include "SinkArrow.h"
 
-; // TODO: Find the missing semicolon
-
+;
 class TestTopologyBuilder {
 
     TestTopology& topology;
