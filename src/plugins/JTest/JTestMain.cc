@@ -66,12 +66,18 @@ using std::endl;
 #include "JEventProcessor_jana_test.h"
 #include "JFactoryGenerator_jana_test.h"
 
+#include "JTestEventSource.h"
+#include "JTestEventProcessor.h"
+
+
 extern "C"{
 void InitPlugin(JApplication *app){
 	InitJANAPlugin(app);
-	app->Add(new JEventSourceGeneratorT<JEventSource_jana_test>());
-	app->Add(new JFactoryGenerator_jana_test());
-	app->Add(new JEventProcessor_jana_test(app));
+	//app->Add(new JEventSourceGeneratorT<JEventSource_jana_test>());
+	//app->Add(new JFactoryGenerator_jana_test());
+	//app->Add(new JEventProcessor_jana_test(app));
+    app->Add(new JEventSourceGeneratorT<JTestEventSource>());
+    app->Add(new JTestEventProcessor(app));
 	app->Add("dummy_evt_src");
 }
 } // "C"

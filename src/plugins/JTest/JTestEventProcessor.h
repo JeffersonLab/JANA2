@@ -1,18 +1,11 @@
-#ifndef _JEventProcessor_jana_test_
-#define _JEventProcessor_jana_test_
+#ifndef JTestEventProcessor_h
+#define JTestEventProcessor_h
 
 #include <atomic>
 #include <iostream>
 #include <algorithm>
 
-#include "JApplication.h"
-#include "JTestEventSource.h"
-#include "JEvent.h"
-#include "JLogger.h"
-#include "JTestDataObject.h"
-#include "JQueueWithLock.h"
-
-
+#include <JANA/JApplication.h>
 #include <JANA/JEventProcessor.h>
 #include <JANA/JEvent.h>
 
@@ -20,12 +13,7 @@ class JTestEventProcessor : public JEventProcessor{
 
 	public:
 
-		JTestEventProcessor(JApplication* app) : JEventProcessor(app) {
-
-			//Add queue for subtasks (not supplied by default!)
-			//auto sSubtaskQueue = new JQueueWithLock(app->GetJParameterManager(), "Subtasks", 2000);
-			//app->GetJThreadManager()->AddQueue(JQueueSet::JQueueType::SubTasks, sSubtaskQueue);
-		}
+		JTestEventProcessor(JApplication* app) : JEventProcessor(app) {}
 
 		~JTestEventProcessor() {
 			std::cout << "Total # objects = " << mNumObjects <<  std::endl;
@@ -35,22 +23,34 @@ class JTestEventProcessor : public JEventProcessor{
 			return "JTestEventProcessor";
 		}
 
-		void Init(void) {
+		void Init() {
 			std::cout << "JTestEventProcessor::Init() called" << std::endl;
+
+            japp->GetJParameterManager()->SetDefaultParameter(
+                    "jtest:min_bytes_per_event",
+                    min_bytes,
+                    "Bytes per event");
+
+            japp->GetJParameterManager()->SetDefaultParameter(
+                    "jtest:max_bytes_per_event",
+                    max_bytes,
+                    "Bytes per event");
 		}
 
 		void Process(const std::shared_ptr<const JEvent>& aEvent) {
-			// Grab all objects, but don't do anything with them. The jana_test factory
-			// will also grab the two types of source objects and then so some busy work
-			// to use up CPU.
 
-			auto sIterators_JanaTest = aEvent->GetIterators<JTestDataObject>(); //Will get from factory
-			auto sIterators_SourceObject = aEvent->GetIterators<JTestSourceData1>(); //Will get from file
-			auto sIterators_SourceObject2 = aEvent->GetIterators<JTestSourceData2>(); //Will get from file, and will submit jobs to generate random #'s
+		    std::vector<char> buffer;
+		    size_t event_buffer_size = randint(min_bytes, max_bytes);
+		    mNumObjects += event_buffer_size;
 
-			mNumObjects += std::distance(sIterators_JanaTest.first, sIterators_JanaTest.second);
-			mNumObjects += std::distance(sIterators_SourceObject.first, sIterators_SourceObject.second);
-			mNumObjects += std::distance(sIterators_SourceObject2.first, sIterators_SourceObject2.second);
+		    for (int i=0; i<event_buffer_size; ++i) {
+		        buffer.push_back(2);
+		    }
+		    long sum = 0;
+            for (int i=0; i<event_buffer_size; ++i) {
+                sum += buffer[i];
+            }
+            std::cout << "Processed " << aEvent->GetEventNumber() << " => " << sum/2 << std::endl;
 		}
 
 		void Finish() {
@@ -59,7 +59,9 @@ class JTestEventProcessor : public JEventProcessor{
 
 	private:
 		std::atomic<std::size_t> mNumObjects{0};
+		size_t min_bytes = 100000;
+		size_t max_bytes = 2100000;
 };
 
-#endif // _JEventProcessor_jana_test_
+#endif // JTestEventProcessor
 
