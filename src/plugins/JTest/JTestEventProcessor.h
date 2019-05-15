@@ -1,66 +1,56 @@
 #ifndef JTestEventProcessor_h
 #define JTestEventProcessor_h
 
-#include <atomic>
-#include <iostream>
-#include <algorithm>
-
 #include <JANA/JApplication.h>
 #include <JANA/JEventProcessor.h>
 #include <JANA/JEvent.h>
 
-class JTestEventProcessor : public JEventProcessor{
+class JTestEventProcessor : public JEventProcessor {
 
-	public:
+private:
+    size_t m_cputime_ms = 10;
+    size_t m_write_bytes = 2000000;
+    double m_cputime_spread = 0.25;
+    double m_write_spread = 0.25;
 
-		JTestEventProcessor(JApplication* app) : JEventProcessor(app) {}
+public:
 
-		~JTestEventProcessor() {
-			std::cout << "Total # objects = " << mNumObjects <<  std::endl;
-		}
+    JTestEventProcessor(JApplication* app) : JEventProcessor(app) {
 
-		const char* className() {
-			return "JTestEventProcessor";
-		}
+        auto params = japp->GetJParameterManager();
 
-		void Init() {
-			std::cout << "JTestEventProcessor::Init() called" << std::endl;
+        params->SetDefaultParameter("jtest:plotter_bytes", m_write_bytes, "");
+        params->SetDefaultParameter("jtest:plotter_ms", m_cputime_ms, "");
+        params->SetDefaultParameter("jtest:plotter_bytes_spread", m_write_spread, "");
+        params->SetDefaultParameter("jtest:plotter_spread", m_cputime_spread, "");
+    }
 
-            japp->GetJParameterManager()->SetDefaultParameter(
-                    "jtest:min_bytes_per_event",
-                    min_bytes,
-                    "Bytes per event");
+    ~JTestEventProcessor() {}
 
-            japp->GetJParameterManager()->SetDefaultParameter(
-                    "jtest:max_bytes_per_event",
-                    max_bytes,
-                    "Bytes per event");
-		}
+    const char* className() {
+        return "JTestEventProcessor";
+    }
 
-		void Process(const std::shared_ptr<const JEvent>& aEvent) {
+    void Init() {
+    }
 
-		    std::vector<char> buffer;
-		    size_t event_buffer_size = randint(min_bytes, max_bytes);
-		    mNumObjects += event_buffer_size;
+    void Process(const std::shared_ptr<const JEvent>& aEvent) {
 
-		    for (int i=0; i<event_buffer_size; ++i) {
-		        buffer.push_back(2);
-		    }
-		    long sum = 0;
-            for (int i=0; i<event_buffer_size; ++i) {
-                sum += buffer[i];
-            }
-            std::cout << "Processed " << aEvent->GetEventNumber() << " => " << sum/2 << std::endl;
-		}
+        // Read the track data
+        auto td = aEvent->GetSingle<JTestTrackData>();
+        auto sum = read_memory(td->buffer);
 
-		void Finish() {
-			std::cout << "JTestEventProcessor::Finish() called" << std::endl;
-		}
+        // Consume CPU
+        consume_cpu_ms(m_cputime_ms, m_cputime_spread);
 
-	private:
-		std::atomic<std::size_t> mNumObjects{0};
-		size_t min_bytes = 100000;
-		size_t max_bytes = 2100000;
+        // Write the histogram data
+        auto hd = new JTestHistogramData;
+        write_memory(hd->buffer, m_write_bytes, m_write_spread);
+        aEvent->Insert(hd);
+    }
+
+    void Finish() {}
+
 };
 
 #endif // JTestEventProcessor

@@ -10,10 +10,12 @@
 
 thread_local std::mt19937* generator = nullptr;
 
-uint64_t consume_cpu_ms(long millisecs) {
+uint64_t consume_cpu_ms(uint64_t millisecs, double spread) {
+
+    uint64_t sampled = rand_size(millisecs, spread);
+    auto duration = std::chrono::milliseconds(sampled);
 
     auto start_time = std::chrono::steady_clock::now();
-    auto duration = std::chrono::milliseconds(millisecs);
     uint64_t result = 0;
 
     while ((std::chrono::steady_clock::now() - start_time) < duration) {
@@ -23,6 +25,38 @@ uint64_t consume_cpu_ms(long millisecs) {
         }
     }
     return result;
+}
+
+uint64_t read_memory(const std::vector<char>& buffer) {
+
+    auto length = buffer.size();
+    uint64_t sum = 0;
+    for (int i=0; i<length; ++i) {
+        sum += buffer[i];
+    }
+    return sum;
+}
+
+uint64_t write_memory(std::vector<char>& buffer, uint64_t bytes, double spread) {
+
+    uint64_t sampled = rand_size(bytes, spread);
+    for (int i=0; i<sampled; ++i) {
+        buffer.push_back(2);
+    }
+    return sampled*2;
+}
+
+size_t rand_size(size_t avg, double spread) {
+
+    auto delta = static_cast<size_t>(avg*spread);
+
+    if (!generator) {
+        std::hash<std::thread::id> hasher;
+        long seed = clock() + hasher(std::this_thread::get_id());
+        generator = new std::mt19937(seed);
+    }
+    std::uniform_int_distribution<int> distribution(avg-delta, avg+delta);
+    return distribution(*generator);
 }
 
 
@@ -49,11 +83,11 @@ double randdouble() {
 }
 
 
-size_t writeMemory(std::vector<char> &buffer, size_t count) {
+size_t writeMemory(std::vector<char> &buffer, size_t bytes) {
 
     size_t sum = 0;
-    for (size_t i = 0; i < count; ++i) {
-        char x = randchar(-128, 127);
+    for (size_t i = 0; i < bytes; ++i) {
+        char x = randchar(0, 255);
         buffer.push_back(x);
         sum += x;
     }

@@ -30,16 +30,26 @@
 // Author: Nathan Brei
 //
 
-#ifndef JANA2_TEXTEVENTRECORD_H
-#define JANA2_TEXTEVENTRECORD_H
-
+#ifndef JANA2_JTESTEVENTCONTEXTS_H
+#define JANA2_JTESTEVENTCONTEXTS_H
 
 #include <JANA/JObject.h>
+#include <memory>
 
-struct TextEventRecord: public JObject {
-    size_t data;
-
+struct JTestEntangledEventData : public JObject {
+    std::shared_ptr<std::vector<char>> buffer;
 };
 
+struct JTestEventData : public JObject {
+    std::vector<char> buffer;
+};
 
-#endif //JANA2_TEXTEVENTRECORD_H
+struct JTestTrackData : public JObject {
+    std::vector<char> buffer;
+};
+
+struct JTestHistogramData : public JObject {
+    std::vector<char> buffer;
+};
+
+#endif //JANA2_JTESTEVENTCONTEXTS_H

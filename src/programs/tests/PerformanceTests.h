@@ -68,7 +68,7 @@ struct PerfTestSource : public Source<Event*> {
             Event* e = new Event;
             consume_cpu_ms(randint(latency_ms-latency_spread, latency_ms+latency_spread));
             int bytes = randint(write_bytes-write_spread, write_bytes+write_spread);
-            e->emit_sum = writeMemory(e->data[write_key], bytes);
+            e->emit_sum = write_memory(e->data[write_key], bytes);
             sum_over_all_events += e->emit_sum;
             e->event_index = next_event_index++;
             ts.push_back(e);
@@ -94,7 +94,7 @@ struct PerfTestMapper : public ParallelProcessor<Event*, Event*> {
         long sum = readMemory(event->data[read_key], event->data[read_key].size());
         sum++; // Suppress compiler warning
         long bytes = randint(write_bytes-write_spread, write_bytes+write_spread);
-        writeMemory(event->data[write_key], bytes);
+        write_memory(event->data[write_key], bytes);
         return event;
     };
 

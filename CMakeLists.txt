@@ -128,18 +128,14 @@ add_library(jana2 STATIC
         )
 
 add_library(jtest SHARED
-        src/plugins/JTest/JTestDataObject.h
-        src/plugins/JTest/JTestDummyDataFactory.h
-        src/plugins/JTest/JTestEventProcessor.h
-        src/plugins/JTest/JTestEventSource.h
-        src/plugins/JTest/JTestDummyDataFactoryGenerator.h
-        src/plugins/JTest/JTestMain.cc
-        src/plugins/JTest/JTestHelpers.h
-        src/plugins/JTest/TextEventRecord.h
-        src/plugins/JTest/JEventSource_jana_test.cc
-        src/plugins/JTest/JEventProcessor_jana_test.cc
-        src/plugins/JTest/jana_test_factory.cc
         src/lib/JANA/JThread.cc  #for THREAD_ID
+        src/lib/JANA/JPerfUtils.cc
+        src/plugins/JTest/JTestMain.cc
+        src/plugins/JTest/JTestDataObjects.h
+        src/plugins/JTest/JTestEventSource.h
+        src/plugins/JTest/JTestEventProcessor.h
+        src/plugins/JTest/JTestFactories.h
+        src/plugins/JTest/JTestFactoryGenerator.h
         )
 
 add_library(janapy SHARED

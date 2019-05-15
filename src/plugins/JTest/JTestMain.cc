@@ -44,40 +44,21 @@
 // class, but I decided to put it here to make things a little cleaner.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <stdlib.h>
-
-#include <thread>
-#include <chrono>
-#include <iostream>
-#include <fstream>
-#include <iomanip>
-using std::cout;
-using std::cerr;
-using std::endl;
-
 #include <JApplication.h>
 #include <JEventSourceGeneratorT.h>
-#include <JCpuInfo.h>
-
-#include "JTestMain.h"
-#include "JEventSource_jana_test.h"
-#include "JEventProcessor_jana_test.h"
-#include "JFactoryGenerator_jana_test.h"
 
 #include "JTestEventSource.h"
 #include "JTestEventProcessor.h"
+#include "JTestFactoryGenerator.h"
 
 
 extern "C"{
 void InitPlugin(JApplication *app){
+
 	InitJANAPlugin(app);
-	//app->Add(new JEventSourceGeneratorT<JEventSource_jana_test>());
-	//app->Add(new JFactoryGenerator_jana_test());
-	//app->Add(new JEventProcessor_jana_test(app));
     app->Add(new JEventSourceGeneratorT<JTestEventSource>());
     app->Add(new JTestEventProcessor(app));
+    app->Add(new JTestFactoryGenerator());
 	app->Add("dummy_evt_src");
 }
 } // "C"

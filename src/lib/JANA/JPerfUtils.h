@@ -11,8 +11,17 @@
 extern thread_local std::mt19937* generator;
 
 
+uint64_t consume_cpu_ms(uint64_t millisecs, double spread=0.0);
 
-uint64_t consume_cpu_ms(long millisecs);
+uint64_t read_memory(const std::vector<char>& buffer);
+
+uint64_t write_memory(std::vector<char>& buffer, uint64_t bytes, double spread=0.0);
+
+size_t rand_size(size_t avg, double spread);
+
+
+
+// Clean up the ones below
 
 int randint(int min, int max);
 

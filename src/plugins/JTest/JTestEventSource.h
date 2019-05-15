@@ -11,29 +11,34 @@
 #include "JResourcePool.h"
 #include "JSourceFactoryGenerator.h"
 #include "JEventSourceGeneratorT.h"
-#include "JQueueWithLock.h"
-#include "JQueueWithBarriers.h"
 
-#include "JTestDataObject.h"
+#include "JTestDataObjects.h"
 #include "JPerfUtils.h"
 
 class JTestEventSource : public JEventSource {
+
+private:
+    size_t m_cputime_ms = 10;
+    size_t m_write_bytes = 2000000;
+    double m_cputime_spread = 0.25;
+    double m_write_spread = 0.25;
+    std::shared_ptr<std::vector<char>> m_latest_entangled_buffer;
+
+    std::size_t mNumEventsToGenerate = 5000;
+    std::size_t mNumEventsGenerated = 0;
+
 public:
 
     JTestEventSource(string source_name, JApplication *japp) : JEventSource(source_name, japp)
     {
-        mNumEventsToGenerate = 5000;
-        japp->GetJParameterManager()->SetDefaultParameter(
-                "NEVENTS",
-                mNumEventsToGenerate,
-                "Number of events for fake event source to generate");
-
-        //Make factory generator that will make factories for all types provided by the event source
-        //This is necessary because the JFactorySet needs all factories ahead of time
-        //Make sure that all types are listed as template arguments here!!
-        mFactoryGenerator = new JSourceFactoryGenerator<>();
-
         auto params = mApplication->GetJParameterManager();
+        params->SetDefaultParameter("nevents", mNumEventsToGenerate, "Number of fake events to generate");
+        params->SetDefaultParameter("jtest:parser_bytes", m_write_bytes, "");
+        params->SetDefaultParameter("jtest:parser_ms", m_cputime_ms, "");
+        params->SetDefaultParameter("jtest:parser_bytes_spread", m_write_spread, "");
+        params->SetDefaultParameter("jtest:parser_spread", m_cputime_spread, "");
+
+        mFactoryGenerator = new JSourceFactoryGenerator<JTestEntangledEventData>();
         mEventQueue = new JQueueSimple(params ,"Events", 200, 50);
     }
 
@@ -55,22 +60,31 @@ public:
 
     void GetEvent(std::shared_ptr<JEvent> event) {
 
+        if ((mNumEventsGenerated % 40) == 0) {
+            // "Read" new entangled event every 40 events
+            m_latest_entangled_buffer = std::shared_ptr<std::vector<char>>(new std::vector<char>);
+            write_memory(*m_latest_entangled_buffer, m_write_bytes, m_write_spread);
+        }
+
+        // Spin the CPU
+        consume_cpu_ms(m_cputime_ms);
+
+        // Emit a shared pointer to the entangled event buffer
+        auto eec = new JTestEntangledEventData;
+        eec->buffer = m_latest_entangled_buffer;
+        event->Insert<JTestEntangledEventData>(eec);
+
+        // Terminate when we've reached our limit
         if (mNumEventsToGenerate != 0 && mNumEventsToGenerate <= mNumEventsGenerated) {
             throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
         }
         mNumEventsGenerated++;
+
         event->SetEventNumber(mNumEventsGenerated);
-        event->SetRunNumber(1234);
+        event->SetRunNumber(1);
     }
 
-
-private:
-
-    std::size_t mNumEventsToGenerate;
-    std::size_t mNumEventsGenerated = 0;
-
 };
-
 
 // This ensures sources supplied by other plugins that use the default CheckOpenable
 // which returns 0.01 will still win out over this one.
