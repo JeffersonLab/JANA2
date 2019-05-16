@@ -2,22 +2,19 @@
 
 #include <vector>
 #include <memory>
-#include <random>
 
 #include "JEventSource.h"
 #include "JEvent.h"
 #include "JQueueSimple.h"
 #include "JApplication.h"
-#include "JResourcePool.h"
 #include "JSourceFactoryGenerator.h"
 #include "JEventSourceGeneratorT.h"
 
 #include "JTestDataObjects.h"
 #include "JPerfUtils.h"
 
-class JTestEventSource : public JEventSource {
+class JTestParser : public JEventSource {
 
-private:
     size_t m_cputime_ms = 10;
     size_t m_write_bytes = 2000000;
     double m_cputime_spread = 0.25;
@@ -29,7 +26,7 @@ private:
 
 public:
 
-    JTestEventSource(string source_name, JApplication *japp) : JEventSource(source_name, japp)
+    JTestParser(string source_name, JApplication *japp) : JEventSource(source_name, japp)
     {
         auto params = mApplication->GetJParameterManager();
         params->SetDefaultParameter("nevents", mNumEventsToGenerate, "Number of fake events to generate");
@@ -42,8 +39,6 @@ public:
         mEventQueue = new JQueueSimple(params ,"Events", 200, 50);
     }
 
-    ~JTestEventSource() {};
-
     static std::string GetDescription() {
         return "JTest Fake Event Source";
     }
@@ -51,12 +46,6 @@ public:
     std::string GetType(void) const {
         return GetDemangledName<decltype(*this)>();
     }
-
-    std::type_index GetDerivedType(void) const {
-        return std::type_index(typeid(JTestEventSource));
-    } //So that we only execute factory generator once per type
-
-    void Open() {};
 
     void GetEvent(std::shared_ptr<JEvent> event) {
 
@@ -88,7 +77,9 @@ public:
 
 // This ensures sources supplied by other plugins that use the default CheckOpenable
 // which returns 0.01 will still win out over this one.
-template<> double JEventSourceGeneratorT<JTestEventSource>::CheckOpenable(std::string source) { return 1.0E-6; }
+template<> double JEventSourceGeneratorT<JTestParser>::CheckOpenable(std::string source) {
+    return 1.0E-6;
+}
 
 
 

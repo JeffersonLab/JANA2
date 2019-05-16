@@ -31,7 +31,7 @@ uint64_t read_memory(const std::vector<char>& buffer) {
 
     auto length = buffer.size();
     uint64_t sum = 0;
-    for (int i=0; i<length; ++i) {
+    for (unsigned i=0; i<length; ++i) {
         sum += buffer[i];
     }
     return sum;
@@ -40,7 +40,7 @@ uint64_t read_memory(const std::vector<char>& buffer) {
 uint64_t write_memory(std::vector<char>& buffer, uint64_t bytes, double spread) {
 
     uint64_t sampled = rand_size(bytes, spread);
-    for (int i=0; i<sampled; ++i) {
+    for (unsigned i=0; i<sampled; ++i) {
         buffer.push_back(2);
     }
     return sampled*2;

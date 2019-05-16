@@ -47,8 +47,8 @@
 #include <JApplication.h>
 #include <JEventSourceGeneratorT.h>
 
-#include "JTestEventSource.h"
-#include "JTestEventProcessor.h"
+#include "JTestParser.h"
+#include "JTestPlotter.h"
 #include "JTestFactoryGenerator.h"
 
 
@@ -56,8 +56,8 @@ extern "C"{
 void InitPlugin(JApplication *app){
 
 	InitJANAPlugin(app);
-    app->Add(new JEventSourceGeneratorT<JTestEventSource>());
-    app->Add(new JTestEventProcessor(app));
+    app->Add(new JEventSourceGeneratorT<JTestParser>());
+    app->Add(new JTestPlotter(app));
     app->Add(new JTestFactoryGenerator());
 	app->Add("dummy_evt_src");
 }

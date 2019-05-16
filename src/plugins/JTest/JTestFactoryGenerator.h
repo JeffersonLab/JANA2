@@ -2,21 +2,17 @@
 #define JTestFactoryGenerator_h
 
 #include <JANA/JFactoryGenerator.h>
-#include "JResourcePool.h"
-#include "JTestFactories.h"
+#include "JTestDisentangler.h"
+#include "JTestTracker.h"
 
 class JTestFactoryGenerator : public JFactoryGenerator {
 public:
 
-    virtual const char *className(void) {
-        return static_className();
-    }
-
-    static const char *static_className(void) {
+    virtual const char *className() {
         return "JTestFactoryGenerator";
     }
 
-    void GenerateFactories(JFactorySet *factory_set) {
+    void GenerateFactories(JFactorySet *factory_set) override {
         factory_set->Add(new JTestDisentangler());
         factory_set->Add(new JTestTracker());
     }

@@ -132,9 +132,10 @@ add_library(jtest SHARED
         src/lib/JANA/JPerfUtils.cc
         src/plugins/JTest/JTestMain.cc
         src/plugins/JTest/JTestDataObjects.h
-        src/plugins/JTest/JTestEventSource.h
-        src/plugins/JTest/JTestEventProcessor.h
-        src/plugins/JTest/JTestFactories.h
+        src/plugins/JTest/JTestParser.h
+        src/plugins/JTest/JTestDisentangler.h
+        src/plugins/JTest/JTestTracker.h
+        src/plugins/JTest/JTestPlotter.h
         src/plugins/JTest/JTestFactoryGenerator.h
         )
 
