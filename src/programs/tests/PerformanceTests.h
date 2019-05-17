@@ -50,25 +50,24 @@ struct Event {
 
 struct PerfTestSource : public Source<Event*> {
     std::string write_key;
-    int latency_ms = 100;
-    int latency_spread = 0;
-    int write_bytes = 100;
-    int write_spread = 0;
+    uint64_t latency_ms = 100;
+    double latency_spread = 0;
+    size_t write_bytes = 100;
+    double write_spread = 0;
     long next_event_index = 0;
     long sum_over_all_events = 0;
     long message_count = 0;
     long message_count_limit = -1; // Only used when > 0
 
-    virtual void initialize() {}
-    virtual void finalize() {}
+    void initialize() override {}
+    void finalize() override {}
 
-    virtual Status inprocess(std::vector<Event*>& ts, size_t count) {
+    Status inprocess(std::vector<Event*>& ts, size_t count) override {
 
         for (size_t i=0; i<count && (message_count_limit <= 0 || message_count < message_count_limit); ++i) {
             Event* e = new Event;
-            consume_cpu_ms(randint(latency_ms-latency_spread, latency_ms+latency_spread));
-            int bytes = randint(write_bytes-write_spread, write_bytes+write_spread);
-            e->emit_sum = write_memory(e->data[write_key], bytes);
+            consume_cpu_ms(latency_ms, latency_spread);
+            e->emit_sum = write_memory(e->data[write_key], write_bytes, write_spread);
             sum_over_all_events += e->emit_sum;
             e->event_index = next_event_index++;
             ts.push_back(e);
@@ -84,17 +83,17 @@ struct PerfTestSource : public Source<Event*> {
 struct PerfTestMapper : public ParallelProcessor<Event*, Event*> {
     std::string read_key = "disentangled";
     std::string write_key = "processed";
-    long latency_ms = 100;
-    long latency_spread = 0;
-    long write_bytes = 100;
-    long write_spread = 0;
+    uint64_t latency_ms = 100;
+    double latency_spread = 0;
+    size_t write_bytes = 100;
+    double write_spread = 0;
 
     virtual Event* process(Event* event) {
-        consume_cpu_ms(randint(latency_ms-latency_spread, latency_ms+latency_spread));
-        long sum = readMemory(event->data[read_key], event->data[read_key].size());
+        consume_cpu_ms(latency_ms, latency_spread);
+        long sum = read_memory(event->data[read_key]);
         sum++; // Suppress compiler warning
-        long bytes = randint(write_bytes-write_spread, write_bytes+write_spread);
-        write_memory(event->data[write_key], bytes);
+
+        write_memory(event->data[write_key], write_bytes, write_spread);
         return event;
     };
 
@@ -103,15 +102,15 @@ struct PerfTestMapper : public ParallelProcessor<Event*, Event*> {
 
 struct PerfTestReducer : public Sink<Event*> {
     std::string read_key = "processed";
-    long latency_ms = 100;
-    long latency_spread = 0;
+    uint64_t latency_ms = 100;
+    double latency_spread = 0;
     double sum_over_all_events = 0;
 
-    virtual void initialize() {}
-    virtual void finalize() {}
-    virtual void outprocess(Event* event) {
-        consume_cpu_ms(randint(latency_ms-latency_spread, latency_ms+latency_spread));
-        event->reduce_sum = readMemory(event->data[read_key], event->data[read_key].size());
+    void initialize() override {}
+    void finalize() override {}
+    void outprocess(Event* event) override {
+        consume_cpu_ms(latency_ms, latency_spread);
+        event->reduce_sum = read_memory(event->data[read_key]);
         sum_over_all_events += event->reduce_sum;
         delete event; // Don't do this in the general case
     }

@@ -20,9 +20,9 @@ uint64_t consume_cpu_ms(uint64_t millisecs, double spread) {
 
     while ((std::chrono::steady_clock::now() - start_time) < duration) {
 
-        for (int x=0; x<randint(10,1000); ++x) {
-            result++;
-        }
+        double a = (*generator)();
+        double b = sqrt(a * pow(1.23, -a)) / a;
+        result += long(b);
     }
     return result;
 }
@@ -52,29 +52,24 @@ size_t rand_size(size_t avg, double spread) {
 
     if (!generator) {
         std::hash<std::thread::id> hasher;
-        long seed = clock() + hasher(std::this_thread::get_id());
+        long now = std::chrono::steady_clock::now().time_since_epoch().count();
+        long seed = now + hasher(std::this_thread::get_id());
         generator = new std::mt19937(seed);
     }
-    std::uniform_int_distribution<int> distribution(avg-delta, avg+delta);
+    std::uniform_int_distribution<size_t> distribution(avg-delta, avg+delta);
     return distribution(*generator);
 }
 
 
 int randint(int min, int max) {
 
-    std::hash<std::thread::id> hasher;
-    long seed = clock() + hasher(std::this_thread::get_id());
-    if (!generator) generator = new std::mt19937(seed);
+    if (!generator) {
+        long now = std::chrono::steady_clock::now().time_since_epoch().count();
+        std::hash<std::thread::id> hasher;
+        long seed = now + hasher(std::this_thread::get_id());
+        generator = new std::mt19937(seed);
+    }
     std::uniform_int_distribution<int> distribution(min, max);
-    return distribution(*generator);
-}
-
-int randchar(char min, char max) {
-
-    std::hash<std::thread::id> hasher;
-    long seed = clock() + hasher(std::this_thread::get_id());
-    if (!generator) generator = new std::mt19937(seed);
-    std::uniform_int_distribution<char> distribution(min, max);
     return distribution(*generator);
 }
 
@@ -83,67 +78,5 @@ double randdouble() {
 }
 
 
-size_t writeMemory(std::vector<char> &buffer, size_t bytes) {
-
-    size_t sum = 0;
-    for (size_t i = 0; i < bytes; ++i) {
-        char x = randchar(0, 255);
-        buffer.push_back(x);
-        sum += x;
-    }
-    return sum;
-}
-
-
-size_t readMemory(std::vector<char> &buffer, size_t count) {
-
-    count = std::min(count, buffer.size());
-    size_t sum = 0;
-    for (size_t i = 0; i < count; ++i) {
-        sum += buffer[i];
-    }
-    return sum;
-};
-
-double writeMemory(std::vector<double>& buffer, size_t count) {
-
-    double sum = 0;
-    for (unsigned i=0; i<count; ++i) {
-        int x = randint(0, 100);
-        buffer.push_back(x);
-        sum += x;
-    }
-    return sum;
-}
-
-double readMemory(std::vector<double>& buffer, size_t count) {
-
-    count = std::min(count, buffer.size());
-    double sum = 0;
-    for (unsigned i=0; i < count; ++i) {
-        sum += buffer[i];
-    }
-    return sum;
-};
-
-void touchMemory(std::vector<double> *buffer, size_t count) {
-
-    for (size_t i = 0; i < count; ++i) {
-        (*buffer)[i]++;
-    }
-};
-
-
-double doBusyWork(std::vector<double> &buffer, double input) {
-
-    double c = input;
-    for (size_t i = 0; i < 1000; i++) {
-        double a = randdouble();
-        double b = sqrt(a * pow(1.23, -a)) / a;
-        c += b;
-        buffer.push_back(a); // add to jana_test object
-    }
-    return c;
-}
 
 
