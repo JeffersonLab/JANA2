@@ -49,10 +49,10 @@ public:
 
     JTestTracker() : JFactoryT<JTestTrackData>("JTestTracker") {
         auto params = japp->GetJParameterManager();
-        params->SetDefaultParameter("jtest:tracker_bytes", m_write_bytes, "");
-        params->SetDefaultParameter("jtest:tracker_ms", m_cputime_ms, "");
-        params->SetDefaultParameter("jtest:tracker_bytes_spread", m_write_spread, "");
-        params->SetDefaultParameter("jtest:tracker_spread", m_cputime_spread, "");
+        params->GetParameter("jtest:tracker_bytes", m_write_bytes);
+        params->GetParameter("jtest:tracker_ms", m_cputime_ms);
+        params->GetParameter("jtest:tracker_bytes_spread", m_write_spread);
+        params->GetParameter("jtest:tracker_spread", m_cputime_spread);
     };
 
     void Process(const std::shared_ptr<const JEvent> &aEvent) {

@@ -29,11 +29,11 @@ public:
     JTestParser(string source_name, JApplication *japp) : JEventSource(source_name, japp)
     {
         auto params = mApplication->GetJParameterManager();
-        params->SetDefaultParameter("nevents", mNumEventsToGenerate, "Number of fake events to generate");
-        params->SetDefaultParameter("jtest:parser_bytes", m_write_bytes, "");
-        params->SetDefaultParameter("jtest:parser_ms", m_cputime_ms, "");
-        params->SetDefaultParameter("jtest:parser_bytes_spread", m_write_spread, "");
-        params->SetDefaultParameter("jtest:parser_spread", m_cputime_spread, "");
+        params->GetParameter("nevents", mNumEventsToGenerate);
+        params->GetParameter("jtest:parser_bytes", m_write_bytes);
+        params->GetParameter("jtest:parser_ms", m_cputime_ms);
+        params->GetParameter("jtest:parser_bytes_spread", m_write_spread);
+        params->GetParameter("jtest:parser_spread", m_cputime_spread);
 
         mFactoryGenerator = new JSourceFactoryGenerator<JTestEntangledEventData>();
         mEventQueue = new JQueueSimple(params ,"Events", 200, 50);

@@ -18,10 +18,10 @@ public:
 
         auto params = japp->GetJParameterManager();
 
-        params->SetDefaultParameter("jtest:plotter_bytes", m_write_bytes, "");
-        params->SetDefaultParameter("jtest:plotter_ms", m_cputime_ms, "");
-        params->SetDefaultParameter("jtest:plotter_bytes_spread", m_write_spread, "");
-        params->SetDefaultParameter("jtest:plotter_spread", m_cputime_spread, "");
+        params->GetParameter("jtest:plotter_bytes", m_write_bytes);
+        params->GetParameter("jtest:plotter_ms", m_cputime_ms);
+        params->GetParameter("jtest:plotter_bytes_spread", m_write_spread);
+        params->GetParameter("jtest:plotter_spread", m_cputime_spread);
     }
 
     void Process(const std::shared_ptr<const JEvent>& aEvent) {

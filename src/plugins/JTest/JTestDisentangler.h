@@ -50,10 +50,10 @@ public:
 
     JTestDisentangler() : JFactoryT<JTestEventData>("JTestDisentangler") {
         auto params = japp->GetJParameterManager();
-        params->SetDefaultParameter("jtest:disentangler_bytes", m_write_bytes, "");
-        params->SetDefaultParameter("jtest:disentangler_ms", m_cputime_ms, "");
-        params->SetDefaultParameter("jtest:disentangler_bytes_spread", m_write_spread, "");
-        params->SetDefaultParameter("jtest:disentangler_spread", m_cputime_spread, "");
+        params->GetParameter("jtest:disentangler_bytes", m_write_bytes);
+        params->GetParameter("jtest:disentangler_ms", m_cputime_ms);
+        params->GetParameter("jtest:disentangler_bytes_spread", m_write_spread);
+        params->GetParameter("jtest:disentangler_spread", m_cputime_spread);
     };
 
     void Process(const std::shared_ptr<const JEvent> &aEvent) {
