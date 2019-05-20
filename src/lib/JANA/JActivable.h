@@ -15,11 +15,16 @@
 /// Queues and arrows together form a bipartite graph. (Queue vertices only have edges
 /// to arrow vertices, and vice versa.) Activable acts like a common vertex type.
 class JActivable {
+public:
+    enum class Status {Unopened, Inactive, Running, Draining, Drained, Finished, Closed};
 
 private:
     bool _is_active = false;
     std::vector<JActivable *> _upstream;
     std::vector<JActivable *> _downstream;
+
+protected:
+    Status _status = Status::Unopened;
 
 public:
     virtual bool is_active() {

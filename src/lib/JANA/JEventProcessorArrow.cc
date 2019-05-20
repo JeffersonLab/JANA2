@@ -10,7 +10,7 @@
 JEventProcessorArrow::JEventProcessorArrow(std::string name,
                                            EventQueue *input_queue,
                                            EventQueue *output_queue)
-        : JArrow(std::move(name), true)
+        : JArrow(std::move(name), true, NodeType::Sink)
         , _input_queue(input_queue)
         , _output_queue(output_queue)
 {
@@ -76,5 +76,17 @@ void JEventProcessorArrow::execute(JArrowMetrics& result) {
     auto latency = (end_latency_time - start_latency_time);
     auto overhead = (end_queue_time - start_total_time) - latency;
     result.update(status, success, 1, latency, overhead);
+}
+
+size_t JEventProcessorArrow::get_pending() {
+    return _input_queue->get_item_count();
+}
+
+size_t JEventProcessorArrow::get_threshold() {
+    return _input_queue->get_threshold();
+}
+
+void JEventProcessorArrow::set_threshold(size_t threshold) {
+    _input_queue->set_threshold(threshold);
 }
 

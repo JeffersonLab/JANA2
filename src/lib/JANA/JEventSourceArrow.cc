@@ -12,7 +12,7 @@ JEventSourceArrow::JEventSourceArrow(std::string name,
                                      EventQueue* output_queue,
                                      JResourcePoolSimple<JFactorySet>* pool
                                      )
-    : JArrow(name, false)
+    : JArrow(name, false, NodeType::Source)
     , _source(source)
     , _output_queue(output_queue)
     , _pool(pool) {

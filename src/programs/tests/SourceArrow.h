@@ -6,7 +6,7 @@
 #define GREENFIELD_SOURCEARROW_H
 
 #include <JANA/JArrow.h>
-
+#include <JANA/Queue.h>
 
 
 /// Source stands in for (and improves upon) JEventSource.
@@ -43,7 +43,7 @@ private:
 
 public:
     SourceArrow(std::string name, Source<T>& source, Queue<T> *output_queue)
-        : JArrow(name, false)
+        : JArrow(name, false, NodeType::Source)
         , _source(source)
         , _output_queue(output_queue) {
 

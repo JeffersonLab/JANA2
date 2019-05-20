@@ -32,7 +32,7 @@ private:
 
 public:
     MapArrow(std::string name, ParallelProcessor<S,T>& processor, Queue<S> *input_queue, Queue<T> *output_queue)
-           : JArrow(name, true)
+           : JArrow(name, true, NodeType::Stage)
            , _processor(processor)
            , _input_queue(input_queue)
            , _output_queue(output_queue) {
@@ -84,6 +84,12 @@ public:
         }
         result.update(status, message_count, 1, latency, overhead);
     }
+
+    size_t get_pending() final { return _input_queue->get_item_count(); }
+
+    size_t get_threshold() final { return _input_queue->get_threshold(); }
+
+    void set_threshold(size_t threshold) final { _input_queue->set_threshold(threshold); }
 };
 
 

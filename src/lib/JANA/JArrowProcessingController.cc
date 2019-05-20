@@ -156,17 +156,21 @@ std::unique_ptr<const JArrowPerfSummary> JArrowProcessingController::measure_int
         auto total_queue_latency_ms = millisecs(total_queue_latency).count();
 
         JMetrics::ArrowSummary summary;
+        summary.arrow_type = arrow->get_type();
+        summary.is_parallel = arrow->is_parallel();
         summary.is_active = arrow->is_active();
         summary.thread_count = arrow->get_thread_count();
         summary.arrow_name = arrow->get_name();
         summary.chunksize = arrow->get_chunksize();
-        summary.is_parallel = arrow->is_parallel();
+        summary.messages_pending = arrow->get_pending();
         summary.is_upstream_active = !arrow->is_upstream_finished();
+        summary.threshold = arrow->get_threshold();
+        summary.status = arrow->get_status();
+
         summary.total_messages_completed = total_message_count;
         summary.last_messages_completed = last_message_count;
         summary.avg_latency_ms = total_latency_ms/total_message_count;
         summary.last_latency_ms = millisecs(last_latency).count()/last_message_count;
-        summary.messages_pending = 0; // TODO: Get this from arrow eventually
         summary.queue_visit_count = total_queue_visits;
         summary.avg_queue_latency_ms = total_queue_latency_ms / total_queue_visits;
         summary.avg_queue_overhead_frac = total_queue_latency_ms / (total_queue_latency_ms + total_latency_ms);

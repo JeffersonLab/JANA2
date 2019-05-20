@@ -6,6 +6,7 @@
 #define JANA2_JPROCESSINGTOPOLOGY_H
 
 #include <JANA/JArrow.h>
+#include <JANA/Queue.h>
 #include <JANA/JResourcePoolSimple.h>
 #include <JANA/JFactorySet.h>
 #include <JANA/JEventSourceManager.h>

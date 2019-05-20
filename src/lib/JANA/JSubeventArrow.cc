@@ -38,7 +38,7 @@
 
 JSubeventArrow::JSubeventArrow(std::string name, JSubeventProcessor* processor,
                                Queue<JSubevent>* inbox, Queue<JSubevent>* outbox)
-    : JArrow(name, true), _processor(processor), _inbox(inbox), _outbox(outbox) {
+    : JArrow(name, true, NodeType::Stage), _processor(processor), _inbox(inbox), _outbox(outbox) {
 
 
 }
@@ -54,7 +54,7 @@ void JSubeventArrow::execute(JArrowMetrics& results) {
 
 JSplitArrow::JSplitArrow(std::string name, JSubeventProcessor* processor,
                          Queue<Event>* inbox, Queue<JSubevent>* outbox)
-    : JArrow(name, false), _processor(processor), _inbox(inbox), _outbox(outbox) {
+    : JArrow(name, true, NodeType::Stage), _processor(processor), _inbox(inbox), _outbox(outbox) {
 
 }
 
@@ -70,7 +70,7 @@ void JSplitArrow::execute(JArrowMetrics& results) {
 }
 
 JMergeArrow::JMergeArrow(std::string name, JSubeventProcessor* processor, Queue<JSubevent>* inbox, Queue<Event>* outbox)
-    : JArrow(name, false), _processor(processor),  _inbox(inbox), _outbox(outbox) {
+    : JArrow(name, true, NodeType::Stage), _processor(processor),  _inbox(inbox), _outbox(outbox) {
 
 }
 

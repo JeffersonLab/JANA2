@@ -33,6 +33,7 @@
 #ifndef JANA2_JMETRICS_H
 #define JANA2_JMETRICS_H
 
+#include <JArrow.h>
 #include <string>
 
 namespace JMetrics {
@@ -57,14 +58,18 @@ struct TopologySummary {
 struct ArrowSummary {
     std::string arrow_name;
     bool is_parallel;
+    size_t thread_count;
+    JArrow::NodeType arrow_type;
     bool is_active;
     bool is_upstream_active;
     bool has_backpressure;
-    size_t thread_count;
+    JArrow::Status status;
     size_t messages_pending;
+    size_t threshold;
+    size_t chunksize;
+
     size_t total_messages_completed;
     size_t last_messages_completed;
-    size_t chunksize;
     double avg_latency_ms;
     double avg_queue_latency_ms;
     double last_latency_ms;

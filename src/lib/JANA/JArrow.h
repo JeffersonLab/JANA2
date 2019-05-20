@@ -5,17 +5,17 @@
 #ifndef GREENFIELD_ARROW_H
 #define GREENFIELD_ARROW_H
 
-#include <vector>
+#include <iostream>
 
-#include <JANA/Queue.h>
-#include "JServiceLocator.h"
+#include "JActivable.h"
 #include "JArrowMetrics.h"
 
 
-using duration_t = std::chrono::steady_clock::duration;
-
+// TODO: Concept of JActivable should be merged with concept of Arrow
 class JArrow : public JActivable {
 
+public:
+    enum class NodeType {Source, Sink, Stage, Group};
 
 private:
     const std::string _name;     // Used for human understanding
@@ -23,7 +23,9 @@ private:
     JArrowMetrics _metrics;      // Performance information accumulated over all workers
     size_t _chunksize = 1;       // Number of items to pop off the input queue at once
     size_t _thread_count = 0;    // Current number of threads assigned to this arrow
-    bool _is_upstream_finished = false;
+    bool _is_upstream_finished = false;  // TODO: Deprecated. Use _status instead.
+    //Status _status = Status::Unopened;  // Lives in JActivable for now
+    NodeType _type;
 
     std::mutex _mutex;           // Protects access to arrow properties.
                                  // TODO: Consider storing and protect thread count differently,
@@ -32,8 +34,6 @@ private:
 
 
 public:
-
-    // TODO: Add NoWork, BackPressure
 
     // Constants
 
@@ -51,6 +51,8 @@ protected:
     // Written internally, read externally
 
     void set_upstream_finished(bool upstream_finished) { _is_upstream_finished = upstream_finished; }
+
+    void set_status(Status status) { _status = status; }
 
 
 public:
@@ -77,17 +79,22 @@ public:
         return _thread_count;
     }
 
+    // TODO: Metrics should be encapsulated so that only actions are to update, clear, or summarize
     JArrowMetrics& get_metrics() {
         return _metrics;
     }
 
-    JArrow(std::string name, bool is_parallel) :
-            _name(std::move(name)), _is_parallel(is_parallel) {
+    Status get_status() {
+        return _status;
+    }
 
-        if (serviceLocator != nullptr) {
-            auto params = serviceLocator->get<ParameterManager>();
-            _chunksize = params->chunksize;
-        }
+    NodeType get_type() {
+        return _type;
+    }
+
+    JArrow(std::string name, bool is_parallel, NodeType arrow_type, size_t chunksize=16) :
+            _name(std::move(name)), _is_parallel(is_parallel), _type(arrow_type), _chunksize(chunksize) {
+
         _metrics.clear();
     };
 
@@ -95,10 +102,22 @@ public:
 
     virtual void execute(JArrowMetrics& result) = 0;
 
+    virtual size_t get_pending() { return 0; }
+
+    virtual size_t get_threshold() { return 0; }
+
+    virtual void set_threshold(size_t threshold) {}
 };
 
 
-
-
+inline std::ostream& operator<<(std::ostream& os, const JArrow::NodeType& nt) {
+    switch (nt) {
+        case JArrow::NodeType::Stage: os << "Stage"; break;
+        case JArrow::NodeType::Source: os << "Source"; break;
+        case JArrow::NodeType::Sink: os << "Sink"; break;
+        case JArrow::NodeType::Group: os << "Group"; break;
+    }
+    return os;
+}
 
 #endif // GREENFIELD_ARROW_H

@@ -10,10 +10,11 @@
 #include <JANA/JArrow.h>
 #include <JANA/Queue.h>
 
-using Event = std::shared_ptr<const JEvent>;
-using EventQueue = Queue<Event>;
-
 class JEventProcessorArrow : public JArrow {
+
+public:
+    using Event = std::shared_ptr<const JEvent>;
+    using EventQueue = Queue<Event>;
 
 private:
     std::vector<JEventProcessor*> _processors;
@@ -29,8 +30,10 @@ public:
 
     void add_processor(JEventProcessor* processor);
 
-    void execute(JArrowMetrics& result);
-
+    void execute(JArrowMetrics& result) final;
+    size_t get_pending() final;
+    size_t get_threshold() final;
+    void set_threshold(size_t) final;
 };
 
 
