@@ -23,6 +23,8 @@ TEST_CASE("JTopology: Basic functionality") {
     b.addProcessor("subtract_one", p2);
     b.addSink("sum_everything", sink);
 
+    topology.get_arrow("emit_rand_ints")->set_chunksize(1);
+
     auto logger = JLogger::nothing();
     //topology.logger = Logger::everything();
     //source.logger = Logger::everything();

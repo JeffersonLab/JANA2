@@ -57,8 +57,8 @@ std::ostream& operator<<(std::ostream& os, const JArrowPerfSummary& s) {
 
     for (auto as : s.arrows) {
         os << " | "
-           << std::setw(24) << std::left << as.arrow_name << " |"
-           << std::setw(12) << (as.is_active ? "   ACTIVE   " : " INACTIVE ") << "| "
+           << std::setw(24) << std::left << as.arrow_name << " | "
+           << std::setw(11) << as.status << "| "
            << std::setw(6) << std::left << as.arrow_type << " | "
            << std::setw(3) << std::right << (as.is_parallel ? " T " : " F ") << " | "
            << std::setw(7) << as.thread_count << " |"

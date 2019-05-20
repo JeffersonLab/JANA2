@@ -16,17 +16,16 @@ using EventQueue = Queue<Event>;
 
 
 class JEventSourceArrow : public JArrow {
-
 private:
     JEventSource* _source;
     EventQueue* _output_queue;
     JResourcePoolSimple<JFactorySet>* _pool;
     std::vector<Event> _chunk_buffer;
-    bool _is_initialized = false;
     JLogger _logger;
 
 public:
     JEventSourceArrow(std::string name, JEventSource* source, EventQueue* output_queue, JResourcePoolSimple<JFactorySet>* resourcePool);
+    void initialize() final;
     void execute(JArrowMetrics& result) final;
 };
 

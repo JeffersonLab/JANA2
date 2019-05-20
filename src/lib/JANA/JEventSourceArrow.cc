@@ -4,6 +4,8 @@
 
 #include <JANA/JEventSourceArrow.h>
 #include <JANA/JApplication.h>
+#include "JEventSourceArrow.h"
+
 
 using SourceStatus = JEventSource::RETURN_STATUS;
 
@@ -22,17 +24,13 @@ JEventSourceArrow::JEventSourceArrow(std::string name,
     _logger = JLogger::nothing();
 }
 
+
+
 void JEventSourceArrow::execute(JArrowMetrics& result) {
 
     if (!is_active()) {
         result.update_finished();
         return;
-    }
-    if (!_is_initialized) {
-        LOG_INFO(_logger) << "JEventSourceArrow '" << get_name() << "': "
-                          << "Initializing" << LOG_END;
-        _source->Open();
-        _is_initialized = true;
     }
 
     SourceStatus in_status = SourceStatus::kSUCCESS;
@@ -83,3 +81,12 @@ void JEventSourceArrow::execute(JArrowMetrics& result) {
     }
     result.update(status, message_count, 1, latency, overhead);
 }
+
+void JEventSourceArrow::initialize() {
+    assert(_status == Status::Unopened);
+    LOG_INFO(_logger) << "JEventSourceArrow '" << get_name() << "': "
+                      << "Initializing" << LOG_END;
+    _source->Open();
+    _status = Status::Inactive;
+}
+

@@ -6,6 +6,7 @@
 #define GREENFIELD_ARROW_H
 
 #include <iostream>
+#include <assert.h>
 
 #include "JActivable.h"
 #include "JArrowMetrics.h"
@@ -100,13 +101,38 @@ public:
 
     virtual ~JArrow() = default;
 
+    virtual void initialize() {
+        assert(_status == Status::Unopened);
+        _status = Status::Inactive;
+    };
+
     virtual void execute(JArrowMetrics& result) = 0;
+
+    virtual void finalize() {
+        assert(_status == Status::Inactive || _status == Status::Finished);
+        _status = Status::Closed;
+    };
+
 
     virtual size_t get_pending() { return 0; }
 
     virtual size_t get_threshold() { return 0; }
 
     virtual void set_threshold(size_t threshold) {}
+
+    void set_active(bool is_active) override {
+        if (is_active) {
+            assert(_status != Status::Closed);
+            if (_status == Status::Unopened) {
+                initialize();
+            }
+            _status = Status::Running;
+        }
+        else {
+            //assert(_status != Status::Unopened);
+            _status = Status::Inactive;
+        }
+    }
 };
 
 
@@ -116,6 +142,19 @@ inline std::ostream& operator<<(std::ostream& os, const JArrow::NodeType& nt) {
         case JArrow::NodeType::Source: os << "Source"; break;
         case JArrow::NodeType::Sink: os << "Sink"; break;
         case JArrow::NodeType::Group: os << "Group"; break;
+    }
+    return os;
+}
+
+inline std::ostream& operator<<(std::ostream& os, const JArrow::Status& s) {
+    switch (s) {
+        case JArrow::Status::Unopened: os << "Unopened"; break;
+        case JArrow::Status::Inactive: os << "Inactive"; break;
+        case JArrow::Status::Running:  os << "Running"; break;
+        case JArrow::Status::Draining: os << "Draining"; break;
+        case JArrow::Status::Drained: os << "Drained"; break;
+        case JArrow::Status::Finished: os << "Finished"; break;
+        case JArrow::Status::Closed: os << "Closed"; break;
     }
     return os;
 }

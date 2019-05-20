@@ -19,7 +19,6 @@ public:
     enum class Status {Unopened, Inactive, Running, Draining, Drained, Finished, Closed};
 
 private:
-    bool _is_active = false;
     std::vector<JActivable *> _upstream;
     std::vector<JActivable *> _downstream;
 
@@ -28,11 +27,17 @@ protected:
 
 public:
     virtual bool is_active() {
-        return _is_active;
+        return _status == Status::Running || _status == Status::Draining || _status == Status::Drained;
     }
 
     virtual void set_active(bool is_active) {
-        _is_active = is_active;
+        if (is_active) {
+            _status = Status::Running;
+        }
+        else {
+            //assert(_status == Status::Running || _status == Status::Draining || _status == Status::Drained);
+            _status = Status::Inactive;
+        }
     }
 
     void update_activeness(bool is_active) {
