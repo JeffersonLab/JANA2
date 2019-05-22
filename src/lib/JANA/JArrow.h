@@ -21,12 +21,12 @@ public:
 private:
     const std::string _name;     // Used for human understanding
     const bool _is_parallel;     // Whether or not it is safe to parallelize
+    NodeType _type;
     JArrowMetrics _metrics;      // Performance information accumulated over all workers
     size_t _chunksize = 1;       // Number of items to pop off the input queue at once
     size_t _thread_count = 0;    // Current number of threads assigned to this arrow
     bool _is_upstream_finished = false;  // TODO: Deprecated. Use _status instead.
     //Status _status = Status::Unopened;  // Lives in JActivable for now
-    NodeType _type;
 
     std::mutex _mutex;           // Protects access to arrow properties.
                                  // TODO: Consider storing and protect thread count differently,

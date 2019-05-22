@@ -68,7 +68,7 @@ void PrintUsage() {
 
 
 void PrintVersion() {
-    /// Prints JANA version information to stdout, for use by the CLI.
+	/// Prints JANA version information to stdout, for use by the CLI.
 
 	std::cout << "          JANA version: " << JVersion::GetVersion()  << std::endl;
 	std::cout << "        JANA ID string: " << JVersion::GetIDstring() << std::endl;
@@ -107,16 +107,24 @@ int Execute(UserOptions& options) {
 	}
 	else {  // All modes which require a JApplication
 
+	    std::cout << "JANA " << JVersion::GetVersion() << " [" << JVersion::GetRevision() << "]" << std::endl;
 		if (options.flags[LoadConfigs]) {
 			// If the user specified an external config file, we should definitely use that
-			std::cout << "Loading functionality is coming soon! File=" << options.load_config_file << std::endl;
+			try {
+				options.params.ReadConfigFile(options.load_config_file);
+			}
+			catch (JException& e) {
+				std::cout << "Problem loading config file '" << options.load_config_file << "'. Exiting." << std::endl << std::endl;
+				exit(-1);
+			}
+			std::cout << "Loaded config file '" << options.load_config_file << "'." << std::endl << std::endl;
 		}
 
-	    auto params_copy = new JParameterManager(options.params); // JApplication owns params_copy, does not own eventSources
-	    japp = new JApplication(params_copy);
-	    for (auto event_src : options.eventSources) {
-	    	japp->Add(event_src);
-	    }
+		auto params_copy = new JParameterManager(options.params); // JApplication owns params_copy, does not own eventSources
+		japp = new JApplication(params_copy);
+		for (auto event_src : options.eventSources) {
+			japp->Add(event_src);
+		}
 		AddSignalHandlers();
 
 		if (options.flags[ShowConfigs]) {
@@ -128,9 +136,10 @@ int Execute(UserOptions& options) {
 			japp->GetJParameterManager()->PrintParameters(true);
 		}
 		else if (options.flags[DumpConfigs]) {
-		    // Load all plugins, dump parameters to file, exit without running anything
-			std::cout << "Dumping functionality is coming soon! File=" << options.dump_config_file << std::endl;
+			// Load all plugins, dump parameters to file, exit without running anything
 			japp->Initialize();
+			std::cout << std::endl << "Writing configuration options to file: " << options.dump_config_file << std::endl;
+			japp->GetJParameterManager()->WriteConfigFile(options.dump_config_file);
 		}
 		else if (options.flags[Benchmark]) {
 			// Run JANA in benchmark mode

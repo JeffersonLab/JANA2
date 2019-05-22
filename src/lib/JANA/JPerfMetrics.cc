@@ -125,9 +125,6 @@ void JPerfMetrics::stop() {
         prev_time_ = last_time_;
         last_time_ = now;
     }
-    else if (mode_ != Mode::Stopped) {
-        throw JException("Stopwatch must be started before it can be stopped");
-    }
 }
 
 /// Stop, and record the final measurement at that time. This should be used
@@ -142,9 +139,6 @@ void JPerfMetrics::stop(size_t current_event_count) {
         last_time_ = now;
         prev_event_count_ = last_event_count_;
         last_event_count_ = current_event_count;
-    }
-    else if (mode_ != Mode::Stopped) {
-        throw JException("Stopwatch must be started before it can be stopped");
     }
 }
 

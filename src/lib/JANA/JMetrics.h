@@ -33,8 +33,9 @@
 #ifndef JANA2_JMETRICS_H
 #define JANA2_JMETRICS_H
 
-#include <JArrow.h>
 #include <string>
+
+#include <JANA/JArrow.h>
 
 namespace JMetrics {
 

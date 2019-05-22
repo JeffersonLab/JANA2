@@ -64,7 +64,7 @@ private:
     std::vector<void*> _sohandles;
 
     bool _verbose;
-    JLogger _logger = JLogger::everything();
+    JLogger _logger = JLoggingService::logger("JPluginLoader");
     JServiceLocator* _service_locator;
     JApplication* _app;
 };
