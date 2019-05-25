@@ -1,5 +1,6 @@
 
 #include <unistd.h>
+#include <thread>
 
 #ifdef __APPLE__
 #include <mach/thread_policy.h>
@@ -72,6 +73,18 @@ size_t GetNumaNodeID() {
 #endif //HAVE_NUMA
 }
 
+size_t GetNumaNodeID(size_t cpu_id) {
+#ifdef HAVE_NUMA
+        if (numa_available() == -1) {
+		return 0;
+	} else {
+		return numa_node_of_cpu(cpu_id);
+	}
+#else //HAVE_NUMA
+        return 0;
+#endif //HAVE_NUMA
+}
+
 size_t GetNumNumaNodes() {
 #ifdef HAVE_NUMA
 	if (numa_available() == -1) {
@@ -82,6 +95,34 @@ size_t GetNumNumaNodes() {
 #else //HAVE_NUMA
 	return 1;
 #endif //HAVE_NUMA
+}
+
+
+bool PinThreadToCpu(std::thread* thread, size_t cpu_id) {
+
+    if (typeid(std::thread::native_handle_type) != typeid(pthread_t)) {
+        return false;
+    }
+    pthread_t pthread = thread->native_handle();
+
+#ifdef __APPLE__
+    // Mac OS X
+    thread_affinity_policy_data_t policy = {(int) cpu_id};
+    thread_port_t mach_thread = pthread_mach_thread_np(pthread);
+    thread_policy_set(mach_thread, THREAD_AFFINITY_POLICY,
+                      (thread_policy_t) &policy,
+                      THREAD_AFFINITY_POLICY_COUNT);
+#else
+    // Linux
+    cpu_set_t cpuset;
+    CPU_ZERO(&cpuset);
+    CPU_SET(_cpu_id, &cpuset);
+    int rc = pthread_setaffinity_np(pthread, sizeof(cpu_set_t), &cpuset);
+    if (rc != 0) {
+        return false;
+    }
+#endif
+    return true;
 }
 
 } // JCpuInfo namespace
