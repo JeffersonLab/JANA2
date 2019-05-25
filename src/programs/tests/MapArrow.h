@@ -43,7 +43,7 @@ public:
         attach_downstream(_output_queue);
     };
 
-    void execute(JArrowMetrics& result) override {
+    void execute(JArrowMetrics& result, size_t location_id) override {
 
         auto start_total_time = std::chrono::steady_clock::now();
         std::vector<S> xs;

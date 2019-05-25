@@ -36,7 +36,7 @@ TEST_CASE("SchedulerTests") {
             assignment = scheduler.next_assignment(0, assignment, last_result);
             if (assignment != nullptr) {
                 JArrowMetrics metrics;
-                assignment->execute(metrics);
+                assignment->execute(metrics, 0);
                 last_result = metrics.get_last_status();
             }
         } while (assignment != nullptr);
@@ -66,7 +66,7 @@ TEST_CASE("SchedulerTests") {
             if (keep_going) {
                 assignment = scheduler.next_assignment(0, assignment, last_result);
                 JArrowMetrics metrics;
-                assignment->execute(metrics);
+                assignment->execute(metrics, 0);
                 last_result = metrics.get_last_status();
             }
         }

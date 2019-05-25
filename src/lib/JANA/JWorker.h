@@ -32,6 +32,7 @@ private:
     JScheduler* _scheduler;
     unsigned _worker_id;
     unsigned _cpu_id;
+    unsigned _location_id;
     bool _pin_to_cpu;
     RunState _run_state;
     JArrow* _assignment;
@@ -47,8 +48,7 @@ public:
     duration_t initial_backoff_time = std::chrono::microseconds(10);
     duration_t checkin_time = std::chrono::milliseconds(500);
 
-    JWorker(unsigned id, JScheduler* scheduler);
-    JWorker(unsigned id, unsigned cpuid, JScheduler* scheduler);
+    JWorker(JScheduler* scheduler, unsigned worker_id, unsigned cpu_id, unsigned domain_id, bool pin_to_cpu);
     ~JWorker();
 
     /// If we copy or move the Worker, the underlying std::thread will be left with a

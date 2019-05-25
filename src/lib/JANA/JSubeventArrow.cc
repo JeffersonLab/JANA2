@@ -43,7 +43,7 @@ JSubeventArrow::JSubeventArrow(std::string name, JSubeventProcessor* processor,
 
 }
 
-void JSubeventArrow::execute(JArrowMetrics& results) {
+void JSubeventArrow::execute(JArrowMetrics& results, size_t location_id) {
     // auto in_result = _inbox.pop(in_buffer, get_chunksize());
     // for (JObject* item : in_buffer) {
     //    _processor.process(item);
@@ -58,7 +58,7 @@ JSplitArrow::JSplitArrow(std::string name, JSubeventProcessor* processor,
 
 }
 
-void JSplitArrow::execute(JArrowMetrics& results) {
+void JSplitArrow::execute(JArrowMetrics& results, size_t location_id) {
     // input_queue.pop(in_buffer, get_chunksize());
     // _processor.split(event, in_buffer);
     // size_t count = in_buffer.size();
@@ -74,7 +74,7 @@ JMergeArrow::JMergeArrow(std::string name, JSubeventProcessor* processor, Queue<
 
 }
 
-void JMergeArrow::execute(JArrowMetrics& results) {
+void JMergeArrow::execute(JArrowMetrics& results, size_t location_id) {
     // This is the complicated one
     // For now, don't worry about allocations, or about queue overflow
     // Maintain a map of {parent, (count, [subevents])}

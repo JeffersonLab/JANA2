@@ -85,7 +85,7 @@ class JSubeventArrow : public JArrow {
 public:
     JSubeventArrow(std::string name, JSubeventProcessor* processor,
                    Queue<JSubevent>* inbox, Queue<JSubevent>* outbox);
-    void execute(JArrowMetrics&) override;
+    void execute(JArrowMetrics&, size_t location_id) override;
     size_t get_pending() final;
     size_t get_threshold() final;
     void set_threshold(size_t) final;
@@ -98,7 +98,7 @@ class JSplitArrow : public JArrow {
 public:
     JSplitArrow(std::string name, JSubeventProcessor* processor,
                 Queue<Event>* inbox, Queue<JSubevent>* outbox);
-    void execute(JArrowMetrics&) override;
+    void execute(JArrowMetrics&, size_t location_id) override;
     size_t get_pending() final;
     size_t get_threshold() final;
     void set_threshold(size_t) final;
@@ -111,7 +111,7 @@ class JMergeArrow : public JArrow {
 public:
     JMergeArrow(std::string name, JSubeventProcessor* processor,
                 Queue<JSubevent>* inbox, Queue<Event>* outbox);
-    void execute(JArrowMetrics&) override;
+    void execute(JArrowMetrics&, size_t location_id) override;
     size_t get_pending() final;
     size_t get_threshold() final;
     void set_threshold(size_t) final;

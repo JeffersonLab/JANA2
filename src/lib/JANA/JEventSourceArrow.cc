@@ -26,7 +26,7 @@ JEventSourceArrow::JEventSourceArrow(std::string name,
 
 
 
-void JEventSourceArrow::execute(JArrowMetrics& result) {
+void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
 
     if (!is_active()) {
         result.update_finished();

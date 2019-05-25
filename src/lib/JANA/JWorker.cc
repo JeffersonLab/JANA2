@@ -77,21 +77,20 @@ void JWorker::measure_perf(JMetrics::WorkerSummary& summary) {
 }
 
 
-JWorker::JWorker(uint32_t id, JScheduler* scheduler) :
-        _scheduler(scheduler), _worker_id(id), _cpu_id(0), _pin_to_cpu(false), _run_state(RunState::Stopped),
-        _assignment(nullptr), _thread(nullptr) {
+JWorker::JWorker(JScheduler* scheduler, unsigned worker_id, unsigned cpu_id, unsigned location_id, bool pin_to_cpu) :
 
-    _logger = JLoggingService::logger("JWorker");
+        _scheduler(scheduler),
+        _worker_id(worker_id),
+        _cpu_id(cpu_id),
+        _location_id(location_id),
+        _pin_to_cpu(pin_to_cpu),
+        _run_state(RunState::Stopped),
+        _assignment(nullptr),
+        _thread(nullptr),
+        _logger(JLoggingService::logger("JWorker")) {
+
     _arrow_metrics.clear();
     _worker_metrics.clear();
-}
-
-
-JWorker::JWorker(uint32_t id, uint32_t cpuid, JScheduler* scheduler) :
-        _scheduler(scheduler), _worker_id(id), _cpu_id(cpuid), _pin_to_cpu(true), _run_state(RunState::Stopped),
-        _assignment(nullptr), _thread(nullptr) {
-
-    _logger = JLoggingService::logger("JWorker");
 }
 
 JWorker::~JWorker() {
@@ -162,7 +161,7 @@ void JWorker::loop() {
                 LOG_DEBUG(_logger) << "JWorker " << _worker_id << " is executing "
                                    << _assignment->get_name() << LOG_END;
                 auto before_execute_time = jclock_t::now();
-                _assignment->execute(_arrow_metrics);
+                _assignment->execute(_arrow_metrics, _location_id);
                 last_result = _arrow_metrics.get_last_status();
                 useful_duration += (jclock_t::now() - before_execute_time);
 

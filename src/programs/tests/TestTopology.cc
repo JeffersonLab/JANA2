@@ -274,7 +274,7 @@ void TestTopology::log_status() {
 JArrowMetrics::Status TestTopology::step(const std::string &arrow_name) {
     JArrow *arrow = get_arrow(arrow_name);
     JArrowMetrics result;
-    arrow->execute(result);
+    arrow->execute(result, 0);
     auto status = result.get_last_status();
     if (status == JArrowMetrics::Status::Finished) {
         arrow->set_active(false);
@@ -310,7 +310,7 @@ void TestTopology::run(int nthreads) {
 
     _scheduler = new JScheduler(arrows);
     for (int i=0; i<nthreads; ++i) {
-        auto worker = new JWorker(i, _scheduler);
+        auto worker = new JWorker(_scheduler, i, 0, 0, false);
         worker->start();
         workers.push_back(worker);
     }

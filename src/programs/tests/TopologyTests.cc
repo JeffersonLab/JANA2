@@ -139,7 +139,7 @@ TEST_CASE("JTopology: Basic functionality") {
 
             auto name = arrow->get_name();
             JArrowMetrics metrics;
-            arrow->execute(metrics);
+            arrow->execute(metrics, 0);
             auto res = metrics.get_last_status();
             results[name] = res;
             //LOG_TRACE(logger) << name << " => "

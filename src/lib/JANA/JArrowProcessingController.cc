@@ -53,7 +53,7 @@ void JArrowProcessingController::scale(size_t nthreads) {
 
     size_t current_workers = _workers.size();
     while (current_workers < nthreads) {
-        _workers.push_back(new JWorker(current_workers, _scheduler));
+        _workers.push_back(new JWorker(_scheduler, current_workers, current_workers, current_workers, true));
         current_workers++;
     }
     for (size_t i=0; i<nthreads; ++i) {

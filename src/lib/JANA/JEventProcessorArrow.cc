@@ -28,7 +28,7 @@ void JEventProcessorArrow::add_processor(JEventProcessor* processor) {
     _processors.push_back(processor);
 }
 
-void JEventProcessorArrow::execute(JArrowMetrics& result) {
+void JEventProcessorArrow::execute(JArrowMetrics& result, size_t location_id) {
 
     auto start_total_time = std::chrono::steady_clock::now();
 

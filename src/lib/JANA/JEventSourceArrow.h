@@ -26,7 +26,7 @@ private:
 public:
     JEventSourceArrow(std::string name, JEventSource* source, EventQueue* output_queue, JResourcePoolSimple<JFactorySet>* resourcePool);
     void initialize() final;
-    void execute(JArrowMetrics& result) final;
+    void execute(JArrowMetrics& result, size_t location_id) final;
 };
 
 #endif //JANA2_JEVENTSOURCEARROW_H
