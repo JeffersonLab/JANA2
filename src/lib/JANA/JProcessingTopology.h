@@ -6,7 +6,7 @@
 #define JANA2_JPROCESSINGTOPOLOGY_H
 
 #include <JANA/JArrow.h>
-#include <JANA/Queue.h>
+#include <JANA/JMailbox.h>
 #include <JANA/JResourcePoolSimple.h>
 #include <JANA/JFactorySet.h>
 #include <JANA/JEventSourceManager.h>
@@ -30,7 +30,6 @@ struct JProcessingTopology : public JActivable {
     Status status = Inactive; // TODO: Merge this concept with JActivable
 
     std::vector<JArrow*> arrows;
-    std::vector<QueueBase*> queues;
     std::vector<JArrow*> sources;           // Sources needed for activation
     std::vector<JArrow*> sinks;             // Sinks needed for finished message count
 

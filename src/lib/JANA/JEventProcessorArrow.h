@@ -8,13 +8,13 @@
 
 #include <JANA/JEvent.h>
 #include <JANA/JArrow.h>
-#include <JANA/Queue.h>
+#include <JANA/JMailbox.h>
 
 class JEventProcessorArrow : public JArrow {
 
 public:
     using Event = std::shared_ptr<const JEvent>;
-    using EventQueue = Queue<Event>;
+    using EventQueue = JMailbox<Event>;
 
 private:
     std::vector<JEventProcessor*> _processors;

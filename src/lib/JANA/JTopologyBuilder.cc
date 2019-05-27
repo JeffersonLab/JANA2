@@ -133,15 +133,14 @@ JProcessingTopology *JTopologyBuilder::build_topology() {
 
     // Assume the simplest possible topology for now, complicate later
     auto queue = new EventQueue();
-    queue->set_threshold(500);  // JTest throughput increases with threshold size: WHY?
-    topology->queues.push_back(queue);
+    queue->set_threshold(80);  // JTest throughput increases with threshold size: WHY?
 
     for (auto src : sEventSources) {
 
         JArrow* arrow = new JEventSourceArrow(src->GetName(), src, queue, &topology->factoryset_pool);
         topology->arrows.push_back(arrow);
         topology->sources.push_back(arrow);
-        arrow->set_chunksize(16);
+        arrow->set_chunksize(40);
         // create arrow for sources. Don't open until arrow.activate() called
     }
 

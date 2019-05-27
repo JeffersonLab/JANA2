@@ -53,11 +53,11 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
     }
     auto latency_time = std::chrono::steady_clock::now();
     auto message_count = _chunk_buffer.size();
-    auto out_status = _output_queue->push(_chunk_buffer);
+    auto out_status = _output_queue->push(_chunk_buffer, location_id);
     _chunk_buffer.clear();
     auto finished_time = std::chrono::steady_clock::now();
 
-    LOG_DEBUG(_logger) << "JEventSourceArrow '" << get_name() << "': "
+    LOG_DEBUG(_logger) << "JEventSourceArrow '" << get_name() << "' [" << location_id << "]: "
                        << "Emitted " << message_count << " events; last GetEvent "
                        << ((in_status==SourceStatus::kSUCCESS) ? "succeeded" : "failed")
                        << LOG_END;

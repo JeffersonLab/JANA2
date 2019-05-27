@@ -6,13 +6,13 @@
 #define JANA2_JEVENTSOURCEARROW_H
 
 #include <JANA/JArrow.h>
-#include <JANA/Queue.h>
+#include <JANA/JMailbox.h>
 #include <JANA/JEvent.h>
 #include <JANA/JResourcePoolSimple.h>
 #include <JANA/JFactorySet.h>
 
 using Event = std::shared_ptr<const JEvent>;
-using EventQueue = Queue<Event>;
+using EventQueue = JMailbox<Event>;
 
 
 class JEventSourceArrow : public JArrow {

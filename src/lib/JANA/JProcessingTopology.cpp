@@ -61,9 +61,6 @@ JProcessingTopology::~JProcessingTopology() {
     for (auto arrow : arrows) {
         delete arrow;
     }
-    for (auto queue : queues) {
-        delete queue;
-    }
     // TODO: Arrows and queues probably should be owned by JArrowProcessingController
 }
 

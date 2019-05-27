@@ -31,47 +31,67 @@
 ///   3. Triple mutex trick to give push() priority?
 
 
-enum class JMailboxStatus {Ready, Congested, Empty, Full};
+#ifndef CACHE_LINE_BYTES
+#define CACHE_LINE_BYTES 64
+#endif
+
 
 template <typename T>
-class JMailbox {
+class JMailbox : public JActivable {
 
 private:
 
-    struct DomainLocalMailbox {
+    struct alignas(CACHE_LINE_BYTES) LocalMailbox {
         std::mutex mutex;
-        std::queue<T> queue;
+        std::deque<T> queue;
         size_t reserved_count = 0;
-        // TODO: Need padding to avoid cache ping-pong
     };
 
+    // TODO: Copy these params into DLMB for better locality
     bool m_threshold;
+    bool m_locations_count;
     bool m_enable_work_stealing = false;
-    const std::vector<DomainLocalMailbox> m_mailboxes;
+    std::unique_ptr<LocalMailbox[]> m_mailboxes;
     JLogger m_logger;
 
 public:
 
+    enum class Status {Ready, Congested, Empty, Full, Finished};
+
+    friend std::ostream& operator<<(std::ostream& os, const Status& s) {
+        switch (s) {
+            case Status::Ready:     os << "Ready"; break;
+            case Status::Congested: os << "Congested"; break;
+            case Status::Empty:     os << "Empty"; break;
+            case Status::Full:      os << "Full"; break;
+            default:                os << "Unknown"; break;
+        }
+        return os;
+    }
+
+
     /// threshold: the (soft) maximum number of items in the queue at any time
     /// domain_count: the number of domains
     /// enable_work_stealing: allow domains to pop from other domains' queues when theirs is empty
-    JMailbox(size_t threshold=100, size_t domain_count=1, bool enable_work_stealing=false)
+    JMailbox(size_t threshold=100, size_t locations_count=1, bool enable_work_stealing=false)
         : m_threshold(threshold)
+        , m_locations_count(locations_count)
         , m_enable_work_stealing(enable_work_stealing) {
 
-        // Create local mailboxes for each domain
-        m_mailboxes.assign(DomainLocalMailbox(), domain_count);
+        m_mailboxes = std::unique_ptr<LocalMailbox[]>(new LocalMailbox[locations_count]);
     }
 
-    ~JMailbox();
+    ~JMailbox() {
+        //delete [] m_mailboxes;
+    }
 
     /// size() counts the number of items in the queue across all domains
     /// This should be used sparingly because it will mess up a bunch of caches.
     /// Meant to be used by measure_perf()
     size_t size() {
         size_t result = 0;
-        for (auto & mb : m_mailboxes) {
-            result += mb.queue.size();
+        for (size_t i = 0; i<m_locations_count; ++i) {
+            result += m_mailboxes[i].queue.size();
         }
         return result;
     };
@@ -91,7 +111,7 @@ public:
     /// alongside the items, to avoid a "reservation leak".
     size_t reserve(size_t requested_count, size_t domain = 0) {
 
-        DomainLocalMailbox& mb = m_mailboxes[domain];
+        LocalMailbox& mb = m_mailboxes[domain];
         std::lock_guard<std::mutex> lock(mb.mutex);
         size_t doable_count = m_threshold - mb.queue.size() - mb.reserved_count;
         if (doable_count > 0) {
@@ -105,30 +125,42 @@ public:
     /// succeed, although it may exceed the threshold if the caller didn't reserve
     /// space, and it may take a long time because it will wait on a mutex.
     /// Note that if the caller had called reserve(), they must pass in the reserved_count here.
-    JMailboxStatus push(std::vector<T>& buffer, size_t reserved_count = 0, size_t domain = 0) {
+    Status push(std::vector<T>& buffer, size_t reserved_count = 0, size_t domain = 0) {
 
         auto& mb = m_mailboxes[domain];
-        {
-            std::lock_guard<std::mutex> lock(mb.mutex);
-            mb.reserved_count -= reserved_count;
-            for (const T& t : buffer) {
-                mb.queue.push_back(std::move(t));
-            }
+        std::lock_guard<std::mutex> lock(mb.mutex);
+        mb.reserved_count -= reserved_count;
+        for (const T& t : buffer) {
+             mb.queue.push_back(std::move(t));
         }
         if (mb.queue.size() > m_threshold) {
-            return JMailboxStatus::Full;
+            return Status::Full;
         }
-        return JMailboxStatus::Ready;
+        return Status::Ready;
     }
+
+    Status push(T& item, size_t reserved_count = 0, size_t domain = 0) {
+
+        auto& mb = m_mailboxes[domain];
+        std::lock_guard<std::mutex> lock(mb.mutex);
+        mb.reserved_count -= reserved_count;
+        mb.queue.push_back(item);
+        size_t size = mb.queue.size();
+        if (size > m_threshold) {
+            return Status::Full;
+        }
+        return Status::Ready;
+    }
+
 
     /// pop() will pop up to requested_count items for the desired domain.
     /// If many threads are contending for the queue, this will fail with Status::Contention,
     /// in which case the caller should probably consult the Scheduler.
-    JMailboxStatus pop(std::vector<T>& buffer, size_t requested_count, size_t domain = 0) {
+    Status pop(std::vector<T>& buffer, size_t requested_count, size_t location_id = 0) {
 
-        auto& mb = m_mailboxes[domain];
+        auto& mb = m_mailboxes[location_id];
         if (!mb.mutex.try_lock()) {
-            return JMailboxStatus::Congested;
+            return Status::Congested;
         }
         auto nitems = std::min(requested_count, mb.queue.size());
         buffer.reserve(nitems);
@@ -139,29 +171,53 @@ public:
         auto size = mb.queue.size();
         mb.mutex.unlock();
         if (size >= m_threshold) {
-            return JMailboxStatus::Full;
+            return Status::Full;
         }
-        else if (size == 0) {
-            return JMailboxStatus::Empty;
+        else if (size != 0) {
+            return Status::Ready;
         }
-        return JMailboxStatus::Ready;
+        else if (is_active()) {
+            return Status::Empty;
+        }
+        return Status::Finished;
     }
+
+
+    Status pop(T& item, bool& success, size_t location_id = 0) {
+
+        success = false;
+        auto& mb = m_mailboxes[location_id];
+        if (!mb.mutex.try_lock()) {
+            return Status::Congested;
+        }
+        size_t nitems = mb.queue.size();
+        if (nitems > 1) {
+            item = std::move(mb.queue.front());
+            mb.queue.pop_front();
+            success = true;
+            mb.mutex.unlock();
+            return Status::Ready;
+        }
+        else if (nitems == 1) {
+            item = std::move(mb.queue.front());
+            mb.queue.pop_front();
+            success = true;
+            mb.mutex.unlock();
+            return Status::Empty;
+        }
+        else if (is_active()) {
+            mb.mutex.unlock();
+            return Status::Empty;
+        }
+        mb.mutex.unlock();
+        return Status::Finished;
+    }
+
 
     size_t get_threshold() { return m_threshold; }
     void set_threshold(size_t threshold) { m_threshold = threshold; }
 
 };
-
-std::ostream& operator<<(std::ostream& os, const JMailboxStatus& s) {
-    switch (s) {
-        case JMailboxStatus::Ready:     os << "Ready"; break;
-        case JMailboxStatus::Congested: os << "Congested"; break;
-        case JMailboxStatus::Empty:     os << "Empty"; break;
-        case JMailboxStatus::Full:      os << "Full"; break;
-        default:                        os << "Unknown"; break;
-    }
-    return os;
-}
 
 
 

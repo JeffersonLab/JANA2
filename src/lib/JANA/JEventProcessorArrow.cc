@@ -34,10 +34,10 @@ void JEventProcessorArrow::execute(JArrowMetrics& result, size_t location_id) {
 
     Event x;
     bool success;
-    auto in_status = _input_queue->pop(x, success);
-    LOG_DEBUG(_logger) << "EventProcessorArrow '" << get_name() << "': "
+    auto in_status = _input_queue->pop(x, success, location_id);
+    LOG_DEBUG(_logger) << "EventProcessorArrow '" << get_name() << "' [" << location_id << "]: "
                        << "pop() returned " << ((success) ? "success" : "failure")
-                       << "; queue is now " << to_string(in_status) << LOG_END;
+                       << "; queue is now " << in_status << LOG_END;
 
     auto start_latency_time = std::chrono::steady_clock::now();
     if (success) {
@@ -79,7 +79,7 @@ void JEventProcessorArrow::execute(JArrowMetrics& result, size_t location_id) {
 }
 
 size_t JEventProcessorArrow::get_pending() {
-    return _input_queue->get_item_count();
+    return _input_queue->size();
 }
 
 size_t JEventProcessorArrow::get_threshold() {
