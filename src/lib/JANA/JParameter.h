@@ -46,6 +46,7 @@
 
 #include <string>
 #include <sstream>
+#include <vector>
 
 class JParameter{
 	public:
@@ -120,6 +121,24 @@ T JParameter::GetValue(void)
 	
 	return val;
 }
+
+
+/// Template specialization for parsing as vector of size_t
+template<>
+inline std::vector<size_t> JParameter::GetValue<std::vector<size_t>>() {
+
+    std::stringstream ss(_val);
+    std::vector<size_t> result;
+    std::string s;
+    while (getline(ss, s, ',')) {
+        std::stringstream sss(s);
+        size_t x;
+        sss >> x;
+        result.push_back(x);
+    }
+    return result;
+}
+
 
 //---------------------------------
 // GetValue

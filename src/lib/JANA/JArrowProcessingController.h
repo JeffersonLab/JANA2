@@ -46,7 +46,7 @@
 class JArrowProcessingController : public JProcessingController {
 public:
 
-    JArrowProcessingController(JProcessingTopology* topology) : _topology(topology) {};
+    explicit JArrowProcessingController(JProcessingTopology* topology) : _topology(topology) {};
     ~JArrowProcessingController() override;
 
     void initialize() override;
@@ -72,6 +72,10 @@ private:
     JProcessingTopology* _topology;
     std::vector<JWorker*> _workers;
     JScheduler* _scheduler = nullptr;
+    bool _pin_to_cpu = true;
+    std::vector<size_t> _cpu_id_mapping;
+    std::vector<size_t> _location_id_mapping;
+
 
     JLogger _logger = JLogger::everything();
 

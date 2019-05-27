@@ -3,6 +3,7 @@
 //
 
 #include <JANA/JWorker.h>
+#include "JCpuInfo.h"
 
 
 void JWorker::measure_perf(JMetrics::WorkerSummary& summary) {
@@ -99,8 +100,13 @@ JWorker::~JWorker() {
 
 void JWorker::start() {
     if (_run_state == RunState::Stopped) {
+
         _run_state = RunState::Running;
         _thread = new std::thread(&JWorker::loop, this);
+
+        if (_pin_to_cpu) {
+            JCpuInfo::PinThreadToCpu(_thread, _cpu_id);
+        }
     }
 }
 
