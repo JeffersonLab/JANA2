@@ -10,19 +10,32 @@
 
 thread_local std::mt19937* generator = nullptr;
 
-uint64_t consume_cpu_ms(uint64_t millisecs, double spread) {
+uint64_t consume_cpu_ms(uint64_t millisecs, double spread, bool fix_flops) {
 
     uint64_t sampled = rand_size(millisecs, spread);
-    auto duration = std::chrono::milliseconds(sampled);
-
-    auto start_time = std::chrono::steady_clock::now();
     uint64_t result = 0;
 
-    while ((std::chrono::steady_clock::now() - start_time) < duration) {
+    if (fix_flops) {
+        // Perform a fixed amount of work in a variable time
+        const uint64_t appx_iters_per_millisec = 14000;
+        sampled *= appx_iters_per_millisec;
 
-        double a = (*generator)();
-        double b = sqrt(a * pow(1.23, -a)) / a;
-        result += long(b);
+        for (int i=0; i<sampled; ++i) {
+            double a = (*generator)();
+            double b = sqrt(a * pow(1.23, -a)) / a;
+            result += long(b);
+        }
+    }
+    else {
+        // Perform a variable amount of work in a fixed time
+        auto duration = std::chrono::milliseconds(sampled);
+        auto start_time = std::chrono::steady_clock::now();
+        while ((std::chrono::steady_clock::now() - start_time) < duration) {
+
+            double a = (*generator)();
+            double b = sqrt(a * pow(1.23, -a)) / a;
+            result += long(b);
+        }
     }
     return result;
 }

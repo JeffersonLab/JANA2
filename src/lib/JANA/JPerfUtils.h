@@ -11,7 +11,7 @@
 extern thread_local std::mt19937* generator;
 
 
-uint64_t consume_cpu_ms(uint64_t millisecs, double spread=0.0);
+uint64_t consume_cpu_ms(uint64_t millisecs, double spread=0.0, bool fix_flops=true);
 
 uint64_t read_memory(const std::vector<char>& buffer);
 
