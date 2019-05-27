@@ -48,7 +48,7 @@ class JFactorySet;
 class JPluginLoader;
 class JProcessingController;
 class JTopologyBuilder;
-class JProcessingTopology;
+struct JProcessingTopology;
 
 extern JApplication* japp;
 
