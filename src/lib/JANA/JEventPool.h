@@ -54,8 +54,8 @@ public:
     inline JEventPool(JApplication* app, std::vector<JFactoryGenerator*>* generators,
                       size_t pool_size, size_t location_count)
         : m_app(app)
-        , m_pool_size(pool_size)
         , m_generators(generators)
+        , m_pool_size(pool_size)
         , m_location_count(location_count) {
 
         m_pools = std::unique_ptr<LocalPool[]>(new LocalPool[location_count]());

@@ -48,8 +48,8 @@ private:
     };
 
     // TODO: Copy these params into DLMB for better locality
-    bool m_threshold;
-    bool m_locations_count;
+    size_t m_threshold;
+    size_t m_locations_count;
     bool m_enable_work_stealing = false;
     std::unique_ptr<LocalMailbox[]> m_mailboxes;
     JLogger m_logger;
@@ -115,8 +115,9 @@ public:
         std::lock_guard<std::mutex> lock(mb.mutex);
         size_t doable_count = m_threshold - mb.queue.size() - mb.reserved_count;
         if (doable_count > 0) {
-            mb.reserved_count += requested_count;
-            return doable_count;
+            size_t reservation = std::min(doable_count, requested_count);
+            mb.reserved_count += reservation;
+            return reservation;
         }
         return 0;
     };

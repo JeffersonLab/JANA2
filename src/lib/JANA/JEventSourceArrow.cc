@@ -21,7 +21,7 @@ JEventSourceArrow::JEventSourceArrow(std::string name,
 
     _output_queue->attach_upstream(this);
     attach_downstream(_output_queue);
-    _logger = JLogger::nothing();
+    _logger = JLogger::everything();
 }
 
 
@@ -35,9 +35,15 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
 
     SourceStatus in_status = SourceStatus::kSUCCESS;
     auto start_time = std::chrono::steady_clock::now();
+
+    auto chunksize = get_chunksize();
+    auto reserved_count = _output_queue->reserve(chunksize, location_id);
+    if (reserved_count == 0) {
+        in_status = SourceStatus::kBUSY;
+    }
+    LOG_DEBUG(_logger) << "JEventSourceArrow asked for " << chunksize << ", reserved " << reserved_count << LOG_END;
     try {
-        size_t item_count = get_chunksize();
-        while (item_count-- != 0) {
+        for (int i=0; i<reserved_count; ++i) {
             auto event = _pool->get(location_id);
             event->SetJEventSource(_source);
             _source->GetEvent(event);
@@ -52,8 +58,7 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
     }
     auto latency_time = std::chrono::steady_clock::now();
     auto message_count = _chunk_buffer.size();
-    auto out_status = _output_queue->push(_chunk_buffer, location_id);
-    _chunk_buffer.clear();
+    auto out_status = _output_queue->push(_chunk_buffer, reserved_count, location_id);
     auto finished_time = std::chrono::steady_clock::now();
 
     LOG_DEBUG(_logger) << "JEventSourceArrow '" << get_name() << "' [" << location_id << "]: "

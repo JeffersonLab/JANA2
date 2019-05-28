@@ -14,7 +14,7 @@ JEventProcessorArrow::JEventProcessorArrow(std::string name,
         : JArrow(std::move(name), true, NodeType::Sink)
         , _input_queue(input_queue)
         , _output_queue(output_queue)
-        , _pool(pool) {
+        , _pool(std::move(pool)) {
 
     _input_queue->attach_downstream(this);
     attach_upstream(_input_queue);
