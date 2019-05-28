@@ -83,7 +83,6 @@ add_library(jana2 STATIC
         src/lib/JANA/JQueueWithLock.h
         src/lib/JANA/JResettable.h
         src/lib/JANA/JResourcePool.h
-        src/lib/JANA/JResourcePoolSimple.h
         src/lib/JANA/JSignalHandler.h
         src/lib/JANA/JSourceFactoryGenerator.h
         src/lib/JANA/JStatus.cc

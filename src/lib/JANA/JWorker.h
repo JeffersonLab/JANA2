@@ -8,8 +8,8 @@
 #include <thread>
 #include <JANA/JLogger.h>
 #include <JANA/JScheduler.h>
-#include "JWorkerMetrics.h"
-#include "JMetrics.h"
+#include <JANA/JWorkerMetrics.h>
+#include <JANA/JMetrics.h>
 
 
 using jclock_t = std::chrono::steady_clock;
@@ -23,7 +23,6 @@ class JWorker {
 
 public:
     /// The Worker may be configured to try different backoff strategies
-    enum class BackoffStrategy { Constant, Linear, Exponential };
     enum class RunState { Running, Stopping, Stopped };
 
 private:
@@ -42,12 +41,6 @@ private:
     JLogger _logger;
 
 public:
-    /// Configuration options
-    unsigned backoff_tries = 4;
-    BackoffStrategy backoff_strategy = BackoffStrategy::Exponential;
-    duration_t initial_backoff_time = std::chrono::microseconds(10);
-    duration_t checkin_time = std::chrono::milliseconds(500);
-
     JWorker(JScheduler* scheduler, unsigned worker_id, unsigned cpu_id, unsigned domain_id, bool pin_to_cpu);
     ~JWorker();
 

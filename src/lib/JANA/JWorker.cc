@@ -148,6 +148,11 @@ void JWorker::loop() {
         auto retry_duration = duration_t::zero();
         auto useful_duration = duration_t::zero();
 
+        auto initial_backoff_time = _assignment->get_initial_backoff_time();
+        auto backoff_strategy = _assignment->get_backoff_strategy();
+        auto backoff_tries = _assignment->get_backoff_tries();
+        auto checkin_time = _assignment->get_checkin_time();
+
         if (_assignment == nullptr) {
             LOG_DEBUG(_logger) << "JWorker " << _worker_id
                                << " idling due to lack of assignments" << LOG_END;
@@ -181,10 +186,10 @@ void JWorker::loop() {
                 else {
                     current_tries++;
                     if (backoff_tries > 0) {
-                        if (backoff_strategy == BackoffStrategy::Linear) {
+                        if (backoff_strategy == JArrow::BackoffStrategy::Linear) {
                             backoff_duration += initial_backoff_time;
                         }
-                        else if (backoff_strategy == BackoffStrategy::Exponential) {
+                        else if (backoff_strategy == JArrow::BackoffStrategy::Exponential) {
                             backoff_duration *= 2;
                         }
                         LOG_DEBUG(_logger) << "JWorker " << _worker_id << " backing off with "
