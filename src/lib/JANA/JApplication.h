@@ -57,7 +57,6 @@ extern JApplication* japp;
 
 // TODO: Move these down one level
 #include <JANA/JResourcePool.h>
-#include <JANA/JResourcePoolSimple.h>
 #include <JANA/JTask.h>
 
 
@@ -168,7 +167,7 @@ private:
     std::chrono::time_point<std::chrono::high_resolution_clock> mRunStartTime;
 
     // TODO: Get rid of these
-    JResourcePoolSimple<JFactorySet> mFactorySetPool;
+    JResourcePool<JFactorySet> mFactorySetPool;
     JResourcePool<JTask<void>> mVoidTaskPool;
     JThreadManager* _threadManager = nullptr; // Extract this from LegacyProcessingController
 

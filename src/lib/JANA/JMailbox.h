@@ -133,6 +133,7 @@ public:
         for (const T& t : buffer) {
              mb.queue.push_back(std::move(t));
         }
+        buffer.clear();
         if (mb.queue.size() > m_threshold) {
             return Status::Full;
         }
@@ -144,7 +145,7 @@ public:
         auto& mb = m_mailboxes[domain];
         std::lock_guard<std::mutex> lock(mb.mutex);
         mb.reserved_count -= reserved_count;
-        mb.queue.push_back(item);
+        mb.queue.push_back(std::move(item));
         size_t size = mb.queue.size();
         if (size > m_threshold) {
             return Status::Full;

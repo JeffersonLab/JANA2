@@ -4,7 +4,7 @@
 
 #include <JANA/JEventSourceArrow.h>
 #include <JANA/JApplication.h>
-#include "JEventSourceArrow.h"
+#include <JANA/JEventPool.h>
 
 
 using SourceStatus = JEventSource::RETURN_STATUS;
@@ -12,7 +12,7 @@ using SourceStatus = JEventSource::RETURN_STATUS;
 JEventSourceArrow::JEventSourceArrow(std::string name,
                                      JEventSource* source,
                                      EventQueue* output_queue,
-                                     JResourcePoolSimple<JFactorySet>* pool
+                                     std::shared_ptr<JEventPool> pool
                                      )
     : JArrow(name, false, NodeType::Source)
     , _source(source)
@@ -38,11 +38,10 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
     try {
         size_t item_count = get_chunksize();
         while (item_count-- != 0) {
-            auto event = std::make_shared<JEvent>(japp);
-            event->SetFactorySet(japp->GetFactorySet());
+            auto event = _pool->get(location_id);
             event->SetJEventSource(_source);
             _source->GetEvent(event);
-            _chunk_buffer.push_back(event);
+            _chunk_buffer.push_back(std::move(event));
         }
     }
     catch (SourceStatus rs) {

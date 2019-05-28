@@ -4,16 +4,18 @@
 
 #include <JANA/JEventProcessorArrow.h>
 #include <JANA/JEventProcessor.h>
-#include "JEventProcessorArrow.h"
+#include <JANA/JEventPool.h>
 
 
 JEventProcessorArrow::JEventProcessorArrow(std::string name,
                                            EventQueue *input_queue,
-                                           EventQueue *output_queue)
+                                           EventQueue *output_queue,
+                                           std::shared_ptr<JEventPool> pool)
         : JArrow(std::move(name), true, NodeType::Sink)
         , _input_queue(input_queue)
         , _output_queue(output_queue)
-{
+        , _pool(pool) {
+
     _input_queue->attach_downstream(this);
     attach_upstream(_input_queue);
     _logger = JLogger::nothing();
@@ -53,11 +55,10 @@ void JEventProcessorArrow::execute(JArrowMetrics& result, size_t location_id) {
 
     if (success) {
         if (_output_queue != nullptr) {
-            out_status = _output_queue->push(x);
+            out_status = _output_queue->push(x, location_id);
         }
         else {
-            JEvent& underlying = const_cast<JEvent&>(*x);
-            underlying.Release();
+            _pool->put(x, location_id);
         }
     }
     auto end_queue_time = std::chrono::steady_clock::now();

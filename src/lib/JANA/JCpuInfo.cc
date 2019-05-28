@@ -116,7 +116,7 @@ bool PinThreadToCpu(std::thread* thread, size_t cpu_id) {
     // Linux
     cpu_set_t cpuset;
     CPU_ZERO(&cpuset);
-    CPU_SET(_cpu_id, &cpuset);
+    CPU_SET(cpu_id, &cpuset);
     int rc = pthread_setaffinity_np(pthread, sizeof(cpu_set_t), &cpuset);
     if (rc != 0) {
         return false;

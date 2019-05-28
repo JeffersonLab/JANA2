@@ -7,12 +7,12 @@
 
 #include <JANA/JArrow.h>
 #include <JANA/JMailbox.h>
-#include <JANA/JResourcePoolSimple.h>
 #include <JANA/JFactorySet.h>
 #include <JANA/JEventSourceManager.h>
 #include <JANA/JActivable.h>
 #include <JANA/JEventProcessor.h>
 #include "JPerfMetrics.h"
+#include "JEventPool.h"
 
 
 struct JProcessingTopology : public JActivable {
@@ -23,7 +23,7 @@ struct JProcessingTopology : public JActivable {
     virtual ~JProcessingTopology();
 
     JEventSourceManager event_source_manager;
-    JResourcePoolSimple<JFactorySet> factoryset_pool;
+    std::shared_ptr<JEventPool> event_pool;
     std::vector<JFactoryGenerator*> factory_generators;
     std::vector<JEventProcessor*> event_processors;
     JPerfMetrics metrics;

@@ -131,24 +131,37 @@ JProcessingTopology *JTopologyBuilder::build_topology() {
         topology->factory_generators.push_back(factory);
     }
 
+    size_t event_pool_size = 100;
+    size_t event_queue_threshold = 80;
+    size_t event_source_chunksize = 40;
+    size_t event_processor_chunksize = 1;
+    size_t location_count = 1;
+    bool enable_stealing = false;
+
+    auto params = japp->GetJParameterManager();
+    params->SetDefaultParameter("jana:event_pool_size", event_pool_size);
+    params->SetDefaultParameter("jana:event_queue_threshold", event_queue_threshold);
+    params->SetDefaultParameter("jana:event_source_chunksize", event_source_chunksize);
+    params->SetDefaultParameter("jana:event_processor_chunksize", event_processor_chunksize);
+    params->SetDefaultParameter("jana:location_count", location_count);
+    params->SetDefaultParameter("jana:enable_stealing", enable_stealing);
+
+    topology->event_pool = std::make_shared<JEventPool>(japp, &topology->factory_generators, event_pool_size, location_count);
+
     // Assume the simplest possible topology for now, complicate later
-    auto queue = new EventQueue();
-    queue->set_threshold(80);  // JTest throughput increases with threshold size: WHY?
+    auto queue = new EventQueue(event_queue_threshold, location_count, enable_stealing);
 
     for (auto src : sEventSources) {
 
-        JArrow* arrow = new JEventSourceArrow(src->GetName(), src, queue, &topology->factoryset_pool);
+        JArrow* arrow = new JEventSourceArrow(src->GetName(), src, queue, topology->event_pool);
         topology->arrows.push_back(arrow);
         topology->sources.push_back(arrow);
-        arrow->set_chunksize(40);
+        arrow->set_chunksize(event_source_chunksize);
         // create arrow for sources. Don't open until arrow.activate() called
     }
 
-    //auto finished_queue = new EventQueue();
-    //_queues.push_back(finished_queue);
-
-    auto proc_arrow = new JEventProcessorArrow("processors", queue, nullptr);
-    proc_arrow->set_chunksize(1);
+    auto proc_arrow = new JEventProcessorArrow("processors", queue, nullptr, topology->event_pool);
+    proc_arrow->set_chunksize(event_processor_chunksize);
     topology->arrows.push_back(proc_arrow);
 
     // Receive notifications when sinks finish

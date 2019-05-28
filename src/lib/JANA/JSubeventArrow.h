@@ -38,7 +38,7 @@
 #include "JArrow.h"
 #include "JEvent.h"
 
-using Event = std::shared_ptr<const JEvent>;
+using Event = std::shared_ptr<JEvent>;
 
 
 /// Data structure containing all of the metadata needed to merge subevents

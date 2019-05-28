@@ -45,9 +45,8 @@ void JProcessingTopology::set_active(bool active) {
     }
 }
 
-JProcessingTopology::JProcessingTopology() : event_source_manager(japp) {
-    //factoryset_pool = new JFactorySet
-    // TODO: FactorySetPools appear to be nullptr... huh?
+JProcessingTopology::JProcessingTopology()
+    : event_source_manager(japp) {
 }
 
 JProcessingTopology::~JProcessingTopology() {

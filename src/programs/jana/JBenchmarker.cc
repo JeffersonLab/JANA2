@@ -32,6 +32,8 @@
 
 #include "JBenchmarker.h"
 
+#include <JANA/JCpuInfo.h>
+
 #include <fstream>
 #include <cmath>
 #include <sys/stat.h>

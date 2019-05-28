@@ -39,6 +39,7 @@
 #include <JANA/JPluginLoader.h>
 #include <JANA/JTopologyBuilder.h>
 #include <JANA/JProcessingController.h>
+#include <JANA/JCpuInfo.h>
 
 JApplication *japp = nullptr;
 

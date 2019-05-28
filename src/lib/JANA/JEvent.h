@@ -108,6 +108,7 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 		JEventSource* GetEventSource(void) const;
 		bool GetIsBarrierEvent(void) const{return mIsBarrierEvent;}
 		JApplication* GetJApplication(void) const {return mApplication;}
+		friend class JEventPool;
 
 	protected:
 		mutable JFactorySet* mFactorySet = nullptr;

@@ -125,6 +125,7 @@ add_library(jana2 STATIC
         src/lib/JANA/JPerfSummary.h
         src/lib/JANA/JArrowPerfSummary.cc
         src/lib/JANA/JArrowPerfSummary.h
+        src/lib/JANA/JEventPool.h
         )
 
 add_library(jtest SHARED
