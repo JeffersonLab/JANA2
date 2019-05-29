@@ -21,7 +21,7 @@ JEventSourceArrow::JEventSourceArrow(std::string name,
 
     _output_queue->attach_upstream(this);
     attach_downstream(_output_queue);
-    _logger = JLogger::everything();
+    _logger = JLogger::nothing();
 }
 
 
@@ -38,12 +38,17 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
 
     auto chunksize = get_chunksize();
     auto reserved_count = _output_queue->reserve(chunksize, location_id);
-    if (reserved_count == 0) {
+    auto emit_count = reserved_count;
+    if (reserved_count != chunksize) {
+        // Ensures that the source _only_ emits in increments of
+        // chunksize, which happens to come in very handy for
+        // processing entangled event blocks
         in_status = SourceStatus::kBUSY;
+        emit_count = 0;
     }
     LOG_DEBUG(_logger) << "JEventSourceArrow asked for " << chunksize << ", reserved " << reserved_count << LOG_END;
     try {
-        for (int i=0; i<reserved_count; ++i) {
+        for (int i=0; i<emit_count; ++i) {
             auto event = _pool->get(location_id);
             event->SetJEventSource(_source);
             _source->GetEvent(event);

@@ -58,12 +58,13 @@ public:
         , m_pool_size(pool_size)
         , m_location_count(location_count) {
 
+        assert(m_location_count >= 1);
         m_pools = std::unique_ptr<LocalPool[]>(new LocalPool[location_count]());
     }
 
     inline std::shared_ptr<JEvent> get(size_t location) {
 
-        LocalPool& pool = m_pools[location];
+        LocalPool& pool = m_pools[location % m_location_count];
         std::lock_guard<std::mutex> lock(pool.mutex);
 
         if (pool.events.empty()) {
@@ -82,7 +83,7 @@ public:
     inline void put(std::shared_ptr<JEvent>& event, size_t location) {
 
         event->mFactorySet->Release();
-        LocalPool& pool = m_pools[location];
+        LocalPool& pool = m_pools[location % m_location_count];
         std::lock_guard<std::mutex> lock(pool.mutex);
 
         if (pool.events.size() < m_pool_size) {

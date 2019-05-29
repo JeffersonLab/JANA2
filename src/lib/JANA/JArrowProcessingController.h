@@ -72,7 +72,7 @@ private:
     JProcessingTopology* _topology;
     std::vector<JWorker*> _workers;
     JScheduler* _scheduler = nullptr;
-    bool _pin_to_cpu = true;
+    bool _pin_to_cpu = false;
     std::vector<size_t> _cpu_id_mapping;
     std::vector<size_t> _location_id_mapping;
 

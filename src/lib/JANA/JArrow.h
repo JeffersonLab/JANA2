@@ -95,7 +95,7 @@ public:
 
     void set_backoff_strategy(BackoffStrategy backoff_strategy) {
         std::lock_guard<std::mutex> lock(_mutex);
-        _backoff_strategy = _backoff_strategy;
+        _backoff_strategy = backoff_strategy;
     }
 
     duration_t get_initial_backoff_time() const {
