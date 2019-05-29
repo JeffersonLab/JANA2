@@ -20,7 +20,7 @@ uint64_t consume_cpu_ms(uint64_t millisecs, double spread, bool fix_flops) {
         const uint64_t appx_iters_per_millisec = 14000;
         sampled *= appx_iters_per_millisec;
 
-        for (int i=0; i<sampled; ++i) {
+        for (uint64_t i=0; i<sampled; ++i) {
             double a = (*generator)();
             double b = sqrt(a * pow(1.23, -a)) / a;
             result += long(b);

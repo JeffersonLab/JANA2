@@ -48,7 +48,7 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
     }
     LOG_DEBUG(_logger) << "JEventSourceArrow asked for " << chunksize << ", reserved " << reserved_count << LOG_END;
     try {
-        for (int i=0; i<emit_count; ++i) {
+        for (size_t i=0; i<emit_count; ++i) {
             auto event = _pool->get(location_id);
             event->SetJEventSource(_source);
             _source->GetEvent(event);

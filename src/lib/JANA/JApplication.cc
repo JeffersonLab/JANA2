@@ -121,8 +121,8 @@ void JApplication::Initialize() {
     _plugin_loader->attach_plugins(_topology_builder);
 
     // Set task pool size
-    int task_pool_size = 200;
-    int task_pool_debuglevel = 0;
+    size_t task_pool_size = 200;
+    size_t task_pool_debuglevel = 0;
     _params->SetDefaultParameter("JANA:TASK_POOL_SIZE", task_pool_size, "Task pool size");
     _params->SetDefaultParameter("JANA:TASK_POOL_DEBUGLEVEL", task_pool_debuglevel, "Task pool debug level");
     mVoidTaskPool.Set_ControlParams(task_pool_size, task_pool_debuglevel);
@@ -415,7 +415,7 @@ void JApplication::UpdateResourceLimits() {
     // of threads which should be sufficient. The user should be given control to
     // adjust this themselves in the future, but or now, this should be OK.
     auto nthreads = _threadManager->GetNJThreads();
-    mFactorySetPool.Set_ControlParams( nthreads*100, 10 );
+    mFactorySetPool.Set_ControlParams( nthreads*100, 0 );
 }
 
 
