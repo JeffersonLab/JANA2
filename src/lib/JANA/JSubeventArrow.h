@@ -34,7 +34,7 @@
 #define JANA2_JSUBEVENTARROW_H
 
 
-#include "Queue.h"
+#include "JMailbox.h"
 #include "JArrow.h"
 #include "JEvent.h"
 
@@ -80,11 +80,11 @@ class JSubeventProcessor {
 
 class JSubeventArrow : public JArrow {
     JSubeventProcessor* _processor;
-    Queue<JSubevent>* _inbox;
-    Queue<JSubevent>* _outbox;
+    JMailbox<JSubevent>* _inbox;
+    JMailbox<JSubevent>* _outbox;
 public:
     JSubeventArrow(std::string name, JSubeventProcessor* processor,
-                   Queue<JSubevent>* inbox, Queue<JSubevent>* outbox);
+                   JMailbox<JSubevent>* inbox, JMailbox<JSubevent>* outbox);
     void execute(JArrowMetrics&, size_t location_id) override;
     size_t get_pending() final;
     size_t get_threshold() final;
@@ -93,11 +93,11 @@ public:
 
 class JSplitArrow : public JArrow {
     JSubeventProcessor* _processor;
-    Queue<Event>* _inbox;
-    Queue<JSubevent>* _outbox;
+    JMailbox<Event>* _inbox;
+    JMailbox<JSubevent>* _outbox;
 public:
     JSplitArrow(std::string name, JSubeventProcessor* processor,
-                Queue<Event>* inbox, Queue<JSubevent>* outbox);
+                JMailbox<Event>* inbox, JMailbox<JSubevent>* outbox);
     void execute(JArrowMetrics&, size_t location_id) override;
     size_t get_pending() final;
     size_t get_threshold() final;
@@ -106,11 +106,11 @@ public:
 
 class JMergeArrow : public JArrow {
     JSubeventProcessor* _processor;
-    Queue<JSubevent>* _inbox;
-    Queue<Event>* _outbox;
+    JMailbox<JSubevent>* _inbox;
+    JMailbox<Event>* _outbox;
 public:
     JMergeArrow(std::string name, JSubeventProcessor* processor,
-                Queue<JSubevent>* inbox, Queue<Event>* outbox);
+                JMailbox<JSubevent>* inbox, JMailbox<Event>* outbox);
     void execute(JArrowMetrics&, size_t location_id) override;
     size_t get_pending() final;
     size_t get_threshold() final;
