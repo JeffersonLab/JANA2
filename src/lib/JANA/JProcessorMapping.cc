@@ -64,6 +64,10 @@ void JProcessorMapping::initialize(AffinityStrategy affinity, LocalityStrategy l
         close(pipe_fd[1]);
     }
 
+    // In case initialize() is called multiple times, we don't want old data to interfere
+    m_loc_count = 1;
+    m_mapping.clear();
+
     // Parse into table
     FILE* infile = fdopen(pipe_fd[0], "r");
 
@@ -81,6 +85,10 @@ void JProcessorMapping::initialize(AffinityStrategy affinity, LocalityStrategy l
                 case LocalityStrategy::CoreLocal:       row.location_id = row.core_id; break;
                 case LocalityStrategy::NumaDomainLocal: row.location_id = row.numa_domain_id; break;
                 case LocalityStrategy::SocketLocal:     row.location_id = row.socket_id; break;
+            }
+            if (row.location_id >= m_loc_count) {
+                // Assume all of these ids are zero-indexed and contiguous
+                m_loc_count = row.location_id + 1;
             }
             m_mapping.push_back(row);
         }
@@ -117,24 +125,53 @@ void JProcessorMapping::initialize(AffinityStrategy affinity, LocalityStrategy l
     m_initialized = true;
 }
 
+std::ostream& operator<<(std::ostream& os, const JProcessorMapping::AffinityStrategy& s) {
+    switch (s) {
+        case JProcessorMapping::AffinityStrategy::ComputeBound: os << "compute-bound (favor fewer hyperthreads)"; break;
+        case JProcessorMapping::AffinityStrategy::MemoryBound: os << "memory-bound (favor fewer NUMA domains)"; break;
+        case JProcessorMapping::AffinityStrategy::None: os << "none"; break;
+    }
+    return os;
+}
+
+
+std::ostream& operator<<(std::ostream& os, const JProcessorMapping::LocalityStrategy& s) {
+    switch (s) {
+        case JProcessorMapping::LocalityStrategy::CpuLocal: os << "cpu-local"; break;
+        case JProcessorMapping::LocalityStrategy::CoreLocal: os << "core-local"; break;
+        case JProcessorMapping::LocalityStrategy::NumaDomainLocal: os << "numa-domain-local"; break;
+        case JProcessorMapping::LocalityStrategy::SocketLocal: os << "socket-local"; break;
+        case JProcessorMapping::LocalityStrategy::Global: os << "global"; break;
+    }
+    return os;
+}
 
 
 std::ostream& operator<<(std::ostream& os, const JProcessorMapping& m) {
 
-    os << "+--------+----------++-------+--------+-----------+--------+" << std::endl
-       << "| worker | location ||  cpu  |  core  | numa node | socket |" << std::endl
-       << "+--------+----------++-------+--------+-----------+--------+" << std::endl;
+    os << "Affinity strategy: " << m.m_affinity_strategy << std::endl;
+    os << "Locality strategy: " << m.m_locality_strategy << std::endl;
+    os << "Location count: " << m.m_loc_count << std::endl;
 
-    size_t worker_id = 0;
-    for (const JProcessorMapping::Row& row : m.m_mapping) {
-        os <<  "| " << std::right << std::setw(6) << worker_id++;
-        os << " | " << std::setw(8) << row.location_id;
-        os << " || " << std::setw(5) << row.cpu_id;
-        os << " | " << std::setw(6) << row.core_id;
-        os << " | " << std::setw(9) << row.numa_domain_id;
-        os << " | " << std::setw(6) << row.socket_id << " |" << std::endl;
+    if (m.m_initialized) {
+        os << "+--------+----------+-------+--------+-----------+--------+" << std::endl
+           << "| worker | location |  cpu  |  core  | numa node | socket |" << std::endl
+           << "+--------+----------+-------+--------+-----------+--------+" << std::endl;
+
+        size_t worker_id = 0;
+        for (const JProcessorMapping::Row& row : m.m_mapping) {
+            os <<  "| " << std::right << std::setw(6) << worker_id++;
+            os << " | " << std::setw(8) << row.location_id;
+            os << " | " << std::setw(5) << row.cpu_id;
+            os << " | " << std::setw(6) << row.core_id;
+            os << " | " << std::setw(9) << row.numa_domain_id;
+            os << " | " << std::setw(6) << row.socket_id << " |" << std::endl;
+        }
+
+        os << "+--------+----------+-------+--------+-----------+--------+" << std::endl;
     }
-
-    os << "+--------+----------++-------+--------+-----------+--------+" << std::endl;
+    else {
+        os << "ERROR: " << m.m_error_msg << std::endl;
+    }
     return os;
 }

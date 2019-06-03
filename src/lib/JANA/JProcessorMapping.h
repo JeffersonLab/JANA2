@@ -59,6 +59,8 @@ public:
     }
 
     friend std::ostream& operator<<(std::ostream& os, const JProcessorMapping& m);
+    friend std::ostream& operator<<(std::ostream& os, const AffinityStrategy& s);
+    friend std::ostream& operator<<(std::ostream& os, const LocalityStrategy& s);
 
 private:
 
@@ -70,12 +72,12 @@ private:
         size_t socket_id;
     };
 
-    AffinityStrategy m_affinity_strategy;
-    LocalityStrategy m_locality_strategy;
+    AffinityStrategy m_affinity_strategy = AffinityStrategy::None;
+    LocalityStrategy m_locality_strategy = LocalityStrategy::Global;
     std::vector<Row> m_mapping;
-    size_t m_loc_count;
+    size_t m_loc_count = 1;
     bool m_initialized;
-    std::string m_error_msg;
+    std::string m_error_msg = "Not initialized yet";
 };
 
 
