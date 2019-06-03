@@ -32,6 +32,7 @@
 
 #include "JProcessorMapping.h"
 #include <iomanip>
+#include <unistd.h>
 
 void JProcessorMapping::initialize(AffinityStrategy affinity, LocalityStrategy locality) {
 
@@ -39,45 +40,88 @@ void JProcessorMapping::initialize(AffinityStrategy affinity, LocalityStrategy l
     m_locality_strategy = locality;
 
     // Capture lscpu info
-    // Parse into table
 
-    // Figure out location
-    for (Row& row : m_mapping) {
-        switch (m_locality_strategy) {
-            case LocalityStrategy::Error:
-            case LocalityStrategy::Global:          row.location_id = 0; break;
-            case LocalityStrategy::CpuLocal:        row.location_id = row.cpu_id; break;
-            case LocalityStrategy::CoreLocal:       row.location_id = row.core_id; break;
-            case LocalityStrategy::NumaDomainLocal: row.location_id = row.numa_domain_id; break;
-            case LocalityStrategy::SocketLocal:     row.location_id = row.socket_id; break;
-        }
+    int pipe_fd[2]; // We want to pipe lscpu's stdout straight to us
+    if (pipe(pipe_fd) == -1) {
+        m_error_msg = "Unable to open pipe";
+        return;
+    }
+    pid_t pid = fork();
+    if (pid == -1) { // Failure
+        m_error_msg = "Unable to fork";
+        close(pipe_fd[0]);
+        close(pipe_fd[1]);
+        return;
+    }
+    else if (pid == 0) { // We are the child process
+        dup2(pipe_fd[1], 1);  // Redirect stdout to pipe
+        close(pipe_fd[0]);
+        close(pipe_fd[1]);
+        execlp("lscpu", "lscpu", "-b", "-pcpu,core,node,socket", nullptr);
+    }
+    else { // We are the parent process
+        close(pipe_fd[1]);
     }
 
+    // Parse into table
+    FILE* infile = fdopen(pipe_fd[0], "r");
+
+    const size_t buffer_size = 300;
+    char buffer[buffer_size];
+
+    while (fgets(buffer, buffer_size, infile) != nullptr) {
+        if (buffer[0] == '#') continue;
+        Row row;
+        int count = sscanf(buffer, "%zu,%zu,%zu,%zu", &row.cpu_id, &row.core_id, &row.numa_domain_id, &row.socket_id);
+        if (count == 4) {
+            switch (m_locality_strategy) {
+                case LocalityStrategy::Unknown:
+                case LocalityStrategy::Global:          row.location_id = 0; break;
+                case LocalityStrategy::CpuLocal:        row.location_id = row.cpu_id; break;
+                case LocalityStrategy::CoreLocal:       row.location_id = row.core_id; break;
+                case LocalityStrategy::NumaDomainLocal: row.location_id = row.numa_domain_id; break;
+                case LocalityStrategy::SocketLocal:     row.location_id = row.socket_id; break;
+            }
+            m_mapping.push_back(row);
+        }
+    }
+    fclose(infile);
+
+    if (m_mapping.empty()) {
+        m_error_msg = "Unable to parse lscpu output";
+        return;
+    }
+
+    // TODO: Sort according to strategy
     switch (m_affinity_strategy) {
         case AffinityStrategy::None: break;
         case AffinityStrategy::ComputeBound: break;
         case AffinityStrategy::MemoryBound: break;
+        case AffinityStrategy::Unknown: break;
     }
-    // Sort according to strategy
+
+    // Apparently we were successful
+    m_initialized = true;
 }
+
 
 
 std::ostream& operator<<(std::ostream& os, const JProcessorMapping& m) {
 
-    os << "+--------+----------+-------+--------+-----------+--------+" << std::endl
-       << "| worker | location |  cpu  |  core  | numa node | socket |" << std::endl
-       << "+--------+----------+-------+--------+-----------+--------+" << std::endl;
+    os << "+--------+----------++-------+--------+-----------+--------+" << std::endl
+       << "| worker | location ||  cpu  |  core  | numa node | socket |" << std::endl
+       << "+--------+----------++-------+--------+-----------+--------+" << std::endl;
 
     size_t worker_id = 0;
     for (const JProcessorMapping::Row& row : m.m_mapping) {
         os <<  "| " << std::right << std::setw(6) << worker_id++;
         os << " | " << std::setw(8) << row.location_id;
-        os << " | " << std::setw(3) << row.cpu_id;
-        os << " | " << std::setw(4) << row.core_id;
+        os << " || " << std::setw(5) << row.cpu_id;
+        os << " | " << std::setw(6) << row.core_id;
         os << " | " << std::setw(9) << row.numa_domain_id;
         os << " | " << std::setw(6) << row.socket_id << " |" << std::endl;
     }
 
-    os << "+---------+----------+-------+--------+-----------+--------+" << std::endl;
+    os << "+--------+----------++-------+--------+-----------+--------+" << std::endl;
 
 }

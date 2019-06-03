@@ -41,8 +41,8 @@ class JProcessorMapping {
 
 public:
 
-    enum class AffinityStrategy { None, MemoryBound, ComputeBound, Error };
-    enum class LocalityStrategy { Global, SocketLocal, NumaDomainLocal, CoreLocal, CpuLocal, Error };
+    enum class AffinityStrategy { None, MemoryBound, ComputeBound, Unknown };
+    enum class LocalityStrategy { Global, SocketLocal, NumaDomainLocal, CoreLocal, CpuLocal, Unknown };
 
     void initialize(AffinityStrategy affinity, LocalityStrategy locality);
 
@@ -68,7 +68,6 @@ private:
         size_t core_id;
         size_t numa_domain_id;
         size_t socket_id;
-        bool available;
     };
 
     AffinityStrategy m_affinity_strategy;
