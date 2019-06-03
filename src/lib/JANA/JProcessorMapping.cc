@@ -33,6 +33,7 @@
 #include "JProcessorMapping.h"
 #include <iomanip>
 #include <unistd.h>
+#include <algorithm>
 
 void JProcessorMapping::initialize(AffinityStrategy affinity, LocalityStrategy locality) {
 
@@ -75,7 +76,6 @@ void JProcessorMapping::initialize(AffinityStrategy affinity, LocalityStrategy l
         int count = sscanf(buffer, "%zu,%zu,%zu,%zu", &row.cpu_id, &row.core_id, &row.numa_domain_id, &row.socket_id);
         if (count == 4) {
             switch (m_locality_strategy) {
-                case LocalityStrategy::Unknown:
                 case LocalityStrategy::Global:          row.location_id = 0; break;
                 case LocalityStrategy::CpuLocal:        row.location_id = row.cpu_id; break;
                 case LocalityStrategy::CoreLocal:       row.location_id = row.core_id; break;
@@ -92,12 +92,25 @@ void JProcessorMapping::initialize(AffinityStrategy affinity, LocalityStrategy l
         return;
     }
 
-    // TODO: Sort according to strategy
+    // Apply affinity strategy by sorting over sets of columns
     switch (m_affinity_strategy) {
+
         case AffinityStrategy::None: break;
-        case AffinityStrategy::ComputeBound: break;
-        case AffinityStrategy::MemoryBound: break;
-        case AffinityStrategy::Unknown: break;
+
+        case AffinityStrategy::ComputeBound:
+
+            std::stable_sort(m_mapping.begin(), m_mapping.end(),
+                             [](const Row& lhs, const Row& rhs) -> bool { return lhs.cpu_id < rhs.cpu_id; });
+            break;
+
+        case AffinityStrategy::MemoryBound:
+
+            std::stable_sort(m_mapping.begin(), m_mapping.end(),
+                             [](const Row& lhs, const Row& rhs) -> bool { return lhs.cpu_id < rhs.cpu_id; });
+
+            std::stable_sort(m_mapping.begin(), m_mapping.end(),
+                             [](const Row& lhs, const Row& rhs) -> bool { return lhs.numa_domain_id < rhs.numa_domain_id; });
+            break;
     }
 
     // Apparently we were successful
@@ -123,5 +136,5 @@ std::ostream& operator<<(std::ostream& os, const JProcessorMapping& m) {
     }
 
     os << "+--------+----------++-------+--------+-----------+--------+" << std::endl;
-
+    return os;
 }

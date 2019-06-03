@@ -41,8 +41,8 @@ class JProcessorMapping {
 
 public:
 
-    enum class AffinityStrategy { None, MemoryBound, ComputeBound, Unknown };
-    enum class LocalityStrategy { Global, SocketLocal, NumaDomainLocal, CoreLocal, CpuLocal, Unknown };
+    enum class AffinityStrategy { None, MemoryBound, ComputeBound };
+    enum class LocalityStrategy { Global, SocketLocal, NumaDomainLocal, CoreLocal, CpuLocal };
 
     void initialize(AffinityStrategy affinity, LocalityStrategy locality);
 
