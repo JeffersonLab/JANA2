@@ -42,9 +42,7 @@ using secs = std::chrono::duration<double>;
 void JArrowProcessingController::initialize() {
 
     _scheduler = new JScheduler(_topology->arrows);
-    japp->GetJParameterManager()->GetParameter("jana:pin_threads", _pin_to_cpu);
-    japp->GetJParameterManager()->GetParameter("jana:cpu_mapping", _cpu_id_mapping);
-    japp->GetJParameterManager()->GetParameter("jana:location_mapping", _location_id_mapping);
+    LOG_INFO(_logger) << _topology->mapping << LOG_END;
 }
 
 void JArrowProcessingController::run(size_t nthreads) {
@@ -55,16 +53,15 @@ void JArrowProcessingController::run(size_t nthreads) {
 
 void JArrowProcessingController::scale(size_t nthreads) {
 
+    bool pin_to_cpu = (_topology->mapping.get_affinity() != JProcessorMapping::AffinityStrategy::None);
     size_t next_worker_id = _workers.size();
-    size_t cpu_map_count = _cpu_id_mapping.size();
-    size_t loc_map_count = _location_id_mapping.size();
 
     while (next_worker_id < nthreads) {
 
-        size_t next_cpu_id = (cpu_map_count == 0) ? next_worker_id : _cpu_id_mapping[next_worker_id % cpu_map_count];
-        size_t next_loc_id = (loc_map_count == 0) ? 0 : _location_id_mapping[next_worker_id % loc_map_count];
+        size_t next_cpu_id = _topology->mapping.get_cpu_id(next_worker_id);
+        size_t next_loc_id = _topology->mapping.get_loc_id(next_worker_id);
 
-        _workers.push_back(new JWorker(_scheduler, next_worker_id, next_cpu_id, next_loc_id, _pin_to_cpu));
+        _workers.push_back(new JWorker(_scheduler, next_worker_id, next_cpu_id, next_loc_id, pin_to_cpu));
         next_worker_id++;
     }
 

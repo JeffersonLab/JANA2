@@ -46,16 +46,24 @@ public:
 
     void initialize(AffinityStrategy affinity, LocalityStrategy locality);
 
-    inline size_t get_loc_count() {
+    inline size_t get_loc_count() const {
         return m_loc_count;
     }
 
-    inline size_t get_cpu_id(size_t worker_id) {
+    inline size_t get_cpu_id(size_t worker_id) const {
         return (m_initialized) ? m_mapping[worker_id % m_mapping.size()].cpu_id : worker_id;
     }
 
-    inline size_t get_loc_id(size_t worker_id) {
+    inline size_t get_loc_id(size_t worker_id) const {
         return (m_initialized) ? m_mapping[worker_id % m_mapping.size()].location_id : 0;
+    }
+
+    inline AffinityStrategy get_affinity() const {
+        return m_affinity_strategy;
+    }
+
+    inline LocalityStrategy get_locality() const {
+        return m_locality_strategy;
     }
 
     friend std::ostream& operator<<(std::ostream& os, const JProcessorMapping& m);

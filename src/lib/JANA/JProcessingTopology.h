@@ -13,6 +13,7 @@
 #include <JANA/JEventProcessor.h>
 #include "JPerfMetrics.h"
 #include "JEventPool.h"
+#include "JProcessorMapping.h"
 
 
 struct JProcessingTopology : public JActivable {
@@ -32,6 +33,7 @@ struct JProcessingTopology : public JActivable {
     std::vector<JArrow*> arrows;
     std::vector<JArrow*> sources;           // Sources needed for activation
     std::vector<JArrow*> sinks;             // Sinks needed for finished message count
+    JProcessorMapping mapping;
 
     JLogger _logger;
 
