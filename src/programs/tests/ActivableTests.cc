@@ -9,21 +9,27 @@
 #include <random>
 #include <TestTopology.h>
 #include <TestTopologyComponents.h>
-#include <TestTopologyBuilder.h>
 
 
 TEST_CASE("ActivableActivationTests") {
 
-    TestTopology topology;
-    TestTopologyBuilder builder(topology);
-
     RandIntSource source;
+    MultByTwoProcessor p1;
+    SubOneProcessor p2;
     SumSink<double> sink;
 
-    builder.addSource("emit_rand_ints", source);
-    builder.addProcessor<MultByTwoProcessor>("multiply_by_two");
-    builder.addProcessor<SubOneProcessor>("subtract_one");
-    builder.addSink("sum_everything", sink);
+    TestTopology topology;
+
+    auto q1 = new JMailbox<int>();
+    auto q2 = new JMailbox<double>();
+    auto q3 = new JMailbox<double>();
+
+    topology.addArrow(new SourceArrow<int>("emit_rand_ints", source, q1));
+    topology.addArrow(new MapArrow<int,double>("multiply_by_two", p1, q1, q2));
+    topology.addArrow(new MapArrow<double,double>("subtract_one", p2, q2, q3));
+    topology.addArrow(new SinkArrow<double>("sum_everything", sink, q3));
+
+    topology.get_arrow("emit_rand_ints")->set_chunksize(1);
 
     auto logger = JLogger::nothing(); //everything();
     topology.logger = logger;
@@ -63,17 +69,23 @@ TEST_CASE("ActivableActivationTests") {
 
 TEST_CASE("ActivableDeactivationTests") {
 
-    TestTopology topology;
-    TestTopologyBuilder builder(topology);
-
     RandIntSource source;
     source.emit_limit = 1;
+
+    MultByTwoProcessor p1;
+    SubOneProcessor p2;
     SumSink<double> sink;
 
-    builder.addSource("a", source);
-    builder.addProcessor<MultByTwoProcessor>("b");
-    builder.addProcessor<SubOneProcessor>("c");
-    builder.addSink("d", sink);
+    TestTopology topology;
+
+    auto q1 = new JMailbox<int>();
+    auto q2 = new JMailbox<double>();
+    auto q3 = new JMailbox<double>();
+
+    topology.addArrow(new SourceArrow<int>("a", source, q1));
+    topology.addArrow(new MapArrow<int,double>("b", p1, q1, q2));
+    topology.addArrow(new MapArrow<double,double>("c", p2, q2, q3));
+    topology.addArrow(new SinkArrow<double>("d", sink, q3));
 
     auto logger = JLogger::nothing();
     topology.logger = logger;

@@ -34,7 +34,6 @@
 #include <JANA/JProcessingTopology.h>
 #include <JANA/JArrowProcessingController.h>
 #include "PerformanceTests.h"
-#include "TestTopologyBuilder.h"
 #include "TestTopology.h"
 
 TEST_CASE("MemoryBottleneckTest", "[.][performance]") {
@@ -77,12 +76,15 @@ TEST_CASE("MemoryBottleneckTest", "[.][performance]") {
 //
 
     TestTopology topology;
-    TestTopologyBuilder builder(topology);
 
-    builder.addSource("parse", parse);
-    builder.addProcessor("disentangle", disentangle);
-    builder.addProcessor("track", track);
-    builder.addSink("plot", plot);
+    auto q1 = new JMailbox<Event*>();
+    auto q2 = new JMailbox<Event*>();
+    auto q3 = new JMailbox<Event*>();
+
+    topology.addArrow(new SourceArrow<Event*>("parse", parse, q1));
+    topology.addArrow(new MapArrow<Event*,Event*>("disentangle", disentangle, q1, q2));
+    topology.addArrow(new MapArrow<Event*,Event*>("track", track, q2, q3));
+    topology.addArrow(new SinkArrow<Event*>("plot", plot, q3));
 
     japp = new JApplication; // TODO: Get rid of this
     JProcessingTopology proctop;

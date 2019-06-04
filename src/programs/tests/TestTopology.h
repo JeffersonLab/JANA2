@@ -2,7 +2,6 @@
 #define GREENFIELD_TOPOLOGY_H
 
 #include <JANA/JArrow.h>
-#include <JANA/Queue.h>
 #include <JANA/JLogger.h>
 
 class JScheduler;
@@ -56,7 +55,6 @@ public:
 
     // TODO: Make these private
     std::vector<JArrow *> arrows;
-    std::vector<QueueBase *> queues;
     std::vector<JWorker *> workers;
 
 private:
@@ -89,7 +87,6 @@ public:
     virtual ~TestTopology();
 
     void addArrow(JArrow *arrow, bool sink=false);
-    void addQueue(QueueBase *queue);
 
     JArrow* get_arrow(std::string arrow_name);  // TODO: Should be used internally, not as part of API
 

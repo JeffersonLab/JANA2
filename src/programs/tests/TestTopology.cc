@@ -39,14 +39,6 @@ TestTopology::~TestTopology() {
         // JTopology owns all arrows.
         delete arrow;
     }
-    for (auto queue : queues) {
-        // JTopology owns all queues.
-        delete queue;
-    }
-}
-
-void TestTopology::addQueue(QueueBase *queue) {
-    queues.push_back(queue);
 }
 
 void TestTopology::addArrow(JArrow *arrow, bool sink) {
@@ -152,12 +144,13 @@ std::vector<TestTopology::ArrowStatus> TestTopology::get_arrow_status() {
 
 std::vector<TestTopology::QueueStatus> TestTopology::get_queue_status() {
     std::vector<QueueStatus> statuses;
-    for (QueueBase *q : queues) {
+    for (auto* a : arrows) {
+
         QueueStatus qs;
-        qs.queue_name = q->get_name();
-        qs.is_active = q->is_active();
-        qs.message_count = q->get_item_count();
-        qs.threshold = q->get_threshold();
+        qs.queue_name = a->get_name();
+        qs.is_active = a->is_upstream_finished();
+        qs.message_count = a->get_pending();
+        qs.threshold = a->get_threshold();
         statuses.push_back(qs);
     }
     return statuses;

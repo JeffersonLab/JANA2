@@ -27,11 +27,11 @@ class MapArrow : public JArrow {
 
 private:
     ParallelProcessor<S,T>& _processor;
-    Queue<S> *_input_queue;
-    Queue<T> *_output_queue;
+    JMailbox<S> *_input_queue;
+    JMailbox<T> *_output_queue;
 
 public:
-    MapArrow(std::string name, ParallelProcessor<S,T>& processor, Queue<S> *input_queue, Queue<T> *output_queue)
+    MapArrow(std::string name, ParallelProcessor<S,T>& processor, JMailbox<S> *input_queue, JMailbox<T> *output_queue)
            : JArrow(name, true, NodeType::Stage)
            , _processor(processor)
            , _input_queue(input_queue)
@@ -61,7 +61,7 @@ public:
         auto message_count = xs.size();
         auto end_latency_time = std::chrono::steady_clock::now();
 
-        auto out_status = QueueBase::Status::Ready;
+        auto out_status = JMailbox<T>::Status::Ready;
         if (!ys.empty()) {
             out_status = _output_queue->push(ys);
         }
@@ -72,11 +72,11 @@ public:
         auto overhead = (end_queue_time - start_total_time) - latency;
 
         JArrowMetrics::Status status;
-        if (in_status == QueueBase::Status::Finished) {
+        if (in_status == JMailbox<S>::Status::Finished) {
             set_upstream_finished(true);
             status = JArrowMetrics::Status::Finished;
         }
-        else if (in_status == QueueBase::Status::Ready && out_status == QueueBase::Status::Ready) {
+        else if (in_status == JMailbox<S>::Status::Ready && out_status == JMailbox<T>::Status::Ready) {
             status = JArrowMetrics::Status::KeepGoing;
         }
         else {
@@ -85,7 +85,7 @@ public:
         result.update(status, message_count, 1, latency, overhead);
     }
 
-    size_t get_pending() final { return _input_queue->get_item_count(); }
+    size_t get_pending() final { return _input_queue->size(); }
 
     size_t get_threshold() final { return _input_queue->get_threshold(); }
 

@@ -4,24 +4,27 @@
 #include <thread>
 #include <random>
 #include <TestTopology.h>
-#include <TestTopologyBuilder.h>
 #include <TestTopologyComponents.h>
 #include <JANA/JPerfUtils.h>
 
 
 TEST_CASE("JTopology: Basic functionality") {
 
-    TestTopology topology;
-    TestTopologyBuilder b(topology);
     RandIntSource source;
     MultByTwoProcessor p1;
     SubOneProcessor p2;
     SumSink<double> sink;
 
-    b.addSource("emit_rand_ints", source);
-    b.addProcessor("multiply_by_two", p1);
-    b.addProcessor("subtract_one", p2);
-    b.addSink("sum_everything", sink);
+    TestTopology topology;
+
+    auto q1 = new JMailbox<int>();
+    auto q2 = new JMailbox<double>();
+    auto q3 = new JMailbox<double>();
+
+    topology.addArrow(new SourceArrow<int>("emit_rand_ints", source, q1));
+    topology.addArrow(new MapArrow<int,double>("multiply_by_two", p1, q1, q2));
+    topology.addArrow(new MapArrow<double,double>("subtract_one", p2, q2, q3));
+    topology.addArrow(new SinkArrow<double>("sum_everything", sink, q3));
 
     topology.get_arrow("emit_rand_ints")->set_chunksize(1);
 
@@ -33,9 +36,9 @@ TEST_CASE("JTopology: Basic functionality") {
     SECTION("Before anything runs...") {
 
         // All queues are empty, none are finished
-        for (QueueBase* queue : topology.queues) {
-            REQUIRE (queue->get_item_count() == 0);
-        }
+        REQUIRE(topology.get_arrow("multiply_by_two")->get_pending() == 0);
+        REQUIRE(topology.get_arrow("subtract_one")->get_pending() == 0);
+        REQUIRE(topology.get_arrow("sum_everything")->get_pending() == 0);
     }
 
     SECTION("When nothing is in the input queue...") {
@@ -52,9 +55,9 @@ TEST_CASE("JTopology: Basic functionality") {
         //topology.log_queue_status();
 
         // All `execute` operations are no-ops
-        for (QueueBase* queue : topology.queues) {
-            REQUIRE (queue->get_item_count() == 0);
-        }
+        REQUIRE(topology.get_arrow("multiply_by_two")->get_pending() == 0);
+        REQUIRE(topology.get_arrow("subtract_one")->get_pending() == 0);
+        REQUIRE(topology.get_arrow("sum_everything")->get_pending() == 0);
     }
 
     SECTION("After emitting") {
@@ -69,9 +72,9 @@ TEST_CASE("JTopology: Basic functionality") {
         topology.step("emit_rand_ints");
         topology.log_status();
 
-        REQUIRE(topology.queues[0]->get_item_count() == 1);
-        REQUIRE(topology.queues[1]->get_item_count() == 0);
-        REQUIRE(topology.queues[2]->get_item_count() == 0);
+        REQUIRE(topology.get_arrow("multiply_by_two")->get_pending() == 1);
+        REQUIRE(topology.get_arrow("subtract_one")->get_pending() == 0);
+        REQUIRE(topology.get_arrow("sum_everything")->get_pending() == 0);
 
         topology.step("emit_rand_ints");
         topology.step("emit_rand_ints");
@@ -79,9 +82,10 @@ TEST_CASE("JTopology: Basic functionality") {
         topology.step("emit_rand_ints");
         topology.log_status();
 
-        REQUIRE(topology.queues[0]->get_item_count() == 5);
-        REQUIRE(topology.queues[1]->get_item_count() == 0);
-        REQUIRE(topology.queues[2]->get_item_count() == 0);
+        REQUIRE(topology.get_arrow("multiply_by_two")->get_pending() == 5);
+        REQUIRE(topology.get_arrow("subtract_one")->get_pending() == 0);
+        REQUIRE(topology.get_arrow("sum_everything")->get_pending() == 0);
+
     }
 
     SECTION("Running each stage sequentially yields the correct results") {
@@ -91,24 +95,24 @@ TEST_CASE("JTopology: Basic functionality") {
 
         for (int i = 0; i < 20; ++i) {
             topology.step("emit_rand_ints");
-            REQUIRE(topology.queues[0]->get_item_count() == 1);
-            REQUIRE(topology.queues[1]->get_item_count() == 0);
-            REQUIRE(topology.queues[2]->get_item_count() == 0);
+            REQUIRE(topology.get_arrow("multiply_by_two")->get_pending() == 1);
+            REQUIRE(topology.get_arrow("subtract_one")->get_pending() == 0);
+            REQUIRE(topology.get_arrow("sum_everything")->get_pending() == 0);
 
             topology.step("multiply_by_two");
-            REQUIRE(topology.queues[0]->get_item_count() == 0);
-            REQUIRE(topology.queues[1]->get_item_count() == 1);
-            REQUIRE(topology.queues[2]->get_item_count() == 0);
+            REQUIRE(topology.get_arrow("multiply_by_two")->get_pending() == 0);
+            REQUIRE(topology.get_arrow("subtract_one")->get_pending() == 1);
+            REQUIRE(topology.get_arrow("sum_everything")->get_pending() == 0);
 
             topology.step("subtract_one");
-            REQUIRE(topology.queues[0]->get_item_count() == 0);
-            REQUIRE(topology.queues[1]->get_item_count() == 0);
-            REQUIRE(topology.queues[2]->get_item_count() == 1);
+            REQUIRE(topology.get_arrow("multiply_by_two")->get_pending() == 0);
+            REQUIRE(topology.get_arrow("subtract_one")->get_pending() == 0);
+            REQUIRE(topology.get_arrow("sum_everything")->get_pending() == 1);
 
             topology.step("sum_everything");
-            REQUIRE(topology.queues[0]->get_item_count() == 0);
-            REQUIRE(topology.queues[1]->get_item_count() == 0);
-            REQUIRE(topology.queues[2]->get_item_count() == 0);
+            REQUIRE(topology.get_arrow("multiply_by_two")->get_pending() == 0);
+            REQUIRE(topology.get_arrow("subtract_one")->get_pending() == 0);
+            REQUIRE(topology.get_arrow("sum_everything")->get_pending() == 0);
         }
 
         REQUIRE(sink.sum == (7 * 2.0 - 1) * 20);
@@ -145,12 +149,12 @@ TEST_CASE("JTopology: Basic functionality") {
             //LOG_TRACE(logger) << name << " => "
             //                  << to_string(res) << LOG_END;
 
-            work_left = false;
-            for (QueueBase* queue : topology.queues) {
-                if (queue->get_item_count() > 0) {
-                    work_left = true;
-                }
-            }
+            size_t pending = topology.get_arrow("multiply_by_two")->get_pending() +
+                             topology.get_arrow("subtract_one")->get_pending() +
+                             topology.get_arrow("sum_everything")->get_pending();
+
+            work_left = (pending > 0);
+
             for (auto pair : results) {
                 if (pair.second == JArrowMetrics::Status::KeepGoing) { work_left = true; }
             }

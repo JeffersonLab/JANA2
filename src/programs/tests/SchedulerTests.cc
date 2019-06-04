@@ -6,18 +6,27 @@
 
 #include <JANA/JScheduler.h>
 #include <TestTopologyComponents.h>
-#include <TestTopologyBuilder.h>
+#include <TestTopology.h>
 
 TEST_CASE("SchedulerTests") {
 
+    RandIntSource source;
+    MultByTwoProcessor p1;
+    SubOneProcessor p2;
     SumSink<double> sink;
-    TestTopology topology;
-    TestTopologyBuilder builder(topology);
-    builder.addSource<RandIntSource>("emit_rand_ints");
-    builder.addProcessor<MultByTwoProcessor>("multiply_by_two");
-    builder.addProcessor<SubOneProcessor>("subtract_one");
-    builder.addSink("sum_everything", sink);
 
+    TestTopology topology;
+
+    auto q1 = new JMailbox<int>();
+    auto q2 = new JMailbox<double>();
+    auto q3 = new JMailbox<double>();
+
+    topology.addArrow(new SourceArrow<int>("emit_rand_ints", source, q1));
+    topology.addArrow(new MapArrow<int,double>("multiply_by_two", p1, q1, q2));
+    topology.addArrow(new MapArrow<double,double>("subtract_one", p2, q2, q3));
+    topology.addArrow(new SinkArrow<double>("sum_everything", sink, q3));
+
+    topology.get_arrow("emit_rand_ints")->set_chunksize(1);
     topology.activate("emit_rand_ints");
 
     JArrow* assignment;
@@ -77,22 +86,27 @@ TEST_CASE("SchedulerTests") {
 
 TEST_CASE("SchedulerRoundRobinBehaviorTests") {
 
+    RandIntSource source;
+    MultByTwoProcessor p1;
+    SubOneProcessor p2;
     SumSink<double> sink;
 
     TestTopology topology;
-    TestTopologyBuilder builder(topology);
 
-    builder.addSource<RandIntSource>("emit_rand_ints");
-    builder.addProcessor<MultByTwoProcessor>("multiply_by_two");
-    builder.addProcessor<SubOneProcessor>("subtract_one");
-    builder.addSink("sum_everything", sink);
+    auto q1 = new JMailbox<int>();
+    auto q2 = new JMailbox<double>();
+    auto q3 = new JMailbox<double>();
+
+    topology.addArrow(new SourceArrow<int>("emit_rand_ints", source, q1));
+    topology.addArrow(new MapArrow<int,double>("multiply_by_two", p1, q1, q2));
+    topology.addArrow(new MapArrow<double,double>("subtract_one", p2, q2, q3));
+    topology.addArrow(new SinkArrow<double>("sum_everything", sink, q3));
+
+    topology.get_arrow("emit_rand_ints")->set_chunksize(1);
+    topology.activate("emit_rand_ints");
 
     JScheduler scheduler(topology.arrows);
-
     auto logger = JLogger::nothing(); // everything();
-
-    // Assume everything is active for now
-    topology.activate("emit_rand_ints");
 
     auto last_result = JArrowMetrics::Status::ComeBackLater;
     JArrow* assignment = nullptr;

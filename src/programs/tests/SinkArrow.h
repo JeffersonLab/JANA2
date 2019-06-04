@@ -29,12 +29,12 @@ class SinkArrow : public JArrow {
 
 private:
     Sink<T> & _sink;
-    Queue<T> * _input_queue;
+    JMailbox<T> * _input_queue;
     std::vector<T> _chunk_buffer;
     bool _is_initialized = false;
 
 public:
-    SinkArrow(std::string name, Sink<T>& sink, Queue<T>* input_queue)
+    SinkArrow(std::string name, Sink<T>& sink, JMailbox<T>* input_queue)
         : JArrow(name, false, NodeType::Sink)
         , _sink(sink)
         , _input_queue(input_queue) {
@@ -74,14 +74,14 @@ public:
         auto overhead = (stop_time - start_time) - latency;
 
         JArrowMetrics::Status status;
-        if (in_status == Queue<T>::Status::Finished) {
+        if (in_status == JMailbox<T>::Status::Finished) {
             set_upstream_finished(true);
             set_active(false);
             notify_downstream(false);
             _sink.finalize();
             status = JArrowMetrics::Status::Finished;
         }
-        else if (in_status == Queue<T>::Status::Empty) {
+        else if (in_status == JMailbox<T>::Status::Empty) {
             status = JArrowMetrics::Status::ComeBackLater;
         }
         else {
@@ -90,7 +90,7 @@ public:
         result.update(status, message_count, 1, latency, overhead);
     }
 
-    size_t get_pending() final { return _input_queue->get_item_count(); }
+    size_t get_pending() final { return _input_queue->size(); }
 
     size_t get_threshold() final { return _input_queue->get_threshold(); }
 

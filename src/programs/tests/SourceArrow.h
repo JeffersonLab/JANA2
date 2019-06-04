@@ -6,7 +6,7 @@
 #define GREENFIELD_SOURCEARROW_H
 
 #include <JANA/JArrow.h>
-#include <JANA/Queue.h>
+#include <JANA/JMailbox.h>
 
 
 /// Source stands in for (and improves upon) JEventSource.
@@ -36,13 +36,13 @@ class SourceArrow : public JArrow {
 
 private:
     Source<T> & _source;
-    Queue<T> * _output_queue;
+    JMailbox<T> * _output_queue;
     std::vector<T> _chunk_buffer;
     bool _is_initialized = false;
 
 
 public:
-    SourceArrow(std::string name, Source<T>& source, Queue<T> *output_queue)
+    SourceArrow(std::string name, Source<T>& source, JMailbox<T> *output_queue)
         : JArrow(name, false, NodeType::Source)
         , _source(source)
         , _output_queue(output_queue) {
@@ -64,9 +64,8 @@ public:
         auto start_time = std::chrono::steady_clock::now();
         auto in_status = _source.inprocess(_chunk_buffer, get_chunksize());
         auto latency_time = std::chrono::steady_clock::now();
-        auto out_status = _output_queue->push(std::move(_chunk_buffer));
+        auto out_status = _output_queue->push(_chunk_buffer);
         auto message_count = _chunk_buffer.size();
-        _chunk_buffer.clear();
         auto finished_time = std::chrono::steady_clock::now();
 
         auto latency = (latency_time - start_time);
@@ -83,7 +82,7 @@ public:
             // a couple of straggler events ~might~ get stranded on an inactive queue
             status = JArrowMetrics::Status::Finished;
         }
-        else if (in_status == Source<T>::Status::KeepGoing && out_status == QueueBase::Status::Ready) {
+        else if (in_status == Source<T>::Status::KeepGoing && out_status == JMailbox<T>::Status::Ready) {
             status = JArrowMetrics::Status::KeepGoing;
         }
         else {
