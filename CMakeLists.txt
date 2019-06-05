@@ -40,7 +40,14 @@ add_executable(tests
 
 add_executable(playground
         src/programs/playground/playground.cc
-        )
+        src/programs/playground/factory_gens_iter_1.cc
+        src/programs/playground/Factory.cc
+        src/programs/playground/Factory.h
+        src/programs/playground/JContext.cc
+        src/programs/playground/JContext.h
+        src/programs/playground/JContext.tcc
+        src/programs/playground/FactoryGenerator.h
+        src/programs/playground/Factory.cc)
 
 add_library(jana2 STATIC
         src/lib/JANA/JApplication.cc

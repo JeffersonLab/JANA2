@@ -1,27 +1,34 @@
 
-#include <cstddef>
 #include <iostream>
-#include <unistd.h>
-#include <sys/wait.h>
-#include <JANA/JProcessorMapping.h>
+#include "JContext.h"
+#include "Factory.h"
+
+struct JObject{};
+
+struct DummyData : public JObject {
+    double x = 22.2;
+};
+
+struct DummyFactory : public FactoryT<DummyData> {
+    double y = 44;
+};
+
 
 int main() {
 
-    JProcessorMapping m;
-    std::cout << m << std::endl;
+    std::vector<FactoryGenerator*> generators;
+    generators.push_back(new FactoryGeneratorT<DummyFactory>());
 
-    m.initialize(JProcessorMapping::AffinityStrategy::MemoryBound,
-                 JProcessorMapping::LocalityStrategy::CoreLocal);
-    std::cout << m << std::endl;
+    JContext context(generators);
 
-    m.initialize(JProcessorMapping::AffinityStrategy::MemoryBound,
-                 JProcessorMapping::LocalityStrategy::NumaDomainLocal);
-    std::cout << m << std::endl;
 
-    m.initialize(JProcessorMapping::AffinityStrategy::ComputeBound,
-                 JProcessorMapping::LocalityStrategy::CpuLocal);
-    std::cout << m << std::endl;
+    auto fac = context.GetFactory<DummyData>(); // returns FactoryT<DummyData>, not DummyFactory
+    // This is (supposedly) a feature: we don't _want_ to know which Factory we used!
+    // If we did know exactly which factory was used, we would be breaking the decoupling!
+    // Instead, we could be creating Factories through template specialization instead of inheritance
+
 }
+
 
 
 
