@@ -51,39 +51,123 @@ public:
     void Clear();   // Whenever context gets recycled
 
 
+    // Factory get/create
+    template<typename T>
+    FactoryT<T>* GetFactory(std::string tag="", bool create_dummy = false) {
+
+        auto key = std::make_pair(std::type_index(typeid(T)), tag);
+        auto it = m_underlying.find(key);
+        if (it != m_underlying.end()) {
+
+            if (it->second.second != nullptr) {
+                // We have the factory, so we can just return it
+                return static_cast<FactoryT<T>*>(it->second.second);
+            }
+            else {
+                // We don't have the factory, but we can create it
+                auto fac = it->second.first->create(tag);
+                it->second.second = fac;
+                return static_cast<FactoryT<T>*>(fac);
+            }
+        }
+        else if (create_dummy) {
+            // We don't have a generator, but we are allowed to create a dummy
+            auto fac = new FactoryT<T>(tag);
+            m_underlying[key] = std::make_pair(nullptr, fac);
+            return fac;
+        }
+        else {
+            // No generator, and no dummies allowed
+            throw JException("Could not find factory!");
+        }
+    }
+
+
     // C style getters
-    template<class T>
-    FactoryT<T>* Get(T** item, const std::string& tag="") const;
 
     template<class T>
-    FactoryT<T>* Get(std::vector<const T*> &vec, const std::string& tag = "") const;
+    FactoryT<T>* Get(T** destination, const std::string& tag="") {
+
+        auto factory = GetFactory<T>(tag);
+        auto iterators = factory->get_or_create(*this);
+        if (std::distance(*iterators.first, *iterators.second) != 1) {
+            throw JException("Wrong number of elements!");
+        }
+        *destination = *iterators.first;
+        return factory;
+    }
+
+    template<class T>
+    FactoryT<T>* Get(std::vector<T*>& destination, const std::string& tag = "") {
+
+        auto factory = GetFactory<T>(tag);
+        auto iterators = factory->get_or_create(*this);
+        for (auto it=iterators.first; it!=iterators.second; it++) {
+            destination.push_back(*it);
+        }
+        return factory;
+    }
 
 
     // C++ style getters
     template<class T>
-    const T* GetSingle(const std::string& tag = "") const;
+    const T* GetSingle(const std::string& tag = "") {
+
+        auto iterators = GetFactory<T>(tag)->get_or_create(*this);
+        if (std::distance(*iterators.first, *iterators.second) != 1) {
+            throw JException("Wrong number of elements!");
+        }
+        return *iterators.first;
+    }
 
     template<class T>
-    std::vector<const T*> GetVector(const std::string& tag = "");
+    std::vector<const T*> GetVector(const std::string& tag = "") {
+
+        auto iters = GetFactory<T>(tag)->get_or_create(*this);
+        std::vector<const T*> vec;
+        for (auto it=iters.first; it!=iters.second; ++it) {
+            vec.push_back(*it);
+        }
+        return vec; // Assumes RVO
+    }
 
     template<class T>
-    typename FactoryT<T>::PairType GetIterators(const std::string& tag = "") const;
+    typename FactoryT<T>::PairType GetIterators(const std::string& tag = "") {
 
-    template<typename T>
-    FactoryT<T>* GetFactory(std::string tag="", bool create_dummy = false);
+        return GetFactory<T>(tag)->get_or_create(*this);
+    }
+};
 
+
+
+/// JInsertableContext allows Sources to insert data directly into a Context,
+/// removing the need for the *Source::GetObjects() nightmare.
+/// By making this a separate class, we use the type system to prevent
+/// Factories and *Processors from inserting things where they shouldn't.
+class JInsertableContext : public JContext {
+
+
+    // TODO: Insert() operations should throw if factory is not a dummy.
+    // TODO: Factories should be private; metadata should be public.
+public:
+    explicit JInsertableContext(const std::vector<FactoryGenerator*>& factory_generators);
 
     // Insert
     template <typename T>
-    void Insert(T* item, const std::string& aTag = "");
+    void Insert(T* item, const std::string& tag = "") {
+
+        auto fac = GetFactory<T>(tag, true);
+        fac.insert(item);
+    }
 
     template <typename T>
-    void Insert(const std::vector<T*>& items, const std::string& tag = "");
+    void Insert(const std::vector<T*>& items, const std::string& tag = "") {
 
+        auto fac = GetFactory<T>(tag, true);
+        for (T* item : items) {
+            fac->insert(item);
+        }
+    }
 };
-
-// Template definitions
-#include "JContext.tcc"
-
 
 #endif //JANA2_JCONTEXT_H

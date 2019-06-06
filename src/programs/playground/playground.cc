@@ -40,7 +40,7 @@ int main() {
     generators.push_back(new FactoryGeneratorT<Hit>("raw_hits"));
     generators.push_back(new FactoryGeneratorT<Hit, CalibratedHitFactory>("calibrated_hits"));
 
-    JContext context(generators);
+    JInsertableContext context(generators);
 
     std::vector<Hit*> raw_hits;
     for (int i=0; i<20; ++i) {

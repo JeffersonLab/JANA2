@@ -81,3 +81,9 @@ void JContext::Clear() {
 }
 
 
+/// JInsertableContext is a straightforward wrapper around JContext.
+JInsertableContext::JInsertableContext(const std::vector<FactoryGenerator*>& factory_generators)
+    : JContext(factory_generators) {}
+
+
+
