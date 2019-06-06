@@ -6,24 +6,39 @@
 struct JObject{};
 
 struct Hit : public JObject {
-    double x;
+    double E;
 };
 
 template <>
-struct FactoryT<Hit>::Metadata {
-    int x = 1000;
-    double y = 22;
+struct Metadata<Hit> {
+    int count = 22;
 };
 
-struct DummyFactory : public FactoryT<Hit> {
-    DummyFactory(std::string tag) : FactoryT(tag, new FactoryT<Hit>::Metadata()) {}
+template <>
+void FactoryT<Hit>::process(JContext& c) {
+    std::cout << "Calling default process() for " << get_type_name() << std::endl;
+    std::cout << "Reading Metadata<Hit> = " << get_metadata().count++ << std::endl;
+}
+
+
+struct WeirdHitFactory : public FactoryT<Hit> {
+
+    explicit WeirdHitFactory(std::string tag)
+        : FactoryT(std::move(tag)) {}
+
+    void process(JContext& c) {
+        std::cout << "Calling weird process() from " << get_type_name() << std::endl;
+        std::cout << "Reading Metadata<Hit> = " << get_metadata().count++ << std::endl;
+    }
 };
 
 
 int main() {
 
     std::vector<FactoryGenerator*> generators;
-    generators.push_back(new FactoryGeneratorT<DummyFactory, Hit>(""));
+
+    //generators.push_back(new FactoryGeneratorT<Hit>(""));   // Uses default FactoryT<T> impl
+    generators.push_back(new FactoryGeneratorT<Hit, WeirdHitFactory>(""));  // Uses arbitrary impl
 
     JContext context(generators);
 
@@ -32,8 +47,9 @@ int main() {
     // This is not a bug: we don't _want_ to know which Factory we used!
     // If we did know exactly which factory was used, plugins would no longer be substitutable!
 
-    auto metadata = fac->get_metadata();
-    std::cout << "Extracted metadata: " << metadata->y << std::endl;
+    fac->process(context);
+
+    std::cout << "process() count: " << fac->get_metadata().count << std::endl;
 
 }
 

@@ -40,12 +40,27 @@
 
 class JContext;
 
+
+/// Basic template for factory metadata. T <: JObject.
+/// This definition gets overridden using template specialization.
+/// Note that each JObject type has exactly _one_ metadata definition.
+/// Anything else would break plugin substitutability.
+template <typename T>
+struct Metadata {};
+
+
+/// Proposal for next generation of Factories.
+/// The base class doesn't do anything (except declare its own type information,
+/// track its lifecycle, and offer virtual functions for the user to override.
 class Factory {
 
     const std::string m_tag;
     const std::string m_type_name;
     const std::string m_inner_type_name;
     const std::type_index m_inner_type_index;
+
+    enum class Status {Uninitialized, InvalidMetadata, Unprocessed, Processed};
+    Status m_status = Status::Uninitialized;
 
     bool m_is_created = false;
     std::mutex m_mutex;
@@ -64,6 +79,8 @@ public:
     virtual void process(JContext& c) {};  // Not threadsafe, provided by user
     virtual void clear() {};
 
+    // TODO: These won't work when we consider the full lifecycle.
+    // Merge into JFactoryT::get() instead.
     // Threadsafe wrappers for process()
     bool try_process(JContext& c);
     inline void wait_until_processed(JContext& c);
@@ -90,16 +107,14 @@ class FactoryT : public Factory {
 public:
     using iterator_t = typename std::vector<T*>::const_iterator;
     using pair_t = std::pair<iterator_t, iterator_t>;
-    struct Metadata;  // User overrides this.
 
 private:
     std::vector<T*> m_underlying;
-    Metadata* m_metadata;
+    Metadata<T> m_metadata;
 
 public:
-    explicit FactoryT(std::string tag = "", Metadata* metadata = nullptr)
-        : Factory("asdf", std::type_index(typeid(T)), std::move(tag))
-        , m_metadata(metadata) {
+    explicit FactoryT(std::string tag = "")
+        : Factory("asdf", std::type_index(typeid(T)), std::move(tag)) {
     }
 
     void process(JContext& c) override {};
@@ -116,7 +131,8 @@ public:
 
     pair_t get() { return std::make_pair(m_underlying.cbegin(), m_underlying.cend()); }
 
-    Metadata* get_metadata() { return m_metadata; }
+    // TODO: Figure out best return type
+    Metadata<T>& get_metadata() { return m_metadata; }
 
     void clear() override {
         for (auto t : m_underlying) {

@@ -58,13 +58,13 @@ struct FactoryGenerator {
 ///   builder.add<FactoryType,ObjectType>("tagname")
 
 /// TODO: Statically enforce that F <: FactoryT<T>
-template <typename F, typename T>
+template <typename T, typename F = FactoryT<T>>
 class FactoryGeneratorT : public FactoryGenerator {
 
     std::string m_tag;
 
 public:
-    FactoryGeneratorT(std::string tag = "") : m_tag(std::move(tag)) {}
+    explicit FactoryGeneratorT(std::string tag = "") : m_tag(std::move(tag)) {}
 
     Factory* create(std::string tag) override {
         return new F(tag);
