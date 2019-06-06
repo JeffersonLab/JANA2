@@ -38,56 +38,101 @@
 #include "JContext.h"
 
 
-
+/// GetFactory() will create a FactoryT
 template<typename T>
 FactoryT<T>* JContext::GetFactory(std::string tag) {
+
     auto key = std::make_pair(std::type_index(typeid(T)), tag);
-    auto it = m_factories.find(key);
-    if (it != m_factories.end()) {
-        return static_cast<FactoryT<T>*>(it->second);
+    auto it = m_underlying.find(key);
+    if (it != m_underlying.end()) {
+        return static_cast<FactoryT<T>*>(it->second.second);
     }
     throw JException("Could not find factory!");
-
 }
 
 
 // C style getters
 template<class T>
-FactoryT<T>* JContext::Get(T** item, const std::string& tag) const {
+FactoryT<T>* JContext::Get(T** destination, const std::string& tag) const {
 
+    auto factory = GetFactory<T>(tag);
+    auto iterators = factory.get();
+    *destination = *iterators.first;
+    // TODO: Assert exactly one element
+    return factory;
 }
 
 template<class T>
-FactoryT<T>* JContext::Get(std::vector<const T*> &vec, const std::string& tag) const {
+FactoryT<T>* JContext::Get(std::vector<const T*> &destination, const std::string& tag) const {
 
+    auto iterators = GetFactory<T>(tag).get();
+    for (auto it=iterators.first; it!=iterators.second; it++) {
+        destination.push_back(*it);
+    }
+    return GetFactory<T>(tag);
 }
 
 
 // C++ style getters
 template<class T>
 const T* JContext::GetSingle(const std::string& tag) const {
-
+    auto result = GetFactory<T>(tag).get();
+    // TODO: Assert exactly one element
+    return *result.first;
 }
 
 template<class T>
 std::vector<const T*> JContext::GetVector(const std::string& tag) const {
 
+    auto iters = GetFactory<T>(tag).get();
+    std::vector<const T*> vec;
+    for (auto it=iters.first; it!=iters.second; ++it) {
+        vec.push_back(*it);
+    }
+    return vec; // Assumes RVO
 }
 
 template<class T>
 typename FactoryT<T>::PairType JContext::GetIterators(const std::string& tag) const {
-
+    return GetFactory<T>(tag).get();
 }
 
+
+/// TODO: Consider a tagged union of (*FactoryGenerator, *Factory, *DummyFactory)
+///       Advantages: Detect and complain when user attempts to insert data into a non-dummy factory
+///                   No reason to store FactoryGenerators once Factory has been generated
 
 // Insert
 template <typename T>
 void JContext::Insert(T* item, const std::string& tag) const {
 
+    auto key = std::make_pair(std::type_index(typeid(T)), tag);
+    auto it = m_underlying.find(key);
+    if (it == m_underlying.end()) {
+
+        // No factoryGenerator; create a dummy Factory
+        auto fac = new FactoryT<T>(tag);
+        m_underlying[key] = std::make_pair(nullptr, fac);
+        fac.insert(item);
+    }
+    else if (it->second.second == nullptr) {
+
+        // FactoryGenerator exists but Factory has not been created yet
+        auto fac = new FactoryT<T>(tag);
+        it->second.second = fac;
+        fac.insert(item);
+    }
+    else {
+
+        // Append data into existing Factory
+        auto fac = static_cast<FactoryT<T>*>(it->second.second);
+        fac.insert(item);
+    }
 }
 
 template <typename T>
 void JContext::Insert(const std::vector<T*>& items, const std::string& tag) const {
+    // Copy
 
 }
 

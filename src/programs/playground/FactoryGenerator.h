@@ -35,14 +35,45 @@
 
 #include "Factory.h"
 
+#include <typeindex>
+
+/// Proposed new base class for FactoryGenerators.
+/// Goals:
+/// - Be able to create Factories lazily given (inner_type_index, tag)
+/// - Be able to use different Factory impls for different tags
+/// - Each Generator instantiates exactly one Factory
+/// - Factory creation is decoupled from JFactorySets, etc
+
 struct FactoryGenerator {
-    virtual Factory* create() = 0;
+    virtual Factory* create(std::string tag) = 0;
+    virtual std::type_index get_inner_type_index() = 0;
+    virtual std::string get_tag() = 0;
 };
 
-template <typename T>
-struct FactoryGeneratorT : FactoryGenerator {
-    Factory* create() override {
-        return new T();
+
+
+/// Proposed default implementation for FactoryGenerators.
+/// Goals:
+/// - Be able to hide all FactoryGenerator machinery behind a method like
+///   builder.add<FactoryType,ObjectType>("tagname")
+
+/// TODO: Statically enforce that F <: FactoryT<T>
+template <typename F, typename T>
+class FactoryGeneratorT : FactoryGenerator {
+
+    std::string m_tag;
+
+public:
+    FactoryGeneratorT(std::string tag = "") : m_tag(std::move(tag)) {}
+
+    Factory* create(std::string tag) override {
+        return new F(tag);
+    }
+    std::type_index get_inner_type_index() override {
+        return std::type_index(typeid(T));
+    }
+    std::string get_tag() override {
+        return m_tag;
     }
 };
 

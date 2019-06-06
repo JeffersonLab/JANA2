@@ -35,10 +35,18 @@
 #include <vector>
 
 JContext::JContext(const std::vector<FactoryGenerator*>& factory_generators) {
+
+    // Build underlying table from factory generators
+    // Note that factories themselves are instantiated lazily
+
     for (auto gen : factory_generators) {
-        auto fac = gen->create();
-        auto key = make_pair(fac->get_inner_type_index(), fac->get_tag());
-        m_factories[key] = fac;
+
+        auto key = std::make_pair(gen->get_inner_type_index(), gen->get_tag());
+        auto val = std::make_pair(gen, nullptr);
+        m_underlying[key] = val;
+
+        // Our strategy for dealing with duplicates is to use the last
+        // This is something we want to handle upstream, e.g. in JTopologyBuilder
     }
 }
 
@@ -46,15 +54,29 @@ JContext::~JContext() {
     Clear();
 }
 
+/// Update() tells all Factories to (eagerly) update any persistent metadata.
+/// The only example of this is when there is a change of run number. Someone (either the EventSource
+/// or the EventSourceArrow) notices that the run number has changed compared to the previous contents of
+/// the Event Context and tells the factories that their metadata is now invalid.
+
+/// TODO: We could make this lazy by setting an 'invalid' bit on m_underlying and
+///       calling factory.update() from context.get() instead.
+
+/// TODO: Reconsider storing metadata inside Factories in favor of some FRP pattern
+
 void JContext::Update() {
-    for (auto& factory : m_factories) {
-        factory.second->update(*this);
+    for (auto& row : m_underlying) {
+        row.second.second->update(*this);
     }
 }
 
+/// Clear() tells all Factories to clear all JObjects associated with this Context.
+/// This is usually called when recycling an Event from the EventPool.
+/// Note that metadata inside Factories persists across Clear() operations.
+
 void JContext::Clear() {
-    for (auto& factory : m_factories) {
-        factory.second->clear();
+    for (auto& row : m_underlying) {
+        row.second.second->clear();
     }
 }
 

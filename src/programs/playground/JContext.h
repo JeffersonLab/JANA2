@@ -39,8 +39,9 @@
 #include <map>
 
 class JContext {
-private:
-    std::map<std::pair<std::type_index, std::string>, Factory*> m_factories;
+
+    mutable std::map <std::pair <std::type_index, std::string>,
+                      std::pair <FactoryGenerator*, Factory* >> m_underlying;
 
 public:
 
@@ -69,7 +70,7 @@ public:
     typename FactoryT<T>::PairType GetIterators(const std::string& tag = "") const;
 
     template<typename T>
-    FactoryT<T>* GetFactory(std::string tag="");
+    FactoryT<T>* GetFactory(std::string tag="", bool create_dummy = false);
 
 
     // Insert
