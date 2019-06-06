@@ -71,18 +71,35 @@ public:
 };
 
 
+/// How are non-dummy Factories used?
+/// - User supplies a Metadata specialization and a process() implementation.
+/// - Inside process(), the user will call get_metadata() and insert()
+/// - Externally, JANA will call get(), update(), clear()
+/// - Externally, the user will call get_metadata()
+/// - Externally, NOBODY will call insert()
+
+/// How are dummy Factories used?
+/// - Users may substitute a real Factory with a dummy one any time.
+/// - Externally, JANA calls insert(), get().
+/// - Externally, the user will call get_metadata() (because of substitutability)
+/// - Internally, nobody calls anything.
+
 template <typename T>
 class FactoryT : public Factory {
 
 public:
     using iterator_t = typename std::vector<T*>::const_iterator;
     using pair_t = std::pair<iterator_t, iterator_t>;
+    struct Metadata;  // User overrides this.
 
 private:
     std::vector<T*> m_underlying;
+    Metadata* m_metadata;
 
 public:
-    explicit FactoryT(std::string tag = "") : Factory("asdf", std::type_index(typeid(T)), std::move(tag)) {
+    explicit FactoryT(std::string tag = "", Metadata* metadata = nullptr)
+        : Factory("asdf", std::type_index(typeid(T)), std::move(tag))
+        , m_metadata(metadata) {
     }
 
     void process(JContext& c) override {};
@@ -99,12 +116,16 @@ public:
 
     pair_t get() { return std::make_pair(m_underlying.cbegin(), m_underlying.cend()); }
 
+    Metadata* get_metadata() { return m_metadata; }
+
     void clear() override {
         for (auto t : m_underlying) {
             delete t;
         }
         m_underlying.clear();
     };
+
+
 };
 
 

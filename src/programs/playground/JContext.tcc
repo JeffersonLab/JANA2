@@ -40,14 +40,33 @@
 
 /// GetFactory() will create a FactoryT
 template<typename T>
-FactoryT<T>* JContext::GetFactory(std::string tag) {
+FactoryT<T>* JContext::GetFactory(std::string tag, bool create_dummy) {
 
     auto key = std::make_pair(std::type_index(typeid(T)), tag);
     auto it = m_underlying.find(key);
     if (it != m_underlying.end()) {
-        return static_cast<FactoryT<T>*>(it->second.second);
+
+        if (it->second.second != nullptr) {
+            // We have the factory, so we can just return it
+            return static_cast<FactoryT<T>*>(it->second.second);
+        }
+        else {
+            // We don't have the factory, but we can create it
+            auto fac = it->second.first->create(tag);
+            it->second.second = fac;
+            return static_cast<FactoryT<T>*>(fac);
+        }
     }
-    throw JException("Could not find factory!");
+    else if (create_dummy) {
+        // We don't have a generator, but we are allowed to create a dummy
+        auto fac = new FactoryT<T>(tag);
+        m_underlying[key] = std::make_pair(nullptr, fac);
+        return fac;
+    }
+    else {
+        // No generator, and no dummies allowed
+        throw JException("Could not find factory!");
+    }
 }
 
 
@@ -106,34 +125,17 @@ typename FactoryT<T>::PairType JContext::GetIterators(const std::string& tag) co
 template <typename T>
 void JContext::Insert(T* item, const std::string& tag) const {
 
-    auto key = std::make_pair(std::type_index(typeid(T)), tag);
-    auto it = m_underlying.find(key);
-    if (it == m_underlying.end()) {
-
-        // No factoryGenerator; create a dummy Factory
-        auto fac = new FactoryT<T>(tag);
-        m_underlying[key] = std::make_pair(nullptr, fac);
-        fac.insert(item);
-    }
-    else if (it->second.second == nullptr) {
-
-        // FactoryGenerator exists but Factory has not been created yet
-        auto fac = new FactoryT<T>(tag);
-        it->second.second = fac;
-        fac.insert(item);
-    }
-    else {
-
-        // Append data into existing Factory
-        auto fac = static_cast<FactoryT<T>*>(it->second.second);
-        fac.insert(item);
-    }
+    auto fac = GetFactory<T>(tag, true);
+    fac.insert(item);
 }
 
 template <typename T>
 void JContext::Insert(const std::vector<T*>& items, const std::string& tag) const {
-    // Copy
 
+    auto fac = GetFactory<T>(tag, true);
+    for (T* item : items) {
+        fac.insert(item);
+    }
 }
 
 

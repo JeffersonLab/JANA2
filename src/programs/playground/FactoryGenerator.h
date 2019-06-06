@@ -59,7 +59,7 @@ struct FactoryGenerator {
 
 /// TODO: Statically enforce that F <: FactoryT<T>
 template <typename F, typename T>
-class FactoryGeneratorT : FactoryGenerator {
+class FactoryGeneratorT : public FactoryGenerator {
 
     std::string m_tag;
 

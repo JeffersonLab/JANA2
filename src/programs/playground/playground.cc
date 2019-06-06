@@ -5,27 +5,35 @@
 
 struct JObject{};
 
-struct DummyData : public JObject {
-    double x = 22.2;
+struct Hit : public JObject {
+    double x;
 };
 
-struct DummyFactory : public FactoryT<DummyData> {
-    double y = 44;
+template <>
+struct FactoryT<Hit>::Metadata {
+    int x = 1000;
+    double y = 22;
+};
+
+struct DummyFactory : public FactoryT<Hit> {
+    DummyFactory(std::string tag) : FactoryT(tag, new FactoryT<Hit>::Metadata()) {}
 };
 
 
 int main() {
 
     std::vector<FactoryGenerator*> generators;
-    generators.push_back(new FactoryGeneratorT<DummyFactory>());
+    generators.push_back(new FactoryGeneratorT<DummyFactory, Hit>(""));
 
     JContext context(generators);
 
+    auto fac = context.GetFactory<Hit>();
+    // Returns FactoryT<DummyData>, not DummyFactory
+    // This is not a bug: we don't _want_ to know which Factory we used!
+    // If we did know exactly which factory was used, plugins would no longer be substitutable!
 
-    auto fac = context.GetFactory<DummyData>(); // returns FactoryT<DummyData>, not DummyFactory
-    // This is (supposedly) a feature: we don't _want_ to know which Factory we used!
-    // If we did know exactly which factory was used, we would be breaking the decoupling!
-    // Instead, we could be creating Factories through template specialization instead of inheritance
+    auto metadata = fac->get_metadata();
+    std::cout << "Extracted metadata: " << metadata->y << std::endl;
 
 }
 
