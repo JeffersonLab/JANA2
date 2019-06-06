@@ -64,7 +64,7 @@ public:
     const T* GetSingle(const std::string& tag = "") const;
 
     template<class T>
-    std::vector<const T*> GetVector(const std::string& tag = "") const;
+    std::vector<const T*> GetVector(const std::string& tag = "");
 
     template<class T>
     typename FactoryT<T>::PairType GetIterators(const std::string& tag = "") const;
@@ -75,10 +75,10 @@ public:
 
     // Insert
     template <typename T>
-    void Insert(T* item, const std::string& aTag = "") const;
+    void Insert(T* item, const std::string& aTag = "");
 
     template <typename T>
-    void Insert(const std::vector<T*>& items, const std::string& tag = "") const;
+    void Insert(const std::vector<T*>& items, const std::string& tag = "");
 
 };
 

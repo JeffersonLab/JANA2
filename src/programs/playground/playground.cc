@@ -11,24 +11,24 @@ struct Hit : public JObject {
 
 template <>
 struct Metadata<Hit> {
-    int count = 22;
+    int count = 0;
 };
 
-template <>
-void FactoryT<Hit>::process(JContext& c) {
-    std::cout << "Calling default process() for " << get_type_name() << std::endl;
-    std::cout << "Reading Metadata<Hit> = " << get_metadata().count++ << std::endl;
-}
 
+struct CalibratedHitFactory : public FactoryT<Hit> {
 
-struct WeirdHitFactory : public FactoryT<Hit> {
-
-    explicit WeirdHitFactory(std::string tag)
+    explicit CalibratedHitFactory(std::string tag)
         : FactoryT(std::move(tag)) {}
 
-    void process(JContext& c) {
-        std::cout << "Calling weird process() from " << get_type_name() << std::endl;
-        std::cout << "Reading Metadata<Hit> = " << get_metadata().count++ << std::endl;
+    void process(JContext& event) override {
+
+        auto raw_hits = event.GetVector<Hit>("raw_hits");
+        for (auto hit : raw_hits) {
+            Hit* calibrated_hit = new Hit(*hit);
+            calibrated_hit->E += 7;
+            insert(calibrated_hit);
+            ++get_metadata().count;
+        }
     }
 };
 
@@ -37,20 +37,26 @@ int main() {
 
     std::vector<FactoryGenerator*> generators;
 
-    //generators.push_back(new FactoryGeneratorT<Hit>(""));   // Uses default FactoryT<T> impl
-    generators.push_back(new FactoryGeneratorT<Hit, WeirdHitFactory>(""));  // Uses arbitrary impl
+    generators.push_back(new FactoryGeneratorT<Hit>("raw_hits"));
+    generators.push_back(new FactoryGeneratorT<Hit, CalibratedHitFactory>("calibrated_hits"));
 
     JContext context(generators);
 
-    auto fac = context.GetFactory<Hit>();
-    // Returns FactoryT<DummyData>, not DummyFactory
-    // This is not a bug: we don't _want_ to know which Factory we used!
-    // If we did know exactly which factory was used, plugins would no longer be substitutable!
+    std::vector<Hit*> raw_hits;
+    for (int i=0; i<20; ++i) {
+        Hit* hit = new Hit();
+        hit->E = i;
+        raw_hits.push_back(hit);
+    }
+    context.Insert(raw_hits, "raw_hits");
 
-    fac->process(context);
+    std::vector<const Hit*> calibrated_hits = context.GetVector<Hit>("calibrated_hits");
 
-    std::cout << "process() count: " << fac->get_metadata().count << std::endl;
-
+    for (const Hit* hit : calibrated_hits) {
+        std::cout << hit->E << ", ";
+    }
+    std::cout << std::endl;
+    std::cout << "count: " << context.GetFactory<Hit>("calibrated_hits")->get_metadata().count << std::endl;
 }
 
 

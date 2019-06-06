@@ -74,7 +74,7 @@ FactoryT<T>* JContext::GetFactory(std::string tag, bool create_dummy) {
 template<class T>
 FactoryT<T>* JContext::Get(T** destination, const std::string& tag) const {
 
-    auto factory = GetFactory<T>(tag);
+    auto factory = GetFactory<T>(tag)->get_or_create(*this);
     auto iterators = factory.get();
     *destination = *iterators.first;
     // TODO: Assert exactly one element
@@ -84,7 +84,7 @@ FactoryT<T>* JContext::Get(T** destination, const std::string& tag) const {
 template<class T>
 FactoryT<T>* JContext::Get(std::vector<const T*> &destination, const std::string& tag) const {
 
-    auto iterators = GetFactory<T>(tag).get();
+    auto iterators = GetFactory<T>(tag)->get_or_create(*this);
     for (auto it=iterators.first; it!=iterators.second; it++) {
         destination.push_back(*it);
     }
@@ -95,15 +95,15 @@ FactoryT<T>* JContext::Get(std::vector<const T*> &destination, const std::string
 // C++ style getters
 template<class T>
 const T* JContext::GetSingle(const std::string& tag) const {
-    auto result = GetFactory<T>(tag).get();
+    auto result = GetFactory<T>(tag)->get_or_create(*this);
     // TODO: Assert exactly one element
     return *result.first;
 }
 
 template<class T>
-std::vector<const T*> JContext::GetVector(const std::string& tag) const {
+std::vector<const T*> JContext::GetVector(const std::string& tag) {
 
-    auto iters = GetFactory<T>(tag).get();
+    auto iters = GetFactory<T>(tag)->get_or_create(*this);
     std::vector<const T*> vec;
     for (auto it=iters.first; it!=iters.second; ++it) {
         vec.push_back(*it);
@@ -113,7 +113,7 @@ std::vector<const T*> JContext::GetVector(const std::string& tag) const {
 
 template<class T>
 typename FactoryT<T>::PairType JContext::GetIterators(const std::string& tag) const {
-    return GetFactory<T>(tag).get();
+    return GetFactory<T>(tag)->get_or_create(*this);
 }
 
 
@@ -123,18 +123,18 @@ typename FactoryT<T>::PairType JContext::GetIterators(const std::string& tag) co
 
 // Insert
 template <typename T>
-void JContext::Insert(T* item, const std::string& tag) const {
+void JContext::Insert(T* item, const std::string& tag) {
 
     auto fac = GetFactory<T>(tag, true);
     fac.insert(item);
 }
 
 template <typename T>
-void JContext::Insert(const std::vector<T*>& items, const std::string& tag) const {
+void JContext::Insert(const std::vector<T*>& items, const std::string& tag) {
 
     auto fac = GetFactory<T>(tag, true);
     for (T* item : items) {
-        fac.insert(item);
+        fac->insert(item);
     }
 }
 

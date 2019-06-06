@@ -66,7 +66,7 @@ JContext::~JContext() {
 
 void JContext::Update() {
     for (auto& row : m_underlying) {
-        row.second.second->update(*this);
+        row.second.second->invalidate_metadata();
     }
 }
 

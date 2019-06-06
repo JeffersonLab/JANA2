@@ -37,6 +37,7 @@
 #include <vector>
 #include <typeindex>
 #include <mutex>
+#include <JANA/JException.h>
 
 class JContext;
 
@@ -59,10 +60,10 @@ class Factory {
     const std::string m_inner_type_name;
     const std::type_index m_inner_type_index;
 
+protected:
+
     enum class Status {Uninitialized, InvalidMetadata, Unprocessed, Processed};
     Status m_status = Status::Uninitialized;
-
-    bool m_is_created = false;
     std::mutex m_mutex;
 
 public:
@@ -74,16 +75,24 @@ public:
     std::type_index get_inner_type_index() { return m_inner_type_index; }
 
 
+    /// These are meant to be overridden by the user.
+    /// The user should call insert() and get_metadata()
     virtual void init() {};
     virtual void update(JContext& c) {};   // E.g. on change of run number
-    virtual void process(JContext& c) {};  // Not threadsafe, provided by user
-    virtual void clear() {};
+    virtual void process(JContext& c) {};  // Does not need to be threadsafe
 
-    // TODO: These won't work when we consider the full lifecycle.
-    // Merge into JFactoryT::get() instead.
-    // Threadsafe wrappers for process()
-    bool try_process(JContext& c);
-    inline void wait_until_processed(JContext& c);
+    /// Allows an upstream caller to indicate that the metadata needs an update,
+    /// e.g. if the run number has changed. Once this has been set, the next call
+    /// to retrieve() will in turn call update() and then process().
+    void invalidate_metadata() {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        if (m_status != Status::Uninitialized) {
+            m_status = Status::InvalidMetadata;
+        }
+    }
+
+    /// This is meant to be overridden by FactoryT, but not by the user.
+    virtual void clear() {};
 
 };
 
@@ -129,10 +138,28 @@ public:
         m_underlying.push_back(t);
     }
 
-    pair_t get() { return std::make_pair(m_underlying.cbegin(), m_underlying.cend()); }
-
     // TODO: Figure out best return type
     Metadata<T>& get_metadata() { return m_metadata; }
+
+    // TODO: This will deadlock if there is a cycle in our Factory dependencies
+    // TODO: This will be inefficient if we have multiple threads hammering one Context
+    pair_t get_or_create(JContext& c) {
+
+        std::lock_guard<std::mutex> lock(m_mutex);
+        switch (m_status) {
+            case Status::Uninitialized:
+                init();
+            case Status::InvalidMetadata:
+                update(c);
+            case Status::Unprocessed:
+                process(c);
+                m_status = Status::Processed;
+            case Status::Processed:
+                return std::make_pair(m_underlying.cbegin(), m_underlying.cend());
+            default:
+                throw JException("How did we end up here?");
+        }
+    }
 
     void clear() override {
         for (auto t : m_underlying) {

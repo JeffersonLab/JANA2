@@ -40,34 +40,6 @@ Factory::Factory(std::string inner_type_name, std::type_index inner_type_index, 
 }
 
 
-bool Factory::try_process(JContext& c) {
-
-    bool result = m_mutex.try_lock();
-    if (! result) {
-        return result;
-    }
-    if (m_is_created) {
-        m_mutex.unlock();
-        return true;
-    }
-    else {
-        process(c);
-        m_is_created = true;
-        m_mutex.unlock();
-        return true;
-    }
-};
-
-
-void Factory::wait_until_processed(JContext& c) {
-
-    std::lock_guard<std::mutex> lock(m_mutex);
-    if (! m_is_created) {
-        process(c);
-        m_is_created = true;
-    }
-}
-
 
 
 

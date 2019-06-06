@@ -57,7 +57,6 @@ struct FactoryGenerator {
 /// - Be able to hide all FactoryGenerator machinery behind a method like
 ///   builder.add<FactoryType,ObjectType>("tagname")
 
-/// TODO: Statically enforce that F <: FactoryT<T>
 template <typename T, typename F = FactoryT<T>>
 class FactoryGeneratorT : public FactoryGenerator {
 
@@ -66,7 +65,7 @@ class FactoryGeneratorT : public FactoryGenerator {
 public:
     explicit FactoryGeneratorT(std::string tag = "") : m_tag(std::move(tag)) {}
 
-    Factory* create(std::string tag) override {
+    FactoryT<T>* create(std::string tag) override {
         return new F(tag);
     }
     std::type_index get_inner_type_index() override {
