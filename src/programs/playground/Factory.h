@@ -51,8 +51,24 @@ struct Metadata {};
 
 
 /// Proposal for next generation of Factories.
-/// The base class doesn't do anything (except declare its own type information,
-/// track its lifecycle, and offer virtual functions for the user to override.
+///
+/// The base class doesn't do much, just declare its own type information,
+/// track its lifecycle. We keep around virtual functions which don't need type information,
+/// like process(), just in case we need them someday, although it is tempting to get rid of them
+///
+/// The idea of 'update' generalizes the existing ChangeRunNumber(), so
+/// that we can have Contexts which are not Events.
+///
+/// We remove the function init() because it suggests that the user should do things there
+/// like open long-lived resources. As evidenced by the lack of a corresponding finalize()
+/// function, there is no mechanism to detect that we are done with a Context except its
+/// own destruction. To make things more confusing, we _do_ have a clear() function, but
+/// this is called every time the Context gets reused, which happens more often than
+/// update(), which happens more often than init(), which should happen
+/// only once. Anything that should happen only once should live in the ctor/dtor,
+/// things that happen on every Event should live in process(), and things that happen
+/// occasionally should live in update().
+///
 class Factory {
 
     const std::string m_tag;
@@ -62,8 +78,8 @@ class Factory {
 
 protected:
 
-    enum class Status {Uninitialized, InvalidMetadata, Unprocessed, Processed};
-    Status m_status = Status::Uninitialized;
+    enum class Status {InvalidMetadata, Unprocessed, Processed};
+    Status m_status = Status::InvalidMetadata;
     std::mutex m_mutex;
 
 public:
@@ -77,7 +93,6 @@ public:
 
     /// These are meant to be overridden by the user.
     /// The user should call insert() and get_metadata()
-    virtual void init() {};
     virtual void update(JContext& c) {};   // E.g. on change of run number
     virtual void process(JContext& c) {};  // Does not need to be threadsafe
 
@@ -86,9 +101,7 @@ public:
     /// to retrieve() will in turn call update() and then process().
     void invalidate_metadata() {
         std::lock_guard<std::mutex> lock(m_mutex);
-        if (m_status != Status::Uninitialized) {
-            m_status = Status::InvalidMetadata;
-        }
+        m_status = Status::InvalidMetadata;
     }
 
     /// This is meant to be overridden by FactoryT, but not by the user.
@@ -96,6 +109,12 @@ public:
 
 };
 
+/// FactoryT is the simplest Factory which has type information attached.
+/// The user may inherit from this, or they may create default implementations
+/// by using template specialization. This avoids boilerplate
+/// but may frighten unsophisticated users. JANA also uses FactoryT in order
+/// to automatically create "dummy factories" which act as simple storage
+/// containers for sequences of T*.
 
 /// How are non-dummy Factories used?
 /// - User supplies a Metadata specialization and a process() implementation.
@@ -110,6 +129,13 @@ public:
 /// - Externally, the user will call get_metadata() (because of substitutability)
 /// - Internally, nobody calls anything.
 
+/// This diverges from the existing FactoryT abstraction in one significant way:
+/// We introduce Metadata<T> to hold any (zero-dimensional) data associated with
+/// the computation of the (one-dimensional) sequence of T. This is needed because
+/// we need to enforce that there is exactly one Metadata type per T. If we don't
+/// do this, we break the principle of substitutability, which is key to the
+/// soundness of our plugin architecture.
+
 template <typename T>
 class FactoryT : public Factory {
 
@@ -117,7 +143,7 @@ public:
     using iterator_t = typename std::vector<T*>::const_iterator;
     using pair_t = std::pair<iterator_t, iterator_t>;
 
-private:
+protected:
     std::vector<T*> m_underlying;
     Metadata<T> m_metadata;
 
@@ -142,13 +168,10 @@ public:
     Metadata<T>& get_metadata() { return m_metadata; }
 
     // TODO: This will deadlock if there is a cycle in our Factory dependencies
-    // TODO: This will be inefficient if we have multiple threads hammering one Context
     pair_t get_or_create(JContext& c) {
 
         std::lock_guard<std::mutex> lock(m_mutex);
         switch (m_status) {
-            case Status::Uninitialized:
-                init();
             case Status::InvalidMetadata:
                 update(c);
             case Status::Unprocessed:
@@ -157,7 +180,7 @@ public:
             case Status::Processed:
                 return std::make_pair(m_underlying.cbegin(), m_underlying.cend());
             default:
-                throw JException("How did we end up here?");
+                throw JException("Enum is set to a garbage value somehow");
         }
     }
 
@@ -171,6 +194,62 @@ public:
 
 };
 
+
+/// Proposal for a streamlined Factory API. Users would be steered towards using this,
+/// but still be allowed to extend JFactoryT as a fallback.
+///
+/// Advantages:
+/// - We are free to change around our implementations without breaking user code
+/// - Everything the user should interact with is exposed as a parameter to a function
+/// - User is encouraged to think in terms of inputs and outputs instead of mutating state
+/// - We are still mutating state for performance
+
+/// Rough edges:
+/// - We are exposing a vector reference to the user, as opposed to a back_inserter,
+///     which gives the user freedom to do weird things (like build up their JObjects over
+///     multiple passes) but doesn't make the actual contract clear. By "actual contract" I mean
+///     "User returns a sequence of JObject pointers which _we_ own"
+
+/// - Semantically, BasicFactory should probably be a Concept, not an abstract class.
+///     However, abstract classes make sense to everybody and yield good error messages,
+///     and concepts don't really even exist, and they yield absolutely dismal error messages.
+
+/// - If the user wants to avoid the extra virtual function calls (aka be a Concept instead of an
+///     abstract class), they just have to remove the part where they inherit from BasicFactory.
+///     The BasicFactoryBackend template will work just fine.
+
+/// - There is probably a trick involving std::ref which would let the caller decide whether
+///     we are mutating existent state vs a copy of existent state, which could let us be
+///     purely functional under the hood
+
+template <typename T>
+struct BasicFactory {
+
+    virtual void process(JContext& context, Metadata<T>& metadata, std::vector<T*>& output) = 0;
+
+    virtual void update(JContext& context, Metadata<T>& metadata) {};
+};
+
+
+/// The BasicFactoryBackend provides the linkage between the BasicFactory and FactoryT.
+/// This allows us to isolate the policy (100% the user's responsibility) from the mechanism
+/// for implementing that policy (100% our responsibility), which is less confusing to the user
+/// and less restricting to us. We no longer have to write documentation saying "the user is
+/// supposed to use these methods, (or worse, protected member variables), and studiously
+/// ignore these other methods".
+template <typename T, typename P>
+struct BasicFactoryBackend : public FactoryT<T>, public P {
+
+    explicit BasicFactoryBackend(std::string tag) : FactoryT<T>(std::move(tag)) {};
+
+    void process(JContext& c) override {
+        P::process(c, FactoryT<T>::m_metadata, FactoryT<T>::m_underlying);
+    };
+
+    void update(JContext& c) override {
+        P::update(c, FactoryT<T>::m_metadata);
+    };
+};
 
 
 #endif //JANA2_FACTORY_H

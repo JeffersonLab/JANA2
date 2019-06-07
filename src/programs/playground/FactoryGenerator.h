@@ -53,9 +53,9 @@ struct FactoryGenerator {
 
 
 /// Proposed default implementation for FactoryGenerators.
-/// Goals:
-/// - Be able to hide all FactoryGenerator machinery behind a method like
-///   builder.add<FactoryType,ObjectType>("tagname")
+/// This should probably be sufficient for all use cases. Any additional
+/// information should be a static member variable of the Factory itself,
+/// and any additional logic would make more sense living in the Factor ctor.
 
 template <typename T, typename F = FactoryT<T>>
 class FactoryGeneratorT : public FactoryGenerator {
@@ -76,5 +76,39 @@ public:
     }
 };
 
+
+/// A demonstration of how we can make the strange business
+/// of constructing FactoryGenerators transparent to the end user.
+
+/// Possible improvements:
+/// - Merge add_basic_factory into add_factory by using more compile-time magic
+/// - Find a way to deduce T given F is-a JFactoryT<T>
+
+class FactoryGeneratorBuilder {
+
+    std::vector<FactoryGenerator*> m_generators;
+
+public:
+
+    template <typename T, typename F = FactoryT<T>>
+    void add_factory(std::string tag) {
+
+        constexpr bool have_factoryt = std::is_base_of<FactoryT<T>, F>().value;
+        static_assert(have_factoryt, "F must be a FactoryT");
+        m_generators.push_back(new FactoryGeneratorT<T, F>(std::move(tag)));
+    }
+
+    template <typename T, typename F>
+    void add_basic_factory(std::string tag) {
+
+        constexpr bool have_basicfactory = std::is_base_of<BasicFactory<T>, F>().value;
+        static_assert(have_basicfactory, "F must be BasicFactory");
+        m_generators.push_back(new FactoryGeneratorT<T, BasicFactoryBackend<T,F>>(std::move(tag)));
+    }
+
+    std::vector<FactoryGenerator*> get_factory_generators() {
+        return m_generators;
+    }
+};
 
 #endif //JANA2_FACTORYGENERATOR_H
