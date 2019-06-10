@@ -302,39 +302,41 @@ JEventSourceGenerator* JEventSourceManager::GetEventSourceGenerator(const std::s
 //---------------------------------
 // GetUserEventSourceGenerator
 //---------------------------------
-JEventSourceGenerator* JEventSourceManager::GetUserEventSourceGenerator(void)
-{
+JEventSourceGenerator* JEventSourceManager::GetUserEventSourceGenerator(void) {
 	// Check if the user has forced a specific type of event source
 	// be used via the EVENT_SOURCE_TYPE config. parameter. If so,
-	// search for that source and use it. Otherwise, throw an exception.
+	// search for that source and use it. Otherwise, return nullptr.
 
-	JEventSourceGenerator* gen = nullptr;
-	try{
-		std::string EVENT_SOURCE_TYPE = mApplication->GetParameterValue<string>("EVENT_SOURCE_TYPE");
-		for( auto sg : _eventSourceGenerators ){
-			if( sg->GetType() == EVENT_SOURCE_TYPE ){
-				gen = sg;
-				jout << "Forcing use of event source type: " << EVENT_SOURCE_TYPE << endl;
-				break;
-			}
-		}
-		if(!gen){
-			jerr << endl;
-			jerr << "-----------------------------------------------------------------" << endl;
-			jerr << " You specified event source type \"" << EVENT_SOURCE_TYPE << "\"" << endl;
-			jerr << " be used to read the event sources but no such type exists." << endl;
-			jerr << " Here is a list of available source types:" << endl;
-			jerr << endl;
-			for( auto sg : _eventSourceGenerators ) jerr << "   " << sg->GetType() << endl;
-			jerr << endl;
-			jerr << "-----------------------------------------------------------------" << endl;
-			mApplication->SetExitCode(-1);
-			mApplication->Quit();
-		}
-	}catch(...){
-		jerr << "Suppressed exception in JEventSourceManager::GetUserEventSourceGenerator!" << std::endl;
+	std::string event_source_type;
+
+	// If no EVENT_SOURCE_TYPE specified, return nullptr
+	try {
+		event_source_type = mApplication->GetParameterValue<string>("EVENT_SOURCE_TYPE");
+	} catch (...) {
+		return nullptr;
 	}
-	return gen;
+
+	// If corresponding JEventSourceGenerator found, use that one
+	for (auto sg : _eventSourceGenerators) {
+		if (sg->GetType() == event_source_type) {
+			jout << "Forcing use of event source type: " << event_source_type << endl;
+			return sg;
+		}
+	}
+
+	// If no corresponding JEventSourceGenerator found, ask JApplication to quit, and return nullptr
+    jerr << endl;
+    jerr << "-----------------------------------------------------------------" << endl;
+    jerr << " You specified event source type \"" << event_source_type << "\"" << endl;
+    jerr << " be used to read the event sources but no such type exists." << endl;
+    jerr << " Here is a list of available source types:" << endl;
+    jerr << endl;
+    for (auto sg : _eventSourceGenerators) jerr << "   " << sg->GetType() << endl;
+    jerr << endl;
+    jerr << "-----------------------------------------------------------------" << endl;
+    mApplication->SetExitCode(-1);
+    mApplication->Quit();
+	return nullptr;
 }
 
 //---------------------------------
