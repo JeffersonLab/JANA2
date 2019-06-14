@@ -86,7 +86,7 @@ public:
     // C style getters
 
     template<class T>
-    FactoryT<T>* Get(T** destination, const std::string& tag="") {
+    Metadata<T>* Get(T** destination, const std::string& tag="") {
 
         auto factory = GetFactory<T>(tag);
         auto iterators = factory->get_or_create(*this);
