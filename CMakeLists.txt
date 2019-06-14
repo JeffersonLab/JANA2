@@ -17,6 +17,16 @@ include_directories(src/plugins/JTest)
 include_directories(src/programs/jana)
 include_directories(src/programs/tests)
 
+add_library(greenfield STATIC
+        src/lib/greenfield/Greenfield.cc
+        src/plugins/zmq2jana/ZmqMain.cc
+        src/plugins/zmq2jana/DummyZmqPublisher.cc
+        src/plugins/zmq2jana/DummyZmqPublisher.h
+        src/plugins/zmq2jana/DummyZmqSubscriber.cc
+        src/plugins/zmq2jana/DummyZmqSubscriber.h
+        src/plugins/zmq2jana/RawHit.h
+        src/plugins/zmq2jana/JZmqSink.h)
+
 add_executable(tests
         src/programs/tests/catch.hpp
         src/programs/tests/ActivableTests.cc
@@ -135,6 +145,19 @@ add_library(janapy SHARED
         src/plugins/janapy/janapy.cc
         )
 
+add_library(zmq2jana SHARED
+        src/plugins/zmq2jana/JZmqSource.h
+        src/plugins/zmq2jana/JZmqSource.h
+        )
+
+add_executable(zmqpub
+        src/plugins/zmq2jana/DummyZmqPublisher.cc
+        )
+
+add_executable(zmqsub
+        src/plugins/zmq2jana/DummyZmqSubscriber.cc
+        )
+
 add_executable(jana
         src/programs/jana/jana.cc
         src/programs/jana/JBenchmarker.h
@@ -169,7 +192,14 @@ target_link_libraries(janapy ${PYTHON_LIBRARIES})
 
 # Remove "lib" prefix from plugins
 set_target_properties(jtest PROPERTIES PREFIX "" SUFFIX ".so")
+set_target_properties(zmq2jana PROPERTIES PREFIX "" SUFFIX ".so")
 set_target_properties(janapy PROPERTIES PREFIX "")
 
-
-
+# For zmq2jana plugin
+find_package(cppzmq)
+target_link_libraries(zmqpub cppzmq)
+target_link_libraries(zmqsub cppzmq)
+target_link_libraries(zmq2jana cppzmq)
+target_link_libraries(zmqpub jana2)
+target_link_libraries(zmqsub jana2)
+target_link_libraries(zmq2jana jana2)
