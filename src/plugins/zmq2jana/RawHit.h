@@ -34,26 +34,46 @@
 #define JANA2_RAWHIT_H
 
 #include <JANA/JObject.h>
+#include <JANA/JException.h>
 
 struct RawHit : public JObject {
+    std::string sensor;
+    size_t id;
     double V, t, x, y, z;
 };
 
 
 template <typename T>
 struct Serializer {
-    virtual T deserialize(std::string) = 0;
-    virtual std::string serialize(const T& rh) = 0;
+    T deserialize(const std::string&) {
+        throw JException("Deserializer not implemented!");
+    };
+    std::string serialize(const T& rh) {
+        throw JException("Serializer not implemented!");
+    };
 };
 
 template <>
 struct Serializer<RawHit> {
-    RawHit deserialize(std::string s) override {
-        return RawHit();
+    RawHit deserialize(const std::string& s) {
+
+        RawHit x;
+        char sensor[64];
+        int matches = sscanf(s.c_str(), "%64s %lu %lf %lf %lf %lf %lf",
+                             sensor, &x.id, &x.V, &x.t, &x.x, &x.y, &x.z);
+        if (matches != 7) {
+            throw JException("Unable to parse string as RawHit!");
+        }
+        x.sensor = std::string(sensor);
+        return x;
     }
 
-    std::string serialize(const RawHit& rh) override {
-        return "";
+    std::string serialize(const RawHit& x) {
+        char buffer[200];
+        sprintf(buffer, "%s %lu %.2lf %.2lf %.2lf %.2lf %.2lf",
+                x.sensor.c_str(), x.id, x.V, x.t, x.x, x.y, x.z);
+        auto result = std::string(buffer);
+        return result;
     }
 
 };
