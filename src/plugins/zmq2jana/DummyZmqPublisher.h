@@ -36,11 +36,17 @@
 #include <string>
 #include <chrono>
 #include "zmq.hpp"
+#include "RawHit.h"
 
 class ZmqDummyPublisher {
 public:
 
-    ZmqDummyPublisher(std::string socket_name, size_t bytes_avg, size_t bytes_spread, uint64_t sampling_ms);
+    ZmqDummyPublisher(std::string socket_name,
+                      std::string sensor_name,
+                      size_t samples_avg,
+                      size_t samples_spread,
+                      uint64_t delay_ms);
+
     ~ZmqDummyPublisher();
 
     void loop();
@@ -50,9 +56,11 @@ private:
     zmq::socket_t m_socket;
 
     std::string m_socket_name;
-    size_t m_bytes_avg;
-    size_t m_bytes_spread;
-    uint64_t m_sampling_ms;
+    std::string m_sensor_name;
+    size_t m_samples_avg;
+    size_t m_samples_spread;
+    uint64_t m_delay_ms;
+    double m_prev_time;
 
 };
 

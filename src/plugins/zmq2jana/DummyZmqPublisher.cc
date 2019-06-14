@@ -38,16 +38,19 @@
 #include <iostream>
 
 ZmqDummyPublisher::ZmqDummyPublisher(std::string socket_name,
-                                     size_t bytes_avg,
-                                     size_t bytes_spread,
-                                     uint64_t sampling_ms)
+                                     std::string sensor_name,
+                                     size_t samples_avg,
+                                     size_t samples_spread,
+                                     uint64_t delay_ms)
 
                                      : m_socket_name(socket_name)
-                                     , m_bytes_avg(bytes_avg)
-                                     , m_bytes_spread(bytes_spread)
-                                     , m_sampling_ms(sampling_ms)
+                                     , m_sensor_name(sensor_name)
+                                     , m_samples_avg(samples_avg)
+                                     , m_samples_spread(samples_spread)
+                                     , m_delay_ms(delay_ms)
                                      , m_context(1)
-                                     , m_socket(m_context, ZMQ_PUB){
+                                     , m_socket(m_context, ZMQ_PUB)
+                                     , m_prev_time(0.0) {
 
     m_socket.bind(m_socket_name);  // E.g. "tcp://*:5555"
 }
@@ -58,20 +61,31 @@ ZmqDummyPublisher::~ZmqDummyPublisher() {
 
 void ZmqDummyPublisher::loop() {
 
-    std::string buffer = "Hello,there,world,";
+    Serializer<RawHit> serializer;
     size_t counter = 0;
 
-    while (true) {
-        std::cout << "Looping!" << std::endl;
-        m_socket.send(zmq::buffer(buffer + std::to_string(counter++)), zmq::send_flags::dontwait);
-        std::cout << "sent something" << std::endl;
-        consume_cpu_ms(m_sampling_ms, 0, false);
+    while (counter < 100000) {
+        RawHit x;
+        x.sensor = m_sensor_name;
+        x.id = counter++;
+        x.V = randdouble(0,1);
+        x.t = randdouble(m_prev_time, m_prev_time+1);
+        x.x = randdouble(-100, 100);
+        x.y = randdouble(-100, 100);
+        x.z = randdouble(-100, 100);
+
+        m_prev_time = x.t;
+
+        std::string message = serializer.serialize(x);
+        m_socket.send(zmq::buffer(message), zmq::send_flags::dontwait);
+        std::cout << message << std::endl;
+        consume_cpu_ms(m_delay_ms, 0, false);
     }
 }
 
 
 
 int main() {
-    ZmqDummyPublisher pub("tcp://127.0.0.1:5555", 100, 10, 1);
+    ZmqDummyPublisher pub("tcp://127.0.0.1:5555", "fcal", 3, 2, 1000);
     pub.loop();
 }

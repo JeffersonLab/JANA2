@@ -31,6 +31,7 @@
 //
 
 #include "DummyZmqSubscriber.h"
+#include "RawHit.h"
 
 #include <JANA/JPerfUtils.h>
 
@@ -52,15 +53,32 @@ ZmqDummySubscriber::~ZmqDummySubscriber() {
     // socket closed by destructor
 }
 
+
 void ZmqDummySubscriber::loop() {
 
-    zmq::message_t message; // What does this do about buffer size?
-    std::cout << "Starting loop!" << std::endl;
+    zmq::message_t message(500); // What does this do about buffer size?
+    Serializer<RawHit> serializer;
 
-    while (true) {
-        std::cout << "In loop!" << std::endl;
+    RawHit x;
+    size_t prev_id = 0;
+
+    m_socket.recv(message);
+    std::string text = std::string(message.data<char>());
+    std::cout << text << std::endl;
+    x = serializer.deserialize(text);
+    prev_id = x.id;
+
+    while (x.id < 10000) {
         m_socket.recv(message);
-        std::cout << "Received " << message << std::endl;
+        std::string text = std::string(message.data<char>());
+        std::cout << text << std::endl;
+        std::cout << message << std::endl;
+        x = serializer.deserialize(text);
+        if (x.id != prev_id + 1) {
+            std::cout << "Dropped packet!" << std::endl;
+            break;
+        }
+        prev_id = x.id;
         consume_cpu_ms(m_delay_ms, 0, false);
     }
 }

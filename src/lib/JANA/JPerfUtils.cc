@@ -59,36 +59,35 @@ uint64_t write_memory(std::vector<char>& buffer, uint64_t bytes, double spread) 
     return sampled*2;
 }
 
-size_t rand_size(size_t avg, double spread) {
-
-    auto delta = static_cast<size_t>(avg*spread);
-
+inline void init_generator() {
     if (!generator) {
         std::hash<std::thread::id> hasher;
         long now = std::chrono::steady_clock::now().time_since_epoch().count();
         long seed = now + hasher(std::this_thread::get_id());
         generator = new std::mt19937(seed);
     }
+}
+
+size_t rand_size(size_t avg, double spread) {
+    auto delta = static_cast<size_t>(avg*spread);
+    init_generator();
     std::uniform_int_distribution<size_t> distribution(avg-delta, avg+delta);
     return distribution(*generator);
 }
 
 
 int randint(int min, int max) {
-
-    if (!generator) {
-        long now = std::chrono::steady_clock::now().time_since_epoch().count();
-        std::hash<std::thread::id> hasher;
-        long seed = now + hasher(std::this_thread::get_id());
-        generator = new std::mt19937(seed);
-    }
+    init_generator();
     std::uniform_int_distribution<int> distribution(min, max);
     return distribution(*generator);
 }
 
-double randdouble() {
-    return (*generator)();
+double randdouble(double min, double max) {
+    init_generator();
+    std::uniform_real_distribution<double> dist(min, max);
+    return dist(*generator);
 }
+
 
 
 
