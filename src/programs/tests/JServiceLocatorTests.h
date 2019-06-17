@@ -64,7 +64,7 @@ struct LoggerSvc : public JService {
 
 struct MagneticFieldSvc : public JService {
 
-    LoggerSvc* logger;
+    std::shared_ptr<LoggerSvc> logger;
     std::string url = "NO_URL";
 
     void acquire_services(JServiceLocator *sl) {

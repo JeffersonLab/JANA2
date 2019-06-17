@@ -202,7 +202,7 @@ inline std::vector<std::string> JParameter::SetDefault(std::vector<std::string> 
 
     std::stringstream ss;
     size_t len = default_value.size();
-    for (int i=0; i+1<len; ++i) {
+    for (size_t i=0; i+1<len; ++i) {
         ss << default_value[i];
         ss << ",";
     }
@@ -239,7 +239,7 @@ inline std::vector<std::string> JParameter::SetValue(std::vector<std::string> va
 
     std::stringstream ss;
     size_t len = val.size();
-    for (int i=0; i+1<len; ++i) {
+    for (size_t i=0; i+1<len; ++i) {
         ss << val[i];
         ss << ",";
     }

@@ -60,6 +60,8 @@ int main_old() {
     // This is (supposedly) a feature: we don't _want_ to know which Factory we used!
     // If we did know exactly which factory was used, we would be breaking the decoupling!
     // Instead, we could be creating Factories through template specialization instead of inheritance
+    fac->ClearData();
+    return 0;
 
 }
 
