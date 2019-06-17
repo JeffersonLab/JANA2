@@ -57,12 +57,12 @@ void JPluginLoader::add_plugin(std::string plugin_name) {
     ///                    The path to the plugin will be searched
     ///                    from the JANA_PLUGIN_PATH envar.
     ///
-    for (std::string& n : _plugins) {
+    for (std::string& n : _plugins_to_include) {
         if (n == plugin_name) {
             return;
         }
     }
-    _plugins.push_back(plugin_name);
+    _plugins_to_include.push_back(plugin_name);
 }
 
 
@@ -114,22 +114,18 @@ void JPluginLoader::attach_plugins(JTopologyBuilder* builder) {
 
     // Add plugins specified via PLUGINS configuration parameter
     // (comma separated list).
-    try {
-        std::stringstream ss(_comma_separated_plugin_names);
-        string p;
-        while (getline(ss, p, ',')) _plugins.push_back(p);
-    }
-    catch (...) {
-        LOG_ERROR(_logger) << "Unknown exception while parsing PLUGINS parameter" << LOG_END;
-        throw JException("Exception parsing PLUGINS parameter.");
-    }
+    std::set<std::string> exclusions(_plugins_to_exclude.begin(), _plugins_to_exclude.end());
 
     // Loop over plugins
     std::stringstream err_mess;
-    for (string plugin : _plugins) {
+    for (string plugin : _plugins_to_include) {
+        if (exclusions.find(plugin) != exclusions.end()) {
+            LOG_TRACE(_logger, _verbose) << "Excluding plugin `" << plugin << "`" << LOG_END;
+            continue;
+        }
         // Sometimes, the user will include the ".so" suffix in the
         // plugin name. If they don't, then we add it here.
-        if (plugin.substr(plugin.size() - 3) != ".so")plugin = plugin + ".so";
+        if (plugin.substr(plugin.size() - 3) != ".so") plugin = plugin + ".so";
 
         // Loop over paths
         bool found_plugin = false;
@@ -208,31 +204,14 @@ void JPluginLoader::attach_plugin(JTopologyBuilder* builder, std::string soname)
 }
 
 
-void JPluginLoader::acquire_services(JServiceLocator* service_locator) {
-
-    _logger = JLoggingService::logger("JPluginLoader");
-    _service_locator = service_locator;
-
-    auto params = service_locator->get<JParameterManager>();
-
-    _comma_separated_plugin_names = "JTest";
-
-    params->SetDefaultParameter("PLUGINS", _comma_separated_plugin_names, "");
-
-    params->SetDefaultParameter("JANA:DEBUG_PLUGIN_LOADING", _verbose,
-                                "Trace the plugin search path and display any loading errors");
-
-}
-
 JPluginLoader::JPluginLoader(JApplication* app, JParameterManager* params) {
 
     _app = app;
 
     if (params != nullptr) {
 
-        _comma_separated_plugin_names = "JTest";
-
-        params->SetDefaultParameter("PLUGINS", _comma_separated_plugin_names, "");
+        params->SetDefaultParameter("plugins", _plugins_to_include, "");
+        params->SetDefaultParameter("plugins_to_ignore", _plugins_to_exclude, "");
 
         params->SetDefaultParameter("JANA:DEBUG_PLUGIN_LOADING", _verbose,
                                     "Trace the plugin search path and display any loading errors");
