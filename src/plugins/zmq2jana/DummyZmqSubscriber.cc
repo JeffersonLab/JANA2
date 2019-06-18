@@ -70,9 +70,8 @@ void ZmqDummySubscriber::loop() {
 
     while (x.id < 10000) {
         m_socket.recv(message);
-        std::string text = std::string(message.data<char>());
+        std::string text = std::string(message.data<char>(), message.size());
         std::cout << text << std::endl;
-        std::cout << message << std::endl;
         x = serializer.deserialize(text);
         if (x.id != prev_id + 1) {
             std::cout << "Dropped packet!" << std::endl;

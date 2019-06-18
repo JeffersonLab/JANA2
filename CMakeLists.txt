@@ -25,7 +25,7 @@ add_library(greenfield STATIC
         src/plugins/zmq2jana/DummyZmqSubscriber.cc
         src/plugins/zmq2jana/DummyZmqSubscriber.h
         src/plugins/zmq2jana/RawHit.h
-        src/plugins/zmq2jana/JZmqSink.h)
+        src/plugins/zmq2jana/JZmqSink.h src/plugins/zmq2jana/JHitCalibrator.h)
 
 add_executable(tests
         src/programs/tests/catch.hpp
@@ -148,6 +148,7 @@ add_library(janapy SHARED
 add_library(zmq2jana SHARED
         src/plugins/zmq2jana/JZmqSource.h
         src/plugins/zmq2jana/JZmqSource.h
+        src/plugins/zmq2jana/ZmqMain.cc
         )
 
 add_executable(zmqpub
