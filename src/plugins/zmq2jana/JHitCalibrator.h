@@ -35,12 +35,15 @@
 
 #include <JANA/JEventProcessor.h>
 #include <JANA/JEvent.h>
+#include <JANA/JPerfUtils.h>
 #include "RawHit.h"
 
 class JHitCalibrator : public JEventProcessor {
 
 public:
-    JHitCalibrator(JApplication* app = nullptr) : JEventProcessor(app) {};
+    JHitCalibrator(JApplication* app = nullptr, size_t delay_ms=1000)
+        : JEventProcessor(app)
+        , m_delay_ms(delay_ms) {};
 
     void Init() override {
 
@@ -55,10 +58,13 @@ public:
             calibrated_hit->V += 7;
             std::cout << serializer.serialize(*calibrated_hit) << std::endl;
         }
+        consume_cpu_ms(m_delay_ms);
     }
     void Finish() override {
         std::cout << "Done!" << std::endl;
     }
+private:
+    size_t m_delay_ms;
 
 };
 
