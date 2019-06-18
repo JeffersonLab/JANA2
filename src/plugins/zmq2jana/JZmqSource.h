@@ -70,6 +70,7 @@ public:
         T* x = new T(m_serializer.deserialize(text)); // TODO: Improve
         m_prev_id = x->id;
         event->Insert(x, "raw_hits");
+        event->SetEventNumber(m_prev_id);
     }
 
     // TODO: I don't like this

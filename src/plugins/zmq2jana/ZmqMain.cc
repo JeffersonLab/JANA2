@@ -41,10 +41,13 @@ extern "C"{
 void InitPlugin(JApplication *app) {
 
 	InitJANAPlugin(app);
-	app->Add("tcp://127.0.0.1:5555"); // So we don't have to put this on the cmd line every time
-	app->Add(new JEventSourceGeneratorT<JZmqSource<RawHit>>);
-	app->Add(new JHitCalibrator());
+	app->Add(new JEventSourceGeneratorT<JZmqSource<RawHit>>(app));
+	app->Add(new JHitCalibrator(app, 5000));
 
+	// So we don't have to put this on the cmd line every time
+	app->Add("tcp://127.0.0.1:5555");
+	app->SetParameterValue("jana:legacy_mode", 0);
+	app->SetParameterValue("jana:extended_report", 0);
 }
 } // "C"
 
