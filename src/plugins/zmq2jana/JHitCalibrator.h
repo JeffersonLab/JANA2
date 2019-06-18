@@ -30,22 +30,37 @@
 // Author: Nathan Brei
 //
 
+#ifndef JANA2_JHITCALIBRATOR_H
+#define JANA2_JHITCALIBRATOR_H
 
-#include <JANA/JApplication.h>
-#include <JANA/JEventSourceGeneratorT.h>
+#include <JANA/JEventProcessor.h>
+#include <JANA/JEvent.h>
+#include "RawHit.h"
 
-#include "JZmqSource.h"
-#include "JHitCalibrator.h"
+class JHitCalibrator : public JEventProcessor {
 
-extern "C"{
-void InitPlugin(JApplication *app) {
+public:
+    JHitCalibrator(JApplication* app = nullptr) : JEventProcessor(app) {};
 
-	InitJANAPlugin(app);
-	app->Add("tcp://127.0.0.1:5555"); // So we don't have to put this on the cmd line every time
-	app->Add(new JEventSourceGeneratorT<JZmqSource<RawHit>>);
-	app->Add(new JHitCalibrator());
+    void Init() override {
 
-}
-} // "C"
+    }
+    void Process(const std::shared_ptr<const JEvent>& event) override {
+
+        auto raw_hits = event->Get<RawHit>("raw_hits");
+        std::cout << "Processing event #" << event->GetEventNumber() << std::endl;
+        Serializer<RawHit> serializer;
+        for (auto & hit : raw_hits) {
+            RawHit* calibrated_hit = new RawHit(*hit);
+            calibrated_hit->V += 7;
+            std::cout << serializer.serialize(*calibrated_hit) << std::endl;
+        }
+    }
+    void Finish() override {
+        std::cout << "Done!" << std::endl;
+    }
+
+};
 
 
+#endif

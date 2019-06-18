@@ -33,8 +33,11 @@
 #ifndef JANA2_JZMQSOURCE_H
 #define JANA2_JZMQSOURCE_H
 
+#include "zmq.hpp"
+#include "RawHit.h"
 
 #include <JANA/JEventSource.h>
+#include <JANA/JEvent.h>
 
 template <typename T>
 class JZmqSource : public JEventSource {
@@ -42,19 +45,49 @@ class JZmqSource : public JEventSource {
 public:
     enum class Mode {PubSub, Pipeline};
 
+    JZmqSource (std::string socket_name, JApplication* app)
+            : JEventSource(socket_name, app)
+            , m_socket_name(socket_name)
+            , m_context(1)
+            , m_socket(m_context, zmq::socket_type::sub) {
+    }
+
     void Open() override {
+        m_socket.connect(m_socket_name);  // E.g. "tcp://*:5555"
+        m_socket.setsockopt(ZMQ_SUBSCRIBE, "", 0);  // Subscribe to everything.
     }
 
-    void GetEvent(std::shared_ptr<JEvent>) override {
-        // Read item from queue
+    void GetEvent(std::shared_ptr<JEvent> event) override {
+
+        zmq::message_t message(500); // What does this do about buffer size?
+        auto result = m_socket.recv(message, zmq::recv_flags::dontwait);
+        // if recv fails, throw
+        if (!result.has_value()) {
+            throw RETURN_STATUS::kTRY_AGAIN;
+        }
+        std::string text = std::string(message.data<char>(), message.size());
+        std::cout << text << std::endl;
+        T* x = new T(m_serializer.deserialize(text)); // TODO: Improve
+        m_prev_id = x->id;
+        event->Insert(x, "raw_hits");
     }
 
-    ~JZmqSource() override {
-
+    // TODO: I don't like this
+    static std::string GetDescription() {
+        return "Emits events pulled off of ZMQ";
     }
+
+
 
 private:
     Mode m_mode = Mode::PubSub;
+    zmq::context_t m_context;
+    zmq::socket_t m_socket;
+
+    std::string m_socket_name;
+    uint64_t m_delay_ms;
+    uint64_t m_prev_id = 0;
+    Serializer<T> m_serializer;
 };
 
 
