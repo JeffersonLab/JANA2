@@ -30,43 +30,52 @@
 // Author: Nathan Brei
 //
 
-#ifndef JANA2_JHITCALIBRATOR_H
-#define JANA2_JHITCALIBRATOR_H
+#ifndef JANA2_RAWHIT_H
+#define JANA2_RAWHIT_H
 
-#include <JANA/JEventProcessor.h>
-#include <JANA/JEvent.h>
-#include <JANA/JPerfUtils.h>
-#include "RawHit.h"
+#include <JANA/JObject.h>
+#include <JANA/JException.h>
 
-class JHitCalibrator : public JEventProcessor {
-
-public:
-    JHitCalibrator(JApplication* app = nullptr, size_t delay_ms=1000)
-        : JEventProcessor(app)
-        , m_delay_ms(delay_ms) {};
-
-    void Init() override {
-
-    }
-    void Process(const std::shared_ptr<const JEvent>& event) override {
-
-        auto raw_hits = event->Get<RawHit>("raw_hits");
-        std::cout << "Processing event #" << event->GetEventNumber() << std::endl;
-        Serializer<RawHit> serializer;
-        for (auto & hit : raw_hits) {
-            RawHit* calibrated_hit = new RawHit(*hit);
-            calibrated_hit->V += 7;
-            std::cout << serializer.serialize(*calibrated_hit) << std::endl;
-        }
-        consume_cpu_ms(m_delay_ms);
-    }
-    void Finish() override {
-        std::cout << "Done!" << std::endl;
-    }
-private:
-    size_t m_delay_ms;
-
+struct DummyHit : public JObject {
+    std::string sensor;
+    size_t id;
+    double V, t, x, y, z;
 };
 
 
-#endif
+template <typename T>
+struct Serializer {
+    T deserialize(const std::string&) {
+        throw JException("Deserializer not implemented!");
+    };
+    std::string serialize(const T& rh) {
+        throw JException("Serializer not implemented!");
+    };
+};
+
+template <>
+struct Serializer<DummyHit> {
+    DummyHit deserialize(const std::string& s) {
+
+        DummyHit x;
+        char sensor[64];
+        int matches = sscanf(s.c_str(), "%64s %lu %lf %lf %lf %lf %lf",
+                             sensor, &x.id, &x.V, &x.t, &x.x, &x.y, &x.z);
+        if (matches != 7) {
+            throw JException("Unable to parse string as DummyHit!");
+        }
+        x.sensor = std::string(sensor);
+        return x;
+    }
+
+    std::string serialize(const DummyHit& x) {
+        char buffer[200];
+        sprintf(buffer, "%s %lu %.2lf %.2lf %.2lf %.2lf %.2lf",
+                x.sensor.c_str(), x.id, x.V, x.t, x.x, x.y, x.z);
+        auto result = std::string(buffer);
+        return result;
+    }
+
+};
+
+#endif //JANA2_RAWHIT_H

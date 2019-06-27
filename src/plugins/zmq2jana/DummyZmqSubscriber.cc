@@ -31,7 +31,7 @@
 //
 
 #include "DummyZmqSubscriber.h"
-#include "RawHit.h"
+#include "DummyHit.h"
 
 #include <JANA/JPerfUtils.h>
 
@@ -57,9 +57,9 @@ ZmqDummySubscriber::~ZmqDummySubscriber() {
 void ZmqDummySubscriber::loop() {
 
     zmq::message_t message(500); // What does this do about buffer size?
-    Serializer<RawHit> serializer;
+    Serializer<DummyHit> serializer;
 
-    RawHit x;
+    DummyHit x;
     size_t prev_id = 0;
 
     m_socket.recv(message);

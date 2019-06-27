@@ -30,52 +30,34 @@
 // Author: Nathan Brei
 //
 
-#ifndef JANA2_RAWHIT_H
-#define JANA2_RAWHIT_H
+#include "JEventBuilder.h"
 
-#include <JANA/JObject.h>
-#include <JANA/JException.h>
+void JEventBuilder::execute(JArrowMetrics& result, size_t location_id) {
+    // get event from pool
+    // pull messages from mailbox
+    // sort by tag
+    // pack into Event
+    // push event onto output queue
+}
 
-struct RawHit : public JObject {
-    std::string sensor;
-    size_t id;
-    double V, t, x, y, z;
-};
+size_t JEventBuilder::get_pending() {
+    // This has to be number of messages, not number of events
+    // Comes from JEventAccumulator, yikes
+    return JArrow::get_pending();
+}
 
+size_t JEventBuilder::get_threshold() {
+    // This also has to be number of messages, not number of events
+    // Comes from JEventAccumulator, yikes
+    return JArrow::get_threshold();
+}
 
-template <typename T>
-struct Serializer {
-    T deserialize(const std::string&) {
-        throw JException("Deserializer not implemented!");
-    };
-    std::string serialize(const T& rh) {
-        throw JException("Serializer not implemented!");
-    };
-};
+void JEventBuilder::set_threshold(size_t threshold) {
+    // This also has to be number of messages, not number of events
+    // Comes from JEventAccumulator, yikes
+}
 
-template <>
-struct Serializer<RawHit> {
-    RawHit deserialize(const std::string& s) {
+JEventAccumulator* JEventBuilder::get_mailbox() {
+    return &m_input_queue;
+}
 
-        RawHit x;
-        char sensor[64];
-        int matches = sscanf(s.c_str(), "%64s %lu %lf %lf %lf %lf %lf",
-                             sensor, &x.id, &x.V, &x.t, &x.x, &x.y, &x.z);
-        if (matches != 7) {
-            throw JException("Unable to parse string as RawHit!");
-        }
-        x.sensor = std::string(sensor);
-        return x;
-    }
-
-    std::string serialize(const RawHit& x) {
-        char buffer[200];
-        sprintf(buffer, "%s %lu %.2lf %.2lf %.2lf %.2lf %.2lf",
-                x.sensor.c_str(), x.id, x.V, x.t, x.x, x.y, x.z);
-        auto result = std::string(buffer);
-        return result;
-    }
-
-};
-
-#endif //JANA2_RAWHIT_H

@@ -22,13 +22,7 @@ include_directories(src/programs/tests)
 
 add_library(greenfield STATIC
         src/lib/greenfield/Greenfield.cc
-        src/plugins/zmq2jana/ZmqMain.cc
-        src/plugins/zmq2jana/DummyZmqPublisher.cc
-        src/plugins/zmq2jana/DummyZmqPublisher.h
-        src/plugins/zmq2jana/DummyZmqSubscriber.cc
-        src/plugins/zmq2jana/DummyZmqSubscriber.h
-        src/plugins/zmq2jana/RawHit.h
-        src/plugins/zmq2jana/JZmqSink.h src/plugins/zmq2jana/JHitCalibrator.h)
+        )
 
 add_executable(tests
         src/programs/tests/catch.hpp
@@ -160,9 +154,24 @@ add_library(janapy SHARED
         )
 
 add_library(zmq2jana SHARED
-        src/plugins/zmq2jana/JZmqSource.h
-        src/plugins/zmq2jana/JZmqSource.h
         src/plugins/zmq2jana/ZmqMain.cc
+        src/plugins/zmq2jana/DummyZmqPublisher.cc
+        src/plugins/zmq2jana/DummyZmqPublisher.h
+        src/plugins/zmq2jana/DummyZmqSubscriber.cc
+        src/plugins/zmq2jana/DummyZmqSubscriber.h
+        src/plugins/zmq2jana/ZmqMessage.h
+        src/plugins/zmq2jana/DummyHit.h
+        src/plugins/zmq2jana/DummyHitCalibrator.h
+        src/plugins/zmq2jana/ZmqHitSource.h
+        src/plugins/zmq2jana/ZmqHitSource.cc
+        src/plugins/zmq2jana/JDataSource.h
+        src/plugins/zmq2jana/ZmqDataSource.h
+        src/plugins/zmq2jana/ZmqDataSource.cc
+        src/plugins/zmq2jana/JEventAccumulator.h
+        src/plugins/zmq2jana/JEventBuilder.h
+        src/plugins/zmq2jana/JEventBuilder.cc
+        src/plugins/zmq2jana/ZmqEventSource.h
+        src/plugins/zmq2jana/ZmqEventSource.cc
         )
 
 add_executable(zmqpub

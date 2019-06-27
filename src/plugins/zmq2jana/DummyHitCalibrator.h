@@ -30,25 +30,43 @@
 // Author: Nathan Brei
 //
 
+#ifndef JANA2_JHITCALIBRATOR_H
+#define JANA2_JHITCALIBRATOR_H
 
-#include <JANA/JApplication.h>
-#include <JANA/JEventSourceGeneratorT.h>
+#include <JANA/JEventProcessor.h>
+#include <JANA/JEvent.h>
+#include <JANA/JPerfUtils.h>
+#include "DummyHit.h"
 
-#include "ZmqHitSource.h"
-#include "DummyHitCalibrator.h"
+class DummyHitCalibrator : public JEventProcessor {
 
-extern "C"{
-void InitPlugin(JApplication *app) {
+public:
+    DummyHitCalibrator(JApplication* app = nullptr, size_t delay_ms=1000)
+        : JEventProcessor(app)
+        , m_delay_ms(delay_ms) {};
 
-	InitJANAPlugin(app);
-	app->Add(new JEventSourceGeneratorT<ZmqHitSource<DummyHit>>(app));
-	app->Add(new DummyHitCalibrator(app, 5000));
+    void Init() override {
 
-	// So we don't have to put this on the cmd line every time
-	app->Add("tcp://127.0.0.1:5555");
-	app->SetParameterValue("jana:legacy_mode", 0);
-	app->SetParameterValue("jana:extended_report", 0);
-}
-} // "C"
+    }
+    void Process(const std::shared_ptr<const JEvent>& event) override {
+
+        auto raw_hits = event->Get<DummyHit>("raw_hits");
+        std::cout << "Processing event #" << event->GetEventNumber() << std::endl;
+        Serializer<DummyHit> serializer;
+        for (auto & hit : raw_hits) {
+            DummyHit* calibrated_hit = new DummyHit(*hit);
+            calibrated_hit->V += 7;
+            std::cout << serializer.serialize(*calibrated_hit) << std::endl;
+        }
+        consume_cpu_ms(m_delay_ms);
+    }
+    void Finish() override {
+        std::cout << "Done!" << std::endl;
+    }
+private:
+    size_t m_delay_ms;
+
+};
 
 
+#endif

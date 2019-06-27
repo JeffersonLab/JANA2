@@ -30,25 +30,36 @@
 // Author: Nathan Brei
 //
 
+#ifndef JANA2_JEVENTBUILDER_H
+#define JANA2_JEVENTBUILDER_H
 
-#include <JANA/JApplication.h>
-#include <JANA/JEventSourceGeneratorT.h>
+#include <JANA/JArrow.h>
+#include <JANA/JEvent.h>
+#include <JANA/JMailbox.h>
+#include <JANA/JEventPool.h>
+#include "JEventAccumulator.h"
 
-#include "ZmqHitSource.h"
-#include "DummyHitCalibrator.h"
+class JEventBuilder : public JArrow {
 
-extern "C"{
-void InitPlugin(JApplication *app) {
+public:
+    void execute(JArrowMetrics& result, size_t location_id) override;
 
-	InitJANAPlugin(app);
-	app->Add(new JEventSourceGeneratorT<ZmqHitSource<DummyHit>>(app));
-	app->Add(new DummyHitCalibrator(app, 5000));
+    size_t get_pending() override;
 
-	// So we don't have to put this on the cmd line every time
-	app->Add("tcp://127.0.0.1:5555");
-	app->SetParameterValue("jana:legacy_mode", 0);
-	app->SetParameterValue("jana:extended_report", 0);
-}
-} // "C"
+    size_t get_threshold() override;
+
+    void set_threshold(size_t threshold);
+
+    JEventAccumulator* get_mailbox(); // So that upstream can connect. Probably needs to be JMailbox
+
+private:
+    using Event = std::shared_ptr<JEvent>;
+    using EventQueue = JMailbox<Event>;
+
+    JEventPool m_event_pool;
+    JEventAccumulator m_input_queue;
+    EventQueue m_output_queue;
+};
 
 
+#endif //JANA2_JEVENTBUILDER_H
