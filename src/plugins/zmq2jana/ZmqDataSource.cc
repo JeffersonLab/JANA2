@@ -31,3 +31,38 @@
 //
 
 #include "ZmqDataSource.h"
+
+ZmqDataSource::ZmqDataSource(std::string socket_name)
+    : m_socket_name(std::move(socket_name))
+    , m_context(1)
+    , m_socket(m_context, zmq::socket_type::sub) {
+}
+
+JDataSource<ZmqMessage>::Status ZmqDataSource::pull(JData<ZmqMessage>& destination) {
+
+    zmq::message_t message(500);
+    auto result = m_socket.recv(message, zmq::recv_flags::dontwait);
+
+    if (!result.has_value()) {
+        return Status::TryAgainLater;
+    }
+    std::string text = std::string(message.data<char>(), message.size());
+
+
+    ZmqMessage payload = m_serializer.deserialize(text);
+
+    return Status::Success;
+
+    // TODO: Rethink how we serialize/deserialize
+    // TODO: Currently no way to detect when we are finished
+    // TODO: Think more carefully about msg buffer size
+    // TODO: Consider creating a pool for JData<ZmqMessage>?
+
+}
+
+void ZmqDataSource::initialize() {
+
+    m_socket.connect(m_socket_name);  // E.g. "tcp://*:5555"
+    m_socket.setsockopt(ZMQ_SUBSCRIBE, "", 0);  // Subscribe to everything.
+}
+

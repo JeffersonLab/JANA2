@@ -38,13 +38,22 @@
 
 #include "JDataSource.h"
 #include "ZmqMessage.h"
+#include "zmq.hpp"
 
 /// JDataSource which emits JData<ZmqMessage>
 /// TODO: We could make this more generic if only we knew how to extract detector_id and timestamp
 class ZmqDataSource : public JDataSource<ZmqMessage> {
 
+public:
+    ZmqDataSource(std::string socket_name);
+    Status pull(JData<ZmqMessage>& destination) override;
+    void initialize() override;
 
-
+private:
+    zmq::context_t m_context;
+    zmq::socket_t m_socket;
+    std::string m_socket_name;
+    Serializer<ZmqMessage> m_serializer;
 
 };
 

@@ -59,12 +59,12 @@ ZmqDummyPublisher::~ZmqDummyPublisher() {
     // socket closed by destructor
 }
 
-void ZmqDummyPublisher::loop() {
+void ZmqDummyPublisher::publish(size_t nitems) {
 
     Serializer<DummyHit> serializer;
     size_t counter = 0;
 
-    while (counter < 100000) {
+    while (counter < nitems) {
         DummyHit x;
         x.sensor = m_sensor_name;
         x.id = counter++;
@@ -85,7 +85,3 @@ void ZmqDummyPublisher::loop() {
 
 
 
-int main() {
-    ZmqDummyPublisher pub("tcp://127.0.0.1:5555", "fcal", 3, 2, 1000);
-    pub.loop();
-}

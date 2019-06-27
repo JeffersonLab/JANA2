@@ -49,7 +49,7 @@ public:
 
     ~ZmqDummyPublisher();
 
-    void loop();
+    void publish(size_t nitems);
 
 private:
     zmq::context_t m_context;
