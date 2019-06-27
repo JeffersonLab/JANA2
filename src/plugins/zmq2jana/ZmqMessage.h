@@ -30,25 +30,43 @@
 // Author: Nathan Brei
 //
 
+#ifndef JANA2_DETECTORMESSAGE_H
+#define JANA2_DETECTORMESSAGE_H
 
-#include <JANA/JApplication.h>
-#include <JANA/JEventSourceGeneratorT.h>
+#include <string>
+#include <chrono>
 
-#include "ZmqHitSource.h"
-#include "DummyHitCalibrator.h"
+using DetectorId = std::string;
+using Timestamp = uint64_t;
 
-extern "C"{
-void InitPlugin(JApplication *app) {
+struct ZmqMessage {
 
-	InitJANAPlugin(app);
-	app->Add(new JEventSourceGeneratorT<ZmqHitSource<DummyHit>>(app));
-	app->Add(new DummyHitCalibrator(app, 5000));
+    enum class Type {Hit, Heartbeat, ChangeRun, Finish};
 
-	// So we don't have to put this on the cmd line every time
-	app->Add("tcp://127.0.0.1:5555");
-	app->SetParameterValue("jana:legacy_mode", 0);
-	app->SetParameterValue("jana:extended_report", 0);
-}
-} // "C"
+    Type type;
+    DetectorId detector_id;
+    Timestamp timestamp;
+    double payload;
 
+    // Ordering defined for the purpose of priority queue
+    inline bool operator<(const ZmqMessage& rhs) const { return this->timestamp > rhs.timestamp; }
+    inline bool operator==(const ZmqMessage& rhs) const { return this->timestamp == rhs.timestamp; }
 
+    inline bool operator>(const ZmqMessage& rhs) const { return rhs < *this; }
+    inline bool operator<=(const ZmqMessage& rhs) const { return !(*this > rhs); }
+    inline bool operator>=(const ZmqMessage& rhs) const { return !(*this < rhs); }
+    inline bool operator!=(const ZmqMessage& rhs) const { return !(*this == rhs); }
+
+};
+
+template <typename T>
+struct Serializer {
+    T deserialize(const std::string&) {
+        throw JException("Deserializer not implemented!");
+    };
+    std::string serialize(const T& rh) {
+        throw JException("Serializer not implemented!");
+    };
+};
+
+#endif //JANA2_DETECTORMESSAGE_H

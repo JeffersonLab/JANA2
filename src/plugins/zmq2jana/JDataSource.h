@@ -4,6 +4,7 @@
 // Copyright 251 2014 Jefferson Science Associates LLC All Rights Reserved. Redistribution
 // and use in source and binary forms, with or without modification, are permitted as a
 // licensed user provided that the following conditions are met:
+//
 // 1. Redistributions of source code must retain the above copyright notice, this
 //    list of conditions and the following disclaimer.
 // 2. Redistributions in binary form must reproduce the above copyright notice, this
@@ -11,10 +12,12 @@
 //    materials provided with the distribution.
 // 3. The name of the author may not be used to endorse or promote products derived
 //    from this software without specific prior written permission.
+//
 // This material resulted from work developed under a United States Government Contract.
 // The Government retains a paid-up, nonexclusive, irrevocable worldwide license in such
 // copyrighted data to reproduce, distribute copies to the public, prepare derivative works,
 // perform publicly and display publicly and to permit others to do so.
+//
 // THIS SOFTWARE IS PROVIDED BY JEFFERSON SCIENCE ASSOCIATES LLC "AS IS" AND ANY EXPRESS
 // OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
 // MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
@@ -30,7 +33,34 @@
 // Author: Nathan Brei
 //
 
-#ifndef JANA2_JZMQSINK_H
-#define JANA2_JZMQSINK_H
+#ifndef JANA2_JDATASOURCE_H
+#define JANA2_JDATASOURCE_H
 
-#endif //JANA2_JZMQSINK_H
+#include <memory>
+#include <vector>
+#include <cstdint>
+
+/// JData wraps arbitrary data alongside time and detector indices.
+/// This is what we need to to fuse raw hit data and/or build events from it.
+template <typename T>
+struct JData {
+    uint64_t timestamp;
+    uint64_t detector_id;
+    std::unique_ptr<T> payload;
+};
+
+
+/// Generic abstract class for sourcing JData. Analogous to JEventSource.
+template <typename T>
+struct JDataSource {
+
+    enum class Status { Success, TryAgainLater, Error, Finished };
+
+    virtual Status pull(JData<T>& destination) = 0;
+
+    virtual void initialize() = 0;
+    virtual void finalize() = 0;
+};
+
+
+#endif //JANA2_JDATASOURCE_H

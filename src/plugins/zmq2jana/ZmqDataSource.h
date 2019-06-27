@@ -4,6 +4,7 @@
 // Copyright 251 2014 Jefferson Science Associates LLC All Rights Reserved. Redistribution
 // and use in source and binary forms, with or without modification, are permitted as a
 // licensed user provided that the following conditions are met:
+
 // 1. Redistributions of source code must retain the above copyright notice, this
 //    list of conditions and the following disclaimer.
 // 2. Redistributions in binary form must reproduce the above copyright notice, this
@@ -11,10 +12,12 @@
 //    materials provided with the distribution.
 // 3. The name of the author may not be used to endorse or promote products derived
 //    from this software without specific prior written permission.
+
 // This material resulted from work developed under a United States Government Contract.
 // The Government retains a paid-up, nonexclusive, irrevocable worldwide license in such
 // copyrighted data to reproduce, distribute copies to the public, prepare derivative works,
 // perform publicly and display publicly and to permit others to do so.
+
 // THIS SOFTWARE IS PROVIDED BY JEFFERSON SCIENCE ASSOCIATES LLC "AS IS" AND ANY EXPRESS
 // OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
 // MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
@@ -30,66 +33,20 @@
 // Author: Nathan Brei
 //
 
-#ifndef JANA2_JZMQSOURCE_H
-#define JANA2_JZMQSOURCE_H
+#ifndef JANA2_ZMQDATASOURCE_H
+#define JANA2_ZMQDATASOURCE_H
 
-#include "zmq.hpp"
-#include "RawHit.h"
+#include "JDataSource.h"
+#include "ZmqMessage.h"
 
-#include <JANA/JEventSource.h>
-#include <JANA/JEvent.h>
-
-template <typename T>
-class JZmqSource : public JEventSource {
-
-public:
-    enum class Mode {PubSub, Pipeline};
-
-    JZmqSource (std::string socket_name, JApplication* app)
-            : JEventSource(socket_name, app)
-            , m_socket_name(socket_name)
-            , m_context(1)
-            , m_socket(m_context, zmq::socket_type::sub) {
-    }
-
-    void Open() override {
-        m_socket.connect(m_socket_name);  // E.g. "tcp://*:5555"
-        m_socket.setsockopt(ZMQ_SUBSCRIBE, "", 0);  // Subscribe to everything.
-    }
-
-    void GetEvent(std::shared_ptr<JEvent> event) override {
-
-        zmq::message_t message(500); // What does this do about buffer size?
-        auto result = m_socket.recv(message, zmq::recv_flags::dontwait);
-        // if recv fails, throw
-        if (!result.has_value()) {
-            throw RETURN_STATUS::kTRY_AGAIN;
-        }
-        std::string text = std::string(message.data<char>(), message.size());
-        std::cout << text << std::endl;
-        T* x = new T(m_serializer.deserialize(text)); // TODO: Improve
-        m_prev_id = x->id;
-        event->Insert(x, "raw_hits");
-        event->SetEventNumber(m_prev_id);
-    }
-
-    // TODO: I don't like this
-    static std::string GetDescription() {
-        return "Emits events pulled off of ZMQ";
-    }
+/// JDataSource which emits JData<ZmqMessage>
+/// TODO: We could make this more generic if only we knew how to extract detector_id and timestamp
+class ZmqDataSource : public JDataSource<ZmqMessage> {
 
 
 
-private:
-    Mode m_mode = Mode::PubSub;
-    zmq::context_t m_context;
-    zmq::socket_t m_socket;
 
-    std::string m_socket_name;
-    uint64_t m_delay_ms;
-    uint64_t m_prev_id = 0;
-    Serializer<T> m_serializer;
 };
 
 
-#endif //JANA2_JZMQSOURCE_H
+#endif //JANA2_ZMQDATASOURCE_H
