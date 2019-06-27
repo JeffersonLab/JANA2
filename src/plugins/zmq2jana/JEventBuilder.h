@@ -4,6 +4,7 @@
 // Copyright 251 2014 Jefferson Science Associates LLC All Rights Reserved. Redistribution
 // and use in source and binary forms, with or without modification, are permitted as a
 // licensed user provided that the following conditions are met:
+
 // 1. Redistributions of source code must retain the above copyright notice, this
 //    list of conditions and the following disclaimer.
 // 2. Redistributions in binary form must reproduce the above copyright notice, this
@@ -11,10 +12,12 @@
 //    materials provided with the distribution.
 // 3. The name of the author may not be used to endorse or promote products derived
 //    from this software without specific prior written permission.
+
 // This material resulted from work developed under a United States Government Contract.
 // The Government retains a paid-up, nonexclusive, irrevocable worldwide license in such
 // copyrighted data to reproduce, distribute copies to the public, prepare derivative works,
 // perform publicly and display publicly and to permit others to do so.
+
 // THIS SOFTWARE IS PROVIDED BY JEFFERSON SCIENCE ASSOCIATES LLC "AS IS" AND ANY EXPRESS
 // OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
 // MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
@@ -33,33 +36,82 @@
 #ifndef JANA2_JEVENTBUILDER_H
 #define JANA2_JEVENTBUILDER_H
 
-#include <JANA/JArrow.h>
-#include <JANA/JEvent.h>
-#include <JANA/JMailbox.h>
-#include <JANA/JEventPool.h>
-#include "JEventAccumulator.h"
+#include "ZmqMessage.h"
+#include "JDataSource.h"
 
-class JEventBuilder : public JArrow {
+#include <map>
+#include <queue>
+
+
+template <typename S>
+struct maybe {
+    bool is_none = true;
+    S value;
+};
+
+using Duration = uint64_t;
+
+template <typename T>
+class JEventBuilder {
 
 public:
-    void execute(JArrowMetrics& result, size_t location_id) override;
+    JEventBuilder(Duration event_interval, const std::vector<DetectorId>& detectors)
+    : m_event_interval(event_interval) {
+        for (auto id : detectors) {
+            m_latest_sample_times.insert({id, maybe<Timestamp>()});
+        }
+    }
 
-    size_t get_pending() override;
+    void push(std::vector<JData<T>>&& messages) {
+        for (auto m : messages) {
+            auto iter = m_latest_sample_times.find(m.detector_id);
+            if (iter == m_latest_sample_times.end()) {
+                throw std::runtime_error("Unexpected detector!");
+            }
+            else {
+                maybe<Timestamp> old_timestamp = iter->second;
+                if (!old_timestamp.is_none && old_timestamp.value > m.timestamp) {
+                    throw std::runtime_error("Partial ordering violation!");
+                }
+                else {
+                    m_inbox.push(m);
+                }
+            }
+        }
+        // Find latest complete time
+        if (!m_latest_sample_times.empty()) {
+            auto iter = m_latest_sample_times.begin();
+            m_latest_complete_time = iter->second;
 
-    size_t get_threshold() override;
+            while (iter != m_latest_sample_times.end()) {
+                if (iter->second.is_none) {
+                    m_latest_complete_time.is_none = true;
+                    break;
+                }
+                m_latest_complete_time.value = std::min(m_latest_complete_time.value, iter->second.value);
+                ++iter;
+            }
+        }
+    }
 
-    void set_threshold(size_t threshold);
+    bool stage_next_event() {
 
-    JEventAccumulator* get_mailbox(); // So that upstream can connect. Probably needs to be JMailbox
+    }
+
 
 private:
-    using Event = std::shared_ptr<JEvent>;
-    using EventQueue = JMailbox<Event>;
+    std::map<DetectorId, std::deque<JData<T>>> m_inbox;
+    std::vector<JData<T>> m_outbox;
+    std::map<DetectorId, maybe<Timestamp>> m_latest_sample_times;
+    maybe<Timestamp> m_latest_complete_time;
+    maybe<Timestamp> m_latest_event_start;
+    Duration m_event_interval;
 
-    JEventPool m_event_pool;
-    JEventAccumulator m_input_queue;
-    EventQueue m_output_queue;
+
+
+
 };
+
 
 
 #endif //JANA2_JEVENTBUILDER_H

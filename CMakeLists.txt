@@ -167,7 +167,6 @@ add_library(zmq2jana SHARED
         src/plugins/zmq2jana/ZmqDataSource.cc
         src/plugins/zmq2jana/JEventAccumulator.h
         src/plugins/zmq2jana/JEventBuilder.h
-        src/plugins/zmq2jana/JEventBuilder.cc
         src/plugins/zmq2jana/ZmqEventSource.h
         src/plugins/zmq2jana/ZmqEventSource.cc
         )

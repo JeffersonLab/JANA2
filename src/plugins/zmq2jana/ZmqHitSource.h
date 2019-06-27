@@ -67,15 +67,14 @@ public:
         }
         std::string text = std::string(message.data<char>(), message.size());
         std::cout << text << std::endl;
-        T* x = new T(m_serializer.deserialize(text)); // TODO: Improve
+        T* x = new T(m_serializer.deserialize(text));
         m_prev_id = x->id;
         event->Insert(x, "raw_hits");
         event->SetEventNumber(m_prev_id);
     }
 
-    // TODO: I don't like this
     static std::string GetDescription() {
-        return "Emits events pulled off of ZMQ";
+        return "ZmqHitSource";
     }
 
 
