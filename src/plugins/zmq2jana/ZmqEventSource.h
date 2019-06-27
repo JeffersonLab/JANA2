@@ -37,22 +37,27 @@
 #include <JANA/JEventSource.h>
 #include "zmq.hpp"
 #include "ZmqMessage.h"
+#include "ZmqDataSource.h"
+#include "JEventBuilder.h"
 
 class ZmqEventSource : public JEventSource {
-public:
 
-    ZmqEventSource(std::string socket_name, JApplication* app);
+public:
+    ZmqEventSource(std::string socket_name,
+                   JApplication* app,
+                   Duration event_interval,
+                   const std::vector<DetectorId>& detectors);
+
     void Open() override;
     void GetEvent(std::shared_ptr<JEvent> event) override;
     static std::string GetDescription();
 
 private:
-    zmq::context_t m_context;
-    zmq::socket_t m_socket;
-
-    std::string m_socket_name;
-    uint64_t m_delay_ms;
-    Serializer<ZmqMessage> m_serializer;
+    ZmqDataSource m_data_source;
+    JEventBuilder<ZmqMessage> m_event_builder;
+    uint64_t m_current_run_number;
+    uint64_t m_current_event_number;
+    bool m_is_finished;
 };
 
 #endif //JANA2_ZMQEVENTBUILDER_H

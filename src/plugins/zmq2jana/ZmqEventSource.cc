@@ -31,3 +31,31 @@
 //
 
 #include "ZmqEventSource.h"
+
+ZmqEventSource::ZmqEventSource(std::string socket_name, JApplication* app, Duration event_interval, const std::vector<DetectorId>& detectors)
+    : JEventSource(socket_name, app)
+    , m_data_source(socket_name)
+    , m_event_builder(event_interval, detectors)
+    {
+
+}
+
+void ZmqEventSource::Open() {
+    JEventSource::Open();
+}
+
+void ZmqEventSource::GetEvent(std::shared_ptr<JEvent> event) {
+    // Get event from EventPool
+    // Pull latest messages from zmq
+    // Push latest messages to JEventBuilder
+    // Ask JEventBuilder for next event
+
+    throw RETURN_STATUS::kTRY_AGAIN;
+    // TODO: No way to detect finish() yet
+
+}
+
+std::string ZmqEventSource::GetDescription() {
+    return "ZmqEventSource";
+}
+
