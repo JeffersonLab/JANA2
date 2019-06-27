@@ -143,8 +143,6 @@ add_library(zmq2jana SHARED
         src/plugins/zmq2jana/ZmqMain.cc
         src/plugins/zmq2jana/DummyZmqPublisher.cc
         src/plugins/zmq2jana/DummyZmqPublisher.h
-        src/plugins/zmq2jana/DummyZmqSubscriber.cc
-        src/plugins/zmq2jana/DummyZmqSubscriber.h
         src/plugins/zmq2jana/ZmqMessage.h
         src/plugins/zmq2jana/DummyHit.h
         src/plugins/zmq2jana/DummyHitCalibrator.h
@@ -158,14 +156,6 @@ add_library(zmq2jana SHARED
         src/plugins/zmq2jana/JEventBuilder.cc
         src/plugins/zmq2jana/ZmqEventSource.h
         src/plugins/zmq2jana/ZmqEventSource.cc
-        )
-
-add_executable(zmqpub
-        src/plugins/zmq2jana/DummyZmqPublisher.cc
-        )
-
-add_executable(zmqsub
-        src/plugins/zmq2jana/DummyZmqSubscriber.cc
         )
 
 add_executable(jana
@@ -207,9 +197,5 @@ set_target_properties(janapy PROPERTIES PREFIX "")
 
 # For zmq2jana plugin
 find_package(cppzmq)
-target_link_libraries(zmqpub cppzmq)
-target_link_libraries(zmqsub cppzmq)
 target_link_libraries(zmq2jana cppzmq)
-target_link_libraries(zmqpub jana2)
-target_link_libraries(zmqsub jana2)
 target_link_libraries(zmq2jana jana2)

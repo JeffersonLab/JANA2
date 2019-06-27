@@ -59,7 +59,8 @@ struct JDataSource {
     virtual Status pull(JData<T>& destination) = 0;
 
     virtual void initialize() = 0;
-    virtual void finalize() = 0;
+    // We don't want to open sockets/files/etc until initialize()
+    // However, all resources should be closed in the destructor
 };
 
 

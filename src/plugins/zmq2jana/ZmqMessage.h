@@ -35,6 +35,7 @@
 
 #include <string>
 #include <chrono>
+#include <JANA/JException.h>
 
 using DetectorId = std::string;
 using Timestamp = uint64_t;

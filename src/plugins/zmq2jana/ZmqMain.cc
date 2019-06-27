@@ -36,6 +36,12 @@
 
 #include "ZmqHitSource.h"
 #include "DummyHitCalibrator.h"
+#include "DummyZmqPublisher.h"
+
+void dummy_publisher_loop() {
+	ZmqDummyPublisher pub("tcp://127.0.0.1:5555", "fcal", 3, 2, 1000);
+	pub.publish(100);
+}
 
 extern "C"{
 void InitPlugin(JApplication *app) {
@@ -48,6 +54,9 @@ void InitPlugin(JApplication *app) {
 	app->Add("tcp://127.0.0.1:5555");
 	app->SetParameterValue("jana:legacy_mode", 0);
 	app->SetParameterValue("jana:extended_report", 0);
+
+
+	auto publisher = new std::thread(dummy_publisher_loop);
 }
 } // "C"
 
