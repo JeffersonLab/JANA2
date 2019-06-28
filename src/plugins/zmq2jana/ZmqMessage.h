@@ -35,39 +35,34 @@
 
 #include <string>
 #include <chrono>
+#include "JDataSource.h"
 #include <JANA/JException.h>
-
-using DetectorId = std::string;
-using Timestamp = uint64_t;
+#include <cstring>
 
 struct ZmqMessage {
 
     enum class Type {Hit, Heartbeat, ChangeRun, Finish};
-
     Type type;
     DetectorId detector_id;
     Timestamp timestamp;
     double payload;
-
-    // Ordering defined for the purpose of priority queue
-    inline bool operator<(const ZmqMessage& rhs) const { return this->timestamp > rhs.timestamp; }
-    inline bool operator==(const ZmqMessage& rhs) const { return this->timestamp == rhs.timestamp; }
-
-    inline bool operator>(const ZmqMessage& rhs) const { return rhs < *this; }
-    inline bool operator<=(const ZmqMessage& rhs) const { return !(*this > rhs); }
-    inline bool operator>=(const ZmqMessage& rhs) const { return !(*this < rhs); }
-    inline bool operator!=(const ZmqMessage& rhs) const { return !(*this == rhs); }
-
 };
 
-template <typename T>
-struct Serializer {
-    T deserialize(const std::string&) {
-        throw JException("Deserializer not implemented!");
-    };
-    std::string serialize(const T& rh) {
-        throw JException("Serializer not implemented!");
-    };
-};
+
+template <>
+inline DetectorId JData<ZmqMessage>::get_detector_id() {
+    return payload.detector_id;
+}
+
+template <>
+inline Timestamp JData<ZmqMessage>::get_timestamp() {
+    return payload.timestamp;
+}
+
+template <>
+inline void JData<ZmqMessage>::emplace(char* serialized, size_t bytes) {
+    memcpy(reinterpret_cast<char*>(this), serialized, bytes);
+}
+
 
 #endif //JANA2_DETECTORMESSAGE_H
