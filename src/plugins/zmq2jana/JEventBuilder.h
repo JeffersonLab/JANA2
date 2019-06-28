@@ -58,53 +58,68 @@ public:
     JEventBuilder(Duration event_interval, const std::vector<DetectorId>& detectors)
     : m_event_interval(event_interval) {
         for (auto id : detectors) {
-            m_latest_sample_times.insert({id, maybe<Timestamp>()});
+            m_inbox.insert({id, {}});
         }
     }
 
     void push(std::vector<JData<T>>&& messages) {
         for (auto m : messages) {
-            auto iter = m_latest_sample_times.find(m.detector_id);
-            if (iter == m_latest_sample_times.end()) {
+            auto iter = m_inbox.find(m.detector_id);
+            if (iter == m_inbox.end()) {
                 throw std::runtime_error("Unexpected detector!");
             }
             else {
-                maybe<Timestamp> old_timestamp = iter->second;
-                if (!old_timestamp.is_none && old_timestamp.value > m.timestamp) {
-                    throw std::runtime_error("Partial ordering violation!");
-                }
-                else {
-                    m_inbox.push(m);
-                }
-            }
-        }
-        // Find latest complete time
-        if (!m_latest_sample_times.empty()) {
-            auto iter = m_latest_sample_times.begin();
-            m_latest_complete_time = iter->second;
-
-            while (iter != m_latest_sample_times.end()) {
-                if (iter->second.is_none) {
-                    m_latest_complete_time.is_none = true;
-                    break;
-                }
-                m_latest_complete_time.value = std::min(m_latest_complete_time.value, iter->second.value);
-                ++iter;
+                iter.second.push_back(m);
             }
         }
     }
 
-    bool stage_next_event() {
+    maybe<Timestamp> find_next_event_start() {
+        maybe<Timestamp> result;
+        result.is_none = true;
+        if (!m_inbox.empty()) {
+            result.is_none = false;
+            auto iter = m_inbox.begin();
+            result.value = iter->second.timestamp;
 
+            while (++iter != m_inbox.end()) {
+                if (iter->second.is_none) {
+                    result.is_none = true;
+                    return result;
+                }
+                result.value = std::min(result.value, iter->second.value);
+            }
+        }
+        return result;
+    }
+
+    bool stage_next_event() {
+        if (m_next_event_start.is_none) {
+            m_next_event_start = find_next_event_start();
+            if (m_next_event_start.is_none) {
+                return false;
+            }
+        }
+        Timestamp next_event_finish = m_next_event_start.value + m_event_interval;
+        for (auto iter : m_inbox) { // for each detector
+            auto & q = iter.second;
+            while (q.front().timestamp <= next_event_finish) {
+                m_outbox.push_back(std::move(q.front()));
+                q.pop_front();
+            }
+            if (q.empty()) {
+                // we've run out of samples, so we can't say whether we have everything or not
+                return false;
+            }
+        }
+        return true;
     }
 
 
 private:
     std::map<DetectorId, std::deque<JData<T>>> m_inbox;
     std::vector<JData<T>> m_outbox;
-    std::map<DetectorId, maybe<Timestamp>> m_latest_sample_times;
-    maybe<Timestamp> m_latest_complete_time;
-    maybe<Timestamp> m_latest_event_start;
+    maybe<Timestamp> m_next_event_start;
     Duration m_event_interval;
 
 

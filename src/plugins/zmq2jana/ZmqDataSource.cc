@@ -46,16 +46,11 @@ JDataSource<ZmqMessage>::Status ZmqDataSource::pull(JData<ZmqMessage>& destinati
     if (!result.has_value()) {
         return Status::TryAgainLater;
     }
-    std::string text = std::string(message.data<char>(), message.size());
 
-
-    ZmqMessage payload = m_serializer.deserialize(text);
-
+    destination.emplace(message.data<char>(), message.size());
     return Status::Success;
 
-    // TODO: Rethink how we serialize/deserialize
     // TODO: Currently no way to detect when we are finished
-    // TODO: Think more carefully about msg buffer size
     // TODO: Consider creating a pool for JData<ZmqMessage>?
 
 }

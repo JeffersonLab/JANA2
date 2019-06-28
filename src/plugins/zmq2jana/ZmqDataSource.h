@@ -53,7 +53,6 @@ private:
     zmq::context_t m_context;
     zmq::socket_t m_socket;
     std::string m_socket_name;
-    Serializer<ZmqMessage> m_serializer;
 
 };
 

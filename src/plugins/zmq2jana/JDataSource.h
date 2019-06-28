@@ -40,15 +40,22 @@
 #include <vector>
 #include <cstdint>
 
+/// Basic types which we use when working with JData
+using DetectorId = std::string;
+using Timestamp = uint64_t;
+
+
 /// JData wraps arbitrary data alongside time and detector indices.
 /// This is what we need to to fuse raw hit data and/or build events from it.
 template <typename T>
 struct JData {
-    uint64_t timestamp;
-    uint64_t detector_id;
-    std::unique_ptr<T> payload;
-};
+    T payload;
 
+    Timestamp get_timestamp();
+    DetectorId get_detector_id();
+
+    void emplace(char* serialized, size_t bytes);
+};
 
 /// Generic abstract class for sourcing JData. Analogous to JEventSource.
 template <typename T>
