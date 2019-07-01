@@ -44,6 +44,8 @@
 // class, but I decided to put it here to make things a little cleaner.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+#include <memory>
+
 #include <JApplication.h>
 #include <JEventSourceGeneratorT.h>
 
@@ -60,6 +62,8 @@ void InitPlugin(JApplication *app){
     app->Add(new JTestPlotter(app));
     app->Add(new JTestFactoryGenerator());
 	app->Add("dummy_evt_src");
+
+	app->ProvideService(std::make_shared<JTestCalibrationService>());
 }
 } // "C"
 

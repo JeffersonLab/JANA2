@@ -168,7 +168,7 @@ private:
     JTopologyBuilder* _topology_builder;
     JProcessingTopology* _topology;
     JProcessingController* _processing_controller;
-    JServiceLocator* _service_locator;
+    JServiceLocator _service_locator;
 
     bool _quitting = false;
     bool _draining_queues = false;
@@ -208,13 +208,13 @@ JParameter* JApplication::SetParameterValue(std::string name, T val) {
 /// A convenience method which delegates to JServiceLocator
 template <typename T>
 std::shared_ptr<T> JApplication::GetService() {
-    return _service_locator->get<T>();
+    return _service_locator.get<T>();
 }
 
 /// A convenience method which delegates to JServiceLocator
 template <typename T>
 void JApplication::ProvideService(std::shared_ptr<T> service) {
-    _service_locator->provide(service);
+    _service_locator.provide(service);
 }
 
 

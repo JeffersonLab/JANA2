@@ -58,9 +58,8 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
     catch (SourceStatus rs) {
         in_status = rs;
     }
-    catch (...) {
-        in_status = SourceStatus::kERROR;
-    }
+    // Any other exceptions should keep propagating in order to kill execution
+
     auto latency_time = std::chrono::steady_clock::now();
     auto message_count = _chunk_buffer.size();
     auto out_status = _output_queue->push(_chunk_buffer, reserved_count, location_id);

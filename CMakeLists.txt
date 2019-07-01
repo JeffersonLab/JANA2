@@ -145,7 +145,7 @@ add_library(jtest SHARED
         src/plugins/JTest/JTestTracker.h
         src/plugins/JTest/JTestPlotter.h
         src/plugins/JTest/JTestFactoryGenerator.h
-        )
+        src/plugins/JTest/JTestCalibrationService.h)
 
 add_library(janapy SHARED
         src/plugins/janapy/janapy.cc

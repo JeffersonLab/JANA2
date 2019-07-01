@@ -13,6 +13,7 @@
 #include <chrono>
 #include <memory>
 #include <mutex>
+#include "JException.h"
 
 
 class JServiceLocator;
@@ -67,7 +68,11 @@ public:
         /// and keep pointers to those, instead of keeping a pointer to the ServiceLocator itself.
         /// (This also makes it easier to migrate to dependency injection if we so desire)
 
-        auto& pair = underlying[std::type_index(typeid(T))];
+        auto iter = underlying.find(std::type_index(typeid(T)));
+        if (iter == underlying.end()) {
+            throw JException("Service not found!");
+        }
+        auto& pair = iter->second;
         auto& wired = pair.second;
         auto ptr = pair.first;
         std::call_once(*wired, [&](){ptr->acquire_services(this);});
