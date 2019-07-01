@@ -4,10 +4,10 @@
 // Creator: davidl (on Darwin amelia.jlab.org 17.7.0 i386)
 //
 // ------ Last repository commit info -----
-// [ Date ]
-// [ Author ]
-// [ Source ]
-// [ Revision ]
+// [ Date: Tue Feb 26 18:13:39 2019 -0500 ]
+// [ Author: Nathan Brei <nbrei@halld3.jlab.org> ]
+// [ Source: src/plugins/janapy/janapy.cc ]
+// [ Revision: c15aad0b0dec2e6f8f29d1f727b2daec6c7cf376 ]
 //
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Jefferson Science Associates LLC Copyright Notice:
@@ -46,6 +46,7 @@ using namespace std;
 #include <JANA/JApplication.h>
 #include <JANA/JThreadManager.h>
 #include <JANA/JCpuInfo.h>
+#include <JANA/JParameterManager.h>
 
 void JANA_PythonModuleInit(JApplication *sApp);
 
@@ -53,7 +54,7 @@ static bool PY_INITIALIZED = false; // See JANA_PythonModuleInit
 
 // This is temporary and will likely be changed once the new arrow
 // system is fully adopted.
-static JApplication *pyjapp = NULL;
+static JApplication *pyjapp = nullptr;
 
 #ifndef _DBG__
 #define _DBG__ std::cout<<__FILE__<<":"<<__LINE__<<std::endl
@@ -100,7 +101,7 @@ PyObject* PVlist( T& c ){
 template<typename K, typename V>
 PyObject* PVdict( std::map<K,V> &m ){
 	PyObject *PDict = PyDict_New();
-	for( auto p : m ) PyDict_SetItem( PDict, PV(p.first), PV(p.second));
+	for( auto &p : m ) PyDict_SetItem( PDict, PV(p.first), PV(p.second));
 	return PDict;
 }
 
@@ -112,7 +113,7 @@ PyObject* PVdict( std::map<K,V> &m ){
 PyObject* PyObjectToVectorOfStrings(PyObject *args, vector<string> &vstr, bool require_str_type=false)
 {
 	PyObject *pyobj;
-	if(!PyArg_ParseTuple(args, "O", &pyobj)) return NULL;
+	if(!PyArg_ParseTuple(args, "O", &pyobj)) return nullptr;
 	
 	// This may or may not be used below
 	PyObject *iter = PyObject_GetIter(pyobj);
@@ -139,7 +140,7 @@ PyObject* PyObjectToVectorOfStrings(PyObject *args, vector<string> &vstr, bool r
 				// Not a string
 				if( require_str_type ){
 					PyErr_SetString( PyExc_TypeError, "Argument must be string or list of strings. (Not all arugments in list passed were strings!)" );
-					return NULL;
+					return nullptr;
 				} else {
 					// Get string representation
 					const char* str = PyUnicode_AsUTF8( PyObject_Str(next) );
@@ -153,7 +154,7 @@ PyObject* PyObjectToVectorOfStrings(PyObject *args, vector<string> &vstr, bool r
 		// Single value that is not a string
 		if( require_str_type ){
 			PyErr_SetString( PyExc_TypeError, "Argument must be string or list of strings. (Argument passed was not a string!)" );
-			return NULL;
+			return nullptr;
 		} else {
 			// Get string representation
 			const char* str = PyUnicode_AsUTF8( PyObject_Str(pyobj) );
@@ -171,7 +172,7 @@ PyObject* PyObjectToVectorOfStrings(PyObject *args, vector<string> &vstr, bool r
 //-------------------------------------
 static PyObject* janapy_Start(PyObject *self, PyObject *args)
 {
-	if(!PyArg_ParseTuple(args, ":Start")) return NULL;
+	if(!PyArg_ParseTuple(args, ":Start")) return nullptr;
 	PY_INITIALIZED = true;
 	return PV("");
 }
@@ -181,7 +182,7 @@ static PyObject* janapy_Start(PyObject *self, PyObject *args)
 //-------------------------------------
 static PyObject* janapy_Run(PyObject *self, PyObject *args)
 {
-	if(!PyArg_ParseTuple(args, ":Run")) return NULL;
+	if(!PyArg_ParseTuple(args, ":Run")) return nullptr;
 	pyjapp->Run();
 	return PV("");
 }
@@ -191,7 +192,7 @@ static PyObject* janapy_Run(PyObject *self, PyObject *args)
 //-------------------------------------
 static PyObject* janapy_Quit(PyObject *self, PyObject *args)
 {
-	if(!PyArg_ParseTuple(args, ":Quit")) return NULL;
+	if(!PyArg_ParseTuple(args, ":Quit")) return nullptr;
 	pyjapp->Quit();
 	return PV("");
 }
@@ -202,7 +203,7 @@ static PyObject* janapy_Quit(PyObject *self, PyObject *args)
 static PyObject* janapy_Stop(PyObject *self, PyObject *args)
 {
 	int wait_until_idle=false;
-	if(!PyArg_ParseTuple(args, "|i:Stop", &wait_until_idle)) return NULL;
+	if(!PyArg_ParseTuple(args, "|i:Stop", &wait_until_idle)) return nullptr;
 	pyjapp->Stop(wait_until_idle);
 	return PV("");
 }
@@ -212,7 +213,7 @@ static PyObject* janapy_Stop(PyObject *self, PyObject *args)
 //-------------------------------------
 static PyObject* janapy_Resume(PyObject *self, PyObject *args)
 {
-	if(!PyArg_ParseTuple(args, ":Resume")) return NULL;
+	if(!PyArg_ParseTuple(args, ":Resume")) return nullptr;
 	pyjapp->Resume();
 	return PV("");
 }
@@ -222,7 +223,7 @@ static PyObject* janapy_Resume(PyObject *self, PyObject *args)
 //-------------------------------------
 static PyObject* janapy_WaitUntilAllThreadsRunning(PyObject *self, PyObject *args)
 {
-	if(!PyArg_ParseTuple(args, ":WaitUntilAllThreadsRunning")) return NULL;
+	if(!PyArg_ParseTuple(args, ":WaitUntilAllThreadsRunning")) return nullptr;
 	PY_INITIALIZED = true; // (in case user doesn't call Start before calling this)
 	pyjapp->GetJThreadManager()->WaitUntilAllThreadsRunning();
 	return PV("");
@@ -233,7 +234,7 @@ static PyObject* janapy_WaitUntilAllThreadsRunning(PyObject *self, PyObject *arg
 //-------------------------------------
 static PyObject* janapy_WaitUntilAllThreadsIdle(PyObject *self, PyObject *args)
 {
-	if(!PyArg_ParseTuple(args, ":WaitUntilAllThreadsIdle")) return NULL;
+	if(!PyArg_ParseTuple(args, ":WaitUntilAllThreadsIdle")) return nullptr;
 	PY_INITIALIZED = true; // (in case user doesn't call Start before calling this)
 	pyjapp->GetJThreadManager()->WaitUntilAllThreadsIdle();
 	return PV("");
@@ -244,7 +245,7 @@ static PyObject* janapy_WaitUntilAllThreadsIdle(PyObject *self, PyObject *args)
 //-------------------------------------
 static PyObject* janapy_WaitUntilAllThreadsEnded(PyObject *self, PyObject *args)
 {
-	if(!PyArg_ParseTuple(args, ":WaitUntilAllThreadsEnded")) return NULL;
+	if(!PyArg_ParseTuple(args, ":WaitUntilAllThreadsEnded")) return nullptr;
 	PY_INITIALIZED = true; // (in case user doesn't call Start before calling this)
 	pyjapp->GetJThreadManager()->WaitUntilAllThreadsEnded();
 	return PV("");
@@ -283,7 +284,7 @@ static PyObject* janapy_AddEventSource(PyObject *self, PyObject *args)
 {
 	char *key;
 	char *val;
-	if(!PyArg_ParseTuple(args, "s:AddEventSource", &key, &val)) return NULL;
+	if(!PyArg_ParseTuple(args, "s:AddEventSource", &key, &val)) return nullptr;
 	pyjapp->SetParameterValue<string>( key, val );
 	return PV( "" );
 }
@@ -294,7 +295,7 @@ static PyObject* janapy_AddEventSource(PyObject *self, PyObject *args)
 static PyObject* janapy_GetNtasksCompleted(PyObject *self, PyObject *args)
 {
 	char name[512] = "";
-	if(!PyArg_ParseTuple(args, "|s:GetNtasksCompleted", name)) return NULL;
+	if(!PyArg_ParseTuple(args, "|s:GetNtasksCompleted", name)) return nullptr;
 	return PV( pyjapp->GetNtasksCompleted( name ) );
 }
 
@@ -303,7 +304,7 @@ static PyObject* janapy_GetNtasksCompleted(PyObject *self, PyObject *args)
 //-------------------------------------
 static PyObject* janapy_GetNeventsProcessed(PyObject *self, PyObject *args)
 {
-	if(!PyArg_ParseTuple(args, ":GetNeventsProcessed")) return NULL;
+	if(!PyArg_ParseTuple(args, ":GetNeventsProcessed")) return nullptr;
 	return PV( pyjapp->GetNeventsProcessed() );
 }
 
@@ -312,7 +313,7 @@ static PyObject* janapy_GetNeventsProcessed(PyObject *self, PyObject *args)
 //-------------------------------------
 static PyObject* janapy_GetIntegratedRate(PyObject *self, PyObject *args)
 {
-	if(!PyArg_ParseTuple(args, ":GetIntegratedRate")) return NULL;
+	if(!PyArg_ParseTuple(args, ":GetIntegratedRate")) return nullptr;
 	return PV( pyjapp->GetIntegratedRate() );
 }
 
@@ -321,7 +322,7 @@ static PyObject* janapy_GetIntegratedRate(PyObject *self, PyObject *args)
 //-------------------------------------
 static PyObject* janapy_GetIntegratedRates(PyObject *self, PyObject *args)
 {
-	if(!PyArg_ParseTuple(args, ":GetIntegratedRates")) return NULL;
+	if(!PyArg_ParseTuple(args, ":GetIntegratedRates")) return nullptr;
 	std::map<string,double> rates_by_thread;
 	pyjapp->GetIntegratedRates(rates_by_thread);
 	return PVdict( rates_by_thread );
@@ -332,7 +333,7 @@ static PyObject* janapy_GetIntegratedRates(PyObject *self, PyObject *args)
 //-------------------------------------
 static PyObject* janapy_GetInstantaneousRate(PyObject *self, PyObject *args)
 {
-	if(!PyArg_ParseTuple(args, ":GetInstantaneousRate")) return NULL;
+	if(!PyArg_ParseTuple(args, ":GetInstantaneousRate")) return nullptr;
 	return PV( pyjapp->GetInstantaneousRate() );
 }
 
@@ -341,7 +342,7 @@ static PyObject* janapy_GetInstantaneousRate(PyObject *self, PyObject *args)
 //-------------------------------------
 static PyObject* janapy_GetInstantaneousRates(PyObject *self, PyObject *args)
 {
-	if(!PyArg_ParseTuple(args, ":GetInstantaneousRates")) return NULL;
+	if(!PyArg_ParseTuple(args, ":GetInstantaneousRates")) return nullptr;
 	vector<double> rates_by_queue;
 	pyjapp->GetInstantaneousRates(rates_by_queue);
 	return PVlist( rates_by_queue );
@@ -352,7 +353,7 @@ static PyObject* janapy_GetInstantaneousRates(PyObject *self, PyObject *args)
 //-------------------------------------
 static PyObject* janapy_GetNJThreads(PyObject *self, PyObject *args)
 {
-	if(!PyArg_ParseTuple(args, ":GetNJThreads")) return NULL;
+	if(!PyArg_ParseTuple(args, ":GetNJThreads")) return nullptr;
 	return PV( pyjapp->GetJThreadManager()->GetNJThreads() );
 }
 
@@ -361,7 +362,7 @@ static PyObject* janapy_GetNJThreads(PyObject *self, PyObject *args)
 //-------------------------------------
 static PyObject* janapy_GetNcores(PyObject *self, PyObject *args)
 {
-	if(!PyArg_ParseTuple(args, ":GetNcores")) return NULL;
+	if(!PyArg_ParseTuple(args, ":GetNcores")) return nullptr;
 	return PV(JCpuInfo::GetNumCpus());
 }
 
@@ -371,7 +372,7 @@ static PyObject* janapy_GetNcores(PyObject *self, PyObject *args)
 static PyObject* janapy_GetParameterValue(PyObject *self, PyObject *args)
 {
 	char *str;
-	if(!PyArg_ParseTuple(args, "s:GetParameterValue", &str)) return NULL;
+	if(!PyArg_ParseTuple(args, "s:GetParameterValue", &str)) return nullptr;
 	try{
 		std::cout << "\n\rLooking for parameter: " << str << "\n\r";
 		return PV( pyjapp->GetParameterValue<string>( str ) );
@@ -387,7 +388,7 @@ static PyObject* janapy_SetParameterValue(PyObject *self, PyObject *args)
 {
 	char *key;
 	PyObject *valobj;
-	if(!PyArg_ParseTuple(args, "sO:SetParameterValue", &key, &valobj)) return NULL;
+	if(!PyArg_ParseTuple(args, "sO:SetParameterValue", &key, &valobj)) return nullptr;
 	const char* val = PyUnicode_AsUTF8( PyObject_Str(valobj) );
 	pyjapp->SetParameterValue<string>( key, val );
 	return PV( "" );
@@ -399,7 +400,7 @@ static PyObject* janapy_SetParameterValue(PyObject *self, PyObject *args)
 static PyObject* janapy_SetTicker(PyObject *self, PyObject *args)
 {
 	int ticker_on = true;
-	if(!PyArg_ParseTuple(args, "|i:SetTicker", &ticker_on)) return NULL;
+	if(!PyArg_ParseTuple(args, "|i:SetTicker", &ticker_on)) return nullptr;
 	pyjapp->SetTicker( ticker_on );
 	return PV( "" );
 }
@@ -410,8 +411,8 @@ static PyObject* janapy_SetTicker(PyObject *self, PyObject *args)
 static PyObject* janapy_SetNJThreads(PyObject *self, PyObject *args)
 {
 	int nthreads=1;
-	if(!PyArg_ParseTuple(args, "i:SetNJThreads", &nthreads)) return NULL;
-	pyjapp->GetJThreadManager()->SetNJThreads( nthreads );
+	if(!PyArg_ParseTuple(args, "i:SetNJThreads", &nthreads)) return nullptr;
+	pyjapp->Scale( nthreads );
 	return PV( pyjapp->GetJThreadManager()->GetNJThreads() );
 }
 
@@ -420,7 +421,7 @@ static PyObject* janapy_SetNJThreads(PyObject *self, PyObject *args)
 //-------------------------------------
 static PyObject* janapy_IsQuitting(PyObject *self, PyObject *args)
 {
-	if(!PyArg_ParseTuple(args, ":IsQuitting")) return NULL;
+	if(!PyArg_ParseTuple(args, ":IsQuitting")) return nullptr;
 	return PV( pyjapp->IsQuitting() );
 }
 
@@ -429,7 +430,7 @@ static PyObject* janapy_IsQuitting(PyObject *self, PyObject *args)
 //-------------------------------------
 static PyObject* janapy_IsDrainingQueues(PyObject *self, PyObject *args)
 {
-	if(!PyArg_ParseTuple(args, ":IsDrainingQueues")) return NULL;
+	if(!PyArg_ParseTuple(args, ":IsDrainingQueues")) return nullptr;
 	return PV( pyjapp->IsDrainingQueues() );
 }
 
@@ -438,7 +439,7 @@ static PyObject* janapy_IsDrainingQueues(PyObject *self, PyObject *args)
 //-------------------------------------
 static PyObject* janapy_PrintStatus(PyObject *self, PyObject *args)
 {
-	if(!PyArg_ParseTuple(args, ":PrintStatus")) return NULL;
+	if(!PyArg_ParseTuple(args, ":PrintStatus")) return nullptr;
 	pyjapp->PrintStatus();
 	return PV( "" );
 }
@@ -448,7 +449,7 @@ static PyObject* janapy_PrintStatus(PyObject *self, PyObject *args)
 //-------------------------------------
 static PyObject* janapy_PrintFinalReport(PyObject *self, PyObject *args)
 {
-	if(!PyArg_ParseTuple(args, ":PrintFinalReport")) return NULL;
+	if(!PyArg_ParseTuple(args, ":PrintFinalReport")) return nullptr;
 	pyjapp->PrintFinalReport();
 	return PV( "" );
 }
@@ -459,7 +460,7 @@ static PyObject* janapy_PrintFinalReport(PyObject *self, PyObject *args)
 static PyObject* janapy_PrintParameters(PyObject *self, PyObject *args)
 {
 	int print_all = 0;
-	if(!PyArg_ParseTuple(args, "|i:PrintParameters", &print_all)) return NULL;
+	if(!PyArg_ParseTuple(args, "|i:PrintParameters", &print_all)) return nullptr;
 	pyjapp->GetJParameterManager()->PrintParameters( print_all );
 	return PV( "" );
 }
@@ -496,7 +497,7 @@ static PyMethodDef JANAPYMethods[] = {
 	{"PrintStatus",                 janapy_PrintStatus,                 METH_VARARGS, "Print current JANA status (ticker without newline)."},
 	{"PrintFinalReport",            janapy_PrintFinalReport,            METH_VARARGS, "Print final JANA status."},
 	{"PrintParameters",             janapy_PrintParameters,             METH_VARARGS, "Print configuration parameters. Pass True to print all. Otherwise, only non-default ones will be printed."},
-	{NULL, NULL, 0, NULL}
+	{nullptr, nullptr, 0, nullptr}
 };
 //.....................................................
 
@@ -517,9 +518,8 @@ static struct PyModuleDef janapy__definition = {
 // Module entry point (for import)
 PyMODINIT_FUNC PyInit_janapy(void) {
 
-	// Create JApplication. This is temporary and will likely be replaced
-	// when the arrow system is fully integrated/
-	pyjapp = new JApplication();
+	// Create JApplication.
+	pyjapp = new JApplication;
 
 	Py_Initialize();
 	return PyModule_Create(&janapy__definition);
@@ -590,7 +590,7 @@ void JANA_PythonModuleInit(JApplication *sApp)
 		jout << "Executing Python script: " << fname << " ..." << std::endl;
 		const char *argv = fname.c_str();
 		PySys_SetArgv( 1, (wchar_t**)&argv );
-		PyRun_AnyFileEx( fil, NULL, 1 );
+		PyRun_AnyFileEx( fil, nullptr, 1 );
 	}else if( fname != "jana.py" ){
 		jerr << std::endl << "Unable to open \"" << fname << "\"! Quitting." << std::endl << std::endl;
 		pyjapp->Quit();

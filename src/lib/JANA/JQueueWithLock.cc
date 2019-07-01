@@ -98,7 +98,7 @@ JQueue::Flags_t JQueueWithLock::AddTask(const std::shared_ptr<JTaskBase>& aTask)
 	//and is worth avoiding the code duplication (or confusion of other tricks)
 
 	if(mDebugLevel > 0)
-		JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JQueueWithLock::AddTask(): Copy-add task " << aTask.get() << "\n" << JLogEnd();
+		JLog(mLogTarget) << "Thread " << THREAD_ID << " JQueueWithLock::AddTask(): Copy-add task " << aTask.get() << "\n" << JLogEnd();
 
 	auto sTempTask = aTask;
 	return AddTask(std::move(sTempTask));
@@ -123,7 +123,7 @@ JQueue::Flags_t JQueueWithLock::AddTask(std::shared_ptr<JTaskBase>&& aTask)
 	// for another try.)
 
 	if(mDebugLevel > 0)
-		JLog(mLogTarget) << "Thread " << JTHREAD->GetThreadID() << " JQueueWithLock::AddTask(): Move-add task " << aTask.get() << ".\n" << JLogEnd();
+		JLog(mLogTarget) << "Thread " << THREAD_ID << " JQueueWithLock::AddTask(): Move-add task " << aTask.get() << ".\n" << JLogEnd();
 
 	std::lock_guard<std::mutex> sLock(mQueueLock);
 

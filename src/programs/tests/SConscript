@@ -6,6 +6,7 @@ import sbms
 Import('*')
 env = env.Clone()
 
+env.AppendUnique(LIBS=['greenfield'])
 sbms.AddJANA(env)
 sbms.executable(env)
 

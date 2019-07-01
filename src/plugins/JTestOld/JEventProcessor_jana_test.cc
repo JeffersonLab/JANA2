@@ -26,8 +26,8 @@
 JEventProcessor_jana_test::JEventProcessor_jana_test(JApplication* aApp) : JEventProcessor(aApp)
 {
 	//Add queue for subtasks (not supplied by default!)
-	auto sSubtaskQueue = new JQueueWithLock(aApp->GetJParameterManager(), "Subtasks", 2000);
-	aApp->GetJThreadManager()->AddQueue(JQueueSet::JQueueType::SubTasks, sSubtaskQueue);
+	//auto sSubtaskQueue = new JQueueWithLock(aApp->GetJParameterManager(), "Subtasks", 2000);
+	//aApp->GetJThreadManager()->AddQueue(JQueueSet::JQueueType::SubTasks, sSubtaskQueue);
 }
 
 //------------------

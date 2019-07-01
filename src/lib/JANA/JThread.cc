@@ -52,7 +52,7 @@
 #include "JLogger.h"
 
 
-thread_local JThread *JTHREAD = nullptr;
+thread_local int THREAD_ID = 0;
 
 //---------------------------------
 // JThread    (Constructor)
@@ -236,7 +236,7 @@ bool JThread::IsJoined(void)
 void JThread::Loop(void)
 {
 	// Set thread_local global variable
-	JTHREAD = this;
+	THREAD_ID = mThreadID;
 
 	//Set logger
 	mLogger = new JLog(0); //std::cout

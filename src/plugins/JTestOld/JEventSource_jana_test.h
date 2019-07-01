@@ -56,7 +56,7 @@ class JEventSource_jana_test: public JEventSource
 
 		int mDebugLevel = 0;
 		int mLogTarget = 0; //std::cout
-		bool mIncludeBarriers = true;
+		bool mIncludeBarriers = false;
 
 		//Resource pool for events
 		JResourcePool<JEvent_test> mEventPool;

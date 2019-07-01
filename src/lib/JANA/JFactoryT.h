@@ -62,15 +62,15 @@ public:
 
 
     JFactoryT(const std::string& aName = GetDemangledName<T>(), const std::string& aTag = "") : JFactory(aName, aTag) {}
-    virtual ~JFactoryT() = default;
+    ~JFactoryT() override = default;
 
 
-    virtual void Init() {}
-    virtual void ChangeRun(const std::shared_ptr<const JEvent>& aEvent) {}
-    virtual void Process(const std::shared_ptr<const JEvent>& aEvent) {}
+    void Init() override {}
+    void ChangeRun(const std::shared_ptr<const JEvent>& aEvent) override {}
+    void Process(const std::shared_ptr<const JEvent>& aEvent) override {}
 
 
-    std::type_index GetObjectType(void) const {
+    std::type_index GetObjectType(void) const override {
         return std::type_index(typeid(T));
     }
 

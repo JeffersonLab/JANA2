@@ -49,7 +49,7 @@ Darwin_*
 #docs/html/*
 docs/latex/*
 
-# Vim swap files
+# IDE artifacts
 *.swp
 cmake-build-debug/*
-.idea
+.idea/*
