@@ -1,12 +1,20 @@
 
-
 import sbms
-
-# get env object and clone it
 Import('*')
 env = env.Clone()
 
-sbms.AddJANA(env)
-sbms.plugin(env)
+includes = ['zmq.h', 'zmq.hpp']
+content = ''
+libs = ['-lzmq']
+
+if sbms.TestCompile(env, 'zmq', includes, content, libs) != None:
+    sbms.AddJANA(env)
+    env.AppendUnique(LIBS = [ File('libzmq.a')])  # force static linking
+    sbms.plugin(env)
+
+else:
+    print()
+    print('--- WARNING: Problem building zmq2jana plugin.')
+    print('--- Please make sure libzmq and cppzmq are both installed on your system. ')
 
 

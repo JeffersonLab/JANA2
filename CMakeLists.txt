@@ -151,7 +151,6 @@ add_library(zmq2jana SHARED
         src/plugins/zmq2jana/JDataSource.h
         src/plugins/zmq2jana/ZmqDataSource.h
         src/plugins/zmq2jana/ZmqDataSource.cc
-        src/plugins/zmq2jana/JEventAccumulator.h
         src/plugins/zmq2jana/JEventBuilder.h
         src/plugins/zmq2jana/ZmqEventSource.h
         src/plugins/zmq2jana/ZmqEventSource.cc
@@ -196,5 +195,5 @@ set_target_properties(janapy PROPERTIES PREFIX "")
 
 # For zmq2jana plugin
 find_package(cppzmq)
-target_link_libraries(zmq2jana cppzmq)
+target_link_libraries(zmq2jana cppzmq-static)
 target_link_libraries(zmq2jana jana2)
