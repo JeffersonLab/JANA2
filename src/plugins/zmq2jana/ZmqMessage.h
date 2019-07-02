@@ -39,24 +39,30 @@
 #include <JANA/JException.h>
 #include <cstring>
 
+
+/// ZmqMessage should be the same as INDRA_Stream_Test's stream_buffer struct.
 struct ZmqMessage {
 
-    enum class Type {Hit, Heartbeat, ChangeRun, Finish};
-    Type type;
-    DetectorId detector_id;
-    Timestamp timestamp;
-    double payload;
+    uint32_t source_id;
+    uint32_t total_length;
+    uint32_t payload_length;
+    uint32_t compressed_length;
+    uint32_t magic;
+    uint32_t format_version;
+    uint64_t record_counter;
+    struct timespec timestamp;
+    uint32_t payload[];
 };
 
 
 template <>
 inline DetectorId JData<ZmqMessage>::get_detector_id() {
-    return payload.detector_id;
+    return std::to_string(payload.source_id);
 }
 
 template <>
 inline Timestamp JData<ZmqMessage>::get_timestamp() {
-    return payload.timestamp;
+    return payload.timestamp.tv_nsec;
 }
 
 template <>
