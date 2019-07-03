@@ -34,9 +34,10 @@
 #include <JANA/JApplication.h>
 #include <JANA/JEventSourceGeneratorT.h>
 
-#include "ZmqHitSource.h"
+#include "internals/JEventSource_SingleSample.h"
 #include "DummyHitCalibrator.h"
 #include "DummyZmqPublisher.h"
+#include "internals/JSampleSource_Zmq.h"
 
 void dummy_publisher_loop() {
 	ZmqDummyPublisher pub("tcp://127.0.0.1:5555", "fcal", 3, 2, 1000);
@@ -47,7 +48,7 @@ extern "C"{
 void InitPlugin(JApplication *app) {
 
 	InitJANAPlugin(app);
-	app->Add(new JEventSourceGeneratorT<ZmqHitSource<DummyHit>>(app));
+	app->Add(new JEventSourceGeneratorT<JEventSource_SingleSample<DetectorAHit, JSampleSource_Zmq>>(app));
 	app->Add(new DummyHitCalibrator(app, 5000));
 
 	// So we don't have to put this on the cmd line every time

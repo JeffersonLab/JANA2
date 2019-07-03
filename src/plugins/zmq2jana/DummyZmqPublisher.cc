@@ -61,11 +61,11 @@ ZmqDummyPublisher::~ZmqDummyPublisher() {
 
 void ZmqDummyPublisher::publish(size_t nitems) {
 
-    Serializer<DummyHit> serializer;
+    Serializer<DetectorAHit> serializer;
     size_t counter = 0;
 
     while (counter < nitems) {
-        DummyHit x;
+        DetectorAHit x;
         x.sensor = m_sensor_name;
         x.id = counter++;
         x.V = randdouble(0,1);

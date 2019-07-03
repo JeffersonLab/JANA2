@@ -4,6 +4,7 @@
 // Copyright 251 2014 Jefferson Science Associates LLC All Rights Reserved. Redistribution
 // and use in source and binary forms, with or without modification, are permitted as a
 // licensed user provided that the following conditions are met:
+
 // 1. Redistributions of source code must retain the above copyright notice, this
 //    list of conditions and the following disclaimer.
 // 2. Redistributions in binary form must reproduce the above copyright notice, this
@@ -11,10 +12,12 @@
 //    materials provided with the distribution.
 // 3. The name of the author may not be used to endorse or promote products derived
 //    from this software without specific prior written permission.
+
 // This material resulted from work developed under a United States Government Contract.
 // The Government retains a paid-up, nonexclusive, irrevocable worldwide license in such
 // copyrighted data to reproduce, distribute copies to the public, prepare derivative works,
 // perform publicly and display publicly and to permit others to do so.
+
 // THIS SOFTWARE IS PROVIDED BY JEFFERSON SCIENCE ASSOCIATES LLC "AS IS" AND ANY EXPRESS
 // OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
 // MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
@@ -30,45 +33,49 @@
 // Author: Nathan Brei
 //
 
-#ifndef JANA2_DETECTORMESSAGE_H
-#define JANA2_DETECTORMESSAGE_H
+#ifndef JANA2_ZMQDATASOURCE_H
+#define JANA2_ZMQDATASOURCE_H
 
-#include <string>
-#include <chrono>
-#include "JDataSource.h"
-#include <JANA/JException.h>
-#include <cstring>
+#include <JANA/JParameterManager.h>
+#include "JSampleSource.h"
+#include "zmq.hpp"
 
+/// JDataSource which emits JData<T> using a ZeroMQ socket under the hood
+template <typename T>
+class JSampleSource_Zmq : public JSampleSource<T> {
 
-/// ZmqMessage should be the same as INDRA_Stream_Test's stream_buffer struct.
-struct ZmqMessage {
+public:
+    JSampleSource_Zmq(std::string socket_name, JApplication* app)
+        : m_socket_name(socket_name)
+        , m_app(app)
+        , m_context(1)
+        , m_socket(m_context, zmq::socket_type::sub) {
+    }
 
-    uint32_t source_id;
-    uint32_t total_length;
-    uint32_t payload_length;
-    uint32_t compressed_length;
-    uint32_t magic;
-    uint32_t format_version;
-    uint64_t record_counter;
-    struct timespec timestamp;
-    uint32_t payload[];
+    JSampleSourceStatus pull(JSample<T>& destination) override {
+
+        zmq::message_t message(500);
+        auto result = m_socket.recv(message, zmq::recv_flags::dontwait);
+
+        if (!result.has_value()) {
+            return JSampleSourceStatus::TryAgainLater;
+        }
+
+        destination.emplace(message.data<char>(), message.size());
+        return JSampleSourceStatus::Success;
+    };
+
+    void initialize() override {
+        m_socket.connect(m_socket_name);
+        m_socket.setsockopt(ZMQ_SUBSCRIBE, "", 0);  // Subscribe to everything.
+    };
+
+private:
+    std::string m_socket_name = "tcp://127.0.0.1:5555";
+    JApplication* m_app;
+    zmq::context_t m_context;
+    zmq::socket_t m_socket;
 };
 
 
-template <>
-inline DetectorId JData<ZmqMessage>::get_detector_id() {
-    return std::to_string(payload.source_id);
-}
-
-template <>
-inline Timestamp JData<ZmqMessage>::get_timestamp() {
-    return payload.timestamp.tv_nsec;
-}
-
-template <>
-inline void JData<ZmqMessage>::emplace(char* serialized, size_t bytes) {
-    memcpy(reinterpret_cast<char*>(this), serialized, bytes);
-}
-
-
-#endif //JANA2_DETECTORMESSAGE_H
+#endif //JANA2_ZMQDATASOURCE_H

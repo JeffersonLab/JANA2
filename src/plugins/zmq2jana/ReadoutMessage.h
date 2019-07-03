@@ -30,34 +30,45 @@
 // Author: Nathan Brei
 //
 
-#ifndef JANA2_ZMQEVENTBUILDER_H
-#define JANA2_ZMQEVENTBUILDER_H
+#ifndef JANA2_DETECTORMESSAGE_H
+#define JANA2_DETECTORMESSAGE_H
+
+#include <string>
+#include <chrono>
+#include "internals/JSampleSource.h"
+#include <JANA/JException.h>
+#include <cstring>
 
 
-#include <JANA/JEventSource.h>
-#include "zmq.hpp"
-#include "ZmqMessage.h"
-#include "ZmqDataSource.h"
-#include "JEventBuilder.h"
+/// ReadoutMessage should be the same as INDRA_Stream_Test's stream_buffer struct.
+struct ReadoutMessage {
 
-class ZmqEventSource : public JEventSource {
-
-public:
-    ZmqEventSource(std::string socket_name,
-                   JApplication* app,
-                   Duration event_interval,
-                   const std::vector<DetectorId>& detectors);
-
-    void Open() override;
-    void GetEvent(std::shared_ptr<JEvent> event) override;
-    static std::string GetDescription();
-
-private:
-    ZmqDataSource m_data_source;
-    JEventBuilder<ZmqMessage> m_event_builder;
-    uint64_t m_current_run_number;
-    uint64_t m_current_event_number;
-    bool m_is_finished;
+    uint32_t source_id;
+    uint32_t total_length;
+    uint32_t payload_length;
+    uint32_t compressed_length;
+    uint32_t magic;
+    uint32_t format_version;
+    uint64_t record_counter;
+    struct timespec timestamp;
+    uint32_t payload[];
 };
 
-#endif //JANA2_ZMQEVENTBUILDER_H
+
+template <>
+inline DetectorId JSample<ReadoutMessage>::get_detector_id() {
+    return std::to_string(payload.source_id);
+}
+
+template <>
+inline Timestamp JSample<ReadoutMessage>::get_timestamp() {
+    return payload.timestamp.tv_nsec;
+}
+
+template <>
+inline void JSample<ReadoutMessage>::emplace(char* serialized, size_t bytes) {
+    memcpy(reinterpret_cast<char*>(this), serialized, bytes);
+}
+
+
+#endif //JANA2_DETECTORMESSAGE_H

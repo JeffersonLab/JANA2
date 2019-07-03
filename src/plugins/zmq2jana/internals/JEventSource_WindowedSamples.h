@@ -30,34 +30,48 @@
 // Author: Nathan Brei
 //
 
-#include "ZmqDataSource.h"
+#ifndef JANA2_ZMQEVENTBUILDER_H
+#define JANA2_ZMQEVENTBUILDER_H
 
-ZmqDataSource::ZmqDataSource(std::string socket_name)
-    : m_socket_name(std::move(socket_name))
-    , m_context(1)
-    , m_socket(m_context, zmq::socket_type::sub) {
-}
 
-JDataSource<ZmqMessage>::Status ZmqDataSource::pull(JData<ZmqMessage>& destination) {
+#include <JANA/JEventSource.h>
+#include "zmq.hpp"
+#include "JSampleSource.h"
+#include "JSampleWindower.h"
 
-    zmq::message_t message(500);
-    auto result = m_socket.recv(message, zmq::recv_flags::dontwait);
+template <typename T, template<typename> class JSampleSourceT >
+class JEventSource_WindowedSamples : public JEventSource {
 
-    if (!result.has_value()) {
-        return Status::TryAgainLater;
+public:
+    JEventSource_WindowedSamples(std::string socket_name,
+                   JApplication* app,
+                   Duration event_interval,
+                   const std::vector<DetectorId>& detectors);
+
+    void Open() override {
+        m_data_source.initialize();
+    };
+
+    void GetEvent(std::shared_ptr<JEvent> event) override {
+        // Get event from EventPool
+        // Pull latest messages from zmq
+        // Push latest messages to JSampleWindower
+        // Ask JSampleWindower for next event
+
+        throw RETURN_STATUS::kTRY_AGAIN;
+        // TODO: No way to detect finish() yet
     }
 
-    destination.emplace(message.data<char>(), message.size());
-    return Status::Success;
+    static std::string GetDescription() {
+        return "JEventSource_WindowedSamples";
+    }
 
-    // TODO: Currently no way to detect when we are finished
-    // TODO: Consider creating a pool for JData<ZmqMessage>?
+private:
+    JSampleSourceT<T> m_data_source;
+    JSampleWindower<T> m_event_builder;
+    uint64_t m_current_run_number;
+    uint64_t m_current_event_number;
+    bool m_is_finished;
+};
 
-}
-
-void ZmqDataSource::initialize() {
-
-    m_socket.connect(m_socket_name);  // E.g. "tcp://*:5555"
-    m_socket.setsockopt(ZMQ_SUBSCRIBE, "", 0);  // Subscribe to everything.
-}
-
+#endif //JANA2_ZMQEVENTBUILDER_H

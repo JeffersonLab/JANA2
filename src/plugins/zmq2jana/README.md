@@ -33,7 +33,7 @@ The entry point is `ZmqMain.cc`, which registers different components with the J
 The different components available are:
 
 
-##### ZmqEventSource
+##### JZmqEventSource
 A `JEventSource` which polls a ZeroMQ socket and emits `JEvent`s which fuse hits across all detectors over a 
 configurable time interval. This uses `JEventBuilder` under the hood.
 

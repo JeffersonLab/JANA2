@@ -36,8 +36,7 @@
 #ifndef JANA2_JEVENTBUILDER_H
 #define JANA2_JEVENTBUILDER_H
 
-#include "ZmqMessage.h"
-#include "JDataSource.h"
+#include "JSampleSource.h"
 
 #include <map>
 #include <queue>
@@ -52,17 +51,17 @@ struct maybe {
 using Duration = uint64_t;
 
 template <typename T>
-class JEventBuilder {
+class JSampleWindower {
 
 public:
-    JEventBuilder(Duration event_interval, const std::vector<DetectorId>& detectors)
+    JSampleWindower(Duration event_interval, const std::vector<DetectorId>& detectors)
     : m_event_interval(event_interval) {
         for (auto id : detectors) {
             m_inbox.insert({id, {}});
         }
     }
 
-    void push(std::vector<JData<T>>&& messages) {
+    void push(std::vector<JSample<T>>&& messages) {
         for (auto m : messages) {
             auto iter = m_inbox.find(m.detector_id);
             if (iter == m_inbox.end()) {
@@ -117,8 +116,8 @@ public:
 
 
 private:
-    std::map<DetectorId, std::deque<JData<T>>> m_inbox;
-    std::vector<JData<T>> m_outbox;
+    std::map<DetectorId, std::deque<JSample<T>>> m_inbox;
+    std::vector<JSample<T>> m_outbox;
     maybe<Timestamp> m_next_event_start;
     Duration m_event_interval;
 
