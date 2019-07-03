@@ -35,8 +35,8 @@
 
 #include <string>
 #include <chrono>
-#include "zmq.hpp"
-#include "DummyHit.h"
+#include "internals/zmq.hpp"
+#include "DetectorAHit.h"
 
 class ZmqDummyPublisher {
 public:

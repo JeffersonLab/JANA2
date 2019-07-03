@@ -30,52 +30,56 @@
 // Author: Nathan Brei
 //
 
-#ifndef JANA2_RAWHIT_H
-#define JANA2_RAWHIT_H
+#ifndef JANA2_JZMQSOURCE_H
+#define JANA2_JZMQSOURCE_H
 
-#include <JANA/JObject.h>
-#include <JANA/JException.h>
+#include "zmq.hpp"
 
-struct DummyHit : public JObject {
-    std::string sensor;
-    size_t id;
-    double V, t, x, y, z;
-};
+#include <JANA/JEventSource.h>
+#include <JANA/JEvent.h>
+#include "JSampleSource.h"
 
+template <typename T, template <typename> class JSampleSourceT>
+class JEventSource_SingleSample : public JEventSource {
 
-template <typename T>
-struct Serializer {
-    T deserialize(const std::string&) {
-        throw JException("Deserializer not implemented!");
-    };
-    std::string serialize(const T& rh) {
-        throw JException("Serializer not implemented!");
-    };
-};
+public:
 
-template <>
-struct Serializer<DummyHit> {
-    DummyHit deserialize(const std::string& s) {
+    JEventSource_SingleSample (std::string name, JApplication* app)
+        : JEventSource(name, app)
+        , m_sample_source(name, app) {}
 
-        DummyHit x;
-        char sensor[64];
-        int matches = sscanf(s.c_str(), "%64s %lu %lf %lf %lf %lf %lf",
-                             sensor, &x.id, &x.V, &x.t, &x.x, &x.y, &x.z);
-        if (matches != 7) {
-            throw JException("Unable to parse string as DummyHit!");
+    void Open() override {
+        m_sample_source.initialize();
+    }
+
+    void GetEvent(std::shared_ptr<JEvent> event) override {
+
+        auto item = new JSample<T>();  // This is why T requires a zero-arg ctor
+        auto result = m_sample_source.pull(*item);
+        switch (result) {
+            case JSampleSourceStatus::Finished: throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
+            case JSampleSourceStatus::TryAgainLater: throw JEventSource::RETURN_STATUS::kTRY_AGAIN;
+            case JSampleSourceStatus::Error: throw JEventSource::RETURN_STATUS::kERROR;
+            default: break;
         }
-        x.sensor = std::string(sensor);
-        return x;
+        // At this point, we know that item contains a valid Sample<T>
+
+        event->SetEventNumber(m_next_id);
+        m_next_id += 1;
+        event->Insert(item, "raw_hits");
+        // TODO: Reconsider whether we want to put the JSample<T>* inside the JEvent, versus the T* itself.
     }
 
-    std::string serialize(const DummyHit& x) {
-        char buffer[200];
-        sprintf(buffer, "%s %lu %.2lf %.2lf %.2lf %.2lf %.2lf",
-                x.sensor.c_str(), x.id, x.V, x.t, x.x, x.y, x.z);
-        auto result = std::string(buffer);
-        return result;
+    static std::string GetDescription() {
+        return "JEventSource_SingleSample";
     }
 
+
+private:
+    JSampleSourceT<T> m_sample_source;
+    uint64_t m_delay_ms;
+    uint64_t m_next_id = 0;
 };
 
-#endif //JANA2_RAWHIT_H
+
+#endif //JANA2_JZMQSOURCE_H

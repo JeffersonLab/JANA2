@@ -36,7 +36,7 @@
 #include <JANA/JEventProcessor.h>
 #include <JANA/JEvent.h>
 #include <JANA/JPerfUtils.h>
-#include "DummyHit.h"
+#include "DetectorAHit.h"
 
 class DummyHitCalibrator : public JEventProcessor {
 
@@ -50,11 +50,11 @@ public:
     }
     void Process(const std::shared_ptr<const JEvent>& event) override {
 
-        auto raw_hits = event->Get<DummyHit>("raw_hits");
+        auto raw_hits = event->Get<DetectorAHit>("raw_hits");
         std::cout << "Processing event #" << event->GetEventNumber() << std::endl;
-        Serializer<DummyHit> serializer;
+        Serializer<DetectorAHit> serializer;
         for (auto & hit : raw_hits) {
-            DummyHit* calibrated_hit = new DummyHit(*hit);
+            DetectorAHit* calibrated_hit = new DetectorAHit(*hit);
             calibrated_hit->V += 7;
             std::cout << serializer.serialize(*calibrated_hit) << std::endl;
         }

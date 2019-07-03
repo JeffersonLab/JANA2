@@ -22,7 +22,7 @@ include_directories(src/programs/tests)
 
 add_library(greenfield STATIC
         src/lib/greenfield/Greenfield.cc
-        )
+        src/plugins/zmq2jana/internals/JEventSourceGenerator_EmbeddedSampleSource.h)
 
 add_executable(tests
         src/programs/tests/catch.hpp
@@ -157,17 +157,15 @@ add_library(zmq2jana SHARED
         src/plugins/zmq2jana/ZmqMain.cc
         src/plugins/zmq2jana/DummyZmqPublisher.cc
         src/plugins/zmq2jana/DummyZmqPublisher.h
-        src/plugins/zmq2jana/ZmqMessage.h
-        src/plugins/zmq2jana/DummyHit.h
+        src/plugins/zmq2jana/ReadoutMessage.h
+        src/plugins/zmq2jana/DetectorAHit.h
         src/plugins/zmq2jana/DummyHitCalibrator.h
-        src/plugins/zmq2jana/ZmqHitSource.h
-        src/plugins/zmq2jana/ZmqHitSource.cc
-        src/plugins/zmq2jana/JDataSource.h
-        src/plugins/zmq2jana/ZmqDataSource.h
-        src/plugins/zmq2jana/ZmqDataSource.cc
-        src/plugins/zmq2jana/JEventBuilder.h
-        src/plugins/zmq2jana/ZmqEventSource.h
-        src/plugins/zmq2jana/ZmqEventSource.cc
+        src/plugins/zmq2jana/internals/JSampleSource.h
+        src/plugins/zmq2jana/internals/JSampleSource_Zmq.h
+        src/plugins/zmq2jana/internals/JSampleWindower.h
+        src/plugins/zmq2jana/internals/JEventSource_WindowedSamples.h
+        src/plugins/zmq2jana/internals/JEventSource_SingleSample.h
+
         )
 
 add_executable(jana
