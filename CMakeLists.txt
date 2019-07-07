@@ -19,7 +19,7 @@ include_directories(src/programs/tests)
 
 add_library(greenfield STATIC
         src/lib/greenfield/Greenfield.cc
-        src/plugins/zmq2jana/internals/JEventSourceGenerator_EmbeddedSampleSource.h)
+        )
 
 add_executable(tests
         src/programs/tests/catch.hpp
@@ -144,15 +144,15 @@ add_library(zmq2jana SHARED
         src/plugins/zmq2jana/DummyZmqPublisher.cc
         src/plugins/zmq2jana/DummyZmqPublisher.h
         src/plugins/zmq2jana/ReadoutMessage.h
-        src/plugins/zmq2jana/DetectorAHit.h
-        src/plugins/zmq2jana/DummyHitCalibrator.h
+        src/plugins/zmq2jana/AHit.h
+        src/plugins/zmq2jana/AHitAnomalyDetector.h
         src/plugins/zmq2jana/internals/JSampleSource.h
         src/plugins/zmq2jana/internals/JSampleSource_Zmq.h
         src/plugins/zmq2jana/internals/JSampleWindower.h
         src/plugins/zmq2jana/internals/JEventSource_WindowedSamples.h
         src/plugins/zmq2jana/internals/JEventSource_SingleSample.h
-
-        )
+        src/plugins/zmq2jana/AHitFactory.h
+        src/plugins/zmq2jana/BHitFactory.h)
 
 add_executable(jana
         src/programs/jana/jana.cc

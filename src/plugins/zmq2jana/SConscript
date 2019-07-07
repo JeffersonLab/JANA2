@@ -9,7 +9,7 @@ libs = ['-lzmq']
 
 if sbms.TestCompile(env, 'zmq', includes, content, libs) != None:
     sbms.AddJANA(env)
-    env.AppendUnique(LIBS = [ File('libzmq.a')])  # force static linking
+    env.AppendUnique(LIBS = [ File('/usr/local/lib64/libzmq.a')])  # force static linking
     sbms.plugin(env)
 
 else:

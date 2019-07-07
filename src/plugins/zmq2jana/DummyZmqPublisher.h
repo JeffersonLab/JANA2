@@ -36,7 +36,7 @@
 #include <string>
 #include <chrono>
 #include "internals/zmq.hpp"
-#include "DetectorAHit.h"
+#include "AHit.h"
 
 class ZmqDummyPublisher {
 public:

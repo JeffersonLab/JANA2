@@ -30,36 +30,14 @@
 // Author: Nathan Brei
 //
 
+#ifndef JANA2_RAWHIT_H
+#define JANA2_RAWHIT_H
 
-#include <JANA/JApplication.h>
-#include <JANA/JEventSourceGeneratorT.h>
+#include <JANA/JObject.h>
+#include <JANA/JException.h>
 
-#include "internals/JEventSource_SingleSample.h"
-#include "AHitAnomalyDetector.h"
-#include "DummyZmqPublisher.h"
-#include "internals/JSampleSource_Zmq.h"
-#include "ReadoutMessage.h"
+struct AHit : public JObject {
+    double E, t, x, y, z;
+};
 
-void dummy_publisher_loop() {
-	ZmqDummyPublisher pub("tcp://127.0.0.1:5555", "fcal", 3, 2, 1000);
-	pub.publish(100);
-}
-
-extern "C"{
-void InitPlugin(JApplication *app) {
-
-	InitJANAPlugin(app);
-	app->Add(new JEventSourceGeneratorT<JEventSource_SingleSample<ReadoutMessage, JSampleSource_Zmq>>(app));
-	app->Add(new AHitAnomalyDetector(app, 5000));
-
-	// So we don't have to put this on the cmd line every time
-	app->Add("tcp://127.0.0.1:5555");
-	app->SetParameterValue("jana:legacy_mode", 0);
-	app->SetParameterValue("jana:extended_report", 0);
-
-
-	auto publisher = new std::thread(dummy_publisher_loop);
-}
-} // "C"
-
-
+#endif //JANA2_RAWHIT_H

@@ -36,12 +36,12 @@
 #include <JANA/JEventProcessor.h>
 #include <JANA/JEvent.h>
 #include <JANA/JPerfUtils.h>
-#include "DetectorAHit.h"
+#include "AHit.h"
 
-class DummyHitCalibrator : public JEventProcessor {
+class AHitAnomalyDetector : public JEventProcessor {
 
 public:
-    DummyHitCalibrator(JApplication* app = nullptr, size_t delay_ms=1000)
+    AHitAnomalyDetector(JApplication* app = nullptr, size_t delay_ms=1000)
         : JEventProcessor(app)
         , m_delay_ms(delay_ms) {};
 
@@ -50,18 +50,18 @@ public:
     }
     void Process(const std::shared_ptr<const JEvent>& event) override {
 
-        auto raw_hits = event->Get<DetectorAHit>("raw_hits");
-        std::cout << "Processing event #" << event->GetEventNumber() << std::endl;
-        Serializer<DetectorAHit> serializer;
-        for (auto & hit : raw_hits) {
-            DetectorAHit* calibrated_hit = new DetectorAHit(*hit);
-            calibrated_hit->V += 7;
-            std::cout << serializer.serialize(*calibrated_hit) << std::endl;
+        auto a_hits = event->Get<AHit>();
+        std::stringstream ss;
+        ss << "Anomaly detection: Event #" << event->GetEventNumber() << " : {";
+        for (auto & hit : a_hits) {
+            ss << "(" << hit->E << "," << hit->t << "), ";
         }
+        ss << "}" << std::endl;
+        std::cout << ss.str();
         consume_cpu_ms(m_delay_ms);
     }
     void Finish() override {
-        std::cout << "Done!" << std::endl;
+        std::cout << "Anomaly detection: Done!" << std::endl;
     }
 private:
     size_t m_delay_ms;

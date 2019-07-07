@@ -30,52 +30,10 @@
 // Author: Nathan Brei
 //
 
-#ifndef JANA2_RAWHIT_H
-#define JANA2_RAWHIT_H
-
-#include <JANA/JObject.h>
-#include <JANA/JException.h>
-
-struct DetectorAHit : public JObject {
-    std::string sensor;
-    size_t id;
-    double V, t, x, y, z;
-};
+#ifndef JANA2_DETECTORAHITFACTORY_H
+#define JANA2_DETECTORAHITFACTORY_H
 
 
-template <typename T>
-struct Serializer {
-    T deserialize(const std::string&) {
-        throw JException("Deserializer not implemented!");
-    };
-    std::string serialize(const T& rh) {
-        throw JException("Serializer not implemented!");
-    };
-};
 
-template <>
-struct Serializer<DetectorAHit> {
-    DetectorAHit deserialize(const std::string& s) {
 
-        DetectorAHit x;
-        char sensor[64];
-        int matches = sscanf(s.c_str(), "%64s %lu %lf %lf %lf %lf %lf",
-                             sensor, &x.id, &x.V, &x.t, &x.x, &x.y, &x.z);
-        if (matches != 7) {
-            throw JException("Unable to parse string as DetectorAHit!");
-        }
-        x.sensor = std::string(sensor);
-        return x;
-    }
-
-    std::string serialize(const DetectorAHit& x) {
-        char buffer[200];
-        sprintf(buffer, "%s %lu %.2lf %.2lf %.2lf %.2lf %.2lf",
-                x.sensor.c_str(), x.id, x.V, x.t, x.x, x.y, x.z);
-        auto result = std::string(buffer);
-        return result;
-    }
-
-};
-
-#endif //JANA2_RAWHIT_H
+#endif //JANA2_DETECTORAHITFACTORY_H

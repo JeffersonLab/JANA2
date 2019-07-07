@@ -61,11 +61,10 @@ ZmqDummyPublisher::~ZmqDummyPublisher() {
 
 void ZmqDummyPublisher::publish(size_t nitems) {
 
-    Serializer<DetectorAHit> serializer;
     size_t counter = 0;
 
     while (counter < nitems) {
-        DetectorAHit x;
+
         x.sensor = m_sensor_name;
         x.id = counter++;
         x.V = randdouble(0,1);
@@ -77,7 +76,7 @@ void ZmqDummyPublisher::publish(size_t nitems) {
         m_prev_time = x.t;
 
         std::string message = serializer.serialize(x);
-        m_socket.send(zmq::buffer(message), zmq::send_flags::dontwait);
+        m_socket.send(zmq::buffer(&message, sizeof(AHit)), zmq::send_flags::dontwait);
         std::cout << message << std::endl;
         consume_cpu_ms(m_delay_ms, 0, false);
     }
