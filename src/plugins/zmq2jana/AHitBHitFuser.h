@@ -30,36 +30,62 @@
 // Author: Nathan Brei
 //
 
+#ifndef JANA2_JHITCALIBRATOR_H
+#define JANA2_JHITCALIBRATOR_H
 
-#include <JANA/JApplication.h>
-#include <JANA/JEventSourceGeneratorT.h>
+#include <JANA/JEventProcessor.h>
+#include <JANA/JEvent.h>
+#include <JANA/JPerfUtils.h>
+#include "AHit.h"
 
-#include "internals/JEventSource_SingleSample.h"
-#include "AHitAnomalyDetector.h"
-#include "DummyZmqPublisher.h"
-#include "internals/JSampleSource_Zmq.h"
-#include "ReadoutMessage.h"
+/// AHitBHitFuser
+class AHitBHitFuser : public JEventProcessor {
 
-void dummy_publisher_loop() {
-	ZmqDummyPublisher pub("tcp://127.0.0.1:5555", "fcal", 3, 2, 1000);
-	pub.publish(100);
-}
+public:
+    AHitAnomalyDetector(JApplication* app = nullptr, size_t delay_ms=1000)
+        : JEventProcessor(app)
+        , m_delay_ms(delay_ms) {};
 
-extern "C"{
-void InitPlugin(JApplication *app) {
+    void Init() override {
 
-	InitJANAPlugin(app);
-	app->Add(new JEventSourceGeneratorT<JEventSource_SingleSample<ReadoutMessage, JSampleSource_Zmq>>(app));
-	app->Add(new AHitAnomalyDetector(app, 5000));
+    }
+    void Process(const std::shared_ptr<const JEvent>& event) override {
 
-	// So we don't have to put this on the cmd line every time
-	app->Add("tcp://127.0.0.1:5555");
-	app->SetParameterValue("jana:legacy_mode", 0);
-	app->SetParameterValue("jana:extended_report", 0);
+        auto a_hits = event->Get<AHit>();
+        auto b_hits = event->Get<BHit>();
+        std::stringstream ss;
+        ss << "AHit/BHit fusion: Event #" << event->GetEventNumber() << " : {";
+        for (auto & hit : a_hits) {
+            ss << "(" << hit->E << "," << hit->t << "), ";
+        }
+        ss << "}, ";
+        for (auto & hit : b_hits) {
+            ss << "(" << hit->E << "," << hit->t << "), ";
+        }
+        ss << "}" << std::endl;
+        std::cout << ss.str();
+        consume_cpu_ms(m_delay_ms);
 
 
-	auto publisher = new std::thread(dummy_publisher_loop);
-}
-} // "C"
+        auto raw_hits = event->Get<AHit>("raw_hits");
 
 
+        std::cout << "Processing event #" << event->GetEventNumber() << std::endl;
+        Serializer<AHit> serializer;
+        for (auto & hit : raw_hits) {
+            AHit* calibrated_hit = new DetectorAHit(*hit);
+            calibrated_hit->V += 7;
+            std::cout << serializer.serialize(*calibrated_hit) << std::endl;
+        }
+        consume_cpu_ms(m_delay_ms);
+    }
+    void Finish() override {
+        std::cout << "Done!" << std::endl;
+    }
+private:
+    size_t m_delay_ms;
+
+};
+
+
+#endif

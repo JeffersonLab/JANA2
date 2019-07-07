@@ -54,7 +54,9 @@ struct JSample {
     Timestamp get_timestamp();
     DetectorId get_detector_id();
 
-    void emplace(char* serialized, size_t bytes);
+    void emplace(char* serialized, size_t bytes) {
+        memcpy(reinterpret_cast<char*>(this), serialized, bytes);
+    };
 };
 
 enum class JSampleSourceStatus { Success, TryAgainLater, Error, Finished };
