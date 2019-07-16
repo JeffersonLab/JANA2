@@ -45,27 +45,13 @@ using DetectorId = std::string;
 using Timestamp = uint64_t;
 
 
-/// JSample wraps arbitrary data alongside time and detector indices.
-/// This is what we need to to fuse raw hit data and/or build events from it.
-template <typename T>
-struct JSample {
-    T payload;
-
-    Timestamp get_timestamp();
-    DetectorId get_detector_id();
-
-    void emplace(char* serialized, size_t bytes) {
-        memcpy(this->payload, serialized, bytes);
-    };
-};
-
 enum class JSampleSourceStatus { Success, TryAgainLater, Error, Finished };
 
 /// Generic abstract class for sourcing JData. Analogous to JEventSource.
 template <typename T>
 struct JSampleSource {
 
-    virtual JSampleSourceStatus pull(JSample<T>& destination) = 0;
+    virtual JSampleSourceStatus pull(T& destination) = 0;
 
     virtual void initialize() = 0;
     // We don't want to open sockets/files/etc until initialize()

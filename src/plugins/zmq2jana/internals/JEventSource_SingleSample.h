@@ -54,7 +54,7 @@ public:
 
     void GetEvent(std::shared_ptr<JEvent> event) override {
 
-        auto item = new JSample<T>();  // This is why T requires a zero-arg ctor
+        auto item = new T();  // This is why T requires a zero-arg ctor
         auto result = m_sample_source.pull(*item);
         switch (result) {
             case JSampleSourceStatus::Finished: throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
@@ -66,8 +66,8 @@ public:
 
         event->SetEventNumber(m_next_id);
         m_next_id += 1;
-        event->Insert<T>(&item->payload);
-        std::cout << "Received: " << item->payload << std::endl;
+        event->Insert<T>(item);
+        std::cout << "Emit: " << *item << std::endl;
     }
 
     static std::string GetDescription() {

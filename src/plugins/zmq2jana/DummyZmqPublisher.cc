@@ -75,9 +75,9 @@ void ZmqDummyPublisher::publish(size_t nitems) {
         float y = randfloat(-100, 100);
         float z = randfloat(-100, 100);
 
-        ReadoutMessage message {
+        ReadoutMessage<4> message {
             .source_id = 22,
-            .total_length = sizeof(ReadoutMessage),
+            .total_length = sizeof(ReadoutMessage<4>),
             .payload_length = 4,
             .compressed_length = 4,
             .magic = 618,
@@ -88,8 +88,8 @@ void ZmqDummyPublisher::publish(size_t nitems) {
         };
 
 
-        m_socket.send(zmq::buffer(&message, sizeof(ReadoutMessage)), zmq::send_flags::dontwait);
-        std::cout << "Send: " << message << " (" << sizeof(ReadoutMessage) << " bytes)" << std::endl;
+        m_socket.send(zmq::buffer(&message, sizeof(ReadoutMessage<4>)), zmq::send_flags::dontwait);
+        std::cout << "Send: " << message << " (" << sizeof(ReadoutMessage<4>) << " bytes)" << std::endl;
         consume_cpu_ms(m_delay_ms, 0, false);
     }
 }

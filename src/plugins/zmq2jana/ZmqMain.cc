@@ -51,7 +51,7 @@ extern "C"{
 void InitPlugin(JApplication *app) {
 
 	InitJANAPlugin(app);
-	app->Add(new JEventSourceGeneratorT<JEventSource_SingleSample<ReadoutMessage, JSampleSource_Zmq>>(app));
+	app->Add(new JEventSourceGeneratorT<JEventSource_SingleSample<ReadoutMessage<4>, JSampleSource_Zmq>>(app));
 	app->Add(new AHitAnomalyDetector(app, 5000));
 	app->Add(new JFactoryGeneratorT<AHitParser>());
 

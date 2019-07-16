@@ -41,6 +41,7 @@
 
 
 /// ReadoutMessage should be the same as INDRA_Stream_Test's stream_buffer struct.
+template <unsigned int N>
 struct ReadoutMessage {
 
     uint32_t source_id;
@@ -51,29 +52,30 @@ struct ReadoutMessage {
     uint32_t format_version;
     uint64_t record_counter;
     struct timespec timestamp;
-    uint32_t payload[4];
+    uint32_t payload[N];
+
+    inline friend std::ostream& operator<< (std::ostream& os, const ReadoutMessage& msg) {
+        std::stringstream ss;
+        ss << msg.record_counter << ": " << reinterpret_cast<const float&>(msg.payload[0]) << " @ " << reinterpret_cast<const float&>(msg.payload[1]);
+        os << ss.str();
+        return os;
+    }
 };
 
-inline std::ostream& operator<< (std::ostream& os, const ReadoutMessage& msg) {
-    std::stringstream ss;
-    ss << msg.record_counter << ": " << reinterpret_cast<const float&>(msg.payload[0]) << " @ " << reinterpret_cast<const float&>(msg.payload[1]);
-    os << ss.str();
-    return os;
+
+template <unsigned int N>
+inline DetectorId get_detector_id(const ReadoutMessage<N>& m) {
+    return std::to_string(m.payload.source_id);
 }
 
-template <>
-inline DetectorId JSample<ReadoutMessage>::get_detector_id() {
-    return std::to_string(payload.source_id);
+template <unsigned int N>
+inline Timestamp get_timestamp(const ReadoutMessage<N>& m) {
+    return m.payload.timestamp.tv_nsec;
 }
 
-template <>
-inline Timestamp JSample<ReadoutMessage>::get_timestamp() {
-    return payload.timestamp.tv_nsec;
-}
-
-template <>
-inline void JSample<ReadoutMessage>::emplace(char* serialized, size_t bytes) {
-    memcpy(reinterpret_cast<char*>(this), serialized, bytes);
+template <unsigned int N>
+inline void emplace(ReadoutMessage<N>* destination, char* source, size_t bytes) {
+    memcpy(destination, source, bytes);
 }
 
 

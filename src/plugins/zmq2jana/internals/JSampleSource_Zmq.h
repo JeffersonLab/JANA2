@@ -53,7 +53,7 @@ public:
         , m_socket(m_context, zmq::socket_type::sub) {
     }
 
-    JSampleSourceStatus pull(JSample<T>& destination) override {
+    JSampleSourceStatus pull(T& destination) override {
 
         zmq::message_t message(500);
         auto result = m_socket.recv(message, zmq::recv_flags::dontwait);
@@ -63,10 +63,10 @@ public:
         }
 
         auto bytes_to_copy = std::min(sizeof(T), message.size());
-        destination.emplace(message.data<char>(), bytes_to_copy);
+        emplace(&destination, message.data<char>(), bytes_to_copy);
 
         std::stringstream ss;
-        ss << "Recv: " << destination.payload << " (" << message.size() << " bytes, expected " << sizeof(T) << " bytes)" << std::endl;
+        ss << "Recv: " << destination << " (" << message.size() << " bytes, expected " << sizeof(T) << " bytes)" << std::endl;
         std::cout << ss.str();
         return JSampleSourceStatus::Success;
     };
