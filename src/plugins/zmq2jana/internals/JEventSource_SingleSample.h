@@ -66,8 +66,8 @@ public:
 
         event->SetEventNumber(m_next_id);
         m_next_id += 1;
-        event->Insert(item, "raw_hits");
-        // TODO: Reconsider whether we want to put the JSample<T>* inside the JEvent, versus the T* itself.
+        event->Insert<T>(&item->payload);
+        std::cout << "Received: " << item->payload << std::endl;
     }
 
     static std::string GetDescription() {

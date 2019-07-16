@@ -39,9 +39,11 @@
 #include "DummyZmqPublisher.h"
 #include "internals/JSampleSource_Zmq.h"
 #include "ReadoutMessage.h"
+#include "AHitParser.h"
 
 void dummy_publisher_loop() {
 	ZmqDummyPublisher pub("tcp://127.0.0.1:5555", "fcal", 3, 2, 1000);
+    std::this_thread::sleep_for(std::chrono::milliseconds(3000));
 	pub.publish(100);
 }
 
@@ -51,6 +53,7 @@ void InitPlugin(JApplication *app) {
 	InitJANAPlugin(app);
 	app->Add(new JEventSourceGeneratorT<JEventSource_SingleSample<ReadoutMessage, JSampleSource_Zmq>>(app));
 	app->Add(new AHitAnomalyDetector(app, 5000));
+	app->Add(new JFactoryGeneratorT<AHitParser>());
 
 	// So we don't have to put this on the cmd line every time
 	app->Add("tcp://127.0.0.1:5555");

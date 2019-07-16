@@ -51,9 +51,15 @@ struct ReadoutMessage {
     uint32_t format_version;
     uint64_t record_counter;
     struct timespec timestamp;
-    uint32_t payload[];
+    uint32_t payload[4];
 };
 
+inline std::ostream& operator<< (std::ostream& os, const ReadoutMessage& msg) {
+    std::stringstream ss;
+    ss << msg.record_counter << ": " << reinterpret_cast<const float&>(msg.payload[0]) << " @ " << reinterpret_cast<const float&>(msg.payload[1]);
+    os << ss.str();
+    return os;
+}
 
 template <>
 inline DetectorId JSample<ReadoutMessage>::get_detector_id() {

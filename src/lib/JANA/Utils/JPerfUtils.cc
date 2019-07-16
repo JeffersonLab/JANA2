@@ -88,7 +88,11 @@ double randdouble(double min, double max) {
     return dist(*generator);
 }
 
-
+float randfloat(float min, float max) {
+    init_generator();
+    std::uniform_real_distribution<float> dist(min, max);
+    return dist(*generator);
+}
 
 
 

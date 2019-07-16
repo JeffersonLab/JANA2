@@ -55,7 +55,7 @@ struct JSample {
     DetectorId get_detector_id();
 
     void emplace(char* serialized, size_t bytes) {
-        memcpy(reinterpret_cast<char*>(this), serialized, bytes);
+        memcpy(this->payload, serialized, bytes);
     };
 };
 

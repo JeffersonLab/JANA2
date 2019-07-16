@@ -39,6 +39,7 @@
 #include <JANA/JParameterManager.h>
 #include "JSampleSource.h"
 #include "zmq.hpp"
+#include "../ReadoutMessage.h"
 
 /// JDataSource which emits JData<T> using a ZeroMQ socket under the hood
 template <typename T>
@@ -61,7 +62,12 @@ public:
             return JSampleSourceStatus::TryAgainLater;
         }
 
-        destination.emplace(message.data<char>(), message.size());
+        auto bytes_to_copy = std::min(sizeof(T), message.size());
+        destination.emplace(message.data<char>(), bytes_to_copy);
+
+        std::stringstream ss;
+        ss << "Recv: " << destination.payload << " (" << message.size() << " bytes, expected " << sizeof(T) << " bytes)" << std::endl;
+        std::cout << ss.str();
         return JSampleSourceStatus::Success;
     };
 

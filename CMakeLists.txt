@@ -151,7 +151,7 @@ add_library(zmq2jana SHARED
         src/plugins/zmq2jana/internals/JSampleWindower.h
         src/plugins/zmq2jana/internals/JEventSource_WindowedSamples.h
         src/plugins/zmq2jana/internals/JEventSource_SingleSample.h
-        src/plugins/zmq2jana/AHitFactory.h
+        src/plugins/zmq2jana/AHitParser.h
         src/plugins/zmq2jana/BHitFactory.h)
 
 add_executable(jana
