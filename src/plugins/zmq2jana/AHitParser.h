@@ -52,7 +52,7 @@ public:
 
     void Process(const std::shared_ptr<const JEvent>& event) {
 
-        auto readoutMessages = event->Get<ReadoutMessage>();
+        auto readoutMessages = event->Get<ReadoutMessage<4>>();
         for (const auto& readoutMessage : readoutMessages) {
             auto ahit = new AHit();
 
