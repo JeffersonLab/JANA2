@@ -32,10 +32,12 @@
 
 
 #include "DummyZmqPublisher.h"
+#include "ReadoutMessage.h"
 
 #include <JANA/JPerfUtils.h>
 
 #include <iostream>
+#include <thread>
 
 ZmqDummyPublisher::ZmqDummyPublisher(std::string socket_name,
                                      std::string sensor_name,
@@ -65,19 +67,29 @@ void ZmqDummyPublisher::publish(size_t nitems) {
 
     while (counter < nitems) {
 
-        x.sensor = m_sensor_name;
-        x.id = counter++;
-        x.V = randdouble(0,1);
-        x.t = randdouble(m_prev_time, m_prev_time+1);
-        x.x = randdouble(-100, 100);
-        x.y = randdouble(-100, 100);
-        x.z = randdouble(-100, 100);
+        struct timespec timestamp;
+        clock_gettime(CLOCK_MONOTONIC, &timestamp);
 
-        m_prev_time = x.t;
+        float V = randfloat(0,1);
+        float x = randfloat(-100, 100);
+        float y = randfloat(-100, 100);
+        float z = randfloat(-100, 100);
 
-        std::string message = serializer.serialize(x);
-        m_socket.send(zmq::buffer(&message, sizeof(AHit)), zmq::send_flags::dontwait);
-        std::cout << message << std::endl;
+        ReadoutMessage message {
+            .source_id = 22,
+            .total_length = sizeof(ReadoutMessage),
+            .payload_length = 4,
+            .compressed_length = 4,
+            .magic = 618,
+            .format_version = 0,
+            .record_counter = counter++,
+            .timestamp = timestamp,
+            {reinterpret_cast<uint32_t&>(V), reinterpret_cast<uint32_t&>(x), reinterpret_cast<uint32_t&>(y), reinterpret_cast<uint32_t&>(z)}
+        };
+
+
+        m_socket.send(zmq::buffer(&message, sizeof(ReadoutMessage)), zmq::send_flags::dontwait);
+        std::cout << "Send: " << message << " (" << sizeof(ReadoutMessage) << " bytes)" << std::endl;
         consume_cpu_ms(m_delay_ms, 0, false);
     }
 }

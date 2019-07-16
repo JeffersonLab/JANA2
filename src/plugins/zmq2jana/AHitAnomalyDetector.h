@@ -54,7 +54,7 @@ public:
         std::stringstream ss;
         ss << "Anomaly detection: Event #" << event->GetEventNumber() << " : {";
         for (auto & hit : a_hits) {
-            ss << "(" << hit->E << "," << hit->t << "), ";
+            ss << "(" << hit->E << "," << hit->x << "), ";
         }
         ss << "}" << std::endl;
         std::cout << ss.str();

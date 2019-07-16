@@ -57,7 +57,7 @@ class JFactoryGenerator{
 };
 
 template <class T>
-class JFactoryGeneratorT : JFactoryGenerator {
+class JFactoryGeneratorT : public JFactoryGenerator {
 
 	~JFactoryGeneratorT() {};
 
