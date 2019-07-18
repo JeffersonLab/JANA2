@@ -186,7 +186,7 @@ public:
                 return loggingService->get_logger(className);
             }
         }
-        return JLogger::nothing();
+        return JLogger(JLogLevel::WARN);
     }
 };
 
