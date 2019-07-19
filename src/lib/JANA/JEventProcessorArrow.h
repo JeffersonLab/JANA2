@@ -34,10 +34,14 @@ public:
 
     void add_processor(JEventProcessor* processor);
 
+    void initialize() final;
+    void finalize() final;
     void execute(JArrowMetrics& result, size_t location_id) final;
+
     size_t get_pending() final;
     size_t get_threshold() final;
     void set_threshold(size_t) final;
+
 };
 
 

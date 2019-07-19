@@ -19,6 +19,7 @@ void JProcessingTopology::set_active(bool active) {
             status = Status::Running;
             for (auto arrow : sources) {
                 // We activate our eventsources, which activate components downstream.
+                arrow->initialize();
                 arrow->set_active(true);
                 arrow->notify_downstream(true);
             }
@@ -34,13 +35,16 @@ void JProcessingTopology::set_active(bool active) {
             status = Status::Draining;
             for (auto arrow : arrows) {
                 arrow->set_active(false);
+                arrow->finalize();
             }
         }
         else {
             // Arrows have all deactivated: Stop timer
             metrics.stop();
             status = Status::Inactive;
-            // TODO: Distinguish deactivation due to finishing from deactivation due to request_stop()
+            for (auto arrow : arrows) {
+                arrow->finalize();
+            }
         }
     }
 }
@@ -51,7 +55,6 @@ JProcessingTopology::JProcessingTopology()
 
 JProcessingTopology::~JProcessingTopology() {
     for (auto evt_proc : event_processors) {
-        evt_proc->Finish(); // TODO: Arrow should do this before deactivating
         delete evt_proc;
     }
     for (auto fac_gen : factory_generators) {

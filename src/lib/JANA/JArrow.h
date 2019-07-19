@@ -157,7 +157,6 @@ public:
     virtual void execute(JArrowMetrics& result, size_t location_id) = 0;
 
     virtual void finalize() {
-        assert(_status == Status::Inactive || _status == Status::Finished);
         _status = Status::Closed;
     };
 

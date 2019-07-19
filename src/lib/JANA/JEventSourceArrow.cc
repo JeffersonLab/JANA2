@@ -75,7 +75,6 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
     JArrowMetrics::Status status;
 
     if (in_status == SourceStatus::kNO_MORE_EVENTS) {
-        // There should be a _source.Close() of some kind
         set_upstream_finished(true);
         LOG_DEBUG(_logger) << "JEventSourceArrow '" << get_name() << "': "
                            << "Finished!" << LOG_END;
@@ -94,7 +93,7 @@ void JEventSourceArrow::initialize() {
     assert(_status == Status::Unopened);
     LOG_INFO(_logger) << "JEventSourceArrow '" << get_name() << "': "
                       << "Initializing" << LOG_END;
-    _source->Open();
+    std::call_once(_source->mOpened, [&]() {_source->Open(); });
     _status = Status::Inactive;
 }
 

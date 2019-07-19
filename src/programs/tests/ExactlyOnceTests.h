@@ -30,50 +30,64 @@
 // Author: Nathan Brei
 //
 
-#ifndef JANA2_JTOPOLOGYBUILDER_H
-#define JANA2_JTOPOLOGYBUILDER_H
+#ifndef JANA2_COMPONENTTESTS_H
+#define JANA2_COMPONENTTESTS_H
 
 
-#include <JANA/JEventSourceGenerator.h>
+#include <JANA/JEventSource.h>
 #include <JANA/JEventProcessor.h>
-#include <JANA/JProcessingTopology.h>
 
-class JTopologyBuilder {
+struct SimpleSource : public JEventSource {
 
-public:
+    std::atomic_int open_count {0};
+    std::atomic_int event_count {0};
 
-    JTopologyBuilder();
+    SimpleSource(std::string source_name, JApplication *japp) : JEventSource(source_name, japp)
+    { }
 
-    void increase_priority();
+    static std::string GetDescription() {
+        return "ComponentTests Fake Event Source";
+    }
 
-    void add(std::string event_source_name);
-    void add(JEventSourceGenerator* source_generator);
-    void add(JFactoryGenerator* factory_generator);
-    void add(JEventSource* event_source);
-    void add(JEventProcessor* processor);
+    std::string GetType(void) const {
+        return GetDemangledName<decltype(*this)>();
+    }
 
-    void print_report();
+    void Open() override {
+        std::cout << "Calling Open()" << std::endl;
+        open_count += 1;
+    }
 
-    JProcessingTopology* build_topology();
-
-
-private:
-
-    std::vector<std::string> _evt_src_names;
-
-    std::vector<JFactoryGenerator*> _fac_gens_front;
-    std::vector<JFactoryGenerator*> _fac_gens_back;
-
-    std::vector<JEventProcessor*> _evt_procs_front;
-    std::vector<JEventProcessor*> _evt_procs_back;
-
-    std::vector<JEventSourceGenerator*> _evt_src_gens_front;
-    std::vector<JEventSourceGenerator*> _evt_src_gens_back;
-
-    std::vector<JEventSource*> _evt_srces_front;
-    std::vector<JEventSource*> _evt_srces_back;
-
+    void GetEvent(std::shared_ptr<JEvent> event) override {
+        std::cout << "Calling GetEvent()" << std::endl;
+        if (++event_count == 5) {
+            throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
+        }
+    }
 };
 
 
-#endif //JANA2_JTOPOLOGYBUILDER_H
+struct SimpleProcessor : public JEventProcessor {
+
+    std::atomic_int init_count {0};
+    std::atomic_int finish_count {0};
+
+    SimpleProcessor(JApplication* app) : JEventProcessor(app) {}
+
+    void Init() override {
+        std::cout << "Calling Init()" << std::endl;
+        init_count += 1;
+    }
+
+    void Process(const std::shared_ptr<const JEvent>& aEvent) override {
+        std::cout << "Calling Process()" << std::endl;
+    }
+
+    void Finish() override {
+        std::cout << "Calling Finish()" << std::endl;
+        finish_count += 1;
+    }
+};
+
+
+#endif //JANA2_COMPONENTTESTS_H

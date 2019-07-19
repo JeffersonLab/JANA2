@@ -83,7 +83,7 @@ void JEventSourceManager::AddEventSource(const std::string& source_name)
 //---------------------------------
 void JEventSourceManager::AddJEventSource(JEventSource *source)
 {
-
+	_sources_unopened.push_back(source);
 }
 
 //---------------------------------
@@ -179,7 +179,7 @@ void JEventSourceManager::OpenInitSources(void)
 	{
 		auto sSource = _sources_unopened.front();
 		_sources_unopened.pop_front();
-		sSource->Open();
+		std::call_once(sSource->mOpened, [&](){ sSource->Open(); });
 		_sources_active.push_back(sSource);
 	}
 }
@@ -252,7 +252,7 @@ std::pair<JEventSource::RETURN_STATUS, JEventSource*> JEventSourceManager::OpenN
 	_sources_unopened.pop_front();
 
 	//Open the new source, register it, and return it
-	sNewSource->Open();
+	std::call_once(sNewSource->mOpened, [&](){ sNewSource->Open(); });
 	_sources_active.push_back(sNewSource);
 	return std::make_pair(JEventSource::RETURN_STATUS::kSUCCESS, sNewSource);
 }
