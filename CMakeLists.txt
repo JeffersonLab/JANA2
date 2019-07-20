@@ -40,6 +40,8 @@ add_executable(tests
         src/programs/tests/ExactlyOnceTests.h
         src/programs/tests/TerminationTests.cc
         src/programs/tests/TerminationTests.h
+        src/programs/tests/UserExceptionTests.cc
+        src/programs/tests/UserExceptionTests.h
         )
 
 add_executable(playground

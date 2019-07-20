@@ -46,6 +46,7 @@ TEST_CASE("ExactlyOnceTests") {
 
     app.Add(source);
     app.Add(processor);
+    app.SetParameterValue("jana:extended_report", 0);
 
     SECTION("Old engine: JEventProcessor::Init(), Finish() called exactly once") {
 

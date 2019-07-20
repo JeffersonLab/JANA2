@@ -13,6 +13,7 @@ TEST_CASE("TerminationTests") {
     japp = &app;
     auto processor = new CountingProcessor(&app);
     app.Add(processor);
+    app.SetParameterValue("jana:extended_report", 0);
 
     SECTION("Old engine, self-termination") {
 

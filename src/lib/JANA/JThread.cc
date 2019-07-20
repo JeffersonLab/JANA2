@@ -304,6 +304,9 @@ void JThread::Loop(void)
 		jerr << "** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** " << std::endl;
 		jerr << "Caught JException: " << e.GetMessage() << std::endl;
 		jerr << "** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** " << std::endl;
+
+		mApplication->SetExitCode(99);
+        // TODO: Handle user exceptions consistently via JStatus
 	}
 
 	// Set flag that we're done just before exiting thread
