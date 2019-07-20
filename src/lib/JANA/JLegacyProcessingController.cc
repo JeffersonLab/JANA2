@@ -81,7 +81,7 @@ void JLegacyProcessingController::request_stop() {
 }
 
 void JLegacyProcessingController::wait_until_stopped() {
-    _threadManager->StopThreads(true);
+    //_threadManager->StopThreads(true);
     _threadManager->JoinThreads();
     _threadManager->EndThreads();
     _topology->set_active(false);

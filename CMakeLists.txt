@@ -38,6 +38,8 @@ add_executable(tests
         src/programs/tests/TestTopology.h
         src/programs/tests/ExactlyOnceTests.cc
         src/programs/tests/ExactlyOnceTests.h
+        src/programs/tests/TerminationTests.cc
+        src/programs/tests/TerminationTests.h
         )
 
 add_executable(playground

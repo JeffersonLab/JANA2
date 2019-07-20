@@ -84,7 +84,7 @@ private:
     LocalityStrategy m_locality_strategy = LocalityStrategy::Global;
     std::vector<Row> m_mapping;
     size_t m_loc_count = 1;
-    bool m_initialized;
+    bool m_initialized = false;
     std::string m_error_msg = "Not initialized yet";
 };
 

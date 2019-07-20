@@ -54,12 +54,10 @@ struct SimpleSource : public JEventSource {
     }
 
     void Open() override {
-        std::cout << "Calling Open()" << std::endl;
         open_count += 1;
     }
 
     void GetEvent(std::shared_ptr<JEvent> event) override {
-        std::cout << "Calling GetEvent()" << std::endl;
         if (++event_count == 5) {
             throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
         }
@@ -75,16 +73,13 @@ struct SimpleProcessor : public JEventProcessor {
     SimpleProcessor(JApplication* app) : JEventProcessor(app) {}
 
     void Init() override {
-        std::cout << "Calling Init()" << std::endl;
         init_count += 1;
     }
 
     void Process(const std::shared_ptr<const JEvent>& aEvent) override {
-        std::cout << "Calling Process()" << std::endl;
     }
 
     void Finish() override {
-        std::cout << "Calling Finish()" << std::endl;
         finish_count += 1;
     }
 };
