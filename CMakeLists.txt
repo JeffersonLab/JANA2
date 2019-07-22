@@ -7,10 +7,11 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # For janapy plugin
+find_package(ROOT)
 find_package(PythonInterp 3 REQUIRED)
 find_package(PythonLibs 3 REQUIRED)
 
-
+include_directories(${ROOT_INCLUDE_DIRS})
 include_directories(${PYTHON_INCLUDE_DIRS})
 
 include_directories(src/lib)
@@ -174,6 +175,23 @@ add_library(zmq2jana SHARED
         src/plugins/zmq2jana/AHitParser.h
         src/plugins/zmq2jana/BHitFactory.h)
 
+add_library(toyDet SHARED
+        src/plugins/toyDet/JEventProcessor_toyDet.cc
+        src/plugins/toyDet/JEventProcessor_toyDet.h
+        src/plugins/toyDet/JEventSource_toyDet.cc
+        src/plugins/toyDet/JEventSource_toyDet.h
+        src/plugins/toyDet/JFactoryGenerator_toyDet.h
+        src/plugins/toyDet/rawSamples.cc
+        src/plugins/toyDet/rawSamples.h
+        src/plugins/toyDet/toyDet.cc
+
+        src/plugins/zmq2jana/internals/JSampleSource.h
+        src/plugins/zmq2jana/internals/JSampleSource_Zmq.h
+        src/plugins/zmq2jana/internals/JSampleWindower.h
+        src/plugins/zmq2jana/internals/JEventSource_WindowedSamples.h
+        src/plugins/zmq2jana/internals/JEventSource_SingleSample.h
+        src/plugins/toyDet/toyDetProducer.cc src/plugins/toyDet/ZmqProducer.cc src/plugins/toyDet/ZmqProducer.h)
+
 add_executable(jana
         src/programs/jana/jana.cc
         src/programs/jana/JBenchmarker.h
@@ -182,13 +200,13 @@ add_executable(jana
         src/programs/jana/MyProcessor.h
         )
 
-
 # Add jana static lib
 target_link_libraries(jana jana2)
 target_link_libraries(jtest jana2)
 target_link_libraries(janapy jana2)
 target_link_libraries(tests jana2)
 target_link_libraries(playground jana2)
+target_link_libraries(toyDet jana2)
 
 # Add greenfield static lib
 target_link_libraries(tests greenfield)
@@ -206,12 +224,15 @@ target_link_libraries(jtest Threads::Threads)
 target_link_libraries(playground Threads::Threads)
 target_link_libraries(tests Threads::Threads)
 
+target_link_libraries(toyDet ${ROOT_LIBRARIES})
+
 # janpy plugin needs libpython
 target_link_libraries(janapy ${PYTHON_LIBRARIES})
 
 # Remove "lib" prefix from plugins
 set_target_properties(jtest PROPERTIES PREFIX "" SUFFIX ".so")
 set_target_properties(zmq2jana PROPERTIES PREFIX "" SUFFIX ".so")
+set_target_properties(toyDet PROPERTIES PREFIX "" SUFFIX ".so")
 set_target_properties(janapy PROPERTIES PREFIX "")
 
 # For zmq2jana plugin
