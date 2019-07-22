@@ -1,126 +1,70 @@
 
 #include <iostream>
-#include <JANA/JThread.h>
-#include <JANA/JEvent.h>
-#include <JANA/JFactoryT.h>
+#include "JContext.h"
+#include "Factory.h"
 
-using namespace std;
 
-struct MyEvent : public JEvent {
+/// Sample data structure containing a Hit
+struct Hit {
+    double E;
 };
 
-struct Hit : public JObject {
-	
-	int t;
-	double v;
-	double x;
-	double y;
-	double z;
-
-	Hit(int t, double v, double x, double y, double z) :
-		t(t), v(v), x(x), y(y), z(z) {};
-
-	friend ostream& operator<<(ostream& dest, Hit& e) {
-		dest << e.t << ":" << e.v << 
-			" @ (" << e.x << "," << e.y << "," << e.z << ")";
-		return dest;
-	}
+/// Sample metadata structure for factories which produce Hits
+template <>
+struct Metadata<Hit> {
+    int count = 0;
 };
 
-struct Cluster : public JObject {
-	double mean_x;
-	double mean_y;
-	double mean_z;
-	double Etot;
+/// Sample factory which takes a sequence of Hits and "calibrates" it by adding 7
+struct CalibratedHitFactory : public BasicFactory<Hit> {
 
-	Cluster() {};
-	Cluster(double mx, double my, double mz, double e) : 
-		mean_x(mx), mean_y(my), mean_z(mz), Etot(e) {};
+    void process(JContext& event, Metadata<Hit>& metadata, std::vector<Hit*>& output) override {
 
-	friend ostream& operator<<(ostream& dest, Cluster& c) {
-		dest << c.Etot << "@ (" << c.mean_x << "," << c.mean_y 
-			<< "," << c.mean_z << ")";
-		return dest;
-	}
+        auto raw_hits = event.GetVector<Hit>("raw_hits");
+        for (auto hit : raw_hits) {
+            Hit* calibrated_hit = new Hit(*hit);
+            calibrated_hit->E += 7;
+            output.push_back(calibrated_hit);
+            metadata.count++;
+        }
+    }
 };
 
-class HitFactory : public JFactoryT<Hit> {
+/// Demonstration:
+/// - Add Factories to the Builder
+/// - Create an event Context
+/// - Insert data into the event
+/// - Retrieve derived data which the Context has computed for us using the appropriate Factory
+/// - Retrieve metadata associated with this computation
+/// - Handle tags in a clean way
 
-	virtual void Init() {
-		cout << "HitFactory.init()" << endl;
+int main() {
 
-		vector<Hit*> dummydata;
-		dummydata.push_back(new Hit {0, 0.1, 2.0, 0.0, 9.0});
-		dummydata.push_back(new Hit {1, 0.2, 1.0, 1.0, 0.0});
-		dummydata.push_back(new Hit {2, 0.4, 0.0, 0.0, 1.0});
-		dummydata.push_back(new Hit {3, 0.1, 1.0, 0.0, 0.0});
-		dummydata.push_back(new Hit {4, 0.3, 1.0, 0.0, 0.0});
+    FactoryGeneratorBuilder builder;
 
-		Set(move(dummydata));
-		SetCreated(true);
-	}
-};
+    builder.add_factory<Hit>("raw_hits");
+    builder.add_basic_factory<Hit, CalibratedHitFactory>("calibrated_hits");
 
-class ClusterFactory : public JFactoryT<Cluster> {
+    JInsertableContext event(builder.get_factory_generators());
 
-	virtual void Process(const shared_ptr<const JEvent>& event) {
-		cout << "ClusterFactory.process()" << endl;
+    std::vector<Hit*> raw_hits;
+    for (int i=0; i<20; ++i) {
+        Hit* hit = new Hit();
+        hit->E = i;
+        raw_hits.push_back(hit);
+    }
 
-		auto cluster = new Cluster(); 
-		auto hits = event->GetIterators<Hit>();
-		int n = 0;
-		for (auto it = hits.first; it != hits.second; ++it) {
-			auto hit = *it;
-			cluster->mean_x += hit->x;
-			cluster->mean_y += hit->y;
-			cluster->mean_z += hit->z;
-			cluster->Etot += hit->v;
-			++n;
-		}
-		cluster->mean_x /= n;
-		cluster->mean_y /= n;
-		cluster->mean_z /= n;
-		mData.push_back(cluster); 
-		// Or call Set()...
-		// Factory is responsible for deletion
-	}
-};
+    event.Insert(raw_hits, "raw_hits");
 
+    std::vector<const Hit*> calibrated_hits = event.GetVector<Hit>("calibrated_hits");
 
-#include<JANA/JLogger.h>
-#include<JANA/JCpuInfo.h>
-
-int main(int narg, char *argv[]) {
-
-	std::cout << "Core id: " << JCpuInfo::GetCpuID() 
-		  << " of " << JCpuInfo::GetNumCpus() << std::endl;
-	std::cout << "Numa node: " << JCpuInfo::GetNumaNodeID() 
-		  << " of " << JCpuInfo::GetNumNumaNodes() << std::endl;
-	return 0;
-	std::shared_ptr<JLogger> logger(new JLogger());
-
-	LOG_INFO(logger) << "Launching a minimal JANA instance!" << LOG_END;
-	LOG_DEBUG(logger) << "You shouldn't see this" << LOG_END;
-	LOG_ERROR(logger) << "Here is an error message!" << LOG_END;
-
-	JLogMessage(logger, JLogLevel::WARN) << "This also works" << JLogMessageEnd();
-	LOG_FATAL(shared_ptr<JLogger>(new JLogger())) << "Exiting now!" << LOG_END;
-
-	auto app = new JApplication();
-	InitJANAPlugin(app);
-	auto event = make_shared<JEvent>(app);
-
-	JFactorySet factories;
-	factories.Add(new ClusterFactory());
-	factories.Add(new HitFactory());
-
-	event->SetFactorySet(&factories);
-
-	Cluster* result = *(event->GetIterators<Cluster>().first);
-	cout << *result << endl;
-	delete app;
-	return 0;
+    for (const Hit* hit : calibrated_hits) {
+        std::cout << hit->E << ", ";
+    }
+    std::cout << std::endl;
+    std::cout << "count: " << event.GetFactory<Hit>("calibrated_hits")->get_metadata().count << std::endl;
 }
+
 
 
 

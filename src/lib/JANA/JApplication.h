@@ -29,44 +29,36 @@
 #ifndef _JApplication_h_
 #define _JApplication_h_
 
-#include <iostream>
-#include <cstdint>
 #include <vector>
 #include <string>
-#include <atomic>
-#include <deque>
-#include <mutex>
-#include <memory>
-#include <map>
-using std::vector;
-using std::string;
-using std::deque;
-using std::map;
+#include <iostream>
 
 #define jout std::cout
 #define jerr std::cerr
-
-#include <JANA/JParameterManager.h>
-#include <JANA/JLogger.h>
-#include <JANA/JResourcePool.h>
-#include <JANA/JResourcePoolSimple.h>
 
 class JApplication;
 class JEventProcessor;
 class JEventSource;
 class JEventSourceGenerator;
 class JFactoryGenerator;
-class JCalibrationGenerator;
-class JQueue;
-class JThread;
 class JEventSourceManager;
 class JThreadManager;
 class JFactorySet;
 
-template <typename ReturnType>
-class JTask;
+class JPluginLoader;
+class JProcessingController;
+class JTopologyBuilder;
+struct JProcessingTopology;
 
-extern JApplication *japp;
+extern JApplication* japp;
+
+#include <JANA/JLogger.h>
+#include <JANA/JParameterManager.h>
+
+// TODO: Move these down one level
+#include <JANA/JResourcePool.h>
+#include <JANA/JTask.h>
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 /// JANA application class (singleton).
@@ -78,132 +70,163 @@ extern JApplication *japp;
 /// of the data. User code (e.g. plugins) will generally register things like event sources
 /// and processors with the JApplication so they can be called up later at the appropriate time.
 //////////////////////////////////////////////////////////////////////////////////////////////////
-class JApplication{
+class JApplication {
+
+public:
+
+    JApplication(JParameterManager* params = nullptr);
+    ~JApplication();
 
 
+    // Loading plugins
 
-	public:
-	
-		enum RETURN_STATUS{
-			kSUCCESS,
-			kNO_MORE_EVENTS,
-			kTRY_AGAIN,
-			kUNKNOWN
-		};
+    void AddPlugin(string plugin_name);
+    void AddPluginPath(string path);
 
-    JApplication(JParameterManager* params = nullptr, std::vector<string>* eventSources = nullptr);
-		virtual ~JApplication();
 
-		int  GetExitCode(void);
-		void Initialize(void);
-		void PrintFinalReport(void);
-		void PrintStatus(void);
-		void Quit(bool skip_join=false);
-		void Run();
-		void SetExitCode(int exit_code);
-		void SetTicker(bool ticker_on=true);
-		void Stop(bool wait_until_idle=false);
-		void Resume(void);
+    // Building a JProcessingTopology
 
-		void Add(JEventSourceGenerator *source_generator);
-		void Add(JFactoryGenerator *factory_generator);
-		void Add(JEventProcessor *processor);
+    void Add(std::string event_source_name);
+    void Add(JEventSourceGenerator* source_generator);
+    void Add(JFactoryGenerator* factory_generator);
+    void Add(JEventSource* event_source);
+    void Add(JEventProcessor* processor);
 
-		void AddPlugin(string plugin_name);
-		void AddPluginPath(string path);
-		
-		void GetJEventProcessors(vector<JEventProcessor*>& aProcessors);
-		void GetJFactoryGenerators(vector<JFactoryGenerator*> &factory_generators);
-		std::shared_ptr<JLogger> GetJLogger(void);
-		JParameterManager* GetJParameterManager(void);
-		JThreadManager* GetJThreadManager(void) const;
-		JEventSourceManager* GetJEventSourceManager(void) const;
-		
-		//GET/RECYCLE POOL RESOURCES
-		std::shared_ptr<JTask<void>> GetVoidTask(void);
-		JFactorySet* GetFactorySet(void);
-		void Recycle(JFactorySet* aFactorySet);
-		void UpdateResourceLimits(void);
 
-		uint64_t GetNtasksCompleted(string name="");
-		uint64_t GetNeventsProcessed(void);
-		float GetIntegratedRate(void);
-		float GetInstantaneousRate(void);
-		void GetInstantaneousRates(vector<double> &rates_by_queue);
-		void GetIntegratedRates(map<string,double> &rates_by_thread);
+    // Controlling processing
 
-		bool IsQuitting(void){ return _quitting; }
-		bool IsDrainingQueues(void){ return _draining_queues; }
+    void Initialize(void);
+    void Run(bool wait_until_finished = true);
+    void Scale(int nthreads);
+    void Stop(bool wait_until_idle = false);
+    void Resume() {};  // TODO: Do we need this?
+    void Quit(bool skip_join = false);
+    void SetExitCode(int exit_code);
+    int GetExitCode(void);
 
-		string Val2StringWithPrefix(float val);
-		template<typename T> T GetParameterValue(std::string name);
-		template<typename T> JParameter* SetParameterValue(std::string name, T val);
-	
-	protected:
 
-		bool _initialized = false;
-		size_t _nthreads;
-		int _exit_code;
-		bool _skip_join;
-		bool _quitting;
-		bool _draining_queues;
-		bool _ticker_on;
-		std::chrono::time_point<std::chrono::high_resolution_clock> mRunStartTime;
-		std::vector<string> _plugins;
-		std::vector<string> _plugin_paths;
-		std::vector<void*> _sohandles;
-		std::vector<JFactoryGenerator*> _factoryGenerators;
-		std::vector<JCalibrationGenerator*> _calibrationGenerators;
-		std::vector<JEventProcessor*> _eventProcessors;
+    // Performance/status monitoring
 
-		std::shared_ptr<JLogger> _logger;
-		JParameterManager *_pmanager;
-		JEventSourceManager* _eventSourceManager;
-		JThreadManager* _threadManager;
-		std::size_t mNumProcessorsAdded;
+    bool IsQuitting(void) { return _quitting; }
+    bool IsDrainingQueues(void) { return _draining_queues; }
 
-		void AttachPlugins(void);
-		void AttachPlugin(string name, bool verbose=false);
-		
-	private:
+    void SetTicker(bool ticker_on = true);
+    void PrintStatus();
+    void PrintFinalReport();
+    uint64_t GetNThreads();
+    uint64_t GetNeventsProcessed();
+    float GetIntegratedRate();
+    float GetInstantaneousRate();
+    // TODO: Do we really want these?
+    uint64_t GetNtasksCompleted(std::string name="") { return 0; }
+    void GetInstantaneousRates(std::vector<double> &rates_by_queue) {}
+    void GetIntegratedRates(std::map<std::string,double> &rates_by_thread) {}
 
-		// Resource pools
-		JResourcePool<JTask<void>> mVoidTaskPool;
-		JResourcePoolSimple<JFactorySet> mFactorySetPool;
+    // Parameter config
+
+    JParameterManager* GetJParameterManager() { return _params; }
+
+    template<typename T>
+    T GetParameterValue(std::string name);
+
+    template<typename T>
+    JParameter* SetParameterValue(std::string name, T val);
+
+
+    // Locating services
+
+    /// Use this in EventSources, Factories, or EventProcessors. Do not call this
+    /// from InitPlugin(), as not all JServices may have been loaded yet.
+    /// When initializing a Service, use acquire_services() instead.
+    ///
+    /// TODO: Consider making ServiceLocator be an argument to Factory::init(), etc?
+    template <typename T>
+    std::shared_ptr<T> GetService();
+
+    /// Call this from InitPlugin.
+    template <typename T>
+    void ProvideService(std::shared_ptr<T> service);
+
+
+    // Doesn't belong here
+
+    void UpdateResourceLimits(void);
+    void GetJEventProcessors(std::vector<JEventProcessor*>& aProcessors);
+    void GetJFactoryGenerators(std::vector<JFactoryGenerator*>& factory_generators);
+    JThreadManager* GetJThreadManager(void) const;
+    JEventSourceManager* GetJEventSourceManager(void) const;
+    std::shared_ptr<JTask<void>> GetVoidTask(void);
+    JFactorySet* GetFactorySet(void);
+    void Recycle(JFactorySet* aFactorySet);
+    string Val2StringWithPrefix(float val);
+
+
+private:
+
+    JLogger _logger;
+    JParameterManager* _params;
+    JPluginLoader* _plugin_loader;
+    JTopologyBuilder* _topology_builder;
+    JProcessingTopology* _topology;
+    JProcessingController* _processing_controller;
+    JServiceLocator _service_locator;
+
+    bool _quitting = false;
+    bool _draining_queues = false;
+    bool _skip_join = false;
+    bool _initialized = false;
+    bool _ticker_on = true;
+    bool _extended_report = true;
+    int  _exit_code = 0;
+    int  _desired_nthreads;
+
+
+    std::chrono::time_point<std::chrono::high_resolution_clock> mRunStartTime;
+
+    // TODO: Get rid of these
+    JResourcePool<JFactorySet> mFactorySetPool;
+    JResourcePool<JTask<void>> mVoidTaskPool;
+    JThreadManager* _threadManager = nullptr; // Extract this from LegacyProcessingController
 
 };
 
-//---------------------------------
-// GetParameterValue
-//---------------------------------
-template<typename T>
-T JApplication::GetParameterValue(std::string name)
-{	
-	/// This is a convenience function that just calls the method
-	/// of the same name in JParameterManager.	
-	return GetJParameterManager()->GetParameterValue<T>(name);
-}		
 
-//---------------------------------
-// SetParameterValue
-//---------------------------------
+
+// Templates
+
+/// A convenience method which delegates to JParameterManager
 template<typename T>
-JParameter* JApplication::SetParameterValue(std::string name, T val)
-{
-	/// This is a convenience function that just calls the SetParameter
-	/// of JParameterManager.
-	return GetJParameterManager()->SetParameter(name, val);
+T JApplication::GetParameterValue(std::string name) {
+    return GetJParameterManager()->GetParameterValue<T>(name);
 }
+
+/// A convenience method which delegates to JParameterManager
+template<typename T>
+JParameter* JApplication::SetParameterValue(std::string name, T val) {
+    return GetJParameterManager()->SetParameter(name, val);
+}
+
+/// A convenience method which delegates to JServiceLocator
+template <typename T>
+std::shared_ptr<T> JApplication::GetService() {
+    return _service_locator.get<T>();
+}
+
+/// A convenience method which delegates to JServiceLocator
+template <typename T>
+void JApplication::ProvideService(std::shared_ptr<T> service) {
+    _service_locator.provide(service);
+}
+
 
 
 // This routine is used to bootstrap plugins. It is done outside
 // of the JApplication class to ensure it sees the global variables
 // that the rest of the plugin's InitPlugin routine sees.
-inline void InitJANAPlugin(JApplication *app)
-{
-	// Make sure global pointers are pointing to the 
-	// same ones being used by executable
-	japp = app;
+inline void InitJANAPlugin(JApplication* app) {
+    // Make sure global pointers are pointing to the
+    // same ones being used by executable
+    japp = app;
 }
 
 #endif // _JApplication_h_

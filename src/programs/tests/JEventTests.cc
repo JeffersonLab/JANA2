@@ -30,12 +30,10 @@
 // Author: Nathan Brei
 //
 
-#include<JEventTests.h>
+#include "catch.hpp"
 
 #include <JANA/JEvent.h>
-
-#define CATCH_CONFIG_MAIN
-#include "catch.hpp"
+#include "JEventTests.h"
 
 
 TEST_CASE("JEventInsertTests") {

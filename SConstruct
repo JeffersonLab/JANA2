@@ -16,6 +16,7 @@ SHOWBUILD = ARGUMENTS.get('SHOWBUILD', 0)
 OPTIMIZATION = ARGUMENTS.get('OPTIMIZATION', 2)
 DEBUG = ARGUMENTS.get('DEBUG', 1)
 PROFILE = ARGUMENTS.get('PROFILE', 0)
+VTUNE = ARGUMENTS.get('VTUNE', 0)
 BITNESS32 = ARGUMENTS.get('m32', 0)
 BITNESS64 = ARGUMENTS.get('m64', 0)
 
@@ -119,6 +120,14 @@ if PROFILE=='1':
 	env.PrependUnique(    CXXFLAGS = ['-pg'])
 	env.PrependUnique(FORTRANFLAGS = ['-pg'])
 	env.PrependUnique(   LINKFLAGS = ['-pg'])
+
+if VTUNE=='1':
+	env.PrependUnique(      CFLAGS = ['-g'])
+	env.PrependUnique(    CXXFLAGS = ['-g'])
+	env.PrependUnique(FORTRANFLAGS = ['-g'])
+	env.PrependUnique(   LINKFLAGS = ['-dynamic'])
+
+
 
 # Add pthread (more efficient to do this here since it involves test compilations)
 sbms.Add_pthread(env)

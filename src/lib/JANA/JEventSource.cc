@@ -169,9 +169,10 @@ std::vector<std::shared_ptr<JTaskBase> > JEventSource::GetProcessEventTasks(std:
 					break;
 			}
 			break; // exception caught so don't try reading any more events right now
-		}catch(...){
+		}
+		catch(...) {
 			mExhausted = true;
-			break; // un-expected exception caught
+			throw;  // Keep propagating swallow user exceptions!
 		}
 	}
 

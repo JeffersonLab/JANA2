@@ -42,7 +42,6 @@
 //
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-#include <JANA/JApplication.h>
 
 #ifndef _JParameterManager_h_
 #define _JParameterManager_h_
@@ -53,8 +52,9 @@
 
 #include <JANA/JParameter.h>
 #include <JANA/JException.h>
+#include "JLogger.h"
 
-class JParameterManager;
+using std::string;
 
 class JParameterManager{
 	public:
@@ -78,6 +78,9 @@ class JParameterManager{
 		template<typename T>
 		JParameter* SetParameter(std::string name, T val);
 
+		void ReadConfigFile(std::string name);
+		void WriteConfigFile(std::string name);
+
 	protected:
 	
 		// When accessing the _jparameters map strings are always converted to
@@ -88,6 +91,7 @@ class JParameterManager{
 		std::map<std::string, JParameter*> _jparameters;
 	
 	private:
+    		JLogger _logger;
 
 };
 

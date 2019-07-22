@@ -51,10 +51,22 @@
 
 class JFactoryGenerator{
 	public:
-		virtual ~JFactoryGenerator() = 0;
+		virtual ~JFactoryGenerator() {};
 		
 		virtual void GenerateFactories(JFactorySet *factory_set) = 0;
 };
 
+template <class T>
+class JFactoryGeneratorT : public JFactoryGenerator {
+
+	~JFactoryGeneratorT() {};
+
+	void GenerateFactories(JFactorySet *factory_set) {
+		factory_set->Add(new T {});
+	}
+};
+
+
 #endif // _JFactoryGenerator_h_
+
 

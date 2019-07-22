@@ -116,7 +116,7 @@ class JThread{
 		bool HandleNullTask(void);
 };
 
-extern thread_local JThread *JTHREAD;
+extern thread_local int THREAD_ID;
 
 #endif // _JThread_h_
 

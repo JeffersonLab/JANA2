@@ -1,30 +1,20 @@
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Jefferson Science Associates LLC Copyright Notice:
 //
-//    File: JFactoryGenerator.cc
-// Created: Thu Oct 12 08:15:55 EDT 2017
-// Creator: davidl (on Darwin harriet.jlab.org 15.6.0 i386)
-//
-// ------ Last repository commit info -----
-// [ Date ]
-// [ Author ]
-// [ Source ]
-// [ Revision ]
-//
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-// Jefferson Science Associates LLC Copyright Notice:  
 // Copyright 251 2014 Jefferson Science Associates LLC All Rights Reserved. Redistribution
 // and use in source and binary forms, with or without modification, are permitted as a
-// licensed user provided that the following conditions are met:  
+// licensed user provided that the following conditions are met:
 // 1. Redistributions of source code must retain the above copyright notice, this
-//    list of conditions and the following disclaimer. 
+//    list of conditions and the following disclaimer.
 // 2. Redistributions in binary form must reproduce the above copyright notice, this
 //    list of conditions and the following disclaimer in the documentation and/or other
-//    materials provided with the distribution.  
+//    materials provided with the distribution.
 // 3. The name of the author may not be used to endorse or promote products derived
-//    from this software without specific prior written permission.  
+//    from this software without specific prior written permission.
 // This material resulted from work developed under a United States Government Contract.
 // The Government retains a paid-up, nonexclusive, irrevocable worldwide license in such
 // copyrighted data to reproduce, distribute copies to the public, prepare derivative works,
-// perform publicly and display publicly and to permit others to do so.   
+// perform publicly and display publicly and to permit others to do so.
 // THIS SOFTWARE IS PROVIDED BY JEFFERSON SCIENCE ASSOCIATES LLC "AS IS" AND ANY EXPRESS
 // OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
 // MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
@@ -35,14 +25,36 @@
 // LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
 // OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 // POSSIBILITY OF SUCH DAMAGE.
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//
+// Author: Nathan Brei
+//
 
-#include "JFactoryGenerator.h"
+#ifndef JANA2_JPROCESSINGCONTROLLER_H
+#define JANA2_JPROCESSINGCONTROLLER_H
 
-//---------------------------------
-// ~JFactoryGenerator    (Destructor)
-//---------------------------------
-JFactoryGenerator::~JFactoryGenerator()
-{
+#include <vector>
+#include <unistd.h>
+#include <memory>
+#include "JPerfSummary.h"
 
-}
+class JProcessingController {
+public:
+
+    virtual ~JProcessingController() = default;
+
+    virtual void initialize() = 0;
+    virtual void run(size_t nthreads) = 0;
+    virtual void scale(size_t nthreads) = 0;
+    virtual void request_stop() = 0;
+    virtual void wait_until_stopped() = 0;
+    virtual bool is_stopped() = 0;
+
+    virtual std::unique_ptr<const JPerfSummary> measure_performance() = 0;
+
+    virtual void print_report() = 0;
+    virtual void print_final_report() = 0;
+};
+
+#endif //JANA2_JPROCESSINGCONTROLLER_H
+
