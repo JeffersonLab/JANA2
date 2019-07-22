@@ -19,9 +19,8 @@
 #include <mutex>
 
 #include <JANA/JEventSource.h>
+#include <JANA/JEvent.h>
 #include <JANA/JEventSourceGeneratorT.h>
-
-#include "JEvent_toyDet.h"
 
 #include "rawSamples.h"
 
