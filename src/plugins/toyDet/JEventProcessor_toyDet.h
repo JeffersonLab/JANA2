@@ -17,8 +17,6 @@
 #include <JANA/JEventProcessor.h>
 #include <JANA/JEvent.h>
 
-#include "JEvent_toyDet.h"
-
 #include <TFile.h>
 #include <TTree.h>
 
