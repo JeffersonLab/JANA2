@@ -50,7 +50,7 @@ JApplication::JApplication(JParameterManager* params) {
 
     _logger = JLoggingService::logger("JApplication");
     _plugin_loader = new JPluginLoader(this,_params);
-    _topology_builder = new JTopologyBuilder();
+    _topology_builder = new JTopologyBuilder(this);
     _topology = nullptr;
     _processing_controller = nullptr;
 }

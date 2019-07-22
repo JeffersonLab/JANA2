@@ -38,11 +38,13 @@
 #include <JANA/JEventProcessor.h>
 #include <JANA/JProcessingTopology.h>
 
+class JApplication;
+
 class JTopologyBuilder {
 
 public:
 
-    JTopologyBuilder();
+    JTopologyBuilder(JApplication* app);
 
     void increase_priority();
 
@@ -58,6 +60,8 @@ public:
 
 
 private:
+
+    JApplication* m_app;
 
     std::vector<std::string> _evt_src_names;
 

@@ -156,19 +156,19 @@ JProcessingTopology *JTopologyBuilder::build_topology() {
     int affinity = 0;
     int locality = 0;
 
-    auto params = japp->GetJParameterManager();
+    auto params = m_app->GetJParameterManager();
     params->SetDefaultParameter("jana:event_pool_size", event_pool_size);
     params->SetDefaultParameter("jana:event_queue_threshold", event_queue_threshold);
     params->SetDefaultParameter("jana:event_source_chunksize", event_source_chunksize);
     params->SetDefaultParameter("jana:event_processor_chunksize", event_processor_chunksize);
     params->SetDefaultParameter("jana:enable_stealing", enable_stealing);
+    params->SetDefaultParameter("jana:affinity", affinity);
+    params->SetDefaultParameter("jana:locality", locality);
 
-    japp->GetJParameterManager()->GetParameter("jana:affinity", affinity);
-    japp->GetJParameterManager()->GetParameter("jana:locality", locality);
     topology->mapping.initialize(static_cast<JProcessorMapping::AffinityStrategy>(affinity),
                                  static_cast<JProcessorMapping::LocalityStrategy>(locality));
 
-    topology->event_pool = std::make_shared<JEventPool>(japp, &topology->factory_generators, event_pool_size, location_count);
+    topology->event_pool = std::make_shared<JEventPool>(m_app, &topology->factory_generators, event_pool_size, location_count);
 
     // Assume the simplest possible topology for now, complicate later
     auto queue = new EventQueue(event_queue_threshold, topology->mapping.get_loc_count(), enable_stealing);
@@ -203,15 +203,13 @@ JProcessingTopology *JTopologyBuilder::build_topology() {
     return topology;
 }
 
-JTopologyBuilder::JTopologyBuilder() {}
+JTopologyBuilder::JTopologyBuilder(JApplication* app) : m_app(app) {}
 
 void JTopologyBuilder::print_report() {
 
     jout << "Event sources: " << std::endl;
     jout << "Event processors: " << std::endl;
     jout << "Event factories: " << std::endl;
-
-
 
 }
 
