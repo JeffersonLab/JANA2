@@ -16,7 +16,7 @@ public:
 
     JTestPlotter(JApplication* app) : JEventProcessor(app) {
 
-        auto params = japp->GetJParameterManager();
+        auto params = app->GetJParameterManager();
 
         params->GetParameter("jtest:plotter_bytes", m_write_bytes);
         params->GetParameter("jtest:plotter_ms", m_cputime_ms);

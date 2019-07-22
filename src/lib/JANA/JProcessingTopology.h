@@ -15,12 +15,13 @@
 #include "JEventPool.h"
 #include "JProcessorMapping.h"
 
+class JApplication;
 
 struct JProcessingTopology : public JActivable {
 
     enum Status { Inactive, Running, Draining, Finished };
 
-    explicit JProcessingTopology();
+    explicit JProcessingTopology(JApplication* app);
     virtual ~JProcessingTopology();
 
     JEventSourceManager event_source_manager;

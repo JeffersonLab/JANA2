@@ -100,7 +100,7 @@ void JTopologyBuilder::increase_priority() {
 JProcessingTopology *JTopologyBuilder::build_topology() {
 
     increase_priority(); // Merges everything into *_back vectors
-    JProcessingTopology* topology = new JProcessingTopology();
+    JProcessingTopology* topology = new JProcessingTopology(m_app);
 
     // Add event processors to topology
     for (auto * evt_proc : _evt_procs_back) {
