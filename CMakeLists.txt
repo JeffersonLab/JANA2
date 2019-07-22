@@ -38,6 +38,12 @@ add_executable(tests
         src/programs/tests/PerformanceTests.h
         src/programs/tests/TestTopology.cc
         src/programs/tests/TestTopology.h
+        src/programs/tests/ExactlyOnceTests.cc
+        src/programs/tests/ExactlyOnceTests.h
+        src/programs/tests/TerminationTests.cc
+        src/programs/tests/TerminationTests.h
+        src/programs/tests/UserExceptionTests.cc
+        src/programs/tests/UserExceptionTests.h
         )
 
 add_executable(playground
@@ -147,7 +153,7 @@ add_library(jtest SHARED
         src/plugins/JTest/JTestTracker.h
         src/plugins/JTest/JTestPlotter.h
         src/plugins/JTest/JTestFactoryGenerator.h
-        )
+        src/plugins/JTest/JTestCalibrationService.h)
 
 add_library(janapy SHARED
         src/plugins/janapy/janapy.cc

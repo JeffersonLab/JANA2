@@ -30,50 +30,13 @@
 // Author: Nathan Brei
 //
 
-#ifndef JANA2_JTOPOLOGYBUILDER_H
-#define JANA2_JTOPOLOGYBUILDER_H
+#ifndef JANA2_JTESTCALIBRATIONSERVICE_H
+#define JANA2_JTESTCALIBRATIONSERVICE_H
 
-
-#include <JANA/JEventSourceGenerator.h>
-#include <JANA/JEventProcessor.h>
-#include <JANA/JProcessingTopology.h>
-
-class JTopologyBuilder {
-
-public:
-
-    JTopologyBuilder();
-
-    void increase_priority();
-
-    void add(std::string event_source_name);
-    void add(JEventSourceGenerator* source_generator);
-    void add(JFactoryGenerator* factory_generator);
-    void add(JEventSource* event_source);
-    void add(JEventProcessor* processor);
-
-    void print_report();
-
-    JProcessingTopology* build_topology();
-
-
-private:
-
-    std::vector<std::string> _evt_src_names;
-
-    std::vector<JFactoryGenerator*> _fac_gens_front;
-    std::vector<JFactoryGenerator*> _fac_gens_back;
-
-    std::vector<JEventProcessor*> _evt_procs_front;
-    std::vector<JEventProcessor*> _evt_procs_back;
-
-    std::vector<JEventSourceGenerator*> _evt_src_gens_front;
-    std::vector<JEventSourceGenerator*> _evt_src_gens_back;
-
-    std::vector<JEventSource*> _evt_srces_front;
-    std::vector<JEventSource*> _evt_srces_back;
-
+struct JTestCalibrationService: JService {
+    double getCalibration() {
+        return 7.0;
+    }
 };
 
-
-#endif //JANA2_JTOPOLOGYBUILDER_H
+#endif //JANA2_JTESTCALIBRATIONSERVICE_H

@@ -192,19 +192,6 @@ TEST_CASE("SchedulerRoundRobinBehaviorTests") {
         REQUIRE(assignment_counts["sum_everything"] == 1);
     }
 
-    SECTION("When an arrow encountered KeepGoing...") {
-
-        LOG_INFO(logger) << "--------------------------------------" << LOG_END;
-        last_result = JArrowMetrics::Status::KeepGoing;
-        assignment = topology.get_arrow("subtract_one");
-
-        for (int i = 0; i < 4; ++i) {
-            assignment = scheduler.next_assignment(0, assignment, last_result);
-
-            REQUIRE(assignment->get_name() == "subtract_one");
-            // That scheduler lets the worker continue with this assignment
-        }
-
-    }
 }
+
 

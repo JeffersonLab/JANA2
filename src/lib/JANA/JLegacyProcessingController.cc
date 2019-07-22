@@ -81,16 +81,10 @@ void JLegacyProcessingController::request_stop() {
 }
 
 void JLegacyProcessingController::wait_until_stopped() {
-    _threadManager->StopThreads(true);
+    //_threadManager->StopThreads(true);
     _threadManager->JoinThreads();
     _threadManager->EndThreads();
-
-    // Delete event processors
-    for(auto sProcessor : _topology->event_processors){
-        sProcessor->Finish(); // (this may not be necessary since it is always next to destructor)
-        delete sProcessor;
-    }
-    _topology->event_processors.clear();
+    _topology->set_active(false);
 }
 
 JThreadManager* JLegacyProcessingController::get_threadmanager() {

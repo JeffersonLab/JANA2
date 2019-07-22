@@ -79,6 +79,20 @@ void JEventProcessorArrow::execute(JArrowMetrics& result, size_t location_id) {
     result.update(status, success, 1, latency, overhead);
 }
 
+void JEventProcessorArrow::initialize() {
+
+    for (auto processor : _processors) {
+        std::call_once(processor->init_flag, [&](){ processor->Init(); });
+    }
+}
+
+void JEventProcessorArrow::finalize() {
+
+    for (auto processor : _processors) {
+        std::call_once(processor->finish_flag, [&](){ processor->Finish(); });
+    }
+}
+
 size_t JEventProcessorArrow::get_pending() {
     return _input_queue->size();
 }

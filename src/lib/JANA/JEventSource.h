@@ -112,6 +112,7 @@ class JEventSource{
 		void SetMaxEventsToRead(std::size_t aMaxEventsToRead){mMaxEventsToRead = aMaxEventsToRead;}
 		std::size_t GetMaxEventsToRead(void){return mMaxEventsToRead;}
 
+		std::once_flag mOpened;
 		std::atomic<std::size_t> mEventsRead{0};
 		std::atomic<std::size_t> mTasksCreated{0};
 

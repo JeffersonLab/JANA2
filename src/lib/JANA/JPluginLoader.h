@@ -49,8 +49,6 @@ public:
 
     JPluginLoader(JApplication* app, JParameterManager* params = nullptr);
 
-    void acquire_services(JServiceLocator* service_locator);
-
     void add_plugin(std::string plugin_name);
     void add_plugin_path(std::string path);
     void attach_plugins(JTopologyBuilder* builder);
@@ -58,9 +56,9 @@ public:
 
 private:
 
-    std::string _comma_separated_plugin_names;
+    std::vector<string> _plugins_to_include;
+    std::vector<string> _plugins_to_exclude;
     std::vector<std::string> _plugin_paths;
-    std::vector<std::string> _plugins;
     std::vector<void*> _sohandles;
 
     bool _verbose;

@@ -59,7 +59,7 @@ void JProcessorMapping::initialize(AffinityStrategy affinity, LocalityStrategy l
         close(pipe_fd[0]);
         close(pipe_fd[1]);
         execlp("lscpu", "lscpu", "-b", "-pcpu,core,node,socket", nullptr);
-        exit(0);
+        exit(-1);
     }
     else { // We are the parent process
         close(pipe_fd[1]);

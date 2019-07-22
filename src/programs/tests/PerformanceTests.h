@@ -116,6 +116,14 @@ struct PerfTestReducer : public Sink<Event*> {
     }
 };
 
+/// To be replaced with the real JParameterManager when the time is right
+struct FakeParameterManager : public JService {
+    using duration_t = std::chrono::steady_clock::duration;
 
+    int chunksize;
+    int backoff_tries;
+    duration_t backoff_time;
+    duration_t checkin_time;
+};
 
 #endif //JANA2_PERFORMANCETESTS_H

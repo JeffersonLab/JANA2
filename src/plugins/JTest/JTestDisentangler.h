@@ -37,6 +37,7 @@
 #include <JANA/JEvent.h>
 #include <JANA/JPerfUtils.h>
 #include "JTestDataObjects.h"
+#include "JTestCalibrationService.h"
 
 
 class JTestDisentangler : public JFactoryT<JTestEventData> {
@@ -46,6 +47,8 @@ class JTestDisentangler : public JFactoryT<JTestEventData> {
     double m_cputime_spread = 0.25;
     double m_write_spread = 0.25;
 
+    std::shared_ptr<JTestCalibrationService> m_calibration_service;
+
 public:
 
     JTestDisentangler() : JFactoryT<JTestEventData>("JTestDisentangler") {
@@ -54,6 +57,9 @@ public:
         params->GetParameter("jtest:disentangler_ms", m_cputime_ms);
         params->GetParameter("jtest:disentangler_bytes_spread", m_write_spread);
         params->GetParameter("jtest:disentangler_spread", m_cputime_spread);
+
+        // Retrieve calibration service from JApp
+        m_calibration_service = japp->GetService<JTestCalibrationService>();
     };
 
     void Process(const std::shared_ptr<const JEvent> &aEvent) {
@@ -61,6 +67,9 @@ public:
         // Read (large) entangled event data
         auto eed = aEvent->GetSingle<JTestEntangledEventData>();
         read_memory(*eed->buffer);
+
+        // Read calibration data
+        m_calibration_service->getCalibration();
 
         // Do a little bit of computation
         consume_cpu_ms(m_cputime_ms, m_cputime_spread);

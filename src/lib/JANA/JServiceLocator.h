@@ -11,56 +11,72 @@
 #include <iostream>
 #include <assert.h>
 #include <chrono>
+#include <memory>
+#include <mutex>
+#include "JException.h"
 
 
 class JServiceLocator;
 
+/// JService is a trait indicating that an object can be shared among JANA components
+/// via a simple ServiceLocator. It provides a callback interface for configuring itself
+/// when it depends on other JServices.
 struct JService {
-    // InitPlugin() provides Services to the JServiceLocator.
+
+    /// acquire_services is a callback which allows the user to configure a JService
+    /// which relies on other JServices. The idea is that the user uses a constructor
+    /// or initialize() method to configure things which don't rely on other JServices, and
+    /// then use acquire_services() to configure the things which do. We need this because
+    /// due to JANA's plugin architecture, we can't guarantee the order in which JServices
+    /// get provided. So instead, we collect all of the JServices first and wire them
+    /// together afterwards in a separate phase.
+    ///
+    /// Note: Don't call JApplication::GetService() or JServiceLocator::get() from InitPlugin()!
 
     virtual void acquire_services(JServiceLocator* sl) {};
-    // Do not ask for services from the JServiceLocator in the constructor,
-    // because they might not have been provided yet. (We can't really control
-    // the order in which plugins get loaded) Instead, put all code that retrieves
-    // Services in acquire_services(). ServiceProvider will call this back once all of the
-    // Services have been provided. Also, calling JServiceLocator::get() from anywhere
-    // will recursively acquire_services for all JService dependencies.
 };
 
+/// JServiceLocator is a nexus for collecting, initializing, and retrieving JServices.
+/// This may be exposed via the JApplication facade, or used on its own. JServiceLocator
+/// uses shared-pointer semantics to ensure that JServices always get freed,
+/// but also don't get freed prematurely if a JApplication or JServiceLocator go out of scope.
 class JServiceLocator {
 
-    std::map<std::type_index, std::pair<JService*, bool>> underlying;
+    std::map<std::type_index, std::pair<std::shared_ptr<JService>, std::once_flag*>> underlying;
+    std::mutex mutex;
 
 public:
 
     template<typename T>
-    void provide(T* t) {
+    void provide(std::shared_ptr<T> t) {
 
         /// Publish a Service to the ServiceLocator. This Service should have
         /// already been constructed, but not finalized.
         /// Users are intended to call this from InitPlugin() most of the time
 
-        auto svc = dynamic_cast<JService*>(t);
+        std::lock_guard<std::mutex> lock(mutex);
+        auto svc = std::dynamic_pointer_cast<JService>(t);
         assert(svc != nullptr);
-        underlying[std::type_index(typeid(T))] = std::make_pair(svc, false);
+        underlying[std::type_index(typeid(T))] = std::make_pair(svc, new std::once_flag());
     }
 
     template<typename T>
-    T* get() {
-        /// Retrieve a Service. If it has not yet been finalized, it will be.
+    std::shared_ptr<T> get() {
+        /// Retrieve a JService. If acquire_services() has not yet been called, it will be.
         /// Usually called from Service::finalize(). It may be called from anywhere,
         /// but it is generally safer to retrieve the services we need during acquire_dependencies()
         /// and keep pointers to those, instead of keeping a pointer to the ServiceLocator itself.
         /// (This also makes it easier to migrate to dependency injection if we so desire)
 
-        auto pair = underlying[std::type_index(typeid(T))];
-        bool& wired = pair.second;
-        auto ptr = pair.first;
-        if (!wired) {
-            ptr->acquire_services(this);
-            wired = true;
+        auto iter = underlying.find(std::type_index(typeid(T)));
+        if (iter == underlying.end()) {
+            throw JException("Service not found!");
         }
-        auto svc = dynamic_cast<T*>(ptr);
+        auto& pair = iter->second;
+        auto& wired = pair.second;
+        auto ptr = pair.first;
+        std::call_once(*wired, [&](){ptr->acquire_services(this);});
+        auto svc = std::static_pointer_cast<T>(ptr);
         return svc;
     }
 
@@ -70,39 +86,16 @@ public:
         /// unpredictably finalized later on, particularly during computation.
 
         for (auto& item : underlying) {
-            JService* ptr = item.second.first;
-            bool finalized = item.second.second;
-            if (!finalized) {
-                ptr->acquire_services(this);
-            }
+            auto sharedptr = item.second.first;
+            auto& wired = item.second.second;
+            std::call_once(*wired, [&](){sharedptr->acquire_services(this);});
         }
     }
-
-    // TODO: Consider adding a finalize() callback which runs after all Services have been wired up,
-    // similar to Spring framework's PostConstruct. This would give us three effective phases of initialization:
-    // (1) JService construction; JServiceLocator::provide()
-    // (2) JService::acquire_services(), which wires together all of our dependencies but doesn't use them
-    // (3) JService::finalize(), where we can actually use our JService dependencies
-    // This helps deal with problems of circular dependencies between Services, but doesn't 100% resolve them.
-
-};
-
-/// To be replaced with the real JParameterManager when the time is right
-struct ParameterManager : public JService {
-    using duration_t = std::chrono::steady_clock::duration;
-
-    int chunksize;
-    int backoff_tries;
-    duration_t backoff_time;
-    duration_t checkin_time;
-
-
 };
 
 // Global variable which serves as a replacement for japp
 // Ideally we would make this be a singleton instead, but until we figure out
 // how to merge our plugins' symbol tables correctly, singletons are broken.
 extern JServiceLocator* serviceLocator;
-
 
 #endif // _JSERVICELOCATOR_H_

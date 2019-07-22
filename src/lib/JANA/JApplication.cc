@@ -82,6 +82,10 @@ void JApplication::AddPluginPath(std::string path) {
 
 // Building a ProcessingTopology
 
+void JApplication::Add(JEventSource* event_source) {
+    _topology_builder->add(event_source);
+}
+
 void JApplication::Add(JEventSourceGenerator *source_generator) {
     /// Add the given JFactoryGenerator to the list of queues
     ///

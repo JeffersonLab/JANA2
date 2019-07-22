@@ -58,9 +58,8 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
     catch (SourceStatus rs) {
         in_status = rs;
     }
-    catch (...) {
-        in_status = SourceStatus::kERROR;
-    }
+    // Any other exceptions should keep propagating in order to kill execution
+
     auto latency_time = std::chrono::steady_clock::now();
     auto message_count = _chunk_buffer.size();
     auto out_status = _output_queue->push(_chunk_buffer, reserved_count, location_id);
@@ -76,7 +75,6 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
     JArrowMetrics::Status status;
 
     if (in_status == SourceStatus::kNO_MORE_EVENTS) {
-        // There should be a _source.Close() of some kind
         set_upstream_finished(true);
         LOG_DEBUG(_logger) << "JEventSourceArrow '" << get_name() << "': "
                            << "Finished!" << LOG_END;
@@ -95,7 +93,7 @@ void JEventSourceArrow::initialize() {
     assert(_status == Status::Unopened);
     LOG_INFO(_logger) << "JEventSourceArrow '" << get_name() << "': "
                       << "Initializing" << LOG_END;
-    _source->Open();
+    std::call_once(_source->mOpened, [&]() {_source->Open(); });
     _status = Status::Inactive;
 }
 

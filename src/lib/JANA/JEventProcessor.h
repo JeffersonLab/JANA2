@@ -60,14 +60,15 @@ class JEventProcessor{
 	
 		friend JApplication;
 	
-		JEventProcessor(JApplication *app=nullptr):mApplication(app){}
+		JEventProcessor(JApplication *app=nullptr): mApplication(app){}
 		virtual ~JEventProcessor(void){}
 
 		virtual void Init(void){}
 		virtual void Process(const std::shared_ptr<const JEvent>& aEvent){}
 		virtual void Finish(void){}
 
-		std::once_flag init_flag; // Used to make sure Init is called only once (see JFunctions.cc:JMakeAnalyzeEventTask)
+		std::once_flag init_flag;
+		std::once_flag finish_flag;
 
 	protected:
 

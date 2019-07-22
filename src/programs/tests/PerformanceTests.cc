@@ -41,14 +41,14 @@ TEST_CASE("MemoryBottleneckTest", "[.][performance]") {
     std::cout << "Running performance test" << std::endl;
     serviceLocator = new JServiceLocator();
 
-    auto loggingService = new JLoggingService;
+    auto loggingService = std::make_shared<JLoggingService>();
     serviceLocator->provide(loggingService);
 
     loggingService->set_level("JThreadTeam", JLogLevel::OFF);
     loggingService->set_level("JScheduler", JLogLevel::OFF);
     loggingService->set_level("JTopology", JLogLevel::INFO);
 
-    auto params = new ParameterManager;
+    auto params = std::make_shared<FakeParameterManager>();
     serviceLocator->provide(params);
 
     params->chunksize = 10;

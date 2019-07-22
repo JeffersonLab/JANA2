@@ -15,11 +15,11 @@ TEST_CASE("JServiceLocator chicken-and-egg tests") {
 
     // PHASE 1: jana.cc sets up params and logger services, which literally everything else needs
 
-    auto parameterSvc = new ParameterSvc();
+    auto parameterSvc = std::make_shared<ParameterSvc>();
     parameterSvc->set("JANA:LogLevel", "DEBUG");   // Eventually set from program args or config file
     sl.provide(parameterSvc);     // Any errors parsing parameters are sent to the UI, not the logger
 
-    auto loggerSvc_throwaway = new LoggerSvc();
+    auto loggerSvc_throwaway = std::make_shared<LoggerSvc>();
     sl.provide(loggerSvc_throwaway);
     // LoggerSvc has not yet obtained its loglevel from parameterSvc
     REQUIRE(loggerSvc_throwaway->level == "INFO");
@@ -38,7 +38,8 @@ TEST_CASE("JServiceLocator chicken-and-egg tests") {
     // PHASE 3: We call JApplication::loadPlugins(), which dlopens a bunch of plugins, each of which
     // has an InitPlugin() function which does something like:
 
-    sl.provide(new MagneticFieldSvc());
+    auto magFieldSvc = std::make_shared<MagneticFieldSvc>();
+    sl.provide(magFieldSvc);
     REQUIRE(parameterSvc->get("EIC:MagneticFieldDatabaseURL") == "");  // MagneticFieldSvc doesn't have its params yet
 
 

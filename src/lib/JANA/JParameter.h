@@ -100,7 +100,7 @@ JParameter::JParameter(std::string name, T val):_has_default(false),_name(name),
 // GetDefault
 //---------------------------------
 template<typename T>
-T JParameter::GetDefault(void)
+inline T JParameter::GetDefault(void)
 {
 	std::stringstream ss(_default);
 	T val;
@@ -109,11 +109,24 @@ T JParameter::GetDefault(void)
 	return val;
 }
 
+template<>
+inline std::vector<std::string> JParameter::GetDefault()
+{
+    std::stringstream ss(_default);
+    std::vector<std::string> result;
+    std::string s;
+    while (getline(ss, s, ',')) {
+        result.push_back(s);
+    }
+    return result;
+}
+
+
 //---------------------------------
 // GetValue
 //---------------------------------
 template<typename T>
-T JParameter::GetValue(void)
+inline T JParameter::GetValue(void)
 {
 	std::stringstream ss(_val);
 	T val;
@@ -139,12 +152,25 @@ inline std::vector<size_t> JParameter::GetValue<std::vector<size_t>>() {
     return result;
 }
 
+/// Template specialization for parsing as vector of string
+template<>
+inline std::vector<std::string> JParameter::GetValue<std::vector<std::string>>() {
+
+    std::stringstream ss(_val);
+    std::vector<std::string> result;
+    std::string s;
+    while (getline(ss, s, ',')) {
+        result.push_back(s);
+    }
+    return result;
+}
+
 
 //---------------------------------
 // GetValue
 //---------------------------------
 template<typename T>
-T JParameter::GetValue(T &val)
+inline T JParameter::GetValue(T &val)
 {
 	val = GetValue<T>();
 	return val;
@@ -154,7 +180,7 @@ T JParameter::GetValue(T &val)
 // SetDefault
 //---------------------------------
 template<typename T>
-T JParameter::SetDefault(T def)
+inline T JParameter::SetDefault(T def)
 {
 	T old_def = GetDefault<T>();
 
@@ -167,11 +193,35 @@ T JParameter::SetDefault(T def)
 	return old_def;
 }
 
+
+/// Specialization for vector<string>
+template<>
+inline std::vector<std::string> JParameter::SetDefault(std::vector<std::string> default_value)
+{
+    auto old_def = GetDefault<std::vector<std::string>>();
+
+    std::stringstream ss;
+    size_t len = default_value.size();
+    for (size_t i=0; i+1<len; ++i) {
+        ss << default_value[i];
+        ss << ",";
+    }
+    if (len != 0) {
+        ss << default_value[len-1];
+    }
+
+    _default = ss.str();
+    _has_default = true;
+
+    return old_def;
+}
+
+
 //---------------------------------
 // SetValue
 //---------------------------------
 template<typename T>
-T JParameter::SetValue(T val)
+inline T JParameter::SetValue(T val)
 {
 	T old_val = GetValue<T>();
 
@@ -181,6 +231,26 @@ T JParameter::SetValue(T val)
 
 	return old_val;
 }
+
+template<>
+inline std::vector<std::string> JParameter::SetValue(std::vector<std::string> val)
+{
+    auto old_val = GetValue<std::vector<std::string>>();
+
+    std::stringstream ss;
+    size_t len = val.size();
+    for (size_t i=0; i+1<len; ++i) {
+        ss << val[i];
+        ss << ",";
+    }
+    if (len > 0) {
+        ss << val[len-1];
+    }
+    _val = ss.str();
+
+    return old_val;
+}
+
 
 #endif // _JParameter_h_
 

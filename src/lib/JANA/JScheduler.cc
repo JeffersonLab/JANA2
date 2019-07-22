@@ -36,9 +36,9 @@ JArrow* JScheduler::next_assignment(uint32_t worker_id, JArrow* assignment, JArr
     // arrow that works
     size_t current_idx = _next_idx;
     do {
+        JArrow* candidate = _arrows[current_idx];
         current_idx += 1;
         current_idx %= _arrows.size();
-        JArrow* candidate = _arrows[current_idx];
 
         if (!candidate->is_upstream_finished() &&
             (candidate->is_parallel() || candidate->get_thread_count() == 0)) {

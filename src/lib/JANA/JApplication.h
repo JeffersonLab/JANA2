@@ -89,6 +89,7 @@ public:
     void Add(std::string event_source_name);
     void Add(JEventSourceGenerator* source_generator);
     void Add(JFactoryGenerator* factory_generator);
+    void Add(JEventSource* event_source);
     void Add(JEventProcessor* processor);
 
 
@@ -132,6 +133,21 @@ public:
     JParameter* SetParameterValue(std::string name, T val);
 
 
+    // Locating services
+
+    /// Use this in EventSources, Factories, or EventProcessors. Do not call this
+    /// from InitPlugin(), as not all JServices may have been loaded yet.
+    /// When initializing a Service, use acquire_services() instead.
+    ///
+    /// TODO: Consider making ServiceLocator be an argument to Factory::init(), etc?
+    template <typename T>
+    std::shared_ptr<T> GetService();
+
+    /// Call this from InitPlugin.
+    template <typename T>
+    void ProvideService(std::shared_ptr<T> service);
+
+
     // Doesn't belong here
 
     void UpdateResourceLimits(void);
@@ -153,6 +169,7 @@ private:
     JTopologyBuilder* _topology_builder;
     JProcessingTopology* _topology;
     JProcessingController* _processing_controller;
+    JServiceLocator _service_locator;
 
     bool _quitting = false;
     bool _draining_queues = false;
@@ -176,19 +193,31 @@ private:
 
 
 // Templates
+
+/// A convenience method which delegates to JParameterManager
 template<typename T>
 T JApplication::GetParameterValue(std::string name) {
-    /// This is a convenience function that just calls the method
-    /// of the same name in JParameterManager.
     return GetJParameterManager()->GetParameterValue<T>(name);
 }
 
+/// A convenience method which delegates to JParameterManager
 template<typename T>
 JParameter* JApplication::SetParameterValue(std::string name, T val) {
-    /// This is a convenience function that just calls the SetParameter
-    /// of JParameterManager.
     return GetJParameterManager()->SetParameter(name, val);
 }
+
+/// A convenience method which delegates to JServiceLocator
+template <typename T>
+std::shared_ptr<T> JApplication::GetService() {
+    return _service_locator.get<T>();
+}
+
+/// A convenience method which delegates to JServiceLocator
+template <typename T>
+void JApplication::ProvideService(std::shared_ptr<T> service) {
+    _service_locator.provide(service);
+}
+
 
 
 // This routine is used to bootstrap plugins. It is done outside

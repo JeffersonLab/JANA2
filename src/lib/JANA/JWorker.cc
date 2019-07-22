@@ -148,18 +148,18 @@ void JWorker::loop() {
         auto retry_duration = duration_t::zero();
         auto useful_duration = duration_t::zero();
 
-        auto initial_backoff_time = _assignment->get_initial_backoff_time();
-        auto backoff_strategy = _assignment->get_backoff_strategy();
-        auto backoff_tries = _assignment->get_backoff_tries();
-        auto checkin_time = _assignment->get_checkin_time();
-
         if (_assignment == nullptr) {
-            LOG_DEBUG(_logger) << "JWorker " << _worker_id
-                               << " idling due to lack of assignments" << LOG_END;
-            std::this_thread::sleep_for(checkin_time);
+
+            LOG_DEBUG(_logger) << "JWorker " << _worker_id << " idling due to lack of assignments" << LOG_END;
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
             idle_duration = jclock_t::now() - scheduler_time;
         }
         else {
+
+            auto initial_backoff_time = _assignment->get_initial_backoff_time();
+            auto backoff_strategy = _assignment->get_backoff_strategy();
+            auto backoff_tries = _assignment->get_backoff_tries();
+            auto checkin_time = _assignment->get_checkin_time();
 
             uint32_t current_tries = 0;
             auto backoff_duration = initial_backoff_time;

@@ -30,50 +30,53 @@
 // Author: Nathan Brei
 //
 
-#ifndef JANA2_JTOPOLOGYBUILDER_H
-#define JANA2_JTOPOLOGYBUILDER_H
+#include "catch.hpp"
+#include "ExactlyOnceTests.h"
+
+#include <JANA/JEventSourceGeneratorT.h>
+#include <JANA/JApplication.h>
+
+TEST_CASE("ExactlyOnceTests") {
+
+    JApplication app;
+    japp = &app;  // For anything relying on the global variable
+
+    auto source = new SimpleSource("SimpleSource", &app);
+    auto processor = new SimpleProcessor(&app);
+
+    app.Add(source);
+    app.Add(processor);
+    app.SetParameterValue("jana:extended_report", 0);
+
+    SECTION("Old engine: JEventProcessor::Init(), Finish() called exactly once") {
+
+        REQUIRE(source->open_count == 0);
+        REQUIRE(processor->init_count == 0);
+        REQUIRE(processor->finish_count == 0);
+
+        app.SetParameterValue("jana:legacy_mode", 1);
+        app.Run(true);
+
+        REQUIRE(source->open_count == 1);
+        REQUIRE(processor->init_count == 1);
+        REQUIRE(processor->finish_count == 1);
+    }
 
 
-#include <JANA/JEventSourceGenerator.h>
-#include <JANA/JEventProcessor.h>
-#include <JANA/JProcessingTopology.h>
+    SECTION("New engine: JEventProcessor::Init(), Finish() called exactly once") {
 
-class JTopologyBuilder {
+        REQUIRE(source->open_count == 0);
+        REQUIRE(processor->init_count == 0);
+        REQUIRE(processor->finish_count == 0);
 
-public:
+        app.SetParameterValue("jana:legacy_mode", 0);
+        app.Run(true);
 
-    JTopologyBuilder();
-
-    void increase_priority();
-
-    void add(std::string event_source_name);
-    void add(JEventSourceGenerator* source_generator);
-    void add(JFactoryGenerator* factory_generator);
-    void add(JEventSource* event_source);
-    void add(JEventProcessor* processor);
-
-    void print_report();
-
-    JProcessingTopology* build_topology();
+        REQUIRE(source->open_count == 1);
+        REQUIRE(processor->init_count == 1);
+        REQUIRE(processor->finish_count == 1);
+    }
+}
 
 
-private:
 
-    std::vector<std::string> _evt_src_names;
-
-    std::vector<JFactoryGenerator*> _fac_gens_front;
-    std::vector<JFactoryGenerator*> _fac_gens_back;
-
-    std::vector<JEventProcessor*> _evt_procs_front;
-    std::vector<JEventProcessor*> _evt_procs_back;
-
-    std::vector<JEventSourceGenerator*> _evt_src_gens_front;
-    std::vector<JEventSourceGenerator*> _evt_src_gens_back;
-
-    std::vector<JEventSource*> _evt_srces_front;
-    std::vector<JEventSource*> _evt_srces_back;
-
-};
-
-
-#endif //JANA2_JTOPOLOGYBUILDER_H

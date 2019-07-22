@@ -37,6 +37,7 @@
 #include <JANA/JTopologyBuilder.h>
 
 #include <unordered_set>
+#include "JTopologyBuilder.h"
 
 
 void JTopologyBuilder::add(std::string event_source_name) {
@@ -54,6 +55,11 @@ void JTopologyBuilder::add(JFactoryGenerator* factory_generator) {
 void JTopologyBuilder::add(JEventProcessor* processor) {
     _evt_procs_front.push_back(processor);
 }
+
+void JTopologyBuilder::add(JEventSource* source) {
+    _evt_srces_front.push_back(source);
+}
+
 
 void JTopologyBuilder::increase_priority() {
 
@@ -78,6 +84,11 @@ void JTopologyBuilder::increase_priority() {
     _evt_src_gens_back.clear();
     _evt_src_gens_front.swap(_evt_src_gens_back);
 
+    for (auto * event_src : _evt_srces_back) {
+        _evt_srces_front.push_back(event_src);
+    }
+    _evt_srces_back.clear();
+    _evt_srces_front.swap(_evt_srces_back);
 }
 
 /// build_topology() takes all of the components the user has provided up
@@ -94,6 +105,11 @@ JProcessingTopology *JTopologyBuilder::build_topology() {
     // Add event processors to topology
     for (auto * evt_proc : _evt_procs_back) {
         topology->event_processors.push_back(evt_proc);
+    }
+
+    // Add ready-made event sources to topology
+    for (auto * evt_src : _evt_srces_back) {
+        topology->event_source_manager.AddJEventSource(evt_src);
     }
 
     // Add event source generators to event source manager
