@@ -30,60 +30,30 @@
 // Author: Nathan Brei
 //
 
-#ifndef JANA2_DETECTORMESSAGE_H
-#define JANA2_DETECTORMESSAGE_H
+#ifndef JANA2_ZMQDUMMYPUBLISHER_H
+#define JANA2_ZMQDUMMYPUBLISHER_H
 
 #include <string>
 #include <chrono>
-#include "internals/JSampleSource.h"
-#include <JANA/JException.h>
-#include <cstring>
+#include "../zmq2jana/internals/zmq.hpp"
 
+class ZmqDummyPublisher {
+public:
 
-/// ReadoutMessage should be the same as INDRA_Stream_Test's stream_buffer struct.
-template <unsigned int N>
-struct ReadoutMessage {
+    ZmqDummyPublisher(std::string file_name, std::string socket_name, uint64_t delay_ms);
 
-    uint32_t source_id;
-    uint32_t total_length;
-    uint32_t payload_length;
-    uint32_t compressed_length;
-    uint32_t magic;
-    uint32_t format_version;
-    uint64_t record_counter;
-    struct timespec timestamp;
-    uint32_t payload[N];
+    ~ZmqDummyPublisher();
 
+    void loop();
 
-    template <typename T>
-    T* get_payload() {
-        return reinterpret_cast<T*>(payload);
-    }
+private:
 
-    inline friend std::ostream& operator<< (std::ostream& os, const ReadoutMessage& msg) {
-        std::stringstream ss;
-        ss << msg.record_counter << ": " << reinterpret_cast<const float&>(msg.payload[0]) << ", ... " << reinterpret_cast<const float&>(msg.payload[1]);
-        os << ss.str();
-        return os;
-    }
-
+    std::string m_file_name;
+    std::string m_socket_name;
+    uint64_t m_delay_ms;
+    zmq::context_t m_context;
+    zmq::socket_t m_socket;
 };
 
 
-template <unsigned int N>
-inline DetectorId get_detector_id(const ReadoutMessage<N>& m) {
-    return std::to_string(m.payload.source_id);
-}
-
-template <unsigned int N>
-inline Timestamp get_timestamp(const ReadoutMessage<N>& m) {
-    return m.payload.timestamp.tv_nsec;
-}
-
-template <unsigned int N>
-inline void emplace(ReadoutMessage<N>* destination, char* source, size_t bytes) {
-    memcpy(destination, source, bytes);
-}
-
-
-#endif //JANA2_DETECTORMESSAGE_H
+#endif //JANA2_ZMQDUMMYPUBLISHER_H
