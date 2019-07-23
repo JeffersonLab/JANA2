@@ -163,13 +163,15 @@ add_library(toyDet SHARED
         src/plugins/toyDet/rawSamples.cc
         src/plugins/toyDet/rawSamples.h
         src/plugins/toyDet/toyDet.cc
+        src/plugins/toyDet/DummyZmqPublisher.cc
+        src/plugins/toyDet/DummyZmqPublisher.h
 
-        src/plugins/zmq2jana/internals/JSampleSource.h
+        src/plugins/zmq2jana/ReadoutMessage.h
         src/plugins/zmq2jana/internals/JSampleSource_Zmq.h
         src/plugins/zmq2jana/internals/JSampleWindower.h
         src/plugins/zmq2jana/internals/JEventSource_WindowedSamples.h
         src/plugins/zmq2jana/internals/JEventSource_SingleSample.h
-        src/plugins/toyDet/toyDetProducer.cc src/plugins/toyDet/ZmqProducer.cc src/plugins/toyDet/ZmqProducer.h)
+        )
 
 add_executable(jana
         src/programs/jana/jana.cc
