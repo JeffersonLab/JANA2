@@ -6,7 +6,7 @@
 #include "JCpuInfo.h"
 
 
-void JWorker::measure_perf(JMetrics::WorkerSummary& summary) {
+void JWorker::measure_perf(WorkerSummary& summary) {
     // Read (do not clear) worker metrics
     // Read and clear arrow metrics
     // Push arrow metrics upstream

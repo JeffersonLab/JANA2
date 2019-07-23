@@ -39,9 +39,8 @@
 
 #include <JANA/JArrow.h>
 #include <JANA/JWorker.h>
-#include <JANA/JMetrics.h>
 #include <JANA/JProcessingTopology.h>
-#include "JArrowPerfSummary.h"
+#include <JANA/JArrowPerfSummary.h>
 
 class JArrowProcessingController : public JProcessingController {
 public:
