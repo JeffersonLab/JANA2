@@ -58,6 +58,7 @@ extern JApplication* japp;
 // TODO: Move these down one level
 #include <JANA/JResourcePool.h>
 #include <JANA/JTask.h>
+#include "JComponentSummary.h"
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -121,6 +122,8 @@ public:
     uint64_t GetNtasksCompleted(std::string name="") { return 0; }
     void GetInstantaneousRates(std::vector<double> &rates_by_queue) {}
     void GetIntegratedRates(std::map<std::string,double> &rates_by_thread) {}
+
+    JComponentSummary GetComponentSummary();
 
     // Parameter config
 

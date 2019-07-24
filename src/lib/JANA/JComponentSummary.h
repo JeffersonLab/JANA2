@@ -54,11 +54,14 @@ struct JEventProcessorSummary {
     std::string type_name;
 };
 
-class JComponentSummary {
+struct JComponentSummary {
     std::vector<JFactorySummary> factories;
     std::vector<JEventSourceSummary> event_sources;
     std::vector<JEventProcessorSummary> event_processors;
 };
+
+std::ostream& operator<<(std::ostream& os, JComponentSummary const & cs);
+
 
 
 #endif //JANA2_JCOMPONENTSUMMARY_H

@@ -165,6 +165,8 @@ void JApplication::Run(bool wait_until_finished) {
     // Print summary of all config parameters (if any aren't default)
     _params->PrintParameters(false);
 
+    jout << GetComponentSummary();
+
     jout << "Start processing ..." << std::endl;
     mRunStartTime = std::chrono::high_resolution_clock::now();
     _processing_controller->run(_desired_nthreads);
@@ -246,6 +248,10 @@ int JApplication::GetExitCode() {
 	return _exit_code;
 }
 
+JComponentSummary JApplication::GetComponentSummary() {
+    /// Returns a data object describing all components currently running
+    return _topology->component_summary;
+}
 
 // Performance/status monitoring
 

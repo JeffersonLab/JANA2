@@ -50,6 +50,7 @@
 
 #include "JResettable.h"
 #include "JFactoryT.h"
+#include "JComponentSummary.h"
 
 class JFactoryGenerator;
 class JFactory;
@@ -69,6 +70,8 @@ class JFactorySet : public JResettable
 
 		JFactory* GetFactory(std::type_index aObjectType, const std::string& aFactoryTag="") const;
 		template<typename T> JFactoryT<T>* GetFactory(const std::string& tag = "") const;
+
+		std::vector<JFactorySummary> Summarize() const;
 
 	protected:
 	

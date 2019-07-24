@@ -105,11 +105,17 @@ JProcessingTopology *JTopologyBuilder::build_topology() {
     // Add event processors to topology
     for (auto * evt_proc : _evt_procs_back) {
         topology->event_processors.push_back(evt_proc);
+        topology->component_summary.event_processors.push_back(
+                {.plugin_name="unknown", .type_name="unknown"});
     }
 
     // Add ready-made event sources to topology
     for (auto * evt_src : _evt_srces_back) {
         topology->event_source_manager.AddJEventSource(evt_src);
+        topology->component_summary.event_sources.push_back(
+                {.plugin_name = "unknown",
+                 .type_name = evt_src->GetType(),
+                 .source_name = evt_src->GetName()});
     }
 
     // Add event source generators to event source manager
@@ -143,9 +149,15 @@ JProcessingTopology *JTopologyBuilder::build_topology() {
         }
     }
 
+    // Add all factory generators to topology
     for (auto factory : _fac_gens_back) {
         topology->factory_generators.push_back(factory);
     }
+
+    // Collect summaries for all factories in factory_generators
+    JFactorySet dummy_fac_set(topology->factory_generators);
+    topology->component_summary.factories = dummy_fac_set.Summarize();
+
 
     size_t event_pool_size = 100;
     size_t event_queue_threshold = 80;
@@ -181,6 +193,13 @@ JProcessingTopology *JTopologyBuilder::build_topology() {
         topology->sources.push_back(arrow);
         arrow->set_chunksize(event_source_chunksize);
         // create arrow for sources. Don't open until arrow.activate() called
+
+        // Add to summary
+        topology->component_summary.event_sources.push_back({
+            .plugin_name="unknown",
+            .type_name=src->GetType(),
+            .source_name=src->GetName()
+        });
     }
 
     auto proc_arrow = new JEventProcessorArrow("processors", queue, nullptr, topology->event_pool);
@@ -212,7 +231,6 @@ void JTopologyBuilder::print_report() {
     jout << "Event factories: " << std::endl;
 
 }
-
 
 
 
