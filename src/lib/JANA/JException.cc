@@ -37,33 +37,35 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
+#include <iostream>
 #include "JException.h"
 
 using namespace std;
 
-//---------------------------------
-// JException    (Constructor)
-//---------------------------------
-JException::JException(string mess)
-{
-	_mess = mess;
+
+JException::JException(string mess) {
+    message = std::move(mess);
+    // TODO: Generate backtrace here
 }
 
-//---------------------------------
-// ~JException    (Destructor)
-//---------------------------------
-JException::~JException()
-{
 
+JException::~JException() = default;
+
+
+/// Deprecated
+std::string JException::GetMessage() {
+    return message;
 }
 
-//---------------------------------
-// GetMessage
-//---------------------------------
-std::string JException::GetMessage(void)
-{
-	return _mess;
-}
 
+/// Convenience method for formatting complete error data
+std::ostream& operator<<(std::ostream& os, JException const& ex) {
+    os << "ERROR: " << ex.message << std::endl;
+    os << "  Plugin:       " << ex.plugin_name << std::endl;
+    os << "  Component:    " << ex.plugin_name << std::endl;
+    os << "  Factory name: " << ex.plugin_name << std::endl;
+    os << "  Factory tag:  " << ex.plugin_name << std::endl;
+    os << "  Backtrace:" << std::endl << std::endl << ex.backtrace << std::endl << std::endl;
+}
 
 
