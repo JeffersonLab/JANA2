@@ -255,11 +255,7 @@ typename JFactoryT<DataType>::PairType JEvent::GetIterators(const std::string& a
 	auto sFactoryBase = mFactorySet->GetFactory(std::type_index(typeid(DataType)), aTag);
 	if(sFactoryBase == nullptr)
 	{
-		//Uh oh, No factory exists for this type.
-		jerr << "ERROR: No factory found for type = " << GetDemangledName<DataType>() << ", tag = \"" << aTag << "\"\n";
-		japp->SetExitCode(-1);
-		japp->Quit();
-		return {};
+		throw JException("No factory found for type = %s, tag = %s", GetDemangledName<DataType>().c_str(), aTag.c_str());
 	}
 	auto sFactory = static_cast<JFactoryT<DataType>*>(sFactoryBase);
 
