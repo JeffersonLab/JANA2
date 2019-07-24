@@ -54,6 +54,7 @@ public:
     void add(JEventSource* event_source);
     void add(JEventProcessor* processor);
 
+    void set_current_plugin(std::string plugin_name);
     void print_report();
 
     JProcessingTopology* build_topology();
@@ -62,6 +63,7 @@ public:
 private:
 
     JApplication* m_app;
+    std::string m_current_plugin_name;
 
     std::vector<std::string> _evt_src_names;
 

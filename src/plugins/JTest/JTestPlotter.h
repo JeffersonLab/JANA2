@@ -24,6 +24,11 @@ public:
         params->GetParameter("jtest:plotter_spread", m_cputime_spread);
     }
 
+    virtual std::string GetType() const {
+        return GetDemangledName<decltype(*this)>();
+    }
+
+
     void Process(const std::shared_ptr<const JEvent>& aEvent) {
 
         // Read the track data

@@ -135,6 +135,7 @@ void JPluginLoader::attach_plugins(JTopologyBuilder* builder) {
             if (access(fullpath.c_str(), F_OK) != -1) {
                 LOG_TRACE(_logger, _verbose) << "Found!" << LOG_END;
                 try {
+                    builder->set_current_plugin(plugin);
                     attach_plugin(builder, fullpath.c_str());
                     found_plugin = true;
                     break;

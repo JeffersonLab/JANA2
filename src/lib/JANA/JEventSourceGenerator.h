@@ -65,7 +65,8 @@ class JEventSourceGenerator{
 	public:
 	
 		friend JEventSourceManager;
-	
+		friend JTopologyBuilder;
+
 		JEventSourceGenerator(JApplication *app=nullptr):mApplication(app){}
 		virtual ~JEventSourceGenerator(){}
 
@@ -74,7 +75,8 @@ class JEventSourceGenerator{
 		virtual std::string GetDescription(void) const = 0; ///< Return description of the source type this will generate
 		virtual JEventSource* MakeJEventSource( std::string source ) = 0; ///< Create an instance of the source type this generates
 		virtual double CheckOpenable( std::string source ) = 0; ///< See JEventSourceGeneratorT for description
-	
+
+
 	protected:
 	
 		/// This is called by JEventSourceManager::AddJEventSourceGenerator which
@@ -82,7 +84,14 @@ class JEventSourceGenerator{
 		/// should be no need to call it from anywhere else.
 		void SetJApplication(JApplication *app){ mApplication = app; }
 
+		/// SetPlugin is called by JANA itself and should not be exposed to the user.
+		void SetPlugin(std::string plugin_name) { mPluginName = plugin_name; };
+
+		/// GetPlugin is called by JANA itself and should not be exposed to the user.
+		std::string GetPlugin() const { return mPluginName; }
+
 		JApplication* mApplication{nullptr};
+		std::string mPluginName;
 };
 
 #endif // _JEventSourceGenerator_h_

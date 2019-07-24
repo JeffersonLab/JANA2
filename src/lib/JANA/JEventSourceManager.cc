@@ -205,6 +205,7 @@ JEventSource* JEventSourceManager::CreateSource(const std::string& source_name)
 	}
 
 	if(new_source != nullptr){
+		new_source->SetPlugin(gen->GetPlugin());
 		new_source->SetJApplication(mApplication);
 		_sources_allocated.push_back(std::shared_ptr<JEventSource>(new_source)); // ensure destruction
 		return new_source;

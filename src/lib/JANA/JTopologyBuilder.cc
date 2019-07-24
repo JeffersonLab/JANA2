@@ -45,6 +45,7 @@ void JTopologyBuilder::add(std::string event_source_name) {
 }
 
 void JTopologyBuilder::add(JEventSourceGenerator* source_generator) {
+    source_generator->SetPlugin(m_current_plugin_name);
     _evt_src_gens_front.push_back(source_generator);
 }
 
@@ -53,13 +54,18 @@ void JTopologyBuilder::add(JFactoryGenerator* factory_generator) {
 }
 
 void JTopologyBuilder::add(JEventProcessor* processor) {
+    processor->SetPlugin(m_current_plugin_name);
     _evt_procs_front.push_back(processor);
 }
 
 void JTopologyBuilder::add(JEventSource* source) {
+    source->SetPlugin(m_current_plugin_name);
     _evt_srces_front.push_back(source);
 }
 
+void JTopologyBuilder::set_current_plugin(std::string plugin_name) {
+    m_current_plugin_name = plugin_name;
+}
 
 void JTopologyBuilder::increase_priority() {
 
@@ -106,14 +112,14 @@ JProcessingTopology *JTopologyBuilder::build_topology() {
     for (auto * evt_proc : _evt_procs_back) {
         topology->event_processors.push_back(evt_proc);
         topology->component_summary.event_processors.push_back(
-                {.plugin_name="unknown", .type_name="unknown"});
+                {.plugin_name=evt_proc->GetPlugin(), .type_name=evt_proc->GetType()});
     }
 
     // Add ready-made event sources to topology
     for (auto * evt_src : _evt_srces_back) {
         topology->event_source_manager.AddJEventSource(evt_src);
         topology->component_summary.event_sources.push_back(
-                {.plugin_name = "unknown",
+                {.plugin_name = evt_src->GetPlugin(),
                  .type_name = evt_src->GetType(),
                  .source_name = evt_src->GetName()});
     }
@@ -196,7 +202,7 @@ JProcessingTopology *JTopologyBuilder::build_topology() {
 
         // Add to summary
         topology->component_summary.event_sources.push_back({
-            .plugin_name="unknown",
+            .plugin_name=src->GetPlugin(),
             .type_name=src->GetType(),
             .source_name=src->GetName()
         });
