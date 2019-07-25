@@ -45,7 +45,14 @@ void JEventProcessorArrow::execute(JArrowMetrics& result, size_t location_id) {
     if (success) {
         LOG_DEBUG(_logger) << "EventProcessorArrow '" << get_name() << "': Starting event# " << x->GetEventNumber() << LOG_END;
         for (JEventProcessor* processor : _processors) {
-            processor->Process(x);
+            try {
+                processor->Process(x);
+            }
+            catch (JException& e) {
+                e.plugin_name = processor->GetPlugin();
+                e.component_name = processor->GetType();
+                throw e;
+            }
         }
         LOG_DEBUG(_logger) << "EventProcessorArrow '" << get_name() << "': Finished event# " << x->GetEventNumber() << LOG_END;
     }

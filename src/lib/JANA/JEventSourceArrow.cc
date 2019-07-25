@@ -51,8 +51,15 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
         for (size_t i=0; i<emit_count; ++i) {
             auto event = _pool->get(location_id);
             event->SetJEventSource(_source);
-            _source->GetEvent(event);
-            _chunk_buffer.push_back(std::move(event));
+            try {
+                _source->GetEvent(event);
+                _chunk_buffer.push_back(std::move(event));
+            }
+            catch (JException& e) {
+                e.component_name = _source->GetType();
+                e.plugin_name = _source->GetPlugin();
+                throw e;
+            }
         }
     }
     catch (SourceStatus rs) {
@@ -93,7 +100,14 @@ void JEventSourceArrow::initialize() {
     assert(_status == Status::Unopened);
     LOG_INFO(_logger) << "JEventSourceArrow '" << get_name() << "': "
                       << "Initializing" << LOG_END;
-    std::call_once(_source->mOpened, [&]() {_source->Open(); });
-    _status = Status::Inactive;
+    try {
+        std::call_once(_source->mOpened, [&]() {_source->Open(); });
+        _status = Status::Inactive;
+    }
+    catch (JException& e) {
+        e.plugin_name = _source->GetPlugin();
+        e.component_name = _source->GetType();
+        throw e;
+    }
 }
 

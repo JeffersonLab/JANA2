@@ -333,9 +333,20 @@ typename JFactoryT<DataType>::PairType JEvent::GetIterators(const std::string& a
 		//Create the objects
 		if(mDebugLevel >= 10)
 			JLog() << "Thread " << THREAD_ID << " JEvent::Get(): Create " << GetDemangledName<DataType>() << " (tag = " << aTag << ") with factory.\n" << JLogEnd();
-		sFactory->Process(sSharedThis);
-		sFactory->SetCreated(true);
-		sFactory->ReleaseCreatingLock();
+		try {
+			sFactory->Process(sSharedThis);
+			sFactory->SetCreated(true);
+			sFactory->ReleaseCreatingLock();
+		}
+		catch (JException& e) {
+		    /// Store the _topmost_ factory name/tag on the JException
+		    /// Storing the entire stack of Factory calls would also be doable
+			if (e.factory_name == "") {
+				e.factory_name = sFactory->GetName();
+				e.factory_tag = sFactory->GetTag();
+			}
+			throw e;
+		}
 	}
 	catch(...)
 	{

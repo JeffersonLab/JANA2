@@ -61,10 +61,10 @@ std::string JException::GetMessage() {
 /// Convenience method for formatting complete error data
 std::ostream& operator<<(std::ostream& os, JException const& ex) {
     os << "ERROR: " << ex.message << std::endl;
-    os << "  Plugin:       " << ex.plugin_name << std::endl;
-    os << "  Component:    " << ex.plugin_name << std::endl;
-    os << "  Factory name: " << ex.plugin_name << std::endl;
-    os << "  Factory tag:  " << ex.plugin_name << std::endl;
+    os << "  Plugin:         " << ex.plugin_name << std::endl;
+    os << "  Component:      " << ex.component_name << std::endl;
+    os << "  Factory name:   " << ex.factory_name << std::endl;
+    os << "  Factory tag:    " << ex.factory_tag << std::endl;
     os << "  Backtrace:" << std::endl << std::endl << ex.backtrace << std::endl << std::endl;
 }
 

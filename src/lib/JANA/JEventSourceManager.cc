@@ -179,7 +179,13 @@ void JEventSourceManager::OpenInitSources(void)
 	{
 		auto sSource = _sources_unopened.front();
 		_sources_unopened.pop_front();
-		std::call_once(sSource->mOpened, [&](){ sSource->Open(); });
+		try {
+			std::call_once(sSource->mOpened, [&](){ sSource->Open(); });
+		}
+		catch (JException& e) {
+			e.plugin_name = sSource->GetPlugin();
+			e.component_name = sSource->GetType();
+		}
 		_sources_active.push_back(sSource);
 	}
 }
@@ -253,7 +259,14 @@ std::pair<JEventSource::RETURN_STATUS, JEventSource*> JEventSourceManager::OpenN
 	_sources_unopened.pop_front();
 
 	//Open the new source, register it, and return it
-	std::call_once(sNewSource->mOpened, [&](){ sNewSource->Open(); });
+	try {
+		std::call_once(sNewSource->mOpened, [&](){ sNewSource->Open(); });
+	}
+	catch (JException& e) {
+		e.component_name = sNewSource->GetType();
+		e.plugin_name = sNewSource->GetPlugin();
+		throw e;
+	}
 	_sources_active.push_back(sNewSource);
 	return std::make_pair(JEventSource::RETURN_STATUS::kSUCCESS, sNewSource);
 }
