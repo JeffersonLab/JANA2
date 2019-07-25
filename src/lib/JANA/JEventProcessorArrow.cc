@@ -89,14 +89,28 @@ void JEventProcessorArrow::execute(JArrowMetrics& result, size_t location_id) {
 void JEventProcessorArrow::initialize() {
 
     for (auto processor : _processors) {
-        std::call_once(processor->init_flag, [&](){ processor->Init(); });
+        try {
+            std::call_once(processor->init_flag, [&](){ processor->Init(); });
+        }
+        catch (JException& ex) {
+            ex.plugin_name = processor->GetPlugin();
+            ex.component_name = processor->GetType();
+            throw ex;
+        }
     }
 }
 
 void JEventProcessorArrow::finalize() {
 
     for (auto processor : _processors) {
-        std::call_once(processor->finish_flag, [&](){ processor->Finish(); });
+        try {
+            std::call_once(processor->finish_flag, [&](){ processor->Finish(); });
+        }
+        catch (JException& ex) {
+            ex.plugin_name = processor->GetPlugin();
+            ex.component_name = processor->GetType();
+            throw ex;
+        }
     }
 }
 

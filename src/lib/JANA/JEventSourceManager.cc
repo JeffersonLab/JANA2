@@ -185,6 +185,7 @@ void JEventSourceManager::OpenInitSources(void)
 		catch (JException& e) {
 			e.plugin_name = sSource->GetPlugin();
 			e.component_name = sSource->GetType();
+			throw e;
 		}
 		_sources_active.push_back(sSource);
 	}

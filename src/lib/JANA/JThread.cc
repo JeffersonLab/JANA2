@@ -302,7 +302,7 @@ void JThread::Loop(void)
 		}
 	}catch(JException &e){
 		jerr << "** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** " << std::endl;
-		jerr << "Caught JException: " << e.GetMessage() << std::endl;
+		jerr << e;
 		jerr << "** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** ** " << std::endl;
 
 		mApplication->SetExitCode(99);

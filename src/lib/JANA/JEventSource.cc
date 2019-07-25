@@ -173,6 +173,7 @@ std::vector<std::shared_ptr<JTaskBase> > JEventSource::GetProcessEventTasks(std:
 		catch (JException& e) {
 			e.plugin_name = GetPlugin();
 			e.component_name = GetType();
+			mExhausted = true;
 			throw e;
 		}
 		catch(...) {

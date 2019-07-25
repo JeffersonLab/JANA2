@@ -46,29 +46,26 @@
 
 #include <string>
 
+/// JException is a data object which attaches JANA-specific context information to a generic exception.
+/// As it unwinds the call stack, different exception handlers may add or change information as they see fit.
+/// It does not use getters and setters, because they are not needed, because there is no invariant.
 struct JException {
 public:
-    JException(std::string mess = "");
+
+    /// Basic constructor
+    JException(std::string message = "");
+
+    /// Constructor with printf-style formatting
+    template<typename... Args>
+    JException(std::string message, Args... args);
 
     virtual ~JException();
-
-    template<typename T>
-    JException(std::string mess, T t);
-
-    template<typename T, typename U>
-    JException(std::string mess, T t, U u);
-
-    template<typename T, typename U, typename V>
-    JException(std::string mess, T t, U u, V v);
 
     // Deprecated
     std::string GetMessage();
 
     friend std::ostream& operator<<(std::ostream& os, JException const& ex);
 
-    /// JException is a data object which attaches JANA-specific context information to a generic exception.
-    /// As it unwinds the call stack, different exception handlers may add or change information as they see fit.
-    /// It does not use getters and setters, because it does not need these, because there is no invariant.
     std::string message;
     std::string plugin_name;
     std::string component_name;
@@ -78,33 +75,12 @@ public:
 
 };
 
-//---------------------------------
-// JException    (Constructor)
-//---------------------------------
-template<typename T>
-JException::JException(std::string mess, T t) {
+/// Constructor with convenient printf-style formatting.
+/// Uses variadic templates (although it is slightly overkill) because variadic functions are frowned on now.
+template<typename... Args>
+JException::JException(std::string message, Args... args) {
     char cmess[1024];
-    snprintf(cmess, 1024, mess.c_str(), t);
-    message = cmess;
-}
-
-//---------------------------------
-// JException    (Constructor)
-//---------------------------------
-template<typename T, typename U>
-JException::JException(std::string mess, T t, U u) {
-    char cmess[1024];
-    snprintf(cmess, 1024, mess.c_str(), t, u);
-    message = cmess;
-}
-
-//---------------------------------
-// JException    (Constructor)
-//---------------------------------
-template<typename T, typename U, typename V>
-JException::JException(std::string mess, T t, U u, V v) {
-    char cmess[1024];
-    snprintf(cmess, 1024, mess.c_str(), t, u, v);
+    snprintf(cmess, 1024, message.c_str(), args...);
     message = cmess;
 }
 
