@@ -69,5 +69,6 @@ std::ostream& operator<<(std::ostream& os, JComponentSummary const& cs) {
     }
     os << "+--------------------------+-------------------------------+-------------------------------+" << std::endl;
     os << std::endl;
+    return os;
 
 }

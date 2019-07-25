@@ -53,11 +53,11 @@ struct JException {
 public:
 
     /// Basic constructor
-    JException(std::string message = "");
+    explicit JException(std::string message = "");
 
     /// Constructor with printf-style formatting
     template<typename... Args>
-    JException(std::string message, Args... args);
+    explicit JException(std::string message, Args... args);
 
     virtual ~JException();
 
@@ -71,7 +71,7 @@ public:
     std::string component_name;
     std::string factory_name;
     std::string factory_tag;
-    std::string backtrace;
+    std::string stacktrace;
 
 };
 
