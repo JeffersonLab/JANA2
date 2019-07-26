@@ -81,6 +81,11 @@ inline Timestamp get_timestamp(const ReadoutMessage<N>& m) {
 }
 
 template <unsigned int N>
+inline bool end_of_stream(const ReadoutMessage<N>& m) {
+    return m.source_id == 0 && m.record_counter == 0;
+}
+
+template <unsigned int N>
 inline void emplace(ReadoutMessage<N>* destination, char* source, size_t bytes) {
     memcpy(destination, source, bytes);
 }

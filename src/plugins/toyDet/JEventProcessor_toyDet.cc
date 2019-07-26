@@ -70,6 +70,7 @@ void JEventProcessor_toyDet::Process(const std::shared_ptr<const JEvent>& aEvent
 
   // get raw samples object for each event
   auto eventData = aEvent->Get<rawSamples>();
+  std::cout << "Got " << eventData.size() << " rawSamples!" << std::endl;
   // impose mutex lock
   lock_guard<mutex> lck(fillMutex);
   

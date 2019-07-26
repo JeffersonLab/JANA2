@@ -33,6 +33,7 @@
 
 #include "DummyZmqPublisher.h"
 #include "../zmq2jana/ReadoutMessage.h"
+#include "INDRAMessage.h"
 
 #include <JANA/JPerfUtils.h>
 
@@ -43,11 +44,15 @@
 
 ZmqDummyPublisher::ZmqDummyPublisher(std::string file_name,
                                      std::string socket_name,
-                                     uint64_t delay_ms)
+                                     uint64_t delay_ms,
+                                     uint32_t total_channels,
+                                     uint32_t total_sources)
 
                                      : m_file_name(file_name)
                                      , m_socket_name(socket_name)
                                      , m_delay_ms(delay_ms)
+                                     , m_total_channels(total_channels)
+                                     , m_total_sources(total_sources)
                                      , m_context(1)
                                      , m_socket(m_context, ZMQ_PUB)
 {
@@ -60,52 +65,52 @@ ZmqDummyPublisher::~ZmqDummyPublisher() = default;
 
 void ZmqDummyPublisher::loop() {
 
-    std::ifstream file_stream;
-    std::string line;
-    std::stringstream line_stream;
-    std::vector<double> event;
+    std::cout << "Starting producer loop" << std::endl;
 
-    size_t line_count = 0;
-    size_t event_count = 0;
+    size_t event_id = 1;
+    uint32_t channel_id = 1;
+    uint32_t source_id = 1;
+
+    std::ifstream file_stream(m_file_name);
+    std::string line;
+    std::vector<double> data;
 
     while (std::getline(file_stream, line)) {
 
-        if (line[0] != '#' ) {
-            line_count += 1;
-            line_stream.str(line);
-            std::string value;
+        // Skip comment lines
+        if (line[0] == '#' || line[0] == '@') continue;
 
-            while (std::getline(line_stream, value, ' ')) {
-                event.push_back(std::stod(value));
-            }
+        // Parse line as sequence of doubles
+        std::stringstream line_stream(line);
+        std::string value;
+        while (std::getline(line_stream, value, ' ')) {
+            data.push_back(std::stod(value));
         }
-        if (line_count == 19) {
-            line_count = 0;
 
-            struct timespec timestamp;
-            clock_gettime(CLOCK_MONOTONIC, &timestamp);
+        // Append all sources to data buffer
+        source_id += 1;
+        if (source_id <= m_total_sources) continue;
 
-            ReadoutMessage<100> message {
-                    .source_id = 22,
-                    .total_length = sizeof(ReadoutMessage<4>),
-                    .payload_length = 4,
-                    .compressed_length = 4,
-                    .magic = 618,
-                    .format_version = 0,
-                    .record_counter = event_count++,
-                    .timestamp = timestamp };
+        // Send line as message over ZMQ
+        auto message = ToyDetMessage(event_id, channel_id, data);
+        m_socket.send(zmq::buffer(&message, sizeof(ToyDetMessage)), zmq::send_flags::dontwait);
+        std::cout << "Send: " << message << " (" << sizeof(ToyDetMessage) << " bytes)" << std::endl;
+        consume_cpu_ms(m_delay_ms, 0, false);
+        data.clear();
 
-            auto* payload = message.get_payload<double>();
-            for (size_t i=0; i<event.size(); ++i) {
-                payload[i] = event[i];
-            }
-
-            m_socket.send(zmq::buffer(&message, sizeof(ReadoutMessage<100>)), zmq::send_flags::dontwait);
-            std::cout << "Send: " << message << " (" << sizeof(ReadoutMessage<100>) << " bytes)" << std::endl;
-            consume_cpu_ms(m_delay_ms, 0, false);
-
+        // Update source and channel ids
+        source_id = 1;
+        channel_id += 1;
+        if (channel_id > m_total_channels) {
+            event_id += 1;
+            channel_id = 1;
         }
     }
+
+    // Send an end-of-stream message
+    auto message = ToyDetMessage(0, 0, data);
+    m_socket.send(zmq::buffer(&message, sizeof(ToyDetMessage)), zmq::send_flags::dontwait);
+    std::cout << "Send: " << message << " (" << sizeof(ToyDetMessage) << " bytes)" << std::endl;
 }
 
 

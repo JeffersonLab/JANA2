@@ -40,7 +40,8 @@
 class ZmqDummyPublisher {
 public:
 
-    ZmqDummyPublisher(std::string file_name, std::string socket_name, uint64_t delay_ms);
+    ZmqDummyPublisher(std::string file_name, std::string socket_name, uint64_t delay_ms,
+                      uint32_t total_channels, uint32_t total_sources);
 
     ~ZmqDummyPublisher();
 
@@ -51,6 +52,8 @@ private:
     std::string m_file_name;
     std::string m_socket_name;
     uint64_t m_delay_ms;
+    uint32_t m_total_channels;
+    uint32_t m_total_sources;
     zmq::context_t m_context;
     zmq::socket_t m_socket;
 };
