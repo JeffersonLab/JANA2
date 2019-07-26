@@ -92,6 +92,12 @@ void ZmqDummyPublisher::publish(size_t nitems) {
         std::cout << "Send: " << message << " (" << sizeof(ReadoutMessage<4>) << " bytes)" << std::endl;
         consume_cpu_ms(m_delay_ms, 0, false);
     }
+
+    // Send end-of-stream message
+    ReadoutMessage<4> message;
+    message.source_id = 0;
+    message.record_counter = 0;
+    m_socket.send(zmq::buffer(&message, sizeof(ReadoutMessage<4>)), zmq::send_flags::dontwait);
 }
 
 

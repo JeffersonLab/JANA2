@@ -68,12 +68,21 @@ public:
         std::stringstream ss;
         ss << "Recv: " << destination << " (" << message.size() << " bytes, expected " << sizeof(T) << " bytes)" << std::endl;
         std::cout << ss.str();
+
+        if (end_of_stream(destination)) {
+            return JSampleSourceStatus::Finished;
+        }
         return JSampleSourceStatus::Success;
     };
 
     void initialize() override {
-        m_socket.connect(m_socket_name);
-        m_socket.setsockopt(ZMQ_SUBSCRIBE, "", 0);  // Subscribe to everything.
+        try {
+            m_socket.connect(m_socket_name);
+            m_socket.setsockopt(ZMQ_SUBSCRIBE, "", 0);  // Subscribe to everything.
+        }
+        catch (...) {
+            throw JException("Unable to subscribe to zmq socket!");
+        }
     };
 
 private:

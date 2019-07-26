@@ -192,7 +192,7 @@ add_library(toyDet SHARED
         src/plugins/zmq2jana/internals/JSampleWindower.h
         src/plugins/zmq2jana/internals/JEventSource_WindowedSamples.h
         src/plugins/zmq2jana/internals/JEventSource_SingleSample.h
-        )
+        src/plugins/toyDet/INDRAMessage.h)
 
 add_executable(jana
         src/programs/jana/jana.cc
@@ -240,4 +240,5 @@ set_target_properties(janapy PROPERTIES PREFIX "")
 # For zmq2jana plugin
 find_package(cppzmq)
 target_link_libraries(zmq2jana cppzmq-static)
+target_link_libraries(toyDet cppzmq-static)
 target_link_libraries(zmq2jana jana2)

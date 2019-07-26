@@ -44,7 +44,7 @@
 void dummy_publisher_loop() {
 	ZmqDummyPublisher pub("tcp://127.0.0.1:5555", "fcal", 3, 2, 1000);
     std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-	pub.publish(100);
+	pub.publish(10);
 }
 
 extern "C"{
