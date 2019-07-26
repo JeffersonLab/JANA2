@@ -53,6 +53,13 @@ void JEventProcessorArrow::execute(JArrowMetrics& result, size_t location_id) {
                 e.component_name = processor->GetType();
                 throw e;
             }
+            catch (...) {
+                auto ex = JException("Unknown exception in JEventProcessor::Process()");
+                ex.nested_exception = std::current_exception();
+                ex.component_name = processor->GetType();
+                ex.plugin_name = processor->GetPlugin();
+                throw ex;
+            }
         }
         LOG_DEBUG(_logger) << "EventProcessorArrow '" << get_name() << "': Finished event# " << x->GetEventNumber() << LOG_END;
     }
@@ -97,6 +104,14 @@ void JEventProcessorArrow::initialize() {
             ex.component_name = processor->GetType();
             throw ex;
         }
+        catch (...) {
+            auto ex = JException("Unknown exception in JEventProcessor::Open()");
+            ex.nested_exception = std::current_exception();
+            ex.component_name = processor->GetType();
+            ex.plugin_name = processor->GetPlugin();
+            throw ex;
+        }
+
     }
 }
 
@@ -109,6 +124,13 @@ void JEventProcessorArrow::finalize() {
         catch (JException& ex) {
             ex.plugin_name = processor->GetPlugin();
             ex.component_name = processor->GetType();
+            throw ex;
+        }
+        catch (...) {
+            auto ex = JException("Unknown exception in JEventProcessor::Finish()");
+            ex.nested_exception = std::current_exception();
+            ex.component_name = processor->GetType();
+            ex.plugin_name = processor->GetPlugin();
             throw ex;
         }
     }

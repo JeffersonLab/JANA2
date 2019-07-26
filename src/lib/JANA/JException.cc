@@ -107,6 +107,10 @@ JException::JException(string message) : message(std::move(message)) {
 JException::~JException() = default;
 
 
+const char* JException::what() const noexcept {
+    return message.c_str();
+}
+
 /// Deprecated
 std::string JException::GetMessage() {
     return message;

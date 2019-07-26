@@ -187,6 +187,13 @@ void JEventSourceManager::OpenInitSources(void)
 			e.component_name = sSource->GetType();
 			throw e;
 		}
+        catch (...) {
+            auto e = JException("Unknown exception in JEventSourceManager::OpenInitSources()");
+            e.nested_exception = std::current_exception();
+            e.plugin_name = sSource->GetPlugin();
+            e.component_name = sSource->GetType();
+            throw e;
+        }
 		_sources_active.push_back(sSource);
 	}
 }
@@ -268,6 +275,13 @@ std::pair<JEventSource::RETURN_STATUS, JEventSource*> JEventSourceManager::OpenN
 		e.plugin_name = sNewSource->GetPlugin();
 		throw e;
 	}
+    catch (...) {
+        auto e = JException("Unknown exception in JEventSourceManager::OpenNext()");
+        e.nested_exception = std::current_exception();
+        e.plugin_name = sNewSource->GetPlugin();
+        e.component_name = sNewSource->GetType();
+        throw e;
+    }
 	_sources_active.push_back(sNewSource);
 	return std::make_pair(JEventSource::RETURN_STATUS::kSUCCESS, sNewSource);
 }

@@ -51,21 +51,26 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
         for (size_t i=0; i<emit_count; ++i) {
             auto event = _pool->get(location_id);
             event->SetJEventSource(_source);
-            try {
-                _source->GetEvent(event);
-                _chunk_buffer.push_back(std::move(event));
-            }
-            catch (JException& e) {
-                e.component_name = _source->GetType();
-                e.plugin_name = _source->GetPlugin();
-                throw e;
-            }
+            _source->GetEvent(event);
+            _chunk_buffer.push_back(std::move(event));
         }
     }
     catch (SourceStatus rs) {
         in_status = rs;
+        // This exception is used for flow control, :/, so we don't rethrow it
     }
-    // Any other exceptions should keep propagating in order to kill execution
+    catch (JException& e) {
+        e.component_name = _source->GetType();
+        e.plugin_name = _source->GetPlugin();
+        throw e;
+    }
+    catch (...) {
+        auto e = JException("Unknown exception in GetEvent()");
+        e.nested_exception = std::current_exception();
+        e.component_name = _source->GetType();
+        e.plugin_name = _source->GetPlugin();
+        throw e;
+    }
 
     auto latency_time = std::chrono::steady_clock::now();
     auto message_count = _chunk_buffer.size();
@@ -109,5 +114,13 @@ void JEventSourceArrow::initialize() {
         e.component_name = _source->GetType();
         throw e;
     }
+    catch (...) {
+        auto e = JException("Unknown exception in Open()");
+        e.nested_exception = std::current_exception();
+        e.component_name = _source->GetType();
+        e.plugin_name = _source->GetPlugin();
+        throw e;
+    }
+
 }
 

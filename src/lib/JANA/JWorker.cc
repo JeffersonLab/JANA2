@@ -214,7 +214,7 @@ void JWorker::loop() {
 
         LOG_DEBUG(_logger) << "JWorker " << _worker_id << " is exiting loop()" << LOG_END;
     }
-    catch (JException& e) {
+    catch (const JException& e) {
         // For now the excepting Worker prints the error, and then terminates the whole program.
         // Eventually we want to unify error handling across JApplication::Run, and maybe even across the entire JApplication.
         // This means that Workers must pass JExceptions back to the master thread.

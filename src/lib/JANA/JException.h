@@ -49,11 +49,11 @@
 /// JException is a data object which attaches JANA-specific context information to a generic exception.
 /// As it unwinds the call stack, different exception handlers may add or change information as they see fit.
 /// It does not use getters and setters, because they are not needed, because there is no invariant.
-struct JException {
+struct JException : public std::exception {
 public:
 
     /// Basic constructor
-    explicit JException(std::string message = "");
+    explicit JException(std::string message = "Unknown exception");
 
     /// Constructor with printf-style formatting
     template<typename... Args>
@@ -63,6 +63,7 @@ public:
 
     // Deprecated
     std::string GetMessage();
+    const char* what() const noexcept;
 
     friend std::ostream& operator<<(std::ostream& os, JException const& ex);
 
@@ -72,6 +73,7 @@ public:
     std::string factory_name;
     std::string factory_tag;
     std::string stacktrace;
+    std::exception_ptr nested_exception;
 
 };
 

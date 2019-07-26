@@ -347,6 +347,13 @@ typename JFactoryT<DataType>::PairType JEvent::GetIterators(const std::string& a
 			}
 			throw e;
 		}
+        catch (...) {
+            auto e = JException("Unknown exception in JFactory::Process()");
+            e.nested_exception = std::current_exception();
+            e.factory_name = sFactory->GetName();
+            e.factory_tag = sFactory->GetTag();
+            throw e;
+        }
 	}
 	catch(...)
 	{
