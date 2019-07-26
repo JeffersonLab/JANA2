@@ -192,7 +192,9 @@ add_library(toyDet SHARED
         src/plugins/zmq2jana/internals/JSampleWindower.h
         src/plugins/zmq2jana/internals/JEventSource_WindowedSamples.h
         src/plugins/zmq2jana/internals/JEventSource_SingleSample.h
-        src/plugins/toyDet/INDRAMessage.h)
+        src/plugins/toyDet/INDRAMessage.h
+        src/plugins/toyDet/JFactory_rawSamples.h
+        )
 
 add_executable(jana
         src/programs/jana/jana.cc

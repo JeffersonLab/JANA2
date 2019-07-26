@@ -10,13 +10,15 @@
 // [ Revision ]
 
 
+#include "../zmq2jana/internals/JEventSource_SingleSample.h"
+#include "../zmq2jana/internals/JSampleSource_Zmq.h"
+
 #include "JEventProcessor_toyDet.h"
 #include "JEventSource_toyDet.h"
 #include "JFactoryGenerator_toyDet.h"
+#include "JFactory_rawSamples.h"
 #include "DummyZmqPublisher.h"
-#include "../zmq2jana/internals/JEventSource_SingleSample.h"
 #include "INDRAMessage.h"
-#include "../zmq2jana/internals/JSampleSource_Zmq.h"
 
 void dummy_publisher_loop() {
     ZmqDummyPublisher pub("run-10-mhz-10-chan-10-ev.dat", "tcp://127.0.0.1:5555", 100, 10, 2);
@@ -31,11 +33,12 @@ void InitPlugin(JApplication* app) {
     app->SetParameterValue("jana:extended_report", false);
 
     app->Add(new JEventProcessor_toyDet());
-    //app->Add(new JEventSourceGeneratorT<JEventSource_toyDet>());
     app->Add(new JEventSourceGeneratorT<JEventSource_SingleSample<ToyDetMessage, JSampleSource_Zmq>>());
-    app->Add(new JFactoryGenerator_toyDet());
-
+    app->Add(new JFactoryGeneratorT<JFactory_rawSamples>());
     app->Add("tcp://127.0.0.1:5555");  // TODO: Fix this later
+
+    //app->Add(new JEventSourceGeneratorT<JEventSource_toyDet>());
+    //app->Add(new JFactoryGenerator_toyDet());
 
     auto publisher = new std::thread(dummy_publisher_loop);
 }
