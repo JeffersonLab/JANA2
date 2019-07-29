@@ -49,7 +49,7 @@ struct SimpleSource : public JEventSource {
         return "ComponentTests Fake Event Source";
     }
 
-    std::string GetType(void) const {
+    std::string GetType(void) const override {
         return GetDemangledName<decltype(*this)>();
     }
 
