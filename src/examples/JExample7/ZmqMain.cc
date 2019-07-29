@@ -33,13 +33,14 @@
 
 #include <JANA/JApplication.h>
 #include <JANA/JEventSourceGeneratorT.h>
+#include <JANA/Streaming/JEventBuilder.h>
+#include <JANA/Streaming/JSessionWindow.h>
 
-#include "internals/JEventSource_SingleSample.h"
-#include "AHitAnomalyDetector.h"
-#include "DummyZmqPublisher.h"
-#include "internals/JSampleSource_Zmq.h"
 #include "ReadoutMessage.h"
+#include "ZmqTransport.h"
+#include "DummyZmqPublisher.h"
 #include "AHitParser.h"
+#include "AHitAnomalyDetector.h"
 
 void dummy_publisher_loop() {
 	ZmqDummyPublisher pub("tcp://127.0.0.1:5555", "fcal", 3, 2, 1000);
@@ -51,12 +52,19 @@ extern "C"{
 void InitPlugin(JApplication *app) {
 
 	InitJANAPlugin(app);
-	app->Add(new JEventSourceGeneratorT<JEventSource_SingleSample<ReadoutMessage<4>, JSampleSource_Zmq>>(app));
+
+    using Msg = ReadoutMessage<float, 4>;
+
+    auto transport = std::unique_ptr<ZmqTransport<Msg>>(new ZmqTransport<Msg>("tcp://127.0.0.1:5555"));
+
+    auto window = std::unique_ptr<JSessionWindow<Msg>>(new JSessionWindow<Msg>(10, {0,1,2}));
+
+    app->Add(new JEventBuilder<Msg>(std::move(transport), std::move(window)));
+
 	app->Add(new AHitAnomalyDetector(app, 5000));
 	app->Add(new JFactoryGeneratorT<AHitParser>());
 
 	// So we don't have to put this on the cmd line every time
-	app->Add("tcp://127.0.0.1:5555");
 	app->SetParameterValue("jana:legacy_mode", 0);
 	app->SetParameterValue("jana:extended_report", 0);
 

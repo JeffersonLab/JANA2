@@ -140,19 +140,15 @@ add_library(janapy SHARED
         )
 
 add_library(zmq2jana SHARED
-        src/plugins/zmq2jana/ZmqMain.cc
-        src/plugins/zmq2jana/DummyZmqPublisher.cc
-        src/plugins/zmq2jana/DummyZmqPublisher.h
-        src/plugins/zmq2jana/ReadoutMessage.h
-        src/plugins/zmq2jana/AHit.h
-        src/plugins/zmq2jana/AHitAnomalyDetector.h
-        src/plugins/zmq2jana/internals/JSampleSource.h
-        src/plugins/zmq2jana/internals/JSampleSource_Zmq.h
-        src/plugins/zmq2jana/internals/JSampleWindower.h
-        src/plugins/zmq2jana/internals/JEventSource_WindowedSamples.h
-        src/plugins/zmq2jana/internals/JEventSource_SingleSample.h
-        src/plugins/zmq2jana/AHitParser.h
-        src/plugins/zmq2jana/BHitFactory.h)
+        src/examples/JExample7/ZmqMain.cc
+        src/examples/JExample7/DummyZmqPublisher.cc
+        src/examples/JExample7/DummyZmqPublisher.h
+        src/examples/JExample7/ReadoutMessage.h
+        src/examples/JExample7/AHit.h
+        src/examples/JExample7/AHitAnomalyDetector.h
+        src/examples/JExample7/AHitParser.h
+        src/examples/JExample7/BHitFactory.h
+        )
 
 add_library(toyDet SHARED
         src/plugins/toyDet/JEventProcessor_toyDet.cc
@@ -165,12 +161,7 @@ add_library(toyDet SHARED
         src/plugins/toyDet/toyDet.cc
         src/plugins/toyDet/DummyZmqPublisher.cc
         src/plugins/toyDet/DummyZmqPublisher.h
-
-        src/plugins/zmq2jana/ReadoutMessage.h
-        src/plugins/zmq2jana/internals/JSampleSource_Zmq.h
-        src/plugins/zmq2jana/internals/JSampleWindower.h
-        src/plugins/zmq2jana/internals/JEventSource_WindowedSamples.h
-        src/plugins/zmq2jana/internals/JEventSource_SingleSample.h
+        src/plugins/toyDet/ZmqTransport.h
         src/plugins/toyDet/INDRAMessage.h
         src/plugins/toyDet/JFactory_rawSamples.h
         )

@@ -4,7 +4,6 @@
 // Copyright 251 2014 Jefferson Science Associates LLC All Rights Reserved. Redistribution
 // and use in source and binary forms, with or without modification, are permitted as a
 // licensed user provided that the following conditions are met:
-
 // 1. Redistributions of source code must retain the above copyright notice, this
 //    list of conditions and the following disclaimer.
 // 2. Redistributions in binary form must reproduce the above copyright notice, this
@@ -12,12 +11,10 @@
 //    materials provided with the distribution.
 // 3. The name of the author may not be used to endorse or promote products derived
 //    from this software without specific prior written permission.
-
 // This material resulted from work developed under a United States Government Contract.
 // The Government retains a paid-up, nonexclusive, irrevocable worldwide license in such
 // copyrighted data to reproduce, distribute copies to the public, prepare derivative works,
 // perform publicly and display publicly and to permit others to do so.
-
 // THIS SOFTWARE IS PROVIDED BY JEFFERSON SCIENCE ASSOCIATES LLC "AS IS" AND ANY EXPRESS
 // OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
 // MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
@@ -33,64 +30,39 @@
 // Author: Nathan Brei
 //
 
-#ifndef JANA2_ZMQDATASOURCE_H
-#define JANA2_ZMQDATASOURCE_H
+#ifndef JANA2_ZMQDUMMYPUBLISHER_H
+#define JANA2_ZMQDUMMYPUBLISHER_H
 
-#include <JANA/JParameterManager.h>
-#include "JSampleSource.h"
+#include <string>
+#include <chrono>
 #include "zmq.hpp"
-#include "../ReadoutMessage.h"
+#include "AHit.h"
 
-/// JDataSource which emits JData<T> using a ZeroMQ socket under the hood
-template <typename T>
-class JSampleSource_Zmq : public JSampleSource<T> {
-
+class ZmqDummyPublisher {
 public:
-    JSampleSource_Zmq(std::string socket_name, JApplication* app)
-        : m_socket_name(socket_name)
-        , m_app(app)
-        , m_context(1)
-        , m_socket(m_context, zmq::socket_type::sub) {
-    }
 
-    JSampleSourceStatus pull(T& destination) override {
+    ZmqDummyPublisher(std::string socket_name,
+                      std::string sensor_name,
+                      size_t samples_avg,
+                      size_t samples_spread,
+                      uint64_t delay_ms);
 
-        zmq::message_t message(500);
-        auto result = m_socket.recv(message, zmq::recv_flags::dontwait);
+    ~ZmqDummyPublisher();
 
-        if (!result.has_value()) {
-            return JSampleSourceStatus::TryAgainLater;
-        }
-
-        auto bytes_to_copy = std::min(sizeof(T), message.size());
-        emplace(&destination, message.data<char>(), bytes_to_copy);
-
-        std::stringstream ss;
-        ss << "Recv: " << destination << " (" << message.size() << " bytes, expected " << sizeof(T) << " bytes)" << std::endl;
-        std::cout << ss.str();
-
-        if (end_of_stream(destination)) {
-            return JSampleSourceStatus::Finished;
-        }
-        return JSampleSourceStatus::Success;
-    };
-
-    void initialize() override {
-        try {
-            m_socket.connect(m_socket_name);
-            m_socket.setsockopt(ZMQ_SUBSCRIBE, "", 0);  // Subscribe to everything.
-        }
-        catch (...) {
-            throw JException("Unable to subscribe to zmq socket!");
-        }
-    };
+    void publish(size_t nitems);
 
 private:
-    std::string m_socket_name = "tcp://127.0.0.1:5555";
-    JApplication* m_app;
     zmq::context_t m_context;
     zmq::socket_t m_socket;
+
+    std::string m_socket_name;
+    std::string m_sensor_name;
+    size_t m_samples_avg;
+    size_t m_samples_spread;
+    uint64_t m_delay_ms;
+    double m_prev_time;
+
 };
 
 
-#endif //JANA2_ZMQDATASOURCE_H
+#endif //JANA2_ZMQDUMMYPUBLISHER_H

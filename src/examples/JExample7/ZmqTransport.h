@@ -4,7 +4,7 @@
 // Copyright 251 2014 Jefferson Science Associates LLC All Rights Reserved. Redistribution
 // and use in source and binary forms, with or without modification, are permitted as a
 // licensed user provided that the following conditions are met:
-//
+
 // 1. Redistributions of source code must retain the above copyright notice, this
 //    list of conditions and the following disclaimer.
 // 2. Redistributions in binary form must reproduce the above copyright notice, this
@@ -12,12 +12,12 @@
 //    materials provided with the distribution.
 // 3. The name of the author may not be used to endorse or promote products derived
 //    from this software without specific prior written permission.
-//
+
 // This material resulted from work developed under a United States Government Contract.
 // The Government retains a paid-up, nonexclusive, irrevocable worldwide license in such
 // copyrighted data to reproduce, distribute copies to the public, prepare derivative works,
 // perform publicly and display publicly and to permit others to do so.
-//
+
 // THIS SOFTWARE IS PROVIDED BY JEFFERSON SCIENCE ASSOCIATES LLC "AS IS" AND ANY EXPRESS
 // OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
 // MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
@@ -33,30 +33,78 @@
 // Author: Nathan Brei
 //
 
-#ifndef JANA2_JDATASOURCE_H
-#define JANA2_JDATASOURCE_H
+#ifndef JANA2_ZMQDATASOURCE_H
+#define JANA2_ZMQDATASOURCE_H
 
-#include <memory>
-#include <vector>
-#include <cstdint>
+#include <JANA/JParameterManager.h>
+#include <JANA/Streaming/JTransport.h>
 
-/// Basic types which we use when working with JSample
-using DetectorId = std::string;
-using Timestamp = uint64_t;
+#include "zmq.hpp"
 
-
-enum class JSampleSourceStatus { Success, TryAgainLater, Error, Finished };
-
-/// Generic abstract class for sourcing JData. Analogous to JEventSource.
 template <typename T>
-struct JSampleSource {
+class ZmqTransport : public JTransport<T> {
 
-    virtual JSampleSourceStatus pull(T& destination) = 0;
+public:
+    ZmqTransport(std::string socket_name, bool publish = false)
+        : m_socket_name(socket_name)
+        , m_context(1)
+        , m_socket(m_context, zmq::socket_type::sub) {
+    }
 
-    virtual void initialize() = 0;
-    // We don't want to open sockets/files/etc until initialize()
-    // However, all resources should be closed in the destructor
+    void initialize() override {
+        try {
+            m_socket.connect(m_socket_name);
+            m_socket.setsockopt(ZMQ_SUBSCRIBE, "", 0);  // Subscribe to everything.
+        }
+        catch (...) {
+            throw JException("Unable to subscribe to zmq socket!");
+        }
+    };
+
+    JTransportResult send(const T& src_msg) override {
+
+        char** serialized_buffer = nullptr;
+        size_t message_length;
+        src_msg.serialize(serialized_buffer, &message_length);
+
+        zmq::message_t message(sizeof(T)); // TODO: This is wrong
+        memcpy(&message, serialized_buffer, message_length);
+        auto result = m_socket.send(message, zmq::send_flags::dontwait);
+
+        if (!result.has_value()) {  // TODO: Not sure this actually does what I think it does
+            return JTransportResult::TRY_AGAIN;
+        }
+        return JTransportResult::SUCCESS;
+    }
+
+    JTransportResult receive(T& dest_msg) override {
+
+        zmq::message_t message(sizeof(T)); // TODO: This is wrong
+        auto result = m_socket.recv(message, zmq::recv_flags::dontwait);
+
+        if (!result.has_value()) {
+            return JTransportResult::TRY_AGAIN;
+        }
+
+        dest_msg.deserialize(message.data<char>(), message.size());
+
+        std::stringstream ss;
+        ss << "Recv: " << dest_msg << " (" << message.size() << " bytes, expected " << sizeof(T) << " bytes)" << std::endl;
+        std::cout << ss.str();
+
+        if (dest_msg.is_end_of_stream()) {
+            return JTransportResult::FINISHED;
+        }
+        return JTransportResult::SUCCESS;
+    }
+
+
+private:
+    std::string m_socket_name = "tcp://127.0.0.1:5555";
+    JApplication* m_app;
+    zmq::context_t m_context;
+    zmq::socket_t m_socket;
 };
 
 
-#endif //JANA2_JDATASOURCE_H
+#endif //JANA2_ZMQDATASOURCE_H

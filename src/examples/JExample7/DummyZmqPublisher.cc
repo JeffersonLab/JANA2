@@ -30,65 +30,62 @@
 // Author: Nathan Brei
 //
 
-#ifndef JANA2_DETECTORMESSAGE_H
-#define JANA2_DETECTORMESSAGE_H
 
-#include <string>
-#include <chrono>
-#include "internals/JSampleSource.h"
-#include <JANA/JException.h>
-#include <cstring>
+#include "DummyZmqPublisher.h"
+#include "ReadoutMessage.h"
 
+#include <JANA/JPerfUtils.h>
 
-/// ReadoutMessage should be the same as INDRA_Stream_Test's stream_buffer struct.
-template <unsigned int N>
-struct ReadoutMessage {
+#include <iostream>
+#include <thread>
 
-    uint32_t source_id;
-    uint32_t total_length;
-    uint32_t payload_length;
-    uint32_t compressed_length;
-    uint32_t magic;
-    uint32_t format_version;
-    uint64_t record_counter;
-    struct timespec timestamp;
-    uint32_t payload[N];
+ZmqDummyPublisher::ZmqDummyPublisher(std::string socket_name,
+                                     std::string sensor_name,
+                                     size_t samples_avg,
+                                     size_t samples_spread,
+                                     uint64_t delay_ms)
 
+                                     : m_socket_name(socket_name)
+                                     , m_sensor_name(sensor_name)
+                                     , m_samples_avg(samples_avg)
+                                     , m_samples_spread(samples_spread)
+                                     , m_delay_ms(delay_ms)
+                                     , m_context(1)
+                                     , m_socket(m_context, ZMQ_PUB)
+                                     , m_prev_time(0.0) {
 
-    template <typename T>
-    T* get_payload() {
-        return reinterpret_cast<T*>(payload);
+    m_socket.bind(m_socket_name);  // E.g. "tcp://*:5555"
+}
+
+ZmqDummyPublisher::~ZmqDummyPublisher() {
+    // socket closed by destructor
+}
+
+void ZmqDummyPublisher::publish(size_t nitems) {
+
+    size_t counter = 0;
+
+    while (counter < nitems) {
+
+        struct timespec timestamp;
+        clock_gettime(CLOCK_MONOTONIC, &timestamp);
+
+        float V = randfloat(0,1);
+        float x = randfloat(-100, 100);
+        float y = randfloat(-100, 100);
+        float z = randfloat(-100, 100);
+
+        ReadoutMessage<float, 4> message(22, counter, {V, x, y, z});
+
+        m_socket.send(zmq::buffer(&message, message.get_buffer_size()), zmq::send_flags::dontwait);
+        std::cout << "Send: " << message << " (" << message.get_buffer_size() << " bytes)" << std::endl;
+        consume_cpu_ms(m_delay_ms, 0, false);
     }
 
-    inline friend std::ostream& operator<< (std::ostream& os, const ReadoutMessage& msg) {
-        std::stringstream ss;
-        ss << msg.record_counter << ": " << reinterpret_cast<const float&>(msg.payload[0]) << ", ... " << reinterpret_cast<const float&>(msg.payload[1]);
-        os << ss.str();
-        return os;
-    }
-
-};
-
-
-template <unsigned int N>
-inline DetectorId get_detector_id(const ReadoutMessage<N>& m) {
-    return std::to_string(m.payload.source_id);
-}
-
-template <unsigned int N>
-inline Timestamp get_timestamp(const ReadoutMessage<N>& m) {
-    return m.payload.timestamp.tv_nsec;
-}
-
-template <unsigned int N>
-inline bool end_of_stream(const ReadoutMessage<N>& m) {
-    return m.source_id == 0 && m.record_counter == 0;
-}
-
-template <unsigned int N>
-inline void emplace(ReadoutMessage<N>* destination, char* source, size_t bytes) {
-    memcpy(destination, source, bytes);
+    // Send end-of-stream message
+    auto eos = ReadoutMessage<float, 4>::end_of_stream();
+    m_socket.send(zmq::buffer(&eos, eos.get_buffer_size()));
 }
 
 
-#endif //JANA2_DETECTORMESSAGE_H
+

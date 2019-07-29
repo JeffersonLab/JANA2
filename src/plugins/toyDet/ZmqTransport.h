@@ -4,6 +4,7 @@
 // Copyright 251 2014 Jefferson Science Associates LLC All Rights Reserved. Redistribution
 // and use in source and binary forms, with or without modification, are permitted as a
 // licensed user provided that the following conditions are met:
+
 // 1. Redistributions of source code must retain the above copyright notice, this
 //    list of conditions and the following disclaimer.
 // 2. Redistributions in binary form must reproduce the above copyright notice, this
@@ -11,10 +12,12 @@
 //    materials provided with the distribution.
 // 3. The name of the author may not be used to endorse or promote products derived
 //    from this software without specific prior written permission.
+
 // This material resulted from work developed under a United States Government Contract.
 // The Government retains a paid-up, nonexclusive, irrevocable worldwide license in such
 // copyrighted data to reproduce, distribute copies to the public, prepare derivative works,
 // perform publicly and display publicly and to permit others to do so.
+
 // THIS SOFTWARE IS PROVIDED BY JEFFERSON SCIENCE ASSOCIATES LLC "AS IS" AND ANY EXPRESS
 // OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
 // MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
@@ -30,44 +33,78 @@
 // Author: Nathan Brei
 //
 
-#ifndef JANA2_DETECTORAHITFACTORY_H
-#define JANA2_DETECTORAHITFACTORY_H
+#ifndef JANA2_ZMQDATASOURCE_H
+#define JANA2_ZMQDATASOURCE_H
 
-#include <JANA/JFactoryT.h>
-#include <JANA/JEvent.h>
+#include <JANA/JParameterManager.h>
+#include <JANA/Streaming/JTransport.h>
 
-#include <chrono>
+#include "zmq.hpp"
 
-#include "AHit.h"
-#include "ReadoutMessage.h"
-
-
-
-class AHitParser : public JFactoryT<AHit> {
-
+template <typename T>
+class ZmqTransport : public JTransport<T> {
 
 public:
-    AHitParser() : JFactoryT<AHit>("AHitParser") {
+    ZmqTransport(std::string socket_name, bool publish = false)
+        : m_socket_name(socket_name)
+        , m_context(1)
+        , m_socket(m_context, zmq::socket_type::sub) {
     }
 
-    void Process(const std::shared_ptr<const JEvent>& event) {
-
-        auto readoutMessages = event->Get<ReadoutMessage<4>>();
-        for (const auto& readoutMessage : readoutMessages) {
-            auto ahit = new AHit();
-
-            auto duration = std::chrono::seconds{readoutMessage->timestamp.tv_sec} +
-                            std::chrono::nanoseconds{readoutMessage->timestamp.tv_nsec};
-
-            ahit->t = duration.count();  // This probably isn't what we want
-
-            ahit->E = reinterpret_cast<const float&>(readoutMessage->payload[0]);
-            ahit->x = reinterpret_cast<const float&>(readoutMessage->payload[1]);
-            ahit->y = reinterpret_cast<const float&>(readoutMessage->payload[2]);
-            ahit->z = reinterpret_cast<const float&>(readoutMessage->payload[3]);
-            Insert(ahit);
+    void initialize() override {
+        try {
+            m_socket.connect(m_socket_name);
+            m_socket.setsockopt(ZMQ_SUBSCRIBE, "", 0);  // Subscribe to everything.
         }
+        catch (...) {
+            throw JException("Unable to subscribe to zmq socket!");
+        }
+    };
+
+    JTransportResult send(const T& src_msg) override {
+
+        char** serialized_buffer = nullptr;
+        size_t message_length;
+        src_msg.serialize(serialized_buffer, &message_length);
+
+        zmq::message_t message(sizeof(T)); // TODO: This is wrong
+        memcpy(&message, serialized_buffer, message_length);
+        auto result = m_socket.send(message, zmq::send_flags::dontwait);
+
+        if (!result.has_value()) {  // TODO: Not sure this actually does what I think it does
+            return JTransportResult::TRY_AGAIN;
+        }
+        return JTransportResult::SUCCESS;
     }
+
+    JTransportResult receive(T& dest_msg) override {
+
+        zmq::message_t message(sizeof(T)); // TODO: This is wrong
+        auto result = m_socket.recv(message, zmq::recv_flags::dontwait);
+
+        if (!result.has_value()) {
+            return JTransportResult::TRY_AGAIN;
+        }
+
+        dest_msg.deserialize(message.data<char>(), message.size());
+
+        std::stringstream ss;
+        ss << "Recv: " << dest_msg << " (" << message.size() << " bytes, expected " << sizeof(T) << " bytes)" << std::endl;
+        std::cout << ss.str();
+
+        if (dest_msg.is_end_of_stream()) {
+            return JTransportResult::FINISHED;
+        }
+        return JTransportResult::SUCCESS;
+    }
+
+
+private:
+    std::string m_socket_name = "tcp://127.0.0.1:5555";
+    JApplication* m_app;
+    zmq::context_t m_context;
+    zmq::socket_t m_socket;
 };
 
-#endif //JANA2_DETECTORAHITFACTORY_H
+
+#endif //JANA2_ZMQDATASOURCE_H

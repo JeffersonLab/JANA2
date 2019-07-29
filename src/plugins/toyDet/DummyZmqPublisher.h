@@ -35,7 +35,7 @@
 
 #include <string>
 #include <chrono>
-#include "../zmq2jana/internals/zmq.hpp"
+#include "../../examples/JExample7/zmq.hpp"
 
 class ZmqDummyPublisher {
 public:

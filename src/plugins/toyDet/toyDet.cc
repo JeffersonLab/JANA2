@@ -9,9 +9,8 @@
 // [ Source ]
 // [ Revision ]
 
-
-#include "../zmq2jana/internals/JEventSource_SingleSample.h"
-#include "../zmq2jana/internals/JSampleSource_Zmq.h"
+#include <JANA/Streaming/JEventBuilder.h>
+#include <JANA/Streaming/JSessionWindow.h>
 
 #include "JEventProcessor_toyDet.h"
 #include "JEventSource_toyDet.h"
@@ -19,6 +18,7 @@
 #include "JFactory_rawSamples.h"
 #include "DummyZmqPublisher.h"
 #include "INDRAMessage.h"
+#include "ZmqTransport.h"
 
 void dummy_publisher_loop() {
     ZmqDummyPublisher pub("run-10-mhz-10-chan-10-ev.dat", "tcp://127.0.0.1:5555", 100, 10, 2);
@@ -32,10 +32,17 @@ void InitPlugin(JApplication* app) {
     app->SetParameterValue("nthreads", 1);
     app->SetParameterValue("jana:extended_report", false);
 
+
+    auto transport = std::unique_ptr<ZmqTransport<ToyDetMessage>>(new ZmqTransport<ToyDetMessage>("tcp://127.0.0.1:5555"));
+
+    auto window = std::unique_ptr<JSessionWindow<ToyDetMessage>>(new JSessionWindow<ToyDetMessage>(10, {0,1,2}));
+
+    //app->Add(new JEventBuilder<ToyDetMessage>(std::move(transport), std::move(window)));
+
+    app->Add(new JEventBuilder<ToyDetMessage>(new ZmqTransport<ToyDetMessage>("tcp://127.0.0.1:5555"), std::move(window)));
+
     app->Add(new JEventProcessor_toyDet());
-    app->Add(new JEventSourceGeneratorT<JEventSource_SingleSample<ToyDetMessage, JSampleSource_Zmq>>());
     app->Add(new JFactoryGeneratorT<JFactory_rawSamples>());
-    app->Add("tcp://127.0.0.1:5555");  // TODO: Fix this later
 
     //app->Add(new JEventSourceGeneratorT<JEventSource_toyDet>());
     //app->Add(new JFactoryGenerator_toyDet());
