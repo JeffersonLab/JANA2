@@ -30,39 +30,77 @@
 // Author: Nathan Brei
 //
 
-#ifndef JANA2_ZMQDUMMYPUBLISHER_H
-#define JANA2_ZMQDUMMYPUBLISHER_H
+#ifndef JANA2_DETECTORMESSAGE_H
+#define JANA2_DETECTORMESSAGE_H
 
 #include <string>
 #include <chrono>
-#include "internals/zmq.hpp"
-#include "AHit.h"
+#include "JANA/Streaming/JMessage.h"
+#include <JANA/JException.h>
+#include <cstring>
 
-class ZmqDummyPublisher {
-public:
 
-    ZmqDummyPublisher(std::string socket_name,
-                      std::string sensor_name,
-                      size_t samples_avg,
-                      size_t samples_spread,
-                      uint64_t delay_ms);
+template <typename T, unsigned int N>
+struct ReadoutMessage : JMessage {
 
-    ~ZmqDummyPublisher();
+    uint32_t source_id;
+    uint32_t message_id;
+    struct timespec timestamp;
+    uint32_t payload_size;
+    T payload[N];
 
-    void publish(size_t nitems);
+    ReadoutMessage(DetectorId detector_id, uint32_t message_id, std::vector<T> data)
+        : source_id(detector_id)
+        , message_id(message_id)
+        , payload_size(data.size())
+    {
+        assert(data.size() <= N);
+        for (int i=0; i<payload_size; ++i) {
+            payload[i] = data[i];
+        }
 
-private:
-    zmq::context_t m_context;
-    zmq::socket_t m_socket;
+        clock_gettime(CLOCK_MONOTONIC, &timestamp);
+    }
 
-    std::string m_socket_name;
-    std::string m_sensor_name;
-    size_t m_samples_avg;
-    size_t m_samples_spread;
-    uint64_t m_delay_ms;
-    double m_prev_time;
+    ReadoutMessage() : source_id(0), message_id(0), payload_size(0), payload{} {
+    }
 
+    inline friend std::ostream& operator<< (std::ostream& os, const ReadoutMessage& msg) {
+        std::stringstream ss;
+        ss << msg.message_id << ": ";
+        for (int i=0; i<5 && i<N; ++i) {
+            ss << msg.payload[i] << ", ";
+        }
+        ss << "...";
+        os << ss.str();
+        return os;
+    }
+
+    inline JMessage::DetectorId get_source_id() override {
+        return source_id;
+    }
+
+    inline JMessage::Timestamp get_timestamp() override {
+        return timestamp.tv_nsec;
+    }
+
+    inline bool is_end_of_stream() override {
+        return source_id == 0 && payload_size == 0;
+    }
+
+    static ReadoutMessage end_of_stream() {
+        return {0, 0, {}};
+    }
+
+    inline size_t get_buffer_size() override {
+        return sizeof(ReadoutMessage) - (N-payload_size)*sizeof(T);
+    }
+
+    inline size_t get_max_buffer_size() override {
+        return sizeof(ReadoutMessage);
+    }
 };
 
 
-#endif //JANA2_ZMQDUMMYPUBLISHER_H
+
+#endif //JANA2_DETECTORMESSAGE_H

@@ -36,10 +36,11 @@
 
 #include <string>
 #include <chrono>
-#include "../zmq2jana/internals/JSampleSource.h"
-#include <JANA/JException.h>
 #include <cstring>
 #include <sstream>
+
+#include <JANA/JException.h>
+#include <JANA/Streaming/JMessage.h>
 
 
 
@@ -47,7 +48,7 @@
 /// only we can choose our max payload size and type as template parameters, which
 /// is extremely convenient.
 template <typename T, unsigned int N>
-struct INDRAMessage {
+struct INDRAMessage : public JMessage {
 
     uint32_t source_id = 0;
     uint32_t total_length;
@@ -97,27 +98,24 @@ struct INDRAMessage {
         return os;
     }
 
-    /// This is actually a free function, at least for now
-
-    inline friend DetectorId get_detector_id(const INDRAMessage& m) {
-        return std::to_string(m.payload.source_id);
+    inline DetectorId get_source_id() override {
+        return source_id;
     }
 
-    /// This is actually a free function, at least for now
-
-    inline friend Timestamp get_timestamp(const INDRAMessage& m) {
-        return m.payload.timestamp.tv_nsec;
+    inline Timestamp get_timestamp() override {
+        return timestamp.tv_nsec;
     }
 
-    /// This is actually a free function, at least for now
-
-    inline friend bool end_of_stream(const INDRAMessage& m) {
-        return m.source_id == 0 && m.record_counter == 0;
+    inline bool is_end_of_stream() override {
+        return source_id == 0 && record_counter == 0;
     }
 
-    // TODO: Rethink having this here (also obviously rethink doing a memcpy at all)
-    inline friend void emplace(INDRAMessage* destination, char* source, size_t bytes) {
-        memcpy(destination, source, bytes);
+    size_t get_buffer_size() override {
+        return sizeof(INDRAMessage);
+    }
+
+    size_t get_max_buffer_size() override {
+        return sizeof(INDRAMessage);
     }
 
 };

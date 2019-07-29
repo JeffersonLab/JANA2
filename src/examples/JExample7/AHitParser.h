@@ -30,56 +30,44 @@
 // Author: Nathan Brei
 //
 
-#ifndef JANA2_JZMQSOURCE_H
-#define JANA2_JZMQSOURCE_H
+#ifndef JANA2_DETECTORAHITFACTORY_H
+#define JANA2_DETECTORAHITFACTORY_H
 
-#include "zmq.hpp"
-
-#include <JANA/JEventSource.h>
+#include <JANA/JFactoryT.h>
 #include <JANA/JEvent.h>
-#include "JSampleSource.h"
 
-template <typename T, template <typename> class JSampleSourceT>
-class JEventSource_SingleSample : public JEventSource {
+#include <chrono>
+
+#include "AHit.h"
+#include "ReadoutMessage.h"
+
+
+
+class AHitParser : public JFactoryT<AHit> {
+
 
 public:
-
-    JEventSource_SingleSample (std::string name, JApplication* app)
-        : JEventSource(name, app)
-        , m_sample_source(name, app) {}
-
-    void Open() override {
-        m_sample_source.initialize();
+    AHitParser() : JFactoryT<AHit>("AHitParser") {
     }
 
-    void GetEvent(std::shared_ptr<JEvent> event) override {
+    void Process(const std::shared_ptr<const JEvent>& event) {
 
-        auto item = new T();  // This is why T requires a zero-arg ctor
-        auto result = m_sample_source.pull(*item);
-        switch (result) {
-            case JSampleSourceStatus::Finished: throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
-            case JSampleSourceStatus::TryAgainLater: throw JEventSource::RETURN_STATUS::kTRY_AGAIN;
-            case JSampleSourceStatus::Error: throw JEventSource::RETURN_STATUS::kERROR;
-            default: break;
+        auto readoutMessages = event->Get<ReadoutMessage<float, 4>>();
+        for (const auto& readoutMessage : readoutMessages) {
+            auto ahit = new AHit();
+
+            auto duration = std::chrono::seconds{readoutMessage->timestamp.tv_sec} +
+                            std::chrono::nanoseconds{readoutMessage->timestamp.tv_nsec};
+
+            ahit->t = duration.count();  // This probably isn't what we want
+
+            ahit->E = reinterpret_cast<const float&>(readoutMessage->payload[0]);
+            ahit->x = reinterpret_cast<const float&>(readoutMessage->payload[1]);
+            ahit->y = reinterpret_cast<const float&>(readoutMessage->payload[2]);
+            ahit->z = reinterpret_cast<const float&>(readoutMessage->payload[3]);
+            Insert(ahit);
         }
-        // At this point, we know that item contains a valid Sample<T>
-
-        event->SetEventNumber(m_next_id);
-        m_next_id += 1;
-        event->Insert<T>(item);
-        std::cout << "Emit: " << *item << std::endl;
     }
-
-    static std::string GetDescription() {
-        return "JEventSource_SingleSample";
-    }
-
-
-private:
-    JSampleSourceT<T> m_sample_source;
-    uint64_t m_delay_ms;
-    uint64_t m_next_id = 0;
 };
 
-
-#endif //JANA2_JZMQSOURCE_H
+#endif //JANA2_DETECTORAHITFACTORY_H

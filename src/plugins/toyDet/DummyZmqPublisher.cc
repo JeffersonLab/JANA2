@@ -32,7 +32,7 @@
 
 
 #include "DummyZmqPublisher.h"
-#include "../zmq2jana/ReadoutMessage.h"
+#include "../../examples/JExample7/ReadoutMessage.h"
 #include "INDRAMessage.h"
 
 #include <JANA/JPerfUtils.h>
