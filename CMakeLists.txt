@@ -139,7 +139,8 @@ add_library(jana2 STATIC
         src/lib/JANA/JProcessorMapping.h
         src/lib/JANA/JProcessorMapping.cc
         src/lib/JANA/JComponentSummary.h
-        src/lib/JANA/JComponentSummary.cc)
+        src/lib/JANA/JComponentSummary.cc
+        src/lib/JANA/JCsvWriter.h)
 
 add_library(jtest SHARED
         src/lib/JANA/JThread.cc  #for THREAD_ID

@@ -30,35 +30,85 @@
 // Author: Nathan Brei
 //
 
-#ifndef JANA2_JTESTEVENTCONTEXTS_H
-#define JANA2_JTESTEVENTCONTEXTS_H
+#ifndef JANA2_JCSVEVENTPROCESSOR_H
+#define JANA2_JCSVEVENTPROCESSOR_H
 
+
+#include <JANA/JEventProcessor.h>
 #include <JANA/JObject.h>
-#include <memory>
 
-struct JTestEntangledEventData : public JObject {
-    std::shared_ptr<std::vector<char>> buffer;
-};
+#include <fstream>
 
-struct JTestEventData : public JObject {
-    std::vector<char> buffer;
-};
+template <typename T>
+class JCsvWriter : public JEventProcessor {
+private:
+    std::string m_tag;
+    std::string m_dest_dir = ".";
+    std::fstream m_dest_file;
+    std::mutex m_mutex;
+    bool m_header_written = false;
 
-struct JTestTrackData : public JObject {
-    std::vector<char> buffer;
+public:
 
-    void Summarize(JObjectSummary& summary) const override {
-        size_t nitems = std::min(buffer.size(), (size_t) 5);
-        for (int i=0; i<nitems; ++i) {
-            char varname[20];
-            snprintf(varname, 20, "x_%d", i);
-            summary.add(buffer[i], varname, "%d");
+    JCsvWriter(std::string tag = "") : m_tag(std::move(tag)) {
+        japp->GetJParameterManager()->SetDefaultParameter("csv:dest_dir", m_dest_dir, "Location where CSV files get written");
+    };
+
+    void Init(void) override {
+
+        std::string filename;
+        if (m_tag == "") {
+            filename = m_dest_dir + "/" + JTypeInfo::demangle<T>() + ".csv";
         }
+        else {
+            filename = m_dest_dir + "/" + JTypeInfo::demangle<T>() + "_" + m_tag + ".csv";
+        }
+        m_dest_file.open(filename, std::fstream::out);
     }
+
+    void Process(const std::shared_ptr<const JEvent>& event) override {
+
+        auto event_nr = event->GetEventNumber();
+        auto jobjs = event->Get<T>(m_tag);
+
+        std::lock_guard<std::mutex> lock(m_mutex);
+
+        if (!m_header_written) {
+            if (jobjs.size() > 0) {
+                JObjectSummary summary;
+                jobjs[0]->Summarize(summary);
+                m_dest_file << "EventNr";
+                for (auto& field : summary.get_fields()) {
+                    m_dest_file << ", " << field.name;
+                }
+                m_dest_file << std::endl;
+                m_header_written = true;
+            }
+        }
+
+        for (auto obj : jobjs) {
+
+            JObjectSummary summary;
+            obj->Summarize(summary);
+            m_dest_file << event_nr;
+            for (auto& field : summary.get_fields()) {
+                m_dest_file << ", " << field.value;
+            }
+            m_dest_file << std::endl;
+        }
+
+    }
+
+    void Finish(void) override {
+        m_dest_file.close();
+    }
+
+    string GetType() const override {
+        return JTypeInfo::demangle<decltype(*this)>();
+    }
+
+
 };
 
-struct JTestHistogramData : public JObject {
-    std::vector<char> buffer;
-};
 
-#endif //JANA2_JTESTEVENTCONTEXTS_H
+#endif //JANA2_JCSVEVENTPROCESSOR_H

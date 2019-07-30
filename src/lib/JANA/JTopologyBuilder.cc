@@ -118,10 +118,6 @@ JProcessingTopology *JTopologyBuilder::build_topology() {
     // Add ready-made event sources to topology
     for (auto * evt_src : _evt_srces_back) {
         topology->event_source_manager.AddJEventSource(evt_src);
-        topology->component_summary.event_sources.push_back(
-                {.plugin_name = evt_src->GetPlugin(),
-                 .type_name = evt_src->GetType(),
-                 .source_name = evt_src->GetName()});
     }
 
     // Add event source generators to event source manager

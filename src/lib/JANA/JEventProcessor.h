@@ -54,6 +54,8 @@ class JEvent;
 #define _JEventProcessor_h_
 
 #include <JANA/JApplication.h>
+#include <JANA/JTypeInfo.h>
+#include <JANA/JEvent.h>
 
 class JEventProcessor{
 	public:
@@ -69,7 +71,7 @@ class JEventProcessor{
 		virtual void Finish(void){}
 
 		virtual std::string GetType() const {
-			return GetDemangledName<decltype(*this)>();
+			return JTypeInfo::demangle<decltype(*this)>();
 		}
 
         std::string GetPlugin() const {
