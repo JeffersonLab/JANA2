@@ -39,7 +39,8 @@
 #include <JANA/JParameterManager.h>
 #include <JANA/Streaming/JTransport.h>
 
-#include "zmq.hpp"
+#include <zmq.h>
+#include <errno.h>
 
 template <typename T>
 class ZmqTransport : public JTransport<T> {
@@ -47,18 +48,33 @@ class ZmqTransport : public JTransport<T> {
 public:
     ZmqTransport(std::string socket_name, bool publish = false)
         : m_socket_name(socket_name)
-        , m_context(1)
-        , m_socket(m_context, zmq::socket_type::sub) {
-    }
+        , m_publish(publish) {}
 
     void initialize() override {
-        try {
-            m_socket.connect(m_socket_name);
-            m_socket.setsockopt(ZMQ_SUBSCRIBE, "", 0);  // Subscribe to everything.
+        m_context = zmq_ctx_new();
+        m_socket = m_publish ? zmq_socket(m_context, ZMQ_PUB) : zmq_socket(m_context, ZMQ_SUB);
+        int rc = zmq_bind(m_socket, m_socket_name.c_str());
+        if (rc != 0) {
+            int errno_saved = errno;
+            ostringstream os;
+            os << "Unable to subscribe to zmq socket " << m_socket_name << ": ";
+            switch (errno_saved) {
+                case EINVAL: os << "Invalid endpoint"; break;
+                case EPROTONOSUPPORT: os << "Transport protocol not supported"; break;
+                case ENOCOMPATPROTO: os << "Transport protocol not compatible with socket type"; break;
+                case EADDRINUSE: os << "Address in use"; break;
+                case EADDRNOTAVAIL: os << "Address not available"; break;
+                case ENODEV: os << "Address specifies nonexistent interface"; break;
+                case ETERM: os << "Context associated with this socket was terminated"; break;
+                case ENOTSOCK: os << "Invalid socket"; break;
+                case EMTHREAD: os << "No I/O thread available"; break;
+            }
+            std::cout << os.str();
+            throw JException(os.str());
         }
-        catch (...) {
-            throw JException("Unable to subscribe to zmq socket!");
-        }
+
+        zmq_setsockopt(m_socket, ZMQ_SUBSCRIBE, "", 0);
+        // Subscribe to everything
     };
 
     JTransportResult send(const T& src_msg) override {
@@ -66,33 +82,30 @@ public:
         char** serialized_buffer = nullptr;
         size_t message_length;
         src_msg.serialize(serialized_buffer, &message_length);
+        int rc = zmq_send(m_socket, serialized_buffer, message_length, 0);
 
-        zmq::message_t message(sizeof(T)); // TODO: This is wrong
-        memcpy(&message, serialized_buffer, message_length);
-        auto result = m_socket.send(message, zmq::send_flags::dontwait);
-
-        if (!result.has_value()) {  // TODO: Not sure this actually does what I think it does
-            return JTransportResult::TRY_AGAIN;
+        if (rc == -1) {
+            return JTransportResult::FAILURE;
         }
         return JTransportResult::SUCCESS;
     }
 
     JTransportResult receive(T& dest_msg) override {
 
-        zmq::message_t message(sizeof(T)); // TODO: This is wrong
-        auto result = m_socket.recv(message, zmq::recv_flags::dontwait);
-
-        if (!result.has_value()) {
+        const size_t max_length = dest_msg.get_max_buffer_size();
+        char* buffer = new char[max_length];
+        int rc_length = zmq_recv(m_socket, buffer, max_length, ZMQ_DONTWAIT);
+        if (rc_length == -1) {
+            // TODO: Verify via ERRNO that this should be TRY_AGAIN and not FAILURE
             return JTransportResult::TRY_AGAIN;
         }
-
-        dest_msg.deserialize(message.data<char>(), message.size());
-
+        dest_msg.deserialize(buffer, rc_length);
         std::stringstream ss;
-        ss << "Recv: " << dest_msg << " (" << message.size() << " bytes, expected " << sizeof(T) << " bytes)" << std::endl;
+        ss << "Recv: " << dest_msg << " (" << rc_length << " bytes of max " << max_length << " bytes)" << std::endl;
         std::cout << ss.str();
 
         if (dest_msg.is_end_of_stream()) {
+            zmq_close(m_socket);
             return JTransportResult::FINISHED;
         }
         return JTransportResult::SUCCESS;
@@ -100,10 +113,11 @@ public:
 
 
 private:
-    std::string m_socket_name = "tcp://127.0.0.1:5555";
     JApplication* m_app;
-    zmq::context_t m_context;
-    zmq::socket_t m_socket;
+    std::string m_socket_name = "tcp://127.0.0.1:5555";
+    bool m_publish = false;
+    void* m_context;
+    void* m_socket;
 };
 
 
