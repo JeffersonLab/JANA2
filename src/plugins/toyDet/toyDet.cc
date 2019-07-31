@@ -32,14 +32,10 @@ void InitPlugin(JApplication* app) {
     app->SetParameterValue("nthreads", 1);
     app->SetParameterValue("jana:extended_report", false);
 
-
     auto transport = std::unique_ptr<ZmqTransport<ToyDetMessage>>(new ZmqTransport<ToyDetMessage>("tcp://127.0.0.1:5555"));
-
     auto window = std::unique_ptr<JSessionWindow<ToyDetMessage>>(new JSessionWindow<ToyDetMessage>(10, {0,1,2}));
 
-    //app->Add(new JEventBuilder<ToyDetMessage>(std::move(transport), std::move(window)));
-
-    app->Add(new JEventBuilder<ToyDetMessage>(new ZmqTransport<ToyDetMessage>("tcp://127.0.0.1:5555"), std::move(window)));
+    app->Add(new JEventBuilder<ToyDetMessage>(std::move(transport), std::move(window)));
 
     app->Add(new JEventProcessor_toyDet());
     app->Add(new JFactoryGeneratorT<JFactory_rawSamples>());

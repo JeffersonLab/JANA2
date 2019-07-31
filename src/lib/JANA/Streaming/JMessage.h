@@ -6,6 +6,7 @@
 #define JANA2_JMESSAGE_H
 
 #include <JANA/JObject.h>
+#include <cstring>
 
 
 /// JMessage is an abstract base class for a message type for streamed data,
