@@ -48,7 +48,7 @@ public:
         return false;
     };
 
-
+/*
     maybe<JMessage::Timestamp> find_next_event_start() {
         maybe<JMessage::Timestamp> result;
         result.is_none = true;
@@ -90,7 +90,7 @@ public:
         return true;
     }
 
-
+*/
 private:
     std::map<JMessage::DetectorId, std::deque<JMessage*>> m_inbox;
     std::vector<T *> m_outbox;
