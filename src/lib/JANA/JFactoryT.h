@@ -47,7 +47,7 @@
 #include <JANA/JApplication.h>
 #include <JANA/JFactory.h>
 #include <JANA/JObject.h>
-#include <JANA/JTypeInfo.h>
+#include <JANA/Utils/JTypeInfo.h>
 
 #ifndef _JFactoryT_h_
 #define _JFactoryT_h_

@@ -51,7 +51,7 @@
 #include <cassert>
 #include <typeinfo>
 
-#include <JANA/JTypeInfo.h>
+#include <JANA/Utils/JTypeInfo.h>
 
 /// The JObject class is a base class for all data classes.
 /// (See JFactory for algorithm classes.)

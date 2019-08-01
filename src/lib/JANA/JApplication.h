@@ -51,10 +51,11 @@ struct JProcessingTopology;
 
 extern JApplication* japp;
 
-#include <JANA/JLogger.h>
-#include <JANA/JParameterManager.h>
-#include <JANA/JComponentSummary.h>
-#include <JANA/JResourcePool.h>
+#include <JANA/Services/JServiceLocator.h>
+#include <JANA/Services/JParameterManager.h>
+#include <JANA/Services/JLogger.h>
+#include <JANA/Status/JComponentSummary.h>
+#include <JANA/Utils/JResourcePool.h>
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////

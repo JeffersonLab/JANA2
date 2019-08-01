@@ -26,19 +26,21 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-#include "JApplication.h"
-#include "JArrowProcessingController.h"
+#include <JANA/JApplication.h>
 
 #include <JANA/JEventProcessor.h>
 #include <JANA/JEventSource.h>
 #include <JANA/JEventSourceGenerator.h>
 #include <JANA/JFactoryGenerator.h>
-#include <JANA/JParameterManager.h>
-#include <JANA/JEventSourceManager.h>
-#include <JANA/JPluginLoader.h>
-#include <JANA/JTopologyBuilder.h>
-#include <JANA/JProcessingController.h>
-#include <JANA/JCpuInfo.h>
+
+#include <JANA/Services/JParameterManager.h>
+#include <JANA/Services/JEventSourceManager.h>
+#include <JANA/Services/JPluginLoader.h>
+#include <JANA/Services/JTopologyBuilder.h>
+#include <JANA/Services/JProcessingController.h>
+
+#include <JANA/Engine/JArrowProcessingController.h>
+#include <JANA/Utils/JCpuInfo.h>
 
 JApplication *japp = nullptr;
 

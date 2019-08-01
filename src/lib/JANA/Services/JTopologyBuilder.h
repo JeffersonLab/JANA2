@@ -30,42 +30,56 @@
 // Author: Nathan Brei
 //
 
-#ifndef JANA2_JPLUGINLOADER_H
-#define JANA2_JPLUGINLOADER_H
-
-#include <JANA/JLogger.h>
-#include <JANA/JParameterManager.h>
-
-#include <string>
-#include <vector>
+#ifndef JANA2_JTOPOLOGYBUILDER_H
+#define JANA2_JTOPOLOGYBUILDER_H
 
 
-class JTopologyBuilder;
+#include <JANA/JEventSourceGenerator.h>
+#include <JANA/JEventProcessor.h>
+#include <JANA/Engine/JProcessingTopology.h>
+
 class JApplication;
 
-class JPluginLoader {
+class JTopologyBuilder {
 
 public:
 
-    JPluginLoader(JApplication* app, JParameterManager* params = nullptr);
+    JTopologyBuilder(JApplication* app);
 
-    void add_plugin(std::string plugin_name);
-    void add_plugin_path(std::string path);
-    void attach_plugins(JTopologyBuilder* builder);
-    void attach_plugin(JTopologyBuilder* builder, std::string plugin_name);
+    void increase_priority();
+
+    void add(std::string event_source_name);
+    void add(JEventSourceGenerator* source_generator);
+    void add(JFactoryGenerator* factory_generator);
+    void add(JEventSource* event_source);
+    void add(JEventProcessor* processor);
+
+    void set_current_plugin(std::string plugin_name);
+    void print_report();
+
+    JProcessingTopology* build_topology();
+
 
 private:
 
-    std::vector<string> _plugins_to_include;
-    std::vector<string> _plugins_to_exclude;
-    std::vector<std::string> _plugin_paths;
-    std::vector<void*> _sohandles;
+    JApplication* m_app;
+    std::string m_current_plugin_name;
 
-    bool _verbose;
-    JLogger _logger = JLoggingService::logger("JPluginLoader");
-    JServiceLocator* _service_locator;
-    JApplication* _app;
+    std::vector<std::string> _evt_src_names;
+
+    std::vector<JFactoryGenerator*> _fac_gens_front;
+    std::vector<JFactoryGenerator*> _fac_gens_back;
+
+    std::vector<JEventProcessor*> _evt_procs_front;
+    std::vector<JEventProcessor*> _evt_procs_back;
+
+    std::vector<JEventSourceGenerator*> _evt_src_gens_front;
+    std::vector<JEventSourceGenerator*> _evt_src_gens_back;
+
+    std::vector<JEventSource*> _evt_srces_front;
+    std::vector<JEventSource*> _evt_srces_back;
+
 };
 
 
-#endif //JANA2_JPLUGINLOADER_H
+#endif //JANA2_JTOPOLOGYBUILDER_H

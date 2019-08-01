@@ -53,12 +53,14 @@
 #include <JANA/JException.h>
 #include <JANA/JFactoryT.h>
 #include <JANA/JFactorySet.h>
-#include <JANA/JResettable.h>
 #include <JANA/JEventSource.h>
 #include <JANA/JApplication.h>
-#include <JANA/JLogger.h>
-#include <JANA/JTypeInfo.h>
-#include "JCpuInfo.h"
+
+#include <JANA/Services/JLogger.h>
+
+#include <JANA/Utils/JResettable.h>
+#include <JANA/Utils/JTypeInfo.h>
+#include <JANA/Utils/JCpuInfo.h>
 
 #ifndef _JEvent_h_
 #define _JEvent_h_

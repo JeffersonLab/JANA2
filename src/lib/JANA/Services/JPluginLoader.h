@@ -30,31 +30,42 @@
 // Author: Nathan Brei
 //
 
-#ifndef JANA2_JPROCESSINGCONTROLLER_H
-#define JANA2_JPROCESSINGCONTROLLER_H
+#ifndef JANA2_JPLUGINLOADER_H
+#define JANA2_JPLUGINLOADER_H
 
+#include <JANA/Services/JLogger.h>
+#include <JANA/Services/JParameterManager.h>
+
+#include <string>
 #include <vector>
-#include <unistd.h>
-#include <memory>
-#include "JPerfSummary.h"
 
-class JProcessingController {
+
+class JTopologyBuilder;
+class JApplication;
+
+class JPluginLoader {
+
 public:
 
-    virtual ~JProcessingController() = default;
+    JPluginLoader(JApplication* app, JParameterManager* params = nullptr);
 
-    virtual void initialize() = 0;
-    virtual void run(size_t nthreads) = 0;
-    virtual void scale(size_t nthreads) = 0;
-    virtual void request_stop() = 0;
-    virtual void wait_until_stopped() = 0;
-    virtual bool is_stopped() = 0;
+    void add_plugin(std::string plugin_name);
+    void add_plugin_path(std::string path);
+    void attach_plugins(JTopologyBuilder* builder);
+    void attach_plugin(JTopologyBuilder* builder, std::string plugin_name);
 
-    virtual std::unique_ptr<const JPerfSummary> measure_performance() = 0;
+private:
 
-    virtual void print_report() = 0;
-    virtual void print_final_report() = 0;
+    std::vector<string> _plugins_to_include;
+    std::vector<string> _plugins_to_exclude;
+    std::vector<std::string> _plugin_paths;
+    std::vector<void*> _sohandles;
+
+    bool _verbose;
+    JLogger _logger = JLoggingService::logger("JPluginLoader");
+    JServiceLocator* _service_locator;
+    JApplication* _app;
 };
 
-#endif //JANA2_JPROCESSINGCONTROLLER_H
 
+#endif //JANA2_JPLUGINLOADER_H

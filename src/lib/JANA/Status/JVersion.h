@@ -4,10 +4,10 @@
 // Creator: davidl (on Darwin harriet.jlab.org 15.6.0 i386)
 //
 // ------ Last repository commit info -----
-// [ Date ]
-// [ Author ]
-// [ Source ]
-// [ Revision ]
+// [ Date: Wed Oct 25 23:19:03 2017 -0400 ]
+// [ Author: David Lawrence <davidl@jlab.org> ]
+// [ Source: src/lib/JANA/JVersion.h ]
+// [ Revision: 28bf59642adb3d82f0cc3bd6405279076bf8f1e6 ]
 //
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 // Jefferson Science Associates LLC Copyright Notice:  
@@ -63,10 +63,10 @@ class JVersion{
 			return ss.str();
 		}
 		
-		static string GetIDstring(void){return "[ Id ]";}
-		static string GetRevision(void){return ExtractContent("[ Revision ]");}
-		static string GetDate(void){return ExtractContent("[ Date ]");}
-		static string GetSource(void){return ExtractContent("[ Source ]");}
+		static string GetIDstring(void){return "[ Id: JVersion.h | Wed Oct 25 23:19:03 2017 -0400 | David Lawrence  ]";}
+		static string GetRevision(void){return ExtractContent("[ Revision: 28bf59642adb3d82f0cc3bd6405279076bf8f1e6 ]");}
+		static string GetDate(void){return ExtractContent("[ Date: Wed Oct 25 23:19:03 2017 -0400 ]");}
+		static string GetSource(void){return ExtractContent("[ Source: src/lib/JANA/JVersion.h ]");}
 		
 	protected:
 		

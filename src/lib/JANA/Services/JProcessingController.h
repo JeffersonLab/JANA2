@@ -30,56 +30,32 @@
 // Author: Nathan Brei
 //
 
-#ifndef JANA2_JTOPOLOGYBUILDER_H
-#define JANA2_JTOPOLOGYBUILDER_H
+#ifndef JANA2_JPROCESSINGCONTROLLER_H
+#define JANA2_JPROCESSINGCONTROLLER_H
 
+#include <vector>
+#include <unistd.h>
+#include <memory>
 
-#include <JANA/JEventSourceGenerator.h>
-#include <JANA/JEventProcessor.h>
-#include <JANA/JProcessingTopology.h>
+#include <JANA/Status/JPerfSummary.h>
 
-class JApplication;
-
-class JTopologyBuilder {
-
+class JProcessingController {
 public:
 
-    JTopologyBuilder(JApplication* app);
+    virtual ~JProcessingController() = default;
 
-    void increase_priority();
+    virtual void initialize() = 0;
+    virtual void run(size_t nthreads) = 0;
+    virtual void scale(size_t nthreads) = 0;
+    virtual void request_stop() = 0;
+    virtual void wait_until_stopped() = 0;
+    virtual bool is_stopped() = 0;
 
-    void add(std::string event_source_name);
-    void add(JEventSourceGenerator* source_generator);
-    void add(JFactoryGenerator* factory_generator);
-    void add(JEventSource* event_source);
-    void add(JEventProcessor* processor);
+    virtual std::unique_ptr<const JPerfSummary> measure_performance() = 0;
 
-    void set_current_plugin(std::string plugin_name);
-    void print_report();
-
-    JProcessingTopology* build_topology();
-
-
-private:
-
-    JApplication* m_app;
-    std::string m_current_plugin_name;
-
-    std::vector<std::string> _evt_src_names;
-
-    std::vector<JFactoryGenerator*> _fac_gens_front;
-    std::vector<JFactoryGenerator*> _fac_gens_back;
-
-    std::vector<JEventProcessor*> _evt_procs_front;
-    std::vector<JEventProcessor*> _evt_procs_back;
-
-    std::vector<JEventSourceGenerator*> _evt_src_gens_front;
-    std::vector<JEventSourceGenerator*> _evt_src_gens_back;
-
-    std::vector<JEventSource*> _evt_srces_front;
-    std::vector<JEventSource*> _evt_srces_back;
-
+    virtual void print_report() = 0;
+    virtual void print_final_report() = 0;
 };
 
+#endif //JANA2_JPROCESSINGCONTROLLER_H
 
-#endif //JANA2_JTOPOLOGYBUILDER_H

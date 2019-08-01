@@ -54,8 +54,9 @@ class JEvent;
 #define _JEventProcessor_h_
 
 #include <JANA/JApplication.h>
-#include <JANA/JTypeInfo.h>
 #include <JANA/JEvent.h>
+
+#include <JANA/Utils/JTypeInfo.h>
 
 class JEventProcessor{
 	public:

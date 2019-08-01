@@ -5,16 +5,20 @@
 #ifndef JANA2_JPROCESSINGTOPOLOGY_H
 #define JANA2_JPROCESSINGTOPOLOGY_H
 
-#include <JANA/JArrow.h>
-#include <JANA/JMailbox.h>
 #include <JANA/JFactorySet.h>
-#include <JANA/JEventSourceManager.h>
-#include <JANA/JActivable.h>
 #include <JANA/JEventProcessor.h>
-#include "JPerfMetrics.h"
-#include "JEventPool.h"
-#include "JProcessorMapping.h"
-#include "JComponentSummary.h"
+
+#include <JANA/Engine/JActivable.h>
+#include <JANA/Engine/JArrow.h>
+#include <JANA/Engine/JMailbox.h>
+
+#include <JANA/Services/JEventSourceManager.h>
+
+#include <JANA/Status/JPerfMetrics.h>
+#include <JANA/Status/JComponentSummary.h>
+
+#include <JANA/Utils/JEventPool.h>
+#include <JANA/Utils/JProcessorMapping.h>
 
 class JApplication;
 

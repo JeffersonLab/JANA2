@@ -14,7 +14,7 @@
 // while trying to instantiate operator<< templates.
 // It has to be included _before_ operator<<(JLog&&, T) gets defined
 
-#include <JANA/JServiceLocator.h>
+#include <JANA/Services/JServiceLocator.h>
 
 enum class JLogLevel { TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF };
 

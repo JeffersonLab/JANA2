@@ -7,8 +7,8 @@
 
 #include <queue>
 #include <mutex>
-#include <JANA/JActivable.h>
-#include <JANA/JLogger.h>
+#include <JANA/Engine/JActivable.h>
+#include <JANA/Services/JLogger.h>
 
 /// JMailbox is a threadsafe event queue designed for communication between Arrows.
 /// It is different from the standard data structure in the following ways:
