@@ -376,7 +376,7 @@ std::size_t JEventSourceManager::GetNumEventsProcessed(void) const
 	// Lock
 	std::lock_guard<std::mutex> lg(mSourcesMutex);
 
-	auto sNumEventGetter = [](std::size_t aTotal, JEventSource* aSource) -> std::size_t {return aTotal + aSource->GetNumEventsProcessed();};
+	auto sNumEventGetter = [](std::size_t aTotal, JEventSource* aSource) -> std::size_t {return aTotal ;}; //+ aSource->GetNumEventsProcessed();};
 
 	//Sum from active sources and exhausted ones
 	auto sNumEvents = std::accumulate(std::begin(_sources_active), std::end(_sources_active), 0, sNumEventGetter);

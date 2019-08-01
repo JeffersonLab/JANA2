@@ -38,7 +38,7 @@
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 #include "JObject.h"
-#include "JFunctions.h"
+#include "JTypeInfo.h"
 
 //---------------------------------
 // JObject    (Constructor)
@@ -62,7 +62,7 @@ JObject::~JObject()
 //---------------------------------
 const std::string& JObject::className(void) const
 {
-		if(mName.empty()) mName=GetDemangledName< decltype(*this) >();
+		if(mName.empty()) mName = JTypeInfo::demangle<decltype(*this)>();
 		return mName;
 }
 

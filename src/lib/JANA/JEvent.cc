@@ -43,10 +43,7 @@
 //---------------------------------
 // JEvent    (Constructor)
 //---------------------------------
-JEvent::JEvent(JApplication* aApplication) : mApplication(aApplication), mThreadManager(nullptr)
-{
-	if(mApplication != nullptr) mThreadManager = mApplication->GetJThreadManager();
-}
+JEvent::JEvent(JApplication* aApplication) : mApplication(aApplication) {}
 
 //---------------------------------
 // ~JEvent    (Destructor)
@@ -71,7 +68,6 @@ JEventSource* JEvent::GetEventSource(void) const
 void JEvent::SetJApplication(JApplication* app)
 {
 	mApplication = app;
-	if(mApplication != nullptr) mThreadManager = mApplication->GetJThreadManager();
 }
 
 //---------------------------------

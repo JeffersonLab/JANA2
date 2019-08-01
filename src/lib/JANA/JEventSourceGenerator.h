@@ -48,7 +48,6 @@
 
 #include <JANA/JEventSource.h>
 #include <JANA/JEventSourceManager.h>
-#include <JANA/JQueue.h>
 
 /// This is a base class for all event source generators. JANA implements
 /// event sources in a modular way so that new types of sources can be

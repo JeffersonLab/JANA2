@@ -16,15 +16,14 @@ struct FlakySource : public JEventSource {
     bool open_excepts, getevent_excepts;
     int event_count = 0;
 
-    FlakySource(std::string source_name, JApplication *japp, bool open_excepts, bool getevent_excepts)
-        : JEventSource(source_name, japp)
-        , open_excepts(open_excepts)
-        , getevent_excepts(getevent_excepts)
-        {}
+    FlakySource(std::string source_name, JApplication* japp, bool open_excepts, bool getevent_excepts)
+            : JEventSource(source_name, japp), open_excepts(open_excepts), getevent_excepts(getevent_excepts) {}
 
     static std::string GetDescription() { return "UnopenableEventSource"; }
 
-    std::string GetType(void) const { return GetDemangledName<decltype(*this)>(); }
+    std::string GetType(void) const {
+        return JTypeInfo::demangle<decltype(*this)>();
+    }
 
     void Open() override {
         if (open_excepts) {
@@ -75,8 +74,8 @@ struct FlakyProcessor : public JEventProcessor {
         }
     }
 
-    virtual std::string GetType() const {
-        return GetDemangledName<decltype(*this)>();
+    std::string GetType(void) const {
+        return JTypeInfo::demangle<decltype(*this)>();
     }
 };
 

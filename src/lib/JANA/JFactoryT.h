@@ -46,8 +46,8 @@
 
 #include <JANA/JApplication.h>
 #include <JANA/JFactory.h>
-#include <JANA/JFunctions.h>
 #include <JANA/JObject.h>
+#include <JANA/JTypeInfo.h>
 
 #ifndef _JFactoryT_h_
 #define _JFactoryT_h_
@@ -61,7 +61,7 @@ public:
     using PairType = std::pair<IteratorType, IteratorType>;
 
 
-    JFactoryT(const std::string& aName = GetDemangledName<T>(), const std::string& aTag = "") : JFactory(aName, aTag) {}
+    JFactoryT(const std::string& aName = JTypeInfo::demangle<T>(), const std::string& aTag = "") : JFactory(aName, aTag) {}
     ~JFactoryT() override = default;
 
 

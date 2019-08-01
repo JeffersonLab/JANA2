@@ -45,7 +45,6 @@
 #include <string>
 
 #include <JANA/JApplication.h>
-#include <JANA/JFunctions.h>
 #include <JANA/JEventSourceGenerator.h>
 #include <JANA/JEventSourceManager.h>
 
@@ -96,7 +95,7 @@ class JEventSourceGeneratorT:public JEventSourceGenerator{
 
 		/// Return name of the source type this will generate
 		std::string GetType(void) const {
-			return GetDemangledName<T>();
+			return JTypeInfo::demangle<T>();
 		}
 
 		/// Return description of the source type this will generate

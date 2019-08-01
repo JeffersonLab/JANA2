@@ -44,7 +44,6 @@
 using namespace std;
 
 #include <JANA/JApplication.h>
-#include <JANA/JThreadManager.h>
 #include <JANA/JCpuInfo.h>
 #include <JANA/JParameterManager.h>
 
@@ -225,7 +224,8 @@ static PyObject* janapy_WaitUntilAllThreadsRunning(PyObject *self, PyObject *arg
 {
 	if(!PyArg_ParseTuple(args, ":WaitUntilAllThreadsRunning")) return nullptr;
 	PY_INITIALIZED = true; // (in case user doesn't call Start before calling this)
-	pyjapp->GetJThreadManager()->WaitUntilAllThreadsRunning();
+	// TODO: Figure out what we really want here
+	//pyjapp->GetJThreadManager()->WaitUntilAllThreadsRunning();
 	return PV("");
 }
 
@@ -236,7 +236,8 @@ static PyObject* janapy_WaitUntilAllThreadsIdle(PyObject *self, PyObject *args)
 {
 	if(!PyArg_ParseTuple(args, ":WaitUntilAllThreadsIdle")) return nullptr;
 	PY_INITIALIZED = true; // (in case user doesn't call Start before calling this)
-	pyjapp->GetJThreadManager()->WaitUntilAllThreadsIdle();
+	// TODO: Figure out what we really want here
+	//pyjapp->GetJThreadManager()->WaitUntilAllThreadsIdle();
 	return PV("");
 }
 
@@ -247,7 +248,8 @@ static PyObject* janapy_WaitUntilAllThreadsEnded(PyObject *self, PyObject *args)
 {
 	if(!PyArg_ParseTuple(args, ":WaitUntilAllThreadsEnded")) return nullptr;
 	PY_INITIALIZED = true; // (in case user doesn't call Start before calling this)
-	pyjapp->GetJThreadManager()->WaitUntilAllThreadsEnded();
+	// TODO: Figure out what we really want here
+	//pyjapp->GetJThreadManager()->WaitUntilAllThreadsEnded();
 	return PV("");
 }
 
@@ -354,7 +356,7 @@ static PyObject* janapy_GetInstantaneousRates(PyObject *self, PyObject *args)
 static PyObject* janapy_GetNJThreads(PyObject *self, PyObject *args)
 {
 	if(!PyArg_ParseTuple(args, ":GetNJThreads")) return nullptr;
-	return PV( pyjapp->GetJThreadManager()->GetNJThreads() );
+	return PV( pyjapp->GetNThreads() );
 }
 
 //-------------------------------------
@@ -413,7 +415,7 @@ static PyObject* janapy_SetNJThreads(PyObject *self, PyObject *args)
 	int nthreads=1;
 	if(!PyArg_ParseTuple(args, "i:SetNJThreads", &nthreads)) return nullptr;
 	pyjapp->Scale( nthreads );
-	return PV( pyjapp->GetJThreadManager()->GetNJThreads() );
+	return PV( pyjapp->GetNThreads() );
 }
 
 //-------------------------------------

@@ -55,11 +55,10 @@
 #include <JANA/JFactorySet.h>
 #include <JANA/JResettable.h>
 #include <JANA/JEventSource.h>
-#include <JANA/JFunctions.h>
 #include <JANA/JApplication.h>
-#include <JANA/JThreadManager.h>
 #include <JANA/JLogger.h>
-#include <JANA/JThread.h>
+#include <JANA/JTypeInfo.h>
+#include "JCpuInfo.h"
 
 #ifndef _JEvent_h_
 #define _JEvent_h_
@@ -117,7 +116,6 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 
 	private:
 		JApplication* mApplication = nullptr;
-		JThreadManager* mThreadManager = nullptr;
 		uint32_t mRunNumber = 0;
 		uint64_t mEventNumber = 0;
 		int mDebugLevel = 0;
@@ -133,7 +131,7 @@ inline void JEvent::Insert(T* item, const string& tag) const {
 
 	auto factory = mFactorySet->GetFactory<T>(tag);
 	if (factory == nullptr) {
-		factory = new JFactoryT<T>(GetDemangledName<T>(), tag);
+		factory = new JFactoryT<T>(JTypeInfo::demangle<T>(), tag);
 		factory->SetCreated(true);
 		mFactorySet->Add(factory);
 	}
@@ -145,7 +143,7 @@ inline void JEvent::Insert(const vector<T*>& items, const string& tag) const {
 
 	auto factory = mFactorySet->GetFactory<T>(tag);
 	if (factory == nullptr) {
-		factory = new JFactoryT<T>(GetDemangledName<T>(), tag);
+		factory = new JFactoryT<T>(JTypeInfo::demangle<T>(), tag);
 		factory->SetCreated(true);
 		mFactorySet->Add(factory);
 	}
@@ -208,9 +206,10 @@ vector<const T*> JEvent::Get(const std::string& aTag) const
 template<class DataType>
 typename JFactoryT<DataType>::PairType JEvent::GetIterators(const std::string& aTag) const
 {
+	uint32_t THREAD_ID = JCpuInfo::GetCpuID();
 
 	if(mDebugLevel > 0)
-		JLog() << "Thread " << THREAD_ID << " JEvent::Get(): Type = " << GetDemangledName<DataType>() << ", tag = " << aTag << ".\n" << JLogEnd();
+		JLog() << "Thread " << THREAD_ID << " JEvent::Get(): Type = " << JTypeInfo::demangle<DataType>() << ", tag = " << aTag << ".\n" << JLogEnd();
 
 	//--------------------------------------------------------------------------------------------
 	// Something is amiss below. It looks like the following block was intended to
@@ -229,7 +228,7 @@ typename JFactoryT<DataType>::PairType JEvent::GetIterators(const std::string& a
 // 		if(sFactoryBase == nullptr)
 // 		{
 // 			//Uh oh, No factory exists for this type.
-// 			jerr << "ERROR: No factory found for type = " << GetDemangledName<DataType>() << ", tag = \"" << aTag << "\\n";
+// 			jerr << "ERROR: No factory found for type = " << JTypeInfo::demangle<DataType>() << ", tag = \"" << aTag << "\\n";
 // 			japp->SetExitCode(-1);
 // 			japp->Quit();
 // 			return {};
@@ -255,7 +254,7 @@ typename JFactoryT<DataType>::PairType JEvent::GetIterators(const std::string& a
 	auto sFactoryBase = mFactorySet->GetFactory(std::type_index(typeid(DataType)), aTag);
 	if(sFactoryBase == nullptr)
 	{
-		throw JException("No factory found for type = %s, tag = %s", GetDemangledName<DataType>().c_str(), aTag.c_str());
+		throw JException("No factory found for type = %s, tag = %s", JTypeInfo::demangle<DataType>().c_str(), aTag.c_str());
 	}
 	auto sFactory = static_cast<JFactoryT<DataType>*>(sFactoryBase);
 
@@ -280,14 +279,7 @@ typename JFactoryT<DataType>::PairType JEvent::GetIterators(const std::string& a
 		// It actually should always be set by the latter which is called from
 		// JEventSource::GetProcessEventTasks after calling GetEvent.
 
-		if (mThreadManager != nullptr) {
-			mThreadManager->DoWorkWhileWaiting(sFactory->GetCreatingLock(), mEventSource);
-			//It's done, return the results
-			return sFactory->Get();
-		}
-		else {
-			throw JException("Race condition: Multiple threads are attempting to JEvent::Get() the same object");
-		}
+		throw JException("Race condition: Multiple threads are attempting to JEvent::Get() the same object");
 	}
 
 	if(mDebugLevel >= 10)
@@ -308,13 +300,13 @@ typename JFactoryT<DataType>::PairType JEvent::GetIterators(const std::string& a
 		//Not yet: We need to create the objects.
 		//First try to get from the event source
 		if(mDebugLevel >= 10)
-			JLog() << "Thread " << THREAD_ID << " JEvent::Get(): Try to get " << GetDemangledName<DataType>() << " (tag = " << aTag << ") objects from JEventSource.\n" << JLogEnd();
+			JLog() << "Thread " << THREAD_ID << " JEvent::Get(): Try to get " << JTypeInfo::demangle<DataType>() << " (tag = " << aTag << ") objects from JEventSource.\n" << JLogEnd();
 		auto sSharedThis = this->shared_from_this();
 		if (mEventSource != nullptr &&
 			mEventSource->GetObjects(sSharedThis, static_cast<JFactory*>(sFactory)))
 		{
 			if(mDebugLevel >= 10)
-				JLog() << "Thread " << THREAD_ID << " JEvent::Get(): " << GetDemangledName<DataType>() << " (tag = " << aTag << ") retrieved from JEventSource.\n" << JLogEnd();
+				JLog() << "Thread " << THREAD_ID << " JEvent::Get(): " << JTypeInfo::demangle<DataType>() << " (tag = " << aTag << ") retrieved from JEventSource.\n" << JLogEnd();
 			sFactory->SetCreated(true);
 			sFactory->ReleaseCreatingLock();
 			return sFactory->Get();
@@ -332,7 +324,7 @@ typename JFactoryT<DataType>::PairType JEvent::GetIterators(const std::string& a
 
 		//Create the objects
 		if(mDebugLevel >= 10)
-			JLog() << "Thread " << THREAD_ID << " JEvent::Get(): Create " << GetDemangledName<DataType>() << " (tag = " << aTag << ") with factory.\n" << JLogEnd();
+			JLog() << "Thread " << THREAD_ID << " JEvent::Get(): Create " << JTypeInfo::demangle<DataType>() << " (tag = " << aTag << ") with factory.\n" << JLogEnd();
 		try {
 			sFactory->Process(sSharedThis);
 			sFactory->SetCreated(true);
@@ -366,7 +358,7 @@ typename JFactoryT<DataType>::PairType JEvent::GetIterators(const std::string& a
 	//Get the object iterators
 	auto sIteratorPair = sFactory->Get();
 	if(mDebugLevel > 0)
-		JLog() << "Thread " << THREAD_ID << " JEvent::Get(): Getting " << std::distance(sIteratorPair.first, sIteratorPair.second) << " " << GetDemangledName<DataType>() << " objects, tag = " << aTag << ".\n" << JLogEnd();
+		JLog() << "Thread " << THREAD_ID << " JEvent::Get(): Getting " << std::distance(sIteratorPair.first, sIteratorPair.second) << " " << JTypeInfo::demangle<DataType>() << " objects, tag = " << aTag << ".\n" << JLogEnd();
 
 	//Return the objects
 	return sIteratorPair;

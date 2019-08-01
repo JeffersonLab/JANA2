@@ -37,12 +37,10 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-#include <cxxabi.h>
-
-#include "JEventSource.h"
-#include "JFunctions.h"
-#include "JApplication.h"
+#include <JANA/JEventSource.h>
+#include <JANA/JApplication.h>
 #include <JANA/JEvent.h>
+#include <JANA/JTypeInfo.h>
 
 //---------------------------------
 // JEventSource    (Constructor)
@@ -82,119 +80,13 @@ void JEventSource::SetJApplication(JApplication *app)
 }
 
 //---------------------------------
-// GetNumEventsProcessed
-//---------------------------------
-std::size_t JEventSource::GetNumEventsProcessed(void) const
-{
-	/// Return total number of events processed by this source.
-	/// This is a little tricky. A source may consist of multiple
-	/// queues that expand one "event" into many. This returns
-	/// the count returned by the GetNumEventsProcessed() of the
-	/// queue pointed to by the mEventQueue member of this source
-	/// if it is set. This presumably is the last queue in the
-	/// chain and what the caller is most interested in. If that
-	/// is not set, then the value of the member mEventsProcessed
-	/// is returned. This is a count of the number of events
-	/// processed through all queues, including any internal ones.
-	/// In those situations, this will likely be double counting.
-	///
-	/// Note that in the first case, the number is how many events
-	/// were removed from the last queue, but some of those may
-	/// still be processing. Thus, it might overcount how many were
-	/// actually completed. This is only a problem if this is called
-	/// while event processing is still ongoing.
-	if( mEventQueue != nullptr ) return mEventQueue->GetNumTasksProcessed();
-
-	return mEventsProcessed;
-}
-
-//---------------------------------
 // GetType
 //---------------------------------
 std::string JEventSource::GetType(void) const
 {
-	return GetDemangledName<decltype(*this)>();
+	return JTypeInfo::demangle<decltype(*this)>();
 }
 
-//---------------------------------
-// GetProcessEventTasks
-//---------------------------------
-std::vector<std::shared_ptr<JTaskBase> > JEventSource::GetProcessEventTasks(std::size_t aNumTasks)
-{
-	/// This version is called by JThread.
-	/// This will attempt to read aNumTasks from the source, wrapping each in a JTask
-	/// so it can be added to this source's Event queue.
-
-	//If file closed, return dummy pair
-	if(mExhausted) return std::vector<std::shared_ptr<JTaskBase>>();
-
-	// Optionally limit number of events read from this source
-	if( (mMaxEventsToRead!=0) && ((mEventsRead + aNumTasks)>mMaxEventsToRead) ){
-		aNumTasks = mMaxEventsToRead - mEventsRead;
-	}
-
-	//Initialize things before locking
-	std::vector<std::shared_ptr<JEvent>> sEvents;
-	sEvents.reserve(aNumTasks);
-
-	//Attempt to acquire atomic lock
-	bool sExpected = false;
-	if(!mGettingEvent.compare_exchange_strong(sExpected, true)){
-		// failed to get lock. Return empty container
-		return std::vector<std::shared_ptr<JTaskBase> >();
-	}
-
-	//Lock aquired, get the events
-	for(std::size_t si = 0; si < aNumTasks; si++)
-	{
-		// Read an event from the source. Anything other than a successful read
-		// throws an exception (we never need to check for kSUCCESS)
-		try{
-			auto jevent = std::make_shared<JEvent>(mApplication);
-			jevent->SetJEventSource(this);
-			jevent->SetJApplication(mApplication);
-			jevent->SetFactorySet(mApplication->GetFactorySet());
-			GetEvent(jevent);
-			sEvents.push_back(std::move(jevent));
-		}
-		catch(RETURN_STATUS ret_status){
-			switch(ret_status){
-				case RETURN_STATUS::kNO_MORE_EVENTS:
-				case RETURN_STATUS::kERROR:
-					mExhausted = true;
-					break;
-				case RETURN_STATUS::kBUSY:
-				case RETURN_STATUS::kTRY_AGAIN:
-				default:
-					break;
-			}
-			break; // exception caught so don't try reading any more events right now
-		}
-		catch (JException& e) {
-			e.plugin_name = GetPlugin();
-			e.component_name = GetType();
-			mExhausted = true;
-			throw e;
-		}
-		catch(...) {
-			mExhausted = true;
-			throw;  // Keep propagating swallow user exceptions!
-		}
-	}
-
-	//Done with the lock: Unlock
-	mGettingEvent = false;
-
-	//Make tasks for analyzing the events
-	std::vector<std::shared_ptr<JTaskBase> > sTasks;
-	mEventsRead.fetch_add(sEvents.size());
-	for(auto& sEvent : sEvents) sTasks.push_back(GetProcessEventTask(std::move(sEvent)));
-	mTasksCreated.fetch_add(sTasks.size());
-
-
-	//Return the tasks
-	return sTasks;
-}
 
 //---------------------------------
 // SetNumEventsToGetAtOnce
@@ -213,14 +105,6 @@ std::pair<std::size_t, std::size_t> JEventSource::GetNumEventsToGetAtOnce(void) 
 	return std::make_pair(mMinNumEventsToGetAtOnce, mMaxNumEventsToGetAtOnce);
 }
 
-//---------------------------------
-// GetProcessEventTask
-//---------------------------------
-std::shared_ptr<JTaskBase> JEventSource::GetProcessEventTask(std::shared_ptr<const JEvent>&& aEvent)
-{
-	//This version creates the task (default: run the processors), and can be overridden in derived classes (but cannot be called)
-	return JMakeAnalyzeEventTask(std::move(aEvent), mApplication);
-}
 
 //---------------------------------
 // IsExhausted

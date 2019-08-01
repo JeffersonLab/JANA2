@@ -4,6 +4,7 @@
 
 #include "TerminationTests.h"
 #include "catch.hpp"
+#include <thread>
 
 #include <JANA/JApplication.h>
 

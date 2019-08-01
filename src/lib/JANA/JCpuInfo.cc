@@ -16,6 +16,9 @@
 
 #include <JANA/JCpuInfo.h>
 
+extern thread_local int THREAD_ID;
+
+
 namespace JCpuInfo {
 
 size_t GetNumCpus() {

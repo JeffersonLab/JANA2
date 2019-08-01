@@ -50,7 +50,7 @@ struct SimpleSource : public JEventSource {
     }
 
     std::string GetType(void) const {
-        return GetDemangledName<decltype(*this)>();
+        return JTypeInfo::demangle<decltype(*this)>();
     }
 
     void Open() override {

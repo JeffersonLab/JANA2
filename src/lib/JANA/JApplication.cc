@@ -27,7 +27,6 @@
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 #include "JApplication.h"
-#include "JLegacyProcessingController.h"
 #include "JArrowProcessingController.h"
 
 #include <JANA/JEventProcessor.h>
@@ -129,8 +128,6 @@ void JApplication::Initialize() {
     size_t task_pool_debuglevel = 0;
     _params->SetDefaultParameter("JANA:TASK_POOL_SIZE", task_pool_size, "Task pool size");
     _params->SetDefaultParameter("JANA:TASK_POOL_DEBUGLEVEL", task_pool_debuglevel, "Task pool debug level");
-    mVoidTaskPool.Set_ControlParams(task_pool_size, task_pool_debuglevel);
-    // TODO: Move mVoidTaskPool into JThreadManager
 
     // Set desired nthreads
     _desired_nthreads = JCpuInfo::GetNumCpus();
@@ -140,18 +137,8 @@ void JApplication::Initialize() {
 
     _topology = _topology_builder->build_topology();
 
-    bool legacy_mode = true;
-    _params->SetDefaultParameter("JANA:LEGACY_MODE", legacy_mode, "");
-    if (legacy_mode) {
-        auto * pc = new JLegacyProcessingController(this, _topology);
-        _threadManager = pc->get_threadmanager();
-        _processing_controller = pc;
-        _extended_report = false;
-    }
-    else {
-        _processing_controller = new JArrowProcessingController(_topology);
-        _extended_report = true;
-    }
+    _processing_controller = new JArrowProcessingController(_topology);
+    _extended_report = true;
 
     _params->SetDefaultParameter("JANA:EXTENDED_REPORT", _extended_report);
     _processing_controller->initialize();
@@ -348,10 +335,6 @@ float JApplication::GetInstantaneousRate()
 
 // Things that don't belong here
 
-std::shared_ptr<JTask<void>> JApplication::GetVoidTask() {
-    return mVoidTaskPool.Get_SharedResource();
-}
-
 JFactorySet* JApplication::GetFactorySet() {
     return mFactorySetPool.Get_Resource(_topology->factory_generators);
 }
@@ -403,29 +386,6 @@ std::string JApplication::Val2StringWithPrefix(float val)
     sprintf(str,"%3.1f %s", val, units);
 
     return std::string(str);
-}
-
-JThreadManager* JApplication::GetJThreadManager() const {
-    return _threadManager;
-}
-
-void JApplication::UpdateResourceLimits() {
-
-    /// Used internally by JANA to adjust the maximum size of resource
-    /// pools after changing the number of threads.
-
-    // OK, this is tricky. The max size of the JFactorySet resource pool should
-    // be at least as big as how many threads we have. Factory sets may also be
-    // attached to JEvent objects in queues that are not currently being acted
-    // on by a thread so we actually need the maximum to be larger if we wish to
-    // prevent constant allocation/deallocation of factory sets. If the factory
-    // sets are large, this will cost more memory, but should save on CPU from
-    // allocating less often and not having to call the constructors repeatedly.
-    // The exact maximum is hard to determine here. We set it to twice the number
-    // of threads which should be sufficient. The user should be given control to
-    // adjust this themselves in the future, but or now, this should be OK.
-    auto nthreads = _threadManager->GetNJThreads();
-    mFactorySetPool.Set_ControlParams( nthreads*100, 0 );
 }
 
 

@@ -52,8 +52,6 @@
 #include <JANA/JApplication.h>
 #include <JANA/JFactoryGenerator.h>
 
-class JTaskBase;
-class JQueue;
 class JEvent;
 class JEventSourceManager;
 class JEventSourceGenerator;
@@ -95,7 +93,6 @@ class JEventSource{
 		void SetNumEventsToGetAtOnce(std::size_t aMinNumEvents, std::size_t aMaxNumEvents);
 		std::pair<std::size_t, std::size_t> GetNumEventsToGetAtOnce(void) const; //returns min, max
 
-		std::vector<std::shared_ptr<JTaskBase> > GetProcessEventTasks(std::size_t aNumTasks = 1);
 		bool IsExhausted(void) const;
 		std::size_t GetNumEventsProcessed(void) const;
 		
@@ -107,7 +104,6 @@ class JEventSource{
 		std::size_t GetNumOutstandingEvents(void) const{return mNumOutstandingEvents;}
 		std::size_t GetNumOutstandingBarrierEvents(void) const{return mNumOutstandingBarrierEvents;}
 
-		JQueue* GetEventQueue(void) const{return mEventQueue;}
 		JFactoryGenerator* GetFactoryGenerator(void) const{return mFactoryGenerator;}
 		std::type_index GetDerivedType(void) const {return std::type_index(typeid(*this));}
 
@@ -124,7 +120,6 @@ class JEventSource{
 		JApplication* mApplication = nullptr;
 		std::string mName;
 		std::string mPluginName;
-		JQueue* mEventQueue = nullptr; //For handling event-source-specific logic (such as disentangling events, dealing with barriers, etc.)
 		JFactoryGenerator* mFactoryGenerator = nullptr; //This should create default factories for all types available in the event source
 
 	private:
@@ -134,8 +129,6 @@ class JEventSource{
 		void DecrementEventCount(void){mNumOutstandingEvents--; mEventsProcessed++;}
 		void IncrementBarrierCount(void){mNumOutstandingBarrierEvents++;}
 		void DecrementBarrierCount(void){mNumOutstandingBarrierEvents--;}
-
-		virtual std::shared_ptr<JTaskBase> GetProcessEventTask(std::shared_ptr<const JEvent>&& aEvent);
 
         /// SetPlugin is called by JTopologyBuilder and should not be exposed to the user.
         void SetPlugin(std::string plugin_name) { mPluginName = std::move(plugin_name); };

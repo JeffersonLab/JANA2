@@ -5,7 +5,6 @@
 
 #include "JEventSource.h"
 #include "JEvent.h"
-#include "JQueueSimple.h"
 #include "JApplication.h"
 #include "JSourceFactoryGenerator.h"
 #include "JEventSourceGeneratorT.h"
@@ -36,7 +35,6 @@ public:
         params->GetParameter("jtest:parser_spread", m_cputime_spread);
 
         mFactoryGenerator = new JSourceFactoryGenerator<JTestEntangledEventData>();
-        mEventQueue = new JQueueSimple(params ,"Events", 200, 50);
     }
 
     static std::string GetDescription() {
@@ -44,7 +42,7 @@ public:
     }
 
     std::string GetType(void) const {
-        return GetDemangledName<decltype(*this)>();
+        return JTypeInfo::demangle<decltype(*this)>();
     }
 
     void GetEvent(std::shared_ptr<JEvent> event) {

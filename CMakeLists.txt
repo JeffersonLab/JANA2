@@ -13,14 +13,9 @@ include_directories(${PYTHON_INCLUDE_DIRS})
 
 include_directories(src/lib)
 include_directories(src/lib/JANA)
-include_directories(src/lib/greenfield)
 include_directories(src/plugins/JTest)
 include_directories(src/programs/jana)
 include_directories(src/programs/tests)
-
-add_library(greenfield STATIC
-        src/lib/greenfield/Greenfield.cc
-        )
 
 add_executable(tests
         src/programs/tests/catch.hpp
@@ -75,8 +70,6 @@ add_library(jana2 STATIC
         src/lib/JANA/JFactorySet.cc
         src/lib/JANA/JFactorySet.h
         src/lib/JANA/JFactoryT.h
-        src/lib/JANA/JFunctions.cc
-        src/lib/JANA/JFunctions.h
         src/lib/JANA/JLogger.h
         src/lib/JANA/JObject.cc
         src/lib/JANA/JObject.h
@@ -84,26 +77,12 @@ add_library(jana2 STATIC
         src/lib/JANA/JParameter.h
         src/lib/JANA/JParameterManager.cc
         src/lib/JANA/JParameterManager.h
-        src/lib/JANA/JQueue.h
-        src/lib/JANA/JQueueSet.cc
-        src/lib/JANA/JQueueSet.h
-        src/lib/JANA/JQueueSimple.cc
-        src/lib/JANA/JQueueSimple.h
-        src/lib/JANA/JQueueWithBarriers.cc
-        src/lib/JANA/JQueueWithBarriers.h
-        src/lib/JANA/JQueueWithLock.cc
-        src/lib/JANA/JQueueWithLock.h
         src/lib/JANA/JResettable.h
         src/lib/JANA/JResourcePool.h
         src/lib/JANA/JSignalHandler.h
         src/lib/JANA/JSourceFactoryGenerator.h
         src/lib/JANA/JStatus.cc
         src/lib/JANA/JStatus.h
-        src/lib/JANA/JTask.h
-        src/lib/JANA/JThread.cc
-        src/lib/JANA/JThread.h
-        src/lib/JANA/JThreadManager.cc
-        src/lib/JANA/JThreadManager.h
         src/lib/JANA/JTypeInfo.h
         src/lib/JANA/JVersion.h
         src/lib/JANA/JEventProcessorArrow.cc
@@ -124,8 +103,6 @@ add_library(jana2 STATIC
         src/lib/JANA/JTopologyBuilder.h
         src/lib/JANA/JPluginLoader.cc
         src/lib/JANA/JPluginLoader.h
-        src/lib/JANA/JLegacyProcessingController.cc
-        src/lib/JANA/JLegacyProcessingController.h
         src/lib/JANA/JProcessingTopology.cpp
         src/lib/JANA/JProcessingTopology.h
         src/lib/JANA/JArrowProcessingController.cc
@@ -143,7 +120,6 @@ add_library(jana2 STATIC
         src/lib/JANA/JCsvWriter.h)
 
 add_library(jtest SHARED
-        src/lib/JANA/JThread.cc  #for THREAD_ID
         src/lib/JANA/JPerfUtils.cc
         src/plugins/JTest/JTestMain.cc
         src/plugins/JTest/JTestDataObjects.h
@@ -173,10 +149,6 @@ target_link_libraries(jtest jana2)
 target_link_libraries(janapy jana2)
 target_link_libraries(tests jana2)
 target_link_libraries(playground jana2)
-
-# Add greenfield static lib
-target_link_libraries(tests greenfield)
-target_link_libraries(playground greenfield)
 
 # Add libdl
 target_link_libraries(jana2 ${CMAKE_DL_LIBS})

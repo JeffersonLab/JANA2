@@ -53,12 +53,8 @@
 
 #include "JParameterManager.h"
 #include "JStatus.h"
-#include "JThread.h"
-#include "JQueue.h"
-#include "JQueueSet.h"
 #include "JEventSourceManager.h"
 #include "JEventSource.h"
-#include "JThreadManager.h"
 #include "JCpuInfo.h"
 
 using namespace std;
@@ -145,28 +141,31 @@ void JStatus::GenerateReport(std::stringstream &ss)
 	vector<JEventSource*> sources;
 	vector<JEventSourceGenerator*> source_generators;
 	vector<JFactoryGenerator*> factory_generators;
-	std::vector<JThreadManager::JEventSourceInfo*> active_source_infos;
+/*	std::vector<JThreadManager::JEventSourceInfo*> active_source_infos;
 	std::vector<JThreadManager::JEventSourceInfo*> retired_source_infos;
 	vector<JThread*> threads;
+*/
 
 	japp->GetJEventProcessors(processors);
 	japp->GetJEventSourceManager()->GetActiveJEventSources(sources); //ignores exhausted sources!!
 	japp->GetJEventSourceManager()->GetJEventSourceGenerators(source_generators);
 	japp->GetJFactoryGenerators(factory_generators);
-	japp->GetJThreadManager()->GetActiveSourceInfos(active_source_infos);
+/*  japp->GetJThreadManager()->GetActiveSourceInfos(active_source_infos);
 	japp->GetJThreadManager()->GetRetiredSourceInfos(retired_source_infos); //assumes one didn't retire in between calls!
 	japp->GetJThreadManager()->GetJThreads(threads);
+*/
 
 	std::size_t sNumQueues = 0;
-	for(auto& sSourceInfo : active_source_infos)
+/*	for(auto& sSourceInfo : active_source_infos)
 		sNumQueues += sSourceInfo->mQueueSet->GetNumQueues();
 	for(auto& sSourceInfo : retired_source_infos)
 		sNumQueues += sSourceInfo->mQueueSet->GetNumQueues();
+*/
 
 	ss << "------ JANA STATUS REPORT -------" << endl;
 	ss << "generated: " << ctime(&t);
 	ss << endl;
-	ss << "      Nthreads/Ncores: " << japp->GetJThreadManager()->GetNJThreads() << " / " << JCpuInfo::GetNumCpus() << endl;
+//	ss << "      Nthreads/Ncores: " << japp->GetJThreadManager()->GetNJThreads() << " / " << JCpuInfo::GetNumCpus() << endl;
 	ss << "    Nevents processed: " << japp->GetNeventsProcessed() << endl;
 	ss << "          Nprocessors: " << processors.size() << endl;
 	ss << "             Nsources: " << sources.size() << endl;
@@ -174,7 +173,8 @@ void JStatus::GenerateReport(std::stringstream &ss)
 	ss << "   Nfactorygenerators: " << factory_generators.size() << endl;
 	ss << "              Nqueues: " << sNumQueues << endl;
 	ss << endl;
-	
+
+/*
 	for(auto& sSourceInfo : active_source_infos)
 	{
 		auto sEventSource = sSourceInfo->mEventSource;
@@ -224,7 +224,7 @@ void JStatus::GenerateReport(std::stringstream &ss)
 			}
 		}
 	}
-	
+*/
 	// The only way to get a stack trace for a thread is from within the thread
 	// itself. To do this, we must signal every thread to interrupt it so it
 	// can record its current stack trace.
@@ -243,12 +243,14 @@ void JStatus::GenerateReport(std::stringstream &ss)
 		// Get list of pthreads, including this one (which is hopefully the main thread)
 		map<std::thread::id, pthread_t> pthreads;
 		auto sThisThreadID = std::this_thread::get_id();
+/*
 		for(auto t : threads)
 		{
 			auto sID = t->GetThread()->get_id();
 			if(sID != sThisThreadID)
 				pthreads.emplace(sID, t->GetThread()->native_handle());
 		}
+*/
 		pthreads.emplace(sThisThreadID, pthread_self());
 		
 		// Pre-allocate memory to hold the traces for all threads.

@@ -42,7 +42,6 @@ class JEventSource;
 class JEventSourceGenerator;
 class JFactoryGenerator;
 class JEventSourceManager;
-class JThreadManager;
 class JFactorySet;
 
 class JPluginLoader;
@@ -54,11 +53,8 @@ extern JApplication* japp;
 
 #include <JANA/JLogger.h>
 #include <JANA/JParameterManager.h>
-
-// TODO: Move these down one level
+#include <JANA/JComponentSummary.h>
 #include <JANA/JResourcePool.h>
-#include <JANA/JTask.h>
-#include "JComponentSummary.h"
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -153,12 +149,9 @@ public:
 
     // Doesn't belong here
 
-    void UpdateResourceLimits(void);
     void GetJEventProcessors(std::vector<JEventProcessor*>& aProcessors);
     void GetJFactoryGenerators(std::vector<JFactoryGenerator*>& factory_generators);
-    JThreadManager* GetJThreadManager(void) const;
     JEventSourceManager* GetJEventSourceManager(void) const;
-    std::shared_ptr<JTask<void>> GetVoidTask(void);
     JFactorySet* GetFactorySet(void);
     void Recycle(JFactorySet* aFactorySet);
     string Val2StringWithPrefix(float val);
@@ -186,11 +179,7 @@ private:
 
     std::chrono::time_point<std::chrono::high_resolution_clock> mRunStartTime;
 
-    // TODO: Get rid of these
     JResourcePool<JFactorySet> mFactorySetPool;
-    JResourcePool<JTask<void>> mVoidTaskPool;
-    JThreadManager* _threadManager = nullptr; // Extract this from LegacyProcessingController
-
 };
 
 

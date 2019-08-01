@@ -25,7 +25,7 @@ public:
     }
 
     virtual std::string GetType() const {
-        return GetDemangledName<decltype(*this)>();
+        return JTypeInfo::demangle<decltype(*this)>();
     }
 
 

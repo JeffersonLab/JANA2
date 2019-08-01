@@ -64,7 +64,7 @@ struct JLogger {
 struct JLogMessageEnd {
 };
 
-extern thread_local int THREAD_ID;
+//extern thread_local int THREAD_ID;
 
 struct JLogMessage {
 
@@ -77,9 +77,9 @@ struct JLogMessage {
     JLogMessage(const JLogger* logger, JLogLevel level) :
             logger(logger), level(level) {
         if (logger->className != "") {
-            builder << "[" << level << "] " << THREAD_ID << ": ";
+            builder << "[" << level << "] ";
         } else {
-            builder << "[" << level << "] " << THREAD_ID << ": " << logger->className << ": ";
+            builder << "[" << level << "] " << logger->className << ": ";
         }
 
     }
