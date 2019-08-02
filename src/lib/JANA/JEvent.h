@@ -92,9 +92,6 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 		template <class T> void Insert(T* item, const std::string& aTag = "") const;
 		template <class T> void Insert(const std::vector<T*>& items, const std::string& tag = "") const;
 
-		//RESOURCES
-		void Release(void);
-
 		//SETTERS
 		void SetRunNumber(uint32_t aRunNumber){mRunNumber = aRunNumber;}
 		void SetEventNumber(uint64_t aEventNumber){mEventNumber = aEventNumber;}

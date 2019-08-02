@@ -146,12 +146,6 @@ public:
     void ProvideService(std::shared_ptr<T> service);
 
 
-    // Doesn't belong here
-    JFactorySet* GetFactorySet(void);
-    void Recycle(JFactorySet* aFactorySet);
-    string Val2StringWithPrefix(float val);
-
-
 private:
 
     JLogger _logger;

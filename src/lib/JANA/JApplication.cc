@@ -249,7 +249,9 @@ void JApplication::PrintStatus(void) {
     }
     else {
         std::stringstream ss;
-        ss << "  " << GetNeventsProcessed() << " events processed  " << Val2StringWithPrefix( GetInstantaneousRate() ) << "Hz (" << Val2StringWithPrefix( GetIntegratedRate() ) << "Hz avg)             ";
+        ss << "  " << GetNeventsProcessed() << " events processed  "
+           << JTypeInfo::to_string_with_si_prefix(GetInstantaneousRate()) << "Hz ("
+           << JTypeInfo::to_string_with_si_prefix(GetIntegratedRate()) << "Hz avg)";
         jout << ss.str() << "\n";
         jout.flush();
     }
@@ -264,8 +266,8 @@ void JApplication::PrintFinalReport() {
         jout << std::endl;
         auto nevents = GetNeventsProcessed();
         jout << "Number of threads: " << GetNThreads() << std::endl;
-        jout << "Total events processed: " << nevents << " (~ " << Val2StringWithPrefix( nevents ) << "evt)" << std::endl;
-        jout << "Integrated Rate: " << Val2StringWithPrefix( GetIntegratedRate() ) << "Hz" << std::endl;
+        jout << "Total events processed: " << nevents << " (~ " << JTypeInfo::to_string_with_si_prefix(nevents) << "evt)" << std::endl;
+        jout << "Integrated Rate: " << JTypeInfo::to_string_with_si_prefix(GetIntegratedRate()) << "Hz" << std::endl;
         jout << std::endl;
     }
     if (_extended_report) {
@@ -326,51 +328,6 @@ float JApplication::GetInstantaneousRate()
     }
 
     return last_R;
-}
-
-
-
-// Things that don't belong here
-
-JFactorySet* JApplication::GetFactorySet() {
-    return mFactorySetPool.Get_Resource(_component_manager->get_fac_gens());
-}
-
-void JApplication::Recycle(JFactorySet* aFactorySet) {
-    return mFactorySetPool.Recycle(aFactorySet);
-}
-
-std::string JApplication::Val2StringWithPrefix(float val)
-{
-    /// Return the value as a string with the appropriate latin unit prefix
-    /// appended.
-    /// Values returned are: "G", "M", "k", "", "u", and "m" for
-    /// values of "val" that are: >1.5E9, >1.5E6, >1.5E3, <1.0E-7, <1.0E-4, 1.0E-1
-    /// respectively.
-    const char *units = "";
-    if(val>1.5E9){
-        val/=1.0E9;
-        units = "G";
-    }else 	if(val>1.5E6){
-        val/=1.0E6;
-        units = "M";
-    }else if(val>1.5E3){
-        val/=1.0E3;
-        units = "k";
-    }else if(val<1.0E-7){
-        units = "";
-    }else if(val<1.0E-4){
-        val/=1.0E6;
-        units = "u";
-    }else if(val<1.0E-1){
-        val/=1.0E3;
-        units = "m";
-    }
-
-    char str[256];
-    sprintf(str,"%3.1f %s", val, units);
-
-    return std::string(str);
 }
 
 

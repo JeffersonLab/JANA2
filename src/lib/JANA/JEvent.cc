@@ -88,30 +88,4 @@ void JEvent::SetFactorySet(JFactorySet* aFactorySet)
 	mFactorySet = aFactorySet;
 }
 
-//---------------------------------
-// Release
-//---------------------------------
-void JEvent::Release(void)
-{
-	//Release all (pointers to) resources, called when recycled to pool
-	if(mFactorySet != nullptr) {
-		if (mApplication != nullptr) {
-			mApplication->Recycle(const_cast<JFactorySet*>(mFactorySet));
-			mFactorySet = nullptr;
-		}
-		else {
-			mFactorySet->Release();
-			delete mFactorySet;
-			mFactorySet = nullptr;
-		}
-	}
 
-	if(mEventSource != nullptr ){
-		mEventSource->DecrementEventCount();
-		if(mIsBarrierEvent) mEventSource->DecrementBarrierCount();
-		mEventSource = nullptr;
-	}
-
-	mLatestBarrierEvent = nullptr;
-	mIsBarrierEvent = false; //In case user forgets to clear it
-}
