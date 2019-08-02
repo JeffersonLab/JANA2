@@ -62,7 +62,7 @@ class JEventProcessor{
 	public:
 	
 		friend JApplication;
-		friend JTopologyBuilder;
+		friend JComponentManager;
 	
 		JEventProcessor(JApplication *app=nullptr): mApplication(app){}
 		virtual ~JEventProcessor(void){}

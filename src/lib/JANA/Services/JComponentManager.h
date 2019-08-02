@@ -13,7 +13,7 @@
 class JComponentManager {
 public:
 
-    JComponentManager(JApplication*);
+    explicit JComponentManager(JApplication*);
     ~JComponentManager();
 
     void next_plugin(std::string plugin_name);
@@ -30,9 +30,10 @@ public:
 
     JComponentSummary get_component_summary();
 
-    std::vector<JEventSource*> get_evt_srces();
-    std::vector<JEventProcessor*> get_evt_procs();
-    std::vector<JFactoryGenerator*> get_fac_gens();
+    // Unsafe access into our own repository of components
+    std::vector<JEventSource*>& get_evt_srces();
+    std::vector<JEventProcessor*>& get_evt_procs();
+    std::vector<JFactoryGenerator*>& get_fac_gens();
 
 
 private:
@@ -46,9 +47,9 @@ private:
     std::vector<std::string> m_src_names;
     std::vector<JEventSourceGenerator*> m_src_gens;
     std::vector<JFactoryGenerator*> m_fac_gens;
-    std::vector<JEventSource*> m_evt_src_owned;
-    std::vector<JEventSource*> m_evt_src_unowned;
-    std::vector<JEventProcessor*> m_evt_proc;
+    std::vector<JEventSource*> m_evt_srces_all;
+    std::vector<JEventSource*> m_evt_srces_owned;
+    std::vector<JEventProcessor*> m_evt_procs;
 
     std::string m_user_evt_src_typename = "";
     JEventSourceGenerator* m_user_evt_src_gen = nullptr;

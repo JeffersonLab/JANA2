@@ -30,56 +30,42 @@
 // Author: Nathan Brei
 //
 
-#ifndef JANA2_JTOPOLOGYBUILDER_H
-#define JANA2_JTOPOLOGYBUILDER_H
+#ifndef JANA2_JARROWTOPOLOGY_H
+#define JANA2_JARROWTOPOLOGY_H
 
 
-#include <JANA/JEventSourceGenerator.h>
-#include <JANA/JEventProcessor.h>
-#include <JANA/Engine/JProcessingTopology.h>
+#include <JANA/Services/JComponentManager.h>
+#include <JANA/Status/JPerfMetrics.h>
+#include <JANA/Utils/JProcessorMapping.h>
+#include <JANA/Utils/JEventPool.h>
 
-class JApplication;
-
-class JTopologyBuilder {
-
-public:
-
-    JTopologyBuilder(JApplication* app);
-
-    void increase_priority();
-
-    void add(std::string event_source_name);
-    void add(JEventSourceGenerator* source_generator);
-    void add(JFactoryGenerator* factory_generator);
-    void add(JEventSource* event_source);
-    void add(JEventProcessor* processor);
-
-    void set_current_plugin(std::string plugin_name);
-    void print_report();
-
-    JProcessingTopology* build_topology();
+#include "JActivable.h"
+#include "JArrow.h"
 
 
-private:
+struct JArrowTopology : public JActivable {
 
-    JApplication* m_app;
-    std::string m_current_plugin_name;
+    enum Status { Inactive, Running, Draining, Finished };
 
-    std::vector<std::string> _evt_src_names;
+    explicit JArrowTopology();
+    virtual ~JArrowTopology();
 
-    std::vector<JFactoryGenerator*> _fac_gens_front;
-    std::vector<JFactoryGenerator*> _fac_gens_back;
+    static JArrowTopology* from_components(JComponentManager*, JApplication*);
 
-    std::vector<JEventProcessor*> _evt_procs_front;
-    std::vector<JEventProcessor*> _evt_procs_back;
+    std::shared_ptr<JEventPool> event_pool; // TODO: Belongs somewhere else
+    JPerfMetrics metrics;
+    Status status = Inactive; // TODO: Merge this concept with JActivable
 
-    std::vector<JEventSourceGenerator*> _evt_src_gens_front;
-    std::vector<JEventSourceGenerator*> _evt_src_gens_back;
+    std::vector<JArrow*> arrows;
+    std::vector<JArrow*> sources;           // Sources needed for activation
+    std::vector<JArrow*> sinks;             // Sinks needed for finished message count // TODO: Not anymore
+    JProcessorMapping mapping;
 
-    std::vector<JEventSource*> _evt_srces_front;
-    std::vector<JEventSource*> _evt_srces_back;
+    JLogger _logger;
 
+    bool is_active() override;
+    void set_active(bool is_active) override;
 };
 
 
-#endif //JANA2_JTOPOLOGYBUILDER_H
+#endif //JANA2_JARROWTOPOLOGY_H

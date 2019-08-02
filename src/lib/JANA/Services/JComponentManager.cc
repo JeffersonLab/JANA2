@@ -12,10 +12,9 @@ JComponentManager::JComponentManager(JApplication * app) : m_app(app) {
 }
 
 JComponentManager::~JComponentManager() {
-    for (auto* src : m_evt_src_owned) {
+    for (auto* src : m_evt_srces_owned) {
         delete src;
     }
-    m_evt_src_owned.clear();
     // TODO: What else do we want to own? We don't really expect the user to delete any of the components ever
     // Maybe we should add a bool param indicating whether we take ownership or not, defaults to true
     // Or maybe we should only accept shared_ptrs
@@ -31,6 +30,8 @@ void JComponentManager::add(std::string event_source_name) {
 }
 
 void JComponentManager::add(JEventSourceGenerator *source_generator) {
+    source_generator->SetPlugin(m_current_plugin_name);
+    source_generator->SetJApplication(m_app);
     m_src_gens.push_back(source_generator);
 }
 
@@ -39,11 +40,14 @@ void JComponentManager::add(JFactoryGenerator *factory_generator) {
 }
 
 void JComponentManager::add(JEventSource *event_source) {
-    m_evt_src_unowned.push_back(event_source);
+    event_source->SetPlugin(m_current_plugin_name);
+    event_source->SetJApplication(m_app);
+    m_evt_srces_all.push_back(event_source);
 }
 
 void JComponentManager::add(JEventProcessor *processor) {
-    m_evt_proc.push_back(processor);
+    processor->SetPlugin(m_current_plugin_name);
+    m_evt_procs.push_back(processor);
 }
 
 void JComponentManager::resolve_event_sources() {
@@ -54,7 +58,12 @@ void JComponentManager::resolve_event_sources() {
         auto source = generator->MakeJEventSource(source_name);
         source->SetPlugin(generator->GetPlugin());
         source->SetJApplication(m_app);
-        m_evt_src_owned.push_back(source);
+        auto fac_gen = source->GetFactoryGenerator();
+        if (fac_gen != nullptr) {
+            m_fac_gens.push_back(source->GetFactoryGenerator());
+        }
+        m_evt_srces_all.push_back(source);
+        m_evt_srces_owned.push_back(source);
     }
 }
 
@@ -112,34 +121,28 @@ JEventSourceGenerator* JComponentManager::resolve_user_event_source_generator() 
 
 }
 
-std::vector<JEventSource*> JComponentManager::get_evt_srces() {
-    std::vector<JEventSource*> result;
-    result.insert(result.end(), m_evt_src_unowned.begin(), m_evt_src_unowned.end());
-    result.insert(result.end(), m_evt_src_owned.begin(), m_evt_src_owned.end());
-    return result;
+std::vector<JEventSource*>& JComponentManager::get_evt_srces() {
+    return m_evt_srces_all;
 }
 
-std::vector<JEventProcessor *> JComponentManager::get_evt_procs() {
-    return std::vector<JEventProcessor *>();
+std::vector<JEventProcessor*>& JComponentManager::get_evt_procs() {
+    return m_evt_procs;
 }
 
-std::vector<JFactoryGenerator *> JComponentManager::get_fac_gens() {
-    return std::vector<JFactoryGenerator *>();
+std::vector<JFactoryGenerator*>& JComponentManager::get_fac_gens() {
+    return m_fac_gens;
 }
 
 JComponentSummary JComponentManager::get_component_summary() {
     JComponentSummary result;
 
     // Event sources
-    for (auto * src : m_evt_src_unowned) {
-        result.event_sources.push_back({.plugin_name=src->GetPlugin(), .type_name=src->GetType(), .source_name=src->GetName()});
-    }
-    for (auto * src : m_evt_src_owned) {
+    for (auto * src : m_evt_srces_all) {
         result.event_sources.push_back({.plugin_name=src->GetPlugin(), .type_name=src->GetType(), .source_name=src->GetName()});
     }
 
     // Event processors
-    for (auto * evt_proc : m_evt_proc) {
+    for (auto * evt_proc : m_evt_procs) {
         result.event_processors.push_back({.plugin_name = evt_proc->GetPlugin(), .type_name=evt_proc->GetType()});
     }
 

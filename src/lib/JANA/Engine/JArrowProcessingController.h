@@ -37,7 +37,7 @@
 
 #include <JANA/Engine/JArrow.h>
 #include <JANA/Engine/JWorker.h>
-#include <JANA/Engine/JProcessingTopology.h>
+#include <JANA/Engine/JArrowTopology.h>
 #include <JANA/Engine/JArrowPerfSummary.h>
 
 #include <vector>
@@ -45,7 +45,7 @@
 class JArrowProcessingController : public JProcessingController {
 public:
 
-    explicit JArrowProcessingController(JProcessingTopology* topology) : _topology(topology) {};
+    explicit JArrowProcessingController(JArrowTopology* topology) : _topology(topology) {};
     ~JArrowProcessingController() override;
 
     void initialize() override;
@@ -68,10 +68,9 @@ private:
     using jclock_t = std::chrono::steady_clock;
 
     JArrowPerfSummary _perf_summary;
-    JProcessingTopology* _topology;
+    JArrowTopology* _topology;
     std::vector<JWorker*> _workers;
     JScheduler* _scheduler = nullptr;
-
     JLogger _logger = JLogger::everything();
 
 };

@@ -31,15 +31,16 @@
 //
 
 
+#include "JPluginLoader.h"
+#include "JComponentManager.h"
+#include "JLogger.h"
+
 #include <dlfcn.h>
 #include <iostream>
 #include <iomanip>
 #include <unistd.h>
 #include <sched.h>
-
-#include "JPluginLoader.h"
-#include "JLogger.h"
-#include "JTopologyBuilder.h"
+#include <set>
 
 void JPluginLoader::add_plugin(std::string plugin_name) {
     /// Add the specified plugin to the list of plugins to be
@@ -90,13 +91,10 @@ void JPluginLoader::add_plugin_path(std::string path) {
 }
 
 
-void JPluginLoader::attach_plugins(JTopologyBuilder* builder) {
+void JPluginLoader::attach_plugins(JComponentManager* jcm) {
     /// Loop over list of plugin names added via AddPlugin() and
     /// actually attach and initialize them. See AddPlugin method
     /// for more.
-
-    builder->increase_priority();
-    // Everything added to builder after this will have higher priority than everything added before.
 
     // The JANA_PLUGIN_PATH specifies directories to search
     // for plugins that were explicitly added through AddPlugin(...).
@@ -135,8 +133,8 @@ void JPluginLoader::attach_plugins(JTopologyBuilder* builder) {
             if (access(fullpath.c_str(), F_OK) != -1) {
                 LOG_TRACE(_logger, _verbose) << "Found!" << LOG_END;
                 try {
-                    builder->set_current_plugin(plugin);
-                    attach_plugin(builder, fullpath.c_str());
+                    jcm->next_plugin(plugin);
+                    attach_plugin(jcm, fullpath.c_str());
                     found_plugin = true;
                     break;
                 } catch (...) {
@@ -159,13 +157,10 @@ void JPluginLoader::attach_plugins(JTopologyBuilder* builder) {
             exit(-1);
         }
     }
-
-    builder->increase_priority();
-    // Push everything onto low-priority list, so future adds have higher priority
 }
 
 
-void JPluginLoader::attach_plugin(JTopologyBuilder* builder, std::string soname) {
+void JPluginLoader::attach_plugin(JComponentManager* jcm, std::string soname) {
 
     /// Attach a plugin by opening the shared object file and running the
     /// InitPlugin_t(JApplication* app) global C-style routine in it.
@@ -190,7 +185,7 @@ void JPluginLoader::attach_plugin(JTopologyBuilder* builder, std::string soname)
 
     // Look for an InitPlugin symbol
     typedef void InitPlugin_t(JApplication* app);
-    //typedef void InitPlugin_t(JTopologyBuilder* builder, JServiceLocator* sl);
+    //typedef void InitPlugin_t(JComponentManager* jcm, JServiceLocator* sl);
     // TODO: Convert InitPlugin sig to (builder, servicelocator) -> void
     InitPlugin_t* plugin = (InitPlugin_t*) dlsym(handle, "InitPlugin");
     if (plugin) {

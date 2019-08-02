@@ -85,19 +85,13 @@ add_library(jana2 STATIC
         src/lib/JANA/Engine/JArrowProcessingController.h
         src/lib/JANA/Engine/JArrowPerfSummary.cc
         src/lib/JANA/Engine/JArrowPerfSummary.h
-        src/lib/JANA/Engine/JProcessingTopology.cpp
-        src/lib/JANA/Engine/JProcessingTopology.h
         src/lib/JANA/Services/JParameter.cc
         src/lib/JANA/Services/JParameter.h
         src/lib/JANA/Services/JParameterManager.cc
         src/lib/JANA/Services/JParameterManager.h
-        src/lib/JANA/Services/JEventSourceManager.cc
-        src/lib/JANA/Services/JEventSourceManager.h
         src/lib/JANA/Services/JLogger.h
         src/lib/JANA/Services/JServiceLocator.cc
         src/lib/JANA/Services/JProcessingController.h
-        src/lib/JANA/Services/JTopologyBuilder.cc
-        src/lib/JANA/Services/JTopologyBuilder.h
         src/lib/JANA/Services/JPluginLoader.cc
         src/lib/JANA/Services/JPluginLoader.h
         src/lib/JANA/Status/JStatus.cc
@@ -119,6 +113,8 @@ add_library(jana2 STATIC
         src/lib/JANA/Utils/JEventPool.h
         src/lib/JANA/Services/JComponentManager.cc
         src/lib/JANA/Services/JComponentManager.h
+        src/lib/JANA/Engine/JArrowTopology.cc
+        src/lib/JANA/Engine/JArrowTopology.h
         )
 
 

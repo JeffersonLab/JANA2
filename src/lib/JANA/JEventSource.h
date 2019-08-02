@@ -69,9 +69,7 @@ template<typename T> class JFactoryT;
 class JEventSource{
 
 	friend JEvent;
-	friend JEventSourceManager;
 	friend JEventSourceGenerator;
-	friend JTopologyBuilder;
 	friend JComponentManager;
 
 	public:

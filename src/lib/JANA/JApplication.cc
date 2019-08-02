@@ -34,9 +34,8 @@
 #include <JANA/JFactoryGenerator.h>
 
 #include <JANA/Services/JParameterManager.h>
-#include <JANA/Services/JEventSourceManager.h>
 #include <JANA/Services/JPluginLoader.h>
-#include <JANA/Services/JTopologyBuilder.h>
+#include <JANA/Services/JComponentManager.h>
 #include <JANA/Services/JProcessingController.h>
 
 #include <JANA/Engine/JArrowProcessingController.h>
@@ -51,8 +50,7 @@ JApplication::JApplication(JParameterManager* params) {
 
     _logger = JLoggingService::logger("JApplication");
     _plugin_loader = new JPluginLoader(this,_params);
-    _topology_builder = new JTopologyBuilder(this);
-    _topology = nullptr;
+    _component_manager = new JComponentManager(this);
     _processing_controller = nullptr;
 }
 
@@ -63,10 +61,7 @@ JApplication::~JApplication() {
     }
     delete _params;
     delete _plugin_loader;
-    delete _topology_builder;
-    if (_topology != nullptr) {
-        delete _topology;
-    }
+    delete _component_manager;
 }
 
 
@@ -84,29 +79,29 @@ void JApplication::AddPluginPath(std::string path) {
 // Building a ProcessingTopology
 
 void JApplication::Add(JEventSource* event_source) {
-    _topology_builder->add(event_source);
+    _component_manager->add(event_source);
 }
 
 void JApplication::Add(JEventSourceGenerator *source_generator) {
     /// Add the given JFactoryGenerator to the list of queues
     ///
     /// @param source_generator pointer to source generator to add. Ownership is passed to JApplication
-    _topology_builder->add(source_generator);
+    _component_manager->add(source_generator);
 }
 
 void JApplication::Add(JFactoryGenerator *factory_generator) {
     /// Add the given JFactoryGenerator to the list of queues
     ///
     /// @param factory_generator pointer to factory generator to add. Ownership is passed to JApplication
-    _topology_builder->add(factory_generator);
+    _component_manager->add(factory_generator);
 }
 
 void JApplication::Add(JEventProcessor* processor) {
-    _topology_builder->add(processor);
+    _component_manager->add(processor);
 }
 
 void JApplication::Add(std::string event_source_name) {
-    _topology_builder->add(event_source_name);
+    _component_manager->add(event_source_name);
 }
 
 
@@ -123,7 +118,7 @@ void JApplication::Initialize() {
     _initialized = true;
 
     // Attach all plugins
-    _plugin_loader->attach_plugins(_topology_builder);
+    _plugin_loader->attach_plugins(_component_manager);
 
     // Set task pool size
     size_t task_pool_size = 200;
@@ -137,9 +132,8 @@ void JApplication::Initialize() {
                                  "The total number of worker threads");
 
 
-    _topology = _topology_builder->build_topology();
-
-    _processing_controller = new JArrowProcessingController(_topology);
+    auto topology = JArrowTopology::from_components(_component_manager, this);
+    _processing_controller = new JArrowProcessingController(topology);
     _extended_report = true;
 
     _params->SetDefaultParameter("JANA:EXTENDED_REPORT", _extended_report);
@@ -170,12 +164,12 @@ void JApplication::Run(bool wait_until_finished) {
         // If we are finishing up (all input sources are closed, and are waiting for all events to finish processing)
         // This flag is used by the integrated rate calculator
         // The JThreadManager is in charge of telling all the threads to end
-        if(!_draining_queues)
-            _draining_queues = _topology->event_source_manager.AreAllFilesClosed();
-
+        // TODO: Bring this back
+        //if(!_draining_queues)
+        //    _draining_queues = _topology->event_source_manager.AreAllFilesClosed();
 
         // Run until topology is deactivated, either because it finished or because another thread called stop()
-        if (!_topology->is_active() || _processing_controller->is_stopped()) {
+        if (_processing_controller->is_stopped()) {
             std::cout << "All threads have ended.\n";
             break;
         }
@@ -239,7 +233,7 @@ int JApplication::GetExitCode() {
 
 JComponentSummary JApplication::GetComponentSummary() {
     /// Returns a data object describing all components currently running
-    return _topology->component_summary;
+    return _component_manager->get_component_summary();
 }
 
 // Performance/status monitoring
@@ -338,23 +332,11 @@ float JApplication::GetInstantaneousRate()
 // Things that don't belong here
 
 JFactorySet* JApplication::GetFactorySet() {
-    return mFactorySetPool.Get_Resource(_topology->factory_generators);
+    return mFactorySetPool.Get_Resource(_component_manager->get_fac_gens());
 }
 
 void JApplication::Recycle(JFactorySet* aFactorySet) {
     return mFactorySetPool.Recycle(aFactorySet);
-}
-
-JEventSourceManager* JApplication::GetJEventSourceManager() const {
-    return &_topology->event_source_manager;
-}
-
-void JApplication::GetJEventProcessors(std::vector<JEventProcessor*>& aProcessors) {
-    aProcessors = _topology->event_processors;
-}
-
-void JApplication::GetJFactoryGenerators(std::vector<JFactoryGenerator*> &factory_generators) {
-    factory_generators = _topology->factory_generators;
 }
 
 std::string JApplication::Val2StringWithPrefix(float val)

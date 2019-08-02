@@ -47,7 +47,6 @@
 #include <string>
 
 #include <JANA/JEventSource.h>
-#include <JANA/Services/JEventSourceManager.h>
 
 /// This is a base class for all event source generators. JANA implements
 /// event sources in a modular way so that new types of sources can be
@@ -63,8 +62,6 @@
 class JEventSourceGenerator{
 	public:
 	
-		friend JEventSourceManager;
-		friend JTopologyBuilder;
 		friend JComponentManager;
 
 		JEventSourceGenerator(JApplication *app=nullptr):mApplication(app){}

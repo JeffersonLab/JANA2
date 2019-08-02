@@ -40,7 +40,7 @@
 #include <vector>
 
 
-class JTopologyBuilder;
+class JComponentManager;
 class JApplication;
 
 class JPluginLoader {
@@ -51,8 +51,8 @@ public:
 
     void add_plugin(std::string plugin_name);
     void add_plugin_path(std::string path);
-    void attach_plugins(JTopologyBuilder* builder);
-    void attach_plugin(JTopologyBuilder* builder, std::string plugin_name);
+    void attach_plugins(JComponentManager* jcm);
+    void attach_plugin(JComponentManager* jcm, std::string plugin_name);
 
 private:
 

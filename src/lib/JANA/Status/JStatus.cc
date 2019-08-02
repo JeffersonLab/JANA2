@@ -55,7 +55,6 @@
 
 #include <JANA/JEventSource.h>
 #include <JANA/Services/JParameterManager.h>
-#include <JANA/Services/JEventSourceManager.h>
 #include <JANA/Utils/JCpuInfo.h>
 
 using namespace std;
@@ -146,12 +145,12 @@ void JStatus::GenerateReport(std::stringstream &ss)
 	std::vector<JThreadManager::JEventSourceInfo*> retired_source_infos;
 	vector<JThread*> threads;
 */
-
+/*
 	japp->GetJEventProcessors(processors);
 	japp->GetJEventSourceManager()->GetActiveJEventSources(sources); //ignores exhausted sources!!
 	japp->GetJEventSourceManager()->GetJEventSourceGenerators(source_generators);
 	japp->GetJFactoryGenerators(factory_generators);
-/*  japp->GetJThreadManager()->GetActiveSourceInfos(active_source_infos);
+    japp->GetJThreadManager()->GetActiveSourceInfos(active_source_infos);
 	japp->GetJThreadManager()->GetRetiredSourceInfos(retired_source_infos); //assumes one didn't retire in between calls!
 	japp->GetJThreadManager()->GetJThreads(threads);
 */

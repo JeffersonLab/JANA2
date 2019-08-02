@@ -44,10 +44,9 @@ class JFactoryGenerator;
 class JEventSourceManager;
 class JFactorySet;
 
+class JComponentManager;
 class JPluginLoader;
 class JProcessingController;
-class JTopologyBuilder;
-struct JProcessingTopology;
 
 extern JApplication* japp;
 
@@ -163,8 +162,7 @@ private:
     JLogger _logger;
     JParameterManager* _params;
     JPluginLoader* _plugin_loader;
-    JTopologyBuilder* _topology_builder;
-    JProcessingTopology* _topology;
+    JComponentManager* _component_manager;
     JProcessingController* _processing_controller;
     JServiceLocator _service_locator;
 

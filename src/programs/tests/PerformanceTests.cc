@@ -31,7 +31,7 @@
 //
 #include "catch.hpp"
 
-#include <JANA/Engine/JProcessingTopology.h>
+#include <JANA/Engine/JArrowTopology.h>
 #include <JANA/Engine/JArrowProcessingController.h>
 #include "PerformanceTests.h"
 #include "TestTopology.h"
@@ -87,7 +87,7 @@ TEST_CASE("MemoryBottleneckTest", "[.][performance]") {
     topology.addArrow(new SinkArrow<Event*>("plot", plot, q3));
 
     japp = new JApplication; // TODO: Get rid of this
-    JProcessingTopology proctop(japp);
+    JArrowTopology proctop;
     proctop.arrows = std::move(topology.arrows);
     proctop.sources.push_back(proctop.arrows[0]);
     proctop.sinks.push_back(proctop.arrows[3]);
