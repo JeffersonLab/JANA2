@@ -5,7 +5,7 @@
 #include <random>
 #include <TestTopology.h>
 #include <TestTopologyComponents.h>
-#include <JANA/JPerfUtils.h>
+#include <JANA/Utils/JPerfUtils.h>
 
 
 TEST_CASE("JTopology: Basic functionality") {

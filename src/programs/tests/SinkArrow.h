@@ -5,7 +5,7 @@
 #ifndef GREENFIELD_SINKARROW_H
 #define GREENFIELD_SINKARROW_H
 
-#include <JANA/JArrow.h>
+#include <JANA/Engine/JArrow.h>
 
 
 /// Sink consumes events of type T, accumulating state along the way. This

@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include <JANA/JLogger.h>
+#include <JANA/Services/JLogger.h>
 #include <thread>
 #include <SourceArrow.h>
 #include <MapArrow.h>

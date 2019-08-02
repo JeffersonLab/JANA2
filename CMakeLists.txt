@@ -117,6 +117,8 @@ add_library(jana2 STATIC
         src/lib/JANA/Utils/JProcessorMapping.h
         src/lib/JANA/Utils/JProcessorMapping.cc
         src/lib/JANA/Utils/JEventPool.h
+        src/lib/JANA/Services/JComponentManager.cc
+        src/lib/JANA/Services/JComponentManager.h
         )
 
 

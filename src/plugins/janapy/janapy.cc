@@ -44,8 +44,8 @@
 using namespace std;
 
 #include <JANA/JApplication.h>
-#include <JANA/JCpuInfo.h>
-#include <JANA/JParameterManager.h>
+#include <JANA/Utils/JCpuInfo.h>
+#include <JANA/Services/JParameterManager.h>
 
 void JANA_PythonModuleInit(JApplication *sApp);
 

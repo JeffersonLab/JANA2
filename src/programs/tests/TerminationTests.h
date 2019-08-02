@@ -21,7 +21,7 @@ struct BoundedSource : public JEventSource {
         return "ComponentTests Fake Event Source";
     }
 
-    std::string GetType(void) const {
+    std::string GetType(void) const override {
         return JTypeInfo::demangle<decltype(*this)>();
     }
 
@@ -47,7 +47,7 @@ struct UnboundedSource : public JEventSource {
         return "ComponentTests Fake Event Source";
     }
 
-    std::string GetType(void) const {
+    std::string GetType(void) const override {
         return JTypeInfo::demangle<decltype(*this)>();
     }
 

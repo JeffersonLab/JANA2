@@ -35,7 +35,7 @@
 #pragma once
 
 #include <map>
-#include <JANA/JServiceLocator.h>
+#include <JANA/Services/JServiceLocator.h>
 
 struct ParameterSvc : public JService {
 

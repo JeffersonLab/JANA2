@@ -56,6 +56,7 @@ class JEvent;
 class JEventSourceManager;
 class JEventSourceGenerator;
 class JFactory;
+class JComponentManager;
 template<typename T> class JFactoryT;
 
 //Deriving classes should:
@@ -71,6 +72,7 @@ class JEventSource{
 	friend JEventSourceManager;
 	friend JEventSourceGenerator;
 	friend JTopologyBuilder;
+	friend JComponentManager;
 
 	public:
 	

@@ -5,8 +5,8 @@
 #ifndef GREENFIELD_SOURCEARROW_H
 #define GREENFIELD_SOURCEARROW_H
 
-#include <JANA/JArrow.h>
-#include <JANA/JMailbox.h>
+#include <JANA/Engine/JArrow.h>
+#include <JANA/Engine/JMailbox.h>
 
 
 /// Source stands in for (and improves upon) JEventSource.

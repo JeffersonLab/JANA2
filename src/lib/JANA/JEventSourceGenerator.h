@@ -65,6 +65,7 @@ class JEventSourceGenerator{
 	
 		friend JEventSourceManager;
 		friend JTopologyBuilder;
+		friend JComponentManager;
 
 		JEventSourceGenerator(JApplication *app=nullptr):mApplication(app){}
 		virtual ~JEventSourceGenerator(){}

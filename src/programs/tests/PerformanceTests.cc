@@ -31,8 +31,8 @@
 //
 #include "catch.hpp"
 
-#include <JANA/JProcessingTopology.h>
-#include <JANA/JArrowProcessingController.h>
+#include <JANA/Engine/JProcessingTopology.h>
+#include <JANA/Engine/JArrowProcessingController.h>
 #include "PerformanceTests.h"
 #include "TestTopology.h"
 

@@ -1,8 +1,8 @@
 #ifndef GREENFIELD_TOPOLOGY_H
 #define GREENFIELD_TOPOLOGY_H
 
-#include <JANA/JArrow.h>
-#include <JANA/JLogger.h>
+#include <JANA/Engine/JArrow.h>
+#include <JANA/Services/JLogger.h>
 
 class JScheduler;
 class JWorker;
