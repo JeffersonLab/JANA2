@@ -87,8 +87,6 @@ template <typename T>
 class JEventSourceGeneratorT:public JEventSourceGenerator{
 	public:
 	
-		friend JEventSourceManager;
-	
 		JEventSourceGeneratorT(JApplication *app=nullptr):JEventSourceGenerator(app){}
 		virtual ~JEventSourceGeneratorT(){}
 

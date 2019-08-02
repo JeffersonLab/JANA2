@@ -41,7 +41,6 @@ class JEventProcessor;
 class JEventSource;
 class JEventSourceGenerator;
 class JFactoryGenerator;
-class JEventSourceManager;
 class JFactorySet;
 
 class JComponentManager;
@@ -148,10 +147,6 @@ public:
 
 
     // Doesn't belong here
-
-    void GetJEventProcessors(std::vector<JEventProcessor*>& aProcessors);
-    void GetJFactoryGenerators(std::vector<JFactoryGenerator*>& factory_generators);
-    JEventSourceManager* GetJEventSourceManager(void) const;
     JFactorySet* GetFactorySet(void);
     void Recycle(JFactorySet* aFactorySet);
     string Val2StringWithPrefix(float val);

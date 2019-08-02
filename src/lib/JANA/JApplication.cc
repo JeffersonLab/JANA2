@@ -132,6 +132,7 @@ void JApplication::Initialize() {
                                  "The total number of worker threads");
 
 
+    _component_manager->resolve_event_sources();
     auto topology = JArrowTopology::from_components(_component_manager, this);
     _processing_controller = new JArrowProcessingController(topology);
     _extended_report = true;

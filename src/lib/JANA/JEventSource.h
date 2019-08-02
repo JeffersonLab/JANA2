@@ -53,10 +53,10 @@
 #include <JANA/JFactoryGenerator.h>
 
 class JEvent;
-class JEventSourceManager;
-class JEventSourceGenerator;
 class JFactory;
+class JEventSourceGenerator;
 class JComponentManager;
+
 template<typename T> class JFactoryT;
 
 //Deriving classes should:
