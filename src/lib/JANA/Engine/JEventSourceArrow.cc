@@ -2,9 +2,9 @@
 // Created by nbrei on 4/8/19.
 //
 
-#include <JANA/JEventSourceArrow.h>
 #include <JANA/JApplication.h>
-#include <JANA/JEventPool.h>
+#include <JANA/Engine/JEventSourceArrow.h>
+#include <JANA/Utils/JEventPool.h>
 
 
 using SourceStatus = JEventSource::RETURN_STATUS;

@@ -50,9 +50,9 @@
 #include <algorithm>
 #include <map>
 
-#include <JANA/JParameter.h>
+#include <JANA/Services/JParameter.h>
+#include <JANA/Services/JLogger.h>
 #include <JANA/JException.h>
-#include "JLogger.h"
 
 using std::string;
 

@@ -37,8 +37,8 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-#include "JObject.h"
-#include "JTypeInfo.h"
+#include <JANA/JObject.h>
+#include <JANA/Utils/JTypeInfo.h>
 
 //---------------------------------
 // JObject    (Constructor)

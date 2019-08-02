@@ -51,11 +51,12 @@
 #include <set>
 #include <map>
 
-#include "JParameterManager.h"
-#include "JStatus.h"
-#include "JEventSourceManager.h"
-#include "JEventSource.h"
-#include "JCpuInfo.h"
+#include <JANA/Status/JStatus.h>
+
+#include <JANA/JEventSource.h>
+#include <JANA/Services/JParameterManager.h>
+#include <JANA/Services/JEventSourceManager.h>
+#include <JANA/Utils/JCpuInfo.h>
 
 using namespace std;
 

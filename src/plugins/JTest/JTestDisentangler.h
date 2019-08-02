@@ -35,7 +35,8 @@
 
 #include <JANA/JFactoryT.h>
 #include <JANA/JEvent.h>
-#include <JANA/JPerfUtils.h>
+#include <JANA/Utils/JPerfUtils.h>
+
 #include "JTestDataObjects.h"
 #include "JTestCalibrationService.h"
 

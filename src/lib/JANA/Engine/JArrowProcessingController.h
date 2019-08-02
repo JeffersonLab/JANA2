@@ -33,14 +33,14 @@
 #ifndef JANA2_JARROWPROCESSINGCONTROLLER_H
 #define JANA2_JARROWPROCESSINGCONTROLLER_H
 
-#include <JANA/JProcessingController.h>
+#include <JANA/Services/JProcessingController.h>
+
+#include <JANA/Engine/JArrow.h>
+#include <JANA/Engine/JWorker.h>
+#include <JANA/Engine/JProcessingTopology.h>
+#include <JANA/Engine/JArrowPerfSummary.h>
 
 #include <vector>
-
-#include <JANA/JArrow.h>
-#include <JANA/JWorker.h>
-#include <JANA/JProcessingTopology.h>
-#include <JANA/JArrowPerfSummary.h>
 
 class JArrowProcessingController : public JProcessingController {
 public:

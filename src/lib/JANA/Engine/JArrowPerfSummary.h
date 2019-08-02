@@ -34,8 +34,8 @@
 #define JANA2_JARROWPERFSUMMARY_H
 
 
-#include <JANA/JPerfSummary.h>
-#include <JANA/JArrow.h>
+#include <JANA/Status/JPerfSummary.h>
+#include <JANA/Engine/JArrow.h>
 
 #include <vector>
 #include <string>

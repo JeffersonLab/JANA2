@@ -5,7 +5,7 @@
 #include <thread>
 
 #include <JANA/JApplication.h>
-#include <JANA/JStatus.h>
+#include <JANA/Status/JStatus.h>
 
 int gSIGINT_RECEIVED = 0;
 

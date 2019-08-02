@@ -30,14 +30,13 @@
 // Author: Nathan Brei
 //
 
-#include <JANA/JTopologyBuilder.h>
-#include <JANA/JProcessingTopology.h>
-#include <JANA/JEventProcessorArrow.h>
-#include <JANA/JEventSourceArrow.h>
-#include <JANA/JTopologyBuilder.h>
+#include <JANA/Services/JTopologyBuilder.h>
+
+#include <JANA/Engine/JProcessingTopology.h>
+#include <JANA/Engine/JEventProcessorArrow.h>
+#include <JANA/Engine/JEventSourceArrow.h>
 
 #include <unordered_set>
-#include "JTopologyBuilder.h"
 
 
 void JTopologyBuilder::add(std::string event_source_name) {

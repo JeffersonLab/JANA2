@@ -6,10 +6,10 @@
 #define JANA_JWORKER_H
 
 #include <thread>
-#include <JANA/JLogger.h>
-#include <JANA/JScheduler.h>
-#include <JANA/JWorkerMetrics.h>
-#include <JANA/JArrowPerfSummary.h>
+#include <JANA/Services/JLogger.h>
+#include <JANA/Engine/JScheduler.h>
+#include <JANA/Engine/JWorkerMetrics.h>
+#include <JANA/Engine/JArrowPerfSummary.h>
 
 
 using jclock_t = std::chrono::steady_clock;

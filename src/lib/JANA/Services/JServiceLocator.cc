@@ -2,7 +2,7 @@
 // Created by nbrei on 4/3/19.
 //
 
-#include <JANA/JServiceLocator.h>
+#include <JANA/Services/JServiceLocator.h>
 
 
 // Global variable which serves as a replacement for japp

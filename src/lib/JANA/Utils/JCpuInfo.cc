@@ -14,7 +14,7 @@
 #include <numa.h>
 #endif //HAVE_NUMA
 
-#include <JANA/JCpuInfo.h>
+#include <JANA/Utils/JCpuInfo.h>
 
 extern thread_local int THREAD_ID;
 

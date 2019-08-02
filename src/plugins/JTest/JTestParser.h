@@ -3,14 +3,15 @@
 #include <vector>
 #include <memory>
 
-#include "JEventSource.h"
-#include "JEvent.h"
-#include "JApplication.h"
-#include "JSourceFactoryGenerator.h"
-#include "JEventSourceGeneratorT.h"
+#include <JANA/JApplication.h>
+#include <JANA/JEventSource.h>
+#include <JANA/JEventSourceGeneratorT.h>
+#include <JANA/JSourceFactoryGenerator.h>
+
+#include <JANA/Utils/JPerfUtils.h>
 
 #include "JTestDataObjects.h"
-#include "JPerfUtils.h"
+
 
 class JTestParser : public JEventSource {
 

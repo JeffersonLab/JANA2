@@ -2,8 +2,8 @@
 // Created by nbrei on 4/4/19.
 //
 
-#include <JANA/JWorker.h>
-#include "JCpuInfo.h"
+#include <JANA/Engine/JWorker.h>
+#include <JANA/Utils/JCpuInfo.h>
 
 
 void JWorker::measure_perf(WorkerSummary& summary) {

@@ -30,9 +30,9 @@
 // Author: Nathan Brei
 //
 
-#include "JArrowProcessingController.h"
-#include "JArrowPerfSummary.h"
-#include "JCpuInfo.h"
+#include <JANA/Engine/JArrowProcessingController.h>
+#include <JANA/Engine/JArrowPerfSummary.h>
+#include <JANA/Utils/JCpuInfo.h>
 
 #include <memory>
 

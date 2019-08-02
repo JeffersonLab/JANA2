@@ -52,8 +52,6 @@ add_executable(playground
 add_library(jana2 STATIC
         src/lib/JANA/JApplication.cc
         src/lib/JANA/JApplication.h
-        src/lib/JANA/JCpuInfo.cc
-        src/lib/JANA/JCpuInfo.h
         src/lib/JANA/JEvent.cc
         src/lib/JANA/JEvent.h
         src/lib/JANA/JEventProcessor.h
@@ -61,8 +59,6 @@ add_library(jana2 STATIC
         src/lib/JANA/JEventSource.h
         src/lib/JANA/JEventSourceGenerator.h
         src/lib/JANA/JEventSourceGeneratorT.h
-        src/lib/JANA/JEventSourceManager.cc
-        src/lib/JANA/JEventSourceManager.h
         src/lib/JANA/JException.cc
         src/lib/JANA/JException.h
         src/lib/JANA/JFactory.h
@@ -70,57 +66,61 @@ add_library(jana2 STATIC
         src/lib/JANA/JFactorySet.cc
         src/lib/JANA/JFactorySet.h
         src/lib/JANA/JFactoryT.h
-        src/lib/JANA/JLogger.h
         src/lib/JANA/JObject.cc
         src/lib/JANA/JObject.h
-        src/lib/JANA/JParameter.cc
-        src/lib/JANA/JParameter.h
-        src/lib/JANA/JParameterManager.cc
-        src/lib/JANA/JParameterManager.h
-        src/lib/JANA/JResettable.h
-        src/lib/JANA/JResourcePool.h
-        src/lib/JANA/JSignalHandler.h
         src/lib/JANA/JSourceFactoryGenerator.h
-        src/lib/JANA/JStatus.cc
-        src/lib/JANA/JStatus.h
-        src/lib/JANA/JTypeInfo.h
-        src/lib/JANA/JVersion.h
-        src/lib/JANA/JEventProcessorArrow.cc
-        src/lib/JANA/JEventProcessorArrow.h
-        src/lib/JANA/JEventSourceArrow.cc
-        src/lib/JANA/JEventSourceArrow.h
-        src/lib/JANA/JScheduler.cc
-        src/lib/JANA/JPerfUtils.cc
-        src/lib/JANA/JServiceLocator.cc
-        src/lib/JANA/JWorker.h
-        src/lib/JANA/JWorker.cc
-        src/lib/JANA/JSubeventArrow.cc
-        src/lib/JANA/JSubeventArrow.h
-        src/lib/JANA/JProcessingController.h
-        src/lib/JANA/JArrowMetrics.h
-        src/lib/JANA/JWorkerMetrics.h
-        src/lib/JANA/JTopologyBuilder.cc
-        src/lib/JANA/JTopologyBuilder.h
-        src/lib/JANA/JPluginLoader.cc
-        src/lib/JANA/JPluginLoader.h
-        src/lib/JANA/JProcessingTopology.cpp
-        src/lib/JANA/JProcessingTopology.h
-        src/lib/JANA/JArrowProcessingController.cc
-        src/lib/JANA/JArrowProcessingController.h
-        src/lib/JANA/JPerfMetrics.cc
-        src/lib/JANA/JPerfMetrics.h
-        src/lib/JANA/JPerfSummary.h
-        src/lib/JANA/JArrowPerfSummary.cc
-        src/lib/JANA/JArrowPerfSummary.h
-        src/lib/JANA/JEventPool.h
-        src/lib/JANA/JProcessorMapping.h
-        src/lib/JANA/JProcessorMapping.cc
-        src/lib/JANA/JComponentSummary.h
-        src/lib/JANA/JComponentSummary.cc
-        src/lib/JANA/JCsvWriter.h)
+        src/lib/JANA/JCsvWriter.h
+        src/lib/JANA/Engine/JEventProcessorArrow.cc
+        src/lib/JANA/Engine/JEventProcessorArrow.h
+        src/lib/JANA/Engine/JEventSourceArrow.cc
+        src/lib/JANA/Engine/JEventSourceArrow.h
+        src/lib/JANA/Engine/JScheduler.cc
+        src/lib/JANA/Engine/JWorker.h
+        src/lib/JANA/Engine/JWorker.cc
+        src/lib/JANA/Engine/JSubeventArrow.cc
+        src/lib/JANA/Engine/JSubeventArrow.h
+        src/lib/JANA/Engine/JArrowMetrics.h
+        src/lib/JANA/Engine/JWorkerMetrics.h
+        src/lib/JANA/Engine/JArrowProcessingController.cc
+        src/lib/JANA/Engine/JArrowProcessingController.h
+        src/lib/JANA/Engine/JArrowPerfSummary.cc
+        src/lib/JANA/Engine/JArrowPerfSummary.h
+        src/lib/JANA/Engine/JProcessingTopology.cpp
+        src/lib/JANA/Engine/JProcessingTopology.h
+        src/lib/JANA/Services/JParameter.cc
+        src/lib/JANA/Services/JParameter.h
+        src/lib/JANA/Services/JParameterManager.cc
+        src/lib/JANA/Services/JParameterManager.h
+        src/lib/JANA/Services/JEventSourceManager.cc
+        src/lib/JANA/Services/JEventSourceManager.h
+        src/lib/JANA/Services/JLogger.h
+        src/lib/JANA/Services/JServiceLocator.cc
+        src/lib/JANA/Services/JProcessingController.h
+        src/lib/JANA/Services/JTopologyBuilder.cc
+        src/lib/JANA/Services/JTopologyBuilder.h
+        src/lib/JANA/Services/JPluginLoader.cc
+        src/lib/JANA/Services/JPluginLoader.h
+        src/lib/JANA/Status/JStatus.cc
+        src/lib/JANA/Status/JStatus.h
+        src/lib/JANA/Status/JVersion.h
+        src/lib/JANA/Status/JPerfMetrics.cc
+        src/lib/JANA/Status/JPerfMetrics.h
+        src/lib/JANA/Status/JPerfSummary.h
+        src/lib/JANA/Status/JComponentSummary.h
+        src/lib/JANA/Status/JComponentSummary.cc
+        src/lib/JANA/Utils/JCpuInfo.cc
+        src/lib/JANA/Utils/JCpuInfo.h
+        src/lib/JANA/Utils/JResettable.h
+        src/lib/JANA/Utils/JResourcePool.h
+        src/lib/JANA/Utils/JTypeInfo.h
+        src/lib/JANA/Utils/JPerfUtils.cc
+        src/lib/JANA/Utils/JProcessorMapping.h
+        src/lib/JANA/Utils/JProcessorMapping.cc
+        src/lib/JANA/Utils/JEventPool.h
+        )
+
 
 add_library(jtest SHARED
-        src/lib/JANA/JPerfUtils.cc
         src/plugins/JTest/JTestMain.cc
         src/plugins/JTest/JTestDataObjects.h
         src/plugins/JTest/JTestParser.h
@@ -128,7 +128,8 @@ add_library(jtest SHARED
         src/plugins/JTest/JTestTracker.h
         src/plugins/JTest/JTestPlotter.h
         src/plugins/JTest/JTestFactoryGenerator.h
-        src/plugins/JTest/JTestCalibrationService.h)
+        src/plugins/JTest/JTestCalibrationService.h
+        )
 
 add_library(janapy SHARED
         src/plugins/janapy/janapy.cc
@@ -138,6 +139,7 @@ add_executable(jana
         src/programs/jana/jana.cc
         src/programs/jana/JBenchmarker.h
         src/programs/jana/JBenchmarker.cc
+        src/programs/jana/JSignalHandler.h
         src/programs/jana/MyProcessor.cc
         src/programs/jana/MyProcessor.h
         )

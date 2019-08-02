@@ -4,8 +4,8 @@
 
 #include <mutex>
 
-#include <JANA/JArrow.h>
-#include "JLogger.h"
+#include <JANA/Engine/JArrow.h>
+#include <JANA/Services/JLogger.h>
 
 
 

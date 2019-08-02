@@ -40,7 +40,7 @@
 #include <JANA/JEventSource.h>
 #include <JANA/JApplication.h>
 #include <JANA/JEvent.h>
-#include <JANA/JTypeInfo.h>
+#include <JANA/Utils/JTypeInfo.h>
 
 //---------------------------------
 // JEventSource    (Constructor)

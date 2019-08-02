@@ -2,9 +2,9 @@
 // Created by nbrei on 4/8/19.
 //
 
-#include <JANA/JEventProcessorArrow.h>
+#include <JANA/Engine/JEventProcessorArrow.h>
+#include <JANA/Utils/JEventPool.h>
 #include <JANA/JEventProcessor.h>
-#include <JANA/JEventPool.h>
 
 
 JEventProcessorArrow::JEventProcessorArrow(std::string name,

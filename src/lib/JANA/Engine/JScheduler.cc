@@ -1,5 +1,5 @@
 
-#include <JANA/JScheduler.h>
+#include <JANA/Engine/JScheduler.h>
 
 
 JScheduler::JScheduler(const std::vector<JArrow*>& arrows)

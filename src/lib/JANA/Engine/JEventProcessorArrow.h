@@ -7,8 +7,8 @@
 
 
 #include <JANA/JEvent.h>
-#include <JANA/JArrow.h>
-#include <JANA/JMailbox.h>
+#include <JANA/Engine/JArrow.h>
+#include <JANA/Engine/JMailbox.h>
 
 class JEventPool;
 
