@@ -21,7 +21,7 @@ struct FlakySource : public JEventSource {
 
     static std::string GetDescription() { return "UnopenableEventSource"; }
 
-    std::string GetType(void) const {
+    std::string GetType(void) const override {
         return JTypeInfo::demangle<decltype(*this)>();
     }
 
@@ -74,7 +74,7 @@ struct FlakyProcessor : public JEventProcessor {
         }
     }
 
-    std::string GetType(void) const {
+    std::string GetType(void) const override {
         return JTypeInfo::demangle<decltype(*this)>();
     }
 };

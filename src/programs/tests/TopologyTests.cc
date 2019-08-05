@@ -28,7 +28,7 @@ TEST_CASE("JTopology: Basic functionality") {
 
     topology.get_arrow("emit_rand_ints")->set_chunksize(1);
 
-    auto logger = JLogger::nothing();
+    auto logger = JLogger(JLogger::Level::OFF);
     //topology.logger = Logger::everything();
     //source.logger = Logger::everything();
 
@@ -61,7 +61,7 @@ TEST_CASE("JTopology: Basic functionality") {
     }
 
     SECTION("After emitting") {
-        logger = JLogger::nothing();
+        auto logger = JLogger(JLogger::Level::OFF);
         topology.logger = logger;
         source.logger = logger;
 
@@ -165,7 +165,7 @@ TEST_CASE("JTopology: Basic functionality") {
     }
     SECTION("Finished flag propagates") {
 
-        logger = JLogger::nothing();
+        logger = JLogger(JLogger::Level::OFF);
         topology.logger = logger;
         source.logger = logger;
 

@@ -21,7 +21,7 @@ JEventSourceArrow::JEventSourceArrow(std::string name,
 
     _output_queue->attach_upstream(this);
     attach_downstream(_output_queue);
-    _logger = JLogger::nothing();
+    _logger = JLogger();
 }
 
 

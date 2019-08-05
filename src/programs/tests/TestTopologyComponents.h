@@ -2,7 +2,7 @@
 
 #include <iostream>
 
-#include <JANA/Services/JLogger.h>
+#include <JANA/Services/JLoggingService.h>
 #include <thread>
 #include <SourceArrow.h>
 #include <MapArrow.h>
@@ -25,7 +25,7 @@ struct RandIntSource : public Source<int> {
             emit_count += 1;
             emit_sum += x;
         }
-        LOG_TRACE(logger, false) << "RandIntSource emitted " << emit_count << " events" << LOG_END;
+        LOG_DEBUG(logger) << "RandIntSource emitted " << emit_count << " events" << LOG_END;
 
         if (emit_count >= emit_limit) {
             return Status::Finished;
@@ -71,11 +71,10 @@ struct SumSink : public Sink<T> {
 
     void outprocess(T d) override {
         sum += d;
-        LOG_TRACE(logger, false) << "SumSink.outprocess() called!" << LOG_END;
+        LOG_DEBUG(logger) << "SumSink.outprocess() called!" << LOG_END;
     }
 
     void initialize() override {
-
         LOG_INFO(logger) << "SumSink.initialize() called!" << LOG_END;
     };
 

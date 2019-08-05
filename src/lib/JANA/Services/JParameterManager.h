@@ -51,7 +51,7 @@
 #include <map>
 
 #include <JANA/Services/JParameter.h>
-#include <JANA/Services/JLogger.h>
+#include <JANA/JLogger.h>
 #include <JANA/JException.h>
 
 using std::string;

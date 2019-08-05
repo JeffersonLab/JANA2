@@ -55,8 +55,7 @@
 #include <JANA/JFactorySet.h>
 #include <JANA/JEventSource.h>
 #include <JANA/JApplication.h>
-
-#include <JANA/Services/JLogger.h>
+#include <JANA/JLogger.h>
 
 #include <JANA/Utils/JResettable.h>
 #include <JANA/Utils/JTypeInfo.h>
@@ -208,7 +207,7 @@ typename JFactoryT<DataType>::PairType JEvent::GetIterators(const std::string& a
 	uint32_t THREAD_ID = JCpuInfo::GetCpuID();
 
 	if(mDebugLevel > 0)
-		JLog() << "Thread " << THREAD_ID << " JEvent::Get(): Type = " << JTypeInfo::demangle<DataType>() << ", tag = " << aTag << ".\n" << JLogEnd();
+		LOG << "Thread " << THREAD_ID << " JEvent::Get(): Type = " << JTypeInfo::demangle<DataType>() << ", tag = " << aTag << ".\n" << LOG_END;
 
 	//--------------------------------------------------------------------------------------------
 	// Something is amiss below. It looks like the following block was intended to
@@ -282,7 +281,7 @@ typename JFactoryT<DataType>::PairType JEvent::GetIterators(const std::string& a
 	}
 
 	if(mDebugLevel >= 10)
-		JLog() << "Thread " << THREAD_ID << " JEvent::Get(): Create lock acquired.\n" << JLogEnd();
+		LOG << "Thread " << THREAD_ID << " JEvent::Get(): Create lock acquired.\n" << LOG_END;
 
 	//If we throw exception within here we may not release the lock, unless we do try/catch:
 	try
@@ -291,7 +290,7 @@ typename JFactoryT<DataType>::PairType JEvent::GetIterators(const std::string& a
 		if(sFactory->GetCreated())
 		{
 			if(mDebugLevel >= 10)
-				JLog() << "Thread " << THREAD_ID << " JEvent::Get(): Objects created in meantime.\n" << JLogEnd();
+				LOG << "Thread " << THREAD_ID << " JEvent::Get(): Objects created in meantime.\n" << LOG_END;
 			sFactory->ReleaseCreatingLock();
 			return sFactory->Get();
 		}
@@ -299,13 +298,13 @@ typename JFactoryT<DataType>::PairType JEvent::GetIterators(const std::string& a
 		//Not yet: We need to create the objects.
 		//First try to get from the event source
 		if(mDebugLevel >= 10)
-			JLog() << "Thread " << THREAD_ID << " JEvent::Get(): Try to get " << JTypeInfo::demangle<DataType>() << " (tag = " << aTag << ") objects from JEventSource.\n" << JLogEnd();
+			LOG << "Thread " << THREAD_ID << " JEvent::Get(): Try to get " << JTypeInfo::demangle<DataType>() << " (tag = " << aTag << ") objects from JEventSource.\n" << LOG_END;
 		auto sSharedThis = this->shared_from_this();
 		if (mEventSource != nullptr &&
 			mEventSource->GetObjects(sSharedThis, static_cast<JFactory*>(sFactory)))
 		{
 			if(mDebugLevel >= 10)
-				JLog() << "Thread " << THREAD_ID << " JEvent::Get(): " << JTypeInfo::demangle<DataType>() << " (tag = " << aTag << ") retrieved from JEventSource.\n" << JLogEnd();
+				LOG << "Thread " << THREAD_ID << " JEvent::Get(): " << JTypeInfo::demangle<DataType>() << " (tag = " << aTag << ") retrieved from JEventSource.\n" << LOG_END;
 			sFactory->SetCreated(true);
 			sFactory->ReleaseCreatingLock();
 			return sFactory->Get();
@@ -316,14 +315,14 @@ typename JFactoryT<DataType>::PairType JEvent::GetIterators(const std::string& a
 		if(sFactory->GetPreviousRunNumber() != mRunNumber)
 		{
 			if(mDebugLevel >= 10)
-				JLog() << "Thread " << THREAD_ID << " JEvent::Get(): Change run.\n" << JLogEnd();
+				LOG << "Thread " << THREAD_ID << " JEvent::Get(): Change run.\n" << LOG_END;
 			sFactory->ChangeRun(sSharedThis);
 			sFactory->SetPreviousRunNumber(mRunNumber);
 		}
 
 		//Create the objects
 		if(mDebugLevel >= 10)
-			JLog() << "Thread " << THREAD_ID << " JEvent::Get(): Create " << JTypeInfo::demangle<DataType>() << " (tag = " << aTag << ") with factory.\n" << JLogEnd();
+			LOG << "Thread " << THREAD_ID << " JEvent::Get(): Create " << JTypeInfo::demangle<DataType>() << " (tag = " << aTag << ") with factory.\n" << LOG_END;
 		try {
 			sFactory->Process(sSharedThis);
 			sFactory->SetCreated(true);
@@ -357,7 +356,7 @@ typename JFactoryT<DataType>::PairType JEvent::GetIterators(const std::string& a
 	//Get the object iterators
 	auto sIteratorPair = sFactory->Get();
 	if(mDebugLevel > 0)
-		JLog() << "Thread " << THREAD_ID << " JEvent::Get(): Getting " << std::distance(sIteratorPair.first, sIteratorPair.second) << " " << JTypeInfo::demangle<DataType>() << " objects, tag = " << aTag << ".\n" << JLogEnd();
+		LOG << "Thread " << THREAD_ID << " JEvent::Get(): Getting " << std::distance(sIteratorPair.first, sIteratorPair.second) << " " << JTypeInfo::demangle<DataType>() << " objects, tag = " << aTag << ".\n" << LOG_END;
 
 	//Return the objects
 	return sIteratorPair;

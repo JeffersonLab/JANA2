@@ -18,7 +18,7 @@ JEventProcessorArrow::JEventProcessorArrow(std::string name,
 
     _input_queue->attach_downstream(this);
     attach_upstream(_input_queue);
-    _logger = JLogger::nothing();
+    _logger = JLogger();
 
     if (_output_queue != nullptr) {
         _output_queue->attach_upstream(this);

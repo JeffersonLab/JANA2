@@ -33,7 +33,7 @@
 
 #include "JPluginLoader.h"
 #include "JComponentManager.h"
-#include "JLogger.h"
+#include "JLoggingService.h"
 
 #include <dlfcn.h>
 #include <iostream>
@@ -118,7 +118,7 @@ void JPluginLoader::attach_plugins(JComponentManager* jcm) {
     std::stringstream err_mess;
     for (string plugin : _plugins_to_include) {
         if (exclusions.find(plugin) != exclusions.end()) {
-            LOG_TRACE(_logger, _verbose) << "Excluding plugin `" << plugin << "`" << LOG_END;
+            LOG_IF(_verbose) << "Excluding plugin `" << plugin << "`" << LOG_END;
             continue;
         }
         // Sometimes, the user will include the ".so" suffix in the
@@ -129,9 +129,9 @@ void JPluginLoader::attach_plugins(JComponentManager* jcm) {
         bool found_plugin = false;
         for (string path : _plugin_paths) {
             string fullpath = path + "/" + plugin;
-            LOG_TRACE(_logger, _verbose) << "Looking for '" << fullpath << "' ...." << LOG_END;
+            LOG_IF(_verbose) << "Looking for '" << fullpath << "' ...." << LOG_END;
             if (access(fullpath.c_str(), F_OK) != -1) {
-                LOG_TRACE(_logger, _verbose) << "Found!" << LOG_END;
+                LOG_IF(_verbose) << "Found!" << LOG_END;
                 try {
                     jcm->next_plugin(plugin);
                     attach_plugin(jcm, fullpath.c_str());
@@ -143,7 +143,7 @@ void JPluginLoader::attach_plugins(JComponentManager* jcm) {
                     continue;
                 }
             }
-            LOG_TRACE(_logger, _verbose) << "Failed to attach '" << fullpath << "'" << LOG_END;
+            LOG_IF(_verbose) << "Failed to attach '" << fullpath << "'" << LOG_END;
         }
 
         // If we didn't find the plugin, then complain and quit
@@ -194,7 +194,7 @@ void JPluginLoader::attach_plugin(JComponentManager* jcm, std::string soname) {
         _sohandles.push_back(handle);
     } else {
         dlclose(handle);
-        LOG_TRACE(_logger, _verbose) << "Plugin \"" << soname << "\" does not have an InitPlugin() function. Ignoring."
+        LOG_IF(_verbose) << "Plugin \"" << soname << "\" does not have an InitPlugin() function. Ignoring."
                                      << LOG_END;
     }
 }

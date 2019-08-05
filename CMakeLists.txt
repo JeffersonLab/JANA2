@@ -89,7 +89,7 @@ add_library(jana2 STATIC
         src/lib/JANA/Services/JParameter.h
         src/lib/JANA/Services/JParameterManager.cc
         src/lib/JANA/Services/JParameterManager.h
-        src/lib/JANA/Services/JLogger.h
+        src/lib/JANA/Services/JLoggingService.h
         src/lib/JANA/Services/JServiceLocator.cc
         src/lib/JANA/Services/JProcessingController.h
         src/lib/JANA/Services/JPluginLoader.cc
@@ -115,7 +115,7 @@ add_library(jana2 STATIC
         src/lib/JANA/Services/JComponentManager.h
         src/lib/JANA/Engine/JArrowTopology.cc
         src/lib/JANA/Engine/JArrowTopology.h
-        )
+        src/lib/JANA/JLogger.h)
 
 
 add_library(jtest SHARED

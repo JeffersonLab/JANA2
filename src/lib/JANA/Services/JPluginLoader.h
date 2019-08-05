@@ -33,7 +33,7 @@
 #ifndef JANA2_JPLUGINLOADER_H
 #define JANA2_JPLUGINLOADER_H
 
-#include <JANA/Services/JLogger.h>
+#include <JANA/Services/JLoggingService.h>
 #include <JANA/Services/JParameterManager.h>
 
 #include <string>

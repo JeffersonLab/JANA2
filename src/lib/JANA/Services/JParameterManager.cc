@@ -38,7 +38,7 @@
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 #include "JParameterManager.h"
-#include "JLogger.h"
+#include "JLoggingService.h"
 
 #include <vector>
 #include <string>
@@ -104,7 +104,7 @@ void JParameterManager::PrintParameters(bool all) {
     // If all params are set to default values, then print a one line
     // summary
     if (keys.empty()) {
-        JLog() << "All configuration parameters set to default values." << JLogEnd();
+        LOG << "All configuration parameters set to default values." << LOG_END;
         return;
     }
 
@@ -112,19 +112,19 @@ void JParameterManager::PrintParameters(bool all) {
     string title("Config. Parameters");
     uint32_t half_title_len = 1 + title.length() / 2;
     if (max_key_len < half_title_len) max_key_len = half_title_len;
-    JLog() << "\n" << JLogEnd();
-    JLog() << string(max_key_len + 4 - half_title_len, ' ') << title << "\n" << JLogEnd();
-    JLog() << "  " << string(2 * max_key_len + 3, '=') << "\n" << JLogEnd();
-    JLog() << string(max_key_len / 2, ' ') << "name" << string(max_key_len, ' ') << "value" << "\n" << JLogEnd();
-    JLog() << "  " << string(max_key_len, '-') << "   " << string(max_key_len, '-') << "\n" << JLogEnd();
+    LOG << "\n" << LOG_END;
+    LOG << string(max_key_len + 4 - half_title_len, ' ') << title << LOG_END;
+    LOG << "  " << string(2 * max_key_len + 3, '=') << LOG_END;
+    LOG << string(max_key_len / 2, ' ') << "name" << string(max_key_len, ' ') << "value" << LOG_END;
+    LOG << "  " << string(max_key_len, '-') << "   " << string(max_key_len, '-') << LOG_END;
 
     // Print all parameters
     for (string& key : keys) {
         auto name = _jparameters[key]->GetName();
         string val = _jparameters[key]->GetValue<string>();
-        JLog() << string(max_key_len + 2 - key.length(), ' ') << name << " = " << val << "\n" << JLogEnd();
+        LOG << string(max_key_len + 2 - key.length(), ' ') << name << " = " << val << LOG_END;
     }
-    JLog() << "\n" << JLogEnd();
+    LOG << LOG_END;
 }
 
 

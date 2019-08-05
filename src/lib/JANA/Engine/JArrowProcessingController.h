@@ -71,7 +71,7 @@ private:
     JArrowTopology* _topology;
     std::vector<JWorker*> _workers;
     JScheduler* _scheduler = nullptr;
-    JLogger _logger = JLogger::everything();
+    JLogger _logger = JLogger();
 
 };
 

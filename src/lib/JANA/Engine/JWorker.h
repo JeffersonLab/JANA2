@@ -6,7 +6,7 @@
 #define JANA_JWORKER_H
 
 #include <thread>
-#include <JANA/Services/JLogger.h>
+#include <JANA/Services/JLoggingService.h>
 #include <JANA/Engine/JScheduler.h>
 #include <JANA/Engine/JWorkerMetrics.h>
 #include <JANA/Engine/JArrowPerfSummary.h>

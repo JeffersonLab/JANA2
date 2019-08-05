@@ -1,5 +1,6 @@
 
 #include <JANA/Engine/JScheduler.h>
+#include <JANA/Services/JLoggingService.h>
 
 
 JScheduler::JScheduler(const std::vector<JArrow*>& arrows)

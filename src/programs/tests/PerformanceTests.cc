@@ -44,9 +44,9 @@ TEST_CASE("MemoryBottleneckTest", "[.][performance]") {
     auto loggingService = std::make_shared<JLoggingService>();
     serviceLocator->provide(loggingService);
 
-    loggingService->set_level("JThreadTeam", JLogLevel::OFF);
-    loggingService->set_level("JScheduler", JLogLevel::OFF);
-    loggingService->set_level("JTopology", JLogLevel::INFO);
+    loggingService->set_level("JThreadTeam", JLogger::Level::OFF);
+    loggingService->set_level("JScheduler", JLogger::Level::OFF);
+    loggingService->set_level("JTopology", JLogger::Level::INFO);
 
     auto params = std::make_shared<FakeParameterManager>();
     serviceLocator->provide(params);
