@@ -59,6 +59,8 @@
 /// the generator is for while still allowing to customization where
 /// needed. See the JEventSourceGeneratorT documentation for details.
 
+class JComponentManager;
+
 class JEventSourceGenerator{
 	public:
 	

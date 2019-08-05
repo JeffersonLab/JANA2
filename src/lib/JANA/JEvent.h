@@ -42,6 +42,21 @@
 //
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
+#ifndef _JEvent_h_
+#define _JEvent_h_
+
+
+#include <JANA/JObject.h>
+#include <JANA/JException.h>
+#include <JANA/JFactoryT.h>
+#include <JANA/JFactorySet.h>
+#include <JANA/JEventSource.h>
+#include <JANA/JLogger.h>
+
+#include <JANA/Utils/JResettable.h>
+#include <JANA/Utils/JTypeInfo.h>
+#include <JANA/Utils/JCpuInfo.h>
+
 #include <vector>
 #include <cstddef>
 #include <memory>
@@ -49,20 +64,7 @@
 #include <atomic>
 #include <mutex>
 
-#include <JANA/JObject.h>
-#include <JANA/JException.h>
-#include <JANA/JFactoryT.h>
-#include <JANA/JFactorySet.h>
-#include <JANA/JEventSource.h>
-#include <JANA/JApplication.h>
-#include <JANA/JLogger.h>
-
-#include <JANA/Utils/JResettable.h>
-#include <JANA/Utils/JTypeInfo.h>
-#include <JANA/Utils/JCpuInfo.h>
-
-#ifndef _JEvent_h_
-#define _JEvent_h_
+class JApplication;
 
 using std::vector;
 

@@ -6,9 +6,11 @@
 #define JANA2_JCOMPONENTMANAGER_H
 
 #include <JANA/JEventSourceGenerator.h>
+#include <JANA/Status/JComponentSummary.h>
 
 #include <vector>
 
+class JEventProcessor;
 
 class JComponentManager {
 public:

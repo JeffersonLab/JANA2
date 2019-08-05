@@ -76,8 +76,6 @@ void JEvent::SetJApplication(JApplication* app)
 void JEvent::SetJEventSource(JEventSource* aSource)
 {
 	mEventSource = aSource;
-	mEventSource->IncrementEventCount();
-	if( mIsBarrierEvent ) mEventSource->IncrementBarrierCount();
 }
 
 //---------------------------------

@@ -55,7 +55,6 @@ add_library(jana2 STATIC
         src/lib/JANA/JEvent.cc
         src/lib/JANA/JEvent.h
         src/lib/JANA/JEventProcessor.h
-        src/lib/JANA/JEventSource.cc
         src/lib/JANA/JEventSource.h
         src/lib/JANA/JEventSourceGenerator.h
         src/lib/JANA/JEventSourceGeneratorT.h

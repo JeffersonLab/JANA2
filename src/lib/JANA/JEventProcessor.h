@@ -205,7 +205,6 @@ private:
     bool m_receive_events_in_order = false;
     JApplication* m_application = nullptr;
 
-    friend JApplication;
     /// This is called by JApplication::Add(JEventProcessor*). There
     /// should be no need to call it from anywhere else.
     void SetJApplication(JApplication* app) { m_application = app; }
