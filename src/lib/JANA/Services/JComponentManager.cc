@@ -46,7 +46,7 @@ void JComponentManager::add(JEventSource *event_source) {
 }
 
 void JComponentManager::add(JEventProcessor *processor) {
-    processor->SetPlugin(m_current_plugin_name);
+    processor->SetPluginName(m_current_plugin_name);
     m_evt_procs.push_back(processor);
 }
 
@@ -143,7 +143,7 @@ JComponentSummary JComponentManager::get_component_summary() {
 
     // Event processors
     for (auto * evt_proc : m_evt_procs) {
-        result.event_processors.push_back({.plugin_name = evt_proc->GetPlugin(), .type_name=evt_proc->GetType()});
+        result.event_processors.push_back({.plugin_name = evt_proc->GetPluginName(), .type_name=evt_proc->GetTypeName()});
     }
 
     // Factories

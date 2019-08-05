@@ -45,21 +45,7 @@ void JEventProcessorArrow::execute(JArrowMetrics& result, size_t location_id) {
     if (success) {
         LOG_DEBUG(_logger) << "EventProcessorArrow '" << get_name() << "': Starting event# " << x->GetEventNumber() << LOG_END;
         for (JEventProcessor* processor : _processors) {
-            try {
-                processor->Process(x);
-            }
-            catch (JException& e) {
-                e.plugin_name = processor->GetPlugin();
-                e.component_name = processor->GetType();
-                throw e;
-            }
-            catch (...) {
-                auto ex = JException("Unknown exception in JEventProcessor::Process()");
-                ex.nested_exception = std::current_exception();
-                ex.component_name = processor->GetType();
-                ex.plugin_name = processor->GetPlugin();
-                throw ex;
-            }
+            processor->DoMap(x);
         }
         LOG_DEBUG(_logger) << "EventProcessorArrow '" << get_name() << "': Finished event# " << x->GetEventNumber() << LOG_END;
     }
@@ -96,43 +82,13 @@ void JEventProcessorArrow::execute(JArrowMetrics& result, size_t location_id) {
 void JEventProcessorArrow::initialize() {
 
     for (auto processor : _processors) {
-        try {
-            std::call_once(processor->init_flag, [&](){ processor->Init(); });
-        }
-        catch (JException& ex) {
-            ex.plugin_name = processor->GetPlugin();
-            ex.component_name = processor->GetType();
-            throw ex;
-        }
-        catch (...) {
-            auto ex = JException("Unknown exception in JEventProcessor::Open()");
-            ex.nested_exception = std::current_exception();
-            ex.component_name = processor->GetType();
-            ex.plugin_name = processor->GetPlugin();
-            throw ex;
-        }
-
+        processor->DoInitialize();
     }
 }
 
 void JEventProcessorArrow::finalize() {
-
     for (auto processor : _processors) {
-        try {
-            std::call_once(processor->finish_flag, [&](){ processor->Finish(); });
-        }
-        catch (JException& ex) {
-            ex.plugin_name = processor->GetPlugin();
-            ex.component_name = processor->GetType();
-            throw ex;
-        }
-        catch (...) {
-            auto ex = JException("Unknown exception in JEventProcessor::Finish()");
-            ex.nested_exception = std::current_exception();
-            ex.component_name = processor->GetType();
-            ex.plugin_name = processor->GetPlugin();
-            throw ex;
-        }
+        processor->DoFinalize();
     }
 }
 

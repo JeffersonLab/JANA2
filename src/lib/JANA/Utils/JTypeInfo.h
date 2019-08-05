@@ -20,6 +20,12 @@ std::string demangle(void) {
 	return type;
 }
 
+/// Macro for extracting the name of the current class as a std::string.
+/// This is meant to be used like this:
+/// `JEventProcessor::SetName(NAME_OF_THIS);`
+#define NAME_OF_THIS JTypeInfo::demangle<decltype(*this)>()
+
+
 template<typename T>
 const char* builtin_typename() {
 
