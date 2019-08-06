@@ -6,6 +6,11 @@ import sbms
 Import('*')
 env = env.Clone()
 
+env.AppendUnique(ALL_SOURCES = env.Glob('Engine/*.cc'))
+env.AppendUnique(ALL_SOURCES = env.Glob('Services/*.cc'))
+env.AppendUnique(ALL_SOURCES = env.Glob('Status/*.cc'))
+env.AppendUnique(ALL_SOURCES = env.Glob('Utils/*.cc'))
+
 sbms.AddJANA(env)
 sbms.library(env)
 

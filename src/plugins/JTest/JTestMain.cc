@@ -46,8 +46,8 @@
 
 #include <memory>
 
-#include <JApplication.h>
-#include <JEventSourceGeneratorT.h>
+#include <JANA/JApplication.h>
+#include <JANA/JEventSourceGeneratorT.h>
 #include <JANA/JCsvWriter.h>
 
 #include "JTestParser.h"

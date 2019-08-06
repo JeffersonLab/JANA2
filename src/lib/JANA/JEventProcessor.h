@@ -56,7 +56,7 @@ class JEventProcessor {
 public:
 
     explicit JEventProcessor(JApplication* app = nullptr)
-        : m_application(app)
+        : mApplication(app)
         , m_status(Status::Unopened)
         , m_event_count{0}
     {}
@@ -75,7 +75,7 @@ public:
 
     uint64_t GetEventCount() const { return m_event_count; };
 
-    JApplication* GetApplication() const { return m_application; }
+    JApplication* GetApplication() const { return mApplication; }
 
     bool AreEventsOrdered() const { return m_receive_events_in_order; }
 
@@ -194,6 +194,9 @@ protected:
 
     void SetEventsOrdered(bool receive_events_in_order) { m_receive_events_in_order = receive_events_in_order; }
 
+    // TODO: Stop getting mApplication this way, use GetApplication() instead, or pass directly to Init()
+    JApplication* mApplication = nullptr;
+
 private:
     Status m_status;
     std::string m_plugin_name;
@@ -203,11 +206,10 @@ private:
     std::once_flag m_finish_flag;
     std::atomic_ullong m_event_count;
     bool m_receive_events_in_order = false;
-    JApplication* m_application = nullptr;
 
     /// This is called by JApplication::Add(JEventProcessor*). There
     /// should be no need to call it from anywhere else.
-    void SetJApplication(JApplication* app) { m_application = app; }
+    void SetJApplication(JApplication* app) { mApplication = app; }
 
     friend JComponentManager;
     /// SetPlugin is called by ComponentManager and should not be exposed to the user.

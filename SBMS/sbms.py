@@ -27,7 +27,8 @@ def library(env, libname=''):
 	if libname=='':
 		libname = os.path.split(os.getcwd())[1]
 
-	env.PrependUnique(CPPPATH = ['.'])
+	env.PrependUnique(CPPPATH = ['.'])   # Relative imports
+	env.PrependUnique(CPPPATH = ['..'])  # Absolute imports prefixed with library name, e.g. #include<JANA/JObject.h>
 
 	# Add C/C++, and FORTRAN targets
 	env.AppendUnique(ALL_SOURCES = env.Glob('*.c'))
@@ -69,7 +70,8 @@ def executable(env, exename=''):
 	if exename=='':
 		exename = os.path.split(os.getcwd())[1]
 
-	env.PrependUnique(CPPPATH = ['.'])
+	env.PrependUnique(CPPPATH = ['.'])         # Relative imports
+	env.PrependUnique(CPPPATH = ['#src/lib'])  # Absolute imports, e.g. <JANA/JApplication.h>
 
 	# Add C/C++, and FORTRAN targets
 	env.AppendUnique(ALL_SOURCES = env.Glob('*.c'))
@@ -172,7 +174,7 @@ def plugin(env, pluginname=''):
 		pluginname = os.path.split(os.getcwd())[1]
 
 	srcdir = str(env.Dir('.').srcnode().path)
-	env.AppendUnique(CPPPATH = ['.', '#src/lib/JANA'])
+	env.AppendUnique(CPPPATH = ['.', '#src/lib/JANA', '#src/lib'])
 
 	# Add C/C++ targets
 	env.AppendUnique(ALL_SOURCES = env.Glob('*.c'))

@@ -79,8 +79,9 @@ public:
     // Constructor
 
     explicit JEventSource(std::string resource_name, JApplication* app = nullptr)
-        : m_application(app)
-        , m_resource_name(std::move(resource_name))
+        : m_resource_name(std::move(resource_name))
+        , m_application(app)
+        , m_factory_generator(nullptr)
         , m_status(SourceStatus::Unopened)
         , m_event_count{0}
         {}
@@ -210,14 +211,15 @@ public:
 
 
 private:
-    SourceStatus m_status;
-    std::string m_plugin_name;
-    std::string m_type_name;
     std::string m_resource_name;
-    std::once_flag m_init_flag;
-    std::atomic_ullong m_event_count;
     JApplication* m_application = nullptr;
     JFactoryGenerator* m_factory_generator = nullptr;
+    SourceStatus m_status;
+    std::atomic_ullong m_event_count;
+
+    std::string m_plugin_name;
+    std::string m_type_name;
+    std::once_flag m_init_flag;
 };
 
 #endif // _JEventSource_h_

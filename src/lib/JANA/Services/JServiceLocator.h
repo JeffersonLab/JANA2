@@ -5,15 +5,15 @@
 #ifndef _JSERVICELOCATOR_H_
 #define _JSERVICELOCATOR_H_
 
+#include <JANA/JException.h>
+
 #include <map>
 #include <typeinfo>
 #include <typeindex>
 #include <iostream>
 #include <assert.h>
-#include <chrono>
 #include <memory>
 #include <mutex>
-#include "JException.h"
 
 
 class JServiceLocator;

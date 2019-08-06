@@ -33,8 +33,8 @@
 #ifndef JANA2_JEVENTPOOL_H
 #define JANA2_JEVENTPOOL_H
 
-#include "JEvent.h"
-#include "JFactoryGenerator.h"
+#include <JANA/JEvent.h>
+#include <JANA/JFactoryGenerator.h>
 
 class JEventPool {
 private:
