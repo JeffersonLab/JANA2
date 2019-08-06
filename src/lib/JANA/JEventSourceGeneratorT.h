@@ -44,8 +44,10 @@
 
 #include <string>
 
-#include <JANA/JApplication.h>
 #include <JANA/JEventSourceGenerator.h>
+#include <JANA/Utils/JTypeInfo.h>
+
+class JApplication;
 
 /// This templated class is used to generate JEventSource based objects
 /// to handle reading events into JANA. Multiple JEventSourceGenerator

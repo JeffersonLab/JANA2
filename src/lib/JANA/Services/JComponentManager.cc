@@ -138,7 +138,7 @@ JComponentSummary JComponentManager::get_component_summary() {
 
     // Event sources
     for (auto * src : m_evt_srces_all) {
-        result.event_sources.push_back({.plugin_name=src->GetPlugin(), .type_name=src->GetType(), .source_name=src->GetName()});
+        result.event_sources.push_back({.plugin_name=src->GetPluginName(), .type_name=src->GetType(), .source_name=src->GetName()});
     }
 
     // Event processors

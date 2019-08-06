@@ -44,6 +44,8 @@
 #ifndef _JEventSource_h_
 #define _JEventSource_h_
 
+#include <JANA/JException.h>
+
 #include <string>
 #include <atomic>
 #include <memory>
@@ -89,7 +91,7 @@ public:
 
     // To be implemented by the user. TODO: Make these protected
 
-    virtual void Open(void) = 0;
+    virtual void Open(void) {}
 
     // TODO: Stop using exceptions for flow control!
     virtual void GetEvent(std::shared_ptr<JEvent>) = 0;

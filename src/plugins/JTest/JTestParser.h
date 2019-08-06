@@ -35,7 +35,7 @@ public:
         params->GetParameter("jtest:parser_bytes_spread", m_write_spread);
         params->GetParameter("jtest:parser_spread", m_cputime_spread);
 
-        mFactoryGenerator = new JSourceFactoryGenerator<JTestEntangledEventData>();
+        SetFactoryGenerator(new JSourceFactoryGenerator<JTestEntangledEventData>());
     }
 
     static std::string GetDescription() {
