@@ -255,11 +255,7 @@ typename JFactoryT<DataType>::PairType JEvent::GetIterators(const std::string& a
 	auto sFactoryBase = mFactorySet->GetFactory(std::type_index(typeid(DataType)), aTag);
 	if(sFactoryBase == nullptr)
 	{
-		//Uh oh, No factory exists for this type.
-		jerr << "ERROR: No factory found for type = " << GetDemangledName<DataType>() << ", tag = \"" << aTag << "\"\n";
-		japp->SetExitCode(-1);
-		japp->Quit();
-		return {};
+		throw JException("No factory found for type = %s, tag = %s", GetDemangledName<DataType>().c_str(), aTag.c_str());
 	}
 	auto sFactory = static_cast<JFactoryT<DataType>*>(sFactoryBase);
 
@@ -337,9 +333,27 @@ typename JFactoryT<DataType>::PairType JEvent::GetIterators(const std::string& a
 		//Create the objects
 		if(mDebugLevel >= 10)
 			JLog() << "Thread " << THREAD_ID << " JEvent::Get(): Create " << GetDemangledName<DataType>() << " (tag = " << aTag << ") with factory.\n" << JLogEnd();
-		sFactory->Process(sSharedThis);
-		sFactory->SetCreated(true);
-		sFactory->ReleaseCreatingLock();
+		try {
+			sFactory->Process(sSharedThis);
+			sFactory->SetCreated(true);
+			sFactory->ReleaseCreatingLock();
+		}
+		catch (JException& e) {
+		    /// Store the _topmost_ factory name/tag on the JException
+		    /// Storing the entire stack of Factory calls would also be doable
+			if (e.factory_name == "") {
+				e.factory_name = sFactory->GetName();
+				e.factory_tag = sFactory->GetTag();
+			}
+			throw e;
+		}
+        catch (...) {
+            auto e = JException("Unknown exception in JFactory::Process()");
+            e.nested_exception = std::current_exception();
+            e.factory_name = sFactory->GetName();
+            e.factory_tag = sFactory->GetTag();
+            throw e;
+        }
 	}
 	catch(...)
 	{

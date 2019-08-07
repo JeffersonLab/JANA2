@@ -46,6 +46,15 @@ struct JTestEventData : public JObject {
 
 struct JTestTrackData : public JObject {
     std::vector<char> buffer;
+
+    void Summarize(JObjectSummary& summary) const override {
+        size_t nitems = std::min(buffer.size(), (size_t) 5);
+        for (int i=0; i<nitems; ++i) {
+            char varname[20];
+            snprintf(varname, 20, "x_%d", i);
+            summary.add(buffer[i], varname, "%d");
+        }
+    }
 };
 
 struct JTestHistogramData : public JObject {

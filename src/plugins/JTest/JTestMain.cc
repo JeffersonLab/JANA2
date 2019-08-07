@@ -48,6 +48,7 @@
 
 #include <JApplication.h>
 #include <JEventSourceGeneratorT.h>
+#include <JANA/JCsvWriter.h>
 
 #include "JTestParser.h"
 #include "JTestPlotter.h"
@@ -58,12 +59,17 @@ extern "C"{
 void InitPlugin(JApplication *app){
 
 	InitJANAPlugin(app);
-    app->Add(new JEventSourceGeneratorT<JTestParser>());
+    app->Add(new JTestParser("dummy_source", app));
     app->Add(new JTestPlotter(app));
     app->Add(new JTestFactoryGenerator());
-	app->Add("dummy_evt_src");
 
+    // Demonstrates attaching a CSV writer so we can view the results from any JFactory
+    app->SetParameterValue<std::string>("csv:dest_dir", ".");
+    app->Add(new JCsvWriter<JTestTrackData>());
+
+    // Demonstrates sharing user-defined services with our components
 	app->ProvideService(std::make_shared<JTestCalibrationService>());
+
 }
 } // "C"
 

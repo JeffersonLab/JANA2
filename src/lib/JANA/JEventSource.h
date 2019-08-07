@@ -72,6 +72,7 @@ class JEventSource{
 	friend JEvent;
 	friend JEventSourceManager;
 	friend JEventSourceGenerator;
+	friend JTopologyBuilder;
 
 	public:
 	
@@ -100,6 +101,7 @@ class JEventSource{
 		
 		virtual std::string GetType(void) const; ///< Returns name of subclass
 		virtual std::string GetVDescription(void) const {return "<description unavailable>";} ///< Optional for getting description via source rather than JEventSourceGenerator
+		std::string GetPlugin() const { return mPluginName; }
 
 		std::string GetName(void) const{return mName;}
 		std::size_t GetNumOutstandingEvents(void) const{return mNumOutstandingEvents;}
@@ -117,10 +119,11 @@ class JEventSource{
 		std::atomic<std::size_t> mTasksCreated{0};
 
 	protected:
-	
+
 		void SetJApplication(JApplication *app);
 		JApplication* mApplication = nullptr;
 		std::string mName;
+		std::string mPluginName;
 		JQueue* mEventQueue = nullptr; //For handling event-source-specific logic (such as disentangling events, dealing with barriers, etc.)
 		JFactoryGenerator* mFactoryGenerator = nullptr; //This should create default factories for all types available in the event source
 
@@ -133,6 +136,10 @@ class JEventSource{
 		void DecrementBarrierCount(void){mNumOutstandingBarrierEvents--;}
 
 		virtual std::shared_ptr<JTaskBase> GetProcessEventTask(std::shared_ptr<const JEvent>&& aEvent);
+
+        /// SetPlugin is called by JTopologyBuilder and should not be exposed to the user.
+        void SetPlugin(std::string plugin_name) { mPluginName = std::move(plugin_name); };
+
 
 		//Keep track of file/event status
 		std::atomic<bool> mExhausted{false};

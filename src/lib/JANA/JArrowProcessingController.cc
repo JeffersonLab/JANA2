@@ -129,7 +129,7 @@ std::unique_ptr<const JArrowPerfSummary> JArrowProcessingController::measure_int
     // any ArrowMetrics they have collected
     _perf_summary.workers.clear();
     for (JWorker* worker : _workers) {
-        JMetrics::WorkerSummary summary;
+        WorkerSummary summary;
         worker->measure_perf(summary);
         _perf_summary.workers.push_back(summary);
     }
@@ -164,7 +164,7 @@ std::unique_ptr<const JArrowPerfSummary> JArrowProcessingController::measure_int
         auto total_latency_ms = millisecs(total_latency).count();
         auto total_queue_latency_ms = millisecs(total_queue_latency).count();
 
-        JMetrics::ArrowSummary summary;
+        ArrowSummary summary;
         summary.arrow_type = arrow->get_type();
         summary.is_parallel = arrow->is_parallel();
         summary.is_active = arrow->is_active();

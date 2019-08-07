@@ -118,7 +118,6 @@ add_library(jana2 STATIC
         src/lib/JANA/JSubeventArrow.cc
         src/lib/JANA/JSubeventArrow.h
         src/lib/JANA/JProcessingController.h
-        src/lib/JANA/JMetrics.h
         src/lib/JANA/JArrowMetrics.h
         src/lib/JANA/JWorkerMetrics.h
         src/lib/JANA/JTopologyBuilder.cc
@@ -139,7 +138,9 @@ add_library(jana2 STATIC
         src/lib/JANA/JEventPool.h
         src/lib/JANA/JProcessorMapping.h
         src/lib/JANA/JProcessorMapping.cc
-        )
+        src/lib/JANA/JComponentSummary.h
+        src/lib/JANA/JComponentSummary.cc
+        src/lib/JANA/JCsvWriter.h)
 
 add_library(jtest SHARED
         src/lib/JANA/JThread.cc  #for THREAD_ID

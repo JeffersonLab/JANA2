@@ -33,10 +33,56 @@
 #ifndef JANA2_JARROWPERFSUMMARY_H
 #define JANA2_JARROWPERFSUMMARY_H
 
-#include "JPerfSummary.h"
-#include "JMetrics.h"
+
+#include <JANA/JPerfSummary.h>
+#include <JANA/JArrow.h>
 
 #include <vector>
+#include <string>
+
+struct ArrowSummary {
+    std::string arrow_name;
+    bool is_parallel;
+    size_t thread_count;
+    JArrow::NodeType arrow_type;
+    bool is_active;
+    bool is_upstream_active;
+    bool has_backpressure;
+    JArrow::Status status;
+    size_t messages_pending;
+    size_t threshold;
+    size_t chunksize;
+
+    size_t total_messages_completed;
+    size_t last_messages_completed;
+    double avg_latency_ms;
+    double avg_queue_latency_ms;
+    double last_latency_ms;
+    double last_queue_latency_ms;
+    double avg_queue_overhead_frac;
+    size_t queue_visit_count;
+};
+
+struct WorkerSummary {
+    int worker_id;
+    int cpu_id;
+    bool is_pinned;
+    double total_useful_time_ms;
+    double total_retry_time_ms;
+    double total_idle_time_ms;
+    double total_scheduler_time_ms;
+    double last_useful_time_ms;
+    double last_retry_time_ms;
+    double last_idle_time_ms;
+    double last_scheduler_time_ms;
+    long scheduler_visit_count;
+    std::string last_arrow_name;
+    double last_arrow_avg_latency_ms;
+    double last_arrow_avg_queue_latency_ms;
+    double last_arrow_last_latency_ms;
+    double last_arrow_last_queue_latency_ms;
+    size_t last_arrow_queue_visit_count;
+};
 
 struct JArrowPerfSummary : public JPerfSummary {
 
@@ -44,8 +90,8 @@ struct JArrowPerfSummary : public JPerfSummary {
     double avg_par_bottleneck_hz;
     double avg_efficiency_frac;
 
-    std::vector<JMetrics::WorkerSummary> workers;
-    std::vector<JMetrics::ArrowSummary> arrows;
+    std::vector<WorkerSummary> workers;
+    std::vector<ArrowSummary> arrows;
 };
 
 std::ostream& operator<<(std::ostream& stream, const JArrowPerfSummary& data);

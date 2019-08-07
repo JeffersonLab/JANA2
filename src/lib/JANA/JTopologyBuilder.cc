@@ -45,6 +45,7 @@ void JTopologyBuilder::add(std::string event_source_name) {
 }
 
 void JTopologyBuilder::add(JEventSourceGenerator* source_generator) {
+    source_generator->SetPlugin(m_current_plugin_name);
     _evt_src_gens_front.push_back(source_generator);
 }
 
@@ -53,13 +54,18 @@ void JTopologyBuilder::add(JFactoryGenerator* factory_generator) {
 }
 
 void JTopologyBuilder::add(JEventProcessor* processor) {
+    processor->SetPlugin(m_current_plugin_name);
     _evt_procs_front.push_back(processor);
 }
 
 void JTopologyBuilder::add(JEventSource* source) {
+    source->SetPlugin(m_current_plugin_name);
     _evt_srces_front.push_back(source);
 }
 
+void JTopologyBuilder::set_current_plugin(std::string plugin_name) {
+    m_current_plugin_name = plugin_name;
+}
 
 void JTopologyBuilder::increase_priority() {
 
@@ -100,11 +106,13 @@ void JTopologyBuilder::increase_priority() {
 JProcessingTopology *JTopologyBuilder::build_topology() {
 
     increase_priority(); // Merges everything into *_back vectors
-    JProcessingTopology* topology = new JProcessingTopology();
+    JProcessingTopology* topology = new JProcessingTopology(m_app);
 
     // Add event processors to topology
     for (auto * evt_proc : _evt_procs_back) {
         topology->event_processors.push_back(evt_proc);
+        topology->component_summary.event_processors.push_back(
+                {.plugin_name=evt_proc->GetPlugin(), .type_name=evt_proc->GetType()});
     }
 
     // Add ready-made event sources to topology
@@ -143,9 +151,15 @@ JProcessingTopology *JTopologyBuilder::build_topology() {
         }
     }
 
+    // Add all factory generators to topology
     for (auto factory : _fac_gens_back) {
         topology->factory_generators.push_back(factory);
     }
+
+    // Collect summaries for all factories in factory_generators
+    JFactorySet dummy_fac_set(topology->factory_generators);
+    topology->component_summary.factories = dummy_fac_set.Summarize();
+
 
     size_t event_pool_size = 100;
     size_t event_queue_threshold = 80;
@@ -156,19 +170,19 @@ JProcessingTopology *JTopologyBuilder::build_topology() {
     int affinity = 0;
     int locality = 0;
 
-    auto params = japp->GetJParameterManager();
+    auto params = m_app->GetJParameterManager();
     params->SetDefaultParameter("jana:event_pool_size", event_pool_size);
     params->SetDefaultParameter("jana:event_queue_threshold", event_queue_threshold);
     params->SetDefaultParameter("jana:event_source_chunksize", event_source_chunksize);
     params->SetDefaultParameter("jana:event_processor_chunksize", event_processor_chunksize);
     params->SetDefaultParameter("jana:enable_stealing", enable_stealing);
+    params->SetDefaultParameter("jana:affinity", affinity);
+    params->SetDefaultParameter("jana:locality", locality);
 
-    japp->GetJParameterManager()->GetParameter("jana:affinity", affinity);
-    japp->GetJParameterManager()->GetParameter("jana:locality", locality);
     topology->mapping.initialize(static_cast<JProcessorMapping::AffinityStrategy>(affinity),
                                  static_cast<JProcessorMapping::LocalityStrategy>(locality));
 
-    topology->event_pool = std::make_shared<JEventPool>(japp, &topology->factory_generators, event_pool_size, location_count);
+    topology->event_pool = std::make_shared<JEventPool>(m_app, &topology->factory_generators, event_pool_size, location_count);
 
     // Assume the simplest possible topology for now, complicate later
     auto queue = new EventQueue(event_queue_threshold, topology->mapping.get_loc_count(), enable_stealing);
@@ -181,6 +195,13 @@ JProcessingTopology *JTopologyBuilder::build_topology() {
         topology->sources.push_back(arrow);
         arrow->set_chunksize(event_source_chunksize);
         // create arrow for sources. Don't open until arrow.activate() called
+
+        // Add to summary
+        topology->component_summary.event_sources.push_back({
+            .plugin_name=src->GetPlugin(),
+            .type_name=src->GetType(),
+            .source_name=src->GetName()
+        });
     }
 
     auto proc_arrow = new JEventProcessorArrow("processors", queue, nullptr, topology->event_pool);
@@ -203,7 +224,7 @@ JProcessingTopology *JTopologyBuilder::build_topology() {
     return topology;
 }
 
-JTopologyBuilder::JTopologyBuilder() {}
+JTopologyBuilder::JTopologyBuilder(JApplication* app) : m_app(app) {}
 
 void JTopologyBuilder::print_report() {
 
@@ -211,10 +232,7 @@ void JTopologyBuilder::print_report() {
     jout << "Event processors: " << std::endl;
     jout << "Event factories: " << std::endl;
 
-
-
 }
-
 
 
 

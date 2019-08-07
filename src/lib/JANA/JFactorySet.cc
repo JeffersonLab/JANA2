@@ -176,3 +176,20 @@ void JFactorySet::Release(void)
 		sFactory->SetCreated(false);
 	}
 }
+
+/// Summarize() generates a JFactorySummary data object describing each JFactory
+/// that this JFactorySet contains. The data is extracted from the JFactory itself.
+std::vector<JFactorySummary> JFactorySet::Summarize() const {
+
+	std::vector<JFactorySummary> results;
+	for (auto& pair : mFactories) {
+		auto tag = pair.second->GetTag();
+		results.push_back({
+			.plugin_name="unknown",
+			.factory_name = pair.second->GetName(),
+			.factory_tag = tag,
+			.object_name = pair.second->GetName()
+		});
+	}
+	return results;
+}

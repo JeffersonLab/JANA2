@@ -49,8 +49,8 @@ void JProcessingTopology::set_active(bool active) {
     }
 }
 
-JProcessingTopology::JProcessingTopology()
-    : event_source_manager(japp) {
+JProcessingTopology::JProcessingTopology(JApplication* app)
+    : event_source_manager(app) {
 }
 
 JProcessingTopology::~JProcessingTopology() {

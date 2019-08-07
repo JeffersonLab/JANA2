@@ -14,13 +14,15 @@
 #include "JPerfMetrics.h"
 #include "JEventPool.h"
 #include "JProcessorMapping.h"
+#include "JComponentSummary.h"
 
+class JApplication;
 
 struct JProcessingTopology : public JActivable {
 
     enum Status { Inactive, Running, Draining, Finished };
 
-    explicit JProcessingTopology();
+    explicit JProcessingTopology(JApplication* app);
     virtual ~JProcessingTopology();
 
     JEventSourceManager event_source_manager;
@@ -28,6 +30,7 @@ struct JProcessingTopology : public JActivable {
     std::vector<JFactoryGenerator*> factory_generators;
     std::vector<JEventProcessor*> event_processors;
     JPerfMetrics metrics;
+    JComponentSummary component_summary;
     Status status = Inactive; // TODO: Merge this concept with JActivable
 
     std::vector<JArrow*> arrows;

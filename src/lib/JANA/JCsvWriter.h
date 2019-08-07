@@ -30,50 +30,85 @@
 // Author: Nathan Brei
 //
 
-#ifndef JANA2_JARROWPROCESSINGCONTROLLER_H
-#define JANA2_JARROWPROCESSINGCONTROLLER_H
+#ifndef JANA2_JCSVEVENTPROCESSOR_H
+#define JANA2_JCSVEVENTPROCESSOR_H
 
-#include <JANA/JProcessingController.h>
 
-#include <vector>
+#include <JANA/JEventProcessor.h>
+#include <JANA/JObject.h>
 
-#include <JANA/JArrow.h>
-#include <JANA/JWorker.h>
-#include <JANA/JProcessingTopology.h>
-#include <JANA/JArrowPerfSummary.h>
+#include <fstream>
 
-class JArrowProcessingController : public JProcessingController {
+template <typename T>
+class JCsvWriter : public JEventProcessor {
+private:
+    std::string m_tag;
+    std::string m_dest_dir = ".";
+    std::fstream m_dest_file;
+    std::mutex m_mutex;
+    bool m_header_written = false;
+
 public:
 
-    explicit JArrowProcessingController(JProcessingTopology* topology) : _topology(topology) {};
-    ~JArrowProcessingController() override;
+    JCsvWriter(std::string tag = "") : m_tag(std::move(tag)) {
+        japp->GetJParameterManager()->SetDefaultParameter("csv:dest_dir", m_dest_dir, "Location where CSV files get written");
+    };
 
-    void initialize() override;
-    void run(size_t nthreads) override;
-    void scale(size_t nthreads) override;
-    void request_stop() override;
-    void wait_until_stopped() override;
+    void Init(void) override {
 
-    bool is_stopped() override;
+        std::string filename;
+        if (m_tag == "") {
+            filename = m_dest_dir + "/" + JTypeInfo::demangle<T>() + ".csv";
+        }
+        else {
+            filename = m_dest_dir + "/" + JTypeInfo::demangle<T>() + "_" + m_tag + ".csv";
+        }
+        m_dest_file.open(filename, std::fstream::out);
+    }
 
-    std::unique_ptr<const JPerfSummary> measure_performance() override;
-    std::unique_ptr<const JArrowPerfSummary> measure_internal_performance();
+    void Process(const std::shared_ptr<const JEvent>& event) override {
 
-    void print_report() override;
-    void print_final_report() override;
+        auto event_nr = event->GetEventNumber();
+        auto jobjs = event->Get<T>(m_tag);
 
+        std::lock_guard<std::mutex> lock(m_mutex);
 
-private:
+        if (!m_header_written) {
+            if (jobjs.size() > 0) {
+                JObjectSummary summary;
+                jobjs[0]->Summarize(summary);
+                m_dest_file << "EventNr";
+                for (auto& field : summary.get_fields()) {
+                    m_dest_file << ", " << field.name;
+                }
+                m_dest_file << std::endl;
+                m_header_written = true;
+            }
+        }
 
-    using jclock_t = std::chrono::steady_clock;
+        for (auto obj : jobjs) {
 
-    JArrowPerfSummary _perf_summary;
-    JProcessingTopology* _topology;
-    std::vector<JWorker*> _workers;
-    JScheduler* _scheduler = nullptr;
+            JObjectSummary summary;
+            obj->Summarize(summary);
+            m_dest_file << event_nr;
+            for (auto& field : summary.get_fields()) {
+                m_dest_file << ", " << field.value;
+            }
+            m_dest_file << std::endl;
+        }
 
-    JLogger _logger = JLogger::everything();
+    }
+
+    void Finish(void) override {
+        m_dest_file.close();
+    }
+
+    string GetType() const override {
+        return JTypeInfo::demangle<decltype(*this)>();
+    }
+
 
 };
 
-#endif //JANA2_JARROWPROCESSINGCONTROLLER_H
+
+#endif //JANA2_JCSVEVENTPROCESSOR_H

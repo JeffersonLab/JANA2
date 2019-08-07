@@ -74,6 +74,10 @@ struct FlakyProcessor : public JEventProcessor {
             throw JException("Unable to finish!");
         }
     }
+
+    virtual std::string GetType() const {
+        return GetDemangledName<decltype(*this)>();
+    }
 };
 
 

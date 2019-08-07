@@ -54,11 +54,14 @@ class JEvent;
 #define _JEventProcessor_h_
 
 #include <JANA/JApplication.h>
+#include <JANA/JTypeInfo.h>
+#include <JANA/JEvent.h>
 
 class JEventProcessor{
 	public:
 	
 		friend JApplication;
+		friend JTopologyBuilder;
 	
 		JEventProcessor(JApplication *app=nullptr): mApplication(app){}
 		virtual ~JEventProcessor(void){}
@@ -66,6 +69,14 @@ class JEventProcessor{
 		virtual void Init(void){}
 		virtual void Process(const std::shared_ptr<const JEvent>& aEvent){}
 		virtual void Finish(void){}
+
+		virtual std::string GetType() const {
+			return JTypeInfo::demangle<decltype(*this)>();
+		}
+
+        std::string GetPlugin() const {
+            return mPluginName;
+        }
 
 		std::once_flag init_flag;
 		std::once_flag finish_flag;
@@ -76,7 +87,11 @@ class JEventProcessor{
 		/// should be no need to call it from anywhere else.
 		void SetJApplication(JApplication *app){ mApplication = app; }
 
+        /// SetPlugin is called by JTopologyBuilder and should not be exposed to the user.
+        void SetPlugin(std::string plugin_name) { mPluginName = std::move(plugin_name); };
+
 		JApplication *mApplication = nullptr;
+		std::string mPluginName;
 };
 
 #endif // _JEventProcessor_h_

@@ -26,9 +26,9 @@ class JTestParser : public JEventSource {
 
 public:
 
-    JTestParser(string source_name, JApplication *japp) : JEventSource(source_name, japp)
+    JTestParser(string source_name, JApplication* app) : JEventSource(source_name, app)
     {
-        auto params = mApplication->GetJParameterManager();
+        auto params = app->GetJParameterManager();
         params->GetParameter("nevents", mNumEventsToGenerate);
         params->GetParameter("jtest:parser_bytes", m_write_bytes);
         params->GetParameter("jtest:parser_ms", m_cputime_ms);
