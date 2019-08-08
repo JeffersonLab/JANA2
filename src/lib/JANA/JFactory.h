@@ -40,7 +40,10 @@
 // Description:
 //
 //
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+#ifndef _JFactory_h_
+#define _JFactory_h_
 
 #include <string>
 #include <typeindex>
@@ -51,9 +54,6 @@
 
 class JEvent;
 class JObject;
-
-#ifndef _JFactory_h_
-#define _JFactory_h_
 
 class JFactory
 {

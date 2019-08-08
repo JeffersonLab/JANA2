@@ -96,10 +96,14 @@ public:
 
 class JObject{
 	public:
-		JObject();
-		virtual ~JObject();
+		JObject() = default;
+		virtual ~JObject() = default;
 	
-		virtual const std::string& className(void) const;
+		virtual const std::string& className(void) const {
+		    // TODO: This doesn't do what we'd hope
+			if(mName.empty()) mName = JTypeInfo::demangle<decltype(*this)>();
+			return mName;
+		}
 	
 		// Associated objects
 		inline void AddAssociatedObject(const JObject *obj);

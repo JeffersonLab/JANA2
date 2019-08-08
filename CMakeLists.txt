@@ -47,7 +47,12 @@ add_executable(playground
         src/programs/playground/JContext.cc
         src/programs/playground/JContext.h
         src/programs/playground/FactoryGenerator.h
-        src/programs/playground/Factory.cc)
+        src/programs/playground/Factory.cc
+        src/programs/playground/JEvent2.h
+        src/programs/playground/JAbstractFactory.h
+        src/programs/playground/JLazyCollection.h
+        )
+
 
 add_library(jana2 STATIC
         src/lib/JANA/JApplication.cc
@@ -65,7 +70,6 @@ add_library(jana2 STATIC
         src/lib/JANA/JFactorySet.cc
         src/lib/JANA/JFactorySet.h
         src/lib/JANA/JFactoryT.h
-        src/lib/JANA/JObject.cc
         src/lib/JANA/JObject.h
         src/lib/JANA/JSourceFactoryGenerator.h
         src/lib/JANA/JCsvWriter.h
@@ -114,7 +118,8 @@ add_library(jana2 STATIC
         src/lib/JANA/Services/JComponentManager.h
         src/lib/JANA/Engine/JArrowTopology.cc
         src/lib/JANA/Engine/JArrowTopology.h
-        src/lib/JANA/JLogger.h)
+        src/lib/JANA/JLogger.h
+        )
 
 
 add_library(jtest SHARED
