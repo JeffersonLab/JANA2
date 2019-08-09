@@ -6,7 +6,7 @@
 #include "JCpuInfo.h"
 
 
-void JWorker::measure_perf(JMetrics::WorkerSummary& summary) {
+void JWorker::measure_perf(WorkerSummary& summary) {
     // Read (do not clear) worker metrics
     // Read and clear arrow metrics
     // Push arrow metrics upstream
@@ -130,89 +130,97 @@ void JWorker::wait_for_stop() {
 
 void JWorker::loop() {
 
-    LOG_DEBUG(_logger) << "JWorker " << _worker_id << " has entered loop()." << LOG_END;
-    JArrowMetrics::Status last_result = JArrowMetrics::Status::NotRunYet;
+    try {
+        LOG_DEBUG(_logger) << "JWorker " << _worker_id << " has entered loop()." << LOG_END;
+        JArrowMetrics::Status last_result = JArrowMetrics::Status::NotRunYet;
 
-    while (_run_state == RunState::Running) {
+        while (_run_state == RunState::Running) {
 
-        LOG_DEBUG(_logger) << "JWorker " << _worker_id << " is checking in" << LOG_END;
-        auto start_time = jclock_t::now();
+            LOG_DEBUG(_logger) << "JWorker " << _worker_id << " is checking in" << LOG_END;
+            auto start_time = jclock_t::now();
 
-        _assignment = _scheduler->next_assignment(_worker_id, _assignment, last_result);
-        last_result = JArrowMetrics::Status::NotRunYet;
+            _assignment = _scheduler->next_assignment(_worker_id, _assignment, last_result);
+            last_result = JArrowMetrics::Status::NotRunYet;
 
-        auto scheduler_time = jclock_t::now();
+            auto scheduler_time = jclock_t::now();
 
-        auto scheduler_duration = scheduler_time - start_time;
-        auto idle_duration = duration_t::zero();
-        auto retry_duration = duration_t::zero();
-        auto useful_duration = duration_t::zero();
+            auto scheduler_duration = scheduler_time - start_time;
+            auto idle_duration = duration_t::zero();
+            auto retry_duration = duration_t::zero();
+            auto useful_duration = duration_t::zero();
 
-        if (_assignment == nullptr) {
+            if (_assignment == nullptr) {
 
-            LOG_DEBUG(_logger) << "JWorker " << _worker_id << " idling due to lack of assignments" << LOG_END;
-            std::this_thread::sleep_for(std::chrono::milliseconds(10));
-            idle_duration = jclock_t::now() - scheduler_time;
-        }
-        else {
+                LOG_DEBUG(_logger) << "JWorker " << _worker_id << " idling due to lack of assignments" << LOG_END;
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                idle_duration = jclock_t::now() - scheduler_time;
+            }
+            else {
 
-            auto initial_backoff_time = _assignment->get_initial_backoff_time();
-            auto backoff_strategy = _assignment->get_backoff_strategy();
-            auto backoff_tries = _assignment->get_backoff_tries();
-            auto checkin_time = _assignment->get_checkin_time();
+                auto initial_backoff_time = _assignment->get_initial_backoff_time();
+                auto backoff_strategy = _assignment->get_backoff_strategy();
+                auto backoff_tries = _assignment->get_backoff_tries();
+                auto checkin_time = _assignment->get_checkin_time();
 
-            uint32_t current_tries = 0;
-            auto backoff_duration = initial_backoff_time;
+                uint32_t current_tries = 0;
+                auto backoff_duration = initial_backoff_time;
 
-            while (current_tries <= backoff_tries &&
-                   (last_result == JArrowMetrics::Status::KeepGoing || last_result == JArrowMetrics::Status::ComeBackLater || last_result == JArrowMetrics::Status::NotRunYet) &&
-                   (_run_state == RunState::Running) &&
-                   (jclock_t::now() - start_time) < checkin_time) {
+                while (current_tries <= backoff_tries &&
+                       (last_result == JArrowMetrics::Status::KeepGoing || last_result == JArrowMetrics::Status::ComeBackLater || last_result == JArrowMetrics::Status::NotRunYet) &&
+                       (_run_state == RunState::Running) &&
+                       (jclock_t::now() - start_time) < checkin_time) {
 
-                LOG_DEBUG(_logger) << "JWorker " << _worker_id << " is executing "
-                                   << _assignment->get_name() << LOG_END;
-                auto before_execute_time = jclock_t::now();
-                _assignment->execute(_arrow_metrics, _location_id);
-                last_result = _arrow_metrics.get_last_status();
-                useful_duration += (jclock_t::now() - before_execute_time);
-
-
-                if (last_result == JArrowMetrics::Status::KeepGoing) {
-                    LOG_DEBUG(_logger) << "JWorker " << _worker_id << " succeeded at "
+                    LOG_DEBUG(_logger) << "JWorker " << _worker_id << " is executing "
                                        << _assignment->get_name() << LOG_END;
-                    current_tries = 0;
-                    backoff_duration = initial_backoff_time;
-                }
-                else {
-                    current_tries++;
-                    if (backoff_tries > 0) {
-                        if (backoff_strategy == JArrow::BackoffStrategy::Linear) {
-                            backoff_duration += initial_backoff_time;
-                        }
-                        else if (backoff_strategy == JArrow::BackoffStrategy::Exponential) {
-                            backoff_duration *= 2;
-                        }
-                        LOG_DEBUG(_logger) << "JWorker " << _worker_id << " backing off with "
-                                           << _assignment->get_name() << ", tries = " << current_tries
-                                           << LOG_END;
+                    auto before_execute_time = jclock_t::now();
+                    _assignment->execute(_arrow_metrics, _location_id);
+                    last_result = _arrow_metrics.get_last_status();
+                    useful_duration += (jclock_t::now() - before_execute_time);
 
-                        std::this_thread::sleep_for(backoff_duration);
-                        retry_duration += backoff_duration;
-                        // TODO: Randomize backoff duration?
+
+                    if (last_result == JArrowMetrics::Status::KeepGoing) {
+                        LOG_DEBUG(_logger) << "JWorker " << _worker_id << " succeeded at "
+                                           << _assignment->get_name() << LOG_END;
+                        current_tries = 0;
+                        backoff_duration = initial_backoff_time;
+                    }
+                    else {
+                        current_tries++;
+                        if (backoff_tries > 0) {
+                            if (backoff_strategy == JArrow::BackoffStrategy::Linear) {
+                                backoff_duration += initial_backoff_time;
+                            }
+                            else if (backoff_strategy == JArrow::BackoffStrategy::Exponential) {
+                                backoff_duration *= 2;
+                            }
+                            LOG_DEBUG(_logger) << "JWorker " << _worker_id << " backing off with "
+                                               << _assignment->get_name() << ", tries = " << current_tries
+                                               << LOG_END;
+
+                            std::this_thread::sleep_for(backoff_duration);
+                            retry_duration += backoff_duration;
+                            // TODO: Randomize backoff duration?
+                        }
                     }
                 }
             }
+            _worker_metrics.update(1, useful_duration, retry_duration, scheduler_duration, idle_duration);
+            publish_arrow_metrics();
         }
-        _worker_metrics.update(1, useful_duration, retry_duration, scheduler_duration, idle_duration);
-        publish_arrow_metrics();
+
+        _scheduler->last_assignment(_worker_id, _assignment, last_result);
+        _assignment = nullptr; // Worker has 'handed in' the assignment
+        // TODO: Make _assignment unique_ptr?
+
+        LOG_DEBUG(_logger) << "JWorker " << _worker_id << " is exiting loop()" << LOG_END;
     }
-
-    _scheduler->last_assignment(_worker_id, _assignment, last_result);
-    _assignment = nullptr; // Worker has 'handed in' the assignment
-    // TODO: Make _assignment unique_ptr?
-
-    LOG_DEBUG(_logger) << "JWorker " << _worker_id << " is exiting loop()" << LOG_END;
-
+    catch (const JException& e) {
+        // For now the excepting Worker prints the error, and then terminates the whole program.
+        // Eventually we want to unify error handling across JApplication::Run, and maybe even across the entire JApplication.
+        // This means that Workers must pass JExceptions back to the master thread.
+        std::cout << e;
+        exit(-1);
+    }
 }
 
 void JWorker::publish_arrow_metrics() {

@@ -30,77 +30,38 @@
 // Author: Nathan Brei
 //
 
-#ifndef JANA2_JMETRICS_H
-#define JANA2_JMETRICS_H
+#ifndef JANA2_JCOMPONENTSUMMARY_H
+#define JANA2_JCOMPONENTSUMMARY_H
 
 #include <string>
+#include <vector>
 
-#include <JANA/JArrow.h>
-
-namespace JMetrics {
-
-struct TopologySummary {
-    size_t messages_completed;
-    double total_uptime_s;
-    double last_uptime_s;
-    double avg_throughput_hz;
-    double last_throughput_hz;
-    double avg_seq_bottleneck_hz;
-    double avg_par_bottleneck_hz;
-    double avg_efficiency_frac;
-
-    double avg_useful_frac;
-    double avg_queue_frac;
-    double avg_scheduling_frac;
-    double avg_retry_frac;
-    double avg_idle_frac;
+struct JFactorySummary {
+    std::string plugin_name;
+    std::string factory_name;
+    std::string factory_tag;
+    std::string object_name;
 };
 
-struct ArrowSummary {
-    std::string arrow_name;
-    bool is_parallel;
-    size_t thread_count;
-    JArrow::NodeType arrow_type;
-    bool is_active;
-    bool is_upstream_active;
-    bool has_backpressure;
-    JArrow::Status status;
-    size_t messages_pending;
-    size_t threshold;
-    size_t chunksize;
-
-    size_t total_messages_completed;
-    size_t last_messages_completed;
-    double avg_latency_ms;
-    double avg_queue_latency_ms;
-    double last_latency_ms;
-    double last_queue_latency_ms;
-    double avg_queue_overhead_frac;
-    size_t queue_visit_count;
+struct JEventSourceSummary {
+    std::string plugin_name;
+    std::string type_name;
+    std::string source_name;
 };
 
-struct WorkerSummary {
-    int worker_id;
-    int cpu_id;
-    bool is_pinned;
-    double total_useful_time_ms;
-    double total_retry_time_ms;
-    double total_idle_time_ms;
-    double total_scheduler_time_ms;
-    double last_useful_time_ms;
-    double last_retry_time_ms;
-    double last_idle_time_ms;
-    double last_scheduler_time_ms;
-    long scheduler_visit_count;
-    std::string last_arrow_name;
-    double last_arrow_avg_latency_ms;
-    double last_arrow_avg_queue_latency_ms;
-    double last_arrow_last_latency_ms;
-    double last_arrow_last_queue_latency_ms;
-    size_t last_arrow_queue_visit_count;
+struct JEventProcessorSummary {
+    std::string plugin_name;
+    std::string type_name;
 };
 
+struct JComponentSummary {
+    std::vector<JFactorySummary> factories;
+    std::vector<JEventSourceSummary> event_sources;
+    std::vector<JEventProcessorSummary> event_processors;
+};
 
-} // namespace JMetrics
+std::ostream& operator<<(std::ostream& os, JComponentSummary const & cs);
 
-#endif //JANA2_JMETRICS_H
+
+
+#endif //JANA2_JCOMPONENTSUMMARY_H

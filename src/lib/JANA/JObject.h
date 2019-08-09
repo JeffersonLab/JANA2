@@ -51,12 +51,48 @@
 #include <cassert>
 #include <typeinfo>
 
+#include <JANA/JTypeInfo.h>
+
 /// The JObject class is a base class for all data classes.
 /// (See JFactory for algorithm classes.)
 
 // The following is a legacy definition that is no longer needed in JANA2.
 #define JOBJECT_PUBLIC(T) \
 	static const char* static_className(void) {return #T;}
+
+
+#define NAME_OF(T) "T"
+
+struct JObjectMember {
+    /// A plain-old data structure for describing one member of a JObject
+	std::string name;        // E.g. "E_tot"
+	std::string type;        // E.g. "float"
+	std::string value;       // E.g. "22.2e-2"
+	std::string description; // E.g. "GeV"
+};
+
+class JObjectSummary {
+	/// A container data structure for collecting information about JObjects. This is meant to be
+	/// used by tools for debugging/visualizing/introspecting. The information for each member is
+	/// collected by JObject::Summarize().
+
+	std::vector<JObjectMember> m_fields;
+
+public:
+	/// get_fields() returns a copy of all JObjectMember information collected so far.
+	std::vector<JObjectMember> get_fields() const {
+		return m_fields;
+	}
+
+	/// add() is used to insert a new row of JObjectMember data
+	template <typename T>
+	void add(const T& x, const char* name, const char* format, const char* description="") {
+
+		char buffer[256];
+		snprintf(buffer, 256, format, x);
+		m_fields.push_back({name, JTypeInfo::builtin_typename<T>(), buffer, description});
+	}
+};
 
 class JObject{
 	public:
@@ -73,18 +109,14 @@ class JObject{
 		inline bool IsAssociated(const JObject* locObject) const {return (associated.find(locObject) != associated.end());}
 
 		// Convert to strings with pretty formatting for printing
-		bool append_types = false;
-		virtual void toStrings(std::vector< std::pair<std::string, std::string> > &items)const;
-		template<typename T> void AddString(std::vector<std::pair<std::string, std::string> > &items, const char *name, const char *format, const T &val) const;
+		virtual void Summarize(JObjectSummary& summary) const;
 
 	protected:
 		mutable std::string mName;
 		std::set<const JObject*> associated;
 		std::set<JObject*> auto_delete;
-	
-	private:
-
 };
+
 
 //--------------------------
 // AddAssociatedObject
@@ -150,109 +182,26 @@ void JObject::ClearAssociatedObjects(void)
 	auto_delete.clear();
 }
 
-//--------------------------
-// toStrings
-//--------------------------
-inline void JObject::toStrings(std::vector<std::pair<std::string,std::string> > &items) const
+inline void JObject::Summarize(JObjectSummary& summary) const
 {
-	/// Fill the given "items" vector with items representing the (important)
-	/// data members of this object. The structure of "items" is a vector
-	/// of pairs. The "first" element of the pair is the name of the item
-	/// as it should be displayed when dumping the item to the screen. For
-	/// example, one may wish to include units using a string like "r (cm)".
-	/// The "second" element of the pair is a formatted string containing the
-	/// value as it should be displayed.
-	///
-	/// To facilitate this, the AddString() method exists which allows
-	/// items to be added with the desired formatting using a single line.
-	///
-	/// This is a virtual method that is expected (but not required)
-	/// to be implemented by all classes that inherit from JObject.
+    /// A virtual method which allows the user to display the contents of
+    /// a JObject in a formatted, structured way. This is optional, but recommended.
 
-	AddString(items, "JObject", "0x%08x", (unsigned long)this);
+    /// Fill in the JObjectSummary container with information for each
+    /// member variable of the JObject using JObjectSummary::add(...).
+    /// This accepts a reference to the variable itself, the variable name,
+    /// a printf-style format string, and an optional description string which is
+    /// good for communicating things like units.
+
+    /// For convenience, we provide a NAME_OF macro, which will turn the member
+    /// variable name into a string, rather than having the user write it out manually.
+    /// This is useful if you use automatic refactoring tools, which otherwise
+    /// might allow the variable name and the stringified name to get out of sync.
+
+	summary.add((unsigned long) this, "JObject", "0x%08x");
 }
 
-//--------------------------
-// AddString
-//--------------------------
-template<typename T>
-void JObject::AddString(std::vector<std::pair<std::string,std::string> > &items, const char *name, const char *format, const T &val) const
-{
-	/// Write the given value (val) to a string using the sprintf style formatting
-	/// string (format) and add it to the given vector (items) with the column
-	/// name "name". This is intended for use in the toStrings() method of
-	/// classes that inherit from JObject.
-	///
-	/// The append_type flag provides a facility for recording the data type
-	/// and value with default formatting into items. This can be used
-	/// by a generic convertor (not part of JANA) to auto-generate a
-	/// representation of this object for use in some other persistence
-	/// package (e.g. ROOT files).
-	///
-	/// If the append_types flag is set then the data type of "val" is
-	/// automatically appended with a colon (:) separator to the
-	/// name (first) part of the pair. In addition, "val" is converted
-	/// using stringstream and appended as well, also with a colon (:)
-	/// separator. For example, if the value of name passed in is "px"
-	/// and T is of type double, then the first member of the pair
-	/// appended to items will be something like "px:double:1.23784"
-	/// which can be decifered later to get the name, type, and value
-	/// of the data member.
-	///
-	/// By default, the append_types flag is not set and the name part
-	/// of the pair is a straight copy of the name argument that is
-	/// passed in.
 
-	char str[256];
-	sprintf(str, format, val);
-
-	std::stringstream ss;
-	ss<<name;
-	if(append_types){
-		if(typeid(T)==typeid(int)){
-			ss<<":int:"<<val;
-		}else if(typeid(T)==typeid(int32_t)){
-			ss<<":int:"<<val;
-		}else if(typeid(T)==typeid(unsigned int)){
-			ss<<":uint:"<<val;
-		}else if(typeid(T)==typeid(uint32_t)){
-			ss<<":uint:"<<val;
-		}else if(typeid(T)==typeid(long)){
-			ss<<":long:"<<val;
-		}else if(typeid(T)==typeid(int64_t)){
-			ss<<":long:"<<val;
-		}else if(typeid(T)==typeid(unsigned long)){
-			ss<<":ulong:"<<val;
-		}else if(typeid(T)==typeid(uint64_t)){
-			ss<<":ulong:"<<val;
-		}else if(typeid(T)==typeid(short)){
-			ss<<":short:"<<val;
-		}else if(typeid(T)==typeid(int16_t)){
-			ss<<":short:"<<val;
-		}else if(typeid(T)==typeid(unsigned short)){
-			ss<<":ushort:"<<val;
-		}else if(typeid(T)==typeid(uint16_t)){
-			ss<<":ushort:"<<val;
-		}else if(typeid(T)==typeid(float)){
-			ss<<":float:"<<val;
-		}else if(typeid(T)==typeid(double)){
-			ss<<":double:"<<val;
-		}else if(typeid(T)==typeid(std::string)){
-			ss<<":string:"<<val;
-		}else if(typeid(T)==typeid(const char*)){
-			ss<<":string:"<<val;
-		}else if(typeid(T)==typeid(char*)){
-			ss<<":string:"<<val;
-		}else{
-			ss<<":unknown:"<<str;
-		}
-	}
-
-	std::pair<std::string, std::string> item;
-	item.first = ss.str();
-	item.second = std::string(str);
-	items.push_back(item);
-}
 
 #endif // _JObject_h_
 

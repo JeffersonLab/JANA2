@@ -23,7 +23,7 @@ class JEventSourceManager
 	public:
 
 		//STRUCTORS
-		JEventSourceManager(JApplication* aApp = japp);
+		JEventSourceManager(JApplication* aApp);
 		~JEventSourceManager();
 
 		void AddEventSource(const std::string& source_name);

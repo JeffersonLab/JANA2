@@ -9,7 +9,7 @@
 #include <JANA/JLogger.h>
 #include <JANA/JScheduler.h>
 #include <JANA/JWorkerMetrics.h>
-#include <JANA/JMetrics.h>
+#include <JANA/JArrowPerfSummary.h>
 
 
 using jclock_t = std::chrono::steady_clock;
@@ -62,7 +62,7 @@ public:
 
     /// Summarize what/how this Worker is doing. This is meant to be called from
     /// JProcessingController::measure_perf()
-    void measure_perf(JMetrics::WorkerSummary& result);
+    void measure_perf(WorkerSummary& result);
 
 private:
     /// Worker accumulates Arrow-specific metrics. These need to propagate back to
