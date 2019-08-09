@@ -4,6 +4,6 @@ import os
 
 Import('env osname')
 
-subdirs = ['JANA','greenfield']
+subdirs = ['JANA']
 
 SConscript(dirs=subdirs, exports='env osname', duplicate=0)

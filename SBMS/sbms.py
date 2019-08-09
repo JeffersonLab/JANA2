@@ -58,6 +58,7 @@ def library(env, libname=''):
 		# Install targets 
 		env.Install(libdir, mylib)
 		env.Install(includedir, env.Glob('*.h*'))
+		env.Install(includedir+"/Streaming", env.Glob('Streaming/*.h*'))
 
 
 ##################################
@@ -172,7 +173,7 @@ def plugin(env, pluginname=''):
 		pluginname = os.path.split(os.getcwd())[1]
 
 	srcdir = str(env.Dir('.').srcnode().path)
-	env.AppendUnique(CPPPATH = ['.', '#src/lib/JANA'])
+	env.AppendUnique(CPPPATH = ['.', '#src/lib', '#src/lib/JANA'])
 
 	# Add C/C++ targets
 	env.AppendUnique(ALL_SOURCES = env.Glob('*.c'))
