@@ -30,62 +30,61 @@
 // Author: Nathan Brei
 //
 
+#ifndef JANA2_DETECTORMESSAGE_H
+#define JANA2_DETECTORMESSAGE_H
 
-#include "DummyZmqPublisher.h"
-#include "ReadoutMessage.h"
+#include <string>
+#include <chrono>
+#include <JANA/Streaming/JMessage.h>
+#include <JANA/JException.h>
+#include <cstring>
 
-#include <JANA/JPerfUtils.h>
+struct ReadoutMessageAuto : public JMessage {
 
-#include <iostream>
-#include <thread>
+    static const size_t MAX_PAYLOAD_SIZE = 100;
 
-ZmqDummyPublisher::ZmqDummyPublisher(std::string socket_name,
-                                     std::string sensor_name,
-                                     size_t samples_avg,
-                                     size_t samples_spread,
-                                     uint64_t delay_ms)
+    uint32_t source_id;
+    uint32_t message_id;
+    struct timespec timestamp;
+    uint32_t payload_size = 0;
+    float payload[MAX_PAYLOAD_SIZE];
 
-                                     : m_socket_name(socket_name)
-                                     , m_sensor_name(sensor_name)
-                                     , m_samples_avg(samples_avg)
-                                     , m_samples_spread(samples_spread)
-                                     , m_delay_ms(delay_ms)
-                                     , m_context(1)
-                                     , m_socket(m_context, ZMQ_PUB)
-                                     , m_prev_time(0.0) {
+public:
+    /// JMessage requires that we expose this as a raw byte array
 
-    m_socket.bind(m_socket_name);  // E.g. "tcp://*:5555"
-}
+    inline char* as_buffer() override { return reinterpret_cast<char*>(this); }
+    inline const char* as_buffer() const override { return reinterpret_cast<const char*>(this); }
 
-ZmqDummyPublisher::~ZmqDummyPublisher() {
-    // socket closed by destructor
-}
+    inline size_t get_buffer_size() const override { return sizeof(*this); }
+    inline size_t get_data_size() const override { return sizeof(*this); } // TODO: If we make this more accurate, sending becomes cheaper
+    inline bool is_end_of_stream() const override { return get_source_id() == 0 && message_id == 0 && payload_size == 0; }
 
-void ZmqDummyPublisher::publish(size_t nitems) {
+    // We need an end-of-stream packet
+    static ReadoutMessageAuto end_of_stream() { return {}; }
 
-    size_t counter = 0;
+    ReadoutMessageAuto(uint32_t source_id = 0, uint32_t message_id = 0) : source_id(source_id), message_id(message_id) {
 
-    while (counter < nitems) {
-
-        struct timespec timestamp;
-        clock_gettime(CLOCK_MONOTONIC, &timestamp);
-
-        float V = randfloat(0,1);
-        float x = randfloat(-100, 100);
-        float y = randfloat(-100, 100);
-        float z = randfloat(-100, 100);
-
-        ReadoutMessage<float, 4> message(22, counter, {V, x, y, z});
-
-        m_socket.send(zmq::buffer(&message, message.get_buffer_size()), zmq::send_flags::dontwait);
-        std::cout << "Send: " << message << " (" << message.get_buffer_size() << " bytes)" << std::endl;
-        consume_cpu_ms(m_delay_ms, 0, false);
     }
 
-    // Send end-of-stream message
-    auto eos = ReadoutMessage<float, 4>::end_of_stream();
-    m_socket.send(zmq::buffer(&eos, eos.get_buffer_size()));
-}
+    inline friend std::ostream& operator<< (std::ostream& os, const ReadoutMessageAuto& msg) {
+        std::stringstream ss;
+        ss << msg.message_id << ": ";
+        for (int i = 0; i < msg.payload_size; ++i) {
+            ss << msg.payload[i] << ", ";
+        }
+        os << ss.str();
+        return os;
+    }
+
+    inline DetectorId get_source_id() const override {
+        return source_id;
+    }
+
+    inline Timestamp get_timestamp() const override {
+        return timestamp.tv_nsec;
+    }
+
+};
 
 
-
+#endif //JANA2_DETECTORMESSAGE_H

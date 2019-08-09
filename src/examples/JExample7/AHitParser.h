@@ -39,7 +39,7 @@
 #include <chrono>
 
 #include "AHit.h"
-#include "ReadoutMessage.h"
+#include "ReadoutMessageAuto.h"
 
 
 
@@ -52,7 +52,7 @@ public:
 
     void Process(const std::shared_ptr<const JEvent>& event) {
 
-        auto readoutMessages = event->Get<ReadoutMessage<float, 4>>();
+        auto readoutMessages = event->Get<ReadoutMessageAuto>();
         for (const auto& readoutMessage : readoutMessages) {
             auto ahit = new AHit();
 

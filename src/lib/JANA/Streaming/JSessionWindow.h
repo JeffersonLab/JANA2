@@ -23,9 +23,6 @@ private:
     };
 
 public:
-    using Timestamp = JMessage::Timestamp;
-    using Duration = JMessage::Timestamp;
-    using DetectorId = JMessage::DetectorId;
 
     JSessionWindow(Timestamp event_interval, const std::vector<DetectorId> &detectors)
     : m_event_interval(event_interval) {
@@ -92,10 +89,10 @@ public:
 
 */
 private:
-    std::map<JMessage::DetectorId, std::deque<JMessage*>> m_inbox;
+    std::map<DetectorId, std::deque<JMessage*>> m_inbox;
     std::vector<T *> m_outbox;
-    maybe<JMessage::Timestamp> m_next_event_start;
-    JMessage::Timestamp m_event_interval; // TODO: This should be a duration
+    maybe<Timestamp> m_next_event_start;
+    Timestamp m_event_interval; // TODO: This should be a duration
 };
 
 

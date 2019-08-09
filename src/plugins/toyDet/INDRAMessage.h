@@ -98,25 +98,27 @@ struct INDRAMessage : public JMessage {
         return os;
     }
 
-    inline DetectorId get_source_id() override {
+    inline DetectorId get_source_id() const override {
         return source_id;
     }
 
-    inline Timestamp get_timestamp() override {
+    inline Timestamp get_timestamp() const override {
         return timestamp.tv_nsec;
     }
 
-    inline bool is_end_of_stream() override {
+    inline bool is_end_of_stream() const override {
         return source_id == 0 && record_counter == 0;
     }
 
-    size_t get_buffer_size() override {
+    size_t get_buffer_size() const override {
         return sizeof(INDRAMessage);
     }
 
-    size_t get_max_buffer_size() override {
-        return sizeof(INDRAMessage);
-    }
+    char* as_buffer() override { return reinterpret_cast<char*>(this); }
+
+    const char* as_buffer() const override { return reinterpret_cast<const char*>(this); }
+
+    virtual size_t get_data_size() const { return sizeof(INDRAMessage); }
 
 };
 

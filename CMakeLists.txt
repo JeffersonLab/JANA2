@@ -141,13 +141,10 @@ add_library(janapy SHARED
 
 add_library(zmq2jana SHARED
         src/examples/JExample7/ZmqMain.cc
-        src/examples/JExample7/DummyZmqPublisher.cc
-        src/examples/JExample7/DummyZmqPublisher.h
-        src/examples/JExample7/ReadoutMessage.h
+        src/examples/JExample7/ReadoutMessageAuto.h
         src/examples/JExample7/AHit.h
         src/examples/JExample7/AHitAnomalyDetector.h
         src/examples/JExample7/AHitParser.h
-        src/examples/JExample7/BHitFactory.h
         )
 
 add_library(toyDet SHARED
