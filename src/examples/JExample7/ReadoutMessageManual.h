@@ -30,39 +30,61 @@
 // Author: Nathan Brei
 //
 
-#ifndef JANA2_ZMQDUMMYPUBLISHER_H
-#define JANA2_ZMQDUMMYPUBLISHER_H
+#ifndef JANA2_DETECTORMESSAGE_H
+#define JANA2_DETECTORMESSAGE_H
 
 #include <string>
 #include <chrono>
-#include "zmq.hpp"
-#include "AHit.h"
+#include <JANA/Streaming/JMessage.h>
+#include <JANA/JException.h>
+#include <cstring>
 
-class ZmqDummyPublisher {
+class ReadoutMessage : public JMessage {
+
+    /// Under the hood, ReadoutMessage is just a fixed-size buffer of char.
+    static const size_t BUFFER_SIZE = 1024;
+    char m_buffer[BUFFER_SIZE];
+    size_t m_data_size;
+
 public:
+    /// JMessage requires that we expose this as a raw byte array
 
-    ZmqDummyPublisher(std::string socket_name,
-                      std::string sensor_name,
-                      size_t samples_avg,
-                      size_t samples_spread,
-                      uint64_t delay_ms);
+    inline char* as_buffer() override { return m_buffer; }
+    inline size_t get_buffer_size() override { return BUFFER_SIZE; }
+    inline size_t get_data_size() override { return BUFFER_SIZE; } // TODO: This is more complicated
+    inline void set_data_size(size_t data_size) override { m_data_size = data_size; } // TODO: This is more complicated
+    inline bool is_end_of_stream() override { return get_source_id() == 0 && get_message_id() == 0 && get_payload_size() == 0; }
 
-    ~ZmqDummyPublisher();
+    ReadoutMessage end_of_stream() override { return {}; }
 
-    void publish(size_t nitems);
+    /// However, we also want to expose it as a high-level object
 
-private:
-    zmq::context_t m_context;
-    zmq::socket_t m_socket;
+    ReadoutMessage(uint32_t source_id = 0, uint32_t message_id = 0) {
+        set_source_id(source_id);
+        set_message_id(message_id);
 
-    std::string m_socket_name;
-    std::string m_sensor_name;
-    size_t m_samples_avg;
-    size_t m_samples_spread;
-    uint64_t m_delay_ms;
-    double m_prev_time;
+    }
+
+    inline friend std::ostream& operator<< (std::ostream& os, const ReadoutMessage& msg) {
+        std::stringstream ss;
+        ss << msg.message_id << ": ";
+        for (int i=0; i<5 && i<N; ++i) {
+            ss << msg.payload[i] << ", ";
+        }
+        ss << "...";
+        os << ss.str();
+        return os;
+    }
+
+    inline DetectorId get_source_id() override {
+        return 0;
+    }
+
+    inline Timestamp get_timestamp() override {
+        return 0;
+    }
 
 };
 
 
-#endif //JANA2_ZMQDUMMYPUBLISHER_H
+#endif //JANA2_DETECTORMESSAGE_H

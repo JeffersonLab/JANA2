@@ -41,14 +41,14 @@
 
 #include "zmq.hpp"
 
-template <typename T>
-class ZmqTransport : public JTransport<T> {
+
+class ZmqTransport : public JTransport {
 
 public:
     ZmqTransport(std::string socket_name, bool publish = false)
         : m_socket_name(socket_name)
         , m_context(1)
-        , m_socket(m_context, zmq::socket_type::sub) {
+        , m_socket(m_context, publish ? zmq::socket_type::pub : zmq::socket_type::sub) {
     }
 
     void initialize() override {
@@ -61,41 +61,39 @@ public:
         }
     };
 
-    JTransportResult send(const T& src_msg) override {
+    JTransport::Result send(const JMessage& src_msg) override {
 
-        char** serialized_buffer = nullptr;
-        size_t message_length;
-        src_msg.serialize(serialized_buffer, &message_length);
 
-        zmq::message_t message(sizeof(T)); // TODO: This is wrong
-        memcpy(&message, serialized_buffer, message_length);
+        zmq::message_t message(src_msg.get_buffer_size());
+
+        memcpy(message.data<char>(), src_msg.as_buffer(), src_msg.get_buffer_size());
+
         auto result = m_socket.send(message, zmq::send_flags::dontwait);
 
         if (!result.has_value()) {  // TODO: Not sure this actually does what I think it does
-            return JTransportResult::TRY_AGAIN;
+            return Result::TRY_AGAIN;
         }
-        return JTransportResult::SUCCESS;
+        return Result::SUCCESS;
     }
 
-    JTransportResult receive(T& dest_msg) override {
+    Result receive(JMessage& dest_msg) override {
 
-        zmq::message_t message(sizeof(T)); // TODO: This is wrong
+        zmq::message_t message(dest_msg.get_buffer_size()); // TODO: This is wrong
         auto result = m_socket.recv(message, zmq::recv_flags::dontwait);
 
         if (!result.has_value()) {
-            return JTransportResult::TRY_AGAIN;
+            return Result::TRY_AGAIN;
         }
 
-        dest_msg.deserialize(message.data<char>(), message.size());
+        memcpy(dest_msg.as_buffer(), message.data<char>(), message.size());
 
         std::stringstream ss;
-        ss << "Recv: " << dest_msg << " (" << message.size() << " bytes, expected " << sizeof(T) << " bytes)" << std::endl;
         std::cout << ss.str();
 
         if (dest_msg.is_end_of_stream()) {
-            return JTransportResult::FINISHED;
+            return Result::FINISHED;
         }
-        return JTransportResult::SUCCESS;
+        return Result::SUCCESS;
     }
 
 

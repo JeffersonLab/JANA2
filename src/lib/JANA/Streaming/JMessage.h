@@ -6,8 +6,10 @@
 #define JANA2_JMESSAGE_H
 
 #include <JANA/JObject.h>
-#include <cstring>
 
+
+using DetectorId = uint64_t;
+using Timestamp = uint64_t;
 
 /// JMessage is an abstract base class for a message type for streamed data,
 /// usually corresponding to detector hits.
@@ -16,24 +18,14 @@
 /// by JWindow in order to do event building, as described in JEventBuilder.
 struct JMessage : public JObject {
 
-    using DetectorId = uint64_t;  // TODO: Choose these types more carefully
-    using Timestamp = uint64_t;
+    virtual DetectorId get_source_id() const = 0;
+    virtual Timestamp get_timestamp() const = 0;
 
-    virtual DetectorId get_source_id() = 0;
-    virtual Timestamp get_timestamp() = 0;
-    virtual bool is_end_of_stream() = 0;
-    virtual size_t get_buffer_size() = 0;
-    virtual size_t get_max_buffer_size() = 0;
-
-    virtual void deserialize(char* buffer, size_t length) {
-        memcpy((void*) this, (void*) buffer, length);
-    };
-
-    virtual void serialize(char** buffer, size_t* length) const {
-        *length = sizeof(*this);
-        *buffer = (char*) malloc(*length);
-        memcpy((void*) buffer, (void*) this, *length);
-    };
+    virtual char* as_buffer() = 0;
+    virtual const char* as_buffer() const = 0;
+    virtual size_t get_buffer_size() const = 0;
+    virtual size_t get_data_size() const = 0;
+    virtual bool is_end_of_stream() const = 0;
 };
 
 

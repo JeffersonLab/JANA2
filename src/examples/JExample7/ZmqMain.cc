@@ -36,16 +36,41 @@
 #include <JANA/Streaming/JEventBuilder.h>
 #include <JANA/Streaming/JSessionWindow.h>
 
-#include "ReadoutMessage.h"
+#include "ReadoutMessageAuto.h"
 #include "ZmqTransport.h"
-#include "DummyZmqPublisher.h"
 #include "AHitParser.h"
 #include "AHitAnomalyDetector.h"
 
+
 void dummy_publisher_loop() {
-	ZmqDummyPublisher pub("tcp://127.0.0.1:5555", "fcal", 3, 2, 1000);
-    std::this_thread::sleep_for(std::chrono::milliseconds(3000));
-	pub.publish(10);
+
+    auto addr = "tcp://127.0.0.1:5555";
+    consume_cpu_ms(3000, 0, false);
+
+    std::cout << "Attempting something!" << std::endl;
+
+	auto transport = ZmqTransport("tcp://127.0.0.1:5555", true);
+    std::cout << "Create xport" << std::endl;
+
+	for (size_t counter = 0; counter < 10; ++counter) {
+
+        std::cout << "Creating msg" << std::endl;
+        float V = randfloat(0,1);
+        float x = randfloat(-100, 100);
+        float y = randfloat(-100, 100);
+        float z = randfloat(-100, 100);
+
+        ReadoutMessageAuto message(22, counter);
+
+        transport.send(message);
+
+        std::cout << "Send: " << message << " (" << message.get_buffer_size() << " bytes)" << std::endl;
+        consume_cpu_ms(1000, 0, false);
+    }
+
+    // Send end-of-stream message
+    auto eos = ReadoutMessageAuto::end_of_stream();
+	transport.send(eos);
 }
 
 extern "C"{
@@ -53,9 +78,9 @@ void InitPlugin(JApplication *app) {
 
 	InitJANAPlugin(app);
 
-    using Msg = ReadoutMessage<float, 4>;
+    using Msg = ReadoutMessageAuto;
 
-    auto transport = std::unique_ptr<ZmqTransport<Msg>>(new ZmqTransport<Msg>("tcp://127.0.0.1:5555"));
+    auto transport = std::unique_ptr<ZmqTransport>(new ZmqTransport("tcp://127.0.0.1:5555"));
 
     auto window = std::unique_ptr<JSessionWindow<Msg>>(new JSessionWindow<Msg>(10, {0,1,2}));
 
