@@ -18,7 +18,7 @@
 #include "JFactory_rawSamples.h"
 #include "DummyZmqPublisher.h"
 #include "INDRAMessage.h"
-#include "../../examples/JExample7/ZmqTransport.h"
+#include "ZmqTransport.h"
 
 void dummy_publisher_loop() {
     ZmqDummyPublisher pub("run-10-mhz-10-chan-10-ev.dat", "tcp://127.0.0.1:5555", 100, 10, 2);

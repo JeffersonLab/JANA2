@@ -49,14 +49,30 @@ public:
         : m_socket_name(socket_name)
         , m_publish(publish) {}
 
+    ~ZmqTransport() {
+        if (m_socket != nullptr) {
+            zmq_close(m_socket);
+        }
+    }
+
     void initialize() override {
         m_context = zmq_ctx_new();
-        m_socket = m_publish ? zmq_socket(m_context, ZMQ_PUB) : zmq_socket(m_context, ZMQ_SUB);
-        int rc = zmq_bind(m_socket, m_socket_name.c_str());
-        if (rc == -1) {
+        int result;
+        if (m_publish) {
+            m_socket = zmq_socket(m_context, ZMQ_PUB);
+            result = zmq_bind(m_socket, m_socket_name.c_str());
+        }
+        else {
+            m_socket = zmq_socket(m_context, ZMQ_SUB);
+            result = zmq_connect(m_socket, m_socket_name.c_str());
+            zmq_setsockopt(m_socket, ZMQ_SUBSCRIBE, "", 0);  // Subscribe to everything
+        }
+        if (result == -1) {
             int errno_saved = errno;
             std::ostringstream os;
-            os << "Unable to subscribe to zmq socket " << m_socket_name << ": ";
+
+            os << "Unable to " << (m_publish ? "bind" : "connect") << " to zmq socket " << m_socket_name << ": ";
+
             switch (errno_saved) {
                 case EINVAL: os << "Invalid endpoint"; break;
                 case EPROTONOSUPPORT: os << "Transport protocol not supported"; break;
@@ -71,9 +87,6 @@ public:
             std::cout << os.str();
             throw JException(os.str());
         }
-
-        zmq_setsockopt(m_socket, ZMQ_SUBSCRIBE, "", 0);
-        // Subscribe to everything
     };
 
     JTransport::Result send(const JMessage& src_msg) override {
@@ -89,18 +102,19 @@ public:
     JTransport::Result receive(JMessage& dest_msg) override {
 
         int rc_length = zmq_recv(m_socket, dest_msg.as_buffer(), dest_msg.get_buffer_size(), ZMQ_DONTWAIT);
+
         if (rc_length == -1) {
-            // TODO: Verify via ERRNO that this should be TRY_AGAIN and not FAILURE
             return JTransport::Result::TRY_AGAIN;
         }
 
         if (dest_msg.is_end_of_stream()) {
             zmq_close(m_socket);
+            m_socket = nullptr;
             return JTransport::Result::FINISHED;
         }
+
         return JTransport::Result::SUCCESS;
     }
-
 
 private:
     std::string m_socket_name = "tcp://127.0.0.1:5555";
