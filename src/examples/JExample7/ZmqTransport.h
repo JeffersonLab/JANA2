@@ -97,10 +97,10 @@ public:
     }
 
 private:
-    bool m_publish;
     std::string m_socket_name = "tcp://127.0.0.1:5555";
     zmq::context_t m_context;
     zmq::socket_t m_socket;
+    bool m_publish;
 };
 
 
