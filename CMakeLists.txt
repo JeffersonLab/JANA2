@@ -17,10 +17,6 @@ include_directories(src/plugins/JTest)
 include_directories(src/programs/jana)
 include_directories(src/programs/tests)
 
-add_library(greenfield STATIC
-        src/lib/greenfield/Greenfield.cc
-        )
-
 add_executable(tests
         src/programs/tests/catch.hpp
         src/programs/tests/ActivableTests.cc

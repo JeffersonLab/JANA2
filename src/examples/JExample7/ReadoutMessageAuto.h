@@ -39,13 +39,12 @@
 #include <JANA/JException.h>
 #include <cstring>
 
-struct ReadoutMessageAuto : public JMessage {
+struct ReadoutMessageAuto : public JEventMessage {
 
     static const size_t MAX_PAYLOAD_SIZE = 100;
 
-    uint32_t source_id;
-    uint32_t message_id;
-    struct timespec timestamp;
+    uint32_t run_number;
+    uint32_t event_number;
     uint32_t payload_size = 0;
     float payload[MAX_PAYLOAD_SIZE];
 
@@ -56,32 +55,29 @@ public:
     inline const char* as_buffer() const override { return reinterpret_cast<const char*>(this); }
 
     inline size_t get_buffer_size() const override { return sizeof(*this); }
-    inline size_t get_data_size() const override { return sizeof(*this); } // TODO: If we make this more accurate, sending becomes cheaper
-    inline bool is_end_of_stream() const override { return get_source_id() == 0 && message_id == 0 && payload_size == 0; }
+    inline bool is_end_of_stream() const override { return event_number == 0 && run_number == 0 && payload_size == 0; }
+
+    inline size_t get_event_number() const override { return event_number; }
+    inline size_t get_run_number() const override { return run_number; }
 
     // We need an end-of-stream packet
     static ReadoutMessageAuto end_of_stream() { return {}; }
 
-    ReadoutMessageAuto(uint32_t source_id = 0, uint32_t message_id = 0) : source_id(source_id), message_id(message_id) {
-
+    ReadoutMessageAuto(uint32_t run_number = 0, uint32_t event_number = 0, uint32_t payload_size = 0)
+        : run_number(run_number)
+        , event_number(event_number)
+        , payload_size(payload_size)
+    {
     }
 
     inline friend std::ostream& operator<< (std::ostream& os, const ReadoutMessageAuto& msg) {
         std::stringstream ss;
-        ss << msg.message_id << ": ";
+        ss << msg.event_number << ": ";
         for (int i = 0; i < msg.payload_size; ++i) {
             ss << msg.payload[i] << ", ";
         }
         os << ss.str();
         return os;
-    }
-
-    inline DetectorId get_source_id() const override {
-        return source_id;
-    }
-
-    inline Timestamp get_timestamp() const override {
-        return timestamp.tv_nsec;
     }
 
 };

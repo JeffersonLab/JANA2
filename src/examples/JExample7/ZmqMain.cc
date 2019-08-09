@@ -35,6 +35,7 @@
 #include <JANA/JEventSourceGeneratorT.h>
 #include <JANA/Streaming/JEventBuilder.h>
 #include <JANA/Streaming/JSessionWindow.h>
+#include <JANA/Streaming/JStreamingEventSource.h>
 
 #include "ReadoutMessageAuto.h"
 #include "ZmqTransport.h"
@@ -73,13 +74,8 @@ void InitPlugin(JApplication *app) {
 
 	InitJANAPlugin(app);
 
-    using Msg = ReadoutMessageAuto;
-
     auto transport = std::unique_ptr<ZmqTransport>(new ZmqTransport("tcp://127.0.0.1:5555"));
-
-    auto window = std::unique_ptr<JSessionWindow<Msg>>(new JSessionWindow<Msg>(10, {0,1,2}));
-
-    app->Add(new JEventBuilder<Msg>(std::move(transport), std::move(window)));
+    app->Add(new JStreamingEventSource<ReadoutMessageAuto>(std::move(transport)));
 
 	app->Add(new AHitAnomalyDetector(app, 5000));
 	app->Add(new JFactoryGeneratorT<AHitParser>());

@@ -48,7 +48,7 @@
 /// only we can choose our max payload size and type as template parameters, which
 /// is extremely convenient.
 template <typename T, unsigned int N>
-struct INDRAMessage : public JMessage {
+struct INDRAMessage : public JEventMessage {
 
     uint32_t source_id = 0;
     uint32_t total_length;
@@ -98,12 +98,11 @@ struct INDRAMessage : public JMessage {
         return os;
     }
 
-    inline DetectorId get_source_id() const override {
-        return source_id;
+    inline size_t get_event_number() const override {
+        return record_counter;
     }
-
-    inline Timestamp get_timestamp() const override {
-        return timestamp.tv_nsec;
+    inline size_t get_run_number() const override {
+        return 0;
     }
 
     inline bool is_end_of_stream() const override {
@@ -118,7 +117,11 @@ struct INDRAMessage : public JMessage {
 
     const char* as_buffer() const override { return reinterpret_cast<const char*>(this); }
 
-    virtual size_t get_data_size() const { return sizeof(INDRAMessage); }
+    virtual size_t get_data_size() const {
+        // This way we don't send garbage data over the wire.
+        // Note this assumes that the payload is the last field in the struct...
+        return sizeof(INDRAMessage) - ((N-payload_length)*sizeof(T));
+    }
 
 };
 

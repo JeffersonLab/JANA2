@@ -56,11 +56,6 @@ public:
         for (const auto& readoutMessage : readoutMessages) {
             auto ahit = new AHit();
 
-            auto duration = std::chrono::seconds{readoutMessage->timestamp.tv_sec} +
-                            std::chrono::nanoseconds{readoutMessage->timestamp.tv_nsec};
-
-            ahit->t = duration.count();  // This probably isn't what we want
-
             ahit->E = reinterpret_cast<const float&>(readoutMessage->payload[0]);
             ahit->x = reinterpret_cast<const float&>(readoutMessage->payload[1]);
             ahit->y = reinterpret_cast<const float&>(readoutMessage->payload[2]);
