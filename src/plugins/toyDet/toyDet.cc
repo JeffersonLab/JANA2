@@ -9,21 +9,73 @@
 // [ Source ]
 // [ Revision ]
 
-#include <JANA/Streaming/JEventBuilder.h>
-#include <JANA/Streaming/JSessionWindow.h>
+#include <JANA/Streaming/JStreamingEventSource.h>
 
 #include "JEventProcessor_toyDet.h"
 #include "JEventSource_toyDet.h"
 #include "JFactoryGenerator_toyDet.h"
 #include "JFactory_rawSamples.h"
-#include "DummyZmqPublisher.h"
+
 #include "INDRAMessage.h"
 #include "ZmqTransport.h"
 
 void dummy_publisher_loop() {
-    ZmqDummyPublisher pub("run-10-mhz-10-chan-10-ev.dat", "tcp://127.0.0.1:5555", 100, 10, 2);
+
+    std::string source_file = "run-10-mhz-10-chan-10-ev.dat";
+    std::string dest_socket = "tcp://127.0.0.1:5555";
+    size_t channel_count = 10;
+    size_t source_count = 2;
+    size_t delay_ms = 200;
+
     std::this_thread::sleep_for(std::chrono::seconds(2));  // Wait for JANA to fire up so we don't lose data
-    pub.loop();
+    std::cout << "Starting producer loop" << std::endl;
+
+    size_t event_id = 1;
+    uint32_t channel_id = 1;
+    uint32_t source_id = 1;
+
+    std::ifstream file_stream(source_file);
+    ZmqTransport transport {dest_socket, true};
+    transport.initialize();
+    std::string line;
+    std::vector<double> data;
+
+    while (std::getline(file_stream, line)) {
+
+        // Skip comment lines
+        if (line[0] == '#' || line[0] == '@') continue;
+
+        // Parse line as sequence of doubles
+        std::stringstream line_stream(line);
+        std::string value;
+        while (std::getline(line_stream, value, ' ')) {
+            data.push_back(std::stod(value));
+        }
+
+        // Append all sources to data buffer
+        source_id += 1;
+        if (source_id <= source_count) continue;
+
+        // Send line as message over ZMQ
+        auto message = ToyDetMessage(event_id, channel_id, data);
+        transport.send(message);
+        std::cout << "Send: " << message << " (" << sizeof(ToyDetMessage) << " bytes)" << std::endl;
+        consume_cpu_ms(delay_ms, 0, false);
+        data.clear();
+
+        // Update source and channel ids
+        source_id = 1;
+        channel_id += 1;
+        if (channel_id > channel_count) {
+            event_id += 1;
+            channel_id = 1;
+        }
+    }
+
+    // Send an end-of-stream message
+    auto message = ToyDetMessage(0, 0, data);
+    transport.send(message);
+    std::cout << "Send: " << message << " (" << sizeof(ToyDetMessage) << " bytes)" << std::endl;
 }
 
 extern "C" {
@@ -33,9 +85,7 @@ void InitPlugin(JApplication* app) {
     app->SetParameterValue("jana:extended_report", false);
 
     auto transport = std::unique_ptr<ZmqTransport>(new ZmqTransport("tcp://127.0.0.1:5555"));
-    auto window = std::unique_ptr<JSessionWindow<ToyDetMessage>>(new JSessionWindow<ToyDetMessage>(10, {0,1,2}));
-
-    app->Add(new JEventBuilder<ToyDetMessage>(std::move(transport), std::move(window)));
+    app->Add(new JStreamingEventSource<ToyDetMessage>(std::move(transport)));
 
     app->Add(new JEventProcessor_toyDet());
     app->Add(new JFactoryGeneratorT<JFactory_rawSamples>());
@@ -46,3 +96,5 @@ void InitPlugin(JApplication* app) {
     auto publisher = new std::thread(dummy_publisher_loop);
 }
 } // "C"
+
+

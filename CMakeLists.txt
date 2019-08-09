@@ -152,8 +152,6 @@ add_library(toyDet SHARED
         src/plugins/toyDet/rawSamples.cc
         src/plugins/toyDet/rawSamples.h
         src/plugins/toyDet/toyDet.cc
-        src/plugins/toyDet/DummyZmqPublisher.cc
-        src/plugins/toyDet/DummyZmqPublisher.h
         src/plugins/toyDet/ZmqTransport.h
         src/plugins/toyDet/INDRAMessage.h
         src/plugins/toyDet/JFactory_rawSamples.h

@@ -70,7 +70,7 @@ public:
 
     JTransport::Result send(const JMessage& src_msg) override {
 
-        auto result = m_socket.send(zmq::buffer(src_msg.as_buffer(), src_msg.get_buffer_size()),
+        auto result = m_socket.send(zmq::buffer(src_msg.as_buffer(), src_msg.get_data_size()),
                                     zmq::send_flags::dontwait);
 
         if (!result.has_value()) {
