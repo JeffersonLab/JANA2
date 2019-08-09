@@ -25,7 +25,7 @@ class JStreamingEventSource : public JEventSource {
 
 public:
 
-    JStreamingEventSource(std::unique_ptr<JTransport>&& transport)
+    explicit JStreamingEventSource(std::unique_ptr<JTransport>&& transport)
         : JEventSource("JStreamingEventSource")
         , m_transport(std::move(transport))
         , m_next_item(nullptr)

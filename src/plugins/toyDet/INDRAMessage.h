@@ -120,7 +120,7 @@ struct INDRAMessage : public JEventMessage {
     virtual size_t get_data_size() const {
         // This way we don't send garbage data over the wire.
         // Note this assumes that the payload is the last field in the struct...
-        return sizeof(INDRAMessage) - ((N-payload_length)*sizeof(T));
+        return sizeof(INDRAMessage); // - ((N-payload_length)*sizeof(T));
     }
 
 };

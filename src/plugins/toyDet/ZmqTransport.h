@@ -91,7 +91,7 @@ public:
 
     JTransport::Result send(const JMessage& src_msg) override {
 
-        int rc = zmq_send(m_socket, src_msg.as_buffer(), src_msg.get_buffer_size(), 0);
+        int rc = zmq_send(m_socket, src_msg.as_buffer(), src_msg.get_data_size(), 0);
 
         if (rc == -1) {
             return JTransport::Result::FAILURE;
