@@ -84,7 +84,7 @@ void InitPlugin(JApplication *app) {
 	app->SetParameterValue("jana:legacy_mode", 0);
 	app->SetParameterValue("jana:extended_report", 0);
 
-	auto publisher = new std::thread(dummy_publisher_loop);
+	new std::thread(dummy_publisher_loop);
 }
 } // "C"
 

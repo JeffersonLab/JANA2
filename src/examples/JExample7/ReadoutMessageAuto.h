@@ -73,7 +73,7 @@ public:
     inline friend std::ostream& operator<< (std::ostream& os, const ReadoutMessageAuto& msg) {
         std::stringstream ss;
         ss << msg.event_number << ": ";
-        for (int i = 0; i < msg.payload_size; ++i) {
+        for (size_t i = 0; i < msg.payload_size; ++i) {
             ss << msg.payload[i] << ", ";
         }
         os << ss.str();

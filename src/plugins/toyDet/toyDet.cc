@@ -93,7 +93,7 @@ void InitPlugin(JApplication* app) {
     //app->Add(new JEventSourceGeneratorT<JEventSource_toyDet>());
     //app->Add(new JFactoryGenerator_toyDet());
 
-    auto publisher = new std::thread(dummy_publisher_loop);
+    new std::thread(dummy_publisher_loop);
 }
 } // "C"
 
