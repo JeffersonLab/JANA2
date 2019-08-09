@@ -112,6 +112,7 @@ public:
     void ClearData() override {
         for (auto p : mData) delete p;
         mData.clear();
+        mDataPresentFlag = false;
     }
 
 protected:

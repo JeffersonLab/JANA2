@@ -53,110 +53,117 @@
 #include <vector>
 
 class JEvent;
+
 class JObject;
 
-class JFactory
-{
-	public:
+class JFactory {
+public:
 
-		enum JFactory_Flags_t{
-			JFACTORY_NULL		=0x00,
-			PERSISTANT			=0x01,
-			WRITE_TO_OUTPUT	=0x02,
-			NOT_OBJECT_OWNER	=0x04
-		};
+    enum JFactory_Flags_t {
+        JFACTORY_NULL = 0x00,
+        PERSISTANT = 0x01,
+        WRITE_TO_OUTPUT = 0x02,
+        NOT_OBJECT_OWNER = 0x04
+    };
 
-		JFactory(std::string aName, std::string aTag = "") : mName(aName), mTag(aTag) { };
-		virtual ~JFactory() = default;
+    JFactory(std::string aName, std::string aTag = "") : mObjectName(std::move(aName)), mTag(std::move(aTag)) {};
 
-		std::string GetName(void) const{return mName;}
-		std::string GetTag(void) const{return mTag;}
+    virtual ~JFactory() = default;
 
-		//VIRTUAL METHODS OVERLOADED BY JFactoryT
-		virtual std::type_index GetObjectType(void) const = 0;
-		virtual void ClearData(void) = 0;
+    std::string GetName() const { return mObjectName; }   // TODO: This is the JObject class name, right?
 
-		//VIRTUAL METHODS TO BE OVERLOADED BY USER FACTORIES
-		virtual void Init(void){}
-		virtual void ChangeRun(const std::shared_ptr<const JEvent>& aEvent){}
-		virtual void Process(const std::shared_ptr<const JEvent>& aEvent){}
-//		virtual void Create(const std::shared_ptr<const JEvent>& aEvent){}
+    std::string GetTag() const { return mTag; }
 
-		uint32_t GetPreviousRunNumber(void) const{return mPreviousRunNumber;}
-		void SetPreviousRunNumber(uint32_t aRunNumber){mPreviousRunNumber = aRunNumber;}
+    uint32_t GetPreviousRunNumber(void) const { return mPreviousRunNumber; }
 
-		//Have objects already been created?
-		bool GetCreated(void) const{return mCreated;}
-		void SetCreated(bool aCreated){mCreated = aCreated;}
+    void SetPreviousRunNumber(uint32_t aRunNumber) { mPreviousRunNumber = aRunNumber; }
 
-		bool AcquireCreatingLock(void);
-		const std::atomic<bool>& GetCreatingLock(void) const;
-		void ReleaseCreatingLock(void);
+    /// Get all flags in the form of a single word
+    inline uint32_t GetFactoryFlags(void) { return mFlags; }
 
-		// Copy/Move objects into factory
-		template<typename T>
-		void Set(std::vector<T*>& items) {
-		    for (T* item : items) {
-		    	Insert(item);
-		    }
-		}
-		// Another option:
-		// Get rid of Set(std::vector<JObject*>& items) completely.
-		// Have virtual Set<T>(std::vector<T*>& items) { throw JException("Wrong type!"); }
-		// When T matches JFactoryT<T>, then this dispatches to the JFactoryT<T>::Set()
-		// The main downside I see right now is a potentially huge vtable
+    /// Set a flag (or flags)
+    inline void SetFactoryFlag(JFactory_Flags_t f) {
+        mFlags |= (uint32_t) f;
+    }
 
-		/// Get all flags in the form of a single word
-		inline uint32_t GetFactoryFlags(void){return mFlags;}
-	
-		/// Set a flag (or flags)
-		inline void SetFactoryFlag(JFactory_Flags_t f){
-			mFlags |= (uint32_t)f;
-		}
+    /// Clear a flag (or flags)
+    inline void ClearFactoryFlag(JFactory_Flags_t f) {
+        mFlags &= ~(uint32_t) f;
+    }
 
-		/// Clear a flag (or flags)
-		inline void ClearFactoryFlag(JFactory_Flags_t f){
-			mFlags &= ~(uint32_t)f;
-		}
+    /// Test if a flag (or set of flags) is set
+    inline bool TestFactoryFlag(JFactory_Flags_t f) {
+        return (mFlags & (uint32_t) f) == (uint32_t) f;
+    }
 
-		/// Test if a flag (or set of flags) is set
-		inline bool TestFactoryFlag(JFactory_Flags_t f){
-			return (mFlags & (uint32_t)f) == (uint32_t)f;
-		}
 
-		// Used to make sure Init is called only once
-		std::once_flag init_flag; 
 
-	protected:
-		virtual void Set(std::vector<JObject*>& data) = 0;
-		virtual void Insert(JObject* data) = 0;
+    // Overloaded by JFactoryT
+    virtual std::type_index GetObjectType() const = 0;
 
-		std::string mName;
-		std::string mTag;
-		uint32_t    mFlags;
-		std::atomic<bool> mCreating{false}; //true if a thread is currently creating objects (effectively a lock)
-		std::atomic<bool> mCreated{false}; //true if created previously, false if not
-		uint32_t mPreviousRunNumber = 0;
+    virtual void ClearData() = 0;
+
+
+
+    // Overloaded by user Factories
+    virtual void Init() {}
+
+    virtual void ChangeRun(const std::shared_ptr<const JEvent> &aEvent) {}
+
+    virtual void Process(const std::shared_ptr<const JEvent> &aEvent) {}
+
+
+
+    void DoInit() {
+        try {
+            std::call_once(mInitFlag, &JFactory::Init, this);
+        }
+        catch (JException& ex) {
+            ex.plugin_name = mPluginName;
+            ex.component_name = mFactoryName;
+            throw ex;
+        }
+        catch (...) {
+            auto ex = JException("Unknown exception in JEventSource::Open()");
+            ex.nested_exception = std::current_exception();
+            ex.plugin_name = mPluginName;
+            ex.component_name = mFactoryName;
+            throw ex;
+        }
+    }
+
+
+    // Copy/Move objects into factory
+    template<typename T>
+    void Set(std::vector<T *> &items) {
+        for (T *item : items) {
+            Insert(item);
+        }
+    }
+    // Another option:
+    // Get rid of Set(std::vector<JObject*>& items) completely.
+    // Have virtual Set<T>(std::vector<T*>& items) { throw JException("Wrong type!"); }
+    // When T matches JFactoryT<T>, then this dispatches to the JFactoryT<T>::Set()
+    // The main downside I see right now is a potentially huge vtable
+
+
+protected:
+    virtual void Set(std::vector<JObject *> &data) = 0;
+
+    virtual void Insert(JObject *data) = 0;
+
+    std::string mPluginName;
+    std::string mFactoryName;
+    std::string mObjectName;
+    std::string mTag;
+    uint32_t mFlags;
+    uint32_t mPreviousRunNumber = 0;
+
+    // Used to make sure Init is called only once
+    std::once_flag mInitFlag;
+    std::atomic_bool mDataPresentFlag;
 
 };
-
-inline const std::atomic<bool>& JFactory::GetCreatingLock(void) const
-{
-	//Get a reference to the lock. This is so that threads can do other things in the meantime while waiting for this
-	return mCreating;
-}
-
-inline bool JFactory::AcquireCreatingLock(void)
-{
-	bool sExpected = false;
-	return mCreating.compare_exchange_weak(sExpected, true);
-}
-
-inline void JFactory::ReleaseCreatingLock(void)
-{
-	//Only call with thread used to acquire!
-	mCreating = false;
-}
 
 #endif // _JFactory_h_
 

@@ -57,7 +57,6 @@ add_executable(playground
 add_library(jana2 STATIC
         src/lib/JANA/JApplication.cc
         src/lib/JANA/JApplication.h
-        src/lib/JANA/JEvent.cc
         src/lib/JANA/JEvent.h
         src/lib/JANA/JEventProcessor.h
         src/lib/JANA/JEventSource.h

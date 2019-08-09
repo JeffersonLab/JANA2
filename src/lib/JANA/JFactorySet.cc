@@ -173,7 +173,6 @@ void JFactorySet::Release(void)
 	for(const auto& sFactoryPair : mFactories){
 		auto sFactory = sFactoryPair.second;
 		sFactory->ClearData();
-		sFactory->SetCreated(false);
 	}
 }
 
