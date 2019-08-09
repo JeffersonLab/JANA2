@@ -2,106 +2,69 @@
 // Created by Nathan Brei on 2019-07-28.
 //
 
-#ifndef JANA2_JEVENTBUILDER_H
-#define JANA2_JEVENTBUILDER_H
+#ifndef JANA2_JSTREAMINGEVENTSOURCE_H
+#define JANA2_JSTREAMINGEVENTSOURCE_H
 
 #include <cstdint>
 #include <cstddef>
 #include <memory>
 #include <queue>
 
+#include <JANA/JEvent.h>
+#include <JANA/JEventSource.h>
 #include <JANA/Streaming/JTransport.h>
-#include <JANA/Streaming/JWindow.h>
-#include <JANA/Streaming/JMergeWindow.h>
 
-/// JTrigger determines whether an event contains data worth passing downstream, or whether
-/// it should be immediately recycled. The user can call arbitrary JFactories from a Trigger
-/// just like they can from an EventProcessor.
-/// This design allows the user to reuse reconstruction code for a software trigger, and to
-/// reuse results calculated for the trigger during reconstruction. The accept() function
-/// should be thread safe, so that the trigger can be automatically parallelized, which will
-/// help bound the system's overall latency.
-struct JTrigger {
-
-    virtual bool accept(JEvent &event) { return true; }
-
-};
-
-
-/// JEventBuilder pulls JMessages off of a user-specified JTransport, aggregates them into
-/// JEvents using the JWindow of their choice, and decides which to keep via a user-specified
-/// JTrigger. The user can choose to merge this Event stream with additional JMessage streams, possibly
-/// applying a different trigger at each level. This is useful for level 2/3/n triggers and maybe EPICS data.
-
+/// JStreamingEventSource makes it convenient to stream events into JANA by handling transport and
+/// message type as separate, orthogonal concerns.
 template <typename T>
-class JEventBuilder : public JEventSource {
+class JStreamingEventSource : public JEventSource {
+
+    std::unique_ptr<JTransport> m_transport;
+    T* m_next_item;
+    size_t m_next_evt_nr = 1;
+
 public:
 
-    JEventBuilder(std::unique_ptr<JTransport> transport,
-                  std::unique_ptr<JWindow<T>> window,
-                  std::unique_ptr<JTrigger> trigger = std::unique_ptr<JTrigger>())
-
-        : JEventSource("JEventBuilder") {
-
-        m_levels.emplace_back(std::move(transport), std::move(window), std::move(trigger));
-    }
-
-    void addLevel(std::unique_ptr<JTransport> transport, std::unique_ptr<JTrigger> trigger = std::unique_ptr<JTrigger>()) {
-        auto merge_window = std::unique_ptr<JMergeWindow<T>>();
-        m_levels.push_back({transport, merge_window, trigger});
+    JStreamingEventSource(std::unique_ptr<JTransport>&& transport)
+        : JEventSource("JStreamingEventSource")
+        , m_transport(std::move(transport))
+        , m_next_item(nullptr)
+    {
     }
 
     void Open() override {
-        for (auto& level : m_levels) {
-            level.transport->initialize();
-        }
+        m_transport->initialize();
     }
 
     void GetEvent(std::shared_ptr<JEvent> event) override {
 
-        auto item = new T();  // This is why T requires a zero-arg ctor
-        auto result = m_levels[0].transport->receive(*item);
-        switch (result) {
-            case JTransport::Result::FINISHED:
-                throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
-            case JTransport::Result::TRY_AGAIN:
-                throw JEventSource::RETURN_STATUS::kTRY_AGAIN;
-            case JTransport::Result::FAILURE:
-                throw JEventSource::RETURN_STATUS::kERROR;
-            default:
-                break;
+        if (m_next_item == nullptr) {
+            m_next_item = new T();  // This is why T requires a zero-arg ctor
         }
-        // At this point, we know that item contains a valid Sample<T>
 
-        event->SetEventNumber(m_next_id);
-        m_next_id += 1;
+        auto result = m_transport->receive(*m_next_item);
+        switch (result) {
+            case JTransport::Result::FINISHED:   throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
+            case JTransport::Result::TRY_AGAIN:  throw JEventSource::RETURN_STATUS::kTRY_AGAIN;
+            case JTransport::Result::FAILURE:    throw JEventSource::RETURN_STATUS::kERROR;
+            default:                             break;
+        }
+
+        // At this point, we know that item contains a valid JEventMessage
+        T* item = m_next_item;
+        m_next_item = nullptr;
+
+        size_t evt_nr = item->get_event_number();
+        event->SetEventNumber(evt_nr == 0 ? m_next_evt_nr++ : evt_nr);
+        event->SetRunNumber(item->get_run_number());
         event->Insert<T>(item);
         std::cout << "Emit: " << *item << std::endl;
     }
 
     static std::string GetDescription() {
-        return "JEventBuilder";
+        return "JStreamingEventSource";
     }
-
-
-private:
-    struct Level {
-        std::unique_ptr<JTransport> transport;
-        std::unique_ptr<JWindow<T>> window;
-        std::unique_ptr<JTrigger> trigger;
-
-        Level(std::unique_ptr<JTransport>&& transport,
-              std::unique_ptr<JWindow<T>>&& window,
-              std::unique_ptr<JTrigger>&& trigger)
-            : transport(std::move(transport)), window(std::move(window)), trigger(std::move(trigger)) {};
-    };
-
-    std::vector<Level> m_levels;
-
-    uint64_t m_delay_ms;
-    uint64_t m_next_id = 0;
-
 };
 
 
-#endif //JANA2_JEVENTBUILDER_H
+#endif //JANA2_JSTREAMINGEVENTSOURCE_H

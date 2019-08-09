@@ -39,30 +39,37 @@
 #include <JANA/JException.h>
 #include <cstring>
 
-class ReadoutMessage : public JMessage {
+/// If we know that both our producer and our consumer were compiled with the same
+/// compiler and running on architectures with the same endianness, it is probably
+/// safe (and certainly more convenient) to create JMessages like ReadoutMessageAuto.
+/// However, if we can't make these assumptions, or if we want to explicitly control
+/// where each individual byte goes, we design our JMessage like this instead:
+
+class ReadoutMessageManual : public JEventMessage {
 
     /// Under the hood, ReadoutMessage is just a fixed-size buffer of char.
+    /// We use getter and setter methods to create a 'view' into this buffer
+    /// which automatically does the unpacking.
     static const size_t BUFFER_SIZE = 1024;
     char m_buffer[BUFFER_SIZE];
     size_t m_data_size;
 
 public:
-    /// JMessage requires that we expose this as a raw byte array
+    /// Supplying the missing virtual functions needed to send the buffer over the wire
 
     inline char* as_buffer() override { return m_buffer; }
     inline size_t get_buffer_size() override { return BUFFER_SIZE; }
     inline size_t get_data_size() override { return BUFFER_SIZE; } // TODO: This is more complicated
-    inline void set_data_size(size_t data_size) override { m_data_size = data_size; } // TODO: This is more complicated
     inline bool is_end_of_stream() override { return get_source_id() == 0 && get_message_id() == 0 && get_payload_size() == 0; }
 
     ReadoutMessage end_of_stream() override { return {}; }
 
-    /// However, we also want to expose it as a high-level object
+
+    /// Exposing ReadoutMessage to us as a high-level object
 
     ReadoutMessage(uint32_t source_id = 0, uint32_t message_id = 0) {
         set_source_id(source_id);
         set_message_id(message_id);
-
     }
 
     inline friend std::ostream& operator<< (std::ostream& os, const ReadoutMessage& msg) {
@@ -76,11 +83,11 @@ public:
         return os;
     }
 
-    inline DetectorId get_source_id() override {
+    inline size_t get_event_number() override {
         return 0;
     }
 
-    inline Timestamp get_timestamp() override {
+    inline size_t get_run_number() override {
         return 0;
     }
 

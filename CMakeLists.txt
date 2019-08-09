@@ -16,14 +16,9 @@ include_directories(${PYTHON_INCLUDE_DIRS})
 
 include_directories(src/lib)
 include_directories(src/lib/JANA)
-include_directories(src/lib/greenfield)
 include_directories(src/plugins/JTest)
 include_directories(src/programs/jana)
 include_directories(src/programs/tests)
-
-add_library(greenfield STATIC
-        src/lib/greenfield/Greenfield.cc
-        )
 
 add_executable(tests
         src/programs/tests/catch.hpp
@@ -142,13 +137,15 @@ add_library(jana2 STATIC
         src/lib/JANA/JProcessorMapping.h
         src/lib/JANA/JProcessorMapping.cc
         src/lib/JANA/Streaming/JEventBuilder.h
+        src/lib/JANA/Streaming/JStreamingEventSource.h
         src/lib/JANA/Streaming/JTransport.h
         src/lib/JANA/Streaming/JMessage.h
         src/lib/JANA/Streaming/JWindow.h
         src/lib/JANA/Streaming/JMergeWindow.h
         src/lib/JANA/JComponentSummary.h
         src/lib/JANA/JComponentSummary.cc
-        src/lib/JANA/JCsvWriter.h)
+        src/lib/JANA/JCsvWriter.h
+        )
 
 add_library(jtest SHARED
         src/lib/JANA/JThread.cc  #for THREAD_ID
@@ -207,9 +204,6 @@ target_link_libraries(tests jana2)
 target_link_libraries(playground jana2)
 target_link_libraries(toyDet jana2)
 
-# Add greenfield static lib
-target_link_libraries(tests greenfield)
-target_link_libraries(playground greenfield)
 
 # Add libdl
 target_link_libraries(jana2 ${CMAKE_DL_LIBS})
