@@ -36,25 +36,32 @@
 #ifndef JANA2_ZMQDATASOURCE_H
 #define JANA2_ZMQDATASOURCE_H
 
-#include <JANA/JParameterManager.h>
 #include <JANA/Streaming/JTransport.h>
 
 #include "zmq.hpp"
 
 
-class ZmqTransport : public JTransport {
+struct ZmqTransport : public JTransport {
 
 public:
     ZmqTransport(std::string socket_name, bool publish = false)
-        : m_socket_name(socket_name)
+        : m_socket_name(std::move(socket_name))
         , m_context(1)
-        , m_socket(m_context, publish ? zmq::socket_type::pub : zmq::socket_type::sub) {
+        , m_socket(m_context, publish ? zmq::socket_type::pub : zmq::socket_type::sub)
+        , m_publish(publish)
+    {
     }
 
     void initialize() override {
+        std::cout << "Initializing zmq " << (m_publish ? "publisher" : "subscriber") << std::endl;
         try {
-            m_socket.connect(m_socket_name);
-            m_socket.setsockopt(ZMQ_SUBSCRIBE, "", 0);  // Subscribe to everything.
+            if (m_publish) {
+                m_socket.bind(m_socket_name);
+            }
+            else {
+                m_socket.connect(m_socket_name);
+                m_socket.setsockopt(ZMQ_SUBSCRIBE, "", 0);  // Subscribe to everything.
+            }
         }
         catch (...) {
             throw JException("Unable to subscribe to zmq socket!");
@@ -63,43 +70,35 @@ public:
 
     JTransport::Result send(const JMessage& src_msg) override {
 
-
-        zmq::message_t message(src_msg.get_buffer_size());
-
-        memcpy(message.data<char>(), src_msg.as_buffer(), src_msg.get_buffer_size());
-
-        auto result = m_socket.send(message, zmq::send_flags::dontwait);
-
-        if (!result.has_value()) {  // TODO: Not sure this actually does what I think it does
-            return Result::TRY_AGAIN;
-        }
-        return Result::SUCCESS;
-    }
-
-    Result receive(JMessage& dest_msg) override {
-
-        zmq::message_t message(dest_msg.get_buffer_size()); // TODO: This is wrong
-        auto result = m_socket.recv(message, zmq::recv_flags::dontwait);
+        auto result = m_socket.send(zmq::buffer(src_msg.as_buffer(), src_msg.get_buffer_size()),
+                                    zmq::send_flags::dontwait);
 
         if (!result.has_value()) {
             return Result::TRY_AGAIN;
         }
-
-        memcpy(dest_msg.as_buffer(), message.data<char>(), message.size());
-
-        std::stringstream ss;
-        std::cout << ss.str();
-
-        if (dest_msg.is_end_of_stream()) {
-            return Result::FINISHED;
-        }
         return Result::SUCCESS;
     }
 
 
+    Result receive(JMessage& dest_msg) override {
+
+        auto result = m_socket.recv(zmq::buffer(dest_msg.as_buffer(), dest_msg.get_buffer_size()),
+                                    zmq::recv_flags::dontwait);
+
+        if (!result.has_value()) {
+            return Result::TRY_AGAIN;
+        }
+        else if (dest_msg.is_end_of_stream()) {
+            return Result::FINISHED;
+        }
+        else {
+            return Result::SUCCESS;
+        }
+    }
+
 private:
+    bool m_publish;
     std::string m_socket_name = "tcp://127.0.0.1:5555";
-    JApplication* m_app;
     zmq::context_t m_context;
     zmq::socket_t m_socket;
 };

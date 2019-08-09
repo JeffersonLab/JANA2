@@ -66,6 +66,7 @@ public:
             ahit->y = reinterpret_cast<const float&>(readoutMessage->payload[2]);
             ahit->z = reinterpret_cast<const float&>(readoutMessage->payload[3]);
             Insert(ahit);
+            std::cout << "Parsing: " << *readoutMessage << std::endl;
         }
     }
 };

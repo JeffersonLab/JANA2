@@ -44,34 +44,29 @@
 
 void dummy_publisher_loop() {
 
-    auto addr = "tcp://127.0.0.1:5555";
     consume_cpu_ms(3000, 0, false);
 
-    std::cout << "Attempting something!" << std::endl;
-
 	auto transport = ZmqTransport("tcp://127.0.0.1:5555", true);
-    std::cout << "Create xport" << std::endl;
+	transport.initialize();
 
-	for (size_t counter = 0; counter < 10; ++counter) {
-
-        std::cout << "Creating msg" << std::endl;
-        float V = randfloat(0,1);
-        float x = randfloat(-100, 100);
-        float y = randfloat(-100, 100);
-        float z = randfloat(-100, 100);
+	for (size_t counter = 1; counter < 11; ++counter) {
 
         ReadoutMessageAuto message(22, counter);
+        message.payload_size = 4;
+        message.payload[0] = randfloat(0,1);
+        message.payload[1] = randfloat(-100,100);
+        message.payload[2] = randfloat(-100,100);
+        message.payload[3] = randfloat(-100,100);
 
         transport.send(message);
-
-        std::cout << "Send: " << message << " (" << message.get_buffer_size() << " bytes)" << std::endl;
+        std::cout << "Send: " << message << "(" << message.get_buffer_size() << " bytes)" << std::endl;
         consume_cpu_ms(1000, 0, false);
     }
 
-    // Send end-of-stream message
-    auto eos = ReadoutMessageAuto::end_of_stream();
-	transport.send(eos);
+    // Send end-of-stream message so that JANA knows to shut down
+	transport.send(ReadoutMessageAuto::end_of_stream());
 }
+
 
 extern "C"{
 void InitPlugin(JApplication *app) {
@@ -92,7 +87,6 @@ void InitPlugin(JApplication *app) {
 	// So we don't have to put this on the cmd line every time
 	app->SetParameterValue("jana:legacy_mode", 0);
 	app->SetParameterValue("jana:extended_report", 0);
-
 
 	auto publisher = new std::thread(dummy_publisher_loop);
 }
