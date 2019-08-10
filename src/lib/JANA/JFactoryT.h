@@ -74,8 +74,21 @@ public:
         return std::type_index(typeid(T));
     }
 
-    PairType Get() const {
-        return std::make_pair(mData.cbegin(), mData.cend());
+    PairType GetOrCreate(const std::shared_ptr<const JEvent>& event) {
+
+        //std::lock_guard<std::mutex> lock(mMutex);
+        switch (mStatus) {
+            case Status::InvalidMetadata:
+                ChangeRun(event);
+            case Status::Unprocessed:
+                Process(event);
+                mStatus = Status::Processed;
+            case Status::Processed:
+            case Status::Inserted:
+                return std::make_pair(mData.cbegin(), mData.cend());
+            default:
+                throw JException("Enum is set to a garbage value somehow");
+        }
     }
 
     /// Please use the typed setters instead whenever possible
@@ -112,7 +125,7 @@ public:
     void ClearData() override {
         for (auto p : mData) delete p;
         mData.clear();
-        mDataPresentFlag = false;
+        mStatus = Status::Cleared;
     }
 
 protected:

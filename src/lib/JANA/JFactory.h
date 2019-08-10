@@ -159,10 +159,12 @@ protected:
     uint32_t mFlags;
     uint32_t mPreviousRunNumber = 0;
 
+    enum class Status {Uninitialized, InvalidMetadata, Unprocessed, Processed, Inserted, Cleared};
+    mutable Status mStatus = Status::InvalidMetadata;
+    mutable std::mutex mMutex;
+
     // Used to make sure Init is called only once
     std::once_flag mInitFlag;
-    std::atomic_bool mDataPresentFlag;
-
 };
 
 #endif // _JFactory_h_

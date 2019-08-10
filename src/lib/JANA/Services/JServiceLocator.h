@@ -33,6 +33,7 @@ struct JService {
     ///
     /// Note: Don't call JApplication::GetService() or JServiceLocator::get() from InitPlugin()!
 
+    virtual ~JService() = default;
     virtual void acquire_services(JServiceLocator* sl) {};
 };
 

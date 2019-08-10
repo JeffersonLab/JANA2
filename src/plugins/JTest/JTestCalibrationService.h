@@ -37,6 +37,7 @@ struct JTestCalibrationService: JService {
     double getCalibration() {
         return 7.0;
     }
+
 };
 
 #endif //JANA2_JTESTCALIBRATIONSERVICE_H
