@@ -114,6 +114,8 @@ sbms.ApplyPlatformSpecificSettings(env, osname)
 # Make plugin from source in this directory
 sbms.AddJANAInstalled(env)
 sbms.AddROOT(env)  # should do nothing unless ROOTSYS is defined
+env.AppendUnique(LIBS = "zmq")   # Include libzmq
+
 sbms.plugin(env)
 
 # Make install target

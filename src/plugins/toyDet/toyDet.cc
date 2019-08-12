@@ -35,12 +35,17 @@ void dummy_publisher_loop() {
     uint32_t source_id = 1;
 
     std::ifstream file_stream(source_file);
+    if (!file_stream.is_open()) {
+        std::cout << "Unable to open file, exiting." << std::endl;
+        exit(0);
+    }
     ZmqTransport transport {dest_socket, true};
     transport.initialize();
     std::string line;
     std::vector<double> data;
 
     while (std::getline(file_stream, line)) {
+        std::cout << "Found a line!" << std::endl;
 
         // Skip comment lines
         if (line[0] == '#' || line[0] == '@') continue;
@@ -75,7 +80,7 @@ void dummy_publisher_loop() {
     // Send an end-of-stream message
     auto message = ToyDetMessage(0, 0, data);
     transport.send(message);
-    std::cout << "Send: " << message << " (" << sizeof(ToyDetMessage) << " bytes)" << std::endl;
+    std::cout << "Send: end-of-stream" << std::endl;
 }
 
 extern "C" {

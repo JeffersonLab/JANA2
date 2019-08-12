@@ -137,6 +137,7 @@ add_library(janapy SHARED
 
 add_library(zmq2jana SHARED
         src/examples/JExample7/ZmqMain.cc
+        src/examples/JExample7/ZmqTransport.h
         src/examples/JExample7/ReadoutMessageAuto.h
         src/examples/JExample7/AHit.h
         src/examples/JExample7/AHitAnomalyDetector.h
@@ -198,7 +199,7 @@ set_target_properties(toyDet PROPERTIES PREFIX "" SUFFIX ".so")
 set_target_properties(janapy PROPERTIES PREFIX "")
 
 # For zmq2jana plugin
-find_package(cppzmq)
-target_link_libraries(zmq2jana cppzmq-static)
-target_link_libraries(toyDet cppzmq-static)
+find_package(ZeroMQ)
+target_link_libraries(zmq2jana libzmq-static)
+target_link_libraries(toyDet libzmq-static)
 target_link_libraries(zmq2jana jana2)
