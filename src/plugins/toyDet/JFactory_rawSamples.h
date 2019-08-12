@@ -67,10 +67,12 @@ public:
             sample->eventNum = message->record_counter;
             sample->chanNum = message->source_id;
 
-            for (size_t i=0; i<message->payload_length/2; ++i) {
+
+            size_t payload_size = message->payload_bytes/sizeof(double);
+            for (size_t i=0; i<payload_size/2; ++i) {
                 sample->adcData.push_back(message->payload[i]);
             }
-            for (size_t i=message->payload_length/2; i<message->payload_length; ++i) {
+            for (size_t i=payload_size/2; i<payload_size; ++i) {
                 sample->tdcData.push_back(message->payload[i]);
             }
             output.push_back(sample);

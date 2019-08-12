@@ -126,6 +126,7 @@ void JEventSource_toyDet::GetEvent(std::shared_ptr<JEvent> event)
   static size_t ievent = 0; 
   if (ievent < eventData.size()) {
     ievent++;
+    event->SetEventNumber(ievent);
     event->Insert(eventData[ievent-1]);
   }
   else throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
