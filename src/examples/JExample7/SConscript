@@ -1,4 +1,5 @@
 
+import os
 import sbms
 Import('*')
 env = env.Clone()
@@ -9,12 +10,17 @@ libs = ['-lzmq']
 
 if sbms.TestCompile(env, 'zmq', includes, content, libs) != None:
     sbms.AddJANA(env)
-    env.AppendUnique(LIBS = [ File('/usr/local/lib64/libzmq.a')])  # force static linking
+    if os.path.exists('/usr/local/lib64/libzmq.a'):
+        print('JExample7: Using static libzmq')
+        env.AppendUnique(LIBS = [ File('/usr/local/lib64/libzmq.a')])  # force static linking
+    else:
+        print('JExample7: Could not find static libzmq, linking dynamically instead')
+        env.AppendUnique(LIBS = 'zmq')
     sbms.plugin(env)
 
 else:
     print()
-    print('--- WARNING: Problem building zmq2jana plugin.')
-    print('--- Please make sure libzmq and cppzmq are both installed on your system. ')
+    print('--- WARNING: Unable to build JExample7')
+    print('--- Please make sure libzmq is installed on your system. ')
 
 
