@@ -51,9 +51,9 @@ template <typename T, unsigned int N>
 struct INDRAMessage : public JEventMessage {
 
     uint32_t source_id = 0;
-    uint32_t total_length;
-    uint32_t payload_length;
-    uint32_t compressed_length;
+    uint32_t total_bytes;
+    uint32_t payload_bytes;
+    uint32_t compressed_bytes;
     uint32_t magic;
     uint32_t format_version;
     uint64_t record_counter;
@@ -71,9 +71,9 @@ struct INDRAMessage : public JEventMessage {
     INDRAMessage(uint64_t event_number, uint32_t channel_number, std::vector<T> data) {
 
         source_id = channel_number;
-        total_length = sizeof(INDRAMessage);
-        payload_length = static_cast<uint32_t>(data.size() * sizeof(T));
-        compressed_length = payload_length;
+        total_bytes = sizeof(INDRAMessage);
+        payload_bytes = static_cast<uint32_t>(data.size() * sizeof(T));
+        compressed_bytes = payload_bytes;
         magic = 2227;
         format_version = 0;
         record_counter = event_number;
@@ -120,7 +120,7 @@ struct INDRAMessage : public JEventMessage {
     virtual size_t get_data_size() const {
         // This way we don't send garbage data over the wire.
         // Note this assumes that the payload is the last field in the struct...
-        return sizeof(INDRAMessage); // - ((N-payload_length)*sizeof(T));
+        return sizeof(INDRAMessage); // - ((N-payload_bytes)*sizeof(T));
     }
 
 };

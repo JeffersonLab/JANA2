@@ -13,30 +13,28 @@
 
 using namespace std;
 
-//////////////////////////////////////////////////////////////////////////////////////////////////
-/// Brief class description.
-///
-/// Detailed class description.
-//////////////////////////////////////////////////////////////////////////////////////////////////
+struct rawSamples : public JObject {
 
-class rawSamples:public JObject{
+    rawSamples();
+    virtual ~rawSamples();
 
- public:
-  
-  rawSamples();
-  virtual ~rawSamples();
-  
-  rawSamples(int eventNum, int chanNum, vector <double> &tdcData, vector <double> &adcData)
-    : eventNum(eventNum), chanNum(chanNum), tdcData(tdcData), adcData(adcData) {}
- 
-  int eventNum, chanNum;
+    rawSamples(int eventNum, int chanNum, vector<double>& tdcData, vector<double>& adcData)
+            : eventNum(eventNum), chanNum(chanNum), tdcData(tdcData), adcData(adcData) {}
 
-  vector <double> tdcData, adcData;
-		
- protected:
-	
-	
- private:
+    void Summarize(JObjectSummary& summary) const override {
+        summary.add(eventNum, NAME_OF(eventNum), "%d");
+        summary.add(chanNum, NAME_OF(chanNum), "%d");
+        summary.add(adcData[0], "adcData[0]", "%1.9lf");
+        summary.add(adcData[1], "adcData[1]", "%1.9lf");
+        summary.add(adcData[2], "adcData[2]", "%1.9lf");
+        summary.add(tdcData[0], "tdcData[0]", "%1.9lf");
+        summary.add(tdcData[1], "tdcData[1]", "%1.9lf");
+        summary.add(tdcData[2], "tdcData[2]", "%1.9lf");
+    }
+
+
+    int eventNum, chanNum;
+    vector<double> tdcData, adcData;
 
 };
 

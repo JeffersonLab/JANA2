@@ -10,6 +10,7 @@
 // [ Revision ]
 
 #include <JANA/Streaming/JStreamingEventSource.h>
+#include <JANA/JCsvWriter.h>
 
 #include "JEventProcessor_toyDet.h"
 #include "JEventSource_toyDet.h"
@@ -45,7 +46,6 @@ void dummy_publisher_loop() {
     std::vector<double> data;
 
     while (std::getline(file_stream, line)) {
-        std::cout << "Found a line!" << std::endl;
 
         // Skip comment lines
         if (line[0] == '#' || line[0] == '@') continue;
@@ -88,17 +88,23 @@ void InitPlugin(JApplication* app) {
     InitJANAPlugin(app);
     app->SetParameterValue("nthreads", 1);
     app->SetParameterValue("jana:extended_report", false);
+    app->SetParameterValue("jana:legacy_mode", 0);
 
-    auto transport = std::unique_ptr<ZmqTransport>(new ZmqTransport("tcp://127.0.0.1:5555"));
-    app->Add(new JStreamingEventSource<ToyDetMessage>(std::move(transport)));
-
-    app->Add(new JEventProcessor_toyDet());
-    app->Add(new JFactoryGeneratorT<JFactory_rawSamples>());
-
+    /// Uncomment these lines in order to read from file directly
+    //app->Add("run-10-mhz-10-chan-10-ev.dat");
     //app->Add(new JEventSourceGeneratorT<JEventSource_toyDet>());
     //app->Add(new JFactoryGenerator_toyDet());
 
+    /// Uncomment these lines in order to stream file over zmq
+    auto transport = std::unique_ptr<ZmqTransport>(new ZmqTransport("tcp://127.0.0.1:5555"));
+    app->Add(new JStreamingEventSource<ToyDetMessage>(std::move(transport)));
     new std::thread(dummy_publisher_loop);
+
+    app->Add(new JEventProcessor_toyDet());
+    app->Add(new JCsvWriter<rawSamples>());
+    app->Add(new JFactoryGeneratorT<JFactory_rawSamples>());
+
+
 }
 } // "C"
 
