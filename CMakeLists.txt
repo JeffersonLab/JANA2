@@ -6,6 +6,9 @@ set(CMAKE_CXX_STANDARD 14)
 # Enable -fPIC for all targets
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+# JANA,playground,tests all need threads
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
 # For janapy plugin
 find_package(PythonInterp 3 REQUIRED)
 find_package(PythonLibs 3 REQUIRED)
@@ -131,11 +134,22 @@ add_library(jtest SHARED
         src/plugins/JTest/JTestCalibrationService.h
         )
 
+target_link_libraries(jtest jana2)
+target_link_libraries(jtest Threads::Threads)
+set_target_properties(jtest PROPERTIES PREFIX "" SUFFIX ".so")
+
 add_library(janapy SHARED
         src/plugins/janapy/janapy.cc
-        )
+)
+find_package(PythonInterp 3 REQUIRED)
+find_package(PythonLibs 3 REQUIRED)
+include_directories(${PYTHON_INCLUDE_DIRS})
+target_link_libraries(janapy ${PYTHON_LIBRARIES})
+target_link_libraries(janapy jana2)
+set_target_properties(janapy PROPERTIES PREFIX "")
 
-add_library(zmq2jana SHARED
+
+add_library(JExample7 SHARED
         src/examples/JExample7/ZmqMain.cc
         src/examples/JExample7/ZmqTransport.h
         src/examples/JExample7/ReadoutMessageAuto.h
@@ -143,6 +157,10 @@ add_library(zmq2jana SHARED
         src/examples/JExample7/AHitAnomalyDetector.h
         src/examples/JExample7/AHitParser.h
         )
+find_package(ZeroMQ)
+target_link_libraries(JExample7 jana2)
+target_link_libraries(JExample7 libzmq-static)
+set_target_properties(JExample7 PROPERTIES PREFIX "" SUFFIX ".so")
 
 add_library(toyDet SHARED
         src/plugins/toyDet/JEventProcessor_toyDet.cc
@@ -158,6 +176,8 @@ add_library(toyDet SHARED
         src/plugins/toyDet/JFactory_rawSamples.h
         )
 
+find_package(ROOT)
+include_directories(${ROOT_INCLUDE_DIRS})
 add_executable(jana
         src/programs/jana/jana.cc
         src/programs/jana/JBenchmarker.h
@@ -174,6 +194,7 @@ target_link_libraries(janapy jana2)
 target_link_libraries(tests jana2)
 target_link_libraries(playground jana2)
 target_link_libraries(toyDet jana2)
+target_link_libraries(toyDet libzmq-static)
 
 # Add libdl
 target_link_libraries(jana2 ${CMAKE_DL_LIBS})
@@ -188,18 +209,7 @@ target_link_libraries(playground Threads::Threads)
 target_link_libraries(tests Threads::Threads)
 
 target_link_libraries(toyDet ${ROOT_LIBRARIES})
-
-# janpy plugin needs libpython
-target_link_libraries(janapy ${PYTHON_LIBRARIES})
-
-# Remove "lib" prefix from plugins
-set_target_properties(jtest PROPERTIES PREFIX "" SUFFIX ".so")
-set_target_properties(zmq2jana PROPERTIES PREFIX "" SUFFIX ".so")
 set_target_properties(toyDet PROPERTIES PREFIX "" SUFFIX ".so")
-set_target_properties(janapy PROPERTIES PREFIX "")
 
-# For zmq2jana plugin
-find_package(ZeroMQ)
-target_link_libraries(zmq2jana libzmq-static)
-target_link_libraries(toyDet libzmq-static)
-target_link_libraries(zmq2jana jana2)
+
+
