@@ -6,51 +6,15 @@ set(CMAKE_CXX_STANDARD 14)
 # Enable -fPIC for all targets
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-# For janapy plugin
-find_package(ROOT)
-find_package(PythonInterp 3 REQUIRED)
-find_package(PythonLibs 3 REQUIRED)
-
-include_directories(${ROOT_INCLUDE_DIRS})
-include_directories(${PYTHON_INCLUDE_DIRS})
+# JANA,playground,tests all need threads
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
 
 include_directories(src/lib)
 include_directories(src/lib/JANA)
 include_directories(src/plugins/JTest)
 include_directories(src/programs/jana)
 include_directories(src/programs/tests)
-
-add_executable(tests
-        src/programs/tests/catch.hpp
-        src/programs/tests/ActivableTests.cc
-        src/programs/tests/JServiceLocatorTests.cc
-        src/programs/tests/JServiceLocatorTests.h
-        src/programs/tests/QueueTests.cc
-        src/programs/tests/TopologyTests.cc
-        src/programs/tests/SchedulerTests.cc
-        src/programs/tests/JEventTests.cc
-        src/programs/tests/JEventTests.h
-        src/programs/tests/PerformanceTests.cc
-        src/programs/tests/PerformanceTests.h
-        src/programs/tests/TestTopology.cc
-        src/programs/tests/TestTopology.h
-        src/programs/tests/ExactlyOnceTests.cc
-        src/programs/tests/ExactlyOnceTests.h
-        src/programs/tests/TerminationTests.cc
-        src/programs/tests/TerminationTests.h
-        src/programs/tests/UserExceptionTests.cc
-        src/programs/tests/UserExceptionTests.h
-        )
-
-add_executable(playground
-        src/programs/playground/playground.cc
-        src/programs/playground/factory_gens_iter_1.cc
-        src/programs/playground/Factory.cc
-        src/programs/playground/Factory.h
-        src/programs/playground/JContext.cc
-        src/programs/playground/JContext.h
-        src/programs/playground/FactoryGenerator.h
-        src/programs/playground/Factory.cc)
 
 add_library(jana2 STATIC
         src/lib/JANA/JApplication.cc
@@ -146,6 +110,57 @@ add_library(jana2 STATIC
         src/lib/JANA/JComponentSummary.cc
         src/lib/JANA/JCsvWriter.h
         )
+target_link_libraries(jana2 ${CMAKE_DL_LIBS})
+target_link_libraries(jana2 Threads::Threads)
+
+
+add_executable(jana
+        src/programs/jana/jana.cc
+        src/programs/jana/JBenchmarker.h
+        src/programs/jana/JBenchmarker.cc
+        src/programs/jana/MyProcessor.cc
+        src/programs/jana/MyProcessor.h
+        )
+
+target_link_libraries(jana jana2)
+target_link_libraries(jana Threads::Threads)
+
+
+add_executable(tests
+        src/programs/tests/catch.hpp
+        src/programs/tests/ActivableTests.cc
+        src/programs/tests/JServiceLocatorTests.cc
+        src/programs/tests/JServiceLocatorTests.h
+        src/programs/tests/QueueTests.cc
+        src/programs/tests/TopologyTests.cc
+        src/programs/tests/SchedulerTests.cc
+        src/programs/tests/JEventTests.cc
+        src/programs/tests/JEventTests.h
+        src/programs/tests/PerformanceTests.cc
+        src/programs/tests/PerformanceTests.h
+        src/programs/tests/TestTopology.cc
+        src/programs/tests/TestTopology.h
+        src/programs/tests/ExactlyOnceTests.cc
+        src/programs/tests/ExactlyOnceTests.h
+        src/programs/tests/TerminationTests.cc
+        src/programs/tests/TerminationTests.h
+        src/programs/tests/UserExceptionTests.cc
+        src/programs/tests/UserExceptionTests.h
+        )
+target_link_libraries(tests jana2)
+target_link_libraries(tests Threads::Threads)
+
+add_executable(playground
+        src/programs/playground/playground.cc
+        src/programs/playground/factory_gens_iter_1.cc
+        src/programs/playground/Factory.cc
+        src/programs/playground/Factory.h
+        src/programs/playground/JContext.cc
+        src/programs/playground/JContext.h
+        src/programs/playground/FactoryGenerator.h
+        src/programs/playground/Factory.cc)
+target_link_libraries(playground jana2)
+target_link_libraries(playground Threads::Threads)
 
 add_library(jtest SHARED
         src/lib/JANA/JThread.cc  #for THREAD_ID
@@ -159,11 +174,22 @@ add_library(jtest SHARED
         src/plugins/JTest/JTestFactoryGenerator.h
         src/plugins/JTest/JTestCalibrationService.h)
 
+target_link_libraries(jtest jana2)
+target_link_libraries(jtest Threads::Threads)
+set_target_properties(jtest PROPERTIES PREFIX "" SUFFIX ".so")
+
 add_library(janapy SHARED
         src/plugins/janapy/janapy.cc
-        )
+)
+find_package(PythonInterp 3 REQUIRED)
+find_package(PythonLibs 3 REQUIRED)
+include_directories(${PYTHON_INCLUDE_DIRS})
+target_link_libraries(janapy ${PYTHON_LIBRARIES})
+target_link_libraries(janapy jana2)
+set_target_properties(janapy PROPERTIES PREFIX "")
 
-add_library(zmq2jana SHARED
+
+add_library(JExample7 SHARED
         src/examples/JExample7/ZmqMain.cc
         src/examples/JExample7/ZmqTransport.h
         src/examples/JExample7/ReadoutMessageAuto.h
@@ -171,6 +197,10 @@ add_library(zmq2jana SHARED
         src/examples/JExample7/AHitAnomalyDetector.h
         src/examples/JExample7/AHitParser.h
         )
+find_package(ZeroMQ)
+target_link_libraries(JExample7 jana2)
+target_link_libraries(JExample7 libzmq-static)
+set_target_properties(JExample7 PROPERTIES PREFIX "" SUFFIX ".so")
 
 add_library(toyDet SHARED
         src/plugins/toyDet/JEventProcessor_toyDet.cc
@@ -184,51 +214,14 @@ add_library(toyDet SHARED
         src/plugins/toyDet/ZmqTransport.h
         src/plugins/toyDet/INDRAMessage.h
         src/plugins/toyDet/JFactory_rawSamples.h
-
         )
 
-add_executable(jana
-        src/programs/jana/jana.cc
-        src/programs/jana/JBenchmarker.h
-        src/programs/jana/JBenchmarker.cc
-        src/programs/jana/MyProcessor.cc
-        src/programs/jana/MyProcessor.h
-        )
-
-# Add jana static lib
-target_link_libraries(jana jana2)
-target_link_libraries(jtest jana2)
-target_link_libraries(janapy jana2)
-target_link_libraries(tests jana2)
-target_link_libraries(playground jana2)
+find_package(ROOT)
+include_directories(${ROOT_INCLUDE_DIRS})
 target_link_libraries(toyDet jana2)
-
-
-# Add libdl
-target_link_libraries(jana2 ${CMAKE_DL_LIBS})
-
-# Add pthreads
-set(THREADS_PREFER_PTHREAD_FLAG ON)
-find_package(Threads REQUIRED)
-target_link_libraries(jana2 Threads::Threads)
-target_link_libraries(jana Threads::Threads)
-target_link_libraries(jtest Threads::Threads)
-target_link_libraries(playground Threads::Threads)
-target_link_libraries(tests Threads::Threads)
-
-target_link_libraries(toyDet ${ROOT_LIBRARIES})
-
-# janpy plugin needs libpython
-target_link_libraries(janapy ${PYTHON_LIBRARIES})
-
-# Remove "lib" prefix from plugins
-set_target_properties(jtest PROPERTIES PREFIX "" SUFFIX ".so")
-set_target_properties(zmq2jana PROPERTIES PREFIX "" SUFFIX ".so")
-set_target_properties(toyDet PROPERTIES PREFIX "" SUFFIX ".so")
-set_target_properties(janapy PROPERTIES PREFIX "")
-
-# For zmq2jana plugin
-find_package(ZeroMQ)
-target_link_libraries(zmq2jana libzmq-static)
 target_link_libraries(toyDet libzmq-static)
-target_link_libraries(zmq2jana jana2)
+target_link_libraries(toyDet ${ROOT_LIBRARIES})
+set_target_properties(toyDet PROPERTIES PREFIX "" SUFFIX ".so")
+
+
+
