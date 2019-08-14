@@ -145,7 +145,7 @@ if specMode == 'sampa' :
         esl.append(csl)
         dfl.append(pd.concat(esl[ievent-1], axis = 1))
     df = pd.concat(dfl, ignore_index=True)
-    np.savetxt(datFile, df.values, fmt='%4d')
+    np.savetxt(datFile, df.values, fmt='%04d')
     # df.plot(y = 'chan_1', use_index = True, marker = 'o', c = 'tab:blue', ls = '')
     # plt.xlabel('TDC Sample (arb. units)')
     # plt.ylabel('ADC Sample (arb. units)')
