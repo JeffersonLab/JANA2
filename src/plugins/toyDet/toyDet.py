@@ -116,7 +116,7 @@ class dataStream:
 
 # gumbel data file for event based analysis
 if specMode == 'gumbel' :
-    datFile = open('run-%2.0d-mhz-%d-chan-%d-ev.dat' % (sampleRate, numChans, numEvents), 'w+')
+    datFile = open('run-%d-mhz-%d-chan-%d-ev.dat' % (sampleRate, numChans, numEvents), 'w+')
     for ievent in range(1, numEvents + 1):
         datFile.write('@ event = %d\n' % ievent)
         for chan in range(1, numChans + 1):
@@ -133,7 +133,7 @@ if specMode == 'gumbel' :
     datFile.close()
 
 if specMode == 'sampa' :
-    datFile = open('run-%2.0d-mhz-%d-chan-%d-ev.dat' % (sampleRate, numChans, numEvents), 'w+')
+    datFile = open('run-%d-mhz-%d-chan-%d-ev.dat' % (sampleRate, numChans, numEvents), 'w+')
     dfl = []; esl = []  # data frame list, event series list
     for ievent in range(1, numEvents + 1):
         csl = []  # channel series list
