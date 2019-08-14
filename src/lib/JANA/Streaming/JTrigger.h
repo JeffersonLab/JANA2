@@ -30,61 +30,27 @@
 // Author: Nathan Brei
 //
 
-
-#include <JANA/JApplication.h>
-#include <JANA/JEventSourceGeneratorT.h>
-#include <JANA/Streaming/JEventBuilder.h>
-#include <JANA/Streaming/JStreamingEventSource.h>
-
-#include "ReadoutMessageAuto.h"
-#include "ZmqTransport.h"
-#include "AHitParser.h"
-#include "AHitAnomalyDetector.h"
+#ifndef JANA2_JTRIGGER_H
+#define JANA2_JTRIGGER_H
 
 
-void dummy_publisher_loop() {
+/// JTrigger determines whether an event contains data worth passing downstream, or whether
+/// it should be immediately recycled. The user can call arbitrary JFactories from a Trigger
+/// just like they can from an EventProcessor.
+///
+/// This design allows the user to reuse reconstruction code for a software trigger, and to
+/// reuse results calculated for the trigger during reconstruction. The accept() function
+/// should be thread safe, so that the trigger can be automatically parallelized, which will
+/// help bound the system's overall latency.
+///
+/// Users should declare their accept() implementation as `final`, so that JANA can devirtualize it.
 
-    consume_cpu_ms(3000, 0, false);
+struct JTrigger {
 
-	auto transport = ZmqTransport("tcp://127.0.0.1:5555", true);
-	transport.initialize();
+    virtual bool accept(JEvent &event) { return true; }
 
-	for (size_t counter = 1; counter < 11; ++counter) {
-
-        ReadoutMessageAuto message(22, counter);
-        message.payload_size = 4;
-        message.payload[0] = randfloat(0,1);
-        message.payload[1] = randfloat(-100,100);
-        message.payload[2] = randfloat(-100,100);
-        message.payload[3] = randfloat(-100,100);
-
-        transport.send(message);
-        std::cout << "Send: " << message << "(" << message.get_buffer_size() << " bytes)" << std::endl;
-        consume_cpu_ms(1000, 0, false);
-    }
-
-    // Send end-of-stream message so that JANA knows to shut down
-	transport.send(ReadoutMessageAuto::end_of_stream());
-}
+};
 
 
-extern "C"{
-void InitPlugin(JApplication *app) {
 
-	InitJANAPlugin(app);
-
-    auto transport = std::unique_ptr<ZmqTransport>(new ZmqTransport("tcp://127.0.0.1:5555"));
-    app->Add(new JStreamingEventSource<ReadoutMessageAuto>(std::move(transport)));
-
-	app->Add(new AHitAnomalyDetector(app, 5000));
-	app->Add(new JFactoryGeneratorT<AHitParser>());
-
-	// So we don't have to put this on the cmd line every time
-	app->SetParameterValue("jana:legacy_mode", 0);
-	app->SetParameterValue("jana:extended_report", 0);
-
-	new std::thread(dummy_publisher_loop);
-}
-} // "C"
-
-
+#endif //JANA2_JTRIGGER_H

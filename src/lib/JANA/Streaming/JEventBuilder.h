@@ -5,62 +5,56 @@
 #ifndef JANA2_JEVENTBUILDER_H
 #define JANA2_JEVENTBUILDER_H
 
+#include <JANA/JEvent.h>
+#include <JANA/JEventSource.h>
+#include <JANA/Streaming/JTransport.h>
+#include <JANA/Streaming/JTrigger.h>
+#include <JANA/Streaming/JDiscreteJoin.h>
+#include <JANA/Streaming/JWindow.h>
+
 #include <cstdint>
 #include <cstddef>
 #include <memory>
 #include <queue>
 
-#include <JANA/Streaming/JTransport.h>
-#include <JANA/Streaming/JWindow.h>
-#include <JANA/Streaming/JMergeWindow.h>
-
-/// JTrigger determines whether an event contains data worth passing downstream, or whether
-/// it should be immediately recycled. The user can call arbitrary JFactories from a Trigger
-/// just like they can from an EventProcessor.
-/// This design allows the user to reuse reconstruction code for a software trigger, and to
-/// reuse results calculated for the trigger during reconstruction. The accept() function
-/// should be thread safe, so that the trigger can be automatically parallelized, which will
-/// help bound the system's overall latency.
-struct JTrigger {
-
-    virtual bool accept(JEvent &event) { return true; }
-
-};
 
 
 /// JEventBuilder pulls JMessages off of a user-specified JTransport, aggregates them into
 /// JEvents using the JWindow of their choice, and decides which to keep via a user-specified
-/// JTrigger. The user can choose to merge this Event stream with additional JMessage streams, possibly
-/// applying a different trigger at each level. This is useful for level 2/3/n triggers and maybe EPICS data.
+/// JTrigger.
 
 template <typename T>
 class JEventBuilder : public JEventSource {
 public:
 
-    JEventBuilder(std::unique_ptr<JTransport> transport,
-                  std::unique_ptr<JWindow<T>> window,
-                  std::unique_ptr<JTrigger> trigger = std::unique_ptr<JTrigger>())
+    JEventBuilder(std::unique_ptr<JTransport>&& transport,
+                  std::unique_ptr<JTrigger>&& trigger = std::unique_ptr<JTrigger>(new JTrigger()),
+                  std::unique_ptr<JWindow<T>>&& window = std::unique_ptr<JSessionWindow<T>>(new JSessionWindow<T>()))
 
-        : JEventSource("JEventBuilder") {
-
-        m_levels.emplace_back(std::move(transport), std::move(window), std::move(trigger));
+        : JEventSource("JEventBuilder")
+        , m_transport(std::move(transport))
+        , m_trigger(std::move(trigger))
+        , m_window(std::move(window)) {
     }
 
-    void addLevel(std::unique_ptr<JTransport> transport, std::unique_ptr<JTrigger> trigger = std::unique_ptr<JTrigger>()) {
-        auto merge_window = std::unique_ptr<JMergeWindow<T>>();
-        m_levels.push_back({transport, merge_window, trigger});
+    void addJoin(std::unique_ptr<JDiscreteJoin<T>>&& join) {
+        m_joins.push_back(std::move(join));
     }
 
     void Open() override {
-        for (auto& level : m_levels) {
-            level.transport->initialize();
+        for (auto join : m_joins) {
+            join->Open();
         }
+    }
+
+    static std::string GetDescription() {
+        return "JEventBuilder";
     }
 
     void GetEvent(std::shared_ptr<JEvent> event) override {
 
         auto item = new T();  // This is why T requires a zero-arg ctor
-        auto result = m_levels[0].transport->receive(*item);
+        auto result = m_transport->receive(*item);
         switch (result) {
             case JTransport::Result::FINISHED:
                 throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
@@ -76,27 +70,24 @@ public:
         event->SetEventNumber(m_next_id);
         m_next_id += 1;
         event->Insert<T>(item);
-        std::cout << "Emit: " << *item << std::endl;
-    }
 
-    static std::string GetDescription() {
-        return "JEventBuilder";
+        /// This is really bad because we have to worry about downstream HitSource returning TryAgainLater
+        /// and we really don't want to block here
+        for (auto join : m_joins) {
+            join->GetEvent(event);
+        }
+        std::cout << "Emit: " << *item << std::endl;
     }
 
 
 private:
-    struct Level {
-        std::unique_ptr<JTransport> transport;
-        std::unique_ptr<JWindow<T>> window;
-        std::unique_ptr<JTrigger> trigger;
+    std::unique_ptr<JTransport> m_transport;
+    std::unique_ptr<JWindow<T>> m_window;
+    std::unique_ptr<JTrigger> m_trigger;
 
-        Level(std::unique_ptr<JTransport>&& transport,
-              std::unique_ptr<JWindow<T>>&& window,
-              std::unique_ptr<JTrigger>&& trigger)
-            : transport(std::move(transport)), window(std::move(window)), trigger(std::move(trigger)) {};
-    };
-
-    std::vector<Level> m_levels;
+    // Downstream joins should probably be managed externally,
+    // since we will want these with regular EventSources as well
+    std::vector<std::unique_ptr<JDiscreteJoin<T>>> m_joins;
 
     uint64_t m_delay_ms;
     uint64_t m_next_id = 0;

@@ -39,10 +39,14 @@ struct JEventMessage : public JMessage, public JObject {
 };
 
 
-/// A JHitMessage represents a single detector hit, meant to be used when the
-/// event building is done by JANA itself.
-/// This requires a source_id and timestamp, which are needed
-/// by JWindow in order to do event building, as described in JEventBuilder.
+/// A JHitMessage represents a single detector hit.
+///
+/// Either we do event building ourselves using JEventBuilder, or we hydrate an existing event using JDiscreteJoin.
+///
+/// These methods extract the information necessary to figure out which JEvent this Hit belongs to,
+/// and also whether we've received data from all detectors needed before emitting a new Event.
+/// This works for both discrete-in-time data and continuous-in-time data.
+
 struct JHitMessage : public JMessage {
 
     virtual DetectorId get_source_id() const = 0;

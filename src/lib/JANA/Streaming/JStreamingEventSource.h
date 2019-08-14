@@ -58,7 +58,7 @@ public:
         event->SetEventNumber(evt_nr == 0 ? m_next_evt_nr++ : evt_nr);
         event->SetRunNumber(item->get_run_number());
         event->Insert<T>(item);
-        std::cout << "Emit: " << *item << std::endl;
+        std::cout << "Recv: " << *item << std::endl;
     }
 
     static std::string GetDescription() {

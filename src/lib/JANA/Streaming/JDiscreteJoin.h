@@ -30,61 +30,76 @@
 // Author: Nathan Brei
 //
 
+#ifndef JANA2_JDISCRETEEVENTJOIN_H
+#define JANA2_JDISCRETEEVENTJOIN_H
 
-#include <JANA/JApplication.h>
-#include <JANA/JEventSourceGeneratorT.h>
-#include <JANA/Streaming/JEventBuilder.h>
-#include <JANA/Streaming/JStreamingEventSource.h>
+#include <cstdint>
+#include <cstddef>
+#include <memory>
+#include <queue>
 
-#include "ReadoutMessageAuto.h"
-#include "ZmqTransport.h"
-#include "AHitParser.h"
-#include "AHitAnomalyDetector.h"
+#include <JANA/JEvent.h>
+#include <JANA/JEventSource.h>
+#include <JANA/Streaming/JTransport.h>
+#include <JANA/Streaming/JTrigger.h>
 
+/// JEventBuilder pulls JMessages off of a user-specified JTransport, aggregates them into
+/// JEvents using the JWindow of their choice, and decides which to keep via a user-specified
+/// JTrigger. The user can choose to merge this Event stream with additional JMessage streams, possibly
+/// applying a different trigger at each level. This is useful for level 2/3/n triggers and maybe EPICS data.
 
-void dummy_publisher_loop() {
+template <typename T>
+class JDiscreteJoin : public JEventSource {
+public:
 
-    consume_cpu_ms(3000, 0, false);
+    JDiscreteJoin(std::unique_ptr<JTransport>&& transport,
+                       std::unique_ptr<JTrigger>&& trigger = std::unique_ptr<JTrigger>(new JTrigger()))
 
-	auto transport = ZmqTransport("tcp://127.0.0.1:5555", true);
-	transport.initialize();
-
-	for (size_t counter = 1; counter < 11; ++counter) {
-
-        ReadoutMessageAuto message(22, counter);
-        message.payload_size = 4;
-        message.payload[0] = randfloat(0,1);
-        message.payload[1] = randfloat(-100,100);
-        message.payload[2] = randfloat(-100,100);
-        message.payload[3] = randfloat(-100,100);
-
-        transport.send(message);
-        std::cout << "Send: " << message << "(" << message.get_buffer_size() << " bytes)" << std::endl;
-        consume_cpu_ms(1000, 0, false);
+            : JEventSource("JEventBuilder")
+            , m_transport(std::move(transport))
+            , m_trigger(std::move(trigger))
+    {
     }
 
-    // Send end-of-stream message so that JANA knows to shut down
-	transport.send(ReadoutMessageAuto::end_of_stream());
-}
+    void Open() override {
+        m_transport->initialize();
+    }
+
+    void GetEvent(std::shared_ptr<JEvent> event) override {
+
+        auto item = new T();  // This is why T requires a zero-arg ctor
+        auto result = m_transport->receive(*item);
+        switch (result) {
+            case JTransport::Result::FINISHED:
+                throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
+            case JTransport::Result::TRY_AGAIN:
+                throw JEventSource::RETURN_STATUS::kTRY_AGAIN;
+            case JTransport::Result::FAILURE:
+                throw JEventSource::RETURN_STATUS::kERROR;
+            default:
+                break;
+        }
+        // At this point, we know that item contains a valid Sample<T>
+
+        event->SetEventNumber(m_next_id);
+        m_next_id += 1;
+        event->Insert<T>(item);
+        std::cout << "Emit: " << *item << std::endl;
+    }
+
+    static std::string GetDescription() {
+        return "JEventBuilder";
+    }
 
 
-extern "C"{
-void InitPlugin(JApplication *app) {
+private:
 
-	InitJANAPlugin(app);
-
-    auto transport = std::unique_ptr<ZmqTransport>(new ZmqTransport("tcp://127.0.0.1:5555"));
-    app->Add(new JStreamingEventSource<ReadoutMessageAuto>(std::move(transport)));
-
-	app->Add(new AHitAnomalyDetector(app, 5000));
-	app->Add(new JFactoryGeneratorT<AHitParser>());
-
-	// So we don't have to put this on the cmd line every time
-	app->SetParameterValue("jana:legacy_mode", 0);
-	app->SetParameterValue("jana:extended_report", 0);
-
-	new std::thread(dummy_publisher_loop);
-}
-} // "C"
+    std::unique_ptr<JTransport> m_transport;
+    std::unique_ptr<JTrigger> m_trigger;
+    uint64_t m_delay_ms;
+    uint64_t m_next_id = 0;
+};
 
 
+
+#endif //JANA2_JEVENTJOINER_H

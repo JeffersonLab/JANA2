@@ -28,7 +28,7 @@ void dummy_publisher_loop() {
     size_t source_count = 2;
     size_t delay_ms = 200;
 
-    std::this_thread::sleep_for(std::chrono::seconds(2));  // Wait for JANA to fire up so we don't lose data
+    std::this_thread::sleep_for(std::chrono::seconds(4));  // Wait for JANA to fire up so we don't lose data
     std::cout << "Starting producer loop" << std::endl;
 
     size_t event_id = 1;

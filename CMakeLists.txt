@@ -20,6 +20,116 @@ include_directories(src/plugins/JTest)
 include_directories(src/programs/jana)
 include_directories(src/programs/tests)
 
+add_library(jana2 STATIC
+        src/lib/JANA/JApplication.cc
+        src/lib/JANA/JApplication.h
+        src/lib/JANA/JCpuInfo.cc
+        src/lib/JANA/JCpuInfo.h
+        src/lib/JANA/JEvent.cc
+        src/lib/JANA/JEvent.h
+        src/lib/JANA/JEventProcessor.h
+        src/lib/JANA/JEventSource.cc
+        src/lib/JANA/JEventSource.h
+        src/lib/JANA/JEventSourceGenerator.h
+        src/lib/JANA/JEventSourceGeneratorT.h
+        src/lib/JANA/JEventSourceManager.cc
+        src/lib/JANA/JEventSourceManager.h
+        src/lib/JANA/JException.cc
+        src/lib/JANA/JException.h
+        src/lib/JANA/JFactory.h
+        src/lib/JANA/JFactoryGenerator.h
+        src/lib/JANA/JFactorySet.cc
+        src/lib/JANA/JFactorySet.h
+        src/lib/JANA/JFactoryT.h
+        src/lib/JANA/JFunctions.cc
+        src/lib/JANA/JFunctions.h
+        src/lib/JANA/JLogger.h
+        src/lib/JANA/JObject.cc
+        src/lib/JANA/JObject.h
+        src/lib/JANA/JParameter.cc
+        src/lib/JANA/JParameter.h
+        src/lib/JANA/JParameterManager.cc
+        src/lib/JANA/JParameterManager.h
+        src/lib/JANA/JQueue.h
+        src/lib/JANA/JQueueSet.cc
+        src/lib/JANA/JQueueSet.h
+        src/lib/JANA/JQueueSimple.cc
+        src/lib/JANA/JQueueSimple.h
+        src/lib/JANA/JQueueWithBarriers.cc
+        src/lib/JANA/JQueueWithBarriers.h
+        src/lib/JANA/JQueueWithLock.cc
+        src/lib/JANA/JQueueWithLock.h
+        src/lib/JANA/JResettable.h
+        src/lib/JANA/JResourcePool.h
+        src/lib/JANA/JSignalHandler.h
+        src/lib/JANA/JSourceFactoryGenerator.h
+        src/lib/JANA/JStatus.cc
+        src/lib/JANA/JStatus.h
+        src/lib/JANA/JTask.h
+        src/lib/JANA/JThread.cc
+        src/lib/JANA/JThread.h
+        src/lib/JANA/JThreadManager.cc
+        src/lib/JANA/JThreadManager.h
+        src/lib/JANA/JTypeInfo.h
+        src/lib/JANA/JVersion.h
+        src/lib/JANA/JEventProcessorArrow.cc
+        src/lib/JANA/JEventProcessorArrow.h
+        src/lib/JANA/JEventSourceArrow.cc
+        src/lib/JANA/JEventSourceArrow.h
+        src/lib/JANA/JScheduler.cc
+        src/lib/JANA/JPerfUtils.cc
+        src/lib/JANA/JServiceLocator.cc
+        src/lib/JANA/JWorker.h
+        src/lib/JANA/JWorker.cc
+        src/lib/JANA/JSubeventArrow.cc
+        src/lib/JANA/JSubeventArrow.h
+        src/lib/JANA/JProcessingController.h
+        src/lib/JANA/JArrowMetrics.h
+        src/lib/JANA/JWorkerMetrics.h
+        src/lib/JANA/JTopologyBuilder.cc
+        src/lib/JANA/JTopologyBuilder.h
+        src/lib/JANA/JPluginLoader.cc
+        src/lib/JANA/JPluginLoader.h
+        src/lib/JANA/JLegacyProcessingController.cc
+        src/lib/JANA/JLegacyProcessingController.h
+        src/lib/JANA/JProcessingTopology.cpp
+        src/lib/JANA/JProcessingTopology.h
+        src/lib/JANA/JArrowProcessingController.cc
+        src/lib/JANA/JArrowProcessingController.h
+        src/lib/JANA/JPerfMetrics.cc
+        src/lib/JANA/JPerfMetrics.h
+        src/lib/JANA/JPerfSummary.h
+        src/lib/JANA/JArrowPerfSummary.cc
+        src/lib/JANA/JArrowPerfSummary.h
+        src/lib/JANA/JEventPool.h
+        src/lib/JANA/JProcessorMapping.h
+        src/lib/JANA/JProcessorMapping.cc
+        src/lib/JANA/Streaming/JEventBuilder.h
+        src/lib/JANA/Streaming/JDiscreteJoin.h
+        src/lib/JANA/Streaming/JStreamingEventSource.h
+        src/lib/JANA/Streaming/JTransport.h
+        src/lib/JANA/Streaming/JMessage.h
+        src/lib/JANA/Streaming/JWindow.h
+        src/lib/JANA/JComponentSummary.h
+        src/lib/JANA/JComponentSummary.cc
+        src/lib/JANA/JCsvWriter.h
+        )
+target_link_libraries(jana2 ${CMAKE_DL_LIBS})
+target_link_libraries(jana2 Threads::Threads)
+
+
+add_executable(jana
+        src/programs/jana/jana.cc
+        src/programs/jana/JBenchmarker.h
+        src/programs/jana/JBenchmarker.cc
+        src/programs/jana/MyProcessor.cc
+        src/programs/jana/MyProcessor.h
+        src/lib/JANA/Streaming/JDiscreteJoin.h src/lib/JANA/Streaming/JTrigger.h)
+
+target_link_libraries(jana jana2)
+target_link_libraries(jana Threads::Threads)
+
+
 add_executable(tests
         src/programs/tests/catch.hpp
         src/programs/tests/ActivableTests.cc
