@@ -129,6 +129,7 @@ inline void JEvent::Insert(T* item, const string& tag) const {
 	auto factory = mFactorySet->GetFactory<T>(tag);
 	if (factory == nullptr) {
 		factory = new JFactoryT<T>(JTypeInfo::demangle<T>(), tag);
+		mFactorySet->Add(factory);
 	}
 	factory->Insert(item);
 }
@@ -158,9 +159,9 @@ inline JFactoryT<T>* JEvent::GetFactory(const std::string& tag) const
         // but it was a dummy and no data had been inserted
         // TODO: Better idea: each EventSource specifies which factories
         factory = new JFactoryT<T>(JTypeInfo::demangle<T>(), tag);
-        bool result = mEventSource->GetObjects(this->shared_from_this(), factory);
-        if (!result) {
-            throw JException("Could not find factory '" + factory->GetName() + "', tag=" + tag);
+
+        if (mEventSource == nullptr || !(mEventSource->GetObjects(this->shared_from_this(), factory))) {
+			throw JException("Could not find factory '" + factory->GetName() + "', tag=" + tag);
         }
 	};
     return factory;
@@ -174,7 +175,7 @@ JFactoryT<T>* JEvent::Get(T** destination, const std::string& tag) const
 {
 	auto factory = GetFactory<T>(tag);
     auto iterators = factory->GetOrCreate(this->shared_from_this());
-    if (std::distance(*iterators.first, *iterators.second) != 1) {
+    if (std::distance(iterators.first, iterators.second) != 1) {
         throw JException("Wrong number of elements!");
     }
 	*destination = *iterators.first;
@@ -198,7 +199,7 @@ JFactoryT<T>* JEvent::Get(vector<const T*>& destination, const std::string& tag)
 
 template<class T> const T* JEvent::GetSingle(const std::string& tag) const {
     auto iterators = GetFactory<T>(tag)->GetOrCreate(this->shared_from_this());
-    if (std::distance(*iterators.first, *iterators.second) != 1) {
+    if (std::distance(iterators.first, iterators.second) != 1) {
         throw JException("Wrong number of elements!");
     }
     return *iterators.first;
