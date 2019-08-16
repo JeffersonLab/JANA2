@@ -55,6 +55,7 @@ public:
     void wait_until_stopped() override;
 
     bool is_stopped() override;
+    bool is_finished() override;
 
     std::unique_ptr<const JPerfSummary> measure_performance() override;
     std::unique_ptr<const JArrowPerfSummary> measure_internal_performance();

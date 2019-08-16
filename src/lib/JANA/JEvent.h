@@ -73,7 +73,9 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 	public:
 
 		explicit JEvent(JApplication* aApplication=nullptr) { mApplication = aApplication; }
-		virtual ~JEvent() = default;
+		virtual ~JEvent() {
+		    mFactorySet->Release();
+		}
 
 		//FACTORIES
 		void SetFactorySet(JFactorySet* aFactorySet) { mFactorySet = aFactorySet; }

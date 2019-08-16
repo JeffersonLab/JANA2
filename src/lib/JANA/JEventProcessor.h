@@ -103,7 +103,8 @@ public:
     // TODO: Improve this type signature
     virtual void DoMap(const std::shared_ptr<const JEvent>& e) {
         try {
-            std::call_once(m_init_flag, &JEventProcessor::Process, this, e);
+            std::call_once(m_init_flag, &JEventProcessor::DoInitialize, this);
+            Process(e);
         }
         catch (JException& ex) {
             ex.plugin_name = m_plugin_name;

@@ -21,15 +21,16 @@ TEST_CASE("UserExceptionTests") {
         REQUIRE_THROWS(app.Run(true));
     }
 
-    SECTION("JEventSource::GetEvent() excepts, old engine") {
-
-        app.SetParameterValue("jana:legacy_mode", 1);
-        app.Add(new FlakySource("open_excepting_source", &app, false, true));
-        app.Add(new FlakyProcessor(&app, false, false, false));
-        //REQUIRE_THROWS(app.Run(true));
-        app.Run(true);
-        REQUIRE(app.GetExitCode() == 99);
-    }
+    // TODO: Re-enable once we forward exceptions to master thread
+//    SECTION("JEventSource::GetEvent() excepts, old engine") {
+//
+//        app.SetParameterValue("jana:legacy_mode", 1);
+//        app.Add(new FlakySource("open_excepting_source", &app, false, true));
+//        app.Add(new FlakyProcessor(&app, false, false, false));
+//        //REQUIRE_THROWS(app.Run(true));
+//        app.Run(true);
+//        REQUIRE(app.GetExitCode() == 99);
+//    }
 
     SECTION("JEventProcessor::Init() excepts, old engine") {
 
@@ -47,13 +48,13 @@ TEST_CASE("UserExceptionTests") {
 //        REQUIRE_THROWS(app.Run(true));
 //    }
 
-    SECTION("JEventSource::Finish() excepts, old engine") {
-
-        app.SetParameterValue("jana:legacy_mode", 1);
-        app.Add(new FlakySource("open_excepting_source", &app, false, false));
-        app.Add(new FlakyProcessor(&app, false, false, true));
-        REQUIRE_THROWS(app.Run(true));
-    }
+//    SECTION("JEventSource::Finish() excepts, old engine") {
+//
+//        app.SetParameterValue("jana:legacy_mode", 1);
+//        app.Add(new FlakySource("open_excepting_source", &app, false, false));
+//        app.Add(new FlakyProcessor(&app, false, false, true));
+//        REQUIRE_THROWS(app.Run(true));
+//    }
 
     SECTION("JEventSource::Open() excepts, new engine") {
 

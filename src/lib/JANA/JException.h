@@ -55,8 +55,7 @@ struct JException : public std::exception {
 public:
 
     /// Basic constructor
-    explicit JException(std::string message = "Unknown exception")
-        : message(std::move(message))
+    explicit JException(std::string message = "Unknown exception") : message(std::move(message))
     {
         std::ostringstream ss;
         make_backtrace(ss);

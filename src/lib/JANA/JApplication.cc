@@ -170,7 +170,7 @@ void JApplication::Run(bool wait_until_finished) {
         //    _draining_queues = _topology->event_source_manager.AreAllFilesClosed();
 
         // Run until topology is deactivated, either because it finished or because another thread called stop()
-        if (_processing_controller->is_stopped()) {
+        if (_processing_controller->is_stopped() || _processing_controller->is_finished()) {
             std::cout << "All threads have ended.\n";
             break;
         }

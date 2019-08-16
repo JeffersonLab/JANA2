@@ -105,6 +105,9 @@ bool JArrowProcessingController::is_stopped() {
     return true;
 }
 
+bool JArrowProcessingController::is_finished() {
+    return !_topology->is_active();
+}
 
 JArrowProcessingController::~JArrowProcessingController() {
     request_stop();

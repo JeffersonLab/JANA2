@@ -50,6 +50,7 @@ public:
     virtual void request_stop() = 0;
     virtual void wait_until_stopped() = 0;
     virtual bool is_stopped() = 0;
+    virtual bool is_finished() = 0;
 
     virtual std::unique_ptr<const JPerfSummary> measure_performance() = 0;
 
