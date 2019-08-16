@@ -62,7 +62,6 @@ add_library(jana2 STATIC
         src/lib/JANA/JEventSource.h
         src/lib/JANA/JEventSourceGenerator.h
         src/lib/JANA/JEventSourceGeneratorT.h
-        src/lib/JANA/JException.cc
         src/lib/JANA/JException.h
         src/lib/JANA/JFactory.h
         src/lib/JANA/JFactoryGenerator.h
@@ -118,7 +117,7 @@ add_library(jana2 STATIC
         src/lib/JANA/Engine/JArrowTopology.cc
         src/lib/JANA/Engine/JArrowTopology.h
         src/lib/JANA/JLogger.h
-        )
+        src/lib/JANA/Utils/JBacktrace.h)
 
 
 add_library(jtest SHARED
