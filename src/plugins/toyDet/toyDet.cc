@@ -22,7 +22,7 @@
 
 void dummy_publisher_loop() {
 
-    std::string source_file = "run-10-mhz-10-chan-10-ev.dat";
+    const char* source_file = "run-10-mhz-10-chan-10-ev.dat";
     std::string dest_socket = "tcp://127.0.0.1:5555";
     size_t channel_count = 10;
     size_t source_count = 2;
@@ -42,43 +42,19 @@ void dummy_publisher_loop() {
     }
     ZmqTransport transport {dest_socket, true};
     transport.initialize();
-    std::string line;
-    std::vector<double> data;
 
-    while (std::getline(file_stream, line)) {
+    ToyDetMessage message;
+    FILE* f = fopen(source_file, "r");
+    while (fread(message.as_buffer(), 1, message.get_buffer_size(), f) == message.get_buffer_size()) {
 
-        // Skip comment lines
-        if (line[0] == '#' || line[0] == '@') continue;
-
-        // Parse line as sequence of doubles
-        std::stringstream line_stream(line);
-        std::string value;
-        while (std::getline(line_stream, value, ' ')) {
-            data.push_back(std::stod(value));
-        }
-
-        // Append all sources to data buffer
-        source_id += 1;
-        if (source_id <= source_count) continue;
-
-        // Send line as message over ZMQ
-        auto message = ToyDetMessage(event_id, channel_id, data);
+        message.record_counter++; // Increment event number
         transport.send(message);
         std::cout << "Send: " << message << " (" << sizeof(ToyDetMessage) << " bytes)" << std::endl;
         consume_cpu_ms(delay_ms, 0, false);
-        data.clear();
-
-        // Update source and channel ids
-        source_id = 1;
-        channel_id += 1;
-        if (channel_id > channel_count) {
-            event_id += 1;
-            channel_id = 1;
-        }
     }
 
     // Send an end-of-stream message
-    auto message = ToyDetMessage(0, 0, data);
+    message = ToyDetMessage(0, 0, {});
     transport.send(message);
     std::cout << "Send: end-of-stream" << std::endl;
 }

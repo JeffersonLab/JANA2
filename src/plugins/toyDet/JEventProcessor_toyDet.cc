@@ -36,6 +36,7 @@ void JEventProcessor_toyDet::Init(void)
 {
   // This is called once at program startup.
 
+  std::cout << "Initializing ROOT file" << std::endl;
   // define root file
   outFile = new TFile("outFile.root", "RECREATE");
   // define trees and branches
