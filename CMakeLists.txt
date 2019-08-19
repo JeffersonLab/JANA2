@@ -275,15 +275,14 @@ set_target_properties(JExample7 PROPERTIES PREFIX "" SUFFIX ".so")
 add_library(toyDet SHARED
         src/plugins/toyDet/JEventProcessor_toyDet.cc
         src/plugins/toyDet/JEventProcessor_toyDet.h
-        src/plugins/toyDet/JEventSource_toyDet.cc
-        src/plugins/toyDet/JEventSource_toyDet.h
+        src/plugins/toyDet/DASFileSource.cc
+        src/plugins/toyDet/DASFileSource.h
         src/plugins/toyDet/JFactoryGenerator_toyDet.h
-        src/plugins/toyDet/rawSamples.cc
-        src/plugins/toyDet/rawSamples.h
         src/plugins/toyDet/toyDet.cc
         src/plugins/toyDet/ZmqTransport.h
         src/plugins/toyDet/INDRAMessage.h
-        src/plugins/toyDet/JFactory_rawSamples.h
+        src/plugins/toyDet/FECSample.h
+        src/plugins/toyDet/FECSampleFactory.h
         )
 
 find_package(ROOT)

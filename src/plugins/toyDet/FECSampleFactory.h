@@ -30,57 +30,60 @@
 // Author: Nathan Brei
 //
 
-#ifndef JANA2_JFACTORY_RAWSAMPLES_H
-#define JANA2_JFACTORY_RAWSAMPLES_H
-
-
-/// This factory converts INDRAMessages into RawSamples
+#ifndef JANA2_RAWHITFACTORY_H
+#define JANA2_RAWHITFACTORY_H
 
 #include <JANA/JFactoryT.h>
 #include <JANA/JEvent.h>
 #include <JANA/JPerfUtils.h>
 
-#include "rawSamples.h"
+#include "FECSample.h"
 #include "INDRAMessage.h"
 
-class JFactory_rawSamples : public JFactoryT<rawSamples> {
+#include <fstream>
+
+class FECSampleFactory : public JFactoryT<FECSample> {
 
     size_t m_cputime_ms = 200;
     double m_cputime_spread = 0.25;
 
 public:
 
-    JFactory_rawSamples() : JFactoryT<rawSamples>("JFactory_rawSamples") {
+    FECSampleFactory() : JFactoryT<FECSample>("FECSampleFactory") {
         auto params = japp->GetJParameterManager();
-        params->GetParameter("toydet:rawsamples_ms", m_cputime_ms);
-        params->GetParameter("toydet:rawsamples_spread", m_cputime_spread);
+        params->GetParameter("toydet:rawhit_ms", m_cputime_ms);
+        params->GetParameter("toydet:rawhit_spread", m_cputime_spread);
     };
 
     void Process(const std::shared_ptr<const JEvent> &event) override {
 
-        auto messages = event->Get<ToyDetMessage>();
+        auto message = event->GetSingle<DASEventMessage>();
+        // Each DASEventMessage corresponds to one hardware event
+        // For now we pretend that hardware events = physics events
 
-        std::vector<rawSamples*> output;
-        for (auto message : messages) {
+        // TODO: Put these somewhere that makes sense
+        size_t MAX_SAMPLES = 1024;
+        size_t MAX_CHANNELS = 10;
 
-            auto sample = new rawSamples;
-            sample->eventNum = message->record_counter;
-            sample->chanNum = message->source_id;
+        const char* buf = message->payload;
+        for (uint16_t sample = 0; sample < MAX_SAMPLES; ++sample) {
+            for (uint16_t channel = 0; channel < MAX_CHANNELS; ++channel) {
 
-
-            size_t payload_size = message->payload_bytes/sizeof(double);
-            for (size_t i=0; i<payload_size/2; ++i) {
-                sample->adcData.push_back(message->payload[i]);
+                uint16_t current_value;
+                int offset;
+                sscanf(buf, "%hu%n", &current_value, &offset);
+                buf += offset;
+                auto hit = new FECSample;
+                hit->sample_id = sample;
+                hit->channel_id = channel;
+                hit->adc_value = current_value;
+                Insert(hit);
             }
-            for (size_t i=payload_size/2; i<payload_size; ++i) {
-                sample->tdcData.push_back(message->payload[i]);
-            }
-            output.push_back(sample);
         }
 
-        Set(std::move(output));
+        // Do some throwaway work in order to simulate a bottleneck
         consume_cpu_ms(m_cputime_ms, m_cputime_spread);
     }
 };
 
-#endif //JANA2_JFACTORY_RAWSAMPLES_H
+#endif //JANA2_RAWHITFACTORY_H

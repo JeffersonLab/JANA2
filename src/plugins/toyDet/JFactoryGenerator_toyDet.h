@@ -5,7 +5,7 @@
 #include <JANA/JFactoryGenerator.h>
 #include <JANA/JFactoryT.h>
 
-#include "rawSamples.h"
+#include "FECSample.h"
 
 class JFactoryGenerator_toyDet:public JFactoryGenerator{
 
@@ -13,7 +13,7 @@ class JFactoryGenerator_toyDet:public JFactoryGenerator{
 
   void GenerateFactories(JFactorySet *factory_set){
 		
-    factory_set->Add(new JFactoryT<rawSamples>());
+    factory_set->Add(new JFactoryT<FECSample>());
 
   }
 };

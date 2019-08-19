@@ -90,7 +90,7 @@ struct INDRAMessage : public JEventMessage {
     inline friend std::ostream& operator<< (std::ostream& os, const INDRAMessage& msg) {
         std::stringstream ss;
         ss << "Evt " << msg.record_counter << ": Chan " << msg.source_id << ": ";
-        for (int i=0; i<5 && i<N; ++i) {
+        for (int i=0; i<10 && i<N; ++i) {
             ss << msg.payload[i] << ", ";
         }
         ss << "...";
@@ -126,7 +126,7 @@ struct INDRAMessage : public JEventMessage {
 };
 
 /// We use a type alias in order to not have to parameterize INDRAMessages everywhere
-using ToyDetMessage = INDRAMessage<char, 1024*10*5>;
+using DASEventMessage = INDRAMessage<char, 1024*10*5>;
 
 
 #endif //JANA2_INDRAMESSAGE_H

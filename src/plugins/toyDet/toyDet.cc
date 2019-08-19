@@ -13,10 +13,8 @@
 #include <JANA/JCsvWriter.h>
 
 #include "JEventProcessor_toyDet.h"
-#include "JEventSource_toyDet.h"
-#include "JFactoryGenerator_toyDet.h"
-#include "JFactory_rawSamples.h"
-
+#include "DASFileSource.h"
+#include "FECSampleFactory.h"
 #include "INDRAMessage.h"
 #include "ZmqTransport.h"
 
@@ -43,18 +41,19 @@ void dummy_publisher_loop() {
     ZmqTransport transport {dest_socket, true};
     transport.initialize();
 
-    ToyDetMessage message;
+    DASEventMessage message;
     FILE* f = fopen(source_file, "r");
-    while (fread(message.as_buffer(), 1, message.get_buffer_size(), f) == message.get_buffer_size()) {
+    size_t BYTES_PER_EVENT = 1024*10*5;
+    while (fread(message.payload, 1, BYTES_PER_EVENT, f) == BYTES_PER_EVENT) {
 
         message.record_counter++; // Increment event number
         transport.send(message);
-        std::cout << "Send: " << message << " (" << sizeof(ToyDetMessage) << " bytes)" << std::endl;
+        std::cout << "Send: " << message << " (" << sizeof(DASEventMessage) << " bytes)" << std::endl;
         consume_cpu_ms(delay_ms, 0, false);
     }
 
     // Send an end-of-stream message
-    message = ToyDetMessage(0, 0, {});
+    message = DASEventMessage(0, 0, {});
     transport.send(message);
     std::cout << "Send: end-of-stream" << std::endl;
 }
@@ -68,17 +67,17 @@ void InitPlugin(JApplication* app) {
 
     /// Uncomment these lines in order to read from file directly
     //app->Add("run-10-mhz-10-chan-10-ev.dat");
-    //app->Add(new JEventSourceGeneratorT<JEventSource_toyDet>());
+    //app->Add(new JEventSourceGeneratorT<DASFileSource>());
     //app->Add(new JFactoryGenerator_toyDet());
 
     /// Uncomment these lines in order to stream file over zmq
     auto transport = std::unique_ptr<ZmqTransport>(new ZmqTransport("tcp://127.0.0.1:5555"));
-    app->Add(new JStreamingEventSource<ToyDetMessage>(std::move(transport)));
+    app->Add(new JStreamingEventSource<DASEventMessage>(std::move(transport)));
     new std::thread(dummy_publisher_loop);
 
     app->Add(new JEventProcessor_toyDet());
-    app->Add(new JCsvWriter<rawSamples>());
-    app->Add(new JFactoryGeneratorT<JFactory_rawSamples>());
+    app->Add(new JCsvWriter<FECSample>());
+    app->Add(new JFactoryGeneratorT<FECSampleFactory>());
 
 
 }
