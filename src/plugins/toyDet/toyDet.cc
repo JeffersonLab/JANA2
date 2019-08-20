@@ -11,8 +11,10 @@
 
 #include <JANA/Streaming/JStreamingEventSource.h>
 #include <JANA/JCsvWriter.h>
+#include <JANA/JEventSourceGeneratorT.h>
 
 #include "JEventProcessor_toyDet.h"
+#include "JFactoryGenerator_toyDet.h"
 #include "DASFileSource.h"
 #include "FECSampleFactory.h"
 #include "INDRAMessage.h"
@@ -20,7 +22,7 @@
 
 void dummy_publisher_loop() {
 
-    const char* source_file = "run-10-mhz-10-chan-10-ev.dat";
+    //const char* source_file = "run-5-mhz-80-chan-100-ev.dat";
     std::string dest_socket = "tcp://127.0.0.1:5555";
     size_t channel_count = 10;
     size_t source_count = 2;
@@ -33,17 +35,16 @@ void dummy_publisher_loop() {
     uint32_t channel_id = 1;
     uint32_t source_id = 1;
 
-    std::ifstream file_stream(source_file);
-    if (!file_stream.is_open()) {
-        std::cout << "Unable to open file, exiting." << std::endl;
-        exit(0);
-    }
     ZmqTransport transport {dest_socket, true};
     transport.initialize();
 
     DASEventMessage message;
-    FILE* f = fopen(source_file, "r");
-    size_t BYTES_PER_EVENT = 1024*10*5;
+    FILE* f = fopen("run-5-mhz-80-chan-100-ev.dat", "r");
+    if (f == nullptr) {
+        std::cout << "Unable to open file, exiting." << std::endl;
+        exit(0);
+    }
+    size_t BYTES_PER_EVENT = 1024*80*5;
     while (fread(message.payload, 1, BYTES_PER_EVENT, f) == BYTES_PER_EVENT) {
 
         message.record_counter++; // Increment event number
@@ -66,7 +67,7 @@ void InitPlugin(JApplication* app) {
     app->SetParameterValue("jana:legacy_mode", 0);
 
     /// Uncomment these lines in order to read from file directly
-    //app->Add("run-10-mhz-10-chan-10-ev.dat");
+    //app->Add("run-5-mhz-80-chan-100-ev.dat");
     //app->Add(new JEventSourceGeneratorT<DASFileSource>());
     //app->Add(new JFactoryGenerator_toyDet());
 
@@ -78,7 +79,6 @@ void InitPlugin(JApplication* app) {
     app->Add(new JEventProcessor_toyDet());
     app->Add(new JCsvWriter<FECSample>());
     app->Add(new JFactoryGeneratorT<FECSampleFactory>());
-
 
 }
 } // "C"

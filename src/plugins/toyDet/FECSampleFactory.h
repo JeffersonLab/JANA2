@@ -63,7 +63,7 @@ public:
 
         // TODO: Put these somewhere that makes sense
         size_t MAX_SAMPLES = 1024;
-        size_t MAX_CHANNELS = 10;
+        size_t MAX_CHANNELS = 80;
 
         const char* buf = message->payload;
         for (uint16_t sample = 0; sample < MAX_SAMPLES; ++sample) {

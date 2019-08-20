@@ -126,7 +126,7 @@ struct INDRAMessage : public JEventMessage {
 };
 
 /// We use a type alias in order to not have to parameterize INDRAMessages everywhere
-using DASEventMessage = INDRAMessage<char, 1024*10*5>;
+using DASEventMessage = INDRAMessage<char, 1024*80*5>;
 
 
 #endif //JANA2_INDRAMESSAGE_H
