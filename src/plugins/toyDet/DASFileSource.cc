@@ -43,9 +43,9 @@ void DASFileSource::Open() {
 void DASFileSource::GetEvent(std::shared_ptr<JEvent> event) {
 
     // TODO: Put these somewhere that makes sense
-    size_t MAX_SAMPLES = 1024;
-    size_t MAX_CHANNELS = 80;
     size_t current_event_nr = 0;
+    size_t MAX_CHANNELS     = 80;
+    size_t MAX_SAMPLES      = 1024;
 
     if (ifs.is_open()) {
 
@@ -59,7 +59,7 @@ void DASFileSource::GetEvent(std::shared_ptr<JEvent> event) {
                 for (uint16_t channel = 0; channel < MAX_CHANNELS; ++channel) {
 
                     auto hit = new FECSample;
-                    hit->sample_id = sample;
+                    hit->sample_id  = sample;
                     hit->channel_id = channel;
                     ifs >> hit->adc_value;
                     hits.push_back(hit);

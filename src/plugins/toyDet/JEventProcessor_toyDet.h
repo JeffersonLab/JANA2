@@ -51,12 +51,12 @@ class JEventProcessor_toyDet : public JEventProcessor{
   TTree *eventTree, *sampleTree;
 
   // user defined data types
-  static const uint numChans = 80;
+  // TODO: put these somewhere that make sense ('global' parameter?)
+  static const uint numChans   = 80;
+  static const uint numSamples = 1024;
 
-  uint   chan, event, nentries;
-  double tdcSample, adcSample;
-
-  vector <double> tdcSamples, adcSamples;
+  uint chan, event, nentries;
+  uint tdcSample, adcSample;
 
 };
 

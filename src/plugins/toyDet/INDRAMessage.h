@@ -56,6 +56,7 @@ struct INDRAMessage : public JEventMessage {
     uint32_t compressed_bytes;
     uint32_t magic;
     uint32_t format_version;
+    uint32_t flags;
     uint64_t record_counter;
     struct timespec timestamp;
     T payload[N];
@@ -76,6 +77,7 @@ struct INDRAMessage : public JEventMessage {
         compressed_bytes = payload_bytes;
         magic = 2227;
         format_version = 0;
+        flags = 0;
         record_counter = event_number;
         clock_gettime(CLOCK_MONOTONIC, &timestamp);
 

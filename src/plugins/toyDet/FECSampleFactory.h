@@ -74,9 +74,9 @@ public:
                 sscanf(buf, "%hu%n", &current_value, &offset);
                 buf += offset;
                 auto hit = new FECSample;
-                hit->sample_id = sample;
+                hit->sample_id  = sample;
                 hit->channel_id = channel;
-                hit->adc_value = current_value;
+                hit->adc_value  = current_value;
                 Insert(hit);
             }
         }
