@@ -59,7 +59,7 @@ void dummy_publisher_loop() {
         message.payload[3] = randfloat(-100,100);
 
         transport.send(message);
-        std::cout << "Send: " << message << "(" << message.get_buffer_size() << " bytes)" << std::endl;
+        std::cout << "Send: " << message << "(" << message.get_buffer_capacity() << " bytes)" << std::endl;
         consume_cpu_ms(1000, 0, false);
     }
 

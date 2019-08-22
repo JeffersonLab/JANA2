@@ -16,11 +16,11 @@
 
 /// JStreamingEventSource makes it convenient to stream events into JANA by handling transport and
 /// message type as separate, orthogonal concerns.
-template <typename T>
+template <class MessageT>
 class JStreamingEventSource : public JEventSource {
 
     std::unique_ptr<JTransport> m_transport;
-    T* m_next_item;
+    MessageT* m_next_item;
     size_t m_next_evt_nr = 1;
 
 public:
@@ -39,7 +39,7 @@ public:
     void GetEvent(std::shared_ptr<JEvent> event) override {
 
         if (m_next_item == nullptr) {
-            m_next_item = new T();  // This is why T requires a zero-arg ctor
+            m_next_item = new MessageT(mApplication);
         }
 
         auto result = m_transport->receive(*m_next_item);
@@ -51,13 +51,14 @@ public:
         }
 
         // At this point, we know that item contains a valid JEventMessage
-        T* item = m_next_item;
+        MessageT* item = m_next_item;
         m_next_item = nullptr;
 
         size_t evt_nr = item->get_event_number();
         event->SetEventNumber(evt_nr == 0 ? m_next_evt_nr++ : evt_nr);
         event->SetRunNumber(item->get_run_number());
-        event->Insert<T>(item);
+        // TODO: Parameterize MessageT on JObjectT, insert ALL JObjects!
+        event->Insert<MessageT>(item);
         std::cout << "Recv: " << *item << std::endl;
     }
 

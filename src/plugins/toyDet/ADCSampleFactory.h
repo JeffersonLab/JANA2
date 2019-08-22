@@ -61,18 +61,21 @@ public:
         // Each DASEventMessage corresponds to one hardware event
         // For now we pretend that hardware events = physics events
 
-        // TODO: Put these somewhere that makes sense
-        size_t MAX_SAMPLES = 1024;
-        size_t MAX_CHANNELS = 80;
+        // Obtain a view into our DASEventMessage payload
+        const char* payload_buffer;
+        size_t payload_buffer_size;
+        message->as_payload(&payload_buffer, &payload_buffer_size);
+        size_t max_samples = message->get_sample_count();
+        size_t max_channels = message->get_channel_count();
 
-        const char* buf = message->payload;
-        for (uint16_t sample = 0; sample < MAX_SAMPLES; ++sample) {
-            for (uint16_t channel = 0; channel < MAX_CHANNELS; ++channel) {
+
+        for (uint16_t sample = 0; sample < max_samples; ++sample) {
+            for (uint16_t channel = 0; channel < max_channels; ++channel) {
 
                 uint16_t current_value;
                 int offset;
-                sscanf(buf, "%hu%n", &current_value, &offset);
-                buf += offset;
+                sscanf(payload_buffer, "%hu%n", &current_value, &offset);
+                payload_buffer += offset;
                 auto hit = new ADCSample;
                 hit->sample_id = sample;
                 hit->channel_id = channel;

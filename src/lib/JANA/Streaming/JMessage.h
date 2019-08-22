@@ -21,9 +21,9 @@ struct JMessage {
 
     virtual char* as_buffer() = 0;
     virtual const char* as_buffer() const = 0;
-    virtual size_t get_buffer_size() const = 0;
+    virtual size_t get_buffer_capacity() const = 0;
     virtual bool is_end_of_stream() const = 0;
-    virtual size_t get_data_size() const { return get_buffer_size(); }
+    virtual size_t get_buffer_size() const { return get_buffer_capacity(); }
 };
 
 

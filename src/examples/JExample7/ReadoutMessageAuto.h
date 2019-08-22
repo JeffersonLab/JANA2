@@ -54,7 +54,7 @@ public:
     inline char* as_buffer() override { return reinterpret_cast<char*>(this); }
     inline const char* as_buffer() const override { return reinterpret_cast<const char*>(this); }
 
-    inline size_t get_buffer_size() const override { return sizeof(*this); }
+    inline size_t get_buffer_capacity() const override { return sizeof(*this); }
     inline bool is_end_of_stream() const override { return event_number == 0 && run_number == 0 && payload_size == 0; }
 
     inline size_t get_event_number() const override { return event_number; }

@@ -30,24 +30,30 @@ void dummy_publisher_loop() {
     ZmqTransport transport {japp->GetParameterValue<std::string>("toydet:socket"), true};
     transport.initialize();
 
-    DASEventMessage message;
+    DASEventMessage message(japp);
+    INDRAMessage* indra_message = message.as_indra_message();
+
+    size_t current_event_number = 1;
+    size_t bytes_per_event = japp->GetParameterValue<size_t>("toydet:nsamples") * japp->GetParameterValue<size_t>("toydet:nchannels") * 5;
+
     FILE* f = fopen(japp->GetParameterValue<std::string>("toydet:filename").c_str(), "r");
     if (f == nullptr) {
         std::cout << "Unable to open file, exiting." << std::endl;
         exit(0);
     }
-    size_t BYTES_PER_EVENT = 1024*80*5;
-    message.record_counter = 0;
-    while (fread(message.payload, 1, BYTES_PER_EVENT, f) == BYTES_PER_EVENT) {
 
-        message.record_counter++; // Increment event number
+    while (fread(indra_message->payload, 1, bytes_per_event, f) == bytes_per_event) {
+
+        message.set_event_number(current_event_number);
         transport.send(message);
-        std::cout << "Send: " << message << " (" << sizeof(DASEventMessage) << " bytes)" << std::endl;
+        std::cout << "Send: " << indra_message << " (" << message.get_buffer_size() << " bytes)" << std::endl;
         consume_cpu_ms(delay_ms, 0, false);
     }
 
-    // Send an end-of-stream message
-    message = DASEventMessage(0, 0, {});
+    // Send an empty end-of-stream message
+    // TODO: Look ahead
+    message.set_payload_size(0);
+    message.set_end_of_stream();
     transport.send(message);
     std::cout << "Send: end-of-stream" << std::endl;
 }
