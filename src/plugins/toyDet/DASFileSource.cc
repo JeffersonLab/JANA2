@@ -11,7 +11,7 @@
 
 #include "DASFileSource.h"
 
-#include "FECSample.h"
+#include "ADCSample.h"
 
 #include <iostream>
 #include <vector>
@@ -53,13 +53,13 @@ void DASFileSource::GetEvent(std::shared_ptr<JEvent> event) {
             // Each iteration of this becomes one new event
             // Assumes file contains no partial events
 
-            std::vector<FECSample*> hits;
+            std::vector<ADCSample*> hits;
 
             for (uint16_t sample = 0; sample < MAX_SAMPLES && !ifs.eof(); ++sample) {
                 for (uint16_t channel = 0; channel < MAX_CHANNELS; ++channel) {
 
-                    auto hit = new FECSample;
-                    hit->sample_id  = sample;
+                    auto hit = new ADCSample;
+                    hit->sample_id = sample;
                     hit->channel_id = channel;
                     ifs >> hit->adc_value;
                     hits.push_back(hit);

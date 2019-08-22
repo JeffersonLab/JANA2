@@ -10,7 +10,7 @@
 // [ Revision ]
 
 #include "JEventProcessor_toyDet.h"
-#include "FECSample.h"
+#include "ADCSample.h"
 
 //---------------------------------
 // JEventProcessor_toyDet    (Constructor)
@@ -53,7 +53,7 @@ void JEventProcessor_toyDet::Init(void) {
 void JEventProcessor_toyDet::Process(const std::shared_ptr<const JEvent>& aEvent) {
 
     // get raw samples object for each event
-    auto eventData = aEvent->Get<FECSample>();
+    auto eventData = aEvent->Get<ADCSample>();
     // impose mutex lock
     lock_guard<mutex> lck(fillMutex);
 

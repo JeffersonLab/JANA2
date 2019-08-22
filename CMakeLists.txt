@@ -281,8 +281,8 @@ add_library(toyDet SHARED
         src/plugins/toyDet/toyDet.cc
         src/plugins/toyDet/ZmqTransport.h
         src/plugins/toyDet/INDRAMessage.h
-        src/plugins/toyDet/FECSample.h
-        src/plugins/toyDet/FECSampleFactory.h
+        src/plugins/toyDet/ADCSample.h
+        src/plugins/toyDet/ADCSampleFactory.h
         )
 
 find_package(ROOT)

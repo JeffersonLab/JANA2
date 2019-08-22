@@ -37,19 +37,19 @@
 #include <JANA/JEvent.h>
 #include <JANA/JPerfUtils.h>
 
-#include "FECSample.h"
+#include "ADCSample.h"
 #include "INDRAMessage.h"
 
 #include <fstream>
 
-class FECSampleFactory : public JFactoryT<FECSample> {
+class ADCSampleFactory : public JFactoryT<ADCSample> {
 
     size_t m_cputime_ms = 200;
     double m_cputime_spread = 0.25;
 
 public:
 
-    FECSampleFactory() : JFactoryT<FECSample>("FECSampleFactory") {
+    ADCSampleFactory() : JFactoryT<ADCSample>("ADCSampleFactory") {
         auto params = japp->GetJParameterManager();
         params->GetParameter("toydet:rawhit_ms", m_cputime_ms);
         params->GetParameter("toydet:rawhit_spread", m_cputime_spread);
@@ -73,10 +73,10 @@ public:
                 int offset;
                 sscanf(buf, "%hu%n", &current_value, &offset);
                 buf += offset;
-                auto hit = new FECSample;
-                hit->sample_id  = sample;
+                auto hit = new ADCSample;
+                hit->sample_id = sample;
                 hit->channel_id = channel;
-                hit->adc_value  = current_value;
+                hit->adc_value = current_value;
                 Insert(hit);
             }
         }
