@@ -42,11 +42,18 @@ void dummy_publisher_loop() {
         exit(0);
     }
 
-    while (fread(indra_message->payload, 1, bytes_per_event, f) == bytes_per_event) {
+    char* payload = nullptr;
+    size_t payload_capacity;
+    size_t payload_length;
+    message.as_payload(&payload, &payload_length, &payload_capacity);
 
-        message.set_event_number(current_event_number);
+    while (fread(payload, 1, payload_capacity, f) == payload_capacity) {
+
+        message.as_indra_message()->source_id = 0;
+        message.set_event_number(current_event_number++);
+        message.set_payload_size(payload_capacity);
+        std::cout << "Send: " << message << " (" << message.get_buffer_size() << " bytes)" << std::endl;
         transport.send(message);
-        std::cout << "Send: " << indra_message << " (" << message.get_buffer_size() << " bytes)" << std::endl;
         consume_cpu_ms(delay_ms, 0, false);
     }
 
@@ -69,19 +76,22 @@ void InitPlugin(JApplication* app) {
     // TODO: Consider making toydet:socket be the 'source_name', and use JESG to switch between JSES and DASFileSource
     // TODO: Improve parametermanager interface
 
-    app->SetParameterValue("toydet:filename", std::string("run-5-mhz-80-chan-3-ev.dat"));
-    app->SetParameterValue("toydet:socket", std::string("tcp://127.0.0.1:5555"));
-    app->SetParameterValue("toydet:nsamples", 1024);
-    app->SetParameterValue("toydet:nchannels", 80);
-
     bool use_zmq = true;
-    app->GetJParameterManager()->SetDefaultParameter("toydet:use_zmq", use_zmq);
-
     bool use_dummy_publisher = true;
+    size_t nchannels = 80;
+    size_t nsamples = 1024;
+    std::string socket_name = "tcp://127.0.0.1:5555";
+    std::string file_name = "run-5-mhz-80-chan-3-ev.dat";
+
+    app->GetJParameterManager()->SetDefaultParameter("toydet:use_zmq", use_zmq);
+    app->GetJParameterManager()->SetDefaultParameter("toydet:socket", socket_name);
+    app->GetJParameterManager()->SetDefaultParameter("toydet:filename", file_name);
+    app->GetJParameterManager()->SetDefaultParameter("toydet:nchannels", nchannels);
+    app->GetJParameterManager()->SetDefaultParameter("toydet:nsamples", nsamples);
     app->GetJParameterManager()->SetDefaultParameter("toydet:use_dummy_publisher", use_dummy_publisher);
 
     if (use_zmq) {
-        auto transport = std::unique_ptr<ZmqTransport>(new ZmqTransport(app->GetParameterValue<std::string>("toydet:socket")));
+        auto transport = std::unique_ptr<ZmqTransport>(new ZmqTransport(socket_name));
         app->Add(new JStreamingEventSource<DASEventMessage>(std::move(transport)));
 
         if (use_dummy_publisher) {

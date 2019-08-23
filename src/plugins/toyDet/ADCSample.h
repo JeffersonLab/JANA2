@@ -44,8 +44,8 @@ struct ADCSample : public JObject {
 
     void Summarize(JObjectSummary& summary) const override {
         summary.add(source_id, NAME_OF(source_id), "%d");
-        summary.add(channel_id, NAME_OF(channel_id), "%d");
         summary.add(sample_id,  NAME_OF(sample_id),  "%d");
+        summary.add(channel_id, NAME_OF(channel_id), "%d");
         summary.add(adc_value,  NAME_OF(adc_value),  "%d");
     }
 };

@@ -58,6 +58,7 @@ public:
     void Process(const std::shared_ptr<const JEvent> &event) override {
 
         auto message = event->GetSingle<DASEventMessage>();
+        auto source_id = message->as_indra_message()->source_id;
         // Each DASEventMessage corresponds to one hardware event
         // For now we pretend that hardware events = physics events
 
@@ -77,6 +78,7 @@ public:
                 sscanf(payload_buffer, "%hu%n", &current_value, &offset);
                 payload_buffer += offset;
                 auto hit = new ADCSample;
+                hit->source_id = source_id;
                 hit->sample_id = sample;
                 hit->channel_id = channel;
                 hit->adc_value = current_value;

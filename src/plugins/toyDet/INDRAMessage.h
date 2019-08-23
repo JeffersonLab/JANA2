@@ -87,7 +87,7 @@ public:
         // constant for the life of the program. If we are a consumer, the buffer should be large
         // enough to accept any message emitted from our producer. This object won't ever reallocate the buffer.
 
-        m_buffer_capacity = sizeof(INDRAMessage) + 5 * (m_sample_count * m_channel_count) - 1;
+        m_buffer_capacity = sizeof(INDRAMessage) + 5 * (m_sample_count * m_channel_count);
         m_buffer = new char[m_buffer_capacity];
     }
 
@@ -125,7 +125,7 @@ public:
 
     size_t get_buffer_capacity() const override { return m_buffer_capacity; }
 
-    size_t get_buffer_size() const override { return sizeof(INDRAMessage) + sizeof(uint32_t)*as_indra_message()->payload_bytes; }
+    size_t get_buffer_size() const override { return sizeof(INDRAMessage) + as_indra_message()->payload_bytes/sizeof(uint32_t); }
 
 
 
