@@ -125,7 +125,7 @@ public:
 
     size_t get_buffer_capacity() const override { return m_buffer_capacity; }
 
-    size_t get_buffer_size() const override { return sizeof(INDRAMessage) + as_indra_message()->payload_bytes/sizeof(uint32_t); }
+    size_t get_buffer_size() const override { return sizeof(INDRAMessage) + as_indra_message()->payload_bytes*sizeof(uint32_t); }
 
 
 

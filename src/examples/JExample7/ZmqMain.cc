@@ -51,7 +51,10 @@ void dummy_publisher_loop() {
 
 	for (size_t counter = 1; counter < 11; ++counter) {
 
-        ReadoutMessageAuto message(22, counter);
+        ReadoutMessageAuto message(nullptr);
+        message.run_number = 0;
+        message.event_number = counter;
+
         message.payload_size = 4;
         message.payload[0] = randfloat(0,1);
         message.payload[1] = randfloat(-100,100);
@@ -64,7 +67,9 @@ void dummy_publisher_loop() {
     }
 
     // Send end-of-stream message so that JANA knows to shut down
-	transport.send(ReadoutMessageAuto::end_of_stream());
+    ReadoutMessageAuto message (nullptr);
+	message.set_end_of_stream();
+	transport.send(message);
 }
 
 

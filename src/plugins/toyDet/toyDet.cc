@@ -81,7 +81,7 @@ void InitPlugin(JApplication* app) {
     size_t nchannels = 80;
     size_t nsamples = 1024;
     std::string socket_name = "tcp://127.0.0.1:5555";
-    std::string file_name = "run-5-mhz-80-chan-3-ev.dat";
+    std::string file_name = "run-5-mhz-80-chan-100-ev.dat";
 
     app->GetJParameterManager()->SetDefaultParameter("toydet:use_zmq", use_zmq);
     app->GetJParameterManager()->SetDefaultParameter("toydet:socket", socket_name);

@@ -37,6 +37,7 @@
 #include <chrono>
 #include <JANA/Streaming/JMessage.h>
 #include <JANA/JException.h>
+#include <JANA/JException.h>
 #include <cstring>
 
 struct ReadoutMessageAuto : public JEventMessage {
@@ -57,17 +58,16 @@ public:
     inline size_t get_buffer_capacity() const override { return sizeof(*this); }
     inline bool is_end_of_stream() const override { return event_number == 0 && run_number == 0 && payload_size == 0; }
 
+    inline void set_end_of_stream() {
+        event_number = 0;
+        run_number = 0;
+        payload_size = 0;
+    }
+
     inline size_t get_event_number() const override { return event_number; }
     inline size_t get_run_number() const override { return run_number; }
 
-    // We need an end-of-stream packet
-    static ReadoutMessageAuto end_of_stream() { return {}; }
-
-    ReadoutMessageAuto(uint32_t run_number = 0, uint32_t event_number = 0, uint32_t payload_size = 0)
-        : run_number(run_number)
-        , event_number(event_number)
-        , payload_size(payload_size)
-    {
+    ReadoutMessageAuto(JApplication* app) {
     }
 
     inline friend std::ostream& operator<< (std::ostream& os, const ReadoutMessageAuto& msg) {
