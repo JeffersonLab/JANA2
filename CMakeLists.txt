@@ -273,6 +273,8 @@ target_link_libraries(JExample7 libzmq-static)
 set_target_properties(JExample7 PROPERTIES PREFIX "" SUFFIX ".so")
 
 add_library(toyDet SHARED
+        src/plugins/toyDet/MonitoringProcessor.cc
+        src/plugins/toyDet/MonitoringProcessor.h
         src/plugins/toyDet/JEventProcessor_toyDet.cc
         src/plugins/toyDet/JEventProcessor_toyDet.h
         src/plugins/toyDet/DASFileSource.cc

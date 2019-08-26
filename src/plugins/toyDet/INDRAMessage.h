@@ -210,7 +210,7 @@ private:
 
 
 /// Conveniently print a one-line summary of any DASEventMessage for debugging
-std::ostream& operator<< (std::ostream& os, const DASEventMessage& message) {
+inline std::ostream& operator<< (std::ostream& os, const DASEventMessage& message) {
     std::stringstream ss;
     const char* payload;
     size_t length;

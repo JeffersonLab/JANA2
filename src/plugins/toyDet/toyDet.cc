@@ -13,7 +13,7 @@
 #include <JANA/JCsvWriter.h>
 #include <JANA/JEventSourceGeneratorT.h>
 
-#include "JEventProcessor_toyDet.h"
+#include "MonitoringProcessor.h"
 #include "JFactoryGenerator_toyDet.h"
 #include "DASFileSource.h"
 #include "ADCSampleFactory.h"
@@ -34,7 +34,6 @@ void dummy_publisher_loop() {
     INDRAMessage* indra_message = message.as_indra_message();
 
     size_t current_event_number = 1;
-    size_t bytes_per_event = japp->GetParameterValue<size_t>("toydet:nsamples") * japp->GetParameterValue<size_t>("toydet:nchannels") * 5;
 
     FILE* f = fopen(japp->GetParameterValue<std::string>("toydet:filename").c_str(), "r");
     if (f == nullptr) {
@@ -80,11 +79,13 @@ void InitPlugin(JApplication* app) {
     bool use_dummy_publisher = true;
     size_t nchannels = 80;
     size_t nsamples = 1024;
-    std::string socket_name = "tcp://127.0.0.1:5555";
+    std::string socket_name = "tcp://127.0.0.1:5556";
+    std::string output_socket_name = "tcp://127.0.0.1:5557";
     std::string file_name = "run-5-mhz-80-chan-100-ev.dat";
 
     app->GetJParameterManager()->SetDefaultParameter("toydet:use_zmq", use_zmq);
     app->GetJParameterManager()->SetDefaultParameter("toydet:socket", socket_name);
+    app->GetJParameterManager()->SetDefaultParameter("toydet:output_socket", output_socket_name);
     app->GetJParameterManager()->SetDefaultParameter("toydet:filename", file_name);
     app->GetJParameterManager()->SetDefaultParameter("toydet:nchannels", nchannels);
     app->GetJParameterManager()->SetDefaultParameter("toydet:nsamples", nsamples);
@@ -104,7 +105,7 @@ void InitPlugin(JApplication* app) {
         app->Add(new JFactoryGenerator_toyDet());
     }
 
-    app->Add(new JEventProcessor_toyDet());
+    app->Add(new MonitoringProcessor());
     app->Add(new JCsvWriter<ADCSample>());
     app->Add(new JFactoryGeneratorT<ADCSampleFactory>());
 }
