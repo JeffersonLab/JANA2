@@ -1,28 +1,25 @@
 //
-//    File: toyDet/JEventProcessor_toyDet.cc
-// Created: Wed Apr 24 16:04:14 EDT 2019
-// Creator: pooser (on Linux rudy.jlab.org 3.10.0-957.10.1.el7.x86_64 x86_64)
+//    File: RootProcessor.cc
+// Created: Mon Aug 26 16:29:25 EDT 2019
+// Creator: pooser (on Linux rudy.jlab.org 3.10.0-1062.el7.x86_64 x86_64)
 //
-// ------ Last repository commit info -----
-// [ Date ]
-// [ Author ]
-// [ Source ]
-// [ Revision ]
 
-#include "JEventProcessor_toyDet.h"
+#include "RootProcessor.h"
 #include "ADCSample.h"
 
 //---------------------------------
-// JEventProcessor_toyDet    (Constructor)
+// RootProcessor    (Constructor)
 //---------------------------------
-JEventProcessor_toyDet::JEventProcessor_toyDet() {
+RootProcessor::RootProcessor()
+{
 
 }
 
 //---------------------------------
-// ~JEventProcessor_toyDet    (Destructor)
+// ~RootProcessor    (Destructor)
 //---------------------------------
-JEventProcessor_toyDet::~JEventProcessor_toyDet() {
+RootProcessor::~RootProcessor()
+{
     // close output root file
     outFile->Close();
 }
@@ -30,7 +27,7 @@ JEventProcessor_toyDet::~JEventProcessor_toyDet() {
 //------------------
 // Init
 //------------------
-void JEventProcessor_toyDet::Init(void) {
+void RootProcessor::Init(void) {
 
     // This is called once at program startup.
     std::cout << "Initializing ROOT file" << std::endl;
@@ -49,11 +46,13 @@ void JEventProcessor_toyDet::Init(void) {
     outFile->Write();
     outFile->Flush();
     outFile->cd();
+
 }
+
 //------------------
 // Process
 //------------------
-void JEventProcessor_toyDet::Process(const std::shared_ptr<const JEvent>& aEvent) {
+void RootProcessor::Process(const std::shared_ptr<const JEvent>& aEvent) {
 
     // get raw samples object for each event
     auto eventData = aEvent->Get<ADCSample>();
@@ -66,7 +65,6 @@ void JEventProcessor_toyDet::Process(const std::shared_ptr<const JEvent>& aEvent
         // Insert this sample into the correct location in the ROOT tree.
         // This is effectively doing a transpose of the incoming DAS file
         // Correctness requires that our samples be ordered by increasing sample_id
-
         chan      = sample->channel_id + 1;
         event     = aEvent->GetEventNumber();
         adcSample = sample->adc_value;
@@ -79,15 +77,16 @@ void JEventProcessor_toyDet::Process(const std::shared_ptr<const JEvent>& aEvent
     eventTree->Fill();
     nentries += eventData.size()/numChans;
     sampleTree->SetEntries(nentries);
-
+    // update the root file
     outFile->Write();
     outFile->Flush();
     outFile->cd();
+
 }
 
 //------------------
 // Finish
 //------------------
-void JEventProcessor_toyDet::Finish(void) {
+void RootProcessor::Finish(void) {
     // outFile->Write();
 }

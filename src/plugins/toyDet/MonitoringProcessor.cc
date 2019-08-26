@@ -3,11 +3,6 @@
 // Created: Wed Apr 24 16:04:14 EDT 2019
 // Creator: pooser (on Linux rudy.jlab.org 3.10.0-957.10.1.el7.x86_64 x86_64)
 //
-// ------ Last repository commit info -----
-// [ Date ]
-// [ Author ]
-// [ Source ]
-// [ Revision ]
 
 #include "MonitoringProcessor.h"
 #include "ADCSample.h"

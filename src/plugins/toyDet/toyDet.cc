@@ -3,16 +3,12 @@
 // Created: Wed Apr 24 16:04:14 EDT 2019
 // Creator: pooser (on Linux rudy.jlab.org 3.10.0-957.10.1.el7.x86_64 x86_64)
 //
-// ------ Last repository commit info -----
-// [ Date ]
-// [ Author ]
-// [ Source ]
-// [ Revision ]
 
 #include <JANA/Streaming/JStreamingEventSource.h>
 #include <JANA/JCsvWriter.h>
 #include <JANA/JEventSourceGeneratorT.h>
 
+#include "RootProcessor.h"
 #include "MonitoringProcessor.h"
 #include "JFactoryGenerator_toyDet.h"
 #include "DASFileSource.h"
@@ -105,6 +101,7 @@ void InitPlugin(JApplication* app) {
         app->Add(new JFactoryGenerator_toyDet());
     }
 
+    app->Add(new RootProcessor());
     app->Add(new MonitoringProcessor());
     app->Add(new JCsvWriter<ADCSample>());
     app->Add(new JFactoryGeneratorT<ADCSampleFactory>());

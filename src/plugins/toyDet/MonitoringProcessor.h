@@ -9,8 +9,8 @@
 // [ Source ]
 // [ Revision ]
 
-#ifndef _JEventProcessor_toyDet_h_
-#define _JEventProcessor_toyDet_h_
+#ifndef _MonitoringProcessor_h_
+#define _MonitoringProcessor_h_
 
 #include <mutex>
 
@@ -42,5 +42,5 @@ private:
 
 };
 
-#endif // _JEventProcessor_toyDet_h_
+#endif // _MonitoringProcessor_h_
 
