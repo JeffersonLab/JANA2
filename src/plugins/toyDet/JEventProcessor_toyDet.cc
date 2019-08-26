@@ -31,11 +31,12 @@ JEventProcessor_toyDet::~JEventProcessor_toyDet() {
 // Init
 //------------------
 void JEventProcessor_toyDet::Init(void) {
-    // This is called once at program startup.
 
+    // This is called once at program startup.
     std::cout << "Initializing ROOT file" << std::endl;
     // define root file
     outFile = new TFile("outFile.root", "RECREATE");
+    outFile->cd();
     // define trees and branches
     eventTree  = new TTree("ET", "Toy Detector Event Data Tree");
     sampleTree = new TTree("ST", "Toy Detector Sample Data Tree");
@@ -45,8 +46,10 @@ void JEventProcessor_toyDet::Init(void) {
         sampleTree->Branch(Form("adcSamplesChan_%d", ichan + 1), &adcSample);
         sampleTree->Branch(Form("tdcSamplesChan_%d", ichan + 1), &tdcSample);
     }
+    outFile->Write();
+    outFile->Flush();
+    outFile->cd();
 }
-
 //------------------
 // Process
 //------------------
@@ -77,11 +80,14 @@ void JEventProcessor_toyDet::Process(const std::shared_ptr<const JEvent>& aEvent
     nentries += eventData.size()/numChans;
     sampleTree->SetEntries(nentries);
 
+    outFile->Write();
+    outFile->Flush();
+    outFile->cd();
 }
 
 //------------------
 // Finish
 //------------------
 void JEventProcessor_toyDet::Finish(void) {
-    outFile->Write();
+    // outFile->Write();
 }

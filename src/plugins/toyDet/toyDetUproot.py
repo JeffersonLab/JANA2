@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import random, os, time
 
 # end of stream flag, root input file
-eos = 0; rif = 'partOutFile.root'
+eos = 0; rif = 'outFile.root'
 # initialize counters
 sizeDiffCntr = 0; fileEndCntr = 0
 # number of channels to analyze
@@ -82,7 +82,7 @@ while eos == 0 :
                                       adcDict[b'adcSamplesChan_%d' % rcl[ic]][-1024:],
                                       color = cl[ic % len(cl)], marker = ml[ic % len(ml)],
                                       ls = '', label = 'Channel %d' % rcl[ic])
-                hitLoc = np.where(adcDict[b'adcSamplesChan_%d' % rcl[ic]][-1024:]>100)[0] + len(adcDict[b'adcSamplesChan_%d' % rcl[ic]])
+                hitLoc = np.where(adcDict[b'adcSamplesChan_%d' % rcl[ic]][-1024:]>100)[0] + len(adcDict[b'adcSamplesChan_%d' % rcl[ic]]) - 1024
                 if len(hitLoc) != 0 : axs[row, column].set_xlim(np.min(hitLoc) - 10, np.max(hitLoc) + 20)
                 axs[row, column].set_ylim(0, 1024)
                 if column == 0 : axs[row, column].set_ylabel('ADC Value')
