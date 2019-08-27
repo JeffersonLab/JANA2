@@ -73,7 +73,7 @@ void InitPlugin(JApplication* app) {
     // TODO: Improve parametermanager interface
 
     bool use_zmq = true;
-    bool use_dummy_publisher = true;
+    bool use_dummy_publisher = false;
     size_t nchannels = 80;
     size_t nsamples = 1024;
     std::string socket_name = "tcp://127.0.0.1:5556";

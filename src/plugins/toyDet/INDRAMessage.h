@@ -61,6 +61,13 @@ public:
         m_buffer = new char[m_buffer_capacity];
     }
 
+    /// This constructor won't be used by JStreamingEventSource, but will instead be used when DASEventMessages are
+    /// 'manually' created by DummyProducers and JEventProcessors
+    explicit DASEventMessage(size_t payload_bytes) {
+        m_buffer_capacity = sizeof(INDRAMessage) + payload_bytes;
+        m_buffer = new char[m_buffer_capacity];
+    }
+
     ~DASEventMessage() override {
         delete[] m_buffer;
     }
@@ -93,7 +100,7 @@ public:
 
     size_t get_buffer_capacity() const override { return m_buffer_capacity; }
 
-    size_t get_buffer_size() const override { return sizeof(INDRAMessage) + as_indra_message()->payload_bytes*sizeof(uint32_t); }
+    size_t get_buffer_size() const override { return sizeof(INDRAMessage) + as_indra_message()->payload_bytes; }
 
     ////////////////////////////////////////////////////////////////////////////////////////
     /// The following setters are NOT required by JStreamingEventSource, but useful for writing producers.
@@ -138,21 +145,24 @@ public:
     /// Grants read-only access to the message payload as a byte array, which we need because INDRAMessage uses uint32_t instead
     void as_payload(const char** payload, size_t* payload_bytes) const {
 
-        *payload = m_buffer + sizeof(INDRAMessage);  // TODO: Verify this
-        *payload_bytes = as_indra_message()->payload_bytes * sizeof(uint32_t);  // TODO: payload_bytes should be payload_length
+        *payload = m_buffer + sizeof(INDRAMessage);
+        *payload_bytes = as_indra_message()->payload_bytes;
     }
 
     /// Grants read/write access to the message payload as a byte array, which we need because INDRAMessage uses uint32_t instead
     void as_payload(char** payload, size_t* payload_bytes, size_t* payload_capacity) {
 
-        *payload = m_buffer + sizeof(INDRAMessage);  // TODO: Verify this
-        *payload_bytes = as_indra_message()->payload_bytes / sizeof(uint32_t);  // TODO: payload_bytes should be payload_length
+        *payload = m_buffer + sizeof(INDRAMessage);
+        *payload_bytes = as_indra_message()->payload_bytes;
         *payload_capacity = m_buffer_capacity - sizeof(INDRAMessage);
     }
 
-    /// Sets a payload size measured in bytes, handling the conversion from uint32_t
+    /// Sets a payload size, measured in bytes
     void set_payload_size(uint32_t payload_bytes) {
-        as_indra_message()->payload_bytes = payload_bytes / sizeof(uint32_t);
+        if (payload_bytes > m_buffer_capacity) {
+            throw JException("set_payload_size: desired size exceeds buffer capacity!");
+        }
+        as_indra_message()->payload_bytes = payload_bytes;
     }
 
     /// Conveniently access the sample count associated with this message
