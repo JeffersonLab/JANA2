@@ -39,7 +39,6 @@ void DASFileSource::Open() {
 void DASFileSource::GetEvent(std::shared_ptr<JEvent> event) {
 
     // TODO: Put these somewhere that makes sense
-    size_t current_event_nr = 0;
     size_t MAX_CHANNELS     = 80;
     size_t MAX_SAMPLES      = 1024;
     if (ifs.is_open()) {

@@ -27,6 +27,7 @@ public:
 private:
 
     std::ifstream ifs;
+    size_t current_event_nr = 0;
 
 };
 
