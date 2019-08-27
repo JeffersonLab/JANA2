@@ -27,6 +27,7 @@ struct INDRAMessage {
     uint64_t record_counter;
     struct timespec timestamp;
     uint32_t payload[];
+
 };
 
 
@@ -45,12 +46,13 @@ public:
     ///  - The size of the valid data contained within is NOT protected, because it is a C-style array.
 
     explicit DASEventMessage(JApplication* app) {
+
         // TODO: Right now we have to default these in the InitPlugin, as otherwise they won't show up in the table
         //       Consider this use case in the future when we try to clean up how we get our parameters
 
         // Extract any parameters needed to figure out the buffer size
 
-        m_sample_count = app->GetParameterValue<size_t>("toydet:nsamples");
+        m_sample_count  = app->GetParameterValue<size_t>("toydet:nsamples");
         m_channel_count = app->GetParameterValue<size_t>("toydet:nchannels");
 
         // Allocate the buffer. The buffer size must be determinable at startup time and
@@ -59,6 +61,7 @@ public:
 
         m_buffer_capacity = sizeof(INDRAMessage) + 5 * (m_sample_count * m_channel_count);
         m_buffer = new char[m_buffer_capacity];
+
     }
 
     /// This constructor won't be used by JStreamingEventSource, but will instead be used when DASEventMessages are
@@ -115,6 +118,7 @@ public:
     }
 
     void set_run_number(size_t run_number) {
+
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////
@@ -131,7 +135,6 @@ public:
     /// and all our data gets corrupted. Instead, we write a 'as_payload' method which reinterprets the 'payload'
     /// region of the buffer as a char*, and converts the sizes (measured in counts of uint32_t) to and from bytes.
 
-
     /// Grants read/write access to any INDRAMessage members directly
     INDRAMessage* as_indra_message() {
         return reinterpret_cast<INDRAMessage*>(m_buffer);
@@ -144,16 +147,14 @@ public:
 
     /// Grants read-only access to the message payload as a byte array, which we need because INDRAMessage uses uint32_t instead
     void as_payload(const char** payload, size_t* payload_bytes) const {
-
-        *payload = m_buffer + sizeof(INDRAMessage);
-        *payload_bytes = as_indra_message()->payload_bytes;
+        *payload = m_buffer + sizeof(INDRAMessage);  // TODO: Verify this
+        *payload_bytes = as_indra_message()->payload_bytes * sizeof(uint32_t);  // TODO: payload_bytes should be payload_length
     }
 
     /// Grants read/write access to the message payload as a byte array, which we need because INDRAMessage uses uint32_t instead
     void as_payload(char** payload, size_t* payload_bytes, size_t* payload_capacity) {
-
-        *payload = m_buffer + sizeof(INDRAMessage);
-        *payload_bytes = as_indra_message()->payload_bytes;
+        *payload = m_buffer + sizeof(INDRAMessage);  // TODO: Verify this
+        *payload_bytes = as_indra_message()->payload_bytes / sizeof(uint32_t);  // TODO: payload_bytes should be payload_length
         *payload_capacity = m_buffer_capacity - sizeof(INDRAMessage);
     }
 
@@ -180,7 +181,6 @@ private:
 
 };
 
-
 /// Conveniently print a one-line summary of any DASEventMessage for debugging
 inline std::ostream& operator<< (std::ostream& os, const DASEventMessage& message) {
 
@@ -195,7 +195,6 @@ inline std::ostream& operator<< (std::ostream& os, const DASEventMessage& messag
     ss << "...";
     os << ss.str();
     return os;
-
 }
 
 #endif // _INDRAMessage_h_

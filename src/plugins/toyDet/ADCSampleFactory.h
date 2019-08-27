@@ -22,6 +22,7 @@ class ADCSampleFactory : public JFactoryT<ADCSample> {
 public:
 
     ADCSampleFactory() : JFactoryT<ADCSample>("ADCSampleFactory") {
+
         auto params = japp->GetJParameterManager();
         params->GetParameter("toydet:rawhit_ms", m_cputime_ms);
         params->GetParameter("toydet:rawhit_spread", m_cputime_spread);
@@ -29,7 +30,7 @@ public:
 
     void Process(const std::shared_ptr<const JEvent> &event) override {
 
-        auto message = event->GetSingle<DASEventMessage>();
+        auto message   = event->GetSingle<DASEventMessage>();
         auto source_id = message->as_indra_message()->source_id;
         // Each DASEventMessage corresponds to one hardware event
         // For now we pretend that hardware events = physics events

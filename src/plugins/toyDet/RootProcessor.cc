@@ -18,10 +18,8 @@ RootProcessor::RootProcessor() {
 // ~RootProcessor    (Destructor)
 //---------------------------------
 RootProcessor::~RootProcessor() {
-
     // close output root file
     outFile->Close();
-
 }
 
 //------------------
@@ -46,7 +44,6 @@ void RootProcessor::Init(void) {
     outFile->Write();
     outFile->Flush();
     outFile->cd();
-
 }
 
 //------------------
@@ -61,7 +58,6 @@ void RootProcessor::Process(const std::shared_ptr<const JEvent>& aEvent) {
 
     // For each ADC sample in the current event
     for (auto sample : eventData) {
-
         // Insert this sample into the correct location in the ROOT tree.
         // This is effectively doing a transpose of the incoming DAS file
         // Correctness requires that our samples be ordered by increasing sample_id
@@ -71,7 +67,6 @@ void RootProcessor::Process(const std::shared_ptr<const JEvent>& aEvent) {
         tdcSample = (sample->sample_id + 1) + numSamples*(event - 1);
         sampleTree->FindBranch(Form("adcSamplesChan_%d", chan))->Fill();
         sampleTree->FindBranch(Form("tdcSamplesChan_%d", chan))->Fill();
-
     }
 
     // fill event tree and set nentries on sample tree
@@ -82,7 +77,6 @@ void RootProcessor::Process(const std::shared_ptr<const JEvent>& aEvent) {
     outFile->Write();
     outFile->Flush();
     outFile->cd();
-
 }
 
 //------------------

@@ -48,7 +48,6 @@ void DASFileSource::GetEvent(std::shared_ptr<JEvent> event) {
             std::vector<ADCSample*> hits;
             for (uint16_t sample = 0; sample < MAX_SAMPLES && !ifs.eof(); ++sample) {
                 for (uint16_t channel = 0; channel < MAX_CHANNELS; ++channel) {
-
                     auto hit = new ADCSample;
                     hit->sample_id = sample;
                     hit->channel_id = channel;

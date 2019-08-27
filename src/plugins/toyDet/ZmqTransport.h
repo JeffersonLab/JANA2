@@ -66,7 +66,6 @@ public:
             return JTransport::Result::FAILURE;
         }
         return JTransport::Result::SUCCESS;
-
     }
 
     JTransport::Result receive(JMessage& dest_msg) override {
@@ -81,7 +80,6 @@ public:
             return JTransport::Result::FINISHED;
         }
         return JTransport::Result::SUCCESS;
-
     }
 
 private:

@@ -25,13 +25,11 @@ public:
     virtual void Process(const std::shared_ptr<const JEvent> &aEvent);
     virtual void Finish(void);
 
-
 private:
 
     std::mutex fillMutex;
     ZmqTransport *m_transport  = nullptr;
     DASEventMessage *m_message = nullptr;
-
 };
 
 #endif // _MonitoringProcessor_h_
