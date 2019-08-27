@@ -27,7 +27,7 @@ void dummy_publisher_loop() {
     transport.initialize();
 
     DASEventMessage message(japp);
-    INDRAMessage* indra_message = message.as_indra_message();
+    // INDRAMessage* indra_message = message.as_indra_message();
 
     size_t current_event_number = 1;
 
@@ -43,7 +43,6 @@ void dummy_publisher_loop() {
     message.as_payload(&payload, &payload_length, &payload_capacity);
 
     while (fread(payload, 1, payload_capacity, f) == payload_capacity) {
-
         message.as_indra_message()->source_id = 0;
         message.set_event_number(current_event_number++);
         message.set_payload_size(payload_capacity);
@@ -58,9 +57,11 @@ void dummy_publisher_loop() {
     message.set_end_of_stream();
     transport.send(message);
     std::cout << "Send: end-of-stream" << std::endl;
+
 }
 
 extern "C" {
+
 void InitPlugin(JApplication* app) {
 
     InitJANAPlugin(app);
@@ -90,7 +91,6 @@ void InitPlugin(JApplication* app) {
     if (use_zmq) {
         auto transport = std::unique_ptr<ZmqTransport>(new ZmqTransport(socket_name));
         app->Add(new JStreamingEventSource<DASEventMessage>(std::move(transport)));
-
         if (use_dummy_publisher) {
             new std::thread(dummy_publisher_loop);
         }
@@ -105,7 +105,9 @@ void InitPlugin(JApplication* app) {
     app->Add(new MonitoringProcessor());
     app->Add(new JCsvWriter<ADCSample>());
     app->Add(new JFactoryGeneratorT<ADCSampleFactory>());
+
 }
+
 } // "C"
 
 

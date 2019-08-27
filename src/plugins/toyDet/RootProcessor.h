@@ -4,8 +4,8 @@
 // Creator: pooser (on Linux rudy.jlab.org 3.10.0-1062.el7.x86_64 x86_64)
 //
 
-#ifndef _RootProcessor_toyDet_h_
-#define _RootProcessor_toyDet_h_
+#ifndef _RootProcessor_h_
+#define _RootProcessor_h_
 
 #include <mutex>
 
@@ -27,18 +27,14 @@ class RootProcessor : public JEventProcessor {
 	public:
 
     RootProcessor();
-
     virtual ~RootProcessor();
 
     virtual void Init(void);
-
     virtual void Process(const std::shared_ptr<const JEvent>& aEvent);
-
     virtual void Finish(void);
 
 	protected:
-	
-	
+
 	private:
 
     // mutex objects

@@ -1,6 +1,6 @@
 
-#ifndef _JFACTORYGENERATOR_TOYDET_H_
-#define _JFACTORYGENERATOR_TOYDET_H_
+#ifndef _JFactoryGenerator_toyDet_h_
+#define _JFactoryGenerator_toyDet_h_
 
 #include <JANA/JFactoryGenerator.h>
 #include <JANA/JFactoryT.h>
@@ -16,6 +16,7 @@ class JFactoryGenerator_toyDet:public JFactoryGenerator{
     factory_set->Add(new JFactoryT<ADCSample>());
 
   }
+
 };
 
-#endif   // _JFACTORYGENERATOR_TOYDET_H_
+#endif // _JFactoryGenerator_toyDet_h_

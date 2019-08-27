@@ -18,19 +18,22 @@ DASFileSource::DASFileSource(std::string source_name, JApplication* app) : JEven
 }
 
 DASFileSource::~DASFileSource() {
+
     // Delete JFactoryGenerator if we created one
     if (mFactoryGenerator != nullptr) delete mFactoryGenerator;
-
     // Close the file/stream here.
     std::cout << "Closing " << mName << std::endl;
     ifs.close();
+
 }
 
 void DASFileSource::Open() {
+
     ifs.open(mName);
     if (!ifs) {
         throw JException("Unable to open '%s'", mName.c_str());
     }
+
 }
 
 void DASFileSource::GetEvent(std::shared_ptr<JEvent> event) {
@@ -39,15 +42,11 @@ void DASFileSource::GetEvent(std::shared_ptr<JEvent> event) {
     size_t current_event_nr = 0;
     size_t MAX_CHANNELS     = 80;
     size_t MAX_SAMPLES      = 1024;
-
     if (ifs.is_open()) {
-
         if (!ifs.eof()) {
             // Each iteration of this becomes one new event
             // Assumes file contains no partial events
-
             std::vector<ADCSample*> hits;
-
             for (uint16_t sample = 0; sample < MAX_SAMPLES && !ifs.eof(); ++sample) {
                 for (uint16_t channel = 0; channel < MAX_CHANNELS; ++channel) {
 
@@ -62,11 +61,11 @@ void DASFileSource::GetEvent(std::shared_ptr<JEvent> event) {
             event->SetEventNumber(current_event_nr++);
             return;
         }
-
         std::cout << "Reached end of file/stream " << mName << std::endl;
         ifs.close();
     }
     throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
+
 }
 
 

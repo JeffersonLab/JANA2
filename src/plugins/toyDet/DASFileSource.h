@@ -18,13 +18,10 @@ class DASFileSource : public JEventSource {
 public:
 
     DASFileSource(std::string source_name, JApplication* app);
-
     ~DASFileSource() override;
 
     static std::string GetDescription() { return "ToyDet event source (direct ADC serialization mode)"; }
-
     void Open() final;
-
     void GetEvent(std::shared_ptr<JEvent>) final;
 
 private:
