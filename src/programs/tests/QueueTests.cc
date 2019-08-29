@@ -1,5 +1,5 @@
 
-#include <JANA/JMailbox.h>
+#include <JANA/Engine/JMailbox.h>
 
 #include "catch.hpp"
 

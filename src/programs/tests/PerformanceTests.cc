@@ -31,8 +31,8 @@
 //
 #include "catch.hpp"
 
-#include <JANA/JProcessingTopology.h>
-#include <JANA/JArrowProcessingController.h>
+#include <JANA/Engine/JArrowTopology.h>
+#include <JANA/Engine/JArrowProcessingController.h>
 #include "PerformanceTests.h"
 #include "TestTopology.h"
 
@@ -44,9 +44,9 @@ TEST_CASE("MemoryBottleneckTest", "[.][performance]") {
     auto loggingService = std::make_shared<JLoggingService>();
     serviceLocator->provide(loggingService);
 
-    loggingService->set_level("JThreadTeam", JLogLevel::OFF);
-    loggingService->set_level("JScheduler", JLogLevel::OFF);
-    loggingService->set_level("JTopology", JLogLevel::INFO);
+    loggingService->set_level("JThreadTeam", JLogger::Level::OFF);
+    loggingService->set_level("JScheduler", JLogger::Level::OFF);
+    loggingService->set_level("JTopology", JLogger::Level::INFO);
 
     auto params = std::make_shared<FakeParameterManager>();
     serviceLocator->provide(params);
@@ -87,7 +87,7 @@ TEST_CASE("MemoryBottleneckTest", "[.][performance]") {
     topology.addArrow(new SinkArrow<Event*>("plot", plot, q3));
 
     japp = new JApplication; // TODO: Get rid of this
-    JProcessingTopology proctop(japp);
+    JArrowTopology proctop;
     proctop.arrows = std::move(topology.arrows);
     proctop.sources.push_back(proctop.arrows[0]);
     proctop.sinks.push_back(proctop.arrows[3]);

@@ -26,20 +26,20 @@
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-#include "JApplication.h"
-#include "JLegacyProcessingController.h"
-#include "JArrowProcessingController.h"
+#include <JANA/JApplication.h>
 
 #include <JANA/JEventProcessor.h>
 #include <JANA/JEventSource.h>
 #include <JANA/JEventSourceGenerator.h>
 #include <JANA/JFactoryGenerator.h>
-#include <JANA/JParameterManager.h>
-#include <JANA/JEventSourceManager.h>
-#include <JANA/JPluginLoader.h>
-#include <JANA/JTopologyBuilder.h>
-#include <JANA/JProcessingController.h>
-#include <JANA/JCpuInfo.h>
+
+#include <JANA/Services/JParameterManager.h>
+#include <JANA/Services/JPluginLoader.h>
+#include <JANA/Services/JComponentManager.h>
+#include <JANA/Services/JProcessingController.h>
+
+#include <JANA/Engine/JArrowProcessingController.h>
+#include <JANA/Utils/JCpuInfo.h>
 
 JApplication *japp = nullptr;
 
@@ -50,8 +50,7 @@ JApplication::JApplication(JParameterManager* params) {
 
     _logger = JLoggingService::logger("JApplication");
     _plugin_loader = new JPluginLoader(this,_params);
-    _topology_builder = new JTopologyBuilder(this);
-    _topology = nullptr;
+    _component_manager = new JComponentManager(this);
     _processing_controller = nullptr;
 }
 
@@ -62,10 +61,7 @@ JApplication::~JApplication() {
     }
     delete _params;
     delete _plugin_loader;
-    delete _topology_builder;
-    if (_topology != nullptr) {
-        delete _topology;
-    }
+    delete _component_manager;
 }
 
 
@@ -83,29 +79,29 @@ void JApplication::AddPluginPath(std::string path) {
 // Building a ProcessingTopology
 
 void JApplication::Add(JEventSource* event_source) {
-    _topology_builder->add(event_source);
+    _component_manager->add(event_source);
 }
 
 void JApplication::Add(JEventSourceGenerator *source_generator) {
     /// Add the given JFactoryGenerator to the list of queues
     ///
     /// @param source_generator pointer to source generator to add. Ownership is passed to JApplication
-    _topology_builder->add(source_generator);
+    _component_manager->add(source_generator);
 }
 
 void JApplication::Add(JFactoryGenerator *factory_generator) {
     /// Add the given JFactoryGenerator to the list of queues
     ///
     /// @param factory_generator pointer to factory generator to add. Ownership is passed to JApplication
-    _topology_builder->add(factory_generator);
+    _component_manager->add(factory_generator);
 }
 
 void JApplication::Add(JEventProcessor* processor) {
-    _topology_builder->add(processor);
+    _component_manager->add(processor);
 }
 
 void JApplication::Add(std::string event_source_name) {
-    _topology_builder->add(event_source_name);
+    _component_manager->add(event_source_name);
 }
 
 
@@ -122,15 +118,13 @@ void JApplication::Initialize() {
     _initialized = true;
 
     // Attach all plugins
-    _plugin_loader->attach_plugins(_topology_builder);
+    _plugin_loader->attach_plugins(_component_manager);
 
     // Set task pool size
     size_t task_pool_size = 200;
     size_t task_pool_debuglevel = 0;
     _params->SetDefaultParameter("JANA:TASK_POOL_SIZE", task_pool_size, "Task pool size");
     _params->SetDefaultParameter("JANA:TASK_POOL_DEBUGLEVEL", task_pool_debuglevel, "Task pool debug level");
-    mVoidTaskPool.Set_ControlParams(task_pool_size, task_pool_debuglevel);
-    // TODO: Move mVoidTaskPool into JThreadManager
 
     // Set desired nthreads
     _desired_nthreads = JCpuInfo::GetNumCpus();
@@ -138,20 +132,10 @@ void JApplication::Initialize() {
                                  "The total number of worker threads");
 
 
-    _topology = _topology_builder->build_topology();
-
-    bool legacy_mode = true;
-    _params->SetDefaultParameter("JANA:LEGACY_MODE", legacy_mode, "");
-    if (legacy_mode) {
-        auto * pc = new JLegacyProcessingController(this, _topology);
-        _threadManager = pc->get_threadmanager();
-        _processing_controller = pc;
-        _extended_report = false;
-    }
-    else {
-        _processing_controller = new JArrowProcessingController(_topology);
-        _extended_report = true;
-    }
+    _component_manager->resolve_event_sources();
+    auto topology = JArrowTopology::from_components(_component_manager, this);
+    _processing_controller = new JArrowProcessingController(topology);
+    _extended_report = true;
 
     _params->SetDefaultParameter("JANA:EXTENDED_REPORT", _extended_report);
     _processing_controller->initialize();
@@ -181,12 +165,12 @@ void JApplication::Run(bool wait_until_finished) {
         // If we are finishing up (all input sources are closed, and are waiting for all events to finish processing)
         // This flag is used by the integrated rate calculator
         // The JThreadManager is in charge of telling all the threads to end
-        if(!_draining_queues)
-            _draining_queues = _topology->event_source_manager.AreAllFilesClosed();
-
+        // TODO: Bring this back
+        //if(!_draining_queues)
+        //    _draining_queues = _topology->event_source_manager.AreAllFilesClosed();
 
         // Run until topology is deactivated, either because it finished or because another thread called stop()
-        if (!_topology->is_active() || _processing_controller->is_stopped()) {
+        if (_processing_controller->is_stopped() || _processing_controller->is_finished()) {
             std::cout << "All threads have ended.\n";
             break;
         }
@@ -250,7 +234,7 @@ int JApplication::GetExitCode() {
 
 JComponentSummary JApplication::GetComponentSummary() {
     /// Returns a data object describing all components currently running
-    return _topology->component_summary;
+    return _component_manager->get_component_summary();
 }
 
 // Performance/status monitoring
@@ -265,7 +249,9 @@ void JApplication::PrintStatus(void) {
     }
     else {
         std::stringstream ss;
-        ss << "  " << GetNeventsProcessed() << " events processed  " << Val2StringWithPrefix( GetInstantaneousRate() ) << "Hz (" << Val2StringWithPrefix( GetIntegratedRate() ) << "Hz avg)             ";
+        ss << "  " << GetNeventsProcessed() << " events processed  "
+           << JTypeInfo::to_string_with_si_prefix(GetInstantaneousRate()) << "Hz ("
+           << JTypeInfo::to_string_with_si_prefix(GetIntegratedRate()) << "Hz avg)";
         jout << ss.str() << "\n";
         jout.flush();
     }
@@ -280,8 +266,8 @@ void JApplication::PrintFinalReport() {
         jout << std::endl;
         auto nevents = GetNeventsProcessed();
         jout << "Number of threads: " << GetNThreads() << std::endl;
-        jout << "Total events processed: " << nevents << " (~ " << Val2StringWithPrefix( nevents ) << "evt)" << std::endl;
-        jout << "Integrated Rate: " << Val2StringWithPrefix( GetIntegratedRate() ) << "Hz" << std::endl;
+        jout << "Total events processed: " << nevents << " (~ " << JTypeInfo::to_string_with_si_prefix(nevents) << "evt)" << std::endl;
+        jout << "Integrated Rate: " << JTypeInfo::to_string_with_si_prefix(GetIntegratedRate()) << "Hz" << std::endl;
         jout << std::endl;
     }
     if (_extended_report) {
@@ -342,90 +328,6 @@ float JApplication::GetInstantaneousRate()
     }
 
     return last_R;
-}
-
-
-
-// Things that don't belong here
-
-std::shared_ptr<JTask<void>> JApplication::GetVoidTask() {
-    return mVoidTaskPool.Get_SharedResource();
-}
-
-JFactorySet* JApplication::GetFactorySet() {
-    return mFactorySetPool.Get_Resource(_topology->factory_generators);
-}
-
-void JApplication::Recycle(JFactorySet* aFactorySet) {
-    return mFactorySetPool.Recycle(aFactorySet);
-}
-
-JEventSourceManager* JApplication::GetJEventSourceManager() const {
-    return &_topology->event_source_manager;
-}
-
-void JApplication::GetJEventProcessors(std::vector<JEventProcessor*>& aProcessors) {
-    aProcessors = _topology->event_processors;
-}
-
-void JApplication::GetJFactoryGenerators(std::vector<JFactoryGenerator*> &factory_generators) {
-    factory_generators = _topology->factory_generators;
-}
-
-std::string JApplication::Val2StringWithPrefix(float val)
-{
-    /// Return the value as a string with the appropriate latin unit prefix
-    /// appended.
-    /// Values returned are: "G", "M", "k", "", "u", and "m" for
-    /// values of "val" that are: >1.5E9, >1.5E6, >1.5E3, <1.0E-7, <1.0E-4, 1.0E-1
-    /// respectively.
-    const char *units = "";
-    if(val>1.5E9){
-        val/=1.0E9;
-        units = "G";
-    }else 	if(val>1.5E6){
-        val/=1.0E6;
-        units = "M";
-    }else if(val>1.5E3){
-        val/=1.0E3;
-        units = "k";
-    }else if(val<1.0E-7){
-        units = "";
-    }else if(val<1.0E-4){
-        val/=1.0E6;
-        units = "u";
-    }else if(val<1.0E-1){
-        val/=1.0E3;
-        units = "m";
-    }
-
-    char str[256];
-    sprintf(str,"%3.1f %s", val, units);
-
-    return std::string(str);
-}
-
-JThreadManager* JApplication::GetJThreadManager() const {
-    return _threadManager;
-}
-
-void JApplication::UpdateResourceLimits() {
-
-    /// Used internally by JANA to adjust the maximum size of resource
-    /// pools after changing the number of threads.
-
-    // OK, this is tricky. The max size of the JFactorySet resource pool should
-    // be at least as big as how many threads we have. Factory sets may also be
-    // attached to JEvent objects in queues that are not currently being acted
-    // on by a thread so we actually need the maximum to be larger if we wish to
-    // prevent constant allocation/deallocation of factory sets. If the factory
-    // sets are large, this will cost more memory, but should save on CPU from
-    // allocating less often and not having to call the constructors repeatedly.
-    // The exact maximum is hard to determine here. We set it to twice the number
-    // of threads which should be sufficient. The user should be given control to
-    // adjust this themselves in the future, but or now, this should be OK.
-    auto nthreads = _threadManager->GetNJThreads();
-    mFactorySetPool.Set_ControlParams( nthreads*100, 0 );
 }
 
 

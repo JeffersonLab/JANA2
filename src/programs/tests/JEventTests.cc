@@ -38,17 +38,18 @@
 
 TEST_CASE("JEventInsertTests") {
 
-    JEvent event;
-    event.SetFactorySet(new JFactorySet);
+
+    auto event = std::make_shared<JEvent>();
+    event->SetFactorySet(new JFactorySet);
 
     SECTION("Single-item JEvent::Insert() can be retrieved via JEvent::Get()") {
         auto input = new FakeJObject(22);
-        event.Insert(input);
-        auto output = event.GetSingle<FakeJObject>();
+        event->Insert(input);
+        auto output = event->GetSingle<FakeJObject>();
         REQUIRE(output->datum == input->datum);
 
         FakeJObject* alternative;
-        event.Get(&alternative);
+        event->Get(&alternative);
         REQUIRE(output->datum == alternative->datum);
 
     }
@@ -58,10 +59,10 @@ TEST_CASE("JEventInsertTests") {
         input.push_back(new FakeJObject(1));
         input.push_back(new FakeJObject(2));
         input.push_back(new FakeJObject(3));
-        event.Insert(input);
+        event->Insert(input);
 
         std::vector<const FakeJObject*> output;   // const is required for output
-        event.Get(output);
+        event->Get(output);
 
         REQUIRE(output.size() == input.size());
         for (size_t i=0; i<output.size(); ++i) {
@@ -70,36 +71,36 @@ TEST_CASE("JEventInsertTests") {
     }
 
     SECTION("JEvent::Insert() respects both tag and typeid") {
-        event.Insert(new FakeJObject(22), "first_tag");
-        event.Insert(new FakeJObject(49), "second_tag");
-        event.Insert(new DifferentFakeJObject(7.6), "first_tag");
+        event->Insert(new FakeJObject(22), "first_tag");
+        event->Insert(new FakeJObject(49), "second_tag");
+        event->Insert(new DifferentFakeJObject(7.6), "first_tag");
 
         std::vector<const FakeJObject*> output;
 
-        event.Get(output, "first_tag");
+        event->Get(output, "first_tag");
         REQUIRE(output.size() == 1);
         REQUIRE(output[0]->datum == 22);
 
         output.clear();
-        event.Get(output, "second_tag");
+        event->Get(output, "second_tag");
         REQUIRE(output.size() == 1);
         REQUIRE(output[0]->datum == 49);
 
         std::vector<const DifferentFakeJObject*> different_output;
 
-        event.Get(different_output, "first_tag");
+        event->Get(different_output, "first_tag");
         REQUIRE(different_output.size() == 1);
         REQUIRE(different_output[0]->sample == 7.6);
     }
 
     SECTION("Repeated calls to JEvent::Insert() aggregate") {
 
-        event.Insert(new FakeJObject(22), "first_tag");
-        event.Insert(new FakeJObject(49), "first_tag");
-        event.Insert(new FakeJObject(618), "first_tag");
+        event->Insert(new FakeJObject(22), "first_tag");
+        event->Insert(new FakeJObject(49), "first_tag");
+        event->Insert(new FakeJObject(618), "first_tag");
 
         std::vector<const FakeJObject*> output;
-        event.Get(output, "first_tag");
+        event->Get(output, "first_tag");
         REQUIRE(output.size() == 3);
         REQUIRE(output[0]->datum == 22);
         REQUIRE(output[1]->datum == 49);

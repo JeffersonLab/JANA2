@@ -3,15 +3,15 @@
 #include <vector>
 #include <memory>
 
-#include "JEventSource.h"
-#include "JEvent.h"
-#include "JQueueSimple.h"
-#include "JApplication.h"
-#include "JSourceFactoryGenerator.h"
-#include "JEventSourceGeneratorT.h"
+#include <JANA/JApplication.h>
+#include <JANA/JEventSource.h>
+#include <JANA/JEventSourceGeneratorT.h>
+#include <JANA/JSourceFactoryGenerator.h>
+
+#include <JANA/Utils/JPerfUtils.h>
 
 #include "JTestDataObjects.h"
-#include "JPerfUtils.h"
+
 
 class JTestParser : public JEventSource {
 
@@ -35,8 +35,7 @@ public:
         params->GetParameter("jtest:parser_bytes_spread", m_write_spread);
         params->GetParameter("jtest:parser_spread", m_cputime_spread);
 
-        mFactoryGenerator = new JSourceFactoryGenerator<JTestEntangledEventData>();
-        mEventQueue = new JQueueSimple(params ,"Events", 200, 50);
+        SetFactoryGenerator(new JSourceFactoryGenerator<JTestEntangledEventData>());
     }
 
     static std::string GetDescription() {
@@ -44,7 +43,7 @@ public:
     }
 
     std::string GetType(void) const {
-        return GetDemangledName<decltype(*this)>();
+        return JTypeInfo::demangle<decltype(*this)>();
     }
 
     void GetEvent(std::shared_ptr<JEvent> event) {

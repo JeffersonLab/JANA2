@@ -32,7 +32,7 @@
 
 #include "JBenchmarker.h"
 
-#include <JANA/JCpuInfo.h>
+#include <JANA/Utils/JCpuInfo.h>
 
 #include <fstream>
 #include <cmath>

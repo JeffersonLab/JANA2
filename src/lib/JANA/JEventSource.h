@@ -40,118 +40,186 @@
 // Description:
 //
 //
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-
-#include <string>
-#include <utility>
-#include <atomic>
-#include <memory>
-#include <vector>
-#include <typeindex>
-
-#include <JANA/JApplication.h>
-#include <JANA/JFactoryGenerator.h>
-
-class JTaskBase;
-class JQueue;
-class JEvent;
-class JEventSourceManager;
-class JEventSourceGenerator;
-class JFactory;
-template<typename T> class JFactoryT;
-
-//Deriving classes should:
-//Overload all virtual methods (as needed)
-//Create their own JFactoryGenerator and JQueue and store in the member variables (as needed)
-
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 #ifndef _JEventSource_h_
 #define _JEventSource_h_
 
-class JEventSource{
+#include <JANA/JException.h>
 
-	friend JEvent;
-	friend JEventSourceManager;
-	friend JEventSourceGenerator;
-	friend JTopologyBuilder;
+#include <string>
+#include <atomic>
+#include <memory>
+#include <mutex>
 
-	public:
-	
-		enum class RETURN_STATUS {
-			kSUCCESS,
-			kNO_MORE_EVENTS,
-			kBUSY,
-			kTRY_AGAIN,
-			kERROR,
-			kUNKNOWN
-		};
+class JFactoryGenerator;
+class JApplication;
+class JFactory;
+class JEvent;
 
-		JEventSource(std::string name, JApplication* aApplication=nullptr);
-		virtual ~JEventSource();
-
-		virtual void Open(void);
-        virtual void GetEvent(std::shared_ptr<JEvent>) = 0;
-		virtual bool GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactory* aFactory){return false;}
-
-		void SetNumEventsToGetAtOnce(std::size_t aMinNumEvents, std::size_t aMaxNumEvents);
-		std::pair<std::size_t, std::size_t> GetNumEventsToGetAtOnce(void) const; //returns min, max
-
-		std::vector<std::shared_ptr<JTaskBase> > GetProcessEventTasks(std::size_t aNumTasks = 1);
-		bool IsExhausted(void) const;
-		std::size_t GetNumEventsProcessed(void) const;
-		
-		virtual std::string GetType(void) const; ///< Returns name of subclass
-		virtual std::string GetVDescription(void) const {return "<description unavailable>";} ///< Optional for getting description via source rather than JEventSourceGenerator
-		std::string GetPlugin() const { return mPluginName; }
-
-		std::string GetName(void) const{return mName;}
-		std::size_t GetNumOutstandingEvents(void) const{return mNumOutstandingEvents;}
-		std::size_t GetNumOutstandingBarrierEvents(void) const{return mNumOutstandingBarrierEvents;}
-
-		JQueue* GetEventQueue(void) const{return mEventQueue;}
-		JFactoryGenerator* GetFactoryGenerator(void) const{return mFactoryGenerator;}
-		std::type_index GetDerivedType(void) const {return std::type_index(typeid(*this));}
-
-		void SetMaxEventsToRead(std::size_t aMaxEventsToRead){mMaxEventsToRead = aMaxEventsToRead;}
-		std::size_t GetMaxEventsToRead(void){return mMaxEventsToRead;}
-
-		std::once_flag mOpened;
-		std::atomic<std::size_t> mEventsRead{0};
-		std::atomic<std::size_t> mTasksCreated{0};
-
-	protected:
-
-		void SetJApplication(JApplication *app);
-		JApplication* mApplication = nullptr;
-		std::string mName;
-		std::string mPluginName;
-		JQueue* mEventQueue = nullptr; //For handling event-source-specific logic (such as disentangling events, dealing with barriers, etc.)
-		JFactoryGenerator* mFactoryGenerator = nullptr; //This should create default factories for all types available in the event source
-
-	private:
-
-		//Called by JEvent when recycling (decrement) and setting new event source (increment)
-		void IncrementEventCount(void){mNumOutstandingEvents++;}
-		void DecrementEventCount(void){mNumOutstandingEvents--; mEventsProcessed++;}
-		void IncrementBarrierCount(void){mNumOutstandingBarrierEvents++;}
-		void DecrementBarrierCount(void){mNumOutstandingBarrierEvents--;}
-
-		virtual std::shared_ptr<JTaskBase> GetProcessEventTask(std::shared_ptr<const JEvent>&& aEvent);
-
-        /// SetPlugin is called by JTopologyBuilder and should not be exposed to the user.
-        void SetPlugin(std::string plugin_name) { mPluginName = std::move(plugin_name); };
+// TODO: Importing JEventSource.h does not import JEvent.h, which is confusing to the user.
+// This has to be this way because JEvent needs to know about JEventSource::GetObjects,
+// whereas JEventSource doesn't need to know anything about JEvent. Yes, this is completely backwards.
 
 
-		//Keep track of file/event status
-		std::atomic<bool> mExhausted{false};
-		std::atomic<bool> mGettingEvent{false};
-		std::atomic<std::size_t> mEventsProcessed{0};
-		std::atomic<std::size_t> mNumOutstandingEvents{0}; //Number of JEvents still be analyzed from this event source (source done when 0 (OR 1 and below is 1))
-		std::atomic<std::size_t> mNumOutstandingBarrierEvents{0}; //Number of BARRIER JEvents still be analyzed from this event source (source done when 1)
+class JEventSource {
+
+public:
+
+    /// SourceStatus describes the current state of the EventSource
+    enum class SourceStatus { Unopened, Opened, Finished };
+
+    /// ReturnStatus describes what happened the last time a GetEvent() was attempted.
+    /// If GetEvent() reaches an error state, it should throw a JException instead.
+    enum class ReturnStatus { Success, TryAgain, Finished };
+
+    /// TODO: Stop throwing RETURN_STATUS; return ReturnStatus instead. For now just encapsulate this mess.
+    enum class RETURN_STATUS { kSUCCESS, kNO_MORE_EVENTS, kBUSY, kTRY_AGAIN, kERROR, kUNKNOWN };
 
 
-		std::size_t mMinNumEventsToGetAtOnce = 1;
-		std::size_t mMaxNumEventsToGetAtOnce = 1;
-		std::size_t mMaxEventsToRead = 0;
+    // Constructor
+
+    explicit JEventSource(std::string resource_name, JApplication* app = nullptr)
+        : m_resource_name(std::move(resource_name))
+        , m_application(app)
+        , m_factory_generator(nullptr)
+        , m_status(SourceStatus::Unopened)
+        , m_event_count{0}
+        {}
+
+    virtual ~JEventSource() = default;
+
+
+
+    // To be implemented by the user. TODO: Make these protected
+
+    virtual void Open(void) {}
+
+    // TODO: Stop using exceptions for flow control!
+    virtual void GetEvent(std::shared_ptr<JEvent>) = 0;
+
+    // TODO: Deprecate this
+    virtual bool GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactory* aFactory) { return false; }
+
+
+
+    // Wrappers for calling Open and GetEvent in a safe way
+
+    virtual void DoInitialize() {
+        try {
+            std::call_once(m_init_flag, &JEventSource::Open, this);
+            m_status = SourceStatus::Opened;
+        }
+        catch (JException& ex) {
+            ex.plugin_name = m_plugin_name;
+            ex.component_name = GetType();
+            throw ex;
+        }
+        catch (...) {
+            auto ex = JException("Unknown exception in JEventSource::Open()");
+            ex.nested_exception = std::current_exception();
+            ex.plugin_name = m_plugin_name;
+            ex.component_name = GetType();
+            throw ex;
+        }
+    }
+
+    // TODO: Do we really want the user to close the resource in GetEvent() instead of in Close()?
+    // TODO: What happens if user doesn't throw?
+    ReturnStatus DoNext(std::shared_ptr<JEvent> event) {
+        try {
+            switch (m_status) {
+                case SourceStatus::Unopened: DoInitialize(); // Fall-through to Opened afterwards
+                case SourceStatus::Opened:   GetEvent(event); return ReturnStatus::Success;
+                case SourceStatus::Finished: return ReturnStatus::Finished;
+            }
+        }
+        catch (RETURN_STATUS rs) {
+            switch(rs) {
+                case RETURN_STATUS::kNO_MORE_EVENTS :
+                    m_status = SourceStatus::Finished; // TODO: This isn't threadsafe at the moment
+                    return ReturnStatus::Finished;
+
+                case RETURN_STATUS::kSUCCESS:
+                    return ReturnStatus::Success;
+
+                case RETURN_STATUS::kERROR:
+                    throw JException("Unknown error in JEventSource!");
+
+                default:
+                    return ReturnStatus::TryAgain;
+            }
+        }
+        catch (JException& ex) {
+            ex.plugin_name = m_plugin_name;
+            ex.component_name = GetType();
+            throw ex;
+        }
+        catch (...) {
+            auto ex = JException("Unknown exception in JEventSource::GetEvent()");
+            ex.nested_exception = std::current_exception();
+            ex.plugin_name = m_plugin_name;
+            ex.component_name = GetType();
+            throw ex;
+        }
+    }
+
+
+    // Getters and setters
+
+    SourceStatus GetStatus() const { return m_status; }
+
+    std::string GetPluginName() const { return m_plugin_name; }
+
+    std::string GetTypeName() const { return m_type_name; }
+
+    std::string GetResourceName() const { return m_resource_name; }
+
+    uint64_t GetEventCount() const { return m_event_count; };
+
+    JApplication* GetApplication() const { return m_application; }
+
+    // TODO: Get rid of me!
+    virtual std::string GetType() const { return m_type_name; }
+
+    // TODO: Get rid of me!
+    std::string GetName(void) const { return m_resource_name; }
+
+    // TODO: What is this even?
+    virtual std::string GetVDescription() const {
+        return "<description unavailable>";
+    } ///< Optional for getting description via source rather than JEventSourceGenerator
+
+    //This should create default factories for all types available in the event source
+    JFactoryGenerator* GetFactoryGenerator() const { return m_factory_generator; }
+
+    /// SetTypeName is intended as a replacement to GetType(), which should be less confusing for the
+    /// user. It should be called from the constructor. For convenience, we provide a
+    /// NAME_OF_THIS macro so that the user doesn't have to type the class name as a string, which may
+    /// get out of sync if automatic refactoring tools are used.
+
+    // Meant to be called by user
+    void SetTypeName(std::string type_name) { m_type_name = std::move(type_name); }
+
+    // Meant to be called by user
+    void SetFactoryGenerator(JFactoryGenerator* generator) { m_factory_generator = generator; }
+
+    // Meant to be called by JANA
+    void SetApplication(JApplication* app) { m_application = app; }
+
+    // Meant to be called by JANA
+    void SetPluginName(std::string plugin_name) { m_plugin_name = std::move(plugin_name); };
+
+
+private:
+    std::string m_resource_name;
+    JApplication* m_application = nullptr;
+    JFactoryGenerator* m_factory_generator = nullptr;
+    SourceStatus m_status;
+    std::atomic_ullong m_event_count;
+
+    std::string m_plugin_name;
+    std::string m_type_name;
+    std::once_flag m_init_flag;
 };
 
 #endif // _JEventSource_h_

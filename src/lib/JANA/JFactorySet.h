@@ -48,9 +48,9 @@
 #include <typeindex>
 #include <map>
 
-#include "JResettable.h"
-#include "JFactoryT.h"
-#include "JComponentSummary.h"
+#include <JANA/JFactoryT.h>
+#include <JANA/Utils/JResettable.h>
+#include <JANA/Status/JComponentSummary.h>
 
 class JFactoryGenerator;
 class JFactory;

@@ -2,7 +2,7 @@
 // Created by nbrei on 3/26/19.
 //
 
-#include <JANA/JWorker.h>
+#include <JANA/Engine/JWorker.h>
 #include "TestTopology.h"
 
 

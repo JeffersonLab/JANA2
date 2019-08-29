@@ -31,7 +31,7 @@ TEST_CASE("ActivableActivationTests") {
 
     topology.get_arrow("emit_rand_ints")->set_chunksize(1);
 
-    auto logger = JLogger::nothing(); //everything();
+    auto logger = JLogger(JLogger::Level::OFF);
     topology.logger = logger;
     source.logger = logger;
 
@@ -87,7 +87,7 @@ TEST_CASE("ActivableDeactivationTests") {
     topology.addArrow(new MapArrow<double,double>("c", p2, q2, q3));
     topology.addArrow(new SinkArrow<double>("d", sink, q3));
 
-    auto logger = JLogger::nothing();
+    auto logger = JLogger(JLogger::Level::OFF);
     topology.logger = logger;
     source.logger = logger;
 

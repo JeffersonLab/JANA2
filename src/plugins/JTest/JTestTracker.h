@@ -35,7 +35,7 @@
 
 #include <JANA/JFactoryT.h>
 #include <JANA/JEvent.h>
-#include <JANA/JPerfUtils.h>
+#include <JANA/Utils/JPerfUtils.h>
 #include "JTestDataObjects.h"
 
 class JTestTracker : public JFactoryT<JTestTrackData> {

@@ -4,7 +4,7 @@
 
 #include "catch.hpp"
 
-#include <JANA/JScheduler.h>
+#include <JANA/Engine/JScheduler.h>
 #include <TestTopologyComponents.h>
 #include <TestTopology.h>
 
@@ -35,7 +35,7 @@ TEST_CASE("SchedulerTests") {
 
     SECTION("When run sequentially, RRS returns nullptr => topology finished") {
 
-        auto logger = JLogger::nothing(); // everything();
+        auto logger = JLogger(JLogger::Level::OFF);
 
         JScheduler scheduler(topology.arrows);
 
@@ -58,7 +58,7 @@ TEST_CASE("SchedulerTests") {
 
     SECTION("When run sequentially, topology finished => RRS returns nullptr") {
 
-        auto logger = JLogger::nothing();
+        auto logger = JLogger(JLogger::Level::OFF);
         JScheduler scheduler(topology.arrows);
         last_result = JArrowMetrics::Status::ComeBackLater;
         assignment = nullptr;
@@ -106,7 +106,7 @@ TEST_CASE("SchedulerRoundRobinBehaviorTests") {
     topology.activate("emit_rand_ints");
 
     JScheduler scheduler(topology.arrows);
-    auto logger = JLogger::nothing(); // everything();
+    auto logger = JLogger(JLogger::Level::OFF);
 
     auto last_result = JArrowMetrics::Status::ComeBackLater;
     JArrow* assignment = nullptr;

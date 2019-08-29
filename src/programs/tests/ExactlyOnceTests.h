@@ -49,8 +49,8 @@ struct SimpleSource : public JEventSource {
         return "ComponentTests Fake Event Source";
     }
 
-    std::string GetType(void) const {
-        return GetDemangledName<decltype(*this)>();
+    std::string GetType(void) const override {
+        return JTypeInfo::demangle<decltype(*this)>();
     }
 
     void Open() override {

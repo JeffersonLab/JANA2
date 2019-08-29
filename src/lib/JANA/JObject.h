@@ -51,7 +51,7 @@
 #include <cassert>
 #include <typeinfo>
 
-#include <JANA/JTypeInfo.h>
+#include <JANA/Utils/JTypeInfo.h>
 
 /// The JObject class is a base class for all data classes.
 /// (See JFactory for algorithm classes.)
@@ -61,7 +61,7 @@
 	static const char* static_className(void) {return #T;}
 
 
-#define NAME_OF(T) "T"
+#define NAME_OF(T) #T
 
 struct JObjectMember {
     /// A plain-old data structure for describing one member of a JObject
@@ -96,10 +96,14 @@ public:
 
 class JObject{
 	public:
-		JObject();
-		virtual ~JObject();
+		JObject() = default;
+		virtual ~JObject() = default;
 	
-		virtual const std::string& className(void) const;
+		virtual const std::string& className(void) const {
+		    // TODO: This doesn't do what we'd hope
+			if(mName.empty()) mName = JTypeInfo::demangle<decltype(*this)>();
+			return mName;
+		}
 	
 		// Associated objects
 		inline void AddAssociatedObject(const JObject *obj);

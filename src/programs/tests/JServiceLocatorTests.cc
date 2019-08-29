@@ -5,7 +5,7 @@
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 
-#include <JANA/JServiceLocator.h>
+#include <JANA/Services/JServiceLocator.h>
 #include "JServiceLocatorTests.h"
 
 

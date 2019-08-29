@@ -35,7 +35,7 @@
 
 
 #include <TestTopology.h>
-#include <JANA/JPerfUtils.h>
+#include <JANA/Utils/JPerfUtils.h>
 #include <SourceArrow.h>
 #include <MapArrow.h>
 #include <SinkArrow.h>

@@ -44,7 +44,9 @@
 #ifndef _JException_h_
 #define _JException_h_
 
+#include <JANA/Utils/JBacktrace.h>
 #include <string>
+#include <sstream>
 
 /// JException is a data object which attaches JANA-specific context information to a generic exception.
 /// As it unwinds the call stack, different exception handlers may add or change information as they see fit.
@@ -53,19 +55,40 @@ struct JException : public std::exception {
 public:
 
     /// Basic constructor
-    explicit JException(std::string message = "Unknown exception");
+    explicit JException(std::string message = "Unknown exception") : message(std::move(message))
+    {
+        std::ostringstream ss;
+        make_backtrace(ss);
+        stacktrace = ss.str();
+    }
+
+    virtual ~JException() = default;
+
 
     /// Constructor with printf-style formatting
     template<typename... Args>
     explicit JException(std::string message, Args... args);
 
-    virtual ~JException();
 
     // Deprecated
-    std::string GetMessage();
-    const char* what() const noexcept;
+    std::string GetMessage() {
+        return message;
+    }
 
-    friend std::ostream& operator<<(std::ostream& os, JException const& ex);
+    const char* what() const noexcept {
+        return message.c_str();
+    }
+
+    /// Convenience method for formatting complete error data
+    inline friend std::ostream& operator<<(std::ostream& os, JException const& ex) {
+        os << "ERROR: " << ex.message << std::endl;
+        os << "  Plugin:         " << ex.plugin_name << std::endl;
+        os << "  Component:      " << ex.component_name << std::endl;
+        os << "  Factory name:   " << ex.factory_name << std::endl;
+        os << "  Factory tag:    " << ex.factory_tag << std::endl;
+        os << "  Backtrace:" << std::endl << std::endl << ex.stacktrace << std::endl << std::endl;
+        return os;
+    }
 
     std::string message;
     std::string plugin_name;
@@ -76,6 +99,7 @@ public:
     std::exception_ptr nested_exception;
 
 };
+
 
 /// Constructor with convenient printf-style formatting.
 /// Uses variadic templates (although it is slightly overkill) because variadic functions are frowned on now.

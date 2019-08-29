@@ -9,12 +9,9 @@
 #include <utility>
 #include <random>
 
-//#include <JANA/JEventSource.h>
 //#include <JANA/JFactory.h>
-//
 //#include <JANA/JApplication.h>
 //#include <JANA/JEventSourceGenerator.h>
-//#include <JANA/JEventSourceManager.h>
 //#include <JANA/JQueue.h>
 //#include <JANA/JEvent.h>
 //#include <JANA/JEventSource.h>

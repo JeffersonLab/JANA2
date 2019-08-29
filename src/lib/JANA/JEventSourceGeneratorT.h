@@ -44,10 +44,10 @@
 
 #include <string>
 
-#include <JANA/JApplication.h>
-#include <JANA/JFunctions.h>
 #include <JANA/JEventSourceGenerator.h>
-#include <JANA/JEventSourceManager.h>
+#include <JANA/Utils/JTypeInfo.h>
+
+class JApplication;
 
 /// This templated class is used to generate JEventSource based objects
 /// to handle reading events into JANA. Multiple JEventSourceGenerator
@@ -89,14 +89,12 @@ template <typename T>
 class JEventSourceGeneratorT:public JEventSourceGenerator{
 	public:
 	
-		friend JEventSourceManager;
-	
 		JEventSourceGeneratorT(JApplication *app=nullptr):JEventSourceGenerator(app){}
 		virtual ~JEventSourceGeneratorT(){}
 
 		/// Return name of the source type this will generate
 		std::string GetType(void) const {
-			return GetDemangledName<T>();
+			return JTypeInfo::demangle<T>();
 		}
 
 		/// Return description of the source type this will generate
