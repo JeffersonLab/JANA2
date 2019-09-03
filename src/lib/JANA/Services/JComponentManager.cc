@@ -3,7 +3,7 @@
 //
 
 #include "JComponentManager.h"
-#include "JEventProcessor.h"
+#include <JANA/JEventProcessor.h>
 
 JComponentManager::JComponentManager(JApplication * app) : m_app(app) {
 

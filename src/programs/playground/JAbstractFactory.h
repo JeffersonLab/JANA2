@@ -39,7 +39,7 @@
 #include <mutex>
 #include <vector>
 #include <JANA/Utils/JTypeInfo.h>
-#include "JException.h"
+#include <JANA/JException.h>
 
 
 template <class InputType>

@@ -130,6 +130,8 @@ public:
     template<typename T>
     JParameter* SetParameterValue(std::string name, T val);
 
+    template <typename T>
+    JParameter* SetDefaultParameter(std::string name, T& val, std::string description="");
 
     // Locating services
 
@@ -177,13 +179,18 @@ private:
 /// A convenience method which delegates to JParameterManager
 template<typename T>
 T JApplication::GetParameterValue(std::string name) {
-    return GetJParameterManager()->GetParameterValue<T>(name);
+    return _params->GetParameterValue<T>(name);
 }
 
 /// A convenience method which delegates to JParameterManager
 template<typename T>
 JParameter* JApplication::SetParameterValue(std::string name, T val) {
-    return GetJParameterManager()->SetParameter(name, val);
+    return _params->SetParameter(name, val);
+}
+
+template <typename T>
+JParameter* JApplication::SetDefaultParameter(std::string name, T& val, std::string description) {
+    return _params->SetDefaultParameter(name, val, description);
 }
 
 /// A convenience method which delegates to JServiceLocator

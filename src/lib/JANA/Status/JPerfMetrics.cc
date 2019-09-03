@@ -31,7 +31,7 @@
 //
 
 #include "JPerfMetrics.h"
-#include "JException.h"
+#include <JANA/JException.h>
 
 
 /// Reset is meant to be called between separate run()s or scale()s.

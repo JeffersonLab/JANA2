@@ -45,12 +45,15 @@
 #ifndef _JFactory_h_
 #define _JFactory_h_
 
+#include <JANA/JException.h>
+
 #include <string>
 #include <typeindex>
 #include <memory>
 #include <limits>
 #include <atomic>
 #include <vector>
+#include <mutex>
 
 class JEvent;
 
