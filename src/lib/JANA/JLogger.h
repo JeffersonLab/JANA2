@@ -106,4 +106,8 @@ inline void operator<<(JLogMessage&& m, JLogMessage::End const& end) {
 #define LOG_DEBUG(logger) LOG_AT_LEVEL(logger, JLogger::Level::DEBUG)
 #define LOG_TRACE(logger) LOG_AT_LEVEL(logger, JLogger::Level::TRACE)
 
+
+#define jout std::cout
+#define jerr std::cerr
+
 #endif //JANA2_JLOGGER_H
