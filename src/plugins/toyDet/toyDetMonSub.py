@@ -30,12 +30,14 @@ rcl.sort()
 # event number list, hit threshold (adc channels), initialize occupancy array
 enl = []; hitThresh = 100
 
+ec = 0  # event counter
 # recieve zmq messages from jana subscriber
 while True :
     # receive zmq packets from jana subscriber
     picklePacket = subscriber.recv_pyobj()
     print('picklePacket received!')
     eventDataDict = pickle.loads(picklePacket)
+    ec += 1
     ic = 0  # index counter
     for row in range(numRows) :
         for column in range(numCols) :
@@ -52,4 +54,5 @@ while True :
             axs[row, column].legend(loc = 'best', markerscale = 0, handletextpad = 0, handlelength = 0)
             ic += 1
     plt.tight_layout()
+    # plt.savefig('plots/event_%d.png' % ec)
     plt.pause(0.05)
