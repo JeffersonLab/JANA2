@@ -275,8 +275,8 @@ set_target_properties(JExample7 PROPERTIES PREFIX "" SUFFIX ".so")
 add_library(toyDet SHARED
         src/plugins/toyDet/MonitoringProcessor.cc
         src/plugins/toyDet/MonitoringProcessor.h
-        src/plugins/toyDet/JEventProcessor_toyDet.cc
-        src/plugins/toyDet/JEventProcessor_toyDet.h
+	src/plugins/toyDet/RootProcessor.cc
+        src/plugins/toyDet/RootProcessor.h
         src/plugins/toyDet/DASFileSource.cc
         src/plugins/toyDet/DASFileSource.h
         src/plugins/toyDet/JFactoryGenerator_toyDet.h
