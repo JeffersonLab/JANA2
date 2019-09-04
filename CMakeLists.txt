@@ -251,13 +251,11 @@ set_target_properties(jtest PROPERTIES PREFIX "" SUFFIX ".so")
 add_library(janapy SHARED
         src/plugins/janapy/janapy.cc
 )
-find_package(PythonInterp 3 REQUIRED)
-find_package(PythonLibs 3 REQUIRED)
+find_package(Python3 COMPONENTS Interpreter Development)
 include_directories(${PYTHON_INCLUDE_DIRS})
 target_link_libraries(janapy ${PYTHON_LIBRARIES})
 target_link_libraries(janapy jana2)
 set_target_properties(janapy PROPERTIES PREFIX "")
-
 
 add_library(JExample7 SHARED
         src/examples/JExample7/ZmqMain.cc
@@ -267,15 +265,16 @@ add_library(JExample7 SHARED
         src/examples/JExample7/AHitAnomalyDetector.h
         src/examples/JExample7/AHitParser.h
         )
-find_package(ZeroMQ)
+find_package(cppzmq REQUIRED)
+find_package(ZeroMQ REQUIRED)
 target_link_libraries(JExample7 jana2)
-target_link_libraries(JExample7 libzmq-static)
+target_link_libraries(JExample7 libzmq)
 set_target_properties(JExample7 PROPERTIES PREFIX "" SUFFIX ".so")
 
 add_library(toyDet SHARED
         src/plugins/toyDet/MonitoringProcessor.cc
         src/plugins/toyDet/MonitoringProcessor.h
-	src/plugins/toyDet/RootProcessor.cc
+		src/plugins/toyDet/RootProcessor.cc
         src/plugins/toyDet/RootProcessor.h
         src/plugins/toyDet/DASFileSource.cc
         src/plugins/toyDet/DASFileSource.h
@@ -287,7 +286,7 @@ add_library(toyDet SHARED
         src/plugins/toyDet/ADCSampleFactory.h
         )
 
-find_package(ROOT)
+find_package(ROOT REQUIRED)
 include_directories(${ROOT_INCLUDE_DIRS})
 add_executable(jana
         src/programs/jana/jana.cc
@@ -305,6 +304,7 @@ target_link_libraries(janapy jana2)
 target_link_libraries(tests jana2)
 target_link_libraries(playground jana2)
 target_link_libraries(toyDet jana2)
+target_link_libraries(toyDet libzmq)
 target_link_libraries(toyDet libzmq-static)
 
 # Add libdl
