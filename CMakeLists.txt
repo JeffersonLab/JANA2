@@ -6,6 +6,9 @@ set(CMAKE_CXX_STANDARD 14)
 # Enable -fPIC for all targets
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+# Define location of cmake modules
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")
+
 # JANA,playground,tests all need threads
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
@@ -251,6 +254,7 @@ set_target_properties(jtest PROPERTIES PREFIX "" SUFFIX ".so")
 add_library(janapy SHARED
         src/plugins/janapy/janapy.cc
 )
+
 find_package(Python3 COMPONENTS Interpreter Development)
 include_directories(${PYTHON_INCLUDE_DIRS})
 target_link_libraries(janapy ${PYTHON_LIBRARIES})
@@ -265,8 +269,10 @@ add_library(JExample7 SHARED
         src/examples/JExample7/AHitAnomalyDetector.h
         src/examples/JExample7/AHitParser.h
         )
-find_package(cppzmq REQUIRED)
+
 find_package(ZeroMQ REQUIRED)
+find_package(CZMQ REQUIRED)
+
 target_link_libraries(JExample7 jana2)
 target_link_libraries(JExample7 libzmq)
 set_target_properties(JExample7 PROPERTIES PREFIX "" SUFFIX ".so")
