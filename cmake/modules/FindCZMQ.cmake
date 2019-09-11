@@ -1,27 +1,14 @@
-
-include(FindPkgConfig)
-PKG_CHECK_MODULES(PC_CZMQ "libczmq")
-IF (NOT PC_CZMQ_FOUND)
-    PKG_CHECK_MODULES(PC_CZMQ "czmq")
-ENDIF (NOT PC_CZMQ_FOUND)
-
-# some libraries install the headers is a subdirectory of the include dir
-# returned by pkg-config, so use a wildcard match to improve chances of finding
-# headers and SOs.
-find_path(
-    CZMQ_INCLUDE_DIRS
-    NAMES czmq.h
-    HINTS ${PC_CZMQ_INCLUDE_DIRS} ${PC_CZMQ_INCLUDE_DIRS}/*
-)
-
-find_library(
-    CZMQ_LIBRARIES
-    NAMES czmq
-    HINTS ${PC_CZMQ_LIBRARY_DIRS} ${PC_CZMQ_LIBRARY_DIRS}/*
-)
-
-IF (NOT CZMQ_INCLUDE_DIRS STREQUAL CZMQ_INCLUDE_DIRS-NOTFOUND AND NOT CZMQ_LIBRARIES STREQUAL CZMQ_LIBRARIES-NOTFOUND)
-    include(FindPackageHandleStandardArgs)
-    FIND_PACKAGE_HANDLE_STANDARD_ARGS(CZMQ DEFAULT_MSG CZMQ_LIBRARIES CZMQ_INCLUDE_DIRS)
-    mark_as_advanced(CZMQ_LIBRARIES CZMQ_INCLUDE_DIRS)
-ENDIF (NOT CZMQ_INCLUDE_DIRS STREQUAL CZMQ_INCLUDE_DIRS-NOTFOUND AND NOT CZMQ_LIBRARIES STREQUAL CZMQ_LIBRARIES-NOTFOUND)
+# - Try to find CZMQ
+# Once done this will define
+# CZMQ_FOUND - System has CZMQ
+# CZMQ_INCLUDE_DIRS - The CZMQ include directories
+# CZMQ_LIBRARIES - The libraries needed to use CZMQ
+# CZMQ_DEFINITIONS - Compiler switches required for using CZMQ
+find_path (CZMQ_INCLUDE_DIR zmq.h)
+find_library (CZMQ_LIBRARY NAMES zmq)
+set (CZMQ_LIBRARIES ${CZMQ_LIBRARY})
+set (CZMQ_INCLUDE_DIRS ${CZMQ_INCLUDE_DIR})
+include (FindPackageHandleStandardArgs)
+# handle the QUIETLY and REQUIRED arguments and set CZMQ_FOUND to TRUE
+# if all listed variables are TRUE
+find_package_handle_standard_args (CZMQ DEFAULT_MSG CZMQ_LIBRARY CZMQ_INCLUDE_DIR)

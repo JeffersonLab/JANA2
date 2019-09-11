@@ -255,11 +255,14 @@ add_library(janapy SHARED
         src/plugins/janapy/janapy.cc
 )
 
-find_package(Python3 COMPONENTS Interpreter Development)
+find_package(PythonInterp 3 REQUIRED)
+find_package(PythonLibs 3 REQUIRED)
 include_directories(${PYTHON_INCLUDE_DIRS})
 target_link_libraries(janapy ${PYTHON_LIBRARIES})
 target_link_libraries(janapy jana2)
 set_target_properties(janapy PROPERTIES PREFIX "")
+
+# JExample 7 plugin
 
 add_library(JExample7 SHARED
         src/examples/JExample7/ZmqMain.cc
@@ -272,10 +275,11 @@ add_library(JExample7 SHARED
 
 find_package(ZeroMQ REQUIRED)
 find_package(CZMQ REQUIRED)
-
-target_link_libraries(JExample7 jana2)
-target_link_libraries(JExample7 libzmq)
+include_directories(${ZEROMQ_INCLUDE_DIRS} ${CMZQ_INCLUDE_DIRS})
+target_link_libraries(JExample7 jana2 ${ZEROMQ_LIBRARIES} ${CZMQ_LIBRARIES})
 set_target_properties(JExample7 PROPERTIES PREFIX "" SUFFIX ".so")
+
+# toyDet plugin
 
 add_library(toyDet SHARED
         src/plugins/toyDet/MonitoringProcessor.cc
@@ -294,38 +298,7 @@ add_library(toyDet SHARED
 
 find_package(ROOT REQUIRED)
 include_directories(${ROOT_INCLUDE_DIRS})
-add_executable(jana
-        src/programs/jana/jana.cc
-        src/programs/jana/JBenchmarker.h
-        src/programs/jana/JBenchmarker.cc
-        src/programs/jana/JSignalHandler.h
-        src/programs/jana/MyProcessor.cc
-        src/programs/jana/MyProcessor.h
-        )
-
-# Add jana static lib
-target_link_libraries(jana jana2)
-target_link_libraries(jtest jana2)
-target_link_libraries(janapy jana2)
-target_link_libraries(tests jana2)
-target_link_libraries(playground jana2)
-target_link_libraries(toyDet jana2)
-target_link_libraries(toyDet libzmq)
-target_link_libraries(toyDet libzmq-static)
-
-# Add libdl
-target_link_libraries(jana2 ${CMAKE_DL_LIBS})
-
-# Add pthreads
-set(THREADS_PREFER_PTHREAD_FLAG ON)
-find_package(Threads REQUIRED)
-target_link_libraries(jana2 Threads::Threads)
-target_link_libraries(jana Threads::Threads)
-target_link_libraries(jtest Threads::Threads)
-target_link_libraries(playground Threads::Threads)
-target_link_libraries(tests Threads::Threads)
-
-target_link_libraries(toyDet ${ROOT_LIBRARIES})
+target_link_libraries(toyDet jana2 ${ZEROMQ_LIBRARIES} ${CZMQ_LIBRARIES} ${ROOT_LIBRARIES})
 set_target_properties(toyDet PROPERTIES PREFIX "" SUFFIX ".so")
 
 

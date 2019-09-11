@@ -1,27 +1,14 @@
-
-include(FindPkgConfig)
-PKG_CHECK_MODULES(PC_ZEROMQ "libzmq")
-IF (NOT PC_ZEROMQ_FOUND)
-    PKG_CHECK_MODULES(PC_ZEROMQ "zmq")
-ENDIF (NOT PC_ZEROMQ_FOUND)
-
-# some libraries install the headers is a subdirectory of the include dir
-# returned by pkg-config, so use a wildcard match to improve chances of finding
-# headers and SOs.
-find_path(
-    ZEROMQ_INCLUDE_DIRS
-    NAMES zmq.h
-    HINTS ${PC_ZEROMQ_INCLUDE_DIRS} ${PC_ZEROMQ_INCLUDE_DIRS}/*
-)
-
-find_library(
-    ZEROMQ_LIBRARIES
-    NAMES zmq
-    HINTS ${PC_ZEROMQ_LIBRARY_DIRS} ${PC_ZEROMQ_LIBRARY_DIRS}/*
-)
-
-IF (NOT ZEROMQ_INCLUDE_DIRS STREQUAL ZEROMQ_INCLUDE_DIRS-NOTFOUND AND NOT ZEROMQ_LIBRARIES STREQUAL ZEROMQ_LIBRARIES-NOTFOUND)
-    include(FindPackageHandleStandardArgs)
-    FIND_PACKAGE_HANDLE_STANDARD_ARGS(ZEROMQ DEFAULT_MSG ZEROMQ_LIBRARIES ZEROMQ_INCLUDE_DIRS)
-    mark_as_advanced(ZEROMQ_LIBRARIES ZEROMQ_INCLUDE_DIRS)
-ENDIF (NOT ZEROMQ_INCLUDE_DIRS STREQUAL ZEROMQ_INCLUDE_DIRS-NOTFOUND AND NOT ZEROMQ_LIBRARIES STREQUAL ZEROMQ_LIBRARIES-NOTFOUND)
+# - Try to find ZEROMQ
+# Once done this will define
+# ZEROMQ_FOUND - System has ZEROMQ
+# ZEROMQ_INCLUDE_DIRS - The ZEROMQ include directories
+# ZEROMQ_LIBRARIES - The libraries needed to use ZEROMQ
+# ZEROMQ_DEFINITIONS - Compiler switches required for using ZEROMQ
+find_path (ZEROMQ_INCLUDE_DIR zmq.h)
+find_library (ZEROMQ_LIBRARY NAMES zmq)
+set (ZEROMQ_LIBRARIES ${ZEROMQ_LIBRARY})
+set (ZEROMQ_INCLUDE_DIRS ${ZEROMQ_INCLUDE_DIR})
+include (FindPackageHandleStandardArgs)
+# handle the QUIETLY and REQUIRED arguments and set ZEROMQ_FOUND to TRUE
+# if all listed variables are TRUE
+find_package_handle_standard_args (ZEROMQ DEFAULT_MSG ZEROMQ_LIBRARY ZEROMQ_INCLUDE_DIR)
