@@ -45,7 +45,7 @@ void dummy_publisher_loop() {
     while (fread(payload, 1, payload_capacity, f) == payload_capacity) {
         message.as_indra_message()->source_id = 0;
         message.set_event_number(current_event_number++);
-        message.set_payload_size(payload_capacity);
+        message.set_payload_size(static_cast <uint32_t> (payload_capacity));
         std::cout << "Send: " << message << " (" << message.get_buffer_size() << " bytes)" << std::endl;
         transport.send(message);
         consume_cpu_ms(delay_ms, 0, false);
@@ -76,17 +76,19 @@ void InitPlugin(JApplication* app) {
     bool use_dummy_publisher = false;
     size_t nchannels = 80;
     size_t nsamples = 1024;
+    size_t msgPrintFreq = 10;
     std::string socket_name = "tcp://127.0.0.1:5556";
     std::string output_socket_name = "tcp://127.0.0.1:5557";
     std::string file_name = "run-5-mhz-80-chan-100-ev.dat";
 
     app->GetJParameterManager()->SetDefaultParameter("toydet:use_zmq", use_zmq);
+    app->GetJParameterManager()->SetDefaultParameter("toydet:use_dummy_publisher", use_dummy_publisher);
+    app->GetJParameterManager()->SetDefaultParameter("toydet:nchannels", nchannels);
+    app->GetJParameterManager()->SetDefaultParameter("toydet:nsamples", nsamples);
+    app->GetJParameterManager()->SetDefaultParameter("toydet:msgPrintFreq", msgPrintFreq);
     app->GetJParameterManager()->SetDefaultParameter("toydet:socket", socket_name);
     app->GetJParameterManager()->SetDefaultParameter("toydet:output_socket", output_socket_name);
     app->GetJParameterManager()->SetDefaultParameter("toydet:filename", file_name);
-    app->GetJParameterManager()->SetDefaultParameter("toydet:nchannels", nchannels);
-    app->GetJParameterManager()->SetDefaultParameter("toydet:nsamples", nsamples);
-    app->GetJParameterManager()->SetDefaultParameter("toydet:use_dummy_publisher", use_dummy_publisher);
 
     if (use_zmq) {
         auto transport = std::unique_ptr<ZmqTransport>(new ZmqTransport(socket_name));

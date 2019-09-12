@@ -27,11 +27,11 @@ class RootProcessor : public JEventProcessor {
 	public:
 
     RootProcessor();
-    virtual ~RootProcessor();
+    ~RootProcessor() override;
 
-    virtual void Init(void);
-    virtual void Process(const std::shared_ptr<const JEvent>& aEvent);
-    virtual void Finish(void);
+    void Init() override;
+    void Process(const std::shared_ptr<const JEvent>& aEvent) override;
+    void Finish() override;
 
 	protected:
 
@@ -41,16 +41,16 @@ class RootProcessor : public JEventProcessor {
     mutex fillMutex;
 
     // root objects
-    TFile *outFile;
-    TTree *eventTree, *sampleTree;
+    TFile *outFile{};
+    TTree *eventTree{}, *sampleTree{};
 
     // user defined data types
     // TODO: put these somewhere that make sense ('global' parameter?)
     static const uint numChans   = 80;
     static const uint numSamples = 1024;
 
-    uint chan, event, nentries;
-    uint tdcSample, adcSample;
+    uint chan{}, event{}, nentries{};
+    uint tdcSample{}, adcSample{};
 
 };
 

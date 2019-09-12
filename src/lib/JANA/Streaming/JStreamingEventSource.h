@@ -59,7 +59,7 @@ public:
         event->SetRunNumber(item->get_run_number());
         // TODO: Parameterize MessageT on JObjectT, insert ALL JObjects!
         event->Insert<MessageT>(item);
-        std::cout << "Recv: " << *item << std::endl;
+        std::cout << *item;
     }
 
     static std::string GetDescription() {

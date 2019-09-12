@@ -10,9 +10,7 @@
 //---------------------------------
 // MonitoringProcessor    (Constructor)
 //---------------------------------
-MonitoringProcessor::MonitoringProcessor() {
-
-}
+MonitoringProcessor::MonitoringProcessor() = default;
 
 //---------------------------------
 // MonitoringProcessor (Destructor)
@@ -28,7 +26,7 @@ MonitoringProcessor::~MonitoringProcessor() {
 void MonitoringProcessor::Init() {
 
     // This is called once at program startup.
-    std::cout << "Initializing ZMQ sink" << std::endl;
+    std::cout << "MonitoringProccessor::Init -> Initializing ZMQ sink" << std::endl;
     // initialize the message and the transport publisher
     m_message   = new DASEventMessage(japp);
     m_transport = new ZmqTransport(japp->GetParameterValue<std::string>("toydet:output_socket"), true);
@@ -51,13 +49,21 @@ void MonitoringProcessor::Process(const std::shared_ptr<const JEvent>& aEvent) {
 
     auto oriMessage = aEvent->GetSingle<DASEventMessage>();
     m_transport->send(*oriMessage);
-    std::cout << "ZmqSink: Sent event " << aEvent->GetEventNumber() << "  (" << oriMessage->get_buffer_size() << " bytes)" << std::endl;
-    std::cout << "buffer capacity = " << oriMessage->get_buffer_capacity() << "\t" << "buffer size = " << oriMessage->get_buffer_size() << std::endl;
+    size_t eventNum = oriMessage->get_event_number();
+    size_t buffSize = oriMessage->get_buffer_size();
+    size_t buffCap  = oriMessage->get_buffer_capacity();
+    size_t msgFreq  = oriMessage->get_message_print_freq();
+    if (eventNum % msgFreq == 0) {
+        std::cout << "MonitoringProcessor::Process -> Sent event " << eventNum
+                  << " on socket " << japp->GetParameterValue<std::string>("toydet:output_socket")
+                  << " with buffer size = " << buffSize << " bytes"
+                  << " with buffer capacity = " << buffCap << " bytes" << std::endl;
+    }
 }
 
 //------------------
 // Finish
 //------------------
-void MonitoringProcessor::Finish(void) {
+void MonitoringProcessor::Finish() {
 
 }

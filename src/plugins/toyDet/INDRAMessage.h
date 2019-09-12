@@ -18,14 +18,14 @@
 struct INDRAMessage {
 
     uint32_t source_id = 0;
-    uint32_t total_bytes;
-    uint32_t payload_bytes;
-    uint32_t compressed_bytes;
-    uint32_t magic;
-    uint32_t format_version;
-    uint32_t flags;
-    uint64_t record_counter;
-    struct timespec timestamp;
+    uint32_t total_bytes{};
+    uint32_t payload_bytes{};
+    uint32_t compressed_bytes{};
+    uint32_t magic{};
+    uint32_t format_version{};
+    uint32_t flags{};
+    uint64_t record_counter{};
+    struct timespec timestamp{};
     uint32_t payload[];
 
 };
@@ -45,7 +45,7 @@ public:
 
     ///  - The size of the valid data contained within is NOT protected, because it is a C-style array.
 
-    explicit DASEventMessage(JApplication* app) {
+    explicit DASEventMessage(JApplication *app) {
 
         // TODO: Right now we have to default these in the InitPlugin, as otherwise they won't show up in the table
         //       Consider this use case in the future when we try to clean up how we get our parameters
@@ -54,6 +54,7 @@ public:
 
         m_sample_count  = app->GetParameterValue<size_t>("toydet:nsamples");
         m_channel_count = app->GetParameterValue<size_t>("toydet:nchannels");
+        m_print_freq    = app->GetParameterValue<size_t>("toydet:msgPrintFreq");
 
         // Allocate the buffer. The buffer size must be determinable at startup time and
         // constant for the life of the program. If we are a consumer, the buffer should be large
@@ -97,9 +98,9 @@ public:
         return as_indra_message()->flags == 1;
     }
 
-    char* as_buffer() override { return m_buffer; }
+    char *as_buffer() override { return m_buffer; }
 
-    const char* as_buffer() const override { return m_buffer; }
+    const char *as_buffer() const override { return m_buffer; }
 
     size_t get_buffer_capacity() const override { return m_buffer_capacity; }
 
@@ -117,7 +118,7 @@ public:
         as_indra_message()->record_counter = event_number;
     }
 
-    void set_run_number(size_t run_number) {
+    static void set_run_number(size_t run_number) {
 
     }
 
@@ -136,25 +137,27 @@ public:
     /// region of the buffer as a char*, and converts the sizes (measured in counts of uint32_t) to and from bytes.
 
     /// Grants read/write access to any INDRAMessage members directly
-    INDRAMessage* as_indra_message() {
-        return reinterpret_cast<INDRAMessage*>(m_buffer);
+    INDRAMessage *as_indra_message() {
+        return reinterpret_cast<INDRAMessage *>(m_buffer);
     }
 
     /// Grants read-only access to any INDRAMessage members directly
-    const INDRAMessage* as_indra_message() const {
-        return reinterpret_cast<INDRAMessage*>(m_buffer);
+    const INDRAMessage *as_indra_message() const {
+        return reinterpret_cast<INDRAMessage *>(m_buffer);
     }
 
     /// Grants read-only access to the message payload as a byte array, which we need because INDRAMessage uses uint32_t instead
-    void as_payload(const char** payload, size_t* payload_bytes) const {
-        *payload = m_buffer + sizeof(INDRAMessage);  // TODO: Verify this
-        *payload_bytes = as_indra_message()->payload_bytes * sizeof(uint32_t);  // TODO: payload_bytes should be payload_length
+    void as_payload(const char **payload, size_t *payload_bytes) const {
+
+        *payload = m_buffer + sizeof(INDRAMessage);
+        *payload_bytes = as_indra_message()->payload_bytes;
     }
 
     /// Grants read/write access to the message payload as a byte array, which we need because INDRAMessage uses uint32_t instead
-    void as_payload(char** payload, size_t* payload_bytes, size_t* payload_capacity) {
-        *payload = m_buffer + sizeof(INDRAMessage);  // TODO: Verify this
-        *payload_bytes = as_indra_message()->payload_bytes / sizeof(uint32_t);  // TODO: payload_bytes should be payload_length
+    void as_payload(char **payload, size_t *payload_bytes, size_t *payload_capacity) {
+
+        *payload = m_buffer + sizeof(INDRAMessage);
+        *payload_bytes = as_indra_message()->payload_bytes;
         *payload_capacity = m_buffer_capacity - sizeof(INDRAMessage);
     }
 
@@ -172,12 +175,15 @@ public:
     /// Conveniently access the channel count associated with this message
     size_t get_channel_count() const { return m_channel_count; }
 
+    size_t get_message_print_freq() const { return m_print_freq; }
+
 private:
 
-    size_t m_sample_count;
-    size_t m_channel_count;
-    char* m_buffer;
-    size_t m_buffer_capacity;
+    size_t m_sample_count{};
+    size_t m_channel_count{};
+    char *m_buffer;
+    size_t m_buffer_capacity{};
+    size_t m_print_freq{};
 
 };
 
@@ -188,12 +194,19 @@ inline std::ostream& operator<< (std::ostream& os, const DASEventMessage& messag
     const char* payload;
     size_t length;
     message.as_payload(&payload, &length);
-    ss << "Evt " << message.get_event_number() << ": ";
-    for (int i = 0; i < 10 && i < (int) length; ++i) {
-        ss << payload[i] << ", ";
+    size_t eventNum = message.get_event_number();
+    size_t msgFreq = message.get_message_print_freq();
+    size_t buffSize = message.get_buffer_size();
+    if (eventNum % msgFreq == 0) {
+        ss << "INDRAMessage Recieved : Event " << eventNum
+           << ", payload length = " << buffSize
+           << ", payload = ";
+        for (int i = 0; i < 10 && i < (int) length; ++i) {
+            ss << payload[i] << ", ";
+        }
+        ss << "...";
+        os << ss.str() << std::endl;
     }
-    ss << "...";
-    os << ss.str();
     return os;
 }
 
