@@ -14,6 +14,9 @@ struct JLogger {
     Level level;
     std::ostream *destination;
     std::string className;
+    bool show_level = false;
+    bool show_timestamp = false;
+    bool show_threadstamp = false;
 
     explicit JLogger(JLogger::Level level = JLogger::Level::INFO,
                      std::ostream* destination = &std::cout,
@@ -27,6 +30,12 @@ struct JLogger {
         destination = in.destination;
         return *this;
     }
+
+    void SetTag(std::string tag) {className = tag; }
+    void SetTimestampFlag() {show_timestamp = true; }
+    void UnsetTimestampFlag() {show_timestamp = false; }
+    void SetThreadstampFlag() {show_threadstamp = true; }
+    void UnsetThreadstampFlag() {show_threadstamp = false; }
 };
 
 static JLogger trivial_logger = JLogger(JLogger::Level::TRACE);
@@ -109,5 +118,7 @@ inline void operator<<(JLogMessage&& m, JLogMessage::End const& end) {
 
 #define jout std::cout
 #define jerr std::cerr
+
+
 
 #endif //JANA2_JLOGGER_H
