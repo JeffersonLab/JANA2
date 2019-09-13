@@ -41,6 +41,7 @@ class RootProcessor : public JEventProcessor {
     mutex fillMutex;
 
     // root objects
+    TString *outFileName{};
     TFile *outFile{};
     TTree *eventTree{}, *sampleTree{};
 

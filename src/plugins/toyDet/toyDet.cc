@@ -23,7 +23,7 @@ void dummy_publisher_loop() {
     std::this_thread::sleep_for(std::chrono::seconds(4));  // Wait for JANA to fire up so we don't lose data
     std::cout << "Starting producer loop" << std::endl;
 
-    ZmqTransport transport {japp->GetParameterValue<std::string>("toydet:socket"), true};
+    ZmqTransport transport {japp->GetParameterValue<std::string>("toydet:sub_socket"), true};
     transport.initialize();
 
     DASEventMessage message(japp);
@@ -31,7 +31,9 @@ void dummy_publisher_loop() {
 
     size_t current_event_number = 1;
 
-    FILE* f = fopen(japp->GetParameterValue<std::string>("toydet:filename").c_str(), "r");
+    FILE* f = fopen(japp->GetParameterValue<std::string>("toydet:data_file").c_str(), "r");
+    std::cout << "toyDet::dummy_publisher_loop -> Reading data from data file "
+              << japp->GetParameterValue<std::string>("toydet:data_file").c_str() << std::endl;
     if (f == nullptr) {
         std::cout << "Unable to open file, exiting." << std::endl;
         exit(0);
@@ -69,36 +71,39 @@ void InitPlugin(JApplication* app) {
     app->SetParameterValue("jana:extended_report", false);
     app->SetParameterValue("jana:legacy_mode", 0);
 
-    // TODO: Consider making toydet:socket be the 'source_name', and use JESG to switch between JSES and DASFileSource
+    // TODO: Consider making toydet:sub_socket be the 'source_name', and use JESG to switch between JSES and DASFileSource
     // TODO: Improve parametermanager interface
 
     bool use_zmq = true;
     bool use_dummy_publisher = false;
     size_t nchannels = 80;
     size_t nsamples = 1024;
-    size_t msgPrintFreq = 10;
-    std::string socket_name = "tcp://127.0.0.1:5556";
-    std::string output_socket_name = "tcp://127.0.0.1:5557";
-    std::string file_name = "run-5-mhz-80-chan-100-ev.dat";
+    size_t msg_print_freq = 10;
+    std::string sub_socket_name = "tcp://127.0.0.1:5556";
+    std::string pub_socket_name = "tcp://127.0.0.1:5557";
+    std::string data_file_name = "run-5-mhz-80-chan-100-ev.dat";
+
+    std::cout << "Subscribing to INDRA messages via ZMQ on socket " << sub_socket_name << std::endl;
+    std::cout << "Publishing JObjects via ZMQ on socket " << pub_socket_name << std::endl;
 
     app->GetJParameterManager()->SetDefaultParameter("toydet:use_zmq", use_zmq);
     app->GetJParameterManager()->SetDefaultParameter("toydet:use_dummy_publisher", use_dummy_publisher);
     app->GetJParameterManager()->SetDefaultParameter("toydet:nchannels", nchannels);
     app->GetJParameterManager()->SetDefaultParameter("toydet:nsamples", nsamples);
-    app->GetJParameterManager()->SetDefaultParameter("toydet:msgPrintFreq", msgPrintFreq);
-    app->GetJParameterManager()->SetDefaultParameter("toydet:socket", socket_name);
-    app->GetJParameterManager()->SetDefaultParameter("toydet:output_socket", output_socket_name);
-    app->GetJParameterManager()->SetDefaultParameter("toydet:filename", file_name);
+    app->GetJParameterManager()->SetDefaultParameter("toydet:msg_print_freq", msg_print_freq);
+    app->GetJParameterManager()->SetDefaultParameter("toydet:sub_socket", sub_socket_name);
+    app->GetJParameterManager()->SetDefaultParameter("toydet:pub_socket", pub_socket_name);
+    app->GetJParameterManager()->SetDefaultParameter("toydet:data_file", data_file_name);
 
     if (use_zmq) {
-        auto transport = std::unique_ptr<ZmqTransport>(new ZmqTransport(socket_name));
+        auto transport = std::unique_ptr<ZmqTransport>(new ZmqTransport(sub_socket_name));
         app->Add(new JStreamingEventSource<DASEventMessage>(std::move(transport)));
         if (use_dummy_publisher) {
             new std::thread(dummy_publisher_loop);
         }
     }
     else {
-        app->Add(app->GetParameterValue<std::string>("toydet:filename"));
+        app->Add(app->GetParameterValue<std::string>("toydet:data_file"));
         app->Add(new JEventSourceGeneratorT<DASFileSource>());
         app->Add(new JFactoryGenerator_toyDet());
     }

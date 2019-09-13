@@ -26,11 +26,12 @@ MonitoringProcessor::~MonitoringProcessor() {
 void MonitoringProcessor::Init() {
 
     // This is called once at program startup.
-    std::cout << "MonitoringProccessor::Init -> Initializing ZMQ sink" << std::endl;
     // initialize the message and the transport publisher
     m_message   = new DASEventMessage(japp);
-    m_transport = new ZmqTransport(japp->GetParameterValue<std::string>("toydet:output_socket"), true);
+    m_transport = new ZmqTransport(japp->GetParameterValue<std::string>("toydet:pub_socket"), true);
     m_transport->initialize();
+    std::cout << "MonitoringProccessor::Init -> Initializing ZMQ sink on socket "
+              <<  japp->GetParameterValue<std::string>("toydet:pub_socket") << std::endl;
 }
 
 //------------------
@@ -51,13 +52,11 @@ void MonitoringProcessor::Process(const std::shared_ptr<const JEvent>& aEvent) {
     m_transport->send(*oriMessage);
     size_t eventNum = oriMessage->get_event_number();
     size_t buffSize = oriMessage->get_buffer_size();
-    size_t buffCap  = oriMessage->get_buffer_capacity();
     size_t msgFreq  = oriMessage->get_message_print_freq();
     if (eventNum % msgFreq == 0) {
-        std::cout << "MonitoringProcessor::Process -> Sent event " << eventNum
-                  << " on socket " << japp->GetParameterValue<std::string>("toydet:output_socket")
-                  << " with buffer size = " << buffSize << " bytes"
-                  << " with buffer capacity = " << buffCap << " bytes" << std::endl;
+        std::cout << "MonitoringProcessor::Process -> Published event " << eventNum
+                  << " on socket " << japp->GetParameterValue<std::string>("toydet:pub_socket")
+                  << " with buffer size = " << buffSize << " bytes" << std::endl;
     }
 }
 

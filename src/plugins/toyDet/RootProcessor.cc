@@ -26,10 +26,11 @@ RootProcessor::~RootProcessor() {
 void RootProcessor::Init() {
 
     // This is called once at program startup.
-    std::cout << "RootProcessor::Init -> Initializing ROOT file" << std::endl;
     // define root file
-    outFile = new TFile("outFile.root", "RECREATE");
+    outFileName = new TString("outFile.root");
+    outFile     = new TFile(*outFileName, "RECREATE");
     outFile->cd();
+    std::cout << "RootProcessor::Init -> Output ROOT file " << *outFileName << " created" << std::endl;
     // define trees and branches
     eventTree  = new TTree("ET", "Toy Detector Event Data Tree");
     sampleTree = new TTree("ST", "Toy Detector Sample Data Tree");

@@ -54,7 +54,8 @@ public:
 
         m_sample_count  = app->GetParameterValue<size_t>("toydet:nsamples");
         m_channel_count = app->GetParameterValue<size_t>("toydet:nchannels");
-        m_print_freq    = app->GetParameterValue<size_t>("toydet:msgPrintFreq");
+        m_print_freq    = app->GetParameterValue<size_t>("toydet:msg_print_freq");
+        m_sub_socket    = app->GetParameterValue<std::string>("toydet:sub_socket");
 
         // Allocate the buffer. The buffer size must be determinable at startup time and
         // constant for the life of the program. If we are a consumer, the buffer should be large
@@ -169,13 +170,11 @@ public:
         as_indra_message()->payload_bytes = payload_bytes;
     }
 
-    /// Conveniently access the sample count associated with this message
+    /// Conveniently access message properties
     size_t get_sample_count() const { return m_sample_count; }
-
-    /// Conveniently access the channel count associated with this message
     size_t get_channel_count() const { return m_channel_count; }
-
     size_t get_message_print_freq() const { return m_print_freq; }
+    std::string get_sub_socket() const { return m_sub_socket; }
 
 private:
 
@@ -184,6 +183,7 @@ private:
     char *m_buffer;
     size_t m_buffer_capacity{};
     size_t m_print_freq{};
+    std::string m_sub_socket{};
 
 };
 
@@ -194,12 +194,14 @@ inline std::ostream& operator<< (std::ostream& os, const DASEventMessage& messag
     const char* payload;
     size_t length;
     message.as_payload(&payload, &length);
-    size_t eventNum = message.get_event_number();
-    size_t msgFreq = message.get_message_print_freq();
-    size_t buffSize = message.get_buffer_size();
+    size_t eventNum  = message.get_event_number();
+    size_t msgFreq   = message.get_message_print_freq();
+    size_t buffSize  = message.get_buffer_size();
+    string subSocket = message.get_sub_socket();
     if (eventNum % msgFreq == 0) {
-        ss << "INDRAMessage Recieved : Event " << eventNum
-           << ", payload length = " << buffSize
+        ss << "INDRA Message Recieved on socket " << subSocket
+           << " -> Event " << eventNum
+           << ", buffer size = " << buffSize
            << ", payload = ";
         for (int i = 0; i < 10 && i < (int) length; ++i) {
             ss << payload[i] << ", ";
