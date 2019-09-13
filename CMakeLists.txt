@@ -117,7 +117,16 @@ add_library(jana2 STATIC
         src/lib/JANA/Engine/JArrowTopology.cc
         src/lib/JANA/Engine/JArrowTopology.h
         src/lib/JANA/JLogger.h
-        src/lib/JANA/Utils/JBacktrace.h)
+        src/lib/JANA/Utils/JBacktrace.h
+        src/lib/JANA/Services/JCalibrationManager.h
+        src/lib/JANA/Calibrations/JCalibration.cc
+        src/lib/JANA/Calibrations/JCalibration.h
+        src/lib/JANA/Calibrations/JCalibrationCCDB.h
+        src/lib/JANA/Calibrations/JCalibrationFile.cc
+        src/lib/JANA/Calibrations/JCalibration.h
+        src/lib/JANA/Calibrations/JCalibrationGenerator.h
+        src/lib/JANA/Calibrations/JCalibrationGeneratorCCDB.h
+        )
 
 
 add_library(jtest SHARED

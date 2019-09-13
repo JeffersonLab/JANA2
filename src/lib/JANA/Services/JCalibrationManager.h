@@ -33,4 +33,41 @@
 #ifndef JANA2_JCALIBRATIONMANAGER_H
 #define JANA2_JCALIBRATIONMANAGER_H
 
+#include <JANA/Calibrations/JCalibration.h>
+#include <JANA/Calibrations/JCalibrationCCDB.h>
+#include <JANA/Calibrations/JCalibrationFile.h>
+#include <JANA/Calibrations/JCalibrationGenerator.h>
+#include <JANA/Services/JServiceLocator.h>
+
+#include <algorithm>
+
+class JCalibrationManager : public JService {
+
+    vector<JCalibration*> calibrations;
+    vector<JCalibrationGenerator*> calibrationGenerators;
+    pthread_mutex_t calibration_mutex;
+
+public:
+    void AddCalibrationGenerator(JCalibrationGenerator* generator) {
+        calibrationGenerators.push_back(generator);
+    };
+
+    void RemoveCalibrationGenerator(JCalibrationGenerator* generator) {
+
+        vector<JCalibrationGenerator*>& f = calibrationGenerators;
+        vector<JCalibrationGenerator*>::iterator iter = std::find(f.begin(), f.end(), generator);
+        if(iter != f.end())f.erase(iter);
+    }
+
+    vector<JCalibrationGenerator*> GetCalibrationGenerators(){ return calibrationGenerators; }
+
+    void GetJCalibrations(vector<JCalibration*> &calibs){ calibs=calibrations; }
+
+    JCalibration* GetJCalibration(unsigned int run_number) {
+
+    }
+};
+
 #endif //JANA2_JCALIBRATIONMANAGER_H
+
+
