@@ -1,6 +1,6 @@
 #!/usr/bin/python3.6
 
-import sys, argparse
+import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.stats import gumbel_r

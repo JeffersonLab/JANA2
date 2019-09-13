@@ -1,6 +1,6 @@
 #!/usr/bin/python3.6
 
-import zmq, struct, pickle, zlib
+import zmq, struct, pickle
 import numpy as np
 
 # define the subscriber and publisher ports
@@ -11,7 +11,7 @@ subContext = zmq.Context()
 subscriber = subContext.socket(zmq.SUB)
 subscriber.setsockopt(zmq.SUBSCRIBE, b'')
 subscriber.connect('tcp://127.0.0.1:%d' % subPort)
-print('\nSubscribing to tcp://127.0.0.1:%d\n' % subPort)
+print('\nSubscribing to JANA ZMQ Messages on socket tcp://127.0.0.1:%d\n' % subPort)
 # configure the publisher
 pubContext = zmq.Context()
 publisher  = pubContext.socket(zmq.PUB)
@@ -35,12 +35,20 @@ while True :
     # unpack the zmq packets according to the INDRA message protocol
     janaIndraMessage = struct.unpack('IIIIIIIQqq%ds' % janaPayloadBytes, janaPacket)
     print('IM source_id = %d, IM total_bytes = %d, IM payload_bytes = %d, IM record_counter = %d' % (janaIndraMessage[0], janaIndraMessage[1], janaIndraMessage[2], janaIndraMessage[7]))
-    jeventSourceId      = janaIndraMessage[0]
-    jeventTotalBytes    = janaIndraMessage[1]
-    jeventPayloadBytes  = janaIndraMessage[2]
-    jeventRecordCounter = janaIndraMessage[7]
+    # obtain the INDRA message members
+    jeventSourceId         = janaIndraMessage[0]
+    jeventTotalBytes       = janaIndraMessage[1]
+    jeventPayloadBytes     = janaIndraMessage[2]
+    jeventCompressedBytes  = janaIndraMessage[3]
+    jeventMagic            = janaIndraMessage[4]
+    jeventFormatVersion    = janaIndraMessage[5]
+    jeventFlags            = janaIndraMessage[6]
+    jeventRecordCounter    = janaIndraMessage[7]
+    jeventTimeStampSec     = janaIndraMessage[8]
+    jeventTimeStampNanoSec = janaIndraMessage[9]
+    jeventPayload          = janaIndraMessage[10]
     # adc samples are uints of length 4 plus 1 space delimiter, convert to array of ints
-    jeventAdcSamplesStr = np.frombuffer(janaIndraMessage[10], dtype='S5')
+    jeventAdcSamplesStr = np.frombuffer(jeventPayload, dtype='S5')
     jeventAdcSamples    = np.reshape(jeventAdcSamplesStr.astype(np.int), (1024, 80))
     # define data dictionary keys and data types
     for chan in range(1, numChans + 1) :
