@@ -151,7 +151,7 @@ void JApplication::Run(bool wait_until_finished) {
 
     jout << GetComponentSummary();
 
-    jout << "Start processing ..." << std::endl;
+    jout << "Start processing ..." << jendl;
     mRunStartTime = std::chrono::high_resolution_clock::now();
     _processing_controller->run(_desired_nthreads);
 
@@ -184,11 +184,11 @@ void JApplication::Run(bool wait_until_finished) {
 
     // Join all threads
     if (!_skip_join) {
-        jout << "Merging threads ..." << std::endl;
+        jout << "Merging threads ..." << jendl;
         _processing_controller->wait_until_stopped();
     }
 
-    jout << "Event processing ended. " << std::endl;
+    jout << "Event processing ended. " << jendl;
     // Report Final numbers
     PrintFinalReport();
 }
@@ -253,7 +253,7 @@ void JApplication::PrintStatus(void) {
            << JTypeInfo::to_string_with_si_prefix(GetInstantaneousRate()) << "Hz ("
            << JTypeInfo::to_string_with_si_prefix(GetIntegratedRate()) << "Hz avg)";
         jout << ss.str() << "\n";
-        jout.flush();
+        jout << jendl;
     }
 }
 
@@ -263,12 +263,12 @@ void JApplication::PrintFinalReport() {
         _processing_controller->print_final_report();
     }
     else {
-        jout << std::endl;
+        jout << jendl;
         auto nevents = GetNeventsProcessed();
-        jout << "Number of threads: " << GetNThreads() << std::endl;
-        jout << "Total events processed: " << nevents << " (~ " << JTypeInfo::to_string_with_si_prefix(nevents) << "evt)" << std::endl;
-        jout << "Integrated Rate: " << JTypeInfo::to_string_with_si_prefix(GetIntegratedRate()) << "Hz" << std::endl;
-        jout << std::endl;
+        jout << "Number of threads: " << GetNThreads() << jendl;
+        jout << "Total events processed: " << nevents << " (~ " << JTypeInfo::to_string_with_si_prefix(nevents) << "evt)" << jendl;
+        jout << "Integrated Rate: " << JTypeInfo::to_string_with_si_prefix(GetIntegratedRate()) << "Hz" << jendl;
+        jout << jendl;
     }
     if (_extended_report) {
         //_plugin_loader->print_report();

@@ -21,15 +21,15 @@ void ctrlCHandle(int x)
 	}
 
 	if (gSIGINT_RECEIVED == 1) {
-		jout << "\nExiting gracefully...\n";
+		jout << "\nExiting gracefully..." << jendl;
 		japp->Quit(false);
 	} 
 	else if (gSIGINT_RECEIVED == 2) {
-		jout << "\nExiting without waiting for threads to join...\n";
+		jout << "\nExiting without waiting for threads to join..." << jendl;
 		japp->Quit(true);
 	}
 	else {
-		jout << "\nExiting immediately.\n";
+		jout << "\nExiting immediately." << jendl;
 		exit(-2);
 	}
 }

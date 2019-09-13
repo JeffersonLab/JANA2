@@ -33,6 +33,7 @@
 #include <JANA/Engine/JArrowProcessingController.h>
 #include <JANA/Engine/JArrowPerfSummary.h>
 #include <JANA/Utils/JCpuInfo.h>
+#include <JANA/JLogger.h>
 
 #include <memory>
 
@@ -119,7 +120,7 @@ JArrowProcessingController::~JArrowProcessingController() {
 
 void JArrowProcessingController::print_report() {
     auto metrics = measure_internal_performance();
-    jout << *metrics;
+    jout << *metrics << jendl;
 }
 
 void JArrowProcessingController::print_final_report() {

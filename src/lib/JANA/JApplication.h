@@ -33,9 +33,6 @@
 #include <string>
 #include <iostream>
 
-#define jout std::cout
-#define jerr std::cerr
-
 class JApplication;
 class JEventProcessor;
 class JEventSource;

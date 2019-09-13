@@ -38,7 +38,8 @@ struct JLogger {
     void UnsetThreadstampFlag() {show_threadstamp = false; }
 };
 
-static JLogger trivial_logger = JLogger(JLogger::Level::TRACE);
+static JLogger default_cout_logger = JLogger(JLogger::Level::TRACE, &std::cout, "JANA");
+static JLogger default_cerr_logger = JLogger(JLogger::Level::TRACE, &std::cerr, "JERR");
 
 inline std::ostream& operator<<(std::ostream& s, JLogger::Level l) {
     switch (l) {
@@ -62,7 +63,7 @@ struct JLogMessage {
     JLogger::Level level;
     std::ostringstream builder;
 
-    JLogMessage(const JLogger* logger = &trivial_logger,
+    JLogMessage(const JLogger* logger = &default_cout_logger,
                 JLogger::Level level = JLogger::Level::INFO)
                 : logger(logger), level(level) {
 
@@ -81,6 +82,13 @@ struct JLogMessage {
 
 /// Stream operators
 
+template <typename T>
+inline JLogMessage&& operator<<(const JLogger& l, T t) {
+    JLogMessage m;
+    m << t;
+    return std::move(m);
+}
+
 template<typename T>
 inline JLogMessage& operator<<(JLogMessage& m, T t) {
     m.builder << t;
@@ -97,6 +105,20 @@ inline void operator<<(JLogMessage&& m, JLogMessage::End const& end) {
     (*m.logger->destination) << m.builder.str() << std::endl;
 }
 
+// JLogMessage now accepts std::endl
+// TODO: This is the _wrong_ thing to do, try a custom streambuf instead
+template <>
+inline JLogMessage&& operator<<(JLogMessage&& m, std::basic_ostream<char, std::char_traits<char>>& (*fp)(std::basic_ostream<char, std::char_traits<char>>&)) {
+
+ /*
+    if (fp == std::endl<char, std::char_traits<char>>) {
+        (*m.logger->destination) << m.builder.str() << std::endl;
+        m.builder.clear();
+    }
+*/
+    m.builder << fp;
+    return std::move(m);
+}
 
 /// Macros
 
@@ -116,8 +138,9 @@ inline void operator<<(JLogMessage&& m, JLogMessage::End const& end) {
 #define LOG_TRACE(logger) LOG_AT_LEVEL(logger, JLogger::Level::TRACE)
 
 
-#define jout std::cout
-#define jerr std::cerr
+#define jout JLogMessage(&default_cout_logger)
+#define jerr JLogMessage(&default_cerr_logger)
+#define jendl JLogMessage::End()
 
 
 
