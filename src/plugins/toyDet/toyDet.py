@@ -31,7 +31,7 @@ def hitFunc(sample, peak, startTime, decayTime, baseLine):
                                              np.exp((-4) * ((sample - startTime) / decayTime)) + baseLine)])
     return adcSample
 
-class dataStream:
+class DataStream:
 
     def __init__(self, sampleRate, numEvents):
         # sampling rate (s^-1), number of events to simulate
@@ -104,7 +104,7 @@ class dataStream:
 # datFile = open('run-%2.0d-mhz-%d-chan-%d-ev.dat' % (sampleRate, numChans, numEvents), 'w+')
 # for chan in range(1, numChans+1) : 
 #     datFile.write('# channel = %d\n' % chan)
-#     dataObj = dataStream(sampleRate*1.0e+6, numEvents)
+#     dataObj = DataStream(sampleRate*1.0e+6, numEvents)
 #     for event in dataObj : 
 #         np.savetxt(datFile, (dataObj.timeSamples, dataObj.adcSamples), fmt='%.9f')
 #    # plt.plot(dataObj.timeSamples, dataObj.adcSamples)
@@ -121,7 +121,7 @@ if specMode == 'gumbel' :
         datFile.write('@ event = %d\n' % ievent)
         for chan in range(1, numChans + 1):
             datFile.write('# channel = %d\n' % chan)
-            dataObj = dataStream(sampleRate * 1.0e+6, 1)
+            dataObj = DataStream(sampleRate * 1.0e+6, 1)
             for event in dataObj:
                 if len(dataObj.timeSamples) != len(dataObj.adcSamples): print("!!!Something terrible is amiss!!!")
                 np.savetxt(datFile, (np.add(dataObj.timeSamples, dataObj.windowWidth * (ievent - 1)), dataObj.adcSamples), fmt='%.9f')
@@ -138,7 +138,7 @@ if specMode == 'sampa' :
     for ievent in range(1, numEvents + 1):
         csl = []  # channel series list
         for chan in range(1, numChans + 1):
-            dataObj = dataStream(sampleRate * 1.0e+6, 1)
+            dataObj = DataStream(sampleRate * 1.0e+6, 1)
             for event in dataObj:
                 if len(dataObj.timeSamples) != len(dataObj.adcSamples): print("!!!Something terrible is amiss!!!")
                 csl.append(pd.Series(dataObj.adcSamples, name = 'chan_%d' % chan))
