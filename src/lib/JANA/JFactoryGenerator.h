@@ -58,10 +58,11 @@ class JFactoryGenerator{
 
 template <class T>
 class JFactoryGeneratorT : JFactoryGenerator {
+public:
 
 	~JFactoryGeneratorT() {};
 
-	void GenerateFactories(JFactorySet *factory_set) {
+	void GenerateFactories(JFactorySet *factory_set) override {
 		factory_set->Add(new T {});
 	}
 };
