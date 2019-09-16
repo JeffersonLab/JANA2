@@ -5,6 +5,9 @@
 // Creator: davidl (on Darwin Amelia.local 8.10.1 i386)
 //
 
+#include "JCalibrationFile.h"
+#include <JANA/JLogger.h>
+
 #include <dirent.h>
 #include <sys/stat.h>
 #include <stdlib.h>
@@ -15,9 +18,6 @@
 #include <fstream>
 using namespace std;
 
-#include "JCalibrationFile.h"
-#include <JANA/JLogger.h>
-using namespace jana;
 
 //---------------------------------
 // JCalibrationFile    (Constructor)

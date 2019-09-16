@@ -8,13 +8,9 @@
 #ifndef _JCalibrationFile_
 #define _JCalibrationFile_
 
-#include <fstream>
-
-#include "jerror.h"
 #include "JCalibration.h"
 
-// Place everything in JANA namespace
-namespace jana{
+#include <fstream>
 
 class JCalibrationFile:public JCalibration{
 	public:
@@ -43,8 +39,6 @@ class JCalibrationFile:public JCalibration{
 
 		void AddToNamepathList(string dir, vector<string> &namepaths);
 };
-
-} // Close JANA namespace
 
 
 #endif // _JCalibrationFile_

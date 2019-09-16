@@ -10,16 +10,11 @@
 #include <iostream>
 #include <memory>
 
-#include <JANA/jerror.h>
 #include <JANA/JCalibrationGenerator.h>
 #include <CCDB/CalibrationGenerator.h>
 #include <CCDB/Helpers/PathUtils.h>
 #include "JCalibrationCCDB.h"
 
-
-// Place everything in JANA namespace
-namespace jana
-{
 
 	class JCalibrationGeneratorCCDB: public JCalibrationGenerator
 	{
@@ -100,9 +95,6 @@ namespace jana
 	private:
 		std::auto_ptr<ccdb::CalibrationGenerator> mGenerator; ///CCDB calibration generator object
 	};
-	
-
-} // Close JANA namespace
 
 #endif // HAVE_CCDB
 

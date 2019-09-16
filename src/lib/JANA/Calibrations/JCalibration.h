@@ -9,6 +9,7 @@
 #define _JCalibration_
 
 #include "jerror.h"
+#include <JANA/JException.h>
 
 #include <typeinfo>
 #include <stdint.h>
@@ -24,12 +25,6 @@ using std::stringstream;
 using std::vector;
 using std::pair;
 
-#include <JANA/JException.h>
-
-
-
-// Place everything in JANA namespace
-namespace jana{
 
 class JCalibration{
 	public:
@@ -570,8 +565,6 @@ JCalibration::containerType_t JCalibration::TrycontainerType(string typeid_name)
 
 	return kUnknownType;
 }
-
-} // Close JANA namespace
 
 #endif // _JCalibration_
 

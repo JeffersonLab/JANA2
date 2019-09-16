@@ -11,11 +11,6 @@
 #include <stdint.h>
 #include <string>
 
-#include <JANA/jerror.h>
-
-// Place everything in JANA namespace
-namespace jana{
-
 class JCalibration;
 
 /// This is a base class for all event source generators. JANA implements
@@ -57,8 +52,6 @@ class JCalibrationGenerator{
 		virtual JCalibration* MakeJCalibration(std::string url, int32_t run, std::string context)=0; ///< Instantiate an JCalibration object (subclass)
 
 };
-
-} // Close JANA namespace
 
 #endif // _JCalibrationGenerator_
 

@@ -5,6 +5,7 @@
 // Creator: davidl (on Darwin fwing-dhcp61.jlab.org 8.10.1 i386)
 //
 
+#include <JANA/JLogger.h>
 #include "JCalibration.h"
 
 #include <unistd.h>
@@ -17,9 +18,7 @@
 using namespace std;
 
 #include <sys/stat.h>
-#include <JANA/JLogger.h>
 
-using namespace jana;
 
 //---------------------------------
 // JCalibration    (Constructor)
