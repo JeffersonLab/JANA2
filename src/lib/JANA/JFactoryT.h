@@ -78,7 +78,7 @@ public:
 
         //std::lock_guard<std::mutex> lock(mMutex);
         switch (mStatus) {
-            case Status::InvalidMetadata:
+            case Status::Uninitialized:
                 ChangeRun(event);
             case Status::Unprocessed:
                 Process(event);
@@ -125,7 +125,7 @@ public:
     void ClearData() override {
         for (auto p : mData) delete p;
         mData.clear();
-        mStatus = Status::Cleared;
+        mStatus = Status::Uninitialized;
     }
 
 protected:

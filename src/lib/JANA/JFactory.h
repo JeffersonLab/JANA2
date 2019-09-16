@@ -162,8 +162,8 @@ protected:
     uint32_t mFlags;
     uint32_t mPreviousRunNumber = 0;
 
-    enum class Status {Uninitialized, InvalidMetadata, Unprocessed, Processed, Inserted, Cleared};
-    mutable Status mStatus = Status::InvalidMetadata;
+    enum class Status {Uninitialized, Unprocessed, Processed, Inserted};
+    mutable Status mStatus = Status::Uninitialized;
     mutable std::mutex mMutex;
 
     // Used to make sure Init is called only once
