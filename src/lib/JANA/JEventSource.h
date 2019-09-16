@@ -45,6 +45,7 @@
 #define _JEventSource_h_
 
 #include <JANA/JException.h>
+#include <JANA/Utils/JTypeInfo.h>
 
 #include <string>
 #include <atomic>
