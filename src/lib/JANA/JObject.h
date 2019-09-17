@@ -52,6 +52,7 @@
 #include <typeinfo>
 
 #include <JANA/Utils/JTypeInfo.h>
+#include <JANA/JLogger.h>
 
 /// The JObject class is a base class for all data classes.
 /// (See JFactory for algorithm classes.)
@@ -61,7 +62,6 @@
 	static const char* static_className(void) {return #T;}
 
 
-#define NAME_OF(T) #T
 
 struct JObjectMember {
     /// A plain-old data structure for describing one member of a JObject
