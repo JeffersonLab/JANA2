@@ -59,15 +59,15 @@ struct JLogMessage {
     /// Message terminator
     struct End {};
 
-    const JLogger *logger;
+    const JLogger& logger;
     JLogger::Level level;
     std::ostringstream builder;
 
-    JLogMessage(const JLogger* logger = &default_cout_logger,
+    JLogMessage(const JLogger& logger = default_cout_logger,
                 JLogger::Level level = JLogger::Level::INFO)
                 : logger(logger), level(level) {
 
-        builder << "[" << level << "] " << logger->className << ": ";
+        builder << "[" << level << "] " << logger.className << ": ";
     }
 
     // Helper function for truncating long strings to keep our log readable
@@ -83,9 +83,9 @@ struct JLogMessage {
 /// Stream operators
 
 template <typename T>
-inline JLogMessage&& operator<<(const JLogger& l, T t) {
-    JLogMessage m;
-    m << t;
+inline JLogMessage&& operator<<(JLogger& l, T t) {
+    JLogMessage m(l);
+    m.builder << t;
     return std::move(m);
 }
 
@@ -102,22 +102,9 @@ inline JLogMessage&& operator<<(JLogMessage&& m, T t) {
 }
 
 inline void operator<<(JLogMessage&& m, JLogMessage::End const& end) {
-    (*m.logger->destination) << m.builder.str() << std::endl;
-}
-
-// JLogMessage now accepts std::endl
-// TODO: This is the _wrong_ thing to do, try a custom streambuf instead
-template <>
-inline JLogMessage&& operator<<(JLogMessage&& m, std::basic_ostream<char, std::char_traits<char>>& (*fp)(std::basic_ostream<char, std::char_traits<char>>&)) {
-
- /*
-    if (fp == std::endl<char, std::char_traits<char>>) {
-        (*m.logger->destination) << m.builder.str() << std::endl;
-        m.builder.clear();
-    }
-*/
-    m.builder << fp;
-    return std::move(m);
+    std::ostream& dest = *m.logger.destination;
+    m.builder << std::endl;
+    dest << m.builder.str();
 }
 
 /// Macros
@@ -128,7 +115,7 @@ inline JLogMessage&& operator<<(JLogMessage&& m, std::basic_ostream<char, std::c
 
 #define LOG_END JLogMessage::End();
 
-#define LOG_AT_LEVEL(logger, msglevel) if (logger.level <= msglevel) JLogMessage(&logger, msglevel)
+#define LOG_AT_LEVEL(logger, msglevel) if (logger.level <= msglevel) JLogMessage(logger, msglevel)
 
 #define LOG_FATAL(logger) LOG_AT_LEVEL(logger, JLogger::Level::FATAL)
 #define LOG_ERROR(logger) LOG_AT_LEVEL(logger, JLogger::Level::ERROR)
@@ -138,8 +125,8 @@ inline JLogMessage&& operator<<(JLogMessage&& m, std::basic_ostream<char, std::c
 #define LOG_TRACE(logger) LOG_AT_LEVEL(logger, JLogger::Level::TRACE)
 
 
-#define jout JLogMessage(&default_cout_logger)
-#define jerr JLogMessage(&default_cerr_logger)
+#define jout JLogMessage(default_cout_logger)
+#define jerr JLogMessage(default_cerr_logger)
 #define jendl JLogMessage::End()
 
 
