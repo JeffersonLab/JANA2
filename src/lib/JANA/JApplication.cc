@@ -49,8 +49,8 @@ JApplication::JApplication(JParameterManager* params) {
     _params = (params == nullptr) ? new JParameterManager : params;
 
     _logger = JLoggingService::logger("JApplication");
-    _plugin_loader = new JPluginLoader(this,_params);
-    _component_manager = new JComponentManager(this);
+    _plugin_loader = new JPluginLoader(this, _params);
+    _component_manager = new JComponentManager(this, _params);
     _processing_controller = nullptr;
 }
 
