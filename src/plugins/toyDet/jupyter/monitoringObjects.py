@@ -5,8 +5,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from IPython.display import display, clear_output, set_matplotlib_close
 
-from ipywidgets import HBox
-
 # define global variables
 numChans = 80
 
@@ -17,54 +15,53 @@ class OccupancyFig:
     # define figure and plot attributes
     def __init__(self):
         self.fig = plt.figure()
-        self.fig.set_size_inches(18.5, 10.5, forward=True)
+        # self.fig.set_size_inches(18.5, 10.5, forward=True)
 
 
 class OccupancyPlot:
     """Class to plot streaming occupancy data"""
 
-    def __init__(self, dataDict, thresh, fig, hitCounter):
-        self.hitThresh  = thresh
+    def __init__(self, data_dict, thresh, fig, hit_cntr):
+        self.thresh = thresh
         self.fig = fig
-        self.hitCounter = hitCounter
-        self.chanList = np.arange(1, numChans + 1, 1)
+        self.hit_cntr = hit_cntr
+        self.chan_list = np.arange(1, numChans + 1, 1)
         for chan in range(1, numChans + 1):
-            if len(np.where(dataDict['adcSamplesChan_%d' % chan] > self.hitThresh)[0]) != 0:
-                self.hitCounter[chan-1] += 1
+            if len(np.where(data_dict['adcSamplesChan_%d' % chan] > self.thresh)[0]) != 0:
+                self.hit_cntr[chan-1] += 1
             # remove event data after being published
-            dataDict.pop('adcSamplesChan_%s' % str(chan), None)
-            dataDict.pop('tdcSamplesChan_%s' % str(chan), None)
-        plt.bar(self.chanList, self.hitCounter, align='center')
+            data_dict.pop('adcSamplesChan_%s' % str(chan), None)
+            data_dict.pop('tdcSamplesChan_%s' % str(chan), None)
+        plt.bar(self.chan_list, self.hit_cntr, align = 'center', color = 'tab:blue')
         plt.xlabel('Channel Number')
-        plt.ylabel('Number of ADC Hits > %d Channels' % self.hitThresh)
+        plt.ylabel('Number of ADC Hits > %d Channels' % self.thresh)
         plt.title('ADC Occupancy')
-        set_matplotlib_close(False)
-        display(self.fig)
-        clear_output(wait = False)
-        plt.pause(0.05)
+        # display(self.fig)
+        clear_output(wait = True)
+        plt.pause(0.005)
 
     def get_hit_cntr(self):
-        return self.hitCounter
+        return self.hit_cntr
 
 
-class WaveFormFig:
+class WaveformFig:
     """Class to create a figure and subplots based on user input for viewing waveforms"""
 
     # define figure and plot attributes
-    def __init__(self, rows, cols):
-        self.numRows = rows
-        self.numCols = cols
-        self.fig, self.axs = plt.subplots(self.numRows, self.numCols)
-        self.fig.set_size_inches(18.5, 10.5, forward=True)
+    def __init__(self, nrows, ncols):
+        self.nrows = nrows
+        self.ncols = ncols
+        self.fig, self.axs = plt.subplots(self.nrows, self.ncols)
+        # self.fig.set_size_inches(18.5, 10.5, forward=True)
         # channel list, ascending and non-repeating
-        self.chans = random.sample(range(1, numChans + 1), self.numRows * self.numCols)
+        self.chans = random.sample(range(1, numChans + 1), self.nrows * self.ncols)
         self.chans.sort()
 
     def get_num_rows(self):
-        return self.numRows
+        return self.nrows
 
     def get_num_cols(self):
-        return self.numCols
+        return self.ncols
 
     def get_fig_obj(self):
         return self.fig
@@ -76,15 +73,15 @@ class WaveFormFig:
         return self.chans
 
 
-class WaveFormPlot:
+class WaveformPlot:
     """Class to plot streaming ADC vs. TDC data"""
 
     # instance variables unique to each instance
-    def __init__(self, dataDict, thresh, rows, cols, fig, axs, chans):
+    def __init__(self, data_dict, thresh, nrows, ncols, fig, axs, chans):
         # figure parameters
-        self.hitThresh = thresh
-        self.numRows = rows
-        self.numCols = cols
+        self.thresh = thresh
+        self.nrows = nrows
+        self.ncols = ncols
         self.fig = fig
         self.axs = axs
         self.chans = chans
@@ -92,36 +89,65 @@ class WaveFormPlot:
         self.cl = ['tab:blue', 'tab:orange', 'tab:green', 'tab:red', 'tab:purple',
                    'tab:brown', 'tab:pink', 'tab:gray', 'tab:olive', 'tab:cyan']
         self.ml = ['o', '^', 's', 'p', 'P', '*', 'X', 'd']
-        # event number list, index counter
-        self.enl = []
-        self.ic = 0
-        for row in range(self.numRows):
-            for column in range(self.numCols):
-                self.axs[row, column].cla()
-                self.axs[row, column].plot(dataDict['tdcSamplesChan_%d' % self.chans[self.ic]],
-                                           dataDict['adcSamplesChan_%d' % self.chans[self.ic]],
-                                           color=self.cl[self.ic % len(self.cl)],
-                                           marker=self.ml[self.ic % len(self.ml)],
-                                           ls='', label='Channel %d' % self.chans[self.ic])
-                hitLoc = np.where(dataDict['adcSamplesChan_%d' % self.chans[self.ic]] > self.hitThresh)[0] + \
-                         np.min(dataDict['tdcSamplesChan_%d' % self.chans[self.ic]])
-                if len(hitLoc) != 0: self.axs[row, column].set_xlim(np.min(hitLoc) - 10, np.max(hitLoc) + 20)
-                self.axs[row, column].set_ylim(0, 1024)
-                if column == 0:
-                    self.axs[row, column].set_ylabel('ADC Value')
-                if row == self.numRows - 1:
-                    self.axs[row, column].set_xlabel('TDC Sample Number')
-                self.axs[row, column].legend(loc='best', markerscale=0, handletextpad=0, handlelength=0)
+        self.ic = 0  # index counter
+        if self.nrows == 1 and self.ncols == 1:
+            self.axs.cla()
+            self.axs.plot(data_dict['tdcSamplesChan_%d' % self.chans[self.ic]],
+                          data_dict['adcSamplesChan_%d' % self.chans[self.ic]],
+                          color = self.cl[self.ic % len(self.cl)],
+                          marker = self.ml[self.ic % len(self.ml)],
+                          ls = '', label = 'Channel %d' % self.chans[self.ic])
+            hit_loc = np.where(data_dict['adcSamplesChan_%d' % self.chans[self.ic]] > self.thresh)[0] + \
+                      np.min(data_dict['tdcSamplesChan_%d' % self.chans[self.ic]])
+            if len(hit_loc) != 0: self.axs.set_xlim(np.min(hit_loc) - 10, np.max(hit_loc) + 20)
+            self.axs.set_ylim(0, 1024)
+            self.axs.set_ylabel('ADC Value')
+            self.axs.set_xlabel('TDC Sample Number')
+            self.axs.legend(loc = 'best', markerscale = 0, handletextpad = 0, handlelength = 0)
+            self.ic += 1
+        if (self.nrows == 1 and self.ncols == 2) or (self.nrows == 2 and self.ncols == 1):
+            for index in range(2):
+                self.axs[index].cla()
+                self.axs[index].plot(data_dict['tdcSamplesChan_%d' % self.chans[self.ic]],
+                              data_dict['adcSamplesChan_%d' % self.chans[self.ic]],
+                              color = self.cl[self.ic % len(self.cl)],
+                              marker = self.ml[self.ic % len(self.ml)],
+                              ls = '', label = 'Channel %d' % self.chans[self.ic])
+                hit_loc = np.where(data_dict['adcSamplesChan_%d' % self.chans[self.ic]] > self.thresh)[0] + \
+                          np.min(data_dict['tdcSamplesChan_%d' % self.chans[self.ic]])
+                if len(hit_loc) != 0: self.axs[index].set_xlim(np.min(hit_loc) - 10, np.max(hit_loc) + 20)
+                self.axs[index].set_ylim(0, 1024)
+                self.axs[index].set_ylabel('ADC Value')
+                self.axs[index].set_xlabel('TDC Sample Number')
+                self.axs[index].legend(loc = 'best', markerscale = 0, handletextpad = 0, handlelength = 0)
                 self.ic += 1
-        # plt.tight_layout()
+        if self.nrows >= 2 and self.ncols >=2:
+            for row in range(self.nrows):
+                for column in range(self.ncols):
+                    self.axs[row, column].cla()
+                    self.axs[row, column].plot(data_dict['tdcSamplesChan_%d' % self.chans[self.ic]],
+                                               data_dict['adcSamplesChan_%d' % self.chans[self.ic]],
+                                               color = self.cl[self.ic % len(self.cl)],
+                                               marker = self.ml[self.ic % len(self.ml)],
+                                               ls = '', label = 'Channel %d' % self.chans[self.ic])
+                    hit_loc = np.where(data_dict['adcSamplesChan_%d' % self.chans[self.ic]] > self.thresh)[0] + \
+                             np.min(data_dict['tdcSamplesChan_%d' % self.chans[self.ic]])
+                    if len(hit_loc) != 0: self.axs[row, column].set_xlim(np.min(hit_loc) - 10, np.max(hit_loc) + 20)
+                    self.axs[row, column].set_ylim(0, 1024)
+                    if column == 0:
+                        self.axs[row, column].set_ylabel('ADC Value')
+                    if row == self.nrows - 1:
+                        self.axs[row, column].set_xlabel('TDC Sample Number')
+                    self.axs[row, column].legend(loc = 'best', markerscale = 0, handletextpad = 0, handlelength = 0)
+                    self.ic += 1
+        plt.tight_layout()
         # plt.savefig('plots/event_%d.png' % ec)
         # plt.pause(0.05)
-        plt.tight_layout()
+        # display(self.fig)
         set_matplotlib_close(False)
-        display(self.fig)
-        clear_output(wait = False)
-        plt.pause(0.05)
+        clear_output(wait = True)
+        plt.pause(0.005)
         # remove event data after being published
         for chan in range(1, numChans + 1):
-            dataDict.pop('adcSamplesChan_%s' % str(chan), None)
-            dataDict.pop('tdcSamplesChan_%s' % str(chan), None)
+            data_dict.pop('adcSamplesChan_%s' % str(chan), None)
+            data_dict.pop('tdcSamplesChan_%s' % str(chan), None)
