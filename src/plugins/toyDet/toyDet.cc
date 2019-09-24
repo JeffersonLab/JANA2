@@ -87,13 +87,13 @@ void InitPlugin(JApplication* app) {
     std::cout << "Publishing JObjects via ZMQ on socket " << pub_socket_name << std::endl;
 
     app->GetJParameterManager()->SetDefaultParameter("toydet:use_zmq", use_zmq);
+    app->GetJParameterManager()->SetDefaultParameter("toydet:data_file", data_file_name);
     app->GetJParameterManager()->SetDefaultParameter("toydet:use_dummy_publisher", use_dummy_publisher);
     app->GetJParameterManager()->SetDefaultParameter("toydet:nchannels", nchannels);
     app->GetJParameterManager()->SetDefaultParameter("toydet:nsamples", nsamples);
     app->GetJParameterManager()->SetDefaultParameter("toydet:msg_print_freq", msg_print_freq);
     app->GetJParameterManager()->SetDefaultParameter("toydet:sub_socket", sub_socket_name);
     app->GetJParameterManager()->SetDefaultParameter("toydet:pub_socket", pub_socket_name);
-    app->GetJParameterManager()->SetDefaultParameter("toydet:data_file", data_file_name);
 
     if (use_zmq) {
         auto transport = std::unique_ptr<ZmqTransport>(new ZmqTransport(sub_socket_name));
