@@ -27,7 +27,7 @@ public:
 
 private:
 
-    std::mutex fillMutex;
+    std::mutex msgMutex;
     ZmqTransport *m_transport  = nullptr;
     DASEventMessage *m_message = nullptr;
 };

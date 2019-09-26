@@ -17,15 +17,18 @@ class DASFileSource : public JEventSource {
 
 public:
 
+    // constructors and destructors
     DASFileSource(std::string source_name, JApplication* app);
     ~DASFileSource() override;
 
+    // define public methods
     static std::string GetDescription() { return "ToyDet event source (direct ADC serialization mode)"; }
     void Open() final;
     void GetEvent(std::shared_ptr<JEvent>) final;
 
 private:
 
+    // file stream and event counter
     std::ifstream ifs;
     size_t current_event_nr = 0;
 

@@ -14,7 +14,7 @@
 #include <JANA/JApplication.h>
 #include <JANA/Streaming/JMessage.h>
 
-/// INDRA_Message should be exactly the same as INDRA_Stream_Test's stream_buffer struct
+// INDRAMessage should be exactly the same as INDRA_Stream_Test's stream_buffer struct
 struct INDRAMessage {
 
     uint32_t source_id = 0;
@@ -42,8 +42,8 @@ public:
     ///  - A buffer of fixed capacity (determinable at startup time) is allocated
     ///  - Its total capacity is always known and never changes
     ///  - It is released when the message is destroyed
-
     ///  - The size of the valid data contained within is NOT protected, because it is a C-style array.
+    ////////////////////////////////////////////////////////////////////////////////////////
 
     explicit DASEventMessage(JApplication *app) {
 
@@ -121,8 +121,6 @@ public:
 
     /// Grants read/write access to any INDRAMessage members directly
     INDRAMessage *as_indra_message() { return reinterpret_cast<INDRAMessage *>(m_buffer); }
-
-    /// Grants read-only access to any INDRAMessage members directly
     const INDRAMessage *as_indra_message() const { return reinterpret_cast<INDRAMessage *>(m_buffer); }
 
     /// Grants read-only access to the message payload as a byte array, which we need because INDRAMessage uses uint32_t instead
@@ -131,8 +129,6 @@ public:
         *payload = m_buffer + sizeof(INDRAMessage);
         *payload_bytes = as_indra_message()->payload_bytes;
     }
-
-    /// Grants read/write access to the message payload as a byte array, which we need because INDRAMessage uses uint32_t instead
     void as_payload(char **payload, size_t *payload_bytes, size_t *payload_capacity) {
 
         *payload = m_buffer + sizeof(INDRAMessage);
@@ -178,7 +174,7 @@ inline std::ostream& operator<< (std::ostream& os, const DASEventMessage& messag
     size_t buffSize  = message.get_buffer_size();
     string subSocket = message.get_sub_socket();
     if (eventNum % msgFreq == 0) {
-        ss << "INDRA Message Recieved on socket " << subSocket
+        ss << "INDRA Message received on socket " << subSocket
            << " -> Event " << eventNum
            << ", buffer size = " << buffSize
            << ", payload = ";

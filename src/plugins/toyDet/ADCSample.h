@@ -9,11 +9,13 @@
 
 struct ADCSample : public JObject {
 
-    uint16_t source_id;
-    uint16_t channel_id;
-    uint16_t sample_id;
-    uint16_t adc_value;
+    // define data types
+    uint32_t source_id;   // 32-bit identifier governed by the INDRA message format
+    uint16_t channel_id;  // adc channel number
+    uint16_t sample_id;   // adc sample number
+    uint16_t adc_value;   // adc sample value
 
+    // construct the jobect
     void Summarize(JObjectSummary& summary) const override {
         summary.add(source_id,  NAME_OF(source_id), "%d");
         summary.add(sample_id,  NAME_OF(sample_id),  "%d");

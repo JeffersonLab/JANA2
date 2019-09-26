@@ -25,7 +25,7 @@ numEvents = args.numEvents[0]
 specMode = args.spectra[0]
 if args.mode : adcMode = args.mode[0]
 
-def hitFunc(sample, peak, startTime, decayTime, baseLine):
+def sampaHitFunc(sample, peak, startTime, decayTime, baseLine):
     adcSample = np.piecewise(sample, [sample < startTime, sample >= startTime], [lambda sample: baseLine,
                              lambda sample: (peak * np.power(((sample - startTime) / decayTime), 4) *
                                              np.exp((-4) * ((sample - startTime) / decayTime)) + baseLine)])
@@ -80,7 +80,7 @@ class DataStream:
             self.decayTime = np.random.randint(2, 5, size=1)[0]
             self.numHitSamples = np.random.randint(10, 16, size=1)[0]
             self.samples = np.arange(0, self.numHitSamples + 11)
-            self.hitSamples = hitFunc(self.samples, self.peak, self.startTime, self.decayTime, np.average(self.baseLine))
+            self.hitSamples = sampaHitFunc(self.samples, self.peak, self.startTime, self.decayTime, np.average(self.baseLine))
             self.adcSamples = np.insert(self.baseLine, self.randTimeIndex, self.hitSamples)[:int(self.numSamples)]
 
     def __iter__(self):
