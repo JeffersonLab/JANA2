@@ -4,8 +4,8 @@
 # CZMQ_INCLUDE_DIRS - The CZMQ include directories
 # CZMQ_LIBRARIES - The libraries needed to use CZMQ
 # CZMQ_DEFINITIONS - Compiler switches required for using CZMQ
-find_path (CZMQ_INCLUDE_DIR zmq.h)
-find_library (CZMQ_LIBRARY NAMES zmq)
+find_path (CZMQ_INCLUDE_DIR czmq.h)
+find_library (CZMQ_LIBRARY NAMES czmq)
 set (CZMQ_LIBRARIES ${CZMQ_LIBRARY})
 set (CZMQ_INCLUDE_DIRS ${CZMQ_INCLUDE_DIR})
 include (FindPackageHandleStandardArgs)
