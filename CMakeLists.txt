@@ -280,27 +280,27 @@ include_directories(${ZEROMQ_INCLUDE_DIRS} ${CMZQ_INCLUDE_DIRS})
 target_link_libraries(JExample7 jana2 ${ZEROMQ_LIBRARIES} ${CZMQ_LIBRARIES})
 set_target_properties(JExample7 PROPERTIES PREFIX "" SUFFIX ".so")
 
-# toyDet plugin
+# streamDet plugin
 
-add_library(toyDet SHARED
-        src/plugins/toyDet/MonitoringProcessor.cc
-        src/plugins/toyDet/MonitoringProcessor.h
-		src/plugins/toyDet/RootProcessor.cc
-        src/plugins/toyDet/RootProcessor.h
-        src/plugins/toyDet/DASFileSource.cc
-        src/plugins/toyDet/DASFileSource.h
-        src/plugins/toyDet/JFactoryGenerator_toyDet.h
-        src/plugins/toyDet/toyDet.cc
-        src/plugins/toyDet/ZmqTransport.h
-        src/plugins/toyDet/INDRAMessage.h
-        src/plugins/toyDet/ADCSample.h
-        src/plugins/toyDet/ADCSampleFactory.h
+add_library(streamDet SHARED
+        src/plugins/streamDet/MonitoringProcessor.cc
+        src/plugins/streamDet/MonitoringProcessor.h
+		src/plugins/streamDet/RootProcessor.cc
+        src/plugins/streamDet/RootProcessor.h
+		src/plugins/streamDet/DecodeDASSource.cc
+		src/plugins/streamDet/DecodeDASSource.h
+		src/plugins/streamDet/JFactoryGenerator_streamDet.h
+		src/plugins/streamDet/streamDet.cc
+        src/plugins/streamDet/ZmqTransport.h
+        src/plugins/streamDet/INDRAMessage.h
+        src/plugins/streamDet/ADCSample.h
+        src/plugins/streamDet/ADCSampleFactory.h
         )
 
 find_package(ROOT REQUIRED)
 include_directories(${ROOT_INCLUDE_DIRS})
-target_link_libraries(toyDet jana2 ${ZEROMQ_LIBRARIES} ${CZMQ_LIBRARIES} ${ROOT_LIBRARIES})
-set_target_properties(toyDet PROPERTIES PREFIX "" SUFFIX ".so")
+target_link_libraries(streamDet jana2 ${ZEROMQ_LIBRARIES} ${CZMQ_LIBRARIES} ${ROOT_LIBRARIES})
+set_target_properties(streamDet PROPERTIES PREFIX "" SUFFIX ".so")
 
 
 

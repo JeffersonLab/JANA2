@@ -1,13 +1,13 @@
 
-#ifndef _JFactoryGenerator_toyDet_h_
-#define _JFactoryGenerator_toyDet_h_
+#ifndef _JFactoryGenerator_streamDet_h_
+#define _JFactoryGenerator_streamDet_h_
 
 #include <JANA/JFactoryGenerator.h>
 #include <JANA/JFactoryT.h>
 
 #include "ADCSample.h"
 
-class JFactoryGenerator_toyDet:public JFactoryGenerator{
+class JFactoryGenerator_streamDet: public JFactoryGenerator{
 
  public:
 
@@ -19,4 +19,4 @@ class JFactoryGenerator_toyDet:public JFactoryGenerator{
 
 };
 
-#endif // _JFactoryGenerator_toyDet_h_
+#endif // _JFactoryGenerator_streamDet_h_

@@ -51,12 +51,12 @@ public:
         //       Consider this use case in the future when we try to clean up how we get our parameters
 
         // Extract any parameters needed to figure out the buffer size
-        m_sample_count  = app->GetParameterValue<size_t>("toydet:nsamples");
-        m_channel_count = app->GetParameterValue<size_t>("toydet:nchannels");
+        m_sample_count  = app->GetParameterValue<size_t>("streamDet:nsamples");
+        m_channel_count = app->GetParameterValue<size_t>("streamDet:nchannels");
 
         // extract parameters useful for printing messages to screen
-        m_print_freq    = app->GetParameterValue<size_t>("toydet:msg_print_freq");
-        m_sub_socket    = app->GetParameterValue<std::string>("toydet:sub_socket");
+        m_print_freq    = app->GetParameterValue<size_t>("streamDet:msg_print_freq");
+        m_sub_socket    = app->GetParameterValue<std::string>("streamDet:sub_socket");
 
         // Allocate the buffer. The buffer size must be determinable at startup time and
         // constant for the life of the program. If we are a consumer, the buffer should be large

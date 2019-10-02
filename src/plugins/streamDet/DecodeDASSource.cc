@@ -1,23 +1,23 @@
 //
-//    File: toyDet/DASFileSource.cc
+//    File: streamDet/DecodeDASSource.cc
 // Created: Wed Apr 24 16:04:14 EDT 2019
 // Creator: pooser (on Linux rudy.jlab.org 3.10.0-957.10.1.el7.x86_64 x86_64)
 //
 
-#include "DASFileSource.h"
+#include "DecodeDASSource.h"
 #include "ADCSample.h"
 
 #include <iostream>
 #include <vector>
 
 //---------------------------------
-// DASFileSource    (Constructor)
+// DecodeDASSource    (Constructor)
 //---------------------------------
-DASFileSource::DASFileSource(std::string source_name, JApplication* app) : JEventSource(source_name, app) {
+DecodeDASSource::DecodeDASSource(std::string source_name, JApplication* app) : JEventSource(source_name, app) {
 
 }
 
-DASFileSource::~DASFileSource() {
+DecodeDASSource::~DecodeDASSource() {
 
     // Delete JFactoryGenerator if we created one
     if (mFactoryGenerator != nullptr) delete mFactoryGenerator;
@@ -27,7 +27,7 @@ DASFileSource::~DASFileSource() {
 
 }
 
-void DASFileSource::Open() {
+void DecodeDASSource::Open() {
 
     // open the file stream
     ifs.open(mName);
@@ -35,7 +35,7 @@ void DASFileSource::Open() {
 
 }
 
-void DASFileSource::GetEvent(std::shared_ptr<JEvent> event) {
+void DecodeDASSource::GetEvent(std::shared_ptr<JEvent> event) {
 
     // TODO: Put these somewhere that makes sense
     size_t MAX_CHANNELS = 80;

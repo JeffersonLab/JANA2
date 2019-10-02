@@ -32,8 +32,8 @@ void RootProcessor::Init() {
     outFile->cd();
     std::cout << "RootProcessor::Init -> Output ROOT file " << *outFileName << " created" << std::endl;
     // define trees and branches
-    eventTree  = new TTree("ET", "Toy Detector Event Data Tree");
-    sampleTree = new TTree("ST", "Toy Detector Sample Data Tree");
+    eventTree  = new TTree("ET", "Streaming Detector Event Data Tree");
+    sampleTree = new TTree("ST", "Streaming Detector Sample Data Tree");
     nentries = 0;
     eventTree->Branch("event", &event);
     for (uint ichan = 0; ichan < numChans; ichan++) {

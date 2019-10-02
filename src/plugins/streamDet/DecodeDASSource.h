@@ -1,11 +1,11 @@
 //
-//    File: toyDet/DASFileSource.h
+//    File: streamDet/DecodeDASSource.h
 // Created: Wed Apr 24 16:04:14 EDT 2019
 // Creator: pooser (on Linux rudy.jlab.org 3.10.0-957.10.1.el7.x86_64 x86_64)
 //
 
-#ifndef _DASFileSource_h_
-#define _DASFileSource_h_
+#ifndef _DecodeDASSource_h_
+#define _DecodeDASSource_h_
 
 #include <JANA/JEventSource.h>
 #include <JANA/JEvent.h>
@@ -13,16 +13,16 @@
 #include <fstream>
 #include <string>
 
-class DASFileSource : public JEventSource {
+class DecodeDASSource : public JEventSource {
 
 public:
 
     // constructors and destructors
-    DASFileSource(std::string source_name, JApplication* app);
-    ~DASFileSource() override;
+    DecodeDASSource(std::string source_name, JApplication* app);
+    ~DecodeDASSource() override;
 
     // define public methods
-    static std::string GetDescription() { return "ToyDet event source (direct ADC serialization mode)"; }
+    static std::string GetDescription() { return "streamDet event source (direct ADC serialization mode)"; }
     void Open() final;
     void GetEvent(std::shared_ptr<JEvent>) final;
 
@@ -34,5 +34,5 @@ private:
 
 };
 
-#endif // _DASFileSource_h_
+#endif // _DecodeDASSource_h_
 

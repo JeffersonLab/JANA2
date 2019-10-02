@@ -26,8 +26,8 @@ public:
 
         // acquire the parameters
         auto params = japp->GetJParameterManager();
-        params->GetParameter("toydet:rawhit_ms",     m_cputime_ms);
-        params->GetParameter("toydet:rawhit_spread", m_cputime_spread);
+        params->GetParameter("streamDet:rawhit_ms",     m_cputime_ms);
+        params->GetParameter("streamDet:rawhit_spread", m_cputime_spread);
     };
 
     // process the message/event and construct the jobject

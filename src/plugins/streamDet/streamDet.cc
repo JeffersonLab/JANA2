@@ -1,5 +1,5 @@
 //
-//    File: toyDet/toyDet.cc
+//    File: streamDet/streamDet.cc
 // Created: Wed Apr 24 16:04:14 EDT 2019
 // Creator: pooser (on Linux rudy.jlab.org 3.10.0-957.10.1.el7.x86_64 x86_64)
 //
@@ -10,8 +10,8 @@
 
 #include "RootProcessor.h"
 #include "MonitoringProcessor.h"
-#include "JFactoryGenerator_toyDet.h"
-#include "DASFileSource.h"
+#include "JFactoryGenerator_streamDet.h"
+#include "DecodeDASSource.h"
 #include "ADCSampleFactory.h"
 #include "INDRAMessage.h"
 #include "ZmqTransport.h"
@@ -23,7 +23,7 @@ void dummy_publisher_loop() {
     std::this_thread::sleep_for(std::chrono::seconds(4));  // Wait for JANA to fire up so we don't lose data
     std::cout << "Starting producer loop" << std::endl;
 
-    ZmqTransport transport {japp->GetParameterValue<std::string>("toydet:sub_socket"), true};
+    ZmqTransport transport {japp->GetParameterValue<std::string>("streamDet:sub_socket"), true};
     transport.initialize();
 
     DASEventMessage message(japp);
@@ -31,9 +31,9 @@ void dummy_publisher_loop() {
 
     size_t current_event_number = 1;
 
-    FILE* f = fopen(japp->GetParameterValue<std::string>("toydet:data_file").c_str(), "r");
-    std::cout << "toyDet::dummy_publisher_loop -> Reading data from data file "
-              << japp->GetParameterValue<std::string>("toydet:data_file").c_str() << std::endl;
+    FILE* f = fopen(japp->GetParameterValue<std::string>("streamDet:data_file").c_str(), "r");
+    std::cout << "streamDet::dummy_publisher_loop -> Reading data from data file "
+              << japp->GetParameterValue<std::string>("streamDet:data_file").c_str() << std::endl;
     if (f == nullptr) {
         std::cout << "Unable to open file, exiting." << std::endl;
         exit(0);
@@ -71,7 +71,7 @@ void InitPlugin(JApplication* app) {
     app->SetParameterValue("jana:extended_report", false);
     app->SetParameterValue("jana:legacy_mode", 0);
 
-    // TODO: Consider making toydet:sub_socket be the 'source_name', and use JESG to switch between JSES and DASFileSource
+    // TODO: Consider making streamDet:sub_socket be the 'source_name', and use JESG to switch between JSES and DecodeDASSource
     // TODO: Improve parametermanager interface
 
     bool use_zmq = true;
@@ -86,14 +86,14 @@ void InitPlugin(JApplication* app) {
     std::cout << "Subscribing to INDRA messages via ZMQ on socket " << sub_socket_name << std::endl;
     std::cout << "Publishing JObjects via ZMQ on socket " << pub_socket_name << std::endl;
 
-    app->GetJParameterManager()->SetDefaultParameter("toydet:use_zmq", use_zmq);
-    app->GetJParameterManager()->SetDefaultParameter("toydet:data_file", data_file_name);
-    app->GetJParameterManager()->SetDefaultParameter("toydet:use_dummy_publisher", use_dummy_publisher);
-    app->GetJParameterManager()->SetDefaultParameter("toydet:nchannels", nchannels);
-    app->GetJParameterManager()->SetDefaultParameter("toydet:nsamples", nsamples);
-    app->GetJParameterManager()->SetDefaultParameter("toydet:msg_print_freq", msg_print_freq);
-    app->GetJParameterManager()->SetDefaultParameter("toydet:sub_socket", sub_socket_name);
-    app->GetJParameterManager()->SetDefaultParameter("toydet:pub_socket", pub_socket_name);
+    app->GetJParameterManager()->SetDefaultParameter("streamDet:use_zmq", use_zmq);
+    app->GetJParameterManager()->SetDefaultParameter("streamDet:data_file", data_file_name);
+    app->GetJParameterManager()->SetDefaultParameter("streamDet:use_dummy_publisher", use_dummy_publisher);
+    app->GetJParameterManager()->SetDefaultParameter("streamDet:nchannels", nchannels);
+    app->GetJParameterManager()->SetDefaultParameter("streamDet:nsamples", nsamples);
+    app->GetJParameterManager()->SetDefaultParameter("streamDet:msg_print_freq", msg_print_freq);
+    app->GetJParameterManager()->SetDefaultParameter("streamDet:sub_socket", sub_socket_name);
+    app->GetJParameterManager()->SetDefaultParameter("streamDet:pub_socket", pub_socket_name);
 
     if (use_zmq) {
         auto transport = std::unique_ptr<ZmqTransport>(new ZmqTransport(sub_socket_name));
@@ -103,9 +103,9 @@ void InitPlugin(JApplication* app) {
         }
     }
     else {
-        app->Add(app->GetParameterValue<std::string>("toydet:data_file"));
-        app->Add(new JEventSourceGeneratorT<DASFileSource>());
-        app->Add(new JFactoryGenerator_toyDet());
+        app->Add(app->GetParameterValue<std::string>("streamDet:data_file"));
+        app->Add(new JEventSourceGeneratorT<DecodeDASSource>());
+        app->Add(new JFactoryGenerator_streamDet());
     }
 
     app->Add(new RootProcessor());
