@@ -8,7 +8,6 @@
 #ifndef _JCalibration_
 #define _JCalibration_
 
-#include "jerror.h"
 #include <JANA/JException.h>
 
 #include <typeinfo>
