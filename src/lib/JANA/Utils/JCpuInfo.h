@@ -6,7 +6,7 @@ namespace JCpuInfo {
 
     size_t GetNumCpus();
 
-    size_t GetCpuID();
+    uint32_t GetCpuID();
 
     size_t GetNumaNodeID();
 

@@ -155,12 +155,11 @@ JParameter* JParameterManager::SetDefaultParameter(K key, V &val, std::string de
 
 	auto p = FindParameter(key);
 	if( p != nullptr ){
-		
+
 		if( p->GetHasDefault() ){
-			auto s1 = p->template GetDefault<std::string>(); // yes, this crazy syntax is correct
-			auto s2 = p->template GetValue<std::string>();   // yes, this crazy syntax is correct
-			if( s1 != s2 ){
-				throw JException("WARNING: Multiple calls to SetDefaultParameter with key=\"%s\": %s != %s", key, s1.c_str(), s2.c_str());
+			auto older_default = p->template GetDefault<V>(); // yes, this crazy syntax is correct
+			if( older_default != val) {
+				throw JException("Conflicting defaults for parameter %s", key);
 			}
 		}else{
 			p->SetDefault( val );
