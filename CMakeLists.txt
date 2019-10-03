@@ -12,10 +12,6 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")
 # JANA,playground,tests all need threads
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
-# For janapy plugin
-find_package(PythonInterp 3 REQUIRED)
-find_package(PythonLibs 3 REQUIRED)
-include_directories(${PYTHON_INCLUDE_DIRS})
 
 include_directories(src/lib)
 include_directories(src/lib/JANA)
@@ -23,115 +19,18 @@ include_directories(src/plugins/JTest)
 include_directories(src/programs/jana)
 include_directories(src/programs/tests)
 
-add_library(jana2 STATIC
-        src/lib/JANA/JApplication.cc
-        src/lib/JANA/JApplication.h
-        src/lib/JANA/JCpuInfo.cc
-        src/lib/JANA/JCpuInfo.h
-        src/lib/JANA/JEvent.cc
-        src/lib/JANA/JEvent.h
-        src/lib/JANA/JEventProcessor.h
-        src/lib/JANA/JEventSource.cc
-        src/lib/JANA/JEventSource.h
-        src/lib/JANA/JEventSourceGenerator.h
-        src/lib/JANA/JEventSourceGeneratorT.h
-        src/lib/JANA/JEventSourceManager.cc
-        src/lib/JANA/JEventSourceManager.h
-        src/lib/JANA/JException.cc
-        src/lib/JANA/JException.h
-        src/lib/JANA/JFactory.h
-        src/lib/JANA/JFactoryGenerator.h
-        src/lib/JANA/JFactorySet.cc
-        src/lib/JANA/JFactorySet.h
-        src/lib/JANA/JFactoryT.h
-        src/lib/JANA/JFunctions.cc
-        src/lib/JANA/JFunctions.h
-        src/lib/JANA/JLogger.h
-        src/lib/JANA/JObject.cc
-        src/lib/JANA/JObject.h
-        src/lib/JANA/JParameter.cc
-        src/lib/JANA/JParameter.h
-        src/lib/JANA/JParameterManager.cc
-        src/lib/JANA/JParameterManager.h
-        src/lib/JANA/JQueue.h
-        src/lib/JANA/JQueueSet.cc
-        src/lib/JANA/JQueueSet.h
-        src/lib/JANA/JQueueSimple.cc
-        src/lib/JANA/JQueueSimple.h
-        src/lib/JANA/JQueueWithBarriers.cc
-        src/lib/JANA/JQueueWithBarriers.h
-        src/lib/JANA/JQueueWithLock.cc
-        src/lib/JANA/JQueueWithLock.h
-        src/lib/JANA/JResettable.h
-        src/lib/JANA/JResourcePool.h
-        src/lib/JANA/JSignalHandler.h
-        src/lib/JANA/JSourceFactoryGenerator.h
-        src/lib/JANA/JStatus.cc
-        src/lib/JANA/JStatus.h
-        src/lib/JANA/JTask.h
-        src/lib/JANA/JThread.cc
-        src/lib/JANA/JThread.h
-        src/lib/JANA/JThreadManager.cc
-        src/lib/JANA/JThreadManager.h
-        src/lib/JANA/JTypeInfo.h
-        src/lib/JANA/JVersion.h
-        src/lib/JANA/JEventProcessorArrow.cc
-        src/lib/JANA/JEventProcessorArrow.h
-        src/lib/JANA/JEventSourceArrow.cc
-        src/lib/JANA/JEventSourceArrow.h
-        src/lib/JANA/JScheduler.cc
-        src/lib/JANA/JPerfUtils.cc
-        src/lib/JANA/JServiceLocator.cc
-        src/lib/JANA/JWorker.h
-        src/lib/JANA/JWorker.cc
-        src/lib/JANA/JSubeventArrow.cc
-        src/lib/JANA/JSubeventArrow.h
-        src/lib/JANA/JProcessingController.h
-        src/lib/JANA/JArrowMetrics.h
-        src/lib/JANA/JWorkerMetrics.h
-        src/lib/JANA/JTopologyBuilder.cc
-        src/lib/JANA/JTopologyBuilder.h
-        src/lib/JANA/JPluginLoader.cc
-        src/lib/JANA/JPluginLoader.h
-        src/lib/JANA/JLegacyProcessingController.cc
-        src/lib/JANA/JLegacyProcessingController.h
-        src/lib/JANA/JProcessingTopology.cpp
-        src/lib/JANA/JProcessingTopology.h
-        src/lib/JANA/JArrowProcessingController.cc
-        src/lib/JANA/JArrowProcessingController.h
-        src/lib/JANA/JPerfMetrics.cc
-        src/lib/JANA/JPerfMetrics.h
-        src/lib/JANA/JPerfSummary.h
-        src/lib/JANA/JArrowPerfSummary.cc
-        src/lib/JANA/JArrowPerfSummary.h
-        src/lib/JANA/JEventPool.h
-        src/lib/JANA/JProcessorMapping.h
-        src/lib/JANA/JProcessorMapping.cc
-        src/lib/JANA/Streaming/JEventBuilder.h
-        src/lib/JANA/Streaming/JDiscreteJoin.h
-        src/lib/JANA/Streaming/JStreamingEventSource.h
-        src/lib/JANA/Streaming/JTransport.h
-        src/lib/JANA/Streaming/JMessage.h
-        src/lib/JANA/Streaming/JWindow.h
-        src/lib/JANA/JComponentSummary.h
-        src/lib/JANA/JComponentSummary.cc
-        src/lib/JANA/JCsvWriter.h
-        )
-target_link_libraries(jana2 ${CMAKE_DL_LIBS})
-target_link_libraries(jana2 Threads::Threads)
-
-
 add_executable(jana
         src/programs/jana/jana.cc
         src/programs/jana/JBenchmarker.h
         src/programs/jana/JBenchmarker.cc
         src/programs/jana/MyProcessor.cc
         src/programs/jana/MyProcessor.h
-        src/lib/JANA/Streaming/JDiscreteJoin.h src/lib/JANA/Streaming/JTrigger.h)
+        src/lib/JANA/Streaming/JDiscreteJoin.h
+		src/lib/JANA/Streaming/JTrigger.h
+		)
 
 target_link_libraries(jana jana2)
 target_link_libraries(jana Threads::Threads)
-
 
 add_executable(tests
         src/programs/tests/catch.hpp
@@ -155,6 +54,10 @@ add_executable(tests
         src/programs/tests/UserExceptionTests.h
         )
 
+target_link_libraries(tests jana2)
+target_link_libraries(tests Threads::Threads)
+
+
 add_executable(playground
         src/programs/playground/playground.cc
         src/programs/playground/factory_gens_iter_1.cc
@@ -168,6 +71,9 @@ add_executable(playground
         src/programs/playground/JAbstractFactory.h
         src/programs/playground/JLazyCollection.h
         )
+
+target_link_libraries(playground jana2)
+target_link_libraries(playground Threads::Threads)
 
 
 add_library(jana2 STATIC
@@ -187,53 +93,72 @@ add_library(jana2 STATIC
         src/lib/JANA/JObject.h
         src/lib/JANA/JSourceFactoryGenerator.h
         src/lib/JANA/JCsvWriter.h
-        src/lib/JANA/Engine/JEventProcessorArrow.cc
+		src/lib/JANA/JLogger.h
+		src/lib/JANA/JTopologyBuilder.cc
+		src/lib/JANA/Engine/JActivable.h
+		src/lib/JANA/Engine/JArrow.h
+		src/lib/JANA/Engine/JArrowMetrics.h
+		src/lib/JANA/Engine/JArrowPerfSummary.cc
+		src/lib/JANA/Engine/JArrowPerfSummary.h
+		src/lib/JANA/Engine/JArrowProcessingController.cc
+		src/lib/JANA/Engine/JArrowProcessingController.h
+		src/lib/JANA/Engine/JArrowTopology.cc
+		src/lib/JANA/Engine/JArrowTopology.h
+		src/lib/JANA/Engine/JEventProcessorArrow.cc
         src/lib/JANA/Engine/JEventProcessorArrow.h
         src/lib/JANA/Engine/JEventSourceArrow.cc
         src/lib/JANA/Engine/JEventSourceArrow.h
-        src/lib/JANA/Engine/JScheduler.cc
-        src/lib/JANA/Engine/JWorker.h
+		src/lib/JANA/Engine/JMailbox.h
+		src/lib/JANA/Engine/JScheduler.cc
+		src/lib/JANA/Engine/JScheduler.h
+		src/lib/JANA/Engine/JSubeventArrow.cc
+		src/lib/JANA/Engine/JSubeventArrow.h
+		src/lib/JANA/Engine/JWorker.h
         src/lib/JANA/Engine/JWorker.cc
-        src/lib/JANA/Engine/JSubeventArrow.cc
-        src/lib/JANA/Engine/JSubeventArrow.h
-        src/lib/JANA/Engine/JArrowMetrics.h
-        src/lib/JANA/Engine/JWorkerMetrics.h
-        src/lib/JANA/Engine/JArrowProcessingController.cc
-        src/lib/JANA/Engine/JArrowProcessingController.h
-        src/lib/JANA/Engine/JArrowPerfSummary.cc
-        src/lib/JANA/Engine/JArrowPerfSummary.h
-        src/lib/JANA/Services/JParameter.cc
+		src/lib/JANA/Engine/JWorkerMetrics.h
+		src/lib/JANA/Services/JComponentManager.cc
+		src/lib/JANA/Services/JComponentManager.h
+		src/lib/JANA/Services/JGlobalRootLock.h
+		src/lib/JANA/Services/JLoggingService.h
+		src/lib/JANA/Services/JParameter.cc
         src/lib/JANA/Services/JParameter.h
         src/lib/JANA/Services/JParameterManager.cc
         src/lib/JANA/Services/JParameterManager.h
-        src/lib/JANA/Services/JLoggingService.h
-        src/lib/JANA/Services/JServiceLocator.cc
-        src/lib/JANA/Services/JProcessingController.h
-        src/lib/JANA/Services/JPluginLoader.cc
-        src/lib/JANA/Services/JPluginLoader.h
-        src/lib/JANA/Status/JStatus.cc
+		src/lib/JANA/Services/JPluginLoader.cc
+		src/lib/JANA/Services/JPluginLoader.h
+		src/lib/JANA/Services/JProcessingController.h
+		src/lib/JANA/Services/JServiceLocator.cc
+		src/lib/JANA/Services/JServiceLocator.h
+		src/lib/JANA/Status/JComponentSummary.h
+		src/lib/JANA/Status/JComponentSummary.cc
+		src/lib/JANA/Status/JPerfMetrics.cc
+		src/lib/JANA/Status/JPerfMetrics.h
+		src/lib/JANA/Status/JPerfSummary.h
+		src/lib/JANA/Status/JStatus.cc
         src/lib/JANA/Status/JStatus.h
-        src/lib/JANA/Status/JVersion.h
-        src/lib/JANA/Status/JPerfMetrics.cc
-        src/lib/JANA/Status/JPerfMetrics.h
-        src/lib/JANA/Status/JPerfSummary.h
-        src/lib/JANA/Status/JComponentSummary.h
-        src/lib/JANA/Status/JComponentSummary.cc
-        src/lib/JANA/Utils/JCpuInfo.cc
+		src/lib/JANA/Status/JVersion.h
+		src/lib/JANA/Streaming/JDiscreteJoin.h
+		src/lib/JANA/Streaming/JEventBuilder.h
+		src/lib/JANA/Streaming/JMessage.h
+		src/lib/JANA/Streaming/JStreamingEventSource.h
+		src/lib/JANA/Streaming/JTransport.h
+		src/lib/JANA/Streaming/JTrigger.h
+        src/lib/JANA/Streaming/JWindow.h
+        src/lib/JANA/Utils/JBacktrace.h
+		src/lib/JANA/Utils/JEventPool.h
+		src/lib/JANA/Utils/JCpuInfo.cc
         src/lib/JANA/Utils/JCpuInfo.h
+		src/lib/JANA/Utils/JTypeInfo.h
+		src/lib/JANA/Utils/JResourcePool.h
         src/lib/JANA/Utils/JResettable.h
-        src/lib/JANA/Utils/JResourcePool.h
-        src/lib/JANA/Utils/JTypeInfo.h
-        src/lib/JANA/Utils/JPerfUtils.cc
-        src/lib/JANA/Utils/JProcessorMapping.h
-        src/lib/JANA/Utils/JProcessorMapping.cc
-        src/lib/JANA/Utils/JEventPool.h
-        src/lib/JANA/Services/JComponentManager.cc
-        src/lib/JANA/Services/JComponentManager.h
-        src/lib/JANA/Engine/JArrowTopology.cc
-        src/lib/JANA/Engine/JArrowTopology.h
-        src/lib/JANA/JLogger.h
-        src/lib/JANA/Utils/JBacktrace.h)
+		src/lib/JANA/Utils/JProcessorMapping.h
+		src/lib/JANA/Utils/JProcessorMapping.cc
+		src/lib/JANA/Utils/JPerfUtils.cc
+		src/lib/JANA/Utils/JPerfUtils.h
+		)
+
+target_link_libraries(jana2 ${CMAKE_DL_LIBS})
+target_link_libraries(jana2 Threads::Threads)
 
 
 add_library(jtest SHARED
@@ -253,7 +178,7 @@ set_target_properties(jtest PROPERTIES PREFIX "" SUFFIX ".so")
 
 add_library(janapy SHARED
         src/plugins/janapy/janapy.cc
-)
+        )
 
 set(Python_ADDITIONAL_VERSIONS 3.7 3.6)
 find_package(PythonInterp REQUIRED)

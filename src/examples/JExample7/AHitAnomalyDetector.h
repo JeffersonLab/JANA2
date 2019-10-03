@@ -35,7 +35,7 @@
 
 #include <JANA/JEventProcessor.h>
 #include <JANA/JEvent.h>
-#include <JANA/JPerfUtils.h>
+#include <JANA/Utils/JPerfUtils.h>
 #include "AHit.h"
 
 class AHitAnomalyDetector : public JEventProcessor {

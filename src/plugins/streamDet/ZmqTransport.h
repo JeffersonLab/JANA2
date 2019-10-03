@@ -5,7 +5,7 @@
 #ifndef _ZmqTransport_h_
 #define _ZmqTransport_h_
 
-#include <JANA/JParameterManager.h>
+#include <JANA/Services/JParameterManager.h>
 #include <JANA/Streaming/JTransport.h>
 
 #include <zmq.h>

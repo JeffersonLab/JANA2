@@ -32,6 +32,7 @@
 
 
 #include <JANA/JApplication.h>
+#include <JANA/JFactoryGenerator.h>
 #include <JANA/JEventSourceGeneratorT.h>
 #include <JANA/Streaming/JEventBuilder.h>
 #include <JANA/Streaming/JStreamingEventSource.h>

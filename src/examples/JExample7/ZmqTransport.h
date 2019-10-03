@@ -36,7 +36,6 @@
 #ifndef JANA2_ZMQDATASOURCE_H
 #define JANA2_ZMQDATASOURCE_H
 
-#include <JANA/JParameterManager.h>
 #include <JANA/Streaming/JTransport.h>
 
 #include <zmq.h>

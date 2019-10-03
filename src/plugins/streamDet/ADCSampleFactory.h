@@ -7,7 +7,7 @@
 
 #include <JANA/JFactoryT.h>
 #include <JANA/JEvent.h>
-#include <JANA/JPerfUtils.h>
+#include <JANA/Utils/JPerfUtils.h>
 
 #include "ADCSample.h"
 #include "INDRAMessage.h"

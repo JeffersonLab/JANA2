@@ -19,10 +19,8 @@ DecodeDASSource::DecodeDASSource(std::string source_name, JApplication* app) : J
 
 DecodeDASSource::~DecodeDASSource() {
 
-    // Delete JFactoryGenerator if we created one
-    if (mFactoryGenerator != nullptr) delete mFactoryGenerator;
     // Close the file/stream here.
-    std::cout << "Closing " << mName << std::endl;
+    std::cout << "Closing " << GetName() << std::endl;
     ifs.close();
 
 }
@@ -30,8 +28,8 @@ DecodeDASSource::~DecodeDASSource() {
 void DecodeDASSource::Open() {
 
     // open the file stream
-    ifs.open(mName);
-    if (!ifs) throw JException("Unable to open '%s'", mName.c_str());
+    ifs.open(GetName());
+    if (!ifs) throw JException("Unable to open '%s'", GetName().c_str());
 
 }
 
@@ -62,7 +60,7 @@ void DecodeDASSource::GetEvent(std::shared_ptr<JEvent> event) {
             return;
         }
         // close file stream when the end of file is reached
-        std::cout << "Reached end of file/stream " << mName << std::endl;
+        std::cout << "Reached end of file/stream " << GetName() << std::endl;
         ifs.close();
     }
     // signal jana to terminate

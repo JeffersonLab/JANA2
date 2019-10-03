@@ -39,7 +39,7 @@ public:
     void GetEvent(std::shared_ptr<JEvent> event) override {
 
         if (m_next_item == nullptr) {
-            m_next_item = new MessageT(mApplication);
+            m_next_item = new MessageT(GetApplication());
         }
 
         auto result = m_transport->receive(*m_next_item);
