@@ -56,8 +56,8 @@ public:
 
 private:
 
-    std::vector<string> _plugins_to_include;
-    std::vector<string> _plugins_to_exclude;
+    std::vector<std::string> _plugins_to_include;
+    std::vector<std::string> _plugins_to_exclude;
     std::vector<std::string> _plugin_paths;
     std::vector<void*> _sohandles;
 

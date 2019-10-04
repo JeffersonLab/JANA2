@@ -52,31 +52,42 @@ using namespace std;
 // JParameterManager    (Constructor)
 //---------------------------------
 JParameterManager::JParameterManager() {
-    _logger = JLoggingService::logger("JParameterManager");
+    m_logger = JLoggingService::logger("JParameterManager");
 }
 
 //---------------------------------
 // ~JParameterManager    (Destructor)
 //---------------------------------
 JParameterManager::~JParameterManager() {
-    for (auto p : _jparameters) delete p.second;
-    _jparameters.clear();
+    for (auto p : m_parameters) delete p.second;
+    m_parameters.clear();
+}
+
+// When accessing the m_parameters map strings are always converted to
+// lower case. This effectively makes configuration parameters case-insensitve
+// while allowing users to use case and have that stored as the actual parameter name
+std::string JParameterManager::to_lower(std::string& name) {
+    std::string tmp(name);
+    std::transform(tmp.begin(), tmp.end(), tmp.begin(), ::tolower);
+    return tmp;
 }
 
 //---------------------------------
 // Exists
 //---------------------------------
 bool JParameterManager::Exists(string name) {
-    return _jparameters.count(ToLC(name)) != 0;
+    return m_parameters.find(to_lower(name)) != m_parameters.end();
 }
 
 //---------------------------------
 // FindParameter
 //---------------------------------
 JParameter* JParameterManager::FindParameter(std::string name) {
-    if (!Exists(name)) return nullptr;
-
-    return _jparameters[ToLC(name)];
+    auto result = m_parameters.find(to_lower(name));
+    if (result == m_parameters.end()) {
+        return nullptr;
+    }
+    return result->second;
 }
 
 //---------------------------------
@@ -93,10 +104,10 @@ void JParameterManager::PrintParameters(bool all) {
     // Find maximum key length
     uint32_t max_key_len = 4;
     vector<string> keys;
-    for (auto& p : _jparameters) {
+    for (auto& p : m_parameters) {
         string key = p.first;
         auto j = p.second;
-        if ((!all) && j->IsDefault()) continue;
+        if ((!all) && j->has_default) continue;
         keys.push_back(key);
         if (key.length() > max_key_len) max_key_len = key.length();
     }
@@ -120,8 +131,8 @@ void JParameterManager::PrintParameters(bool all) {
 
     // Print all parameters
     for (string& key : keys) {
-        auto name = _jparameters[key]->GetName();
-        string val = _jparameters[key]->GetValue<string>();
+        auto name = m_parameters[key]->name;
+        string val = m_parameters[key]->value;
         LOG << string(max_key_len + 2 - key.length(), ' ') << name << " = " << val << LOG_END;
     }
     LOG << LOG_END;
@@ -154,7 +165,7 @@ void JParameterManager::ReadConfigFile(std::string filename) {
     ifstream ifs(filename);
 
     if (!ifs.is_open()) {
-        LOG_ERROR(_logger) << "Unable to open configuration file \"" << filename << "\" !" << LOG_END;
+        LOG_ERROR(m_logger) << "Unable to open configuration file \"" << filename << "\" !" << LOG_END;
         throw JException("Unable to open configuration file");
     }
 
@@ -198,7 +209,8 @@ void JParameterManager::ReadConfigFile(std::string filename) {
         if (val == "")val = "1";
 
         // Override defaulted values only
-        if (!Exists(key) || FindParameter(key)->IsDefault()) {
+        JParameter* param = FindParameter(key);
+        if (param == nullptr || param->has_default) {
             SetParameter(key, val);
         }
     }
@@ -217,7 +229,7 @@ void JParameterManager::WriteConfigFile(std::string filename) {
     // Try and open file
     ofstream ofs(filename);
     if (!ofs.is_open()) {
-        LOG_ERROR(_logger) << "Unable to open configuration file \"" << filename << "\" for writing!" << LOG_END;
+        LOG_ERROR(m_logger) << "Unable to open configuration file \"" << filename << "\" for writing!" << LOG_END;
         throw JException("Unable to open configuration file for writing!");
     }
 
@@ -236,25 +248,25 @@ void JParameterManager::WriteConfigFile(std::string filename) {
     // First, find the longest key and value
     size_t max_key_len = 0;
     size_t max_val_len = 0;
-    for (auto pair : _jparameters) {
+    for (auto pair : m_parameters) {
         auto key_len = pair.first.length();
-        auto val_len = pair.second->GetValue<std::string>().length();
+        auto val_len = pair.second->value.length();
         if (key_len > max_key_len) max_key_len = key_len;
         if (val_len > max_val_len) max_val_len = val_len;
     }
 
     // Loop over parameters a second time and print them out
-    for (auto pair : _jparameters) {
+    for (auto pair : m_parameters) {
         std::string key = pair.first;
-        std::string val = pair.second->GetValue<std::string>();
+        std::string val = pair.second->value;
+        std::string desc = pair.second->description;
 
-        ofs << key << string(max_key_len - key.length(), ' ') << " " << val << string(max_val_len - val.length(), ' ');
-        // TODO: No ability to retrieve descriptions!
-        ofs << std::endl;
+        ofs << key << string(max_key_len - key.length(), ' ') << " "
+            << val << string(max_val_len - val.length(), ' ') << " # "
+            << desc << std::endl;
     }
     // Release mutex
     //_mutex.unlock();
 
-    // close file
     ofs.close();
 }

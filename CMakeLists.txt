@@ -87,8 +87,6 @@ add_library(jana2 STATIC
         src/lib/JANA/Engine/JArrowProcessingController.h
         src/lib/JANA/Engine/JArrowPerfSummary.cc
         src/lib/JANA/Engine/JArrowPerfSummary.h
-        src/lib/JANA/Services/JParameter.cc
-        src/lib/JANA/Services/JParameter.h
         src/lib/JANA/Services/JParameterManager.cc
         src/lib/JANA/Services/JParameterManager.h
         src/lib/JANA/Services/JLoggingService.h

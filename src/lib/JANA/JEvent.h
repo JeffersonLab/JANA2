@@ -126,7 +126,7 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 /// Repeated calls to Insert() will append to the previous data rather than overwrite it,
 /// which saves the user from having to allocate a throwaway vector and requires less error handling.
 template <class T>
-inline void JEvent::Insert(T* item, const string& tag) const {
+inline void JEvent::Insert(T* item, const std::string& tag) const {
 
 	auto factory = mFactorySet->GetFactory<T>(tag);
 	if (factory == nullptr) {
@@ -137,7 +137,7 @@ inline void JEvent::Insert(T* item, const string& tag) const {
 }
 
 template <class T>
-inline void JEvent::Insert(const vector<T*>& items, const string& tag) const {
+inline void JEvent::Insert(const vector<T*>& items, const std::string& tag) const {
 
 	auto factory = mFactorySet->GetFactory<T>(tag);
 	if (factory == nullptr) {

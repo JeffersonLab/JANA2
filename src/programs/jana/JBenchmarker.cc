@@ -169,12 +169,12 @@ void JBenchmarker::RunUntilFinished() {
 void JBenchmarker::copy_to_output_dir(std::string filename) {
 
     // Substitute environment variables in given filename
-    string new_fname = filename;
+    std::string new_fname = filename;
     while (auto pos_start = new_fname.find("${") != new_fname.npos) {
         auto pos_end = new_fname.find("}", pos_start + 3);
         if (pos_end != new_fname.npos) {
 
-            string envar_name = new_fname.substr(pos_start + 1, pos_end - pos_start - 1);
+            std::string envar_name = new_fname.substr(pos_start + 1, pos_end - pos_start - 1);
             LOG_DEBUG(_logger) << "Looking for env var '" << envar_name
                                << "'" << LOG_END;
 
@@ -195,7 +195,7 @@ void JBenchmarker::copy_to_output_dir(std::string filename) {
     }
 
     // Extract filename without path
-    string base_fname = new_fname;
+    std::string base_fname = new_fname;
     if (auto pos = base_fname.rfind("/")) base_fname.erase(0, pos);
 
     // Copy file

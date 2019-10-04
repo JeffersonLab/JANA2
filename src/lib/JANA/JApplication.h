@@ -73,8 +73,8 @@ public:
 
     // Loading plugins
 
-    void AddPlugin(string plugin_name);
-    void AddPluginPath(string path);
+    void AddPlugin(std::string plugin_name);
+    void AddPluginPath(std::string path);
 
 
     // Building a JProcessingTopology

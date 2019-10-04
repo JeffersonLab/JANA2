@@ -102,13 +102,13 @@ void JPluginLoader::attach_plugins(JComponentManager* jcm) {
     const char* jpp = getenv("JANA_PLUGIN_PATH");
     if (jpp) {
         std::stringstream ss(jpp);
-        string path;
+        std::string path;
         while (getline(ss, path, ':')) add_plugin_path(path);
     }
 
     // Default plugin search path
     add_plugin_path(".");
-    if (const char* ptr = getenv("JANA_HOME")) add_plugin_path(string(ptr) + "/plugins");
+    if (const char* ptr = getenv("JANA_HOME")) add_plugin_path(std::string(ptr) + "/plugins");
 
     // Add plugins specified via PLUGINS configuration parameter
     // (comma separated list).
@@ -116,7 +116,7 @@ void JPluginLoader::attach_plugins(JComponentManager* jcm) {
 
     // Loop over plugins
     std::stringstream err_mess;
-    for (string plugin : _plugins_to_include) {
+    for (std::string plugin : _plugins_to_include) {
         if (exclusions.find(plugin) != exclusions.end()) {
             LOG_IF(_verbose) << "Excluding plugin `" << plugin << "`" << LOG_END;
             continue;
@@ -127,8 +127,8 @@ void JPluginLoader::attach_plugins(JComponentManager* jcm) {
 
         // Loop over paths
         bool found_plugin = false;
-        for (string path : _plugin_paths) {
-            string fullpath = path + "/" + plugin;
+        for (std::string path : _plugin_paths) {
+            std::string fullpath = path + "/" + plugin;
             LOG_IF(_verbose) << "Looking for '" << fullpath << "' ...." << LOG_END;
             if (access(fullpath.c_str(), F_OK) != -1) {
                 LOG_IF(_verbose) << "Found!" << LOG_END;
