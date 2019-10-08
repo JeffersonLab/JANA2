@@ -83,7 +83,7 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 
 		//OBJECTS
 		// C style getters
-		template<class T> JFactoryT<T>* Get(T** item, const std::string& tag="") const;
+		template<class T> JFactoryT<T>* Get(const T** item, const std::string& tag="") const;
 		template<class T> JFactoryT<T>* Get(vector<const T*> &vec, const std::string& tag = "") const;
 
 		// C++ style getters
@@ -165,6 +165,7 @@ inline JFactoryT<T>* JEvent::GetFactory(const std::string& tag) const
         if (mEventSource == nullptr || !(mEventSource->GetObjects(this->shared_from_this(), factory))) {
 			throw JException("Could not find factory '" + factory->GetName() + "', tag=" + tag);
         }
+        mFactorySet->Add(factory);
 	};
     return factory;
 }
@@ -173,7 +174,7 @@ inline JFactoryT<T>* JEvent::GetFactory(const std::string& tag) const
 /// C-style getters
 
 template<class T>
-JFactoryT<T>* JEvent::Get(T** destination, const std::string& tag) const
+JFactoryT<T>* JEvent::Get(const T** destination, const std::string& tag) const
 {
 	auto factory = GetFactory<T>(tag);
     auto iterators = factory->GetOrCreate(this->shared_from_this());

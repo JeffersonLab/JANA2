@@ -61,7 +61,9 @@ public:
     using PairType = std::pair<IteratorType, IteratorType>;
 
 
-    JFactoryT(const std::string& aName = JTypeInfo::demangle<T>(), const std::string& aTag = "") : JFactory(aName, aTag) {}
+    JFactoryT(const std::string& aName = JTypeInfo::demangle<T>(), const std::string& aTag = "")
+    : JFactory(aName, aTag) {}
+
     ~JFactoryT() override = default;
 
 
@@ -78,7 +80,9 @@ public:
 
         //std::lock_guard<std::mutex> lock(mMutex);
         switch (mStatus) {
+            case Status::Uninitialized:
             case Status::InvalidMetadata:
+            case Status::Cleared:
                 ChangeRun(event);
             case Status::Unprocessed:
                 Process(event);
@@ -106,20 +110,25 @@ public:
         T* casted = dynamic_cast<T*>(aDatum);
         assert(casted != nullptr);
         mData.push_back(casted);
+        mStatus = Status::Inserted;
+        // TODO: assert correct mStatus precondition
     }
 
     void Set(const std::vector<T*>& aData) {
         ClearData();
         mData = aData;
+        mStatus = Status::Inserted;
     }
 
     void Set(std::vector<T*>&& aData) {
         ClearData();
         mData = std::move(aData);
+        mStatus = Status::Inserted;
     }
 
     void Insert(T* aDatum) {
         mData.push_back(aDatum);
+        mStatus = Status::Inserted;
     }
 
     void ClearData() override {

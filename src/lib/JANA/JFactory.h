@@ -69,7 +69,8 @@ public:
         NOT_OBJECT_OWNER = 0x04
     };
 
-    JFactory(std::string aName, std::string aTag = "") : mObjectName(std::move(aName)), mTag(std::move(aTag)) {};
+    JFactory(std::string aName, std::string aTag = "")
+    : mObjectName(std::move(aName)), mTag(std::move(aTag)), mStatus(Status::Uninitialized) {};
 
     virtual ~JFactory() = default;
 
