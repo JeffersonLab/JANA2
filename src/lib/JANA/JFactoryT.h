@@ -47,6 +47,7 @@
 #include <JANA/JApplication.h>
 #include <JANA/JFactory.h>
 #include <JANA/JObject.h>
+#include <JANA/JEventSource.h>
 #include <JANA/Utils/JTypeInfo.h>
 
 #ifndef _JFactoryT_h_
@@ -69,14 +70,16 @@ public:
 
     void Init() override {}
     void ChangeRun(const std::shared_ptr<const JEvent>& aEvent) override {}
-    void Process(const std::shared_ptr<const JEvent>& aEvent) override {}
+    void Process(const std::shared_ptr<const JEvent>& aEvent) override {
+        throw JException("Dummy factory created but nothing was Inserted() or Set().");
+    }
 
 
     std::type_index GetObjectType(void) const override {
         return std::type_index(typeid(T));
     }
 
-    PairType GetOrCreate(const std::shared_ptr<const JEvent>& event) {
+    PairType GetOrCreate(const std::shared_ptr<const JEvent>& event, JEventSource* src) {
 
         //std::lock_guard<std::mutex> lock(mMutex);
         switch (mStatus) {
@@ -85,7 +88,10 @@ public:
             case Status::Cleared:
                 ChangeRun(event);
             case Status::Unprocessed:
-                Process(event);
+                // Attempt to retrieve from JEventSource; otherwise call Process
+                if (src != nullptr && !src->GetObjects(event, this)) {
+                    Process(event);
+                }
                 mStatus = Status::Processed;
             case Status::Processed:
             case Status::Inserted:
