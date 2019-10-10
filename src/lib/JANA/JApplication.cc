@@ -248,12 +248,9 @@ void JApplication::PrintStatus(void) {
         _processing_controller->print_report();
     }
     else {
-        std::stringstream ss;
-        ss << "  " << GetNeventsProcessed() << " events processed  "
+        jout << "  " << GetNeventsProcessed() << " events processed  "
            << JTypeInfo::to_string_with_si_prefix(GetInstantaneousRate()) << "Hz ("
-           << JTypeInfo::to_string_with_si_prefix(GetIntegratedRate()) << "Hz avg)";
-        jout << ss.str() << "\n";
-        jout << jendl;
+           << JTypeInfo::to_string_with_si_prefix(GetIntegratedRate()) << "Hz avg)" << jendl;
     }
 }
 
