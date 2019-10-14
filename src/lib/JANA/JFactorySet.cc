@@ -86,23 +86,19 @@ JFactorySet::~JFactorySet()
 //---------------------------------
 bool JFactorySet::Add(JFactory* aFactory)
 {
-	/// Add a factory to this JFactorySet. The caller should be careful when
-	/// using the factory pointer after calling this since the factory may be deleted
-	/// during this call. This will happen if a factory of the same type and tag
-	/// already exists in this set. A return value of "true" indicates that the
-	/// factory was successfully added and that the given pointer is still valid
-	/// (until this set is destroyed). A return value of "false" indicates that
-	/// this factory was a duplicate and therefore the factory object was destroyed.
-	/// In all cases, this assumes ownership of the factory object.
+	/// Add a JFactory to this JFactorySet. The JFactorySet assumes ownership of this factory.
+	/// If the JFactorySet already contains a JFactory with the same key,
+	/// throw an exception and let the user figure out what to do.
+	/// This scenario occurs when the user has multiple JFactory<T> producing the
+	/// same T JObject, and is not distinguishing between them via tags.
 
 	auto sKey = std::make_pair( aFactory->GetObjectType(), aFactory->GetTag() );
 	auto res = mFactories.emplace(sKey, static_cast<JFactory*>(aFactory));
 	if( res.second ) return true; // factory successfully added
 	
-	// factory is duplicate. Destroy it and inform caller by returning false.
-	delete aFactory;
-	
-	return false;
+	// Factory is duplicate. Since this almost certainly indicates a user error, and
+	// the caller will not be able to do anything about it anyway, throw an exception.
+	throw JException("JFactorySet::Add failed because factory is duplicate");
 }
 
 //---------------------------------

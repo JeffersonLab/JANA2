@@ -61,10 +61,9 @@ private:
     std::vector<std::string> _plugin_paths;
     std::vector<void*> _sohandles;
 
-    bool _verbose;
+    bool _verbose = false;
     JLogger _logger = JLoggingService::logger("JPluginLoader");
-    JServiceLocator* _service_locator;
-    JApplication* _app;
+    JApplication* _app = nullptr;
 };
 
 

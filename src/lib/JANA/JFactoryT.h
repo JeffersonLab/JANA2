@@ -84,6 +84,7 @@ public:
         //std::lock_guard<std::mutex> lock(mMutex);
         switch (mStatus) {
             case Status::Uninitialized:
+                Init();
             case Status::InvalidMetadata:
             case Status::Cleared:
                 ChangeRun(event);
