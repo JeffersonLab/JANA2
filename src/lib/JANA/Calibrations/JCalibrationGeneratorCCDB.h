@@ -10,7 +10,7 @@
 #include <iostream>
 #include <memory>
 
-#include <JANA/JCalibrationGenerator.h>
+#include <JANA/Calibrations/JCalibrationGenerator.h>
 #include <CCDB/CalibrationGenerator.h>
 #include <CCDB/Helpers/PathUtils.h>
 #include "JCalibrationCCDB.h"
@@ -81,7 +81,7 @@
 				if(parseResult.RunNumberIsParsed) 
 				{
 					run = parseResult.RunNumber;
-					jout<<"CCDB::janaccdb (!) The run number for CCDB IS FORCED TO BE '"<< run<<"' (it was set through context) (!)"<<std::endl;
+					jout<<"CCDB::janaccdb (!) The run number for CCDB IS FORCED TO BE '"<< run<<"' (it was set through context) (!)"<<jendl;
 				}
 			#endif
 

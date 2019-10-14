@@ -141,7 +141,6 @@ public:
             jout<<"URL: "<<g->GetURL()<<jendl;
             jout<<"context: "<<g->GetContext()<<jendl;
         }else{
-            /*
             _DBG__;
             _DBG_<<"Unable to create JCalibration object!"<<endl;
             _DBG_<<"    URL: "<<url<<endl;
@@ -151,7 +150,6 @@ public:
                 _DBG_<<"attempted to use generator: "<<gen->Description()<<endl;
             else
                 _DBG_<<"no appropriate generators found. attempted JCalibrationFile"<<endl;
-                */
         }
 
         // Unlock calibration mutex
