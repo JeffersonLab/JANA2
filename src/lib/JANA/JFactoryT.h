@@ -71,7 +71,9 @@ public:
     void Init() override {}
     void ChangeRun(const std::shared_ptr<const JEvent>& aEvent) override {}
     void Process(const std::shared_ptr<const JEvent>& aEvent) override {
-        throw JException("Dummy factory created but nothing was Inserted() or Set().");
+        // TODO: Debate best thing to do in this case. Consider fa250WaveboardV1Hit
+        LOG << "Dummy factory created but nothing was Inserted() or Set()." << LOG_END;
+        //throw JException("Dummy factory created but nothing was Inserted() or Set().");
     }
 
 
