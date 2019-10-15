@@ -57,10 +57,10 @@
 /// The JObject class is a base class for all data classes.
 /// (See JFactory for algorithm classes.)
 
-// The following is a legacy definition that is no longer needed in JANA2.
+/// The JOBJECT_PUBLIC macro is used to generate the correct className() overrides for a JObject subclass
 #define JOBJECT_PUBLIC(T) \
-	static const char* static_className(void) {return #T;}
-
+	static const std::string static_className() {return #T;} \
+	const std::string className() const override {return #T;} \
 
 
 struct JObjectMember {
@@ -98,11 +98,13 @@ class JObject{
 	public:
 		JObject() = default;
 		virtual ~JObject() = default;
-	
-		virtual const std::string& className(void) const {
-		    // TODO: This doesn't do what we'd hope
-			if(mName.empty()) mName = JTypeInfo::demangle<decltype(*this)>();
-			return mName;
+
+		virtual const std::string className() const {
+		    /// className returns a string representation of the name of this class.
+		    /// This won't automatically do the right thing -- in each JObject subclass,
+		    /// the user either needs to use the JOBJECT_PUBLIC macro,
+		    /// or override this method while keeping the same method body.
+			return JTypeInfo::demangle<decltype(*this)>();
 		}
 	
 		// Associated objects
@@ -116,7 +118,6 @@ class JObject{
 		virtual void Summarize(JObjectSummary& summary) const;
 
 	protected:
-		mutable std::string mName;
 		std::set<const JObject*> associated;
 		std::set<JObject*> auto_delete;
 };

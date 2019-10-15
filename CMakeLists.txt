@@ -38,7 +38,7 @@ add_executable(tests
         src/programs/tests/UserExceptionTests.cc
         src/programs/tests/UserExceptionTests.h
         src/programs/tests/JParameterManagerTests.cc
-        )
+        src/programs/tests/JObjectTests.cc)
 
 add_executable(playground
         src/programs/playground/playground.cc
