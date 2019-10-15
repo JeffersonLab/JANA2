@@ -53,6 +53,9 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
     try {
         for (size_t i=0; i<emit_count; ++i) {
             auto event = _pool->get(location_id);
+            if (event == nullptr) {
+                throw SourceStatus::kBUSY;
+            }
             event->SetJEventSource(_source);
             _source->GetEvent(event);
             _chunk_buffer.push_back(std::move(event));

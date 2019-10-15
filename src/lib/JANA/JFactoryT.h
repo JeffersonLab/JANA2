@@ -88,8 +88,8 @@ public:
             case Status::Uninitialized:
                 Init();
             case Status::InvalidMetadata:
-            case Status::Cleared:
                 ChangeRun(event);
+            case Status::Cleared:
             case Status::Unprocessed:
                 // Attempt to retrieve from JEventSource; otherwise call Process
                 if (src != nullptr && !src->GetObjects(event, this)) {
@@ -141,9 +141,12 @@ public:
     }
 
     void ClearData() override {
-        for (auto p : mData) delete p;
-        mData.clear();
-        mStatus = Status::Cleared;
+        if (mStatus == Status::Inserted || mStatus == Status::Processed) {
+            for (auto p : mData) delete p;
+            mData.clear();
+            mStatus = Status::Cleared;
+        }
+        // otherwise leave mStatus and mData alone
     }
 
 protected:
