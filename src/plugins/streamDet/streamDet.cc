@@ -18,7 +18,7 @@
 
 void dummy_publisher_loop() {
 
-    size_t delay_ms = 200;
+    size_t delay_ms = 10;
 
     std::this_thread::sleep_for(std::chrono::seconds(4));  // Wait for JANA to fire up so we don't lose data
     std::cout << "Starting producer loop" << std::endl;
@@ -51,6 +51,7 @@ void dummy_publisher_loop() {
         std::cout << "Send: " << message << " (" << message.get_buffer_size() << " bytes)" << std::endl;
         transport.send(message);
         consume_cpu_ms(delay_ms, 0, false);
+        std::this_thread::yield();
     }
 
     // Send an empty end-of-stream message
@@ -69,7 +70,6 @@ void InitPlugin(JApplication* app) {
     InitJANAPlugin(app);
     app->SetParameterValue("nthreads", 4);
     app->SetParameterValue("jana:extended_report", false);
-    app->SetParameterValue("jana:legacy_mode", 0);
 
     // TODO: Consider making streamDet:sub_socket be the 'source_name', and use JESG to switch between JSES and DecodeDASSource
     // TODO: Improve parametermanager interface
@@ -110,7 +110,7 @@ void InitPlugin(JApplication* app) {
 
     app->Add(new RootProcessor());
     app->Add(new MonitoringProcessor());
-    app->Add(new JCsvWriter<ADCSample>());
+    //app->Add(new JCsvWriter<ADCSample>());
     app->Add(new JFactoryGeneratorT<ADCSampleFactory>());
 
 }

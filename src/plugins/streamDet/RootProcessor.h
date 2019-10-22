@@ -53,6 +53,9 @@ class RootProcessor : public JEventProcessor {
     uint chan{}, event{}, nentries{};
     uint tdcSample{}, adcSample{};
 
+    TBranch** adc_samples_chans;
+    TBranch** tdc_samples_chans;
+
 };
 
 #endif // _RootProcessor_h_

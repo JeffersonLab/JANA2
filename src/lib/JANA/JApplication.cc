@@ -39,6 +39,7 @@
 #include <JANA/Services/JProcessingController.h>
 
 #include <JANA/Engine/JArrowProcessingController.h>
+#include <JANA/Engine/JDebugProcessingController.h>
 #include <JANA/Utils/JCpuInfo.h>
 
 JApplication *japp = nullptr;

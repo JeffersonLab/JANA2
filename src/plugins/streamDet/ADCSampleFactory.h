@@ -17,7 +17,7 @@
 class ADCSampleFactory : public JFactoryT<ADCSample> {
 
     // parameters to simulate a bottle neck, spread is in sigmas
-    size_t m_cputime_ms = 200;
+    size_t m_cputime_ms = 0;
     double m_cputime_spread = 0.25;
 
 public:
@@ -49,10 +49,10 @@ public:
         // decode the message and populate the associated jobject (hit) for the event
         for (uint16_t sample = 0; sample < max_samples; ++sample) {
             for (uint16_t channel = 0; channel < max_channels; ++channel) {
-                uint16_t current_value;
-                int offset;
-                sscanf(payload_buffer, "%hu%n", &current_value, &offset);
-                payload_buffer += offset;
+
+                uint16_t current_value = (payload_buffer[0]-48) * 1000 + (payload_buffer[1]-48) * 100 + (payload_buffer[2]-48) * 10 + (payload_buffer[3]-48);
+
+                payload_buffer += 5;
                 auto hit = new ADCSample;
                 hit->source_id  = source_id;
                 hit->sample_id  = sample;
@@ -62,7 +62,7 @@ public:
             }
         }
         // do some throwaway work in order to simulate a bottleneck
-        consume_cpu_ms(m_cputime_ms, m_cputime_spread);
+        //consume_cpu_ms(m_cputime_ms, m_cputime_spread);
     }
 };
 
