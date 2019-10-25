@@ -11,6 +11,10 @@ try:
 	PYTHON_CFLAGS = subprocess.Popen(["python3-config", "--cflags"], stdout=subprocess.PIPE).communicate()[0].strip()
 	PYTHON_PREFIX = subprocess.Popen(["python3-config", "--prefix"], stdout=subprocess.PIPE).communicate()[0].strip()
 	PYTHON_LINKFLAGS = subprocess.Popen(["python3-config", "--libs"], stdout=subprocess.PIPE).communicate()[0].strip()
+
+	PYTHON_CFLAGS = PYTHON_CFLAGS.decode('utf-8')
+	PYTHON_PREFIX = PYTHON_PREFIX.decode('utf-8')
+	PYTHON_LINKFLAGS = PYTHON_LINKFLAGS.decode('utf-8')
 	
 	# address temporary issue with JLab /apps/python/3.4.3 build which adds an
 	# extra "/u" to the front of paths returned from python3-config
@@ -20,7 +24,6 @@ try:
 
 	sbms.AddCompileFlags(env, PYTHON_CFLAGS)
 	sbms.AddLinkFlags(env, PYTHON_LINKFLAGS + " -L"+PYTHON_PREFIX+"/lib")
-
 
 	sbms.AddJANA(env)
 	sbms.plugin(env)

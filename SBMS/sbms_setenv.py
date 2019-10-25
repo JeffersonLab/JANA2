@@ -1,3 +1,5 @@
+from __future__  import print_function, absolute_import, division
+
 
 #####################################################################
 # This file is used to generate a setenv.csh script in the installation
@@ -15,6 +17,7 @@
 # Nov. 5, 2013  DL
 #####################################################################
 
+
 import os, sys
 import subprocess
 import datetime
@@ -27,7 +30,7 @@ from stat import *
 def mk_setenv_csh(env):
 	ofdir = '%s' % env.Dir(env['INSTALLDIR'])
 	ofname = '%s/setenv.csh' % ofdir
-	print 'sbms : Making setenv.csh in %s' % ofdir
+	print('sbms : Making setenv.csh in %s' % ofdir)
 
 	str = ''
 
@@ -132,7 +135,7 @@ def mk_setenv_csh(env):
 def mk_setenv_bash(env):
 	ofdir = '%s' % env.Dir(env['INSTALLDIR'])
 	ofname = '%s/setenv.sh' % ofdir
-	print 'sbms : Making setenv.sh in %s' % ofdir
+	print('sbms : Making setenv.sh in %s' % ofdir)
 
 	str = ''
 

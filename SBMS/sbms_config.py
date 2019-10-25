@@ -1,3 +1,5 @@
+from __future__  import print_function, absolute_import, division
+
 #####################################################################
 # This is used to create 2 files that contain configuration information
 # for JANA. Specifically, what external packages are present so that
@@ -24,6 +26,7 @@
 #
 # Dec. 10, 2013  DL
 #####################################################################
+
 import os, sys
 import subprocess
 import datetime
@@ -55,7 +58,7 @@ def mk_jana_config_h(env):
 	ofdirname = '#src/.%s/JANA' % env['OSNAME']
 	ofdir = '%s' % env.Dir(ofdirname)
 	ofname = '%s/jana_config.h' % ofdir
-	print 'sbms : Making jana_config.h in %s' % ofdir
+	print('sbms : Making jana_config.h in %s' % ofdir)
 	
 	# ROOT
 	HAVE_ROOT = 0
@@ -99,13 +102,13 @@ def mk_jana_config_h(env):
 
 	# If showing build, print config. results
 	if(env['SHOWBUILD']>0):
-		print '--- Configuration results ----'
-		print '    HAVE_ROOT = %d' % HAVE_ROOT
-		print '  HAVE_XERCES = %d' % HAVE_XERCES
-		print '      XERCES3 = %d' % XERCES3
-		print '    HAVE_CCDB = %d' % HAVE_CCDB
-		print '    HAVE_NUMA = %d' % HAVE_NUMA
-		print '------------------------------'
+		print('--- Configuration results ----')
+		print('    HAVE_ROOT = %d' % HAVE_ROOT)
+		print('  HAVE_XERCES = %d' % HAVE_XERCES)
+		print('      XERCES3 = %d' % XERCES3)
+		print('    HAVE_CCDB = %d' % HAVE_CCDB)
+		print('    HAVE_NUMA = %d' % HAVE_NUMA)
+		print('------------------------------')
 		
 	str = ''
 	
@@ -152,7 +155,7 @@ def mk_jana_config_script(env):
 	ofdirname = '%s/bin' % env.subst('$INSTALLDIR')
 	ofdir = '%s' % env.Dir(ofdirname)
 	ofname = '%s/jana-config' % ofdir
-	print 'sbms : Making jana-config in %s' % ofdir
+	print('sbms : Making jana-config in %s' % ofdir)
 
 	JANA_INSTALL_DIR = '%s' % env.Dir(env.subst('$INSTALLDIR')).abspath
 	
@@ -235,7 +238,7 @@ def mk_jana_config_script(env):
 
 	# Read in entire jana-congfig.in file as a single string
 	ifname = env.File("#/SBMS/jana-config.in").abspath
-	with open (ifname, "r") as myfile:
+	with open(ifname, "r") as myfile:
 
 		# Read in file
 		str=myfile.read()
