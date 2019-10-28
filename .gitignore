@@ -44,6 +44,7 @@ Linux_*
 Darwin_*
 .Linux_*
 .Darwin_*
+Makefile
 
 # Doxygen generated files
 #docs/html/*
@@ -52,4 +53,4 @@ docs/latex/*
 # IDE artifacts
 *.swp
 cmake-build-debug/*
-.idea/*
+.idea/* 
