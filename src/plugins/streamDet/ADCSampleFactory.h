@@ -28,6 +28,7 @@ public:
         auto params = japp->GetJParameterManager();
         params->GetParameter("streamDet:rawhit_ms",     m_cputime_ms);
         params->GetParameter("streamDet:rawhit_spread", m_cputime_spread);
+        SetFactoryFlag(JFactory_Flags_t::NOT_OBJECT_OWNER); // TODO: This is a memory leak
     };
 
     // process the message/event and construct the jobject
@@ -46,23 +47,26 @@ public:
         size_t max_samples  = message->get_sample_count();
         size_t max_channels = message->get_channel_count();
 
+        // Allocate all samples at once, fill later
+        ADCSample* samples = new ADCSample[max_channels*max_samples];
+        size_t i = 0;
+
         // decode the message and populate the associated jobject (hit) for the event
         for (uint16_t sample = 0; sample < max_samples; ++sample) {
             for (uint16_t channel = 0; channel < max_channels; ++channel) {
 
                 uint16_t current_value = (payload_buffer[0]-48) * 1000 + (payload_buffer[1]-48) * 100 + (payload_buffer[2]-48) * 10 + (payload_buffer[3]-48);
-
+                //assert(current_value >= 0);
+                //assert(current_value <= 1024);
                 payload_buffer += 5;
-                auto hit = new ADCSample;
-                hit->source_id  = source_id;
-                hit->sample_id  = sample;
-                hit->channel_id = channel;
-                hit->adc_value  = current_value;
-                Insert(hit);
+                ADCSample& hit = samples[i++];
+                hit.source_id  = source_id;
+                hit.sample_id  = sample;
+                hit.channel_id = channel;
+                hit.adc_value  = current_value;
+                Insert(&hit);
             }
         }
-        // do some throwaway work in order to simulate a bottleneck
-        //consume_cpu_ms(m_cputime_ms, m_cputime_spread);
     }
 };
 

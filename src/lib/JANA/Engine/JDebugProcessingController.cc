@@ -61,21 +61,22 @@ void JDebugProcessingController::run_worker() {
             try {
                 factory_set->Release();
                 evt_src->GetEvent(event);
-                LOG_INFO(m_logger) << "Acquired event " << event->GetEventNumber() << " from " << evt_src->GetResourceName() << LOG_END;
+                //LOG_DEBUG(m_logger) << "Acquired event " << event->GetEventNumber() << " from " << evt_src->GetResourceName() << LOG_END;
                 event->SetJEventSource(evt_src);
                 event->SetEventNumber(++event_nr);
                 // TODO: Assumes JEvtSrc doesn't throw kSUCCESS
                 for (JEventProcessor* proc : evt_procs) {
-                    LOG_DEBUG(m_logger) << "Processing: " << proc->GetTypeName() << LOG_END;
+                    //LOG_DEBUG(m_logger) << "Processing: " << proc->GetTypeName() << LOG_END;
                     proc->DoMap(event);
                 }
+                m_total_events_processed += 1;
             }
             catch (JEventSource::RETURN_STATUS rs) {
                 switch (rs) {
                     case JEventSource::RETURN_STATUS::kNO_MORE_EVENTS :
                     case JEventSource::RETURN_STATUS::kERROR:
                     case JEventSource::RETURN_STATUS::kUNKNOWN:
-                        LOG_DEBUG(m_logger) << "Giving up on eventsource" << LOG_END;
+                        //LOG_DEBUG(m_logger) << "Giving up on eventsource" << LOG_END;
                         more_events = false; break;
 
                     case JEventSource::RETURN_STATUS::kBUSY:
@@ -155,6 +156,7 @@ std::unique_ptr<const JPerfSummary> JDebugProcessingController::measure_performa
 
     m_perf_metrics.summarize(*ps);
     ps->thread_count = 1;
+    ps->monotonic_events_completed = m_total_events_processed;
     return ps;
 }
 

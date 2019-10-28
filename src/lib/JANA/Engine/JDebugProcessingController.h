@@ -73,6 +73,7 @@ private:
     bool m_stop_requested = false;
     bool m_stop_achieved = false;
     bool m_finish_achieved = false;
+    size_t m_total_events_processed = 0;
 
     JPerfMetrics m_perf_metrics;
 

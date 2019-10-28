@@ -44,10 +44,6 @@ void RootProcessor::Init() {
         adc_samples_chans[ichan] = sampleTree->Branch(Form("adcSamplesChan_%d", ichan + 1), &adcSample);
         tdc_samples_chans[ichan] = sampleTree->Branch(Form("tdcSamplesChan_%d", ichan + 1), &tdcSample);
     }
-
-    // update the root file
-    outFile->Write();
-    outFile->Flush();
     outFile->cd();
 }
 

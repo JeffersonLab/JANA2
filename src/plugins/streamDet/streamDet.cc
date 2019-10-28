@@ -18,9 +18,9 @@
 
 void dummy_publisher_loop() {
 
-    size_t delay_ms = 10;
+    size_t delay_ms = 5;
 
-    std::this_thread::sleep_for(std::chrono::seconds(4));  // Wait for JANA to fire up so we don't lose data
+    //std::this_thread::sleep_for(std::chrono::seconds(4));  // Wait for JANA to fire up so we don't lose data
     std::cout << "Starting producer loop" << std::endl;
 
     ZmqTransport transport {japp->GetParameterValue<std::string>("streamDet:sub_socket"), true};
@@ -48,7 +48,7 @@ void dummy_publisher_loop() {
         message.as_indra_message()->source_id = 0;
         message.set_event_number(current_event_number++);
         message.set_payload_size(static_cast <uint32_t> (payload_capacity));
-        std::cout << "Send: " << message << " (" << message.get_buffer_size() << " bytes)" << std::endl;
+        //std::cout << "Send: " << message << " (" << message.get_buffer_size() << " bytes)" << std::endl;
         transport.send(message);
         consume_cpu_ms(delay_ms, 0, false);
         std::this_thread::yield();
@@ -75,7 +75,7 @@ void InitPlugin(JApplication* app) {
     // TODO: Improve parametermanager interface
 
     bool use_zmq = true;
-    bool use_dummy_publisher = false;
+    bool use_dummy_publisher = true;
     size_t nchannels = 80;
     size_t nsamples = 1024;
     size_t msg_print_freq = 10;
@@ -108,7 +108,7 @@ void InitPlugin(JApplication* app) {
         app->Add(new JFactoryGenerator_streamDet());
     }
 
-    app->Add(new RootProcessor());
+    //app->Add(new RootProcessor());
     app->Add(new MonitoringProcessor());
     //app->Add(new JCsvWriter<ADCSample>());
     app->Add(new JFactoryGeneratorT<ADCSampleFactory>());
