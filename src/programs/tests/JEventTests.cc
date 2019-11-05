@@ -119,5 +119,26 @@ TEST_CASE("JEventInsertTests") {
         REQUIRE(deleted == true);
     }
 
+
+    SECTION("JEvent::GetFactory<T> handles missing factories correctly") {
+
+        // When present, GetFactory<T> returns a pointer to the correct factory (dummy or otherwise)
+        event->Insert(new FakeJObject(22), "present_tag");
+        auto present_factory = event->GetFactory<FakeJObject>("present_tag");
+        REQUIRE(present_factory != nullptr);
+
+        // By default, return nullptr for compatibility with older code
+        auto missing_factory = event->GetFactory<FakeJObject>("absent_tag");
+        REQUIRE(missing_factory == nullptr);
+
+        // This is effected via the throw_on_missing parameter
+        missing_factory = event->GetFactory<FakeJObject>("absent_tag", false);
+        REQUIRE(missing_factory == nullptr);
+
+        // GetFactory<T> can conveniently throw an exception if factory is missing.
+        // This is useful when said data is required
+        REQUIRE_THROWS(event->GetFactory<FakeJObject>("absent_tag", true));
+    }
+
 }
 
