@@ -13,3 +13,5 @@ add_library(JExample2 SHARED
 
 target_link_libraries(JExample2 jana2)
 set_target_properties(JExample2 PROPERTIES PREFIX "" SUFFIX ".so")
+install(TARGETS JExample2 DESTINATION plugins)
+

@@ -26,5 +26,6 @@ endif()
 target_include_directories(janapy PUBLIC ${PYTHON_INCLUDE_DIRS})
 target_link_libraries(janapy jana2 ${PYTHON_LIBRARIES})
 set_target_properties(janapy PROPERTIES PREFIX "" SUFFIX ".so")
+install(TARGETS janapy DESTINATION plugins)
 
 

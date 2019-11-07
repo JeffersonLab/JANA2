@@ -14,6 +14,6 @@ add_executable(playground
         )
 
 find_package(Threads REQUIRED)
-target_link_libraries(playground jana2)
-target_link_libraries(playground Threads::Threads)
+target_link_libraries(playground jana2 Threads::Threads)
+install(TARGETS playground DESTINATION bin)
 

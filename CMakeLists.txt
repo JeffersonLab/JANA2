@@ -2,26 +2,28 @@ cmake_minimum_required(VERSION 3.13)
 project(jana2)
 
 set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)   # Enable -fPIC for all targets
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")   # Define location of cmake modules
 
-# Enable -fPIC for all targets
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
-# Define location of cmake modules
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")
-
-# JANA,playground,tests all need threads
-
-
-include_directories(src/lib)
-include_directories(src/lib/JANA)
-include_directories(src/plugins/JTest)
-include_directories(src/programs/jana)
-include_directories(src/programs/tests)
-
+# Figure out install directory.
+#   1. If specified as an argument to CMake, use that
+#   2. If $JANA_HOME defined, use that
+#   3. Otherwise, install to cmake build directory
+#   Do NOT install to default install directory, which is /usr/local.
 
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-	set(CMAKE_INSTALL_PREFIX "/my/default" CACHE PATH "..." FORCE)
+	if(DEFINED ENV{JANA_HOME})
+		message(STATUS "Installing to " ENV{JANA_HOME} "(From $JANA_HOME)")
+		set(CMAKE_INSTALL_PREFIX ENV{JANA_HOME} CACHE PATH "magic incantation" FORCE)
+	else()
+		message(STATUS "Installing to " ${CMAKE_BINARY_DIR} " (Undefined environment var $JANA_HOME)")
+		set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR} CACHE PATH "magic incantation" FORCE)
+	endif()
+else()
+	message(STATUS "Installing to " ${CMAKE_INSTALL_PREFIX} " (Non-default CMAKE_INSTALL_PREFIX)")
 endif()
+
+include_directories(src/lib)   # So that everyone can find the JANA header files
 
 add_subdirectory(src/lib/JANA)
 
@@ -37,3 +39,4 @@ add_subdirectory(src/plugins/janarate)
 add_subdirectory(src/programs/jana)
 add_subdirectory(src/programs/tests)
 add_subdirectory(src/programs/playground)
+

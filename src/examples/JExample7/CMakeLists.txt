@@ -38,5 +38,6 @@ endif()
 target_include_directories(JExample7 PUBLIC ${ZEROMQ_INCLUDE_DIRS} ${CMZQ_INCLUDE_DIRS})
 target_link_libraries(JExample7 jana2 ${ZEROMQ_LIBRARIES} ${CZMQ_LIBRARIES})
 set_target_properties(JExample7 PROPERTIES PREFIX "" SUFFIX ".so")
+install(TARGETS JExample7 DESTINATION plugins)
 
 

@@ -21,10 +21,8 @@ set(TEST_SOURCES
     UserExceptionTests.h
    )
 
-find_package(Threads REQUIRED)
 add_executable(tests ${TEST_SOURCES})
+find_package(Threads REQUIRED)
+target_include_directories(tests PUBLIC .)
 target_link_libraries(tests jana2 Threads::Threads)
-
-# install(TARGETS tests DESTINATION bin)
-# Want to install to JANA_HOME, not to /usr/local/...
-# Also want to be able to find plugins without doing an install?
+install(TARGETS tests DESTINATION bin)
