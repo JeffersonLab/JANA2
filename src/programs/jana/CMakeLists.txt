@@ -1,6 +1,6 @@
 
 
-add_executable(jana_cli
+add_executable(jana
     jana.cc
     JBenchmarker.h
     JBenchmarker.cc
@@ -8,5 +8,6 @@ add_executable(jana_cli
     MyProcessor.h
     )
 
-target_link_libraries(jana_cli jana2 Threads::Threads)
+find_package(Threads REQUIRED)
+target_link_libraries(jana jana2 Threads::Threads)
 

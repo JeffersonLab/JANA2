@@ -11,8 +11,6 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")
 
 # JANA,playground,tests all need threads
 
-set(THREADS_PREFER_PTHREAD_FLAG ON)
-find_package(Threads REQUIRED)
 
 include_directories(src/lib)
 include_directories(src/lib/JANA)
@@ -29,9 +27,10 @@ add_subdirectory(src/lib/JANA)
 
 add_subdirectory(src/examples/JExample7)
 
+add_subdirectory(src/plugins/JTest)
 add_subdirectory(src/plugins/streamDet)
 add_subdirectory(src/plugins/janapy)
 
+add_subdirectory(src/programs/jana)
 add_subdirectory(src/programs/tests)
 add_subdirectory(src/programs/playground)
-add_subdirectory(src/programs/jana)

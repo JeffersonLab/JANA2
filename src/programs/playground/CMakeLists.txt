@@ -13,6 +13,7 @@ add_executable(playground
         JLazyCollection.h
         )
 
+find_package(Threads REQUIRED)
 target_link_libraries(playground jana2)
 target_link_libraries(playground Threads::Threads)
 

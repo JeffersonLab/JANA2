@@ -85,6 +85,11 @@ set(JANA2_SOURCES
     Utils/JPerfUtils.h
     )
 
-add_library(jana2 STATIC ${JANA2_SOURCES})
 
+find_package(Threads REQUIRED)
+
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+add_library(jana2 STATIC ${JANA2_SOURCES})
 target_link_libraries(jana2 ${CMAKE_DL_LIBS} Threads::Threads)
+
+

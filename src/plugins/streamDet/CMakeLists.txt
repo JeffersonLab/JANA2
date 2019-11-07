@@ -19,8 +19,16 @@ find_package(ZeroMQ REQUIRED)
 find_package(CZMQ REQUIRED)
 find_package(ROOT REQUIRED)
 
-target_include_directories(streamDet PUBLIC ${ROOT_INCLUDE_DIRS} ${ZEROMQ_INCLUDE_DIRS} ${CMZQ_INCLUDE_DIRS})
+if ((ZeroMQ_FOUND AND CZMQ_FOUND) AND ROOT_FOUND)
 
-target_link_libraries(streamDet jana2 ${ZEROMQ_LIBRARIES} ${CZMQ_LIBRARIES} ${ROOT_LIBRARIES})
-set_target_properties(streamDet PROPERTIES PREFIX "" SUFFIX ".so")
+    target_include_directories(streamDet PUBLIC ${ROOT_INCLUDE_DIRS} ${ZEROMQ_INCLUDE_DIRS} ${CMZQ_INCLUDE_DIRS})
+    target_link_libraries(streamDet jana2 ${ZEROMQ_LIBRARIES} ${CZMQ_LIBRARIES} ${ROOT_LIBRARIES})
+    set_target_properties(streamDet PROPERTIES PREFIX "" SUFFIX ".so")
+
+else()
+
+    message(WARNING "Unable to find ZeroMQ/CZMQ/ROOT! Skipping compilation of streamDet.so")
+
+endif()
+
 

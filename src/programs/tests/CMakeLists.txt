@@ -21,8 +21,8 @@ set(TEST_SOURCES
     UserExceptionTests.h
    )
 
+find_package(Threads REQUIRED)
 add_executable(tests ${TEST_SOURCES})
-
 target_link_libraries(tests jana2 Threads::Threads)
 
 # install(TARGETS tests DESTINATION bin)
