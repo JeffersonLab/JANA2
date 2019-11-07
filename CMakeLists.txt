@@ -13,14 +13,14 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")   # Define location o
 
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 	if(DEFINED ENV{JANA_HOME})
-		message(STATUS "Installing to " ENV{JANA_HOME} "(From $JANA_HOME)")
+		install(CODE "message(STATUS \"Installing to \" ENV{JANA_HOME} \"(From $JANA_HOME)\")")
 		set(CMAKE_INSTALL_PREFIX ENV{JANA_HOME} CACHE PATH "magic incantation" FORCE)
 	else()
-		message(STATUS "Installing to " ${CMAKE_BINARY_DIR} " (Undefined environment var $JANA_HOME)")
+		install(CODE "message(STATUS \"Installing to \" ${CMAKE_BINARY_DIR} \" (Undefined environment var $JANA_HOME)\")")
 		set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR} CACHE PATH "magic incantation" FORCE)
 	endif()
 else()
-	message(STATUS "Installing to " ${CMAKE_INSTALL_PREFIX} " (Non-default CMAKE_INSTALL_PREFIX)")
+	install(CODE "message(STATUS \"Installing to \" ${CMAKE_INSTALL_PREFIX} \" (Non-default CMAKE_INSTALL_PREFIX)\")")
 endif()
 
 include_directories(src/lib)   # So that everyone can find the JANA header files
