@@ -25,11 +25,14 @@ endif()
 
 add_subdirectory(src/lib/JANA)
 
+add_subdirectory(src/examples/JExample1)
+add_subdirectory(src/examples/JExample2)
 add_subdirectory(src/examples/JExample7)
 
 add_subdirectory(src/plugins/JTest)
 add_subdirectory(src/plugins/streamDet)
 add_subdirectory(src/plugins/janapy)
+add_subdirectory(src/plugins/janarate)
 
 add_subdirectory(src/programs/jana)
 add_subdirectory(src/programs/tests)
