@@ -91,6 +91,26 @@ find_package(Threads REQUIRED)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 add_library(jana2 STATIC ${JANA2_SOURCES})
 target_link_libraries(jana2 ${CMAKE_DL_LIBS} Threads::Threads)
+
+# Install library
 install(TARGETS jana2 DESTINATION lib)
+
+# Install "public" header files
+
+file(GLOB jana_headers "*.h*")
+file(GLOB jana_engine_headers "Engine/*.h*")
+file(GLOB jana_services_headers "Services/*.h*")
+file(GLOB jana_status_headers "Status/*.h*")
+file(GLOB jana_streaming_headers "Streaming/*.h*")
+file(GLOB jana_utils_headers "Utils/*.h*")
+
+install(FILES ${jana_headers} DESTINATION include)
+install(FILES ${jana_engine_headers} DESTINATION include/Engine)
+install(FILES ${jana_services_headers} DESTINATION include/Services)
+install(FILES ${jana_status_headers} DESTINATION include/Status)
+install(FILES ${jana_streaming_headers} DESTINATION include/Streaming)
+install(FILES ${jana_utils_headers} DESTINATION include/Utils)
+
+
 
 
