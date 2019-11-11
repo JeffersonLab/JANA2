@@ -64,3 +64,4 @@ add_custom_target(jana_config_target ALL DEPENDS ${jana_config_file})
 install(FILES ${jana_config_file} DESTINATION bin)
 
 
+include(${CMAKE_SOURCE_DIR}/cmake/make_config.cmake)
