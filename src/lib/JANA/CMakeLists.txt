@@ -93,7 +93,6 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 target_link_libraries(jana2 ${CMAKE_DL_LIBS} Threads::Threads)
 set_target_properties(jana2 PROPERTIES PREFIX "lib" OUTPUT_NAME "JANA")
 
-
 # Install library
 install(TARGETS jana2 DESTINATION lib)
 
@@ -106,12 +105,12 @@ file(GLOB jana_status_headers "Status/*.h*")
 file(GLOB jana_streaming_headers "Streaming/*.h*")
 file(GLOB jana_utils_headers "Utils/*.h*")
 
-install(FILES ${jana_headers} DESTINATION include)
-install(FILES ${jana_engine_headers} DESTINATION include/Engine)
-install(FILES ${jana_services_headers} DESTINATION include/Services)
-install(FILES ${jana_status_headers} DESTINATION include/Status)
-install(FILES ${jana_streaming_headers} DESTINATION include/Streaming)
-install(FILES ${jana_utils_headers} DESTINATION include/Utils)
+install(FILES ${jana_headers} DESTINATION include/JANA)
+install(FILES ${jana_engine_headers} DESTINATION include/JANA/Engine)
+install(FILES ${jana_services_headers} DESTINATION include/JANA/Services)
+install(FILES ${jana_status_headers} DESTINATION include/JANA/Status)
+install(FILES ${jana_streaming_headers} DESTINATION include/JANA/Streaming)
+install(FILES ${jana_utils_headers} DESTINATION include/JANA/Utils)
 
 
 

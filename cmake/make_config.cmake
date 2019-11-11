@@ -29,7 +29,18 @@ if(DEFINED ENV{XERCESCROOT})
     set(XERCES_LDFLAGS "-L${XERCESCROOT}/lib")
     set(XERCES_LIBS "-lxerces-c")
 else()
+    # TODO: find_package(XERCES) just in case it was installed via a normal package manager instead
     set(HAVE_XERCES 0)
+endif()
+
+
+find_file(XERCES3_HEADER "xercesc/dom/DOMImplementationList.hpp"
+          PATHS "$ENV{XERCESCROOT}/include" "$ENV{XERCESCROOT}/include/xercesc")
+
+if(XERCES3_HEADER)
+    set(XERCES3 1)
+else()
+    set(XERCES3 0)
 endif()
 
 
@@ -41,6 +52,7 @@ if(DEFINED $ENV{CMSGROOT})
 else()
     set(HAVE_CMSG 0)
 endif()
+
 
 
 if(DEFINED $ENV{CCDB_HOME})
@@ -92,8 +104,11 @@ else()
     set(HAVE_CURL 0)
 endif()
 
-
+# TODO: FindNuma.cmake
+set(HAVE_NUMA 0)
 
 configure_file(SBMS/jana-config.in jana-config @ONLY)
+configure_file(SBMS/jana_config.h.in jana_config.h @ONLY)
 
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/jana-config DESTINATION bin)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/jana_config.h DESTINATION include/JANA)
