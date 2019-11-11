@@ -86,11 +86,13 @@ set(JANA2_SOURCES
     )
 
 
-find_package(Threads REQUIRED)
-
-set(THREADS_PREFER_PTHREAD_FLAG ON)
 add_library(jana2 STATIC ${JANA2_SOURCES})
+
+find_package(Threads REQUIRED)
+set(THREADS_PREFER_PTHREAD_FLAG ON)
 target_link_libraries(jana2 ${CMAKE_DL_LIBS} Threads::Threads)
+set_target_properties(jana2 PROPERTIES PREFIX "lib" OUTPUT_NAME "JANA")
+
 
 # Install library
 install(TARGETS jana2 DESTINATION lib)

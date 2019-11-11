@@ -40,28 +40,6 @@ add_subdirectory(src/programs/jana)
 add_subdirectory(src/programs/tests)
 add_subdirectory(src/programs/playground)
 
-install(FILES scripts/mkplugin scripts/mkclass DESTINATION bin)
-
-
-# Generate jana_config script from Python, and install to $JANA_HOME/bin
-
-set(jana_config_file ${CMAKE_CURRENT_BINARY_DIR}/jana_config)
-
-add_custom_command(OUTPUT ${jana_config_file}
-                   DEPENDS "${CMAKE_SOURCE_DIR}/scripts/make_jana_config.py"
-                   COMMAND "python"
-		           ARGS "${CMAKE_SOURCE_DIR}/scripts/make_jana_config.py"
-                   WORKING_DIR ${CMAKE_CURRENT_BINARY_DIR}
-				   COMMENT "Generating jana_config bash script via Python"
-                   VERBATIM)
-
-# Our custom command won't even run unless attached to a target. In CMake, file != target.
-# Once we've defined a throwaway target, CMake won't let us install the target directly,
-# so we have to install the underlying file instead.
-# See: https://samthursfield.wordpress.com/2015/11/21/cmake-dependencies-between-targets-and-files-and-custom-commands/
-
-add_custom_target(jana_config_target ALL DEPENDS ${jana_config_file})
-install(FILES ${jana_config_file} DESTINATION bin)
-
+install(PROGRAMS scripts/mkplugin scripts/mkclass DESTINATION bin)
 
 include(${CMAKE_SOURCE_DIR}/cmake/make_config.cmake)
