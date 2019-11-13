@@ -1,0 +1,26 @@
+
+import os
+import sbms
+Import('*')
+env = env.Clone()
+
+includes = ['zmq.h', 'zmq.hpp']
+content = ''
+libs = ['-lzmq']
+
+if sbms.TestCompile(env, 'zmq', includes, content, libs) != None:
+    sbms.AddJANA(env)
+    if os.path.exists('/usr/local/lib64/libzmq.a'):
+        print('JExample7: Using static libzmq')
+        env.AppendUnique(LIBS = [ File('/usr/local/lib64/libzmq.a')])  # force static linking
+    else:
+        print('JExample7: Could not find static libzmq, linking dynamically instead')
+        env.AppendUnique(LIBS = 'zmq')
+    sbms.plugin(env)
+
+else:
+    print()
+    print('--- WARNING: Unable to build JExample7')
+    print('--- Please make sure libzmq is installed on your system. ')
+
+

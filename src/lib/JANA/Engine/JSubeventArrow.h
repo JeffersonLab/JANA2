@@ -36,7 +36,7 @@
 
 #include "JMailbox.h"
 #include "JArrow.h"
-#include "JEvent.h"
+#include <JANA/JEvent.h>
 
 using Event = std::shared_ptr<JEvent>;
 

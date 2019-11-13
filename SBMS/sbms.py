@@ -1,3 +1,4 @@
+from __future__  import print_function, absolute_import, division
 
 import os
 import subprocess
@@ -9,7 +10,6 @@ import sys
 #===========================================================
 # The first 4 functions provide for building a library,
 # program, multiple-programs, or plugin from all the source
-# in the current directory.
 #
 # The next section contains useful utility functions.
 #
@@ -307,21 +307,21 @@ def ApplyPlatformSpecificSettings(env, platform):
 	# "."s. The Python module loader doesn't like these and we have to
 	# replace them with "-"s to appease it.
 
-	platform = re.sub('\.', '-', platform)
+	platform = re.sub('\.', '-', str(platform))
 
 	modname = "sbms_%s" % platform
 	if (int(env['SHOWBUILD']) > 0):
-		print "looking for %s.py" % modname
+		print("looking for %s.py" % modname)
 	try:
 		InitENV = getattr(__import__(modname), "InitENV")
 
 		# Run the InitENV function (if found)
 		if(InitENV != None):
-			print "sbms : Applying settings for platform %s" % platform
+			print("sbms : Applying settings for platform %s" % platform)
 			InitENV(env)
 
-	except ImportError,e:
-		if (int(env['SHOWBUILD']) > 0): print "%s" % e
+	except ImportError as e:
+		if (int(env['SHOWBUILD']) > 0): print("%s" % e)
 		pass
 
 
@@ -389,18 +389,18 @@ def TestCompile(env, name, includes, content, options):
 	for opt in options:
 		myargs = opt.split()
 		if(env['SHOWBUILD'] >0):
-			print 'Test compiling %s:' % name
-			print args + myargs
+			print('Test compiling %s:' % name)
+			print(args + myargs)
 		res = subprocess.call(args + myargs, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 		if res==0:
-			if(env['SHOWBUILD'] >0): print '---Succeeded'
+			if(env['SHOWBUILD'] >0): print('---Succeeded')
 			ret = myargs
 			break
 		else:
 			if(env['SHOWBUILD'] >1):
-				print '----Failed. Test file content was:------'
-				print subprocess.call(['cat', ifname])
-				print '----------------------------------------'
+				print('----Failed. Test file content was:------')
+				print(subprocess.call(['cat', ifname]))
+				print('----------------------------------------')
 				
 	
 	if os.path.exists(ifname): os.unlink(ifname);
@@ -468,6 +468,9 @@ def AddJANAInstalled(env):
 	if(jana_home != None):
 		JANA_CFLAGS = subprocess.Popen(["%s/bin/jana-config" % jana_home, "--cflags"], stdout=subprocess.PIPE).communicate()[0]
 		JANA_LINKFLAGS = subprocess.Popen(["%s/bin/jana-config" % jana_home, "--libs"], stdout=subprocess.PIPE).communicate()[0]
+
+		JANA_CFLAGS = JANA_CFLAGS.decode('utf-8')
+		JANA_LINKFLAGS = JANA_LINKFLAGS.decode('utf-8')
 
 		AddCompileFlags(env, JANA_CFLAGS)
 		AddLinkFlags(env, JANA_LINKFLAGS)
@@ -610,6 +613,8 @@ def AddROOT(env):
 
 		ROOT_CFLAGS = subprocess.Popen(["%s/bin/root-config" % rootsys, "--cflags"], stdout=subprocess.PIPE).communicate()[0]
 		ROOT_LINKFLAGS = subprocess.Popen(["%s/bin/root-config" % rootsys, "--glibs"], stdout=subprocess.PIPE).communicate()[0]
+		ROOT_CFLAGS = ROOT_CFLAGS.decode('utf-8')
+		ROOT_LINKFLAGS = ROOT_LINKFLAGS.decode('utf-8')
 		AddCompileFlags(env, ROOT_CFLAGS)
 		AddLinkFlags(env, ROOT_LINKFLAGS)
 		env.AppendUnique(LIBS = "Geom")
@@ -639,7 +644,7 @@ def AddROOT(env):
 		elif os.path.exists(rootcintpath):
 			bld = SCons.Script.Builder(action = rootcintaction, suffix='_Dict.cc', src_suffix='.h')
 		else:
-			print 'Neither rootcint nor rootcling exists. Unable to create ROOT dictionaries if any encountered.'
+			print('Neither rootcint nor rootcling exists. Unable to create ROOT dictionaries if any encountered.')
 			return
 
 		env.Append(BUILDERS = {'ROOTDict' : bld})
@@ -656,13 +661,13 @@ def AddROOT(env):
 		curpath = os.getcwd()
 		srcpath = env.Dir('.').srcnode().abspath
 		if(int(env['SHOWBUILD'])>1):
-			print "---- Scanning for headers to generate ROOT dictionaries in: %s" % srcpath
+			print("---- Scanning for headers to generate ROOT dictionaries in: %s" % srcpath)
 		os.chdir(srcpath)
 		for f in glob.glob('*.[h|hh|hpp]'):
 			if 'ClassDef' in open(f).read():
 				env.AppendUnique(ALL_SOURCES = env.ROOTDict(f))
 				if(int(env['SHOWBUILD'])>1):
-					print "       ROOT dictionary for %s" % f
+					print("       ROOT dictionary for %s" % f)
 		os.chdir(curpath)
 
 

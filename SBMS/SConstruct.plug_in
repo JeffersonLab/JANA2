@@ -1,3 +1,4 @@
+from __future__  import print_function, absolute_import, division
 
 #
 #  Jan. 31, 2014  David Lawrence
@@ -24,6 +25,7 @@
 # diligent of building for multiple platforms using the same source.
 #
 
+
 import os
 import sys
 import subprocess
@@ -32,7 +34,7 @@ import glob
 # Get JANA_HOME environment variable, verifying it is set
 jana_home = os.getenv('JANA_HOME')
 if(jana_home == None):
-	print 'JANA_HOME environment variable not set!'
+	print('JANA_HOME environment variable not set!')
 	exit(-1)
 
 # Get JANA_MY if it exists. Otherwise use HALLD_HOME
@@ -49,9 +51,11 @@ SHOWBUILD = ARGUMENTS.get('SHOWBUILD', 0)
 
 # Get platform-specific name
 osname = os.getenv('BMS_OSNAME', 'build')
+osname = osname.decode('utf-8')
 
 # Get architecture name
 arch = subprocess.Popen(["uname"], stdout=subprocess.PIPE).communicate()[0].strip()
+arch = arch.decode('utf-8')
 
 # Setup initial environment
 installdir = "%s" %(jana_my)

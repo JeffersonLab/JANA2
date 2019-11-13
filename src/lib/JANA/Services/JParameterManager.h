@@ -48,6 +48,7 @@
 
 #include <string>
 #include <algorithm>
+#include <vector>
 #include <map>
 
 #include <JANA/JLogger.h>

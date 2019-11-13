@@ -20,7 +20,14 @@ std::string demangle(void) {
 	return type;
 }
 
-/// Macro for extracting the name of the current class as a std::string.
+
+/// Macro for conveniently turning a variable name into a string. This is used by JObject::Summarize
+/// in order to play nicely with refactoring tools. Because the symbol is picked up by the
+/// preprocessor and not the compiler, no demangling is necessary.
+#define NAME_OF(T) #T
+
+
+/// Macro for extracting the typename of the current class as a std::string.
 /// This is meant to be used like this:
 /// `JEventProcessor::SetName(NAME_OF_THIS);`
 #define NAME_OF_THIS JTypeInfo::demangle<decltype(*this)>()
@@ -28,6 +35,8 @@ std::string demangle(void) {
 
 template<typename T>
 const char* builtin_typename() {
+    /// Function template for stringifying builtin typenames.
+    /// This provides some normalization, i.e. both ulongs and uint64_t's get converted to "ulong"
 
 	if (typeid(T) == typeid(int) || typeid(T) == typeid(int32_t)) {
 		return "int";

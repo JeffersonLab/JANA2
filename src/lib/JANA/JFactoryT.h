@@ -87,14 +87,9 @@ public:
         switch (mStatus) {
             case Status::Uninitialized:
                 Init();
-            case Status::InvalidMetadata:
-                ChangeRun(event);
-            case Status::Cleared:
             case Status::Unprocessed:
-                // Attempt to retrieve from JEventSource; otherwise call Process
-                if (src != nullptr && !src->GetObjects(event, this)) {
-                    Process(event);
-                }
+                ChangeRun(event);
+                Process(event);
                 mStatus = Status::Processed;
             case Status::Processed:
             case Status::Inserted:
@@ -144,7 +139,7 @@ public:
         if (mStatus == Status::Inserted || mStatus == Status::Processed) {
             for (auto p : mData) delete p;
             mData.clear();
-            mStatus = Status::Cleared;
+            mStatus = Status::Uninitialized;
         }
         // otherwise leave mStatus and mData alone
     }

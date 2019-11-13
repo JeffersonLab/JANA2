@@ -36,14 +36,11 @@ public:
         params->GetParameter("jtest:parser_spread", m_cputime_spread);
 
         SetFactoryGenerator(new JSourceFactoryGenerator<JTestEntangledEventData>());
+        SetTypeName(NAME_OF_THIS);
     }
 
     static std::string GetDescription() {
         return "JTest Fake Event Source";
-    }
-
-    std::string GetType(void) const {
-        return JTypeInfo::demangle<decltype(*this)>();
     }
 
     void GetEvent(std::shared_ptr<JEvent> event) {

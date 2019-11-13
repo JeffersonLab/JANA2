@@ -1,3 +1,4 @@
+from __future__ import unicode_literals
 
 import os
 import sys
@@ -12,13 +13,13 @@ import sbms
 import sbms_config
 
 # Get command-line options
-SHOWBUILD = ARGUMENTS.get('SHOWBUILD', 0)
-OPTIMIZATION = ARGUMENTS.get('OPTIMIZATION', 2)
-DEBUG = ARGUMENTS.get('DEBUG', 1)
-PROFILE = ARGUMENTS.get('PROFILE', 0)
-VTUNE = ARGUMENTS.get('VTUNE', 0)
-BITNESS32 = ARGUMENTS.get('m32', 0)
-BITNESS64 = ARGUMENTS.get('m64', 0)
+SHOWBUILD = int(ARGUMENTS.get('SHOWBUILD', 0))
+OPTIMIZATION = int(ARGUMENTS.get('OPTIMIZATION', 2))
+DEBUG = int(ARGUMENTS.get('DEBUG', 1))
+PROFILE = int(ARGUMENTS.get('PROFILE', 0))
+VTUNE = int(ARGUMENTS.get('VTUNE', 0))
+BITNESS32 = int(ARGUMENTS.get('m32', 0))
+BITNESS64 = int(ARGUMENTS.get('m64', 0))
 
 # Get platform-specific name
 osname = os.getenv('BMS_OSNAME')
@@ -28,11 +29,13 @@ if BITNESS64!=0 : osname = osname.replace('i686','x86_64')
 
 # Finish with command line arguments
 # Both PREFIX and VARIANT_DIR require osname set to get default values
-PREFIX = ARGUMENTS.get('PREFIX',"#%s" %(osname))
-VARIANT_DIR = ARGUMENTS.get('VARIANT-DIR',".%s" % (osname))
+osname = osname.decode('utf-8')
+PREFIX = ARGUMENTS.get('PREFIX', "#%s" % osname)
+VARIANT_DIR = ARGUMENTS.get('VARIANT-DIR', ".%s" % osname)
 
 # Get architecture name
-arch = ROOT_CFLAGS = subprocess.Popen(["uname"], stdout=subprocess.PIPE).communicate()[0].strip()
+arch = subprocess.Popen(["uname"], stdout=subprocess.PIPE).communicate()[0].strip()
+arch = arch.decode("utf-8")
 
 # Setup initial environment
 installdir = PREFIX
@@ -94,6 +97,7 @@ env.Replace( CXX = os.getenv('CXX', 'c++'),
 # Get compiler name
 compiler = 'unknown'
 compiler_string = subprocess.Popen([env['CC'],"-v"], stderr=subprocess.PIPE).communicate()[1]
+compiler_string = compiler_string.decode('utf-8')
 if 'clang' in compiler_string:
 	compiler = 'clang'
 if 'gcc' in compiler_string and 'clang' not in compiler_string:
@@ -152,8 +156,8 @@ SConscript('scripts/SConscript', exports='env osname', duplicate=0)
 env.Alias('install', installdir)
 
 # Create setenv and make link to src if user explicitly specified "install" target
-build_targets = map(str,BUILD_TARGETS)
-if len(build_targets)>0:
+build_targets = map(str, BUILD_TARGETS)
+if build_targets:
 	if 'install' in build_targets:
 		import sbms_setenv
 		sbms_setenv.mk_setenv_csh(env)

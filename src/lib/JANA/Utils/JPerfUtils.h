@@ -21,6 +21,7 @@ size_t rand_size(size_t avg, double spread);
 
 int randint(int min, int max);
 
-double randdouble();
+double randdouble(double min=0.0, double max=1000.0);
 
+float randfloat(float min=0.0, float max=1000.0);
 #endif // JANA2_PERFUTILS_H
