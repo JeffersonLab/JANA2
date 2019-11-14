@@ -10,16 +10,14 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 # Figure out install directory.
 #   1. If specified as an argument to CMake, use that
 #   2. If $JANA_HOME defined, use that
-#   3. Otherwise, install to cmake build directory
-#   Do NOT install to default install directory, which is /usr/local.
+#   3. Otherwise, install to /usr/local or similar
 
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     if(DEFINED ENV{JANA_HOME})
         install(CODE "message(STATUS \"Installing to \" ENV{JANA_HOME} \"(From $JANA_HOME)\")")
         set(CMAKE_INSTALL_PREFIX ENV{JANA_HOME} CACHE PATH "magic incantation" FORCE)
     else()
-        install(CODE "message(STATUS \"Installing to \" ${CMAKE_BINARY_DIR} \" (Undefined environment var $JANA_HOME)\")")
-        set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR} CACHE PATH "magic incantation" FORCE)
+        install(CODE "message(STATUS \"Installing to  ${CMAKE_INSTALL_PREIX} \" (Undefined environment var $JANA_HOME)\")")
     endif()
 else()
     install(CODE "message(STATUS \"Installing to \" ${CMAKE_INSTALL_PREFIX} \" (Non-default CMAKE_INSTALL_PREFIX)\")")
