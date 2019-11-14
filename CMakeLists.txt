@@ -3,7 +3,9 @@ project(jana2)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)   # Enable -fPIC for all targets
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")   # Define location of cmake modules
+
+# Expose custom cmake modules
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 # Figure out install directory.
 #   1. If specified as an argument to CMake, use that
@@ -42,4 +44,4 @@ add_subdirectory(src/programs/playground)
 
 install(PROGRAMS scripts/mkplugin scripts/mkclass DESTINATION bin)
 
-include(${CMAKE_SOURCE_DIR}/cmake/make_config.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/MakeConfig.cmake)
