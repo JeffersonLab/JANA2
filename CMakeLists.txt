@@ -8,19 +8,23 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)   # Enable -fPIC for all targets
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 # Figure out install directory.
-#   1. If specified as an argument to CMake, use that
-#   2. If $JANA_HOME defined, use that
-#   3. Otherwise, install to /usr/local or similar
+#   1. If CMAKE_INSTALL_PREFIX specified as an argument to CMake, use that
+#   2. If JANA_HOME specified as an argument to CMake, use that
+#   3. If environment variable $JANA_HOME defined, use that
+#   4. Otherwise, install to /usr/local or similar
 
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    if(DEFINED ENV{JANA_HOME})
-        install(CODE "message(STATUS \"Installing to \" ENV{JANA_HOME} \"(From $JANA_HOME)\")")
-        set(CMAKE_INSTALL_PREFIX ENV{JANA_HOME} CACHE PATH "magic incantation" FORCE)
+    if(DEFINED JANA_HOME)
+        set(CMAKE_INSTALL_PREFIX ${JANA_HOME} CACHE PATH "magic incantation" FORCE)
+        message(STATUS "Installing to ${CMAKE_INSTALL_PREFIX} (From CMake variable $JANA_HOME)")
+    elseif(DEFINED ENV{JANA_HOME})
+        set(CMAKE_INSTALL_PREFIX $ENV{JANA_HOME} CACHE PATH "magic incantation" FORCE)
+        message(STATUS "Installing to  ${CMAKE_INSTALL_PREIX} (From environment variable $JANA_HOME)")
     else()
-        install(CODE "message(STATUS \"Installing to  ${CMAKE_INSTALL_PREIX} \" (Undefined environment var $JANA_HOME)\")")
+        message(STATUS "Installing to  ${CMAKE_INSTALL_PREIX} (No JANA_HOME specified, defaulting)")
     endif()
 else()
-    install(CODE "message(STATUS \"Installing to \" ${CMAKE_INSTALL_PREFIX} \" (Non-default CMAKE_INSTALL_PREFIX)\")")
+    message(STATUS "Installing to ${CMAKE_INSTALL_PREFIX} (Non-default CMAKE_INSTALL_PREFIX)")
 endif()
 
 include_directories(src/lib)   # So that everyone can find the JANA header files

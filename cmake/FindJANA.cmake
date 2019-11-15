@@ -34,12 +34,16 @@ This will define the following variables:
 # TODO: Find JANA via jana-config or pkg-config?
 # TODO: Provide CMake with real version information
 
-if ($ENV{JANA_HOME})
+if (DEFINED JANA_HOME)
+    set(JANA_ROOT_DIR ${JANA_HOME})
+    message(STATUS "Using JANA_HOME = ${JANA_ROOT_DIR} (From CMake JANA_HOME variable)")
+
+elseif (DEFINED ENV{JANA_HOME})
     set(JANA_ROOT_DIR $ENV{JANA_HOME})
-    message(STATUS "Found $JANA_HOME=${JANA_ROOT_DIR}")
+    message(STATUS "Using JANA_HOME = ${JANA_ROOT_DIR} (From JANA_HOME environment variable)")
+
 else()
-    set(JANA_ROOT_DIR /usr/local)
-    message(STATUS "Missing $JANA_HOME, using /usr/local")
+    message(FATAL_ERROR "Missing $JANA_HOME")
 endif()
 
 set(JANA_VERSION 2)
