@@ -139,7 +139,7 @@ public:
         if (mStatus == Status::Inserted || mStatus == Status::Processed) {
             for (auto p : mData) delete p;
             mData.clear();
-            mStatus = Status::Uninitialized;
+            mStatus = Status::Unprocessed;
         }
         // otherwise leave mStatus and mData alone
     }
