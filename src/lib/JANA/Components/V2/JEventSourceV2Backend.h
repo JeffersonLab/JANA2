@@ -5,12 +5,19 @@
 #ifndef JANA2_JEVENTSOURCEBACKENDV2_H
 #define JANA2_JEVENTSOURCEBACKENDV2_H
 
+#include <JANA/Components/JEventSourceBackend.h>
+#include <JANA/JFactoryGenerator.h>
+
 namespace jana {
 namespace v2 {
 
-struct JEventSourceV2Backend : public JEventSourceBackend {
+struct JEventSourceV2Backend : public jana::components::JEventSourceBackend {
 
-public JEventSourceV2Backend(std::string resource_name) : m_resource_name(resource_name) {}
+public:
+
+    JEventSourceV2Backend(std::string resource_name) {
+        m_resource_name = resource_name;
+    }
 
     JFactoryGenerator* m_factory_generator = nullptr;
 

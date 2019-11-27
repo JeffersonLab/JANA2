@@ -89,8 +89,21 @@ set(JANA2_SOURCES
     Calibrations/JCalibrationFile.h
     Calibrations/JCalibrationGenerator.h
     Calibrations/JCalibrationGeneratorCCDB.h
-    )
 
+    Components/JEventProcessorBackend.h
+    Components/JEventSourceBackend.h
+    Components/JFactoryBackend.h
+    Components/V1/JEventProcessorV1Backend.h
+    Components/V1/JEventSourceV1Backend.h
+    Components/V1/JFactoryV1Backend.h
+    Components/V2/JEventProcessorV2Backend.h
+    Components/V2/JEventSourceV2Backend.h
+    Components/V2/JFactoryV2Backend.h
+    Components/V3/JEventProcessorV3Backend.h
+    Components/V3/JEventSourceV3Backend.h
+    Components/V3/JFactoryV3Backend.h
+    Components/JEventSourceFrontend.h
+    )
 
 add_library(jana2 STATIC ${JANA2_SOURCES})
 
