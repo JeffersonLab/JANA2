@@ -42,13 +42,12 @@ using jana::v2::JEventSourceV2Backend;
 
 TEST_CASE("JEventSourceTests") {
 
-    JEvent event;
+    auto event = std::make_shared<JEvent>();
 
     DummyFrontend frontend;
-    JEventSourceV2Backend sut("dummy_resource_name");
+    JEventSourceV2Backend sut(&frontend);
 
-
-    auto result = sut.next(event);
+    auto result = sut.next(*event);
     REQUIRE(result == JEventSourceV2Backend::Result::Success);
 
 }
