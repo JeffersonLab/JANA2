@@ -159,6 +159,4 @@ public:
 } // namespace v3
 } // namespace jana
 
-using jana::v2::JEventSource;
-
 #endif //JANA2_JEVENTSOURCEFRONTEND_H

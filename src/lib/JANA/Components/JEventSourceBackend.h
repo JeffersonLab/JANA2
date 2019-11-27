@@ -9,12 +9,12 @@
 #include <atomic>
 #include <mutex>
 
+class JEvent;
+class JApplication;
+
 namespace jana {
 namespace components {
 
-
-class JEvent;
-class JApplication;
 
 // JEventSourceBackend is an interface which allows us to try out different API versions simultaneously and
 // migrate off the old ones more gently.

@@ -21,11 +21,11 @@ public:
 
     JFactoryGenerator* m_factory_generator = nullptr;
 
-    virtual void open() {
+    void open() override {
 
     }
 
-    virtual Result next(JEvent &) {
+    Result next(JEvent &) override {
 
     }
 };

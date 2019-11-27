@@ -20,7 +20,7 @@ set(TEST_SOURCES
     UserExceptionTests.cc
     UserExceptionTests.h
     JFactoryTests.h
-    JFactoryTests.cc)
+    JFactoryTests.cc JEventSourceTests.cc JEventSourceTests.h)
 
 add_executable(tests ${TEST_SOURCES})
 find_package(Threads REQUIRED)
