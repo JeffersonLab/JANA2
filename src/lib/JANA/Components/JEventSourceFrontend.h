@@ -32,8 +32,10 @@
 
 #ifndef JANA2_JEVENTSOURCEFRONTEND_H
 #define JANA2_JEVENTSOURCEFRONTEND_H
+
 #include <JANA/JException.h>
 #include <JANA/Utils/JTypeInfo.h>
+#include <JANA/Components/V1/jerror.h>
 #include <set>
 #include <memory>
 
@@ -48,26 +50,6 @@ namespace v1 {
 class JEventSource {
 
 public:
-    enum jerror_t {
-        NOERROR = 0,
-        UNKNOWN_ERROR = -1000,
-        MAX_EVENT_PROCESSORS_EXCEEDED,
-        ERROR_OPENING_EVENT_SOURCE,
-        ERROR_CLOSING_EVENT_SOURCE,
-        NO_MORE_EVENTS_IN_SOURCE,
-        NO_MORE_EVENT_SOURCES,
-        EVENT_NOT_IN_MEMORY,
-        EVENT_SOURCE_NOT_OPEN,
-        OBJECT_NOT_AVAILABLE,
-        DEVENT_OBJECT_DOES_NOT_EXIST,
-        MEMORY_ALLOCATION_ERROR,
-        RESOURCE_UNAVAILABLE,
-        VALUE_OUT_OF_RANGE,
-        INFINITE_RECURSION,
-        UNRECOVERABLE_ERROR,
-        FILTER_EVENT_OUT
-    };
-
 
     JEventSource(const char *source_name);
 

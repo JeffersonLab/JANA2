@@ -30,75 +30,43 @@
 // Author: Nathan Brei
 //
 
-#ifndef JANA2_JEVENTSOURCETESTS_H
-#define JANA2_JEVENTSOURCETESTS_H
+#ifndef JANA1_JERROR_H
+#define JANA1_JERROR_H
 
-#include <JANA/Components/JEventSourceFrontend.h>
+/// This file contains error codes for errors specific to the
+/// analysis code. Many functions return values
+/// of type jerror_t. This header should be included in all
+/// files which must deal with this type.
 
-#include <iostream>
-#include <atomic>
+#define _DBG_ std::cerr<<__FILE__<<":"<<__LINE__<<" "
+#define _DBG__ std::cerr<<__FILE__<<":"<<__LINE__<<std::endl
 
+enum jerror_t{
+	NOERROR = 0,
+	UNKNOWN_ERROR = -1000,
 
-struct DummyV1Frontend : public jana::v1::JEventSource {
+	MAX_EVENT_PROCESSORS_EXCEEDED,
 
-    std::atomic_int event_count {0};
+	ERROR_OPENING_EVENT_SOURCE,
+	ERROR_CLOSING_EVENT_SOURCE,
+	NO_MORE_EVENTS_IN_SOURCE,
+	NO_MORE_EVENT_SOURCES,
+	EVENT_NOT_IN_MEMORY,
+	EVENT_SOURCE_NOT_OPEN,
+	OBJECT_NOT_AVAILABLE,
+	DEVENT_OBJECT_DOES_NOT_EXIST,
 
-    jerror_t GetEvent(JEvent& event) override {
-        if (event_count >= 3) {
-            return jerror_t::NO_MORE_EVENTS_IN_SOURCE;
-        }
-        ++event_count;
-        return jerror_t::NOERROR;
-    }
+	MEMORY_ALLOCATION_ERROR,
+
+	RESOURCE_UNAVAILABLE,
+	VALUE_OUT_OF_RANGE,
+
+	INFINITE_RECURSION,
+	UNRECOVERABLE_ERROR,
+
+	FILTER_EVENT_OUT
 };
 
 
-struct DummyV2Frontend : public jana::v2::JEventSource {
 
-    std::atomic_int open_count {0};
-    std::atomic_int event_count {0};
-
-    DummyV2Frontend() : jana::v2::JEventSource("dummy_frontend_resource") {};
-
-    void Open() override {
-        ++open_count;
-    }
-
-    void GetEvent(std::shared_ptr<JEvent>) override {
-        if (event_count >= 3) {
-            throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
-        }
-        ++event_count;
-    }
-
-    bool GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactory* aFactory) override {
-        return false;
-    }
-
-};
-
-
-struct DummyV3Frontend : public jana::v3::JEventSource {
-
-    std::atomic_int open_count {0};
-    std::atomic_int close_count {0};
-    std::atomic_int event_count {0};
-
-    void open(std::string resource_name) override {
-        ++open_count;
-    }
-
-    void close() override {
-        ++close_count;
-    }
-
-    Result next_event(JEvent& event) override {
-        if (event_count >= 3) {
-            return Result::FAILURE_FINISHED;
-        }
-        ++event_count;
-        return Result::SUCCESS;
-    }
-};
-
-#endif //JANA2_JEVENTSOURCETESTS_H
+#endif //JANA2_JERROR_H
