@@ -39,12 +39,12 @@
 #include <atomic>
 
 
-struct DummyFrontend : public jana::v2::JEventSource {
+struct DummyV2Frontend : public jana::v2::JEventSource {
 
     std::atomic_int open_count {0};
     std::atomic_int event_count {0};
 
-    DummyFrontend() : jana::v2::JEventSource("dummy_frontend_resource") {};
+    DummyV2Frontend() : jana::v2::JEventSource("dummy_frontend_resource") {};
 
     void Open() override {
         ++open_count;
@@ -61,6 +61,29 @@ struct DummyFrontend : public jana::v2::JEventSource {
         return false;
     }
 
+};
+
+struct DummyV3Frontend : public jana::v3::JEventSource {
+
+    std::atomic_int open_count {0};
+    std::atomic_int close_count {0};
+    std::atomic_int event_count {0};
+
+    void open(std::string resource_name) override {
+        ++open_count;
+    }
+
+    void close() override {
+        ++close_count;
+    }
+
+    Result next_event(JEvent& event) override {
+        if (event_count >= 3) {
+            return Result::FAILURE_FINISHED;
+        }
+        ++event_count;
+        return Result::SUCCESS;
+    }
 };
 
 #endif //JANA2_JEVENTSOURCETESTS_H

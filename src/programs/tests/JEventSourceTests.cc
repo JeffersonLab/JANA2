@@ -36,17 +36,17 @@
 
 #include <JANA/Components/JEventSourceFrontend.h>
 #include <JANA/Components/V2/JEventSourceV2Backend.h>
+#include <JANA/Components/V3/JEventSourceV3Backend.h>
 #include <JANA/JEvent.h>
 
 using namespace jana;
-using jana::v2::JEventSourceV2Backend;
 
 TEST_CASE("JEventSourceV2Tests") {
 
     auto event = std::make_shared<JEvent>();
 
-    DummyFrontend frontend;
-    JEventSourceV2Backend backend(&frontend);
+    DummyV2Frontend frontend;
+    jana::v2::JEventSourceV2Backend backend(&frontend);
 
     SECTION("When backend.open() is called once, frontend.open() is called once") {
         REQUIRE(backend.get_status() == JEventSourceBackend::Status::Unopened);
@@ -111,3 +111,72 @@ TEST_CASE("JEventSourceV2Tests") {
 
 }
 
+TEST_CASE("JEventSourceV3Tests") {
+
+    JEvent event; // No shared_ptr needed anymore
+
+    DummyV3Frontend frontend;
+    jana::v3::JEventSourceV3Backend backend(&frontend);
+
+    SECTION("When backend.open() is called once, frontend.open() is called once") {
+        REQUIRE(backend.get_status() == JEventSourceBackend::Status::Unopened);
+        backend.open();
+        backend.next(event);
+        REQUIRE(frontend.open_count == 1);
+        REQUIRE(frontend.event_count == 1);
+        REQUIRE(backend.get_event_count() == 1);
+        REQUIRE(backend.get_status() == JEventSourceBackend::Status::Opened);
+    }
+
+    SECTION("When backend.open() is called multiple times, frontend.open() is called once") {
+        REQUIRE(backend.get_status() == JEventSourceBackend::Status::Unopened);
+        backend.open();
+        backend.open();
+        backend.open();
+        backend.next(event);
+        REQUIRE(frontend.open_count == 1);
+        REQUIRE(frontend.event_count == 1);
+        REQUIRE(backend.get_event_count() == 1);
+        REQUIRE(backend.get_status() == JEventSourceBackend::Status::Opened);
+    }
+
+    SECTION("When backend.open() isn't called at all, frontend.open() is called from backend.next()") {
+        REQUIRE(backend.get_status() == JEventSourceBackend::Status::Unopened);
+        backend.next(event);
+        REQUIRE(frontend.open_count == 1);
+        REQUIRE(frontend.event_count == 1);
+        REQUIRE(backend.get_event_count() == 1);
+        REQUIRE(backend.get_status() == JEventSourceBackend::Status::Opened);
+    }
+
+    SECTION("When frontend.next() doesn't throw, backend.next() returns SUCCESS") {
+        // frontend is constrained to emit exactly three events
+        REQUIRE(backend.get_status() == JEventSourceBackend::Status::Unopened);
+        REQUIRE(backend.next(event) == JEventSourceBackend::Result::Success);
+        REQUIRE(backend.get_status() == JEventSourceBackend::Status::Opened);
+        REQUIRE(backend.next(event) == JEventSourceBackend::Result::Success);
+        REQUIRE(backend.next(event) == JEventSourceBackend::Result::Success);
+        REQUIRE(frontend.open_count == 1);
+        REQUIRE(frontend.event_count == 3);
+        REQUIRE(backend.get_event_count() == 3);
+    }
+
+    SECTION("When frontend.next() throws kNoMoreEvents, backend.next() returns FAILURE_FINISHED") {
+        // frontend is constrained to emit exactly three events
+        REQUIRE(backend.get_status() == JEventSourceBackend::Status::Unopened);
+        REQUIRE(backend.next(event) == JEventSourceBackend::Result::Success);
+        REQUIRE(backend.get_status() == JEventSourceBackend::Status::Opened);
+        REQUIRE(backend.next(event) == JEventSourceBackend::Result::Success);
+        REQUIRE(backend.next(event) == JEventSourceBackend::Result::Success);
+        REQUIRE(backend.get_status() == JEventSourceBackend::Status::Opened);
+        REQUIRE(backend.next(event) == JEventSourceBackend::Result::FailureFinished);
+        REQUIRE(backend.get_status() == JEventSourceBackend::Status::Finished);
+        REQUIRE(backend.next(event) == JEventSourceBackend::Result::FailureFinished);
+        REQUIRE(backend.next(event) == JEventSourceBackend::Result::FailureFinished);
+        REQUIRE(backend.get_status() == JEventSourceBackend::Status::Finished);
+        REQUIRE(frontend.open_count == 1);
+        REQUIRE(frontend.event_count == 3);
+        REQUIRE(backend.get_event_count() == 3);
+    }
+
+}

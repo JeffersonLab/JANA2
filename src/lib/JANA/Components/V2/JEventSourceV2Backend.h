@@ -6,6 +6,7 @@
 #define JANA2_JEVENTSOURCEBACKENDV2_H
 
 #include <JANA/Components/JEventSourceBackend.h>
+#include <JANA/Components/JEventSourceFrontend.h>
 #include <JANA/JFactoryGenerator.h>
 #include <JANA/JEvent.h>
 

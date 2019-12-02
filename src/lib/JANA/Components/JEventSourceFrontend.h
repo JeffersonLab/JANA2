@@ -152,7 +152,8 @@ public:
     };
 
     // data
-    void set_type_name(std::string type_name) { m_type_name = type_name; }
+    void set_type_name(std::string type_name) { m_type_name = std::move(type_name); }
+    std::string get_type_name() { return m_type_name; }
 
     // methods
     virtual void open(std::string resource_name) {}
