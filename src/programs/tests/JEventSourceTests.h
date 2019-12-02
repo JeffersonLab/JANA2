@@ -34,13 +34,16 @@
 #define JANA2_JEVENTSOURCETESTS_H
 
 #include <JANA/Components/JEventSourceFrontend.h>
+#include <iostream>
 
 
 struct DummyFrontend : public jana::v2::JEventSource {
 
     DummyFrontend() : jana::v2::JEventSource("dummy_frontend_resource") {};
 
-    void Open() override {}
+    void Open() override {
+        std::cout << "Calling open" << std::endl;
+    }
 
     void GetEvent(std::shared_ptr<JEvent>) override {}
 

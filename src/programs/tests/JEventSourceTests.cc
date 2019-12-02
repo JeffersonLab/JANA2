@@ -47,6 +47,8 @@ TEST_CASE("JEventSourceTests") {
     DummyFrontend frontend;
     JEventSourceV2Backend sut(&frontend);
 
+    sut.open();
+
     auto result = sut.next(*event);
     REQUIRE(result == JEventSourceV2Backend::Result::Success);
 

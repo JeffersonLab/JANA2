@@ -112,7 +112,8 @@ class JEventSource {
     JFactoryGenerator *m_factory_generator;
 
 public:
-    // Data which user should provide
+    enum class RETURN_STATUS { kSUCCESS, kNO_MORE_EVENTS, kBUSY, kTRY_AGAIN, kERROR, kUNKNOWN };
+
 
     explicit JEventSource(std::string resource_name, JApplication *app = nullptr)
             : m_resource_name(std::move(resource_name)), m_application(app) {}
