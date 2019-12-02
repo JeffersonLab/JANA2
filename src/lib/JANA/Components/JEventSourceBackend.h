@@ -32,6 +32,16 @@ public:
 
     virtual Result next(JEvent&) = 0;
 
+    Status get_status() const { return m_status; }
+
+    std::string get_plugin_name() const { return m_plugin_name; }
+
+    std::string get_type_name() const { return m_type_name; }
+
+    std::string get_resource_name() const { return m_resource_name; }
+
+    uint64_t get_event_count() const { return m_event_count; };
+
 protected:
     std::string m_plugin_name;
     std::string m_type_name;

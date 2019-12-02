@@ -46,6 +46,7 @@ public:
             switch (m_status) {
                 case Status::Unopened: open(); // Fall-through to Opened afterwards
                 case Status::Opened:   m_frontend->GetEvent(event.shared_from_this());
+                                       ++m_event_count;
                                        return Result::Success;
                 case Status::Finished: return Result::FailureFinished;
             }
