@@ -34,18 +34,28 @@
 #define JANA2_JEVENTSOURCETESTS_H
 
 #include <JANA/Components/JEventSourceFrontend.h>
+
 #include <iostream>
+#include <atomic>
 
 
 struct DummyFrontend : public jana::v2::JEventSource {
 
+    std::atomic_int open_count {0};
+    std::atomic_int event_count {0};
+
     DummyFrontend() : jana::v2::JEventSource("dummy_frontend_resource") {};
 
     void Open() override {
-        std::cout << "Calling open" << std::endl;
+        ++open_count;
     }
 
-    void GetEvent(std::shared_ptr<JEvent>) override {}
+    void GetEvent(std::shared_ptr<JEvent>) override {
+        if (event_count >= 3) {
+            throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
+        }
+        ++event_count;
+    }
 
     bool GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactory* aFactory) override {
         return false;

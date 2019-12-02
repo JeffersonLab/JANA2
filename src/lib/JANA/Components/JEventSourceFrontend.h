@@ -121,8 +121,10 @@ public:
     virtual ~JEventSource() {}
 
     void SetTypeName(std::string type_name) { m_type_name = std::move(type_name); }
+    std::string GetTypeName() { return m_type_name; }
 
     void SetFactoryGenerator(JFactoryGenerator *generator) { m_factory_generator = generator; }
+    JFactoryGenerator* GetFactoryGenerator() { return m_factory_generator; }
 
     std::string GetName() const { return m_resource_name; }
 

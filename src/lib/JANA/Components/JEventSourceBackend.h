@@ -37,9 +37,9 @@ protected:
     std::string m_type_name;
     std::string m_resource_name;
     std::once_flag m_init_flag;
-    Status m_status;
+    Status m_status = Status::Unopened;
     JApplication* m_application = nullptr;
-    std::atomic_ullong m_event_count;
+    std::atomic_ullong m_event_count {0};
 };
 
 } // namespace components

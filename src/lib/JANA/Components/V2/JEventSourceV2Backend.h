@@ -68,18 +68,16 @@ public:
         }
         catch (JException& ex) {
             ex.plugin_name = m_plugin_name;
-            ex.component_name = GetType();
+            ex.component_name = m_frontend->GetTypeName();
             throw ex;
         }
         catch (...) {
             auto ex = JException("Unknown exception in JEventSource::GetEvent()");
             ex.nested_exception = std::current_exception();
             ex.plugin_name = m_plugin_name;
-            ex.component_name = GetType();
+            ex.component_name = m_frontend->GetTypeName();
             throw ex;
         }
-        m_frontend->GetEvent(event.shared_from_this());
-        return Result::FailureFinished;
     }
 };
 
