@@ -13,8 +13,6 @@ class JEvent;
 class JApplication;
 
 namespace jana {
-namespace components {
-
 
 // JEventSourceBackend is an interface which allows us to try out different API versions simultaneously and
 // migrate off the old ones more gently.
@@ -52,7 +50,6 @@ protected:
     std::atomic_ullong m_event_count {0};
 };
 
-} // namespace components
 } // namespace jana
 
 #endif //JANA2_JEVENTSOURCEBACKEND_H

@@ -12,7 +12,7 @@
 namespace jana {
 namespace v2 {
 
-class JEventSourceV2Backend : public jana::components::JEventSourceBackend {
+class JEventSourceV2Backend : public JEventSourceBackend {
 private:
     jana::v2::JEventSource* m_frontend;
 

@@ -38,10 +38,10 @@
 #include <JANA/Components/V2/JEventSourceV2Backend.h>
 #include <JANA/JEvent.h>
 
+using namespace jana;
 using jana::v2::JEventSourceV2Backend;
-using jana::components::JEventSourceBackend;
 
-TEST_CASE("JEventSourceTests") {
+TEST_CASE("JEventSourceV2Tests") {
 
     auto event = std::make_shared<JEvent>();
 
@@ -53,6 +53,8 @@ TEST_CASE("JEventSourceTests") {
         backend.open();
         backend.next(*event);
         REQUIRE(frontend.open_count == 1);
+        REQUIRE(frontend.event_count == 1);
+        REQUIRE(backend.get_event_count() == 1);
         REQUIRE(backend.get_status() == JEventSourceBackend::Status::Opened);
     }
 
@@ -63,6 +65,8 @@ TEST_CASE("JEventSourceTests") {
         backend.open();
         backend.next(*event);
         REQUIRE(frontend.open_count == 1);
+        REQUIRE(frontend.event_count == 1);
+        REQUIRE(backend.get_event_count() == 1);
         REQUIRE(backend.get_status() == JEventSourceBackend::Status::Opened);
     }
 
@@ -70,6 +74,8 @@ TEST_CASE("JEventSourceTests") {
         REQUIRE(backend.get_status() == JEventSourceBackend::Status::Unopened);
         backend.next(*event);
         REQUIRE(frontend.open_count == 1);
+        REQUIRE(frontend.event_count == 1);
+        REQUIRE(backend.get_event_count() == 1);
         REQUIRE(backend.get_status() == JEventSourceBackend::Status::Opened);
     }
 
