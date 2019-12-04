@@ -29,3 +29,12 @@ title: JANA: Multi-threaded HENP Event Reconstruction
 
 ## More complex topologies
 
+### JObjects
+
+JObjects are data containers for specific results. JObjects are close to being plain-old structs, except they include
+some extra functionality for creating and traversing associations with other JObjects. They are immutable once 
+outside of the JFactory created them. It may be beneficial to use multiple inheritance in order to take gain additional
+ functionality, e.g. to delegate persistence to ROOT.
+
+### JEventSource
+

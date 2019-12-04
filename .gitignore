@@ -39,7 +39,6 @@
 .cproject
 .settings
 .sconsign.dblite
-SBMS
 Linux_*
 Darwin_*
 .Linux_*
