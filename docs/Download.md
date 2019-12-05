@@ -5,12 +5,12 @@ title: JANA: Multi-threaded HENP Event Reconstruction
 <center>
 <table border="0" width="100%" align="center">
 <TH width="20%"><A href="index.html">Welcome</A></TH>
-<TH width="15%"><A href="Tutorial.html">Tutorial</A></TH>
-<TH width="25%"><A href="Download.html">Download + Docs</A></TH>
-<TH width="25%"><A href="Installation.html">Installation + Use</A></TH>
-<TH width="15%"><A href="FAQ.html">FAQ</A></TH>
+<TH width="20%"><A href="Tutorial.html">Tutorial</A></TH>
+<TH width="20%"><A href="Howto.html">How-to guides</A></TH>
+<TH width="20%"><A href="Explanation.html">Principles</A></TH>
+<TH width="20%"><A href="Reference.html">Reference</A></TH>
 </table>
-</center>
+</center>---
 
 
 ## Get JANA
