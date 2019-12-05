@@ -1,4 +1,3 @@
-
 ---
 title: JANA: Multi-threaded HENP Event Reconstruction
 ---
@@ -28,7 +27,7 @@ This section describes the underlying machinery of JANA. This is essentially a l
 ## Streaming Extensions
 
 * [JStreamingEventSource](html/class_j_streaming_event_source.html): A starting point for structured, composable streaming
-* [JTransport](html/class_j_transport.html): An interface for a generic messaging transport
+* [JTransport](html/struct_j_transport.html): An interface for a generic messaging transport
 * [JMessage](html/struct_j_message.html): An interface for a stream buffer
 
 ## User-facing utilities

@@ -19,7 +19,7 @@ This section walks the user through specific steps for solving a real-world prob
 Table of contents
 -----------------
 
-1.  Download and install JANA
+1.  [Download](Download.html) and [install](Installation.html) JANA
 2.  Create a new JANA project, plugin, or executable
 3.  Add new JEventSources, JEventProcessors, or JFactories to an existing JANA project
 4.  Create a service which can be shared between different plugins
@@ -29,7 +29,7 @@ Table of contents
 8.  Use ROOT TObjects inside JANA
 9.  Persist the entire DST using ROOT
 10. Checkpoint the entire DST using ROOT
-11. Stream data to and from JANA
+11. [Stream data to and from JANA](howto_streaming.html)
 12. Build and filter events ("L1 and L2 triggers")
 13. Process subevents
 14. Migrate from JANA1 to JANA2

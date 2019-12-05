@@ -12,21 +12,22 @@ title: JANA: Multi-threaded HENP Event Reconstruction
 </table>
 </center>
 
+How To...
+=========
+Stream data to and from JANA
+----------------------------
 
-## Get JANA
+### The basic case
 
-### JANA 2.0.0-snapshot (unstable)
+1. Understand your data
+-- How large are your events?
+-- What is the structure of your data?
+-- Is/should your data be serialized?
+-- Endianness
 
-- `git clone https://github.com/JeffersonLab/JANA2/`
-- [Doxygen documentation](html/index.html)
+2. Define a data type for your events
 
-### Stable releases
+3. Implement your transport wrapper
 
-- None yet!
-
-### JANA 1
-
-- [JANA 1 homepage](https://www.jlab.org/JANA/)
-- [JANA 1 repo](https://github.com/JeffersonLab/JANA)
-
+4. Connect 
 
