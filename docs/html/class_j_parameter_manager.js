@@ -8,7 +8,10 @@ var class_j_parameter_manager =
     [ "GetParameter", "class_j_parameter_manager.html#a21e103b044e0f7c400b0963efa76c83c", null ],
     [ "GetParameterValue", "class_j_parameter_manager.html#a0f5f8a1beee4b1c08150dae866b55800", null ],
     [ "PrintParameters", "class_j_parameter_manager.html#a4a3ac6e1f8f90d52e75770e37cc65b6b", null ],
+    [ "ReadConfigFile", "class_j_parameter_manager.html#ae46022657f15d7486b445f4b204a36a2", null ],
     [ "SetDefaultParameter", "class_j_parameter_manager.html#a2259115b11e86bdfa7abfb3d3ba5306a", null ],
     [ "SetParameter", "class_j_parameter_manager.html#afbb49e839ee5cd17934f10d9b7d995a6", null ],
+    [ "ToLC", "class_j_parameter_manager.html#a2a8c228eb7849244b885ea9a668f3891", null ],
+    [ "WriteConfigFile", "class_j_parameter_manager.html#a90f0c1b84c4d00df0e765cd343b26431", null ],
     [ "_jparameters", "class_j_parameter_manager.html#ae4ddf0670954e3e0e022caef3fd58b76", null ]
 ];

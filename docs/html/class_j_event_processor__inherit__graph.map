@@ -1,5 +1,3 @@
 <map id="JEventProcessor" name="JEventProcessor">
-<area shape="rect" id="node2" href="$class_j_event_processor__example2.html" title="JEventProcessor_example2" alt="" coords="5,80,189,107"/>
-<area shape="rect" id="node3" href="$class_j_event_processor__jana__test.html" title="JEventProcessor_jana_test" alt="" coords="214,80,396,107"/>
-<area shape="rect" id="node4" href="$class_j_event_processor_j_a_n_a_r_a_t_e.html" title="JEventProcessorJANARATE" alt="" coords="421,80,613,107"/>
+<area shape="rect" id="node2" href="$class_j_csv_writer.html" title="JCsvWriter\&lt; T \&gt;" alt="" coords="5,80,131,107"/>
 </map>

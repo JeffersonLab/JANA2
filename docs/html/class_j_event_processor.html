@@ -44,7 +44,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li>
         <div id="MSearchBox" class="MSearchBoxInactive">
@@ -92,7 +91,7 @@ $(document).ready(function(){initNavTree('class_j_event_processor.html','');});
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Friends</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -103,8 +102,8 @@ $(document).ready(function(){initNavTree('class_j_event_processor.html','');});
 
 <div class="header">
   <div class="summary">
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-attribs">Public Attributes</a> &#124;
 <a href="#pro-methods">Protected Member Functions</a> &#124;
 <a href="#pro-attribs">Protected Attributes</a> &#124;
 <a href="class_j_event_processor-members.html">List of all members</a>  </div>
@@ -117,45 +116,91 @@ Inheritance diagram for JEventProcessor:</div>
 <div class="dyncontent">
 <div class="center"><img src="class_j_event_processor__inherit__graph.png" border="0" usemap="#_j_event_processor_inherit__map" alt="Inheritance graph"/></div>
 <map name="_j_event_processor_inherit__map" id="_j_event_processor_inherit__map">
-<area shape="rect" id="node2" href="class_j_event_processor__example2.html" title="JEventProcessor_example2" alt="" coords="5,80,189,107"/><area shape="rect" id="node3" href="class_j_event_processor__jana__test.html" title="JEventProcessor_jana_test" alt="" coords="214,80,396,107"/><area shape="rect" id="node4" href="class_j_event_processor_j_a_n_a_r_a_t_e.html" title="JEventProcessorJANARATE" alt="" coords="421,80,613,107"/></map>
+<area shape="rect" id="node2" href="class_j_csv_writer.html" title="JCsvWriter\&lt; T \&gt;" alt="" coords="5,80,131,107"/></map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <div class="dynheader">
 Collaboration diagram for JEventProcessor:</div>
 <div class="dyncontent">
 <div class="center"><img src="class_j_event_processor__coll__graph.png" border="0" usemap="#_j_event_processor_coll__map" alt="Collaboration graph"/></div>
 <map name="_j_event_processor_coll__map" id="_j_event_processor_coll__map">
-<area shape="rect" id="node2" href="class_j_application.html" title="JANA application class (singleton). " alt="" coords="268,96,361,123"/><area shape="rect" id="node3" href="class_j_event_source_manager.html" title="JEventSourceManager" alt="" coords="5,5,160,32"/><area shape="rect" id="node5" href="class_j_thread_manager.html" title="JThreadManager" alt="" coords="326,5,444,32"/><area shape="rect" id="node6" href="class_j_parameter_manager.html" title="JParameterManager" alt="" coords="469,5,608,32"/></map>
+<area shape="rect" id="node2" href="class_j_application.html" title="JANA application class (singleton). " alt="" coords="19,5,117,32"/></map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:a6c53848cd8f7b635cfd376d47de21935"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><b>Status</b> { <br/>
+&#160;&#160;<b>Unopened</b>, 
+<br/>
+&#160;&#160;<b>Opened</b>, 
+<br/>
+&#160;&#160;<b>Finished</b>
+<br/>
+ }</td></tr>
+<tr class="separator:a6c53848cd8f7b635cfd376d47de21935"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a9c647e1d7586117b0e72b5fc7976e9f3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9c647e1d7586117b0e72b5fc7976e9f3"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>JEventProcessor</b> (<a class="el" href="class_j_application.html">JApplication</a> *app=nullptr)</td></tr>
 <tr class="separator:a9c647e1d7586117b0e72b5fc7976e9f3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6d4f6ee73343fe3c6f5bba828e10ac55"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6d4f6ee73343fe3c6f5bba828e10ac55"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>Init</b> (void)</td></tr>
-<tr class="separator:a6d4f6ee73343fe3c6f5bba828e10ac55"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0401f8f6ea0712e7c1ffd94de0ae8c18"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0401f8f6ea0712e7c1ffd94de0ae8c18"></a>
+Status&#160;</td><td class="memItemRight" valign="bottom"><b>GetStatus</b> () const </td></tr>
+<tr class="separator:a0401f8f6ea0712e7c1ffd94de0ae8c18"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6d37d6dea7d89a65217d35abee2da758"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6d37d6dea7d89a65217d35abee2da758"></a>
+std::string&#160;</td><td class="memItemRight" valign="bottom"><b>GetPluginName</b> () const </td></tr>
+<tr class="separator:a6d37d6dea7d89a65217d35abee2da758"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a583b4146c4048b6cbdf159e2ef4ac10e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a583b4146c4048b6cbdf159e2ef4ac10e"></a>
+std::string&#160;</td><td class="memItemRight" valign="bottom"><b>GetTypeName</b> () const </td></tr>
+<tr class="separator:a583b4146c4048b6cbdf159e2ef4ac10e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a547eab6f2ad4bca16be00d8e8ecdce30"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a547eab6f2ad4bca16be00d8e8ecdce30"></a>
+std::string&#160;</td><td class="memItemRight" valign="bottom"><b>GetResourceName</b> () const </td></tr>
+<tr class="separator:a547eab6f2ad4bca16be00d8e8ecdce30"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afe93d7f03f2876a61b616cc82d509998"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afe93d7f03f2876a61b616cc82d509998"></a>
+uint64_t&#160;</td><td class="memItemRight" valign="bottom"><b>GetEventCount</b> () const </td></tr>
+<tr class="separator:afe93d7f03f2876a61b616cc82d509998"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a45f0eb3f8febc599beca4997d2f1cc1f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a45f0eb3f8febc599beca4997d2f1cc1f"></a>
+<a class="el" href="class_j_application.html">JApplication</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>GetApplication</b> () const </td></tr>
+<tr class="separator:a45f0eb3f8febc599beca4997d2f1cc1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aeddd8ae011812c7a2660677f2fb2c9c1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aeddd8ae011812c7a2660677f2fb2c9c1"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>AreEventsOrdered</b> () const </td></tr>
+<tr class="separator:aeddd8ae011812c7a2660677f2fb2c9c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9619c89d702a5d69ff5787ee1f1bb4f9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9619c89d702a5d69ff5787ee1f1bb4f9"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>DoInitialize</b> ()</td></tr>
+<tr class="separator:a9619c89d702a5d69ff5787ee1f1bb4f9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a149a80afefecc7c8b83fd2a3335bad95"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a149a80afefecc7c8b83fd2a3335bad95"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>DoMap</b> (const std::shared_ptr&lt; const <a class="el" href="class_j_event.html">JEvent</a> &gt; &amp;e)</td></tr>
+<tr class="separator:a149a80afefecc7c8b83fd2a3335bad95"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a43fc17eda1be82a9a27e92274df43280"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a43fc17eda1be82a9a27e92274df43280"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>DoReduce</b> (const std::shared_ptr&lt; const <a class="el" href="class_j_event.html">JEvent</a> &gt; &amp;e)</td></tr>
+<tr class="separator:a43fc17eda1be82a9a27e92274df43280"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab62962d531b3238b54609923433c7afc"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab62962d531b3238b54609923433c7afc"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>DoFinalize</b> ()</td></tr>
+<tr class="separator:ab62962d531b3238b54609923433c7afc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afd9e9a124fefcce2bf9b3eeb7337aceb"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_j_event_processor.html#afd9e9a124fefcce2bf9b3eeb7337aceb">Init</a> ()</td></tr>
+<tr class="memdesc:afd9e9a124fefcce2bf9b3eeb7337aceb"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="class_j_event_processor.html#afd9e9a124fefcce2bf9b3eeb7337aceb" title="JEventProcessor::Init, Process, and Finish are meant to be written by the user. ">JEventProcessor::Init</a>, Process, and Finish are meant to be written by the user.  <a href="#afd9e9a124fefcce2bf9b3eeb7337aceb">More...</a><br/></td></tr>
+<tr class="separator:afd9e9a124fefcce2bf9b3eeb7337aceb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aed3938605a9a5ce313712f2ad8d28112"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aed3938605a9a5ce313712f2ad8d28112"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>Process</b> (const std::shared_ptr&lt; const <a class="el" href="class_j_event.html">JEvent</a> &gt; &amp;aEvent)</td></tr>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_j_event_processor.html#aed3938605a9a5ce313712f2ad8d28112">Process</a> (const std::shared_ptr&lt; const <a class="el" href="class_j_event.html">JEvent</a> &gt; &amp;aEvent)</td></tr>
+<tr class="memdesc:aed3938605a9a5ce313712f2ad8d28112"><td class="mdescLeft">&#160;</td><td class="mdescRight">Process i. <br/></td></tr>
 <tr class="separator:aed3938605a9a5ce313712f2ad8d28112"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a38d4fb078c3a578ccd9558032d7fc107"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a38d4fb078c3a578ccd9558032d7fc107"></a>
-virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>Finish</b> (void)</td></tr>
-<tr class="separator:a38d4fb078c3a578ccd9558032d7fc107"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
-Public Attributes</h2></td></tr>
-<tr class="memitem:ae720bf68ef2eb1d309b0bc7aecb71476"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae720bf68ef2eb1d309b0bc7aecb71476"></a>
-friend&#160;</td><td class="memItemRight" valign="bottom"><b>JApplication</b></td></tr>
-<tr class="separator:ae720bf68ef2eb1d309b0bc7aecb71476"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4695a09aa4a6585ea4ba7ed5a8947ed9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4695a09aa4a6585ea4ba7ed5a8947ed9"></a>
-std::once_flag&#160;</td><td class="memItemRight" valign="bottom"><b>init_flag</b></td></tr>
-<tr class="separator:a4695a09aa4a6585ea4ba7ed5a8947ed9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa2c00acfaaa25e71e84df04f6e656b38"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa2c00acfaaa25e71e84df04f6e656b38"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>Finish</b> ()</td></tr>
+<tr class="separator:aa2c00acfaaa25e71e84df04f6e656b38"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab5276826a62c56a1525d3db0bd49c717"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab5276826a62c56a1525d3db0bd49c717"></a>
+virtual std::string&#160;</td><td class="memItemRight" valign="bottom"><b>GetType</b> () const </td></tr>
+<tr class="separator:ab5276826a62c56a1525d3db0bd49c717"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
-<tr class="memitem:a00c030992d9c49d2718bde6913ad7b8e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_j_event_processor.html#a00c030992d9c49d2718bde6913ad7b8e">SetJApplication</a> (<a class="el" href="class_j_application.html">JApplication</a> *app)</td></tr>
-<tr class="memdesc:a00c030992d9c49d2718bde6913ad7b8e"><td class="mdescLeft">&#160;</td><td class="mdescRight">This is called by JApplication::Add(JEventProcessor*).  <a href="#a00c030992d9c49d2718bde6913ad7b8e">More...</a><br/></td></tr>
-<tr class="separator:a00c030992d9c49d2718bde6913ad7b8e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2bf33ec363a5eab0cf3ea98e602ab6ec"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_j_event_processor.html#a2bf33ec363a5eab0cf3ea98e602ab6ec">SetTypeName</a> (std::string type_name)</td></tr>
+<tr class="memdesc:a2bf33ec363a5eab0cf3ea98e602ab6ec"><td class="mdescLeft">&#160;</td><td class="mdescRight">SetTypeName is intended as a replacement to GetType(), which should be less confusing for the user.  <a href="#a2bf33ec363a5eab0cf3ea98e602ab6ec">More...</a><br/></td></tr>
+<tr class="separator:a2bf33ec363a5eab0cf3ea98e602ab6ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9b7c6f8c38a8d7d57e679344579b1c77"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_j_event_processor.html#a9b7c6f8c38a8d7d57e679344579b1c77">SetResourceName</a> (std::string resource_name)</td></tr>
+<tr class="memdesc:a9b7c6f8c38a8d7d57e679344579b1c77"><td class="mdescLeft">&#160;</td><td class="mdescRight">Resource name lets the user tell the parallelization engine to synchronize different EventProcessors which write to the same shared resource; e.g.  <a href="#a9b7c6f8c38a8d7d57e679344579b1c77">More...</a><br/></td></tr>
+<tr class="separator:a9b7c6f8c38a8d7d57e679344579b1c77"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7516ebc4a9eaf1c8c59bfde62dd56fb0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_j_event_processor.html#a7516ebc4a9eaf1c8c59bfde62dd56fb0">SetEventsOrdered</a> (bool receive_events_in_order)</td></tr>
+<tr class="memdesc:a7516ebc4a9eaf1c8c59bfde62dd56fb0"><td class="mdescLeft">&#160;</td><td class="mdescRight">SetEventsOrdered allows the user to tell the parallelization engine that it needs to see the event stream ordered by increasing event IDs.  <a href="#a7516ebc4a9eaf1c8c59bfde62dd56fb0">More...</a><br/></td></tr>
+<tr class="separator:a7516ebc4a9eaf1c8c59bfde62dd56fb0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
 Protected Attributes</h2></td></tr>
@@ -164,7 +209,7 @@ Protected Attributes</h2></td></tr>
 <tr class="separator:a2e420ed479a02eda6b077a87cb7cc96f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="a00c030992d9c49d2718bde6913ad7b8e"></a>
+<a class="anchor" id="afd9e9a124fefcce2bf9b3eeb7337aceb"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -172,10 +217,39 @@ Protected Attributes</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void JEventProcessor::SetJApplication </td>
+          <td class="memname">virtual void JEventProcessor::Init </td>
           <td>(</td>
-          <td class="paramtype"><a class="el" href="class_j_application.html">JApplication</a> *&#160;</td>
-          <td class="paramname"><em>app</em></td><td>)</td>
+          <td class="paramtype">void&#160;</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p><a class="el" href="class_j_event_processor.html#afd9e9a124fefcce2bf9b3eeb7337aceb" title="JEventProcessor::Init, Process, and Finish are meant to be written by the user. ">JEventProcessor::Init</a>, Process, and Finish are meant to be written by the user. </p>
+<p>Each <a class="el" href="class_j_event_processor.html">JEventProcessor</a> is intended to generate one distinct output, </p>
+
+<p>Reimplemented in <a class="el" href="class_j_csv_writer.html#a636ebca731cf2b41612c04dc99f86318">JCsvWriter&lt; T &gt;</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a7516ebc4a9eaf1c8c59bfde62dd56fb0"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void JEventProcessor::SetEventsOrdered </td>
+          <td>(</td>
+          <td class="paramtype">bool&#160;</td>
+          <td class="paramname"><em>receive_events_in_order</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -186,8 +260,62 @@ Protected Attributes</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>This is called by JApplication::Add(JEventProcessor*). </p>
-<p>There should be no need to call it from anywhere else. </p>
+<p>SetEventsOrdered allows the user to tell the parallelization engine that it needs to see the event stream ordered by increasing event IDs. </p>
+<p>(Note that this requires all EventSources emit event IDs which are consecutive.) Ordering by event ID makes for cleaner output, but comes with a performance penalty, so it is best if this is enabled during debugging, and disabled otherwise. </p>
+
+</div>
+</div>
+<a class="anchor" id="a9b7c6f8c38a8d7d57e679344579b1c77"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void JEventProcessor::SetResourceName </td>
+          <td>(</td>
+          <td class="paramtype">std::string&#160;</td>
+          <td class="paramname"><em>resource_name</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Resource name lets the user tell the parallelization engine to synchronize different EventProcessors which write to the same shared resource; e.g. </p>
+<p>if you have two EventProcessors which both write to a ROOT tree, they should both set the resource name 'ROOT'. On the flip side, if you have two EventProcessors which write to different resources, e.g. ROOT and a CSV file, and you set different resource names, the parallelization engine will know that it is safe to pipeline these two processors. If you don't set a resource name at all, the parallelization engine will assume that you are manually synchronizing access via your own mutex, which will be safe if and only if you use your locks correctly, and also may result in a performance penalty. </p>
+
+</div>
+</div>
+<a class="anchor" id="a2bf33ec363a5eab0cf3ea98e602ab6ec"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void JEventProcessor::SetTypeName </td>
+          <td>(</td>
+          <td class="paramtype">std::string&#160;</td>
+          <td class="paramname"><em>type_name</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">protected</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>SetTypeName is intended as a replacement to GetType(), which should be less confusing for the user. </p>
+<p>It should be called from the constructor. For convenience, we provide a NAME_OF_THIS macro so that the user doesn't have to type the class name as a string, which may get out of sync if automatic refactoring tools are used. </p>
 
 </div>
 </div>
@@ -200,7 +328,7 @@ Protected Attributes</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="class_j_event_processor.html">JEventProcessor</a></li>
-    <li class="footer">Generated on Thu Feb 28 2019 13:28:34 for JANA2 by
+    <li class="footer">Generated on Thu Dec 5 2019 16:43:44 for JANA2 by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.5 </li>
   </ul>

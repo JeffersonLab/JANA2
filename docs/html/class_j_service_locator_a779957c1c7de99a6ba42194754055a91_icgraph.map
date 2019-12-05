@@ -1,0 +1,5 @@
+<map id="JServiceLocator::get" name="JServiceLocator::get">
+<area shape="rect" id="node2" href="$class_j_application.html#a49ed9e5315ac94d5d77d85315a0c48a5" title="Use this in EventSources, Factories, or EventProcessors. " alt="" coords="205,5,384,32"/>
+<area shape="rect" id="node3" href="$class_j_logging_service.html#a301d12419c0c041679fc39af945bf2ba" title="This is a convenience function to get a correctly configured Logger via a ServiceLocator global..." alt="" coords="207,56,382,83"/>
+<area shape="rect" id="node4" href="$class_j_scheduler.html#ab5bcdd3398ab37efe27b4307028cf00f" title="Constructor. Note that a Scheduler operates on a vector of Arrow*s. " alt="" coords="433,56,599,83"/>
+</map>

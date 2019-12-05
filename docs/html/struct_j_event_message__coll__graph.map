@@ -1,0 +1,4 @@
+<map id="JEventMessage" name="JEventMessage">
+<area shape="rect" id="node2" href="$struct_j_message.html" title="JMessage is an abstract base class for data that can be streamed using JTransport&#39;s. " alt="" coords="5,96,88,123"/>
+<area shape="rect" id="node3" href="$class_j_object.html" title="JObject" alt="" coords="113,96,180,123"/>
+</map>

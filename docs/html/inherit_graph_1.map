@@ -1,6 +1,13 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="node1" href="$class_j_event_processor.html" title="JEventProcessor" alt="" coords="5,56,128,83"/>
-<area shape="rect" id="node2" href="$class_j_event_processor__example2.html" title="JEventProcessor_example2" alt="" coords="181,5,366,32"/>
-<area shape="rect" id="node3" href="$class_j_event_processor__jana__test.html" title="JEventProcessor_jana_test" alt="" coords="182,56,365,83"/>
-<area shape="rect" id="node4" href="$class_j_event_processor_j_a_n_a_r_a_t_e.html" title="JEventProcessorJANARATE" alt="" coords="177,107,370,133"/>
+<area shape="rect" id="node1" href="$class_j_activable.html" title="Activable provides a way of propagating information about whether a particular item in the topology i..." alt="" coords="6,208,93,235"/>
+<area shape="rect" id="node2" href="$class_j_arrow.html" title="JArrow" alt="" coords="196,107,260,133"/>
+<area shape="rect" id="node8" href="$struct_j_arrow_topology.html" title="JArrowTopology" alt="" coords="167,157,289,184"/>
+<area shape="rect" id="node9" href="$class_j_mailbox.html" title="JMailbox\&lt; T \&gt;" alt="" coords="171,208,285,235"/>
+<area shape="rect" id="node10" href="$class_j_mailbox.html" title="JMailbox\&lt; Event \&gt;" alt="" coords="156,259,300,285"/>
+<area shape="rect" id="node11" href="$class_j_mailbox.html" title="JMailbox\&lt; JSubevent \&gt;" alt="" coords="142,309,314,336"/>
+<area shape="rect" id="node3" href="$class_j_event_processor_arrow.html" title="JEventProcessorArrow" alt="" coords="363,5,527,32"/>
+<area shape="rect" id="node4" href="$class_j_event_source_arrow.html" title="JEventSourceArrow" alt="" coords="373,56,518,83"/>
+<area shape="rect" id="node5" href="$class_j_merge_arrow.html" title="JMergeArrow" alt="" coords="393,107,497,133"/>
+<area shape="rect" id="node6" href="$class_j_split_arrow.html" title="JSplitArrow" alt="" coords="399,157,492,184"/>
+<area shape="rect" id="node7" href="$class_j_subevent_arrow.html" title="JSubeventArrow" alt="" coords="383,208,508,235"/>
 </map>

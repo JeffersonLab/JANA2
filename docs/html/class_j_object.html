@@ -44,7 +44,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li>
         <div id="MSearchBox" class="MSearchBoxInactive">
@@ -92,7 +91,7 @@ $(document).ready(function(){initNavTree('class_j_object.html','');});
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Friends</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -104,7 +103,6 @@ $(document).ready(function(){initNavTree('class_j_object.html','');});
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-attribs">Public Attributes</a> &#124;
 <a href="#pro-attribs">Protected Attributes</a> &#124;
 <a href="class_j_object-members.html">List of all members</a>  </div>
   <div class="headertitle">
@@ -116,7 +114,7 @@ Inheritance diagram for JObject:</div>
 <div class="dyncontent">
 <div class="center"><img src="class_j_object__inherit__graph.png" border="0" usemap="#_j_object_inherit__map" alt="Inheritance graph"/></div>
 <map name="_j_object_inherit__map" id="_j_object_inherit__map">
-<area shape="rect" id="node2" href="struct_cluster.html" title="Cluster" alt="" coords="5,80,69,107"/><area shape="rect" id="node3" href="struct_hit.html" title="Hit" alt="" coords="94,80,132,107"/><area shape="rect" id="node4" href="classjana__test.html" title="jana_test" alt="" coords="157,80,232,107"/><area shape="rect" id="node5" href="class_j_source_object.html" title="JSourceObject" alt="" coords="257,80,364,107"/><area shape="rect" id="node6" href="class_j_source_object2.html" title="JSourceObject2" alt="" coords="389,80,504,107"/><area shape="rect" id="node7" href="class_my_cluster.html" title="MyCluster" alt="" coords="528,80,611,107"/><area shape="rect" id="node8" href="class_my_hit.html" title="MyHit" alt="" coords="635,80,692,107"/></map>
+<area shape="rect" id="node2" href="struct_j_event_message.html" title="A JEventMessage represents a single event, meant to be used when the event building is done upstream..." alt="" coords="5,80,125,107"/></map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <div class="dynheader">
 Collaboration diagram for JObject:</div>
@@ -128,9 +126,9 @@ Collaboration diagram for JObject:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a61f7c6c6027ea6f2023f15fe0d78861b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a61f7c6c6027ea6f2023f15fe0d78861b"></a>
+<tr class="memitem:a8ef1cdfd846cf218d76b1443886f2201"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8ef1cdfd846cf218d76b1443886f2201"></a>
 virtual const std::string &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>className</b> (void) const </td></tr>
-<tr class="separator:a61f7c6c6027ea6f2023f15fe0d78861b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="separator:a8ef1cdfd846cf218d76b1443886f2201"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad0fc35acf71313c13a1ba33f79df9e4c"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_j_object.html#ad0fc35acf71313c13a1ba33f79df9e4c">AddAssociatedObject</a> (const <a class="el" href="class_j_object.html">JObject</a> *obj)</td></tr>
 <tr class="separator:ad0fc35acf71313c13a1ba33f79df9e4c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a88fa24b99bbf1e1c42e7fa6f3d1560b6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_j_object.html#a88fa24b99bbf1e1c42e7fa6f3d1560b6">AddAssociatedObjectAutoDelete</a> (<a class="el" href="class_j_object.html">JObject</a> *obj, bool auto_delete=true)</td></tr>
@@ -142,17 +140,8 @@ virtual const std::string &amp;&#160;</td><td class="memItemRight" valign="botto
 <tr class="memitem:a07acd1fc996160ed027ae7d684c8194e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a07acd1fc996160ed027ae7d684c8194e"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><b>IsAssociated</b> (const <a class="el" href="class_j_object.html">JObject</a> *locObject) const </td></tr>
 <tr class="separator:a07acd1fc996160ed027ae7d684c8194e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8e74be8772a68ab800ddbb5715840a0c"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_j_object.html#a8e74be8772a68ab800ddbb5715840a0c">toStrings</a> (std::vector&lt; std::pair&lt; std::string, std::string &gt; &gt; &amp;items) const </td></tr>
-<tr class="separator:a8e74be8772a68ab800ddbb5715840a0c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a37f54b2912a0857261b807250e3c5d07"><td class="memTemplParams" colspan="2">template&lt;typename T &gt; </td></tr>
-<tr class="memitem:a37f54b2912a0857261b807250e3c5d07"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_j_object.html#a37f54b2912a0857261b807250e3c5d07">AddString</a> (std::vector&lt; std::pair&lt; std::string, std::string &gt; &gt; &amp;items, const char *name, const char *format, const T &amp;val) const </td></tr>
-<tr class="separator:a37f54b2912a0857261b807250e3c5d07"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
-Public Attributes</h2></td></tr>
-<tr class="memitem:af52b918379935c2a3ad3281d0f6fe594"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af52b918379935c2a3ad3281d0f6fe594"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>append_types</b> = false</td></tr>
-<tr class="separator:af52b918379935c2a3ad3281d0f6fe594"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa678f1a42651c305c0eeb4442babde11"><td class="memItemLeft" align="right" valign="top">virtual void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_j_object.html#aa678f1a42651c305c0eeb4442babde11">Summarize</a> (<a class="el" href="class_j_object_summary.html">JObjectSummary</a> &amp;summary) const </td></tr>
+<tr class="separator:aa678f1a42651c305c0eeb4442babde11"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
 Protected Attributes</h2></td></tr>
@@ -190,17 +179,6 @@ std::set&lt; <a class="el" href="class_j_object.html">JObject</a> * &gt;&#160;</
 </div><div class="memdoc">
 <p>Add a <a class="el" href="class_j_object.html">JObject</a> to the list of associated objects </p>
 
-<p>Referenced by <a class="el" href="class_j_object.html#a88fa24b99bbf1e1c42e7fa6f3d1560b6">AddAssociatedObjectAutoDelete()</a>.</p>
-
-<p><div class="dynheader">
-Here is the caller graph for this function:</div>
-<div class="dyncontent">
-<div class="center"><img src="class_j_object_ad0fc35acf71313c13a1ba33f79df9e4c_icgraph.png" border="0" usemap="#class_j_object_ad0fc35acf71313c13a1ba33f79df9e4c_icgraph" alt=""/></div>
-<map name="class_j_object_ad0fc35acf71313c13a1ba33f79df9e4c_icgraph" id="class_j_object_ad0fc35acf71313c13a1ba33f79df9e4c_icgraph">
-<area shape="rect" id="node2" href="class_j_object.html#a88fa24b99bbf1e1c42e7fa6f3d1560b6" title="JObject::AddAssociatedObject\lAutoDelete" alt="" coords="257,5,458,46"/></map>
-</div>
-</p>
-
 </div>
 </div>
 <a class="anchor" id="a88fa24b99bbf1e1c42e7fa6f3d1560b6"></a>
@@ -236,72 +214,6 @@ Here is the caller graph for this function:</div>
 </div><div class="memdoc">
 <p>Add a <a class="el" href="class_j_object.html">JObject</a> to the list of associated objects. If the auto_delete flag is true, then automatically delete it when this object is deleted. Otherwise, this behaves identically to the AddAssociatedObject method.</p>
 <p>Note that if the object is removed via RemoveAssociatedObject(...) then the object is NOT deleted. BUT, if the entire list of associated objects is cleared via ClearAssociatedObjects, then the object will be deleted. </p>
-
-<p>References <a class="el" href="class_j_object.html#ad0fc35acf71313c13a1ba33f79df9e4c">AddAssociatedObject()</a>.</p>
-
-<p><div class="dynheader">
-Here is the call graph for this function:</div>
-<div class="dyncontent">
-<div class="center"><img src="class_j_object_a88fa24b99bbf1e1c42e7fa6f3d1560b6_cgraph.png" border="0" usemap="#class_j_object_a88fa24b99bbf1e1c42e7fa6f3d1560b6_cgraph" alt=""/></div>
-<map name="class_j_object_a88fa24b99bbf1e1c42e7fa6f3d1560b6_cgraph" id="class_j_object_a88fa24b99bbf1e1c42e7fa6f3d1560b6_cgraph">
-<area shape="rect" id="node2" href="class_j_object.html#ad0fc35acf71313c13a1ba33f79df9e4c" title="JObject::AddAssociatedObject" alt="" coords="257,12,458,39"/></map>
-</div>
-</p>
-
-</div>
-</div>
-<a class="anchor" id="a37f54b2912a0857261b807250e3c5d07"></a>
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename T &gt; </div>
-      <table class="memname">
-        <tr>
-          <td class="memname">void JObject::AddString </td>
-          <td>(</td>
-          <td class="paramtype">std::vector&lt; std::pair&lt; std::string, std::string &gt; &gt; &amp;&#160;</td>
-          <td class="paramname"><em>items</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const char *&#160;</td>
-          <td class="paramname"><em>name</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const char *&#160;</td>
-          <td class="paramname"><em>format</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">const T &amp;&#160;</td>
-          <td class="paramname"><em>val</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td> const</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Write the given value (val) to a string using the sprintf style formatting string (format) and add it to the given vector (items) with the column name "name". This is intended for use in the <a class="el" href="class_j_object.html#a8e74be8772a68ab800ddbb5715840a0c">toStrings()</a> method of classes that inherit from <a class="el" href="class_j_object.html">JObject</a>.</p>
-<p>The append_type flag provides a facility for recording the data type and value with default formatting into items. This can be used by a generic convertor (not part of JANA) to auto-generate a representation of this object for use in some other persistence package (e.g. ROOT files).</p>
-<p>If the append_types flag is set then the data type of "val" is automatically appended with a colon (:) separator to the name (first) part of the pair. In addition, "val" is converted using stringstream and appended as well, also with a colon (:) separator. For example, if the value of name passed in is "px" and T is of type double, then the first member of the pair appended to items will be something like "px:double:1.23784" which can be decifered later to get the name, type, and value of the data member.</p>
-<p>By default, the append_types flag is not set and the name part of the pair is a straight copy of the name argument that is passed in. </p>
-
-<p>Referenced by <a class="el" href="class_j_object.html#a8e74be8772a68ab800ddbb5715840a0c">toStrings()</a>.</p>
-
-<p><div class="dynheader">
-Here is the caller graph for this function:</div>
-<div class="dyncontent">
-<div class="center"><img src="class_j_object_a37f54b2912a0857261b807250e3c5d07_icgraph.png" border="0" usemap="#class_j_object_a37f54b2912a0857261b807250e3c5d07_icgraph" alt=""/></div>
-<map name="class_j_object_a37f54b2912a0857261b807250e3c5d07_icgraph" id="class_j_object_a37f54b2912a0857261b807250e3c5d07_icgraph">
-<area shape="rect" id="node2" href="class_j_object.html#a8e74be8772a68ab800ddbb5715840a0c" title="JObject::toStrings" alt="" coords="187,5,314,32"/></map>
-</div>
-</p>
 
 </div>
 </div>
@@ -355,7 +267,7 @@ Here is the caller graph for this function:</div>
 
 </div>
 </div>
-<a class="anchor" id="a8e74be8772a68ab800ddbb5715840a0c"></a>
+<a class="anchor" id="aa678f1a42651c305c0eeb4442babde11"></a>
 <div class="memitem">
 <div class="memproto">
 <table class="mlabels">
@@ -363,10 +275,10 @@ Here is the caller graph for this function:</div>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">void JObject::toStrings </td>
+          <td class="memname">void JObject::Summarize </td>
           <td>(</td>
-          <td class="paramtype">std::vector&lt; std::pair&lt; std::string, std::string &gt; &gt; &amp;&#160;</td>
-          <td class="paramname"><em>items</em></td><td>)</td>
+          <td class="paramtype"><a class="el" href="class_j_object_summary.html">JObjectSummary</a> &amp;&#160;</td>
+          <td class="paramname"><em>summary</em></td><td>)</td>
           <td> const</td>
         </tr>
       </table>
@@ -376,26 +288,25 @@ Here is the caller graph for this function:</div>
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Fill the given "items" vector with items representing the (important) data members of this object. The structure of "items" is a vector of pairs. The "first" element of the pair is the name of the item as it should be displayed when dumping the item to the screen. For example, one may wish to include units using a string like "r (cm)". The "second" element of the pair is a formatted string containing the value as it should be displayed.</p>
-<p>To facilitate this, the <a class="el" href="class_j_object.html#a37f54b2912a0857261b807250e3c5d07">AddString()</a> method exists which allows items to be added with the desired formatting using a single line.</p>
-<p>This is a virtual method that is expected (but not required) to be implemented by all classes that inherit from <a class="el" href="class_j_object.html">JObject</a>. </p>
+<p>A virtual method which allows the user to display the contents of a <a class="el" href="class_j_object.html">JObject</a> in a formatted, structured way. This is optional, but recommended.</p>
+<p>Fill in the <a class="el" href="class_j_object_summary.html">JObjectSummary</a> container with information for each member variable of the <a class="el" href="class_j_object.html">JObject</a> using <a class="el" href="class_j_object_summary.html#ab1e4a31190e3236f5adfc975ba71e3fd" title="add() is used to insert a new row of JObjectMember data ">JObjectSummary::add</a>(...). This accepts a reference to the variable itself, the variable name, a printf-style format string, and an optional description string which is good for communicating things like units.</p>
+<p>For convenience, we provide a NAME_OF macro, which will turn the member variable name into a string, rather than having the user write it out manually. This is useful if you use automatic refactoring tools, which otherwise might allow the variable name and the stringified name to get out of sync. </p>
 
-<p>References <a class="el" href="class_j_object.html#a37f54b2912a0857261b807250e3c5d07">AddString()</a>.</p>
+<p>References <a class="el" href="class_j_object_summary.html#ab1e4a31190e3236f5adfc975ba71e3fd">JObjectSummary::add()</a>.</p>
 
 <p><div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><img src="class_j_object_a8e74be8772a68ab800ddbb5715840a0c_cgraph.png" border="0" usemap="#class_j_object_a8e74be8772a68ab800ddbb5715840a0c_cgraph" alt=""/></div>
-<map name="class_j_object_a8e74be8772a68ab800ddbb5715840a0c_cgraph" id="class_j_object_a8e74be8772a68ab800ddbb5715840a0c_cgraph">
-<area shape="rect" id="node2" href="class_j_object.html#a37f54b2912a0857261b807250e3c5d07" title="JObject::AddString" alt="" coords="182,5,314,32"/></map>
+<div class="center"><img src="class_j_object_aa678f1a42651c305c0eeb4442babde11_cgraph.png" border="0" usemap="#class_j_object_aa678f1a42651c305c0eeb4442babde11_cgraph" alt=""/></div>
+<map name="class_j_object_aa678f1a42651c305c0eeb4442babde11_cgraph" id="class_j_object_aa678f1a42651c305c0eeb4442babde11_cgraph">
+<area shape="rect" id="node2" href="class_j_object_summary.html#ab1e4a31190e3236f5adfc975ba71e3fd" title="add() is used to insert a new row of JObjectMember data " alt="" coords="205,5,368,32"/></map>
 </div>
 </p>
 
 </div>
 </div>
-<hr/>The documentation for this class was generated from the following files:<ul>
+<hr/>The documentation for this class was generated from the following file:<ul>
 <li>src/lib/JANA/JObject.h</li>
-<li>src/lib/JANA/JObject.cc</li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -403,7 +314,7 @@ Here is the call graph for this function:</div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="class_j_object.html">JObject</a></li>
-    <li class="footer">Generated on Thu Feb 28 2019 13:28:35 for JANA2 by
+    <li class="footer">Generated on Thu Dec 5 2019 16:43:44 for JANA2 by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.5 </li>
   </ul>

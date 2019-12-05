@@ -1,9 +1,3 @@
 <map id="JFactory" name="JFactory">
-<area shape="rect" id="node2" href="$class_j_factory_t.html" title="JFactoryT\&lt; T \&gt;" alt="" coords="5,80,117,107"/>
-<area shape="rect" id="node3" href="$class_j_factory_t.html" title="JFactoryT\&lt; Cluster \&gt;" alt="" coords="143,80,289,107"/>
-<area shape="rect" id="node5" href="$class_j_factory_t.html" title="JFactoryT\&lt; Hit \&gt;" alt="" coords="313,80,436,107"/>
-<area shape="rect" id="node7" href="$class_j_factory_t.html" title="JFactoryT\&lt; jana_test \&gt;" alt="" coords="461,80,619,107"/>
-<area shape="rect" id="node4" href="$class_cluster_factory.html" title="ClusterFactory" alt="" coords="162,155,269,181"/>
-<area shape="rect" id="node6" href="$class_hit_factory.html" title="HitFactory" alt="" coords="333,155,416,181"/>
-<area shape="rect" id="node8" href="$classjana__test__factory.html" title="jana_test_factory" alt="" coords="479,155,601,181"/>
+<area shape="rect" id="node2" href="$class_j_factory_t.html" title="JFactoryT\&lt; T \&gt;" alt="" coords="5,80,123,107"/>
 </map>

@@ -44,7 +44,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li>
         <div id="MSearchBox" class="MSearchBoxInactive">
@@ -92,7 +91,7 @@ $(document).ready(function(){initNavTree('class_j_event_source.html','');});
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Friends</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -105,9 +104,6 @@ $(document).ready(function(){initNavTree('class_j_event_source.html','');});
   <div class="summary">
 <a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-attribs">Public Attributes</a> &#124;
-<a href="#pro-methods">Protected Member Functions</a> &#124;
-<a href="#pro-attribs">Protected Attributes</a> &#124;
 <a href="class_j_event_source-members.html">List of all members</a>  </div>
   <div class="headertitle">
 <div class="title">JEventSource Class Reference<span class="mlabels"><span class="mlabel">abstract</span></span></div>  </div>
@@ -118,19 +114,32 @@ Inheritance diagram for JEventSource:</div>
 <div class="dyncontent">
 <div class="center"><img src="class_j_event_source__inherit__graph.png" border="0" usemap="#_j_event_source_inherit__map" alt="Inheritance graph"/></div>
 <map name="_j_event_source_inherit__map" id="_j_event_source_inherit__map">
-<area shape="rect" id="node2" href="class_j_event_source__example1.html" title="JEventSource_example1" alt="" coords="5,80,171,107"/><area shape="rect" id="node3" href="class_j_event_source__example2.html" title="JEventSource_example2" alt="" coords="195,80,361,107"/><area shape="rect" id="node4" href="class_j_event_source__jana__test.html" title="JEventSource_jana_test" alt="" coords="386,80,549,107"/></map>
-<center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
-<div class="dynheader">
-Collaboration diagram for JEventSource:</div>
-<div class="dyncontent">
-<div class="center"><img src="class_j_event_source__coll__graph.png" border="0" usemap="#_j_event_source_coll__map" alt="Collaboration graph"/></div>
-<map name="_j_event_source_coll__map" id="_j_event_source_coll__map">
-<area shape="rect" id="node2" href="class_j_factory_generator.html" title="JFactoryGenerator" alt="" coords="103,96,233,123"/><area shape="rect" id="node3" href="class_j_application.html" title="JANA application class (singleton). " alt="" coords="269,96,363,123"/><area shape="rect" id="node4" href="class_j_event_source_manager.html" title="JEventSourceManager" alt="" coords="5,5,160,32"/><area shape="rect" id="node6" href="class_j_thread_manager.html" title="JThreadManager" alt="" coords="326,5,444,32"/><area shape="rect" id="node7" href="class_j_parameter_manager.html" title="JParameterManager" alt="" coords="469,5,608,32"/><area shape="rect" id="node8" href="class_j_queue.html" title="JQueue" alt="" coords="393,96,460,123"/></map>
+<area shape="rect" id="node2" href="class_j_discrete_join.html" title="JEventBuilder pulls JMessages off of a user&#45;specified JTransport, aggregates them into JEvents using ..." alt="" coords="5,88,147,115"/><area shape="rect" id="node3" href="class_j_event_builder.html" title="JEventBuilder pulls JMessages off of a user&#45;specified JTransport, aggregates them into JEvents using ..." alt="" coords="172,88,319,115"/><area shape="rect" id="node4" href="class_j_streaming_event_source.html" title="JStreamingEventSource makes it convenient to stream events into JANA by handling transport and messag..." alt="" coords="343,81,517,122"/></map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
 Public Types</h2></td></tr>
-<tr class="memitem:ac32c920e8ddae10eb845f782f9776fbb"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><b>RETURN_STATUS</b> { <br/>
+<tr class="memitem:abc59f0be9458af1aadc95bb870973393"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_j_event_source.html#abc59f0be9458af1aadc95bb870973393">SourceStatus</a> { <br/>
+&#160;&#160;<b>Unopened</b>, 
+<br/>
+&#160;&#160;<b>Opened</b>, 
+<br/>
+&#160;&#160;<b>Finished</b>
+<br/>
+ }</td></tr>
+<tr class="memdesc:abc59f0be9458af1aadc95bb870973393"><td class="mdescLeft">&#160;</td><td class="mdescRight">SourceStatus describes the current state of the EventSource. <br/></td></tr>
+<tr class="separator:abc59f0be9458af1aadc95bb870973393"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab00355c75cbe39fa6ff9a0d43d8fc9ba"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_j_event_source.html#ab00355c75cbe39fa6ff9a0d43d8fc9ba">ReturnStatus</a> { <br/>
+&#160;&#160;<b>Success</b>, 
+<br/>
+&#160;&#160;<b>TryAgain</b>, 
+<br/>
+&#160;&#160;<b>Finished</b>
+<br/>
+ }</td></tr>
+<tr class="memdesc:ab00355c75cbe39fa6ff9a0d43d8fc9ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">ReturnStatus describes what happened the last time a GetEvent() was attempted.  <a href="class_j_event_source.html#ab00355c75cbe39fa6ff9a0d43d8fc9ba">More...</a><br/></td></tr>
+<tr class="separator:ab00355c75cbe39fa6ff9a0d43d8fc9ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac32c920e8ddae10eb845f782f9776fbb"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_j_event_source.html#ac32c920e8ddae10eb845f782f9776fbb">RETURN_STATUS</a> { <br/>
 &#160;&#160;<b>kSUCCESS</b>, 
 <br/>
 &#160;&#160;<b>kNO_MORE_EVENTS</b>, 
@@ -144,168 +153,127 @@ Public Types</h2></td></tr>
 &#160;&#160;<b>kUNKNOWN</b>
 <br/>
  }</td></tr>
+<tr class="memdesc:ac32c920e8ddae10eb845f782f9776fbb"><td class="mdescLeft">&#160;</td><td class="mdescRight">TODO: Stop throwing RETURN_STATUS; return ReturnStatus instead. For now just encapsulate this mess. <br/></td></tr>
 <tr class="separator:ac32c920e8ddae10eb845f782f9776fbb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a19f20bfcda8ff479272d8754f366fd4e"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_j_event_source.html#a19f20bfcda8ff479272d8754f366fd4e">JEventSource</a> (std::string name, <a class="el" href="class_j_application.html">JApplication</a> *aApplication=nullptr)</td></tr>
-<tr class="separator:a19f20bfcda8ff479272d8754f366fd4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0ca36952f312cd39df7f07d43e8b5e98"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0ca36952f312cd39df7f07d43e8b5e98"></a>
+<tr class="memitem:a63aa202c6e602259f668bb0d92e81ebd"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a63aa202c6e602259f668bb0d92e81ebd"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>JEventSource</b> (std::string resource_name, <a class="el" href="class_j_application.html">JApplication</a> *app=nullptr)</td></tr>
+<tr class="separator:a63aa202c6e602259f668bb0d92e81ebd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6a38587d6056dc404070d523ab0fe66d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6a38587d6056dc404070d523ab0fe66d"></a>
 virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>Open</b> (void)</td></tr>
-<tr class="separator:a0ca36952f312cd39df7f07d43e8b5e98"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="separator:a6a38587d6056dc404070d523ab0fe66d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a129991e14e33b2fe27789aee056ee065"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a129991e14e33b2fe27789aee056ee065"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>GetEvent</b> (std::shared_ptr&lt; <a class="el" href="class_j_event.html">JEvent</a> &gt;)=0</td></tr>
+<tr class="separator:a129991e14e33b2fe27789aee056ee065"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a182c50c8c6a990b604cabf898b6e232e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a182c50c8c6a990b604cabf898b6e232e"></a>
 virtual bool&#160;</td><td class="memItemRight" valign="bottom"><b>GetObjects</b> (const std::shared_ptr&lt; const <a class="el" href="class_j_event.html">JEvent</a> &gt; &amp;aEvent, <a class="el" href="class_j_factory.html">JFactory</a> *aFactory)</td></tr>
 <tr class="separator:a182c50c8c6a990b604cabf898b6e232e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0f1c1cc802b8b69b086041b3e973a3fd"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0f1c1cc802b8b69b086041b3e973a3fd"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>SetNumEventsToGetAtOnce</b> (std::size_t aMinNumEvents, std::size_t aMaxNumEvents)</td></tr>
-<tr class="separator:a0f1c1cc802b8b69b086041b3e973a3fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acfbaeb280012f6403acd0caa4b4fd563"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acfbaeb280012f6403acd0caa4b4fd563"></a>
-std::pair&lt; std::size_t, <br class="typebreak"/>
-std::size_t &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>GetNumEventsToGetAtOnce</b> (void) const </td></tr>
-<tr class="separator:acfbaeb280012f6403acd0caa4b4fd563"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a10d36086496b26f92b6e96392a2fc8e0"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::shared_ptr<br class="typebreak"/>
-&lt; <a class="el" href="class_j_task_base.html">JTaskBase</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_j_event_source.html#a10d36086496b26f92b6e96392a2fc8e0">GetProcessEventTasks</a> (std::size_t aNumTasks=1)</td></tr>
-<tr class="separator:a10d36086496b26f92b6e96392a2fc8e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0db99afc621d1f61a76d9fb4412b2ad2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0db99afc621d1f61a76d9fb4412b2ad2"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>IsExhausted</b> (void) const </td></tr>
-<tr class="separator:a0db99afc621d1f61a76d9fb4412b2ad2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0cbc60046fa819529294ef017f45261c"><td class="memItemLeft" align="right" valign="top">std::size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_j_event_source.html#a0cbc60046fa819529294ef017f45261c">GetNumEventsProcessed</a> (void) const </td></tr>
-<tr class="separator:a0cbc60046fa819529294ef017f45261c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae5bf24933bf2c6486675a0ceac13b258"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae5bf24933bf2c6486675a0ceac13b258"></a>
-virtual std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_j_event_source.html#ae5bf24933bf2c6486675a0ceac13b258">GetType</a> (void) const </td></tr>
-<tr class="memdesc:ae5bf24933bf2c6486675a0ceac13b258"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns name of subclass. <br/></td></tr>
-<tr class="separator:ae5bf24933bf2c6486675a0ceac13b258"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a80ab4faa11a0bb8b4f0c39849523b13b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a80ab4faa11a0bb8b4f0c39849523b13b"></a>
-virtual std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_j_event_source.html#a80ab4faa11a0bb8b4f0c39849523b13b">GetVDescription</a> (void) const </td></tr>
-<tr class="memdesc:a80ab4faa11a0bb8b4f0c39849523b13b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Optional for getting description via source rather than <a class="el" href="class_j_event_source_generator.html" title="This is a base class for all event source generators. ">JEventSourceGenerator</a>. <br/></td></tr>
-<tr class="separator:a80ab4faa11a0bb8b4f0c39849523b13b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afbd77c398831044cdf6d67406a289d82"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afbd77c398831044cdf6d67406a289d82"></a>
+virtual void&#160;</td><td class="memItemRight" valign="bottom"><b>DoInitialize</b> ()</td></tr>
+<tr class="separator:afbd77c398831044cdf6d67406a289d82"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab1c48f8d977c1ce4d4a912fdb5ee0812"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab1c48f8d977c1ce4d4a912fdb5ee0812"></a>
+<a class="el" href="class_j_event_source.html#ab00355c75cbe39fa6ff9a0d43d8fc9ba">ReturnStatus</a>&#160;</td><td class="memItemRight" valign="bottom"><b>DoNext</b> (std::shared_ptr&lt; <a class="el" href="class_j_event.html">JEvent</a> &gt; event)</td></tr>
+<tr class="separator:ab1c48f8d977c1ce4d4a912fdb5ee0812"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7f57d308f0d4c2ee8819a9e6a23c5a21"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7f57d308f0d4c2ee8819a9e6a23c5a21"></a>
+<a class="el" href="class_j_event_source.html#abc59f0be9458af1aadc95bb870973393">SourceStatus</a>&#160;</td><td class="memItemRight" valign="bottom"><b>GetStatus</b> () const </td></tr>
+<tr class="separator:a7f57d308f0d4c2ee8819a9e6a23c5a21"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a53c9fccdfa4264afd0141135526a0d37"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a53c9fccdfa4264afd0141135526a0d37"></a>
+std::string&#160;</td><td class="memItemRight" valign="bottom"><b>GetPluginName</b> () const </td></tr>
+<tr class="separator:a53c9fccdfa4264afd0141135526a0d37"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac40a8559755ffa943ec2b663b7d1b3b4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac40a8559755ffa943ec2b663b7d1b3b4"></a>
+std::string&#160;</td><td class="memItemRight" valign="bottom"><b>GetTypeName</b> () const </td></tr>
+<tr class="separator:ac40a8559755ffa943ec2b663b7d1b3b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad049170c204426d428ae3215840b15cf"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad049170c204426d428ae3215840b15cf"></a>
+std::string&#160;</td><td class="memItemRight" valign="bottom"><b>GetResourceName</b> () const </td></tr>
+<tr class="separator:ad049170c204426d428ae3215840b15cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acd60f51e9cd3b709bda631324b586c83"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="acd60f51e9cd3b709bda631324b586c83"></a>
+uint64_t&#160;</td><td class="memItemRight" valign="bottom"><b>GetEventCount</b> () const </td></tr>
+<tr class="separator:acd60f51e9cd3b709bda631324b586c83"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af312be076776a6b1d984b21dc80ef594"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af312be076776a6b1d984b21dc80ef594"></a>
+<a class="el" href="class_j_application.html">JApplication</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>GetApplication</b> () const </td></tr>
+<tr class="separator:af312be076776a6b1d984b21dc80ef594"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2037e61fad75f71b374669c9e7593ef1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2037e61fad75f71b374669c9e7593ef1"></a>
+virtual std::string&#160;</td><td class="memItemRight" valign="bottom"><b>GetType</b> () const </td></tr>
+<tr class="separator:a2037e61fad75f71b374669c9e7593ef1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa6d3fd96186d128c68f6e19fea218a35"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa6d3fd96186d128c68f6e19fea218a35"></a>
 std::string&#160;</td><td class="memItemRight" valign="bottom"><b>GetName</b> (void) const </td></tr>
 <tr class="separator:aa6d3fd96186d128c68f6e19fea218a35"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a29557b578e4e301c74fecce79aeeff08"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a29557b578e4e301c74fecce79aeeff08"></a>
-std::size_t&#160;</td><td class="memItemRight" valign="bottom"><b>GetNumOutstandingEvents</b> (void) const </td></tr>
-<tr class="separator:a29557b578e4e301c74fecce79aeeff08"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad951a649cb52b86300d8f31ccac75783"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad951a649cb52b86300d8f31ccac75783"></a>
-std::size_t&#160;</td><td class="memItemRight" valign="bottom"><b>GetNumOutstandingBarrierEvents</b> (void) const </td></tr>
-<tr class="separator:ad951a649cb52b86300d8f31ccac75783"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a28ecc5ea94972b0cd03feec7991a8625"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a28ecc5ea94972b0cd03feec7991a8625"></a>
-<a class="el" href="class_j_queue.html">JQueue</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>GetEventQueue</b> (void) const </td></tr>
-<tr class="separator:a28ecc5ea94972b0cd03feec7991a8625"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2d5b810b914de9a5192c2ed030d0a2d4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2d5b810b914de9a5192c2ed030d0a2d4"></a>
-<a class="el" href="class_j_factory_generator.html">JFactoryGenerator</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>GetFactoryGenerator</b> (void) const </td></tr>
-<tr class="separator:a2d5b810b914de9a5192c2ed030d0a2d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9069aa02a9b78f3f112282884fa2489f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9069aa02a9b78f3f112282884fa2489f"></a>
-std::type_index&#160;</td><td class="memItemRight" valign="bottom"><b>GetDerivedType</b> (void) const </td></tr>
-<tr class="separator:a9069aa02a9b78f3f112282884fa2489f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af550bf1436c28302812dc80f2955ba76"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af550bf1436c28302812dc80f2955ba76"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>SetMaxEventsToRead</b> (std::size_t aMaxEventsToRead)</td></tr>
-<tr class="separator:af550bf1436c28302812dc80f2955ba76"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0647a71271f924cf3ae95c4df0f1f41b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0647a71271f924cf3ae95c4df0f1f41b"></a>
-std::size_t&#160;</td><td class="memItemRight" valign="bottom"><b>GetMaxEventsToRead</b> (void)</td></tr>
-<tr class="separator:a0647a71271f924cf3ae95c4df0f1f41b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
-Public Attributes</h2></td></tr>
-<tr class="memitem:a3af2e483f0dc11a876ed127a82509058"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3af2e483f0dc11a876ed127a82509058"></a>
-std::atomic&lt; std::size_t &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>mEventsRead</b></td></tr>
-<tr class="separator:a3af2e483f0dc11a876ed127a82509058"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5352b357ac1e0a042c47adc485686c52"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5352b357ac1e0a042c47adc485686c52"></a>
-std::atomic&lt; std::size_t &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>mTasksCreated</b> {0}</td></tr>
-<tr class="separator:a5352b357ac1e0a042c47adc485686c52"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
-Protected Member Functions</h2></td></tr>
-<tr class="memitem:af6a0872b2548b8257b92d563991ed001"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af6a0872b2548b8257b92d563991ed001"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>SetJApplication</b> (<a class="el" href="class_j_application.html">JApplication</a> *app)</td></tr>
-<tr class="separator:af6a0872b2548b8257b92d563991ed001"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9c9962c56e53151339ba42e30e5e4724"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9c9962c56e53151339ba42e30e5e4724"></a>
-virtual std::shared_ptr&lt; const <br class="typebreak"/>
-<a class="el" href="class_j_event.html">JEvent</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>GetEvent</b> (void)=0</td></tr>
-<tr class="separator:a9c9962c56e53151339ba42e30e5e4724"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
-Protected Attributes</h2></td></tr>
-<tr class="memitem:ae412b528787c38cdbb95cbf84954a604"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae412b528787c38cdbb95cbf84954a604"></a>
-<a class="el" href="class_j_application.html">JApplication</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>mApplication</b> = nullptr</td></tr>
-<tr class="separator:ae412b528787c38cdbb95cbf84954a604"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a587b98d5b9891b61a22a847c4c30ab85"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a587b98d5b9891b61a22a847c4c30ab85"></a>
-std::string&#160;</td><td class="memItemRight" valign="bottom"><b>mName</b></td></tr>
-<tr class="separator:a587b98d5b9891b61a22a847c4c30ab85"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a78e1341081a8d5a6149bb7a19f216bf6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a78e1341081a8d5a6149bb7a19f216bf6"></a>
-<a class="el" href="class_j_queue.html">JQueue</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>mEventQueue</b> = nullptr</td></tr>
-<tr class="separator:a78e1341081a8d5a6149bb7a19f216bf6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0dbfa65240da25cb3074c7fb11a421bc"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0dbfa65240da25cb3074c7fb11a421bc"></a>
-<a class="el" href="class_j_factory_generator.html">JFactoryGenerator</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>mFactoryGenerator</b> = nullptr</td></tr>
-<tr class="separator:a0dbfa65240da25cb3074c7fb11a421bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab1a833266a18f90c063e01812f9ac5c0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab1a833266a18f90c063e01812f9ac5c0"></a>
+virtual std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_j_event_source.html#ab1a833266a18f90c063e01812f9ac5c0">GetVDescription</a> () const </td></tr>
+<tr class="memdesc:ab1a833266a18f90c063e01812f9ac5c0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Optional for getting description via source rather than <a class="el" href="class_j_event_source_generator.html">JEventSourceGenerator</a>. <br/></td></tr>
+<tr class="separator:ab1a833266a18f90c063e01812f9ac5c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa09291d15fe14e43849f7041e0791ff8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa09291d15fe14e43849f7041e0791ff8"></a>
+<a class="el" href="class_j_factory_generator.html">JFactoryGenerator</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>GetFactoryGenerator</b> () const </td></tr>
+<tr class="separator:aa09291d15fe14e43849f7041e0791ff8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af081c4c47f279793ac6c569acfed45df"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_j_event_source.html#af081c4c47f279793ac6c569acfed45df">SetTypeName</a> (std::string type_name)</td></tr>
+<tr class="memdesc:af081c4c47f279793ac6c569acfed45df"><td class="mdescLeft">&#160;</td><td class="mdescRight">SetTypeName is intended as a replacement to GetType(), which should be less confusing for the user.  <a href="#af081c4c47f279793ac6c569acfed45df">More...</a><br/></td></tr>
+<tr class="separator:af081c4c47f279793ac6c569acfed45df"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a739eb453ff226a30cc9a45ab0b2a17ee"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a739eb453ff226a30cc9a45ab0b2a17ee"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>SetFactoryGenerator</b> (<a class="el" href="class_j_factory_generator.html">JFactoryGenerator</a> *generator)</td></tr>
+<tr class="separator:a739eb453ff226a30cc9a45ab0b2a17ee"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afebbcc83963ba2023ffe3624e74ab739"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afebbcc83963ba2023ffe3624e74ab739"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>SetApplication</b> (<a class="el" href="class_j_application.html">JApplication</a> *app)</td></tr>
+<tr class="separator:afebbcc83963ba2023ffe3624e74ab739"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a66754d3ef953fcfe032784793c652bd4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a66754d3ef953fcfe032784793c652bd4"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>SetPluginName</b> (std::string plugin_name)</td></tr>
+<tr class="separator:a66754d3ef953fcfe032784793c652bd4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
-<a class="anchor" id="a19f20bfcda8ff479272d8754f366fd4e"></a>
+<h2 class="groupheader">Member Enumeration Documentation</h2>
+<a class="anchor" id="ab00355c75cbe39fa6ff9a0d43d8fc9ba"></a>
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">JEventSource::JEventSource </td>
-          <td>(</td>
-          <td class="paramtype">std::string&#160;</td>
-          <td class="paramname"><em>name</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="class_j_application.html">JApplication</a> *&#160;</td>
-          <td class="paramname"><em>aApplication</em> = <code>nullptr</code>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
+          <td class="memname">enum <a class="el" href="class_j_event_source.html#ab00355c75cbe39fa6ff9a0d43d8fc9ba">JEventSource::ReturnStatus</a></td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">strong</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
-<p>Do not open the source here! It will be opened in the Open() method</p>
-<p>If anything more than the default JEventQueue structure is needed then create it here. You may also add <a class="el" href="class_j_factory_generator.html">JFactoryGenerator</a> objects to the <a class="el" href="class_j_application.html" title="JANA application class (singleton). ">JApplication</a> to generate factories for holding object types created by this source. </p>
+
+<p>ReturnStatus describes what happened the last time a GetEvent() was attempted. </p>
+<p>If GetEvent() reaches an error state, it should throw a <a class="el" href="struct_j_exception.html" title="JException is a data object which attaches JANA-specific context information to a generic exception...">JException</a> instead. </p>
 
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="a0cbc60046fa819529294ef017f45261c"></a>
+<a class="anchor" id="af081c4c47f279793ac6c569acfed45df"></a>
 <div class="memitem">
 <div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">std::size_t JEventSource::GetNumEventsProcessed </td>
+          <td class="memname">void JEventSource::SetTypeName </td>
           <td>(</td>
-          <td class="paramtype">void&#160;</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Return total number of events processed by this source. This is a little tricky. A source may consist of multiple queues that expand one "event" into many. This returns the count returned by the <a class="el" href="class_j_event_source.html#a0cbc60046fa819529294ef017f45261c">GetNumEventsProcessed()</a> of the queue pointed to by the mEventQueue member of this source if it is set. This presumably is the last queue in the chain and what the caller is most interested in. If that is not set, then the value of the member mEventsProcessed is returned. This is a count of the number of events processed through all queues, including any internal ones. In those situations, this will likely be double counting.</p>
-<p>Note that in the first case, the number is how many events were removed from the last queue, but some of those may still be processing. Thus, it might overcount how many were actually completed. This is only a problem if this is called while event processing is still ongoing. </p>
-
-</div>
-</div>
-<a class="anchor" id="a10d36086496b26f92b6e96392a2fc8e0"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">std::vector&lt; std::shared_ptr&lt; <a class="el" href="class_j_task_base.html">JTaskBase</a> &gt; &gt; JEventSource::GetProcessEventTasks </td>
-          <td>(</td>
-          <td class="paramtype">std::size_t&#160;</td>
-          <td class="paramname"><em>aNumTasks</em> = <code>1</code></td><td>)</td>
+          <td class="paramtype">std::string&#160;</td>
+          <td class="paramname"><em>type_name</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
 </div><div class="memdoc">
-<p>This version is called by <a class="el" href="class_j_thread.html">JThread</a>. This will attempt to read aNumTasks from the source, wrapping each in a <a class="el" href="class_j_task.html">JTask</a> so it can be added to this source's Event queue. </p>
+
+<p>SetTypeName is intended as a replacement to GetType(), which should be less confusing for the user. </p>
+<p>It should be called from the constructor. For convenience, we provide a NAME_OF_THIS macro so that the user doesn't have to type the class name as a string, which may get out of sync if automatic refactoring tools are used. </p>
 
 </div>
 </div>
-<hr/>The documentation for this class was generated from the following files:<ul>
+<hr/>The documentation for this class was generated from the following file:<ul>
 <li>src/lib/JANA/JEventSource.h</li>
-<li>src/lib/JANA/JEventSource.cc</li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -313,7 +281,7 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>mName</b></td>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="class_j_event_source.html">JEventSource</a></li>
-    <li class="footer">Generated on Thu Feb 28 2019 13:28:34 for JANA2 by
+    <li class="footer">Generated on Thu Dec 5 2019 16:43:44 for JANA2 by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.5 </li>
   </ul>

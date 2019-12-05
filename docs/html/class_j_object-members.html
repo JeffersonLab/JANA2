@@ -44,7 +44,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li>
         <div id="MSearchBox" class="MSearchBoxInactive">
@@ -92,7 +91,7 @@ $(document).ready(function(){initNavTree('class_j_object.html','');});
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Friends</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -111,24 +110,22 @@ $(document).ready(function(){initNavTree('class_j_object.html','');});
 <table class="directory">
   <tr class="even"><td class="entry"><a class="el" href="class_j_object.html#ad0fc35acf71313c13a1ba33f79df9e4c">AddAssociatedObject</a>(const JObject *obj)</td><td class="entry"><a class="el" href="class_j_object.html">JObject</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr><td class="entry"><a class="el" href="class_j_object.html#a88fa24b99bbf1e1c42e7fa6f3d1560b6">AddAssociatedObjectAutoDelete</a>(JObject *obj, bool auto_delete=true)</td><td class="entry"><a class="el" href="class_j_object.html">JObject</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="class_j_object.html#a37f54b2912a0857261b807250e3c5d07">AddString</a>(std::vector&lt; std::pair&lt; std::string, std::string &gt; &gt; &amp;items, const char *name, const char *format, const T &amp;val) const </td><td class="entry"><a class="el" href="class_j_object.html">JObject</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0"><td class="entry"><b>append_types</b> (defined in <a class="el" href="class_j_object.html">JObject</a>)</td><td class="entry"><a class="el" href="class_j_object.html">JObject</a></td><td class="entry"></td></tr>
   <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>associated</b> (defined in <a class="el" href="class_j_object.html">JObject</a>)</td><td class="entry"><a class="el" href="class_j_object.html">JObject</a></td><td class="entry"><span class="mlabel">protected</span></td></tr>
   <tr bgcolor="#f0f0f0"><td class="entry"><b>auto_delete</b> (defined in <a class="el" href="class_j_object.html">JObject</a>)</td><td class="entry"><a class="el" href="class_j_object.html">JObject</a></td><td class="entry"><span class="mlabel">protected</span></td></tr>
-  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>className</b>(void) const  (defined in <a class="el" href="class_j_object.html">JObject</a>)</td><td class="entry"><a class="el" href="class_j_object.html">JObject</a></td><td class="entry"><span class="mlabel">virtual</span></td></tr>
+  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>className</b>(void) const  (defined in <a class="el" href="class_j_object.html">JObject</a>)</td><td class="entry"><a class="el" href="class_j_object.html">JObject</a></td><td class="entry"><span class="mlabel">inline</span><span class="mlabel">virtual</span></td></tr>
   <tr><td class="entry"><a class="el" href="class_j_object.html#adc35961afa0f89c2560a6331dc011d4a">ClearAssociatedObjects</a>(void)</td><td class="entry"><a class="el" href="class_j_object.html">JObject</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>IsAssociated</b>(const JObject *locObject) const  (defined in <a class="el" href="class_j_object.html">JObject</a>)</td><td class="entry"><a class="el" href="class_j_object.html">JObject</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr bgcolor="#f0f0f0"><td class="entry"><b>JObject</b>() (defined in <a class="el" href="class_j_object.html">JObject</a>)</td><td class="entry"><a class="el" href="class_j_object.html">JObject</a></td><td class="entry"></td></tr>
+  <tr bgcolor="#f0f0f0"><td class="entry"><b>JObject</b>()=default (defined in <a class="el" href="class_j_object.html">JObject</a>)</td><td class="entry"><a class="el" href="class_j_object.html">JObject</a></td><td class="entry"></td></tr>
   <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>mName</b> (defined in <a class="el" href="class_j_object.html">JObject</a>)</td><td class="entry"><a class="el" href="class_j_object.html">JObject</a></td><td class="entry"><span class="mlabel">mutable</span><span class="mlabel">protected</span></td></tr>
   <tr><td class="entry"><a class="el" href="class_j_object.html#a36836b3b6423db482ef5b710df931836">RemoveAssociatedObject</a>(const JObject *obj)</td><td class="entry"><a class="el" href="class_j_object.html">JObject</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="class_j_object.html#a8e74be8772a68ab800ddbb5715840a0c">toStrings</a>(std::vector&lt; std::pair&lt; std::string, std::string &gt; &gt; &amp;items) const </td><td class="entry"><a class="el" href="class_j_object.html">JObject</a></td><td class="entry"><span class="mlabel">inline</span><span class="mlabel">virtual</span></td></tr>
-  <tr bgcolor="#f0f0f0"><td class="entry"><b>~JObject</b>() (defined in <a class="el" href="class_j_object.html">JObject</a>)</td><td class="entry"><a class="el" href="class_j_object.html">JObject</a></td><td class="entry"><span class="mlabel">virtual</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="class_j_object.html#aa678f1a42651c305c0eeb4442babde11">Summarize</a>(JObjectSummary &amp;summary) const </td><td class="entry"><a class="el" href="class_j_object.html">JObject</a></td><td class="entry"><span class="mlabel">inline</span><span class="mlabel">virtual</span></td></tr>
+  <tr bgcolor="#f0f0f0"><td class="entry"><b>~JObject</b>()=default (defined in <a class="el" href="class_j_object.html">JObject</a>)</td><td class="entry"><a class="el" href="class_j_object.html">JObject</a></td><td class="entry"><span class="mlabel">virtual</span></td></tr>
 </table></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Thu Feb 28 2019 13:28:35 for JANA2 by
+    <li class="footer">Generated on Thu Dec 5 2019 16:43:44 for JANA2 by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.5 </li>
   </ul>

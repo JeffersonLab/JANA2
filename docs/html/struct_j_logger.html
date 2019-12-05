@@ -44,7 +44,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li>
         <div id="MSearchBox" class="MSearchBoxInactive">
@@ -92,7 +91,7 @@ $(document).ready(function(){initNavTree('struct_j_logger.html','');});
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Friends</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -103,24 +102,89 @@ $(document).ready(function(){initNavTree('struct_j_logger.html','');});
 
 <div class="header">
   <div class="summary">
+<a href="#pub-types">Public Types</a> &#124;
+<a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-attribs">Public Attributes</a> &#124;
 <a href="struct_j_logger-members.html">List of all members</a>  </div>
   <div class="headertitle">
 <div class="title">JLogger Struct Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
+<div class="dynheader">
+Collaboration diagram for JLogger:</div>
+<div class="dyncontent">
+<div class="center"><img src="struct_j_logger__coll__graph.png" border="0" usemap="#_j_logger_coll__map" alt="Collaboration graph"/></div>
+<map name="_j_logger_coll__map" id="_j_logger_coll__map">
+</map>
+<center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:aaaac872d78032cd51c0ee33e1ac5c960"><td class="memItemLeft" align="right" valign="top">enum &#160;</td><td class="memItemRight" valign="bottom"><b>Level</b> { <br/>
+&#160;&#160;<b>TRACE</b>, 
+<br/>
+&#160;&#160;<b>DEBUG</b>, 
+<br/>
+&#160;&#160;<b>INFO</b>, 
+<br/>
+&#160;&#160;<b>WARN</b>, 
+<br/>
+&#160;&#160;<b>ERROR</b>, 
+<br/>
+&#160;&#160;<b>FATAL</b>, 
+<br/>
+&#160;&#160;<b>OFF</b>
+<br/>
+ }</td></tr>
+<tr class="separator:aaaac872d78032cd51c0ee33e1ac5c960"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
+Public Member Functions</h2></td></tr>
+<tr class="memitem:a60fab1d120334f0b2d04cf2a7e9ab2de"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a60fab1d120334f0b2d04cf2a7e9ab2de"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>JLogger</b> (JLogger::Level level=JLogger::Level::INFO, std::ostream *destination=&amp;std::cout, std::string className=&quot;&quot;)</td></tr>
+<tr class="separator:a60fab1d120334f0b2d04cf2a7e9ab2de"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4f1678cc9abd1dc060bb162be60fb3c8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4f1678cc9abd1dc060bb162be60fb3c8"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>JLogger</b> (const <a class="el" href="struct_j_logger.html">JLogger</a> &amp;logger)=default</td></tr>
+<tr class="separator:a4f1678cc9abd1dc060bb162be60fb3c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab8e7f86ce5aa79bd3176b8a85efca812"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab8e7f86ce5aa79bd3176b8a85efca812"></a>
+<a class="el" href="struct_j_logger.html">JLogger</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (const <a class="el" href="struct_j_logger.html">JLogger</a> &amp;in)</td></tr>
+<tr class="separator:ab8e7f86ce5aa79bd3176b8a85efca812"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a69dbda8d777a2234ee9507a2416bb1ed"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a69dbda8d777a2234ee9507a2416bb1ed"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>SetTag</b> (std::string tag)</td></tr>
+<tr class="separator:a69dbda8d777a2234ee9507a2416bb1ed"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a89200b31610bb478e7d6d0dfed15ae9e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a89200b31610bb478e7d6d0dfed15ae9e"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>SetTimestampFlag</b> ()</td></tr>
+<tr class="separator:a89200b31610bb478e7d6d0dfed15ae9e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7eff8a36ee454b041e217791f566ca47"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7eff8a36ee454b041e217791f566ca47"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>UnsetTimestampFlag</b> ()</td></tr>
+<tr class="separator:a7eff8a36ee454b041e217791f566ca47"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6748e075fc89b1d757b31e22485090e1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6748e075fc89b1d757b31e22485090e1"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>SetThreadstampFlag</b> ()</td></tr>
+<tr class="separator:a6748e075fc89b1d757b31e22485090e1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a55f14d393cae156da8766111f8fd1211"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a55f14d393cae156da8766111f8fd1211"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>UnsetThreadstampFlag</b> ()</td></tr>
+<tr class="separator:a55f14d393cae156da8766111f8fd1211"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
-<tr class="memitem:a736b57644d8f068e43a894b9bf138ce3"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a736b57644d8f068e43a894b9bf138ce3"></a>
-JLogLevel&#160;</td><td class="memItemRight" valign="bottom"><b>level</b> = JLogLevel::INFO</td></tr>
-<tr class="separator:a736b57644d8f068e43a894b9bf138ce3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a28c3bd3173ed6e9c0806b55ad4e6d0b2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a28c3bd3173ed6e9c0806b55ad4e6d0b2"></a>
-std::ostream &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>destination</b> = std::cout</td></tr>
-<tr class="separator:a28c3bd3173ed6e9c0806b55ad4e6d0b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a20259bb1e4cb29df392c43481185b253"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a20259bb1e4cb29df392c43481185b253"></a>
-std::mutex&#160;</td><td class="memItemRight" valign="bottom"><b>mutex</b></td></tr>
-<tr class="separator:a20259bb1e4cb29df392c43481185b253"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2eeeab390b7306ffe401f58b7fed53bb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2eeeab390b7306ffe401f58b7fed53bb"></a>
+Level&#160;</td><td class="memItemRight" valign="bottom"><b>level</b></td></tr>
+<tr class="separator:a2eeeab390b7306ffe401f58b7fed53bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac3a8e218e855d98d65efef1964fe7a3c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac3a8e218e855d98d65efef1964fe7a3c"></a>
+std::ostream *&#160;</td><td class="memItemRight" valign="bottom"><b>destination</b></td></tr>
+<tr class="separator:ac3a8e218e855d98d65efef1964fe7a3c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a19b1a8bffe0483182a99b1363b2b9f82"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a19b1a8bffe0483182a99b1363b2b9f82"></a>
+std::string&#160;</td><td class="memItemRight" valign="bottom"><b>className</b></td></tr>
+<tr class="separator:a19b1a8bffe0483182a99b1363b2b9f82"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae779b0d58e500a00c499784eb8b1c74b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae779b0d58e500a00c499784eb8b1c74b"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>show_level</b> = false</td></tr>
+<tr class="separator:ae779b0d58e500a00c499784eb8b1c74b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ade9526120449f6305887a17e1ab2a2f4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ade9526120449f6305887a17e1ab2a2f4"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>show_timestamp</b> = false</td></tr>
+<tr class="separator:ade9526120449f6305887a17e1ab2a2f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aef82a267cfb815c5438dd6c9625e5662"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aef82a267cfb815c5438dd6c9625e5662"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>show_threadstamp</b> = false</td></tr>
+<tr class="separator:aef82a267cfb815c5438dd6c9625e5662"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this struct was generated from the following file:<ul>
 <li>src/lib/JANA/JLogger.h</li>
@@ -131,7 +195,7 @@ std::mutex&#160;</td><td class="memItemRight" valign="bottom"><b>mutex</b></td><
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="struct_j_logger.html">JLogger</a></li>
-    <li class="footer">Generated on Thu Feb 28 2019 13:28:35 for JANA2 by
+    <li class="footer">Generated on Thu Dec 5 2019 16:43:44 for JANA2 by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.5 </li>
   </ul>

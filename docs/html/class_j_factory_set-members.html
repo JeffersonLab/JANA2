@@ -44,7 +44,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li>
         <div id="MSearchBox" class="MSearchBoxInactive">
@@ -92,7 +91,7 @@ $(document).ready(function(){initNavTree('class_j_factory_set.html','');});
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Friends</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -111,13 +110,15 @@ $(document).ready(function(){initNavTree('class_j_factory_set.html','');});
 <table class="directory">
   <tr class="even"><td class="entry"><a class="el" href="class_j_factory_set.html#a6f1754d98aff22802a69d36b1c9ab895">Add</a>(JFactory *aFactory)</td><td class="entry"><a class="el" href="class_j_factory_set.html">JFactorySet</a></td><td class="entry"></td></tr>
   <tr bgcolor="#f0f0f0"><td class="entry"><b>GetFactory</b>(std::type_index aObjectType, const std::string &amp;aFactoryTag=&quot;&quot;) const  (defined in <a class="el" href="class_j_factory_set.html">JFactorySet</a>)</td><td class="entry"><a class="el" href="class_j_factory_set.html">JFactorySet</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>JFactorySet</b>(void) (defined in <a class="el" href="class_j_factory_set.html">JFactorySet</a>)</td><td class="entry"><a class="el" href="class_j_factory_set.html">JFactorySet</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0"><td class="entry"><b>JFactorySet</b>(const std::vector&lt; JFactoryGenerator * &gt; &amp;aFactoryGenerators) (defined in <a class="el" href="class_j_factory_set.html">JFactorySet</a>)</td><td class="entry"><a class="el" href="class_j_factory_set.html">JFactorySet</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="class_j_factory_set.html#a0e860343f120167367e31182f6997699">Merge</a>(JFactorySet &amp;aFactorySet)</td><td class="entry"><a class="el" href="class_j_factory_set.html">JFactorySet</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0"><td class="entry"><b>mFactories</b> (defined in <a class="el" href="class_j_factory_set.html">JFactorySet</a>)</td><td class="entry"><a class="el" href="class_j_factory_set.html">JFactorySet</a></td><td class="entry"><span class="mlabel">protected</span></td></tr>
-  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>Print</b>(void) const  (defined in <a class="el" href="class_j_factory_set.html">JFactorySet</a>)</td><td class="entry"><a class="el" href="class_j_factory_set.html">JFactorySet</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0"><td class="entry"><b>Release</b>(void) (defined in <a class="el" href="class_j_factory_set.html">JFactorySet</a>)</td><td class="entry"><a class="el" href="class_j_factory_set.html">JFactorySet</a></td><td class="entry"><span class="mlabel">virtual</span></td></tr>
-  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>Reset</b>(void) (defined in <a class="el" href="class_j_resettable.html">JResettable</a>)</td><td class="entry"><a class="el" href="class_j_resettable.html">JResettable</a></td><td class="entry"><span class="mlabel">inline</span><span class="mlabel">virtual</span></td></tr>
+  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>GetFactory</b>(const std::string &amp;tag=&quot;&quot;) const  (defined in <a class="el" href="class_j_factory_set.html">JFactorySet</a>)</td><td class="entry"><a class="el" href="class_j_factory_set.html">JFactorySet</a></td><td class="entry"></td></tr>
+  <tr bgcolor="#f0f0f0"><td class="entry"><b>JFactorySet</b>(void) (defined in <a class="el" href="class_j_factory_set.html">JFactorySet</a>)</td><td class="entry"><a class="el" href="class_j_factory_set.html">JFactorySet</a></td><td class="entry"></td></tr>
+  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>JFactorySet</b>(const std::vector&lt; JFactoryGenerator * &gt; &amp;aFactoryGenerators) (defined in <a class="el" href="class_j_factory_set.html">JFactorySet</a>)</td><td class="entry"><a class="el" href="class_j_factory_set.html">JFactorySet</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="class_j_factory_set.html#a0e860343f120167367e31182f6997699">Merge</a>(JFactorySet &amp;aFactorySet)</td><td class="entry"><a class="el" href="class_j_factory_set.html">JFactorySet</a></td><td class="entry"></td></tr>
+  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>mFactories</b> (defined in <a class="el" href="class_j_factory_set.html">JFactorySet</a>)</td><td class="entry"><a class="el" href="class_j_factory_set.html">JFactorySet</a></td><td class="entry"><span class="mlabel">protected</span></td></tr>
+  <tr bgcolor="#f0f0f0"><td class="entry"><b>Print</b>(void) const  (defined in <a class="el" href="class_j_factory_set.html">JFactorySet</a>)</td><td class="entry"><a class="el" href="class_j_factory_set.html">JFactorySet</a></td><td class="entry"></td></tr>
+  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>Release</b>(void) (defined in <a class="el" href="class_j_factory_set.html">JFactorySet</a>)</td><td class="entry"><a class="el" href="class_j_factory_set.html">JFactorySet</a></td><td class="entry"><span class="mlabel">virtual</span></td></tr>
+  <tr bgcolor="#f0f0f0"><td class="entry"><b>Reset</b>(void) (defined in <a class="el" href="class_j_resettable.html">JResettable</a>)</td><td class="entry"><a class="el" href="class_j_resettable.html">JResettable</a></td><td class="entry"><span class="mlabel">inline</span><span class="mlabel">virtual</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="class_j_factory_set.html#a5e0d485aab1f78a8631eaece00090d16">Summarize</a>() const </td><td class="entry"><a class="el" href="class_j_factory_set.html">JFactorySet</a></td><td class="entry"></td></tr>
   <tr><td class="entry"><a class="el" href="class_j_factory_set.html#a2cc853ac2a22202b3aad0909971ae5f5">~JFactorySet</a>()</td><td class="entry"><a class="el" href="class_j_factory_set.html">JFactorySet</a></td><td class="entry"><span class="mlabel">virtual</span></td></tr>
   <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>~JResettable</b>(void)=0 (defined in <a class="el" href="class_j_resettable.html">JResettable</a>)</td><td class="entry"><a class="el" href="class_j_resettable.html">JResettable</a></td><td class="entry"><span class="mlabel">inline</span><span class="mlabel">pure virtual</span></td></tr>
 </table></div><!-- contents -->
@@ -125,7 +126,7 @@ $(document).ready(function(){initNavTree('class_j_factory_set.html','');});
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Thu Feb 28 2019 13:28:35 for JANA2 by
+    <li class="footer">Generated on Thu Dec 5 2019 16:43:44 for JANA2 by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.5 </li>
   </ul>

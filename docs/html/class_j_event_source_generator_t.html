@@ -44,7 +44,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li>
         <div id="MSearchBox" class="MSearchBoxInactive">
@@ -92,7 +91,7 @@ $(document).ready(function(){initNavTree('class_j_event_source_generator_t.html'
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Friends</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -104,7 +103,6 @@ $(document).ready(function(){initNavTree('class_j_event_source_generator_t.html'
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
-<a href="#pub-attribs">Public Attributes</a> &#124;
 <a href="#pro-methods">Protected Member Functions</a> &#124;
 <a href="class_j_event_source_generator_t-members.html">List of all members</a>  </div>
   <div class="headertitle">
@@ -121,14 +119,14 @@ Inheritance diagram for JEventSourceGeneratorT&lt; T &gt;:</div>
 <div class="dyncontent">
 <div class="center"><img src="class_j_event_source_generator_t__inherit__graph.png" border="0" usemap="#_j_event_source_generator_t_3_01_t_01_4_inherit__map" alt="Inheritance graph"/></div>
 <map name="_j_event_source_generator_t_3_01_t_01_4_inherit__map" id="_j_event_source_generator_t_3_01_t_01_4_inherit__map">
-<area shape="rect" id="node2" href="class_j_event_source_generator.html" title="This is a base class for all event source generators. " alt="" coords="25,5,185,32"/></map>
+<area shape="rect" id="node2" href="class_j_event_source_generator.html" title="JEventSourceGenerator" alt="" coords="29,5,200,32"/></map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <div class="dynheader">
 Collaboration diagram for JEventSourceGeneratorT&lt; T &gt;:</div>
 <div class="dyncontent">
 <div class="center"><img src="class_j_event_source_generator_t__coll__graph.png" border="0" usemap="#_j_event_source_generator_t_3_01_t_01_4_coll__map" alt="Collaboration graph"/></div>
 <map name="_j_event_source_generator_t_3_01_t_01_4_coll__map" id="_j_event_source_generator_t_3_01_t_01_4_coll__map">
-<area shape="rect" id="node2" href="class_j_event_source_generator.html" title="This is a base class for all event source generators. " alt="" coords="234,187,395,213"/><area shape="rect" id="node3" href="class_j_application.html" title="JANA application class (singleton). " alt="" coords="268,96,361,123"/><area shape="rect" id="node4" href="class_j_event_source_manager.html" title="JEventSourceManager" alt="" coords="5,5,160,32"/><area shape="rect" id="node6" href="class_j_thread_manager.html" title="JThreadManager" alt="" coords="326,5,444,32"/><area shape="rect" id="node7" href="class_j_parameter_manager.html" title="JParameterManager" alt="" coords="469,5,608,32"/></map>
+<area shape="rect" id="node2" href="class_j_event_source_generator.html" title="JEventSourceGenerator" alt="" coords="29,96,200,123"/><area shape="rect" id="node3" href="class_j_application.html" title="JANA application class (singleton). " alt="" coords="5,5,104,32"/></map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
@@ -151,50 +149,50 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hre
 <tr class="memitem:a3630ca8a659931a4be3ad17358b0676a"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_j_event_source_generator_t.html#a3630ca8a659931a4be3ad17358b0676a">CheckOpenable</a> (std::string source)</td></tr>
 <tr class="memdesc:a3630ca8a659931a4be3ad17358b0676a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check how likely a source of the type this generates is to read the specified source.  <a href="#a3630ca8a659931a4be3ad17358b0676a">More...</a><br/></td></tr>
 <tr class="separator:a3630ca8a659931a4be3ad17358b0676a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab406d8ff585fb652b62513d664e1fe6b"><td class="memTemplParams" colspan="2"><a class="anchor" id="ab406d8ff585fb652b62513d664e1fe6b"></a>
-template&lt;&gt; </td></tr>
-<tr class="memitem:ab406d8ff585fb652b62513d664e1fe6b"><td class="memTemplItemLeft" align="right" valign="top">double&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="class_j_event_source_generator_t.html#ab406d8ff585fb652b62513d664e1fe6b">CheckOpenable</a> (std::string source)</td></tr>
-<tr class="memdesc:ab406d8ff585fb652b62513d664e1fe6b"><td class="mdescLeft">&#160;</td><td class="mdescRight">See <a class="el" href="class_j_event_source_generator_t.html" title="This templated class is used to generate JEventSource based objects to handle reading events into JAN...">JEventSourceGeneratorT</a> for description. <br/></td></tr>
-<tr class="separator:ab406d8ff585fb652b62513d664e1fe6b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pub_methods_class_j_event_source_generator"><td colspan="2" onclick="javascript:toggleInherit('pub_methods_class_j_event_source_generator')"><img src="closed.png" alt="-"/>&#160;Public Member Functions inherited from <a class="el" href="class_j_event_source_generator.html">JEventSourceGenerator</a></td></tr>
 <tr class="memitem:afc3c02c704acc0b39fb6b36aadf71210 inherit pub_methods_class_j_event_source_generator"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afc3c02c704acc0b39fb6b36aadf71210"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>JEventSourceGenerator</b> (<a class="el" href="class_j_application.html">JApplication</a> *app=nullptr)</td></tr>
 <tr class="separator:afc3c02c704acc0b39fb6b36aadf71210 inherit pub_methods_class_j_event_source_generator"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
-Public Attributes</h2></td></tr>
-<tr class="memitem:ae6ae8e45cc822ca475abfec4518aa8fe"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae6ae8e45cc822ca475abfec4518aa8fe"></a>
-friend&#160;</td><td class="memItemRight" valign="bottom"><b>JEventSourceManager</b></td></tr>
-<tr class="separator:ae6ae8e45cc822ca475abfec4518aa8fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="inherit_header pub_attribs_class_j_event_source_generator"><td colspan="2" onclick="javascript:toggleInherit('pub_attribs_class_j_event_source_generator')"><img src="closed.png" alt="-"/>&#160;Public Attributes inherited from <a class="el" href="class_j_event_source_generator.html">JEventSourceGenerator</a></td></tr>
-<tr class="memitem:a0e591cfc5cfe230024e68d4170ffbed1 inherit pub_attribs_class_j_event_source_generator"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0e591cfc5cfe230024e68d4170ffbed1"></a>
-friend&#160;</td><td class="memItemRight" valign="bottom"><b>JEventSourceManager</b></td></tr>
-<tr class="separator:a0e591cfc5cfe230024e68d4170ffbed1 inherit pub_attribs_class_j_event_source_generator"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
 Protected Member Functions</h2></td></tr>
 <tr class="memitem:a94574644766b32da40202eecdfe5f234"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_j_event_source_generator_t.html#a94574644766b32da40202eecdfe5f234">SetJApplication</a> (<a class="el" href="class_j_application.html">JApplication</a> *app)</td></tr>
-<tr class="memdesc:a94574644766b32da40202eecdfe5f234"><td class="mdescLeft">&#160;</td><td class="mdescRight">This is called by <a class="el" href="class_j_event_source_manager.html#a7c0fec20e8b5b03ed3e21f2abf886708">JEventSourceManager::AddJEventSourceGenerator</a> which itself is called by <a class="el" href="class_j_application.html#aa958550b6fd95cfd7acc26a1052c78cb">JApplication::Add(JEventSourceGenerator*)</a>.  <a href="#a94574644766b32da40202eecdfe5f234">More...</a><br/></td></tr>
+<tr class="memdesc:a94574644766b32da40202eecdfe5f234"><td class="mdescLeft">&#160;</td><td class="mdescRight">This is called by JEventSourceManager::AddJEventSourceGenerator which itself is called by <a class="el" href="class_j_application.html#aa958550b6fd95cfd7acc26a1052c78cb">JApplication::Add(JEventSourceGenerator*)</a>.  <a href="#a94574644766b32da40202eecdfe5f234">More...</a><br/></td></tr>
 <tr class="separator:a94574644766b32da40202eecdfe5f234"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_methods_class_j_event_source_generator"><td colspan="2" onclick="javascript:toggleInherit('pro_methods_class_j_event_source_generator')"><img src="closed.png" alt="-"/>&#160;Protected Member Functions inherited from <a class="el" href="class_j_event_source_generator.html">JEventSourceGenerator</a></td></tr>
 <tr class="memitem:a1f0d48cec836a9ba53e75fe2fbe2cff0 inherit pro_methods_class_j_event_source_generator"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_j_event_source_generator.html#a1f0d48cec836a9ba53e75fe2fbe2cff0">SetJApplication</a> (<a class="el" href="class_j_application.html">JApplication</a> *app)</td></tr>
-<tr class="memdesc:a1f0d48cec836a9ba53e75fe2fbe2cff0 inherit pro_methods_class_j_event_source_generator"><td class="mdescLeft">&#160;</td><td class="mdescRight">This is called by <a class="el" href="class_j_event_source_manager.html#a7c0fec20e8b5b03ed3e21f2abf886708">JEventSourceManager::AddJEventSourceGenerator</a> which itself is called by <a class="el" href="class_j_application.html#aa958550b6fd95cfd7acc26a1052c78cb">JApplication::Add(JEventSourceGenerator*)</a>.  <a href="#a1f0d48cec836a9ba53e75fe2fbe2cff0">More...</a><br/></td></tr>
+<tr class="memdesc:a1f0d48cec836a9ba53e75fe2fbe2cff0 inherit pro_methods_class_j_event_source_generator"><td class="mdescLeft">&#160;</td><td class="mdescRight">This is called by JEventSourceManager::AddJEventSourceGenerator which itself is called by <a class="el" href="class_j_application.html#aa958550b6fd95cfd7acc26a1052c78cb">JApplication::Add(JEventSourceGenerator*)</a>.  <a href="#a1f0d48cec836a9ba53e75fe2fbe2cff0">More...</a><br/></td></tr>
 <tr class="separator:a1f0d48cec836a9ba53e75fe2fbe2cff0 inherit pro_methods_class_j_event_source_generator"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8b2635b5f5de016e74cac7c29d89c1f6 inherit pro_methods_class_j_event_source_generator"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8b2635b5f5de016e74cac7c29d89c1f6"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_j_event_source_generator.html#a8b2635b5f5de016e74cac7c29d89c1f6">SetPlugin</a> (std::string plugin_name)</td></tr>
+<tr class="memdesc:a8b2635b5f5de016e74cac7c29d89c1f6 inherit pro_methods_class_j_event_source_generator"><td class="mdescLeft">&#160;</td><td class="mdescRight">SetPlugin is called by JANA itself and should not be exposed to the user. <br/></td></tr>
+<tr class="separator:a8b2635b5f5de016e74cac7c29d89c1f6 inherit pro_methods_class_j_event_source_generator"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7bf96e7d9fad65dada367a7ee7b82a40 inherit pro_methods_class_j_event_source_generator"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7bf96e7d9fad65dada367a7ee7b82a40"></a>
+std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_j_event_source_generator.html#a7bf96e7d9fad65dada367a7ee7b82a40">GetPlugin</a> () const </td></tr>
+<tr class="memdesc:a7bf96e7d9fad65dada367a7ee7b82a40 inherit pro_methods_class_j_event_source_generator"><td class="mdescLeft">&#160;</td><td class="mdescRight">GetPlugin is called by JANA itself and should not be exposed to the user. <br/></td></tr>
+<tr class="separator:a7bf96e7d9fad65dada367a7ee7b82a40 inherit pro_methods_class_j_event_source_generator"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="inherited"></a>
 Additional Inherited Members</h2></td></tr>
+<tr class="inherit_header pub_attribs_class_j_event_source_generator"><td colspan="2" onclick="javascript:toggleInherit('pub_attribs_class_j_event_source_generator')"><img src="closed.png" alt="-"/>&#160;Public Attributes inherited from <a class="el" href="class_j_event_source_generator.html">JEventSourceGenerator</a></td></tr>
+<tr class="memitem:ab069a676fdfc70e83b7027a98924a0c8 inherit pub_attribs_class_j_event_source_generator"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab069a676fdfc70e83b7027a98924a0c8"></a>
+friend&#160;</td><td class="memItemRight" valign="bottom"><b>JComponentManager</b></td></tr>
+<tr class="separator:ab069a676fdfc70e83b7027a98924a0c8 inherit pub_attribs_class_j_event_source_generator"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="inherit_header pro_attribs_class_j_event_source_generator"><td colspan="2" onclick="javascript:toggleInherit('pro_attribs_class_j_event_source_generator')"><img src="closed.png" alt="-"/>&#160;Protected Attributes inherited from <a class="el" href="class_j_event_source_generator.html">JEventSourceGenerator</a></td></tr>
 <tr class="memitem:a5d6f760ddaff84d8a3006ab6906c1ee0 inherit pro_attribs_class_j_event_source_generator"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a5d6f760ddaff84d8a3006ab6906c1ee0"></a>
 <a class="el" href="class_j_application.html">JApplication</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>mApplication</b> {nullptr}</td></tr>
 <tr class="separator:a5d6f760ddaff84d8a3006ab6906c1ee0 inherit pro_attribs_class_j_event_source_generator"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa1bc73e8fc79300ef3aac87b6d7bb680 inherit pro_attribs_class_j_event_source_generator"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa1bc73e8fc79300ef3aac87b6d7bb680"></a>
+std::string&#160;</td><td class="memItemRight" valign="bottom"><b>mPluginName</b></td></tr>
+<tr class="separator:aa1bc73e8fc79300ef3aac87b6d7bb680 inherit pro_attribs_class_j_event_source_generator"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><h3>template&lt;typename T&gt;<br/>
 class JEventSourceGeneratorT&lt; T &gt;</h3>
 
 <p>This templated class is used to generate <a class="el" href="class_j_event_source.html">JEventSource</a> based objects to handle reading events into JANA. </p>
-<p>Multiple <a class="el" href="class_j_event_source_generator.html" title="This is a base class for all event source generators. ">JEventSourceGenerator</a> objects may exist in a given program, each representing a different input type. For example, one source may be used to read raw data while another may be used to read DST formats. A third may be used to read from a network connection for online applications. For each source specified in a given job, JANA will determine which <a class="el" href="class_j_event_source.html">JEventSource</a> class to use to read from it. It does this via the CheckOpenable method of JEventSourceSourceGenerator.</p>
-<p>A new instance of the <a class="el" href="class_j_event_source.html">JEventSource</a> subclass will be created for each input source in the job. For example, if two files of the same type, are specified then the <a class="el" href="class_j_event_source_generator.html" title="This is a base class for all event source generators. ">JEventSourceGenerator</a> corresponding to that file type will be used to create two <a class="el" href="class_j_event_source.html">JEventSource</a> objects.</p>
+<p>Multiple <a class="el" href="class_j_event_source_generator.html">JEventSourceGenerator</a> objects may exist in a given program, each representing a different input type. For example, one source may be used to read raw data while another may be used to read DST formats. A third may be used to read from a network connection for online applications. For each source specified in a given job, JANA will determine which <a class="el" href="class_j_event_source.html">JEventSource</a> class to use to read from it. It does this via the CheckOpenable method of JEventSourceSourceGenerator.</p>
+<p>A new instance of the <a class="el" href="class_j_event_source.html">JEventSource</a> subclass will be created for each input source in the job. For example, if two files of the same type, are specified then the <a class="el" href="class_j_event_source_generator.html">JEventSourceGenerator</a> corresponding to that file type will be used to create two <a class="el" href="class_j_event_source.html">JEventSource</a> objects.</p>
 <h2>REQUIREMENTS OF <a class="el" href="class_j_event_source.html">JEventSource</a> SUBCLASS: </h2>
 <ul>
 <li>constructor that accepts (std::string, JApplication*)</li>
@@ -259,7 +257,7 @@ template&lt;typename T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>This is called by <a class="el" href="class_j_event_source_manager.html#a7c0fec20e8b5b03ed3e21f2abf886708">JEventSourceManager::AddJEventSourceGenerator</a> which itself is called by <a class="el" href="class_j_application.html#aa958550b6fd95cfd7acc26a1052c78cb">JApplication::Add(JEventSourceGenerator*)</a>. </p>
+<p>This is called by JEventSourceManager::AddJEventSourceGenerator which itself is called by <a class="el" href="class_j_application.html#aa958550b6fd95cfd7acc26a1052c78cb">JApplication::Add(JEventSourceGenerator*)</a>. </p>
 <p>There should be no need to call it from anywhere else. </p>
 
 </div>
@@ -273,7 +271,7 @@ template&lt;typename T &gt; </div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="class_j_event_source_generator_t.html">JEventSourceGeneratorT</a></li>
-    <li class="footer">Generated on Thu Feb 28 2019 13:28:35 for JANA2 by
+    <li class="footer">Generated on Thu Dec 5 2019 16:43:44 for JANA2 by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.5 </li>
   </ul>

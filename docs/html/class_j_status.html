@@ -44,7 +44,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li>
         <div id="MSearchBox" class="MSearchBoxInactive">
@@ -92,7 +91,7 @@ $(document).ready(function(){initNavTree('class_j_status.html','');});
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Friends</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -180,14 +179,14 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>path</b></td><
 </div><div class="memdoc">
 <p>Construct a <a class="el" href="class_j_status.html">JStatus</a> object. <a class="el" href="class_j_status.html">JStatus</a> is a singleton and can only be constructed via a call to the static "JStatus::Report()" method. </p>
 
-<p>References <a class="el" href="class_j_application.html#aa633f70fe381eca46ae6b6b1a4ee0563">JApplication::GetJParameterManager()</a>, and <a class="el" href="class_j_parameter_manager.html#a2259115b11e86bdfa7abfb3d3ba5306a">JParameterManager::SetDefaultParameter()</a>.</p>
+<p>References <a class="el" href="class_j_parameter_manager.html#a2259115b11e86bdfa7abfb3d3ba5306a">JParameterManager::SetDefaultParameter()</a>.</p>
 
 <p><div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
 <div class="center"><img src="class_j_status_a23959ca695c5bc62840ef25091e672d9_cgraph.png" border="0" usemap="#class_j_status_a23959ca695c5bc62840ef25091e672d9_cgraph" alt=""/></div>
 <map name="class_j_status_a23959ca695c5bc62840ef25091e672d9_cgraph" id="class_j_status_a23959ca695c5bc62840ef25091e672d9_cgraph">
-<area shape="rect" id="node2" href="class_j_application.html#aa633f70fe381eca46ae6b6b1a4ee0563" title="JApplication::GetJParameter\lManager" alt="" coords="173,5,363,46"/><area shape="rect" id="node3" href="class_j_parameter_manager.html#a2259115b11e86bdfa7abfb3d3ba5306a" title="JParameterManager::\lSetDefaultParameter" alt="" coords="195,70,341,111"/></map>
+<area shape="rect" id="node2" href="class_j_parameter_manager.html#a2259115b11e86bdfa7abfb3d3ba5306a" title="JParameterManager::\lSetDefaultParameter" alt="" coords="174,5,333,46"/></map>
 </div>
 </p>
 
@@ -262,8 +261,8 @@ Here is the call graph for this function:</div>
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following files:<ul>
-<li>src/lib/JANA/JStatus.h</li>
-<li>src/lib/JANA/JStatus.cc</li>
+<li>src/lib/JANA/Status/JStatus.h</li>
+<li>src/lib/JANA/Status/JStatus.cc</li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -271,7 +270,7 @@ Here is the call graph for this function:</div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="class_j_status.html">JStatus</a></li>
-    <li class="footer">Generated on Thu Feb 28 2019 13:28:36 for JANA2 by
+    <li class="footer">Generated on Thu Dec 5 2019 16:43:44 for JANA2 by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.5 </li>
   </ul>

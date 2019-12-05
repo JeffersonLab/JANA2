@@ -1,10 +1,6 @@
 <map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="node2" href="$class_j_event.html" title="JEvent" alt="" coords="237,56,299,83"/>
-<area shape="rect" id="node3" href="$class_j_event__example1.html" title="JEvent_example1" alt="" coords="375,5,502,32"/>
-<area shape="rect" id="node4" href="$class_j_event__test.html" title="JEvent_test" alt="" coords="393,56,485,83"/>
-<area shape="rect" id="node5" href="$class_my_event.html" title="MyEvent" alt="" coords="401,107,476,133"/>
-<area shape="rect" id="node6" href="$class_j_resettable.html" title="JResettable" alt="" coords="43,107,135,133"/>
-<area shape="rect" id="node7" href="$class_j_factory_set.html" title="JFactorySet" alt="" coords="221,107,315,133"/>
-<area shape="rect" id="node8" href="$class_j_task_base.html" title="JTaskBase" alt="" coords="224,157,312,184"/>
-<area shape="rect" id="node9" href="$class_j_task.html" title="JTask\&lt; ReturnType \&gt;" alt="" coords="363,157,514,184"/>
+<area shape="rect" id="node1" href="$struct_j_message.html" title="JMessage is an abstract base class for data that can be streamed using JTransport&#39;s. " alt="" coords="5,56,88,83"/>
+<area shape="rect" id="node2" href="$struct_j_event_message.html" title="A JEventMessage represents a single event, meant to be used when the event building is done upstream..." alt="" coords="136,5,256,32"/>
+<area shape="rect" id="node3" href="$struct_j_hit_message.html" title="A JHitMessage represents a single detector hit. " alt="" coords="145,56,247,83"/>
+<area shape="rect" id="node4" href="$class_j_object.html" title="JObject" alt="" coords="13,5,81,32"/>
 </map>

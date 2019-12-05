@@ -44,7 +44,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li>
         <div id="MSearchBox" class="MSearchBoxInactive">
@@ -92,7 +91,7 @@ $(document).ready(function(){initNavTree('class_j_parameter_manager.html','');})
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Friends</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -104,6 +103,7 @@ $(document).ready(function(){initNavTree('class_j_parameter_manager.html','');})
 <div class="header">
   <div class="summary">
 <a href="#pub-methods">Public Member Functions</a> &#124;
+<a href="#pro-methods">Protected Member Functions</a> &#124;
 <a href="#pro-attribs">Protected Attributes</a> &#124;
 <a href="class_j_parameter_manager-members.html">List of all members</a>  </div>
   <div class="headertitle">
@@ -139,6 +139,16 @@ template&lt;typename T &gt; </td></tr>
 template&lt;typename T &gt; </td></tr>
 <tr class="memitem:afbb49e839ee5cd17934f10d9b7d995a6"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="class_j_parameter.html">JParameter</a> *&#160;</td><td class="memTemplItemRight" valign="bottom"><b>SetParameter</b> (std::string name, T val)</td></tr>
 <tr class="separator:afbb49e839ee5cd17934f10d9b7d995a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae46022657f15d7486b445f4b204a36a2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_j_parameter_manager.html#ae46022657f15d7486b445f4b204a36a2">ReadConfigFile</a> (std::string name)</td></tr>
+<tr class="separator:ae46022657f15d7486b445f4b204a36a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a90f0c1b84c4d00df0e765cd343b26431"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_j_parameter_manager.html#a90f0c1b84c4d00df0e765cd343b26431">WriteConfigFile</a> (std::string name)</td></tr>
+<tr class="separator:a90f0c1b84c4d00df0e765cd343b26431"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-methods"></a>
+Protected Member Functions</h2></td></tr>
+<tr class="memitem:a2a8c228eb7849244b885ea9a668f3891"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2a8c228eb7849244b885ea9a668f3891"></a>
+string&#160;</td><td class="memItemRight" valign="bottom"><b>ToLC</b> (string &amp;name)</td></tr>
+<tr class="separator:a2a8c228eb7849244b885ea9a668f3891"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pro-attribs"></a>
 Protected Attributes</h2></td></tr>
@@ -162,6 +172,31 @@ std::map&lt; std::string, <br class="typebreak"/>
       </table>
 </div><div class="memdoc">
 <p>Print configuration parameters to stdout. If "all" is false (default) then only parameters whose values are different than their default are printed. If "all" is true then all parameters are printed. </p>
+
+</div>
+</div>
+<a class="anchor" id="ae46022657f15d7486b445f4b204a36a2"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void JParameterManager::ReadConfigFile </td>
+          <td>(</td>
+          <td class="paramtype">std::string&#160;</td>
+          <td class="paramname"><em>name</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Read in the configuration file with name specified by "fname". The file should have the form:</p>
+<pre>
+key1 value1
+key2 value2
+...
+</pre><p>Where there is a space between the key and the value (thus, the "key" can contain no spaces). The value is taken as the rest of the line up to, but not including the newline itself.</p>
+<p>A key may be specified with no value and the value will be set to "1".</p>
+<p>A "#" charater will discard the remaining characters in a line up to the next newline. Therefore, lines starting with "#" are ignored completely.</p>
+<p>Lines with no characters (except for the newline) are ignored. </p>
 
 </div>
 </div>
@@ -204,22 +239,39 @@ template&lt;typename K , typename V &gt; </div>
 <p>Parameters specified on the command line using the "-Pkey=value" syntax will not have a default value at the time the parameter is created.</p>
 <p>This should be called after the <a class="el" href="class_j_application.html" title="JANA application class (singleton). ">JApplication</a> object has been initialized so that parameters can be created from any command line options the user may specify. </p>
 
-<p>Referenced by <a class="el" href="class_j_status.html#a23959ca695c5bc62840ef25091e672d9">JStatus::JStatus()</a>.</p>
+<p>Referenced by <a class="el" href="class_j_application.html#a885200c157d4fa6b90c5071a1ad6f4ef">JApplication::Initialize()</a>, and <a class="el" href="class_j_status.html#a23959ca695c5bc62840ef25091e672d9">JStatus::JStatus()</a>.</p>
 
 <p><div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
 <div class="center"><img src="class_j_parameter_manager_a2259115b11e86bdfa7abfb3d3ba5306a_icgraph.png" border="0" usemap="#class_j_parameter_manager_a2259115b11e86bdfa7abfb3d3ba5306a_icgraph" alt=""/></div>
 <map name="class_j_parameter_manager_a2259115b11e86bdfa7abfb3d3ba5306a_icgraph" id="class_j_parameter_manager_a2259115b11e86bdfa7abfb3d3ba5306a_icgraph">
-<area shape="rect" id="node2" href="class_j_status.html#a23959ca695c5bc62840ef25091e672d9" title="JStatus::JStatus" alt="" coords="200,12,320,39"/></map>
+<area shape="rect" id="node2" href="class_j_application.html#a885200c157d4fa6b90c5071a1ad6f4ef" title="JApplication::Initialize" alt="" coords="213,5,376,32"/><area shape="rect" id="node3" href="class_j_status.html#a23959ca695c5bc62840ef25091e672d9" title="JStatus::JStatus" alt="" coords="235,56,355,83"/></map>
 </div>
 </p>
 
 </div>
 </div>
+<a class="anchor" id="a90f0c1b84c4d00df0e765cd343b26431"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void JParameterManager::WriteConfigFile </td>
+          <td>(</td>
+          <td class="paramtype">std::string&#160;</td>
+          <td class="paramname"><em>name</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Write all of the configuration parameters out to an ASCII file in a format compatible with reading in via <a class="el" href="class_j_parameter_manager.html#ae46022657f15d7486b445f4b204a36a2">ReadConfigFile()</a>. </p>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following files:<ul>
-<li>src/lib/JANA/JParameterManager.h</li>
-<li>src/lib/JANA/JParameterManager.cc</li>
+<li>src/lib/JANA/Services/JParameterManager.h</li>
+<li>src/lib/JANA/Services/JParameterManager.cc</li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
@@ -227,7 +279,7 @@ Here is the caller graph for this function:</div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="class_j_parameter_manager.html">JParameterManager</a></li>
-    <li class="footer">Generated on Thu Feb 28 2019 13:28:35 for JANA2 by
+    <li class="footer">Generated on Thu Dec 5 2019 16:43:44 for JANA2 by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.5 </li>
   </ul>

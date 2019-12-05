@@ -44,7 +44,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li>
         <div id="MSearchBox" class="MSearchBoxInactive">
@@ -77,11 +76,12 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
       <li class="current"><a href="functions.html"><span>All</span></a></li>
       <li><a href="functions_func.html"><span>Functions</span></a></li>
       <li><a href="functions_vars.html"><span>Variables</span></a></li>
+      <li><a href="functions_enum.html"><span>Enumerations</span></a></li>
+      <li><a href="functions_rela.html"><span>Related&#160;Functions</span></a></li>
     </ul>
   </div>
   <div id="navrow4" class="tabs3">
     <ul class="tablist">
-      <li><a href="#index__"><span>_</span></a></li>
       <li><a href="#index_a"><span>a</span></a></li>
       <li><a href="#index_b"><span>b</span></a></li>
       <li><a href="#index_c"><span>c</span></a></li>
@@ -91,13 +91,12 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
       <li><a href="#index_j"><span>j</span></a></li>
       <li><a href="#index_l"><span>l</span></a></li>
       <li><a href="#index_m"><span>m</span></a></li>
+      <li><a href="#index_n"><span>n</span></a></li>
       <li><a href="#index_o"><span>o</span></a></li>
       <li><a href="#index_p"><span>p</span></a></li>
       <li><a href="#index_r"><span>r</span></a></li>
       <li><a href="#index_s"><span>s</span></a></li>
       <li><a href="#index_t"><span>t</span></a></li>
-      <li><a href="#index_u"><span>u</span></a></li>
-      <li><a href="#index_v"><span>v</span></a></li>
       <li><a href="#index_w"><span>w</span></a></li>
       <li><a href="#index_0x7e"><span>~</span></a></li>
     </ul>
@@ -122,7 +121,7 @@ $(document).ready(function(){initNavTree('functions.html','');});
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Friends</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -134,17 +133,20 @@ $(document).ready(function(){initNavTree('functions.html','');});
 <div class="contents">
 <div class="textblock">Here is a list of all documented class members with links to the class documentation for each member:</div>
 
-<h3><a class="anchor" id="index__"></a>- _ -</h3><ul>
-<li>_args
-: <a class="el" href="class_j_application.html#aeda7687c4bf68db2025800f4631533a0">JApplication</a>
-</li>
-</ul>
-
-
 <h3><a class="anchor" id="index_a"></a>- a -</h3><ul>
+<li>add()
+: <a class="el" href="class_j_object_summary.html#ab1e4a31190e3236f5adfc975ba71e3fd">JObjectSummary</a>
+</li>
 <li>Add()
 : <a class="el" href="class_j_application.html#aa958550b6fd95cfd7acc26a1052c78cb">JApplication</a>
 , <a class="el" href="class_j_factory_set.html#a6f1754d98aff22802a69d36b1c9ab895">JFactorySet</a>
+, <a class="el" href="class_j_application.html#a1991ad0b8bbae5156854e123cfc48e8d">JApplication</a>
+</li>
+<li>add_plugin()
+: <a class="el" href="class_j_plugin_loader.html#aeee8d9cad057f0ca10e496de23d089b2">JPluginLoader</a>
+</li>
+<li>add_plugin_path()
+: <a class="el" href="class_j_plugin_loader.html#a5435d2582c0de6a63f51d13cbadb7703">JPluginLoader</a>
 </li>
 <li>AddAssociatedObject()
 : <a class="el" href="class_j_object.html#ad0fc35acf71313c13a1ba33f79df9e4c">JObject</a>
@@ -152,38 +154,11 @@ $(document).ready(function(){initNavTree('functions.html','');});
 <li>AddAssociatedObjectAutoDelete()
 : <a class="el" href="class_j_object.html#a88fa24b99bbf1e1c42e7fa6f3d1560b6">JObject</a>
 </li>
-<li>AddEventSource()
-: <a class="el" href="class_j_event_source_manager.html#a65bd08331de92248c1b5721a43503300">JEventSourceManager</a>
+<li>attach_plugin()
+: <a class="el" href="class_j_plugin_loader.html#a1c5d007a6e6e26cfaa2105b7b7dfb281">JPluginLoader</a>
 </li>
-<li>AddJEventSourceGenerator()
-: <a class="el" href="class_j_event_source_manager.html#a7c0fec20e8b5b03ed3e21f2abf886708">JEventSourceManager</a>
-</li>
-<li>AddPlugin()
-: <a class="el" href="class_j_application.html#afc6932010bc0d73eec8e61bcba9af822">JApplication</a>
-</li>
-<li>AddPluginPath()
-: <a class="el" href="class_j_application.html#a32a89a3afeef96d0c5321a13dbeeb38a">JApplication</a>
-</li>
-<li>AddString()
-: <a class="el" href="class_j_object.html#a37f54b2912a0857261b807250e3c5d07">JObject</a>
-</li>
-<li>AddTask()
-: <a class="el" href="class_j_queue_with_lock.html#a89214a9f6d62c004ab2498686c3d3d7a">JQueueWithLock</a>
-</li>
-<li>AreAllThreadsEnded()
-: <a class="el" href="class_j_thread_manager.html#af861e431bedee2e132090925a39af0ac">JThreadManager</a>
-</li>
-<li>AreAllThreadsIdle()
-: <a class="el" href="class_j_thread_manager.html#ad61ddb955af8229e6fcc0732d74e5811">JThreadManager</a>
-</li>
-<li>AreAllThreadsRunning()
-: <a class="el" href="class_j_thread_manager.html#ad32142252ce840b2de3cafd29d85a0c7">JThreadManager</a>
-</li>
-<li>AttachPlugin()
-: <a class="el" href="class_j_application.html#aec335a80b81db4431fd1fae785127ad8">JApplication</a>
-</li>
-<li>AttachPlugins()
-: <a class="el" href="class_j_application.html#aa4e6d4d8e2248dd8bde53a724c508f47">JApplication</a>
+<li>attach_plugins()
+: <a class="el" href="class_j_plugin_loader.html#af04cbac14aca102f7f65fb431d4b195c">JPluginLoader</a>
 </li>
 </ul>
 
@@ -210,9 +185,6 @@ $(document).ready(function(){initNavTree('functions.html','');});
 
 
 <h3><a class="anchor" id="index_e"></a>- e -</h3><ul>
-<li>End()
-: <a class="el" href="class_j_thread.html#a78568cd73f7c59a9fa5e2ba2ee85972d">JThread</a>
-</li>
 <li>ExtractContent()
 : <a class="el" href="class_j_version.html#acf03df3efbf86112b8c16165c6717812">JVersion</a>
 </li>
@@ -220,15 +192,27 @@ $(document).ready(function(){initNavTree('functions.html','');});
 
 
 <h3><a class="anchor" id="index_g"></a>- g -</h3><ul>
+<li>get()
+: <a class="el" href="class_j_service_locator.html#a779957c1c7de99a6ba42194754055a91">JServiceLocator</a>
+</li>
+<li>Get()
+: <a class="el" href="class_j_event.html#aaf9f101c4eab45dbea1857f91942752f">JEvent</a>
+</li>
 <li>Get_CacheLineSize()
 : <a class="el" href="class_j_resource_pool.html#a6a0c1c5dc69ef995422cc00baa5e501d">JResourcePool&lt; DType &gt;</a>
+</li>
+<li>get_fields()
+: <a class="el" href="class_j_object_summary.html#acf2cad623cef2bd8b37b22821ffb1cf4">JObjectSummary</a>
+</li>
+<li>GetComponentSummary()
+: <a class="el" href="class_j_application.html#a531ab90196293cd9f3b593435a468638">JApplication</a>
 </li>
 <li>GetDescription()
 : <a class="el" href="class_j_event_source_generator.html#ad8ecb8ee0635daf9e3c70f2f37739f07">JEventSourceGenerator</a>
 , <a class="el" href="class_j_event_source_generator_t.html#a87fd3d4b14971b7909f04caf13c6af29">JEventSourceGeneratorT&lt; T &gt;</a>
 </li>
 <li>GetEvent()
-: <a class="el" href="class_j_event_source__jana__test.html#a7a8d7da777ae14dda8269bd2cbb8a7bd">JEventSource_jana_test</a>
+: <a class="el" href="class_j_event_builder.html#a4d2303f1a97a62290b977806cca2c6ad">JEventBuilder&lt; T &gt;</a>
 </li>
 <li>GetExitCode()
 : <a class="el" href="class_j_application.html#abd523beb83769b722dfb3134d4d219e6">JApplication</a>
@@ -240,101 +224,73 @@ $(document).ready(function(){initNavTree('functions.html','');});
 : <a class="el" href="class_j_parameter.html#a8c333f8787022f34c690287c61617c34">JParameter</a>
 </li>
 <li>GetIntegratedRate()
-: <a class="el" href="class_j_application.html#aac903c76a2fc78c3c2db743d4aa245c1">JApplication</a>
-</li>
-<li>GetJParameterManager()
-: <a class="el" href="class_j_application.html#aa633f70fe381eca46ae6b6b1a4ee0563">JApplication</a>
-</li>
-<li>GetJThreads()
-: <a class="el" href="class_j_thread_manager.html#a2aa1adf39a3027b94fe399cf6f8368e7">JThreadManager</a>
-</li>
-<li>GetMaxTasks()
-: <a class="el" href="class_j_queue_simple.html#ae07ac2b3461062a59c033ae0a4bc22dd">JQueueSimple</a>
-, <a class="el" href="class_j_queue_with_barriers.html#afb2a662bf4f243c85b2be8748b0a756d">JQueueWithBarriers</a>
-, <a class="el" href="class_j_queue_with_lock.html#afbabfc9a9e58b2d89117a7b1fdd8096a">JQueueWithLock</a>
-</li>
-<li>GetNeventsProcessed()
-: <a class="el" href="class_j_application.html#a433a3e01e3a1e8b7f75b043b3ff1fb1e">JApplication</a>
-</li>
-<li>GetNJThreads()
-: <a class="el" href="class_j_thread_manager.html#af4c32238a2e2110db316b215988eb2af">JThreadManager</a>
-</li>
-<li>GetNumEventsProcessed()
-: <a class="el" href="class_j_event_source.html#a0cbc60046fa819529294ef017f45261c">JEventSource</a>
-, <a class="el" href="class_j_thread.html#a7bc7972f4fe542e9ac011a76f0eef10f">JThread</a>
-</li>
-<li>GetNumTasks()
-: <a class="el" href="class_j_queue_simple.html#a7a25521b63a8b2f3cf7829d062d7c2b9">JQueueSimple</a>
-, <a class="el" href="class_j_queue_with_barriers.html#a61e15a7f6d9f95b781895357e548c280">JQueueWithBarriers</a>
-, <a class="el" href="class_j_queue_with_lock.html#a6f2fd555b0210af84ad336da032d1a5c">JQueueWithLock</a>
-</li>
-<li>GetNumTasksInserted()
-: <a class="el" href="class_j_queue_simple.html#afc4a317003ba0fb69b804f2affc8367f">JQueueSimple</a>
-</li>
-<li>GetNumTasksProcessed()
-: <a class="el" href="class_j_queue_with_lock.html#a2a123a3f875e5010293f1ca4e6e1ed6f">JQueueWithLock</a>
-, <a class="el" href="class_j_queue_with_barriers.html#a9363d6951df64acc66ccfa4cd1ebfe95">JQueueWithBarriers</a>
-, <a class="el" href="class_j_queue_simple.html#add7b9a20b59be3c34bd51c4c473c5c90">JQueueSimple</a>
-</li>
-<li>GetNumTasksWithLock()
-: <a class="el" href="class_j_queue_with_lock.html#a3144cf80c5a74a7d32a78c75640f102d">JQueueWithLock</a>
+: <a class="el" href="class_j_application.html#ac7e2b80d25cb79f2420d3555ad9072b2">JApplication</a>
 </li>
 <li>GetParameterValue()
 : <a class="el" href="class_j_application.html#afeccb6375c0bfe94f829a9729ac4c963">JApplication</a>
 </li>
-<li>GetProcessEventTasks()
-: <a class="el" href="class_j_event_source.html#a10d36086496b26f92b6e96392a2fc8e0">JEventSource</a>
+<li>GetPlugin()
+: <a class="el" href="class_j_event_source_generator.html#a7bf96e7d9fad65dada367a7ee7b82a40">JEventSourceGenerator</a>
 </li>
-<li>GetTask()
-: <a class="el" href="class_j_queue_with_lock.html#a3c9a1b54fec9e16876145c3ae6e77953">JQueueWithLock</a>
+<li>GetService()
+: <a class="el" href="class_j_application.html#a49ed9e5315ac94d5d77d85315a0c48a5">JApplication</a>
 </li>
-<li>GetThread()
-: <a class="el" href="class_j_thread.html#ae479145fc9278b89e2d9062fdcf6786b">JThread</a>
+<li>GetSingle()
+: <a class="el" href="class_j_event.html#aeaa29d9d395e860a14ecf67759c1cacd">JEvent</a>
 </li>
 <li>GetType()
-: <a class="el" href="class_j_event_source.html#ae5bf24933bf2c6486675a0ceac13b258">JEventSource</a>
+: <a class="el" href="class_j_event_source_generator_t.html#ab3de83b3fbb7b13dd69911e069868952">JEventSourceGeneratorT&lt; T &gt;</a>
 , <a class="el" href="class_j_event_source_generator.html#ae2e99e88dd80ce048169d497a145a9a9">JEventSourceGenerator</a>
-, <a class="el" href="class_j_event_source__jana__test.html#aa73d2ae502e52e6c9a90a684cfe00469">JEventSource_jana_test</a>
-, <a class="el" href="class_j_event_source_generator_t.html#ab3de83b3fbb7b13dd69911e069868952">JEventSourceGeneratorT&lt; T &gt;</a>
 </li>
 <li>GetVDescription()
-: <a class="el" href="class_j_event_source.html#a80ab4faa11a0bb8b4f0c39849523b13b">JEventSource</a>
+: <a class="el" href="class_j_event_source.html#ab1a833266a18f90c063e01812f9ac5c0">JEventSource</a>
 </li>
 </ul>
 
 
 <h3><a class="anchor" id="index_i"></a>- i -</h3><ul>
+<li>Init()
+: <a class="el" href="class_j_csv_writer.html#a636ebca731cf2b41612c04dc99f86318">JCsvWriter&lt; T &gt;</a>
+, <a class="el" href="class_j_event_processor.html#afd9e9a124fefcce2bf9b3eeb7337aceb">JEventProcessor</a>
+</li>
 <li>Initialize()
 : <a class="el" href="class_j_application.html#a885200c157d4fa6b90c5071a1ad6f4ef">JApplication</a>
 </li>
-<li>IsEnded()
-: <a class="el" href="class_j_thread.html#ac07d7ff9a48ff89b946bb0cf741e5a8f">JThread</a>
-</li>
-<li>IsIdle()
-: <a class="el" href="class_j_thread.html#a6c01c36d67eb01850b2d8dba90c3ae7c">JThread</a>
-</li>
-<li>IsRunning()
-: <a class="el" href="class_j_thread.html#a44895d7d1abff06b7ceb4475d74c510c">JThread</a>
+<li>Insert()
+: <a class="el" href="class_j_factory_t.html#a8b04ea30962bf9099323a452b60715e8">JFactoryT&lt; T &gt;</a>
+, <a class="el" href="class_j_event.html#a71c1c6709692f3af6c2a9318f65c6a06">JEvent</a>
 </li>
 </ul>
 
 
 <h3><a class="anchor" id="index_j"></a>- j -</h3><ul>
-<li>JEventSource()
-: <a class="el" href="class_j_event_source.html#a19f20bfcda8ff479272d8754f366fd4e">JEventSource</a>
+<li>JException()
+: <a class="el" href="struct_j_exception.html#a2529fc4ddb2927c44cef174b85ec31a2">JException</a>
 </li>
-<li>Join()
-: <a class="el" href="class_j_thread.html#ae3879666d3beb31df586336abb106940">JThread</a>
+<li>JMailbox()
+: <a class="el" href="class_j_mailbox.html#a746ed453e6fded608bee4a5a28474f32">JMailbox&lt; T &gt;</a>
+</li>
+<li>JScheduler()
+: <a class="el" href="class_j_scheduler.html#ab5bcdd3398ab37efe27b4307028cf00f">JScheduler</a>
 </li>
 <li>JStatus()
 : <a class="el" href="class_j_status.html#a23959ca695c5bc62840ef25091e672d9">JStatus</a>
+</li>
+<li>JWorker()
+: <a class="el" href="class_j_worker.html#a488c9879dcd1c2aea514840f90fddbec">JWorker</a>
 </li>
 </ul>
 
 
 <h3><a class="anchor" id="index_l"></a>- l -</h3><ul>
-<li>Loop()
-: <a class="el" href="class_j_thread.html#a2c21ceafdb6b5dd147191ed9d63d70e0">JThread</a>
+<li>last_assignment()
+: <a class="el" href="class_j_scheduler.html#a9bc941a9a0ce201134e5341b6829ff06">JScheduler</a>
+</li>
+<li>logger()
+: <a class="el" href="class_j_logging_service.html#a301d12419c0c041679fc39af945bf2ba">JLoggingService</a>
+</li>
+<li>loop()
+: <a class="el" href="class_j_worker.html#a9b7b98ff1d3de10afd79800c900a0441">JWorker</a>
 </li>
 </ul>
 
@@ -344,33 +300,59 @@ $(document).ready(function(){initNavTree('functions.html','');});
 : <a class="el" href="class_j_event_source_generator.html#a46ca694b55278ea9c822f6837bf439a5">JEventSourceGenerator</a>
 , <a class="el" href="class_j_event_source_generator_t.html#a58dbec31b1113557fc8cb8645e7526ae">JEventSourceGeneratorT&lt; T &gt;</a>
 </li>
+<li>measure_perf()
+: <a class="el" href="class_j_worker.html#a6b3cd182b0de63ce8ff6c1f34d669cfd">JWorker</a>
+</li>
 <li>Merge()
 : <a class="el" href="class_j_factory_set.html#a0e860343f120167367e31182f6997699">JFactorySet</a>
 </li>
-<li>mRunState
-: <a class="el" href="class_j_thread.html#ac6b0b1d63269f9a37fb15e2a946cbeb8">JThread</a>
+</ul>
+
+
+<h3><a class="anchor" id="index_n"></a>- n -</h3><ul>
+<li>name
+: <a class="el" href="struct_j_object_member.html#a4638fa2faaa2fc829a52080f2d5c8225">JObjectMember</a>
 </li>
-<li>mRunStateTarget
-: <a class="el" href="class_j_thread.html#abb1d9c8a1c940ee097fbba52f2209f65">JThread</a>
+<li>next_assignment()
+: <a class="el" href="class_j_scheduler.html#a508a0e194cbec78020d6098dab303dbb">JScheduler</a>
 </li>
 </ul>
 
 
 <h3><a class="anchor" id="index_o"></a>- o -</h3><ul>
-<li>OpenNext()
-: <a class="el" href="class_j_event_source_manager.html#ac14f1643f1d266183518ad90ffa7a672">JEventSourceManager</a>
+<li>operator&lt;&lt;
+: <a class="el" href="struct_j_exception.html#abe6b72a4f97c1c26d878ca7f7c482043">JException</a>
 </li>
 </ul>
 
 
 <h3><a class="anchor" id="index_p"></a>- p -</h3><ul>
+<li>pop()
+: <a class="el" href="class_j_mailbox.html#a9ab96f7f62a0c72f243f77ac26651a90">JMailbox&lt; T &gt;</a>
+</li>
 <li>PrintParameters()
 : <a class="el" href="class_j_parameter_manager.html#a4a3ac6e1f8f90d52e75770e37cc65b6b">JParameterManager</a>
+</li>
+<li>Process()
+: <a class="el" href="class_j_event_processor.html#aed3938605a9a5ce313712f2ad8d28112">JEventProcessor</a>
+, <a class="el" href="class_j_csv_writer.html#ae637cdb4c1e7c4e1700d0b9ac19ff7c6">JCsvWriter&lt; T &gt;</a>
+</li>
+<li>provide()
+: <a class="el" href="class_j_service_locator.html#a3a927177f755fdfb72e051c575b8f364">JServiceLocator</a>
+</li>
+<li>ProvideService()
+: <a class="el" href="class_j_application.html#a3c1c9c3857d4c1baa381fa9a6e9d7ea6">JApplication</a>
+</li>
+<li>push()
+: <a class="el" href="class_j_mailbox.html#a16ec050066a0c715aca6fc4d5ac711cb">JMailbox&lt; T &gt;</a>
 </li>
 </ul>
 
 
 <h3><a class="anchor" id="index_r"></a>- r -</h3><ul>
+<li>ReadConfigFile()
+: <a class="el" href="class_j_parameter_manager.html#ae46022657f15d7486b445f4b204a36a2">JParameterManager</a>
+</li>
 <li>RecordBackTrace()
 : <a class="el" href="class_j_status.html#adbebb0b11f8ae179c522dcaad169d160">JStatus</a>
 </li>
@@ -380,21 +362,36 @@ $(document).ready(function(){initNavTree('functions.html','');});
 <li>Report()
 : <a class="el" href="class_j_status.html#ac2727fff86dc84c64af0fb170febd556">JStatus</a>
 </li>
-<li>Resume()
-: <a class="el" href="class_j_application.html#ac03a57fc8bed4bdd78807d87f46ddd71">JApplication</a>
+<li>reserve()
+: <a class="el" href="class_j_mailbox.html#a48f72f1aaf0806855fd3d9c7caf34f72">JMailbox&lt; T &gt;</a>
 </li>
-<li>Run()
-: <a class="el" href="class_j_thread.html#a19bb9c2b498e5a67be59919c24cc6382">JThread</a>
+<li>reset()
+: <a class="el" href="class_j_perf_metrics.html#a500dadabe264082f3a58a64ed7533502">JPerfMetrics</a>
 </li>
-<li>RunThreads()
-: <a class="el" href="class_j_thread_manager.html#ae8f489d3ce817457972bec5d8d135d38">JThreadManager</a>
+<li>RETURN_STATUS
+: <a class="el" href="class_j_event_source.html#ac32c920e8ddae10eb845f782f9776fbb">JEventSource</a>
+</li>
+<li>ReturnStatus
+: <a class="el" href="class_j_event_source.html#ab00355c75cbe39fa6ff9a0d43d8fc9ba">JEventSource</a>
+</li>
+<li>RunState
+: <a class="el" href="class_j_worker.html#af5555d55f088193df644767f4c7652db">JWorker</a>
 </li>
 </ul>
 
 
 <h3><a class="anchor" id="index_s"></a>- s -</h3><ul>
+<li>Set()
+: <a class="el" href="class_j_factory_t.html#a8bfe40ae67c958a6e276d25d74b08f70">JFactoryT&lt; T &gt;</a>
+</li>
+<li>SetDefault()
+: <a class="el" href="class_j_parameter.html#aa646bd9e8421b603423d6152e4c6cb9d">JParameter</a>
+</li>
 <li>SetDefaultParameter()
 : <a class="el" href="class_j_parameter_manager.html#a2259115b11e86bdfa7abfb3d3ba5306a">JParameterManager</a>
+</li>
+<li>SetEventsOrdered()
+: <a class="el" href="class_j_event_processor.html#a7516ebc4a9eaf1c8c59bfde62dd56fb0">JEventProcessor</a>
 </li>
 <li>SetExitCode()
 : <a class="el" href="class_j_application.html#a716f65399fda2b141d3600ba7d8a8609">JApplication</a>
@@ -403,22 +400,40 @@ $(document).ready(function(){initNavTree('functions.html','');});
 : <a class="el" href="class_j_factory.html#a81b77a4ce8848455c186e23b86ebf46c">JFactory</a>
 </li>
 <li>SetJApplication()
-: <a class="el" href="class_j_event_processor.html#a00c030992d9c49d2718bde6913ad7b8e">JEventProcessor</a>
+: <a class="el" href="class_j_event_source_generator_t.html#a94574644766b32da40202eecdfe5f234">JEventSourceGeneratorT&lt; T &gt;</a>
 , <a class="el" href="class_j_event_source_generator.html#a1f0d48cec836a9ba53e75fe2fbe2cff0">JEventSourceGenerator</a>
-, <a class="el" href="class_j_event_source_generator_t.html#a94574644766b32da40202eecdfe5f234">JEventSourceGeneratorT&lt; T &gt;</a>
 </li>
 <li>SetParameterValue()
 : <a class="el" href="class_j_application.html#af8e4e847d6403f3f1f1069b42e3d00d3">JApplication</a>
 </li>
-<li>SetThreadAffinity()
-: <a class="el" href="class_j_thread_manager.html#ab4775b2f00e3be1dd3b99e5e8d249d95">JThreadManager</a>
+<li>SetPlugin()
+: <a class="el" href="class_j_event_source_generator.html#a8b2635b5f5de016e74cac7c29d89c1f6">JEventSourceGenerator</a>
 </li>
-<li>Stop()
-: <a class="el" href="class_j_application.html#a63568fd606e8fd57d83724fc51df5b92">JApplication</a>
-, <a class="el" href="class_j_thread.html#a7a4090326410ae0991f807de34116675">JThread</a>
+<li>SetResourceName()
+: <a class="el" href="class_j_event_processor.html#a9b7c6f8c38a8d7d57e679344579b1c77">JEventProcessor</a>
 </li>
-<li>StopThreads()
-: <a class="el" href="class_j_thread_manager.html#aac5480ff66fbd8cbe1cda91974385b4f">JThreadManager</a>
+<li>SetTypeName()
+: <a class="el" href="class_j_event_processor.html#a2bf33ec363a5eab0cf3ea98e602ab6ec">JEventProcessor</a>
+, <a class="el" href="class_j_event_source.html#af081c4c47f279793ac6c569acfed45df">JEventSource</a>
+</li>
+<li>size()
+: <a class="el" href="class_j_mailbox.html#adb5cf4268cea3ae86c692eee655d832e">JMailbox&lt; T &gt;</a>
+</li>
+<li>SourceStatus
+: <a class="el" href="class_j_event_source.html#abc59f0be9458af1aadc95bb870973393">JEventSource</a>
+</li>
+<li>split()
+: <a class="el" href="class_j_perf_metrics.html#a33a6c772fe338d6dc9f222fd167899bb">JPerfMetrics</a>
+</li>
+<li>start()
+: <a class="el" href="class_j_perf_metrics.html#a404ef3d63bb279c683b7ab9091226dd9">JPerfMetrics</a>
+</li>
+<li>stop()
+: <a class="el" href="class_j_perf_metrics.html#a3e15ac1ecd48efe2bd5f47b4f81df496">JPerfMetrics</a>
+</li>
+<li>Summarize()
+: <a class="el" href="class_j_object.html#aa678f1a42651c305c0eeb4442babde11">JObject</a>
+, <a class="el" href="class_j_factory_set.html#a5e0d485aab1f78a8631eaece00090d16">JFactorySet</a>
 </li>
 </ul>
 
@@ -427,44 +442,15 @@ $(document).ready(function(){initNavTree('functions.html','');});
 <li>TestFactoryFlag()
 : <a class="el" href="class_j_factory.html#adfc3dcd62c53a5a792ee1da7718f95a8">JFactory</a>
 </li>
-<li>thread_delta_sec
-: <a class="el" href="struct_j_event_processor_j_a_n_a_r_a_t_e_1_1rate__t.html#aa4e1433ed7685ec55bef1c1f853b6d2c">JEventProcessorJANARATE::rate_t</a>
-</li>
-<li>thread_rate
-: <a class="el" href="struct_j_event_processor_j_a_n_a_r_a_t_e_1_1rate__t.html#ac9ee2a1397aadf351e7c830bf69db2d7">JEventProcessorJANARATE::rate_t</a>
-</li>
-<li>threadid
-: <a class="el" href="struct_j_event_processor_j_a_n_a_r_a_t_e_1_1rate__t.html#a8534abc7733be1b7b6e4d29b859a461f">JEventProcessorJANARATE::rate_t</a>
-</li>
-<li>toStrings()
-: <a class="el" href="class_j_object.html#a8e74be8772a68ab800ddbb5715840a0c">JObject</a>
-</li>
-<li>tot_integrated_rate
-: <a class="el" href="struct_j_event_processor_j_a_n_a_r_a_t_e_1_1rate__t.html#ae56c18ad002180624fd217bf989bda41">JEventProcessorJANARATE::rate_t</a>
-</li>
-<li>tot_rate
-: <a class="el" href="struct_j_event_processor_j_a_n_a_r_a_t_e_1_1rate__t.html#ac36b9d8687b2650fe968a5dd60e61736">JEventProcessorJANARATE::rate_t</a>
-</li>
-</ul>
-
-
-<h3><a class="anchor" id="index_u"></a>- u -</h3><ul>
-<li>UpdateResourceLimits()
-: <a class="el" href="class_j_application.html#a2b1c00d2d2d66550db32f79752ae2acd">JApplication</a>
-</li>
-</ul>
-
-
-<h3><a class="anchor" id="index_v"></a>- v -</h3><ul>
-<li>Val2StringWithPrefix()
-: <a class="el" href="class_j_application.html#af127419e9516fe3454c1bc91fd5f9670">JApplication</a>
-</li>
 </ul>
 
 
 <h3><a class="anchor" id="index_w"></a>- w -</h3><ul>
-<li>WaitUntilAllThreadsIdle()
-: <a class="el" href="class_j_thread_manager.html#a8d7ea5cb5fb9bf511dd4ffc0e7d2c138">JThreadManager</a>
+<li>wire_everything()
+: <a class="el" href="class_j_service_locator.html#a39a40c3eb31c13c2adbbacc13b45482e">JServiceLocator</a>
+</li>
+<li>WriteConfigFile()
+: <a class="el" href="class_j_parameter_manager.html#a90f0c1b84c4d00df0e765cd343b26431">JParameterManager</a>
 </li>
 </ul>
 
@@ -473,13 +459,16 @@ $(document).ready(function(){initNavTree('functions.html','');});
 <li>~JFactorySet()
 : <a class="el" href="class_j_factory_set.html#a2cc853ac2a22202b3aad0909971ae5f5">JFactorySet</a>
 </li>
+<li>~JService()
+: <a class="el" href="struct_j_service.html#ab9be674b0e9db74549b23a7d980ffbaf">JService</a>
+</li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Thu Feb 28 2019 13:28:38 for JANA2 by
+    <li class="footer">Generated on Thu Dec 5 2019 16:43:44 for JANA2 by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.5 </li>
   </ul>

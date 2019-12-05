@@ -44,7 +44,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li>
         <div id="MSearchBox" class="MSearchBoxInactive">
@@ -92,7 +91,7 @@ $(document).ready(function(){initNavTree('struct_j_log_message.html','');});
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Friends</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -103,6 +102,7 @@ $(document).ready(function(){initNavTree('struct_j_log_message.html','');});
 
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="#pub-attribs">Public Attributes</a> &#124;
 <a href="struct_j_log_message-members.html">List of all members</a>  </div>
@@ -110,27 +110,37 @@ $(document).ready(function(){initNavTree('struct_j_log_message.html','');});
 <div class="title">JLogMessage Struct Reference</div>  </div>
 </div><!--header-->
 <div class="contents">
+<div class="dynheader">
+Collaboration diagram for JLogMessage:</div>
+<div class="dyncontent">
+<div class="center"><img src="struct_j_log_message__coll__graph.png" border="0" usemap="#_j_log_message_coll__map" alt="Collaboration graph"/></div>
+<map name="_j_log_message_coll__map" id="_j_log_message_coll__map">
+<area shape="rect" id="node2" href="struct_j_logger.html" title="JLogger" alt="" coords="23,96,93,123"/></map>
+<center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
+Classes</h2></td></tr>
+<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_j_log_message_1_1_end.html">End</a></td></tr>
+<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Message terminator.  <a href="struct_j_log_message_1_1_end.html#details">More...</a><br/></td></tr>
+<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ae1f9698eb559bda281e413620a3e1245"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae1f9698eb559bda281e413620a3e1245"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>JLogMessage</b> (std::shared_ptr&lt; <a class="el" href="struct_j_logger.html">JLogger</a> &gt; logger_, JLogLevel level_)</td></tr>
-<tr class="separator:ae1f9698eb559bda281e413620a3e1245"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae752e302385308bc369c3e3284d070a8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae752e302385308bc369c3e3284d070a8"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>JLogMessage</b> (const <a class="el" href="struct_j_logger.html">JLogger</a> *logger=&amp;trivial_logger, JLogger::Level level=JLogger::Level::INFO)</td></tr>
+<tr class="separator:ae752e302385308bc369c3e3284d070a8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2e8dd6de6ef20d653714d96d40472724"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a2e8dd6de6ef20d653714d96d40472724"></a>
 std::string&#160;</td><td class="memItemRight" valign="bottom"><b>ltrunc</b> (std::string original, size_t desired_length)</td></tr>
 <tr class="separator:a2e8dd6de6ef20d653714d96d40472724"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae4664067c5aea101319beb0a93e08222"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae4664067c5aea101319beb0a93e08222"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>JLogMessage</b> (std::shared_ptr&lt; <a class="el" href="struct_j_logger.html">JLogger</a> &gt; logger_, JLogLevel level_, int thread, std::string file, int line, std::string func, long timestamp)</td></tr>
-<tr class="separator:ae4664067c5aea101319beb0a93e08222"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-attribs"></a>
 Public Attributes</h2></td></tr>
-<tr class="memitem:ad65a251457e0e3e440d474d6faa49a8a"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ad65a251457e0e3e440d474d6faa49a8a"></a>
-std::shared_ptr&lt; <a class="el" href="struct_j_logger.html">JLogger</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>logger</b></td></tr>
-<tr class="separator:ad65a251457e0e3e440d474d6faa49a8a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac2cd27c39c2d8381eb898b18ff5d9521"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ac2cd27c39c2d8381eb898b18ff5d9521"></a>
-JLogLevel&#160;</td><td class="memItemRight" valign="bottom"><b>level</b></td></tr>
-<tr class="separator:ac2cd27c39c2d8381eb898b18ff5d9521"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a08ece533b997af4a0d88929820c32713"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a08ece533b997af4a0d88929820c32713"></a>
+const <a class="el" href="struct_j_logger.html">JLogger</a> *&#160;</td><td class="memItemRight" valign="bottom"><b>logger</b></td></tr>
+<tr class="separator:a08ece533b997af4a0d88929820c32713"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1877d8b774698f8f2da25709c660ce51"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a1877d8b774698f8f2da25709c660ce51"></a>
+JLogger::Level&#160;</td><td class="memItemRight" valign="bottom"><b>level</b></td></tr>
+<tr class="separator:a1877d8b774698f8f2da25709c660ce51"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abdb406fbbcd489b6adbead0a21ad7a96"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abdb406fbbcd489b6adbead0a21ad7a96"></a>
 std::ostringstream&#160;</td><td class="memItemRight" valign="bottom"><b>builder</b></td></tr>
 <tr class="separator:abdb406fbbcd489b6adbead0a21ad7a96"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -144,7 +154,7 @@ std::ostringstream&#160;</td><td class="memItemRight" valign="bottom"><b>builder
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="struct_j_log_message.html">JLogMessage</a></li>
-    <li class="footer">Generated on Thu Feb 28 2019 13:28:35 for JANA2 by
+    <li class="footer">Generated on Thu Dec 5 2019 16:43:44 for JANA2 by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.5 </li>
   </ul>

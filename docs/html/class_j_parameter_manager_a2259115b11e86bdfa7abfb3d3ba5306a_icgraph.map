@@ -1,3 +1,4 @@
 <map id="JParameterManager::SetDefaultParameter" name="JParameterManager::SetDefaultParameter">
-<area shape="rect" id="node2" href="$class_j_status.html#a23959ca695c5bc62840ef25091e672d9" title="JStatus::JStatus" alt="" coords="200,12,320,39"/>
+<area shape="rect" id="node2" href="$class_j_application.html#a885200c157d4fa6b90c5071a1ad6f4ef" title="JApplication::Initialize" alt="" coords="213,5,376,32"/>
+<area shape="rect" id="node3" href="$class_j_status.html#a23959ca695c5bc62840ef25091e672d9" title="JStatus::JStatus" alt="" coords="235,56,355,83"/>
 </map>

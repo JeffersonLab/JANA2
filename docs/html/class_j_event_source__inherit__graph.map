@@ -1,5 +1,5 @@
 <map id="JEventSource" name="JEventSource">
-<area shape="rect" id="node2" href="$class_j_event_source__example1.html" title="JEventSource_example1" alt="" coords="5,80,171,107"/>
-<area shape="rect" id="node3" href="$class_j_event_source__example2.html" title="JEventSource_example2" alt="" coords="195,80,361,107"/>
-<area shape="rect" id="node4" href="$class_j_event_source__jana__test.html" title="JEventSource_jana_test" alt="" coords="386,80,549,107"/>
+<area shape="rect" id="node2" href="$class_j_discrete_join.html" title="JEventBuilder pulls JMessages off of a user&#45;specified JTransport, aggregates them into JEvents using ..." alt="" coords="5,88,147,115"/>
+<area shape="rect" id="node3" href="$class_j_event_builder.html" title="JEventBuilder pulls JMessages off of a user&#45;specified JTransport, aggregates them into JEvents using ..." alt="" coords="172,88,319,115"/>
+<area shape="rect" id="node4" href="$class_j_streaming_event_source.html" title="JStreamingEventSource makes it convenient to stream events into JANA by handling transport and messag..." alt="" coords="343,81,517,122"/>
 </map>

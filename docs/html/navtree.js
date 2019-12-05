@@ -1,9 +1,6 @@
 var NAVTREE =
 [
   [ "JANA2", "index.html", [
-    [ "README", "md_src_examples__j_example1__r_e_a_d_m_e.html", null ],
-    [ "README", "md_src_examples__j_example2__r_e_a_d_m_e.html", null ],
-    [ "JThread", "md_src_lib__j_a_n_a__notes.html", null ],
     [ "Classes", null, [
       [ "Class List", "annotated.html", "annotated" ],
       [ "Class Index", "classes.html", null ],
@@ -11,7 +8,9 @@ var NAVTREE =
       [ "Class Members", "functions.html", [
         [ "All", "functions.html", null ],
         [ "Functions", "functions_func.html", null ],
-        [ "Variables", "functions_vars.html", null ]
+        [ "Variables", "functions_vars.html", null ],
+        [ "Enumerations", "functions_enum.html", null ],
+        [ "Related Functions", "functions_rela.html", null ]
       ] ]
     ] ]
   ] ]
@@ -20,8 +19,9 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "annotated.html",
-"class_j_factory.html#a38ef7306eca36895908f2c3688373000aec384737d84606709a9d4e23c1b8869c",
-"class_j_source_object.html#aa149bb40504acd332c690bfd062c923b"
+"class_j_event_source.html#ac32c920e8ddae10eb845f782f9776fbba2f8379f56e763d4bf5143fa86bf2fb95",
+"class_j_processor_mapping.html#ae00edf4e7e07df3472218da1057fb767ae41185e045297fbd9933073dda0ee6b1",
+"struct_j_status_1_1_b_a_c_k_t_r_a_c_e___i_n_f_o__t.html#ad3b68f468d3c54f3d910742ccb963d9e"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

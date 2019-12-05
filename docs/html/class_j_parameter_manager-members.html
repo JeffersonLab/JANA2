@@ -44,7 +44,6 @@ var searchBox = new SearchBox("searchBox", "search",false,'Search');
   <div id="navrow1" class="tabs">
     <ul class="tablist">
       <li><a href="index.html"><span>Main&#160;Page</span></a></li>
-      <li><a href="pages.html"><span>Related&#160;Pages</span></a></li>
       <li class="current"><a href="annotated.html"><span>Classes</span></a></li>
       <li>
         <div id="MSearchBox" class="MSearchBoxInactive">
@@ -92,7 +91,7 @@ $(document).ready(function(){initNavTree('class_j_parameter_manager.html','');})
      onmouseover="return searchBox.OnSearchSelectShow()"
      onmouseout="return searchBox.OnSearchSelectHide()"
      onkeydown="return searchBox.OnSearchSelectKey(event)">
-<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Pages</a></div>
+<a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(0)"><span class="SelectionMark">&#160;</span>All</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(1)"><span class="SelectionMark">&#160;</span>Classes</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(2)"><span class="SelectionMark">&#160;</span>Functions</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(3)"><span class="SelectionMark">&#160;</span>Variables</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(4)"><span class="SelectionMark">&#160;</span>Enumerations</a><a class="SelectItem" href="javascript:void(0)" onclick="searchBox.OnSelectItem(5)"><span class="SelectionMark">&#160;</span>Friends</a></div>
 
 <!-- iframe showing the search results (closed by default) -->
 <div id="MSearchResultsWindow">
@@ -117,15 +116,18 @@ $(document).ready(function(){initNavTree('class_j_parameter_manager.html','');})
   <tr bgcolor="#f0f0f0"><td class="entry"><b>GetParameterValue</b>(std::string name) (defined in <a class="el" href="class_j_parameter_manager.html">JParameterManager</a>)</td><td class="entry"><a class="el" href="class_j_parameter_manager.html">JParameterManager</a></td><td class="entry"></td></tr>
   <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>JParameterManager</b>() (defined in <a class="el" href="class_j_parameter_manager.html">JParameterManager</a>)</td><td class="entry"><a class="el" href="class_j_parameter_manager.html">JParameterManager</a></td><td class="entry"></td></tr>
   <tr><td class="entry"><a class="el" href="class_j_parameter_manager.html#a4a3ac6e1f8f90d52e75770e37cc65b6b">PrintParameters</a>(bool all=false)</td><td class="entry"><a class="el" href="class_j_parameter_manager.html">JParameterManager</a></td><td class="entry"></td></tr>
-  <tr class="even"><td class="entry"><a class="el" href="class_j_parameter_manager.html#a2259115b11e86bdfa7abfb3d3ba5306a">SetDefaultParameter</a>(K key, V &amp;val, std::string description=&quot;&quot;)</td><td class="entry"><a class="el" href="class_j_parameter_manager.html">JParameterManager</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0"><td class="entry"><b>SetParameter</b>(std::string name, T val) (defined in <a class="el" href="class_j_parameter_manager.html">JParameterManager</a>)</td><td class="entry"><a class="el" href="class_j_parameter_manager.html">JParameterManager</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>~JParameterManager</b>() (defined in <a class="el" href="class_j_parameter_manager.html">JParameterManager</a>)</td><td class="entry"><a class="el" href="class_j_parameter_manager.html">JParameterManager</a></td><td class="entry"><span class="mlabel">virtual</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="class_j_parameter_manager.html#ae46022657f15d7486b445f4b204a36a2">ReadConfigFile</a>(std::string name)</td><td class="entry"><a class="el" href="class_j_parameter_manager.html">JParameterManager</a></td><td class="entry"></td></tr>
+  <tr><td class="entry"><a class="el" href="class_j_parameter_manager.html#a2259115b11e86bdfa7abfb3d3ba5306a">SetDefaultParameter</a>(K key, V &amp;val, std::string description=&quot;&quot;)</td><td class="entry"><a class="el" href="class_j_parameter_manager.html">JParameterManager</a></td><td class="entry"></td></tr>
+  <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>SetParameter</b>(std::string name, T val) (defined in <a class="el" href="class_j_parameter_manager.html">JParameterManager</a>)</td><td class="entry"><a class="el" href="class_j_parameter_manager.html">JParameterManager</a></td><td class="entry"></td></tr>
+  <tr bgcolor="#f0f0f0"><td class="entry"><b>ToLC</b>(string &amp;name) (defined in <a class="el" href="class_j_parameter_manager.html">JParameterManager</a>)</td><td class="entry"><a class="el" href="class_j_parameter_manager.html">JParameterManager</a></td><td class="entry"><span class="mlabel">inline</span><span class="mlabel">protected</span></td></tr>
+  <tr class="even"><td class="entry"><a class="el" href="class_j_parameter_manager.html#a90f0c1b84c4d00df0e765cd343b26431">WriteConfigFile</a>(std::string name)</td><td class="entry"><a class="el" href="class_j_parameter_manager.html">JParameterManager</a></td><td class="entry"></td></tr>
+  <tr bgcolor="#f0f0f0"><td class="entry"><b>~JParameterManager</b>() (defined in <a class="el" href="class_j_parameter_manager.html">JParameterManager</a>)</td><td class="entry"><a class="el" href="class_j_parameter_manager.html">JParameterManager</a></td><td class="entry"><span class="mlabel">virtual</span></td></tr>
 </table></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Thu Feb 28 2019 13:28:35 for JANA2 by
+    <li class="footer">Generated on Thu Dec 5 2019 16:43:44 for JANA2 by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.5 </li>
   </ul>

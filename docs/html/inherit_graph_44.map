@@ -1,0 +1,7 @@
+<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
+<area shape="rect" id="node1" href="$struct_j_window.html" title="JWindow is an abstract data structure for aggregating individual JMessages into a single JEvent..." alt="" coords="6,81,122,108"/>
+<area shape="rect" id="node2" href="$class_j_fixed_window.html" title="JFixedWindow partitions time into fixed, contiguous buckets, and emits a JEvent containing all JMessa..." alt="" coords="179,5,330,32"/>
+<area shape="rect" id="node3" href="$class_j_merge_window.html" title="JMergeWindow &#39;hydrates&#39; an existing JEvent by appending any JMessages that fall into its pre&#45;existing..." alt="" coords="177,56,333,83"/>
+<area shape="rect" id="node4" href="$class_j_session_window.html" title="JSessionWindow aggregates JMessages adaptively, i.e. " alt="" coords="171,107,338,133"/>
+<area shape="rect" id="node5" href="$class_j_trivial_window.html" title="JTrivialWindow emits a new JEvent for each JMessage it receives. " alt="" coords="177,157,332,184"/>
+</map>

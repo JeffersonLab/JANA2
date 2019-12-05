@@ -1,5 +1,0 @@
-<map id="JQueue" name="JQueue">
-<area shape="rect" id="node2" href="$class_j_queue_simple.html" title="JQueueSimple" alt="" coords="5,80,112,107"/>
-<area shape="rect" id="node3" href="$class_j_queue_with_barriers.html" title="JQueueWithBarriers" alt="" coords="136,80,275,107"/>
-<area shape="rect" id="node4" href="$class_j_queue_with_lock.html" title="JQueueWithLock" alt="" coords="299,80,421,107"/>
-</map>

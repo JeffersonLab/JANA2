@@ -1,0 +1,4 @@
+<map id="JMessage" name="JMessage">
+<area shape="rect" id="node2" href="$struct_j_event_message.html" title="A JEventMessage represents a single event, meant to be used when the event building is done upstream..." alt="" coords="5,80,125,107"/>
+<area shape="rect" id="node3" href="$struct_j_hit_message.html" title="A JHitMessage represents a single detector hit. " alt="" coords="150,80,252,107"/>
+</map>
