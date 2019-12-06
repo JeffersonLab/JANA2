@@ -14,7 +14,7 @@
 #include <JANA/JEventSource.h>
 #include <JANA/Streaming/JTransport.h>
 
-/// JStreamingEventSource is a class template which simplifes streaming events into JANA.
+/// JStreamingEventSource is a class template which simplifies streaming events into JANA.
 ///
 /// JStreamingEventSource makes it convenient to stream existing events into JANA by handling transport and message
 /// format as separate, orthogonal concerns. The user need only implement classes satisfying the JTransport and
