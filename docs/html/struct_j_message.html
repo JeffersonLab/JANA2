@@ -109,7 +109,7 @@ $(document).ready(function(){initNavTree('struct_j_message.html','');});
 </div><!--header-->
 <div class="contents">
 
-<p><a class="el" href="struct_j_message.html" title="JMessage is an abstract base class for data that can be streamed using JTransport&#39;s. ">JMessage</a> is an abstract base class for data that can be streamed using <a class="el" href="struct_j_transport.html" title="JTransport is a wrapper designed to integrate different messaging systems with JANA in a lightweight ...">JTransport</a>'s.  
+<p><a class="el" href="struct_j_message.html" title="JMessage is an interface for data that can be streamed using JTransports. ">JMessage</a> is an interface for data that can be streamed using JTransports.  
  <a href="struct_j_message.html#details">More...</a></p>
 
 <p><code>#include &lt;JMessage.h&gt;</code></p>
@@ -118,31 +118,188 @@ Inheritance diagram for JMessage:</div>
 <div class="dyncontent">
 <div class="center"><img src="struct_j_message__inherit__graph.png" border="0" usemap="#_j_message_inherit__map" alt="Inheritance graph"/></div>
 <map name="_j_message_inherit__map" id="_j_message_inherit__map">
-<area shape="rect" id="node2" href="struct_j_event_message.html" title="A JEventMessage represents a single event, meant to be used when the event building is done upstream..." alt="" coords="5,80,125,107"/><area shape="rect" id="node3" href="struct_j_hit_message.html" title="A JHitMessage represents a single detector hit. " alt="" coords="150,80,252,107"/></map>
+<area shape="rect" id="node2" href="struct_j_event_message.html" title="A JEventMessage is an interface used by JTransport for streaming individual events. " alt="" coords="5,80,125,107"/><area shape="rect" id="node3" href="struct_j_hit_message.html" title="A JHitMessage is an interface used by JTransport for streaming detector hits. " alt="" coords="150,80,252,107"/></map>
 <center><span class="legend">[<a target="top" href="graph_legend.html">legend</a>]</span></center></div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:af07b93860b12b89948df103fb28a7b68"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af07b93860b12b89948df103fb28a7b68"></a>
-virtual char *&#160;</td><td class="memItemRight" valign="bottom"><b>as_buffer</b> ()=0</td></tr>
+<tr class="memitem:af07b93860b12b89948df103fb28a7b68"><td class="memItemLeft" align="right" valign="top">virtual char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_j_message.html#af07b93860b12b89948df103fb28a7b68">as_buffer</a> ()=0</td></tr>
+<tr class="memdesc:af07b93860b12b89948df103fb28a7b68"><td class="mdescLeft">&#160;</td><td class="mdescRight">Expose the underlying buffer via a raw pointer.  <a href="#af07b93860b12b89948df103fb28a7b68">More...</a><br/></td></tr>
 <tr class="separator:af07b93860b12b89948df103fb28a7b68"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4bbd6ba3d84e8afda0850936dd86a8be"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4bbd6ba3d84e8afda0850936dd86a8be"></a>
-virtual const char *&#160;</td><td class="memItemRight" valign="bottom"><b>as_buffer</b> () const =0</td></tr>
+<tr class="memitem:a4bbd6ba3d84e8afda0850936dd86a8be"><td class="memItemLeft" align="right" valign="top">virtual const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_j_message.html#a4bbd6ba3d84e8afda0850936dd86a8be">as_buffer</a> () const =0</td></tr>
+<tr class="memdesc:a4bbd6ba3d84e8afda0850936dd86a8be"><td class="mdescLeft">&#160;</td><td class="mdescRight">Expose the underlying buffer via a raw pointer.  <a href="#a4bbd6ba3d84e8afda0850936dd86a8be">More...</a><br/></td></tr>
 <tr class="separator:a4bbd6ba3d84e8afda0850936dd86a8be"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4b0554e11f1a9170546ed1a9ec119191"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4b0554e11f1a9170546ed1a9ec119191"></a>
-virtual size_t&#160;</td><td class="memItemRight" valign="bottom"><b>get_buffer_capacity</b> () const =0</td></tr>
+<tr class="memitem:a4b0554e11f1a9170546ed1a9ec119191"><td class="memItemLeft" align="right" valign="top">virtual size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_j_message.html#a4b0554e11f1a9170546ed1a9ec119191">get_buffer_capacity</a> () const =0</td></tr>
+<tr class="memdesc:a4b0554e11f1a9170546ed1a9ec119191"><td class="mdescLeft">&#160;</td><td class="mdescRight">Determine the length of the buffer itself, a.k.a.  <a href="#a4b0554e11f1a9170546ed1a9ec119191">More...</a><br/></td></tr>
 <tr class="separator:a4b0554e11f1a9170546ed1a9ec119191"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9918e469ac719e20507a157c5cdf50f8"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9918e469ac719e20507a157c5cdf50f8"></a>
-virtual bool&#160;</td><td class="memItemRight" valign="bottom"><b>is_end_of_stream</b> () const =0</td></tr>
-<tr class="separator:a9918e469ac719e20507a157c5cdf50f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae6d2d6ffb21a83a0564d34bdf09673c1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae6d2d6ffb21a83a0564d34bdf09673c1"></a>
-virtual size_t&#160;</td><td class="memItemRight" valign="bottom"><b>get_buffer_size</b> () const </td></tr>
+<tr class="memitem:ae6d2d6ffb21a83a0564d34bdf09673c1"><td class="memItemLeft" align="right" valign="top">virtual size_t&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_j_message.html#ae6d2d6ffb21a83a0564d34bdf09673c1">get_buffer_size</a> () const </td></tr>
+<tr class="memdesc:ae6d2d6ffb21a83a0564d34bdf09673c1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Determine the length of the buffer's contents, a.k.a.  <a href="#ae6d2d6ffb21a83a0564d34bdf09673c1">More...</a><br/></td></tr>
 <tr class="separator:ae6d2d6ffb21a83a0564d34bdf09673c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9918e469ac719e20507a157c5cdf50f8"><td class="memItemLeft" align="right" valign="top">virtual bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="struct_j_message.html#a9918e469ac719e20507a157c5cdf50f8">is_end_of_stream</a> () const =0</td></tr>
+<tr class="memdesc:a9918e469ac719e20507a157c5cdf50f8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Determine whether this is the last message.  <a href="#a9918e469ac719e20507a157c5cdf50f8">More...</a><br/></td></tr>
+<tr class="separator:a9918e469ac719e20507a157c5cdf50f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
-<div class="textblock"><p><a class="el" href="struct_j_message.html" title="JMessage is an abstract base class for data that can be streamed using JTransport&#39;s. ">JMessage</a> is an abstract base class for data that can be streamed using <a class="el" href="struct_j_transport.html" title="JTransport is a wrapper designed to integrate different messaging systems with JANA in a lightweight ...">JTransport</a>'s. </p>
-<p>In addition to the methods required below, it needs a zero-argument constructor and a constant sizeof(T) which is known at compile-time. In other words, we don't allow flexible array members at the end &ndash; use an array of fixed size instead, and override get_data_size() to avoid sending over the garbage bytes. </p>
-</div><hr/>The documentation for this struct was generated from the following file:<ul>
+<div class="textblock"><p><a class="el" href="struct_j_message.html" title="JMessage is an interface for data that can be streamed using JTransports. ">JMessage</a> is an interface for data that can be streamed using JTransports. </p>
+<p>The basic goal is to have an object wrapper around an old-fashioned <code>char*</code> buffer which can be created automatically on either the stack or the heap. Most importantly, it encapsulates the mess arising from variable message lengths. A common pattern for solving this problem in C is to use flexible array members. Do NOT do this here, as this causes a variety of problems when it comes to type safety and memory safety, and it is not even part of any C++ standard. Instead, agree upon a max message size (which your transport needs anyway), and declare an array of that length. The array length (a.k.a. 'capacity') should be a compile-time constant, and the length of the data contained (a.k.a. 'size') should be tracked in a separate variable.</p>
+<p>In addition to the pure virtual methods listed below, conforming implementations need a zero-argument constructor. </p>
+</div><h2 class="groupheader">Member Function Documentation</h2>
+<a class="anchor" id="af07b93860b12b89948df103fb28a7b68"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual char* JMessage::as_buffer </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Expose the underlying buffer via a raw pointer. </p>
+<dl class="section return"><dt>Returns</dt><dd>A raw pointer to the buffer </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="a4bbd6ba3d84e8afda0850936dd86a8be"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual const char* JMessage::as_buffer </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Expose the underlying buffer via a raw pointer. </p>
+<dl class="section return"><dt>Returns</dt><dd>A raw pointer to the buffer </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="a4b0554e11f1a9170546ed1a9ec119191"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual size_t JMessage::get_buffer_capacity </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Determine the length of the buffer itself, a.k.a. </p>
+<p>the max number of bytes that can be written. </p>
+<dl class="section return"><dt>Returns</dt><dd>The number of bytes allocated for the buffer </dd></dl>
+
+<p>Referenced by <a class="el" href="struct_j_message.html#ae6d2d6ffb21a83a0564d34bdf09673c1">get_buffer_size()</a>.</p>
+
+<p><div class="dynheader">
+Here is the caller graph for this function:</div>
+<div class="dyncontent">
+<div class="center"><img src="struct_j_message_a4b0554e11f1a9170546ed1a9ec119191_icgraph.png" border="0" usemap="#struct_j_message_a4b0554e11f1a9170546ed1a9ec119191_icgraph" alt=""/></div>
+<map name="struct_j_message_a4b0554e11f1a9170546ed1a9ec119191_icgraph" id="struct_j_message_a4b0554e11f1a9170546ed1a9ec119191_icgraph">
+<area shape="rect" id="node2" href="struct_j_message.html#ae6d2d6ffb21a83a0564d34bdf09673c1" title="Determine the length of the buffer&#39;s contents, a.k.a. " alt="" coords="211,12,402,39"/></map>
+</div>
+</p>
+
+</div>
+</div>
+<a class="anchor" id="ae6d2d6ffb21a83a0564d34bdf09673c1"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual size_t JMessage::get_buffer_size </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span><span class="mlabel">virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Determine the length of the buffer's contents, a.k.a. </p>
+<p>the number of bytes which ought to be read </p>
+<dl class="section return"><dt>Returns</dt><dd>The number of bytes of meaningful data inside the buffer </dd></dl>
+
+<p>References <a class="el" href="struct_j_message.html#a4b0554e11f1a9170546ed1a9ec119191">get_buffer_capacity()</a>.</p>
+
+<p><div class="dynheader">
+Here is the call graph for this function:</div>
+<div class="dyncontent">
+<div class="center"><img src="struct_j_message_ae6d2d6ffb21a83a0564d34bdf09673c1_cgraph.png" border="0" usemap="#struct_j_message_ae6d2d6ffb21a83a0564d34bdf09673c1_cgraph" alt=""/></div>
+<map name="struct_j_message_ae6d2d6ffb21a83a0564d34bdf09673c1_cgraph" id="struct_j_message_ae6d2d6ffb21a83a0564d34bdf09673c1_cgraph">
+<area shape="rect" id="node2" href="struct_j_message.html#a4b0554e11f1a9170546ed1a9ec119191" title="Determine the length of the buffer itself, a.k.a. " alt="" coords="245,5,403,46"/></map>
+</div>
+</p>
+
+</div>
+</div>
+<a class="anchor" id="a9918e469ac719e20507a157c5cdf50f8"></a>
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">virtual bool JMessage::is_end_of_stream </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">pure virtual</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Determine whether this is the last message. </p>
+<p>An end-of-stream message is assumed to also contain a meaningful payload. It is not empty like EOF. TODO: Figure out best way to handle empty end-of-stream as well as other control signals such as change-run. </p>
+<dl class="section return"><dt>Returns</dt><dd>Whether this is the last message to expect from the producer </dd></dl>
+
+</div>
+</div>
+<hr/>The documentation for this struct was generated from the following file:<ul>
 <li>src/lib/JANA/Streaming/JMessage.h</li>
 </ul>
 </div><!-- contents -->
@@ -151,7 +308,7 @@ virtual size_t&#160;</td><td class="memItemRight" valign="bottom"><b>get_buffer_
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="struct_j_message.html">JMessage</a></li>
-    <li class="footer">Generated on Thu Dec 5 2019 16:43:44 for JANA2 by
+    <li class="footer">Generated on Fri Dec 6 2019 14:00:53 for JANA2 by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.5 </li>
   </ul>
