@@ -25,7 +25,7 @@ Table of contents
 4.  Create a service which can be shared between different plugins
 5.  Handle both real and simulated data
 6.  Handle EPICS data
-7.  Detect when a group of events has finished
+7.  [Detect when a group of events has finished](howto_group_events.md)
 8.  Use ROOT TObjects inside JANA
 9.  Persist the entire DST using ROOT
 10. Checkpoint the entire DST using ROOT

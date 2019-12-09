@@ -14,7 +14,7 @@ title: JANA: Multi-threaded HENP Event Reconstruction
 
 How To...
 =========
-##Stream data to and from JANA
+## Stream data to and from JANA
 
 1. The first question to ask is: What is the relationship between messages and events? Remember, a message is just 
    a packet of data sent over the wire, whereas an event is JANA's main unit of independent computation, corresponding
