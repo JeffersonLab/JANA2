@@ -40,6 +40,7 @@ Our current recommendation is a `JService` called `JEventGroupTracker`. The inte
 is a persistent JObject. Insert the JEventGroup into the JEvent so that downstream components can access it.
 
 3. In the sequential part of the JEventProcessor, call JEvent.Get<JEventGroup>()->ReportEventFinished();
+Please only call this once; although we could make JEventGroup robust against repeated calls, it would add some overhead.
 
 4. Afterwards, the JEventProcessor may call JEvent.Get<JEventGroup>()->IsGroupFinished() to determine if that 
 event was the last of its run number. This can be called from any component. For instance, if we wanted to reintroduce 
