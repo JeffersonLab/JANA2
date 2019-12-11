@@ -116,5 +116,4 @@ Many different event reconstruction frameworks exist. The following are frequent
  support more general stream topologies. JANA is to OpenMP as Clara is to MPI.
 
 - [Fun4all](https://github.com/sPHENIX-Collaboration/Fun4All) Comparison coming soon!
-)
 

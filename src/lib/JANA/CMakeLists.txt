@@ -54,6 +54,7 @@ set(JANA2_SOURCES
     Services/JProcessingController.h
     Services/JServiceLocator.cc
     Services/JServiceLocator.h
+    Services/JEventGroupTracker.h
 
     Status/JComponentSummary.h
     Status/JComponentSummary.cc

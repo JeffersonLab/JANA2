@@ -29,30 +29,26 @@ a set of run numbers it has already seen, but it won't know when it has seen all
 For that it needs an additional piece of information: the number of events emitted with that run number.
 Complicating things further, this information needs to be read and modified by both the JEventSource and the JEventProcessor.
 
-Our current recommendation is a `JService` called `JEventGroupTracker`. The interface looks like this:
-```c++
-```
+Our current recommendation is a `JService` called `JEventGroupManager`. This is designed to be used as follows:
 
+1. A JEventSource should keep a pointer to the current JEventGroup, which it obtains through the JEventGroupManager.
+Groups are given a unique id, which 
 
-1. Whenever a JEventSource emits an event, it registers that event as being part of some group.
+2. Whenever the JEventSource emits a new event, it should insert the JEventGroup into the JEvent. The event is
+now tagged as belonging to that group.
 
-2. The registration returns a JEventGroup pointer, which is conceptually like a coat check ticket. JEventGroup
-is a persistent JObject. Insert the JEventGroup into the JEvent so that downstream components can access it.
+3. When the JEventSource moves on to the next group, e.g. if the run number changed, it should close out the old group
+by calling JEventGroup::CloseGroup(). The group needs to be closed before it will report itself as finished, even 
+if there are no events still in-flight.
 
-3. In the sequential part of the JEventProcessor, call JEvent.Get<JEventGroup>()->ReportEventFinished();
-Please only call this once; although we could make JEventGroup robust against repeated calls, it would add some overhead.
+4. A JEventProcessor should retrieve the JEventGroup object by calling JEvent::Get. It should report that an event is
+finished by calling JEventGroup::FinishEvent. Please only call this once; although we could make JEventGroup robust 
+against repeated calls, it would add some overhead.
 
-4. Afterwards, the JEventProcessor may call JEvent.Get<JEventGroup>()->IsGroupFinished() to determine if that 
-event was the last of its run number. This can be called from any component. For instance, if we wanted to reintroduce 
-barrier events, modify the JEventSource as follows:
-
-5. If events arrive slowly but are processed quickly, the number of in-flight events for the current run number
-may become zero even though there are more events coming. To remedy this problem, JEventGroup::IsGroupFinished waits 
-for an additional sign-off from the JEventSource before reporting true. From our JEventSource we call 
-```c++
-JEventGroupTracker::StartGroup(groupid)
-JEventGroupTracker::FinishGroup(groupid)
-```
+5. A JEventSource or JEventProcessor (or technically anything whose lifespan is enclosed by the lifespan of JServices) 
+may then test whether this is the last event in its group by calling JEventGroup::IsGroupFinished(). A blocking version, 
+JEventGroup::WaitUntilGroupFinished(), is also provided. This mechanism allows relatively arbitrary hooks into the 
+event stream.
 
 
 
