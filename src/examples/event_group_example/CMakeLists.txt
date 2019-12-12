@@ -11,6 +11,6 @@ target_include_directories(example_eventgroups PUBLIC ${JANA_INCLUDE_DIRS})
 target_link_libraries(example_eventgroups jana2 ${JANA_LIBRARIES})
 set_target_properties(example_eventgroups PROPERTIES PREFIX "" SUFFIX ".so")
 
-install(TARGETS example_eventgroups DESTINATION ${JANA_HOME}/plugins)
+install(TARGETS example_eventgroups DESTINATION ${CMAKE_INSTALL_PREFIX}/plugins)
 
 

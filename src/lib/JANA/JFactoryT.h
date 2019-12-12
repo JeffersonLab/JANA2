@@ -123,7 +123,11 @@ public:
     }
 
     void ClearData() override {
-        for (auto p : mData) delete p;
+
+        // Assuming we _are_ the object owner, delete the underlying jobjects
+        if (!TestFactoryFlag(JFactory_Flags_t::NOT_OBJECT_OWNER)) {
+            for (auto p : mData) delete p;
+        }
         mData.clear();
         mStatus = Status::Uninitialized;
     }

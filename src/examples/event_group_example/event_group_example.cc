@@ -32,45 +32,70 @@
 
 
 #include <JANA/JEventProcessor.h>
-#include <JANA/JFactoryGenerator.h>
+#include <JANA/Services/JEventGroupTracker.h>
+#include <JANA/JFactory.h>
 
 
 class JEventSource_eventgroups : public JEventSource {
+
+    JEventGroupManager m_egm;
+    JEventGroup* m_current_group;
+    int m_remaining_events_in_group;
+    int m_current_group_id;
+    int m_current_event_number;
+
 public:
     JEventSource_eventgroups(std::string res_name, JApplication* app) : JEventSource(std::move(res_name), app) {
-        // Get service from SL
+        // TODO: Get EventGroupManager from ServiceLocator instead
+        m_remaining_events_in_group = 5;
+        m_current_group_id = 0;
+        m_current_event_number = 0;
     };
 
-    void GetEvent(std::shared_ptr<JEvent>) override {
-        // If event counter = 0, randomly generate some number of events
-        // Decrement remaining event counter
-        // Close old group
-        // Issue a new run number, also a new group
-        // Add event to group
-        // Optional: Barrier event
+    void GetEvent(std::shared_ptr<JEvent> event) override {
+
+        if (m_current_group_id == 5) {
+            throw RETURN_STATUS::kNO_MORE_EVENTS;
+        }
+
+        // TODO: We can hold on to the pointer instead of doing the lookup everytime
+        auto current_group = m_egm.GetEventGroup(m_current_group_id);
+
+        current_group->StartEvent();
+        m_remaining_events_in_group -= 1;
+        if (m_remaining_events_in_group == 0) {
+            current_group->CloseGroup();
+            m_remaining_events_in_group = 5;
+            m_current_group_id += 1;
+        }
+
+        event->SetEventNumber(m_current_event_number++);
+        event->SetRunNumber(m_current_group_id);
+        event->Insert(current_group);
+        event->GetFactory<JEventGroup>()->SetFactoryFlag(JFactory::JFactory_Flags_t::NOT_OBJECT_OWNER);
     }
 };
 
 
-struct JEventData : public JObject {};
-
-
-class JFactory_random_delay : public JFactoryT<JEventData> {
-public:
-    void Process(const std::shared_ptr<const JEvent>& event) override {
-        // delay a random amount of time so that runs get jumbled up
-    }
-
-};
 
 class JEventProcessor_eventgroups : public JEventProcessor {
+    std::mutex m_mutex;
+
 public:
     void Process(const std::shared_ptr<const JEvent>& event) override {
-        // Perform a computation which induces a random delay
-        // cout << evt nr, run nr
-        // Mark event as finished
-        // If first event in run, do something
-        // If last event in run, do something
+        // TODO: Perform a computation which induces a random delay
+
+        std::lock_guard<std::mutex> lock(m_mutex);
+        std::cout << "Processing event "
+                  << event->GetRunNumber()
+                  << ":" << event->GetEventNumber() << std::endl;
+
+        auto group = event->GetSingle<JEventGroup>();
+        bool finishes_group = group->FinishEvent();
+
+        if (finishes_group) {
+            std::cout << "Finishing group " << group->GetGroupId() << std::endl;
+        }
     }
 };
 
@@ -81,7 +106,6 @@ void InitPlugin(JApplication *app) {
     InitJANAPlugin(app);
     app->Add(new JEventSource_eventgroups("dummy_source", app));
     app->Add(new JEventProcessor_eventgroups());
-    app->Add(new JFactoryGeneratorT<JFactory_random_delay>());
 
 }
 } // "C"

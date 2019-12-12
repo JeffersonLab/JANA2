@@ -43,8 +43,8 @@
 class JEventGroup : public JObject {
 
     const int m_group_id;
-    std::atomic_int m_events_in_flight;
-    std::atomic_bool m_group_closed;
+    mutable std::atomic_int m_events_in_flight;
+    mutable std::atomic_bool m_group_closed;
 
     friend class JEventGroupManager;
 
@@ -56,24 +56,33 @@ class JEventGroup : public JObject {
 
 public:
 
+    /// Report back what group this actual is. This is mostly for debugging purposes.
+    int GetGroupId() const {
+        return m_group_id;
+    }
+
     /// Record that another event belonging to this group has been emitted.
     /// This is meant to be called from JEventSource::GetEvent.
-    void StartEvent() {
+    void StartEvent() const {
         m_events_in_flight += 1;
         m_group_closed = false;
     }
 
     /// Report an event as finished. If this was the last event in the group, IsGroupFinished will now return true.
     /// Please only call once per event, so that we don't have to maintain a set of outstanding event ids.
+    /// This takes advantage of C++ atomics to detect if _we_ were the one who finished the whole group without
+    /// needing a lock.
     /// This is meant to be called from JEventProcessor::Process.
-    bool FinishEvent() {
-        m_events_in_flight -= 1;
+    bool FinishEvent() const {
+        auto prev_events_in_flight = m_events_in_flight.fetch_sub(1);
+        assert(prev_events_in_flight > 0); // detect if someone is miscounting
+        return (prev_events_in_flight == 1) && m_group_closed;
     }
 
     /// Indicate that no more events in the group are on their way. Note that groups can be re-opened
     /// by simply emitting another event tagged according to that group.
     /// This is meant to be called from JEventSource::GetEvent.
-    void CloseGroup() {
+    void CloseGroup() const {
         m_group_closed = true;
     }
 
@@ -82,7 +91,8 @@ public:
     /// 2. The group must be closed. Otherwise, if the JEventSource is slow but the JEventProcessor is fast,
     ///    the number of in-flight events could drop to zero before the group is conceptually finished.
     /// This is meant to be callable from any JANA component.
-    bool IsGroupFinished() {
+    /// Note that this doesn't indicate anything about _who_
+    bool IsGroupFinished() const {
         return m_group_closed && (m_events_in_flight == 0);
     }
 
@@ -105,13 +115,23 @@ public:
 
 class JEventGroupManager : public JService {
 
+    std::mutex m_mutex;
     std::map<int, JEventGroup*> m_eventgroups;
 
+public:
+    ~JEventGroupManager() final {
+        for (auto item : m_eventgroups) {
+            delete item.second;
+        }
+    }
+
     JEventGroup* GetEventGroup(int group_id) {
+        std::lock_guard<std::mutex> lock(m_mutex);
         auto result = m_eventgroups.find(group_id);
         if (result == m_eventgroups.end()) {
             auto* eg = new JEventGroup(group_id);
             m_eventgroups.insert(std::make_pair(group_id, eg));
+            return eg;
         }
         else {
             return result->second;

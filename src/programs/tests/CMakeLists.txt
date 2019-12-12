@@ -19,7 +19,8 @@ set(TEST_SOURCES
     TerminationTests.h
     UserExceptionTests.cc
     UserExceptionTests.h
-   )
+    JEventGroupTests.cc
+    )
 
 add_executable(tests ${TEST_SOURCES})
 find_package(Threads REQUIRED)
