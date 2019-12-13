@@ -34,7 +34,7 @@
 #include <JANA/JEventProcessor.h>
 #include <JANA/Services/JEventGroupTracker.h>
 #include <JANA/JFactory.h>
-
+#include <JANA/Utils/JPerfUtils.h>
 
 class JEventSource_eventgroups : public JEventSource {
 
@@ -62,6 +62,11 @@ public:
         auto current_group = m_egm.GetEventGroup(m_current_group_id);
 
         current_group->StartEvent();
+        event->Insert(current_group);
+        event->GetFactory<JEventGroup>()->SetFactoryFlag(JFactory::JFactory_Flags_t::NOT_OBJECT_OWNER);
+        event->SetEventNumber(++m_current_event_number);
+        event->SetRunNumber(m_current_group_id);
+
         m_remaining_events_in_group -= 1;
         if (m_remaining_events_in_group == 0) {
             current_group->CloseGroup();
@@ -69,10 +74,6 @@ public:
             m_current_group_id += 1;
         }
 
-        event->SetEventNumber(m_current_event_number++);
-        event->SetRunNumber(m_current_group_id);
-        event->Insert(current_group);
-        event->GetFactory<JEventGroup>()->SetFactoryFlag(JFactory::JFactory_Flags_t::NOT_OBJECT_OWNER);
     }
 };
 
@@ -83,8 +84,10 @@ class JEventProcessor_eventgroups : public JEventProcessor {
 
 public:
     void Process(const std::shared_ptr<const JEvent>& event) override {
-        // TODO: Perform a computation which induces a random delay
+        // In parallel, perform a random amount of (slow) computation
+        consume_cpu_ms(100, 1.0);
 
+        // Sequentially, process each event and report when a group finishes
         std::lock_guard<std::mutex> lock(m_mutex);
         std::cout << "Processing event "
                   << event->GetRunNumber()

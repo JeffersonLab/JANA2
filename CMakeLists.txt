@@ -12,10 +12,14 @@ set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")   # Define location o
 #   Do NOT install to default install directory, which is /usr/local.
 
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    if(DEFINED ENV{JANA_HOME})
-        install(CODE "message(STATUS \"Installing to \" ENV{JANA_HOME} \"(From $JANA_HOME)\")")
-        set(CMAKE_INSTALL_PREFIX ENV{JANA_HOME} CACHE PATH "magic incantation" FORCE)
+    if(DEFINED $ENV{JANA_HOME})
+        install(CODE "message(STATUS \"Installing to \" $ENV{JANA_HOME} \"(From $JANA_HOME)\")")
+        set(CMAKE_INSTALL_PREFIX $ENV{JANA_HOME} CACHE PATH "magic incantation" FORCE)
+    elseif(DEFINED JANA_HOME)
+        install(CODE "message(STATUS \"Installing to \" ${JANA_HOME} \"(From -DJANA_HOME)\")")
+        set(CMAKE_INSTALL_PREFIX ${JANA_HOME} CACHE PATH "magic incantation" FORCE)
     else()
+
         install(CODE "message(STATUS \"Installing to \" ${CMAKE_BINARY_DIR} \" (Undefined environment var $JANA_HOME)\")")
         set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR} CACHE PATH "magic incantation" FORCE)
     endif()
