@@ -31,6 +31,8 @@
 //
 
 #include <JANA/JApplication.h>
+#include <JANA/JLogger.h>
+
 #include "GroupedEventProcessor.h"
 #include "GroupedEventSource.h"
 #include "BlockingGroupedEventSource.h"
@@ -57,14 +59,14 @@ void producer_thread(BlockingGroupedEventSource* evt_src, JApplication* app, int
         // Note: In general, the producer really shouldn't be responsible for setting group number, because they
         // can really mess that up. For now we are just doing this so that we can easily see the 'barrier' in the logs
 
-        std::cout << "Calling SubmitAndWait for events " << event_number-5 << ".." << event_number-1 << std::endl;
+        LOG << "Calling SubmitAndWait for events " << event_number-5 << ".." << event_number-1 << LOG_END;
 
         // SubmitAndWait causes producer to block until GroupedEventProcessor finishes
         evt_src->SubmitAndWait(event_batch);
 
         // After this point, all of the events in event_batch have been processed!
-        std::cout << "SubmitAndWait returned! Producer thread may now access results for events "
-                  << event_number-5 << ".." << event_number-1 << std::endl;
+        LOG << "SubmitAndWait returned! Producer thread may now access results for events "
+            << event_number-5 << ".." << event_number-1 << LOG_END;
 
         // Note: Just for demonstration purposes, we are setting should_keep=false in the producer and having JANA
         // set it to true in the GroupedEventProcessor. More realistically, a JFactory would make a decision.

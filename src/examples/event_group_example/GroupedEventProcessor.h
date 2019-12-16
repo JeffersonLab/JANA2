@@ -7,8 +7,10 @@
 
 
 #include <JANA/JEventProcessor.h>
+#include <JANA/JLogger.h>
 #include <JANA/Services/JEventGroupTracker.h>
 #include <JANA/Utils/JPerfUtils.h>
+
 #include "TridasEvent.h"
 
 /// GroupedEventProcessor demonstrates basic usage of JEventGroups
@@ -30,11 +32,11 @@ public:
         // Sequentially, process each event and report when a group finishes
         std::lock_guard<std::mutex> lock(m_mutex);
 
-        std::cout << "Processed group #" << group->GetGroupId() << ", event #" << event->GetEventNumber() << std::endl;
+        LOG << "Processed group #" << group->GetGroupId() << ", event #" << event->GetEventNumber() << LOG_END;
 
         bool finishes_group = group->FinishEvent();
         if (finishes_group) {
-            std::cout << "Processed last element in group " << group->GetGroupId() << std::endl;
+            LOG << "Processed last element in group " << group->GetGroupId() << LOG_END;
         }
     }
 };
