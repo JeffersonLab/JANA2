@@ -1,7 +1,11 @@
 # JExample 7 plugin
 
 set(example_eventgroups_SOURCES SHARED
-        event_group_example.cc
+        BlockingGroupedEventSource.h
+        EventGroupExamplePlugin.cc
+        GroupedEventProcessor.h
+        GroupedEventSource.h
+        TridasEvent.h
 )
 
 #find_package(JANA)
