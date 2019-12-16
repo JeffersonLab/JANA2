@@ -37,9 +37,9 @@
 
 
 /// The producer thread generates and feeds TridasEvents to the BlockingEventSource.
-void producer_thread(BlockingGroupedEventSource* evt_src, JApplication* app) {
+void producer_thread(BlockingGroupedEventSource* evt_src, JApplication* app, int starting_event_number = 1) {
 
-    int event_number = 1;
+    int event_number = starting_event_number;
     std::vector<TridasEvent*> event_batch;
 
     for (int group_number = 1; group_number < 6; ++group_number) {
@@ -50,7 +50,6 @@ void producer_thread(BlockingGroupedEventSource* evt_src, JApplication* app) {
             auto event = new TridasEvent;
             event->event_number = event_number++;
             event->run_number = 22;
-            event->group_number = group_number;
             event->should_keep = false;
             event_batch.push_back(event);
         }
@@ -58,20 +57,21 @@ void producer_thread(BlockingGroupedEventSource* evt_src, JApplication* app) {
         // Note: In general, the producer really shouldn't be responsible for setting group number, because they
         // can really mess that up. For now we are just doing this so that we can easily see the 'barrier' in the logs
 
-        std::cout << "Calling SubmitAndWait for group " << group_number << std::endl;
+        std::cout << "Calling SubmitAndWait for events " << event_number-5 << ".." << event_number-1 << std::endl;
 
         // SubmitAndWait causes producer to block until GroupedEventProcessor finishes
-        evt_src->SubmitAndWait(group_number, event_batch);
+        evt_src->SubmitAndWait(event_batch);
 
         // After this point, all of the events in event_batch have been processed!
-        std::cout << "SubmitAndWait returned! Producer thread may now access results from group " << group_number << std::endl;
+        std::cout << "SubmitAndWait returned! Producer thread may now access results for events "
+                  << event_number-5 << ".." << event_number-1 << std::endl;
 
         // Note: Just for demonstration purposes, we are setting should_keep=false in the producer and having JANA
         // set it to true in the GroupedEventProcessor. More realistically, a JFactory would make a decision.
 
         // Verify that JANA indeed processed all of the events, and that it didn't free the TridasEvents afterwards!
         for (int i=0; i<5; ++i) {
-            assert(event_batch[i]->should_keep == true);
+            assert(event_batch[i]->should_keep);
             delete event_batch[i];
         }
         event_batch.clear();
@@ -100,8 +100,7 @@ void InitPlugin(JApplication *app) {
     new std::thread([=](){ producer_thread(evt_src, app); });
 
     // We can run multiple producer threads, which will correctly interleave execution within JANA
-    // TODO: We need to set event and group numbers correctly for each thread, though
-    // new std::thread([=](){ producer_thread(evt_src); });
+    new std::thread([=](){ producer_thread(evt_src, app, 100); });
 
 
 }

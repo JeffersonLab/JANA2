@@ -13,7 +13,6 @@ struct TridasEvent : public JObject {
 
     int run_number;            // TODO: The event source should extract event & run numbers directly from tridas_object,
     int event_number;          //       so we should remove these once we have an actual tridas_object
-    int group_number;          // TODO: Group number should really be encapsulated inside the EventSource instead
 
     mutable bool should_keep;  // TODO: This needs to be mutable because we will be updating a const JObject
                                //       This won't be a problem with the 'real' TRIDAS, whose should_keep lives behind the
