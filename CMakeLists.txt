@@ -33,11 +33,11 @@ add_subdirectory(src/lib/JANA)
 
 add_subdirectory(src/examples/JExample1)
 add_subdirectory(src/examples/JExample2)
-add_subdirectory(src/examples/JExample7)
+#add_subdirectory(src/examples/JExample7)
 add_subdirectory(src/examples/event_group_example)
 
 add_subdirectory(src/plugins/JTest)
-add_subdirectory(src/plugins/streamDet)
+#add_subdirectory(src/plugins/streamDet)
 add_subdirectory(src/plugins/janapy)
 add_subdirectory(src/plugins/janarate)
 
