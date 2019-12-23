@@ -115,7 +115,7 @@ void JApplication::Initialize() {
 
     // Only run this once
     if (_initialized) return;
-    _initialized = true;
+
 
     // Attach all plugins
     _plugin_loader->attach_plugins(_component_manager);
@@ -139,6 +139,8 @@ void JApplication::Initialize() {
 
     _params->SetDefaultParameter("JANA:EXTENDED_REPORT", _extended_report);
     _processing_controller->initialize();
+
+    _initialized = true;
 }
 
 void JApplication::Run(bool wait_until_finished) {

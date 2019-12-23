@@ -102,7 +102,7 @@ public:
 
 
     // Performance/status monitoring
-
+    bool IsInitialized(void){return _initialized;}
     bool IsQuitting(void) { return _quitting; }
     bool IsDrainingQueues(void) { return _draining_queues; }
 
