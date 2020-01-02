@@ -153,18 +153,19 @@ std::ostream& operator<<(std::ostream& os, const JProcessorMapping::LocalityStra
 
 std::ostream& operator<<(std::ostream& os, const JProcessorMapping& m) {
 
-    os << "Affinity strategy: " << m.m_affinity_strategy << std::endl;
-    os << "Locality strategy: " << m.m_locality_strategy << std::endl;
-    os << "Location count: " << m.m_loc_count << std::endl;
+    os << "NUMA Configuration" << std::endl << std::endl;
+    os << "  Affinity strategy: " << m.m_affinity_strategy << std::endl;
+    os << "  Locality strategy: " << m.m_locality_strategy << std::endl;
+    os << "  Location count: " << m.m_loc_count << std::endl;
 
     if (m.m_initialized) {
-        os << "+--------+----------+-------+--------+-----------+--------+" << std::endl
-           << "| worker | location |  cpu  |  core  | numa node | socket |" << std::endl
-           << "+--------+----------+-------+--------+-----------+--------+" << std::endl;
+        os << "  +--------+----------+-------+--------+-----------+--------+" << std::endl
+           << "  | worker | location |  cpu  |  core  | numa node | socket |" << std::endl
+           << "  +--------+----------+-------+--------+-----------+--------+" << std::endl;
 
         size_t worker_id = 0;
         for (const JProcessorMapping::Row& row : m.m_mapping) {
-            os <<  "| " << std::right << std::setw(6) << worker_id++;
+            os <<  "  | " << std::right << std::setw(6) << worker_id++;
             os << " | " << std::setw(8) << row.location_id;
             os << " | " << std::setw(5) << row.cpu_id;
             os << " | " << std::setw(6) << row.core_id;
@@ -172,10 +173,10 @@ std::ostream& operator<<(std::ostream& os, const JProcessorMapping& m) {
             os << " | " << std::setw(6) << row.socket_id << " |" << std::endl;
         }
 
-        os << "+--------+----------+-------+--------+-----------+--------+" << std::endl;
+        os << "  +--------+----------+-------+--------+-----------+--------+" << std::endl;
     }
     else {
-        os << "ERROR: " << m.m_error_msg << std::endl;
+        os << "  ERROR: " << m.m_error_msg << std::endl;
     }
     return os;
 }

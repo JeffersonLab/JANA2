@@ -218,7 +218,7 @@ void JWorker::loop() {
         // For now the excepting Worker prints the error, and then terminates the whole program.
         // Eventually we want to unify error handling across JApplication::Run, and maybe even across the entire JApplication.
         // This means that Workers must pass JExceptions back to the master thread.
-        std::cout << e;
+        LOG_FATAL(_logger) << e << LOG_END;
         exit(-1);
     }
 }

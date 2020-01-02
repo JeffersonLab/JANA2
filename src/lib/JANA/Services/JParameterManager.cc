@@ -109,22 +109,23 @@ void JParameterManager::PrintParameters(bool all) {
     }
 
     // Print title/header
+    JLogMessage m;
     string title("Config. Parameters");
     uint32_t half_title_len = 1 + title.length() / 2;
     if (max_key_len < half_title_len) max_key_len = half_title_len;
-    LOG << "\n" << LOG_END;
-    LOG << string(max_key_len + 4 - half_title_len, ' ') << title << LOG_END;
-    LOG << "  " << string(2 * max_key_len + 3, '=') << LOG_END;
-    LOG << string(max_key_len / 2, ' ') << "name" << string(max_key_len, ' ') << "value" << LOG_END;
-    LOG << "  " << string(max_key_len, '-') << "   " << string(max_key_len, '-') << LOG_END;
+    m << "Parameters\n\n"
+        << string(max_key_len + 4 - half_title_len, ' ') << title << "\n"
+        << "  " << string(2 * max_key_len + 3, '=') << "\n"
+        << string(max_key_len / 2, ' ') << "name" << string(max_key_len, ' ') << "value" << "\n"
+        << "  " << string(max_key_len, '-') << "   " << string(max_key_len, '-') << "\n";
 
     // Print all parameters
     for (string& key : keys) {
         auto name = _jparameters[key]->GetName();
         string val = _jparameters[key]->GetValue<string>();
-        LOG << string(max_key_len + 2 - key.length(), ' ') << name << " = " << val << LOG_END;
+        m << string(max_key_len + 2 - key.length(), ' ') << name << " = " << val << "\n";
     }
-    LOG << LOG_END;
+    std::move(m) << LOG_END;
 }
 
 

@@ -14,7 +14,8 @@ struct JLogger {
     Level level;
     std::ostream *destination;
     std::string className;
-    bool show_level = false;
+    bool show_level = true;
+    bool show_classname = false;
     bool show_timestamp = false;
     bool show_threadstamp = false;
 
@@ -66,7 +67,13 @@ struct JLogMessage {
                 JLogger::Level level = JLogger::Level::INFO)
                 : logger(logger), level(level) {
 
-        builder << "[" << level << "] " << logger->className << ": ";
+        if (logger->show_level) {
+            builder << "[" << level << "] ";
+        }
+        if (logger->show_classname) {
+            builder << logger->className << ": ";
+        }
+        // TODO: Re-add thread and timestamp info?
     }
 
     // Helper function for truncating long strings to keep our log readable

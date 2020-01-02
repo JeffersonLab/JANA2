@@ -165,7 +165,7 @@ private:
     bool _skip_join = false;
     bool _initialized = false;
     bool _ticker_on = true;
-    bool _extended_report = true;
+    bool _extended_report = false;
     int  _exit_code = 0;
     int  _desired_nthreads;
 

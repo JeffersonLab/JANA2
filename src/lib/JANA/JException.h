@@ -81,7 +81,7 @@ public:
 
     /// Convenience method for formatting complete error data
     inline friend std::ostream& operator<<(std::ostream& os, JException const& ex) {
-        os << "ERROR: " << ex.message << std::endl;
+        os << "Exception: " << ex.message << std::endl << std::endl;
         os << "  Plugin:         " << ex.plugin_name << std::endl;
         os << "  Component:      " << ex.component_name << std::endl;
         os << "  Factory name:   " << ex.factory_name << std::endl;

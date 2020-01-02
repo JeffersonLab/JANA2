@@ -48,7 +48,7 @@ JApplication::JApplication(JParameterManager* params) {
 
     _params = (params == nullptr) ? new JParameterManager : params;
 
-    _logger = JLoggingService::logger("JApplication");
+    _logger = JLogger(JLogger::Level::INFO);
     _plugin_loader = new JPluginLoader(this,_params);
     _component_manager = new JComponentManager(this);
     _processing_controller = nullptr;
@@ -113,32 +113,37 @@ void JApplication::Initialize() {
     /// This is called by the Run method so users will usually not
     /// need to call this directly.
 
-    // Only run this once
-    if (_initialized) return;
-    _initialized = true;
+    try {
+        // Only run this once
+        if (_initialized) return;
+        _initialized = true;
 
-    // Attach all plugins
-    _plugin_loader->attach_plugins(_component_manager);
+        // Attach all plugins
+        _plugin_loader->attach_plugins(_component_manager);
 
-    // Set task pool size
-    size_t task_pool_size = 200;
-    size_t task_pool_debuglevel = 0;
-    _params->SetDefaultParameter("JANA:TASK_POOL_SIZE", task_pool_size, "Task pool size");
-    _params->SetDefaultParameter("JANA:TASK_POOL_DEBUGLEVEL", task_pool_debuglevel, "Task pool debug level");
+        // Set task pool size
+        size_t task_pool_size = 200;
+        size_t task_pool_debuglevel = 0;
+        _params->SetDefaultParameter("JANA:TASK_POOL_SIZE", task_pool_size, "Task pool size");
+        _params->SetDefaultParameter("JANA:TASK_POOL_DEBUGLEVEL", task_pool_debuglevel, "Task pool debug level");
 
-    // Set desired nthreads
-    _desired_nthreads = JCpuInfo::GetNumCpus();
-    _params->SetDefaultParameter("NTHREADS", _desired_nthreads,
-                                 "The total number of worker threads");
+        // Set desired nthreads
+        _desired_nthreads = JCpuInfo::GetNumCpus();
+        _params->SetDefaultParameter("NTHREADS", _desired_nthreads,
+                                     "The total number of worker threads");
 
 
-    _component_manager->resolve_event_sources();
-    auto topology = JArrowTopology::from_components(_component_manager, this);
-    _processing_controller = new JArrowProcessingController(topology);
-    _extended_report = true;
+        _component_manager->resolve_event_sources();
+        auto topology = JArrowTopology::from_components(_component_manager, this);
+        _processing_controller = new JArrowProcessingController(topology);
 
-    _params->SetDefaultParameter("JANA:EXTENDED_REPORT", _extended_report);
-    _processing_controller->initialize();
+        _params->SetDefaultParameter("JANA:EXTENDED_REPORT", _extended_report);
+        _processing_controller->initialize();
+    }
+    catch (JException e) {
+        LOG_FATAL(_logger) << e << LOG_END;
+        exit(-1);
+    }
 }
 
 void JApplication::Run(bool wait_until_finished) {
@@ -149,9 +154,8 @@ void JApplication::Run(bool wait_until_finished) {
     // Print summary of all config parameters (if any aren't default)
     _params->PrintParameters(false);
 
-    jout << GetComponentSummary();
-
-    jout << "Start processing ..." << std::endl;
+    LOG_INFO(_logger) << GetComponentSummary() << LOG_END;
+    LOG_INFO(_logger) << "Starting processing ..." << LOG_END;
     mRunStartTime = std::chrono::high_resolution_clock::now();
     _processing_controller->run(_desired_nthreads);
 
@@ -171,7 +175,7 @@ void JApplication::Run(bool wait_until_finished) {
 
         // Run until topology is deactivated, either because it finished or because another thread called stop()
         if (_processing_controller->is_stopped() || _processing_controller->is_finished()) {
-            std::cout << "All threads have ended.\n";
+            LOG_INFO(_logger) << "All threads have ended." << LOG_END;
             break;
         }
 
@@ -184,12 +188,11 @@ void JApplication::Run(bool wait_until_finished) {
 
     // Join all threads
     if (!_skip_join) {
-        jout << "Merging threads ..." << std::endl;
+        LOG_INFO(_logger) << "Merging threads ..." << LOG_END;
         _processing_controller->wait_until_stopped();
     }
 
-    jout << "Event processing ended. " << std::endl;
-    // Report Final numbers
+    LOG_INFO(_logger) << "Event processing ended." << LOG_END;
     PrintFinalReport();
 }
 
@@ -248,38 +251,36 @@ void JApplication::PrintStatus(void) {
         _processing_controller->print_report();
     }
     else {
-        std::stringstream ss;
-        ss << "  " << GetNeventsProcessed() << " events processed  "
-           << JTypeInfo::to_string_with_si_prefix(GetInstantaneousRate()) << "Hz ("
-           << JTypeInfo::to_string_with_si_prefix(GetIntegratedRate()) << "Hz avg)";
-        jout << ss.str() << "\n";
-        jout.flush();
+        LOG_INFO(_logger) << "Running: " << GetNeventsProcessed() << " events processed  "
+                          << JTypeInfo::to_string_with_si_prefix(GetInstantaneousRate()) << "Hz ("
+                          << JTypeInfo::to_string_with_si_prefix(GetIntegratedRate()) << "Hz avg)" << LOG_END;
     }
 }
 
 void JApplication::PrintFinalReport() {
 
+    JLogMessage m(&_logger, JLogger::Level::INFO);
     if (_extended_report) {
         _processing_controller->print_final_report();
     }
     else {
-        jout << std::endl;
+        m << "Final Report\n\n";
         auto nevents = GetNeventsProcessed();
-        jout << "Number of threads: " << GetNThreads() << std::endl;
-        jout << "Total events processed: " << nevents << " (~ " << JTypeInfo::to_string_with_si_prefix(nevents) << "evt)" << std::endl;
-        jout << "Integrated Rate: " << JTypeInfo::to_string_with_si_prefix(GetIntegratedRate()) << "Hz" << std::endl;
-        jout << std::endl;
+        m << "  Number of threads: " << GetNThreads() << "\n";
+        m << "  Total events processed: " << nevents << " (~ " << JTypeInfo::to_string_with_si_prefix(nevents) << "evt)" << "\n";
+        m << "  Integrated Rate: " << JTypeInfo::to_string_with_si_prefix(GetIntegratedRate()) << "Hz" << "\n\n";
     }
     if (_extended_report) {
         //_plugin_loader->print_report();
         //_topology->print_report();
-        //jout << std::endl;
-        //jout << "               Num. plugins: " << _plugins.size() <<std::endl;
-        //jout << "          Num. plugin paths: " << _plugin_paths.size() <<std::endl;
-        //jout << "    Num. factory generators: " << _factoryGenerators.size() <<std::endl;
-        //jout << "      Num. event processors: " << mNumProcessorsAdded <<std::endl;
-        //jout << "          Num. factory sets: " << mFactorySetPool.Get_PoolSize() << " (max. " << mFactorySetPool.Get_MaxPoolSize() << ")" << std::endl;
+        //m << "\n";
+        //m << "               Num. plugins: " << _plugins.size() << "\n";
+        //m << "          Num. plugin paths: " << _plugin_paths.size() << "\n";
+        //m << "    Num. factory generators: " << _factoryGenerators.size() << "\n";
+        //m << "      Num. event processors: " << mNumProcessorsAdded << "\n";
+        //m << "          Num. factory sets: " << mFactorySetPool.Get_PoolSize() << " (max. " << mFactorySetPool.Get_MaxPoolSize() << ")" << "\n";
     }
+    std::move(m) << LOG_END;
 }
 
 uint64_t JApplication::GetNThreads() {
