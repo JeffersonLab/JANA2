@@ -148,13 +148,11 @@ void JPluginLoader::attach_plugins(JComponentManager* jcm) {
 
         // If we didn't find the plugin, then complain and quit
         if (!found_plugin) {
-
-            LOG_FATAL(_logger) << "Couldn't find plugin '" << plugin << "'!\n" <<
-                                  "  Make sure the JANA_PLUGIN_PATH environment variable is set correctly.\n" <<
-                                  "  To see paths checked, set JANA:DEBUG_PLUGIN_LOADING=1\n" <<
-                                  "  Some hints to the error follow:\n\n" << err_mess.str() << LOG_END;
-
-            exit(-1);
+            LOG_ERROR(_logger) << "Couldn't find plugin '" << plugin << "'\n" <<
+                               "  Make sure the JANA_PLUGIN_PATH environment variable is set correctly.\n" <<
+                               "  To see paths checked, set JANA:DEBUG_PLUGIN_LOADING=1\n" <<
+                               "  Some hints to the error follow:\n\n" << err_mess.str() << LOG_END;
+            throw JException("Couldn't find plugin '%s'", plugin.c_str());
         }
     }
 }
