@@ -16,12 +16,12 @@ public:
 
     JTestPlotter(JApplication* app) : JEventProcessor(app) {
 
-        auto params = app->GetJParameterManager();
+        SetTypeName(NAME_OF_THIS);
 
-        params->GetParameter("jtest:plotter_bytes", m_write_bytes);
-        params->GetParameter("jtest:plotter_ms", m_cputime_ms);
-        params->GetParameter("jtest:plotter_bytes_spread", m_write_spread);
-        params->GetParameter("jtest:plotter_spread", m_cputime_spread);
+        app->GetParameter("jtest:plotter_bytes", m_write_bytes);
+        app->GetParameter("jtest:plotter_ms", m_cputime_ms);
+        app->GetParameter("jtest:plotter_bytes_spread", m_write_spread);
+        app->GetParameter("jtest:plotter_spread", m_cputime_spread);
     }
 
     virtual std::string GetType() const {

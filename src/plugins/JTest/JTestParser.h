@@ -28,12 +28,11 @@ public:
 
     JTestParser(string source_name, JApplication* app) : JEventSource(source_name, app)
     {
-        auto params = app->GetJParameterManager();
-        params->GetParameter("nevents", mNumEventsToGenerate);
-        params->GetParameter("jtest:parser_bytes", m_write_bytes);
-        params->GetParameter("jtest:parser_ms", m_cputime_ms);
-        params->GetParameter("jtest:parser_bytes_spread", m_write_spread);
-        params->GetParameter("jtest:parser_spread", m_cputime_spread);
+        app->GetParameter("nevents", mNumEventsToGenerate);
+        app->GetParameter("jtest:parser_bytes", m_write_bytes);
+        app->GetParameter("jtest:parser_ms", m_cputime_ms);
+        app->GetParameter("jtest:parser_bytes_spread", m_write_spread);
+        app->GetParameter("jtest:parser_spread", m_cputime_spread);
 
         SetFactoryGenerator(new JSourceFactoryGenerator<JTestEntangledEventData>());
         SetTypeName(NAME_OF_THIS);

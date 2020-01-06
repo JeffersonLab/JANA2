@@ -51,6 +51,7 @@ private:
 public:
 
     JCsvWriter(std::string tag = "") : m_tag(std::move(tag)) {
+        SetTypeName(NAME_OF_THIS);
         japp->GetJParameterManager()->SetDefaultParameter("csv:dest_dir", m_dest_dir, "Location where CSV files get written");
     };
 
