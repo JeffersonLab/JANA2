@@ -248,6 +248,7 @@ void JApplication::SetTicker(bool ticker_on) {
 
 void JApplication::PrintStatus(void) {
     if (_extended_report) {
+        LOG_INFO(_logger) << "Running:" << LOG_END;
         _processing_controller->print_report();
     }
     else {
@@ -258,29 +259,8 @@ void JApplication::PrintStatus(void) {
 }
 
 void JApplication::PrintFinalReport() {
-
-    JLogMessage m(&_logger, JLogger::Level::INFO);
-    if (_extended_report) {
-        _processing_controller->print_final_report();
-    }
-    else {
-        m << "Final Report\n\n";
-        auto nevents = GetNeventsProcessed();
-        m << "  Number of threads: " << GetNThreads() << "\n";
-        m << "  Total events processed: " << nevents << " (~ " << JTypeInfo::to_string_with_si_prefix(nevents) << "evt)" << "\n";
-        m << "  Integrated Rate: " << JTypeInfo::to_string_with_si_prefix(GetIntegratedRate()) << "Hz" << "\n\n";
-    }
-    if (_extended_report) {
-        //_plugin_loader->print_report();
-        //_topology->print_report();
-        //m << "\n";
-        //m << "               Num. plugins: " << _plugins.size() << "\n";
-        //m << "          Num. plugin paths: " << _plugin_paths.size() << "\n";
-        //m << "    Num. factory generators: " << _factoryGenerators.size() << "\n";
-        //m << "      Num. event processors: " << mNumProcessorsAdded << "\n";
-        //m << "          Num. factory sets: " << mFactorySetPool.Get_PoolSize() << " (max. " << mFactorySetPool.Get_MaxPoolSize() << ")" << "\n";
-    }
-    std::move(m) << LOG_END;
+    LOG_INFO(_logger) << "Final Report" << LOG_END;
+    _processing_controller->print_final_report();
 }
 
 uint64_t JApplication::GetNThreads() {
