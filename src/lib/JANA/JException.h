@@ -82,11 +82,19 @@ public:
     /// Convenience method for formatting complete error data
     inline friend std::ostream& operator<<(std::ostream& os, JException const& ex) {
         os << "Exception: " << ex.message << std::endl << std::endl;
-        os << "  Plugin:         " << ex.plugin_name << std::endl;
-        os << "  Component:      " << ex.component_name << std::endl;
-        os << "  Factory name:   " << ex.factory_name << std::endl;
-        os << "  Factory tag:    " << ex.factory_tag << std::endl;
-        os << "  Backtrace:" << std::endl << std::endl << ex.stacktrace << std::endl << std::endl;
+        if (ex.plugin_name.length() != 0) {
+            os << "  Plugin:         " << ex.plugin_name << std::endl;
+        }
+        if (ex.component_name.length() != 0) {
+            os << "  Component:      " << ex.component_name << std::endl;
+        }
+        if (ex.factory_name.length() != 0) {
+            os << "  Factory name:   " << ex.factory_name << std::endl;
+            os << "  Factory tag:    " << ex.factory_tag << std::endl;
+        }
+        if (ex.stacktrace.length() != 0) {
+            os << "  Backtrace:" << std::endl << std::endl << ex.stacktrace << std::endl << std::endl;
+        }
         return os;
     }
 
@@ -104,9 +112,9 @@ public:
 /// Constructor with convenient printf-style formatting.
 /// Uses variadic templates (although it is slightly overkill) because variadic functions are frowned on now.
 template<typename... Args>
-JException::JException(std::string message, Args... args) {
+JException::JException(std::string format_str, Args... args) {
     char cmess[1024];
-    snprintf(cmess, 1024, message.c_str(), args...);
+    snprintf(cmess, 1024, format_str.c_str(), args...);
     message = cmess;
 }
 

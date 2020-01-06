@@ -91,7 +91,11 @@ JEventSourceGenerator *JComponentManager::resolve_event_source(std::string sourc
     }
 
     // Otherwise, report the problem and throw
-    throw JException("Unable to open event source \"%s\": No suitable generator found!", source_name.c_str());
+    auto ex = JException("Unable to open event source \"%s\": No suitable generator found!", source_name.c_str());
+    std::ostringstream os;
+    make_backtrace(os);
+    ex.stacktrace = os.str();
+    throw ex;
 }
 
 
