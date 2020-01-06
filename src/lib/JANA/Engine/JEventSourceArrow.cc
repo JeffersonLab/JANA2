@@ -106,8 +106,9 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
 
 void JEventSourceArrow::initialize() {
     assert(_status == Status::Unopened);
-    LOG_INFO(_logger) << "JEventSourceArrow '" << get_name() << "': "
+    LOG_DEBUG(_logger) << "JEventSourceArrow '" << get_name() << "': "
                       << "Initializing" << LOG_END;
     _source->DoInitialize();
+    _status = Status::Running;
 }
 
