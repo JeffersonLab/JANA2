@@ -50,7 +50,7 @@ JApplication::JApplication(JParameterManager* params) {
 
     _logger = JLogger(JLogger::Level::INFO);
     _plugin_loader = new JPluginLoader(this,_params);
-    _component_manager = new JComponentManager(this);
+    _component_manager = new JComponentManager(this, _params);
     _processing_controller = nullptr;
 }
 

@@ -140,7 +140,6 @@ public:
 
     void ClearData() override {
 
-        std::cout << "Clearing JFactory data!" << std::endl;
         // ClearData() does nothing if persistent flag is set.
         // User must manually recycle data, e.g. during ChangeRun()
         if (TestFactoryFlag(JFactory_Flags_t::PERSISTENT)) {
@@ -149,7 +148,6 @@ public:
 
         // Assuming we _are_ the object owner, delete the underlying jobjects
         if (!TestFactoryFlag(JFactory_Flags_t::NOT_OBJECT_OWNER)) {
-            std::cout << "Deleting JFactory data!" << std::endl;
             for (auto p : mData) delete p;
         }
         mData.clear();

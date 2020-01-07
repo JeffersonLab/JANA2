@@ -68,11 +68,11 @@ struct JLogMessage {
                 JLogger::Level level = JLogger::Level::INFO)
                 : logger(logger), level(level) {
 
-        if (logger->show_level) {
+        if (logger.show_level) {
             builder << "[" << level << "] ";
         }
-        if (logger->show_classname) {
-            builder << logger->className << ": ";
+        if (logger.show_classname) {
+            builder << logger.className << ": ";
         }
         // TODO: Re-add thread and timestamp info?
     }
