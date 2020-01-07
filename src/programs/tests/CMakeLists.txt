@@ -20,6 +20,8 @@ set(TEST_SOURCES
     UserExceptionTests.cc
     UserExceptionTests.h
     JEventGroupTests.cc
+    JFactoryTests.h
+    JFactoryTests.cc
     )
 
 add_executable(tests ${TEST_SOURCES})

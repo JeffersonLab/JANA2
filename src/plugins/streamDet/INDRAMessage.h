@@ -172,7 +172,7 @@ inline std::ostream& operator<< (std::ostream& os, const DASEventMessage& messag
     size_t eventNum  = message.get_event_number();
     size_t msgFreq   = message.get_message_print_freq();
     size_t buffSize  = message.get_buffer_size();
-    string subSocket = message.get_sub_socket();
+    std::string subSocket = message.get_sub_socket();
     if (eventNum % msgFreq == 0) {
         ss << "INDRA Message received on socket " << subSocket
            << " -> Event " << eventNum

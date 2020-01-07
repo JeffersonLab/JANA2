@@ -181,7 +181,7 @@ int main(int nargs, char *argv[]) {
 
 	for (int i=1; i<nargs; i++){
 
-		string arg = argv[i];
+		std::string arg = argv[i];
 		//std::cout << "Found arg " << arg << std::endl;
 
 		if(argv[i][0] != '-') {
@@ -233,9 +233,9 @@ int main(int nargs, char *argv[]) {
 				if (argv[i][0] == '-' && argv[i][1] == 'P') {
 
 					size_t pos = arg.find("=");
-					if ((pos != string::npos) && (pos > 2)) {
-						string key = arg.substr(2, pos - 2);
-						string val = arg.substr(pos + 1);
+					if ((pos != std::string::npos) && (pos > 2)) {
+						std::string key = arg.substr(2, pos - 2);
+						std::string val = arg.substr(pos + 1);
 						options.params.SetParameter(key, val);
 					} else {
 						std::cout << "Invalid JANA parameter '" << arg

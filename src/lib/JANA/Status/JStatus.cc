@@ -52,7 +52,7 @@
 #include <map>
 
 #include <JANA/Status/JStatus.h>
-
+#include <JANA/JLogger.h>
 #include <JANA/JEventSource.h>
 #include <JANA/Services/JParameterManager.h>
 #include <JANA/Utils/JCpuInfo.h>
@@ -93,7 +93,7 @@ JStatus::JStatus()
 		path, 
 		"Filename of named pipe that can be used to get instantaneous status info. of running proccess.");
 
-	jout << "Creating pipe named \"" << path << "\" for status info." << endl;
+	jout << "Creating pipe named \"" << path << "\" for status info." << jendl;
 	mkfifo( path.c_str(), 0666);
 	
 	gJSTATUS = this;
@@ -324,7 +324,7 @@ void JStatus::SendReport(std::stringstream &ss)
 		write(fd, ss.str().c_str(), ss.str().length()+1);
 		close(fd);
 	}else{
-		jerr << "Unable to open named pipe \"" << path << "\" for writing status!" << endl;
+		jerr << "Unable to open named pipe \"" << path << "\" for writing status!" << jendl;
 	}
 }
 

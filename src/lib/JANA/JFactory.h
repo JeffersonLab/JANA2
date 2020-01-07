@@ -64,12 +64,13 @@ public:
 
     enum JFactory_Flags_t {
         JFACTORY_NULL = 0x00,
-        PERSISTANT = 0x01,
+        PERSISTENT = 0x01,
         WRITE_TO_OUTPUT = 0x02,
         NOT_OBJECT_OWNER = 0x04
     };
 
-    JFactory(std::string aName, std::string aTag = "") : mObjectName(std::move(aName)), mTag(std::move(aTag)) {};
+    JFactory(std::string aName, std::string aTag = "")
+    : mObjectName(std::move(aName)), mTag(std::move(aTag)), mStatus(Status::Uninitialized) {};
 
     virtual ~JFactory() = default;
 
@@ -159,8 +160,8 @@ protected:
     std::string mFactoryName;
     std::string mObjectName;
     std::string mTag;
-    uint32_t mFlags;
-    uint32_t mPreviousRunNumber = 0;
+    uint32_t mFlags = 0;
+    uint32_t mPreviousRunNumber = -1;
 
     enum class Status {Uninitialized, Unprocessed, Processed, Inserted};
     mutable Status mStatus = Status::Uninitialized;

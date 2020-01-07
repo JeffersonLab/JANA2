@@ -48,7 +48,7 @@ TEST_CASE("JEventInsertTests") {
         auto output = event->GetSingle<FakeJObject>();
         REQUIRE(output->datum == input->datum);
 
-        FakeJObject* alternative;
+        const FakeJObject* alternative;
         event->Get(&alternative);
         REQUIRE(output->datum == alternative->datum);
 

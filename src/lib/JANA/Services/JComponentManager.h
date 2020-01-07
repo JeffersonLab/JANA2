@@ -6,6 +6,7 @@
 #define JANA2_JCOMPONENTMANAGER_H
 
 #include <JANA/JEventSourceGenerator.h>
+#include <JANA/Services/JParameterManager.h>
 #include <JANA/Status/JComponentSummary.h>
 
 #include <vector>
@@ -15,7 +16,7 @@ class JEventProcessor;
 class JComponentManager {
 public:
 
-    explicit JComponentManager(JApplication*);
+    explicit JComponentManager(JApplication*, JParameterManager*);
     ~JComponentManager();
 
     void next_plugin(std::string plugin_name);

@@ -74,7 +74,7 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 
 		explicit JEvent(JApplication* aApplication=nullptr) { mApplication = aApplication; }
 		virtual ~JEvent() {
-		    mFactorySet->Release();
+		    if (mFactorySet != nullptr) mFactorySet->Release();
 		}
 
 		//FACTORIES
@@ -83,7 +83,7 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 
 		//OBJECTS
 		// C style getters
-		template<class T> JFactoryT<T>* Get(T** item, const std::string& tag="") const;
+		template<class T> JFactoryT<T>* Get(const T** item, const std::string& tag="") const;
 		template<class T> JFactoryT<T>* Get(vector<const T*> &vec, const std::string& tag = "") const;
 
 		// C++ style getters
@@ -126,7 +126,7 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 /// Repeated calls to Insert() will append to the previous data rather than overwrite it,
 /// which saves the user from having to allocate a throwaway vector and requires less error handling.
 template <class T>
-inline void JEvent::Insert(T* item, const string& tag) const {
+inline void JEvent::Insert(T* item, const std::string& tag) const {
 
 	auto factory = mFactorySet->GetFactory<T>(tag);
 	if (factory == nullptr) {
@@ -137,7 +137,7 @@ inline void JEvent::Insert(T* item, const string& tag) const {
 }
 
 template <class T>
-inline void JEvent::Insert(const vector<T*>& items, const string& tag) const {
+inline void JEvent::Insert(const vector<T*>& items, const std::string& tag) const {
 
 	auto factory = mFactorySet->GetFactory<T>(tag);
 	if (factory == nullptr) {
@@ -157,16 +157,8 @@ inline JFactoryT<T>* JEvent::GetFactory(const std::string& tag, bool throw_on_mi
 {
     auto factory = mFactorySet->GetFactory<T>(tag);
     if (factory == nullptr) {
-        // If we couldn't find a factory, or if we found a factory
-        // but it was a dummy and no data had been inserted
-        // TODO: Better idea: each EventSource specifies which factories
-        factory = new JFactoryT<T>(JTypeInfo::demangle<T>(), tag);
-
-        if (mEventSource == nullptr || !(mEventSource->GetObjects(this->shared_from_this(), factory))) {
-        	if (throw_on_missing) {
-				throw JException("Could not find factory '" + factory->GetName() + "', tag=" + tag);
-        	}
-        	return nullptr;
+        if (throw_on_missing) {
+            throw JException("Could not find JFactoryT<" + JTypeInfo::demangle<T>() + "> with tag=" + tag);
         }
 	};
     return factory;
@@ -176,10 +168,10 @@ inline JFactoryT<T>* JEvent::GetFactory(const std::string& tag, bool throw_on_mi
 /// C-style getters
 
 template<class T>
-JFactoryT<T>* JEvent::Get(T** destination, const std::string& tag) const
+JFactoryT<T>* JEvent::Get(const T** destination, const std::string& tag) const
 {
 	auto factory = GetFactory<T>(tag, true);
-    auto iterators = factory->GetOrCreate(this->shared_from_this());
+    auto iterators = factory->GetOrCreate(this->shared_from_this(), mEventSource, mRunNumber);
     if (std::distance(iterators.first, iterators.second) != 1) {
         throw JException("Wrong number of elements!");
     }
@@ -192,7 +184,7 @@ template<class T>
 JFactoryT<T>* JEvent::Get(vector<const T*>& destination, const std::string& tag) const
 {
     auto factory = GetFactory<T>(tag, true);
-    auto iterators = factory->GetOrCreate(this->shared_from_this());
+    auto iterators = factory->GetOrCreate(this->shared_from_this(), mEventSource, mRunNumber);
     for (auto it=iterators.first; it!=iterators.second; it++) {
         destination.push_back(*it);
     }
@@ -203,7 +195,7 @@ JFactoryT<T>* JEvent::Get(vector<const T*>& destination, const std::string& tag)
 /// C++ style getters
 
 template<class T> const T* JEvent::GetSingle(const std::string& tag) const {
-    auto iterators = GetFactory<T>(tag, true)->GetOrCreate(this->shared_from_this());
+    auto iterators = GetFactory<T>(tag)->GetOrCreate(this->shared_from_this(), mEventSource, mRunNumber);
     if (std::distance(iterators.first, iterators.second) != 1) {
         throw JException("Wrong number of elements!");
     }
@@ -214,7 +206,7 @@ template<class T> const T* JEvent::GetSingle(const std::string& tag) const {
 template<class T>
 std::vector<const T*> JEvent::Get(const std::string& tag) const {
 
-    auto iters = GetFactory<T>(tag, true)->GetOrCreate(this->shared_from_this());
+    auto iters = GetFactory<T>(tag, true)->GetOrCreate(this->shared_from_this(), mEventSource, mRunNumber);
     std::vector<const T*> vec;
     for (auto it=iters.first; it!=iters.second; ++it) {
         vec.push_back(*it);
@@ -225,7 +217,7 @@ std::vector<const T*> JEvent::Get(const std::string& tag) const {
 
 template<class T>
 typename JFactoryT<T>::PairType JEvent::GetIterators(const std::string& tag) const {
-    return GetFactory<T>(tag, true)->GetOrCreate(this->shared_from_this());
+    return GetFactory<T>(tag, true)->GetOrCreate(this->shared_from_this(), mEventSource, mRunNumber);
 }
 
 #endif // _JEvent_h_

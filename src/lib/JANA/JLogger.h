@@ -39,7 +39,8 @@ struct JLogger {
     void UnsetThreadstampFlag() {show_threadstamp = false; }
 };
 
-static JLogger trivial_logger = JLogger(JLogger::Level::TRACE);
+static JLogger default_cout_logger = JLogger(JLogger::Level::TRACE, &std::cout, "JANA");
+static JLogger default_cerr_logger = JLogger(JLogger::Level::TRACE, &std::cerr, "JERR");
 
 inline std::ostream& operator<<(std::ostream& s, JLogger::Level l) {
     switch (l) {
@@ -59,11 +60,11 @@ struct JLogMessage {
     /// Message terminator
     struct End {};
 
-    const JLogger *logger;
+    const JLogger& logger;
     JLogger::Level level;
     std::ostringstream builder;
 
-    JLogMessage(const JLogger* logger = &trivial_logger,
+    JLogMessage(const JLogger& logger = default_cout_logger,
                 JLogger::Level level = JLogger::Level::INFO)
                 : logger(logger), level(level) {
 
@@ -88,6 +89,13 @@ struct JLogMessage {
 
 /// Stream operators
 
+template <typename T>
+inline JLogMessage&& operator<<(JLogger& l, T t) {
+    JLogMessage m(l);
+    m.builder << t;
+    return std::move(m);
+}
+
 template<typename T>
 inline JLogMessage& operator<<(JLogMessage& m, T t) {
     m.builder << t;
@@ -101,9 +109,10 @@ inline JLogMessage&& operator<<(JLogMessage&& m, T t) {
 }
 
 inline void operator<<(JLogMessage&& m, JLogMessage::End const& end) {
-    (*m.logger->destination) << m.builder.str() << std::endl;
+    std::ostream& dest = *m.logger.destination;
+    m.builder << std::endl;
+    dest << m.builder.str();
 }
-
 
 /// Macros
 
@@ -113,7 +122,7 @@ inline void operator<<(JLogMessage&& m, JLogMessage::End const& end) {
 
 #define LOG_END JLogMessage::End();
 
-#define LOG_AT_LEVEL(logger, msglevel) if (logger.level <= msglevel) JLogMessage(&logger, msglevel)
+#define LOG_AT_LEVEL(logger, msglevel) if (logger.level <= msglevel) JLogMessage(logger, msglevel)
 
 #define LOG_FATAL(logger) LOG_AT_LEVEL(logger, JLogger::Level::FATAL)
 #define LOG_ERROR(logger) LOG_AT_LEVEL(logger, JLogger::Level::ERROR)
@@ -123,8 +132,9 @@ inline void operator<<(JLogMessage&& m, JLogMessage::End const& end) {
 #define LOG_TRACE(logger) LOG_AT_LEVEL(logger, JLogger::Level::TRACE)
 
 
-#define jout std::cout
-#define jerr std::cerr
+#define jout JLogMessage(default_cout_logger)
+#define jerr JLogMessage(default_cerr_logger)
+#define jendl JLogMessage::End()
 
 
 

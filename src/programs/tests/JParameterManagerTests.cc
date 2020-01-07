@@ -30,41 +30,41 @@
 // Author: Nathan Brei
 //
 
-#ifndef JANA2_JPLUGINLOADER_H
-#define JANA2_JPLUGINLOADER_H
-
-#include <JANA/Services/JLoggingService.h>
 #include <JANA/Services/JParameterManager.h>
+#include "catch.hpp"
 
-#include <string>
-#include <vector>
+TEST_CASE("JParameterManager::SetDefaultParameter") {
 
-
-class JComponentManager;
-class JApplication;
-
-class JPluginLoader {
-
-public:
-
-    JPluginLoader(JApplication* app, JParameterManager* params = nullptr);
-
-    void add_plugin(std::string plugin_name);
-    void add_plugin_path(std::string path);
-    void attach_plugins(JComponentManager* jcm);
-    void attach_plugin(JComponentManager* jcm, std::string plugin_name);
-
-private:
-
-    std::vector<std::string> _plugins_to_include;
-    std::vector<std::string> _plugins_to_exclude;
-    std::vector<std::string> _plugin_paths;
-    std::vector<void*> _sohandles;
-
-    bool _verbose = false;
-    JLogger _logger = JLoggingService::logger("JPluginLoader");
-    JApplication* _app = nullptr;
-};
+    JParameterManager jpm;
 
 
-#endif //JANA2_JPLUGINLOADER_H
+    SECTION("Multiple calls to SetDefaultParameter with same defaults succeed") {
+
+        jpm.SetParameter("testing:dummy_var", 22);
+
+        int x = 44;
+        jpm.SetDefaultParameter("testing:dummy_var", x);
+        REQUIRE(x == 22);
+
+        int y = 44;
+        jpm.SetDefaultParameter("testing:dummy_var", y);
+        REQUIRE(y == 22);
+    }
+
+
+    SECTION("Multiple calls to SetDefaultParameter with different defaults throw") {
+
+        jpm.SetParameter("testing:dummy_var", 22);
+
+        int x = 44;
+        jpm.SetDefaultParameter("testing:dummy_var", x);
+        REQUIRE(x == 22);
+
+        int y = 77;
+        CHECK_THROWS(jpm.SetDefaultParameter("testing:dummy_var", y));
+    }
+}
+
+
+
+
