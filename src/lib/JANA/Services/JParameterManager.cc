@@ -107,7 +107,7 @@ void JParameterManager::PrintParameters(bool all) {
     for (auto& p : m_parameters) {
         string key = p.first;
         auto j = p.second;
-        if ((!all) && j->has_default) continue;
+        if ((!all) && j->has_default && (j->value == j->default_value)) continue;
         keys.push_back(key);
         if (key.length() > max_key_len) max_key_len = key.length();
     }

@@ -56,11 +56,12 @@
 
 
 struct JParameter {
-    std::string name;
-    std::string value;
-    std::string default_value;
-    std::string description;
-    bool has_default;
+    std::string name;             // A token (no whitespace, colon-prefixed), e.g. "my_plugin:use_mc"
+    std::string value;            // Stringified value, e.g. "1". Can handle comma-separated vectors of strings e.g. "abc, def"
+    std::string default_value;    // Optional default value, which may or may not equal value
+    std::string description;      // One-liner
+    bool has_default;             // Indicates that a default value is present. Does not indicate whether said value is in use.
+    // bool uses_default;         // TODO: We may want this instead of `if(param.value == param.default_value)` all the time
 };
 
 class JParameterManager {

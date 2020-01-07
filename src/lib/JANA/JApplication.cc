@@ -248,7 +248,6 @@ void JApplication::SetTicker(bool ticker_on) {
 
 void JApplication::PrintStatus(void) {
     if (_extended_report) {
-        LOG_INFO(_logger) << "Running:" << LOG_END;
         _processing_controller->print_report();
     }
     else {
@@ -259,7 +258,6 @@ void JApplication::PrintStatus(void) {
 }
 
 void JApplication::PrintFinalReport() {
-    LOG_INFO(_logger) << "Final Report" << LOG_END;
     _processing_controller->print_final_report();
 }
 

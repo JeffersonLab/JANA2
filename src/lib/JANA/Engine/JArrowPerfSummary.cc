@@ -38,8 +38,6 @@
 std::ostream& operator<<(std::ostream& os, const JArrowPerfSummary& s) {
 
     os << std::endl;
-    os << "  TOPOLOGY STATUS" << std::endl;
-    os << "  ---------------" << std::endl;
     os << "  Thread team size [count]:    " << s.thread_count << std::endl;
     os << "  Total uptime [s]:            " << std::setprecision(4) << s.total_uptime_s << std::endl;
     os << "  Uptime delta [s]:            " << std::setprecision(4) << s.latest_uptime_s << std::endl;

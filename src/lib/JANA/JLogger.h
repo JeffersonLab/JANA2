@@ -112,6 +112,7 @@ inline void operator<<(JLogMessage&& m, JLogMessage::End const& end) {
     std::ostream& dest = *m.logger.destination;
     m.builder << std::endl;
     dest << m.builder.str();
+    dest.flush();
 }
 
 /// Macros
