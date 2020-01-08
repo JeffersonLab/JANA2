@@ -30,41 +30,18 @@
 // Author: Nathan Brei
 //
 
-#ifndef JANA2_JPLUGINLOADER_H
-#define JANA2_JPLUGINLOADER_H
+#include "catch.hpp"
 
-#include <JANA/Services/JLoggingService.h>
-#include <JANA/Services/JParameterManager.h>
+#include <JANA/JObject.h>
 
-#include <string>
-#include <vector>
-
-
-class JComponentManager;
-class JApplication;
-
-class JPluginLoader {
-
+class SillyObject : public JObject {
 public:
-
-    JPluginLoader(JApplication* app, JParameterManager* params = nullptr);
-
-    void add_plugin(std::string plugin_name);
-    void add_plugin_path(std::string path);
-    void attach_plugins(JComponentManager* jcm);
-    void attach_plugin(JComponentManager* jcm, std::string plugin_name);
-
-private:
-
-    std::vector<std::string> _plugins_to_include;
-    std::vector<std::string> _plugins_to_exclude;
-    std::vector<std::string> _plugin_paths;
-    std::vector<void*> _sohandles;
-
-    bool _verbose = false;
-    JLogger _logger = JLoggingService::logger("JPluginLoader");
-    JApplication* _app = nullptr;
+    JOBJECT_PUBLIC(SillyObject)
 };
 
+TEST_CASE("JObject::className") {
+    SillyObject sut;
+    REQUIRE(sut.static_className() == "SillyObject");
+    REQUIRE(sut.className() == "SillyObject");
+}
 
-#endif //JANA2_JPLUGINLOADER_H

@@ -104,7 +104,7 @@ public:
         m_dest_file.close();
     }
 
-    string GetType() const override {
+    std::string GetType() const override {
         return JTypeInfo::demangle<decltype(*this)>();
     }
 

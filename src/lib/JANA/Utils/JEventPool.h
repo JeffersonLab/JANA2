@@ -48,18 +48,29 @@ private:
     std::vector<JFactoryGenerator*>* m_generators;
     size_t m_pool_size;
     size_t m_location_count;
+    bool m_limit_total_events_in_flight;
     std::unique_ptr<LocalPool[]> m_pools;
 
 public:
     inline JEventPool(JApplication* app, std::vector<JFactoryGenerator*>* generators,
-                      size_t pool_size, size_t location_count)
+                      size_t pool_size, size_t location_count, bool limit_total_events_in_flight)
         : m_app(app)
         , m_generators(generators)
         , m_pool_size(pool_size)
-        , m_location_count(location_count) {
-
+        , m_location_count(location_count)
+        , m_limit_total_events_in_flight(limit_total_events_in_flight)
+    {
         assert(m_location_count >= 1);
         m_pools = std::unique_ptr<LocalPool[]>(new LocalPool[location_count]());
+
+        for (int j=0; j<m_location_count; ++j) {
+            for (int i=0; i<m_pool_size; ++i) {
+                auto event = std::make_shared<JEvent>(m_app);
+                auto factory_set = new JFactorySet(*m_generators);
+                event->SetFactorySet(factory_set);
+                put(event, j);
+            }
+        }
     }
 
     inline std::shared_ptr<JEvent> get(size_t location) {
@@ -68,10 +79,15 @@ public:
         std::lock_guard<std::mutex> lock(pool.mutex);
 
         if (pool.events.empty()) {
-            auto event = std::make_shared<JEvent>(m_app);
-            auto factory_set = new JFactorySet(*m_generators);
-            event->SetFactorySet(factory_set);
-            return event;
+            if (m_limit_total_events_in_flight) {
+                return nullptr;
+            }
+            else {
+                auto event = std::make_shared<JEvent>(m_app);
+                auto factory_set = new JFactorySet(*m_generators);
+                event->SetFactorySet(factory_set);
+                return event;
+            }
         }
         else {
             auto event = std::move(pool.events.back());

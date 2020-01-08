@@ -41,15 +41,20 @@ class JGlobalRootLock : public JService {
 
 public:
 
-    inline void acquire_read_lock() { pthread_rwlock_rdlock(root_rw_lock); }
+    JGlobalRootLock() {
+        m_root_rw_lock = new pthread_rwlock_t;
+        pthread_rwlock_init(m_root_rw_lock, nullptr);
+    }
 
-    inline void acquire_write_lock() { pthread_rwlock_wrlock(root_rw_lock); }
+    inline void acquire_read_lock() { pthread_rwlock_rdlock(m_root_rw_lock); }
 
-    inline void release_lock() { pthread_rwlock_unlock(root_rw_lock); }
+    inline void acquire_write_lock() { pthread_rwlock_wrlock(m_root_rw_lock); }
+
+    inline void release_lock() { pthread_rwlock_unlock(m_root_rw_lock); }
 
 private:
 
-    pthread_rwlock_t* root_rw_lock;
+    pthread_rwlock_t* m_root_rw_lock;
 
 };
 

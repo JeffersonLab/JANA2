@@ -50,7 +50,7 @@ JApplication::JApplication(JParameterManager* params) {
 
     _logger = JLogger(JLogger::Level::INFO);
     _plugin_loader = new JPluginLoader(this,_params);
-    _component_manager = new JComponentManager(this);
+    _component_manager = new JComponentManager(this, _params);
     _processing_controller = nullptr;
 }
 
@@ -248,7 +248,6 @@ void JApplication::SetTicker(bool ticker_on) {
 
 void JApplication::PrintStatus(void) {
     if (_extended_report) {
-        LOG_INFO(_logger) << "Running:" << LOG_END;
         _processing_controller->print_report();
     }
     else {
@@ -259,7 +258,6 @@ void JApplication::PrintStatus(void) {
 }
 
 void JApplication::PrintFinalReport() {
-    LOG_INFO(_logger) << "Final Report" << LOG_END;
     _processing_controller->print_final_report();
 }
 

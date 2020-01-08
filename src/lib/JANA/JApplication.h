@@ -33,9 +33,6 @@
 #include <string>
 #include <iostream>
 
-#define jout std::cout
-#define jerr std::cerr
-
 class JApplication;
 class JEventProcessor;
 class JEventSource;
@@ -76,8 +73,8 @@ public:
 
     // Loading plugins
 
-    void AddPlugin(string plugin_name);
-    void AddPluginPath(string path);
+    void AddPlugin(std::string plugin_name);
+    void AddPluginPath(std::string path);
 
 
     // Building a JProcessingTopology

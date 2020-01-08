@@ -47,6 +47,7 @@
 #include <JANA/JApplication.h>
 #include <JANA/JFactory.h>
 #include <JANA/JObject.h>
+#include <JANA/JEventSource.h>
 #include <JANA/Utils/JTypeInfo.h>
 
 #ifndef _JFactoryT_h_
@@ -61,26 +62,36 @@ public:
     using PairType = std::pair<IteratorType, IteratorType>;
 
 
-    JFactoryT(const std::string& aName = JTypeInfo::demangle<T>(), const std::string& aTag = "") : JFactory(aName, aTag) {}
+    JFactoryT(const std::string& aName = JTypeInfo::demangle<T>(), const std::string& aTag = "")
+    : JFactory(aName, aTag) {}
+
     ~JFactoryT() override = default;
 
 
     void Init() override {}
     void ChangeRun(const std::shared_ptr<const JEvent>& aEvent) override {}
-    void Process(const std::shared_ptr<const JEvent>& aEvent) override {}
+    void Process(const std::shared_ptr<const JEvent>& aEvent) override {
+        // TODO: Debate best thing to do in this case. Consider fa250WaveboardV1Hit
+        LOG << "Dummy factory created but nothing was Inserted() or Set()." << LOG_END;
+        //throw JException("Dummy factory created but nothing was Inserted() or Set().");
+    }
 
 
     std::type_index GetObjectType(void) const override {
         return std::type_index(typeid(T));
     }
 
-    PairType GetOrCreate(const std::shared_ptr<const JEvent>& event) {
+    PairType GetOrCreate(const std::shared_ptr<const JEvent>& event, JEventSource* source, uint64_t run_number) {
 
         //std::lock_guard<std::mutex> lock(mMutex);
         switch (mStatus) {
             case Status::Uninitialized:
-                ChangeRun(event);
+                DoInit();
             case Status::Unprocessed:
+                if (mPreviousRunNumber != run_number) {
+                    ChangeRun(event);
+                    mPreviousRunNumber = run_number;
+                }
                 Process(event);
                 mStatus = Status::Processed;
             case Status::Processed:
@@ -106,30 +117,41 @@ public:
         T* casted = dynamic_cast<T*>(aDatum);
         assert(casted != nullptr);
         mData.push_back(casted);
+        mStatus = Status::Inserted;
+        // TODO: assert correct mStatus precondition
     }
 
     void Set(const std::vector<T*>& aData) {
         ClearData();
         mData = aData;
+        mStatus = Status::Inserted;
     }
 
     void Set(std::vector<T*>&& aData) {
         ClearData();
         mData = std::move(aData);
+        mStatus = Status::Inserted;
     }
 
     void Insert(T* aDatum) {
         mData.push_back(aDatum);
+        mStatus = Status::Inserted;
     }
 
     void ClearData() override {
+
+        // ClearData() does nothing if persistent flag is set.
+        // User must manually recycle data, e.g. during ChangeRun()
+        if (TestFactoryFlag(JFactory_Flags_t::PERSISTENT)) {
+            return;
+        }
 
         // Assuming we _are_ the object owner, delete the underlying jobjects
         if (!TestFactoryFlag(JFactory_Flags_t::NOT_OBJECT_OWNER)) {
             for (auto p : mData) delete p;
         }
         mData.clear();
-        mStatus = Status::Uninitialized;
+        mStatus = Status::Unprocessed;
     }
 
 protected:

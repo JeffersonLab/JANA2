@@ -97,11 +97,13 @@ JArrowTopology* JArrowTopology::from_components(JComponentManager* jcm, JApplica
     size_t event_processor_chunksize = 1;
     size_t location_count = 1;
     bool enable_stealing = false;
+    bool limit_total_events_in_flight = false;
     int affinity = 0;
     int locality = 0;
 
     auto params = japp->GetJParameterManager();
     params->SetDefaultParameter("jana:event_pool_size", event_pool_size);
+    params->SetDefaultParameter("jana:limit_total_events_in_flight", limit_total_events_in_flight);
     params->SetDefaultParameter("jana:event_queue_threshold", event_queue_threshold);
     params->SetDefaultParameter("jana:event_source_chunksize", event_source_chunksize);
     params->SetDefaultParameter("jana:event_processor_chunksize", event_processor_chunksize);
@@ -112,7 +114,8 @@ JArrowTopology* JArrowTopology::from_components(JComponentManager* jcm, JApplica
     topology->mapping.initialize(static_cast<JProcessorMapping::AffinityStrategy>(affinity),
                                  static_cast<JProcessorMapping::LocalityStrategy>(locality));
 
-    topology->event_pool = std::make_shared<JEventPool>(japp, &jcm->get_fac_gens(), event_pool_size, location_count);
+    topology->event_pool = std::make_shared<JEventPool>(japp, &jcm->get_fac_gens(), event_pool_size,
+            location_count, limit_total_events_in_flight);
 
     // Assume the simplest possible topology for now, complicate later
     auto queue = new EventQueue(event_queue_threshold, topology->mapping.get_loc_count(), enable_stealing);

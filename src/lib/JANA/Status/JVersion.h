@@ -55,30 +55,30 @@ class JVersion{
 		static unsigned int GetMajor(void){return major;}
 		static unsigned int GetMinor(void){return minor;}
 		static unsigned int GetBuild(void){return build;}
-		      static string GetDevStatus(void){return string("dev");} // return either "dev" or ""
+		      static std::string GetDevStatus(void){return std::string("dev");} // return either "dev" or ""
 		
-		static string GetVersion(void){
+		static std::string GetVersion(void){
 			std::stringstream ss;
 			ss<<major<<"."<<minor<<"."<<build<<GetDevStatus();
 			return ss.str();
 		}
 		
-		static string GetIDstring(void){return "[ Id: JVersion.h | Wed Oct 25 23:19:03 2017 -0400 | David Lawrence  ]";}
-		static string GetRevision(void){return ExtractContent("[ Revision: 28bf59642adb3d82f0cc3bd6405279076bf8f1e6 ]");}
-		static string GetDate(void){return ExtractContent("[ Date: Wed Oct 25 23:19:03 2017 -0400 ]");}
-		static string GetSource(void){return ExtractContent("[ Source: src/lib/JANA/JVersion.h ]");}
+		static std::string GetIDstring(void){return "[ Id: JVersion.h | Wed Oct 25 23:19:03 2017 -0400 | David Lawrence  ]";}
+		static std::string GetRevision(void){return ExtractContent("[ Revision: 28bf59642adb3d82f0cc3bd6405279076bf8f1e6 ]");}
+		static std::string GetDate(void){return ExtractContent("[ Date: Wed Oct 25 23:19:03 2017 -0400 ]");}
+		static std::string GetSource(void){return ExtractContent("[ Source: src/lib/JANA/JVersion.h ]");}
 		
 	protected:
 		
-		static string ExtractContent(const char *ccstr){
+		static std::string ExtractContent(const char *ccstr){
 			/// Attempt to cut off everything leading up to and including
 			/// the first space character and everything after and
 			/// including the last space character of the given string.
-			string str = ccstr;
-			string::size_type pos_start = str.find_first_of(" ", 0);
-			if(pos_start==string::npos)return str;
-			string::size_type pos_end = str.find_last_of(" ", str.size());
-			if(pos_end==string::npos)return str;
+			std::string str = ccstr;
+			std::string::size_type pos_start = str.find_first_of(" ", 0);
+			if(pos_start==std::string::npos)return str;
+			std::string::size_type pos_end = str.find_last_of(" ", str.size());
+			if(pos_end==std::string::npos)return str;
 			return str.substr(pos_start+1, pos_end-(pos_start+1));
 		}
 };

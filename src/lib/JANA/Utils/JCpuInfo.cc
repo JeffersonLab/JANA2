@@ -28,7 +28,7 @@ size_t GetNumCpus() {
 }
 
 
-size_t GetCpuID() {
+uint32_t GetCpuID() {
 	/// Returns the current CPU the calling thread is running on.
 	/// Note that unless the thread affinity has been set, this may 
 	/// change, even before returning from this call. The thread

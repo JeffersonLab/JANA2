@@ -26,7 +26,7 @@ class JTestParser : public JEventSource {
 
 public:
 
-    JTestParser(string source_name, JApplication* app) : JEventSource(source_name, app)
+    JTestParser(std::string source_name, JApplication* app) : JEventSource(source_name, app)
     {
         app->GetParameter("nevents", mNumEventsToGenerate);
         app->GetParameter("jtest:parser_bytes", m_write_bytes);

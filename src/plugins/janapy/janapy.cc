@@ -556,7 +556,7 @@ void JANA_PythonModuleInit(JApplication *sApp)
 
 	// Check if interpreter is already initialized and do nothing at all if it is.
 	if( Py_IsInitialized() ){
-		jout << "Python already initialized! Skipping initialization of janapy!" << std::endl;
+		jout << "Python already initialized! Skipping initialization of janapy!" << jendl;
 		PY_INITIALIZED = true;
 		return;
 	}
@@ -564,7 +564,7 @@ void JANA_PythonModuleInit(JApplication *sApp)
 	pyjapp = sApp;
 
 	// Initialize interpreter and register the jana module
-	jout << "Initializing embedded Python ... " << std::endl;
+	jout << "Initializing embedded Python ... " << jendl;
 	PyEval_InitThreads();
 	Py_Initialize();
 #if PY_MAJOR_VERSION >= 3
@@ -589,12 +589,12 @@ void JANA_PythonModuleInit(JApplication *sApp)
 	
 	auto fil = std::fopen(fname.c_str(), "r");
 	if( fil ) {
-		jout << "Executing Python script: " << fname << " ..." << std::endl;
+		jout << "Executing Python script: " << fname << " ..." << jendl;
 		const char *argv = fname.c_str();
 		PySys_SetArgv( 1, (wchar_t**)&argv );
 		PyRun_AnyFileEx( fil, nullptr, 1 );
 	}else if( fname != "jana.py" ){
-		jerr << std::endl << "Unable to open \"" << fname << "\"! Quitting." << std::endl << std::endl;
+		jerr << "Unable to open \"" << fname << "\"! Quitting." << jendl;
 		pyjapp->Quit();
 		PY_INITIALIZED = true;
 		std::this_thread::sleep_for(std::chrono::seconds(1));

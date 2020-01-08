@@ -48,216 +48,213 @@
 
 #include <string>
 #include <algorithm>
+#include <vector>
 #include <map>
 
-#include <JANA/Services/JParameter.h>
 #include <JANA/JLogger.h>
 #include <JANA/JException.h>
 
-using std::string;
 
-class JParameterManager{
-	public:
-		JParameterManager();
-		virtual ~JParameterManager();
-		
-		bool Exists(std::string name);
-		JParameter* FindParameter(std::string);
-		void PrintParameters(bool all=false);
-		std::size_t GetNumParameters(void){ return _jparameters.size(); }
-
-		template<typename T>
-		JParameter* GetParameter(std::string name, T &val);
-
-		template<typename T>
-		T GetParameterValue(std::string name);
-		
-		template<typename K, typename V>
-		JParameter* SetDefaultParameter(K key, V& val, std::string description="");
-
-		template<typename T>
-		JParameter* SetParameter(std::string name, T val);
-
-		void ReadConfigFile(std::string name);
-		void WriteConfigFile(std::string name);
-
-	protected:
-	
-		// When accessing the _jparameters map strings are always converted to
-		// lower case. This effectively makes configuration parameters case-insensitve
-		// while allowing users to use case and have that stored as the actual parameter
-		// name
-		string ToLC(string &name){std::string tmp(name); std::transform(tmp.begin(), tmp.end(), tmp.begin(), ::tolower); return tmp;}
-		std::map<std::string, JParameter*> _jparameters;
-	
-	private:
-    		JLogger _logger;
-
+struct JParameter {
+    std::string name;             // A token (no whitespace, colon-prefixed), e.g. "my_plugin:use_mc"
+    std::string value;            // Stringified value, e.g. "1". Can handle comma-separated vectors of strings e.g. "abc, def"
+    std::string default_value;    // Optional default value, which may or may not equal value
+    std::string description;      // One-liner
+    bool has_default;             // Indicates that a default value is present. Does not indicate whether said value is in use.
+    // bool uses_default;         // TODO: We may want this instead of `if(param.value == param.default_value)` all the time
 };
 
-//---------------------------------
-// GetParameter
-//---------------------------------
+class JParameterManager {
+public:
+
+    JParameterManager();
+
+    virtual ~JParameterManager();
+
+    bool Exists(std::string name);
+
+    JParameter* FindParameter(std::string);
+
+    void PrintParameters(bool all = false);
+
+    template<typename T>
+    JParameter* GetParameter(std::string name, T& val);
+
+    template<typename T>
+    T GetParameterValue(std::string name);
+
+    template<typename T>
+    JParameter* SetParameter(std::string name, T val);
+
+    template<typename T>
+    JParameter* SetDefaultParameter(std::string name, T& val, std::string description = "");
+
+    void ReadConfigFile(std::string name);
+
+    void WriteConfigFile(std::string name);
+
+protected:
+
+    template<typename T>
+    T parse(std::string value);
+
+    template<typename T>
+    std::string stringify(T value);
+
+    std::string to_lower(std::string& name);
+
+    std::map<std::string, JParameter*> m_parameters;
+
+    JLogger m_logger;
+};
+
+
+
 template<typename T>
-JParameter* JParameterManager::GetParameter(std::string name, T &val)
-{	
-	if( ! Exists(name) ) return NULL;
+JParameter* JParameterManager::GetParameter(std::string name, T& val) {
 
-	auto jpar = _jparameters[ ToLC(name) ];
-	jpar->GetValue( val );
-	return jpar;
-}		
-
-//---------------------------------
-// GetParameterValue
-//---------------------------------
-template<typename T>
-T JParameterManager::GetParameterValue(std::string name)
-{	
-	if( ! Exists(name) ) throw JException("Unknown parameter \"%s\"", name.c_str());
-
-	return _jparameters[ ToLC(name) ]->GetValue<T>();
-}		
-
-//---------------------------------
-// SetDefaultParameter
-//---------------------------------
-template<typename K, typename V>
-JParameter* JParameterManager::SetDefaultParameter(K key, V &val, std::string description)
-{
-	/// Retrieve a configuration parameter, creating it if necessary.
-	///
-	/// Upon entry, the value in "val" should be set to the desired default value. It
-	/// will be overwritten if a value for the parameter already exists because
-	/// it was given by the user either on the command line or in a configuration
-	/// file.
-	///
-	/// If the parameter does not already exist, it is created and its value set
-	/// to that of "val".
-	///
-	/// Upon exit, "val" will always contain the value that should be used for event
-	/// processing.
-	///
-	/// If a parameter with the given name already exists, it will be checked to see
-	/// if the parameter already has a default value assigned (this is kept separate
-	/// from the actual value of the parameter used and is maintained purely for
-	/// bookkeeping purposes). If it does not have a default value, then the value
-	/// of "val" upon entry is saved as the default. If it does have a default, then
-	/// the value of the default is compared to the value of "val" upon entry. If the
-	/// two do not match, then a warning message is printed to indicate to the user
-	/// that two different default values are being set for this parameter.
-	///
-	/// Parameters specified on the command line using the "-Pkey=value" syntax will
-	/// not have a default value at the time the parameter is created.
-	///
-	/// This should be called after the JApplication object has been initialized so
-	/// that parameters can be created from any command line options the user may specify.
-
-	auto p = FindParameter(key);
-	if( p != nullptr ){
-		
-		if( p->GetHasDefault() ){
-			auto s1 = p->template GetDefault<std::string>(); // yes, this crazy syntax is correct
-			auto s2 = p->template GetValue<std::string>();   // yes, this crazy syntax is correct
-			if( s1 != s2 ){
-				throw JException("WARNING: Multiple calls to SetDefaultParameter with key=\"%s\": %s != %s", key, s1.c_str(), s2.c_str());
-			}
-		}else{
-			p->SetDefault( val );
-		}
-		
-	}else{
-		p = SetParameter(key, val);
-		p->SetDefault( val );
-	}
-
-	val = p->template GetValue<V>();
-
-	return p;
-	
-#if 0
-	string skey(key); // (handle const char* or string)
-	stringstream ss;
-	ss << std::setprecision(15) << val;
-	string sval = ss.str();
-	
-	pthread_mutex_lock(&parameter_mutex);
-	
-	JParameter *p = GetParameterNoLock(key);
-	if(p != NULL){
-		// Parameter exists
-		
-		// Copy value into user's variable using stringstream for conversion
-		p->GetValue(val);
-		
-		// Warn user if two different default values are set
-		if(p->hasdefault && (sval != p->GetDefault()) ){
-			jout<<" WARNING: Multiple calls to SetDefaultParameter with key=\""
-			<<key<<"\" value= \""<<p->GetDefault()<<"\" and \""<<sval<<"\""<<std::endl;
-			jout<<"        : (\""<<sval<<"\" will be used for the default.)"<<std::endl;
-		}
-		
-		if(!p->hasdefault){
-			// Parameters set from the command line will have the
-			// wrong data type since SetParameter will have been called
-			// with a string type for the value. If a default has not
-			// been set already for this parameter, then we assume the
-			// currently set data type is invalid and we replace it with
-			// the type specified in this call.
-			p->type = JParameter::DataType(val);
-		}		
-	}else{
-		// Parameter doesn't exist. Create it.
-		p = new JParameter(skey, sval);
-		parameters.push_back(p);
-		p->type = JParameter::DataType(val);
-		
-		// We want the value used by this thread to be exactly the same as the
-		// the value for susequent threads. Since they will get a value that has
-		// been converted to/from a string, we need to do this here as well.
-		V save_val = val;
-		p->GetValue(val);
-		
-		// Warn the user if the conversion ends up changing the value
-		if(val != save_val){
-			// Use dedicated stringstream objects to convert using high precision
-			// to avoid changing the prescision setting of jerr
-			stringstream ss_bef;
-			stringstream ss_aft;
-			ss_bef << std::setprecision(15) << save_val;
-			ss_aft << std::setprecision(15) << val;
-		
-			jerr<<" WARNING! The value for "<<skey<<" is changed while storing and retrieving parameter default"<<std::endl;
-			jerr<<"          before conversion:"<< ss_bef.str() << std::endl;
-			jerr<<"          after  conversion:"<< ss_aft.str() << std::endl;
-		}
-	}
-	
-	// Set the default value and description for this parameter
-	p->SetDefault(sval);
-	p->SetDescription(description);
-	
-	// release the parameters mutex
-	pthread_mutex_unlock(&parameter_mutex);
-
-	return p;
-#endif
+    auto result = m_parameters.find(to_lower(name));
+    if (result == m_parameters.end()) {
+        return nullptr;
+    }
+    val = parse<T>(result->second->value);
+    return result->second;
 }
 
-//---------------------------------
-// SetParameter
-//---------------------------------
-template<typename T>
-JParameter* JParameterManager::SetParameter(std::string name, T val)
-{	
-	if( !Exists(name) ) {
-		_jparameters[ ToLC(name) ] = new JParameter(name, val);
-	}else{
-		_jparameters[ ToLC(name) ]->SetValue( val );
-	}
 
-	return _jparameters[ ToLC(name) ];
-}		
+template<typename T>
+T JParameterManager::GetParameterValue(std::string name) {
+    auto result = m_parameters.find(to_lower(name));
+    if (result == m_parameters.end()) {
+        throw JException("Unknown parameter \"%s\"", name.c_str());
+    }
+    return parse<T>(result->second->value);
+}
+
+
+template<typename T>
+JParameter* JParameterManager::SetParameter(std::string name, T val) {
+
+    auto result = m_parameters.find(to_lower(name));
+
+    if (result == m_parameters.end()) {
+        auto* param = new JParameter {name, stringify(val), "", "", false};
+        m_parameters[to_lower(name)] = param;
+        return param;
+    }
+    result->second->value = stringify(val);
+    return result->second;
+}
+
+
+template<typename T>
+JParameter* JParameterManager::SetDefaultParameter(std::string name, T& val, std::string description) {
+    /// Retrieve a configuration parameter, creating it if necessary.
+    ///
+    /// Upon entry, the value in "val" should be set to the desired default value. It
+    /// will be overwritten if a value for the parameter already exists because
+    /// it was given by the user either on the command line or in a configuration
+    /// file. If the parameter does not already exist, it is created and its value set
+    /// to that of "val". Upon exit, "val" will always contain the value that should be used
+    /// for event processing.
+    ///
+    /// If a parameter with the given name already exists, it will be checked to see
+    /// if the parameter already has a default value assigned (this is kept separate
+    /// from the actual value of the parameter used and is maintained purely for
+    /// bookkeeping purposes). If it does not have a default value, then the value
+    /// of "val" upon entry is saved as the default. If it does have a default, then
+    /// the value of the default is compared to the value of "val" upon entry. If the
+    /// two do not match, then a warning message is printed to indicate to the user
+    /// that two different default values are being set for this parameter.
+    ///
+    /// Parameters specified on the command line using the "-Pkey=value" syntax will
+    /// not have a default value at the time the parameter is created.
+    ///
+    /// This should be called after the JApplication object has been initialized so
+    /// that parameters can be created from any command line options the user may specify.
+
+    JParameter* param = nullptr;
+
+    auto result = m_parameters.find(to_lower(name));
+    if (result != m_parameters.end()) {
+        // We already have a value stored for this parameter
+        param = result->second;
+
+        if (!param->has_default) {
+            // Our existing value is a non-default value.
+            // We still want to remember the default for future conflict detection.
+            param->has_default = true;
+            param->default_value = stringify(val);
+        }
+        else if (parse<T>(param->default_value) != val) {
+            // Our existing value is another default, and it conflicts
+            throw JException("Conflicting defaults for parameter %s", name.c_str());
+        }
+    }
+    else {
+        // We are storing a value for this parameter for the first time
+        auto valstr = stringify(val);
+        param = new JParameter {name, valstr, valstr, std::move(description), true};
+
+        // Test whether parameter is one-to-one with its string representation.
+        // If not, we have a problem
+        if (parse<T>(valstr) != val) {
+            throw JException("Parameter %s loses equality with itself after stringification");
+        }
+        m_parameters[to_lower(name)] = param;
+    }
+
+    // Always put val through the stringification/parsing cycle to be consistent with
+    // values passed in from config file, accesses from other threads
+    val = parse<T>(param->value);
+    return param;
+}
+
+
+// Logic for parsing and stringifying different types
+
+template <typename T>
+inline T JParameterManager::parse(std::string value) {
+    std::stringstream ss(value);
+    T val;
+    ss >> val;
+    return val;
+}
+
+/// Specialization for std::vector<std::string>
+template<>
+inline std::vector<std::string> JParameterManager::parse(std::string value) {
+    std::stringstream ss(value);
+    std::vector<std::string> result;
+    std::string s;
+    while (getline(ss, s, ',')) {
+        result.push_back(s);
+    }
+    return result;
+}
+
+template <typename T>
+inline std::string JParameterManager::stringify(T value) {
+    std::stringstream ss;
+    ss << value;
+    return ss.str();
+}
+
+/// Specialization for std::vector<std::string>
+template<>
+inline std::string JParameterManager::stringify(std::vector<std::string> value) {
+
+    std::stringstream ss;
+    size_t len = value.size();
+    for (size_t i = 0; i+1 < len; ++i) {
+        ss << value[i];
+        ss << ",";
+    }
+    if (len != 0) {
+        ss << value[len-1];
+    }
+    return ss.str();
+}
 
 #endif // _JParameterManager_h_
 
