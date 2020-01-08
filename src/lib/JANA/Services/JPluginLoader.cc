@@ -34,6 +34,7 @@
 #include "JPluginLoader.h"
 #include "JComponentManager.h"
 #include "JLoggingService.h"
+#include <JANA/JApplication.h>
 
 #include <dlfcn.h>
 #include <iostream>
@@ -198,18 +199,14 @@ void JPluginLoader::attach_plugin(JComponentManager* jcm, std::string soname) {
 }
 
 
-JPluginLoader::JPluginLoader(JApplication* app, JParameterManager* params) {
+JPluginLoader::JPluginLoader(JApplication* app) {
 
     _app = app;
 
-    if (params != nullptr) {
-
-        params->SetDefaultParameter("plugins", _plugins_to_include, "");
-        params->SetDefaultParameter("plugins_to_ignore", _plugins_to_exclude, "");
-
-        params->SetDefaultParameter("JANA:DEBUG_PLUGIN_LOADING", _verbose,
+    app->SetDefaultParameter("plugins", _plugins_to_include, "");
+    app->SetDefaultParameter("plugins_to_ignore", _plugins_to_exclude, "");
+    app->SetDefaultParameter("JANA:DEBUG_PLUGIN_LOADING", _verbose,
                                     "Trace the plugin search path and display any loading errors");
-    }
 }
 
 

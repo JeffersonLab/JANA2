@@ -53,6 +53,7 @@
 
 #include <JANA/JLogger.h>
 #include <JANA/JException.h>
+#include <JANA/Services/JServiceLocator.h>
 
 
 struct JParameter {
@@ -64,7 +65,7 @@ struct JParameter {
     // bool uses_default;         // TODO: We may want this instead of `if(param.value == param.default_value)` all the time
 };
 
-class JParameterManager {
+class JParameterManager : public JService {
 public:
 
     JParameterManager();

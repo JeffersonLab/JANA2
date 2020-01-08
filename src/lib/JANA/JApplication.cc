@@ -46,23 +46,26 @@ JApplication *japp = nullptr;
 
 JApplication::JApplication(JParameterManager* params) {
 
-    _params = (params == nullptr) ? new JParameterManager : params;
-
-    _logger = JLogger(JLogger::Level::INFO);
-    _plugin_loader = new JPluginLoader(this,_params);
-    _component_manager = new JComponentManager(this, _params);
-    _processing_controller = nullptr;
-}
-
-
-JApplication::~JApplication() {
-    if (_processing_controller != nullptr) {
-        delete _processing_controller;
+    if (_params == nullptr) {
+        _params = std::make_shared<JParameterManager>();
     }
-    delete _params;
-    delete _plugin_loader;
-    delete _component_manager;
+    else {
+        _params = std::shared_ptr<JParameterManager>(params);
+    }
+
+    _service_locator.provide(_params);
+    _service_locator.provide(std::make_shared<JLoggingService>());
+    _service_locator.provide(std::make_shared<JPluginLoader>(this));
+    _service_locator.provide(std::make_shared<JComponentManager>(this));
+
+    _plugin_loader = _service_locator.get<JPluginLoader>();
+    _component_manager = _service_locator.get<JComponentManager>();
+
+    _logger = JLogger(JLogger::Level::INFO); // TODO: Get from logging service
 }
+
+
+JApplication::~JApplication() {}
 
 
 // Loading plugins
@@ -118,7 +121,7 @@ void JApplication::Initialize() {
         if (_initialized) return;
 
         // Attach all plugins
-        _plugin_loader->attach_plugins(_component_manager);
+        _plugin_loader->attach_plugins(_component_manager.get());
 
         // Set task pool size
         size_t task_pool_size = 200;
@@ -133,8 +136,8 @@ void JApplication::Initialize() {
 
 
         _component_manager->resolve_event_sources();
-        auto topology = JArrowTopology::from_components(_component_manager, this);
-        _processing_controller = new JArrowProcessingController(topology);
+        auto topology = JArrowTopology::from_components(_component_manager, _params);
+        _processing_controller = std::make_shared<JArrowProcessingController>(topology);
 
         _params->SetDefaultParameter("JANA:EXTENDED_REPORT", _extended_report);
         _processing_controller->initialize();

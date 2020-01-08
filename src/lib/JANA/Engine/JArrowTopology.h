@@ -50,7 +50,7 @@ struct JArrowTopology : public JActivable {
     explicit JArrowTopology();
     virtual ~JArrowTopology();
 
-    static JArrowTopology* from_components(JComponentManager*, JApplication*);
+    static JArrowTopology* from_components(std::shared_ptr<JComponentManager>, std::shared_ptr<JParameterManager>);
 
     std::shared_ptr<JEventPool> event_pool; // TODO: Belongs somewhere else
     JPerfMetrics metrics;

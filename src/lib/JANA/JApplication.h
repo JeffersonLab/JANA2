@@ -99,6 +99,7 @@ public:
 
 
     // Performance/status monitoring
+
     bool IsInitialized(void){return _initialized;}
     bool IsQuitting(void) { return _quitting; }
     bool IsDrainingQueues(void) { return _draining_queues; }
@@ -119,7 +120,7 @@ public:
 
     // Parameter config
 
-    JParameterManager* GetJParameterManager() { return _params; }
+    JParameterManager* GetJParameterManager() { return _params.get(); }
 
     template<typename T>
     T GetParameterValue(std::string name);
@@ -151,11 +152,12 @@ public:
 private:
 
     JLogger _logger;
-    JParameterManager* _params;
-    JPluginLoader* _plugin_loader;
-    JComponentManager* _component_manager;
-    JProcessingController* _processing_controller;
     JServiceLocator _service_locator;
+
+    std::shared_ptr<JParameterManager> _params;
+    std::shared_ptr<JPluginLoader> _plugin_loader;
+    std::shared_ptr<JComponentManager> _component_manager;
+    std::shared_ptr<JProcessingController> _processing_controller;
 
     bool _quitting = false;
     bool _draining_queues = false;
@@ -166,10 +168,7 @@ private:
     int  _exit_code = 0;
     int  _desired_nthreads;
 
-
     std::chrono::time_point<std::chrono::high_resolution_clock> mRunStartTime;
-
-    JResourcePool<JFactorySet> mFactorySetPool;
 };
 
 

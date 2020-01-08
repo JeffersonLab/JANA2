@@ -87,7 +87,7 @@ JArrowTopology::~JArrowTopology() {
     }
 }
 
-JArrowTopology* JArrowTopology::from_components(JComponentManager* jcm, JApplication* japp) {
+JArrowTopology* JArrowTopology::from_components(std::shared_ptr<JComponentManager> jcm, std::shared_ptr<JParameterManager> params) {
 
     JArrowTopology* topology = new JArrowTopology();
 
@@ -101,7 +101,6 @@ JArrowTopology* JArrowTopology::from_components(JComponentManager* jcm, JApplica
     int affinity = 0;
     int locality = 0;
 
-    auto params = japp->GetJParameterManager();
     params->SetDefaultParameter("jana:event_pool_size", event_pool_size);
     params->SetDefaultParameter("jana:limit_total_events_in_flight", limit_total_events_in_flight);
     params->SetDefaultParameter("jana:event_queue_threshold", event_queue_threshold);

@@ -43,11 +43,11 @@
 class JComponentManager;
 class JApplication;
 
-class JPluginLoader {
+class JPluginLoader : public JService {
 
 public:
 
-    JPluginLoader(JApplication* app, JParameterManager* params = nullptr);
+    JPluginLoader(JApplication* app);
 
     void add_plugin(std::string plugin_name);
     void add_plugin_path(std::string path);
@@ -62,8 +62,11 @@ private:
     std::vector<void*> _sohandles;
 
     bool _verbose = false;
-    JLogger _logger = JLoggingService::logger("JPluginLoader");
+    JLogger _logger;
+
     JApplication* _app = nullptr;
+    std::shared_ptr<JComponentManager> _jcm;
+
 };
 
 

@@ -8,15 +8,16 @@
 #include <JANA/JEventSourceGenerator.h>
 #include <JANA/Services/JParameterManager.h>
 #include <JANA/Status/JComponentSummary.h>
+#include <JANA/Services/JServiceLocator.h>
 
 #include <vector>
 
 class JEventProcessor;
 
-class JComponentManager {
+class JComponentManager : public JService {
 public:
 
-    explicit JComponentManager(JApplication*, JParameterManager*);
+    explicit JComponentManager(JApplication*);
     ~JComponentManager();
 
     void next_plugin(std::string plugin_name);

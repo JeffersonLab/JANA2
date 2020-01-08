@@ -5,10 +5,10 @@
 #include "JComponentManager.h"
 #include <JANA/JEventProcessor.h>
 
-JComponentManager::JComponentManager(JApplication* app, JParameterManager* params) : m_app(app) {
+JComponentManager::JComponentManager(JApplication* app) : m_app(app) {
 
     // Extract the "user event source" in case of manual override
-    params->SetDefaultParameter("event_source_type", m_user_evt_src_typename, "");
+    app->SetDefaultParameter("event_source_type", m_user_evt_src_typename, "");
 }
 
 JComponentManager::~JComponentManager() {
