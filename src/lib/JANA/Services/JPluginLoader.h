@@ -48,6 +48,8 @@ class JPluginLoader : public JService {
 public:
 
     JPluginLoader(JApplication* app);
+    ~JPluginLoader() override = default;
+    void acquire_services(JServiceLocator*) override;
 
     void add_plugin(std::string plugin_name);
     void add_plugin_path(std::string path);
@@ -65,7 +67,6 @@ private:
     JLogger _logger;
 
     JApplication* _app = nullptr;
-    std::shared_ptr<JComponentManager> _jcm;
 
 };
 

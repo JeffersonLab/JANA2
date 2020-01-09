@@ -46,7 +46,7 @@ JApplication *japp = nullptr;
 
 JApplication::JApplication(JParameterManager* params) {
 
-    if (_params == nullptr) {
+    if (params == nullptr) {
         _params = std::make_shared<JParameterManager>();
     }
     else {
@@ -61,7 +61,7 @@ JApplication::JApplication(JParameterManager* params) {
     _plugin_loader = _service_locator.get<JPluginLoader>();
     _component_manager = _service_locator.get<JComponentManager>();
 
-    _logger = JLogger(JLogger::Level::INFO); // TODO: Get from logging service
+    _logger = _service_locator.get<JLoggingService>()->get_logger("JApplication");
 }
 
 

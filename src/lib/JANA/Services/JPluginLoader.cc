@@ -34,7 +34,7 @@
 #include "JPluginLoader.h"
 #include "JComponentManager.h"
 #include "JLoggingService.h"
-#include <JANA/JApplication.h>
+#include "JParameterManager.h"
 
 #include <dlfcn.h>
 #include <iostream>
@@ -42,6 +42,8 @@
 #include <unistd.h>
 #include <sched.h>
 #include <set>
+
+class JApplication;
 
 void JPluginLoader::add_plugin(std::string plugin_name) {
     /// Add the specified plugin to the list of plugins to be
@@ -119,7 +121,7 @@ void JPluginLoader::attach_plugins(JComponentManager* jcm) {
     std::stringstream err_mess;
     for (std::string plugin : _plugins_to_include) {
         if (exclusions.find(plugin) != exclusions.end()) {
-            LOG_IF(_verbose) << "Excluding plugin `" << plugin << "`" << LOG_END;
+            LOG_DEBUG(_logger) << "Excluding plugin `" << plugin << "`" << LOG_END;
             continue;
         }
         // Sometimes, the user will include the ".so" suffix in the
@@ -130,9 +132,9 @@ void JPluginLoader::attach_plugins(JComponentManager* jcm) {
         bool found_plugin = false;
         for (std::string path : _plugin_paths) {
             std::string fullpath = path + "/" + plugin;
-            LOG_IF(_verbose) << "Looking for '" << fullpath << "' ...." << LOG_END;
+            LOG_DEBUG(_logger) << "Looking for '" << fullpath << "' ...." << LOG_END;
             if (access(fullpath.c_str(), F_OK) != -1) {
-                LOG_IF(_verbose) << "Found!" << LOG_END;
+                LOG_DEBUG(_logger) << "Found!" << LOG_END;
                 try {
                     jcm->next_plugin(plugin);
                     attach_plugin(jcm, fullpath.c_str());
@@ -144,7 +146,7 @@ void JPluginLoader::attach_plugins(JComponentManager* jcm) {
                     continue;
                 }
             }
-            LOG_IF(_verbose) << "Failed to attach '" << fullpath << "'" << LOG_END;
+            LOG_DEBUG(_logger) << "Failed to attach '" << fullpath << "'" << LOG_END;
         }
 
         // If we didn't find the plugin, then complain and quit
@@ -193,20 +195,29 @@ void JPluginLoader::attach_plugin(JComponentManager* jcm, std::string soname) {
         _sohandles.push_back(handle);
     } else {
         dlclose(handle);
-        LOG_IF(_verbose) << "Plugin \"" << soname << "\" does not have an InitPlugin() function. Ignoring."
-                                     << LOG_END;
+        LOG_DEBUG(_logger) << "Plugin \"" << soname
+                           << "\" does not have an InitPlugin() function. Ignoring." << LOG_END;
     }
 }
 
 
-JPluginLoader::JPluginLoader(JApplication* app) {
+JPluginLoader::JPluginLoader(JApplication* app) : _app(app) {}
 
-    _app = app;
 
-    app->SetDefaultParameter("plugins", _plugins_to_include, "");
-    app->SetDefaultParameter("plugins_to_ignore", _plugins_to_exclude, "");
-    app->SetDefaultParameter("JANA:DEBUG_PLUGIN_LOADING", _verbose,
-                                    "Trace the plugin search path and display any loading errors");
+void JPluginLoader::acquire_services(JServiceLocator* sl) {
+
+    auto params = sl->get<JParameterManager>();
+    params->SetDefaultParameter("plugins", _plugins_to_include, "");
+    params->SetDefaultParameter("plugins_to_ignore", _plugins_to_exclude, "");
+    params->SetDefaultParameter("JANA:DEBUG_PLUGIN_LOADING", _verbose,
+                                "Trace the plugin search path and display any loading errors");
+
+    _logger = sl->get<JLoggingService>()->get_logger("JPluginLoader");
+    if (_verbose) {
+        // The jana:debug_plugin_loading parameter is kept around for backwards compatibility
+        // at least for now
+        _logger.level = JLogger::Level::TRACE;
+    }
 }
 
 

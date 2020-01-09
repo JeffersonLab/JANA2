@@ -4,6 +4,7 @@
 #define JANA_JLOGGER_H_
 
 #include <JANA/JLogger.h>
+#include <JANA/Services/JParameterManager.h>
 #include <JANA/Services/JServiceLocator.h>
 
 #include <iostream>
@@ -32,6 +33,7 @@ class JLoggingService : public JService {
     std::map<std::string, JLogger::Level> _local_log_levels;
 
 public:
+
     void set_level(JLogger::Level level) { _global_log_level = level; }
 
     void set_level(std::string className, JLogger::Level level) {
@@ -39,8 +41,43 @@ public:
     }
 
     void acquire_services(JServiceLocator* serviceLocator) override {
-        // serviceLocator.get<ParameterService>()
-        // Add loglevels to
+
+        auto params = serviceLocator->get<JParameterManager>();
+        std::vector<std::string> groups;
+        params->SetDefaultParameter("log:off", groups, "");
+        for (auto& s : groups) {
+            _local_log_levels[s] = JLogger::Level::OFF;
+        }
+        groups.clear();
+        params->SetDefaultParameter("log:fatal", groups, "");
+        for (auto& s : groups) {
+            _local_log_levels[s] = JLogger::Level::FATAL;
+        }
+        groups.clear();
+        params->SetDefaultParameter("log:error", groups, "");
+        for (auto& s : groups) {
+            _local_log_levels[s] = JLogger::Level::ERROR;
+        }
+        groups.clear();
+        params->SetDefaultParameter("log:warn", groups, "");
+        for (auto& s : groups) {
+            _local_log_levels[s] = JLogger::Level::WARN;
+        }
+        groups.clear();
+        params->SetDefaultParameter("log:info", groups, "");
+        for (auto& s : groups) {
+            _local_log_levels[s] = JLogger::Level::INFO;
+        }
+        groups.clear();
+        params->SetDefaultParameter("log:debug", groups, "");
+        for (auto& s : groups) {
+            _local_log_levels[s] = JLogger::Level::DEBUG;
+        }
+        groups.clear();
+        params->SetDefaultParameter("log:trace", groups, "");
+        for (auto& s : groups) {
+            _local_log_levels[s] = JLogger::Level::TRACE;
+        }
     }
 
     JLogger get_logger() {
