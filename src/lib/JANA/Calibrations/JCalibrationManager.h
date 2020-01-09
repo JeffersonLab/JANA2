@@ -37,7 +37,9 @@
 #include <JANA/Calibrations/JCalibrationCCDB.h>
 #include <JANA/Calibrations/JCalibrationFile.h>
 #include <JANA/Calibrations/JCalibrationGenerator.h>
+
 #include <JANA/Services/JServiceLocator.h>
+#include <JANA/Services/JLoggingService.h>
 
 #include <algorithm>
 
@@ -46,8 +48,29 @@ class JCalibrationManager : public JService {
     vector<JCalibration*> calibrations;
     vector<JCalibrationGenerator*> calibrationGenerators;
     pthread_mutex_t calibration_mutex;
+    JLogger logger;
+    std::string url = "file://./";
+    std::string context = "default";
 
 public:
+    void acquire_services(JServiceLocator* service_locator) {
+
+        // Configure our logger
+        logger = service_locator->get<JLoggingService>()->get_logger("JCalibrationManager");
+
+        auto params = service_locator->get<JParameterManager>();
+
+        // Url and context may be passed in either as environment variables
+        // or configuration parameters. Default values are used if neither is available.
+
+        if (getenv("JANA_CALIB_URL") != nullptr) url = getenv("JANA_CALIB_URL");
+        if (getenv("JANA_CALIB_CONTEXT") != nullptr) context = getenv("JANA_CALIB_CONTEXT");
+
+        params->SetDefaultParameter("JANA:CALIB_URL", url, "URL used to access calibration constants");
+        params->SetDefaultParameter("JANA:CALIB_CONTEXT", context,
+                                  "Calibration context to pass on to concrete JCalibration derived class");
+    }
+
     void AddCalibrationGenerator(JCalibrationGenerator* generator) {
         calibrationGenerators.push_back(generator);
     };
@@ -79,15 +102,6 @@ public:
         /// should access it in their brun() callback and keep a local
         /// copy of the required constants for use in the evnt() callback.
 
-        // url and context may be passed in either as environment variables
-        // or configuration parameters. Default values are used if neither
-        // is available.
-        string url     = "file://./";
-        string context = "default";
-        if( getenv("JANA_CALIB_URL"    )!=NULL ) url     = getenv("JANA_CALIB_URL");
-        if( getenv("JANA_CALIB_CONTEXT")!=NULL ) context = getenv("JANA_CALIB_CONTEXT");
-        japp->SetDefaultParameter("JANA_CALIB_URL",     url,     "URL used to access calibration constants");
-        japp->SetDefaultParameter("JANA_CALIB_CONTEXT", context, "Calibration context to pass on to concrete JCalibration derived class");
 
         // Lock mutex to keep list from being modified while we search it
         pthread_mutex_lock(&calibration_mutex);
@@ -133,35 +147,40 @@ public:
         if(gen==NULL && (url.find("file://")==0)){
             g = new JCalibrationFile(url, run_number, context);
         }
-        if(g){
+        if (g) {
             calibrations.push_back(g);
-            jout<<"Created JCalibration object of type: "<<g->className()<<jendl;
-            jout<<"Generated via: "<< (gen==NULL ? "fallback creation of JCalibrationFile":gen->Description())<<jendl;
-            jout<<"Run:"<<g->GetRun()<<jendl;
-            jout<<"URL: "<<g->GetURL()<<jendl;
-            jout<<"context: "<<g->GetContext()<<jendl;
-        }else{
-            _DBG__;
-            _DBG_<<"Unable to create JCalibration object!"<<endl;
-            _DBG_<<"    URL: "<<url<<endl;
-            _DBG_<<"context: "<<context<<endl;
-            _DBG_<<"    run: "<<run_number<<endl;
-            if(gen)
-                _DBG_<<"attempted to use generator: "<<gen->Description()<<endl;
-            else
-                _DBG_<<"no appropriate generators found. attempted JCalibrationFile"<<endl;
+            LOG_INFO(logger)
+                << "Created JCalibration object of type: " << g->className() << "\n"
+                << "  Generated via: " << (gen == NULL ? "fallback creation of JCalibrationFile" : gen->Description())
+                << "\n"
+                << "  Run: " << g->GetRun() << "\n"
+                << "  URL: " << g->GetURL() << "\n"
+                << "  context: " << g->GetContext()
+                << LOG_END;
+        }
+        else {
+            JLogMessage m(logger, JLogger::Level::ERROR);
+            m << "Unable to create JCalibration object!\n"
+              << "  Run: " << run_number << "\n"
+              << "  URL: " << url << "\n"
+              << "  context: " << context << "\n";
+
+            if (gen) {
+                m << "  Attempted to use generator: " << gen->Description();
+            }
+            else {
+                m << "  No appropriate generators found. Attempted JCalibrationFile";
+            }
+            std::move(m) << LOG_END;
         }
 
         // Unlock calibration mutex
         pthread_mutex_unlock(&calibration_mutex);
-
         return g;
-
     }
 
     template<class T>
-    bool GetCalib(unsigned int run_number, unsigned int event_number, string namepath, map<string,T> &vals)
-    {
+    bool GetCalib(unsigned int run_number, unsigned int event_number, string namepath, map<string, T>& vals) {
         /// Get the JCalibration object from JApplication for the run number of
         /// the current event and call its Get() method to get the constants.
 
@@ -170,22 +189,23 @@ public:
         // it easier for the user to understand how to call us.
 
         vals.clear();
-        JCalibration *calib = GetJCalibration(run_number);
-        if(!calib){
-            _DBG_<<"Unable to get JCalibration object for run "<<run_number<<std::endl;
+        JCalibration* calib = GetJCalibration(run_number);
+        if (!calib) {
+            LOG_ERROR(logger) << "Unable to get JCalibration object for run " << run_number << LOG_END;
             return true;
         }
         return calib->Get(namepath, vals, event_number);
     }
 
-    template<class T> bool GetCalib(unsigned int run_number, unsigned int event_number, string namepath, vector<T> &vals) {
+    template<class T>
+    bool GetCalib(unsigned int run_number, unsigned int event_number, string namepath, vector<T>& vals) {
         /// Get the JCalibration object from JApplication for the run number of
         /// the current event and call its Get() method to get the constants.
 
         vals.clear();
-        JCalibration *calib = GetJCalibration(run_number);
-        if(!calib){
-            _DBG_<<"Unable to get JCalibration object for run "<<run_number<<std::endl;
+        JCalibration* calib = GetJCalibration(run_number);
+        if (!calib) {
+            LOG_ERROR(logger) << "Unable to get JCalibration object for run " << run_number << LOG_END;
             return true;
         }
         return calib->Get(namepath, vals, event_number);
