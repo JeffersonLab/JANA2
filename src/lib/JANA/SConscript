@@ -15,6 +15,7 @@ env.AppendUnique(ALL_SOURCES = env.Glob('Engine/*.cc'))
 env.AppendUnique(ALL_SOURCES = env.Glob('Services/*.cc'))
 env.AppendUnique(ALL_SOURCES = env.Glob('Status/*.cc'))
 env.AppendUnique(ALL_SOURCES = env.Glob('Utils/*.cc'))
+env.AppendUnique(ALL_SOURCES = env.Glob('Calibrations/*.cc'))
 
 libname = 'JANA'
 myobjs = env.Object(env['ALL_SOURCES'])
