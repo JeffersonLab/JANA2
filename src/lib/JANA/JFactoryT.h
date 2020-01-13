@@ -82,7 +82,6 @@ public:
     }
 
     PairType GetOrCreate(const std::shared_ptr<const JEvent>& event, JEventSource* source, uint64_t run_number) {
-
         //std::lock_guard<std::mutex> lock(mMutex);
         switch (mStatus) {
             case Status::Uninitialized:

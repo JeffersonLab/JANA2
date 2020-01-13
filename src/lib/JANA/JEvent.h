@@ -45,7 +45,6 @@
 #ifndef _JEvent_h_
 #define _JEvent_h_
 
-
 #include <JANA/JObject.h>
 #include <JANA/JException.h>
 #include <JANA/JFactoryT.h>
@@ -68,64 +67,88 @@ class JApplication;
 
 using std::vector;
 
-class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
-{
-	public:
+class JEvent: public JResettable, public std::enable_shared_from_this<JEvent> {
+public:
 
-		explicit JEvent(JApplication* aApplication=nullptr) { mApplication = aApplication; }
-		virtual ~JEvent() {
-		    if (mFactorySet != nullptr) mFactorySet->Release();
-		}
+	explicit JEvent(JApplication* aApplication = nullptr) {
+		mApplication = aApplication;
+	}
+	virtual ~JEvent() {
+		if (mFactorySet != nullptr)
+			mFactorySet->Release();
+	}
 
-		//FACTORIES
-		void SetFactorySet(JFactorySet* aFactorySet) { mFactorySet = aFactorySet; }
-		template<class T> JFactoryT<T>* GetFactory(const std::string& tag = "", bool throw_on_missing=false) const;
+	//FACTORIES
+	void SetFactorySet(JFactorySet* aFactorySet) {
+		mFactorySet = aFactorySet;
+	}
+	template<class T> JFactoryT<T>* GetFactory(const std::string& tag = "", bool throw_on_missing = false) const;
 
-		//OBJECTS
-		// C style getters
-		template<class T> JFactoryT<T>* Get(const T** item, const std::string& tag="") const;
-		template<class T> JFactoryT<T>* Get(vector<const T*> &vec, const std::string& tag = "") const;
+	template<class T> vector<JFactoryT<T>*> GetFactoryAll(bool throw_on_missing = false) const;
 
-		// C++ style getters
-		template<class T> const T* GetSingle(const std::string& tag = "") const;
-		template<class T> vector<const T*> Get(const std::string& tag = "") const;
-		template<class T> typename JFactoryT<T>::PairType GetIterators(const std::string& aTag = "") const;
+	//OBJECTS
+	// C style getters
+	template<class T> JFactoryT<T>* Get(const T** item, const std::string& tag = "") const;
+	template<class T> JFactoryT<T>* Get(vector<const T*> &vec, const std::string& tag = "") const;
+	template<class T> void GetAll(vector<const T*> &vec) const;
 
-		// Insert
-		template <class T> void Insert(T* item, const std::string& aTag = "") const;
-		template <class T> void Insert(const std::vector<T*>& items, const std::string& tag = "") const;
+	// C++ style getters
+	template<class T> const T* GetSingle(const std::string& tag = "") const;
+	template<class T> vector<const T*> Get(const std::string& tag = "") const;
+	template<class T> vector<const T*> GetAll() const;
+	template<class T> typename JFactoryT<T>::PairType GetIterators(const std::string& aTag = "") const;
 
-		//SETTERS
-		void SetRunNumber(uint32_t aRunNumber){mRunNumber = aRunNumber;}
-		void SetEventNumber(uint64_t aEventNumber){mEventNumber = aEventNumber;}
-		void SetJApplication(JApplication* app){mApplication = app;}
-		void SetJEventSource(JEventSource* aSource){mEventSource = aSource;}
+	// Insert
+	template<class T> void Insert(T* item, const std::string& aTag = "") const;
+	template<class T> void Insert(const std::vector<T*>& items, const std::string& tag = "") const;
 
-		//GETTERS
-		uint32_t GetRunNumber() const {return mRunNumber;}
-		uint64_t GetEventNumber() const {return mEventNumber;}
-		JApplication* GetJApplication() const {return mApplication;}
-        JEventSource* GetJEventSource() const {return mEventSource; }
-		friend class JEventPool;
+	//SETTERS
+	void SetRunNumber(uint32_t aRunNumber) {
+		mRunNumber = aRunNumber;
+	}
+	void SetEventNumber(uint64_t aEventNumber) {
+		mEventNumber = aEventNumber;
+	}
+	void SetJApplication(JApplication* app) {
+		mApplication = app;
+	}
+	void SetJEventSource(JEventSource* aSource) {
+		mEventSource = aSource;
+	}
 
-	protected:
-		mutable JFactorySet* mFactorySet = nullptr;
-		JEventSource* mEventSource = nullptr;
-		bool mIsBarrierEvent = false;
+	//GETTERS
+	uint32_t GetRunNumber() const {
+		return mRunNumber;
+	}
+	uint64_t GetEventNumber() const {
+		return mEventNumber;
+	}
+	JApplication* GetJApplication() const {
+		return mApplication;
+	}
+	JEventSource* GetJEventSource() const {
+		return mEventSource;
+	}
+	friend class JEventPool;
 
-	private:
-		JApplication* mApplication = nullptr;
-		uint32_t mRunNumber = 0;
-		uint64_t mEventNumber = 0;
-		int mDebugLevel = 0;
-		std::shared_ptr<const JEvent> mLatestBarrierEvent = nullptr;
+protected:
+	mutable JFactorySet* mFactorySet = nullptr;
+	JEventSource* mEventSource = nullptr;
+	bool mIsBarrierEvent = false;
+
+private:
+	JApplication* mApplication = nullptr;
+	uint32_t mRunNumber = 0;
+	uint64_t mEventNumber = 0;
+	int mDebugLevel = 0;
+	std::shared_ptr<const JEvent> mLatestBarrierEvent = nullptr;
 };
 
 /// Insert() allows an EventSource to insert items directly into the JEvent,
 /// removing the need for user-extended JEvents and/or JEventSource::GetObjects(...)
 /// Repeated calls to Insert() will append to the previous data rather than overwrite it,
 /// which saves the user from having to allocate a throwaway vector and requires less error handling.
-template <class T>
+template<class T>
 inline void JEvent::Insert(T* item, const std::string& tag) const {
 
 	auto factory = mFactorySet->GetFactory<T>(tag);
@@ -136,7 +159,7 @@ inline void JEvent::Insert(T* item, const std::string& tag) const {
 	factory->Insert(item);
 }
 
-template <class T>
+template<class T>
 inline void JEvent::Insert(const vector<T*>& items, const std::string& tag) const {
 
 	auto factory = mFactorySet->GetFactory<T>(tag);
@@ -153,71 +176,105 @@ inline void JEvent::Insert(const vector<T*>& items, const std::string& tag) cons
 // GetFactory
 //---------------------------------
 template<class T>
-inline JFactoryT<T>* JEvent::GetFactory(const std::string& tag, bool throw_on_missing) const
-{
-    auto factory = mFactorySet->GetFactory<T>(tag);
-    if (factory == nullptr) {
-        if (throw_on_missing) {
-            throw JException("Could not find JFactoryT<" + JTypeInfo::demangle<T>() + "> with tag=" + tag);
-        }
+inline JFactoryT<T>* JEvent::GetFactory(const std::string& tag, bool throw_on_missing) const {
+	auto factory = mFactorySet->GetFactory<T>(tag);
+	if (factory == nullptr) {
+		if (throw_on_missing) {
+			throw JException("Could not find JFactoryT<" + JTypeInfo::demangle<T>() + "> with tag=" + tag);
+		}
 	};
-    return factory;
+	return factory;
 }
 
+//---------------------------------
+// GetFactoryAll
+//---------------------------------
+template<class T>
+inline vector<JFactoryT<T>*> JEvent::GetFactoryAll(bool throw_on_missing) const {
+	auto factories = mFactorySet->GetFactoryAll<T>();
+	if (factories.size() == 0) {
+		if (throw_on_missing) {
+			throw JException("Could not find any JFactoryT<" + JTypeInfo::demangle<T>() + "> (from any tag)");
+		}
+	};
+	return factories;
+}
 
 /// C-style getters
 
 template<class T>
-JFactoryT<T>* JEvent::Get(const T** destination, const std::string& tag) const
-{
+JFactoryT<T>* JEvent::Get(const T** destination, const std::string& tag) const {
 	auto factory = GetFactory<T>(tag, true);
-    auto iterators = factory->GetOrCreate(this->shared_from_this(), mEventSource, mRunNumber);
-    if (std::distance(iterators.first, iterators.second) != 1) {
-        throw JException("Wrong number of elements!");
-    }
+	auto iterators = factory->GetOrCreate(this->shared_from_this(), mEventSource, mRunNumber);
+	if (std::distance(iterators.first, iterators.second) != 1) {
+		throw JException("Wrong number of elements!");
+	}
 	*destination = *iterators.first;
 	return factory;
 }
 
-
 template<class T>
-JFactoryT<T>* JEvent::Get(vector<const T*>& destination, const std::string& tag) const
-{
-    auto factory = GetFactory<T>(tag, true);
-    auto iterators = factory->GetOrCreate(this->shared_from_this(), mEventSource, mRunNumber);
-    for (auto it=iterators.first; it!=iterators.second; it++) {
-        destination.push_back(*it);
-    }
-    return factory;
+JFactoryT<T>* JEvent::Get(vector<const T*>& destination, const std::string& tag) const {
+	auto factory = GetFactory<T>(tag, true);
+	auto iterators = factory->GetOrCreate(this->shared_from_this(), mEventSource, mRunNumber);
+	for (auto it = iterators.first; it != iterators.second; it++) {
+		destination.push_back(*it);
+	}
+	return factory;
 }
 
+//A.C. GetAll
+template<class T>
+void JEvent::GetAll(vector<const T*>& destination) const {
+	auto factories = GetFactoryAll<T>(true);
+	for (auto factory : factories) {
+		auto iterators = factory->GetOrCreate(this->shared_from_this(), mEventSource, mRunNumber);
+		for (auto it = iterators.first; it != iterators.second; it++) {
+			destination.push_back(*it);
+		}
+	}
+}
 
 /// C++ style getters
 
 template<class T> const T* JEvent::GetSingle(const std::string& tag) const {
-    auto iterators = GetFactory<T>(tag)->GetOrCreate(this->shared_from_this(), mEventSource, mRunNumber);
-    if (std::distance(iterators.first, iterators.second) != 1) {
-        throw JException("Wrong number of elements!");
-    }
-    return *iterators.first;
+	auto iterators = GetFactory<T>(tag)->GetOrCreate(this->shared_from_this(), mEventSource, mRunNumber);
+	if (std::distance(iterators.first, iterators.second) != 1) {
+		throw JException("Wrong number of elements!");
+	}
+	return *iterators.first;
 }
-
 
 template<class T>
 std::vector<const T*> JEvent::Get(const std::string& tag) const {
 
-    auto iters = GetFactory<T>(tag, true)->GetOrCreate(this->shared_from_this(), mEventSource, mRunNumber);
-    std::vector<const T*> vec;
-    for (auto it=iters.first; it!=iters.second; ++it) {
-        vec.push_back(*it);
-    }
-    return vec; // Assumes RVO
+	auto iters = GetFactory<T>(tag, true)->GetOrCreate(this->shared_from_this(), mEventSource, mRunNumber);
+	std::vector<const T*> vec;
+	for (auto it = iters.first; it != iters.second; ++it) {
+		vec.push_back(*it);
+	}
+	return vec; // Assumes RVO
 }
 
+//A.C. GetAll
+template<class T>
+std::vector<const T*> JEvent::GetAll() const {
+	std::vector<const T*> vec;
+	auto factories = GetFactoryAll<T>(true);
+
+	for (auto factory : factories) {
+		auto iters = factory->GetOrCreate(this->shared_from_this(), mEventSource, mRunNumber);
+		std::vector<const T*> vec;
+		for (auto it = iters.first; it != iters.second; ++it) {
+			vec.push_back(*it);
+		}
+	}
+	return vec; // Assumes RVO
+}
 
 template<class T>
 typename JFactoryT<T>::PairType JEvent::GetIterators(const std::string& tag) const {
-    return GetFactory<T>(tag, true)->GetOrCreate(this->shared_from_this(), mEventSource, mRunNumber);
+	return GetFactory<T>(tag, true)->GetOrCreate(this->shared_from_this(), mEventSource, mRunNumber);
 }
 
 #endif // _JEvent_h_

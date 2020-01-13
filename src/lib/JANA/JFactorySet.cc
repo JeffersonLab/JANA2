@@ -111,6 +111,8 @@ JFactory* JFactorySet::GetFactory(std::type_index aObjectType, const std::string
 	return (sIterator != std::end(mFactories)) ? sIterator->second : nullptr;
 }
 
+
+
 //---------------------------------
 // Merge
 //---------------------------------
