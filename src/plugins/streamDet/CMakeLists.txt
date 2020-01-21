@@ -15,35 +15,22 @@ set(STREAMDET_SOURCES
     ADCSampleFactory.h
     )
 
-find_package(ZeroMQ REQUIRED)
-find_package(CZMQ REQUIRED)
-find_package(ROOT REQUIRED)
+find_package(ZeroMQ)
+find_package(CZMQ)
+find_package(ROOT)
 
 if ((ZEROMQ_FOUND AND CZMQ_FOUND) AND ROOT_FOUND)
 
     add_library(streamDet SHARED ${STREAMDET_SOURCES})
+    target_include_directories(streamDet PUBLIC ${ROOT_INCLUDE_DIRS} ${ZEROMQ_INCLUDE_DIRS} ${CMZQ_INCLUDE_DIRS})
+    target_link_libraries(streamDet jana2 ${ZEROMQ_LIBRARIES} ${CZMQ_LIBRARIES} ${ROOT_LIBRARIES})
+    set_target_properties(streamDet PROPERTIES PREFIX "" SUFFIX ".so")
+    install(TARGETS streamDet DESTINATION plugins)
 
 else()
 
-    add_library(streamDet SHARED EXCLUDE_FROM_ALL ${STREAMDET_SOURCES})
-    message(WARNING "Skipping compilation of streamDet.so")
-
-    if (NOT ZEROMQ_FOUND)
-        message(WARNING "Unable to find ZeroMQ")
-    endif()
-
-    if (NOT CZMQ_FOUND)
-        message(WARNING "Unable to find CZMQ")
-    endif()
-
-    if (NOT ROOT_FOUND)
-        message(WARNING "Unable to find ROOT")
-    endif()
+    message(WARNING "Skipping target `streamDet` due to missing ZeroMQ, CZMQ, or ROOT dependencies")
 
 endif()
 
-target_include_directories(streamDet PUBLIC ${ROOT_INCLUDE_DIRS} ${ZEROMQ_INCLUDE_DIRS} ${CMZQ_INCLUDE_DIRS})
-target_link_libraries(streamDet jana2 ${ZEROMQ_LIBRARIES} ${CZMQ_LIBRARIES} ${ROOT_LIBRARIES})
-set_target_properties(streamDet PROPERTIES PREFIX "" SUFFIX ".so")
-install(TARGETS streamDet DESTINATION plugins)
 
