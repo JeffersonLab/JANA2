@@ -47,6 +47,9 @@ void JComponentManager::add(JEventSource *event_source) {
 
 void JComponentManager::add(JEventProcessor *processor) {
     processor->SetPluginName(m_current_plugin_name);
+    if (processor->GetApplication() == nullptr) {
+        processor->SetJApplication(m_app);
+    }
     m_evt_procs.push_back(processor);
 }
 
