@@ -125,8 +125,26 @@ public:
     ReturnStatus DoNext(std::shared_ptr<JEvent> event) {
         try {
             switch (m_status) {
+
                 case SourceStatus::Unopened: DoInitialize(); // Fall-through to Opened afterwards
-                case SourceStatus::Opened:   GetEvent(event); return ReturnStatus::Success;
+
+                case SourceStatus::Opened:
+
+                    if (m_event_count < m_first_event) {
+                        m_event_count += 1;
+                        GetEvent(std::move(event));
+                        return ReturnStatus::TryAgain;
+                    }
+                    else if (m_event_count > m_last_event) {
+                        m_status = SourceStatus::Finished; // TODO: This isn't threadsafe at the moment
+                        return ReturnStatus::Finished;
+                    }
+                    else {
+                        GetEvent(std::move(event));
+                        m_event_count += 1;
+                        return ReturnStatus::Success;
+                    }
+
                 case SourceStatus::Finished: return ReturnStatus::Finished;
             }
         }
@@ -203,13 +221,21 @@ public:
     // Meant to be called by JANA
     void SetPluginName(std::string plugin_name) { m_plugin_name = std::move(plugin_name); };
 
+    // Meant to be called by JANA
+    void SetRange(uint64_t nskip, uint64_t nevents) {
+        m_first_event = nskip;
+        m_last_event = nskip+nevents;
+    };
+
 
 private:
     std::string m_resource_name;
     JApplication* m_application = nullptr;
     JFactoryGenerator* m_factory_generator = nullptr;
     SourceStatus m_status;
-    std::atomic_ullong m_event_count;
+    std::atomic_ullong m_event_count {0};
+    uint64_t m_first_event = 0;
+    uint64_t m_last_event = std::numeric_limits<uint64_t>::max(); // "infinity" by default
 
     std::string m_plugin_name;
     std::string m_type_name;

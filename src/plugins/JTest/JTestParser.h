@@ -21,19 +21,18 @@ class JTestParser : public JEventSource {
     double m_write_spread = 0.25;
     std::shared_ptr<std::vector<char>> m_latest_entangled_buffer;
 
-    std::size_t mNumEventsToGenerate = 5000;
     std::size_t mNumEventsGenerated = 0;
 
 public:
 
     JTestParser(std::string source_name, JApplication* app) : JEventSource(source_name, app)
     {
-        app->GetParameter("nevents", mNumEventsToGenerate);
         app->GetParameter("jtest:parser_bytes", m_write_bytes);
         app->GetParameter("jtest:parser_ms", m_cputime_ms);
         app->GetParameter("jtest:parser_bytes_spread", m_write_spread);
         app->GetParameter("jtest:parser_spread", m_cputime_spread);
 
+        jout << "Hello from JTestParser" << jendl;
         SetFactoryGenerator(new JSourceFactoryGenerator<JTestEntangledEventData>());
         SetTypeName(NAME_OF_THIS);
     }
@@ -58,10 +57,6 @@ public:
         eec->buffer = m_latest_entangled_buffer;
         event->Insert<JTestEntangledEventData>(eec);
 
-        // Terminate when we've reached our limit
-        if (mNumEventsToGenerate != 0 && mNumEventsToGenerate <= mNumEventsGenerated) {
-            throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
-        }
         mNumEventsGenerated++;
 
         event->SetEventNumber(mNumEventsGenerated);
