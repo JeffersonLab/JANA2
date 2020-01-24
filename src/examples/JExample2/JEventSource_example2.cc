@@ -5,20 +5,12 @@
 // Creator: davidl (on Darwin amelia.jlab.org 17.5.0 x86_64)
 //
 
-#include <memory>
-#include <utility>
-#include <random>
-
-//#include <JANA/JFactory.h>
-//#include <JANA/JApplication.h>
-//#include <JANA/JEventSourceGenerator.h>
-//#include <JANA/JQueue.h>
-//#include <JANA/JEvent.h>
-//#include <JANA/JEventSource.h>
-
 #include "JEventSource_example2.h"
 #include "MyEvent.h"
 
+#include <memory>
+#include <utility>
+#include <random>
 
 //-------------------------------------------------------------------------
 // Open

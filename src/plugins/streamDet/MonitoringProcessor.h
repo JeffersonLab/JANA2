@@ -10,7 +10,6 @@
 #include <mutex>
 
 #include <JANA/JEventProcessor.h>
-#include <JANA/JEvent.h>
 #include "ZmqTransport.h"
 #include "INDRAMessage.h"
 

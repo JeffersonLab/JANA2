@@ -46,6 +46,7 @@
 
 #include <JANA/JException.h>
 #include <JANA/Utils/JTypeInfo.h>
+#include <JANA/JEvent.h>
 
 #include <string>
 #include <atomic>
@@ -55,11 +56,6 @@
 class JFactoryGenerator;
 class JApplication;
 class JFactory;
-class JEvent;
-
-// TODO: Importing JEventSource.h does not import JEvent.h, which is confusing to the user.
-// This has to be this way because JEvent needs to know about JEventSource::GetObjects,
-// whereas JEventSource doesn't need to know anything about JEvent. Yes, this is completely backwards.
 
 
 class JEventSource {

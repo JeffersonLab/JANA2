@@ -3,6 +3,7 @@
 //
 
 #include <JANA/JApplication.h>
+#include <JANA/JEventSource.h>
 #include <JANA/Engine/JEventSourceArrow.h>
 #include <JANA/Utils/JEventPool.h>
 

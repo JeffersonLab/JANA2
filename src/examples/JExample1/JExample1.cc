@@ -10,7 +10,6 @@
 
 #include <JANA/JApplication.h>
 #include <JANA/JEventSourceGeneratorT.h>
-#include <JANA/JEvent.h>
 
 
 //-------------------------------------------------------------------------

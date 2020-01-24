@@ -13,8 +13,6 @@
 #include <JANA/JApplication.h>
 #include <JANA/JEventSourceGenerator.h>
 #include <JANA/JEventSource.h>
-#include <JANA/JEvent.h>
-#include <JANA/JEventSource.h>
 
 #include "MyHit.h"
 
