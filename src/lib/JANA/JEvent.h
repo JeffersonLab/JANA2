@@ -80,16 +80,19 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 		//FACTORIES
 		void SetFactorySet(JFactorySet* aFactorySet) { mFactorySet = aFactorySet; }
 		template<class T> JFactoryT<T>* GetFactory(const std::string& tag = "", bool throw_on_missing=false) const;
+        template<class T> std::vector<JFactoryT<T>*> GetFactoryAll(bool throw_on_missing = false) const;
 
 		//OBJECTS
 		// C style getters
 		template<class T> JFactoryT<T>* Get(const T** item, const std::string& tag="") const;
-		template<class T> JFactoryT<T>* Get(vector<const T*> &vec, const std::string& tag = "") const;
+		template<class T> JFactoryT<T>* Get(std::vector<const T*> &vec, const std::string& tag = "") const;
+        template<class T> void GetAll(std::vector<const T*> &vec) const;
 
 		// C++ style getters
 		template<class T> const T* GetSingle(const std::string& tag = "") const;
-		template<class T> vector<const T*> Get(const std::string& tag = "") const;
+		template<class T> std::vector<const T*> Get(const std::string& tag = "") const;
 		template<class T> typename JFactoryT<T>::PairType GetIterators(const std::string& aTag = "") const;
+        template<class T> std::vector<const T*> GetAll() const;
 
 		// Insert
 		template <class T> void Insert(T* item, const std::string& aTag = "") const;
@@ -137,7 +140,7 @@ inline void JEvent::Insert(T* item, const std::string& tag) const {
 }
 
 template <class T>
-inline void JEvent::Insert(const vector<T*>& items, const std::string& tag) const {
+inline void JEvent::Insert(const std::vector<T*>& items, const std::string& tag) const {
 
 	auto factory = mFactorySet->GetFactory<T>(tag);
 	if (factory == nullptr) {
@@ -181,7 +184,7 @@ JFactoryT<T>* JEvent::Get(const T** destination, const std::string& tag) const
 
 
 template<class T>
-JFactoryT<T>* JEvent::Get(vector<const T*>& destination, const std::string& tag) const
+JFactoryT<T>* JEvent::Get(std::vector<const T*>& destination, const std::string& tag) const
 {
     auto factory = GetFactory<T>(tag, true);
     auto iterators = factory->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
@@ -210,6 +213,48 @@ std::vector<const T*> JEvent::Get(const std::string& tag) const {
     std::vector<const T*> vec;
     for (auto it=iters.first; it!=iters.second; ++it) {
         vec.push_back(*it);
+    }
+    return vec; // Assumes RVO
+}
+
+/// GetFactoryAll returns all JFactoryT's for type T (each corresponds to a different tag).
+/// This is useful when there are many different tags, or the tags are unknown, and the user
+/// wishes to examine them all together.
+template<class T>
+inline std::vector<JFactoryT<T>*> JEvent::GetFactoryAll(bool throw_on_missing) const {
+    auto factories = mFactorySet->GetFactoryAll<T>();
+    if (factories.size() == 0) {
+        if (throw_on_missing) {
+            throw JException("Could not find any JFactoryT<" + JTypeInfo::demangle<T>() + "> (from any tag)");
+        }
+    };
+    return factories;
+}
+
+/// GetAll returns all JObjects of (child) type T, regardless of tag.
+template<class T>
+void JEvent::GetAll(std::vector<const T*>& destination) const {
+    auto factories = GetFactoryAll<T>(true);
+    for (auto factory : factories) {
+        auto iterators = factory->GetOrCreate(this->shared_from_this(), mEventSource, mRunNumber);
+        for (auto it = iterators.first; it != iterators.second; it++) {
+            destination.push_back(*it);
+        }
+    }
+}
+
+/// GetAll returns all JObjects of (child) type T, regardless of tag.
+template<class T>
+std::vector<const T*> JEvent::GetAll() const {
+    std::vector<const T*> vec;
+    auto factories = GetFactoryAll<T>(true);
+
+    for (auto factory : factories) {
+        auto iters = factory->GetOrCreate(this->shared_from_this(), mEventSource, mRunNumber);
+        std::vector<const T*> vec;
+        for (auto it = iters.first; it != iters.second; ++it) {
+            vec.push_back(*it);
+        }
     }
     return vec; // Assumes RVO
 }

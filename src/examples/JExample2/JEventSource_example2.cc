@@ -76,7 +76,7 @@ bool JEventSource_example2::GetObjects(const std::shared_ptr<const JEvent>& aEve
 	while(Nhits<10) Nhits = distribution(generator);
 
 	// Create MyHit objects
-	vector<MyHit*> hits;
+	std::vector<MyHit*> hits;
 	for(size_t i=0; i<Nhits; i++){
 		double x = distribution(generator)/10.0;
 		double E = distribution(generator)*2.0;

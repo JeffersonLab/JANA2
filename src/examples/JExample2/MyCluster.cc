@@ -24,7 +24,7 @@ void JFactoryT<MyCluster>::Process(const std::shared_ptr<const JEvent>& aEvent)
 	auto hits = aEvent->Get<MyHit>();
 
 	// For simplicity, split hits into 3 groups and we'll make a MyCluster from each
-	vector< decltype(hits) > sorted_hits(3); // i.e. vector< vector<const MyHit*> > with 3 elements
+	std::vector< decltype(hits) > sorted_hits(3); // i.e. vector< vector<const MyHit*> > with 3 elements
 	for(size_t i=0; i<hits.size(); i++){
 		sorted_hits[i%3].push_back( hits[i] ); // copy pointer to MyHit to appropriate internal vector
 	}

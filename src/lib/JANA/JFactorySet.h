@@ -70,6 +70,7 @@ class JFactorySet : public JResettable
 
 		JFactory* GetFactory(std::type_index aObjectType, const std::string& aFactoryTag="") const;
 		template<typename T> JFactoryT<T>* GetFactory(const std::string& tag = "") const;
+		template<typename T> std::vector<JFactoryT<T>*> GetFactoryAll() const;
 
 		std::vector<JFactorySummary> Summarize() const;
 
@@ -86,6 +87,19 @@ JFactoryT<T>* JFactorySet::GetFactory(const std::string& tag) const {
 	auto sIterator = mFactories.find(sKeyPair);
 	return (sIterator != std::end(mFactories)) ? static_cast<JFactoryT<T>*>(sIterator->second) : nullptr;
 }
+
+template<typename T>
+std::vector<JFactoryT<T>*> JFactorySet::GetFactoryAll() const {
+	auto sKey = std::type_index(typeid(T));
+	std::vector<JFactoryT<T>*> data;
+	for (auto it=std::begin(mFactories);it!=std::end(mFactories);it++){
+		if (it->first.first==sKey){
+			data.push_back(static_cast<JFactoryT<T>*>(it->second));
+		}
+	}
+	return data;
+}
+
 
 #endif // _JFactorySet_h_
 
