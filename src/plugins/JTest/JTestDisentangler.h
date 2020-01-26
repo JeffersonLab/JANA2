@@ -52,18 +52,21 @@ class JTestDisentangler : public JFactoryT<JTestEventData> {
 
 public:
 
-    JTestDisentangler() : JFactoryT<JTestEventData>("JTestDisentangler") {
-        auto params = japp->GetJParameterManager();
-        params->GetParameter("jtest:disentangler_bytes", m_write_bytes);
-        params->GetParameter("jtest:disentangler_ms", m_cputime_ms);
-        params->GetParameter("jtest:disentangler_bytes_spread", m_write_spread);
-        params->GetParameter("jtest:disentangler_spread", m_cputime_spread);
+    JTestDisentangler() : JFactoryT<JTestEventData>("JTestDisentangler") {};
+
+    void Init() override {
+        auto app = GetApplication();
+        assert (app != nullptr);
+        app->GetParameter("jtest:disentangler_bytes", m_write_bytes);
+        app->GetParameter("jtest:disentangler_ms", m_cputime_ms);
+        app->GetParameter("jtest:disentangler_bytes_spread", m_write_spread);
+        app->GetParameter("jtest:disentangler_spread", m_cputime_spread);
 
         // Retrieve calibration service from JApp
-        m_calibration_service = japp->GetService<JTestCalibrationService>();
-    };
+        m_calibration_service = app->GetService<JTestCalibrationService>();
+    }
 
-    void Process(const std::shared_ptr<const JEvent> &aEvent) {
+    void Process(const std::shared_ptr<const JEvent> &aEvent) override {
 
         // Read (large) entangled event data
         auto eed = aEvent->GetSingle<JTestEntangledEventData>();

@@ -47,15 +47,20 @@ class JTestTracker : public JFactoryT<JTestTrackData> {
 
 public:
 
-    JTestTracker() : JFactoryT<JTestTrackData>("JTestTracker") {
-        auto params = japp->GetJParameterManager();
-        params->GetParameter("jtest:tracker_bytes", m_write_bytes);
-        params->GetParameter("jtest:tracker_ms", m_cputime_ms);
-        params->GetParameter("jtest:tracker_bytes_spread", m_write_spread);
-        params->GetParameter("jtest:tracker_spread", m_cputime_spread);
-    };
+    JTestTracker() : JFactoryT<JTestTrackData>("JTestTracker") {};
 
-    void Process(const std::shared_ptr<const JEvent> &aEvent) {
+
+    void Init() override {
+
+        auto app = GetApplication();
+        assert (app != nullptr);
+        app->GetParameter("jtest:tracker_bytes", m_write_bytes);
+        app->GetParameter("jtest:tracker_ms", m_cputime_ms);
+        app->GetParameter("jtest:tracker_bytes_spread", m_write_spread);
+        app->GetParameter("jtest:tracker_spread", m_cputime_spread);
+    }
+
+    void Process(const std::shared_ptr<const JEvent> &aEvent) override {
 
         // Read (large) event data
         auto ed = aEvent->GetSingle<JTestEventData>();

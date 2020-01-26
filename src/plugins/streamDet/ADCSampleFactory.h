@@ -22,13 +22,13 @@ class ADCSampleFactory : public JFactoryT<ADCSample> {
 
 public:
 
-    ADCSampleFactory() : JFactoryT<ADCSample>("ADCSampleFactory") {
+    ADCSampleFactory() : JFactoryT<ADCSample>("ADCSampleFactory") {};
 
-        // acquire the parameters
-        auto params = japp->GetJParameterManager();
-        params->GetParameter("streamDet:rawhit_ms",     m_cputime_ms);
-        params->GetParameter("streamDet:rawhit_spread", m_cputime_spread);
-    };
+    void Init() override {
+        auto app = GetApplication();
+        app->GetParameter("streamDet:rawhit_ms",     m_cputime_ms);
+        app->GetParameter("streamDet:rawhit_spread", m_cputime_spread);
+    }
 
     // process the message/event and construct the jobject
     void Process(const std::shared_ptr<const JEvent> &event) override {

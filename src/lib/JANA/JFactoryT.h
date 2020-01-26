@@ -57,7 +57,6 @@ template<typename T>
 class JFactoryT : public JFactory {
 public:
 
-
     using IteratorType = typename std::vector<T*>::const_iterator;
     using PairType = std::pair<IteratorType, IteratorType>;
 
@@ -81,12 +80,33 @@ public:
         return std::type_index(typeid(T));
     }
 
-    PairType GetOrCreate(const std::shared_ptr<const JEvent>& event, JEventSource* source, uint64_t run_number) {
+    /// GetOrCreate handles all the preconditions and postconditions involved in calling the user-defined Open(),
+    /// ChangeRun(), and Process() methods. These include making sure the JFactory JApplication is set, Init() is called
+    /// exactly once, exceptions are tagged with the originating plugin and eventsource, ChangeRun() is
+    /// called if and only if the run number changes, etc.
+    PairType GetOrCreate(const std::shared_ptr<const JEvent>& event, JApplication* app, uint64_t run_number) {
 
         //std::lock_guard<std::mutex> lock(mMutex);
+        if (mApp == nullptr) {
+            mApp = app;
+        }
         switch (mStatus) {
             case Status::Uninitialized:
-                DoInit();
+                try {
+                    std::call_once(mInitFlag, &JFactory::Init, this);
+                }
+                catch (JException& ex) {
+                    ex.plugin_name = mPluginName;
+                    ex.component_name = mFactoryName;
+                    throw ex;
+                }
+                catch (...) {
+                    auto ex = JException("Unknown exception in JEventSource::Open()");
+                    ex.nested_exception = std::current_exception();
+                    ex.plugin_name = mPluginName;
+                    ex.component_name = mFactoryName;
+                    throw ex;
+                }
             case Status::Unprocessed:
                 if (mPreviousRunNumber != run_number) {
                     ChangeRun(event);

@@ -180,7 +180,7 @@ std::vector<JFactorySummary> JFactorySet::Summarize() const {
 	for (auto& pair : mFactories) {
 		auto tag = pair.second->GetTag();
 		results.push_back({
-			.plugin_name="unknown",
+			.plugin_name = "unknown",
 			.factory_name = pair.second->GetName(),
 			.factory_tag = tag,
 			.object_name = pair.second->GetName()

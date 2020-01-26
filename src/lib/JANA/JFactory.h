@@ -56,8 +56,8 @@
 #include <mutex>
 
 class JEvent;
-
 class JObject;
+class JApplication;
 
 class JFactory {
 public:
@@ -118,25 +118,6 @@ public:
 
 
 
-    void DoInit() {
-        try {
-            std::call_once(mInitFlag, &JFactory::Init, this);
-        }
-        catch (JException& ex) {
-            ex.plugin_name = mPluginName;
-            ex.component_name = mFactoryName;
-            throw ex;
-        }
-        catch (...) {
-            auto ex = JException("Unknown exception in JEventSource::Open()");
-            ex.nested_exception = std::current_exception();
-            ex.plugin_name = mPluginName;
-            ex.component_name = mFactoryName;
-            throw ex;
-        }
-    }
-
-
     // Copy/Move objects into factory
     template<typename T>
     void Set(std::vector<T *> &items) {
@@ -151,6 +132,15 @@ public:
     // The main downside I see right now is a potentially huge vtable
 
 
+
+    /// JApplication setter. This is meant to be used under the hood.
+    void SetApplication(JApplication* app) { mApp = app; }
+
+    /// JApplication getter. This is meant to be called by user-defined JFactories which need to
+    /// acquire parameter values or services from JFactory::Init()
+    JApplication* GetApplication() { return mApp; }
+
+
 protected:
     virtual void Set(std::vector<JObject *> &data) = 0;
 
@@ -162,6 +152,7 @@ protected:
     std::string mTag;
     uint32_t mFlags = 0;
     uint32_t mPreviousRunNumber = -1;
+    JApplication* mApp = nullptr;
 
     enum class Status {Uninitialized, Unprocessed, Processed, Inserted};
     mutable Status mStatus = Status::Uninitialized;
