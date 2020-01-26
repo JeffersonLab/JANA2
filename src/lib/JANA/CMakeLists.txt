@@ -50,7 +50,6 @@ set(JANA2_SOURCES
     Services/JPluginLoader.cc
     Services/JPluginLoader.h
     Services/JProcessingController.h
-    Services/JServiceLocator.cc
     Services/JServiceLocator.h
     Services/JEventGroupTracker.h
 

@@ -39,7 +39,7 @@
 TEST_CASE("MemoryBottleneckTest", "[.][performance]") {
 
     std::cout << "Running performance test" << std::endl;
-    serviceLocator = new JServiceLocator();
+    auto serviceLocator = new JServiceLocator();
 
     auto loggingService = std::make_shared<JLoggingService>();
     serviceLocator->provide(loggingService);
