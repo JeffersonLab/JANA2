@@ -39,7 +39,6 @@
 TEST_CASE("ExactlyOnceTests") {
 
     JApplication app;
-    japp = &app;  // For anything relying on the global variable
 
     auto source = new SimpleSource("SimpleSource", &app);
     auto processor = new SimpleProcessor(&app);

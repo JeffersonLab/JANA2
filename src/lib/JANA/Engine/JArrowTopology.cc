@@ -113,7 +113,7 @@ JArrowTopology* JArrowTopology::from_components(std::shared_ptr<JComponentManage
     topology->mapping.initialize(static_cast<JProcessorMapping::AffinityStrategy>(affinity),
                                  static_cast<JProcessorMapping::LocalityStrategy>(locality));
 
-    topology->event_pool = std::make_shared<JEventPool>(japp, &jcm->get_fac_gens(), event_pool_size,
+    topology->event_pool = std::make_shared<JEventPool>(&jcm->get_fac_gens(), event_pool_size,
             location_count, limit_total_events_in_flight);
 
     // Assume the simplest possible topology for now, complicate later

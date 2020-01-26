@@ -26,12 +26,13 @@ MonitoringProcessor::~MonitoringProcessor() {
 void MonitoringProcessor::Init() {
 
     // This is called once at program startup.
-    // initialize the message and the transport publisher
-    m_message   = new DASEventMessage(japp);
-    m_transport = new ZmqTransport(japp->GetParameterValue<std::string>("streamDet:pub_socket"), true);
+    // Initialize the message and the transport publisher
+    auto app = GetApplication();
+    m_message   = new DASEventMessage(app);
+    m_pub_socket = app->GetParameterValue<std::string>("streamDet:pub_socket");
+    m_transport = new ZmqTransport(m_pub_socket, true);
     m_transport->initialize();
-    std::cout << "MonitoringProccessor::Init -> Initializing ZMQ sink on socket "
-              <<  japp->GetParameterValue<std::string>("streamDet:pub_socket") << std::endl;
+    std::cout << "MonitoringProccessor::Init -> Initialized ZMQ sink on socket " << m_pub_socket << std::endl;
 }
 
 //------------------
@@ -47,7 +48,7 @@ void MonitoringProcessor::Process(const std::shared_ptr<const JEvent>& aEvent) {
     size_t msgFreq  = oriMessage->get_message_print_freq();
     if (eventNum % msgFreq == 0) {
         std::cout << "MonitoringProcessor::Process -> Published event " << eventNum
-                  << " on socket " << japp->GetParameterValue<std::string>("streamDet:pub_socket")
+                  << " on socket " << m_pub_socket
                   << " with buffer size = " << buffSize << " bytes" << std::endl;
     }
 }

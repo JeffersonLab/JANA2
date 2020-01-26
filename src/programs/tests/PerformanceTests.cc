@@ -86,7 +86,6 @@ TEST_CASE("MemoryBottleneckTest", "[.][performance]") {
     topology.addArrow(new MapArrow<Event*,Event*>("track", track, q2, q3));
     topology.addArrow(new SinkArrow<Event*>("plot", plot, q3));
 
-    japp = new JApplication; // TODO: Get rid of this
     JArrowTopology proctop;
     proctop.arrows = std::move(topology.arrows);
     proctop.sources.push_back(proctop.arrows[0]);

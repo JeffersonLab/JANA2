@@ -121,37 +121,41 @@ int Execute(UserOptions& options) {
 		}
 
 		auto params_copy = new JParameterManager(options.params); // JApplication owns params_copy, does not own eventSources
-		japp = new JApplication(params_copy);
+
+		auto app = new JApplication(params_copy);
+        // Keep japp global around for backwards compatibility. Don't use this in new code, however
+		japp = app;
+
 		for (auto event_src : options.eventSources) {
-			japp->Add(event_src);
+			app->Add(event_src);
 		}
 		AddSignalHandlers();
 
 		if (options.flags[ShowConfigs]) {
 			// Load all plugins, collect all parameters, exit without running anything
-			japp->Initialize();
+			app->Initialize();
 			if (options.flags[Benchmark]) {
-				JBenchmarker benchmarker(japp);  // Show benchmarking configs only if benchmarking mode specified
+				JBenchmarker benchmarker(app);  // Show benchmarking configs only if benchmarking mode specified
 			}
-			japp->GetJParameterManager()->PrintParameters(true);
+			app->GetJParameterManager()->PrintParameters(true);
 		}
 		else if (options.flags[DumpConfigs]) {
 			// Load all plugins, dump parameters to file, exit without running anything
-			japp->Initialize();
+			app->Initialize();
 			std::cout << std::endl << "Writing configuration options to file: " << options.dump_config_file << std::endl;
-			japp->GetJParameterManager()->WriteConfigFile(options.dump_config_file);
+			app->GetJParameterManager()->WriteConfigFile(options.dump_config_file);
 		}
 		else if (options.flags[Benchmark]) {
 			// Run JANA in benchmark mode
-			JBenchmarker benchmarker(japp); // Benchmarking params override default params
+			JBenchmarker benchmarker(app); // Benchmarking params override default params
 			benchmarker.RunUntilFinished(); // Benchmarker will control JApp Run/Stop
 		}
 		else {
 			// Run JANA in normal mode
-			japp->Run();
+			app->Run();
 		}
-		exitStatus = japp->GetExitCode();
-		delete japp;
+		exitStatus = app->GetExitCode();
+		delete app;
 	}
 	exit(exitStatus);
 }

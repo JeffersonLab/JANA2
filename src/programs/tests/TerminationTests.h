@@ -14,7 +14,7 @@ struct BoundedSource : public JEventSource {
 
     std::atomic_int event_count {0};
 
-    BoundedSource(std::string source_name, JApplication *japp) : JEventSource(source_name, japp)
+    BoundedSource(std::string source_name, JApplication *app) : JEventSource(source_name, app)
     { }
 
     static std::string GetDescription() {
@@ -40,7 +40,7 @@ struct UnboundedSource : public JEventSource {
 
     std::atomic_int event_count {0};
 
-    UnboundedSource(std::string source_name, JApplication *japp) : JEventSource(source_name, japp)
+    UnboundedSource(std::string source_name, JApplication *app) : JEventSource(source_name, app)
     { }
 
     static std::string GetDescription() {

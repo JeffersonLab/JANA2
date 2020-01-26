@@ -16,24 +16,24 @@
 #include "INDRAMessage.h"
 #include "ZmqTransport.h"
 
-void dummy_publisher_loop() {
+void dummy_publisher_loop(JApplication* app) {
 
     size_t delay_ms = 200;
 
     std::this_thread::sleep_for(std::chrono::seconds(4));  // Wait for JANA to fire up so we don't lose data
     std::cout << "Starting producer loop" << std::endl;
 
-    ZmqTransport transport {japp->GetParameterValue<std::string>("streamDet:sub_socket"), true};
+    ZmqTransport transport {app->GetParameterValue<std::string>("streamDet:sub_socket"), true};
     transport.initialize();
 
-    DASEventMessage message(japp);
+    DASEventMessage message(app);
     // INDRAMessage* indra_message = message.as_indra_message();
 
     size_t current_event_number = 1;
 
-    FILE* f = fopen(japp->GetParameterValue<std::string>("streamDet:data_file").c_str(), "r");
+    FILE* f = fopen(app->GetParameterValue<std::string>("streamDet:data_file").c_str(), "r");
     std::cout << "streamDet::dummy_publisher_loop -> Reading data from data file "
-              << japp->GetParameterValue<std::string>("streamDet:data_file").c_str() << std::endl;
+              << app->GetParameterValue<std::string>("streamDet:data_file").c_str() << std::endl;
     if (f == nullptr) {
         std::cout << "Unable to open file, exiting." << std::endl;
         exit(0);
@@ -99,7 +99,7 @@ void InitPlugin(JApplication* app) {
         auto transport = std::unique_ptr<ZmqTransport>(new ZmqTransport(sub_socket_name));
         app->Add(new JStreamingEventSource<DASEventMessage>(std::move(transport)));
         if (use_dummy_publisher) {
-            new std::thread(dummy_publisher_loop);
+            new std::thread(dummy_publisher_loop, app);
         }
     }
     else {

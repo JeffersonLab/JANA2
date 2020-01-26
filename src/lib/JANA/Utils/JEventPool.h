@@ -44,7 +44,6 @@ private:
         std::vector<std::shared_ptr<JEvent>> events;
     };
 
-    JApplication* m_app;
     std::vector<JFactoryGenerator*>* m_generators;
     size_t m_pool_size;
     size_t m_location_count;
@@ -52,10 +51,9 @@ private:
     std::unique_ptr<LocalPool[]> m_pools;
 
 public:
-    inline JEventPool(JApplication* app, std::vector<JFactoryGenerator*>* generators,
+    inline JEventPool(std::vector<JFactoryGenerator*>* generators,
                       size_t pool_size, size_t location_count, bool limit_total_events_in_flight)
-        : m_app(app)
-        , m_generators(generators)
+        : m_generators(generators)
         , m_pool_size(pool_size)
         , m_location_count(location_count)
         , m_limit_total_events_in_flight(limit_total_events_in_flight)
@@ -65,7 +63,7 @@ public:
 
         for (int j=0; j<m_location_count; ++j) {
             for (int i=0; i<m_pool_size; ++i) {
-                auto event = std::make_shared<JEvent>(m_app);
+                auto event = std::make_shared<JEvent>();
                 auto factory_set = new JFactorySet(*m_generators);
                 event->SetFactorySet(factory_set);
                 put(event, j);
@@ -83,7 +81,7 @@ public:
                 return nullptr;
             }
             else {
-                auto event = std::make_shared<JEvent>(m_app);
+                auto event = std::make_shared<JEvent>();
                 auto factory_set = new JFactorySet(*m_generators);
                 event->SetFactorySet(factory_set);
                 return event;

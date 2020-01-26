@@ -10,7 +10,6 @@
 TEST_CASE("UserExceptionTests") {
 
     JApplication app;
-    japp = &app;
     app.SetParameterValue("jana:extended_report", 0);
 
     SECTION("JEventSource::Open() excepts, old engine") {

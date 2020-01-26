@@ -11,7 +11,6 @@
 TEST_CASE("TerminationTests") {
 
     JApplication app;
-    japp = &app;
     auto processor = new CountingProcessor(&app);
     app.Add(processor);
     app.SetParameterValue("jana:extended_report", 0);

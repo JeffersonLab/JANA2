@@ -42,7 +42,7 @@ struct SimpleSource : public JEventSource {
     std::atomic_int open_count {0};
     std::atomic_int event_count {0};
 
-    SimpleSource(std::string source_name, JApplication *japp) : JEventSource(source_name, japp)
+    SimpleSource(std::string source_name, JApplication *app) : JEventSource(source_name, app)
     { }
 
     static std::string GetDescription() {

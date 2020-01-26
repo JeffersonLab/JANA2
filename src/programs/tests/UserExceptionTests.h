@@ -16,8 +16,8 @@ struct FlakySource : public JEventSource {
     bool open_excepts, getevent_excepts;
     int event_count = 0;
 
-    FlakySource(std::string source_name, JApplication* japp, bool open_excepts, bool getevent_excepts)
-            : JEventSource(source_name, japp), open_excepts(open_excepts), getevent_excepts(getevent_excepts) {}
+    FlakySource(std::string source_name, JApplication* app, bool open_excepts, bool getevent_excepts)
+            : JEventSource(source_name, app), open_excepts(open_excepts), getevent_excepts(getevent_excepts) {}
 
     static std::string GetDescription() { return "UnopenableEventSource"; }
 

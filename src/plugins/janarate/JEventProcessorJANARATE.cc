@@ -13,7 +13,6 @@ using namespace std;
 #include <TTree.h>
 #include <TFile.h>
 
-#include <JANA/JEvent.h>
 #include "JEventProcessorJANARATE.h"
 
 TFile *rootfile = nullptr;
@@ -103,8 +102,9 @@ void JEventProcessorJANARATE::Process(const std::shared_ptr<const JEvent>& aEven
 
 	// Fill local variable outside mutex lock in case
 	rate_t myrate;
-	myrate.tot_rate = japp->GetInstantaneousRate();
-	myrate.tot_integrated_rate = japp->GetIntegratedRate();
+	auto app = GetApplication();
+	myrate.tot_rate = app->GetInstantaneousRate();
+	myrate.tot_integrated_rate = app->GetIntegratedRate();
 //	myrate.thread_rate = loop->GetInstantaneousRate(); // only updated every 2 seconds!
 //	myrate.thread_delta_sec = loop->GetLastEventProcessingTime(); // updated every event
 //	myrate.threadid = (unsigned int)(0xFFFFFFFF & (unsigned int)&(std::this_thread::get_id()));
@@ -146,7 +146,7 @@ void JEventProcessorJANARATE::Finish(void)
 	cout<<"Elapsed time:"<<delta_sec<<" sec"<<endl;
 	cout<<"Total events:"<<Ncalls<<endl;
 	cout<<"Avg. rate (janarate):"<<rate<<" Hz"<<endl;
-	cout<<"Avg. rate (JApplication):"<<japp->GetIntegratedRate()<<" Hz"<<endl;
+	cout<<"Avg. rate (JApplication):"<<GetApplication()->GetIntegratedRate()<<" Hz"<<endl;
 
 	rootfile->Write();
 	delete rootfile;
