@@ -47,11 +47,16 @@
 #include <JANA/JApplication.h>
 #include <JANA/JFactory.h>
 #include <JANA/JObject.h>
-#include <JANA/JEventSource.h>
 #include <JANA/Utils/JTypeInfo.h>
 
 #ifndef _JFactoryT_h_
 #define _JFactoryT_h_
+
+/// Class template for metadata. This constrains JFactoryT<T> to use the same (user-defined)
+/// metadata structure, JMetadata<T> for that T. This is essential for retrieving metadata from
+/// JFactoryT's without breaking the Liskov substitution property.
+template<typename T>
+struct JMetadata {};
 
 template<typename T>
 class JFactoryT : public JFactory {
@@ -101,7 +106,7 @@ public:
                     throw ex;
                 }
                 catch (...) {
-                    auto ex = JException("Unknown exception in JEventSource::Open()");
+                    auto ex = JException("Unknown exception in JFactoryT::Init()");
                     ex.nested_exception = std::current_exception();
                     ex.plugin_name = mPluginName;
                     ex.component_name = mFactoryName;
@@ -174,9 +179,19 @@ public:
         mStatus = Status::Unprocessed;
     }
 
-protected:
+    /// Set the JFactory's metadata. This is meant to be called by user during their JFactoryT::Process
+    /// Metadata will *not* be cleared on ClearData(), but will be destroyed when the JFactoryT is.
+    void SetMetadata(JMetadata<T> metadata) { mMetadata = metadata; }
 
+    /// Get the JFactory's metadata. This is meant to be called by user during their JFactoryT::Process
+    /// and also used by JEvent under the hood.
+    /// Metadata will *not* be cleared on ClearData(), but will be destroyed when the JFactoryT is.
+    JMetadata<T> GetMetadata() { return mMetadata; }
+
+
+protected:
     std::vector<T*> mData;
+    JMetadata<T> mMetadata;
 };
 
 #endif // _JFactoryT_h_

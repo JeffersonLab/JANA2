@@ -7,6 +7,7 @@
 
 #include <JANA/JObject.h>
 #include <JANA/JFactoryT.h>
+#include <JANA/JEventSource.h>
 
 /// DummyObject is a trivial JObject which reports its own destruction.
 struct DummyObject : public JObject {
