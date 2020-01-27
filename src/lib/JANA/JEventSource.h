@@ -131,19 +131,16 @@ public:
             }
         }
         catch (RETURN_STATUS rs) {
-            switch(rs) {
-                case RETURN_STATUS::kNO_MORE_EVENTS :
-                    m_status = SourceStatus::Finished; // TODO: This isn't threadsafe at the moment
-                    return ReturnStatus::Finished;
 
-                case RETURN_STATUS::kSUCCESS:
-                    return ReturnStatus::Success;
-
-                case RETURN_STATUS::kERROR:
-                    throw JException("Unknown error in JEventSource!");
-
-                default:
-                    return ReturnStatus::TryAgain;
+            if (rs == RETURN_STATUS::kNO_MORE_EVENTS) {
+                m_status = SourceStatus::Finished; // TODO: This isn't threadsafe at the moment
+                return ReturnStatus::Finished;
+            }
+            else {
+                JException ex ("Throwing a RETURN_STATUS other than kNO_MORE_EVENTS is verboten");
+                ex.plugin_name = m_plugin_name;
+                ex.component_name = GetType();
+                throw ex;
             }
         }
         catch (JException& ex) {
