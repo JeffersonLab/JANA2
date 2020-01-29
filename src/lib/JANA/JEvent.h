@@ -179,7 +179,7 @@ inline JMetadata<T> JEvent::GetMetadata(const std::string& tag) const {
         throw JException("Could not find JFactoryT<" + JTypeInfo::demangle<T>() + "> with tag=" + tag);
     };
     // Make sure that JFactoryT::Process has already been called before returning the metadata
-    factory->GetOrCreate(this->shared_from_this(), mEventSource, mRunNumber);
+    factory->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
 
     return factory->GetMetadata();
 }
@@ -253,7 +253,7 @@ template<class T>
 void JEvent::GetAll(std::vector<const T*>& destination) const {
     auto factories = GetFactoryAll<T>(true);
     for (auto factory : factories) {
-        auto iterators = factory->GetOrCreate(this->shared_from_this(), mEventSource, mRunNumber);
+        auto iterators = factory->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
         for (auto it = iterators.first; it != iterators.second; it++) {
             destination.push_back(*it);
         }
@@ -267,7 +267,7 @@ std::vector<const T*> JEvent::GetAll() const {
     auto factories = GetFactoryAll<T>(true);
 
     for (auto factory : factories) {
-        auto iters = factory->GetOrCreate(this->shared_from_this(), mEventSource, mRunNumber);
+        auto iters = factory->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
         std::vector<const T*> vec;
         for (auto it = iters.first; it != iters.second; ++it) {
             vec.push_back(*it);
