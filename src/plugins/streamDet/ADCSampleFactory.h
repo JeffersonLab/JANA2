@@ -21,6 +21,7 @@ class ADCSampleFactory : public JFactoryT<ADCSample> {
     double m_cputime_spread = 0.25;
 
     std::vector<ADCSample> m_samples;
+    std::vector<ADCSample*> m_sample_ptrs;
     // Rather than creating and destroying lots of individual hit objects for each event,
     // we maintain a block of them and set NOT_OBJECT_OWNER. These are owned by the JFactory
     // so there won't be a memory leak.
@@ -51,9 +52,17 @@ public:
         size_t max_samples  = message->get_sample_count();
         size_t max_channels = message->get_channel_count();
 
-        m_samples.resize(max_channels*max_samples);
-        // If size actually changes, create or destroy new ADCSamples as needed
-        // They will be initialized with garbage data though
+        if (m_samples.size() != max_channels*max_samples) {
+            // If size actually changes (hopefully not often), create or destroy new ADCSamples as needed
+            // They will be initialized with garbage data though
+            m_samples.resize(max_channels*max_samples);
+
+            // Also recreate the vector of pointers into this buffer
+            m_sample_ptrs.resize(max_channels*max_samples);
+            for (size_t i=0; i < m_samples.size(); ++i) {
+                m_sample_ptrs[i] = &m_samples[i];
+            }
+        }
 
         size_t i = 0;
         // decode the message and populate the associated jobject (hit) for the event
@@ -70,9 +79,9 @@ public:
                 hit.sample_id  = sample;
                 hit.channel_id = channel;
                 hit.adc_value  = current_value;
-                Insert(&hit);  // TODO: Ideally we wouldn't have to do this either
             }
         }
+        Set(m_sample_ptrs); // Copy all of the pointers into m_samples over in one go
     }
 };
 
