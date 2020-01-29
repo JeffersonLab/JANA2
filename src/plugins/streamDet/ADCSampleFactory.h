@@ -17,8 +17,13 @@
 class ADCSampleFactory : public JFactoryT<ADCSample> {
 
     // parameters to simulate a bottle neck, spread is in sigmas
-    size_t m_cputime_ms = 200;
+    size_t m_cputime_ms = 0;
     double m_cputime_spread = 0.25;
+
+    std::vector<ADCSample> m_samples;
+    // Rather than creating and destroying lots of individual hit objects for each event,
+    // we maintain a block of them and set NOT_OBJECT_OWNER. These are owned by the JFactory
+    // so there won't be a memory leak.
 
 public:
 
@@ -28,9 +33,9 @@ public:
         auto app = GetApplication();
         app->GetParameter("streamDet:rawhit_ms",     m_cputime_ms);
         app->GetParameter("streamDet:rawhit_spread", m_cputime_spread);
+        SetFactoryFlag(JFactory_Flags_t::NOT_OBJECT_OWNER);
     }
 
-    // process the message/event and construct the jobject
     void Process(const std::shared_ptr<const JEvent> &event) override {
 
         // acquire the DASEventMessage via zmq
@@ -46,23 +51,28 @@ public:
         size_t max_samples  = message->get_sample_count();
         size_t max_channels = message->get_channel_count();
 
+        m_samples.resize(max_channels*max_samples);
+        // If size actually changes, create or destroy new ADCSamples as needed
+        // They will be initialized with garbage data though
+
+        size_t i = 0;
         // decode the message and populate the associated jobject (hit) for the event
         for (uint16_t sample = 0; sample < max_samples; ++sample) {
             for (uint16_t channel = 0; channel < max_channels; ++channel) {
-                uint16_t current_value;
-                int offset;
-                sscanf(payload_buffer, "%hu%n", &current_value, &offset);
-                payload_buffer += offset;
-                auto hit = new ADCSample;
-                hit->source_id  = source_id;
-                hit->sample_id  = sample;
-                hit->channel_id = channel;
-                hit->adc_value  = current_value;
-                Insert(hit);
+
+                // Parse in the simplest way possible
+                uint16_t current_value = (payload_buffer[0]-48) * 1000 + (payload_buffer[1]-48) * 100 + (payload_buffer[2]-48) * 10 + (payload_buffer[3]-48);
+                assert(current_value >= 0);
+                assert(current_value <= 1024);
+                payload_buffer += 5;
+                ADCSample& hit = m_samples[i++];
+                hit.source_id  = source_id;
+                hit.sample_id  = sample;
+                hit.channel_id = channel;
+                hit.adc_value  = current_value;
+                Insert(&hit);  // TODO: Ideally we wouldn't have to do this either
             }
         }
-        // do some throwaway work in order to simulate a bottleneck
-        consume_cpu_ms(m_cputime_ms, m_cputime_spread);
     }
 };
 

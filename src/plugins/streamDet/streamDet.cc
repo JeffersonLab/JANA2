@@ -18,9 +18,9 @@
 
 void dummy_publisher_loop(JApplication* app) {
 
-    size_t delay_ms = 200;
+    size_t delay_ms = 5;
 
-    std::this_thread::sleep_for(std::chrono::seconds(4));  // Wait for JANA to fire up so we don't lose data
+    //std::this_thread::sleep_for(std::chrono::seconds(4));  // Wait for JANA to fire up so we don't lose data
     std::cout << "Starting producer loop" << std::endl;
 
     ZmqTransport transport {app->GetParameterValue<std::string>("streamDet:sub_socket"), true};
@@ -48,9 +48,10 @@ void dummy_publisher_loop(JApplication* app) {
         message.as_indra_message()->source_id = 0;
         message.set_event_number(current_event_number++);
         message.set_payload_size(static_cast <uint32_t> (payload_capacity));
-        std::cout << "Send: " << message << " (" << message.get_buffer_size() << " bytes)" << std::endl;
+        //std::cout << "Send: " << message << " (" << message.get_buffer_size() << " bytes)" << std::endl;
         transport.send(message);
         consume_cpu_ms(delay_ms, 0, false);
+        std::this_thread::yield();
     }
 
     // Send an empty end-of-stream message
@@ -69,7 +70,8 @@ void InitPlugin(JApplication* app) {
     InitJANAPlugin(app);
     app->SetParameterValue("nthreads", 4);
     app->SetParameterValue("jana:extended_report", false);
-    app->SetParameterValue("jana:legacy_mode", 0);
+    app->SetParameterValue("jana:limit_total_events_in_flight", true);
+    app->SetParameterValue("jana:event_pool_size", 16);
 
     // TODO: Consider making streamDet:sub_socket be the 'source_name', and use JESG to switch between JSES and DecodeDASSource
     // TODO: Improve parametermanager interface
@@ -86,14 +88,14 @@ void InitPlugin(JApplication* app) {
     std::cout << "Subscribing to INDRA messages via ZMQ on socket " << sub_socket_name << std::endl;
     std::cout << "Publishing JObjects via ZMQ on socket " << pub_socket_name << std::endl;
 
-    app->GetJParameterManager()->SetDefaultParameter("streamDet:use_zmq", use_zmq);
-    app->GetJParameterManager()->SetDefaultParameter("streamDet:data_file", data_file_name);
-    app->GetJParameterManager()->SetDefaultParameter("streamDet:use_dummy_publisher", use_dummy_publisher);
-    app->GetJParameterManager()->SetDefaultParameter("streamDet:nchannels", nchannels);
-    app->GetJParameterManager()->SetDefaultParameter("streamDet:nsamples", nsamples);
-    app->GetJParameterManager()->SetDefaultParameter("streamDet:msg_print_freq", msg_print_freq);
-    app->GetJParameterManager()->SetDefaultParameter("streamDet:sub_socket", sub_socket_name);
-    app->GetJParameterManager()->SetDefaultParameter("streamDet:pub_socket", pub_socket_name);
+    app->SetDefaultParameter("streamDet:use_zmq", use_zmq);
+    app->SetDefaultParameter("streamDet:data_file", data_file_name);
+    app->SetDefaultParameter("streamDet:use_dummy_publisher", use_dummy_publisher);
+    app->SetDefaultParameter("streamDet:nchannels", nchannels);
+    app->SetDefaultParameter("streamDet:nsamples", nsamples);
+    app->SetDefaultParameter("streamDet:msg_print_freq", msg_print_freq);
+    app->SetDefaultParameter("streamDet:sub_socket", sub_socket_name);
+    app->SetDefaultParameter("streamDet:pub_socket", pub_socket_name);
 
     if (use_zmq) {
         auto transport = std::unique_ptr<ZmqTransport>(new ZmqTransport(sub_socket_name));
@@ -110,7 +112,7 @@ void InitPlugin(JApplication* app) {
 
     app->Add(new RootProcessor());
     app->Add(new MonitoringProcessor());
-    app->Add(new JCsvWriter<ADCSample>());
+    //app->Add(new JCsvWriter<ADCSample>());
     app->Add(new JFactoryGeneratorT<ADCSampleFactory>());
 
 }

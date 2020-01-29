@@ -36,9 +36,13 @@ void RootProcessor::Init() {
     sampleTree = new TTree("ST", "Streaming Detector Sample Data Tree");
     nentries = 0;
     eventTree->Branch("event", &event);
+
+    adc_samples_chans = new TBranch* [numChans];
+    tdc_samples_chans = new TBranch* [numChans];
+
     for (uint ichan = 0; ichan < numChans; ichan++) {
-        sampleTree->Branch(Form("adcSamplesChan_%d", ichan + 1), &adcSample);
-        sampleTree->Branch(Form("tdcSamplesChan_%d", ichan + 1), &tdcSample);
+        adc_samples_chans[ichan] = sampleTree->Branch(Form("adcSamplesChan_%d", ichan + 1), &adcSample);
+        tdc_samples_chans[ichan] = sampleTree->Branch(Form("tdcSamplesChan_%d", ichan + 1), &tdcSample);
     }
     // update the root file
     outFile->Write();
@@ -64,18 +68,21 @@ void RootProcessor::Process(const std::shared_ptr<const JEvent>& aEvent) {
         event     = static_cast <uint> (aEvent->GetEventNumber());
         adcSample = sample->adc_value;
         tdcSample = (sample->sample_id + 1) + numSamples*(event - 1);
-        sampleTree->FindBranch(Form("adcSamplesChan_%d", chan))->Fill();
-        sampleTree->FindBranch(Form("tdcSamplesChan_%d", chan))->Fill();
+        adc_samples_chans[chan-1]->Fill();
+        tdc_samples_chans[chan-1]->Fill();
     }
 
     // fill event tree and set nentries on sample tree
     eventTree->Fill();
     nentries += eventData.size()/numChans;
     sampleTree->SetEntries(nentries);
+
     // update the root file
-    outFile->Write();
-    outFile->Flush();
-    outFile->cd();
+    if (aEvent->GetEventNumber() % 10 == 0) {
+        outFile->Write();
+        outFile->Flush();
+        outFile->cd();
+    }
 }
 
 //------------------
@@ -83,6 +90,7 @@ void RootProcessor::Process(const std::shared_ptr<const JEvent>& aEvent) {
 //------------------
 void RootProcessor::Finish() {
 
+    outFile->Write();
     // outFile->Write();
 
 }

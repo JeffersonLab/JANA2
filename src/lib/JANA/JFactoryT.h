@@ -165,6 +165,10 @@ public:
 
     void ClearData() override {
 
+        // ClearData won't do anything if Init() hasn't been called
+        if (mStatus == Status::Uninitialized) {
+            return;
+        }
         // ClearData() does nothing if persistent flag is set.
         // User must manually recycle data, e.g. during ChangeRun()
         if (TestFactoryFlag(JFactory_Flags_t::PERSISTENT)) {
