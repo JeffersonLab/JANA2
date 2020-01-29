@@ -37,6 +37,7 @@
 #include <JANA/Services/JPluginLoader.h>
 #include <JANA/Services/JComponentManager.h>
 #include <JANA/Engine/JArrowProcessingController.h>
+#include <JANA/Engine/JDebugProcessingController.h>
 #include <JANA/Utils/JCpuInfo.h>
 
 JApplication *japp = nullptr;
