@@ -292,16 +292,6 @@ static PyObject* janapy_AddEventSource(PyObject *self, PyObject *args)
 }
 
 //-------------------------------------
-// janapy_GetNtasksCompleted
-//-------------------------------------
-static PyObject* janapy_GetNtasksCompleted(PyObject *self, PyObject *args)
-{
-	char name[512] = "";
-	if(!PyArg_ParseTuple(args, "|s:GetNtasksCompleted", name)) return nullptr;
-	return PV( pyjapp->GetNtasksCompleted( name ) );
-}
-
-//-------------------------------------
 // janapy_GetNeventsProcessed
 //-------------------------------------
 static PyObject* janapy_GetNeventsProcessed(PyObject *self, PyObject *args)
@@ -482,7 +472,6 @@ static PyMethodDef JANAPYMethods[] = {
 	{"AddPlugin",                   janapy_AddPlugin,                   METH_VARARGS, "Add a plugin to the list of plugins to be attached (call before calling Run)"},
 	{"AddPluginPath",               janapy_AddPluginPath,               METH_VARARGS, "Add directory to plugin search path"},
 	{"AddEventSource",              janapy_AddEventSource,              METH_VARARGS, "Add an event source (e.g. filename). Can be given multiple arguments and/or called multiple times."},
-	{"GetNtasksCompleted",          janapy_GetNtasksCompleted,          METH_VARARGS, "Return the number of tasks completed. If specified, only count tasks for that JQueue."},
 	{"GetNeventsProcessed",         janapy_GetNeventsProcessed,         METH_VARARGS, "Return the number of events processed so far."},
 	{"GetIntegratedRate",           janapy_GetIntegratedRate,           METH_VARARGS, "Return integrated rate."},
 	{"GetIntegratedRates",          janapy_GetIntegratedRates,          METH_VARARGS, "Return integrated rates for each thread."},

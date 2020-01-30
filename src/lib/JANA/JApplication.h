@@ -112,7 +112,6 @@ public:
     float GetIntegratedRate();
     float GetInstantaneousRate();
     // TODO: Do we really want these?
-    uint64_t GetNtasksCompleted(std::string name="") { return 0; }
     void GetInstantaneousRates(std::vector<double> &rates_by_queue) {}
     void GetIntegratedRates(std::map<std::string,double> &rates_by_thread) {}
 
@@ -139,8 +138,6 @@ public:
     /// Use this in EventSources, Factories, or EventProcessors. Do not call this
     /// from InitPlugin(), as not all JServices may have been loaded yet.
     /// When initializing a Service, use acquire_services() instead.
-    ///
-    /// TODO: Consider making ServiceLocator be an argument to Factory::init(), etc?
     template <typename T>
     std::shared_ptr<T> GetService();
 

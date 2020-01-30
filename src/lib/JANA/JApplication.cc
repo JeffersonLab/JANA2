@@ -36,8 +36,6 @@
 #include <JANA/Services/JParameterManager.h>
 #include <JANA/Services/JPluginLoader.h>
 #include <JANA/Services/JComponentManager.h>
-#include <JANA/Services/JProcessingController.h>
-
 #include <JANA/Engine/JArrowProcessingController.h>
 #include <JANA/Utils/JCpuInfo.h>
 
@@ -123,23 +121,16 @@ void JApplication::Initialize() {
         // Attach all plugins
         _plugin_loader->attach_plugins(_component_manager.get());
 
-        // Set task pool size
-        size_t task_pool_size = 200;
-        size_t task_pool_debuglevel = 0;
-        _params->SetDefaultParameter("JANA:TASK_POOL_SIZE", task_pool_size, "Task pool size");
-        _params->SetDefaultParameter("JANA:TASK_POOL_DEBUGLEVEL", task_pool_debuglevel, "Task pool debug level");
-
         // Set desired nthreads
         _desired_nthreads = JCpuInfo::GetNumCpus();
-        _params->SetDefaultParameter("NTHREADS", _desired_nthreads,
+        _params->SetDefaultParameter("nthreads", _desired_nthreads,
                                      "The total number of worker threads");
-
 
         _component_manager->resolve_event_sources();
         auto topology = JArrowTopology::from_components(_component_manager, _params);
         _processing_controller = std::make_shared<JArrowProcessingController>(topology);
 
-        _params->SetDefaultParameter("JANA:EXTENDED_REPORT", _extended_report);
+        _params->SetDefaultParameter("jana:extended_report", _extended_report);
         _processing_controller->initialize();
         _initialized = true;
     }
@@ -167,14 +158,17 @@ void JApplication::Run(bool wait_until_finished) {
     }
 
     // Monitor status of all threads
-    while( !_quitting ){
+    while (!_quitting) {
 
         // If we are finishing up (all input sources are closed, and are waiting for all events to finish processing)
         // This flag is used by the integrated rate calculator
-        // The JThreadManager is in charge of telling all the threads to end
-        // TODO: Bring this back
-        //if(!_draining_queues)
-        //    _draining_queues = _topology->event_source_manager.AreAllFilesClosed();
+        if (!_draining_queues) {
+            bool draining = true;
+            for (auto evt_src : _component_manager->get_evt_srces()) {
+                draining &= (evt_src->GetStatus() == JEventSource::SourceStatus::Finished);
+            }
+            _draining_queues = draining;
+        }
 
         // Run until topology is deactivated, either because it finished or because another thread called stop()
         if (_processing_controller->is_stopped() || _processing_controller->is_finished()) {
@@ -274,9 +268,8 @@ uint64_t JApplication::GetNeventsProcessed() {
     return perf->monotonic_events_completed;
 }
 
+/// Returns the total integrated rate so far in Hz since Run() was called.
 float JApplication::GetIntegratedRate() {
-    /// Returns the total integrated rate so far in Hz since
-    /// Run was called.
     static float last_R = 0.0;
 
     auto now = std::chrono::high_resolution_clock::now();
