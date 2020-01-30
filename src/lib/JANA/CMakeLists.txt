@@ -58,8 +58,6 @@ set(JANA2_SOURCES
     Status/JPerfMetrics.cc
     Status/JPerfMetrics.h
     Status/JPerfSummary.h
-    Status/JStatus.cc
-    Status/JStatus.h
     Status/JVersion.h
 
     Streaming/JDiscreteJoin.h
