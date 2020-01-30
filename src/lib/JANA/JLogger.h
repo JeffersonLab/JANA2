@@ -123,7 +123,7 @@ inline void operator<<(JLogMessage&& m, JLogMessage::End const& end) {
 
 #define LOG_END JLogMessage::End();
 
-#define LOG_AT_LEVEL(logger, msglevel) if (logger.level <= msglevel) JLogMessage(logger, msglevel)
+#define LOG_AT_LEVEL(logger, msglevel) if ((logger).level <= msglevel) JLogMessage((logger), msglevel)
 
 #define LOG_FATAL(logger) LOG_AT_LEVEL(logger, JLogger::Level::FATAL)
 #define LOG_ERROR(logger) LOG_AT_LEVEL(logger, JLogger::Level::ERROR)

@@ -129,7 +129,7 @@ int Execute(UserOptions& options) {
 		for (auto event_src : options.eventSources) {
 			app->Add(event_src);
 		}
-		AddSignalHandlers();
+		JSignalHandler::register_handlers(app);
 
 		if (options.flags[ShowConfigs]) {
 			// Load all plugins, collect all parameters, exit without running anything
