@@ -30,16 +30,16 @@
 // Author: Nathan Brei
 //
 
-#include <JANA/Engine/JDebugProcessingController.h>
 #include <JANA/JFactorySet.h>
 #include <JANA/JEventProcessor.h>
 #include <JANA/JEvent.h>
+
+#include <JANA/Engine/JDebugProcessingController.h>
 
 using millisecs = std::chrono::duration<double, std::milli>;
 using secs = std::chrono::duration<double>;
 
 void JDebugProcessingController::run_worker() {
-    LOG_INFO(m_logger) << "Running JDebugProcessingController" << LOG_END;
     auto evt_srces = m_component_manager->get_evt_srces();
     auto evt_procs = m_component_manager->get_evt_procs();
 
@@ -47,33 +47,37 @@ void JDebugProcessingController::run_worker() {
         proc->DoInitialize();
     }
 
-    m_finish_achieved = false;
-    size_t event_nr = 0;
+    // We don't need a JEventPool because our worker can just keep recycling the same one
+    // This also makes locality trivial
+    auto event = std::make_shared<JEvent>();
+    auto factory_set = new JFactorySet(m_component_manager->get_fac_gens());
+    event->SetFactorySet(factory_set);
 
     for (JEventSource* evt_src : evt_srces) {
+
+        if (m_stop_requested) continue;
         evt_src->DoInitialize();
-        std::shared_ptr<JEvent> event = nullptr;
-        while (!m_finish_achieved && !m_stop_requested) {
 
-            if (event == nullptr) {
-                // Get from event pool
+        for (auto result = JEventSource::ReturnStatus::TryAgain;
+             result != JEventSource::ReturnStatus::Finished && !m_stop_requested;) {
+
+            result = evt_src->DoNext(event);
+            if (result == JEventSource::ReturnStatus::Success) {
+                event->SetEventNumber(++m_total_events_emitted);
+                event->SetJEventSource(evt_src);
+                event->SetJApplication(evt_src->GetApplication());
+
+                for (JEventProcessor* proc : evt_procs) {
+                    proc->DoMap(event);
+                    proc->DoReduce(event);
+                }
+                m_total_events_processed += 1;
+                factory_set->Release();
             }
-
-            auto result = evt_src->DoNext(event);
-            if (result == )
-
-            //LOG_DEBUG(m_logger) << "Acquired event " << event->GetEventNumber() << " from " << evt_src->GetResourceName() << LOG_END;
-            event->SetJEventSource(evt_src);
-            event->SetEventNumber(++event_nr);
-            // TODO: Assumes JEvtSrc doesn't throw kSUCCESS
-            for (JEventProcessor* proc : evt_procs) {
-                //LOG_DEBUG(m_logger) << "Processing: " << proc->GetTypeName() << LOG_END;
-                proc->DoMap(event);
-                std::lock_guard<std::mutex> lock(evt_proc_mutex);
-                proc->DoReduce(event);
-            }
-            m_total_events_processed += 1;
         }
+    }
+    if (!m_stop_requested) {
+        m_finish_achieved = true;
     }
 
     LOG_INFO(m_logger) << "Finished JDebugProcessingController::run_worker" << LOG_END;
@@ -88,11 +92,13 @@ void JDebugProcessingController::initialize() {
 }
 
 void JDebugProcessingController::run(size_t nthreads) {
-    m_worker = new std::thread(&JDebugProcessingController::run_worker, this);
+    m_finish_achieved = false;
+    for (int i=0; i<nthreads; ++i) {
+        m_workers.push_back(new std::thread(&JDebugProcessingController::run_worker, this));
+    }
 }
 
 void JDebugProcessingController::scale(size_t nthreads) {
-    return;
 }
 
 void JDebugProcessingController::request_stop() {
@@ -101,10 +107,11 @@ void JDebugProcessingController::request_stop() {
 
 void JDebugProcessingController::wait_until_stopped() {
     m_stop_requested = true;
-    if (m_worker != nullptr) {
-        m_worker->join();
+    for (auto * worker : m_workers) {
+        worker->join();
+        delete worker;
     }
-    m_worker = nullptr;
+    m_workers.clear();
     m_stop_achieved = true;
 }
 
@@ -117,11 +124,10 @@ bool JDebugProcessingController::is_finished() {
 }
 
 JDebugProcessingController::~JDebugProcessingController() {
-    wait_until_stopped();
-    if (m_worker != nullptr) {
-        delete m_worker;
+    for (auto * worker : m_workers) {
+        worker->join();
+        delete worker;
     }
-    m_worker = nullptr;
 }
 
 void JDebugProcessingController::print_report() {
@@ -138,7 +144,7 @@ std::unique_ptr<const JPerfSummary> JDebugProcessingController::measure_performa
     auto ps = std::make_unique<JPerfSummary>();
 
     m_perf_metrics.summarize(*ps);
-    ps->thread_count = 1;
+    ps->thread_count = m_workers.size();
     ps->monotonic_events_completed = m_total_events_processed;
     return ps;
 }

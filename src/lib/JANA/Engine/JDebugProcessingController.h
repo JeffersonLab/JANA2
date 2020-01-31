@@ -43,7 +43,7 @@
 class JDebugProcessingController : public JProcessingController {
 public:
 
-    explicit JDebugProcessingController(JApplication* japp, JComponentManager* jcm) : m_app(japp), m_component_manager(jcm) {};
+    explicit JDebugProcessingController(JComponentManager* jcm) : m_component_manager(jcm) {};
     ~JDebugProcessingController() override;
 
     void initialize() override;
@@ -64,18 +64,16 @@ private:
 
     void run_worker();
 
-    using jclock_t = std::chrono::steady_clock;
-
-    JApplication* m_app = nullptr;
-    JComponentManager* m_component_manager = nullptr;
-    JLogger m_logger = JLogger();
-    std::thread* m_worker = nullptr;
     bool m_stop_requested = false;
     bool m_stop_achieved = false;
     bool m_finish_achieved = false;
+    size_t m_total_events_emitted = 0;
     size_t m_total_events_processed = 0;
 
+    std::vector<std::thread*> m_workers;
+    JLogger m_logger = JLogger();
     JPerfMetrics m_perf_metrics;
+    JComponentManager* m_component_manager = nullptr;
 
 };
 
