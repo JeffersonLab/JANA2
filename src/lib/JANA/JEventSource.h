@@ -69,7 +69,7 @@ public:
     /// If GetEvent() reaches an error state, it should throw a JException instead.
     enum class ReturnStatus { Success, TryAgain, Finished };
 
-    /// TODO: Stop throwing RETURN_STATUS; return ReturnStatus instead. For now just encapsulate this mess.
+    /// The user is supposed to _throw_ RETURN_STATUS::kNO_MORE_EVENTS or kBUSY from GetEvent()
     enum class RETURN_STATUS { kSUCCESS, kNO_MORE_EVENTS, kBUSY, kTRY_AGAIN, kERROR, kUNKNOWN };
 
 
@@ -87,14 +87,13 @@ public:
 
 
 
-    // To be implemented by the user. TODO: Make these protected
+    // To be implemented by the user
 
-    virtual void Open(void) {}
+    virtual void Open() {}
 
-    // TODO: Stop using exceptions for flow control!
     virtual void GetEvent(std::shared_ptr<JEvent>) = 0;
 
-    // TODO: Deprecate this
+    // Deprecated. Use JEvent::Insert() from inside GetEvent instead.
     virtual bool GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactory* aFactory) { return false; }
 
 
@@ -120,9 +119,9 @@ public:
         }
     }
 
-    // TODO: Do we really want the user to close the resource in GetEvent() instead of in Close()?
-    // TODO: What happens if user doesn't throw?
     ReturnStatus DoNext(std::shared_ptr<JEvent> event) {
+        auto first_evt_nr = m_nskip;
+        auto last_evt_nr = m_nevents + m_nskip;
         try {
             switch (m_status) {
 
@@ -130,12 +129,12 @@ public:
 
                 case SourceStatus::Opened:
 
-                    if (m_event_count < m_first_event) {
+                    if (m_event_count < first_evt_nr) {
                         m_event_count += 1;
-                        GetEvent(std::move(event));
+                        GetEvent(std::move(event));  // Throw this event away
                         return ReturnStatus::TryAgain;
                     }
-                    else if (m_event_count > m_last_event) {
+                    else if (m_nevents != 0 && (m_event_count > last_evt_nr)) {
                         m_status = SourceStatus::Finished; // TODO: This isn't threadsafe at the moment
                         return ReturnStatus::Finished;
                     }
@@ -154,11 +153,17 @@ public:
                 m_status = SourceStatus::Finished; // TODO: This isn't threadsafe at the moment
                 return ReturnStatus::Finished;
             }
-            else {
-                JException ex ("Throwing a RETURN_STATUS other than kNO_MORE_EVENTS is verboten");
+            else if (rs == RETURN_STATUS::kTRY_AGAIN || rs == RETURN_STATUS::kBUSY) {
+                return ReturnStatus::TryAgain;
+            }
+            else if (rs == RETURN_STATUS::kERROR || rs == RETURN_STATUS::kUNKNOWN) {
+                JException ex ("JEventSource threw RETURN_STATUS::kERROR or kUNKNOWN");
                 ex.plugin_name = m_plugin_name;
                 ex.component_name = GetType();
                 throw ex;
+            }
+            else {
+                return ReturnStatus::Success;
             }
         }
         catch (JException& ex) {
@@ -190,13 +195,10 @@ public:
 
     JApplication* GetApplication() const { return m_application; }
 
-    // TODO: Get rid of me!
     virtual std::string GetType() const { return m_type_name; }
 
-    // TODO: Get rid of me!
-    std::string GetName(void) const { return m_resource_name; }
+    std::string GetName() const { return m_resource_name; }
 
-    // TODO: What is this even?
     virtual std::string GetVDescription() const {
         return "<description unavailable>";
     } ///< Optional for getting description via source rather than JEventSourceGenerator
@@ -223,8 +225,8 @@ public:
 
     // Meant to be called by JANA
     void SetRange(uint64_t nskip, uint64_t nevents) {
-        m_first_event = nskip;
-        m_last_event = nskip+nevents;
+        m_nskip = nskip;
+        m_nevents = nevents;
     };
 
 
@@ -234,8 +236,8 @@ private:
     JFactoryGenerator* m_factory_generator = nullptr;
     SourceStatus m_status;
     std::atomic_ullong m_event_count {0};
-    uint64_t m_first_event = 0;
-    uint64_t m_last_event = std::numeric_limits<uint64_t>::max(); // "infinity" by default
+    uint64_t m_nskip = 0;
+    uint64_t m_nevents = 0;
 
     std::string m_plugin_name;
     std::string m_type_name;
