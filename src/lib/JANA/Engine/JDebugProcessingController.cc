@@ -43,52 +43,36 @@ void JDebugProcessingController::run_worker() {
     auto evt_srces = m_component_manager->get_evt_srces();
     auto evt_procs = m_component_manager->get_evt_procs();
 
-    auto event = std::make_shared<JEvent>();
-    auto factory_set = new JFactorySet(m_component_manager->get_fac_gens());
-    event->SetFactorySet(factory_set);
-    event->SetJApplication(m_app);
-
     for (JEventProcessor* proc : evt_procs) {
-        proc->DoInitialize(); // TODO: Bug with std::call_once?!?
+        proc->DoInitialize();
     }
 
-    // TODO: Assumes one event source
-    bool more_events = true;
+    m_finish_achieved = false;
     size_t event_nr = 0;
+
     for (JEventSource* evt_src : evt_srces) {
         evt_src->DoInitialize();
-        while (more_events && !m_stop_requested) {
-            try {
-                factory_set->Release();
-                evt_src->GetEvent(event);
-                //LOG_DEBUG(m_logger) << "Acquired event " << event->GetEventNumber() << " from " << evt_src->GetResourceName() << LOG_END;
-                event->SetJEventSource(evt_src);
-                event->SetEventNumber(++event_nr);
-                // TODO: Assumes JEvtSrc doesn't throw kSUCCESS
-                for (JEventProcessor* proc : evt_procs) {
-                    //LOG_DEBUG(m_logger) << "Processing: " << proc->GetTypeName() << LOG_END;
-                    proc->DoMap(event);
-                }
-                m_total_events_processed += 1;
-            }
-            catch (JEventSource::RETURN_STATUS rs) {
-                switch (rs) {
-                    case JEventSource::RETURN_STATUS::kNO_MORE_EVENTS :
-                    case JEventSource::RETURN_STATUS::kERROR:
-                    case JEventSource::RETURN_STATUS::kUNKNOWN:
-                        //LOG_DEBUG(m_logger) << "Giving up on eventsource" << LOG_END;
-                        more_events = false; break;
+        std::shared_ptr<JEvent> event = nullptr;
+        while (!m_finish_achieved && !m_stop_requested) {
 
-                    case JEventSource::RETURN_STATUS::kBUSY:
-                    case JEventSource::RETURN_STATUS::kTRY_AGAIN:
-                        //std::this_thread::yield();
-                        //std::this_thread::sleep_for(std::chrono::milliseconds(10));
-                        LOG_TRACE(m_logger) << "EventSource is not ready yet" << LOG_END;
-                        break;
-                    default:
-                        break;
-                }
+            if (event == nullptr) {
+                // Get from event pool
             }
+
+            auto result = evt_src->DoNext(event);
+            if (result == )
+
+            //LOG_DEBUG(m_logger) << "Acquired event " << event->GetEventNumber() << " from " << evt_src->GetResourceName() << LOG_END;
+            event->SetJEventSource(evt_src);
+            event->SetEventNumber(++event_nr);
+            // TODO: Assumes JEvtSrc doesn't throw kSUCCESS
+            for (JEventProcessor* proc : evt_procs) {
+                //LOG_DEBUG(m_logger) << "Processing: " << proc->GetTypeName() << LOG_END;
+                proc->DoMap(event);
+                std::lock_guard<std::mutex> lock(evt_proc_mutex);
+                proc->DoReduce(event);
+            }
+            m_total_events_processed += 1;
         }
     }
 
@@ -97,7 +81,6 @@ void JDebugProcessingController::run_worker() {
         evt_prc->DoFinalize();
     }
     m_stop_achieved = true;
-    m_finish_achieved = !more_events;
 }
 
 

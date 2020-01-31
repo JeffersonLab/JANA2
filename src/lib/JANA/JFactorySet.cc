@@ -141,32 +141,29 @@ void JFactorySet::Merge(JFactorySet &aFactorySet)
 //---------------------------------
 // Print
 //---------------------------------
-void JFactorySet::Print(void) const
+void JFactorySet::Print() const
 {
 	size_t max_len = 0;
-	for( auto p: mFactories ){
+	for (auto p: mFactories) {
 		auto len = p.second->GetName().length();
 		if( len > max_len ) max_len = len;
 	}
 
 	max_len += 4;
-	for( auto p: mFactories ){
+	for (auto p: mFactories) {
 		auto name = p.second->GetName();
 		auto tag = p.second->GetTag();
 		
 		std::cout << std::string( max_len-name.length(), ' ') + name;
-		if(!tag.empty()) std::cout << ":" << tag;
+		if (!tag.empty()) std::cout << ":" << tag;
 		std::cout << std::endl;
 	}
 }
 
-//---------------------------------
-// Release
-//---------------------------------
-void JFactorySet::Release(void)
-{
-	//Loop over all factories and: clear the data and set the created flag to false
-	for(const auto& sFactoryPair : mFactories){
+/// Release() loops over all contained factories, clearing their data
+void JFactorySet::Release() {
+
+	for (const auto& sFactoryPair : mFactories) {
 		auto sFactory = sFactoryPair.second;
 		sFactory->ClearData();
 	}
