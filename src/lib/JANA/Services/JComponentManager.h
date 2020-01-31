@@ -55,6 +55,8 @@ private:
     std::vector<JEventSource*> m_evt_srces_owned;
     std::vector<JEventProcessor*> m_evt_procs;
 
+    uint64_t m_nskip=0;
+    uint64_t m_nevents=0;
     std::string m_user_evt_src_typename = "";
     JEventSourceGenerator* m_user_evt_src_gen = nullptr;
 

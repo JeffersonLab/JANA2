@@ -10,7 +10,6 @@
 #include <memory>
 #include <queue>
 
-#include <JANA/JEvent.h>
 #include <JANA/JEventSource.h>
 #include <JANA/Streaming/JTransport.h>
 

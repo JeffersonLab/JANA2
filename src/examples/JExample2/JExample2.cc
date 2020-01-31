@@ -8,7 +8,6 @@
 
 #include <JANA/JApplication.h>
 #include <JANA/JEventSourceGeneratorT.h>
-#include <JANA/JEvent.h>
 
 #include "JEventProcessor_example2.h"
 #include "JEventSource_example2.h"

@@ -15,15 +15,6 @@ TEST_CASE("TerminationTests") {
     app.Add(processor);
     app.SetParameterValue("jana:extended_report", 0);
 
-    SECTION("Old engine, self-termination") {
-
-        app.SetParameterValue("jana:legacy_mode", 1);
-        auto source = new BoundedSource("BoundedSource", &app);
-        app.Add(source);
-        app.Run(true);
-        REQUIRE(source->event_count == 10);
-        REQUIRE(processor->processed_count == 10);
-    }
 
     SECTION("New engine, self-termination") {
 

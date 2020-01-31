@@ -6,7 +6,7 @@
 #define JANA2_JEVENTPROCESSORARROW_H
 
 
-#include <JANA/JEvent.h>
+#include <JANA/JEventProcessor.h>
 #include <JANA/Engine/JArrow.h>
 #include <JANA/Engine/JMailbox.h>
 

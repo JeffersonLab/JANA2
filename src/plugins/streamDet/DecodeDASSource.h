@@ -8,7 +8,6 @@
 #define _DecodeDASSource_h_
 
 #include <JANA/JEventSource.h>
-#include <JANA/JEvent.h>
 
 #include <fstream>
 #include <string>

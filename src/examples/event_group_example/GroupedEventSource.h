@@ -5,6 +5,7 @@
 #ifndef JANA2_GROUPEDEVENTSOURCE_H
 #define JANA2_GROUPEDEVENTSOURCE_H
 
+#include <JANA/JEventSource.h>
 #include <JANA/Services/JEventGroupTracker.h>
 
 class GroupedEventSource : public JEventSource {

@@ -3,7 +3,6 @@
 
 #include <JANA/JApplication.h>
 #include <JANA/JEventProcessor.h>
-#include <JANA/JEvent.h>
 
 class JTestPlotter : public JEventProcessor {
 

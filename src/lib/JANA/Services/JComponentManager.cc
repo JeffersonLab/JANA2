@@ -9,6 +9,8 @@ JComponentManager::JComponentManager(JApplication* app) : m_app(app) {
 
     // Extract the "user event source" in case of manual override
     app->SetDefaultParameter("event_source_type", m_user_evt_src_typename, "");
+    app->SetDefaultParameter("nevents", m_nevents, "Max number of events that sources can emit");
+    app->SetDefaultParameter("nskip", m_nskip, "Number of events that sources should skip before starting emitting");
 }
 
 JComponentManager::~JComponentManager() {
@@ -42,6 +44,7 @@ void JComponentManager::add(JFactoryGenerator *factory_generator) {
 void JComponentManager::add(JEventSource *event_source) {
     event_source->SetPluginName(m_current_plugin_name);
     event_source->SetApplication(m_app);
+    event_source->SetRange(m_nskip, m_nevents);
     m_evt_srces_all.push_back(event_source);
 }
 
@@ -61,6 +64,7 @@ void JComponentManager::resolve_event_sources() {
         auto source = generator->MakeJEventSource(source_name);
         source->SetPluginName(generator->GetPlugin());
         source->SetApplication(m_app);
+        source->SetRange(m_nskip, m_nevents);
         auto fac_gen = source->GetFactoryGenerator();
         if (fac_gen != nullptr) {
             m_fac_gens.push_back(source->GetFactoryGenerator());

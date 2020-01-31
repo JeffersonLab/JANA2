@@ -5,7 +5,6 @@
 #ifndef JANA2_JEVENTSOURCEARROW_H
 #define JANA2_JEVENTSOURCEARROW_H
 
-#include <JANA/JEvent.h>
 #include <JANA/JFactorySet.h>
 
 #include <JANA/Engine/JArrow.h>

@@ -50,7 +50,6 @@
 #include <JANA/JException.h>
 #include <JANA/JFactoryT.h>
 #include <JANA/JFactorySet.h>
-#include <JANA/JEventSource.h>
 #include <JANA/JLogger.h>
 
 #include <JANA/Utils/JResettable.h>
@@ -65,6 +64,7 @@
 #include <mutex>
 
 class JApplication;
+class JEventSource;
 
 using std::vector;
 
