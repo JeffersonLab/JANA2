@@ -22,6 +22,7 @@ set(TEST_SOURCES
     JEventGroupTests.cc
     JFactoryTests.h
     JFactoryTests.cc
+    NEventNSkipTests.cc
     )
 
 add_executable(tests ${TEST_SOURCES})

@@ -134,7 +134,7 @@ public:
                         GetEvent(std::move(event));  // Throw this event away
                         return ReturnStatus::TryAgain;
                     }
-                    else if (m_nevents != 0 && (m_event_count > last_evt_nr)) {
+                    else if (m_nevents != 0 && (m_event_count == last_evt_nr)) {
                         m_status = SourceStatus::Finished; // TODO: This isn't threadsafe at the moment
                         return ReturnStatus::Finished;
                     }

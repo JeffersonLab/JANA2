@@ -18,7 +18,7 @@ class JComponentManager : public JService {
 public:
 
     explicit JComponentManager(JApplication*);
-    ~JComponentManager();
+    ~JComponentManager() override;
 
     void next_plugin(std::string plugin_name);
 

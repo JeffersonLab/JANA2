@@ -5,21 +5,14 @@
 #include "JComponentManager.h"
 #include <JANA/JEventProcessor.h>
 
-JComponentManager::JComponentManager(JApplication* app) : m_app(app) {
-
-    // Extract the "user event source" in case of manual override
-    app->SetDefaultParameter("event_source_type", m_user_evt_src_typename, "");
-    app->SetDefaultParameter("nevents", m_nevents, "Max number of events that sources can emit");
-    app->SetDefaultParameter("nskip", m_nskip, "Number of events that sources should skip before starting emitting");
-}
+JComponentManager::JComponentManager(JApplication* app) : m_app(app) {}
 
 JComponentManager::~JComponentManager() {
     for (auto* src : m_evt_srces_owned) {
         delete src;
     }
-    // TODO: What else do we want to own? We don't really expect the user to delete any of the components ever
-    // Maybe we should add a bool param indicating whether we take ownership or not, defaults to true
-    // Or maybe we should only accept shared_ptrs
+    // TODO: User owns event_procs, but probably won't ever delete them.
+    // If the event_proc comes from a plugin, the user _can't_ delete them.
 }
 
 void JComponentManager::next_plugin(std::string plugin_name) {
@@ -44,7 +37,6 @@ void JComponentManager::add(JFactoryGenerator *factory_generator) {
 void JComponentManager::add(JEventSource *event_source) {
     event_source->SetPluginName(m_current_plugin_name);
     event_source->SetApplication(m_app);
-    event_source->SetRange(m_nskip, m_nevents);
     m_evt_srces_all.push_back(event_source);
 }
 
@@ -58,19 +50,27 @@ void JComponentManager::add(JEventProcessor *processor) {
 
 void JComponentManager::resolve_event_sources() {
 
+    m_app->SetDefaultParameter("event_source_type", m_user_evt_src_typename, "");
+
     m_user_evt_src_gen = resolve_user_event_source_generator();
     for (auto& source_name : m_src_names) {
         auto* generator = resolve_event_source(source_name);
         auto source = generator->MakeJEventSource(source_name);
         source->SetPluginName(generator->GetPlugin());
         source->SetApplication(m_app);
-        source->SetRange(m_nskip, m_nevents);
         auto fac_gen = source->GetFactoryGenerator();
         if (fac_gen != nullptr) {
             m_fac_gens.push_back(source->GetFactoryGenerator());
         }
         m_evt_srces_all.push_back(source);
         m_evt_srces_owned.push_back(source);
+    }
+
+    m_app->SetDefaultParameter("jana:nevents", m_nevents, "Max number of events that sources can emit");
+    m_app->SetDefaultParameter("jana:nskip", m_nskip, "Number of events that sources should skip before starting emitting");
+
+    for (auto source : m_evt_srces_all) {
+        source->SetRange(m_nskip, m_nevents);
     }
 }
 
