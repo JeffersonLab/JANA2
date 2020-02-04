@@ -4,6 +4,7 @@
 
 #include "JComponentManager.h"
 #include <JANA/JEventProcessor.h>
+#include <JANA/JApplication.h>
 
 JComponentManager::JComponentManager(JApplication* app) : m_app(app) {}
 

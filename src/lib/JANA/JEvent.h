@@ -80,21 +80,21 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 		//FACTORIES
 		void SetFactorySet(JFactorySet* aFactorySet) { mFactorySet = aFactorySet; }
 
-		template<class T> JFactoryT<T>* GetFactory(const std::string& tag = "", bool throw_on_missing=false) const;
-        template<class T> std::vector<JFactoryT<T>*> GetFactoryAll(bool throw_on_missing = false) const;
+		template<class T> JAbstractFactoryT<T>* GetFactory(const std::string& tag = "", bool throw_on_missing=false) const;
+        template<class T> std::vector<JAbstractFactoryT<T>*> GetFactoryAll(bool throw_on_missing = false) const;
 
 		template<class T> JMetadata<T> GetMetadata(const std::string& tag = "") const;
 
 		//OBJECTS
 		// C style getters
-		template<class T> JFactoryT<T>* Get(const T** item, const std::string& tag="") const;
-		template<class T> JFactoryT<T>* Get(std::vector<const T*> &vec, const std::string& tag = "") const;
+		template<class T> JAbstractFactoryT<T>* Get(const T** item, const std::string& tag="") const;
+		template<class T> JAbstractFactoryT<T>* Get(std::vector<const T*> &vec, const std::string& tag = "") const;
         template<class T> void GetAll(std::vector<const T*> &vec) const;
 
 		// C++ style getters
 		template<class T> const T* GetSingle(const std::string& tag = "") const;
 		template<class T> std::vector<const T*> Get(const std::string& tag = "") const;
-		template<class T> typename JFactoryT<T>::PairType GetIterators(const std::string& aTag = "") const;
+		template<class T> typename JAbstractFactoryT<T>::PairType GetIterators(const std::string& aTag = "") const;
         template<class T> std::vector<const T*> GetAll() const;
 
 		// Insert
@@ -136,7 +136,7 @@ inline void JEvent::Insert(T* item, const std::string& tag) const {
 
 	auto factory = mFactorySet->GetFactory<T>(tag);
 	if (factory == nullptr) {
-		factory = new JFactoryT<T>(JTypeInfo::demangle<T>(), tag);
+		factory = new JFactoryV2<T>(JTypeInfo::demangle<T>(), tag);
 		mFactorySet->Add(factory);
 	}
 	factory->Insert(item);
@@ -147,7 +147,7 @@ inline void JEvent::Insert(const std::vector<T*>& items, const std::string& tag)
 
 	auto factory = mFactorySet->GetFactory<T>(tag);
 	if (factory == nullptr) {
-		factory = new JFactoryT<T>(JTypeInfo::demangle<T>(), tag);
+		factory = new JFactoryV2<T>(JTypeInfo::demangle<T>(), tag);
 		mFactorySet->Add(factory);
 	}
 	for (T* item : items) {
@@ -158,12 +158,12 @@ inline void JEvent::Insert(const std::vector<T*>& items, const std::string& tag)
 /// GetFactory() should be used with extreme care because it subverts the JEvent abstraction.
 /// Most historical uses of GetFactory are far better served by GetMetadata.
 template<class T>
-inline JFactoryT<T>* JEvent::GetFactory(const std::string& tag, bool throw_on_missing) const
+inline JAbstractFactoryT<T>* JEvent::GetFactory(const std::string& tag, bool throw_on_missing) const
 {
     auto factory = mFactorySet->GetFactory<T>(tag);
     if (factory == nullptr) {
         if (throw_on_missing) {
-            throw JException("Could not find JFactoryT<" + JTypeInfo::demangle<T>() + "> with tag=" + tag);
+            throw JException("Could not find JAbstractFactoryT<" + JTypeInfo::demangle<T>() + "> with tag=" + tag);
         }
 	};
     return factory;
@@ -176,9 +176,9 @@ inline JMetadata<T> JEvent::GetMetadata(const std::string& tag) const {
 
     auto factory = mFactorySet->GetFactory<T>(tag);
     if (factory == nullptr) {
-        throw JException("Could not find JFactoryT<" + JTypeInfo::demangle<T>() + "> with tag=" + tag);
+        throw JException("Could not find JAbstractFactoryT<" + JTypeInfo::demangle<T>() + "> with tag=" + tag);
     };
-    // Make sure that JFactoryT::Process has already been called before returning the metadata
+    // Make sure that JAbstractFactoryT::Process has already been called before returning the metadata
     factory->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
 
     return factory->GetMetadata();
@@ -188,7 +188,7 @@ inline JMetadata<T> JEvent::GetMetadata(const std::string& tag) const {
 /// C-style getters
 
 template<class T>
-JFactoryT<T>* JEvent::Get(const T** destination, const std::string& tag) const
+JAbstractFactoryT<T>* JEvent::Get(const T** destination, const std::string& tag) const
 {
 	auto factory = GetFactory<T>(tag, true);
     auto iterators = factory->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
@@ -201,7 +201,7 @@ JFactoryT<T>* JEvent::Get(const T** destination, const std::string& tag) const
 
 
 template<class T>
-JFactoryT<T>* JEvent::Get(std::vector<const T*>& destination, const std::string& tag) const
+JAbstractFactoryT<T>* JEvent::Get(std::vector<const T*>& destination, const std::string& tag) const
 {
     auto factory = GetFactory<T>(tag, true);
     auto iterators = factory->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
@@ -234,15 +234,15 @@ std::vector<const T*> JEvent::Get(const std::string& tag) const {
     return vec; // Assumes RVO
 }
 
-/// GetFactoryAll returns all JFactoryT's for type T (each corresponds to a different tag).
+/// GetFactoryAll returns all JAbstractFactoryT's for type T (each corresponds to a different tag).
 /// This is useful when there are many different tags, or the tags are unknown, and the user
 /// wishes to examine them all together.
 template<class T>
-inline std::vector<JFactoryT<T>*> JEvent::GetFactoryAll(bool throw_on_missing) const {
+inline std::vector<JAbstractFactoryT<T>*> JEvent::GetFactoryAll(bool throw_on_missing) const {
     auto factories = mFactorySet->GetFactoryAll<T>();
     if (factories.size() == 0) {
         if (throw_on_missing) {
-            throw JException("Could not find any JFactoryT<" + JTypeInfo::demangle<T>() + "> (from any tag)");
+            throw JException("Could not find any JAbstractFactoryT<" + JTypeInfo::demangle<T>() + "> (from any tag)");
         }
     };
     return factories;
@@ -278,7 +278,7 @@ std::vector<const T*> JEvent::GetAll() const {
 
 
 template<class T>
-typename JFactoryT<T>::PairType JEvent::GetIterators(const std::string& tag) const {
+typename JAbstractFactoryT<T>::PairType JEvent::GetIterators(const std::string& tag) const {
     return GetFactory<T>(tag, true)->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
 }
 

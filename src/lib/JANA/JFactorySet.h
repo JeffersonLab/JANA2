@@ -69,8 +69,8 @@ class JFactorySet : public JResettable
 		void Release(void);
 
 		JFactory* GetFactory(std::type_index aObjectType, const std::string& aFactoryTag="") const;
-		template<typename T> JFactoryT<T>* GetFactory(const std::string& tag = "") const;
-		template<typename T> std::vector<JFactoryT<T>*> GetFactoryAll() const;
+		template<typename T> JAbstractFactoryT<T>* GetFactory(const std::string& tag = "") const;
+		template<typename T> std::vector<JAbstractFactoryT<T>*> GetFactoryAll() const;
 
 		std::vector<JFactorySummary> Summarize() const;
 
@@ -81,20 +81,20 @@ class JFactorySet : public JResettable
 };
 
 template<typename T>
-JFactoryT<T>* JFactorySet::GetFactory(const std::string& tag) const {
+JAbstractFactoryT<T>* JFactorySet::GetFactory(const std::string& tag) const {
 
 	auto sKeyPair = std::make_pair(std::type_index(typeid(T)), tag);
 	auto sIterator = mFactories.find(sKeyPair);
-	return (sIterator != std::end(mFactories)) ? static_cast<JFactoryT<T>*>(sIterator->second) : nullptr;
+	return (sIterator != std::end(mFactories)) ? dynamic_cast<JAbstractFactoryT<T>*>(sIterator->second) : nullptr;
 }
 
 template<typename T>
-std::vector<JFactoryT<T>*> JFactorySet::GetFactoryAll() const {
+std::vector<JAbstractFactoryT<T>*> JFactorySet::GetFactoryAll() const {
 	auto sKey = std::type_index(typeid(T));
-	std::vector<JFactoryT<T>*> data;
+	std::vector<JAbstractFactoryT<T>*> data;
 	for (auto it=std::begin(mFactories);it!=std::end(mFactories);it++){
 		if (it->first.first==sKey){
-			data.push_back(static_cast<JFactoryT<T>*>(it->second));
+			data.push_back(dynamic_cast<JAbstractFactoryT<T>*>(it->second));
 		}
 	}
 	return data;

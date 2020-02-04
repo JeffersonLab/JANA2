@@ -69,6 +69,8 @@ public:
         NOT_OBJECT_OWNER = 0x04
     };
 
+    enum class Status {Uninitialized, Unprocessed, Processed, Inserted};
+
     JFactory(std::string aName, std::string aTag = "")
     : mObjectName(std::move(aName)), mTag(std::move(aTag)), mStatus(Status::Uninitialized) {};
 
@@ -100,36 +102,10 @@ public:
         return (mFlags & (uint32_t) f) == (uint32_t) f;
     }
 
-
-
-    // Overloaded by JFactoryT
+    // Overloaded by JAbstractFactoryT
     virtual std::type_index GetObjectType() const = 0;
 
     virtual void ClearData() = 0;
-
-
-
-    // Overloaded by user Factories
-    virtual void Init() {}
-
-    virtual void ChangeRun(const std::shared_ptr<const JEvent> &aEvent) {}
-
-    virtual void Process(const std::shared_ptr<const JEvent> &aEvent) {}
-
-
-
-    // Copy/Move objects into factory
-    template<typename T>
-    void Set(std::vector<T *> &items) {
-        for (T *item : items) {
-            Insert(item);
-        }
-    }
-    // Another option:
-    // Get rid of Set(std::vector<JObject*>& items) completely.
-    // Have virtual Set<T>(std::vector<T*>& items) { throw JException("Wrong type!"); }
-    // When T matches JFactoryT<T>, then this dispatches to the JFactoryT<T>::Set()
-    // The main downside I see right now is a potentially huge vtable
 
 
 
@@ -142,9 +118,6 @@ public:
 
 
 protected:
-    virtual void Set(std::vector<JObject *> &data) = 0;
-
-    virtual void Insert(JObject *data) = 0;
 
     std::string mPluginName;
     std::string mFactoryName;
@@ -154,12 +127,8 @@ protected:
     uint32_t mPreviousRunNumber = -1;
     JApplication* mApp = nullptr;
 
-    enum class Status {Uninitialized, Unprocessed, Processed, Inserted};
     mutable Status mStatus = Status::Uninitialized;
-    mutable std::mutex mMutex;
 
-    // Used to make sure Init is called only once
-    std::once_flag mInitFlag;
 };
 
 #endif // _JFactory_h_
