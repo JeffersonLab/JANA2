@@ -39,7 +39,7 @@ TEST_CASE("UserExceptionTests") {
         REQUIRE_THROWS(app.Run(true));
     }
 
-//    SECTION("JEventProcessor::Process() excepts, old engine") {
+//    SECTION("JAbstractEventProcessor::Process() excepts, old engine") {
 //
 //        app.SetParameterValue("jana:legacy_mode", 1);
 //        app.Add(new FlakySource("open_excepting_source", &app, false, false));
@@ -79,7 +79,7 @@ TEST_CASE("UserExceptionTests") {
         REQUIRE_THROWS(app.Run(true));
     }
 
-//    SECTION("JEventProcessor::Process() excepts, new engine") {
+//    SECTION("JAbstractEventProcessor::Process() excepts, new engine") {
 //
 //        app.SetParameterValue("jana:legacy_mode", 0);
 //        app.Add(new FlakySource("open_excepting_source", &app, false, false));
@@ -87,7 +87,7 @@ TEST_CASE("UserExceptionTests") {
 //        REQUIRE_THROWS(app.Run(true));
 //    }
 
-//    SECTION("JEventProcessor::Finish() excepts, new engine") {
+//    SECTION("JAbstractEventProcessor::Finish() excepts, new engine") {
 //
 //        app.SetParameterValue("jana:legacy_mode", 0);
 //        app.Add(new FlakySource("open_excepting_source", &app, false, false));

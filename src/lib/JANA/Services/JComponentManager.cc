@@ -40,7 +40,7 @@ void JComponentManager::add(JAbstractEventSource *event_source) {
     m_evt_srces_all.push_back(event_source);
 }
 
-void JComponentManager::add(JEventProcessor *processor) {
+void JComponentManager::add(JAbstractEventProcessor *processor) {
     processor->SetPluginName(m_current_plugin_name);
     if (processor->GetApplication() == nullptr) {
         processor->SetJApplication(m_app);
@@ -136,7 +136,7 @@ std::vector<JAbstractEventSource*>& JComponentManager::get_evt_srces() {
     return m_evt_srces_all;
 }
 
-std::vector<JEventProcessor*>& JComponentManager::get_evt_procs() {
+std::vector<JAbstractEventProcessor*>& JComponentManager::get_evt_procs() {
     return m_evt_procs;
 }
 

@@ -34,7 +34,7 @@
 #include <iostream>
 
 class JApplication;
-class JEventProcessor;
+class JAbstractEventProcessor;
 class JAbstractEventSource;
 class JEventSourceGenerator;
 class JFactoryGenerator;
@@ -83,7 +83,7 @@ public:
     void Add(JEventSourceGenerator* source_generator);
     void Add(JFactoryGenerator* factory_generator);
     void Add(JAbstractEventSource* event_source);
-    void Add(JEventProcessor* processor);
+    void Add(JAbstractEventProcessor* processor);
 
 
     // Controlling processing

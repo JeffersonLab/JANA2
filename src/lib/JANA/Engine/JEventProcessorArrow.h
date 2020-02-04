@@ -19,7 +19,7 @@ public:
     using EventQueue = JMailbox<Event>;
 
 private:
-    std::vector<JEventProcessor*> _processors;
+    std::vector<JAbstractEventProcessor*> _processors;
     EventQueue* _input_queue;
     EventQueue* _output_queue;
     std::shared_ptr<JEventPool> _pool;
@@ -32,7 +32,7 @@ public:
                          EventQueue *output_queue,
                          std::shared_ptr<JEventPool> pool);
 
-    void add_processor(JEventProcessor* processor);
+    void add_processor(JAbstractEventProcessor* processor);
 
     void initialize() final;
     void finalize() final;

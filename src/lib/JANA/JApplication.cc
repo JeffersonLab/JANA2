@@ -98,7 +98,7 @@ void JApplication::Add(JFactoryGenerator *factory_generator) {
     _component_manager->add(factory_generator);
 }
 
-void JApplication::Add(JEventProcessor* processor) {
+void JApplication::Add(JAbstractEventProcessor* processor) {
     _component_manager->add(processor);
 }
 

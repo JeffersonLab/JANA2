@@ -43,7 +43,7 @@ void JDebugProcessingController::run_worker() {
     auto evt_srces = m_component_manager->get_evt_srces();
     auto evt_procs = m_component_manager->get_evt_procs();
 
-    for (JEventProcessor* proc : evt_procs) {
+    for (JAbstractEventProcessor* proc : evt_procs) {
         proc->DoInitialize();
     }
 
@@ -67,7 +67,7 @@ void JDebugProcessingController::run_worker() {
                 event->SetJEventSource(evt_src);
                 event->SetJApplication(evt_src->GetApplication());
 
-                for (JEventProcessor* proc : evt_procs) {
+                for (JAbstractEventProcessor* proc : evt_procs) {
                     proc->DoMap(event);
                     proc->DoReduce(event);
                 }
@@ -81,7 +81,7 @@ void JDebugProcessingController::run_worker() {
     }
 
     LOG_INFO(m_logger) << "Finished JDebugProcessingController::run_worker" << LOG_END;
-    for (JEventProcessor* evt_prc : evt_procs) {
+    for (JAbstractEventProcessor* evt_prc : evt_procs) {
         evt_prc->DoFinalize();
     }
     m_stop_achieved = true;

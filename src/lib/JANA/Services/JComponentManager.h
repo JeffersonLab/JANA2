@@ -12,7 +12,7 @@
 
 #include <vector>
 
-class JEventProcessor;
+class JAbstractEventProcessor;
 
 class JComponentManager : public JService {
 public:
@@ -26,7 +26,7 @@ public:
     void add(JEventSourceGenerator* source_generator);
     void add(JFactoryGenerator* factory_generator);
     void add(JAbstractEventSource* event_source);
-    void add(JEventProcessor* processor);
+    void add(JAbstractEventProcessor* processor);
 
     void resolve_event_sources();
     JEventSourceGenerator* resolve_user_event_source_generator() const;
@@ -36,7 +36,7 @@ public:
 
     // Unsafe access into our own repository of components
     std::vector<JAbstractEventSource*>& get_evt_srces();
-    std::vector<JEventProcessor*>& get_evt_procs();
+    std::vector<JAbstractEventProcessor*>& get_evt_procs();
     std::vector<JFactoryGenerator*>& get_fac_gens();
 
 
@@ -53,7 +53,7 @@ private:
     std::vector<JFactoryGenerator*> m_fac_gens;
     std::vector<JAbstractEventSource*> m_evt_srces_all;
     std::vector<JAbstractEventSource*> m_evt_srces_owned;
-    std::vector<JEventProcessor*> m_evt_procs;
+    std::vector<JAbstractEventProcessor*> m_evt_procs;
 
     uint64_t m_nskip=0;
     uint64_t m_nevents=0;

@@ -26,7 +26,7 @@ JEventProcessorArrow::JEventProcessorArrow(std::string name,
     }
 }
 
-void JEventProcessorArrow::add_processor(JEventProcessor* processor) {
+void JEventProcessorArrow::add_processor(JAbstractEventProcessor* processor) {
     _processors.push_back(processor);
 }
 
@@ -44,7 +44,7 @@ void JEventProcessorArrow::execute(JArrowMetrics& result, size_t location_id) {
     auto start_latency_time = std::chrono::steady_clock::now();
     if (success) {
         LOG_DEBUG(_logger) << "EventProcessorArrow '" << get_name() << "': Starting event# " << x->GetEventNumber() << LOG_END;
-        for (JEventProcessor* processor : _processors) {
+        for (JAbstractEventProcessor* processor : _processors) {
             processor->DoMap(x);
         }
         LOG_DEBUG(_logger) << "EventProcessorArrow '" << get_name() << "': Finished event# " << x->GetEventNumber() << LOG_END;
