@@ -89,6 +89,22 @@ set(JANA2_SOURCES
     Calibrations/JCalibrationFile.h
     Calibrations/JCalibrationGenerator.h
     Calibrations/JCalibrationGeneratorCCDB.h
+
+    Components/JAbstractFactory.h
+    Components/JAbstractEventProcessor.h
+    Components/JAbstractEventSource.h
+    Components/V2/JFactoryV2.cc
+    Components/V2/JFactoryV2.h
+    Components/V2/JEventProcessorV2.cc
+    Components/V2/JEventProcessorV2.h
+    Components/V2/JEventSourceV2.cc
+    Components/V2/JEventSourceV2.h
+    Components/V3/JFactoryV3.cc
+    Components/V3/JFactoryV3.h
+    Components/V3/JEventProcessorV3.cc
+    Components/V3/JEventProcessorV3.h
+    Components/V3/JEventSourceV3.cc
+    Components/V3/JEventSourceV3.h
     )
 
 
