@@ -11,7 +11,7 @@
 using SourceStatus = JEventSource::RETURN_STATUS;
 
 JEventSourceArrow::JEventSourceArrow(std::string name,
-                                     JEventSource* source,
+                                     JAbstractEventSource* source,
                                      EventQueue* output_queue,
                                      std::shared_ptr<JEventPool> pool
                                      )
@@ -34,7 +34,7 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
         return;
     }
 
-    JEventSource::ReturnStatus in_status = JEventSource::ReturnStatus::Success;
+    JAbstractEventSource::ReturnStatus in_status = JAbstractEventSource::ReturnStatus::Success;
     auto start_time = std::chrono::steady_clock::now();
 
     auto chunksize = get_chunksize();
@@ -45,21 +45,21 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
         // Ensures that the source _only_ emits in increments of
         // chunksize, which happens to come in very handy for
         // processing entangled event blocks
-        in_status = JEventSource::ReturnStatus::TryAgain;
+        in_status = JAbstractEventSource::ReturnStatus::TryAgain;
         emit_count = 0;
         LOG_DEBUG(_logger) << "JEventSourceArrow asked for " << chunksize << ", but only reserved " << reserved_count << LOG_END;
     }
     else {
         auto event = _pool->get(location_id);
-        for (size_t i=0; i<emit_count && in_status==JEventSource::ReturnStatus::Success; ++i) {
+        for (size_t i=0; i<emit_count && in_status==JAbstractEventSource::ReturnStatus::Success; ++i) {
             if (event == nullptr) {
-                in_status = JEventSource::ReturnStatus::TryAgain;
+                in_status = JAbstractEventSource::ReturnStatus::TryAgain;
                 break;
             }
             event->SetJEventSource(_source);
             event->SetJApplication(_source->GetApplication());
             in_status = _source->DoNext(event);
-            if (in_status == JEventSource::ReturnStatus::Success) {
+            if (in_status == JAbstractEventSource::ReturnStatus::Success) {
                 _chunk_buffer.push_back(std::move(event));
                 event = _pool->get(location_id);
             }
@@ -73,14 +73,14 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
 
     LOG_DEBUG(_logger) << "JEventSourceArrow '" << get_name() << "' [" << location_id << "]: "
                        << "Emitted " << message_count << " events; last GetEvent "
-                       << ((in_status==JEventSource::ReturnStatus::Success) ? "succeeded" : "failed")
+                       << ((in_status==JAbstractEventSource::ReturnStatus::Success) ? "succeeded" : "failed")
                        << LOG_END;
 
     auto latency = latency_time - start_time;
     auto overhead = finished_time - latency_time;
     JArrowMetrics::Status status;
 
-    if (in_status == JEventSource::ReturnStatus::Finished) {
+    if (in_status == JAbstractEventSource::ReturnStatus::Finished) {
         set_upstream_finished(true);
         LOG_DEBUG(_logger) << "JEventSourceArrow '" << get_name() << "': "
                            << "Finished!" << LOG_END;

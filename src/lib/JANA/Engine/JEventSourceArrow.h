@@ -17,14 +17,14 @@ class JEventPool;
 
 class JEventSourceArrow : public JArrow {
 private:
-    JEventSource* _source;
+    JAbstractEventSource* _source;
     EventQueue* _output_queue;
     std::shared_ptr<JEventPool> _pool;
     std::vector<Event> _chunk_buffer;
     JLogger _logger;
 
 public:
-    JEventSourceArrow(std::string name, JEventSource* source, EventQueue* output_queue, std::shared_ptr<JEventPool> pool);
+    JEventSourceArrow(std::string name, JAbstractEventSource* source, EventQueue* output_queue, std::shared_ptr<JEventPool> pool);
     void initialize() final;
     void execute(JArrowMetrics& result, size_t location_id) final;
 };

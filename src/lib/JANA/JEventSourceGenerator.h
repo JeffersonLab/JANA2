@@ -46,7 +46,7 @@
 
 #include <string>
 
-#include <JANA/JEventSource.h>
+#include <JANA/Components/JAbstractEventSource.h>
 
 /// This is a base class for all event source generators. JANA implements
 /// event sources in a modular way so that new types of sources can be
@@ -72,7 +72,7 @@ class JEventSourceGenerator{
 		// Default versions of these are defined in JEventSourceGeneratorT.h
 		virtual std::string GetType(void) const = 0; ///< Return name of the source type this will generate
 		virtual std::string GetDescription(void) const = 0; ///< Return description of the source type this will generate
-		virtual JEventSource* MakeJEventSource( std::string source ) = 0; ///< Create an instance of the source type this generates
+		virtual JAbstractEventSource* MakeJEventSource( std::string source ) = 0; ///< Create an instance of the source type this generates
 		virtual double CheckOpenable( std::string source ) = 0; ///< See JEventSourceGeneratorT for description
 
 

@@ -101,7 +101,7 @@ class JEventSourceGeneratorT:public JEventSourceGenerator{
 		std::string GetDescription(void) const { return T::GetDescription(); }
 
 		/// Create an instance of the source type this generates
-		JEventSource* MakeJEventSource( std::string source ){ return new T( source, mApplication ); }
+		JAbstractEventSource* MakeJEventSource( std::string source ){ return new T( source, mApplication ); }
 
 		/// Check how likely a source of the type this generates is to read
 		/// the specified source. This mechanism is to allow a single executable

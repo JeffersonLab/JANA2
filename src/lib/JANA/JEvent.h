@@ -64,7 +64,7 @@
 #include <mutex>
 
 class JApplication;
-class JEventSource;
+class JAbstractEventSource;
 
 using std::vector;
 
@@ -105,18 +105,18 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 		void SetRunNumber(uint32_t aRunNumber){mRunNumber = aRunNumber;}
 		void SetEventNumber(uint64_t aEventNumber){mEventNumber = aEventNumber;}
 		void SetJApplication(JApplication* app){mApplication = app;}
-		void SetJEventSource(JEventSource* aSource){mEventSource = aSource;}
+		void SetJEventSource(JAbstractEventSource* aSource){mEventSource = aSource;}
 
 		//GETTERS
 		uint32_t GetRunNumber() const {return mRunNumber;}
 		uint64_t GetEventNumber() const {return mEventNumber;}
 		JApplication* GetJApplication() const {return mApplication;}
-        JEventSource* GetJEventSource() const {return mEventSource; }
+        JAbstractEventSource* GetJEventSource() const {return mEventSource; }
 		friend class JEventPool;
 
 	protected:
 		mutable JFactorySet* mFactorySet = nullptr;
-		JEventSource* mEventSource = nullptr;
+		JAbstractEventSource* mEventSource = nullptr;
 		bool mIsBarrierEvent = false;
 
 	private:

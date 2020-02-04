@@ -29,7 +29,7 @@
 #include <JANA/JApplication.h>
 
 #include <JANA/JEventProcessor.h>
-#include <JANA/JEventSource.h>
+#include <JANA/Components/JAbstractEventSource.h>
 #include <JANA/JEventSourceGenerator.h>
 #include <JANA/JFactoryGenerator.h>
 
@@ -80,7 +80,7 @@ void JApplication::AddPluginPath(std::string path) {
 
 // Building a ProcessingTopology
 
-void JApplication::Add(JEventSource* event_source) {
+void JApplication::Add(JAbstractEventSource* event_source) {
     _component_manager->add(event_source);
 }
 
@@ -166,7 +166,7 @@ void JApplication::Run(bool wait_until_finished) {
         if (!_draining_queues) {
             bool draining = true;
             for (auto evt_src : _component_manager->get_evt_srces()) {
-                draining &= (evt_src->GetStatus() == JEventSource::SourceStatus::Finished);
+                draining &= (evt_src->GetStatus() == JAbstractEventSource::SourceStatus::Finished);
             }
             _draining_queues = draining;
         }

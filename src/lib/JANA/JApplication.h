@@ -35,7 +35,7 @@
 
 class JApplication;
 class JEventProcessor;
-class JEventSource;
+class JAbstractEventSource;
 class JEventSourceGenerator;
 class JFactoryGenerator;
 class JFactorySet;
@@ -82,7 +82,7 @@ public:
     void Add(std::string event_source_name);
     void Add(JEventSourceGenerator* source_generator);
     void Add(JFactoryGenerator* factory_generator);
-    void Add(JEventSource* event_source);
+    void Add(JAbstractEventSource* event_source);
     void Add(JEventProcessor* processor);
 
 

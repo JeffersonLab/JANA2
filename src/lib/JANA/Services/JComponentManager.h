@@ -25,7 +25,7 @@ public:
     void add(std::string event_source_name);
     void add(JEventSourceGenerator* source_generator);
     void add(JFactoryGenerator* factory_generator);
-    void add(JEventSource* event_source);
+    void add(JAbstractEventSource* event_source);
     void add(JEventProcessor* processor);
 
     void resolve_event_sources();
@@ -35,7 +35,7 @@ public:
     JComponentSummary get_component_summary();
 
     // Unsafe access into our own repository of components
-    std::vector<JEventSource*>& get_evt_srces();
+    std::vector<JAbstractEventSource*>& get_evt_srces();
     std::vector<JEventProcessor*>& get_evt_procs();
     std::vector<JFactoryGenerator*>& get_fac_gens();
 
@@ -51,8 +51,8 @@ private:
     std::vector<std::string> m_src_names;
     std::vector<JEventSourceGenerator*> m_src_gens;
     std::vector<JFactoryGenerator*> m_fac_gens;
-    std::vector<JEventSource*> m_evt_srces_all;
-    std::vector<JEventSource*> m_evt_srces_owned;
+    std::vector<JAbstractEventSource*> m_evt_srces_all;
+    std::vector<JAbstractEventSource*> m_evt_srces_owned;
     std::vector<JEventProcessor*> m_evt_procs;
 
     uint64_t m_nskip=0;

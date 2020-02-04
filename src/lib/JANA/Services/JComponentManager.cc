@@ -34,7 +34,7 @@ void JComponentManager::add(JFactoryGenerator *factory_generator) {
     m_fac_gens.push_back(factory_generator);
 }
 
-void JComponentManager::add(JEventSource *event_source) {
+void JComponentManager::add(JAbstractEventSource *event_source) {
     event_source->SetPluginName(m_current_plugin_name);
     event_source->SetApplication(m_app);
     m_evt_srces_all.push_back(event_source);
@@ -132,7 +132,7 @@ JEventSourceGenerator* JComponentManager::resolve_user_event_source_generator() 
 
 }
 
-std::vector<JEventSource*>& JComponentManager::get_evt_srces() {
+std::vector<JAbstractEventSource*>& JComponentManager::get_evt_srces() {
     return m_evt_srces_all;
 }
 

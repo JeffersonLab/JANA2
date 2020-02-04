@@ -53,16 +53,16 @@ void JDebugProcessingController::run_worker() {
     auto factory_set = new JFactorySet(m_component_manager->get_fac_gens());
     event->SetFactorySet(factory_set);
 
-    for (JEventSource* evt_src : evt_srces) {
+    for (JAbstractEventSource* evt_src : evt_srces) {
 
         if (m_stop_requested) continue;
         evt_src->DoInitialize();
 
-        for (auto result = JEventSource::ReturnStatus::TryAgain;
-             result != JEventSource::ReturnStatus::Finished && !m_stop_requested;) {
+        for (auto result = JAbstractEventSource::ReturnStatus::TryAgain;
+             result != JAbstractEventSource::ReturnStatus::Finished && !m_stop_requested;) {
 
             result = evt_src->DoNext(event);
-            if (result == JEventSource::ReturnStatus::Success) {
+            if (result == JAbstractEventSource::ReturnStatus::Success) {
                 event->SetEventNumber(++m_total_events_emitted);
                 event->SetJEventSource(evt_src);
                 event->SetJApplication(evt_src->GetApplication());
