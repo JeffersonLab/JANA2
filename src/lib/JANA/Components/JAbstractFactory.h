@@ -26,7 +26,7 @@ public:
     using IteratorType = typename std::vector<T*>::const_iterator;
     using PairType = std::pair<IteratorType, IteratorType>;
 
-    JAbstractFactoryT(const std::string& aName = JTypeInfo::demangle<T>(), const std::string& aTag = "")
+    explicit JAbstractFactoryT(const std::string& aName = JTypeInfo::demangle<T>(), const std::string& aTag = "")
             : JFactory(aName, aTag) {}
 
     ~JAbstractFactoryT() override = default;

@@ -139,7 +139,11 @@ inline void JEvent::Insert(T* item, const std::string& tag) const {
 		factory = new JFactoryV2<T>(JTypeInfo::demangle<T>(), tag);
 		mFactorySet->Add(factory);
 	}
-	factory->Insert(item);
+    auto dummy = dynamic_cast<JFactoryV2<T>*>(factory);
+    if (dummy == nullptr) {
+        throw JException("Attempting to insert into a non-dummy factory");
+    }
+	dummy->Insert(item);
 }
 
 template <class T>
@@ -150,8 +154,12 @@ inline void JEvent::Insert(const std::vector<T*>& items, const std::string& tag)
 		factory = new JFactoryV2<T>(JTypeInfo::demangle<T>(), tag);
 		mFactorySet->Add(factory);
 	}
+	auto dummy = dynamic_cast<JFactoryV2<T>*>(factory);
+	if (dummy == nullptr) {
+	    throw JException("Attempting to insert into a non-dummy factory");
+	}
 	for (T* item : items) {
-		factory->Insert(item);
+		dummy->Insert(item);
 	}
 }
 

@@ -13,7 +13,8 @@ class JFactoryV2 : public JAbstractFactoryT<T> {
 public:
 
     JFactoryV2(const std::string& factory_name, const std::string& tag="")
-    : JFactory(factory_name, tag) {}
+    : JFactory(factory_name, tag), JAbstractFactoryT<T>(factory_name, tag)(
+            <>) {}
 
     // -----------------------------
     // Meant to be overriden by user
