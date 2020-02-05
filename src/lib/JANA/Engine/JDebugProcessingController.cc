@@ -141,12 +141,12 @@ void JDebugProcessingController::print_final_report() {
 
 std::unique_ptr<const JPerfSummary> JDebugProcessingController::measure_performance() {
 
-    auto ps = std::make_unique<JPerfSummary>();
+    auto ps = std::unique_ptr<JPerfSummary>(new JPerfSummary());
 
     m_perf_metrics.summarize(*ps);
     ps->thread_count = m_workers.size();
     ps->monotonic_events_completed = m_total_events_processed;
-    return ps;
+    return std::move(ps);
 }
 
 
