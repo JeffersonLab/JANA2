@@ -87,9 +87,9 @@ JWorker::JWorker(JScheduler* scheduler, unsigned worker_id, unsigned cpu_id, uns
         _pin_to_cpu(pin_to_cpu),
         _run_state(RunState::Stopped),
         _assignment(nullptr),
-        _thread(nullptr),
-        _logger(JLoggingService::logger("JWorker")) {
+        _thread(nullptr) {
 
+    _logger = JLogger(JLogger::Level::INFO);
     _arrow_metrics.clear();
     _worker_metrics.clear();
 }
@@ -170,7 +170,7 @@ void JWorker::loop() {
                        (_run_state == RunState::Running) &&
                        (jclock_t::now() - start_time) < checkin_time) {
 
-                    LOG_DEBUG(_logger) << "JWorker " << _worker_id << " is executing "
+                    LOG_TRACE(_logger) << "JWorker " << _worker_id << " is executing "
                                        << _assignment->get_name() << LOG_END;
                     auto before_execute_time = jclock_t::now();
                     _assignment->execute(_arrow_metrics, _location_id);
@@ -193,7 +193,7 @@ void JWorker::loop() {
                             else if (backoff_strategy == JArrow::BackoffStrategy::Exponential) {
                                 backoff_duration *= 2;
                             }
-                            LOG_DEBUG(_logger) << "JWorker " << _worker_id << " backing off with "
+                            LOG_TRACE(_logger) << "JWorker " << _worker_id << " backing off with "
                                                << _assignment->get_name() << ", tries = " << current_tries
                                                << LOG_END;
 

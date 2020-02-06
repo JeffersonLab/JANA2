@@ -75,6 +75,10 @@ public:
         m_buffer = new char[m_buffer_capacity];
     }
 
+    DASEventMessage(const DASEventMessage &) = delete;
+
+    DASEventMessage(DASEventMessage &&)  = delete;
+
     ~DASEventMessage() override {
         delete[] m_buffer;
     }
@@ -173,17 +177,15 @@ inline std::ostream& operator<< (std::ostream& os, const DASEventMessage& messag
     size_t msgFreq   = message.get_message_print_freq();
     size_t buffSize  = message.get_buffer_size();
     std::string subSocket = message.get_sub_socket();
-    if (eventNum % msgFreq == 0) {
-        ss << "INDRA Message received on socket " << subSocket
-           << " -> Event " << eventNum
-           << ", buffer size = " << buffSize
-           << ", payload = ";
-        for (int i = 0; i < 10 && i < (int) length; ++i) {
-            ss << payload[i] << ", ";
-        }
-        ss << "...";
-        os << ss.str() << std::endl;
+    ss << "INDRA Message received on " << subSocket
+       << " -> Event " << eventNum
+       << ", buffer size = " << buffSize
+       << ", payload = ";
+    for (int i = 0; i < 10 && i < (int) length; ++i) {
+        ss << payload[i] << ", ";
     }
+    ss << "...";
+    os << ss.str();
     return os;
 }
 

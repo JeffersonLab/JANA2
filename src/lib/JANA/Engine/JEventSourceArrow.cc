@@ -22,7 +22,7 @@ JEventSourceArrow::JEventSourceArrow(std::string name,
 
     _output_queue->attach_upstream(this);
     attach_downstream(_output_queue);
-    _logger = JLogger();
+    _logger = JLogger(JLogger::Level::INFO);
 }
 
 
@@ -50,8 +50,8 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
         LOG_DEBUG(_logger) << "JEventSourceArrow asked for " << chunksize << ", but only reserved " << reserved_count << LOG_END;
     }
     else {
-        auto event = _pool->get(location_id);
         for (size_t i=0; i<emit_count && in_status==JEventSource::ReturnStatus::Success; ++i) {
+            auto event = _pool->get(location_id);
             if (event == nullptr) {
                 in_status = JEventSource::ReturnStatus::TryAgain;
                 break;
@@ -61,7 +61,9 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
             in_status = _source->DoNext(event);
             if (in_status == JEventSource::ReturnStatus::Success) {
                 _chunk_buffer.push_back(std::move(event));
-                event = _pool->get(location_id);
+            }
+            else {
+                _pool->put(event, location_id);
             }
         }
     }
@@ -71,10 +73,15 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
     auto out_status = _output_queue->push(_chunk_buffer, reserved_count, location_id);
     auto finished_time = std::chrono::steady_clock::now();
 
-    LOG_DEBUG(_logger) << "JEventSourceArrow '" << get_name() << "' [" << location_id << "]: "
-                       << "Emitted " << message_count << " events; last GetEvent "
-                       << ((in_status==JEventSource::ReturnStatus::Success) ? "succeeded" : "failed")
-                       << LOG_END;
+    if (message_count != 0) {
+        LOG_DEBUG(_logger) << "JEventSourceArrow '" << get_name() << "' [" << location_id << "]: "
+                           << "Emitted " << message_count << " events; last GetEvent "
+                           << ((in_status==JEventSource::ReturnStatus::Success) ? "succeeded" : "failed")
+                           << LOG_END;
+    }
+    else {
+        LOG_TRACE(_logger) << "JEventSourceArrow emitted nothing" << LOG_END;
+    }
 
     auto latency = latency_time - start_time;
     auto overhead = finished_time - latency_time;

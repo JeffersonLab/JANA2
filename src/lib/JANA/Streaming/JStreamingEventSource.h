@@ -80,7 +80,7 @@ public:
         event->SetEventNumber(evt_nr == 0 ? m_next_evt_nr++ : evt_nr);
         event->SetRunNumber(item->get_run_number());
         event->Insert<MessageT>(item);
-        std::cout << *item;
+        std::cout << "JStreamingEventSource: Emitting " << *item << std::endl;
     }
 
     static std::string GetDescription() {

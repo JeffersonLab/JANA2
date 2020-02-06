@@ -215,7 +215,7 @@ JFactoryT<T>* JEvent::Get(std::vector<const T*>& destination, const std::string&
 /// C++ style getters
 
 template<class T> const T* JEvent::GetSingle(const std::string& tag) const {
-    auto iterators = GetFactory<T>(tag)->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
+    auto iterators = GetFactory<T>(tag, true)->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
     if (std::distance(iterators.first, iterators.second) != 1) {
         throw JException("Wrong number of elements!");
     }
