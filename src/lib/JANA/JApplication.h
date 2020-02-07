@@ -163,6 +163,7 @@ private:
     int  _exit_code = 0;
     int  _desired_nthreads;
 
+    std::mutex _status_mutex;
     std::chrono::milliseconds _ticker_interval {500};
     std::chrono::time_point<std::chrono::high_resolution_clock> _last_measurement;
     std::unique_ptr<const JPerfSummary> _perf_summary;

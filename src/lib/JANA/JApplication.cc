@@ -262,6 +262,7 @@ void JApplication::PrintStatus() {
         _processing_controller->print_report();
     }
     else {
+        std::lock_guard<std::mutex> lock(_status_mutex);
         update_status();
         LOG_INFO(_logger) << "Running: " << _perf_summary->total_events_completed << " events processed  "
                           << JTypeInfo::to_string_with_si_prefix(_perf_summary->latest_throughput_hz) << "Hz ("
@@ -286,6 +287,7 @@ void JApplication::update_status() {
 /// Note: This data gets stale. If you need event counts and rates
 /// which are more consistent with one another, call GetStatus() instead.
 uint64_t JApplication::GetNThreads() {
+    std::lock_guard<std::mutex> lock(_status_mutex);
     update_status();
     return _perf_summary->thread_count;
 }
@@ -294,6 +296,7 @@ uint64_t JApplication::GetNThreads() {
 /// Note: This data gets stale. If you need event counts and rates
 /// which are more consistent with one another, call GetStatus() instead.
 uint64_t JApplication::GetNEventsProcessed() {
+    std::lock_guard<std::mutex> lock(_status_mutex);
     update_status();
     return _perf_summary->total_events_completed;
 }
@@ -302,6 +305,7 @@ uint64_t JApplication::GetNEventsProcessed() {
 /// Note: This data gets stale. If you need event counts and rates
 /// which are more consistent with one another, call GetStatus() instead.
 float JApplication::GetIntegratedRate() {
+    std::lock_guard<std::mutex> lock(_status_mutex);
     update_status();
     return _perf_summary->avg_throughput_hz;
 }
@@ -311,6 +315,7 @@ float JApplication::GetIntegratedRate() {
 /// which are more consistent with one another, call GetStatus() instead.
 float JApplication::GetInstantaneousRate()
 {
+    std::lock_guard<std::mutex> lock(_status_mutex);
     update_status();
     return _perf_summary->latest_throughput_hz;
 }
