@@ -149,7 +149,7 @@ void JApplication::Initialize() {
         _processing_controller->initialize();
         _initialized = true;
     }
-    catch (JException e) {
+    catch (JException& e) {
         LOG_FATAL(_logger) << e << LOG_END;
         exit(-1);
     }
@@ -165,7 +165,6 @@ void JApplication::Run(bool wait_until_finished) {
 
     LOG_INFO(_logger) << GetComponentSummary() << LOG_END;
     LOG_INFO(_logger) << "Starting processing ..." << LOG_END;
-    mRunStartTime = std::chrono::high_resolution_clock::now();
     _processing_controller->run(_desired_nthreads);
 
     if (!wait_until_finished) {
@@ -192,7 +191,7 @@ void JApplication::Run(bool wait_until_finished) {
         }
 
         // Sleep a few cycles
-        std::this_thread::sleep_for( std::chrono::milliseconds(500) );
+        std::this_thread::sleep_for(_ticker_interval);
 
         // Print status
         if( _ticker_on ) PrintStatus();
@@ -258,14 +257,15 @@ void JApplication::SetTicker(bool ticker_on) {
     _ticker_on = ticker_on;
 }
 
-void JApplication::PrintStatus(void) {
+void JApplication::PrintStatus() {
     if (_extended_report) {
         _processing_controller->print_report();
     }
     else {
-        LOG_INFO(_logger) << "Running: " << GetNeventsProcessed() << " events processed  "
-                          << JTypeInfo::to_string_with_si_prefix(GetInstantaneousRate()) << "Hz ("
-                          << JTypeInfo::to_string_with_si_prefix(GetIntegratedRate()) << "Hz avg)" << LOG_END;
+        update_status();
+        LOG_INFO(_logger) << "Running: " << _perf_summary->total_events_completed << " events processed  "
+                          << JTypeInfo::to_string_with_si_prefix(_perf_summary->latest_throughput_hz) << "Hz ("
+                          << JTypeInfo::to_string_with_si_prefix(_perf_summary->avg_throughput_hz) << "Hz avg)" << LOG_END;
     }
 }
 
@@ -273,51 +273,46 @@ void JApplication::PrintFinalReport() {
     _processing_controller->print_final_report();
 }
 
-uint64_t JApplication::GetNThreads() {
-    auto perf = _processing_controller->measure_performance();
-    return perf->thread_count;
-}
-
-uint64_t JApplication::GetNeventsProcessed() {
-    auto perf = _processing_controller->measure_performance();
-    return perf->monotonic_events_completed;
-}
-
-/// Returns the total integrated rate so far in Hz since Run() was called.
-float JApplication::GetIntegratedRate() {
-    static float last_R = 0.0;
-
+/// Performs a new measurement if the time elapsed since the previous measurement exceeds some threshold
+void JApplication::update_status() {
     auto now = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<float> delta_t = now - mRunStartTime;
-    float delta_t_seconds = delta_t.count();
-    float delta_N = (float)GetNeventsProcessed();
-
-    if( delta_t_seconds >= 0.5) {
-        last_R = delta_N / delta_t_seconds;
+    if ((now - _last_measurement) >= _ticker_interval || _perf_summary == nullptr) {
+        _perf_summary = _processing_controller->measure_performance();
+        _last_measurement = now;
     }
-
-    return last_R;
 }
 
+/// Returns the number of threads currently being used.
+/// Note: This data gets stale. If you need event counts and rates
+/// which are more consistent with one another, call GetStatus() instead.
+uint64_t JApplication::GetNThreads() {
+    update_status();
+    return _perf_summary->thread_count;
+}
+
+/// Returns the number of events processed since Run() was called.
+/// Note: This data gets stale. If you need event counts and rates
+/// which are more consistent with one another, call GetStatus() instead.
+uint64_t JApplication::GetNEventsProcessed() {
+    update_status();
+    return _perf_summary->total_events_completed;
+}
+
+/// Returns the total integrated throughput so far in Hz since Run() was called.
+/// Note: This data gets stale. If you need event counts and rates
+/// which are more consistent with one another, call GetStatus() instead.
+float JApplication::GetIntegratedRate() {
+    update_status();
+    return _perf_summary->avg_throughput_hz;
+}
+
+/// Returns the 'instantaneous' throughput in Hz since the last perf measurement was made.
+/// Note: This data gets stale. If you need event counts and rates
+/// which are more consistent with one another, call GetStatus() instead.
 float JApplication::GetInstantaneousRate()
 {
-    auto now = std::chrono::high_resolution_clock::now();
-    uint64_t N = GetNeventsProcessed();
-    static auto last_t = now;
-    static uint64_t last_N = N;
-
-    std::chrono::duration<float> delta_t = now - last_t;
-    float delta_t_seconds = delta_t.count();
-    float delta_N = (float)(GetNeventsProcessed() - last_N);
-
-    static float last_R = 0.0;
-    if( delta_t_seconds >= 0.5) {
-        last_R = delta_N / delta_t_seconds;
-        last_t = now;
-        last_N = N;
-    }
-
-    return last_R;
+    update_status();
+    return _perf_summary->latest_throughput_hz;
 }
 
 

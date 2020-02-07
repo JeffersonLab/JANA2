@@ -51,6 +51,7 @@ extern JApplication* japp;
 #include <JANA/Services/JLoggingService.h>
 #include <JANA/Status/JComponentSummary.h>
 #include <JANA/Utils/JResourcePool.h>
+#include <JANA/Status/JPerfSummary.h>
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -108,12 +109,9 @@ public:
     void PrintStatus();
     void PrintFinalReport();
     uint64_t GetNThreads();
-    uint64_t GetNeventsProcessed();
+    uint64_t GetNEventsProcessed();
     float GetIntegratedRate();
     float GetInstantaneousRate();
-    // TODO: Do we really want these?
-    void GetInstantaneousRates(std::vector<double> &rates_by_queue) {}
-    void GetIntegratedRates(std::map<std::string,double> &rates_by_thread) {}
 
     JComponentSummary GetComponentSummary();
 
@@ -165,12 +163,14 @@ private:
     int  _exit_code = 0;
     int  _desired_nthreads;
 
-    std::chrono::time_point<std::chrono::high_resolution_clock> mRunStartTime;
+    std::chrono::milliseconds _ticker_interval {500};
+    std::chrono::time_point<std::chrono::high_resolution_clock> _last_measurement;
+    std::unique_ptr<const JPerfSummary> _perf_summary;
+
+    void update_status();
 };
 
 
-
-// Templates
 
 /// A convenience method which delegates to JParameterManager
 template<typename T>

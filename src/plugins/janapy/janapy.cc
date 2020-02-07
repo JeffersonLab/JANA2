@@ -296,8 +296,8 @@ static PyObject* janapy_AddEventSource(PyObject *self, PyObject *args)
 //-------------------------------------
 static PyObject* janapy_GetNeventsProcessed(PyObject *self, PyObject *args)
 {
-	if(!PyArg_ParseTuple(args, ":GetNeventsProcessed")) return nullptr;
-	return PV( pyjapp->GetNeventsProcessed() );
+	if(!PyArg_ParseTuple(args, ":GetNEventsProcessed")) return nullptr;
+	return PV(pyjapp->GetNEventsProcessed() );
 }
 
 //-------------------------------------
@@ -309,16 +309,6 @@ static PyObject* janapy_GetIntegratedRate(PyObject *self, PyObject *args)
 	return PV( pyjapp->GetIntegratedRate() );
 }
 
-//-------------------------------------
-// janapy_GetIntegratedRates
-//-------------------------------------
-static PyObject* janapy_GetIntegratedRates(PyObject *self, PyObject *args)
-{
-	if(!PyArg_ParseTuple(args, ":GetIntegratedRates")) return nullptr;
-	std::map<string,double> rates_by_thread;
-	pyjapp->GetIntegratedRates(rates_by_thread);
-	return PVdict( rates_by_thread );
-}
 
 //-------------------------------------
 // janapy_GetInstantaneousRate
@@ -327,17 +317,6 @@ static PyObject* janapy_GetInstantaneousRate(PyObject *self, PyObject *args)
 {
 	if(!PyArg_ParseTuple(args, ":GetInstantaneousRate")) return nullptr;
 	return PV( pyjapp->GetInstantaneousRate() );
-}
-
-//-------------------------------------
-// janapy_GetInstantaneousRates
-//-------------------------------------
-static PyObject* janapy_GetInstantaneousRates(PyObject *self, PyObject *args)
-{
-	if(!PyArg_ParseTuple(args, ":GetInstantaneousRates")) return nullptr;
-	vector<double> rates_by_queue;
-	pyjapp->GetInstantaneousRates(rates_by_queue);
-	return PVlist( rates_by_queue );
 }
 
 //-------------------------------------
@@ -472,11 +451,9 @@ static PyMethodDef JANAPYMethods[] = {
 	{"AddPlugin",                   janapy_AddPlugin,                   METH_VARARGS, "Add a plugin to the list of plugins to be attached (call before calling Run)"},
 	{"AddPluginPath",               janapy_AddPluginPath,               METH_VARARGS, "Add directory to plugin search path"},
 	{"AddEventSource",              janapy_AddEventSource,              METH_VARARGS, "Add an event source (e.g. filename). Can be given multiple arguments and/or called multiple times."},
-	{"GetNeventsProcessed",         janapy_GetNeventsProcessed,         METH_VARARGS, "Return the number of events processed so far."},
+	{"GetNEventsProcessed",         janapy_GetNeventsProcessed,         METH_VARARGS, "Return the number of events processed so far."},
 	{"GetIntegratedRate",           janapy_GetIntegratedRate,           METH_VARARGS, "Return integrated rate."},
-	{"GetIntegratedRates",          janapy_GetIntegratedRates,          METH_VARARGS, "Return integrated rates for each thread."},
 	{"GetInstantaneousRate",        janapy_GetInstantaneousRate,        METH_VARARGS, "Return instantaneous rate."},
-	{"GetInstantaneousRates",       janapy_GetInstantaneousRates,       METH_VARARGS, "Return instantaneous rates for each thread."},
 	{"GetNJThreads",                janapy_GetNJThreads,                METH_VARARGS, "Return current number of JThread objects."},
 	{"GetNcores",                   janapy_GetNcores,                   METH_VARARGS, "Return number of cores reported by system (full + logical)."},
 	{"GetParameterValue",           janapy_GetParameterValue,           METH_VARARGS, "Return value of given configuration parameter."},
