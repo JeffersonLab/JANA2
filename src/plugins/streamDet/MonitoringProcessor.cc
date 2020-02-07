@@ -42,7 +42,13 @@ void MonitoringProcessor::Process(const std::shared_ptr<const JEvent>& aEvent) {
 
     auto oriMessage = aEvent->GetSingle<DASEventMessage>();
     std::lock_guard<std::mutex> lck(msgMutex);
-    m_transport->send(*oriMessage);
+    auto result = m_transport->send(*oriMessage);
+    if (result == JTransport::SUCCESS) {
+        std::cout << "MonitoringProcessor::Process: Success sending " << *oriMessage << std::endl;
+    }
+    else {
+        std::cout << "MonitoringProcessor::Process: Failure sending " << *oriMessage << std::endl;
+    }
     size_t eventNum = oriMessage->get_event_number();
     size_t buffSize = oriMessage->get_buffer_size();
     size_t msgFreq  = oriMessage->get_message_print_freq();

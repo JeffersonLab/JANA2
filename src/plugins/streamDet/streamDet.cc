@@ -18,24 +18,25 @@
 
 void dummy_publisher_loop(JApplication* app) {
 
-    size_t delay_ms = 5;
+    size_t delay_ms = 1;
+    auto logger = app->GetService<JLoggingService>()->get_logger("dummy_publisher_loop");
 
-    //std::this_thread::sleep_for(std::chrono::seconds(4));  // Wait for JANA to fire up so we don't lose data
-    std::cout << "Starting producer loop" << std::endl;
+    std::this_thread::yield();
+    //std::this_thread::sleep_for(std::chrono::milliseconds(10));  // Wait for JANA to fire up so we don't lose data
+    LOG_INFO(logger) << "Starting producer loop" << LOG_END;
 
     ZmqTransport transport {app->GetParameterValue<std::string>("streamDet:sub_socket"), true};
     transport.initialize();
 
     DASEventMessage message(app);
-    // INDRAMessage* indra_message = message.as_indra_message();
 
     size_t current_event_number = 1;
 
     FILE* f = fopen(app->GetParameterValue<std::string>("streamDet:data_file").c_str(), "r");
-    std::cout << "streamDet::dummy_publisher_loop -> Reading data from data file "
-              << app->GetParameterValue<std::string>("streamDet:data_file").c_str() << std::endl;
+    LOG_INFO(logger) << "streamDet::dummy_publisher_loop -> Reading data from file "
+              << app->GetParameterValue<std::string>("streamDet:data_file").c_str() << LOG_END;
     if (f == nullptr) {
-        std::cout << "Unable to open file, exiting." << std::endl;
+        LOG_FATAL(logger) << "Unable to open file, exiting." << LOG_END;
         exit(0);
     }
 
@@ -47,19 +48,19 @@ void dummy_publisher_loop(JApplication* app) {
     while (fread(payload, 1, payload_capacity, f) == payload_capacity) {
         message.as_indra_message()->source_id = 0;
         message.set_event_number(current_event_number++);
-        message.set_payload_size(static_cast <uint32_t> (payload_capacity));
-        //std::cout << "Send: " << message << " (" << message.get_buffer_size() << " bytes)" << std::endl;
+        message.set_payload_size(static_cast<uint32_t>(payload_capacity));
+        //LOG_DEBUG(logger) << "Send: " << message << " (" << message.get_buffer_size() << " bytes)" << LOG_END;
+        std::cout << "dummy_producer_loop: Sending '" << message << "' (" << message.get_buffer_size() << " bytes)" << std::endl;
         transport.send(message);
         consume_cpu_ms(delay_ms, 0, false);
         std::this_thread::yield();
     }
 
     // Send an empty end-of-stream message
-    // TODO: Look ahead
     message.set_payload_size(0);
     message.set_end_of_stream();
     transport.send(message);
-    std::cout << "Send: end-of-stream" << std::endl;
+    LOG_INFO(logger) << "Send: end-of-stream" << LOG_END;
 
 }
 
@@ -68,8 +69,10 @@ extern "C" {
 void InitPlugin(JApplication* app) {
 
     InitJANAPlugin(app);
+    auto logger = app->GetService<JLoggingService>()->get_logger("streamDet");
+
     app->SetParameterValue("nthreads", 4);
-    app->SetParameterValue("jana:extended_report", false);
+    app->SetParameterValue("jana:extended_report", true);
     app->SetParameterValue("jana:limit_total_events_in_flight", true);
     app->SetParameterValue("jana:event_pool_size", 16);
 
@@ -85,8 +88,8 @@ void InitPlugin(JApplication* app) {
     std::string pub_socket_name = "tcp://127.0.0.1:5557";
     std::string data_file_name = "run-5-mhz-80-chan-100-ev.dat";
 
-    std::cout << "Subscribing to INDRA messages via ZMQ on socket " << sub_socket_name << std::endl;
-    std::cout << "Publishing JObjects via ZMQ on socket " << pub_socket_name << std::endl;
+    LOG_INFO(logger) << "Subscribing to INDRA messages via ZMQ on socket " << sub_socket_name << LOG_END;
+    LOG_DEBUG(logger) << "Publishing JObjects via ZMQ on socket " << pub_socket_name << LOG_END;
 
     app->SetDefaultParameter("streamDet:use_zmq", use_zmq);
     app->SetDefaultParameter("streamDet:data_file", data_file_name);
