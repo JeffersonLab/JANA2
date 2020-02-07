@@ -47,6 +47,7 @@ public:
 
     explicit JArrowProcessingController(JArrowTopology* topology) : _topology(topology) {};
     ~JArrowProcessingController() override;
+    void acquire_services(JServiceLocator *) override;
 
     void initialize() override;
     void run(size_t nthreads) override;
@@ -72,7 +73,9 @@ private:
     JArrowTopology* _topology;
     std::vector<JWorker*> _workers;
     JScheduler* _scheduler = nullptr;
-    JLogger _logger = JLogger();
+    JLogger _logger;
+    JLogger _worker_logger;
+    JLogger _scheduler_logger;
 
 };
 

@@ -40,9 +40,17 @@
 using millisecs = std::chrono::duration<double, std::milli>;
 using secs = std::chrono::duration<double>;
 
+void JArrowProcessingController::acquire_services(JServiceLocator * sl) {
+    auto ls = sl->get<JLoggingService>();
+    _logger = ls->get_logger("JArrowProcessingController");
+    _worker_logger = ls->get_logger("JWorker");
+    _scheduler_logger = ls->get_logger("JScheduler");
+}
+
 void JArrowProcessingController::initialize() {
 
     _scheduler = new JScheduler(_topology->arrows);
+    _scheduler->logger = _scheduler_logger;
     LOG_INFO(_logger) << _topology->mapping << LOG_END;
 }
 
@@ -62,7 +70,9 @@ void JArrowProcessingController::scale(size_t nthreads) {
         size_t next_cpu_id = _topology->mapping.get_cpu_id(next_worker_id);
         size_t next_loc_id = _topology->mapping.get_loc_id(next_worker_id);
 
-        _workers.push_back(new JWorker(_scheduler, next_worker_id, next_cpu_id, next_loc_id, pin_to_cpu));
+        auto worker = new JWorker(_scheduler, next_worker_id, next_cpu_id, next_loc_id, pin_to_cpu);
+        worker->logger = _worker_logger;
+        _workers.push_back(worker);
         next_worker_id++;
     }
 

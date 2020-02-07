@@ -25,12 +25,7 @@ struct JLogger {
             : level(level), destination(destination), className(std::move(className)) {};
 
     JLogger(const JLogger& logger) = default;
-
-    JLogger& operator=(const JLogger& in) {
-        level = in.level;
-        destination = in.destination;
-        return *this;
-    }
+    JLogger& operator=(const JLogger& in) = default;
 
     void SetTag(std::string tag) {className = tag; }
     void SetTimestampFlag() {show_timestamp = true; }

@@ -87,6 +87,9 @@ public:
     JLogger get_logger(std::string className) {
 
         JLogger logger;
+        logger.show_classname = true;
+        logger.className = className;
+
         auto search = _local_log_levels.find(className);
         if (search != _local_log_levels.end()) {
             logger.level = search->second;

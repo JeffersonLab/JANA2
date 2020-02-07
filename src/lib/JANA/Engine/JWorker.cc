@@ -89,7 +89,6 @@ JWorker::JWorker(JScheduler* scheduler, unsigned worker_id, unsigned cpu_id, uns
         _assignment(nullptr),
         _thread(nullptr) {
 
-    _logger = JLogger(JLogger::Level::INFO);
     _arrow_metrics.clear();
     _worker_metrics.clear();
 }
@@ -131,12 +130,12 @@ void JWorker::wait_for_stop() {
 void JWorker::loop() {
 
     try {
-        LOG_DEBUG(_logger) << "JWorker " << _worker_id << " has entered loop()." << LOG_END;
+        LOG_DEBUG(logger) << "Worker " << _worker_id << " has fired up." << LOG_END;
         JArrowMetrics::Status last_result = JArrowMetrics::Status::NotRunYet;
 
         while (_run_state == RunState::Running) {
 
-            LOG_DEBUG(_logger) << "JWorker " << _worker_id << " is checking in" << LOG_END;
+            LOG_DEBUG(logger) << "Worker " << _worker_id << " is checking in" << LOG_END;
             auto start_time = jclock_t::now();
 
             _assignment = _scheduler->next_assignment(_worker_id, _assignment, last_result);
@@ -151,7 +150,7 @@ void JWorker::loop() {
 
             if (_assignment == nullptr) {
 
-                LOG_DEBUG(_logger) << "JWorker " << _worker_id << " idling due to lack of assignments" << LOG_END;
+                LOG_DEBUG(logger) << "Worker " << _worker_id << " idling due to lack of assignments" << LOG_END;
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
                 idle_duration = jclock_t::now() - scheduler_time;
             }
@@ -170,7 +169,7 @@ void JWorker::loop() {
                        (_run_state == RunState::Running) &&
                        (jclock_t::now() - start_time) < checkin_time) {
 
-                    LOG_TRACE(_logger) << "JWorker " << _worker_id << " is executing "
+                    LOG_TRACE(logger) << "Worker " << _worker_id << " is executing "
                                        << _assignment->get_name() << LOG_END;
                     auto before_execute_time = jclock_t::now();
                     _assignment->execute(_arrow_metrics, _location_id);
@@ -179,7 +178,7 @@ void JWorker::loop() {
 
 
                     if (last_result == JArrowMetrics::Status::KeepGoing) {
-                        LOG_DEBUG(_logger) << "JWorker " << _worker_id << " succeeded at "
+                        LOG_DEBUG(logger) << "Worker " << _worker_id << " succeeded at "
                                            << _assignment->get_name() << LOG_END;
                         current_tries = 0;
                         backoff_duration = initial_backoff_time;
@@ -193,13 +192,12 @@ void JWorker::loop() {
                             else if (backoff_strategy == JArrow::BackoffStrategy::Exponential) {
                                 backoff_duration *= 2;
                             }
-                            LOG_TRACE(_logger) << "JWorker " << _worker_id << " backing off with "
-                                               << _assignment->get_name() << ", tries = " << current_tries
-                                               << LOG_END;
+                            LOG_TRACE(logger) << "Worker " << _worker_id << " backing off with "
+                                              << _assignment->get_name() << ", tries = " << current_tries
+                                              << LOG_END;
 
                             std::this_thread::sleep_for(backoff_duration);
                             retry_duration += backoff_duration;
-                            // TODO: Randomize backoff duration?
                         }
                     }
                 }
@@ -212,13 +210,13 @@ void JWorker::loop() {
         _assignment = nullptr; // Worker has 'handed in' the assignment
         // TODO: Make _assignment unique_ptr?
 
-        LOG_DEBUG(_logger) << "JWorker " << _worker_id << " is exiting loop()" << LOG_END;
+        LOG_DEBUG(logger) << "Worker " << _worker_id << " is exiting." << LOG_END;
     }
     catch (const JException& e) {
         // For now the excepting Worker prints the error, and then terminates the whole program.
         // Eventually we want to unify error handling across JApplication::Run, and maybe even across the entire JApplication.
         // This means that Workers must pass JExceptions back to the master thread.
-        LOG_FATAL(_logger) << e << LOG_END;
+        LOG_FATAL(logger) << e << LOG_END;
         exit(-1);
     }
 }

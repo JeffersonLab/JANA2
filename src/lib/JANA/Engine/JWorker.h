@@ -25,6 +25,9 @@ public:
     /// The Worker may be configured to try different backoff strategies
     enum class RunState { Running, Stopping, Stopped };
 
+    /// The logger is made public so that somebody else may set it
+    JLogger logger;
+
 private:
     /// Machinery that nobody else should modify. These should be protected eventually.
     /// Probably simply make them private and expose via get_status() -> Worker::Status
@@ -38,7 +41,6 @@ private:
     std::thread* _thread;    // JWorker encapsulates a thread of some kind. Nothing else should care how.
     JWorkerMetrics _worker_metrics;
     JArrowMetrics _arrow_metrics;
-    JLogger _logger;
 
 public:
     JWorker(JScheduler* scheduler, unsigned worker_id, unsigned cpu_id, unsigned domain_id, bool pin_to_cpu);

@@ -6,9 +6,7 @@
 JScheduler::JScheduler(const std::vector<JArrow*>& arrows)
     : _arrows(arrows)
     , _next_idx(0)
-    {
-        _logger = JLoggingService::logger("JScheduler");
-    }
+    {}
 
 
 JArrow* JScheduler::next_assignment(uint32_t worker_id, JArrow* assignment, JArrowMetrics::Status last_result) {
@@ -27,7 +25,7 @@ JArrow* JScheduler::next_assignment(uint32_t worker_id, JArrow* assignment, JArr
             assignment->set_active(false);
 
             _mutex.unlock();
-            LOG_INFO(_logger) << "JScheduler: Deactivating arrow " << assignment->get_name() << LOG_END;
+            LOG_INFO(logger) << "Deactivating arrow " << assignment->get_name() << LOG_END;
             assignment->notify_downstream(false);
             _mutex.lock();
         }
@@ -48,9 +46,9 @@ JArrow* JScheduler::next_assignment(uint32_t worker_id, JArrow* assignment, JArr
             _next_idx = current_idx; // Next time, continue right where we left off
             candidate->update_thread_count(1);
 
-            LOG_DEBUG(_logger) << "JScheduler: (" << worker_id << ", "
+            LOG_DEBUG(logger) << "Worker " << worker_id << ", "
                               << ((assignment == nullptr) ? "idle" : assignment->get_name())
-                              << ", " << to_string(last_result) << ") => "
+                              << ", " << to_string(last_result) << " => "
                               << candidate->get_name() << "  [" << candidate->get_thread_count() << "]" << LOG_END;
             _mutex.unlock();
             return candidate;
@@ -65,7 +63,7 @@ JArrow* JScheduler::next_assignment(uint32_t worker_id, JArrow* assignment, JArr
 
 void JScheduler::last_assignment(uint32_t worker_id, JArrow* assignment, JArrowMetrics::Status result) {
 
-    LOG_DEBUG(_logger) << "JScheduler: (" << worker_id << ", "
+    LOG_DEBUG(logger) << "Worker " << worker_id << ", "
                        << ((assignment == nullptr) ? "idle" : assignment->get_name())
                        << ", " << to_string(result) << ") => Shutting down!" << LOG_END;
     _mutex.lock();

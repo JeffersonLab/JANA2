@@ -61,6 +61,7 @@ JApplication::JApplication(JParameterManager* params) {
     _component_manager = _service_locator.get<JComponentManager>();
 
     _logger = _service_locator.get<JLoggingService>()->get_logger("JApplication");
+    _logger.show_classname = false;
 }
 
 
@@ -135,15 +136,15 @@ void JApplication::Initialize() {
         if (engine_choice == 0) {
             auto topology = JArrowTopology::from_components(_component_manager, _params);
             auto japc = std::make_shared<JArrowProcessingController>(topology);
-            _processing_controller = japc;
-            _service_locator.provide(japc);
-            _service_locator.provide(_processing_controller);
+            _service_locator.provide(japc);  // Make concrete class available via SL
+            _processing_controller = _service_locator.get<JArrowProcessingController>();  // Get deps from SL
+            _service_locator.provide(_processing_controller);  // Make abstract class available via SL
         }
         else {
             auto jdpc = std::make_shared<JDebugProcessingController>(_component_manager.get());
-            _processing_controller = jdpc;
-            _service_locator.provide(jdpc);
-            _service_locator.provide(_processing_controller);
+            _service_locator.provide(jdpc);  // Make the concrete class available via SL
+            _processing_controller = _service_locator.get<JDebugProcessingController>();  // Get deps from SL
+            _service_locator.provide(_processing_controller); // Make abstract class available via SL
         }
 
         _processing_controller->initialize();
@@ -264,7 +265,7 @@ void JApplication::PrintStatus() {
     else {
         std::lock_guard<std::mutex> lock(_status_mutex);
         update_status();
-        LOG_INFO(_logger) << "Running: " << _perf_summary->total_events_completed << " events processed  "
+        LOG_INFO(_logger) << "Status: " << _perf_summary->total_events_completed << " events processed  "
                           << JTypeInfo::to_string_with_si_prefix(_perf_summary->latest_throughput_hz) << "Hz ("
                           << JTypeInfo::to_string_with_si_prefix(_perf_summary->avg_throughput_hz) << "Hz avg)" << LOG_END;
     }

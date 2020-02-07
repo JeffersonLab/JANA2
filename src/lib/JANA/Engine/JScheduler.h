@@ -8,16 +8,14 @@
 #include <JANA/Services/JLoggingService.h>
 
 
-
     /// Scheduler assigns Arrows to Workers in a first-come-first-serve manner,
-    /// not unlike OpenMP's `schedule dynamic`. Its tradeoffs are:
+    /// not unlike OpenMP's `schedule dynamic`.
     class JScheduler {
 
     private:
         std::vector<JArrow*> _arrows;
         size_t _next_idx;
         std::mutex _mutex;
-        JLogger _logger;
 
     public:
 
@@ -34,6 +32,8 @@
         /// any more. The scheduler is thus free to reassign the arrow to one of the remaining workers.
         void last_assignment(uint32_t worker_id, JArrow* assignment, JArrowMetrics::Status result);
 
+        /// Logger is public so that somebody else can configure it
+        JLogger logger;
     };
 
 
