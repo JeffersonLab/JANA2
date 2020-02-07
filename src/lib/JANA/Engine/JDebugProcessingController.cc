@@ -40,6 +40,8 @@ using millisecs = std::chrono::duration<double, std::milli>;
 using secs = std::chrono::duration<double>;
 
 void JDebugProcessingController::run_worker() {
+
+    LOG_INFO(m_logger) << "Starting JDebugProcessingController::run_worker" << LOG_END;
     auto evt_srces = m_component_manager->get_evt_srces();
     auto evt_procs = m_component_manager->get_evt_procs();
 
@@ -57,6 +59,8 @@ void JDebugProcessingController::run_worker() {
 
         if (m_stop_requested) continue;
         evt_src->DoInitialize();
+        event->SetJEventSource(evt_src);
+        event->SetJApplication(evt_src->GetApplication());
 
         for (auto result = JEventSource::ReturnStatus::TryAgain;
              result != JEventSource::ReturnStatus::Finished && !m_stop_requested;) {
@@ -64,8 +68,6 @@ void JDebugProcessingController::run_worker() {
             result = evt_src->DoNext(event);
             if (result == JEventSource::ReturnStatus::Success) {
                 event->SetEventNumber(++m_total_events_emitted);
-                event->SetJEventSource(evt_src);
-                event->SetJApplication(evt_src->GetApplication());
 
                 for (JEventProcessor* proc : evt_procs) {
                     proc->DoMap(event);
@@ -89,9 +91,12 @@ void JDebugProcessingController::run_worker() {
 
 
 void JDebugProcessingController::initialize() {
+    LOG_INFO(m_logger) << "Initializing JDebugProcessingController" << LOG_END;
 }
 
 void JDebugProcessingController::run(size_t nthreads) {
+    m_stop_requested = false;
+    m_stop_achieved = false;
     m_finish_achieved = false;
     for (int i=0; i<nthreads; ++i) {
         m_workers.push_back(new std::thread(&JDebugProcessingController::run_worker, this));
@@ -99,6 +104,8 @@ void JDebugProcessingController::run(size_t nthreads) {
 }
 
 void JDebugProcessingController::scale(size_t nthreads) {
+    wait_until_stopped();
+    run(nthreads);
 }
 
 void JDebugProcessingController::request_stop() {
@@ -146,6 +153,7 @@ std::unique_ptr<const JPerfSummary> JDebugProcessingController::measure_performa
     m_perf_metrics.summarize(*ps);
     ps->thread_count = m_workers.size();
     ps->monotonic_events_completed = m_total_events_processed;
+    ps->total_events_completed = m_total_events_processed;
     return std::move(ps);
 }
 

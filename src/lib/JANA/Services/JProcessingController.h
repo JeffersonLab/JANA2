@@ -37,9 +37,10 @@
 #include <unistd.h>
 #include <memory>
 
+#include <JANA/Services/JServiceLocator.h>
 #include <JANA/Status/JPerfSummary.h>
 
-class JProcessingController {
+class JProcessingController : public JService {
 public:
 
     virtual ~JProcessingController() = default;

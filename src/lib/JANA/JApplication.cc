@@ -124,14 +124,28 @@ void JApplication::Initialize() {
 
         // Set desired nthreads
         _desired_nthreads = JCpuInfo::GetNumCpus();
-        _params->SetDefaultParameter("nthreads", _desired_nthreads,
-                                     "The total number of worker threads");
+        _params->SetDefaultParameter("nthreads", _desired_nthreads, "The total number of worker threads");
+        _params->SetDefaultParameter("jana:extended_report", _extended_report);
 
         _component_manager->resolve_event_sources();
-        auto topology = JArrowTopology::from_components(_component_manager, _params);
-        _processing_controller = std::make_shared<JArrowProcessingController>(topology);
 
-        _params->SetDefaultParameter("jana:extended_report", _extended_report);
+        int engine_choice = 0;
+        _params->SetDefaultParameter("jana:engine", engine_choice, "0: Arrow engine, 1: Debug engine");
+
+        if (engine_choice == 0) {
+            auto topology = JArrowTopology::from_components(_component_manager, _params);
+            auto japc = std::make_shared<JArrowProcessingController>(topology);
+            _processing_controller = japc;
+            _service_locator.provide(japc);
+            _service_locator.provide(_processing_controller);
+        }
+        else {
+            auto jdpc = std::make_shared<JDebugProcessingController>(_component_manager.get());
+            _processing_controller = jdpc;
+            _service_locator.provide(jdpc);
+            _service_locator.provide(_processing_controller);
+        }
+
         _processing_controller->initialize();
         _initialized = true;
     }

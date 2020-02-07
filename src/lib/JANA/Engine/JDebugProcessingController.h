@@ -43,7 +43,10 @@
 class JDebugProcessingController : public JProcessingController {
 public:
 
-    explicit JDebugProcessingController(JComponentManager* jcm) : m_component_manager(jcm) {};
+    explicit JDebugProcessingController(JComponentManager* jcm) : m_component_manager(jcm) {
+        assert(jcm != nullptr);
+    };
+
     ~JDebugProcessingController() override;
 
     void initialize() override;

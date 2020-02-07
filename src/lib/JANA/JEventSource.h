@@ -120,6 +120,8 @@ public:
     }
 
     ReturnStatus DoNext(std::shared_ptr<JEvent> event) {
+
+        std::lock_guard<std::mutex> lock(m_mutex); // In general, DoNext must be synchronized.
         auto first_evt_nr = m_nskip;
         auto last_evt_nr = m_nevents + m_nskip;
         try {
@@ -131,7 +133,7 @@ public:
 
                     if (m_event_count < first_evt_nr) {
                         m_event_count += 1;
-                        GetEvent(std::move(event));  // Throw this event away
+                        GetEvent(event);
                         return ReturnStatus::TryAgain;
                     }
                     else if (m_nevents != 0 && (m_event_count == last_evt_nr)) {
@@ -139,7 +141,7 @@ public:
                         return ReturnStatus::Finished;
                     }
                     else {
-                        GetEvent(std::move(event));
+                        GetEvent(event);
                         m_event_count += 1;
                         return ReturnStatus::Success;
                     }
@@ -242,6 +244,7 @@ private:
     std::string m_plugin_name;
     std::string m_type_name;
     std::once_flag m_init_flag;
+    std::mutex m_mutex;
 };
 
 #endif // _JEventSource_h_
