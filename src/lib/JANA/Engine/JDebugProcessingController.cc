@@ -39,9 +39,18 @@
 using millisecs = std::chrono::duration<double, std::milli>;
 using secs = std::chrono::duration<double>;
 
+JDebugProcessingController::JDebugProcessingController(JComponentManager* jcm) : m_component_manager(jcm) {
+    assert(jcm != nullptr);
+}
+
+void JDebugProcessingController::acquire_services(JServiceLocator * sl) {
+    m_logger = sl->get<JLoggingService>()->get_logger("JDebugProcessingController");
+}
+
+
 void JDebugProcessingController::run_worker() {
 
-    LOG_INFO(m_logger) << "Starting JDebugProcessingController::run_worker" << LOG_END;
+    LOG_INFO(m_logger) << "Starting worker" << LOG_END;
     auto evt_srces = m_component_manager->get_evt_srces();
     auto evt_procs = m_component_manager->get_evt_procs();
 
@@ -78,15 +87,29 @@ void JDebugProcessingController::run_worker() {
             }
         }
     }
-    if (!m_stop_requested) {
-        m_finish_achieved = true;
-    }
 
-    LOG_INFO(m_logger) << "Finished JDebugProcessingController::run_worker" << LOG_END;
-    for (JEventProcessor* evt_prc : evt_procs) {
-        evt_prc->DoFinalize();
+    LOG_INFO(m_logger) << "Worker is shutting down..." << LOG_END;
+    m_total_active_workers -= 1;
+
+    if (m_total_active_workers == 0) {
+
+        m_stop_achieved = true;
+        m_finish_achieved = true;
+        for (auto evt_src : evt_srces) {
+            m_finish_achieved &= (evt_src->GetStatus() == JEventSource::SourceStatus::Finished);
+        }
+
+        if (m_finish_achieved) {
+            // Finalize event processors _only_ if finish was achieved.
+            LOG_INFO(m_logger) << "Finish achieved. Last worker is finalizing the event processors." << LOG_END;
+            for (JEventProcessor* evt_prc : evt_procs) {
+                evt_prc->DoFinalize();
+            }
+        }
+
+        LOG_INFO(m_logger) << "Last worker is stopping the stopwatch" << LOG_END;
+        m_perf_metrics.stop(m_total_events_processed);
     }
-    m_stop_achieved = true;
 }
 
 
@@ -98,6 +121,8 @@ void JDebugProcessingController::run(size_t nthreads) {
     m_stop_requested = false;
     m_stop_achieved = false;
     m_finish_achieved = false;
+    m_total_active_workers = nthreads;
+    m_perf_metrics.start(m_total_events_processed, nthreads);
     for (int i=0; i<nthreads; ++i) {
         m_workers.push_back(new std::thread(&JDebugProcessingController::run_worker, this));
     }
@@ -105,6 +130,8 @@ void JDebugProcessingController::run(size_t nthreads) {
 
 void JDebugProcessingController::scale(size_t nthreads) {
     wait_until_stopped();
+    m_perf_metrics.stop(m_total_events_processed);
+    m_perf_metrics.reset();
     run(nthreads);
 }
 
@@ -116,6 +143,9 @@ void JDebugProcessingController::wait_until_stopped() {
     m_stop_requested = true;
     for (auto * worker : m_workers) {
         worker->join();
+    }
+    m_perf_metrics.stop(m_total_events_processed);
+    for (auto * worker : m_workers) {
         delete worker;
     }
     m_workers.clear();
@@ -148,12 +178,9 @@ void JDebugProcessingController::print_final_report() {
 
 std::unique_ptr<const JPerfSummary> JDebugProcessingController::measure_performance() {
 
+    m_perf_metrics.split(m_total_events_processed);
     auto ps = std::unique_ptr<JPerfSummary>(new JPerfSummary());
-
     m_perf_metrics.summarize(*ps);
-    ps->thread_count = m_workers.size();
-    ps->monotonic_events_completed = m_total_events_processed;
-    ps->total_events_completed = m_total_events_processed;
     return std::move(ps);
 }
 

@@ -54,10 +54,10 @@ struct JPerfSummary {
 };
 
 inline std::ostream& operator<<(std::ostream& os, const JPerfSummary& x) {
-    os << "Threads: " << std::setw(2) << x.thread_count
-       << ",  Events processed: " << std::setw(9) << x.total_events_completed
-       << ",  Inst throughput: " << std::setw(5) << std::setprecision(3) << x.latest_throughput_hz
-       << " Hz,  Avg throughput: " << std::setw(5) << x.avg_throughput_hz << " Hz" << std::endl;
+    os << "  Threads:               " << x.thread_count << std::endl
+       << "  Events processed:      " << x.total_events_completed << std::endl
+       << "  Inst throughput [Hz]:  " << x.latest_throughput_hz << std::endl
+       << "  Avg throughput [Hz]:   " << x.avg_throughput_hz << std::endl;
     return os;
 }
 
