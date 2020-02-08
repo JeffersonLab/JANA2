@@ -12,9 +12,8 @@ template <typename T>
 class JFactoryV2 : public JAbstractFactoryT<T> {
 public:
 
-    JFactoryV2(const std::string& factory_name, const std::string& tag="")
-    : JFactory(factory_name, tag), JAbstractFactoryT<T>(factory_name, tag)(
-            <>) {}
+    JFactoryV2(const std::string& factory_name=JTypeInfo::demangle<T>(), const std::string& tag="")
+    : JAbstractFactoryT<T>(factory_name, tag) {}
 
     // -----------------------------
     // Meant to be overriden by user
@@ -34,6 +33,7 @@ public:
 
     /// Please use the typed setters instead whenever possible
     void Set(std::vector<JObject*>& aData) {
+        assert(JFactory::mStatus != JFactory::Status::Processed);
         ClearData();
         for (auto jobj : aData) {
             T* casted = dynamic_cast<T*>(jobj);
@@ -45,9 +45,7 @@ public:
 
     /// Please use the typed setters instead whenever possible
     void Insert(JObject* aDatum) {
-
-        assert(JFactory::mStatus == JFactory::Status::Uninitialized ||
-               JFactory::mStatus == JFactory::Status::Unprocessed);
+        assert(JFactory::mStatus != JFactory::Status::Processed);
         T* casted = dynamic_cast<T*>(aDatum);
         assert(casted != nullptr);
         mData.push_back(casted);
@@ -55,20 +53,21 @@ public:
     }
 
     void Set(const std::vector<T*>& aData) {
+        assert(JFactory::mStatus != JFactory::Status::Processed);
         ClearData();
         mData = aData;
         JFactory::mStatus = JFactory::Status::Inserted;
     }
 
     void Set(std::vector<T*>&& aData) {
+        assert(JFactory::mStatus != JFactory::Status::Processed);
         ClearData();
         mData = std::move(aData);
         JFactory::mStatus = JFactory::Status::Inserted;
     }
 
     void Insert(T* aDatum) {
-        assert(JFactory::mStatus == JFactory::Status::Uninitialized ||
-               JFactory::mStatus == JFactory::Status::Unprocessed);
+        assert(JFactory::mStatus != JFactory::Status::Processed);
         mData.push_back(aDatum);
         JFactory::mStatus = JFactory::Status::Inserted;
     }

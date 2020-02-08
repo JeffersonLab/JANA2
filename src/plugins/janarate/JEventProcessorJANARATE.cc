@@ -14,6 +14,7 @@ using namespace std;
 #include <TFile.h>
 
 #include "JEventProcessorJANARATE.h"
+#include <JANA/JApplication.h>
 
 TFile *rootfile = nullptr;
 mutex mtxroot;

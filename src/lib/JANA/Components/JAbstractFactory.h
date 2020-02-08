@@ -20,7 +20,7 @@ template<typename T>
 struct JMetadata {};
 
 template<typename T>
-class JAbstractFactoryT : virtual public JFactory {
+class JAbstractFactoryT : public JFactory {
 public:
 
     using IteratorType = typename std::vector<T*>::const_iterator;

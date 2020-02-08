@@ -1,6 +1,7 @@
-
+#include <map>
 #include <iostream>
 #include <JANA/JFactoryT.h>
+#include <JANA/JObject.h>
 
 struct SimpleFactoryGenerator {
     virtual JFactory* create() = 0;

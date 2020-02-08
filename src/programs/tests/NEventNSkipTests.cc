@@ -3,6 +3,7 @@
 //
 #include "catch.hpp"
 
+#include <JANA/JApplication.h>
 #include <JANA/JEventSource.h>
 
 
