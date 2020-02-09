@@ -33,7 +33,7 @@ public:
 
     void DoInitialize() final {
         try {
-            std::call_once(m_init_flag, &JEventSourceV3::Open, this, this->m_application, this->m_resource_name);
+            std::call_once(m_init_flag, &JEventSourceV3::Open, this, this->m_resource_name, this->m_application);
             m_status = SourceStatus::Opened;
         }
         catch (JException& ex) {
