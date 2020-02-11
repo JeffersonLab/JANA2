@@ -60,7 +60,6 @@ set(JANA2_SOURCES
     Status/JPerfMetrics.cc
     Status/JPerfMetrics.h
     Status/JPerfSummary.h
-    Status/JVersion.h
 
     Streaming/JDiscreteJoin.h
     Streaming/JEventBuilder.h
@@ -89,6 +88,11 @@ set(JANA2_SOURCES
     Calibrations/JCalibrationFile.h
     Calibrations/JCalibrationGenerator.h
     Calibrations/JCalibrationGeneratorCCDB.h
+
+    CLI/JVersion.h
+    CLI/JBenchmarker.cc
+    CLI/JBenchmarker.h
+    CLI/JSignalHandler.h
     )
 
 

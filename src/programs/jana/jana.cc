@@ -31,10 +31,10 @@
 
 #include <iostream>
 #include <JANA/JApplication.h>
-#include <JANA/Status/JVersion.h>
 
-#include "JBenchmarker.h"
-#include "JSignalHandler.h"
+#include <JANA/CLI/JVersion.h>
+#include <JANA/CLI/JBenchmarker.h>
+#include <JANA/CLI/JSignalHandler.h>
 
 
 void PrintUsage() {
