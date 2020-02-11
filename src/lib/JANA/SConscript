@@ -16,6 +16,7 @@ env.AppendUnique(ALL_SOURCES = env.Glob('Services/*.cc'))
 env.AppendUnique(ALL_SOURCES = env.Glob('Status/*.cc'))
 env.AppendUnique(ALL_SOURCES = env.Glob('Utils/*.cc'))
 env.AppendUnique(ALL_SOURCES = env.Glob('Calibrations/*.cc'))
+env.AppendUnique(ALL_SOURCES = env.Glob('CLI/*.cc'))
 
 libname = 'JANA'
 myobjs = env.Object(env['ALL_SOURCES'])
@@ -44,3 +45,5 @@ else:
     env.Install(includedir + "/Services", env.Glob('Services/*.h'))
     env.Install(includedir + "/Status", env.Glob('Status/*.h'))
     env.Install(includedir + "/Utils", env.Glob('Utils/*.h'))
+    env.Install(includedir + "/Calibrations", env.Glob('Calibrations/*.h'))
+    env.Install(includedir + "/CLI", env.Glob('CLI/*.h'))
