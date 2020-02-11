@@ -134,7 +134,7 @@ void JApplication::Initialize() {
         _params->SetDefaultParameter("jana:engine", engine_choice, "0: Arrow engine, 1: Debug engine");
 
         if (engine_choice == 0) {
-            auto topology = JArrowTopology::from_components(_component_manager, _params);
+            auto topology = JArrowTopology::from_components(_component_manager, _params, _desired_nthreads);
             auto japc = std::make_shared<JArrowProcessingController>(topology);
             _service_locator.provide(japc);  // Make concrete class available via SL
             _processing_controller = _service_locator.get<JArrowProcessingController>();  // Get deps from SL

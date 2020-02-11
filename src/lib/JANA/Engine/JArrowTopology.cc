@@ -87,17 +87,17 @@ JArrowTopology::~JArrowTopology() {
     }
 }
 
-JArrowTopology* JArrowTopology::from_components(std::shared_ptr<JComponentManager> jcm, std::shared_ptr<JParameterManager> params) {
+JArrowTopology* JArrowTopology::from_components(std::shared_ptr<JComponentManager> jcm, std::shared_ptr<JParameterManager> params, int nthreads) {
 
     JArrowTopology* topology = new JArrowTopology();
 
-    size_t event_pool_size = 100;
+    size_t event_pool_size = nthreads;
     size_t event_queue_threshold = 80;
     size_t event_source_chunksize = 40;
     size_t event_processor_chunksize = 1;
     size_t location_count = 1;
     bool enable_stealing = false;
-    bool limit_total_events_in_flight = false;
+    bool limit_total_events_in_flight = true;
     int affinity = 0;
     int locality = 0;
 
