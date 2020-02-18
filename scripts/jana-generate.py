@@ -172,6 +172,236 @@ void {name}::GetEvent(std::shared_ptr <JEvent> event) {{
 
 """
 
+plugin_main = """
+
+#include <JANA/JApplication.h>
+#include <JANA/JFactoryGenerator.h>
+
+#include "{name}Processor.h"
+
+extern "C" {{
+void InitPlugin(JApplication* app) {{
+
+    // This code is executed when the plugin is attached.
+    // It should always call InitJANAPlugin(app) first, and then do one or more of:
+    //   - Read configuration parameters
+    //   - Register JFactoryGenerators
+    //   - Register JEventProcessors
+    //   - Register JEventSourceGenerators (or JEventSources directly)
+    //   - Register JServices
+
+    InitJANAPlugin(app);
+
+    LOG << "Loading {name}" << LOG_END;
+    app->Add(new {name}Processor);
+    // Add any additional components as needed
+}}
+}}
+
+"""
+
+plugin_cmakelists_txt = """
+
+set ({name}_PLUGIN_SOURCES
+		{name}.cc
+		{name}Processor.cc
+		{name}Processor.h
+	)
+
+add_library({name}_plugin SHARED ${{{name}_PLUGIN_SOURCES}})
+
+find_package(JANA REQUIRED)
+target_include_directories({name}_plugin PUBLIC ${{JANA_INCLUDE_DIR}})
+target_link_libraries({name}_plugin ${{JANA_LIBRARY}})
+set_target_properties({name}_plugin PROPERTIES PREFIX "" OUTPUT_NAME "{name}" SUFFIX ".so")
+install(TARGETS {name}_plugin DESTINATION plugins)
+
+"""
+
+
+plugin_findjana_cmake = """
+# Distributed under the OSI-approved BSD 3-Clause License.  See accompanying
+# file Copyright.txt or https://cmake.org/licensing for details.
+
+#[=======================================================================[.rst:
+FindJANA
+--------
+
+Finds the JANA library.
+
+Imported Targets
+^^^^^^^^^^^^^^^^
+
+This module provides the following imported targets, if found:
+
+``JANA::jana``
+  The JANA library
+
+Result Variables
+^^^^^^^^^^^^^^^^
+
+This will define the following variables:
+
+``JANA_FOUND``
+  True if the system has the JANA library.
+``JANA_VERSION``
+  The version of the JANA library which was found.
+``JANA_INCLUDE_DIRS``
+  Include directories needed to use JANA.
+``JANA_LIBRARIES``
+  Libraries needed to link to JANA.
+
+#]=======================================================================]
+
+if (DEFINED JANA_HOME)
+    set(JANA_ROOT_DIR ${JANA_HOME})
+    message(STATUS "Using JANA_HOME = ${JANA_ROOT_DIR} (From CMake JANA_HOME variable)")
+
+elseif (DEFINED ENV{JANA_HOME})
+    set(JANA_ROOT_DIR $ENV{JANA_HOME})
+    message(STATUS "Using JANA_HOME = ${JANA_ROOT_DIR} (From JANA_HOME environment variable)")
+
+else()
+    message(FATAL_ERROR "Missing $JANA_HOME")
+endif()
+
+set(JANA_VERSION 2)
+
+find_path(JANA_INCLUDE_DIR
+        NAMES "JANA/JApplication.h"
+        PATHS ${JANA_ROOT_DIR}/include
+        )
+
+find_library(JANA_LIBRARY
+        NAMES "JANA"
+        PATHS ${JANA_ROOT_DIR}/lib
+        )
+
+set(JANA_LIBRARIES ${JANA_LIBRARY})
+set(JANA_INCLUDE_DIRS ${JANA_ROOT_DIR}/include)
+
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(JANA
+        FOUND_VAR JANA_FOUND
+        VERSION_VAR JANA_VERSION
+        REQUIRED_VARS JANA_ROOT_DIR JANA_INCLUDE_DIR JANA_LIBRARY
+        )
+"""
+
+plugin_tests_cmakelists_txt = """
+
+set ({name}_PLUGIN_TESTS_SOURCES
+        catch.hpp
+        tests_main.cc
+        integration_tests.cc
+        # Add component tests here
+        )
+
+add_executable({name}_plugin_tests ${{{name}_PLUGIN_TESTS_SOURCES}})
+
+find_package(JANA REQUIRED)
+
+target_include_directories({name}_plugin_tests PUBLIC ../src)
+target_include_directories({name}_plugin_tests PUBLIC ${{JANA_INCLUDE_DIR}})
+
+target_link_libraries({name}_plugin_tests {name}_plugin)
+target_link_libraries({name}_plugin_tests ${{JANA_LIBRARY}})
+
+install(TARGETS {name}_plugin_tests DESTINATION bin)
+
+"""
+
+plugin_integration_tests_cc = """
+#include "catch.hpp"
+#include "{name}Processor.h"
+
+#include <JANA/JApplication.h>
+#include <JANA/JFactoryGenerator.h>
+
+
+// This is where you can assemble various components and verify that when put together, they
+// do what you'd expect. This means you can skip the laborious mixing and matching of plugins and configurations,
+// and have everything run automatically inside one executable.
+
+TEST_CASE("IntegrationTests") {{
+
+    auto app = new JApplication;
+    
+    // Create and register components
+    // app->Add(new {name}Processor);
+
+    // Set test parameters
+    app->SetParameterValue("nevents", 10);
+
+    // Run everything, blocking until finished
+    app->Run();
+
+    // Verify the results you'd expect
+    REQUIRE(app->GetNeventsProcessed() == 10);
+
+}}
+
+"""
+
+plugin_tests_main_cc = """
+
+// This is the entry point for our test suite executable.
+// Catch2 will take over from here.
+
+#define CATCH_CONFIG_MAIN
+#include "catch.hpp"
+
+"""
+
+jeventprocessor_template_h = """
+#ifndef _{name}_h_
+#define _{name}_h_
+
+#include <JANA/JEventProcessor.h>
+
+class {name} : public JEventProcessor {{
+public:
+
+    {name}();
+    virtual ~{name}() = default;
+
+    void Init() override;
+    void Process(const std::shared_ptr<const JEvent>& event) override;
+    void Finish() override;
+
+}};
+
+
+#endif // _{name}_h_
+
+"""
+
+jeventprocessor_template_cc = """
+#include "{name}.h"
+
+{name}::{name}() {{
+    SetTypeName(NAME_OF_THIS); // Provide JANA with this class's name
+}}
+
+void {name}::Init() {{
+    // Open TFiles, set up TTree branches, etc
+}}
+
+void {name}::Process(const std::shared_ptr<const JEvent> &event) {{
+    // Get intermediate results from Factories
+    // Lock mutex
+    // Do file operations 
+}}
+
+void {name}::Finish() {{
+    // Close any resources
+}}
+
+"""
+
+jeventprocessor_template_tests = """
+"""
+
 
 def create_jobject(name):
     filename = name + ".h"
@@ -192,7 +422,17 @@ def create_jeventsource(name):
 
 
 def create_jeventprocessor(name):
-    pass
+    with open(name + ".h", 'w') as f:
+        text = jeventprocessor_template_h.format(copyright_notice=copyright_notice, name=name)
+        f.write(text)
+
+    with open(name + ".cc", 'w') as f:
+        text = jeventprocessor_template_cc.format(copyright_notice=copyright_notice, name=name)
+        f.write(text)
+
+    with open(name + "Tests.cc", 'w') as f:
+        text = jeventprocessor_template_tests.format(copyright_notice=copyright_notice, name=name)
+        f.write(text)
 
 
 def create_jfactory(name):
@@ -200,8 +440,42 @@ def create_jfactory(name):
 
 
 def create_plugin(name):
-    pass
+    import os
+    os.mkdir(name)
+    os.mkdir(name + "/cmake")
+    os.mkdir(name + "/src")
+    os.mkdir(name + "/tests")
 
+    with open(name + "/cmake/FindJANA.cmake", 'w') as f:
+        f.write(plugin_findjana_cmake)
+
+    with open(name + "/src/CMakeLists.txt", 'w') as f:
+        text = plugin_cmakelists_txt.format(name=name)
+        f.write(text)
+
+    with open(name + "/src/" + name + ".cc", 'w') as f:
+        text = plugin_main.format(name=name)
+        f.write(text)
+
+    with open(name + "/src/" + name + "Processor.cc", 'w') as f:
+        text = jeventprocessor_template_cc.format(name=name+"Processor")
+        f.write(text)
+
+    with open(name + "/src/" + name + "Processor.h", 'w') as f:
+        text = jeventprocessor_template_h.format(name=name+"Processor")
+        f.write(text)
+
+    with open(name + "/tests/tests_main.cc", "w") as f:
+        text = plugin_tests_main_cc.format(name=name)
+        f.write(text)
+
+    with open(name + "/tests/integration_tests.cc", "w") as f:
+        text = plugin_integration_tests_cc.format(name=name)
+        f.write(text)
+
+    with open(name + "/tests/CMakeLists.txt", "w") as f:
+        text = plugin_tests_cmakelists_txt.format(name=name)
+        f.write(text)
 
 def create_executable(name):
     pass
@@ -212,9 +486,9 @@ def create_project(name):
 
 
 def print_usage():
-    print("Usage: jana-gen [type] [name]")
-    print("  type: jobject jeventsource jeventprocessor jfactory plugin executable project")
-    print("  name: camel or snake case")
+    print("Usage: jana-generate [type] [name]")
+    print("  type: JObject JEventSource JEventProcessor JFactory plugin executable project")
+    print("  name: Preferably in CamelCase, e.g. EvioSource")
 
 
 if __name__ == '__main__':
@@ -224,10 +498,10 @@ if __name__ == '__main__':
         print_usage()
         exit()
 
-    dispatch_table = {'jobject': create_jobject,
-                      'jeventsource': create_jeventsource,
-                      'jeventprocessor': create_jeventprocessor,
-                      'jfactory': create_jfactory,
+    dispatch_table = {'JObject': create_jobject,
+                      'JEventSource': create_jeventsource,
+                      'JEventProcessor': create_jeventprocessor,
+                      'JFactory': create_jfactory,
                       'plugin': create_plugin,
                       'executable': create_executable,
                       'project': create_project
