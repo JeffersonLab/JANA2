@@ -465,11 +465,11 @@ def create_plugin(name):
         text = jeventprocessor_template_h.format(name=name+"Processor")
         f.write(text)
 
-    with open(name + "/tests/tests_main.cc", "w") as f:
+    with open(name + "/tests/TestsMain.cc", "w") as f:
         text = plugin_tests_main_cc.format(name=name)
         f.write(text)
 
-    with open(name + "/tests/integration_tests.cc", "w") as f:
+    with open(name + "/tests/IntegrationTests.cc", "w") as f:
         text = plugin_integration_tests_cc.format(name=name)
         f.write(text)
 

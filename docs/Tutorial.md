@@ -13,75 +13,74 @@ title: JANA: Multi-threaded HENP Event Reconstruction
 </center>
 
 This tutorial will walk you through creating a standalone JANA plugin, introducing the key ideas along the way. 
-All of this code for this example is [available here](https://github.com/nathanwbrei/jana-plugin-example).
+The end result for this example is [available here](https://github.com/nathanwbrei/jana-plugin-example). 
 
-The first thing we need to do is install the JANA library. This is done just like any other CMake project. 
-We choose an installation directory by setting the environment variable `$JANA_HOME`. For now, this will be 
-under `JANA2/install`, although if we want a system-wide installation, it should be `/usr/local`.
+Before we begin, we need to make sure that 
+* The JANA library is installed
+* The `JANA_HOME` environment variable points to the installation directory
+* Your `$PATH` contains `$JANA_HOME/bin`. 
 
-```
-mkdir ~/tutorial
-cd ~/tutorial
-git clone https://github.com/JeffersonLab/JANA2
-cd JANA2
-mkdir install
-export JANA_HOME=`pwd`/install
-mkdir build
-cd build
-cmake ..
-make install
-```
-
-We can quickly test that our install works by running
-```
-$JANA_HOME/bin/jana -Pplugins=JTest -b
-```
-This will launch a plugin that will benchmark the performance of your system and measure how
-JANA's throughput scales with the number of threads being used. You can cancel processing any time 
-by pressing Ctrl-C.
-
-With JANA working, we can now create our own standalone plugin. 
-```
-cd ~/tutorial
-mkdir sample_plugin
-git init
-```
-
-You can use JANA with any build system. For this tutorial, we shall use CMake. JANA provides a FindJANA.cmake script
-which tells CMake where to find everything relative to `$JANA_HOME`.
-```
-cd ~/tutorial/sample_plugin
-mkdir cmake
-cp JANA2/cmake/FindJANA.cmake sample_plugin/cmake
-touch CMakeLists.txt
-```
-
-We are going to use a very simple directory structure for now. When it comes time to put together a larger project,
-use [this example](https://github.com/nathanwbrei/jana-project-example) as a guide.
-```
-CMakeLists.txt
-cmake
-    FindJANA.cmake
-src
-    CMakeLists.txt
-    sample_plugin.cc
-```
-
-The root CMakeLists.txt file tells CMake that we require C++14 and PIC, where to find . The code which goes into
-the 
+The installation process is described [here](Installation.html). We can quickly test that our install 
+was successful by running a builtin benchmarking/scaling test:
 
 ```
-cmake_minimum_required(VERSION 3.13)
-project(sample_jana_project)
-
-set(CMAKE_CXX_STANDARD 14)
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)   # Enable -fPIC for all targets
-
-# Expose custom cmake modules
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
-
-add_subdirectory(src)
+jana -Pplugins=JTest -b
 ```
+
+We can understand this command as follows:
+
+* `jana` is the default command-line tool for launching JANA. If you would rather create your own executable which 
+   uses JANA internally, you are free to do so.
+   
+* The `-P` flag specifies a configuration parameter, e.g. `-Pnthreads=4` tells JANA to use exactly 4 threads.
+   
+* `plugins` is the parameter specifying the names of plugins to load, as a comma-separated list (without spaces). 
+By default JANA searches for these in `$JANA_HOME/plugins`, although you can also specify full paths.
+
+* `-b` tells JANA to run everything in benchmark mode, i.e. it slowly increases the number of threads while 
+measuring the overall throughput. You can cancel processing at any time by pressing Ctrl-C.
+
+
+With JANA working, we can now create our own plugin. JANA provides a script which generates code skeletons 
+to help us get started. If you are working with an existing project such as eJANA or GlueX, you 
+should `cd` into `src/plugins` or similar. Otherwise, you can run these commands from your home directory.
+
+We shall name our plugin "QuickTutorial". To generate the skeleton, run
+```
+jana-generate.py plugin QuickTutorial
+```
+
+This creates the following directory tree. 
+
+```
+QuickTutorial/
+├── cmake
+│   └── FindJANA.cmake
+├── src
+│   ├── CMakeLists.txt
+│   ├── QuickTutorial.cc
+│   ├── QuickTutorialProcessor.cc
+│   └── QuickTutorialProcessor.h
+└── tests
+    ├── CMakeLists.txt
+    ├── IntegrationTests.cc
+    └── TestsMain.cc
+```
+
+Note that if you are inside of an existing project, you may need to make some quick modifications:
+* Tell the parent CMakeLists.txt to `add_subdirectory(QuickTutorial)`. 
+* Delete `QuickTutorial/cmake` since the project will provide this
+* Delete the superfluous project definition inside the root `CMakeLists.txt`
+
+Let's dive into the skeleton code we've created. 
+* `src/QuickTutorialProcessor.*` contains the skeleton of a `JEventProcessor`, which will eventually do
+  the bulk of the heavy lifting.
+* `src/QuickTutorial.cc` contains the plugin's entry point, whose only goal right now is to register the
+  QuickTutorialProcessor with JANA.
+* We have a parallel directory for tests set up so we can start writing tests immediately.
+
+
+
 
 
 
@@ -106,13 +105,6 @@ add_subdirectory(src)
 ## Event processors
 
 ## More complex topologies
-
-### JObjects
-
-JObjects are data containers for specific results. JObjects are close to being plain-old structs, except they include
-some extra functionality for creating and traversing associations with other JObjects. They are immutable once 
-outside of the JFactory created them. It may be beneficial to use multiple inheritance in order to take gain additional
- functionality, e.g. to delegate persistence to ROOT.
 
 ### JEventSource
 
