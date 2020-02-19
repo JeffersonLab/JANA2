@@ -41,6 +41,8 @@ By default JANA searches for these in `$JANA_HOME/plugins`, although you can als
 measuring the overall throughput. You can cancel processing at any time by pressing Ctrl-C.
 
 
+### Creating a JANA plugin
+
 With JANA working, we can now create our own plugin. JANA provides a script which generates code skeletons 
 to help us get started. If you are working with an existing project such as eJANA or GlueX, you 
 should `cd` into `src/plugins` or similar. Otherwise, you can run these commands from your home directory.
