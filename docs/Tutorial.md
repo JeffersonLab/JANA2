@@ -36,7 +36,8 @@ We can understand this command as follows:
 * `jana` is the default command-line tool for launching JANA. If you would rather create your own executable which 
    uses JANA internally, you are free to do so.
    
-* The `-P` flag specifies a configuration parameter, e.g. `-Pnthreads=4` tells JANA to use exactly 4 threads.
+* The `-P` flag specifies a configuration parameter, e.g. `-Pjana:debug_plugin_loading=1` tells JANA to log
+   detailed information about where the plugin loader went looking and what it found.
    
 * `plugins` is the parameter specifying the names of plugins to load, as a comma-separated list (without spaces). 
 By default JANA searches for these in `$JANA_HOME/plugins`, although you can also specify full paths.
@@ -173,9 +174,9 @@ plugin. This helps prevent namespace collisions.
 ```
 void RandomSource::Open() {
     JApplication* app = GetApplication();
-    app->SetDefaultParameter("random_source:max_emit_freq_hz",                // ADD ME
-                             m_max_emit_freq_hz,                             // ADD ME
-                             "Maximum event rate [Hz] for RandomSource");    // ADD ME
+    app->SetDefaultParameter("random_source:max_emit_freq_hz",            // ADD ME
+                             m_max_emit_freq_hz,                          // ADD ME
+                             "Maximum event rate [Hz] for RandomSource"); // ADD ME
 }
 ```
 
@@ -229,6 +230,9 @@ struct Hit : public JObject {
     int z;     // Pixel coordinates
     double E;  // Energy loss in GeV
     double t;  // Time in us
+
+    // Make it possible to construct a Hit as a one-liner
+    Hit(int x, int y, int z, double E, double t) : x(x), y(y), z(z), E(E), t(t) {};
     ...
 ```
 
@@ -251,7 +255,35 @@ name as well. We will see where this comes in handy later.
 }
 ```
 
-Now it is time to have our `RandomSource` create and emit these hit objects. 
+## Inserting JObjects into a JEvent
+
+Now it is time to have our `RandomSource` emit events which contain `Hit` objects. For the sake
+of brevity, we shall keep our hit generation logic as simple as possible: four hits which are constant.
+We can make our detector simulation arbitrarily complex, but be aware that `JEventSources` only run on
+a single thread by default, so complex simulations can reduce the event rate. Synchronizing `GetEvent` makes our job 
+easier, however, because we can manipulate non-thread-local state such as file pointers or cursors or message buffers 
+without having to worry about race conditions and deadlocks.
+
+The pattern we use for inserting data into the event is simple: For data of type `T`, create a `std::vector<T*>`, fill
+it, and pass it to `JEvent::Insert`, which will move its contents directly into the `JEvent` object. If we want,
+when we insert we can also specify a tag, which is just a string. The purpose of a tag is to provide an extra level
+of granularity. For instance, if we have two detectors which both use the `Hit` datatype but have separate processing
+logic, we want to be able to access them independently.
+
+```
+void RandomSource::GetEvent(std::shared_ptr<JEvent> event) {
+    // ...
+
+    /// Insert simulated data into event          // ADD ME
+
+    std::vector<Hit*> hits;                       // ADD ME
+    hits.push_back(new Hit(0, 0, 0, 1.0, 0));     // ADD ME
+    hits.push_back(new Hit(0, 1, 0, 1.0, 0));     // ADD ME
+    hits.push_back(new Hit(1, 0, 0, 1.0, 0));     // ADD ME
+    hits.push_back(new Hit(1, 1, 0, 1.0, 0));     // ADD ME
+    event->Insert(hits);                          // ADD ME
+}
+```
 
 
 
