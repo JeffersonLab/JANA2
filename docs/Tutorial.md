@@ -27,7 +27,7 @@ Before we begin, we need to make sure that
 The installation process is described [here](Installation.html). We can quickly test that our install 
 was successful by running a builtin benchmarking/scaling test:
 
-```bash
+```
 jana -Pplugins=JTest -b
 ```
 
@@ -52,7 +52,7 @@ to help us get started. If you are working with an existing project such as eJAN
 should `cd` into `src/plugins` or similar. Otherwise, you can run these commands from your home directory.
 
 We shall name our plugin "QuickTutorial". To generate the skeleton, run
-```bash
+```
 jana-generate.py plugin QuickTutorial
 ```
 
@@ -60,6 +60,7 @@ This creates the following directory tree.
 
 ```
 QuickTutorial/
+├── CMakeLists.txt
 ├── cmake
 │   └── FindJANA.cmake
 ├── src
@@ -73,7 +74,8 @@ QuickTutorial/
     ├── IntegrationTests.cc
     └── TestsMain.cc
 ```
-### Integrating into Existing Build
+
+### Integrating into an existing project
 The skeleton contains a complete stand-alone CMake configuration and can be used as-is to
 build the plugin. However, if you want to integrate the plugin into the source of a larger project
 such as eJANA then you'll need to make some quick modifications:
@@ -84,7 +86,7 @@ such as eJANA then you'll need to make some quick modifications:
 ### Building the plugin
 We build and run the plugin with the following:
 
-```bash
+```
 mkdir build
 cd build
 cmake ..
@@ -101,12 +103,12 @@ from other plugins and observe our processor dutifully print out the event numbe
 assume that we don't have access to an event source, so we'll create one ourselves. Our first event
 source will emit an infinite stream of random data, so we'll name it RandomSource.
 
-```bash
+```
 cd src
 jana-generate.py JEventSource RandomSource
 ```
 
-This creates two files, `RandomSource.cc` and `RandomSource.h`, right in the current directory. We'll
+This creates two files, `RandomSource.cc` and `RandomSource.h`, in the current directory. We'll
 need to add them to `CMakeLists.txt` ourselves. Note that we retain complete control over our directory 
 structure. In this tutorial, for simplicity, we'll keep all .h and .cc files directly under `src`, except 
 for tests, which belong under `tests`. For larger projects, `jana-generate project MyProjectName` creates
@@ -116,7 +118,7 @@ To use our new RandomSource as-is, we need to do three things:
 * Add `RandomSource.cc` and `RandomSource.h` to `QuickTutorial_PLUGIN_SOURCES` inside `src/CMakeLists.txt`
 * Register our `RandomSource` with JANA inside `QuickTutorial.cc` like this:
 
-```c++
+```
 #include <JANA/JApplication.h>
 
 #include "QuickTutorialProcessor.h"
@@ -135,15 +137,71 @@ void InitPlugin(JApplication* app) {
 * Rebuild the cmake project, rebuild the plugin target, and install.
 
 When we run the QuickTutorial plugin now, we observe that `QuickTutorialProcessor::Process`
-is being called on every event. Because neither the source nor the processor are doing any 
-'real work', the events are being processed very quickly. To slow it down, we could add
-a delay inside `GetEvent()`:
+is being called on every event. Note that `Process` is 'seeing' events slightly out-of-order. This is 
+because there are multiple threads running `Process`, which means that we have to be careful about how 
+we organize the work we do inside there. This will be discussed in depth later.
+
+### Configuring an event source
+
+Because neither the source nor the processor are doing any 'real work', the events are being processed 
+very quickly. To throttle the rate events get emitted, to whatever frequency we like, we can add a delay 
+inside `GetEvent`:
 
 ```std::this_thread::sleep_for(std::chrono::milliseconds(100));```
 
-which would throttle our event rate to around 10 Hz. Also note that `Process` is 'seeing' events slightly 
-out-of-order. This is because there are multiple threads running `Process`, which means that we have to be 
-careful about how we organize the work we do inside there. This will be discussed in depth later.
+Perhaps we'd like to set the emit frequency at runtime. First, we declare a member variable on 
+`RandomSource`, initializing it to our preferred default value:
+
+```
+class RandomSource : public JEventSource {
+    int m_max_emit_freq_hz = 100;             // <- ADD THIS LINE
+
+public:
+    RandomSource(std::string resource_name, JApplication* app);
+    virtual ~RandomSource() = default;
+    void Open() override;
+    void GetEvent(std::shared_ptr<JEvent>) override;
+};
+```
+
+Next we sync the variable with the parameter manager inside `Open`. We do this by calling 
+`JApplication::SetDefaultParameter`, which tells JANA to look among its configuration parameters for one 
+called "random_source:max_emit_freq_hz". If it finds one, it 
+sets `m_max_emit_freq_hz` to the value it found. Otherwise, it leaves the variable alone. JANA remembers 
+all such 'default parameters' along with their default values so that it can report them and generate config
+files. Note that we conventionally prefix our parameter names with the name of the requesting component or 
+plugin. This helps prevent namespace collisions. 
+
+```
+void RandomSource::Open() {
+    JApplication* app = GetApplication();
+    app->SetDefaultParameter("random_source:max_emit_freq_hz",                // ADD ME
+                             m_max_emit_freq_hz,                             // ADD ME
+                             "Maximum event rate [Hz] for RandomSource");    // ADD ME
+}
+```
+
+We can now use the value of `m_max_emit_freq_hz`, confident that it is consistent with the current 
+runtime configuration:
+
+```
+void RandomSource::GetEvent(std::shared_ptr <JEvent> event) {
+
+    /// Configure event and run numbers
+    static size_t current_event_number = 1;
+    event->SetEventNumber(current_event_number++);
+    event->SetRunNumber(22);
+
+    /// Slow down event source                                           // ADD ME
+    auto delay_ms = std::chrono::milliseconds(1000/m_max_emit_freq_hz);  // ADD ME
+    std::this_thread::sleep_for(delay_ms);                               // ADD ME
+```
+
+Finally, we can set this parameter on the command line and observe the throughput change accordingly:
+
+```
+jana -Pplugins=QuickTutorial -Prandom_source:max_emit_freq_hz=10
+```
 
 <hr>
 
