@@ -1,8 +1,6 @@
-<hr>
-
-# JANA: Multi-threaded HENP Event Reconstruction
-
-<hr>
+---
+title: JANA: Multi-threaded HENP Event Reconstruction
+---
 
 <center>
 <table border="0" width="100%" align="center">
@@ -13,6 +11,8 @@
 <TH width="20%"><A href="Reference.html">Reference</A></TH>
 </table>
 </center>
+
+## Tutorial
 
 This tutorial will walk you through creating a standalone JANA plugin, introducing the key ideas along the way. 
 The end result for this example is [available here](https://github.com/nathanwbrei/jana-plugin-example). 
@@ -27,7 +27,7 @@ Before we begin, we need to make sure that
 The installation process is described [here](Installation.html). We can quickly test that our install 
 was successful by running a builtin benchmarking/scaling test:
 
-```
+```bash
 jana -Pplugins=JTest -b
 ```
 
@@ -52,7 +52,7 @@ to help us get started. If you are working with an existing project such as eJAN
 should `cd` into `src/plugins` or similar. Otherwise, you can run these commands from your home directory.
 
 We shall name our plugin "QuickTutorial". To generate the skeleton, run
-```
+```bash
 jana-generate.py plugin QuickTutorial
 ```
 
@@ -68,11 +68,12 @@ QuickTutorial/
 │   ├── QuickTutorialProcessor.cc
 │   └── QuickTutorialProcessor.h
 └── tests
+    ├── catch.hpp
     ├── CMakeLists.txt
     ├── IntegrationTests.cc
     └── TestsMain.cc
 ```
-#### Integrating into Existing Build
+### Integrating into Existing Build
 The skeleton contains a complete stand-alone CMake configuration and can be used as-is to
 build the plugin. However, if you want to integrate the plugin into the source of a larger project
 such as eJANA then you'll need to make some quick modifications:
@@ -82,7 +83,9 @@ such as eJANA then you'll need to make some quick modifications:
 
 ### Building the plugin
 We build and run the plugin with the following:
-```mkdir build
+
+```bash
+mkdir build
 cd build
 cmake ..
 make install
@@ -90,6 +93,7 @@ jana -Pplugins=QuickTest
 ```
 
 ### Adding an event source
+
 When we run this, we observe that JANA loads the plugin, opens our QuickTutorialProcessor, closes it 
 again without processing any events, and exits. This is because there is nothing to do because we haven't
 specified any sources. If we are running in the context of an existing project, we can pull in event sources
@@ -97,7 +101,7 @@ from other plugins and observe our processor dutifully print out the event numbe
 assume that we don't have access to an event source, so we'll create one ourselves. Our first event
 source will emit an infinite stream of random data, so we'll name it RandomSource.
 
-```
+```bash
 cd src
 jana-generate.py JEventSource RandomSource
 ```
@@ -111,7 +115,8 @@ a much more complex code skeleton.
 To use our new RandomSource as-is, we need to do three things:
 * Add `RandomSource.cc` and `RandomSource.h` to `QuickTutorial_PLUGIN_SOURCES` inside `src/CMakeLists.txt`
 * Register our `RandomSource` with JANA inside `QuickTutorial.cc` like this:
-```
+
+```c++
 #include <JANA/JApplication.h>
 
 #include "QuickTutorialProcessor.h"
