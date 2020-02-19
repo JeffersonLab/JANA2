@@ -45,6 +45,6 @@ add_subdirectory(src/programs/jana)
 add_subdirectory(src/programs/tests)
 add_subdirectory(src/programs/playground)
 
-install(PROGRAMS scripts/mkplugin scripts/mkclass DESTINATION bin)
+install(PROGRAMS scripts/jana-generate.py scripts/jana-upgrade.py DESTINATION bin)
 
 include(${CMAKE_SOURCE_DIR}/cmake/MakeConfig.cmake)

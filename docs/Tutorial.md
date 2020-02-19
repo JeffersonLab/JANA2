@@ -74,12 +74,19 @@ Note that if you are inside of an existing project, you may need to make some qu
 
 Let's dive into the skeleton code we've created. 
 * `src/QuickTutorialProcessor.*` contains the skeleton of a `JEventProcessor`, which will eventually do
-  the bulk of the heavy lifting.
+  the bulk of the heavy lifting. For now all it does is print the current event number to a log file.
 * `src/QuickTutorial.cc` contains the plugin's entry point, whose only goal right now is to register the
   QuickTutorialProcessor with JANA.
 * We have a parallel directory for tests set up so we can start writing tests immediately.
 
-
+We build and run this just to see what happens:
+```bash
+mkdir build
+cd build
+cmake ..
+make install
+jana -Pplugins=QuickTest
+```
 
 
 

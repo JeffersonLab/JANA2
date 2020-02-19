@@ -200,6 +200,24 @@ void InitPlugin(JApplication* app) {{
 
 """
 
+plugin_root_cmakelists_txt = """
+cmake_minimum_required(VERSION 3.13)
+project(sample_jana_project)
+
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)   # Enable -fPIC for all targets
+
+# Expose custom cmake modules
+list(APPEND CMAKE_MODULE_PATH "${{CMAKE_CURRENT_LIST_DIR}}/cmake")
+
+# Set install directory to $JANA_HOME
+set(CMAKE_INSTALL_PREFIX $ENV{{JANA_HOME}} CACHE PATH "magic incantation" FORCE)
+
+add_subdirectory(src)
+add_subdirectory(tests)
+
+"""
+
 plugin_cmakelists_txt = """
 
 set ({name}_PLUGIN_SOURCES
@@ -292,8 +310,8 @@ plugin_tests_cmakelists_txt = """
 
 set ({name}_PLUGIN_TESTS_SOURCES
         catch.hpp
-        tests_main.cc
-        integration_tests.cc
+        TestsMain.cc
+        IntegrationTests.cc
         # Add component tests here
         )
 
@@ -337,7 +355,7 @@ TEST_CASE("IntegrationTests") {{
     app->Run();
 
     // Verify the results you'd expect
-    REQUIRE(app->GetNeventsProcessed() == 10);
+    REQUIRE(app->GetNEventsProcessed() == 10);
 
 }}
 
@@ -378,16 +396,19 @@ public:
 
 jeventprocessor_template_cc = """
 #include "{name}.h"
+#include <JANA/JLogger.h>
 
 {name}::{name}() {{
     SetTypeName(NAME_OF_THIS); // Provide JANA with this class's name
 }}
 
 void {name}::Init() {{
+    LOG << "{name}::Init" << LOG_END;
     // Open TFiles, set up TTree branches, etc
 }}
 
 void {name}::Process(const std::shared_ptr<const JEvent> &event) {{
+    LOG << "{name}::Process, Event #" << event->GetEventNumber() << LOG_END;
     // Get intermediate results from Factories
     // Lock mutex
     // Do file operations 
@@ -395,6 +416,7 @@ void {name}::Process(const std::shared_ptr<const JEvent> &event) {{
 
 void {name}::Finish() {{
     // Close any resources
+    LOG << "{name}::Finish" << LOG_END;
 }}
 
 """
@@ -446,8 +468,18 @@ def create_plugin(name):
     os.mkdir(name + "/src")
     os.mkdir(name + "/tests")
 
+    jana_home = os.getenv("JANA_HOME")
+    if jana_home is None:
+        raise Exception("Need JANA_HOME!")
+    os.system("cp " + jana_home + "/include/external/catch.hpp " + name + "/tests/")
+
+
     with open(name + "/cmake/FindJANA.cmake", 'w') as f:
         f.write(plugin_findjana_cmake)
+
+    with open(name + "/CMakeLists.txt", 'w') as f:
+        text = plugin_root_cmakelists_txt.format(name=name)
+        f.write(text)
 
     with open(name + "/src/CMakeLists.txt", 'w') as f:
         text = plugin_cmakelists_txt.format(name=name)
