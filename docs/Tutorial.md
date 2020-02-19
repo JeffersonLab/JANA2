@@ -282,10 +282,43 @@ void RandomSource::GetEvent(std::shared_ptr<JEvent> event) {
     hits.push_back(new Hit(1, 0, 0, 1.0, 0));     // ADD ME
     hits.push_back(new Hit(1, 1, 0, 1.0, 0));     // ADD ME
     event->Insert(hits);                          // ADD ME
+    //event->Insert(hits, "fcal");                // If we used a tag
+}
+```
+
+We now have `Hit`s in our event stream. The next section will cover how the `QuickTutorialProcessor` should
+access them. However, we don't need to create a custom JEventProcessor to examine our event stream. JANA provides
+a small utility called `JCsvWriter` which creates a CSV file containing all `JObjects` of a certain type and tag. 
+It can figure out how to do this thanks to `JObject::Summarize`. You can examine the full code for `JCsvWriter` 
+if you look under `$JANA_HOME/include/JANA/JCsvWriter.h`. Be aware that `JCsvWriter` is very inefficient and 
+should be used for debugging, not for production.
+
+To use `JCsvWriter`, we merely register it with our `JApplication`. If we run JANA now, 
+a file 'Hit.csv' should appear in the current working directory. Note that the CSV file 
+will be closed correctly even when we terminate JANA using Ctrl-C. 
+
+```
+#include<JANA/JCsvWriter.h>                       // ADD ME
+#include "Hit.h"                                  // ADD ME
+
+extern "C" {
+void InitPlugin(JApplication* app) {
+
+    InitJANAPlugin(app);
+
+    app->Add(new QuickTutorialProcessor);
+    app->Add(new RandomSource("random", app));
+    app->Add(new JCsvWriter<Hit>);                // ADD ME
+    //app->Add(new JCsvWriter<Hit>("fcal"));      // If we used a tag
 }
 ```
 
 
+## Retrieving JObjects from a JEventProcessor
+
+## Creating factories
+
+## Reading files using a JEventSource
 
 <hr>
 
