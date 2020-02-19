@@ -1,6 +1,8 @@
----
-title: JANA: Multi-threaded HENP Event Reconstruction
----
+<hr>
+
+# JANA: Multi-threaded HENP Event Reconstruction
+
+<hr>
 
 <center>
 <table border="0" width="100%" align="center">
@@ -86,6 +88,12 @@ cmake ..
 make install
 jana -Pplugins=QuickTest
 ```
+
+<hr>
+
+# Under Development
+
+The rest of this tutorial is still under development ....
 
 ### Understanding the code
 Let's dive into the skeleton code we've created. 
