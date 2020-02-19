@@ -15,6 +15,8 @@ title: JANA: Multi-threaded HENP Event Reconstruction
 This tutorial will walk you through creating a standalone JANA plugin, introducing the key ideas along the way. 
 The end result for this example is [available here](https://github.com/nathanwbrei/jana-plugin-example). 
 
+### Introduction
+
 Before we begin, we need to make sure that 
 * The JANA library is installed
 * The `JANA_HOME` environment variable points to the installation directory
@@ -68,12 +70,24 @@ QuickTutorial/
     ├── IntegrationTests.cc
     └── TestsMain.cc
 ```
-
-Note that if you are inside of an existing project, you may need to make some quick modifications:
+#### Integrating into Existing Build
+The skeleton contains a complete stand-alone CMake configuration and can be used as-is to
+build the plugin. However, if you want to integrate the plugin into the source of a larger project
+such as eJANA then you'll need to make some quick modifications:
 * Tell the parent CMakeLists.txt to `add_subdirectory(QuickTutorial)`. 
 * Delete `QuickTutorial/cmake` since the project will provide this
 * Delete the superfluous project definition inside the root `CMakeLists.txt`
 
+### Building the plugin
+We build and run the plugin with the following:
+```mkdir build
+cd build
+cmake ..
+make install
+jana -Pplugins=QuickTest
+```
+
+### Understanding the code
 Let's dive into the skeleton code we've created. 
 * `src/QuickTutorialProcessor.*` contains the skeleton of a `JEventProcessor`, which will eventually do
   the bulk of the heavy lifting. For now all it does is print the current event number to a log file.
@@ -81,14 +95,6 @@ Let's dive into the skeleton code we've created.
   QuickTutorialProcessor with JANA.
 * We have a parallel directory for tests set up so we can start writing tests immediately.
 
-We build and run this just to see what happens:
-```bash
-mkdir build
-cd build
-cmake ..
-make install
-jana -Pplugins=QuickTest
-```
 
 
 
