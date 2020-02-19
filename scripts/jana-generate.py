@@ -149,7 +149,7 @@ void {name}::GetEvent(std::shared_ptr <JEvent> event) {{
     /// read and write state on the JEventSource without causing race conditions.
     
     /// Configure event and run numbers
-    static size_t current_event_number = 1
+    static size_t current_event_number = 1;
     event->SetEventNumber(current_event_number++);
     event->SetRunNumber(22);
 
@@ -202,7 +202,7 @@ void InitPlugin(JApplication* app) {{
 
 plugin_root_cmakelists_txt = """
 cmake_minimum_required(VERSION 3.13)
-project(sample_jana_project)
+project({name}_plugin_project)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)   # Enable -fPIC for all targets

@@ -89,6 +89,57 @@ make install
 jana -Pplugins=QuickTest
 ```
 
+### Adding an event source
+When we run this, we observe that JANA loads the plugin, opens our QuickTutorialProcessor, closes it 
+again without processing any events, and exits. This is because there is nothing to do because we haven't
+specified any sources. If we are running in the context of an existing project, we can pull in event sources
+from other plugins and observe our processor dutifully print out the event number. For now, however, we 
+assume that we don't have access to an event source, so we'll create one ourselves. Our first event
+source will emit an infinite stream of random data, so we'll name it RandomSource.
+
+```
+cd src
+jana-generate.py JEventSource RandomSource
+```
+
+This creates two files, `RandomSource.cc` and `RandomSource.h`, right in the current directory. We'll
+need to add them to `CMakeLists.txt` ourselves. Note that we retain complete control over our directory 
+structure. In this tutorial, for simplicity, we'll keep all .h and .cc files directly under `src`, except 
+for tests, which belong under `tests`. For larger projects, `jana-generate project MyProjectName` creates
+a much more complex code skeleton. 
+
+To use our new RandomSource as-is, we need to do three things:
+* Add `RandomSource.cc` and `RandomSource.h` to `QuickTutorial_PLUGIN_SOURCES` inside `src/CMakeLists.txt`
+* Register our `RandomSource` with JANA inside `QuickTutorial.cc` like this:
+```
+#include <JANA/JApplication.h>
+
+#include "QuickTutorialProcessor.h"
+#include "RandomSource.h"                         // <- ADD THIS LINE
+
+extern "C" {
+void InitPlugin(JApplication* app) {
+
+    InitJANAPlugin(app);
+
+    app->Add(new QuickTutorialProcessor);
+    app->Add(new RandomSource("random", app));    // <- ADD THIS LINE
+}
+}
+```
+* Rebuild the cmake project, rebuild the plugin target, and install.
+
+When we run the QuickTutorial plugin now, we observe that `QuickTutorialProcessor::Process`
+is being called on every event. Because neither the source nor the processor are doing any 
+'real work', the events are being processed very quickly. To slow it down, we could add
+a delay inside `GetEvent()`:
+
+```std::this_thread::sleep_for(std::chrono::milliseconds(100));```
+
+which would throttle our event rate to around 10 Hz. Also note that `Process` is 'seeing' events slightly 
+out-of-order. This is because there are multiple threads running `Process`, which means that we have to be 
+careful about how we organize the work we do inside there. This will be discussed in depth later.
+
 <hr>
 
 # Under Development
