@@ -12,12 +12,12 @@ title: JANA: Multi-threaded HENP Event Reconstruction
 </table>
 </center>
 
-## Tutorial
+# Tutorial
 
 This tutorial will walk you through creating a standalone JANA plugin, introducing the key ideas along the way. 
 The end result for this example is [available here](https://github.com/nathanwbrei/jana-plugin-example). 
 
-### Introduction
+## Introduction
 
 Before we begin, we need to make sure that 
 * The JANA library is installed
@@ -45,7 +45,7 @@ By default JANA searches for these in `$JANA_HOME/plugins`, although you can als
 measuring the overall throughput. You can cancel processing at any time by pressing Ctrl-C.
 
 
-### Creating a JANA plugin
+## Creating a JANA plugin
 
 With JANA working, we can now create our own plugin. JANA provides a script which generates code skeletons 
 to help us get started. If you are working with an existing project such as eJANA or GlueX, you 
@@ -56,7 +56,9 @@ We shall name our plugin "QuickTutorial". To generate the skeleton, run
 jana-generate.py plugin QuickTutorial
 ```
 
-This creates the following directory tree. 
+This creates the following directory tree. Examine the files `QuickTutorial.cc`, which provides the plugin
+ entry point, and `QuickTutorialProcessor.cc`, which is where the majority of the work happens. The generated
+ files include lots of comments providing helpful hints on their use. 
 
 ```
 QuickTutorial/
@@ -75,15 +77,15 @@ QuickTutorial/
     └── TestsMain.cc
 ```
 
-### Integrating into an existing project
+## Integrating into an existing project
 The skeleton contains a complete stand-alone CMake configuration and can be used as-is to
 build the plugin. However, if you want to integrate the plugin into the source of a larger project
 such as eJANA then you'll need to make some quick modifications:
-* Tell the parent CMakeLists.txt to `add_subdirectory(QuickTutorial)`. 
+* Tell the parent CMakeLists.txt to `add_subdirectory(QuickTutorial)`
 * Delete `QuickTutorial/cmake` since the project will provide this
 * Delete the superfluous project definition inside the root `CMakeLists.txt`
 
-### Building the plugin
+## Building the plugin
 We build and run the plugin with the following:
 
 ```
@@ -94,7 +96,7 @@ make install
 jana -Pplugins=QuickTest
 ```
 
-### Adding an event source
+## Adding an event source
 
 When we run this, we observe that JANA loads the plugin, opens our QuickTutorialProcessor, closes it 
 again without processing any events, and exits. This is because there is nothing to do because we haven't
@@ -141,15 +143,11 @@ is being called on every event. Note that `Process` is 'seeing' events slightly 
 because there are multiple threads running `Process`, which means that we have to be careful about how 
 we organize the work we do inside there. This will be discussed in depth later.
 
-### Configuring an event source
+## Configuring an event source
 
 Because neither the source nor the processor are doing any 'real work', the events are being processed 
 very quickly. To throttle the rate events get emitted, to whatever frequency we like, we can add a delay 
-inside `GetEvent`:
-
-```std::this_thread::sleep_for(std::chrono::milliseconds(100));```
-
-Perhaps we'd like to set the emit frequency at runtime. First, we declare a member variable on 
+inside `GetEvent`. Perhaps we'd like to set the emit frequency at runtime. First, we declare a member variable on 
 `RandomSource`, initializing it to our preferred default value:
 
 ```
@@ -195,6 +193,7 @@ void RandomSource::GetEvent(std::shared_ptr <JEvent> event) {
     /// Slow down event source                                           // ADD ME
     auto delay_ms = std::chrono::milliseconds(1000/m_max_emit_freq_hz);  // ADD ME
     std::this_thread::sleep_for(delay_ms);                               // ADD ME
+}
 ```
 
 Finally, we can set this parameter on the command line and observe the throughput change accordingly:
@@ -203,45 +202,65 @@ Finally, we can set this parameter on the command line and observe the throughpu
 jana -Pplugins=QuickTutorial -Prandom_source:max_emit_freq_hz=10
 ```
 
+
+## Creating JObjects
+
+So far `RandomSource` has been emitting events with no data attached. Now we'd like to have them 
+emit randomly generated 'Hit' objects which simulate the readout from a detector. First, we need 
+to set up our data model. Although we can insert pointers of any kind into our `JEvent`, we strongly
+recommend using `JObjects` for reasons we will discuss later. 
+
+```
+cd src
+jana-generate.py JObject Hit
+```
+
+JObjects are meant to be plain-old data. For this tutorial we pretend that our detector consists of a 3D grid
+of sensors, each of which measures some energy at some time. Note that we are declaring `Hit` to be a `struct`
+instead of a `class`. This is because `JObjects` should be lightweight containers with no creation logic and 
+no invariants which need to be encapsulated. JObjects are free to contain pointers to arbitrary data types and
+nested STL containers, but the recommended approach is to maintain a flat structure of primitives whenever possible.
+A JObject should conceptually resemble a row in a database table.
+
+```
+struct Hit : public JObject {
+    int x;     // Pixel coordinates
+    int y;     // Pixel coordinates
+    int z;     // Pixel coordinates
+    double E;  // Energy loss in GeV
+    double t;  // Time in us
+    ...
+```
+
+The only additional thing we need to fill out is the `Summarize` method, which aids in debugging and introspection.
+Basically, it tells JANA how to convert this JObject into a (structured) string. Inside `Summarize`, we add each of 
+our primitive member variables to the provided `JObjectSummary`, along with the variable name, a C-style format 
+specifier, and a description of what that variable means. JANA provides a `NAME_OF` macro so that if we rename a 
+member variable using automatic refactoring tools, it will automatically update the string representation of variable 
+name as well. We will see where this comes in handy later.
+
+```
+    ...
+    void Summarize(JObjectSummary& summary) const override {
+        summary.add(x, NAME_OF(x), "%d", "Pixel coordinates centered around 0,0");
+        summary.add(y, NAME_OF(y), "%d", "Pixel coordinates centered around 0,0");
+        summary.add(z, NAME_OF(z), "%d", "Pixel coordinates centered around 0,0");
+        summary.add(E, NAME_OF(E), "%f", "Energy loss in GeV");
+        summary.add(t, NAME_OF(t), "%f", "Time in us");
+    }
+}
+```
+
+Now it is time to have our `RandomSource` create and emit these hit objects. 
+
+
+
 <hr>
 
 # Under Development
 
 The rest of this tutorial is still under development ....
 
-### Understanding the code
-Let's dive into the skeleton code we've created. 
-* `src/QuickTutorialProcessor.*` contains the skeleton of a `JEventProcessor`, which will eventually do
-  the bulk of the heavy lifting. For now all it does is print the current event number to a log file.
-* `src/QuickTutorial.cc` contains the plugin's entry point, whose only goal right now is to register the
-  QuickTutorialProcessor with JANA.
-* We have a parallel directory for tests set up so we can start writing tests immediately.
-
-
-
-
-
-
-
-
-
-
-## Problem domain
-
 ![Alt JANA Simple system with a single queue](images/queues1.png)
 ![Alt JANA system with multiple queues](images/queues2.png)
-
-## Parallelism concept
-
-## Factories
-
 ![Alt JANA Factory Model](images/factory_model.png)
-
-## Event sources
-
-## Event processors
-
-## More complex topologies
-
-### JEventSource
-
