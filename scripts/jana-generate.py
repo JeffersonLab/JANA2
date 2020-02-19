@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 from sys import argv
+import subprocess
+import sys
+import os
 
 copyright_notice = """//
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -468,12 +471,85 @@ def create_plugin(name):
     os.mkdir(name + "/src")
     os.mkdir(name + "/tests")
 
-    jana_home = os.getenv("JANA_HOME")
-    if jana_home is None:
-        raise Exception("Need JANA_HOME!")
-    os.system("cp " + jana_home + "/include/external/catch.hpp " + name + "/tests/")
+    # For files that are copied from a JANA source directory we need to know
+    # that directory. Preference is given to a path derived from the location
+    # of the currently executing script since that is most the likely to
+    # succeed and most likely what the user is intending.
+    # This is complicated by the fact that someone could be running this script
+    # from the install directory or from the source directory OR from a copy
+    # they placed somewhere else. For this last case we must rely on the
+    # JANA_HOME environment variable.
+    #
+    # This is also complicated by the relative path to files (e.g. catch.hpp)
+    # being different in the JANA source directory tree than where it is
+    # installed. Thus, in order to handle all cases, we need to make a list of
+    # the source files along with various relative paths. We do this using a
+    # dictionary where each key is the source filename and the value is itself
+    # a dictionary containing the relative paths is the source and install
+    # directories as well as a destination name for the file (in case we ever
+    # add one that needs to be renamed).
+    files_to_copy = {}
+    files_to_copy["catch.hpp"] = {"sourcedir":"src/programs/tests", "installdir":"include/external", "destname":name+"/tests/catch.hpp"}
 
+    jana_scripts_dir = os.path.dirname(os.path.realpath(__file__)) # Directory hold current script
+    jana_dir = os.path.dirname(jana_scripts_dir)                   # Parent directory of above dir
 
+    # Guess whether this script is being run from install or source directory
+    script_in_source  = (os.path.basename(jana_scripts_dir) == "scripts")
+    script_in_install = (os.path.basename(jana_scripts_dir) == "bin")
+
+    # Check for files relative to this script
+    Nfile_in_source  = sum([1 for f,d in files_to_copy.items() if os.path.exists(jana_dir+"/"+d["sourcedir" ]+"/"+f)])
+    Nfile_in_install = sum([1 for f,d in files_to_copy.items() if os.path.exists(jana_dir+"/"+d["installdir"]+"/"+f)])
+    all_files_in_source  = (Nfile_in_source  == len(files_to_copy))
+    all_files_in_install = (Nfile_in_install == len(files_to_copy))
+
+    # This more complicated than it should be, but is done this way to try and
+    # handle all ways a user may have setup their install and source dirs.
+    Nerrs = 0
+    use_install = script_in_install and all_files_in_install
+    use_source  = script_in_source  and all_files_in_source
+    if not (use_install or use_source):
+        use_install = script_in_source  and all_files_in_install
+        use_source  = script_in_install and all_files_in_source
+
+    # Make a new entry in each file's dictionary of full path to actual source file
+    if use_install:
+        for f,d in files_to_copy.items():
+            files_to_copy[f]["sourcefile"] = jana_dir+"/"+d["installdir"]+"/"+f
+    if use_source:
+        for f,d in files_to_copy.items():
+            files_to_copy[f]["sourcefile"] = jana_dir+"/"+d["sourcedir"]+"/"+f
+    else:
+        # We only get here if neither the install nor source directory contain
+        # all of the files we need to install (or they don't exist). Try JANA_HOME
+        jana_home = os.getenv("JANA_HOME")
+        if jana_home is None:
+            print("ERROR: This script does not look like it is being run from a known")
+            print("       location and JANA_HOME is also not set. Please set your")
+            print("       JANA_HOME environment variable to a valid JANA installation.")
+            sys.exit(-1)
+        for f,d in files_to_copy.items():
+            files_to_copy[f]["sourcefile"] = jana_home +"/"+d["installdir"]+"/"+f
+
+    # OK, finally we can copy the files
+    Nerrs = 0
+    for f,d in files_to_copy.items():
+        try:
+            cmd = ["cp", d["sourcefile"], d["destname"]]
+            print(" ".join(cmd))
+            subprocess.check_call(cmd)
+        except subprocess.CalledProcessError as cpe:
+            print("ERROR: Copy failed of " + d["sourcefile"] + " -> " + d["destname"])
+            Nerrs += 1
+    if Nerrs > 0:
+        print("")
+        print("Errors encountered while copying files to plugin directory. Please")
+        print("check your permissions, your JANA_HOME environment variable, and")
+        print("you JANA installation. Continuing now though this may leave you with")
+        print("a broken plugin.")
+
+    # Write all files defined in this script
     with open(name + "/cmake/FindJANA.cmake", 'w') as f:
         f.write(plugin_findjana_cmake)
 
