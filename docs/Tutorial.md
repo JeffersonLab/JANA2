@@ -240,8 +240,8 @@ The only additional thing we need to fill out is the `Summarize` method, which a
 Basically, it tells JANA how to convert this JObject into a (structured) string. Inside `Summarize`, we add each of 
 our primitive member variables to the provided `JObjectSummary`, along with the variable name, a C-style format 
 specifier, and a description of what that variable means. JANA provides a `NAME_OF` macro so that if we rename a 
-member variable using automatic refactoring tools, it will automatically update the string representation of variable 
-name as well. We will see where this comes in handy later.
+member variable using automatic refactoring tools, it will automatically update the string representation of the variable 
+name as well. 
 
 ```
     ...
@@ -313,19 +313,114 @@ void InitPlugin(JApplication* app) {
 }
 ```
 
+## Writing our own JEventProcessor
 
-## Retrieving JObjects from a JEventProcessor
+A JEventProcessor does two things: It calculates a bunch of intermediate results
+for each event (this part is done in parallel), and then it aggregates those results 
+into a single output (this part is done sequentially). The canonical example is to 
+calculate clusters, track candidates, and tracks separately for each event, and then 
+produce a histogram using all of the tracks of all of the events.
 
-## Creating factories
+In this section, we are going to produce a heatmap that only uses hit data, and 
+discuss how to structure more complicated calculations later. First, we add a 
+quick-and-dirty heatmap member variable:
 
-## Reading files using a JEventSource
+```
+class QuickTutorialProcessor : public JEventProcessor {
+    double m_heatmap[100][100];     // ADD ME
+    std::mutex m_mutex;             // ADD ME
+
+public:
+    // ...
+```
+
+The heatmap itself is a piece of _shared_ _state_. We have to be careful because if 
+multiple threads try to read and write to this shared state, they will conflict with each 
+other and corrupt it. This means we have to protect _who_ can access it and _when_. 
+Only QuickTutorialProcessor should be able to access it, so we make it a private member.
+However, this is not enough. Only one thread running `QuickTutorialProcessor::Process` must
+be allowed to access it at a time, which we enforce using `m_mutex`. Let's look at how this
+is used:
+
+```
+void QuickTutorialProcessor::Process(const std::shared_ptr<const JEvent> &event) {
+
+    /// Do everything we can in parallel
+    /// Warning: We are only allowed to use local variables and `event` here
+    auto hits = event->Get<Hit>();
+    
+    /// Lock mutex
+    std::lock_guard<std::mutex>lock(m_mutex);
+
+    /// Do the rest sequentially
+    /// Now we are free to access shared state such as m_heatmap
+    for (const Hit* hit : hits) {
+        m_heatmap[hit->x][hit->y] += hit->E;
+    }
+}
+```
+
+As you can see, we do everything we can in parallel, before we lock our mutex. All we are 
+doing for now is retrieve the `Hit` objects we `Insert`ed earlier, however, as we will later
+see, virtually all of our per-event computations will be called from here. Remember that
+we should _only_ access local variables and data retrieved from a `JEvent` at first, whereas 
+after we lock the mutex, we are free to access our private member variables as well.
+
+We proceed to define our `Init` and `Finish` methods. The former zeroes out each bucket and
+the latter prints the heatmap to standard out as ASCII art. Note that if we want to output 
+our results to a file all at once, we should do so in `Finish`. `Finish` will be called even 
+if we forcibly terminate JANA with Ctrl-C. On the other hand, if we wanted to write to a file
+incrementally like we do with JCsvWriter, we can open it in `Init`, access it `Process` inside
+the lock, and close it in `Finish`.
+
+```
+void QuickTutorialProcessor::Init() {
+    LOG << "QuickTutorialProcessor::Init: Initializing heatmap" << LOG_END;
+
+    for (int i=0; i<100; ++i) {
+        for (int j=0; j<100; ++j) {
+            m_heatmap[i][j] = 0.0;
+        }
+    }
+}
+
+void QuickTutorialProcessor::Finish() {
+    LOG << "QuickTutorialProcessor::Finish: Displaying heatmap" << LOG_END;
+
+    double min_value = m_heatmap[0][0];
+    double max_value = m_heatmap[0][0];
+
+    for (int i=0; i<100; ++i) {
+        for (int j=0; j<100; ++j) {
+            double value = m_heatmap[i][j];
+            if (min_value > value) min_value = value;
+            if (max_value < value) max_value = value;
+        }
+    }
+    char ramp[] = " .:-=+*#%@";
+    for (int i=0; i<100; ++i) {
+        for (int j=0; j<100; ++j) {
+            int shade = int((m_heatmap[i][j] - min_value)/(max_value - min_value) * 9);
+            std::cout << ramp[shade];
+        }
+        std::cout << std::endl;
+    }
+}
+```
+
 
 <hr>
 
 # Under Development
 
+![Alt JANA Simple system with a single queue](images/queues1.png)
+
+## Creating JFactories
+
+![Alt JANA Factory Model](images/factory_model.png)
+## Reading files using a JEventSource
+
+
+
 The rest of this tutorial is still under development ....
 
-![Alt JANA Simple system with a single queue](images/queues1.png)
-![Alt JANA system with multiple queues](images/queues2.png)
-![Alt JANA Factory Model](images/factory_model.png)
