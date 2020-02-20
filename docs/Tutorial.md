@@ -408,16 +408,131 @@ void QuickTutorialProcessor::Finish() {
 }
 ```
 
+## Organizing computations using JFactories
+
+Just as JANA uses JObjects to organize experiment data, it uses JFactories to organize the algorithms for processing said data.
+
+JFactories are slightly different from the 'Factory' design patterns: rather than abstracting away the subclass of the 
+object being constructed, JFactories abstract away the multiplicity instead. This is a good match for nuclear and 
+high-energy physics, where m inputs produce n outputs and n isn't known until after the algorithm has finished. Additionally,
+JFactories are lazy, memoized, and recursive: 
+
+JFactories confer a number of other benefits as well:
+- Algorithms can be swapped at runtime
+- Different paths for deriving a result may come into play depending on the source data
+- Results are calculated only if they are needed ('lazy')
+- Results are only calculated once and then reused as needed ('memoized')
+
+For this example, we create a simple algorithm computing clusters, given hit data. We start by generating a cluster 
+JObject:
+
+```jana-generate.py JObject Cluster```
+
+We fill out the `Cluster.h` skeleton, defining a cluster to be the coordinates of its center along with the total energy 
+and time interval. Note that using JObjects helps keep our domain model malleable, so we can evolve it over
+time as we learn more. 
+
+```
+struct Cluster : public JObject {
+    double x_center;     // Pixel coordinates centered around 0,0
+    double y_center;     // Pixel coordinates centered around 0,0
+    double E_tot;     // Energy loss in GeV
+    double t_begin;   // Time in us
+    double t_end;     // Time in us
+
+    Cluster(double x_center, double y_center, double E_tot, double t_begin, double t_end)
+        : x_center(x_center), y_center(y_center), E_tot(E_tot), t_begin(t_begin), t_end(t_end) {};
+
+    void Summarize(JObjectSummary& summary) const override {
+        summary.add(x_center, NAME_OF(x_center), "%f", "Pixel coords <- [0,80)");
+        summary.add(y_center, NAME_OF(y_center), "%f", "Pixel coords <- [0,24)");
+        summary.add(E_tot, NAME_OF(E_tot), "%f", "Energy loss in GeV");
+        summary.add(t_begin, NAME_OF(t_begin), "%f", "Earliest observed time in us");
+        summary.add(t_end, NAME_OF(t_end), "%f", "Latest observed time in us");
+    }
+...
+}
+```
+
+Now we generate a JFactory which will compute n `Cluster`s given m `Hit`s. Note that
+we need to provide both the classname of our factory and the classname of the JObject
+it produces.
+
+```jana-generate.py JFactory QuickClusterFactory Cluster```
+
+The heart of a JFactory is the function `Process`, where we take an event, extract
+whatever inputs we need by calling `JEvent::Get` or one of its variants, produce 
+some number of outputs, and publish them by calling `JFactory::Set`. These outputs
+will stay cached for the lifetime of the current event number and afterwards cleared.
+To keep things really simple, our example shall assume there is only one cluster and all of the
+hits associated with this event belong to it.
+
+```
+#include "Hit.h"
+
+void QuickClusterFactory::Process(const std::shared_ptr<const JEvent> &event) {
+
+    auto hits = event->Get<Hit>();
+
+    auto cluster = new Cluster(0,0,0,0,0);
+    for (auto hit : hits) {
+        cluster->x_center += hit->x;
+        cluster->y_center += hit->y;
+        cluster->E_tot += hit->E;
+        if (cluster->t_begin > hit->t) cluster->t_begin = hit->t;
+        if (cluster->t_end < hit->t) cluster->t_end = hit->t;
+    }
+    cluster->x_center /= hits.size();
+    cluster->y_center /= hits.size();
+
+    std::vector<Cluster*> results;
+    results.push_back(cluster);
+    Set(results);
+}
+```
+
+For our tutorial, we don't need to do anything inside `Init` or `ChangeRun`. Usually,
+these are useful for collecting statistics, or when the algorithm depends on calibration 
+constants which we want to cache. We are free to access member variables without locking
+a mutex because a JFactory is assigned to at most one thread at a time.
+
+Although JFactories are relatively simple, there are several important details.
+First, because each instance is assigned at most one thread, it won't see the entire event stream. 
+Second, there will be at least as many instances of each JFactory in existence as 
+threads, and possibly more depending on how JANA is configured, so `Initialize` and 
+`ChangeRun` should be fast. Thirdly, although it is tempting to use static variables 
+to share state between different instances of the same JFactory, this practice is 
+discouraged. That state should live in a JService instead.
+
+Next, we register our `QuickClusterFactory` with our JApplication. Because JANA will
+need arbitrarily many instances of these, we pass in a `JFactoryGenerator` which
+knows how to create a `QuickClusterFactory`. As long as our JFactory has a zero-argument
+constructor, this is easy: 
+
+```
+#include <JANA/JFactoryGenerator.h>                         // ADD ME
+#include "QuickClusterFactory.h"                            // ADD ME
+
+extern "C" {
+void InitPlugin(JApplication* app) {
+
+    InitJANAPlugin(app);
+
+    app->Add(new QuickTutorialProcessor);
+    app->Add(new RandomSource("random", app));
+    app->Add(new JCsvWriter<Hit>());
+    app->Add(new JFactoryGeneratorT<QuickClusterFactory>);  // ADD ME
+}
+}
+```
+
+![Alt JANA Factory Model](images/factory_model.png)
 
 <hr>
 
 # Under Development
 
 ![Alt JANA Simple system with a single queue](images/queues1.png)
-
-## Creating JFactories
-
-![Alt JANA Factory Model](images/factory_model.png)
 ## Reading files using a JEventSource
 
 
