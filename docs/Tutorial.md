@@ -86,6 +86,9 @@ such as eJANA then you'll need to make some quick modifications:
 * Delete `QuickTutorial/cmake` since the project will provide this
 * Delete the superfluous project definition inside the root `CMakeLists.txt`
 
+Alternatively, you can run `jana-generate.py ProjectPlugin QuickTutorial`, which will generate a plugin
+whose CMake setup is immediately compatible with the `jana-generate.py`'s project skeleton.
+
 ## Building the plugin
 We build and run the plugin with the following:
 
@@ -397,13 +400,15 @@ void QuickTutorialProcessor::Finish() {
             if (max_value < value) max_value = value;
         }
     }
-    char ramp[] = " .:-=+*#%@";
-    for (int i=0; i<100; ++i) {
-        for (int j=0; j<100; ++j) {
-            int shade = int((m_heatmap[i][j] - min_value)/(max_value - min_value) * 9);
-            std::cout << ramp[shade];
+    if (min_value != max_value) {
+        char ramp[] = " .:-=+*#%@";
+        for (int i=0; i<100; ++i) {
+            for (int j=0; j<100; ++j) {
+                int shade = int((m_heatmap[i][j] - min_value)/(max_value - min_value) * 9);
+                std::cout << ramp[shade];
+            }
+            std::cout << std::endl;
         }
-        std::cout << std::endl;
     }
 }
 ```
@@ -414,14 +419,14 @@ Just as JANA uses JObjects to organize experiment data, it uses JFactories to or
 
 JFactories are slightly different from the 'Factory' design patterns: rather than abstracting away the subclass of the 
 object being constructed, JFactories abstract away the multiplicity instead. This is a good match for nuclear and 
-high-energy physics, where m inputs produce n outputs and n isn't known until after the algorithm has finished. Additionally,
-JFactories are lazy, memoized, and recursive: 
+high-energy physics, where m inputs produce n outputs and n isn't always known until after the algorithm has finished. 
+JFactories confer other benefits as well:
 
-JFactories confer a number of other benefits as well:
 - Algorithms can be swapped at runtime
-- Different paths for deriving a result may come into play depending on the source data
 - Results are calculated only if they are needed ('lazy')
 - Results are only calculated once and then reused as needed ('memoized')
+- JFactories are agnostic as to whether their inputs were calculated by another JFactory or inserted by a JEventSource
+- Different paths for deriving a result may come into play depending on the source data
 
 For this example, we create a simple algorithm computing clusters, given hit data. We start by generating a cluster 
 JObject:
@@ -463,7 +468,7 @@ it produces.
 The heart of a JFactory is the function `Process`, where we take an event, extract
 whatever inputs we need by calling `JEvent::Get` or one of its variants, produce 
 some number of outputs, and publish them by calling `JFactory::Set`. These outputs
-will stay cached for the lifetime of the current event number and afterwards cleared.
+will stay cached as long as the current event is in flight and get cleared afterwards.
 To keep things really simple, our example shall assume there is only one cluster and all of the
 hits associated with this event belong to it.
 
@@ -526,16 +531,108 @@ void InitPlugin(JApplication* app) {
 }
 ```
 
-![Alt JANA Factory Model](images/factory_model.png)
+We are now free to modify `QuickTutorialProcessor` (or create a new
+`JEventProcessor`) which histograms clusters instead of hits. Crucially,
+`JEvent::Get` doesn't care whether the `JObjects` were `Insert`ed by an event
+source or whether they were `Set` by a `JFactory`. The interface for retrieving
+them is the same either way.
 
-<hr>
-
-# Under Development
-
-![Alt JANA Simple system with a single queue](images/queues1.png)
 ## Reading files using a JEventSource
 
+Earlier we created a `JEventSource` which we added directly to the 
+`JApplication`. This works well for simple cases but becomes cumbersome due to 
+the amount of configuration needed: First we'd have to tell the plugin which
+`JEventSource` to register, then tell that source which files to open, and we'd have
+to do this for each `JEventSource` separately. Instead, JANA gives us a cleaner option tailored 
+to our workflow: we specify a set of input URIs (a.k.a. file paths or sockets) and let JANA decide
+which JEventSource to instantiate for each. Thus we prefer to call JANA like this:
+
+```
+jana -PQuickTutorial,CsvSourcePlugin,RootSourcePlugin path/to/file1.csv path/to/file2.root
+```
+
+In order to make this happen, we need to define a `JEventSourceGenerator`. This is conceptually
+similar to the `JFactoryGenerator` we mentioned earlier, with one important addition: a method which 
+reports back the likelihood that the underlying event source can make sense of that resource. 
+Let's remove the line where we added the `RandomSource` instance directly to the JApplication, and replace it with
+a corresponding `JEventSourceGenerator`:
 
 
-The rest of this tutorial is still under development ....
+```
+#include <JANA/JApplication.h>
+#include <JANA/JFactoryGenerator.h>
+#include <JANA/JEventSourceGeneratorT.h>                    // ADD ME
+#include <JANA/JCsvWriter.h>
+
+#include "Hit.h"
+#include "RandomSource.h"
+#include "QuickTutorialProcessor.h"
+#include "QuickClusterFactory.h"
+
+extern "C" {
+void InitPlugin(JApplication* app) {
+
+    InitJANAPlugin(app);
+
+    app->Add(new QuickTutorialProcessor);
+    // app->Add(new RandomSource("random", app));           // REMOVE ME
+    app->Add(new JEventSourceGeneratorT<RandomSource>);     // ADD ME
+    app->Add(new JCsvWriter<Hit>());
+    app->Add(new JFactoryGeneratorT<QuickClusterFactory>);
+}
+}
+```
+
+By default, `JEventSourceGeneratorT` will report a confidence of 0.1 that it can open
+any resource it is given. Let's make this more realistic: suppose we want to use this 
+event source if and only if the resource name is "random". In `RandomSource.h`, observe
+that `jana-generate.py` already declared for us:
+
+```
+template <>
+double JEventSourceGeneratorT<RandomSource>::CheckOpenable(std::string);
+```
+
+We fill out the definition in `RandomSource.cc`:
+
+```
+template <>
+double JEventSourceGeneratorT<RandomSource>::CheckOpenable(std::string resource_name) {
+    return (resource_name == "random") ? 1.0 : 0.0;
+}
+```
+
+Note that `JEventSourceGenerator` puts some constraints on our `JEventSource`. Specifically,
+we need to note that:
+
+- Our `JEventSource` needs a two-argument constructor which accepts a string containing 
+the resource name, and a `JApplication` pointer.
+ 
+- Our `JEventSource` needs a static method `GetDescription`, to help JANA report to the user which sources 
+are available and which ended up being chosen.
+
+- In case we need to override JANA's preferred JEventSource for some resource, we can specify the 
+typename of the event source we'd rather use instead via the configuration parameter `event_source_type`.
+
+- When we implement `Open` for an event source that reads a file, we get the filename
+from `JEventSource::GetResourceName()`.
+
+
+## Exercises for the reader
+
+- Create a new `JEventProcessor` which generates a heatmap of `Clusters` instead of `Hits`. 
+
+- Create a `BetterClusterFactory` which handles multiple clusters per event. Bonus points if 
+  it is a lightweight wrapper around an industrial-strength clustering algorithm.
+  Inside `InitPlugin`, use a configuration parameter to decide which `JFactoryT<Cluster>`
+  gets registered with the `JApplication`.
+
+- Use tags to register both `ClusterFactories` with the `JApplication`. Create a 
+  `JEventProcessor` which asks for the results from both algorithms and compares their results.
+
+- Create a `CsvFileSource` which reads the CSV file generated from the `JCsvWriter<Hit>`.
+  For `CheckOpenable`, read the first line of the file and check whether the column headers
+  match what we'd expect for a table of `Hit`s. Verify that we get the same histograms
+  whether we use the `RandomSource` or the `CsvFileSource`.
+
 

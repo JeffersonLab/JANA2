@@ -95,8 +95,11 @@ jeventsource_template_h = """
 #define  _{name}_h_
 
 #include <JANA/JEventSource.h>
+#include <JANA/JEventSourceGeneratorT.h>
 
 class {name} : public JEventSource {{
+
+    /// Add member variables here
 
 public:
     {name}(std::string resource_name, JApplication* app);
@@ -106,8 +109,13 @@ public:
     void Open() override;
 
     void GetEvent(std::shared_ptr<JEvent>) override;
+    
+    static std::string GetDescription();
 
 }};
+
+template <>
+double JEventSourceGeneratorT<RandomSource>::CheckOpenable(std::string);
 
 #endif // _{name}_h_
 
@@ -173,6 +181,24 @@ void {name}::GetEvent(std::shared_ptr <JEvent> event) {{
     // throw RETURN_STATUS::kBUSY;
 }}
 
+std::string {name}::GetDescription() {{
+
+    /// GetDescription() helps JANA explain to the user what is going on
+    return "";
+}
+
+
+template <>
+double JEventSourceGeneratorT<{name}>::CheckOpenable(std::string resource_name) {{
+
+    /// CheckOpenable() decides how confident we are that this EventSource can handle this resource.
+    ///    0.0        -> 'Cannot handle'
+    ///    (0.0, 1.0] -> 'Can handle, with this confidence level
+    ///
+    /// To determine confidence level, feel free to open up the file and check for magic bytes or metadata.
+    
+    return (resource_name == "{name}") ? 1.0 : 0.0;
+}}
 """
 
 plugin_main = """
