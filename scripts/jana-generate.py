@@ -37,7 +37,6 @@ copyright_notice = """//
 //"""
 
 jobject_template_h = """
-{copyright_notice}
 
 #ifndef _{name}_h_
 #define _{name}_h_
@@ -89,7 +88,6 @@ struct {name} : public JObject {{
 """
 
 jeventsource_template_h = """
-{copyright_notice}
 
 #ifndef _{name}_h_
 #define  _{name}_h_
@@ -167,9 +165,6 @@ void {name}::GetEvent(std::shared_ptr <JEvent> event) {{
     /// Insert whatever data was read into the event
     // std::vector<Hit*> hits;
     // hits.push_back(new Hit(0,0,1.0,0));
-    // hits.push_back(new Hit(0,1,1.0,0));
-    // hits.push_back(new Hit(1,0,1.0,0));
-    // hits.push_back(new Hit(1,1,1.0,0));
     // event->Insert(hits);
 
     /// If you are reading a file of events and have reached the end, terminate the stream like this:
@@ -193,9 +188,10 @@ double JEventSourceGeneratorT<{name}>::CheckOpenable(std::string resource_name) 
 
     /// CheckOpenable() decides how confident we are that this EventSource can handle this resource.
     ///    0.0        -> 'Cannot handle'
-    ///    (0.0, 1.0] -> 'Can handle, with this confidence level
-    ///
+    ///    (0.0, 1.0] -> 'Can handle, with this confidence level'
+    
     /// To determine confidence level, feel free to open up the file and check for magic bytes or metadata.
+    /// Returning a confidence <- {0.0, 1.0} is perfectly OK!
     
     return (resource_name == "{name}") ? 1.0 : 0.0;
 }}

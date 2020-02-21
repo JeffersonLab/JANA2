@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.13)
-project(jana2)
+project(jana2 VERSION 2.0.1)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)   # Enable -fPIC for all targets
@@ -40,6 +40,7 @@ add_subdirectory(src/plugins/JTest)
 add_subdirectory(src/plugins/streamDet)
 add_subdirectory(src/plugins/janapy)
 add_subdirectory(src/plugins/janarate)
+add_subdirectory(src/plugins/QuickTutorial)
 
 add_subdirectory(src/programs/jana)
 add_subdirectory(src/programs/tests)
