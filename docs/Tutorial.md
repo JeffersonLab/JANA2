@@ -86,6 +86,9 @@ such as eJANA then you'll need to make some quick modifications:
 * Delete `QuickTutorial/cmake` since the project will provide this
 * Delete the superfluous project definition inside the root `CMakeLists.txt`
 
+Alternatively, you can run `jana-generate.py ProjectPlugin QuickTutorial`, which will generate a plugin
+whose CMake setup is immediately compatible with the `jana-generate.py`'s project skeleton.
+
 ## Building the plugin
 We build and run the plugin with the following:
 
@@ -240,8 +243,8 @@ The only additional thing we need to fill out is the `Summarize` method, which a
 Basically, it tells JANA how to convert this JObject into a (structured) string. Inside `Summarize`, we add each of 
 our primitive member variables to the provided `JObjectSummary`, along with the variable name, a C-style format 
 specifier, and a description of what that variable means. JANA provides a `NAME_OF` macro so that if we rename a 
-member variable using automatic refactoring tools, it will automatically update the string representation of variable 
-name as well. We will see where this comes in handy later.
+member variable using automatic refactoring tools, it will automatically update the string representation of the variable 
+name as well. 
 
 ```
     ...
@@ -313,19 +316,323 @@ void InitPlugin(JApplication* app) {
 }
 ```
 
+## Writing our own JEventProcessor
 
-## Retrieving JObjects from a JEventProcessor
+A JEventProcessor does two things: It calculates a bunch of intermediate results
+for each event (this part is done in parallel), and then it aggregates those results 
+into a single output (this part is done sequentially). The canonical example is to 
+calculate clusters, track candidates, and tracks separately for each event, and then 
+produce a histogram using all of the tracks of all of the events.
 
-## Creating factories
+In this section, we are going to produce a heatmap that only uses hit data, and 
+discuss how to structure more complicated calculations later. First, we add a 
+quick-and-dirty heatmap member variable:
+
+```
+class QuickTutorialProcessor : public JEventProcessor {
+    double m_heatmap[100][100];     // ADD ME
+    std::mutex m_mutex;             // ADD ME
+
+public:
+    // ...
+```
+
+The heatmap itself is a piece of _shared_ _state_. We have to be careful because if 
+multiple threads try to read and write to this shared state, they will conflict with each 
+other and corrupt it. This means we have to protect _who_ can access it and _when_. 
+Only QuickTutorialProcessor should be able to access it, so we make it a private member.
+However, this is not enough. Only one thread running `QuickTutorialProcessor::Process` must
+be allowed to access it at a time, which we enforce using `m_mutex`. Let's look at how this
+is used:
+
+```
+void QuickTutorialProcessor::Process(const std::shared_ptr<const JEvent> &event) {
+
+    /// Do everything we can in parallel
+    /// Warning: We are only allowed to use local variables and `event` here
+    auto hits = event->Get<Hit>();
+    
+    /// Lock mutex
+    std::lock_guard<std::mutex>lock(m_mutex);
+
+    /// Do the rest sequentially
+    /// Now we are free to access shared state such as m_heatmap
+    for (const Hit* hit : hits) {
+        m_heatmap[hit->x][hit->y] += hit->E;
+    }
+}
+```
+
+As you can see, we do everything we can in parallel, before we lock our mutex. All we are 
+doing for now is retrieve the `Hit` objects we `Insert`ed earlier, however, as we will later
+see, virtually all of our per-event computations will be called from here. Remember that
+we should _only_ access local variables and data retrieved from a `JEvent` at first, whereas 
+after we lock the mutex, we are free to access our private member variables as well.
+
+We proceed to define our `Init` and `Finish` methods. The former zeroes out each bucket and
+the latter prints the heatmap to standard out as ASCII art. Note that if we want to output 
+our results to a file all at once, we should do so in `Finish`. `Finish` will be called even 
+if we forcibly terminate JANA with Ctrl-C. On the other hand, if we wanted to write to a file
+incrementally like we do with JCsvWriter, we can open it in `Init`, access it `Process` inside
+the lock, and close it in `Finish`.
+
+```
+void QuickTutorialProcessor::Init() {
+    LOG << "QuickTutorialProcessor::Init: Initializing heatmap" << LOG_END;
+
+    for (int i=0; i<100; ++i) {
+        for (int j=0; j<100; ++j) {
+            m_heatmap[i][j] = 0.0;
+        }
+    }
+}
+
+void QuickTutorialProcessor::Finish() {
+    LOG << "QuickTutorialProcessor::Finish: Displaying heatmap" << LOG_END;
+
+    double min_value = m_heatmap[0][0];
+    double max_value = m_heatmap[0][0];
+
+    for (int i=0; i<100; ++i) {
+        for (int j=0; j<100; ++j) {
+            double value = m_heatmap[i][j];
+            if (min_value > value) min_value = value;
+            if (max_value < value) max_value = value;
+        }
+    }
+    if (min_value != max_value) {
+        char ramp[] = " .:-=+*#%@";
+        for (int i=0; i<100; ++i) {
+            for (int j=0; j<100; ++j) {
+                int shade = int((m_heatmap[i][j] - min_value)/(max_value - min_value) * 9);
+                std::cout << ramp[shade];
+            }
+            std::cout << std::endl;
+        }
+    }
+}
+```
+
+## Organizing computations using JFactories
+
+Just as JANA uses JObjects to organize experiment data, it uses JFactories to organize the algorithms for processing said data.
+
+JFactories are slightly different from the 'Factory' design patterns: rather than abstracting away the subclass of the 
+object being constructed, JFactories abstract away the multiplicity instead. This is a good match for nuclear and 
+high-energy physics, where m inputs produce n outputs and n isn't always known until after the algorithm has finished. 
+JFactories confer other benefits as well:
+
+- Algorithms can be swapped at runtime
+- Results are calculated only if they are needed ('lazy')
+- Results are only calculated once and then reused as needed ('memoized')
+- JFactories are agnostic as to whether their inputs were calculated by another JFactory or inserted by a JEventSource
+- Different paths for deriving a result may come into play depending on the source data
+
+For this example, we create a simple algorithm computing clusters, given hit data. We start by generating a cluster 
+JObject:
+
+```jana-generate.py JObject Cluster```
+
+We fill out the `Cluster.h` skeleton, defining a cluster to be the coordinates of its center along with the total energy 
+and time interval. Note that using JObjects helps keep our domain model malleable, so we can evolve it over
+time as we learn more. 
+
+```
+struct Cluster : public JObject {
+    double x_center;     // Pixel coordinates centered around 0,0
+    double y_center;     // Pixel coordinates centered around 0,0
+    double E_tot;     // Energy loss in GeV
+    double t_begin;   // Time in us
+    double t_end;     // Time in us
+
+    Cluster(double x_center, double y_center, double E_tot, double t_begin, double t_end)
+        : x_center(x_center), y_center(y_center), E_tot(E_tot), t_begin(t_begin), t_end(t_end) {};
+
+    void Summarize(JObjectSummary& summary) const override {
+        summary.add(x_center, NAME_OF(x_center), "%f", "Pixel coords <- [0,80)");
+        summary.add(y_center, NAME_OF(y_center), "%f", "Pixel coords <- [0,24)");
+        summary.add(E_tot, NAME_OF(E_tot), "%f", "Energy loss in GeV");
+        summary.add(t_begin, NAME_OF(t_begin), "%f", "Earliest observed time in us");
+        summary.add(t_end, NAME_OF(t_end), "%f", "Latest observed time in us");
+    }
+...
+}
+```
+
+Now we generate a JFactory which will compute n `Cluster`s given m `Hit`s. Note that
+we need to provide both the classname of our factory and the classname of the JObject
+it produces.
+
+```jana-generate.py JFactory QuickClusterFactory Cluster```
+
+The heart of a JFactory is the function `Process`, where we take an event, extract
+whatever inputs we need by calling `JEvent::Get` or one of its variants, produce 
+some number of outputs, and publish them by calling `JFactory::Set`. These outputs
+will stay cached as long as the current event is in flight and get cleared afterwards.
+To keep things really simple, our example shall assume there is only one cluster and all of the
+hits associated with this event belong to it.
+
+```
+#include "Hit.h"
+
+void QuickClusterFactory::Process(const std::shared_ptr<const JEvent> &event) {
+
+    auto hits = event->Get<Hit>();
+
+    auto cluster = new Cluster(0,0,0,0,0);
+    for (auto hit : hits) {
+        cluster->x_center += hit->x;
+        cluster->y_center += hit->y;
+        cluster->E_tot += hit->E;
+        if (cluster->t_begin > hit->t) cluster->t_begin = hit->t;
+        if (cluster->t_end < hit->t) cluster->t_end = hit->t;
+    }
+    cluster->x_center /= hits.size();
+    cluster->y_center /= hits.size();
+
+    std::vector<Cluster*> results;
+    results.push_back(cluster);
+    Set(results);
+}
+```
+
+For our tutorial, we don't need to do anything inside `Init` or `ChangeRun`. Usually,
+these are useful for collecting statistics, or when the algorithm depends on calibration 
+constants which we want to cache. We are free to access member variables without locking
+a mutex because a JFactory is assigned to at most one thread at a time.
+
+Although JFactories are relatively simple, there are several important details.
+First, because each instance is assigned at most one thread, it won't see the entire event stream. 
+Second, there will be at least as many instances of each JFactory in existence as 
+threads, and possibly more depending on how JANA is configured, so `Initialize` and 
+`ChangeRun` should be fast. Thirdly, although it is tempting to use static variables 
+to share state between different instances of the same JFactory, this practice is 
+discouraged. That state should live in a JService instead.
+
+Next, we register our `QuickClusterFactory` with our JApplication. Because JANA will
+need arbitrarily many instances of these, we pass in a `JFactoryGenerator` which
+knows how to create a `QuickClusterFactory`. As long as our JFactory has a zero-argument
+constructor, this is easy: 
+
+```
+#include <JANA/JFactoryGenerator.h>                         // ADD ME
+#include "QuickClusterFactory.h"                            // ADD ME
+
+extern "C" {
+void InitPlugin(JApplication* app) {
+
+    InitJANAPlugin(app);
+
+    app->Add(new QuickTutorialProcessor);
+    app->Add(new RandomSource("random", app));
+    app->Add(new JCsvWriter<Hit>());
+    app->Add(new JFactoryGeneratorT<QuickClusterFactory>);  // ADD ME
+}
+}
+```
+
+We are now free to modify `QuickTutorialProcessor` (or create a new
+`JEventProcessor`) which histograms clusters instead of hits. Crucially,
+`JEvent::Get` doesn't care whether the `JObjects` were `Insert`ed by an event
+source or whether they were `Set` by a `JFactory`. The interface for retrieving
+them is the same either way.
 
 ## Reading files using a JEventSource
 
-<hr>
+Earlier we created a `JEventSource` which we added directly to the 
+`JApplication`. This works well for simple cases but becomes cumbersome due to 
+the amount of configuration needed: First we'd have to tell the plugin which
+`JEventSource` to register, then tell that source which files to open, and we'd have
+to do this for each `JEventSource` separately. Instead, JANA gives us a cleaner option tailored 
+to our workflow: we specify a set of input URIs (a.k.a. file paths or sockets) and let JANA decide
+which JEventSource to instantiate for each. Thus we prefer to call JANA like this:
 
-# Under Development
+```
+jana -PQuickTutorial,CsvSourcePlugin,RootSourcePlugin path/to/file1.csv path/to/file2.root
+```
 
-The rest of this tutorial is still under development ....
+In order to make this happen, we need to define a `JEventSourceGenerator`. This is conceptually
+similar to the `JFactoryGenerator` we mentioned earlier, with one important addition: a method which 
+reports back the likelihood that the underlying event source can make sense of that resource. 
+Let's remove the line where we added the `RandomSource` instance directly to the JApplication, and replace it with
+a corresponding `JEventSourceGenerator`:
 
-![Alt JANA Simple system with a single queue](images/queues1.png)
-![Alt JANA system with multiple queues](images/queues2.png)
-![Alt JANA Factory Model](images/factory_model.png)
+
+```
+#include <JANA/JApplication.h>
+#include <JANA/JFactoryGenerator.h>
+#include <JANA/JEventSourceGeneratorT.h>                    // ADD ME
+#include <JANA/JCsvWriter.h>
+
+#include "Hit.h"
+#include "RandomSource.h"
+#include "QuickTutorialProcessor.h"
+#include "QuickClusterFactory.h"
+
+extern "C" {
+void InitPlugin(JApplication* app) {
+
+    InitJANAPlugin(app);
+
+    app->Add(new QuickTutorialProcessor);
+    // app->Add(new RandomSource("random", app));           // REMOVE ME
+    app->Add(new JEventSourceGeneratorT<RandomSource>);     // ADD ME
+    app->Add(new JCsvWriter<Hit>());
+    app->Add(new JFactoryGeneratorT<QuickClusterFactory>);
+}
+}
+```
+
+By default, `JEventSourceGeneratorT` will report a confidence of 0.1 that it can open
+any resource it is given. Let's make this more realistic: suppose we want to use this 
+event source if and only if the resource name is "random". In `RandomSource.h`, observe
+that `jana-generate.py` already declared for us:
+
+```
+template <>
+double JEventSourceGeneratorT<RandomSource>::CheckOpenable(std::string);
+```
+
+We fill out the definition in `RandomSource.cc`:
+
+```
+template <>
+double JEventSourceGeneratorT<RandomSource>::CheckOpenable(std::string resource_name) {
+    return (resource_name == "random") ? 1.0 : 0.0;
+}
+```
+
+Note that `JEventSourceGenerator` puts some constraints on our `JEventSource`. Specifically,
+we need to note that:
+
+- Our `JEventSource` needs a two-argument constructor which accepts a string containing 
+the resource name, and a `JApplication` pointer.
+ 
+- Our `JEventSource` needs a static method `GetDescription`, to help JANA report to the user which sources 
+are available and which ended up being chosen.
+
+- In case we need to override JANA's preferred JEventSource for some resource, we can specify the 
+typename of the event source we'd rather use instead via the configuration parameter `event_source_type`.
+
+- When we implement `Open` for an event source that reads a file, we get the filename
+from `JEventSource::GetResourceName()`.
+
+
+## Exercises for the reader
+
+- Create a new `JEventProcessor` which generates a heatmap of `Clusters` instead of `Hits`. 
+
+- Create a `BetterClusterFactory` which handles multiple clusters per event. Bonus points if 
+  it is a lightweight wrapper around an industrial-strength clustering algorithm.
+  Inside `InitPlugin`, use a configuration parameter to decide which `JFactoryT<Cluster>`
+  gets registered with the `JApplication`.
+
+- Use tags to register both `ClusterFactories` with the `JApplication`. Create a 
+  `JEventProcessor` which asks for the results from both algorithms and compares their results.
+
+- Create a `CsvFileSource` which reads the CSV file generated from the `JCsvWriter<Hit>`.
+  For `CheckOpenable`, read the first line of the file and check whether the column headers
+  match what we'd expect for a table of `Hit`s. Verify that we get the same histograms
+  whether we use the `RandomSource` or the `CsvFileSource`.
+
+

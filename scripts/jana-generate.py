@@ -95,8 +95,11 @@ jeventsource_template_h = """
 #define  _{name}_h_
 
 #include <JANA/JEventSource.h>
+#include <JANA/JEventSourceGeneratorT.h>
 
 class {name} : public JEventSource {{
+
+    /// Add member variables here
 
 public:
     {name}(std::string resource_name, JApplication* app);
@@ -106,8 +109,13 @@ public:
     void Open() override;
 
     void GetEvent(std::shared_ptr<JEvent>) override;
+    
+    static std::string GetDescription();
 
 }};
+
+template <>
+double JEventSourceGeneratorT<RandomSource>::CheckOpenable(std::string);
 
 #endif // _{name}_h_
 
@@ -173,6 +181,24 @@ void {name}::GetEvent(std::shared_ptr <JEvent> event) {{
     // throw RETURN_STATUS::kBUSY;
 }}
 
+std::string {name}::GetDescription() {{
+
+    /// GetDescription() helps JANA explain to the user what is going on
+    return "";
+}
+
+
+template <>
+double JEventSourceGeneratorT<{name}>::CheckOpenable(std::string resource_name) {{
+
+    /// CheckOpenable() decides how confident we are that this EventSource can handle this resource.
+    ///    0.0        -> 'Cannot handle'
+    ///    (0.0, 1.0] -> 'Can handle, with this confidence level
+    ///
+    /// To determine confidence level, feel free to open up the file and check for magic bytes or metadata.
+    
+    return (resource_name == "{name}") ? 1.0 : 0.0;
+}}
 """
 
 plugin_main = """
@@ -427,6 +453,75 @@ void {name}::Finish() {{
 jeventprocessor_template_tests = """
 """
 
+jfactory_template_cc = """
+#include "{name}.h"
+
+#include <JANA/JEvent.h>
+
+void {name}::Init() {{
+    auto app = GetApplication();
+    
+    /// Acquire any parameters
+    // app->GetParameter("parameter_name", m_destination);
+    
+    /// Acquire any services
+    // m_service = app->GetService<ServiceT>();
+    
+    /// Set any factory flags
+    // SetFactoryFlag(JFactory_Flags_t::NOT_OBJECT_OWNER);
+}}
+
+void {name}::ChangeRun(const std::shared_ptr<const JEvent> &event) {{
+    /// This is automatically run before Process, when a new run number is seen
+    /// Usually we update our calibration constants by asking a JService
+    /// to give us the latest data for this run number
+    
+    auto run_nr = event->GetRunNumber();
+    // m_calibration = m_service->GetCalibrationsForRun(run_nr);
+}}
+
+void {name}::Process(const std::shared_ptr<const JEvent> &event) {{
+
+    /// JFactories are local to a thread, so we are free to access and modify
+    /// member variables here. However, be aware that events are _scattered_ to
+    /// different JFactory instances, not _broadcast_: this means that JFactory 
+    /// instances only see _some_ of the events. 
+    
+    /// Acquire inputs (This may recursively call other JFactories)
+    // auto inputs = event->Get<...>();
+    
+    /// Do some computation
+    
+    /// Publish outputs
+    // std::vector<{jobject_name}*> results;
+    // results.push_back(new {jobject_name}(...));
+    // Set(results);
+}}
+"""
+
+jfactory_template_h = """
+#ifndef _{name}_h_
+#define _{name}_h_
+
+#include <JANA/JFactoryT.h>
+
+#include "{jobject_name}.h"
+
+class {name} : public JFactoryT<{jobject_name}> {{
+
+    // Insert any member variables here
+
+public:
+    {name}() : JFactoryT<{jobject_name}>(NAME_OF_THIS) {{}};
+    void Init() override;
+    void ChangeRun(const std::shared_ptr<const JEvent> &event) override;
+    void Process(const std::shared_ptr<const JEvent> &event) override;
+
+}};
+
+#endif // _{name}_h_
+"""
+
 
 def create_jobject(name):
     filename = name + ".h"
@@ -447,6 +542,7 @@ def create_jeventsource(name):
 
 
 def create_jeventprocessor(name):
+
     with open(name + ".h", 'w') as f:
         text = jeventprocessor_template_h.format(copyright_notice=copyright_notice, name=name)
         f.write(text)
@@ -460,8 +556,16 @@ def create_jeventprocessor(name):
         f.write(text)
 
 
-def create_jfactory(name):
-    pass
+def create_jfactory(name, jobject_name):
+
+    print(f"Creating {name}:public JFactoryT<{jobject_name}>")
+    with open(name + ".cc", 'w') as f:
+        text = jfactory_template_cc.format(name=name, jobject_name=jobject_name)
+        f.write(text)
+
+    with open(name + ".h", 'w') as f:
+        text = jfactory_template_h.format(name=name, jobject_name=jobject_name)
+        f.write(text)
 
 
 def create_plugin(name):
@@ -616,9 +720,8 @@ if __name__ == '__main__':
                       }
 
     option = argv[1]
-    name = argv[2]
     if option in dispatch_table:
-        dispatch_table[option](name)
+        dispatch_table[option](*argv[2:])
     else:
         print("Error: Invalid type!")
         print_usage()
