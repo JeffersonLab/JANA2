@@ -49,11 +49,9 @@ measuring the overall throughput. You can cancel processing at any time by press
 ## Creating a JANA plugin
 
 With JANA working, we can now create our own plugin. JANA provides a script which generates code skeletons 
-to help us get started. If you are working with an existing project such as eJANA or GlueX, you 
-should `cd` into `src/plugins` or similar. Otherwise, you can run these commands from your home directory.
-
-We shall name our plugin "QuickTutorial". To generate the skeleton, run
+to help us get started. We shall generate a skeleton for a plugin named "QuickTutorial" as follows:
 ```
+cd ~
 jana-generate.py plugin QuickTutorial
 ```
 
@@ -79,15 +77,25 @@ QuickTutorial/
 ```
 
 ## Integrating into an existing project
-The skeleton contains a complete stand-alone CMake configuration and can be used as-is to
-build the plugin. However, if you want to integrate the plugin into the source of a larger project
-such as eJANA then you'll need to make some quick modifications:
-* Tell the parent CMakeLists.txt to `add_subdirectory(QuickTutorial)`
-* Delete `QuickTutorial/cmake` since the project will provide this
-* Delete the superfluous project definition inside the root `CMakeLists.txt`
 
-Alternatively, you can run `jana-generate.py ProjectPlugin QuickTutorial`, which will generate a plugin
-whose CMake setup is immediately compatible with the `jana-generate.py`'s project skeleton.
+If we are working with an existing project such as eJANA or GlueX, we don't need the CMake
+project definition, CMake helper files, or tests boilerplate. All we need is the inner `src`
+directory, which we copy into its own leaf in the project tree:
+```
+cp QuickTutorial/src $PATH_TO_PROJECT_SOURCE/src/plugins/QuickTutorial
+```
+
+For convenience, `jana-generate.py` will generate the stripped-down plugin directly if we specify 
+`ProjectPlugin` instead. 
+
+```
+cd $PATH_TO_PROJECT_SOURCE/src/plugins
+jana-generate.py ProjectPlugin QuickTutorial
+```
+
+Either way, we'll have to manually tell the parent CMakeLists.txt to 
+`add_subdirectory(QuickTutorial)`.
+
 
 ## Building the plugin
 We build and run the plugin with the following:

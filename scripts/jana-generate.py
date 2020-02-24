@@ -403,6 +403,10 @@ jeventprocessor_template_h = """
 #include <JANA/JEventProcessor.h>
 
 class {name} : public JEventProcessor {{
+
+    // Shared state (e.g. histograms, TTrees, TFiles) live
+    std::mutex m_mutex;
+    
 public:
 
     {name}();
@@ -434,9 +438,19 @@ void {name}::Init() {{
 
 void {name}::Process(const std::shared_ptr<const JEvent> &event) {{
     LOG << "{name}::Process, Event #" << event->GetEventNumber() << LOG_END;
-    // Get intermediate results from Factories
-    // Lock mutex
-    // Do file operations 
+    
+    /// Do everything we can in parallel
+    /// Warning: We are only allowed to use local variables and `event` here
+    //auto hits = event->Get<Hit>();
+
+    /// Lock mutex
+    std::lock_guard<std::mutex>lock(m_mutex);
+
+    /// Do the rest sequentially
+    /// Now we are free to access shared state such as m_heatmap
+    //for (const Hit* hit : hits) {{
+        /// Update shared state
+    //}}
 }}
 
 void {name}::Finish() {{
@@ -565,7 +579,6 @@ def create_jfactory(name, jobject_name):
 
 
 def create_plugin(name):
-    import os
     os.mkdir(name)
     os.mkdir(name + "/cmake")
     os.mkdir(name + "/src")
@@ -685,12 +698,45 @@ def create_plugin(name):
         text = plugin_tests_cmakelists_txt.format(name=name)
         f.write(text)
 
+
+def create_project_plugin(name):
+    os.mkdir(name)
+
+    with open(name + "/CMakeLists.txt", 'w') as f:
+        text = plugin_cmakelists_txt.format(name=name)
+        f.write(text)
+
+    with open(name + "/" + name + ".cc", 'w') as f:
+        text = plugin_main.format(name=name)
+        f.write(text)
+
+    with open(name + "/" + name + "Processor.cc", 'w') as f:
+        text = jeventprocessor_template_cc.format(name=name+"Processor")
+        f.write(text)
+
+    with open(name + "/" + name + "Processor.h", 'w') as f:
+        text = jeventprocessor_template_h.format(name=name+"Processor")
+        f.write(text)
+
+    with open(name + "/" + name + "ProcessorTest.cc", 'w') as f:
+        text = jeventprocessor_template_tests.format(name=name+"Processor")
+        f.write(text)
+
 def create_executable(name):
     pass
 
 
 def create_project(name):
-    pass
+    os.mkdir(name)
+    os.mkdir(name + "/cmake")
+    os.mkdir(name + "/external")
+    os.mkdir(name + "/src")
+    os.mkdir(name + "/src/libraries")
+    os.mkdir(name + "/src/plugins")
+    os.mkdir(name + "/src/programs")
+    os.mkdir(name + "/src/programs/cli")
+    os.mkdir(name + "/tests")
+
 
 
 def print_usage():
@@ -711,6 +757,7 @@ if __name__ == '__main__':
                       'JEventProcessor': create_jeventprocessor,
                       'JFactory': create_jfactory,
                       'plugin': create_plugin,
+                      'ProjectPlugin': create_project_plugin,
                       'executable': create_executable,
                       'project': create_project
                       }
