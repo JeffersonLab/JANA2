@@ -6,7 +6,8 @@
 
 class TutorialProcessor : public JEventProcessor {
 
-    // Shared state (e.g. histograms, TTrees, TFiles) live
+    /// Shared state (e.g. histograms, TTrees, TFiles) live
+    double m_heatmap[100][100];
     std::mutex m_mutex;
     
 public:

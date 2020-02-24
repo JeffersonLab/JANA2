@@ -2,25 +2,27 @@
 
 #include <JANA/JApplication.h>
 #include <JANA/JFactoryGenerator.h>
+#include <JANA/JCsvWriter.h>
 
 #include "TutorialProcessor.h"
+#include "RandomSource.h"
+#include "Hit.h"
+#include "SimpleClusterFactory.h"
 
 extern "C" {
 void InitPlugin(JApplication* app) {
-
-    // This code is executed when the plugin is attached.
-    // It should always call InitJANAPlugin(app) first, and then do one or more of:
-    //   - Read configuration parameters
-    //   - Register JFactoryGenerators
-    //   - Register JEventProcessors
-    //   - Register JEventSourceGenerators (or JEventSources directly)
-    //   - Register JServices
 
     InitJANAPlugin(app);
 
     LOG << "Loading Tutorial" << LOG_END;
     app->Add(new TutorialProcessor);
-    // Add any additional components as needed
+    app->Add(new JCsvWriter<Hit>);
+    app->Add(new JFactoryGeneratorT<SimpleClusterFactory>);
+
+    app->Add(new RandomSource("random", app));            // Always use RandomSource
+    //app->Add(new JEventSourceGeneratorT<RandomSource>); // Only use RandomSource when
+                                                          //  'random' specified on cmd line
+
 }
 }
 

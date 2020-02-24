@@ -127,7 +127,7 @@ jeventsource_template_cc = """
 #include <JANA/JEvent.h>
 
 /// Include headers to any JObjects you wish to associate with each event
-// #include "hit.h"
+// #include "Hit.h"
 
 /// There are two different ways of instantiating JEventSources
 /// 1. Creating them manually and registering them with the JApplication
@@ -180,7 +180,7 @@ std::string {name}::GetDescription() {{
 
     /// GetDescription() helps JANA explain to the user what is going on
     return "";
-}
+}}
 
 
 template <>
@@ -191,7 +191,7 @@ double JEventSourceGeneratorT<{name}>::CheckOpenable(std::string resource_name) 
     ///    (0.0, 1.0] -> 'Can handle, with this confidence level'
     
     /// To determine confidence level, feel free to open up the file and check for magic bytes or metadata.
-    /// Returning a confidence <- {0.0, 1.0} is perfectly OK!
+    /// Returning a confidence <- {{0.0, 1.0}} is perfectly OK!
     
     return (resource_name == "{name}") ? 1.0 : 0.0;
 }}
