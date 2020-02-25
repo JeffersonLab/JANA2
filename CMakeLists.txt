@@ -36,7 +36,6 @@ add_subdirectory(src/plugins/JTest)
 add_subdirectory(src/plugins/streamDet)
 add_subdirectory(src/plugins/janapy)
 add_subdirectory(src/plugins/janarate)
-add_subdirectory(src/plugins/QuickTutorial)
 
 add_subdirectory(src/programs/jana)
 add_subdirectory(src/programs/tests)
