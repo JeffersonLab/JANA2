@@ -37,7 +37,6 @@ copyright_notice = """//
 //"""
 
 jobject_template_h = """
-{copyright_notice}
 
 #ifndef _{name}_h_
 #define _{name}_h_
@@ -89,7 +88,6 @@ struct {name} : public JObject {{
 """
 
 jeventsource_template_h = """
-{copyright_notice}
 
 #ifndef _{name}_h_
 #define  _{name}_h_
@@ -129,7 +127,7 @@ jeventsource_template_cc = """
 #include <JANA/JEvent.h>
 
 /// Include headers to any JObjects you wish to associate with each event
-// #include "hit.h"
+// #include "Hit.h"
 
 /// There are two different ways of instantiating JEventSources
 /// 1. Creating them manually and registering them with the JApplication
@@ -167,9 +165,6 @@ void {name}::GetEvent(std::shared_ptr <JEvent> event) {{
     /// Insert whatever data was read into the event
     // std::vector<Hit*> hits;
     // hits.push_back(new Hit(0,0,1.0,0));
-    // hits.push_back(new Hit(0,1,1.0,0));
-    // hits.push_back(new Hit(1,0,1.0,0));
-    // hits.push_back(new Hit(1,1,1.0,0));
     // event->Insert(hits);
 
     /// If you are reading a file of events and have reached the end, terminate the stream like this:
@@ -185,7 +180,7 @@ std::string {name}::GetDescription() {{
 
     /// GetDescription() helps JANA explain to the user what is going on
     return "";
-}
+}}
 
 
 template <>
@@ -193,9 +188,10 @@ double JEventSourceGeneratorT<{name}>::CheckOpenable(std::string resource_name) 
 
     /// CheckOpenable() decides how confident we are that this EventSource can handle this resource.
     ///    0.0        -> 'Cannot handle'
-    ///    (0.0, 1.0] -> 'Can handle, with this confidence level
-    ///
+    ///    (0.0, 1.0] -> 'Can handle, with this confidence level'
+    
     /// To determine confidence level, feel free to open up the file and check for magic bytes or metadata.
+    /// Returning a confidence <- {{0.0, 1.0}} is perfectly OK!
     
     return (resource_name == "{name}") ? 1.0 : 0.0;
 }}
@@ -407,6 +403,10 @@ jeventprocessor_template_h = """
 #include <JANA/JEventProcessor.h>
 
 class {name} : public JEventProcessor {{
+
+    // Shared state (e.g. histograms, TTrees, TFiles) live
+    std::mutex m_mutex;
+    
 public:
 
     {name}();
@@ -438,9 +438,19 @@ void {name}::Init() {{
 
 void {name}::Process(const std::shared_ptr<const JEvent> &event) {{
     LOG << "{name}::Process, Event #" << event->GetEventNumber() << LOG_END;
-    // Get intermediate results from Factories
-    // Lock mutex
-    // Do file operations 
+    
+    /// Do everything we can in parallel
+    /// Warning: We are only allowed to use local variables and `event` here
+    //auto hits = event->Get<Hit>();
+
+    /// Lock mutex
+    std::lock_guard<std::mutex>lock(m_mutex);
+
+    /// Do the rest sequentially
+    /// Now we are free to access shared state such as m_heatmap
+    //for (const Hit* hit : hits) {{
+        /// Update shared state
+    //}}
 }}
 
 void {name}::Finish() {{
@@ -569,7 +579,6 @@ def create_jfactory(name, jobject_name):
 
 
 def create_plugin(name):
-    import os
     os.mkdir(name)
     os.mkdir(name + "/cmake")
     os.mkdir(name + "/src")
@@ -689,12 +698,45 @@ def create_plugin(name):
         text = plugin_tests_cmakelists_txt.format(name=name)
         f.write(text)
 
+
+def create_project_plugin(name):
+    os.mkdir(name)
+
+    with open(name + "/CMakeLists.txt", 'w') as f:
+        text = plugin_cmakelists_txt.format(name=name)
+        f.write(text)
+
+    with open(name + "/" + name + ".cc", 'w') as f:
+        text = plugin_main.format(name=name)
+        f.write(text)
+
+    with open(name + "/" + name + "Processor.cc", 'w') as f:
+        text = jeventprocessor_template_cc.format(name=name+"Processor")
+        f.write(text)
+
+    with open(name + "/" + name + "Processor.h", 'w') as f:
+        text = jeventprocessor_template_h.format(name=name+"Processor")
+        f.write(text)
+
+    with open(name + "/" + name + "ProcessorTest.cc", 'w') as f:
+        text = jeventprocessor_template_tests.format(name=name+"Processor")
+        f.write(text)
+
 def create_executable(name):
     pass
 
 
 def create_project(name):
-    pass
+    os.mkdir(name)
+    os.mkdir(name + "/cmake")
+    os.mkdir(name + "/external")
+    os.mkdir(name + "/src")
+    os.mkdir(name + "/src/libraries")
+    os.mkdir(name + "/src/plugins")
+    os.mkdir(name + "/src/programs")
+    os.mkdir(name + "/src/programs/cli")
+    os.mkdir(name + "/tests")
+
 
 
 def print_usage():
@@ -715,6 +757,7 @@ if __name__ == '__main__':
                       'JEventProcessor': create_jeventprocessor,
                       'JFactory': create_jfactory,
                       'plugin': create_plugin,
+                      'ProjectPlugin': create_project_plugin,
                       'executable': create_executable,
                       'project': create_project
                       }

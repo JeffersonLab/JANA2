@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.13)
-project(jana2)
+project(jana2 VERSION 2.0.1)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)   # Enable -fPIC for all targets
@@ -30,11 +30,7 @@ endif()
 include_directories(src/lib)   # So that everyone can find the JANA header files
 
 add_subdirectory(src/lib/JANA)
-
-add_subdirectory(src/examples/JExample1)
-add_subdirectory(src/examples/JExample2)
-add_subdirectory(src/examples/JExample7)
-add_subdirectory(src/examples/event_group_example)
+add_subdirectory(src/examples)
 
 add_subdirectory(src/plugins/JTest)
 add_subdirectory(src/plugins/streamDet)
