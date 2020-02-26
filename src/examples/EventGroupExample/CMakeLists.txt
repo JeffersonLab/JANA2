@@ -8,7 +8,6 @@ set(EventGroupExample_SOURCES SHARED
         TridasEvent.h
 )
 
-#find_package(JANA)
 add_library(EventGroupExample_plugin SHARED ${EventGroupExample_SOURCES})
 
 target_include_directories(EventGroupExample_plugin PUBLIC ${JANA_INCLUDE_DIRS})
