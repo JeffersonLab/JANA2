@@ -37,8 +37,8 @@ FROM centos:7.7.1908
 LABEL maintainer "David Lawrence <davidl@jlab.org>"
 
 # Setup environment variables
-#ENV JANA_HOME /opt/JANA2/Linux_CentOS7-x86_64-gcc4.8.5
-ENV JANA_HOME /opt/JANA2
+ENV JANA_HOME /opt/JANA2/Linux_CentOS7-x86_64-gcc4.8.5
+#ENV JANA_HOME /opt/JANA2
 ENV JANA_PLUGIN_PATH /usr/lib64/jana/plugins:/plugins
 ENV LD_LIBRARY_PATH ${JANA_PLUGIN_PATH}:/usr/local/lib64
 
