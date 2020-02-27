@@ -70,8 +70,8 @@ RUN cd /opt/JANA2 \
 	&& mkdir /usr/lib64/jana \
 	&& ln -s ${JANA_HOME}/Linux_*/plugins /usr/lib64/jana \
 	&& for f in `ls /opt/JANA2/Linux_CentOS7-x86_64-gcc4.8.5/bin/*` ; do ln -s $f /usr/bin ; done\
-	&& rm -rf src/.Linux* \
-	&& rm -rf `find ./scons/ -name "*.pyc"`
+    && cd .. \
+	&& rm -rf build/*
 
 # Copy the Dockerfile into container
 ADD Dockerfile* /container/Docker/jana/
