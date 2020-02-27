@@ -16,7 +16,7 @@ find_package(Threads REQUIRED)
 target_include_directories(janacontrol_plugin_tests PUBLIC ../src)
 target_include_directories(janacontrol_plugin_tests PUBLIC ${JANA_INCLUDE_DIR})
 
-target_link_libraries(janacontrol_plugin_tests janacontrol_plugin)
+target_link_libraries(janacontrol_plugin_tests janacontrol)
 #target_link_libraries(janacontrol_plugin_tests ${JANA_LIBRARY})
 target_link_libraries(janacontrol_plugin_tests jana2)
 target_link_libraries(janacontrol_plugin_tests Threads::Threads)
