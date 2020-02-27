@@ -11,5 +11,5 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 set(CMAKE_INSTALL_PREFIX $ENV{JANA_HOME} CACHE PATH "magic incantation" FORCE)
 
 add_subdirectory(src)
-add_subdirectory(tests)
+#add_subdirectory(tests)
 
