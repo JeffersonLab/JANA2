@@ -1,5 +1,5 @@
 
-
+find_package(ZeroMQ)
 if (ZEROMQ_FOUND)
 
     set (janacontrol_PLUGIN_SOURCES
@@ -10,21 +10,16 @@ if (ZEROMQ_FOUND)
 
     add_library(janacontrol_plugin SHARED ${janacontrol_PLUGIN_SOURCES})
 
-    #find_package(JANA REQUIRED)
     find_package(Threads REQUIRED)
-    find_package(ZeroMQ)
 
 	target_include_directories(janacontrol_plugin PUBLIC ${JANA_INCLUDE_DIR} ${ZEROMQ_INCLUDE_DIRS})
-    target_link_libraries(janacontrol_plugin jana2)
-    target_link_libraries(janacontrol_plugin Threads::Threads)
-    target_link_libraries(janacontrol_plugin ${ZEROMQ_LIBRARIES})
-	#target_link_libraries(janacontrol_plugin ${JANA_LIBRARY} ${ZEROMQ_LIBRARIES})
+    target_link_libraries(janacontrol_plugin jana2 Threads::Threads ${ZEROMQ_LIBRARIES})
 	set_target_properties(janacontrol_plugin PROPERTIES PREFIX "" OUTPUT_NAME "janacontrol" SUFFIX ".so")
 	install(TARGETS janacontrol_plugin DESTINATION plugins)
 
 else()
 
-	message(WARNING "Skipping target `janacontrol` due to missing ZeroMQ, or CZMQ dependencies")
+	message(WARNING "Skipping target `janacontrol` due to missing ZeroMQ")
 
 endif()
 
