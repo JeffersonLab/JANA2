@@ -27,7 +27,10 @@ from collections import OrderedDict
 # import numpy as np
 
 # -- Globals
-DONE =False
+DONE      = False
+PORT      = 11238
+HOST      = 'localhost'
+SOCKET    = None
 
 #-----------------------------------------------------------------------------
 # MultiColumnListbox
@@ -530,6 +533,10 @@ class MyWindow(Frame):
 	# update things outside of the mainloop.
 	def TimerUpdate(self):
 		while not DONE:
+
+			SOCKET.send( b'get_status')
+			message = SOCKET.recv()
+			print('Received message: ' + message)
 		
 			# # Update hdrdmacp listbox
 			# now = time.time()
@@ -641,12 +648,16 @@ app = MyWindow(root)
 
 #  Only single 0MQ context is needed
 context = zmq.Context()
-	
+connstr = "tcp://" + HOST + ":" + str(PORT)
+print('Connecting to ' + connstr )
+SOCKET = context.socket( zmq.REQ )
+SOCKET.connect(connstr)
 
 # Create a thread for periodic updates
 threads = []
 t = threading.Thread(target=app.TimerUpdate)
 t.start()
+threads.append(t)
 
 # Run main GUI loop until user closes window
 root.mainloop()

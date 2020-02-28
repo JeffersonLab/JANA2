@@ -2,6 +2,8 @@
 #include <unistd.h>
 #include <sys/statvfs.h>
 #include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 #include <pthread.h>
 #include <sys/time.h>
 #include <sys/resource.h>
@@ -43,7 +45,7 @@ static int JANA_ZEROMQ_STATS_PORT;
 //-------------------------------------------------------------
 // JControlZMQ
 //-------------------------------------------------------------
-JControlZMQ::JControlZMQ(JApplication *app, int port):_port(port),_japp(app)
+JControlZMQ::JControlZMQ(JApplication *app, int port):_port(port), _japp(app)
 {
     LOG << "Launching JControlZMQ thread ..." << LOG_END;
 
