@@ -1,5 +1,10 @@
 
 
+#find_package(JANA REQUIRED)
+find_package(Threads REQUIRED)
+find_package(ZeroMQ)
+
+
 if (ZEROMQ_FOUND)
 
     set (janacontrol_PLUGIN_SOURCES
@@ -9,10 +14,6 @@ if (ZEROMQ_FOUND)
         )
 
     add_library(janacontrol_plugin SHARED ${janacontrol_PLUGIN_SOURCES})
-
-    #find_package(JANA REQUIRED)
-    find_package(Threads REQUIRED)
-    find_package(ZeroMQ)
 
 	target_include_directories(janacontrol_plugin PUBLIC ${JANA_INCLUDE_DIR} ${ZEROMQ_INCLUDE_DIRS})
     target_link_libraries(janacontrol_plugin jana2)

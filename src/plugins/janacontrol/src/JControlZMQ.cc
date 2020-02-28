@@ -3,6 +3,8 @@
 #include <sys/statvfs.h>
 #include <sys/stat.h>
 #include <pthread.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 
 #include <map>
 #include <string>

@@ -26,7 +26,7 @@ private:
     int           _port        = 0;
     void         *_zmq_context = nullptr;
     std::thread  *_thr         = nullptr;
-    char         _host[256]    = "";
+    char         _host[256];
 };
 
 
