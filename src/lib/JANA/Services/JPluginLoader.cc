@@ -38,9 +38,7 @@
 
 #include <dlfcn.h>
 #include <iostream>
-#include <iomanip>
 #include <unistd.h>
-#include <sched.h>
 #include <set>
 
 class JApplication;
@@ -118,7 +116,7 @@ void JPluginLoader::attach_plugins(JComponentManager* jcm) {
     std::set<std::string> exclusions(_plugins_to_exclude.begin(), _plugins_to_exclude.end());
 
     // Loop over plugins
-    std::stringstream err_mess;
+    std::stringstream paths_checked;
     for (std::string plugin : _plugins_to_include) {
         if (exclusions.find(plugin) != exclusions.end()) {
             LOG_DEBUG(_logger) << "Excluding plugin `" << plugin << "`" << LOG_END;
@@ -133,28 +131,31 @@ void JPluginLoader::attach_plugins(JComponentManager* jcm) {
         for (std::string path : _plugin_paths) {
             std::string fullpath = path + "/" + plugin;
             LOG_DEBUG(_logger) << "Looking for '" << fullpath << "' ...." << LOG_END;
+            paths_checked << "    " << fullpath << "  =>  ";
             if (access(fullpath.c_str(), F_OK) != -1) {
                 LOG_DEBUG(_logger) << "Found!" << LOG_END;
                 try {
                     jcm->next_plugin(plugin);
                     attach_plugin(jcm, fullpath.c_str());
+                    paths_checked << "Loaded successfully" << std::endl;
                     found_plugin = true;
                     break;
                 } catch (...) {
-                    err_mess << "Tried to attach: \"" << fullpath << "\"" << std::endl;
-                    err_mess << "  -- error message: " << dlerror() << std::endl;
+                    paths_checked << "Failed dlopen" << std::endl;
+                    LOG_DEBUG(_logger) << "Loading failure: " << dlerror() << LOG_END;
                     continue;
                 }
             }
+            paths_checked << "File not found" << std::endl;
             LOG_DEBUG(_logger) << "Failed to attach '" << fullpath << "'" << LOG_END;
         }
 
         // If we didn't find the plugin, then complain and quit
         if (!found_plugin) {
-            LOG_ERROR(_logger) << "Couldn't find plugin '" << plugin << "'\n" <<
-                               "  Make sure the JANA_PLUGIN_PATH environment variable is set correctly.\n" <<
-                               "  To see paths checked, set JANA:DEBUG_PLUGIN_LOADING=1\n" <<
-                               "  Some hints to the error follow:\n\n" << err_mess.str() << LOG_END;
+            LOG_ERROR(_logger) << "Couldn't load plugin '" << plugin << "'\n" <<
+                               "  Make sure that JANA_HOME and/or JANA_PLUGIN_PATH environment variables are set correctly.\n" <<
+                               "  For more information, set jana:debug_plugin_loading=1.\n"
+                               "  Paths checked:\n" << paths_checked.str() << LOG_END;
             throw JException("Couldn't find plugin '%s'", plugin.c_str());
         }
     }
