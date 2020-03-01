@@ -547,8 +547,11 @@ private:
     TFile* dest_file;
     TDirectory* dest_dir; // Virtual subfolder inside dest_file used for this specific processor
 
-
 public:
+    {processor_name}() {{
+        SetTypeName(NAME_OF_THIS); // Provide JANA with this class's name
+    }}
+    
     void Init() override {{
         auto app = GetApplication();
         m_lock = app->GetService<JGlobalRootLock>();
@@ -584,6 +587,85 @@ public:
     }};
 }};
 
+"""
+
+mini_plugin_cmakelists_txt = """
+
+add_library({name}_plugin SHARED {name}.cc)
+
+find_package(JANA REQUIRED)
+find_package(ROOT)
+
+target_include_directories({name}_plugin PUBLIC ${{JANA_INCLUDE_DIR}} ${{ROOT_INCLUDE_DIRS}})
+target_link_libraries({name}_plugin ${{JANA_LIB}} ${{ROOT_LIBRARIES}})
+set_target_properties({name}_plugin PROPERTIES PREFIX "" OUTPUT_NAME "{name}" SUFFIX ".so")
+install(TARGETS {name}_plugin DESTINATION plugins)
+
+"""
+
+mini_plugin_cc = """
+#include <JANA/JEventProcessor.h>
+#include <JANA/Services/JGlobalRootLock.h>
+#include <TH1D.h>
+#include <TFile.h>
+
+class {name}Processor: public JEventProcessor {{
+private:
+    std::string m_tracking_alg = "genfit";
+    std::shared_ptr<JGlobalRootLock> m_lock;
+    TFile* dest_file;
+    TDirectory* dest_dir; // Virtual subfolder inside dest_file used for this specific processor
+    
+    /// Declare histograms here
+    TH1D* h1d_pt_reco;
+
+public:
+    {name}Processor() {{
+        SetTypeName(NAME_OF_THIS); // Provide JANA with this class's name
+    }}
+    
+    void Init() override {{
+        auto app = GetApplication();
+        m_lock = app->GetService<JGlobalRootLock>();
+
+        /// Set parameters to control which JFactories you use
+        app->SetDefaultParameter("tracking_alg", m_tracking_alg);
+
+        /// Set up histograms
+        m_lock->acquire_write_lock();
+        //dest_file = ... /// TODO: Acquire dest_file via either a JService or a JParameter
+        dest_dir = dest_file->mkdir("{name}"); // Create a subdir inside dest_file for these results
+        dest_file->cd();
+        h1d_pt_reco = new TH1D("pt_reco", "reco pt", 100,0,10);
+        h1d_pt_reco->SetDirectory(dest_dir);
+        m_lock->release_lock();
+    }}
+
+    void Process(const std::shared_ptr<const JEvent>& event) override {{
+
+        /// Acquire any results you need for your analysis
+        //auto reco_tracks = event->Get<RecoTrack>(m_tracking_alg);
+
+        m_lock->acquire_write_lock();
+        /// Inside the global root lock, update histograms
+        // for (auto reco_track : reco_tracks) {{
+        //    h1d_pt_reco->Fill(reco_track->p.Pt());
+        // }}
+        m_lock->release_lock();
+    }}
+
+    void Finish() override {{
+        // Close TFile (unless shared)
+    }}
+}};
+    
+extern "C" {{
+    void InitPlugin(JApplication *app) {{
+        InitJANAPlugin(app);
+        app->Add(new {name}Processor);
+    }}
+}}
+    
 """
 
 def create_jobject(name):
@@ -795,9 +877,21 @@ def create_root_eventprocessor(processor_name, dir_name):
         text = jroot_output_processor_h.format(processor_name=processor_name, dir_name=dir_name)
         f.write(text)
 
+
+def create_mini_plugin(name):
+    os.mkdir(name)
+    with open(name + "/CMakeLists.txt", 'w') as f:
+        text = mini_plugin_cmakelists_txt.format(name=name)
+        f.write(text)
+
+    with open(name + "/" + name + ".cc", 'w') as f:
+        text = mini_plugin_cc.format(name=name)
+        f.write(text)
+
+
 def print_usage():
     print("Usage: jana-generate [type] [name]")
-    print("  type: JObject JEventSource JEventProcessor JFactory plugin executable project RootEventProcessor")
+    print("  type: JObject JEventSource JEventProcessor RootEventProcessor JFactory StandalonePlugin ProjectPlugin MiniPlugin Executable Project")
     print("  name: Preferably in CamelCase, e.g. EvioSource")
 
 
@@ -811,12 +905,13 @@ if __name__ == '__main__':
     dispatch_table = {'JObject': create_jobject,
                       'JEventSource': create_jeventsource,
                       'JEventProcessor': create_jeventprocessor,
+                      'RootEventProcessor': create_root_eventprocessor,
                       'JFactory': create_jfactory,
-                      'plugin': create_plugin,
+                      'StandalonePlugin': create_plugin,
                       'ProjectPlugin': create_project_plugin,
-                      'executable': create_executable,
-                      'project': create_project,
-                      'RootEventProcessor': create_root_eventprocessor
+                      'MiniPlugin': create_mini_plugin,
+                      'Executable': create_executable,
+                      'Project': create_project,
                       }
 
     option = argv[1]

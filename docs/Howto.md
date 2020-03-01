@@ -63,9 +63,9 @@ Project plugins include one JEventProcessor by default.
 
 
 #### Mini plugins
-Mini plugins are project plugins which have been stripped down to a single `cpp` file. They are useful
+Mini plugins are project plugins which have been stripped down to a single `cc` file. They are useful
 when someone wants to do a quick analysis and doesn't need or want the additional boilerplate. They
-include one JEventProcessor. 
+include one JEventProcessor with support for ROOT histograms. 
 
 ```jana-generate.py MiniPlugin PluginNameInCamelCase```
 
@@ -73,14 +73,14 @@ include one JEventProcessor.
 Standalone plugins are useful for getting started quickly. They are also effective when someone wishes to 
 integrate with an existing project, but want their analyses to live in a separate repository.
 
-```jana-generate.py plugin PluginNameInCamelCase```
+```jana-generate.py StandalonePlugin PluginNameInCamelCase```
   
 #### Executables
 Executables are useful when using the provided `$JANA_HOME/bin/jana` is inconvenient. This may be
 because the project is sufficiently simple that multiple plugins aren't even needed, or because the project is 
 sufficiently complex that specialized configuration is needed before loading any other plugins.
 
-```jana-generate.py executable ExecutableNameInCamelCase```
+```jana-generate.py Executable ExecutableNameInCamelCase```
 
 #### JEventSources
 
@@ -101,9 +101,9 @@ of the TFile.
  
 ```jana-generate.py RootEventProcessor ProcessorNameInCamelCase directory_name_in_snake_case```
 
-Note that this script, like the others, does not update your CMakeLists.txt. Not only will you 
-need to add the file to `PluginName_PLUGIN_SOURCES`, but you will also need to add ROOT as a 
-dependency if you haven't yet:
+Note that this script, like the others, does not update your `CMakeLists.txt`. Not only will you 
+need to add the file to `PluginName_PLUGIN_SOURCES`, but you may need to add ROOT as a 
+dependency if your project hasn't yet:
 
 ```
 find_package(ROOT)
