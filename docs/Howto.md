@@ -20,7 +20,7 @@ Table of contents
 -----------------
 
 1.  [Download](Download.html) and [install](Installation.html) JANA
-2.  [Generate code skeletons](#Creating-code-skeletons) for projects, plugins, components, etc]
+2.  [Generate code skeletons](#Creating-code-skeletons) for projects, plugins, components, etc
 4.  Create a service which can be shared between different plugins
 5.  Handle both real and simulated data
 6.  Handle EPICS data
@@ -92,7 +92,25 @@ sufficiently complex that specialized configuration is needed before loading any
 
 #### JEventProcessors which output to ROOT
 
-```jana-generate.py RootEventProcessor NameInCamelCase```
+This JEventProcessor includes the boilerplate for creating a ROOT histogram in a specific
+virtual subdirectory of a TFile. If this TFile is shared among different `JEventProcessors`,
+it should be encapsulated in a JService. Otherwise, it can be specified as a simple parameter.
+We recommend naming the subdirectory after the plugin name. E.g. a `trk_eff` plugin contains 
+a `TrackingEfficiencyProcessor` which writes all of its results to the `trk_eff` subdirectory 
+of the TFile. 
+ 
+```jana-generate.py RootEventProcessor ProcessorNameInCamelCase directory_name_in_snake_case```
+
+Note that this script, like the others, does not update your CMakeLists.txt. Not only will you 
+need to add the file to `PluginName_PLUGIN_SOURCES`, but you will also need to add ROOT as a 
+dependency if you haven't yet:
+
+```
+find_package(ROOT)
+include_directories(${ROOT_INCLUDE_DIRS})
+link_directories(${ROOT_LIBRARY_DIR})
+target_link_libraries(${PLUGIN_NAME} ${ROOT_LIBRARIES})
+``` 
 
 #### JFactories
 

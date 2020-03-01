@@ -533,6 +533,59 @@ public:
 """
 
 
+jroot_output_processor_h = """
+#include <JANA/JEventProcessor.h>
+#include <JANA/Services/JGlobalRootLock.h>
+#include <TH1D.h>
+#include <TFile.h>
+
+class {processor_name}: public JEventProcessor {{
+private:
+    std::string m_tracking_alg = "genfit";
+    std::shared_ptr<JGlobalRootLock> m_lock;
+    TH1D* h1d_pt_reco;
+    TFile* dest_file;
+    TDirectory* dest_dir; // Virtual subfolder inside dest_file used for this specific processor
+
+
+public:
+    void Init() override {{
+        auto app = GetApplication();
+        m_lock = app->GetService<JGlobalRootLock>();
+
+        /// Set parameters to control which JFactories you use
+        app->SetDefaultParameter("tracking_alg", m_tracking_alg);
+
+        /// Set up histograms
+        m_lock->acquire_write_lock();
+        //dest_file = ... /// TODO: Acquire dest_file via either a JService or a JParameter
+        dest_dir = dest_file->mkdir("{dir_name}"); // Create a subdir inside dest_file for these results
+        dest_file->cd();
+        h1d_pt_reco = new TH1D("pt_reco", "reco pt", 100,0,10);
+        h1d_pt_reco->SetDirectory(dest_dir);
+        m_lock->release_lock();
+    }}
+
+    void Process(const std::shared_ptr<const JEvent>& event) override {{
+
+        /// Acquire any results you need for your analysis
+        //auto reco_tracks = event->Get<RecoTrack>(m_tracking_alg);
+
+        m_lock->acquire_write_lock();
+        /// Inside the global root lock, update histograms
+        // for (auto reco_track : reco_tracks) {{
+        //    h1d_pt_reco->Fill(reco_track->p.Pt());
+        // }}
+        m_lock->release_lock();
+    }}
+
+    void Finish() override {{
+        // Close TFile (unless shared)
+    }};
+}};
+
+"""
+
 def create_jobject(name):
     filename = name + ".h"
     text = jobject_template_h.format(copyright_notice=copyright_notice, name=name)
@@ -561,9 +614,9 @@ def create_jeventprocessor(name):
         text = jeventprocessor_template_cc.format(copyright_notice=copyright_notice, name=name)
         f.write(text)
 
-    with open(name + "Tests.cc", 'w') as f:
-        text = jeventprocessor_template_tests.format(copyright_notice=copyright_notice, name=name)
-        f.write(text)
+    #with open(name + "Tests.cc", 'w') as f:
+    #    text = jeventprocessor_template_tests.format(copyright_notice=copyright_notice, name=name)
+    #    f.write(text)
 
 
 def create_jfactory(name, jobject_name):
@@ -737,11 +790,14 @@ def create_project(name):
     os.mkdir(name + "/src/programs/cli")
     os.mkdir(name + "/tests")
 
-
+def create_root_eventprocessor(processor_name, dir_name):
+    with open(processor_name + ".h", 'w') as f:
+        text = jroot_output_processor_h.format(processor_name=processor_name, dir_name=dir_name)
+        f.write(text)
 
 def print_usage():
     print("Usage: jana-generate [type] [name]")
-    print("  type: JObject JEventSource JEventProcessor JFactory plugin executable project")
+    print("  type: JObject JEventSource JEventProcessor JFactory plugin executable project RootEventProcessor")
     print("  name: Preferably in CamelCase, e.g. EvioSource")
 
 
@@ -759,7 +815,8 @@ if __name__ == '__main__':
                       'plugin': create_plugin,
                       'ProjectPlugin': create_project_plugin,
                       'executable': create_executable,
-                      'project': create_project
+                      'project': create_project,
+                      'RootEventProcessor': create_root_eventprocessor
                       }
 
     option = argv[1]
