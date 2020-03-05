@@ -218,7 +218,11 @@ void JWorker::loop() {
         // This means that Workers must pass JExceptions back to the master thread.
         LOG_FATAL(logger) << e << LOG_END;
         exit(-1);
-    }
+    }catch (std::runtime_error& e){
+		// same as above
+		LOG_FATAL(logger) << e.what() << LOG_END;
+        exit(-1);
+	}
 }
 
 void JWorker::publish_arrow_metrics() {

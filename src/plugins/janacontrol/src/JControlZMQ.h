@@ -5,6 +5,7 @@
 #include <thread>
 #include <JANA/JApplication.h>
 #include <zmq.h>
+#include <unistd.h>
 
 class JControlZMQ  {
 public:
@@ -14,6 +15,7 @@ public:
 
            void ServerLoop(void);
     std::string GetStatusJSON(void);
+           void JANAStatusPROC(std::map<std::string,float> &vals);
            void HostStatusPROC(std::map<std::string,float> &vals);
            void HostStatusPROCLinux(std::map<std::string,float> &vals);
            void HostStatusPROCMacOSX(std::map<std::string,float> &vals);
@@ -26,7 +28,8 @@ private:
     int           _port        = 0;
     void         *_zmq_context = nullptr;
     std::thread  *_thr         = nullptr;
-    char         _host[256]    = "";
+    char         _host[256];
+    pid_t        _pid          = 0;
 };
 
 
