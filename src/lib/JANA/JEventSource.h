@@ -110,6 +110,9 @@ public:
             ex.component_name = GetType();
             throw ex;
         }
+        catch (std::runtime_error& e){
+            throw(JException(e.what()));
+		}
         catch (...) {
             auto ex = JException("Unknown exception in JEventSource::Open()");
             ex.nested_exception = std::current_exception();
@@ -173,7 +176,10 @@ public:
             ex.component_name = GetType();
             throw ex;
         }
-        catch (...) {
+        catch (std::runtime_error& e){
+            throw(JException(e.what()));
+		}
+		catch (...) {
             auto ex = JException("Unknown exception in JEventSource::GetEvent()");
             ex.nested_exception = std::current_exception();
             ex.plugin_name = m_plugin_name;
