@@ -374,10 +374,15 @@ class MyWindow(Frame):
 		Frame.__init__(self, master)
 		self.master = master
 		self.init_window()
+		self.cmd_queue = []  # List of commands to send during TimerUpdate call
 
 	#=========================
 	# init_window
 	def init_window(self):
+	
+		self.labelsFont = tkFont.Font(family="Helvetica", size=16)
+		self.labmap = {}
+	
 		self.master.title('JANA Status/Control GUI')
 		self.grid(row=0, column=0, sticky=N+S+E+W ) # Fill root window
 		Grid.rowconfigure(self, 0, weight=1)
@@ -385,67 +390,61 @@ class MyWindow(Frame):
 
 		#----- Information Section (Top)
 		infoframe = Frame(self)
-		infoframe.grid( row=0, sticky=N+S+E+W )
+		infoframe.grid( row=0, sticky=N+S+E+W)
 
 		# Host Info (left)
+		labels = {
+			'program': 'Program Name',
+			'host'   :'host',
+			'PID'    :'PID'
+		}
 		hostinfoframe = Frame(infoframe)
-		hostinfoframe.grid( row=0, column=0, sticky=N+S+E+W )
-		ttk.Label(hostinfoframe, justify='right', text='host: ').grid(row=0, column=0)
-		ttk.Label(hostinfoframe, justify='right', text='PID: ').grid(row=1, column=0)
-		self.hostlab = StringVar()
-		self.PIDlab = StringVar()
-		self.hostlab.set('---')
-		self.PIDlab.set('---')
-		ttk.Label(hostinfoframe, justify='left', textvariable=self.hostlab  ).grid(row=0, column=1)
-		ttk.Label(hostinfoframe, justify='left', textvariable=self.PIDlab   ).grid(row=1, column=1)
-
+		hostinfoframe.grid( row=0, column=0, sticky=N+S+E+W, padx=30, ipadx=10 )
+		for i,(varname,label) in enumerate(labels.items()):
+			self.labmap[varname] = StringVar()
+			ttk.Label(hostinfoframe, anchor='e', text=label+': ', font=self.labelsFont).grid(row=i, column=0, sticky=E+W)
+			ttk.Label(hostinfoframe, anchor='w', textvariable=self.labmap[varname], font=self.labelsFont  ).grid(row=i, column=1, sticky=E+W)
+		
 		# Process Info (right)
+		labels = { # keys are names in JSON record, vales are text labels for GUI
+			'NEventsProcessed': 'Number of Events',
+			'rate_avg': 'Avg. Rate (Hz)',
+			'rate_instantaneous': 'Rate (Hz)',
+			'NThreads': 'Number of Threads',
+			'cpu_total': 'CPU Total Usage (%)',
+			'cpu_idle': 'CPU idle (%)',
+			'cpu_nice': 'CPU nice (%)',
+			'cpu_sys': 'CPU system (%)',
+			'cpu_user': 'CPU user (%)',
+			'ram_tot_GB': 'RAM total (GB)',
+			'ram_avail_GB': 'RAM avail. (GB)',
+			'ram_free_GB': 'RAM free (GB)',
+			'ram_used_this_proc_GB': 'RAM used this proc (GB)'
+		}
 		procinfoframe = Frame(infoframe)
-		procinfoframe.grid( row=0, column=1, sticky=N+S+E+W )
-		ttk.Label(procinfoframe, justify='right', text='Number of Events: '  ).grid(row=0, column=0)
-		ttk.Label(procinfoframe, justify='right', text='Instantaneous Rate: ').grid(row=1, column=0)
-		ttk.Label(procinfoframe, justify='right', text='Average Rate: '      ).grid(row=2, column=0)
-		ttk.Label(procinfoframe, justify='right', text='Number of Threads: ' ).grid(row=3, column=0)
-		ttk.Label(procinfoframe, justify='right', text='Mem Usage (proc): '  ).grid(row=4, column=0)
-		ttk.Label(procinfoframe, justify='right', text='CPU Usage (proc): '  ).grid(row=5, column=0)
-		ttk.Label(procinfoframe, justify='right', text='Mem Usage (sys): '   ).grid(row=6, column=0)
-		ttk.Label(procinfoframe, justify='right', text='CPU Usage (sys): '   ).grid(row=7, column=0)
-		self.Neventslab = StringVar()
-		self.InstRatelab = StringVar()
-		self.AvgRatelab = StringVar()
-		self.Nthreadslab = StringVar()
-		self.MemUsageProclab = StringVar()
-		self.MemUsageSysLab = StringVar()
-		self.CPUProcLab = StringVar()
-		self.CPUSysLab = StringVar()
-		self.Neventslab.set('---')
-		self.InstRatelab.set('---')
-		self.AvgRatelab.set('---')
-		self.Nthreadslab.set('---')
-		self.MemUsageProclab.set('---')
-		self.MemUsageSysLab.set('---')
-		self.CPUProcLab.set('---')
-		self.CPUSysLab.set('---')
+		procinfoframe.grid( row=0, column=1, sticky=N+S+E+W, padx=30, ipadx=10 )
+		for i,(varname,label) in enumerate(labels.items()):
+			self.labmap[varname] = StringVar()
+			ttk.Label(procinfoframe, anchor='e', text=label+': ', font=self.labelsFont).grid(row=i, column=0, sticky=E+W)
+			ttk.Label(procinfoframe, anchor='w', textvariable=self.labmap[varname], font=self.labelsFont  ).grid(row=i, column=1, sticky=E+W)
 
-		ttk.Label(procinfoframe, justify='left', textvariable=self.Neventslab      ).grid(row=0, column=1)
-		ttk.Label(procinfoframe, justify='left', textvariable=self.InstRatelab     ).grid(row=1, column=1)
-		ttk.Label(procinfoframe, justify='left', textvariable=self.AvgRatelab      ).grid(row=2, column=1)
-		ttk.Label(procinfoframe, justify='left', textvariable=self.Nthreadslab     ).grid(row=3, column=1)
-		ttk.Label(procinfoframe, justify='left', textvariable=self.MemUsageProclab ).grid(row=4, column=1)
-		ttk.Label(procinfoframe, justify='left', textvariable=self.MemUsageSysLab  ).grid(row=5, column=1)
-		ttk.Label(procinfoframe, justify='left', textvariable=self.CPUProcLab      ).grid(row=6, column=1)
-		ttk.Label(procinfoframe, justify='left', textvariable=self.CPUSysLab       ).grid(row=7, column=1)
+
+		# Initialize all labels
+		for key in self.labmap.keys(): self.labmap[key].set('---')
 
 		#----- Control Section (Middle)
 		controlframe = Frame(self)
 		controlframe.grid( row=1, sticky=N+S+E+W )
-
+		but1 = ttk.Button(controlframe, text='Nthreads-', command=self.DecrNThreads)
+		but1.grid(row=0, column=0)
+		but2 = Button(controlframe, text='Nthreads+', command=self.IncrNthreads)
+		but2.grid(row=0, column=1)
 
 		#----- GUI controls (Bottom)
 		guicontrolframe = Frame(self)
 		guicontrolframe.grid( row=3, sticky=E+W )
 
-		quitButton = Button(self, text="Quit",command=self.Quit, fg="black", bg="blue")
+		quitButton = Button(self, text="Quit",command=self.Quit)
 		quitButton.grid( row=4 )
 
 		#===== Configure weights of layout
@@ -461,6 +460,20 @@ class MyWindow(Frame):
 		global DONE, root
 		DONE=True
 		root.destroy()
+
+	#=========================
+	# DecrNThreads
+	def DecrNThreads(self):
+		N = self.last_info['NThreads']
+		N -= 1
+		self.cmd_queue.append( 'set_nthreads '+str(N) )
+
+	#=========================
+	# IncrNthreads
+	def IncrNthreads(self):
+		N = self.last_info['NThreads']
+		N += 1
+		self.cmd_queue.append( 'set_nthreads '+str(N) )
 
 	# #=========================
 	# # OnDoubleClick
@@ -533,52 +546,38 @@ class MyWindow(Frame):
 	# update things outside of the mainloop.
 	def TimerUpdate(self):
 		while not DONE:
-
-			SOCKET.send( b'get_status')
-			message = SOCKET.recv()
-			print('Received message: ' + message)
 		
-			# # Update hdrdmacp listbox
-			# now = time.time()
-			# hostinfos = dict.copy(self.hostinfo)
-			# for host, hostinfo in hostinfos.items():
-			# 	if (now - hostinfo['received']) > 6.0:
-			# 		myhostinfo = dict.copy(hostinfo)
-			# 		myhostinfo['avg5min'] = '---- MB/s'
-			# 		myhostinfo['Nfiles'] = '----'
-			# 		self.hostslb1._upsrt_row(myhostinfo)
-			#
-			# # Update HOSS listbox
-			# now = time.time()
-			# hostinfos = dict.copy(self.hostinfo_HOSS)
-			# for host, hostinfo in hostinfos.items():
-			# 	if (now - hostinfo['received']) > 6.0:
-			# 		myhostinfo = dict.copy(hostinfo)
-			# 		myhostinfo['status'] = '----'
-			# 		myhostinfo['tbusy'] = '----'
-			# 		myhostinfo['tidle'] = '----'
-			# 		myhostinfo['Busy fraction'] = '----'
-			# 		self.hostslb2._upsrt_row(myhostinfo)
-			#
-			# # Update strip charts
-			# gluonraid_tot_rate10sec = 0.0
-			# gluonraid_tot_rate1min = 0.0
-			# gluonworker_tot_rate1min = 0.0
-			# for host, hostinfo in self.hostinfo.items():
-			# 	if (now - hostinfo['received']) > 12.0: continue
-			# 	if 'gluonraid' in host:
-			# 		gluonraid_tot_rate10sec += hostinfo['avg10sec']
-			# 		gluonraid_tot_rate1min += hostinfo['avg1min']
-			# 	elif 'gluondaqbuff' in host:
-			# 		pass
-			# 	else:
-			# 		gluonworker_tot_rate1min += hostinfo['avg1min']
-			#
-			# self.rate_stripchart.plotValues( avg10sec=gluonraid_tot_rate10sec, avg1min=gluonraid_tot_rate1min, hoss1min=gluonworker_tot_rate1min )
-
+			# Send any queued commands
+			for cmd in self.cmd_queue:
+				try:
+					SOCKET.send( cmd.encode() )
+					message = SOCKET.recv()
+					print('command: ' + cmd + '   -- result: ' + message.decode())
+				except:
+					pass
+		
+			# Clear command queue
+			self.cmd_queue.clear()
+		
+			# Get status
+			try:
+				SOCKET.send( b'get_status')
+				message = SOCKET.recv()
+				info = json.loads( message.decode() )
+				self.last_info = info
+				#print(info)
+				
+				# Loop over top-level keys in the JSON record and any that
+				# have a corresponding entry in the labmap member of the
+				# class, set the value of the label.
+				labkeys = self.labmap.keys()
+				for k,v in info.items():
+					if k in labkeys: self.labmap[k].set(v)
+			except:
+				break
 
 			# Limit rate through loop
-			time.sleep(2)
+			time.sleep(0.5)
 
 # #-----------------------------------------------------------------------------
 # # MySubscriber_hdrdmacp
@@ -665,8 +664,13 @@ root.mainloop()
 #-----------------------------------------------------------------------------
 print('GUI finished. Cleaning up ...')
 
-# Close all zeroMQ threads
+# Closing socket will force recv call to throw exception allowing thread to finish so it can be joined.
+SOCKET.close(linger=0)
+context.destroy(linger=0)
+
+# Join all threads
 DONE = True
 for t in threads: t.join()
+
 
 print('\nFinished\n')
