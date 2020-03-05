@@ -2,7 +2,11 @@
 #include <unistd.h>
 #include <sys/statvfs.h>
 #include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 #include <pthread.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 
 #include <map>
 #include <string>
@@ -41,13 +45,14 @@ static int JANA_ZEROMQ_STATS_PORT;
 //-------------------------------------------------------------
 // JControlZMQ
 //-------------------------------------------------------------
-JControlZMQ::JControlZMQ(JApplication *app, int port):_port(port),_japp(app)
+JControlZMQ::JControlZMQ(JApplication *app, int port):_port(port), _japp(app)
 {
     LOG << "Launching JControlZMQ thread ..." << LOG_END;
 
     // Create new zmq context, get the current host name, and launch server thread
     _zmq_context = zmq_ctx_new();
     gethostname( _host, 256 );
+    _pid = getpid();
     _thr = new std::thread( &JControlZMQ::ServerLoop, this );
 
 }
@@ -141,6 +146,15 @@ void JControlZMQ::ServerLoop(void)
 		}else if( vals[0] == "get_status" ){
 		    //------------------ get_status
 			ss << GetStatusJSON();
+		}else if( vals[0]=="set_nthreads" ){
+			//------------------ set_nthreads
+			if( vals.size()==2 ){
+				int Nthreads = atoi( vals[1].c_str() );
+				_japp->Scale( Nthreads );
+				ss << "OK";
+			}else{
+				ss << "wrong number of args to set_nthreads. 1 expected, " << vals.size() << " received";
+			}
 		}else if( vals[0] == "get_file_size" ){ // mulitple files may be specified
 		    //------------------ get_file_size
 			if( vals.size()<2){
@@ -177,10 +191,15 @@ string JControlZMQ::GetStatusJSON(void)
     ss << "{\n";
     ss << "\"program\":\"JANAcp\"";
 
+	// Static info
     JSONADS( "host" , _host );
+    JSONADS( "PID"  , _pid  );
 
     // Add numeric values to the vals map which will be converted into JSON below
     map<string,float> vals;
+    
+    // Get JANA status info
+    JANAStatusPROC(vals);
 
     // Get current system info from /proc
     HostStatusPROC(vals);
@@ -191,6 +210,17 @@ string JControlZMQ::GetStatusJSON(void)
     // Close JSON string and return
     ss << "\n}";
 	return ss.str(); // TODO: return this with move semantics
+}
+
+//---------------------------------
+// JANAStatusPROC
+//---------------------------------
+void JControlZMQ::JANAStatusPROC(std::map<std::string,float> &vals)
+{
+	vals["NEventsProcessed"   ] = _japp->GetNEventsProcessed();
+	vals["NThreads"           ] = _japp->GetNThreads();
+	vals["rate_avg"           ] = _japp->GetIntegratedRate();
+	vals["rate_instantaneous" ] = _japp->GetInstantaneousRate();
 }
 
 //---------------------------------
@@ -309,7 +339,7 @@ void JControlZMQ::HostStatusPROCLinux(std::map<std::string,float> &vals)
     struct rusage usage;
     getrusage(RUSAGE_SELF, &usage);
     double mem_usage = (double)(usage.ru_maxrss)/1024.0; // convert to MB
-    vals["ram_used_this_proc_GB"] = (double)mem_usage*1.0E-9;
+    vals["ram_used_this_proc_GB"] = (double)mem_usage*1.0E-3;
 #endif // __linux__
 }
 
