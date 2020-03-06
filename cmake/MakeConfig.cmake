@@ -107,8 +107,8 @@ endif()
 # TODO: FindNuma.cmake
 set(HAVE_NUMA 0)
 
-configure_file(SBMS/jana-config.in jana-config @ONLY)
-configure_file(SBMS/jana_config.h.in jana_config.h @ONLY)
+configure_file(scripts/jana-config.in jana-config @ONLY)
+configure_file(scripts/jana_config.h.in jana_config.h @ONLY)
 
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/jana-config DESTINATION bin)
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/jana_config.h DESTINATION include/JANA)

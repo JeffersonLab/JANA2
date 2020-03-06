@@ -12,20 +12,8 @@ title: JANA: Multi-threaded HENP Event Reconstruction
 </table>
 </center>
 
-## Getting Started With JANA
 
-For now, it is best to start with a fresh checkout of master. If you are trying to compile JANA as part of EIC,
-we recommend using [ejpm](https://gitlab.com/eic/ejpm) instead as it can reason about transitive dependencies
-such XERCES and ROOT. Otherwise, do the following:
-
-~~~ bash
-git clone https://github.com/JeffersonLab/JANA2 ~/jana2
-~~~
-
-JANA can be built using either CMake or SCons. CMake is recommended mainly because the rest of the C++ world
-appears to be converging on using CMake. This makes for better tooling, e.g. tighter IDE integration.
-
-### Building with CMake
+### Building JANA
 
 First, set your `$JANA_HOME` environment variable. This is where the executables, libraries, headers, and plugins
 get installed. You will need to tell CMake to install to `$JANA_HOME` manually -- this is on purpose to avoid accidentally
@@ -63,27 +51,6 @@ to load t them if you set the JANA config `jana:debug_plugin_loading=1`.
 jana -Pplugins=JTest -Pjana:debug_plugin_loading=1
 ~~~
 
-
-### Building with SCons
-
-To build, you can simply type `scons` from the project root. If you have a multicore
-build machine you can speed up compilation with the `-j` flag. Debugging is easier if you set `OPTIMIZATION=0`.
-If you run into trouble, you can inspect the exact compiler arguments by specifying `SHOWBUILD=1`.
-The main build script lives in the file `SConstruct`, and most of the functions it calls live in `SBMS/sbms.py`.
-
-~~~ bash
-~/jana2$ scons install -j8 OPTIMIZATION=0
-~~~
-
-By default, `scons` will build to a different directory for different operating systems, architectures, and
-compilers. For instance, if you are compiling on CentOS 7 using gcc, your build directory might
-be `~/jana2/Linux_CentOS7-x86_64-gcc4.8.5/`
-
-
-~~~ bash
-export JANA_HOME = ~/jana2/Linux_CentOS7-x86_64-gcc4.8.5/
-export PATH=$PATH:$JANA_HOME/bin
-~~~
 
 ### Running JANA
 
