@@ -36,7 +36,6 @@ add_subdirectory(src/plugins/janacontrol)
 
 add_subdirectory(src/programs/jana)
 add_subdirectory(src/programs/tests)
-add_subdirectory(src/programs/playground)
 
 install(PROGRAMS scripts/jana-generate.py scripts/jana-upgrade.py DESTINATION bin)
 
