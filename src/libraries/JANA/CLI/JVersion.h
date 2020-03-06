@@ -66,7 +66,7 @@ class JVersion{
 		static std::string GetIDstring(void){return "[ Id: JVersion.h | Wed Oct 25 23:19:03 2017 -0400 | David Lawrence  ]";}
 		static std::string GetRevision(void){return ExtractContent("[ Revision: 28bf59642adb3d82f0cc3bd6405279076bf8f1e6 ]");}
 		static std::string GetDate(void){return ExtractContent("[ Date: Wed Oct 25 23:19:03 2017 -0400 ]");}
-		static std::string GetSource(void){return ExtractContent("[ Source: src/lib/JANA/JVersion.h ]");}
+		static std::string GetSource(void){return ExtractContent("[ Source: src/libraries/JANA/JVersion.h ]");}
 		
 	protected:
 		

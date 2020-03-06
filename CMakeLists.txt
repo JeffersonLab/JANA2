@@ -23,9 +23,9 @@ else()
     message(FATAL_ERROR "Please provide CMAKE_INSTALL_PREFIX or JANA_HOME (as a CMake variable, not an envvar)")
 endif()
 
-include_directories(src/lib)   # So that everyone can find the JANA header files
+include_directories(src/libraries)   # So that everyone can find the JANA header files
 
-add_subdirectory(src/lib/JANA)
+add_subdirectory(src/libraries/JANA)
 add_subdirectory(src/examples)
 
 add_subdirectory(src/plugins/JTest)
