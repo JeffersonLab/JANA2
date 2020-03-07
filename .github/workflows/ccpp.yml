@@ -17,7 +17,7 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake3 ../JANA2 -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/Linux
+        cmake ../JANA2 -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/Linux
     - name: make
       run: make
     - name: make install
