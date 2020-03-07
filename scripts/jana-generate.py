@@ -1125,6 +1125,11 @@ def create_mini_standalone_plugin(name):
     os.mkdir(name+"/cmake")
     with open(name + "/cmake/FindJANA.cmake", 'w') as f:
         f.write(plugin_findjana_cmake)
+def create_jfactory_test(factory_name, jobject_name):
+    with open(factory_name + "Test.cc", 'w') as f:
+        text = jfactory_test_cc.format(factory_name=factory_name, jobject_name=jobject_name);
+        f.write(text)
+
 
 def print_usage():
     print("Usage: jana-generate [type] [args...]")
@@ -1143,6 +1148,7 @@ if __name__ == '__main__':
                       'JFactory': create_jfactory,
                       'Plugin': create_plugin,
                       'StandalonePlugin': create_standalone_plugin,
+                      'JFactoryTest': create_jfactory_test,
                       'ProjectPlugin': create_project_plugin,
                       'MiniProjectPlugin': create_mini_project_plugin,
                       'MiniStandalonePlugin': create_mini_standalone_plugin,
