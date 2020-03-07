@@ -1,4 +1,4 @@
-name: C/C++ CI
+name: C/C++ CI ubuntu-18.04
 
 on:
   push:
@@ -28,6 +28,5 @@ jobs:
     - name: make install
       run: |
         cd $GITHUB_WORKSPACE/build
-        cat cmake_install.cmake
-        cat CMakeCache.txt
-        echo "skipping make install"
+        echo "running make install via sudo since GitHub CMAKE_INSTALL_PREFIX is broken"
+        sudo make install
