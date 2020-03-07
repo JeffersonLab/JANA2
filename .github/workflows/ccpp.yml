@@ -28,4 +28,5 @@ jobs:
     - name: make install
       run: |
         cd $GITHUB_WORKSPACE/build
+        cat cmake_install.cmake
         make install
