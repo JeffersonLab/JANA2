@@ -20,7 +20,7 @@ jobs:
       run: |
         mkdir -p $GITHUB_WORKSPACE/build
         cd $GITHUB_WORKSPACE/build
-        cmake ../ -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/Linux -DJANA_HOME=$GITHUB_WORKSPACE/Linux
+        cmake ../ -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/Linux
     - name: make
       run: |
         cd $GITHUB_WORKSPACE/build
@@ -29,4 +29,5 @@ jobs:
       run: |
         cd $GITHUB_WORKSPACE/build
         cat cmake_install.cmake
+        cat CMakeCache.txt
         make install
