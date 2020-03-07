@@ -30,4 +30,4 @@ jobs:
         cd $GITHUB_WORKSPACE/build
         cat cmake_install.cmake
         cat CMakeCache.txt
-        make install
+        echo "skipping make install"
