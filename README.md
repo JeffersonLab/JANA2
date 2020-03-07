@@ -1,4 +1,4 @@
-![C/C++ CI ubuntu-18.04](https://github.com/JeffersonLab/JANA2/workflows/C/C++%20CI%20ubuntu-18.04/badge.svg)
+![C/C++ CI ubuntu-18.04](https://github.com/JeffersonLab/JANA2/workflows/C/C++%20CI%20ubuntu-18.04/badge.svg)<br>
 ![C/C++ CI macOS-latest](https://github.com/JeffersonLab/JANA2/workflows/C/C++%20CI%20macOS-latest/badge.svg)
 ## Welcome to JANA!
 
