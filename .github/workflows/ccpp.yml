@@ -19,6 +19,14 @@ jobs:
         cd build
         cmake ../ -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/Linux
     - name: make
-      run: make
+      run: |
+        pwd
+        echo "----- ls ------"
+        ls
+        echo "----- ls .. ------"
+        ls ..
+        echo "----- ls $GITHUB_WORKSPACE/ ------"
+        ls $GITHUB_WORKSPACE/
+        make $GITHUB_WORKSPACE/build
     - name: make install
       run: make install
