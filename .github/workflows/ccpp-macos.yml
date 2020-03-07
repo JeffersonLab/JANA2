@@ -28,5 +28,4 @@ jobs:
     - name: make install
       run: |
         cd $GITHUB_WORKSPACE/build
-        echo "running make install via sudo since GitHub CMAKE_INSTALL_PREFIX is broken"
-        sudo make install
+        echo "skipping make install since GitHub CMAKE_INSTALL_PREFIX is broken"
