@@ -26,4 +26,6 @@ jobs:
         cd $GITHUB_WORKSPACE/build
         make
     - name: make install
-      run: make install
+      run: |
+        cd $GITHUB_WORKSPACE/build
+        make install
