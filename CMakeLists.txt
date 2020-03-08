@@ -1,8 +1,13 @@
 cmake_minimum_required(VERSION 3.13)
 project(jana2 VERSION 2.0.1)
 
-set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)   # Enable -fPIC for all targets
+
+# Set default standard to C++14, but allow user to override at command line
+if(NOT "${CMAKE_CXX_STANDARD}")
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+
 
 # Expose custom cmake modules
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
