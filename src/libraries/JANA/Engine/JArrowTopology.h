@@ -56,6 +56,10 @@ struct JArrowTopology : public JActivable {
 
     static JArrowTopology* from_components(std::shared_ptr<JComponentManager>, std::shared_ptr<JParameterManager>, int nthreads);
 
+    std::shared_ptr<JComponentManager> component_manager;
+    // Ensure that ComponentManager stays alive at least as long as JArrowTopology does
+    // Otherwise there is a potential use-after-free when JArrowTopology or JArrowProcessingController access components
+
     std::shared_ptr<JEventPool> event_pool; // TODO: Belongs somewhere else
     JPerfMetrics metrics;
     Status status = Inactive; // TODO: Merge this concept with JActivable

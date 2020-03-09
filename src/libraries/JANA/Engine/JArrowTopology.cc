@@ -93,6 +93,7 @@ JArrowTopology::~JArrowTopology() {
 JArrowTopology* JArrowTopology::from_components(std::shared_ptr<JComponentManager> jcm, std::shared_ptr<JParameterManager> params, int nthreads) {
 
     JArrowTopology* topology = new JArrowTopology();
+    topology->component_manager = jcm;  // Hold on to this
 
     size_t event_pool_size = nthreads;
     size_t event_queue_threshold = 80;
