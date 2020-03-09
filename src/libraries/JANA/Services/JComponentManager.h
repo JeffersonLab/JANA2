@@ -51,8 +51,7 @@ private:
     std::vector<std::string> m_src_names;
     std::vector<JEventSourceGenerator*> m_src_gens;
     std::vector<JFactoryGenerator*> m_fac_gens;
-    std::vector<JEventSource*> m_evt_srces_all;
-    std::vector<JEventSource*> m_evt_srces_owned;
+    std::vector<JEventSource*> m_evt_srces;
     std::vector<JEventProcessor*> m_evt_procs;
 
     uint64_t m_nskip=0;

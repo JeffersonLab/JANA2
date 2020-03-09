@@ -70,9 +70,10 @@ private:
     using jclock_t = std::chrono::steady_clock;
 
     JArrowPerfSummary _perf_summary;
-    JArrowTopology* _topology;
-    std::vector<JWorker*> _workers;
+    JArrowTopology* _topology;       // Owned by JArrowProcessingController
     JScheduler* _scheduler = nullptr;
+
+    std::vector<JWorker*> _workers;
     JLogger _logger;
     JLogger _worker_logger;
     JLogger _scheduler_logger;

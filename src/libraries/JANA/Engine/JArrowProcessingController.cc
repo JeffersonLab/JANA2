@@ -126,6 +126,8 @@ JArrowProcessingController::~JArrowProcessingController() {
     for (JWorker* worker : _workers) {
         delete worker;
     }
+    delete _topology;
+    delete _scheduler;
 }
 
 void JArrowProcessingController::print_report() {

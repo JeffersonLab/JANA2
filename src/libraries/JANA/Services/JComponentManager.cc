@@ -4,15 +4,24 @@
 
 #include "JComponentManager.h"
 #include <JANA/JEventProcessor.h>
+#include <JANA/JFactoryGenerator.h>
 
 JComponentManager::JComponentManager(JApplication* app) : m_app(app) {}
 
 JComponentManager::~JComponentManager() {
-    for (auto* src : m_evt_srces_owned) {
+
+    for (auto* src : m_evt_srces) {
         delete src;
     }
-    // TODO: User owns event_procs, but probably won't ever delete them.
-    // If the event_proc comes from a plugin, the user _can't_ delete them.
+    for (auto* proc : m_evt_procs) {
+        delete proc;
+    }
+    for (auto* fac_gen : m_fac_gens) {
+        delete fac_gen;
+    }
+    for (auto* src_gen : m_src_gens) {
+        delete src_gen;
+    }
 }
 
 void JComponentManager::next_plugin(std::string plugin_name) {
@@ -37,7 +46,7 @@ void JComponentManager::add(JFactoryGenerator *factory_generator) {
 void JComponentManager::add(JEventSource *event_source) {
     event_source->SetPluginName(m_current_plugin_name);
     event_source->SetApplication(m_app);
-    m_evt_srces_all.push_back(event_source);
+    m_evt_srces.push_back(event_source);
 }
 
 void JComponentManager::add(JEventProcessor *processor) {
@@ -62,14 +71,13 @@ void JComponentManager::resolve_event_sources() {
         if (fac_gen != nullptr) {
             m_fac_gens.push_back(source->GetFactoryGenerator());
         }
-        m_evt_srces_all.push_back(source);
-        m_evt_srces_owned.push_back(source);
+        m_evt_srces.push_back(source);
     }
 
     m_app->SetDefaultParameter("jana:nevents", m_nevents, "Max number of events that sources can emit");
     m_app->SetDefaultParameter("jana:nskip", m_nskip, "Number of events that sources should skip before starting emitting");
 
-    for (auto source : m_evt_srces_all) {
+    for (auto source : m_evt_srces) {
         source->SetRange(m_nskip, m_nevents);
     }
 }
@@ -133,7 +141,7 @@ JEventSourceGenerator* JComponentManager::resolve_user_event_source_generator() 
 }
 
 std::vector<JEventSource*>& JComponentManager::get_evt_srces() {
-    return m_evt_srces_all;
+    return m_evt_srces;
 }
 
 std::vector<JEventProcessor*>& JComponentManager::get_evt_procs() {
@@ -148,7 +156,7 @@ JComponentSummary JComponentManager::get_component_summary() {
     JComponentSummary result;
 
     // Event sources
-    for (auto * src : m_evt_srces_all) {
+    for (auto * src : m_evt_srces) {
         result.event_sources.push_back({.plugin_name=src->GetPluginName(), .type_name=src->GetType(), .source_name=src->GetName()});
     }
 
