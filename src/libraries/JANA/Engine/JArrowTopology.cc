@@ -85,6 +85,9 @@ JArrowTopology::~JArrowTopology() {
     for (auto arrow : arrows) {
         delete arrow;
     }
+    for (auto queue : queues) {
+        delete queue;
+    }
 }
 
 JArrowTopology* JArrowTopology::from_components(std::shared_ptr<JComponentManager> jcm, std::shared_ptr<JParameterManager> params, int nthreads) {
@@ -118,6 +121,7 @@ JArrowTopology* JArrowTopology::from_components(std::shared_ptr<JComponentManage
 
     // Assume the simplest possible topology for now, complicate later
     auto queue = new EventQueue(event_queue_threshold, topology->mapping.get_loc_count(), enable_stealing);
+    topology->queues.push_back(queue);
 
     for (auto src : jcm->get_evt_srces()) {
 

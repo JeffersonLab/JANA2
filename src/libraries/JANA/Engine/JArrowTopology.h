@@ -41,9 +41,13 @@
 
 #include "JActivable.h"
 #include "JArrow.h"
+#include "JMailbox.h"
 
 
 struct JArrowTopology : public JActivable {
+
+    using Event = std::shared_ptr<JEvent>;
+    using EventQueue = JMailbox<Event>;
 
     enum Status { Inactive, Running, Draining, Finished };
 
@@ -59,6 +63,7 @@ struct JArrowTopology : public JActivable {
     std::vector<JArrow*> arrows;
     std::vector<JArrow*> sources;           // Sources needed for activation
     std::vector<JArrow*> sinks;             // Sinks needed for finished message count // TODO: Not anymore
+    std::vector<EventQueue*> queues;        // Queues shared between arrows
     JProcessorMapping mapping;
 
     JLogger _logger;
