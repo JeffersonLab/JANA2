@@ -35,7 +35,6 @@ public:
         app->GetParameter("jtest:nevents", m_max_event_count);
 
         jout << "Hello from JTestParser" << jendl;
-        SetFactoryGenerator(new JSourceFactoryGenerator<JTestEntangledEventData>());
         SetTypeName(NAME_OF_THIS);
     }
 

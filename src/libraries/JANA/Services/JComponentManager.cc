@@ -47,6 +47,10 @@ void JComponentManager::add(JEventSource *event_source) {
     event_source->SetPluginName(m_current_plugin_name);
     event_source->SetApplication(m_app);
     m_evt_srces.push_back(event_source);
+    auto fac_gen = event_source->GetFactoryGenerator();
+    if (fac_gen != nullptr) {
+        m_fac_gens.push_back(event_source->GetFactoryGenerator());
+    }
 }
 
 void JComponentManager::add(JEventProcessor *processor) {
@@ -69,7 +73,7 @@ void JComponentManager::resolve_event_sources() {
         source->SetApplication(m_app);
         auto fac_gen = source->GetFactoryGenerator();
         if (fac_gen != nullptr) {
-            m_fac_gens.push_back(source->GetFactoryGenerator());
+            m_fac_gens.push_back(fac_gen);
         }
         m_evt_srces.push_back(source);
     }
