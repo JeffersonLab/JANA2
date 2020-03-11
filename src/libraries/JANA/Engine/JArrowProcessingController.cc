@@ -195,11 +195,21 @@ std::unique_ptr<const JArrowPerfSummary> JArrowProcessingController::measure_int
 
         summary.total_messages_completed = total_message_count;
         summary.last_messages_completed = last_message_count;
-        summary.avg_latency_ms = total_latency_ms/total_message_count;
-        summary.last_latency_ms = millisecs(last_latency).count()/last_message_count;
         summary.queue_visit_count = total_queue_visits;
-        summary.avg_queue_latency_ms = total_queue_latency_ms / total_queue_visits;
+
+        summary.avg_queue_latency_ms = (total_queue_visits == 0)
+                                       ? std::numeric_limits<double>::infinity()
+                                       : total_queue_latency_ms / total_queue_visits;
+
         summary.avg_queue_overhead_frac = total_queue_latency_ms / (total_queue_latency_ms + total_latency_ms);
+
+        summary.avg_latency_ms = (total_message_count == 0)
+                               ? std::numeric_limits<double>::infinity()
+                               : summary.avg_latency_ms = total_latency_ms/total_message_count;
+
+        summary.last_latency_ms = (last_message_count == 0)
+                                ? std::numeric_limits<double>::infinity()
+                                : millisecs(last_latency).count()/last_message_count;
 
         if (arrow->is_parallel()) {
             worst_par_latency = std::max(worst_par_latency, summary.avg_latency_ms);
@@ -214,7 +224,10 @@ std::unique_ptr<const JArrowPerfSummary> JArrowProcessingController::measure_int
     _perf_summary.avg_par_bottleneck_hz = 1e3 * _perf_summary.thread_count / worst_par_latency;
 
     auto tighter_bottleneck = std::min(_perf_summary.avg_seq_bottleneck_hz, _perf_summary.avg_par_bottleneck_hz);
-    _perf_summary.avg_efficiency_frac = _perf_summary.avg_throughput_hz/tighter_bottleneck;
+
+    _perf_summary.avg_efficiency_frac = (tighter_bottleneck == 0)
+                                      ? std::numeric_limits<double>::infinity()
+                                      : _perf_summary.avg_throughput_hz/tighter_bottleneck;
 
     return std::unique_ptr<JArrowPerfSummary>(new JArrowPerfSummary(_perf_summary));
 }

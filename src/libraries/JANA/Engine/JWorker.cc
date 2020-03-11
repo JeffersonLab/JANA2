@@ -70,10 +70,17 @@ void JWorker::measure_perf(WorkerSummary& summary) {
                              last_queue_visits, total_latency, last_latency, total_queue_latency, last_queue_latency);
 
 
-    summary.last_arrow_avg_latency_ms = millis(total_latency).count() / total_message_count;
     summary.last_arrow_last_latency_ms = millis(last_latency).count();
     summary.last_arrow_queue_visit_count = total_queue_visits; // TODO: Why do we have last_queue_visits?
-    summary.last_arrow_avg_queue_latency_ms = millis(total_queue_latency).count() / total_message_count;
+
+    if (total_message_count == 0) {
+        summary.last_arrow_avg_latency_ms = std::numeric_limits<double>::infinity();
+        summary.last_arrow_avg_queue_latency_ms = std::numeric_limits<double>::infinity();
+    }
+    else {
+        summary.last_arrow_avg_queue_latency_ms = millis(total_queue_latency).count() / total_message_count;
+        summary.last_arrow_avg_latency_ms = millis(total_latency).count() / total_message_count;
+    }
     summary.last_arrow_last_queue_latency_ms = millis(last_queue_latency).count();
 
     // TODO: Do we even want last_message_count? This is in [0, chunksize], nothing to do with
