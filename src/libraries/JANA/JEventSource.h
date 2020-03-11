@@ -242,7 +242,7 @@ private:
     std::string m_resource_name;
     JApplication* m_application = nullptr;
     JFactoryGenerator* m_factory_generator = nullptr;
-    SourceStatus m_status;
+    std::atomic<SourceStatus> m_status;
     std::atomic_ullong m_event_count {0};
     uint64_t m_nskip = 0;
     uint64_t m_nevents = 0;

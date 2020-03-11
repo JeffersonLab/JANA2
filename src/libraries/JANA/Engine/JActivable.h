@@ -23,7 +23,7 @@ private:
     std::vector<JActivable *> _downstream;
 
 protected:
-    Status _status = Status::Unopened;
+    std::atomic<Status> _status {Status::Unopened};
 
 public:
     virtual bool is_active() {

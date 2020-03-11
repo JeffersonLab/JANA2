@@ -14,8 +14,13 @@ void JWorker::measure_perf(WorkerSummary& summary) {
     JArrowMetrics latest_arrow_metrics;
     latest_arrow_metrics.clear();
     latest_arrow_metrics.take(_arrow_metrics); // move local arrow metrics onto stack
-    if (_assignment != nullptr) {
-        _assignment->get_metrics().update(latest_arrow_metrics); // propagate to global arrow context
+    std::string arrow_name = "idle";
+    {
+        std::lock_guard<std::mutex> lock(_assignment_mutex);
+        if (_assignment != nullptr) {
+            _assignment->get_metrics().update(latest_arrow_metrics); // propagate to global arrow context
+            arrow_name = _assignment->get_name();
+        }
     }
     // Unpack latest_arrow_metrics, add to WorkerSummary
 
@@ -55,7 +60,7 @@ void JWorker::measure_perf(WorkerSummary& summary) {
     summary.is_pinned = _pin_to_cpu;
     summary.scheduler_visit_count = scheduler_visit_count;
 
-    summary.last_arrow_name = ((_assignment == nullptr) ? "idle" : _assignment->get_name());
+    summary.last_arrow_name = arrow_name;
 
     JArrowMetrics::Status last_status;
     size_t total_message_count, last_message_count, total_queue_visits, last_queue_visits;
@@ -138,7 +143,10 @@ void JWorker::loop() {
             LOG_DEBUG(logger) << "Worker " << _worker_id << " is checking in" << LOG_END;
             auto start_time = jclock_t::now();
 
-            _assignment = _scheduler->next_assignment(_worker_id, _assignment, last_result);
+            {
+                std::lock_guard<std::mutex> lock(_assignment_mutex);
+                _assignment = _scheduler->next_assignment(_worker_id, _assignment, last_result);
+            }
             last_result = JArrowMetrics::Status::NotRunYet;
 
             auto scheduler_time = jclock_t::now();
@@ -203,7 +211,12 @@ void JWorker::loop() {
                 }
             }
             _worker_metrics.update(1, useful_duration, retry_duration, scheduler_duration, idle_duration);
-            publish_arrow_metrics();
+            if (_assignment != nullptr) {
+                JArrowMetrics latest_arrow_metrics;
+                latest_arrow_metrics.clear();
+                latest_arrow_metrics.take(_arrow_metrics); // move local arrow metrics onto stack
+                _assignment->get_metrics().update(latest_arrow_metrics); // propagate to global arrow context
+            }
         }
 
         _scheduler->last_assignment(_worker_id, _assignment, last_result);
@@ -225,14 +238,6 @@ void JWorker::loop() {
 	}
 }
 
-void JWorker::publish_arrow_metrics() {
-    if (_assignment != nullptr) {
-        JArrowMetrics latest_arrow_metrics;
-        latest_arrow_metrics.clear();
-        latest_arrow_metrics.take(_arrow_metrics); // move local arrow metrics onto stack
-        _assignment->get_metrics().update(latest_arrow_metrics); // propagate to global arrow context
-    }
-}
 
 
 
