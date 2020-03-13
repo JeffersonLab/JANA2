@@ -21,7 +21,8 @@ class JTestParser : public JEventSource {
     double m_write_spread = 0.25;
     std::shared_ptr<std::vector<char>> m_latest_entangled_buffer;
 
-    std::size_t mNumEventsGenerated = 0;
+    size_t m_max_event_count = 0;
+    size_t m_events_generated = 0;
 
 public:
 
@@ -31,9 +32,9 @@ public:
         app->GetParameter("jtest:parser_ms", m_cputime_ms);
         app->GetParameter("jtest:parser_bytes_spread", m_write_spread);
         app->GetParameter("jtest:parser_spread", m_cputime_spread);
+        app->GetParameter("jtest:nevents", m_max_event_count);
 
         jout << "Hello from JTestParser" << jendl;
-        SetFactoryGenerator(new JSourceFactoryGenerator<JTestEntangledEventData>());
         SetTypeName(NAME_OF_THIS);
     }
 
@@ -42,8 +43,11 @@ public:
     }
 
     void GetEvent(std::shared_ptr<JEvent> event) {
+        if (m_max_event_count != 0 && m_events_generated > m_max_event_count) {
+            throw RETURN_STATUS::kNO_MORE_EVENTS;
+        }
 
-        if ((mNumEventsGenerated % 40) == 0) {
+        if ((m_events_generated % 40) == 0) {
             // "Read" new entangled event every 40 events
             m_latest_entangled_buffer = std::shared_ptr<std::vector<char>>(new std::vector<char>);
             write_memory(*m_latest_entangled_buffer, m_write_bytes, m_write_spread);
@@ -57,9 +61,9 @@ public:
         eec->buffer = m_latest_entangled_buffer;
         event->Insert<JTestEntangledEventData>(eec);
 
-        mNumEventsGenerated++;
+        m_events_generated++;
 
-        event->SetEventNumber(mNumEventsGenerated);
+        event->SetEventNumber(m_events_generated);
         event->SetRunNumber(1);
     }
 

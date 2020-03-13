@@ -6,6 +6,6 @@ import os
 Import('env osname')
 
 # Loop over libraries, building each
-subdirs = ['jana','playground','tests']
+subdirs = ['jana','tests']
 
 SConscript(dirs=subdirs, exports='env osname', duplicate=0)

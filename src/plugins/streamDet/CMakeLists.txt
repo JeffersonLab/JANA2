@@ -28,7 +28,7 @@ if (ZEROMQ_FOUND AND ROOT_FOUND)
 
 else()
 
-    message(WARNING "Skipping target `streamDet` due to missing ZeroMQ, CZMQ, or ROOT dependencies")
+    message(WARNING "Skipping target `streamDet` due to missing ZeroMQ or ROOT dependencies")
 
 endif()
 

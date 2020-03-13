@@ -28,14 +28,18 @@ appears to be converging on using CMake. This makes for better tooling, e.g. tig
 ### Building with CMake
 
 First, set your `$JANA_HOME` environment variable. This is where the executables, libraries, headers, and plugins
-get installed. If you don't set it, CMake will default to a system install, usually `/usr/local` under Linux. 
-Sometimes it is more convenient to pass `JANA_HOME` as a CMake variable instead of an environment variable; the 
-CMakeLists.txt will look for the CMake variable first, then the environment variable, and finally just pick the default. 
-Note that if you change `$JANA_HOME`, you may have to rebuild the entire CMake project before CMake notices the change. 
+get installed. You will need to tell CMake to install to `$JANA_HOME` manually -- this is on purpose to avoid accidentally
+clobbering an existing JANA installation. Luckily, all you have to do is pass `-DCMAKE_INSTALL_PREFIX=$JANA_HOME`
+to CMake. Be aware that if you change $JANA_HOME, you'll need to rerun cmake, and sometimes you'll also need to invalidate your CMake cache. 
+Also be aware that although CMake usually defaults `CMAKE_INSTALL_PREFIX` to `/usr/local`, we have disabled this because 
+we rarely want this in practice, and we don't want the build system picking up outdated headers and libraries we installed to `/usr/local` by accident. 
+If you want to set `JANA_HOME=/usr/local`, you are free to do so, but you must do so deliberately.
 
 Next, set your build directory. This is where CMake's caches, logs, intermediate build artifacts, etc go. The convention
 is to name it `build` and put it in the project's root directory. If you are using CLion, it will automatically create 
-a `cmake-build-debug` directory which works just fine.
+a `cmake-build-debug` directory which works just fine. 
+
+Finally, you can cd into your build directory and build and install everything the usual CMake way.
 
 ~~~ bash
 git clone https://github.com/JeffersonLab/JANA2   # Get JANA
@@ -44,8 +48,8 @@ export PATH=$PATH:$JANA_HOME/bin                  # Put jana executable on path
 
 mkdir build                                       # Set build dir
 cd build
-cmake ../JANA2                                    # Generate makefiles
-make -j8 install                                  # Build and install
+cmake ../JANA2 -DCMAKE_INSTALL_PREFIX=$JANA_HOME  # Generate makefiles
+make -j8 install                                  # Build (using 8 threads) and install
 jana -Pplugins=JTest                              # Run JTest plugin to verify successful install
 
 ~~~

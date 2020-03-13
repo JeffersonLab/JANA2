@@ -1,0 +1,7 @@
+@PACKAGE_INIT@
+
+# https://cliutils.gitlab.io/modern-cmake/chapters/install/installing.html
+# include(CMakeFindDependencyMacro)
+# find_dependency(MYDEP REQUIRED)
+
+include("${CMAKE_CURRENT_LIST_DIR}/MyProject-targets.cmake")

@@ -1,0 +1,31 @@
+name: C/C++ CI macOS-latest
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: macOS-latest
+    
+    # Run cmake, make, and make install as separate steps
+    # Note that every step starts out in the $GITHUB_WORKSPACE
+    # directory.
+    steps:
+    - uses: actions/checkout@v2
+    - name: cmake
+      run: |
+        mkdir -p $GITHUB_WORKSPACE/build
+        cd $GITHUB_WORKSPACE/build
+        cmake ../ -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/Darwin
+    - name: make
+      run: |
+        cd $GITHUB_WORKSPACE/build
+        make
+    - name: make install
+      run: |
+        cd $GITHUB_WORKSPACE/build
+        echo "skipping make install since GitHub CMAKE_INSTALL_PREFIX is broken"

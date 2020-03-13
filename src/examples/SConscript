@@ -6,6 +6,6 @@ import os
 Import('env osname')
 
 # Loop over examples, building each
-subdirs = ['JExample1', 'JExample2', 'JExample7', 'event_group_example']
+subdirs = []
 
 SConscript(dirs=subdirs, exports='env osname', duplicate=0)

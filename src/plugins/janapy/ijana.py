@@ -95,7 +95,7 @@ def draw_banner():
 
 	# Draw status
 	PRINTAT( 3, 2, 'Num. Events Processed: %d' % jana.GetNeventsProcessed() )
-	PRINTAT( 3, 3, ' Num. Tasks Completed: %d' % jana.GetNtasksCompleted() )
+	#PRINTAT( 3, 3, ' Num. Tasks Completed: %d' % jana.GetNtasksCompleted() ) # This no longer exists
 	PRINTAT( 3, 4, '           Num. Cores: %d' % jana.GetNcores() )
 	PRINTAT( 3, 5, '        Num. JThreads: %d' % jana.GetNJThreads() )
 
@@ -109,17 +109,17 @@ def draw_banner():
 # print_help
 #------------------------------
 def print_help():
-	print '\n JANA Python Interactive CLI Help'
-	print '\r------------------------------------'
-	print '\r banner [on/off]    set banner on/off (def. on)"'
-	print '\r exit               same as "quit"'
-	print '\r help               print this message'
-	print '\r history            print history of this session'
-	print '\r parameter cmd ...  get/set/list config. parameters'
-	print '\r quit               stop data processing and quit the program'
-	print '\r resume             resume data processing'
-	print '\r status             print some status info'
-	print '\r stop               pause data processing'
+	print('\n JANA Python Interactive CLI Help')
+	print('\r------------------------------------')
+	print('\r banner [on/off]    set banner on/off (def. on)"')
+	print('\r exit               same as "quit"')
+	print('\r help               print this message')
+	print('\r history            print history of this session')
+	print('\r parameter cmd ...  get/set/list config. parameters')
+	print('\r quit               stop data processing and quit the program')
+	print('\r resume             resume data processing')
+	print('\r status             print some status info')
+	print('\r stop               pause data processing')
 
 #------------------------------
 # process_command
@@ -133,16 +133,16 @@ def process_command( input ):
 	cmd = tokens[0]
 	args = tokens[1:]
 	
-	print 'processing command: ' + ' '.join(tokens)
+	print('processing command: ' + ' '.join(tokens))
 	LEFT(1000)
 
 	#--- banner
 	if cmd=='banner':
 		if len(args) == 0:
-			print 'command banner requires you to specify "on" or "off". (see help for details)'
+			print('command banner requires you to specify "on" or "off". (see help for details)')
 		elif args[0] == 'on' : BANNER_ON = True
 		elif args[0] == 'off': BANNER_ON = False
-		else: print 'command banner requires you to specify "on" or "off". (see help for details)'
+		else: print('command banner requires you to specify "on" or "off". (see help for details)')
 	#--- exit, quit
 	elif cmd=='exit' or cmd=='quit':
 		CLI_ACTIVE = False
@@ -154,51 +154,51 @@ def process_command( input ):
 	elif cmd=='history':
 		idx = 0
 		for h in history:
-			print '%3d %s\r' % (idx, h)
+			print('%3d %s\r' % (idx, h))
 			idx += 1
-		print '%3d %s\r' % (idx, ' '.join(tokens) )  # include this history command which will be added below
+		print('%3d %s\r' % (idx, ' '.join(tokens) ) ) # include this history command which will be added below
 	#--- nthreads
 	elif cmd=='nthreads':
 		if len(args) == 0:
-			print 'Number of JThreads: %d' % jana.GetNJThreads()
+			print('Number of JThreads: %d' % jana.GetNJThreads())
 		elif len(args)==1:
-			print 'Number of JThreads now at: %d' % jana.SetNJThreads( int(args[0]) )
+			print('Number of JThreads now at: %d' % jana.SetNJThreads( int(args[0]) ) )
 		else:
-			print 'njthreads takes either 0 or 1 argument (see help for details)'
+			print('njthreads takes either 0 or 1 argument (see help for details)')
 	#--- parameter
 	elif cmd=='parameter':
 		if len(args) == 0:
-			print 'command parameter requires arguments. (see help for details)'
+			print('command parameter requires arguments. (see help for details)')
 		elif args[0] == 'get':
 			if len(args)==2:
-				print '%s: %s' % (args[1], jana.GetParameterValue(args[1]))
+				print('%s: %s' % (args[1], jana.GetParameterValue(args[1])))
 			else:
-				print 'command parameter get requires exactly 1 argument! (see help for details)'
+				print('command parameter get requires exactly 1 argument! (see help for details)')
 		elif args[0] == 'set':
 			if len(args)==3:
 				jana.SetParameter(args[1], args[2])
 			else:
-				print 'command parameter set requires exactly 2 arguments! (see help for details)'
+				print('command parameter set requires exactly 2 arguments! (see help for details)')
 		elif args[0] == 'list':
 			if len(args)==1:
 				jana.PrintParameters(True)
 			else:
-				print 'command parameter list requires no arguments! (see help for details)'
+				print('command parameter list requires no arguments! (see help for details)')
 	#--- resume
 	elif cmd=='resume':
 		jana.Resume()
-		print 'event processing resumed'
+		print('event processing resumed')
 	#--- status
 	elif cmd=='status':
 		jana.PrintStatus()
-		print ''
+		print('')
 	#--- stop
 	elif cmd=='stop':
 		jana.Stop(True)
-		print 'event processing stopped after %d events (use "resume" to start again)' % jana.GetNeventsProcessed()
+		print('event processing stopped after %d events (use "resume" to start again)' % jana.GetNeventsProcessed())
 	#--- unknown command
 	else:
-		print 'Unknown command: ' + cmd
+		print('Unknown command: ' + cmd)
 		return
 
 	history.append( ' '.join(tokens) ) # add to history
@@ -317,7 +317,7 @@ def command_line():
 			sys.stdout.flush()
 		
 		# Process one input line
-		print ''
+		print('')
 		MOVETO(1,NROWS)
 		termios.tcsetattr(sys.stdin, termios.TCSAFLUSH, mode)
 		process_command( input )
@@ -330,7 +330,7 @@ def command_line():
 
 	# Restore terminal settings
 	termios.tcsetattr(sys.stdin, termios.TCSAFLUSH, mode)
-	print '\nCLI exiting ...\n'
+	print('\nCLI exiting ...\n')
 
 #===========================================================
 #                         MAIN

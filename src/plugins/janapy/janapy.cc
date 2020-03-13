@@ -51,6 +51,8 @@ void JANA_PythonModuleInit(JApplication *sApp);
 
 static bool PY_INITIALIZED = false; // See JANA_PythonModuleInit
 
+static PyObject *JANA_PYMODULE_OBJ = nullptr;
+
 // This is temporary and will likely be changed once the new arrow
 // system is fully adopted.
 static JApplication *pyjapp = nullptr;
@@ -297,7 +299,8 @@ static PyObject* janapy_AddEventSource(PyObject *self, PyObject *args)
 static PyObject* janapy_GetNeventsProcessed(PyObject *self, PyObject *args)
 {
 	if(!PyArg_ParseTuple(args, ":GetNeventsProcessed")) return nullptr;
-	return PV( pyjapp->GetNeventsProcessed() );
+    return PV(123);
+	return PV( pyjapp->GetNEventsProcessed() );
 }
 
 //-------------------------------------
@@ -306,19 +309,10 @@ static PyObject* janapy_GetNeventsProcessed(PyObject *self, PyObject *args)
 static PyObject* janapy_GetIntegratedRate(PyObject *self, PyObject *args)
 {
 	if(!PyArg_ParseTuple(args, ":GetIntegratedRate")) return nullptr;
+    return PV(456.0);
 	return PV( pyjapp->GetIntegratedRate() );
 }
 
-//-------------------------------------
-// janapy_GetIntegratedRates
-//-------------------------------------
-static PyObject* janapy_GetIntegratedRates(PyObject *self, PyObject *args)
-{
-	if(!PyArg_ParseTuple(args, ":GetIntegratedRates")) return nullptr;
-	std::map<string,double> rates_by_thread;
-	pyjapp->GetIntegratedRates(rates_by_thread);
-	return PVdict( rates_by_thread );
-}
 
 //-------------------------------------
 // janapy_GetInstantaneousRate
@@ -326,18 +320,8 @@ static PyObject* janapy_GetIntegratedRates(PyObject *self, PyObject *args)
 static PyObject* janapy_GetInstantaneousRate(PyObject *self, PyObject *args)
 {
 	if(!PyArg_ParseTuple(args, ":GetInstantaneousRate")) return nullptr;
+    return PV(321.0);
 	return PV( pyjapp->GetInstantaneousRate() );
-}
-
-//-------------------------------------
-// janapy_GetInstantaneousRates
-//-------------------------------------
-static PyObject* janapy_GetInstantaneousRates(PyObject *self, PyObject *args)
-{
-	if(!PyArg_ParseTuple(args, ":GetInstantaneousRates")) return nullptr;
-	vector<double> rates_by_queue;
-	pyjapp->GetInstantaneousRates(rates_by_queue);
-	return PVlist( rates_by_queue );
 }
 
 //-------------------------------------
@@ -346,6 +330,7 @@ static PyObject* janapy_GetInstantaneousRates(PyObject *self, PyObject *args)
 static PyObject* janapy_GetNJThreads(PyObject *self, PyObject *args)
 {
 	if(!PyArg_ParseTuple(args, ":GetNJThreads")) return nullptr;
+    return PV(3);
 	return PV( pyjapp->GetNThreads() );
 }
 
@@ -474,9 +459,7 @@ static PyMethodDef JANAPYMethods[] = {
 	{"AddEventSource",              janapy_AddEventSource,              METH_VARARGS, "Add an event source (e.g. filename). Can be given multiple arguments and/or called multiple times."},
 	{"GetNeventsProcessed",         janapy_GetNeventsProcessed,         METH_VARARGS, "Return the number of events processed so far."},
 	{"GetIntegratedRate",           janapy_GetIntegratedRate,           METH_VARARGS, "Return integrated rate."},
-	{"GetIntegratedRates",          janapy_GetIntegratedRates,          METH_VARARGS, "Return integrated rates for each thread."},
 	{"GetInstantaneousRate",        janapy_GetInstantaneousRate,        METH_VARARGS, "Return instantaneous rate."},
-	{"GetInstantaneousRates",       janapy_GetInstantaneousRates,       METH_VARARGS, "Return instantaneous rates for each thread."},
 	{"GetNJThreads",                janapy_GetNJThreads,                METH_VARARGS, "Return current number of JThread objects."},
 	{"GetNcores",                   janapy_GetNcores,                   METH_VARARGS, "Return number of cores reported by system (full + logical)."},
 	{"GetParameterValue",           janapy_GetParameterValue,           METH_VARARGS, "Return value of given configuration parameter."},
@@ -499,7 +482,7 @@ static PyMethodDef JANAPYMethods[] = {
 // what it's methods are and where to look for it's method definitions
 static struct PyModuleDef janapy__definition = {
     PyModuleDef_HEAD_INIT,
-    "janapy",
+    "jana",
     "JANA2 Python module.",
     -1,
     JANAPYMethods
@@ -510,10 +493,11 @@ static struct PyModuleDef janapy__definition = {
 PyMODINIT_FUNC PyInit_janapy(void) {
 
 	// Create JApplication.
-	pyjapp = new JApplication;
+	if( pyjapp == nullptr ) pyjapp = new JApplication;
 
-	Py_Initialize();
-	return PyModule_Create(&janapy__definition);
+	if( ! Py_IsInitialized() ) Py_Initialize();
+	if( JANA_PYMODULE_OBJ == nullptr ) JANA_PYMODULE_OBJ = PyModule_Create(&janapy__definition);
+	return JANA_PYMODULE_OBJ;
 }
 
 //-------------------------------------
@@ -555,10 +539,13 @@ void JANA_PythonModuleInit(JApplication *sApp)
 	// Initialize interpreter and register the jana module
 	jout << "Initializing embedded Python ... " << jendl;
 	PyEval_InitThreads();
-	Py_Initialize();
 #if PY_MAJOR_VERSION >= 3
-	PyModule_Create(&janapy__definition);
+
+	PyImport_AppendInittab("jana", &PyInit_janapy);
+	Py_Initialize();
+	JANA_PYMODULE_OBJ = PyModule_Create(&janapy__definition);
 #else // Python 2
+	Py_Initialize();
 	Py_InitModule("jana", JANAPYMethods);
 #endif
 
@@ -579,8 +566,10 @@ void JANA_PythonModuleInit(JApplication *sApp)
 	auto fil = std::fopen(fname.c_str(), "r");
 	if( fil ) {
 		jout << "Executing Python script: " << fname << " ..." << jendl;
-		const char *argv = fname.c_str();
-		PySys_SetArgv( 1, (wchar_t**)&argv );
+
+		wchar_t *wargv = Py_DecodeLocale(fname.c_str(), NULL);
+		PySys_SetArgv( 1, (wchar_t**)&wargv );
+		PyMem_RawFree(wargv);
 		PyRun_AnyFileEx( fil, nullptr, 1 );
 	}else if( fname != "jana.py" ){
 		jerr << "Unable to open \"" << fname << "\"! Quitting." << jendl;
