@@ -19,3 +19,4 @@ jobs:
       uses: faustus123/DockerAction-JANA2@alpha
       with:
         branch: $GITHUB_REF
+
