@@ -11,12 +11,33 @@ jobs:
 
     runs-on: ubuntu-latest
     name: Full build with tests
+	steps:
     
-    # Build Docker container and run the entrypoint.sh script in it
-    steps:
+    # Have GitHub clone repository and checkout relevant branch based on
+    # pull request (or master if this was triggered by push directly to master)
+    - uses: actions/checkout@v2
+    
+    # Run git status so log has a record of which branch was checked out
+    - name: Print Status
+	  run: |
+		cd  $GITHUB_WORKSPACE
+		git status
+		
+	# Checkout and run the Docker action
     - name: Build and run
       id: build_and_run
-      uses: faustus123/DockerAction-JANA2@alpha
-      with:
-        branch: ${{ github.ref }}
+      uses: faustus123/DockerAction-JANA2
+
+	# Print directory contents. This is primarily for debugging
+	- name: Print Directory Contents
+	  id: print_directory_contents
+	  run: |
+		cd $GITHUB_WORKSPACE
+		echo "-------- $GITHUB_WORKSPACE --------"
+		ls
+		ls */*
+		echo "-------- $GITHUB_WORKSPACE/.. --------"
+		ls ..
+
+
 
