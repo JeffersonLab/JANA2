@@ -22,7 +22,7 @@ jobs:
       run: |
         cd  $GITHUB_WORKSPACE
         git status
-		
+
     # Checkout and run the Docker action
     - name: Build and run
       id: build_and_run
