@@ -19,9 +19,9 @@ jobs:
     
     # Run git status so log has a record of which branch was checked out
     - name: Print Status
-	  run: |
-		cd  $GITHUB_WORKSPACE
-		git status
+      run: |
+        cd  $GITHUB_WORKSPACE
+        git status
 		
 	# Checkout and run the Docker action
     - name: Build and run
