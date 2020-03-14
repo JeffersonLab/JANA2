@@ -28,4 +28,11 @@ jobs:
     - name: make install
       run: |
         cd $GITHUB_WORKSPACE/build
-        echo "skipping make install since GitHub CMAKE_INSTALL_PREFIX is broken"
+        make install
+    - name: run tests
+      run: |
+        export JANA_PLUGIN_PATH=$GITHUB_WORKSPACE/Linux/plugins
+        echo "--- Running JTest plugin -----------------------"
+        $GITHUB_WORKSPACE/Linux/bin/jana -PPLUGINS=JTest -Pjana:nevents=100
+        echo "--- Running janatests ------------------------------"
+        $GITHUB_WORKSPACE/Linux/bin/janatests

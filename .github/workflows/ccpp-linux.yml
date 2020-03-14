@@ -28,5 +28,12 @@ jobs:
     - name: make install
       run: |
         cd $GITHUB_WORKSPACE/build
-        echo "running make install via sudo since GitHub CMAKE_INSTALL_PREFIX is broken"
-        sudo make install
+        make install
+    - name: run tests
+      run: |
+        export JANA_PLUGIN_PATH=$GITHUB_WORKSPACE/Linux/plugins
+        echo "--- Running JTest plugin -----------------------"
+        $GITHUB_WORKSPACE/Linux/bin/jana -PPLUGINS=JTest -Pjana:nevents=100
+        echo "--- Running janatests ------------------------------"
+        $GITHUB_WORKSPACE/Linux/bin/janatests
+
