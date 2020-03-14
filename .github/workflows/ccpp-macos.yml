@@ -32,7 +32,7 @@ jobs:
     - name: run tests
       run: |
         export JANA_PLUGIN_PATH=$GITHUB_WORKSPACE/Darwin/plugins
-        echo "--- Running JTest plugin -----------------------"
-        $GITHUB_WORKSPACE/Darwin/bin/jana -PPLUGINS=JTest -Pjana:nevents=100
         echo "--- Running janatests ------------------------------"
         $GITHUB_WORKSPACE/Darwin/bin/janatests
+        echo "--- Running JTest plugin -----------------------"
+        $GITHUB_WORKSPACE/Darwin/bin/jana -PPLUGINS=JTest -Pjana:nevents=100
