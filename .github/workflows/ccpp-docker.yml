@@ -27,6 +27,7 @@ jobs:
     # Checkout and run the Docker action
     - name: Build and run
       id: build_and_run
+      uses: actions/checkout@v2
       uses: faustus123/DockerAction-JANA2@alpha
 
     # Print directory contents. This is primarily for debugging
