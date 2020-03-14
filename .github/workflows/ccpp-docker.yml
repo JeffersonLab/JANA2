@@ -15,7 +15,8 @@ jobs:
     
     # Have GitHub clone repository and checkout relevant branch based on
     # pull request (or master if this was triggered by push directly to master)
-    - uses: actions/checkout@v2
+    - name: Checkout Code
+      uses: actions/checkout@v2
     
     # Run git status so log has a record of which branch was checked out
     - name: Print Status
