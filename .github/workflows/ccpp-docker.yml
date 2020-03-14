@@ -17,6 +17,4 @@ jobs:
     - name: Build and run
       id: build_and_run
       uses: faustus123/DockerAction-JANA2@alpha
-      with:
-        ref: ${{ github.ref }}
 
