@@ -323,6 +323,7 @@ find_library(JANA_LIBRARY
         )
 
 set(JANA_LIBRARIES ${JANA_LIBRARY})
+set(JANA_LIB ${JANA_LIBRARY})
 set(JANA_INCLUDE_DIRS ${JANA_ROOT_DIR}/include)
 
 include(FindPackageHandleStandardArgs)
@@ -603,6 +604,9 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)   # Enable -fPIC for all targets
 
 # Set install directory to $JANA_HOME
 set(CMAKE_INSTALL_PREFIX $ENV{{JANA_HOME}} CACHE PATH "magic incantation" FORCE)
+
+# Expose custom cmake modules
+list(APPEND CMAKE_MODULE_PATH "${{CMAKE_CURRENT_LIST_DIR}}/cmake")
 
 # Find dependencies
 find_package(JANA REQUIRED)
@@ -958,6 +962,11 @@ def create_mini_standalone_plugin(name):
     with open(name + "/" + name + ".cc", 'w') as f:
         text = mini_plugin_cc.format(name=name)
         f.write(text)
+
+    os.mkdir(name+"/cmake")
+    with open(name + "/cmake/FindJANA.cmake", 'w') as f:
+        f.write(plugin_findjana_cmake)
+
 
 def print_usage():
     print("Usage: jana-generate [type] [args...]")
