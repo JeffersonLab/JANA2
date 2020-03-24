@@ -669,6 +669,9 @@ extern "C" {{
 """
 
 def create_jobject(name):
+    """Create a JObject code skeleton in the current directory. Requires one argument:
+       name:  The name of the JObject, e.g. "RecoTrack"
+    """
     filename = name + ".h"
     text = jobject_template_h.format(copyright_notice=copyright_notice, name=name)
     with open(filename, 'w') as f:
@@ -676,6 +679,9 @@ def create_jobject(name):
 
 
 def create_jeventsource(name):
+    """Create a JEventSource code skeleton in the current directory. Requires one argument:
+       name:  The name of the JEventSource, e.g. "CsvFileSource"
+    """
 
     with open(name + ".h", 'w') as f:
         text = jeventsource_template_h.format(copyright_notice=copyright_notice, name=name)
@@ -687,6 +693,9 @@ def create_jeventsource(name):
 
 
 def create_jeventprocessor(name):
+    """Create a JFactory code skeleton in the current directory. Requires one argument:
+       name:  The name of the JEventProcessor, e.g. "TrackingEfficiencyProcessor"
+    """
 
     with open(name + ".h", 'w') as f:
         text = jeventprocessor_template_h.format(copyright_notice=copyright_notice, name=name)
@@ -701,19 +710,26 @@ def create_jeventprocessor(name):
     #    f.write(text)
 
 
-def create_jfactory(name, jobject_name):
+def create_jfactory(factory_name, jobject_name):
+    """Create a JFactory code skeleton in the current directory. Requires two arguments:
+       factory_name:  The name of the JFactory, e.g. "RecoTrackFactory_Genfit"
+       jobject_name:  The name of the JObject this factory creates, e.g. "RecoTrack"
+    """
 
-    print(f"Creating {name}:public JFactoryT<{jobject_name}>")
-    with open(name + ".cc", 'w') as f:
-        text = jfactory_template_cc.format(name=name, jobject_name=jobject_name)
+    print(f"Creating {factory_name}:public JFactoryT<{jobject_name}>")
+    with open(factory_name + ".cc", 'w') as f:
+        text = jfactory_template_cc.format(name=factory_name, jobject_name=jobject_name)
         f.write(text)
 
-    with open(name + ".h", 'w') as f:
-        text = jfactory_template_h.format(name=name, jobject_name=jobject_name)
+    with open(factory_name + ".h", 'w') as f:
+        text = jfactory_template_h.format(name=factory_name, jobject_name=jobject_name)
         f.write(text)
 
 
 def create_plugin(name):
+    """Create a code skeleton for a standalone plugin in its own directory. Requires one argument:
+       name:  The name of the plugin, e.g. "trk_eff" or "TrackingEfficiency"
+    """
     os.mkdir(name)
     os.mkdir(name + "/cmake")
     os.mkdir(name + "/src")
@@ -835,6 +851,9 @@ def create_plugin(name):
 
 
 def create_project_plugin(name):
+    """Create a code skeleton for a project plugin in its own directory. Requires one argument:
+       name:  The name of the plugin, e.g. "trk_eff" or "TrackingEfficiency"
+    """
     os.mkdir(name)
 
     with open(name + "/CMakeLists.txt", 'w') as f:
@@ -858,10 +877,16 @@ def create_project_plugin(name):
         f.write(text)
 
 def create_executable(name):
+    """Create a code skeleton for a project executable in the current directory. Requires one argument:
+       name:  The name of the executable, e.g. "escalate" or "halld_recon"
+    """
     pass
 
 
 def create_project(name):
+    """Create a code skeleton for a complete project in its own directory. Requires one argument:
+       name:  The name of the project, e.g. "escalate" or "halld_recon"
+    """
     os.mkdir(name)
     os.mkdir(name + "/cmake")
     os.mkdir(name + "/external")
@@ -873,12 +898,19 @@ def create_project(name):
     os.mkdir(name + "/tests")
 
 def create_root_eventprocessor(processor_name, dir_name):
+    """Create a ROOT-aware JEventProcessor code skeleton in the current directory. Requires two arguments:
+       processor_name:  The name of the JEventProcessor, e.g. "TrackingEfficiencyProcessor"
+       dir_name:        The name of the virtual directory in the ROOT file where everything goes, e.g. "trk_eff"
+    """
     with open(processor_name + ".h", 'w') as f:
         text = jroot_output_processor_h.format(processor_name=processor_name, dir_name=dir_name)
         f.write(text)
 
 
 def create_mini_plugin(name):
+    """Create a minimal-boilerplate JANA project plugin. Requires one argument:
+       name: The name of the plugin, e.g. "TrackingEfficiency" or "trk_eff"
+    """
     os.mkdir(name)
     with open(name + "/CMakeLists.txt", 'w') as f:
         text = mini_plugin_cmakelists_txt.format(name=name)
@@ -890,15 +922,12 @@ def create_mini_plugin(name):
 
 
 def print_usage():
-    print("Usage: jana-generate [type] [name]")
-    print("  type: JObject JEventSource JEventProcessor RootEventProcessor JFactory StandalonePlugin ProjectPlugin MiniPlugin Executable Project")
-    print("  name: Preferably in CamelCase, e.g. EvioSource")
-
+    print("Usage: jana-generate [type] [args...]")
+    print("  type: JObject JEventSource JEventProcessor RootEventProcessor JFactory StandalonePlugin ProjectPlugin MiniPlugin Project")
 
 if __name__ == '__main__':
 
-    if len(argv) < 3:
-        print("Error: Wrong number of arguments!")
+    if len(argv) < 2:
         print_usage()
         exit()
 
@@ -916,9 +945,13 @@ if __name__ == '__main__':
 
     option = argv[1]
     if option in dispatch_table:
-        dispatch_table[option](*argv[2:])
+        try:
+            dispatch_table[option](*argv[2:])
+        except TypeError:
+            print(dispatch_table[option].__doc__)
+
     else:
-        print("Error: Invalid type!")
+        print("Error: Invalid option!")
         print_usage()
         exit()
 
