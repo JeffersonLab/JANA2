@@ -12,18 +12,6 @@ title: JANA: Multi-threaded HENP Event Reconstruction
 </table>
 </center>
 
-## Getting Started With JANA
-
-For now, it is best to start with a fresh checkout of master. If you are trying to compile JANA as part of EIC,
-we recommend using [ejpm](https://gitlab.com/eic/ejpm) instead as it can reason about transitive dependencies
-such XERCES and ROOT. Otherwise, do the following:
-
-~~~ bash
-git clone https://github.com/JeffersonLab/JANA2 ~/jana2
-~~~
-
-JANA can be built using either CMake or SCons. CMake is recommended mainly because the rest of the C++ world
-appears to be converging on using CMake. This makes for better tooling, e.g. tighter IDE integration.
 
 ### Building with CMake
 
@@ -62,68 +50,4 @@ to load t them if you set the JANA config `jana:debug_plugin_loading=1`.
 ~~~ bash
 jana -Pplugins=JTest -Pjana:debug_plugin_loading=1
 ~~~
-
-
-### Building with SCons
-
-To build, you can simply type `scons` from the project root. If you have a multicore
-build machine you can speed up compilation with the `-j` flag. Debugging is easier if you set `OPTIMIZATION=0`.
-If you run into trouble, you can inspect the exact compiler arguments by specifying `SHOWBUILD=1`.
-The main build script lives in the file `SConstruct`, and most of the functions it calls live in `SBMS/sbms.py`.
-
-~~~ bash
-~/jana2$ scons install -j8 OPTIMIZATION=0
-~~~
-
-By default, `scons` will build to a different directory for different operating systems, architectures, and
-compilers. For instance, if you are compiling on CentOS 7 using gcc, your build directory might
-be `~/jana2/Linux_CentOS7-x86_64-gcc4.8.5/`
-
-
-~~~ bash
-export JANA_HOME = ~/jana2/Linux_CentOS7-x86_64-gcc4.8.5/
-export PATH=$PATH:$JANA_HOME/bin
-~~~
-
-### Running JANA
-
-JANA is typically run like this:
-
-~~~ bash
-$JANA_HOME/bin/jana -Pplugins=JTest -Pnthreads=8 ~/data/inputfile.txt
-~~~
-
-Note that the JANA executable won't do anything until you provide plugins.
-A simple plugin is provided called JTest, which verifies that everything is working and optionally does a quick
-performance benchmark. Additional simple plugins are provided in `src/examples`. Instructions on how to write your
-own are given in the Tutorial section.
-
-Along with specifying plugins, you need to specify the input files containing the events you wish to process.
-Note that JTest ignores these and crunches randomly generated data instead.
-
-
-The command-line flags are:
-
-| Short | Long | Meaning  |
-|:------|:-----|:---------|
-| -h    | --help               | Display help message |
-| -v    | --version            | Display version information |
-| -c    | --configs            | Display configuration parameters |
-| -l    | --loadconfigs <file> | Load configuration parameters from file |
-| -d    | --dumpconfigs <file> | Dump configuration parameters to file |
-| -b    | --benchmark          | Run JANA in benchmark mode |
-| -P    |                      | Specify a configuration parameter (see below) |
-
-
-
-The most commonly used configuration parameters are below. Your plugins can define their own parameters
-and automatically get them from the command line or config file as well.
-
-
-| Name | Description |
-|:-----|:------------|
-plugins                   | Comma-separated list of plugin filenames. JANA will look for these on the `$JANA_PLUGIN_PATH`
-nthreads                  | Size of thread team (Defaults to the number of cores on your machine)
-jana:debug_plugin_loading | Log additional information in case JANA isn't finding your plugins
-jtest:nsamples            | Number of randomly-generated events to process when running JTEST
 

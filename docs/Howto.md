@@ -20,7 +20,8 @@ Table of contents
 -----------------
 
 1.  [Download](Download.html) and [install](Installation.html) JANA
-2.  [Generate code skeletons](#Creating-code-skeletons) for projects, plugins, components, etc
+2.  [Using the JANA command-line program](#using-the-jana-cli)
+3.  [Generate code skeletons](#creating-code-skeletons) for projects, plugins, components, etc
 4.  Create a service which can be shared between different plugins
 5.  Handle both real and simulated data
 6.  Handle EPICS data
@@ -32,6 +33,51 @@ Table of contents
 12. Build and filter events ("L1 and L2 triggers")
 13. Process subevents
 14. Migrate from JANA1 to JANA2
+
+
+Using the JANA CLI
+------------------
+
+JANA is typically run like this:
+
+~~~ bash
+$JANA_HOME/bin/jana -Pplugins=JTest -Pnthreads=8 ~/data/inputfile.txt
+~~~
+
+Note that the JANA executable won't do anything until you provide plugins.
+A simple plugin is provided called JTest, which verifies that everything is working and optionally does a quick
+performance benchmark. Additional simple plugins are provided in `src/examples`. Instructions on how to write your
+own are given in the Tutorial section.
+
+Along with specifying plugins, you need to specify the input files containing the events you wish to process.
+Note that JTest ignores these and crunches randomly generated data instead.
+
+
+The command-line flags are:
+
+| Short | Long | Meaning  |
+|:------|:-----|:---------|
+| -h    | --help               | Display help message |
+| -v    | --version            | Display version information |
+| -c    | --configs            | Display configuration parameters |
+| -l    | --loadconfigs <file> | Load configuration parameters from file |
+| -d    | --dumpconfigs <file> | Dump configuration parameters to file |
+| -b    | --benchmark          | Run JANA in benchmark mode |
+| -P    |                      | Specify a configuration parameter (see below) |
+
+
+
+The most commonly used configuration parameters are below. Your plugins can define their own parameters
+and automatically get them from the command line or config file as well.
+
+
+| Name | Description |
+|:-----|:------------|
+plugins                   | Comma-separated list of plugin filenames. JANA will look for these on the `$JANA_PLUGIN_PATH`
+nthreads                  | Size of thread team (Defaults to the number of cores on your machine)
+jana:debug_plugin_loading | Log additional information in case JANA isn't finding your plugins
+jtest:nsamples            | Number of randomly-generated events to process when running JTEST
+
 
 
 Creating code skeletons
