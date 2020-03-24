@@ -226,10 +226,12 @@ void InitPlugin(JApplication* app) {{
 """
 
 plugin_root_cmakelists_txt = """
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.9)
 project({name}_plugin_project)
 
-set(CMAKE_CXX_STANDARD 14)
+if(NOT "${{CMAKE_CXX_STANDARD}}")
+  set(CMAKE_CXX_STANDARD 14)
+endif()
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)   # Enable -fPIC for all targets
 
 # Expose custom cmake modules
@@ -589,16 +591,40 @@ public:
 
 """
 
-mini_plugin_cmakelists_txt = """
+mini_standalone_plugin_cmakelists_txt = """
 
-add_library({name}_plugin SHARED {name}.cc)
+cmake_minimum_required(VERSION 3.9)
+project({name}_plugin_project)
 
+if(NOT "${{CMAKE_CXX_STANDARD}}")
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)   # Enable -fPIC for all targets
+
+# Set install directory to $JANA_HOME
+set(CMAKE_INSTALL_PREFIX $ENV{{JANA_HOME}} CACHE PATH "magic incantation" FORCE)
+
+# Find dependencies
 find_package(JANA REQUIRED)
 find_package(ROOT)
+
+# Add our code as a shared library
+add_library({name}_plugin SHARED {name}.cc)
+target_include_directories({name}_plugin PUBLIC ${{JANA_INCLUDE_DIR}} ${{ROOT_INCLUDE_DIRS}})
+target_link_libraries({name}_plugin ${{JANA_LIB}} ${{ROOT_LIBRARIES}})
+set_target_properties({name}_plugin PROPERTIES PREFIX "" OUTPUT_NAME "{name}" SUFFIX ".so")
+install(TARGETS {name}_plugin DESTINATION plugins)
+
+"""
+
+mini_project_plugin_cmakelists_txt = """
+
+add_library({name}_plugin SHARED {name}.cc)
 
 target_include_directories({name}_plugin PUBLIC ${{JANA_INCLUDE_DIR}} ${{ROOT_INCLUDE_DIRS}})
 target_link_libraries({name}_plugin ${{JANA_LIB}} ${{ROOT_LIBRARIES}})
 set_target_properties({name}_plugin PROPERTIES PREFIX "" OUTPUT_NAME "{name}" SUFFIX ".so")
+
 install(TARGETS {name}_plugin DESTINATION plugins)
 
 """
@@ -907,23 +933,35 @@ def create_root_eventprocessor(processor_name, dir_name):
         f.write(text)
 
 
-def create_mini_plugin(name):
+def create_mini_project_plugin(name):
     """Create a minimal-boilerplate JANA project plugin. Requires one argument:
        name: The name of the plugin, e.g. "TrackingEfficiency" or "trk_eff"
     """
     os.mkdir(name)
     with open(name + "/CMakeLists.txt", 'w') as f:
-        text = mini_plugin_cmakelists_txt.format(name=name)
+        text = mini_project_plugin_cmakelists_txt.format(name=name)
         f.write(text)
 
     with open(name + "/" + name + ".cc", 'w') as f:
         text = mini_plugin_cc.format(name=name)
         f.write(text)
 
+def create_mini_standalone_plugin(name):
+    """Create a minimal-boilerplate JANA standalone plugin. Requires one argument:
+       name: The name of the plugin, e.g. "TrackingEfficiency" or "trk_eff"
+    """
+    os.mkdir(name)
+    with open(name + "/CMakeLists.txt", 'w') as f:
+        text = mini_standalone_plugin_cmakelists_txt.format(name=name)
+        f.write(text)
+
+    with open(name + "/" + name + ".cc", 'w') as f:
+        text = mini_plugin_cc.format(name=name)
+        f.write(text)
 
 def print_usage():
     print("Usage: jana-generate [type] [args...]")
-    print("  type: JObject JEventSource JEventProcessor RootEventProcessor JFactory StandalonePlugin ProjectPlugin MiniPlugin Project")
+    print("  type: JObject JEventSource JEventProcessor RootEventProcessor JFactory StandalonePlugin ProjectPlugin MiniStandalonePlugin MiniProjectPlugin Project")
 
 if __name__ == '__main__':
 
@@ -938,7 +976,8 @@ if __name__ == '__main__':
                       'JFactory': create_jfactory,
                       'StandalonePlugin': create_plugin,
                       'ProjectPlugin': create_project_plugin,
-                      'MiniPlugin': create_mini_plugin,
+                      'MiniProjectPlugin': create_mini_project_plugin,
+                      'MiniStandalonePlugin': create_mini_standalone_plugin,
                       'Executable': create_executable,
                       'Project': create_project,
                       }
