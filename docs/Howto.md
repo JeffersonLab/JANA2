@@ -111,9 +111,12 @@ Project plugins include one JEventProcessor by default.
 #### Mini plugins
 Mini plugins are project plugins which have been stripped down to a single `cc` file. They are useful
 when someone wants to do a quick analysis and doesn't need or want the additional boilerplate. They
-include one JEventProcessor with support for ROOT histograms. 
+include one JEventProcessor with support for ROOT histograms. There are two options: 
 
-```jana-generate.py MiniPlugin PluginNameInCamelCase```
+```
+jana-generate.py MiniStandalonePlugin PluginNameInCamelCase
+jana-generate.py MiniProjectPlugin PluginNameInCamelCase
+```
 
 #### Standalone plugins 
 Standalone plugins are useful for getting started quickly. They are also effective when someone wishes to 
