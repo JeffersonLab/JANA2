@@ -56,147 +56,172 @@
 /// metadata structure, JMetadata<T> for that T. This is essential for retrieving metadata from
 /// JFactoryT's without breaking the Liskov substitution property.
 template<typename T>
-struct JMetadata {};
+struct JMetadata {
+};
 
 template<typename T>
-class JFactoryT : public JFactory {
+class JFactoryT: public JFactory {
 public:
 
-    using IteratorType = typename std::vector<T*>::const_iterator;
-    using PairType = std::pair<IteratorType, IteratorType>;
+	using IteratorType = typename std::vector<T*>::const_iterator;
+	using PairType = std::pair<IteratorType, IteratorType>;
 
+	JFactoryT(const std::string& aName = JTypeInfo::demangle<T>(), const std::string& aTag = "") :
+			JFactory(aName, aTag) {
+	}
 
-    JFactoryT(const std::string& aName = JTypeInfo::demangle<T>(), const std::string& aTag = "")
-    : JFactory(aName, aTag) {}
+	~JFactoryT() override = default;
 
-    ~JFactoryT() override = default;
+	void Init() override {
+	}
+	void ChangeRun(const std::shared_ptr<const JEvent>& aEvent) override {
+	}
+	void Process(const std::shared_ptr<const JEvent>& aEvent) override {
+		// TODO: Debate best thing to do in this case. Consider fa250WaveboardV1Hit
+		LOG << "Dummy factory created but nothing was Inserted() or Set()." << LOG_END;
+		//throw JException("Dummy factory created but nothing was Inserted() or Set().");
+			}
 
+			std::type_index GetObjectType(void) const override {
+				return std::type_index(typeid(T));
+			}
 
-    void Init() override {}
-    void ChangeRun(const std::shared_ptr<const JEvent>& aEvent) override {}
-    void Process(const std::shared_ptr<const JEvent>& aEvent) override {
-        // TODO: Debate best thing to do in this case. Consider fa250WaveboardV1Hit
-        LOG << "Dummy factory created but nothing was Inserted() or Set()." << LOG_END;
-        //throw JException("Dummy factory created but nothing was Inserted() or Set().");
-    }
+			//-------------
+			// Get
+			//-------------
+			std::vector<JObject*>& GetAllObjectP(const std::shared_ptr<const JEvent>& event, JApplication* app, uint64_t run_number) override{
+				/// Return a STL vector of pointers to the objects produced by the
+				/// factory. The pointers are cast as JObject* so this can be
+				/// accessed through the JFactory base class. This just
+				/// dispatches to the type specific GetOrCreate
+				/// method.
+				///
+				/// Probably this won't work with multiple inheritance
+				std::vector<const T*> _data;
+				auto iters=this->GetOrCreate(event,app,run_number);
+				for (auto it=iters.first; it!=iters.second; ++it) {
+					_data.push_back(*it);
+				}
+				// Copy the pointers into a vector of void*s.
+				std::vector<JObject*> _vdata;
+				for(unsigned int i=0;i<_data.size();i++) {
+					JObject *vpointer = (JObject*)(_data[i]);
+					_vdata.push_back(vpointer);
+				}
+				return _vdata;
+			}
 
+			/// GetOrCreate handles all the preconditions and postconditions involved in calling the user-defined Open(),
+			/// ChangeRun(), and Process() methods. These include making sure the JFactory JApplication is set, Init() is called
+			/// exactly once, exceptions are tagged with the originating plugin and eventsource, ChangeRun() is
+			/// called if and only if the run number changes, etc.
+			PairType GetOrCreate(const std::shared_ptr<const JEvent>& event, JApplication* app, uint64_t run_number) {
 
-    std::type_index GetObjectType(void) const override {
-        return std::type_index(typeid(T));
-    }
+				//std::lock_guard<std::mutex> lock(mMutex);
+				if (mApp == nullptr) {
+					mApp = app;
+				}
+				switch (mStatus) {
+					case Status::Uninitialized:
+					try {
+						std::call_once(mInitFlag, &JFactory::Init, this);
+					}
+					catch (JException& ex) {
+						ex.plugin_name = mPluginName;
+						ex.component_name = mFactoryName;
+						throw ex;
+					}
+					catch (...) {
+						auto ex = JException("Unknown exception in JFactoryT::Init()");
+						ex.nested_exception = std::current_exception();
+						ex.plugin_name = mPluginName;
+						ex.component_name = mFactoryName;
+						throw ex;
+					}
+					case Status::Unprocessed:
+					if (mPreviousRunNumber != run_number) {
+						ChangeRun(event);
+						mPreviousRunNumber = run_number;
+					}
+					Process(event);
+					mStatus = Status::Processed;
+					case Status::Processed:
+					case Status::Inserted:
+					return std::make_pair(mData.cbegin(), mData.cend());
+					default:
+					throw JException("Enum is set to a garbage value somehow");
+				}
+			}
 
-    /// GetOrCreate handles all the preconditions and postconditions involved in calling the user-defined Open(),
-    /// ChangeRun(), and Process() methods. These include making sure the JFactory JApplication is set, Init() is called
-    /// exactly once, exceptions are tagged with the originating plugin and eventsource, ChangeRun() is
-    /// called if and only if the run number changes, etc.
-    PairType GetOrCreate(const std::shared_ptr<const JEvent>& event, JApplication* app, uint64_t run_number) {
+			/// Please use the typed setters instead whenever possible
+			void Set(std::vector<JObject*>& aData) override {
+				ClearData();
+				for (auto jobj : aData) {
+					T* casted = dynamic_cast<T*>(jobj);
+					assert(casted != nullptr);
+					mData.push_back(casted);
+				}
+			}
 
-        //std::lock_guard<std::mutex> lock(mMutex);
-        if (mApp == nullptr) {
-            mApp = app;
-        }
-        switch (mStatus) {
-            case Status::Uninitialized:
-                try {
-                    std::call_once(mInitFlag, &JFactory::Init, this);
-                }
-                catch (JException& ex) {
-                    ex.plugin_name = mPluginName;
-                    ex.component_name = mFactoryName;
-                    throw ex;
-                }
-                catch (...) {
-                    auto ex = JException("Unknown exception in JFactoryT::Init()");
-                    ex.nested_exception = std::current_exception();
-                    ex.plugin_name = mPluginName;
-                    ex.component_name = mFactoryName;
-                    throw ex;
-                }
-            case Status::Unprocessed:
-                if (mPreviousRunNumber != run_number) {
-                    ChangeRun(event);
-                    mPreviousRunNumber = run_number;
-                }
-                Process(event);
-                mStatus = Status::Processed;
-            case Status::Processed:
-            case Status::Inserted:
-                return std::make_pair(mData.cbegin(), mData.cend());
-            default:
-                throw JException("Enum is set to a garbage value somehow");
-        }
-    }
+			/// Please use the typed setters instead whenever possible
+			void Insert(JObject* aDatum) override {
+				T* casted = dynamic_cast<T*>(aDatum);
+				assert(casted != nullptr);
+				mData.push_back(casted);
+				mStatus = Status::Inserted;
+				// TODO: assert correct mStatus precondition
+			}
 
-    /// Please use the typed setters instead whenever possible
-    void Set(std::vector<JObject*>& aData) override {
-        ClearData();
-        for (auto jobj : aData) {
-            T* casted = dynamic_cast<T*>(jobj);
-            assert(casted != nullptr);
-            mData.push_back(casted);
-        }
-    }
+			void Set(const std::vector<T*>& aData) {
+				ClearData();
+				mData = aData;
+				mStatus = Status::Inserted;
+			}
 
-    /// Please use the typed setters instead whenever possible
-    void Insert(JObject* aDatum) override {
-        T* casted = dynamic_cast<T*>(aDatum);
-        assert(casted != nullptr);
-        mData.push_back(casted);
-        mStatus = Status::Inserted;
-        // TODO: assert correct mStatus precondition
-    }
+			void Set(std::vector<T*>&& aData) {
+				ClearData();
+				mData = std::move(aData);
+				mStatus = Status::Inserted;
+			}
 
-    void Set(const std::vector<T*>& aData) {
-        ClearData();
-        mData = aData;
-        mStatus = Status::Inserted;
-    }
+			void Insert(T* aDatum) {
+				mData.push_back(aDatum);
+				mStatus = Status::Inserted;
+			}
 
-    void Set(std::vector<T*>&& aData) {
-        ClearData();
-        mData = std::move(aData);
-        mStatus = Status::Inserted;
-    }
+			void ClearData() override {
 
-    void Insert(T* aDatum) {
-        mData.push_back(aDatum);
-        mStatus = Status::Inserted;
-    }
+				// ClearData won't do anything if Init() hasn't been called
+				if (mStatus == Status::Uninitialized) {
+					return;
+				}
+				// ClearData() does nothing if persistent flag is set.
+				// User must manually recycle data, e.g. during ChangeRun()
+				if (TestFactoryFlag(JFactory_Flags_t::PERSISTENT)) {
+					return;
+				}
 
-    void ClearData() override {
+				// Assuming we _are_ the object owner, delete the underlying jobjects
+				if (!TestFactoryFlag(JFactory_Flags_t::NOT_OBJECT_OWNER)) {
+					for (auto p : mData) delete p;
+				}
+				mData.clear();
+				mStatus = Status::Unprocessed;
+			}
 
-        // ClearData won't do anything if Init() hasn't been called
-        if (mStatus == Status::Uninitialized) {
-            return;
-        }
-        // ClearData() does nothing if persistent flag is set.
-        // User must manually recycle data, e.g. during ChangeRun()
-        if (TestFactoryFlag(JFactory_Flags_t::PERSISTENT)) {
-            return;
-        }
+			/// Set the JFactory's metadata. This is meant to be called by user during their JFactoryT::Process
+			/// Metadata will *not* be cleared on ClearData(), but will be destroyed when the JFactoryT is.
+			void SetMetadata(JMetadata<T> metadata) {mMetadata = metadata;}
 
-        // Assuming we _are_ the object owner, delete the underlying jobjects
-        if (!TestFactoryFlag(JFactory_Flags_t::NOT_OBJECT_OWNER)) {
-            for (auto p : mData) delete p;
-        }
-        mData.clear();
-        mStatus = Status::Unprocessed;
-    }
+			/// Get the JFactory's metadata. This is meant to be called by user during their JFactoryT::Process
+			/// and also used by JEvent under the hood.
+			/// Metadata will *not* be cleared on ClearData(), but will be destroyed when the JFactoryT is.
+			JMetadata<T> GetMetadata() {return mMetadata;}
 
-    /// Set the JFactory's metadata. This is meant to be called by user during their JFactoryT::Process
-    /// Metadata will *not* be cleared on ClearData(), but will be destroyed when the JFactoryT is.
-    void SetMetadata(JMetadata<T> metadata) { mMetadata = metadata; }
-
-    /// Get the JFactory's metadata. This is meant to be called by user during their JFactoryT::Process
-    /// and also used by JEvent under the hood.
-    /// Metadata will *not* be cleared on ClearData(), but will be destroyed when the JFactoryT is.
-    JMetadata<T> GetMetadata() { return mMetadata; }
-
-
-protected:
-    std::vector<T*> mData;
-    JMetadata<T> mMetadata;
-};
+		protected:
+			std::vector<T*> mData;
+			JMetadata<T> mMetadata;
+		};
 
 #endif // _JFactoryT_h_
 

@@ -62,104 +62,118 @@ class JApplication;
 class JFactory {
 public:
 
-    enum JFactory_Flags_t {
-        JFACTORY_NULL = 0x00,
-        PERSISTENT = 0x01,
-        WRITE_TO_OUTPUT = 0x02,
-        NOT_OBJECT_OWNER = 0x04
-    };
+	enum JFactory_Flags_t {
+		JFACTORY_NULL = 0x00, PERSISTENT = 0x01, WRITE_TO_OUTPUT = 0x02, NOT_OBJECT_OWNER = 0x04
+	};
 
-    JFactory(std::string aName, std::string aTag = "")
-    : mObjectName(std::move(aName)), mTag(std::move(aTag)), mStatus(Status::Uninitialized) {};
+	JFactory(std::string aName, std::string aTag = "") :
+			mObjectName(std::move(aName)), mTag(std::move(aTag)), mStatus(Status::Uninitialized) {
+	}
+	;
 
-    virtual ~JFactory() = default;
+	virtual ~JFactory() = default;
 
-    std::string GetName() const { return mObjectName; }   // TODO: This is the JObject class name, right?
+	std::string GetName() const {
+		return mObjectName;
+	}   // TODO: This is the JObject class name, right?
 
-    std::string GetTag() const { return mTag; }
+	std::string GetTag() const {
+		return mTag;
+	}
 
-    uint32_t GetPreviousRunNumber(void) const { return mPreviousRunNumber; }
+	uint32_t GetPreviousRunNumber(void) const {
+		return mPreviousRunNumber;
+	}
 
-    void SetPreviousRunNumber(uint32_t aRunNumber) { mPreviousRunNumber = aRunNumber; }
+	void SetPreviousRunNumber(uint32_t aRunNumber) {
+		mPreviousRunNumber = aRunNumber;
+	}
 
-    /// Get all flags in the form of a single word
-    inline uint32_t GetFactoryFlags(void) { return mFlags; }
+	/// Get all flags in the form of a single word
+	inline uint32_t GetFactoryFlags(void) {
+		return mFlags;
+	}
 
-    /// Set a flag (or flags)
-    inline void SetFactoryFlag(JFactory_Flags_t f) {
-        mFlags |= (uint32_t) f;
-    }
+	/// Set a flag (or flags)
+	inline void SetFactoryFlag(JFactory_Flags_t f) {
+		mFlags |= (uint32_t) f;
+	}
 
-    /// Clear a flag (or flags)
-    inline void ClearFactoryFlag(JFactory_Flags_t f) {
-        mFlags &= ~(uint32_t) f;
-    }
+	/// Clear a flag (or flags)
+	inline void ClearFactoryFlag(JFactory_Flags_t f) {
+		mFlags &= ~(uint32_t) f;
+	}
 
-    /// Test if a flag (or set of flags) is set
-    inline bool TestFactoryFlag(JFactory_Flags_t f) {
-        return (mFlags & (uint32_t) f) == (uint32_t) f;
-    }
+	/// Test if a flag (or set of flags) is set
+	inline bool TestFactoryFlag(JFactory_Flags_t f) {
+		return (mFlags & (uint32_t) f) == (uint32_t) f;
+	}
 
+	// Overloaded by JFactoryT
+	virtual std::type_index GetObjectType() const = 0;
 
+	virtual void ClearData() = 0;
 
-    // Overloaded by JFactoryT
-    virtual std::type_index GetObjectType() const = 0;
+	// Overloaded by user Factories
+	virtual void Init() {
+	}
 
-    virtual void ClearData() = 0;
+	virtual void ChangeRun(const std::shared_ptr<const JEvent> &aEvent) {
+	}
 
+	virtual void Process(const std::shared_ptr<const JEvent> &aEvent) {
+	}
 
+	// Copy/Move objects into factory
+	template<typename T>
+	void Set(std::vector<T *> &items) {
+		for (T *item : items) {
+			Insert(item);
+		}
+	}
+	// Another option:
+	// Get rid of Set(std::vector<JObject*>& items) completely.
+	// Have virtual Set<T>(std::vector<T*>& items) { throw JException("Wrong type!"); }
+	// When T matches JFactoryT<T>, then this dispatches to the JFactoryT<T>::Set()
+	// The main downside I see right now is a potentially huge vtable
 
-    // Overloaded by user Factories
-    virtual void Init() {}
+	/// JApplication setter. This is meant to be used under the hood.
+	void SetApplication(JApplication* app) {
+		mApp = app;
+	}
 
-    virtual void ChangeRun(const std::shared_ptr<const JEvent> &aEvent) {}
+	/// JApplication getter. This is meant to be called by user-defined JFactories which need to
+	/// acquire parameter values or services from JFactory::Init()
+	JApplication* GetApplication() {
+		return mApp;
+	}
 
-    virtual void Process(const std::shared_ptr<const JEvent> &aEvent) {}
-
-
-
-    // Copy/Move objects into factory
-    template<typename T>
-    void Set(std::vector<T *> &items) {
-        for (T *item : items) {
-            Insert(item);
-        }
-    }
-    // Another option:
-    // Get rid of Set(std::vector<JObject*>& items) completely.
-    // Have virtual Set<T>(std::vector<T*>& items) { throw JException("Wrong type!"); }
-    // When T matches JFactoryT<T>, then this dispatches to the JFactoryT<T>::Set()
-    // The main downside I see right now is a potentially huge vtable
-
-
-
-    /// JApplication setter. This is meant to be used under the hood.
-    void SetApplication(JApplication* app) { mApp = app; }
-
-    /// JApplication getter. This is meant to be called by user-defined JFactories which need to
-    /// acquire parameter values or services from JFactory::Init()
-    JApplication* GetApplication() { return mApp; }
-
+	/// This gets typecast in the template member function
+	/// also named "Get()" in the JEventLoop class. Since there
+	/// is no base class for vector objects, we give it something
+	/// that should at least be the same size i.e. vector<void*>
+	virtual std::vector<JObject*>& GetAllObjectP(const std::shared_ptr<const JEvent>& event, JApplication* app, uint64_t run_number)=0;
 
 protected:
-    virtual void Set(std::vector<JObject *> &data) = 0;
+	virtual void Set(std::vector<JObject *> &data) = 0;
+	virtual void Insert(JObject *data) = 0;
 
-    virtual void Insert(JObject *data) = 0;
+	std::string mPluginName;
+	std::string mFactoryName;
+	std::string mObjectName;
+	std::string mTag;
+	uint32_t mFlags = 0;
+	uint32_t mPreviousRunNumber = -1;
+	JApplication* mApp = nullptr;
 
-    std::string mPluginName;
-    std::string mFactoryName;
-    std::string mObjectName;
-    std::string mTag;
-    uint32_t mFlags = 0;
-    uint32_t mPreviousRunNumber = -1;
-    JApplication* mApp = nullptr;
+	enum class Status {
+		Uninitialized, Unprocessed, Processed, Inserted
+	};
+	mutable Status mStatus = Status::Uninitialized;
+	mutable std::mutex mMutex;
 
-    enum class Status {Uninitialized, Unprocessed, Processed, Inserted};
-    mutable Status mStatus = Status::Uninitialized;
-    mutable std::mutex mMutex;
-
-    // Used to make sure Init is called only once
-    std::once_flag mInitFlag;
+	// Used to make sure Init is called only once
+	std::once_flag mInitFlag;
 };
 
 #endif // _JFactory_h_
