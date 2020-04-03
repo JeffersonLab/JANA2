@@ -128,7 +128,7 @@ public:
         auto first_evt_nr = m_nskip;
         auto last_evt_nr = m_nevents + m_nskip;
         try {
-            switch (m_status) {
+            switch (m_status.load()) {
 
                 case SourceStatus::Unopened: DoInitialize(); // Fall-through to Opened afterwards
 
