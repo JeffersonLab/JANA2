@@ -652,6 +652,65 @@ install(TARGETS {name}_plugin DESTINATION plugins)
 
 """
 
+mini_project_plugin_cmakelists_txt_noroot = """
+
+add_library({name}_plugin SHARED {name}.cc)
+
+target_include_directories({name}_plugin PUBLIC ${{JANA_INCLUDE_DIR}})
+target_link_libraries({name}_plugin ${{JANA_LIB}})
+set_target_properties({name}_plugin PROPERTIES PREFIX "" OUTPUT_NAME "{name}" SUFFIX ".so")
+
+install(TARGETS {name}_plugin DESTINATION plugins)
+
+"""
+
+mini_plugin_cc_noroot = """
+#include <JANA/JEventProcessor.h>
+
+class {name}Processor: public JEventProcessor {{
+private:
+    std::string m_tracking_alg = "genfit";
+    std::mutex m_mutex;
+
+public:
+    {name}Processor() {{
+        SetTypeName(NAME_OF_THIS); // Provide JANA with this class's name
+    }}
+    
+    void Init() override {{
+        auto app = GetApplication();
+
+        /// Set parameters to control which JFactories you use
+        app->SetDefaultParameter("tracking_alg", m_tracking_alg);
+    }}
+
+    void Process(const std::shared_ptr<const JEvent>& event) override {{
+
+        /// Acquire any per-event results you need for your analysis
+        // auto reco_tracks = event->Get<RecoTrack>(m_tracking_alg);
+
+        /// Inside the lock, update any shared state, e.g. histograms
+        std::lock_guard<std::mutex> lock(m_mutex);
+        
+        // for (auto reco_track : reco_tracks) {{
+        //    histogram->Fill(reco_track->p.Pt());
+        // }}
+    }}
+
+    void Finish() override {{
+        // Write data and close resources
+    }}
+}};
+    
+extern "C" {{
+    void InitPlugin(JApplication *app) {{
+        InitJANAPlugin(app);
+        app->Add(new {name}Processor);
+    }}
+}}
+    
+"""
+
 mini_plugin_cc = """
 #include <JANA/JEventProcessor.h>
 #include <JANA/Services/JGlobalRootLock.h>
@@ -793,9 +852,6 @@ def create_plugin(name, is_standalone=True, is_mini=True, include_root=True, inc
     include_root = boolify(include_root, "include_root")
     include_tests = boolify(include_tests, "include_tests")
 
-    if not include_root and is_mini:
-        raise Exception("Not supported yet!")
-
     os.mkdir(name)
 
     cmakelists = ""
@@ -828,7 +884,10 @@ def create_plugin(name, is_standalone=True, is_mini=True, include_root=True, inc
         cmakelists += plugin_cmakelists_txt.format(name=name)
 
     elif not include_root and is_mini:
-        pass
+        cmakelists += mini_project_plugin_cmakelists_txt_noroot.format(name=name)  # TODO: Remove ROOT dep
+        with open(name + "/" + name + ".cc", 'w') as f:
+            text = mini_plugin_cc_noroot.format(name=name)
+            f.write(text)
 
     else: # not include_root and not is_mini:
 
