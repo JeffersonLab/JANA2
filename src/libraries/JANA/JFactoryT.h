@@ -67,7 +67,9 @@ public:
 
 
     JFactoryT(const std::string& aName = JTypeInfo::demangle<T>(), const std::string& aTag = "")
-    : JFactory(aName, aTag) {}
+    : JFactory(aName, aTag) {
+        EnableGetAs<T>();
+    }
 
     ~JFactoryT() override = default;
 
@@ -165,7 +167,9 @@ public:
 
 
     /// EnableGetAs generates a vtable entry so that users may extract the
-    /// contents of this JFactoryT using JFactory
+    /// contents of this JFactoryT from the type-erased JFactory. The user has to manually specify which upcasts
+    /// to allow, and they have to do so for each instance. It is recommended to do so in the constructor.
+    /// Note that EnableGetAs<T>() is called automatically.
     template <typename S> void EnableGetAs ();
 
 
