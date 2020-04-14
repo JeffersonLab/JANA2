@@ -112,6 +112,18 @@ JFactory* JFactorySet::GetFactory(std::type_index aObjectType, const std::string
 }
 
 //---------------------------------
+// GetFactory
+//---------------------------------
+std::vector<JFactory*> JFactorySet::GetAll() const {
+    std::vector<JFactory*> results;
+    for (auto p : mFactories) {
+        results.push_back(p.second);
+    }
+    return results;
+}
+
+
+//---------------------------------
 // Merge
 //---------------------------------
 void JFactorySet::Merge(JFactorySet &aFactorySet)

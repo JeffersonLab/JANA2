@@ -163,6 +163,12 @@ public:
         mStatus = Status::Inserted;
     }
 
+
+    /// EnableGetAs generates a vtable entry so that users may extract the
+    /// contents of this JFactoryT using JFactory
+    template <typename S> void EnableGetAs ();
+
+
     void ClearData() override {
 
         // ClearData won't do anything if Init() hasn't been called
@@ -197,6 +203,24 @@ protected:
     std::vector<T*> mData;
     JMetadata<T> mMetadata;
 };
+
+template<typename T>
+template<typename S>
+void JFactoryT<T>::EnableGetAs() {
+
+    auto upcast_lambda = [this]() {
+        std::vector<S*> results;
+        for (auto t : mData) {
+            results.push_back(static_cast<S*>(t));
+        }
+        return results;
+    };
+
+    auto key = std::type_index(typeid(S));
+    using upcast_fn_t = std::function<std::vector<S*>()>;
+    auto upcast_fn = new upcast_fn_t(upcast_lambda);
+    mUpcastVTable[key] = upcast_fn;
+}
 
 #endif // _JFactoryT_h_
 

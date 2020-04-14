@@ -99,7 +99,10 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 		template<class T> typename JFactoryT<T>::PairType GetIterators(const std::string& aTag = "") const;
         template<class T> std::vector<const T*> GetAll() const;
 
-		// Insert
+        template<class T>
+        std::map<std::pair<std::string,std::string>,std::vector<T*>> GetAllChildren() const;
+
+    // Insert
 		template <class T> void Insert(T* item, const std::string& aTag = "") const;
 		template <class T> void Insert(const std::vector<T*>& items, const std::string& tag = "") const;
 
@@ -276,6 +279,25 @@ std::vector<const T*> JEvent::GetAll() const {
         }
     }
     return vec; // Assumes RVO
+}
+
+
+// GetAllChildren will furnish a map { (type_name,tag_name) : [BaseClass*] } containing all JFactoryT<T> data where
+// T inherits from BaseClass. Note that this _won't_ compute any results (unlike GetAll) because this is meant for
+// things like visualizing and persisting DSTs.
+// TODO: This is conceptually inconsistent with GetAll. Reconcile.
+
+template<class S>
+std::map<std::pair<std::string, std::string>, std::vector<S*>> JEvent::GetAllChildren() const {
+    std::map<std::pair<std::string, std::string>, std::vector<S*>> results;
+    for (JFactory* factory : mFactorySet->GetAll()) {
+        auto val = factory->GetAs<S>();
+        if (!val.empty()) {
+            auto key = std::make_pair(factory->GetName(), factory->GetTag());
+            results.insert(std::make_pair(key, val));
+        }
+    }
+    return results;
 }
 
 

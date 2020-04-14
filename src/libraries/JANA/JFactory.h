@@ -54,6 +54,7 @@
 #include <atomic>
 #include <vector>
 #include <mutex>
+#include <unordered_map>
 
 class JEvent;
 class JObject;
@@ -125,12 +126,18 @@ public:
             Insert(item);
         }
     }
-    // Another option:
-    // Get rid of Set(std::vector<JObject*>& items) completely.
-    // Have virtual Set<T>(std::vector<T*>& items) { throw JException("Wrong type!"); }
-    // When T matches JFactoryT<T>, then this dispatches to the JFactoryT<T>::Set()
-    // The main downside I see right now is a potentially huge vtable
 
+    /// Access the encapsulated data, performing an upcast if necessary. This is useful for extracting data from
+    /// all JFactories<T> where T extends a parent class S, such as JObject or TObject, in contexts where T is not known
+    /// or it would introduce an unwanted coupling. The main application is for building DSTs.
+    ///
+    /// Be aware of the following caveats:
+    /// - The factory's object type must not use virtual inheritance.
+    /// - If JFactory::Process hasn't already been called, this will return an empty vector. This will NOT call JFactory::Process.
+    /// - Someone must call JFactoryT<T>::EnableGetAs<S>, preferably the constructor. Otherwise, this will return an empty vector.
+    /// - If S isn't a base class of T, this will return an empty vector.
+    template<typename S>
+    std::vector<S*> GetAs();
 
 
     /// JApplication setter. This is meant to be used under the hood.
@@ -153,6 +160,7 @@ protected:
     uint32_t mFlags = 0;
     uint32_t mPreviousRunNumber = -1;
     JApplication* mApp = nullptr;
+    std::unordered_map<std::type_index, void*> mUpcastVTable;
 
     enum class Status {Uninitialized, Unprocessed, Processed, Inserted};
     mutable Status mStatus = Status::Uninitialized;
@@ -161,6 +169,27 @@ protected:
     // Used to make sure Init is called only once
     std::once_flag mInitFlag;
 };
+
+// Because C++ doesn't support templated virtual functions, we implement our own dispatch table, mUpcastVTable.
+// This means that the JFactoryT is forced to manually populate this table by calling JFactoryT<T>::EnableGetAs.
+// We have the option to make the vtable be a static member of JFactoryT<T>, but we have chosen not to because:
+//
+//   1. It would be inconsistent with the fact that the user is supposed to call EnableGetAs in the ctor
+//   2. People in the future may want to generalize GetAs to support user-defined S* -> T* conversions (which I don't recommend)
+//   3. The size of the vtable is expected to be very small (<10 elements, most likely 2)
+
+template<typename S>
+std::vector<S*> JFactory::GetAs() {
+    std::vector<S*> results;
+    auto ti = std::type_index(typeid(S));
+    auto search = mUpcastVTable.find(ti);
+    if (search != mUpcastVTable.end()) {
+        using upcast_fn_t = std::function<std::vector<S*>()>;
+        auto upcast_fn = reinterpret_cast<upcast_fn_t*>(search->second);
+        results = (*upcast_fn)();
+    }
+    return results;
+}
 
 #endif // _JFactory_h_
 
