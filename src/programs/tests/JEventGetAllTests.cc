@@ -150,3 +150,35 @@ TEST_CASE("JFactoryGetAs") {
         REQUIRE(multiples[0]->multiple == 49);
     }
 }
+
+TEST_CASE("JEventGetAllChildren") {
+
+    auto event = std::make_shared<JEvent>();
+    event->SetFactorySet(new JFactorySet);
+
+    SECTION("Single-item JEvent::Insert() can be retrieved via JEvent::GetAllChildren()") {
+        auto b = new Base(22);
+        auto d = new Derived(33,44);
+        auto u = new Unrelated(19);
+        auto m = new Multiple(1,2,3,4);
+
+        event->Insert(b);
+        event->Insert(u);
+        event->Insert(d)->EnableGetAs<Base>();
+
+        auto f = event->Insert(m);
+        f->EnableGetAs<Base>();
+        f->EnableGetAs<Derived>();
+        f->EnableGetAs<Unrelated>();
+
+        auto base_map = event->GetAllChildren<Base>();
+        REQUIRE(base_map.size() == 3);
+        REQUIRE(base_map[{"Base",""}].size() == 1);
+        REQUIRE(base_map[{"Base",""}][0]->base == 22);
+        REQUIRE(base_map[{"Derived",""}].size() == 1);
+        REQUIRE(base_map[{"Derived",""}][0]->base == 33);
+        REQUIRE(base_map[{"Multiple",""}].size() == 1);
+        REQUIRE(base_map[{"Multiple",""}][0]->base == 1);
+    }
+
+}

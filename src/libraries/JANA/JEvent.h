@@ -102,9 +102,9 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
         template<class T>
         std::map<std::pair<std::string,std::string>,std::vector<T*>> GetAllChildren() const;
 
-    // Insert
-		template <class T> void Insert(T* item, const std::string& aTag = "") const;
-		template <class T> void Insert(const std::vector<T*>& items, const std::string& tag = "") const;
+        // Insert
+		template <class T> JFactoryT<T>* Insert(T* item, const std::string& aTag = "") const;
+		template <class T> JFactoryT<T>* Insert(const std::vector<T*>& items, const std::string& tag = "") const;
 
 		//SETTERS
 		void SetRunNumber(uint32_t aRunNumber){mRunNumber = aRunNumber;}
@@ -137,7 +137,7 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 /// Repeated calls to Insert() will append to the previous data rather than overwrite it,
 /// which saves the user from having to allocate a throwaway vector and requires less error handling.
 template <class T>
-inline void JEvent::Insert(T* item, const std::string& tag) const {
+inline JFactoryT<T>* JEvent::Insert(T* item, const std::string& tag) const {
 
 	auto factory = mFactorySet->GetFactory<T>(tag);
 	if (factory == nullptr) {
@@ -145,10 +145,11 @@ inline void JEvent::Insert(T* item, const std::string& tag) const {
 		mFactorySet->Add(factory);
 	}
 	factory->Insert(item);
+	return factory;
 }
 
 template <class T>
-inline void JEvent::Insert(const std::vector<T*>& items, const std::string& tag) const {
+inline JFactoryT<T>* JEvent::Insert(const std::vector<T*>& items, const std::string& tag) const {
 
 	auto factory = mFactorySet->GetFactory<T>(tag);
 	if (factory == nullptr) {
@@ -158,6 +159,7 @@ inline void JEvent::Insert(const std::vector<T*>& items, const std::string& tag)
 	for (T* item : items) {
 		factory->Insert(item);
 	}
+	return factory;
 }
 
 /// GetFactory() should be used with extreme care because it subverts the JEvent abstraction.
