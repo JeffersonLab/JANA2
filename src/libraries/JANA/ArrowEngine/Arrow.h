@@ -80,16 +80,6 @@ public:
     void execute() override {};
 };
 
-template <typename T, typename U>
-class GatherArrow : public ArrowWithBasicOutbox<U> {
-    std::vector<JMailbox<T>> m_inboxes;
-    using f_t = std::function<U(T,int)>;
-    const f_t m_f;
-public:
-    GatherArrow(f_t f, int inbox_count) : m_f(f), m_inboxes(inbox_count) {};
-    void execute() override {};
-};
-
 #if __cpp_lib_variant
 template <typename T, typename U, typename V>
 class SplitArrow : public ArrowWithBasicInbox<T> {
@@ -131,13 +121,6 @@ void attach(SplitArrow<T,U,V>& upstream, ArrowWithBasicInbox<U>& downstream) {
     downstream.active_upstreams += 1;
 }
 #endif
-
-template <typename T, typename U>
-void attach(ArrowWithBasicOutbox<T>& upstream, GatherArrow<T,U>& downstream, int i) {
-    upstream.m_outboxes.push_back(&downstream.m_inboxes[i]);
-    upstream.downstreams.push_back(&downstream);
-    downstream.active_upstreams += 1;
-}
 
 template <typename T, typename U, typename V>
 void attach(ArrowWithBasicOutbox<T>& upstream, MergeArrow<T,U,V>& downstream) {
