@@ -6,6 +6,7 @@
 using namespace jana::arrowengine;
 
 TEST_CASE("ArrowEngineTests") {
-   REQUIRE (0 == 1);
+    StageArrow<int,double>([](int x) { return x + 1.0; });
+    REQUIRE (0 == 1);
 }
 

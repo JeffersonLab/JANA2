@@ -17,16 +17,17 @@ class Arrow {
 
 public:
     virtual void execute() = 0;
+    virtual ~Arrow() = default;
 };
 
 template <typename T>
-class ArrowWithBasicOutbox : virtual Arrow {
+class ArrowWithBasicOutbox : public virtual Arrow {
 protected:
     std::vector<JMailbox<T>*> m_outboxes; // Outboxes are owned by the downstream arrows
 };
 
 template <typename T>
-class ArrowWithBasicInbox : virtual Arrow {
+class ArrowWithBasicInbox : public virtual Arrow {
 protected:
     JMailbox<T> m_inbox; // Arrow owns its inbox(es), but not its outbox(es)
 };
