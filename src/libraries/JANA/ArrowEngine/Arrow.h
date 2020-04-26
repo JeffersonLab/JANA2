@@ -10,51 +10,45 @@
 namespace jana {
 namespace arrowengine {
 
-class Arrow {
+struct Arrow {
     std::string name;
     std::atomic_int active_upstream_count;
     std::vector<Arrow*> downstreams;
 
-public:
     virtual void execute() = 0;
     virtual ~Arrow() = default;
 };
 
 template <typename T>
-class ArrowWithBasicOutbox : public virtual Arrow {
-protected:
+struct ArrowWithBasicOutbox : public virtual Arrow {
     std::vector<JMailbox<T>*> m_outboxes; // Outboxes are owned by the downstream arrows
 };
 
 template <typename T>
-class ArrowWithBasicInbox : public virtual Arrow {
-protected:
+struct ArrowWithBasicInbox : public virtual Arrow {
     JMailbox<T> m_inbox; // Arrow owns its inbox(es), but not its outbox(es)
 };
 
 template <typename T>
-class SourceArrow : public ArrowWithBasicOutbox<T> {
+struct SourceArrow : public ArrowWithBasicOutbox<T> {
     using f_t = std::function<T(void)>;
     const f_t m_f;
-public:
     SourceArrow(f_t f) : m_f(f) {};
     void execute() override {};
 };
 
 template <typename T>
-class SinkArrow : public ArrowWithBasicInbox<T> {
+struct SinkArrow : public ArrowWithBasicInbox<T> {
     using f_t = std::function<void(T)>;
     const f_t m_f;
-public:
     SinkArrow(f_t f) : m_f(f) {}
     void execute() override {};
 };
 
 template <typename T, typename U>
-class StageArrow : public ArrowWithBasicInbox<T>, public ArrowWithBasicOutbox<U> {
+struct StageArrow : public ArrowWithBasicInbox<T>, public ArrowWithBasicOutbox<U> {
     using f_t = std::function<U(T)>;
     const f_t m_f;
-public:
     StageArrow(f_t f) : m_f(f) {};
     void execute() override {};
 };
@@ -73,10 +67,9 @@ public:
 #endif
 
 template <typename T, typename U>
-class ScatterArrow : public ArrowWithBasicInbox<T>, public ArrowWithBasicOutbox<U> {
+struct ScatterArrow : public ArrowWithBasicInbox<T>, public ArrowWithBasicOutbox<U> {
     using f_t = std::function<std::pair<U,int>(T)>;
     const f_t m_f;
-public:
     ScatterArrow(f_t f) : m_f(f) {};
     void execute() override {};
 };
@@ -95,7 +88,7 @@ public:
 #endif
 
 template <typename T, typename U, typename V>
-class MergeArrow : public ArrowWithBasicOutbox<V> {
+struct MergeArrow : public ArrowWithBasicOutbox<V> {
     JMailbox<T> m_inbox_1;
     JMailbox<U> m_inbox_2;
     using f_t = std::function<V(T)>;
@@ -125,18 +118,21 @@ void attach(SplitArrow<T,U,V>& upstream, ArrowWithBasicInbox<U>& downstream) {
 
 template <typename T, typename U, typename V>
 void attach(ArrowWithBasicOutbox<T>& upstream, MergeArrow<T,U,V>& downstream) {
+    upstream.m_outboxes.push_back(&downstream.m_inbox_1);
+    upstream.downstreams.push_back(&downstream);
+    downstream.active_upstream_count += 1;
 
 }
 
 template <typename T, typename U, typename V>
 void attach(ArrowWithBasicOutbox<T> upstream, MergeArrow<T,U,V> downstream) {
-
+    upstream.m_outboxes.push_back(&downstream.m_inbox_2);
+    upstream.downstreams.push_back(&downstream);
+    downstream.active_upstream_count += 1;
 }
 
 } // namespace arrowengine
 } // namespace jana
-
-
 
 
 #endif //JANA2_ARROW_H
