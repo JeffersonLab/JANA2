@@ -136,7 +136,6 @@ public:
         for (const T& t : buffer) {
              mb.queue.push_back(std::move(t));
         }
-        buffer.clear();
         if (mb.queue.size() > m_threshold) {
             return Status::Full;
         }
