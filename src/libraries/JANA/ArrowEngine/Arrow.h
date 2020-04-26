@@ -12,6 +12,7 @@ namespace arrowengine {
 
 struct Arrow {
     std::string name;
+    int chunk_size;
     std::atomic_int active_upstream_count;
     std::vector<Arrow*> downstreams;
 
@@ -21,7 +22,7 @@ struct Arrow {
 
 template <typename T>
 struct ArrowWithBasicOutbox : public virtual Arrow {
-    std::vector<JMailbox<T>*> m_outboxes; // Outboxes are owned by the downstream arrows
+    JMailbox<T>* m_outbox; // Outbox is owned by the downstream arrows
 };
 
 template <typename T>
@@ -102,33 +103,32 @@ public:
 
 template <typename T>
 void attach(ArrowWithBasicOutbox<T>& upstream, ArrowWithBasicInbox<T>& downstream) {
-    upstream.downstreams.push_back(&downstream);
-    upstream.m_outboxes.push_back(&downstream.m_inbox);
+    upstream.m_outbox = &downstream.m_inbox;
     downstream.active_upstream_count += 1;
+    upstream.downstreams.push_back(&downstream);
 }
 
 #if __cpp_lib_variant
 template <typename T, typename U, typename V>
 void attach(SplitArrow<T,U,V>& upstream, ArrowWithBasicInbox<U>& downstream) {
     upstream.m_outbox_1 = &downstream.m_inbox;
-    upstream.downstreams.push_back(&downstream);
     downstream.active_upstreams += 1;
+    upstream.downstreams.push_back(&downstream);
 }
 #endif
 
 template <typename T, typename U, typename V>
 void attach(ArrowWithBasicOutbox<T>& upstream, MergeArrow<T,U,V>& downstream) {
-    upstream.m_outboxes.push_back(&downstream.m_inbox_1);
-    upstream.downstreams.push_back(&downstream);
+    upstream.m_outbox = &downstream.m_inbox_1;
     downstream.active_upstream_count += 1;
-
+    upstream.downstreams.push_back(&downstream);
 }
 
 template <typename T, typename U, typename V>
 void attach(ArrowWithBasicOutbox<T> upstream, MergeArrow<T,U,V> downstream) {
-    upstream.m_outboxes.push_back(&downstream.m_inbox_2);
-    upstream.downstreams.push_back(&downstream);
+    upstream.m_outbox = &downstream.m_inbox_2;
     downstream.active_upstream_count += 1;
+    upstream.downstreams.push_back(&downstream);
 }
 
 } // namespace arrowengine
