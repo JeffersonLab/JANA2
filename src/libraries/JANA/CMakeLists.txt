@@ -43,6 +43,9 @@ set(JANA2_SOURCES
     Engine/JWorker.cc
     Engine/JWorkerMetrics.h
 
+        ArrowEngine/Arrow.h
+        ArrowEngine/JMailbox.h
+
     Services/JComponentManager.cc
     Services/JComponentManager.h
     Services/JGlobalRootLock.h

@@ -2,30 +2,33 @@
 #ifndef JANA2_ARROW_H
 #define JANA2_ARROW_H
 
+#include <string>
+#include <functional>
+#include <vector>
+#include <JANA/ArrowEngine/JMailbox.h>
+
+namespace jana {
+namespace arrowengine {
+
 class Arrow {
     std::string name;
-    bool is_finished;
-    const bool is_parallel;
-
-    uint32_t thread_count;
-    std::atomic_int active_upstreams;
+    std::atomic_int active_upstream_count;
     std::vector<Arrow*> downstreams;
 
-    // TODO: Add backoff strategies, metrics, etc
-
+public:
     virtual void execute() = 0;
 };
 
 template <typename T>
 class ArrowWithBasicOutbox : virtual Arrow {
 protected:
-    std::vector<JMailbox*> m_outboxes;
+    std::vector<JMailbox<T>*> m_outboxes; // Outboxes are owned by the downstream arrows
 };
 
 template <typename T>
 class ArrowWithBasicInbox : virtual Arrow {
 protected:
-    JMailbox* m_inbox;
+    JMailbox<T> m_inbox; // Arrow owns its inbox(es), but not its outbox(es)
 };
 
 template <typename T>
@@ -55,6 +58,7 @@ public:
     void execute() override {};
 };
 
+#if __cpp_lib_optional
 template <typename T, typename U, typename A>
 class MultiStageArrow : public ArrowWithBasicInbox<T>, public ArrowWithBasicOutbox<U> {
     using f_t = std::function<A(T)>;
@@ -65,6 +69,7 @@ public:
     MultiStageArrow(f_t f, g_t g) : m_f(f), m_g(g) {};
     void execute() override {};
 };
+#endif
 
 template <typename T, typename U>
 class ScatterArrow : public ArrowWithBasicInbox<T>, public ArrowWithBasicOutbox<U> {
@@ -77,27 +82,29 @@ public:
 
 template <typename T, typename U>
 class GatherArrow : public ArrowWithBasicOutbox<U> {
-    std::vector<JMailbox<T>*> m_inboxes;
+    std::vector<JMailbox<T>> m_inboxes;
     using f_t = std::function<U(T,int)>;
     const f_t m_f;
 public:
-    GatherArrow(f_t f) : m_f(f) {};
+    GatherArrow(f_t f, int inbox_count) : m_f(f), m_inboxes(inbox_count) {};
     void execute() override {};
 };
 
+#if __cpp_lib_variant
 template <typename T, typename U, typename V>
-class Scatter2Arrow : public ArrowWithBasicInbox<T> {
+class SplitArrow : public ArrowWithBasicInbox<T> {
     JMailbox<U>* m_outbox_1;
     JMailbox<V>* m_outbox_2;
     using f_t = std::function<std::variant<U,V>(T)>;
     const f_t m_f;
 public:
-    Scatter2Arrow(f_t f) : m_f(f) {};
+    SplitArrow(f_t f) : m_f(f) {};
     void execute() override {};
 };
+#endif
 
 template <typename T, typename U, typename V>
-class Gather2Arrow : public ArrowWithBasicOutbox<V> {
+class MergeArrow : public ArrowWithBasicOutbox<V> {
     JMailbox<T> m_inbox_1;
     JMailbox<U> m_inbox_2;
     using f_t = std::function<V(T)>;
@@ -105,7 +112,7 @@ class Gather2Arrow : public ArrowWithBasicOutbox<V> {
     const f_t m_f;
     const g_t m_g;
 public:
-    Gather2Arrow(f_t f, g_t g) : m_f(f), m_g(g) {};
+    MergeArrow(f_t f, g_t g) : m_f(f), m_g(g) {};
     void execute() override {};
 };
 
@@ -113,32 +120,37 @@ template <typename T>
 void attach(ArrowWithBasicOutbox<T>& upstream, ArrowWithBasicInbox<T>& downstream) {
     upstream.downstreams.push_back(&downstream);
     upstream.m_outboxes.push_back(&downstream.m_inbox);
-    downstream.active_upstreams += 1;
+    downstream.active_upstream_count += 1;
 }
 
+#if __cpp_lib_variant
 template <typename T, typename U, typename V>
-void attach(Scatter2Arrow<T,U,V>& upstream, ArrowWithBasicInbox<U>& downstream) {
+void attach(SplitArrow<T,U,V>& upstream, ArrowWithBasicInbox<U>& downstream) {
+    upstream.m_outbox_1 = &downstream.m_inbox;
     upstream.downstreams.push_back(&downstream);
-    upstream.m_outboxes.push_back(&downstream.m_inbox);
+    downstream.active_upstreams += 1;
+}
+#endif
+
+template <typename T, typename U>
+void attach(ArrowWithBasicOutbox<T>& upstream, GatherArrow<T,U>& downstream, int i) {
+    upstream.m_outboxes.push_back(&downstream.m_inboxes[i]);
+    upstream.downstreams.push_back(&downstream);
     downstream.active_upstreams += 1;
 }
 
-template <typename T>
-void attach(ArrowWithBasicOutbox<T>& upstream, GatherArrow<T>& downstream) {
+template <typename T, typename U, typename V>
+void attach(ArrowWithBasicOutbox<T>& upstream, MergeArrow<T,U,V>& downstream) {
 
 }
 
 template <typename T, typename U, typename V>
-void attach(ArrowWithBasicOutbox<T>& upstream, GatherArrow2<T,U,V>& downstream) {
+void attach(ArrowWithBasicOutbox<T> upstream, MergeArrow<T,U,V> downstream) {
 
 }
 
-template <typename T, typename U, typename V>
-void attach(ArrowWithBasicOutbox<T> upstream, GatherArrow2<T,U,V> downstream) {
-
-}
-
-
+} // namespace arrowengine
+} // namespace jana
 
 
 
