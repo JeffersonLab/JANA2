@@ -12,45 +12,26 @@ namespace arrowengine {
 
 struct Arrow {
     std::string name;
+    bool is_parallel;
     int chunk_size = 10;
     bool is_finished = false;
-    bool is_parallel;
-    std::atomic_int active_upstream_count;
+    std::atomic_int active_upstream_count {0};
     std::vector<Arrow*> downstreams;
 
     virtual void execute() = 0;
     Arrow() = delete;
-    Arrow(std::string name, bool is_parallel) : name(name), is_parallel(is_parallel) {
-        std::cout << "Calling Arrow ctor with name=" << name << std::endl;
-    };
+    Arrow(std::string name, bool is_parallel) : name(name), is_parallel(is_parallel) {};
     virtual ~Arrow() = default;
 };
 
 template <typename T>
 struct ArrowWithBasicOutbox : public virtual Arrow {
     Mailbox<T>* m_outbox; // Outbox is owned by the downstream arrows
-    ArrowWithBasicOutbox() {
-        std::cout << "Constructing ArrowWithBasicOutbox" << std::endl;
-    };
-};
-
-
-struct KMailbox {
-    int x;
-    KMailbox() : x(22) {
-        std::cout << "Cosntructing kmailbox" << std::endl;
-    }
-    KMailbox(int x) : x(x) {
-        std::cout << "Cosntructing kmailbox with x=" << x << std::endl;
-    }
 };
 
 template <typename T>
 struct ArrowWithBasicInbox : public virtual Arrow {
     Mailbox<T> m_inbox; // Arrow owns its inbox(es), but not its outbox(es)
-    KMailbox m_dummy;
-    ArrowWithBasicInbox()
-    : m_inbox(10,1,false), m_dummy(23) {}
 };
 
 template <typename T>
@@ -58,10 +39,7 @@ struct SourceArrow : public ArrowWithBasicOutbox<T> {
     using f_t = std::function<T()>;
     const f_t m_f;
     SourceArrow(std::string name, f_t f, bool is_parallel=false)
-    : Arrow(name, is_parallel), ArrowWithBasicOutbox<T>(), m_f(f)
-    {
-        std::cout << "Constructing SourceArrow" << std::endl;
-    };
+    : Arrow(name, is_parallel), m_f(f) {};
     void execute() override;
 };
 
@@ -70,10 +48,7 @@ struct SinkArrow : public ArrowWithBasicInbox<T> {
     using f_t = std::function<void(T)>;
     const f_t m_f;
     SinkArrow(std::string name, f_t f, bool is_parallel)
-    : Arrow(name, is_parallel), m_f(f) {
-
-        std::cout << "Constructing SinkArrow" << std::endl;
-    }
+    : Arrow(name, is_parallel), m_f(f) {}
     void execute() override;
 };
 
@@ -82,10 +57,7 @@ struct StageArrow : public ArrowWithBasicInbox<T>, public ArrowWithBasicOutbox<U
     using f_t = std::function<U(T)>;
     const f_t m_f;
     StageArrow(std::string name, f_t f, bool is_parallel)
-    : Arrow(name, is_parallel)
-    , m_f(f) {
-        std::cout << "Constructing StageArrow" << std::endl;
-    };
+    : Arrow(name, is_parallel), m_f(f) {};
     void execute() override;
 };
 
@@ -94,9 +66,7 @@ class BroadcastArrow : public ArrowWithBasicInbox<T> {
 public:
     std::vector<Mailbox<T>*> m_outboxes;
     BroadcastArrow(std::string name, bool is_parallel)
-    : Arrow(name, is_parallel) {
-        std::cout << "Constructing BroadcastArrow" << std::endl;
-    }
+    : Arrow(name, is_parallel) {}
     void execute() override;
 };
 

@@ -35,12 +35,13 @@
 #define CACHE_LINE_BYTES 64
 #endif
 
+namespace jana {
+namespace arrowengine {
 
 template <typename T>
 class Mailbox {
 
 private:
-
     struct alignas(CACHE_LINE_BYTES) LocalMailbox {
         std::mutex mutex;
         std::deque<T> queue;
@@ -217,6 +218,9 @@ public:
 
 };
 
+
+} // namespace arrowengine
+} // namespace jana
 
 
 #endif //JANA2_MAILBOX_H
