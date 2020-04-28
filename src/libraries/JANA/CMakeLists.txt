@@ -44,7 +44,7 @@ set(JANA2_SOURCES
     Engine/JWorkerMetrics.h
 
         ArrowEngine/Arrow.h
-        ArrowEngine/JMailbox.h
+        ArrowEngine/Mailbox.h
 
     Services/JComponentManager.cc
     Services/JComponentManager.h

@@ -2,8 +2,8 @@
 // Created by Nathan W Brei on 2019-05-22.
 //
 
-#ifndef JANA2_JMAILBOX_H
-#define JANA2_JMAILBOX_H
+#ifndef JANA2_MAILBOX_H
+#define JANA2_MAILBOX_H
 
 #include <queue>
 #include <mutex>
@@ -37,7 +37,7 @@
 
 
 template <typename T>
-class JMailbox {
+class Mailbox {
 
 private:
 
@@ -74,15 +74,16 @@ public:
     /// threshold: the (soft) maximum number of items in the queue at any time
     /// domain_count: the number of domains
     /// enable_work_stealing: allow domains to pop from other domains' queues when theirs is empty
-    JMailbox(size_t threshold=100, size_t locations_count=1, bool enable_work_stealing=false)
+    Mailbox(size_t threshold=100, size_t locations_count=1, bool enable_work_stealing=false)
         : m_threshold(threshold)
         , m_locations_count(locations_count)
         , m_enable_work_stealing(enable_work_stealing) {
 
         m_mailboxes = std::unique_ptr<LocalMailbox[]>(new LocalMailbox[locations_count]);
+        std::cout << "Constructing Mailbox" << std::endl;
     }
 
-    ~JMailbox() {
+    ~Mailbox() {
         //delete [] m_mailboxes;
     }
 
@@ -218,4 +219,4 @@ public:
 
 
 
-#endif //JANA2_JMAILBOX_H
+#endif //JANA2_MAILBOX_H

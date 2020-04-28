@@ -5,7 +5,7 @@
 #include <string>
 #include <functional>
 #include <vector>
-#include <JANA/ArrowEngine/JMailbox.h>
+#include <JANA/ArrowEngine/Mailbox.h>
 
 namespace jana {
 namespace arrowengine {
@@ -14,28 +14,54 @@ struct Arrow {
     std::string name;
     int chunk_size = 10;
     bool is_finished = false;
+    bool is_parallel;
     std::atomic_int active_upstream_count;
     std::vector<Arrow*> downstreams;
 
     virtual void execute() = 0;
+    Arrow() = delete;
+    Arrow(std::string name, bool is_parallel) : name(name), is_parallel(is_parallel) {
+        std::cout << "Calling Arrow ctor with name=" << name << std::endl;
+    };
     virtual ~Arrow() = default;
 };
 
 template <typename T>
 struct ArrowWithBasicOutbox : public virtual Arrow {
-    JMailbox<T>* m_outbox; // Outbox is owned by the downstream arrows
+    Mailbox<T>* m_outbox; // Outbox is owned by the downstream arrows
+    ArrowWithBasicOutbox() {
+        std::cout << "Constructing ArrowWithBasicOutbox" << std::endl;
+    };
+};
+
+
+struct KMailbox {
+    int x;
+    KMailbox() : x(22) {
+        std::cout << "Cosntructing kmailbox" << std::endl;
+    }
+    KMailbox(int x) : x(x) {
+        std::cout << "Cosntructing kmailbox with x=" << x << std::endl;
+    }
 };
 
 template <typename T>
 struct ArrowWithBasicInbox : public virtual Arrow {
-    JMailbox<T> m_inbox; // Arrow owns its inbox(es), but not its outbox(es)
+    Mailbox<T> m_inbox; // Arrow owns its inbox(es), but not its outbox(es)
+    KMailbox m_dummy;
+    ArrowWithBasicInbox()
+    : m_inbox(10,1,false), m_dummy(23) {}
 };
 
 template <typename T>
 struct SourceArrow : public ArrowWithBasicOutbox<T> {
     using f_t = std::function<T()>;
     const f_t m_f;
-    SourceArrow(f_t f) : m_f(f) {};
+    SourceArrow(std::string name, f_t f, bool is_parallel=false)
+    : Arrow(name, is_parallel), ArrowWithBasicOutbox<T>(), m_f(f)
+    {
+        std::cout << "Constructing SourceArrow" << std::endl;
+    };
     void execute() override;
 };
 
@@ -43,7 +69,11 @@ template <typename T>
 struct SinkArrow : public ArrowWithBasicInbox<T> {
     using f_t = std::function<void(T)>;
     const f_t m_f;
-    SinkArrow(f_t f) : m_f(f) {}
+    SinkArrow(std::string name, f_t f, bool is_parallel)
+    : Arrow(name, is_parallel), m_f(f) {
+
+        std::cout << "Constructing SinkArrow" << std::endl;
+    }
     void execute() override;
 };
 
@@ -51,14 +81,22 @@ template <typename T, typename U>
 struct StageArrow : public ArrowWithBasicInbox<T>, public ArrowWithBasicOutbox<U> {
     using f_t = std::function<U(T)>;
     const f_t m_f;
-    StageArrow(f_t f) : m_f(f) {};
+    StageArrow(std::string name, f_t f, bool is_parallel)
+    : Arrow(name, is_parallel)
+    , m_f(f) {
+        std::cout << "Constructing StageArrow" << std::endl;
+    };
     void execute() override;
 };
 
 template <typename T>
 class BroadcastArrow : public ArrowWithBasicInbox<T> {
 public:
-    std::vector<JMailbox<T>*> m_outboxes;
+    std::vector<Mailbox<T>*> m_outboxes;
+    BroadcastArrow(std::string name, bool is_parallel)
+    : Arrow(name, is_parallel) {
+        std::cout << "Constructing BroadcastArrow" << std::endl;
+    }
     void execute() override;
 };
 
@@ -98,8 +136,8 @@ public:
 
 template <typename T, typename U, typename V>
 struct MergeArrow : public ArrowWithBasicOutbox<V> {
-    JMailbox<T> m_inbox_1;
-    JMailbox<U> m_inbox_2;
+    Mailbox<T> m_inbox_1;
+    Mailbox<U> m_inbox_2;
     using f_t = std::function<V(T)>;
     using g_t = std::function<V(U)>;
     const f_t m_f;
@@ -201,10 +239,10 @@ void SinkArrow<T>::execute() {
         m_f(t);
     }
 
-    if (pop_result == JMailbox<T>::Status::Ready) {
+    if (pop_result == Mailbox<T>::Status::Ready) {
         // TODO: Set return status = success
     }
-    else if ((pop_result == JMailbox<T>::Status::Empty) && (Arrow::active_upstream_count == 0)) {
+    else if ((pop_result == Mailbox<T>::Status::Empty) && (Arrow::active_upstream_count == 0)) {
         // TODO: Set return status = finished
         Arrow::is_finished = true;
         for (auto downstream : Arrow::downstreams) {
@@ -240,10 +278,10 @@ void StageArrow<T,U>::execute() {
         // We have to return our reservation regardless of whether our pop succeeded
         this->m_outbox->push(output_chunk_buffer, reserved_count);
 
-        if (pop_result == JMailbox<T>::Status::Ready) {
+        if (pop_result == Mailbox<T>::Status::Ready) {
             // TODO: Set return status = success
         }
-        else if ((pop_result == JMailbox<T>::Status::Empty) && (Arrow::active_upstream_count == 0)) {
+        else if ((pop_result == Mailbox<T>::Status::Empty) && (Arrow::active_upstream_count == 0)) {
             // TODO: Set return status = finished
             Arrow::is_finished = true;
             for (auto downstream : Arrow::downstreams) {
@@ -278,10 +316,10 @@ void BroadcastArrow<T>::execute() {
     std::vector<T> chunk_buffer(requested_count); // TODO: Get rid of allocations
     if (requested_count != 0) {
         auto pop_result = this->m_inbox.pop(chunk_buffer, requested_count);
-        if (pop_result == JMailbox<T>::Status::Ready) {
+        if (pop_result == Mailbox<T>::Status::Ready) {
             // TODO: Set return status = success
         }
-        else if ((pop_result == JMailbox<T>::Status::Empty) && (Arrow::active_upstream_count == 0)) {
+        else if ((pop_result == Mailbox<T>::Status::Empty) && (Arrow::active_upstream_count == 0)) {
             // TODO: Set return status = finished
             Arrow::is_finished = true;
             for (auto downstream : Arrow::downstreams) {
