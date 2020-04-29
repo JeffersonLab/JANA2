@@ -36,7 +36,8 @@ struct ArrowWithBasicInbox : public virtual Arrow {
 
 template <typename T>
 struct SourceArrow : public ArrowWithBasicOutbox<T> {
-    using f_t = std::function<T()>;
+    enum class Status { Success, FailTryAgain, FailFinished };
+    using f_t = std::function<std::pair<Status,T>()>;
     const f_t m_f;
     SourceArrow(std::string name, f_t f, bool is_parallel=false)
     : Arrow(name, is_parallel), m_f(f) {};
@@ -70,18 +71,23 @@ public:
     void execute() override;
 };
 
-#if __cpp_lib_optional
 template <typename T, typename U, typename A>
 class MultiStageArrow : public ArrowWithBasicInbox<T>, public ArrowWithBasicOutbox<U> {
+
+    // The g() sig needs a lot more work. Consider:
+    // 0. A -> std::optional<U>
+    // 1. A -> (bool, U)
+    // 2. (A, int) -> [U]
+    // 3. A -> (Status, U) where Status <- {KeepGoing, NeedNextT}
+
     using f_t = std::function<A(T)>;
-    using g_t = std::function<std::optional<U>(A)>;
+    using g_t = std::function<std::vector<U>(A,int)>;
     const f_t m_f;
     const g_t m_g;
 public:
     MultiStageArrow(f_t f, g_t g) : m_f(f), m_g(g) {};
     void execute() override {};
 };
-#endif
 
 template <typename T, typename U>
 struct ScatterArrow : public ArrowWithBasicInbox<T>, public ArrowWithBasicOutbox<U> {
@@ -91,18 +97,25 @@ struct ScatterArrow : public ArrowWithBasicInbox<T>, public ArrowWithBasicOutbox
     void execute() override {};
 };
 
-#if __cpp_lib_variant
 template <typename T, typename U, typename V>
 class SplitArrow : public ArrowWithBasicInbox<T> {
-    JMailbox<U>* m_outbox_1;
-    JMailbox<V>* m_outbox_2;
-    using f_t = std::function<std::variant<U,V>(T)>;
+
+    // In an ideal world we could just use std::variant
+    struct Either {
+        enum class Tag { Left, Right };
+        union Val { U left; V right; };
+        Tag tag;
+        Val val;
+    };
+
+    Mailbox<U>* m_outbox_1;
+    Mailbox<V>* m_outbox_2;
+    using f_t = std::function<Either(T)>;
     const f_t m_f;
 public:
     SplitArrow(f_t f) : m_f(f) {};
     void execute() override {};
 };
-#endif
 
 template <typename T, typename U, typename V>
 struct MergeArrow : public ArrowWithBasicOutbox<V> {
@@ -131,14 +144,12 @@ void attach(BroadcastArrow<T>& upstream, ArrowWithBasicInbox<U>& downstream) {
     upstream.downstreams.push_back(&downstream);
 }
 
-#if __cpp_lib_variant
 template <typename T, typename U, typename V>
 void attach(SplitArrow<T,U,V>& upstream, ArrowWithBasicInbox<U>& downstream) {
     upstream.m_outbox_1 = &downstream.m_inbox;
     downstream.active_upstreams += 1;
     upstream.downstreams.push_back(&downstream);
 }
-#endif
 
 template <typename T, typename U, typename V>
 void attach(ArrowWithBasicOutbox<T>& upstream, MergeArrow<T,U,V>& downstream) {
@@ -162,25 +173,30 @@ void SourceArrow<T>::execute() {
         return;
     }
     int requested_count = Arrow::chunk_size;
-    std::vector<T> chunk_buffer(requested_count); // TODO: Get rid of allocations
+    std::vector<T> chunk_buffer; // TODO: Get rid of allocations
     int reserved_count = this->m_outbox->reserve(requested_count);
 
     if (reserved_count != 0) {
-        for (int i=0; i<reserved_count; ++i) {
-            chunk_buffer[i] = m_f();
-            // TODO: Modify m_f to return status code, only populate chunk buffer with valid T
+
+        Status lambda_result = Status::Success;
+        for (int i=0; i<reserved_count && lambda_result == Status::Success; ++i) {
+            auto pair = m_f();
+            lambda_result = pair.first;
+            if (lambda_result == Status::Success) {
+                chunk_buffer.push_back(pair.second);
+            }
         }
 
         // We have to return our reservation regardless of whether our pop succeeded
         this->m_outbox->push(chunk_buffer, reserved_count);
 
-        if (false) { // If lambda returns keep going
+        if (lambda_result == Status::Success) {
             // TODO: set return status = keep going
         }
-        else if (false) { // If lambda returns try again later
+        else if (lambda_result == Status::FailTryAgain) {
             // TODO: set return status = try again later
         }
-        else if (false) {  // TODO: if lambda returns status::finished
+        else if (lambda_result == Status::FailFinished) {
             // TODO: set return status = finished
             Arrow::is_finished = true;
             for (auto downstream : Arrow::downstreams) {
@@ -188,8 +204,8 @@ void SourceArrow<T>::execute() {
             }
         }
     }
-    else {
-        // Set return status = downstream full, try again later
+    else { // reserved_count = 0  => downstream is full
+        // TODO: Set return status = try again later
     }
 }
 
@@ -200,7 +216,7 @@ void SinkArrow<T>::execute() {
         // report.update_finished(); // TODO: Re-add this
         return;
     }
-    std::vector<T> chunk_buffer(Arrow::chunk_size); // TODO: Get rid of allocations
+    std::vector<T> chunk_buffer; // TODO: Get rid of allocations
 
     auto pop_result = this->m_inbox.pop(chunk_buffer, Arrow::chunk_size);
 
@@ -232,17 +248,16 @@ void StageArrow<T,U>::execute() {
         return;
     }
     int requested_count = Arrow::chunk_size;
-    std::vector<T> input_chunk_buffer(requested_count); // TODO: Get rid of allocations
-    std::vector<U> output_chunk_buffer(requested_count); // TODO: Get rid of allocations
+    std::vector<T> input_chunk_buffer; // TODO: Get rid of allocations
+    std::vector<U> output_chunk_buffer; // TODO: Get rid of allocations
 
     int reserved_count = this->m_outbox->reserve(requested_count);
     if (reserved_count != 0) {
         auto pop_result = this->m_inbox.pop(input_chunk_buffer, this->chunk_size);
 
         // TODO: Timing information
-        auto item_count = input_chunk_buffer.size();
-        for (int i = 0; i<item_count; ++i) {
-            output_chunk_buffer[i] = m_f(input_chunk_buffer[i]);
+        for (auto t : input_chunk_buffer) {
+            output_chunk_buffer.push_back(m_f(t));
         }
 
         // We have to return our reservation regardless of whether our pop succeeded
@@ -263,7 +278,7 @@ void StageArrow<T,U>::execute() {
         }
     }
     else {
-        // Set return status = upstream empty
+        // TODO: Set return status = downstream full
     }
 }
 
@@ -283,7 +298,7 @@ void BroadcastArrow<T>::execute() {
         if (reserved_count < requested_count) requested_count = reserved_count;
         reservations[i] = reserved_count;
     }
-    std::vector<T> chunk_buffer(requested_count); // TODO: Get rid of allocations
+    std::vector<T> chunk_buffer; // TODO: Get rid of allocations
     if (requested_count != 0) {
         auto pop_result = this->m_inbox.pop(chunk_buffer, requested_count);
         if (pop_result == Mailbox<T>::Status::Ready) {

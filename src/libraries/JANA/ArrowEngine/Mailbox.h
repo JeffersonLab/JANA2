@@ -57,7 +57,7 @@ private:
 
 public:
 
-    enum class Status {Ready, Congested, Empty, Full, Finished};
+    enum class Status {Ready, Congested, Empty, Full};
 
     friend std::ostream& operator<<(std::ostream& os, const Status& s) {
         switch (s) {
@@ -81,7 +81,6 @@ public:
         , m_enable_work_stealing(enable_work_stealing) {
 
         m_mailboxes = std::unique_ptr<LocalMailbox[]>(new LocalMailbox[locations_count]);
-        std::cout << "Constructing Mailbox" << std::endl;
     }
 
     ~Mailbox() {
