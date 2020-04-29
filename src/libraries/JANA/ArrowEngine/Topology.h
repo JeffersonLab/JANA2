@@ -2,34 +2,55 @@
 #ifndef JANA2_TOPOLOGY_H
 #define JANA2_TOPOLOGY_H
 
-struct Topology {
+namespace jana {
+namespace arrowengine {
 
-    virtual const std::vector<JArrow*>& get_arrows() = 0;
-    virtual const JArrowStatus& get_status() = 0;
+struct Topology : public JService {
+    virtual const std::vector<JArrow *> &get_arrows() = 0;
+    virtual const JArrowStatus &get_status() = 0;
+    virtual void initialize() = 0;
+    virtual void open() = 0;
+    virtual void close() = 0;
+}
 
-    virtual void initialize() {
-        // Construct arrow topology from JCM.
-        // Get granularity from JPM
-        // Get arrows from somewhere
-        // Maintain a queue of event sources somewhere here
-        // Need to figure out event pool again as well :(
-    }
+/// GenericTopology knows nothing about the JANA component interfaces. It is mainly used for
+/// testing and improving the ArrowEngine internals, but it could come in handy if someone wants
+/// to use the ArrowEngine on its own.
+class GenericTopology : public Topology {
+    std::vector<JArrow*> arrows;
+    std::vector<JArrow*> sources;
+    std::vector<JArrow*> sinks;
+public:
+    const std::vector<JArrow *> &get_arrows() override;
+    const JArrowStatus &get_status() override;
+    void initialize() override;
+    void open() override;
+    void close() override;
+};
 
-    virtual void start() {
-        // open event processors
-        // open event sources
-        // start timer
-    }
+/// DefaultJanaTopology assumes all of its arrows come from the JComponentManager. This is
+/// sufficient for 'standard' use cases, but is insufficient if we need blocks or subevents.
+class DefaultJanaTopology : public Topology {
+    std::shared_ptr<JEventPool> event_pool; // TODO: Belongs somewhere else
+    Status status = Inactive; // TODO: Merge this concept with JActivable
 
-    virtual void finish() {
-        // stop timer
-        // close event processors
-        // Scheduler calls me? Who calls me?
-    }
+    std::vector<JArrow*> arrows;
+    std::vector<JArrow*> sources;           // Sources needed for activation
+    std::vector<JArrow*> sinks;             // Sinks needed for finished message count // TODO: Not anymore
+    std::vector<EventQueue*> queues;        // Queues shared between arrows
+    JProcessorMapping mapping;
 
+    JLogger _logger;
+public:
+    const std::vector<JArrow *> &get_arrows() override;
+    const JArrowStatus &get_status() override;
+    void initialize() override;
+    void open() override;
+    void close() override;
 };
 
 
-
+} // namespace arrowengine
+} // namespace jana
 
 #endif //JANA2_TOPOLOGY_H
