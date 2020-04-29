@@ -18,9 +18,10 @@ TEST_CASE("ArrowEngineTests") {
     attach(zeros, add_one);
     attach(add_one, sum_sink);
 
-    zeros.execute();
-    add_one.execute();
-    sum_sink.execute();
+    JArrowMetrics m;
+    zeros.execute(m, 0);
+    add_one.execute(m, 0);
+    sum_sink.execute(m, 0);
 
     REQUIRE (sum == 1.0);
 }

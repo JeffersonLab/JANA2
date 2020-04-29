@@ -6,6 +6,7 @@
 #include <functional>
 #include <vector>
 #include <JANA/ArrowEngine/Mailbox.h>
+#include <JANA/Engine/JArrowMetrics.h>
 
 namespace jana {
 namespace arrowengine {
@@ -18,9 +19,9 @@ struct Arrow {
     std::atomic_int active_upstream_count {0};
     std::vector<Arrow*> downstreams;
 
-    virtual void execute() = 0;
-    Arrow() = delete;
-    Arrow(std::string name, bool is_parallel) : name(name), is_parallel(is_parallel) {};
+    virtual void execute(JArrowMetrics& result, size_t location_id) = 0;
+
+    Arrow(std::string name, bool is_parallel) : name(std::move(name)), is_parallel(is_parallel) {};
     virtual ~Arrow() = default;
 };
 
@@ -41,7 +42,7 @@ struct SourceArrow : public ArrowWithBasicOutbox<T> {
     const f_t m_f;
     SourceArrow(std::string name, f_t f, bool is_parallel=false)
     : Arrow(name, is_parallel), m_f(f) {};
-    void execute() override;
+    void execute(JArrowMetrics& result, size_t location_id) override;
 };
 
 template <typename T>
@@ -50,7 +51,7 @@ struct SinkArrow : public ArrowWithBasicInbox<T> {
     const f_t m_f;
     SinkArrow(std::string name, f_t f, bool is_parallel)
     : Arrow(name, is_parallel), m_f(f) {}
-    void execute() override;
+    void execute(JArrowMetrics& result, size_t location_id) override;
 };
 
 template <typename T, typename U>
@@ -59,7 +60,7 @@ struct StageArrow : public ArrowWithBasicInbox<T>, public ArrowWithBasicOutbox<U
     const f_t m_f;
     StageArrow(std::string name, f_t f, bool is_parallel)
     : Arrow(name, is_parallel), m_f(f) {};
-    void execute() override;
+    void execute(JArrowMetrics& result, size_t location_id) override;
 };
 
 template <typename T>
@@ -68,7 +69,7 @@ public:
     std::vector<Mailbox<T>*> m_outboxes;
     BroadcastArrow(std::string name, bool is_parallel)
     : Arrow(name, is_parallel) {}
-    void execute() override;
+    void execute(JArrowMetrics& result, size_t location_id) override;
 };
 
 template <typename T, typename U, typename A>
@@ -86,7 +87,7 @@ class MultiStageArrow : public ArrowWithBasicInbox<T>, public ArrowWithBasicOutb
     const g_t m_g;
 public:
     MultiStageArrow(f_t f, g_t g) : m_f(f), m_g(g) {};
-    void execute() override {};
+    void execute(JArrowMetrics& result, size_t location_id) override;
 };
 
 template <typename T, typename U>
@@ -94,7 +95,7 @@ struct ScatterArrow : public ArrowWithBasicInbox<T>, public ArrowWithBasicOutbox
     using f_t = std::function<std::pair<U,int>(T)>;
     const f_t m_f;
     ScatterArrow(f_t f) : m_f(f) {};
-    void execute() override {};
+    void execute(JArrowMetrics& result, size_t location_id) override;
 };
 
 template <typename T, typename U, typename V>
@@ -114,7 +115,7 @@ class SplitArrow : public ArrowWithBasicInbox<T> {
     const f_t m_f;
 public:
     SplitArrow(f_t f) : m_f(f) {};
-    void execute() override {};
+    void execute(JArrowMetrics& result, size_t location_id) override;
 };
 
 template <typename T, typename U, typename V>
@@ -127,7 +128,7 @@ struct MergeArrow : public ArrowWithBasicOutbox<V> {
     const g_t m_g;
 public:
     MergeArrow(f_t f, g_t g) : m_f(f), m_g(g) {};
-    void execute() override {};
+    void execute(JArrowMetrics& result, size_t location_id) override;
 };
 
 template <typename T>
@@ -166,15 +167,20 @@ void attach(ArrowWithBasicOutbox<T> upstream, MergeArrow<T,U,V> downstream) {
 }
 
 template <typename T>
-void SourceArrow<T>::execute() {
+void SourceArrow<T>::execute(JArrowMetrics& result, size_t location_id) {
 
     if (Arrow::is_finished) {
-        // report.update_finished(); // TODO: Re-add this
+        result.update_finished();
         return;
     }
+    JArrowMetrics::Status status;
+    JArrowMetrics::duration_t latency;
+    JArrowMetrics::duration_t overhead; // TODO: Populate these
+    size_t message_count = 0;
+
     int requested_count = Arrow::chunk_size;
     std::vector<T> chunk_buffer; // TODO: Get rid of allocations
-    int reserved_count = this->m_outbox->reserve(requested_count);
+    int reserved_count = this->m_outbox->reserve(requested_count, location_id);
 
     if (reserved_count != 0) {
 
@@ -188,16 +194,17 @@ void SourceArrow<T>::execute() {
         }
 
         // We have to return our reservation regardless of whether our pop succeeded
-        this->m_outbox->push(chunk_buffer, reserved_count);
+        this->m_outbox->push(chunk_buffer, reserved_count, location_id);
 
         if (lambda_result == Status::Success) {
-            // TODO: set return status = keep going
+            status = JArrowMetrics::Status::KeepGoing;
         }
         else if (lambda_result == Status::FailTryAgain) {
-            // TODO: set return status = try again later
+            status = JArrowMetrics::Status::ComeBackLater;
+            // TODO: Consider reporting queueempty/queuefull/sourcebusy here instead
         }
         else if (lambda_result == Status::FailFinished) {
-            // TODO: set return status = finished
+            status = JArrowMetrics::Status::Finished;
             Arrow::is_finished = true;
             for (auto downstream : Arrow::downstreams) {
                 downstream->active_upstream_count -= 1;
@@ -205,20 +212,27 @@ void SourceArrow<T>::execute() {
         }
     }
     else { // reserved_count = 0  => downstream is full
-        // TODO: Set return status = try again later
+        status = JArrowMetrics::Status::ComeBackLater;
+        // TODO: Consider reporting queueempty/queuefull/sourcebusy here instead
     }
+    result.update(status, message_count, 1, latency, overhead);
 }
 
 template <typename T>
-void SinkArrow<T>::execute() {
+void SinkArrow<T>::execute(JArrowMetrics& result, size_t location_id) {
 
     if (Arrow::is_finished) {
-        // report.update_finished(); // TODO: Re-add this
+        result.update_finished();
         return;
     }
+
+    JArrowMetrics::Status status;
+    JArrowMetrics::duration_t latency;
+    JArrowMetrics::duration_t overhead; // TODO: Populate these
+    size_t message_count = 0;
     std::vector<T> chunk_buffer; // TODO: Get rid of allocations
 
-    auto pop_result = this->m_inbox.pop(chunk_buffer, Arrow::chunk_size);
+    auto pop_result = this->m_inbox.pop(chunk_buffer, Arrow::chunk_size, location_id);
 
     // TODO: Timing information
     for (auto t : chunk_buffer) {
@@ -226,34 +240,41 @@ void SinkArrow<T>::execute() {
     }
 
     if (pop_result == Mailbox<T>::Status::Ready) {
-        // TODO: Set return status = success
+        status = JArrowMetrics::Status::KeepGoing;
     }
     else if ((pop_result == Mailbox<T>::Status::Empty) && (Arrow::active_upstream_count == 0)) {
-        // TODO: Set return status = finished
+        status = JArrowMetrics::Status::Finished;
         Arrow::is_finished = true;
         for (auto downstream : Arrow::downstreams) {
             downstream->active_upstream_count -= 1;
         }
     }
     else {
-        // TODO: Set return status = upstream empty
+        status = JArrowMetrics::Status::ComeBackLater;
+        // TODO: Consider reporting queueempty/queuefull/sourcebusy here instead
     }
+    result.update(status, message_count, 1, latency, overhead);
 }
 
 template <typename T, typename U>
-void StageArrow<T,U>::execute() {
+void StageArrow<T,U>::execute(JArrowMetrics& result, size_t location_id) {
 
     if (Arrow::is_finished) {
-        // report.update_finished(); // TODO: Re-add this
+        result.update_finished();
         return;
     }
+    JArrowMetrics::Status status;
+    JArrowMetrics::duration_t latency;
+    JArrowMetrics::duration_t overhead; // TODO: Populate these
+    size_t message_count = 0;
+
     int requested_count = Arrow::chunk_size;
     std::vector<T> input_chunk_buffer; // TODO: Get rid of allocations
     std::vector<U> output_chunk_buffer; // TODO: Get rid of allocations
 
-    int reserved_count = this->m_outbox->reserve(requested_count);
+    int reserved_count = this->m_outbox->reserve(requested_count, location_id);
     if (reserved_count != 0) {
-        auto pop_result = this->m_inbox.pop(input_chunk_buffer, this->chunk_size);
+        auto pop_result = this->m_inbox.pop(input_chunk_buffer, this->chunk_size, location_id);
 
         // TODO: Timing information
         for (auto t : input_chunk_buffer) {
@@ -261,64 +282,77 @@ void StageArrow<T,U>::execute() {
         }
 
         // We have to return our reservation regardless of whether our pop succeeded
-        this->m_outbox->push(output_chunk_buffer, reserved_count);
+        this->m_outbox->push(output_chunk_buffer, reserved_count, location_id);
 
         if (pop_result == Mailbox<T>::Status::Ready) {
-            // TODO: Set return status = success
+            status = JArrowMetrics::Status::KeepGoing;
         }
         else if ((pop_result == Mailbox<T>::Status::Empty) && (Arrow::active_upstream_count == 0)) {
-            // TODO: Set return status = finished
+            status = JArrowMetrics::Status::Finished;
             Arrow::is_finished = true;
             for (auto downstream : Arrow::downstreams) {
                 downstream->active_upstream_count -= 1;
             }
         }
         else {
-            // TODO: Set return status = upstream empty
+            status = JArrowMetrics::Status::ComeBackLater;
+            // TODO: Consider reporting queueempty/queuefull/sourcebusy here instead
         }
     }
     else {
-        // TODO: Set return status = downstream full
+        status = JArrowMetrics::Status::ComeBackLater;
+        // TODO: Consider reporting queueempty/queuefull/sourcebusy here instead
     }
+    result.update(status, message_count, 1, latency, overhead);
 }
 
 
 template <typename T>
-void BroadcastArrow<T>::execute() {
+void BroadcastArrow<T>::execute(JArrowMetrics& result, size_t location_id) {
 
     if (Arrow::is_finished) {
-        // report.update_finished(); // TODO: Re-add this
+        result.update_finished();
         return;
     }
+    JArrowMetrics::Status status;
+    JArrowMetrics::duration_t latency;
+    JArrowMetrics::duration_t overhead; // TODO: Populate these
+    size_t message_count = 0;
+
     int requested_count = this->chunk_size;
     int dest_count = m_outboxes.size();
     std::vector<int> reservations(dest_count);
     for (int i=0; i<dest_count; ++i) {
-        int reserved_count = m_outboxes[i]->reserve(requested_count);
+        int reserved_count = m_outboxes[i]->reserve(requested_count, location_id);
         if (reserved_count < requested_count) requested_count = reserved_count;
         reservations[i] = reserved_count;
     }
     std::vector<T> chunk_buffer; // TODO: Get rid of allocations
     if (requested_count != 0) {
-        auto pop_result = this->m_inbox.pop(chunk_buffer, requested_count);
+        auto pop_result = this->m_inbox.pop(chunk_buffer, requested_count, location_id);
         if (pop_result == Mailbox<T>::Status::Ready) {
-            // TODO: Set return status = success
+            status = JArrowMetrics::Status::KeepGoing;
         }
         else if ((pop_result == Mailbox<T>::Status::Empty) && (Arrow::active_upstream_count == 0)) {
-            // TODO: Set return status = finished
+            status = JArrowMetrics::Status::Finished;
             Arrow::is_finished = true;
             for (auto downstream : Arrow::downstreams) {
                 downstream->active_upstream_count -= 1;
             }
         }
         else {
-            // TODO: Set return status = tryagainlater
+            status = JArrowMetrics::Status::ComeBackLater;
+            // TODO: Consider reporting queueempty/queuefull/sourcebusy here instead
+        }
+        for (int i=0; i<dest_count; ++i) {
+            m_outboxes[i]->push(chunk_buffer, reservations[i], location_id);
         }
     }
-    for (int i=0; i<dest_count; ++i) {
-        m_outboxes[i]->push(chunk_buffer, reservations[i]);
+    else {
+        status = JArrowMetrics::Status::ComeBackLater;
+        // TODO: Consider reporting queueempty/queuefull/sourcebusy here instead
     }
-
+    result.update(status, message_count, 1, latency, overhead);
 }
 
 } // namespace arrowengine
