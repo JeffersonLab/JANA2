@@ -25,6 +25,7 @@ struct Arrow {
     virtual ~Arrow() = default;
 };
 
+
 template <typename T>
 struct ArrowWithBasicOutbox : public virtual Arrow {
     Mailbox<T>* m_outbox; // Outbox is owned by the downstream arrows
@@ -35,72 +36,100 @@ struct ArrowWithBasicInbox : public virtual Arrow {
     Mailbox<T> m_inbox; // Arrow owns its inbox(es), but not its outbox(es)
 };
 
+
 template <typename T>
-struct SourceArrow : public ArrowWithBasicOutbox<T> {
+class SourceOp {
+public:
     enum class Status { Success, FailTryAgain, FailFinished };
-    using f_t = std::function<std::pair<Status,T>()>;
-    const f_t m_f;
-    SourceArrow(std::string name, f_t f, bool is_parallel=false)
-    : Arrow(name, is_parallel), m_f(f) {};
+    virtual std::pair<Status, T> next() = 0;
+};
+
+template <typename T, class MySourceOp>
+struct SourceArrow : public ArrowWithBasicOutbox<T>, public MySourceOp {
+
+    template<typename ...Args>
+    SourceArrow(std::string name, bool is_parallel, Args... args) : Arrow(name, is_parallel), MySourceOp(args...) {
+        static_assert(std::is_base_of<SourceOp<T>, MySourceOp>::value, "MySourceOp needs to be a subclass of SourceOp");
+    };
+    //SourceArrow(MySourceOp* )
     void execute(JArrowMetrics& result, size_t location_id) override;
 };
 
+template <typename T, typename MySourceOp>
+SourceArrow<T, MySourceOp> lift(SourceOp<T>* underlying) {
+    // auto item = static_cast<SourceOp<T>>(underlying);
+    return SourceArrow<T, MySourceOp>(underlying);
+}
+
 template <typename T>
-struct SinkArrow : public ArrowWithBasicInbox<T> {
-    using f_t = std::function<void(T)>;
-    const f_t m_f;
-    SinkArrow(std::string name, f_t f, bool is_parallel)
-    : Arrow(name, is_parallel), m_f(f) {}
+class SinkOp {
+public:
+    virtual void accumulate(T item) = 0;
+};
+
+template <typename T, typename MySinkOp>
+struct SinkArrow : public ArrowWithBasicInbox<T>, public MySinkOp {
+    SinkArrow(std::string name, bool is_parallel)
+    : Arrow(name, is_parallel) {
+        static_assert(std::is_base_of<SinkOp<T>, MySinkOp>::value, "MySinkOp needs to be a subclass of SinkOp");
+    }
     void execute(JArrowMetrics& result, size_t location_id) override;
 };
 
 template <typename T, typename U>
-struct StageArrow : public ArrowWithBasicInbox<T>, public ArrowWithBasicOutbox<U> {
-    using f_t = std::function<U(T)>;
-    const f_t m_f;
-    StageArrow(std::string name, f_t f, bool is_parallel)
-    : Arrow(name, is_parallel), m_f(f) {};
+class MapOp {
+public:
+    virtual U map(T) = 0;
+};
+
+template <typename T, typename U, typename MyMapOp>
+struct StageArrow : public ArrowWithBasicInbox<T>, public ArrowWithBasicOutbox<U>, public MyMapOp {
+    StageArrow(std::string name, bool is_parallel) : Arrow(name, is_parallel) {
+        static_assert(std::is_base_of<MapOp<T,U>, MyMapOp>::value, "MyMapOp needs to be a subclass of MapOp");
+    };
     void execute(JArrowMetrics& result, size_t location_id) override;
 };
 
 template <typename T>
-class BroadcastArrow : public ArrowWithBasicInbox<T> {
-public:
+struct BroadcastArrow : public ArrowWithBasicInbox<T> {
     std::vector<Mailbox<T>*> m_outboxes;
-    BroadcastArrow(std::string name, bool is_parallel)
-    : Arrow(name, is_parallel) {}
-    void execute(JArrowMetrics& result, size_t location_id) override;
-};
-
-template <typename T, typename U, typename A>
-class MultiStageArrow : public ArrowWithBasicInbox<T>, public ArrowWithBasicOutbox<U> {
-
-    // The g() sig needs a lot more work. Consider:
-    // 0. A -> std::optional<U>
-    // 1. A -> (bool, U)
-    // 2. (A, int) -> [U]
-    // 3. A -> (Status, U) where Status <- {KeepGoing, NeedNextT}
-
-    using f_t = std::function<A(T)>;
-    using g_t = std::function<std::vector<U>(A,int)>;
-    const f_t m_f;
-    const g_t m_g;
-public:
-    MultiStageArrow(f_t f, g_t g) : m_f(f), m_g(g) {};
+    BroadcastArrow(std::string name, bool is_parallel) : Arrow(name, is_parallel) {}
     void execute(JArrowMetrics& result, size_t location_id) override;
 };
 
 template <typename T, typename U>
-struct ScatterArrow : public ArrowWithBasicInbox<T>, public ArrowWithBasicOutbox<U> {
-    using f_t = std::function<std::pair<U,int>(T)>;
-    const f_t m_f;
-    ScatterArrow(f_t f) : m_f(f) {};
+class MultiMapOp {
+public:
+    enum class Status { KeepGoing, NeedIngest };
+    virtual void ingest(T);
+    virtual Status emit(size_t requested_count, std::vector<U>& destination);
+};
+
+template <typename T, typename U, typename MyMultiMapOp>
+struct MultiStageArrow : public ArrowWithBasicInbox<T>, public ArrowWithBasicOutbox<U>, public MyMultiMapOp {
+    MultiStageArrow(std::string name, bool is_parallel) : Arrow(name, is_parallel) {
+        static_assert(std::is_base_of<MultiMapOp<T,U>, MyMultiMapOp>::value, "MyMultiMapOp needs to be a subclass of MultiMapOp");
+    }
+    void execute(JArrowMetrics& result, size_t location_id) override;
+};
+
+template <typename T, typename U>
+class ScatterOp {
+public:
+    virtual std::pair<U,size_t> scatter(T) = 0;
+};
+
+template <typename T, typename U, typename MyScatterOp>
+struct ScatterArrow : public ArrowWithBasicInbox<T>, public ArrowWithBasicOutbox<U>, MyScatterOp {
+    ScatterArrow(std::string name, bool is_parallel) : Arrow(name, is_parallel) {
+        static_assert(std::is_base_of<ScatterOp<T, U>, MyScatterOp>::value, "MyScatterOp needs to be a subclass of ScatterOp");
+    }
     void execute(JArrowMetrics& result, size_t location_id) override;
 };
 
 template <typename T, typename U, typename V>
-class SplitArrow : public ArrowWithBasicInbox<T> {
-
+class SplitOp {
+public:
     // In an ideal world we could just use std::variant
     struct Either {
         enum class Tag { Left, Right };
@@ -108,26 +137,31 @@ class SplitArrow : public ArrowWithBasicInbox<T> {
         Tag tag;
         Val val;
     };
+    virtual Either split(T input) = 0;
+};
 
+
+template <typename T, typename U, typename V>
+struct SplitArrow : public ArrowWithBasicInbox<T> {
     Mailbox<U>* m_outbox_1;
     Mailbox<V>* m_outbox_2;
-    using f_t = std::function<Either(T)>;
-    const f_t m_f;
 public:
-    SplitArrow(f_t f) : m_f(f) {};
+    SplitArrow(std::string name, bool is_parallel) : Arrow(name, is_parallel) {};
     void execute(JArrowMetrics& result, size_t location_id) override;
+};
+
+
+template <typename T, typename U, typename V>
+struct MergeOp {
+    virtual V visit(T t) = 0;
+    virtual V visit(U u) = 0;
 };
 
 template <typename T, typename U, typename V>
 struct MergeArrow : public ArrowWithBasicOutbox<V> {
     Mailbox<T> m_inbox_1;
     Mailbox<U> m_inbox_2;
-    using f_t = std::function<V(T)>;
-    using g_t = std::function<V(U)>;
-    const f_t m_f;
-    const g_t m_g;
-public:
-    MergeArrow(f_t f, g_t g) : m_f(f), m_g(g) {};
+    MergeArrow(std::string name, bool is_parallel) : Arrow(name, is_parallel) {};
     void execute(JArrowMetrics& result, size_t location_id) override;
 };
 
@@ -138,7 +172,7 @@ void attach(ArrowWithBasicOutbox<T>& upstream, ArrowWithBasicInbox<T>& downstrea
     upstream.downstreams.push_back(&downstream);
 }
 
-template <typename T, typename U, typename V>
+template <typename T, typename U, typename V, typename Derived>
 void attach(BroadcastArrow<T>& upstream, ArrowWithBasicInbox<U>& downstream) {
     upstream.m_outboxes.push_back(&downstream.m_inbox);
     downstream.active_upstreams += 1;
@@ -166,8 +200,8 @@ void attach(ArrowWithBasicOutbox<T> upstream, MergeArrow<T,U,V> downstream) {
     upstream.downstreams.push_back(&downstream);
 }
 
-template <typename T>
-void SourceArrow<T>::execute(JArrowMetrics& result, size_t location_id) {
+template <typename T, typename MySourceOp>
+void SourceArrow<T, MySourceOp>::execute(JArrowMetrics& result, size_t location_id) {
 
     if (Arrow::is_finished) {
         result.update_finished();
@@ -184,9 +218,10 @@ void SourceArrow<T>::execute(JArrowMetrics& result, size_t location_id) {
 
     if (reserved_count != 0) {
 
+        using Status = typename MySourceOp::Status;
         Status lambda_result = Status::Success;
         for (int i=0; i<reserved_count && lambda_result == Status::Success; ++i) {
-            auto pair = m_f();
+            auto pair = MySourceOp::next();
             lambda_result = pair.first;
             if (lambda_result == Status::Success) {
                 chunk_buffer.push_back(pair.second);
@@ -218,8 +253,8 @@ void SourceArrow<T>::execute(JArrowMetrics& result, size_t location_id) {
     result.update(status, message_count, 1, latency, overhead);
 }
 
-template <typename T>
-void SinkArrow<T>::execute(JArrowMetrics& result, size_t location_id) {
+template <typename T, typename MySinkOp>
+void SinkArrow<T, MySinkOp>::execute(JArrowMetrics& result, size_t location_id) {
 
     if (Arrow::is_finished) {
         result.update_finished();
@@ -236,7 +271,7 @@ void SinkArrow<T>::execute(JArrowMetrics& result, size_t location_id) {
 
     // TODO: Timing information
     for (auto t : chunk_buffer) {
-        m_f(t);
+        MySinkOp::accumulate(t);
     }
 
     if (pop_result == Mailbox<T>::Status::Ready) {
@@ -256,8 +291,8 @@ void SinkArrow<T>::execute(JArrowMetrics& result, size_t location_id) {
     result.update(status, message_count, 1, latency, overhead);
 }
 
-template <typename T, typename U>
-void StageArrow<T,U>::execute(JArrowMetrics& result, size_t location_id) {
+template <typename T, typename U, typename MyMapOp>
+void StageArrow<T,U, MyMapOp>::execute(JArrowMetrics& result, size_t location_id) {
 
     if (Arrow::is_finished) {
         result.update_finished();
@@ -278,7 +313,7 @@ void StageArrow<T,U>::execute(JArrowMetrics& result, size_t location_id) {
 
         // TODO: Timing information
         for (auto t : input_chunk_buffer) {
-            output_chunk_buffer.push_back(m_f(t));
+            output_chunk_buffer.push_back(MyMapOp::map(t));
         }
 
         // We have to return our reservation regardless of whether our pop succeeded
