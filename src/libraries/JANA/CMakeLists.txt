@@ -45,6 +45,8 @@ set(JANA2_SOURCES
 
         ArrowEngine/Arrow.h
         ArrowEngine/Mailbox.h
+        ArrowEngine/ComponentArrows.cc
+        ArrowEngine/ComponentArrows.h
 
     Services/JComponentManager.cc
     Services/JComponentManager.h
