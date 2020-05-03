@@ -84,7 +84,8 @@ public:
 
 template <typename T, typename U, typename MyMapOp>
 struct StageArrow : public ArrowWithBasicInbox<T>, public ArrowWithBasicOutbox<U>, public MyMapOp {
-    StageArrow(std::string name, bool is_parallel) : Arrow(name, is_parallel) {
+    template <typename ...Args>
+    StageArrow(std::string name, bool is_parallel, Args... args) : Arrow(name, is_parallel), MyMapOp(args...) {
         static_assert(std::is_base_of<MapOp<T,U>, MyMapOp>::value, "MyMapOp needs to be a subclass of MapOp");
     };
     void execute(JArrowMetrics& result, size_t location_id) override;
