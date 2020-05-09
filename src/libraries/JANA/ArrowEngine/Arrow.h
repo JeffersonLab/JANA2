@@ -17,6 +17,7 @@ struct Arrow {
     int chunk_size = 10;
     bool is_finished = false;
     std::atomic_int active_upstream_count {0};
+    std::atomic_int thread_count {0};
     std::vector<Arrow*> downstreams;
 
     virtual void execute(JArrowMetrics& result, size_t location_id) = 0;
@@ -241,10 +242,6 @@ void SourceArrow<T, MySourceOp>::execute(JArrowMetrics& result, size_t location_
         }
         else if (lambda_result == Status::FailFinished) {
             status = JArrowMetrics::Status::Finished;
-            Arrow::is_finished = true;
-            for (auto downstream : Arrow::downstreams) {
-                downstream->active_upstream_count -= 1;
-            }
         }
     }
     else { // reserved_count = 0  => downstream is full
@@ -280,10 +277,6 @@ void SinkArrow<T, MySinkOp>::execute(JArrowMetrics& result, size_t location_id) 
     }
     else if ((pop_result == Mailbox<T>::Status::Empty) && (Arrow::active_upstream_count == 0)) {
         status = JArrowMetrics::Status::Finished;
-        Arrow::is_finished = true;
-        for (auto downstream : Arrow::downstreams) {
-            downstream->active_upstream_count -= 1;
-        }
     }
     else {
         status = JArrowMetrics::Status::ComeBackLater;
@@ -325,10 +318,6 @@ void StageArrow<T,U, MyMapOp>::execute(JArrowMetrics& result, size_t location_id
         }
         else if ((pop_result == Mailbox<T>::Status::Empty) && (Arrow::active_upstream_count == 0)) {
             status = JArrowMetrics::Status::Finished;
-            Arrow::is_finished = true;
-            for (auto downstream : Arrow::downstreams) {
-                downstream->active_upstream_count -= 1;
-            }
         }
         else {
             status = JArrowMetrics::Status::ComeBackLater;
@@ -371,10 +360,6 @@ void BroadcastArrow<T>::execute(JArrowMetrics& result, size_t location_id) {
         }
         else if ((pop_result == Mailbox<T>::Status::Empty) && (Arrow::active_upstream_count == 0)) {
             status = JArrowMetrics::Status::Finished;
-            Arrow::is_finished = true;
-            for (auto downstream : Arrow::downstreams) {
-                downstream->active_upstream_count -= 1;
-            }
         }
         else {
             status = JArrowMetrics::Status::ComeBackLater;

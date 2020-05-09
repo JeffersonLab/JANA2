@@ -43,12 +43,14 @@ set(JANA2_SOURCES
     Engine/JWorker.cc
     Engine/JWorkerMetrics.h
 
-        ArrowEngine/Arrow.h
-        ArrowEngine/Mailbox.h
-        ArrowEngine/ComponentArrows.cc
-        ArrowEngine/ComponentArrows.h
-        ArrowEngine/Topology.cc
-        ArrowEngine/Topology.h
+    ArrowEngine/Arrow.h
+    ArrowEngine/Mailbox.h
+    ArrowEngine/ComponentArrows.cc
+    ArrowEngine/ComponentArrows.h
+    ArrowEngine/Topology.cc
+    ArrowEngine/Topology.h
+    ArrowEngine/Scheduler.cc
+    ArrowEngine/Scheduler.h
 
     Services/JComponentManager.cc
     Services/JComponentManager.h

@@ -1,31 +1,34 @@
 
 #include <JANA/ArrowEngine/Scheduler.h>
 
-
-JScheduler::JScheduler(const std::vector<JArrow*>& arrows)
-        : _arrows(arrows)
-        , _next_idx(0)
-{}
+namespace jana {
+namespace arrowengine {
 
 
-JArrow* JScheduler::next_assignment(uint32_t worker_id, JArrow* assignment, JArrowMetrics::Status last_result) {
+
+
+Arrow* RoundRobinScheduler::next_assignment(uint32_t worker_id, Arrow* assignment, JArrowMetrics::Status last_result) {
 
     _mutex.lock();
 
     // Check latest arrow back in
     if (assignment != nullptr) {
-        assignment->update_thread_count(-1);
+        assignment->thread_count--;
 
-        if (assignment->is_upstream_finished() && assignment->get_thread_count() == 0) {
+        /// Just because one worker thinks the arrow is finished doesn't mean that it is safe for downstream
+        /// to assume that all workers running that arrow are finished. Thus it is up to the scheduler to
+        /// declare when an arrow is finished based on looking at all of the workers
+        if (last_result==JArrowMetrics::Status::Finished && assignment->thread_count == 0) {
 
             // This was the last worker running this arrow, so it can now deactivate
             // We know it is the last worker because we stopped assigning them
             // once is_upstream_finished started returning true
-            assignment->set_active(false);
+            assignment->is_finished = true;
+            for (auto downstream : assignment->downstreams) {
+                downstream->active_upstream_count -= 1;
+            }
 
-            _mutex.unlock();
-            LOG_INFO(logger) << "Deactivating arrow " << assignment->get_name() << LOG_END;
-            assignment->notify_downstream(false);
+            LOG_INFO(logger) << "Deactivating arrow " << assignment->name << LOG_END;
             _mutex.lock();
         }
     }
@@ -34,21 +37,20 @@ JArrow* JScheduler::next_assignment(uint32_t worker_id, JArrow* assignment, JArr
     // arrow that works
     size_t current_idx = _next_idx;
     do {
-        JArrow* candidate = _arrows[current_idx];
+        Arrow* candidate = _arrows[current_idx];
         current_idx += 1;
         current_idx %= _arrows.size();
 
-        if (!candidate->is_upstream_finished() &&
-            (candidate->is_parallel() || candidate->get_thread_count() == 0)) {
+        if (!candidate->is_finished && (candidate->is_parallel || candidate->thread_count == 0)) {
 
             // Found a plausible candidate; done
             _next_idx = current_idx; // Next time, continue right where we left off
-            candidate->update_thread_count(1);
+            candidate->thread_count += 1;
 
             LOG_DEBUG(logger) << "Worker " << worker_id << ", "
-                              << ((assignment == nullptr) ? "idle" : assignment->get_name())
+                              << ((assignment == nullptr) ? "idle" : assignment->name)
                               << ", " << to_string(last_result) << " => "
-                              << candidate->get_name() << "  [" << candidate->get_thread_count() << "]" << LOG_END;
+                              << candidate->name << "  [" << candidate->thread_count.load() << "]" << LOG_END;
             _mutex.unlock();
             return candidate;
         }
@@ -56,20 +58,23 @@ JArrow* JScheduler::next_assignment(uint32_t worker_id, JArrow* assignment, JArr
     } while (current_idx != _next_idx);
 
     _mutex.unlock();
-    return nullptr;  // We've looped through everything with no luck
+    return nullptr;  // We've looped through everything with no luck. Consider telling JAPC to shut down timer, topology to shut down
 }
 
 
-void JScheduler::last_assignment(uint32_t worker_id, JArrow* assignment, JArrowMetrics::Status result) {
+void RoundRobinScheduler::last_assignment(uint32_t worker_id, Arrow* assignment, JArrowMetrics::Status result) {
 
     LOG_DEBUG(logger) << "Worker " << worker_id << ", "
-                      << ((assignment == nullptr) ? "idle" : assignment->get_name())
+                      << ((assignment == nullptr) ? "idle" : assignment->name)
                       << ", " << to_string(result) << ") => Shutting down!" << LOG_END;
     _mutex.lock();
     if (assignment != nullptr) {
-        assignment->update_thread_count(-1);
+        assignment->thread_count--;
     }
     _mutex.unlock();
+}
+
+}
 }
 
 
