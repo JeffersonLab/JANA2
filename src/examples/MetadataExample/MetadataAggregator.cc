@@ -2,16 +2,16 @@
 #include "MetadataAggregator.h"
 #include <JANA/JLogger.h>
 
-MetadataExampleProcessor::MetadataExampleProcessor() {
+MetadataAggregator::MetadataAggregator() {
     SetTypeName(NAME_OF_THIS); // Provide JANA with this class's name
 }
 
-void MetadataExampleProcessor::Init() {
+void MetadataAggregator::Init() {
     LOG << "MetadataExampleProcessor::Init" << LOG_END;
     // Open TFiles, set up TTree branches, etc
 }
 
-void MetadataExampleProcessor::Process(const std::shared_ptr<const JEvent> &event) {
+void MetadataAggregator::Process(const std::shared_ptr<const JEvent> &event) {
     LOG << "MetadataExampleProcessor::Process, Event #" << event->GetEventNumber() << LOG_END;
     
     /// Do everything we can in parallel
@@ -28,7 +28,7 @@ void MetadataExampleProcessor::Process(const std::shared_ptr<const JEvent> &even
     //}
 }
 
-void MetadataExampleProcessor::Finish() {
+void MetadataAggregator::Finish() {
     // Close any resources
     LOG << "MetadataExampleProcessor::Finish" << LOG_END;
 }
