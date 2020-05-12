@@ -17,7 +17,7 @@
 template <>
 struct JMetadata<Track> {
 
-    std::chrono::nanoseconds elapsed_time_ns = 0;
+    std::chrono::nanoseconds elapsed_time_ns {0};
 };
 
 #endif //JANA2_TRACKMETADATA_H

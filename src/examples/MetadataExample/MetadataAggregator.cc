@@ -1,5 +1,7 @@
 
 #include "MetadataAggregator.h"
+#include "Track.h"
+#include "TrackMetadata.h"
 #include <JANA/JLogger.h>
 
 MetadataAggregator::MetadataAggregator() {
@@ -7,29 +9,42 @@ MetadataAggregator::MetadataAggregator() {
 }
 
 void MetadataAggregator::Init() {
-    LOG << "MetadataExampleProcessor::Init" << LOG_END;
-    // Open TFiles, set up TTree branches, etc
+
+    auto app = GetApplication();
+
+    // Allow the user to choose at runtime where we get our tracks
+    app->SetDefaultParameter("metadata_example:track_factory", m_track_factory, "Options are 'generated' or 'smeared'");
+    LOG << "MetadataAggregator::Init" << LOG_END;
 }
 
 void MetadataAggregator::Process(const std::shared_ptr<const JEvent> &event) {
-    LOG << "MetadataExampleProcessor::Process, Event #" << event->GetEventNumber() << LOG_END;
-    
-    /// Do everything we can in parallel
-    /// Warning: We are only allowed to use local variables and `event` here
-    //auto hits = event->Get<Hit>();
+    LOG << "MetadataAggregator::Process, Event #" << event->GetEventNumber() << LOG_END;
 
-    /// Lock mutex
+    // Acquire tracks in parallel
+    auto tracks = event->Get<Track>(m_track_factory);
+
+    // Lock mutex, so we can update shared state sequentially
     std::lock_guard<std::mutex>lock(m_mutex);
 
-    /// Do the rest sequentially
-    /// Now we are free to access shared state such as m_heatmap
-    //for (const Hit* hit : hits) {
-        /// Update shared state
-    //}
+    // Since the run number probably doesn't change too frequently we cache the last entry
+    int run_number = event->GetRunNumber();
+    if (run_number != last_run_nr) {
+        last_run_nr = run_number;
+        last_run_statistics = &track_factory_statistics[last_run_nr]; // Get-or-create
+    }
+
+    last_run_statistics->first += 1;  // event count
+    last_run_statistics->second += event->GetMetadata<Track>(m_track_factory).elapsed_time_ns;
 }
 
 void MetadataAggregator::Finish() {
-    // Close any resources
-    LOG << "MetadataExampleProcessor::Finish" << LOG_END;
+    LOG << "MetadataAggregator::Finish" << LOG_END;
+    LOG << "Track factory tag = " << m_track_factory << LOG_END;
+
+    // Print statistics organized by run number
+    for (auto pair : track_factory_statistics) {
+        auto avg_latency = pair.second.second.count()/pair.second.first;
+        LOG << "run_nr: " << pair.first << " => latency: " << avg_latency << LOG_END;
+    }
 }
 
