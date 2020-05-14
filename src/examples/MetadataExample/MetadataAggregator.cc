@@ -27,14 +27,15 @@ void MetadataAggregator::Process(const std::shared_ptr<const JEvent> &event) {
     std::lock_guard<std::mutex>lock(m_mutex);
 
     // Since the run number probably doesn't change too frequently we cache the last entry
-    int run_number = event->GetRunNumber();
-    if (run_number != last_run_nr) {
-        last_run_nr = run_number;
-        last_run_statistics = &track_factory_statistics[last_run_nr]; // Get-or-create
+    int run_nr = event->GetRunNumber();
+    if (run_nr != m_last_run_nr) {
+        m_last_run_nr = run_nr;
+        m_last_statistics = &m_statistics[m_last_run_nr]; // Get-or-create
     }
 
-    last_run_statistics->first += 1;  // event count
-    last_run_statistics->second += event->GetMetadata<Track>(m_track_factory).elapsed_time_ns;
+    m_last_statistics->event_count += 1;
+    m_last_statistics->total_track_count += tracks.size();
+    m_last_statistics->total_latency_ns += event->GetMetadata<Track>(m_track_factory).elapsed_time_ns;
 }
 
 void MetadataAggregator::Finish() {
@@ -42,9 +43,15 @@ void MetadataAggregator::Finish() {
     LOG << "Track factory tag = " << m_track_factory << LOG_END;
 
     // Print statistics organized by run number
-    for (auto pair : track_factory_statistics) {
-        auto avg_latency = pair.second.second.count()/pair.second.first;
-        LOG << "run_nr: " << pair.first << " => latency: " << avg_latency << LOG_END;
+    for (const auto& pair : m_statistics) {
+        const int& run_nr = pair.first;
+        const Statistics& statistics = pair.second;
+
+        auto avg_track_count = statistics.total_track_count / statistics.event_count;
+        auto avg_latency = statistics.total_latency_ns.count() / statistics.event_count;
+
+        LOG << "run_nr=" << run_nr << " => avg track count= " << avg_track_count
+            << ", latency= " << avg_latency << LOG_END;
     }
 }
 

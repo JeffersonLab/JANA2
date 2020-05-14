@@ -5,14 +5,22 @@
 #include <JANA/JEventProcessor.h>
 #include <map>
 
+
+
 class MetadataAggregator : public JEventProcessor {
+
+    /// Container for all of the statistics we want to collect from our event stream
+    struct Statistics {
+        size_t event_count = 0;
+        size_t total_track_count = 0;
+        std::chrono::nanoseconds total_latency_ns {0};
+    };
 
     std::mutex m_mutex;
 
     std::string m_track_factory; // So we can choose what we are measuring at runtime
 
-    std::map<int, std::pair<int, std::chrono::nanoseconds>> track_factory_statistics;
-    // { run_number : (event_count, total_elapsed_time) }
+    std::map<int, Statistics> m_statistics; // Keyed off of run nr
 
     // Note that just like with JObjects, we don't want to store pointers to JMetadata here, because
     // they will be overwritten when JEvents get recycled and dangle when JEvents are destroyed.
@@ -22,8 +30,8 @@ class MetadataAggregator : public JEventProcessor {
     // We are also going to cache the last entry in our map so that we only have to do a map lookup
     // when the run number changes.
 
-    int last_run_nr = -1;
-    std::pair<int, std::chrono::nanoseconds>* last_run_statistics = nullptr;
+    int m_last_run_nr = -1;
+    Statistics* m_last_statistics = nullptr;
 
 
 public:
