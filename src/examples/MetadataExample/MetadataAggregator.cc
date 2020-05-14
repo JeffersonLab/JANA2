@@ -33,6 +33,7 @@ void MetadataAggregator::Process(const std::shared_ptr<const JEvent> &event) {
         m_last_statistics = &m_statistics[m_last_run_nr]; // Get-or-create
     }
 
+    // Update the statistics accumulator using the metadata from this event
     m_last_statistics->event_count += 1;
     m_last_statistics->total_track_count += tracks.size();
     m_last_statistics->total_latency_ns += event->GetMetadata<Track>(m_track_factory).elapsed_time_ns;
