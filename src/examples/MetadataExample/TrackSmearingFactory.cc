@@ -1,5 +1,6 @@
 
 #include "TrackSmearingFactory.h"
+#include "TrackMetadata.h"
 
 #include <JANA/JEvent.h>
 
@@ -27,18 +28,20 @@ void TrackSmearingFactory::ChangeRun(const std::shared_ptr<const JEvent> &event)
 
 void TrackSmearingFactory::Process(const std::shared_ptr<const JEvent> &event) {
 
-    /// JFactories are local to a thread, so we are free to access and modify
-    /// member variables here. However, be aware that events are _scattered_ to
-    /// different JFactory instances, not _broadcast_: this means that JFactory 
-    /// instances only see _some_ of the events. 
-    
-    /// Acquire inputs (This may recursively call other JFactories)
-    // auto inputs = event->Get<...>();
-    
-    /// Do some computation
-    
-    /// Publish outputs
-    // std::vector<Track*> results;
+    auto raw_tracks = event->Get<Track>("generated");
+    std::vector<Track*> results;
+
+    // TODO: Start timer
+
+    // TODO: Do some work
     // results.push_back(new Track(...));
-    // Set(results);
+
+    // TODO: Stop timer
+
+    // Share results with TrackSmearingFactory
+    Set(results);
+
+    JMetadata<Track> metadata;
+    metadata.elapsed_time_ns = std::chrono::nanoseconds {10};
+    SetMetadata(metadata);
 }

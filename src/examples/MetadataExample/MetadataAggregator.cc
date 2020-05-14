@@ -18,7 +18,7 @@ void MetadataAggregator::Init() {
 }
 
 void MetadataAggregator::Process(const std::shared_ptr<const JEvent> &event) {
-    LOG << "MetadataAggregator::Process, Event #" << event->GetEventNumber() << LOG_END;
+    LOG << "MetadataAggregator::Process, Run #" << event->GetRunNumber() << ", Event #" << event->GetEventNumber() << LOG_END;
 
     // Acquire tracks in parallel
     auto tracks = event->Get<Track>(m_track_factory);

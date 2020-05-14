@@ -5,8 +5,8 @@
 #include <JANA/JApplication.h>
 #include <JANA/JEvent.h>
 
-/// Include headers to any JObjects you wish to associate with each event
-// #include "Hit.h"
+#include "Track.h"
+#include "TrackMetadata.h"
 
 /// There are two different ways of instantiating JEventSources
 /// 1. Creating them manually and registering them with the JApplication
@@ -22,37 +22,48 @@ RandomTrackSource::RandomTrackSource(std::string resource_name, JApplication* ap
 void RandomTrackSource::Open() {
 
     /// Open is called exactly once when processing begins.
-    
+
     /// Get any configuration parameters from the JApplication
     // GetApplication()->SetDefaultParameter("RandomTrackSource:random_seed", m_seed, "Random seed");
 
     /// For opening a file, get the filename via:
     // std::string resource_name = GetResourceName();
     /// Open the file here!
+
+    m_current_event_number = 0;
+    m_current_run_number = 1;
+    m_events_in_run = 5;
+    m_max_run_number = 10;
 }
 
 void RandomTrackSource::GetEvent(std::shared_ptr <JEvent> event) {
 
     /// Calls to GetEvent are synchronized with each other, which means they can
     /// read and write state on the JEventSource without causing race conditions.
-    
-    /// Configure event and run numbers
-    static size_t current_event_number = 1;
-    event->SetEventNumber(current_event_number++);
-    event->SetRunNumber(22);
+
+    m_current_event_number += 1;
+    if (m_current_event_number > m_events_in_run) {
+        m_current_run_number += 1;
+        m_current_event_number = 1;
+    }
+
+    if (m_current_run_number > m_max_run_number) {
+        throw RETURN_STATUS::kNO_MORE_EVENTS;
+    }
+
+    event->SetEventNumber(m_current_event_number);
+    event->SetRunNumber(m_current_run_number);
 
     /// Insert whatever data was read into the event
-    // std::vector<Hit*> hits;
-    // hits.push_back(new Hit(0,0,1.0,0));
-    // event->Insert(hits);
+    std::vector<Track*> tracks;
+    tracks.push_back(new Track(0,0,0,0,0,0,0,0));
+    event->Insert(tracks, "generated");
 
-    /// If you are reading a file of events and have reached the end, terminate the stream like this:
-    // // Close file pointer!
-    // throw RETURN_STATUS::kNO_MORE_EVENTS;
-
-    /// If you are streaming events and there are no new events in the message queue,
-    /// tell JANA that GetEvent() was temporarily unsuccessful like this:
-    // throw RETURN_STATUS::kBUSY;
+    // Insert metadata corresponding to these tracks
+    // TODO: Overload event->Insert() to make this look nicer
+    JMetadata<Track> metadata;
+    metadata.elapsed_time_ns = std::chrono::nanoseconds {5};
+    event->GetFactory<Track>("generated")->SetMetadata(metadata);
 }
 
 std::string RandomTrackSource::GetDescription() {

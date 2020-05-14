@@ -8,7 +8,10 @@
 
 class RandomTrackSource : public JEventSource {
 
-    /// Add member variables here
+    int m_events_in_run;
+    int m_current_run_number;
+    int m_current_event_number;
+    int m_max_run_number;
 
 public:
     RandomTrackSource(std::string resource_name, JApplication* app);

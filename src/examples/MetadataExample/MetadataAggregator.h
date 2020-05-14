@@ -18,7 +18,7 @@ class MetadataAggregator : public JEventProcessor {
 
     std::mutex m_mutex;
 
-    std::string m_track_factory; // So we can choose what we are measuring at runtime
+    std::string m_track_factory = "smeared"; // So we can choose what we are measuring at runtime
 
     std::map<int, Statistics> m_statistics; // Keyed off of run nr
 
