@@ -99,9 +99,12 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 		template<class T> typename JFactoryT<T>::PairType GetIterators(const std::string& aTag = "") const;
         template<class T> std::vector<const T*> GetAll() const;
 
-		// Insert
-		template <class T> void Insert(T* item, const std::string& aTag = "") const;
-		template <class T> void Insert(const std::vector<T*>& items, const std::string& tag = "") const;
+        template<class T>
+        std::map<std::pair<std::string,std::string>,std::vector<T*>> GetAllChildren() const;
+
+        // Insert
+		template <class T> JFactoryT<T>* Insert(T* item, const std::string& aTag = "") const;
+		template <class T> JFactoryT<T>* Insert(const std::vector<T*>& items, const std::string& tag = "") const;
 
 		//SETTERS
 		void SetRunNumber(uint32_t aRunNumber){mRunNumber = aRunNumber;}
@@ -134,7 +137,7 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 /// Repeated calls to Insert() will append to the previous data rather than overwrite it,
 /// which saves the user from having to allocate a throwaway vector and requires less error handling.
 template <class T>
-inline void JEvent::Insert(T* item, const std::string& tag) const {
+inline JFactoryT<T>* JEvent::Insert(T* item, const std::string& tag) const {
 
 	auto factory = mFactorySet->GetFactory<T>(tag);
 	if (factory == nullptr) {
@@ -142,10 +145,11 @@ inline void JEvent::Insert(T* item, const std::string& tag) const {
 		mFactorySet->Add(factory);
 	}
 	factory->Insert(item);
+	return factory;
 }
 
 template <class T>
-inline void JEvent::Insert(const std::vector<T*>& items, const std::string& tag) const {
+inline JFactoryT<T>* JEvent::Insert(const std::vector<T*>& items, const std::string& tag) const {
 
 	auto factory = mFactorySet->GetFactory<T>(tag);
 	if (factory == nullptr) {
@@ -155,6 +159,7 @@ inline void JEvent::Insert(const std::vector<T*>& items, const std::string& tag)
 	for (T* item : items) {
 		factory->Insert(item);
 	}
+	return factory;
 }
 
 /// GetFactory() should be used with extreme care because it subverts the JEvent abstraction.
@@ -276,6 +281,25 @@ std::vector<const T*> JEvent::GetAll() const {
         }
     }
     return vec; // Assumes RVO
+}
+
+
+// GetAllChildren will furnish a map { (type_name,tag_name) : [BaseClass*] } containing all JFactoryT<T> data where
+// T inherits from BaseClass. Note that this _won't_ compute any results (unlike GetAll) because this is meant for
+// things like visualizing and persisting DSTs.
+// TODO: This is conceptually inconsistent with GetAll. Reconcile.
+
+template<class S>
+std::map<std::pair<std::string, std::string>, std::vector<S*>> JEvent::GetAllChildren() const {
+    std::map<std::pair<std::string, std::string>, std::vector<S*>> results;
+    for (JFactory* factory : mFactorySet->GetAll()) {
+        auto val = factory->GetAs<S>();
+        if (!val.empty()) {
+            auto key = std::make_pair(factory->GetName(), factory->GetTag());
+            results.insert(std::make_pair(key, val));
+        }
+    }
+    return results;
 }
 
 
