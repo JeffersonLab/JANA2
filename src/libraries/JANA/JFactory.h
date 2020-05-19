@@ -55,6 +55,8 @@
 #include <vector>
 #include <mutex>
 #include <unordered_map>
+#include <functional>
+
 
 class JEvent;
 class JObject;
