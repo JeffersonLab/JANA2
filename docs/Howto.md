@@ -23,17 +23,18 @@ Table of contents
 2.  [Use the JANA command-line program](#using-the-jana-cli)
 3.  [Configure JANA](#configuring-jana)
 4.  [Generate code skeletons](#creating-code-skeletons) for projects, plugins, components, etc
-5.  Create a service which can be shared between different plugins
-6.  Handle both real and simulated data
-7.  Handle EPICS data
-8.  [Detect when a group of events has finished](howto_group_events.md)
-9.  Use JANA with ROOT
-10.  Persist the entire DST using ROOT
-11. Checkpoint the entire DST using ROOT
-12. [Stream data to and from JANA](howto_streaming.html)
-13. Build and filter events ("L1 and L2 triggers")
-14. Process subevents
-15. Migrate from JANA1 to JANA2
+5.  [Work with factory metadata](#Using-factory-metadata) for collecting statistics, etc
+6.  Create a service which can be shared between different plugins
+7.  Handle both real and simulated data
+8.  Handle EPICS data
+9.  [Detect when a group of events has finished](howto_group_events.md)
+10.  Use JANA with ROOT
+11.  Persist the entire DST using ROOT
+12. Checkpoint the entire DST using ROOT
+13. [Stream data to and from JANA](howto_streaming.html)
+14. Build and filter events ("L1 and L2 triggers")
+15. Process subevents
+16. Migrate from JANA1 to JANA2
 
 
 Using the JANA CLI
@@ -211,6 +212,28 @@ JObject name is 'RecoTrack', and the factory uses Genfit under the hood, the fac
 'RecoTrackFactory_Genfit'. 
 
 ```jana-generate.py JFactory JFactoryNameInCamelCase JObjectNameInCamelCase```
+
+
+
+Using factory metadata
+----------------------
+
+The `JFactoryT<T>` interface abstracts the creation logic for a vector of n objects of type `T`. However, often
+we also care about single pieces of data associated with the same computation. For instance, a track fitting factory
+might want to return statistics about how many fits succeeded and failed. 
+
+A naive solution is to put member variables on the factory and then access them from a `JEventProcessor` 
+by obtaining the `JFactoryT<T>` via `GetFactory<>` and performing a dynamic cast to the underlying factory type. 
+Although this works, it means that that factory can no longer be swapped with an alternate version without modifying
+the calling code. This degrades the whole project's ability to take advantage of the plugin architecture and hurts 
+its overall code quality.
+
+Instead, we recommend using the `JMetadata` template trait. Each `JFactoryT<T>` not only produces a vector of `T`, 
+but also a singular `JMetadata<T>` struct whose contents can be completely arbitrary, but cannot be redefined for a
+particular T. All `JFactoryT<T>` for some `T` will use it. 
+
+An example project demonstrating usage of JMetadata can be found under `examples/MetadataExample`. 
+
 
 
 
