@@ -1,5 +1,6 @@
 
 #include "DstExampleProcessor.h"
+#include "DataObjects.h"
 #include <JANA/JLogger.h>
 
 DstExampleProcessor::DstExampleProcessor() {
@@ -13,19 +14,39 @@ void DstExampleProcessor::Init() {
 
 void DstExampleProcessor::Process(const std::shared_ptr<const JEvent> &event) {
     LOG << "DstExampleProcessor::Process, Event #" << event->GetEventNumber() << LOG_END;
-    
-    /// Do everything we can in parallel
-    /// Warning: We are only allowed to use local variables and `event` here
-    //auto hits = event->Get<Hit>();
 
-    /// Lock mutex
+    /// Obtain all Renderables and all JObjects, in parallel
+    auto renderable_map = event->GetAllChildren<Renderable>();
+    auto jobject_map = event->GetAllChildren<JObject>();
+
+    /// Senquentially,
     std::lock_guard<std::mutex>lock(m_mutex);
+    for (auto item : renderable_map) {
+        // destructure
+        std::string factory_name = item.first.first;
+        std::string factory_tag = item.first.second;
+        const std::vector<Renderable*>& renderables = item.second;
 
-    /// Do the rest sequentially
-    /// Now we are free to access shared state such as m_heatmap
-    //for (const Hit* hit : hits) {
-        /// Update shared state
-    //}
+        LOG << "Found factory producing Renderables: " << factory_name << ", " << factory_tag << LOG_END;
+        for (auto renderable : renderables) {
+            renderable->Render();
+        }
+    }
+
+    for (auto item : jobject_map) {
+        // destructure
+        std::string factory_name = item.first.first;
+        std::string factory_tag = item.first.second;
+        const std::vector<JObject*>& jobjects = item.second;
+
+        LOG << "Found factory producing JObjects: " << factory_name << ", " << factory_tag << LOG_END;
+
+        for (auto jobject : jobjects) {
+            LOG << "Found JObject with classname " << jobject->className() << LOG_END;
+        }
+    }
+
+
 }
 
 void DstExampleProcessor::Finish() {

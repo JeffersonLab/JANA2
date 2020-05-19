@@ -4,6 +4,7 @@ set (DstExample_PLUGIN_SOURCES
 		DstExample.cc
 		DstExampleProcessor.cc
 		DstExampleProcessor.h
+		DataObjects.h
 	)
 
 add_library(DstExample_plugin SHARED ${DstExample_PLUGIN_SOURCES})
