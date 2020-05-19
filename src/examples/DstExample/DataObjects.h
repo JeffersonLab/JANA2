@@ -38,7 +38,8 @@ struct MyRenderable : public Renderable {
     int y;
     double E;
 
-    MyRenderable(int x, int y, double E) : x(x), y(y), E(E) {};
+    MyRenderable(int x, int y, double E) : x(x), y(y), E(E) {
+    };
 
     void Render() override {
         LOG << "MyRenderable::Render " << x << "," << y << "," << E << LOG_END;
