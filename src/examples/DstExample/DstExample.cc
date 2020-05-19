@@ -4,6 +4,7 @@
 #include <JANA/JFactoryGenerator.h>
 
 #include "DstExampleProcessor.h"
+#include "DstExampleSource.h"
 
 extern "C" {
 void InitPlugin(JApplication* app) {
@@ -20,7 +21,7 @@ void InitPlugin(JApplication* app) {
 
     LOG << "Loading DstExample" << LOG_END;
     app->Add(new DstExampleProcessor);
-    // Add any additional components as needed
+    app->Add(new DstExampleSource("dummy", app));
 }
 }
 

@@ -19,9 +19,9 @@ void DstExampleProcessor::Process(const std::shared_ptr<const JEvent> &event) {
     auto renderable_map = event->GetAllChildren<Renderable>();
     auto jobject_map = event->GetAllChildren<JObject>();
 
-    /// Senquentially,
+    /// Senquentially, iterate over everything
     std::lock_guard<std::mutex>lock(m_mutex);
-    for (auto item : renderable_map) {
+    for (const auto& item : renderable_map) {
         // destructure
         std::string factory_name = item.first.first;
         std::string factory_tag = item.first.second;
@@ -33,7 +33,7 @@ void DstExampleProcessor::Process(const std::shared_ptr<const JEvent> &event) {
         }
     }
 
-    for (auto item : jobject_map) {
+    for (const auto& item : jobject_map) {
         // destructure
         std::string factory_name = item.first.first;
         std::string factory_tag = item.first.second;
@@ -45,8 +45,6 @@ void DstExampleProcessor::Process(const std::shared_ptr<const JEvent> &event) {
             LOG << "Found JObject with classname " << jobject->className() << LOG_END;
         }
     }
-
-
 }
 
 void DstExampleProcessor::Finish() {

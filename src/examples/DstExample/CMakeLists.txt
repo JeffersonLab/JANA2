@@ -2,6 +2,8 @@
 
 set (DstExample_PLUGIN_SOURCES
 		DstExample.cc
+		DstExampleSource.cc
+		DstExampleSource.h
 		DstExampleProcessor.cc
 		DstExampleProcessor.h
 		DataObjects.h

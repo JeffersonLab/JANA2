@@ -20,6 +20,8 @@ struct MyJObject : public JObject {
     int y;
     double E;
 
+    MyJObject(int x, int y, double E) : x(x), y(y), E(E) {};
+
     void Summarize(JObjectSummary& summary) const override {
         summary.add(x, NAME_OF(x), "%d", "Pixel coordinates centered around 0,0");
         summary.add(y, NAME_OF(y), "%d", "Pixel coordinates centered around 0,0");
@@ -36,6 +38,8 @@ struct MyRenderable : public Renderable {
     int y;
     double E;
 
+    MyRenderable(int x, int y, double E) : x(x), y(y), E(E) {};
+
     void Render() override {
         LOG << "MyRenderable::Render " << x << "," << y << "," << E << LOG_END;
     }
@@ -45,6 +49,10 @@ struct MyRenderableJObject : public JObject, Renderable {
     int x;
     int y;
     double E;
+
+    /// Constructor
+
+    MyRenderableJObject(int x, int y, double E) : x(x), y(y), E(E) {};
 
     /// Renderable vfunctions
 
