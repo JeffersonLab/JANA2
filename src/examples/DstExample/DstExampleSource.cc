@@ -59,7 +59,7 @@ void DstExampleSource::GetEvent(std::shared_ptr <JEvent> event) {
     /// Insert some canned MyRenderableJObjects
     std::vector<MyRenderableJObject*> my_renderable_jobjects;
     my_renderable_jobjects.push_back(new MyRenderableJObject(1,1,1.1));
-    auto my_both_fac = event->Insert(my_renderable_jobjects);
+    auto my_both_fac = event->Insert(my_renderable_jobjects, "from_source");
 
     /// Enable automatic upcast to both JObjects and Renderable
     my_both_fac->EnableGetAs<JObject>();

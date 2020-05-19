@@ -15,11 +15,21 @@ void DstExampleProcessor::Init() {
 void DstExampleProcessor::Process(const std::shared_ptr<const JEvent> &event) {
     LOG << "DstExampleProcessor::Process, Event #" << event->GetEventNumber() << LOG_END;
 
-    /// Obtain all Renderables and all JObjects, in parallel
+    /// Note that GetAllChildren won't trigger any new computations, it will only
+    /// project down results which already exist in the JEvent. In order to obtain
+    /// results from our DstExampleFactory, we need to trigger it explicitly using
+    /// either JEvent::Get or JEvent::GetAll.
+
+    event->Get<MyRenderableJObject>("from_factory");
+
+    /// Now we can project our event down to a map of Renderables and a separate
+    /// map of JObjects. Note we do this in parallel.
     auto renderable_map = event->GetAllChildren<Renderable>();
     auto jobject_map = event->GetAllChildren<JObject>();
 
-    /// Senquentially, iterate over everything
+    /// Senquentially, we iterate over all of our Renderables and JObjects and use
+    /// whatever functionality each interface provides.
+
     std::lock_guard<std::mutex>lock(m_mutex);
     for (const auto& item : renderable_map) {
         // destructure
@@ -27,6 +37,7 @@ void DstExampleProcessor::Process(const std::shared_ptr<const JEvent> &event) {
         std::string factory_tag = item.first.second;
         const std::vector<Renderable*>& renderables = item.second;
 
+        LOG << "----------------------------------" << LOG_END;
         LOG << "Found factory producing Renderables: " << factory_name << ", " << factory_tag << LOG_END;
         for (auto renderable : renderables) {
             renderable->Render();
@@ -39,12 +50,14 @@ void DstExampleProcessor::Process(const std::shared_ptr<const JEvent> &event) {
         std::string factory_tag = item.first.second;
         const std::vector<JObject*>& jobjects = item.second;
 
+        LOG << "----------------------------------" << LOG_END;
         LOG << "Found factory producing JObjects: " << factory_name << ", " << factory_tag << LOG_END;
 
         for (auto jobject : jobjects) {
             LOG << "Found JObject with classname " << jobject->className() << LOG_END;
         }
     }
+    LOG << "----------------------------------" << LOG_END;
 }
 
 void DstExampleProcessor::Finish() {
