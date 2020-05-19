@@ -128,7 +128,7 @@ public:
         auto first_evt_nr = m_nskip;
         auto last_evt_nr = m_nevents + m_nskip;
         try {
-            switch (m_status) {
+            switch (m_status.load()) {
 
                 case SourceStatus::Unopened: DoInitialize(); // Fall-through to Opened afterwards
 
@@ -242,7 +242,7 @@ private:
     std::string m_resource_name;
     JApplication* m_application = nullptr;
     JFactoryGenerator* m_factory_generator = nullptr;
-    SourceStatus m_status;
+    std::atomic<SourceStatus> m_status;
     std::atomic_ullong m_event_count {0};
     uint64_t m_nskip = 0;
     uint64_t m_nevents = 0;

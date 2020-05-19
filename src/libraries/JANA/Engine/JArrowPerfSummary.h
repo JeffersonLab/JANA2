@@ -92,6 +92,11 @@ struct JArrowPerfSummary : public JPerfSummary {
 
     std::vector<WorkerSummary> workers;
     std::vector<ArrowSummary> arrows;
+
+    JArrowPerfSummary() = default;
+    JArrowPerfSummary(const JArrowPerfSummary& other) = default;
+    virtual ~JArrowPerfSummary() = default;
+
 };
 
 std::ostream& operator<<(std::ostream& stream, const JArrowPerfSummary& data);

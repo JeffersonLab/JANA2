@@ -27,7 +27,7 @@ private:
     // Statuses
     JArrowMetrics _metrics;      // Performance information accumulated over all workers
     size_t _thread_count = 0;    // Current number of threads assigned to this arrow
-    bool _is_upstream_finished = false;  // TODO: Deprecated. Use _status instead.
+    std::atomic_bool _is_upstream_finished { false };  // TODO: Deprecated. Use _status instead.
     //Status _status = Status::Unopened;  // Lives in JActivable for now
 
     // Knobs

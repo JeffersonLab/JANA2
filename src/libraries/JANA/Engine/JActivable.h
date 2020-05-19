@@ -6,6 +6,7 @@
 #define GREENFIELD_ACTIVABLE_H
 
 #include <vector>
+#include <atomic>
 
 /// Activable provides a way of propagating information about whether a particular
 /// item in the topology is active or not using notifications. It is an instance of
@@ -23,7 +24,7 @@ private:
     std::vector<JActivable *> _downstream;
 
 protected:
-    Status _status = Status::Unopened;
+    std::atomic<Status> _status {Status::Unopened};
 
 public:
     virtual bool is_active() {

@@ -1,3 +1,4 @@
 theme: jekyll-theme-architect
 include: ["html/_*"]
-markdown: GFM
+markdown: kramdown
+

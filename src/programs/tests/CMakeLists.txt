@@ -25,10 +25,10 @@ set(TEST_SOURCES
     NEventNSkipTests.cc
     )
 
-add_executable(tests ${TEST_SOURCES})
+add_executable(janatests ${TEST_SOURCES})
 find_package(Threads REQUIRED)
-target_include_directories(tests PUBLIC .)
-target_link_libraries(tests jana2 Threads::Threads)
+target_include_directories(janatests PUBLIC .)
+target_link_libraries(janatests jana2 Threads::Threads)
 
-install(TARGETS tests DESTINATION bin)
+install(TARGETS janatests DESTINATION bin)
 install(FILES catch.hpp DESTINATION include/external)

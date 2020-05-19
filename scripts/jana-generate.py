@@ -226,10 +226,12 @@ void InitPlugin(JApplication* app) {{
 """
 
 plugin_root_cmakelists_txt = """
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.9)
 project({name}_plugin_project)
 
-set(CMAKE_CXX_STANDARD 14)
+if(NOT "${{CMAKE_CXX_STANDARD}}")
+  set(CMAKE_CXX_STANDARD 14)
+endif()
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)   # Enable -fPIC for all targets
 
 # Expose custom cmake modules
@@ -260,7 +262,6 @@ set_target_properties({name}_plugin PROPERTIES PREFIX "" OUTPUT_NAME "{name}" SU
 install(TARGETS {name}_plugin DESTINATION plugins)
 
 """
-
 
 plugin_findjana_cmake = """
 # Distributed under the OSI-approved BSD 3-Clause License.  See accompanying
@@ -321,6 +322,7 @@ find_library(JANA_LIBRARY
         )
 
 set(JANA_LIBRARIES ${JANA_LIBRARY})
+set(JANA_LIB ${JANA_LIBRARY})
 set(JANA_INCLUDE_DIRS ${JANA_ROOT_DIR}/include)
 
 include(FindPackageHandleStandardArgs)
@@ -532,7 +534,6 @@ public:
 #endif // _{name}_h_
 """
 
-
 jroot_output_processor_h = """
 #include <JANA/JEventProcessor.h>
 #include <JANA/Services/JGlobalRootLock.h>
@@ -589,16 +590,65 @@ public:
 
 """
 
-mini_plugin_cmakelists_txt = """
+cmakelists_project_preamble_txt = """
 
-add_library({name}_plugin SHARED {name}.cc)
+cmake_minimum_required(VERSION 3.9)
+project({name}_plugin_project)
 
+if(NOT "${{CMAKE_CXX_STANDARD}}")
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)   # Enable -fPIC for all targets
+
+# Set install directory to $JANA_HOME
+set(CMAKE_INSTALL_PREFIX $ENV{{JANA_HOME}} CACHE PATH "magic incantation" FORCE)
+
+# Expose custom cmake modules
+list(APPEND CMAKE_MODULE_PATH "${{CMAKE_CURRENT_LIST_DIR}}/cmake")
+
+# Find dependencies
 find_package(JANA REQUIRED)
 find_package(ROOT)
+
+"""
+
+mini_standalone_plugin_cmakelists_txt = """
+
+cmake_minimum_required(VERSION 3.9)
+project({name}_plugin_project)
+
+if(NOT "${{CMAKE_CXX_STANDARD}}")
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)   # Enable -fPIC for all targets
+
+# Set install directory to $JANA_HOME
+set(CMAKE_INSTALL_PREFIX $ENV{{JANA_HOME}} CACHE PATH "magic incantation" FORCE)
+
+# Expose custom cmake modules
+list(APPEND CMAKE_MODULE_PATH "${{CMAKE_CURRENT_LIST_DIR}}/cmake")
+
+# Find dependencies
+find_package(JANA REQUIRED)
+find_package(ROOT)
+
+# Add our code as a shared library
+add_library({name}_plugin SHARED {name}.cc)
+target_include_directories({name}_plugin PUBLIC ${{JANA_INCLUDE_DIR}} ${{ROOT_INCLUDE_DIRS}})
+target_link_libraries({name}_plugin ${{JANA_LIB}} ${{ROOT_LIBRARIES}})
+set_target_properties({name}_plugin PROPERTIES PREFIX "" OUTPUT_NAME "{name}" SUFFIX ".so")
+install(TARGETS {name}_plugin DESTINATION plugins)
+
+"""
+
+mini_project_plugin_cmakelists_txt = """
+
+add_library({name}_plugin SHARED {name}.cc)
 
 target_include_directories({name}_plugin PUBLIC ${{JANA_INCLUDE_DIR}} ${{ROOT_INCLUDE_DIRS}})
 target_link_libraries({name}_plugin ${{JANA_LIB}} ${{ROOT_LIBRARIES}})
 set_target_properties({name}_plugin PROPERTIES PREFIX "" OUTPUT_NAME "{name}" SUFFIX ".so")
+
 install(TARGETS {name}_plugin DESTINATION plugins)
 
 """
@@ -669,13 +719,18 @@ extern "C" {{
 """
 
 def create_jobject(name):
+    """Create a JObject code skeleton in the current directory. Requires one argument:
+       name:  The name of the JObject, e.g. "RecoTrack"
+    """
     filename = name + ".h"
     text = jobject_template_h.format(copyright_notice=copyright_notice, name=name)
     with open(filename, 'w') as f:
         f.write(text)
 
-
 def create_jeventsource(name):
+    """Create a JEventSource code skeleton in the current directory. Requires one argument:
+       name:  The name of the JEventSource, e.g. "CsvFileSource"
+    """
 
     with open(name + ".h", 'w') as f:
         text = jeventsource_template_h.format(copyright_notice=copyright_notice, name=name)
@@ -685,8 +740,10 @@ def create_jeventsource(name):
         text = jeventsource_template_cc.format(copyright_notice=copyright_notice, name=name)
         f.write(text)
 
-
 def create_jeventprocessor(name):
+    """Create a JFactory code skeleton in the current directory. Requires one argument:
+       name:  The name of the JEventProcessor, e.g. "TrackingEfficiencyProcessor"
+    """
 
     with open(name + ".h", 'w') as f:
         text = jeventprocessor_template_h.format(copyright_notice=copyright_notice, name=name)
@@ -700,25 +757,107 @@ def create_jeventprocessor(name):
     #    text = jeventprocessor_template_tests.format(copyright_notice=copyright_notice, name=name)
     #    f.write(text)
 
+def create_jfactory(factory_name, jobject_name):
+    """Create a JFactory code skeleton in the current directory. Requires two arguments:
+       factory_name:  The name of the JFactory, e.g. "RecoTrackFactory_Genfit"
+       jobject_name:  The name of the JObject this factory creates, e.g. "RecoTrack"
+    """
 
-def create_jfactory(name, jobject_name):
-
-    print(f"Creating {name}:public JFactoryT<{jobject_name}>")
-    with open(name + ".cc", 'w') as f:
-        text = jfactory_template_cc.format(name=name, jobject_name=jobject_name)
+    print(f"Creating {factory_name}:public JFactoryT<{jobject_name}>")
+    with open(factory_name + ".cc", 'w') as f:
+        text = jfactory_template_cc.format(name=factory_name, jobject_name=jobject_name)
         f.write(text)
 
-    with open(name + ".h", 'w') as f:
-        text = jfactory_template_h.format(name=name, jobject_name=jobject_name)
+    with open(factory_name + ".h", 'w') as f:
+        text = jfactory_template_h.format(name=factory_name, jobject_name=jobject_name)
         f.write(text)
 
+def boolify(x, name):
+    if x==True or x=="True" or x=="true" or x==1:
+        return True
+    elif x==False or x=="False" or x=="false" or x==0:
+        return False
+    else:
+        raise Exception("Argument "+name+ " must be either 'true' or 'false'")
 
-def create_plugin(name):
+def create_plugin(name, is_standalone=True, is_mini=True, include_root=True, include_tests=False):
+    """Create a code skeleton for a plugin in its own directory. Requires:
+       name:           The name of the plugin, e.g. "trk_eff" or "TrackingEfficiency"
+       is_standalone:  Are we inside the source tree of an existing project? If not, configure a CMake project
+       is_mini:        Reduce boilerplate and put everything in a single file?
+       include_root:   Include a ROOT dependency and stubs for filling a ROOT histogram?
+       include_tests:  Include stubs for test cases?
+    """
+
+    is_standalone = boolify(is_standalone, "is_standalone")
+    is_mini = boolify(is_mini, "is_mini")
+    include_root = boolify(include_root, "include_root")
+    include_tests = boolify(include_tests, "include_tests")
+
+    if not include_root and is_mini:
+        raise Exception("Not supported yet!")
+
     os.mkdir(name)
-    os.mkdir(name + "/cmake")
-    os.mkdir(name + "/src")
-    os.mkdir(name + "/tests")
 
+    cmakelists = ""
+
+    if is_standalone:
+        os.mkdir(name+"/cmake")
+        with open(name + "/cmake/FindJANA.cmake", 'w') as f:
+            f.write(plugin_findjana_cmake)
+
+        cmakelists += cmakelists_project_preamble_txt.format(name=name)
+
+    if not is_mini:
+        with open(name + "/" + name + ".cc", 'w') as f:
+            text = plugin_main.format(name=name)
+            f.write(text)
+
+        # Otherwise InitPlugin goes into the processor file
+
+    if include_root and is_mini:
+        cmakelists += mini_project_plugin_cmakelists_txt.format(name=name)
+        with open(name + "/" + name + ".cc", 'w') as f:
+            text = mini_plugin_cc.format(name=name)
+            f.write(text)
+
+    elif include_root and not is_mini:
+        with open(name + "/" + name + "Processor.h", 'w') as f:
+            text = jroot_output_processor_h.format(processor_name=name+"Processor", dir_name=name)
+            f.write(text)
+
+        cmakelists += plugin_cmakelists_txt.format(name=name)
+
+    elif not include_root and is_mini:
+        pass
+
+    else: # not include_root and not is_mini:
+
+        cmakelists += plugin_cmakelists_txt.format(name=name)
+
+        with open(name + "/" + name + "Processor.cc", 'w') as f:
+            text = jeventprocessor_template_cc.format(name=name+"Processor")
+            f.write(text)
+
+        with open(name + "/" + name + "Processor.h", 'w') as f:
+            text = jeventprocessor_template_h.format(name=name+"Processor")
+            f.write(text)
+
+
+    if include_tests:
+        with open(name + "/" + name + "ProcessorTest.cc", 'w') as f:
+            text = jeventprocessor_template_tests.format(name=name+"Processor")
+            f.write(text)
+
+        # Copy tests CMakeLists stub
+        # Copy catch2
+        # Copy tests for processor
+
+    # Write CMakeLists body
+    with open(name + "/CMakeLists.txt", 'w') as f:
+        f.write(cmakelists)
+
+def copy_from_source_dir(files_to_copy):
     # For files that are copied from a JANA source directory we need to know
     # that directory. Preference is given to a path derived from the location
     # of the currently executing script since that is most the likely to
@@ -736,8 +875,6 @@ def create_plugin(name):
     # a dictionary containing the relative paths is the source and install
     # directories as well as a destination name for the file (in case we ever
     # add one that needs to be renamed).
-    files_to_copy = {}
-    files_to_copy["catch.hpp"] = {"sourcedir":"src/programs/tests", "installdir":"include/external", "destname":name+"/tests/catch.hpp"}
 
     jana_scripts_dir = os.path.dirname(os.path.realpath(__file__)) # Directory hold current script
     jana_dir = os.path.dirname(jana_scripts_dir)                   # Parent directory of above dir
@@ -797,6 +934,19 @@ def create_plugin(name):
         print("you JANA installation. Continuing now though this may leave you with")
         print("a broken plugin.")
 
+def create_standalone_plugin(name):
+    """Create a code skeleton for a standalone plugin in its own directory. Requires one argument:
+       name:  The name of the plugin, e.g. "trk_eff" or "TrackingEfficiency"
+    """
+    os.mkdir(name)
+    os.mkdir(name + "/cmake")
+    os.mkdir(name + "/src")
+    os.mkdir(name + "/tests")
+
+    files_to_copy = {}
+    files_to_copy["catch.hpp"] = {"sourcedir":"src/programs/tests", "installdir":"include/external", "destname":name+"/tests/catch.hpp"}
+    copy_from_source_dir(files_to_copy)
+
     # Write all files defined in this script
     with open(name + "/cmake/FindJANA.cmake", 'w') as f:
         f.write(plugin_findjana_cmake)
@@ -833,8 +983,10 @@ def create_plugin(name):
         text = plugin_tests_cmakelists_txt.format(name=name)
         f.write(text)
 
-
 def create_project_plugin(name):
+    """Create a code skeleton for a project plugin in its own directory. Requires one argument:
+       name:  The name of the plugin, e.g. "trk_eff" or "TrackingEfficiency"
+    """
     os.mkdir(name)
 
     with open(name + "/CMakeLists.txt", 'w') as f:
@@ -858,10 +1010,15 @@ def create_project_plugin(name):
         f.write(text)
 
 def create_executable(name):
+    """Create a code skeleton for a project executable in the current directory. Requires one argument:
+       name:  The name of the executable, e.g. "escalate" or "halld_recon"
+    """
     pass
 
-
 def create_project(name):
+    """Create a code skeleton for a complete project in its own directory. Requires one argument:
+       name:  The name of the project, e.g. "escalate" or "halld_recon"
+    """
     os.mkdir(name)
     os.mkdir(name + "/cmake")
     os.mkdir(name + "/external")
@@ -873,32 +1030,51 @@ def create_project(name):
     os.mkdir(name + "/tests")
 
 def create_root_eventprocessor(processor_name, dir_name):
+    """Create a ROOT-aware JEventProcessor code skeleton in the current directory. Requires two arguments:
+       processor_name:  The name of the JEventProcessor, e.g. "TrackingEfficiencyProcessor"
+       dir_name:        The name of the virtual directory in the ROOT file where everything goes, e.g. "trk_eff"
+    """
     with open(processor_name + ".h", 'w') as f:
         text = jroot_output_processor_h.format(processor_name=processor_name, dir_name=dir_name)
         f.write(text)
 
-
-def create_mini_plugin(name):
+def create_mini_project_plugin(name):
+    """Create a minimal-boilerplate JANA project plugin. Requires one argument:
+       name: The name of the plugin, e.g. "TrackingEfficiency" or "trk_eff"
+    """
     os.mkdir(name)
     with open(name + "/CMakeLists.txt", 'w') as f:
-        text = mini_plugin_cmakelists_txt.format(name=name)
+        text = mini_project_plugin_cmakelists_txt.format(name=name)
         f.write(text)
 
     with open(name + "/" + name + ".cc", 'w') as f:
         text = mini_plugin_cc.format(name=name)
         f.write(text)
 
+def create_mini_standalone_plugin(name):
+    """Create a minimal-boilerplate JANA standalone plugin. Requires one argument:
+       name: The name of the plugin, e.g. "TrackingEfficiency" or "trk_eff"
+    """
+    os.mkdir(name)
+    with open(name + "/CMakeLists.txt", 'w') as f:
+        text = mini_standalone_plugin_cmakelists_txt.format(name=name)
+        f.write(text)
+
+    with open(name + "/" + name + ".cc", 'w') as f:
+        text = mini_plugin_cc.format(name=name)
+        f.write(text)
+
+    os.mkdir(name+"/cmake")
+    with open(name + "/cmake/FindJANA.cmake", 'w') as f:
+        f.write(plugin_findjana_cmake)
 
 def print_usage():
-    print("Usage: jana-generate [type] [name]")
-    print("  type: JObject JEventSource JEventProcessor RootEventProcessor JFactory StandalonePlugin ProjectPlugin MiniPlugin Executable Project")
-    print("  name: Preferably in CamelCase, e.g. EvioSource")
-
+    print("Usage: jana-generate [type] [args...]")
+    print("  type: JObject JEventSource JEventProcessor RootEventProcessor JFactory StandalonePlugin ProjectPlugin MiniStandalonePlugin MiniProjectPlugin Project")
 
 if __name__ == '__main__':
 
-    if len(argv) < 3:
-        print("Error: Wrong number of arguments!")
+    if len(argv) < 2:
         print_usage()
         exit()
 
@@ -907,18 +1083,24 @@ if __name__ == '__main__':
                       'JEventProcessor': create_jeventprocessor,
                       'RootEventProcessor': create_root_eventprocessor,
                       'JFactory': create_jfactory,
-                      'StandalonePlugin': create_plugin,
+                      'Plugin': create_plugin,
+                      'StandalonePlugin': create_standalone_plugin,
                       'ProjectPlugin': create_project_plugin,
-                      'MiniPlugin': create_mini_plugin,
+                      'MiniProjectPlugin': create_mini_project_plugin,
+                      'MiniStandalonePlugin': create_mini_standalone_plugin,
                       'Executable': create_executable,
                       'Project': create_project,
                       }
 
     option = argv[1]
     if option in dispatch_table:
-        dispatch_table[option](*argv[2:])
+        try:
+           dispatch_table[option](*argv[2:])
+        except TypeError:
+           print(dispatch_table[option].__doc__)
+
     else:
-        print("Error: Invalid type!")
+        print("Error: Invalid option!")
         print_usage()
         exit()
 

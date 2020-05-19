@@ -1,8 +1,12 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.9)
 project(jana2 VERSION 2.0.1)
 
-set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)   # Enable -fPIC for all targets
+
+# Set default standard to C++14, but allow user to override at command line
+if(NOT "${CMAKE_CXX_STANDARD}")
+  set(CMAKE_CXX_STANDARD 14)
+endif()
 
 # Expose custom cmake modules
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
@@ -12,7 +16,8 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 if(NOT CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
     message(STATUS "Installing to ${CMAKE_INSTALL_PREFIX}")
 else()
-    message(FATAL_ERROR "Please provide CMAKE_INSTALL_PREFIX or JANA_HOME (as a CMake variable, not an envvar)")
+    message(WARNING "Missing CMAKE_INSTALL_PREFIX=$JANA_HOME => Defaulting to ./install")
+    set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/install CACHE PATH "Comment explaining this nonsense" FORCE)
 endif()
 
 include_directories(src/libraries)   # So that everyone can find the JANA header files

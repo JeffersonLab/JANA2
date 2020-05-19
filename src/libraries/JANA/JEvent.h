@@ -66,7 +66,6 @@
 class JApplication;
 class JEventSource;
 
-using std::vector;
 
 class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 {
@@ -75,10 +74,13 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 		explicit JEvent(JApplication* aApplication=nullptr) { mApplication = aApplication; }
 		virtual ~JEvent() {
 		    if (mFactorySet != nullptr) mFactorySet->Release();
+		    delete mFactorySet;
 		}
 
-		//FACTORIES
-		void SetFactorySet(JFactorySet* aFactorySet) { mFactorySet = aFactorySet; }
+		void SetFactorySet(JFactorySet* aFactorySet) {
+			delete mFactorySet;
+		    mFactorySet = aFactorySet;
+		}
 
 		template<class T> JFactoryT<T>* GetFactory(const std::string& tag = "", bool throw_on_missing=false) const;
         template<class T> std::vector<JFactoryT<T>*> GetFactoryAll(bool throw_on_missing = false) const;

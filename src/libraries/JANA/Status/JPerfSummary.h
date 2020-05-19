@@ -51,6 +51,10 @@ struct JPerfSummary {
     double latest_uptime_s = 0;
     double avg_throughput_hz = 0;
     double latest_throughput_hz = 0;
+
+    JPerfSummary() = default;
+    JPerfSummary(const JPerfSummary& other) = default;
+    virtual ~JPerfSummary() = default;
 };
 
 inline std::ostream& operator<<(std::ostream& os, const JPerfSummary& x) {

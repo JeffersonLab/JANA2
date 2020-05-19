@@ -36,11 +36,12 @@ private:
     unsigned _cpu_id;
     unsigned _location_id;
     bool _pin_to_cpu;
-    RunState _run_state;
+    std::atomic<RunState> _run_state;
     JArrow* _assignment;
     std::thread* _thread;    // JWorker encapsulates a thread of some kind. Nothing else should care how.
     JWorkerMetrics _worker_metrics;
     JArrowMetrics _arrow_metrics;
+    std::mutex _assignment_mutex;
 
 public:
     JWorker(JScheduler* scheduler, unsigned worker_id, unsigned cpu_id, unsigned domain_id, bool pin_to_cpu);
@@ -66,12 +67,6 @@ public:
     /// JProcessingController::measure_perf()
     void measure_perf(WorkerSummary& result);
 
-private:
-    /// Worker accumulates Arrow-specific metrics. These need to propagate back to
-    /// one central place. There are two things which trigger this:
-    /// 1. JWorker::measure_perf()
-    /// 2. JWorker::loop() after an arrow assignment change
-    void publish_arrow_metrics();
 };
 
 

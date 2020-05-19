@@ -20,18 +20,106 @@ Table of contents
 -----------------
 
 1.  [Download](Download.html) and [install](Installation.html) JANA
-2.  [Generate code skeletons](#Creating-code-skeletons) for projects, plugins, components, etc
-4.  Create a service which can be shared between different plugins
-5.  Handle both real and simulated data
-6.  Handle EPICS data
-7.  [Detect when a group of events has finished](howto_group_events.md)
-8.  Use JANA with ROOT
-9.  Persist the entire DST using ROOT
-10. Checkpoint the entire DST using ROOT
-11. [Stream data to and from JANA](howto_streaming.html)
-12. Build and filter events ("L1 and L2 triggers")
-13. Process subevents
-14. Migrate from JANA1 to JANA2
+2.  [Use the JANA command-line program](#using-the-jana-cli)
+3.  [Configure JANA](#configuring-jana)
+4.  [Generate code skeletons](#creating-code-skeletons) for projects, plugins, components, etc
+5.  Create a service which can be shared between different plugins
+6.  Handle both real and simulated data
+7.  Handle EPICS data
+8.  [Detect when a group of events has finished](howto_group_events.md)
+9.  Use JANA with ROOT
+10.  Persist the entire DST using ROOT
+11. Checkpoint the entire DST using ROOT
+12. [Stream data to and from JANA](howto_streaming.html)
+13. Build and filter events ("L1 and L2 triggers")
+14. Process subevents
+15. Migrate from JANA1 to JANA2
+
+
+Using the JANA CLI
+------------------
+
+JANA is typically run like this:
+
+~~~ bash
+$JANA_HOME/bin/jana -Pplugins=JTest -Pnthreads=8 ~/data/inputfile.txt
+~~~
+
+Note that the JANA executable won't do anything until you provide plugins.
+A simple plugin is provided called JTest, which verifies that everything is working and optionally does a quick
+performance benchmark. Additional simple plugins are provided in `src/examples`. Instructions on how to write your
+own are given in the Tutorial section.
+
+Along with specifying plugins, you need to specify the input files containing the events you wish to process.
+Note that JTest ignores these and crunches randomly generated data instead.
+
+
+The command-line flags are:
+
+| Short | Long | Meaning  |
+|:------|:-----|:---------|
+| -h    | --help               | Display help message |
+| -v    | --version            | Display version information |
+| -c    | --configs            | Display configuration parameters |
+| -l    | --loadconfigs <file> | Load configuration parameters from file |
+| -d    | --dumpconfigs <file> | Dump configuration parameters to file |
+| -b    | --benchmark          | Run JANA in benchmark mode |
+| -P    |                      | Specify a configuration parameter (see below) |
+
+
+
+Configuring JANA
+----------------
+
+JANA provides a parameter manager so that configuration options may be controlled via code, command-line args, and 
+config files in a consistent and self-documenting way. Plugins are free to request any existing parameters or register
+their own. 
+
+The following configuration options are used most commonly:
+
+| Name | Type | Description |
+|:-----|:-----|:------------|
+nthreads                  | int     | Size of thread team (Defaults to the number of cores on your machine)
+plugins                   | string  | Comma-separated list of plugin filenames. JANA will look for these on the `$JANA_PLUGIN_PATH`
+plugins_to_ignore         | string  | This removes plugins which had been specified in `plugins`. 
+event_source_type         | string  | Manually override JANA's decision about which JEventSource to use
+jana:nevents              | int     | Limit the number of events each source may emit
+jana:nskip                | int     | Skip processing the first n events from each event source
+jana:extended_report      | bool    | The amount of status information to show while running
+jana:status_fname         | string  | Named pipe for retrieving status information remotely
+
+
+JANA has its own logger. You can control the verbosity of different components using 
+the parameters `log:off`, `log:fatal`, `log:error`, `log:warn`, `log:info`, `log:debug`, and `log:trace`.
+The following example shows how you would increase the verbosity of JPluginLoader and JComponentManager:
+```
+jana -Pplugins=JTest -Plog:debug=JPluginLoader,JComponentManager
+```
+
+The following parameters are used for benchmarking:
+
+| Name | Type | Default | Description |
+|:-----|:-----|:------------|:--------|
+benchmark:nsamples    | int    | 15 | Number of measurements made for each thread count
+benchmark:minthreads  | int    | 1  | Minimum thread count
+benchmark:maxthreads  | int    | ncores | Maximum thread count
+benchmark:threadstep  | int    | 1  | Thread count increment
+benchmark:resultsdir  | string | JANA_Test_Results | Directory name for benchmark test results
+
+
+The following parameters may come in handy when doing performance tuning:
+
+| Name | Type | Default | Description |
+|:-----|:-----|:------------|:--------|
+jana:engine                       | int  | 0        | Which parallelism engine to use. 0: JArrowProcessingController. 1: JDebugProcessingController.
+jana:event_pool_size              | int  | nthreads | The number of events which may be in-flight at once
+jana:limit_total_events_in_flight | bool | 1        | Whether the number of in-flight events should be limited
+jana:affinity                     | int  | 0        | Thread pinning strategy. 0: None. 1: Minimize number of memory localities. 2: Minimize number of hyperthreads.
+jana:locality                     | int  | 0        | Memory locality strategy. 0: Global. 1: Socket-local. 2: Numa-domain-local. 3. Core-local. 4. Cpu-local
+jana:enable_stealing              | bool | 0        | Allow threads to pick up work from a different memory location if their local mailbox is empty.
+jana:event_queue_threshold        | int  | 80       | Mailbox buffer size
+jana:event_source_chunksize       | int  | 40       | Reduce mailbox contention by chunking work assignments
+jana:event_processor_chunksize    | int  | 1        | Reduce mailbox contention by chunking work assignments
 
 
 Creating code skeletons
@@ -65,9 +153,12 @@ Project plugins include one JEventProcessor by default.
 #### Mini plugins
 Mini plugins are project plugins which have been stripped down to a single `cc` file. They are useful
 when someone wants to do a quick analysis and doesn't need or want the additional boilerplate. They
-include one JEventProcessor with support for ROOT histograms. 
+include one JEventProcessor with support for ROOT histograms. There are two options: 
 
-```jana-generate.py MiniPlugin PluginNameInCamelCase```
+```
+jana-generate.py MiniStandalonePlugin PluginNameInCamelCase
+jana-generate.py MiniProjectPlugin PluginNameInCamelCase
+```
 
 #### Standalone plugins 
 Standalone plugins are useful for getting started quickly. They are also effective when someone wishes to 

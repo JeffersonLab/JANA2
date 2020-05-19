@@ -82,9 +82,8 @@ They are the following :
 1. ROOT must be installed and the appropriate environment configured.  Consider one of the two options listed below:
     - `source /path/to/root/installation/bin/thisroot.(c)sh`
     - Manually configure the `ROOTSYS, PATH,` and `LD_LIBRARY_PATH` environment variables
-1. Both the ZeroMQ and CZMQ libraries must be present
-    - Use your package manager to install the libraries system wide e.g. `yum install zeromq-devel` 
-    and `yum install czmq-devel` 
+1. The ZeroMQ library must be present
+    - Use your package manager to install the libraries system wide e.g. `yum install zeromq-devel`
 
 In order to compile JANA2 in conjunction with the stream detector plugin, one must execute the following commands:
 
@@ -252,7 +251,7 @@ prerequisites are required in order to successfully build and execute the `INDRA
 are the following :
 
 1. The minimum required version of cmake is 3.13
-1. Both the ZeroMQ and CZMQ libraries must be present
+1. The ZeroMQ library must be present
     - Use your package manager to install the libraries system wide e.g. `yum install zeromq-devel` 
     and `yum install czmq-devel` 
 

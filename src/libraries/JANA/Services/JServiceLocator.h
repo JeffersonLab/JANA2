@@ -48,6 +48,12 @@ class JServiceLocator {
 
 public:
 
+    ~JServiceLocator() {
+        for (auto pair : underlying) {
+            delete pair.second.second; // Delete each pointer to once_flag
+        }
+    }
+
     template<typename T>
     void provide(std::shared_ptr<T> t) {
 

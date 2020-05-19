@@ -141,7 +141,7 @@ void JPluginLoader::attach_plugins(JComponentManager* jcm) {
                     found_plugin = true;
                     break;
                 } catch (...) {
-                    paths_checked << "Failed dlopen" << std::endl;
+                    paths_checked << "Loading failure: " << dlerror() << std::endl;
                     LOG_DEBUG(_logger) << "Loading failure: " << dlerror() << LOG_END;
                     continue;
                 }
@@ -154,7 +154,6 @@ void JPluginLoader::attach_plugins(JComponentManager* jcm) {
         if (!found_plugin) {
             LOG_ERROR(_logger) << "Couldn't load plugin '" << plugin << "'\n" <<
                                "  Make sure that JANA_HOME and/or JANA_PLUGIN_PATH environment variables are set correctly.\n" <<
-                               "  For more information, set jana:debug_plugin_loading=1.\n"
                                "  Paths checked:\n" << paths_checked.str() << LOG_END;
             throw JException("Couldn't find plugin '%s'", plugin.c_str());
         }

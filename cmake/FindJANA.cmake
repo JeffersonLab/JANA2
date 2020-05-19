@@ -85,6 +85,7 @@ find_library(JANA_LIBRARY
         )
 
 set(JANA_LIBRARIES ${JANA_LIBRARY})
+set(JANA_LIB ${JANA_LIBRARY})
 set(JANA_INCLUDE_DIRS ${JANA_ROOT_DIR}/include)
 
 include(FindPackageHandleStandardArgs)

@@ -93,6 +93,7 @@ public:
     size_t size() {
         size_t result = 0;
         for (size_t i = 0; i<m_locations_count; ++i) {
+            std::lock_guard<std::mutex> lock(m_mailboxes[i].mutex);
             result += m_mailboxes[i].queue.size();
         }
         return result;
