@@ -24,6 +24,7 @@ set(TEST_SOURCES
     JFactoryTests.cc
     NEventNSkipTests.cc
     JEventGetAllTests.cc
+    JParameterManagerTests.cc
     )
 
 add_executable(janatests ${TEST_SOURCES})

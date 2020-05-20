@@ -66,5 +66,61 @@ TEST_CASE("JParameterManager::SetDefaultParameter") {
 }
 
 
+TEST_CASE("JParameterManagerBoolTests") {
+    JParameterManager jpm;
+
+    SECTION("'0' parses to false") {
+        jpm.SetParameter("test_param", "0");
+        bool val = jpm.GetParameterValue<bool>("test_param");
+        REQUIRE(val == false);
+    }
+
+    SECTION("'1' parses to true") {
+        jpm.SetParameter("test_param", "1");
+        bool val = jpm.GetParameterValue<bool>("test_param");
+        REQUIRE(val == true);
+    }
+
+    SECTION("'off' parses to false") {
+        jpm.SetParameter("test_param", "off");
+        bool val = jpm.GetParameterValue<bool>("test_param");
+        REQUIRE(val == false);
+    }
+
+    SECTION("'on' parses to true") {
+        jpm.SetParameter("test_param", "on");
+        bool val = jpm.GetParameterValue<bool>("test_param");
+        REQUIRE(val == true);
+    }
+
+    SECTION("'true' parses to true") {
+        jpm.SetParameter("test_param", "true");
+        bool val = jpm.GetParameterValue<bool>("test_param");
+        REQUIRE(val == true);
+    }
+
+    SECTION("'false' parses to false") {
+        jpm.SetParameter("test_param", "false");
+        bool val = jpm.GetParameterValue<bool>("test_param");
+        REQUIRE(val == false);
+    }
+
+    SECTION("Parsing anything else as bool throws an exception") {
+        jpm.SetParameter("test_param", "maybe");
+        CHECK_THROWS(jpm.GetParameterValue<bool>("test_param"));
+    }
+
+    SECTION("Stringify still works") {
+        jpm.SetParameter("test_param", false);
+        std::string val = jpm.GetParameterValue<std::string>("test_param");
+        REQUIRE(val == "0");
+
+        jpm.SetParameter("test_param", true);
+        val = jpm.GetParameterValue<std::string>("test_param");
+        REQUIRE(val == "1");
+    }
+}
+
+
 
 
