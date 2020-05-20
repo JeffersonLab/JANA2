@@ -97,7 +97,7 @@ public:
 protected:
 
     template<typename T>
-    T parse(std::string value);
+    T parse(const std::string& value);
 
     template<typename T>
     std::string stringify(T value);
@@ -215,16 +215,28 @@ JParameter* JParameterManager::SetDefaultParameter(std::string name, T& val, std
 // Logic for parsing and stringifying different types
 
 template <typename T>
-inline T JParameterManager::parse(std::string value) {
+inline T JParameterManager::parse(const std::string& value) {
     std::stringstream ss(value);
     T val;
     ss >> val;
     return val;
 }
 
+template <>
+inline bool JParameterManager::parse(const std::string& value) {
+    if (value == "0") return false;
+    if (value == "1") return true;
+    if (value == "false") return false;
+    if (value == "true") return true;
+    if (value == "off") return false;
+    if (value == "on") return true;
+    throw JException("'%s' not parseable as bool", value.c_str());
+}
+
+
 /// Specialization for std::vector<std::string>
 template<>
-inline std::vector<std::string> JParameterManager::parse(std::string value) {
+inline std::vector<std::string> JParameterManager::parse(const std::string& value) {
     std::stringstream ss(value);
     std::vector<std::string> result;
     std::string s;
