@@ -109,6 +109,16 @@ TEST_CASE("JParameterManagerBoolTests") {
         jpm.SetParameter("test_param", "maybe");
         CHECK_THROWS(jpm.GetParameterValue<bool>("test_param"));
     }
+
+    SECTION("Stringify still works") {
+        jpm.SetParameter("test_param", false);
+        std::string val = jpm.GetParameterValue<std::string>("test_param");
+        REQUIRE(val == "0");
+
+        jpm.SetParameter("test_param", true);
+        val = jpm.GetParameterValue<std::string>("test_param");
+        REQUIRE(val == "1");
+    }
 }
 
 
