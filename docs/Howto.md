@@ -23,7 +23,7 @@ Table of contents
 2.  [Use the JANA command-line program](#using-the-jana-cli)
 3.  [Configure JANA](#configuring-jana)
 4.  [Generate code skeletons](#creating-code-skeletons) for projects, plugins, components, etc
-5.  [Work with factory metadata](#Using-factory-metadata) for collecting statistics, etc
+5.  [Work with factory metadata](#using-factory-metadata) for collecting statistics, etc
 6.  Create a service which can be shared between different plugins
 7.  Handle both real and simulated data
 8.  Handle EPICS data
