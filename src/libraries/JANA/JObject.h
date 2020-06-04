@@ -211,15 +211,23 @@ const T* JObject::GetSingle() const {
 			}
 		}
 	}
-	if (last_found != nullptr) {
-		return last_found;
+	if (last_found == nullptr) {
+		// If nothing found, attempt matching by strings.
+		// Why? Because dl and RTTI aren't playing nicely together;
+		// each plugin might assign a different typeid to the same class.
+		std::string classname = JTypeInfo::demangle<T>();
+		for (auto obj : associated) {
+			if (obj->className() == classname) {
+				if (last_found == nullptr) {
+					last_found = reinterpret_cast<const T*>(obj);
+				}
+				else {
+					throw JException("JObject::GetSingle(): Multiple objects found.");
+				}
+			}
+		}
 	}
-	else {
-		// TODO: If nothing found, attempt matching by strings.
-		//       Why? Because dl and RTTI aren't playing nicely together;
-		//       each plugin might assign a different typeid to the same class.
-	}
-	return nullptr;
+	return last_found;
 }
 
 template<typename T>
@@ -233,9 +241,18 @@ std::vector<const T*> JObject::Get() const {
 			results.push_back(t);
 		}
 	}
-	// TODO: If nothing found, attempt matching by strings.
-	//       Why? Because dl and RTTI aren't playing nicely together;
-	//       each plugin might assign a different typeid to the same class.
+	if (results.empty()) {
+		// If nothing found, attempt matching by strings.
+		// Why? Because dl and RTTI aren't playing nicely together;
+		// each plugin might assign a different typeid to the same class.
+
+		std::string classname = JTypeInfo::demangle<T>();
+		for (auto obj : associated) {
+			if (obj->className() == classname) {
+				results.push_back(reinterpret_cast<const T*>(obj));
+			}
+		}
+	}
 	return results;
 }
 
