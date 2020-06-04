@@ -53,6 +53,7 @@
 
 #include <JANA/Utils/JTypeInfo.h>
 #include <JANA/JLogger.h>
+#include <JANA/JException.h>
 
 /// The JObject class is a base class for all data classes.
 /// (See JFactory for algorithm classes.)
@@ -217,8 +218,8 @@ const T* JObject::GetSingle() const {
 		// TODO: If nothing found, attempt matching by strings.
 		//       Why? Because dl and RTTI aren't playing nicely together;
 		//       each plugin might assign a different typeid to the same class.
-		throw JException("JObject::GetSingle(): No objects found.");
 	}
+	return nullptr;
 }
 
 template<typename T>
