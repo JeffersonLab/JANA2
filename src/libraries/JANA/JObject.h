@@ -114,6 +114,11 @@ class JObject{
 		inline void ClearAssociatedObjects(void);
 		inline bool IsAssociated(const JObject* locObject) const {return (associated.find(locObject) != associated.end());}
 
+		template<class T> const T* GetSingle() const;
+		template<class T> std::vector<const T*> Get() const;
+
+
+
 		// Convert to strings with pretty formatting for printing
 		virtual void Summarize(JObjectSummary& summary) const;
 
@@ -185,6 +190,52 @@ void JObject::ClearAssociatedObjects(void)
 	// Delete objects in the auto_delete list
 	for( auto p : auto_delete ) delete p;
 	auto_delete.clear();
+}
+
+
+template<class T>
+const T* JObject::GetSingle() const {
+	/// This is a convenience method that can be used to get a pointer to the single associated object of type T.
+	/// If no object is found, or multiple objects are found, this will throw a JException.
+
+	const T* last_found = nullptr;
+	for (auto obj : associated) {
+		auto t = dynamic_cast<const T*>(obj);
+		if (t != nullptr) {
+			if (last_found == nullptr) {
+				last_found = t;
+			}
+			else {
+				throw JException("JObject::GetSingle(): Multiple objects found.");
+			}
+		}
+	}
+	if (last_found != nullptr) {
+		return last_found;
+	}
+	else {
+		// TODO: If nothing found, attempt matching by strings.
+		//       Why? Because dl and RTTI aren't playing nicely together;
+		//       each plugin might assign a different typeid to the same class.
+		throw JException("JObject::GetSingle(): No objects found.");
+	}
+}
+
+template<typename T>
+std::vector<const T*> JObject::Get() const {
+	/// Returns a vector of pointers to all associated objects of type T.
+
+	std::vector<const T*> results;
+	for (auto obj : associated) {
+		const T* t = dynamic_cast<const T*>(obj);
+		if (t != nullptr) {
+			results.push_back(t);
+		}
+	}
+	// TODO: If nothing found, attempt matching by strings.
+	//       Why? Because dl and RTTI aren't playing nicely together;
+	//       each plugin might assign a different typeid to the same class.
+	return results;
 }
 
 inline void JObject::Summarize(JObjectSummary& summary) const
