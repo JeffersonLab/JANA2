@@ -1,3 +1,15 @@
+#
+# This is used to generate the jana-config script and jana_config.h header
+# from the corresponding ".in" files in the scripts directory.
+#
+# The jana-config script can be used by other build systems to get compiler
+# and linker options needed for this installation of JANA2. These will
+# include some 3rd party packages that users will need to link to if they
+# were linked into their JANA2 build.
+#
+# Similarly, jana_config.h gives some access to these 3rd party packages
+# that can be accessed programmatically.
+#
 
 set(JANA_INSTALL_DIR ${CMAKE_INSTALL_PREFIX})
 
@@ -6,9 +18,10 @@ execute_process(COMMAND SBMS/osrelease.pl
         OUTPUT_VARIABLE BMS_OSNAME
         OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-
+# ROOT
 if(DEFINED ENV{ROOTSYS})
     set(HAVE_ROOT 1)
+    set(ROOTSYS $ENV{ROOTSYS})
 
     execute_process(COMMAND $ENV{ROOTSYS}/bin/root-config --cflags
                     OUTPUT_VARIABLE ROOTCFLAGS
@@ -22,41 +35,45 @@ else()
     set(HAVE_ROOT 0)
 endif()
 
-
+# XERCESC
+# n.b. this is hard-coded for now to assume XERCES 3
 if(DEFINED ENV{XERCESCROOT})
     set(HAVE_XERCES 1)
-    set(XERCES_CPPFLAGS "-I${XERCESCROOT}/include -I${XERCESCROOT}/include/xercesc")
-    set(XERCES_LDFLAGS "-L${XERCESCROOT}/lib")
-    set(XERCES_LIBS "-lxerces-c")
-else()
-    # TODO: find_package(XERCES) just in case it was installed via a normal package manager instead
-    set(HAVE_XERCES 0)
-endif()
-
-
-find_file(XERCES3_HEADER "xercesc/dom/DOMImplementationList.hpp"
-          PATHS "$ENV{XERCESCROOT}/include" "$ENV{XERCESCROOT}/include/xercesc")
-
-if(XERCES3_HEADER)
     set(XERCES3 1)
+    set(XERCESCROOT $ENV{XERCESCROOT})
+    set(XERCES_CPPFLAGS "-I${XERCESCROOT}/include/xercesc")
+    set(XERCES_LIBS "-lxerces-c")
+    if( $XERCESCROOT != "/usr" )
+        set(XERCES_CPPFLAGS "${XERCES_CPPFLAGS} -I${XERCESCROOT}/include")
+        set(XERCES_LDFLAGS "-L${XERCESCROOT}/lib")
+    endif()
 else()
-    set(XERCES3 0)
+    find_package(XercesC)
+    if(XercesC_FOUND)
+        set(HAVE_XERCES 1)
+        set(XERCES3 1)
+        get_filename_component(XERCESCROOT "${XercesC_INCLUDE_DIRS}" DIRECTORY)
+        set(XERCES_CPPFLAGS "-I${XercesC_INCLUDE_DIRS} -I${XercesC_INCLUDE_DIRS}/xercesc")
+        set(XERCES_LIBS "${XercesC_LIBRARIES}")
+    endif()
 endif()
 
+# cMsg
+# n.b. I don't believe this will be needed in JANA2
+#if(DEFINED ENV{CMSGROOT})
+#    set(HAVE_CMSG 1)
+#    set(CMSG_CPPFLAGS "-I${CMSGROOT}/include")
+#    set(CMSG_LDFLAGS "-L${CMSGROOT}/lib")
+#    set(CMSG_LIBS "-lcmsg -lcmsgxx -lcmsgRegex")
+#else()
+#    set(HAVE_CMSG 0)
+#endif()
 
-if(DEFINED $ENV{CMSGROOT})
-    set(HAVE_CMSG 1)
-    set(CMSG_CPPFLAGS "-I${CMSGROOT}/include")
-    set(CMSG_LDFLAGS "-L${CMSGROOT}/lib")
-    set(CMSG_LIBS "-lcmsg -lcmsgxx -lcmsgRegex")
-else()
-    set(HAVE_CMSG 0)
-endif()
 
-
-
-if(DEFINED $ENV{CCDB_HOME})
+# CCDB
+if(DEFINED ENV{CCDB_HOME})
     set(HAVE_CCDB 1)
+    set(CCDB_HOME $ENV{CCDB_HOME})
     set(CCDB_CPPFLAGS "-I${CCDB_HOME}/include")
     set(CCDB_LDFLAGS "-L${CCDB_HOME}/lib")
     set(CCDB_LIBS "-lccdb")
@@ -64,12 +81,14 @@ else()
     set(HAVE_CCDB 0)
 endif()
 
-
+# MySQL
+# TODO: Strange that MySQL does not provide a FindMySQL.cmake. There seem to  be plenty out there though and we should maybe adopt one to replace the following
 execute_process(COMMAND which mysql_config
                 OUTPUT_VARIABLE MYSQL_FOUND
                 OUTPUT_STRIP_TRAILING_WHITESPACE)
 if(MYSQL_FOUND)
     set(HAVE_MYSQL 1)
+    set(JANA2_MYSQL_CONFIG ${MYSQL_FOUND})
     execute_process(COMMAND mysql_config --cflags
             OUTPUT_VARIABLE MYSQL_CFLAGS
             OUTPUT_STRIP_TRAILING_WHITESPACE)
@@ -81,24 +100,32 @@ if(MYSQL_FOUND)
     execute_process(COMMAND mysql_config --version
             OUTPUT_VARIABLE MYSQL_VERSION
             OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+    execute_process(COMMAND mysql_config --variable=pkglibdir
+            OUTPUT_VARIABLE MYSQL_PKGLIBDIR
+            OUTPUT_STRIP_TRAILING_WHITESPACE)
 else()
     set(HAVE_MYSQL 0)
 endif()
 
-
+# CURL
 execute_process(COMMAND which curl-config
         OUTPUT_VARIABLE CURL_FOUND
         OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 if(CURL_FOUND)
     set(HAVE_CURL 1)
-
+    set(JANA2_CURL_CONFIG ${CURL_FOUND})
     execute_process(COMMAND curl-config --cflags
             OUTPUT_VARIABLE CURL_CFLAGS
             OUTPUT_STRIP_TRAILING_WHITESPACE)
 
     execute_process(COMMAND curl-config --libs
             OUTPUT_VARIABLE CURL_LDFLAGS
+            OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+    execute_process(COMMAND curl-config --prefix
+            OUTPUT_VARIABLE CURL_ROOT
             OUTPUT_STRIP_TRAILING_WHITESPACE)
 else()
     set(HAVE_CURL 0)
@@ -109,6 +136,10 @@ set(HAVE_NUMA 0)
 
 configure_file(scripts/jana-config.in jana-config @ONLY)
 configure_file(scripts/jana_config.h.in jana_config.h @ONLY)
+configure_file(scripts/jana-this.sh.in  jana-this.sh  @ONLY)
+configure_file(scripts/jana-this.csh.in jana-this.csh  @ONLY)
 
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/jana-config DESTINATION bin)
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/jana_config.h DESTINATION include/JANA)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/jana-this.sh  DESTINATION bin)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/jana-this.csh  DESTINATION bin)
