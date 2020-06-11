@@ -4,7 +4,7 @@
 add_subdirectory(pybind11-2.2.4)
 
 add_library(janapy SHARED janapy.cc)
-target_link_libraries(janapy PRIVATE pybind11::embed)
+target_link_libraries(janapy PRIVATE pybind11::embed jana2)
 set_target_properties(janapy PROPERTIES PREFIX "" SUFFIX ".so")
 install(TARGETS janapy DESTINATION plugins)
 
