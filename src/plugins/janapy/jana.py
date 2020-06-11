@@ -1,14 +1,26 @@
 
+import time
 import janapy
 
-janapy.AddPlugin('jtest')
-janapy.SetParameterValue('NEVENTS', 10000)
-janapy.Run()
-janapy.PrintFinalReport()
+print('Hello from jana.py!!!')
 
-jana.SetTicker( False )
-jana.WaitUntilAllThreadsRunning()
+# Turn off JANA's standard ticker so we can print our own updates
+janapy.SetTicker(False)
 
-for i in range(0,20):
+# Wait for 4 seconds before allowing processing to start
+for i in range(1,5):
 	time.sleep(1)
-	print( '\nCalled jana.GetNeventsProcessed: %d' % jana.GetNeventsProcessed())
+	print(" waiting ... %d" % (4-i))
+
+# Start event processing
+janapy.Start()
+
+# Wait for 5 seconds while processing events
+for i in range(1,6):
+	time.sleep(1)
+	print(" running ... %d  (Nevents: %d)" % (i, janapy.GetNeventsProcessed()))
+
+# Tell program to quit gracefully
+janapy.Quit()
+
+
