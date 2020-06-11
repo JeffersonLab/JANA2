@@ -11,15 +11,15 @@ class JControlZMQ  {
 public:
 
     JControlZMQ(JApplication *app, int port);
-    ~JControlZMQ(void);
+    ~JControlZMQ();
 
-           void ServerLoop(void);
-    std::string GetStatusJSON(void);
+           void ServerLoop();
+    std::string GetStatusJSON();
            void JANAStatusPROC(std::map<std::string,float> &vals);
-           void HostStatusPROC(std::map<std::string,float> &vals);
-           void HostStatusPROCLinux(std::map<std::string,float> &vals);
-           void HostStatusPROCMacOSX(std::map<std::string,float> &vals);
-           void GetDiskSpace(std::string dirname, std::map<std::string,float> &vals);
+    static void HostStatusPROC(std::map<std::string,float> &vals);
+    static void HostStatusPROCLinux(std::map<std::string,float> &vals);
+    static void HostStatusPROCMacOSX(std::map<std::string,float> &vals);
+    static void GetDiskSpace(const std::string &dirname, std::map<std::string,float> &vals);
 
 private:
 
@@ -28,7 +28,7 @@ private:
     int           _port        = 0;
     void         *_zmq_context = nullptr;
     std::thread  *_thr         = nullptr;
-    char         _host[256];
+    char         _host[256]    = {};
     pid_t        _pid          = 0;
 };
 
