@@ -1,0 +1,57 @@
+#!/bin/sh
+#
+# This script was automatically generated from the scripts/jana-this.sh.in file in the
+# JANA2 source directory when JANA2 was built. It can be sourced to set the environment
+# up to use this JANA2 build. This includes setting environment variables for some
+# 3rd party packages that were used to build JANA2.
+#
+# n.b. the variable replacements done at build time come from cmake/MakeConfig.cmake
+# in the JANA2 source which explicitly creates the installed file.
+#
+#
+
+# BMS_OSNAME
+export BMS_OSNAME="@BMS_OSNAME@"
+
+# JANA2
+export JANA_HOME="@JANA_INSTALL_DIR@"
+export PATH=@JANA_INSTALL_DIR@/bin:${PATH}
+
+# ROOT
+if [ "@HAVE_ROOT@" == "1" ]; then
+    if [ -f "@ROOTSYS@/bin/thisroot.sh" ]; then
+        .  "@ROOTSYS@/bin/thisroot.sh"
+    fi
+fi
+
+# Xerces
+if [ "@HAVE_XERCES@" == "1" ]; then
+    export XERCESCROOT="@XERCESCROOT@"
+    # only add to LD_LIBRARY_PATH if XERCESCROOT does not appear to be a system directory
+    [[ ${XERCESCROOT} != /usr ]] && export LD_LIBRARY_PATH=${XERCESCROOT}/lib:${LD_LIBRARY_PATH}
+fi
+
+# CCDB
+if [ "@HAVE_CCDB@" == "1" ]; then
+    export CCDB_HOME="@CCDB_HOME@"
+    export PATH=${CCDB_HOME}/bin:${PATH}
+    export LD_LIBRARY_PATH=${CCDB_HOME}/lib:${LD_LIBRARY_PATH}
+fi
+
+# MYSQL
+# n.b. MySQL compile and link options come from running mysql_config. There is
+# not a simple way of setting up the environment for this like other packages.
+# Thus, we simply set the JANA2_MYSQL_CONFIG variable to point to the mysql_config
+# that was actually used to get the compile/link options when JANA2 was built.
+if [ "@HAVE_MYSQL@" == "1" ]; then
+    export JANA2_MYSQL_CONFIG="@JANA2_MYSQL_CONFIG@"
+    export LD_LIBRARY_PATH=@MYSQL_PKGLIBDIR@:${LD_LIBRARY_PATH}
+fi
+
+# CURL
+if [ "@HAVE_CURL@" == "1" ]; then
+    export CURL_ROOT="@CURL_ROOT@"
+    # only add to PATH and LD_LIBRARY_PATH if CURL_ROOT does not appear to be a system directory
+    [[ ${CURL_ROOT} != /usr ]] && export PATH=${CURL_ROOT}/bin:${PATH}
+    [[ ${CURL_ROOT} != /usr ]] && export LD_LIBRARY_PATH=${CURL_ROOT}/lib:${LD_LIBRARY_PATH}
+fi
