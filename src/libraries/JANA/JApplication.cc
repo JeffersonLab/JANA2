@@ -101,12 +101,11 @@ void JApplication::Initialize() {
 
         // Set desired nthreads. We parse the 'nthreads' parameter two different ways for backwards compatibility.
         _desired_nthreads = 1;
-        if (_params->GetParameterValue<std::string>("nthreads") == "Ncores") {
+	    _params->SetDefaultParameter("nthreads", _desired_nthreads, "The total number of worker threads");
+	    if (_params->GetParameterValue<std::string>("nthreads") == "Ncores") {
             _desired_nthreads = JCpuInfo::GetNumCpus();
         }
-        else {
-            _params->SetDefaultParameter("nthreads", _desired_nthreads, "The total number of worker threads");
-        }
+
         _params->SetDefaultParameter("jana:extended_report", _extended_report);
 
         _component_manager->resolve_event_sources();
