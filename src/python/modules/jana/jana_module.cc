@@ -124,4 +124,6 @@ PYBIND11_MODULE(jana, m) {
 
     // (see src/python/common/janapy.h)
     JANA_MODULE_DEF
+
+    pyjapp = new JApplication();
 }
