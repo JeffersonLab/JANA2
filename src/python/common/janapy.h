@@ -63,6 +63,11 @@ inline void     janapy_Run(void) { pyjapp->Run(); }
 inline void     janapy_Quit(bool skip_join=false) { pyjapp->Quit(skip_join); }
 inline void     janapy_Stop(bool wait_until_idle=false) { pyjapp->Stop(wait_until_idle); }
 inline void     janapy_Resume(void) { pyjapp->Resume(); }
+
+inline bool     janapy_IsInitialized(void) { return pyjapp->IsInitialized(); }
+inline bool     janapy_IsQuitting(void) { return pyjapp->IsQuitting(); }
+inline bool     janapy_IsDrainingQueues(void) { return pyjapp->IsDrainingQueues(); }
+
 inline void     janapy_AddPlugin(string plugin_name) { pyjapp->AddPlugin(plugin_name); }
 inline void     janapy_AddPluginPath(string path) { pyjapp->AddPluginPath(path); }
 inline void     janapy_AddEventSource(string source) { pyjapp->Add( source ); }
@@ -109,6 +114,11 @@ m.def("Run",                         &janapy_Run,                         "Begin
 m.def("Quit",                        &janapy_Quit,                        "Tell JANA to quit gracefully", py::arg("skip_join")=false); \
 m.def("Stop",                        &janapy_Stop,                        "Tell JANA to (temporarily) stop event processing. If optional agrument is True then block until all threads are stopped."); \
 m.def("Resume",                      &janapy_Resume,                      "Tell JANA to resume event processing."); \
+\
+m.def("IsInitialized",               &janapy_IsInitialized,               "Check if JApplication has already been initialized."); \
+m.def("IsQuitting",                  &janapy_IsQuitting,                  "Check if JApplication is in the process of quitting."); \
+m.def("IsDrainingQueues",            &janapy_IsDrainingQueues,            "Check if JApplication is in the process of draining the queues."); \
+\
 m.def("AddPlugin",                   &janapy_AddPlugin,                   "Add a plugin to the list of plugins to be attached (call before calling Run)"); \
 m.def("AddPluginPath",               &janapy_AddPluginPath,               "Add directory to plugin search path"); \
 m.def("AddEventSource",              &janapy_AddEventSource,              "Add an event source (e.g. filename). Can be given multiple arguments and/or called multiple times."); \
