@@ -1,8 +1,6 @@
 
 import sys
 import time
-import subprocess
-import threading
 import tty
 import termios
 import select
@@ -97,7 +95,7 @@ def draw_banner():
 	PRINTAT( 3, 2, 'Num. Events Processed: %d' % jana.GetNeventsProcessed() )
 	#PRINTAT( 3, 3, ' Num. Tasks Completed: %d' % jana.GetNtasksCompleted() ) # This no longer exists
 	PRINTAT( 3, 4, '           Num. Cores: %d' % jana.GetNcores() )
-	PRINTAT( 3, 5, '        Num. JThreads: %d' % jana.GetNJThreads() )
+	PRINTAT( 3, 5, '        Num. JThreads: %d' % jana.GetNThreads() )
 
 	PRINTAT( NCOLS/2, 2, 'Rate: %5.0fHz (%5.0fHz avg.)' % (jana.GetInstantaneousRate(), jana.GetIntegratedRate()) )
 
@@ -160,9 +158,9 @@ def process_command( input ):
 	#--- nthreads
 	elif cmd=='nthreads':
 		if len(args) == 0:
-			print('Number of JThreads: %d' % jana.GetNJThreads())
+			print('Number of JThreads: %d' % jana.GetNThreads())
 		elif len(args)==1:
-			print('Number of JThreads now at: %d' % jana.SetNJThreads( int(args[0]) ) )
+			print('Number of JThreads now at: %d' % jana.SetNThreads( int(args[0]) ) )
 		else:
 			print('njthreads takes either 0 or 1 argument (see help for details)')
 	#--- parameter
@@ -336,7 +334,9 @@ def command_line():
 #                         MAIN
 
 jana.SetTicker( False )
-jana.WaitUntilAllThreadsRunning()
+jana.Start()
+time.sleep(2)
+# jana.WaitUntilAllThreadsRunning()
 
 # print '=================================================================================='
 # import inspect
