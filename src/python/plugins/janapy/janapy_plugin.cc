@@ -52,7 +52,7 @@ using namespace std;
 
 
 
-void JANA_PythonModuleInit(JApplication *sApp);
+void JANA_EmbeddedPythonModuleInit(JApplication *sApp);
 
 //static bool PY_INITIALIZED = false; // See JANA_PythonModuleInit
 
@@ -71,7 +71,7 @@ void InitPlugin(JApplication *app){
     InitJANAPlugin(app);
 
     // Launch thread to handle Python interpreter.
-    std::thread thr(JANA_PythonModuleInit, app);
+    std::thread thr(JANA_EmbeddedPythonModuleInit, app);
     thr.detach();
 
     // Wait for interpreter to initialize and possibly run script.
@@ -88,9 +88,9 @@ void InitPlugin(JApplication *app){
 //================================================================================
 
 //-------------------------------------
-// JANA_PythonModuleInit
+// JANA_EmbeddedPythonModuleInit
 //-------------------------------------
-void JANA_PythonModuleInit(JApplication *sApp)
+void JANA_EmbeddedPythonModuleInit(JApplication *sApp)
 {
     /// This will initialize the embedded Python interpreter and import the
     /// JANA module (defined by the routines in this file). This gets called
