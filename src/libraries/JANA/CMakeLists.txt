@@ -98,6 +98,7 @@ set(JANA2_SOURCES
     Compatibility/JStreamLog.h
     Compatibility/JStreamLogBuffer.cc
     Compatibility/JStreamLogBuffer.h
+    Compatibility/JStatusBits.h
     Compatibility/jerror.h
     )
 
