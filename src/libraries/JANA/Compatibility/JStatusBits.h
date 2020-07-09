@@ -19,6 +19,8 @@ class JStatusBits {
 
 public:
 
+	uint64_t GetStatus() const { return m_status; }
+
 	bool GetStatusBit(T bit)
 	{
 		/// Return the present value of the specified status bit.
@@ -27,7 +29,7 @@ public:
 		return (m_status>>int(bit)) & 0x01;
 	}
 
-	bool SetStatusBit(T bit, bool val)
+	bool SetStatusBit(T bit, bool val=true)
 	{
 		/// Set the value of the specified status bit. If the
 		/// second argument is passed, the bit will be set to
@@ -116,12 +118,10 @@ public:
 	}
 
 
-	static std::string StatusWordToString(uint64_t status)
+	std::string ToString()
 	{
-		/// Given a 64-bit status word, generate a nicely formatted string
-		/// suitable for printing to the screen. This will include the
-		/// entire word in both hexadecimal and binary. It will also print
-		///
+		/// Generate a formatted string suitable for printing to the screen, including the
+		/// entire word in both hexadecimal and binary along with descriptions.
 
 		// Lock mutex to prevent changes to status_bit_descriptions while we
 		// read from it.
@@ -130,12 +130,12 @@ public:
 		std::stringstream ss;
 
 		// Add status in hex first
-		ss << "status: 0x" << std::hex << std::setw(sizeof(uint64_t)*2) << std::setfill('0') << status << std::dec <<std::endl;
+		ss << "status: 0x" << std::hex << std::setw(sizeof(uint64_t)*2) << std::setfill('0') << m_status << std::dec <<std::endl;
 
 		// Binary
 		ss << std::setw(0) << "   bin |";
 		for(int i=sizeof(uint64_t)*8-1; i>=0; i--){
-			ss << ((status>>i) & 0x1);
+			ss << ((m_status>>i) & 0x1);
 			if((i%8)==0) ss << "|";
 		}
 		ss << std::endl;
@@ -143,13 +143,13 @@ public:
 		// 1-byte hex under binary
 		ss << "   hex ";
 		for(int i=sizeof(uint64_t) - 1; i>=0; i--){
-			ss << std::hex << "   0x"<< std::setw(2) << ((status>>(i*8)) & 0xFF) << "  ";
+			ss << std::hex << "   0x"<< std::setw(2) << ((m_status>>(i*8)) & 0xFF) << "  ";
 		}
 		ss << std::endl;
 
 		// Descriptions for each bit that has a description or is set
 		for(unsigned int i=0; i<sizeof(uint64_t)*8; i++){
-			uint64_t val = ((status>>i) & 0x1);
+			uint64_t val = ((m_status>>i) & 0x1);
 
 			auto iter = m_status_bit_descriptions.find(i);
 
