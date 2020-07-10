@@ -121,9 +121,9 @@ JFactory* JFactorySet::GetFactory(const std::string& object_name, const std::str
 }
 
 //---------------------------------
-// GetAll
+// GetAllFactories
 //---------------------------------
-std::vector<JFactory*> JFactorySet::GetAll() const {
+std::vector<JFactory*> JFactorySet::GetAllFactories() const {
     std::vector<JFactory*> results;
     for (auto p : mFactories) {
         results.push_back(p.second);

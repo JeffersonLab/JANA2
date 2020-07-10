@@ -246,7 +246,7 @@ std::vector<const T*> JEvent::Get(const std::string& tag) const {
 /// wishes to examine them all together.
 template<class T>
 inline std::vector<JFactoryT<T>*> JEvent::GetFactoryAll(bool throw_on_missing) const {
-    auto factories = mFactorySet->GetFactoryAll<T>();
+    auto factories = mFactorySet->GetAllFactories<T>();
     if (factories.size() == 0) {
         if (throw_on_missing) {
             throw JException("Could not find any JFactoryT<" + JTypeInfo::demangle<T>() + "> (from any tag)");
@@ -292,7 +292,7 @@ std::vector<const T*> JEvent::GetAll() const {
 template<class S>
 std::map<std::pair<std::string, std::string>, std::vector<S*>> JEvent::GetAllChildren() const {
     std::map<std::pair<std::string, std::string>, std::vector<S*>> results;
-    for (JFactory* factory : mFactorySet->GetAll()) {
+    for (JFactory* factory : mFactorySet->GetAllFactories()) {
         auto val = factory->GetAs<S>();
         if (!val.empty()) {
             auto key = std::make_pair(factory->GetName(), factory->GetTag());
