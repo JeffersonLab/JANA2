@@ -113,17 +113,6 @@ bool JFactorySet::Add(JFactory* aFactory)
 //---------------------------------
 // GetFactory
 //---------------------------------
-JFactory* JFactorySet::GetFactory(std::type_index aObjectType, const std::string& aFactoryTag) const
-{
-	auto sKeyPair = std::make_pair(aObjectType, aFactoryTag);
-	auto sIterator = mFactories.find(sKeyPair);
-	return (sIterator != std::end(mFactories)) ? sIterator->second : nullptr;
-	// TODO: Problem: We can't defer to the object string. Solution is to probably get rid of this method completely.
-}
-
-//---------------------------------
-// GetFactory
-//---------------------------------
 JFactory* JFactorySet::GetFactory(const std::string& object_name, const std::string& tag) const
 {
 	auto untyped_key = std::make_pair(object_name, tag);
