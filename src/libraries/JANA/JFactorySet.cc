@@ -92,13 +92,22 @@ bool JFactorySet::Add(JFactory* aFactory)
 	/// This scenario occurs when the user has multiple JFactory<T> producing the
 	/// same T JObject, and is not distinguishing between them via tags.
 
-	auto sKey = std::make_pair( aFactory->GetObjectType(), aFactory->GetTag() );
-	auto res = mFactories.emplace(sKey, static_cast<JFactory*>(aFactory));
-	if( res.second ) return true; // factory successfully added
-	
-	// Factory is duplicate. Since this almost certainly indicates a user error, and
-	// the caller will not be able to do anything about it anyway, throw an exception.
-	throw JException("JFactorySet::Add failed because factory is duplicate");
+	auto typed_key = std::make_pair( aFactory->GetObjectType(), aFactory->GetTag() );
+	auto untyped_key = std::make_pair( aFactory->GetName(), aFactory->GetTag() );
+
+	auto typed_result = mFactories.find(typed_key);
+	auto untyped_result = mFactoriesFromString.find(untyped_key);
+
+	if (typed_result != std::end(mFactories) || untyped_result != std::end(mFactoriesFromString)) {
+		// Factory is duplicate. Since this almost certainly indicates a user error, and
+		// the caller will not be able to do anything about it anyway, throw an exception.
+		throw JException("JFactorySet::Add failed because factory is duplicate");
+		// return false;
+	}
+
+	mFactories[typed_key] = aFactory;
+	mFactoriesFromString[untyped_key] = aFactory;
+	return true;
 }
 
 //---------------------------------
@@ -109,10 +118,21 @@ JFactory* JFactorySet::GetFactory(std::type_index aObjectType, const std::string
 	auto sKeyPair = std::make_pair(aObjectType, aFactoryTag);
 	auto sIterator = mFactories.find(sKeyPair);
 	return (sIterator != std::end(mFactories)) ? sIterator->second : nullptr;
+	// TODO: Problem: We can't defer to the object string. Solution is to probably get rid of this method completely.
 }
 
 //---------------------------------
 // GetFactory
+//---------------------------------
+JFactory* JFactorySet::GetFactory(const std::string& object_name, const std::string& tag) const
+{
+	auto untyped_key = std::make_pair(object_name, tag);
+	auto it = mFactoriesFromString.find(untyped_key);
+	return (it != std::end(mFactoriesFromString)) ? it->second : nullptr;
+}
+
+//---------------------------------
+// GetAll
 //---------------------------------
 std::vector<JFactory*> JFactorySet::GetAll() const {
     std::vector<JFactory*> results;
@@ -138,10 +158,22 @@ void JFactorySet::Merge(JFactorySet &aFactorySet)
 	/// duplicates. It will be left to the caller to delete those.
 	
 	JFactorySet tmpSet; // keep track of duplicates to copy back into aFactorySet
-	for( auto f : aFactorySet.mFactories ){
-		if( ! mFactories.insert( f ).second ) {
-			// duplicate. Record so we can send back to caller
-			tmpSet.mFactories[f.first] = f.second;
+	for( auto pair : aFactorySet.mFactories ){
+		auto factory = pair.second;
+
+		auto typed_key = std::make_pair(factory->GetObjectType(), factory->GetTag());
+		auto untyped_key = std::make_pair(factory->GetName(), factory->GetTag());
+
+		auto typed_result = mFactories.find(typed_key);
+		auto untyped_result = mFactoriesFromString.find(untyped_key);
+
+		if (typed_result != std::end(mFactories) || untyped_result != std::end(mFactoriesFromString)) {
+			// Factory is duplicate. Return to caller just in case
+			tmpSet.mFactories[pair.first] = factory;
+		}
+		else {
+			mFactories[typed_key] = factory;
+			mFactoriesFromString[untyped_key] = factory;
 		}
 	}
 	

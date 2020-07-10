@@ -69,24 +69,34 @@ class JFactorySet : public JResettable
 		void Release(void);
 
 		JFactory* GetFactory(std::type_index aObjectType, const std::string& aFactoryTag="") const;
+		JFactory* GetFactory(const std::string& object_name, const std::string& tag="") const;
 		template<typename T> JFactoryT<T>* GetFactory(const std::string& tag = "") const;
-        std::vector<JFactory*> GetAll() const;
+		std::vector<JFactory*> GetAll() const;
 		template<typename T> std::vector<JFactoryT<T>*> GetFactoryAll() const;
 
 		std::vector<JFactorySummary> Summarize() const;
 
 	protected:
-	
-		//string: tag
-		std::map<std::pair<std::type_index, std::string>, JFactory*> mFactories;
+		std::map<std::pair<std::type_index, std::string>, JFactory*> mFactories;           // {(typeid, tag) : factory}
+		std::map<std::pair<std::string, std::string>, JFactory*> mFactoriesFromString;  // {(objname, tag) : factory}
 };
+
 
 template<typename T>
 JFactoryT<T>* JFactorySet::GetFactory(const std::string& tag) const {
 
-	auto sKeyPair = std::make_pair(std::type_index(typeid(T)), tag);
-	auto sIterator = mFactories.find(sKeyPair);
-	return (sIterator != std::end(mFactories)) ? static_cast<JFactoryT<T>*>(sIterator->second) : nullptr;
+	auto typed_key = std::make_pair(std::type_index(typeid(T)), tag);
+	auto typed_iter = mFactories.find(typed_key);
+	if (typed_iter != std::end(mFactories)) {
+		return static_cast<JFactoryT<T>*>(typed_iter->second);
+	}
+
+	auto untyped_key = std::make_pair(JTypeInfo::demangle<T>(), tag);
+	auto untyped_iter = mFactoriesFromString.find(untyped_key);
+	if (untyped_iter != std::end(mFactoriesFromString)) {
+		return static_cast<JFactoryT<T>*>(untyped_iter->second);
+	}
+	return nullptr;
 }
 
 template<typename T>
