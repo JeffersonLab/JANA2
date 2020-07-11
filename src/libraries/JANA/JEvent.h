@@ -82,6 +82,7 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 		    mFactorySet = aFactorySet;
 		}
 
+		JFactory* GetFactory(const std::string& object_name, const std::string& tag) const;
 		template<class T> JFactoryT<T>* GetFactory(const std::string& tag = "", bool throw_on_missing=false) const;
         template<class T> std::vector<JFactoryT<T>*> GetFactoryAll(bool throw_on_missing = false) const;
 
@@ -160,6 +161,12 @@ inline JFactoryT<T>* JEvent::Insert(const std::vector<T*>& items, const std::str
 		factory->Insert(item);
 	}
 	return factory;
+}
+
+/// GetFactory() should be used with extreme care because it subverts the JEvent abstraction.
+/// Most historical uses of GetFactory are far better served by GetMetadata.
+inline JFactory* JEvent::GetFactory(const std::string& object_name, const std::string& tag) const {
+	return mFactorySet->GetFactory(object_name, tag);
 }
 
 /// GetFactory() should be used with extreme care because it subverts the JEvent abstraction.
