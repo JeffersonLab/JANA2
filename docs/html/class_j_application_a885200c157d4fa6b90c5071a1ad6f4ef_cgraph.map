@@ -1,6 +1,0 @@
-<map id="JApplication::Initialize" name="JApplication::Initialize">
-<area shape="rect" id="node2" href="$class_j_plugin_loader.html#af04cbac14aca102f7f65fb431d4b195c" title="JPluginLoader::attach\l_plugins" alt="" coords="217,37,375,78"/>
-<area shape="rect" id="node5" href="$class_j_parameter_manager.html#a2259115b11e86bdfa7abfb3d3ba5306a" title="JParameterManager::\lSetDefaultParameter" alt="" coords="217,102,375,143"/>
-<area shape="rect" id="node3" href="$class_j_plugin_loader.html#a5435d2582c0de6a63f51d13cbadb7703" title="JPluginLoader::add\l_plugin_path" alt="" coords="433,5,575,46"/>
-<area shape="rect" id="node4" href="$class_j_plugin_loader.html#a1c5d007a6e6e26cfaa2105b7b7dfb281" title="JPluginLoader::attach\l_plugin" alt="" coords="425,70,583,111"/>
-</map>
