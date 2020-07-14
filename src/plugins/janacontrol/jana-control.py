@@ -14,6 +14,10 @@
 # are quite a bit of things that are not used. This needs a major overhaul
 # to remove unnecessary things and to clean it up.
 
+# Copyright 2020, Jefferson Science Associates, LLC.
+# Subject to the terms in the LICENSE file found in the top-level directory.
+
+
 import zmq
 import json
 import threading

@@ -1,6 +1,0 @@
-<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="node1" href="$struct_j_message.html" title="JMessage is an abstract base class for data that can be streamed using JTransport&#39;s. " alt="" coords="5,56,88,83"/>
-<area shape="rect" id="node2" href="$struct_j_event_message.html" title="A JEventMessage represents a single event, meant to be used when the event building is done upstream..." alt="" coords="136,5,256,32"/>
-<area shape="rect" id="node3" href="$struct_j_hit_message.html" title="A JHitMessage represents a single detector hit. " alt="" coords="145,56,247,83"/>
-<area shape="rect" id="node4" href="$class_j_object.html" title="JObject" alt="" coords="13,5,81,32"/>
-</map>

@@ -1,8 +1,7 @@
-//
-//    File: RootProcessor.h
-// Created: Mon Aug 26 16:29:25 EDT 2019
-// Creator: pooser (on Linux rudy.jlab.org 3.10.0-1062.el7.x86_64 x86_64)
-//
+
+// Copyright 2020, Jefferson Science Associates, LLC.
+// Subject to the terms in the LICENSE file found in the top-level directory.
+
 
 #ifndef _RootProcessor_h_
 #define _RootProcessor_h_

@@ -1,9 +1,6 @@
-// $Id$
-//
-//    File: JCalibration.h
-// Created: Fri Jul  6 16:24:24 EDT 2007
-// Creator: davidl (on Darwin fwing-dhcp61.jlab.org 8.10.1 i386)
-//
+
+// Copyright 2020, Jefferson Science Associates, LLC.
+// Subject to the terms in the LICENSE file found in the top-level directory.
 
 #ifndef _JCalibration_
 #define _JCalibration_

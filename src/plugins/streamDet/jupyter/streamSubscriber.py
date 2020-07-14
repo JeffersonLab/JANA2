@@ -1,5 +1,8 @@
 #!/usr/bin/python3.6
 
+# Copyright 2020, Jefferson Science Associates, LLC.
+# Subject to the terms in the LICENSE file found in the top-level directory.
+
 import zmq
 import numpy as np
 from indraMessage import IndraMessage

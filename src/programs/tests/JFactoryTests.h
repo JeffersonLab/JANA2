@@ -1,6 +1,6 @@
-//
-// Created by Nathan Brei on 2019-11-21.
-//
+
+// Copyright 2020, Jefferson Science Associates, LLC.
+// Subject to the terms in the LICENSE file found in the top-level directory.
 
 #ifndef JANA2_JFACTORYTESTS_H
 #define JANA2_JFACTORYTESTS_H

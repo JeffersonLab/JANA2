@@ -1,6 +1,6 @@
-//
-// Created by nbrei on 4/4/19.
-//
+
+// Copyright 2020, Jefferson Science Associates, LLC.
+// Subject to the terms in the LICENSE file found in the top-level directory.
 
 #include <JANA/Engine/JWorker.h>
 #include <JANA/Utils/JCpuInfo.h>

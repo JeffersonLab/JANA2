@@ -1,6 +1,7 @@
-//
-// Created by Nathan W Brei on 2019-03-10.
-//
+
+// Copyright 2020, Jefferson Science Associates, LLC.
+// Subject to the terms in the LICENSE file found in the top-level directory.
+
 
 #ifndef _JSERVICELOCATOR_H_
 #define _JSERVICELOCATOR_H_

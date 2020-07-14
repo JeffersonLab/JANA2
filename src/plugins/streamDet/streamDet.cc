@@ -1,8 +1,7 @@
-//
-//    File: streamDet/streamDet.cc
-// Created: Wed Apr 24 16:04:14 EDT 2019
-// Creator: pooser (on Linux rudy.jlab.org 3.10.0-957.10.1.el7.x86_64 x86_64)
-//
+
+// Copyright 2020, Jefferson Science Associates, LLC.
+// Subject to the terms in the LICENSE file found in the top-level directory.
+
 
 #include <JANA/Streaming/JStreamingEventSource.h>
 #include <JANA/JCsvWriter.h>

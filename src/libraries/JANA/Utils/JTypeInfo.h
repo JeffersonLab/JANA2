@@ -1,3 +1,8 @@
+
+// Copyright 2020, Jefferson Science Associates, LLC.
+// Subject to the terms in the LICENSE file found in the top-level directory.
+
+
 #ifndef _JTypeInfo_h_
 #define _JTypeInfo_h_
 

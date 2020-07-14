@@ -1,6 +1,7 @@
-//
-// Created by nbrei on 3/29/19.
-//
+
+// Copyright 2020, Jefferson Science Associates, LLC.
+// Subject to the terms in the LICENSE file found in the top-level directory.
+
 
 #include "catch.hpp"
 

@@ -1,4 +1,7 @@
 
+// Copyright 2020, Jefferson Science Associates, LLC.
+// Subject to the terms in the LICENSE file found in the top-level directory.
+
 #ifndef _JControlZMQ_h_
 #define _JControlZMQ_h_
 
