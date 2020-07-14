@@ -88,12 +88,48 @@ public:
 
 
     // To be implemented by the user
+    /// `Open` is called by JANA when it is ready to accept events from this event source. The implementor should open
+    /// file pointers or sockets here, instead of in the constructor. This is because the implementor won't know how many
+    /// or which event sources the user will decide to activate within one job. Thus the implementor can avoid problems
+    /// such as running out of file pointers, or multiple event sources attempting to bind to the same socket.
 
     virtual void Open() {}
 
+    /// `GetEvent` is called by JANA in order to emit a fresh event into the stream. JANA manages the entire lifetime of
+    /// the JEvent. The `JEvent` being passed in is empty and merely needs to hydrated as follows:
+
+    ///  1. `SetRunNumber()`
+    ///  2. `SetEventNumber()`
+    ///  3. `Insert<T>()` raw data of type `T` into the `JEvent` container. Note that `T` should be a child class, such as
+    ///     `FADC250DigiHit`, not a parent class such as `JObject` or `TObject`. Also note that `Insert` transfers
+    ///     ownership of the data to that JEvent. If the data is shared among multiple `JEvents`, e.g. BOR data,
+    ///     use `SetFactoryFlags(JFactory::NOT_OBJECT_OWNER)`
+
+    /// Note that JEvents are usually recycled. Although all reconstruction data is cleared before `GetEvent` is called,
+    /// the constituent `JFactories` may retain some state, e.g. statistics, or calibration data keyed off of run number.
+
+    /// If an event cannot be emitted, either because the resource is not ready or because we have reached the end of
+    /// the event stream, the implementor should throw the corresponding `RETURN_STATUS`. The user should NEVER throw
+    /// `RETURN_STATUS SUCCESS` because this will hurt performance. Instead, they should simply return normally.
+
     virtual void GetEvent(std::shared_ptr<JEvent>) = 0;
 
-    // Deprecated. Use JEvent::Insert() from inside GetEvent instead.
+
+    /// `FreeEvent` is used to notify the `JEventSource` that an event has been completely processed. This is the final
+    /// chance to interact with the `JEvent` before it is either cleared and recycled, or deleted. Although it is
+    /// possible to use this for freeing resources on the JEvent itself, this is strongly discouraged in favor of putting
+    /// that logic on the destructor, RAII-style. Instead, this callback should be used for updating and freeing state
+    /// owned by the JEventSource, e.g. raw data which is keyed off of run number and therefore shared among multiple
+    /// JEvents. `FreeEvent` is also well-suited for use with `EventGroup`s, e.g. to notify someone that a batch of
+    /// events has finished, or to implement "barrier events".
+    virtual void FreeEvent(JEvent&) {};
+
+
+    /// `GetObjects` was historically used for lazily unpacking data from a JEvent and putting it into a "dummy" JFactory.
+    /// This mechanism has been replaced by `JEvent::Insert`. All lazy evaluation should happen in a (non-dummy)
+    /// JFactory, whereas eager evaluation should happen in `JEventSource::GetEvent` via `JEvent::Insert`.
+
+    [[deprecated]]
     virtual bool GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactory* aFactory) { return false; }
 
 
