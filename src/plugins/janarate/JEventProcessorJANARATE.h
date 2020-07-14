@@ -1,6 +1,6 @@
-// Author: David Lawrence  August 8, 2007
-//
-//
+// Copyright 2020, Jefferson Science Associates, LLC.
+// Subject to the terms in the LICENSE file found in the top-level directory.
+
 
 #include <JANA/JEventProcessor.h>
 

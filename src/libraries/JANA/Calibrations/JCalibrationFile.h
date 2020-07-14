@@ -1,9 +1,6 @@
-// $Id$
-//
-//    File: JCalibrationFile.h
-// Created: Fri Jul  6 19:45:56 EDT 2007
-// Creator: davidl (on Darwin Amelia.local 8.10.1 i386)
-//
+
+// Copyright 2020, Jefferson Science Associates, LLC.
+// Subject to the terms in the LICENSE file found in the top-level directory.
 
 #ifndef _JCalibrationFile_
 #define _JCalibrationFile_
