@@ -225,6 +225,12 @@ public:
     }
 
 
+    void DoFree(JEvent& event) {
+    	std::lock_guard<std::mutex> lock(m_mutex);
+    	FreeEvent(event);
+    }
+
+
     // Getters and setters
 
     SourceStatus GetStatus() const { return m_status; }

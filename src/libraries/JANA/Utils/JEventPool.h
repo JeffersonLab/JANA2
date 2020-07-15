@@ -96,7 +96,7 @@ public:
 
     inline void put(std::shared_ptr<JEvent>& event, size_t location) {
 
-        event->mFactorySet->Release();
+	    event->mFactorySet->Release();
         LocalPool& pool = m_pools[location % m_location_count];
         std::lock_guard<std::mutex> lock(pool.mutex);
 
