@@ -15,7 +15,8 @@ title: JANA: Multi-threaded HENP Event Reconstruction
 # Tutorial
 
 This tutorial will walk you through creating a standalone JANA plugin, introducing the key ideas along the way. 
-The end result for this example is [available here](https://github.com/nathanwbrei/jana-plugin-example). 
+The end result for this example is available under 
+[src/examples/Tutorial](https://github.com/JeffersonLab/JANA2/tree/master/src/examples/Tutorial).
 
 ## Introduction
 
