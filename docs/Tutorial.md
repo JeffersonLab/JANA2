@@ -53,7 +53,7 @@ With JANA working, we can now create our own plugin. JANA provides a script whic
 to help us get started. We shall generate a skeleton for a plugin named "QuickTutorial" as follows:
 ```
 cd ~
-jana-generate.py plugin QuickTutorial
+jana-generate.py StandalonePlugin QuickTutorial
 ```
 
 This creates the following directory tree. Examine the files `QuickTutorial.cc`, which provides the plugin
@@ -108,7 +108,7 @@ mkdir build
 cd build
 cmake ..
 make install
-jana -Pplugins=QuickTest
+jana -Pplugins=QuickTutorial
 ```
 
 ## Adding an event source
@@ -132,7 +132,7 @@ for tests, which belong under `tests`. For larger projects, `jana-generate proje
 a much more complex code skeleton. 
 
 To use our new RandomSource as-is, we need to do three things:
-* Add `RandomSource.cc` and `RandomSource.h` to `QuickTutorial_PLUGIN_SOURCES` inside `src/CMakeLists.txt`
+* Add `RandomSource.cc` and `RandomSource.h` to the `QuickTutorial_PLUGIN_SOURCES` list at the top of `src/CMakeLists.txt`
 * Register our `RandomSource` with JANA inside `QuickTutorial.cc` like this:
 
 ```
