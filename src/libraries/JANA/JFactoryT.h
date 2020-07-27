@@ -118,6 +118,7 @@ public:
             case Status::Unprocessed:
                 if (mPreviousRunNumber == -1) {
                     // This is the very first run
+                    ChangeRun(event);
                     BeginRun(event);
                     mPreviousRunNumber = run_number;
                 }
