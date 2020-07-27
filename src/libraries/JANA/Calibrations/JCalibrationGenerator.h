@@ -1,9 +1,6 @@
-// $Id$
-//
-//    File: JCalibrationGenerator.h
-// Created: Sat Jan 10 22:59:59 EST 2009
-// Creator: davidl (on Darwin Amelia.local 9.6.0 i386)
-//
+
+// Copyright 2020, Jefferson Science Associates, LLC.
+// Subject to the terms in the LICENSE file found in the top-level directory.
 
 #ifndef _JCalibrationGenerator_
 #define _JCalibrationGenerator_

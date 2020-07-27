@@ -15,20 +15,32 @@ title: JANA: Multi-threaded HENP Event Reconstruction
 
 ## Get JANA
 
-### Latest release
-- `git clone --branch v2.0.1 https://github.com/JeffersonLab/JANA2`
-- [See doxygen documentation](html/index.html)
-
 ### Latest master (unstable)
 
 - `git clone https://github.com/JeffersonLab/JANA2/`
-- Breaking changes
-  * CMake build now requires explicit `-DCMAKE_INSTALL_PREFIX=$JANA_HOME` [(See commit)](https://github.com/JeffersonLab/JANA2/commit/ae031fe183ef165bd22e664e92d842f655d79b94)
+
+### Latest release
+- `git clone --branch latest_release https://github.com/JeffersonLab/JANA2`
+- [See release on GitHub](https://github.com/JeffersonLab/JANA2/tree/latest_release)
+- [See online doxygen documentation](http://www.jlab.org/JANA/jana_doc_latest/index.html)
+- [Download doxygen documentation](http://www.jlab.org/JANA/jana_doc_latest.tar.gz)
+
+### 2.0.3 
+- [See release on GitHub](https://github.com/JeffersonLab/JANA2/releases/tag/v2.0.3)
+- [See online doxygen documentation](http://www.jlab.org/JANA/jana_doc_2.0.3/index.html)
+- [Download doxygen documentation](http://www.jlab.org/JANA/jana_doc_2.0.3.tar.gz)
+
+### 2.0.2
+- [See release on GitHub](https://github.com/JeffersonLab/JANA2/releases/tag/v2.0.2)
+- [See online doxygen documentation](http://www.jlab.org/JANA/jana_doc_2.0.2/index.html)
+- [Download doxygen documentation](http://www.jlab.org/JANA/jana_doc_2.0.2.tar.gz)
 
 ### 2.0.1
 - This is the first release where all essential functionality is present.
   After this point, breaking changes will be tracked.
 - [See release on GitHub](https://github.com/JeffersonLab/JANA2/releases/tag/v2.0.1)
+- [See online doxygen documentation](http://www.jlab.org/JANA/jana_doc_2.0.1/index.html)
+- [Download doxygen documentation](http://www.jlab.org/JANA/jana_doc_2.0.1.tar.gz)
 
 ### JANA 1
 

@@ -1,6 +1,7 @@
-//
-// Created by Nathan W Brei on 2019-05-22.
-//
+
+// Copyright 2020, Jefferson Science Associates, LLC.
+// Subject to the terms in the LICENSE file found in the top-level directory.
+
 
 #ifndef JANA2_JMAILBOX_H
 #define JANA2_JMAILBOX_H

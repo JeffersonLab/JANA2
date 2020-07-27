@@ -1,3 +1,7 @@
+
+// Copyright 2020, Jefferson Science Associates, LLC.
+// Subject to the terms in the LICENSE file found in the top-level directory.
+
 #ifndef JANA_JSIGNALHANDLER_H_
 #define JANA_JSIGNALHANDLER_H_
 

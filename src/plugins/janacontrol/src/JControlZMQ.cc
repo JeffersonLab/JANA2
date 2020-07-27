@@ -1,4 +1,7 @@
 
+// Copyright 2020, Jefferson Science Associates, LLC.
+// Subject to the terms in the LICENSE file found in the top-level directory.
+
 #include <unistd.h>
 #include <sys/statvfs.h>
 #include <sys/stat.h>
@@ -23,7 +26,7 @@ using namespace std;
 #include "JControlZMQ.h"
 
 
-// The following is are convenience macros that make
+// The following are convenience macros that make
 // the code below a little more succinct and easier
 // to read. It changes this:
 //
@@ -38,16 +41,13 @@ using namespace std;
 #define JSONADD(K) ss<<"\n,\""<<K<<"\":"
 #define JSONADS(K,V) ss<<"\n,\""<<K<<"\":\""<<V<<"\""
 
-static void *JANA_ZEROMQ_CONTEXT;
-static int JANA_ZEROMQ_STATS_PORT;
-
 
 //-------------------------------------------------------------
 // JControlZMQ
 //-------------------------------------------------------------
 JControlZMQ::JControlZMQ(JApplication *app, int port):_port(port), _japp(app)
 {
-    LOG << "Launching JControlZMQ thread ..." << LOG_END;
+    LOG << "Launching JControlZMQ thread ..." << LOG_END
 
     // Create new zmq context, get the current host name, and launch server thread
     _zmq_context = zmq_ctx_new();
@@ -60,15 +60,15 @@ JControlZMQ::JControlZMQ(JApplication *app, int port):_port(port), _japp(app)
 //-------------------------------------------------------------
 // ~JControlZMQ
 //-------------------------------------------------------------
-JControlZMQ::~JControlZMQ(void)
+JControlZMQ::~JControlZMQ()
 {
     // Tell server thread to quit and wait for it to finish
     _done =true;
     if(_thr != nullptr) {
-        LOG << "Joining JControlZMQ thread ..." << LOG_END;
+        LOG << "Joining JControlZMQ thread ..." << LOG_END
         _thr->join();
         delete _thr;
-        LOG << "JControlZMQ thread joined." << LOG_END;
+        LOG << "JControlZMQ thread joined." << LOG_END
     }
 
     // Delete the zmq context
@@ -79,7 +79,7 @@ JControlZMQ::~JControlZMQ(void)
 //-------------------------------------------------------------
 // ServerLoop
 //-------------------------------------------------------------
-void JControlZMQ::ServerLoop(void)
+void JControlZMQ::ServerLoop()
 {
     /// This implements the zmq server for handling REQ-REP requests.
     /// It is run in a separate thread and should generally take very
@@ -87,10 +87,10 @@ void JControlZMQ::ServerLoop(void)
     /// indefinitely until the internal _done member is set to true.
     /// Currently, that is done only by calling the destructor.
 
-    LOG << "JControlZMQ server starting ..." << LOG_END;
+    LOG << "JControlZMQ server starting ..." << LOG_END
 
     // This just makes it easier to identify this thread while debugging.
-    // Linux and Mac OS X use a different calling signatures for pthread_setname_np
+    // Linux and Mac OS X use different calling signatures for pthread_setname_np
 #if __linux__
     pthread_setname_np( pthread_self(), "JControlZMQ::ServerLoop" );
 #elif defined(__APPLE__)
@@ -101,9 +101,9 @@ void JControlZMQ::ServerLoop(void)
     char bind_str[256];
 	sprintf( bind_str, "tcp://*:%d", _port );
 	void *responder = zmq_socket( _zmq_context, ZMQ_REP );
-	int rc = zmq_bind( responder, bind_str);
-	if( rc != 0 ){
-		LOG << "JControlZMQ: Unable to bind zeroMQ control socket " << _port << "!" << LOG_END;
+	auto ret = zmq_bind( responder, bind_str);
+	if( ret != 0 ){
+		LOG << "JControlZMQ: Unable to bind zeroMQ control socket " << _port << "!" << LOG_END
 		perror("zmq_bind");
 		return;
 	}
@@ -119,7 +119,7 @@ void JControlZMQ::ServerLoop(void)
 				std::this_thread::sleep_for(std::chrono::milliseconds(250));
 				continue;
 			}else{
-				LOG << "JControlZMQ: ERROR listening on control socket: errno=" << errno << LOG_END;
+				LOG << "JControlZMQ: ERROR listening on control socket: errno=" << errno << LOG_END
 				_done = true;
 				continue;
 			}
@@ -140,16 +140,16 @@ void JControlZMQ::ServerLoop(void)
 		}else if( vals[0] == "quit" ){
 		    //------------------ quit
 		    _done = true;
-		    if( vals.size()>1 )  _japp->SetExitCode( atoi(vals[1].c_str()) ); // allow remote user to optionally set exit code.
+		    if( vals.size()>1 )  _japp->SetExitCode( strtol(vals[1].c_str(), nullptr, 10) ); // allow remote user to optionally set exit code.
             _japp->Quit();
-			ss << "{message:\"OK\"}";;
+			ss << "{message:\"OK\"}";
 		}else if( vals[0] == "get_status" ){
 		    //------------------ get_status
 			ss << GetStatusJSON();
 		}else if( vals[0]=="set_nthreads" ){
 			//------------------ set_nthreads
 			if( vals.size()==2 ){
-				int Nthreads = atoi( vals[1].c_str() );
+				int Nthreads = strtol( vals[1].c_str(), nullptr, 10 );
 				_japp->Scale( Nthreads );
 				ss << "OK";
 			}else{
@@ -164,7 +164,7 @@ void JControlZMQ::ServerLoop(void)
 				for( uint32_t i=1; i<vals.size(); i++){
 
 					auto &fname = vals[i];
-					struct stat st;
+					struct stat st ={};
 					int64_t fsize = -1;
 					if( stat(fname.c_str(), &st) == 0) fsize = (int64_t)st.st_size;
 					if( i>1 ) ss << ",";
@@ -172,6 +172,22 @@ void JControlZMQ::ServerLoop(void)
 				}
 				ss << "}";
 			}
+        }else if( vals[0] == "get_disk_space" ){ // mulitple directories may be specified
+            //------------------ get_file_size
+            if( vals.size()<2){
+                ss << "{message:\"ERROR: No directory given!\"}";
+            }else{
+                ss << "{";
+                for( uint32_t i=1; i<vals.size(); i++){
+
+                    auto &dname = vals[i];
+
+                    std::map<std::string,float> myvals;
+                    GetDiskSpace( dname, myvals);
+                    for( const auto &p : myvals ) ss << "\"" << p.first << "\":" << p.second << "\n";
+                }
+                ss << "}";
+            }
 		}else{
 		    //------------------ Unknown Command
 			ss << "{message:\"Bad Command: " << vals[0] << "\"}";
@@ -184,12 +200,12 @@ void JControlZMQ::ServerLoop(void)
 //-------------------------------------------------------------
 // GetStatusJSON
 //-------------------------------------------------------------
-string JControlZMQ::GetStatusJSON(void)
+string JControlZMQ::GetStatusJSON()
 {
     // Create JSON string
     stringstream ss;
     ss << "{\n";
-    ss << "\"program\":\"JANAcp\"";
+    ss << R"("program":"JANAcp")";  // (n.b. c++11 string literal)
 
 	// Static info
     JSONADS( "host" , _host );
@@ -205,7 +221,7 @@ string JControlZMQ::GetStatusJSON(void)
     HostStatusPROC(vals);
 
     // Write all items in "vals" into the JSON formatted return string
-    for( auto p : vals ) JSONADD(p.first) << p.second;
+    for( const auto &p : vals ) JSONADD(p.first) << p.second;
 
     // Close JSON string and return
     ss << "\n}";
@@ -264,7 +280,7 @@ void JControlZMQ::HostStatusPROCLinux(std::map<std::string,float> &vals)
     static double delta_sys  = 0.0;
     static double delta_idle = 1.0;
 
-    time_t now = time(NULL);
+    time_t now = time(nullptr);
     if(now > last_time){
         ifstream ifs("/proc/stat");
         if( ifs.is_open() ){
@@ -316,13 +332,13 @@ void JControlZMQ::HostStatusPROCLinux(std::map<std::string,float> &vals)
         string sbuff(buff);
 
         size_t pos = sbuff.find("MemTotal:");
-        if(pos != string::npos) mem_tot_kB = atoi(&buff[pos+10+1]);
+        if(pos != string::npos) mem_tot_kB = strtol(&buff[pos+10+1], nullptr, 10);
 
         pos = sbuff.find("MemFree:");
-        if(pos != string::npos) mem_free_kB = atoi(&buff[pos+9+1]);
+        if(pos != string::npos) mem_free_kB = strtol(&buff[pos+9+1], nullptr, 10);
 
         pos = sbuff.find("MemAvailable:");
-        if(pos != string::npos) mem_avail_kB = atoi(&buff[pos+14+1]);
+        if(pos != string::npos) mem_avail_kB = strtol(&buff[pos+14+1], nullptr, 10);
     }
 
     // RAM
@@ -336,7 +352,7 @@ void JControlZMQ::HostStatusPROCLinux(std::map<std::string,float> &vals)
     vals["ram_avail_GB"] = mem_avail_kB*1.0E-6;
 
     // Get system resource usage
-    struct rusage usage;
+    struct rusage usage = {};
     getrusage(RUSAGE_SELF, &usage);
     double mem_usage = (double)(usage.ru_maxrss)/1024.0; // convert to MB
     vals["ram_used_this_proc_GB"] = (double)mem_usage*1.0E-3;
@@ -363,14 +379,14 @@ void JControlZMQ::HostStatusPROCMacOSX(std::map<std::string,float> &vals)
 //---------------------------------
 // GetDiskSpace
 //---------------------------------
-void JControlZMQ::GetDiskSpace(std::string dirname, std::map<std::string,float> &vals)
+void JControlZMQ::GetDiskSpace(const std::string &dirname, std::map<std::string,float> &vals)
 {
     // Attempt to get stats on the disk specified by dirname.
     // If found, they are added to vals. If no directory by
     // that name is found then nothing is added to vals and
     // this returns quietly.
 
-    struct statvfs vfs;
+    struct statvfs vfs = {};
     int err = statvfs(dirname.c_str(), &vfs);
     if( err != 0 ) return;
 
