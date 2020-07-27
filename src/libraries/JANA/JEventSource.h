@@ -115,14 +115,14 @@ public:
     virtual void GetEvent(std::shared_ptr<JEvent>) = 0;
 
 
-    /// `FreeEvent` is used to notify the `JEventSource` that an event has been completely processed. This is the final
+    /// `FinishEvent` is used to notify the `JEventSource` that an event has been completely processed. This is the final
     /// chance to interact with the `JEvent` before it is either cleared and recycled, or deleted. Although it is
     /// possible to use this for freeing resources on the JEvent itself, this is strongly discouraged in favor of putting
     /// that logic on the destructor, RAII-style. Instead, this callback should be used for updating and freeing state
     /// owned by the JEventSource, e.g. raw data which is keyed off of run number and therefore shared among multiple
-    /// JEvents. `FreeEvent` is also well-suited for use with `EventGroup`s, e.g. to notify someone that a batch of
+    /// JEvents. `FinishEvent` is also well-suited for use with `EventGroup`s, e.g. to notify someone that a batch of
     /// events has finished, or to implement "barrier events".
-    virtual void FreeEvent(JEvent&) {};
+    virtual void FinishEvent(JEvent&) {};
 
 
     /// `GetObjects` was historically used for lazily unpacking data from a JEvent and putting it into a "dummy" JFactory.
@@ -224,14 +224,14 @@ public:
         }
     }
 
-    /// Calls the optional-and-discouraged user-provided FreeEvent virtual method, enforcing
+    /// Calls the optional-and-discouraged user-provided FinishEvent virtual method, enforcing
     /// 1. Thread safety
     /// 2. The m_enable_free_event flag
 
-    void DoFree(JEvent& event) {
+    void DoFinish(JEvent& event) {
         if (m_enable_free_event) {
             std::lock_guard<std::mutex> lock(m_mutex);
-            FreeEvent(event);
+            FinishEvent(event);
         }
     }
 
@@ -273,12 +273,12 @@ public:
     void SetFactoryGenerator(JFactoryGenerator* generator) { m_factory_generator = generator; }
 
     // Meant to be called by user
-    /// EnableFreeEvent() is intended to be called by the user in the constructor in order to
-    /// tell JANA to call the provided FreeEvent method after all JEventProcessors
+    /// EnableFinishEvent() is intended to be called by the user in the constructor in order to
+    /// tell JANA to call the provided FinishEvent method after all JEventProcessors
     /// have finished with a given event. This should only be enabled when absolutely necessary
     /// (e.g. for backwards compatibility) because it introduces contention for the JEventSource mutex,
-    /// which will hurt performance. Conceptually, FreeEvent isn't great, and so should be avoided when possible.
-    void EnableFreeEvent() { m_enable_free_event = true; }
+    /// which will hurt performance. Conceptually, FinishEvent isn't great, and so should be avoided when possible.
+    void EnableFinishEvent() { m_enable_free_event = true; }
 
     // Meant to be called by JANA
     void SetApplication(JApplication* app) { m_application = app; }
