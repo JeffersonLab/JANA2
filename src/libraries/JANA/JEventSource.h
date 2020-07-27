@@ -148,7 +148,7 @@ public:
         }
         catch (std::runtime_error& e){
             throw(JException(e.what()));
-		}
+        }
         catch (...) {
             auto ex = JException("Unknown exception in JEventSource::Open()");
             ex.nested_exception = std::current_exception();
@@ -214,8 +214,8 @@ public:
         }
         catch (std::runtime_error& e){
             throw(JException(e.what()));
-		}
-		catch (...) {
+        }
+        catch (...) {
             auto ex = JException("Unknown exception in JEventSource::GetEvent()");
             ex.nested_exception = std::current_exception();
             ex.plugin_name = m_plugin_name;
@@ -224,10 +224,15 @@ public:
         }
     }
 
+    /// Calls the optional-and-discouraged user-provided FreeEvent virtual method, enforcing
+    /// 1. Thread safety
+    /// 2. The m_enable_free_event flag
 
     void DoFree(JEvent& event) {
-    	std::lock_guard<std::mutex> lock(m_mutex);
-    	FreeEvent(event);
+        if (m_enable_free_event) {
+            std::lock_guard<std::mutex> lock(m_mutex);
+            FreeEvent(event);
+        }
     }
 
 
@@ -267,6 +272,14 @@ public:
     // Meant to be called by user
     void SetFactoryGenerator(JFactoryGenerator* generator) { m_factory_generator = generator; }
 
+    // Meant to be called by user
+    /// EnableFreeEvent() is intended to be called by the user in the constructor in order to
+    /// tell JANA to call the provided FreeEvent method after all JEventProcessors
+    /// have finished with a given event. This should only be enabled when absolutely necessary
+    /// (e.g. for backwards compatibility) because it introduces contention for the JEventSource mutex,
+    /// which will hurt performance. Conceptually, FreeEvent isn't great, and so should be avoided when possible.
+    void EnableFreeEvent() { m_enable_free_event = true; }
+
     // Meant to be called by JANA
     void SetApplication(JApplication* app) { m_application = app; }
 
@@ -288,11 +301,11 @@ private:
     std::atomic_ullong m_event_count {0};
     uint64_t m_nskip = 0;
     uint64_t m_nevents = 0;
-
     std::string m_plugin_name;
     std::string m_type_name;
     std::once_flag m_init_flag;
     std::mutex m_mutex;
+    bool m_enable_free_event = false;
 };
 
 #endif // _JEventSource_h_
