@@ -16,5 +16,5 @@ jobs:
     steps:
     - name: Build and run
       id: build_and_run
-      uses: faustus123/DockerAction-JANA2@alpha
+      uses: faustus123/DockerAction-JANA2@v1.0.0
 
