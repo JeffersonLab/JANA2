@@ -1,6 +1,7 @@
-//
-// Created by Nathan Brei on 2019-08-16.
-//
+
+// Copyright 2020, Jefferson Science Associates, LLC.
+// Subject to the terms in the LICENSE file found in the top-level directory.
+
 
 #ifndef JANA2_JBACKTRACE_H
 #define JANA2_JBACKTRACE_H

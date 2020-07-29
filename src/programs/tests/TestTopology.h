@@ -1,3 +1,7 @@
+
+// Copyright 2020, Jefferson Science Associates, LLC.
+// Subject to the terms in the LICENSE file found in the top-level directory.
+
 #ifndef GREENFIELD_TOPOLOGY_H
 #define GREENFIELD_TOPOLOGY_H
 
