@@ -76,9 +76,13 @@ inline uint64_t janapy_GetNeventsProcessed(void) { return pyjapp->GetNEventsProc
 inline float    janapy_GetIntegratedRate(void) { return pyjapp->GetIntegratedRate(); }
 inline float    janapy_GetInstantaneousRate(void) { return pyjapp->GetInstantaneousRate(); }
 inline uint32_t janapy_GetNThreads(void) { return pyjapp->GetNThreads(); }
+inline uint32_t janapy_SetNThreads(int Nthreads) { auto prev = pyjapp->GetNThreads(); pyjapp->Scale(Nthreads); return prev; }
 inline size_t   janapy_GetNcores(void) { return JCpuInfo::GetNumCpus(); }
 inline string   janapy_GetParameterValue(string key) { return pyjapp->GetJParameterManager()->Exists(key) ? pyjapp->GetParameterValue<string>(key):"Not Defined"; }
 inline void     janapy_SetParameterValue(string key, string val) { pyjapp->SetParameterValue<string>( key, val ); }
+
+inline void     janapy_PrintStatus(void) { pyjapp->PrintStatus(); }
+inline void     janapy_PrintParameters(bool all=false) { pyjapp->GetJParameterManager()->PrintParameters(all); }
 
 
 inline void janapy_AddProcessor(py::object &pyproc )
@@ -127,10 +131,14 @@ m.def("GetNeventsProcessed",         &janapy_GetNeventsProcessed,         "Retur
 m.def("GetIntegratedRate",           &janapy_GetIntegratedRate,           "Return integrated rate."); \
 m.def("GetInstantaneousRate",        &janapy_GetInstantaneousRate,        "Return instantaneous rate."); \
 m.def("GetNThreads",                 &janapy_GetNThreads,                 "Return current number of JThread objects."); \
+m.def("SetNThreads",                 &janapy_SetNThreads,                 "Set number of JThread objects. (returns previous number)"); \
 m.def("GetNcores",                   &janapy_GetNcores,                   "Return number of cores reported by system (full + logical)."); \
 m.def("GetParameterValue",           &janapy_GetParameterValue,           "Return value of given configuration parameter."); \
 m.def("SetParameterValue",           &janapy_SetParameterValue,           "Set configuration parameter."); \
 m.def("AddProcessor",                &janapy_AddProcessor,                "Add an event processor"); \
+\
+m.def("PrintStatus",                 &janapy_PrintStatus,                 "Print the status of the current job to the screen"); \
+m.def("PrintParameters",             &janapy_PrintParameters,             "Print config. parameters (give argument True to print all parameters)"); \
 
 //================================================================================
 

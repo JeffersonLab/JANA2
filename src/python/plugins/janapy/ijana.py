@@ -113,6 +113,7 @@ def print_help():
 	print('\r exit               same as "quit"')
 	print('\r help               print this message')
 	print('\r history            print history of this session')
+	print('\r nthreads [N]       get or set the number of processing threads')
 	print('\r parameter cmd ...  get/set/list config. parameters')
 	print('\r quit               stop data processing and quit the program')
 	print('\r resume             resume data processing')
@@ -160,9 +161,10 @@ def process_command( input ):
 		if len(args) == 0:
 			print('Number of JThreads: %d' % jana.GetNThreads())
 		elif len(args)==1:
-			print('Number of JThreads now at: %d' % jana.SetNThreads( int(args[0]) ) )
+			prev = jana.SetNThreads( int(args[0]) )
+			print('Number of JThreads set to: %d (was %d)' %  (int(args[0]), prev))
 		else:
-			print('njthreads takes either 0 or 1 argument (see help for details)')
+			print('nthreads takes either 0 or 1 argument (see help for details)')
 	#--- parameter
 	elif cmd=='parameter':
 		if len(args) == 0:
@@ -174,7 +176,7 @@ def process_command( input ):
 				print('command parameter get requires exactly 1 argument! (see help for details)')
 		elif args[0] == 'set':
 			if len(args)==3:
-				jana.SetParameter(args[1], args[2])
+				jana.SetParameterValue(args[1], args[2])
 			else:
 				print('command parameter set requires exactly 2 arguments! (see help for details)')
 		elif args[0] == 'list':
@@ -234,6 +236,7 @@ def command_line():
 	tty.setraw(sys.stdin)
 
 	prompt = 'jana> '
+	highlighted_prompt = BOLD+prompt+RESET
 
 	CLI_ACTIVE = True
 	BANNER_ON  = True
@@ -246,7 +249,7 @@ def command_line():
 		index = 0
 		input_save = ""
 		history_index = len(history)
-		sys.stdout.write(prompt)
+		sys.stdout.write(highlighted_prompt)
 		sys.stdout.flush()
 		while CLI_ACTIVE and not jana.IsDrainingQueues(): # loop for each character
 		
@@ -309,7 +312,7 @@ def command_line():
 			# Print current input-string
 			MOVETO(1,NROWS)
 			CLEARLINE()
-			sys.stdout.write(prompt + syntax_highlight(input))
+			sys.stdout.write(highlighted_prompt + syntax_highlight(input))
 			MOVETO(1,NROWS)
 			if index >= 0: RIGHT( index+len(prompt) )
 			sys.stdout.flush()
