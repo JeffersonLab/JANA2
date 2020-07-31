@@ -113,5 +113,67 @@ TEST_CASE("JEventInsertTests") {
         REQUIRE_THROWS(event->GetFactory<FakeJObject>("absent_tag", true));
     }
 
+	// ---------
+	// GetSingle
+	// ---------
+
+    SECTION("JEvent::GetSingle returns null when factory is present but empty") {
+    	std::vector<FakeJObject*> objects;
+    	event->Insert(objects);
+    	auto object = event->GetSingle<FakeJObject>();
+    	REQUIRE(object == nullptr);
+    }
+
+	SECTION("JEvent::GetSingle throws an exception when factory is missing") {
+		REQUIRE_THROWS(event->GetSingle<FakeJObject>());
+	}
+
+	SECTION("JEvent::GetSingle returns the only object when the factory contains only one object") {
+    	auto inserted = new FakeJObject(22);
+		event->Insert(inserted);
+		auto retrieved = event->GetSingle<FakeJObject>();
+		REQUIRE(retrieved->datum == inserted->datum);      // Same contents
+		REQUIRE(retrieved == inserted);                    // Same pointer
+	}
+
+	SECTION("JEvent::GetSingle returns the first object when the factory contains multiple objects") {
+		auto first = new FakeJObject(22);
+		event->Insert(first);
+		event->Insert(new FakeJObject(99));
+		event->Insert(new FakeJObject(42));
+		auto retrieved = event->GetSingle<FakeJObject>();
+		REQUIRE(retrieved->datum == first->datum);      // Same contents
+		REQUIRE(retrieved == first);                    // Same pointer
+	}
+
+	// ---------------
+	// GetSingleStrict
+	// ---------------
+
+	SECTION("JEvent::GetSingleStrict throws an exception when factory is present but empty") {
+		std::vector<FakeJObject*> objects; // empty
+		event->Insert(objects);  // creates an empty dummy factory
+		REQUIRE_THROWS(event->GetSingleStrict<FakeJObject>());
+	}
+
+	SECTION("JEvent::GetSingleStrict throws an exception when factory is missing") {
+		REQUIRE_THROWS(event->GetSingleStrict<FakeJObject>());
+	}
+
+	SECTION("JEvent::GetSingleStrict returns the only object when the factory contains only one object") {
+		auto inserted = new FakeJObject(22);
+		event->Insert(inserted);
+		auto retrieved = event->GetSingle<FakeJObject>();
+		REQUIRE(retrieved->datum == inserted->datum);      // Same contents
+		REQUIRE(retrieved == inserted);                    // Same pointer
+	}
+
+	SECTION("JEvent::GetSingleStrict throws an exception when the factory contains multiple objects") {
+		event->Insert(new FakeJObject(22));
+		event->Insert(new FakeJObject(99));
+		event->Insert(new FakeJObject(42));
+		REQUIRE_THROWS(event->GetSingleStrict<FakeJObject>());
+	}
+
 }
 

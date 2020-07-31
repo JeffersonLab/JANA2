@@ -162,6 +162,7 @@ inline JMetadata<T> JEvent::GetMetadata(const std::string& tag) const {
 
 /// C-style getters
 
+///
 template<class T>
 JFactoryT<T>* JEvent::Get(const T** destination, const std::string& tag) const
 {
@@ -189,7 +190,13 @@ JFactoryT<T>* JEvent::Get(std::vector<const T*>& destination, const std::string&
 
 /// C++ style getters
 
-/// GetSingle returns nullptr if factory
+/// GetSingle conveniently returns one item from inside the JFactory. This should be used when the data in question
+/// is optional and the caller wants to examine the result and decide how to proceed. The caller should embed this
+/// inside an if-block.
+/// - If the factory is missing, GetSingle throws an exception
+/// - If the factory exists but contains no items, GetSingle returns nullptr
+/// - If the factory contains more than one item, GetSingle returns the first item
+
 template<class T> const T* JEvent::GetSingle(const std::string& tag) const {
 	auto iterators = GetFactory<T>(tag, true)->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
 	if (std::distance(iterators.first, iterators.second) == 0) {
@@ -198,6 +205,12 @@ template<class T> const T* JEvent::GetSingle(const std::string& tag) const {
 	return *iterators.first;
 }
 
+/// GetSingleStrict conveniently returns one item from inside the JFactory. This should be used when the data in
+/// question is mandatory, and its absence indicates an error which should stop execution. The caller does not need
+/// to embed this in an if- or try-catch block; it can be a one-liner.
+/// - If the factory is missing, GetSingleStrict throws an exception
+/// - If the factory exists but contains no items, GetSingleStrict throws an exception
+/// - If the factory contains more than one item, GetSingleStrict throws an exception
 template<class T> const T* JEvent::GetSingleStrict(const std::string& tag) const {
 	auto iterators = GetFactory<T>(tag, true)->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
 	if (std::distance(iterators.first, iterators.second) == 0) {
