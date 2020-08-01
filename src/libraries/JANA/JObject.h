@@ -158,7 +158,8 @@ void JObject::ClearAssociatedObjects(void)
 template<class T>
 const T* JObject::GetSingle() const {
 	/// This is a convenience method that can be used to get a pointer to the single associated object of type T.
-	/// If no object is found, or multiple objects are found, this will throw a JException.
+	/// If no object is found, this will return nullptr.
+	/// If multiple objects are found, this will throw a JException.
 
 	const T* last_found = nullptr;
 	for (auto obj : associated) {
