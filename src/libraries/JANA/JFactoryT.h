@@ -33,9 +33,10 @@ public:
 
     ~JFactoryT() override = default;
 
-
     void Init() override {}
-    void ChangeRun(const std::shared_ptr<const JEvent>& aEvent) override {}
+    void BeginRun(const std::shared_ptr<const JEvent> &aEvent) override {}
+    void ChangeRun(const std::shared_ptr<const JEvent> &aEvent) override {}
+    void EndRun() override {}
     void Process(const std::shared_ptr<const JEvent>& aEvent) override {
         // TODO: Debate best thing to do in this case. Consider fa250WaveboardV1Hit
         LOG << "Dummy factory created but nothing was Inserted() or Set()." << LOG_END;
@@ -75,8 +76,17 @@ public:
                     throw ex;
                 }
             case Status::Unprocessed:
-                if (mPreviousRunNumber != run_number) {
+                if (mPreviousRunNumber == -1) {
+                    // This is the very first run
                     ChangeRun(event);
+                    BeginRun(event);
+                    mPreviousRunNumber = run_number;
+                }
+                else if (mPreviousRunNumber != run_number) {
+                    // This is a later run, and it has changed
+                    EndRun();
+                    ChangeRun(event);
+                    BeginRun(event);
                     mPreviousRunNumber = run_number;
                 }
                 Process(event);
