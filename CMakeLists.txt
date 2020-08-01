@@ -27,12 +27,13 @@ add_subdirectory(src/examples)
 
 add_subdirectory(src/plugins/JTest)
 add_subdirectory(src/plugins/streamDet)
-add_subdirectory(src/plugins/janapy)
 add_subdirectory(src/plugins/janarate)
 add_subdirectory(src/plugins/janacontrol)
 
 add_subdirectory(src/programs/jana)
 add_subdirectory(src/programs/tests)
+
+add_subdirectory(src/python)
 
 install(PROGRAMS scripts/jana-generate.py scripts/jana-upgrade.py DESTINATION bin)
 
