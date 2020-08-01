@@ -162,16 +162,24 @@ inline JMetadata<T> JEvent::GetMetadata(const std::string& tag) const {
 
 /// C-style getters
 
-///
+/// Get conveniently returns one item from inside the JFactory. This should be used when the data in question
+/// is optional and the caller wants to examine the result and decide how to proceed. The caller should embed this
+/// inside an if-block. Get updates the `destination` out parameter and returns a pointer to the enclosing JFactory.
+/// - If the factory is missing, GetSingle throws an exception.
+/// - If the factory exists but contains no items, GetSingle updates the `destination` to point to nullptr.
+/// - If the factory contains exactly one item, GetSingle updates the `destination` to point to that item.
+/// - If the factory contains more than one item, GetSingle updates the `destination` to point to the first time.
 template<class T>
 JFactoryT<T>* JEvent::Get(const T** destination, const std::string& tag) const
 {
 	auto factory = GetFactory<T>(tag, true);
 	auto iterators = factory->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
-	if (std::distance(iterators.first, iterators.second) != 1) {
-		throw JException("Wrong number of elements!");
+	if (std::distance(iterators.first, iterators.second) == 0) {
+		*destination = nullptr;
 	}
-	*destination = *iterators.first;
+	else {
+		*destination = *iterators.first;
+	}
 	return factory;
 }
 

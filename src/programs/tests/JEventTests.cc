@@ -113,8 +113,47 @@ TEST_CASE("JEventInsertTests") {
         REQUIRE_THROWS(event->GetFactory<FakeJObject>("absent_tag", true));
     }
 
-	// ---------
-	// GetSingle
+    // -----------------
+    // C-style GetSingle
+    // -----------------
+	SECTION("JEvent::Get(Single) updates destination to null when factory is present but empty") {
+		std::vector<FakeJObject*> objects;
+		event->Insert(objects);
+		const FakeJObject* result;
+		JFactory* factory = event->Get(&result);
+		REQUIRE(result == nullptr);
+		REQUIRE(factory != nullptr);
+	}
+
+	SECTION("JEvent::Get(Single) throws an exception when factory is missing") {
+    	const FakeJObject* result;
+		REQUIRE_THROWS(event->Get(&result));
+	}
+
+	SECTION("JEvent::Get(Single) updates destination to point to the only object when the factory contains only one object") {
+		auto inserted = new FakeJObject(22);
+		event->Insert(inserted);
+		const FakeJObject* result;
+		auto factory = event->Get(&result);
+		REQUIRE(result->datum == inserted->datum);      // Same contents
+		REQUIRE(result == inserted);                    // Same pointer
+		REQUIRE(factory != nullptr);                    // Factory exists
+	}
+
+	SECTION("JEvent::Get(Single) returns the first object when the factory contains multiple objects") {
+		auto first = new FakeJObject(22);
+		event->Insert(first);
+		event->Insert(new FakeJObject(99));
+		event->Insert(new FakeJObject(42));
+		const FakeJObject* result;
+		auto factory = event->Get(&result);
+		REQUIRE(result->datum == first->datum);      // Same contents
+		REQUIRE(result == first);                    // Same pointer
+		REQUIRE(factory != nullptr);                    // Factory exists
+	}
+
+		// ---------
+		// GetSingle
 	// ---------
 
     SECTION("JEvent::GetSingle returns null when factory is present but empty") {
