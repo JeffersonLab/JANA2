@@ -1,46 +1,8 @@
-//
-//    File: JEventSource.h
-// Created: Thu Oct 12 08:15:39 EDT 2017
-// Creator: davidl (on Darwin harriet.jlab.org 15.6.0 i386)
-//
-// ------ Last repository commit info -----
-// [ Date ]
-// [ Author ]
-// [ Source ]
-// [ Revision ]
-//
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-// Jefferson Science Associates LLC Copyright Notice:  
-// Copyright 251 2014 Jefferson Science Associates LLC All Rights Reserved. Redistribution
-// and use in source and binary forms, with or without modification, are permitted as a
-// licensed user provided that the following conditions are met:  
-// 1. Redistributions of source code must retain the above copyright notice, this
-//    list of conditions and the following disclaimer. 
-// 2. Redistributions in binary form must reproduce the above copyright notice, this
-//    list of conditions and the following disclaimer in the documentation and/or other
-//    materials provided with the distribution.  
-// 3. The name of the author may not be used to endorse or promote products derived
-//    from this software without specific prior written permission.  
-// This material resulted from work developed under a United States Government Contract.
-// The Government retains a paid-up, nonexclusive, irrevocable worldwide license in such
-// copyrighted data to reproduce, distribute copies to the public, prepare derivative works,
-// perform publicly and display publicly and to permit others to do so.   
-// THIS SOFTWARE IS PROVIDED BY JEFFERSON SCIENCE ASSOCIATES LLC "AS IS" AND ANY EXPRESS
-// OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-// MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
-// JEFFERSON SCIENCE ASSOCIATES, LLC OR THE U.S. GOVERNMENT BE LIABLE TO LICENSEE OR ANY
-// THIRD PARTES FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
-// OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
-// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-//
-// Description:
-//
-//
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+// Copyright 2020, Jefferson Science Associates, LLC.
+// Subject to the terms in the LICENSE file found in the top-level directory.
+
+
 #ifndef _JEventSource_h_
 #define _JEventSource_h_
 
@@ -88,12 +50,48 @@ public:
 
 
     // To be implemented by the user
+    /// `Open` is called by JANA when it is ready to accept events from this event source. The implementor should open
+    /// file pointers or sockets here, instead of in the constructor. This is because the implementor won't know how many
+    /// or which event sources the user will decide to activate within one job. Thus the implementor can avoid problems
+    /// such as running out of file pointers, or multiple event sources attempting to bind to the same socket.
 
     virtual void Open() {}
 
+    /// `GetEvent` is called by JANA in order to emit a fresh event into the stream. JANA manages the entire lifetime of
+    /// the JEvent. The `JEvent` being passed in is empty and merely needs to hydrated as follows:
+
+    ///  1. `SetRunNumber()`
+    ///  2. `SetEventNumber()`
+    ///  3. `Insert<T>()` raw data of type `T` into the `JEvent` container. Note that `T` should be a child class, such as
+    ///     `FADC250DigiHit`, not a parent class such as `JObject` or `TObject`. Also note that `Insert` transfers
+    ///     ownership of the data to that JEvent. If the data is shared among multiple `JEvents`, e.g. BOR data,
+    ///     use `SetFactoryFlags(JFactory::NOT_OBJECT_OWNER)`
+
+    /// Note that JEvents are usually recycled. Although all reconstruction data is cleared before `GetEvent` is called,
+    /// the constituent `JFactories` may retain some state, e.g. statistics, or calibration data keyed off of run number.
+
+    /// If an event cannot be emitted, either because the resource is not ready or because we have reached the end of
+    /// the event stream, the implementor should throw the corresponding `RETURN_STATUS`. The user should NEVER throw
+    /// `RETURN_STATUS SUCCESS` because this will hurt performance. Instead, they should simply return normally.
+
     virtual void GetEvent(std::shared_ptr<JEvent>) = 0;
 
-    // Deprecated. Use JEvent::Insert() from inside GetEvent instead.
+
+    /// `FinishEvent` is used to notify the `JEventSource` that an event has been completely processed. This is the final
+    /// chance to interact with the `JEvent` before it is either cleared and recycled, or deleted. Although it is
+    /// possible to use this for freeing resources on the JEvent itself, this is strongly discouraged in favor of putting
+    /// that logic on the destructor, RAII-style. Instead, this callback should be used for updating and freeing state
+    /// owned by the JEventSource, e.g. raw data which is keyed off of run number and therefore shared among multiple
+    /// JEvents. `FinishEvent` is also well-suited for use with `EventGroup`s, e.g. to notify someone that a batch of
+    /// events has finished, or to implement "barrier events".
+    virtual void FinishEvent(JEvent&) {};
+
+
+    /// `GetObjects` was historically used for lazily unpacking data from a JEvent and putting it into a "dummy" JFactory.
+    /// This mechanism has been replaced by `JEvent::Insert`. All lazy evaluation should happen in a (non-dummy)
+    /// JFactory, whereas eager evaluation should happen in `JEventSource::GetEvent` via `JEvent::Insert`.
+
+    [[deprecated]]
     virtual bool GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactory* aFactory) { return false; }
 
 
@@ -112,7 +110,7 @@ public:
         }
         catch (std::runtime_error& e){
             throw(JException(e.what()));
-		}
+        }
         catch (...) {
             auto ex = JException("Unknown exception in JEventSource::Open()");
             ex.nested_exception = std::current_exception();
@@ -178,13 +176,24 @@ public:
         }
         catch (std::runtime_error& e){
             throw(JException(e.what()));
-		}
-		catch (...) {
+        }
+        catch (...) {
             auto ex = JException("Unknown exception in JEventSource::GetEvent()");
             ex.nested_exception = std::current_exception();
             ex.plugin_name = m_plugin_name;
             ex.component_name = GetType();
             throw ex;
+        }
+    }
+
+    /// Calls the optional-and-discouraged user-provided FinishEvent virtual method, enforcing
+    /// 1. Thread safety
+    /// 2. The m_enable_free_event flag
+
+    void DoFinish(JEvent& event) {
+        if (m_enable_free_event) {
+            std::lock_guard<std::mutex> lock(m_mutex);
+            FinishEvent(event);
         }
     }
 
@@ -225,6 +234,14 @@ public:
     // Meant to be called by user
     void SetFactoryGenerator(JFactoryGenerator* generator) { m_factory_generator = generator; }
 
+    // Meant to be called by user
+    /// EnableFinishEvent() is intended to be called by the user in the constructor in order to
+    /// tell JANA to call the provided FinishEvent method after all JEventProcessors
+    /// have finished with a given event. This should only be enabled when absolutely necessary
+    /// (e.g. for backwards compatibility) because it introduces contention for the JEventSource mutex,
+    /// which will hurt performance. Conceptually, FinishEvent isn't great, and so should be avoided when possible.
+    void EnableFinishEvent() { m_enable_free_event = true; }
+
     // Meant to be called by JANA
     void SetApplication(JApplication* app) { m_application = app; }
 
@@ -246,11 +263,11 @@ private:
     std::atomic_ullong m_event_count {0};
     uint64_t m_nskip = 0;
     uint64_t m_nevents = 0;
-
     std::string m_plugin_name;
     std::string m_type_name;
     std::once_flag m_init_flag;
     std::mutex m_mutex;
+    bool m_enable_free_event = false;
 };
 
 #endif // _JEventSource_h_

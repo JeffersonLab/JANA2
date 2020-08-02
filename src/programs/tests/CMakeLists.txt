@@ -23,7 +23,9 @@ set(TEST_SOURCES
     JFactoryTests.h
     JFactoryTests.cc
     NEventNSkipTests.cc
-
+    JEventGetAllTests.cc
+    JParameterManagerTests.cc
+    JStatusBitsTests.cc
     ArrowEngineTests.cc
     )
 

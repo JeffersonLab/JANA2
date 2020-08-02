@@ -102,6 +102,13 @@ set(JANA2_SOURCES
     CLI/JBenchmarker.cc
     CLI/JBenchmarker.h
     CLI/JSignalHandler.h
+
+    Compatibility/JStreamLog.cc
+    Compatibility/JStreamLog.h
+    Compatibility/JStreamLogBuffer.cc
+    Compatibility/JStreamLogBuffer.h
+    Compatibility/JStatusBits.h
+    Compatibility/jerror.h
     )
 
 
@@ -150,6 +157,7 @@ file(GLOB jana_streaming_headers "Streaming/*.h*")
 file(GLOB jana_utils_headers "Utils/*.h*")
 file(GLOB jana_calibs_headers "Calibrations/*.h*")
 file(GLOB jana_cli_headers "CLI/*.h*")
+file(GLOB jana_compat_headers "Compatibility/*.h*")
 
 install(FILES ${jana_headers} DESTINATION include/JANA)
 install(FILES ${jana_engine_headers} DESTINATION include/JANA/Engine)
@@ -159,6 +167,7 @@ install(FILES ${jana_streaming_headers} DESTINATION include/JANA/Streaming)
 install(FILES ${jana_utils_headers} DESTINATION include/JANA/Utils)
 install(FILES ${jana_calibs_headers} DESTINATION include/JANA/Calibrations)
 install(FILES ${jana_cli_headers} DESTINATION include/JANA/CLI)
+install(FILES ${jana_compat_headers} DESTINATION include/JANA/Compatibility)
 
 
 

@@ -13,7 +13,7 @@ title: JANA: Multi-threaded HENP Event Reconstruction
 </center>
 
 
-### Building with CMake
+### Building JANA
 
 First, set your `$JANA_HOME` environment variable. This is where the executables, libraries, headers, and plugins
 get installed. You will need to tell CMake to install to `$JANA_HOME` manually -- this is on purpose to avoid accidentally

@@ -1,46 +1,6 @@
-//
-//    File: JFactory.h
-// Created: Fri Oct 20 09:44:48 EDT 2017
-// Creator: davidl (on Darwin harriet.jlab.org 15.6.0 i386)
-//
-// ------ Last repository commit info -----
-// [ Date ]
-// [ Author ]
-// [ Source ]
-// [ Revision ]
-//
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-// Jefferson Science Associates LLC Copyright Notice:  
-// Copyright 251 2014 Jefferson Science Associates LLC All Rights Reserved. Redistribution
-// and use in source and binary forms, with or without modification, are permitted as a
-// licensed user provided that the following conditions are met:  
-// 1. Redistributions of source code must retain the above copyright notice, this
-//    list of conditions and the following disclaimer. 
-// 2. Redistributions in binary form must reproduce the above copyright notice, this
-//    list of conditions and the following disclaimer in the documentation and/or other
-//    materials provided with the distribution.  
-// 3. The name of the author may not be used to endorse or promote products derived
-//    from this software without specific prior written permission.  
-// This material resulted from work developed under a United States Government Contract.
-// The Government retains a paid-up, nonexclusive, irrevocable worldwide license in such
-// copyrighted data to reproduce, distribute copies to the public, prepare derivative works,
-// perform publicly and display publicly and to permit others to do so.   
-// THIS SOFTWARE IS PROVIDED BY JEFFERSON SCIENCE ASSOCIATES LLC "AS IS" AND ANY EXPRESS
-// OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-// MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
-// JEFFERSON SCIENCE ASSOCIATES, LLC OR THE U.S. GOVERNMENT BE LIABLE TO LICENSEE OR ANY
-// THIRD PARTES FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
-// OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
-// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-//
-// Description:
-//
-//
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+// Copyright 2020, Jefferson Science Associates, LLC.
+// Subject to the terms in the LICENSE file found in the top-level directory.
 
 #include <vector>
 
@@ -67,13 +27,16 @@ public:
 
 
     JFactoryT(const std::string& aName = JTypeInfo::demangle<T>(), const std::string& aTag = "")
-    : JFactory(aName, aTag) {}
+    : JFactory(aName, aTag) {
+        EnableGetAs<T>();
+    }
 
     ~JFactoryT() override = default;
 
-
     void Init() override {}
-    void ChangeRun(const std::shared_ptr<const JEvent>& aEvent) override {}
+    void BeginRun(const std::shared_ptr<const JEvent> &aEvent) override {}
+    void ChangeRun(const std::shared_ptr<const JEvent> &aEvent) override {}
+    void EndRun() override {}
     void Process(const std::shared_ptr<const JEvent>& aEvent) override {
         // TODO: Debate best thing to do in this case. Consider fa250WaveboardV1Hit
         LOG << "Dummy factory created but nothing was Inserted() or Set()." << LOG_END;
@@ -113,8 +76,17 @@ public:
                     throw ex;
                 }
             case Status::Unprocessed:
-                if (mPreviousRunNumber != run_number) {
+                if (mPreviousRunNumber == -1) {
+                    // This is the very first run
                     ChangeRun(event);
+                    BeginRun(event);
+                    mPreviousRunNumber = run_number;
+                }
+                else if (mPreviousRunNumber != run_number) {
+                    // This is a later run, and it has changed
+                    EndRun();
+                    ChangeRun(event);
+                    BeginRun(event);
                     mPreviousRunNumber = run_number;
                 }
                 Process(event);
@@ -163,6 +135,14 @@ public:
         mStatus = Status::Inserted;
     }
 
+
+    /// EnableGetAs generates a vtable entry so that users may extract the
+    /// contents of this JFactoryT from the type-erased JFactory. The user has to manually specify which upcasts
+    /// to allow, and they have to do so for each instance. It is recommended to do so in the constructor.
+    /// Note that EnableGetAs<T>() is called automatically.
+    template <typename S> void EnableGetAs ();
+
+
     void ClearData() override {
 
         // ClearData won't do anything if Init() hasn't been called
@@ -197,6 +177,24 @@ protected:
     std::vector<T*> mData;
     JMetadata<T> mMetadata;
 };
+
+template<typename T>
+template<typename S>
+void JFactoryT<T>::EnableGetAs() {
+
+    auto upcast_lambda = [this]() {
+        std::vector<S*> results;
+        for (auto t : mData) {
+            results.push_back(static_cast<S*>(t));
+        }
+        return results;
+    };
+
+    auto key = std::type_index(typeid(S));
+    using upcast_fn_t = std::function<std::vector<S*>()>;
+    auto upcast_fn = new upcast_fn_t(upcast_lambda);
+    mUpcastVTable[key] = upcast_fn;
+}
 
 #endif // _JFactoryT_h_
 

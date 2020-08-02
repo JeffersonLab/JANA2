@@ -1,41 +1,6 @@
-//
-//    File: JFactorySet.cc
-// Created: Fri Oct 20 09:33:40 EDT 2017
-// Creator: davidl (on Darwin harriet.jlab.org 15.6.0 i386)
-//
-// ------ Last repository commit info -----
-// [ Date ]
-// [ Author ]
-// [ Source ]
-// [ Revision ]
-//
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-// Jefferson Science Associates LLC Copyright Notice:  
-// Copyright 251 2014 Jefferson Science Associates LLC All Rights Reserved. Redistribution
-// and use in source and binary forms, with or without modification, are permitted as a
-// licensed user provided that the following conditions are met:  
-// 1. Redistributions of source code must retain the above copyright notice, this
-//    list of conditions and the following disclaimer. 
-// 2. Redistributions in binary form must reproduce the above copyright notice, this
-//    list of conditions and the following disclaimer in the documentation and/or other
-//    materials provided with the distribution.  
-// 3. The name of the author may not be used to endorse or promote products derived
-//    from this software without specific prior written permission.  
-// This material resulted from work developed under a United States Government Contract.
-// The Government retains a paid-up, nonexclusive, irrevocable worldwide license in such
-// copyrighted data to reproduce, distribute copies to the public, prepare derivative works,
-// perform publicly and display publicly and to permit others to do so.   
-// THIS SOFTWARE IS PROVIDED BY JEFFERSON SCIENCE ASSOCIATES LLC "AS IS" AND ANY EXPRESS
-// OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-// MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
-// JEFFERSON SCIENCE ASSOCIATES, LLC OR THE U.S. GOVERNMENT BE LIABLE TO LICENSEE OR ANY
-// THIRD PARTES FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
-// OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
-// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+// Copyright 2020, Jefferson Science Associates, LLC.
+// Subject to the terms in the LICENSE file found in the top-level directory.
 
 #include <iterator>
 #include <iostream>
@@ -92,24 +57,45 @@ bool JFactorySet::Add(JFactory* aFactory)
 	/// This scenario occurs when the user has multiple JFactory<T> producing the
 	/// same T JObject, and is not distinguishing between them via tags.
 
-	auto sKey = std::make_pair( aFactory->GetObjectType(), aFactory->GetTag() );
-	auto res = mFactories.emplace(sKey, static_cast<JFactory*>(aFactory));
-	if( res.second ) return true; // factory successfully added
-	
-	// Factory is duplicate. Since this almost certainly indicates a user error, and
-	// the caller will not be able to do anything about it anyway, throw an exception.
-	throw JException("JFactorySet::Add failed because factory is duplicate");
+	auto typed_key = std::make_pair( aFactory->GetObjectType(), aFactory->GetTag() );
+	auto untyped_key = std::make_pair( aFactory->GetName(), aFactory->GetTag() );
+
+	auto typed_result = mFactories.find(typed_key);
+	auto untyped_result = mFactoriesFromString.find(untyped_key);
+
+	if (typed_result != std::end(mFactories) || untyped_result != std::end(mFactoriesFromString)) {
+		// Factory is duplicate. Since this almost certainly indicates a user error, and
+		// the caller will not be able to do anything about it anyway, throw an exception.
+		throw JException("JFactorySet::Add failed because factory is duplicate");
+		// return false;
+	}
+
+	mFactories[typed_key] = aFactory;
+	mFactoriesFromString[untyped_key] = aFactory;
+	return true;
 }
 
 //---------------------------------
 // GetFactory
 //---------------------------------
-JFactory* JFactorySet::GetFactory(std::type_index aObjectType, const std::string& aFactoryTag) const
+JFactory* JFactorySet::GetFactory(const std::string& object_name, const std::string& tag) const
 {
-	auto sKeyPair = std::make_pair(aObjectType, aFactoryTag);
-	auto sIterator = mFactories.find(sKeyPair);
-	return (sIterator != std::end(mFactories)) ? sIterator->second : nullptr;
+	auto untyped_key = std::make_pair(object_name, tag);
+	auto it = mFactoriesFromString.find(untyped_key);
+	return (it != std::end(mFactoriesFromString)) ? it->second : nullptr;
 }
+
+//---------------------------------
+// GetAllFactories
+//---------------------------------
+std::vector<JFactory*> JFactorySet::GetAllFactories() const {
+    std::vector<JFactory*> results;
+    for (auto p : mFactories) {
+        results.push_back(p.second);
+    }
+    return results;
+}
+
 
 //---------------------------------
 // Merge
@@ -126,10 +112,22 @@ void JFactorySet::Merge(JFactorySet &aFactorySet)
 	/// duplicates. It will be left to the caller to delete those.
 	
 	JFactorySet tmpSet; // keep track of duplicates to copy back into aFactorySet
-	for( auto f : aFactorySet.mFactories ){
-		if( ! mFactories.insert( f ).second ) {
-			// duplicate. Record so we can send back to caller
-			tmpSet.mFactories[f.first] = f.second;
+	for( auto pair : aFactorySet.mFactories ){
+		auto factory = pair.second;
+
+		auto typed_key = std::make_pair(factory->GetObjectType(), factory->GetTag());
+		auto untyped_key = std::make_pair(factory->GetName(), factory->GetTag());
+
+		auto typed_result = mFactories.find(typed_key);
+		auto untyped_result = mFactoriesFromString.find(untyped_key);
+
+		if (typed_result != std::end(mFactories) || untyped_result != std::end(mFactoriesFromString)) {
+			// Factory is duplicate. Return to caller just in case
+			tmpSet.mFactories[pair.first] = factory;
+		}
+		else {
+			mFactories[typed_key] = factory;
+			mFactoriesFromString[untyped_key] = factory;
 		}
 	}
 	

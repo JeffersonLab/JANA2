@@ -10,6 +10,13 @@
 # can use a different port number if specified by the JANA_ZMQ_PORT
 # when the JANA process was started.
 #
+# NOTE: This was originally copied from the HOSS GUI script so there
+# are quite a bit of things that are not used. This needs a major overhaul
+# to remove unnecessary things and to clean it up.
+
+# Copyright 2020, Jefferson Science Associates, LLC.
+# Subject to the terms in the LICENSE file found in the top-level directory.
+
 
 import zmq
 import json
@@ -434,23 +441,30 @@ class MyWindow(Frame):
 
 		#----- Control Section (Middle)
 		controlframe = Frame(self)
-		controlframe.grid( row=1, sticky=N+S+E+W )
+		controlframe.grid( row=1, sticky=N+S+E+W)
+		controlframe.columnconfigure(0, weight=1)
 		but1 = ttk.Button(controlframe, text='Nthreads-', command=self.DecrNThreads)
 		but1.grid(row=0, column=0)
 		but2 = Button(controlframe, text='Nthreads+', command=self.IncrNthreads)
 		but2.grid(row=0, column=1)
 
+		remotequitButton = Button(controlframe, text="Quit Remote",command=self.QuitRemote)
+		remotequitButton.grid( row=1, column=0, columnspan=2, sticky=E+W )
+
 		#----- GUI controls (Bottom)
 		guicontrolframe = Frame(self)
-		guicontrolframe.grid( row=3, sticky=E+W )
+		guicontrolframe.grid( row=2, sticky=E+W )
+		guicontrolframe.columnconfigure(1, weight=1)
 
-		quitButton = Button(self, text="Quit",command=self.Quit)
-		quitButton.grid( row=4 )
+
+		closeButton = Button(guicontrolframe, text="Close",command=self.Quit)
+		closeButton.grid( row=0, column=2, sticky=E+W)
+		closeButton.columnconfigure(0, weight=1)
 
 		#===== Configure weights of layout
 		Grid.rowconfigure(self, 0, weight=10)  # Info
 		Grid.rowconfigure(self, 1, weight=10)  # Control
-		Grid.rowconfigure(self, 2, weight=1)  # GUI controls
+		Grid.rowconfigure(self, 2, weight=1)   # GUI controls
 		Grid.columnconfigure(self, 0, weight=1)
 
 
@@ -460,6 +474,11 @@ class MyWindow(Frame):
 		global DONE, root
 		DONE=True
 		root.destroy()
+
+	#=========================
+	# QuitRemote
+	def QuitRemote(self):
+		self.cmd_queue.append( 'quit' )
 
 	#=========================
 	# DecrNThreads

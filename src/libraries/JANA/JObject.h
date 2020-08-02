@@ -1,46 +1,7 @@
-//
-//    File: JObject.h
-// Created: Sun Oct 15 21:30:42 CDT 2017
-// Creator: davidl (on Darwin harriet.local 15.6.0 i386)
-//
-// ------ Last repository commit info -----
-// [ Date ]
-// [ Author ]
-// [ Source ]
-// [ Revision ]
-//
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-// Jefferson Science Associates LLC Copyright Notice:  
-// Copyright 251 2014 Jefferson Science Associates LLC All Rights Reserved. Redistribution
-// and use in source and binary forms, with or without modification, are permitted as a
-// licensed user provided that the following conditions are met:  
-// 1. Redistributions of source code must retain the above copyright notice, this
-//    list of conditions and the following disclaimer. 
-// 2. Redistributions in binary form must reproduce the above copyright notice, this
-//    list of conditions and the following disclaimer in the documentation and/or other
-//    materials provided with the distribution.  
-// 3. The name of the author may not be used to endorse or promote products derived
-//    from this software without specific prior written permission.  
-// This material resulted from work developed under a United States Government Contract.
-// The Government retains a paid-up, nonexclusive, irrevocable worldwide license in such
-// copyrighted data to reproduce, distribute copies to the public, prepare derivative works,
-// perform publicly and display publicly and to permit others to do so.   
-// THIS SOFTWARE IS PROVIDED BY JEFFERSON SCIENCE ASSOCIATES LLC "AS IS" AND ANY EXPRESS
-// OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-// MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
-// JEFFERSON SCIENCE ASSOCIATES, LLC OR THE U.S. GOVERNMENT BE LIABLE TO LICENSEE OR ANY
-// THIRD PARTES FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
-// OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
-// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-//
-// Description:
-//
-//
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+// Copyright 2020, Jefferson Science Associates, LLC.
+// Subject to the terms in the LICENSE file found in the top-level directory.
+
 #ifndef _JObject_h_
 #define _JObject_h_
 
@@ -53,6 +14,7 @@
 
 #include <JANA/Utils/JTypeInfo.h>
 #include <JANA/JLogger.h>
+#include <JANA/JException.h>
 
 /// The JObject class is a base class for all data classes.
 /// (See JFactory for algorithm classes.)
@@ -113,6 +75,11 @@ class JObject{
 		inline void RemoveAssociatedObject(const JObject *obj);
 		inline void ClearAssociatedObjects(void);
 		inline bool IsAssociated(const JObject* locObject) const {return (associated.find(locObject) != associated.end());}
+
+		template<class T> const T* GetSingle() const;
+		template<class T> std::vector<const T*> Get() const;
+
+
 
 		// Convert to strings with pretty formatting for printing
 		virtual void Summarize(JObjectSummary& summary) const;
@@ -185,6 +152,70 @@ void JObject::ClearAssociatedObjects(void)
 	// Delete objects in the auto_delete list
 	for( auto p : auto_delete ) delete p;
 	auto_delete.clear();
+}
+
+
+template<class T>
+const T* JObject::GetSingle() const {
+	/// This is a convenience method that can be used to get a pointer to the single associated object of type T.
+	/// If no object is found, this will return nullptr.
+	/// If multiple objects are found, this will throw a JException.
+
+	const T* last_found = nullptr;
+	for (auto obj : associated) {
+		auto t = dynamic_cast<const T*>(obj);
+		if (t != nullptr) {
+			if (last_found == nullptr) {
+				last_found = t;
+			}
+			else {
+				throw JException("JObject::GetSingle(): Multiple objects found.");
+			}
+		}
+	}
+	if (last_found == nullptr) {
+		// If nothing found, attempt matching by strings.
+		// Why? Because dl and RTTI aren't playing nicely together;
+		// each plugin might assign a different typeid to the same class.
+		std::string classname = JTypeInfo::demangle<T>();
+		for (auto obj : associated) {
+			if (obj->className() == classname) {
+				if (last_found == nullptr) {
+					last_found = reinterpret_cast<const T*>(obj);
+				}
+				else {
+					throw JException("JObject::GetSingle(): Multiple objects found.");
+				}
+			}
+		}
+	}
+	return last_found;
+}
+
+template<typename T>
+std::vector<const T*> JObject::Get() const {
+	/// Returns a vector of pointers to all associated objects of type T.
+
+	std::vector<const T*> results;
+	for (auto obj : associated) {
+		const T* t = dynamic_cast<const T*>(obj);
+		if (t != nullptr) {
+			results.push_back(t);
+		}
+	}
+	if (results.empty()) {
+		// If nothing found, attempt matching by strings.
+		// Why? Because dl and RTTI aren't playing nicely together;
+		// each plugin might assign a different typeid to the same class.
+
+		std::string classname = JTypeInfo::demangle<T>();
+		for (auto obj : associated) {
+			if (obj->className() == classname) {
+				results.push_back(reinterpret_cast<const T*>(obj));
+			}
+		}
+	}
+	return results;
 }
 
 inline void JObject::Summarize(JObjectSummary& summary) const

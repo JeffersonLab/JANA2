@@ -1,34 +1,7 @@
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// Jefferson Science Associates LLC Copyright Notice:
-//
-// Copyright 251 2014 Jefferson Science Associates LLC All Rights Reserved. Redistribution
-// and use in source and binary forms, with or without modification, are permitted as a
-// licensed user provided that the following conditions are met:
-// 1. Redistributions of source code must retain the above copyright notice, this
-//    list of conditions and the following disclaimer.
-// 2. Redistributions in binary form must reproduce the above copyright notice, this
-//    list of conditions and the following disclaimer in the documentation and/or other
-//    materials provided with the distribution.
-// 3. The name of the author may not be used to endorse or promote products derived
-//    from this software without specific prior written permission.
-// This material resulted from work developed under a United States Government Contract.
-// The Government retains a paid-up, nonexclusive, irrevocable worldwide license in such
-// copyrighted data to reproduce, distribute copies to the public, prepare derivative works,
-// perform publicly and display publicly and to permit others to do so.
-// THIS SOFTWARE IS PROVIDED BY JEFFERSON SCIENCE ASSOCIATES LLC "AS IS" AND ANY EXPRESS
-// OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-// MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
-// JEFFERSON SCIENCE ASSOCIATES, LLC OR THE U.S. GOVERNMENT BE LIABLE TO LICENSEE OR ANY
-// THIRD PARTES FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
-// OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-// LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
-// OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//
-// Author: Nathan Brei
-//
+
+// Copyright 2020, Jefferson Science Associates, LLC.
+// Subject to the terms in the LICENSE file found in the top-level directory.
+
 
 #include "catch.hpp"
 
@@ -139,6 +112,107 @@ TEST_CASE("JEventInsertTests") {
         // This is useful when said data is required
         REQUIRE_THROWS(event->GetFactory<FakeJObject>("absent_tag", true));
     }
+
+    // -----------------
+    // C-style GetSingle
+    // -----------------
+	SECTION("JEvent::Get(Single) updates destination to null when factory is present but empty") {
+		std::vector<FakeJObject*> objects;
+		event->Insert(objects);
+		const FakeJObject* result;
+		JFactory* factory = event->Get(&result);
+		REQUIRE(result == nullptr);
+		REQUIRE(factory != nullptr);
+	}
+
+	SECTION("JEvent::Get(Single) throws an exception when factory is missing") {
+    	const FakeJObject* result;
+		REQUIRE_THROWS(event->Get(&result));
+	}
+
+	SECTION("JEvent::Get(Single) updates destination to point to the only object when the factory contains only one object") {
+		auto inserted = new FakeJObject(22);
+		event->Insert(inserted);
+		const FakeJObject* result;
+		auto factory = event->Get(&result);
+		REQUIRE(result->datum == inserted->datum);      // Same contents
+		REQUIRE(result == inserted);                    // Same pointer
+		REQUIRE(factory != nullptr);                    // Factory exists
+	}
+
+	SECTION("JEvent::Get(Single) returns the first object when the factory contains multiple objects") {
+		auto first = new FakeJObject(22);
+		event->Insert(first);
+		event->Insert(new FakeJObject(99));
+		event->Insert(new FakeJObject(42));
+		const FakeJObject* result;
+		auto factory = event->Get(&result);
+		REQUIRE(result->datum == first->datum);      // Same contents
+		REQUIRE(result == first);                    // Same pointer
+		REQUIRE(factory != nullptr);                    // Factory exists
+	}
+
+		// ---------
+		// GetSingle
+	// ---------
+
+    SECTION("JEvent::GetSingle returns null when factory is present but empty") {
+    	std::vector<FakeJObject*> objects;
+    	event->Insert(objects);
+    	auto object = event->GetSingle<FakeJObject>();
+    	REQUIRE(object == nullptr);
+    }
+
+	SECTION("JEvent::GetSingle throws an exception when factory is missing") {
+		REQUIRE_THROWS(event->GetSingle<FakeJObject>());
+	}
+
+	SECTION("JEvent::GetSingle returns the only object when the factory contains only one object") {
+    	auto inserted = new FakeJObject(22);
+		event->Insert(inserted);
+		auto retrieved = event->GetSingle<FakeJObject>();
+		REQUIRE(retrieved->datum == inserted->datum);      // Same contents
+		REQUIRE(retrieved == inserted);                    // Same pointer
+	}
+
+	SECTION("JEvent::GetSingle returns the first object when the factory contains multiple objects") {
+		auto first = new FakeJObject(22);
+		event->Insert(first);
+		event->Insert(new FakeJObject(99));
+		event->Insert(new FakeJObject(42));
+		auto retrieved = event->GetSingle<FakeJObject>();
+		REQUIRE(retrieved->datum == first->datum);      // Same contents
+		REQUIRE(retrieved == first);                    // Same pointer
+	}
+
+	// ---------------
+	// GetSingleStrict
+	// ---------------
+
+	SECTION("JEvent::GetSingleStrict throws an exception when factory is present but empty") {
+		std::vector<FakeJObject*> objects; // empty
+		event->Insert(objects);  // creates an empty dummy factory
+		REQUIRE_THROWS(event->GetSingleStrict<FakeJObject>());
+	}
+
+	SECTION("JEvent::GetSingleStrict throws an exception when factory is missing") {
+		REQUIRE_THROWS(event->GetSingleStrict<FakeJObject>());
+	}
+
+	SECTION("JEvent::GetSingleStrict returns the only object when the factory contains only one object") {
+		auto inserted = new FakeJObject(22);
+		event->Insert(inserted);
+		auto retrieved = event->GetSingle<FakeJObject>();
+		REQUIRE(retrieved->datum == inserted->datum);      // Same contents
+		REQUIRE(retrieved == inserted);                    // Same pointer
+	}
+
+	SECTION("JEvent::GetSingleStrict throws an exception when the factory contains multiple objects") {
+		event->Insert(new FakeJObject(22));
+		event->Insert(new FakeJObject(99));
+		event->Insert(new FakeJObject(42));
+		REQUIRE_THROWS(event->GetSingleStrict<FakeJObject>());
+	}
 
 }
 

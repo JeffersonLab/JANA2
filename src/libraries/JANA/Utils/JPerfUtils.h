@@ -1,6 +1,7 @@
-//
-// Created by nbrei on 3/28/19.
-//
+
+// Copyright 2020, Jefferson Science Associates, LLC.
+// Subject to the terms in the LICENSE file found in the top-level directory.
+
 
 #ifndef JANA2_PERFUTILS_H
 #define JANA2_PERFUTILS_H
