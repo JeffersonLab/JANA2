@@ -2,20 +2,23 @@
 // Created by nbrei on 4/4/19.
 //
 
-#ifndef JANA_JWORKER_H
-#define JANA_JWORKER_H
+#ifndef JANA_WORKER_H
+#define JANA_WORKER_H
 
 #include <thread>
 #include <JANA/Services/JLoggingService.h>
-#include <JANA/Engine/JScheduler.h>
+#include <JANA/ArrowEngine/Scheduler.h>
 #include <JANA/Engine/JWorkerMetrics.h>
 #include <JANA/Engine/JArrowPerfSummary.h>
 
 
+namespace jana {
+namespace arrowengine {
+
 using jclock_t = std::chrono::steady_clock;
 using duration_t = std::chrono::steady_clock::duration;
 
-class JWorker {
+class Worker {
     /// Designed so that the Worker checks in with the Scheduler on his own terms;
     /// i.e. nobody will update the worker's assignment externally. This eliminates
     /// a whole lot of synchronization since we can assume
@@ -31,28 +34,28 @@ public:
 private:
     /// Machinery that nobody else should modify. These should be protected eventually.
     /// Probably simply make them private and expose via get_status() -> Worker::Status
-    JScheduler* _scheduler;
+    Scheduler* _scheduler;
     unsigned _worker_id;
     unsigned _cpu_id;
     unsigned _location_id;
     bool _pin_to_cpu;
     std::atomic<RunState> _run_state;
-    JArrow* _assignment;
+    Arrow* _assignment;
     std::thread* _thread;    // JWorker encapsulates a thread of some kind. Nothing else should care how.
     JWorkerMetrics _worker_metrics;
     JArrowMetrics _arrow_metrics;
     std::mutex _assignment_mutex;
 
 public:
-    JWorker(JScheduler* scheduler, unsigned worker_id, unsigned cpu_id, unsigned domain_id, bool pin_to_cpu);
-    ~JWorker();
+    Worker(Scheduler* scheduler, unsigned worker_id, unsigned cpu_id, unsigned domain_id, bool pin_to_cpu);
+    ~Worker();
 
     /// If we copy or move the Worker, the underlying std::thread will be left with a
     /// dangling pointer back to `this`. So we forbid copying, assigning, and moving.
 
-    JWorker(const JWorker &other) = delete;
-    JWorker(JWorker &&other) = delete;
-    JWorker &operator=(const JWorker &other) = delete;
+    Worker(const Worker &other) = delete;
+    Worker(Worker &&other) = delete;
+    Worker &operator=(const Worker &other) = delete;
 
     RunState get_runstate() { return _run_state; };
 
@@ -69,5 +72,8 @@ public:
 
 };
 
+
+}  // namespace arrowengine
+}  // namespace jana
 
 #endif

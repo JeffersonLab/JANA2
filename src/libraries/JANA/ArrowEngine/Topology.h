@@ -1,11 +1,10 @@
 
-#ifndef JANA2_TOPOLOGY_H
-#define JANA2_TOPOLOGY_H
+#ifndef JANA_TOPOLOGY_H
+#define JANA_TOPOLOGY_H
 
 #include <JANA/Services/JServiceLocator.h>
 #include <JANA/ArrowEngine/Arrow.h>
 #include <JANA/Utils/JEventPool.h>
-#include <JANA/Engine/JEventSourceArrow.h>
 #include <JANA/Utils/JProcessorMapping.h>
 
 namespace jana {

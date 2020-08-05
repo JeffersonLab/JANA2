@@ -1,7 +1,7 @@
 
 #include <JANA/ArrowEngine/Topology.h>
-#include <JANA/Services/JComponentManager.h>
 #include <JANA/ArrowEngine/ComponentArrows.h>
+#include <JANA/Services/JComponentManager.h>
 #include <JANA/JEventProcessor.h>
 
 namespace jana {
@@ -9,6 +9,9 @@ namespace arrowengine {
 
 
 void DefaultJanaTopology::initialize() {
+
+	using Event = std::shared_ptr<JEvent>;
+	using EventQueue = Mailbox<Event>;
 
     // Construct arrow topology from JCM.
     // Get granularity from JPM

@@ -2,11 +2,13 @@
 // Created by nbrei on 4/4/19.
 //
 
-#include <JANA/Engine/JWorker.h>
+#include <JANA/ArrowEngine/Worker.h>
 #include <JANA/Utils/JCpuInfo.h>
 
+namespace jana {
+namespace arrowengine {
 
-void JWorker::measure_perf(WorkerSummary& summary) {
+void Worker::measure_perf(WorkerSummary& summary) {
     // Read (do not clear) worker metrics
     // Read and clear arrow metrics
     // Push arrow metrics upstream
@@ -19,7 +21,7 @@ void JWorker::measure_perf(WorkerSummary& summary) {
         std::lock_guard<std::mutex> lock(_assignment_mutex);
         if (_assignment != nullptr) {
             _assignment->get_metrics().update(latest_arrow_metrics); // propagate to global arrow context
-            arrow_name = _assignment->get_name();
+            arrow_name = _assignment->name;
         }
     }
     // Unpack latest_arrow_metrics, add to WorkerSummary
@@ -90,7 +92,7 @@ void JWorker::measure_perf(WorkerSummary& summary) {
 }
 
 
-JWorker::JWorker(JScheduler* scheduler, unsigned worker_id, unsigned cpu_id, unsigned location_id, bool pin_to_cpu) :
+Worker::Worker(Scheduler* scheduler, unsigned worker_id, unsigned cpu_id, unsigned location_id, bool pin_to_cpu) :
 
         _scheduler(scheduler),
         _worker_id(worker_id),
@@ -105,15 +107,15 @@ JWorker::JWorker(JScheduler* scheduler, unsigned worker_id, unsigned cpu_id, uns
     _worker_metrics.clear();
 }
 
-JWorker::~JWorker() {
+Worker::~Worker() {
     wait_for_stop();
 }
 
-void JWorker::start() {
+void Worker::start() {
     if (_run_state == RunState::Stopped) {
 
         _run_state = RunState::Running;
-        _thread = new std::thread(&JWorker::loop, this);
+        _thread = new std::thread(&Worker::loop, this);
 
         if (_pin_to_cpu) {
             JCpuInfo::PinThreadToCpu(_thread, _cpu_id);
@@ -121,13 +123,13 @@ void JWorker::start() {
     }
 }
 
-void JWorker::request_stop() {
+void Worker::request_stop() {
     if (_run_state == RunState::Running) {
         _run_state = RunState::Stopping;
     }
 }
 
-void JWorker::wait_for_stop() {
+void Worker::wait_for_stop() {
     if (_run_state == RunState::Running) {
         _run_state = RunState::Stopping;
     }
@@ -139,7 +141,7 @@ void JWorker::wait_for_stop() {
     }
 }
 
-void JWorker::loop() {
+void Worker::loop() {
 
     try {
         LOG_DEBUG(logger) << "Worker " << _worker_id << " has fired up." << LOG_END;
@@ -245,7 +247,8 @@ void JWorker::loop() {
 	}
 }
 
-
+} // arrowengine
+} // jana
 
 
 
