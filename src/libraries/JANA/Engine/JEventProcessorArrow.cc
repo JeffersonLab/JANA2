@@ -6,6 +6,7 @@
 #include <JANA/Engine/JEventProcessorArrow.h>
 #include <JANA/Utils/JEventPool.h>
 #include <JANA/JEventProcessor.h>
+#include <JANA/JEventSource.h>
 
 
 JEventProcessorArrow::JEventProcessorArrow(std::string name,
@@ -56,9 +57,12 @@ void JEventProcessorArrow::execute(JArrowMetrics& result, size_t location_id) {
 
     if (success) {
         if (_output_queue != nullptr) {
+        	// This is NOT the last arrow in the topology. Pass the event onwards.
             out_status = _output_queue->push(x, location_id);
         }
         else {
+        	// This IS the last arrow in the topology. Notify the event source and return event to the pool.
+	        x->GetJEventSource()->DoFinish(*x);
             _pool->put(x, location_id);
         }
     }
