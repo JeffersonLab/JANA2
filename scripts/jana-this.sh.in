@@ -55,3 +55,9 @@ if [ "@HAVE_CURL@" == "1" ]; then
     [[ ${CURL_ROOT} != /usr ]] && export PATH=${CURL_ROOT}/bin:${PATH}
     [[ ${CURL_ROOT} != /usr ]] && export LD_LIBRARY_PATH=${CURL_ROOT}/lib:${LD_LIBRARY_PATH}
 fi
+
+# PYTHON
+# Add install directory for Python moduels to the PYTHONPATH (if it exists)
+if [ -d @JANA_INSTALL_DIR@/python ]; then
+    export PYTHONPATH=@JANA_INSTALL_DIR@/python:${PYTHONPATH}
+fi
