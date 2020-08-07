@@ -1,10 +1,10 @@
 
-import janapy
+import jana
 #from DHit import *
 #from DCluster import *
 #
 # JEventProcessor class defined in janapy module
-class MyProcessor( janapy.JEventProcessor):
+class MyProcessor( jana.JEventProcessor):
 	def __init__(self):
 		super().__init__(self)
 
@@ -24,15 +24,15 @@ class MyProcessor( janapy.JEventProcessor):
 
 #-----------------------------------------------------------
 
-janapy.SetParameterValue( 'JANA:DEBUG_PLUGIN_LOADING', '1')
-janapy.SetParameterValue( 'NTHREADS', '4')
-janapy.SetParameterValue( 'NEVENTS', '100')
+jana.SetParameterValue( 'JANA:DEBUG_PLUGIN_LOADING', '1')
+jana.SetParameterValue( 'NTHREADS', '4')
+jana.SetParameterValue( 'NEVENTS', '100')
 
 # The janapy module itself serves as the JApplication facade
-janapy.AddProcessor( MyProcessor() )
+jana.AddProcessor( MyProcessor() )
 
-janapy.AddPlugin('jtest')
-janapy.Run()
+jana.AddPlugin('jtest')
+jana.Run()
 
 print('PYTHON DONE.')
 
