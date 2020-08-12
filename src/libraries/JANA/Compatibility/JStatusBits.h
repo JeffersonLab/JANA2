@@ -10,7 +10,7 @@
 #include <sstream>
 #include <iomanip>
 
-template <typename T, typename = std::enable_if_t<std::is_enum<T>::value>>
+template <typename T>
 class JStatusBits {
 
 	uint64_t m_status = 0L;
