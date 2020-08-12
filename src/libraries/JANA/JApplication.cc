@@ -15,6 +15,7 @@
 #include <JANA/Engine/JArrowProcessingController.h>
 #include <JANA/Engine/JDebugProcessingController.h>
 #include <JANA/Utils/JCpuInfo.h>
+#include <JANA/Engine/JTopologyBuilder.h>
 
 JApplication *japp = nullptr;
 
@@ -32,8 +33,9 @@ JApplication::JApplication(JParameterManager* params) {
     _service_locator.provide(std::make_shared<JLoggingService>());
     _service_locator.provide(std::make_shared<JPluginLoader>(this));
     _service_locator.provide(std::make_shared<JComponentManager>(this));
+	_service_locator.provide(std::make_shared<JTopologyBuilder>());
 
-    _plugin_loader = _service_locator.get<JPluginLoader>();
+	_plugin_loader = _service_locator.get<JPluginLoader>();
     _component_manager = _service_locator.get<JComponentManager>();
 
     _logger = _service_locator.get<JLoggingService>()->get_logger("JApplication");
@@ -110,7 +112,11 @@ void JApplication::Initialize() {
         _params->SetDefaultParameter("jana:engine", engine_choice, "0: Arrow engine, 1: Debug engine");
 
         if (engine_choice == 0) {
-            auto topology = JArrowTopology::from_components(_component_manager, _params, _desired_nthreads);
+        	std::shared_ptr<JTopologyBuilder> topology_builder = nullptr;
+		    topology_builder = _service_locator.get<JTopologyBuilder>();
+		    // JTopologyBuilder was added to JServiceLocator in ctor, but may have been overridden by user before Init
+
+        	auto topology = topology_builder->build(_desired_nthreads);
             auto japc = std::make_shared<JArrowProcessingController>(topology);
             _service_locator.provide(japc);  // Make concrete class available via SL
             _processing_controller = _service_locator.get<JArrowProcessingController>();  // Get deps from SL

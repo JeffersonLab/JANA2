@@ -55,6 +55,8 @@ set(JANA2_SOURCES
     Engine/JWorker.h
     Engine/JWorker.cc
     Engine/JWorkerMetrics.h
+    Engine/JTopologyBuilder.cc
+    Engine/JTopologyBuilder.h
 
     Services/JComponentManager.cc
     Services/JComponentManager.h
