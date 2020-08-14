@@ -37,15 +37,25 @@ public:
 
     virtual ~JFactory() = default;
 
-    std::string GetName() const { return mObjectName; }   // TODO: This is the JObject class name, right?
 
-    void SetName(std::string name) { mObjectName = std::move(name); }
+    [[deprecated]]
+    std::string GetName() const { return mObjectName; }
 
-    std::string GetTag() const { return mTag; }
+	std::string GetTag() const { return mTag; }
+	std::string GetObjectName() const { return mObjectName; }
+	std::string GetFactoryName() const { return mFactoryName; }
+	std::string GetPluginName() const { return mPluginName; }
 
-    void SetTag(std::string tag) { mTag = std::move(tag); }
+	uint32_t GetPreviousRunNumber(void) const { return mPreviousRunNumber; }
 
-    uint32_t GetPreviousRunNumber(void) const { return mPreviousRunNumber; }
+
+	[[deprecated]]
+    void SetName(std::string objectName) { mObjectName = std::move(objectName); }
+
+	void SetTag(std::string tag) { mTag = std::move(tag); }
+	void SetObjectName(std::string objectName) { mObjectName = std::move(objectName); }
+	void SetFactoryName(std::string factoryName) { mFactoryName = std::move(factoryName); }
+	void SetPluginName(std::string pluginName) { mPluginName = std::move(pluginName); }
 
     void SetPreviousRunNumber(uint32_t aRunNumber) { mPreviousRunNumber = aRunNumber; }
 

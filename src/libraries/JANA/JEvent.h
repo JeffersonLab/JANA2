@@ -298,7 +298,7 @@ std::map<std::pair<std::string, std::string>, std::vector<S*>> JEvent::GetAllChi
 	for (JFactory* factory : mFactorySet->GetAllFactories()) {
 		auto val = factory->GetAs<S>();
 		if (!val.empty()) {
-			auto key = std::make_pair(factory->GetName(), factory->GetTag());
+			auto key = std::make_pair(factory->GetObjectName(), factory->GetTag());
 			results.insert(std::make_pair(key, val));
 		}
 	}

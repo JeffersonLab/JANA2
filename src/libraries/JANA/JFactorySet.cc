@@ -58,7 +58,7 @@ bool JFactorySet::Add(JFactory* aFactory)
 	/// same T JObject, and is not distinguishing between them via tags.
 
 	auto typed_key = std::make_pair( aFactory->GetObjectType(), aFactory->GetTag() );
-	auto untyped_key = std::make_pair( aFactory->GetName(), aFactory->GetTag() );
+	auto untyped_key = std::make_pair( aFactory->GetObjectName(), aFactory->GetTag() );
 
 	auto typed_result = mFactories.find(typed_key);
 	auto untyped_result = mFactoriesFromString.find(untyped_key);
@@ -116,7 +116,7 @@ void JFactorySet::Merge(JFactorySet &aFactorySet)
 		auto factory = pair.second;
 
 		auto typed_key = std::make_pair(factory->GetObjectType(), factory->GetTag());
-		auto untyped_key = std::make_pair(factory->GetName(), factory->GetTag());
+		auto untyped_key = std::make_pair(factory->GetObjectName(), factory->GetTag());
 
 		auto typed_result = mFactories.find(typed_key);
 		auto untyped_result = mFactoriesFromString.find(untyped_key);
@@ -143,13 +143,13 @@ void JFactorySet::Print() const
 {
 	size_t max_len = 0;
 	for (auto p: mFactories) {
-		auto len = p.second->GetName().length();
+		auto len = p.second->GetObjectName().length();
 		if( len > max_len ) max_len = len;
 	}
 
 	max_len += 4;
 	for (auto p: mFactories) {
-		auto name = p.second->GetName();
+		auto name = p.second->GetObjectName();
 		auto tag = p.second->GetTag();
 		
 		std::cout << std::string( max_len-name.length(), ' ') + name;
@@ -173,12 +173,11 @@ std::vector<JFactorySummary> JFactorySet::Summarize() const {
 
 	std::vector<JFactorySummary> results;
 	for (auto& pair : mFactories) {
-		auto tag = pair.second->GetTag();
 		results.push_back({
-			.plugin_name = "unknown",
-			.factory_name = pair.second->GetName(),
-			.factory_tag = tag,
-			.object_name = pair.second->GetName()
+			.plugin_name = pair.second->GetPluginName(),
+			.factory_name = pair.second->GetFactoryName(),
+			.factory_tag = pair.second->GetTag(),
+			.object_name = pair.second->GetObjectName()
 		});
 	}
 	return results;
