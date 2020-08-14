@@ -524,7 +524,6 @@ class {name} : public JFactoryT<{jobject_name}> {{
     // Insert any member variables here
 
 public:
-    {name}() : JFactoryT<{jobject_name}>(NAME_OF_THIS) {{}};
     void Init() override;
     void ChangeRun(const std::shared_ptr<const JEvent> &event) override;
     void Process(const std::shared_ptr<const JEvent> &event) override;
