@@ -45,11 +45,11 @@ class JEventSourceGenerator{
 		/// should be no need to call it from anywhere else.
 		void SetJApplication(JApplication *app){ mApplication = app; }
 
-		/// SetPlugin is called by JANA itself and should not be exposed to the user.
-		void SetPlugin(std::string plugin_name) { mPluginName = plugin_name; };
+		/// SetPluginName is called by JANA itself and should not be exposed to the user.
+		void SetPluginName(std::string plugin_name) { mPluginName = plugin_name; };
 
-		/// GetPlugin is called by JANA itself and should not be exposed to the user.
-		std::string GetPlugin() const { return mPluginName; }
+		/// GetPluginName is called by JANA itself and should not be exposed to the user.
+		std::string GetPluginName() const { return mPluginName; }
 
 		JApplication* mApplication{nullptr};
 		std::string mPluginName;

@@ -20,8 +20,6 @@ class AHitParser : public JFactoryT<AHit> {
 
 
 public:
-    AHitParser() : JFactoryT<AHit>("AHitParser") {
-    }
 
     void Process(const std::shared_ptr<const JEvent>& event) {
 

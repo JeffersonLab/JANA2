@@ -173,7 +173,7 @@ private:
     void SetJApplication(JApplication* app) { mApplication = app; }
 
     friend JComponentManager;
-    /// SetPlugin is called by ComponentManager and should not be exposed to the user.
+    /// SetPluginName is called by ComponentManager and should not be exposed to the user.
     // TODO: Maybe we want JApplication to track the current plugin instead
     void SetPluginName(std::string plugin_name) { m_plugin_name = std::move(plugin_name); };
 

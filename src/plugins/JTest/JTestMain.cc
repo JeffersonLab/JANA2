@@ -5,12 +5,12 @@
 #include <memory>
 
 #include <JANA/JApplication.h>
-#include <JANA/JEventSourceGeneratorT.h>
 #include <JANA/JCsvWriter.h>
 
 #include "JTestParser.h"
 #include "JTestPlotter.h"
-#include "JTestFactoryGenerator.h"
+#include "JTestDisentangler.h"
+#include "JTestTracker.h"
 
 
 extern "C"{
@@ -19,7 +19,8 @@ void InitPlugin(JApplication *app){
 	InitJANAPlugin(app);
     app->Add(new JTestParser("dummy_source", app));
     app->Add(new JTestPlotter(app));
-    app->Add(new JTestFactoryGenerator());
+	app->Add(new JFactoryGeneratorT<JTestDisentangler>());
+	app->Add(new JFactoryGeneratorT<JTestTracker>());
 
     // Demonstrates attaching a CSV writer so we can view the results from any JFactory
     app->SetParameterValue<std::string>("csv:dest_dir", ".");

@@ -37,11 +37,25 @@ public:
 
     virtual ~JFactory() = default;
 
-    std::string GetName() const { return mObjectName; }   // TODO: This is the JObject class name, right?
+
+    [[deprecated]]
+    std::string GetName() const { return mObjectName; }
 
     std::string GetTag() const { return mTag; }
+    std::string GetObjectName() const { return mObjectName; }
+    std::string GetFactoryName() const { return mFactoryName; }
+    std::string GetPluginName() const { return mPluginName; }
 
     uint32_t GetPreviousRunNumber(void) const { return mPreviousRunNumber; }
+
+
+    [[deprecated]]
+    void SetName(std::string objectName) { mObjectName = std::move(objectName); }
+
+    void SetTag(std::string tag) { mTag = std::move(tag); }
+    void SetObjectName(std::string objectName) { mObjectName = std::move(objectName); }
+    void SetFactoryName(std::string factoryName) { mFactoryName = std::move(factoryName); }
+    void SetPluginName(std::string pluginName) { mPluginName = std::move(pluginName); }
 
     void SetPreviousRunNumber(uint32_t aRunNumber) { mPreviousRunNumber = aRunNumber; }
 
@@ -75,9 +89,9 @@ public:
     // Overloaded by user Factories
     virtual void Init() {}
 
-	virtual void BeginRun(const std::shared_ptr<const JEvent> &aEvent) {}
-	virtual void ChangeRun(const std::shared_ptr<const JEvent> &aEvent) {}
-	virtual void EndRun() {}
+    virtual void BeginRun(const std::shared_ptr<const JEvent> &aEvent) {}
+    virtual void ChangeRun(const std::shared_ptr<const JEvent> &aEvent) {}
+    virtual void EndRun() {}
     virtual void Process(const std::shared_ptr<const JEvent> &aEvent) {}
 
 

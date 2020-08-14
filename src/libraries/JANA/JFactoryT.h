@@ -25,9 +25,19 @@ public:
     using IteratorType = typename std::vector<T*>::const_iterator;
     using PairType = std::pair<IteratorType, IteratorType>;
 
+    /// JFactoryT constructor requires a name and a tag.
+    /// Name should always be JTypeInfo::demangle<T>(), tag is usually "".
+    [[deprecated]]
+    JFactoryT(const std::string& aName, const std::string& aTag) : JFactory(aName, aTag) {
+        EnableGetAs<T>();
+    }
 
-    JFactoryT(const std::string& aName = JTypeInfo::demangle<T>(), const std::string& aTag = "")
-    : JFactory(aName, aTag) {
+	[[deprecated]]
+	JFactoryT(const std::string& aName) : JFactory(aName, "") {
+        EnableGetAs<T>();
+    }
+
+    JFactoryT() : JFactory(JTypeInfo::demangle<T>(), ""){
         EnableGetAs<T>();
     }
 

@@ -24,8 +24,6 @@ class JTestDisentangler : public JFactoryT<JTestEventData> {
 
 public:
 
-    JTestDisentangler() : JFactoryT<JTestEventData>("JTestDisentangler") {};
-
     void Init() override {
         auto app = GetApplication();
         assert (app != nullptr);
