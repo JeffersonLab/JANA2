@@ -32,7 +32,10 @@ public:
         EnableGetAs<T>();
     }
 
-    /// Prefer using the zero-arg ctor along with SetTag.
+    JFactoryT(const std::string& aName) : JFactory(aName, "") {
+        EnableGetAs<T>();
+    }
+
     JFactoryT() : JFactory(JTypeInfo::demangle<T>(), ""){
         EnableGetAs<T>();
     }

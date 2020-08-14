@@ -103,7 +103,8 @@ inline JFactoryT<T>* JEvent::Insert(T* item, const std::string& tag) const {
 
 	auto factory = mFactorySet->GetFactory<T>(tag);
 	if (factory == nullptr) {
-		factory = new JFactoryT<T>(JTypeInfo::demangle<T>(), tag);
+		factory = new JFactoryT<T>;
+		factory->SetTag(tag);
 		mFactorySet->Add(factory);
 	}
 	factory->Insert(item);
@@ -115,7 +116,8 @@ inline JFactoryT<T>* JEvent::Insert(const std::vector<T*>& items, const std::str
 
 	auto factory = mFactorySet->GetFactory<T>(tag);
 	if (factory == nullptr) {
-		factory = new JFactoryT<T>(JTypeInfo::demangle<T>(), tag);
+		factory = new JFactoryT<T>;
+		factory->SetTag(tag);
 		mFactorySet->Add(factory);
 	}
 	for (T* item : items) {

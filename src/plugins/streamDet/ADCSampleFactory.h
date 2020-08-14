@@ -28,8 +28,6 @@ class ADCSampleFactory : public JFactoryT<ADCSample> {
 
 public:
 
-    ADCSampleFactory() : JFactoryT<ADCSample>("ADCSampleFactory") {};
-
     void Init() override {
         auto app = GetApplication();
         app->GetParameter("streamDet:rawhit_ms",     m_cputime_ms);

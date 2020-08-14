@@ -20,9 +20,6 @@ class JTestTracker : public JFactoryT<JTestTrackData> {
 
 public:
 
-    JTestTracker() : JFactoryT<JTestTrackData>("JTestTracker") {};
-
-
     void Init() override {
 
         auto app = GetApplication();
