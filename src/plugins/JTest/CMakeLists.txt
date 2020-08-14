@@ -6,7 +6,6 @@ add_library(jtest SHARED
     JTestDisentangler.h
     JTestTracker.h
     JTestPlotter.h
-    JTestFactoryGenerator.h
     JTestCalibrationService.h
     )
 
