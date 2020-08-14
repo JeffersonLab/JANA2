@@ -39,7 +39,11 @@ public:
 
     std::string GetName() const { return mObjectName; }   // TODO: This is the JObject class name, right?
 
+    void SetName(std::string name) { mObjectName = std::move(name); }
+
     std::string GetTag() const { return mTag; }
+
+    void SetTag(std::string tag) { mTag = std::move(tag); }
 
     uint32_t GetPreviousRunNumber(void) const { return mPreviousRunNumber; }
 
@@ -75,9 +79,9 @@ public:
     // Overloaded by user Factories
     virtual void Init() {}
 
-	virtual void BeginRun(const std::shared_ptr<const JEvent> &aEvent) {}
-	virtual void ChangeRun(const std::shared_ptr<const JEvent> &aEvent) {}
-	virtual void EndRun() {}
+    virtual void BeginRun(const std::shared_ptr<const JEvent> &aEvent) {}
+    virtual void ChangeRun(const std::shared_ptr<const JEvent> &aEvent) {}
+    virtual void EndRun() {}
     virtual void Process(const std::shared_ptr<const JEvent> &aEvent) {}
 
 
