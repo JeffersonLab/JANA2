@@ -5,7 +5,6 @@
 #include <memory>
 
 #include <JANA/JApplication.h>
-#include <JANA/JEventSourceGeneratorT.h>
 #include <JANA/JCsvWriter.h>
 
 #include "JTestParser.h"
