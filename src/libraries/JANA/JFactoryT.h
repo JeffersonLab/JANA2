@@ -27,12 +27,13 @@ public:
 
     /// JFactoryT constructor requires a name and a tag.
     /// Name should always be JTypeInfo::demangle<T>(), tag is usually "".
-    /// In the future this may be deprecated in favor of the zero-arg ctor along with SetTag.
+    [[deprecated]]
     JFactoryT(const std::string& aName, const std::string& aTag) : JFactory(aName, aTag) {
         EnableGetAs<T>();
     }
 
-    JFactoryT(const std::string& aName) : JFactory(aName, "") {
+	[[deprecated]]
+	JFactoryT(const std::string& aName) : JFactory(aName, "") {
         EnableGetAs<T>();
     }
 
