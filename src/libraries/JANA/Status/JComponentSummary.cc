@@ -33,11 +33,11 @@ std::ostream& operator<<(std::ostream& os, JComponentSummary const& cs) {
     os << "  +--------------------------+---------------------------------------------------------------+" << std::endl;
     os << "  FACTORIES" << std::endl;
     os << "  +--------------------------+-------------------------------+-------------------------------+" << std::endl;
-    os << "  | Plugin                   | Name                          | Tag                           |" << std::endl;
+    os << "  | Plugin                   | Object name                   | Tag                           |" << std::endl;
     os << "  +--------------------------+-------------------------------+-------------------------------+" << std::endl;
     for (const auto& factory : cs.factories) {
         os << "  | " << std::setw(25) << factory.plugin_name
-           << "| " << std::setw(30) << factory.factory_name
+           << "| " << std::setw(30) << factory.object_name
            << "| " << std::setw(30) << factory.factory_tag
            << "|" << std::endl;
     }
