@@ -44,7 +44,14 @@ TEST_CASE("JTopology: Basic functionality") {
     auto subtract_one = new MapArrow<double,double>("subtract_one", p2, q2, q3);
     auto sum_everything = new SinkArrow<double>("sum_everything", sink, q3);
 
-    emit_rand_ints->set_chunksize(1);
+	topology.sources.push_back(emit_rand_ints);
+
+	topology.arrows.push_back(emit_rand_ints);
+	topology.arrows.push_back(multiply_by_two);
+	topology.arrows.push_back(subtract_one);
+	topology.arrows.push_back(sum_everything);
+
+	emit_rand_ints->set_chunksize(1);
 
     auto logger = JLogger(JLogger::Level::OFF);
     //topology.logger = Logger::everything();
@@ -86,7 +93,7 @@ TEST_CASE("JTopology: Basic functionality") {
         //LOG_INFO(logger) << "After emitting; should be something in q0" << LOG_END;
 
         log_status(topology);
-        emit_rand_ints->set_active(true);
+        topology.set_active(true);
         step(emit_rand_ints);
 		log_status(topology);
 
@@ -108,7 +115,7 @@ TEST_CASE("JTopology: Basic functionality") {
     SECTION("Running each stage sequentially yields the correct results") {
 
         //LOG_INFO(logger) << "Running each stage sequentially yields the correct results" << LOG_END;
-        emit_rand_ints->set_active(true);
+        topology.set_active(true);
 
         for (int i = 0; i < 20; ++i) {
             step(emit_rand_ints);
@@ -150,7 +157,7 @@ TEST_CASE("JTopology: Basic functionality") {
         results["sum_everything"] = JArrowMetrics::Status::KeepGoing;
 
         // Put something in the queue to get started
-        emit_rand_ints->set_active(true);
+        topology.set_active(true);
         step(emit_rand_ints);
 
         bool work_left = true;
@@ -186,7 +193,7 @@ TEST_CASE("JTopology: Basic functionality") {
         topology._logger = logger;
         source.logger = logger;
 
-        emit_rand_ints->set_active(true);
+        topology.set_active(true);
 
         REQUIRE(emit_rand_ints->is_active() == true);
         REQUIRE(multiply_by_two->is_active() == true);
