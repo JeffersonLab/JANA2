@@ -9,8 +9,8 @@
 
 #include <JANA/Services/JComponentManager.h>
 #include <JANA/Status/JPerfMetrics.h>
-#include <JANA/Utils/JProcessorMapping.h>
 #include <JANA/Utils/JEventPool.h>
+#include <JANA/Utils/JProcessorMapping.h>
 
 #include "JActivable.h"
 #include "JArrow.h"
@@ -26,8 +26,6 @@ struct JArrowTopology : public JActivable {
 
     explicit JArrowTopology();
     virtual ~JArrowTopology();
-
-    static JArrowTopology* from_components(std::shared_ptr<JComponentManager>, std::shared_ptr<JParameterManager>, int nthreads);
 
     std::shared_ptr<JComponentManager> component_manager;
     // Ensure that ComponentManager stays alive at least as long as JArrowTopology does
