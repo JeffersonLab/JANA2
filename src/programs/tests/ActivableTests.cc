@@ -4,7 +4,6 @@
 
 
 #include "catch.hpp"
-#include "TestTopology.h"
 
 #include <TestTopologyComponents.h>
 #include <JANA/Engine/JArrowTopology.h>

@@ -7,7 +7,6 @@
 #include <JANA/Engine/JArrowTopology.h>
 #include <JANA/Engine/JArrowProcessingController.h>
 #include "PerformanceTests.h"
-#include "TestTopology.h"
 
 TEST_CASE("MemoryBottleneckTest", "[.][performance]") {
 

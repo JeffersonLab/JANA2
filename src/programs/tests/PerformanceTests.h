@@ -5,8 +5,6 @@
 #ifndef JANA2_PERFORMANCETESTS_H
 #define JANA2_PERFORMANCETESTS_H
 
-
-#include <TestTopology.h>
 #include <JANA/Utils/JPerfUtils.h>
 #include <SourceArrow.h>
 #include <MapArrow.h>
