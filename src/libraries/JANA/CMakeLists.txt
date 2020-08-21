@@ -15,7 +15,6 @@ set(JANA2_SOURCES
     JFactorySet.h
     JFactoryT.h
     JObject.h
-    JSourceFactoryGenerator.h
     JCsvWriter.h
     JLogger.h
 
