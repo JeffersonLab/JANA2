@@ -34,7 +34,7 @@ private:
     // Knobs
     size_t _chunksize = 1;       // Number of items to pop off the input queue at once
     BackoffStrategy _backoff_strategy = BackoffStrategy::Exponential;
-    duration_t _initial_backoff_time = std::chrono::microseconds(10);
+    duration_t _initial_backoff_time = std::chrono::microseconds(1);
     duration_t _checkin_time = std::chrono::milliseconds(500);
     unsigned _backoff_tries = 4;
 
