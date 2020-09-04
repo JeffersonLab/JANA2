@@ -8,13 +8,11 @@
 #include "BlockExampleSource.h"
 #include "BlockExampleProcessor.h"
 
-extern "C" {
-void InitPlugin(JApplication* app) {
 
-	InitJANAPlugin(app);
+int main(int argc, char* argv[]) {
 
-	LOG << "Loading BlockExample" << LOG_END;
-	app->Add(new BlockExampleProcessor);
-}
+	JApplication app;
+	app.Add(new BlockExampleProcessor);
+	app.Run(true);
 }
 

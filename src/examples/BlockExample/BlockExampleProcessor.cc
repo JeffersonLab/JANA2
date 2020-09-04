@@ -1,5 +1,9 @@
 
+// Copyright 2020, Jefferson Science Associates, LLC.
+// Subject to the terms in the LICENSE file found in the top-level directory.
+
 #include "BlockExampleProcessor.h"
+#include "MyObject.h"
 #include <JANA/JLogger.h>
 
 BlockExampleProcessor::BlockExampleProcessor() {
@@ -14,18 +18,12 @@ void BlockExampleProcessor::Init() {
 void BlockExampleProcessor::Process(const std::shared_ptr<const JEvent> &event) {
     LOG << "BlockExampleProcessor::Process, Event #" << event->GetEventNumber() << LOG_END;
     
-    /// Do everything we can in parallel
-    /// Warning: We are only allowed to use local variables and `event` here
-    //auto hits = event->Get<Hit>();
-
-    /// Lock mutex
+    auto objs = event->Get<MyObject>();
     std::lock_guard<std::mutex>lock(m_mutex);
 
-    /// Do the rest sequentially
-    /// Now we are free to access shared state such as m_heatmap
-    //for (const Hit* hit : hits) {
-        /// Update shared state
-    //}
+	for (const MyObject* obj : objs) {
+        LOG << obj->datum << LOG_END;
+    }
 }
 
 void BlockExampleProcessor::Finish() {
