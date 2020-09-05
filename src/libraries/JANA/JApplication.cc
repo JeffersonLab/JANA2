@@ -116,7 +116,7 @@ void JApplication::Initialize() {
 		    topology_builder = _service_locator.get<JTopologyBuilder>();
 		    // JTopologyBuilder was added to JServiceLocator in ctor, but may have been overridden by user before Init
 
-        	auto topology = topology_builder->build(_desired_nthreads);
+        	auto topology = topology_builder->get_or_create(_desired_nthreads);
             auto japc = std::make_shared<JArrowProcessingController>(topology);
             _service_locator.provide(japc);  // Make concrete class available via SL
             _processing_controller = _service_locator.get<JArrowProcessingController>();  // Get deps from SL

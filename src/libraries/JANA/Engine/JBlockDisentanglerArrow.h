@@ -2,8 +2,8 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-#ifndef JANA2_JBLOCKSOURCEARROW_H
-#define JANA2_JBLOCKSOURCEARROW_H
+#ifndef JANA2_JBLOCKDISENTANGLERARROW_H
+#define JANA2_JBLOCKDISENTANGLERARROW_H
 
 #include <JANA/Engine/JArrow.h>
 #include <JANA/Engine/JMailbox.h>
@@ -12,7 +12,7 @@
 template <typename T>
 class JBlockDisentanglerArrow : public JArrow {
 	JBlockedEventSource<T>* m_source;  // non-owning
-	JMailbox<T>* m_block_queue; // owning
+	JMailbox<T*>* m_block_queue; // owning
 	JMailbox<std::shared_ptr<JEvent>>* m_event_queue; // non-owning
 	std::shared_ptr<JEventPool> m_pool;
 	JLogger m_logger;
@@ -20,7 +20,7 @@ class JBlockDisentanglerArrow : public JArrow {
 public:
 	JBlockDisentanglerArrow(std::string name,
 							JBlockedEventSource<T>* source,
-							JMailbox<T>* block_queue,
+							JMailbox<T*>* block_queue,
 							JMailbox<std::shared_ptr<JEvent>>* event_queue,
 							std::shared_ptr<JEventPool> pool
 							)
@@ -43,4 +43,4 @@ public:
 };
 
 
-#endif //JANA2_JBLOCKSOURCEARROW_H
+#endif //JANA2_JBLOCKDISENTANGLERARROW_H

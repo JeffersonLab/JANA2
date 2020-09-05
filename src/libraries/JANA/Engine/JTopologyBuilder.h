@@ -14,11 +14,13 @@ class JTopologyBuilder : public JService {
 	std::shared_ptr<JParameterManager> m_params;
 	std::shared_ptr<JComponentManager> m_components;
 
-	JArrowTopology* m_override; // Non-owning; caller responsible for deletion.
+	JArrowTopology* m_override = nullptr; // Non-owning; caller responsible for deletion.
 
 public:
 
-	///
+	JTopologyBuilder() = default;
+	~JTopologyBuilder() override = default;
+
 	inline JArrowTopology* get_or_create(int nthreads) {
 		if (m_override != nullptr) {
 			return m_override;
@@ -26,11 +28,11 @@ public:
 		return build(nthreads);
 	}
 
-	inline void set_override(JArrowTopology* override) {
-		m_override = override;
+	inline void set_override(JArrowTopology* topology) {
+		m_override = topology;
 	}
 
-	virtual void acquire_services(JServiceLocator* sl) {
+	void acquire_services(JServiceLocator* sl) override {
 		m_components = sl->get<JComponentManager>();
 		m_params = sl->get<JParameterManager>();
 	};

@@ -6,8 +6,7 @@
 #include "JEventSourceArrow.h"
 #include "JEventProcessorArrow.h"
 
-JArrowTopology *
-JTopologyBuilder::build(int nthreads) {
+JArrowTopology* JTopologyBuilder::build(int nthreads) {
 
 	auto topology = new JArrowTopology;
 	topology->component_manager = m_components;  // Ensure the lifespan of the component manager exceeds that of the topology
