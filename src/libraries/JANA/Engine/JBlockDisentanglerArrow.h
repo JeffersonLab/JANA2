@@ -17,6 +17,8 @@ class JBlockDisentanglerArrow : public JArrow {
 	std::shared_ptr<JEventPool> m_pool;
 	JLogger m_logger;
 
+	size_t m_max_events_per_block = 40;
+
 public:
 	JBlockDisentanglerArrow(std::string name,
 							JBlockedEventSource<T>* source,
@@ -35,9 +37,47 @@ public:
 		delete m_block_queue;
 	}
 
+	void set_max_events_per_block(size_t max_events_per_block) {
+		m_max_events_per_block = max_events_per_block;
+	}
+
 
 	void execute(JArrowMetrics& result, size_t location_id) final {
 
+		if (!this->is_active()) {
+			result.update_finished();
+			return;
+		}
+		JArrowMetrics::Status status;
+		JArrowMetrics::duration_t latency;
+		JArrowMetrics::duration_t overhead; // TODO: Populate these
+		size_t message_count = 0;
+
+		int requested_events = this->get_chunksize() * m_max_events_per_block; // chunksize is measured in blocks
+		int reserved_events = m_event_queue->reserve(requested_events, location_id);
+		int reserved_blocks = reserved_events / m_max_events_per_block; // truncate
+
+		std::vector<T*> block_buffer; // TODO: Get rid of allocations
+		std::vector<std::shared_ptr<JEvent>> event_buffer;
+
+		auto input_queue_status = m_block_queue->pop(block_buffer, reserved_blocks, location_id);
+		for (auto block : block_buffer) {
+			auto events = m_source->DisentangleBlock(*block, m_pool);
+			event_buffer.insert(events.cbegin(), events.cend());
+		}
+
+		auto output_queue_status = m_event_queue->push(event_buffer, reserved_events, location_id);
+
+		if (reserved_events == 0 || input_queue_status == JMailbox<T*>::Status::Congested || input_queue_status == JMailbox<T*>::Status::Full) {
+			status = JArrowMetrics::Status::ComeBackLater;
+		}
+		else if (input_queue_status == JMailbox<T*>::Status::Finished) {
+			status = JArrowMetrics::Status::Finished;
+		}
+		else {
+			status = JArrowMetrics::Status::KeepGoing;
+		}
+		result.update(status, reserved_blocks, 1, latency, overhead);
 	}
 
 };
