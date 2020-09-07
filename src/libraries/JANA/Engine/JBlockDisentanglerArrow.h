@@ -62,8 +62,8 @@ public:
 
 		auto input_queue_status = m_block_queue->pop(block_buffer, reserved_blocks, location_id);
 		for (auto block : block_buffer) {
-			auto events = m_source->DisentangleBlock(*block, m_pool);
-			event_buffer.insert(events.cbegin(), events.cend());
+			auto events = m_source->DisentangleBlock(*block, *m_pool);
+			event_buffer.insert(event_buffer.end(), events.begin(), events.end());
 		}
 
 		auto output_queue_status = m_event_queue->push(event_buffer, reserved_events, location_id);
