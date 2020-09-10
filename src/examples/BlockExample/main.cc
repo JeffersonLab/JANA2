@@ -45,6 +45,7 @@ int main(int argc, char* argv[]) {
 	auto builder = app.GetService<JTopologyBuilder>();
 	builder->set_override(topology);
 
+	app.SetParameterValue("log:trace", "JWorker");
 	app.Run(true);
 }
 

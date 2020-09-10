@@ -15,7 +15,7 @@ class JBlockDisentanglerArrow : public JArrow {
 	JMailbox<T*>* m_block_queue; // owning
 	JMailbox<std::shared_ptr<JEvent>>* m_event_queue; // non-owning
 	std::shared_ptr<JEventPool> m_pool;
-	JLogger m_logger;
+	JLogger m_logger {JLogger::Level::DEBUG};
 
 	size_t m_max_events_per_block = 40;
 
