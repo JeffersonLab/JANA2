@@ -61,7 +61,7 @@ class JStreamLog : public std::ostream
 
 std::ostream& endMsg(std::ostream& os);
 
-extern JStreamLog jout;
-extern JStreamLog jerr;
+//extern JStreamLog jout;
+//extern JStreamLog jerr;
 
 #endif //_DSTREAMLOG_H_

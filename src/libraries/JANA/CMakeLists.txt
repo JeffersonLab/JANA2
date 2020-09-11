@@ -100,6 +100,11 @@ set(JANA2_SOURCES
     Compatibility/JStreamLogBuffer.h
     Compatibility/JStatusBits.h
     Compatibility/jerror.h
+    Compatibility/JGeometry.h
+    Compatibility/JGeometryMYSQL.cc
+    Compatibility/JGeometryMYSQL.h
+    Compatibility/JGeometryXML.cc
+    Compatibility/JGeometryXML.h
     )
 
 
