@@ -22,6 +22,8 @@ struct JParameter {
     std::string description;      // One-liner
     bool has_default;             // Indicates that a default value is present. Does not indicate whether said value is in use.
     // bool uses_default;         // TODO: We may want this instead of `if(param.value == param.default_value)` all the time
+
+    void SetDescription(std::string description) { this->description = description; }
 };
 
 class JParameterManager : public JService {

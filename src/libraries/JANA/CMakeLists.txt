@@ -88,6 +88,8 @@ set(JANA2_SOURCES
     Calibrations/JCalibrationFile.h
     Calibrations/JCalibrationGenerator.h
     Calibrations/JCalibrationGeneratorCCDB.h
+    Calibrations/JLargeCalibration.cc
+    Calibrations/JLargeCalibration.h
 
     CLI/JVersion.h
     CLI/JBenchmarker.cc
