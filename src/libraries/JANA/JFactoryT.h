@@ -110,7 +110,7 @@ public:
     }
 
     /// Please use the typed setters instead whenever possible
-    void Set(std::vector<JObject*>& aData) override {
+    void Set(const std::vector<JObject*>& aData) override {
         ClearData();
         for (auto jobj : aData) {
             T* casted = dynamic_cast<T*>(jobj);

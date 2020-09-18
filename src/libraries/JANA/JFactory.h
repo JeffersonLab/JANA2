@@ -98,7 +98,7 @@ public:
 
     // Copy/Move objects into factory
     template<typename T>
-    void Set(std::vector<T *> &items) {
+    void Set(const std::vector<T *> &items) {
         for (T *item : items) {
             Insert(item);
         }
@@ -126,7 +126,7 @@ public:
 
 
 protected:
-    virtual void Set(std::vector<JObject *> &data) = 0;
+    virtual void Set(const std::vector<JObject *> &data) = 0;
 
     virtual void Insert(JObject *data) = 0;
 
