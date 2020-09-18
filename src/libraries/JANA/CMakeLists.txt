@@ -103,10 +103,14 @@ set(JANA2_SOURCES
     Compatibility/JStatusBits.h
     Compatibility/jerror.h
     Compatibility/JGeometry.h
+    Compatibility/JGeometryManager.cc
+    Compatibility/JGeometryManager.h
     Compatibility/JGeometryMYSQL.cc
     Compatibility/JGeometryMYSQL.h
     Compatibility/JGeometryXML.cc
     Compatibility/JGeometryXML.h
+    Compatibility/md5.c
+    Compatibility/md5.h
     )
 
 
