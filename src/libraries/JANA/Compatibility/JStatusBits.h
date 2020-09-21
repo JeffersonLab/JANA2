@@ -21,7 +21,7 @@ public:
 
 	uint64_t GetStatus() const { return m_status; }
 
-	bool GetStatusBit(T bit)
+	bool GetStatusBit(T bit) const
 	{
 		/// Return the present value of the specified status bit.
 		/// The value of "bit" should be from 0-63.
