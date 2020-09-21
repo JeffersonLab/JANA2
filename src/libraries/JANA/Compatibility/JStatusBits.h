@@ -164,6 +164,11 @@ public:
 
 };
 
+template <typename T>
+std::mutex JStatusBits<T>::m_mutex;
+
+template <typename T>
+std::map<uint32_t, std::string> JStatusBits<T>::m_status_bit_descriptions;
 
 
 #endif //JANA2_JSTATUSBITS_H
