@@ -60,7 +60,7 @@ JGeometry *JGeometryManager::GetJGeometry(unsigned int run_number) {
 		geometries.push_back(g);
 	}
 	else {
-		jerr << "Cannot make JGeometry object for \"" << url_str << "\" (Don't know how!)" << jendl;
+		jerr << "Cannot make JGeometry object for \"" << url_str << "\" (Don't know how!)" << std::endl;
 	}
 	return g;
 }

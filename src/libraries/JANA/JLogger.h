@@ -8,8 +8,8 @@
 
 #include <iostream>
 #include <sstream>
+#include <JANA/Compatibility/JStreamLog.h>
 
-///
 struct JLogger {
     enum class Level { TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF };
     Level level;
@@ -127,12 +127,6 @@ inline void operator<<(JLogMessage&& m, JLogMessage::End const& end) {
 #define LOG_INFO(logger)  LOG_AT_LEVEL(logger, JLogger::Level::INFO)
 #define LOG_DEBUG(logger) LOG_AT_LEVEL(logger, JLogger::Level::DEBUG)
 #define LOG_TRACE(logger) LOG_AT_LEVEL(logger, JLogger::Level::TRACE)
-
-
-#define jout JLogMessage(default_cout_logger)
-#define jerr JLogMessage(default_cerr_logger)
-#define jendl JLogMessage::End()
-
 
 
 #endif //JANA2_JLOGGER_H

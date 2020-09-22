@@ -81,7 +81,7 @@ JGeometryXML::JGeometryXML(string url, int run, string context):JGeometry(url,ru
 		
 		// Try and open top-level XML file to see if it exists and is readable
 		if( access(xmlfile.c_str(), R_OK)){
-			jerr << " Unable to open \""<<xmlfile<<"\"! Geometry info not available!!"<<jendl;
+			jerr << " Unable to open \""<<xmlfile<<"\"! Geometry info not available!!"<<endl;
 			run_min = run_max = -1;
 			return;
 		}
@@ -96,7 +96,7 @@ JGeometryXML::JGeometryXML(string url, int run, string context):JGeometry(url,ru
 		vector< map<string, string> > vals;
 		jcalib->GetCalib(xmlfile, vals);
 		if(vals.empty()){
-			jerr << " Failed to get XML for " << xmlfile << "! Geometry info not available!!" << jendl;
+			jerr << " Failed to get XML for " << xmlfile << "! Geometry info not available!!" << endl;
 			run_min = run_max = -1;
 			return;
 		}
@@ -169,11 +169,11 @@ void JGeometryXML::Init(string xmlfile, string xml)
 
 
 #if !HAVE_XERCES
-	jerr<<jendl;
-	jerr<<"This JANA library was compiled without XERCESC support. To enable"<<jendl;
-	jerr<<"XERCESC, install it on your system and set your XERCESCROOT enviro."<<jendl;
-	jerr<<"variable to point to it. Then, recompile and install JANA."<<jendl;
-	jerr<<jendl;
+	jerr<<endl;
+	jerr<<"This JANA library was compiled without XERCESC support. To enable"<<endl;
+	jerr<<"XERCESC, install it on your system and set your XERCESCROOT enviro."<<endl;
+	jerr<<"variable to point to it. Then, recompile and install JANA."<<endl;
+	jerr<<endl;
 #else
 	// Initialize XERCES system
 	XMLPlatformUtils::Initialize();

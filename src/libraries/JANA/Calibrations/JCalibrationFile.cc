@@ -3,6 +3,7 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #include "JCalibrationFile.h"
+#include <JANA/Compatibility/JStreamLog.h>
 #include <JANA/JLogger.h>
 
 #include <dirent.h>
@@ -46,7 +47,7 @@ JCalibrationFile::JCalibrationFile(string url, int32_t run, string context):JCal
 	string fname = basedir + "info.xml";
 	ifstream f(fname.c_str());
 	if(!f.is_open()){
-		jout<<"WARNING: Unable to open \""<<fname<<"\" (not necessarily a problem)"<<jendl;
+		jout<<"WARNING: Unable to open \""<<fname<<"\" (not necessarily a problem)"<<std::endl;
 	}
 	
 	// At this point, we need to read in the info file and probably

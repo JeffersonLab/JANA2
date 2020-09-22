@@ -5,6 +5,8 @@
 // Creator: davidl (on Darwin eleanor.jlab.org 12.2.0 i386)
 //
 
+
+#include <JANA/Compatibility/JStreamLog.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -204,12 +206,12 @@ string JLargeCalibration::GetResource(string namepath) {
 		// Option 1
 		if (has_URL_base || has_path) {
 			if (!has_URL_base) {
-				jout << "URL_base=\"" << info["URL_base"] << "\" path=\"" << info["path"] << "\"" << jendl;
+				jout << "URL_base=\"" << info["URL_base"] << "\" path=\"" << info["path"] << "\"" << endl;
 				string mess = string("\"path\" specified for resource \"") + namepath + "\" but not \"URL_base\"!";
 				throw JException(mess);
 			}
 			if (!has_path) {
-				jout << "URL_base=\"" << info["URL_base"] << "\" path=\"" << info["path"] << "\"" << jendl;
+				jout << "URL_base=\"" << info["URL_base"] << "\" path=\"" << info["path"] << "\"" << endl;
 				string mess = string("\"URL_base\" specified for resource \"") + namepath + "\" but not \"path\"!";
 				throw JException(mess);
 			}
@@ -314,10 +316,10 @@ string JLargeCalibration::GetResource(string namepath) {
 			if (redownload_required) {
 				// We must redownload the file, replacing the existing one.
 				// Remove old file first and warn the user this is happening.
-				jout << " Resource \"" << namepath << "\" already exists, but is" << jendl;
-				jout << " associated with the URL: " << other_URL << jendl;
-				jout << " Deleting existing file and downloading new version" << jendl;
-				jout << " from: " << URL << jendl;
+				jout << " Resource \"" << namepath << "\" already exists, but is" << endl;
+				jout << " associated with the URL: " << other_URL << endl;
+				jout << " Deleting existing file and downloading new version" << endl;
+				jout << " from: " << URL << endl;
 				unlink(fullpath.c_str());
 
 				GetResourceFromURL(URL, fullpath);
@@ -345,21 +347,21 @@ string JLargeCalibration::GetResource(string namepath) {
 		if (has_md5 && check_md5) {
 			string md5sum = Get_MD5(fullpath);
 			if (md5sum != info["md5"]) {
-				jerr << "-- ERROR: md5 checksum for the following resource file does not match expected" << jendl;
-				jerr << "-- " << fullpath << jendl;
-				jerr << "--  for the resource: " << jendl;
-				if (has_URL_base) jerr << "--   URL_base = " << info["URL_base"] << jendl;
-				if (has_path) jerr << "--       path = " << info["path"] << jendl;
-				if (has_URL) jerr << "--        URL = " << info["URL"] << jendl;
-				if (has_md5) jerr << "--        md5 = " << info["md5"] << jendl;
-				jerr << "-- The md5sum for the existing file is: " << md5sum << jendl;
-				jerr << "--" << jendl;
-				jerr << "-- This can happen if the resource download was previously interrupted." << jendl;
-				jerr << "-- Try removing the existing file and re-running to trigger a re-download." << jendl;
-				jerr << "--" << jendl;
-				jerr << "-- This is a fatal error and the program will stop now. To bypass checking" << jendl;
-				jerr << "-- the md5sum, set the JANA:RESOURCE_CHECK_MD5 config. parameter to 0." << jendl;
-				jerr << "--" << jendl;
+				jerr << "-- ERROR: md5 checksum for the following resource file does not match expected" << endl;
+				jerr << "-- " << fullpath << endl;
+				jerr << "--  for the resource: " << endl;
+				if (has_URL_base) jerr << "--   URL_base = " << info["URL_base"] << endl;
+				if (has_path) jerr << "--       path = " << info["path"] << endl;
+				if (has_URL) jerr << "--        URL = " << info["URL"] << endl;
+				if (has_md5) jerr << "--        md5 = " << info["md5"] << endl;
+				jerr << "-- The md5sum for the existing file is: " << md5sum << endl;
+				jerr << "--" << endl;
+				jerr << "-- This can happen if the resource download was previously interrupted." << endl;
+				jerr << "-- Try removing the existing file and re-running to trigger a re-download." << endl;
+				jerr << "--" << endl;
+				jerr << "-- This is a fatal error and the program will stop now. To bypass checking" << endl;
+				jerr << "-- the md5sum, set the JANA:RESOURCE_CHECK_MD5 config. parameter to 0." << endl;
+				jerr << "--" << endl;
 				exit(-1);
 			}
 		}
@@ -462,7 +464,7 @@ void JLargeCalibration::GetResourceFromURL(const string &URL, const string &full
 
 	pthread_mutex_lock(&resource_manager_mutex);
 
-	jout << "Downloading " << URL << " ..." << jendl;
+	jout << "Downloading " << URL << " ..." << endl;
 	CURRENT_OUTPUT_FNAME = fullpath;
 	if (fullpath.length() > 60) {
 		CURRENT_OUTPUT_FNAME = string("...") + fullpath.substr(fullpath.length() - 60, 60);
