@@ -83,6 +83,8 @@ class JGeometry{
 			attr_level_last = 1,	// Include the attributes for the last node only.
 			attr_level_all  = 2	// Include attributes for all nodes.
 		}ATTR_LEVEL_t;
+
+		void SetVerbose(int newval){ verbose = newval; }
 		
 		// Virtual methods called through base class
 		virtual bool Get(string xpath, string &sval)=0;
@@ -111,8 +113,10 @@ class JGeometry{
 		int run_min;
 		int run_max;
 		int run_found;
-		
-	private:
+
+		int verbose=1;
+
+private:
 		JGeometry(){} // Don't allow trivial constructor
 
 		int run_requested;
