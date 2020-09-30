@@ -31,7 +31,9 @@ public:
 
     JParameterManager();
 
-    virtual ~JParameterManager();
+	JParameterManager(const JParameterManager&);
+
+	virtual ~JParameterManager();
 
     bool Exists(std::string name);
 
@@ -51,6 +53,8 @@ public:
     template<typename T>
     JParameter* SetDefaultParameter(std::string name, T& val, std::string description = "");
 
+	void FilterParameters(std::map<std::string,std::string> &parms, std::string filter="");
+
     void ReadConfigFile(std::string name);
 
     void WriteConfigFile(std::string name);
@@ -68,6 +72,8 @@ protected:
     std::map<std::string, JParameter*> m_parameters;
 
     JLogger m_logger;
+
+    std::mutex m_mutex;
 };
 
 
@@ -135,6 +141,7 @@ JParameter* JParameterManager::SetDefaultParameter(std::string name, T& val, std
     /// This should be called after the JApplication object has been initialized so
     /// that parameters can be created from any command line options the user may specify.
 
+    std::lock_guard<std::mutex> lock(m_mutex);
     JParameter* param = nullptr;
 
     auto result = m_parameters.find(to_lower(name));

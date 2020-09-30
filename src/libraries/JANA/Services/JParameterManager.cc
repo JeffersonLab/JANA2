@@ -20,6 +20,11 @@ JParameterManager::JParameterManager() {
     m_logger = JLoggingService::logger("JParameterManager");
 }
 
+JParameterManager::JParameterManager(const JParameterManager& other) {
+	m_parameters = other.m_parameters;
+	m_logger = other.m_logger;
+}
+
 //---------------------------------
 // ~JParameterManager    (Destructor)
 //---------------------------------
@@ -235,4 +240,24 @@ void JParameterManager::WriteConfigFile(std::string filename) {
     //_mutex.unlock();
 
     ofs.close();
+}
+
+void JParameterManager::FilterParameters(std::map<std::string, std::string> &parms, std::string filter) {
+	/// Copy a list of all parameters into the supplied map, replacing
+	/// its current contents. If a filter string is supplied, it is
+	/// used to filter out all parameters that are do not start with
+	/// the filter string. In addition, the filter string is removed
+	/// from the keys.
+
+	parms.clear();
+	std::lock_guard<std::mutex> lock(m_mutex);
+	for (auto pair : m_parameters) {
+		string key = pair.first;
+		string value = pair.second->value;
+		if (filter.size() > 0) {
+			if (key.substr(0, filter.size()) != filter) continue;
+			key.erase(0, filter.size());
+		}
+		parms[key] = value;
+	}
 }
