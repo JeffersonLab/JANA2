@@ -111,6 +111,7 @@ set(JANA2_SOURCES
     Compatibility/JGeometryXML.h
     Compatibility/md5.c
     Compatibility/md5.h
+    Compatibility/JLockService.h
     )
 
 
