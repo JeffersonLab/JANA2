@@ -34,8 +34,6 @@ void JDebugProcessingController::run_worker() {
     // We don't need a JEventPool because our worker can just keep recycling the same one
     // This also makes locality trivial
     auto event = std::make_shared<JEvent>();
-    auto factory_set = new JFactorySet(m_component_manager->get_fac_gens());
-    event->SetFactorySet(factory_set);
 
     for (JEventSource* evt_src : evt_srces) {
 
@@ -43,6 +41,9 @@ void JDebugProcessingController::run_worker() {
         evt_src->DoInitialize();
         event->SetJEventSource(evt_src);
         event->SetJApplication(evt_src->GetApplication());
+
+        auto factory_set = new JFactorySet(evt_src->GetFactoryGenerator(), m_component_manager->get_fac_gens());
+        event->SetFactorySet(factory_set);
 
         for (auto result = JEventSource::ReturnStatus::TryAgain;
              result != JEventSource::ReturnStatus::Finished && !m_stop_requested;) {

@@ -42,6 +42,8 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 			mFactorySet = aFactorySet;
 		}
 
+		JFactorySet* GetFactorySet() { return mFactorySet; }
+
 		JFactory* GetFactory(const std::string& object_name, const std::string& tag) const;
 		template<class T> JFactoryT<T>* GetFactory(const std::string& tag = "", bool throw_on_missing=false) const;
 		template<class T> std::vector<JFactoryT<T>*> GetFactoryAll(bool throw_on_missing = false) const;

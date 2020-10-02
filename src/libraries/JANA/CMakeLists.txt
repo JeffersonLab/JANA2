@@ -112,6 +112,7 @@ set(JANA2_SOURCES
     Compatibility/md5.c
     Compatibility/md5.h
     Compatibility/JLockService.h
+    Compatibility/JGetObjectsFactory.h
     )
 
 
