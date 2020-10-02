@@ -93,10 +93,11 @@ public:
     virtual void ChangeRun(const std::shared_ptr<const JEvent> &aEvent) {}
     virtual void EndRun() {}
     virtual void Process(const std::shared_ptr<const JEvent> &aEvent) {}
+	virtual void Finish() {}
 
 
 
-    // Copy/Move objects into factory
+	// Copy/Move objects into factory
     template<typename T>
     void Set(const std::vector<T *> &items) {
         for (T *item : items) {
