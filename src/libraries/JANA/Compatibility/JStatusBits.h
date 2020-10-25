@@ -118,7 +118,7 @@ public:
 	}
 
 
-	std::string ToString()
+	std::string ToString() const
 	{
 		/// Generate a formatted string suitable for printing to the screen, including the
 		/// entire word in both hexadecimal and binary along with descriptions.
