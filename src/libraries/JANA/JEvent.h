@@ -76,25 +76,25 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 		void SetEventNumber(uint64_t aEventNumber){mEventNumber = aEventNumber;}
 		void SetJApplication(JApplication* app){mApplication = app;}
 		void SetJEventSource(JEventSource* aSource){mEventSource = aSource;}
+		[[deprecated]]
+		void SetSequential(bool isSequential){mIsBarrierEvent = isSequential;}
 
 		//GETTERS
 		uint32_t GetRunNumber() const {return mRunNumber;}
 		uint64_t GetEventNumber() const {return mEventNumber;}
 		JApplication* GetJApplication() const {return mApplication;}
 		JEventSource* GetJEventSource() const {return mEventSource; }
+		bool GetSequential() const {return mIsBarrierEvent;}
 		friend class JEventPool;
-
-	protected:
-		mutable JFactorySet* mFactorySet = nullptr;
-		JEventSource* mEventSource = nullptr;
-		bool mIsBarrierEvent = false;
 
 	private:
 		JApplication* mApplication = nullptr;
 		uint32_t mRunNumber = 0;
 		uint64_t mEventNumber = 0;
+		mutable JFactorySet* mFactorySet = nullptr;
+		JEventSource* mEventSource = nullptr;
+		bool mIsBarrierEvent = false;
 		int mDebugLevel = 0;
-		std::shared_ptr<const JEvent> mLatestBarrierEvent = nullptr;
 };
 
 /// Insert() allows an EventSource to insert items directly into the JEvent,
