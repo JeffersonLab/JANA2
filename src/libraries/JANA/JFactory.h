@@ -97,7 +97,7 @@ public:
 
 
 
-	// Copy/Move objects into factory
+		// Copy/Move objects into factory
     template<typename T>
     void Set(const std::vector<T *> &items) {
         for (T *item : items) {
@@ -117,8 +117,12 @@ public:
     template<typename S>
     std::vector<S*> GetAs();
 
+    /// Create() calls JFactory::Init,BeginRun,Process in an invariant-preserving way without knowing the exact
+    /// type of object contained. It returns the number of objects created. In order to access said objects,
+    /// use JFactory::GetAs().
+	virtual size_t Create(const std::shared_ptr<const JEvent>& event, JApplication* app, uint64_t run_number) = 0;
 
-    /// JApplication setter. This is meant to be used under the hood.
+	/// JApplication setter. This is meant to be used under the hood.
     void SetApplication(JApplication* app) { mApp = app; }
 
     /// JApplication getter. This is meant to be called by user-defined JFactories which need to
@@ -128,7 +132,6 @@ public:
 
 protected:
     virtual void Set(const std::vector<JObject *> &data) = 0;
-
     virtual void Insert(JObject *data) = 0;
 
     std::string mPluginName;

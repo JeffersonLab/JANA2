@@ -109,7 +109,13 @@ public:
         }
     }
 
-    /// Please use the typed setters instead whenever possible
+	size_t Create(const std::shared_ptr<const JEvent>& event, JApplication* app, uint64_t run_number) final {
+		auto result = GetOrCreate(event, app, run_number);
+		return std::distance(result.first, result.second);
+	}
+
+
+	/// Please use the typed setters instead whenever possible
     void Set(const std::vector<JObject*>& aData) override {
         ClearData();
         for (auto jobj : aData) {
