@@ -63,7 +63,10 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
             	// This is obviously not the best way to handle this but I'll need to
             	// rejigger the whole thing anyway when we re-add parallel event sources.
                 auto factory_set = new JFactorySet();
-                _source->GetFactoryGenerator()->GenerateFactories(factory_set);
+                auto src_fac_gen = _source->GetFactoryGenerator();
+                if (src_fac_gen != nullptr) {
+	                src_fac_gen->GenerateFactories(factory_set);
+                }
                 factory_set->Merge(*event->GetFactorySet());
                 event->SetFactorySet(factory_set);
 	            event->SetJEventSource(_source);
