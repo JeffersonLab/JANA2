@@ -19,6 +19,8 @@ class JStatusBits {
 
 public:
 
+	void SetStatus(uint64_t status) { m_status = status; }
+
 	uint64_t GetStatus() const { return m_status; }
 
 	bool GetStatusBit(T bit) const
@@ -72,7 +74,7 @@ public:
 	}
 
 
-	void ClearStatus(void)
+	void ClearStatus()
 	{
 		/// Clear all bits in the status word. This
 		/// is equivalent to calling SetStatus(0).
