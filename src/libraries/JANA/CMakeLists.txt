@@ -95,6 +95,8 @@ set(JANA2_SOURCES
     CLI/JBenchmarker.cc
     CLI/JBenchmarker.h
     CLI/JSignalHandler.h
+    CLI/JMain.cc
+    CLI/JMain.h
 
     Compatibility/JStreamLog.cc
     Compatibility/JStreamLog.h
