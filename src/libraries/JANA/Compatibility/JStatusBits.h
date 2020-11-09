@@ -157,7 +157,7 @@ public:
 
 			if(iter != m_status_bit_descriptions.end() || val != 0){
 				ss << std::dec << std::setw(2) << std::setfill(' ');
-				ss << " " << val << " - [" << std::setw(2) << std::setfill(' ') << i << "] " << GetStatusBitDescription(i) << std::endl;
+				ss << " " << val << " - [" << std::setw(2) << std::setfill(' ') << i << "] " << m_status_bit_descriptions[i] << std::endl;
 			}
 		}
 		ss << std::endl;
