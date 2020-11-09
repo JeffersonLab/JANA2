@@ -25,6 +25,8 @@ class JApplication;
 class JFactory {
 public:
 
+	enum class CreationStatus { NotCreatedYet, Created, Inserted, InsertedViaGetObjects };
+
     enum JFactory_Flags_t {
         JFACTORY_NULL = 0x00,
         PERSISTENT = 0x01,
@@ -45,6 +47,7 @@ public:
     std::string GetObjectName() const { return mObjectName; }
     std::string GetFactoryName() const { return mFactoryName; }
     std::string GetPluginName() const { return mPluginName; }
+    CreationStatus GetCreationStatus() const { return mCreationStatus; }
 
     uint32_t GetPreviousRunNumber(void) const { return mPreviousRunNumber; }
 
@@ -96,7 +99,6 @@ public:
 	virtual void Finish() {}
 
 
-
 		// Copy/Move objects into factory
     template<typename T>
     void Set(const std::vector<T *> &items) {
@@ -145,7 +147,9 @@ protected:
 
     enum class Status {Uninitialized, Unprocessed, Processed, Inserted};
     mutable Status mStatus = Status::Uninitialized;
-    mutable std::mutex mMutex;
+
+	CreationStatus mCreationStatus = CreationStatus::NotCreatedYet;
+	mutable std::mutex mMutex;
 
     // Used to make sure Init is called only once
     std::once_flag mInitFlag;

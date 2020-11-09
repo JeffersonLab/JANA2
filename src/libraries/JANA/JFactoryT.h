@@ -101,6 +101,7 @@ public:
                 }
                 Process(event);
                 mStatus = Status::Processed;
+                mCreationStatus = CreationStatus::Created;
             case Status::Processed:
             case Status::Inserted:
                 return std::make_pair(mData.cbegin(), mData.cend());
@@ -131,6 +132,7 @@ public:
         assert(casted != nullptr);
         mData.push_back(casted);
         mStatus = Status::Inserted;
+        mCreationStatus = CreationStatus::Inserted;
         // TODO: assert correct mStatus precondition
     }
 
@@ -138,17 +140,20 @@ public:
         ClearData();
         mData = aData;
         mStatus = Status::Inserted;
+	    mCreationStatus = CreationStatus::Inserted;
     }
 
     void Set(std::vector<T*>&& aData) {
         ClearData();
         mData = std::move(aData);
         mStatus = Status::Inserted;
+	    mCreationStatus = CreationStatus::Inserted;
     }
 
     void Insert(T* aDatum) {
         mData.push_back(aDatum);
         mStatus = Status::Inserted;
+	    mCreationStatus = CreationStatus::Inserted;
     }
 
 
@@ -177,6 +182,7 @@ public:
         }
         mData.clear();
         mStatus = Status::Unprocessed;
+	    mCreationStatus = CreationStatus::NotCreatedYet;
     }
 
     /// Set the JFactory's metadata. This is meant to be called by user during their JFactoryT::Process
