@@ -28,7 +28,7 @@ endif
 if ( "@HAVE_XERCES@" == "1" ) then
     setenv XERCESCROOT "@XERCESCROOT@"
     # only add to LD_LIBRARY_PATH if XERCESCROOT does not appear to be a system directory
-    if ( ${XERCESCROOT} != /usr ) setenv LD_LIBRARY_PATH=${XERCESCROOT}/lib:${LD_LIBRARY_PATH}
+    if ( ${XERCESCROOT} != /usr ) setenv LD_LIBRARY_PATH ${XERCESCROOT}/lib:${LD_LIBRARY_PATH}
 endif
 
 # CCDB
