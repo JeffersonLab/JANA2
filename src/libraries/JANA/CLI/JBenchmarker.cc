@@ -133,7 +133,9 @@ void JBenchmarker::RunUntilFinished() {
 
     copy_to_output_dir("${JANA_HOME}/bin/jana-plot-scaletest.py");
 
-    std::cout << "Testing finished" << std::endl;
+    std::cout << "Testing finished. To view a plot of test results:" << std::endl << std::endl;
+    std::cout << "   cd " << _output_dir << std::endl;
+    std::cout << "   ./jana-plot-scaletest.py" << std::endl << std::endl;
     _app->Quit();
 }
 
