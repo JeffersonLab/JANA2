@@ -15,7 +15,7 @@ set(STREAMDET_SOURCES
     ADCSampleFactory.h
     )
 
-find_package(ZeroMQ)
+find_package(ZEROMQ)
 find_package(ROOT)
 
 if (ZEROMQ_FOUND AND ROOT_FOUND)

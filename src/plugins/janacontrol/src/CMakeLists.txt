@@ -1,5 +1,5 @@
 
-find_package(ZeroMQ)
+find_package(ZEROMQ)
 if (ZEROMQ_FOUND)
 
     set (janacontrol_PLUGIN_SOURCES
