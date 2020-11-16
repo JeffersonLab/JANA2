@@ -64,6 +64,15 @@ public:
     virtual void DoMap(const std::shared_ptr<const JEvent>& e) {
         try {
             std::call_once(m_init_flag, &JEventProcessor::DoInitialize, this);
+            auto run_number = e->GetRunNumber();
+            if (m_last_run_number != run_number) {
+                std::lock_guard<std::mutex> lock(m_mutex);
+                if (m_last_run_number != -1) {
+                    EndRun();
+                }
+	            m_last_run_number = run_number;
+	            BeginRun(e);
+            }
             Process(e);
         }
         catch (JException& ex) {
@@ -88,8 +97,14 @@ public:
 
     virtual void DoFinalize() {
         try {
-            std::call_once(m_finish_flag, &JEventProcessor::Finish, this);
-            m_status = Status::Finished;
+            std::lock_guard<std::mutex> lock(m_mutex);
+            if (m_status != Status::Finished) {
+                if (m_last_run_number != -1) {
+                    EndRun();
+                }
+                Finish();
+                m_status = Status::Finished;
+            }
         }
         catch (JException& ex) {
             ex.plugin_name = m_plugin_name;
@@ -168,6 +183,8 @@ private:
     std::once_flag m_init_flag;
     std::once_flag m_finish_flag;
     std::atomic_ullong m_event_count;
+    size_t m_last_run_number = -1;
+    std::mutex m_mutex;
     bool m_receive_events_in_order = false;
 
     /// This is called by JApplication::Add(JEventProcessor*). There
