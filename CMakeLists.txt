@@ -35,6 +35,6 @@ add_subdirectory(src/programs/tests)
 
 add_subdirectory(src/python)
 
-install(PROGRAMS scripts/jana-generate.py scripts/jana-upgrade.py DESTINATION bin)
+install(PROGRAMS scripts/jana-generate.py scripts/jana-upgrade.py scripts/jana-plot-scaletest.py DESTINATION bin)
 
 include(${CMAKE_SOURCE_DIR}/cmake/MakeConfig.cmake)
