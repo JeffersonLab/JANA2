@@ -58,6 +58,10 @@ public:
         return std::type_index(typeid(T));
     }
 
+    std::size_t GetNumObjects(void) const override {
+        return mData.size();
+    }
+
     /// GetOrCreate handles all the preconditions and postconditions involved in calling the user-defined Open(),
     /// ChangeRun(), and Process() methods. These include making sure the JFactory JApplication is set, Init() is called
     /// exactly once, exceptions are tagged with the originating plugin and eventsource, ChangeRun() is
