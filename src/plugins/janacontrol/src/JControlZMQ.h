@@ -10,6 +10,8 @@
 #include <zmq.h>
 #include <unistd.h>
 
+#include "JControlEventProcessor.h"
+
 class JControlZMQ  {
 public:
 
@@ -23,6 +25,8 @@ public:
     static void HostStatusPROCLinux(std::map<std::string,float> &vals);
     static void HostStatusPROCMacOSX(std::map<std::string,float> &vals);
     static void GetDiskSpace(const std::string &dirname, std::map<std::string,float> &vals);
+    std::string GetJANAFactoryListJSON();
+    std::string GetJANAObjectListJSON();
 
 private:
 
@@ -33,6 +37,7 @@ private:
     std::thread  *_thr         = nullptr;
     char         _host[256]    = {};
     pid_t        _pid          = 0;
+    JControlEventProcessor *_jproc = nullptr;
 };
 
 

@@ -6,6 +6,8 @@ if (ZEROMQ_FOUND)
             janacontrol.cc
             JControlZMQ.cc
             JControlZMQ.h
+            JControlEventProcessor.cc
+            JControlEventProcessor.h
         )
 
     add_library(janacontrol_plugin SHARED ${janacontrol_PLUGIN_SOURCES})
