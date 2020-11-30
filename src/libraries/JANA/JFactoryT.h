@@ -3,6 +3,7 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #include <vector>
+#include <type_traits>
 
 #include <JANA/JApplication.h>
 #include <JANA/JFactory.h>
@@ -30,15 +31,18 @@ public:
     [[deprecated]]
     JFactoryT(const std::string& aName, const std::string& aTag) : JFactory(aName, aTag) {
         EnableGetAs<T>();
+        EnableGetAs<JObject>( std::is_convertible<T,JObject>() ); // Automatically add JObject if this can be converted to it
     }
 
 	[[deprecated]]
 	JFactoryT(const std::string& aName) : JFactory(aName, "") {
         EnableGetAs<T>();
+        EnableGetAs<JObject>( std::is_convertible<T,JObject>() ); // Automatically add JObject if this can be converted to it
     }
 
     JFactoryT() : JFactory(JTypeInfo::demangle<T>(), ""){
         EnableGetAs<T>();
+        EnableGetAs<JObject>( std::is_convertible<T,JObject>() ); // Automatically add JObject if this can be converted to it
     }
 
     ~JFactoryT() override = default;
@@ -156,6 +160,10 @@ public:
     /// Note that EnableGetAs<T>() is called automatically.
     template <typename S> void EnableGetAs ();
 
+    // The following specializations allow automatically adding standard types (e.g. JObject) using things like
+    // std::is_convertible(). The std::true_type version defers to the standard EnableGetAs().
+    template <typename S> void EnableGetAs(std::true_type) { EnableGetAs<S>(); }
+    template <typename S> void EnableGetAs(std::false_type) {}
 
     void ClearData() override {
 
