@@ -85,3 +85,41 @@ void JControlEventProcessor::GetObjectStatus( std::map<JFactorySummary, std::siz
         if( fac ) factory_object_counts[fac_info] = fac->GetNumObjects();
     }
 }
+
+//-------------------------------------------------------------
+// GetObjects
+//
+// Get objects for the specified factory in the form of strings.
+//-------------------------------------------------------------
+void JControlEventProcessor::GetObjects(const std::string &factory_name, const std::string &factory_tag, const std::string &object_name, std::map<std::string, JObjectSummary> &objects){
+    // bombproof against getting called with no active JEvent
+    if(_jevent.get() == nullptr ) return;
+    auto fac = _jevent->GetFactory(object_name, factory_tag);
+    if( fac ){
+        for( auto jobj : fac->GetAs<JObject>()){
+            JObjectSummary summary;
+            jobj->Summarize(summary);
+            std::stringstream ss;
+            ss << "0x" << std::hex << (uint64_t)jobj << std::dec;
+            objects[ss.str()] = summary; // key is address of object converted to string
+        }
+    }else{
+        _DBG_<<"No factory found! object_name=" << object_name << std::endl;
+    }
+}
+
+//-------------------------------------------------------------
+// GetRunNumber
+//-------------------------------------------------------------
+uint32_t JControlEventProcessor::GetRunNumber(void){
+    if(_jevent.get() == nullptr ) return 0;
+    return _jevent->GetRunNumber();
+}
+
+//-------------------------------------------------------------
+// GetEventNumber
+//-------------------------------------------------------------
+uint64_t JControlEventProcessor::GetEventNumber(void){
+    if(_jevent.get() == nullptr ) return 0;
+    return _jevent->GetEventNumber();
+}

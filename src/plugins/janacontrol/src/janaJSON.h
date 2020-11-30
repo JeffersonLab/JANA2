@@ -21,7 +21,7 @@ void JJSON_Add(std::stringstream &ss, const T &t, int &indent_level){
 void JJSON_Add(std::stringstream &ss, const std::string &s, int &indent_level){
     // Next 3 lines decide whether to put quotes around string
     bool has_whitespace = s.find_first_not_of("\t\n ") != string::npos;
-    bool is_json = s.find("{") == 0;
+    bool is_json = s.find_first_not_of("{[\t\n ") != 0;
     std::string quote = ((has_whitespace && !is_json) || s.empty()) ? "\"":"";
     ss << std::string(indent_level*2, ' ') << quote << s << quote;
 }
@@ -39,7 +39,7 @@ void JJSON_Add(std::stringstream &ss, const std::vector<T> &V, int &indent_level
         ss << "\n";
     }
     indent_level--;
-    ss << std::string(indent_level*2, ' ') << "]\n";
+    ss << std::string(indent_level*2, ' ') << "]";
 }
 
 // std::map
@@ -56,7 +56,7 @@ void JJSON_Add(std::stringstream &ss, const std::map<std::string, T> &M, int &in
         ss << "\n";
     }
     indent_level--;
-    ss << std::string(indent_level*2, ' ') << "}\n";
+    ss << std::string(indent_level*2, ' ') << "}";
 }
 // std::unordered_map
 template <typename T>
@@ -72,7 +72,7 @@ void JJSON_Add(std::stringstream &ss, const std::unordered_map<std::string, T> &
         ss << "\n";
     }
     indent_level--;
-    ss << std::string(indent_level*2, ' ') << "}\n";
+    ss << std::string(indent_level*2, ' ') << "}";
 }
 
 // JObjectSummary

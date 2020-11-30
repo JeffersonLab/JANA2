@@ -35,6 +35,7 @@ using namespace std;
 
 #include "JControlZMQ.h"
 #include "JControlEventProcessor.h"
+#include "janaJSON.h"
 
 
 // The following are convenience macros that make
@@ -52,12 +53,36 @@ using namespace std;
 //#define JSONADD(K) ss<<",\n\""<<K<<"\":"
 //#define JSONADS(K,V) ss<<",\n\""<<K<<"\":\""<<V<<"\""
 
+template <typename T>
+std::string ToString(const T &t){
+    stringstream ss;
+    ss << t;
+    return ss.str();
+}
+
 template<class T>
 void JSONADD(stringstream &ss, string K, T V, int indent_level=0, bool first_element=false){
         if( ! first_element ) ss << ",\n";
         ss << string(indent_level*2, ' ');
         ss << "\"" << K << "\":";
         ss << "\"" << V << "\"";
+}
+void JSONOPENARRAY(stringstream &ss, string K, int indent_level=0, bool first_element=false){
+    if( ! first_element ) ss << ",\n";
+    ss << string(indent_level*2, ' ');
+    ss << "\"" << K << "\":";
+    ss << "[\n";
+}
+void JSONCLOSEARRAY(stringstream &ss, int indent_level=0){
+    ss << "\n" << string(indent_level*2, ' ') + "]";
+}
+void JSONOPENSECTION(stringstream &ss, int indent_level=0, bool first_element=false){
+    if( ! first_element ) ss << ",\n";
+    ss << string(indent_level*2, ' ');
+    ss << "{\n";
+}
+void JSONCLOSESECTION(stringstream &ss, int indent_level=0){
+    ss << "\n" << string(indent_level*2, ' ') + "}";
 }
 
 //-------------------------------------------------------------
@@ -257,6 +282,10 @@ void JControlZMQ::ServerLoop()
         }else if( vals[0] == "get_object_count" ){
             //------------------ get_object_count
             ss << GetJANAObjectListJSON();
+        }else if( vals[0] == "get_objects" ){
+            //------------------ get_objects
+            std::string factory_tag = vals.size()>=4 ? vals[3]:"";
+            ss << GetJANAObjectsJSON( vals[1], vals[2], factory_tag );
         }else{
 		    //------------------ Unknown Command
 			ss << "{message:\"Bad Command: " << vals[0] << "\"}";
@@ -595,6 +624,9 @@ std::string JControlZMQ::GetJANAFactoryListJSON()
 // GetJANAObjectListJSON
 //---------------------------------
 std::string JControlZMQ::GetJANAObjectListJSON(){
+    /// Get a list of all objects in JSON format. This only reports the
+    /// the factory name, tag, object type, plugin and number of objects
+    /// already produced for this event.
 
     // Get list of factories and number of objects they've created this event already
     std::map<JFactorySummary, std::size_t> factory_object_counts;
@@ -608,6 +640,8 @@ std::string JControlZMQ::GetJANAObjectListJSON(){
     // Static info
     JSONADD( ss,"host" , _host );
     JSONADD( ss,"PID" , _pid );
+    JSONADD( ss,"run_number" , _jproc->GetRunNumber() );
+    JSONADD( ss,"event_number" , _jproc->GetEventNumber() );
     ss << ",\n" << R"("factories":[)";
 
     auto component_summary = _japp->GetComponentSummary();
@@ -632,6 +666,36 @@ std::string JControlZMQ::GetJANAObjectListJSON(){
 
     // Close JSON string and return
     ss << "}\n";
-    cout << ss.str() << endl;
+//    cout << ss.str() << endl;
     return ss.str(); // TODO: return this with move semantics
+}
+
+//---------------------------------
+// GetJANAObjectsJSON
+//---------------------------------
+std::string JControlZMQ::GetJANAObjectsJSON(const std::string &object_name, const std::string &factory_name, const std::string &factory_tag){
+    /// Get the object contents (if possible) for the specified factory.
+
+    // Get map of objects where key is address as hex string
+    std::map<std::string, JObjectSummary> objects;
+    _jproc->GetObjects( factory_name, factory_tag, object_name, objects );
+
+    // Build map of values to create JSON record of. Add some redundant
+    // info so there is the option of verifying the exact origin of this
+    // by the consumer.
+    std::unordered_map<std::string, std::string> mvals;
+    mvals["program"] = "JANAcp";
+    mvals["host"] = _host;
+    mvals["PID"] = ToString(_pid);
+    mvals["run_number"] = ToString(_jproc->GetRunNumber());
+    mvals["event_number"] = ToString(_jproc->GetEventNumber());
+    mvals["object_name"] = object_name;
+    mvals["factory_name"] = factory_name;
+    mvals["factory_tag"] = factory_tag;
+    mvals["objects"] = JJSON_Create(objects, 2); // Create JSON of objects
+
+    // Create JSON string
+    std::string json = JJSON_Create(mvals);
+//    cout << json << std::endl;
+    return json;
 }

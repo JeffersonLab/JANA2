@@ -35,6 +35,9 @@ public:
     void SetDebugMode(bool debug_mode);
     void NextEvent(void);
     void GetObjectStatus( std::map<JFactorySummary, std::size_t> &factory_object_counts );
+    void GetObjects(const std::string &factory_name, const std::string &factory_tag, const std::string &object_name, std::map<std::string, JObjectSummary> &objects);
+    uint32_t GetRunNumber(void);
+    uint64_t GetEventNumber(void);
 
 protected:
     bool _debug_mode    = false;

@@ -27,6 +27,7 @@ public:
     static void GetDiskSpace(const std::string &dirname, std::map<std::string,float> &vals);
     std::string GetJANAFactoryListJSON();
     std::string GetJANAObjectListJSON();
+    std::string GetJANAObjectsJSON(const std::string &object_name, const std::string &factory_name, const std::string &factory_tag);
 
 private:
 
