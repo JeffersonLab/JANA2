@@ -26,6 +26,7 @@ add_subdirectory(src/libraries/JANA)
 add_subdirectory(src/examples)
 
 add_subdirectory(src/plugins/JTest)
+add_subdirectory(src/plugins/JTestRoot)
 add_subdirectory(src/plugins/streamDet)
 add_subdirectory(src/plugins/janarate)
 add_subdirectory(src/plugins/janacontrol)
