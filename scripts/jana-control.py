@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # GUI for monitoring and controlling a running JANA process
 # via ZMQ messages.
@@ -14,6 +14,7 @@
 # Subject to the terms in the LICENSE file found in the top-level directory.
 
 import os
+import sys
 import zmq
 import json
 import threading
@@ -665,10 +666,89 @@ class MyDebugWindow(ttk.Frame):
 				item_to_select = self.object_info.tree.get_children()[-1]
 		if item_to_select: self.object_info.tree.selection_set(item_to_select)
 
+#=========================
+# Usage
+def Usage():
+	mess='''
+	Usage:
+	        jana-control.py [--help] [--host HOST] [--port PORT]
+	
+This script will open a GUI window that will monitor a running JANA process.
+The process can be running on either the local node or a remote node. For
+this to work, the following criteria must be met:
+
+1. JANA must have been compiled with ZEROMQ support. (This relies
+   on cmake find_package(ZEROMQ) successfully finding it when camke
+   is run.)
+
+2. The python3 environment must me present and have zmq installed.
+   (e.g. pip3 install zmq)
+
+3. The JANA process must have been started with the janacontrol plugin.
+   This should generally be added to the *end* of the plugin list
+   like this:
+   
+      -Pplugins=myplugin1,myplugin2,janacontrol
+
+By default, it will try to attach to port 11238 on the localhost. It
+does not matter whether the JANA process is already running or not.
+It will automatically connect when it does and reconnect if the process
+is restarted.
+
+The following command line options are available:
+
+-h, --help     Print this Usage statement and exit
+--host HOST    Set the host of the JANA process to monitor
+--port PORT    Set the port on the host to connect to
+
+n.b. To change the port used by the remote JANA process set the
+jana:zmq_port configuration parameter.
+
+Debugger
+--------------
+The GUI can be used to step through events in the JANA process and
+view the objects, with some limitations. If the data object inherits
+from JObject then it will display fields obtained from the subclass'
+Summarize method. (See JObject::Summarize for details). If the data
+object inherits from ROOT's TObject then an attempt is made to extract
+the data members via the dictionary. Note that this relies on the
+dictionary being available in the plugin and there are limitations
+to the complexity of the objects that can be displayed.
+
+When the debugger window is opened (by pushing the "Debugger" button
+on the main GUI window), it will stall event processing so that single
+events can be examined and stepped through. To stall processing on the
+very first event, the JANA process should have the jana:debug_mode
+config. parameter set to a non-zero value when it is started. e.g.
+
+jana -Pplugins=myplugin1,myplugin2,janacontrol -Pjana:debug_mode=1 file1.dat
+
+Once an event is loaded, click on a factory to display a list of 
+objects it created for this event (displayed as the object's hexadecimal
+address). Click on an object to display its content summary (if they
+are accessible). n.b. clicking on a factory will NOT cause the factory
+algorithm to activate and create objects for the event. It will only
+display objects created by other plugins having activated the algorithm.
+	'''
+	return mess
 
 
 #=============================================================================
 #------------------- main  (rest of script is in global scope) ---------------
+
+
+# Parse the command line parameters
+if any(item in ['-h', '-help', '--help'] for item in sys.argv):
+	print( Usage() )
+	sys.exit()
+Nargs = len(sys.argv)
+for i,arg in enumerate(sys.argv):
+	if i==0 : continue # skip script name
+	if (arg=='--host') and (i+1<Nargs): HOST = sys.argv[i+1]
+	if (arg=='--port') and (i+1<Nargs): PORT = sys.argv[i+1]
+
+print('\nAttempting connection on host="'+HOST+'" port='+str(PORT))
+print('For help, run "jana-control.py --help"\n')
 
 os.environ['TK_SILENCE_DEPRECATION'] = '1'  # Supress warning on Mac OS X about tkinter going away
 
