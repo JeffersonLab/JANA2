@@ -16,10 +16,10 @@ public:
     virtual ~JTestRootEventSource() = default;
 
     void GetEvent(std::shared_ptr<JEvent>) override;
-};
 
-//template <>
-//double JEventSourceGeneratorT<JTestRootEventSource>::CheckOpenable(std::string);
+protected:
+    std::default_random_engine generator;
+};
 
 #endif // _JTestRootEventSource_h_
 
