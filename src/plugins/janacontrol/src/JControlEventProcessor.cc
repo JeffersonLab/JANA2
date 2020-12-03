@@ -50,8 +50,17 @@ std::string GetAddrAsString(void *addr){
 /// GetRootObjectMemberAsString is the entry point for converting members of
 /// TObject derived objects into strings. This really only works for a few
 /// primitive types, but is useful for debugging/viewing single events.
-std::string GetRootObjectMemberAsString(const TObject *tobj, const TDataMember *memitem, const std::string &type){
+std::string GetRootObjectMemberAsString(const TObject *tobj, const TDataMember *memitem, std::string type){
     void *addr = (void*)(((uint64_t)tobj) + memitem->GetOffset()); // untyped address of data member
+
+    // Convert char arrays to std:string so they display properly (assume that is what user wants)
+    std::string tmp;
+    if( (memitem->Property()&kIsArray) && (type=="char") ){
+        tmp = (char*)addr;
+        addr = (void*)&tmp;
+        type = "string";
+    }
+
     if(      type == "int"           ) return GetAddrAsString<int>(addr);
     else if( type == "double"        ) return GetAddrAsString<double>(addr);
     else if( type == "float"         ) return GetAddrAsString<float>(addr);
