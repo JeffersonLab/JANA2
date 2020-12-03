@@ -651,7 +651,10 @@ class MyDebugWindow(ttk.Frame):
 		if items:
 			addr = self.object_info.tree.item(items[0])['values'][0] # copy value of first selected item
 
-		s = json.loads( result )
+		try:
+			s = json.loads( result )
+		except json.decoder.JSONDecodeError as e:
+			print('ERROR decoding JSON: ' + e.msg)
 		self.last_object_list = s
 		self.object_info.clear() # delete all items in tree
 		for a in s['objects'].keys():
