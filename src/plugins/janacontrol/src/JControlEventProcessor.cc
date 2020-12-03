@@ -80,6 +80,8 @@ JControlEventProcessor::JControlEventProcessor(JApplication *japp):JEventProcess
 //-------------------------------------------------------------
 void JControlEventProcessor::Init() {
     LOG << "JControlEventProcessor::Init" << LOG_END;
+
+    GetApplication()->GetJParameterManager()->SetDefaultParameter("jana:debug_mode", _debug_mode, "Turn on JANA debug mode for janacontrol plugin. (Will require jana-control.py GUI to step through events)");
 }
 
 //-------------------------------------------------------------
