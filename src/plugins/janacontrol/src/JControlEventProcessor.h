@@ -1,3 +1,5 @@
+// Copyright 2020, Jefferson Science Associates, LLC.
+// Subject to the terms in the LICENSE file found in the top-level directory.
 
 #ifndef _JControlEventProcessor_h_
 #define _JControlEventProcessor_h_
@@ -6,6 +8,11 @@
 #include <JANA/JEventProcessor.h>
 #include <JANA/Services/JComponentManager.h>
 
+/// The JControlEventProcessor class is used by the janacontrol plugin, primarily
+/// to help with its debugging feature. It can be used to stall event processing
+/// while events are inspected. It will also grab lists of factories and objects
+/// from a JEvent and encode them in forms (e.g. strings) that can be easily
+/// browsed.
 class JControlEventProcessor : public JEventProcessor {
 
     // Shared state (e.g. histograms, TTrees, TFiles) live

@@ -1,6 +1,72 @@
+// Copyright 2020, Jefferson Science Associates, LLC.
+// Subject to the terms in the LICENSE file found in the top-level directory.
+
 
 #include "JControlEventProcessor.h"
 #include <JANA/JLogger.h>
+
+#include <sstream>
+
+#ifdef HAVE_ROOT
+#include <TObject.h>
+#include <TClass.h>
+#include <TDataMember.h>
+#include <TMethodCall.h>
+#include <Tlist.h>
+
+/// Helper routines to extract value of member of TObject.
+
+// These 4 templates use SFINAE to allow the GetAddrAsString template below to compile
+// even when the template argument is something like a string that cannot be cast to
+// an (int) or (unsigned int). We need this because we want to treat char and unsigned
+// char variables as numbers and not characters.
+template <typename T> void ConvertInt(std::stringstream &ss, T val, std::true_type){ss << (int)val;}
+template <typename T> void ConvertInt(std::stringstream &ss, T val, std::false_type){ss << "unknown";}
+template <typename T> void ConvertUInt(std::stringstream &ss, T val, std::true_type){ss << "0x" << std::hex << (unsigned int)val << std::dec;}
+template <typename T> void ConvertUInt(std::stringstream &ss, T val, std::false_type){ss << "unknown";}
+
+/// The GetAddrAsString template is used to convert an untyped addr
+/// into a std::string. It interprets the address as pointing to
+/// a primitive object of the same type as the template argument.
+// This is done in a very C-style way by doing address arithmetic.
+// There is almost certainly a better way to do this, but the
+// ROOT documentation is not forthcoming.
+template <typename T>
+std::string GetAddrAsString(void *addr){
+    auto val = *(T *)addr;
+    std::stringstream ss;
+    if( std::is_same<T, char>::value ) { // darn char types have to be treated special!
+        ConvertInt(ss, val, std::is_same<T, char>());
+    }else if( std::is_same<T, unsigned char>::value ){
+        ConvertUInt(ss, val, std::is_same<T, unsigned char>());
+    }else if( std::is_same<T, std::string>::value ){
+        ss  << val;
+    }else{
+        ss << val;
+    }
+    return ss.str();
+}
+
+/// GetRootObjectMemberAsString is the entry point for converting members of
+/// TObject derived objects into strings. This really only works for a few
+/// primitive types, but is useful for debugging/viewing single events.
+std::string GetRootObjectMemberAsString(const TObject *tobj, const TDataMember *memitem, const std::string &type){
+    void *addr = (void*)(((uint64_t)tobj) + memitem->GetOffset()); // untyped address of data member
+    if(      type == "int"           ) return GetAddrAsString<int>(addr);
+    else if( type == "double"        ) return GetAddrAsString<double>(addr);
+    else if( type == "float"         ) return GetAddrAsString<float>(addr);
+    else if( type == "char"          ) return GetAddrAsString<char>(addr);
+    else if( type == "unsigned char" ) return GetAddrAsString<unsigned char>(addr);
+    else if( type == "unsigned int"  ) return GetAddrAsString<unsigned int>(addr);
+    else if( type == "long"          ) return GetAddrAsString<long>(addr);
+    else if( type == "unsigned long" ) return GetAddrAsString<unsigned long>(addr);
+    else if( type == "ULong64_t"     ) return GetAddrAsString<ULong64_t>(addr);
+    else if( type == "Long64_t"      ) return GetAddrAsString<Long64_t>(addr);
+    else if( type == "string"        ) return GetAddrAsString<std::string>(addr);
+    return "unknown";
+}
+#endif // HAVE_ROOT
+
 
 //-------------------------------------------------------------
 // JControlEventProcessor
@@ -76,12 +142,18 @@ void JControlEventProcessor::GetObjectStatus( std::map<JFactorySummary, std::siz
     // bombproof against getting called with no active JEvent
     if(_jevent.get() == nullptr ) return;
 
-    // Get a JComponentSummary which contains a list of factory names/tags.
-    auto jcs = _jevent->GetJApplication()->GetComponentSummary();
-
-    // Loop over factories and get number of existing objects for this event for each
-    for( auto fac_info : jcs.factories ){
-        auto fac = _jevent->GetFactory(fac_info.object_name, fac_info.factory_tag);
+    // Get list of all factories associated with this event.
+    // n.b. This will also list objects inserted by the event source
+    // unlike _jevent->GetJApplication()->GetComponentSummary()
+    // which only lists registered factories.
+    auto factories = _jevent->GetAllFactories();
+    for( auto fac : factories ){
+        JFactorySummary fac_info;
+        fac_info.plugin_name = fac->GetPluginName();
+        fac_info.factory_name = fac->GetFactoryName();
+        fac_info.factory_tag = fac->GetTag();
+        fac_info.object_name = fac->GetObjectName();
+        if(fac_info.factory_name == "") fac_info.factory_name = "JFactoryT<" + fac_info.object_name + ">";
         if( fac ) factory_object_counts[fac_info] = fac->GetNumObjects();
     }
 }
@@ -103,6 +175,33 @@ void JControlEventProcessor::GetObjects(const std::string &factory_name, const s
             ss << "0x" << std::hex << (uint64_t)jobj << std::dec;
             objects[ss.str()] = summary; // key is address of object converted to string
         }
+#ifdef HAVE_ROOT
+        // For objects inheriting from TObject, we try and convert members automatically
+        // into JObjectSummary form. This relies on dictionaries being compiled in.
+        // (see ROOT_GENERATE_DICTIONARY for cmake files).
+        for( auto tobj : fac->GetAs<TObject>()){
+            JObjectSummary summary;
+            auto tclass = TClass::GetClass(tobj->ClassName());
+            if(tclass){
+                auto *members = tclass->GetListOfAllPublicDataMembers();
+                for( auto item : *members){
+                    TDataMember *memitem = dynamic_cast<TDataMember*>(item);
+                    if( memitem == nullptr ) continue;
+                    if( memitem->Property() & kIsStatic ) continue; // exclude TObject enums
+                    JObjectMember jObjectMember;
+                    jObjectMember.name = memitem->GetName();
+                    jObjectMember.type = memitem->GetTypeName();
+                    jObjectMember.value = GetRootObjectMemberAsString(tobj, memitem, jObjectMember.type);
+                    summary.add(jObjectMember);
+                }
+            }else {
+                LOG << "Unable to get TClass for: " << object_name << LOG_END;
+            }
+            std::stringstream ss;
+            ss << "0x" << std::hex << (uint64_t)tobj << std::dec;
+            objects[ss.str()] = summary; // key is address of object converted to string
+        }
+#endif
     }else{
         _DBG_<<"No factory found! object_name=" << object_name << std::endl;
     }
