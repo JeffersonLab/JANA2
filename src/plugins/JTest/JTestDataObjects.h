@@ -15,6 +15,10 @@ struct JTestEntangledEventData : public JObject {
 
 struct JTestEventData : public JObject {
     std::vector<char> buffer;
+
+    void Summarize(JObjectSummary& summary) const override {
+        summary.add(buffer.size(), "buffer_size", "%d");
+    }
 };
 
 struct JTestTrackData : public JObject {

@@ -94,7 +94,9 @@ public:
     virtual void EndRun() {}
     virtual void Process(const std::shared_ptr<const JEvent> &aEvent) {}
 
-
+    virtual std::size_t GetNumObjects(void) const {
+        return 0;
+    }
 
     // Copy/Move objects into factory
     template<typename T>
