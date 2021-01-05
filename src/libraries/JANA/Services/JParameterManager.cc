@@ -19,7 +19,7 @@ JParameterManager::JParameterManager() {
 }
 
 /// @brief Copy constructor
-/// @details Does a deep copy of the JParameter* objects to avoid double frees.
+/// @details Does a deep copy of the JParameter objects to avoid double frees.
 JParameterManager::JParameterManager(const JParameterManager& other) {
 
 	m_logger = other.m_logger;
@@ -30,7 +30,7 @@ JParameterManager::JParameterManager(const JParameterManager& other) {
 }
 
 /// @brief Destructor
-/// @details Destroys all contained JParameter* objects
+/// @details Destroys all contained JParameter objects.
 JParameterManager::~JParameterManager() {
     for (auto p : m_parameters) delete p.second;
     m_parameters.clear();
@@ -63,7 +63,7 @@ bool JParameterManager::Exists(string name) {
 /// @param [in] name    the parameter name
 /// @return             a pointer to the JParameter.
 ///
-/// @note The JParameter pointer is still owned by the JParameterManager, so handle it with care.
+/// @note The JParameter pointer is still owned by the JParameterManager, so don't delete it.
 JParameter* JParameterManager::FindParameter(std::string name) {
     auto result = m_parameters.find(to_lower(name));
     if (result == m_parameters.end()) {
@@ -72,7 +72,7 @@ JParameter* JParameterManager::FindParameter(std::string name) {
     return result->second;
 }
 
-/// @brief Prints all parameters to stdout
+/// @brief Prints parameters to stdout
 ///
 /// @param [in] all   If false, prints only parameters whose values differ from the defaults.
 ///                   If true, prints all parameters.
@@ -121,24 +121,20 @@ void JParameterManager::PrintParameters(bool all) {
 /// @brief Load parameters from a configuration file
 ///
 /// @param filename    Path to the configuration file
+///
 /// @details
 /// The file should have the form:
-///         ~~~~
-///         <pre>
-///         key1 value1
-///         key2 value2
-///         ...
-///         </pre>
-///         ~~~~
+///     <pre>
+///     key1 value1
+///     key2 value2
+///     ...
+///     </pre>
 ///
 /// There should be a space between the key and the value. The key may contain no spaces.
 /// The value is taken as the rest of the line up to, but not including the newline.
-///
 /// A key may be specified with no value and the value will be set to "1".
-///
 /// A "#" charater will discard the remaining characters in a line up to
 /// the next newline. Lines starting with "#" are ignored completely.
-///
 /// Lines with no characters (except for the newline) are ignored.
 ///
 void JParameterManager::ReadConfigFile(std::string filename) {
@@ -204,9 +200,9 @@ void JParameterManager::ReadConfigFile(std::string filename) {
 
 /// @brief Write parameters out to an ASCII configuration file
 ///
-/// @param filename    Path to the configuration file
-/// @details
-/// The file is written in a format compatible with reading in via ReadConfigFile.
+/// @param [in] filename    Path to the configuration file
+///
+/// @details The file is written in a format compatible with reading in via ReadConfigFile().
 ///
 void JParameterManager::WriteConfigFile(std::string filename) {
 
