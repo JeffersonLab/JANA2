@@ -22,6 +22,7 @@ class JFactorySet : public JResettable
 	public:
 		JFactorySet(void);
 		JFactorySet(const std::vector<JFactoryGenerator*>& aFactoryGenerators);
+		JFactorySet(JFactoryGenerator* source_gen, const std::vector<JFactoryGenerator*>& default_gens);
 		virtual ~JFactorySet();
 		
 		bool Add(JFactory* aFactory);

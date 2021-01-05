@@ -88,11 +88,15 @@ set(JANA2_SOURCES
     Calibrations/JCalibrationFile.h
     Calibrations/JCalibrationGenerator.h
     Calibrations/JCalibrationGeneratorCCDB.h
+    Calibrations/JLargeCalibration.cc
+    Calibrations/JLargeCalibration.h
 
     CLI/JVersion.h
     CLI/JBenchmarker.cc
     CLI/JBenchmarker.h
     CLI/JSignalHandler.h
+    CLI/JMain.cc
+    CLI/JMain.h
 
     Compatibility/JStreamLog.cc
     Compatibility/JStreamLog.h
@@ -100,6 +104,17 @@ set(JANA2_SOURCES
     Compatibility/JStreamLogBuffer.h
     Compatibility/JStatusBits.h
     Compatibility/jerror.h
+    Compatibility/JGeometry.h
+    Compatibility/JGeometryManager.cc
+    Compatibility/JGeometryManager.h
+    Compatibility/JGeometryMYSQL.cc
+    Compatibility/JGeometryMYSQL.h
+    Compatibility/JGeometryXML.cc
+    Compatibility/JGeometryXML.h
+    Compatibility/md5.c
+    Compatibility/md5.h
+    Compatibility/JLockService.h
+    Compatibility/JGetObjectsFactory.h
     )
 
 

@@ -60,12 +60,6 @@ regexes = [
 
     (re.compile(r'loop->AddFactory'),
      r'factorySet->Add'),
-
-    (re.compile(r'jout((?:(?! endl).)*) endl;'),
-     r'jout\1 jendl;'),
-
-    (re.compile(r'jout((?:(?!>endl).)*)>endl;'),
-     r'jout\1>jendl;')
 ]
 
 

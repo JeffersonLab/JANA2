@@ -11,11 +11,11 @@ set(StreamingExample_SOURCES SHARED
 
 find_package(ZEROMQ)
 
-if (ZEROMQ_FOUND)
+if (ZeroMQ_FOUND)
 
     add_library(StreamingExample_plugin SHARED ${StreamingExample_SOURCES})
-    target_include_directories(StreamingExample_plugin PUBLIC ${ZEROMQ_INCLUDE_DIRS})
-    target_link_libraries(StreamingExample_plugin jana2 ${ZEROMQ_LIBRARIES})
+    target_include_directories(StreamingExample_plugin PUBLIC ${ZeroMQ_INCLUDE_DIRS})
+    target_link_libraries(StreamingExample_plugin jana2 ${ZeroMQ_LIBRARIES})
     set_target_properties(StreamingExample_plugin PROPERTIES PREFIX "" SUFFIX ".so")
     install(TARGETS StreamingExample_plugin DESTINATION plugins)
 

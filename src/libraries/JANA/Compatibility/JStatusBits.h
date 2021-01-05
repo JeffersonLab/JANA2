@@ -19,9 +19,11 @@ class JStatusBits {
 
 public:
 
+	void SetStatus(uint64_t status) { m_status = status; }
+
 	uint64_t GetStatus() const { return m_status; }
 
-	bool GetStatusBit(T bit)
+	bool GetStatusBit(T bit) const
 	{
 		/// Return the present value of the specified status bit.
 		/// The value of "bit" should be from 0-63.
@@ -72,7 +74,7 @@ public:
 	}
 
 
-	void ClearStatus(void)
+	void ClearStatus()
 	{
 		/// Clear all bits in the status word. This
 		/// is equivalent to calling SetStatus(0).
@@ -118,7 +120,7 @@ public:
 	}
 
 
-	std::string ToString()
+	std::string ToString() const
 	{
 		/// Generate a formatted string suitable for printing to the screen, including the
 		/// entire word in both hexadecimal and binary along with descriptions.
@@ -155,7 +157,7 @@ public:
 
 			if(iter != m_status_bit_descriptions.end() || val != 0){
 				ss << std::dec << std::setw(2) << std::setfill(' ');
-				ss << " " << val << " - [" << std::setw(2) << std::setfill(' ') << i << "] " << GetStatusBitDescription(i) << std::endl;
+				ss << " " << val << " - [" << std::setw(2) << std::setfill(' ') << i << "] " << m_status_bit_descriptions[i] << std::endl;
 			}
 		}
 		ss << std::endl;
@@ -164,6 +166,11 @@ public:
 
 };
 
+template <typename T>
+std::mutex JStatusBits<T>::m_mutex;
+
+template <typename T>
+std::map<uint32_t, std::string> JStatusBits<T>::m_status_bit_descriptions;
 
 
 #endif //JANA2_JSTATUSBITS_H

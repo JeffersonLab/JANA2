@@ -40,7 +40,7 @@ enum jerror_t{
 };
 
 // The following is here just so we can use ROOT's THtml class to generate documentation.
-#include "cint.h"
+#include <JANA/Compatibility/cint.h>
 
 
 #endif //_JERROR_H_

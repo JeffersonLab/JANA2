@@ -38,7 +38,7 @@ public:
         app->GetParameter("jtest:parser_spread", m_cputime_spread);
         app->GetParameter("jtest:nevents", m_max_event_count);
 
-        jout << "Hello from JTestParser" << jendl;
+        LOG << "Hello from JTestParser" << LOG_END;
         SetTypeName(NAME_OF_THIS);
     }
 

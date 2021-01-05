@@ -3,6 +3,7 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #include <JANA/JLogger.h>
+#include <JANA/Compatibility/JStreamLog.h>
 #include "JCalibration.h"
 
 #include <unistd.h>
@@ -335,9 +336,9 @@ void JCalibration::DumpCalibrationsToFiles(string basedir)
 		closedir(dirp);
 	}
 	if(err != 0){
-		jerr<<" Error getting full pathname to directory where the calib constants were written!" << jendl;
-		jerr<<" It's possible you can still access them using the info below, but this is" << jendl;
-		jerr<<" likely a critical error!" << jendl;
+		jerr<<" Error getting full pathname to directory where the calib constants were written!" << endl;
+		jerr<<" It's possible you can still access them using the info below, but this is" << endl;
+		jerr<<" likely a critical error!" << endl;
 		if(basedir.length() >1023) basedir = "/fatal/error/its/hopeless/"; // ;)
 		strcpy(fullpath, basedir.c_str());
 	}

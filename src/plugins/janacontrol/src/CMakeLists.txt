@@ -1,6 +1,6 @@
 
-find_package(ZEROMQ)
-if (ZEROMQ_FOUND)
+find_package(ZeroMQ)
+if (ZeroMQ_FOUND)
 
     set (janacontrol_PLUGIN_SOURCES
             janacontrol.cc
@@ -25,8 +25,8 @@ if (ZEROMQ_FOUND)
     endif()
     #---------------------------------------------------------------------------------------
 
-	target_include_directories(janacontrol_plugin PUBLIC ${JANA_INCLUDE_DIR} ${ZEROMQ_INCLUDE_DIRS})
-    target_link_libraries(janacontrol_plugin jana2 Threads::Threads ${ZEROMQ_LIBRARIES})
+	target_include_directories(janacontrol_plugin PUBLIC ${JANA_INCLUDE_DIR} ${ZeroMQ_INCLUDE_DIRS})
+    target_link_libraries(janacontrol_plugin jana2 Threads::Threads ${ZeroMQ_LIBRARY})
 	set_target_properties(janacontrol_plugin PROPERTIES PREFIX "" OUTPUT_NAME "janacontrol" SUFFIX ".so")
 	install(TARGETS janacontrol_plugin DESTINATION plugins)
 

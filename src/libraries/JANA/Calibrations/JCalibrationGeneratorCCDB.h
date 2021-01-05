@@ -84,7 +84,7 @@
 				if(parseResult.RunNumberIsParsed) 
 				{
 					run = parseResult.RunNumber;
-					jout<<"CCDB::janaccdb (!) The run number for CCDB IS FORCED TO BE '"<< run<<"' (it was set through context) (!)"<<jendl;
+					jout<<"CCDB::janaccdb (!) The run number for CCDB IS FORCED TO BE '"<< run<<"' (it was set through context) (!)"<<std::endl;
 				}
 			#endif
 

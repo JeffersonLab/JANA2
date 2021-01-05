@@ -52,6 +52,7 @@ class JCalibration{
 		template<class T> bool Get(string namepath, vector<T> &vals, uint64_t event_number=0);
 		template<class T> bool Get(string namepath, vector< map<string,T> > &vals, uint64_t event_number=0);
 		template<class T> bool Get(string namepath, vector< vector<T> > &vals, uint64_t event_number=0);
+		template<class T> bool Get(string namepath, T &val);
 
 		template<class T> bool Put(string namepath, int32_t run_min, int32_t run_max, uint64_t event_min, uint64_t event_max, string &author, map<string,T> &vals, const string &comment="");
 		template<class T> bool Put(string namepath, int32_t run_min, int32_t run_max, uint64_t event_min, uint64_t event_max, string &author, vector<T> &vals, const string &comment="");
@@ -379,6 +380,26 @@ bool JCalibration::Get(string namepath, const T* &vals, uint64_t event_number)
 	
 	return res;
 }
+
+//-------------
+// GetCalib (single)
+//-------------
+template<class T> bool JCalibration::Get(string namepath, T &val)
+{
+	/// This is a convenience method for getting a single entry. It
+	/// simply calls the vector version and returns the first entry.
+	/// It returns true if the vector version returns true AND there
+	/// is at least one entry in the vector. No check is made for there
+	/// there being more than one entry in the vector.
+
+	vector<T> vals;
+	bool ret = Get(namepath, vals);
+	if(vals.empty()) return true;
+	val = vals[0];
+
+	return ret;
+}
+
 
 //-------------
 // Put  (map version)

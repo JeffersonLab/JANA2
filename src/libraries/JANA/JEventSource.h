@@ -232,6 +232,8 @@ public:
     void SetTypeName(std::string type_name) { m_type_name = std::move(type_name); }
 
     // Meant to be called by user
+    /// SetFactoryGenerator allows us to override the set of factories. This is somewhat superfluous
+    /// The only time we _really_ need to call SetFactoryGenerator
     void SetFactoryGenerator(JFactoryGenerator* generator) { m_factory_generator = generator; }
 
     // Meant to be called by user

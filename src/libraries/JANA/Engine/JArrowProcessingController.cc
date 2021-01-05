@@ -104,12 +104,12 @@ JArrowProcessingController::~JArrowProcessingController() {
 
 void JArrowProcessingController::print_report() {
     auto metrics = measure_internal_performance();
-    jout << "Running" << *metrics << jendl;
+    LOG_INFO(_logger) << "Running" << *metrics << LOG_END;
 }
 
 void JArrowProcessingController::print_final_report() {
     auto metrics = measure_internal_performance();
-    jout << "Final Report" << *metrics << jendl;
+    LOG_INFO(_logger) << "Final Report" << *metrics << LOG_END;
 }
 
 std::unique_ptr<const JArrowPerfSummary> JArrowProcessingController::measure_internal_performance() {

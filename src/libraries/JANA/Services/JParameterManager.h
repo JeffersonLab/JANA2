@@ -22,12 +22,16 @@ struct JParameter {
     std::string description;      // One-liner
     bool has_default;             // Indicates that a default value is present. Does not indicate whether said value is in use.
     // bool uses_default;         // TODO: We may want this instead of `if(param.value == param.default_value)` all the time
+
+    void SetDescription(std::string description) { this->description = description; }
 };
 
 class JParameterManager : public JService {
 public:
 
     JParameterManager();
+
+    JParameterManager(const JParameterManager&);
 
     virtual ~JParameterManager();
 
@@ -49,6 +53,8 @@ public:
     template<typename T>
     JParameter* SetDefaultParameter(std::string name, T& val, std::string description = "");
 
+	void FilterParameters(std::map<std::string,std::string> &parms, std::string filter="");
+
     void ReadConfigFile(std::string name);
 
     void WriteConfigFile(std::string name);
@@ -61,15 +67,24 @@ protected:
     template<typename T>
     std::string stringify(T value);
 
-    std::string to_lower(std::string& name);
+    std::string to_lower(const std::string& name);
 
     std::map<std::string, JParameter*> m_parameters;
 
     JLogger m_logger;
+
+    std::mutex m_mutex;
 };
 
 
 
+/// @brief Retrieves a JParameter and stores its value
+///
+/// @param [in] name    The name of the parameter to retrieve
+/// @param [out] val    Reference to where the parameter value should be stored
+/// @returns            The corresponding JParameter representation, which provides us with
+///                     additional information such as the default value, or nullptr if not found.
+///
 template<typename T>
 JParameter* JParameterManager::GetParameter(std::string name, T& val) {
 
@@ -82,6 +97,12 @@ JParameter* JParameterManager::GetParameter(std::string name, T& val) {
 }
 
 
+/// @brief Retrieves a parameter value
+///
+/// @param [in] name    The name of the parameter to retrieve
+/// @returns            The parameter value
+/// @throws JException  in case the parameter is not found
+///
 template<typename T>
 T JParameterManager::GetParameterValue(std::string name) {
     auto result = m_parameters.find(to_lower(name));
@@ -92,6 +113,11 @@ T JParameterManager::GetParameterValue(std::string name) {
 }
 
 
+/// @brief Sets a configuration parameter
+/// @param [in] name        The parameter name
+/// @param [in] val         The parameter value. This may be typed, or it may be a string.
+/// @return                 Pointer to the JParameter that was either created or updated.
+///                         Note that this is owned by this JParameterManager, so do not delete.
 template<typename T>
 JParameter* JParameterManager::SetParameter(std::string name, T val) {
 
@@ -107,32 +133,35 @@ JParameter* JParameterManager::SetParameter(std::string name, T val) {
 }
 
 
+/// @brief Retrieve a configuration parameter, if necessary creating it with the provided default value
+///
+/// @param [in] name            The parameter name. Must not contain spaces.
+/// @param [in,out] val         Reference to a variable which has been set to the desired default value.
+/// @param [in] description     Optional description, e.g. units, set or range of valid values, etc.
+///
+/// @details Upon entry, the value in "val" should be set to the desired default value. It
+/// will be overwritten if a value for the parameter already exists because
+/// it was given by the user either on the command line or in a configuration
+/// file. If the parameter does not already exist, it is created and its value set
+/// to that of "val". Upon exit, "val" will always contain the value that should be used
+/// for event processing.
+///
+/// If a parameter with the given name already exists, it will be checked to see
+/// if the parameter already has a default value assigned (this is kept separate
+/// from the actual value of the parameter used and is maintained purely for
+/// bookkeeping purposes). If it does not have a default value, then the value
+/// of "val" upon entry is saved as the default. If it does have a default, then
+/// the value of the default is compared to the value of "val" upon entry. If the
+/// two do not match, then a warning message is printed to indicate to the user
+/// that two different default values are being set for this parameter.
+///
+/// Parameters specified on the command line using the "-Pkey=value" syntax will
+/// not have a default value at the time the parameter is created.
+///
 template<typename T>
 JParameter* JParameterManager::SetDefaultParameter(std::string name, T& val, std::string description) {
-    /// Retrieve a configuration parameter, creating it if necessary.
-    ///
-    /// Upon entry, the value in "val" should be set to the desired default value. It
-    /// will be overwritten if a value for the parameter already exists because
-    /// it was given by the user either on the command line or in a configuration
-    /// file. If the parameter does not already exist, it is created and its value set
-    /// to that of "val". Upon exit, "val" will always contain the value that should be used
-    /// for event processing.
-    ///
-    /// If a parameter with the given name already exists, it will be checked to see
-    /// if the parameter already has a default value assigned (this is kept separate
-    /// from the actual value of the parameter used and is maintained purely for
-    /// bookkeeping purposes). If it does not have a default value, then the value
-    /// of "val" upon entry is saved as the default. If it does have a default, then
-    /// the value of the default is compared to the value of "val" upon entry. If the
-    /// two do not match, then a warning message is printed to indicate to the user
-    /// that two different default values are being set for this parameter.
-    ///
-    /// Parameters specified on the command line using the "-Pkey=value" syntax will
-    /// not have a default value at the time the parameter is created.
-    ///
-    /// This should be called after the JApplication object has been initialized so
-    /// that parameters can be created from any command line options the user may specify.
 
+    std::lock_guard<std::mutex> lock(m_mutex);
     JParameter* param = nullptr;
 
     auto result = m_parameters.find(to_lower(name));
@@ -171,8 +200,8 @@ JParameter* JParameterManager::SetDefaultParameter(std::string name, T& val, std
 }
 
 
-// Logic for parsing and stringifying different types
-
+/// @brief Logic for parsing different types in a generic way
+/// @throws JException in case parsing fails.
 template <typename T>
 inline T JParameterManager::parse(const std::string& value) {
     std::stringstream ss(value);
@@ -181,6 +210,7 @@ inline T JParameterManager::parse(const std::string& value) {
     return val;
 }
 
+/// @brief Specialization for bool
 template <>
 inline bool JParameterManager::parse(const std::string& value) {
     if (value == "0") return false;
@@ -193,7 +223,7 @@ inline bool JParameterManager::parse(const std::string& value) {
 }
 
 
-/// Specialization for std::vector<std::string>
+/// @brief Specialization for std::vector<std::string>
 template<>
 inline std::vector<std::string> JParameterManager::parse(const std::string& value) {
     std::stringstream ss(value);
@@ -205,6 +235,7 @@ inline std::vector<std::string> JParameterManager::parse(const std::string& valu
     return result;
 }
 
+/// @brief Logic for stringifying different types in a generic way
 template <typename T>
 inline std::string JParameterManager::stringify(T value) {
     std::stringstream ss;

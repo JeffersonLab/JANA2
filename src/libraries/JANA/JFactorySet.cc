@@ -37,6 +37,17 @@ JFactorySet::JFactorySet(const std::vector<JFactoryGenerator*>& aFactoryGenerato
 	}
 }
 
+JFactorySet::JFactorySet(JFactoryGenerator* source_gen, const std::vector<JFactoryGenerator*>& default_gens) {
+	source_gen->GenerateFactories(this);
+	for (auto gen : default_gens) {
+		JFactorySet temp_set;
+		Merge(temp_set); // Factories which are shadowed stay in temp_set; others are removed
+		for (auto straggler : temp_set.GetAllFactories()) {
+			LOG << "Factory '" << straggler->GetFactoryName() << "' overriden, will be excluded from event." << LOG_END;
+		}
+	}
+}
+
 //---------------------------------
 // ~JFactorySet    (Destructor)
 //---------------------------------

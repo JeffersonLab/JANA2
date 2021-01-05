@@ -42,6 +42,8 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 			mFactorySet = aFactorySet;
 		}
 
+		JFactorySet* GetFactorySet() const { return mFactorySet; }
+
 		JFactory* GetFactory(const std::string& object_name, const std::string& tag) const;
 		std::vector<JFactory*> GetAllFactories() const;
 		template<class T> JFactoryT<T>* GetFactory(const std::string& tag = "", bool throw_on_missing=false) const;
@@ -61,9 +63,10 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 		template<class T> std::vector<const T*> Get(const std::string& tag = "") const;
 		template<class T> typename JFactoryT<T>::PairType GetIterators(const std::string& aTag = "") const;
 		template<class T> std::vector<const T*> GetAll() const;
+		template<class T> std::map<std::pair<std::string,std::string>,std::vector<T*>> GetAllChildren() const;
 
-		template<class T>
-		std::map<std::pair<std::string,std::string>,std::vector<T*>> GetAllChildren() const;
+		// JANA1 compatibility getters
+		template<class T> JFactoryT<T>* GetSingle(const T* &t, const char *tag="", bool exception_if_not_one=true) const;
 
 		// Insert
 		template <class T> JFactoryT<T>* Insert(T* item, const std::string& aTag = "") const;
@@ -74,25 +77,25 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 		void SetEventNumber(uint64_t aEventNumber){mEventNumber = aEventNumber;}
 		void SetJApplication(JApplication* app){mApplication = app;}
 		void SetJEventSource(JEventSource* aSource){mEventSource = aSource;}
+		[[deprecated]]
+		void SetSequential(bool isSequential){mIsBarrierEvent = isSequential;}
 
 		//GETTERS
 		uint32_t GetRunNumber() const {return mRunNumber;}
 		uint64_t GetEventNumber() const {return mEventNumber;}
 		JApplication* GetJApplication() const {return mApplication;}
 		JEventSource* GetJEventSource() const {return mEventSource; }
+		bool GetSequential() const {return mIsBarrierEvent;}
 		friend class JEventPool;
-
-	protected:
-		mutable JFactorySet* mFactorySet = nullptr;
-		JEventSource* mEventSource = nullptr;
-		bool mIsBarrierEvent = false;
 
 	private:
 		JApplication* mApplication = nullptr;
 		uint32_t mRunNumber = 0;
 		uint64_t mEventNumber = 0;
+		mutable JFactorySet* mFactorySet = nullptr;
+		JEventSource* mEventSource = nullptr;
+		bool mIsBarrierEvent = false;
 		int mDebugLevel = 0;
-		std::shared_ptr<const JEvent> mLatestBarrierEvent = nullptr;
 };
 
 /// Insert() allows an EventSource to insert items directly into the JEvent,
@@ -317,6 +320,32 @@ template<class T>
 typename JFactoryT<T>::PairType JEvent::GetIterators(const std::string& tag) const {
 	return GetFactory<T>(tag, true)->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
 }
+
+
+template<class T>
+JFactoryT<T>* JEvent::GetSingle(const T* &t, const char *tag, bool exception_if_not_one) const
+{
+	/// This is a convenience method that can be used to get a pointer to the single
+	/// object of type T from the specified factory. It simply calls the Get(vector<...>) method
+	/// and copies the first pointer into "t" (or NULL if something other than 1 object is returned).
+	///
+	/// This is intended to address the common situation in which there is an interest
+	/// in the event if and only if there is exactly 1 object of type T. If the event
+	/// has no objects of that type or more than 1 object of that type (for the specified
+	/// factory) then an exception of type "unsigned long" is thrown with the value
+	/// being the number of objects of type T. You can supress the exception by setting
+	/// exception_if_not_one to false. In that case, you will have to check if t==NULL to
+	/// know if the call succeeded.
+	std::vector<const T*> v;
+	JFactoryT<T> *fac = Get(v, tag);
+	if(v.size()!=1){
+		t = NULL;
+		if(exception_if_not_one) throw v.size();
+	}
+	t = v[0];
+	return fac;
+}
+
 
 #endif // _JEvent_h_
 

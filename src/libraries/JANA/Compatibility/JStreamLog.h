@@ -63,5 +63,6 @@ std::ostream& endMsg(std::ostream& os);
 
 extern JStreamLog jout;
 extern JStreamLog jerr;
+#define jendl std::endl
 
 #endif //_DSTREAMLOG_H_
