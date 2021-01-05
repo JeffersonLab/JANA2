@@ -34,8 +34,7 @@ add_subdirectory(src/plugins/janacontrol)
 add_subdirectory(src/programs/jana)
 add_subdirectory(src/programs/tests)
 
-#add_subdirectory(src/python)
-# TODO: Disabled because pybind11 suddenly broke on macOS
+add_subdirectory(src/python)
 
 install(DIRECTORY scripts/ DESTINATION bin FILES_MATCHING PATTERN "jana-*.py"
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_READ WORLD_EXECUTE)
