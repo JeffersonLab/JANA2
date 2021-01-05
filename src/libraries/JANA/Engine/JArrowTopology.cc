@@ -75,7 +75,7 @@ JArrowTopology* JArrowTopology::from_components(std::shared_ptr<JComponentManage
     size_t location_count = 1;
     bool enable_stealing = false;
     bool limit_total_events_in_flight = true;
-    int affinity = 0;
+    int affinity = 2;
     int locality = 0;
 
     params->SetDefaultParameter("jana:event_pool_size", event_pool_size);

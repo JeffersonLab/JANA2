@@ -131,9 +131,11 @@ void JBenchmarker::RunUntilFinished() {
     }
     ofs2.close();
 
-    copy_to_output_dir("${JANA_HOME}/src/plugins/JTest/plot_rate_vs_nthreads.py");
+    copy_to_output_dir("${JANA_HOME}/bin/jana-plot-scaletest.py");
 
-    std::cout << "Testing finished" << std::endl;
+    std::cout << "Testing finished. To view a plot of test results:" << std::endl << std::endl;
+    std::cout << "   cd " << _output_dir << std::endl;
+    std::cout << "   ./jana-plot-scaletest.py" << std::endl << std::endl;
     _app->Quit();
 }
 
@@ -169,12 +171,18 @@ void JBenchmarker::copy_to_output_dir(std::string filename) {
     // Extract filename without path
     std::string base_fname = new_fname;
     if (auto pos = base_fname.rfind("/")) base_fname.erase(0, pos);
+    auto out_name = _output_dir + "/" + base_fname;
 
     // Copy file
     LOG_INFO(_logger) << "Copying " << new_fname << " -> " << _output_dir << LOG_END;
     std::ifstream src(new_fname, std::ios::binary);
-    std::ofstream dst(_output_dir + "/" + base_fname, std::ios::binary);
+    std::ofstream dst(out_name, std::ios::binary);
     dst << src.rdbuf();
+
+    // Change permissions to match source
+    struct stat st;
+    stat(new_fname.c_str(), &st);
+    chmod(out_name.c_str(), st.st_mode);
 }
 
 

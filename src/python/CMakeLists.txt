@@ -2,7 +2,7 @@
 # Top-level CMakeLists.txt for JANA2 python interfaces
 #
 
-add_subdirectory(externals/pybind11-2.5.0)
+add_subdirectory(externals/pybind11-2.6.1)
 
 
 # Note that the common directory contains source common to

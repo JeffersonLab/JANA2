@@ -3,11 +3,16 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #include <vector>
+#include <type_traits>
 
 #include <JANA/JApplication.h>
 #include <JANA/JFactory.h>
 #include <JANA/JObject.h>
 #include <JANA/Utils/JTypeInfo.h>
+
+#ifdef HAVE_ROOT
+#include <TObject.h>
+#endif
 
 #ifndef _JFactoryT_h_
 #define _JFactoryT_h_
@@ -30,16 +35,28 @@ public:
     [[deprecated]]
     JFactoryT(const std::string& aName, const std::string& aTag) : JFactory(aName, aTag) {
         EnableGetAs<T>();
+        EnableGetAs<JObject>( std::is_convertible<T,JObject>() ); // Automatically add JObject if this can be converted to it
+#ifdef HAVE_ROOT
+        EnableGetAs<TObject>( std::is_convertible<T,TObject>() ); // Automatically add TObject if this can be converted to it
+#endif
     }
 
 	[[deprecated]]
 	JFactoryT(const std::string& aName) : JFactory(aName, "") {
         EnableGetAs<T>();
+        EnableGetAs<JObject>( std::is_convertible<T,JObject>() ); // Automatically add JObject if this can be converted to it
+#ifdef HAVE_ROOT
+        EnableGetAs<TObject>( std::is_convertible<T,TObject>() ); // Automatically add TObject if this can be converted to it
+#endif
     }
 
     JFactoryT() : JFactory(JTypeInfo::demangle<T>(), ""){
         EnableGetAs<T>();
-    }
+        EnableGetAs<JObject>( std::is_convertible<T,JObject>() ); // Automatically add JObject if this can be converted to it
+#ifdef HAVE_ROOT
+        EnableGetAs<TObject>( std::is_convertible<T,TObject>() ); // Automatically add TObject if this can be converted to it
+#endif
+	}
 
     ~JFactoryT() override = default;
 
@@ -56,6 +73,10 @@ public:
 
     std::type_index GetObjectType(void) const override {
         return std::type_index(typeid(T));
+    }
+
+    std::size_t GetNumObjects(void) const override {
+        return mData.size();
     }
 
     /// GetOrCreate handles all the preconditions and postconditions involved in calling the user-defined Open(),
@@ -163,6 +184,10 @@ public:
     /// Note that EnableGetAs<T>() is called automatically.
     template <typename S> void EnableGetAs ();
 
+    // The following specializations allow automatically adding standard types (e.g. JObject) using things like
+    // std::is_convertible(). The std::true_type version defers to the standard EnableGetAs().
+    template <typename S> void EnableGetAs(std::true_type) { EnableGetAs<S>(); }
+    template <typename S> void EnableGetAs(std::false_type) {}
 
     void ClearData() override {
 

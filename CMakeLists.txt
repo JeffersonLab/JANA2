@@ -26,6 +26,7 @@ add_subdirectory(src/libraries/JANA)
 add_subdirectory(src/examples)
 
 add_subdirectory(src/plugins/JTest)
+add_subdirectory(src/plugins/JTestRoot)
 add_subdirectory(src/plugins/streamDet)
 add_subdirectory(src/plugins/janarate)
 add_subdirectory(src/plugins/janacontrol)
@@ -36,6 +37,6 @@ add_subdirectory(src/programs/tests)
 #add_subdirectory(src/python)
 # TODO: Disabled because pybind11 suddenly broke on macOS
 
-install(PROGRAMS scripts/jana-generate.py scripts/jana-upgrade.py DESTINATION bin)
-
+install(DIRECTORY scripts/ DESTINATION bin FILES_MATCHING PATTERN "jana-*.py"
+        PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_READ WORLD_EXECUTE)
 include(${CMAKE_SOURCE_DIR}/cmake/MakeConfig.cmake)

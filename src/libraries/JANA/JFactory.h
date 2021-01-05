@@ -98,8 +98,11 @@ public:
     virtual void Process(const std::shared_ptr<const JEvent> &aEvent) {}
 	virtual void Finish() {}
 
+    virtual std::size_t GetNumObjects(void) const {
+        return 0;
+    }
 
-		// Copy/Move objects into factory
+    // Copy/Move objects into factory
     template<typename T>
     void Set(const std::vector<T *> &items) {
         for (T *item : items) {

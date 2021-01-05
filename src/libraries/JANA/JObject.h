@@ -54,6 +54,11 @@ public:
 		snprintf(buffer, 256, format, x);
 		m_fields.push_back({name, JTypeInfo::builtin_typename<T>(), buffer, description});
 	}
+
+	/// add() is used to insert a new row of JObjectMember data
+	void add(const JObjectMember &objectMember){
+	    m_fields.push_back(objectMember);
+	}
 };
 
 class JObject{
