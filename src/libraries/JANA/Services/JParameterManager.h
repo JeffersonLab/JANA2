@@ -31,9 +31,9 @@ public:
 
     JParameterManager();
 
-	JParameterManager(const JParameterManager&);
+    JParameterManager(const JParameterManager&);
 
-	virtual ~JParameterManager();
+    virtual ~JParameterManager();
 
     bool Exists(std::string name);
 
@@ -67,7 +67,7 @@ protected:
     template<typename T>
     std::string stringify(T value);
 
-    std::string to_lower(std::string& name);
+    std::string to_lower(const std::string& name);
 
     std::map<std::string, JParameter*> m_parameters;
 
