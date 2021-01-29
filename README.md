@@ -18,3 +18,5 @@ for(auto t : tracks){
   // ... do something with a track
 }
 ```
+
+For detailed instructions on building and installing JANA, see the [howto guide](https://jeffersonlab.github.io/JANA2/Installation.html).
