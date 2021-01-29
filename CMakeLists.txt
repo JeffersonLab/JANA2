@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.9)
-project(jana2 VERSION 2.0.1)
+project(jana2 VERSION 2.0.3)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)   # Enable -fPIC for all targets
 

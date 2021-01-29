@@ -139,7 +139,7 @@ configure_package_config_file(
         INSTALL_DESTINATION "lib/cmake/JANA"
 )
 
-# Generate JANAConfigVesrion.cmake
+# Generate JANAConfigVersion.cmake
 write_basic_package_version_file(
         JANAConfigVersion.cmake
         VERSION ${PACKAGE_VERSION}

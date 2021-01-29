@@ -4,4 +4,18 @@
 # include(CMakeFindDependencyMacro)
 # find_dependency(MYDEP REQUIRED)
 
+set(JANA_ROOT_DIR ${JANA_DIR}/../../../)
+
+find_path(JANA_INCLUDE_DIR NAMES "JANA/JApplication.h"
+                           PATHS ${JANA_ROOT_DIR}/include)
+
+find_library(JANA_LIBRARY NAMES "JANA"
+                          PATHS ${JANA_ROOT_DIR}/lib)
+
+set(JANA_INCLUDE_DIRS ${JANA_INCLUDE_DIR})
+set(JANA_LIBRARIES ${JANA_LIBRARY})
+set(JANA_LIB ${JANA_LIBRARY})
+
 include("${CMAKE_CURRENT_LIST_DIR}/JANATargets.cmake")
+
+
