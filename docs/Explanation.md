@@ -37,13 +37,42 @@ take m Hit objects and produce n Cluster objects, where m and n vary per event a
 - JEventProcessors run desired JFactories over the event stream and write the results to an output file or messaging
 consumer. JFactories form a lazy directed acyclic graph, whereas JEventProcessors trigger their actual evaluation. 
 
+## Object lifecycles
+
+It is important to understand who owns each JObject and when it is destroyed.
+
+By default, a JFactory owns all of the JObjects that it created during `Process()`. Once all event processors have 
+finished processing a `JEvent`, all `JFactories` associated with that `JEvent` will clears and delete their `JObjects`. 
+However, you can change this behavior by setting one of the factory flags:
+
+* `PERSISTENT`: Objects are neither cleared nor deleted. This is usually used for calibrations and translation tables.
+ Note that if an object is persistent, `JFactory::Process` will _not_ be re-run on the next `JEvent`. The user  
+ may still update the objects manually, via `JFactory::BeginRun`, and must delete the objects manually via 
+ `JFactory::EndRun` or `JFactory::Finish`. 
+ 
+* `NOT_OBJECT_OWNER`: Objects are cleared from the `JFactory` but _not_ deleted. This is useful for "proxy" factories 
+ (which reorganize objects that are owned by a different factory) and for `JEventGroups`. `JFactory::Process` _will_ be
+ re-run for each `JEvent`. As long as the objects are owned by a different `JFactory`, the user doesn't have to do any 
+ cleanup.
+ 
+The lifetime of a `JFactory` spans the time that a `JEvent` is in-flight. No other guarantees are made: `JFactories` might
+be re-used for multiple `JEvents` for the sake of efficiency, but the implementation is free to _not_ do so. In particular,
+the user must never assume that one `JFactory` will see the entire `JEvent` stream.
+
+The lifetime of a `JEventSource` spans the time that all of its emitted `JEvents` are in-flight. 
+
+The lifetime of a `JEventProcessor` spans the time that any `JEventSources` are active.
+
+The lifetime of a `JService` not only spans the time that any `JEventProcessors` are active, but also the lifetime of 
+`JApplication` itself. Furthermore, because JServices use `shared_ptr`, they are allowed to live even longer than 
+`JApplication`, which is helpful for things like writing test cases.
 
 
 ## Design philosophy
 
 JANA's design philosophy can be boiled down to five values, ordered by importance:
 
-1. Simple to use
+### Simple to use
 
 JANA chooses its battles carefully. First and foremost, JANA is about parallelizing computations over data organized
 into events. From a 30000-foot view, it should look more like OpenMP or Thread Building Blocks or RaftLib than like ROOT. 
@@ -60,7 +89,7 @@ In particular, this means minimizing the complexity of the build system and mini
 against JANA should require nothing more than implementing certain key interfaces, adding a single path to includes,
 and linking against a single library. 
 
-2. Well-organized
+### Well-organized
 
 While JANA's primary goal is running code in parallel, its secondary goal is imposing an organizing principle on
 the users' codebase. This can be invaluable in a large collaboration where members vary in programming skill. Specifically, 
@@ -70,7 +99,7 @@ JEventProcessors. Components can be compiled into independent plugins, to be mix
 JANA enforces an organizing principle that enables groups to develop and test their code with both freedom and discipline.
 
 
-3. Safe
+### Safe
 
 JANA recognizes that not all of its users are proficient parallel programmers, and it steers users towards patterns which
 mitigate some of the pitfalls. Specifically, it provides:
@@ -84,11 +113,11 @@ make its memory ownership semantics explicit in the type system as much as possi
 and performance/stability improvements.
 
 
-4. Fast
+### Fast
 
 JANA uses low-level optimizations wherever it can in order to boost performance. 
 
-5. Flexible
+### Flexible
 
 The simplest use case for JANA is to read a file of batched events, process each event independently, and aggregate 
 the results into a new file. However, it can be used in more sophisticated ways. 
