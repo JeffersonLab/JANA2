@@ -34,7 +34,13 @@ add_subdirectory(src/plugins/janacontrol)
 add_subdirectory(src/programs/jana)
 add_subdirectory(src/programs/tests)
 
-add_subdirectory(src/python)
+option(USE_PYTHON "Compile optional python targets. This requires python-devel and python-distutils." OFF)
+if (${USE_PYTHON})
+    message(STATUS "USE_PYTHON=ON: Including optional python targets")
+    add_subdirectory(src/python)
+else()
+    message(STATUS "USE_PYTHON=OFF: Skipping optional python targets")
+endif()
 
 install(DIRECTORY scripts/ DESTINATION bin FILES_MATCHING PATTERN "jana-*.py"
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_READ WORLD_EXECUTE)
