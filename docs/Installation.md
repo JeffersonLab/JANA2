@@ -42,6 +42,10 @@ jana -Pplugins=JTest                              # Run JTest plugin to verify s
 
 ~~~
 
+Note: If you want to use a compiler other than the default one on your system, it is not enough to modify your
+`$PATH`, as CMake ignores this by design. You either need to set the `CXX` environment variable or the 
+`CMAKE_CXX_COMPILER` CMake variable.
+
 By default, JANA will look for plugins under `$JANA_HOME/plugins`. For your plugins to propagate here, you have to `install`
 them. If you don't want to do that, you can also set the environment variable `$JANA_PLUGIN_PATH` to point to the build
 directory of your project. JANA will report where exactly it went looking for your plugins and what happened when it tried
