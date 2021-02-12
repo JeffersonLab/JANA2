@@ -225,9 +225,9 @@ void InitPlugin(JApplication* app) {{
 
 """
 
-plugin_root_cmakelists_txt = """
+project_cmakelists_txt = """
 cmake_minimum_required(VERSION 3.9)
-project({name}_plugin_project)
+project({name}_project)
 
 if(NOT "${{CMAKE_CXX_STANDARD}}")
   set(CMAKE_CXX_STANDARD 14)
@@ -240,10 +240,20 @@ list(APPEND CMAKE_MODULE_PATH "${{CMAKE_CURRENT_LIST_DIR}}/cmake")
 # Set install directory to $JANA_HOME
 set(CMAKE_INSTALL_PREFIX $ENV{{JANA_HOME}} CACHE PATH "magic incantation" FORCE)
 
+# Find dependencies
+find_package(JANA REQUIRED)
+
 add_subdirectory(src)
 add_subdirectory(tests)
 
 """
+
+project_src_cmakelists_txt = """
+add_subdirectory(libraries)
+add_subdirectory(plugins)
+add_subdirectory(programs)
+"""
+
 
 plugin_cmakelists_txt = """
 set ({name}_PLUGIN_SOURCES
@@ -937,7 +947,7 @@ def create_standalone_plugin(name):
     # Write all files defined in this script
 
     with open(name + "/CMakeLists.txt", 'w') as f:
-        text = plugin_root_cmakelists_txt.format(name=name)
+        text = project_cmakelists_txt.format(name=name)
         f.write(text)
 
     with open(name + "/src/CMakeLists.txt", 'w') as f:
@@ -1003,37 +1013,6 @@ def create_executable(name):
     pass
 
 
-project_cmakelists_txt = """
-
-cmake_minimum_required(VERSION 3.9)
-project({name}_project)
-
-if(NOT "${{CMAKE_CXX_STANDARD}}")
-  set(CMAKE_CXX_STANDARD 14)
-endif()
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)   # Enable -fPIC for all targets
-
-# Set install directory to $JANA_HOME
-set(CMAKE_INSTALL_PREFIX $ENV{{JANA_HOME}} CACHE PATH "magic incantation" FORCE)
-
-# Expose custom cmake modules
-list(APPEND CMAKE_MODULE_PATH "${{CMAKE_CURRENT_LIST_DIR}}/cmake")
-
-# Find dependencies
-find_package(JANA REQUIRED)
-
-add_subdirectory(src)
-add_subdirectory(tests)
-
-"""
-
-
-project_src_cmakelists_txt = """
-add_subdirectory(libraries)
-add_subdirectory(plugins)
-add_subdirectory(programs)
-"""
-
 
 def create_project(name):
     """Create a code skeleton for a complete project in its own directory. Requires one argument:
@@ -1089,7 +1068,7 @@ def create_jfactory_test(factory_name, jobject_name):
 
 def print_usage():
     print("Usage: jana-generate [type] [args...]")
-    print("  type: JObject JEventSource JEventProcessor RootEventProcessor JFactory StandalonePlugin ProjectPlugin MiniProjectPlugin Project")
+    print("  type: JObject JEventSource JEventProcessor RootEventProcessor JFactory Plugin Project")
 
 
 if __name__ == '__main__':
@@ -1103,11 +1082,11 @@ if __name__ == '__main__':
                       'JEventProcessor': create_jeventprocessor,
                       'RootEventProcessor': create_root_eventprocessor,
                       'JFactory': create_jfactory,
-                      'Plugin': create_plugin,
                       'StandalonePlugin': create_standalone_plugin,
                       'JFactoryTest': create_jfactory_test,
                       'ProjectPlugin': create_project_plugin,
                       'Executable': create_executable,
+                      'Plugin': create_plugin,
                       'Project': create_project,
                       }
 
