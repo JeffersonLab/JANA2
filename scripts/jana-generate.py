@@ -664,26 +664,14 @@ list(APPEND CMAKE_MODULE_PATH "${{CMAKE_CURRENT_LIST_DIR}}/cmake")
 find_package(JANA REQUIRED)
 """
 
-mini_project_plugin_cmakelists_txt = """
+
+mini_plugin_cmakelists_txt = """
 {extra_find_packages}
 
 add_library({name}_plugin SHARED {name}.cc)
 
 target_include_directories({name}_plugin PUBLIC ${{JANA_INCLUDE_DIR}} {extra_includes})
 target_link_libraries({name}_plugin ${{JANA_LIB}} {extra_libraries})
-set_target_properties({name}_plugin PROPERTIES PREFIX "" OUTPUT_NAME "{name}" SUFFIX ".so")
-
-install(TARGETS {name}_plugin DESTINATION plugins)
-
-"""
-
-
-mini_project_plugin_cmakelists_txt_noroot = """
-
-add_library({name}_plugin SHARED {name}.cc)
-
-target_include_directories({name}_plugin PUBLIC ${{JANA_INCLUDE_DIR}})
-target_link_libraries({name}_plugin ${{JANA_LIB}})
 set_target_properties({name}_plugin PROPERTIES PREFIX "" OUTPUT_NAME "{name}" SUFFIX ".so")
 
 install(TARGETS {name}_plugin DESTINATION plugins)
@@ -948,10 +936,10 @@ def create_plugin(name, is_standalone=True, is_mini=True, include_root=True, inc
         # Otherwise InitPlugin goes into the processor file
 
     if include_root and is_mini:
-        cmakelists += mini_project_plugin_cmakelists_txt.format(name=name,
-                                                                extra_find_packages=extra_find_packages,
-                                                                extra_includes=extra_includes,
-                                                                extra_libraries=extra_libraries)
+        cmakelists += mini_plugin_cmakelists_txt.format(name=name,
+                                                        extra_find_packages=extra_find_packages,
+                                                        extra_includes=extra_includes,
+                                                        extra_libraries=extra_libraries)
         with open(name + "/" + name + ".cc", 'w') as f:
             text = mini_plugin_cc.format(name=name)
             f.write(text)
@@ -971,7 +959,10 @@ def create_plugin(name, is_standalone=True, is_mini=True, include_root=True, inc
                                                    extra_libraries=extra_libraries)
 
     elif not include_root and is_mini:
-        cmakelists += mini_project_plugin_cmakelists_txt_noroot.format(name=name)  # TODO: Remove ROOT dep
+        cmakelists += mini_plugin_cmakelists_txt.format(name=name,
+                                                        extra_find_packages=extra_find_packages,
+                                                        extra_includes=extra_includes,
+                                                        extra_libraries=extra_libraries)
         with open(name + "/" + name + ".cc", 'w') as f:
             text = mini_plugin_cc_noroot.format(name=name)
             f.write(text)
