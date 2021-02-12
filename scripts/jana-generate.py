@@ -4,6 +4,94 @@ import subprocess
 import sys
 import os
 
+
+def copy_from_source_dir(files_to_copy):
+    # For files that are copied from a JANA source directory we need to know
+    # that directory. Preference is given to a path derived from the location
+    # of the currently executing script since that is most the likely to
+    # succeed and most likely what the user is intending.
+    # This is complicated by the fact that someone could be running this script
+    # from the install directory or from the source directory OR from a copy
+    # they placed somewhere else. For this last case we must rely on the
+    # JANA_HOME environment variable.
+    #
+    # This is also complicated by the relative path to files (e.g. catch.hpp)
+    # being different in the JANA source directory tree than where it is
+    # installed. Thus, in order to handle all cases, we need to make a list of
+    # the source files along with various relative paths. We do this using a
+    # dictionary where each key is the source filename and the value is itself
+    # a dictionary containing the relative paths is the source and install
+    # directories as well as a destination name for the file (in case we ever
+    # add one that needs to be renamed).
+
+    jana_scripts_dir = os.path.dirname(os.path.realpath(__file__)) # Directory hold current script
+    jana_dir = os.path.dirname(jana_scripts_dir)                   # Parent directory of above dir
+
+    # Guess whether this script is being run from install or source directory
+    script_in_source  = (os.path.basename(jana_scripts_dir) == "scripts")
+    script_in_install = (os.path.basename(jana_scripts_dir) == "bin")
+
+    # Check for files relative to this script
+    Nfile_in_source  = sum([1 for f,d in files_to_copy.items() if os.path.exists(jana_dir+"/"+d["sourcedir" ]+"/"+f)])
+    Nfile_in_install = sum([1 for f,d in files_to_copy.items() if os.path.exists(jana_dir+"/"+d["installdir"]+"/"+f)])
+    all_files_in_source  = (Nfile_in_source  == len(files_to_copy))
+    all_files_in_install = (Nfile_in_install == len(files_to_copy))
+
+    # This more complicated than it should be, but is done this way to try and
+    # handle all ways a user may have setup their install and source dirs.
+    Nerrs = 0
+    use_install = script_in_install and all_files_in_install
+    use_source  = script_in_source  and all_files_in_source
+    if not (use_install or use_source):
+        use_install = script_in_source  and all_files_in_install
+        use_source  = script_in_install and all_files_in_source
+
+    # Make a new entry in each file's dictionary of full path to actual source file
+    if use_install:
+        for f,d in files_to_copy.items():
+            files_to_copy[f]["sourcefile"] = jana_dir+"/"+d["installdir"]+"/"+f
+    if use_source:
+        for f,d in files_to_copy.items():
+            files_to_copy[f]["sourcefile"] = jana_dir+"/"+d["sourcedir"]+"/"+f
+    else:
+        # We only get here if neither the install nor source directory contain
+        # all of the files we need to install (or they don't exist). Try JANA_HOME
+        jana_home = os.getenv("JANA_HOME")
+        if jana_home is None:
+            print("ERROR: This script does not look like it is being run from a known")
+            print("       location and JANA_HOME is also not set. Please set your")
+            print("       JANA_HOME environment variable to a valid JANA installation.")
+            sys.exit(-1)
+        for f,d in files_to_copy.items():
+            files_to_copy[f]["sourcefile"] = jana_home +"/"+d["installdir"]+"/"+f
+
+    # OK, finally we can copy the files
+    Nerrs = 0
+    for f,d in files_to_copy.items():
+        try:
+            cmd = ["cp", d["sourcefile"], d["destname"]]
+            print(" ".join(cmd))
+            subprocess.check_call(cmd)
+        except subprocess.CalledProcessError as cpe:
+            print("ERROR: Copy failed of " + d["sourcefile"] + " -> " + d["destname"])
+            Nerrs += 1
+    if Nerrs > 0:
+        print("")
+        print("Errors encountered while copying files to plugin directory. Please")
+        print("check your permissions, your JANA_HOME environment variable, and")
+        print("you JANA installation. Continuing now though this may leave you with")
+        print("a broken plugin.")
+
+
+def boolify(x, name):
+    if x==True or x=="True" or x=="true" or x==1:
+        return True
+    elif x==False or x=="False" or x=="false" or x==0:
+        return False
+    else:
+        raise Exception("Argument "+name+ " must be either 'true' or 'false'")
+
+
 copyright_notice = """//
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Jefferson Science Associates LLC Copyright Notice:
@@ -35,6 +123,7 @@ copyright_notice = """//
 // POSSIBILITY OF SUCH DAMAGE.
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //"""
+
 
 jobject_template_h = """
 
@@ -248,6 +337,7 @@ add_subdirectory(tests)
 
 """
 
+
 project_src_cmakelists_txt = """
 add_subdirectory(libraries)
 add_subdirectory(plugins)
@@ -273,6 +363,7 @@ set_target_properties({name}_plugin PROPERTIES PREFIX "" OUTPUT_NAME "{name}" SU
 install(TARGETS {name}_plugin DESTINATION plugins)
 """
 
+
 plugin_tests_cmakelists_txt = """
 
 set ({name}_PLUGIN_TESTS_SOURCES
@@ -295,6 +386,7 @@ target_link_libraries({name}_plugin_tests ${{JANA_LIBRARY}})
 install(TARGETS {name}_plugin_tests DESTINATION bin)
 
 """
+
 
 plugin_integration_tests_cc = """
 #include "catch.hpp"
@@ -328,6 +420,7 @@ TEST_CASE("IntegrationTests") {{
 
 """
 
+
 plugin_tests_main_cc = """
 
 // This is the entry point for our test suite executable.
@@ -337,6 +430,7 @@ plugin_tests_main_cc = """
 #include "catch.hpp"
 
 """
+
 
 jeventprocessor_template_h = """
 #ifndef _{name}_h_
@@ -364,6 +458,7 @@ public:
 #endif // _{name}_h_
 
 """
+
 
 jeventprocessor_template_cc = """
 #include "{name}.h"
@@ -402,8 +497,10 @@ void {name}::Finish() {{
 
 """
 
+
 jeventprocessor_template_tests = """
 """
+
 
 jfactory_template_cc = """
 #include "{name}.h"
@@ -451,6 +548,7 @@ void {name}::Process(const std::shared_ptr<const JEvent> &event) {{
 }}
 """
 
+
 jfactory_template_h = """
 #ifndef _{name}_h_
 #define _{name}_h_
@@ -472,6 +570,7 @@ public:
 
 #endif // _{name}_h_
 """
+
 
 jroot_output_processor_h = """
 #include <JANA/JEventProcessor.h>
@@ -499,6 +598,7 @@ public:
 }};
 
 """
+
 
 jroot_output_processor_cc = """
 #include "{processor_name}.h"
@@ -543,6 +643,7 @@ void {processor_name}::Finish() {{
 
 """
 
+
 cmakelists_project_preamble_txt = """
 
 cmake_minimum_required(VERSION 3.9)
@@ -576,6 +677,7 @@ install(TARGETS {name}_plugin DESTINATION plugins)
 
 """
 
+
 mini_project_plugin_cmakelists_txt_noroot = """
 
 add_library({name}_plugin SHARED {name}.cc)
@@ -587,6 +689,7 @@ set_target_properties({name}_plugin PROPERTIES PREFIX "" OUTPUT_NAME "{name}" SU
 install(TARGETS {name}_plugin DESTINATION plugins)
 
 """
+
 
 mini_plugin_cc_noroot = """
 #include <JANA/JEventProcessor.h>
@@ -634,6 +737,7 @@ extern "C" {{
 }}
     
 """
+
 
 mini_plugin_cc = """
 #include <JANA/JEventProcessor.h>
@@ -700,6 +804,7 @@ extern "C" {{
     
 """
 
+
 def create_jobject(name):
     """Create a JObject code skeleton in the current directory. Requires one argument:
        name:  The name of the JObject, e.g. "RecoTrack"
@@ -708,6 +813,7 @@ def create_jobject(name):
     text = jobject_template_h.format(copyright_notice=copyright_notice, name=name)
     with open(filename, 'w') as f:
         f.write(text)
+
 
 def create_jeventsource(name):
     """Create a JEventSource code skeleton in the current directory. Requires one argument:
@@ -721,6 +827,7 @@ def create_jeventsource(name):
     with open(name + ".cc", 'w') as f:
         text = jeventsource_template_cc.format(copyright_notice=copyright_notice, name=name)
         f.write(text)
+
 
 def create_jeventprocessor(name):
     """Create a JFactory code skeleton in the current directory. Requires one argument:
@@ -739,6 +846,37 @@ def create_jeventprocessor(name):
         text = jeventprocessor_template_tests.format(copyright_notice=copyright_notice, name=name)
         f.write(text)
 
+
+def create_root_eventprocessor(processor_name, dir_name):
+    """Create a ROOT-aware JEventProcessor code skeleton in the current directory. Requires two arguments:
+       processor_name:  The name of the JEventProcessor, e.g. "TrackingEfficiencyProcessor"
+       dir_name:        The name of the virtual directory in the ROOT file where everything goes, e.g. "trk_eff"
+    """
+    with open(processor_name + ".h", 'w') as f:
+        text = jroot_output_processor_h.format(processor_name=processor_name, dir_name=dir_name)
+        f.write(text)
+
+
+def create_jeventprocessor_test(processor_name):
+
+    # TODO: This is all bad, I just cut the relevant pieces out of create_standalone_plugin
+    files_to_copy = {}
+    files_to_copy["catch.hpp"] = {"sourcedir":"src/programs/tests", "installdir":"include/external", "destname":name+"/tests/catch.hpp"}
+    copy_from_source_dir(files_to_copy)
+
+    with open(name + "/tests/TestsMain.cc", "w") as f:
+        text = plugin_tests_main_cc.format(name=name)
+        f.write(text)
+
+    with open(name + "/tests/IntegrationTests.cc", "w") as f:
+        text = plugin_integration_tests_cc.format(name=name)
+        f.write(text)
+
+    with open(name + "/tests/CMakeLists.txt", "w") as f:
+        text = plugin_tests_cmakelists_txt.format(name=name)
+        f.write(text)
+
+
 def create_jfactory(factory_name, jobject_name):
     """Create a JFactory code skeleton in the current directory. Requires two arguments:
        factory_name:  The name of the JFactory, e.g. "RecoTrackFactory_Genfit"
@@ -755,13 +893,17 @@ def create_jfactory(factory_name, jobject_name):
         f.write(text)
 
 
-def boolify(x, name):
-    if x==True or x=="True" or x=="true" or x==1:
-        return True
-    elif x==False or x=="False" or x=="false" or x==0:
-        return False
-    else:
-        raise Exception("Argument "+name+ " must be either 'true' or 'false'")
+def create_jfactory_test(factory_name, jobject_name):
+    with open(factory_name + "Test.cc", 'w') as f:
+        text = jfactory_test_cc.format(factory_name=factory_name, jobject_name=jobject_name);
+        f.write(text)
+
+
+def create_executable(name):
+    """Create a code skeleton for a project executable in the current directory. Requires one argument:
+       name:  The name of the executable, e.g. "escalate" or "halld_recon"
+    """
+    pass
 
 
 def create_plugin(name, is_standalone=True, is_mini=True, include_root=True, include_tests=False):
@@ -862,90 +1004,6 @@ def create_plugin(name, is_standalone=True, is_mini=True, include_root=True, inc
     with open(name + "/CMakeLists.txt", 'w') as f:
         f.write(cmakelists)
 
-def copy_from_source_dir(files_to_copy):
-    # For files that are copied from a JANA source directory we need to know
-    # that directory. Preference is given to a path derived from the location
-    # of the currently executing script since that is most the likely to
-    # succeed and most likely what the user is intending.
-    # This is complicated by the fact that someone could be running this script
-    # from the install directory or from the source directory OR from a copy
-    # they placed somewhere else. For this last case we must rely on the
-    # JANA_HOME environment variable.
-    #
-    # This is also complicated by the relative path to files (e.g. catch.hpp)
-    # being different in the JANA source directory tree than where it is
-    # installed. Thus, in order to handle all cases, we need to make a list of
-    # the source files along with various relative paths. We do this using a
-    # dictionary where each key is the source filename and the value is itself
-    # a dictionary containing the relative paths is the source and install
-    # directories as well as a destination name for the file (in case we ever
-    # add one that needs to be renamed).
-
-    jana_scripts_dir = os.path.dirname(os.path.realpath(__file__)) # Directory hold current script
-    jana_dir = os.path.dirname(jana_scripts_dir)                   # Parent directory of above dir
-
-    # Guess whether this script is being run from install or source directory
-    script_in_source  = (os.path.basename(jana_scripts_dir) == "scripts")
-    script_in_install = (os.path.basename(jana_scripts_dir) == "bin")
-
-    # Check for files relative to this script
-    Nfile_in_source  = sum([1 for f,d in files_to_copy.items() if os.path.exists(jana_dir+"/"+d["sourcedir" ]+"/"+f)])
-    Nfile_in_install = sum([1 for f,d in files_to_copy.items() if os.path.exists(jana_dir+"/"+d["installdir"]+"/"+f)])
-    all_files_in_source  = (Nfile_in_source  == len(files_to_copy))
-    all_files_in_install = (Nfile_in_install == len(files_to_copy))
-
-    # This more complicated than it should be, but is done this way to try and
-    # handle all ways a user may have setup their install and source dirs.
-    Nerrs = 0
-    use_install = script_in_install and all_files_in_install
-    use_source  = script_in_source  and all_files_in_source
-    if not (use_install or use_source):
-        use_install = script_in_source  and all_files_in_install
-        use_source  = script_in_install and all_files_in_source
-
-    # Make a new entry in each file's dictionary of full path to actual source file
-    if use_install:
-        for f,d in files_to_copy.items():
-            files_to_copy[f]["sourcefile"] = jana_dir+"/"+d["installdir"]+"/"+f
-    if use_source:
-        for f,d in files_to_copy.items():
-            files_to_copy[f]["sourcefile"] = jana_dir+"/"+d["sourcedir"]+"/"+f
-    else:
-        # We only get here if neither the install nor source directory contain
-        # all of the files we need to install (or they don't exist). Try JANA_HOME
-        jana_home = os.getenv("JANA_HOME")
-        if jana_home is None:
-            print("ERROR: This script does not look like it is being run from a known")
-            print("       location and JANA_HOME is also not set. Please set your")
-            print("       JANA_HOME environment variable to a valid JANA installation.")
-            sys.exit(-1)
-        for f,d in files_to_copy.items():
-            files_to_copy[f]["sourcefile"] = jana_home +"/"+d["installdir"]+"/"+f
-
-    # OK, finally we can copy the files
-    Nerrs = 0
-    for f,d in files_to_copy.items():
-        try:
-            cmd = ["cp", d["sourcefile"], d["destname"]]
-            print(" ".join(cmd))
-            subprocess.check_call(cmd)
-        except subprocess.CalledProcessError as cpe:
-            print("ERROR: Copy failed of " + d["sourcefile"] + " -> " + d["destname"])
-            Nerrs += 1
-    if Nerrs > 0:
-        print("")
-        print("Errors encountered while copying files to plugin directory. Please")
-        print("check your permissions, your JANA_HOME environment variable, and")
-        print("you JANA installation. Continuing now though this may leave you with")
-        print("a broken plugin.")
-
-
-def create_executable(name):
-    """Create a code skeleton for a project executable in the current directory. Requires one argument:
-       name:  The name of the executable, e.g. "escalate" or "halld_recon"
-    """
-    pass
-
 
 def create_project(name):
     """Create a code skeleton for a complete project in its own directory. Requires one argument:
@@ -982,42 +1040,6 @@ def create_project(name):
         f.write("")
 
 
-def create_root_eventprocessor(processor_name, dir_name):
-    """Create a ROOT-aware JEventProcessor code skeleton in the current directory. Requires two arguments:
-       processor_name:  The name of the JEventProcessor, e.g. "TrackingEfficiencyProcessor"
-       dir_name:        The name of the virtual directory in the ROOT file where everything goes, e.g. "trk_eff"
-    """
-    with open(processor_name + ".h", 'w') as f:
-        text = jroot_output_processor_h.format(processor_name=processor_name, dir_name=dir_name)
-        f.write(text)
-
-
-
-def create_jfactory_test(factory_name, jobject_name):
-    with open(factory_name + "Test.cc", 'w') as f:
-        text = jfactory_test_cc.format(factory_name=factory_name, jobject_name=jobject_name);
-        f.write(text)
-
-
-def create_jeventprocessor_test(processor_name):
-
-    # TODO: This is all bad, I just cut the relevant pieces out of create_standalone_plugin
-    files_to_copy = {}
-    files_to_copy["catch.hpp"] = {"sourcedir":"src/programs/tests", "installdir":"include/external", "destname":name+"/tests/catch.hpp"}
-    copy_from_source_dir(files_to_copy)
-
-    with open(name + "/tests/TestsMain.cc", "w") as f:
-        text = plugin_tests_main_cc.format(name=name)
-        f.write(text)
-
-    with open(name + "/tests/IntegrationTests.cc", "w") as f:
-        text = plugin_integration_tests_cc.format(name=name)
-        f.write(text)
-
-    with open(name + "/tests/CMakeLists.txt", "w") as f:
-        text = plugin_tests_cmakelists_txt.format(name=name)
-        f.write(text)
-
 def print_usage():
     print("Usage: jana-generate [type] [args...]")
     print("  type: JObject JEventSource JEventProcessor RootEventProcessor JFactory Plugin Project")
@@ -1039,6 +1061,7 @@ if __name__ == '__main__':
                       'Executable': create_executable,
                       'Plugin': create_plugin,
                       'Project': create_project,
+                      #'Test': run_tests
                       }
 
     option = argv[1]
@@ -1047,7 +1070,6 @@ if __name__ == '__main__':
             dispatch_table[option](*argv[2:])
         except TypeError:
             print(dispatch_table[option].__doc__)
-
     else:
         print("Error: Invalid option!")
         print_usage()
