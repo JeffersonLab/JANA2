@@ -256,6 +256,8 @@ add_subdirectory(programs)
 
 
 plugin_cmakelists_txt = """
+{extra_find_packages}
+
 set ({name}_PLUGIN_SOURCES
         {name}.cc
         {name}Processor.cc
@@ -733,9 +735,9 @@ def create_jeventprocessor(name):
         text = jeventprocessor_template_cc.format(copyright_notice=copyright_notice, name=name)
         f.write(text)
 
-    #with open(name + "Tests.cc", 'w') as f:
-    #    text = jeventprocessor_template_tests.format(copyright_notice=copyright_notice, name=name)
-    #    f.write(text)
+    with open(name + "Tests.cc", 'w') as f:
+        text = jeventprocessor_template_tests.format(copyright_notice=copyright_notice, name=name)
+        f.write(text)
 
 def create_jfactory(factory_name, jobject_name):
     """Create a JFactory code skeleton in the current directory. Requires two arguments:
@@ -821,7 +823,10 @@ def create_plugin(name, is_standalone=True, is_mini=True, include_root=True, inc
             text = jroot_output_processor_cc.format(processor_name=name+"Processor", dir_name=name)
             f.write(text)
 
-        cmakelists += plugin_cmakelists_txt.format(name=name, extra_includes=extra_includes, extra_libraries=extra_libraries)
+        cmakelists += plugin_cmakelists_txt.format(name=name,
+                                                   extra_find_packages=extra_find_packages,
+                                                   extra_includes=extra_includes,
+                                                   extra_libraries=extra_libraries)
 
     elif not include_root and is_mini:
         cmakelists += mini_project_plugin_cmakelists_txt_noroot.format(name=name)  # TODO: Remove ROOT dep
@@ -831,7 +836,10 @@ def create_plugin(name, is_standalone=True, is_mini=True, include_root=True, inc
 
     else:
         # not include_root and not is_mini:
-        cmakelists += plugin_cmakelists_txt.format(name=name, extra_includes=extra_includes, extra_libraries=extra_libraries)
+        cmakelists += plugin_cmakelists_txt.format(name=name,
+                                                   extra_find_packages=extra_find_packages,
+                                                   extra_includes=extra_includes,
+                                                   extra_libraries=extra_libraries)
 
         with open(name + "/" + name + "Processor.cc", 'w') as f:
             text = jeventprocessor_template_cc.format(name=name+"Processor")
@@ -931,87 +939,12 @@ def copy_from_source_dir(files_to_copy):
         print("you JANA installation. Continuing now though this may leave you with")
         print("a broken plugin.")
 
-def create_standalone_plugin(name):
-    """Create a code skeleton for a standalone plugin in its own directory. Requires one argument:
-       name:  The name of the plugin, e.g. "trk_eff" or "TrackingEfficiency"
-    """
-    os.mkdir(name)
-    os.mkdir(name + "/cmake")
-    os.mkdir(name + "/src")
-    os.mkdir(name + "/tests")
-
-    files_to_copy = {}
-    files_to_copy["catch.hpp"] = {"sourcedir":"src/programs/tests", "installdir":"include/external", "destname":name+"/tests/catch.hpp"}
-    copy_from_source_dir(files_to_copy)
-
-    # Write all files defined in this script
-
-    with open(name + "/CMakeLists.txt", 'w') as f:
-        text = project_cmakelists_txt.format(name=name)
-        f.write(text)
-
-    with open(name + "/src/CMakeLists.txt", 'w') as f:
-        text = plugin_cmakelists_txt.format(name=name, extra_includes="", extra_libraries="")
-        f.write(text)
-
-    with open(name + "/src/" + name + ".cc", 'w') as f:
-        text = plugin_main.format(name=name)
-        f.write(text)
-
-    with open(name + "/src/" + name + "Processor.cc", 'w') as f:
-        text = jeventprocessor_template_cc.format(name=name+"Processor")
-        f.write(text)
-
-    with open(name + "/src/" + name + "Processor.h", 'w') as f:
-        text = jeventprocessor_template_h.format(name=name+"Processor")
-        f.write(text)
-
-    with open(name + "/tests/TestsMain.cc", "w") as f:
-        text = plugin_tests_main_cc.format(name=name)
-        f.write(text)
-
-    with open(name + "/tests/IntegrationTests.cc", "w") as f:
-        text = plugin_integration_tests_cc.format(name=name)
-        f.write(text)
-
-    with open(name + "/tests/CMakeLists.txt", "w") as f:
-        text = plugin_tests_cmakelists_txt.format(name=name)
-        f.write(text)
-
-
-def create_project_plugin(name):
-    """Create a code skeleton for a project plugin in its own directory. Requires one argument:
-       name:  The name of the plugin, e.g. "trk_eff" or "TrackingEfficiency"
-    """
-    os.mkdir(name)
-
-    with open(name + "/CMakeLists.txt", 'w') as f:
-        text = plugin_cmakelists_txt.format(name=name)
-        f.write(text)
-
-    with open(name + "/" + name + ".cc", 'w') as f:
-        text = plugin_main.format(name=name)
-        f.write(text)
-
-    with open(name + "/" + name + "Processor.cc", 'w') as f:
-        text = jeventprocessor_template_cc.format(name=name+"Processor")
-        f.write(text)
-
-    with open(name + "/" + name + "Processor.h", 'w') as f:
-        text = jeventprocessor_template_h.format(name=name+"Processor")
-        f.write(text)
-
-    with open(name + "/" + name + "ProcessorTest.cc", 'w') as f:
-        text = jeventprocessor_template_tests.format(name=name+"Processor")
-        f.write(text)
-
 
 def create_executable(name):
     """Create a code skeleton for a project executable in the current directory. Requires one argument:
        name:  The name of the executable, e.g. "escalate" or "halld_recon"
     """
     pass
-
 
 
 def create_project(name):
@@ -1066,6 +999,25 @@ def create_jfactory_test(factory_name, jobject_name):
         f.write(text)
 
 
+def create_jeventprocessor_test(processor_name):
+
+    # TODO: This is all bad, I just cut the relevant pieces out of create_standalone_plugin
+    files_to_copy = {}
+    files_to_copy["catch.hpp"] = {"sourcedir":"src/programs/tests", "installdir":"include/external", "destname":name+"/tests/catch.hpp"}
+    copy_from_source_dir(files_to_copy)
+
+    with open(name + "/tests/TestsMain.cc", "w") as f:
+        text = plugin_tests_main_cc.format(name=name)
+        f.write(text)
+
+    with open(name + "/tests/IntegrationTests.cc", "w") as f:
+        text = plugin_integration_tests_cc.format(name=name)
+        f.write(text)
+
+    with open(name + "/tests/CMakeLists.txt", "w") as f:
+        text = plugin_tests_cmakelists_txt.format(name=name)
+        f.write(text)
+
 def print_usage():
     print("Usage: jana-generate [type] [args...]")
     print("  type: JObject JEventSource JEventProcessor RootEventProcessor JFactory Plugin Project")
@@ -1081,10 +1033,9 @@ if __name__ == '__main__':
                       'JEventSource': create_jeventsource,
                       'JEventProcessor': create_jeventprocessor,
                       'RootEventProcessor': create_root_eventprocessor,
+                      'JEventProcessorTest': create_jeventprocessor_test,
                       'JFactory': create_jfactory,
-                      'StandalonePlugin': create_standalone_plugin,
                       'JFactoryTest': create_jfactory_test,
-                      'ProjectPlugin': create_project_plugin,
                       'Executable': create_executable,
                       'Plugin': create_plugin,
                       'Project': create_project,
