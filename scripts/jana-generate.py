@@ -768,6 +768,11 @@ def create_plugin(name, is_standalone=True, is_mini=True, include_root=True, inc
     include_tests = boolify(include_tests, "include_tests")
 
     os.mkdir(name)
+    if not is_standalone:
+        with open("CMakeLists.txt", 'a') as f:
+            f.write("add_subdirectory("+name+")\n")
+            # If CMakeLists doesn't already exist, this will create it
+            # TODO: Probably want to auto detect is_standalone based on existence of parent CMakeLists
 
     cmakelists = ""
     if include_root:
@@ -961,6 +966,7 @@ def create_standalone_plugin(name):
         text = plugin_tests_cmakelists_txt.format(name=name)
         f.write(text)
 
+
 def create_project_plugin(name):
     """Create a code skeleton for a project plugin in its own directory. Requires one argument:
        name:  The name of the plugin, e.g. "trk_eff" or "TrackingEfficiency"
@@ -986,6 +992,7 @@ def create_project_plugin(name):
     with open(name + "/" + name + "ProcessorTest.cc", 'w') as f:
         text = jeventprocessor_template_tests.format(name=name+"Processor")
         f.write(text)
+
 
 def create_executable(name):
     """Create a code skeleton for a project executable in the current directory. Requires one argument:
@@ -1018,11 +1025,13 @@ add_subdirectory(tests)
 
 """
 
+
 project_src_cmakelists_txt = """
 add_subdirectory(libraries)
 add_subdirectory(plugins)
 add_subdirectory(programs)
 """
+
 
 def create_project(name):
     """Create a code skeleton for a complete project in its own directory. Requires one argument:
@@ -1053,7 +1062,7 @@ def create_project(name):
         f.write("")
 
     with open(name + "/src/plugins/CMakeLists.txt", 'w') as f:
-        f.write("")
+        f.write("\n")
 
     with open(name + "/src/programs/CMakeLists.txt", 'w') as f:
         f.write("")
@@ -1067,6 +1076,7 @@ def create_root_eventprocessor(processor_name, dir_name):
     with open(processor_name + ".h", 'w') as f:
         text = jroot_output_processor_h.format(processor_name=processor_name, dir_name=dir_name)
         f.write(text)
+
 
 def create_mini_project_plugin(name):
     """Create a minimal-boilerplate JANA project plugin. Requires one argument:
@@ -1092,6 +1102,7 @@ def print_usage():
     print("Usage: jana-generate [type] [args...]")
     print("  type: JObject JEventSource JEventProcessor RootEventProcessor JFactory StandalonePlugin ProjectPlugin MiniProjectPlugin Project")
 
+
 if __name__ == '__main__':
 
     if len(argv) < 2:
@@ -1115,9 +1126,9 @@ if __name__ == '__main__':
     option = argv[1]
     if option in dispatch_table:
         try:
-           dispatch_table[option](*argv[2:])
+            dispatch_table[option](*argv[2:])
         except TypeError:
-           print(dispatch_table[option].__doc__)
+            print(dispatch_table[option].__doc__)
 
     else:
         print("Error: Invalid option!")
