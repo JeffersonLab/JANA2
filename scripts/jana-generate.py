@@ -246,21 +246,19 @@ add_subdirectory(tests)
 """
 
 plugin_cmakelists_txt = """
-
 set ({name}_PLUGIN_SOURCES
-		{name}.cc
-		{name}Processor.cc
-		{name}Processor.h
-	)
+        {name}.cc
+        {name}Processor.cc
+        {name}Processor.h
+    )
 
 add_library({name}_plugin SHARED ${{{name}_PLUGIN_SOURCES}})
 
-find_package(JANA REQUIRED)
-target_include_directories({name}_plugin PUBLIC ${{JANA_INCLUDE_DIR}})
-target_link_libraries({name}_plugin ${{JANA_LIBRARY}})
+target_include_directories({name}_plugin PUBLIC ${{JANA_INCLUDE_DIR}} {extra_includes})
+target_link_libraries({name}_plugin ${{JANA_LIBRARY}} {extra_libraries})
 set_target_properties({name}_plugin PROPERTIES PREFIX "" OUTPUT_NAME "{name}" SUFFIX ".so")
-install(TARGETS {name}_plugin DESTINATION plugins)
 
+install(TARGETS {name}_plugin DESTINATION plugins)
 """
 
 plugin_tests_cmakelists_txt = """
@@ -470,6 +468,7 @@ jroot_output_processor_h = """
 #include <TFile.h>
 
 class {processor_name}: public JEventProcessor {{
+
 private:
     std::string m_tracking_alg = "genfit";
     std::shared_ptr<JGlobalRootLock> m_lock;
@@ -478,43 +477,56 @@ private:
     TDirectory* dest_dir; // Virtual subfolder inside dest_file used for this specific processor
 
 public:
-    {processor_name}() {{
-        SetTypeName(NAME_OF_THIS); // Provide JANA with this class's name
-    }}
+    {processor_name}();
     
-    void Init() override {{
-        auto app = GetApplication();
-        m_lock = app->GetService<JGlobalRootLock>();
+    void Init() override;
 
-        /// Set parameters to control which JFactories you use
-        app->SetDefaultParameter("tracking_alg", m_tracking_alg);
+    void Process(const std::shared_ptr<const JEvent>& event) override;
 
-        /// Set up histograms
-        m_lock->acquire_write_lock();
-        //dest_file = ... /// TODO: Acquire dest_file via either a JService or a JParameter
-        dest_dir = dest_file->mkdir("{dir_name}"); // Create a subdir inside dest_file for these results
-        dest_file->cd();
-        h1d_pt_reco = new TH1D("pt_reco", "reco pt", 100,0,10);
-        h1d_pt_reco->SetDirectory(dest_dir);
-        m_lock->release_lock();
-    }}
+    void Finish() override;
+}};
 
-    void Process(const std::shared_ptr<const JEvent>& event) override {{
+"""
 
-        /// Acquire any results you need for your analysis
-        //auto reco_tracks = event->Get<RecoTrack>(m_tracking_alg);
+jroot_output_processor_cc = """
+#include "{processor_name}.h"
 
-        m_lock->acquire_write_lock();
-        /// Inside the global root lock, update histograms
-        // for (auto reco_track : reco_tracks) {{
-        //    h1d_pt_reco->Fill(reco_track->p.Pt());
-        // }}
-        m_lock->release_lock();
-    }}
+{processor_name}::{processor_name}() {{
+    SetTypeName(NAME_OF_THIS); // Provide JANA with this class's name
+}}
+    
+void {processor_name}::Init() {{
+    auto app = GetApplication();
+    m_lock = app->GetService<JGlobalRootLock>();
 
-    void Finish() override {{
-        // Close TFile (unless shared)
-    }};
+    /// Set parameters to control which JFactories you use
+    app->SetDefaultParameter("tracking_alg", m_tracking_alg);
+
+    /// Set up histograms
+    m_lock->acquire_write_lock();
+    //dest_file = ... /// TODO: Acquire dest_file via either a JService or a JParameter
+    dest_dir = dest_file->mkdir("{dir_name}"); // Create a subdir inside dest_file for these results
+    dest_file->cd();
+    h1d_pt_reco = new TH1D("pt_reco", "reco pt", 100,0,10);
+    h1d_pt_reco->SetDirectory(dest_dir);
+    m_lock->release_lock();
+}}
+
+void {processor_name}::Process(const std::shared_ptr<const JEvent>& event) {{
+
+    /// Acquire any results you need for your analysis
+    //auto reco_tracks = event->Get<RecoTrack>(m_tracking_alg);
+
+    m_lock->acquire_write_lock();
+    /// Inside the global root lock, update histograms
+    // for (auto reco_track : reco_tracks) {{
+    //    h1d_pt_reco->Fill(reco_track->p.Pt());
+    // }}
+    m_lock->release_lock();
+}}
+
+void {processor_name}::Finish() {{
+    // Close TFile (unless shared)
 }};
 
 """
@@ -537,7 +549,7 @@ list(APPEND CMAKE_MODULE_PATH "${{CMAKE_CURRENT_LIST_DIR}}/cmake")
 
 # Find dependencies
 find_package(JANA REQUIRED)
-find_package(ROOT)
+{extra_find_packages}
 
 """
 
@@ -787,9 +799,18 @@ def create_plugin(name, is_standalone=True, is_mini=True, include_root=True, inc
     os.mkdir(name)
 
     cmakelists = ""
+    if include_root:
+        extra_find_packages = "find_package(ROOT REQUIRED)"
+        extra_includes = "${ROOT_INCLUDE_DIRS}"
+        extra_libraries = "${ROOT_LIBRARIES}"
+    else:
+        extra_find_packages = ""
+        extra_includes = ""
+        extra_libraries = ""
+
 
     if is_standalone:
-        cmakelists += cmakelists_project_preamble_txt.format(name=name)
+        cmakelists += cmakelists_project_preamble_txt.format(name=name, extra_find_packages=extra_find_packages)
 
     if not is_mini:
         with open(name + "/" + name + ".cc", 'w') as f:
@@ -809,7 +830,11 @@ def create_plugin(name, is_standalone=True, is_mini=True, include_root=True, inc
             text = jroot_output_processor_h.format(processor_name=name+"Processor", dir_name=name)
             f.write(text)
 
-        cmakelists += plugin_cmakelists_txt.format(name=name)
+        with open(name + "/" + name + "Processor.cc", 'w') as f:
+            text = jroot_output_processor_cc.format(processor_name=name+"Processor", dir_name=name)
+            f.write(text)
+
+        cmakelists += plugin_cmakelists_txt.format(name=name, extra_includes=extra_includes, extra_libraries=extra_libraries)
 
     elif not include_root and is_mini:
         cmakelists += mini_project_plugin_cmakelists_txt_noroot.format(name=name)  # TODO: Remove ROOT dep
@@ -819,7 +844,7 @@ def create_plugin(name, is_standalone=True, is_mini=True, include_root=True, inc
 
     else:
         # not include_root and not is_mini:
-        cmakelists += plugin_cmakelists_txt.format(name=name)
+        cmakelists += plugin_cmakelists_txt.format(name=name, extra_includes=extra_includes, extra_libraries=extra_libraries)
 
         with open(name + "/" + name + "Processor.cc", 'w') as f:
             text = jeventprocessor_template_cc.format(name=name+"Processor")
@@ -939,7 +964,7 @@ def create_standalone_plugin(name):
         f.write(text)
 
     with open(name + "/src/CMakeLists.txt", 'w') as f:
-        text = plugin_cmakelists_txt.format(name=name)
+        text = plugin_cmakelists_txt.format(name=name, extra_includes="", extra_libraries="")
         f.write(text)
 
     with open(name + "/src/" + name + ".cc", 'w') as f:
