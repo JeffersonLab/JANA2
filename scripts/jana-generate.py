@@ -549,16 +549,15 @@ list(APPEND CMAKE_MODULE_PATH "${{CMAKE_CURRENT_LIST_DIR}}/cmake")
 
 # Find dependencies
 find_package(JANA REQUIRED)
-{extra_find_packages}
-
 """
 
 mini_project_plugin_cmakelists_txt = """
+{extra_find_packages}
 
 add_library({name}_plugin SHARED {name}.cc)
 
-target_include_directories({name}_plugin PUBLIC ${{JANA_INCLUDE_DIR}} ${{ROOT_INCLUDE_DIRS}})
-target_link_libraries({name}_plugin ${{JANA_LIB}} ${{ROOT_LIBRARIES}})
+target_include_directories({name}_plugin PUBLIC ${{JANA_INCLUDE_DIR}} {extra_includes})
+target_link_libraries({name}_plugin ${{JANA_LIB}} {extra_libraries})
 set_target_properties({name}_plugin PROPERTIES PREFIX "" OUTPUT_NAME "{name}" SUFFIX ".so")
 
 install(TARGETS {name}_plugin DESTINATION plugins)
@@ -785,7 +784,7 @@ def create_plugin(name, is_standalone=True, is_mini=True, include_root=True, inc
         extra_libraries = ""
 
     if is_standalone:
-        cmakelists += cmakelists_project_preamble_txt.format(name=name, extra_find_packages=extra_find_packages)
+        cmakelists += cmakelists_project_preamble_txt.format(name=name)
 
     if not is_mini:
         with open(name + "/" + name + ".cc", 'w') as f:
@@ -795,7 +794,10 @@ def create_plugin(name, is_standalone=True, is_mini=True, include_root=True, inc
         # Otherwise InitPlugin goes into the processor file
 
     if include_root and is_mini:
-        cmakelists += mini_project_plugin_cmakelists_txt.format(name=name)
+        cmakelists += mini_project_plugin_cmakelists_txt.format(name=name,
+                                                                extra_find_packages=extra_find_packages,
+                                                                extra_includes=extra_includes,
+                                                                extra_libraries=extra_libraries)
         with open(name + "/" + name + ".cc", 'w') as f:
             text = mini_plugin_cc.format(name=name)
             f.write(text)
@@ -1078,19 +1080,6 @@ def create_root_eventprocessor(processor_name, dir_name):
         f.write(text)
 
 
-def create_mini_project_plugin(name):
-    """Create a minimal-boilerplate JANA project plugin. Requires one argument:
-       name: The name of the plugin, e.g. "TrackingEfficiency" or "trk_eff"
-    """
-    os.mkdir(name)
-    with open(name + "/CMakeLists.txt", 'w') as f:
-        text = mini_project_plugin_cmakelists_txt.format(name=name)
-        f.write(text)
-
-    with open(name + "/" + name + ".cc", 'w') as f:
-        text = mini_plugin_cc.format(name=name)
-        f.write(text)
-
 
 def create_jfactory_test(factory_name, jobject_name):
     with open(factory_name + "Test.cc", 'w') as f:
@@ -1118,7 +1107,6 @@ if __name__ == '__main__':
                       'StandalonePlugin': create_standalone_plugin,
                       'JFactoryTest': create_jfactory_test,
                       'ProjectPlugin': create_project_plugin,
-                      'MiniProjectPlugin': create_mini_project_plugin,
                       'Executable': create_executable,
                       'Project': create_project,
                       }
