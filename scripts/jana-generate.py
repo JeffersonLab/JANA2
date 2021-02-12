@@ -553,7 +553,6 @@ find_package(JANA REQUIRED)
 
 """
 
-
 mini_project_plugin_cmakelists_txt = """
 
 add_library({name}_plugin SHARED {name}.cc)
@@ -994,6 +993,37 @@ def create_executable(name):
     """
     pass
 
+
+project_cmakelists_txt = """
+
+cmake_minimum_required(VERSION 3.9)
+project({name}_project)
+
+if(NOT "${{CMAKE_CXX_STANDARD}}")
+  set(CMAKE_CXX_STANDARD 14)
+endif()
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)   # Enable -fPIC for all targets
+
+# Set install directory to $JANA_HOME
+set(CMAKE_INSTALL_PREFIX $ENV{{JANA_HOME}} CACHE PATH "magic incantation" FORCE)
+
+# Expose custom cmake modules
+list(APPEND CMAKE_MODULE_PATH "${{CMAKE_CURRENT_LIST_DIR}}/cmake")
+
+# Find dependencies
+find_package(JANA REQUIRED)
+
+add_subdirectory(src)
+add_subdirectory(tests)
+
+"""
+
+project_src_cmakelists_txt = """
+add_subdirectory(libraries)
+add_subdirectory(plugins)
+add_subdirectory(programs)
+"""
+
 def create_project(name):
     """Create a code skeleton for a complete project in its own directory. Requires one argument:
        name:  The name of the project, e.g. "escalate" or "halld_recon"
@@ -1007,6 +1037,27 @@ def create_project(name):
     os.mkdir(name + "/src/programs")
     os.mkdir(name + "/src/programs/cli")
     os.mkdir(name + "/tests")
+
+    with open(name + "/CMakeLists.txt", 'w') as f:
+        text = project_cmakelists_txt.format(name=name)
+        f.write(text)
+
+    with open(name + "/src/CMakeLists.txt", 'w') as f:
+        text = project_src_cmakelists_txt
+        f.write(text)
+
+    with open(name + "/tests/CMakeLists.txt", 'w') as f:
+        f.write("")
+
+    with open(name + "/src/libraries/CMakeLists.txt", 'w') as f:
+        f.write("")
+
+    with open(name + "/src/plugins/CMakeLists.txt", 'w') as f:
+        f.write("")
+
+    with open(name + "/src/programs/CMakeLists.txt", 'w') as f:
+        f.write("")
+
 
 def create_root_eventprocessor(processor_name, dir_name):
     """Create a ROOT-aware JEventProcessor code skeleton in the current directory. Requires two arguments:
