@@ -263,76 +263,6 @@ install(TARGETS {name}_plugin DESTINATION plugins)
 
 """
 
-plugin_findjana_cmake = """
-# Distributed under the OSI-approved BSD 3-Clause License.  See accompanying
-# file Copyright.txt or https://cmake.org/licensing for details.
-
-#[=======================================================================[.rst:
-FindJANA
---------
-
-Finds the JANA library.
-
-Imported Targets
-^^^^^^^^^^^^^^^^
-
-This module provides the following imported targets, if found:
-
-``JANA::jana``
-  The JANA library
-
-Result Variables
-^^^^^^^^^^^^^^^^
-
-This will define the following variables:
-
-``JANA_FOUND``
-  True if the system has the JANA library.
-``JANA_VERSION``
-  The version of the JANA library which was found.
-``JANA_INCLUDE_DIRS``
-  Include directories needed to use JANA.
-``JANA_LIBRARIES``
-  Libraries needed to link to JANA.
-
-#]=======================================================================]
-
-if (DEFINED JANA_HOME)
-    set(JANA_ROOT_DIR ${JANA_HOME})
-    message(STATUS "Using JANA_HOME = ${JANA_ROOT_DIR} (From CMake JANA_HOME variable)")
-
-elseif (DEFINED ENV{JANA_HOME})
-    set(JANA_ROOT_DIR $ENV{JANA_HOME})
-    message(STATUS "Using JANA_HOME = ${JANA_ROOT_DIR} (From JANA_HOME environment variable)")
-
-else()
-    message(FATAL_ERROR "Missing $JANA_HOME")
-endif()
-
-set(JANA_VERSION 2)
-
-find_path(JANA_INCLUDE_DIR
-        NAMES "JANA/JApplication.h"
-        PATHS ${JANA_ROOT_DIR}/include
-        )
-
-find_library(JANA_LIBRARY
-        NAMES "JANA"
-        PATHS ${JANA_ROOT_DIR}/lib
-        )
-
-set(JANA_LIBRARIES ${JANA_LIBRARY})
-set(JANA_LIB ${JANA_LIBRARY})
-set(JANA_INCLUDE_DIRS ${JANA_ROOT_DIR}/include)
-
-include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(JANA
-        FOUND_VAR JANA_FOUND
-        VERSION_VAR JANA_VERSION
-        REQUIRED_VARS JANA_ROOT_DIR JANA_INCLUDE_DIR JANA_LIBRARY
-        )
-"""
-
 plugin_tests_cmakelists_txt = """
 
 set ({name}_PLUGIN_TESTS_SOURCES
@@ -830,6 +760,7 @@ def create_jfactory(factory_name, jobject_name):
         text = jfactory_template_h.format(name=factory_name, jobject_name=jobject_name)
         f.write(text)
 
+
 def boolify(x, name):
     if x==True or x=="True" or x=="true" or x==1:
         return True
@@ -837,6 +768,7 @@ def boolify(x, name):
         return False
     else:
         raise Exception("Argument "+name+ " must be either 'true' or 'false'")
+
 
 def create_plugin(name, is_standalone=True, is_mini=True, include_root=True, include_tests=False):
     """Create a code skeleton for a plugin in its own directory. Requires:
@@ -857,10 +789,6 @@ def create_plugin(name, is_standalone=True, is_mini=True, include_root=True, inc
     cmakelists = ""
 
     if is_standalone:
-        os.mkdir(name+"/cmake")
-        with open(name + "/cmake/FindJANA.cmake", 'w') as f:
-            f.write(plugin_findjana_cmake)
-
         cmakelists += cmakelists_project_preamble_txt.format(name=name)
 
     if not is_mini:
@@ -889,8 +817,8 @@ def create_plugin(name, is_standalone=True, is_mini=True, include_root=True, inc
             text = mini_plugin_cc_noroot.format(name=name)
             f.write(text)
 
-    else: # not include_root and not is_mini:
-
+    else:
+        # not include_root and not is_mini:
         cmakelists += plugin_cmakelists_txt.format(name=name)
 
         with open(name + "/" + name + "Processor.cc", 'w') as f:
@@ -900,7 +828,6 @@ def create_plugin(name, is_standalone=True, is_mini=True, include_root=True, inc
         with open(name + "/" + name + "Processor.h", 'w') as f:
             text = jeventprocessor_template_h.format(name=name+"Processor")
             f.write(text)
-
 
     if include_tests:
         with open(name + "/" + name + "ProcessorTest.cc", 'w') as f:
@@ -1006,8 +933,6 @@ def create_standalone_plugin(name):
     copy_from_source_dir(files_to_copy)
 
     # Write all files defined in this script
-    with open(name + "/cmake/FindJANA.cmake", 'w') as f:
-        f.write(plugin_findjana_cmake)
 
     with open(name + "/CMakeLists.txt", 'w') as f:
         text = plugin_root_cmakelists_txt.format(name=name)
@@ -1123,8 +1048,8 @@ def create_mini_standalone_plugin(name):
         f.write(text)
 
     os.mkdir(name+"/cmake")
-    with open(name + "/cmake/FindJANA.cmake", 'w') as f:
-        f.write(plugin_findjana_cmake)
+
+
 def create_jfactory_test(factory_name, jobject_name):
     with open(factory_name + "Test.cc", 'w') as f:
         text = jfactory_test_cc.format(factory_name=factory_name, jobject_name=jobject_name);
