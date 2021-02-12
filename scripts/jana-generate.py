@@ -553,34 +553,6 @@ find_package(JANA REQUIRED)
 
 """
 
-mini_standalone_plugin_cmakelists_txt = """
-
-cmake_minimum_required(VERSION 3.9)
-project({name}_plugin_project)
-
-if(NOT "${{CMAKE_CXX_STANDARD}}")
-  set(CMAKE_CXX_STANDARD 14)
-endif()
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)   # Enable -fPIC for all targets
-
-# Set install directory to $JANA_HOME
-set(CMAKE_INSTALL_PREFIX $ENV{{JANA_HOME}} CACHE PATH "magic incantation" FORCE)
-
-# Expose custom cmake modules
-list(APPEND CMAKE_MODULE_PATH "${{CMAKE_CURRENT_LIST_DIR}}/cmake")
-
-# Find dependencies
-find_package(JANA REQUIRED)
-find_package(ROOT)
-
-# Add our code as a shared library
-add_library({name}_plugin SHARED {name}.cc)
-target_include_directories({name}_plugin PUBLIC ${{JANA_INCLUDE_DIR}} ${{ROOT_INCLUDE_DIRS}})
-target_link_libraries({name}_plugin ${{JANA_LIB}} ${{ROOT_LIBRARIES}})
-set_target_properties({name}_plugin PROPERTIES PREFIX "" OUTPUT_NAME "{name}" SUFFIX ".so")
-install(TARGETS {name}_plugin DESTINATION plugins)
-
-"""
 
 mini_project_plugin_cmakelists_txt = """
 
@@ -807,7 +779,6 @@ def create_plugin(name, is_standalone=True, is_mini=True, include_root=True, inc
         extra_find_packages = ""
         extra_includes = ""
         extra_libraries = ""
-
 
     if is_standalone:
         cmakelists += cmakelists_project_preamble_txt.format(name=name, extra_find_packages=extra_find_packages)
@@ -1059,21 +1030,6 @@ def create_mini_project_plugin(name):
         text = mini_plugin_cc.format(name=name)
         f.write(text)
 
-def create_mini_standalone_plugin(name):
-    """Create a minimal-boilerplate JANA standalone plugin. Requires one argument:
-       name: The name of the plugin, e.g. "TrackingEfficiency" or "trk_eff"
-    """
-    os.mkdir(name)
-    with open(name + "/CMakeLists.txt", 'w') as f:
-        text = mini_standalone_plugin_cmakelists_txt.format(name=name)
-        f.write(text)
-
-    with open(name + "/" + name + ".cc", 'w') as f:
-        text = mini_plugin_cc.format(name=name)
-        f.write(text)
-
-    os.mkdir(name+"/cmake")
-
 
 def create_jfactory_test(factory_name, jobject_name):
     with open(factory_name + "Test.cc", 'w') as f:
@@ -1083,7 +1039,7 @@ def create_jfactory_test(factory_name, jobject_name):
 
 def print_usage():
     print("Usage: jana-generate [type] [args...]")
-    print("  type: JObject JEventSource JEventProcessor RootEventProcessor JFactory StandalonePlugin ProjectPlugin MiniStandalonePlugin MiniProjectPlugin Project")
+    print("  type: JObject JEventSource JEventProcessor RootEventProcessor JFactory StandalonePlugin ProjectPlugin MiniProjectPlugin Project")
 
 if __name__ == '__main__':
 
@@ -1101,7 +1057,6 @@ if __name__ == '__main__':
                       'JFactoryTest': create_jfactory_test,
                       'ProjectPlugin': create_project_plugin,
                       'MiniProjectPlugin': create_mini_project_plugin,
-                      'MiniStandalonePlugin': create_mini_standalone_plugin,
                       'Executable': create_executable,
                       'Project': create_project,
                       }
