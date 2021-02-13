@@ -332,9 +332,11 @@ set(CMAKE_INSTALL_PREFIX $ENV{{JANA_HOME}} CACHE PATH "magic incantation" FORCE)
 # Find dependencies
 find_package(JANA REQUIRED)
 
+"""
+
+project_cmakelists_txt_postamble = """
 add_subdirectory(src)
 add_subdirectory(tests)
-
 """
 
 
@@ -361,6 +363,20 @@ target_link_libraries({name}_plugin ${{JANA_LIBRARY}} {extra_libraries})
 set_target_properties({name}_plugin PROPERTIES PREFIX "" OUTPUT_NAME "{name}" SUFFIX ".so")
 
 install(TARGETS {name}_plugin DESTINATION plugins)
+"""
+
+
+mini_plugin_cmakelists_txt = """
+{extra_find_packages}
+
+add_library({name}_plugin SHARED {name}.cc)
+
+target_include_directories({name}_plugin PUBLIC ${{JANA_INCLUDE_DIR}} {extra_includes})
+target_link_libraries({name}_plugin ${{JANA_LIB}} {extra_libraries})
+set_target_properties({name}_plugin PROPERTIES PREFIX "" OUTPUT_NAME "{name}" SUFFIX ".so")
+
+install(TARGETS {name}_plugin DESTINATION plugins)
+
 """
 
 
@@ -644,41 +660,6 @@ void {processor_name}::Finish() {{
 """
 
 
-cmakelists_project_preamble_txt = """
-
-cmake_minimum_required(VERSION 3.9)
-project({name}_plugin_project)
-
-if(NOT "${{CMAKE_CXX_STANDARD}}")
-  set(CMAKE_CXX_STANDARD 14)
-endif()
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)   # Enable -fPIC for all targets
-
-# Set install directory to $JANA_HOME
-set(CMAKE_INSTALL_PREFIX $ENV{{JANA_HOME}} CACHE PATH "magic incantation" FORCE)
-
-# Expose custom cmake modules
-list(APPEND CMAKE_MODULE_PATH "${{CMAKE_CURRENT_LIST_DIR}}/cmake")
-
-# Find dependencies
-find_package(JANA REQUIRED)
-"""
-
-
-mini_plugin_cmakelists_txt = """
-{extra_find_packages}
-
-add_library({name}_plugin SHARED {name}.cc)
-
-target_include_directories({name}_plugin PUBLIC ${{JANA_INCLUDE_DIR}} {extra_includes})
-target_link_libraries({name}_plugin ${{JANA_LIB}} {extra_libraries})
-set_target_properties({name}_plugin PROPERTIES PREFIX "" OUTPUT_NAME "{name}" SUFFIX ".so")
-
-install(TARGETS {name}_plugin DESTINATION plugins)
-
-"""
-
-
 mini_plugin_cc_noroot = """
 #include <JANA/JEventProcessor.h>
 
@@ -926,7 +907,8 @@ def create_plugin(name, is_standalone=True, is_mini=True, include_root=True, inc
         extra_libraries = ""
 
     if is_standalone:
-        cmakelists += cmakelists_project_preamble_txt.format(name=name)
+        cmakelists += project_cmakelists_txt.format(name=name)
+        cmakelists += project_cmakelists_txt_postamble.format(name=name)
 
     if not is_mini:
         with open(name + "/" + name + ".cc", 'w') as f:
