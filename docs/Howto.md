@@ -218,7 +218,7 @@ Run the Status Control Debugger GUI
 -----------------------------------
 
 The JANA Status/Control/Debugger GUI can be a useful tool for probing a running process. Details can
-be found on the [dedicated page for the GUI](GUI_Monitor_Debug.html)
+be found on the [dedicated page for the GUI](GUI_Monitor_Debug.md)
 
 
 Using factory metadata
