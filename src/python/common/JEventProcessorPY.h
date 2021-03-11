@@ -6,15 +6,19 @@
 // a JEventProcessor class in Python. The design uses a pair of
 // classes with a HasA relationship.
 //
-// The JEventProcessorPY class is a C++ class that inherits from
-// JEventProcessor.
+// The JEventProcessorPYTrampoline class is a C++ class that
+// inherits from JEventProcessor and is what JANA uses for callbacks.
 //
-// The JEventProcessorPYpyobject class is a python class that
-// inherits from pyobject in pybind11.
+// The JEventProcessorPY class is a python class that inherits
+// from pyobject in pybind11. It also serves as a base class
+// for Python JEventProcessor classes.
 //
 // Two classes are needed because the design of JANA requires
 // ownership of the JEventProcessor object be given to JApplication.
 // At the same time, pybind11 insists on ownership of all pyobjects.
+//
+// n.b. There may actually be a way to do this with one class by
+// manipulating the ref counter in the python object
 
 
 #include <mutex>
@@ -38,6 +42,11 @@ class JEventProcessorPY {
     JEventProcessorPY(py::object &py_obj):pyobj(py_obj){
 
         cout << "JEventProcessorPY constructor called with py:object : " << this  << endl;
+
+        // Get the name of the Python class inheriting from JEventProcessorPY
+        // so it can be displayed as the JEventProcessor name (see JEventProcessorPYTrampoline)
+        auto name_obj = py_obj.get_type().attr("__name__");
+        class_name = py::cast<std::string>(name_obj);
 
         try { pymInit    = pyobj.attr("Init"   );  has_pymInit    = true; }catch(...){}
         try { pymProcess = pyobj.attr("Process");  has_pymProcess = true; }catch(...){}
@@ -84,6 +93,7 @@ class JEventProcessorPY {
 
     }
 
+    std::string class_name = "JEventProcssorPY";
     py::object &pyobj; // _self_
     py::object pymInit;
     py::object pymProcess;
@@ -100,7 +110,7 @@ class JEventProcessorPYTrampoline: public JEventProcessor {
 
 public:
     JEventProcessorPYTrampoline(JEventProcessorPY *jevent_proc):jevent_proc_py(jevent_proc){
-        SetTypeName("JEventProcessorPY");
+        SetTypeName(jevent_proc->class_name);
     }
 
     void Init(void){ jevent_proc_py->Init(); }
