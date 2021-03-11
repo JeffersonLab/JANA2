@@ -71,11 +71,16 @@ inline void     janapy_SetParameterValue(string key, py::object valobj)
     pyjapp->SetParameterValue<string>( key, ss.str() );
 }
 
-inline void janapy_AddProcessor(py::object &pyproc )
-{
-    cout << "JANAPY2_AddProcessor called!" << endl;
+inline void janapy_AddProcessor(py::object &pyproc ) {
+    cout << "JANAPY_AddProcessor called!" << endl;
     JEventProcessorPY *proc = pyproc.cast<JEventProcessorPY *>();
-    pyjapp->Add( proc );
+//    JEventProcessorPY *proc = new JEventProcessorPYTrampoline(pyproc);
+    if (pyjapp != nullptr) {
+        cout << "[INFO] Adding JEventProcessorPY" << endl;
+        pyjapp->Add( new JEventProcessorPYTrampoline(proc) );
+    }else {
+        cerr << "[ERROR] pyjapp not set before call to janapy_AddProcessor() !!" << endl;
+    }
 }
 
 //================================================================================
@@ -94,9 +99,10 @@ inline void janapy_AddProcessor(py::object &pyproc )
 \
 /* JEventProcessor */ \
 py::class_<JEventProcessorPY>(m, "JEventProcessor") \
-.def(py::init<py::object&>()) \
-.def("Init", &JEventProcessorPY::Init) \
-.def("Process", &JEventProcessorPY::Process); \
+.def(py::init<py::object&>())\
+.def("Init",    &JEventProcessorPY::Init)\
+.def("Process", &JEventProcessorPY::Process)\
+.def("Finish",  &JEventProcessorPY::Finish);\
 \
 /* C-wrapper routines */ \
 m.def("Start",                       &janapy_Start,                       "Allow JANA system to start processing data. (Not needed for short scripts.)"); \
