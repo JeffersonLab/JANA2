@@ -4,6 +4,17 @@ add_library(janapy_plugin SHARED janapy_plugin.cc)
 include_directories(${PYTHON_INCLUDE_DIRS} ${PYBIND11_INCLUDE_DIR} ../../common)
 target_link_libraries(janapy_plugin PRIVATE ${PYTHON_LIBRARIES} pybind11::embed jana2)
 
+#---------------------------------------------------------------------------------------
+# ROOT is optional
+find_package(ROOT)
+if(${ROOT_FOUND})
+    include(${ROOT_USE_FILE})
+    target_compile_definitions(janapy_plugin PUBLIC HAVE_ROOT)
+    include_directories(${ROOT_INCLUDE_DIRS})
+    link_libraries(${ROOT_LIBRARIES})
+endif()
+#---------------------------------------------------------------------------------------
+
 set_target_properties(janapy_plugin PROPERTIES PREFIX "" SUFFIX ".so" LIBRARY_OUTPUT_NAME "janapy")
 install(TARGETS janapy_plugin DESTINATION plugins)
 
