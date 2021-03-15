@@ -160,11 +160,11 @@ void JPluginLoader::attach_plugin(JComponentManager* jcm, std::string soname) {
     typedef void InitPlugin_t(JApplication* app);
     //typedef void InitPlugin_t(JComponentManager* jcm, JServiceLocator* sl);
     // TODO: Convert InitPlugin sig to (builder, servicelocator) -> void
-    InitPlugin_t* plugin = (InitPlugin_t*) dlsym(handle, "InitPlugin");
-    if (plugin) {
+    InitPlugin_t* initialize_proc = (InitPlugin_t*) dlsym(handle, "InitPlugin");
+    if (initialize_proc) {
         LOG_INFO(_logger) << "Initializing plugin \"" << soname << "\"" << LOG_END;
-        (*plugin)(_app);
-        _sohandles.push_back(handle);
+        (*initialize_proc)(_app);
+        _sohandles[soname] = handle;
     } else {
         dlclose(handle);
         LOG_DEBUG(_logger) << "Plugin \"" << soname
@@ -175,6 +175,24 @@ void JPluginLoader::attach_plugin(JComponentManager* jcm, std::string soname) {
 
 JPluginLoader::JPluginLoader(JApplication* app) : _app(app) {}
 
+JPluginLoader::~JPluginLoader(){
+
+    // Loop over open plugin handles.
+    // Call FinalizePlugin if it has one and close it in all cases.
+    typedef void FinalizePlugin_t(JApplication* app);
+    for( auto p :_sohandles ){
+        auto soname = p.first;
+        auto handle = p.second;
+        FinalizePlugin_t* finalize_proc = (FinalizePlugin_t*) dlsym(handle, "FinalizePlugin");
+        if (finalize_proc) {
+            LOG_INFO(_logger) << "Finalizing plugin \"" << soname << "\"" << LOG_END;
+            (*finalize_proc)(_app);
+        }
+
+        // Close plugin handle
+        dlclose(handle);
+    }
+}
 
 void JPluginLoader::acquire_services(JServiceLocator* sl) {
 
