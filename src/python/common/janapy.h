@@ -20,7 +20,7 @@ namespace py = pybind11;
 
 static py::module_ *PY_MODULE = nullptr;       // set at end of JANA_MODULE_DEF
 static py::module_ PY_MODULE_JSON = py::none();  // set at end of JANA_MODULE_DEF
-static bool PY_INITIALIZED = false;
+bool PY_INITIALIZED = false;
 static bool PY_MODULE_INSTANTIATED_JAPPLICATION = false;
 static JApplication *pyjapp = nullptr;
 
@@ -88,7 +88,7 @@ inline void janapy_AddProcessor(py::object &pyproc ) {
 
     if (pyjapp != nullptr) {
         cout << "[INFO] Adding JEventProcessorPY" << endl;
-        pyjapp->Add( new JEventProcessorPYTrampoline(proc) );
+        pyjapp->Add( new JEventProcessorPYTrampoline(pyjapp, proc) );
     }else {
         cerr << "[ERROR] pyjapp not set before call to janapy_AddProcessor() !!" << endl;
     }

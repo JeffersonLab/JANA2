@@ -39,8 +39,10 @@ namespace py = pybind11;
 
 #include <JANA/JEventProcessor.h>
 #include <JANA/JEvent.h>
-#include <janacontrol/src/janaJSON.h>
-#include <janacontrol/src/JControlEventProcessor.h>
+#include <JANA/Utils/JStringification.h>
+
+std::mutex pymutex; // This is bad practice to put this in a header, but it is needed in both the plugin and the module
+extern bool PY_INITIALIZED;  // declared in janapy.h
 
 //#pragma GCC visibility push(hidden)
 
@@ -48,7 +50,9 @@ class JEventProcessorPY {
 
     public:
 
-    JEventProcessorPY(py::object &py_obj):pyobj(py_obj){
+    //----------------------------------------
+    // JEventProcessorPY
+    JEventProcessorPY(py::object &py_obj):pyobj(py_obj),jstringification(new JStringification){
 
         cout << "JEventProcessorPY constructor called with py:object : " << this  << endl;
 
@@ -62,16 +66,29 @@ class JEventProcessorPY {
         try { pymFinish  = pyobj.attr("Finish" );  has_pymFinish  = true; }catch(...){}
 
     }
+
+    //----------------------------------------
+    // ~JEventProcessorPY
     ~JEventProcessorPY() {
         cout << "JEventProcessorPY destructor called : " << this  << endl;
+    }
+
+    //----------------------------------------
+    // SetJApplication
+    //
+    /// This sets the internal mApplication member. It is called by the
+    /// JEventProcessorPYTrampoline class constructor, which itself is
+    /// only called when the Python jana.AddProcessor(proc) method is
+    /// called.
+    void SetJApplication(JApplication *japp) {
+        mApplication = japp;
     }
 
     //----------------------------------------
     // Init
     void Init(void){
 
-        cout << "JEventProcessorPY::Init called " << endl;
-        if( has_pymInit ) {
+        if( has_pymInit && PY_INITIALIZED ) {
             lock_guard<mutex> lck(pymutex);
             pymInit();
         }
@@ -81,8 +98,6 @@ class JEventProcessorPY {
     //----------------------------------------
     // Process
     void Process(const std::shared_ptr<const JEvent>& aEvent){
-
-        cout << "JEventProcessorPY::Process called " << endl;
 
         // Prefetch any factory in the prefetch list.
         // This does not actually fetch them, but does activate the factories
@@ -103,7 +118,7 @@ class JEventProcessorPY {
             }
         }
 
-        if( has_pymProcess ) {
+        if( has_pymProcess  && PY_INITIALIZED ) {
 
             // According to the Python documentation we should be wrapping the call to pmProcess() below
             // in the following that activates the GIL lock. In practice, this seemed to allow each thread
@@ -113,12 +128,12 @@ class JEventProcessorPY {
             lock_guard<mutex> lck(pymutex);
 
             // This magic line creates a shared_ptr on the stack with a custom deleter.
-            // The custom deleter is used to reset the _aEvent data member back to
+            // The custom deleter is used to reset the mEvent data member back to
             // nullptr so that it does not hold on the the JEvent after we return
             // from this method. We use this trick to ensure it happens even if an
             // exception is thrown from pymProcess().
-            std::shared_ptr<int> _avent_free(nullptr, [=](int *ptr){_aEvent = nullptr;});
-            _aEvent = aEvent; // remember this JEvent so it can be used in calls to Get()
+            std::shared_ptr<int> mEvent_free(nullptr, [=](int *ptr){ mEvent = nullptr;});
+            mEvent = aEvent; // remember this JEvent so it can be used in calls to Get()
 
             pymProcess();
         }
@@ -128,9 +143,7 @@ class JEventProcessorPY {
     // Finish
     void Finish(void){
 
-        cout << "JEventProcessorPY::Finish called " << endl;
-
-        if( has_pymFinish ) {
+        if( has_pymFinish  && PY_INITIALIZED ) {
             lock_guard<mutex> lck(pymutex);
             pymFinish();
         }
@@ -193,16 +206,11 @@ class JEventProcessorPY {
         std::string fac_name_str = py::str(fac_name);
         std::string tag_str = tag.is(py::none()) ? "":py::str(tag);
 
-        std::map<std::string, JObjectSummary> objects;
-        GetObjectSummaries(fac_name_str, tag_str, objects);
+        std::vector<std::string> json_vec;
+        jstringification->GetObjectSummariesAsJSON(json_vec, mEvent, fac_name_str, tag_str);
 
         py::list list;
-        for(auto p : objects){
-
-            const std::string &hexaddr = p.first;
-            const JObjectSummary &summary = p.second;
-//            std::string obj_json = JJSON_Create(summary);
-            std::string obj_json = ObjectToJSON( hexaddr, summary );
+        for(auto obj_json : json_vec){
 
             try {
                 auto json_loads = pymodule_json->attr("loads" );
@@ -214,69 +222,6 @@ class JEventProcessorPY {
         }
 
         return list;
-    }
-
-    //----------------------------------------
-    // GetObjectSummaries
-    //
-    // TODO: Take this and the (same) code in JControlEventPRocessor and move them to a common place
-    void GetObjectSummaries(const std::string &factory_name, const std::string &factory_tag, std::map<std::string, JObjectSummary> &objects){
-        // bombproof against getting called with no active JEvent
-        if(_aEvent.get() == nullptr ) return;
-        auto fac = _aEvent->GetFactory(factory_name, factory_tag);
-        if( fac == nullptr ){
-            jerr << "Unable to find factory specified for prefetching: factory=" << factory_name << " tag=" << factory_tag << std::endl;
-            return;
-        }
-        for( auto jobj : fac->GetAs<JObject>()){
-            JObjectSummary summary;
-            jobj->Summarize(summary);
-            std::stringstream ss;
-            ss << "0x" << std::hex << (uint64_t)jobj << std::dec;
-            objects[ss.str()] = summary; // key is address of object converted to string
-        }
-#ifdef HAVE_ROOT
-        // For objects inheriting from TObject, we try and convert members automatically
-        // into JObjectSummary form. This relies on dictionaries being compiled in.
-        // (see ROOT_GENERATE_DICTIONARY for cmake files).
-        for( auto tobj : fac->GetAs<TObject>()){
-            JObjectSummary summary;
-            auto tclass = TClass::GetClass(tobj->ClassName());
-            if(tclass){
-                auto *members = tclass->GetListOfAllPublicDataMembers();
-                for( auto item : *members){
-                    TDataMember *memitem = dynamic_cast<TDataMember*>(item);
-                    if( memitem == nullptr ) continue;
-                    if( memitem->Property() & kIsStatic ) continue; // exclude TObject enums
-                    JObjectMember jObjectMember;
-                    jObjectMember.name = memitem->GetName();
-                    jObjectMember.type = memitem->GetTypeName();
-                    jObjectMember.value = GetRootObjectMemberAsString(tobj, memitem, jObjectMember.type);
-                    summary.add(jObjectMember);
-                }
-            }else {
-                LOG << "Unable to get TClass for: " << tobj->ClassName() << LOG_END;
-            }
-            std::stringstream ss;
-            ss << "0x" << std::hex << (uint64_t)tobj << std::dec;
-            objects[ss.str()] = summary; // key is address of object converted to string
-        }
-#endif
-     }
-
-    //----------------------------------------
-    // ObjectToJSON
-    std::string ObjectToJSON( const std::string &hexaddr, const JObjectSummary &summary ){
-
-        stringstream ss;
-        ss << "{\n";
-        ss << "\"hexaddr\":\"" << hexaddr << "\"\n";
-        for( auto m : summary.get_fields() ){
-            ss << ",\"" << m.name << "\":\"" << m.value << "\"\n";
-        }
-        ss << "}";
-
-        return std::move(ss.str());
     }
 
     // Data members
@@ -291,17 +236,18 @@ class JEventProcessorPY {
     bool has_pymProcess = false;
     bool has_pymFinish  = false;
 
-    mutex pymutex;
-
-    std::shared_ptr<const JEvent> _aEvent;
+    JApplication *mApplication = nullptr;
+    std::shared_ptr<const JEvent> mEvent;
     std::map<std::string, std::string> prefetch_factories;
+    std::shared_ptr<const JStringification> jstringification;
 };
 
 class JEventProcessorPYTrampoline: public JEventProcessor {
 
 public:
-    JEventProcessorPYTrampoline(JEventProcessorPY *jevent_proc):jevent_proc_py(jevent_proc){
+    JEventProcessorPYTrampoline(JApplication *japp, JEventProcessorPY *jevent_proc):JEventProcessor(japp),jevent_proc_py(jevent_proc){
         SetTypeName(jevent_proc->class_name);
+        jevent_proc_py->SetJApplication(japp); // copy JApplication pointer to our JEventProcessorPY
     }
 
     void Init(void){ jevent_proc_py->Init(); }
