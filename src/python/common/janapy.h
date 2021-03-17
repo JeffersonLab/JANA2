@@ -37,7 +37,7 @@ inline bool     janapy_IsInitialized(void) { return pyjapp->IsInitialized(); }
 inline bool     janapy_IsQuitting(void) { return pyjapp->IsQuitting(); }
 inline bool     janapy_IsDrainingQueues(void) { return pyjapp->IsDrainingQueues(); }
 
-inline void     janapy_AddPlugin(string plugin_name) { pyjapp->AddPlugin(plugin_name); _DBG__; }
+inline void     janapy_AddPlugin(string plugin_name) { pyjapp->AddPlugin(plugin_name); }
 inline void     janapy_AddPluginPath(string path) { pyjapp->AddPluginPath(path); }
 inline void     janapy_AddEventSource(string source) { pyjapp->Add( source ); }
 inline void     janapy_SetTicker(bool ticker_on=true) { pyjapp->SetTicker(ticker_on); }
