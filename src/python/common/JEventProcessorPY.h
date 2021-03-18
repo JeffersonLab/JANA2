@@ -107,6 +107,7 @@ class JEventProcessorPY {
         // handle the case where the factory object is neither a JObject nor
         // a TObject.
         for( auto p : prefetch_factories ){
+
             auto fac = aEvent->GetFactory( p.first, p.second);
             if( fac == nullptr ){
                 jerr << "Unable to find factory specified for prefetching: factory=" << p.first << " tag=" << p.second << std::endl;
@@ -115,6 +116,8 @@ class JEventProcessorPY {
 #ifdef HAVE_ROOT
                 if( v.empty() )fac->GetAs<TObject>();
 #endif // HAVE_ROOT
+
+                _DBG_<<"Prefetching from factory: " << p.first <<":" << p.second << "  - " << v.size() << " objects" <<std::endl;
             }
         }
 
