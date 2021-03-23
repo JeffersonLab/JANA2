@@ -14,17 +14,6 @@ if (ZeroMQ_FOUND)
 
     find_package(Threads REQUIRED)
 
-    #---------------------------------------------------------------------------------------
-    # ROOT is optional
-    find_package(ROOT)
-    if(${ROOT_FOUND})
-        include(${ROOT_USE_FILE})
-        target_compile_definitions(janacontrol_plugin PUBLIC HAVE_ROOT)
-        target_include_directories(janacontrol_plugin PUBLIC ${ROOT_INCLUDE_DIRS})
-        target_link_libraries(janacontrol_plugin ${ROOT_LIBRARIES})
-    endif()
-    #---------------------------------------------------------------------------------------
-
 	target_include_directories(janacontrol_plugin PUBLIC ${JANA_INCLUDE_DIR} ${ZeroMQ_INCLUDE_DIRS})
     target_link_libraries(janacontrol_plugin jana2 Threads::Threads ${ZeroMQ_LIBRARY})
 	set_target_properties(janacontrol_plugin PROPERTIES PREFIX "" OUTPUT_NAME "janacontrol" SUFFIX ".so")

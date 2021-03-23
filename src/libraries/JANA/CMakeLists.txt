@@ -80,6 +80,8 @@ set(JANA2_SOURCES
     Utils/JProcessorMapping.cc
     Utils/JPerfUtils.cc
     Utils/JPerfUtils.h
+    Utils/JStringification.cc
+    Utils/JStringification.h
 
     Calibrations/JCalibration.cc
     Calibrations/JCalibration.h
@@ -116,7 +118,6 @@ set(JANA2_SOURCES
     Compatibility/JLockService.h
     Compatibility/JGetObjectsFactory.h
     )
-
 
 add_library(jana2 STATIC ${JANA2_SOURCES})
 

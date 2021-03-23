@@ -18,7 +18,9 @@ using namespace std;
 namespace py = pybind11;
 #include "JEventProcessorPY.h"
 
-static bool PY_INITIALIZED = false;
+static py::module_ *PY_MODULE = nullptr;       // set at end of JANA_MODULE_DEF
+static py::module_ PY_MODULE_JSON = py::none();  // set at end of JANA_MODULE_DEF
+bool PY_INITIALIZED = false;
 static bool PY_MODULE_INSTANTIATED_JAPPLICATION = false;
 static JApplication *pyjapp = nullptr;
 
@@ -71,13 +73,22 @@ inline void     janapy_SetParameterValue(string key, py::object valobj)
     pyjapp->SetParameterValue<string>( key, ss.str() );
 }
 
+//-----------------------------------------
+// janapy_AddProcessor
+//-----------------------------------------
 inline void janapy_AddProcessor(py::object &pyproc ) {
-    cout << "JANAPY_AddProcessor called!" << endl;
+
+    // The JEventProcessorPY is instantiated from python by vitue of
+    // it being a base class for whatever jana.JEventProcessor class
+    // the python script defines. Here though we set some data members
+    // only accessible via C++.
     JEventProcessorPY *proc = pyproc.cast<JEventProcessorPY *>();
-//    JEventProcessorPY *proc = new JEventProcessorPYTrampoline(pyproc);
+    proc->pymodule = PY_MODULE;
+    proc->pymodule_json = &PY_MODULE_JSON;
+
     if (pyjapp != nullptr) {
         cout << "[INFO] Adding JEventProcessorPY" << endl;
-        pyjapp->Add( new JEventProcessorPYTrampoline(proc) );
+        pyjapp->Add( new JEventProcessorPYTrampoline(pyjapp, proc) );
     }else {
         cerr << "[ERROR] pyjapp not set before call to janapy_AddProcessor() !!" << endl;
     }
@@ -98,11 +109,13 @@ inline void janapy_AddProcessor(py::object &pyproc ) {
 #define JANA_MODULE_DEF \
 \
 /* JEventProcessor */ \
-py::class_<JEventProcessorPY>(m, "JEventProcessor") \
+py::class_<JEventProcessorPY>(m, "JEventProcessor")\
 .def(py::init<py::object&>())\
-.def("Init",    &JEventProcessorPY::Init)\
-.def("Process", &JEventProcessorPY::Process)\
-.def("Finish",  &JEventProcessorPY::Finish);\
+.def("Init",       &JEventProcessorPY::Init)\
+.def("Process",    &JEventProcessorPY::Process)\
+.def("Finish",     &JEventProcessorPY::Finish)\
+.def("Prefetch",   &JEventProcessorPY::Prefetch, py::arg("fac_name"), py::arg("tag")="")\
+.def("Get",        &JEventProcessorPY::Get, py::arg("fac_name"), py::arg("tag")="");\
 \
 /* C-wrapper routines */ \
 m.def("Start",                       &janapy_Start,                       "Allow JANA system to start processing data. (Not needed for short scripts.)"); \
@@ -131,6 +144,8 @@ m.def("GetParameterValue",           &janapy_GetParameterValue,           "Retur
 m.def("SetParameterValue",           &janapy_SetParameterValue,           "Set configuration parameter."); \
 m.def("AddProcessor",                &janapy_AddProcessor,                "Add an event processor"); \
 \
-
+PY_MODULE = &m;\
+PY_MODULE_JSON = py::module_::import("json");\
+\
 //================================================================================
 

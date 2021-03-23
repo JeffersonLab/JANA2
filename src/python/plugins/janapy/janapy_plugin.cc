@@ -4,7 +4,7 @@
 
 
 #include <thread>
-#include <cstdio>
+#include <mutex>
 #include <chrono>
 using namespace std;
 
@@ -16,6 +16,7 @@ using namespace std;
 #include <janapy.h>
 #include <pybind11/embed.h>
 
+extern std::mutex pymutex;    // declared in JEventProcessorPY.h
 
 void JANA_EmbeddedPythonModuleInit(JApplication *sApp);
 
@@ -39,7 +40,23 @@ void InitPlugin(JApplication *app){
 
 void FinalizePlugin(JApplication *app){
     // Finalize the python interpreter
-    if( PY_INITIALIZED ) py::finalize_interpreter();
+    if( PY_INITIALIZED ) {
+        // Wait upt to 2 seconds for interpreter to not be in use before finalizing it.
+        for(int i=0; i<20; i++) {
+            if (pymutex.try_lock()) {
+                PY_INITIALIZED = false;
+                // TODO: Fix this
+                //  There is an issue with seg faults when dlclose is called on the janapy plugin
+                //  if we call finalize here. I tried to ensure no other python methods were being
+                //  called, but couldn't find how to plug things up completely. Thus, to avoid
+                //  crashes when ending (especially when ctl-C is hit) we do not finalize the
+                //  python interpreter.
+                //py::finalize_interpreter();
+                break;
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+    }
 }
 } // "C"
 

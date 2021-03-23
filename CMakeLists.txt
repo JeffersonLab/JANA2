@@ -20,6 +20,24 @@ else()
     set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/install CACHE PATH "Comment explaining this nonsense" FORCE)
 endif()
 
+#---------------------------------------------------------------------------------------
+option(USE_ROOT "Include additional ROOT support if ROOT is available." ON)
+if (${USE_ROOT})
+    find_package(ROOT)
+    if(${ROOT_FOUND})
+        message(STATUS "USE_ROOT=ON: Found ROOT at: " ${ROOT_USE_FILE})
+        include(${ROOT_USE_FILE})
+        add_compile_definitions(HAVE_ROOT)
+        include_directories(${ROOT_INCLUDE_DIRS})
+        link_libraries(${ROOT_LIBRARIES})
+    else()
+        message(ERROR "USE_ROOT=ON: No ROOT found (make sure CMAKE_PREFIX_PATH includes ROOT location)")
+    endif()
+else()
+    message(STATUS "USE_ROOT=OFF: Additional ROOT support will not be included")
+endif()
+#---------------------------------------------------------------------------------------
+
 include_directories(src/libraries)   # So that everyone can find the JANA header files
 
 add_subdirectory(src/libraries/JANA)
@@ -34,6 +52,7 @@ add_subdirectory(src/plugins/janacontrol)
 add_subdirectory(src/programs/jana)
 add_subdirectory(src/programs/tests)
 
+#---------------------------------------------------------------------------------------
 option(USE_PYTHON "Compile optional python targets. This requires python-devel and python-distutils." OFF)
 if (${USE_PYTHON})
     message(STATUS "USE_PYTHON=ON: Including optional python targets")
@@ -41,6 +60,7 @@ if (${USE_PYTHON})
 else()
     message(STATUS "USE_PYTHON=OFF: Skipping optional python targets")
 endif()
+#---------------------------------------------------------------------------------------
 
 install(DIRECTORY scripts/ DESTINATION bin FILES_MATCHING PATTERN "jana-*.py"
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_READ WORLD_EXECUTE)

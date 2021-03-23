@@ -11,6 +11,9 @@ add_subdirectory(externals/pybind11-2.6.1)
 # compiled by each of those separately (so it is compiled
 # multiple times).
 
+include_directories(${PROJECT_SOURCE_DIR}/src/plugins)  # needed to include janacontrol/janaJSON.h
+
+
 add_subdirectory(plugins/janapy)
 add_subdirectory(modules/jana)
 

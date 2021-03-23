@@ -88,47 +88,63 @@ void JPluginLoader::attach_plugins(JComponentManager* jcm) {
     std::set<std::string> exclusions(_plugins_to_exclude.begin(), _plugins_to_exclude.end());
 
     // Loop over plugins
-    std::stringstream paths_checked;
-    for (std::string plugin : _plugins_to_include) {
-        if (exclusions.find(plugin) != exclusions.end()) {
-            LOG_DEBUG(_logger) << "Excluding plugin `" << plugin << "`" << LOG_END;
-            continue;
-        }
-        // Sometimes, the user will include the ".so" suffix in the
-        // plugin name. If they don't, then we add it here.
-        if (plugin.substr(plugin.size() - 3) != ".so") plugin = plugin + ".so";
-
-        // Loop over paths
-        bool found_plugin = false;
-        for (std::string path : _plugin_paths) {
-            std::string fullpath = path + "/" + plugin;
-            LOG_DEBUG(_logger) << "Looking for '" << fullpath << "' ...." << LOG_END;
-            paths_checked << "    " << fullpath << "  =>  ";
-            if (access(fullpath.c_str(), F_OK) != -1) {
-                LOG_DEBUG(_logger) << "Found!" << LOG_END;
-                try {
-                    jcm->next_plugin(plugin);
-                    attach_plugin(jcm, fullpath.c_str());
-                    paths_checked << "Loaded successfully" << std::endl;
-                    found_plugin = true;
-                    break;
-                } catch (...) {
-                    paths_checked << "Loading failure: " << dlerror() << std::endl;
-                    LOG_DEBUG(_logger) << "Loading failure: " << dlerror() << LOG_END;
-                    continue;
-                }
+    // It is possible for plugins to add additional plugins that will also need to
+    // be attached. To accommodate this we wrap the following chunk of code in
+    // a lambda function so we can run it over the additional plugins recursively
+    // until all are attached. (see below)
+    auto add_plugins_lamda = [=](std::vector<std::string> &plugins) {
+        std::stringstream paths_checked;
+        for (std::string plugin : plugins) {
+            if (exclusions.find(plugin) != exclusions.end()) {
+                LOG_DEBUG(_logger) << "Excluding plugin `" << plugin << "`" << LOG_END;
+                continue;
             }
-            paths_checked << "File not found" << std::endl;
-            LOG_DEBUG(_logger) << "Failed to attach '" << fullpath << "'" << LOG_END;
-        }
+            // Sometimes, the user will include the ".so" suffix in the
+            // plugin name. If they don't, then we add it here.
+            if (plugin.substr(plugin.size() - 3) != ".so") plugin = plugin + ".so";
 
-        // If we didn't find the plugin, then complain and quit
-        if (!found_plugin) {
-            LOG_ERROR(_logger) << "Couldn't load plugin '" << plugin << "'\n" <<
-                               "  Make sure that JANA_HOME and/or JANA_PLUGIN_PATH environment variables are set correctly.\n" <<
-                               "  Paths checked:\n" << paths_checked.str() << LOG_END;
-            throw JException("Couldn't find plugin '%s'", plugin.c_str());
+            // Loop over paths
+            bool found_plugin = false;
+            for (std::string path : _plugin_paths) {
+                std::string fullpath = path + "/" + plugin;
+                LOG_DEBUG(_logger) << "Looking for '" << fullpath << "' ...." << LOG_END;
+                paths_checked << "    " << fullpath << "  =>  ";
+                if (access(fullpath.c_str(), F_OK) != -1) {
+                    LOG_DEBUG(_logger) << "Found!" << LOG_END;
+                    try {
+                        jcm->next_plugin(plugin);
+                        attach_plugin(jcm, fullpath.c_str());
+                        paths_checked << "Loaded successfully" << std::endl;
+                        found_plugin = true;
+                        break;
+                    } catch (...) {
+                        paths_checked << "Loading failure: " << dlerror() << std::endl;
+                        LOG_DEBUG(_logger) << "Loading failure: " << dlerror() << LOG_END;
+                        continue;
+                    }
+                }
+                paths_checked << "File not found" << std::endl;
+                LOG_DEBUG(_logger) << "Failed to attach '" << fullpath << "'" << LOG_END;
+            }
+
+            // If we didn't find the plugin, then complain and quit
+            if (!found_plugin) {
+                LOG_ERROR(_logger) << "Couldn't load plugin '" << plugin << "'\n" <<
+                                   "  Make sure that JANA_HOME and/or JANA_PLUGIN_PATH environment variables are set correctly.\n"
+                                   <<
+                                   "  Paths checked:\n" << paths_checked.str() << LOG_END;
+                throw JException("Couldn't find plugin '%s'", plugin.c_str());
+            }
         }
+    };
+
+    // Recursively loop over the list of plugins to ensure new plugins added by ones being
+    // attached are also attached.
+    uint64_t inext = 0;
+    while( inext < _plugins_to_include.size() ){
+        std::vector<std::string> myplugins( _plugins_to_include.begin()+inext, _plugins_to_include.end());
+        inext = _plugins_to_include.size(); // new plugins will be attached to end of vector
+        add_plugins_lamda(myplugins);
     }
 }
 

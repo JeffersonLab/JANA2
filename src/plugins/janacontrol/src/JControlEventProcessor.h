@@ -7,6 +7,7 @@
 #include <map>
 #include <JANA/JEventProcessor.h>
 #include <JANA/Services/JComponentManager.h>
+#include <JANA/Utils/JStringification.h>
 
 /// The JControlEventProcessor class is used by the janacontrol plugin, primarily
 /// to help with its debugging feature. It can be used to stall event processing
@@ -50,6 +51,7 @@ protected:
     bool _debug_mode    = false;
     bool _wait          = true;
     std::shared_ptr<const JEvent> _jevent;
+    std::shared_ptr<JStringification> jstringification;
 };
 
 // Compare function to allow JFactorySummary to be used as keys in std::map
