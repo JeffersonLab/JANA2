@@ -90,10 +90,9 @@ public:
     /// `GetObjects` was historically used for lazily unpacking data from a JEvent and putting it into a "dummy" JFactory.
     /// This mechanism has been replaced by `JEvent::Insert`. All lazy evaluation should happen in a (non-dummy)
     /// JFactory, whereas eager evaluation should happen in `JEventSource::GetEvent` via `JEvent::Insert`.
-
-    [[deprecated]]
-    virtual bool GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactory* aFactory) { return false; }
-
+    virtual bool GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactory* aFactory) __attribute__ ((deprecated)) {
+    	return false;
+    }
 
 
     // Wrappers for calling Open and GetEvent in a safe way

@@ -32,8 +32,7 @@ public:
 
     /// JFactoryT constructor requires a name and a tag.
     /// Name should always be JTypeInfo::demangle<T>(), tag is usually "".
-    [[deprecated]]
-    JFactoryT(const std::string& aName, const std::string& aTag) : JFactory(aName, aTag) {
+    JFactoryT(const std::string& aName, const std::string& aTag) __attribute__ ((deprecated)) : JFactory(aName, aTag) {
         EnableGetAs<T>();
         EnableGetAs<JObject>( std::is_convertible<T,JObject>() ); // Automatically add JObject if this can be converted to it
 #ifdef HAVE_ROOT
@@ -41,8 +40,7 @@ public:
 #endif
     }
 
-	[[deprecated]]
-	JFactoryT(const std::string& aName) : JFactory(aName, "") {
+	JFactoryT(const std::string& aName) __attribute__ ((deprecated))  : JFactory(aName, "") {
         EnableGetAs<T>();
         EnableGetAs<JObject>( std::is_convertible<T,JObject>() ); // Automatically add JObject if this can be converted to it
 #ifdef HAVE_ROOT

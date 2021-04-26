@@ -40,8 +40,7 @@ public:
     virtual ~JFactory() = default;
 
 
-    [[deprecated]]
-    std::string GetName() const { return mObjectName; }
+    std::string GetName() const __attribute__ ((deprecated))  { return mObjectName; }
 
     std::string GetTag() const { return mTag; }
     std::string GetObjectName() const { return mObjectName; }
@@ -52,8 +51,7 @@ public:
     uint32_t GetPreviousRunNumber(void) const { return mPreviousRunNumber; }
 
 
-    [[deprecated]]
-    void SetName(std::string objectName) { mObjectName = std::move(objectName); }
+    void SetName(std::string objectName) __attribute__ ((deprecated)) { mObjectName = std::move(objectName); }
 
     void SetTag(std::string tag) { mTag = std::move(tag); }
     void SetObjectName(std::string objectName) { mObjectName = std::move(objectName); }

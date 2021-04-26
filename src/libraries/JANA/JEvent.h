@@ -77,8 +77,8 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 		void SetEventNumber(uint64_t aEventNumber){mEventNumber = aEventNumber;}
 		void SetJApplication(JApplication* app){mApplication = app;}
 		void SetJEventSource(JEventSource* aSource){mEventSource = aSource;}
-		[[deprecated]]
-		void SetSequential(bool isSequential){mIsBarrierEvent = isSequential;}
+
+		void SetSequential(bool isSequential) __attribute__ ((deprecated)) {mIsBarrierEvent = isSequential;}
 
 		//GETTERS
 		uint32_t GetRunNumber() const {return mRunNumber;}
