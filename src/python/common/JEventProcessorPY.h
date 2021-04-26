@@ -34,7 +34,7 @@ namespace py = pybind11;
 #include <TClass.h>
 #include <TDataMember.h>
 #include <TMethodCall.h>
-#include <Tlist.h>
+#include <TList.h>
 #endif // HAVE_ROOT
 
 #include <JANA/JEventProcessor.h>

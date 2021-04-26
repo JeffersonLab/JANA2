@@ -13,7 +13,7 @@
 #include <TClass.h>
 #include <TDataMember.h>
 #include <TMethodCall.h>
-#include <Tlist.h>
+#include <TList.h>
 #endif // HAVE_ROOT
 
 #include <JANA/JObject.h>
