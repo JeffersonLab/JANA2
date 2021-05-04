@@ -35,6 +35,7 @@ public:
     JComponentSummary get_component_summary();
 
     // Unsafe access into our own repository of components
+    std::vector<JEventSourceGenerator*>& get_evt_src_gens();
     std::vector<JEventSource*>& get_evt_srces();
     std::vector<JEventProcessor*>& get_evt_procs();
     std::vector<JFactoryGenerator*>& get_fac_gens();
