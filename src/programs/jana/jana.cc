@@ -6,7 +6,7 @@
 
 int main(int argc, char* argv[]) {
 
-	auto options = jana::ParseCommandLineOptions(argc, argv);
+	auto options = jana::ParseCommandLineOptions(argc, argv, false);
 
 	if (options.flags[jana::ShowUsage]) {
 		// Show usage information and exit immediately

@@ -17,15 +17,16 @@ struct UserOptions {
 	/// This lets us cleanly separate args parsing from execution.
 
 	std::map<Flag, bool> flags;
-	JParameterManager params;
+	std::map<std::string, std::string> params;
 	std::vector<std::string> eventSources;
 	std::string load_config_file;
 	std::string dump_config_file;
 };
 
 void PrintUsage();
+void PrintUsageOptions();
 void PrintVersion();
-UserOptions ParseCommandLineOptions(int nargs, char *argv[]);
+UserOptions ParseCommandLineOptions(int nargs, char *argv[], bool expect_extra=true);
 JApplication* CreateJApplication(UserOptions& options);
 int Execute(JApplication* app, UserOptions& options);
 

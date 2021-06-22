@@ -27,16 +27,19 @@ void PrintUsage() {
 
 	std::cout << "Options:" << std::endl;
 	std::cout << "   -h   --help                  Display this message" << std::endl;
+	PrintUsageOptions();
+	std::cout << "Example:" << std::endl;
+	std::cout << "    jana -Pplugins=plugin1,plugin2,plugin3 -Pnthreads=8 inputfile1.txt" << std::endl << std::endl;
+
+}
+
+void PrintUsageOptions() {
 	std::cout << "   -v   --version               Display version information" << std::endl;
 	std::cout << "   -c   --configs               Display configuration parameters" << std::endl;
 	std::cout << "   -l   --loadconfigs <file>    Load configuration parameters from file" << std::endl;
 	std::cout << "   -d   --dumpconfigs <file>    Dump configuration parameters to file" << std::endl;
 	std::cout << "   -b   --benchmark             Run in benchmark mode" << std::endl;
 	std::cout << "   -Pkey=value                  Specify a configuration parameter" << std::endl << std::endl;
-
-	std::cout << "Example:" << std::endl;
-	std::cout << "    jana -Pplugins=plugin1,plugin2,plugin3 -Pnthreads=8 inputfile1.txt" << std::endl << std::endl;
-
 }
 
 void PrintVersion() {
@@ -51,10 +54,15 @@ void PrintVersion() {
 
 JApplication* CreateJApplication(UserOptions& options) {
 
+	auto params = new JParameterManager(); // JApplication owns params_copy, does not own eventSources
+	for (auto pair : options.params) {
+		params->SetParameter(pair.first, pair.second);
+	}
+
 	if (options.flags[LoadConfigs]) {
 		// If the user specified an external config file, we should definitely use that
 		try {
-			options.params.ReadConfigFile(options.load_config_file);
+			params->ReadConfigFile(options.load_config_file);
 		}
 		catch (JException &e) {
 			std::cout << "Problem loading config file '" << options.load_config_file << "'. Exiting." << std::endl
@@ -64,9 +72,7 @@ JApplication* CreateJApplication(UserOptions& options) {
 		std::cout << "Loaded config file '" << options.load_config_file << "'." << std::endl << std::endl;
 	}
 
-	auto params_copy = new JParameterManager(options.params); // JApplication owns params_copy, does not own eventSources
-
-	auto app = new JApplication(params_copy);
+	auto app = new JApplication(params);
 
 	for (auto event_src : options.eventSources) {
 		app->Add(event_src);
@@ -109,7 +115,7 @@ int Execute(JApplication* app, UserOptions &options) {
 }
 
 
-UserOptions ParseCommandLineOptions(int nargs, char *argv[]) {
+UserOptions ParseCommandLineOptions(int nargs, char *argv[], bool expect_extra) {
 
 	UserOptions options;
 
@@ -186,15 +192,17 @@ UserOptions ParseCommandLineOptions(int nargs, char *argv[]) {
 					if ((pos != std::string::npos) && (pos > 2)) {
 						std::string key = arg.substr(2, pos - 2);
 						std::string val = arg.substr(pos + 1);
-						options.params.SetParameter(key, val);
+						options.params.insert({key, val});
 					} else {
 						std::cout << "Invalid JANA parameter '" << arg
 						          << "': Expected format -Pkey=value" << std::endl;
 						options.flags[ShowConfigs] = true;
 					}
 				} else {
-					std::cout << "Invalid command line flag '" << arg << "'" << std::endl;
-					options.flags[ShowUsage] = true;
+					if (!expect_extra) {
+						std::cout << "Invalid command line flag '" << arg << "'" << std::endl;
+						options.flags[ShowUsage] = true;
+					}
 				}
 		}
 	}
