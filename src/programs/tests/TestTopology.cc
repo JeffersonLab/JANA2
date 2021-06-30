@@ -17,9 +17,9 @@ TestTopology::ArrowStatus::ArrowStatus(JArrow* arrow) {
     thread_count = arrow->get_thread_count();
     chunksize = arrow->get_chunksize();
 
-    duration_t total_latency;
-    duration_t queue_overhead;
-    duration_t last_latency;
+    JArrowMetrics::duration_t total_latency;
+    JArrowMetrics::duration_t queue_overhead;
+    JArrowMetrics::duration_t last_latency;
     //arrow->get_metrics(messages_completed, queue_visit_count, total_latency, queue_overhead, last_latency);
 
     double l_total = millisecs(total_latency).count();
