@@ -1,9 +1,7 @@
 
 
-find_package(ROOT)
-
-if (ROOT_FOUND)
-
+if (${USE_ROOT})
+    find_package(ROOT)
     add_library(janarate SHARED JEventProcessorJANARATE.cc)
     target_include_directories(janarate PUBLIC ${ROOT_INCLUDE_DIRS})
     target_link_libraries(janarate jana2 ${ROOT_LIBRARIES})
@@ -11,8 +9,7 @@ if (ROOT_FOUND)
     install(TARGETS janarate DESTINATION plugins)
 
 else()
-    message(WARNING "ROOT not found. Skipping compilation of janarate.so")
-#    add_library(janarate SHARED EXCLUDE_FROM_ALL JEventProcessorJANARATE.cc)
+    message(WARNING "Skipping compilation of janarate.so because USE_ROOT=Off")
 
 endif()
 

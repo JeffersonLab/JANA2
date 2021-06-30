@@ -9,7 +9,7 @@ set(StreamingExample_SOURCES SHARED
     AHitParser.h
     )
 
-find_package(ZEROMQ)
+find_package(ZeroMQ)
 
 if (ZeroMQ_FOUND)
 

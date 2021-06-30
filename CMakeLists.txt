@@ -21,7 +21,7 @@ else()
 endif()
 
 #---------------------------------------------------------------------------------------
-option(USE_ROOT "Include additional ROOT support if ROOT is available." ON)
+option(USE_ROOT "Compile optional targets that require ROOT" ON)
 if (${USE_ROOT})
     find_package(ROOT)
     if(${ROOT_FOUND})
