@@ -12,9 +12,6 @@
 #include <JANA/Engine/JArrowPerfSummary.h>
 
 
-using jclock_t = std::chrono::steady_clock;
-using duration_t = std::chrono::steady_clock::duration;
-
 class JWorker {
     /// Designed so that the Worker checks in with the Scheduler on his own terms;
     /// i.e. nobody will update the worker's assignment externally. This eliminates

@@ -40,10 +40,11 @@ void JWorker::measure_perf(WorkerSummary& summary) {
     using millis = std::chrono::duration<double, std::milli>;
 
     long scheduler_visit_count;
-    duration_t total_useful_time, total_retry_time, total_scheduler_time, total_idle_time;
-    duration_t last_useful_time, last_retry_time, last_scheduler_time, last_idle_time;
+    JWorkerMetrics::duration_t total_useful_time, total_retry_time, total_scheduler_time, total_idle_time;
+    JWorkerMetrics::duration_t last_useful_time, last_retry_time, last_scheduler_time, last_idle_time;
+    JWorkerMetrics::time_point_t last_heartbeat;
 
-    latest_worker_metrics.get(scheduler_visit_count, total_useful_time, total_retry_time, total_scheduler_time,
+    latest_worker_metrics.get(last_heartbeat, scheduler_visit_count, total_useful_time, total_retry_time, total_scheduler_time,
              total_idle_time, last_useful_time, last_retry_time, last_scheduler_time, last_idle_time);
 
     summary.total_useful_time_ms = millis(total_useful_time).count();
@@ -54,6 +55,7 @@ void JWorker::measure_perf(WorkerSummary& summary) {
     summary.last_retry_time_ms = millis(last_retry_time).count();
     summary.last_scheduler_time_ms = millis(last_scheduler_time).count();
     summary.last_idle_time_ms = millis(last_idle_time).count();
+    summary.last_heartbeat_ms = millis(JWorkerMetrics::clock_t::now() - last_heartbeat).count();
 
     summary.worker_id = _worker_id;
     summary.cpu_id = _cpu_id;
@@ -64,7 +66,7 @@ void JWorker::measure_perf(WorkerSummary& summary) {
 
     JArrowMetrics::Status last_status;
     size_t total_message_count, last_message_count, total_queue_visits, last_queue_visits;
-    duration_t total_latency, last_latency, total_queue_latency, last_queue_latency;
+    JArrowMetrics::duration_t total_latency, last_latency, total_queue_latency, last_queue_latency;
 
     latest_arrow_metrics.get(last_status, total_message_count, last_message_count, total_queue_visits,
                              last_queue_visits, total_latency, last_latency, total_queue_latency, last_queue_latency);
@@ -140,7 +142,7 @@ void JWorker::wait_for_stop() {
 }
 
 void JWorker::loop() {
-
+	using jclock_t = JWorkerMetrics::clock_t;
     try {
         LOG_DEBUG(logger) << "Worker " << _worker_id << " has fired up." << LOG_END;
         JArrowMetrics::Status last_result = JArrowMetrics::Status::NotRunYet;
@@ -159,9 +161,9 @@ void JWorker::loop() {
             auto scheduler_time = jclock_t::now();
 
             auto scheduler_duration = scheduler_time - start_time;
-            auto idle_duration = duration_t::zero();
-            auto retry_duration = duration_t::zero();
-            auto useful_duration = duration_t::zero();
+            auto idle_duration = jclock_t::duration::zero();
+            auto retry_duration = jclock_t::duration::zero();
+            auto useful_duration = jclock_t::duration::zero();
 
             if (_assignment == nullptr) {
 
@@ -217,7 +219,7 @@ void JWorker::loop() {
                     }
                 }
             }
-            _worker_metrics.update(1, useful_duration, retry_duration, scheduler_duration, idle_duration);
+            _worker_metrics.update(start_time, 1, useful_duration, retry_duration, scheduler_duration, idle_duration);
             if (_assignment != nullptr) {
                 JArrowMetrics latest_arrow_metrics;
                 latest_arrow_metrics.clear();

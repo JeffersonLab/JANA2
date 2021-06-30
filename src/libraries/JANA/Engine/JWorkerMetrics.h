@@ -17,12 +17,16 @@ class JWorkerMetrics {
     /// who should be performing the accumulation or when, and this gives us the freedom to
     /// try different possibilities.
 
+public:
+    using clock_t = std::chrono::steady_clock;
+    using duration_t = clock_t::duration;
+    using time_point_t = clock_t::time_point;
 
-    using duration_t = std::chrono::steady_clock::duration;
-
+private:
     mutable std::mutex _mutex;
     // mutex is mutable so that we can lock before reading from a const ref
 
+    time_point_t _last_heartbeat;
     long _scheduler_visit_count;
 
     duration_t _total_useful_time;
@@ -34,13 +38,29 @@ class JWorkerMetrics {
     duration_t _last_scheduler_time;
     duration_t _last_idle_time;
 
+
 public:
+    JWorkerMetrics() {
+        _mutex.lock();
+        _last_heartbeat = clock_t::now();
+        _scheduler_visit_count = 0;
+        auto zero = duration_t::zero();
+        _total_useful_time = zero;
+        _total_retry_time = zero;
+        _total_scheduler_time = zero;
+        _total_idle_time = zero;
+        _last_useful_time = zero;
+        _last_retry_time = zero;
+        _last_scheduler_time = zero;
+        _last_idle_time = zero;
+        _mutex.unlock();
+    }
+
     void clear() {
         _mutex.lock();
+        _last_heartbeat = clock_t::now();
         _scheduler_visit_count = 0;
-
         auto zero = duration_t::zero();
-
         _total_useful_time = zero;
         _total_retry_time = zero;
         _total_scheduler_time = zero;
@@ -57,6 +77,7 @@ public:
 
         _mutex.lock();
         other._mutex.lock();
+        _last_heartbeat = other._last_heartbeat;
         _scheduler_visit_count += other._scheduler_visit_count;
         _total_useful_time += other._total_useful_time;
         _total_retry_time += other._total_retry_time;
@@ -71,7 +92,9 @@ public:
     }
 
 
-    void update(const long& scheduler_visit_count,
+    void update(
+                const time_point_t& heartbeat,
+                const long& scheduler_visit_count,
                 const duration_t& useful_time,
                 const duration_t& retry_time,
                 const duration_t& scheduler_time,
@@ -87,11 +110,14 @@ public:
         _last_retry_time = retry_time;
         _last_scheduler_time = scheduler_time;
         _last_idle_time = idle_time;
+        _last_heartbeat = heartbeat;
         _mutex.unlock();
     }
 
 
-    void get(long& scheduler_visit_count,
+    void get(
+             time_point_t& last_heartbeat,
+             long& scheduler_visit_count,
              duration_t& total_useful_time,
              duration_t& total_retry_time,
              duration_t& total_scheduler_time,
@@ -111,6 +137,7 @@ public:
         last_retry_time = _last_retry_time;
         last_scheduler_time = _last_scheduler_time;
         last_idle_time = _last_idle_time;
+        last_heartbeat = _last_heartbeat;
         _mutex.unlock();
     }
 

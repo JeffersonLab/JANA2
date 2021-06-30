@@ -142,10 +142,10 @@ std::unique_ptr<const JArrowPerfSummary> JArrowProcessingController::measure_int
         size_t last_message_count;
         size_t total_queue_visits;
         size_t last_queue_visits;
-        duration_t total_latency;
-        duration_t last_latency;
-        duration_t total_queue_latency;
-        duration_t last_queue_latency;
+        JArrowMetrics::duration_t total_latency;
+        JArrowMetrics::duration_t last_latency;
+        JArrowMetrics::duration_t total_queue_latency;
+        JArrowMetrics::duration_t last_queue_latency;
 
         arrow->get_metrics().get(last_status, total_message_count, last_message_count, total_queue_visits,
                                  last_queue_visits, total_latency, last_latency, total_queue_latency, last_queue_latency);
