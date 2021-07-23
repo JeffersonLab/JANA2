@@ -106,10 +106,18 @@ bool JArrowProcessingController::is_timed_out() {
 	// and have print_report(), print_final_report(), is_timed_out(), etc use the cached version
 	auto metrics = measure_internal_performance();
 
-	size_t events_in_pool = _topology->event_pool->size();
-	bool factories_are_warmed_up = (metrics->total_events_completed >= events_in_pool);
-
-	int timeout_s = (factories_are_warmed_up) ? _timeout_s : _warmup_timeout_s;
+	int timeout_s;
+	if (metrics->total_uptime_s < _warmup_timeout_s * _topology->event_pool_size / metrics->thread_count) {
+		// We are at the beginning and not all events have necessarily had a chance to warm up
+		timeout_s = _warmup_timeout_s;
+	}
+	else if (!_topology->limit_total_events_in_flight) {
+		// New events are constantly emitted, each of which may contain jfactorysets which need to be warmed up
+		timeout_s = _warmup_timeout_s;
+	}
+	else {
+		timeout_s = _timeout_s;
+	}
 
 	// Find all workers whose last heartbeat exceeds timeout
 	bool found_timeout = false;

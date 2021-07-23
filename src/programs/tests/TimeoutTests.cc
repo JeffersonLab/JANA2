@@ -64,11 +64,6 @@ TEST_CASE("TimeoutTests") {
 		REQUIRE(app.GetExitCode() == 0);
 	}
 
-	SECTION("Timeout in the event processor on the 5th event, notice that running this here triggers a segfault!") {
-		app.Add(new SourceWithTimeout("source_with_timeout", &app, -1));
-		app.Add(new ProcessorWithTimeout(5));
-		app.Run(true);
-		REQUIRE(app.GetExitCode() == 22);
-	}
+
 }
 
