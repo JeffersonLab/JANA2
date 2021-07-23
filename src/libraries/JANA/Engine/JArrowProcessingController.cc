@@ -17,6 +17,12 @@ void JArrowProcessingController::acquire_services(JServiceLocator * sl) {
     _logger = ls->get_logger("JArrowProcessingController");
     _worker_logger = ls->get_logger("JWorker");
     _scheduler_logger = ls->get_logger("JScheduler");
+
+    // Obtain timeouts from parameter manager
+    auto params = sl->get<JParameterManager>();
+    params->SetDefaultParameter("jana:timeout", _timeout_s, "Max. time (in seconds) system will wait for a thread to update its heartbeat before killing it and launching a new one.");
+	params->SetDefaultParameter("jana:warmup_timeout", _warmup_timeout_s, "Max. time (in seconds) system will wait for the initial events to complete before killing program.");
+	// Originally "THREAD_TIMEOUT" and "THREAD_TIMEOUT_FIRST_EVENT"
 }
 
 void JArrowProcessingController::initialize() {
@@ -90,6 +96,32 @@ bool JArrowProcessingController::is_stopped() {
 
 bool JArrowProcessingController::is_finished() {
     return !_topology->is_active();
+}
+
+bool JArrowProcessingController::is_timed_out() {
+
+	// Note that this makes its own (redundant) call to measure_internal_performance().
+	// Probably want to refactor so that we only make one such call per ticker iteration.
+	// Since we are storing our metrics summary anyway, we could call measure_performance()
+	// and have print_report(), print_final_report(), is_timed_out(), etc use the cached version
+	auto metrics = measure_internal_performance();
+
+	size_t events_in_pool = _topology->event_pool->size();
+	bool factories_are_warmed_up = (metrics->total_events_completed >= events_in_pool);
+
+	int timeout_s = (factories_are_warmed_up) ? _timeout_s : _warmup_timeout_s;
+
+	// Find all workers whose last heartbeat exceeds timeout
+	bool found_timeout = false;
+	for (size_t i=0; i<metrics->workers.size(); ++i) {
+		if (metrics->workers[i].last_heartbeat_ms > (timeout_s * 1000)) {
+			found_timeout = true;
+			_workers[i]->declare_timeout();
+			// This assumes the workers and their summaries are ordered the same.
+			// Which is true, but I don't like it.
+		}
+	}
+	return found_timeout;
 }
 
 JArrowProcessingController::~JArrowProcessingController() {
@@ -207,6 +239,7 @@ std::unique_ptr<const JArrowPerfSummary> JArrowProcessingController::measure_int
 std::unique_ptr<const JPerfSummary> JArrowProcessingController::measure_performance() {
     return measure_internal_performance();
 }
+
 
 
 

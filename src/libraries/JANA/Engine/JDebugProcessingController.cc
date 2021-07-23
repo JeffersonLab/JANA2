@@ -134,6 +134,10 @@ bool JDebugProcessingController::is_finished() {
     return m_finish_achieved;
 }
 
+bool JDebugProcessingController::is_timed_out() {
+	return false;
+}
+
 JDebugProcessingController::~JDebugProcessingController() {
     for (auto * worker : m_workers) {
         worker->join();

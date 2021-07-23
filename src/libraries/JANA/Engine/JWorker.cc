@@ -5,6 +5,20 @@
 #include <JANA/Engine/JWorker.h>
 #include <JANA/Utils/JCpuInfo.h>
 
+/// This allows someone (aka JArrowProcessingController) to declare that this
+/// thread has timed out. This ensures that the underlying thread will be detached
+/// rather than joined when it is time to wait_for_stop().
+/// Note: Another option was to non-cooperatively kill the thread, at the risk of
+/// resource leaks and data corruption. This is NOT supported by std::thread, because
+/// smarter people than me have concluded it is a Bad Idea, so we'd have to use the
+/// underlying pthread interface if we decide we REALLY want this feature. It doesn't
+/// make a difference in the common case because the program will terminate upon timeout
+/// anyhow; it only matters in case we are running JANA from a REPL. My instinct is to
+/// leave the offending thread alone so that the user has a chance to attach a debugger
+/// to the process.
+void JWorker::declare_timeout() {
+	_run_state = RunState::TimedOut;
+}
 
 void JWorker::measure_perf(WorkerSummary& summary) {
     // Read (do not clear) worker metrics
@@ -134,10 +148,21 @@ void JWorker::wait_for_stop() {
         _run_state = RunState::Stopping;
     }
     if (_thread != nullptr) {
-        _thread->join();
+    	if (_run_state == RunState::TimedOut) {
+		    _thread->detach();
+		    // Thread has timed out. Rather than non-cooperatively killing it,
+		    // we relinquish ownership of it but remember that it was ours once and
+		    // is still out there, somewhere, biding its time
+    	}
+    	else {
+		    _thread->join();
+	    }
         delete _thread;
         _thread = nullptr;
-        _run_state = RunState::Stopped;
+        if (_run_state == RunState::Stopping) {
+	        _run_state = RunState::Stopped;
+	        // By this point, the JWorker must either be Stopped or TimedOut
+        }
     }
 }
 

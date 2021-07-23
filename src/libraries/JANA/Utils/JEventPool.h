@@ -77,6 +77,8 @@ public:
             pool.events.push_back(std::move(event));
         }
     }
+
+    inline size_t size() { return m_pool_size; }
 };
 
 

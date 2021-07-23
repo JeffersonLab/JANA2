@@ -29,6 +29,7 @@ public:
 
     bool is_stopped() override;
     bool is_finished() override;
+    bool is_timed_out() override;
 
     std::unique_ptr<const JPerfSummary> measure_performance() override;
     std::unique_ptr<const JArrowPerfSummary> measure_internal_performance();
@@ -40,6 +41,8 @@ public:
 private:
 
     using jclock_t = std::chrono::steady_clock;
+    int _timeout_s = 8;
+    int _warmup_timeout_s = 30;
 
     JArrowPerfSummary _perf_summary;
     JArrowTopology* _topology;       // Owned by JArrowProcessingController

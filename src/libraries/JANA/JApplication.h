@@ -82,6 +82,7 @@ public:
     bool IsDrainingQueues(void) { return _draining_queues; }
 
     void SetTicker(bool ticker_on = true);
+    void EnableTimeout(bool enabled = true);
     void PrintStatus();
     void PrintFinalReport();
     uint64_t GetNThreads();
@@ -135,6 +136,7 @@ private:
     bool _skip_join = false;
     bool _initialized = false;
     bool _ticker_on = true;
+    bool _timeout_on = false;
     bool _extended_report = false;
     int  _exit_code = 0;
     int  _desired_nthreads;

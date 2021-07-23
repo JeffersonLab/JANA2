@@ -20,7 +20,7 @@ class JWorker {
 
 public:
     /// The Worker may be configured to try different backoff strategies
-    enum class RunState { Running, Stopping, Stopped };
+    enum class RunState { Running, Stopping, Stopped, TimedOut };
 
     /// The logger is made public so that somebody else may set it
     JLogger logger;
@@ -56,6 +56,7 @@ public:
     void start();
     void request_stop();
     void wait_for_stop();
+    void declare_timeout();
 
     /// This is what the encapsulated thread is supposed to be doing
     void loop();

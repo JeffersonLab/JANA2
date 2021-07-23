@@ -172,6 +172,13 @@ void JApplication::Run(bool wait_until_finished) {
 
         // Print status
         if( _ticker_on ) PrintStatus();
+
+        // Test for timeout
+        if(_timeout_on && _processing_controller->is_timed_out()) {
+            LOG_FATAL(_logger) << "Timeout detected." << LOG_END;
+            SetExitCode(22);  // TODO: What are the exit codes, and which corresponds to timeout?
+            break;
+        }
     }
 
     // Join all threads
@@ -215,12 +222,12 @@ void JApplication::SetExitCode(int exit_code) {
 }
 
 int JApplication::GetExitCode() {
-	/// Returns the currently set exit code. This can be used by
-	/// JProcessor/JFactory classes to communicate an appropriate
-	/// exit code that a jana program can return upon exit. The
-	/// value can be set via the SetExitCode method.
+    /// Returns the currently set exit code. This can be used by
+    /// JProcessor/JFactory classes to communicate an appropriate
+    /// exit code that a jana program can return upon exit. The
+    /// value can be set via the SetExitCode method.
 
-	return _exit_code;
+    return _exit_code;
 }
 
 JComponentSummary JApplication::GetComponentSummary() {
@@ -229,9 +236,12 @@ JComponentSummary JApplication::GetComponentSummary() {
 }
 
 // Performance/status monitoring
-
 void JApplication::SetTicker(bool ticker_on) {
     _ticker_on = ticker_on;
+}
+
+void JApplication::EnableTimeout(bool enabled) {
+	_timeout_on = enabled;
 }
 
 void JApplication::PrintStatus() {
