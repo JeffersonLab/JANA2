@@ -1,6 +1,6 @@
 
 if(${USE_ROOT})
-	find_package(ROOT)
+	find_package(ROOT REQUIRED)
 	include(${ROOT_USE_FILE})
 
 	# Generate ROOT dictionaries for each of our ROOT object types
