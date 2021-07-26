@@ -41,22 +41,22 @@
 
 class JStreamLog : public std::ostream
 {
-	public:
-		JStreamLog(const std::ostream& os=std::cout, const char* tag="INFO");
-		JStreamLog(const std::ostream& os, const std::string& tag);
-		JStreamLog(std::streambuf* buf, const char* tag);
-		virtual ~JStreamLog();
-		
-		std::string GetTag(void);
-		bool GetTimestampFlag(void);
-		bool GetThreadstampFlag(void);
-		JStreamLogBuffer* GetJStreamLogBuffer(void);
-		void SetTag(std::string tag);
-		void SetTimestampFlag(bool prepend_timestamp=true);
-		void SetThreadstampFlag(bool prepend_threadstamp=true);
+    public:
+        JStreamLog(const std::ostream& os=std::cout, const char* tag="INFO");
+        JStreamLog(const std::ostream& os, const std::string& tag);
+        JStreamLog(std::streambuf* buf, const char* tag);
+        virtual ~JStreamLog();
 
-	private:
-		bool own_rdbuf; // keep track if we deleted the buffer object already
+        std::string GetTag(void);
+        bool GetTimestampFlag(void);
+        bool GetThreadstampFlag(void);
+        JStreamLogBuffer* GetJStreamLogBuffer(void);
+        void SetTag(std::string tag);
+        void SetTimestampFlag(bool prepend_timestamp=true);
+        void SetThreadstampFlag(bool prepend_threadstamp=true);
+
+    private:
+        bool own_rdbuf; // keep track if we deleted the buffer object already
 };
 
 std::ostream& endMsg(std::ostream& os);

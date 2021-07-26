@@ -32,11 +32,11 @@ class JSourceFactoryGenerator<HeadType, TailTypes...>;
 template <typename... DataTypes>
 class JSourceFactoryGenerator : public JFactoryGenerator
 {
-	public:
-		void GenerateFactories(JFactorySet *factory_set);
+    public:
+        void GenerateFactories(JFactorySet *factory_set);
 
-		template <typename ContainerType>
-		static void MakeFactories(std::back_insert_iterator<ContainerType> aIterator);
+        template <typename ContainerType>
+        static void MakeFactories(std::back_insert_iterator<ContainerType> aIterator);
 };
 
 /************************************************************* TYPE SPECIALIZATION DEFINITION *************************************************************/
@@ -45,11 +45,11 @@ class JSourceFactoryGenerator : public JFactoryGenerator
 template <typename HeadType, typename... TailTypes>
 struct JSourceFactoryGenerator<HeadType, TailTypes...> : public JFactoryGenerator
 {
-	public:
-		void GenerateFactories(JFactorySet *factory_set);
+    public:
+        void GenerateFactories(JFactorySet *factory_set);
 
-		template <typename ContainerType>
-		static void MakeFactories(std::back_insert_iterator<ContainerType> aIterator);
+        template <typename ContainerType>
+        static void MakeFactories(std::back_insert_iterator<ContainerType> aIterator);
 };
 
 /*********************************************************** MEMBER FUNCTION DEFINITIONS: DEFAULT ***********************************************************/
@@ -57,17 +57,17 @@ struct JSourceFactoryGenerator<HeadType, TailTypes...> : public JFactoryGenerato
 template <typename... DataTypes>
 void JSourceFactoryGenerator<DataTypes...>::GenerateFactories(JFactorySet *factory_set)
 {
-	//Do nothing: This is only called when DataTypes is empty.
-	//If DataTypes is not empty, template deduction extracts HeadType and thus uses the JSourceFactoryGenerator specialization.
-	return;
+    //Do nothing: This is only called when DataTypes is empty.
+    //If DataTypes is not empty, template deduction extracts HeadType and thus uses the JSourceFactoryGenerator specialization.
+    return;
 }
 
 template <typename... DataTypes>
 template <typename ContainerType>
 void JSourceFactoryGenerator<DataTypes...>::MakeFactories(std::back_insert_iterator<ContainerType> aIterator)
 {
-	//Do nothing: This is only called when DataTypes is empty.
-	//If DataTypes is not empty, template deduction extracts HeadType and thus uses the JSourceFactoryGenerator specialization.
+    //Do nothing: This is only called when DataTypes is empty.
+    //If DataTypes is not empty, template deduction extracts HeadType and thus uses the JSourceFactoryGenerator specialization.
 }
 
 /******************************************************** MEMBER FUNCTION DEFINITIONS: SPECIALIZATION ********************************************************/
@@ -75,23 +75,23 @@ void JSourceFactoryGenerator<DataTypes...>::MakeFactories(std::back_insert_itera
 template <typename HeadType, typename... TailTypes>
 void JSourceFactoryGenerator<HeadType, TailTypes...>::GenerateFactories(JFactorySet *factory_set)
 {
-	//Initialize vector
-	std::vector<JFactory*> sFactories;
-	sFactories.reserve(sizeof...(TailTypes) + 1);
+    //Initialize vector
+    std::vector<JFactory*> sFactories;
+    sFactories.reserve(sizeof...(TailTypes) + 1);
 
-	//Make factories and return
-	MakeFactories(std::back_inserter(sFactories));
-	for(auto fac : sFactories) factory_set->Add(fac);
+    //Make factories and return
+    MakeFactories(std::back_inserter(sFactories));
+    for(auto fac : sFactories) factory_set->Add(fac);
 }
 
 template <typename HeadType, typename... TailTypes>
 template <typename ContainerType>
 void JSourceFactoryGenerator<HeadType, TailTypes...>::MakeFactories(std::back_insert_iterator<ContainerType> aIterator)
 {
-	//Create the factory for the head type
-	aIterator = static_cast<JFactory*>(new JFactoryT<HeadType>);
-	//Continue making factories for tail types (unless tail is empty)
-	JSourceFactoryGenerator<TailTypes...>::MakeFactories(aIterator);
+    //Create the factory for the head type
+    aIterator = static_cast<JFactory*>(new JFactoryT<HeadType>);
+    //Continue making factories for tail types (unless tail is empty)
+    JSourceFactoryGenerator<TailTypes...>::MakeFactories(aIterator);
 }
 
 #endif // _JSourceFactoryGenerator_h_

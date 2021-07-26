@@ -70,8 +70,8 @@ public:
                 if (m_last_run_number != -1) {
                     EndRun();
                 }
-	            m_last_run_number = run_number;
-	            BeginRun(e);
+                m_last_run_number = run_number;
+                BeginRun(e);
             }
             Process(e);
         }
@@ -126,14 +126,14 @@ public:
     /// Each JEventProcessor is intended to generate one distinct output,
     virtual void Init() {}
 
-	virtual void BeginRun(const std::shared_ptr<const JEvent> &aEvent) {}
+    virtual void BeginRun(const std::shared_ptr<const JEvent> &aEvent) {}
 
     virtual void Process(const std::shared_ptr<const JEvent>& aEvent) {
         throw JException("Not implemented yet!");
     }
-	virtual void EndRun() {}
+    virtual void EndRun() {}
 
-	virtual void Finish() {}
+    virtual void Finish() {}
 
 
     // TODO: Can we please deprecate this in favor of GetTypeName?

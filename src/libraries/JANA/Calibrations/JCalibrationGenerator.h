@@ -40,13 +40,13 @@ class JCalibration;
 /// 	work of reading objects from the source.
 
 class JCalibrationGenerator{
-	public:
-		JCalibrationGenerator(){}
-		virtual ~JCalibrationGenerator(){}
-		
-		virtual const char* Description(void)=0; ///< Get string indicating type of calibration this handles
-		virtual double CheckOpenable(std::string url, int32_t run, std::string context)=0; ///< Test probability of opening the given calibration
-		virtual JCalibration* MakeJCalibration(std::string url, int32_t run, std::string context)=0; ///< Instantiate an JCalibration object (subclass)
+    public:
+        JCalibrationGenerator(){}
+        virtual ~JCalibrationGenerator(){}
+
+        virtual const char* Description(void)=0; ///< Get string indicating type of calibration this handles
+        virtual double CheckOpenable(std::string url, int32_t run, std::string context)=0; ///< Test probability of opening the given calibration
+        virtual JCalibration* MakeJCalibration(std::string url, int32_t run, std::string context)=0; ///< Instantiate an JCalibration object (subclass)
 
 };
 

@@ -19,85 +19,85 @@
 #include "JCalibrationCCDB.h"
 
 
-	class JCalibrationGeneratorCCDB: public JCalibrationGenerator
-	{
-	public:
-		
-		/** @brief default ctor */
-		JCalibrationGeneratorCCDB():
-			mGenerator(new ccdb::CalibrationGenerator())
-		{	
-		}
+    class JCalibrationGeneratorCCDB: public JCalibrationGenerator
+    {
+    public:
 
-		
-		/** @brief destructor */
-		virtual ~JCalibrationGeneratorCCDB(){}
-
-		
-		/** @brief Get string indicating type of calibration this handles
-		 *
-		 * @return string with desctiption
-		 */
-		const char* Description(){return "JCalibration using CCDB for MySQL and SQLite databases";}
-
-		
-		/** @brief  Test probability of opening the given calibration
-		 *
-		 * @parameter [in] url in form "mysql://username@pass:host:port database_name"
-		 * @parameter [in] run number
-		 * @parameter [in] name of the variation
-		 * @return 0.0 - not openable, 0.99 if openable
-		 */
-		double CheckOpenable(std::string url, int32_t run, std::string context)
-		{
-			#ifdef CCDB_DEBUG_OUTPUT
-			jout<<"CCDB::janaccdb CheckOpenable "<<"url: '"<<url<<"' run: "<<run<< " context: "<<context<<std::endl;
-			#endif
-
-			if(ccdb::CalibrationGenerator::CheckOpenable(url)) return 0.99;
-			return 0.0;
-		}
+        /** @brief default ctor */
+        JCalibrationGeneratorCCDB():
+            mGenerator(new ccdb::CalibrationGenerator())
+        {
+        }
 
 
-		/** @brief MakeJCalibration
-		 *
-		 * @parameter [in] url in form "mysql://username@pass:host:port database_name"
-		 * @parameter [in] run number
-		 * @parameter [in] name of the variation
-		 * @return JCalibration pointer or null if error
-		 */
-		JCalibration* MakeJCalibration(std::string url, int32_t run, std::string context) ///< Instantiate an JCalibration object
-		{
-			#ifdef CCDB_DEBUG_OUTPUT
-			jout<<"CCDB::janaccdb MakeJCalibration "<<"url: '"<<url<<"' run: "<<run<< " context: '"<<context<<"'"<<std::endl;
-			#endif
-			
-			//By default we have default variation and 0 time (means current time)
-			string varition("default");
-			time_t time = 0;
+        /** @brief destructor */
+        virtual ~JCalibrationGeneratorCCDB(){}
 
-			//Parse context
-			ccdb::ContextParseResult parseResult = ccdb::PathUtils::ParseContext(context);
-			if(parseResult.VariationIsParsed) varition = parseResult.Variation;
-			if(parseResult.ConstantsTimeIsParsed) time = parseResult.ConstantsTime;
-			#ifdef CCDB_PARSES_CONTEXT_RUN
-				if(parseResult.RunNumberIsParsed) 
-				{
-					run = parseResult.RunNumber;
-					jout<<"CCDB::janaccdb (!) The run number for CCDB IS FORCED TO BE '"<< run<<"' (it was set through context) (!)"<<std::endl;
-				}
-			#endif
 
-			//Get ccdb calibration object
-			ccdb::Calibration *calib = mGenerator->MakeCalibration(url,run,varition,time);
+        /** @brief Get string indicating type of calibration this handles
+         *
+         * @return string with desctiption
+         */
+        const char* Description(){return "JCalibration using CCDB for MySQL and SQLite databases";}
 
-			//Create jana calibration object from ccdb
-			return new JCalibrationCCDB(calib, url, run, context);
-		}
 
-	private:
-		std::auto_ptr<ccdb::CalibrationGenerator> mGenerator; ///CCDB calibration generator object
-	};
+        /** @brief  Test probability of opening the given calibration
+         *
+         * @parameter [in] url in form "mysql://username@pass:host:port database_name"
+         * @parameter [in] run number
+         * @parameter [in] name of the variation
+         * @return 0.0 - not openable, 0.99 if openable
+         */
+        double CheckOpenable(std::string url, int32_t run, std::string context)
+        {
+            #ifdef CCDB_DEBUG_OUTPUT
+            jout<<"CCDB::janaccdb CheckOpenable "<<"url: '"<<url<<"' run: "<<run<< " context: "<<context<<std::endl;
+            #endif
+
+            if(ccdb::CalibrationGenerator::CheckOpenable(url)) return 0.99;
+            return 0.0;
+        }
+
+
+        /** @brief MakeJCalibration
+         *
+         * @parameter [in] url in form "mysql://username@pass:host:port database_name"
+         * @parameter [in] run number
+         * @parameter [in] name of the variation
+         * @return JCalibration pointer or null if error
+         */
+        JCalibration* MakeJCalibration(std::string url, int32_t run, std::string context) ///< Instantiate an JCalibration object
+        {
+            #ifdef CCDB_DEBUG_OUTPUT
+            jout<<"CCDB::janaccdb MakeJCalibration "<<"url: '"<<url<<"' run: "<<run<< " context: '"<<context<<"'"<<std::endl;
+            #endif
+
+            //By default we have default variation and 0 time (means current time)
+            string varition("default");
+            time_t time = 0;
+
+            //Parse context
+            ccdb::ContextParseResult parseResult = ccdb::PathUtils::ParseContext(context);
+            if(parseResult.VariationIsParsed) varition = parseResult.Variation;
+            if(parseResult.ConstantsTimeIsParsed) time = parseResult.ConstantsTime;
+            #ifdef CCDB_PARSES_CONTEXT_RUN
+                if(parseResult.RunNumberIsParsed)
+                {
+                    run = parseResult.RunNumber;
+                    jout<<"CCDB::janaccdb (!) The run number for CCDB IS FORCED TO BE '"<< run<<"' (it was set through context) (!)"<<std::endl;
+                }
+            #endif
+
+            //Get ccdb calibration object
+            ccdb::Calibration *calib = mGenerator->MakeCalibration(url,run,varition,time);
+
+            //Create jana calibration object from ccdb
+            return new JCalibrationCCDB(calib, url, run, context);
+        }
+
+    private:
+        std::auto_ptr<ccdb::CalibrationGenerator> mGenerator; ///CCDB calibration generator object
+    };
 
 #endif // HAVE_CCDB
 

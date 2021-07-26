@@ -29,8 +29,8 @@ JGeometryMYSQL::~JGeometryMYSQL()
 bool JGeometryMYSQL::Get(string path, string &sval)
 {
 
-	// Looks like we failed to find the requested item. Let the caller know.
-	return false;
+    // Looks like we failed to find the requested item. Let the caller know.
+    return false;
 }
 
 //---------------------------------
@@ -38,8 +38,8 @@ bool JGeometryMYSQL::Get(string path, string &sval)
 //---------------------------------
 bool JGeometryMYSQL::Get(string path, map<string, string> &svals)
 {
-	// Looks like we failed to find the requested item. Let the caller know.
-	return false;
+    // Looks like we failed to find the requested item. Let the caller know.
+    return false;
 }
 
 //---------------------------------
@@ -47,7 +47,7 @@ bool JGeometryMYSQL::Get(string path, map<string, string> &svals)
 //---------------------------------
 bool JGeometryMYSQL::GetMultiple(string xpath, vector<string> &vsval)
 {
-	return false;
+    return false;
 }
 
 //---------------------------------
@@ -55,7 +55,7 @@ bool JGeometryMYSQL::GetMultiple(string xpath, vector<string> &vsval)
 //---------------------------------
 bool JGeometryMYSQL::GetMultiple(string xpath, vector<map<string, string> >&vsvals)
 {
-	return false;
+    return false;
 }
 
 //---------------------------------

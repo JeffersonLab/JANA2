@@ -14,21 +14,21 @@
 
 
 class JGeometryMYSQL:public JGeometry{
-	public:
-		JGeometryMYSQL(string url, int run, string context="default");
-		virtual ~JGeometryMYSQL();
-		
-		bool Get(string xpath, string &sval);
-		bool Get(string xpath, map<string, string> &svals);
-		bool GetMultiple(string xpath, vector<string> &vsval);
-		bool GetMultiple(string xpath, vector<map<string, string> >&vsvals);
-		void GetXPaths(vector<string> &xpaths, ATTR_LEVEL_t level, const string &filter="");
+    public:
+        JGeometryMYSQL(string url, int run, string context="default");
+        virtual ~JGeometryMYSQL();
 
-	protected:
-	
-	
-	private:
-		JGeometryMYSQL();
+        bool Get(string xpath, string &sval);
+        bool Get(string xpath, map<string, string> &svals);
+        bool GetMultiple(string xpath, vector<string> &vsval);
+        bool GetMultiple(string xpath, vector<map<string, string> >&vsvals);
+        void GetXPaths(vector<string> &xpaths, ATTR_LEVEL_t level, const string &filter="");
+
+    protected:
+
+
+    private:
+        JGeometryMYSQL();
 
 };
 

@@ -20,10 +20,10 @@ void dummy_publisher_loop() {
 
     consume_cpu_ms(3000, 0, false);
 
-	auto transport = ZmqTransport("tcp://127.0.0.1:5555", true);
-	transport.initialize();
+    auto transport = ZmqTransport("tcp://127.0.0.1:5555", true);
+    transport.initialize();
 
-	for (size_t counter = 1; counter < 11; ++counter) {
+    for (size_t counter = 1; counter < 11; ++counter) {
 
         ReadoutMessageAuto message(nullptr);
         message.run_number = 0;
@@ -42,27 +42,27 @@ void dummy_publisher_loop() {
 
     // Send end-of-stream message so that JANA knows to shut down
     ReadoutMessageAuto message (nullptr);
-	message.set_end_of_stream();
-	transport.send(message);
+    message.set_end_of_stream();
+    transport.send(message);
 }
 
 
 extern "C"{
 void InitPlugin(JApplication *app) {
 
-	InitJANAPlugin(app);
+    InitJANAPlugin(app);
 
     auto transport = std::unique_ptr<ZmqTransport>(new ZmqTransport("tcp://127.0.0.1:5555"));
     app->Add(new JStreamingEventSource<ReadoutMessageAuto>(std::move(transport)));
 
-	app->Add(new AHitAnomalyDetector(app, 5000));
-	app->Add(new JFactoryGeneratorT<AHitParser>());
+    app->Add(new AHitAnomalyDetector(app, 5000));
+    app->Add(new JFactoryGeneratorT<AHitParser>());
 
-	// So we don't have to put this on the cmd line every time
-	app->SetParameterValue("jana:legacy_mode", 0);
-	app->SetParameterValue("jana:extended_report", 0);
+    // So we don't have to put this on the cmd line every time
+    app->SetParameterValue("jana:legacy_mode", 0);
+    app->SetParameterValue("jana:extended_report", 0);
 
-	new std::thread(dummy_publisher_loop);
+    new std::thread(dummy_publisher_loop);
 }
 } // "C"
 

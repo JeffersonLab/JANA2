@@ -98,58 +98,58 @@ using std::string;
 
 class JLargeCalibration {
 public:
-	JLargeCalibration(std::shared_ptr<JParameterManager> params, JCalibration *jcalib = NULL, string resource_dir = "");
+    JLargeCalibration(std::shared_ptr<JParameterManager> params, JCalibration *jcalib = NULL, string resource_dir = "");
 
-	virtual ~JLargeCalibration();
+    virtual ~JLargeCalibration();
 
-	template<class T>
-	bool Get(string namepath, T &vals, int event_number = 0);
+    template<class T>
+    bool Get(string namepath, T &vals, int event_number = 0);
 
-	string GetResource(string namepath);
+    string GetResource(string namepath);
 
-	string GetLocalPathToResource(string namepath);
+    string GetLocalPathToResource(string namepath);
 
-	map<string, string> GetLocalResources(void) { return resources; }
+    map<string, string> GetLocalResources(void) { return resources; }
 
-	JCalibration *GetJCalibration(void) { return jcalib; }
+    JCalibration *GetJCalibration(void) { return jcalib; }
 
-	void GetResourceFromURL(const string &URL, const string &fullpath);
+    void GetResourceFromURL(const string &URL, const string &fullpath);
 
-	string Get_MD5(string fullpath);
+    string Get_MD5(string fullpath);
 
 protected:
 
-	// Used to get URL of remote resource
-	JCalibration *jcalib;
+    // Used to get URL of remote resource
+    JCalibration *jcalib;
 
-	// Keep list of namepaths in JCalibration
-	vector<string> calib_namepaths;
+    // Keep list of namepaths in JCalibration
+    vector<string> calib_namepaths;
 
-	// Used to convert files to values in STL containers
-	JCalibrationFile *jcalibfile;
+    // Used to convert files to values in STL containers
+    JCalibrationFile *jcalibfile;
 
-	// Full path to top-most directory of resource files
-	string resource_dir;
+    // Full path to top-most directory of resource files
+    string resource_dir;
 
-	// Map of URLs to namepaths for existing resources
-	// key is URL and value is relative path (which should
-	// be the same as the namepath)
-	map<string, string> resources;
+    // Map of URLs to namepaths for existing resources
+    // key is URL and value is relative path (which should
+    // be the same as the namepath)
+    map<string, string> resources;
 
-	void ReadResourceInfoFile(void);
+    void ReadResourceInfoFile(void);
 
-	void WriteResourceInfoFile(void);
+    void WriteResourceInfoFile(void);
 
-	// Argument for the external curl program in case it is used
-	string curl_args;
+    // Argument for the external curl program in case it is used
+    string curl_args;
 
 private:
 
-	// Holds user specified URL_base that superceeds any found
-	// in calib DB
-	bool overide_URL_base;
-	string URL_base;
-	bool check_md5;
+    // Holds user specified URL_base that superceeds any found
+    // in calib DB
+    bool overide_URL_base;
+    string URL_base;
+    bool check_md5;
 
 };
 
@@ -158,18 +158,18 @@ private:
 //----------------------
 template<class T>
 bool JLargeCalibration::Get(string namepath, T &vals, int event_number) {
-	/// Get the specified resource and parse it, placing the values in the
-	/// specified "vals" container. This first calls GetResource(namepath)
-	/// to download the resource (if necessary) and then uses a
-	/// JCalibrationFile::Get() method to parse the file and fill the
-	/// "vals" container.
+    /// Get the specified resource and parse it, placing the values in the
+    /// specified "vals" container. This first calls GetResource(namepath)
+    /// to download the resource (if necessary) and then uses a
+    /// JCalibrationFile::Get() method to parse the file and fill the
+    /// "vals" container.
 
-	// Call to GetResource to (optionally) download and install resource file
-	string fullpath = GetResource(namepath);
-	string path = fullpath.substr(resource_dir.size() + 1); // chop off resource_dir + "/"
+    // Call to GetResource to (optionally) download and install resource file
+    string fullpath = GetResource(namepath);
+    string path = fullpath.substr(resource_dir.size() + 1); // chop off resource_dir + "/"
 
-	// Have JCalibrationFile parse the resource file
-	return jcalibfile->Get(path, vals, event_number);
+    // Have JCalibrationFile parse the resource file
+    return jcalibfile->Get(path, vals, event_number);
 }
 
 

@@ -17,7 +17,7 @@
 /// leave the offending thread alone so that the user has a chance to attach a debugger
 /// to the process.
 void JWorker::declare_timeout() {
-	_run_state = RunState::TimedOut;
+    _run_state = RunState::TimedOut;
 }
 
 void JWorker::measure_perf(WorkerSummary& summary) {
@@ -148,26 +148,26 @@ void JWorker::wait_for_stop() {
         _run_state = RunState::Stopping;
     }
     if (_thread != nullptr) {
-    	if (_run_state == RunState::TimedOut) {
-		    _thread->detach();
-		    // Thread has timed out. Rather than non-cooperatively killing it,
-		    // we relinquish ownership of it but remember that it was ours once and
-		    // is still out there, somewhere, biding its time
-    	}
-    	else {
-		    _thread->join();
-	    }
+        if (_run_state == RunState::TimedOut) {
+            _thread->detach();
+            // Thread has timed out. Rather than non-cooperatively killing it,
+            // we relinquish ownership of it but remember that it was ours once and
+            // is still out there, somewhere, biding its time
+        }
+        else {
+            _thread->join();
+        }
         delete _thread;
         _thread = nullptr;
         if (_run_state == RunState::Stopping) {
-	        _run_state = RunState::Stopped;
-	        // By this point, the JWorker must either be Stopped or TimedOut
+            _run_state = RunState::Stopped;
+            // By this point, the JWorker must either be Stopped or TimedOut
         }
     }
 }
 
 void JWorker::loop() {
-	using jclock_t = JWorkerMetrics::clock_t;
+    using jclock_t = JWorkerMetrics::clock_t;
     try {
         LOG_DEBUG(logger) << "Worker " << _worker_id << " has fired up." << LOG_END;
         JArrowMetrics::Status last_result = JArrowMetrics::Status::NotRunYet;
@@ -266,10 +266,10 @@ void JWorker::loop() {
         LOG_FATAL(logger) << e << LOG_END;
         exit(-1);
     }catch (std::runtime_error& e){
-		// same as above
-		LOG_FATAL(logger) << e.what() << LOG_END;
+        // same as above
+        LOG_FATAL(logger) << e.what() << LOG_END;
         exit(-1);
-	}
+    }
 }
 
 

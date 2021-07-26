@@ -24,35 +24,35 @@
 class JComponentManager;
 
 class JEventSourceGenerator{
-	public:
-	
-		friend JComponentManager;
+    public:
 
-		JEventSourceGenerator(JApplication *app=nullptr):mApplication(app){}
-		virtual ~JEventSourceGenerator(){}
+        friend JComponentManager;
 
-		// Default versions of these are defined in JEventSourceGeneratorT.h
-		virtual std::string GetType(void) const = 0; ///< Return name of the source type this will generate
-		virtual std::string GetDescription(void) const = 0; ///< Return description of the source type this will generate
-		virtual JEventSource* MakeJEventSource( std::string source ) = 0; ///< Create an instance of the source type this generates
-		virtual double CheckOpenable( std::string source ) = 0; ///< See JEventSourceGeneratorT for description
+        JEventSourceGenerator(JApplication *app=nullptr):mApplication(app){}
+        virtual ~JEventSourceGenerator(){}
+
+        // Default versions of these are defined in JEventSourceGeneratorT.h
+        virtual std::string GetType(void) const = 0; ///< Return name of the source type this will generate
+        virtual std::string GetDescription(void) const = 0; ///< Return description of the source type this will generate
+        virtual JEventSource* MakeJEventSource( std::string source ) = 0; ///< Create an instance of the source type this generates
+        virtual double CheckOpenable( std::string source ) = 0; ///< See JEventSourceGeneratorT for description
 
 
-	protected:
-	
-		/// This is called by JEventSourceManager::AddJEventSourceGenerator which
-		/// itself is called by JApplication::Add(JEventSourceGenerator*). There
-		/// should be no need to call it from anywhere else.
-		void SetJApplication(JApplication *app){ mApplication = app; }
+    protected:
 
-		/// SetPluginName is called by JANA itself and should not be exposed to the user.
-		void SetPluginName(std::string plugin_name) { mPluginName = plugin_name; };
+        /// This is called by JEventSourceManager::AddJEventSourceGenerator which
+        /// itself is called by JApplication::Add(JEventSourceGenerator*). There
+        /// should be no need to call it from anywhere else.
+        void SetJApplication(JApplication *app){ mApplication = app; }
 
-		/// GetPluginName is called by JANA itself and should not be exposed to the user.
-		std::string GetPluginName() const { return mPluginName; }
+        /// SetPluginName is called by JANA itself and should not be exposed to the user.
+        void SetPluginName(std::string plugin_name) { mPluginName = plugin_name; };
 
-		JApplication* mApplication{nullptr};
-		std::string mPluginName;
+        /// GetPluginName is called by JANA itself and should not be exposed to the user.
+        std::string GetPluginName() const { return mPluginName; }
+
+        JApplication* mApplication{nullptr};
+        std::string mPluginName;
 };
 
 #endif // _JEventSourceGenerator_h_

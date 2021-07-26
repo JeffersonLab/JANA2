@@ -21,8 +21,8 @@ void JArrowProcessingController::acquire_services(JServiceLocator * sl) {
     // Obtain timeouts from parameter manager
     auto params = sl->get<JParameterManager>();
     params->SetDefaultParameter("jana:timeout", _timeout_s, "Max. time (in seconds) system will wait for a thread to update its heartbeat before killing it and launching a new one.");
-	params->SetDefaultParameter("jana:warmup_timeout", _warmup_timeout_s, "Max. time (in seconds) system will wait for the initial events to complete before killing program.");
-	// Originally "THREAD_TIMEOUT" and "THREAD_TIMEOUT_FIRST_EVENT"
+    params->SetDefaultParameter("jana:warmup_timeout", _warmup_timeout_s, "Max. time (in seconds) system will wait for the initial events to complete before killing program.");
+    // Originally "THREAD_TIMEOUT" and "THREAD_TIMEOUT_FIRST_EVENT"
 }
 
 void JArrowProcessingController::initialize() {
@@ -100,36 +100,36 @@ bool JArrowProcessingController::is_finished() {
 
 bool JArrowProcessingController::is_timed_out() {
 
-	// Note that this makes its own (redundant) call to measure_internal_performance().
-	// Probably want to refactor so that we only make one such call per ticker iteration.
-	// Since we are storing our metrics summary anyway, we could call measure_performance()
-	// and have print_report(), print_final_report(), is_timed_out(), etc use the cached version
-	auto metrics = measure_internal_performance();
+    // Note that this makes its own (redundant) call to measure_internal_performance().
+    // Probably want to refactor so that we only make one such call per ticker iteration.
+    // Since we are storing our metrics summary anyway, we could call measure_performance()
+    // and have print_report(), print_final_report(), is_timed_out(), etc use the cached version
+    auto metrics = measure_internal_performance();
 
-	int timeout_s;
-	if (metrics->total_uptime_s < _warmup_timeout_s * _topology->event_pool_size / metrics->thread_count) {
-		// We are at the beginning and not all events have necessarily had a chance to warm up
-		timeout_s = _warmup_timeout_s;
-	}
-	else if (!_topology->limit_total_events_in_flight) {
-		// New events are constantly emitted, each of which may contain jfactorysets which need to be warmed up
-		timeout_s = _warmup_timeout_s;
-	}
-	else {
-		timeout_s = _timeout_s;
-	}
+    int timeout_s;
+    if (metrics->total_uptime_s < _warmup_timeout_s * _topology->event_pool_size / metrics->thread_count) {
+        // We are at the beginning and not all events have necessarily had a chance to warm up
+        timeout_s = _warmup_timeout_s;
+    }
+    else if (!_topology->limit_total_events_in_flight) {
+        // New events are constantly emitted, each of which may contain jfactorysets which need to be warmed up
+        timeout_s = _warmup_timeout_s;
+    }
+    else {
+        timeout_s = _timeout_s;
+    }
 
-	// Find all workers whose last heartbeat exceeds timeout
-	bool found_timeout = false;
-	for (size_t i=0; i<metrics->workers.size(); ++i) {
-		if (metrics->workers[i].last_heartbeat_ms > (timeout_s * 1000)) {
-			found_timeout = true;
-			_workers[i]->declare_timeout();
-			// This assumes the workers and their summaries are ordered the same.
-			// Which is true, but I don't like it.
-		}
-	}
-	return found_timeout;
+    // Find all workers whose last heartbeat exceeds timeout
+    bool found_timeout = false;
+    for (size_t i=0; i<metrics->workers.size(); ++i) {
+        if (metrics->workers[i].last_heartbeat_ms > (timeout_s * 1000)) {
+            found_timeout = true;
+            _workers[i]->declare_timeout();
+            // This assumes the workers and their summaries are ordered the same.
+            // Which is true, but I don't like it.
+        }
+    }
+    return found_timeout;
 }
 
 JArrowProcessingController::~JArrowProcessingController() {

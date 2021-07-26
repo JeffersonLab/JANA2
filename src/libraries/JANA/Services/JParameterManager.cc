@@ -22,11 +22,11 @@ JParameterManager::JParameterManager() {
 /// @details Does a deep copy of the JParameter objects to avoid double frees.
 JParameterManager::JParameterManager(const JParameterManager& other) {
 
-	m_logger = other.m_logger;
-	// Do a deep copy of contained JParameters to avoid double frees
-	for (auto param : other.m_parameters) {
-		m_parameters.insert({param.first, new JParameter(*param.second)});
-	}
+    m_logger = other.m_logger;
+    // Do a deep copy of contained JParameters to avoid double frees
+    for (auto param : other.m_parameters) {
+        m_parameters.insert({param.first, new JParameter(*param.second)});
+    }
 }
 
 /// @brief Destructor
@@ -265,15 +265,15 @@ void JParameterManager::WriteConfigFile(std::string filename) {
 ///
 void JParameterManager::FilterParameters(std::map<std::string, std::string> &parms, std::string filter) {
 
-	parms.clear();
-	std::lock_guard<std::mutex> lock(m_mutex);
-	for (auto pair : m_parameters) {
-		string key = pair.first;
-		string value = pair.second->value;
-		if (filter.size() > 0) {
-			if (key.substr(0, filter.size()) != filter) continue;
-			key.erase(0, filter.size());
-		}
-		parms[key] = value;
-	}
+    parms.clear();
+    std::lock_guard<std::mutex> lock(m_mutex);
+    for (auto pair : m_parameters) {
+        string key = pair.first;
+        string value = pair.second->value;
+        if (filter.size() > 0) {
+            if (key.substr(0, filter.size()) != filter) continue;
+            key.erase(0, filter.size());
+        }
+        parms[key] = value;
+    }
 }

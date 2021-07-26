@@ -53,7 +53,7 @@ public:
     template<typename T>
     JParameter* SetDefaultParameter(std::string name, T& val, std::string description = "");
 
-	void FilterParameters(std::map<std::string,std::string> &parms, std::string filter="");
+    void FilterParameters(std::map<std::string,std::string> &parms, std::string filter="");
 
     void ReadConfigFile(std::string name);
 

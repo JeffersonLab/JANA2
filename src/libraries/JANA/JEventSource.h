@@ -91,7 +91,7 @@ public:
     /// This mechanism has been replaced by `JEvent::Insert`. All lazy evaluation should happen in a (non-dummy)
     /// JFactory, whereas eager evaluation should happen in `JEventSource::GetEvent` via `JEvent::Insert`.
     virtual bool GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactory* aFactory) __attribute__ ((deprecated)) {
-    	return false;
+        return false;
     }
 
 

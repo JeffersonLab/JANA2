@@ -36,7 +36,7 @@ public:
     }
 
     std::string GetStackTrace() {
-    	return stacktrace;
+        return stacktrace;
     }
 
     const char* what() const noexcept {

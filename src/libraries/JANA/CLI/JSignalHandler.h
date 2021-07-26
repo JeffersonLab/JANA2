@@ -72,16 +72,16 @@ void produce_overall_report() {
         auto main_thread_id = pthread_self();
         std::vector<pthread_t> threads; // TODO: Populate this
         g_thread_report_count = threads.size();
-		for (auto& thread_id : threads) {
-			if (main_thread_id == thread_id) {
+        for (auto& thread_id : threads) {
+            if (main_thread_id == thread_id) {
                 pthread_kill(thread_id, SIGUSR2);
-			}
-		}
+            }
+        }
 
-		// Assemble backtrace for own thread
-		std::stringstream bt_str;
-		make_backtrace(bt_str);
-		g_thread_reports[main_thread_id] = bt_str.str();
+        // Assemble backtrace for own thread
+        std::stringstream bt_str;
+        make_backtrace(bt_str);
+        g_thread_reports[main_thread_id] = bt_str.str();
 
         // Wait for all other threads to finish handling USR2
         for(int i=0; i<1000; i++){

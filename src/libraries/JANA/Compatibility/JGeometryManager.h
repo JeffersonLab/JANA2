@@ -14,11 +14,11 @@
 
 class JGeometryManager: public JService {
 
-	std::mutex m_mutex;
-	std::vector<JGeometry*> geometries;
+    std::mutex m_mutex;
+    std::vector<JGeometry*> geometries;
 
 public:
-	JGeometry* GetJGeometry(unsigned int run_number);
+    JGeometry* GetJGeometry(unsigned int run_number);
 
 };
 

@@ -25,7 +25,7 @@ class JApplication;
 class JFactory {
 public:
 
-	enum class CreationStatus { NotCreatedYet, Created, Inserted, InsertedViaGetObjects };
+    enum class CreationStatus { NotCreatedYet, Created, Inserted, InsertedViaGetObjects };
 
     enum JFactory_Flags_t {
         JFACTORY_NULL = 0x00,
@@ -94,7 +94,7 @@ public:
     virtual void ChangeRun(const std::shared_ptr<const JEvent> &aEvent) {}
     virtual void EndRun() {}
     virtual void Process(const std::shared_ptr<const JEvent> &aEvent) {}
-	virtual void Finish() {}
+    virtual void Finish() {}
 
     virtual std::size_t GetNumObjects(void) const {
         return 0;
@@ -123,9 +123,9 @@ public:
     /// Create() calls JFactory::Init,BeginRun,Process in an invariant-preserving way without knowing the exact
     /// type of object contained. It returns the number of objects created. In order to access said objects,
     /// use JFactory::GetAs().
-	virtual size_t Create(const std::shared_ptr<const JEvent>& event, JApplication* app, uint64_t run_number) = 0;
+    virtual size_t Create(const std::shared_ptr<const JEvent>& event, JApplication* app, uint64_t run_number) = 0;
 
-	/// JApplication setter. This is meant to be used under the hood.
+    /// JApplication setter. This is meant to be used under the hood.
     void SetApplication(JApplication* app) { mApp = app; }
 
     /// JApplication getter. This is meant to be called by user-defined JFactories which need to
@@ -149,8 +149,8 @@ protected:
     enum class Status {Uninitialized, Unprocessed, Processed, Inserted};
     mutable Status mStatus = Status::Uninitialized;
 
-	CreationStatus mCreationStatus = CreationStatus::NotCreatedYet;
-	mutable std::mutex mMutex;
+    CreationStatus mCreationStatus = CreationStatus::NotCreatedYet;
+    mutable std::mutex mMutex;
 
     // Used to make sure Init is called only once
     std::once_flag mInitFlag;

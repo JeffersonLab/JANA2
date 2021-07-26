@@ -47,39 +47,39 @@ class JApplication;
 
 template <typename T>
 class JEventSourceGeneratorT:public JEventSourceGenerator{
-	public:
-	
-		JEventSourceGeneratorT(JApplication *app=nullptr):JEventSourceGenerator(app){}
-		virtual ~JEventSourceGeneratorT(){}
+    public:
 
-		/// Return name of the source type this will generate
-		std::string GetType(void) const {
-			return JTypeInfo::demangle<T>();
-		}
+        JEventSourceGeneratorT(JApplication *app=nullptr):JEventSourceGenerator(app){}
+        virtual ~JEventSourceGeneratorT(){}
 
-		/// Return description of the source type this will generate
-		std::string GetDescription(void) const { return T::GetDescription(); }
+        /// Return name of the source type this will generate
+        std::string GetType(void) const {
+            return JTypeInfo::demangle<T>();
+        }
 
-		/// Create an instance of the source type this generates
-		JEventSource* MakeJEventSource( std::string source ){ return new T( source, mApplication ); }
+        /// Return description of the source type this will generate
+        std::string GetDescription(void) const { return T::GetDescription(); }
 
-		/// Check how likely a source of the type this generates is to read
-		/// the specified source. This mechanism is to allow a single executable
-		/// to read from multiple file types, each corresponding to a different
-		/// JEventSource subclass. If you use only a single source type, then
-		/// there is no need to override this. If you do need this functionality
-		/// however, then override this in your code with something like:
-		///
-		///   template<> double JEventSourceGeneratorT<MyType>::CheckOpenable(std::string source) { ... }
-		///
-		double CheckOpenable( std::string source ){ return 0.01; }
-	
-	protected:
-	
-		/// This is called by JEventSourceManager::AddJEventSourceGenerator which
-		/// itself is called by JApplication::Add(JEventSourceGenerator*). There
-		/// should be no need to call it from anywhere else.
-		void SetJApplication(JApplication *app){ mApplication = app; }
+        /// Create an instance of the source type this generates
+        JEventSource* MakeJEventSource( std::string source ){ return new T( source, mApplication ); }
+
+        /// Check how likely a source of the type this generates is to read
+        /// the specified source. This mechanism is to allow a single executable
+        /// to read from multiple file types, each corresponding to a different
+        /// JEventSource subclass. If you use only a single source type, then
+        /// there is no need to override this. If you do need this functionality
+        /// however, then override this in your code with something like:
+        ///
+        ///   template<> double JEventSourceGeneratorT<MyType>::CheckOpenable(std::string source) { ... }
+        ///
+        double CheckOpenable( std::string source ){ return 0.01; }
+
+    protected:
+
+        /// This is called by JEventSourceManager::AddJEventSourceGenerator which
+        /// itself is called by JApplication::Add(JEventSourceGenerator*). There
+        /// should be no need to call it from anywhere else.
+        void SetJApplication(JApplication *app){ mApplication = app; }
 };
 
 #endif // _JEventSourceGeneratorT_h_

@@ -135,7 +135,7 @@ bool JDebugProcessingController::is_finished() {
 }
 
 bool JDebugProcessingController::is_timed_out() {
-	return false;
+    return false;
 }
 
 JDebugProcessingController::~JDebugProcessingController() {

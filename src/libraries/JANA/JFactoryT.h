@@ -40,7 +40,7 @@ public:
 #endif
     }
 
-	JFactoryT(const std::string& aName) __attribute__ ((deprecated))  : JFactory(aName, "") {
+    JFactoryT(const std::string& aName) __attribute__ ((deprecated))  : JFactory(aName, "") {
         EnableGetAs<T>();
         EnableGetAs<JObject>( std::is_convertible<T,JObject>() ); // Automatically add JObject if this can be converted to it
 #ifdef HAVE_ROOT
@@ -54,7 +54,7 @@ public:
 #ifdef HAVE_ROOT
         EnableGetAs<TObject>( std::is_convertible<T,TObject>() ); // Automatically add TObject if this can be converted to it
 #endif
-	}
+    }
 
     ~JFactoryT() override = default;
 
@@ -129,13 +129,13 @@ public:
         }
     }
 
-	size_t Create(const std::shared_ptr<const JEvent>& event, JApplication* app, uint64_t run_number) final {
-		auto result = GetOrCreate(event, app, run_number);
-		return std::distance(result.first, result.second);
-	}
+    size_t Create(const std::shared_ptr<const JEvent>& event, JApplication* app, uint64_t run_number) final {
+        auto result = GetOrCreate(event, app, run_number);
+        return std::distance(result.first, result.second);
+    }
 
 
-	/// Please use the typed setters instead whenever possible
+    /// Please use the typed setters instead whenever possible
     void Set(const std::vector<JObject*>& aData) override {
         ClearData();
         for (auto jobj : aData) {
@@ -159,20 +159,20 @@ public:
         ClearData();
         mData = aData;
         mStatus = Status::Inserted;
-	    mCreationStatus = CreationStatus::Inserted;
+        mCreationStatus = CreationStatus::Inserted;
     }
 
     void Set(std::vector<T*>&& aData) {
         ClearData();
         mData = std::move(aData);
         mStatus = Status::Inserted;
-	    mCreationStatus = CreationStatus::Inserted;
+        mCreationStatus = CreationStatus::Inserted;
     }
 
     void Insert(T* aDatum) {
         mData.push_back(aDatum);
         mStatus = Status::Inserted;
-	    mCreationStatus = CreationStatus::Inserted;
+        mCreationStatus = CreationStatus::Inserted;
     }
 
 
@@ -205,7 +205,7 @@ public:
         }
         mData.clear();
         mStatus = Status::Unprocessed;
-	    mCreationStatus = CreationStatus::NotCreatedYet;
+        mCreationStatus = CreationStatus::NotCreatedYet;
     }
 
     /// Set the JFactory's metadata. This is meant to be called by user during their JFactoryT::Process
