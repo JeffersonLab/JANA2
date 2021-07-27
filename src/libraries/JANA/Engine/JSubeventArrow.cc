@@ -10,7 +10,7 @@
 
 JSubeventArrow::JSubeventArrow(std::string name, JSubeventProcessor* processor,
                                JMailbox<JSubevent>* inbox, JMailbox<JSubevent>* outbox)
-    : JArrow(name, true, NodeType::Stage), _processor(processor), _inbox(inbox), _outbox(outbox) {
+    : JArrow(name, true, NodeType::Stage), m_processor(processor), m_inbox(inbox), m_outbox(outbox) {
 
 
 }
@@ -26,7 +26,7 @@ void JSubeventArrow::execute(JArrowMetrics& results, size_t location_id) {
 
 JSplitArrow::JSplitArrow(std::string name, JSubeventProcessor* processor,
                          JMailbox<Event>* inbox, JMailbox<JSubevent>* outbox)
-    : JArrow(name, true, NodeType::Stage), _processor(processor), _inbox(inbox), _outbox(outbox) {
+    : JArrow(name, true, NodeType::Stage), m_processor(processor), m_inbox(inbox), m_outbox(outbox) {
 
 }
 
@@ -42,7 +42,7 @@ void JSplitArrow::execute(JArrowMetrics& results, size_t location_id) {
 }
 
 JMergeArrow::JMergeArrow(std::string name, JSubeventProcessor* processor, JMailbox<JSubevent>* inbox, JMailbox<Event>* outbox)
-    : JArrow(name, true, NodeType::Stage), _processor(processor),  _inbox(inbox), _outbox(outbox) {
+    : JArrow(name, true, NodeType::Stage), m_processor(processor), m_inbox(inbox), m_outbox(outbox) {
 
 }
 

@@ -21,48 +21,47 @@ public:
 
 private:
     // Info
-    const std::string _name;     // Used for human understanding
-    const bool _is_parallel;     // Whether or not it is safe to parallelize
-    const NodeType _type;
+    const std::string m_name;     // Used for human understanding
+    const bool m_is_parallel;     // Whether or not it is safe to parallelize
+    const NodeType m_type;
 
     // Statuses
-    JArrowMetrics _metrics;      // Performance information accumulated over all workers
-    size_t _thread_count = 0;    // Current number of threads assigned to this arrow
-    std::atomic_bool _is_upstream_finished { false };  // TODO: Deprecated. Use _status instead.
-    //Status _status = Status::Unopened;  // Lives in JActivable for now
+    JArrowMetrics m_metrics;      // Performance information accumulated over all workers
+    size_t m_thread_count = 0;    // Current number of threads assigned to this arrow
+    std::atomic_bool m_is_upstream_finished {false };  // TODO: Deprecated. Use m_status instead.
+    //Status m_status = Status::Unopened;  // Lives in JActivable for now
 
     // Knobs
-    size_t _chunksize = 1;       // Number of items to pop off the input queue at once
-    BackoffStrategy _backoff_strategy = BackoffStrategy::Exponential;
-    duration_t _initial_backoff_time = std::chrono::microseconds(1);
-    duration_t _checkin_time = std::chrono::milliseconds(500);
-    unsigned _backoff_tries = 4;
+    size_t m_chunksize = 1;       // Number of items to pop off the input queue at once
+    BackoffStrategy m_backoff_strategy = BackoffStrategy::Exponential;
+    duration_t m_initial_backoff_time = std::chrono::microseconds(1);
+    duration_t m_checkin_time = std::chrono::milliseconds(500);
+    unsigned m_backoff_tries = 4;
 
-    mutable std::mutex _mutex;   // Protects access to arrow properties.
+    mutable std::mutex m_mutex;   // Protects access to arrow properties.
                                  // TODO: Consider storing and protect thread count differently,
                                  // so that (number of workers) = (sum of thread counts for all arrows)
                                  // This is not so simple if we also want our WorkerStatus::arrow_name to match
 public:
-public:
 
     // Constants
 
-    bool is_parallel() { return _is_parallel; }
+    bool is_parallel() { return m_is_parallel; }
 
-    std::string get_name() { return _name; }
+    std::string get_name() { return m_name; }
 
     // Written internally, read externally
 
-    bool is_upstream_finished() { return _is_upstream_finished; }
+    bool is_upstream_finished() { return m_is_upstream_finished; }
 
 
 protected:
 
     // Written internally, read externally
 
-    void set_upstream_finished(bool upstream_finished) { _is_upstream_finished = upstream_finished; }
+    void set_upstream_finished(bool upstream_finished) { m_is_upstream_finished = upstream_finished; }
 
-    void set_status(Status status) { _status = status; }
+    void set_status(Status status) { m_status = status; }
 
 
 public:
@@ -70,95 +69,95 @@ public:
     // Written externally
 
     void set_chunksize(size_t chunksize) {
-        std::lock_guard<std::mutex> lock(_mutex);
-        _chunksize = chunksize;
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_chunksize = chunksize;
     }
 
     size_t get_chunksize() const {
-        std::lock_guard<std::mutex> lock(_mutex);
-        return _chunksize;
+        std::lock_guard<std::mutex> lock(m_mutex);
+        return m_chunksize;
     }
 
     void set_backoff_tries(unsigned backoff_tries) {
-        std::lock_guard<std::mutex> lock(_mutex);
-        _backoff_tries = backoff_tries;
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_backoff_tries = backoff_tries;
     }
 
     unsigned get_backoff_tries() const {
-        std::lock_guard<std::mutex> lock(_mutex);
-        return _backoff_tries;
+        std::lock_guard<std::mutex> lock(m_mutex);
+        return m_backoff_tries;
     }
 
     BackoffStrategy get_backoff_strategy() const {
-        std::lock_guard<std::mutex> lock(_mutex);
-        return _backoff_strategy;
+        std::lock_guard<std::mutex> lock(m_mutex);
+        return m_backoff_strategy;
     }
 
     void set_backoff_strategy(BackoffStrategy backoff_strategy) {
-        std::lock_guard<std::mutex> lock(_mutex);
-        _backoff_strategy = backoff_strategy;
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_backoff_strategy = backoff_strategy;
     }
 
     duration_t get_initial_backoff_time() const {
-        std::lock_guard<std::mutex> lock(_mutex);
-        return _initial_backoff_time;
+        std::lock_guard<std::mutex> lock(m_mutex);
+        return m_initial_backoff_time;
     }
 
     void set_initial_backoff_time(const duration_t& initial_backoff_time) {
-        std::lock_guard<std::mutex> lock(_mutex);
-        _initial_backoff_time = initial_backoff_time;
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_initial_backoff_time = initial_backoff_time;
     }
 
     const duration_t& get_checkin_time() const {
-        std::lock_guard<std::mutex> lock(_mutex);
-        return _checkin_time;
+        std::lock_guard<std::mutex> lock(m_mutex);
+        return m_checkin_time;
     }
 
     void set_checkin_time(const duration_t& checkin_time) {
-        std::lock_guard<std::mutex> lock(_mutex);
-        _checkin_time = checkin_time;
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_checkin_time = checkin_time;
     }
 
     void update_thread_count(int thread_count_delta) {
-        std::lock_guard<std::mutex> lock(_mutex);
-        _thread_count += thread_count_delta;
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_thread_count += thread_count_delta;
     }
 
     size_t get_thread_count() {
-        std::lock_guard<std::mutex> lock(_mutex);
-        return _thread_count;
+        std::lock_guard<std::mutex> lock(m_mutex);
+        return m_thread_count;
     }
 
     // TODO: Metrics should be encapsulated so that only actions are to update, clear, or summarize
     JArrowMetrics& get_metrics() {
-        return _metrics;
+        return m_metrics;
     }
 
     Status get_status() {
-        return _status;
+        return m_status;
     }
 
     NodeType get_type() {
-        return _type;
+        return m_type;
     }
 
     JArrow(std::string name, bool is_parallel, NodeType arrow_type, size_t chunksize=16) :
-            _name(std::move(name)), _is_parallel(is_parallel), _type(arrow_type), _chunksize(chunksize) {
+            m_name(std::move(name)), m_is_parallel(is_parallel), m_type(arrow_type), m_chunksize(chunksize) {
 
-        _metrics.clear();
+        m_metrics.clear();
     };
 
     virtual ~JArrow() = default;
 
     virtual void initialize() {
-        assert(_status == Status::Unopened);
-        _status = Status::Inactive;
+        assert(m_status == Status::Unopened);
+        m_status = Status::Inactive;
     };
 
     virtual void execute(JArrowMetrics& result, size_t location_id) = 0;
 
     virtual void finalize() {
-        _status = Status::Closed;
+        m_status = Status::Closed;
     };
 
 
@@ -170,15 +169,15 @@ public:
 
     void set_active(bool is_active) override {
         if (is_active) {
-            assert(_status != Status::Closed);
-            if (_status == Status::Unopened) {
+            assert(m_status != Status::Closed);
+            if (m_status == Status::Unopened) {
                 initialize();
             }
-            _status = Status::Running;
+            m_status = Status::Running;
         }
         else {
             //assert(_status != Status::Unopened);
-            _status = Status::Inactive;
+            m_status = Status::Inactive;
         }
     }
 };

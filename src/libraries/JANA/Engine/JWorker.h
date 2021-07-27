@@ -28,17 +28,17 @@ public:
 private:
     /// Machinery that nobody else should modify. These should be protected eventually.
     /// Probably simply make them private and expose via get_status() -> Worker::Status
-    JScheduler* _scheduler;
-    unsigned _worker_id;
-    unsigned _cpu_id;
-    unsigned _location_id;
-    bool _pin_to_cpu;
-    std::atomic<RunState> _run_state;
-    JArrow* _assignment;
-    std::thread* _thread;    // JWorker encapsulates a thread of some kind. Nothing else should care how.
-    JWorkerMetrics _worker_metrics;
-    JArrowMetrics _arrow_metrics;
-    std::mutex _assignment_mutex;
+    JScheduler* m_scheduler;
+    unsigned m_worker_id;
+    unsigned m_cpu_id;
+    unsigned m_location_id;
+    bool m_pin_to_cpu;
+    std::atomic<RunState> m_run_state;
+    JArrow* m_assignment;
+    std::thread* m_thread;    // JWorker encapsulates a thread of some kind. Nothing else should care how.
+    JWorkerMetrics m_worker_metrics;
+    JArrowMetrics m_arrow_metrics;
+    std::mutex m_assignment_mutex;
 
 public:
     JWorker(JScheduler* scheduler, unsigned worker_id, unsigned cpu_id, unsigned domain_id, bool pin_to_cpu);
@@ -51,7 +51,7 @@ public:
     JWorker(JWorker &&other) = delete;
     JWorker &operator=(const JWorker &other) = delete;
 
-    RunState get_runstate() { return _run_state; };
+    RunState get_runstate() { return m_run_state; };
 
     void start();
     void request_stop();

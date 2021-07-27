@@ -15,18 +15,18 @@ public:
     using duration_t = std::chrono::steady_clock::duration;
 
 private:
-    mutable std::mutex _mutex;
+    mutable std::mutex m_mutex;
     // Mutex is mutable so that we can lock before reading from a const ref
 
-    Status _last_status;
-    size_t _total_message_count;
-    size_t _last_message_count;
-    size_t _total_queue_visits;
-    size_t _last_queue_visits;
-    duration_t _total_latency;
-    duration_t _last_latency;
-    duration_t _total_queue_latency;
-    duration_t _last_queue_latency;
+    Status m_last_status;
+    size_t m_total_message_count;
+    size_t m_last_message_count;
+    size_t m_total_queue_visits;
+    size_t m_last_queue_visits;
+    duration_t m_total_latency;
+    duration_t m_last_latency;
+    duration_t m_total_queue_latency;
+    duration_t m_last_queue_latency;
 
 
     // TODO: We might want to add a timestamp, so that
@@ -36,74 +36,74 @@ private:
 public:
     void clear() {
 
-        _mutex.lock();
-        _last_status = Status::NotRunYet;
-        _total_message_count = 0;
-        _last_message_count = 0;
-        _total_queue_visits = 0;
-        _last_queue_visits = 0;
-        _total_latency = duration_t::zero();
-        _last_latency = duration_t::zero();
-        _total_queue_latency = duration_t::zero();
-        _last_queue_latency = duration_t::zero();
-        _mutex.unlock();
+        m_mutex.lock();
+        m_last_status = Status::NotRunYet;
+        m_total_message_count = 0;
+        m_last_message_count = 0;
+        m_total_queue_visits = 0;
+        m_last_queue_visits = 0;
+        m_total_latency = duration_t::zero();
+        m_last_latency = duration_t::zero();
+        m_total_queue_latency = duration_t::zero();
+        m_last_queue_latency = duration_t::zero();
+        m_mutex.unlock();
     }
 
     void take(JArrowMetrics& other) {
 
-        _mutex.lock();
-        other._mutex.lock();
+        m_mutex.lock();
+        other.m_mutex.lock();
 
-        if (other._last_message_count != 0) {
-            _last_message_count = other._last_message_count;
-            _last_latency = other._last_latency;
+        if (other.m_last_message_count != 0) {
+            m_last_message_count = other.m_last_message_count;
+            m_last_latency = other.m_last_latency;
         }
 
-        _last_status = other._last_status;
-        _total_message_count += other._total_message_count;
-        _total_queue_visits += other._total_queue_visits;
-        _last_queue_visits = other._last_queue_visits;
-        _total_latency += other._total_latency;
-        _total_queue_latency += other._total_queue_latency;
-        _last_queue_latency = other._last_queue_latency;
+        m_last_status = other.m_last_status;
+        m_total_message_count += other.m_total_message_count;
+        m_total_queue_visits += other.m_total_queue_visits;
+        m_last_queue_visits = other.m_last_queue_visits;
+        m_total_latency += other.m_total_latency;
+        m_total_queue_latency += other.m_total_queue_latency;
+        m_last_queue_latency = other.m_last_queue_latency;
 
-        other._last_status = Status::NotRunYet;
-        other._total_message_count = 0;
-        other._last_message_count = 0;
-        other._total_queue_visits = 0;
-        other._last_queue_visits = 0;
-        other._total_latency = duration_t::zero();
-        other._last_latency = duration_t::zero();
-        other._total_queue_latency = duration_t::zero();
-        other._last_queue_latency = duration_t::zero();
-        other._mutex.unlock();
-        _mutex.unlock();
+        other.m_last_status = Status::NotRunYet;
+        other.m_total_message_count = 0;
+        other.m_last_message_count = 0;
+        other.m_total_queue_visits = 0;
+        other.m_last_queue_visits = 0;
+        other.m_total_latency = duration_t::zero();
+        other.m_last_latency = duration_t::zero();
+        other.m_total_queue_latency = duration_t::zero();
+        other.m_last_queue_latency = duration_t::zero();
+        other.m_mutex.unlock();
+        m_mutex.unlock();
     };
 
     void update(const JArrowMetrics &other) {
 
-        _mutex.lock();
-        other._mutex.lock();
+        m_mutex.lock();
+        other.m_mutex.lock();
 
-        if (other._last_message_count != 0) {
-            _last_message_count = other._last_message_count;
-            _last_latency = other._last_latency;
+        if (other.m_last_message_count != 0) {
+            m_last_message_count = other.m_last_message_count;
+            m_last_latency = other.m_last_latency;
         }
-        _total_latency += other._total_latency;
-        _last_status = other._last_status;
-        _total_message_count += other._total_message_count;
-        _total_queue_visits += other._total_queue_visits;
-        _last_queue_visits = other._last_queue_visits;
-        _total_queue_latency += other._total_queue_latency;
-        _last_queue_latency = other._last_queue_latency;
-        other._mutex.unlock();
-        _mutex.unlock();
+        m_total_latency += other.m_total_latency;
+        m_last_status = other.m_last_status;
+        m_total_message_count += other.m_total_message_count;
+        m_total_queue_visits += other.m_total_queue_visits;
+        m_last_queue_visits = other.m_last_queue_visits;
+        m_total_queue_latency += other.m_total_queue_latency;
+        m_last_queue_latency = other.m_last_queue_latency;
+        other.m_mutex.unlock();
+        m_mutex.unlock();
     };
 
     void update_finished() {
-        _mutex.lock();
-        _last_status = Status::Finished;
-        _mutex.unlock();
+        m_mutex.lock();
+        m_last_status = Status::Finished;
+        m_mutex.unlock();
     }
 
     void update(const Status& last_status,
@@ -112,23 +112,23 @@ public:
                 const duration_t& latency_delta,
                 const duration_t& queue_latency_delta) {
 
-        _mutex.lock();
-        _last_status = last_status;
+        m_mutex.lock();
+        m_last_status = last_status;
 
         if (message_count_delta > 0) {
             // We don't want to lose our most recent latency numbers
             // when the most recent execute() encounters an empty
             // queue and consequently processes zero items.
-            _last_message_count = message_count_delta;
-            _last_latency = latency_delta;
+            m_last_message_count = message_count_delta;
+            m_last_latency = latency_delta;
         }
-        _total_message_count += message_count_delta;
-        _total_queue_visits += queue_visit_delta;
-        _last_queue_visits = queue_visit_delta;
-        _total_latency += latency_delta;
-        _total_queue_latency += queue_latency_delta;
-        _last_queue_latency = queue_latency_delta;
-        _mutex.unlock();
+        m_total_message_count += message_count_delta;
+        m_total_queue_visits += queue_visit_delta;
+        m_last_queue_visits = queue_visit_delta;
+        m_total_latency += latency_delta;
+        m_total_queue_latency += queue_latency_delta;
+        m_last_queue_latency = queue_latency_delta;
+        m_mutex.unlock();
 
     };
 
@@ -142,27 +142,27 @@ public:
              duration_t& total_queue_latency,
              duration_t& last_queue_latency) {
 
-        _mutex.lock();
-        last_status = _last_status;
-        total_message_count = _total_message_count;
-        last_message_count = _last_message_count;
-        total_queue_visits = _total_queue_visits;
-        last_queue_visits = _last_queue_visits;
-        total_latency = _total_latency;
-        last_latency = _last_latency;
-        total_queue_latency = _total_queue_latency;
-        last_queue_latency = _last_queue_latency;
-        _mutex.unlock();
+        m_mutex.lock();
+        last_status = m_last_status;
+        total_message_count = m_total_message_count;
+        last_message_count = m_last_message_count;
+        total_queue_visits = m_total_queue_visits;
+        last_queue_visits = m_last_queue_visits;
+        total_latency = m_total_latency;
+        last_latency = m_last_latency;
+        total_queue_latency = m_total_queue_latency;
+        last_queue_latency = m_last_queue_latency;
+        m_mutex.unlock();
     }
 
     size_t get_total_message_count() {
-        std::lock_guard<std::mutex> lock(_mutex);
-        return _total_message_count;
+        std::lock_guard<std::mutex> lock(m_mutex);
+        return m_total_message_count;
     }
 
     Status get_last_status() {
-        std::lock_guard<std::mutex> lock(_mutex);
-        return _last_status;
+        std::lock_guard<std::mutex> lock(m_mutex);
+        return m_last_status;
     }
 
     void summarize() {

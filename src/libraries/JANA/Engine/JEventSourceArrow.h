@@ -18,11 +18,11 @@ class JEventPool;
 
 class JEventSourceArrow : public JArrow {
 private:
-    JEventSource* _source;
-    EventQueue* _output_queue;
-    std::shared_ptr<JEventPool> _pool;
-    std::vector<Event> _chunk_buffer;
-    JLogger _logger;
+    JEventSource* m_source;
+    EventQueue* m_output_queue;
+    std::shared_ptr<JEventPool> m_pool;
+    std::vector<Event> m_chunk_buffer;
+    JLogger m_logger;
 
 public:
     JEventSourceArrow(std::string name, JEventSource* source, EventQueue* output_queue, std::shared_ptr<JEventPool> pool);

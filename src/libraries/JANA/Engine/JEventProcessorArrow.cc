@@ -14,22 +14,22 @@ JEventProcessorArrow::JEventProcessorArrow(std::string name,
                                            EventQueue *output_queue,
                                            std::shared_ptr<JEventPool> pool)
         : JArrow(std::move(name), true, NodeType::Sink)
-        , _input_queue(input_queue)
-        , _output_queue(output_queue)
-        , _pool(std::move(pool)) {
+        , m_input_queue(input_queue)
+        , m_output_queue(output_queue)
+        , m_pool(std::move(pool)) {
 
-    _input_queue->attach_downstream(this);
-    attach_upstream(_input_queue);
-    _logger = JLogger();
+    m_input_queue->attach_downstream(this);
+    attach_upstream(m_input_queue);
+    m_logger = JLogger();
 
-    if (_output_queue != nullptr) {
-        _output_queue->attach_upstream(this);
-        attach_downstream(_output_queue);
+    if (m_output_queue != nullptr) {
+        m_output_queue->attach_upstream(this);
+        attach_downstream(m_output_queue);
     }
 }
 
 void JEventProcessorArrow::add_processor(JEventProcessor* processor) {
-    _processors.push_back(processor);
+    m_processors.push_back(processor);
 }
 
 void JEventProcessorArrow::execute(JArrowMetrics& result, size_t location_id) {
@@ -38,32 +38,32 @@ void JEventProcessorArrow::execute(JArrowMetrics& result, size_t location_id) {
 
     Event x;
     bool success;
-    auto in_status = _input_queue->pop(x, success, location_id);
-    LOG_DEBUG(_logger) << "EventProcessorArrow '" << get_name() << "' [" << location_id << "]: "
-                       << "pop() returned " << ((success) ? "success" : "failure")
-                       << "; queue is now " << in_status << LOG_END;
+    auto in_status = m_input_queue->pop(x, success, location_id);
+    LOG_DEBUG(m_logger) << "EventProcessorArrow '" << get_name() << "' [" << location_id << "]: "
+                        << "pop() returned " << ((success) ? "success" : "failure")
+                        << "; queue is now " << in_status << LOG_END;
 
     auto start_latency_time = std::chrono::steady_clock::now();
     if (success) {
-        LOG_DEBUG(_logger) << "EventProcessorArrow '" << get_name() << "': Starting event# " << x->GetEventNumber() << LOG_END;
-        for (JEventProcessor* processor : _processors) {
+        LOG_DEBUG(m_logger) << "EventProcessorArrow '" << get_name() << "': Starting event# " << x->GetEventNumber() << LOG_END;
+        for (JEventProcessor* processor : m_processors) {
             processor->DoMap(x);
         }
-        LOG_DEBUG(_logger) << "EventProcessorArrow '" << get_name() << "': Finished event# " << x->GetEventNumber() << LOG_END;
+        LOG_DEBUG(m_logger) << "EventProcessorArrow '" << get_name() << "': Finished event# " << x->GetEventNumber() << LOG_END;
     }
     auto end_latency_time = std::chrono::steady_clock::now();
 
     auto out_status = EventQueue::Status::Ready;
 
     if (success) {
-        if (_output_queue != nullptr) {
+        if (m_output_queue != nullptr) {
             // This is NOT the last arrow in the topology. Pass the event onwards.
-            out_status = _output_queue->push(x, location_id);
+            out_status = m_output_queue->push(x, location_id);
         }
         else {
             // This IS the last arrow in the topology. Notify the event source and return event to the pool.
             x->GetJEventSource()->DoFinish(*x);
-            _pool->put(x, location_id);
+            m_pool->put(x, location_id);
         }
     }
     auto end_queue_time = std::chrono::steady_clock::now();
@@ -86,26 +86,26 @@ void JEventProcessorArrow::execute(JArrowMetrics& result, size_t location_id) {
 
 void JEventProcessorArrow::initialize() {
 
-    for (auto processor : _processors) {
+    for (auto processor : m_processors) {
         processor->DoInitialize();
     }
 }
 
 void JEventProcessorArrow::finalize() {
-    for (auto processor : _processors) {
+    for (auto processor : m_processors) {
         processor->DoFinalize();
     }
 }
 
 size_t JEventProcessorArrow::get_pending() {
-    return _input_queue->size();
+    return m_input_queue->size();
 }
 
 size_t JEventProcessorArrow::get_threshold() {
-    return _input_queue->get_threshold();
+    return m_input_queue->get_threshold();
 }
 
 void JEventProcessorArrow::set_threshold(size_t threshold) {
-    _input_queue->set_threshold(threshold);
+    m_input_queue->set_threshold(threshold);
 }
 

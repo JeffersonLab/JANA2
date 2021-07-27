@@ -53,7 +53,7 @@ struct JArrowTopology : public JActivable {
     int affinity = 2;
     int locality = 0;
 
-    JLogger _logger;
+    JLogger m_logger;
 
     bool is_active() override;
     void set_active(bool is_active) override;

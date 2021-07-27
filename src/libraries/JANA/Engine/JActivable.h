@@ -21,24 +21,24 @@ public:
     enum class Status {Unopened, Inactive, Running, Draining, Drained, Finished, Closed};
 
 private:
-    std::vector<JActivable *> _upstream;
-    std::vector<JActivable *> _downstream;
+    std::vector<JActivable *> m_upstream;
+    std::vector<JActivable *> m_downstream;
 
 protected:
-    std::atomic<Status> _status {Status::Unopened};
+    std::atomic<Status> m_status {Status::Unopened};
 
 public:
     virtual bool is_active() {
-        return _status == Status::Running || _status == Status::Draining || _status == Status::Drained;
+        return m_status == Status::Running || m_status == Status::Draining || m_status == Status::Drained;
     }
 
     virtual void set_active(bool is_active) {
         if (is_active) {
-            _status = Status::Running;
+            m_status = Status::Running;
         }
         else {
-            //assert(_status == Status::Running || _status == Status::Draining || _status == Status::Drained);
-            _status = Status::Inactive;
+            //assert(m_status == Status::Running || m_status == Status::Draining || m_status == Status::Drained);
+            m_status = Status::Inactive;
         }
     }
 
@@ -50,7 +50,7 @@ public:
         }
         else {
             bool any_active = false;
-            for (auto activable : _upstream) {
+            for (auto activable : m_upstream) {
                 any_active |= activable->is_active();
             }
             if (!any_active) {
@@ -61,17 +61,17 @@ public:
     }
 
     void notify_downstream(bool is_active) {
-        for (auto activable : _downstream) {
+        for (auto activable : m_downstream) {
             activable->update_activeness(is_active);
         }
     }
 
     void attach_upstream(JActivable* activable) {
-        _upstream.push_back(activable);
+        m_upstream.push_back(activable);
     };
 
     void attach_downstream(JActivable* activable) {
-        _downstream.push_back(activable);
+        m_downstream.push_back(activable);
     };
 
 };
