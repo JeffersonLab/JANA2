@@ -5,7 +5,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)   # Enable -fPIC for all targets
 
 option(USE_ASAN "Compile with address sanitizer" ON)
 if (${USE_ASAN})
-    string(APPEND CMAKE_CXX_FLAGS " -O1 -fsanitize=address -fno-omit-frame-pointer")
+    string(APPEND CMAKE_CXX_FLAGS " -fsanitize=address")
 endif()
 
 # Set default standard to C++14, but allow user to override at command line

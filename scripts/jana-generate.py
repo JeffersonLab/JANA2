@@ -416,12 +416,15 @@ plugin_integration_tests_cc = """
 // do what you'd expect. This means you can skip the laborious mixing and matching of plugins and configurations,
 // and have everything run automatically inside one executable.
 
-TEST_CASE("IntegrationTests") {{
+TEST_CASE("{name}IntegrationTests") {{
 
     auto app = new JApplication;
     
     // Create and register components
     // app->Add(new {name}Processor);
+    
+    // TODO: Add (mocked) event source
+    // app->Add(new MockEventSource);
 
     // Set test parameters
     app->SetParameterValue("nevents", 10);
@@ -826,24 +829,60 @@ def create_root_eventprocessor(processor_name, dir_name):
         f.write(text)
 
 
-def create_jeventprocessor_test(processor_name):
+def build_plugin_test(plugin_name, copy_catch_hpp=True, dir="."):
 
-    # TODO: This is all bad, I just cut the relevant pieces out of create_standalone_plugin
-    files_to_copy = {}
-    files_to_copy["catch.hpp"] = {"sourcedir":"src/programs/tests", "installdir":"include/external", "destname":name+"/tests/catch.hpp"}
-    copy_from_source_dir(files_to_copy)
+    if copy_catch_hpp:
+        files_to_copy = {"catch.hpp": {"sourcedir": "src/programs/tests",
+                                       "installdir": "include/external",
+                                       "destname": dir+"/catch.hpp"}}
+        copy_from_source_dir(files_to_copy)
 
-    with open(name + "/tests/TestsMain.cc", "w") as f:
-        text = plugin_tests_main_cc.format(name=name)
+    cmakelists_path = dir + "/" + "CMakeLists.txt"
+    with open(cmakelists_path) as f:
+        text = plugin_tests_cmakelists_txt.format(name=plugin_name)
         f.write(text)
 
-    with open(name + "/tests/IntegrationTests.cc", "w") as f:
-        text = plugin_integration_tests_cc.format(name=name)
+    integration_test_cc_path = dir + "/IntegrationTests.cc"
+    with open(integration_test_cc_path) as f:
+        text = plugin_integration_tests_cc.format(name=plugin_name)
         f.write(text)
 
-    with open(name + "/tests/CMakeLists.txt", "w") as f:
+    tests_main_path = dir + "/TestsMain.cc"
+    with open(tests_main_path) as f:
+        text = plugin_tests_main_cc
+        f.write(text)
+
+
+def build_jeventprocessor_test(processor_name, is_mini=True, copy_catch_hpp=True, dir="."):
+
+    if copy_catch_hpp:
+        files_to_copy = {"catch.hpp": {"sourcedir": "src/programs/tests",
+                                       "installdir": "include/external",
+                                       "destname": dir+"/catch.hpp"}}
+        copy_from_source_dir(files_to_copy)
+
+    cmakelists_path = dir + "/" + "CMakeLists.txt"
+    with open(cmakelists_path) as f:
         text = plugin_tests_cmakelists_txt.format(name=name)
         f.write(text)
+
+    if is_mini:
+        integration_test_cc_path = dir + "/IntegrationTests.cc"
+        with open(integration_test_cc_path) as f:
+            text = plugin_integration_tests_cc.format(name=processor_name)
+            f.write(text)
+    else:
+        tests_main_path = dir + "/TestsMain.cc"
+        with open(tests_main_path) as f:
+            text = plugin_tests_main_cc
+            f.write(text)
+
+
+def create_jeventprocessor_test(processor_name):
+    """Create a JEventProcessor unit test skeleton in the current directory. Requires two arguments:
+       processor_name:  The name of the JEventProcessor under test
+    """
+    build_jeventprocessor_test()
 
 
 def create_jfactory(factory_name, jobject_name):
