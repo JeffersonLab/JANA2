@@ -99,9 +99,13 @@ void JApplication::Initialize() {
         // Attach all plugins
         m_plugin_loader->attach_plugins(m_component_manager.get());
 
-        // Set desired nthreads
-        m_desired_nthreads = JCpuInfo::GetNumCpus();
-        m_params->SetDefaultParameter("nthreads", m_desired_nthreads, "The total number of worker threads");
+        // Set desired nthreads. We parse the 'nthreads' parameter two different ways for backwards compatibility.
+        m_desired_nthreads = 1;
+	    m_params->SetDefaultParameter("nthreads", m_desired_nthreads, "The total number of worker threads");
+	    if (m_params->GetParameterValue<std::string>("nthreads") == "Ncores") {
+            m_desired_nthreads = JCpuInfo::GetNumCpus();
+        }
+
         m_params->SetDefaultParameter("jana:extended_report", m_extended_report);
 
         m_component_manager->resolve_event_sources();

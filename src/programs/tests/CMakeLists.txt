@@ -27,6 +27,7 @@ set(TEST_SOURCES
     JParameterManagerTests.cc
     JStatusBitsTests.cc
     TimeoutTests.cc
+    ScaleTests.cc
     )
 
 add_executable(janatests ${TEST_SOURCES})
