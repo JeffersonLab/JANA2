@@ -133,9 +133,10 @@ public:
     JApplication* GetApplication() { return mApp; }
 
 
-protected:
     virtual void Set(const std::vector<JObject *> &data) = 0;
     virtual void Insert(JObject *data) = 0;
+
+protected:
 
     std::string mPluginName;
     std::string mFactoryName;
