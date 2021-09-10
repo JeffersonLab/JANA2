@@ -84,7 +84,7 @@ public:
         m_mailboxes = std::unique_ptr<LocalMailbox[]>(new LocalMailbox[locations_count]);
     }
 
-    ~JMailbox() {
+    virtual ~JMailbox() {
         //delete [] m_mailboxes;
     }
 
@@ -170,7 +170,7 @@ public:
         }
         auto nitems = std::min(requested_count, mb.queue.size());
         buffer.reserve(nitems);
-        for (int i=0; i<nitems; ++i) {
+        for (size_t i=0; i<nitems; ++i) {
             buffer.push_back(std::move(mb.queue.front()));
             mb.queue.pop_front();
         }

@@ -97,7 +97,7 @@ std::string JStringification::ObjectToJSON( const std::string &hexaddr, const JO
     }
     ss << "}";
 
-    return std::move(ss.str());
+    return ss.str();
 }
 
 //-------------------------------------------------------------

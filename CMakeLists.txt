@@ -2,10 +2,12 @@ cmake_minimum_required(VERSION 3.9)
 project(jana2 VERSION 2.0.4)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)   # Enable -fPIC for all targets
+add_compile_options(-Wall -Wextra -Wno-unused-parameter)
 
 option(USE_ASAN "Compile with address sanitizer" OFF)
 if (${USE_ASAN})
-    string(APPEND CMAKE_CXX_FLAGS " -fsanitize=address")
+    add_compile_options(-fsanitize=address)
+#    string(APPEND CMAKE_CXX_FLAGS " -fsanitize=address")  # TODO: Delete this once I verify its replacement works
 endif()
 
 # Set default standard to C++14, but allow user to override at command line

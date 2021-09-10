@@ -34,8 +34,8 @@ public:
         assert(m_location_count >= 1);
         m_pools = std::unique_ptr<LocalPool[]>(new LocalPool[location_count]());
 
-        for (int j=0; j<m_location_count; ++j) {
-            for (int i=0; i<m_pool_size; ++i) {
+        for (size_t j=0; j<m_location_count; ++j) {
+            for (size_t i=0; i<m_pool_size; ++i) {
                 auto event = std::make_shared<JEvent>();
                 auto factory_set = new JFactorySet(*m_generators);
                 event->SetFactorySet(factory_set);

@@ -88,7 +88,7 @@ void JSONCLOSESECTION(stringstream &ss, int indent_level=0){
 //-------------------------------------------------------------
 // JControlZMQ
 //-------------------------------------------------------------
-JControlZMQ::JControlZMQ(JApplication *app, int port):_port(port), _japp(app)
+JControlZMQ::JControlZMQ(JApplication *app, int port):_japp(app), _port(port)
 {
     // This is called from jcontrol plugin's InitPlugin() routine
 

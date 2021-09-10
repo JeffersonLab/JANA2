@@ -97,7 +97,7 @@ void JDebugProcessingController::run(size_t nthreads) {
     m_finish_achieved = false;
     m_total_active_workers = nthreads;
     m_perf_metrics.start(m_total_events_processed, nthreads);
-    for (int i=0; i<nthreads; ++i) {
+    for (size_t i=0; i<nthreads; ++i) {
         m_workers.push_back(new std::thread(&JDebugProcessingController::run_worker, this));
     }
 }

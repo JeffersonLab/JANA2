@@ -82,8 +82,6 @@ JApplication* CreateJApplication(UserOptions& options) {
 
 int Execute(JApplication* app, UserOptions &options) {
 
-    int exitStatus = 0;
-
     std::cout << "JANA " << JVersion::GetVersion() << " [" << JVersion::GetRevision() << "]" << std::endl;
     JSignalHandler::register_handlers(app);
 
