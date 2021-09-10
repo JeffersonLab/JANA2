@@ -38,9 +38,9 @@ public:
     // an (int) or (unsigned int). We need this because we want to treat char and unsigned
     // char variables as numbers and not characters.
     template <typename T> void ConvertInt(std::stringstream &ss, T val, std::true_type) const {ss << (int)val;}
-    template <typename T> void ConvertInt(std::stringstream &ss, T val, std::false_type) const {ss << "unknown";}
+    template <typename T> void ConvertInt(std::stringstream &ss, T /* val */, std::false_type) const {ss << "unknown";}
     template <typename T> void ConvertUInt(std::stringstream &ss, T val, std::true_type) const {ss << "0x" << std::hex << (unsigned int)val << std::dec;}
-    template <typename T> void ConvertUInt(std::stringstream &ss, T val, std::false_type) const {ss << "unknown";}
+    template <typename T> void ConvertUInt(std::stringstream &ss, T /* val */, std::false_type) const {ss << "unknown";}
 
     template <typename T> std::string GetAddrAsString(void *addr) const;
 

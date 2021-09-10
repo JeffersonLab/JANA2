@@ -165,7 +165,7 @@ public:
 
     virtual size_t get_threshold() { return 0; }
 
-    virtual void set_threshold(size_t threshold) {}
+    virtual void set_threshold(size_t /* threshold */) {}
 
     void set_active(bool is_active) override {
         if (is_active) {

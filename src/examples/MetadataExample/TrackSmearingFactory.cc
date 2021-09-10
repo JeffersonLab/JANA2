@@ -10,7 +10,7 @@
 void TrackSmearingFactory::Init() {
 }
 
-void TrackSmearingFactory::ChangeRun(const std::shared_ptr<const JEvent> &event) {
+void TrackSmearingFactory::ChangeRun(const std::shared_ptr<const JEvent>&) {
 }
 
 void TrackSmearingFactory::Process(const std::shared_ptr<const JEvent> &event) {

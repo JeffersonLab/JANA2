@@ -55,16 +55,15 @@ struct JSourceFactoryGenerator<HeadType, TailTypes...> : public JFactoryGenerato
 /*********************************************************** MEMBER FUNCTION DEFINITIONS: DEFAULT ***********************************************************/
 
 template <typename... DataTypes>
-void JSourceFactoryGenerator<DataTypes...>::GenerateFactories(JFactorySet *factory_set)
+void JSourceFactoryGenerator<DataTypes...>::GenerateFactories(JFactorySet*)
 {
     //Do nothing: This is only called when DataTypes is empty.
     //If DataTypes is not empty, template deduction extracts HeadType and thus uses the JSourceFactoryGenerator specialization.
-    return;
 }
 
 template <typename... DataTypes>
 template <typename ContainerType>
-void JSourceFactoryGenerator<DataTypes...>::MakeFactories(std::back_insert_iterator<ContainerType> aIterator)
+void JSourceFactoryGenerator<DataTypes...>::MakeFactories(std::back_insert_iterator<ContainerType>)
 {
     //Do nothing: This is only called when DataTypes is empty.
     //If DataTypes is not empty, template deduction extracts HeadType and thus uses the JSourceFactoryGenerator specialization.

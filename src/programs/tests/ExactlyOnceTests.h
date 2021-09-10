@@ -30,7 +30,7 @@ struct SimpleSource : public JEventSource {
         open_count += 1;
     }
 
-    void GetEvent(std::shared_ptr<JEvent> event) override {
+    void GetEvent(std::shared_ptr<JEvent>) override {
         if (++event_count == 5) {
             throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
         }
@@ -49,7 +49,7 @@ struct SimpleProcessor : public JEventProcessor {
         init_count += 1;
     }
 
-    void Process(const std::shared_ptr<const JEvent>& aEvent) override {
+    void Process(const std::shared_ptr<const JEvent>&) override {
     }
 
     void Finish() override {

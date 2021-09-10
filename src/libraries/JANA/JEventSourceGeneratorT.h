@@ -72,7 +72,7 @@ class JEventSourceGeneratorT:public JEventSourceGenerator{
         ///
         ///   template<> double JEventSourceGeneratorT<MyType>::CheckOpenable(std::string source) { ... }
         ///
-        double CheckOpenable( std::string source ){ return 0.01; }
+        double CheckOpenable( std::string /* source */ ){ return 0.01; }
 
     protected:
 

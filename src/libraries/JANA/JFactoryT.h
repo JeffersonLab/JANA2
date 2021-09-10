@@ -59,10 +59,10 @@ public:
     ~JFactoryT() override = default;
 
     void Init() override {}
-    void BeginRun(const std::shared_ptr<const JEvent> &aEvent) override {}
-    void ChangeRun(const std::shared_ptr<const JEvent> &aEvent) override {}
+    void BeginRun(const std::shared_ptr<const JEvent>&) override {}
+    void ChangeRun(const std::shared_ptr<const JEvent>&) override {}
     void EndRun() override {}
-    void Process(const std::shared_ptr<const JEvent>& aEvent) override {
+    void Process(const std::shared_ptr<const JEvent>&) override {
         // TODO: Debate best thing to do in this case. Consider fa250WaveboardV1Hit
         LOG << "Dummy factory created but nothing was Inserted() or Set()." << LOG_END;
         //throw JException("Dummy factory created but nothing was Inserted() or Set().");

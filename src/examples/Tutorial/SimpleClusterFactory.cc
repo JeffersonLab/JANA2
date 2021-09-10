@@ -20,7 +20,7 @@ void SimpleClusterFactory::Init() {
     // SetFactoryFlag(JFactory_Flags_t::NOT_OBJECT_OWNER);
 }
 
-void SimpleClusterFactory::ChangeRun(const std::shared_ptr<const JEvent> &event) {
+void SimpleClusterFactory::ChangeRun(const std::shared_ptr<const JEvent> & /* event */) {
     /// This is automatically run before Process, when a new run number is seen
     /// Usually we update our calibration constants by asking a JService
     /// to give us the latest data for this run number

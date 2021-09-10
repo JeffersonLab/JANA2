@@ -15,7 +15,7 @@ struct NEventNSkipBoundedSource : public JEventSource {
 
     NEventNSkipBoundedSource(std::string source_name, JApplication *app) : JEventSource(source_name, app) { }
 
-    void GetEvent(std::shared_ptr<JEvent> event) override {
+    void GetEvent(std::shared_ptr<JEvent>) override {
         if (event_count >= event_bound) {
             throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
         }

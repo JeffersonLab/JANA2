@@ -90,13 +90,13 @@ public:
     // Overloaded by user Factories
     virtual void Init() {}
 
-    virtual void BeginRun(const std::shared_ptr<const JEvent> &aEvent) {}
-    virtual void ChangeRun(const std::shared_ptr<const JEvent> &aEvent) {}
+    virtual void BeginRun(const std::shared_ptr<const JEvent>&) {}
+    virtual void ChangeRun(const std::shared_ptr<const JEvent>&) {}
     virtual void EndRun() {}
-    virtual void Process(const std::shared_ptr<const JEvent> &aEvent) {}
+    virtual void Process(const std::shared_ptr<const JEvent>&) {}
     virtual void Finish() {}
 
-    virtual std::size_t GetNumObjects(void) const {
+    virtual std::size_t GetNumObjects() const {
         return 0;
     }
 

@@ -17,7 +17,7 @@ void DstExampleFactory::Init() {
     EnableGetAs<Renderable>();
 }
 
-void DstExampleFactory::ChangeRun(const std::shared_ptr<const JEvent> &event) {
+void DstExampleFactory::ChangeRun(const std::shared_ptr<const JEvent>&) {
 }
 
 void DstExampleFactory::Process(const std::shared_ptr<const JEvent> &event) {

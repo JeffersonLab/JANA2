@@ -51,7 +51,7 @@ public:
         attach_downstream(_output_queue);
     }
 
-    void execute(JArrowMetrics& result, size_t location_id) {
+    void execute(JArrowMetrics& result, size_t /* location_id */) {
         if (!is_active()) {
             result.update_finished();
             return;

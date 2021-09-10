@@ -103,7 +103,7 @@ public:
     }
 
     /// Deprecated
-    static JLogger logger(std::string className) {
+    static JLogger logger(std::string /* className */) {
         return JLogger(JLogger::Level::WARN);
     }
 };

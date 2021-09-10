@@ -105,7 +105,7 @@ void JControlEventProcessor::GetObjectStatus( std::map<JFactorySummary, std::siz
 //
 // Get objects for the specified factory in the form of strings.
 //-------------------------------------------------------------
-void JControlEventProcessor::GetObjects(const std::string &factory_name, const std::string &factory_tag, const std::string &object_name, std::map<std::string, JObjectSummary> &objects){
+void JControlEventProcessor::GetObjects(const std::string &/* factory_name */, const std::string &factory_tag, const std::string &object_name, std::map<std::string, JObjectSummary> &objects){
     // bombproof against getting called with no active JEvent
     if(_jevent.get() == nullptr ) return;
 

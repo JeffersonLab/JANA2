@@ -92,7 +92,7 @@ public:
 
     // Reduce does nothing in the basic version because the current API tells
     // the user to lock a mutex in Process(), which takes care of it for us.
-    virtual void DoReduce(const std::shared_ptr<const JEvent>& e) {}
+    virtual void DoReduce(const std::shared_ptr<const JEvent>&) {}
 
 
     virtual void DoFinalize() {
@@ -126,9 +126,9 @@ public:
     /// Each JEventProcessor is intended to generate one distinct output,
     virtual void Init() {}
 
-    virtual void BeginRun(const std::shared_ptr<const JEvent> &aEvent) {}
+    virtual void BeginRun(const std::shared_ptr<const JEvent>&) {}
 
-    virtual void Process(const std::shared_ptr<const JEvent>& aEvent) {
+    virtual void Process(const std::shared_ptr<const JEvent>&) {
         throw JException("Not implemented yet!");
     }
     virtual void EndRun() {}

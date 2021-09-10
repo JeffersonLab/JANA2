@@ -104,7 +104,7 @@ inline JLogMessage&& operator<<(JLogMessage&& m, T t) {
     return std::move(m);
 }
 
-inline void operator<<(JLogMessage&& m, JLogMessage::End const& end) {
+inline void operator<<(JLogMessage&& m, JLogMessage::End const&) {
     std::ostream& dest = *m.logger.destination;
     m.builder << std::endl;
     dest << m.builder.str();

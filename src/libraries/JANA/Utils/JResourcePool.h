@@ -115,8 +115,8 @@ template <typename DType> class JResourcePool
         template <typename RType> typename std::enable_if<std::is_base_of<JResettable, RType>::value, void>::type Reset(JResettable* sResource){sResource->Reset();}
 
         //Enable this version if type does NOT inherit from JResettable //void: is return type
-        template <typename RType> typename std::enable_if<!std::is_base_of<JResettable, RType>::value, void>::type Release_Resources(RType* sResource){};
-        template <typename RType> typename std::enable_if<!std::is_base_of<JResettable, RType>::value, void>::type Reset(RType* sResource){};
+        template <typename RType> typename std::enable_if<!std::is_base_of<JResettable, RType>::value, void>::type Release_Resources(RType* /* sResource */){};
+        template <typename RType> typename std::enable_if<!std::is_base_of<JResettable, RType>::value, void>::type Reset(RType* /* sResource */){};
 
         template <typename ContainerType>
         std::size_t Get_Resources_StaticPool(std::size_t aNumResources, std::back_insert_iterator<ContainerType> aInsertIterator);

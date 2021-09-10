@@ -36,7 +36,7 @@ struct SourceWithTimeout : public JEventSource {
     void Open() override {
     }
 
-    void GetEvent(std::shared_ptr<JEvent> event) override {
+    void GetEvent(std::shared_ptr<JEvent>) override {
         event_count += 1;
         std::cout << "Processing event # " << event_count << std::endl;
         std::flush(std::cout);
@@ -73,7 +73,7 @@ struct ProcessorWithTimeout : public JEventProcessor {
 
     void Init() override {}
 
-    void Process(const std::shared_ptr<const JEvent>& aEvent) override {
+    void Process(const std::shared_ptr<const JEvent>&) override {
         processed_count += 1;
         if (processed_count == 1) {
             std::this_thread::sleep_for(std::chrono::milliseconds(first_event_delay_ms));

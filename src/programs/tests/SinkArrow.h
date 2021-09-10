@@ -43,7 +43,7 @@ public:
         attach_upstream(_input_queue);
     };
 
-    void execute(JArrowMetrics& result, size_t location_id) override {
+    void execute(JArrowMetrics& result, size_t /* location_id */) override {
         if (!is_active()) {
             result.update_finished();
             return;

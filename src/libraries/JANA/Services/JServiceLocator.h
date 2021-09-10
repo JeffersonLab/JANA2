@@ -35,7 +35,7 @@ struct JService {
     /// Note: Don't call JApplication::GetService() or JServiceLocator::get() from InitPlugin()!
 
     virtual ~JService() = default;
-    virtual void acquire_services(JServiceLocator* sl) {};
+    virtual void acquire_services(JServiceLocator*) {};
 };
 
 /// JServiceLocator is a nexus for collecting, initializing, and retrieving JServices.
