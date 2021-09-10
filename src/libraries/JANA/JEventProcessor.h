@@ -183,7 +183,7 @@ private:
     std::once_flag m_init_flag;
     std::once_flag m_finish_flag;
     std::atomic_ullong m_event_count;
-    size_t m_last_run_number = -1;
+    int32_t m_last_run_number = -1;
     std::mutex m_mutex;
     bool m_receive_events_in_order = false;
 

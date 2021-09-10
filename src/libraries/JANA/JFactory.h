@@ -143,7 +143,7 @@ protected:
     std::string mObjectName;
     std::string mTag;
     uint32_t mFlags = 0;
-    uint32_t mPreviousRunNumber = -1;
+    int32_t mPreviousRunNumber = -1;
     JApplication* mApp = nullptr;
     std::unordered_map<std::type_index, void*> mUpcastVTable;
 

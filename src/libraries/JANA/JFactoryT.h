@@ -81,7 +81,7 @@ public:
     /// ChangeRun(), and Process() methods. These include making sure the JFactory JApplication is set, Init() is called
     /// exactly once, exceptions are tagged with the originating plugin and eventsource, ChangeRun() is
     /// called if and only if the run number changes, etc.
-    PairType GetOrCreate(const std::shared_ptr<const JEvent>& event, JApplication* app, uint64_t run_number) {
+    PairType GetOrCreate(const std::shared_ptr<const JEvent>& event, JApplication* app, int32_t run_number) {
 
         //std::lock_guard<std::mutex> lock(mMutex);
         if (mApp == nullptr) {

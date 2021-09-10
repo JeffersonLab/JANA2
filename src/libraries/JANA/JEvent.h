@@ -73,7 +73,7 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
         template <class T> JFactoryT<T>* Insert(const std::vector<T*>& items, const std::string& tag = "") const;
 
         //SETTERS
-        void SetRunNumber(uint32_t aRunNumber){mRunNumber = aRunNumber;}
+        void SetRunNumber(int32_t aRunNumber){mRunNumber = aRunNumber;}
         void SetEventNumber(uint64_t aEventNumber){mEventNumber = aEventNumber;}
         void SetJApplication(JApplication* app){mApplication = app;}
         void SetJEventSource(JEventSource* aSource){mEventSource = aSource;}
@@ -81,7 +81,7 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
         void SetSequential(bool isSequential) __attribute__ ((deprecated)) {mIsBarrierEvent = isSequential;}
 
         //GETTERS
-        uint32_t GetRunNumber() const {return mRunNumber;}
+        int32_t GetRunNumber() const {return mRunNumber;}
         uint64_t GetEventNumber() const {return mEventNumber;}
         JApplication* GetJApplication() const {return mApplication;}
         JEventSource* GetJEventSource() const {return mEventSource; }
@@ -90,12 +90,11 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 
     private:
         JApplication* mApplication = nullptr;
-        uint32_t mRunNumber = 0;
+        int32_t mRunNumber = 0;
         uint64_t mEventNumber = 0;
         mutable JFactorySet* mFactorySet = nullptr;
         JEventSource* mEventSource = nullptr;
         bool mIsBarrierEvent = false;
-        int mDebugLevel = 0;
 };
 
 /// Insert() allows an EventSource to insert items directly into the JEvent,
