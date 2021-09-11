@@ -21,7 +21,6 @@ public:
     // of objects can be members here other than what the ROOT TObject may impose.
     char my_char_t                   = 'C';       // will display as signed integer
     unsigned char my_unsigned_char_t = 128;       // will display as hex number
-    char my_char_array[256]          ="test";
     unsigned long my_unsigned_long_t = 12345678;
     long my_long_t                   = -12345678;
     uint32_t my_uint32_t             = 32;
