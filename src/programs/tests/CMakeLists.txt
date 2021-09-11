@@ -28,6 +28,8 @@ set(TEST_SOURCES
     JStatusBitsTests.cc
     TimeoutTests.cc
     ScaleTests.cc
+    BarrierEventTests.cc
+    BarrierEventTests.h
     )
 
 add_executable(janatests ${TEST_SOURCES})
