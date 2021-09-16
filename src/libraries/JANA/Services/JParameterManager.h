@@ -188,7 +188,7 @@ JParameter* JParameterManager::SetDefaultParameter(std::string name, T& val, std
         // Test whether parameter is one-to-one with its string representation.
         // If not, we have a problem
         if (parse<T>(valstr) != val) {
-            throw JException("Parameter %s loses equality with itself after stringification");
+            LOG_WARN(m_logger) << "Parameter '" << name << "' loses equality with itself after stringification" << LOG_END;
         }
         m_parameters[to_lower(name)] = param;
     }
