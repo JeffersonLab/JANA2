@@ -973,11 +973,11 @@ JGeometryXML::EntityResolver::EntityResolver(const string &xmlFile, JCalibration
     }
 
     PRINT_CHECKSUM_INPUT_FILES = false;
-    if(gPARMS){
-        if(gPARMS->Exists("PRINT_CHECKSUM_INPUT_FILES")){
-            gPARMS->GetParameter("PRINT_CHECKSUM_INPUT_FILES", PRINT_CHECKSUM_INPUT_FILES);
-        }
-    }
+    // if(gPARMS){
+    //     if(gPARMS->Exists("PRINT_CHECKSUM_INPUT_FILES")){
+    //         gPARMS->GetParameter("PRINT_CHECKSUM_INPUT_FILES", PRINT_CHECKSUM_INPUT_FILES);
+    //     }
+    // }
 }
 
 //----------------------------------

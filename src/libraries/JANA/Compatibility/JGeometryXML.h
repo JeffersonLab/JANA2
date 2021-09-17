@@ -19,6 +19,7 @@
 #include <JANA/Compatibility/md5.h>
 
 
+
 #if HAVE_XERCES
 #if !defined(__CINT__) && !defined(__CLING__)
 
@@ -108,7 +109,7 @@ class JGeometryXML:public JGeometry{
                 unsigned int max_values;	// return up to max_values attributes (0 means return all)
 
                 // Outputs
-                multimap<xercesc::DOMNode*, string> attributes; // DOMnode* is deepest level matched to xpath, string is value of specified attribute
+                std::multimap<xercesc::DOMNode*, string> attributes; // DOMnode* is deepest level matched to xpath, string is value of specified attribute
 
                 // Recursion variables (used to pass state through recursive calls)
                 unsigned int depth;		// keeps track of depth in nodes tree
@@ -130,7 +131,7 @@ class JGeometryXML:public JGeometry{
         //xercesc::DOMNode* FindNode(string xpath, string &attribute, xercesc::DOMNode *after_node=NULL);
         //xercesc::DOMNode* SearchTree(xercesc::DOMNode* current_node, unsigned int depth, vector<pair<string, map<string,string> > > &nodes, unsigned int attr_depth, bool find_all=false, vector<xercesc::DOMNode*> *dom_nodes=NULL);
 
-        void FindAttributeValues(string &xpath, multimap<xercesc::DOMNode*, string> &attributes, unsigned int max_values=0);
+        void FindAttributeValues(string &xpath, std::multimap<xercesc::DOMNode*, string> &attributes, unsigned int max_values=0);
         static void GetAttributes(xercesc::DOMNode* node, map<string,string> &attributes);
 
         // Error handler callback class
@@ -144,7 +145,7 @@ class JGeometryXML:public JGeometry{
                  //  Constructors and Destructor
                  ErrorHandler(){}
                  ~ErrorHandler(){}
-                 bool handleError(const xercesc::DOMError& domError){jerr<<"Got Error!!"<<endl; return false;}
+                 bool handleError(const xercesc::DOMError& domError){jerr<<"Got Error!!"<<std::endl; return false;}
              void resetErrors(){}
       
             // Purely virtual methods
