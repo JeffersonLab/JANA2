@@ -3,6 +3,7 @@ project(jana2 VERSION 2.0.4)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)   # Enable -fPIC for all targets
 add_compile_options(-Wall -Wextra)
+string(APPEND CMAKE_CXX_FLAGS_DEBUG " -O0 -g")
 
 option(USE_ASAN "Compile with address sanitizer" OFF)
 if (${USE_ASAN})

@@ -71,6 +71,7 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
                 event->SetFactorySet(factory_set);
                 event->SetJEventSource(m_source);
             }
+            event->SetSequential(false);
             event->SetJApplication(m_source->GetApplication());
             in_status = m_source->DoNext(event);
             if (in_status == JEventSource::ReturnStatus::Success) {
