@@ -44,6 +44,24 @@ if (${USE_ROOT})
 else()
     message(STATUS "USE_ROOT=OFF: Additional ROOT support will not be included")
 endif()
+
+# Xerces
+if(DEFINED ENV{XERCESCROOT})
+    message(STATUS "HAVE_XERCES=1: Found Xerces via $XERCESCROOT at: " $ENV{XERCESCROOT})
+    set(HAVE_XERCES 1)
+    set(XERCES3 1)
+    set(XercesC_INCLUDE_DIRS $ENV{XERCESCROOT}/include $ENV{XERCESCROOT}/include/xercesc)
+    find_library(XercesC_LIBRARY NAMES xerces-c HINTS $ENV{XERCESCROOT})
+    set(XercesC_LIBRARIES XercesC_LIBRARY)
+else()
+    find_package(XercesC)
+    if(XercesC_FOUND)
+        message(STATUS "HAVE_XERCES=1: Found Xerces via CMake")
+        set(HAVE_XERCES 1)
+        set(XERCES3 1)
+    endif()
+endif()
+
 #---------------------------------------------------------------------------------------
 
 include_directories(src/libraries)   # So that everyone can find the JANA header files
