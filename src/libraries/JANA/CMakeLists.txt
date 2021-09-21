@@ -119,6 +119,10 @@ set(JANA2_SOURCES
     Compatibility/JGetObjectsFactory.h
     )
 
+if (NOT ${USE_XERCES})
+    message(STATUS "Skipping support for libJANA's JGeometryXML because USE_XERCES=Off")
+endif()
+
 add_library(jana2 STATIC ${JANA2_SOURCES})
 
 find_package(Threads REQUIRED)

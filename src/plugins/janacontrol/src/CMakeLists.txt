@@ -19,5 +19,8 @@ if (${USE_ZEROMQ})
     set_target_properties(janacontrol_plugin PROPERTIES PREFIX "" OUTPUT_NAME "janacontrol" SUFFIX ".so")
     install(TARGETS janacontrol_plugin DESTINATION plugins)
 
+else()
+    message(STATUS "Skipping plugins/janacontrol because USE_ZEROMQ=Off")
+
 endif()
 

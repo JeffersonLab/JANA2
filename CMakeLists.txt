@@ -119,9 +119,7 @@ add_subdirectory(src/plugins/janacontrol)
 add_subdirectory(src/programs/jana)
 add_subdirectory(src/programs/tests)
 
-if (${USE_PYTHON})
-    add_subdirectory(src/python)
-endif()
+add_subdirectory(src/python)
 
 #---------------------------------------------------------------------------------------
 

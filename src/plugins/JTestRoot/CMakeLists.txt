@@ -31,6 +31,6 @@ if(${USE_ROOT})
 	install(TARGETS JTestRoot_plugin DESTINATION plugins)
 
 else()
-#	message(WARNING "Skipping compilation of JTestRoot.so because USE_ROOT=Off")
+	message(STATUS "Skipping plugins/JTestRoot because USE_ROOT=Off")
 
 endif() # ROOT_FOUND

@@ -24,5 +24,6 @@ if (${USE_ROOT} AND ${USE_ZEROMQ})
     target_link_libraries(streamDet jana2 ${ZeroMQ_LIBRARIES} ${ROOT_LIBRARIES})
     set_target_properties(streamDet PROPERTIES PREFIX "" SUFFIX ".so")
     install(TARGETS streamDet DESTINATION plugins)
-
+else()
+    message(STATUS "Skipping plugins/streamDet because USE_ROOT=Off or USE_ZEROMQ=Off")
 endif()
