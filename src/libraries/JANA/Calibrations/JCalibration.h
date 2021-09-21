@@ -166,6 +166,15 @@ bool JCalibration::Get(string namepath, map<string,T> &vals, uint64_t event_numb
     return res;
 }
 
+
+template<>
+bool JCalibration::Get(string namepath, map<string,string> &vals, uint64_t event_number)
+{
+    bool res = GetCalib(namepath, vals, event_number);
+    RecordRequest(namepath, typeid(map<string,string>).name());
+    return res;
+}
+
 //-------------
 // Get  (vector version)
 //-------------
@@ -206,6 +215,14 @@ bool JCalibration::Get(string namepath, vector<T> &vals, uint64_t event_number)
 
     return res;
 }
+
+template<>
+bool JCalibration::Get(string namepath, vector<string> &vals, uint64_t event_number) {
+    bool res = GetCalib(namepath, vals, event_number);
+    RecordRequest(namepath, typeid(vector<string>).name());
+    return res;
+}
+
 
 //-------------
 // Get  (table, map version)
@@ -268,6 +285,12 @@ bool JCalibration::Get(string namepath, vector< map<string,T> > &vals, uint64_t 
 
     return res;
 }
+template<>
+bool JCalibration::Get(string namepath, vector< map<string,string> > &vals, uint64_t event_number) {
+    bool res = GetCalib(namepath, vals, event_number);
+    RecordRequest(namepath, typeid(vector< map<string,string> >).name());
+    return res;
+}
 
 //-------------
 // Get  (table, vector version)
@@ -325,6 +348,13 @@ bool JCalibration::Get(string namepath, vector< vector<T> > &vals, uint64_t even
         vals.push_back(vvals);
     }
 
+    return res;
+}
+
+template<>
+bool JCalibration::Get(string namepath, vector< vector<string> > &vals, uint64_t event_number) {
+    bool res = GetCalib(namepath, vals, event_number);
+    RecordRequest(namepath, typeid(vector< vector<string> >).name());
     return res;
 }
 
