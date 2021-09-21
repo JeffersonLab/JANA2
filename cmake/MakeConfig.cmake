@@ -37,7 +37,7 @@ if(DEFINED ENV{ROOTSYS})
                     OUTPUT_VARIABLE ROOTGLIBS
                     OUTPUT_STRIP_TRAILING_WHITESPACE)
 else()
-    message(STATUS "Did not find ROOT")
+#    message(STATUS "Did not find ROOT")
     set(HAVE_ROOT 0)
 endif()
 
@@ -115,7 +115,7 @@ else()
 endif()
 
 # CURL
-execute_process(COMMAND which curl-config
+execute_process(COMMAND "which curl-config 2> /dev/null"
         OUTPUT_VARIABLE CURL_FOUND
         OUTPUT_STRIP_TRAILING_WHITESPACE)
 

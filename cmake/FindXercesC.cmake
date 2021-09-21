@@ -35,9 +35,9 @@ This will define the following variables:
 
 if (DEFINED ENV{XERCESCROOT})
     set(XercesC_DIR $ENV{XERCESCROOT})
-    message(STATUS "Using XercesC_DIR = ${XercesC_DIR} (From XERCESCROOT env variable)")
+#    message(STATUS "Using XercesC_DIR = ${XercesC_DIR} (From XERCESCROOT env variable)")
 else()
-    message(WARNING "$XERCESCROOT env variable not set")
+#    message(WARNING "$XERCESCROOT env variable not set")
 endif()
 
 set(XercesC_VERSION 3.1.4)
