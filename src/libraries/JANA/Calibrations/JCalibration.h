@@ -168,7 +168,7 @@ bool JCalibration::Get(string namepath, map<string,T> &vals, uint64_t event_numb
 
 
 template<>
-bool JCalibration::Get(string namepath, map<string,string> &vals, uint64_t event_number)
+inline bool JCalibration::Get(string namepath, map<string,string> &vals, uint64_t event_number)
 {
     bool res = GetCalib(namepath, vals, event_number);
     RecordRequest(namepath, typeid(map<string,string>).name());
@@ -217,7 +217,7 @@ bool JCalibration::Get(string namepath, vector<T> &vals, uint64_t event_number)
 }
 
 template<>
-bool JCalibration::Get(string namepath, vector<string> &vals, uint64_t event_number) {
+inline bool JCalibration::Get(string namepath, vector<string> &vals, uint64_t event_number) {
     bool res = GetCalib(namepath, vals, event_number);
     RecordRequest(namepath, typeid(vector<string>).name());
     return res;
@@ -286,7 +286,7 @@ bool JCalibration::Get(string namepath, vector< map<string,T> > &vals, uint64_t 
     return res;
 }
 template<>
-bool JCalibration::Get(string namepath, vector< map<string,string> > &vals, uint64_t event_number) {
+inline bool JCalibration::Get(string namepath, vector< map<string,string> > &vals, uint64_t event_number) {
     bool res = GetCalib(namepath, vals, event_number);
     RecordRequest(namepath, typeid(vector< map<string,string> >).name());
     return res;
@@ -352,7 +352,7 @@ bool JCalibration::Get(string namepath, vector< vector<T> > &vals, uint64_t even
 }
 
 template<>
-bool JCalibration::Get(string namepath, vector< vector<string> > &vals, uint64_t event_number) {
+inline bool JCalibration::Get(string namepath, vector< vector<string> > &vals, uint64_t event_number) {
     bool res = GetCalib(namepath, vals, event_number);
     RecordRequest(namepath, typeid(vector< vector<string> >).name());
     return res;
