@@ -20,6 +20,9 @@ class JGetObjectsFactory : public JFactoryT<T> {
     /// to call into it.
 
 public:
+    JGetObjectsFactory(std::string tag="") {
+        JFactory::SetTag(tag);
+    }
 
     void Process(const std::shared_ptr<const JEvent>& event) {
         JEventSource* source = event->GetJEventSource();
