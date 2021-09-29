@@ -15,6 +15,7 @@
 #include <JANA/Engine/JArrowProcessingController.h>
 #include <JANA/Engine/JDebugProcessingController.h>
 #include <JANA/Utils/JCpuInfo.h>
+#include <JANA/Utils/JAutoActivator.h>
 
 JApplication *japp = nullptr;
 
@@ -99,10 +100,15 @@ void JApplication::Initialize() {
         // Attach all plugins
         m_plugin_loader->attach_plugins(m_component_manager.get());
 
+        // Look for factories to auto-activate
+        if (JAutoActivator::IsRequested(m_params)) {
+            m_component_manager->add(new JAutoActivator);
+        }
+
         // Set desired nthreads. We parse the 'nthreads' parameter two different ways for backwards compatibility.
         m_desired_nthreads = 1;
-	    m_params->SetDefaultParameter("nthreads", m_desired_nthreads, "The total number of worker threads");
-	    if (m_params->GetParameterValue<std::string>("nthreads") == "Ncores") {
+            m_params->SetDefaultParameter("nthreads", m_desired_nthreads, "The total number of worker threads");
+            if (m_params->GetParameterValue<std::string>("nthreads") == "Ncores") {
             m_desired_nthreads = JCpuInfo::GetNumCpus();
         }
 
