@@ -5,6 +5,10 @@
 
 #include "JAutoActivator.h"
 
+JAutoActivator::JAutoActivator() {
+    SetTypeName("JAutoActivator");
+}
+
 bool JAutoActivator::IsRequested(std::shared_ptr <JParameterManager> params) {
     return params->Exists("AUTOACTIVATE") && (!params->GetParameterValue<string>("AUTOACTIVATE").empty());
 }
@@ -55,7 +59,13 @@ void JAutoActivator::Process(const std::shared_ptr<const JEvent> &event) {
     for (const auto &pair: m_auto_activated_factories) {
         auto name = pair.first;
         auto tag = pair.second;
-        event->GetFactory(name, tag)->Create(event, event->GetJApplication(), event->GetRunNumber());
+        auto factory = event->GetFactory(name, tag);
+        if (factory != nullptr) {
+            factory->Create(event, event->GetJApplication(), event->GetRunNumber());
+        }
+        else {
+            LOG << "Warning: Could not find factory with name=" << name << ", tag=" << tag << LOG_END;
+        }
     }
 }
 

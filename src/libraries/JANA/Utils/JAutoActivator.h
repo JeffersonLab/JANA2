@@ -15,6 +15,7 @@ using std::pair;
 class JAutoActivator : public JEventProcessor {
 
 public:
+    JAutoActivator();
     static bool IsRequested(std::shared_ptr<JParameterManager> params);
     void AddAutoActivatedFactory(string factory_name, string factory_tag);
     void Init() override;
