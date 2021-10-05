@@ -20,6 +20,17 @@ public:
         m_root_rw_lock = CreateLock("root");
     }
 
+    ~JLockService() override {
+        delete m_app_rw_lock;
+        delete m_root_rw_lock;
+        for (const auto& pair : m_rw_locks) {
+            delete pair.second;
+        }
+        for (const auto& pair : m_root_fill_rw_lock) {
+            delete pair.second;
+        }
+    }
+
     inline pthread_rwlock_t *CreateLock(const std::string &name, bool throw_exception_if_exists = true);
 
     inline pthread_rwlock_t *ReadLock(const std::string &name);
@@ -63,7 +74,7 @@ private:
     std::map<std::string, pthread_rwlock_t *> m_rw_locks;
     pthread_rwlock_t *m_app_rw_lock;
     pthread_rwlock_t *m_root_rw_lock;
-    pthread_rwlock_t m_rw_locks_lock; // control access to rw_locks
+    pthread_rwlock_t m_rw_locks_lock {}; // control access to rw_locks
     std::map<JEventProcessor *, pthread_rwlock_t *> m_root_fill_rw_lock;
 
 };
@@ -217,12 +228,18 @@ inline pthread_rwlock_t *JLockService::RootFillLock(JEventProcessor *proc) {
     /// are in use and all contending for the same root lock. You should
     /// only use this when filling a histogram and not for creating. Use
     /// RootWriteLock and RootUnLock for that.
-    std::map<JEventProcessor *, pthread_rwlock_t *>::iterator iter = m_root_fill_rw_lock.find(proc);
+
+    pthread_rwlock_t *lock;
+
+    auto iter = m_root_fill_rw_lock.find(proc);
     if (iter == m_root_fill_rw_lock.end()) {
-        throw JException(
-                "Tried calling JLockService::RootFillLock with something other than a registered JEventProcessor!");
+        lock = new pthread_rwlock_t;
+        pthread_rwlock_init(lock, nullptr);
+        m_root_fill_rw_lock[proc] = lock;
     }
-    pthread_rwlock_t *lock = iter->second;
+    else {
+        lock = iter->second;
+    }
     pthread_rwlock_wrlock(lock);
     return lock;
 }
