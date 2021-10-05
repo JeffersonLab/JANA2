@@ -27,7 +27,9 @@ public:
     void Process(const std::shared_ptr<const JEvent>& event) {
         JEventSource* source = event->GetJEventSource();
         bool result = source->GetObjects(event, this);
-        if (!result) throw JException("JGetObjectsFactory registered with a source that doesn't provide said objects");
+        // if (!result) throw JException("JGetObjectsFactory registered with a source that doesn't provide said objects");
+        // JANA can't/shouldn't distinguish between "Source can't provide said objects" and "Source provided zero"
+        // Examples: DMCThrown, DDIRCTruthBarHit
     }
 
 };
