@@ -6,6 +6,7 @@
 #define _JFactory_h_
 
 #include <JANA/JException.h>
+#include <JANA/Utils/JAny.h>
 
 #include <string>
 #include <typeindex>
@@ -61,7 +62,7 @@ public:
     void SetPreviousRunNumber(uint32_t aRunNumber) { mPreviousRunNumber = aRunNumber; }
 
     /// Get all flags in the form of a single word
-    inline uint32_t GetFactoryFlags(void) { return mFlags; }
+    inline uint32_t GetFactoryFlags() const { return mFlags; }
 
     /// Set a flag (or flags)
     inline void SetFactoryFlag(JFactory_Flags_t f) {
@@ -74,7 +75,7 @@ public:
     }
 
     /// Test if a flag (or set of flags) is set
-    inline bool TestFactoryFlag(JFactory_Flags_t f) {
+    inline bool TestFactoryFlag(JFactory_Flags_t f) const {
         return (mFlags & (uint32_t) f) == (uint32_t) f;
     }
 
@@ -145,7 +146,7 @@ protected:
     uint32_t mFlags = 0;
     int32_t mPreviousRunNumber = -1;
     JApplication* mApp = nullptr;
-    std::unordered_map<std::type_index, void*> mUpcastVTable;
+    std::unordered_map<std::type_index, std::unique_ptr<JAny>> mUpcastVTable;
 
     enum class Status {Uninitialized, Unprocessed, Processed, Inserted};
     mutable Status mStatus = Status::Uninitialized;
@@ -172,8 +173,9 @@ std::vector<S*> JFactory::GetAs() {
     auto search = mUpcastVTable.find(ti);
     if (search != mUpcastVTable.end()) {
         using upcast_fn_t = std::function<std::vector<S*>()>;
-        auto upcast_fn = reinterpret_cast<upcast_fn_t*>(search->second);
-        results = (*upcast_fn)();
+        auto temp = static_cast<JAnyT<upcast_fn_t>*>(&(*search->second));
+        upcast_fn_t upcast_fn = temp->t;
+        results = upcast_fn();
     }
     return results;
 }

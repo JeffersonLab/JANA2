@@ -84,6 +84,7 @@ set(JANA2_SOURCES
     Utils/JStringification.h
     Utils/JAutoActivator.cc
     Utils/JAutoActivator.h
+    Utils/JAny.h
 
     Calibrations/JCalibration.cc
     Calibrations/JCalibration.h

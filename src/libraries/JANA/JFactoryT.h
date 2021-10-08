@@ -233,8 +233,7 @@ void JFactoryT<T>::EnableGetAs() {
 
     auto key = std::type_index(typeid(S));
     using upcast_fn_t = std::function<std::vector<S*>()>;
-    auto upcast_fn = new upcast_fn_t(upcast_lambda);
-    mUpcastVTable[key] = upcast_fn;
+    mUpcastVTable[key] = std::unique_ptr<JAny>(new JAnyT<upcast_fn_t>(std::move(upcast_lambda)));
 }
 
 #endif // _JFactoryT_h_
