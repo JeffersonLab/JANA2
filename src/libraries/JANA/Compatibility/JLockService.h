@@ -256,7 +256,7 @@ inline pthread_rwlock_t *JLockService::RootFillUnLock(JEventProcessor *proc) {
     std::map<JEventProcessor *, pthread_rwlock_t *>::iterator iter = m_root_fill_rw_lock.find(proc);
     if (iter == m_root_fill_rw_lock.end()) {
         throw JException(
-                "Tried calling JLockService::RootFillLock with something other than a registered JEventProcessor!");
+                "Tried calling JLockService::RootFillUnLock with something other than a registered JEventProcessor!");
     }
     pthread_rwlock_t *lock = iter->second;
     pthread_rwlock_unlock(m_root_fill_rw_lock[proc]);
