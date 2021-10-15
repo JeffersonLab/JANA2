@@ -65,13 +65,15 @@ public:
         try {
             std::call_once(m_init_flag, &JEventProcessor::DoInitialize, this);
             auto run_number = e->GetRunNumber();
-            if (m_last_run_number != run_number) {
+            {
                 std::lock_guard<std::mutex> lock(m_mutex);
-                if (m_last_run_number != -1) {
-                    EndRun();
+                if (m_last_run_number != run_number) {
+                    if (m_last_run_number != -1) {
+                        EndRun();
+                    }
+                    m_last_run_number = run_number;
+                    BeginRun(e);
                 }
-                m_last_run_number = run_number;
-                BeginRun(e);
             }
             Process(e);
         }
