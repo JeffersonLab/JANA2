@@ -16,6 +16,7 @@ public:
 
     JLockService() {
         pthread_rwlock_init(&m_rw_locks_lock, nullptr);
+        pthread_rwlock_init(&m_root_fill_locks_lock, nullptr);
         m_app_rw_lock = CreateLock("app");
         m_root_rw_lock = CreateLock("root");
     }
@@ -75,6 +76,7 @@ private:
     pthread_rwlock_t *m_app_rw_lock;
     pthread_rwlock_t *m_root_rw_lock;
     pthread_rwlock_t m_rw_locks_lock {}; // control access to rw_locks
+    pthread_rwlock_t m_root_fill_locks_lock {}; // control access to m_root_fill_rw_lock
     std::map<JEventProcessor *, pthread_rwlock_t *> m_root_fill_rw_lock;
 
 };
@@ -231,15 +233,19 @@ inline pthread_rwlock_t *JLockService::RootFillLock(JEventProcessor *proc) {
 
     pthread_rwlock_t *lock;
 
+    pthread_rwlock_rdlock(&m_root_fill_locks_lock);
     auto iter = m_root_fill_rw_lock.find(proc);
     if (iter == m_root_fill_rw_lock.end()) {
+        pthread_rwlock_unlock(&m_root_fill_locks_lock);
         lock = new pthread_rwlock_t;
+        pthread_rwlock_wrlock(&m_root_fill_locks_lock);
         pthread_rwlock_init(lock, nullptr);
         m_root_fill_rw_lock[proc] = lock;
     }
     else {
         lock = iter->second;
     }
+    pthread_rwlock_unlock(&m_root_fill_locks_lock);
     pthread_rwlock_wrlock(lock);
     return lock;
 }
@@ -253,12 +259,15 @@ inline pthread_rwlock_t *JLockService::RootFillUnLock(JEventProcessor *proc) {
     /// are in use and all contending for the same root lock. You should
     /// only use this when filling a histogram and not for creating. Use
     /// RootWriteLock and RootUnLock for that.
+    pthread_rwlock_rdlock(&m_root_fill_locks_lock);
     std::map<JEventProcessor *, pthread_rwlock_t *>::iterator iter = m_root_fill_rw_lock.find(proc);
     if (iter == m_root_fill_rw_lock.end()) {
+        pthread_rwlock_unlock(&m_root_fill_locks_lock);
         throw JException(
                 "Tried calling JLockService::RootFillUnLock with something other than a registered JEventProcessor!");
     }
     pthread_rwlock_t *lock = iter->second;
+    pthread_rwlock_unlock(&m_root_fill_locks_lock);
     pthread_rwlock_unlock(m_root_fill_rw_lock[proc]);
     return lock;
 }
