@@ -175,10 +175,10 @@ JParameter* JParameterManager::SetDefaultParameter(std::string name, T& val, std
             param->has_default = true;
             param->default_value = stringify(val);
         }
-        else if (parse<T>(param->default_value) != val) {
-            // Our existing value is another default, and it conflicts
-            throw JException("Conflicting defaults for parameter %s", name.c_str());
-        }
+        // else if (parse<T>(param->default_value) != val) {
+        //     // Our existing value is another default, and it conflicts
+        //     LOG_WARN(m_logger) << "Parameter '" << name << "' has conflicting defaults" << LOG_END;
+        // }
     }
     else {
         // We are storing a value for this parameter for the first time
