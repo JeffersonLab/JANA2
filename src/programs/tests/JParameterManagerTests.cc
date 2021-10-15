@@ -25,7 +25,9 @@ TEST_CASE("JParameterManager::SetDefaultParameter") {
     }
 
 
-    SECTION("Multiple calls to SetDefaultParameter with different defaults throw") {
+    SECTION("Multiple calls to SetDefaultParameter with different defaults") {
+
+        // If set, the user provided value overrides ALL default values
 
         jpm.SetParameter("testing:dummy_var", 22);
 
@@ -34,7 +36,20 @@ TEST_CASE("JParameterManager::SetDefaultParameter") {
         REQUIRE(x == 22);
 
         int y = 77;
-        CHECK_THROWS(jpm.SetDefaultParameter("testing:dummy_var", y));
+        jpm.SetDefaultParameter("testing:dummy_var", y);
+        REQUIRE(x == 22);
+
+
+        // If unset, the _first_ default value wins
+        // TODO: This is not right. We can do better
+
+        int z = 44;
+        jpm.SetDefaultParameter("testing:dummy_var_2", z);
+        REQUIRE(z == 44);
+
+        int zz = 77;
+        jpm.SetDefaultParameter("testing:dummy_var_2", zz);
+        REQUIRE(zz == 44); // Ideally 77
     }
 }
 
