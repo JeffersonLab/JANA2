@@ -14,28 +14,37 @@
 #include <JANA/JException.h>
 #include <JANA/Services/JServiceLocator.h>
 
+class JParameter {
+    std::string m_name;             // A token (no whitespace, colon-prefixed), e.g. "my_plugin:use_mc"
+    std::string m_value;            // Stringified value, e.g. "1". Can handle comma-separated vectors of strings e.g. "abc, def"
+    std::string m_default_value;    // Optional default value, which may or may not equal value
+    std::string m_description;      // One-liner
+    bool m_has_default = false;     // Indicates that a default value is present. Does not indicate whether said value is in use.
+    bool m_is_default = false;      // Indicates that we are actually using this default value.
 
-struct JParameter {
-    std::string name;             // A token (no whitespace, colon-prefixed), e.g. "my_plugin:use_mc"
-    std::string value;            // Stringified value, e.g. "1". Can handle comma-separated vectors of strings e.g. "abc, def"
-    std::string default_value;    // Optional default value, which may or may not equal value
-    std::string description;      // One-liner
-    bool has_default = false;     // Indicates that a default value is present. Does not indicate whether said value is in use.
-    bool is_default = false;      // Indicates that we are actually using this default value.
+public:
 
-    JParameter(std::string key, std::string val, std::string def, std::string desc, bool has_def, bool is_def)
-    : name(std::move(key)),
-      value(std::move(val)),
-      default_value(std::move(def)),
-      description(std::move(desc)),
-      has_default(has_def),
-      is_default(is_def) {}
+    JParameter(std::string key, std::string value, std::string defaultValue, std::string description, bool hasDefault, bool isDefault)
+    : m_name(std::move(key)),
+      m_value(std::move(value)),
+      m_default_value(std::move(defaultValue)),
+      m_description(std::move(description)),
+      m_has_default(hasDefault),
+      m_is_default(isDefault) {}
 
-    inline void SetDescription(std::string desc) { this->description = std::move(desc); }
-    inline const std::string& GetKey() const { return name; }
-    inline const std::string& GetValue() const { return value; }
-    inline const std::string& GetDefault() const { return default_value; }
-    inline bool IsDefault() const { return is_default; }
+    inline const std::string& GetKey() const { return m_name; }
+    inline const std::string& GetValue() const { return m_value; }
+    inline const std::string& GetDefault() const { return m_default_value; }
+    inline const std::string& GetDescription() const { return m_description; }
+    inline bool IsDefault() const { return m_is_default; }
+    inline bool HasDefault() const { return m_has_default; }
+
+    inline void SetKey(std::string key) { m_name = std::move(key); }
+    inline void SetValue(std::string val) { m_value = std::move(val); }
+    inline void SetDefault(std::string defaultValue) { m_default_value = std::move(defaultValue); }
+    inline void SetDescription(std::string desc) { m_description = std::move(desc); }
+    inline void SetIsDefault(bool isDefault) { m_is_default = isDefault; }
+    inline void SetHasDefault(bool hasDefault) { m_has_default = hasDefault; }
 };
 
 class JParameterManager : public JService {
@@ -45,7 +54,7 @@ public:
 
     JParameterManager(const JParameterManager&);
 
-    virtual ~JParameterManager() override;
+    ~JParameterManager() override;
 
     bool Exists(std::string name);
 
@@ -104,7 +113,7 @@ JParameter* JParameterManager::GetParameter(std::string name, T& val) {
     if (result == m_parameters.end()) {
         return nullptr;
     }
-    val = parse<T>(result->second->value);
+    val = parse<T>(result->second->GetValue());
     return result->second;
 }
 
@@ -121,7 +130,7 @@ T JParameterManager::GetParameterValue(std::string name) {
     if (result == m_parameters.end()) {
         throw JException("Unknown parameter \"%s\"", name.c_str());
     }
-    return parse<T>(result->second->value);
+    return parse<T>(result->second->GetValue());
 }
 
 
@@ -140,8 +149,8 @@ JParameter* JParameterManager::SetParameter(std::string name, T val) {
         m_parameters[to_lower(name)] = param;
         return param;
     }
-    result->second->value = stringify(val);
-    result->second->is_default = false;
+    result->second->SetValue(stringify(val));
+    result->second->SetIsDefault(false);
     return result->second;
 }
 
@@ -182,11 +191,11 @@ JParameter* JParameterManager::SetDefaultParameter(std::string name, T& val, std
         // We already have a value stored for this parameter
         param = result->second;
 
-        if (!param->has_default) {
+        if (!param->HasDefault()) {
             // Our existing value is a non-default value.
             // We still want to remember the default for future conflict detection.
-            param->has_default = true;
-            param->default_value = stringify(val);
+            param->SetHasDefault(true);
+            param->SetDefault(stringify(val));
         }
         // else if (parse<T>(param->default_value) != val) {
         //     // Our existing value is another default, and it conflicts
@@ -208,7 +217,7 @@ JParameter* JParameterManager::SetDefaultParameter(std::string name, T& val, std
 
     // Always put val through the stringification/parsing cycle to be consistent with
     // values passed in from config file, accesses from other threads
-    val = parse<T>(param->value);
+    val = parse<T>(param->GetValue());
     return param;
 }
 

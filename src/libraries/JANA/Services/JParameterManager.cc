@@ -85,7 +85,7 @@ void JParameterManager::PrintParameters(bool all) {
     for (auto& p : m_parameters) {
         string key = p.first;
         auto j = p.second;
-        if ((!all) && j->has_default && (j->value == j->default_value)) continue;
+        if ((!all) && j->IsDefault()) continue;
         keys.push_back(key);
         if (key.length() > max_key_len) max_key_len = key.length();
     }
@@ -110,8 +110,8 @@ void JParameterManager::PrintParameters(bool all) {
 
     // Print all parameters
     for (string& key : keys) {
-        auto name = m_parameters[key]->name;
-        string val = m_parameters[key]->value;
+        auto name = m_parameters[key]->GetKey();
+        string val = m_parameters[key]->GetValue();
         m << string(max_key_len + 2 - key.length(), ' ') << name << " = " << val << "\n";
     }
     std::move(m) << LOG_END;
@@ -188,7 +188,7 @@ void JParameterManager::ReadConfigFile(std::string filename) {
 
         // Override defaulted values only
         JParameter* param = FindParameter(key);
-        if (param == nullptr || param->has_default) {
+        if (param == nullptr || param->HasDefault()) {
             SetParameter(key, val);
         }
     }
@@ -230,7 +230,7 @@ void JParameterManager::WriteConfigFile(std::string filename) {
     size_t max_val_len = 0;
     for (auto pair : m_parameters) {
         auto key_len = pair.first.length();
-        auto val_len = pair.second->value.length();
+        auto val_len = pair.second->GetValue().length();
         if (key_len > max_key_len) max_key_len = key_len;
         if (val_len > max_val_len) max_val_len = val_len;
     }
@@ -238,8 +238,8 @@ void JParameterManager::WriteConfigFile(std::string filename) {
     // Loop over parameters a second time and print them out
     for (auto pair : m_parameters) {
         std::string key = pair.first;
-        std::string val = pair.second->value;
-        std::string desc = pair.second->description;
+        std::string val = pair.second->GetValue();
+        std::string desc = pair.second->GetDescription();
 
         ofs << key << string(max_key_len - key.length(), ' ') << " "
             << val << string(max_val_len - val.length(), ' ') << " # "
@@ -269,7 +269,7 @@ void JParameterManager::FilterParameters(std::map<std::string, std::string> &par
     std::lock_guard<std::mutex> lock(m_mutex);
     for (auto pair : m_parameters) {
         string key = pair.first;
-        string value = pair.second->value;
+        string value = pair.second->GetValue();
         if (filter.size() > 0) {
             if (key.substr(0, filter.size()) != filter) continue;
             key.erase(0, filter.size());
