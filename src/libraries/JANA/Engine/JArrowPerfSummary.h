@@ -68,7 +68,7 @@ struct JArrowPerfSummary : public JPerfSummary {
     std::vector<ArrowSummary> arrows;
 
     JArrowPerfSummary() = default;
-    JArrowPerfSummary(const JArrowPerfSummary& other) = default;
+    JArrowPerfSummary(const JArrowPerfSummary&) = default;
     virtual ~JArrowPerfSummary() = default;
 
 };

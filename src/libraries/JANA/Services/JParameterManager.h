@@ -20,10 +20,22 @@ struct JParameter {
     std::string value;            // Stringified value, e.g. "1". Can handle comma-separated vectors of strings e.g. "abc, def"
     std::string default_value;    // Optional default value, which may or may not equal value
     std::string description;      // One-liner
-    bool has_default;             // Indicates that a default value is present. Does not indicate whether said value is in use.
-    // bool uses_default;         // TODO: We may want this instead of `if(param.value == param.default_value)` all the time
+    bool has_default = false;     // Indicates that a default value is present. Does not indicate whether said value is in use.
+    bool is_default = false;      // Indicates that we are actually using this default value.
 
-    void SetDescription(std::string description) { this->description = description; }
+    JParameter(std::string key, std::string val, std::string def, std::string desc, bool has_def, bool is_def)
+    : name(std::move(key)),
+      value(std::move(val)),
+      default_value(std::move(def)),
+      description(std::move(desc)),
+      has_default(has_def),
+      is_default(is_def) {}
+
+    inline void SetDescription(std::string desc) { this->description = std::move(desc); }
+    inline const std::string& GetKey() const { return name; }
+    inline const std::string& GetValue() const { return value; }
+    inline const std::string& GetDefault() const { return default_value; }
+    inline bool IsDefault() const { return is_default; }
 };
 
 class JParameterManager : public JService {
@@ -33,7 +45,7 @@ public:
 
     JParameterManager(const JParameterManager&);
 
-    virtual ~JParameterManager();
+    virtual ~JParameterManager() override;
 
     bool Exists(std::string name);
 
@@ -124,11 +136,12 @@ JParameter* JParameterManager::SetParameter(std::string name, T val) {
     auto result = m_parameters.find(to_lower(name));
 
     if (result == m_parameters.end()) {
-        auto* param = new JParameter {name, stringify(val), "", "", false};
+        auto* param = new JParameter {name, stringify(val), "", "", false, false};
         m_parameters[to_lower(name)] = param;
         return param;
     }
     result->second->value = stringify(val);
+    result->second->is_default = false;
     return result->second;
 }
 
@@ -183,7 +196,7 @@ JParameter* JParameterManager::SetDefaultParameter(std::string name, T& val, std
     else {
         // We are storing a value for this parameter for the first time
         auto valstr = stringify(val);
-        param = new JParameter {name, valstr, valstr, std::move(description), true};
+        param = new JParameter {name, valstr, valstr, std::move(description), true, true};
 
         // Test whether parameter is one-to-one with its string representation.
         // If not, we have a problem

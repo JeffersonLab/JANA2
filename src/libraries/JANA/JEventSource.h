@@ -146,7 +146,8 @@ public:
                         return ReturnStatus::Success;
                     }
 
-                case SourceStatus::Finished: return ReturnStatus::Finished;
+                default: //case SourceStatus::Finished:
+                    return ReturnStatus::Finished;
             }
         }
         catch (RETURN_STATUS rs) {
