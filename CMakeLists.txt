@@ -108,14 +108,7 @@ include_directories(src/libraries)   # So that everyone can find the JANA header
 
 add_subdirectory(src/libraries/JANA)
 add_subdirectory(src/examples)
-
-add_subdirectory(src/plugins/JTest)
-add_subdirectory(src/plugins/JTestRoot)
-
-add_subdirectory(src/plugins/streamDet)
-add_subdirectory(src/plugins/janarate)
-add_subdirectory(src/plugins/janacontrol)
-
+add_subdirectory(src/plugins)
 add_subdirectory(src/programs/jana)
 add_subdirectory(src/programs/tests)
 
