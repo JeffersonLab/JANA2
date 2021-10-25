@@ -12,23 +12,22 @@ using namespace std;
 
 #include <JANA/JApplication.h>
 #include "JEventProcessorJANADOT.h"
-using namespace jana;
 
 
 // Routine used to allow us to register our JEventSourceGenerator
 extern "C"{
 void InitPlugin(JApplication *app){
 	InitJANAPlugin(app);
-	app->AddProcessor(new JEventProcessorJANADOT());
+	app->Add(new JEventProcessorJANADOT());
 }
 } // "C"
 
 //------------------------------------------------------------------
 // init 
 //------------------------------------------------------------------
-jerror_t JEventProcessorJANADOT::init(void)
+void JEventProcessorJANADOT::Init()
 {
-
+    auto app = GetApplication();
 	// Turn on call stack recording
 	bool record_call_stack=true;
 	force_all_factories_active = false;
@@ -50,7 +49,7 @@ jerror_t JEventProcessorJANADOT::init(void)
 		// the group and the value is a comma separated list of classes to add to
 		// the group.
 		map<string,string> parms;
-		app->GetJParameterManager()->GetParameters(parms, "JANADOT:GROUP:");
+		app->GetJParameterManager()->FilterParameters(parms, "JANADOT:GROUP:");
 		jout<<"JANADOT groups: "<<parms.size()<<endl;
 		for(map<string,string>::iterator it=parms.begin(); it!=parms.end(); it++){
 		
@@ -98,28 +97,24 @@ jerror_t JEventProcessorJANADOT::init(void)
 
 	// Initialize our mutex
 	pthread_mutex_init(&mutex, NULL);
-	
-	return NOERROR;
 }
 
 //------------------------------------------------------------------
-// brun
+// EndRun
 //------------------------------------------------------------------
-jerror_t JEventProcessorJANADOT::brun(JEventLoop *loop, int32_t runnumber)
+void JEventProcessorJANADOT::BeginRun(const std::shared_ptr<const JEvent>& event)
 {
 	// Nothing to do here
-	
-	return NOERROR;
 }
 
 //------------------------------------------------------------------
 // evnt
 //------------------------------------------------------------------
-jerror_t JEventProcessorJANADOT::evnt(JEventLoop *loop, uint64_t eventnumber)
+void JEventProcessorJANADOT::Process(const std::shared_ptr<const JEvent>& event)
 {
 	// If we are supposed to activate all factories, do that now
 	if(force_all_factories_active){
-		vector<JFactory_base*> factories = loop->GetFactories();
+		vector<JFactory*> factories = event->GetFactories();
 		for(unsigned int i=0; i<factories.size(); i++)factories[i]->GetNrows();
 	}
 
@@ -177,14 +172,12 @@ jerror_t JEventProcessorJANADOT::evnt(JEventLoop *loop, uint64_t eventnumber)
 	
 	// Unlock mutex
 	pthread_mutex_unlock(&mutex);
-
-	return NOERROR;
 }
 
 //------------------------------------------------------------------
 // fini
 //------------------------------------------------------------------
-jerror_t JEventProcessorJANADOT::fini(void)
+void JEventProcessorJANADOT::Finish()
 {
 
 	// In order to get the total time we have to first get a list of 
@@ -418,8 +411,6 @@ jerror_t JEventProcessorJANADOT::fini(void)
 	<<endl
 	<<"This should give you a file named \"jana.pdf\"."<<endl
 	<<endl;
-
-	return NOERROR;
 }
 
 //------------------------------------------------------------------

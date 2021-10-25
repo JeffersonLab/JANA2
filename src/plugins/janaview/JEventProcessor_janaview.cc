@@ -26,11 +26,11 @@ JEventProcessor_janaview *JEP=NULL;
 extern "C"{
 void InitPlugin(JApplication *app){
 	InitJANAPlugin(app);
-	app->AddProcessor(new JEventProcessor_janaview());
+	app->Add(new JEventProcessor_janaview());
 	
 	// Some event sources don't maintain call stack info
 	// unless told to do so via environment variable.
-	gPARMS->SetParameter("RECORD_CALL_STACK", 1);
+	app->SetParameter("RECORD_CALL_STACK", 1);
 	
 }
 } // "C"
