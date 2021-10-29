@@ -120,7 +120,7 @@ set(JANA2_SOURCES
     Compatibility/md5.h
     Compatibility/JLockService.h
     Compatibility/JGetObjectsFactory.h
-    )
+        Utils/JCallGraphRecorder.h Utils/JCallGraphRecorder.cc)
 
 if (NOT ${USE_XERCES})
     message(STATUS "Skipping support for libJANA's JGeometryXML because USE_XERCES=Off")

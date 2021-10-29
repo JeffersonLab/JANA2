@@ -15,6 +15,7 @@
 #include <JANA/Utils/JResettable.h>
 #include <JANA/Utils/JTypeInfo.h>
 #include <JANA/Utils/JCpuInfo.h>
+#include <JANA/Utils/JCallGraphRecorder.h>
 
 #include <vector>
 #include <cstddef>
@@ -93,6 +94,7 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
         int32_t mRunNumber = 0;
         uint64_t mEventNumber = 0;
         mutable JFactorySet* mFactorySet = nullptr;
+        mutable JCallGraphRecorder mCallGraph;
         JEventSource* mEventSource = nullptr;
         bool mIsBarrierEvent = false;
 };
@@ -110,7 +112,10 @@ inline JFactoryT<T>* JEvent::Insert(T* item, const std::string& tag) const {
         factory->SetTag(tag);
         mFactorySet->Add(factory);
     }
+    JCallGraphRecorder::JCallStack cs;
+    CallStackStart(cs, caller_name, caller_tag, JTypeInfo::demangle<T>(), tag);
     factory->Insert(item);
+    mCallGraph.CallStackEnd(cs);
     return factory;
 }
 
