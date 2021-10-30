@@ -42,19 +42,18 @@ public:
     };
 
 private:
-    bool m_record_call_stack;
+    bool m_enabled = false;
     std::vector<JCallStackFrame> m_call_stack;
     std::vector<JErrorCallStack> m_error_call_stack;
     std::vector<JCallGraphNode> m_call_graph;
 
 public:
-    inline bool GetCallStackRecordingStatus(){ return m_record_call_stack; }
-    inline void DisableCallStackRecording(){ m_record_call_stack = false; }
-    inline void EnableCallStackRecording(){ m_record_call_stack = true; }
+    inline bool IsEnabled() const { return m_enabled; }
+    inline void SetEnabled(bool recordingEnabled=true){ m_enabled = recordingEnabled; }
     inline void StartFactoryCall(const std::string& callee_name, const std::string& callee_tag);
     inline void FinishFactoryCall(JDataSource data_source=JDataSource::DATA_FROM_FACTORY);
     inline std::vector<JCallGraphNode> GetCallGraph() {return m_call_graph;} ///< Get the current factory call stack
-    inline void AddToCallGraph(JCallGraphNode &cs) {if(m_record_call_stack) m_call_graph.push_back(cs);} ///< Add specified item to call stack record but only if record_call_stack is true
+    inline void AddToCallGraph(JCallGraphNode &cs) {if(m_enabled) m_call_graph.push_back(cs);} ///< Add specified item to call stack record but only if record_call_stack is true
     inline void AddToErrorCallStack(JErrorCallStack &cs) {m_error_call_stack.push_back(cs);} ///< Add layer to the factory call stack
     inline std::vector<JErrorCallStack> GetErrorCallStack(){return m_error_call_stack;} ///< Get the current factory error call stack
     void PrintErrorCallStack(); ///< Print the current factory call stack

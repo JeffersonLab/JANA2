@@ -45,6 +45,7 @@ struct JArrowTopology : public JActivable {
 
     size_t event_pool_size;                 //  Will be defaulted to nthreads later
     bool limit_total_events_in_flight = true;
+    bool enable_call_graph_recording = false;
     size_t event_queue_threshold = 80;
     size_t event_source_chunksize = 40;
     size_t event_processor_chunksize = 1;

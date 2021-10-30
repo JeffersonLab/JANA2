@@ -77,12 +77,16 @@ JArrowTopology* JArrowTopology::from_components(std::shared_ptr<JComponentManage
     params->SetDefaultParameter("jana:enable_stealing", topology->enable_stealing);
     params->SetDefaultParameter("jana:affinity", topology->affinity);
     params->SetDefaultParameter("jana:locality", topology->locality);
+    params->SetDefaultParameter("RECORD_CALL_STACK", topology->enable_call_graph_recording);
 
     topology->mapping.initialize(static_cast<JProcessorMapping::AffinityStrategy>(topology->affinity),
                                  static_cast<JProcessorMapping::LocalityStrategy>(topology->locality));
 
-    topology->event_pool = std::make_shared<JEventPool>(&jcm->get_fac_gens(), topology->event_pool_size,
-            topology->location_count, topology->limit_total_events_in_flight);
+    topology->event_pool = std::make_shared<JEventPool>(&jcm->get_fac_gens(),
+                                                        topology->enable_call_graph_recording,
+                                                        topology->event_pool_size,
+                                                        topology->location_count,
+                                                        topology->limit_total_events_in_flight);
 
     // Assume the simplest possible topology for now, complicate later
     auto queue = new EventQueue(topology->event_queue_threshold, topology->mapping.get_loc_count(), topology->enable_stealing);

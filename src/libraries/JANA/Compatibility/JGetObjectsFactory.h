@@ -30,6 +30,7 @@ public:
         // if (!result) throw JException("JGetObjectsFactory registered with a source that doesn't provide said objects");
         // JANA can't/shouldn't distinguish between "Source can't provide said objects" and "Source provided zero"
         // Examples: DMCThrown, DDIRCTruthBarHit
+        JFactory::mCreationStatus = JFactory::CreationStatus::InsertedViaGetObjects;
     }
 
 };

@@ -26,7 +26,7 @@ class JApplication;
 class JFactory {
 public:
 
-    enum class CreationStatus { NotCreatedYet, Created, Inserted, InsertedViaGetObjects };
+    enum class CreationStatus { NotCreatedYet, Created, Inserted, InsertedViaGetObjects, NeverCreated };
 
     enum JFactory_Flags_t {
         JFACTORY_NULL = 0x00,

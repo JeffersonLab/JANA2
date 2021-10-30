@@ -30,7 +30,7 @@ set(TEST_SOURCES
     ScaleTests.cc
     BarrierEventTests.cc
     BarrierEventTests.h
-    )
+        GetObjectsTests.cc)
 
 add_executable(janatests ${TEST_SOURCES})
 find_package(Threads REQUIRED)
