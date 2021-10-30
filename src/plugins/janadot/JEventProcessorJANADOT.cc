@@ -100,7 +100,7 @@ void JEventProcessorJANADOT::Init()
 }
 
 //------------------------------------------------------------------
-// EndRun
+// BeginRun
 //------------------------------------------------------------------
 void JEventProcessorJANADOT::BeginRun(const std::shared_ptr<const JEvent>& event)
 {
@@ -108,18 +108,18 @@ void JEventProcessorJANADOT::BeginRun(const std::shared_ptr<const JEvent>& event
 }
 
 //------------------------------------------------------------------
-// evnt
+// Process
 //------------------------------------------------------------------
 void JEventProcessorJANADOT::Process(const std::shared_ptr<const JEvent>& event)
 {
 	// If we are supposed to activate all factories, do that now
 	if(force_all_factories_active){
-		vector<JFactory*> factories = event->GetFactories();
-		for(unsigned int i=0; i<factories.size(); i++)factories[i]->GetNrows();
+		vector<JFactory*> factories = event->GetAllFactories();
+		for(unsigned int i=0; i<factories.size(); i++)factories[i]->GetNumObjects();
 	}
 
 	// Get the call stack for ths event and add the results to our stats
-	vector<JEventLoop::call_stack_t> stack = loop->GetCallStack();
+	auto stack = event->GetJCallGraphRecorder()->GetCallGraph();
 	
 	// Lock mutex in case we are running with multiple threads
 	pthread_mutex_lock(&mutex);
@@ -147,21 +147,21 @@ void JEventProcessorJANADOT::Process(const std::shared_ptr<const JEvent>& event)
 		CallStats &stats = call_links[link]; // get pointer to stats object or create if it doesn't exist
 		
 		switch(stack[i].data_source){
-			case JEventLoop::DATA_NOT_AVAILABLE:
+            case JCallGraphRecorder::DATA_NOT_AVAILABLE:
 				stats.Ndata_not_available++;
 				stats.data_not_available_ms += delta_t;
 				break;
-			case JEventLoop::DATA_FROM_CACHE:
+			case JCallGraphRecorder::DATA_FROM_CACHE:
 				fcallstats2.Nfrom_cache++;
 				stats.Nfrom_cache++;
 				stats.from_cache_ms += delta_t;
 				break;
-			case JEventLoop::DATA_FROM_SOURCE:
+			case JCallGraphRecorder::DATA_FROM_SOURCE:
 				fcallstats2.Nfrom_source++;
 				stats.Nfrom_source++;
 				stats.from_source_ms += delta_t;
 				break;
-			case JEventLoop::DATA_FROM_FACTORY:
+			case JCallGraphRecorder::DATA_FROM_FACTORY:
 				fcallstats2.Nfrom_factory++;
 				stats.Nfrom_factory++;
 				stats.from_factory_ms += delta_t;
