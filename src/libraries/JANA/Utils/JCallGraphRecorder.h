@@ -7,6 +7,7 @@
 
 #include <vector>
 #include <string>
+#include <cassert>
 #include <sys/time.h>
 
 class JCallGraphRecorder {
@@ -72,7 +73,11 @@ void JCallGraphRecorder::StartFactoryCall(const std::string& callee_name, const 
     struct itimerval tmr;
     getitimer(ITIMER_PROF, &tmr);
     double start_time = tmr.it_value.tv_sec + tmr.it_value.tv_usec / 1.0E6;
-    m_call_stack.push_back({callee_name, callee_tag, start_time});
+    JCallStackFrame frame;
+    frame.factory_name = callee_name;
+    frame.factory_tag = callee_tag;
+    frame.start_time = start_time;
+    m_call_stack.push_back(frame);
 }
 
 

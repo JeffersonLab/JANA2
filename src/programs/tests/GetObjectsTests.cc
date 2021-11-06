@@ -37,7 +37,7 @@ class Fac : public JFactoryT<Obj3> {
 
 TEST_CASE("GetObjectsTests") {
     JEvent event;
-    JFactorySet* fs;
+    JFactorySet* fs = new JFactorySet;
     fs->Add(new Fac);
     event.SetFactorySet(fs);
     event.GetJCallGraphRecorder()->SetEnabled(true);
