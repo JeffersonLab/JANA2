@@ -223,12 +223,12 @@ void JEventProcessor_janaview::GetAssociatedTo(JObject *jobj, vector<const JObje
 	for(uint32_t i=0; i<factories.size(); i++){
 		
 		// Do not activate factories that have not yet been activated
-		if(!factories[i]->evnt_was_called()) continue;
-		
+	    	if(factories[i]->GetCreationStatus() == JFactory::CreationStatus::NotCreatedYet) continue;
+
 		// Get objects for this factory and associated objects for each of those
-		vector<void*> vobjs = factories[i]->Get();
+		vector<JObject*> vobjs = factories[i]->GetAs<JObject>();
 		for(uint32_t i=0; i<vobjs.size(); i++){
-			JObject *obj = (JObject*)vobjs[i];
+			JObject *obj = vobjs[i];
 			
 			vector<const JObject*> associated;
 			obj->GetT(associated);
@@ -258,7 +258,7 @@ void JEventProcessor_janaview::MakeCallGraph(string nametag)
 	cgobjs.clear();
 
 	// Make list of all factories and their callees
-	auto stack = event->GetJCallGraphRecorder()->GetCallGraph();
+	auto stack = loop->GetJCallGraphRecorder()->GetCallGraph();
 	if(stack.empty()) return;
 	for(auto &cs : stack){
 		string caller = MakeNametag(cs.caller_name, cs.caller_tag);

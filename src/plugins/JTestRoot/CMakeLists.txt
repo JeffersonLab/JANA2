@@ -26,7 +26,7 @@ if(${USE_ROOT})
 	target_compile_definitions(JTestRoot_plugin PUBLIC HAVE_ROOT)
 	target_include_directories(JTestRoot_plugin PUBLIC ${JANA_INCLUDE_DIR} ${ROOT_INCLUDE_DIRS})
 	target_link_libraries(JTestRoot_plugin jana2)
-	target_link_libraries(JTestRoot_plugin ${JANA_LIBRARY} ${ROOT_LIBRARIES})
+	target_link_libraries(JTestRoot_plugin ${ROOT_LIBRARIES})
 	set_target_properties(JTestRoot_plugin PROPERTIES PREFIX "" OUTPUT_NAME "JTestRoot" SUFFIX ".so")
 	install(TARGETS JTestRoot_plugin DESTINATION plugins)
 

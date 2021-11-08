@@ -441,8 +441,12 @@ void jv_mainframe::UpdateObjectValues(JObject *obj)
 	lObjectValue->Resize();
 
 	vector<pair<string,string> > items;
-	obj->toStrings(items);
-	
+	JObjectSummary summary;
+	obj->Summarize(summary);
+	for (const auto& field : summary.get_fields()) {
+		items.push_back({field.name, field.value});
+	}
+
 	// Find maximum label width
 	uint32_t max_width = 0;
 	for(uint32_t i=0; i<items.size(); i++){
@@ -483,7 +487,7 @@ void jv_mainframe::UpdateObjectValues(JObject *obj)
 void jv_mainframe::SelectNewObject(void *vobj)
 {
 	JObject *obj = (JObject*)vobj;
-	string nametag = obj->GetNameTag();
+	string nametag = obj->className(); // TODO: Should be name:tag except we aren't storing a factory ptr anymore
 	for(uint32_t i=0; i<objtypes.size(); i++){
 		if(objtypes[i] != nametag) continue;
 		
