@@ -32,7 +32,6 @@ using namespace std;
 
 #if !defined(__CINT__) && !defined(__CLING__)
 #include <JANA/JObject.h>
-using namespace jana;
 #endif // __CINT__  __CLING__
 
 
@@ -119,7 +118,7 @@ class jv_mainframe:public TGMainFrame{
 		TRootEmbeddedCanvas *canvas;
 		
 		vector<string> objtypes; // nametags of values in object type listbox
-		vector<void*> vobjs;
+		vector<JObject*> vobjs;
 #if !defined(__CINT__) && !defined(__CLING__)
 		vector<const JObject*> aobjs;
 		vector<const JObject*> a2objs;

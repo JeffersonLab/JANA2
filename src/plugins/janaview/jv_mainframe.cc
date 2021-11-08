@@ -8,6 +8,7 @@
 
 #include "jv_mainframe.h"
 #include "JEventProcessor_janaview.h"
+#include <JANA/JEventSource.h>
 
 //---------------------------------
 // jv_mainframe    (Constructor)
@@ -178,7 +179,7 @@ void jv_mainframe::DoSelectObjectType(Int_t id)
 
 	// Get factory and list of objects
 	JEP->Lock();
-	JFactory_base *fac = JEP->loop->GetFactory(name, tag.c_str());
+	JFactory *fac = JEP->loop->GetFactory(name, tag.c_str());
 	if(!fac){
 		JEP->Unlock();
 		_DBG_<<"Unable to find factory for name=\""<<name<<"\"  tag=\"" << tag << "\"" << endl;
@@ -189,23 +190,23 @@ void jv_mainframe::DoSelectObjectType(Int_t id)
 	// method is called. The JFactory::Get method called below will only try to 
 	// generate the objects using the factory algorithm so objects coming from the
 	// source will not be necessarily be there unless we force the call here.	
-	JEvent &jevent = JEP->loop->GetJEvent();
-	JEventSource *source = jevent.GetJEventSource();
+	auto jevent = JEP->loop;
+	JEventSource *source = jevent->GetJEventSource();
 	source->GetObjects(jevent, fac);
 
-	JEventLoop::call_stack_t cs;
-	JEP->loop->CallStackStart(cs, "JEventProcessor_janaview", "", name, tag);
+	auto cgr = JEP->loop->GetJCallGraphRecorder();
+	cgr->StartFactoryCall(name, tag);
 
 	// Get pointers from factory
-	vobjs = fac->Get();
+	vobjs = fac->GetAs<JObject>();
 
-	JEP->loop->CallStackEnd(cs);
+	cgr->FinishFactoryCall();
 
 	// Copy list of objects into listbox
 	lbObjects->RemoveAll();
 	for(uint32_t i=0; i<vobjs.size(); i++){
 		char str[256];
-		sprintf(str, "0x%016lx %s", (unsigned long)vobjs[i], ((JObject*)vobjs[i])->GetName().c_str());
+		sprintf(str, "0x%016lx %s", (unsigned long)vobjs[i], vobjs[i]->className().c_str());
 		lbObjects->AddEntry(str, i+1);
 	}
 	
@@ -238,7 +239,7 @@ void jv_mainframe::DoSelectObject(Int_t id)
 	obj->GetT(aobjs);
 	for(uint32_t i=0; i<aobjs.size(); i++){
 		char str[256];
-		sprintf(str, "0x%016lx %s", (unsigned long)aobjs[i], aobjs[i]->GetName().c_str());
+		sprintf(str, "0x%016lx %s", (unsigned long)aobjs[i], aobjs[i]->className().c_str());
 		lbAssociatedObjects->AddEntry(str, i+1);
 	}
 	Redraw(lbAssociatedObjects);
@@ -248,7 +249,7 @@ void jv_mainframe::DoSelectObject(Int_t id)
 	JEP->GetAssociatedTo(obj, a2objs);
 	for(uint32_t i=0; i<a2objs.size(); i++){
 		char str[256];
-		sprintf(str, "0x%016lx %s", (unsigned long)a2objs[i], a2objs[i]->GetName().c_str());
+		sprintf(str, "0x%016lx %s", (unsigned long)a2objs[i], a2objs[i]->className().c_str());
 		lbAssociatedToObjects->AddEntry(str, i+1);
 	}
 	Redraw(lbAssociatedToObjects);
@@ -435,7 +436,7 @@ void jv_mainframe::UpdateObjectTypeList(vector<JVFactoryInfo> &facinfo)
 void jv_mainframe::UpdateObjectValues(JObject *obj)
 {
 	char title[256];
-	sprintf(title, "0x%016lx : %s", (unsigned long)obj, obj->GetName().c_str());
+	sprintf(title, "0x%016lx : %s", (unsigned long)obj, obj->className().c_str());
 	lObjectValue->SetTitle(title);
 	lObjectValue->Resize();
 

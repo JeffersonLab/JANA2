@@ -10,7 +10,7 @@
 using namespace std;
 
 #include "JEventProcessor_janaview.h"
-using namespace jana;
+#include <JANA/JEventSource.h>
 
 #include <TLatex.h>
 #include <TArrow.h>
@@ -23,6 +23,7 @@ JEventProcessor_janaview *JEP=NULL;
 // Routine used to create our JEventProcessor
 #include <JANA/JApplication.h>
 #include <JANA/JFactory.h>
+
 extern "C"{
 void InitPlugin(JApplication *app){
 	InitJANAPlugin(app);
@@ -30,7 +31,7 @@ void InitPlugin(JApplication *app){
 	
 	// Some event sources don't maintain call stack info
 	// unless told to do so via environment variable.
-	app->SetParameter("RECORD_CALL_STACK", 1);
+	app->SetParameterValue("RECORD_CALL_STACK", 1);
 	
 }
 } // "C"
@@ -41,9 +42,9 @@ void InitPlugin(JApplication *app){
 //.....................................
 // FactoryNameSort
 //.....................................
-bool FactoryNameSort(JFactory_base *a,JFactory_base *b){
-  if (a->GetDataClassName()==b->GetDataClassName()) return string(a->Tag()) < string(b->Tag());
-  return a->GetDataClassName() < b->GetDataClassName();
+bool FactoryNameSort(JFactory *a,JFactory *b){
+  if (a->GetObjectName()==b->GetObjectName()) return string(a->GetTag()) < string(b->GetTag());
+  return a->GetObjectName() < b->GetObjectName();
 }
 
 //==============================================================================
@@ -81,7 +82,6 @@ void* JanaViewRootGUIThread(void *arg)
 //------------------
 JEventProcessor_janaview::JEventProcessor_janaview()
 {
-	loop = NULL;
 	eventnumber = 0;
 
 	pthread_mutex_init(&mutex, NULL);
@@ -106,32 +106,29 @@ JEventProcessor_janaview::~JEventProcessor_janaview()
 //------------------
 // init
 //------------------
-jerror_t JEventProcessor_janaview::init(void)
+void JEventProcessor_janaview::Init()
 {
-
-	return NOERROR;
 }
 
 //------------------
 // brun
 //------------------
-jerror_t JEventProcessor_janaview::brun(JEventLoop *loop, int32_t runnumber)
+void JEventProcessor_janaview::BeginRun(const std::shared_ptr<const JEvent>& event)
 {
-	this->loop = loop;
-	loop->EnableCallStackRecording();
-
-	return NOERROR;
+	this->loop = event;
+	loop->GetJCallGraphRecorder()->SetEnabled(true);
 }
 
 //------------------
 // evnt
 //------------------
-jerror_t JEventProcessor_janaview::evnt(JEventLoop *loop, uint64_t eventnumber)
+void JEventProcessor_janaview::Process(const std::shared_ptr<const JEvent>& event)
 {
 	// We need to wait here in order to allow the GUI to control when to
 	// go to the next event. Lock the mutex and wait for the GUI to wake us
-	app->monitor_heartbeat = false;
-	app->SetShowTicker(false);
+	auto app = event->GetJApplication();
+	app->SetTicker(false);
+	// app->monitor_heartbeat = false;  // TODO: Re-add this when I cycle back to the heartbeat stuff
 
 	pthread_mutex_lock(&mutex);
 
@@ -140,9 +137,8 @@ jerror_t JEventProcessor_janaview::evnt(JEventLoop *loop, uint64_t eventnumber)
 	this->loop = loop;
 	this->eventnumber = eventnumber;
 	
-	JEvent &jevent = loop->GetJEvent();
-	JEventSource *source = jevent.GetJEventSource();
-	JVMF->UpdateInfo(source->GetSourceName(), jevent.GetRunNumber(), jevent.GetEventNumber());
+	JEventSource *source = event->GetJEventSource();
+	JVMF->UpdateInfo(source->GetResourceName(), event->GetRunNumber(), event->GetEventNumber());
 
 	vector<JVFactoryInfo> facinfo;
 	GetObjectTypes(facinfo);
@@ -155,8 +151,6 @@ jerror_t JEventProcessor_janaview::evnt(JEventLoop *loop, uint64_t eventnumber)
 	// processed_first_event = true;
 	
 	pthread_mutex_unlock(&mutex);
-
-	return NOERROR;
 }
 
 //------------------
@@ -171,21 +165,19 @@ void JEventProcessor_janaview::NextEvent(void)
 //------------------
 // erun
 //------------------
-jerror_t JEventProcessor_janaview::erun(void)
+void JEventProcessor_janaview::EndRun()
 {
 	// This is called whenever the run number changes, before it is
 	// changed to give you a chance to clean up before processing
 	// events from the next run number.
-	return NOERROR;
 }
 
 //------------------
 // fini
 //------------------
-jerror_t JEventProcessor_janaview::fini(void)
+void JEventProcessor_janaview::Finish(void)
 {
 	// Called before program exit after event processing is finished.
-	return NOERROR;
 }
 
 //------------------------------------------------------------------
@@ -207,14 +199,14 @@ void JEventProcessor_janaview::GetObjectTypes(vector<JVFactoryInfo> &facinfo)
 	if(!loop) return;
 
 	// Get factory pointers and sort them by factory name
-	vector<JFactory_base*> factories = loop->GetFactories();
+	vector<JFactory*> factories = loop->GetAllFactories();
 	sort(factories.begin(), factories.end(), FactoryNameSort);
 	
 	// Copy factory info into JVFactoryInfo structures
 	for(uint32_t i=0; i<factories.size(); i++){
 		JVFactoryInfo finfo;
-		finfo.name = factories[i]->GetDataClassName();
-		finfo.tag = factories[i]->Tag();
+		finfo.name = factories[i]->GetObjectName();
+		finfo.tag = factories[i]->GetTag();
 		finfo.nametag = MakeNametag(finfo.name, finfo.tag);
 		facinfo.push_back(finfo);
 	}
@@ -227,7 +219,7 @@ void JEventProcessor_janaview::GetAssociatedTo(JObject *jobj, vector<const JObje
 {
 	if(!loop) return;
 
-	vector<JFactory_base*> factories = loop->GetFactories();
+	vector<JFactory*> factories = loop->GetAllFactories();
 	for(uint32_t i=0; i<factories.size(); i++){
 		
 		// Do not activate factories that have not yet been activated
@@ -253,8 +245,6 @@ void JEventProcessor_janaview::GetAssociatedTo(JObject *jobj, vector<const JObje
 //------------------
 void JEventProcessor_janaview::MakeCallGraph(string nametag)
 {
-	if(!loop) return;
-
 	if(nametag=="") nametag = JVMF->GetSelectedObjectType();
 
 	// Clear canvas
@@ -268,7 +258,7 @@ void JEventProcessor_janaview::MakeCallGraph(string nametag)
 	cgobjs.clear();
 
 	// Make list of all factories and their callees
-	vector<JEventLoop::call_stack_t> stack = loop->GetCallStack();
+	auto stack = event->GetJCallGraphRecorder()->GetCallGraph();
 	if(stack.empty()) return;
 	for(auto &cs : stack){
 		string caller = MakeNametag(cs.caller_name, cs.caller_tag);
