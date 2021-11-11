@@ -198,7 +198,10 @@ void jv_mainframe::DoSelectObjectType(Int_t id)
 	cgr->StartFactoryCall(name, tag);
 
 	// Get pointers from factory
-	vobjs = fac->GetAs<JObject>();
+	auto objs = fac->GetAs<JObject>();
+	for (auto obj : objs) {
+		vobjs.push_back(obj);
+	}
 
 	cgr->FinishFactoryCall();
 
@@ -206,7 +209,7 @@ void jv_mainframe::DoSelectObjectType(Int_t id)
 	lbObjects->RemoveAll();
 	for(uint32_t i=0; i<vobjs.size(); i++){
 		char str[256];
-		sprintf(str, "0x%016lx %s", (unsigned long)vobjs[i], vobjs[i]->className().c_str());
+		sprintf(str, "0x%016lx %s", (unsigned long)vobjs[i], ((JObject*)vobjs[i])->className().c_str());
 		lbObjects->AddEntry(str, i+1);
 	}
 	
