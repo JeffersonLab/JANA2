@@ -1,14 +1,14 @@
 
-#include "JIntrospection.h"
+#include "JInspector.h"
 #include <JANA/JEventSource.h>
 #include <sstream>
 #include <stack>
 #include <JANA/Utils/JTablePrinter.h>
 
 
-JIntrospection::JIntrospection(const JEvent* event) : m_event(event) {}
+JInspector::JInspector(const JEvent* event) : m_event(event) {}
 
-void JIntrospection::BuildIndices() {
+void JInspector::BuildIndices() {
     if (m_indexes_built) return;
     auto facs = m_event->GetFactorySet()->GetAllFactories();
     int i = 0;
@@ -20,7 +20,7 @@ void JIntrospection::BuildIndices() {
     m_indexes_built = true;
 }
 
-std::vector<const JObject*> JIntrospection::FindAllAncestors(const JObject* root) const {
+std::vector<const JObject*> JInspector::FindAllAncestors(const JObject* root) const {
     std::vector<const JObject*> all_ancestors;
     std::stack<const JObject*> to_visit;
     to_visit.push(root);
@@ -37,7 +37,7 @@ std::vector<const JObject*> JIntrospection::FindAllAncestors(const JObject* root
     return all_ancestors;
 }
 
-std::pair<JFactory*, size_t> JIntrospection::LocateObject(const JEvent& event, const JObject* obj) {
+std::pair<JFactory*, size_t> JInspector::LocateObject(const JEvent& event, const JObject* obj) {
     auto objName = obj->className();
     for (auto fac : event.GetAllFactories()) {
         if (fac->GetObjectName() == objName) {
@@ -51,28 +51,28 @@ std::pair<JFactory*, size_t> JIntrospection::LocateObject(const JEvent& event, c
     return {nullptr, -1};
 }
 
-void JIntrospection::PrintEvent() {
+void JInspector::PrintEvent() {
     m_out << StringifyEvent() << std::endl;
 }
-void JIntrospection::PrintFactories() {
+void JInspector::PrintFactories() {
     m_out << StringifyFactories() << std::endl;
 }
-void JIntrospection::PrintFactory(int factory_idx) {
+void JInspector::PrintFactory(int factory_idx) {
     m_out << StringifyFactory(factory_idx) << std::endl;
 }
-void JIntrospection::PrintJObjects(int factory_idx) {
+void JInspector::PrintJObjects(int factory_idx) {
     m_out << StringifyJObjects(factory_idx) << std::endl;
 }
-void JIntrospection::PrintJObject(int factory_idx, int object_idx) {
+void JInspector::PrintJObject(int factory_idx, int object_idx) {
     m_out << StringifyJObject(factory_idx, object_idx) << std::endl;
 }
-void JIntrospection::PrintAncestors(int factory_idx) {
+void JInspector::PrintAncestors(int factory_idx) {
     m_out << StringifyAncestors(factory_idx) << std::endl;
 }
-void JIntrospection::PrintAssociations(int factory_idx, int object_idx) {
+void JInspector::PrintAssociations(int factory_idx, int object_idx) {
     m_out << StringifyAssociations(factory_idx, object_idx) << std::endl;
 }
-void JIntrospection::PrintHelp() {
+void JInspector::PrintHelp() {
     m_out << "----------------------" << std::endl;
     m_out << "Available commands" << std::endl;
     m_out << "----------------------" << std::endl;
@@ -88,7 +88,7 @@ void JIntrospection::PrintHelp() {
     m_out << "Quit" << std::endl;
     m_out << "----------------------" << std::endl;
 }
-std::string JIntrospection::StringifyEvent() {
+std::string JInspector::StringifyEvent() {
     auto className = m_event->GetJEventSource()->GetTypeName();
     if (className.empty()) className = "(unknown)";
     std::ostringstream ss;
@@ -98,7 +98,7 @@ std::string JIntrospection::StringifyEvent() {
     ss << "Class name:   " << className << std::endl;
     return ss.str();
 }
-std::string JIntrospection::StringifyFactories() {
+std::string JInspector::StringifyFactories() {
     auto facs = m_event->GetFactorySet()->GetAllFactories();
     std::ostringstream ss;
     size_t idx = 0;
@@ -118,7 +118,7 @@ std::string JIntrospection::StringifyFactories() {
     t.Render(ss);
     return ss.str();
 }
-std::string JIntrospection::StringifyFactory(int factory_idx) {
+std::string JInspector::StringifyFactory(int factory_idx) {
     auto facs = m_event->GetFactorySet()->GetAllFactories();
     if (factory_idx >= facs.size()) {
         return "(Error: Factory index out of range)\n";
@@ -157,7 +157,7 @@ std::string JIntrospection::StringifyFactory(int factory_idx) {
 
     return ss.str();
 }
-std::string JIntrospection::StringifyJObjects(int factory_idx) {
+std::string JInspector::StringifyJObjects(int factory_idx) {
     auto facs = m_event->GetFactorySet()->GetAllFactories();
     if (factory_idx >= facs.size()) {
         return "(Error: Factory index out of range)\n";
@@ -177,7 +177,7 @@ std::string JIntrospection::StringifyJObjects(int factory_idx) {
     }
     return ss.str();
 }
-std::string JIntrospection::StringifyJObject(int factory_idx, int object_idx) {
+std::string JInspector::StringifyJObject(int factory_idx, int object_idx) {
     auto facs = m_event->GetFactorySet()->GetAllFactories();
     if (factory_idx >= facs.size()) {
         return "(Error: Factory index out of range)\n";
@@ -195,7 +195,7 @@ std::string JIntrospection::StringifyJObject(int factory_idx, int object_idx) {
     }
     return ss.str();
 }
-std::string JIntrospection::StringifyAncestors(int factory_idx) {
+std::string JInspector::StringifyAncestors(int factory_idx) {
     BuildIndices();  // So that we can retrieve the integer index given the factory name/tag pair
     auto facs = m_event->GetFactorySet()->GetAllFactories();
     if (factory_idx >= facs.size()) {
@@ -232,7 +232,7 @@ std::string JIntrospection::StringifyAncestors(int factory_idx) {
     t.Render(ss);
     return ss.str();
 }
-std::string JIntrospection::StringifyAssociations(int factory_idx, int object_idx) {
+std::string JInspector::StringifyAssociations(int factory_idx, int object_idx) {
     auto facs = m_event->GetFactorySet()->GetAllFactories();
     if (factory_idx >= facs.size()) {
         return "(Error: Factory index out of range)\n";
@@ -277,7 +277,7 @@ std::string JIntrospection::StringifyAssociations(int factory_idx, int object_id
     return ss.str();
 }
 
-std::pair<std::string, std::vector<int>> JIntrospection::Parse(const std::string& user_input) {
+std::pair<std::string, std::vector<int>> JInspector::Parse(const std::string& user_input) {
     std::string token;
     std::stringstream ss(user_input);
     ss >> token;
@@ -289,7 +289,7 @@ std::pair<std::string, std::vector<int>> JIntrospection::Parse(const std::string
     return {token, args};
 }
 
-uint64_t JIntrospection::DoReplLoop(uint64_t next_evt_nr) {
+uint64_t JInspector::DoReplLoop(uint64_t next_evt_nr) {
     if (!m_enabled) {
         return 0;
     }

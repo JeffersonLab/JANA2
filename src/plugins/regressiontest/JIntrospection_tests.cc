@@ -1,6 +1,6 @@
 
 
-#include "JIntrospection.h"
+#include "JInspector.h"
 
 int main() {
 

@@ -1,8 +1,8 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-#ifndef _JIntrospection_h_wth
-#define _JIntrospection_h_wth
+#ifndef _JInspector_h_
+#define _JInspector_h_
 
 #include <string>
 #include <vector>
@@ -13,7 +13,7 @@
 #include <JANA/JEvent.h>
 
 
-class JIntrospection {
+class JInspector {
     bool m_enabled = true;
     const JEvent* m_event;
     bool m_indexes_built = false;
@@ -22,7 +22,7 @@ class JIntrospection {
     std::istream& m_in = std::cin;
 
 public:
-    explicit JIntrospection(const JEvent* event);
+    explicit JInspector(const JEvent* event);
     void PrintEvent();
     void PrintFactories();
     void PrintFactory(int factory_idx);

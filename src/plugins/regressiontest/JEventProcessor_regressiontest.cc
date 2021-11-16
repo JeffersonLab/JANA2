@@ -6,7 +6,7 @@
 // Richard Jones, 1-July-2012
 
 #include "JEventProcessor_regressiontest.h"
-#include "JIntrospection.h"
+#include "JInspector.h"
 
 #include <tuple>
 
@@ -55,7 +55,7 @@ void JEventProcessor_regressiontest::Process(const std::shared_ptr<const JEvent>
     auto facs = event->GetAllFactories();
 
     std::lock_guard<std::mutex> lock(m_mutex);
-    JIntrospection introspection (event.get());
+    JInspector introspection (event.get());
     if ((evt_nr == m_next_event_nr) || (m_next_event_nr == 0)) {
         m_next_event_nr = introspection.DoReplLoop(event->GetEventNumber());
     }
