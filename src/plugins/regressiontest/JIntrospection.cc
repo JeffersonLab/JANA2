@@ -3,6 +3,7 @@
 #include <JANA/JEventSource.h>
 #include <sstream>
 #include <stack>
+#include <JANA/Utils/JTablePrinter.h>
 
 
 JIntrospection::JIntrospection(const JEvent* event) : m_event(event) {}
@@ -101,17 +102,20 @@ std::string JIntrospection::StringifyFactories() {
     auto facs = m_event->GetFactorySet()->GetAllFactories();
     std::ostringstream ss;
     size_t idx = 0;
+    JTablePrinter t;
+    t.AddColumn("Index", JTablePrinter::Justify::Right);
+    t.AddColumn("Factory name");
+    t.AddColumn("Object name");
+    t.AddColumn("Tag");
+    t.AddColumn("Object count", JTablePrinter::Justify::Right);
     for (auto fac : facs) {
         auto facName = fac->GetFactoryName();
         if (facName.empty()) facName = "(no factory name)";
         auto tag = fac->GetTag();
         if (tag.empty()) tag = "(no tag)";
-        ss << idx++ << "\t";
-        ss << facName << "\t";
-        ss << fac->GetObjectName() << "\t";
-        ss << tag << "\t";
-        ss << fac->GetNumObjects() << std::endl;
+        t | idx++ | facName | fac->GetObjectName() | tag | fac->GetNumObjects();
     }
+    t.Render(ss);
     return ss.str();
 }
 std::string JIntrospection::StringifyFactory(int factory_idx) {
@@ -206,6 +210,10 @@ std::string JIntrospection::StringifyAncestors(int factory_idx) {
     if (!callgraph_on) {
         ss << "(Error: Callgraph recording is currently disabled)" << std::endl;
     }
+    JTablePrinter t;
+    t.AddColumn("Index", JTablePrinter::Justify::Right);
+    t.AddColumn("Object name");
+    t.AddColumn("Tag");
     auto callgraph = m_event->GetJCallGraphRecorder()->GetCallGraph();
     bool found_anything = false;
     for (const auto& node : callgraph) {
@@ -214,10 +222,14 @@ std::string JIntrospection::StringifyAncestors(int factory_idx) {
             auto idx = m_factory_index[{node.callee_name, node.callee_tag}].first;
             auto tag = node.callee_tag;
             if (tag.empty()) tag = "(no tag)";
-            ss << idx << "\t" << node.callee_name << "\t" << tag << std::endl;
+            t | idx | node.callee_name | tag;
         }
     }
-    if (!found_anything) ss << "(No ancestors found)" << std::endl;
+    if (!found_anything) {
+        ss << "(No ancestors found)" << std::endl;
+        return ss.str();
+    }
+    t.Render(ss);
     return ss.str();
 }
 std::string JIntrospection::StringifyAssociations(int factory_idx, int object_idx) {
@@ -232,6 +244,12 @@ std::string JIntrospection::StringifyAssociations(int factory_idx, int object_id
     auto obj = objs[object_idx];
     auto ancestors = FindAllAncestors(obj);
     if (ancestors.empty()) return "(No associations found)\n";
+
+    JTablePrinter t;
+    t.AddColumn("Object name");
+    t.AddColumn("Tag");
+    t.AddColumn("Index", JTablePrinter::Justify::Right);
+    t.AddColumn("Object contents");
     std::ostringstream ss;
     for (auto ancestor : FindAllAncestors(obj)) {
         JFactory* fac;
@@ -246,13 +264,16 @@ std::string JIntrospection::StringifyAssociations(int factory_idx, int object_id
 
         auto tag = fac->GetTag();
         if (tag.empty()) tag = "(no tag)";
-        ss << fac->GetObjectName() << "\t" << tag << "\t" << idx << "\t";
-        ss << "{";
+        std::ostringstream objval;
+        objval << "{";
         for (auto& field : summary.get_fields()) {
-            ss << field.name << ": " << field.value << ", ";
+            objval << field.name << ": " << field.value << ", ";
         }
-        ss << "}" << std::endl;
+        objval << "}";
+
+        t | fac->GetObjectName() | tag | idx | objval.str();
     }
+    t.Render(ss);
     return ss.str();
 }
 

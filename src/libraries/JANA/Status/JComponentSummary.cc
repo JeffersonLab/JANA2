@@ -13,32 +13,32 @@ std::ostream& operator<<(std::ostream& os, JComponentSummary const& cs) {
     os << std::left;
     os << "  SOURCES" << std::endl;
     JTablePrinter sourcesTable;
-    sourcesTable.addColumn("Plugin");
-    sourcesTable.addColumn("Name");
-    sourcesTable.addColumn("Source");
+    sourcesTable.AddColumn("Plugin");
+    sourcesTable.AddColumn("Name");
+    sourcesTable.AddColumn("Source");
     for (const auto& source : cs.event_sources) {
 	sourcesTable | source.plugin_name | source.type_name | source.source_name;
     }
-    sourcesTable.render(os);
+    sourcesTable.Render(os);
     os << "  PROCESSORS" << std::endl;
     JTablePrinter procsTable;
-    procsTable.addColumn("Plugin");
-    procsTable.addColumn("Name");
+    procsTable.AddColumn("Plugin");
+    procsTable.AddColumn("Name");
     for (const auto& proc : cs.event_processors) {
 	procsTable | proc.plugin_name | proc.type_name;
     }
-    procsTable.render(os);
+    procsTable.Render(os);
 
     os << "  FACTORIES" << std::endl;
 
     JTablePrinter factoryTable;
-    factoryTable.addColumn("Plugin");
-    factoryTable.addColumn("Object name");
-    factoryTable.addColumn("Tag");
+    factoryTable.AddColumn("Plugin");
+    factoryTable.AddColumn("Object name");
+    factoryTable.AddColumn("Tag");
     for (const auto& factory : cs.factories) {
         factoryTable | factory.plugin_name | factory.object_name | factory.factory_tag;
     }
-    factoryTable.render(os);
+    factoryTable.Render(os);
     return os;
 
 }

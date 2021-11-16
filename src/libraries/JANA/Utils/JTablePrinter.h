@@ -40,13 +40,35 @@ public:
     int indent = 2;
     int cell_margin = 2;
 
-    Column& addColumn(std::string header);
-    JTablePrinter::Column& addColumn(std::string header, int desired_width);
-    JTablePrinter& operator| (std::string cell);
+    JTablePrinter::Column& AddColumn(std::string header, Justify justify=Justify::Left, int desired_width=0);
     void FormatCell(std::ostream& os, std::string contents, int max_width, Justify justify);
-    void render(std::ostream& os);
+    void Render(std::ostream& os);
+
+    template <typename T> JTablePrinter& operator|(T);
+
 
 };
 
+template <typename T>
+JTablePrinter& JTablePrinter::operator|(T cell) {
+    std::ostringstream ss;
+    ss << cell;
+    return (*this) | ss.str();
+}
+
+template <>
+inline JTablePrinter& JTablePrinter::operator|(std::string cell) {
+    auto len = cell.size();
+    if (columns[current_column].contents_width < len) {
+	columns[current_column].contents_width = len;
+    }
+    columns[current_column].values.push_back(cell);
+    current_column += 1;
+    if (current_column >= columns.size()) {
+	current_column = 0;
+	current_row += 1;
+    }
+    return *this;
+}
 
 #endif //JANA2_JTABLEPRINTER_H

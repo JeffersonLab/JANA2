@@ -5,36 +5,18 @@
 
 #include "JTablePrinter.h"
 
-JTablePrinter::Column& JTablePrinter::addColumn(std::string header) {
-    columns.emplace_back();
-    Column& col = columns.back();
-    col.header = header;
-    col.contents_width = header.length();
-    return col;
-}
 
-JTablePrinter::Column& JTablePrinter::addColumn(std::string header, int desired_width) {
+JTablePrinter::Column& JTablePrinter::AddColumn(std::string header, Justify justify, int desired_width) {
     columns.emplace_back();
     Column& col = columns.back();
-    col.header = header;
+    col.header = std::move(header);
+    col.contents_width = col.header.size();
+    col.justify = justify;
     col.desired_width = desired_width;
-    col.use_desired_width = true;
+    col.use_desired_width = (desired_width != 0);
     return col;
 }
 
-JTablePrinter& JTablePrinter::operator| (std::string cell) {
-    auto len = cell.size();
-    if (columns[current_column].contents_width < len) {
-        columns[current_column].contents_width = len;
-    }
-    columns[current_column].values.push_back(cell);
-    current_column += 1;
-    if (current_column >= columns.size()) {
-        current_column = 0;
-        current_row += 1;
-    }
-    return *this;
-}
 
 void JTablePrinter::FormatCell(std::ostream& os, std::string contents, int max_width, Justify justify) {
     auto cs = contents.size();
@@ -42,10 +24,10 @@ void JTablePrinter::FormatCell(std::ostream& os, std::string contents, int max_w
         os << contents.substr(0, max_width-2) << "\u2026";
     }
     else if (justify == Justify::Left) {
-        os << std::setw(max_width) << std::left << contents;
+        os << std::left << std::setw(max_width) << contents;
     }
     else if (justify == Justify::Right) {
-        os << std::setw(max_width) << std::right << contents;
+        os << std::right << std::setw(max_width) << contents;
     }
     else {
         int lpad = (max_width-cs)/2; // center slightly to the left
@@ -56,7 +38,7 @@ void JTablePrinter::FormatCell(std::ostream& os, std::string contents, int max_w
     }
 }
 
-void JTablePrinter::render(std::ostream& os) {
+void JTablePrinter::Render(std::ostream& os) {
 
     int total_rows = current_row;
     current_row = 0;
