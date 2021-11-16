@@ -3,6 +3,7 @@
 #include <JANA/JEventSource.h>
 #include <iostream>
 #include <sstream>
+#include <stack>
 
 
 JIntrospection::JIntrospection(const JEvent* event) : m_event(event) {}
@@ -17,6 +18,37 @@ void JIntrospection::BuildIndices() {
         m_factory_index.insert({key, value});
     }
     m_indexes_built = true;
+}
+
+std::vector<const JObject*> JIntrospection::FindAllAncestors(const JObject* root) const {
+    std::vector<const JObject*> all_ancestors;
+    std::stack<const JObject*> to_visit;
+    to_visit.push(root);
+    while (!to_visit.empty()) {
+        auto current_obj = to_visit.top();
+        to_visit.pop();
+        all_ancestors.push_back(current_obj);
+        std::vector<const JObject*> current_ancestors;
+        current_obj->GetT<JObject>(current_ancestors);
+        for (auto obj : current_ancestors) {
+            to_visit.push(obj);
+        }
+    }
+    return all_ancestors;
+}
+
+std::pair<JFactory*, size_t> JIntrospection::LocateObject(const JEvent& event, const JObject* obj) {
+    auto objName = obj->className();
+    for (auto fac : event.GetAllFactories()) {
+        if (fac->GetObjectName() == objName) {
+            int i = 0;
+            for (auto o : fac->GetAs<JObject>()) { // Won't trigger factory creation if it hasn't already happened
+                if (obj == o) return {fac, i};
+                i++;
+            }
+        }
+    }
+    return {nullptr, -1};
 }
 
 void JIntrospection::PrintEvent() {
@@ -199,13 +231,33 @@ std::string JIntrospection::StringifyAssociations(int factory_idx, int object_id
         return "(Error: Object index out of range)\n";
     }
     auto obj = objs[object_idx];
-    std::set<JObject*> assocs;
-    obj->
-    // auto assocs = obj->GetAssociatedAncestors(assocs);
-    return "(Associations)";
+    auto ancestors = FindAllAncestors(obj);
+    if (ancestors.empty()) return "(No associations found)\n";
+    std::ostringstream ss;
+    for (auto ancestor : FindAllAncestors(obj)) {
+        JFactory* fac;
+        size_t idx;
+        std::tie(fac, idx) = LocateObject(*m_event, obj);
+        if (fac == nullptr) {
+            ss << "(Error: Unable to find factory containing object with classname '" << obj->className() << "')" << std::endl;
+            continue;
+        }
+        JObjectSummary summary;
+        obj->Summarize(summary);
+
+        auto tag = fac->GetTag();
+        if (tag.empty()) tag = "(no tag)";
+        ss << fac->GetObjectName() << "\t" << tag << "\t" << idx << "\t";
+        ss << "{";
+        for (auto& field : summary.get_fields()) {
+            ss << field.name << ": " << field.value << ", ";
+        }
+        ss << "}" << std::endl;
+    }
+    return ss.str();
 }
 
-std::pair<std::string, std::vector<int>> JIntrospection::Parse(std::string user_input) {
+std::pair<std::string, std::vector<int>> JIntrospection::Parse(const std::string& user_input) {
     std::string token;
     std::stringstream ss(user_input);
     ss >> token;

@@ -19,7 +19,7 @@ class JIntrospection {
     std::map<std::pair<std::string, std::string>, std::pair<int, const JFactory*>> m_factory_index;
 
 public:
-    JIntrospection(const JEvent* event);
+    explicit JIntrospection(const JEvent* event);
     void PrintEvent();
     void PrintFactories();
     void PrintFactory(int factory_idx);
@@ -41,8 +41,9 @@ private:
     std::string StringifyAssociations(int factory_idx, int object_idx);
 
     void BuildIndices();
-
-    std::pair<std::string, std::vector<int>> Parse(std::string);
+    std::vector<const JObject*> FindAllAncestors(const JObject*) const;
+    static std::pair<JFactory*, size_t> LocateObject(const JEvent&, const JObject* obj);
+    static std::pair<std::string, std::vector<int>> Parse(const std::string&);
 };
 
 

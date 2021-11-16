@@ -11,10 +11,14 @@
 
 struct JTestEntangledEventData : public JObject {
     std::shared_ptr<std::vector<char>> buffer;
+
+    JOBJECT_PUBLIC(JTestEntangledEventData)
 };
 
 struct JTestEventData : public JObject {
     std::vector<char> buffer;
+
+    JOBJECT_PUBLIC(JTestEventData)
 
     void Summarize(JObjectSummary& summary) const override {
         summary.add(buffer.size(), "buffer_size", "%d");
@@ -23,6 +27,8 @@ struct JTestEventData : public JObject {
 
 struct JTestTrackData : public JObject {
     std::vector<char> buffer;
+
+    JOBJECT_PUBLIC(JTestTrackData)
 
     void Summarize(JObjectSummary& summary) const override {
         size_t nitems = std::min(buffer.size(), (size_t) 5);
@@ -36,6 +42,7 @@ struct JTestTrackData : public JObject {
 
 struct JTestHistogramData : public JObject {
     std::vector<char> buffer;
+    JOBJECT_PUBLIC(JTestHistogramData)
 };
 
 #endif //JANA2_JTESTEVENTCONTEXTS_H
