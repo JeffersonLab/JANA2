@@ -55,9 +55,10 @@ public:
     inline void FinishFactoryCall(JDataSource data_source=JDataSource::DATA_FROM_FACTORY);
     inline std::vector<JCallGraphNode> GetCallGraph() {return m_call_graph;} ///< Get the current factory call stack
     inline void AddToCallGraph(JCallGraphNode &cs) {if(m_enabled) m_call_graph.push_back(cs);} ///< Add specified item to call stack record but only if record_call_stack is true
-    inline void AddToErrorCallStack(JErrorCallStack &cs) {m_error_call_stack.push_back(cs);} ///< Add layer to the factory call stack
+    inline void AddToErrorCallStack(JErrorCallStack &cs) {if (m_enabled) m_error_call_stack.push_back(cs);} ///< Add layer to the factory call stack
     inline std::vector<JErrorCallStack> GetErrorCallStack(){return m_error_call_stack;} ///< Get the current factory error call stack
     void PrintErrorCallStack(); ///< Print the current factory call stack
+    void Reset();
 };
 
 
@@ -70,6 +71,7 @@ void JCallGraphRecorder::StartFactoryCall(const std::string& callee_name, const 
     /// above, but may also be used by external actors to manipulate
     /// the call stack (presumably for good and not evil).
 
+    if (!m_enabled) return;
     struct itimerval tmr;
     getitimer(ITIMER_PROF, &tmr);
     double start_time = tmr.it_value.tv_sec + tmr.it_value.tv_usec / 1.0E6;
@@ -87,6 +89,7 @@ void JCallGraphRecorder::FinishFactoryCall(JCallGraphRecorder::JDataSource data_
     /// with a previous call to CallStackStart which was
     /// used to fill the cs structure.
 
+    if (!m_enabled) return;
     assert(!m_call_stack.empty());
 
     struct itimerval tmr;

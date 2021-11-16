@@ -73,6 +73,7 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
             }
             event->SetSequential(false);
             event->SetJApplication(m_source->GetApplication());
+            event->GetJCallGraphRecorder()->Reset();
             in_status = m_source->DoNext(event);
             if (in_status == JEventSource::ReturnStatus::Success) {
                 m_chunk_buffer.push_back(std::move(event));

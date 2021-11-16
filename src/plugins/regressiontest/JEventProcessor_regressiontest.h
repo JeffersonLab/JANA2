@@ -28,6 +28,8 @@ public:
     void Finish() override;
 
 private:
+    std::mutex m_mutex;
+    uint64_t m_next_event_nr = 0;
     map<tuple<uint64_t, string, string>, uint64_t> counts;
     map<tuple<uint64_t, string, string, int>, string> summaries;
     map<tuple<uint64_t, string, string, int, string>, string> summaries_expanded;

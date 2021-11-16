@@ -13,6 +13,11 @@ using std::vector;
 using std::string;
 using std::endl;
 
+void JCallGraphRecorder::Reset() {
+    m_call_graph.clear();
+    m_call_stack.clear();
+    m_error_call_stack.clear();
+}
 
 void JCallGraphRecorder::PrintErrorCallStack() {
 

@@ -6,6 +6,7 @@
 // Richard Jones, 1-July-2012
 
 #include "JEventProcessor_regressiontest.h"
+#include "JIntrospection.h"
 
 #include <tuple>
 
@@ -15,6 +16,7 @@ extern "C" {
 void InitPlugin(JApplication *app) {
     InitJANAPlugin(app);
     app->Add(new JEventProcessor_regressiontest());
+    app->SetParameterValue("RECORD_CALL_STACK", true);
 }
 } // "extern C"
 
@@ -24,10 +26,16 @@ void InitPlugin(JApplication *app) {
 void JEventProcessor_regressiontest::Init()
 {
     auto app = GetApplication();
+    app->SetTicker(false);
     app->SetDefaultParameter("regressiontest:counts_file_name", counts_file_name);
     app->SetDefaultParameter("regressiontest:summaries_file_name", summaries_file_name);
     app->SetDefaultParameter("regressiontest:expand_summaries", expand_summaries);
+    app->SetDefaultParameter("regressiontest:expand_summaries", expand_summaries);
 
+
+    std::lock_guard<std::mutex> lock(m_mutex);
+    std::cout << "Welcome to JANA's interactive inspector!" << std::endl;
+    JIntrospection::PrintHelp();
 }
 
 //-------------------------------
@@ -47,7 +55,11 @@ void JEventProcessor_regressiontest::Process(const std::shared_ptr<const JEvent>
     auto run_nr = event->GetRunNumber();
     auto facs = event->GetAllFactories();
 
-    std::cout << "Processing event number " << evt_nr << std::endl;
+    std::lock_guard<std::mutex> lock(m_mutex);
+    JIntrospection introspection (event.get());
+    if ((evt_nr == m_next_event_nr) || (m_next_event_nr == 0)) {
+        m_next_event_nr = introspection.DoReplLoop(event->GetEventNumber());
+    }
 
     for (auto fac : facs) {
         auto item_ct = fac->Create(event, app, run_nr);
@@ -76,7 +88,6 @@ void JEventProcessor_regressiontest::Process(const std::shared_ptr<const JEvent>
                 auto key = make_tuple(evt_nr, fac->GetObjectName(), fac->GetTag(), i++);
                 summaries.insert({key, ss.str()});
             }
-
         }
     }
 }

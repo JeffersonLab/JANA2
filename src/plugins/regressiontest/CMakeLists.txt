@@ -1,5 +1,5 @@
 
-add_library(regressiontest SHARED JEventProcessor_regressiontest.cc)
+add_library(regressiontest SHARED JEventProcessor_regressiontest.cc JIntrospection.cc)
 find_package(Threads REQUIRED)
 target_link_libraries(regressiontest jana2)
 target_link_libraries(regressiontest Threads::Threads)
