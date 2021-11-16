@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <JANA/Utils/JTablePrinter.h>
 #include "JComponentSummary.h"
 
 std::ostream& operator<<(std::ostream& os, JComponentSummary const& cs) {
@@ -11,37 +12,33 @@ std::ostream& operator<<(std::ostream& os, JComponentSummary const& cs) {
     os << "Component Summary" << std::endl << std::endl;
     os << std::left;
     os << "  SOURCES" << std::endl;
-    os << "  +--------------------------+-------------------------------+-------------------------------+" << std::endl;
-    os << "  | Plugin                   | Name                          | Source                        |" << std::endl;
-    os << "  +--------------------------+-------------------------------+-------------------------------+" << std::endl;
+    JTablePrinter sourcesTable;
+    sourcesTable.addColumn("Plugin");
+    sourcesTable.addColumn("Name");
+    sourcesTable.addColumn("Source");
     for (const auto& source : cs.event_sources) {
-        os << "  | " << std::setw(25) << source.plugin_name
-           << "| " << std::setw(30) << source.type_name
-           << "| " << std::setw(30) << source.source_name
-           << "|" << std::endl;
+	sourcesTable | source.plugin_name | source.type_name | source.source_name;
     }
-    os << "  +--------------------------+-------------------------------+-------------------------------+" << std::endl;
+    sourcesTable.render(os);
     os << "  PROCESSORS" << std::endl;
-    os << "  +--------------------------+---------------------------------------------------------------+" << std::endl;
-    os << "  | Plugin                   | Name                                                          |" << std::endl;
-    os << "  +--------------------------+---------------------------------------------------------------+" << std::endl;
+    JTablePrinter procsTable;
+    procsTable.addColumn("Plugin");
+    procsTable.addColumn("Name");
     for (const auto& proc : cs.event_processors) {
-        os << "  | " << std::setw(25) << proc.plugin_name
-           << "| " << std::setw(62) << proc.type_name
-           << "|" << std::endl;
+	procsTable | proc.plugin_name | proc.type_name;
     }
-    os << "  +--------------------------+---------------------------------------------------------------+" << std::endl;
+    procsTable.render(os);
+
     os << "  FACTORIES" << std::endl;
-    os << "  +--------------------------+-------------------------------+-------------------------------+" << std::endl;
-    os << "  | Plugin                   | Object name                   | Tag                           |" << std::endl;
-    os << "  +--------------------------+-------------------------------+-------------------------------+" << std::endl;
+
+    JTablePrinter factoryTable;
+    factoryTable.addColumn("Plugin");
+    factoryTable.addColumn("Object name");
+    factoryTable.addColumn("Tag");
     for (const auto& factory : cs.factories) {
-        os << "  | " << std::setw(25) << factory.plugin_name
-           << "| " << std::setw(30) << factory.object_name
-           << "| " << std::setw(30) << factory.factory_tag
-           << "|" << std::endl;
+        factoryTable | factory.plugin_name | factory.object_name | factory.factory_tag;
     }
-    os << "  +--------------------------+-------------------------------+-------------------------------+" << std::endl;
+    factoryTable.render(os);
     return os;
 
 }

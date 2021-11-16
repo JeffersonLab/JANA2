@@ -85,6 +85,8 @@ set(JANA2_SOURCES
     Utils/JAutoActivator.cc
     Utils/JAutoActivator.h
     Utils/JAny.h
+    Utils/JTablePrinter.cc
+    Utils/JTablePrinter.h
 
     Calibrations/JCalibration.cc
     Calibrations/JCalibration.h

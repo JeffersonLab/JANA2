@@ -34,8 +34,7 @@ void JEventProcessor_regressiontest::Init()
 
 
     std::lock_guard<std::mutex> lock(m_mutex);
-    std::cout << "Welcome to JANA's interactive inspector!" << std::endl;
-    JIntrospection::PrintHelp();
+    std::cout << "Welcome to JANA's interactive inspector! Type `PrintHelp` to see available commands." << std::endl;
 }
 
 //-------------------------------
