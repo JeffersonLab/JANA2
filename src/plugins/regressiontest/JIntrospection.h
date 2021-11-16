@@ -8,6 +8,7 @@
 #include <vector>
 #include <tuple>
 #include <mutex>
+#include <iostream>
 
 #include <JANA/JEvent.h>
 
@@ -17,6 +18,8 @@ class JIntrospection {
     const JEvent* m_event;
     bool m_indexes_built = false;
     std::map<std::pair<std::string, std::string>, std::pair<int, const JFactory*>> m_factory_index;
+    std::ostream& m_out = std::cout;
+    std::istream& m_in = std::cin;
 
 public:
     explicit JIntrospection(const JEvent* event);
@@ -27,7 +30,7 @@ public:
     void PrintJObject(int factory_idx, int object_idx);
     void PrintAncestors(int factory_idx);
     void PrintAssociations(int factory_idx, int object_idx);
-    static void PrintHelp();
+    void PrintHelp();
 
     uint64_t DoReplLoop(uint64_t current_evt_nr);
 

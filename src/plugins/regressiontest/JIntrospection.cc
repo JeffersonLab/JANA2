@@ -1,7 +1,6 @@
 
 #include "JIntrospection.h"
 #include <JANA/JEventSource.h>
-#include <iostream>
 #include <sstream>
 #include <stack>
 
@@ -52,41 +51,41 @@ std::pair<JFactory*, size_t> JIntrospection::LocateObject(const JEvent& event, c
 }
 
 void JIntrospection::PrintEvent() {
-    std::cout << StringifyEvent() << std::endl;
+    m_out << StringifyEvent() << std::endl;
 }
 void JIntrospection::PrintFactories() {
-    std::cout << StringifyFactories() << std::endl;
+    m_out << StringifyFactories() << std::endl;
 }
 void JIntrospection::PrintFactory(int factory_idx) {
-    std::cout << StringifyFactory(factory_idx) << std::endl;
+    m_out << StringifyFactory(factory_idx) << std::endl;
 }
 void JIntrospection::PrintJObjects(int factory_idx) {
-    std::cout << StringifyJObjects(factory_idx) << std::endl;
+    m_out << StringifyJObjects(factory_idx) << std::endl;
 }
 void JIntrospection::PrintJObject(int factory_idx, int object_idx) {
-    std::cout << StringifyJObject(factory_idx, object_idx) << std::endl;
+    m_out << StringifyJObject(factory_idx, object_idx) << std::endl;
 }
 void JIntrospection::PrintAncestors(int factory_idx) {
-    std::cout << StringifyAncestors(factory_idx) << std::endl;
+    m_out << StringifyAncestors(factory_idx) << std::endl;
 }
 void JIntrospection::PrintAssociations(int factory_idx, int object_idx) {
-    std::cout << StringifyAssociations(factory_idx, object_idx) << std::endl;
+    m_out << StringifyAssociations(factory_idx, object_idx) << std::endl;
 }
 void JIntrospection::PrintHelp() {
-    std::cout << "----------------------" << std::endl;
-    std::cout << "Available commands" << std::endl;
-    std::cout << "----------------------" << std::endl;
-    std::cout << "PrintEvent" << std::endl;
-    std::cout << "PrintFactories" << std::endl;
-    std::cout << "PrintFactory fac_idx" << std::endl;
-    std::cout << "PrintJObjects fac_idx" << std::endl;
-    std::cout << "PrintJObject fac_idx obj_idx" << std::endl;
-    std::cout << "PrintAncestors fac_idx" << std::endl;
-    std::cout << "PrintAssociations fac_idx obj_idx" << std::endl;
-    std::cout << "Next [evt_nr]" << std::endl;
-    std::cout << "Finish" << std::endl;
-    std::cout << "Quit" << std::endl;
-    std::cout << "----------------------" << std::endl;
+    m_out << "----------------------" << std::endl;
+    m_out << "Available commands" << std::endl;
+    m_out << "----------------------" << std::endl;
+    m_out << "PrintEvent" << std::endl;
+    m_out << "PrintFactories" << std::endl;
+    m_out << "PrintFactory fac_idx" << std::endl;
+    m_out << "PrintJObjects fac_idx" << std::endl;
+    m_out << "PrintJObject fac_idx obj_idx" << std::endl;
+    m_out << "PrintAncestors fac_idx" << std::endl;
+    m_out << "PrintAssociations fac_idx obj_idx" << std::endl;
+    m_out << "Next [evt_nr]" << std::endl;
+    m_out << "Finish" << std::endl;
+    m_out << "Quit" << std::endl;
+    m_out << "----------------------" << std::endl;
 }
 std::string JIntrospection::StringifyEvent() {
     auto className = m_event->GetJEventSource()->GetTypeName();
@@ -278,8 +277,8 @@ uint64_t JIntrospection::DoReplLoop(uint64_t next_evt_nr) {
     PrintEvent();
     while (stay_in_loop) {
         std::string user_input;
-        std::cout << "JANA: ";
-        std::getline(std::cin, user_input);
+        m_out << "JANA: ";
+        std::getline(m_in, user_input);
         auto result = Parse(user_input);
         auto token = result.first;
         auto args = result.second;
@@ -326,7 +325,7 @@ uint64_t JIntrospection::DoReplLoop(uint64_t next_evt_nr) {
             // Do nothing
         }
         else {
-            std::cout << "Error: Unrecognized command, or wrong argument count" << std::endl;
+            m_out << "Error: Unrecognized command, or wrong argument count" << std::endl;
             PrintHelp();
         }
     }
