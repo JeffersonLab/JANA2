@@ -9,6 +9,7 @@
 #include <string>
 #include <fstream>
 #include <cstring>
+#include <JANA/Utils/JTablePrinter.h>
 
 using namespace std;
 
@@ -97,24 +98,17 @@ void JParameterManager::PrintParameters(bool all) {
         return;
     }
 
-    // Print title/header
-    JLogMessage m;
-    string title("Config. Parameters");
-    uint32_t half_title_len = 1 + title.length() / 2;
-    if (max_key_len < half_title_len) max_key_len = half_title_len;
-    m << "Parameters\n\n"
-        << string(max_key_len + 4 - half_title_len, ' ') << title << "\n"
-        << "  " << string(2 * max_key_len + 3, '=') << "\n"
-        << string(max_key_len / 2, ' ') << "name" << string(max_key_len, ' ') << "value" << "\n"
-        << "  " << string(max_key_len, '-') << "   " << string(max_key_len, '-') << "\n";
-
-    // Print all parameters
+    JTablePrinter table;
+    table.AddColumn("Name", JTablePrinter::Justify::Right);
+    table.AddColumn("Value");
     for (string& key : keys) {
         auto name = m_parameters[key]->GetKey();
         string val = m_parameters[key]->GetValue();
-        m << string(max_key_len + 2 - key.length(), ' ') << name << " = " << val << "\n";
+        table | name | val;
     }
-    std::move(m) << LOG_END;
+    std::ostringstream ss;
+    table.Render(ss);
+    LOG << "Configuration Parameters\n"  << ss.str() << LOG_END;
 }
 
 
