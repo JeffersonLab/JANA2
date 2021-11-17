@@ -1,13 +1,20 @@
 
 #include "JInspector.h"
 #include <JANA/JEventSource.h>
-#include <sstream>
 #include <stack>
 #include <JANA/Utils/JTablePrinter.h>
 
 
-JInspector::JInspector(const JEvent* event) : m_event(event) {}
+JInspector::JInspector(const JEvent* event) : m_event(event) {
+    event->GetJApplication()->SetDefaultParameter("jana:enable_inspector", m_enabled);
+    event->GetJApplication()->SetDefaultParameter("jana:inspector_format", m_format, "Options are 'table','json'");
+}
 
+void JInspector::SetEvent(const JEvent* event) {
+    m_event = event;
+    m_indexes_built = false;
+    m_factory_index.clear();
+}
 void JInspector::BuildIndices() {
     if (m_indexes_built) return;
     auto facs = m_event->GetFactorySet()->GetAllFactories();
@@ -20,7 +27,7 @@ void JInspector::BuildIndices() {
     m_indexes_built = true;
 }
 
-std::vector<const JObject*> JInspector::FindAllAncestors(const JObject* root) const {
+std::vector<const JObject*> JInspector::FindAllAncestors(const JObject* root) {
     std::vector<const JObject*> all_ancestors;
     std::stack<const JObject*> to_visit;
     to_visit.push(root);
@@ -52,78 +59,82 @@ std::pair<JFactory*, size_t> JInspector::LocateObject(const JEvent& event, const
 }
 
 void JInspector::PrintEvent() {
-    m_out << StringifyEvent() << std::endl;
+    ToText(m_event, m_format==Format::Json, m_out);
 }
 void JInspector::PrintFactories() {
-    m_out << StringifyFactories() << std::endl;
+    auto facs = m_event->GetAllFactories();
+    ToText(facs, m_format==Format::Json, m_out);
 }
 void JInspector::PrintFactory(int factory_idx) {
-    m_out << StringifyFactory(factory_idx) << std::endl;
-}
-void JInspector::PrintJObjects(int factory_idx) {
-    m_out << StringifyJObjects(factory_idx) << std::endl;
-}
-void JInspector::PrintJObject(int factory_idx, int object_idx) {
-    m_out << StringifyJObject(factory_idx, object_idx) << std::endl;
-}
-void JInspector::PrintAncestors(int factory_idx) {
-    m_out << StringifyAncestors(factory_idx) << std::endl;
-}
-void JInspector::PrintAssociations(int factory_idx, int object_idx) {
-    m_out << StringifyAssociations(factory_idx, object_idx) << std::endl;
-}
-void JInspector::PrintHelp() {
-    m_out << "----------------------" << std::endl;
-    m_out << "Available commands" << std::endl;
-    m_out << "----------------------" << std::endl;
-    m_out << "PrintEvent" << std::endl;
-    m_out << "PrintFactories" << std::endl;
-    m_out << "PrintFactory fac_idx" << std::endl;
-    m_out << "PrintJObjects fac_idx" << std::endl;
-    m_out << "PrintJObject fac_idx obj_idx" << std::endl;
-    m_out << "PrintAncestors fac_idx" << std::endl;
-    m_out << "PrintAssociations fac_idx obj_idx" << std::endl;
-    m_out << "Next [evt_nr]" << std::endl;
-    m_out << "Finish" << std::endl;
-    m_out << "Quit" << std::endl;
-    m_out << "----------------------" << std::endl;
-}
-std::string JInspector::StringifyEvent() {
-    auto className = m_event->GetJEventSource()->GetTypeName();
-    if (className.empty()) className = "(unknown)";
-    std::ostringstream ss;
-    ss << "Run number:   " << m_event->GetRunNumber() << std::endl;
-    ss << "Event number: " << m_event->GetEventNumber() << std::endl;
-    ss << "Event source: " << m_event->GetJEventSource()->GetResourceName() << std::endl;
-    ss << "Class name:   " << className << std::endl;
-    return ss.str();
-}
-std::string JInspector::StringifyFactories() {
-    auto facs = m_event->GetFactorySet()->GetAllFactories();
-    std::ostringstream ss;
-    size_t idx = 0;
-    JTablePrinter t;
-    t.AddColumn("Index", JTablePrinter::Justify::Right);
-    t.AddColumn("Factory name");
-    t.AddColumn("Object name");
-    t.AddColumn("Tag");
-    t.AddColumn("Object count", JTablePrinter::Justify::Right);
-    for (auto fac : facs) {
-        auto facName = fac->GetFactoryName();
-        if (facName.empty()) facName = "(no factory name)";
-        auto tag = fac->GetTag();
-        if (tag.empty()) tag = "(no tag)";
-        t | idx++ | facName | fac->GetObjectName() | tag | fac->GetNumObjects();
-    }
-    t.Render(ss);
-    return ss.str();
-}
-std::string JInspector::StringifyFactory(int factory_idx) {
     auto facs = m_event->GetFactorySet()->GetAllFactories();
     if (factory_idx >= facs.size()) {
-        return "(Error: Factory index out of range)\n";
+        m_out << "(Error: Factory index out of range)\n";
+        return;
     }
     auto fac = facs[factory_idx];
+    ToText(fac, m_format==Format::Json, m_out);
+}
+void JInspector::PrintObjects(int factory_idx) {
+    auto facs = m_event->GetFactorySet()->GetAllFactories();
+    if (factory_idx >= facs.size()) {
+        m_out << "(Error: Factory index out of range)" << std::endl;
+        return;
+    }
+    auto objs = facs[factory_idx]->GetAs<JObject>();
+    ToText(objs, m_format==Format::Json, m_out);
+}
+void JInspector::PrintObject(int factory_idx, int object_idx) {
+    auto facs = m_event->GetFactorySet()->GetAllFactories();
+    if (factory_idx >= facs.size()) {
+        m_out << "(Error: Factory index out of range)" << std::endl;
+        return;
+    }
+    auto objs = facs[factory_idx]->GetAs<JObject>();
+    if (object_idx >= objs.size()) {
+        m_out << "(Error: Object index out of range)" << std::endl;
+        return;
+    }
+    auto obj = objs[object_idx];
+    ToText(obj, m_format==Format::Json, m_out);
+}
+void JInspector::PrintHelp() {
+    m_out << "  -----------------------------------------" << std::endl;
+    m_out << "  Available commands" << std::endl;
+    m_out << "  -----------------------------------------" << std::endl;
+    m_out << "  pe   PrintEvent" << std::endl;
+    m_out << "  pf   PrintFactories" << std::endl;
+    m_out << "  pf   PrintFactory fac_idx" << std::endl;
+    m_out << "  po   PrintObjects fac_idx" << std::endl;
+    m_out << "  po   PrintObject fac_idx obj_idx" << std::endl;
+    m_out << "  pfa  PrintFactoryAncestors fac_idx" << std::endl;
+    m_out << "  poa  PrintObjectAncestors fac_idx obj_idx" << std::endl;
+    m_out << "  vt   ViewAsTable" << std::endl;
+    m_out << "  vj   ViewAsJson" << std::endl;
+    m_out << "  n    Next [evt_nr]" << std::endl;
+    m_out << "  f    Finish" << std::endl;
+    m_out << "  q    Quit" << std::endl;
+    m_out << "  h    Help" << std::endl;
+    m_out << "  -----------------------------------------" << std::endl;
+}
+void JInspector::ToText(const JEvent* event, bool asJson, std::ostream& out) {
+    auto className = event->GetJEventSource()->GetTypeName();
+    if (className.empty()) className = "(unknown)";
+    if (asJson) {
+        out << "{ \"run_number\": " << event->GetRunNumber();
+        out << ", \"event_number\": " << event->GetEventNumber();
+        out << ", \"source\": \"" << event->GetJEventSource()->GetResourceName();
+        out << "\", \"class_name\": \"" << className << "\"}";
+        out << std::endl;
+    }
+    else {
+        out << "Run number:   " << event->GetRunNumber() << std::endl;
+        out << "Event number: " << event->GetEventNumber() << std::endl;
+        out << "Event source: " << event->GetJEventSource()->GetResourceName() << std::endl;
+        out << "Class name:   " << className << std::endl;
+    }
+}
+
+void JInspector::ToText(JFactory* fac, bool asJson, std::ostream& out) {
 
     auto pluginName = fac->GetPluginName();
     if (pluginName.empty()) pluginName = "(no plugin)";
@@ -144,62 +155,164 @@ std::string JInspector::StringifyFactory(int factory_idx) {
         default: creationStatus = "Unknown";
     }
 
-
-    std::ostringstream ss;
-    ss << "Plugin name          " << pluginName << std::endl;
-    ss << "Factory name         " << factoryName << std::endl;
-    ss << "Object name          " << fac->GetObjectName() << std::endl;
-    ss << "Tag                  " << tag << std::endl;
-    ss << "Creation status      " << creationStatus << std::endl;
-    ss << "Object count         " << fac->GetNumObjects() << std::endl;
-    ss << "Persistent flag      " << fac->TestFactoryFlag(JFactory::PERSISTENT) << std::endl;
-    ss << "NotObjectOwner flag  " << fac->TestFactoryFlag(JFactory::NOT_OBJECT_OWNER) << std::endl;
-
-    return ss.str();
-}
-std::string JInspector::StringifyJObjects(int factory_idx) {
-    auto facs = m_event->GetFactorySet()->GetAllFactories();
-    if (factory_idx >= facs.size()) {
-        return "(Error: Factory index out of range)\n";
+    if (!asJson) {
+        out << "Plugin name          " << pluginName << std::endl;
+        out << "Factory name         " << factoryName << std::endl;
+        out << "Object name          " << fac->GetObjectName() << std::endl;
+        out << "Tag                  " << tag << std::endl;
+        out << "Creation status      " << creationStatus << std::endl;
+        out << "Object count         " << fac->GetNumObjects() << std::endl;
+        out << "Persistent flag      " << fac->TestFactoryFlag(JFactory::PERSISTENT) << std::endl;
+        out << "NotObjectOwner flag  " << fac->TestFactoryFlag(JFactory::NOT_OBJECT_OWNER) << std::endl;
     }
-    auto objs = facs[factory_idx]->GetAs<JObject>();
-    std::ostringstream ss;
+    else {
+        out << "{" << std::endl;
+        out << "  \"plugin_name\":   \"" << pluginName << "\"," << std::endl;
+        out << "  \"factory_name\":  \"" << factoryName << "\"," << std::endl;
+        out << "  \"object_name\":   \"" << fac->GetObjectName() << "\"," << std::endl;
+        out << "  \"tag\":           \"" << tag << "\"," << std::endl;
+        out << "  \"creation\":      \"" << creationStatus << "\"," << std::endl;
+        out << "  \"object_count\":  " << fac->GetNumObjects() << "," << std::endl;
+        out << "  \"persistent\":    " << fac->TestFactoryFlag(JFactory::PERSISTENT) << "," << std::endl;
+        out << "  \"not_obj_owner\": " << fac->TestFactoryFlag(JFactory::NOT_OBJECT_OWNER) << std::endl;
+        out << "}" << std::endl;
+    }
+}
 
-    for (size_t i = 0; i < objs.size(); ++i) {
-        auto obj = objs[i];
-        JObjectSummary summary;
-        obj->Summarize(summary);
-        ss << i << ":\t {";
-        for (auto& field : summary.get_fields()) {
-            ss << field.name << ": " << field.value << ", ";
+void JInspector::ToText(const std::vector<JFactory*>& factories, bool asJson, std::ostream &out) {
+    size_t idx = 0;
+    if (!asJson) {
+        JTablePrinter t;
+        t.AddColumn("Index", JTablePrinter::Justify::Right);
+        t.AddColumn("Factory name");
+        t.AddColumn("Object name");
+        t.AddColumn("Tag");
+        t.AddColumn("Object count", JTablePrinter::Justify::Right);
+        for (auto fac : factories) {
+            auto facName = fac->GetFactoryName();
+            if (facName.empty()) facName = "(no factory name)";
+            auto tag = fac->GetTag();
+            if (tag.empty()) tag = "(no tag)";
+            t | idx++ | facName | fac->GetObjectName() | tag | fac->GetNumObjects();
         }
-        ss << "}" << std::endl;
+        t.Render(out);
     }
-    return ss.str();
+    else {
+        out << "{" << std::endl;
+        for (auto fac : factories) {
+            auto facName = fac->GetFactoryName();
+            if (facName.empty()) facName = "null";
+            auto tag = fac->GetTag();
+            if (tag.empty()) tag = "null";
+            out << "  " << idx++ << ": { \"factory_name\": ";
+            if (fac->GetFactoryName().empty()) {
+                out << "null, ";
+            }
+            else {
+                out << "\"" << fac->GetFactoryName() << "\", ";
+            }
+            out << "\"object_name\": \"" << fac->GetObjectName() << "\", \"tag\": ";
+            if (fac->GetTag().empty()) {
+                out << "null, ";
+            }
+            else {
+                out << "\"" << fac->GetTag() << "\", ";
+            }
+            out << "\"object_count\": " << fac->GetNumObjects();
+            out << "}," << std::endl;
+        }
+        out << "}" << std::endl;
+    }
 }
-std::string JInspector::StringifyJObject(int factory_idx, int object_idx) {
-    auto facs = m_event->GetFactorySet()->GetAllFactories();
-    if (factory_idx >= facs.size()) {
-        return "(Error: Factory index out of range)\n";
+
+void JInspector::ToText(std::vector<JObject*> objs, bool as_json, std::ostream& out) {
+
+    if (as_json) {
+        out << "{" << std::endl;
+        for (size_t i = 0; i < objs.size(); ++i) {
+            auto obj = objs[i];
+            JObjectSummary summary;
+            obj->Summarize(summary);
+            out << "  " << i << ":  {";
+            for (auto& field : summary.get_fields()) {
+                out << "\"" << field.name << "\": \"" << field.value << "\", ";
+            }
+            out << "}" << std::endl;
+        }
+        out << "}" << std::endl;
     }
-    auto objs = facs[factory_idx]->GetAs<JObject>();
-    if (object_idx >= objs.size()) {
-        return "(Error: Object index out of range)\n";
+    else {
+        JTablePrinter t;
+        std::set<std::string> fieldnames_seen;
+        std::vector<std::string> fieldnames_in_order;
+        for (auto obj : objs) {
+            JObjectSummary summary;
+            obj->Summarize(summary);
+            for (auto field : summary.get_fields()) {
+                if (fieldnames_seen.find(field.name) == fieldnames_seen.end()) {
+                    fieldnames_in_order.push_back(field.name);
+                    fieldnames_seen.insert(field.name);
+                }
+            }
+        }
+        t.AddColumn("Index");
+        for (auto fieldname : fieldnames_in_order) {
+            t.AddColumn(fieldname);
+        }
+        for (size_t i = 0; i < objs.size(); ++i) {
+            auto obj = objs[i];
+            t | i;
+            std::map<std::string, std::string> summary_map;
+            JObjectSummary summary;
+            obj->Summarize(summary);
+            for (auto& field : summary.get_fields()) {
+                summary_map[field.name] = field.value;
+            }
+            for (auto& fieldname : fieldnames_in_order) {
+                auto result = summary_map.find(fieldname);
+                if (result == summary_map.end()) {
+                    t | "(missing)";
+                }
+                else {
+                    t | result->second;
+                }
+            }
+        }
+        t.Render(out);
     }
-    auto obj = objs[object_idx];
+}
+
+void JInspector::ToText(const JObject* obj, bool asJson, std::ostream& out) {
     JObjectSummary summary;
     obj->Summarize(summary);
-    std::ostringstream ss;
-    for (auto& field : summary.get_fields()) {
-        ss << field.name << "\t" << field.value << "\t"  << field.description << std::endl;
+    if (asJson) {
+        out << "[" << std::endl;
+        for (auto& field : summary.get_fields()) {
+            out << "  { \"name\": \"" << field.name << "\", ";
+            out << "\"value\": \"" << field.value << "\", ";
+            out << "\"description\": \"" << field.description << "\" }" << std::endl;
+        }
+        out << "]" << std::endl;
     }
-    return ss.str();
+    else {
+        JTablePrinter t;
+        t.AddColumn("Field name");
+        t.AddColumn("Value");
+        t.AddColumn("Description");
+        for (auto& field : summary.get_fields()) {
+            t | field.name | field.value | field.description;
+        }
+        t.Render(out);
+    }
 }
-std::string JInspector::StringifyAncestors(int factory_idx) {
+
+void JInspector::PrintFactoryAncestors(int factory_idx) {
+
     BuildIndices();  // So that we can retrieve the integer index given the factory name/tag pair
     auto facs = m_event->GetFactorySet()->GetAllFactories();
     if (factory_idx >= facs.size()) {
-        return "(Error: Factory index out of range)\n";
+        m_out << "(Error: Factory index out of range)" << std::endl;
+        return;
     }
     auto fac = facs[factory_idx];
     auto obj_name = fac->GetObjectName();
@@ -226,37 +339,42 @@ std::string JInspector::StringifyAncestors(int factory_idx) {
         }
     }
     if (!found_anything) {
-        ss << "(No ancestors found)" << std::endl;
-        return ss.str();
+        m_out << "(No ancestors found)" << std::endl;
+        return;
     }
-    t.Render(ss);
-    return ss.str();
+    t.Render(m_out);
 }
-std::string JInspector::StringifyAssociations(int factory_idx, int object_idx) {
+
+void JInspector::PrintObjectAncestors(int factory_idx, int object_idx) {
+
     auto facs = m_event->GetFactorySet()->GetAllFactories();
     if (factory_idx >= facs.size()) {
-        return "(Error: Factory index out of range)\n";
+        m_out << "(Error: Factory index out of range)" << std::endl;
+        return;
     }
     auto objs = facs[factory_idx]->GetAs<JObject>();
-    if (object_idx >= facs.size()) {
-        return "(Error: Object index out of range)\n";
+    if (object_idx >= objs.size()) {
+        m_out << "(Error: Object index out of range)" << std::endl;
+        return;
     }
     auto obj = objs[object_idx];
     auto ancestors = FindAllAncestors(obj);
-    if (ancestors.empty()) return "(No associations found)\n";
+    if (ancestors.empty()) {
+         m_out << "(No associations found)" << std::endl;
+         return;
+    }
 
     JTablePrinter t;
     t.AddColumn("Object name");
     t.AddColumn("Tag");
     t.AddColumn("Index", JTablePrinter::Justify::Right);
     t.AddColumn("Object contents");
-    std::ostringstream ss;
     for (auto ancestor : FindAllAncestors(obj)) {
         JFactory* fac;
         size_t idx;
-        std::tie(fac, idx) = LocateObject(*m_event, obj);
+        std::tie(fac, idx) = LocateObject(*m_event, ancestor);
         if (fac == nullptr) {
-            ss << "(Error: Unable to find factory containing object with classname '" << obj->className() << "')" << std::endl;
+            m_out << "(Error: Unable to find factory containing object with classname '" << obj->className() << "')" << std::endl;
             continue;
         }
         JObjectSummary summary;
@@ -273,8 +391,7 @@ std::string JInspector::StringifyAssociations(int factory_idx, int object_idx) {
 
         t | fac->GetObjectName() | tag | idx | objval.str();
     }
-    t.Render(ss);
-    return ss.str();
+    t.Render(m_out);
 }
 
 std::pair<std::string, std::vector<int>> JInspector::Parse(const std::string& user_input) {
@@ -298,55 +415,64 @@ uint64_t JInspector::DoReplLoop(uint64_t next_evt_nr) {
     PrintEvent();
     while (stay_in_loop) {
         std::string user_input;
-        m_out << "JANA: ";
+        m_out << std::endl << "JANA: ";
         std::getline(m_in, user_input);
         auto result = Parse(user_input);
         auto token = result.first;
         auto args = result.second;
-        if (token == "PrintEvent") {
+        if (token == "PrintEvent" || token == "pe") {
             PrintEvent();
         }
-        else if (token == "PrintFactories" && args.empty()) {
+        else if ((token == "PrintFactories" || token == "pf") && args.empty()) {
             PrintFactories();
         }
-        else if (token == "PrintFactory" && (args.size() == 1)) {
+        else if ((token == "PrintFactory" || token == "pf") && (args.size() == 1)) {
             PrintFactory(args[0]);
         }
-        else if (token == "PrintJObjects" && (args.size() == 1)) {
-            PrintJObjects(args[0]);
+        else if ((token == "PrintObjects" || token == "po") && (args.size() == 1)) {
+            PrintObjects(args[0]);
         }
-        else if (token == "PrintJObject" && (args.size() == 2)) {
-            PrintJObject(args[0], args[1]);
+        else if ((token == "PrintObject" || token == "po") && (args.size() == 2)) {
+            PrintObject(args[0], args[1]);
         }
-        else if (token == "PrintAncestors" && (args.size() == 1)) {
-            PrintAncestors(args[0]);
+        else if ((token == "PrintFactoryAncestors" || token == "pfa") && (args.size() == 1)) {
+            PrintFactoryAncestors(args[0]);
         }
-        else if (token == "PrintAssociations" && (args.size() == 2)) {
-            PrintAssociations(args[0], args[1]);
+        else if ((token == "PrintObjectAncestors" || token == "poa") && (args.size() == 2)) {
+            PrintObjectAncestors(args[0], args[1]);
         }
-        else if (token == "Next") {
+        else if (token == "ViewAsTable" || token == "vt") {
+            m_format = Format::Table;
+            m_out << "(Switching to table view mode)" << std::endl;
+        }
+        else if (token == "ViewAsJson" || token == "vj") {
+            m_format = Format::Json;
+            m_out << "(Switching to JSON view mode)" << std::endl;
+        }
+        else if (token == "Next" || token == "n") {
             stay_in_loop = false;
+            m_enabled = true;
             if (args.size() > 0) {
                 next_evt_nr = args[0];
             }
         }
-        else if (token == "Finish") {
+        else if (token == "Finish" || token == "f") {
             stay_in_loop = false;
             m_enabled = false;
         }
-        else if (token == "Quit") {
+        else if (token == "Quit" || token == "q") {
             stay_in_loop = false;
             m_enabled = false;
             m_event->GetJApplication()->Quit(false);
         }
-        else if (token == "PrintHelp") {
+        else if (token == "Help" || token == "h") {
             PrintHelp();
         }
         else if (token == "") {
             // Do nothing
         }
         else {
-            m_out << "Error: Unrecognized command, or wrong argument count" << std::endl;
+            m_out << "(Error: Unrecognized command, or wrong argument count)" << std::endl;
             PrintHelp();
         }
     }

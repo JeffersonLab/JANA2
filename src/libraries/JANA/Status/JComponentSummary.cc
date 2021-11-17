@@ -17,7 +17,7 @@ std::ostream& operator<<(std::ostream& os, JComponentSummary const& cs) {
     sourcesTable.AddColumn("Name");
     sourcesTable.AddColumn("Source");
     for (const auto& source : cs.event_sources) {
-	sourcesTable | source.plugin_name | source.type_name | source.source_name;
+        sourcesTable | source.plugin_name | source.type_name | source.source_name;
     }
     sourcesTable.Render(os);
     os << "  PROCESSORS" << std::endl;
@@ -25,7 +25,7 @@ std::ostream& operator<<(std::ostream& os, JComponentSummary const& cs) {
     procsTable.AddColumn("Plugin");
     procsTable.AddColumn("Name");
     for (const auto& proc : cs.event_processors) {
-	procsTable | proc.plugin_name | proc.type_name;
+        procsTable | proc.plugin_name | proc.type_name;
     }
     procsTable.Render(os);
 

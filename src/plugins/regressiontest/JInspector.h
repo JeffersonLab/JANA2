@@ -5,16 +5,25 @@
 #define _JInspector_h_
 
 #include <string>
+#include <map>
 #include <vector>
 #include <tuple>
 #include <mutex>
 #include <iostream>
 
-#include <JANA/JEvent.h>
-
+#include <JANA/Services/JParameterManager.h>
+class JEvent;
+class JFactory;
+class JObject;
 
 class JInspector {
+
+public:
+    enum class Format {Table, Json, Tsv};
+
+private:
     bool m_enabled = true;
+    Format m_format = Format::Table;
     const JEvent* m_event;
     bool m_indexes_built = false;
     std::map<std::pair<std::string, std::string>, std::pair<int, const JFactory*>> m_factory_index;
@@ -23,31 +32,49 @@ class JInspector {
 
 public:
     explicit JInspector(const JEvent* event);
+    void SetEvent(const JEvent* event);
+
     void PrintEvent();
     void PrintFactories();
     void PrintFactory(int factory_idx);
-    void PrintJObjects(int factory_idx);
-    void PrintJObject(int factory_idx, int object_idx);
-    void PrintAncestors(int factory_idx);
-    void PrintAssociations(int factory_idx, int object_idx);
+    void PrintObjects(int factory_idx);
+    void PrintObject(int factory_idx, int object_idx);
+    void PrintFactoryAncestors(int factory_idx);
+    void PrintObjectAncestors(int factory_idx, int object_idx);
     void PrintHelp();
 
     uint64_t DoReplLoop(uint64_t current_evt_nr);
 
-private:
-    std::string StringifyEvent();
-    std::string StringifyFactories();
-    std::string StringifyFactory(int factory_idx);
-    std::string StringifyJObjects(int factory_idx);
-    std::string StringifyJObject(int factory_idx, int object_idx);
-    std::string StringifyAncestors(int factory_idx);
-    std::string StringifyAssociations(int factory_idx, int object_idx);
+    static void ToText(const JEvent* event, bool asJson=false, std::ostream& out=std::cout);
+    static void ToText(const std::vector<JFactory*>& factories, bool asJson=false, std::ostream& out=std::cout);
+    static void ToText(JFactory* factory, bool asJson=false, std::ostream& out=std::cout);
+    static void ToText(std::vector<JObject*> objs, bool as_json, std::ostream& out= std::cout);
+    static void ToText(const JObject* obj, bool asJson, std::ostream& out=std::cout);
 
+private:
     void BuildIndices();
-    std::vector<const JObject*> FindAllAncestors(const JObject*) const;
+    static std::vector<const JObject*> FindAllAncestors(const JObject*);
     static std::pair<JFactory*, size_t> LocateObject(const JEvent&, const JObject* obj);
     static std::pair<std::string, std::vector<int>> Parse(const std::string&);
 };
 
+template <>
+inline std::string JParameterManager::stringify(JInspector::Format value) {
+    switch (value) {
+        case JInspector::Format::Table: return "table";
+        case JInspector::Format::Json: return "json";
+        case JInspector::Format::Tsv: return "tsv";
+        default: return "unknown";
+    }
+}
+
+template <>
+inline JInspector::Format JParameterManager::parse(const std::string& value) {
+    auto lowered = JParameterManager::to_lower(value);
+    if (lowered == "table") return JInspector::Format::Table;
+    if (lowered == "json") return JInspector::Format::Json;
+    if (lowered == "tsv") return JInspector::Format::Tsv;
+    else return JInspector::Format::Table;
+}
 
 #endif // _JIntrospection_h_

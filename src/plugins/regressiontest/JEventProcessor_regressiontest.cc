@@ -16,7 +16,8 @@ extern "C" {
 void InitPlugin(JApplication *app) {
     InitJANAPlugin(app);
     app->Add(new JEventProcessor_regressiontest());
-    app->SetParameterValue("RECORD_CALL_STACK", true);
+    app->SetParameterValue("record_call_stack", true);
+    app->SetParameterValue("jana:enable_inspector", true);
 }
 } // "extern C"
 
@@ -34,7 +35,7 @@ void JEventProcessor_regressiontest::Init()
 
 
     std::lock_guard<std::mutex> lock(m_mutex);
-    std::cout << "Welcome to JANA's interactive inspector! Type `PrintHelp` to see available commands." << std::endl;
+    std::cout << "Welcome to JANA's interactive inspector! Type `Help` to see available commands." << std::endl;
 }
 
 //-------------------------------
