@@ -39,7 +39,8 @@ public:
     void PrintFactory(int factory_idx);
     void PrintObjects(int factory_idx);
     void PrintObject(int factory_idx, int object_idx);
-    void PrintFactoryAncestors(int factory_idx);
+    void PrintFactoryParents(int factory_idx);
+    void PrintObjectParents(int factory_idx, int object_idx);
     void PrintObjectAncestors(int factory_idx, int object_idx);
     void PrintHelp();
 
