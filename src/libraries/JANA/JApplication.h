@@ -43,7 +43,9 @@ class JApplication {
 
 public:
 
-    enum class JExitCode {Success=0, UnhandledException, Timeout, Segfault=139};
+    /// These exit codes are what JANA uses internally. However they are fundamentally a suggestion --
+    /// the user code is likely to use arbitrary exit codes.
+    enum class ExitCode {Success=0, UnhandledException, Timeout, Segfault=139};
 
     explicit JApplication(JParameterManager* params = nullptr);
     ~JApplication();
@@ -72,8 +74,8 @@ public:
     void Stop(bool wait_until_idle = false);
     void Resume() {};  // TODO: Do we need this?
     void Quit(bool skip_join = false);
-    void SetExitCode(JExitCode exitCode);
-    JExitCode GetExitCode();
+    void SetExitCode(int exitCode);
+    int GetExitCode();
 
 
     // Performance/status monitoring
@@ -139,7 +141,7 @@ private:
     bool m_ticker_on = true;
     bool m_timeout_on = true;
     bool m_extended_report = false;
-    JExitCode  m_exit_code = JExitCode::Success;
+    int  m_exit_code = (int) ExitCode::Success;
     int  m_desired_nthreads;
 
     std::mutex m_status_mutex;

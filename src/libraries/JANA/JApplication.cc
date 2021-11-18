@@ -139,7 +139,7 @@ void JApplication::Initialize() {
     catch (JException& e) {
         LOG_FATAL(m_logger) << e << LOG_END;
         // TODO: This belongs in JMain. We want someone embedding JANA to be able to catch these
-        exit((int) JExitCode::UnhandledException);
+        exit((int) ExitCode::UnhandledException);
     }
 }
 
@@ -187,7 +187,7 @@ void JApplication::Run(bool wait_until_finished) {
         // Test for timeout
         if(m_timeout_on && m_processing_controller->is_timed_out()) {
             LOG_FATAL(m_logger) << "Timeout detected." << LOG_END;
-            SetExitCode(JExitCode::Timeout);
+            SetExitCode((int) ExitCode::Timeout);
             break;
         }
     }
@@ -222,7 +222,7 @@ void JApplication::Quit(bool skip_join) {
     }
 }
 
-void JApplication::SetExitCode(JExitCode exit_code) {
+void JApplication::SetExitCode(int exit_code) {
     /// Set a value of the exit code in that can be later retrieved
     /// using GetExitCode. This is so the executable can return
     /// a meaningful error code if processing is stopped prematurely,
@@ -232,7 +232,7 @@ void JApplication::SetExitCode(JExitCode exit_code) {
     m_exit_code = exit_code;
 }
 
-JApplication::JExitCode JApplication::GetExitCode() {
+int JApplication::GetExitCode() {
     /// Returns the currently set exit code. This can be used by
     /// JProcessor/JFactory classes to communicate an appropriate
     /// exit code that a jana program can return upon exit. The
