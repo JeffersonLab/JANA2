@@ -15,7 +15,6 @@ class JEventSource;
 class JEventSourceGenerator;
 class JFactoryGenerator;
 class JFactorySet;
-
 class JComponentManager;
 class JPluginLoader;
 class JProcessingController;
@@ -44,7 +43,9 @@ class JApplication {
 
 public:
 
-    JApplication(JParameterManager* params = nullptr);
+    enum class JExitCode {Success=0, UnhandledException, Timeout, Segfault=139};
+
+    explicit JApplication(JParameterManager* params = nullptr);
     ~JApplication();
 
 
@@ -71,8 +72,8 @@ public:
     void Stop(bool wait_until_idle = false);
     void Resume() {};  // TODO: Do we need this?
     void Quit(bool skip_join = false);
-    void SetExitCode(int exit_code);
-    int GetExitCode(void);
+    void SetExitCode(JExitCode exitCode);
+    JExitCode GetExitCode();
 
 
     // Performance/status monitoring
@@ -82,7 +83,7 @@ public:
     bool IsDrainingQueues(void) { return m_draining_queues; }
 
     void SetTicker(bool ticker_on = true);
-    void EnableTimeout(bool enabled = true);
+    void SetTimeoutEnabled(bool enabled = true);
     void PrintStatus();
     void PrintFinalReport();
     uint64_t GetNThreads();
@@ -136,9 +137,9 @@ private:
     bool m_skip_join = false;
     bool m_initialized = false;
     bool m_ticker_on = true;
-    bool m_timeout_on = false;
+    bool m_timeout_on = true;
     bool m_extended_report = false;
-    int  m_exit_code = 0;
+    JExitCode  m_exit_code = JExitCode::Success;
     int  m_desired_nthreads;
 
     std::mutex m_status_mutex;

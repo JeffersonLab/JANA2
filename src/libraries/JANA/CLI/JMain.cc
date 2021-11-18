@@ -122,7 +122,7 @@ int Execute(JApplication* app, UserOptions &options) {
         // Run JANA in normal mode
         app->Run();
     }
-    return app->GetExitCode();
+    return (int) app->GetExitCode();
 }
 
 

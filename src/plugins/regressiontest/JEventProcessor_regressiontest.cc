@@ -28,6 +28,7 @@ void JEventProcessor_regressiontest::Init()
 {
     auto app = GetApplication();
     app->SetTicker(false);
+    app->SetTimeoutEnabled(false);
     app->SetDefaultParameter("regressiontest:counts_file_name", counts_file_name);
     app->SetDefaultParameter("regressiontest:summaries_file_name", summaries_file_name);
     app->SetDefaultParameter("regressiontest:expand_summaries", expand_summaries);

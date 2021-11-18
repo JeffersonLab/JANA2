@@ -107,8 +107,8 @@ void JApplication::Initialize() {
 
         // Set desired nthreads. We parse the 'nthreads' parameter two different ways for backwards compatibility.
         m_desired_nthreads = 1;
-            m_params->SetDefaultParameter("nthreads", m_desired_nthreads, "The total number of worker threads");
-            if (m_params->GetParameterValue<std::string>("nthreads") == "Ncores") {
+        m_params->SetDefaultParameter("nthreads", m_desired_nthreads, "The total number of worker threads");
+        if (m_params->GetParameterValue<std::string>("nthreads") == "Ncores") {
             m_desired_nthreads = JCpuInfo::GetNumCpus();
         }
 
@@ -138,7 +138,8 @@ void JApplication::Initialize() {
     }
     catch (JException& e) {
         LOG_FATAL(m_logger) << e << LOG_END;
-        exit(-1);
+        // TODO: This belongs in JMain. We want someone embedding JANA to be able to catch these
+        exit((int) JExitCode::UnhandledException);
     }
 }
 
@@ -186,7 +187,7 @@ void JApplication::Run(bool wait_until_finished) {
         // Test for timeout
         if(m_timeout_on && m_processing_controller->is_timed_out()) {
             LOG_FATAL(m_logger) << "Timeout detected." << LOG_END;
-            SetExitCode(22);  // TODO: What are the exit codes, and which corresponds to timeout?
+            SetExitCode(JExitCode::Timeout);
             break;
         }
     }
@@ -221,7 +222,7 @@ void JApplication::Quit(bool skip_join) {
     }
 }
 
-void JApplication::SetExitCode(int exit_code) {
+void JApplication::SetExitCode(JExitCode exit_code) {
     /// Set a value of the exit code in that can be later retrieved
     /// using GetExitCode. This is so the executable can return
     /// a meaningful error code if processing is stopped prematurely,
@@ -231,7 +232,7 @@ void JApplication::SetExitCode(int exit_code) {
     m_exit_code = exit_code;
 }
 
-int JApplication::GetExitCode() {
+JApplication::JExitCode JApplication::GetExitCode() {
     /// Returns the currently set exit code. This can be used by
     /// JProcessor/JFactory classes to communicate an appropriate
     /// exit code that a jana program can return upon exit. The
@@ -250,7 +251,7 @@ void JApplication::SetTicker(bool ticker_on) {
     m_ticker_on = ticker_on;
 }
 
-void JApplication::EnableTimeout(bool enabled) {
+void JApplication::SetTimeoutEnabled(bool enabled) {
     m_timeout_on = enabled;
 }
 

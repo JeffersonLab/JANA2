@@ -12,7 +12,7 @@ TEST_CASE("TimeoutTests") {
 
     std::cout << "Running timeout tests..." << std::endl;
     JApplication app;
-    app.EnableTimeout(true);
+    app.SetTimeoutEnabled(true);
     app.SetTicker(true);
     app.SetParameterValue("jana:timeout", 1);
     app.SetParameterValue("jana:warmup_timeout", 3);
@@ -22,28 +22,28 @@ TEST_CASE("TimeoutTests") {
         app.Add(new SourceWithTimeout("source_with_timeout", &app, 1));
         app.Add(new ProcessorWithTimeout(-1));
         app.Run(true);
-        REQUIRE(app.GetExitCode() == 22);
+        REQUIRE(app.GetExitCode() == JApplication::JExitCode::Timeout);
     }
 
     SECTION("Timeout in the event source on the 5th event") {
         app.Add(new SourceWithTimeout("source_with_timeout", &app, 5));
         app.Add(new ProcessorWithTimeout(-1));
         app.Run(true);
-        REQUIRE(app.GetExitCode() == 22);
+	REQUIRE(app.GetExitCode() == JApplication::JExitCode::Timeout);
     }
 
     SECTION("Timeout in the event processor on the first event") {
         app.Add(new SourceWithTimeout("source_with_timeout", &app, -1));
         app.Add(new ProcessorWithTimeout(1));
         app.Run(true);
-        REQUIRE(app.GetExitCode() == 22);
+	REQUIRE(app.GetExitCode() == JApplication::JExitCode::Timeout);
     }
 
     SECTION("Timeout in the event processor on the 5th event") {
         app.Add(new SourceWithTimeout("source_with_timeout", &app, -1));
         app.Add(new ProcessorWithTimeout(5));
         app.Run(true);
-        REQUIRE(app.GetExitCode() == 22);
+	REQUIRE(app.GetExitCode() == JApplication::JExitCode::Timeout);
     }
 
     SECTION("A slow event source for the first event is fine") {
@@ -52,7 +52,7 @@ TEST_CASE("TimeoutTests") {
         app.Add(new SourceWithTimeout("source_with_timeout", &app, -1, first_event_ms));
         app.Add(new ProcessorWithTimeout(-1, 0));
         app.Run(true);
-        REQUIRE(app.GetExitCode() == 0);
+	REQUIRE(app.GetExitCode() == JApplication::JExitCode::Timeout);
     }
 
     SECTION("A slow event processor for the first event is fine") {
@@ -61,7 +61,7 @@ TEST_CASE("TimeoutTests") {
         app.Add(new SourceWithTimeout("source_with_timeout", &app, -1, 0));
         app.Add(new ProcessorWithTimeout(-1, first_event_ms));
         app.Run(true);
-        REQUIRE(app.GetExitCode() == 0);
+	REQUIRE(app.GetExitCode() == JApplication::JExitCode::Timeout);
     }
 
 
