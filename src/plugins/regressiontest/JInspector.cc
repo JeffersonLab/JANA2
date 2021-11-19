@@ -107,7 +107,7 @@ void JInspector::PrintHelp() {
     m_out << "  -----------------------------------------" << std::endl;
     m_out << "  pe   PrintEvent" << std::endl;
     m_out << "  pf   PrintFactories [filter_level <- {0,1,2,3}]" << std::endl;
-    m_out << "  pf   PrintFactory fac_idx" << std::endl;
+    m_out << "  pfd  PrintFactoryDetails fac_idx" << std::endl;
     m_out << "  po   PrintObjects fac_idx" << std::endl;
     m_out << "  po   PrintObject fac_idx obj_idx" << std::endl;
     m_out << "  pfp  PrintFactoryParents fac_idx" << std::endl;
@@ -612,7 +612,7 @@ uint64_t JInspector::DoReplLoop(uint64_t next_evt_nr) {
         else if ((token == "PrintFactories" || token == "pf") && args.size() == 1) {
             PrintFactories(args[0]);
         }
-        else if ((token == "PrintFactory" || token == "pf") && (args.size() == 1)) {
+        else if ((token == "PrintFactoryDetails" || token == "pfd") && (args.size() == 1)) {
             PrintFactory(args[0]);
         }
         else if ((token == "PrintObjects" || token == "po") && (args.size() == 1)) {
