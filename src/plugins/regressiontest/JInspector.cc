@@ -230,6 +230,10 @@ void JInspector::ToText(const std::vector<JFactory*>& factories, bool asJson, st
 
 void JInspector::ToText(std::vector<JObject*> objs, bool as_json, std::ostream& out) {
 
+    if (objs.empty()) {
+        out << "(No objects found)" << std::endl;
+        return;
+    }
     if (as_json) {
         out << "{" << std::endl;
         for (size_t i = 0; i < objs.size(); ++i) {
