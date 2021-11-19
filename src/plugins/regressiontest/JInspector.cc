@@ -47,15 +47,17 @@ std::vector<const JObject*> JInspector::FindAllAncestors(const JObject* root) {
 std::tuple<JFactory*, size_t, size_t> JInspector::LocateObject(const JEvent& event, const JObject* obj) {
     auto objName = obj->className();
     size_t fac_idx = 0;
-    size_t obj_idx = 0;
     for (auto fac : event.GetAllFactories()) {
         if (fac->GetObjectName() == objName) {
+            size_t obj_idx = 0;
             for (auto o : fac->GetAs<JObject>()) { // Won't trigger factory creation if it hasn't already happened
-                if (obj == o) return std::make_tuple(fac, fac_idx, obj_idx);
+                if (obj == o) {
+                    return std::make_tuple(fac, fac_idx, obj_idx);
+                }
                 obj_idx++;
             }
-            fac_idx++;
         }
+        fac_idx++;
     }
     return std::make_tuple(nullptr, -1, -1);
 }
@@ -533,15 +535,15 @@ void JInspector::PrintObjectAncestors(int factory_idx, int object_idx) {
             auto tag = fac->GetTag();
             if (tag.empty()) tag = "(no tag)";
 
-	    m_out << "  " << "{ " << std::endl << "    \"object_name\": \"" << fac->GetObjectName() << "\", ";
-	    if (tag.empty()) {
-		m_out << "\"tag\": null, ";
-	    }
-	    else {
-		m_out << "\"tag\": \"" << tag << "\", ";
-	    }
-	    m_out << "\"fac_index\": " << fac_idx << ", \"obj_index\": " << obj_idx << "," << std::endl;
-	    m_out << "    \"object_contents\": ";
+            m_out << "  " << "{ " << std::endl << "    \"object_name\": \"" << fac->GetObjectName() << "\", ";
+            if (tag.empty()) {
+                m_out << "\"tag\": null, ";
+            }
+            else {
+                m_out << "\"tag\": \"" << tag << "\", ";
+            }
+            m_out << "\"fac_index\": " << fac_idx << ", \"obj_index\": " << obj_idx << "," << std::endl;
+            m_out << "    \"object_contents\": ";
 
             JObjectSummary summary;
             obj->Summarize(summary);
