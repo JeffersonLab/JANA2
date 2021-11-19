@@ -187,7 +187,7 @@ void JInspector::ToText(JFactory* fac, bool asJson, std::ostream& out) {
 }
 
 void JInspector::ToText(const std::vector<JFactory*>& factories, int filterlevel, bool asJson, std::ostream &out) {
-    size_t idx = 0;
+    size_t idx = -1;
     if (!asJson) {
         JTablePrinter t;
         t.AddColumn("Index", JTablePrinter::Justify::Right);
@@ -210,13 +210,14 @@ void JInspector::ToText(const std::vector<JFactory*>& factories, int filterlevel
                 case JFactory::CreationStatus::NeverCreated: creationStatus = "NeverCreated"; break;
                 default: creationStatus = "Unknown";
             }
+            idx += 1;
             if (filterlevel > 0 && (fac->GetCreationStatus()==JFactory::CreationStatus::NeverCreated ||
                            fac->GetCreationStatus()==JFactory::CreationStatus::NotCreatedYet)) continue;
             if (filterlevel > 1 && (fac->GetNumObjects()== 0)) continue;
             if (filterlevel > 2 && (fac->GetCreationStatus()==JFactory::CreationStatus::Inserted ||
                                     fac->GetCreationStatus()==JFactory::CreationStatus::InsertedViaGetObjects)) continue;
 
-            t | idx++ | facName | fac->GetObjectName() | tag | creationStatus | fac->GetNumObjects();
+            t | idx | facName | fac->GetObjectName() | tag | creationStatus | fac->GetNumObjects();
         }
         t.Render(out);
     }
