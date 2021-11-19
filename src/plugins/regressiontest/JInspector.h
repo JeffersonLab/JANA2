@@ -35,7 +35,7 @@ public:
     void SetEvent(const JEvent* event);
 
     void PrintEvent();
-    void PrintFactories();
+    void PrintFactories(int filter_level);
     void PrintFactory(int factory_idx);
     void PrintObjects(int factory_idx);
     void PrintObject(int factory_idx, int object_idx);
@@ -47,7 +47,7 @@ public:
     uint64_t DoReplLoop(uint64_t current_evt_nr);
 
     static void ToText(const JEvent* event, bool asJson=false, std::ostream& out=std::cout);
-    static void ToText(const std::vector<JFactory*>& factories, bool asJson=false, std::ostream& out=std::cout);
+    static void ToText(const std::vector<JFactory*>& factories, int filter_level, bool asJson=false, std::ostream& out=std::cout);
     static void ToText(JFactory* factory, bool asJson=false, std::ostream& out=std::cout);
     static void ToText(std::vector<JObject*> objs, bool as_json, std::ostream& out= std::cout);
     static void ToText(const JObject* obj, bool asJson, std::ostream& out=std::cout);

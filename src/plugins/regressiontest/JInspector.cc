@@ -65,9 +65,9 @@ std::tuple<JFactory*, size_t, size_t> JInspector::LocateObject(const JEvent& eve
 void JInspector::PrintEvent() {
     ToText(m_event, m_format==Format::Json, m_out);
 }
-void JInspector::PrintFactories() {
+void JInspector::PrintFactories(int filter_level=0) {
     auto facs = m_event->GetAllFactories();
-    ToText(facs, m_format==Format::Json, m_out);
+    ToText(facs, filter_level, m_format==Format::Json, m_out);
 }
 void JInspector::PrintFactory(int factory_idx) {
     auto facs = m_event->GetFactorySet()->GetAllFactories();
@@ -106,7 +106,7 @@ void JInspector::PrintHelp() {
     m_out << "  Available commands" << std::endl;
     m_out << "  -----------------------------------------" << std::endl;
     m_out << "  pe   PrintEvent" << std::endl;
-    m_out << "  pf   PrintFactories" << std::endl;
+    m_out << "  pf   PrintFactories [filter_level <- {0,1,2,3}]" << std::endl;
     m_out << "  pf   PrintFactory fac_idx" << std::endl;
     m_out << "  po   PrintObjects fac_idx" << std::endl;
     m_out << "  po   PrintObject fac_idx obj_idx" << std::endl;
@@ -186,7 +186,7 @@ void JInspector::ToText(JFactory* fac, bool asJson, std::ostream& out) {
     }
 }
 
-void JInspector::ToText(const std::vector<JFactory*>& factories, bool asJson, std::ostream &out) {
+void JInspector::ToText(const std::vector<JFactory*>& factories, int filterlevel, bool asJson, std::ostream &out) {
     size_t idx = 0;
     if (!asJson) {
         JTablePrinter t;
@@ -194,13 +194,29 @@ void JInspector::ToText(const std::vector<JFactory*>& factories, bool asJson, st
         t.AddColumn("Factory name");
         t.AddColumn("Object name");
         t.AddColumn("Tag");
+        t.AddColumn("Creation status");
         t.AddColumn("Object count", JTablePrinter::Justify::Right);
         for (auto fac : factories) {
             auto facName = fac->GetFactoryName();
             if (facName.empty()) facName = "(no factory name)";
             auto tag = fac->GetTag();
             if (tag.empty()) tag = "(no tag)";
-            t | idx++ | facName | fac->GetObjectName() | tag | fac->GetNumObjects();
+            std::string creationStatus;
+            switch (fac->GetCreationStatus()) {
+                case JFactory::CreationStatus::NotCreatedYet: creationStatus = "NotCreatedYet"; break;
+                case JFactory::CreationStatus::Created: creationStatus = "Created"; break;
+                case JFactory::CreationStatus::Inserted: creationStatus = "Inserted"; break;
+                case JFactory::CreationStatus::InsertedViaGetObjects: creationStatus = "InsertedViaGetObjects"; break;
+                case JFactory::CreationStatus::NeverCreated: creationStatus = "NeverCreated"; break;
+                default: creationStatus = "Unknown";
+            }
+            if (filterlevel > 0 && (fac->GetCreationStatus()==JFactory::CreationStatus::NeverCreated ||
+                           fac->GetCreationStatus()==JFactory::CreationStatus::NotCreatedYet)) continue;
+            if (filterlevel > 1 && (fac->GetNumObjects()== 0)) continue;
+            if (filterlevel > 2 && (fac->GetCreationStatus()==JFactory::CreationStatus::Inserted ||
+                                    fac->GetCreationStatus()==JFactory::CreationStatus::InsertedViaGetObjects)) continue;
+
+            t | idx++ | facName | fac->GetObjectName() | tag | creationStatus | fac->GetNumObjects();
         }
         t.Render(out);
     }
@@ -352,7 +368,7 @@ void JInspector::PrintFactoryParents(int factory_idx) {
             }
         }
         if (!found_anything) {
-            m_out << "(No ancestors found)" << std::endl;
+            m_out << "(No parents found)" << std::endl;
             return;
         }
         t.Render(m_out);
@@ -460,7 +476,7 @@ void JInspector::PrintObjectParents(int factory_idx, int object_idx) {
             m_out << "    \"object_contents\": ";
 
             JObjectSummary summary;
-            obj->Summarize(summary);
+            ancestor->Summarize(summary);
             m_out << "{";
             for (auto& field : summary.get_fields()) {
                 m_out << "\"" << field.name << "\": \"" << field.value << "\", ";
@@ -546,7 +562,7 @@ void JInspector::PrintObjectAncestors(int factory_idx, int object_idx) {
             m_out << "    \"object_contents\": ";
 
             JObjectSummary summary;
-            obj->Summarize(summary);
+            ancestor->Summarize(summary);
             m_out << "{";
             for (auto& field : summary.get_fields()) {
                 m_out << "\"" << field.name << "\": \"" << field.value << "\", ";
@@ -590,7 +606,10 @@ uint64_t JInspector::DoReplLoop(uint64_t next_evt_nr) {
             PrintEvent();
         }
         else if ((token == "PrintFactories" || token == "pf") && args.empty()) {
-            PrintFactories();
+            PrintFactories(0);
+        }
+        else if ((token == "PrintFactories" || token == "pf") && args.size() == 1) {
+            PrintFactories(args[0]);
         }
         else if ((token == "PrintFactory" || token == "pf") && (args.size() == 1)) {
             PrintFactory(args[0]);
