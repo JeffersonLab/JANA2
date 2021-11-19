@@ -55,7 +55,7 @@ public:
 private:
     void BuildIndices();
     static std::vector<const JObject*> FindAllAncestors(const JObject*);
-    static std::pair<JFactory*, size_t> LocateObject(const JEvent&, const JObject* obj);
+    static std::tuple<JFactory*, size_t, size_t> LocateObject(const JEvent&, const JObject* obj);
     static std::pair<std::string, std::vector<int>> Parse(const std::string&);
 };
 

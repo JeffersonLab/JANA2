@@ -44,18 +44,20 @@ std::vector<const JObject*> JInspector::FindAllAncestors(const JObject* root) {
     return all_ancestors;
 }
 
-std::pair<JFactory*, size_t> JInspector::LocateObject(const JEvent& event, const JObject* obj) {
+std::tuple<JFactory*, size_t, size_t> JInspector::LocateObject(const JEvent& event, const JObject* obj) {
     auto objName = obj->className();
+    size_t fac_idx = 0;
+    size_t obj_idx = 0;
     for (auto fac : event.GetAllFactories()) {
         if (fac->GetObjectName() == objName) {
-            int i = 0;
             for (auto o : fac->GetAs<JObject>()) { // Won't trigger factory creation if it hasn't already happened
-                if (obj == o) return {fac, i};
-                i++;
+                if (obj == o) return std::make_tuple(fac, fac_idx, obj_idx);
+                obj_idx++;
             }
+            fac_idx++;
         }
     }
-    return {nullptr, -1};
+    return std::make_tuple(nullptr, -1, -1);
 }
 
 void JInspector::PrintEvent() {
@@ -232,8 +234,8 @@ void JInspector::ToText(std::vector<JObject*> objs, bool as_json, std::ostream& 
 
     if (objs.empty()) {
         out << "(No objects found)" << std::endl;
-	std::cout << "Welcome to JANA's interactive inspector! Type `Help` to see available commands." << std::endl;
-	return;
+        std::cout << "Welcome to JANA's interactive inspector! Type `Help` to see available commands." << std::endl;
+        return;
     }
     if (as_json) {
         out << "{" << std::endl;
@@ -403,18 +405,20 @@ void JInspector::PrintObjectParents(int factory_idx, int object_idx) {
         JTablePrinter t;
         t.AddColumn("Object name");
         t.AddColumn("Tag");
-        t.AddColumn("Index", JTablePrinter::Justify::Right);
+        t.AddColumn("Factory Index", JTablePrinter::Justify::Right);
+        t.AddColumn("Object Index", JTablePrinter::Justify::Right);
         t.AddColumn("Object contents");
         for (auto parent : parents) {
             JFactory* fac;
-            size_t idx;
-            std::tie(fac, idx) = LocateObject(*m_event, parent);
+            size_t fac_idx;
+            size_t obj_idx;
+            std::tie(fac, fac_idx, obj_idx) = LocateObject(*m_event, parent);
             if (fac == nullptr) {
                 m_out << "(Error: Unable to find factory containing object with classname '" << obj->className() << "')" << std::endl;
                 continue;
             }
             JObjectSummary summary;
-            obj->Summarize(summary);
+            parent->Summarize(summary);
 
             auto tag = fac->GetTag();
             if (tag.empty()) tag = "(no tag)";
@@ -425,7 +429,7 @@ void JInspector::PrintObjectParents(int factory_idx, int object_idx) {
             }
             objval << "}";
 
-            t | fac->GetObjectName() | tag | idx | objval.str();
+            t | fac->GetObjectName() | tag | fac_idx | obj_idx | objval.str();
         }
         t.Render(m_out);
     }
@@ -433,8 +437,9 @@ void JInspector::PrintObjectParents(int factory_idx, int object_idx) {
         m_out << "[" << std::endl;
         for (auto ancestor : FindAllAncestors(obj)) {
             JFactory* fac;
-            size_t idx;
-            std::tie(fac, idx) = LocateObject(*m_event, ancestor);
+            size_t fac_idx;
+            size_t obj_idx;
+            std::tie(fac, fac_idx, obj_idx) = LocateObject(*m_event, ancestor);
             if (fac == nullptr) {
                 m_out << "(Error: Unable to find factory containing object with classname '" << obj->className() << "')" << std::endl;
                 continue;
@@ -444,11 +449,13 @@ void JInspector::PrintObjectParents(int factory_idx, int object_idx) {
 
             m_out << "  " << "{ " << std::endl << "    \"object_name\": \"" << fac->GetObjectName() << "\", ";
             if (tag.empty()) {
-                m_out << "\"tag\": null, \"index\": " << idx << ", " << std::endl << "    \"object_contents\": ";
+                m_out << "\"tag\": null, ";
             }
             else {
-                m_out << "\"tag\": \"" << tag << "\", \"index\": " << idx << ", " << std::endl << "    \"object_contents\": ";
+                m_out << "\"tag\": \"" << tag << "\", ";
             }
+            m_out << "\"fac_index\": " << fac_idx << ", \"obj_index\": " << obj_idx << "," << std::endl;
+            m_out << "    \"object_contents\": ";
 
             JObjectSummary summary;
             obj->Summarize(summary);
@@ -486,18 +493,19 @@ void JInspector::PrintObjectAncestors(int factory_idx, int object_idx) {
         JTablePrinter t;
         t.AddColumn("Object name");
         t.AddColumn("Tag");
-        t.AddColumn("Index", JTablePrinter::Justify::Right);
+        t.AddColumn("Factory index", JTablePrinter::Justify::Right);
+        t.AddColumn("Object index", JTablePrinter::Justify::Right);
         t.AddColumn("Object contents");
         for (auto ancestor : FindAllAncestors(obj)) {
             JFactory* fac;
-            size_t idx;
-            std::tie(fac, idx) = LocateObject(*m_event, ancestor);
+            size_t fac_idx, obj_idx;
+            std::tie(fac, fac_idx, obj_idx) = LocateObject(*m_event, ancestor);
             if (fac == nullptr) {
                 m_out << "(Error: Unable to find factory containing object with classname '" << obj->className() << "')" << std::endl;
                 continue;
             }
             JObjectSummary summary;
-            obj->Summarize(summary);
+            ancestor->Summarize(summary);
 
             auto tag = fac->GetTag();
             if (tag.empty()) tag = "(no tag)";
@@ -508,7 +516,7 @@ void JInspector::PrintObjectAncestors(int factory_idx, int object_idx) {
             }
             objval << "}";
 
-            t | fac->GetObjectName() | tag | idx | objval.str();
+            t | fac->GetObjectName() | tag | fac_idx | obj_idx | objval.str();
         }
         t.Render(m_out);
     }
@@ -516,8 +524,8 @@ void JInspector::PrintObjectAncestors(int factory_idx, int object_idx) {
         m_out << "[" << std::endl;
         for (auto ancestor : FindAllAncestors(obj)) {
             JFactory* fac;
-            size_t idx;
-            std::tie(fac, idx) = LocateObject(*m_event, ancestor);
+            size_t fac_idx, obj_idx;
+            std::tie(fac, fac_idx, obj_idx) = LocateObject(*m_event, ancestor);
             if (fac == nullptr) {
                 m_out << "(Error: Unable to find factory containing object with classname '" << obj->className() << "')" << std::endl;
                 continue;
@@ -525,13 +533,15 @@ void JInspector::PrintObjectAncestors(int factory_idx, int object_idx) {
             auto tag = fac->GetTag();
             if (tag.empty()) tag = "(no tag)";
 
-            m_out << "  " << "{ " << std::endl << "    \"object_name\": \"" << fac->GetObjectName() << "\", ";
-            if (tag.empty()) {
-                m_out << "\"tag\": null, \"index\": " << idx << ", " << std::endl << "    \"object_contents\": ";
-            }
-            else {
-                m_out << "\"tag\": \"" << tag << "\", \"index\": " << idx << ", " << std::endl << "    \"object_contents\": ";
-            }
+	    m_out << "  " << "{ " << std::endl << "    \"object_name\": \"" << fac->GetObjectName() << "\", ";
+	    if (tag.empty()) {
+		m_out << "\"tag\": null, ";
+	    }
+	    else {
+		m_out << "\"tag\": \"" << tag << "\", ";
+	    }
+	    m_out << "\"fac_index\": " << fac_idx << ", \"obj_index\": " << obj_idx << "," << std::endl;
+	    m_out << "    \"object_contents\": ";
 
             JObjectSummary summary;
             obj->Summarize(summary);
