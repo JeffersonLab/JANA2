@@ -253,8 +253,21 @@ void JInspector::ToText(std::vector<JObject*> objs, bool as_json, std::ostream& 
 
     if (objs.empty()) {
         out << "(No objects found)" << std::endl;
-        std::cout << "Welcome to JANA's interactive inspector! Type `Help` to see available commands." << std::endl;
         return;
+    }
+    std::set<std::string> objnames;
+    for (auto obj: objs) {
+        objnames.insert(obj->className());
+    }
+    if (objnames.size() == 1) {
+        out << *(objnames.begin()) << std::endl;
+    }
+    else {
+        out << "{ ";
+        for (auto name : objnames) {
+            out << name << ",";
+        }
+        out << "}" << std::endl;
     }
     if (as_json) {
         out << "{" << std::endl;
@@ -312,6 +325,7 @@ void JInspector::ToText(std::vector<JObject*> objs, bool as_json, std::ostream& 
 }
 
 void JInspector::ToText(const JObject* obj, bool asJson, std::ostream& out) {
+    out << obj->className() << std::endl;
     JObjectSummary summary;
     obj->Summarize(summary);
     if (asJson) {
@@ -337,6 +351,11 @@ void JInspector::ToText(const JObject* obj, bool asJson, std::ostream& out) {
 
 void JInspector::PrintFactoryParents(int factory_idx) {
 
+    bool callgraph_on = m_event->GetJCallGraphRecorder()->IsEnabled();
+    if (!callgraph_on) {
+        m_out << "(Error: Callgraph recording is currently disabled)" << std::endl;
+    }
+
     BuildIndices();  // So that we can retrieve the integer index given the factory name/tag pair
     auto facs = m_event->GetFactorySet()->GetAllFactories();
     if (factory_idx >= facs.size()) {
@@ -346,10 +365,11 @@ void JInspector::PrintFactoryParents(int factory_idx) {
     auto fac = facs[factory_idx];
     auto obj_name = fac->GetObjectName();
     auto fac_tag = fac->GetTag();
-
-    bool callgraph_on = m_event->GetJCallGraphRecorder()->IsEnabled();
-    if (!callgraph_on) {
-        m_out << "(Error: Callgraph recording is currently disabled)" << std::endl;
+    if (fac_tag.empty()) {
+        m_out << obj_name << std::endl;
+    }
+    else {
+        m_out << obj_name << ":" << fac_tag << std::endl;
     }
 
     if (m_format != Format::Json) {
@@ -413,6 +433,7 @@ void JInspector::PrintObjectParents(int factory_idx, int object_idx) {
         return;
     }
     auto obj = objs[object_idx];
+    m_out << obj->className() << std::endl;
     std::vector<const JObject*> parents;
     obj->GetT<JObject>(parents);
     if (parents.empty()) {
@@ -502,6 +523,7 @@ void JInspector::PrintObjectAncestors(int factory_idx, int object_idx) {
         return;
     }
     auto obj = objs[object_idx];
+    m_out << obj->className() << std::endl;
     auto ancestors = FindAllAncestors(obj);
     if (ancestors.empty()) {
          m_out << "(No ancestors found)" << std::endl;
@@ -593,8 +615,10 @@ uint64_t JInspector::DoReplLoop(uint64_t next_evt_nr) {
     }
     bool stay_in_loop = true;
     next_evt_nr = 0;  // 0 denotes that Repl stops at the next event number by default
-    std::cout << "--------------------------------------------------------------------------------------" << std::endl;
-    std::cout << "Welcome to JANA's interactive inspector! Type `Help` or `h` to see available commands." << std::endl;
+    m_out << std::endl;
+    m_out << "--------------------------------------------------------------------------------------" << std::endl;
+    m_out << "Welcome to JANA's interactive inspector! Type `Help` or `h` to see available commands." << std::endl;
+    m_out << "--------------------------------------------------------------------------------------" << std::endl;
     PrintEvent();
     while (stay_in_loop) {
         std::string user_input;
