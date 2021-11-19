@@ -33,10 +33,6 @@ void JEventProcessor_regressiontest::Init()
     app->SetDefaultParameter("regressiontest:summaries_file_name", summaries_file_name);
     app->SetDefaultParameter("regressiontest:expand_summaries", expand_summaries);
     app->SetDefaultParameter("regressiontest:expand_summaries", expand_summaries);
-
-
-    std::lock_guard<std::mutex> lock(m_mutex);
-    std::cout << "Welcome to JANA's interactive inspector! Type `Help` to see available commands." << std::endl;
 }
 
 //-------------------------------

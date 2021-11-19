@@ -232,7 +232,8 @@ void JInspector::ToText(std::vector<JObject*> objs, bool as_json, std::ostream& 
 
     if (objs.empty()) {
         out << "(No objects found)" << std::endl;
-        return;
+	std::cout << "Welcome to JANA's interactive inspector! Type `Help` to see available commands." << std::endl;
+	return;
     }
     if (as_json) {
         out << "{" << std::endl;
@@ -563,6 +564,8 @@ uint64_t JInspector::DoReplLoop(uint64_t next_evt_nr) {
     }
     bool stay_in_loop = true;
     next_evt_nr = 0;  // 0 denotes that Repl stops at the next event number by default
+    std::cout << "--------------------------------------------------------------------------------------" << std::endl;
+    std::cout << "Welcome to JANA's interactive inspector! Type `Help` or `h` to see available commands." << std::endl;
     PrintEvent();
     while (stay_in_loop) {
         std::string user_input;
