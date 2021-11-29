@@ -67,6 +67,10 @@ void JInspector::PrintEvent() {
 }
 void JInspector::PrintFactories(int filter_level=0) {
     auto facs = m_event->GetAllFactories();
+    std::sort(facs.begin(), facs.end(), [](JFactory* first, JFactory* second){
+        return std::make_pair(first->GetObjectName(), first->GetTag()) <
+               std::make_pair(second->GetObjectName(), second->GetTag());});
+
     ToText(facs, filter_level, m_format==Format::Json, m_out);
 }
 void JInspector::PrintFactory(int factory_idx) {
