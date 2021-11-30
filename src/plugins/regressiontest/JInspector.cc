@@ -17,9 +17,16 @@ void JInspector::SetEvent(const JEvent* event) {
 }
 void JInspector::BuildIndices() {
     if (m_indexes_built) return;
-    auto facs = m_event->GetFactorySet()->GetAllFactories();
+    m_factories.clear();
+    for (auto fac: m_event->GetFactorySet()->GetAllFactories()) {
+        m_factories.push_back(fac);
+    }
+    std::sort(m_factories.begin(), m_factories.end(), [](JFactory* first, JFactory* second){
+	return std::make_pair(first->GetObjectName(), first->GetTag()) <
+	       std::make_pair(second->GetObjectName(), second->GetTag());});
+
     int i = 0;
-    for (auto fac : facs) {
+    for (auto fac : m_factories) {
         std::pair<std::string, std::string> key = {fac->GetObjectName(), fac->GetTag()};
         std::pair<int, const JFactory*> value = {i++, fac};
         m_factory_index.insert({key, value});
@@ -67,10 +74,6 @@ void JInspector::PrintEvent() {
 }
 void JInspector::PrintFactories(int filter_level=0) {
     auto facs = m_event->GetAllFactories();
-    std::sort(facs.begin(), facs.end(), [](JFactory* first, JFactory* second){
-        return std::make_pair(first->GetObjectName(), first->GetTag()) <
-               std::make_pair(second->GetObjectName(), second->GetTag());});
-
     ToText(facs, filter_level, m_format==Format::Json, m_out);
 }
 void JInspector::PrintFactory(int factory_idx) {
@@ -91,6 +94,43 @@ void JInspector::PrintObjects(int factory_idx) {
     auto objs = facs[factory_idx]->GetAs<JObject>();
     ToText(objs, m_format==Format::Json, m_out);
 }
+
+void JInspector::PrintFactory(std::string factory_name_or_id) {
+    try {
+        auto idx = std::stoull(factory_name_or_id);
+	auto facs = m_event->GetFactorySet()->GetAllFactories();
+	if (idx >= facs.size()) {
+	    m_out << "(Error: Factory index out of range)\n";
+	    return;
+	}
+	auto fac = facs[idx];
+	ToText(fac, m_format==Format::Json, m_out);
+    }
+    catch (...) {
+        // Split factory and tag
+        auto colon = factory_name_or_id.find(':');
+        std::string fac_name;
+        std::string tag;
+        if (colon == std::string::npos) {
+            fac_name = factory_name_or_id;
+            tag = "";
+        }
+        else {
+            fac_name = factory_name_or_id.substr(0, colon);
+            tag = factory_name_or_id.substr(colon+1, std::string::npos);
+        }
+	BuildIndices();
+        auto result = m_factory_index.find(std::make_pair(fac_name, tag));
+        if (result == m_factory_index.end()) {
+	    m_out << "(Error: Invalid factory name or index)\n";
+	    return;
+        }
+        auto fac = result->second.second;
+	ToText(fac, m_format==Format::Json, m_out);
+    }
+
+}
+
 void JInspector::PrintObject(int factory_idx, int object_idx) {
     auto facs = m_event->GetFactorySet()->GetAllFactories();
     if (factory_idx >= facs.size()) {
@@ -145,7 +185,7 @@ void JInspector::ToText(const JEvent* event, bool asJson, std::ostream& out) {
     }
 }
 
-void JInspector::ToText(JFactory* fac, bool asJson, std::ostream& out) {
+void JInspector::ToText(const JFactory* fac, bool asJson, std::ostream& out) {
 
     auto pluginName = fac->GetPluginName();
     if (pluginName.empty()) pluginName = "(no plugin)";
@@ -601,18 +641,6 @@ void JInspector::PrintObjectAncestors(int factory_idx, int object_idx) {
     }
 }
 
-std::pair<std::string, std::vector<int>> JInspector::Parse(const std::string& user_input) {
-    std::string token;
-    std::stringstream ss(user_input);
-    ss >> token;
-    std::vector<int> args;
-    int arg;
-    while (ss >> arg) {
-        args.push_back(arg);
-    }
-    return {token, args};
-}
-
 uint64_t JInspector::DoReplLoop(uint64_t next_evt_nr) {
     if (!m_enabled) {
         return 0;
@@ -627,10 +655,17 @@ uint64_t JInspector::DoReplLoop(uint64_t next_evt_nr) {
     while (stay_in_loop) {
         std::string user_input;
         m_out << std::endl << "JANA: ";
+        // Obtain a single line
         std::getline(m_in, user_input);
-        auto result = Parse(user_input);
-        auto token = result.first;
-        auto args = result.second;
+        // Split into tokens
+        std::stringstream ss(user_input);
+        std::string token;
+        ss >> token;
+        std::vector<std::string> args;
+        std::string arg;
+        while (ss >> arg) {
+            args.push_back(arg);
+        }
         if (token == "PrintEvent" || token == "pe") {
             PrintEvent();
         }
@@ -638,25 +673,25 @@ uint64_t JInspector::DoReplLoop(uint64_t next_evt_nr) {
             PrintFactories(0);
         }
         else if ((token == "PrintFactories" || token == "pf") && args.size() == 1) {
-            PrintFactories(args[0]);
+            PrintFactories(std::stoi(args[0]));
         }
         else if ((token == "PrintFactoryDetails" || token == "pfd") && (args.size() == 1)) {
             PrintFactory(args[0]);
         }
         else if ((token == "PrintObjects" || token == "po") && (args.size() == 1)) {
-            PrintObjects(args[0]);
+            PrintObjects(std::stoi(args[0]));
         }
         else if ((token == "PrintObject" || token == "po") && (args.size() == 2)) {
-            PrintObject(args[0], args[1]);
+            PrintObject(std::stoi(args[0]), std::stoi(args[1]));
         }
         else if ((token == "PrintFactoryParents" || token == "pfp") && (args.size() == 1)) {
-            PrintFactoryParents(args[0]);
+            PrintFactoryParents(std::stoi(args[0]));
         }
         else if ((token == "PrintObjectParents" || token == "pop") && (args.size() == 2)) {
-            PrintObjectParents(args[0], args[1]);
+            PrintObjectParents(std::stoi(args[0]), std::stoi(args[1]));
         }
         else if ((token == "PrintObjectAncestors" || token == "poa") && (args.size() == 2)) {
-            PrintObjectAncestors(args[0], args[1]);
+            PrintObjectAncestors(std::stoi(args[0]), std::stoi(args[1]));
         }
         else if (token == "ViewAsTable" || token == "vt") {
             m_format = Format::Table;
@@ -670,7 +705,7 @@ uint64_t JInspector::DoReplLoop(uint64_t next_evt_nr) {
             stay_in_loop = false;
             m_enabled = true;
             if (args.size() > 0) {
-                next_evt_nr = args[0];
+                next_evt_nr = std::stoi(args[0]);
             }
         }
         else if (token == "Finish" || token == "f") {

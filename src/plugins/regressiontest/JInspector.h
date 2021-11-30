@@ -27,6 +27,7 @@ private:
     const JEvent* m_event;
     bool m_indexes_built = false;
     std::map<std::pair<std::string, std::string>, std::pair<int, const JFactory*>> m_factory_index;
+    std::vector<const JFactory*> m_factories;
     std::ostream& m_out = std::cout;
     std::istream& m_in = std::cin;
 
@@ -36,6 +37,7 @@ public:
 
     void PrintEvent();
     void PrintFactories(int filter_level);
+    void PrintFactory(std::string factory_name_or_id);
     void PrintFactory(int factory_idx);
     void PrintObjects(int factory_idx);
     void PrintObject(int factory_idx, int object_idx);
@@ -48,7 +50,7 @@ public:
 
     static void ToText(const JEvent* event, bool asJson=false, std::ostream& out=std::cout);
     static void ToText(const std::vector<JFactory*>& factories, int filter_level, bool asJson=false, std::ostream& out=std::cout);
-    static void ToText(JFactory* factory, bool asJson=false, std::ostream& out=std::cout);
+    static void ToText(const JFactory* factory, bool asJson=false, std::ostream& out=std::cout);
     static void ToText(std::vector<JObject*> objs, bool as_json, std::ostream& out= std::cout);
     static void ToText(const JObject* obj, bool asJson, std::ostream& out=std::cout);
 
@@ -56,7 +58,6 @@ private:
     void BuildIndices();
     static std::vector<const JObject*> FindAllAncestors(const JObject*);
     static std::tuple<JFactory*, size_t, size_t> LocateObject(const JEvent&, const JObject* obj);
-    static std::pair<std::string, std::vector<int>> Parse(const std::string&);
 };
 
 template <>
