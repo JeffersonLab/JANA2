@@ -5,11 +5,16 @@
 #include <unistd.h>
 #include <thread>
 
+// Note that Apple complicates things some. In particular with the
+// addition of Apple silicon (M1 chip) which does not seem to have
+// thesame CPU utilities as older Apple OS versions/hardware (ugh!)
 #ifdef __APPLE__
 #include <mach/thread_policy.h>
 #import <mach/thread_act.h>
+#ifndef __aarch64__
 #include <cpuid.h>
-#else //__APPLE__
+#endif // __aarch64__
+#else //__APPLE__ (i.e. Linux)
 #include <sched.h>
 #endif //__APPLE__
 
@@ -55,8 +60,13 @@ uint32_t GetCpuID() {
         if (CPU < 0) CPU = 0;                          \
         }
 
-    int cpuid;
+    int cpuid=0;
+// Apple M1 running MacOS 12.0.1 does not support __cpuid_count. Skip for now
+#ifdef __cpuid_count
     GETCPU(cpuid);
+#else  // __cpuid_count
+#warning __cpuid_count is not defined on this system.
+#endif // __cpuid_count
     return cpuid;
     // TODO: Clean this up
 
@@ -87,6 +97,7 @@ size_t GetNumaNodeID(size_t cpu_id) {
         return numa_node_of_cpu(cpu_id);
     }
 #else //HAVE_NUMA
+	cpu_id = 0; // suppress compiler warning.
         return 0;
 #endif //HAVE_NUMA
 }
