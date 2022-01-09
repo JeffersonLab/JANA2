@@ -22,6 +22,7 @@ Table of contents
 1.  [Download](Download.html) and [install](Installation.html) JANA
 2.  [Use the JANA command-line program](#using-the-jana-cli)
 3.  [Configure JANA](#configuring-jana)
+6.  [Benchmark a JANA program](benchmarking.html)
 4.  [Generate code skeletons](#creating-code-skeletons) for projects, plugins, components, etc
 5.  [Run the JANA Status/Control/Debugger GUI](#run-the-status-control-debugger-gui)
 6.  [Work with factory metadata](#using-factory-metadata) for collecting statistics, etc
