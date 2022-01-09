@@ -21,7 +21,7 @@ void JInspector::BuildIndices() {
     for (auto fac: m_event->GetFactorySet()->GetAllFactories()) {
         m_factories.push_back(fac);
     }
-    std::sort(m_factories.begin(), m_factories.end(), [](JFactory* first, JFactory* second){
+    std::sort(m_factories.begin(), m_factories.end(), [](const JFactory* first, const JFactory* second){
 	return std::make_pair(first->GetObjectName(), first->GetTag()) <
 	       std::make_pair(second->GetObjectName(), second->GetTag());});
 
