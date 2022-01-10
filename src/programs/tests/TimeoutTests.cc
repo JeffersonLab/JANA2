@@ -8,7 +8,7 @@
 
 #include <JANA/JApplication.h>
 
-TEST_CASE("TimeoutTests") {
+TEST_CASE("TimeoutTests", "[.][performance") {
 
     std::cout << "Running timeout tests..." << std::endl;
     JApplication app;
@@ -52,7 +52,7 @@ TEST_CASE("TimeoutTests") {
         app.Add(new SourceWithTimeout("source_with_timeout", &app, -1, first_event_ms));
         app.Add(new ProcessorWithTimeout(-1, 0));
         app.Run(true);
-        REQUIRE(app.GetExitCode() == (int) JApplication::ExitCode::Timeout);
+        REQUIRE(app.GetExitCode() == (int) JApplication::ExitCode::Success);
     }
 
     SECTION("A slow event processor for the first event is fine") {
@@ -61,7 +61,7 @@ TEST_CASE("TimeoutTests") {
         app.Add(new SourceWithTimeout("source_with_timeout", &app, -1, 0));
         app.Add(new ProcessorWithTimeout(-1, first_event_ms));
         app.Run(true);
-        REQUIRE(app.GetExitCode() == (int) JApplication::ExitCode::Timeout);
+        REQUIRE(app.GetExitCode() == (int) JApplication::ExitCode::Success);
     }
 
 
