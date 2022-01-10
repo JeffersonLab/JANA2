@@ -2,6 +2,9 @@
 
 #include <JANA/JApplication.h>
 #include <JANA/Utils/JCpuInfo.h>
+#include <JANA/JEventSourceGeneratorT.h>
+#include <JANA/CLI/JBenchmarker.h>
+#include "ScaleTests.h"
 
 TEST_CASE("NThreads") {
 
@@ -28,7 +31,7 @@ TEST_CASE("NThreads") {
 	}
 }
 
-TEST_CASE("JApplication::Scale") {
+TEST_CASE("JApplication::Scale updates the number of workers") {
 	JApplication app;
 	app.SetParameterValue("nthreads", 4);
 	app.Run(false);
@@ -42,4 +45,19 @@ TEST_CASE("JApplication::Scale") {
 	// TODO: Rethink update_status
 	threads = app.GetNThreads();
 	REQUIRE(threads == 8);
+}
+
+TEST_CASE("JApplication::Scale improves the throughput", "[.][performance]") {
+    JApplication app;
+    app.SetTicker(false);
+    app.Add(new DummySource("dummy", &app));
+    app.Add(new DummyProcessor);
+    app.SetParameterValue("benchmark:minthreads", 1);
+    app.SetParameterValue("benchmark:maxthreads", 5);
+    app.SetParameterValue("benchmark:threadstep", 2);
+    app.SetParameterValue("benchmark:nsamples", 3);
+    app.Initialize();
+    // app.Run(true);
+    JBenchmarker benchmarker (&app);
+    benchmarker.RunUntilFinished();
 }

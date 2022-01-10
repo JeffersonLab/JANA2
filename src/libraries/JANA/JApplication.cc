@@ -152,7 +152,7 @@ void JApplication::Run(bool wait_until_finished) {
     m_params->PrintParameters(false);
 
     LOG_INFO(m_logger) << GetComponentSummary() << LOG_END;
-    LOG_INFO(m_logger) << "Starting processing ..." << LOG_END;
+    LOG_INFO(m_logger) << "Starting processing with " << m_desired_nthreads << " threads requested..." << LOG_END;
     m_processing_controller->run(m_desired_nthreads);
 
     if (!wait_until_finished) {
@@ -204,6 +204,7 @@ void JApplication::Run(bool wait_until_finished) {
 
 
 void JApplication::Scale(int nthreads) {
+    LOG_INFO(m_logger) << "Scaling to " << nthreads << " threads" << LOG_END;
     m_processing_controller->scale(nthreads);
 }
 
