@@ -2,8 +2,8 @@
 
 #include <JANA/JApplication.h>
 #include <JANA/Utils/JCpuInfo.h>
-#include <JANA/JEventSourceGeneratorT.h>
-#include <JANA/CLI/JBenchmarker.h>
+#include <JANA/Engine/JArrowProcessingController.h>
+
 #include "ScaleTests.h"
 
 TEST_CASE("NThreads") {
@@ -57,7 +57,20 @@ TEST_CASE("JApplication::Scale improves the throughput", "[.][performance]") {
     app.SetParameterValue("benchmark:threadstep", 2);
     app.SetParameterValue("benchmark:nsamples", 3);
     app.Initialize();
-    // app.Run(true);
-    JBenchmarker benchmarker (&app);
-    benchmarker.RunUntilFinished();
+    auto japc = app.GetService<JArrowProcessingController>();
+    app.Run(false);
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+    auto throughput_hz_1 = japc->measure_internal_performance()->latest_throughput_hz;
+    std::cout << "nthreads=1: throughput_hz=" << throughput_hz_1 << std::endl;
+    app.Scale(2);
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+    auto throughput_hz_2 = japc->measure_internal_performance()->latest_throughput_hz;
+    std::cout << "nthreads=2: throughput_hz=" << throughput_hz_2 << std::endl;
+    app.Scale(4);
+    std::this_thread::sleep_for(std::chrono::seconds(5));
+    auto throughput_hz_4 = japc->measure_internal_performance()->latest_throughput_hz;
+    std::cout << "nthreads=4: throughput_hz=" << throughput_hz_4 << std::endl;
+    app.Quit();
+    REQUIRE(throughput_hz_2 > throughput_hz_1*1.5);
+    REQUIRE(throughput_hz_4 > throughput_hz_2*1.25);
 }

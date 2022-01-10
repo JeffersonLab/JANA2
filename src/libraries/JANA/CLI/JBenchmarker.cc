@@ -44,6 +44,9 @@ JBenchmarker::JBenchmarker(JApplication* app) : m_app(app) {
             "BENCHMARK:RESULTSDIR",
             m_output_dir,
             "Output directory name for benchmark test results");
+
+    params->SetParameter("NTHREADS", m_max_threads);
+    // Otherwise JApplication::Scale() doesn't scale up. This is an interesting bug. TODO: Remove me when fixed.
 }
 
 
