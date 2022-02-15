@@ -1059,6 +1059,10 @@ def print_usage():
 
 if __name__ == '__main__':
 
+    if sys.version_info < (3, 6):
+        print('Please upgrade your Python version to 3.6.0 or higher')
+        sys.exit()
+
     if len(argv) < 2:
         print_usage()
         exit()
