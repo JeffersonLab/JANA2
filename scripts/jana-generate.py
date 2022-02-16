@@ -917,10 +917,10 @@ def create_executable(name):
 def create_plugin(name, is_standalone=True, is_mini=True, include_root=True, include_tests=False):
     """Create a code skeleton for a plugin in its own directory. Requires:
        name:           The name of the plugin, e.g. "trk_eff" or "TrackingEfficiency"
-       is_standalone:  Are we inside the source tree of an existing project? If not, configure a CMake project
-       is_mini:        Reduce boilerplate and put everything in a single file?
-       include_root:   Include a ROOT dependency and stubs for filling a ROOT histogram?
-       include_tests:  Include stubs for test cases?
+       is_standalone:  Is this a new project, or are we inside the source tree of an existing CMake project? (default=True)
+       is_mini:        Reduce boilerplate and put everything in a single file? (default=True)
+       include_root:   Include a ROOT dependency and stubs for filling a ROOT histogram? (default=True)
+       include_tests:  Include stubs for test cases? (default=False)
     """
 
     is_standalone = boolify(is_standalone, "is_standalone")
