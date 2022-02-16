@@ -947,7 +947,6 @@ def create_plugin(name, is_standalone=True, is_mini=True, include_root=True, inc
 
     if is_standalone:
         cmakelists += project_cmakelists_txt.format(name=name)
-        cmakelists += project_cmakelists_txt_postamble.format(name=name)
 
     if not is_mini:
         with open(name + "/" + name + ".cc", 'w') as f:
