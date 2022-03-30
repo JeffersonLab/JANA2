@@ -6,7 +6,7 @@
 // Richard Jones, 1-July-2012
 
 #include "JEventProcessor_regressiontest.h"
-#include "JInspector.h"
+#include "JANA/Utils/JInspector.h"
 
 #include <tuple>
 

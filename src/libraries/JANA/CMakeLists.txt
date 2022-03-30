@@ -87,6 +87,10 @@ set(JANA2_SOURCES
     Utils/JAny.h
     Utils/JTablePrinter.cc
     Utils/JTablePrinter.h
+    Utils/JCallGraphRecorder.h
+    Utils/JCallGraphRecorder.cc
+    Utils/JInspector.cc
+    Utils/JInspector.h
 
     Calibrations/JCalibration.cc
     Calibrations/JCalibration.h
@@ -122,7 +126,7 @@ set(JANA2_SOURCES
     Compatibility/md5.h
     Compatibility/JLockService.h
     Compatibility/JGetObjectsFactory.h
-        Utils/JCallGraphRecorder.h Utils/JCallGraphRecorder.cc)
+    )
 
 if (NOT ${USE_XERCES})
     message(STATUS "Skipping support for libJANA's JGeometryXML because USE_XERCES=Off")
