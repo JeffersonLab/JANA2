@@ -84,9 +84,9 @@ def copy_from_source_dir(files_to_copy):
 
 
 def boolify(x, name):
-    if x==True or x=="True" or x=="true" or x==1:
+    if x==True or x=="True" or x=="true" or x=="1":
         return True
-    elif x==False or x=="False" or x=="false" or x==0:
+    elif x==False or x=="False" or x=="false" or x=="0":
         return False
     else:
         raise Exception("Argument "+name+ " must be either 'true' or 'false'")
@@ -332,11 +332,6 @@ set(CMAKE_INSTALL_PREFIX $ENV{{JANA_HOME}} CACHE PATH "magic incantation" FORCE)
 # Find dependencies
 find_package(JANA REQUIRED)
 
-"""
-
-project_cmakelists_txt_postamble = """
-add_subdirectory(src)
-add_subdirectory(tests)
 """
 
 
@@ -820,9 +815,9 @@ def create_jeventprocessor(name):
 
 
 def create_root_eventprocessor(processor_name, dir_name):
-    """Create a ROOT-aware JEventProcessor code skeleton in the current directory. Requires two arguments:
-       processor_name:  The name of the JEventProcessor, e.g. "TrackingEfficiencyProcessor"
-       dir_name:        The name of the virtual directory in the ROOT file where everything goes, e.g. "trk_eff"
+    """Create a ROOT-aware JEventProcessor code skeleton in the current directory. Requires two positional arguments:
+       [processor_name]  The name of the JEventProcessor, e.g. "TrackingEfficiencyProcessor"
+       [dir_name]        The name of the virtual directory in the ROOT file where everything goes, e.g. "trk_eff"
     """
     with open(processor_name + ".h", 'w') as f:
         text = jroot_output_processor_h.format(processor_name=processor_name, dir_name=dir_name)
@@ -886,9 +881,9 @@ def create_jeventprocessor_test(processor_name):
 
 
 def create_jfactory(factory_name, jobject_name):
-    """Create a JFactory code skeleton in the current directory. Requires two arguments:
-       factory_name:  The name of the JFactory, e.g. "RecoTrackFactory_Genfit"
-       jobject_name:  The name of the JObject this factory creates, e.g. "RecoTrack"
+    """Create a JFactory code skeleton in the current directory. Requires two positional arguments:
+       [factory_name]  The name of the JFactory, e.g. "RecoTrackFactory_Genfit"
+       [jobject_name]  The name of the JObject this factory creates, e.g. "RecoTrack"
     """
 
     print(f"Creating {factory_name}:public JFactoryT<{jobject_name}>")
@@ -908,19 +903,20 @@ def create_jfactory_test(factory_name, jobject_name):
 
 
 def create_executable(name):
-    """Create a code skeleton for a project executable in the current directory. Requires one argument:
+    """Create a code skeleton for a project executable in the current directory. Requires one positional argument:
        name:  The name of the executable, e.g. "escalate" or "halld_recon"
     """
     pass
 
 
 def create_plugin(name, is_standalone=True, is_mini=True, include_root=True, include_tests=False):
-    """Create a code skeleton for a plugin in its own directory. Requires:
-       name:           The name of the plugin, e.g. "trk_eff" or "TrackingEfficiency"
-       is_standalone:  Are we inside the source tree of an existing project? If not, configure a CMake project
-       is_mini:        Reduce boilerplate and put everything in a single file?
-       include_root:   Include a ROOT dependency and stubs for filling a ROOT histogram?
-       include_tests:  Include stubs for test cases?
+    """Create a code skeleton for a plugin in its own directory. Takes the following positional arguments:
+         [name]           The name of the plugin, e.g. "trk_eff" or "TrackingEfficiency"
+         [is_standalone]  Is this a new project, or are we inside the source tree of an existing CMake project? (default=True)
+         [is_mini]        Reduce boilerplate and put everything in a single file? (default=True)
+         [include_root]   Include a ROOT dependency and stubs for filling a ROOT histogram? (default=True)
+
+       Example: `jana_generate.py Plugin TrackingEfficiency 1 0 0`
     """
 
     is_standalone = boolify(is_standalone, "is_standalone")
@@ -947,7 +943,6 @@ def create_plugin(name, is_standalone=True, is_mini=True, include_root=True, inc
 
     if is_standalone:
         cmakelists += project_cmakelists_txt.format(name=name)
-        cmakelists += project_cmakelists_txt_postamble.format(name=name)
 
     if not is_mini:
         with open(name + "/" + name + ".cc", 'w') as f:
@@ -1029,7 +1024,7 @@ def create_project(name):
     os.mkdir(name + "/src/plugins")
     os.mkdir(name + "/src/programs")
     os.mkdir(name + "/src/programs/cli")
-    os.mkdir(name + "/tests")
+    # os.mkdir(name + "/tests")
 
     with open(name + "/CMakeLists.txt", 'w') as f:
         text = project_cmakelists_txt.format(name=name)
@@ -1039,8 +1034,8 @@ def create_project(name):
         text = project_src_cmakelists_txt
         f.write(text)
 
-    with open(name + "/tests/CMakeLists.txt", 'w') as f:
-        f.write("")
+    # with open(name + "/tests/CMakeLists.txt", 'w') as f:
+    #     f.write("")
 
     with open(name + "/src/libraries/CMakeLists.txt", 'w') as f:
         f.write("")
@@ -1059,6 +1054,10 @@ def print_usage():
 
 if __name__ == '__main__':
 
+    if sys.version_info < (3, 6):
+        print('Please upgrade your Python version to 3.6.0 or higher')
+        sys.exit()
+
     if len(argv) < 2:
         print_usage()
         exit()
@@ -1069,8 +1068,8 @@ if __name__ == '__main__':
                       'RootEventProcessor': create_root_eventprocessor,
                       'JEventProcessorTest': create_jeventprocessor_test,
                       'JFactory': create_jfactory,
-                      'JFactoryTest': create_jfactory_test,
-                      'Executable': create_executable,
+                      # 'JFactoryTest': create_jfactory_test,
+                      # 'Executable': create_executable,
                       'Plugin': create_plugin,
                       'Project': create_project,
                       #'Test': run_tests
