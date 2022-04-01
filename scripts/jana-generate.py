@@ -886,7 +886,7 @@ def create_jfactory(factory_name, jobject_name):
        [jobject_name]  The name of the JObject this factory creates, e.g. "RecoTrack"
     """
 
-    print(f"Creating {factory_name}:public JFactoryT<{jobject_name}>")
+    print("Creating {factory_name}:public JFactoryT<{jobject_name}>")
     with open(factory_name + ".cc", 'w') as f:
         text = jfactory_template_cc.format(name=factory_name, jobject_name=jobject_name)
         f.write(text)
