@@ -30,6 +30,12 @@ if(${USE_ROOT})
 	set_target_properties(JTestRoot_plugin PROPERTIES PREFIX "" OUTPUT_NAME "JTestRoot" SUFFIX ".so")
 	install(TARGETS JTestRoot_plugin DESTINATION plugins)
 
+    file(GLOB my_pcms "${CMAKE_CURRENT_BINARY_DIR}/*.pcm")
+    install(FILES ${my_pcms} DESTINATION plugins)
+        
+    file(GLOB my_headers "*.h*")
+    install(FILES ${my_headers} DESTINATION include/JTestRoot)
+
 else()
 	message(STATUS "Skipping plugins/JTestRoot because USE_ROOT=Off")
 
