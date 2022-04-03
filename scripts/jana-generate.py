@@ -4,6 +4,8 @@ import subprocess
 import sys
 import os
 
+disapatch_table = {}
+
 
 def copy_from_source_dir(files_to_copy):
     # For files that are copied from a JANA source directory we need to know
@@ -345,11 +347,26 @@ add_subdirectory(programs)
 plugin_cmakelists_txt = """
 {extra_find_packages}
 
-set ({name}_PLUGIN_SOURCES
+# According to the internet, CMake authors discourage the use
+# of GLOB for identifying source files. IMHO, this is due to
+# the flawed use of cache files in CMake itself. Here, GLOB
+# is used as the default. What this means is you can add source
+# files and re-run cmake (after clearing the cache file) and
+# they will be found without needing to modify this file.
+# You also have the option of switching the following to "false"
+# and managing the source file list manually the way they recommend.
+if(true)
+  # Automatically determine source file list.
+  file(GLOB mysourcefiles *.cpp *.cc *.c  *.hpp *.hh *.h)
+  set( JANAGPUTest_PLUGIN_SOURCES ${{mysourcefiles}} )    
+else()
+  # Manually manage source file list
+  set ({name}_PLUGIN_SOURCES
         {name}.cc
         {name}Processor.cc
         {name}Processor.h
-    )
+  )
+endif()
 
 add_library({name}_plugin SHARED ${{{name}_PLUGIN_SOURCES}})
 
@@ -358,6 +375,14 @@ target_link_libraries({name}_plugin ${{JANA_LIBRARY}} {extra_libraries})
 set_target_properties({name}_plugin PROPERTIES PREFIX "" OUTPUT_NAME "{name}" SUFFIX ".so")
 
 install(TARGETS {name}_plugin DESTINATION plugins)
+
+file(GLOB my_headers "*.h*")
+install(FILES ${{my_headers}} DESTINATION include/{name})
+
+# For root dictionaries
+file(GLOB my_pcms "${{CMAKE_CURRENT_BINARY_DIR}}/*.pcm")
+install(FILES ${{my_pcms}} DESTINATION plugins)
+
 """
 
 
@@ -521,6 +546,26 @@ jfactory_template_cc = """
 
 #include <JANA/JEvent.h>
 
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+// Please add the following lines to your InitPlugin or similar routine
+// in order to register this factory with the system.
+//
+// #include "{name}.h"
+//
+//     app->Add( new JFactoryGeneratorT<{name}>() );
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+
+//------------------------
+// Constructor
+//------------------------
+{name}::{name}(){{
+    SetTag("{tag}");
+}}
+
+//------------------------
+// Init
+//------------------------
 void {name}::Init() {{
     auto app = GetApplication();
     
@@ -534,6 +579,9 @@ void {name}::Init() {{
     // SetFactoryFlag(JFactory_Flags_t::NOT_OBJECT_OWNER);
 }}
 
+//------------------------
+// ChangeRun
+//------------------------
 void {name}::ChangeRun(const std::shared_ptr<const JEvent> &event) {{
     /// This is automatically run before Process, when a new run number is seen
     /// Usually we update our calibration constants by asking a JService
@@ -543,6 +591,9 @@ void {name}::ChangeRun(const std::shared_ptr<const JEvent> &event) {{
     // m_calibration = m_service->GetCalibrationsForRun(run_nr);
 }}
 
+//------------------------
+// Process
+//------------------------
 void {name}::Process(const std::shared_ptr<const JEvent> &event) {{
 
     /// JFactories are local to a thread, so we are free to access and modify
@@ -576,6 +627,7 @@ class {name} : public JFactoryT<{jobject_name}> {{
     // Insert any member variables here
 
 public:
+    {name}();
     void Init() override;
     void ChangeRun(const std::shared_ptr<const JEvent> &event) override;
     void Process(const std::shared_ptr<const JEvent> &event) override;
@@ -597,9 +649,9 @@ class {processor_name}: public JEventProcessor {{
 private:
     std::string m_tracking_alg = "genfit";
     std::shared_ptr<JGlobalRootLock> m_lock;
-    TH1D* h1d_pt_reco;
-    TFile* dest_file;
-    TDirectory* dest_dir; // Virtual subfolder inside dest_file used for this specific processor
+    TH1D* h1d_pt_reco = nullptr;
+    TDirectory* dest_file = nullptr;
+    TDirectory* dest_dir=nullptr; // Virtual subfolder inside dest_file used for this specific processor
 
 public:
     {processor_name}();
@@ -630,9 +682,12 @@ void {processor_name}::Init() {{
 
     /// Set up histograms
     m_lock->acquire_write_lock();
-    //dest_file = ... /// TODO: Acquire dest_file via either a JService or a JParameter
+    
+    if( dest_file == nullptr ){{
+        /// TODO: Create dest_file or acquire it via either a JService or a JParameter
+        dest_file = gDirectory;  // default to current directory which may be memory resident
+    }}
     dest_dir = dest_file->mkdir("{dir_name}"); // Create a subdir inside dest_file for these results
-    dest_file->cd();
     h1d_pt_reco = new TH1D("pt_reco", "reco pt", 100,0,10);
     h1d_pt_reco->SetDirectory(dest_dir);
     m_lock->release_lock();
@@ -778,6 +833,7 @@ def create_jobject(name):
     """
     filename = name + ".h"
     text = jobject_template_h.format(copyright_notice=copyright_notice, name=name)
+    print(f"Creating {name}:public JObject")
     with open(filename, 'w') as f:
         f.write(text)
 
@@ -797,7 +853,7 @@ def create_jeventsource(name):
 
 
 def create_jeventprocessor(name):
-    """Create a JFactory code skeleton in the current directory. Requires one argument:
+    """Create a JEventProcessor code skeleton in the current directory. Requires one argument:
        name:  The name of the JEventProcessor, e.g. "TrackingEfficiencyProcessor"
     """
 
@@ -880,20 +936,34 @@ def create_jeventprocessor_test(processor_name):
     build_jeventprocessor_test()
 
 
-def create_jfactory(factory_name, jobject_name):
-    """Create a JFactory code skeleton in the current directory. Requires two positional arguments:
-       [factory_name]  The name of the JFactory, e.g. "RecoTrackFactory_Genfit"
-       [jobject_name]  The name of the JObject this factory creates, e.g. "RecoTrack"
+def create_jfactory(jobject_name, tag=''):
+    """Create a JFactory code skeleton in the current directory. One required argument and one optional argument:
+       jobject_name  The name of the JObject this factory creates, e.g. "RecoTrack"
+       [tag]         Optional tag for the factory (defaults to empty string)
+       
+       n.b. This will also automatically create a JObject header in the current
+       directory if the file does not already exist. You may need to delete this
+       manually if you already have this class defined elsewhere in the source tree.
     """
+
+    factory_name = f'JFactory_{jobject_name}'
+    if tag != '' : factory_name += f'_{tag}'
 
     print(f"Creating {factory_name}:public JFactoryT<{jobject_name}>")
     with open(factory_name + ".cc", 'w') as f:
-        text = jfactory_template_cc.format(name=factory_name, jobject_name=jobject_name)
+        text = jfactory_template_cc.format(name=factory_name, jobject_name=jobject_name, tag=tag)
         f.write(text)
 
     with open(factory_name + ".h", 'w') as f:
-        text = jfactory_template_h.format(name=factory_name, jobject_name=jobject_name)
+        text = jfactory_template_h.format(name=factory_name, jobject_name=jobject_name, tag=tag)
         f.write(text)
+    
+    # Check if a header for the JObject already exists. If not, create it.
+    # The more likely scenario is that someone creating a factory will also
+    # need to create this.
+    jobject_header_filename = jobject_name + ".h"
+    if not os.path.exists( jobject_header_filename ):
+        create_jobject( jobject_name )
 
 
 def create_jfactory_test(factory_name, jobject_name):
@@ -911,7 +981,7 @@ def create_executable(name):
 
 def create_plugin(name, is_standalone=True, is_mini=True, include_root=True, include_tests=False):
     """Create a code skeleton for a plugin in its own directory. Takes the following positional arguments:
-         [name]           The name of the plugin, e.g. "trk_eff" or "TrackingEfficiency"
+          name            The name of the plugin, e.g. "trk_eff" or "TrackingEfficiency"
          [is_standalone]  Is this a new project, or are we inside the source tree of an existing CMake project? (default=True)
          [is_mini]        Reduce boilerplate and put everything in a single file? (default=True)
          [include_root]   Include a ROOT dependency and stubs for filling a ROOT histogram? (default=True)
@@ -1046,22 +1116,39 @@ def create_project(name):
     with open(name + "/src/programs/CMakeLists.txt", 'w') as f:
         f.write("")
 
-
 def print_usage():
-    print("Usage: jana-generate [type] [args...]")
-    print("  type: JObject JEventSource JEventProcessor RootEventProcessor JFactory Plugin Project")
+    print("Usage: jana-generate.py [-h|--help] [type] [args...]")
+    print("  type: " + ' '.join(dispatch_table.keys()))
+
+def print_help():
+    print("""
+jana-generate.py : Generate skeleton code template for various JANA code constructs.
+  
+Usage: jana-generate.py [-h|--help] [type] [args...]
+
+  This is used to generate a small piece of skeleton code that can then be easily
+edited to implement a specific class or plugin in JANA. The type argument specifies
+the type of construct to generate. Optional arguments vary depending on the type.
+The type argument should be one of:
+""")
+    print('\n'.join(dispatch_table.keys()))
+
+    print('\n--------------------------------------------------------------------')
+    print('Details:\n')
+   
+    for (name,proc) in dispatch_table.items():
+        print( name )
+        print( proc.__doc__ )
 
 
+#========================================================================================
 if __name__ == '__main__':
 
     if sys.version_info < (3, 6):
         print('Please upgrade your Python version to 3.6.0 or higher')
         sys.exit()
 
-    if len(argv) < 2:
-        print_usage()
-        exit()
-
+    # dispatch_table must be defined here since print_usage uses it
     dispatch_table = {'JObject': create_jobject,
                       'JEventSource': create_jeventsource,
                       'JEventProcessor': create_jeventprocessor,
@@ -1075,12 +1162,24 @@ if __name__ == '__main__':
                       #'Test': run_tests
                       }
 
+    # Print short usage statement if no arguments
+    if len(argv) < 2:
+        print_usage()
+        exit()
+    
+    # Print longer help if user specifies -h or --help
+    if len(argv) == 2:
+        if argv[1]=='-h' or argv[1]=='--help':
+            print_help()
+            exit()
+
+    # Run generator for user specified type
     option = argv[1]
     if option in dispatch_table:
         try:
             dispatch_table[option](*argv[2:])
         except TypeError:
-            print(dispatch_table[option].__doc__)
+            print('\n'+dispatch_table[option].__doc__)
     else:
         print("Error: Invalid option!")
         print_usage()
