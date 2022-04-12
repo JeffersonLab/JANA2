@@ -10,10 +10,7 @@
 #include <string>
 #include <map>
 #include <ostream>
-
-using std::map;
-using std::tuple;
-using std::string;
+#include <istream>
 
 #include <JANA/JEventProcessor.h>
 
@@ -29,15 +26,15 @@ public:
 
 private:
     std::mutex m_mutex;
-    uint64_t m_next_event_nr = 0;
-    map<tuple<uint64_t, string, string>, uint64_t> counts;
-    map<tuple<uint64_t, string, string, int>, string> summaries;
-    map<tuple<uint64_t, string, string, int, string>, string> summaries_expanded;
-    bool expand_summaries = false;
-    std::ofstream counts_file;
-    std::ofstream summaries_file;
-    std::string counts_file_name = "objcounts.tsv";
-    std::string summaries_file_name = "objsummaries.tsv";
+
+    bool have_old_log_file = false;
+    std::ifstream old_log_file;
+    std::string old_log_file_name = "regression_log_old.tsv";
+    std::ofstream new_log_file;
+    std::string new_log_file_name = "regression_log_new.tsv";
+
+    std::vector<JFactory*> GetFactoriesTopologicallyOrdered(const JEvent& event);
+    int ParseOldItemCount(std::string old_count_line);
 };
 
 #endif // _JEventProcessor_regressiontest_
