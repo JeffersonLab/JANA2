@@ -59,12 +59,12 @@ JTablePrinter& JTablePrinter::operator|(T cell) {
 template <>
 inline JTablePrinter& JTablePrinter::operator|(std::string cell) {
     auto len = cell.size();
-    if (columns[current_column].contents_width < len) {
+    if ((size_t) columns[current_column].contents_width < len) {
 	columns[current_column].contents_width = len;
     }
     columns[current_column].values.push_back(cell);
     current_column += 1;
-    if (current_column >= columns.size()) {
+    if ((size_t) current_column >= columns.size()) {
 	current_column = 0;
 	current_row += 1;
     }

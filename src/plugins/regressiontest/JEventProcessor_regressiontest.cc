@@ -117,7 +117,7 @@ void JEventProcessor_regressiontest::Process(const std::shared_ptr<const JEvent>
             for (int i=0; i<old_item_ct; ++i) {
                 std::string old_object_line;
                 std::getline(old_log_file, old_object_line);
-		if (i >= new_object_lines.size()) {
+		if ((size_t) i >= new_object_lines.size()) {
                     std::cout << "MISMATCH: " << old_item_ct << " vs " << item_ct << std::endl;
                     std::cout << "OLD OBJ: " << old_object_line << std::endl;
                     std::cout << "NEW OBJ: missing" << std::endl;

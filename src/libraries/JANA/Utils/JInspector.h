@@ -26,26 +26,23 @@ private:
     Format m_format = Format::Table;
     const JEvent* m_event;
     bool m_indexes_built = false;
-    std::map<std::pair<std::string, std::string>, std::pair<int, const JFactory*>> m_factory_index;
+    std::map<std::string, std::pair<int, const JFactory*>> m_factory_index;
     std::vector<const JFactory*> m_factories;
     std::ostream& m_out = std::cout;
     std::istream& m_in = std::cin;
 
 public:
     explicit JInspector(const JEvent* event);
-    void SetEvent(const JEvent* event);
 
     void PrintEvent();
     void PrintFactories(int filter_level);
-    void PrintFactory(std::string factory_name_or_id);
-    void PrintFactory(int factory_idx);
-    void PrintObjects(int factory_idx);
-    void PrintObject(int factory_idx, int object_idx);
-    void PrintFactoryParents(int factory_idx);
-    void PrintObjectParents(int factory_idx, int object_idx);
-    void PrintObjectAncestors(int factory_idx, int object_idx);
+    void PrintFactoryDetails(std::string factory_key);
+    void PrintObjects(std::string factory_key);
+    void PrintObject(std::string factory_key, int object_idx);
+    void PrintFactoryParents(std::string factory_key);
+    void PrintObjectParents(std::string factory_key, int object_idx);
+    void PrintObjectAncestors(std::string factory_key, int object_idx);
     void PrintHelp();
-
     void Loop();
 
     static void ToText(const JEvent* event, bool asJson=false, std::ostream& out=std::cout);
@@ -56,6 +53,7 @@ public:
 
 private:
     void BuildIndices();
+    std::string MakeFactoryKey(std::string name, std::string tag);
     static std::vector<const JObject*> FindAllAncestors(const JObject*);
     static std::tuple<JFactory*, size_t, size_t> LocateObject(const JEvent&, const JObject* obj);
 };
