@@ -22,6 +22,9 @@ add_library(janaview SHARED
     install(TARGETS janaview DESTINATION plugins)
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libjv_mainframe_rdict.pcm DESTINATION plugins)
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libjv_mainframe.rootmap DESTINATION plugins)
+        
+    file(GLOB my_headers "*.h*")
+    install(FILES ${my_headers} DESTINATION include/janaview)
 
 else()
 message(STATUS "Skipping plugins/janaview because USE_ROOT=Off")

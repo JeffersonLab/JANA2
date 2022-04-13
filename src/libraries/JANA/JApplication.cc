@@ -12,6 +12,7 @@
 #include <JANA/Services/JParameterManager.h>
 #include <JANA/Services/JPluginLoader.h>
 #include <JANA/Services/JComponentManager.h>
+#include <JANA/Services/JGlobalRootLock.h>
 #include <JANA/Engine/JArrowProcessingController.h>
 #include <JANA/Engine/JDebugProcessingController.h>
 #include <JANA/Utils/JCpuInfo.h>
@@ -33,6 +34,7 @@ JApplication::JApplication(JParameterManager* params) {
     m_service_locator.provide(std::make_shared<JLoggingService>());
     m_service_locator.provide(std::make_shared<JPluginLoader>(this));
     m_service_locator.provide(std::make_shared<JComponentManager>(this));
+    m_service_locator.provide(std::make_shared<JGlobalRootLock>());
 
     m_plugin_loader = m_service_locator.get<JPluginLoader>();
     m_component_manager = m_service_locator.get<JComponentManager>();
