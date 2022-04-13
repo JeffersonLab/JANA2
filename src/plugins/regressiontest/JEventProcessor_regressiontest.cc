@@ -31,6 +31,7 @@ void JEventProcessor_regressiontest::Init()
     app->SetTimeoutEnabled(false);
     app->SetDefaultParameter("regressiontest:old_log_file_name", old_log_file_name);
     app->SetDefaultParameter("regressiontest:new_log_file_name", new_log_file_name);
+    LOG << "Running regressiontest plugin" << LOG_END;
     old_log_file.open(old_log_file_name);
     if (old_log_file.good()) {
         have_old_log_file = true;
@@ -57,22 +58,22 @@ void JEventProcessor_regressiontest::Process(const std::shared_ptr<const JEvent>
         fac->Create(event, app, run_nr); // Make sure all factories have run
     }
     auto facs = GetFactoriesTopologicallyOrdered(*event);
-    bool found_discrepancy = false;
 
 
     std::lock_guard<std::mutex> lock(m_mutex);
 
     for (auto fac : facs) {
-        auto item_ct = fac->GetNumObjects();
+        bool found_discrepancy = false;
+	auto jobs = fac->GetAs<JObject>();
+        auto item_ct = jobs.size();
         int old_item_ct = 0;
 
         // Generate line describing factory counts
         std::ostringstream os;
-        os << evt_nr << "\t" << fac->GetObjectName() << "\t" << fac->GetTag() << "\t" << item_ct << std::endl;
+        os << evt_nr << "\t" << fac->GetObjectName() << "\t" << fac->GetTag() << "\t" << item_ct;
         std::string count_line = os.str();
 
         new_log_file << count_line << std::endl;
-        std::cout << "CHECKING " << count_line << std::endl;
 
         if (have_old_log_file) {
             std::string old_count_line;
@@ -81,22 +82,24 @@ void JEventProcessor_regressiontest::Process(const std::shared_ptr<const JEvent>
 
             if (old_count_line != count_line) {
                 std::cout << "MISMATCH" << std::endl;
-                std::cout << "OLD: " << old_count_line << std::endl;
-                std::cout << "NEW: " << count_line << std::endl;
+                std::cout << "OLD COUNT: " << old_count_line << std::endl;
+                std::cout << "NEW COUNT: " << count_line << std::endl;
                 found_discrepancy = true;
             }
+	    else {
+		    // std::cout << "MATCH " << count_line << std::endl;
+	    }
         }
 
         std::vector<std::string> new_object_lines;
-        std::vector<std::string> old_object_lines;
 
-        for (auto obj : fac->GetAs<JObject>()) {
+        for (auto obj : jobs) {
 
             JObjectSummary summary;
             obj->Summarize(summary);
 
             std::stringstream ss;
-            ss << evt_nr << "\t" << fac->GetObjectName() << ":" << fac->GetTag() << "\t";
+            ss << evt_nr << "\t" << fac->GetObjectName() << "\t" << fac->GetTag() << "\t";
             ss << "{";
             for (auto& field : summary.get_fields()) {
                 ss << field.name << ": " << field.value << ", ";
@@ -114,12 +117,21 @@ void JEventProcessor_regressiontest::Process(const std::shared_ptr<const JEvent>
             for (int i=0; i<old_item_ct; ++i) {
                 std::string old_object_line;
                 std::getline(old_log_file, old_object_line);
-                if (old_object_line != new_object_lines[i]) {
+		if (i >= new_object_lines.size()) {
+                    std::cout << "MISMATCH: " << old_item_ct << " vs " << item_ct << std::endl;
+                    std::cout << "OLD OBJ: " << old_object_line << std::endl;
+                    std::cout << "NEW OBJ: missing" << std::endl;
+                    found_discrepancy = true;
+		}
+		else if (old_object_line != new_object_lines[i]) {
                     found_discrepancy = true;
                     std::cout << "MISMATCH" << std::endl;
-                    std::cout << "OLD: " << old_object_line << std::endl;
-                    std::cout << "NEW: " << new_object_lines[i] << std::endl;
+                    std::cout << "OLD OBJ: " << old_object_line << std::endl;
+                    std::cout << "NEW OBJ: " << new_object_lines[i] << std::endl;
                 }
+		else {
+                    // std::cout << "MATCH" << old_object_line << std::endl;
+		}
             }
         }
         if (found_discrepancy) {
