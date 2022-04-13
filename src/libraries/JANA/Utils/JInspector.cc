@@ -156,9 +156,7 @@ void JInspector::PrintHelp() {
     m_out << "  poa  PrintObjectAncestors fac_idx obj_idx" << std::endl;
     m_out << "  vt   ViewAsTable" << std::endl;
     m_out << "  vj   ViewAsJson" << std::endl;
-    m_out << "  n    Next [evt_nr]" << std::endl;
-    m_out << "  f    Finish" << std::endl;
-    m_out << "  q    Quit" << std::endl;
+    m_out << "  x    Exit" << std::endl;
     m_out << "  h    Help" << std::endl;
     m_out << "  -----------------------------------------" << std::endl;
 }
