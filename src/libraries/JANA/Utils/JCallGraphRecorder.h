@@ -27,6 +27,9 @@ public:
         double start_time = 0;
         double end_time = 0;
         JDataSource data_source = DATA_NOT_AVAILABLE;
+	JCallGraphNode() {}
+	JCallGraphNode(std::string caller_name, std::string caller_tag, std::string callee_name, std::string callee_tag) 
+	: caller_name(caller_name), caller_tag(caller_tag), callee_name(callee_name), callee_tag(callee_tag) {}
     };
 
     struct JCallStackFrame {

@@ -9,6 +9,7 @@
 #include <sstream>
 #include <JANA/Compatibility/JStreamLog.h>
 #include <queue>
+#include <algorithm>
 
 using std::vector;
 using std::string;

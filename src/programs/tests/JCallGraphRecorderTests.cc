@@ -15,10 +15,14 @@ TEST_CASE("Test topological sort algorithm in isolation") {
 
     JCallGraphRecorder sut;
     sut.SetEnabled();
-    sut.AddToCallGraph({"BName","BTag","AName","ATag"});
-    sut.AddToCallGraph({"BName","BTag","CName","CTag"});
-    sut.AddToCallGraph({"DName","DTag","BName","BTag"});
-    sut.AddToCallGraph({"DName","DTag","CName","CTag"});
+    //sut.AddToCallGraph({"BName","BTag","AName","ATag"});
+    //sut.AddToCallGraph({"BName","BTag","CName","CTag"});
+    //sut.AddToCallGraph({"DName","DTag","BName","BTag"});
+    //sut.AddToCallGraph({"DName","DTag","CName","CTag"});
+    JCallGraphRecorder::JCallGraphNode("BName", "BTag", "AName", "ATag");
+    JCallGraphRecorder::JCallGraphNode("BName", "BTag", "CName", "CTag");
+    JCallGraphRecorder::JCallGraphNode("DName", "DTag", "BName", "BTag");
+    JCallGraphRecorder::JCallGraphNode("DName", "DTag", "CName", "CTag");
     REQUIRE(sut.GetCallGraph().size() == 4);
 
     auto result = sut.TopologicalSort();
