@@ -27,6 +27,7 @@ public:
 private:
     std::mutex m_mutex;
 
+    bool interactive = true;
     bool have_old_log_file = false;
     std::ifstream old_log_file;
     std::string old_log_file_name = "regression_log_old.tsv";

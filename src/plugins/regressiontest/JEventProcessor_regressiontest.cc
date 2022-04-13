@@ -17,7 +17,6 @@ void InitPlugin(JApplication *app) {
     InitJANAPlugin(app);
     app->Add(new JEventProcessor_regressiontest());
     app->SetParameterValue("record_call_stack", true);
-    // app->SetParameterValue("jana:enable_inspector", true);
 }
 } // "extern C"
 
@@ -29,8 +28,9 @@ void JEventProcessor_regressiontest::Init()
     auto app = GetApplication();
     app->SetTicker(false);
     app->SetTimeoutEnabled(false);
-    app->SetDefaultParameter("regressiontest:old_log_file_name", old_log_file_name);
-    app->SetDefaultParameter("regressiontest:new_log_file_name", new_log_file_name);
+    app->SetDefaultParameter("regressiontest:interactive", interactive);
+    app->SetDefaultParameter("regressiontest:old_log", old_log_file_name);
+    app->SetDefaultParameter("regressiontest:new_log", new_log_file_name);
     LOG << "Running regressiontest plugin" << LOG_END;
     old_log_file.open(old_log_file_name);
     if (old_log_file.good()) {
@@ -135,8 +135,7 @@ void JEventProcessor_regressiontest::Process(const std::shared_ptr<const JEvent>
             }
         }
         if (found_discrepancy) {
-            JInspector inspector (event.get());
-            inspector.DoReplLoop(evt_nr);
+            event->Inspect();
         }
     }
 }

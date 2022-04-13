@@ -22,7 +22,7 @@ public:
     enum class Format {Table, Json, Tsv};
 
 private:
-    bool m_enabled = true;
+    // bool m_enabled = true;
     Format m_format = Format::Table;
     const JEvent* m_event;
     bool m_indexes_built = false;
@@ -46,7 +46,7 @@ public:
     void PrintObjectAncestors(int factory_idx, int object_idx);
     void PrintHelp();
 
-    uint64_t DoReplLoop(uint64_t current_evt_nr);
+    void Loop();
 
     static void ToText(const JEvent* event, bool asJson=false, std::ostream& out=std::cout);
     static void ToText(const std::vector<JFactory*>& factories, int filter_level, bool asJson=false, std::ostream& out=std::cout);

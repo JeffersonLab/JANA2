@@ -5,10 +5,7 @@
 #include <JANA/Utils/JTablePrinter.h>
 
 
-JInspector::JInspector(const JEvent* event) : m_event(event) {
-    event->GetJApplication()->SetDefaultParameter("jana:enable_inspector", m_enabled);
-    event->GetJApplication()->SetDefaultParameter("jana:inspector_format", m_format, "Options are 'table','json'");
-}
+JInspector::JInspector(const JEvent* event) : m_event(event) {}
 
 void JInspector::SetEvent(const JEvent* event) {
     m_event = event;
@@ -641,12 +638,8 @@ void JInspector::PrintObjectAncestors(int factory_idx, int object_idx) {
     }
 }
 
-uint64_t JInspector::DoReplLoop(uint64_t next_evt_nr) {
-    if (!m_enabled) {
-        return 0;
-    }
+void JInspector::Loop() {
     bool stay_in_loop = true;
-    next_evt_nr = 0;  // 0 denotes that Repl stops at the next event number by default
     m_out << std::endl;
     m_out << "--------------------------------------------------------------------------------------" << std::endl;
     m_out << "Welcome to JANA's interactive inspector! Type `Help` or `h` to see available commands." << std::endl;
@@ -701,21 +694,11 @@ uint64_t JInspector::DoReplLoop(uint64_t next_evt_nr) {
             m_format = Format::Json;
             m_out << "(Switching to JSON view mode)" << std::endl;
         }
-        else if (token == "Next" || token == "n") {
+        else if (token == "Continue" || token == "c") {
             stay_in_loop = false;
-            m_enabled = true;
-            if (args.size() > 0) {
-                next_evt_nr = std::stoi(args[0]);
-            }
         }
-        else if (token == "Finish" || token == "f") {
+        else if (token == "Exit" || token == "x") {
             stay_in_loop = false;
-            m_enabled = false;
-        }
-        else if (token == "Quit" || token == "q") {
-            stay_in_loop = false;
-            m_enabled = false;
-            m_event->GetJApplication()->Quit(false);
         }
         else if (token == "Help" || token == "h") {
             PrintHelp();
@@ -728,5 +711,4 @@ uint64_t JInspector::DoReplLoop(uint64_t next_evt_nr) {
             PrintHelp();
         }
     }
-    return next_evt_nr;
 }
