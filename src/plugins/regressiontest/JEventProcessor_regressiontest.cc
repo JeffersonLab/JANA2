@@ -37,6 +37,12 @@ void JEventProcessor_regressiontest::Init()
         have_old_log_file = true;
     }
     new_log_file.open(new_log_file_name);
+
+    blacklist_file.open(blacklist_file_name);
+    std::string line;
+    while (std::getline(blacklist_file, line)) {
+        blacklist.insert(line);
+    }
 }
 
 //-------------------------------
@@ -102,7 +108,10 @@ void JEventProcessor_regressiontest::Process(const std::shared_ptr<const JEvent>
             ss << evt_nr << "\t" << fac->GetObjectName() << "\t" << fac->GetTag() << "\t";
             ss << "{";
             for (auto& field : summary.get_fields()) {
-                ss << field.name << ": " << field.value << ", ";
+                std::string blacklist_entry = fac->GetObjectName() + "\t" + fac->GetTag() + "\t" + field.name;
+                if (blacklist.find(blacklist_entry) == blacklist.end()) {
+                    ss << field.name << ": " << field.value << ", ";
+                }
             }
             ss << "}";
             new_object_lines.push_back(ss.str());

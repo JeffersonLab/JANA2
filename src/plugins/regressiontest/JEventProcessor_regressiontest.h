@@ -33,6 +33,9 @@ private:
     std::string old_log_file_name = "regression_log_old.tsv";
     std::ofstream new_log_file;
     std::string new_log_file_name = "regression_log_new.tsv";
+    std::ifstream blacklist_file;
+    std::string blacklist_file_name = "blacklist.tsv";
+    std::set<std::string> blacklist;
 
     std::vector<JFactory*> GetFactoriesTopologicallyOrdered(const JEvent& event);
     int ParseOldItemCount(std::string old_count_line);
