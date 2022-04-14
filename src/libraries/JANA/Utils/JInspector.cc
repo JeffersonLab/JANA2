@@ -206,14 +206,11 @@ void JInspector::ToText(const std::vector<JFactory*>& factories, int filterlevel
     if (!asJson) {
         JTablePrinter t;
         t.AddColumn("Index", JTablePrinter::Justify::Right);
-        t.AddColumn("Factory name");
-        t.AddColumn("Object name");
+        t.AddColumn("Object");
         t.AddColumn("Tag");
         t.AddColumn("Creation status");
         t.AddColumn("Object count", JTablePrinter::Justify::Right);
         for (auto fac : factories) {
-            auto facName = fac->GetFactoryName();
-            if (facName.empty()) facName = "(no factory name)";
             auto tag = fac->GetTag();
             if (tag.empty()) tag = "(no tag)";
             std::string creationStatus;
@@ -232,7 +229,7 @@ void JInspector::ToText(const std::vector<JFactory*>& factories, int filterlevel
             if (filterlevel > 2 && (fac->GetCreationStatus()==JFactory::CreationStatus::Inserted ||
                                     fac->GetCreationStatus()==JFactory::CreationStatus::InsertedViaGetObjects)) continue;
 
-            t | idx | facName | fac->GetObjectName() | tag | creationStatus | fac->GetNumObjects();
+            t | idx | fac->GetObjectName() | tag | creationStatus | fac->GetNumObjects();
         }
         t.Render(out);
     }
