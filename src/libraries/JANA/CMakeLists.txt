@@ -18,19 +18,6 @@ set(JANA2_SOURCES
     JCsvWriter.h
     JLogger.h
 
-#    ArrowEngine/Arrow.h
-#    ArrowEngine/ComponentArrows.h
-#    ArrowEngine/ComponentArrows.cc
-#    ArrowEngine/Worker.h
-#    ArrowEngine/Worker.cc
-#    ArrowEngine/Mailbox.h
-#    ArrowEngine/Scheduler.h
-#    ArrowEngine/Scheduler.cc
-#    ArrowEngine/Topology.h
-#    ArrowEngine/Topology.cc
-#    ArrowEngine/ArrowProcessingController.cc
-#    ArrowEngine/ArrowProcessingController.h
-
     Engine/JActivable.h
     Engine/JArrow.h
     Engine/JArrowMetrics.h
