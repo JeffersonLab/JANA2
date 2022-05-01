@@ -47,7 +47,7 @@ TEST_CASE("ActivableActivationTests") {
 	emit_rand_ints->set_chunksize(1);
 
     auto logger = JLogger(JLogger::Level::OFF);
-    topology._logger = logger;
+    topology.m_logger = logger;
     source.logger = logger;
 
 
@@ -117,7 +117,7 @@ TEST_CASE("ActivableDeactivationTests") {
 	topology.arrows.push_back(sum_everything);
 
     auto logger = JLogger(JLogger::Level::OFF);
-    topology._logger = logger;
+    topology.m_logger = logger;
     source.logger = logger;
 
 	REQUIRE(emit_rand_ints->is_active() == false);

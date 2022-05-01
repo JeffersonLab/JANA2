@@ -87,7 +87,7 @@ TEST_CASE("JTopology: Basic functionality") {
 
     SECTION("After emitting") {
         auto logger = JLogger(JLogger::Level::OFF);
-        topology._logger = logger;
+        topology.m_logger = logger;
         source.logger = logger;
 
         //LOG_INFO(logger) << "After emitting; should be something in q0" << LOG_END;
@@ -190,7 +190,7 @@ TEST_CASE("JTopology: Basic functionality") {
     SECTION("Finished flag propagates") {
 
         logger = JLogger(JLogger::Level::OFF);
-        topology._logger = logger;
+        topology.m_logger = logger;
         source.logger = logger;
 
         topology.set_active(true);

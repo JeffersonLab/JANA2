@@ -26,9 +26,9 @@ public:
 
 	void initialize() final {
 		LOG_DEBUG(m_logger) << "JBlockDisentanglerArrow '" << get_name() << "': " << "Initializing" << LOG_END;
-		assert(_status == Status::Unopened);
+		assert(m_status == Status::Unopened);
 		m_source->Initialize();
-		_status = Status::Running;
+		m_status = Status::Running;
 	}
 
 	void execute(JArrowMetrics& result, size_t location_id) final {

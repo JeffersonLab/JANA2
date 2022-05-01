@@ -36,7 +36,7 @@ JApplication::JApplication(JParameterManager* params) {
     m_service_locator.provide(std::make_shared<JPluginLoader>(this));
     m_service_locator.provide(std::make_shared<JComponentManager>(this));
     m_service_locator.provide(std::make_shared<JGlobalRootLock>());
-	_service_locator.provide(std::make_shared<JTopologyBuilder>());
+    m_service_locator.provide(std::make_shared<JTopologyBuilder>());
 
     m_plugin_loader = m_service_locator.get<JPluginLoader>();
     m_component_manager = m_service_locator.get<JComponentManager>();
@@ -129,10 +129,10 @@ void JApplication::Initialize() {
 
             // After: Use topology_builder::get_or_create
         	std::shared_ptr<JTopologyBuilder> topology_builder = nullptr;
-		    topology_builder = _service_locator.get<JTopologyBuilder>();
+		    topology_builder = m_service_locator.get<JTopologyBuilder>();
 		    // JTopologyBuilder was added to JServiceLocator in ctor, but may have been overridden by user before Init
 
-        	auto topology = topology_builder->get_or_create(_desired_nthreads);
+        	auto topology = topology_builder->get_or_create(m_desired_nthreads);
             
             auto japc = std::make_shared<JArrowProcessingController>(topology);
             m_service_locator.provide(japc);  // Make concrete class available via SL

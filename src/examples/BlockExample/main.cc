@@ -24,7 +24,7 @@ int main(int argc, char* argv[]) {
 	auto event_queue = new JMailbox<std::shared_ptr<JEvent>>;
 
 	topology->component_manager = app.GetService<JComponentManager>();  // Ensure the lifespan of the component manager exceeds that of the topology
-	topology->event_pool = std::make_shared<JEventPool>(&topology->component_manager->get_fac_gens(), 20, 1, true);
+	topology->event_pool = std::make_shared<JEventPool>(&topology->component_manager->get_fac_gens(), false, 20, 1, true);
 
 	auto block_source_arrow = new JBlockSourceArrow<MyBlock>("block_source", source, block_queue);
 	auto block_disentangler_arrow = new JBlockDisentanglerArrow<MyBlock>("block_disentangler", source, block_queue, event_queue, topology->event_pool);
