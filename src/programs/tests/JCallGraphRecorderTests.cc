@@ -19,10 +19,10 @@ TEST_CASE("Test topological sort algorithm in isolation") {
     //sut.AddToCallGraph({"BName","BTag","CName","CTag"});
     //sut.AddToCallGraph({"DName","DTag","BName","BTag"});
     //sut.AddToCallGraph({"DName","DTag","CName","CTag"});
-    JCallGraphRecorder::JCallGraphNode("BName", "BTag", "AName", "ATag");
-    JCallGraphRecorder::JCallGraphNode("BName", "BTag", "CName", "CTag");
-    JCallGraphRecorder::JCallGraphNode("DName", "DTag", "BName", "BTag");
-    JCallGraphRecorder::JCallGraphNode("DName", "DTag", "CName", "CTag");
+    sut.AddToCallGraph(JCallGraphRecorder::JCallGraphNode("BName", "BTag", "AName", "ATag"));
+    sut.AddToCallGraph(JCallGraphRecorder::JCallGraphNode("BName", "BTag", "CName", "CTag"));
+    sut.AddToCallGraph(JCallGraphRecorder::JCallGraphNode("DName", "DTag", "BName", "BTag"));
+    sut.AddToCallGraph(JCallGraphRecorder::JCallGraphNode("DName", "DTag", "CName", "CTag"));
     REQUIRE(sut.GetCallGraph().size() == 4);
 
     auto result = sut.TopologicalSort();
@@ -68,13 +68,13 @@ struct FacD: public JFactoryT<ObjD> {
 
 TEST_CASE("Test topological sort algorithm using actual Factories") {
     JApplication app;
-    JFactorySet factories;
-    factories.Add(new FacA());
-    factories.Add(new FacB());
-    factories.Add(new FacC());
-    factories.Add(new FacD());
+    JFactorySet* factories = new JFactorySet;
+    factories->Add(new FacA());
+    factories->Add(new FacB());
+    factories->Add(new FacC());
+    factories->Add(new FacD());
     auto event = std::make_shared<JEvent>(&app);
-    event->SetFactorySet(&factories);
+    event->SetFactorySet(factories);
     event->GetJCallGraphRecorder()->SetEnabled();
     event->Get<ObjD>();
     auto result = event->GetJCallGraphRecorder()->TopologicalSort();
