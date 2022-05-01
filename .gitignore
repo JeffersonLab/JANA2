@@ -51,5 +51,5 @@ docs/latex/*
 
 # IDE artifacts
 *.swp
-cmake-build-debug/*
-.idea/* 
+cmake-build*/
+.idea/*

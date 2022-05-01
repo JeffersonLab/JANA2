@@ -13,7 +13,7 @@
 class GroupedEventSource : public JEventSource {
 
     JEventGroupManager m_egm;
-    JEventGroup* m_current_group;
+    // JEventGroup* m_current_group;
     int m_remaining_events_in_group;
     int m_current_group_id;
     int m_current_event_number;

@@ -19,11 +19,11 @@ public:
     using EventQueue = JMailbox<Event>;
 
 private:
-    std::vector<JEventProcessor*> _processors;
-    EventQueue* _input_queue;
-    EventQueue* _output_queue;
-    std::shared_ptr<JEventPool> _pool;
-    JLogger _logger;
+    std::vector<JEventProcessor*> m_processors;
+    EventQueue* m_input_queue;
+    EventQueue* m_output_queue;
+    std::shared_ptr<JEventPool> m_pool;
+    JLogger m_logger;
 
 public:
 

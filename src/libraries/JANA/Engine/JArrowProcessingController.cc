@@ -14,72 +14,78 @@ using secs = std::chrono::duration<double>;
 
 void JArrowProcessingController::acquire_services(JServiceLocator * sl) {
     auto ls = sl->get<JLoggingService>();
-    _logger = ls->get_logger("JArrowProcessingController");
-    _worker_logger = ls->get_logger("JWorker");
-    _scheduler_logger = ls->get_logger("JScheduler");
+    m_logger = ls->get_logger("JArrowProcessingController");
+    m_worker_logger = ls->get_logger("JWorker");
+    m_scheduler_logger = ls->get_logger("JScheduler");
+
+    // Obtain timeouts from parameter manager
+    auto params = sl->get<JParameterManager>();
+    params->SetDefaultParameter("jana:timeout", m_timeout_s, "Max. time (in seconds) system will wait for a thread to update its heartbeat before killing it and launching a new one.");
+    params->SetDefaultParameter("jana:warmup_timeout", m_warmup_timeout_s, "Max. time (in seconds) system will wait for the initial events to complete before killing program.");
+    // Originally "THREAD_TIMEOUT" and "THREAD_TIMEOUT_FIRST_EVENT"
 }
 
 void JArrowProcessingController::initialize() {
 
-    _scheduler = new JScheduler(_topology->arrows);
-    _scheduler->logger = _scheduler_logger;
-    LOG_INFO(_logger) << _topology->mapping << LOG_END;
+    m_scheduler = new JScheduler(m_topology->arrows);
+    m_scheduler->logger = m_scheduler_logger;
+    LOG_INFO(m_logger) << m_topology->mapping << LOG_END;
 }
 
 void JArrowProcessingController::run(size_t nthreads) {
 
-    _topology->set_active(true);
+    m_topology->set_active(true);
     scale(nthreads);
 }
 
 void JArrowProcessingController::scale(size_t nthreads) {
 
-    bool pin_to_cpu = (_topology->mapping.get_affinity() != JProcessorMapping::AffinityStrategy::None);
-    size_t next_worker_id = _workers.size();
+    bool pin_to_cpu = (m_topology->mapping.get_affinity() != JProcessorMapping::AffinityStrategy::None);
+    size_t next_worker_id = m_workers.size();
 
     while (next_worker_id < nthreads) {
 
-        size_t next_cpu_id = _topology->mapping.get_cpu_id(next_worker_id);
-        size_t next_loc_id = _topology->mapping.get_loc_id(next_worker_id);
+        size_t next_cpu_id = m_topology->mapping.get_cpu_id(next_worker_id);
+        size_t next_loc_id = m_topology->mapping.get_loc_id(next_worker_id);
 
-        auto worker = new JWorker(_scheduler, next_worker_id, next_cpu_id, next_loc_id, pin_to_cpu);
-        worker->logger = _worker_logger;
-        _workers.push_back(worker);
+        auto worker = new JWorker(m_scheduler, next_worker_id, next_cpu_id, next_loc_id, pin_to_cpu);
+        worker->logger = m_worker_logger;
+        m_workers.push_back(worker);
         next_worker_id++;
     }
 
     for (size_t i=0; i<nthreads; ++i) {
-        _workers.at(i)->start();
+        m_workers.at(i)->start();
     };
     for (size_t i=nthreads; i<next_worker_id; ++i) {
-        _workers.at(i)->request_stop();
+        m_workers.at(i)->request_stop();
     }
     for (size_t i=nthreads; i<next_worker_id; ++i) {
-        _workers.at(i)->wait_for_stop();
+        m_workers.at(i)->wait_for_stop();
     }
-    _topology->metrics.reset();
-    _topology->metrics.start(nthreads);
+    m_topology->metrics.reset();
+    m_topology->metrics.start(nthreads);
 }
 
 void JArrowProcessingController::request_stop() {
-    for (JWorker* worker : _workers) {
+    for (JWorker* worker : m_workers) {
         worker->request_stop();
     }
     // Tell the topology to stop timers and deactivate arrows
-    _topology->set_active(false);
+    m_topology->set_active(false);
 }
 
 void JArrowProcessingController::wait_until_stopped() {
-    for (JWorker* worker : _workers) {
+    for (JWorker* worker : m_workers) {
         worker->request_stop();
     }
-    for (JWorker* worker : _workers) {
+    for (JWorker* worker : m_workers) {
         worker->wait_for_stop();
     }
 }
 
 bool JArrowProcessingController::is_stopped() {
-    for (JWorker* worker : _workers) {
+    for (JWorker* worker : m_workers) {
         if (worker->get_runstate() != JWorker::RunState::Stopped) {
             return false;
         }
@@ -89,63 +95,97 @@ bool JArrowProcessingController::is_stopped() {
 }
 
 bool JArrowProcessingController::is_finished() {
-    return !_topology->is_active();
+    return !m_topology->is_active();
+}
+
+bool JArrowProcessingController::is_timed_out() {
+
+    // Note that this makes its own (redundant) call to measure_internal_performance().
+    // Probably want to refactor so that we only make one such call per ticker iteration.
+    // Since we are storing our metrics summary anyway, we could call measure_performance()
+    // and have print_report(), print_final_report(), is_timed_out(), etc use the cached version
+    auto metrics = measure_internal_performance();
+
+    int timeout_s;
+    if (metrics->total_uptime_s < m_warmup_timeout_s * m_topology->event_pool_size / metrics->thread_count) {
+        // We are at the beginning and not all events have necessarily had a chance to warm up
+        timeout_s = m_warmup_timeout_s;
+    }
+    else if (!m_topology->limit_total_events_in_flight) {
+        // New events are constantly emitted, each of which may contain jfactorysets which need to be warmed up
+        timeout_s = m_warmup_timeout_s;
+    }
+    else {
+        timeout_s = m_timeout_s;
+    }
+
+    // Find all workers whose last heartbeat exceeds timeout
+    bool found_timeout = false;
+    for (size_t i=0; i<metrics->workers.size(); ++i) {
+        if (metrics->workers[i].last_heartbeat_ms > (timeout_s * 1000)) {
+            found_timeout = true;
+            m_workers[i]->declare_timeout();
+            // This assumes the workers and their summaries are ordered the same.
+            // Which is true, but I don't like it.
+        }
+    }
+    return found_timeout;
 }
 
 JArrowProcessingController::~JArrowProcessingController() {
     request_stop();
     wait_until_stopped();
-    for (JWorker* worker : _workers) {
+    for (JWorker* worker : m_workers) {
         delete worker;
     }
-    delete _topology;
-    delete _scheduler;
+    delete m_topology;
+    delete m_scheduler;
 }
 
 void JArrowProcessingController::print_report() {
     auto metrics = measure_internal_performance();
-    jout << "Running" << *metrics << jendl;
+    LOG_INFO(m_logger) << "Running" << *metrics << LOG_END;
 }
 
 void JArrowProcessingController::print_final_report() {
     auto metrics = measure_internal_performance();
-    jout << "Final Report" << *metrics << jendl;
+    LOG_INFO(m_logger) << "Final Report" << *metrics << LOG_END;
 }
 
 std::unique_ptr<const JArrowPerfSummary> JArrowProcessingController::measure_internal_performance() {
 
     // Measure perf on all Workers first, as this will prompt them to publish
     // any ArrowMetrics they have collected
-    _perf_summary.workers.clear();
-    for (JWorker* worker : _workers) {
+    m_perf_summary.workers.clear();
+    for (JWorker* worker : m_workers) {
         WorkerSummary summary;
         worker->measure_perf(summary);
-        _perf_summary.workers.push_back(summary);
+        m_perf_summary.workers.push_back(summary);
     }
 
     size_t monotonic_event_count = 0;
-    for (JArrow* arrow : _topology->sinks) {
+    for (JArrow* arrow : m_topology->sinks) {
         monotonic_event_count += arrow->get_metrics().get_total_message_count();
     }
 
     // Uptime
-    _topology->metrics.split(monotonic_event_count);
-    _topology->metrics.summarize(_perf_summary);
+    m_topology->metrics.split(monotonic_event_count);
+    m_topology->metrics.summarize(m_perf_summary);
 
     double worst_seq_latency = 0;
     double worst_par_latency = 0;
 
-    _perf_summary.arrows.clear();
-    for (JArrow* arrow : _topology->arrows) {
+    m_perf_summary.arrows.clear();
+    for (JArrow* arrow : m_topology->arrows) {
         JArrowMetrics::Status last_status;
         size_t total_message_count;
         size_t last_message_count;
         size_t total_queue_visits;
         size_t last_queue_visits;
-        duration_t total_latency;
-        duration_t last_latency;
-        duration_t total_queue_latency;
-        duration_t last_queue_latency;
+        JArrowMetrics::duration_t total_latency;
+        JArrowMetrics::duration_t last_latency;
+        JArrowMetrics::duration_t total_queue_latency;
+        JArrowMetrics::duration_t last_queue_latency;
 
         arrow->get_metrics().get(last_status, total_message_count, last_message_count, total_queue_visits,
                                  last_queue_visits, total_latency, last_latency, total_queue_latency, last_queue_latency);
@@ -188,25 +228,26 @@ std::unique_ptr<const JArrowPerfSummary> JArrowProcessingController::measure_int
         } else {
             worst_seq_latency = std::max(worst_seq_latency, summary.avg_latency_ms);
         }
-        _perf_summary.arrows.push_back(summary);
+        m_perf_summary.arrows.push_back(summary);
     }
 
     // bottlenecks
-    _perf_summary.avg_seq_bottleneck_hz = 1e3 / worst_seq_latency;
-    _perf_summary.avg_par_bottleneck_hz = 1e3 * _perf_summary.thread_count / worst_par_latency;
+    m_perf_summary.avg_seq_bottleneck_hz = 1e3 / worst_seq_latency;
+    m_perf_summary.avg_par_bottleneck_hz = 1e3 * m_perf_summary.thread_count / worst_par_latency;
 
-    auto tighter_bottleneck = std::min(_perf_summary.avg_seq_bottleneck_hz, _perf_summary.avg_par_bottleneck_hz);
+    auto tighter_bottleneck = std::min(m_perf_summary.avg_seq_bottleneck_hz, m_perf_summary.avg_par_bottleneck_hz);
 
-    _perf_summary.avg_efficiency_frac = (tighter_bottleneck == 0)
+    m_perf_summary.avg_efficiency_frac = (tighter_bottleneck == 0)
                                       ? std::numeric_limits<double>::infinity()
-                                      : _perf_summary.avg_throughput_hz/tighter_bottleneck;
+                                      : m_perf_summary.avg_throughput_hz / tighter_bottleneck;
 
-    return std::unique_ptr<JArrowPerfSummary>(new JArrowPerfSummary(_perf_summary));
+    return std::unique_ptr<JArrowPerfSummary>(new JArrowPerfSummary(m_perf_summary));
 }
 
 std::unique_ptr<const JPerfSummary> JArrowProcessingController::measure_performance() {
     return measure_internal_performance();
 }
+
 
 
 

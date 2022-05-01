@@ -8,8 +8,8 @@
 
 #include <iostream>
 #include <sstream>
+#include <JANA/Compatibility/JStreamLog.h>
 
-///
 struct JLogger {
     enum class Level { TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF };
     Level level;
@@ -25,8 +25,8 @@ struct JLogger {
                      std::string className = "")
             : level(level), destination(destination), className(std::move(className)) {};
 
-    JLogger(const JLogger& logger) = default;
-    JLogger& operator=(const JLogger& in) = default;
+    JLogger(const JLogger&) = default;
+    JLogger& operator=(const JLogger&) = default;
 
     void SetTag(std::string tag) {className = tag; }
     void SetTimestampFlag() {show_timestamp = true; }
@@ -104,7 +104,7 @@ inline JLogMessage&& operator<<(JLogMessage&& m, T t) {
     return std::move(m);
 }
 
-inline void operator<<(JLogMessage&& m, JLogMessage::End const& end) {
+inline void operator<<(JLogMessage&& m, JLogMessage::End const&) {
     std::ostream& dest = *m.logger.destination;
     m.builder << std::endl;
     dest << m.builder.str();
@@ -127,12 +127,6 @@ inline void operator<<(JLogMessage&& m, JLogMessage::End const& end) {
 #define LOG_INFO(logger)  LOG_AT_LEVEL(logger, JLogger::Level::INFO)
 #define LOG_DEBUG(logger) LOG_AT_LEVEL(logger, JLogger::Level::DEBUG)
 #define LOG_TRACE(logger) LOG_AT_LEVEL(logger, JLogger::Level::TRACE)
-
-
-#define jout JLogMessage(default_cout_logger)
-#define jerr JLogMessage(default_cerr_logger)
-#define jendl JLogMessage::End()
-
 
 
 #endif //JANA2_JLOGGER_H

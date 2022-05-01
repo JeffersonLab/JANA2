@@ -64,6 +64,17 @@ public:
     virtual void DoMap(const std::shared_ptr<const JEvent>& e) {
         try {
             std::call_once(m_init_flag, &JEventProcessor::DoInitialize, this);
+            auto run_number = e->GetRunNumber();
+            {
+                std::lock_guard<std::mutex> lock(m_mutex);
+                if (m_last_run_number != run_number) {
+                    if (m_last_run_number != -1) {
+                        EndRun();
+                    }
+                    m_last_run_number = run_number;
+                    BeginRun(e);
+                }
+            }
             Process(e);
         }
         catch (JException& ex) {
@@ -83,13 +94,19 @@ public:
 
     // Reduce does nothing in the basic version because the current API tells
     // the user to lock a mutex in Process(), which takes care of it for us.
-    virtual void DoReduce(const std::shared_ptr<const JEvent>& e) {}
+    virtual void DoReduce(const std::shared_ptr<const JEvent>&) {}
 
 
     virtual void DoFinalize() {
         try {
-            std::call_once(m_finish_flag, &JEventProcessor::Finish, this);
-            m_status = Status::Finished;
+            std::lock_guard<std::mutex> lock(m_mutex);
+            if (m_status != Status::Finished) {
+                if (m_last_run_number != -1) {
+                    EndRun();
+                }
+                Finish();
+                m_status = Status::Finished;
+            }
         }
         catch (JException& ex) {
             ex.plugin_name = m_plugin_name;
@@ -111,10 +128,12 @@ public:
     /// Each JEventProcessor is intended to generate one distinct output,
     virtual void Init() {}
 
-    /// Process i
-    virtual void Process(const std::shared_ptr<const JEvent>& aEvent) {
+    virtual void BeginRun(const std::shared_ptr<const JEvent>&) {}
+
+    virtual void Process(const std::shared_ptr<const JEvent>&) {
         throw JException("Not implemented yet!");
     }
+    virtual void EndRun() {}
 
     virtual void Finish() {}
 
@@ -166,6 +185,8 @@ private:
     std::once_flag m_init_flag;
     std::once_flag m_finish_flag;
     std::atomic_ullong m_event_count;
+    int32_t m_last_run_number = -1;
+    std::mutex m_mutex;
     bool m_receive_events_in_order = false;
 
     /// This is called by JApplication::Add(JEventProcessor*). There
@@ -173,7 +194,7 @@ private:
     void SetJApplication(JApplication* app) { mApplication = app; }
 
     friend JComponentManager;
-    /// SetPlugin is called by ComponentManager and should not be exposed to the user.
+    /// SetPluginName is called by ComponentManager and should not be exposed to the user.
     // TODO: Maybe we want JApplication to track the current plugin instead
     void SetPluginName(std::string plugin_name) { m_plugin_name = std::move(plugin_name); };
 

@@ -72,7 +72,7 @@ public:
         }
     };
 
-    bool pullEvent(JEvent& event) final {
+    bool pullEvent(JEvent&) final {
         return false;
     };
 

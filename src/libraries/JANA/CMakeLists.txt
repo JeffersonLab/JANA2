@@ -96,6 +96,17 @@ set(JANA2_SOURCES
     Utils/JProcessorMapping.cc
     Utils/JPerfUtils.cc
     Utils/JPerfUtils.h
+    Utils/JStringification.cc
+    Utils/JStringification.h
+    Utils/JAutoActivator.cc
+    Utils/JAutoActivator.h
+    Utils/JAny.h
+    Utils/JTablePrinter.cc
+    Utils/JTablePrinter.h
+    Utils/JCallGraphRecorder.h
+    Utils/JCallGraphRecorder.cc
+    Utils/JInspector.cc
+    Utils/JInspector.h
 
     Calibrations/JCalibration.cc
     Calibrations/JCalibration.h
@@ -104,11 +115,15 @@ set(JANA2_SOURCES
     Calibrations/JCalibrationFile.h
     Calibrations/JCalibrationGenerator.h
     Calibrations/JCalibrationGeneratorCCDB.h
+    Calibrations/JLargeCalibration.cc
+    Calibrations/JLargeCalibration.h
 
     CLI/JVersion.h
     CLI/JBenchmarker.cc
     CLI/JBenchmarker.h
     CLI/JSignalHandler.h
+    CLI/JMain.cc
+    CLI/JMain.h
 
     Compatibility/JStreamLog.cc
     Compatibility/JStreamLog.h
@@ -116,8 +131,22 @@ set(JANA2_SOURCES
     Compatibility/JStreamLogBuffer.h
     Compatibility/JStatusBits.h
     Compatibility/jerror.h
+    Compatibility/JGeometry.h
+    Compatibility/JGeometryManager.cc
+    Compatibility/JGeometryManager.h
+    Compatibility/JGeometryMYSQL.cc
+    Compatibility/JGeometryMYSQL.h
+    Compatibility/JGeometryXML.cc
+    Compatibility/JGeometryXML.h
+    Compatibility/md5.c
+    Compatibility/md5.h
+    Compatibility/JLockService.h
+    Compatibility/JGetObjectsFactory.h
     )
 
+if (NOT ${USE_XERCES})
+    message(STATUS "Skipping support for libJANA's JGeometryXML because USE_XERCES=Off")
+endif()
 
 add_library(jana2 STATIC ${JANA2_SOURCES})
 
@@ -140,7 +169,7 @@ configure_package_config_file(
         INSTALL_DESTINATION "lib/cmake/JANA"
 )
 
-# Generate JANAConfigVesrion.cmake
+# Generate JANAConfigVersion.cmake
 write_basic_package_version_file(
         JANAConfigVersion.cmake
         VERSION ${PACKAGE_VERSION}

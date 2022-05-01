@@ -31,7 +31,7 @@ struct FlakySource : public JEventSource {
         }
     }
 
-    void GetEvent(std::shared_ptr<JEvent> event) override {
+    void GetEvent(std::shared_ptr<JEvent>) override {
 
         if (++event_count > 10) {
             throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
@@ -62,7 +62,7 @@ struct FlakyProcessor : public JEventProcessor {
         }
     };
 
-    void Process(const std::shared_ptr<const JEvent>& aEvent) override {
+    void Process(const std::shared_ptr<const JEvent>&) override {
         if (process_excepts) {
             throw JException("Unable to process!");
         }

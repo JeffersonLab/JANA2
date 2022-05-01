@@ -6,6 +6,7 @@
 #define _JFactory_h_
 
 #include <JANA/JException.h>
+#include <JANA/Utils/JAny.h>
 
 #include <string>
 #include <typeindex>
@@ -25,6 +26,8 @@ class JApplication;
 class JFactory {
 public:
 
+    enum class CreationStatus { NotCreatedYet, Created, Inserted, InsertedViaGetObjects, NeverCreated };
+
     enum JFactory_Flags_t {
         JFACTORY_NULL = 0x00,
         PERSISTENT = 0x01,
@@ -37,16 +40,29 @@ public:
 
     virtual ~JFactory() = default;
 
-    std::string GetName() const { return mObjectName; }   // TODO: This is the JObject class name, right?
+
+    std::string GetName() const __attribute__ ((deprecated))  { return mObjectName; }
 
     std::string GetTag() const { return mTag; }
+    std::string GetObjectName() const { return mObjectName; }
+    std::string GetFactoryName() const { return mFactoryName; }
+    std::string GetPluginName() const { return mPluginName; }
+    CreationStatus GetCreationStatus() const { return mCreationStatus; }
 
     uint32_t GetPreviousRunNumber(void) const { return mPreviousRunNumber; }
+
+
+    void SetName(std::string objectName) __attribute__ ((deprecated)) { mObjectName = std::move(objectName); }
+
+    void SetTag(std::string tag) { mTag = std::move(tag); }
+    void SetObjectName(std::string objectName) { mObjectName = std::move(objectName); }
+    void SetFactoryName(std::string factoryName) { mFactoryName = std::move(factoryName); }
+    void SetPluginName(std::string pluginName) { mPluginName = std::move(pluginName); }
 
     void SetPreviousRunNumber(uint32_t aRunNumber) { mPreviousRunNumber = aRunNumber; }
 
     /// Get all flags in the form of a single word
-    inline uint32_t GetFactoryFlags(void) { return mFlags; }
+    inline uint32_t GetFactoryFlags() const { return mFlags; }
 
     /// Set a flag (or flags)
     inline void SetFactoryFlag(JFactory_Flags_t f) {
@@ -59,7 +75,7 @@ public:
     }
 
     /// Test if a flag (or set of flags) is set
-    inline bool TestFactoryFlag(JFactory_Flags_t f) {
+    inline bool TestFactoryFlag(JFactory_Flags_t f) const {
         return (mFlags & (uint32_t) f) == (uint32_t) f;
     }
 
@@ -75,16 +91,19 @@ public:
     // Overloaded by user Factories
     virtual void Init() {}
 
-	virtual void BeginRun(const std::shared_ptr<const JEvent> &aEvent) {}
-	virtual void ChangeRun(const std::shared_ptr<const JEvent> &aEvent) {}
-	virtual void EndRun() {}
-    virtual void Process(const std::shared_ptr<const JEvent> &aEvent) {}
+    virtual void BeginRun(const std::shared_ptr<const JEvent>&) {}
+    virtual void ChangeRun(const std::shared_ptr<const JEvent>&) {}
+    virtual void EndRun() {}
+    virtual void Process(const std::shared_ptr<const JEvent>&) {}
+    virtual void Finish() {}
 
-
+    virtual std::size_t GetNumObjects() const {
+        return 0;
+    }
 
     // Copy/Move objects into factory
     template<typename T>
-    void Set(std::vector<T *> &items) {
+    void Set(const std::vector<T *> &items) {
         for (T *item : items) {
             Insert(item);
         }
@@ -102,6 +121,10 @@ public:
     template<typename S>
     std::vector<S*> GetAs();
 
+    /// Create() calls JFactory::Init,BeginRun,Process in an invariant-preserving way without knowing the exact
+    /// type of object contained. It returns the number of objects created. In order to access said objects,
+    /// use JFactory::GetAs().
+    virtual size_t Create(const std::shared_ptr<const JEvent>& event, JApplication* app, uint64_t run_number) = 0;
 
     /// JApplication setter. This is meant to be used under the hood.
     void SetApplication(JApplication* app) { mApp = app; }
@@ -111,22 +134,24 @@ public:
     JApplication* GetApplication() { return mApp; }
 
 
-protected:
-    virtual void Set(std::vector<JObject *> &data) = 0;
-
+    virtual void Set(const std::vector<JObject *> &data) = 0;
     virtual void Insert(JObject *data) = 0;
+
+protected:
 
     std::string mPluginName;
     std::string mFactoryName;
     std::string mObjectName;
     std::string mTag;
     uint32_t mFlags = 0;
-    uint32_t mPreviousRunNumber = -1;
+    int32_t mPreviousRunNumber = -1;
     JApplication* mApp = nullptr;
-    std::unordered_map<std::type_index, void*> mUpcastVTable;
+    std::unordered_map<std::type_index, std::unique_ptr<JAny>> mUpcastVTable;
 
     enum class Status {Uninitialized, Unprocessed, Processed, Inserted};
     mutable Status mStatus = Status::Uninitialized;
+
+    CreationStatus mCreationStatus = CreationStatus::NotCreatedYet;
     mutable std::mutex mMutex;
 
     // Used to make sure Init is called only once
@@ -148,8 +173,9 @@ std::vector<S*> JFactory::GetAs() {
     auto search = mUpcastVTable.find(ti);
     if (search != mUpcastVTable.end()) {
         using upcast_fn_t = std::function<std::vector<S*>()>;
-        auto upcast_fn = reinterpret_cast<upcast_fn_t*>(search->second);
-        results = (*upcast_fn)();
+        auto temp = static_cast<JAnyT<upcast_fn_t>*>(&(*search->second));
+        upcast_fn_t upcast_fn = temp->t;
+        results = upcast_fn();
     }
     return results;
 }

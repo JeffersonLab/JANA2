@@ -18,27 +18,27 @@ JStreamLog::JStreamLog(const std::ostream& os, const std::string& tag) : std::os
 {}
 
 JStreamLog::~JStreamLog() {
-	// On some Linux systems (CentOS 6.4) it seems this destructor
-	// is called twice whenever a plugin is attached. I can only guess
-	// that the global-scope jout and jerr are somehow linked when 
-	// the plugin is attached, but their destructors are called both
-	// when they are detached and when the program exists. The problem
-	// manifests in a seg. fault at the very end of the program. To avoid
-	// this, we keep a flag that is set in the constructor and cleared
-	// here in the destructor to indicate that the JStreamLogBuffer has 
-	// been deleted already. Thus, we don't try deleting it a second time
-	// and therefore avoid the seg. fault.    Dec. 13, 2013  D.L.
-	if(own_rdbuf){
-		std::streambuf *mybuf = rdbuf(NULL);
-		if(mybuf!=NULL) delete mybuf;
-	}
-	own_rdbuf = false;
+    // On some Linux systems (CentOS 6.4) it seems this destructor
+    // is called twice whenever a plugin is attached. I can only guess
+    // that the global-scope jout and jerr are somehow linked when
+    // the plugin is attached, but their destructors are called both
+    // when they are detached and when the program exists. The problem
+    // manifests in a seg. fault at the very end of the program. To avoid
+    // this, we keep a flag that is set in the constructor and cleared
+    // here in the destructor to indicate that the JStreamLogBuffer has
+    // been deleted already. Thus, we don't try deleting it a second time
+    // and therefore avoid the seg. fault.    Dec. 13, 2013  D.L.
+    if(own_rdbuf){
+        std::streambuf *mybuf = rdbuf(NULL);
+        if(mybuf!=NULL) delete mybuf;
+    }
+    own_rdbuf = false;
 }
 
 std::ostream& endMsg(std::ostream& dSL) {
-	dSL << static_cast<char>(6); 
-	dSL << std::flush;
-	return dSL;
+    dSL << static_cast<char>(6);
+    dSL << std::flush;
+    return dSL;
 }
 
 //------------------
@@ -46,9 +46,9 @@ std::ostream& endMsg(std::ostream& dSL) {
 //------------------
 std::string JStreamLog::GetTag(void)
 {
-	JStreamLogBuffer *b = GetJStreamLogBuffer();
-	
-	return (b ? b->GetTag():"unknown");
+    JStreamLogBuffer *b = GetJStreamLogBuffer();
+
+    return (b ? b->GetTag():"unknown");
 }
 
 //------------------
@@ -56,9 +56,9 @@ std::string JStreamLog::GetTag(void)
 //------------------
 bool JStreamLog::GetTimestampFlag(void)
 {
-	JStreamLogBuffer *b = GetJStreamLogBuffer();
-	
-	return (b ? b->GetTimestampFlag():false);
+    JStreamLogBuffer *b = GetJStreamLogBuffer();
+
+    return (b ? b->GetTimestampFlag():false);
 }
 
 //------------------
@@ -66,9 +66,9 @@ bool JStreamLog::GetTimestampFlag(void)
 //------------------
 bool JStreamLog::GetThreadstampFlag(void)
 {
-	JStreamLogBuffer *b = GetJStreamLogBuffer();
-	
-	return (b ? b->GetThreadstampFlag():false);
+    JStreamLogBuffer *b = GetJStreamLogBuffer();
+
+    return (b ? b->GetThreadstampFlag():false);
 }
 
 //------------------
@@ -76,8 +76,8 @@ bool JStreamLog::GetThreadstampFlag(void)
 //------------------
 void JStreamLog::SetTag(std::string tag)
 {
-	JStreamLogBuffer *b = GetJStreamLogBuffer();
-	if(b)b->SetTag(tag);
+    JStreamLogBuffer *b = GetJStreamLogBuffer();
+    if(b)b->SetTag(tag);
 }
 
 //------------------
@@ -85,8 +85,8 @@ void JStreamLog::SetTag(std::string tag)
 //------------------
 void JStreamLog::SetTimestampFlag(bool prepend_timestamp)
 {
-	JStreamLogBuffer *b = GetJStreamLogBuffer();
-	if(b)b->SetTimestampFlag(prepend_timestamp);
+    JStreamLogBuffer *b = GetJStreamLogBuffer();
+    if(b)b->SetTimestampFlag(prepend_timestamp);
 }
 
 //------------------
@@ -94,8 +94,8 @@ void JStreamLog::SetTimestampFlag(bool prepend_timestamp)
 //------------------
 void JStreamLog::SetThreadstampFlag(bool prepend_threadstamp)
 {
-	JStreamLogBuffer *b = GetJStreamLogBuffer();
-	if(b)b->SetThreadstampFlag(prepend_threadstamp);
+    JStreamLogBuffer *b = GetJStreamLogBuffer();
+    if(b)b->SetThreadstampFlag(prepend_threadstamp);
 }
 
 //------------------
@@ -103,8 +103,8 @@ void JStreamLog::SetThreadstampFlag(bool prepend_threadstamp)
 //------------------
 JStreamLogBuffer* JStreamLog::GetJStreamLogBuffer(void)
 {
-	// Try and dynamic cast our streambuf as a JStreamLogBuffer
-	return dynamic_cast<JStreamLogBuffer*> (rdbuf());
+    // Try and dynamic cast our streambuf as a JStreamLogBuffer
+    return dynamic_cast<JStreamLogBuffer*> (rdbuf());
 }
 
 

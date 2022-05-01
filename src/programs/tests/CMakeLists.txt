@@ -24,6 +24,12 @@ set(TEST_SOURCES
     JEventGetAllTests.cc
     JParameterManagerTests.cc
     JStatusBitsTests.cc
+    TimeoutTests.cc
+    ScaleTests.cc
+    BarrierEventTests.cc
+    BarrierEventTests.h
+    GetObjectsTests.cc
+    JCallGraphRecorderTests.cc
     ArrowEngineTests.cc
     )
 

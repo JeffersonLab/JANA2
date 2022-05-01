@@ -40,7 +40,7 @@ public:
     inline size_t get_event_number() const override { return event_number; }
     inline size_t get_run_number() const override { return run_number; }
 
-    ReadoutMessageAuto(JApplication* app) {
+    ReadoutMessageAuto(JApplication*) {
     }
 
     inline friend std::ostream& operator<< (std::ostream& os, const ReadoutMessageAuto& msg) {

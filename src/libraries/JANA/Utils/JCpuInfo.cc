@@ -5,11 +5,16 @@
 #include <unistd.h>
 #include <thread>
 
+// Note that Apple complicates things some. In particular with the
+// addition of Apple silicon (M1 chip) which does not seem to have
+// thesame CPU utilities as older Apple OS versions/hardware (ugh!)
 #ifdef __APPLE__
 #include <mach/thread_policy.h>
 #import <mach/thread_act.h>
+#ifndef __aarch64__
 #include <cpuid.h>
-#else //__APPLE__
+#endif // __aarch64__
+#else //__APPLE__ (i.e. Linux)
 #include <sched.h>
 #endif //__APPLE__
 
@@ -25,18 +30,18 @@ extern thread_local int THREAD_ID;
 namespace JCpuInfo {
 
 size_t GetNumCpus() {
-	/// Returns the number of cores that are on the computer.
-	/// The count will be full cores+hyperthreads (or equivalent)
-	return sysconf(_SC_NPROCESSORS_ONLN);
+    /// Returns the number of cores that are on the computer.
+    /// The count will be full cores+hyperthreads (or equivalent)
+    return sysconf(_SC_NPROCESSORS_ONLN);
 }
 
 
 uint32_t GetCpuID() {
-	/// Returns the current CPU the calling thread is running on.
-	/// Note that unless the thread affinity has been set, this may 
-	/// change, even before returning from this call. The thread
-	/// affinity of all threads may be fixed by setting the AFFINITY
-	/// configuration parameter at program start up.
+    /// Returns the current CPU the calling thread is running on.
+    /// Note that unless the thread affinity has been set, this may
+    /// change, even before returning from this call. The thread
+    /// affinity of all threads may be fixed by setting the AFFINITY
+    /// configuration parameter at program start up.
 
 
 #ifdef __APPLE__
@@ -55,13 +60,18 @@ uint32_t GetCpuID() {
         if (CPU < 0) CPU = 0;                          \
         }
 
-	int cpuid;
-	GETCPU(cpuid);
-	return cpuid;
-	// TODO: Clean this up	
+    int cpuid=0;
+// Apple M1 running MacOS 12.0.1 does not support __cpuid_count. Skip for now
+#ifdef __cpuid_count
+    GETCPU(cpuid);
+#else  // __cpuid_count
+#warning __cpuid_count is not defined on this system.
+#endif // __cpuid_count
+    return cpuid;
+    // TODO: Clean this up
 
 #else //__APPLE__
-	return sched_getcpu();
+    return sched_getcpu();
 #endif //__APPLE__
 }
 
@@ -69,37 +79,38 @@ uint32_t GetCpuID() {
 
 size_t GetNumaNodeID() {
 #ifdef HAVE_NUMA
-	if (numa_available() == -1) {
-		return 0;
-	} else {
-		return numa_node_of_cpu(GetCpuID());
-	}
+    if (numa_available() == -1) {
+        return 0;
+    } else {
+        return numa_node_of_cpu(GetCpuID());
+    }
 #else //HAVE_NUMA
-	return 0;
+    return 0;
 #endif //HAVE_NUMA
 }
 
 size_t GetNumaNodeID(size_t cpu_id) {
 #ifdef HAVE_NUMA
         if (numa_available() == -1) {
-		return 0;
-	} else {
-		return numa_node_of_cpu(cpu_id);
-	}
+        return 0;
+    } else {
+        return numa_node_of_cpu(cpu_id);
+    }
 #else //HAVE_NUMA
+	cpu_id = 0; // suppress compiler warning.
         return 0;
 #endif //HAVE_NUMA
 }
 
 size_t GetNumNumaNodes() {
 #ifdef HAVE_NUMA
-	if (numa_available() == -1) {
-		return 1;
-	} else {
-		return numa_num_configured_nodes();
-	}
+    if (numa_available() == -1) {
+        return 1;
+    } else {
+        return numa_num_configured_nodes();
+    }
 #else //HAVE_NUMA
-	return 1;
+    return 1;
 #endif //HAVE_NUMA
 }
 

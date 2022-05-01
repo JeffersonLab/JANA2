@@ -41,7 +41,18 @@ struct JArrowTopology : public JActivable {
     std::vector<EventQueue*> queues;        // Queues shared between arrows
     JProcessorMapping mapping;
 
-    JLogger _logger;
+    size_t event_pool_size;                 //  Will be defaulted to nthreads later
+    bool limit_total_events_in_flight = true;
+    bool enable_call_graph_recording = false;
+    size_t event_queue_threshold = 80;
+    size_t event_source_chunksize = 40;
+    size_t event_processor_chunksize = 1;
+    size_t location_count = 1;
+    bool enable_stealing = false;
+    int affinity = 2;
+    int locality = 0;
+
+    JLogger m_logger;
 
     bool is_active() override;
     void set_active(bool is_active) override;

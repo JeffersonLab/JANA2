@@ -26,7 +26,7 @@ struct JPerfSummary {
     double latest_throughput_hz = 0;
 
     JPerfSummary() = default;
-    JPerfSummary(const JPerfSummary& other) = default;
+    JPerfSummary(const JPerfSummary&) = default;
     virtual ~JPerfSummary() = default;
 };
 

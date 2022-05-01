@@ -1,7 +1,16 @@
 import sys
 import re
 
+
+print("BAH!")
 regexes = [
+
+    # JObjects
+
+    (re.compile(r'void toStrings\(vector<pair<string,string> > &items\)\s*const\s*\{'), 'void Summarize(JObjectSummary& summary) const override {'),
+
+    (re.compile(r'AddString\(items,\s*"([^"]*)",\s*"([^"]*)",\s*([^,]*)\);'), r'summary.add(\3, "\1", "\2");'),
+    (re.compile(r'AddString\(items, "([^"]*)",\s*"([^"]*)",\s*([^,]*),\s*"([^"]*)"\);'), r'summary.add(\3, "\1", "\2", "\4");'),
 
     # JFactories
 
@@ -51,12 +60,6 @@ regexes = [
 
     (re.compile(r'loop->AddFactory'),
      r'factorySet->Add'),
-
-    (re.compile(r'jout((?:(?! endl).)*) endl;'),
-     r'jout\1 jendl;'),
-
-    (re.compile(r'jout((?:(?!>endl).)*)>endl;'),
-     r'jout\1>jendl;')
 ]
 
 

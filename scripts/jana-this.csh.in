@@ -28,7 +28,7 @@ endif
 if ( "@HAVE_XERCES@" == "1" ) then
     setenv XERCESCROOT "@XERCESCROOT@"
     # only add to LD_LIBRARY_PATH if XERCESCROOT does not appear to be a system directory
-    if ( ${XERCESCROOT} != /usr ) setenv LD_LIBRARY_PATH=${XERCESCROOT}/lib:${LD_LIBRARY_PATH}
+    if ( ${XERCESCROOT} != /usr ) setenv LD_LIBRARY_PATH ${XERCESCROOT}/lib:${LD_LIBRARY_PATH}
 endif
 
 # CCDB
@@ -55,5 +55,15 @@ if ( "@HAVE_CURL@" == "1" ) then
     if ( ${CURL_ROOT} != /usr ) then
         setenv PATH ${CURL_ROOT}/bin:${PATH}
         setenv LD_LIBRARY_PATH ${CURL_ROOT}/lib:${LD_LIBRARY_PATH}
+    endif
+endif
+
+# PYTHON
+# Add install directory for Python moduels to the PYTHONPATH (if it exists)
+if ( -d @JANA_INSTALL_DIR@/python ) then
+    if ( $?PYTHONPATH ) then
+        setenv PYTHONPATH @JANA_INSTALL_DIR@/python:${PYTHONPATH}
+    else
+        setenv PYTHONPATH @JANA_INSTALL_DIR@/python
     endif
 endif

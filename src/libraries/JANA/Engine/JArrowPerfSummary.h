@@ -40,6 +40,7 @@ struct WorkerSummary {
     int worker_id;
     int cpu_id;
     bool is_pinned;
+    double last_heartbeat_ms;
     double total_useful_time_ms;
     double total_retry_time_ms;
     double total_idle_time_ms;
@@ -67,7 +68,7 @@ struct JArrowPerfSummary : public JPerfSummary {
     std::vector<ArrowSummary> arrows;
 
     JArrowPerfSummary() = default;
-    JArrowPerfSummary(const JArrowPerfSummary& other) = default;
+    JArrowPerfSummary(const JArrowPerfSummary&) = default;
     virtual ~JArrowPerfSummary() = default;
 
 };

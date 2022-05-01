@@ -8,7 +8,6 @@
 
 #include "JServiceLocator.h"
 
-class JEventProcessor;
 
 class JGlobalRootLock : public JService {
 

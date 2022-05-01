@@ -38,11 +38,11 @@ struct DummyFactory : public JFactoryT<DummyObject> {
         ++init_call_count;
     }
 
-    void ChangeRun(const std::shared_ptr<const JEvent>& event) override {
+    void ChangeRun(const std::shared_ptr<const JEvent>&) override {
         ++change_run_call_count;
     }
 
-    void Process(const std::shared_ptr<const JEvent>& event) override {
+    void Process(const std::shared_ptr<const JEvent>&) override {
         ++process_call_count;
         Insert(new DummyObject (7, &destroy_flags[0]));
         Insert(new DummyObject (22, &destroy_flags[1]));
@@ -58,7 +58,7 @@ struct DummySource: public JEventSource {
     void GetEvent(std::shared_ptr<JEvent>) override {
     };
 
-    bool GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactory* aFactory) override {
+    bool GetObjects(const std::shared_ptr<const JEvent>&, JFactory* aFactory) override {
         auto factory = dynamic_cast<JFactoryT<DummyObject>*>(aFactory);
         if (factory != nullptr) {
             factory->Insert(new DummyObject(8));

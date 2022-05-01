@@ -51,9 +51,9 @@ class JSubeventProcessor {
 };
 
 class JSubeventArrow : public JArrow {
-    JSubeventProcessor* _processor;
-    JMailbox<JSubevent>* _inbox;
-    JMailbox<JSubevent>* _outbox;
+    JSubeventProcessor* m_processor;
+    JMailbox<JSubevent>* m_inbox;
+    JMailbox<JSubevent>* m_outbox;
 public:
     JSubeventArrow(std::string name, JSubeventProcessor* processor,
                    JMailbox<JSubevent>* inbox, JMailbox<JSubevent>* outbox);
@@ -64,9 +64,9 @@ public:
 };
 
 class JSplitArrow : public JArrow {
-    JSubeventProcessor* _processor;
-    JMailbox<Event>* _inbox;
-    JMailbox<JSubevent>* _outbox;
+    JSubeventProcessor* m_processor;
+    JMailbox<Event>* m_inbox;
+    JMailbox<JSubevent>* m_outbox;
 public:
     JSplitArrow(std::string name, JSubeventProcessor* processor,
                 JMailbox<Event>* inbox, JMailbox<JSubevent>* outbox);
@@ -77,9 +77,9 @@ public:
 };
 
 class JMergeArrow : public JArrow {
-    JSubeventProcessor* _processor;
-    JMailbox<JSubevent>* _inbox;
-    JMailbox<Event>* _outbox;
+    JSubeventProcessor* m_processor;
+    JMailbox<JSubevent>* m_inbox;
+    JMailbox<Event>* m_outbox;
 public:
     JMergeArrow(std::string name, JSubeventProcessor* processor,
                 JMailbox<JSubevent>* inbox, JMailbox<Event>* outbox);

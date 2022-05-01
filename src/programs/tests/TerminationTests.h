@@ -29,7 +29,7 @@ struct BoundedSource : public JEventSource {
     void Open() override {
     }
 
-    void GetEvent(std::shared_ptr<JEvent> event) override {
+    void GetEvent(std::shared_ptr<JEvent>) override {
         if (event_count >= 10) {
             throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
         }
@@ -55,7 +55,7 @@ struct UnboundedSource : public JEventSource {
     void Open() override {
     }
 
-    void GetEvent(std::shared_ptr<JEvent> event) override {
+    void GetEvent(std::shared_ptr<JEvent>) override {
         event_count += 1;
     }
 };
@@ -68,7 +68,7 @@ struct CountingProcessor : public JEventProcessor {
 
     void Init() override {}
 
-    void Process(const std::shared_ptr<const JEvent>& aEvent) override {
+    void Process(const std::shared_ptr<const JEvent>&) override {
         processed_count += 1;
     }
 

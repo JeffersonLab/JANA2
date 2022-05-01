@@ -22,19 +22,21 @@ Table of contents
 1.  [Download](Download.html) and [install](Installation.html) JANA
 2.  [Use the JANA command-line program](#using-the-jana-cli)
 3.  [Configure JANA](#configuring-jana)
+6.  [Benchmark a JANA program](benchmarking.html)
 4.  [Generate code skeletons](#creating-code-skeletons) for projects, plugins, components, etc
-5.  [Work with factory metadata](#using-factory-metadata) for collecting statistics, etc
-6.  Create a service which can be shared between different plugins
-7.  Handle both real and simulated data
-8.  Handle EPICS data
-9.  [Detect when a group of events has finished](howto_group_events.md)
-10.  Use JANA with ROOT
-11.  Persist the entire DST using ROOT
-12. Checkpoint the entire DST using ROOT
-13. [Stream data to and from JANA](howto_streaming.html)
-14. Build and filter events ("L1 and L2 triggers")
-15. Process subevents
-16. Migrate from JANA1 to JANA2
+5.  [Run the JANA Status/Control/Debugger GUI](#run-the-status-control-debugger-gui)
+6.  [Work with factory metadata](#using-factory-metadata) for collecting statistics, etc
+7.  Create a service which can be shared between different plugins
+8.  Handle both real and simulated data
+9.  Handle EPICS data
+10.  [Detect when a group of events has finished](howto_group_events.md)
+11.  Use JANA with ROOT
+12.  Persist the entire DST using ROOT
+13. Checkpoint the entire DST using ROOT
+14. [Stream data to and from JANA](howto_streaming.html)
+15. Build and filter events ("L1 and L2 triggers")
+16. Process subevents
+17. Migrate from JANA1 to JANA2
 
 
 Using the JANA CLI
@@ -213,6 +215,11 @@ JObject name is 'RecoTrack', and the factory uses Genfit under the hood, the fac
 
 ```jana-generate.py JFactory JFactoryNameInCamelCase JObjectNameInCamelCase```
 
+Run the Status Control Debugger GUI
+-----------------------------------
+
+The JANA Status/Control/Debugger GUI can be a useful tool for probing a running process. Details can
+be found on the [dedicated page for the GUI](GUI_Monitor_Debug.md)
 
 
 Using factory metadata

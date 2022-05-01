@@ -9,14 +9,14 @@
 
 class JBenchmarker {
 
-    JApplication* _app;
-    JLogger _logger = JLoggingService::logger("JBenchmarker");
+    JApplication* m_app;
+    JLogger m_logger = JLoggingService::logger("JBenchmarker");
 
-    size_t _min_threads = 1;
-    size_t _max_threads = 0;
-    unsigned _thread_step = 1;
-    unsigned _nsamples = 15;
-    std::string _output_dir = "JANA_Test_Results";
+    size_t m_min_threads = 1;
+    size_t m_max_threads = 0;
+    unsigned m_thread_step = 1;
+    unsigned m_nsamples = 15;
+    std::string m_output_dir = "JANA_Test_Results";
 
 public:
     explicit JBenchmarker(JApplication* app);

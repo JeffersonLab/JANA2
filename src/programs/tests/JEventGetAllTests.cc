@@ -40,7 +40,7 @@ public:
         EnableGetAs<Base>();
     }
 
-    void Process(const std::shared_ptr<const JEvent>& event) override {
+    void Process(const std::shared_ptr<const JEvent>&) override {
         Insert(new Derived(19, 13));
         Insert(new Derived(29, 23));
     }

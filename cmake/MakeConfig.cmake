@@ -1,14 +1,20 @@
 #
-# This is used to generate the jana-config script and jana_config.h header
-# from the corresponding ".in" files in the scripts directory.
+# This is used in the generation of the files:
+#   jana-config
+#   jana_config.h
+#   jana-this.sh
+#   jana-this.csh
 #
-# The jana-config script can be used by other build systems to get compiler
-# and linker options needed for this installation of JANA2. These will
-# include some 3rd party packages that users will need to link to if they
-# were linked into their JANA2 build.
+# The primary role of this file is to set cmake variables based on the
+# output of running various 3rd party tools meant to help with your
+# build system. For example, it runs root-config --cflags and puts the
+# results in the ROOTCFLAGS cmake variable. That variable is then used
+# in generating the jana-config script so that it can report those flags
+# for use when building against this version of JANA.
 #
-# Similarly, jana_config.h gives some access to these 3rd party packages
-# that can be accessed programmatically.
+# In addition, some variables such as HAVE_ROOT are set which can be used
+# in preprocessor directives to conditionally compile code depending on
+# whether the 3rd party package is present.
 #
 
 set(JANA_INSTALL_DIR ${CMAKE_INSTALL_PREFIX})
@@ -31,7 +37,7 @@ if(DEFINED ENV{ROOTSYS})
                     OUTPUT_VARIABLE ROOTGLIBS
                     OUTPUT_STRIP_TRAILING_WHITESPACE)
 else()
-    message(STATUS "Did not find ROOT")
+#    message(STATUS "Did not find ROOT")
     set(HAVE_ROOT 0)
 endif()
 
@@ -43,7 +49,7 @@ if(DEFINED ENV{XERCESCROOT})
     set(XERCESCROOT $ENV{XERCESCROOT})
     set(XERCES_CPPFLAGS "-I${XERCESCROOT}/include/xercesc")
     set(XERCES_LIBS "-lxerces-c")
-    if( $XERCESCROOT != "/usr" )
+    if( NOT $XERCESCROOT EQUAL "/usr" )
         set(XERCES_CPPFLAGS "${XERCES_CPPFLAGS} -I${XERCESCROOT}/include")
         set(XERCES_LDFLAGS "-L${XERCESCROOT}/lib")
     endif()
@@ -109,7 +115,7 @@ else()
 endif()
 
 # CURL
-execute_process(COMMAND which curl-config
+execute_process(COMMAND "which curl-config 2> /dev/null"
         OUTPUT_VARIABLE CURL_FOUND
         OUTPUT_STRIP_TRAILING_WHITESPACE)
 

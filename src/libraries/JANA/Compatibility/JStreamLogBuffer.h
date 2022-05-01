@@ -33,33 +33,33 @@ extern pthread_mutex_t jstreamlog_mutex;
 
 class JStreamLogBuffer : public std::streambuf
 {
-	private:
-		std::streambuf* __sbuf;
-		char*			__tag;
+    private:
+        std::streambuf* __sbuf;
+        char*			__tag;
 //		bool			__newline;
-		bool			__prepend_timestamp;
-		bool			__prepend_threadstamp;
-		
-	protected:
-		int overflow(int c);
-		int sync();
-		std::string getThreadStamp();
-		std::string getTimeStamp();
-		
-		// keep a buffer for each thread that tries to write so only
-		// complete messages are written to the screen.
-		std::map<pthread_t,std::string> thr_buffers;
-	
-	public:
-		JStreamLogBuffer(std::streambuf* buf, const char* tag);
-		virtual ~JStreamLogBuffer();
+        bool			__prepend_timestamp;
+        bool			__prepend_threadstamp;
 
-		std::string GetTag(void){return std::string(__tag);}
-		bool GetTimestampFlag(void){return __prepend_timestamp;}
-		bool GetThreadstampFlag(void){return __prepend_threadstamp;}
-		void SetTag(std::string tag);
-		void SetTimestampFlag(bool prepend_timestamp=true){__prepend_timestamp=prepend_timestamp;}
-		void SetThreadstampFlag(bool prepend_threadstamp=true){__prepend_threadstamp=prepend_threadstamp;}
+    protected:
+        int overflow(int c);
+        int sync();
+        std::string getThreadStamp();
+        std::string getTimeStamp();
+
+        // keep a buffer for each thread that tries to write so only
+        // complete messages are written to the screen.
+        std::map<pthread_t,std::string> thr_buffers;
+
+    public:
+        JStreamLogBuffer(std::streambuf* buf, const char* tag);
+        virtual ~JStreamLogBuffer();
+
+        std::string GetTag(void){return std::string(__tag);}
+        bool GetTimestampFlag(void){return __prepend_timestamp;}
+        bool GetThreadstampFlag(void){return __prepend_threadstamp;}
+        void SetTag(std::string tag);
+        void SetTimestampFlag(bool prepend_timestamp=true){__prepend_timestamp=prepend_timestamp;}
+        void SetThreadstampFlag(bool prepend_threadstamp=true){__prepend_threadstamp=prepend_threadstamp;}
 };
 
 #endif //_DSTREAMLOGBUFFER_H_

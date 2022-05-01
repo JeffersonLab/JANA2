@@ -34,8 +34,6 @@ void JDebugProcessingController::run_worker() {
     // We don't need a JEventPool because our worker can just keep recycling the same one
     // This also makes locality trivial
     auto event = std::make_shared<JEvent>();
-    auto factory_set = new JFactorySet(m_component_manager->get_fac_gens());
-    event->SetFactorySet(factory_set);
 
     for (JEventSource* evt_src : evt_srces) {
 
@@ -43,6 +41,9 @@ void JDebugProcessingController::run_worker() {
         evt_src->DoInitialize();
         event->SetJEventSource(evt_src);
         event->SetJApplication(evt_src->GetApplication());
+
+        auto factory_set = new JFactorySet(evt_src->GetFactoryGenerator(), m_component_manager->get_fac_gens());
+        event->SetFactorySet(factory_set);
 
         for (auto result = JEventSource::ReturnStatus::TryAgain;
              result != JEventSource::ReturnStatus::Finished && !m_stop_requested;) {
@@ -96,7 +97,7 @@ void JDebugProcessingController::run(size_t nthreads) {
     m_finish_achieved = false;
     m_total_active_workers = nthreads;
     m_perf_metrics.start(m_total_events_processed, nthreads);
-    for (int i=0; i<nthreads; ++i) {
+    for (size_t i=0; i<nthreads; ++i) {
         m_workers.push_back(new std::thread(&JDebugProcessingController::run_worker, this));
     }
 }
@@ -131,6 +132,10 @@ bool JDebugProcessingController::is_stopped() {
 
 bool JDebugProcessingController::is_finished() {
     return m_finish_achieved;
+}
+
+bool JDebugProcessingController::is_timed_out() {
+    return false;
 }
 
 JDebugProcessingController::~JDebugProcessingController() {

@@ -37,7 +37,7 @@ public:
         app->GetParameter("jtest:parser_spread", m_cputime_spread);
         app->GetParameter("jtest:nevents", m_max_event_count);
 
-        jout << "Hello from JTestParser" << jendl;
+        LOG << "Hello from JTestParser" << LOG_END;
         SetTypeName(NAME_OF_THIS);
     }
 
@@ -74,7 +74,7 @@ public:
 
 // This ensures sources supplied by other plugins that use the default CheckOpenable
 // which returns 0.01 will still win out over this one.
-template<> double JEventSourceGeneratorT<JTestParser>::CheckOpenable(std::string source) {
+template<> double JEventSourceGeneratorT<JTestParser>::CheckOpenable(std::string /* source */) {
     return 1.0E-6;
 }
 

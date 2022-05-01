@@ -3,11 +3,16 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #include <vector>
+#include <type_traits>
 
 #include <JANA/JApplication.h>
 #include <JANA/JFactory.h>
 #include <JANA/JObject.h>
 #include <JANA/Utils/JTypeInfo.h>
+
+#ifdef HAVE_ROOT
+#include <TObject.h>
+#endif
 
 #ifndef _JFactoryT_h_
 #define _JFactoryT_h_
@@ -25,34 +30,54 @@ public:
     using IteratorType = typename std::vector<T*>::const_iterator;
     using PairType = std::pair<IteratorType, IteratorType>;
 
-
-    JFactoryT(const std::string& aName = JTypeInfo::demangle<T>(), const std::string& aTag = "")
-    : JFactory(aName, aTag) {
+    /// JFactoryT constructor requires a name and a tag.
+    /// Name should always be JTypeInfo::demangle<T>(), tag is usually "".
+    JFactoryT(const std::string& aName, const std::string& aTag) __attribute__ ((deprecated)) : JFactory(aName, aTag) {
         EnableGetAs<T>();
+        EnableGetAs<JObject>( std::is_convertible<T,JObject>() ); // Automatically add JObject if this can be converted to it
+#ifdef HAVE_ROOT
+        EnableGetAs<TObject>( std::is_convertible<T,TObject>() ); // Automatically add TObject if this can be converted to it
+#endif
+    }
+
+    JFactoryT(const std::string& aName) __attribute__ ((deprecated))  : JFactory(aName, "") {
+        EnableGetAs<T>();
+        EnableGetAs<JObject>( std::is_convertible<T,JObject>() ); // Automatically add JObject if this can be converted to it
+#ifdef HAVE_ROOT
+        EnableGetAs<TObject>( std::is_convertible<T,TObject>() ); // Automatically add TObject if this can be converted to it
+#endif
+    }
+
+    JFactoryT() : JFactory(JTypeInfo::demangle<T>(), ""){
+        EnableGetAs<T>();
+        EnableGetAs<JObject>( std::is_convertible<T,JObject>() ); // Automatically add JObject if this can be converted to it
+#ifdef HAVE_ROOT
+        EnableGetAs<TObject>( std::is_convertible<T,TObject>() ); // Automatically add TObject if this can be converted to it
+#endif
     }
 
     ~JFactoryT() override = default;
 
     void Init() override {}
-    void BeginRun(const std::shared_ptr<const JEvent> &aEvent) override {}
-    void ChangeRun(const std::shared_ptr<const JEvent> &aEvent) override {}
+    void BeginRun(const std::shared_ptr<const JEvent>&) override {}
+    void ChangeRun(const std::shared_ptr<const JEvent>&) override {}
     void EndRun() override {}
-    void Process(const std::shared_ptr<const JEvent>& aEvent) override {
-        // TODO: Debate best thing to do in this case. Consider fa250WaveboardV1Hit
-        LOG << "Dummy factory created but nothing was Inserted() or Set()." << LOG_END;
-        //throw JException("Dummy factory created but nothing was Inserted() or Set().");
-    }
+    void Process(const std::shared_ptr<const JEvent>&) override {}
 
 
     std::type_index GetObjectType(void) const override {
         return std::type_index(typeid(T));
     }
 
+    std::size_t GetNumObjects(void) const override {
+        return mData.size();
+    }
+
     /// GetOrCreate handles all the preconditions and postconditions involved in calling the user-defined Open(),
     /// ChangeRun(), and Process() methods. These include making sure the JFactory JApplication is set, Init() is called
     /// exactly once, exceptions are tagged with the originating plugin and eventsource, ChangeRun() is
     /// called if and only if the run number changes, etc.
-    PairType GetOrCreate(const std::shared_ptr<const JEvent>& event, JApplication* app, uint64_t run_number) {
+    PairType GetOrCreate(const std::shared_ptr<const JEvent>& event, JApplication* app, int32_t run_number) {
 
         //std::lock_guard<std::mutex> lock(mMutex);
         if (mApp == nullptr) {
@@ -91,6 +116,7 @@ public:
                 }
                 Process(event);
                 mStatus = Status::Processed;
+                mCreationStatus = CreationStatus::Created;
             case Status::Processed:
             case Status::Inserted:
                 return std::make_pair(mData.cbegin(), mData.cend());
@@ -99,8 +125,14 @@ public:
         }
     }
 
+    size_t Create(const std::shared_ptr<const JEvent>& event, JApplication* app, uint64_t run_number) final {
+        auto result = GetOrCreate(event, app, run_number);
+        return std::distance(result.first, result.second);
+    }
+
+
     /// Please use the typed setters instead whenever possible
-    void Set(std::vector<JObject*>& aData) override {
+    void Set(const std::vector<JObject*>& aData) override {
         ClearData();
         for (auto jobj : aData) {
             T* casted = dynamic_cast<T*>(jobj);
@@ -115,6 +147,7 @@ public:
         assert(casted != nullptr);
         mData.push_back(casted);
         mStatus = Status::Inserted;
+        mCreationStatus = CreationStatus::Inserted;
         // TODO: assert correct mStatus precondition
     }
 
@@ -122,17 +155,20 @@ public:
         ClearData();
         mData = aData;
         mStatus = Status::Inserted;
+        mCreationStatus = CreationStatus::Inserted;
     }
 
     void Set(std::vector<T*>&& aData) {
         ClearData();
         mData = std::move(aData);
         mStatus = Status::Inserted;
+        mCreationStatus = CreationStatus::Inserted;
     }
 
     void Insert(T* aDatum) {
         mData.push_back(aDatum);
         mStatus = Status::Inserted;
+        mCreationStatus = CreationStatus::Inserted;
     }
 
 
@@ -142,6 +178,10 @@ public:
     /// Note that EnableGetAs<T>() is called automatically.
     template <typename S> void EnableGetAs ();
 
+    // The following specializations allow automatically adding standard types (e.g. JObject) using things like
+    // std::is_convertible(). The std::true_type version defers to the standard EnableGetAs().
+    template <typename S> void EnableGetAs(std::true_type) { EnableGetAs<S>(); }
+    template <typename S> void EnableGetAs(std::false_type) {}
 
     void ClearData() override {
 
@@ -161,6 +201,7 @@ public:
         }
         mData.clear();
         mStatus = Status::Unprocessed;
+        mCreationStatus = CreationStatus::NotCreatedYet;
     }
 
     /// Set the JFactory's metadata. This is meant to be called by user during their JFactoryT::Process
@@ -192,8 +233,7 @@ void JFactoryT<T>::EnableGetAs() {
 
     auto key = std::type_index(typeid(S));
     using upcast_fn_t = std::function<std::vector<S*>()>;
-    auto upcast_fn = new upcast_fn_t(upcast_lambda);
-    mUpcastVTable[key] = upcast_fn;
+    mUpcastVTable[key] = std::unique_ptr<JAny>(new JAnyT<upcast_fn_t>(std::move(upcast_lambda)));
 }
 
 #endif // _JFactoryT_h_

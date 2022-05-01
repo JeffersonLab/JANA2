@@ -17,81 +17,107 @@ class JWorkerMetrics {
     /// who should be performing the accumulation or when, and this gives us the freedom to
     /// try different possibilities.
 
+public:
+    using clock_t = std::chrono::steady_clock;
+    using duration_t = clock_t::duration;
+    using time_point_t = clock_t::time_point;
 
-    using duration_t = std::chrono::steady_clock::duration;
-
-    mutable std::mutex _mutex;
+private:
+    mutable std::mutex m_mutex;
     // mutex is mutable so that we can lock before reading from a const ref
 
-    long _scheduler_visit_count;
+    time_point_t m_last_heartbeat;
+    long m_scheduler_visit_count;
 
-    duration_t _total_useful_time;
-    duration_t _total_retry_time;
-    duration_t _total_scheduler_time;
-    duration_t _total_idle_time;
-    duration_t _last_useful_time;
-    duration_t _last_retry_time;
-    duration_t _last_scheduler_time;
-    duration_t _last_idle_time;
+    duration_t m_total_useful_time;
+    duration_t m_total_retry_time;
+    duration_t m_total_scheduler_time;
+    duration_t m_total_idle_time;
+    duration_t m_last_useful_time;
+    duration_t m_last_retry_time;
+    duration_t m_last_scheduler_time;
+    duration_t m_last_idle_time;
+
 
 public:
-    void clear() {
-        _mutex.lock();
-        _scheduler_visit_count = 0;
-
+    JWorkerMetrics() {
+        m_mutex.lock();
+        m_last_heartbeat = clock_t::now();
+        m_scheduler_visit_count = 0;
         auto zero = duration_t::zero();
+        m_total_useful_time = zero;
+        m_total_retry_time = zero;
+        m_total_scheduler_time = zero;
+        m_total_idle_time = zero;
+        m_last_useful_time = zero;
+        m_last_retry_time = zero;
+        m_last_scheduler_time = zero;
+        m_last_idle_time = zero;
+        m_mutex.unlock();
+    }
 
-        _total_useful_time = zero;
-        _total_retry_time = zero;
-        _total_scheduler_time = zero;
-        _total_idle_time = zero;
-        _last_useful_time = zero;
-        _last_retry_time = zero;
-        _last_scheduler_time = zero;
-        _last_idle_time = zero;
-        _mutex.unlock();
+    void clear() {
+        m_mutex.lock();
+        m_last_heartbeat = clock_t::now();
+        m_scheduler_visit_count = 0;
+        auto zero = duration_t::zero();
+        m_total_useful_time = zero;
+        m_total_retry_time = zero;
+        m_total_scheduler_time = zero;
+        m_total_idle_time = zero;
+        m_last_useful_time = zero;
+        m_last_retry_time = zero;
+        m_last_scheduler_time = zero;
+        m_last_idle_time = zero;
+        m_mutex.unlock();
     }
 
 
     void update(const JWorkerMetrics &other) {
 
-        _mutex.lock();
-        other._mutex.lock();
-        _scheduler_visit_count += other._scheduler_visit_count;
-        _total_useful_time += other._total_useful_time;
-        _total_retry_time += other._total_retry_time;
-        _total_scheduler_time += other._total_scheduler_time;
-        _total_idle_time += other._total_idle_time;
-        _last_useful_time = other._last_useful_time;
-        _last_retry_time = other._last_retry_time;
-        _last_scheduler_time = other._last_scheduler_time;
-        _last_idle_time = other._last_idle_time;
-        other._mutex.unlock();
-        _mutex.unlock();
+        m_mutex.lock();
+        other.m_mutex.lock();
+        m_last_heartbeat = other.m_last_heartbeat;
+        m_scheduler_visit_count += other.m_scheduler_visit_count;
+        m_total_useful_time += other.m_total_useful_time;
+        m_total_retry_time += other.m_total_retry_time;
+        m_total_scheduler_time += other.m_total_scheduler_time;
+        m_total_idle_time += other.m_total_idle_time;
+        m_last_useful_time = other.m_last_useful_time;
+        m_last_retry_time = other.m_last_retry_time;
+        m_last_scheduler_time = other.m_last_scheduler_time;
+        m_last_idle_time = other.m_last_idle_time;
+        other.m_mutex.unlock();
+        m_mutex.unlock();
     }
 
 
-    void update(const long& scheduler_visit_count,
+    void update(
+                const time_point_t& heartbeat,
+                const long& scheduler_visit_count,
                 const duration_t& useful_time,
                 const duration_t& retry_time,
                 const duration_t& scheduler_time,
                 const duration_t& idle_time) {
 
-        _mutex.lock();
-        _scheduler_visit_count += scheduler_visit_count;
-        _total_useful_time += useful_time;
-        _total_retry_time += retry_time;
-        _total_scheduler_time += scheduler_time;
-        _total_idle_time += idle_time;
-        _last_useful_time = useful_time;
-        _last_retry_time = retry_time;
-        _last_scheduler_time = scheduler_time;
-        _last_idle_time = idle_time;
-        _mutex.unlock();
+        m_mutex.lock();
+        m_scheduler_visit_count += scheduler_visit_count;
+        m_total_useful_time += useful_time;
+        m_total_retry_time += retry_time;
+        m_total_scheduler_time += scheduler_time;
+        m_total_idle_time += idle_time;
+        m_last_useful_time = useful_time;
+        m_last_retry_time = retry_time;
+        m_last_scheduler_time = scheduler_time;
+        m_last_idle_time = idle_time;
+        m_last_heartbeat = heartbeat;
+        m_mutex.unlock();
     }
 
 
-    void get(long& scheduler_visit_count,
+    void get(
+             time_point_t& last_heartbeat,
+             long& scheduler_visit_count,
              duration_t& total_useful_time,
              duration_t& total_retry_time,
              duration_t& total_scheduler_time,
@@ -101,17 +127,18 @@ public:
              duration_t& last_scheduler_time,
              duration_t& last_idle_time) {
 
-        _mutex.lock();
-        scheduler_visit_count = _scheduler_visit_count;
-        total_useful_time = _total_useful_time;
-        total_retry_time = _total_retry_time;
-        total_scheduler_time = _total_scheduler_time;
-        total_idle_time = _total_idle_time;
-        last_useful_time = _last_useful_time;
-        last_retry_time = _last_retry_time;
-        last_scheduler_time = _last_scheduler_time;
-        last_idle_time = _last_idle_time;
-        _mutex.unlock();
+        m_mutex.lock();
+        scheduler_visit_count = m_scheduler_visit_count;
+        total_useful_time = m_total_useful_time;
+        total_retry_time = m_total_retry_time;
+        total_scheduler_time = m_total_scheduler_time;
+        total_idle_time = m_total_idle_time;
+        last_useful_time = m_last_useful_time;
+        last_retry_time = m_last_retry_time;
+        last_scheduler_time = m_last_scheduler_time;
+        last_idle_time = m_last_idle_time;
+        last_heartbeat = m_last_heartbeat;
+        m_mutex.unlock();
     }
 
 };

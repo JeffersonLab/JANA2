@@ -15,7 +15,6 @@ class JEventSource;
 class JEventSourceGenerator;
 class JFactoryGenerator;
 class JFactorySet;
-
 class JComponentManager;
 class JPluginLoader;
 class JProcessingController;
@@ -44,7 +43,11 @@ class JApplication {
 
 public:
 
-    JApplication(JParameterManager* params = nullptr);
+    /// These exit codes are what JANA uses internally. However they are fundamentally a suggestion --
+    /// the user code is likely to use arbitrary exit codes.
+    enum class ExitCode {Success=0, UnhandledException, Timeout, Segfault=139};
+
+    explicit JApplication(JParameterManager* params = nullptr);
     ~JApplication();
 
 
@@ -71,17 +74,18 @@ public:
     void Stop(bool wait_until_idle = false);
     void Resume() {};  // TODO: Do we need this?
     void Quit(bool skip_join = false);
-    void SetExitCode(int exit_code);
-    int GetExitCode(void);
+    void SetExitCode(int exitCode);
+    int GetExitCode();
 
 
     // Performance/status monitoring
 
-    bool IsInitialized(void){return _initialized;}
-    bool IsQuitting(void) { return _quitting; }
-    bool IsDrainingQueues(void) { return _draining_queues; }
+    bool IsInitialized(void){return m_initialized;}
+    bool IsQuitting(void) { return m_quitting; }
+    bool IsDrainingQueues(void) { return m_draining_queues; }
 
     void SetTicker(bool ticker_on = true);
+    void SetTimeoutEnabled(bool enabled = true);
     void PrintStatus();
     void PrintFinalReport();
     uint64_t GetNThreads();
@@ -93,7 +97,7 @@ public:
 
     // Parameter config
 
-    JParameterManager* GetJParameterManager() { return _params.get(); }
+    JParameterManager* GetJParameterManager() { return m_params.get(); }
 
     template<typename T>
     T GetParameterValue(std::string name);
@@ -122,27 +126,28 @@ public:
 
 private:
 
-    JLogger _logger;
-    JServiceLocator _service_locator;
+    JLogger m_logger;
+    JServiceLocator m_service_locator;
 
-    std::shared_ptr<JParameterManager> _params;
-    std::shared_ptr<JPluginLoader> _plugin_loader;
-    std::shared_ptr<JComponentManager> _component_manager;
-    std::shared_ptr<JProcessingController> _processing_controller;
+    std::shared_ptr<JParameterManager> m_params;
+    std::shared_ptr<JPluginLoader> m_plugin_loader;
+    std::shared_ptr<JComponentManager> m_component_manager;
+    std::shared_ptr<JProcessingController> m_processing_controller;
 
-    bool _quitting = false;
-    bool _draining_queues = false;
-    bool _skip_join = false;
-    bool _initialized = false;
-    bool _ticker_on = true;
-    bool _extended_report = false;
-    int  _exit_code = 0;
-    int  _desired_nthreads;
+    bool m_quitting = false;
+    bool m_draining_queues = false;
+    bool m_skip_join = false;
+    bool m_initialized = false;
+    bool m_ticker_on = true;
+    bool m_timeout_on = true;
+    bool m_extended_report = false;
+    int  m_exit_code = (int) ExitCode::Success;
+    int  m_desired_nthreads;
 
-    std::mutex _status_mutex;
-    std::chrono::milliseconds _ticker_interval {500};
-    std::chrono::time_point<std::chrono::high_resolution_clock> _last_measurement;
-    std::unique_ptr<const JPerfSummary> _perf_summary;
+    std::mutex m_status_mutex;
+    std::chrono::milliseconds m_ticker_interval {500};
+    std::chrono::time_point<std::chrono::high_resolution_clock> m_last_measurement;
+    std::unique_ptr<const JPerfSummary> m_perf_summary;
 
     void update_status();
 };
@@ -152,35 +157,35 @@ private:
 /// A convenience method which delegates to JParameterManager
 template<typename T>
 T JApplication::GetParameterValue(std::string name) {
-    return _params->GetParameterValue<T>(name);
+    return m_params->GetParameterValue<T>(name);
 }
 
 /// A convenience method which delegates to JParameterManager
 template<typename T>
 JParameter* JApplication::SetParameterValue(std::string name, T val) {
-    return _params->SetParameter(name, val);
+    return m_params->SetParameter(name, val);
 }
 
 template <typename T>
 JParameter* JApplication::SetDefaultParameter(std::string name, T& val, std::string description) {
-    return _params->SetDefaultParameter(name.c_str(), val, description);
+    return m_params->SetDefaultParameter(name.c_str(), val, description);
 }
 
 template <typename T>
 JParameter* JApplication::GetParameter(std::string name, T& result) {
-    return _params->GetParameter(name, result);
+    return m_params->GetParameter(name, result);
 }
 
 /// A convenience method which delegates to JServiceLocator
 template <typename T>
 std::shared_ptr<T> JApplication::GetService() {
-    return _service_locator.get<T>();
+    return m_service_locator.get<T>();
 }
 
 /// A convenience method which delegates to JServiceLocator
 template <typename T>
 void JApplication::ProvideService(std::shared_ptr<T> service) {
-    _service_locator.provide(service);
+    m_service_locator.provide(service);
 }
 
 

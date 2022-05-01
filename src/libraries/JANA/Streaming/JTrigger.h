@@ -20,7 +20,7 @@
 
 struct JTrigger {
 
-    virtual bool accept(JEvent &event) { return true; }
+    virtual bool accept(JEvent&) { return true; }
 
 };
 

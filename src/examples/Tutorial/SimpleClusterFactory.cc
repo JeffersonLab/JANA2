@@ -8,7 +8,7 @@
 #include <JANA/JEvent.h>
 
 void SimpleClusterFactory::Init() {
-    auto app = GetApplication();
+    // auto app = GetApplication();
     
     /// Acquire any parameters
     // app->GetParameter("parameter_name", m_destination);
@@ -20,12 +20,12 @@ void SimpleClusterFactory::Init() {
     // SetFactoryFlag(JFactory_Flags_t::NOT_OBJECT_OWNER);
 }
 
-void SimpleClusterFactory::ChangeRun(const std::shared_ptr<const JEvent> &event) {
+void SimpleClusterFactory::ChangeRun(const std::shared_ptr<const JEvent> & /* event */) {
     /// This is automatically run before Process, when a new run number is seen
     /// Usually we update our calibration constants by asking a JService
     /// to give us the latest data for this run number
     
-    auto run_nr = event->GetRunNumber();
+    // auto run_nr = event->GetRunNumber();
     // m_calibration = m_service->GetCalibrationsForRun(run_nr);
 }
 

@@ -35,12 +35,13 @@ void JComponentManager::add(std::string event_source_name) {
 }
 
 void JComponentManager::add(JEventSourceGenerator *source_generator) {
-    source_generator->SetPlugin(m_current_plugin_name);
+    source_generator->SetPluginName(m_current_plugin_name);
     source_generator->SetJApplication(m_app);
     m_src_gens.push_back(source_generator);
 }
 
 void JComponentManager::add(JFactoryGenerator *factory_generator) {
+    factory_generator->SetPluginName(m_current_plugin_name);
     m_fac_gens.push_back(factory_generator);
 }
 
@@ -70,7 +71,7 @@ void JComponentManager::resolve_event_sources() {
     for (auto& source_name : m_src_names) {
         auto* generator = resolve_event_source(source_name);
         auto source = generator->MakeJEventSource(source_name);
-        source->SetPluginName(generator->GetPlugin());
+        source->SetPluginName(generator->GetPluginName());
         source->SetApplication(m_app);
         auto fac_gen = source->GetFactoryGenerator();
         if (fac_gen != nullptr) {
@@ -143,6 +144,10 @@ JEventSourceGenerator* JComponentManager::resolve_user_event_source_generator() 
     os << std::endl;
     throw JException(os.str());
 
+}
+
+std::vector<JEventSourceGenerator*>& JComponentManager::get_evt_src_gens() {
+    return m_src_gens;
 }
 
 std::vector<JEventSource*>& JComponentManager::get_evt_srces() {

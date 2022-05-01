@@ -31,9 +31,12 @@ public:
     explicit JException(std::string message, Args... args);
 
 
-    // Deprecated
     std::string GetMessage() {
         return message;
+    }
+
+    std::string GetStackTrace() {
+        return stacktrace;
     }
 
     const char* what() const noexcept {

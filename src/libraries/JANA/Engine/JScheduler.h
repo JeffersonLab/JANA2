@@ -16,9 +16,9 @@
     class JScheduler {
 
     private:
-        std::vector<JArrow*> _arrows;
-        size_t _next_idx;
-        std::mutex _mutex;
+        std::vector<JArrow*> m_arrows;
+        size_t m_next_idx;
+        std::mutex m_mutex;
 
     public:
 

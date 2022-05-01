@@ -21,7 +21,7 @@ class JPluginLoader : public JService {
 public:
 
     JPluginLoader(JApplication* app);
-    ~JPluginLoader() override = default;
+    ~JPluginLoader() override;
     void acquire_services(JServiceLocator*) override;
 
     void add_plugin(std::string plugin_name);
@@ -31,15 +31,15 @@ public:
 
 private:
 
-    std::vector<std::string> _plugins_to_include;
-    std::vector<std::string> _plugins_to_exclude;
-    std::vector<std::string> _plugin_paths;
-    std::vector<void*> _sohandles;
+    std::vector<std::string> m_plugins_to_include;
+    std::vector<std::string> m_plugins_to_exclude;
+    std::vector<std::string> m_plugin_paths;
+    std::map<std::string, void*> m_sohandles; // key=plugin name  val=dlopen handle
 
-    bool _verbose = false;
-    JLogger _logger;
+    bool m_verbose = false;
+    JLogger m_logger;
 
-    JApplication* _app = nullptr;
+    JApplication* m_app = nullptr;
 
 };
 

@@ -1,38 +1,48 @@
-
-import janapy
-#from DHit import *
-#from DCluster import *
 #
+# This example demonstrates how to implement a JEventProccessor in Python.
+#
+# This can be run like so:
+#
+#   jana -Pplugins=janapy -PJANA_PYTHON_FILE=MyProcessor.py
+#
+#
+import jana
+import inspect
+
 # JEventProcessor class defined in janapy module
-class MyProcessor( janapy.JEventProcessor):
+class MyProcessor( jana.JEventProcessor ):
+	#--------------------------------------
+	# Constructor
 	def __init__(self):
 		super().__init__(self)
+		super().Prefetch('Hit')
 
+	#--------------------------------------
+	# Init
 	def Init( self ):
 		print('Python Init called')
 
-	# event is a JEvent object defined in janapy module
+	#--------------------------------------
+	# Process
 	def Process( self ):
-		print('Python Process called')
+		hits = super().Get('Hit') # hits is standard python dictionary with string types for keys and values
+		for hit in hits:
+			print('E=' + hit['E'] + '  t= ' + hit['t'] )
 
+	#--------------------------------------
+	# Finish
 	def Finish( self ):
 		print('Python Finish called')
 
-#		hits = event.Get( DHit )
-#		for h in hits:
-#			print('hit:  a=%d  b=%f  type=%s' % (h.a, h.b , type(h)))
-
 #-----------------------------------------------------------
 
-janapy.SetParameterValue( 'JANA:DEBUG_PLUGIN_LOADING', '1')
-janapy.SetParameterValue( 'NTHREADS', '4')
-janapy.SetParameterValue( 'NEVENTS', '100')
+jana.SetParameterValue( 'NEVENTS', '10')
 
-# The janapy module itself serves as the JApplication facade
-janapy.AddProcessor( MyProcessor() )
+proc = MyProcessor()
+jana.AddProcessor( proc )
 
-janapy.AddPlugin('jtest')
-janapy.Run()
+jana.AddPlugin('JTestRoot')
+jana.Run()
 
 print('PYTHON DONE.')
 

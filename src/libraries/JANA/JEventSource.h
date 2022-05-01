@@ -90,10 +90,9 @@ public:
     /// `GetObjects` was historically used for lazily unpacking data from a JEvent and putting it into a "dummy" JFactory.
     /// This mechanism has been replaced by `JEvent::Insert`. All lazy evaluation should happen in a (non-dummy)
     /// JFactory, whereas eager evaluation should happen in `JEventSource::GetEvent` via `JEvent::Insert`.
-
-    [[deprecated]]
-    virtual bool GetObjects(const std::shared_ptr<const JEvent>& aEvent, JFactory* aFactory) { return false; }
-
+    virtual bool GetObjects(const std::shared_ptr<const JEvent>&, JFactory*) {
+        return false;
+    }
 
 
     // Wrappers for calling Open and GetEvent in a safe way
@@ -147,7 +146,8 @@ public:
                         return ReturnStatus::Success;
                     }
 
-                case SourceStatus::Finished: return ReturnStatus::Finished;
+                default: //case SourceStatus::Finished:
+                    return ReturnStatus::Finished;
             }
         }
         catch (RETURN_STATUS rs) {
@@ -232,6 +232,8 @@ public:
     void SetTypeName(std::string type_name) { m_type_name = std::move(type_name); }
 
     // Meant to be called by user
+    /// SetFactoryGenerator allows us to override the set of factories. This is somewhat superfluous
+    /// The only time we _really_ need to call SetFactoryGenerator
     void SetFactoryGenerator(JFactoryGenerator* generator) { m_factory_generator = generator; }
 
     // Meant to be called by user

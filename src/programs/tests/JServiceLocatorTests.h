@@ -13,7 +13,7 @@ struct ParameterSvc : public JService {
 
     std::map<std::string, std::string> underlying;
 
-    void acquire_services(JServiceLocator *sl) {}
+    void acquire_services(JServiceLocator*) {}
     void set(std::string name, std::string value) {
         underlying[name] = value;
 

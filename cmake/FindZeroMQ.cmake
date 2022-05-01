@@ -1,14 +1,19 @@
-# - Try to find ZEROMQ
+# - Try to find ZeroMQ
 # Once done this will define
-# ZEROMQ_FOUND - System has ZEROMQ
-# ZEROMQ_INCLUDE_DIRS - The ZEROMQ include directories
-# ZEROMQ_LIBRARIES - The libraries needed to use ZEROMQ
-# ZEROMQ_DEFINITIONS - Compiler switches required for using ZEROMQ
-find_path (ZEROMQ_INCLUDE_DIR zmq.h)
-find_library (ZEROMQ_LIBRARY NAMES zmq)
-set (ZEROMQ_LIBRARIES ${ZEROMQ_LIBRARY})
-set (ZEROMQ_INCLUDE_DIRS ${ZEROMQ_INCLUDE_DIR})
+# ZeroMQ_FOUND - System has ZeroMQ
+# ZeroMQ_INCLUDE_DIRS - The ZeroMQ include directories
+# ZeroMQ_LIBRARIES - The libraries needed to use ZeroMQ
+# ZeroMQ_DEFINITIONS - Compiler switches required for using ZeroMQ
+find_path (ZeroMQ_INCLUDE_DIR zmq.h)
+find_library (ZeroMQ_LIBRARY NAMES zmq)
+set (ZeroMQ_LIBRARIES ${ZeroMQ_LIBRARY})
+set (ZeroMQ_INCLUDE_DIRS ${ZeroMQ_INCLUDE_DIR})
 include (FindPackageHandleStandardArgs)
-# handle the QUIETLY and REQUIRED arguments and set ZEROMQ_FOUND to TRUE
+# handle the QUIETLY and REQUIRED arguments and set ZeroMQ_FOUND to TRUE
 # if all listed variables are TRUE
-find_package_handle_standard_args (ZEROMQ DEFAULT_MSG ZEROMQ_LIBRARY ZEROMQ_INCLUDE_DIR)
+
+find_package_handle_standard_args(ZeroMQ
+        FOUND_VAR ZeroMQ_FOUND
+        VERSION_VAR ZeroMQ_VERSION
+        REQUIRED_VARS ZeroMQ_DIR ZeroMQ_INCLUDE_DIR ZeroMQ_LIBRARY
+        )

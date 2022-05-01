@@ -18,3 +18,15 @@ for(auto t : tracks){
   // ... do something with a track
 }
 ```
+
+To quickly build and install, run:
+```bash
+mkdir build
+mkdir install
+export JANA_HOME=`pwd`/install
+cmake -S . -B build
+cmake --build build -j 10 --target install
+install/bin/jana -Pplugins=JTest
+```
+
+For detailed instructions, see the [howto guide](https://jeffersonlab.github.io/JANA2/Installation.html).
