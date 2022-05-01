@@ -27,6 +27,9 @@ public:
         double start_time = 0;
         double end_time = 0;
         JDataSource data_source = DATA_NOT_AVAILABLE;
+	JCallGraphNode() {}
+	JCallGraphNode(std::string caller_name, std::string caller_tag, std::string callee_name, std::string callee_tag) 
+	: caller_name(caller_name), caller_tag(caller_tag), callee_name(callee_name), callee_tag(callee_tag) {}
     };
 
     struct JCallStackFrame {
@@ -54,11 +57,12 @@ public:
     inline void StartFactoryCall(const std::string& callee_name, const std::string& callee_tag);
     inline void FinishFactoryCall(JDataSource data_source=JDataSource::DATA_FROM_FACTORY);
     inline std::vector<JCallGraphNode> GetCallGraph() {return m_call_graph;} ///< Get the current factory call stack
-    inline void AddToCallGraph(JCallGraphNode &cs) {if(m_enabled) m_call_graph.push_back(cs);} ///< Add specified item to call stack record but only if record_call_stack is true
-    inline void AddToErrorCallStack(JErrorCallStack &cs) {if (m_enabled) m_error_call_stack.push_back(cs);} ///< Add layer to the factory call stack
+    inline void AddToCallGraph(const JCallGraphNode &cs) {if(m_enabled) m_call_graph.push_back(cs);} ///< Add specified item to call stack record but only if record_call_stack is true
+    inline void AddToErrorCallStack(const JErrorCallStack &cs) {if (m_enabled) m_error_call_stack.push_back(cs);} ///< Add layer to the factory call stack
     inline std::vector<JErrorCallStack> GetErrorCallStack(){return m_error_call_stack;} ///< Get the current factory error call stack
     void PrintErrorCallStack(); ///< Print the current factory call stack
     void Reset();
+    std::vector<std::pair<std::string, std::string>> TopologicalSort() const;
 };
 
 
@@ -111,9 +115,8 @@ void JCallGraphRecorder::FinishFactoryCall(JCallGraphRecorder::JDataSource data_
         JCallStackFrame& caller_frame = m_call_stack.back();
         node.caller_name = caller_frame.factory_name;
         node.caller_tag = caller_frame.factory_tag;
+        m_call_graph.push_back(node);
     }
-
-    m_call_graph.push_back(node);
 }
 
 

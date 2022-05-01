@@ -5,16 +5,8 @@
 #include <JANA/Utils/JTablePrinter.h>
 
 
-JInspector::JInspector(const JEvent* event) : m_event(event) {
-    event->GetJApplication()->SetDefaultParameter("jana:enable_inspector", m_enabled);
-    event->GetJApplication()->SetDefaultParameter("jana:inspector_format", m_format, "Options are 'table','json'");
-}
+JInspector::JInspector(const JEvent* event) : m_event(event) {}
 
-void JInspector::SetEvent(const JEvent* event) {
-    m_event = event;
-    m_indexes_built = false;
-    m_factory_index.clear();
-}
 void JInspector::BuildIndices() {
     if (m_indexes_built) return;
     m_factories.clear();
@@ -22,14 +14,15 @@ void JInspector::BuildIndices() {
         m_factories.push_back(fac);
     }
     std::sort(m_factories.begin(), m_factories.end(), [](const JFactory* first, const JFactory* second){
-	return std::make_pair(first->GetObjectName(), first->GetTag()) <
-	       std::make_pair(second->GetObjectName(), second->GetTag());});
+        return std::make_pair(first->GetObjectName(), first->GetTag()) <
+               std::make_pair(second->GetObjectName(), second->GetTag());});
 
     int i = 0;
     for (auto fac : m_factories) {
-        std::pair<std::string, std::string> key = {fac->GetObjectName(), fac->GetTag()};
+        std::string key = MakeFactoryKey(fac->GetObjectName(), fac->GetTag());
         std::pair<int, const JFactory*> value = {i++, fac};
         m_factory_index.insert({key, value});
+        m_factory_index.insert({std::to_string(i), value});
     }
     m_indexes_built = true;
 }
@@ -76,75 +69,55 @@ void JInspector::PrintFactories(int filter_level=0) {
     auto facs = m_event->GetAllFactories();
     ToText(facs, filter_level, m_format==Format::Json, m_out);
 }
-void JInspector::PrintFactory(int factory_idx) {
-    auto facs = m_event->GetFactorySet()->GetAllFactories();
-    if (factory_idx >= facs.size()) {
-        m_out << "(Error: Factory index out of range)\n";
+
+void JInspector::PrintObjects(std::string factory_key) {
+
+    auto result = m_factory_index.find(factory_key);
+    if (result == m_factory_index.end()) {
+        m_out << "(Error: Invalid factory name or index)\n";
         return;
     }
-    auto fac = facs[factory_idx];
-    ToText(fac, m_format==Format::Json, m_out);
-}
-void JInspector::PrintObjects(int factory_idx) {
-    auto facs = m_event->GetFactorySet()->GetAllFactories();
-    if (factory_idx >= facs.size()) {
-        m_out << "(Error: Factory index out of range)" << std::endl;
-        return;
-    }
-    auto objs = facs[factory_idx]->GetAs<JObject>();
+    auto fac = const_cast<JFactory*>(result->second.second);
+    auto objs = fac->GetAs<JObject>();
     ToText(objs, m_format==Format::Json, m_out);
 }
 
-void JInspector::PrintFactory(std::string factory_name_or_id) {
-    try {
-        auto idx = std::stoull(factory_name_or_id);
-	auto facs = m_event->GetFactorySet()->GetAllFactories();
-	if (idx >= facs.size()) {
-	    m_out << "(Error: Factory index out of range)\n";
-	    return;
-	}
-	auto fac = facs[idx];
-	ToText(fac, m_format==Format::Json, m_out);
-    }
-    catch (...) {
-        // Split factory and tag
-        auto colon = factory_name_or_id.find(':');
-        std::string fac_name;
-        std::string tag;
-        if (colon == std::string::npos) {
-            fac_name = factory_name_or_id;
-            tag = "";
-        }
-        else {
-            fac_name = factory_name_or_id.substr(0, colon);
-            tag = factory_name_or_id.substr(colon+1, std::string::npos);
-        }
-	BuildIndices();
-        auto result = m_factory_index.find(std::make_pair(fac_name, tag));
-        if (result == m_factory_index.end()) {
-	    m_out << "(Error: Invalid factory name or index)\n";
-	    return;
-        }
-        auto fac = result->second.second;
-	ToText(fac, m_format==Format::Json, m_out);
-    }
-
-}
-
-void JInspector::PrintObject(int factory_idx, int object_idx) {
-    auto facs = m_event->GetFactorySet()->GetAllFactories();
-    if (factory_idx >= facs.size()) {
-        m_out << "(Error: Factory index out of range)" << std::endl;
+void JInspector::PrintFactoryDetails(std::string fac_key) {
+    BuildIndices();
+    auto result = m_factory_index.find(fac_key);
+    if (result == m_factory_index.end()) {
+        m_out << "(Error: Invalid factory name or index)\n";
         return;
     }
-    auto objs = facs[factory_idx]->GetAs<JObject>();
-    if (object_idx >= objs.size()) {
+    auto fac = result->second.second;
+    ToText(fac, m_format==Format::Json, m_out);
+}
+
+void JInspector::PrintObject(std::string fac_key, int object_idx) {
+    BuildIndices();
+    auto result = m_factory_index.find(fac_key);
+    if (result == m_factory_index.end()) {
+        m_out << "(Error: Invalid factory name or index)\n";
+        return;
+    }
+    JFactory* fac = const_cast<JFactory*>(result->second.second);
+    auto objs = fac->GetAs<JObject>();
+    if ((size_t) object_idx >= objs.size()) {
         m_out << "(Error: Object index out of range)" << std::endl;
         return;
     }
     auto obj = objs[object_idx];
     ToText(obj, m_format==Format::Json, m_out);
 }
+std::string JInspector::MakeFactoryKey(std::string name, std::string tag) {
+    std::ostringstream ss;
+    ss << name;
+    if (!tag.empty()) {
+        ss << ":" << tag;
+    }
+    return ss.str();
+}
+
 void JInspector::PrintHelp() {
     m_out << "  -----------------------------------------" << std::endl;
     m_out << "  Available commands" << std::endl;
@@ -159,9 +132,7 @@ void JInspector::PrintHelp() {
     m_out << "  poa  PrintObjectAncestors fac_idx obj_idx" << std::endl;
     m_out << "  vt   ViewAsTable" << std::endl;
     m_out << "  vj   ViewAsJson" << std::endl;
-    m_out << "  n    Next [evt_nr]" << std::endl;
-    m_out << "  f    Finish" << std::endl;
-    m_out << "  q    Quit" << std::endl;
+    m_out << "  x    Exit" << std::endl;
     m_out << "  h    Help" << std::endl;
     m_out << "  -----------------------------------------" << std::endl;
 }
@@ -235,14 +206,11 @@ void JInspector::ToText(const std::vector<JFactory*>& factories, int filterlevel
     if (!asJson) {
         JTablePrinter t;
         t.AddColumn("Index", JTablePrinter::Justify::Right);
-        t.AddColumn("Factory name");
-        t.AddColumn("Object name");
+        t.AddColumn("Object");
         t.AddColumn("Tag");
         t.AddColumn("Creation status");
         t.AddColumn("Object count", JTablePrinter::Justify::Right);
         for (auto fac : factories) {
-            auto facName = fac->GetFactoryName();
-            if (facName.empty()) facName = "(no factory name)";
             auto tag = fac->GetTag();
             if (tag.empty()) tag = "(no tag)";
             std::string creationStatus;
@@ -261,7 +229,7 @@ void JInspector::ToText(const std::vector<JFactory*>& factories, int filterlevel
             if (filterlevel > 2 && (fac->GetCreationStatus()==JFactory::CreationStatus::Inserted ||
                                     fac->GetCreationStatus()==JFactory::CreationStatus::InsertedViaGetObjects)) continue;
 
-            t | idx | facName | fac->GetObjectName() | tag | creationStatus | fac->GetNumObjects();
+            t | idx | fac->GetObjectName() | tag | creationStatus | fac->GetNumObjects();
         }
         t.Render(out);
     }
@@ -393,7 +361,7 @@ void JInspector::ToText(const JObject* obj, bool asJson, std::ostream& out) {
     }
 }
 
-void JInspector::PrintFactoryParents(int factory_idx) {
+void JInspector::PrintFactoryParents(std::string factory_idx) {
 
     bool callgraph_on = m_event->GetJCallGraphRecorder()->IsEnabled();
     if (!callgraph_on) {
@@ -401,12 +369,12 @@ void JInspector::PrintFactoryParents(int factory_idx) {
     }
 
     BuildIndices();  // So that we can retrieve the integer index given the factory name/tag pair
-    auto facs = m_event->GetFactorySet()->GetAllFactories();
-    if (factory_idx >= facs.size()) {
-        m_out << "(Error: Factory index out of range)" << std::endl;
+    auto result = m_factory_index.find(factory_idx);
+    if (result == m_factory_index.end()) {
+        m_out << "(Error: Invalid factory name or index)\n";
         return;
     }
-    auto fac = facs[factory_idx];
+    auto fac = result->second.second;
     auto obj_name = fac->GetObjectName();
     auto fac_tag = fac->GetTag();
     if (fac_tag.empty()) {
@@ -426,7 +394,7 @@ void JInspector::PrintFactoryParents(int factory_idx) {
         for (const auto& node : callgraph) {
             if ((node.caller_name == obj_name) && (node.caller_tag == fac_tag)) {
                 found_anything = true;
-                auto idx = m_factory_index[{node.callee_name, node.callee_tag}].first;
+                auto idx = m_factory_index[MakeFactoryKey(node.callee_name, node.callee_tag)].first;
                 auto tag = node.callee_tag;
                 if (tag.empty()) tag = "(no tag)";
                 t | idx | node.callee_name | tag;
@@ -445,7 +413,7 @@ void JInspector::PrintFactoryParents(int factory_idx) {
         for (const auto& node : callgraph) {
             if ((node.caller_name == obj_name) && (node.caller_tag == fac_tag)) {
                 found_anything = true;
-                auto idx = m_factory_index[{node.callee_name, node.callee_tag}].first;
+                auto idx = m_factory_index[MakeFactoryKey(node.callee_name, node.callee_tag)].first;
                 auto tag = node.callee_tag;
                 m_out << "  { \"index\": " << idx << ", \"object_name\": \"" << node.callee_name << "\", \"tag\": ";
                 if (tag.empty()) {
@@ -464,15 +432,17 @@ void JInspector::PrintFactoryParents(int factory_idx) {
     }
 }
 
-void JInspector::PrintObjectParents(int factory_idx, int object_idx) {
+void JInspector::PrintObjectParents(std::string factory_key, int object_idx) {
 
-    auto facs = m_event->GetFactorySet()->GetAllFactories();
-    if (factory_idx >= facs.size()) {
-        m_out << "(Error: Factory index out of range)" << std::endl;
+    BuildIndices();  // So that we can retrieve the integer index given the factory name/tag pair
+    auto result = m_factory_index.find(factory_key);
+    if (result == m_factory_index.end()) {
+        m_out << "(Error: Invalid factory name or index)\n";
         return;
     }
-    auto objs = facs[factory_idx]->GetAs<JObject>();
-    if (object_idx >= objs.size()) {
+    auto fac = const_cast<JFactory*>(result->second.second);
+    auto objs = fac->GetAs<JObject>();
+    if ((size_t) object_idx >= objs.size()) {
         m_out << "(Error: Object index out of range)" << std::endl;
         return;
     }
@@ -554,15 +524,17 @@ void JInspector::PrintObjectParents(int factory_idx, int object_idx) {
     }
 }
 
-void JInspector::PrintObjectAncestors(int factory_idx, int object_idx) {
+void JInspector::PrintObjectAncestors(std::string factory_idx, int object_idx) {
 
-    auto facs = m_event->GetFactorySet()->GetAllFactories();
-    if (factory_idx >= facs.size()) {
-        m_out << "(Error: Factory index out of range)" << std::endl;
+    BuildIndices();  // So that we can retrieve the integer index given the factory name/tag pair
+    auto result = m_factory_index.find(factory_idx);
+    if (result == m_factory_index.end()) {
+        m_out << "(Error: Invalid factory name or index)\n";
         return;
     }
-    auto objs = facs[factory_idx]->GetAs<JObject>();
-    if (object_idx >= objs.size()) {
+    auto fac = const_cast<JFactory*>(result->second.second);
+    auto objs = fac->GetAs<JObject>();
+    if ((size_t) object_idx >= objs.size()) {
         m_out << "(Error: Object index out of range)" << std::endl;
         return;
     }
@@ -641,12 +613,8 @@ void JInspector::PrintObjectAncestors(int factory_idx, int object_idx) {
     }
 }
 
-uint64_t JInspector::DoReplLoop(uint64_t next_evt_nr) {
-    if (!m_enabled) {
-        return 0;
-    }
+void JInspector::Loop() {
     bool stay_in_loop = true;
-    next_evt_nr = 0;  // 0 denotes that Repl stops at the next event number by default
     m_out << std::endl;
     m_out << "--------------------------------------------------------------------------------------" << std::endl;
     m_out << "Welcome to JANA's interactive inspector! Type `Help` or `h` to see available commands." << std::endl;
@@ -676,22 +644,22 @@ uint64_t JInspector::DoReplLoop(uint64_t next_evt_nr) {
             PrintFactories(std::stoi(args[0]));
         }
         else if ((token == "PrintFactoryDetails" || token == "pfd") && (args.size() == 1)) {
-            PrintFactory(args[0]);
+            PrintFactoryDetails(args[0]);
         }
         else if ((token == "PrintObjects" || token == "po") && (args.size() == 1)) {
-            PrintObjects(std::stoi(args[0]));
+            PrintObjects(args[0]);
         }
         else if ((token == "PrintObject" || token == "po") && (args.size() == 2)) {
-            PrintObject(std::stoi(args[0]), std::stoi(args[1]));
+            PrintObject(args[0], std::stoi(args[1]));
         }
         else if ((token == "PrintFactoryParents" || token == "pfp") && (args.size() == 1)) {
-            PrintFactoryParents(std::stoi(args[0]));
+            PrintFactoryParents(args[0]);
         }
         else if ((token == "PrintObjectParents" || token == "pop") && (args.size() == 2)) {
-            PrintObjectParents(std::stoi(args[0]), std::stoi(args[1]));
+            PrintObjectParents(args[0], std::stoi(args[1]));
         }
         else if ((token == "PrintObjectAncestors" || token == "poa") && (args.size() == 2)) {
-            PrintObjectAncestors(std::stoi(args[0]), std::stoi(args[1]));
+            PrintObjectAncestors(args[0], std::stoi(args[1]));
         }
         else if (token == "ViewAsTable" || token == "vt") {
             m_format = Format::Table;
@@ -701,21 +669,11 @@ uint64_t JInspector::DoReplLoop(uint64_t next_evt_nr) {
             m_format = Format::Json;
             m_out << "(Switching to JSON view mode)" << std::endl;
         }
-        else if (token == "Next" || token == "n") {
+        else if (token == "Continue" || token == "c") {
             stay_in_loop = false;
-            m_enabled = true;
-            if (args.size() > 0) {
-                next_evt_nr = std::stoi(args[0]);
-            }
         }
-        else if (token == "Finish" || token == "f") {
+        else if (token == "Exit" || token == "x") {
             stay_in_loop = false;
-            m_enabled = false;
-        }
-        else if (token == "Quit" || token == "q") {
-            stay_in_loop = false;
-            m_enabled = false;
-            m_event->GetJApplication()->Quit(false);
         }
         else if (token == "Help" || token == "h") {
             PrintHelp();
@@ -728,5 +686,4 @@ uint64_t JInspector::DoReplLoop(uint64_t next_evt_nr) {
             PrintHelp();
         }
     }
-    return next_evt_nr;
 }

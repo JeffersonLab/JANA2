@@ -23,6 +23,7 @@
 #include <exception>
 #include <atomic>
 #include <mutex>
+#include "JANA/Utils/JInspector.h"
 
 class JApplication;
 class JEventSource;
@@ -32,7 +33,7 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 {
     public:
 
-        explicit JEvent(JApplication* aApplication=nullptr) {
+        explicit JEvent(JApplication* aApplication=nullptr) : mInspector(&(*this)) {
             mApplication = aApplication;
         }
         virtual ~JEvent() {
@@ -89,6 +90,7 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
         JApplication* GetJApplication() const {return mApplication;}
         JEventSource* GetJEventSource() const {return mEventSource; }
         JCallGraphRecorder* GetJCallGraphRecorder() const {return &mCallGraph;}
+        void Inspect() const { mInspector.Loop(); }
         bool GetSequential() const {return mIsBarrierEvent;}
         friend class JEventPool;
 
@@ -98,6 +100,7 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
         uint64_t mEventNumber = 0;
         mutable JFactorySet* mFactorySet = nullptr;
         mutable JCallGraphRecorder mCallGraph;
+        mutable JInspector mInspector;
         JEventSource* mEventSource = nullptr;
         bool mIsBarrierEvent = false;
 };

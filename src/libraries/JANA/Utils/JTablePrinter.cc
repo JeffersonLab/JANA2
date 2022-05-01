@@ -20,7 +20,7 @@ JTablePrinter::Column& JTablePrinter::AddColumn(std::string header, Justify just
 
 void JTablePrinter::FormatCell(std::ostream& os, std::string contents, int max_width, Justify justify) {
     auto cs = contents.size();
-    if (cs > max_width) {
+    if (cs > (size_t) max_width) {
         os << contents.substr(0, max_width-2) << "\u2026";
     }
     else if (justify == Justify::Left) {
