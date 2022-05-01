@@ -7,7 +7,6 @@
 #include <JANA/Engine/JArrowTopology.h>
 #include <JANA/Engine/JArrowProcessingController.h>
 #include "PerformanceTests.h"
-#include "TestTopology.h"
 
 TEST_CASE("MemoryBottleneckTest", "[.][performance]") {
 
@@ -48,23 +47,27 @@ TEST_CASE("MemoryBottleneckTest", "[.][performance]") {
 //    entangled "block of 40": dis * 40
 //
 
-    TestTopology topology;
+    auto topology = new JArrowTopology;
 
     auto q1 = new JMailbox<Event*>();
     auto q2 = new JMailbox<Event*>();
     auto q3 = new JMailbox<Event*>();
 
-    topology.addArrow(new SourceArrow<Event*>("parse", parse, q1));
-    topology.addArrow(new MapArrow<Event*,Event*>("disentangle", disentangle, q1, q2));
-    topology.addArrow(new MapArrow<Event*,Event*>("track", track, q2, q3));
-    topology.addArrow(new SinkArrow<Event*>("plot", plot, q3));
+	auto parse_arrow = new SourceArrow<Event*>("parse", parse, q1);
+	auto disentangle_arrow = new MapArrow<Event*,Event*>("disentangle", disentangle, q1, q2);
+	auto track_arrow = new MapArrow<Event*,Event*>("track", track, q2, q3);
+	auto plot_arrow = new SinkArrow<Event*>("plot", plot, q3);
 
-    JArrowTopology proctop;
-    proctop.arrows = std::move(topology.arrows);
-    proctop.sources.push_back(proctop.arrows[0]);
-    proctop.sinks.push_back(proctop.arrows[3]);
+	parse_arrow->set_chunksize(1);
 
-    JArrowProcessingController controller(&proctop);
+	topology->sources.push_back(parse_arrow);
+	topology->sinks.push_back(plot_arrow);
+	topology->arrows.push_back(parse_arrow);
+	topology->arrows.push_back(disentangle_arrow);
+	topology->arrows.push_back(track_arrow);
+	topology->arrows.push_back(plot_arrow);
+
+    JArrowProcessingController controller(topology);
     controller.initialize();
 
     for (int nthreads=1; nthreads<6; nthreads++) {

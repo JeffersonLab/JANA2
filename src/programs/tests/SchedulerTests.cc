@@ -7,7 +7,7 @@
 
 #include <JANA/Engine/JScheduler.h>
 #include <TestTopologyComponents.h>
-#include <TestTopology.h>
+#include <JANA/Engine/JArrowTopology.h>
 
 TEST_CASE("SchedulerTests") {
 
@@ -16,19 +16,26 @@ TEST_CASE("SchedulerTests") {
     SubOneProcessor p2;
     SumSink<double> sink;
 
-    TestTopology topology;
+    JArrowTopology topology;
 
     auto q1 = new JMailbox<int>();
     auto q2 = new JMailbox<double>();
     auto q3 = new JMailbox<double>();
 
-    topology.addArrow(new SourceArrow<int>("emit_rand_ints", source, q1));
-    topology.addArrow(new MapArrow<int,double>("multiply_by_two", p1, q1, q2));
-    topology.addArrow(new MapArrow<double,double>("subtract_one", p2, q2, q3));
-    topology.addArrow(new SinkArrow<double>("sum_everything", sink, q3));
+	auto emit_rand_ints = new SourceArrow<int>("emit_rand_ints", source, q1);
+	auto multiply_by_two = new MapArrow<int,double>("multiply_by_two", p1, q1, q2);
+	auto subtract_one = new MapArrow<double,double>("subtract_one", p2, q2, q3);
+	auto sum_everything = new SinkArrow<double>("sum_everything", sink, q3);
 
-    topology.get_arrow("emit_rand_ints")->set_chunksize(1);
-    topology.activate("emit_rand_ints");
+	topology.sources.push_back(emit_rand_ints);
+
+	topology.arrows.push_back(emit_rand_ints);
+	topology.arrows.push_back(multiply_by_two);
+	topology.arrows.push_back(subtract_one);
+	topology.arrows.push_back(sum_everything);
+
+	emit_rand_ints->set_chunksize(1);
+	topology.set_active(true);
 
     JArrow* assignment;
     JArrowMetrics::Status last_result;
@@ -51,10 +58,10 @@ TEST_CASE("SchedulerTests") {
             }
         } while (assignment != nullptr);
 
-        REQUIRE(topology.get_status("emit_rand_ints").is_active == false);
-        REQUIRE(topology.get_status("multiply_by_two").is_active == false);
-        REQUIRE(topology.get_status("subtract_one").is_active == false);
-        REQUIRE(topology.get_status("sum_everything").is_active == false);
+		REQUIRE(emit_rand_ints->is_active() == false);
+		REQUIRE(multiply_by_two->is_active() == false);
+		REQUIRE(subtract_one->is_active() == false);
+		REQUIRE(sum_everything->is_active() == false);
     }
 
     SECTION("When run sequentially, topology finished => RRS returns nullptr") {
@@ -67,11 +74,10 @@ TEST_CASE("SchedulerTests") {
         bool keep_going = true;
         while (keep_going) {
 
-            keep_going = false;
-            auto statuses = topology.get_arrow_status();
-            for (auto status : statuses) {
-                keep_going |= status.is_active;
-            }
+            keep_going = emit_rand_ints->is_active() ||
+            		     multiply_by_two->is_active() ||
+            		     subtract_one->is_active() ||
+            		     sum_everything->is_active();
 
             if (keep_going) {
                 assignment = scheduler.next_assignment(0, assignment, last_result);
@@ -92,19 +98,26 @@ TEST_CASE("SchedulerRoundRobinBehaviorTests") {
     SubOneProcessor p2;
     SumSink<double> sink;
 
-    TestTopology topology;
+    JArrowTopology topology;
 
     auto q1 = new JMailbox<int>();
     auto q2 = new JMailbox<double>();
     auto q3 = new JMailbox<double>();
 
-    topology.addArrow(new SourceArrow<int>("emit_rand_ints", source, q1));
-    topology.addArrow(new MapArrow<int,double>("multiply_by_two", p1, q1, q2));
-    topology.addArrow(new MapArrow<double,double>("subtract_one", p2, q2, q3));
-    topology.addArrow(new SinkArrow<double>("sum_everything", sink, q3));
+	auto emit_rand_ints = new SourceArrow<int>("emit_rand_ints", source, q1);
+	auto multiply_by_two = new MapArrow<int,double>("multiply_by_two", p1, q1, q2);
+	auto subtract_one = new MapArrow<double,double>("subtract_one", p2, q2, q3);
+	auto sum_everything = new SinkArrow<double>("sum_everything", sink, q3);
 
-    topology.get_arrow("emit_rand_ints")->set_chunksize(1);
-    topology.activate("emit_rand_ints");
+	topology.sources.push_back(emit_rand_ints);
+
+	topology.arrows.push_back(emit_rand_ints);
+	topology.arrows.push_back(multiply_by_two);
+	topology.arrows.push_back(subtract_one);
+	topology.arrows.push_back(sum_everything);
+
+	emit_rand_ints->set_chunksize(1);
+	topology.set_active(true);
 
     JScheduler scheduler(topology.arrows);
     auto logger = JLogger(JLogger::Level::OFF);

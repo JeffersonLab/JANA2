@@ -11,8 +11,6 @@ set(TEST_SOURCES
     JEventTests.h
     PerformanceTests.cc
     PerformanceTests.h
-    TestTopology.cc
-    TestTopology.h
     ExactlyOnceTests.cc
     ExactlyOnceTests.h
     TerminationTests.cc

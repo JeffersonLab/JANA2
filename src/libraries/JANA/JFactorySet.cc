@@ -38,7 +38,8 @@ JFactorySet::JFactorySet(const std::vector<JFactoryGenerator*>& aFactoryGenerato
 }
 
 JFactorySet::JFactorySet(JFactoryGenerator* source_gen, const std::vector<JFactoryGenerator*>& default_gens) {
-    source_gen->GenerateFactories(this);
+
+    if (source_gen != nullptr) source_gen->GenerateFactories(this);
     for (auto gen : default_gens) {
         JFactorySet temp_set;
         gen->GenerateFactories(&temp_set);

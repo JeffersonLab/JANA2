@@ -15,7 +15,6 @@ set(JANA2_SOURCES
     JFactorySet.h
     JFactoryT.h
     JObject.h
-    JSourceFactoryGenerator.h
     JCsvWriter.h
     JLogger.h
 
@@ -34,6 +33,9 @@ set(JANA2_SOURCES
     Engine/JEventProcessorArrow.h
     Engine/JEventSourceArrow.cc
     Engine/JEventSourceArrow.h
+    Engine/JBlockSourceArrow.h
+    Engine/JBlockDisentanglerArrow.h
+
     Engine/JMailbox.h
     Engine/JScheduler.cc
     Engine/JScheduler.h
@@ -42,6 +44,7 @@ set(JANA2_SOURCES
     Engine/JWorker.h
     Engine/JWorker.cc
     Engine/JWorkerMetrics.h
+    Engine/JTopologyBuilder.h
 
     Services/JComponentManager.cc
     Services/JComponentManager.h
