@@ -10,21 +10,6 @@
 #include "JArrow.h"
 #include <JANA/JEvent.h>
 
-using Event = std::shared_ptr<JEvent>;
-
-
-/// Data structure containing all of the metadata needed to merge subevents
-/// on a per-event basis without needing a barrier. This is used internally by
-/// Queues and Arrows and the user should never need to interact with it directly
-struct JSubevent {
-    JEvent* parent;
-    JObject* subevent_data;
-    long subevent_id;
-    long subevent_count;
-};
-
-
-
 /// SubtaskProcessor offers sub-event-level parallelism. The idea is to split parent
 /// event S into independent subtasks T, and automatically bundling them with
 /// bookkeeping information X onto a Queue<pair<T,X>. process :: T -> U handles the stateless,
@@ -40,16 +25,29 @@ struct JSubevent {
 ///  1. To make the functions non-virtual,
 ///  2. To replace the generic JObject pointer with something typesafe
 /// Future versions could also recycle JObjects by using another Queue.
-class JSubeventProcessor {
 
-    virtual void split(JEvent& parent, std::vector<JObject*>& subevents) = 0;
+template <typename InputT, typename OutputT>
+struct JSubeventProcessor {
 
-    virtual void process(JObject& subevent) = 0;
+    std::string inputTag;
+    std::string outputTag;
 
-    virtual void merge(JEvent& parent, std::vector<JObject*>& subevents) = 0;
+    virtual OutputT* ProcessSubevent(InputT* input) = 0;
 
 };
 
+// class JSubeventProcessor {
+//
+//     virtual void split(JEvent& parent, std::vector<JObject*>& subevents) = 0;
+//
+//     virtual void process(JObject& subevent) = 0;
+//
+//     virtual void merge(JEvent& parent, std::vector<JObject*>& subevents) = 0;
+//
+// };
+
+/*
+template <typename T>
 class JSubeventArrow : public JArrow {
     JSubeventProcessor* m_processor;
     JMailbox<JSubevent>* m_inbox;
@@ -88,7 +86,7 @@ public:
     size_t get_threshold() final;
     void set_threshold(size_t) final;
 };
-
+*/
 
 #endif //JANA2_JSUBEVENTARROW_H
 

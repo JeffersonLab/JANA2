@@ -6,7 +6,7 @@
 
 
 
-
+#if 0
 
 JSubeventArrow::JSubeventArrow(std::string name, JSubeventProcessor* processor,
                                JMailbox<JSubevent>* inbox, JMailbox<JSubevent>* outbox)
@@ -54,3 +54,5 @@ void JMergeArrow::execute(JArrowMetrics& /* results */, size_t /* location_id */
     //
     // Alternative: If item is not part of current event, then push back onto queue
 }
+
+#endif
