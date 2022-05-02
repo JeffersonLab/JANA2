@@ -126,6 +126,25 @@ TEST_CASE("SubeventMailbox with two overlapping events") {
 }
 
 
-TEST_CASE("Create SplitArrow") {
+TEST_CASE("Basic subevent arrow functionality") {
+
+    MyProcessor processor;
+    JMailbox<std::shared_ptr<JEvent>> events_in;
+    JMailbox<std::shared_ptr<JEvent>> events_out;
+    JMailbox<SubeventWrapper<MyInput>> subevents_in;
+    JMailbox<SubeventWrapper<MyOutput>> subevents_out;
+
+    JSplitArrow<MyInput, MyOutput> split_arrow("split", &processor, &events_in, &subevents_in);
+    JSubeventArrow<MyInput, MyOutput> subprocess_arrow("subprocess", &processor, &subevents_in, &subevents_out);
+    JMergeArrow<MyInput, MyOutput> merge_arrow("merge", &processor, &subevents_out, &events_out);
+
+    SECTION("Execute subevent arrows") {
+        JArrowMetrics m;
+        split_arrow.execute(m, 0);
+        merge_arrow.execute(m, 0);
+        subprocess_arrow.execute(m, 0);
+    }
 
 }
+
+

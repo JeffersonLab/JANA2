@@ -3,8 +3,8 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 
-#ifndef JANA2_JMAILBOX_H
-#define JANA2_JMAILBOX_H
+#ifndef JANA2_JSUBEVENTMAILBOX_H
+#define JANA2_JSUBEVENTMAILBOX_H
 
 #include <queue>
 #include <mutex>
@@ -231,4 +231,4 @@ public:
 
 
 
-#endif //JANA2_JMAILBOX_H
+#endif //JANA2_JSUBEVENTMAILBOX_H
