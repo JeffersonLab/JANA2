@@ -15,22 +15,21 @@ class JTopologyBuilder : public JService {
 
 	std::shared_ptr<JParameterManager> m_params;
 	std::shared_ptr<JComponentManager> m_components;
-
-	JArrowTopology* m_override = nullptr; // Non-owning; caller responsible for deletion.
+	std::shared_ptr<JArrowTopology> m_override;
 
 public:
 
 	JTopologyBuilder() = default;
 	~JTopologyBuilder() override = default;
 
-	inline JArrowTopology* get_or_create(int nthreads) {
+	inline std::shared_ptr<JArrowTopology> get_or_create(int nthreads) {
 		if (m_override != nullptr) {
 			return m_override;
 		}
 		return build(nthreads);
 	}
 
-	inline void set_override(JArrowTopology* topology) {
+	inline void setTopology(std::shared_ptr<JArrowTopology> topology) {
 		m_override = topology;
 	}
 
@@ -39,9 +38,9 @@ public:
 		m_params = sl->get<JParameterManager>();
 	};
 
-	inline virtual JArrowTopology* build(int nthreads) {
+	inline virtual std::shared_ptr<JArrowTopology> build(int nthreads) {
 
-		auto topology = new JArrowTopology;
+		auto topology = std::make_shared<JArrowTopology>();
 		topology->component_manager = m_components;  // Ensure the lifespan of the component manager exceeds that of the topology
 
 		size_t event_pool_size = nthreads;
@@ -95,7 +94,8 @@ public:
 		topology->arrows.push_back(proc_arrow);
 
 		// Receive notifications when sinks finish
-		proc_arrow->attach_downstream(topology);   // TODO: Simplify shutdown process using upstream count instead
+		proc_arrow->attach_downstream(&(*topology));   // TODO: Simplify shutdown process using upstream count instead
+                // TODO: This should probably be a weak pointer instead
 		topology->attach_upstream(proc_arrow);
 
 		for (auto proc : m_components->get_evt_procs()) {

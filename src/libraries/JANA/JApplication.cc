@@ -124,15 +124,8 @@ void JApplication::Initialize() {
         m_params->SetDefaultParameter("jana:engine", engine_choice, "0: Arrow engine, 1: Debug engine");
 
         if (engine_choice == 0) {
-            // Before: use from_components
-            // auto topology = JArrowTopology::from_components(m_component_manager, m_params, m_desired_nthreads);
-
-            // After: Use topology_builder::get_or_create
-        	std::shared_ptr<JTopologyBuilder> topology_builder = nullptr;
-		    topology_builder = m_service_locator.get<JTopologyBuilder>();
-		    // JTopologyBuilder was added to JServiceLocator in ctor, but may have been overridden by user before Init
-
-        	auto topology = topology_builder->get_or_create(m_desired_nthreads);
+            std::shared_ptr<JTopologyBuilder> topology_builder = m_service_locator.get<JTopologyBuilder>();
+            auto topology = topology_builder->get_or_create(m_desired_nthreads);
             
             auto japc = std::make_shared<JArrowProcessingController>(topology);
             m_service_locator.provide(japc);  // Make concrete class available via SL

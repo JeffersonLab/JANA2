@@ -138,12 +138,18 @@ TEST_CASE("Basic subevent arrow functionality") {
     JSubeventArrow<MyInput, MyOutput> subprocess_arrow("subprocess", &processor, &subevents_in, &subevents_out);
     JMergeArrow<MyInput, MyOutput> merge_arrow("merge", &processor, &subevents_out, &events_out);
 
-    SECTION("Execute subevent arrows") {
+    SECTION("No-op execute subevent arrows") {
         JArrowMetrics m;
         split_arrow.execute(m, 0);
         merge_arrow.execute(m, 0);
         subprocess_arrow.execute(m, 0);
     }
+
+    SECTION("Execute subevent arrows end-to-end using same example as in JSubeventMailbox") {
+
+    }
+
+
 
 }
 
