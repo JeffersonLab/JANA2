@@ -15,16 +15,13 @@
 int main(int argc, char* argv[]) {
 
 	JApplication app;
+        auto topology = app.GetService<JTopologyBuilder>()->create_empty();
 
-	auto source = new BlockExampleSource;
+        auto source = new BlockExampleSource;
 	auto processor = new BlockExampleProcessor;
-	auto topology = std::make_shared<JArrowTopology>();
 
 	auto block_queue = new JMailbox<MyBlock*>;
 	auto event_queue = new JMailbox<std::shared_ptr<JEvent>>;
-
-	topology->component_manager = app.GetService<JComponentManager>();  // Ensure the lifespan of the component manager exceeds that of the topology
-	topology->event_pool = std::make_shared<JEventPool>(&topology->component_manager->get_fac_gens(), false, 20, 1, true);
 
 	auto block_source_arrow = new JBlockSourceArrow<MyBlock>("block_source", source, block_queue);
 	auto block_disentangler_arrow = new JBlockDisentanglerArrow<MyBlock>("block_disentangler", source, block_queue, event_queue, topology->event_pool);
@@ -41,9 +38,6 @@ int main(int argc, char* argv[]) {
 
 	processor_arrow->attach_downstream(&(*topology));
 	topology->attach_upstream(processor_arrow);    // Receive notifications when sinks finish
-
-	auto builder = app.GetService<JTopologyBuilder>();
-	builder->setTopology(topology);
 
 	app.SetParameterValue("log:trace", "JWorker");
 	app.Run(true);

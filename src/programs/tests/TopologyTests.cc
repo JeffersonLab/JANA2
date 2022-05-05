@@ -244,7 +244,9 @@ TEST_CASE("JTopology: Basic functionality") {
     SECTION("Running from inside JApplication returns the correct answer") {
         JApplication app;
         auto builder = app.GetService<JTopologyBuilder>();
-        builder->setTopology(topology);
+        builder->set(topology);
+
+        REQUIRE(sink.sum == 0);
 
         app.Run(true);
 

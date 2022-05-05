@@ -9,16 +9,19 @@
 #include <JANA/JEvent.h>
 #include <JANA/Engine/JSubeventMailbox.h>
 #include <JANA/Engine/JSubeventArrow.h>
+#include "JANA/Engine/JArrowTopology.h"
+#include "JANA/Engine/JTopologyBuilder.h"
 
 
 struct MyInput : public JObject {
     int x;
     float y;
+    MyInput(int x, float y) : x(x), y(y) {}
 };
 
 struct MyOutput : public JObject {
     float z;
-    MyOutput(float z) : z(z) {}
+    explicit MyOutput(float z) : z(z) {}
 };
 
 struct MyProcessor : public JSubeventProcessor<MyInput, MyOutput> {
@@ -26,17 +29,15 @@ struct MyProcessor : public JSubeventProcessor<MyInput, MyOutput> {
         inputTag = "";
         outputTag = "subeventted";
     }
-    MyOutput* ProcessSubevent(MyInput* input) {
-        return new MyOutput(input->y + input->x);
+    MyOutput* ProcessSubevent(MyInput* input) override {
+        return new MyOutput(input->y + (float) input->x);
     }
 };
 
 TEST_CASE("Create subevent processor") {
 
     MyProcessor processor;
-    MyInput input;
-    input.x = 22;
-    input.y = 7.6;
+    MyInput input(22, 7.6);
     MyOutput* output = processor.ProcessSubevent(&input);
     REQUIRE(output->z == 29.6f);
 }
@@ -134,21 +135,67 @@ TEST_CASE("Basic subevent arrow functionality") {
     JMailbox<SubeventWrapper<MyInput>> subevents_in;
     JMailbox<SubeventWrapper<MyOutput>> subevents_out;
 
-    JSplitArrow<MyInput, MyOutput> split_arrow("split", &processor, &events_in, &subevents_in);
-    JSubeventArrow<MyInput, MyOutput> subprocess_arrow("subprocess", &processor, &subevents_in, &subevents_out);
-    JMergeArrow<MyInput, MyOutput> merge_arrow("merge", &processor, &subevents_out, &events_out);
+    auto split_arrow = new JSplitArrow<MyInput, MyOutput>("split", &processor, &events_in, &subevents_in);
+    auto subprocess_arrow = new JSubeventArrow<MyInput, MyOutput>("subprocess", &processor, &subevents_in, &subevents_out);
+    auto merge_arrow = new JMergeArrow<MyInput, MyOutput>("merge", &processor, &subevents_out, &events_out);
 
     SECTION("No-op execute subevent arrows") {
         JArrowMetrics m;
-        split_arrow.execute(m, 0);
-        merge_arrow.execute(m, 0);
-        subprocess_arrow.execute(m, 0);
+        split_arrow->execute(m, 0);
+        merge_arrow->execute(m, 0);
+        subprocess_arrow->execute(m, 0);
     }
+
+    struct SimpleSource : public JEventSource {
+        SimpleSource(std::string name) : JEventSource(name) {};
+        void GetEvent(std::shared_ptr<JEvent> event) override {
+            std::vector<MyInput*> inputs;
+            inputs.push_back(new MyInput(22,3.6));
+            inputs.push_back(new MyInput(23,3.5));
+            inputs.push_back(new MyInput(24,3.4));
+            inputs.push_back(new MyInput(25,3.3));
+            event->Insert(inputs);
+            // throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
+        }
+    };
+
+    struct SimpleProcessor : public JEventProcessor {
+        void Process(const std::shared_ptr<const JEvent>& event) {
+            auto outputs = event->Get<MyOutput>();
+            REQUIRE(outputs.size() == 4);
+            REQUIRE(outputs[0]->z == 25.6);
+            REQUIRE(outputs[1]->z == 26.5);
+            REQUIRE(outputs[2]->z == 27.4);
+            REQUIRE(outputs[3]->z == 28.3);
+        }
+    };
 
     SECTION("Execute subevent arrows end-to-end using same example as in JSubeventMailbox") {
 
-    }
+        JApplication app;
+        auto topology = app.GetService<JTopologyBuilder>()->create_empty();
+        auto source_arrow = new JEventSourceArrow("simpleSource",
+                                                  new SimpleSource("simpleSource"),
+                                                  &events_in,
+                                                  topology->event_pool);
+        topology->arrows.push_back(source_arrow);
+        topology->sources.push_back(source_arrow);
+        topology->arrows.push_back(split_arrow);
+        topology->arrows.push_back(subprocess_arrow);
+        topology->arrows.push_back(merge_arrow);
 
+        auto proc_arrow = new JEventProcessorArrow("simpleProcessor", &events_out, nullptr, topology->event_pool);
+        proc_arrow->add_processor(new SimpleProcessor);
+
+        topology->arrows.push_back(proc_arrow);
+        topology->sinks.push_back(proc_arrow);
+        proc_arrow->attach_downstream(&(*topology));
+        topology->attach_upstream(proc_arrow);
+
+
+        app.SetParameterValue("jana:nevents", 6);
+        app.Run(true);
+    }
 
 
 }

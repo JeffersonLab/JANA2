@@ -125,7 +125,7 @@ void JApplication::Initialize() {
 
         if (engine_choice == 0) {
             std::shared_ptr<JTopologyBuilder> topology_builder = m_service_locator.get<JTopologyBuilder>();
-            auto topology = topology_builder->get_or_create(m_desired_nthreads);
+            auto topology = topology_builder->get_or_create();
             
             auto japc = std::make_shared<JArrowProcessingController>(topology);
             m_service_locator.provide(japc);  // Make concrete class available via SL
