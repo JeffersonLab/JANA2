@@ -179,8 +179,12 @@ void JApplication::Run(bool wait_until_finished) {
         }
 
         // Run until topology is deactivated, either because it finished or because another thread called stop()
-        if (m_processing_controller->is_stopped() || m_processing_controller->is_finished()) {
-            LOG_INFO(m_logger) << "All threads have ended." << LOG_END;
+        if (m_processing_controller->is_stopped()) {
+            LOG_INFO(m_logger) << "All workers have stopped." << LOG_END;
+            break;
+        }
+        if (m_processing_controller->is_finished()) {
+            LOG_INFO(m_logger) << "All workers have finished." << LOG_END;
             break;
         }
 

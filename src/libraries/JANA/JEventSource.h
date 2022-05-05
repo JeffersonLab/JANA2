@@ -141,8 +141,9 @@ public:
                         return ReturnStatus::Finished;
                     }
                     else {
-                        GetEvent(event);
                         m_event_count += 1;
+                        event->SetEventNumber(m_event_count);
+                        GetEvent(event);
                         return ReturnStatus::Success;
                     }
 

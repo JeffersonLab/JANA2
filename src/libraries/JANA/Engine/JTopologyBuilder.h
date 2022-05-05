@@ -16,7 +16,7 @@ class JTopologyBuilder : public JService {
     std::shared_ptr<JComponentManager> m_components;
     std::shared_ptr<JArrowTopology> m_topology;
 
-    size_t m_event_pool_size = 0;
+    size_t m_event_pool_size = 4;
     size_t m_event_queue_threshold = 80;
     size_t m_event_source_chunksize = 40;
     size_t m_event_processor_chunksize = 1;

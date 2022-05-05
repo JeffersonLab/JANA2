@@ -47,7 +47,13 @@ public:
                    JSubeventProcessor<InputT,OutputT>* processor,
                    JMailbox<SubeventWrapper<InputT>>* inbox,
                    JMailbox<SubeventWrapper<OutputT>>* outbox)
-        : JArrow(name, true, NodeType::Stage), m_processor(processor), m_inbox(inbox), m_outbox(outbox) {}
+        : JArrow(name, true, NodeType::Stage), m_processor(processor), m_inbox(inbox), m_outbox(outbox) {
+
+        m_inbox->attach_downstream(this);
+        attach_upstream(m_inbox);
+        m_outbox->attach_upstream(this);
+        attach_downstream(m_outbox);
+    }
 
     size_t get_pending() final { return m_inbox->size(); };
     size_t get_threshold() final { return m_inbox->get_threshold(); };
@@ -66,7 +72,13 @@ public:
                 JSubeventProcessor<InputT,OutputT>* processor,
                 JMailbox<std::shared_ptr<JEvent>>* inbox,
                 JMailbox<SubeventWrapper<InputT>>* outbox)
-        : JArrow(name, true, NodeType::Stage), m_processor(processor), m_inbox(inbox), m_outbox(outbox) {}
+        : JArrow(name, true, NodeType::Stage), m_processor(processor), m_inbox(inbox), m_outbox(outbox) {
+
+        m_inbox->attach_downstream(this);
+        attach_upstream(m_inbox);
+        m_outbox->attach_upstream(this);
+        attach_downstream(m_outbox);
+    }
 
     size_t get_pending() final { return m_inbox->size(); };
     size_t get_threshold() final { return m_inbox->get_threshold(); };
@@ -86,7 +98,13 @@ public:
                 JSubeventProcessor<InputT,OutputT>* processor,
                 JMailbox<SubeventWrapper<OutputT>>* inbox,
                 JMailbox<std::shared_ptr<JEvent>>* outbox)
-        : JArrow(name, false, NodeType::Stage), m_processor(processor), m_inbox(inbox), m_outbox(outbox) {}
+        : JArrow(name, false, NodeType::Stage), m_processor(processor), m_inbox(inbox), m_outbox(outbox) {
+
+        m_inbox->attach_downstream(this);
+        attach_upstream(m_inbox);
+        m_outbox->attach_upstream(this);
+        attach_downstream(m_outbox);
+    }
 
     size_t get_pending() final { return m_inbox->size(); };
     size_t get_threshold() final { return m_inbox->get_threshold(); };
@@ -127,6 +145,7 @@ void JSplitArrow<InputT, OutputT>::execute(JArrowMetrics& result, size_t locatio
     auto end_latency_time = std::chrono::steady_clock::now();
     auto out_status = OutQueue::Status::Ready;
 
+    size_t output_size = wrapped.size();
     if (success) {
         assert(m_outbox != nullptr);
         out_status = m_outbox->push(wrapped, reserved_size, location_id);
@@ -146,7 +165,7 @@ void JSplitArrow<InputT, OutputT>::execute(JArrowMetrics& result, size_t locatio
     }
     auto latency = (end_latency_time - start_latency_time);
     auto overhead = (end_queue_time - start_total_time) - latency;
-    result.update(status, success, 1, latency, overhead);
+    result.update(status, output_size, 1, latency, overhead);
 
 }
 template <typename InputT, typename OutputT>
@@ -166,10 +185,11 @@ void JSubeventArrow<InputT, OutputT>::execute(JArrowMetrics& result, size_t loca
         auto wrapped = SubeventWrapper<OutputT>(input.parent, output, input.id, input.total);
         outputs.push_back(wrapped);
     }
+    size_t outputs_size = outputs.size();
     auto end_latency_time = std::chrono::steady_clock::now();
     auto out_status = JMailbox<SubeventWrapper<OutputT>>::Status::Ready;
 
-    if (outputs.size() > 0) {
+    if (outputs_size > 0) {
         assert(m_outbox != nullptr);
         out_status = m_outbox->push(outputs, downstream_accepts, location_id);
     }
@@ -188,7 +208,7 @@ void JSubeventArrow<InputT, OutputT>::execute(JArrowMetrics& result, size_t loca
     }
     auto latency = (end_latency_time - start_latency_time);
     auto overhead = (end_queue_time - start_total_time) - latency;
-    result.update(status, downstream_accepts, 1, latency, overhead);
+    result.update(status, outputs_size, 1, latency, overhead);
 
 }
 template <typename InputT, typename OutputT>
@@ -219,7 +239,11 @@ void JMergeArrow<InputT, OutputT>::execute(JArrowMetrics& result, size_t locatio
                 m_in_progress[input.parent] = input.total-1;
             }
             else {
-                if (pair->second == 1) {
+                if (pair->second == 0) {   // Event was already in the map. TODO: What happens when we turn off event recycling?
+                    pair->second = input.total-1;
+                }
+                else if (pair->second == 1) {
+                    pair->second -= 1;
                     outputs.push_back(input.parent);
                 }
                 else {
@@ -231,7 +255,8 @@ void JMergeArrow<InputT, OutputT>::execute(JArrowMetrics& result, size_t locatio
     auto end_latency_time = std::chrono::steady_clock::now();
     auto out_status = OutQueue::Status::Ready;
 
-    if (outputs.size() > 0) {
+    size_t outputs_size = outputs.size();
+    if (outputs_size > 0) {
         assert(m_outbox != nullptr);
         out_status = m_outbox->push(outputs, downstream_accepts, location_id);
     }
@@ -250,7 +275,7 @@ void JMergeArrow<InputT, OutputT>::execute(JArrowMetrics& result, size_t locatio
     }
     auto latency = (end_latency_time - start_latency_time);
     auto overhead = (end_queue_time - start_total_time) - latency;
-    result.update(status, downstream_accepts, 1, latency, overhead);
+    result.update(status, outputs_size, 1, latency, overhead);
 }
 
 #endif //JANA2_JSUBEVENTARROW_H

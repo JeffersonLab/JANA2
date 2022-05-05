@@ -172,7 +172,14 @@ TEST_CASE("Basic subevent arrow functionality") {
 
     SECTION("Execute subevent arrows end-to-end using same example as in JSubeventMailbox") {
 
-        JApplication app;
+        auto parms = new JParameterManager;
+        // Some params need to be present BEFORE JApplication is constructed, e.g. log levels are lost
+        parms->SetParameter("log:debug", "JWorker,JScheduler,JArrowProcessingController,JEventProcessorArrow");
+        parms->SetParameter("jana:nevents", 6);
+        JApplication app(parms);
+        app.SetTimeoutEnabled(false);
+        app.SetTicker(false);
+
         auto topology = app.GetService<JTopologyBuilder>()->create_empty();
         auto source_arrow = new JEventSourceArrow("simpleSource",
                                                   new SimpleSource("simpleSource"),
@@ -193,7 +200,6 @@ TEST_CASE("Basic subevent arrow functionality") {
         topology->attach_upstream(proc_arrow);
 
 
-        app.SetParameterValue("jana:nevents", 6);
         app.Run(true);
     }
 
