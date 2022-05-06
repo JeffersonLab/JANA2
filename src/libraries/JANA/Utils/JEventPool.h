@@ -69,13 +69,15 @@ public:
         else {
             auto event = std::move(pool.events.back());
             pool.events.pop_back();
+            event->mFactorySet->Release();
+            event->mInspector.Reset();
+            event->GetJCallGraphRecorder()->Reset();
             return event;
         }
     }
 
     inline void put(std::shared_ptr<JEvent>& event, size_t location) {
 
-        event->mFactorySet->Release();
         LocalPool& pool = m_pools[location % m_location_count];
         std::lock_guard<std::mutex> lock(pool.mutex);
 

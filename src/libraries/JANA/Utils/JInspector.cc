@@ -7,9 +7,14 @@
 
 JInspector::JInspector(const JEvent* event) : m_event(event) {}
 
+void JInspector::Reset() {
+    m_indexes_built = false;
+    m_factories.clear();
+    m_factory_index.clear();
+}
+
 void JInspector::BuildIndices() {
     if (m_indexes_built) return;
-    m_factories.clear();
     for (auto fac: m_event->GetFactorySet()->GetAllFactories()) {
         m_factories.push_back(fac);
     }

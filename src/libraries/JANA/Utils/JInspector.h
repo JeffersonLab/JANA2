@@ -30,6 +30,7 @@ private:
     std::vector<JFactory*> m_factories;
     std::ostream& m_out = std::cout;
     std::istream& m_in = std::cin;
+    std::set<std::string> m_discrepancies;
 
 public:
     explicit JInspector(const JEvent* event);
@@ -44,6 +45,7 @@ public:
     void PrintObjectAncestors(std::string factory_key, int object_idx);
     void PrintHelp();
     void Loop();
+    void Reset();
 
     static void ToText(const JEvent* event, bool asJson=false, std::ostream& out=std::cout);
     static void ToText(const std::vector<JFactory*>& factories, int filter_level, bool asJson=false, std::ostream& out=std::cout);
