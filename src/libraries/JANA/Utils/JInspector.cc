@@ -162,7 +162,7 @@ void JInspector::ToText(const JFactory* fac, bool asJson, std::ostream& out) {
     if (pluginName.empty()) pluginName = "(no plugin)";
 
     auto factoryName = fac->GetFactoryName();
-    if (factoryName.empty()) factoryName = "(dummy factory)";
+    // if (factoryName.empty()) factoryName = "(no name)";
 
     auto tag = fac->GetTag();
     if (tag.empty()) tag = "(no tag)";
@@ -179,7 +179,7 @@ void JInspector::ToText(const JFactory* fac, bool asJson, std::ostream& out) {
 
     if (!asJson) {
         out << "Plugin name          " << pluginName << std::endl;
-        out << "Factory name         " << factoryName << std::endl;
+        // out << "Factory name         " << factoryName << std::endl;
         out << "Object name          " << fac->GetObjectName() << std::endl;
         out << "Tag                  " << tag << std::endl;
         out << "Creation status      " << creationStatus << std::endl;
