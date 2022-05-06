@@ -27,7 +27,7 @@ private:
     const JEvent* m_event;
     bool m_indexes_built = false;
     std::map<std::string, std::pair<int, const JFactory*>> m_factory_index;
-    std::vector<const JFactory*> m_factories;
+    std::vector<JFactory*> m_factories;
     std::ostream& m_out = std::cout;
     std::istream& m_in = std::cin;
 

@@ -66,12 +66,13 @@ void JInspector::PrintEvent() {
     ToText(m_event, m_format==Format::Json, m_out);
 }
 void JInspector::PrintFactories(int filter_level=0) {
-    auto facs = m_event->GetAllFactories();
-    ToText(facs, filter_level, m_format==Format::Json, m_out);
+    BuildIndices();
+    ToText(m_factories, filter_level, m_format==Format::Json, m_out);
 }
 
 void JInspector::PrintObjects(std::string factory_key) {
 
+    BuildIndices();
     auto result = m_factory_index.find(factory_key);
     if (result == m_factory_index.end()) {
         m_out << "(Error: Invalid factory name or index)\n";
