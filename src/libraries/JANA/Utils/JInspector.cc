@@ -11,6 +11,11 @@ void JInspector::Reset() {
     m_indexes_built = false;
     m_factories.clear();
     m_factory_index.clear();
+    m_discrepancies.clear();
+}
+
+void JInspector::SetDiscrepancies(std::set<std::string>&& diverging_factory_keys) {
+    m_discrepancies = std::move(diverging_factory_keys);
 }
 
 void JInspector::BuildIndices() {
@@ -72,11 +77,10 @@ void JInspector::PrintEvent() {
 }
 void JInspector::PrintFactories(int filter_level=0) {
     BuildIndices();
-    ToText(m_factories, filter_level, m_format==Format::Json, m_out);
+    ToText(m_factories, m_discrepancies, filter_level, m_format==Format::Json, m_out);
 }
 
 void JInspector::PrintObjects(std::string factory_key) {
-
     BuildIndices();
     auto result = m_factory_index.find(factory_key);
     if (result == m_factory_index.end()) {
@@ -207,7 +211,7 @@ void JInspector::ToText(const JFactory* fac, bool asJson, std::ostream& out) {
     }
 }
 
-void JInspector::ToText(const std::vector<JFactory*>& factories, int filterlevel, bool asJson, std::ostream &out) {
+void JInspector::ToText(const std::vector<JFactory*>& factories, const std::set<std::string>& discrepancies, int filterlevel, bool asJson, std::ostream &out) {
     size_t idx = -1;
     if (!asJson) {
         JTablePrinter t;
@@ -216,6 +220,7 @@ void JInspector::ToText(const std::vector<JFactory*>& factories, int filterlevel
         t.AddColumn("Tag");
         t.AddColumn("Creation status");
         t.AddColumn("Object count", JTablePrinter::Justify::Right);
+        t.AddColumn("Discrepancy", JTablePrinter::Justify::Right);
         for (auto fac : factories) {
             auto tag = fac->GetTag();
             if (tag.empty()) tag = "(no tag)";
@@ -235,7 +240,11 @@ void JInspector::ToText(const std::vector<JFactory*>& factories, int filterlevel
             if (filterlevel > 2 && (fac->GetCreationStatus()==JFactory::CreationStatus::Inserted ||
                                     fac->GetCreationStatus()==JFactory::CreationStatus::InsertedViaGetObjects)) continue;
 
-            t | idx | fac->GetObjectName() | tag | creationStatus | fac->GetNumObjects();
+            bool discrepancy = false;
+            auto key = MakeFactoryKey(fac->GetObjectName(), fac->GetTag());
+            if (discrepancies.find(key) != discrepancies.end()) discrepancy = true;
+
+            t | idx | fac->GetObjectName() | tag | creationStatus | fac->GetNumObjects() | discrepancy;
         }
         t.Render(out);
     }

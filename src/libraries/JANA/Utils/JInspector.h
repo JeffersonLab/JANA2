@@ -6,6 +6,7 @@
 
 #include <string>
 #include <map>
+#include <set>
 #include <vector>
 #include <tuple>
 #include <mutex>
@@ -47,8 +48,10 @@ public:
     void Loop();
     void Reset();
 
+    void SetDiscrepancies(std::set<std::string>&& diverging_factory_keys);
+
     static void ToText(const JEvent* event, bool asJson=false, std::ostream& out=std::cout);
-    static void ToText(const std::vector<JFactory*>& factories, int filter_level, bool asJson=false, std::ostream& out=std::cout);
+    void ToText(const std::vector<JFactory*>& factories, const std::set<std::string>& discrepancies, int filter_level, bool asJson=false, std::ostream& out=std::cout);
     static void ToText(const JFactory* factory, bool asJson=false, std::ostream& out=std::cout);
     static void ToText(std::vector<JObject*> objs, bool as_json, std::ostream& out= std::cout);
     static void ToText(const JObject* obj, bool asJson, std::ostream& out=std::cout);
