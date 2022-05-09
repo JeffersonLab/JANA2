@@ -187,15 +187,31 @@ void JEventProcessor_regressiontest::Finish()
 
 std::vector<JFactory*> JEventProcessor_regressiontest::GetFactoriesTopologicallyOrdered(const JEvent& event) {
 
+    std::map<std::pair<std::string,std::string>, std::pair<JFactory*, bool>> factories;
     std::vector<JFactory*> sorted_factories;
+
+    for (JFactory* fac : event.GetAllFactories()) {
+        factories[std::make_pair(fac->GetObjectName(), fac->GetTag())] = std::make_pair(fac, false);
+    }
+
     auto topologicalOrdering = event.GetJCallGraphRecorder()->TopologicalSort();
     for (auto pair : topologicalOrdering) {
         auto fac_name = pair.first;
         auto fac_tag = pair.second;
-        JFactory* fac = event.GetFactory(fac_name, fac_tag);
-        sorted_factories.push_back(fac);
+        auto result = factories.find(std::make_pair(fac_name,fac_tag));
+        if (result != factories.end()) {
+            result->second.second = true;
+            sorted_factories.push_back(result->second.first);
+        }
+    }
+
+    for (auto pair : factories) {
+        if (pair.second.second == false) {
+            sorted_factories.push_back(pair.second.first);
+        }
     }
     return sorted_factories;
+
 }
 
 std::pair<std::string, int> JEventProcessor_regressiontest::ParseFactorySummary(std::string line) {
