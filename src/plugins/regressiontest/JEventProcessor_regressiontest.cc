@@ -95,19 +95,13 @@ void JEventProcessor_regressiontest::Process(const std::shared_ptr<const JEvent>
         bool found_discrepancy = false;
 	auto jobs = fac->GetAs<JObject>();
         auto item_ct = jobs.size();
-        int old_item_ct = 0;
 
         // Generate line describing factory counts
         std::ostringstream os;
         std::string fac_key = fac->GetObjectName();
         if (!fac->GetTag().empty()) fac_key += ":" + fac->GetTag();
 
-        if (fac->GetTag().empty()) {
-            os << evt_nr << "\t" << fac->GetObjectName() << "\t" << item_ct;
-        }
-        else {
-            os << evt_nr << "\t" << fac->GetObjectName() << ":" << fac->GetTag() << "\t" << item_ct;
-        }
+        os << evt_nr << "\t" << fac_key << "\t" << item_ct;
         std::string count_line = os.str();
 
         new_log_file << count_line << std::endl;
@@ -120,10 +114,10 @@ void JEventProcessor_regressiontest::Process(const std::shared_ptr<const JEvent>
             obj->Summarize(summary);
 
             std::stringstream ss;
-            ss << evt_nr << "\t" << fac->GetObjectName() << "\t" << fac->GetTag() << "\t";
+            ss << evt_nr << "\t" << fac_key << "\t";
             ss << "{";
             for (auto& field : summary.get_fields()) {
-                std::string blacklist_entry = fac->GetObjectName() + "\t" + fac->GetTag() + "\t" + field.name;
+                std::string blacklist_entry = fac_key + "\t" + field.name;
                 if (blacklist.find(blacklist_entry) == blacklist.end()) {
                     ss << field.name << ": " << field.value << ", ";
                 }
