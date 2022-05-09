@@ -117,6 +117,7 @@ void JEventProcessor_regressiontest::Process(const std::shared_ptr<const JEvent>
             ss << evt_nr << "\t" << fac_key << "\t";
             ss << "{";
             for (auto& field : summary.get_fields()) {
+                if (field.name == "JObject" || field.name == "id") continue;
                 std::string blacklist_entry = fac_key + "\t" + field.name;
                 if (blacklist.find(blacklist_entry) == blacklist.end()) {
                     ss << field.name << ": " << field.value << ", ";
@@ -175,7 +176,7 @@ void JEventProcessor_regressiontest::Finish()
 {
     std::cout << "OVERALL DISCREPANCIES" << std::endl;
     for (auto p : discrepancy_counts) {
-        std::cout << p.first << "\t" << p.second;
+        std::cout << p.first << "\t" << p.second << std::endl;
     }
     new_log_file.close();
     if (have_old_log_file) {
