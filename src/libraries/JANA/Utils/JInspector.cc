@@ -240,9 +240,9 @@ void JInspector::ToText(const std::vector<JFactory*>& factories, const std::set<
             if (filterlevel > 2 && (fac->GetCreationStatus()==JFactory::CreationStatus::Inserted ||
                                     fac->GetCreationStatus()==JFactory::CreationStatus::InsertedViaGetObjects)) continue;
 
-            bool discrepancy = false;
+            char discrepancy = ' ';
             auto key = MakeFactoryKey(fac->GetObjectName(), fac->GetTag());
-            if (discrepancies.find(key) != discrepancies.end()) discrepancy = true;
+            if (discrepancies.find(key) != discrepancies.end()) discrepancy = 'x';
 
             t | idx | fac->GetObjectName() | tag | creationStatus | fac->GetNumObjects() | discrepancy;
         }

@@ -142,14 +142,14 @@ void JEventProcessor_regressiontest::Process(const std::shared_ptr<const JEvent>
             if (item_ct != old_object_lines.size()) {
                 found_discrepancy = true;
                 event_discrepancies.insert(fac_key);
-                std::cout << "MISCOUNT: old=" << old_object_lines.size() << ", new=" << item_ct << std::endl;
+                std::cout << "MISCOUNT: " << fac_key << ", old=" << old_object_lines.size() << ", new=" << item_ct << std::endl;
             }
             else {
                 for (size_t i=0; i<item_ct; ++i) {
                     if (old_object_lines[i] != new_object_lines[i]) {
                         found_discrepancy = true;
                         event_discrepancies.insert(fac_key);
-                        std::cout << "MISMATCH" << std::endl;
+                        std::cout << "MISMATCH: " << fac_key << std::endl;
                         std::cout << "OLD OBJ: " << old_object_lines[i] << std::endl;
                         std::cout << "NEW OBJ: " << new_object_lines[i] << std::endl;
                     }
