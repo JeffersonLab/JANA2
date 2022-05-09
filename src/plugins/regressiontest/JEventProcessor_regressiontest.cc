@@ -210,7 +210,6 @@ std::pair<std::string, int> JEventProcessor_regressiontest::ParseFactorySummary(
     std::string split;
     std::getline(iss, split, '\t');  // Event number
     std::getline(iss, facname, '\t'); // Factory key
-    std::getline(iss, split, '\t'); // Item Count
     int count;
     iss >> count;
     return std::make_pair(facname, count);
