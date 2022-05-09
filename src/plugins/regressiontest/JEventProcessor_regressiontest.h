@@ -36,9 +36,10 @@ private:
     std::ifstream blacklist_file;
     std::string blacklist_file_name = "blacklist.tsv";
     std::set<std::string> blacklist;
+    std::map<std::string, int> discrepancy_counts;
 
     std::vector<JFactory*> GetFactoriesTopologicallyOrdered(const JEvent& event);
-    int ParseOldItemCount(std::string old_count_line);
+    std::pair<std::string, int> ParseFactorySummary(std::string line);
 };
 
 #endif // _JEventProcessor_regressiontest_

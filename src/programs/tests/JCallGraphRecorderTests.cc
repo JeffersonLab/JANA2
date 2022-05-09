@@ -40,7 +40,7 @@ struct ObjC {};
 struct ObjD {};
 
 struct FacA: public JFactoryT<ObjA> {
-    void Process(const std::shared_ptr<const JEvent>& event) override {
+    void Process(const std::shared_ptr<const JEvent>&) override {
     }
 };
 
@@ -54,7 +54,7 @@ struct FacB: public JFactoryT<ObjB> {
 };
 
 struct FacC: public JFactoryT<ObjC> {
-    void Process(const std::shared_ptr<const JEvent>& event) override {
+    void Process(const std::shared_ptr<const JEvent>&) override {
     }
 };
 

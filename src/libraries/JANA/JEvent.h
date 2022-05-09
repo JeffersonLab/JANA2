@@ -90,6 +90,7 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
         JApplication* GetJApplication() const {return mApplication;}
         JEventSource* GetJEventSource() const {return mEventSource; }
         JCallGraphRecorder* GetJCallGraphRecorder() const {return &mCallGraph;}
+        JInspector* GetJInspector() const {return &mInspector;}
         void Inspect() const { mInspector.Loop(); }
         bool GetSequential() const {return mIsBarrierEvent;}
         friend class JEventPool;

@@ -57,10 +57,6 @@ void JEventProcessor_regressiontest::BeginRun(const std::shared_ptr<const JEvent
 //-------------------------------
 void JEventProcessor_regressiontest::Process(const std::shared_ptr<const JEvent>& event)
 {
-    if (interactive) {
-        event->Inspect();
-        return;
-    }
     auto app = GetApplication();
     auto evt_nr = event->GetEventNumber();
     auto run_nr = event->GetRunNumber();
@@ -69,8 +65,31 @@ void JEventProcessor_regressiontest::Process(const std::shared_ptr<const JEvent>
     }
     auto facs = GetFactoriesTopologicallyOrdered(*event);
 
-
     std::lock_guard<std::mutex> lock(m_mutex);
+
+    std::map<std::string, std::vector<std::string>> old_event_log;
+    std::set<std::string> event_discrepancies;
+    if (have_old_log_file) {
+        // Read entire event from log and store
+        std::string line = "throwaway";
+        while (!line.empty()) {
+            // Empty line demarcates next event
+            // Assume events are in the same order
+            std::getline(old_log_file, line);
+            int item_count;
+            std::string fac_key;
+            auto pair = ParseFactorySummary(line);
+            fac_key = pair.first;
+            item_count = pair.second;
+
+            std::vector<std::string> jobjs_summaries;
+            for (int i=0; i<item_count; ++i) {
+                std::getline(old_log_file, line);
+                jobjs_summaries.push_back(line);
+            }
+            old_event_log[fac_key] = std::move(jobjs_summaries);
+        }
+    }
 
     for (auto fac : facs) {
         bool found_discrepancy = false;
@@ -80,26 +99,18 @@ void JEventProcessor_regressiontest::Process(const std::shared_ptr<const JEvent>
 
         // Generate line describing factory counts
         std::ostringstream os;
-        os << evt_nr << "\t" << fac->GetObjectName() << "\t" << fac->GetTag() << "\t" << item_ct;
+        std::string fac_key = fac->GetObjectName();
+        if (!fac->GetTag().empty()) fac_key += ":" + fac->GetTag();
+
+        if (fac->GetTag().empty()) {
+            os << evt_nr << "\t" << fac->GetObjectName() << "\t" << item_ct;
+        }
+        else {
+            os << evt_nr << "\t" << fac->GetObjectName() << ":" << fac->GetTag() << "\t" << item_ct;
+        }
         std::string count_line = os.str();
 
         new_log_file << count_line << std::endl;
-
-        if (have_old_log_file) {
-            std::string old_count_line;
-            std::getline(old_log_file, old_count_line);
-            old_item_ct = ParseOldItemCount(old_count_line);
-
-            if (old_count_line != count_line) {
-                std::cout << "MISMATCH" << std::endl;
-                std::cout << "OLD COUNT: " << old_count_line << std::endl;
-                std::cout << "NEW COUNT: " << count_line << std::endl;
-                found_discrepancy = true;
-            }
-	    else {
-		    // std::cout << "MATCH " << count_line << std::endl;
-	    }
-        }
 
         std::vector<std::string> new_object_lines;
 
@@ -127,29 +138,32 @@ void JEventProcessor_regressiontest::Process(const std::shared_ptr<const JEvent>
         }
 
         if (have_old_log_file) {
-            for (int i=0; i<old_item_ct; ++i) {
-                std::string old_object_line;
-                std::getline(old_log_file, old_object_line);
-		if ((size_t) i >= new_object_lines.size()) {
-                    std::cout << "MISMATCH: " << old_item_ct << " vs " << item_ct << std::endl;
-                    std::cout << "OLD OBJ: " << old_object_line << std::endl;
-                    std::cout << "NEW OBJ: missing" << std::endl;
-                    found_discrepancy = true;
-		}
-		else if (old_object_line != new_object_lines[i]) {
-                    found_discrepancy = true;
-                    std::cout << "MISMATCH" << std::endl;
-                    std::cout << "OLD OBJ: " << old_object_line << std::endl;
-                    std::cout << "NEW OBJ: " << new_object_lines[i] << std::endl;
+            const std::vector<std::string>& old_object_lines = old_event_log[fac_key];
+            if (item_ct != old_object_lines.size()) {
+                found_discrepancy = true;
+                event_discrepancies.insert(fac_key);
+                std::cout << "MISCOUNT: old=" << old_object_lines.size() << ", new=" << item_ct << std::endl;
+            }
+            else {
+                for (size_t i=0; i<item_ct; ++i) {
+                    if (old_object_lines[i] != new_object_lines[i]) {
+                        found_discrepancy = true;
+                        event_discrepancies.insert(fac_key);
+                        std::cout << "MISMATCH" << std::endl;
+                        std::cout << "OLD OBJ: " << old_object_lines[i] << std::endl;
+                        std::cout << "NEW OBJ: " << new_object_lines[i] << std::endl;
+                    }
                 }
-		else {
-                    // std::cout << "MATCH" << old_object_line << std::endl;
-		}
             }
         }
-        if (found_discrepancy) {
-            event->Inspect();
-        }
+        if (found_discrepancy) discrepancy_counts[fac_key] += 1;
+    } // for each factory
+    new_log_file << std::endl; // Include a blank line to indicate end-of-event
+
+    if (interactive) {
+        auto inspector = event->GetJInspector();
+        inspector->SetDiscrepancies(std::move(event_discrepancies));
+        inspector->Loop();
     }
 }
 
@@ -165,6 +179,10 @@ void JEventProcessor_regressiontest::EndRun()
 //-------------------------------
 void JEventProcessor_regressiontest::Finish()
 {
+    std::cout << "OVERALL DISCREPANCIES" << std::endl;
+    for (auto p : discrepancy_counts) {
+        std::cout << p.first << "\t" << p.second;
+    }
     new_log_file.close();
     if (have_old_log_file) {
         old_log_file.close();
@@ -185,15 +203,16 @@ std::vector<JFactory*> JEventProcessor_regressiontest::GetFactoriesTopologically
     return sorted_factories;
 }
 
-int JEventProcessor_regressiontest::ParseOldItemCount(std::string old_count_line) {
+std::pair<std::string, int> JEventProcessor_regressiontest::ParseFactorySummary(std::string line) {
 
-    std::istringstream iss(old_count_line);
+    std::istringstream iss(line);
+    std::string facname;
     std::string split;
-    std::getline(iss, split, '\t');
-    std::getline(iss, split, '\t');
-    std::getline(iss, split, '\t');
-    int result;
-    iss >> result;
-    return result;
+    std::getline(iss, split, '\t');  // Event number
+    std::getline(iss, facname, '\t'); // Factory key
+    std::getline(iss, split, '\t'); // Item Count
+    int count;
+    iss >> count;
+    return std::make_pair(facname, count);
 
 }
