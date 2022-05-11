@@ -649,56 +649,68 @@ void JInspector::Loop() {
         while (ss >> arg) {
             args.push_back(arg);
         }
-        if (token == "PrintEvent" || token == "pe") {
-            PrintEvent();
+        try {
+            if (token == "PrintEvent" || token == "pe") {
+                PrintEvent();
+            }
+            else if ((token == "PrintFactories" || token == "pf") && args.empty()) {
+                PrintFactories(0);
+            }
+            else if ((token == "PrintFactories" || token == "pf") && args.size() == 1) {
+                PrintFactories(std::stoi(args[0]));
+            }
+            else if ((token == "PrintFactoryDetails" || token == "pfd") && (args.size() == 1)) {
+                PrintFactoryDetails(args[0]);
+            }
+            else if ((token == "PrintObjects" || token == "po") && (args.size() == 1)) {
+                PrintObjects(args[0]);
+            }
+            else if ((token == "PrintObject" || token == "po") && (args.size() == 2)) {
+                PrintObject(args[0], std::stoi(args[1]));
+            }
+            else if ((token == "PrintFactoryParents" || token == "pfp") && (args.size() == 1)) {
+                PrintFactoryParents(args[0]);
+            }
+            else if ((token == "PrintObjectParents" || token == "pop") && (args.size() == 2)) {
+                PrintObjectParents(args[0], std::stoi(args[1]));
+            }
+            else if ((token == "PrintObjectAncestors" || token == "poa") && (args.size() == 2)) {
+                PrintObjectAncestors(args[0], std::stoi(args[1]));
+            }
+            else if (token == "ViewAsTable" || token == "vt") {
+                m_format = Format::Table;
+                m_out << "(Switching to table view mode)" << std::endl;
+            }
+            else if (token == "ViewAsJson" || token == "vj") {
+                m_format = Format::Json;
+                m_out << "(Switching to JSON view mode)" << std::endl;
+            }
+            else if (token == "Continue" || token == "c") {
+                stay_in_loop = false;
+            }
+            else if (token == "Exit" || token == "x") {
+                stay_in_loop = false;
+            }
+            else if (token == "Help" || token == "h") {
+                PrintHelp();
+            }
+            else if (token == "") {
+                // Do nothing
+            }
+            else {
+                m_out << "(Error: Unrecognized command, or wrong argument count)" << std::endl;
+                PrintHelp();
+            }
+
         }
-        else if ((token == "PrintFactories" || token == "pf") && args.empty()) {
-            PrintFactories(0);
+        catch (JException& ex) {
+            m_out << "(JException: Maybe you tried to print out objects that are not JObjects)" << std::endl;
         }
-        else if ((token == "PrintFactories" || token == "pf") && args.size() == 1) {
-            PrintFactories(std::stoi(args[0]));
+        catch (std::invalid_argument&) {
+            m_out << "(Parse error: Maybe an argument needs to be an int)" << std::endl;
         }
-        else if ((token == "PrintFactoryDetails" || token == "pfd") && (args.size() == 1)) {
-            PrintFactoryDetails(args[0]);
-        }
-        else if ((token == "PrintObjects" || token == "po") && (args.size() == 1)) {
-            PrintObjects(args[0]);
-        }
-        else if ((token == "PrintObject" || token == "po") && (args.size() == 2)) {
-            PrintObject(args[0], std::stoi(args[1]));
-        }
-        else if ((token == "PrintFactoryParents" || token == "pfp") && (args.size() == 1)) {
-            PrintFactoryParents(args[0]);
-        }
-        else if ((token == "PrintObjectParents" || token == "pop") && (args.size() == 2)) {
-            PrintObjectParents(args[0], std::stoi(args[1]));
-        }
-        else if ((token == "PrintObjectAncestors" || token == "poa") && (args.size() == 2)) {
-            PrintObjectAncestors(args[0], std::stoi(args[1]));
-        }
-        else if (token == "ViewAsTable" || token == "vt") {
-            m_format = Format::Table;
-            m_out << "(Switching to table view mode)" << std::endl;
-        }
-        else if (token == "ViewAsJson" || token == "vj") {
-            m_format = Format::Json;
-            m_out << "(Switching to JSON view mode)" << std::endl;
-        }
-        else if (token == "Continue" || token == "c") {
-            stay_in_loop = false;
-        }
-        else if (token == "Exit" || token == "x") {
-            stay_in_loop = false;
-        }
-        else if (token == "Help" || token == "h") {
-            PrintHelp();
-        }
-        else if (token == "") {
-            // Do nothing
-        }
-        else {
-            m_out << "(Error: Unrecognized command, or wrong argument count)" << std::endl;
-            PrintHelp();
+        catch (...) {
+            m_out << "(Unknown error)" << std::endl;
         }
     }
 }
