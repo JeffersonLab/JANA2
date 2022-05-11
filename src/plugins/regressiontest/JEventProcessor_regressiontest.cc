@@ -72,10 +72,11 @@ void JEventProcessor_regressiontest::Process(const std::shared_ptr<const JEvent>
     if (have_old_log_file) {
         // Read entire event from log and store
         std::string line = "throwaway";
-        while (!line.empty()) {
+        while (true) {
             // Empty line demarcates next event
             // Assume events are in the same order
             std::getline(old_log_file, line);
+            if (line.empty()) break;
             int item_count;
             std::string fac_key;
             auto pair = ParseFactorySummary(line);
@@ -223,6 +224,9 @@ std::pair<std::string, int> JEventProcessor_regressiontest::ParseFactorySummary(
     std::getline(iss, facname, '\t'); // Factory key
     int count;
     iss >> count;
+    if (iss.fail()) {
+        throw JException("Unable to parse factory summary");
+    }
     return std::make_pair(facname, count);
 
 }
