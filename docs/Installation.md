@@ -16,11 +16,10 @@ title: JANA: Multi-threaded HENP Event Reconstruction
 ### Building JANA
 
 First, set your `$JANA_HOME` environment variable. This is where the executables, libraries, headers, and plugins
-get installed. You will need to tell CMake to install to `$JANA_HOME` manually -- this is on purpose to avoid accidentally
-clobbering an existing JANA installation. Luckily, all you have to do is pass `-DCMAKE_INSTALL_PREFIX=$JANA_HOME`
-to CMake. Be aware that if you change $JANA_HOME, you'll need to rerun cmake, and sometimes you'll also need to invalidate your CMake cache. 
-Also be aware that although CMake usually defaults `CMAKE_INSTALL_PREFIX` to `/usr/local`, we have disabled this because 
-we rarely want this in practice, and we don't want the build system picking up outdated headers and libraries we installed to `/usr/local` by accident. 
+get installed. (It is also where we will clone the source). CMake will install to `$JANA_HOME` if it is set (it
+will install to `${CMAKE_BINARY_DIR}/install` if not). Be aware that although CMake usually defaults
+`CMAKE_INSTALL_PREFIX` to `/usr/local`, we have disabled this because we rarely want this in practice, and we
+don't want the build system picking up outdated headers and libraries we installed to `/usr/local` by accident.
 If you want to set `JANA_HOME=/usr/local`, you are free to do so, but you must do so deliberately.
 
 Next, set your build directory. This is where CMake's caches, logs, intermediate build artifacts, etc go. The convention
@@ -30,16 +29,18 @@ a `cmake-build-debug` directory which works just fine.
 Finally, you can cd into your build directory and build and install everything the usual CMake way.
 
 ~~~ bash
-git clone https://github.com/JeffersonLab/JANA2   # Get JANA
-export JANA_HOME=~/jana_home                      # Set install dir
-export PATH=$PATH:$JANA_HOME/bin                  # Put jana executable on path
+export JANA_VERSION=v2.0.5                    # Convenient to set this once for specific release
+export JANA_HOME=${PWD}/JANA${JANA_VERSION}   # Set full path to install dir
 
-mkdir build                                       # Set build dir
+git clone https://github.com/JeffersonLab/JANA2 --branch ${JANA_VERSION} ${JANA_HOME}  # Get JANA2
+
+mkdir build                                   # Set build dir
 cd build
-cmake ../JANA2 -DCMAKE_INSTALL_PREFIX=$JANA_HOME  # Generate makefiles
-make -j8 install                                  # Build (using 8 threads) and install
-jana -Pplugins=JTest                              # Run JTest plugin to verify successful install
+cmake3 ${JANA_HOME}  # Generate makefiles     # Generate makefiles
+make -j8 install                              # Build (using 8 threads) and install
 
+source ${JANA_HOME}/bin/jana-this.sh          # Set PATH (and other envars)
+jana -Pplugins=JTest                          # Run JTest plugin to verify successful install
 ~~~
 
 Note: If you want to use a compiler other than the default one on your system, it is not enough to modify your
