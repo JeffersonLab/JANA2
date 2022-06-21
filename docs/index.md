@@ -29,7 +29,7 @@ for actual use yet, but you are free to browse around to see how progress is goi
 [hosted on GitHub](https://github.com/JeffersonLab/JANA2)
 
 ```
-auto tracks = jevent->Get<DTrack>(tracks);
+auto tracks = jevent->Get<DTrack>();
 
 for(auto t : tracks){
   // ... do something with a track
