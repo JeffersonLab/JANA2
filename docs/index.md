@@ -24,8 +24,8 @@ options that allow for more complicated reconstruction as your project grows. Th
 run on a laptop for local code development, but to also be highly efficent when deploying to large computing
 sites like [NERSC](http://www.nersc.gov/){:target="_blank"}.
 
-JANA is currently undergoing a complete rewrite. The new version will be JANA 2. The code is not quite ready
-for actual use yet, but you are free to browse around to see how progress is going. The project is 
+JANA has undergone a large rewrite with the newer version dubbed JANA2. The code is now available for use
+and you are free to browse around. The project is 
 [hosted on GitHub](https://github.com/JeffersonLab/JANA2)
 
 ```
