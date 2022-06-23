@@ -370,7 +370,7 @@ endif()
 
 add_library({name}_plugin SHARED ${{{name}_PLUGIN_SOURCES}})
 
-target_include_directories({name}_plugin PUBLIC ${{JANA_INCLUDE_DIR}} {extra_includes})
+target_include_directories({name}_plugin PUBLIC  ${{CMAKE_SOURCE_DIR}} ${{JANA_INCLUDE_DIR}} {extra_includes})
 target_link_libraries({name}_plugin ${{JANA_LIBRARY}} {extra_libraries})
 set_target_properties({name}_plugin PROPERTIES PREFIX "" OUTPUT_NAME "{name}" SUFFIX ".so")
 
@@ -391,7 +391,7 @@ mini_plugin_cmakelists_txt = """
 
 add_library({name}_plugin SHARED {name}.cc)
 
-target_include_directories({name}_plugin PUBLIC ${{JANA_INCLUDE_DIR}} {extra_includes})
+target_include_directories({name}_plugin PUBLIC ${{CMAKE_SOURCE_DIR}} ${{JANA_INCLUDE_DIR}} {extra_includes})
 target_link_libraries({name}_plugin ${{JANA_LIB}} {extra_libraries})
 set_target_properties({name}_plugin PROPERTIES PREFIX "" OUTPUT_NAME "{name}" SUFFIX ".so")
 
@@ -684,8 +684,7 @@ void {processor_name}::Init() {{
     m_lock->acquire_write_lock();
     
     if( dest_file == nullptr ){{
-        /// TODO: Create dest_file or acquire it via either a JService or a JParameter
-        dest_file = gDirectory;  // default to current directory which may be memory resident
+        dest_file = new TFile("{processor_name}.root", "recreate");  /// TODO: Acquire dest_file via either a JService or a JParameter
     }}
     dest_dir = dest_file->mkdir("{dir_name}"); // Create a subdir inside dest_file for these results
     h1d_pt_reco = new TH1D("pt_reco", "reco pt", 100,0,10);
@@ -707,7 +706,10 @@ void {processor_name}::Process(const std::shared_ptr<const JEvent>& event) {{
 }}
 
 void {processor_name}::Finish() {{
-    // Close TFile (unless shared)
+    // TODO: If we did not create this file then we should not delete it
+    dest_file->Write();
+    delete dest_file;
+    dest_file = nullptr;
 }};
 
 """
@@ -791,7 +793,7 @@ public:
 
         /// Set up histograms
         m_lock->acquire_write_lock();
-        //dest_file = ... /// TODO: Acquire dest_file via either a JService or a JParameter
+        dest_file = new TFile("{name}.root", "recreate");  /// TODO: Acquire dest_file via either a JService or a JParameter
         dest_dir = dest_file->mkdir("{name}"); // Create a subdir inside dest_file for these results
         dest_file->cd();
         h1d_pt_reco = new TH1D("pt_reco", "reco pt", 100,0,10);
@@ -813,7 +815,10 @@ public:
     }}
 
     void Finish() override {{
-        // Close TFile (unless shared)
+        // TODO: If we did not create this file then we should not delete it
+        dest_file->Write();
+        delete dest_file;
+        dest_file = nullptr;
     }}
 }};
     
