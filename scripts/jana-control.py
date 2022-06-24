@@ -27,7 +27,6 @@ import tkinter.font as tkFont
 # import matplotlib.pyplot as plt
 # import numpy as np
 
-# TODO: Allow command line arguments to change host and port numbers
 # -- Globals
 DONE      = False
 PORT      = 11238
@@ -141,9 +140,20 @@ class MyWindow(ttk.Frame):
     #=========================
     # init_window
     def init_window(self):
-
+	 
+        # Find a font family for the banner
+        preferred_fonts = ['Comic Sans MS', 'URW Gothic', 'Courier']
+        available_fonts=list(tkFont.families())
+        self.bannerFont = None
+        for f in preferred_fonts:
+            for af in available_fonts:
+                if af.startswith( f ):
+                    self.bannerFont = tkFont.Font(family=af, size=36)
+                    break
+            if self.bannerFont : break
+        if self.bannerFont == None : self.bannerFont = tkFont.Font(family=preferred_fonts[-1], size=36)
+            
         self.labelsFont = tkFont.Font(family="Helvetica", size=16)
-        self.bannerFont = tkFont.Font(family="Comic Sans MS", size=36)
         self.labmap = {}
 
         self.master.title('JANA Status/Control GUI')
