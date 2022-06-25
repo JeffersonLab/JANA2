@@ -204,7 +204,7 @@ public:
 }};
 
 template <>
-double JEventSourceGeneratorT<RandomSource>::CheckOpenable(std::string);
+double JEventSourceGeneratorT<{name}>::CheckOpenable(std::string);
 
 #endif // _{name}_h_
 
