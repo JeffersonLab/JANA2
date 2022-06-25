@@ -389,13 +389,39 @@ install(FILES ${{my_pcms}} DESTINATION plugins)
 mini_plugin_cmakelists_txt = """
 {extra_find_packages}
 
-add_library({name}_plugin SHARED {name}.cc)
+# According to the internet, CMake authors discourage the use
+# of GLOB for identifying source files. IMHO, this is due to
+# the flawed use of cache files in CMake itself. Here, GLOB
+# is used as the default. What this means is you can add source
+# files and re-run cmake (after clearing the cache file) and
+# they will be found without needing to modify this file.
+# You also have the option of switching the following to "false"
+# and managing the source file list manually the way they recommend.
+if(true)
+  # Automatically determine source file list.
+  file(GLOB mysourcefiles *.cpp *.cc *.c  *.hpp *.hh *.h)
+  set( {name}_PLUGIN_SOURCES ${{mysourcefiles}} )    
+else()
+  # Manually manage source file list
+  set ({name}_PLUGIN_SOURCES
+        {name}.cc
+  )
+endif()
+
+add_library({name}_plugin SHARED ${{{name}_PLUGIN_SOURCES}})
 
 target_include_directories({name}_plugin PUBLIC ${{CMAKE_SOURCE_DIR}} ${{JANA_INCLUDE_DIR}} {extra_includes})
 target_link_libraries({name}_plugin ${{JANA_LIB}} {extra_libraries})
 set_target_properties({name}_plugin PROPERTIES PREFIX "" OUTPUT_NAME "{name}" SUFFIX ".so")
 
 install(TARGETS {name}_plugin DESTINATION plugins)
+
+file(GLOB my_headers "*.h*")
+install(FILES ${{my_headers}} DESTINATION include/{name})
+
+# For root dictionaries
+file(GLOB my_pcms "${{CMAKE_CURRENT_BINARY_DIR}}/*.pcm")
+install(FILES ${{my_pcms}} DESTINATION plugins)
 
 """
 
