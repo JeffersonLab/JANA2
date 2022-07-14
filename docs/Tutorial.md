@@ -29,7 +29,7 @@ The installation process is described [here](Installation.html). We can quickly 
 was successful by running a builtin benchmarking/scaling test:
 
 ```
-jana -Pplugins=JTest -b
+jana -Pplugins=JTest -b   # (cancel with Ctrl-C)
 ```
 
 We can understand this command as follows:
@@ -52,61 +52,44 @@ measuring the overall throughput. You can cancel processing at any time by press
 With JANA working, we can now create our own plugin. JANA provides a script which generates code skeletons 
 to help us get started. We shall generate a skeleton for a plugin named "QuickTutorial" as follows:
 ```
-cd ~
-jana-generate.py StandalonePlugin QuickTutorial
+jana-generate.py Plugin QuickTutorial
 ```
 
-This creates the following directory tree. Examine the files `QuickTutorial.cc`, which provides the plugin
- entry point, and `QuickTutorialProcessor.cc`, which is where the majority of the work happens. The generated
- files include lots of comments providing helpful hints on their use. 
+This creates the following directory tree. By default, a minimal skelton is created in a single file:
+`QuickTutorial.cc`. This provides a JEventProcessor class as well as the the plugin entry point. The
+generated files include lots of comments providing helpful hints on their use. 
 
 ```
 QuickTutorial/
 ├── CMakeLists.txt
-├── cmake
-│   └── FindJANA.cmake
-├── src
-│   ├── CMakeLists.txt
-│   ├── QuickTutorial.cc
-│   ├── QuickTutorialProcessor.cc
-│   └── QuickTutorialProcessor.h
-└── tests
-    ├── catch.hpp
-    ├── CMakeLists.txt
-    ├── IntegrationTests.cc
-    └── TestsMain.cc
+│├─ QuickTutorial.cc
 ```
+
+The `jana-generate.py Plugin ...` command provides some option flags as well that can be given at the 
+end of the command line. Run `jana-generate.py --help` to see what they are.
 
 ## Integrating into an existing project
 
-If we are working with an existing project such as eJANA or GlueX, we don't need the CMake
-project definition, CMake helper files, or tests boilerplate. All we need is the inner `src`
-directory, which we copy into its own leaf in the project tree:
+If you are working with an existing project such as eJANA or GlueX, then you don't need the CMake
+project. All you need are the source files (e.g. `QuickTutorial.cc`):
 ```
-cp QuickTutorial/src $PATH_TO_PROJECT_SOURCE/src/plugins/QuickTutorial
-```
-
-For convenience, `jana-generate.py` will generate the stripped-down plugin directly if we specify 
-`ProjectPlugin` instead. 
-
-```
-cd $PATH_TO_PROJECT_SOURCE/src/plugins
-jana-generate.py ProjectPlugin QuickTutorial
+cp QuickTutorial $PATH_TO_PROJECT_SOURCE/src/plugins/QuickTutorial
 ```
 
-Either way, we'll have to manually tell the parent CMakeLists.txt to 
+Be aware that you will have to manually tell the parent CMakeLists.txt to 
 `add_subdirectory(QuickTutorial)`.
 
-The rest of the tutorial assumes that we are using a standalone plugin instead.
+The rest of the tutorial assumes that we are using a standalone plugin.
 
 
 ## Building the plugin
 We build and run the plugin with the following:
 
 ```
+cd QuickTutorial
 mkdir build
 cd build
-cmake ..
+cmake3 ..
 make install
 jana -Pplugins=QuickTutorial
 ```
@@ -121,37 +104,46 @@ assume that we don't have access to an event source, so we'll create one ourselv
 source will emit an infinite stream of random data, so we'll name it RandomSource.
 
 ```
-cd src
+cd ..
 jana-generate.py JEventSource RandomSource
 ```
 
 This creates two files, `RandomSource.cc` and `RandomSource.h`, in the current directory. We'll
 need to add them to `CMakeLists.txt` ourselves. Note that we retain complete control over our directory 
-structure. In this tutorial, for simplicity, we'll keep all .h and .cc files directly under `src`, except 
-for tests, which belong under `tests`. For larger projects, `jana-generate project MyProjectName` creates
+structure. In this tutorial, for simplicity, we'll keep all .h and .cc files in the topmost directory.
+For larger projects, `jana-generate project MyProjectName` creates
 a much more complex code skeleton. 
 
 To use our new RandomSource as-is, we need to do three things:
-* Add `RandomSource.cc` and `RandomSource.h` to the `QuickTutorial_PLUGIN_SOURCES` list at the top of `src/CMakeLists.txt`
-* Register our `RandomSource` with JANA inside `QuickTutorial.cc` like this:
+* Add `RandomSource.cc` and `RandomSource.h` to the `add_library(...)` line in `CMakeLists.txt`.
+* Register our `RandomSource` with JANA inside `QuickTutorial.cc`
+* Rebuild the cmake project, rebuild the plugin target, and install.
+
+The modified line in the CMakeLists.txt line should look like:
+```
+add_library(QuickTutorial_plugin SHARED QuickTutorial.cc RandomSource.cc RandomSource.h)
+```
+
+The modified `QuickTuorial.cc` file needs to have the new `RandomSource.h` header included so
+it can instantiatie an object and pass it over to the JApplication in the `InitPlugin()` routine.
+The bottom of the file should look like this: 
 
 ```
-#include <JANA/JApplication.h>
-
-#include "QuickTutorialProcessor.h"
-#include "RandomSource.h"                         // <- ADD THIS LINE
+#include <RandomSource.h>                             // <- ADD THIS LINE (probably better to put this at top of file)
 
 extern "C" {
-void InitPlugin(JApplication* app) {
+    void InitPlugin(JApplication *app) {
+        InitJANAPlugin(app);
+        app->Add(new QuickTutorialProcessor);
+        app->Add(new RandomSource("random", app));    // <- ADD THIS LINE
+    }
+}```
 
-    InitJANAPlugin(app);
-
-    app->Add(new QuickTutorialProcessor);
-    app->Add(new RandomSource("random", app));    // <- ADD THIS LINE
-}
-}
+And finally, rebuild ...
 ```
-* Rebuild the cmake project, rebuild the plugin target, and install.
+cd build
+make install
+```
 
 When we run the QuickTutorial plugin now, we observe that `QuickTutorialProcessor::Process`
 is being called on every event. Note that `Process` is 'seeing' events slightly out-of-order. This is 
@@ -162,7 +154,7 @@ we organize the work we do inside there. This will be discussed in depth later.
 
 Because neither the source nor the processor are doing any 'real work', the events are being processed 
 very quickly. To throttle the rate events get emitted, to whatever frequency we like, we can add a delay 
-inside `GetEvent`. Perhaps we'd like to set the emit frequency at runtime. First, we declare a member variable on 
+inside `GetEvent`. Perhaps we'd even like to set the emit frequency at runtime. First, we declare a member variable on 
 `RandomSource`, initializing it to our preferred default value:
 
 ```
@@ -188,10 +180,10 @@ plugin. This helps prevent namespace collisions.
 
 ```
 void RandomSource::Open() {
-    JApplication* app = GetApplication();
-    app->SetDefaultParameter("random_source:max_emit_freq_hz",            // ADD ME
-                             m_max_emit_freq_hz,                          // ADD ME
-                             "Maximum event rate [Hz] for RandomSource"); // ADD ME
+    JApplication* app = GetApplication(); 								        // <- ADD THIS LINE
+    app->SetDefaultParameter("random_source:max_emit_freq_hz",            // <- ADD THIS LINE
+                             m_max_emit_freq_hz,                          // <- ADD THIS LINE
+                             "Maximum event rate [Hz] for RandomSource"); // <- ADD THIS LINE
 }
 ```
 
@@ -206,9 +198,9 @@ void RandomSource::GetEvent(std::shared_ptr <JEvent> event) {
     event->SetEventNumber(current_event_number++);
     event->SetRunNumber(22);
 
-    /// Slow down event source                                           // ADD ME
-    auto delay_ms = std::chrono::milliseconds(1000/m_max_emit_freq_hz);  // ADD ME
-    std::this_thread::sleep_for(delay_ms);                               // ADD ME
+    /// Slow down event source                                           // <- ADD THIS LINE
+    auto delay_ms = std::chrono::milliseconds(1000/m_max_emit_freq_hz);  // <- ADD THIS LINE
+    std::this_thread::sleep_for(delay_ms);                               // <- ADD THIS LINE
 }
 ```
 

@@ -91,7 +91,7 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
         JEventSource* GetJEventSource() const {return mEventSource; }
         JCallGraphRecorder* GetJCallGraphRecorder() const {return &mCallGraph;}
         JInspector* GetJInspector() const {return &mInspector;}
-        void Inspect() const { mInspector.Loop(); }
+        void Inspect() const { mInspector.Loop();} // TODO: Force this not to be inlined AND used so it is defined in libJANA.a
         bool GetSequential() const {return mIsBarrierEvent;}
         friend class JEventPool;
 

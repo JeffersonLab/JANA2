@@ -630,6 +630,8 @@ void JInspector::PrintObjectAncestors(std::string factory_idx, int object_idx) {
 
 void JInspector::Loop() {
     bool stay_in_loop = true;
+    m_event->GetJApplication()->SetTicker( false ); // TODO: Get the current ticker state first (requires JApplication be modified)
+    m_event->GetJApplication()->SetTimeoutEnabled( false ); // TODO: Get current state and save
     m_out << std::endl;
     m_out << "--------------------------------------------------------------------------------------" << std::endl;
     m_out << "Welcome to JANA's interactive inspector! Type `Help` or `h` to see available commands." << std::endl;
@@ -637,7 +639,7 @@ void JInspector::Loop() {
     PrintEvent();
     while (stay_in_loop) {
         std::string user_input;
-        m_out << std::endl << "JANA: ";
+        m_out << std::endl << "JANA: "; m_out.flush();
         // Obtain a single line
         std::getline(m_in, user_input);
         // Split into tokens
@@ -713,4 +715,7 @@ void JInspector::Loop() {
             m_out << "(Unknown error)" << std::endl;
         }
     }
+
+    m_event->GetJApplication()->SetTicker( true ); // TODO: Reset to what it was upon entry
+    m_event->GetJApplication()->SetTimeoutEnabled( true ); // TODO: Reset to what it was upon entry
 }

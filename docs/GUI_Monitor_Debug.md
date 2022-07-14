@@ -31,14 +31,22 @@ running on either the local node or a remote node. For this to work, the followi
    This should generally be added to the *end* of the plugin list
    like this:
    
-      ```jana -Pplugins=JTest,janacontrol```
+```
+jana -Pplugins=JTest,janacontrol
+```
+
+To start the JANA control GUI, just run the `jana-control.py` program:
+
+```
+jana-control.py
+```
 
 By default, it will try to attach to port 11238 on the localhost. It
 does not matter whether the JANA process is already running or not.
 It will automatically connect when it starts and reconnect if the process
 is restarted.
 
-The following command line options are available:
+The following command line options are available for `jana-control.py`:
 
 <pre>
 -h, --help     Print this Usage statement and exit
@@ -48,9 +56,23 @@ The following command line options are available:
 
 n.b. To set the port used by the remote JANA process set the
 jana:zmq_port configuration parameter when that process is started.
+For example:
+
+```
+jana -Pplugins=JTest,janacontrol -Pjana:zmq_port=12345
+```
 
 Debugger
 --------------
+
+The `Debugger` GUI here is really just a browser. It does not allow 
+for true control flow debugging. For that, please look at the command line
+debugger features of JANA2. This is intended to give a way to step
+through events and examine the exposed data members of the objects
+created in the event.
+
+To open the Debugger window, just press the button in the lower
+right hand coner of the control window.
 
 ![](images/JANA_Debugger_GUI.png)
 
@@ -69,7 +91,9 @@ events can be examined and stepped through. To stall processing on the
 very first event, the JANA process should have the jana:debug_mode
 config. parameter set to a non-zero value when it is started. e.g.
 
-``jana -Pplugins=myplugin1,myplugin2,janacontrol -Pjana:debug_mode=1 file1.dat``
+```
+jana -Pplugins=JTest,janacontrol -Pjana:debug_mode=1
+```
 
 Once an event is loaded, click on a factory to display a list of 
 objects it created for this event (displayed as the object's hexadecimal

@@ -204,7 +204,7 @@ public:
 }};
 
 template <>
-double JEventSourceGeneratorT<RandomSource>::CheckOpenable(std::string);
+double JEventSourceGeneratorT<{name}>::CheckOpenable(std::string);
 
 #endif // _{name}_h_
 
@@ -370,7 +370,7 @@ endif()
 
 add_library({name}_plugin SHARED ${{{name}_PLUGIN_SOURCES}})
 
-target_include_directories({name}_plugin PUBLIC ${{JANA_INCLUDE_DIR}} {extra_includes})
+target_include_directories({name}_plugin PUBLIC  ${{CMAKE_SOURCE_DIR}} ${{JANA_INCLUDE_DIR}} {extra_includes})
 target_link_libraries({name}_plugin ${{JANA_LIBRARY}} {extra_libraries})
 set_target_properties({name}_plugin PROPERTIES PREFIX "" OUTPUT_NAME "{name}" SUFFIX ".so")
 
@@ -389,13 +389,39 @@ install(FILES ${{my_pcms}} DESTINATION plugins)
 mini_plugin_cmakelists_txt = """
 {extra_find_packages}
 
-add_library({name}_plugin SHARED {name}.cc)
+# According to the internet, CMake authors discourage the use
+# of GLOB for identifying source files. IMHO, this is due to
+# the flawed use of cache files in CMake itself. Here, GLOB
+# is used as the default. What this means is you can add source
+# files and re-run cmake (after clearing the cache file) and
+# they will be found without needing to modify this file.
+# You also have the option of switching the following to "false"
+# and managing the source file list manually the way they recommend.
+if(true)
+  # Automatically determine source file list.
+  file(GLOB mysourcefiles *.cpp *.cc *.c  *.hpp *.hh *.h)
+  set( {name}_PLUGIN_SOURCES ${{mysourcefiles}} )    
+else()
+  # Manually manage source file list
+  set ({name}_PLUGIN_SOURCES
+        {name}.cc
+  )
+endif()
 
-target_include_directories({name}_plugin PUBLIC ${{JANA_INCLUDE_DIR}} {extra_includes})
+add_library({name}_plugin SHARED ${{{name}_PLUGIN_SOURCES}})
+
+target_include_directories({name}_plugin PUBLIC ${{CMAKE_SOURCE_DIR}} ${{JANA_INCLUDE_DIR}} {extra_includes})
 target_link_libraries({name}_plugin ${{JANA_LIB}} {extra_libraries})
 set_target_properties({name}_plugin PROPERTIES PREFIX "" OUTPUT_NAME "{name}" SUFFIX ".so")
 
 install(TARGETS {name}_plugin DESTINATION plugins)
+
+file(GLOB my_headers "*.h*")
+install(FILES ${{my_headers}} DESTINATION include/{name})
+
+# For root dictionaries
+file(GLOB my_pcms "${{CMAKE_CURRENT_BINARY_DIR}}/*.pcm")
+install(FILES ${{my_pcms}} DESTINATION plugins)
 
 """
 
@@ -684,8 +710,7 @@ void {processor_name}::Init() {{
     m_lock->acquire_write_lock();
     
     if( dest_file == nullptr ){{
-        /// TODO: Create dest_file or acquire it via either a JService or a JParameter
-        dest_file = gDirectory;  // default to current directory which may be memory resident
+        dest_file = new TFile("{processor_name}.root", "recreate");  /// TODO: Acquire dest_file via either a JService or a JParameter
     }}
     dest_dir = dest_file->mkdir("{dir_name}"); // Create a subdir inside dest_file for these results
     h1d_pt_reco = new TH1D("pt_reco", "reco pt", 100,0,10);
@@ -707,7 +732,10 @@ void {processor_name}::Process(const std::shared_ptr<const JEvent>& event) {{
 }}
 
 void {processor_name}::Finish() {{
-    // Close TFile (unless shared)
+    // TODO: If we did not create this file then we should not delete it
+    dest_file->Write();
+    delete dest_file;
+    dest_file = nullptr;
 }};
 
 """
@@ -791,7 +819,7 @@ public:
 
         /// Set up histograms
         m_lock->acquire_write_lock();
-        //dest_file = ... /// TODO: Acquire dest_file via either a JService or a JParameter
+        dest_file = new TFile("{name}.root", "recreate");  /// TODO: Acquire dest_file via either a JService or a JParameter
         dest_dir = dest_file->mkdir("{name}"); // Create a subdir inside dest_file for these results
         dest_file->cd();
         h1d_pt_reco = new TH1D("pt_reco", "reco pt", 100,0,10);
@@ -813,7 +841,10 @@ public:
     }}
 
     void Finish() override {{
-        // Close TFile (unless shared)
+        // TODO: If we did not create this file then we should not delete it
+        dest_file->Write();
+        delete dest_file;
+        dest_file = nullptr;
     }}
 }};
     

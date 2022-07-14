@@ -12,7 +12,7 @@ check it out and give feedback to help us improve it.
 Just to whet your appetite a little, the code snippet below is the most common signature of JANA. A large fraction of end users won't really need to know much more than this.
 
 ```
-auto tracks = jevent->Get<DTrack>(tracks);
+auto tracks = jevent->Get<DTrack>();
 
 for(auto t : tracks){
   // ... do something with a track
