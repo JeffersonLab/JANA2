@@ -32,6 +32,8 @@ private:
     std::ostream& m_out = std::cout;
     std::istream& m_in = std::cin;
     std::set<std::string> m_discrepancies;
+    bool m_enable_timeout_on_exit = false;
+    bool m_enable_ticker_on_exit = false;
 
 public:
     explicit JInspector(const JEvent* event);
