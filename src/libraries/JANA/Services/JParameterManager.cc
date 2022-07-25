@@ -111,6 +111,17 @@ void JParameterManager::PrintParameters(bool all) {
     LOG << "Configuration Parameters\n"  << ss.str() << LOG_END;
 }
 
+/// @brief Access entire map of parameters
+///
+/// \return The parameter map
+///
+/// @details Use this to do things like writing all parameters out to a non-standard format.
+/// This creates a copy of the map. Any modifications you make to the map itself won't propagate
+/// back to the JParameterManager. However, any modifications you make to the enclosed JParameters
+/// will. Prefer using SetParameter, SetDefaultParameter, FindParameter, or FilterParameters instead.
+std::map<std::string, JParameter*> JParameterManager::GetAllParameters() {
+    return m_parameters;
+}
 
 /// @brief Load parameters from a configuration file
 ///

@@ -62,6 +62,8 @@ public:
 
     void PrintParameters(bool all = false);
 
+    std::map<std::string, JParameter*> GetAllParameters();
+
     template<typename T>
     JParameter* GetParameter(std::string name, T& val);
 
