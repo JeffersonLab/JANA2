@@ -269,6 +269,10 @@ void JApplication::SetTimeoutEnabled(bool enabled) {
     m_timeout_on = enabled;
 }
 
+bool JApplication::IsTimeoutEnabled() {
+    return m_timeout_on;
+}
+
 void JApplication::PrintStatus() {
     if (m_extended_report) {
         m_processing_controller->print_report();
