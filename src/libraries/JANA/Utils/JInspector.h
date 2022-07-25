@@ -66,7 +66,7 @@ private:
 };
 
 template <>
-inline std::string JParameterManager::stringify(JInspector::Format value) {
+inline std::string JParameterManager::stringify(const JInspector::Format& value) {
     switch (value) {
         case JInspector::Format::Table: return "table";
         case JInspector::Format::Json: return "json";

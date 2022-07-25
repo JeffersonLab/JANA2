@@ -109,6 +109,71 @@ TEST_CASE("JParameterManagerBoolTests") {
     }
 }
 
+TEST_CASE("JParameterManager_VectorParams") {
+    JParameterManager jpm;
+
+    SECTION("Reading a vector of strings") {
+        jpm.SetParameter("test", "simple,whitespace in middle, also with whitespace padding ");
+        std::vector<std::string> vals;
+        jpm.GetParameter<std::vector<std::string>>("test", vals);
+
+        REQUIRE(vals[0] == "simple");
+        REQUIRE(vals[1] == "whitespace in middle");
+        REQUIRE(vals[2] == " also with whitespace padding ");
+    }
+    SECTION("Writing a vector of strings") {
+        std::vector<std::string> inputs;
+        inputs.emplace_back("first");
+        inputs.emplace_back("second one");
+        inputs.emplace_back(" third one ");
+
+        jpm.SetDefaultParameter("test", inputs);
+        std::vector<std::string> outputs;
+        auto param = jpm.GetParameter("test", outputs);
+        REQUIRE(param->GetValue() == "first,second one, third one ");
+    }
+    SECTION("Reading a vector of ints") {
+        jpm.SetParameter("test", "1,2, 3 ");
+        std::vector<int32_t> vals;
+        jpm.GetParameter("test", vals);
+
+        REQUIRE(vals[0] == 1);
+        REQUIRE(vals[1] == 2);
+        REQUIRE(vals[2] == 3);
+    }
+    SECTION("Writing a vector of ints") {
+        std::vector<int32_t> inputs;
+        inputs.emplace_back(22);
+        inputs.emplace_back(49);
+        inputs.emplace_back(42);
+
+        jpm.SetDefaultParameter("test", inputs);
+        std::vector<std::string> outputs;
+        auto param = jpm.GetParameter("test", outputs);
+        REQUIRE(param->GetValue() == "22,49,42");
+    }
+    SECTION("Reading a vector of floats") {
+        jpm.SetParameter("test", "1,2,3");
+        std::vector<float> vals;
+        jpm.GetParameter("test", vals);
+
+        REQUIRE(vals[0] == 1.0f);
+        REQUIRE(vals[1] == 2.0f);
+        REQUIRE(vals[2] == 3.0f);
+    }
+    SECTION("Writing a vector of floats") {
+        std::vector<float> inputs;
+        inputs.emplace_back(22.0);
+        inputs.emplace_back(49.2);
+        inputs.emplace_back(42.0);
+
+        jpm.SetDefaultParameter("test", inputs);
+        std::vector<float> outputs;
+        auto param = jpm.GetParameter("test", outputs);
+        REQUIRE(param->GetValue() == "22,49.2,42");
+    }
+
+}
 
 
 

@@ -88,7 +88,13 @@ protected:
     T parse(const std::string& value);
 
     template<typename T>
-    std::string stringify(T value);
+    std::string stringify(const T& value);
+
+    template<typename T>
+    std::vector<T> parse_vector(const std::string& value);
+
+    template<typename T>
+    std::string stringify_vector(const std::vector<T>& values);
 
     std::string to_lower(const std::string& name);
 
@@ -259,29 +265,102 @@ inline std::vector<std::string> JParameterManager::parse(const std::string& valu
     return result;
 }
 
+template <typename T>
+inline std::vector<T> JParameterManager::parse_vector(const std::string &value) {
+    std::stringstream ss(value);
+    std::vector<T> result;
+    std::string s;
+    while (getline(ss, s, ',')) {
+        std::stringstream sss(s);
+        T t;
+        sss >> t;
+        result.push_back(t);
+    }
+    return result;
+}
+
+template <>
+inline std::vector<int32_t> JParameterManager::parse(const std::string& value) {
+    return parse_vector<int32_t>(value);
+}
+template <>
+inline std::vector<int64_t> JParameterManager::parse(const std::string& value) {
+    return parse_vector<int64_t>(value);
+}
+template <>
+inline std::vector<uint32_t> JParameterManager::parse(const std::string& value) {
+    return parse_vector<uint32_t>(value);
+}
+template <>
+inline std::vector<uint64_t> JParameterManager::parse(const std::string& value) {
+    return parse_vector<uint64_t>(value);
+}
+template <>
+inline std::vector<float> JParameterManager::parse(const std::string& value) {
+    return parse_vector<float>(value);
+}
+template <>
+inline std::vector<double> JParameterManager::parse(const std::string& value) {
+    return parse_vector<double>(value);
+}
+
 /// @brief Logic for stringifying different types in a generic way
 template <typename T>
-inline std::string JParameterManager::stringify(T value) {
+inline std::string JParameterManager::stringify(const T& value) {
     std::stringstream ss;
     ss << value;
     return ss.str();
 }
 
-/// Specialization for std::vector<std::string>
-template<>
-inline std::string JParameterManager::stringify(std::vector<std::string> value) {
-
+template <typename T>
+inline std::string JParameterManager::stringify_vector(const std::vector<T> &values) {
     std::stringstream ss;
-    size_t len = value.size();
+    size_t len = values.size();
     for (size_t i = 0; i+1 < len; ++i) {
-        ss << value[i];
+        ss << values[i];
         ss << ",";
     }
     if (len != 0) {
-        ss << value[len-1];
+        ss << values[len-1];
     }
     return ss.str();
 }
 
+/// Specializations of stringify
+
+template<>
+inline std::string JParameterManager::stringify(const std::vector<std::string>& values) {
+    return stringify_vector(values);
+}
+
+template<>
+inline std::string JParameterManager::stringify(const std::vector<int32_t>& values) {
+    return stringify_vector(values);
+}
+
+template<>
+inline std::string JParameterManager::stringify(const std::vector<int64_t>& values) {
+    return stringify_vector(values);
+}
+
+template<>
+inline std::string JParameterManager::stringify(const std::vector<uint32_t>& values) {
+    return stringify_vector(values);
+}
+
+template<>
+inline std::string JParameterManager::stringify(const std::vector<uint64_t>& values) {
+    return stringify_vector(values);
+}
+
+template<>
+inline std::string JParameterManager::stringify(const std::vector<float>& values) {
+    return stringify_vector(values);
+}
+
+template<>
+inline std::string JParameterManager::stringify(const std::vector<double>& values) {
+    return stringify_vector(values);
+}
 #endif // _JParameterManager_h_
 
