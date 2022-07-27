@@ -107,12 +107,16 @@ TEST_CASE("SchedulerRoundRobinBehaviorTests") {
     auto subtract_one = new MapArrow<double,double>("subtract_one", p2, q2, q3);
     auto sum_everything = new SinkArrow<double>("sum_everything", sink, q3);
 
-    topology.sources.push_back(emit_rand_ints);
+    emit_rand_ints->attach_listener(multiply_by_two);
+    multiply_by_two->attach_listener(subtract_one);
+    subtract_one->attach_listener(sum_everything);
 
+    topology.sources.push_back(emit_rand_ints);
     topology.arrows.push_back(emit_rand_ints);
     topology.arrows.push_back(multiply_by_two);
     topology.arrows.push_back(subtract_one);
     topology.arrows.push_back(sum_everything);
+    topology.sinks.push_back(sum_everything);
 
     emit_rand_ints->set_chunksize(1);
     topology.run();
@@ -135,6 +139,7 @@ TEST_CASE("SchedulerRoundRobinBehaviorTests") {
             assignment = scheduler.next_assignment(0, assignment, last_result);
 
             // The assignments go round-robin
+            std::cout << "Assignment is " << assignment->get_name() << std::endl;
             REQUIRE(assignment != nullptr);
             REQUIRE(assignment->get_name() == ordering[i % 4]);
         }
@@ -180,6 +185,7 @@ TEST_CASE("SchedulerRoundRobinBehaviorTests") {
         auto sum_everything_arrow = scheduler.next_assignment(3, nullptr, JArrowMetrics::Status::ComeBackLater);
 
         // Last assignment returned sequential arrow "sum_everything"
+        REQUIRE(sum_everything_arrow != nullptr);
         REQUIRE(sum_everything_arrow->get_name() == "sum_everything");
 
         std::map<std::string, int> assignment_counts;
