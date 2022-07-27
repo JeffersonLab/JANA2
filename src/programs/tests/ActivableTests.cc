@@ -13,8 +13,7 @@ JArrowMetrics::Status steppe(JArrow* arrow) {
 	arrow->execute(metrics, 0);
 	auto status = metrics.get_last_status();
 	if (status == JArrowMetrics::Status::Finished) {
-		arrow->set_active(false);
-		arrow->notify_downstream(false);
+		arrow->finish();
 	}
 	return status;
 }
@@ -53,17 +52,14 @@ TEST_CASE("ActivableActivationTests") {
 
     SECTION("At first, everything is deactivated and all queues are empty") {
 
-		REQUIRE(q1->is_active() == false);
 		REQUIRE(q1->size() == 0);
-		REQUIRE(q2->is_active() == false);
 		REQUIRE(q2->size() == 0);
-		REQUIRE(q3->is_active() == false);
 		REQUIRE(q3->size() == 0);
 
-		REQUIRE(emit_rand_ints->is_active() == false);
-		REQUIRE(multiply_by_two->is_active() == false);
-		REQUIRE(subtract_one->is_active() == false);
-		REQUIRE(sum_everything->is_active() == false);
+		REQUIRE(emit_rand_ints->get_status() == JActivable::Status::Stopped);
+		REQUIRE(multiply_by_two->get_status() == JActivable::Status::Stopped);
+		REQUIRE(subtract_one->get_status() == JActivable::Status::Stopped);
+		REQUIRE(sum_everything->get_status() == JActivable::Status::Stopped);
 
 		REQUIRE(emit_rand_ints->get_pending() == 0);
 		REQUIRE(multiply_by_two->get_pending() == 0);
@@ -73,17 +69,17 @@ TEST_CASE("ActivableActivationTests") {
 
     SECTION("As a message propagates, arrows and queues downstream automatically activate") {
 
-		REQUIRE(emit_rand_ints->is_active() == false);
-		REQUIRE(multiply_by_two->is_active() == false);
-		REQUIRE(subtract_one->is_active() == false);
-		REQUIRE(sum_everything->is_active() == false);
+		REQUIRE(emit_rand_ints->get_status() == JActivable::Status::Stopped);
+		REQUIRE(multiply_by_two->get_status() == JActivable::Status::Stopped);
+		REQUIRE(subtract_one->get_status() == JActivable::Status::Stopped);
+		REQUIRE(sum_everything->get_status() == JActivable::Status::Stopped);
 
-		topology.set_active(true);
+		topology.run();
 
-		REQUIRE(emit_rand_ints->is_active() == true);
-		REQUIRE(multiply_by_two->is_active() == true);
-		REQUIRE(subtract_one->is_active() == true);
-		REQUIRE(sum_everything->is_active() == true);
+		REQUIRE(emit_rand_ints->get_status() == JActivable::Status::Running);
+		REQUIRE(multiply_by_two->get_status() == JActivable::Status::Running);
+		REQUIRE(subtract_one->get_status() == JActivable::Status::Running);
+		REQUIRE(sum_everything->get_status() == JActivable::Status::Running);
     }
 
 } // TEST_CASE
@@ -120,24 +116,24 @@ TEST_CASE("ActivableDeactivationTests") {
     topology.m_logger = logger;
     source.logger = logger;
 
-	REQUIRE(emit_rand_ints->is_active() == false);
-	REQUIRE(multiply_by_two->is_active() == false);
-	REQUIRE(subtract_one->is_active() == false);
-	REQUIRE(sum_everything->is_active() == false);
+	REQUIRE(emit_rand_ints->get_status() == JActivable::Status::Stopped);
+	REQUIRE(multiply_by_two->get_status() == JActivable::Status::Stopped);
+	REQUIRE(subtract_one->get_status() == JActivable::Status::Stopped);
+	REQUIRE(sum_everything->get_status() == JActivable::Status::Stopped);
 
-	topology.set_active(true);
+	topology.run();
 
-	REQUIRE(emit_rand_ints->is_active() == true);
-	REQUIRE(multiply_by_two->is_active() == true);
-	REQUIRE(subtract_one->is_active() == true);
-	REQUIRE(sum_everything->is_active() == true);
+	REQUIRE(emit_rand_ints->get_status() == JActivable::Status::Running);
+	REQUIRE(multiply_by_two->get_status() == JActivable::Status::Running);
+	REQUIRE(subtract_one->get_status() == JActivable::Status::Running);
+	REQUIRE(sum_everything->get_status() == JActivable::Status::Running);
 
     steppe(emit_rand_ints);
 
-	REQUIRE(emit_rand_ints->is_active() == false);
-	REQUIRE(multiply_by_two->is_active() == true);
-	REQUIRE(subtract_one->is_active() == true);
-	REQUIRE(sum_everything->is_active() == true);
+	REQUIRE(emit_rand_ints->get_status() == JActivable::Status::Stopped);
+	REQUIRE(multiply_by_two->get_status() == JActivable::Status::Running);
+	REQUIRE(subtract_one->get_status() == JActivable::Status::Running);
+	REQUIRE(sum_everything->get_status() == JActivable::Status::Running);
 
 } // TEST_CASE
 

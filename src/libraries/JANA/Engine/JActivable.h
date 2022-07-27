@@ -8,70 +8,75 @@
 
 #include <vector>
 #include <atomic>
+#include <cassert>
+#include <JANA/JException.h>
 
 /// Activable provides a way of propagating information about whether a particular
 /// item in the topology is active or not using notifications. It is an instance of
 /// the Observer pattern. It takes advantage of the property that the information always
 /// flows downstream.
 
-/// Queues and arrows together form a bipartite graph. (Queue vertices only have edges
-/// to arrow vertices, and vice versa.) Activable acts like a common vertex type.
 class JActivable {
 public:
-    enum class Status {Unopened, Inactive, Running, Draining, Drained, Finished, Closed};
+    enum class Status {Unopened, Running, Stopped, Finished};
 
 private:
-    std::vector<JActivable *> m_upstream;
-    std::vector<JActivable *> m_downstream;
-
-protected:
+    std::vector<JActivable *> m_listeners;
+    std::atomic<int> m_running_upstreams {0};
     std::atomic<Status> m_status {Status::Unopened};
 
 public:
-    virtual bool is_active() {
-        return m_status == Status::Running || m_status == Status::Draining || m_status == Status::Drained;
+    Status get_status() {
+        return m_status;
     }
 
-    virtual void set_active(bool is_active) {
-        if (is_active) {
-            m_status = Status::Running;
-        }
-        else {
-            //assert(m_status == Status::Running || m_status == Status::Draining || m_status == Status::Drained);
-            m_status = Status::Inactive;
-        }
+    int get_running_upstreams() {
+        return m_running_upstreams;
     }
 
-    void update_activeness(bool is_active) {
-        if (is_active) {
-            set_active(true);
-            notify_downstream(true);
-            // propagate this immediately
+    void run() {
+        assert(m_status == Status::Unopened || m_status == Status::Stopped || m_status == Status::Running);
+        Status old_status = m_status;
+        m_status = Status::Running;
+
+        for (auto listener: m_listeners) {
+            listener->m_running_upstreams++;
+            listener->run();  // Activating something recursively activates everything downstream.
         }
-        else {
-            bool any_active = false;
-            for (auto activable : m_upstream) {
-                any_active |= activable->is_active();
+        on_status_change(old_status, Status::Running);
+    }
+
+    void stop() {
+        assert(m_status == Status::Running);
+        Status old_status = m_status;
+        m_status = Status::Stopped;
+        for (auto listener: m_listeners) {
+            listener->m_running_upstreams--;
+            // listener->stop();
+            // This is not a sufficient condition for stopping downstream listeners.
+            // What we need is zero running upstreams AND zero messages in queue AND zero threads currently processing
+            // Correspondingly, the scheduler or worker needs to be the one to call stop() when this condition is reached.
+        }
+        on_status_change(old_status, Status::Stopped);
+    }
+
+    void finish() {
+        assert(m_status == Status::Running || m_status == Status::Stopped);
+        Status old_status = m_status;
+        m_status = Status::Finished;
+
+        if (old_status == Status::Running) {
+            for (auto listener: m_listeners) {
+                listener->m_running_upstreams--;
             }
-            if (!any_active) {
-                set_active(false);
-                // defer propagating
-            }
         }
+        on_status_change(old_status, Status::Finished);
     }
 
-    void notify_downstream(bool is_active) {
-        for (auto activable : m_downstream) {
-            activable->update_activeness(is_active);
-        }
-    }
+    virtual void on_status_change(Status old_status, Status new_status) {};
 
-    void attach_upstream(JActivable* activable) {
-        m_upstream.push_back(activable);
-    };
-
-    void attach_downstream(JActivable* activable) {
-        m_downstream.push_back(activable);
+    void attach_listener(JActivable* listener) {
+        m_listeners.push_back(listener);
     };
 
 };

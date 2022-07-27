@@ -20,17 +20,12 @@ JArrow* JScheduler::next_assignment(uint32_t worker_id, JArrow* assignment, JArr
     if (assignment != nullptr) {
         assignment->update_thread_count(-1);
 
-        if (assignment->is_upstream_finished() && assignment->get_thread_count() == 0) {
+        if (assignment->get_running_upstreams() == 0 &&
+            assignment->get_pending() == 0 &&
+            assignment->get_thread_count() == 0) {
 
-            // This was the last worker running this arrow, so it can now deactivate
-            // We know it is the last worker because we stopped assigning them
-            // once is_upstream_finished started returning true
-            assignment->set_active(false);
-
-            m_mutex.unlock();
             LOG_INFO(logger) << "Deactivating arrow " << assignment->get_name() << LOG_END;
-            assignment->notify_downstream(false);
-            m_mutex.lock();
+            assignment->stop();
         }
     }
 
@@ -42,7 +37,7 @@ JArrow* JScheduler::next_assignment(uint32_t worker_id, JArrow* assignment, JArr
         current_idx += 1;
         current_idx %= m_arrows.size();
 
-        if (!candidate->is_upstream_finished() &&
+        if (candidate->get_status() != JActivable::Status::Stopped &&
             (candidate->is_parallel() || candidate->get_thread_count() == 0)) {
 
             // Found a plausible candidate; done

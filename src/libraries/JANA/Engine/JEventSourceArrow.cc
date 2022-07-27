@@ -20,9 +20,6 @@ JEventSourceArrow::JEventSourceArrow(std::string name,
     , m_source(source)
     , m_output_queue(output_queue)
     , m_pool(pool) {
-
-    m_output_queue->attach_upstream(this);
-    attach_downstream(m_output_queue);
     m_logger = JLogger(JLogger::Level::INFO);
 }
 
@@ -30,7 +27,7 @@ JEventSourceArrow::JEventSourceArrow(std::string name,
 
 void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
 
-    if (!is_active()) {
+    if (get_status() == JActivable::Status::Stopped) {
         result.update_finished();
         return;
     }
@@ -104,7 +101,7 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
     JArrowMetrics::Status status;
 
     if (in_status == JEventSource::ReturnStatus::Finished) {
-        set_upstream_finished(true);
+        finish();
         LOG_DEBUG(m_logger) << "JEventSourceArrow '" << get_name() << "': "
                             << "Finished!" << LOG_END;
         status = JArrowMetrics::Status::Finished;
@@ -119,10 +116,8 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
 }
 
 void JEventSourceArrow::initialize() {
-    assert(m_status == Status::Unopened);
     LOG_DEBUG(m_logger) << "JEventSourceArrow '" << get_name() << "': "
                         << "Initializing" << LOG_END;
     m_source->DoInitialize();
-    m_status = Status::Running;
 }
 

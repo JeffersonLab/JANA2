@@ -9,8 +9,6 @@
 
 TEST_CASE("Queue: Basic functionality") {
     JMailbox<int> q;
-    q.set_active(true);
-
     REQUIRE(q.size() == 0);
 
     int item = 22;

@@ -7,50 +7,6 @@
 #include "JEventProcessorArrow.h"
 #include "JEventSourceArrow.h"
 
-bool JArrowTopology::is_active() {
-    for (auto arrow : arrows) {
-        if (arrow->is_active()) {
-            return true;
-        }
-    }
-    return false;
-}
-
-void JArrowTopology::set_active(bool active) {
-    if (active) {
-        if (status == Status::Inactive) {
-            status = Status::Running;
-            for (auto arrow : sources) {
-                // We activate our eventsources, which activate components downstream.
-                arrow->initialize();
-                arrow->set_active(true);
-                arrow->notify_downstream(true);
-            }
-        }
-    }
-    else {
-        // Someone has told us to deactivate. There are two ways to get here:
-        //   * The last JEventProcessorArrow notifies us that he is deactivating because the topology is finished
-        //   * The JArrowController is requesting us to stop regardless of whether the topology finished or not
-
-        if (is_active()) {
-            // Premature exit: Shut down any arrows which are still running
-            status = Status::Draining;
-            for (auto arrow : arrows) {
-                arrow->set_active(false);
-                arrow->finalize();
-            }
-        }
-        else {
-            // Arrows have all deactivated: Stop timer
-            metrics.stop();
-            status = Status::Inactive;
-            for (auto arrow : arrows) {
-                arrow->finalize();
-            }
-        }
-    }
-}
 
 JArrowTopology::JArrowTopology() = default;
 
@@ -60,5 +16,31 @@ JArrowTopology::~JArrowTopology() {
     }
     for (auto queue : queues) {
         delete queue;
+    }
+}
+
+void JArrowTopology::on_status_change(Status old_status, Status new_status) {
+    if (old_status == Status::Unopened && new_status == Status::Running) {
+        for (auto source : sources) {
+            // We activate all sources, and everything downstream activates automatically
+            source->run();
+        }
+        metrics.start(0);
+    }
+    else if (old_status == Status::Running && new_status == Status::Stopped) {
+        // TODO: I think we need to forcibly stop all arrows here.
+        //       Complication 1: Probably want to block until all workers stop first.
+        //       Complication 2: Probably want to stop all arrows that are still running
+        metrics.stop();
+    }
+    else if (old_status == Status::Stopped && new_status == Status::Running) {
+        metrics.reset();
+        metrics.start(0);
+    }
+    else if (old_status == Status::Running && new_status == Status::Finished) {
+        metrics.stop();
+        // This used to call finalize() on _all_ arrows, but I don't think it should.
+        // I think finalize() will propagate automatically. All the topology cares about
+        // at this point is turning off the timer, I think.
     }
 }

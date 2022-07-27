@@ -18,14 +18,7 @@ JEventProcessorArrow::JEventProcessorArrow(std::string name,
         , m_output_queue(output_queue)
         , m_pool(std::move(pool)) {
 
-    m_input_queue->attach_downstream(this);
-    attach_upstream(m_input_queue);
     m_logger = JLogger();
-
-    if (m_output_queue != nullptr) {
-        m_output_queue->attach_upstream(this);
-        attach_downstream(m_output_queue);
-    }
 }
 
 void JEventProcessorArrow::add_processor(JEventProcessor* processor) {
@@ -69,9 +62,8 @@ void JEventProcessorArrow::execute(JArrowMetrics& result, size_t location_id) {
     auto end_queue_time = std::chrono::steady_clock::now();
 
     JArrowMetrics::Status status;
-    if (in_status == EventQueue::Status::Finished) {
-        set_upstream_finished(true);
-        status = JArrowMetrics::Status::Finished;
+    if (in_status == EventQueue::Status::Empty) {
+        status = JArrowMetrics::Status::ComeBackLater;
     }
     else if (in_status == EventQueue::Status::Ready && out_status == EventQueue::Status::Ready) {
         status = JArrowMetrics::Status::KeepGoing;

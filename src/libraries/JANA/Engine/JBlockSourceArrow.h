@@ -26,17 +26,16 @@ public:
 
 	void initialize() final {
 		LOG_DEBUG(m_logger) << "JBlockDisentanglerArrow '" << get_name() << "': " << "Initializing" << LOG_END;
-		assert(m_status == Status::Unopened);
 		m_source->Initialize();
-		m_status = Status::Running;
 	}
 
 	void execute(JArrowMetrics& result, size_t location_id) final {
 
-		if (!this->is_active()) {
-			result.update_finished();
-			return;
-		}
+                if (get_status() != JActivable::Status::Running) {
+                    result.update_finished();
+                    throw JException("I wonder if we actually get here. Do we want to?");
+                    return;
+                }
 		JArrowMetrics::Status status;
 		JArrowMetrics::duration_t latency;
 		JArrowMetrics::duration_t overhead; // TODO: Populate these

@@ -22,8 +22,6 @@ struct JArrowTopology : public JActivable {
     using Event = std::shared_ptr<JEvent>;
     using EventQueue = JMailbox<Event>;
 
-    enum Status { Inactive, Running, Draining, Finished };
-
     explicit JArrowTopology();
     virtual ~JArrowTopology();
 
@@ -33,7 +31,6 @@ struct JArrowTopology : public JActivable {
 
     std::shared_ptr<JEventPool> event_pool; // TODO: Belongs somewhere else
     JPerfMetrics metrics;
-    Status status = Inactive; // TODO: Merge this concept with JActivable
 
     std::vector<JArrow*> arrows;
     std::vector<JArrow*> sources;           // Sources needed for activation
@@ -54,8 +51,8 @@ struct JArrowTopology : public JActivable {
 
     JLogger m_logger;
 
-    bool is_active() override;
-    void set_active(bool is_active) override;
+    void on_status_change(Status old_status, Status new_status) override;
+
 };
 
 

@@ -44,10 +44,11 @@ public:
 
 	void execute(JArrowMetrics& result, size_t location_id) final {
 
-		if (!this->is_active()) {
-			result.update_finished();
-			return;
-		}
+                if (get_status() != JActivable::Status::Running) {
+                    result.update_finished();
+                    throw JException("I wonder if we actually get here. Do we want to?");
+                    return;
+                }
 		JArrowMetrics::Status status;
 		JArrowMetrics::duration_t latency;
 		JArrowMetrics::duration_t overhead; // TODO: Populate these
@@ -71,9 +72,9 @@ public:
 		if (reserved_events == 0 || input_queue_status == JMailbox<T*>::Status::Congested || input_queue_status == JMailbox<T*>::Status::Full) {
 			status = JArrowMetrics::Status::ComeBackLater;
 		}
-		else if (input_queue_status == JMailbox<T*>::Status::Finished) {
-			status = JArrowMetrics::Status::Finished;
-		}
+		// else if (input_queue_status == JMailbox<T*>::Status::Finished) {
+		// 	status = JArrowMetrics::Status::Finished;
+		// }
 		else {
 			status = JArrowMetrics::Status::KeepGoing;
 		}

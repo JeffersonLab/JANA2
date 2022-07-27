@@ -50,19 +50,6 @@ public:
 
     std::string get_name() { return m_name; }
 
-    // Written internally, read externally
-
-    bool is_upstream_finished() { return m_is_upstream_finished; }
-
-
-protected:
-
-    // Written internally, read externally
-
-    void set_upstream_finished(bool upstream_finished) { m_is_upstream_finished = upstream_finished; }
-
-    void set_status(Status status) { m_status = status; }
-
 
 public:
 
@@ -133,10 +120,6 @@ public:
         return m_metrics;
     }
 
-    Status get_status() {
-        return m_status;
-    }
-
     NodeType get_type() {
         return m_type;
     }
@@ -150,14 +133,13 @@ public:
     virtual ~JArrow() = default;
 
     virtual void initialize() {
-        assert(m_status == Status::Unopened);
-        m_status = Status::Inactive;
+        assert(get_status() == Status::Unopened);
     };
 
     virtual void execute(JArrowMetrics& result, size_t location_id) = 0;
 
     virtual void finalize() {
-        m_status = Status::Closed;
+        assert(get_status() == Status::Stopped);
     };
 
 
@@ -167,17 +149,13 @@ public:
 
     virtual void set_threshold(size_t /* threshold */) {}
 
-    void set_active(bool is_active) override {
-        if (is_active) {
-            assert(m_status != Status::Closed);
-            if (m_status == Status::Unopened) {
-                initialize();
-            }
-            m_status = Status::Running;
+protected:
+    void on_status_change(JActivable::Status old_status, JActivable::Status new_status ) override {
+        if (old_status == JActivable::Status::Unopened) {
+            initialize();
         }
-        else {
-            //assert(_status != Status::Unopened);
-            m_status = Status::Inactive;
+        else if (new_status == JActivable::Status::Finished) {
+            finalize();
         }
     }
 };
@@ -196,12 +174,9 @@ inline std::ostream& operator<<(std::ostream& os, const JArrow::NodeType& nt) {
 inline std::ostream& operator<<(std::ostream& os, const JArrow::Status& s) {
     switch (s) {
         case JArrow::Status::Unopened: os << "Unopened"; break;
-        case JArrow::Status::Inactive: os << "Inactive"; break;
         case JArrow::Status::Running:  os << "Running"; break;
-        case JArrow::Status::Draining: os << "Draining"; break;
-        case JArrow::Status::Drained: os << "Drained"; break;
+        case JArrow::Status::Stopped: os << "Stopped"; break;
         case JArrow::Status::Finished: os << "Finished"; break;
-        case JArrow::Status::Closed: os << "Closed"; break;
     }
     return os;
 }

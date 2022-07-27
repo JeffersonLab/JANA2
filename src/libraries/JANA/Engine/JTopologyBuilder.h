@@ -91,12 +91,11 @@ public:
 		}
 
 		auto proc_arrow = new JEventProcessorArrow("processors", queue, nullptr, topology->event_pool);
+                for (auto src_arrow : topology->sources) {
+                    src_arrow->attach_listener(proc_arrow);
+                }
 		proc_arrow->set_chunksize(event_processor_chunksize);
 		topology->arrows.push_back(proc_arrow);
-
-		// Receive notifications when sinks finish
-		proc_arrow->attach_downstream(topology);   // TODO: Simplify shutdown process using upstream count instead
-		topology->attach_upstream(proc_arrow);
 
 		for (auto proc : m_components->get_evt_procs()) {
 			proc_arrow->add_processor(proc);

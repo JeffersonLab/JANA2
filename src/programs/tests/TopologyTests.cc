@@ -14,8 +14,7 @@ JArrowMetrics::Status step(JArrow* arrow) {
 	arrow->execute(metrics, 0);
 	auto status = metrics.get_last_status();
 	if (status == JArrowMetrics::Status::Finished) {
-		arrow->set_active(false);
-		arrow->notify_downstream(false);
+            arrow->finish();
 	}
 	return status;
 }
@@ -93,7 +92,7 @@ TEST_CASE("JTopology: Basic functionality") {
         //LOG_INFO(logger) << "After emitting; should be something in q0" << LOG_END;
 
         log_status(topology);
-        topology.set_active(true);
+        topology.run();
         step(emit_rand_ints);
 		log_status(topology);
 
@@ -115,7 +114,7 @@ TEST_CASE("JTopology: Basic functionality") {
     SECTION("Running each stage sequentially yields the correct results") {
 
         //LOG_INFO(logger) << "Running each stage sequentially yields the correct results" << LOG_END;
-        topology.set_active(true);
+        topology.run();
 
         for (int i = 0; i < 20; ++i) {
             step(emit_rand_ints);
@@ -157,7 +156,7 @@ TEST_CASE("JTopology: Basic functionality") {
         results["sum_everything"] = JArrowMetrics::Status::KeepGoing;
 
         // Put something in the queue to get started
-        topology.set_active(true);
+        topology.run();
         step(emit_rand_ints);
 
         bool work_left = true;
@@ -193,48 +192,48 @@ TEST_CASE("JTopology: Basic functionality") {
         topology.m_logger = logger;
         source.logger = logger;
 
-        topology.set_active(true);
+        topology.run();
 
-        REQUIRE(emit_rand_ints->is_active() == true);
-        REQUIRE(multiply_by_two->is_active() == true);
-        REQUIRE(subtract_one->is_active() == true);
-        REQUIRE(sum_everything->is_active() == true);
+        REQUIRE(emit_rand_ints->get_status() == JActivable::Status::Running);
+        REQUIRE(multiply_by_two->get_status() == JActivable::Status::Running);
+        REQUIRE(subtract_one->get_status() == JActivable::Status::Running);
+        REQUIRE(sum_everything->get_status() == JActivable::Status::Running);
 
         for (int i = 0; i < 20; ++i) {
             step(emit_rand_ints);
         }
 
-        REQUIRE(emit_rand_ints->is_active() == false);
-        REQUIRE(multiply_by_two->is_active() == true);
-        REQUIRE(subtract_one->is_active() == true);
-        REQUIRE(sum_everything->is_active() == true);
+        REQUIRE(emit_rand_ints->get_status() == JActivable::Status::Finished);
+        REQUIRE(multiply_by_two->get_status() == JActivable::Status::Running);
+        REQUIRE(subtract_one->get_status() == JActivable::Status::Running);
+        REQUIRE(sum_everything->get_status() == JActivable::Status::Running);
 
         for (int i = 0; i < 20; ++i) {
             step(multiply_by_two);
         }
 
-        REQUIRE(emit_rand_ints->is_active() == false);
-        REQUIRE(multiply_by_two->is_active() == false);
-        REQUIRE(subtract_one->is_active() == true);
-        REQUIRE(sum_everything->is_active() == true);
+        REQUIRE(emit_rand_ints->get_status() == JActivable::Status::Finished);
+        REQUIRE(multiply_by_two->get_status() == JActivable::Status::Stopped);
+        REQUIRE(subtract_one->get_status() == JActivable::Status::Running);
+        REQUIRE(sum_everything->get_status() == JActivable::Status::Running);
 
         for (int i = 0; i < 20; ++i) {
             step(subtract_one);
         }
 
-        REQUIRE(emit_rand_ints->is_active() == false);
-        REQUIRE(multiply_by_two->is_active() == false);
-        REQUIRE(subtract_one->is_active() == false);
-        REQUIRE(sum_everything->is_active() == true);
+        REQUIRE(emit_rand_ints->get_status() == JActivable::Status::Finished);
+        REQUIRE(multiply_by_two->get_status() == JActivable::Status::Stopped);
+        REQUIRE(subtract_one->get_status() == JActivable::Status::Stopped);
+        REQUIRE(sum_everything->get_status() == JActivable::Status::Running);
 
         for (int i = 0; i < 20; ++i) {
             step(sum_everything);
         }
 
-        REQUIRE(emit_rand_ints->is_active() == false);
-        REQUIRE(multiply_by_two->is_active() == false);
-        REQUIRE(subtract_one->is_active() == false);
-        REQUIRE(sum_everything->is_active() == false);
+        REQUIRE(emit_rand_ints->get_status() == JActivable::Status::Finished);
+        REQUIRE(multiply_by_two->get_status() == JActivable::Status::Stopped);
+        REQUIRE(subtract_one->get_status() == JActivable::Status::Stopped);
+        REQUIRE(sum_everything->get_status() == JActivable::Status::Stopped);
 
         log_status(topology);
 

@@ -35,7 +35,7 @@ TEST_CASE("SchedulerTests") {
 	topology.arrows.push_back(sum_everything);
 
 	emit_rand_ints->set_chunksize(1);
-	topology.set_active(true);
+	topology.run();
 
     JArrow* assignment;
     JArrowMetrics::Status last_result;
@@ -58,10 +58,10 @@ TEST_CASE("SchedulerTests") {
             }
         } while (assignment != nullptr);
 
-		REQUIRE(emit_rand_ints->is_active() == false);
-		REQUIRE(multiply_by_two->is_active() == false);
-		REQUIRE(subtract_one->is_active() == false);
-		REQUIRE(sum_everything->is_active() == false);
+		REQUIRE(emit_rand_ints->get_status() == JActivable::Status::Finished);
+		REQUIRE(multiply_by_two->get_status() == JActivable::Status::Finished);
+		REQUIRE(subtract_one->get_status() == JActivable::Status::Finished);
+		REQUIRE(sum_everything->get_status() == JActivable::Status::Finished);
     }
 
     SECTION("When run sequentially, topology finished => RRS returns nullptr") {
@@ -74,10 +74,10 @@ TEST_CASE("SchedulerTests") {
         bool keep_going = true;
         while (keep_going) {
 
-            keep_going = emit_rand_ints->is_active() ||
-            		     multiply_by_two->is_active() ||
-            		     subtract_one->is_active() ||
-            		     sum_everything->is_active();
+            keep_going = emit_rand_ints->get_status() == JActivable::Status::Running ||
+            		     multiply_by_two->get_status() == JActivable::Status::Running ||
+            		     subtract_one->get_status() == JActivable::Status::Running ||
+            		     sum_everything->get_status() == JActivable::Status::Running ;
 
             if (keep_going) {
                 assignment = scheduler.next_assignment(0, assignment, last_result);
@@ -117,7 +117,7 @@ TEST_CASE("SchedulerRoundRobinBehaviorTests") {
 	topology.arrows.push_back(sum_everything);
 
 	emit_rand_ints->set_chunksize(1);
-	topology.set_active(true);
+	topology.run();
 
     JScheduler scheduler(topology.arrows);
     auto logger = JLogger(JLogger::Level::OFF);

@@ -39,7 +39,7 @@
 
 
 template <typename T>
-class JMailbox : public JActivable {
+class JMailbox {
 
 private:
 
@@ -58,7 +58,7 @@ private:
 
 public:
 
-    enum class Status {Ready, Congested, Empty, Full, Finished};
+    enum class Status {Ready, Congested, Empty, Full};
 
     friend std::ostream& operator<<(std::ostream& os, const Status& s) {
         switch (s) {
@@ -66,7 +66,6 @@ public:
             case Status::Congested: os << "Congested"; break;
             case Status::Empty:     os << "Empty"; break;
             case Status::Full:      os << "Full"; break;
-            case Status::Finished:  os << "Finished"; break;
             default:                os << "Unknown"; break;
         }
         return os;
@@ -182,10 +181,7 @@ public:
         else if (size != 0) {
             return Status::Ready;
         }
-        else if (is_active()) {
-            return Status::Empty;
-        }
-        return Status::Finished;
+        return Status::Empty;
     }
 
 
@@ -211,12 +207,8 @@ public:
             mb.mutex.unlock();
             return Status::Empty;
         }
-        else if (is_active()) {
-            mb.mutex.unlock();
-            return Status::Empty;
-        }
         mb.mutex.unlock();
-        return Status::Finished;
+        return Status::Empty;
     }
 
 

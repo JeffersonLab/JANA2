@@ -34,7 +34,7 @@ void JArrowProcessingController::initialize() {
 
 void JArrowProcessingController::run(size_t nthreads) {
 
-    m_topology->set_active(true);
+    m_topology->run();
     scale(nthreads);
 }
 
@@ -63,6 +63,9 @@ void JArrowProcessingController::scale(size_t nthreads) {
     for (size_t i=nthreads; i<next_worker_id; ++i) {
         m_workers.at(i)->wait_for_stop();
     }
+    m_topology->run();
+    // TODO: Topology metrics belong in topology::on_status_change.
+    //       Only problem is we don't have access to nthreads there. Figure out later.
     m_topology->metrics.reset();
     m_topology->metrics.start(nthreads);
 }
@@ -72,7 +75,7 @@ void JArrowProcessingController::request_stop() {
         worker->request_stop();
     }
     // Tell the topology to stop timers and deactivate arrows
-    m_topology->set_active(false);
+    m_topology->stop();
 }
 
 void JArrowProcessingController::wait_until_stopped() {
@@ -85,6 +88,7 @@ void JArrowProcessingController::wait_until_stopped() {
 }
 
 bool JArrowProcessingController::is_stopped() {
+    /*
     for (JWorker* worker : m_workers) {
         if (worker->get_runstate() != JWorker::RunState::Stopped) {
             return false;
@@ -92,10 +96,13 @@ bool JArrowProcessingController::is_stopped() {
     }
     // We have determined that all Workers have actually stopped
     return true;
+     */
+    // NWB: This really shoulld be 'paused'
+    return m_topology->get_status() == JActivable::Status::Stopped;
 }
 
 bool JArrowProcessingController::is_finished() {
-    return !m_topology->is_active();
+    return m_topology->get_status() == JActivable::Status::Finished;
 }
 
 bool JArrowProcessingController::is_timed_out() {
@@ -196,12 +203,11 @@ std::unique_ptr<const JArrowPerfSummary> JArrowProcessingController::measure_int
         ArrowSummary summary;
         summary.arrow_type = arrow->get_type();
         summary.is_parallel = arrow->is_parallel();
-        summary.is_active = arrow->is_active();
         summary.thread_count = arrow->get_thread_count();
         summary.arrow_name = arrow->get_name();
         summary.chunksize = arrow->get_chunksize();
         summary.messages_pending = arrow->get_pending();
-        summary.is_upstream_active = !arrow->is_upstream_finished();
+        summary.running_upstreams = arrow->get_running_upstreams();
         summary.threshold = arrow->get_threshold();
         summary.status = arrow->get_status();
 
