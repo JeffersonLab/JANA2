@@ -71,20 +71,20 @@ void JArrowProcessingController::scale(size_t nthreads) {
 }
 
 void JArrowProcessingController::request_stop() {
-    for (JWorker* worker : m_workers) {
-        worker->request_stop();
-    }
-    // Tell the topology to stop timers and deactivate arrows
-    m_topology->stop();
+    // Shut off the sources and let the thing come to a stop by itself.
+    m_topology->drain();
 }
 
 void JArrowProcessingController::wait_until_stopped() {
     for (JWorker* worker : m_workers) {
-        worker->request_stop();
-    }
-    for (JWorker* worker : m_workers) {
         worker->wait_for_stop();
     }
+    // TODO: The JAPC abstractions are all wrong. We want to be able to
+    //       1. Pause (turn off workers, leave events in queues, be able to resume or finish as-is without draining)
+    //       2. Resume (from a paused state: turn workers back on, e.g. for debugging, scaling tests)
+    //       5. Finish (from a paused state)
+    //       3. Stop=Drain (turn off sources, wait for events in queue to empty and workers to finish. Not able to resume)
+    //       4. Run until finished (sources turn themselves off, wait for events in queue to empty and workers to finish. Not able to resume)
 }
 
 bool JArrowProcessingController::is_stopped() {
@@ -140,8 +140,13 @@ bool JArrowProcessingController::is_timed_out() {
 }
 
 JArrowProcessingController::~JArrowProcessingController() {
-    request_stop();
-    wait_until_stopped();
+
+    for (JWorker* worker : m_workers) {
+        worker->request_stop();
+    }
+    for (JWorker* worker : m_workers) {
+        worker->wait_for_stop();
+    }
     for (JWorker* worker : m_workers) {
         delete worker;
     }

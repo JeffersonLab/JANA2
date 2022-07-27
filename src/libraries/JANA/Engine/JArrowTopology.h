@@ -51,6 +51,7 @@ struct JArrowTopology : public JActivable {
 
     JLogger m_logger;
 
+    void drain();
     void on_status_change(Status old_status, Status new_status) override;
 
 };

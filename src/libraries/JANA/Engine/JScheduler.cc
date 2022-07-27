@@ -22,10 +22,12 @@ JArrow* JScheduler::next_assignment(uint32_t worker_id, JArrow* assignment, JArr
 
         if (assignment->get_running_upstreams() == 0 &&
             assignment->get_pending() == 0 &&
-            assignment->get_thread_count() == 0) {
+            assignment->get_thread_count() == 0 &&
+            assignment->get_type() != JArrow::NodeType::Source &&
+            assignment->get_status() == JActivable::Status::Running) {
 
             LOG_INFO(logger) << "Deactivating arrow " << assignment->get_name() << LOG_END;
-            assignment->stop();
+            assignment->finish();
         }
     }
 
@@ -37,8 +39,10 @@ JArrow* JScheduler::next_assignment(uint32_t worker_id, JArrow* assignment, JArr
         current_idx += 1;
         current_idx %= m_arrows.size();
 
-        if (candidate->get_status() != JActivable::Status::Stopped &&
-            (candidate->is_parallel() || candidate->get_thread_count() == 0)) {
+        if (candidate->get_status() == JActivable::Status::Running &&
+            (candidate->is_parallel() || candidate->get_thread_count() == 0) &&
+            (candidate->get_type() == JArrow::NodeType::Source || candidate->get_running_upstreams() > 0 || candidate->get_pending() > 0)
+           ) {
 
             // Found a plausible candidate; done
             m_next_idx = current_idx; // Next time, continue right where we left off

@@ -46,7 +46,7 @@ public:
     }
 
     void stop() {
-        assert(m_status == Status::Running);
+        if (m_status != Status::Running) return; // stop() is a no-op unless running
         Status old_status = m_status;
         for (auto listener: m_listeners) {
             listener->m_running_upstreams--;
@@ -60,7 +60,6 @@ public:
     }
 
     void finish() {
-        assert(m_status == Status::Running || m_status == Status::Stopped);
         Status old_status = m_status;
 
         if (old_status == Status::Running) {
@@ -68,7 +67,9 @@ public:
                 listener->m_running_upstreams--;
             }
         }
-        on_status_change(old_status, Status::Finished);
+        if (old_status != Status::Finished) {
+            on_status_change(old_status, Status::Finished);
+        }
         m_status = Status::Finished;
     }
 

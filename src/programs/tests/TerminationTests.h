@@ -9,6 +9,7 @@
 #include <JANA/JEventSource.h>
 #include <JANA/JEventProcessor.h>
 
+#include "catch.hpp"
 
 
 struct BoundedSource : public JEventSource {
@@ -57,12 +58,16 @@ struct UnboundedSource : public JEventSource {
 
     void GetEvent(std::shared_ptr<JEvent>) override {
         event_count += 1;
+        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        // jout << "Emitting " << event_count << jendl;
     }
 };
 
 struct CountingProcessor : public JEventProcessor {
 
     std::atomic_int processed_count {0};
+    std::atomic_int finish_call_count {0};
+
 
     CountingProcessor(JApplication* app) : JEventProcessor(app) {}
 
@@ -70,9 +75,11 @@ struct CountingProcessor : public JEventProcessor {
 
     void Process(const std::shared_ptr<const JEvent>&) override {
         processed_count += 1;
+        REQUIRE(finish_call_count == 0);
     }
 
     void Finish() override {
+        finish_call_count += 1;
     }
 };
 

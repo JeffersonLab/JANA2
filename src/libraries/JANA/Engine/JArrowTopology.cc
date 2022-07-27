@@ -11,11 +11,18 @@
 JArrowTopology::JArrowTopology() = default;
 
 JArrowTopology::~JArrowTopology() {
+    finish();  // In case we stopped() but didn't finish(),
     for (auto arrow : arrows) {
         delete arrow;
     }
     for (auto queue : queues) {
         delete queue;
+    }
+}
+
+void JArrowTopology::drain() {
+    for (auto source : sources) {
+        source->finish();
     }
 }
 
@@ -28,19 +35,24 @@ void JArrowTopology::on_status_change(Status old_status, Status new_status) {
         metrics.start(0);
     }
     else if (old_status == Status::Running && new_status == Status::Stopped) {
-        // TODO: I think we need to forcibly stop all arrows here.
-        //       Complication 1: Probably want to block until all workers stop first.
-        //       Complication 2: Probably want to stop all arrows that are still running
+        // This stops all arrows WITHOUT draining queues.
+        // There might still be some events being worked on, so the caller to stop() should call wait_until_stopped() afterwards.
+        // Note that this won't call finish(), but we are allowed to call finish() later (importantly, after wait_until_stopped)
+        for (auto arrow: arrows) {
+            arrow->stop(); // If arrow is not running, stop() is a no-op
+        }
         metrics.stop();
     }
     else if (old_status == Status::Stopped && new_status == Status::Running) {
         metrics.reset();
         metrics.start(0);
+        for (auto source: sources) {
+            if (source->get_status() != JActivable::Status::Finished) {
+                source->run();
+            }
+        }
     }
-    else if (old_status == Status::Running && new_status == Status::Finished) {
+    else if (new_status == Status::Finished) {
         metrics.stop();
-        // This used to call finalize() on _all_ arrows, but I don't think it should.
-        // I think finalize() will propagate automatically. All the topology cares about
-        // at this point is turning off the timer, I think.
     }
 }

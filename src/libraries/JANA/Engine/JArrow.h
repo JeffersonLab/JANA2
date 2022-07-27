@@ -149,13 +149,12 @@ public:
 
     virtual void set_threshold(size_t /* threshold */) {}
 
-protected:
     void on_status_change(JActivable::Status old_status, JActivable::Status new_status ) override {
         if (old_status == JActivable::Status::Unopened) {
             initialize();
         }
         else if (new_status == JActivable::Status::Finished) {
-            finalize();
+            this->finalize();
         }
     }
 };
