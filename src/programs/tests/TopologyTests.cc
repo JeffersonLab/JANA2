@@ -10,13 +10,20 @@
 
 
 JArrowMetrics::Status step(JArrow* arrow) {
-	JArrowMetrics metrics;
-	arrow->execute(metrics, 0);
-	auto status = metrics.get_last_status();
-	if (status == JArrowMetrics::Status::Finished) {
+
+        if (arrow->get_type() != JArrow::NodeType::Source &&
+            arrow->get_status() == JActivable::Status::Running &&
+            arrow->get_pending() == 0 &&
+            arrow->get_running_upstreams() == 0) {
+
             arrow->finish();
-	}
-	return status;
+            return JArrowMetrics::Status::Finished;
+        }
+
+        JArrowMetrics metrics;
+        arrow->execute(metrics, 0);
+        auto status = metrics.get_last_status();
+        return status;
 }
 
 void log_status(JArrowTopology& topology) {
@@ -43,18 +50,22 @@ TEST_CASE("JTopology: Basic functionality") {
     auto subtract_one = new MapArrow<double,double>("subtract_one", p2, q2, q3);
     auto sum_everything = new SinkArrow<double>("sum_everything", sink, q3);
 
-	topology.sources.push_back(emit_rand_ints);
+    emit_rand_ints->attach_listener(multiply_by_two);
+    multiply_by_two->attach_listener(subtract_one);
+    subtract_one->attach_listener(sum_everything);
 
-	topology.arrows.push_back(emit_rand_ints);
-	topology.arrows.push_back(multiply_by_two);
-	topology.arrows.push_back(subtract_one);
-	topology.arrows.push_back(sum_everything);
+    topology.sources.push_back(emit_rand_ints);
+    topology.arrows.push_back(emit_rand_ints);
+    topology.arrows.push_back(multiply_by_two);
+    topology.arrows.push_back(subtract_one);
+    topology.arrows.push_back(sum_everything);
+    topology.sinks.push_back(sum_everything);
 
-	emit_rand_ints->set_chunksize(1);
+    emit_rand_ints->set_chunksize(1);
 
-    auto logger = JLogger(JLogger::Level::OFF);
-    //topology.logger = Logger::everything();
-    //source.logger = Logger::everything();
+    auto logger = JLogger(JLogger::Level::TRACE);
+    topology.m_logger = logger;
+    source.logger = logger;
 
 
     SECTION("Before anything runs...") {
@@ -67,7 +78,7 @@ TEST_CASE("JTopology: Basic functionality") {
 
     SECTION("When nothing is in the input queue...") {
 
-        //LOG_INFO(logger) << "Nothing has run yet; should be empty" << LOG_END;
+        LOG_INFO(logger) << "Nothing has run yet; should be empty" << LOG_END;
 
         //topology.log_queue_status();
         step(multiply_by_two);
@@ -85,16 +96,12 @@ TEST_CASE("JTopology: Basic functionality") {
     }
 
     SECTION("After emitting") {
-        auto logger = JLogger(JLogger::Level::OFF);
-        topology.m_logger = logger;
-        source.logger = logger;
-
-        //LOG_INFO(logger) << "After emitting; should be something in q0" << LOG_END;
+        LOG_INFO(logger) << "After emitting; should be something in q0" << LOG_END;
 
         log_status(topology);
         topology.run();
         step(emit_rand_ints);
-		log_status(topology);
+        log_status(topology);
 
         REQUIRE(multiply_by_two->get_pending() == 1);
         REQUIRE(subtract_one->get_pending() == 0);
@@ -213,7 +220,7 @@ TEST_CASE("JTopology: Basic functionality") {
         }
 
         REQUIRE(emit_rand_ints->get_status() == JActivable::Status::Finished);
-        REQUIRE(multiply_by_two->get_status() == JActivable::Status::Stopped);
+        REQUIRE(multiply_by_two->get_status() == JActivable::Status::Finished);
         REQUIRE(subtract_one->get_status() == JActivable::Status::Running);
         REQUIRE(sum_everything->get_status() == JActivable::Status::Running);
 
@@ -222,8 +229,8 @@ TEST_CASE("JTopology: Basic functionality") {
         }
 
         REQUIRE(emit_rand_ints->get_status() == JActivable::Status::Finished);
-        REQUIRE(multiply_by_two->get_status() == JActivable::Status::Stopped);
-        REQUIRE(subtract_one->get_status() == JActivable::Status::Stopped);
+        REQUIRE(multiply_by_two->get_status() == JActivable::Status::Finished);
+        REQUIRE(subtract_one->get_status() == JActivable::Status::Finished);
         REQUIRE(sum_everything->get_status() == JActivable::Status::Running);
 
         for (int i = 0; i < 20; ++i) {
@@ -231,9 +238,9 @@ TEST_CASE("JTopology: Basic functionality") {
         }
 
         REQUIRE(emit_rand_ints->get_status() == JActivable::Status::Finished);
-        REQUIRE(multiply_by_two->get_status() == JActivable::Status::Stopped);
-        REQUIRE(subtract_one->get_status() == JActivable::Status::Stopped);
-        REQUIRE(sum_everything->get_status() == JActivable::Status::Stopped);
+        REQUIRE(multiply_by_two->get_status() == JActivable::Status::Finished);
+        REQUIRE(subtract_one->get_status() == JActivable::Status::Finished);
+        REQUIRE(sum_everything->get_status() == JActivable::Status::Finished);
 
         log_status(topology);
 

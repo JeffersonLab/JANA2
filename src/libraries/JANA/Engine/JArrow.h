@@ -139,7 +139,7 @@ public:
     virtual void execute(JArrowMetrics& result, size_t location_id) = 0;
 
     virtual void finalize() {
-        assert(get_status() == Status::Stopped);
+        assert(get_status() == Status::Stopped || get_status() == Status::Running);
     };
 
 

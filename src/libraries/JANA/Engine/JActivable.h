@@ -37,19 +37,17 @@ public:
     void run() {
         assert(m_status == Status::Unopened || m_status == Status::Stopped || m_status == Status::Running);
         Status old_status = m_status;
-        m_status = Status::Running;
-
+        on_status_change(old_status, Status::Running);
         for (auto listener: m_listeners) {
             listener->m_running_upstreams++;
             listener->run();  // Activating something recursively activates everything downstream.
         }
-        on_status_change(old_status, Status::Running);
+        m_status = Status::Running;
     }
 
     void stop() {
         assert(m_status == Status::Running);
         Status old_status = m_status;
-        m_status = Status::Stopped;
         for (auto listener: m_listeners) {
             listener->m_running_upstreams--;
             // listener->stop();
@@ -58,12 +56,12 @@ public:
             // Correspondingly, the scheduler or worker needs to be the one to call stop() when this condition is reached.
         }
         on_status_change(old_status, Status::Stopped);
+        m_status = Status::Stopped;
     }
 
     void finish() {
         assert(m_status == Status::Running || m_status == Status::Stopped);
         Status old_status = m_status;
-        m_status = Status::Finished;
 
         if (old_status == Status::Running) {
             for (auto listener: m_listeners) {
@@ -71,6 +69,7 @@ public:
             }
         }
         on_status_change(old_status, Status::Finished);
+        m_status = Status::Finished;
     }
 
     virtual void on_status_change(Status old_status, Status new_status) {};

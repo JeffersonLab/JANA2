@@ -9,13 +9,18 @@
 #include <JANA/Engine/JArrowTopology.h>
 
 JArrowMetrics::Status steppe(JArrow* arrow) {
-	JArrowMetrics metrics;
-	arrow->execute(metrics, 0);
-	auto status = metrics.get_last_status();
-	if (status == JArrowMetrics::Status::Finished) {
-		arrow->finish();
-	}
-	return status;
+    if (arrow->get_type() != JArrow::NodeType::Source &&
+        arrow->get_status() == JActivable::Status::Running &&
+        arrow->get_pending() == 0 &&
+        arrow->get_running_upstreams() == 0) {
+
+        arrow->finish();
+        return JArrowMetrics::Status::Finished;
+    }
+
+    JArrowMetrics metrics;
+        arrow->execute(metrics, 0);
+        return metrics.get_last_status();
 }
 
 TEST_CASE("ActivableActivationTests") {
@@ -36,14 +41,19 @@ TEST_CASE("ActivableActivationTests") {
     auto subtract_one = new MapArrow<double,double>("subtract_one", p2, q2, q3);
     auto sum_everything = new SinkArrow<double>("sum_everything", sink, q3);
 
+    emit_rand_ints->attach_listener(multiply_by_two);
+    multiply_by_two->attach_listener(subtract_one);
+    subtract_one->attach_listener(sum_everything);
+
     topology.sources.push_back(emit_rand_ints);
 
     topology.arrows.push_back(emit_rand_ints);
-	topology.arrows.push_back(multiply_by_two);
-	topology.arrows.push_back(subtract_one);
-	topology.arrows.push_back(sum_everything);
+    topology.arrows.push_back(multiply_by_two);
+    topology.arrows.push_back(subtract_one);
+    topology.arrows.push_back(sum_everything);
+    topology.sinks.push_back(sum_everything);
 
-	emit_rand_ints->set_chunksize(1);
+    emit_rand_ints->set_chunksize(1);
 
     auto logger = JLogger(JLogger::Level::OFF);
     topology.m_logger = logger;
@@ -52,34 +62,35 @@ TEST_CASE("ActivableActivationTests") {
 
     SECTION("At first, everything is deactivated and all queues are empty") {
 
-		REQUIRE(q1->size() == 0);
-		REQUIRE(q2->size() == 0);
-		REQUIRE(q3->size() == 0);
+        REQUIRE(q1->size() == 0);
+        REQUIRE(q2->size() == 0);
+        REQUIRE(q3->size() == 0);
 
-		REQUIRE(emit_rand_ints->get_status() == JActivable::Status::Stopped);
-		REQUIRE(multiply_by_two->get_status() == JActivable::Status::Stopped);
-		REQUIRE(subtract_one->get_status() == JActivable::Status::Stopped);
-		REQUIRE(sum_everything->get_status() == JActivable::Status::Stopped);
+        REQUIRE(emit_rand_ints->get_status() == JActivable::Status::Unopened);
+        REQUIRE(multiply_by_two->get_status() == JActivable::Status::Unopened);
+        REQUIRE(subtract_one->get_status() == JActivable::Status::Unopened);
+        REQUIRE(sum_everything->get_status() == JActivable::Status::Unopened);
 
-		REQUIRE(emit_rand_ints->get_pending() == 0);
-		REQUIRE(multiply_by_two->get_pending() == 0);
-		REQUIRE(subtract_one->get_pending() == 0);
-		REQUIRE(sum_everything->get_pending() == 0);
+        REQUIRE(emit_rand_ints->get_pending() == 0);
+        REQUIRE(multiply_by_two->get_pending() == 0);
+        REQUIRE(subtract_one->get_pending() == 0);
+        REQUIRE(sum_everything->get_pending() == 0);
     }
 
     SECTION("As a message propagates, arrows and queues downstream automatically activate") {
 
-		REQUIRE(emit_rand_ints->get_status() == JActivable::Status::Stopped);
-		REQUIRE(multiply_by_two->get_status() == JActivable::Status::Stopped);
-		REQUIRE(subtract_one->get_status() == JActivable::Status::Stopped);
-		REQUIRE(sum_everything->get_status() == JActivable::Status::Stopped);
+        REQUIRE(emit_rand_ints->get_status() == JActivable::Status::Unopened);
+        REQUIRE(multiply_by_two->get_status() == JActivable::Status::Unopened);
+        REQUIRE(subtract_one->get_status() == JActivable::Status::Unopened);
+        REQUIRE(sum_everything->get_status() == JActivable::Status::Unopened);
 
-		topology.run();
+        topology.run();
+        // TODO: Check that initialize has been called, but not finalize
 
-		REQUIRE(emit_rand_ints->get_status() == JActivable::Status::Running);
-		REQUIRE(multiply_by_two->get_status() == JActivable::Status::Running);
-		REQUIRE(subtract_one->get_status() == JActivable::Status::Running);
-		REQUIRE(sum_everything->get_status() == JActivable::Status::Running);
+        REQUIRE(emit_rand_ints->get_status() == JActivable::Status::Running);
+        REQUIRE(multiply_by_two->get_status() == JActivable::Status::Running);
+        REQUIRE(subtract_one->get_status() == JActivable::Status::Running);
+        REQUIRE(sum_everything->get_status() == JActivable::Status::Running);
     }
 
 } // TEST_CASE
@@ -94,47 +105,52 @@ TEST_CASE("ActivableDeactivationTests") {
     SubOneProcessor p2;
     SumSink<double> sink;
 
-	JArrowTopology topology;
+    JArrowTopology topology;
 
     auto q1 = new JMailbox<int>();
     auto q2 = new JMailbox<double>();
     auto q3 = new JMailbox<double>();
 
-	auto emit_rand_ints = new SourceArrow<int>("emit_rand_ints", source, q1);
-	auto multiply_by_two = new MapArrow<int,double>("multiply_by_two", p1, q1, q2);
-	auto subtract_one = new MapArrow<double,double>("subtract_one", p2, q2, q3);
-	auto sum_everything = new SinkArrow<double>("sum_everything", sink, q3);
+    auto emit_rand_ints = new SourceArrow<int>("emit_rand_ints", source, q1);
+    auto multiply_by_two = new MapArrow<int,double>("multiply_by_two", p1, q1, q2);
+    auto subtract_one = new MapArrow<double,double>("subtract_one", p2, q2, q3);
+    auto sum_everything = new SinkArrow<double>("sum_everything", sink, q3);
 
-	topology.sources.push_back(emit_rand_ints);
+    emit_rand_ints->attach_listener(multiply_by_two);
+    multiply_by_two->attach_listener(subtract_one);
+    subtract_one->attach_listener(sum_everything);
 
-	topology.arrows.push_back(emit_rand_ints);
-	topology.arrows.push_back(multiply_by_two);
-	topology.arrows.push_back(subtract_one);
-	topology.arrows.push_back(sum_everything);
+    topology.sources.push_back(emit_rand_ints);
+    topology.arrows.push_back(emit_rand_ints);
+    topology.arrows.push_back(multiply_by_two);
+    topology.arrows.push_back(subtract_one);
+    topology.arrows.push_back(sum_everything);
+    topology.sinks.push_back(sum_everything);
 
     auto logger = JLogger(JLogger::Level::OFF);
     topology.m_logger = logger;
     source.logger = logger;
 
-	REQUIRE(emit_rand_ints->get_status() == JActivable::Status::Stopped);
-	REQUIRE(multiply_by_two->get_status() == JActivable::Status::Stopped);
-	REQUIRE(subtract_one->get_status() == JActivable::Status::Stopped);
-	REQUIRE(sum_everything->get_status() == JActivable::Status::Stopped);
+    REQUIRE(emit_rand_ints->get_status() == JActivable::Status::Unopened);
+    REQUIRE(multiply_by_two->get_status() == JActivable::Status::Unopened);
+    REQUIRE(subtract_one->get_status() == JActivable::Status::Unopened);
+    REQUIRE(sum_everything->get_status() == JActivable::Status::Unopened);
 
-	topology.run();
+    topology.run();
 
-	REQUIRE(emit_rand_ints->get_status() == JActivable::Status::Running);
-	REQUIRE(multiply_by_two->get_status() == JActivable::Status::Running);
-	REQUIRE(subtract_one->get_status() == JActivable::Status::Running);
-	REQUIRE(sum_everything->get_status() == JActivable::Status::Running);
+    REQUIRE(emit_rand_ints->get_status() == JActivable::Status::Running);
+    REQUIRE(multiply_by_two->get_status() == JActivable::Status::Running);
+    REQUIRE(subtract_one->get_status() == JActivable::Status::Running);
+    REQUIRE(sum_everything->get_status() == JActivable::Status::Running);
 
     steppe(emit_rand_ints);
 
-	REQUIRE(emit_rand_ints->get_status() == JActivable::Status::Stopped);
-	REQUIRE(multiply_by_two->get_status() == JActivable::Status::Running);
-	REQUIRE(subtract_one->get_status() == JActivable::Status::Running);
-	REQUIRE(sum_everything->get_status() == JActivable::Status::Running);
+    REQUIRE(emit_rand_ints->get_status() == JActivable::Status::Finished);
+    REQUIRE(multiply_by_two->get_status() == JActivable::Status::Running);
+    REQUIRE(subtract_one->get_status() == JActivable::Status::Running);
+    REQUIRE(sum_everything->get_status() == JActivable::Status::Running);
 
+    // TODO: Test that finalize was called exactly once
 } // TEST_CASE
 
 

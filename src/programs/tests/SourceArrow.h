@@ -38,7 +38,6 @@ private:
     Source<T> & _source;
     JMailbox<T> * _output_queue;
     std::vector<T> _chunk_buffer;
-    bool _is_initialized = false;
 
 
 public:
@@ -48,14 +47,10 @@ public:
         , _output_queue(output_queue) {
     }
 
-    void execute(JArrowMetrics& result, size_t /* location_id */) {
-        // if (get_status() != Status::Running) {
-        //     result.update_finished();
-        //     return;
-        // }
-        if (!_is_initialized) {
-            _source.initialize();
-            _is_initialized = true;
+    void execute(JArrowMetrics& result, size_t /* location_id */) override {
+        if (get_status() == Status::Finished) {
+             result.update_finished();
+             return;
         }
 
         auto start_time = std::chrono::steady_clock::now();
@@ -70,8 +65,7 @@ public:
 
         JArrowMetrics::Status status;
         if (in_status == Source<T>::Status::Finished) {
-            _source.finalize();
-            finish();
+            finish();  // This will call finalize() which will call _source.finalize()
             status = JArrowMetrics::Status::Finished;
         }
         else if (in_status == Source<T>::Status::KeepGoing && out_status == JMailbox<T>::Status::Ready) {
@@ -81,6 +75,15 @@ public:
             status = JArrowMetrics::Status::ComeBackLater;
         }
         result.update(status, message_count, 1, latency, overhead);
+    }
+
+
+    void initialize() override {
+        _source.initialize();
+    }
+
+    void finalize() override {
+        _source.finalize();
     }
 };
 
