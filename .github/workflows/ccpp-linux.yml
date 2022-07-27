@@ -21,6 +21,9 @@ jobs:
     # directory.
     steps:
     - uses: actions/checkout@v2
+    - name: deps
+      run: |
+        sudo apt-get install -y libzmq3-dev libxerces-c-dev python3-dev
     - name: cmake
       run: |
         mkdir -p $GITHUB_WORKSPACE/build
