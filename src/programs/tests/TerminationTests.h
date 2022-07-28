@@ -14,7 +14,7 @@
 
 struct BoundedSource : public JEventSource {
 
-    std::atomic_int event_count {0};
+    uint64_t event_count = 0;
 
     BoundedSource(std::string source_name, JApplication *app) : JEventSource(source_name, app)
     { }
@@ -40,7 +40,7 @@ struct BoundedSource : public JEventSource {
 
 struct UnboundedSource : public JEventSource {
 
-    std::atomic_uint64_t event_count {0};
+    uint64_t event_count = 0;
 
     UnboundedSource(std::string source_name, JApplication *app) : JEventSource(source_name, app)
     { }
@@ -74,7 +74,7 @@ struct CountingProcessor : public JEventProcessor {
 
     void Init() override {}
 
-    void Process(const std::shared_ptr<const JEvent>& event) override {
+    void Process(const std::shared_ptr<const JEvent>& /*event*/) override {
         processed_count += 1;
         // jout << "Processing " << event->GetEventNumber() << jendl;
         REQUIRE(finish_call_count == 0);
