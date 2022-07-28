@@ -70,21 +70,47 @@ void JArrowProcessingController::scale(size_t nthreads) {
     }
 }
 
+void JArrowProcessingController::request_pause() {
+    for (JWorker* worker : m_workers) {
+        worker->request_stop();
+    }
+    // We could also do:
+    // m_topology->pause();
+    // Pausing the topology will cause workers to stop on their own, now that we've gotten rid of worker idling
+    // The downside to this approach is that we temporarily lose information about which arrows are paused and finished
+    // We probably want that information if we ever create an interactive inspector.
+}
+
+void JArrowProcessingController::wait_until_paused() {
+    for (JWorker* worker : m_workers) {
+        worker->wait_for_stop();
+    }
+    // Join all the worker threads.
+    // Do not trigger the pause (we may want the pause to come internally, e.g. from an event source running out.)
+    // Do NOT finish() the topology (we want the abillity to be able to restart it)
+}
+
 void JArrowProcessingController::request_stop() {
-    // Shut off the sources and let the thing come to a stop by itself.
+    // Shut off the sources; the workers will stop on their own once they run out of assignments.
+    // Unlike request_pause, this drains all queues.
+    // Conceivably, a user could request_stop() followed by wait_until_paused(), which would drain all queues but
+    // leave the topology in a restartable state. This suggests we might want to rename some of these things.
+    // e.g. request_stop      =>   drain OR drain_then_pause
+    //      request_pause     =>   pause
+    //      wait_until_stop   =>   join_then_finish
+    //      wait_until_pause  =>   join
     m_topology->drain();
 }
 
 void JArrowProcessingController::wait_until_stopped() {
+    // Join all workers
     for (JWorker* worker : m_workers) {
         worker->wait_for_stop();
     }
-    // Make sure everything has finished.
-    // (note some things might have already finished e.g. event sources, but that's fine, finish() is idempotent)
+    // finish out the topology
+    // (note some arrows might have already finished e.g. event sources, but that's fine, finish() is idempotent)
     m_topology->finish();
 
-    // TODO: The JAPC abstractions are all wrong. We want to be able to
-    //       1. Pause (turn off workers, leave events in queues, be able to resume or finish as-is without draining)
     //       2. Resume (from a paused state: turn workers back on, e.g. for debugging, scaling tests)
     //       5. Finish (from a paused state)
     //       3. Stop=Drain (turn off sources, wait for events in queue to empty and workers to finish. Not able to resume)
@@ -92,6 +118,7 @@ void JArrowProcessingController::wait_until_stopped() {
 }
 
 bool JArrowProcessingController::is_stopped() {
+    // This is now mis-named. Actually tests that the computation has been _paused_.
     for (JWorker* worker : m_workers) {
         if (worker->get_runstate() != JWorker::RunState::Stopped) {
             return false;
@@ -102,6 +129,7 @@ bool JArrowProcessingController::is_stopped() {
 }
 
 bool JArrowProcessingController::is_finished() {
+    // This is also mis-named. This actually tests whether computation has been _stopped_.
     return m_topology->get_status() == JActivable::Status::Finished;
 }
 

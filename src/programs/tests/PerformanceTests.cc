@@ -80,8 +80,8 @@ TEST_CASE("MemoryBottleneckTest", "[.][performance]") {
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             controller.print_report();
         }
-        controller.request_stop();
-        controller.wait_until_stopped();
+        controller.request_pause();
+        controller.wait_until_paused();
         auto result = controller.measure_internal_performance();
         std::cout << nthreads << ": " << result->avg_throughput_hz << " Hz" << std::endl;
 
