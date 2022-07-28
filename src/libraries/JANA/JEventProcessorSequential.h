@@ -88,7 +88,8 @@ public:
 		PrefetchT(JEventProcessorSequential *jeps, const std::string &tag=""):mTag(tag){jeps->mPrefetch.push_back(this);}
 
         std::vector<const T*>& operator()(){ return mObjs; }
-		void Get(const std::shared_ptr<const JEvent>& event){ mObjs = event->Get<T>(mTag); }
+		void Get(const std::shared_ptr<const JEvent>& event){ event->Get<T>(mTag); }
+		void Fill(const std::shared_ptr<const JEvent>& event){ mObjs = event->Get<T>(mTag); }
 
 	private:
 		PrefetchT()=default; // user must pass "this" so member can be added to our mPrefetch
@@ -102,8 +103,9 @@ public:
     void Finish() override {};
 
 	void Process(const std::shared_ptr<const JEvent>& event) override final{
-		for( auto p : mPrefetch ) p->Get(event);
+		for( auto p : mPrefetch ) p->Get(event);  // make sure all factories have been activated
 		std::lock_guard<std::mutex> lck(mMutex);
+		for( auto p : mPrefetch ) p->Fill(event); // Copy object pointers into members
 		ProcessSequential( event );
 	}
 	virtual void ProcessSequential(const std::shared_ptr<const JEvent>& event){};
