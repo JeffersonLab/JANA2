@@ -74,11 +74,11 @@ TEST_CASE("MemoryBottleneckTest", "[.][performance]") {
     JArrowProcessingController controller(topology);
     controller.initialize();
 
+    controller.run(6); // for whatever mysterious reason we need to pre-warm our thread team
     for (int nthreads=1; nthreads<6; nthreads++) {
-        controller.run(nthreads);
+        controller.scale(nthreads);
         for (int secs=0; secs<10; secs++) {
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            controller.print_report();
         }
         controller.request_pause();
         controller.wait_until_paused();
@@ -86,6 +86,12 @@ TEST_CASE("MemoryBottleneckTest", "[.][performance]") {
         std::cout << nthreads << ": " << result->avg_throughput_hz << " Hz" << std::endl;
 
     }
+    controller.scale(1);
+    controller.request_stop();
+    controller.wait_until_stopped();
+    controller.print_final_report();
+    auto perf = controller.measure_internal_performance();
+    // REQUIRE(perf->total_events_completed == perf->arrows[0].total_messages_completed);
 }
 
 

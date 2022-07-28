@@ -31,7 +31,7 @@ TEST_CASE("NThreads") {
 	}
 }
 
-TEST_CASE("JApplication::Scale updates the number of workers") {
+TEST_CASE("ScaleNWorkerUpdate") {
 	JApplication app;
 	app.SetParameterValue("nthreads", 4);
 	app.Run(false);
@@ -47,28 +47,37 @@ TEST_CASE("JApplication::Scale updates the number of workers") {
 	REQUIRE(threads == 8);
 }
 
-TEST_CASE("JApplication::Scale improves the throughput", "[.][performance]") {
-    JApplication app;
+TEST_CASE("ScaleThroughputImprovement", "[.][performance]") {
+
+    auto parms = new JParameterManager;
+    parms->SetParameter("log:debug","JArrowProcessingController,JWorker,JArrow");
+    parms->SetParameter("log:info","JScheduler");
+    JApplication app(parms);
+    app.SetParameterValue("nthreads", 4);
     app.SetTicker(false);
     app.Add(new DummySource("dummy", &app));
     app.Add(new DummyProcessor);
-    app.SetParameterValue("benchmark:minthreads", 1);
-    app.SetParameterValue("benchmark:maxthreads", 5);
-    app.SetParameterValue("benchmark:threadstep", 2);
-    app.SetParameterValue("benchmark:nsamples", 3);
+    // app.SetParameterValue("benchmark:minthreads", 1);
+    // app.SetParameterValue("benchmark:maxthreads", 5);
+    // app.SetParameterValue("benchmark:threadstep", 2);
+    // app.SetParameterValue("benchmark:nsamples", 3);
     app.Initialize();
     auto japc = app.GetService<JArrowProcessingController>();
     app.Run(false);
+    app.Scale(1);
     std::this_thread::sleep_for(std::chrono::seconds(5));
     auto throughput_hz_1 = japc->measure_internal_performance()->latest_throughput_hz;
+    japc->print_report();
     std::cout << "nthreads=1: throughput_hz=" << throughput_hz_1 << std::endl;
     app.Scale(2);
     std::this_thread::sleep_for(std::chrono::seconds(5));
     auto throughput_hz_2 = japc->measure_internal_performance()->latest_throughput_hz;
+    japc->print_report();
     std::cout << "nthreads=2: throughput_hz=" << throughput_hz_2 << std::endl;
     app.Scale(4);
     std::this_thread::sleep_for(std::chrono::seconds(5));
     auto throughput_hz_4 = japc->measure_internal_performance()->latest_throughput_hz;
+    japc->print_report();
     std::cout << "nthreads=4: throughput_hz=" << throughput_hz_4 << std::endl;
     app.Quit();
     REQUIRE(throughput_hz_2 > throughput_hz_1*1.5);
