@@ -63,9 +63,9 @@ TEST_CASE("SchedulerTests") {
         } while (assignment != nullptr);
 
         REQUIRE(emit_rand_ints->get_status() == JActivable::Status::Finished);
-        REQUIRE(multiply_by_two->get_status() == JActivable::Status::Finished);
-        REQUIRE(subtract_one->get_status() == JActivable::Status::Finished);
-        REQUIRE(sum_everything->get_status() == JActivable::Status::Finished);
+        REQUIRE(multiply_by_two->get_status() == JActivable::Status::Paused);
+        REQUIRE(subtract_one->get_status() == JActivable::Status::Paused);
+        REQUIRE(sum_everything->get_status() == JActivable::Status::Paused);
     }
 
     SECTION("When run sequentially, topology finished => RRS returns nullptr") {

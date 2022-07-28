@@ -17,7 +17,8 @@ JArrowTopology::JArrowTopology() = default;
 
 JArrowTopology::~JArrowTopology() {
     LOG_INFO(m_logger) << "Deleting JArrowTopology" << LOG_END;
-    finish();  // In case we paused() but didn't finish(),
+    // finish(); // We don't want to call finish() here in case there was an exception in JArrow::initialize(), finalize()
+
     for (auto arrow : arrows) {
         delete arrow;
     }
