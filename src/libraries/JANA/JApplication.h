@@ -85,7 +85,9 @@ public:
     bool IsDrainingQueues(void) { return m_draining_queues; }
 
     void SetTicker(bool ticker_on = true);
+    bool IsTickerEnabled();
     void SetTimeoutEnabled(bool enabled = true);
+    bool IsTimeoutEnabled();
     void PrintStatus();
     void PrintFinalReport();
     uint64_t GetNThreads();

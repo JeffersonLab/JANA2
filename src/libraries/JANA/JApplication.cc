@@ -265,8 +265,16 @@ void JApplication::SetTicker(bool ticker_on) {
     m_ticker_on = ticker_on;
 }
 
+bool JApplication::IsTickerEnabled() {
+    return m_ticker_on;
+}
+
 void JApplication::SetTimeoutEnabled(bool enabled) {
     m_timeout_on = enabled;
+}
+
+bool JApplication::IsTimeoutEnabled() {
+    return m_timeout_on;
 }
 
 void JApplication::PrintStatus() {
