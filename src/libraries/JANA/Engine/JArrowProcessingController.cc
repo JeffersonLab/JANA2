@@ -27,14 +27,12 @@ void JArrowProcessingController::acquire_services(JServiceLocator * sl) {
 
 void JArrowProcessingController::initialize() {
 
-    m_scheduler = new JScheduler(m_topology->arrows);
+    m_scheduler = new JScheduler(m_topology);
     m_scheduler->logger = m_scheduler_logger;
     LOG_INFO(m_logger) << m_topology->mapping << LOG_END;
 }
 
 void JArrowProcessingController::run(size_t nthreads) {
-
-    m_topology->run();
     scale(nthreads);
 }
 
@@ -54,6 +52,13 @@ void JArrowProcessingController::scale(size_t nthreads) {
         next_worker_id++;
     }
 
+    // topology->run needs to happen before threads are started so that threads don't quit due to lack of assignments
+    m_topology->run();
+    m_topology->metrics.reset();
+    m_topology->metrics.start(nthreads);
+    // TODO: Topology metrics belong in topology::on_status_change.
+    //       Only problem is we don't have access to nthreads there. Figure out later.
+
     for (size_t i=0; i<nthreads; ++i) {
         m_workers.at(i)->start();
     };
@@ -63,11 +68,6 @@ void JArrowProcessingController::scale(size_t nthreads) {
     for (size_t i=nthreads; i<next_worker_id; ++i) {
         m_workers.at(i)->wait_for_stop();
     }
-    m_topology->run();
-    // TODO: Topology metrics belong in topology::on_status_change.
-    //       Only problem is we don't have access to nthreads there. Figure out later.
-    m_topology->metrics.reset();
-    m_topology->metrics.start(nthreads);
 }
 
 void JArrowProcessingController::request_stop() {
@@ -79,6 +79,10 @@ void JArrowProcessingController::wait_until_stopped() {
     for (JWorker* worker : m_workers) {
         worker->wait_for_stop();
     }
+    // Make sure everything has finished.
+    // (note some things might have already finished e.g. event sources, but that's fine, finish() is idempotent)
+    m_topology->finish();
+
     // TODO: The JAPC abstractions are all wrong. We want to be able to
     //       1. Pause (turn off workers, leave events in queues, be able to resume or finish as-is without draining)
     //       2. Resume (from a paused state: turn workers back on, e.g. for debugging, scaling tests)
@@ -88,7 +92,6 @@ void JArrowProcessingController::wait_until_stopped() {
 }
 
 bool JArrowProcessingController::is_stopped() {
-    /*
     for (JWorker* worker : m_workers) {
         if (worker->get_runstate() != JWorker::RunState::Stopped) {
             return false;
@@ -96,9 +99,6 @@ bool JArrowProcessingController::is_stopped() {
     }
     // We have determined that all Workers have actually stopped
     return true;
-     */
-    // NWB: This really shoulld be 'paused'
-    return m_topology->get_status() == JActivable::Status::Stopped;
 }
 
 bool JArrowProcessingController::is_finished() {

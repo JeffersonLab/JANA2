@@ -53,19 +53,23 @@ TEST_CASE("MemoryBottleneckTest", "[.][performance]") {
     auto q2 = new JMailbox<Event*>();
     auto q3 = new JMailbox<Event*>();
 
-	auto parse_arrow = new SourceArrow<Event*>("parse", parse, q1);
-	auto disentangle_arrow = new MapArrow<Event*,Event*>("disentangle", disentangle, q1, q2);
-	auto track_arrow = new MapArrow<Event*,Event*>("track", track, q2, q3);
-	auto plot_arrow = new SinkArrow<Event*>("plot", plot, q3);
+    auto parse_arrow = new SourceArrow<Event*>("parse", parse, q1);
+    auto disentangle_arrow = new MapArrow<Event*,Event*>("disentangle", disentangle, q1, q2);
+    auto track_arrow = new MapArrow<Event*,Event*>("track", track, q2, q3);
+    auto plot_arrow = new SinkArrow<Event*>("plot", plot, q3);
 
-	parse_arrow->set_chunksize(1);
+    parse_arrow->attach_listener(disentangle_arrow);
+    disentangle_arrow->attach_listener(track_arrow);
+    track_arrow->attach_listener(plot_arrow);
 
-	topology->sources.push_back(parse_arrow);
-	topology->sinks.push_back(plot_arrow);
-	topology->arrows.push_back(parse_arrow);
-	topology->arrows.push_back(disentangle_arrow);
-	topology->arrows.push_back(track_arrow);
-	topology->arrows.push_back(plot_arrow);
+    parse_arrow->set_chunksize(1);
+
+    topology->sources.push_back(parse_arrow);
+    topology->sinks.push_back(plot_arrow);
+    topology->arrows.push_back(parse_arrow);
+    topology->arrows.push_back(disentangle_arrow);
+    topology->arrows.push_back(track_arrow);
+    topology->arrows.push_back(plot_arrow);
 
     JArrowProcessingController controller(topology);
     controller.initialize();
@@ -76,9 +80,10 @@ TEST_CASE("MemoryBottleneckTest", "[.][performance]") {
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
             controller.print_report();
         }
+        controller.request_stop();
         controller.wait_until_stopped();
-        //auto result = controller.measure_internal_performance();
-        //std::cout << nthreads << ": " << result->avg_throughput_hz << " Hz" << std::endl;
+        auto result = controller.measure_internal_performance();
+        std::cout << nthreads << ": " << result->avg_throughput_hz << " Hz" << std::endl;
 
     }
 }

@@ -49,7 +49,7 @@ TEST_CASE("SchedulerTests") {
 
         auto logger = JLogger(JLogger::Level::OFF);
 
-        JScheduler scheduler(topology.arrows);
+        JScheduler scheduler(&topology);
 
         last_result = JArrowMetrics::Status::ComeBackLater;
         assignment = nullptr;
@@ -71,7 +71,7 @@ TEST_CASE("SchedulerTests") {
     SECTION("When run sequentially, topology finished => RRS returns nullptr") {
 
         auto logger = JLogger(JLogger::Level::OFF);
-        JScheduler scheduler(topology.arrows);
+        JScheduler scheduler(&topology);
         last_result = JArrowMetrics::Status::ComeBackLater;
         assignment = nullptr;
 
@@ -121,7 +121,7 @@ TEST_CASE("SchedulerRoundRobinBehaviorTests") {
     emit_rand_ints->set_chunksize(1);
     topology.run();
 
-    JScheduler scheduler(topology.arrows);
+    JScheduler scheduler(&topology);
     auto logger = JLogger(JLogger::Level::OFF);
 
     auto last_result = JArrowMetrics::Status::ComeBackLater;

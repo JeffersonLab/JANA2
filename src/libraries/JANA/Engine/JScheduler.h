@@ -11,19 +11,21 @@
 #include <JANA/Services/JLoggingService.h>
 
 
+    struct JArrowTopology;
+
     /// Scheduler assigns Arrows to Workers in a first-come-first-serve manner,
     /// not unlike OpenMP's `schedule dynamic`.
     class JScheduler {
 
     private:
-        std::vector<JArrow*> m_arrows;
+        JArrowTopology* m_topology;
         size_t m_next_idx;
         std::mutex m_mutex;
 
     public:
 
         /// Constructor. Note that a Scheduler operates on a vector of Arrow*s.
-        JScheduler(const std::vector<JArrow*>& arrows);
+        JScheduler(JArrowTopology* topology);
 
         /// Lets a Worker ask the Scheduler for another assignment. If no assignments make sense,
         /// Scheduler returns nullptr, which tells that Worker to idle until his next checkin.

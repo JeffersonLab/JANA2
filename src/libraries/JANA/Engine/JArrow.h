@@ -11,6 +11,7 @@
 
 #include "JActivable.h"
 #include "JArrowMetrics.h"
+#include <JANA/JLogger.h>
 
 class JArrow : public JActivable {
 
@@ -28,8 +29,6 @@ private:
     // Statuses
     JArrowMetrics m_metrics;      // Performance information accumulated over all workers
     size_t m_thread_count = 0;    // Current number of threads assigned to this arrow
-    std::atomic_bool m_is_upstream_finished {false };  // TODO: Deprecated. Use m_status instead.
-    //Status m_status = Status::Unopened;  // Lives in JActivable for now
 
     // Knobs
     size_t m_chunksize = 1;       // Number of items to pop off the input queue at once
@@ -38,7 +37,8 @@ private:
     duration_t m_checkin_time = std::chrono::milliseconds(500);
     unsigned m_backoff_tries = 4;
 
-    mutable std::mutex m_mutex;   // Protects access to arrow properties.
+    JLogger m_logger {JLogger::Level::DEBUG};
+    mutable std::mutex m_mutex;  // Protects access to arrow properties.
                                  // TODO: Consider storing and protect thread count differently,
                                  // so that (number of workers) = (sum of thread counts for all arrows)
                                  // This is not so simple if we also want our WorkerStatus::arrow_name to match
@@ -54,6 +54,10 @@ public:
 public:
 
     // Written externally
+
+    void set_logger(JLogger logger) {
+        m_logger = logger;
+    }
 
     void set_chunksize(size_t chunksize) {
         std::lock_guard<std::mutex> lock(m_mutex);
@@ -149,11 +153,14 @@ public:
 
     virtual void set_threshold(size_t /* threshold */) {}
 
-    void on_status_change(JActivable::Status old_status, JActivable::Status new_status ) override {
+    void on_status_change(JActivable::Status old_status, JActivable::Status new_status ) final {
+        LOG_INFO(m_logger) << "Arrow '" << m_name << "' status change: " << old_status << " ==> " << new_status << LOG_END;
         if (old_status == JActivable::Status::Unopened) {
+            LOG_DEBUG(m_logger) << "Arrow '" << m_name << "': Initializing" << LOG_END;
             initialize();
         }
         else if (new_status == JActivable::Status::Finished) {
+            LOG_DEBUG(m_logger) << "Arrow '" << m_name << "': Finalizing" << LOG_END;
             this->finalize();
         }
     }

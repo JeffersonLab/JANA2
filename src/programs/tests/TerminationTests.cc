@@ -14,7 +14,9 @@
 
 TEST_CASE("TerminationTests") {
 
-    JApplication app;
+    auto parms = new JParameterManager;
+    // parms->SetParameter("log:debug","JScheduler,JArrowProcessingController,JWorker,JArrow");
+    JApplication app(parms);
     auto processor = new CountingProcessor(&app);
     app.Add(processor);
     app.SetParameterValue("jana:extended_report", 0);
@@ -25,9 +27,19 @@ TEST_CASE("TerminationTests") {
         auto source = new UnboundedSource("UnboundedSource", &app);
         app.Add(source);
         app.Run(false);
-        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
         app.Stop(true);
         REQUIRE(source->event_count > 0);
+    }
+
+    SECTION("Arrow engine, self termination") {
+
+        app.SetParameterValue("jana:engine", 0);
+        auto source = new BoundedSource("BoundedSource", &app);
+        app.Add(source);
+        app.Run(true);
+        REQUIRE(source->event_count == 10);
+        REQUIRE(processor->processed_count == 10);
     }
 
     SECTION("Debug engine, self-termination") {
@@ -52,54 +64,5 @@ TEST_CASE("TerminationTests") {
     }
 
 };
-
-
-
-TEST_CASE("TerminationTestsIssue119") {
-
-
-    auto parms = new JParameterManager;
-    // parms->SetParameter("log:debug","JScheduler,JArrowProcessingController,JWorker,JArrow");
-
-    JApplication app(parms);
-    auto processor = new CountingProcessor(&app);
-    app.Add(processor);
-    app.SetParameterValue("jana:extended_report", 1);
-    app.SetParameterValue("jana:engine", 0);
-    app.SetParameterValue("nthreads", 4);
-    app.SetTicker(true);
-
-    auto source = new UnboundedSource("UnboundedSource", &app);
-    app.Add(source);
-    app.Run(false);
-    for (int secs = 0; secs < 2; secs++) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-        // app.PrintStatus();
-    }
-    app.Quit(false);
-    REQUIRE(source->event_count > 0);
-    REQUIRE(processor->finish_call_count == 1);
-}
-
-
-
-TEST_CASE("SelfTermination") {
-
-    auto parms = new JParameterManager;
-    parms->SetParameter("log:debug","JScheduler,JArrowProcessingController,JWorker,JArrow");
-    JApplication app(parms);
-    auto processor = new CountingProcessor(&app);
-    app.Add(processor);
-    app.SetParameterValue("jana:extended_report", 0);
-
-    app.SetParameterValue("jana:engine", 0);
-    auto source = new BoundedSource("BoundedSource", &app);
-    app.Add(source);
-    app.Run(true);
-    REQUIRE(source->event_count == 10);
-    REQUIRE(processor->processed_count == 10);
-}
-
-
 
 

@@ -144,9 +144,6 @@ void JWorker::request_stop() {
 }
 
 void JWorker::wait_for_stop() {
-    if (m_run_state == RunState::Running) {
-        m_run_state = RunState::Stopping;
-    }
     if (m_thread != nullptr) {
         if (m_run_state == RunState::TimedOut) {
             m_thread->detach();
@@ -174,7 +171,6 @@ void JWorker::loop() {
 
         while (m_run_state == RunState::Running) {
 
-            LOG_DEBUG(logger) << "Worker " << m_worker_id << " is checking in" << LOG_END;
             auto start_time = jclock_t::now();
 
             {
@@ -191,10 +187,13 @@ void JWorker::loop() {
             auto useful_duration = jclock_t::duration::zero();
 
             if (m_assignment == nullptr) {
+                LOG_DEBUG(logger) << "Worker " << m_worker_id << " is shutting down due to lack of assignments" << LOG_END;
+                m_run_state = RunState::Stopped;
+                return;
 
-                LOG_DEBUG(logger) << "Worker " << m_worker_id << " idling due to lack of assignments" << LOG_END;
-                std::this_thread::sleep_for(std::chrono::microseconds(1));
-                idle_duration = jclock_t::now() - scheduler_time;
+                // LOG_DEBUG(logger) << "Worker " << m_worker_id << " idling due to lack of assignments" << LOG_END;
+                // std::this_thread::sleep_for(std::chrono::microseconds(1));
+                // idle_duration = jclock_t::now() - scheduler_time;
             }
             else {
 

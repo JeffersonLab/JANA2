@@ -73,7 +73,7 @@ public:
         m_status = Status::Finished;
     }
 
-    virtual void on_status_change(Status old_status, Status new_status) {};
+    virtual void on_status_change(Status /*old_status*/, Status /*new_status*/) {};
 
     void attach_listener(JActivable* listener) {
         m_listeners.push_back(listener);
