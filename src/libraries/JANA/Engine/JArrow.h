@@ -136,15 +136,11 @@ public:
 
     virtual ~JArrow() = default;
 
-    virtual void initialize() {
-        assert(get_status() == Status::Unopened);
-    };
+    virtual void initialize() {};
 
     virtual void execute(JArrowMetrics& result, size_t location_id) = 0;
 
-    virtual void finalize() {
-        assert(get_status() == Status::Stopped || get_status() == Status::Running);
-    };
+    virtual void finalize() {};
 
 
     virtual size_t get_pending() { return 0; }
@@ -181,7 +177,7 @@ inline std::ostream& operator<<(std::ostream& os, const JArrow::Status& s) {
     switch (s) {
         case JArrow::Status::Unopened: os << "Unopened"; break;
         case JArrow::Status::Running:  os << "Running"; break;
-        case JArrow::Status::Stopped: os << "Stopped"; break;
+        case JArrow::Status::Paused: os << "Stopped"; break;
         case JArrow::Status::Finished: os << "Finished"; break;
     }
     return os;

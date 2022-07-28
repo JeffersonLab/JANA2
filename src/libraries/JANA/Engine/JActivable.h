@@ -18,7 +18,7 @@
 
 class JActivable {
 public:
-    enum class Status {Unopened, Running, Stopped, Finished};
+    enum class Status {Unopened, Running, Paused, Finished};
 
 private:
     std::vector<JActivable *> m_listeners;
@@ -35,7 +35,7 @@ public:
     }
 
     void run() {
-        assert(m_status == Status::Unopened || m_status == Status::Stopped || m_status == Status::Running);
+        assert(m_status == Status::Unopened || m_status == Status::Paused || m_status == Status::Running);
         Status old_status = m_status;
         on_status_change(old_status, Status::Running);
         for (auto listener: m_listeners) {
@@ -45,18 +45,18 @@ public:
         m_status = Status::Running;
     }
 
-    void stop() {
-        if (m_status != Status::Running) return; // stop() is a no-op unless running
+    void pause() {
+        if (m_status != Status::Running) return; // pause() is a no-op unless running
         Status old_status = m_status;
         for (auto listener: m_listeners) {
             listener->m_running_upstreams--;
-            // listener->stop();
-            // This is not a sufficient condition for stopping downstream listeners.
+            // listener->pause();
+            // This is NOT a sufficient condition for pausing downstream listeners.
             // What we need is zero running upstreams AND zero messages in queue AND zero threads currently processing
-            // Correspondingly, the scheduler or worker needs to be the one to call stop() when this condition is reached.
+            // Correspondingly, the scheduler or worker needs to be the one to call pause() when this condition is reached.
         }
-        on_status_change(old_status, Status::Stopped);
-        m_status = Status::Stopped;
+        on_status_change(old_status, Status::Paused);
+        m_status = Status::Paused;
     }
 
     void finish() {

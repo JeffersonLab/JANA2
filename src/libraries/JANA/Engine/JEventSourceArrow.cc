@@ -27,11 +27,6 @@ JEventSourceArrow::JEventSourceArrow(std::string name,
 
 void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
 
-    if (get_status() == JActivable::Status::Stopped) {
-        result.update_finished();
-        return;
-    }
-
     JEventSource::ReturnStatus in_status = JEventSource::ReturnStatus::Success;
     auto start_time = std::chrono::steady_clock::now();
 

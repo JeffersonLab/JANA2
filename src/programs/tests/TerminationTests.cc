@@ -30,6 +30,7 @@ TEST_CASE("TerminationTests") {
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
         app.Stop(true);
         REQUIRE(source->event_count > 0);
+        REQUIRE(processor->finish_call_count == 1);
     }
 
     SECTION("Arrow engine, self termination") {
@@ -40,6 +41,8 @@ TEST_CASE("TerminationTests") {
         app.Run(true);
         REQUIRE(source->event_count == 10);
         REQUIRE(processor->processed_count == 10);
+        REQUIRE(processor->finish_call_count == 1);
+        app.Quit(); // prevent destructor from triggering finish() before REQUIRE statements
     }
 
     SECTION("Debug engine, self-termination") {
@@ -50,6 +53,7 @@ TEST_CASE("TerminationTests") {
         app.Run(true);
         REQUIRE(source->event_count == 10);
         REQUIRE(processor->processed_count == 10);
+        REQUIRE(processor->finish_call_count == 1);
     }
 
     SECTION("Debug engine, manual termination") {
@@ -61,6 +65,7 @@ TEST_CASE("TerminationTests") {
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
         app.Stop(true);
         REQUIRE(source->event_count > 0);
+        REQUIRE(processor->finish_call_count == 1);
     }
 
 };

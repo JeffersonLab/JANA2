@@ -29,7 +29,7 @@ JArrow* JScheduler::next_assignment(uint32_t worker_id, JArrow* assignment, JArr
             assignment->get_status() == JActivable::Status::Running) {
 
             LOG_INFO(logger) << "JScheduler: Deactivating arrow " << assignment->get_name() << LOG_END;
-            assignment->stop();
+            assignment->pause();
             m_topology->running_arrow_count -= 1;
             if (m_topology->running_arrow_count == 0) {
                 LOG_INFO(logger) << "All arrows deactivated. Deactivating topology." << LOG_END;
@@ -68,9 +68,9 @@ JArrow* JScheduler::next_assignment(uint32_t worker_id, JArrow* assignment, JArr
 
             }
             else {
-                // Candidate can be stopped immediately because there is no more work coming
+                // Candidate can be paused immediately because there is no more work coming
                 LOG_INFO(logger) << "Deactivating arrow " << candidate->get_name() << LOG_END;
-                candidate->stop();
+                candidate->pause();
                 m_topology->running_arrow_count -= 1;
                 if (m_topology->running_arrow_count == 0) {
                     LOG_INFO(logger) << "All arrows deactivated. Deactivating topology." << LOG_END;
