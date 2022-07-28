@@ -4,6 +4,7 @@
 
 #include <unistd.h>
 #include <thread>
+#include <typeinfo>
 
 // Note that Apple complicates things some. In particular with the
 // addition of Apple silicon (M1 chip) which does not seem to have
