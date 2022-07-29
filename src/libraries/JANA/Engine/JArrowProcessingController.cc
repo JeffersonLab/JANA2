@@ -103,6 +103,7 @@ void JArrowProcessingController::wait_until_stopped() {
     }
     // finish out the topology
     // (note some arrows might have already finished e.g. event sources, but that's fine, finish() is idempotent)
+    m_topology->achieve_pause();
     m_topology->stop();
 }
 

@@ -56,6 +56,7 @@ std::ostream& operator<<(std::ostream& os, JArrowTopology::Status status) {
 void JArrowTopology::run(int nthreads) {
 
     LOG_INFO(m_logger) << "Topology: run (previous state was " << m_current_status << ")" << LOG_END;
+    if (m_current_status == Status::Running || m_current_status == Status::Stopped) return;
     for (auto source : sources) {
         // We activate any sources, and everything downstream activates automatically
         // Note that this won't affect finished sources. It will, however, stop drain().
@@ -63,34 +64,37 @@ void JArrowTopology::run(int nthreads) {
     }
     // Note that we activate workers AFTER we activate the topology, so no actual processing will have happened
     // by this point when we start up the metrics.
-    metrics.reset(); // TODO: Do I want this?
+    metrics.reset();
     metrics.start(nthreads);
     m_current_status = Status::Running;
 }
+
 void JArrowTopology::request_pause() {
     // This sets all Running arrows to Paused, which prevents Workers from picking up any additional assignments
     // Once all Workers have completed their remaining assignments, the scheduler will notify us via achieve_pause().
     LOG_INFO(m_logger) << "Topology: request_pause (previous state was " << m_current_status << ")" << LOG_END;
-    for (auto arrow: arrows) {
-        arrow->pause();
-        // If arrow is not running, pause() is a no-op
+    if (m_current_status == Status::Running) {
+        for (auto arrow: arrows) {
+            arrow->pause();
+            // If arrow is not running, pause() is a no-op
+        }
+        m_current_status = Status::Pausing;
     }
-    m_current_status = Status::Pausing;
 }
+
 void JArrowTopology::achieve_pause() {
     // This is meant to be used by the scheduler to tell us when all workers have stopped, so it is safe to stop(), etc
     LOG_INFO(m_logger) << "Topology: achieve_pause (previous state was " << m_current_status << ")" << LOG_END;
-    assert(m_current_status == Status::Pausing || m_current_status == Status::Draining);
-    metrics.stop();
-    m_current_status = Status::Paused;
-
+    if (m_current_status == Status::Running || m_current_status == Status::Pausing || m_current_status == Status::Draining) {
+        metrics.stop();
+        m_current_status = Status::Paused;
+    }
 }
+
 void JArrowTopology::stop() {
     // This finalizes all arrows. Once this happens, we cannot restart the topology.
     LOG_INFO(m_logger) << "Topology: stop (previous state was " << m_current_status << ")" << LOG_END;
-    // assert(m_current_status == Status::Paused);
-    // TODO: Re-enable this once we fix running_arrow_count so that we are correctly in a Pause state first
-    metrics.stop();
+    assert(m_current_status == Status::Paused);
     for (auto arrow : arrows) {
         arrow->finish();
     }
