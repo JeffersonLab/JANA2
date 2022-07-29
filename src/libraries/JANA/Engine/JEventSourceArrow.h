@@ -22,7 +22,6 @@ private:
     EventQueue* m_output_queue;
     std::shared_ptr<JEventPool> m_pool;
     std::vector<Event> m_chunk_buffer;
-    JLogger m_logger;
 
 public:
     JEventSourceArrow(std::string name, JEventSource* source, EventQueue* output_queue, std::shared_ptr<JEventPool> pool);

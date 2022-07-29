@@ -15,7 +15,7 @@ class JTopologyBuilder : public JService {
 
 	std::shared_ptr<JParameterManager> m_params;
 	std::shared_ptr<JComponentManager> m_components;
-
+        JLogger m_logger;
 	JArrowTopology* m_override = nullptr; // Non-owning; caller responsible for deletion.
 
 public:
@@ -37,6 +37,7 @@ public:
 	void acquire_services(JServiceLocator* sl) override {
 		m_components = sl->get<JComponentManager>();
 		m_params = sl->get<JParameterManager>();
+                m_logger = sl->get<JLoggingService>()->get_logger("JArrow");
 	};
 
 	inline virtual JArrowTopology* build(int nthreads) {
@@ -89,6 +90,7 @@ public:
 			topology->arrows.push_back(arrow);
 			topology->sources.push_back(arrow);
 			arrow->set_chunksize(event_source_chunksize);
+                        arrow->set_logger(m_logger);
 		}
 
 		auto proc_arrow = new JEventProcessorArrow("processors", queue, nullptr, topology->event_pool);
@@ -98,6 +100,7 @@ public:
 		proc_arrow->set_chunksize(event_processor_chunksize);
 		topology->arrows.push_back(proc_arrow);
                 proc_arrow->set_running_arrows(&topology->running_arrow_count);
+                proc_arrow->set_logger(m_logger);
 
                 for (auto proc : m_components->get_evt_procs()) {
 			proc_arrow->add_processor(proc);

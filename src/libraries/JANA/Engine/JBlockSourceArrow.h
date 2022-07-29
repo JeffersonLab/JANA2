@@ -13,7 +13,6 @@ template <typename T>
 class JBlockSourceArrow : public JArrow {
 	JBlockedEventSource<T>* m_source;  // non-owning
 	JMailbox<T*>* m_block_queue; // non-owning
-	JLogger m_logger {JLogger::Level::DEBUG};
 
 	T* m_next_block = nullptr;
 

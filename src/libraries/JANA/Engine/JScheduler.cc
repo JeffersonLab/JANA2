@@ -28,11 +28,11 @@ JArrow* JScheduler::next_assignment(uint32_t worker_id, JArrow* assignment, JArr
             assignment->get_type() != JArrow::NodeType::Source &&
             assignment->get_state() == JArrow::State::Running) {
 
-            LOG_INFO(logger) << "Deactivating arrow '" << assignment->get_name() << "' (" << m_topology->running_arrow_count - 1 << " remaining)" << LOG_END;
+            LOG_DEBUG(logger) << "Deactivating arrow '" << assignment->get_name() << "' (" << m_topology->running_arrow_count - 1 << " remaining)" << LOG_END;
             assignment->pause();
             assert(m_topology->running_arrow_count >= 0);
             if (m_topology->running_arrow_count == 0) {
-                LOG_INFO(logger) << "All arrows deactivated. Deactivating topology." << LOG_END;
+                LOG_DEBUG(logger) << "All arrows deactivated. Deactivating topology." << LOG_END;
                 m_topology->achieve_pause();
             }
         }
@@ -69,11 +69,11 @@ JArrow* JScheduler::next_assignment(uint32_t worker_id, JArrow* assignment, JArr
             }
             else {
                 // Candidate can be paused immediately because there is no more work coming
-                LOG_INFO(logger) << "Deactivating arrow '" << candidate->get_name() << "' (" << m_topology->running_arrow_count - 1 << " remaining)" << LOG_END;
+                LOG_DEBUG(logger) << "Deactivating arrow '" << candidate->get_name() << "' (" << m_topology->running_arrow_count - 1 << " remaining)" << LOG_END;
                 candidate->pause();
                 assert(m_topology->running_arrow_count >= 0);
                 if (m_topology->running_arrow_count == 0) {
-                    LOG_INFO(logger) << "All arrows deactivated. Deactivating topology." << LOG_END;
+                    LOG_DEBUG(logger) << "All arrows deactivated. Deactivating topology." << LOG_END;
                     m_topology->achieve_pause();
                 }
             }

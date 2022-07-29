@@ -10,7 +10,7 @@
 JArrowTopology::JArrowTopology() = default;
 
 JArrowTopology::~JArrowTopology() {
-    LOG_INFO(m_logger) << "Deleting JArrowTopology" << LOG_END;
+    LOG_DEBUG(m_logger) << "JArrowTopology: Entering destructor" << LOG_END;
     // finish(); // We don't want to call finish() here in case there was an exception in JArrow::initialize(), finalize()
 
     for (auto arrow : arrows) {
@@ -22,7 +22,11 @@ JArrowTopology::~JArrowTopology() {
 }
 
 void JArrowTopology::drain() {
-    LOG_INFO(m_logger) << "JArrowTopology: draining" << LOG_END;
+    if (m_current_status == Status::Stopped) {
+        LOG_DEBUG(m_logger) << "JArrowTopology: drain(): Skipping because topology is already Stopped" << LOG_END;
+        return;
+    }
+    LOG_DEBUG(m_logger) << "JArrowTopology: drain()" << LOG_END;
     for (auto source : sources) {
         if (source->get_state() == JArrow::State::Running) {
             // TODO: I'm considering creating a single TopologyMutex that controls access to
@@ -55,8 +59,11 @@ std::ostream& operator<<(std::ostream& os, JArrowTopology::Status status) {
 
 void JArrowTopology::run(int nthreads) {
 
-    LOG_INFO(m_logger) << "Topology: run (previous state was " << m_current_status << ")" << LOG_END;
-    if (m_current_status == Status::Running || m_current_status == Status::Stopped) return;
+    if (m_current_status == Status::Running || m_current_status == Status::Stopped) {
+        LOG_DEBUG(m_logger) << "JArrowTopology: run() : " << m_current_status << " => " << m_current_status << LOG_END;
+        return;
+    }
+    LOG_DEBUG(m_logger) << "JArrowTopology: run() : " << m_current_status << " => Running" << LOG_END;
     for (auto source : sources) {
         // We activate any sources, and everything downstream activates automatically
         // Note that this won't affect finished sources. It will, however, stop drain().
@@ -72,28 +79,38 @@ void JArrowTopology::run(int nthreads) {
 void JArrowTopology::request_pause() {
     // This sets all Running arrows to Paused, which prevents Workers from picking up any additional assignments
     // Once all Workers have completed their remaining assignments, the scheduler will notify us via achieve_pause().
-    LOG_INFO(m_logger) << "Topology: request_pause (previous state was " << m_current_status << ")" << LOG_END;
     if (m_current_status == Status::Running) {
+        LOG_DEBUG(m_logger) << "JArrowTopology: request_pause() : " << m_current_status << " => Pausing" << LOG_END;
         for (auto arrow: arrows) {
             arrow->pause();
             // If arrow is not running, pause() is a no-op
         }
         m_current_status = Status::Pausing;
     }
+    else {
+        LOG_DEBUG(m_logger) << "JArrowTopology: request_pause() : " << m_current_status << " => " << m_current_status << LOG_END;
+    }
 }
 
 void JArrowTopology::achieve_pause() {
     // This is meant to be used by the scheduler to tell us when all workers have stopped, so it is safe to stop(), etc
-    LOG_INFO(m_logger) << "Topology: achieve_pause (previous state was " << m_current_status << ")" << LOG_END;
     if (m_current_status == Status::Running || m_current_status == Status::Pausing || m_current_status == Status::Draining) {
+        LOG_DEBUG(m_logger) << "JArrowTopology: achieve_pause() : " << m_current_status << " => " << Status::Paused << LOG_END;
         metrics.stop();
         m_current_status = Status::Paused;
+    }
+    else {
+        LOG_DEBUG(m_logger) << "JArrowTopology: achieve_pause() : " << m_current_status << " => " << m_current_status << LOG_END;
     }
 }
 
 void JArrowTopology::stop() {
     // This finalizes all arrows. Once this happens, we cannot restart the topology.
-    LOG_INFO(m_logger) << "Topology: stop (previous state was " << m_current_status << ")" << LOG_END;
+    if (m_current_status == JArrowTopology::Status::Stopped) {
+        LOG_DEBUG(m_logger) << "JArrowTopology: stop() : " << m_current_status << " => Stopped" << LOG_END;
+        return;
+    }
+    LOG_DEBUG(m_logger) << "JArrowTopology: stop() : " << m_current_status << " => Stopped" << LOG_END;
     assert(m_current_status == Status::Paused);
     for (auto arrow : arrows) {
         arrow->finish();

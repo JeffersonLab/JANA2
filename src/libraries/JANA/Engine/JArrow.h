@@ -35,7 +35,6 @@ private:
     duration_t m_checkin_time = std::chrono::milliseconds(500);
     unsigned m_backoff_tries = 4;
 
-    JLogger m_logger {JLogger::Level::DEBUG};
     mutable std::mutex m_mutex;  // Protects access to arrow properties.
 
 
@@ -46,6 +45,12 @@ private:
     int64_t m_running_upstreams = 0;       // Current number of running arrows immediately upstream
     int64_t* m_running_arrows = nullptr;   // Current number of running arrows total, so we can detect pauses
     std::vector<JArrow *> m_listeners;     // Downstream Arrows
+
+protected:
+    // This is usable by subclasses.
+    // Note that it has to be injected because JArrow doesn't know about JApplication, etc
+    JLogger m_logger {JLogger::Level::OFF};
+
 public:
 
     // Constants
@@ -166,8 +171,11 @@ public:
     }
 
     void run() {
-        LOG_INFO(m_logger) << "Arrow '" << m_name << "' running (previous state: " << m_state << ")" << LOG_END;
-        if (m_state == State::Running || m_state == State::Finished) return;
+        if (m_state == State::Running || m_state == State::Finished) {
+            LOG_DEBUG(m_logger) << "Arrow '" << m_name << "' run() : " << m_state << " => " << m_state << LOG_END;
+            return;
+        }
+        LOG_DEBUG(m_logger) << "Arrow '" << m_name << "' run() : " << m_state << " => Running" << LOG_END;
         State old_status = m_state;
         if (m_running_arrows != nullptr) (*m_running_arrows)++;
         for (auto listener: m_listeners) {
@@ -175,15 +183,18 @@ public:
             listener->run();  // Activating something recursively activates everything downstream.
         }
         if (old_status == State::Unopened) {
-            LOG_DEBUG(m_logger) << "Arrow '" << m_name << "': Initializing" << LOG_END;
+            LOG_TRACE(m_logger) << "JArrow '" << m_name << "': Initializing (this must only happen once)" << LOG_END;
             initialize();
         }
         m_state = State::Running;
     }
 
     void pause() {
-        LOG_INFO(m_logger) << "Arrow '" << m_name << "' pausing. (previous state: " << m_state << ")" << LOG_END;
-        if (m_state != State::Running) return; // pause() is a no-op unless running
+        if (m_state != State::Running) {
+            LOG_DEBUG(m_logger) << "JArrow '" << m_name << "' pause() : " << m_state << " => " << m_state << LOG_END;
+            return; // pause() is a no-op unless running
+        }
+        LOG_DEBUG(m_logger) << "JArrow '" << m_name << "' pause() : " << m_state << " => Paused" << LOG_END;
         if (m_running_arrows != nullptr) (*m_running_arrows)--;
         for (auto listener: m_listeners) {
             listener->m_running_upstreams--;
@@ -196,10 +207,10 @@ public:
     }
 
     void finish() {
-        LOG_INFO(m_logger) << "Arrow '" << m_name << "' finishing. (previous state: " << m_state << ")" << LOG_END;
+        LOG_DEBUG(m_logger) << "JArrow '" << m_name << "' finish() : " << m_state << " => Finished" << LOG_END;
         State old_status = m_state;
         if (old_status == State::Unopened) {
-            LOG_DEBUG(m_logger) << "Arrow '" << m_name << "': Initializing (belatedly)" << LOG_END;
+            LOG_DEBUG(m_logger) << "JArrow '" << m_name << "': Initializing (this must only happen once) (called from finish(), surprisingly)" << LOG_END;
             initialize();
         }
         if (old_status == State::Running) {
@@ -209,7 +220,7 @@ public:
             }
         }
         if (old_status != State::Finished) {
-            LOG_DEBUG(m_logger) << "Arrow '" << m_name << "': Finalizing" << LOG_END;
+            LOG_TRACE(m_logger) << "JArrow '" << m_name << "': Finalizing (this must only happen once)" << LOG_END;
             this->finalize();
         }
         m_state = State::Finished;
@@ -236,7 +247,7 @@ inline std::ostream& operator<<(std::ostream& os, const JArrow::State& s) {
     switch (s) {
         case JArrow::State::Unopened: os << "Unopened"; break;
         case JArrow::State::Running:  os << "Running"; break;
-        case JArrow::State::Paused: os << "Stopped"; break;
+        case JArrow::State::Paused: os << "Paused"; break;
         case JArrow::State::Finished: os << "Finished"; break;
     }
     return os;

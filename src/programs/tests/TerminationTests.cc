@@ -15,7 +15,7 @@
 TEST_CASE("TerminationTests") {
 
     auto parms = new JParameterManager;
-    parms->SetParameter("log:debug","JScheduler,JArrowProcessingController,JWorker,JArrow");
+    // parms->SetParameter("log:debug","JScheduler,JArrowProcessingController,JWorker,JArrow");
     JApplication app(parms);
     auto processor = new CountingProcessor(&app);
     app.Add(processor);

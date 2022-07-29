@@ -17,8 +17,6 @@ JEventProcessorArrow::JEventProcessorArrow(std::string name,
         , m_input_queue(input_queue)
         , m_output_queue(output_queue)
         , m_pool(std::move(pool)) {
-
-    m_logger = JLogger();
 }
 
 void JEventProcessorArrow::add_processor(JEventProcessor* processor) {
@@ -32,17 +30,17 @@ void JEventProcessorArrow::execute(JArrowMetrics& result, size_t location_id) {
     Event x;
     bool success;
     auto in_status = m_input_queue->pop(x, success, location_id);
-    LOG_DEBUG(m_logger) << "EventProcessorArrow '" << get_name() << "' [" << location_id << "]: "
+    LOG_TRACE(m_logger) << "JEventProcessorArrow '" << get_name() << "' [" << location_id << "]: "
                         << "pop() returned " << ((success) ? "success" : "failure")
                         << "; queue is now " << in_status << LOG_END;
 
     auto start_latency_time = std::chrono::steady_clock::now();
     if (success) {
-        LOG_DEBUG(m_logger) << "EventProcessorArrow '" << get_name() << "': Starting event# " << x->GetEventNumber() << LOG_END;
+        LOG_DEBUG(m_logger) << "JEventProcessorArrow '" << get_name() << "': Starting event# " << x->GetEventNumber() << LOG_END;
         for (JEventProcessor* processor : m_processors) {
             processor->DoMap(x);
         }
-        LOG_DEBUG(m_logger) << "EventProcessorArrow '" << get_name() << "': Finished event# " << x->GetEventNumber() << LOG_END;
+        LOG_DEBUG(m_logger) << "JEventProcessorArrow '" << get_name() << "': Finished event# " << x->GetEventNumber() << LOG_END;
     }
     auto end_latency_time = std::chrono::steady_clock::now();
 
@@ -78,13 +76,17 @@ void JEventProcessorArrow::execute(JArrowMetrics& result, size_t location_id) {
 
 void JEventProcessorArrow::initialize() {
 
+    LOG_DEBUG(m_logger) << "JEventProcessorArrow: Initializing arrow '" << get_name() << "'" << LOG_END;
     for (auto processor : m_processors) {
+        LOG_INFO(m_logger) << "Initializing JEventProcessor '" << processor->GetType() << "'" << LOG_END;
         processor->DoInitialize();
     }
 }
 
 void JEventProcessorArrow::finalize() {
+    LOG_DEBUG(m_logger) << "JEventProcessorArrow: Finalizing arrow '" << get_name() << "'" << LOG_END;
     for (auto processor : m_processors) {
+        LOG_INFO(m_logger) << "Finalizing JEventProcessor '" << processor->GetType() << "'" << LOG_END;
         processor->DoFinalize();
     }
 }
