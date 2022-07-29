@@ -23,7 +23,7 @@ JArrowMetrics::Status steppe(JArrow* arrow) {
         return metrics.get_last_status();
 }
 
-TEST_CASE("ActivableActivationTests") {
+TEST_CASE("ArrowActivationTests") {
 
     RandIntSource source;
     MultByTwoProcessor p1;

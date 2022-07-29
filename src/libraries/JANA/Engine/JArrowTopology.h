@@ -12,7 +12,6 @@
 #include <JANA/Utils/JEventPool.h>
 #include <JANA/Utils/JProcessorMapping.h>
 
-#include "JActivable.h"
 #include "JArrow.h"
 #include "JMailbox.h"
 
