@@ -17,7 +17,8 @@
 #include "JMailbox.h"
 
 
-struct JArrowTopology : public JActivable {
+struct JArrowTopology {
+    enum class Status { Paused, Running, Pausing, Draining, Stopped };
 
     using Event = std::shared_ptr<JEvent>;
     using EventQueue = JMailbox<Event>;
@@ -55,8 +56,12 @@ struct JArrowTopology : public JActivable {
 
     JLogger m_logger;
 
+    Status m_current_status = Status::Paused;
     void drain();
-    void on_status_change(Status old_status, Status new_status) override;
+    void run(int nthreads);
+    void request_pause();
+    void achieve_pause();
+    void stop();
 
 };
 

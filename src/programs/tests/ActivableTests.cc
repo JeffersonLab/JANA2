@@ -84,7 +84,7 @@ TEST_CASE("ActivableActivationTests") {
         REQUIRE(subtract_one->get_state() == JArrow::State::Unopened);
         REQUIRE(sum_everything->get_state() == JArrow::State::Unopened);
 
-        topology.run();
+        topology.run(1);
         // TODO: Check that initialize has been called, but not finalize
 
         REQUIRE(emit_rand_ints->get_state() == JArrow::State::Running);
@@ -136,7 +136,7 @@ TEST_CASE("ActivableDeactivationTests") {
     REQUIRE(subtract_one->get_state() == JArrow::State::Unopened);
     REQUIRE(sum_everything->get_state() == JArrow::State::Unopened);
 
-    topology.run();
+    topology.run(1);
 
     REQUIRE(emit_rand_ints->get_state() == JArrow::State::Running);
     REQUIRE(multiply_by_two->get_state() == JArrow::State::Running);

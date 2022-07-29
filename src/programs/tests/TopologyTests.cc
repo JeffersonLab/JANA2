@@ -99,7 +99,7 @@ TEST_CASE("JTopology: Basic functionality") {
         LOG_INFO(logger) << "After emitting; should be something in q0" << LOG_END;
 
         log_status(topology);
-        topology.run();
+        topology.run(1);
         step(emit_rand_ints);
         log_status(topology);
 
@@ -121,7 +121,7 @@ TEST_CASE("JTopology: Basic functionality") {
     SECTION("Running each stage sequentially yields the correct results") {
 
         //LOG_INFO(logger) << "Running each stage sequentially yields the correct results" << LOG_END;
-        topology.run();
+        topology.run(1);
 
         for (int i = 0; i < 20; ++i) {
             step(emit_rand_ints);
@@ -163,7 +163,7 @@ TEST_CASE("JTopology: Basic functionality") {
         results["sum_everything"] = JArrowMetrics::Status::KeepGoing;
 
         // Put something in the queue to get started
-        topology.run();
+        topology.run(1);
         step(emit_rand_ints);
 
         bool work_left = true;
@@ -199,7 +199,7 @@ TEST_CASE("JTopology: Basic functionality") {
         topology.m_logger = logger;
         source.logger = logger;
 
-        topology.run();
+        topology.run(1);
 
         REQUIRE(emit_rand_ints->get_state() == JArrow::State::Running);
         REQUIRE(multiply_by_two->get_state() == JArrow::State::Running);

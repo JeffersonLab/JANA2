@@ -33,7 +33,7 @@ JArrow* JScheduler::next_assignment(uint32_t worker_id, JArrow* assignment, JArr
             assert(m_topology->running_arrow_count >= 0);
             if (m_topology->running_arrow_count == 0) {
                 LOG_INFO(logger) << "All arrows deactivated. Deactivating topology." << LOG_END;
-                m_topology->finish();
+                m_topology->achieve_pause();
             }
         }
     }
@@ -74,7 +74,8 @@ JArrow* JScheduler::next_assignment(uint32_t worker_id, JArrow* assignment, JArr
                 assert(m_topology->running_arrow_count >= 0);
                 if (m_topology->running_arrow_count == 0) {
                     LOG_INFO(logger) << "All arrows deactivated. Deactivating topology." << LOG_END;
-                    m_topology->finish();
+                    m_topology->request_pause();
+                    m_topology->achieve_pause();
                 }
             }
         }

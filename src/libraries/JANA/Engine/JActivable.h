@@ -35,7 +35,7 @@ public:
     }
 
     void run() {
-        assert(m_status == Status::Unopened || m_status == Status::Paused || m_status == Status::Running);
+        if (m_status == Status::Finished) return;
         Status old_status = m_status;
         on_status_change(old_status, Status::Running);
         for (auto listener: m_listeners) {

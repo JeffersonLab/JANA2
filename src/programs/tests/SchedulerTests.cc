@@ -39,7 +39,7 @@ TEST_CASE("SchedulerTests") {
     topology.sinks.push_back(sum_everything);
 
     emit_rand_ints->set_chunksize(1);
-    topology.run();
+    topology.run(1);
 
     JArrow* assignment;
     JArrowMetrics::Status last_result;
@@ -119,7 +119,7 @@ TEST_CASE("SchedulerRoundRobinBehaviorTests") {
     topology.sinks.push_back(sum_everything);
 
     emit_rand_ints->set_chunksize(1);
-    topology.run();
+    topology.run(1);
 
     JScheduler scheduler(&topology);
     auto logger = JLogger(JLogger::Level::OFF);
