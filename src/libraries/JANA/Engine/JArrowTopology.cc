@@ -28,16 +28,10 @@ JArrowTopology::~JArrowTopology() {
 }
 
 void JArrowTopology::drain() {
-    LOG_INFO(m_logger) << "Draining topology" << LOG_END;
+    LOG_INFO(m_logger) << "JArrowTopology: draining" << LOG_END;
     for (auto source : sources) {
-        if (source->get_status() == JActivable::Status::Running) {
-            running_arrow_count -= 1;
-            // TODO: A possibly better option is to give each Arrow a reference to running_arrow_count
-            //       and only modify running_arrow_count from inside on_status_change.
-            // TODO: There is a race condition here where a source can pause on its own in between get_status() and pause(),
-            //       causing the running_arrow_count to be wrong and finish() to not be triggered.
-            //       This would be basically impossible to detect via testing.
-            //       I'm considering creating a single TopologyMutex that controls access to
+        if (source->get_state() == JArrow::State::Running) {
+            // TODO: I'm considering creating a single TopologyMutex that controls access to
             //         - scheduler
             //         - arrow thread counts
             //         - activable status
@@ -73,7 +67,7 @@ void JArrowTopology::on_status_change(Status old_status, Status new_status) {
         metrics.reset();
         metrics.start(0);
         for (auto source: sources) {
-            if (source->get_status() != JActivable::Status::Finished) {
+            if (source->get_state() != JArrow::State::Finished) {
                 source->run();
             }
         }

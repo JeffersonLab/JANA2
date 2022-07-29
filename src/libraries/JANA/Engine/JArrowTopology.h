@@ -38,7 +38,9 @@ struct JArrowTopology : public JActivable {
     std::vector<EventQueue*> queues;        // Queues shared between arrows
     JProcessorMapping mapping;
 
-    size_t running_arrow_count = 0;         // This lets us know when it is safe to finish the whole topology
+    // JActivable stuff
+    int64_t running_arrow_count = 0;         // Detects when the topology has paused
+    int64_t running_worker_count = 0;        // Detects when the workers have all joined
 
     size_t event_pool_size = 1;                 //  Will be defaulted to nthreads by builder
     bool limit_total_events_in_flight = true;

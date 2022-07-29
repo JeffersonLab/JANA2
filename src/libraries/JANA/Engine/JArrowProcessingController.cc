@@ -242,7 +242,7 @@ std::unique_ptr<const JArrowPerfSummary> JArrowProcessingController::measure_int
         summary.messages_pending = arrow->get_pending();
         summary.running_upstreams = arrow->get_running_upstreams();
         summary.threshold = arrow->get_threshold();
-        summary.status = arrow->get_status();
+        summary.status = arrow->get_state();
 
         summary.total_messages_completed = total_message_count;
         summary.last_messages_completed = last_message_count;

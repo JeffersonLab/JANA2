@@ -58,9 +58,9 @@ TEST_CASE("MemoryBottleneckTest", "[.][performance]") {
     auto track_arrow = new MapArrow<Event*,Event*>("track", track, q2, q3);
     auto plot_arrow = new SinkArrow<Event*>("plot", plot, q3);
 
-    parse_arrow->attach_listener(disentangle_arrow);
-    disentangle_arrow->attach_listener(track_arrow);
-    track_arrow->attach_listener(plot_arrow);
+    parse_arrow->attach(disentangle_arrow);
+    disentangle_arrow->attach(track_arrow);
+    track_arrow->attach(plot_arrow);
 
     parse_arrow->set_chunksize(1);
 

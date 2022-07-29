@@ -81,5 +81,14 @@ public:
 
 };
 
+inline std::ostream& operator<<(std::ostream& os, const JActivable::Status& s) {
+    switch (s) {
+        case JActivable::Status::Unopened: os << "Unopened"; break;
+        case JActivable::Status::Running:  os << "Running"; break;
+        case JActivable::Status::Paused: os << "Stopped"; break;
+        case JActivable::Status::Finished: os << "Finished"; break;
+    }
+    return os;
+}
 
 #endif //GREENFIELD_ACTIVABLE_H

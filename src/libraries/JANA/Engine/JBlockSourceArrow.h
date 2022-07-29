@@ -31,11 +31,6 @@ public:
 
 	void execute(JArrowMetrics& result, size_t location_id) final {
 
-                if (get_status() != JActivable::Status::Running) {
-                    result.update_finished();
-                    throw JException("I wonder if we actually get here. Do we want to?");
-                    return;
-                }
 		JArrowMetrics::Status status;
 		JArrowMetrics::duration_t latency;
 		JArrowMetrics::duration_t overhead; // TODO: Populate these

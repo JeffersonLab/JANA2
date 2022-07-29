@@ -44,7 +44,7 @@ public:
 
 	void execute(JArrowMetrics& result, size_t location_id) final {
 
-                if (get_status() != JActivable::Status::Running) {
+                if (get_state() != State::Running) {
                     result.update_finished();
                     throw JException("I wonder if we actually get here. Do we want to?");
                     return;

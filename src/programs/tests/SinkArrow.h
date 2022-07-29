@@ -41,7 +41,7 @@ public:
     };
 
     void execute(JArrowMetrics& result, size_t /* location_id */) override {
-        if (get_status() == JActivable::Status::Finished) {
+        if (get_state() == State::Finished) {
             result.update_finished();
             return;
         }

@@ -26,11 +26,11 @@ JArrow* JScheduler::next_assignment(uint32_t worker_id, JArrow* assignment, JArr
             assignment->get_pending() == 0 &&
             assignment->get_thread_count() == 0 &&
             assignment->get_type() != JArrow::NodeType::Source &&
-            assignment->get_status() == JActivable::Status::Running) {
+            assignment->get_state() == JArrow::State::Running) {
 
-            LOG_INFO(logger) << "JScheduler: Deactivating arrow " << assignment->get_name() << LOG_END;
+            LOG_INFO(logger) << "Deactivating arrow '" << assignment->get_name() << "' (" << m_topology->running_arrow_count - 1 << " remaining)" << LOG_END;
             assignment->pause();
-            m_topology->running_arrow_count -= 1;
+            assert(m_topology->running_arrow_count >= 0);
             if (m_topology->running_arrow_count == 0) {
                 LOG_INFO(logger) << "All arrows deactivated. Deactivating topology." << LOG_END;
                 m_topology->finish();
@@ -46,7 +46,7 @@ JArrow* JScheduler::next_assignment(uint32_t worker_id, JArrow* assignment, JArr
         current_idx += 1;
         current_idx %= m_topology->arrows.size();
 
-        if (candidate->get_status() == JActivable::Status::Running &&
+        if (candidate->get_state() == JArrow::State::Running &&
             (candidate->is_parallel() || candidate->get_thread_count() == 0)) {
 
             // Found a plausible candidate.
@@ -69,9 +69,9 @@ JArrow* JScheduler::next_assignment(uint32_t worker_id, JArrow* assignment, JArr
             }
             else {
                 // Candidate can be paused immediately because there is no more work coming
-                LOG_INFO(logger) << "Deactivating arrow " << candidate->get_name() << LOG_END;
+                LOG_INFO(logger) << "Deactivating arrow '" << candidate->get_name() << "' (" << m_topology->running_arrow_count - 1 << " remaining)" << LOG_END;
                 candidate->pause();
-                m_topology->running_arrow_count -= 1;
+                assert(m_topology->running_arrow_count >= 0);
                 if (m_topology->running_arrow_count == 0) {
                     LOG_INFO(logger) << "All arrows deactivated. Deactivating topology." << LOG_END;
                     m_topology->finish();

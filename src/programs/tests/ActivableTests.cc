@@ -10,7 +10,7 @@
 
 JArrowMetrics::Status steppe(JArrow* arrow) {
     if (arrow->get_type() != JArrow::NodeType::Source &&
-        arrow->get_status() == JActivable::Status::Running &&
+        arrow->get_state() == JArrow::State::Running &&
         arrow->get_pending() == 0 &&
         arrow->get_running_upstreams() == 0) {
 
@@ -41,9 +41,9 @@ TEST_CASE("ActivableActivationTests") {
     auto subtract_one = new MapArrow<double,double>("subtract_one", p2, q2, q3);
     auto sum_everything = new SinkArrow<double>("sum_everything", sink, q3);
 
-    emit_rand_ints->attach_listener(multiply_by_two);
-    multiply_by_two->attach_listener(subtract_one);
-    subtract_one->attach_listener(sum_everything);
+    emit_rand_ints->attach(multiply_by_two);
+    multiply_by_two->attach(subtract_one);
+    subtract_one->attach(sum_everything);
 
     topology.sources.push_back(emit_rand_ints);
 
@@ -66,10 +66,10 @@ TEST_CASE("ActivableActivationTests") {
         REQUIRE(q2->size() == 0);
         REQUIRE(q3->size() == 0);
 
-        REQUIRE(emit_rand_ints->get_status() == JActivable::Status::Unopened);
-        REQUIRE(multiply_by_two->get_status() == JActivable::Status::Unopened);
-        REQUIRE(subtract_one->get_status() == JActivable::Status::Unopened);
-        REQUIRE(sum_everything->get_status() == JActivable::Status::Unopened);
+        REQUIRE(emit_rand_ints->get_state() == JArrow::State::Unopened);
+        REQUIRE(multiply_by_two->get_state() == JArrow::State::Unopened);
+        REQUIRE(subtract_one->get_state() == JArrow::State::Unopened);
+        REQUIRE(sum_everything->get_state() == JArrow::State::Unopened);
 
         REQUIRE(emit_rand_ints->get_pending() == 0);
         REQUIRE(multiply_by_two->get_pending() == 0);
@@ -79,18 +79,18 @@ TEST_CASE("ActivableActivationTests") {
 
     SECTION("As a message propagates, arrows and queues downstream automatically activate") {
 
-        REQUIRE(emit_rand_ints->get_status() == JActivable::Status::Unopened);
-        REQUIRE(multiply_by_two->get_status() == JActivable::Status::Unopened);
-        REQUIRE(subtract_one->get_status() == JActivable::Status::Unopened);
-        REQUIRE(sum_everything->get_status() == JActivable::Status::Unopened);
+        REQUIRE(emit_rand_ints->get_state() == JArrow::State::Unopened);
+        REQUIRE(multiply_by_two->get_state() == JArrow::State::Unopened);
+        REQUIRE(subtract_one->get_state() == JArrow::State::Unopened);
+        REQUIRE(sum_everything->get_state() == JArrow::State::Unopened);
 
         topology.run();
         // TODO: Check that initialize has been called, but not finalize
 
-        REQUIRE(emit_rand_ints->get_status() == JActivable::Status::Running);
-        REQUIRE(multiply_by_two->get_status() == JActivable::Status::Running);
-        REQUIRE(subtract_one->get_status() == JActivable::Status::Running);
-        REQUIRE(sum_everything->get_status() == JActivable::Status::Running);
+        REQUIRE(emit_rand_ints->get_state() == JArrow::State::Running);
+        REQUIRE(multiply_by_two->get_state() == JArrow::State::Running);
+        REQUIRE(subtract_one->get_state() == JArrow::State::Running);
+        REQUIRE(sum_everything->get_state() == JArrow::State::Running);
     }
 
 } // TEST_CASE
@@ -116,9 +116,9 @@ TEST_CASE("ActivableDeactivationTests") {
     auto subtract_one = new MapArrow<double,double>("subtract_one", p2, q2, q3);
     auto sum_everything = new SinkArrow<double>("sum_everything", sink, q3);
 
-    emit_rand_ints->attach_listener(multiply_by_two);
-    multiply_by_two->attach_listener(subtract_one);
-    subtract_one->attach_listener(sum_everything);
+    emit_rand_ints->attach(multiply_by_two);
+    multiply_by_two->attach(subtract_one);
+    subtract_one->attach(sum_everything);
 
     topology.sources.push_back(emit_rand_ints);
     topology.arrows.push_back(emit_rand_ints);
@@ -131,24 +131,24 @@ TEST_CASE("ActivableDeactivationTests") {
     topology.m_logger = logger;
     source.logger = logger;
 
-    REQUIRE(emit_rand_ints->get_status() == JActivable::Status::Unopened);
-    REQUIRE(multiply_by_two->get_status() == JActivable::Status::Unopened);
-    REQUIRE(subtract_one->get_status() == JActivable::Status::Unopened);
-    REQUIRE(sum_everything->get_status() == JActivable::Status::Unopened);
+    REQUIRE(emit_rand_ints->get_state() == JArrow::State::Unopened);
+    REQUIRE(multiply_by_two->get_state() == JArrow::State::Unopened);
+    REQUIRE(subtract_one->get_state() == JArrow::State::Unopened);
+    REQUIRE(sum_everything->get_state() == JArrow::State::Unopened);
 
     topology.run();
 
-    REQUIRE(emit_rand_ints->get_status() == JActivable::Status::Running);
-    REQUIRE(multiply_by_two->get_status() == JActivable::Status::Running);
-    REQUIRE(subtract_one->get_status() == JActivable::Status::Running);
-    REQUIRE(sum_everything->get_status() == JActivable::Status::Running);
+    REQUIRE(emit_rand_ints->get_state() == JArrow::State::Running);
+    REQUIRE(multiply_by_two->get_state() == JArrow::State::Running);
+    REQUIRE(subtract_one->get_state() == JArrow::State::Running);
+    REQUIRE(sum_everything->get_state() == JArrow::State::Running);
 
     steppe(emit_rand_ints);
 
-    REQUIRE(emit_rand_ints->get_status() == JActivable::Status::Finished);
-    REQUIRE(multiply_by_two->get_status() == JActivable::Status::Running);
-    REQUIRE(subtract_one->get_status() == JActivable::Status::Running);
-    REQUIRE(sum_everything->get_status() == JActivable::Status::Running);
+    REQUIRE(emit_rand_ints->get_state() == JArrow::State::Finished);
+    REQUIRE(multiply_by_two->get_state() == JArrow::State::Running);
+    REQUIRE(subtract_one->get_state() == JArrow::State::Running);
+    REQUIRE(sum_everything->get_state() == JArrow::State::Running);
 
     // TODO: Test that finalize was called exactly once
 } // TEST_CASE
