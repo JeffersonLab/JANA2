@@ -17,7 +17,7 @@
 
 
 struct JArrowTopology {
-    enum class Status { Paused, Running, Pausing, Draining, Stopped };
+    enum class Status { Paused, Running, Pausing, Draining, Finished };
 
     using Event = std::shared_ptr<JEvent>;
     using EventQueue = JMailbox<Event>;
@@ -60,7 +60,7 @@ struct JArrowTopology {
     void run(int nthreads);
     void request_pause();
     void achieve_pause();
-    void stop();
+    void finish();
 
 };
 

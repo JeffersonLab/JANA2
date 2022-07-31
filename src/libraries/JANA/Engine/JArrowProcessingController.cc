@@ -104,7 +104,7 @@ void JArrowProcessingController::wait_until_stopped() {
     // finish out the topology
     // (note some arrows might have already finished e.g. event sources, but that's fine, finish() is idempotent)
     m_topology->achieve_pause();
-    m_topology->stop();
+    m_topology->finish();
 }
 
 bool JArrowProcessingController::is_stopped() {
@@ -112,8 +112,7 @@ bool JArrowProcessingController::is_stopped() {
 }
 
 bool JArrowProcessingController::is_finished() {
-    // This is also mis-named. This actually tests whether computation has been _stopped_.
-    return m_topology->m_current_status == JArrowTopology::Status::Stopped;
+    return m_topology->m_current_status == JArrowTopology::Status::Finished;
 }
 
 bool JArrowProcessingController::is_timed_out() {

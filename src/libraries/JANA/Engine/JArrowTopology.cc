@@ -22,8 +22,8 @@ JArrowTopology::~JArrowTopology() {
 }
 
 void JArrowTopology::drain() {
-    if (m_current_status == Status::Stopped) {
-        LOG_DEBUG(m_logger) << "JArrowTopology: drain(): Skipping because topology is already Stopped" << LOG_END;
+    if (m_current_status == Status::Finished) {
+        LOG_DEBUG(m_logger) << "JArrowTopology: drain(): Skipping because topology is already Finished" << LOG_END;
         return;
     }
     LOG_DEBUG(m_logger) << "JArrowTopology: drain()" << LOG_END;
@@ -51,7 +51,7 @@ std::ostream& operator<<(std::ostream& os, JArrowTopology::Status status) {
         case JArrowTopology::Status::Running: os << "Running"; break;
         case JArrowTopology::Status::Pausing: os << "Pausing"; break;
         case JArrowTopology::Status::Paused: os << "Paused"; break;
-        case JArrowTopology::Status::Stopped: os << "Stopped"; break;
+        case JArrowTopology::Status::Finished: os << "Finished"; break;
         case JArrowTopology::Status::Draining: os << "Draining"; break;
     }
     return os;
@@ -59,7 +59,7 @@ std::ostream& operator<<(std::ostream& os, JArrowTopology::Status status) {
 
 void JArrowTopology::run(int nthreads) {
 
-    if (m_current_status == Status::Running || m_current_status == Status::Stopped) {
+    if (m_current_status == Status::Running || m_current_status == Status::Finished) {
         LOG_DEBUG(m_logger) << "JArrowTopology: run() : " << m_current_status << " => " << m_current_status << LOG_END;
         return;
     }
@@ -104,17 +104,17 @@ void JArrowTopology::achieve_pause() {
     }
 }
 
-void JArrowTopology::stop() {
+void JArrowTopology::finish() {
     // This finalizes all arrows. Once this happens, we cannot restart the topology.
-    if (m_current_status == JArrowTopology::Status::Stopped) {
-        LOG_DEBUG(m_logger) << "JArrowTopology: stop() : " << m_current_status << " => Stopped" << LOG_END;
+    if (m_current_status == JArrowTopology::Status::Finished) {
+        LOG_DEBUG(m_logger) << "JArrowTopology: finish() : " << m_current_status << " => Finished" << LOG_END;
         return;
     }
-    LOG_DEBUG(m_logger) << "JArrowTopology: stop() : " << m_current_status << " => Stopped" << LOG_END;
+    LOG_DEBUG(m_logger) << "JArrowTopology: finish() : " << m_current_status << " => Finished" << LOG_END;
     assert(m_current_status == Status::Paused);
     for (auto arrow : arrows) {
         arrow->finish();
     }
-    m_current_status = Status::Stopped;
+    m_current_status = Status::Finished;
 }
 
