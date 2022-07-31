@@ -42,8 +42,9 @@ void JDebugProcessingController::run_worker() {
         event->SetJEventSource(evt_src);
         event->SetJApplication(evt_src->GetApplication());
 
-        auto factory_set = new JFactorySet(evt_src->GetFactoryGenerator(), m_component_manager->get_fac_gens());
-        event->SetFactorySet(factory_set);
+        m_component_manager->configure_event(*event);
+        // auto factory_set = new JFactorySet(evt_src->GetFactoryGenerator(), m_component_manager->get_fac_gens());
+        // event->SetFactorySet(factory_set);
 
         for (auto result = JEventSource::ReturnStatus::TryAgain;
              result != JEventSource::ReturnStatus::Finished && !m_stop_requested;) {
@@ -57,7 +58,7 @@ void JDebugProcessingController::run_worker() {
                     proc->DoReduce(event);
                 }
                 m_total_events_processed += 1;
-                factory_set->Release();
+                event->GetFactorySet()->Release();
             }
         }
     }

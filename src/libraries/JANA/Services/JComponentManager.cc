@@ -7,7 +7,11 @@
 #include <JANA/JEventProcessor.h>
 #include <JANA/JFactoryGenerator.h>
 
-JComponentManager::JComponentManager(JApplication* app) : m_app(app) {}
+JComponentManager::JComponentManager(JApplication* app) : m_app(app) {
+    auto parms = app->GetJParameterManager();
+    parms->SetDefaultParameter("RECORD_CALL_STACK", m_enable_call_graph_recording);
+    parms->FilterParameters(m_default_tags, "DEFTAG");
+}
 
 JComponentManager::~JComponentManager() {
 
@@ -61,6 +65,13 @@ void JComponentManager::add(JEventProcessor *processor) {
         processor->SetJApplication(m_app);
     }
     m_evt_procs.push_back(processor);
+}
+
+void JComponentManager::configure_event(JEvent& event) {
+    auto factory_set = new JFactorySet(m_fac_gens);
+    event.SetFactorySet(factory_set);
+    event.SetDefaultTags(m_default_tags);
+    event.GetJCallGraphRecorder()->SetEnabled(m_enable_call_graph_recording);
 }
 
 void JComponentManager::resolve_event_sources() {

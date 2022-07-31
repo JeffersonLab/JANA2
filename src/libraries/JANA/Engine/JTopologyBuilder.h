@@ -63,15 +63,13 @@ public:
 		m_params->SetDefaultParameter("jana:enable_stealing", enable_stealing);
 		m_params->SetDefaultParameter("jana:affinity", affinity);
 		m_params->SetDefaultParameter("jana:locality", locality);
-		m_params->SetDefaultParameter("RECORD_CALL_STACK", enable_call_graph_recording);
 
 
             // TODO: Move params onto JProcessorTopology. Maybe do the same for nthreads actually
 		topology->mapping.initialize(static_cast<JProcessorMapping::AffinityStrategy>(affinity),
 		                             static_cast<JProcessorMapping::LocalityStrategy>(locality));
 
-		topology->event_pool = std::make_shared<JEventPool>(&m_components->get_fac_gens(),
-                                                                    enable_call_graph_recording,
+		topology->event_pool = std::make_shared<JEventPool>(m_components,
                                                                     event_pool_size,
 		                                                    location_count,
                                                                     limit_total_events_in_flight);
