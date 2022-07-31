@@ -96,8 +96,6 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
 
     if (in_status == JEventSource::ReturnStatus::Finished) {
         finish();
-        LOG_INFO(m_logger) << "Finalizing JEventSource '" << m_source->GetName() << "' (" << m_source->GetResourceName() << ")" << LOG_END;
-        // TODO: We desperately need a Finalize() on event sources so that we can close them correctly when we Ctrl-C
         status = JArrowMetrics::Status::Finished;
     }
     else if (in_status == JEventSource::ReturnStatus::Success && out_status == EventQueue::Status::Ready) {
@@ -110,7 +108,11 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
 }
 
 void JEventSourceArrow::initialize() {
-    LOG_INFO(m_logger) << "Initializing JEventSource '" << m_source->GetName() << "' (" << m_source->GetResourceName() << ")" << LOG_END;
+    LOG_INFO(m_logger) << "Initializing JEventSource '" << m_source->GetResourceName() << "' (" << m_source->GetTypeName() << ")" << LOG_END;
     m_source->DoInitialize();
 }
 
+void JEventSourceArrow::finalize() {
+    LOG_INFO(m_logger) << "Finalizing JEventSource '" << m_source->GetResourceName() << "' (" << m_source->GetTypeName() << ")" << LOG_END;
+    m_source->DoFinalize();
+}

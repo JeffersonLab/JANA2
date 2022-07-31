@@ -26,6 +26,7 @@ private:
 public:
     JEventSourceArrow(std::string name, JEventSource* source, EventQueue* output_queue, std::shared_ptr<JEventPool> pool);
     void initialize() final;
+    void finalize() final;
     void execute(JArrowMetrics& result, size_t location_id) final;
 };
 
