@@ -38,6 +38,10 @@ void JArrowProcessingController::run(size_t nthreads) {
 
 void JArrowProcessingController::scale(size_t nthreads) {
 
+    LOG_INFO(m_logger) << "scale(): Stopping all running workers" << LOG_END;
+    request_pause();
+    wait_until_paused();
+    LOG_INFO(m_logger) << "scale(): All workers are stopped" << LOG_END;
     bool pin_to_cpu = (m_topology->mapping.get_affinity() != JProcessorMapping::AffinityStrategy::None);
     size_t next_worker_id = m_workers.size();
 
@@ -52,18 +56,13 @@ void JArrowProcessingController::scale(size_t nthreads) {
         next_worker_id++;
     }
 
-    // topology->run needs to happen before threads are started so that threads don't quit due to lack of assignments
+    LOG_INFO(m_logger) << "scale(): Restarting " << nthreads << " workers" << LOG_END;
+    // topology->run needs to happen _before_ threads are started so that threads don't quit due to lack of assignments
     m_topology->run(nthreads);
 
     for (size_t i=0; i<nthreads; ++i) {
         m_workers.at(i)->start();
     };
-    for (size_t i=nthreads; i<next_worker_id; ++i) {
-        m_workers.at(i)->request_stop();
-    }
-    for (size_t i=nthreads; i<next_worker_id; ++i) {
-        m_workers.at(i)->wait_for_stop();
-    }
 }
 
 void JArrowProcessingController::request_pause() {

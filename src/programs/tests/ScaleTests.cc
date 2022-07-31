@@ -8,52 +8,62 @@
 
 TEST_CASE("NThreads") {
 
-	JApplication app;
-	SECTION("If nthreads not provided, default to 1") {
-		app.Run(true);
-		auto threads = app.GetNThreads();
-		REQUIRE(threads == 1);
-	}
+    JApplication app;
+    SECTION("If nthreads not provided, default to 1") {
+        app.Run(true);
+        auto threads = app.GetNThreads();
+        REQUIRE(threads == 1);
+    }
 
-	SECTION("If nthreads=Ncores, use ncores") {
-		auto ncores = JCpuInfo::GetNumCpus();
-		app.SetParameterValue("nthreads", "Ncores");
-		app.Run(true);
-		auto threads = app.GetNThreads();
-		REQUIRE(threads == ncores);
-	}
+    SECTION("If nthreads=Ncores, use ncores") {
+        auto ncores = JCpuInfo::GetNumCpus();
+        app.SetParameterValue("nthreads", "Ncores");
+        app.Run(true);
+        auto threads = app.GetNThreads();
+        REQUIRE(threads == ncores);
+    }
 
-	SECTION("If nthreads is something else, use that") {
-		app.SetParameterValue("nthreads", 17);
-		app.Run(true);
-		auto threads = app.GetNThreads();
-		REQUIRE(threads == 17);
-	}
+    SECTION("If nthreads is something else, use that") {
+        app.SetParameterValue("nthreads", 17);
+        app.Run(true);
+        auto threads = app.GetNThreads();
+        REQUIRE(threads == 17);
+    }
 }
 
 TEST_CASE("ScaleNWorkerUpdate") {
-	JApplication app;
-	app.SetParameterValue("nthreads", 4);
-	app.Run(false);
-	auto threads = app.GetNThreads();
-	REQUIRE(threads == 4);
+    auto params = new JParameterManager();
+    // params->SetParameter("log:debug", "JWorker,JArrowTopology,JScheduler,JArrow");
+    JApplication app(params);
+    app.Add(new DummySource("DummySource", &app));
+    app.Add(new DummyProcessor);
+    app.SetParameterValue("nthreads", 4);
+    app.Run(false);
+    auto threads = app.GetNThreads();
+    REQUIRE(threads == 4);
 
-	app.Scale(8);
-	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-	// There is a ticker interval which prevents JApplication::update_status from fetching the most up-to-date
-	// thread count. Obviously this should be improved, but we'll deal with that later.
-	// TODO: Rethink update_status
-	threads = app.GetNThreads();
-	REQUIRE(threads == 8);
+    app.Scale(8); // Scale blocks until workers have fired up
+
+    // Ideally we could just do this:
+    // threads = app.GetNThreads();
+    // However, we can't, because JApplication caches performance metrics based off of a ticker interval, and
+    // Scale() doesn't invalidate the cache. We don't have a clean mechanism to manually force a cache invalidation
+    // from JApplication yet. So for now we will obtain the thread count directly from the JProcessingController.
+
+    auto pc = app.GetService<JProcessingController>();
+    auto perf_summary = pc->measure_performance();
+    threads = perf_summary->thread_count;
+
+    REQUIRE(threads == 8);
+    app.Quit();
 }
 
 TEST_CASE("ScaleThroughputImprovement", "[.][performance]") {
 
     auto parms = new JParameterManager;
-    parms->SetParameter("log:debug","JArrowProcessingController,JWorker,JArrow");
-    parms->SetParameter("log:info","JScheduler");
+    // parms->SetParameter("log:debug","JArrowProcessingController,JWorker,JArrow");
+    // parms->SetParameter("log:info","JScheduler");
     JApplication app(parms);
-    app.SetParameterValue("nthreads", 4);
     app.SetTicker(false);
     app.Add(new DummySource("dummy", &app));
     app.Add(new DummyProcessor);
@@ -64,7 +74,6 @@ TEST_CASE("ScaleThroughputImprovement", "[.][performance]") {
     app.Initialize();
     auto japc = app.GetService<JArrowProcessingController>();
     app.Run(false);
-    app.Scale(1);
     std::this_thread::sleep_for(std::chrono::seconds(5));
     auto throughput_hz_1 = japc->measure_internal_performance()->latest_throughput_hz;
     japc->print_report();
