@@ -62,10 +62,10 @@ TEST_CASE("SchedulerTests") {
             }
         } while (assignment != nullptr);
 
-        REQUIRE(emit_rand_ints->get_state() == JArrow::State::Finished);
-        REQUIRE(multiply_by_two->get_state() == JArrow::State::Paused);
-        REQUIRE(subtract_one->get_state() == JArrow::State::Paused);
-        REQUIRE(sum_everything->get_state() == JArrow::State::Paused);
+        REQUIRE(emit_rand_ints->get_status() == JArrow::Status::Finished);
+        REQUIRE(multiply_by_two->get_status() == JArrow::Status::Paused);
+        REQUIRE(subtract_one->get_status() == JArrow::Status::Paused);
+        REQUIRE(sum_everything->get_status() == JArrow::Status::Paused);
     }
 
     SECTION("When run sequentially, topology finished => RRS returns nullptr") {

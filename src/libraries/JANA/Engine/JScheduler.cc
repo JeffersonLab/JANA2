@@ -26,7 +26,7 @@ JArrow* JScheduler::next_assignment(uint32_t worker_id, JArrow* assignment, JArr
             assignment->get_pending() == 0 &&
             assignment->get_thread_count() == 0 &&
             assignment->get_type() != JArrow::NodeType::Source &&
-            assignment->get_state() == JArrow::State::Running) {
+                assignment->get_status() == JArrow::Status::Running) {
 
             LOG_DEBUG(logger) << "Deactivating arrow '" << assignment->get_name() << "' (" << m_topology->running_arrow_count - 1 << " remaining)" << LOG_END;
             assignment->pause();
@@ -46,7 +46,7 @@ JArrow* JScheduler::next_assignment(uint32_t worker_id, JArrow* assignment, JArr
         current_idx += 1;
         current_idx %= m_topology->arrows.size();
 
-        if (candidate->get_state() == JArrow::State::Running &&
+        if (candidate->get_status() == JArrow::Status::Running &&
             (candidate->is_parallel() || candidate->get_thread_count() == 0)) {
 
             // Found a plausible candidate.

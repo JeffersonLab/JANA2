@@ -12,7 +12,7 @@
 JArrowMetrics::Status step(JArrow* arrow) {
 
         if (arrow->get_type() != JArrow::NodeType::Source &&
-            arrow->get_state() == JArrow::State::Running &&
+                arrow->get_status() == JArrow::Status::Running &&
             arrow->get_pending() == 0 &&
             arrow->get_running_upstreams() == 0) {
 
@@ -201,46 +201,46 @@ TEST_CASE("JTopology: Basic functionality") {
 
         topology.run(1);
 
-        REQUIRE(emit_rand_ints->get_state() == JArrow::State::Running);
-        REQUIRE(multiply_by_two->get_state() == JArrow::State::Running);
-        REQUIRE(subtract_one->get_state() == JArrow::State::Running);
-        REQUIRE(sum_everything->get_state() == JArrow::State::Running);
+        REQUIRE(emit_rand_ints->get_status() == JArrow::Status::Running);
+        REQUIRE(multiply_by_two->get_status() == JArrow::Status::Running);
+        REQUIRE(subtract_one->get_status() == JArrow::Status::Running);
+        REQUIRE(sum_everything->get_status() == JArrow::Status::Running);
 
         for (int i = 0; i < 20; ++i) {
             step(emit_rand_ints);
         }
 
-        REQUIRE(emit_rand_ints->get_state() == JArrow::State::Finished);
-        REQUIRE(multiply_by_two->get_state() == JArrow::State::Running);
-        REQUIRE(subtract_one->get_state() == JArrow::State::Running);
-        REQUIRE(sum_everything->get_state() == JArrow::State::Running);
+        REQUIRE(emit_rand_ints->get_status() == JArrow::Status::Finished);
+        REQUIRE(multiply_by_two->get_status() == JArrow::Status::Running);
+        REQUIRE(subtract_one->get_status() == JArrow::Status::Running);
+        REQUIRE(sum_everything->get_status() == JArrow::Status::Running);
 
         for (int i = 0; i < 20; ++i) {
             step(multiply_by_two);
         }
 
-        REQUIRE(emit_rand_ints->get_state() == JArrow::State::Finished);
-        REQUIRE(multiply_by_two->get_state() == JArrow::State::Finished);
-        REQUIRE(subtract_one->get_state() == JArrow::State::Running);
-        REQUIRE(sum_everything->get_state() == JArrow::State::Running);
+        REQUIRE(emit_rand_ints->get_status() == JArrow::Status::Finished);
+        REQUIRE(multiply_by_two->get_status() == JArrow::Status::Finished);
+        REQUIRE(subtract_one->get_status() == JArrow::Status::Running);
+        REQUIRE(sum_everything->get_status() == JArrow::Status::Running);
 
         for (int i = 0; i < 20; ++i) {
             step(subtract_one);
         }
 
-        REQUIRE(emit_rand_ints->get_state() == JArrow::State::Finished);
-        REQUIRE(multiply_by_two->get_state() == JArrow::State::Finished);
-        REQUIRE(subtract_one->get_state() == JArrow::State::Finished);
-        REQUIRE(sum_everything->get_state() == JArrow::State::Running);
+        REQUIRE(emit_rand_ints->get_status() == JArrow::Status::Finished);
+        REQUIRE(multiply_by_two->get_status() == JArrow::Status::Finished);
+        REQUIRE(subtract_one->get_status() == JArrow::Status::Finished);
+        REQUIRE(sum_everything->get_status() == JArrow::Status::Running);
 
         for (int i = 0; i < 20; ++i) {
             step(sum_everything);
         }
 
-        REQUIRE(emit_rand_ints->get_state() == JArrow::State::Finished);
-        REQUIRE(multiply_by_two->get_state() == JArrow::State::Finished);
-        REQUIRE(subtract_one->get_state() == JArrow::State::Finished);
-        REQUIRE(sum_everything->get_state() == JArrow::State::Finished);
+        REQUIRE(emit_rand_ints->get_status() == JArrow::Status::Finished);
+        REQUIRE(multiply_by_two->get_status() == JArrow::Status::Finished);
+        REQUIRE(subtract_one->get_status() == JArrow::Status::Finished);
+        REQUIRE(sum_everything->get_status() == JArrow::Status::Finished);
 
         log_status(topology);
 

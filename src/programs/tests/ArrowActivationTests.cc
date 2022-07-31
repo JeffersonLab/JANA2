@@ -10,7 +10,7 @@
 
 JArrowMetrics::Status steppe(JArrow* arrow) {
     if (arrow->get_type() != JArrow::NodeType::Source &&
-        arrow->get_state() == JArrow::State::Running &&
+            arrow->get_status() == JArrow::Status::Running &&
         arrow->get_pending() == 0 &&
         arrow->get_running_upstreams() == 0) {
 
@@ -66,10 +66,10 @@ TEST_CASE("ArrowActivationTests") {
         REQUIRE(q2->size() == 0);
         REQUIRE(q3->size() == 0);
 
-        REQUIRE(emit_rand_ints->get_state() == JArrow::State::Unopened);
-        REQUIRE(multiply_by_two->get_state() == JArrow::State::Unopened);
-        REQUIRE(subtract_one->get_state() == JArrow::State::Unopened);
-        REQUIRE(sum_everything->get_state() == JArrow::State::Unopened);
+        REQUIRE(emit_rand_ints->get_status() == JArrow::Status::Unopened);
+        REQUIRE(multiply_by_two->get_status() == JArrow::Status::Unopened);
+        REQUIRE(subtract_one->get_status() == JArrow::Status::Unopened);
+        REQUIRE(sum_everything->get_status() == JArrow::Status::Unopened);
 
         REQUIRE(emit_rand_ints->get_pending() == 0);
         REQUIRE(multiply_by_two->get_pending() == 0);
@@ -79,18 +79,18 @@ TEST_CASE("ArrowActivationTests") {
 
     SECTION("As a message propagates, arrows and queues downstream automatically activate") {
 
-        REQUIRE(emit_rand_ints->get_state() == JArrow::State::Unopened);
-        REQUIRE(multiply_by_two->get_state() == JArrow::State::Unopened);
-        REQUIRE(subtract_one->get_state() == JArrow::State::Unopened);
-        REQUIRE(sum_everything->get_state() == JArrow::State::Unopened);
+        REQUIRE(emit_rand_ints->get_status() == JArrow::Status::Unopened);
+        REQUIRE(multiply_by_two->get_status() == JArrow::Status::Unopened);
+        REQUIRE(subtract_one->get_status() == JArrow::Status::Unopened);
+        REQUIRE(sum_everything->get_status() == JArrow::Status::Unopened);
 
         topology.run(1);
         // TODO: Check that initialize has been called, but not finalize
 
-        REQUIRE(emit_rand_ints->get_state() == JArrow::State::Running);
-        REQUIRE(multiply_by_two->get_state() == JArrow::State::Running);
-        REQUIRE(subtract_one->get_state() == JArrow::State::Running);
-        REQUIRE(sum_everything->get_state() == JArrow::State::Running);
+        REQUIRE(emit_rand_ints->get_status() == JArrow::Status::Running);
+        REQUIRE(multiply_by_two->get_status() == JArrow::Status::Running);
+        REQUIRE(subtract_one->get_status() == JArrow::Status::Running);
+        REQUIRE(sum_everything->get_status() == JArrow::Status::Running);
     }
 
 } // TEST_CASE
@@ -131,24 +131,24 @@ TEST_CASE("ActivableDeactivationTests") {
     topology.m_logger = logger;
     source.logger = logger;
 
-    REQUIRE(emit_rand_ints->get_state() == JArrow::State::Unopened);
-    REQUIRE(multiply_by_two->get_state() == JArrow::State::Unopened);
-    REQUIRE(subtract_one->get_state() == JArrow::State::Unopened);
-    REQUIRE(sum_everything->get_state() == JArrow::State::Unopened);
+    REQUIRE(emit_rand_ints->get_status() == JArrow::Status::Unopened);
+    REQUIRE(multiply_by_two->get_status() == JArrow::Status::Unopened);
+    REQUIRE(subtract_one->get_status() == JArrow::Status::Unopened);
+    REQUIRE(sum_everything->get_status() == JArrow::Status::Unopened);
 
     topology.run(1);
 
-    REQUIRE(emit_rand_ints->get_state() == JArrow::State::Running);
-    REQUIRE(multiply_by_two->get_state() == JArrow::State::Running);
-    REQUIRE(subtract_one->get_state() == JArrow::State::Running);
-    REQUIRE(sum_everything->get_state() == JArrow::State::Running);
+    REQUIRE(emit_rand_ints->get_status() == JArrow::Status::Running);
+    REQUIRE(multiply_by_two->get_status() == JArrow::Status::Running);
+    REQUIRE(subtract_one->get_status() == JArrow::Status::Running);
+    REQUIRE(sum_everything->get_status() == JArrow::Status::Running);
 
     steppe(emit_rand_ints);
 
-    REQUIRE(emit_rand_ints->get_state() == JArrow::State::Finished);
-    REQUIRE(multiply_by_two->get_state() == JArrow::State::Running);
-    REQUIRE(subtract_one->get_state() == JArrow::State::Running);
-    REQUIRE(sum_everything->get_state() == JArrow::State::Running);
+    REQUIRE(emit_rand_ints->get_status() == JArrow::Status::Finished);
+    REQUIRE(multiply_by_two->get_status() == JArrow::Status::Running);
+    REQUIRE(subtract_one->get_status() == JArrow::Status::Running);
+    REQUIRE(sum_everything->get_status() == JArrow::Status::Running);
 
     // TODO: Test that finalize was called exactly once
 } // TEST_CASE

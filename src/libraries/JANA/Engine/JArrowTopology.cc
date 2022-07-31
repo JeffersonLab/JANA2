@@ -28,7 +28,7 @@ void JArrowTopology::drain() {
     }
     LOG_DEBUG(m_logger) << "JArrowTopology: drain()" << LOG_END;
     for (auto source : sources) {
-        if (source->get_state() == JArrow::State::Running) {
+        if (source->get_status() == JArrow::Status::Running) {
             // TODO: I'm considering creating a single TopologyMutex that controls access to
             //         - scheduler
             //         - arrow thread counts

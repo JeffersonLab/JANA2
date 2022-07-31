@@ -41,7 +41,7 @@ public:
     };
 
     void execute(JArrowMetrics& result, size_t /* location_id */) override {
-        if (get_state() == State::Finished) {
+        if (get_status() == Status::Finished) {
             result.update_finished();
             return;
         }

@@ -43,7 +43,7 @@ public:
 
 	void execute(JArrowMetrics& result, size_t location_id) final {
 
-                if (get_state() != State::Running) {
+                if (get_status() != Status::Running) {
                     result.update_finished();
                     throw JException("I wonder if we actually get here. Do we want to?");
                     return;

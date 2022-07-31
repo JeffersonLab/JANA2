@@ -20,7 +20,7 @@ struct ArrowSummary {
     JArrow::NodeType arrow_type;
     int running_upstreams;
     bool has_backpressure;
-    JArrow::State status;
+    JArrow::Status status;
     size_t messages_pending;
     size_t threshold;
     size_t chunksize;

@@ -16,7 +16,7 @@
 class JArrow {
 
 public:
-    enum class State { Unopened, Running, Paused, Finished };
+    enum class Status { Unopened, Running, Paused, Finished };
     enum class NodeType {Source, Sink, Stage, Group};
     enum class BackoffStrategy { Constant, Linear, Exponential };
     using duration_t = std::chrono::steady_clock::duration;
@@ -40,7 +40,7 @@ private:
 
     // Scheduler stats
     // These are protected by the Topology mutex, NOT the Arrow mutex!!!
-    State m_state = State::Unopened;
+    Status m_status = Status::Unopened;
     int64_t m_thread_count = 0;            // Current number of threads assigned to this arrow
     int64_t m_running_upstreams = 0;       // Current number of running arrows immediately upstream
     int64_t* m_running_arrows = nullptr;   // Current number of running arrows total, so we can detect pauses
@@ -158,8 +158,8 @@ public:
 
 
 
-    State get_state() const {
-        return m_state;
+    Status get_status() const {
+        return m_status;
     }
 
     int64_t get_running_upstreams() const {
@@ -171,30 +171,30 @@ public:
     }
 
     void run() {
-        if (m_state == State::Running || m_state == State::Finished) {
-            LOG_DEBUG(m_logger) << "Arrow '" << m_name << "' run() : " << m_state << " => " << m_state << LOG_END;
+        if (m_status == Status::Running || m_status == Status::Finished) {
+            LOG_DEBUG(m_logger) << "Arrow '" << m_name << "' run() : " << m_status << " => " << m_status << LOG_END;
             return;
         }
-        LOG_DEBUG(m_logger) << "Arrow '" << m_name << "' run() : " << m_state << " => Running" << LOG_END;
-        State old_status = m_state;
+        LOG_DEBUG(m_logger) << "Arrow '" << m_name << "' run() : " << m_status << " => Running" << LOG_END;
+        Status old_status = m_status;
         if (m_running_arrows != nullptr) (*m_running_arrows)++;
         for (auto listener: m_listeners) {
             listener->m_running_upstreams++;
             listener->run();  // Activating something recursively activates everything downstream.
         }
-        if (old_status == State::Unopened) {
+        if (old_status == Status::Unopened) {
             LOG_TRACE(m_logger) << "JArrow '" << m_name << "': Initializing (this must only happen once)" << LOG_END;
             initialize();
         }
-        m_state = State::Running;
+        m_status = Status::Running;
     }
 
     void pause() {
-        if (m_state != State::Running) {
-            LOG_DEBUG(m_logger) << "JArrow '" << m_name << "' pause() : " << m_state << " => " << m_state << LOG_END;
+        if (m_status != Status::Running) {
+            LOG_DEBUG(m_logger) << "JArrow '" << m_name << "' pause() : " << m_status << " => " << m_status << LOG_END;
             return; // pause() is a no-op unless running
         }
-        LOG_DEBUG(m_logger) << "JArrow '" << m_name << "' pause() : " << m_state << " => Paused" << LOG_END;
+        LOG_DEBUG(m_logger) << "JArrow '" << m_name << "' pause() : " << m_status << " => Paused" << LOG_END;
         if (m_running_arrows != nullptr) (*m_running_arrows)--;
         for (auto listener: m_listeners) {
             listener->m_running_upstreams--;
@@ -203,27 +203,27 @@ public:
             // What we need is zero running upstreams AND zero messages in queue AND zero threads currently processing
             // Correspondingly, the scheduler or worker needs to be the one to call pause() when this condition is reached.
         }
-        m_state = State::Paused;
+        m_status = Status::Paused;
     }
 
     void finish() {
-        LOG_DEBUG(m_logger) << "JArrow '" << m_name << "' finish() : " << m_state << " => Finished" << LOG_END;
-        State old_status = m_state;
-        if (old_status == State::Unopened) {
+        LOG_DEBUG(m_logger) << "JArrow '" << m_name << "' finish() : " << m_status << " => Finished" << LOG_END;
+        Status old_status = m_status;
+        if (old_status == Status::Unopened) {
             LOG_DEBUG(m_logger) << "JArrow '" << m_name << "': Initializing (this must only happen once) (called from finish(), surprisingly)" << LOG_END;
             initialize();
         }
-        if (old_status == State::Running) {
+        if (old_status == Status::Running) {
             if (m_running_arrows != nullptr) (*m_running_arrows)--;
             for (auto listener: m_listeners) {
                 listener->m_running_upstreams--;
             }
         }
-        if (old_status != State::Finished) {
+        if (old_status != Status::Finished) {
             LOG_TRACE(m_logger) << "JArrow '" << m_name << "': Finalizing (this must only happen once)" << LOG_END;
             this->finalize();
         }
-        m_state = State::Finished;
+        m_status = Status::Finished;
     }
 
     void attach(JArrow* downstream) {
@@ -243,12 +243,12 @@ inline std::ostream& operator<<(std::ostream& os, const JArrow::NodeType& nt) {
     return os;
 }
 
-inline std::ostream& operator<<(std::ostream& os, const JArrow::State& s) {
+inline std::ostream& operator<<(std::ostream& os, const JArrow::Status& s) {
     switch (s) {
-        case JArrow::State::Unopened: os << "Unopened"; break;
-        case JArrow::State::Running:  os << "Running"; break;
-        case JArrow::State::Paused: os << "Paused"; break;
-        case JArrow::State::Finished: os << "Finished"; break;
+        case JArrow::Status::Unopened: os << "Unopened"; break;
+        case JArrow::Status::Running:  os << "Running"; break;
+        case JArrow::Status::Paused: os << "Paused"; break;
+        case JArrow::Status::Finished: os << "Finished"; break;
     }
     return os;
 }
