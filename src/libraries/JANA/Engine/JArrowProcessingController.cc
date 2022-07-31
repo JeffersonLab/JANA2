@@ -20,7 +20,7 @@ void JArrowProcessingController::acquire_services(JServiceLocator * sl) {
 
     // Obtain timeouts from parameter manager
     auto params = sl->get<JParameterManager>();
-    params->SetDefaultParameter("jana:timeout", m_timeout_s, "Max. time (in seconds) system will wait for a thread to update its heartbeat before killing it and launching a new one.");
+    params->SetDefaultParameter("jana:timeout", m_timeout_s, "Max. time (in seconds) system will wait for a thread to update its heartbeat before killing it and launching a new one. 0 to disable timeout completely.");
     params->SetDefaultParameter("jana:warmup_timeout", m_warmup_timeout_s, "Max. time (in seconds) system will wait for the initial events to complete before killing program.");
     // Originally "THREAD_TIMEOUT" and "THREAD_TIMEOUT_FIRST_EVENT"
 }
@@ -116,6 +116,7 @@ bool JArrowProcessingController::is_finished() {
 }
 
 bool JArrowProcessingController::is_timed_out() {
+    if (m_timeout_s == 0) return false;
 
     // Note that this makes its own (redundant) call to measure_internal_performance().
     // Probably want to refactor so that we only make one such call per ticker iteration.
