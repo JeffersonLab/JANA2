@@ -81,7 +81,7 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
         void SetEventNumber(uint64_t aEventNumber){mEventNumber = aEventNumber;}
         void SetJApplication(JApplication* app){mApplication = app;}
         void SetJEventSource(JEventSource* aSource){mEventSource = aSource;}
-        void SetDefaultTags(std::map<std::string, std::string> aDefaultTags){mDefaultTags=aDefaultTags; mUseDefaultTags=true;}
+        void SetDefaultTags(std::map<std::string, std::string> aDefaultTags){mDefaultTags=aDefaultTags; mUseDefaultTags = mDefaultTags.empty();}
 
         void SetSequential(bool isSequential) {mIsBarrierEvent = isSequential;}
 
