@@ -18,8 +18,7 @@ struct ArrowSummary {
     bool is_parallel;
     size_t thread_count;
     JArrow::NodeType arrow_type;
-    bool is_active;
-    bool is_upstream_active;
+    int running_upstreams;
     bool has_backpressure;
     JArrow::Status status;
     size_t messages_pending;

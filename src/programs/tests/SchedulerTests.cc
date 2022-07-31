@@ -22,20 +22,24 @@ TEST_CASE("SchedulerTests") {
     auto q2 = new JMailbox<double>();
     auto q3 = new JMailbox<double>();
 
-	auto emit_rand_ints = new SourceArrow<int>("emit_rand_ints", source, q1);
-	auto multiply_by_two = new MapArrow<int,double>("multiply_by_two", p1, q1, q2);
-	auto subtract_one = new MapArrow<double,double>("subtract_one", p2, q2, q3);
-	auto sum_everything = new SinkArrow<double>("sum_everything", sink, q3);
+    auto emit_rand_ints = new SourceArrow<int>("emit_rand_ints", source, q1);
+    auto multiply_by_two = new MapArrow<int,double>("multiply_by_two", p1, q1, q2);
+    auto subtract_one = new MapArrow<double,double>("subtract_one", p2, q2, q3);
+    auto sum_everything = new SinkArrow<double>("sum_everything", sink, q3);
 
-	topology.sources.push_back(emit_rand_ints);
+    emit_rand_ints->attach(multiply_by_two);
+    multiply_by_two->attach(subtract_one);
+    subtract_one->attach(sum_everything);
 
-	topology.arrows.push_back(emit_rand_ints);
-	topology.arrows.push_back(multiply_by_two);
-	topology.arrows.push_back(subtract_one);
-	topology.arrows.push_back(sum_everything);
+    topology.sources.push_back(emit_rand_ints);
+    topology.arrows.push_back(emit_rand_ints);
+    topology.arrows.push_back(multiply_by_two);
+    topology.arrows.push_back(subtract_one);
+    topology.arrows.push_back(sum_everything);
+    topology.sinks.push_back(sum_everything);
 
-	emit_rand_ints->set_chunksize(1);
-	topology.set_active(true);
+    emit_rand_ints->set_chunksize(1);
+    topology.run(1);
 
     JArrow* assignment;
     JArrowMetrics::Status last_result;
@@ -45,7 +49,7 @@ TEST_CASE("SchedulerTests") {
 
         auto logger = JLogger(JLogger::Level::OFF);
 
-        JScheduler scheduler(topology.arrows);
+        JScheduler scheduler(&topology);
 
         last_result = JArrowMetrics::Status::ComeBackLater;
         assignment = nullptr;
@@ -58,33 +62,27 @@ TEST_CASE("SchedulerTests") {
             }
         } while (assignment != nullptr);
 
-		REQUIRE(emit_rand_ints->is_active() == false);
-		REQUIRE(multiply_by_two->is_active() == false);
-		REQUIRE(subtract_one->is_active() == false);
-		REQUIRE(sum_everything->is_active() == false);
+        REQUIRE(emit_rand_ints->get_status() == JArrow::Status::Finished);
+        REQUIRE(multiply_by_two->get_status() == JArrow::Status::Paused);
+        REQUIRE(subtract_one->get_status() == JArrow::Status::Paused);
+        REQUIRE(sum_everything->get_status() == JArrow::Status::Paused);
     }
 
     SECTION("When run sequentially, topology finished => RRS returns nullptr") {
 
         auto logger = JLogger(JLogger::Level::OFF);
-        JScheduler scheduler(topology.arrows);
+        JScheduler scheduler(&topology);
         last_result = JArrowMetrics::Status::ComeBackLater;
         assignment = nullptr;
 
-        bool keep_going = true;
-        while (keep_going) {
+        for (int i=0; i<80; ++i) {
+            // 20 events in source which need to pass through 4 arrows
 
-            keep_going = emit_rand_ints->is_active() ||
-            		     multiply_by_two->is_active() ||
-            		     subtract_one->is_active() ||
-            		     sum_everything->is_active();
-
-            if (keep_going) {
-                assignment = scheduler.next_assignment(0, assignment, last_result);
-                JArrowMetrics metrics;
-                assignment->execute(metrics, 0);
-                last_result = metrics.get_last_status();
-            }
+            assignment = scheduler.next_assignment(0, assignment, last_result);
+            REQUIRE(assignment != nullptr);
+            JArrowMetrics metrics;
+            assignment->execute(metrics, 0);
+            last_result = metrics.get_last_status();
         }
         assignment = scheduler.next_assignment(0, assignment, last_result);
         REQUIRE(assignment == nullptr);
@@ -104,22 +102,26 @@ TEST_CASE("SchedulerRoundRobinBehaviorTests") {
     auto q2 = new JMailbox<double>();
     auto q3 = new JMailbox<double>();
 
-	auto emit_rand_ints = new SourceArrow<int>("emit_rand_ints", source, q1);
-	auto multiply_by_two = new MapArrow<int,double>("multiply_by_two", p1, q1, q2);
-	auto subtract_one = new MapArrow<double,double>("subtract_one", p2, q2, q3);
-	auto sum_everything = new SinkArrow<double>("sum_everything", sink, q3);
+    auto emit_rand_ints = new SourceArrow<int>("emit_rand_ints", source, q1);
+    auto multiply_by_two = new MapArrow<int,double>("multiply_by_two", p1, q1, q2);
+    auto subtract_one = new MapArrow<double,double>("subtract_one", p2, q2, q3);
+    auto sum_everything = new SinkArrow<double>("sum_everything", sink, q3);
 
-	topology.sources.push_back(emit_rand_ints);
+    emit_rand_ints->attach(multiply_by_two);
+    multiply_by_two->attach(subtract_one);
+    subtract_one->attach(sum_everything);
 
-	topology.arrows.push_back(emit_rand_ints);
-	topology.arrows.push_back(multiply_by_two);
-	topology.arrows.push_back(subtract_one);
-	topology.arrows.push_back(sum_everything);
+    topology.sources.push_back(emit_rand_ints);
+    topology.arrows.push_back(emit_rand_ints);
+    topology.arrows.push_back(multiply_by_two);
+    topology.arrows.push_back(subtract_one);
+    topology.arrows.push_back(sum_everything);
+    topology.sinks.push_back(sum_everything);
 
-	emit_rand_ints->set_chunksize(1);
-	topology.set_active(true);
+    emit_rand_ints->set_chunksize(1);
+    topology.run(1);
 
-    JScheduler scheduler(topology.arrows);
+    JScheduler scheduler(&topology);
     auto logger = JLogger(JLogger::Level::OFF);
 
     auto last_result = JArrowMetrics::Status::ComeBackLater;
@@ -137,6 +139,7 @@ TEST_CASE("SchedulerRoundRobinBehaviorTests") {
             assignment = scheduler.next_assignment(0, assignment, last_result);
 
             // The assignments go round-robin
+            std::cout << "Assignment is " << assignment->get_name() << std::endl;
             REQUIRE(assignment != nullptr);
             REQUIRE(assignment->get_name() == ordering[i % 4]);
         }
@@ -182,6 +185,7 @@ TEST_CASE("SchedulerRoundRobinBehaviorTests") {
         auto sum_everything_arrow = scheduler.next_assignment(3, nullptr, JArrowMetrics::Status::ComeBackLater);
 
         // Last assignment returned sequential arrow "sum_everything"
+        REQUIRE(sum_everything_arrow != nullptr);
         REQUIRE(sum_everything_arrow->get_name() == "sum_everything");
 
         std::map<std::string, int> assignment_counts;

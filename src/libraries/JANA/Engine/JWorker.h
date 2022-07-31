@@ -10,6 +10,7 @@
 #include <JANA/Engine/JScheduler.h>
 #include <JANA/Engine/JWorkerMetrics.h>
 #include <JANA/Engine/JArrowPerfSummary.h>
+#include <atomic>
 
 
 class JWorker {

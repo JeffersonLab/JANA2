@@ -15,7 +15,6 @@ class JBlockDisentanglerArrow : public JArrow {
 	JMailbox<T*>* m_block_queue; // owning
 	JMailbox<std::shared_ptr<JEvent>>* m_event_queue; // non-owning
 	std::shared_ptr<JEventPool> m_pool;
-	JLogger m_logger {JLogger::Level::DEBUG};
 
 	size_t m_max_events_per_block = 40;
 
@@ -44,10 +43,11 @@ public:
 
 	void execute(JArrowMetrics& result, size_t location_id) final {
 
-		if (!this->is_active()) {
-			result.update_finished();
-			return;
-		}
+                if (get_status() != Status::Running) {
+                    result.update_finished();
+                    throw JException("I wonder if we actually get here. Do we want to?");
+                    return;
+                }
 		JArrowMetrics::Status status;
 		JArrowMetrics::duration_t latency;
 		JArrowMetrics::duration_t overhead; // TODO: Populate these
@@ -71,9 +71,9 @@ public:
 		if (reserved_events == 0 || input_queue_status == JMailbox<T*>::Status::Congested || input_queue_status == JMailbox<T*>::Status::Full) {
 			status = JArrowMetrics::Status::ComeBackLater;
 		}
-		else if (input_queue_status == JMailbox<T*>::Status::Finished) {
-			status = JArrowMetrics::Status::Finished;
-		}
+		// else if (input_queue_status == JMailbox<T*>::Status::Finished) {
+		// 	status = JArrowMetrics::Status::Finished;
+		// }
 		else {
 			status = JArrowMetrics::Status::KeepGoing;
 		}

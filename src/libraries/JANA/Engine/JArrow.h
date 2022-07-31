@@ -7,14 +7,16 @@
 #define GREENFIELD_ARROW_H
 
 #include <iostream>
-#include <assert.h>
+#include <cassert>
+#include <vector>
 
-#include "JActivable.h"
 #include "JArrowMetrics.h"
+#include <JANA/JLogger.h>
 
-class JArrow : public JActivable {
+class JArrow {
 
 public:
+    enum class Status { Unopened, Running, Paused, Finished };
     enum class NodeType {Source, Sink, Stage, Group};
     enum class BackoffStrategy { Constant, Linear, Exponential };
     using duration_t = std::chrono::steady_clock::duration;
@@ -24,12 +26,7 @@ private:
     const std::string m_name;     // Used for human understanding
     const bool m_is_parallel;     // Whether or not it is safe to parallelize
     const NodeType m_type;
-
-    // Statuses
     JArrowMetrics m_metrics;      // Performance information accumulated over all workers
-    size_t m_thread_count = 0;    // Current number of threads assigned to this arrow
-    std::atomic_bool m_is_upstream_finished {false };  // TODO: Deprecated. Use m_status instead.
-    //Status m_status = Status::Unopened;  // Lives in JActivable for now
 
     // Knobs
     size_t m_chunksize = 1;       // Number of items to pop off the input queue at once
@@ -38,10 +35,22 @@ private:
     duration_t m_checkin_time = std::chrono::milliseconds(500);
     unsigned m_backoff_tries = 4;
 
-    mutable std::mutex m_mutex;   // Protects access to arrow properties.
-                                 // TODO: Consider storing and protect thread count differently,
-                                 // so that (number of workers) = (sum of thread counts for all arrows)
-                                 // This is not so simple if we also want our WorkerStatus::arrow_name to match
+    mutable std::mutex m_mutex;  // Protects access to arrow properties.
+
+
+    // Scheduler stats
+    // These are protected by the Topology mutex, NOT the Arrow mutex!!!
+    Status m_status = Status::Unopened;
+    int64_t m_thread_count = 0;            // Current number of threads assigned to this arrow
+    int64_t m_running_upstreams = 0;       // Current number of running arrows immediately upstream
+    int64_t* m_running_arrows = nullptr;   // Current number of running arrows total, so we can detect pauses
+    std::vector<JArrow *> m_listeners;     // Downstream Arrows
+
+protected:
+    // This is usable by subclasses.
+    // Note that it has to be injected because JArrow doesn't know about JApplication, etc
+    JLogger m_logger {JLogger::Level::OFF};
+
 public:
 
     // Constants
@@ -50,23 +59,12 @@ public:
 
     std::string get_name() { return m_name; }
 
-    // Written internally, read externally
-
-    bool is_upstream_finished() { return m_is_upstream_finished; }
-
-
-protected:
-
-    // Written internally, read externally
-
-    void set_upstream_finished(bool upstream_finished) { m_is_upstream_finished = upstream_finished; }
-
-    void set_status(Status status) { m_status = status; }
-
-
-public:
 
     // Written externally
+
+    void set_logger(JLogger logger) {
+        m_logger = logger;
+    }
 
     void set_chunksize(size_t chunksize) {
         std::lock_guard<std::mutex> lock(m_mutex);
@@ -133,10 +131,6 @@ public:
         return m_metrics;
     }
 
-    Status get_status() {
-        return m_status;
-    }
-
     NodeType get_type() {
         return m_type;
     }
@@ -149,17 +143,11 @@ public:
 
     virtual ~JArrow() = default;
 
-    virtual void initialize() {
-        assert(m_status == Status::Unopened);
-        m_status = Status::Inactive;
-    };
+    virtual void initialize() {};
 
     virtual void execute(JArrowMetrics& result, size_t location_id) = 0;
 
-    virtual void finalize() {
-        m_status = Status::Closed;
-    };
-
+    virtual void finalize() {};
 
     virtual size_t get_pending() { return 0; }
 
@@ -167,19 +155,81 @@ public:
 
     virtual void set_threshold(size_t /* threshold */) {}
 
-    void set_active(bool is_active) override {
-        if (is_active) {
-            assert(m_status != Status::Closed);
-            if (m_status == Status::Unopened) {
-                initialize();
-            }
-            m_status = Status::Running;
-        }
-        else {
-            //assert(_status != Status::Unopened);
-            m_status = Status::Inactive;
-        }
+
+
+
+    Status get_status() const {
+        return m_status;
     }
+
+    int64_t get_running_upstreams() const {
+        return m_running_upstreams;
+    }
+
+    void set_running_arrows(int64_t* running_arrows_ptr) {
+        m_running_arrows = running_arrows_ptr;
+    }
+
+    void run() {
+        if (m_status == Status::Running || m_status == Status::Finished) {
+            LOG_DEBUG(m_logger) << "Arrow '" << m_name << "' run() : " << m_status << " => " << m_status << LOG_END;
+            return;
+        }
+        LOG_DEBUG(m_logger) << "Arrow '" << m_name << "' run() : " << m_status << " => Running" << LOG_END;
+        Status old_status = m_status;
+        if (m_running_arrows != nullptr) (*m_running_arrows)++;
+        for (auto listener: m_listeners) {
+            listener->m_running_upstreams++;
+            listener->run();  // Activating something recursively activates everything downstream.
+        }
+        if (old_status == Status::Unopened) {
+            LOG_TRACE(m_logger) << "JArrow '" << m_name << "': Initializing (this must only happen once)" << LOG_END;
+            initialize();
+        }
+        m_status = Status::Running;
+    }
+
+    void pause() {
+        if (m_status != Status::Running) {
+            LOG_DEBUG(m_logger) << "JArrow '" << m_name << "' pause() : " << m_status << " => " << m_status << LOG_END;
+            return; // pause() is a no-op unless running
+        }
+        LOG_DEBUG(m_logger) << "JArrow '" << m_name << "' pause() : " << m_status << " => Paused" << LOG_END;
+        if (m_running_arrows != nullptr) (*m_running_arrows)--;
+        for (auto listener: m_listeners) {
+            listener->m_running_upstreams--;
+            // listener->pause();
+            // This is NOT a sufficient condition for pausing downstream listeners.
+            // What we need is zero running upstreams AND zero messages in queue AND zero threads currently processing
+            // Correspondingly, the scheduler or worker needs to be the one to call pause() when this condition is reached.
+        }
+        m_status = Status::Paused;
+    }
+
+    void finish() {
+        LOG_DEBUG(m_logger) << "JArrow '" << m_name << "' finish() : " << m_status << " => Finished" << LOG_END;
+        Status old_status = m_status;
+        if (old_status == Status::Unopened) {
+            LOG_DEBUG(m_logger) << "JArrow '" << m_name << "': Initializing (this must only happen once) (called from finish(), surprisingly)" << LOG_END;
+            initialize();
+        }
+        if (old_status == Status::Running) {
+            if (m_running_arrows != nullptr) (*m_running_arrows)--;
+            for (auto listener: m_listeners) {
+                listener->m_running_upstreams--;
+            }
+        }
+        if (old_status != Status::Finished) {
+            LOG_TRACE(m_logger) << "JArrow '" << m_name << "': Finalizing (this must only happen once)" << LOG_END;
+            this->finalize();
+        }
+        m_status = Status::Finished;
+    }
+
+    void attach(JArrow* downstream) {
+        m_listeners.push_back(downstream);
+    };
+
 };
 
 
@@ -196,12 +246,9 @@ inline std::ostream& operator<<(std::ostream& os, const JArrow::NodeType& nt) {
 inline std::ostream& operator<<(std::ostream& os, const JArrow::Status& s) {
     switch (s) {
         case JArrow::Status::Unopened: os << "Unopened"; break;
-        case JArrow::Status::Inactive: os << "Inactive"; break;
         case JArrow::Status::Running:  os << "Running"; break;
-        case JArrow::Status::Draining: os << "Draining"; break;
-        case JArrow::Status::Drained: os << "Drained"; break;
+        case JArrow::Status::Paused: os << "Paused"; break;
         case JArrow::Status::Finished: os << "Finished"; break;
-        case JArrow::Status::Closed: os << "Closed"; break;
     }
     return os;
 }

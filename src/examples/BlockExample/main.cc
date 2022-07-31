@@ -39,9 +39,6 @@ int main(int argc, char* argv[]) {
 	topology->sources.push_back(block_source_arrow);
 	topology->sinks.push_back(processor_arrow);
 
-	processor_arrow->attach_downstream(topology);
-	topology->attach_upstream(processor_arrow);    // Receive notifications when sinks finish
-
 	auto builder = app.GetService<JTopologyBuilder>();
 	builder->set_override(topology);
 

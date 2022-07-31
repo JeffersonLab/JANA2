@@ -24,6 +24,8 @@ public:
     void initialize() override;
     void run(size_t nthreads) override;
     void scale(size_t nthreads) override;
+    void request_pause();
+    void wait_until_paused();
     void request_stop() override;
     void wait_until_stopped() override;
 

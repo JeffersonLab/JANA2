@@ -20,20 +20,11 @@ JEventSourceArrow::JEventSourceArrow(std::string name,
     , m_source(source)
     , m_output_queue(output_queue)
     , m_pool(pool) {
-
-    m_output_queue->attach_upstream(this);
-    attach_downstream(m_output_queue);
-    m_logger = JLogger(JLogger::Level::INFO);
 }
 
 
 
 void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
-
-    if (!is_active()) {
-        result.update_finished();
-        return;
-    }
 
     JEventSource::ReturnStatus in_status = JEventSource::ReturnStatus::Success;
     auto start_time = std::chrono::steady_clock::now();
@@ -104,9 +95,7 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
     JArrowMetrics::Status status;
 
     if (in_status == JEventSource::ReturnStatus::Finished) {
-        set_upstream_finished(true);
-        LOG_DEBUG(m_logger) << "JEventSourceArrow '" << get_name() << "': "
-                            << "Finished!" << LOG_END;
+        finish();
         status = JArrowMetrics::Status::Finished;
     }
     else if (in_status == JEventSource::ReturnStatus::Success && out_status == EventQueue::Status::Ready) {
@@ -119,10 +108,11 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
 }
 
 void JEventSourceArrow::initialize() {
-    assert(m_status == Status::Unopened);
-    LOG_DEBUG(m_logger) << "JEventSourceArrow '" << get_name() << "': "
-                        << "Initializing" << LOG_END;
+    LOG_INFO(m_logger) << "Initializing JEventSource '" << m_source->GetResourceName() << "' (" << m_source->GetTypeName() << ")" << LOG_END;
     m_source->DoInitialize();
-    m_status = Status::Running;
 }
 
+void JEventSourceArrow::finalize() {
+    LOG_INFO(m_logger) << "Finalizing JEventSource '" << m_source->GetResourceName() << "' (" << m_source->GetTypeName() << ")" << LOG_END;
+    m_source->DoFinalize();
+}

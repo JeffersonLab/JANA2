@@ -20,26 +20,28 @@ void JArrowProcessingController::acquire_services(JServiceLocator * sl) {
 
     // Obtain timeouts from parameter manager
     auto params = sl->get<JParameterManager>();
-    params->SetDefaultParameter("jana:timeout", m_timeout_s, "Max. time (in seconds) system will wait for a thread to update its heartbeat before killing it and launching a new one.");
+    params->SetDefaultParameter("jana:timeout", m_timeout_s, "Max. time (in seconds) system will wait for a thread to update its heartbeat before killing it and launching a new one. 0 to disable timeout completely.");
     params->SetDefaultParameter("jana:warmup_timeout", m_warmup_timeout_s, "Max. time (in seconds) system will wait for the initial events to complete before killing program.");
     // Originally "THREAD_TIMEOUT" and "THREAD_TIMEOUT_FIRST_EVENT"
 }
 
 void JArrowProcessingController::initialize() {
 
-    m_scheduler = new JScheduler(m_topology->arrows);
+    m_scheduler = new JScheduler(m_topology);
     m_scheduler->logger = m_scheduler_logger;
     LOG_INFO(m_logger) << m_topology->mapping << LOG_END;
 }
 
 void JArrowProcessingController::run(size_t nthreads) {
-
-    m_topology->set_active(true);
     scale(nthreads);
 }
 
 void JArrowProcessingController::scale(size_t nthreads) {
 
+    LOG_INFO(m_logger) << "scale(): Stopping all running workers" << LOG_END;
+    request_pause();
+    wait_until_paused();
+    LOG_INFO(m_logger) << "scale(): All workers are stopped" << LOG_END;
     bool pin_to_cpu = (m_topology->mapping.get_affinity() != JProcessorMapping::AffinityStrategy::None);
     size_t next_worker_id = m_workers.size();
 
@@ -54,51 +56,66 @@ void JArrowProcessingController::scale(size_t nthreads) {
         next_worker_id++;
     }
 
+    LOG_INFO(m_logger) << "scale(): Restarting " << nthreads << " workers" << LOG_END;
+    // topology->run needs to happen _before_ threads are started so that threads don't quit due to lack of assignments
+    m_topology->run(nthreads);
+
     for (size_t i=0; i<nthreads; ++i) {
         m_workers.at(i)->start();
     };
-    for (size_t i=nthreads; i<next_worker_id; ++i) {
-        m_workers.at(i)->request_stop();
-    }
-    for (size_t i=nthreads; i<next_worker_id; ++i) {
-        m_workers.at(i)->wait_for_stop();
-    }
-    m_topology->metrics.reset();
-    m_topology->metrics.start(nthreads);
 }
 
-void JArrowProcessingController::request_stop() {
-    for (JWorker* worker : m_workers) {
-        worker->request_stop();
-    }
-    // Tell the topology to stop timers and deactivate arrows
-    m_topology->set_active(false);
+void JArrowProcessingController::request_pause() {
+    m_topology->request_pause();
+    // Or:
+    // for (JWorker* worker : m_workers) {
+    //     worker->request_stop();
+    // }
 }
 
-void JArrowProcessingController::wait_until_stopped() {
-    for (JWorker* worker : m_workers) {
-        worker->request_stop();
-    }
+void JArrowProcessingController::wait_until_paused() {
     for (JWorker* worker : m_workers) {
         worker->wait_for_stop();
     }
+    // Join all the worker threads.
+    // Do not trigger the pause (we may want the pause to come internally, e.g. from an event source running out.)
+    // Do NOT finish() the topology (we want the ability to be able to restart it)
+    m_topology->achieve_pause();
+}
+
+void JArrowProcessingController::request_stop() {
+    // Shut off the sources; the workers will stop on their own once they run out of assignments.
+    // Unlike request_pause, this drains all queues.
+    // Conceivably, a user could request_stop() followed by wait_until_paused(), which would drain all queues but
+    // leave the topology in a restartable state. This suggests we might want to rename some of these things.
+    // e.g. request_stop      =>   drain OR drain_then_pause
+    //      request_pause     =>   pause
+    //      wait_until_stop   =>   join_then_finish
+    //      wait_until_pause  =>   join
+    m_topology->drain();
+}
+
+void JArrowProcessingController::wait_until_stopped() {
+    // Join all workers
+    for (JWorker* worker : m_workers) {
+        worker->wait_for_stop();
+    }
+    // finish out the topology
+    // (note some arrows might have already finished e.g. event sources, but that's fine, finish() is idempotent)
+    m_topology->achieve_pause();
+    m_topology->finish();
 }
 
 bool JArrowProcessingController::is_stopped() {
-    for (JWorker* worker : m_workers) {
-        if (worker->get_runstate() != JWorker::RunState::Stopped) {
-            return false;
-        }
-    }
-    // We have determined that all Workers have actually stopped
-    return true;
+    return m_topology->m_current_status == JArrowTopology::Status::Paused;
 }
 
 bool JArrowProcessingController::is_finished() {
-    return !m_topology->is_active();
+    return m_topology->m_current_status == JArrowTopology::Status::Finished;
 }
 
 bool JArrowProcessingController::is_timed_out() {
+    if (m_timeout_s == 0) return false;
 
     // Note that this makes its own (redundant) call to measure_internal_performance().
     // Probably want to refactor so that we only make one such call per ticker iteration.
@@ -133,8 +150,13 @@ bool JArrowProcessingController::is_timed_out() {
 }
 
 JArrowProcessingController::~JArrowProcessingController() {
-    request_stop();
-    wait_until_stopped();
+
+    for (JWorker* worker : m_workers) {
+        worker->request_stop();
+    }
+    for (JWorker* worker : m_workers) {
+        worker->wait_for_stop();
+    }
     for (JWorker* worker : m_workers) {
         delete worker;
     }
@@ -196,12 +218,11 @@ std::unique_ptr<const JArrowPerfSummary> JArrowProcessingController::measure_int
         ArrowSummary summary;
         summary.arrow_type = arrow->get_type();
         summary.is_parallel = arrow->is_parallel();
-        summary.is_active = arrow->is_active();
         summary.thread_count = arrow->get_thread_count();
         summary.arrow_name = arrow->get_name();
         summary.chunksize = arrow->get_chunksize();
         summary.messages_pending = arrow->get_pending();
-        summary.is_upstream_active = !arrow->is_upstream_finished();
+        summary.running_upstreams = arrow->get_running_upstreams();
         summary.threshold = arrow->get_threshold();
         summary.status = arrow->get_status();
 
