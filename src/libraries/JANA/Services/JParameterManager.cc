@@ -111,6 +111,17 @@ void JParameterManager::PrintParameters(bool all) {
     LOG << "Configuration Parameters\n"  << ss.str() << LOG_END;
 }
 
+/// @brief Access entire map of parameters
+///
+/// \return The parameter map
+///
+/// @details Use this to do things like writing all parameters out to a non-standard format.
+/// This creates a copy of the map. Any modifications you make to the map itself won't propagate
+/// back to the JParameterManager. However, any modifications you make to the enclosed JParameters
+/// will. Prefer using SetParameter, SetDefaultParameter, FindParameter, or FilterParameters instead.
+std::map<std::string, JParameter*> JParameterManager::GetAllParameters() {
+    return m_parameters;
+}
 
 /// @brief Load parameters from a configuration file
 ///
@@ -262,7 +273,7 @@ void JParameterManager::FilterParameters(std::map<std::string, std::string> &par
     parms.clear();
     std::lock_guard<std::mutex> lock(m_mutex);
     for (auto pair : m_parameters) {
-        string key = pair.first;
+        string key = pair.second->GetKey();  // Note that this is the version that preserves the original case!
         string value = pair.second->GetValue();
         if (filter.size() > 0) {
             if (key.substr(0, filter.size()) != filter) continue;

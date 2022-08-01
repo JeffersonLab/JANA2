@@ -18,7 +18,6 @@ set(JANA2_SOURCES
     JCsvWriter.h
     JLogger.h
 
-    Engine/JActivable.h
     Engine/JArrow.h
     Engine/JArrowMetrics.h
     Engine/JArrowPerfSummary.cc

@@ -57,6 +57,16 @@ public:
 
     virtual void Open() {}
 
+
+    /// `Close` is called by JANA when it is finished accepting events from this event source. Here is where you should
+    /// cleanly close files, sockets, etc. Although GetEvent() knows when (for instance) there are no more events in a
+    /// file, the logic for closing needs to live here because there are other ways a computation may end besides
+    /// running out of events in a file. For instance, the user may want to process a limited number of events using
+    /// the `jana:nevents` parameter, or they may want to terminate the computation manually using Ctrl-C.
+
+    virtual void Close() {}
+
+
     /// `GetEvent` is called by JANA in order to emit a fresh event into the stream. JANA manages the entire lifetime of
     /// the JEvent. The `JEvent` being passed in is empty and merely needs to hydrated as follows:
 
@@ -79,7 +89,7 @@ public:
 
     /// `FinishEvent` is used to notify the `JEventSource` that an event has been completely processed. This is the final
     /// chance to interact with the `JEvent` before it is either cleared and recycled, or deleted. Although it is
-    /// possible to use this for freeing resources on the JEvent itself, this is strongly discouraged in favor of putting
+    /// possible to use this for freeing JObjects stored in the JEvent , this is strongly discouraged in favor of putting
     /// that logic on the destructor, RAII-style. Instead, this callback should be used for updating and freeing state
     /// owned by the JEventSource, e.g. raw data which is keyed off of run number and therefore shared among multiple
     /// JEvents. `FinishEvent` is also well-suited for use with `EventGroup`s, e.g. to notify someone that a batch of
@@ -101,6 +111,28 @@ public:
         try {
             std::call_once(m_init_flag, &JEventSource::Open, this);
             m_status = SourceStatus::Opened;
+        }
+        catch (JException& ex) {
+            ex.plugin_name = m_plugin_name;
+            ex.component_name = GetType();
+            throw ex;
+        }
+        catch (std::runtime_error& e){
+            throw(JException(e.what()));
+        }
+        catch (...) {
+            auto ex = JException("Unknown exception in JEventSource::Open()");
+            ex.nested_exception = std::current_exception();
+            ex.plugin_name = m_plugin_name;
+            ex.component_name = GetType();
+            throw ex;
+        }
+    }
+
+    virtual void DoFinalize() {
+        try {
+            std::call_once(m_close_flag, &JEventSource::Close, this);
+            m_status = SourceStatus::Finished;
         }
         catch (JException& ex) {
             ex.plugin_name = m_plugin_name;
@@ -270,6 +302,7 @@ private:
     std::string m_plugin_name;
     std::string m_type_name;
     std::once_flag m_init_flag;
+    std::once_flag m_close_flag;
     std::mutex m_mutex;
     bool m_enable_free_event = false;
 };

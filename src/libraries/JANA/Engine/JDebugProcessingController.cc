@@ -42,8 +42,9 @@ void JDebugProcessingController::run_worker() {
         event->SetJEventSource(evt_src);
         event->SetJApplication(evt_src->GetApplication());
 
-        auto factory_set = new JFactorySet(evt_src->GetFactoryGenerator(), m_component_manager->get_fac_gens());
-        event->SetFactorySet(factory_set);
+        m_component_manager->configure_event(*event);
+        // auto factory_set = new JFactorySet(evt_src->GetFactoryGenerator(), m_component_manager->get_fac_gens());
+        // event->SetFactorySet(factory_set);
 
         for (auto result = JEventSource::ReturnStatus::TryAgain;
              result != JEventSource::ReturnStatus::Finished && !m_stop_requested;) {
@@ -57,7 +58,7 @@ void JDebugProcessingController::run_worker() {
                     proc->DoReduce(event);
                 }
                 m_total_events_processed += 1;
-                factory_set->Release();
+                event->GetFactorySet()->Release();
             }
         }
     }
@@ -73,12 +74,12 @@ void JDebugProcessingController::run_worker() {
             m_finish_achieved &= (evt_src->GetStatus() == JEventSource::SourceStatus::Finished);
         }
 
-        if (m_finish_achieved) {
-            // Finalize event processors _only_ if finish was achieved.
-            LOG_INFO(m_logger) << "Finish achieved. Last worker is finalizing the event processors." << LOG_END;
-            for (JEventProcessor* evt_prc : evt_procs) {
-                evt_prc->DoFinalize();
-            }
+        // Previously, we finalized event processors _only_ if finish was achieved.
+        // Now, however, "stop" means finalize everything, and the alternative is named "pause".
+        // TODO: Update JDebugProcessingController and JProcessingController to support pause. Maybe even JApplication.
+        LOG_INFO(m_logger) << "Last worker is finalizing the event processors" << LOG_END;
+        for (JEventProcessor* evt_prc : evt_procs) {
+            evt_prc->DoFinalize();
         }
 
         LOG_INFO(m_logger) << "Last worker is stopping the stopwatch" << LOG_END;

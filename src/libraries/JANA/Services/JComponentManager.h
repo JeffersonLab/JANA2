@@ -28,6 +28,7 @@ public:
     void add(JEventSource* event_source);
     void add(JEventProcessor* processor);
 
+    void initialize();
     void resolve_event_sources();
     JEventSourceGenerator* resolve_user_event_source_generator() const;
     JEventSourceGenerator* resolve_event_source(std::string source_name) const;
@@ -40,6 +41,7 @@ public:
     std::vector<JEventProcessor*>& get_evt_procs();
     std::vector<JFactoryGenerator*>& get_fac_gens();
 
+    void configure_event(JEvent& event);
 
 private:
     // Sources need:    { typename, pluginname, srcname, status, evtcnt }
@@ -54,6 +56,9 @@ private:
     std::vector<JFactoryGenerator*> m_fac_gens;
     std::vector<JEventSource*> m_evt_srces;
     std::vector<JEventProcessor*> m_evt_procs;
+
+    std::map<std::string, std::string> m_default_tags;
+    bool m_enable_call_graph_recording = false;
 
     uint64_t m_nskip=0;
     uint64_t m_nevents=0;

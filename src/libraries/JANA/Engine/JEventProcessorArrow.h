@@ -23,7 +23,6 @@ private:
     EventQueue* m_input_queue;
     EventQueue* m_output_queue;
     std::shared_ptr<JEventPool> m_pool;
-    JLogger m_logger;
 
 public:
 

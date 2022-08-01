@@ -126,6 +126,7 @@ JWorker::~JWorker() {
 }
 
 void JWorker::start() {
+    // start() requires a wait_until_stopped() first. Otherwise everything gets very confused.
     if (m_run_state == RunState::Stopped) {
 
         m_run_state = RunState::Running;
@@ -144,9 +145,6 @@ void JWorker::request_stop() {
 }
 
 void JWorker::wait_for_stop() {
-    if (m_run_state == RunState::Running) {
-        m_run_state = RunState::Stopping;
-    }
     if (m_thread != nullptr) {
         if (m_run_state == RunState::TimedOut) {
             m_thread->detach();
@@ -169,12 +167,11 @@ void JWorker::wait_for_stop() {
 void JWorker::loop() {
     using jclock_t = JWorkerMetrics::clock_t;
     try {
-        LOG_DEBUG(logger) << "Worker " << m_worker_id << " has fired up." << LOG_END;
+        LOG_DEBUG(logger) << "Worker " << m_worker_id << " has entered loop()." << LOG_END;
         JArrowMetrics::Status last_result = JArrowMetrics::Status::NotRunYet;
 
         while (m_run_state == RunState::Running) {
 
-            LOG_DEBUG(logger) << "Worker " << m_worker_id << " is checking in" << LOG_END;
             auto start_time = jclock_t::now();
 
             {
@@ -191,10 +188,13 @@ void JWorker::loop() {
             auto useful_duration = jclock_t::duration::zero();
 
             if (m_assignment == nullptr) {
+                LOG_DEBUG(logger) << "Worker " << m_worker_id << " shutdown driven by topology pause" << LOG_END;
+                m_run_state = RunState::Stopped;
+                return;
 
-                LOG_DEBUG(logger) << "Worker " << m_worker_id << " idling due to lack of assignments" << LOG_END;
-                std::this_thread::sleep_for(std::chrono::microseconds(1));
-                idle_duration = jclock_t::now() - scheduler_time;
+                // LOG_DEBUG(logger) << "Worker " << m_worker_id << " idling due to lack of assignments" << LOG_END;
+                // std::this_thread::sleep_for(std::chrono::microseconds(1));
+                // idle_duration = jclock_t::now() - scheduler_time;
             }
             else {
 
@@ -255,18 +255,18 @@ void JWorker::loop() {
 
         m_scheduler->last_assignment(m_worker_id, m_assignment, last_result);
         m_assignment = nullptr; // Worker has 'handed in' the assignment
-        // TODO: Make m_assignment unique_ptr?
-
-        LOG_DEBUG(logger) << "Worker " << m_worker_id << " is exiting." << LOG_END;
+        LOG_DEBUG(logger) << "Worker " << m_worker_id << " shutdown due to worker->request_stop()." << LOG_END;
     }
     catch (const JException& e) {
         // For now the excepting Worker prints the error, and then terminates the whole program.
         // Eventually we want to unify error handling across JApplication::Run, and maybe even across the entire JApplication.
         // This means that Workers must pass JExceptions back to the master thread.
+        LOG_DEBUG(logger) << "Worker " << m_worker_id << " shutdown due to JException." << LOG_END;
         LOG_FATAL(logger) << e << LOG_END;
         exit(-1);
     }catch (std::runtime_error& e){
         // same as above
+        LOG_DEBUG(logger) << "Worker " << m_worker_id << " shutdown due to std::runtime_error." << LOG_END;
         LOG_FATAL(logger) << e.what() << LOG_END;
         exit(-1);
     }

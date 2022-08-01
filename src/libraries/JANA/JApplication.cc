@@ -118,6 +118,7 @@ void JApplication::Initialize() {
 
         m_params->SetDefaultParameter("jana:extended_report", m_extended_report);
 
+        m_component_manager->initialize();
         m_component_manager->resolve_event_sources();
 
         int engine_choice = 0;
@@ -232,7 +233,7 @@ void JApplication::Quit(bool skip_join) {
     m_skip_join = skip_join;
     m_quitting = true;
     if (m_processing_controller != nullptr) {
-        Stop(skip_join);
+        Stop(!skip_join);
     }
 }
 
@@ -265,8 +266,16 @@ void JApplication::SetTicker(bool ticker_on) {
     m_ticker_on = ticker_on;
 }
 
+bool JApplication::IsTickerEnabled() {
+    return m_ticker_on;
+}
+
 void JApplication::SetTimeoutEnabled(bool enabled) {
     m_timeout_on = enabled;
+}
+
+bool JApplication::IsTimeoutEnabled() {
+    return m_timeout_on;
 }
 
 void JApplication::PrintStatus() {

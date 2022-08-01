@@ -630,8 +630,11 @@ void JInspector::PrintObjectAncestors(std::string factory_idx, int object_idx) {
 
 void JInspector::Loop() {
     bool stay_in_loop = true;
-    m_event->GetJApplication()->SetTicker( false ); // TODO: Get the current ticker state first (requires JApplication be modified)
-    m_event->GetJApplication()->SetTimeoutEnabled( false ); // TODO: Get current state and save
+    auto app = m_event->GetJApplication();
+    m_enable_timeout_on_exit = app->IsTimeoutEnabled();
+    m_enable_ticker_on_exit = app->IsTickerEnabled();
+    m_event->GetJApplication()->SetTicker( false );
+    m_event->GetJApplication()->SetTimeoutEnabled( false );
     m_out << std::endl;
     m_out << "--------------------------------------------------------------------------------------" << std::endl;
     m_out << "Welcome to JANA's interactive inspector! Type `Help` or `h` to see available commands." << std::endl;
@@ -716,6 +719,10 @@ void JInspector::Loop() {
         }
     }
 
-    m_event->GetJApplication()->SetTicker( true ); // TODO: Reset to what it was upon entry
-    m_event->GetJApplication()->SetTimeoutEnabled( true ); // TODO: Reset to what it was upon entry
+    if (m_enable_ticker_on_exit) {
+        m_event->GetJApplication()->SetTicker( true );
+    }
+    if (m_enable_timeout_on_exit) {
+        m_event->GetJApplication()->SetTimeoutEnabled( true );
+    }
 }

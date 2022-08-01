@@ -38,7 +38,6 @@ private:
     Source<T> & _source;
     JMailbox<T> * _output_queue;
     std::vector<T> _chunk_buffer;
-    bool _is_initialized = false;
 
 
 public:
@@ -46,19 +45,12 @@ public:
         : JArrow(name, false, NodeType::Source)
         , _source(source)
         , _output_queue(output_queue) {
-
-        _output_queue->attach_upstream(this);
-        attach_downstream(_output_queue);
     }
 
-    void execute(JArrowMetrics& result, size_t /* location_id */) {
-        if (!is_active()) {
-            result.update_finished();
-            return;
-        }
-        if (!_is_initialized) {
-            _source.initialize();
-            _is_initialized = true;
+    void execute(JArrowMetrics& result, size_t /* location_id */) override {
+        if (get_status() == Status::Finished) {
+             result.update_finished();
+             return;
         }
 
         auto start_time = std::chrono::steady_clock::now();
@@ -73,13 +65,7 @@ public:
 
         JArrowMetrics::Status status;
         if (in_status == Source<T>::Status::Finished) {
-            _source.finalize();
-            set_upstream_finished(true);
-            set_active(false);
-            notify_downstream(false);
-            // TODO: We may need to have scheduler check that _all_ threads running
-            // this arrow have finished before notifying downstream, otherwise
-            // a couple of straggler events ~might~ get stranded on an inactive queue
+            finish();  // This will call finalize() which will call _source.finalize()
             status = JArrowMetrics::Status::Finished;
         }
         else if (in_status == Source<T>::Status::KeepGoing && out_status == JMailbox<T>::Status::Ready) {
@@ -89,6 +75,15 @@ public:
             status = JArrowMetrics::Status::ComeBackLater;
         }
         result.update(status, message_count, 1, latency, overhead);
+    }
+
+
+    void initialize() override {
+        _source.initialize();
+    }
+
+    void finalize() override {
+        _source.finalize();
     }
 };
 

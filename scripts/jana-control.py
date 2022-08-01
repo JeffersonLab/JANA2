@@ -98,7 +98,7 @@ class MultiColumnListbox(object):
         item = tuple(row_list)
 
         # Use first column as key
-        mykey = item[0]
+        mykey = item[0] + ':' + item[1]
         if mykey not in self.item_map.keys():
             self.item_map[mykey] = self.tree.insert('', 'end', values=item)
         # Update row with new values and adjust column's width if necessary to fit each value

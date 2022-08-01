@@ -9,21 +9,23 @@
 #include <JANA/JEventProcessor.h>
 #include <JANA/JEventSource.h>
 
+namespace scaletest {
 struct DummySource : public JEventSource {
 
-    DummySource(std::string source_name, JApplication *app) : JEventSource(std::move(source_name), app) { }
+    DummySource(std::string source_name, JApplication *app ) : JEventSource(std::move(source_name), app) {}
 
     void GetEvent(std::shared_ptr<JEvent>) override {
-        consume_cpu_ms(50);
+        consume_cpu_ms(20);
         std::this_thread::sleep_for(std::chrono::nanoseconds(1));
     }
 };
 
 struct DummyProcessor : public JEventProcessor {
 
-    void Process(const std::shared_ptr<const JEvent>&) override {
-        consume_cpu_ms(2000);
+    void Process(const std::shared_ptr<const JEvent> &) override {
+        consume_cpu_ms(100);
         std::this_thread::sleep_for(std::chrono::nanoseconds(1));
     }
 };
+} // namespace scaletest
 #endif //JANA2_SCALETESTS_H

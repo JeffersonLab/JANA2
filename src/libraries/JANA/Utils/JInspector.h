@@ -32,6 +32,8 @@ private:
     std::ostream& m_out = std::cout;
     std::istream& m_in = std::cin;
     std::set<std::string> m_discrepancies;
+    bool m_enable_timeout_on_exit = false;
+    bool m_enable_ticker_on_exit = false;
 
 public:
     explicit JInspector(const JEvent* event);
@@ -64,7 +66,7 @@ private:
 };
 
 template <>
-inline std::string JParameterManager::stringify(JInspector::Format value) {
+inline std::string JParameterManager::stringify(const JInspector::Format& value) {
     switch (value) {
         case JInspector::Format::Table: return "table";
         case JInspector::Format::Json: return "json";

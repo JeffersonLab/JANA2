@@ -53,34 +53,45 @@ TEST_CASE("MemoryBottleneckTest", "[.][performance]") {
     auto q2 = new JMailbox<Event*>();
     auto q3 = new JMailbox<Event*>();
 
-	auto parse_arrow = new SourceArrow<Event*>("parse", parse, q1);
-	auto disentangle_arrow = new MapArrow<Event*,Event*>("disentangle", disentangle, q1, q2);
-	auto track_arrow = new MapArrow<Event*,Event*>("track", track, q2, q3);
-	auto plot_arrow = new SinkArrow<Event*>("plot", plot, q3);
+    auto parse_arrow = new SourceArrow<Event*>("parse", parse, q1);
+    auto disentangle_arrow = new MapArrow<Event*,Event*>("disentangle", disentangle, q1, q2);
+    auto track_arrow = new MapArrow<Event*,Event*>("track", track, q2, q3);
+    auto plot_arrow = new SinkArrow<Event*>("plot", plot, q3);
 
-	parse_arrow->set_chunksize(1);
+    parse_arrow->attach(disentangle_arrow);
+    disentangle_arrow->attach(track_arrow);
+    track_arrow->attach(plot_arrow);
 
-	topology->sources.push_back(parse_arrow);
-	topology->sinks.push_back(plot_arrow);
-	topology->arrows.push_back(parse_arrow);
-	topology->arrows.push_back(disentangle_arrow);
-	topology->arrows.push_back(track_arrow);
-	topology->arrows.push_back(plot_arrow);
+    parse_arrow->set_chunksize(1);
+
+    topology->sources.push_back(parse_arrow);
+    topology->sinks.push_back(plot_arrow);
+    topology->arrows.push_back(parse_arrow);
+    topology->arrows.push_back(disentangle_arrow);
+    topology->arrows.push_back(track_arrow);
+    topology->arrows.push_back(plot_arrow);
 
     JArrowProcessingController controller(topology);
     controller.initialize();
 
+    controller.run(6); // for whatever mysterious reason we need to pre-warm our thread team
     for (int nthreads=1; nthreads<6; nthreads++) {
-        controller.run(nthreads);
+        controller.scale(nthreads);
         for (int secs=0; secs<10; secs++) {
             std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-            controller.print_report();
         }
-        controller.wait_until_stopped();
-        //auto result = controller.measure_internal_performance();
-        //std::cout << nthreads << ": " << result->avg_throughput_hz << " Hz" << std::endl;
+        controller.request_pause();
+        controller.wait_until_paused();
+        auto result = controller.measure_internal_performance();
+        std::cout << nthreads << ": " << result->avg_throughput_hz << " Hz" << std::endl;
 
     }
+    controller.scale(1);
+    controller.request_stop();
+    controller.wait_until_stopped();
+    controller.print_final_report();
+    auto perf = controller.measure_internal_performance();
+    // REQUIRE(perf->total_events_completed == perf->arrows[0].total_messages_completed);
 }
 
 
