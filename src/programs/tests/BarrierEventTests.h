@@ -13,7 +13,7 @@
 int global_resource = 0;
 
 class BarrierSource : public JEventSource {
-    int event_count;
+    int event_count=0;
 
 public:
     BarrierSource(std::string source_name, JApplication *app) : JEventSource(source_name, app)

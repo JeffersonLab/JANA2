@@ -31,6 +31,7 @@ set(TEST_SOURCES
     BarrierEventTests.h
     GetObjectsTests.cc
     JCallGraphRecorderTests.cc
+    JEventProcessorSequentialTests.cc
     JFactoryDefTagsTests.cc
     )
 
