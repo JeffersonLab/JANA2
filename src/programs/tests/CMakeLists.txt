@@ -1,7 +1,8 @@
 
 set(TEST_SOURCES
     catch.hpp
-    ActivableTests.cc
+    ArrowActivationTests.cc
+    JObjectTests.cc
     JServiceLocatorTests.cc
     JServiceLocatorTests.h
     QueueTests.cc

@@ -13,7 +13,6 @@ template <typename T>
 class JBlockSourceArrow : public JArrow {
 	JBlockedEventSource<T>* m_source;  // non-owning
 	JMailbox<T*>* m_block_queue; // non-owning
-	JLogger m_logger {JLogger::Level::DEBUG};
 
 	T* m_next_block = nullptr;
 
@@ -26,17 +25,11 @@ public:
 
 	void initialize() final {
 		LOG_DEBUG(m_logger) << "JBlockDisentanglerArrow '" << get_name() << "': " << "Initializing" << LOG_END;
-		assert(m_status == Status::Unopened);
 		m_source->Initialize();
-		m_status = Status::Running;
 	}
 
 	void execute(JArrowMetrics& result, size_t location_id) final {
 
-		if (!this->is_active()) {
-			result.update_finished();
-			return;
-		}
 		JArrowMetrics::Status status;
 		JArrowMetrics::duration_t latency;
 		JArrowMetrics::duration_t overhead; // TODO: Populate these

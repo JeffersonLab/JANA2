@@ -13,6 +13,7 @@
 struct SimpleSource : public JEventSource {
 
     std::atomic_int open_count {0};
+    std::atomic_int close_count {0};
     std::atomic_int event_count {0};
 
     SimpleSource(std::string source_name, JApplication *app) : JEventSource(source_name, app)
@@ -34,6 +35,9 @@ struct SimpleSource : public JEventSource {
         if (++event_count == 5) {
             throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
         }
+    }
+    void Close() override {
+        close_count += 1;
     }
 };
 

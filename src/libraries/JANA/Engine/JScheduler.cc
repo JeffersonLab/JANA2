@@ -3,13 +3,15 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #include <JANA/Engine/JScheduler.h>
+#include <JANA/Engine/JArrowTopology.h>
 #include <JANA/Services/JLoggingService.h>
 
 
-JScheduler::JScheduler(const std::vector<JArrow*>& arrows)
-    : m_arrows(arrows)
+JScheduler::JScheduler(JArrowTopology* topology)
+    : m_topology(topology)
     , m_next_idx(0)
-    {}
+    {
+    }
 
 
 JArrow* JScheduler::next_assignment(uint32_t worker_id, JArrow* assignment, JArrowMetrics::Status last_result) {
@@ -20,17 +22,19 @@ JArrow* JScheduler::next_assignment(uint32_t worker_id, JArrow* assignment, JArr
     if (assignment != nullptr) {
         assignment->update_thread_count(-1);
 
-        if (assignment->is_upstream_finished() && assignment->get_thread_count() == 0) {
+        if (assignment->get_running_upstreams() == 0 &&
+            assignment->get_pending() == 0 &&
+            assignment->get_thread_count() == 0 &&
+            assignment->get_type() != JArrow::NodeType::Source &&
+                assignment->get_status() == JArrow::Status::Running) {
 
-            // This was the last worker running this arrow, so it can now deactivate
-            // We know it is the last worker because we stopped assigning them
-            // once is_upstream_finished started returning true
-            assignment->set_active(false);
-
-            m_mutex.unlock();
-            LOG_INFO(logger) << "Deactivating arrow " << assignment->get_name() << LOG_END;
-            assignment->notify_downstream(false);
-            m_mutex.lock();
+            LOG_DEBUG(logger) << "Deactivating arrow '" << assignment->get_name() << "' (" << m_topology->running_arrow_count - 1 << " remaining)" << LOG_END;
+            assignment->pause();
+            assert(m_topology->running_arrow_count >= 0);
+            if (m_topology->running_arrow_count == 0) {
+                LOG_DEBUG(logger) << "All arrows deactivated. Deactivating topology." << LOG_END;
+                m_topology->achieve_pause();
+            }
         }
     }
 
@@ -38,23 +42,41 @@ JArrow* JScheduler::next_assignment(uint32_t worker_id, JArrow* assignment, JArr
     // arrow that works
     size_t current_idx = m_next_idx;
     do {
-        JArrow* candidate = m_arrows[current_idx];
+        JArrow* candidate = m_topology->arrows[current_idx];
         current_idx += 1;
-        current_idx %= m_arrows.size();
+        current_idx %= m_topology->arrows.size();
 
-        if (!candidate->is_upstream_finished() &&
+        if (candidate->get_status() == JArrow::Status::Running &&
             (candidate->is_parallel() || candidate->get_thread_count() == 0)) {
 
-            // Found a plausible candidate; done
-            m_next_idx = current_idx; // Next time, continue right where we left off
-            candidate->update_thread_count(1);
+            // Found a plausible candidate.
 
-            LOG_DEBUG(logger) << "Worker " << worker_id << ", "
-                              << ((assignment == nullptr) ? "idle" : assignment->get_name())
-                              << ", " << to_string(last_result) << " => "
-                              << candidate->get_name() << "  [" << candidate->get_thread_count() << "]" << LOG_END;
-            m_mutex.unlock();
-            return candidate;
+            if (candidate->get_type() == JArrow::NodeType::Source ||
+                candidate->get_running_upstreams() > 0 ||
+                candidate->get_pending() > 0) {
+
+                // Candidate still has work they can do
+                m_next_idx = current_idx; // Next time, continue right where we left off
+                candidate->update_thread_count(1);
+
+                LOG_DEBUG(logger) << "Worker " << worker_id << ", "
+                                  << ((assignment == nullptr) ? "idle" : assignment->get_name())
+                                  << ", " << to_string(last_result) << " => "
+                                  << candidate->get_name() << "  [" << candidate->get_thread_count() << " threads]" << LOG_END;
+                m_mutex.unlock();
+                return candidate;
+
+            }
+            else {
+                // Candidate can be paused immediately because there is no more work coming
+                LOG_DEBUG(logger) << "Deactivating arrow '" << candidate->get_name() << "' (" << m_topology->running_arrow_count - 1 << " remaining)" << LOG_END;
+                candidate->pause();
+                assert(m_topology->running_arrow_count >= 0);
+                if (m_topology->running_arrow_count == 0) {
+                    LOG_DEBUG(logger) << "All arrows deactivated. Deactivating topology." << LOG_END;
+                    m_topology->achieve_pause();
+                }
+            }
         }
 
     } while (current_idx != m_next_idx);

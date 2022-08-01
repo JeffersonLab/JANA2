@@ -14,7 +14,7 @@ struct DummySource : public JEventSource {
     DummySource(std::string source_name, JApplication *app) : JEventSource(std::move(source_name), app) { }
 
     void GetEvent(std::shared_ptr<JEvent>) override {
-        consume_cpu_ms(50);
+        consume_cpu_ms(20);
         std::this_thread::sleep_for(std::chrono::nanoseconds(1));
     }
 };
@@ -22,7 +22,7 @@ struct DummySource : public JEventSource {
 struct DummyProcessor : public JEventProcessor {
 
     void Process(const std::shared_ptr<const JEvent>&) override {
-        consume_cpu_ms(2000);
+        consume_cpu_ms(100);
         std::this_thread::sleep_for(std::chrono::nanoseconds(1));
     }
 };

@@ -36,11 +36,6 @@ public:
            , _processor(processor)
            , _input_queue(input_queue)
            , _output_queue(output_queue) {
-
-        _input_queue->attach_downstream(this);
-        _output_queue->attach_upstream(this);
-        attach_upstream(_input_queue);
-        attach_downstream(_output_queue);
     };
 
     void execute(JArrowMetrics& result, size_t /* location_id */) override {
@@ -72,11 +67,11 @@ public:
         auto overhead = (end_queue_time - start_total_time) - latency;
 
         JArrowMetrics::Status status;
-        if (in_status == JMailbox<S>::Status::Finished) {
-            set_upstream_finished(true);
-            status = JArrowMetrics::Status::Finished;
-        }
-        else if (in_status == JMailbox<S>::Status::Ready && out_status == JMailbox<T>::Status::Ready) {
+        // if (in_status == JMailbox<S>::Status::Finished) {
+        //     set_status(JActivable::Status::Finished);
+        //     status = JArrowMetrics::Status::Finished;
+        // }
+        if (in_status == JMailbox<S>::Status::Ready && out_status == JMailbox<T>::Status::Ready) {
             status = JArrowMetrics::Status::KeepGoing;
         }
         else {

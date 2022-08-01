@@ -18,6 +18,11 @@ public:
         pthread_rwlock_init(m_root_rw_lock, nullptr);
     }
 
+    ~JGlobalRootLock() {
+        delete m_root_rw_lock;
+        m_root_rw_lock = nullptr;
+    }
+
     inline void acquire_read_lock() { pthread_rwlock_rdlock(m_root_rw_lock); }
 
     inline void acquire_write_lock() { pthread_rwlock_wrlock(m_root_rw_lock); }

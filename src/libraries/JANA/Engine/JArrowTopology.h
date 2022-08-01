@@ -12,17 +12,15 @@
 #include <JANA/Utils/JEventPool.h>
 #include <JANA/Utils/JProcessorMapping.h>
 
-#include "JActivable.h"
 #include "JArrow.h"
 #include "JMailbox.h"
 
 
-struct JArrowTopology : public JActivable {
+struct JArrowTopology {
+    enum class Status { Paused, Running, Pausing, Draining, Finished };
 
     using Event = std::shared_ptr<JEvent>;
     using EventQueue = JMailbox<Event>;
-
-    enum Status { Inactive, Running, Draining, Finished };
 
     explicit JArrowTopology();
     virtual ~JArrowTopology();
@@ -33,7 +31,6 @@ struct JArrowTopology : public JActivable {
 
     std::shared_ptr<JEventPool> event_pool; // TODO: Belongs somewhere else
     JPerfMetrics metrics;
-    Status status = Inactive; // TODO: Merge this concept with JActivable
 
     std::vector<JArrow*> arrows;
     std::vector<JArrow*> sources;           // Sources needed for activation
@@ -41,7 +38,11 @@ struct JArrowTopology : public JActivable {
     std::vector<EventQueue*> queues;        // Queues shared between arrows
     JProcessorMapping mapping;
 
-    size_t event_pool_size;                 //  Will be defaulted to nthreads later
+    // JActivable stuff
+    int64_t running_arrow_count = 0;         // Detects when the topology has paused
+    int64_t running_worker_count = 0;        // Detects when the workers have all joined
+
+    size_t event_pool_size = 1;                 //  Will be defaulted to nthreads by builder
     bool limit_total_events_in_flight = true;
     bool enable_call_graph_recording = false;
     size_t event_queue_threshold = 80;
@@ -54,8 +55,13 @@ struct JArrowTopology : public JActivable {
 
     JLogger m_logger;
 
-    bool is_active() override;
-    void set_active(bool is_active) override;
+    Status m_current_status = Status::Paused;
+    void drain();
+    void run(int nthreads);
+    void request_pause();
+    void achieve_pause();
+    void finish();
+
 };
 
 

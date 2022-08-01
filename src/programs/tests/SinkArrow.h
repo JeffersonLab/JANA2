@@ -38,13 +38,10 @@ public:
         : JArrow(name, false, NodeType::Sink)
         , _sink(sink)
         , _input_queue(input_queue) {
-
-        _input_queue->attach_downstream(this);
-        attach_upstream(_input_queue);
     };
 
     void execute(JArrowMetrics& result, size_t /* location_id */) override {
-        if (!is_active()) {
+        if (get_status() == Status::Finished) {
             result.update_finished();
             return;
         }
@@ -74,14 +71,13 @@ public:
         auto overhead = (stop_time - start_time) - latency;
 
         JArrowMetrics::Status status;
-        if (in_status == JMailbox<T>::Status::Finished) {
-            set_upstream_finished(true);
-            set_active(false);
-            notify_downstream(false);
-            _sink.finalize();
-            status = JArrowMetrics::Status::Finished;
-        }
-        else if (in_status == JMailbox<T>::Status::Empty) {
+        // TODO: NOT HERE. Finalize the sink in on_status_change().
+        // if (in_status == JMailbox<T>::Status::Finished) {
+        //     set_status(JActivable::Status::Finished);
+        //     _sink.finalize();
+        //     status = JArrowMetrics::Status::Finished;
+        // }
+        if (in_status == JMailbox<T>::Status::Empty) {
             status = JArrowMetrics::Status::ComeBackLater;
         }
         else {

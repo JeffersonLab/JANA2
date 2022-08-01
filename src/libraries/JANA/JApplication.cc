@@ -232,7 +232,7 @@ void JApplication::Quit(bool skip_join) {
     m_skip_join = skip_join;
     m_quitting = true;
     if (m_processing_controller != nullptr) {
-        Stop(skip_join);
+        Stop(!skip_join);
     }
 }
 
