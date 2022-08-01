@@ -8,9 +8,6 @@
 #include <JANA/JFactoryGenerator.h>
 
 JComponentManager::JComponentManager(JApplication* app) : m_app(app) {
-    auto parms = app->GetJParameterManager();
-    parms->SetDefaultParameter("RECORD_CALL_STACK", m_enable_call_graph_recording);
-    parms->FilterParameters(m_default_tags, "DEFTAG");
 }
 
 JComponentManager::~JComponentManager() {
@@ -73,6 +70,17 @@ void JComponentManager::configure_event(JEvent& event) {
     event.SetDefaultTags(m_default_tags);
     event.GetJCallGraphRecorder()->SetEnabled(m_enable_call_graph_recording);
 }
+
+void JComponentManager::initialize() {
+    // We want to obtain parameters from here rather than in the constructor.
+    // If we set them here, plugins and test cases can set parameters right up until JApplication::Initialize()
+    // or Run() are called. Otherwise, the parameters have to be set before the
+    // JApplication is even constructed.
+    auto parms = m_app->GetJParameterManager();
+    parms->SetDefaultParameter("RECORD_CALL_STACK", m_enable_call_graph_recording);
+    parms->FilterParameters(m_default_tags, "DEFTAG:");
+}
+
 
 void JComponentManager::resolve_event_sources() {
 

@@ -13,13 +13,15 @@
 #include <JANA/Services/JComponentManager.h>
 #include "JANA/JFactoryGenerator.h"
 
+namespace deftagstest {
 struct Obj : public JObject {
     JOBJECT_PUBLIC(Obj)
-    double x=0,y=0,E=0;
+
+    double x = 0, y = 0, E = 0;
 };
 
 struct Fac1 : public JFactoryT<Obj> {
-    void Process(const std::shared_ptr<const JEvent>&) override {
+    void Process(const std::shared_ptr<const JEvent> &) override {
         auto obj = new Obj;
         obj->x = 1;
         obj->y = 1;
@@ -32,7 +34,8 @@ struct Fac2 : public JFactoryT<Obj> {
     Fac2() {
         SetTag("tagB");
     }
-    void Process(const std::shared_ptr<const JEvent>& event) override {
+
+    void Process(const std::shared_ptr<const JEvent> &event) override {
         auto obj = new Obj;
         obj->x = 1;
         obj->y = 1;
@@ -40,9 +43,11 @@ struct Fac2 : public JFactoryT<Obj> {
         Insert(obj);
     }
 };
+} // namespace deftagstest
 
 TEST_CASE("SmallDefTags") {
 
+    using namespace deftagstest;
     auto event = std::make_shared<JEvent>();
     auto fs = new JFactorySet;
     fs->Add(new Fac1);
@@ -56,54 +61,68 @@ TEST_CASE("SmallDefTags") {
     REQUIRE(objsB[0]->E == 33.3);
 
     std::map<std::string, std::string> deftags;
-    deftags["Obj"] = "tagB";
+    deftags["deftagstest::Obj"] = "tagB";
     event->SetDefaultTags(deftags);
-    auto objsC = event->Get<Obj>("");
+    auto objsC = event->Get<Obj>();
     REQUIRE(objsC[0]->E == 33.3);
 
 }
 
 TEST_CASE("MediumDefTags") {
+    using namespace deftagstest;
     JApplication app;
     app.Add(new JFactoryGeneratorT<Fac1>);
     app.Add(new JFactoryGeneratorT<Fac2>);
-    app.SetParameterValue("DEFTAG:Obj", "tagB");
+    app.SetParameterValue("DEFTAG:deftagstest::Obj", "tagB");
     app.Initialize();
     auto event = std::make_shared<JEvent>();
-    app.GetService<JComponentManager>()->configure_event(*event);
+    auto jcm = app.GetService<JComponentManager>();
+    jcm->configure_event(*event);
     auto objs = event->Get<Obj>();
     REQUIRE(objs[0]->E == 33.3);
 }
 
-
+namespace deftagstest {
 struct DummySource : public JEventSource {
-    DummySource() : JEventSource("DummySource") {};
+    DummySource() : JEventSource("DummySource") {
+        SetTypeName(NAME_OF_THIS);
+    };
+
     void GetEvent(std::shared_ptr<JEvent>) override {};
 };
 
 struct DummyProcessor : public JEventProcessor {
-    double E;
-    std::atomic_int processed_count {0};
-    void Process(const std::shared_ptr<const JEvent>& event) override {
+    double E = 0.5;
+    std::atomic_int processed_count{0};
+    std::mutex m;
+
+    DummyProcessor() {
+        SetTypeName("DummyProcessor");
+    }
+
+    void Process(const std::shared_ptr<const JEvent> &event) override {
         auto objsA = event->Get<Obj>("");
+        std::lock_guard<std::mutex> lock(m);
         E = objsA[0]->E;
         processed_count++;
     }
 };
+} // namespace deftagstest
 
 
 TEST_CASE("LargeDefTags") {
 
+    using namespace deftagstest;
     JApplication app;
     app.Add(new JFactoryGeneratorT<Fac1>);
     app.Add(new JFactoryGeneratorT<Fac2>);
     app.Add(new DummySource);
     auto proc = new DummyProcessor;
     app.Add(proc);
-    app.SetParameterValue("jana:nevents", 1);
-    app.SetParameterValue("deftag:Obj", "tagB");
+    app.SetParameterValue("jana:nevents", 3);
+    app.SetParameterValue("DEFTAG:deftagstest::Obj", "tagB");
     app.Run(true);
-    REQUIRE(proc->processed_count == 1);
+    REQUIRE(proc->processed_count == 3);
+    REQUIRE(proc->GetEventCount() == 3);
     REQUIRE(proc->E == 33.3);
-    app.Quit();
 }

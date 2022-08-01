@@ -14,7 +14,7 @@ TEST_CASE("JFactoryTests") {
 
     SECTION("GetOrCreate calls Init, ChangeRun, and Process as needed") {
 
-        DummyFactory sut;
+        JFactoryTestDummyFactory sut;
         auto event = std::make_shared<JEvent>();
 
         // The first time it is run, Init, ChangeRun, and Process each get run once
@@ -57,7 +57,7 @@ TEST_CASE("JFactoryTests") {
 */
     SECTION("ChangeRun called only when run number changes") {
         auto event = std::make_shared<JEvent>();
-        DummyFactory sut;
+        JFactoryTestDummyFactory sut;
 
         // For the first event, ChangeRun() always gets called
         event->SetEventNumber(1);
@@ -91,11 +91,11 @@ TEST_CASE("JFactoryTests") {
     }
 
     SECTION("not PERSISTENT && not NOT_OBJECT_OWNER => JObject is cleared and deleted") {
-        JFactoryT<DummyObject> sut; // Process() is a no-op
+        JFactoryT<JFactoryTestDummyObject> sut; // Process() is a no-op
         bool deleted_flag = false;
         sut.ClearFactoryFlag(JFactory::PERSISTENT);
         sut.ClearFactoryFlag(JFactory::NOT_OBJECT_OWNER);
-        sut.Insert(new DummyObject(42, &deleted_flag));
+        sut.Insert(new JFactoryTestDummyObject(42, &deleted_flag));
         sut.ClearData();
         auto results = sut.GetOrCreate(nullptr, nullptr, 0);
         REQUIRE(std::distance(results.first, results.second) == 0);
@@ -103,11 +103,11 @@ TEST_CASE("JFactoryTests") {
     }
 
     SECTION("not PERSISTENT && NOT_OBJECT_OWNER => JObject is cleared but not deleted") {
-        JFactoryT<DummyObject> sut; // Process() is a no-op
+        JFactoryT<JFactoryTestDummyObject> sut; // Process() is a no-op
         bool deleted_flag = false;
         sut.ClearFactoryFlag(JFactory::PERSISTENT);
         sut.SetFactoryFlag(JFactory::NOT_OBJECT_OWNER);
-        sut.Insert(new DummyObject(42, &deleted_flag));
+        sut.Insert(new JFactoryTestDummyObject(42, &deleted_flag));
         sut.ClearData();
         auto results = sut.GetOrCreate(nullptr, nullptr, 0);
         REQUIRE(std::distance(results.first, results.second) == 0);
@@ -115,11 +115,11 @@ TEST_CASE("JFactoryTests") {
     }
 
     SECTION("PERSISTENT && not NOT_OBJECT_OWNER => JObject is neither cleared nor deleted") {
-        JFactoryT<DummyObject> sut; // Process() is a no-op
+        JFactoryT<JFactoryTestDummyObject> sut; // Process() is a no-op
         bool deleted_flag = false;
         sut.SetFactoryFlag(JFactory::PERSISTENT);
         sut.ClearFactoryFlag(JFactory::NOT_OBJECT_OWNER);
-        sut.Insert(new DummyObject(42, &deleted_flag));
+        sut.Insert(new JFactoryTestDummyObject(42, &deleted_flag));
         sut.ClearData();
         auto results = sut.GetOrCreate(nullptr, nullptr, 0);
         REQUIRE(std::distance(results.first, results.second) == 1);
@@ -127,11 +127,11 @@ TEST_CASE("JFactoryTests") {
     }
 
     SECTION("PERSISTENT && NOT_OBJECT_OWNER => JObject is neither cleared nor deleted") {
-        JFactoryT<DummyObject> sut; // Process() is a no-op
+        JFactoryT<JFactoryTestDummyObject> sut; // Process() is a no-op
         bool deleted_flag = false;
         sut.SetFactoryFlag(JFactory::PERSISTENT);
         sut.SetFactoryFlag(JFactory::NOT_OBJECT_OWNER);
-        sut.Insert(new DummyObject(42, &deleted_flag));
+        sut.Insert(new JFactoryTestDummyObject(42, &deleted_flag));
         sut.ClearData();
         auto results = sut.GetOrCreate(nullptr, nullptr, 0);
         REQUIRE(std::distance(results.first, results.second) == 1);

@@ -118,6 +118,7 @@ void JApplication::Initialize() {
 
         m_params->SetDefaultParameter("jana:extended_report", m_extended_report);
 
+        m_component_manager->initialize();
         m_component_manager->resolve_event_sources();
 
         int engine_choice = 0;

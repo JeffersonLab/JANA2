@@ -28,6 +28,7 @@ public:
     void add(JEventSource* event_source);
     void add(JEventProcessor* processor);
 
+    void initialize();
     void resolve_event_sources();
     JEventSourceGenerator* resolve_user_event_source_generator() const;
     JEventSourceGenerator* resolve_event_source(std::string source_name) const;

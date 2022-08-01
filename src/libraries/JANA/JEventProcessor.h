@@ -76,6 +76,7 @@ public:
                 }
             }
             Process(e);
+            m_event_count += 1;
         }
         catch (JException& ex) {
             ex.plugin_name = m_plugin_name;
