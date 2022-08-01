@@ -98,7 +98,7 @@ size_t GetNumaNodeID(size_t cpu_id) {
         return numa_node_of_cpu(cpu_id);
     }
 #else //HAVE_NUMA
-	cpu_id = 0; // suppress compiler warning.
+        (void) cpu_id; // suppress compiler warning.
         return 0;
 #endif //HAVE_NUMA
 }
