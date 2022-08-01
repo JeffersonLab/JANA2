@@ -148,7 +148,7 @@ public:
 
     // These are what the user implements (in lieu of Process, Init, and Finish)
 
-    virtual void ProcessSequential(const std::shared_ptr<const JEvent> &event) {};
+    virtual void ProcessSequential(const std::shared_ptr<const JEvent>&) {};
 
     virtual void InitWithGlobalRootLock() {};
 

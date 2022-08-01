@@ -132,18 +132,20 @@ public:
                 case SourceStatus::Opened:
 
                     if (m_event_count < first_evt_nr) {
-                        m_event_count += 1;
+                        event->SetEventNumber(m_event_count); // Default event number to event count
                         GetEvent(event);
-                        return ReturnStatus::TryAgain;
+                        m_event_count += 1;
+                        return ReturnStatus::TryAgain;  // Reject this event and recycle it
                     }
                     else if (m_nevents != 0 && (m_event_count == last_evt_nr)) {
                         m_status = SourceStatus::Finished; // TODO: This isn't threadsafe at the moment
                         return ReturnStatus::Finished;
                     }
                     else {
+                        event->SetEventNumber(m_event_count); // Default event number to event count
                         GetEvent(event);
                         m_event_count += 1;
-                        return ReturnStatus::Success;
+                        return ReturnStatus::Success; // Don't reject this event!
                     }
 
                 default: //case SourceStatus::Finished:
