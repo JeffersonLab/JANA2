@@ -34,6 +34,7 @@ option(USE_ZEROMQ "Include ZeroMQ dependency. (Needed for examples/StreamingExam
 option(USE_XERCES "Include XercesC 3 dependency. (Needed for JGeometryXML)" OFF)
 option(USE_PYTHON "Include Python dependency. This requires python-devel and python-distutils." OFF)
 option(USE_ASAN "Compile with address sanitizer" OFF)
+option(USE_TSAN "Compile with thread sanitizer" OFF)
 
 
 if (${USE_ROOT})
@@ -63,7 +64,13 @@ if (${USE_XERCES})
 endif()
 
 if (${USE_ASAN})
-    add_compile_options(-fsanitize=address)
+    add_compile_options(-fsanitize=address -g -O2)
+    add_link_options(-fsanitize=address)
+endif()
+
+if (${USE_TSAN})
+    add_compile_options(-fsanitize=thread -g -O2)
+    add_link_options(-fsanitize=thread)
 endif()
 
 #---------
