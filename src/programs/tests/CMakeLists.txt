@@ -31,6 +31,7 @@ set(TEST_SOURCES
     BarrierEventTests.h
     GetObjectsTests.cc
     JCallGraphRecorderTests.cc
+    JFactoryDefTagsTests.cc
     )
 
 add_executable(janatests ${TEST_SOURCES})

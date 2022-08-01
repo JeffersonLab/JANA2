@@ -81,6 +81,7 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
         void SetEventNumber(uint64_t aEventNumber){mEventNumber = aEventNumber;}
         void SetJApplication(JApplication* app){mApplication = app;}
         void SetJEventSource(JEventSource* aSource){mEventSource = aSource;}
+        void SetDefaultTags(std::map<std::string, std::string> aDefaultTags){mDefaultTags=aDefaultTags; mUseDefaultTags = !mDefaultTags.empty();}
 
         void SetSequential(bool isSequential) {mIsBarrierEvent = isSequential;}
 
@@ -102,6 +103,8 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
         mutable JFactorySet* mFactorySet = nullptr;
         mutable JCallGraphRecorder mCallGraph;
         mutable JInspector mInspector;
+        bool mUseDefaultTags = false;
+        std::map<std::string, std::string> mDefaultTags;
         JEventSource* mEventSource = nullptr;
         bool mIsBarrierEvent = false;
 };
@@ -113,7 +116,12 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 template <class T>
 inline JFactoryT<T>* JEvent::Insert(T* item, const std::string& tag) const {
 
-    auto factory = mFactorySet->GetFactory<T>(tag);
+    std::string resolved_tag = tag;
+    if (mUseDefaultTags) {
+        auto defaultTag = mDefaultTags.find(JTypeInfo::demangle<T>());
+        if (defaultTag != mDefaultTags.end()) resolved_tag = defaultTag->second;
+    }
+    auto factory = mFactorySet->GetFactory<T>(resolved_tag);
     if (factory == nullptr) {
         factory = new JFactoryT<T>;
         factory->SetTag(tag);
@@ -126,7 +134,12 @@ inline JFactoryT<T>* JEvent::Insert(T* item, const std::string& tag) const {
 template <class T>
 inline JFactoryT<T>* JEvent::Insert(const std::vector<T*>& items, const std::string& tag) const {
 
-    auto factory = mFactorySet->GetFactory<T>(tag);
+    std::string resolved_tag = tag;
+    if (mUseDefaultTags) {
+        auto defaultTag = mDefaultTags.find(JTypeInfo::demangle<T>());
+        if (defaultTag != mDefaultTags.end()) resolved_tag = defaultTag->second;
+    }
+    auto factory = mFactorySet->GetFactory<T>(resolved_tag);
     if (factory == nullptr) {
         factory = new JFactoryT<T>;
         factory->SetTag(tag);
@@ -155,7 +168,12 @@ inline std::vector<JFactory*> JEvent::GetAllFactories() const {
 template<class T>
 inline JFactoryT<T>* JEvent::GetFactory(const std::string& tag, bool throw_on_missing) const
 {
-    auto factory = mFactorySet->GetFactory<T>(tag);
+    std::string resolved_tag = tag;
+    if (mUseDefaultTags) {
+        auto defaultTag = mDefaultTags.find(JTypeInfo::demangle<T>());
+        if (defaultTag != mDefaultTags.end()) resolved_tag = defaultTag->second;
+    }
+    auto factory = mFactorySet->GetFactory<T>(resolved_tag);
     if (factory == nullptr) {
         if (throw_on_missing) {
             throw JException("Could not find JFactoryT<" + JTypeInfo::demangle<T>() + "> with tag=" + tag);
@@ -169,13 +187,9 @@ inline JFactoryT<T>* JEvent::GetFactory(const std::string& tag, bool throw_on_mi
 template<class T>
 inline JMetadata<T> JEvent::GetMetadata(const std::string& tag) const {
 
-    auto factory = mFactorySet->GetFactory<T>(tag);
-    if (factory == nullptr) {
-        throw JException("Could not find JFactoryT<" + JTypeInfo::demangle<T>() + "> with tag=" + tag);
-    };
+    auto factory = GetFactory<T>(tag, true);
     // Make sure that JFactoryT::Process has already been called before returning the metadata
     factory->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
-
     return factory->GetMetadata();
 }
 

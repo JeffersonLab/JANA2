@@ -273,7 +273,7 @@ void JParameterManager::FilterParameters(std::map<std::string, std::string> &par
     parms.clear();
     std::lock_guard<std::mutex> lock(m_mutex);
     for (auto pair : m_parameters) {
-        string key = pair.first;
+        string key = pair.second->GetKey();  // Note that this is the version that preserves the original case!
         string value = pair.second->GetValue();
         if (filter.size() > 0) {
             if (key.substr(0, filter.size()) != filter) continue;

@@ -35,8 +35,8 @@ TEST_CASE("ScaleNWorkerUpdate") {
     auto params = new JParameterManager();
     // params->SetParameter("log:debug", "JWorker,JArrowTopology,JScheduler,JArrow");
     JApplication app(params);
-    app.Add(new DummySource("DummySource", &app));
-    app.Add(new DummyProcessor);
+    app.Add(new scaletest::DummySource("DummySource", &app));
+    app.Add(new scaletest::DummyProcessor);
     app.SetParameterValue("nthreads", 4);
     app.Run(false);
     auto threads = app.GetNThreads();
@@ -65,8 +65,8 @@ TEST_CASE("ScaleThroughputImprovement", "[.][performance]") {
     // parms->SetParameter("log:info","JScheduler");
     JApplication app(parms);
     app.SetTicker(false);
-    app.Add(new DummySource("dummy", &app));
-    app.Add(new DummyProcessor);
+    app.Add(new scaletest::DummySource("dummy", &app));
+    app.Add(new scaletest::DummyProcessor);
     // app.SetParameterValue("benchmark:minthreads", 1);
     // app.SetParameterValue("benchmark:maxthreads", 5);
     // app.SetParameterValue("benchmark:threadstep", 2);
