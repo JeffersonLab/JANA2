@@ -238,7 +238,7 @@ std::unique_ptr<const JArrowPerfSummary> JArrowProcessingController::measure_int
 
         summary.avg_latency_ms = (total_message_count == 0)
                                ? std::numeric_limits<double>::infinity()
-                               : summary.avg_latency_ms = total_latency_ms/total_message_count;
+                               : total_latency_ms/total_message_count;
 
         summary.last_latency_ms = (last_message_count == 0)
                                 ? std::numeric_limits<double>::infinity()

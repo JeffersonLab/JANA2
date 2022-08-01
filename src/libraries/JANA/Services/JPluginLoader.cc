@@ -113,7 +113,7 @@ void JPluginLoader::attach_plugins(JComponentManager* jcm) {
                     LOG_DEBUG(m_logger) << "Found!" << LOG_END;
                     try {
                         jcm->next_plugin(plugin);
-                        attach_plugin(jcm, fullpath.c_str());
+                        attach_plugin(fullpath.c_str());
                         paths_checked << "Loaded successfully" << std::endl;
                         found_plugin = true;
                         break;
@@ -149,7 +149,7 @@ void JPluginLoader::attach_plugins(JComponentManager* jcm) {
 }
 
 
-void JPluginLoader::attach_plugin(JComponentManager* jcm, std::string soname) {
+void JPluginLoader::attach_plugin(std::string soname) {
 
     /// Attach a plugin by opening the shared object file and running the
     /// InitPlugin_t(JApplication* app) global C-style routine in it.
@@ -174,8 +174,6 @@ void JPluginLoader::attach_plugin(JComponentManager* jcm, std::string soname) {
 
     // Look for an InitPlugin symbol
     typedef void InitPlugin_t(JApplication* app);
-    //typedef void InitPlugin_t(JComponentManager* jcm, JServiceLocator* sl);
-    // TODO: Convert InitPlugin sig to (builder, servicelocator) -> void
     InitPlugin_t* initialize_proc = (InitPlugin_t*) dlsym(handle, "InitPlugin");
     if (initialize_proc) {
         LOG_INFO(m_logger) << "Initializing plugin \"" << soname << "\"" << LOG_END;

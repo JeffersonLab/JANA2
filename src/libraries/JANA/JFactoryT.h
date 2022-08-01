@@ -79,49 +79,52 @@ public:
     /// called if and only if the run number changes, etc.
     PairType GetOrCreate(const std::shared_ptr<const JEvent>& event, JApplication* app, int32_t run_number) {
 
-        //std::lock_guard<std::mutex> lock(mMutex);
+        // std::lock_guard<std::mutex> lock(mMutex);
+        // TODO: We might want _some_ locking here actually
         if (mApp == nullptr) {
             mApp = app;
         }
-        switch (mStatus) {
-            case Status::Uninitialized:
-                try {
-                    std::call_once(mInitFlag, &JFactory::Init, this);
-                }
-                catch (JException& ex) {
-                    ex.plugin_name = mPluginName;
-                    ex.component_name = mFactoryName;
-                    throw ex;
-                }
-                catch (...) {
-                    auto ex = JException("Unknown exception in JFactoryT::Init()");
-                    ex.nested_exception = std::current_exception();
-                    ex.plugin_name = mPluginName;
-                    ex.component_name = mFactoryName;
-                    throw ex;
-                }
-            case Status::Unprocessed:
-                if (mPreviousRunNumber == -1) {
-                    // This is the very first run
-                    ChangeRun(event);
-                    BeginRun(event);
-                    mPreviousRunNumber = run_number;
-                }
-                else if (mPreviousRunNumber != run_number) {
-                    // This is a later run, and it has changed
-                    EndRun();
-                    ChangeRun(event);
-                    BeginRun(event);
-                    mPreviousRunNumber = run_number;
-                }
-                Process(event);
-                mStatus = Status::Processed;
-                mCreationStatus = CreationStatus::Created;
-            case Status::Processed:
-            case Status::Inserted:
-                return std::make_pair(mData.cbegin(), mData.cend());
-            default:
-                throw JException("Enum is set to a garbage value somehow");
+        if (mStatus == Status::Uninitialized) {
+            try {
+                std::call_once(mInitFlag, &JFactory::Init, this);
+                mStatus = Status::Unprocessed;
+            }
+            catch (JException& ex) {
+                ex.plugin_name = mPluginName;
+                ex.component_name = mFactoryName;
+                throw ex;
+            }
+            catch (...) {
+                auto ex = JException("Unknown exception in JFactoryT::Init()");
+                ex.nested_exception = std::current_exception();
+                ex.plugin_name = mPluginName;
+                ex.component_name = mFactoryName;
+                throw ex;
+            }
+        }
+        if (mStatus == Status::Unprocessed) {
+            if (mPreviousRunNumber == -1) {
+                // This is the very first run
+                ChangeRun(event);
+                BeginRun(event);
+                mPreviousRunNumber = run_number;
+            }
+            else if (mPreviousRunNumber != run_number) {
+                // This is a later run, and it has changed
+                EndRun();
+                ChangeRun(event);
+                BeginRun(event);
+                mPreviousRunNumber = run_number;
+            }
+            Process(event);
+            mStatus = Status::Processed;
+            mCreationStatus = CreationStatus::Created;
+        }
+        if (mStatus == Status::Processed || mStatus == Status::Inserted) {
+            return std::make_pair(mData.cbegin(), mData.cend());
+        }
+        else {
+            throw JException("JFactoryT::Status is set to a garbage value");
         }
     }
 

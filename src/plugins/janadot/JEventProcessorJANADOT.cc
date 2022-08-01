@@ -102,7 +102,7 @@ void JEventProcessorJANADOT::Init()
 //------------------------------------------------------------------
 // BeginRun
 //------------------------------------------------------------------
-void JEventProcessorJANADOT::BeginRun(const std::shared_ptr<const JEvent>& event)
+void JEventProcessorJANADOT::BeginRun(const std::shared_ptr<const JEvent>& /*event*/)
 {
 	// Nothing to do here
 }

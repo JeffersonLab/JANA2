@@ -156,38 +156,37 @@ public:
         std::lock_guard<std::mutex> lock(m_mutex); // In general, DoNext must be synchronized.
         auto first_evt_nr = m_nskip;
         auto last_evt_nr = m_nevents + m_nskip;
+
         try {
-            switch (m_status.load()) {
-
-                case SourceStatus::Unopened: DoInitialize(); // Fall-through to Opened afterwards
-
-                case SourceStatus::Opened:
-
-                    if (m_event_count < first_evt_nr) {
-                        event->SetEventNumber(m_event_count); // Default event number to event count
-                        GetEvent(event);
-                        m_event_count += 1;
-                        return ReturnStatus::TryAgain;  // Reject this event and recycle it
-                    }
-                    else if (m_nevents != 0 && (m_event_count == last_evt_nr)) {
-                        m_status = SourceStatus::Finished; // TODO: This isn't threadsafe at the moment
-                        return ReturnStatus::Finished;
-                    }
-                    else {
-                        event->SetEventNumber(m_event_count); // Default event number to event count
-                        GetEvent(event);
-                        m_event_count += 1;
-                        return ReturnStatus::Success; // Don't reject this event!
-                    }
-
-                default: //case SourceStatus::Finished:
+            if (m_status == SourceStatus::Unopened) {
+                DoInitialize();
+                m_status = SourceStatus::Opened;
+            }
+            if (m_status == SourceStatus::Opened) {
+                if (m_event_count < first_evt_nr) {
+                    event->SetEventNumber(m_event_count); // Default event number to event count
+                    GetEvent(event);
+                    m_event_count += 1;
+                    return ReturnStatus::TryAgain;  // Reject this event and recycle it
+                } else if (m_nevents != 0 && (m_event_count == last_evt_nr)) {
+                    m_status = SourceStatus::Finished;
                     return ReturnStatus::Finished;
+                } else {
+                    event->SetEventNumber(m_event_count); // Default event number to event count
+                    GetEvent(event);
+                    m_event_count += 1;
+                    return ReturnStatus::Success; // Don't reject this event!
+                }
+            } else if (m_status == SourceStatus::Finished) {
+                return ReturnStatus::Finished;
+            } else {
+                throw JException("Invalid ReturnStatus");
             }
         }
         catch (RETURN_STATUS rs) {
 
             if (rs == RETURN_STATUS::kNO_MORE_EVENTS) {
-                m_status = SourceStatus::Finished; // TODO: This isn't threadsafe at the moment
+                m_status = SourceStatus::Finished;
                 return ReturnStatus::Finished;
             }
             else if (rs == RETURN_STATUS::kTRY_AGAIN || rs == RETURN_STATUS::kBUSY) {

@@ -12,7 +12,7 @@
 #include "BlockExampleProcessor.h"
 
 
-int main(int argc, char* argv[]) {
+int main() {
 
 	JApplication app;
 

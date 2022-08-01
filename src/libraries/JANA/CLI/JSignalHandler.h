@@ -36,7 +36,7 @@ void create_named_pipe(const std::string& path_to_named_pipe) {
 
 void send_to_named_pipe(const std::string& path_to_named_pipe, const std::string& data) {
 
-    int fd = open(g_path_to_named_pipe.c_str(), O_WRONLY);
+    int fd = open(path_to_named_pipe.c_str(), O_WRONLY);
     if (fd >=0) {
         write(fd, data.c_str(), data.length()+1);
         close(fd);
@@ -138,7 +138,7 @@ void handle_usr2(int) {
     produce_thread_report();
 }
 
-void handle_sigsegv(int signal_number, siginfo_t* signal_info, void* context) {
+void handle_sigsegv(int /*signal_number*/, siginfo_t* /*signal_info*/, void* /*context*/) {
     produce_overall_report();
 }
 

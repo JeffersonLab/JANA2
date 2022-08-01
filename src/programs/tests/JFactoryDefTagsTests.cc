@@ -35,7 +35,7 @@ struct Fac2 : public JFactoryT<Obj> {
         SetTag("tagB");
     }
 
-    void Process(const std::shared_ptr<const JEvent> &event) override {
+    void Process(const std::shared_ptr<const JEvent>& /*event*/) override {
         auto obj = new Obj;
         obj->x = 1;
         obj->y = 1;
