@@ -78,6 +78,7 @@ public:
 	class Prefetch{
 	public:
 		virtual void Get(const std::shared_ptr<const JEvent>& event) = 0;
+		virtual void Fill(const std::shared_ptr<const JEvent>& event) = 0;
 	};
 
     // typed class
@@ -108,7 +109,7 @@ public:
 		for( auto p : mPrefetch ) p->Fill(event); // Copy object pointers into members
 		ProcessSequential( event );
 	}
-	virtual void ProcessSequential(const std::shared_ptr<const JEvent>& event){};
+	virtual void ProcessSequential(const std::shared_ptr<const JEvent>& /*event*/){};
 
 private:
 
