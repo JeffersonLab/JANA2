@@ -74,52 +74,91 @@ class JEventProcessorSequentialRoot : public JEventProcessor {
 
 public:
 
-	JEventProcessorSequentialRoot(){}
+    JEventProcessorSequentialRoot() {}
     virtual ~JEventProcessorSequentialRoot() = default;
 
     // non-templated base class
-	class Prefetch{
-	public:
-		virtual void Get(const std::shared_ptr<const JEvent>& event) = 0;
-	};
+    class Prefetch {
+    public:
+        virtual void Get(const std::shared_ptr<const JEvent> &event) = 0;
+        virtual void Fill(const std::shared_ptr<const JEvent> &event) = 0;
+    };
 
     // typed class
-	template<typename T>
-	class PrefetchT:public Prefetch{
-	public:
+    template<typename T>
+    class PrefetchT : public Prefetch {
+    public:
         // This constructor gets called by the {this} initializer for the data member.
-		PrefetchT(JEventProcessorSequentialRoot *jeps, const std::string &tag=""):mTag(tag){jeps->mPrefetch.push_back(this);}
+        PrefetchT(JEventProcessorSequentialRoot *jeps, const std::string &tag = "") : mTag(
+                tag) { jeps->mPrefetch.push_back(this); }
 
-        std::vector<const T*>& operator()(){ return mObjs; }
-		void Get(const std::shared_ptr<const JEvent>& event){ event->Get<T>(mTag); }
-		void Fill(const std::shared_ptr<const JEvent>& event){ mObjs = event->Get<T>(mTag); }
+        std::vector<const T*> &operator()() { return mObjs; }
+        void Get(const std::shared_ptr<const JEvent> &event) { event->Get<T>(mTag); }
+        void Fill(const std::shared_ptr<const JEvent> &event) { mObjs = event->Get<T>(mTag); }
 
-	private:
-		PrefetchT()=default; // user must pass "this" so member can be added to our mPrefetch
+    private:
+        PrefetchT() = default; // user must pass "this" so member can be added to our mPrefetch
 
         std::string mTag;
-        std::vector<const T*> mObjs;
-	};
+        std::vector<const T *> mObjs;
+    };
 
-    // JEventProcessorSequentialRoot methods
-	void Init() override {m_lock = GetApplication()->GetService<JGlobalRootLock>();};
-    void Finish() override {};
 
-	void Process(const std::shared_ptr<const JEvent>& event) override final{
-		for( auto p : mPrefetch ) p->Get(event);  // make sure all factories have been activated
-		m_lock->acquire_write_lock();
-		try{ // use try-catch since we can't use lock_guard
-			for( auto p : mPrefetch ) p->Fill(event); // Copy object pointers into members
-			ProcessSequential( event );
-		}catch(...){}
-		m_lock->release_lock();
-	}
-	virtual void ProcessSequential(const std::shared_ptr<const JEvent>& event){};
+    // JEventProcessorSequentialRoot takes control of Init, Finish, and Process. The user overrides
+    // ProcessSequential, InitWithGlobalRootLock, and FinishWithGlobalRootLock instead.
+
+    void Init() final {
+        mGlobalWriteLock = GetApplication()->GetService<JGlobalRootLock>();
+        mGlobalWriteLock->acquire_write_lock();
+        try {
+            InitWithGlobalRootLock();
+            mGlobalWriteLock->release_lock();
+        }
+        catch (...) {
+            mGlobalWriteLock->release_lock();
+            // Ideally we'd use the STL read-write lock (std::shared_mutex/lock) intead of the pthreads one.
+            // However for now we are limited to C++14 (we would need C++17).
+            throw;
+            // It is important to re-throw exceptions so that the framework can handle them correctly
+        }
+    };
+
+    void Finish() final {
+        mGlobalWriteLock->acquire_write_lock();
+        try {
+            FinishWithGlobalRootLock();
+            mGlobalWriteLock->release_lock();
+        }
+        catch (...) {
+            mGlobalWriteLock->release_lock();
+            // Ideally we'd use the STL read-write lock (std::shared_mutex/lock) intead of the pthreads one.
+            // However for now we are limited to C++14 (we would need C++17).
+            throw;
+            // It is important to re-throw exceptions so that the framework can handle them correctly
+        }
+    };
+
+    void Process(const std::shared_ptr<const JEvent> &event) override final {
+        for (auto p: mPrefetch) p->Get(event);  // make sure all factories have been activated
+
+        std::lock_guard<std::mutex> lock(mFillMutex);
+        for (auto p: mPrefetch) p->Fill(event); // Copy object pointers into members
+        ProcessSequential(event);
+    }
+
+    // These are what the user implements (in lieu of Process, Init, and Finish)
+
+    virtual void ProcessSequential(const std::shared_ptr<const JEvent> &event) {};
+
+    virtual void InitWithGlobalRootLock() {};
+
+    virtual void FinishWithGlobalRootLock() {};
 
 private:
 
-	std::vector<Prefetch*> mPrefetch;
-	std::shared_ptr<JGlobalRootLock> m_lock;
+    std::vector<Prefetch *> mPrefetch;
+    std::shared_ptr<JGlobalRootLock> mGlobalWriteLock;
+    std::mutex mFillMutex; // We don't need the global root lock to fill a histogram as long as all reads and writes happen inside ProcessSequential!
 };
 
 
