@@ -105,6 +105,11 @@ if (${USE_ASAN})
 else()
     message(STATUS "USE_ASAN    Off")
 endif()
+if (${USE_TSAN})
+    message(STATUS "USE_TSAN    On")
+else()
+    message(STATUS "USE_TSAN    Off")
+endif()
 message(STATUS "-----------------------")
 
 #---------

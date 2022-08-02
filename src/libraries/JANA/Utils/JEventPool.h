@@ -35,6 +35,7 @@ public:
         , m_limit_total_events_in_flight(limit_total_events_in_flight)
     {
         assert(m_location_count >= 1);
+        assert(m_pool_size > 0 || !m_limit_total_events_in_flight);
         m_pools = std::unique_ptr<LocalPool[]>(new LocalPool[location_count]());
 
         for (size_t j=0; j<m_location_count; ++j) {

@@ -7,7 +7,7 @@
 #include <JANA/Services/JLoggingService.h>
 
 
-JScheduler::JScheduler(JArrowTopology* topology)
+JScheduler::JScheduler(std::shared_ptr<JArrowTopology> topology)
     : m_topology(topology)
     , m_next_idx(0)
     {

@@ -16,7 +16,7 @@ TEST_CASE("SchedulerTests") {
     SubOneProcessor p2;
     SumSink<double> sink;
 
-    JArrowTopology topology;
+    auto topology = std::make_shared<JArrowTopology>();
 
     auto q1 = new JMailbox<int>();
     auto q2 = new JMailbox<double>();
@@ -31,15 +31,15 @@ TEST_CASE("SchedulerTests") {
     multiply_by_two->attach(subtract_one);
     subtract_one->attach(sum_everything);
 
-    topology.sources.push_back(emit_rand_ints);
-    topology.arrows.push_back(emit_rand_ints);
-    topology.arrows.push_back(multiply_by_two);
-    topology.arrows.push_back(subtract_one);
-    topology.arrows.push_back(sum_everything);
-    topology.sinks.push_back(sum_everything);
+    topology->sources.push_back(emit_rand_ints);
+    topology->arrows.push_back(emit_rand_ints);
+    topology->arrows.push_back(multiply_by_two);
+    topology->arrows.push_back(subtract_one);
+    topology->arrows.push_back(sum_everything);
+    topology->sinks.push_back(sum_everything);
 
     emit_rand_ints->set_chunksize(1);
-    topology.run(1);
+    topology->run(1);
 
     JArrow* assignment;
     JArrowMetrics::Status last_result;
@@ -49,7 +49,7 @@ TEST_CASE("SchedulerTests") {
 
         auto logger = JLogger(JLogger::Level::OFF);
 
-        JScheduler scheduler(&topology);
+        JScheduler scheduler(topology);
 
         last_result = JArrowMetrics::Status::ComeBackLater;
         assignment = nullptr;
@@ -71,7 +71,7 @@ TEST_CASE("SchedulerTests") {
     SECTION("When run sequentially, topology finished => RRS returns nullptr") {
 
         auto logger = JLogger(JLogger::Level::OFF);
-        JScheduler scheduler(&topology);
+        JScheduler scheduler(topology);
         last_result = JArrowMetrics::Status::ComeBackLater;
         assignment = nullptr;
 
@@ -96,7 +96,7 @@ TEST_CASE("SchedulerRoundRobinBehaviorTests") {
     SubOneProcessor p2;
     SumSink<double> sink;
 
-    JArrowTopology topology;
+    auto topology = std::make_shared<JArrowTopology>();
 
     auto q1 = new JMailbox<int>();
     auto q2 = new JMailbox<double>();
@@ -111,17 +111,17 @@ TEST_CASE("SchedulerRoundRobinBehaviorTests") {
     multiply_by_two->attach(subtract_one);
     subtract_one->attach(sum_everything);
 
-    topology.sources.push_back(emit_rand_ints);
-    topology.arrows.push_back(emit_rand_ints);
-    topology.arrows.push_back(multiply_by_two);
-    topology.arrows.push_back(subtract_one);
-    topology.arrows.push_back(sum_everything);
-    topology.sinks.push_back(sum_everything);
+    topology->sources.push_back(emit_rand_ints);
+    topology->arrows.push_back(emit_rand_ints);
+    topology->arrows.push_back(multiply_by_two);
+    topology->arrows.push_back(subtract_one);
+    topology->arrows.push_back(sum_everything);
+    topology->sinks.push_back(sum_everything);
 
     emit_rand_ints->set_chunksize(1);
-    topology.run(1);
+    topology->run(1);
 
-    JScheduler scheduler(&topology);
+    JScheduler scheduler(topology);
     auto logger = JLogger(JLogger::Level::OFF);
 
     auto last_result = JArrowMetrics::Status::ComeBackLater;

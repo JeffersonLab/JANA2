@@ -160,7 +160,6 @@ JArrowProcessingController::~JArrowProcessingController() {
     for (JWorker* worker : m_workers) {
         delete worker;
     }
-    delete m_topology;
     delete m_scheduler;
 }
 

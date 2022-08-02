@@ -33,6 +33,7 @@ set(TEST_SOURCES
     JCallGraphRecorderTests.cc
     JEventProcessorSequentialTests.cc
     JFactoryDefTagsTests.cc
+    SubeventTests.cc
     )
 
 add_executable(janatests ${TEST_SOURCES})

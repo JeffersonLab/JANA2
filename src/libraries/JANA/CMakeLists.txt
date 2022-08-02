@@ -38,7 +38,6 @@ set(JANA2_SOURCES
     Engine/JMailbox.h
     Engine/JScheduler.cc
     Engine/JScheduler.h
-    Engine/JSubeventArrow.cc
     Engine/JSubeventArrow.h
     Engine/JWorker.h
     Engine/JWorker.cc

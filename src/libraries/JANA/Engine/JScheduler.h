@@ -18,14 +18,14 @@
     class JScheduler {
 
     private:
-        JArrowTopology* m_topology;
+        std::shared_ptr<JArrowTopology> m_topology;
         size_t m_next_idx;
         std::mutex m_mutex;
 
     public:
 
         /// Constructor. Note that a Scheduler operates on a vector of Arrow*s.
-        JScheduler(JArrowTopology* topology);
+        JScheduler(std::shared_ptr<JArrowTopology> topology);
 
         /// Lets a Worker ask the Scheduler for another assignment. If no assignments make sense,
         /// Scheduler returns nullptr, which tells that Worker to idle until his next checkin.
