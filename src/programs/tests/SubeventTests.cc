@@ -153,7 +153,8 @@ TEST_CASE("Basic subevent arrow functionality") {
             inputs.push_back(new MyInput(24,3.4));
             inputs.push_back(new MyInput(25,3.3));
             event->Insert(inputs);
-            // throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
+            if (GetEventCount() == 10)
+                throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
         }
     };
 
@@ -172,8 +173,7 @@ TEST_CASE("Basic subevent arrow functionality") {
 
         auto parms = new JParameterManager;
         // Some params need to be present BEFORE JApplication is constructed, e.g. log levels are lost
-        parms->SetParameter("log:debug", "JWorker,JScheduler,JArrowProcessingController,JEventProcessorArrow");
-        parms->SetParameter("jana:nevents", 6);
+        parms->SetParameter("log:trace", "JWorker,JScheduler,JArrow,JArrowProcessingController,JEventProcessorArrow");
         JApplication app(parms);
         app.SetTimeoutEnabled(false);
         app.SetTicker(false);
