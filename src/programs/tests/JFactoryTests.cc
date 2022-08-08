@@ -139,7 +139,7 @@ TEST_CASE("JFactoryTests") {
     }
 
     struct Issue135Factory : public JFactoryT<JFactoryTestDummyObject> {
-        void Process(const std::shared_ptr<const JEvent>& event) override {
+        void Process(const std::shared_ptr<const JEvent>&) override {
             mData.emplace_back(new JFactoryTestDummyObject(3));
             mData.emplace_back(new JFactoryTestDummyObject(4));
             mData.emplace_back(new JFactoryTestDummyObject(5));
