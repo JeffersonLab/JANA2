@@ -142,6 +142,8 @@ public:
             assert(casted != nullptr);
             mData.push_back(casted);
         }
+        mStatus = Status::Inserted;
+        mCreationStatus = CreationStatus::Inserted;
     }
 
     /// Please use the typed setters instead whenever possible
@@ -151,14 +153,23 @@ public:
         mData.push_back(casted);
         mStatus = Status::Inserted;
         mCreationStatus = CreationStatus::Inserted;
-        // TODO: assert correct mStatus precondition
     }
 
     void Set(const std::vector<T*>& aData) {
-        ClearData();
-        mData = aData;
-        mStatus = Status::Inserted;
-        mCreationStatus = CreationStatus::Inserted;
+        if (aData == mData) {
+            // The user populated mData directly instead of populating a temporary vector and passing it to us.
+            // Doing this breaks the JFactory::Status invariant unless they remember to call Set() afterwards.
+            // Ideally, they would use a temporary vector and not access mData at all, but they are used to this
+            // from JANA1 and I haven't found a cleaner solution that gives them what they want yet.
+            mStatus = Status::Inserted;
+            mCreationStatus = CreationStatus::Inserted;
+        }
+        else {
+            ClearData();
+            mData = aData;
+            mStatus = Status::Inserted;
+            mCreationStatus = CreationStatus::Inserted;
+        }
     }
 
     void Set(std::vector<T*>&& aData) {

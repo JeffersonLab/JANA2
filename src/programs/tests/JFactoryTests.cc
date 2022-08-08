@@ -137,5 +137,33 @@ TEST_CASE("JFactoryTests") {
         REQUIRE(std::distance(results.first, results.second) == 1);
         REQUIRE(deleted_flag == false);
     }
+
+    struct Issue135Factory : public JFactoryT<JFactoryTestDummyObject> {
+        void Process(const std::shared_ptr<const JEvent>& event) override {
+            mData.emplace_back(new JFactoryTestDummyObject(3));
+            mData.emplace_back(new JFactoryTestDummyObject(4));
+            mData.emplace_back(new JFactoryTestDummyObject(5));
+            Set(mData);
+        }
+    };
+    SECTION("Issue 135: Users modifying mData directly and calling Set() afterwards") {
+        // Unfortunately, we are giving users the ability to access mData directly.
+        // If they do this, they might think they should call Set() directly afterwards so that
+        // the Status and CreationStatus flags get correctly set.
+        // Previously, this would clear mData before setting it, which would make their data
+        // disappear, and they'd have to dig deep into the JANA internals to find out why.
+        // Now, we account for this case. I still think we should clean up this abstraction, though.
+
+        Issue135Factory sut;
+        auto results = sut.GetOrCreate(nullptr, nullptr, 0);
+        REQUIRE(sut.GetNumObjects() == 3);
+        REQUIRE(std::distance(results.first, results.second) == 3);
+
+        int data = 3;
+        for (auto it = results.first; it != results.second; ++it ) {
+            REQUIRE((*it)->data == data);
+            data++;
+        }
+    }
 }
 
