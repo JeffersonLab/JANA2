@@ -34,6 +34,7 @@ private:
     std::vector<std::string> m_plugins_to_include;
     std::vector<std::string> m_plugins_to_exclude;
     std::vector<std::string> m_plugin_paths;
+    std::string m_plugin_paths_str;
     std::map<std::string, void*> m_sohandles; // key=plugin name  val=dlopen handle
 
     bool m_verbose = false;
