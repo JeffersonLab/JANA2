@@ -110,7 +110,14 @@ TEST_CASE("JEventInsertTests") {
 
         // GetFactory<T> can conveniently throw an exception if factory is missing.
         // This is useful when said data is required
-        REQUIRE_THROWS(event->GetFactory<FakeJObject>("absent_tag", true));
+        try {
+            event->GetFactory<FakeJObject>("absent_tag", true);
+            REQUIRE(0 == 1); // Shouldn't reach this point
+        }
+        catch (const JException& ex) {
+            // Hide the stack trace by default if the error can be trivially traced back to a JFactory
+            REQUIRE(ex.show_stacktrace == false);
+        }
     }
 
     // -----------------

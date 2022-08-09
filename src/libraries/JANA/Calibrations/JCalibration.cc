@@ -78,7 +78,7 @@ JCalibration::~JCalibration()
 //---------------------------------
 // PutCalib
 //---------------------------------
-bool JCalibration::PutCalib(string namepath, int32_t run_min, int32_t run_max, uint64_t event_min, uint64_t event_max, string &author, map<string, string> &svals, string comment)
+bool JCalibration::PutCalib(string /*namepath*/, int32_t /*run_min*/, int32_t /*run_max*/, uint64_t /*event_min*/, uint64_t /*event_max*/, string &/*author*/, map<string, string> &/*svals*/, string /*comment*/)
 {
     LOG<<"PutCalib(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, map<string, string> &svals, string &comment="") not implemented!"<<LOG_END;
     return true;
@@ -87,7 +87,7 @@ bool JCalibration::PutCalib(string namepath, int32_t run_min, int32_t run_max, u
 //---------------------------------
 // PutCalib
 //---------------------------------
-bool JCalibration::PutCalib(string namepath, int32_t run_min, int32_t run_max, uint64_t event_min, uint64_t event_max, string &author, vector< map<string, string> > &svals, string comment)
+bool JCalibration::PutCalib(string /*namepath*/, int32_t /*run_min*/, int32_t /*run_max*/, uint64_t /*event_min*/, uint64_t /*event_max*/, string &/*author*/, vector< map<string, string> > &/*svals*/, string /*comment*/)
 {
     LOG<<"PutCalib(string namepath, int run_min, int run_max, int event_min, int event_max, string &author, vector< map<string, string> > &svals, string &comment="") not implemented!"<<LOG_END;
     return true;

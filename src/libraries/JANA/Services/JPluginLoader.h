@@ -27,13 +27,14 @@ public:
     void add_plugin(std::string plugin_name);
     void add_plugin_path(std::string path);
     void attach_plugins(JComponentManager* jcm);
-    void attach_plugin(JComponentManager* jcm, std::string plugin_name);
+    void attach_plugin(std::string plugin_name);
 
 private:
 
     std::vector<std::string> m_plugins_to_include;
     std::vector<std::string> m_plugins_to_exclude;
     std::vector<std::string> m_plugin_paths;
+    std::string m_plugin_paths_str;
     std::map<std::string, void*> m_sohandles; // key=plugin name  val=dlopen handle
 
     bool m_verbose = false;

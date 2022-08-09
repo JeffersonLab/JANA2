@@ -26,7 +26,7 @@ JGeometryMYSQL::~JGeometryMYSQL()
 //---------------------------------
 // Get
 //---------------------------------
-bool JGeometryMYSQL::Get(string path, string &sval)
+bool JGeometryMYSQL::Get(string /*path*/, string &/*sval*/)
 {
 
     // Looks like we failed to find the requested item. Let the caller know.
@@ -36,7 +36,7 @@ bool JGeometryMYSQL::Get(string path, string &sval)
 //---------------------------------
 // Get
 //---------------------------------
-bool JGeometryMYSQL::Get(string path, map<string, string> &svals)
+bool JGeometryMYSQL::Get(string /*path*/, map<string, string> &/*svals*/)
 {
     // Looks like we failed to find the requested item. Let the caller know.
     return false;
@@ -45,7 +45,7 @@ bool JGeometryMYSQL::Get(string path, map<string, string> &svals)
 //---------------------------------
 // GetMultiple
 //---------------------------------
-bool JGeometryMYSQL::GetMultiple(string xpath, vector<string> &vsval)
+bool JGeometryMYSQL::GetMultiple(string /*xpath*/, vector<string> &/*vsval*/)
 {
     return false;
 }
@@ -53,7 +53,7 @@ bool JGeometryMYSQL::GetMultiple(string xpath, vector<string> &vsval)
 //---------------------------------
 // GetMultiple
 //---------------------------------
-bool JGeometryMYSQL::GetMultiple(string xpath, vector<map<string, string> >&vsvals)
+bool JGeometryMYSQL::GetMultiple(string /*xpath*/, vector<map<string, string> >&/*vsvals*/)
 {
     return false;
 }
@@ -61,7 +61,7 @@ bool JGeometryMYSQL::GetMultiple(string xpath, vector<map<string, string> >&vsva
 //---------------------------------
 // GetXPaths
 //---------------------------------
-void JGeometryMYSQL::GetXPaths(vector<string> &paths, ATTR_LEVEL_t level, const string &filter)
+void JGeometryMYSQL::GetXPaths(vector<string> &/*paths*/, ATTR_LEVEL_t /*level*/, const string &/*filter*/)
 {
 
 }

@@ -51,7 +51,7 @@ public:
 		JArrowMetrics::Status status;
 		JArrowMetrics::duration_t latency;
 		JArrowMetrics::duration_t overhead; // TODO: Populate these
-		size_t message_count = 0;
+		// size_t message_count = 0;
 
 		int requested_events = this->get_chunksize() * m_max_events_per_block; // chunksize is measured in blocks
 		int reserved_events = m_event_queue->reserve(requested_events, location_id);
@@ -68,12 +68,13 @@ public:
 
 		auto output_queue_status = m_event_queue->push(event_buffer, reserved_events, location_id);
 
-		if (reserved_events == 0 || input_queue_status == JMailbox<T*>::Status::Congested || input_queue_status == JMailbox<T*>::Status::Full) {
+		if (reserved_events == 0 ||
+                    input_queue_status == JMailbox<T*>::Status::Congested ||
+                    output_queue_status == JMailbox<Event>::Status::Full ||
+                    input_queue_status == JMailbox<T*>::Status::Empty
+                   ) {
 			status = JArrowMetrics::Status::ComeBackLater;
 		}
-		// else if (input_queue_status == JMailbox<T*>::Status::Finished) {
-		// 	status = JArrowMetrics::Status::Finished;
-		// }
 		else {
 			status = JArrowMetrics::Status::KeepGoing;
 		}

@@ -79,49 +79,52 @@ public:
     /// called if and only if the run number changes, etc.
     PairType GetOrCreate(const std::shared_ptr<const JEvent>& event, JApplication* app, int32_t run_number) {
 
-        //std::lock_guard<std::mutex> lock(mMutex);
+        // std::lock_guard<std::mutex> lock(mMutex);
+        // TODO: We might want _some_ locking here actually
         if (mApp == nullptr) {
             mApp = app;
         }
-        switch (mStatus) {
-            case Status::Uninitialized:
-                try {
-                    std::call_once(mInitFlag, &JFactory::Init, this);
-                }
-                catch (JException& ex) {
-                    ex.plugin_name = mPluginName;
-                    ex.component_name = mFactoryName;
-                    throw ex;
-                }
-                catch (...) {
-                    auto ex = JException("Unknown exception in JFactoryT::Init()");
-                    ex.nested_exception = std::current_exception();
-                    ex.plugin_name = mPluginName;
-                    ex.component_name = mFactoryName;
-                    throw ex;
-                }
-            case Status::Unprocessed:
-                if (mPreviousRunNumber == -1) {
-                    // This is the very first run
-                    ChangeRun(event);
-                    BeginRun(event);
-                    mPreviousRunNumber = run_number;
-                }
-                else if (mPreviousRunNumber != run_number) {
-                    // This is a later run, and it has changed
-                    EndRun();
-                    ChangeRun(event);
-                    BeginRun(event);
-                    mPreviousRunNumber = run_number;
-                }
-                Process(event);
-                mStatus = Status::Processed;
-                mCreationStatus = CreationStatus::Created;
-            case Status::Processed:
-            case Status::Inserted:
-                return std::make_pair(mData.cbegin(), mData.cend());
-            default:
-                throw JException("Enum is set to a garbage value somehow");
+        if (mStatus == Status::Uninitialized) {
+            try {
+                std::call_once(mInitFlag, &JFactory::Init, this);
+                mStatus = Status::Unprocessed;
+            }
+            catch (JException& ex) {
+                ex.plugin_name = mPluginName;
+                ex.component_name = mFactoryName;
+                throw ex;
+            }
+            catch (...) {
+                auto ex = JException("Unknown exception in JFactoryT::Init()");
+                ex.nested_exception = std::current_exception();
+                ex.plugin_name = mPluginName;
+                ex.component_name = mFactoryName;
+                throw ex;
+            }
+        }
+        if (mStatus == Status::Unprocessed) {
+            if (mPreviousRunNumber == -1) {
+                // This is the very first run
+                ChangeRun(event);
+                BeginRun(event);
+                mPreviousRunNumber = run_number;
+            }
+            else if (mPreviousRunNumber != run_number) {
+                // This is a later run, and it has changed
+                EndRun();
+                ChangeRun(event);
+                BeginRun(event);
+                mPreviousRunNumber = run_number;
+            }
+            Process(event);
+            mStatus = Status::Processed;
+            mCreationStatus = CreationStatus::Created;
+        }
+        if (mStatus == Status::Processed || mStatus == Status::Inserted) {
+            return std::make_pair(mData.cbegin(), mData.cend());
+        }
+        else {
+            throw JException("JFactoryT::Status is set to a garbage value");
         }
     }
 
@@ -139,6 +142,8 @@ public:
             assert(casted != nullptr);
             mData.push_back(casted);
         }
+        mStatus = Status::Inserted;
+        mCreationStatus = CreationStatus::Inserted;
     }
 
     /// Please use the typed setters instead whenever possible
@@ -148,14 +153,23 @@ public:
         mData.push_back(casted);
         mStatus = Status::Inserted;
         mCreationStatus = CreationStatus::Inserted;
-        // TODO: assert correct mStatus precondition
     }
 
     void Set(const std::vector<T*>& aData) {
-        ClearData();
-        mData = aData;
-        mStatus = Status::Inserted;
-        mCreationStatus = CreationStatus::Inserted;
+        if (aData == mData) {
+            // The user populated mData directly instead of populating a temporary vector and passing it to us.
+            // Doing this breaks the JFactory::Status invariant unless they remember to call Set() afterwards.
+            // Ideally, they would use a temporary vector and not access mData at all, but they are used to this
+            // from JANA1 and I haven't found a cleaner solution that gives them what they want yet.
+            mStatus = Status::Inserted;
+            mCreationStatus = CreationStatus::Inserted;
+        }
+        else {
+            ClearData();
+            mData = aData;
+            mStatus = Status::Inserted;
+            mCreationStatus = CreationStatus::Inserted;
+        }
     }
 
     void Set(std::vector<T*>&& aData) {

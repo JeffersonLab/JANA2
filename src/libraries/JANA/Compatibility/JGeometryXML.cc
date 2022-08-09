@@ -169,6 +169,8 @@ void JGeometryXML::Init(string xmlfile, string xml)
 
 
 #if !HAVE_XERCES
+    (void) xmlfile; // Suppress unused parameter warning
+    (void) xml;     // Suppress unused parameter warning
     jerr<<endl;
     jerr<<"This JANA library was compiled without XERCESC support. To enable"<<endl;
     jerr<<"XERCESC, install it on your system and set your XERCESCROOT enviro."<<endl;
@@ -428,6 +430,8 @@ bool JGeometryXML::GetMultiple(string xpath, vector<string> &vsval)
     pthread_setcancelstate(oldstate, NULL);
     pthread_setcanceltype(oldtype, NULL);
 
+#else
+    (void) xpath; // Suppress unused parameter warning
 #endif
 
     // Looks like we failed to find the requested item. Let the caller know.
@@ -472,7 +476,8 @@ bool JGeometryXML::GetMultiple(string xpath, vector<map<string, string> >&vsvals
 
     pthread_setcancelstate(oldstate, NULL);
     pthread_setcanceltype(oldtype, NULL);
-
+#else
+    (void) xpath; // Suppress unused parameter warning
 #endif
 
     // Looks like we failed to find the requested item. Let the caller know.
@@ -495,6 +500,8 @@ void JGeometryXML::GetXPaths(vector<string> &xpaths, ATTR_LEVEL_t level, const s
 
 #if HAVE_XERCES
     AddNodeToList((DOMNode*)doc->getDocumentElement(), "", xpaths, level);
+#else
+    (void) level; // Suppress unused parameter warning
 #endif // XERCESC
 
     // If no filter is specified then return now.

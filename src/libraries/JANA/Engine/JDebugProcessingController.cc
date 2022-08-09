@@ -160,7 +160,7 @@ std::unique_ptr<const JPerfSummary> JDebugProcessingController::measure_performa
     m_perf_metrics.split(m_total_events_processed);
     auto ps = std::unique_ptr<JPerfSummary>(new JPerfSummary());
     m_perf_metrics.summarize(*ps);
-    return std::move(ps);
+    return ps;
 }
 
 

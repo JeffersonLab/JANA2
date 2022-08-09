@@ -72,7 +72,7 @@ JCalibrationFile::~JCalibrationFile()
 //---------------------------------
 // GetCalib
 //---------------------------------
-bool JCalibrationFile::GetCalib(string namepath, map<string, string> &svals, uint64_t event_number)
+bool JCalibrationFile::GetCalib(string namepath, map<string, string> &svals, uint64_t /*event_number*/)
 {
     /// Open file specified by namepath (and the url passed to us in the
     /// constructor) and read in the calibration constants in plain
@@ -135,7 +135,7 @@ bool JCalibrationFile::GetCalib(string namepath, map<string, string> &svals, uin
 //---------------------------------
 // GetCalib
 //---------------------------------
-bool JCalibrationFile::GetCalib(string namepath, vector<string> &svals, uint64_t event_number)
+bool JCalibrationFile::GetCalib(string namepath, vector<string> &svals, uint64_t /*event_number*/)
 {
     /// Open file specified by namepath (and the url passed to us in the
     /// constructor) and read in the calibration constants in plain
@@ -201,7 +201,7 @@ bool JCalibrationFile::GetCalib(string namepath, vector<string> &svals, uint64_t
 //---------------------------------
 // GetCalib
 //---------------------------------
-bool JCalibrationFile::GetCalib(string namepath, vector< map<string, string> > &svals, uint64_t event_number)
+bool JCalibrationFile::GetCalib(string namepath, vector< map<string, string> > &svals, uint64_t /*event_number*/)
 {
     /// Open file specified by namepath (and the url passed to us in the
     /// constructor) and read in a table of calibration constants in plain
@@ -282,7 +282,7 @@ bool JCalibrationFile::GetCalib(string namepath, vector< map<string, string> > &
 //---------------------------------
 // GetCalib
 //---------------------------------
-bool JCalibrationFile::GetCalib(string namepath, vector< vector<string> > &svals, uint64_t event_number)
+bool JCalibrationFile::GetCalib(string namepath, vector< vector<string> > &svals, uint64_t /*event_number*/)
 {
     /// Open file specified by namepath (and the url passed to us in the
     /// constructor) and read in a table of calibration constants in plain
@@ -366,7 +366,7 @@ bool JCalibrationFile::GetCalib(string namepath, vector< vector<string> > &svals
 //---------------------------------
 // PutCalib
 //---------------------------------
-bool JCalibrationFile::JCalibrationFile::PutCalib(string namepath, int32_t run_min, int32_t run_max, uint64_t event_min, uint64_t event_max, string &author, map<string, string> &svals, string comment)
+bool JCalibrationFile::JCalibrationFile::PutCalib(string namepath, int32_t run_min, int32_t run_max, uint64_t /*event_min*/, uint64_t /*event_max*/, string &author, map<string, string> &svals, string comment)
 {
     // Open the item file creating the directory path if needed and
     // writing a header to it.
@@ -389,7 +389,7 @@ bool JCalibrationFile::JCalibrationFile::PutCalib(string namepath, int32_t run_m
 //---------------------------------
 // PutCalib
 //---------------------------------
-bool JCalibrationFile::JCalibrationFile::PutCalib(string namepath, int32_t run_min, int32_t run_max, uint64_t event_min, uint64_t event_max, string &author, vector< map<string, string> > &svals, string comment)
+bool JCalibrationFile::JCalibrationFile::PutCalib(string namepath, int32_t run_min, int32_t run_max, uint64_t /*event_min*/, uint64_t /*event_max*/, string &author, vector< map<string, string> > &svals, string comment)
 {
     // We need at least one element to make this worthwhile
     if(svals.size()<1)return true;

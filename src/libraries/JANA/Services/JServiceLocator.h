@@ -15,6 +15,7 @@
 #include <assert.h>
 #include <memory>
 #include <mutex>
+#include "JANA/Utils/JTypeInfo.h"
 
 
 class JServiceLocator;
@@ -78,7 +79,9 @@ public:
 
         auto iter = underlying.find(std::type_index(typeid(T)));
         if (iter == underlying.end()) {
-            throw JException("Service not found!");
+            std::ostringstream oss;
+            oss << "Service not found: '" << JTypeInfo::demangle<T>() << "'. Did you forget to include a plugin?" << std::endl;
+            throw JException(oss.str());
         }
         auto& pair = iter->second;
         auto& wired = pair.second;

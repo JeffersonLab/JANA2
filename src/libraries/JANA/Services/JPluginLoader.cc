@@ -69,19 +69,28 @@ void JPluginLoader::attach_plugins(JComponentManager* jcm) {
     /// actually attach and initialize them. See AddPlugin method
     /// for more.
 
-    // The JANA_PLUGIN_PATH specifies directories to search
-    // for plugins that were explicitly added through AddPlugin(...).
-    // Multiple directories can be specified using a colon(:) separator.
+    // Build our list of plugin search paths.
+    // 1. First we look for plugins in the local directory
+    add_plugin_path(".");
+
+    // 2. Next we look for plugins in locations specified via parameters. (Colon-separated)
+    m_app->SetDefaultParameter("jana:plugin_path", m_plugin_paths_str, "Colon-separated paths to search for plugins");
+    std::stringstream param_ss(m_plugin_paths_str);
+    std::string path;
+    while (getline(param_ss, path, ':')) add_plugin_path(path);
+
+    // 3. Next we look for plugins in locations specified via environment variable. (Colon-separated)
     const char* jpp = getenv("JANA_PLUGIN_PATH");
     if (jpp) {
-        std::stringstream ss(jpp);
-        std::string path;
-        while (getline(ss, path, ':')) add_plugin_path(path);
+        std::stringstream envvar_ss(jpp);
+        while (getline(envvar_ss, path, ':')) add_plugin_path(path);
     }
 
-    // Default plugin search path
-    add_plugin_path(".");
-    if (const char* ptr = getenv("JANA_HOME")) add_plugin_path(std::string(ptr) + "/plugins");
+    // 4. Finally we look in the plugin directories relative to $JANA_HOME
+    if (const char* jana_home = getenv("JANA_HOME")) {
+        add_plugin_path(std::string(jana_home) + "/plugins/JANA");  // In case we did a system install and want to avoid conflicts.
+        add_plugin_path(std::string(jana_home) + "/plugins");
+    }
 
     // Add plugins specified via PLUGINS configuration parameter
     // (comma separated list).
@@ -113,7 +122,7 @@ void JPluginLoader::attach_plugins(JComponentManager* jcm) {
                     LOG_DEBUG(m_logger) << "Found!" << LOG_END;
                     try {
                         jcm->next_plugin(plugin);
-                        attach_plugin(jcm, fullpath.c_str());
+                        attach_plugin(fullpath.c_str());
                         paths_checked << "Loaded successfully" << std::endl;
                         found_plugin = true;
                         break;
@@ -149,7 +158,7 @@ void JPluginLoader::attach_plugins(JComponentManager* jcm) {
 }
 
 
-void JPluginLoader::attach_plugin(JComponentManager* jcm, std::string soname) {
+void JPluginLoader::attach_plugin(std::string soname) {
 
     /// Attach a plugin by opening the shared object file and running the
     /// InitPlugin_t(JApplication* app) global C-style routine in it.
@@ -174,8 +183,6 @@ void JPluginLoader::attach_plugin(JComponentManager* jcm, std::string soname) {
 
     // Look for an InitPlugin symbol
     typedef void InitPlugin_t(JApplication* app);
-    //typedef void InitPlugin_t(JComponentManager* jcm, JServiceLocator* sl);
-    // TODO: Convert InitPlugin sig to (builder, servicelocator) -> void
     InitPlugin_t* initialize_proc = (InitPlugin_t*) dlsym(handle, "InitPlugin");
     if (initialize_proc) {
         LOG_INFO(m_logger) << "Initializing plugin \"" << soname << "\"" << LOG_END;

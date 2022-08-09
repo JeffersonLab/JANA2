@@ -26,7 +26,7 @@ JArrowMetrics::Status step(JArrow* arrow) {
         return status;
 }
 
-void log_status(JArrowTopology& topology) {
+void log_status(JArrowTopology& /*topology*/) {
 
 }
 
