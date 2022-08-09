@@ -86,7 +86,7 @@ public:
 ///    equal group ids. This makes debugging much easier.
 /// 3. Encourage the practice of keeping state which is shared between different JEvents _explicit_ by using JServices.
 
-class JEventGroupManager : public JService {
+class JEventGroupManager final : public JService {
 
     std::mutex m_mutex;
     std::map<int, JEventGroup*> m_eventgroups;
