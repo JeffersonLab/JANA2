@@ -116,6 +116,16 @@ public:
         auto queue = new EventQueue(m_event_queue_threshold, m_topology->mapping.get_loc_count(), m_enable_stealing);
         m_topology->queues.push_back(queue);
 
+        // If the user doesn't provide any event sources, we want to communicate this to them clearly.
+        // Right now, unfortunately, a thrown JException gets caught in JApplication::Initialize() which immediately
+        // calls exit(). The catch2 exit handler somehow segfaults. We really don't want to exit there anyhow. Instead,
+        // we want the exception to keep going so that the caller (catch2, JMain, Tridas, etc) handles it instead.
+        //
+        // if (m_components->get_evt_srces().empty()) {
+        //     throw JException("No event sources provided!");
+        // }
+        LOG_ERROR(m_topology->m_logger) << "No event sources provided!" << LOG_END;
+
         for (auto src: m_components->get_evt_srces()) {
 
             // create arrow for each source. Don't open until arrow.activate() called
