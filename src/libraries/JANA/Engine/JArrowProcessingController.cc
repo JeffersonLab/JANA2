@@ -59,8 +59,12 @@ void JArrowProcessingController::run(size_t nthreads) {
 void JArrowProcessingController::scale(size_t nthreads) {
 
     LOG_INFO(m_logger) << "scale(): Stopping all running workers" << LOG_END;
-    request_pause();
-    wait_until_paused();
+    m_topology->request_pause();
+    for (JWorker* worker : m_workers) {
+        worker->wait_for_stop();
+    }
+    m_topology->achieve_pause();
+
     LOG_INFO(m_logger) << "scale(): All workers are stopped" << LOG_END;
     bool pin_to_cpu = (m_topology->mapping.get_affinity() != JProcessorMapping::AffinityStrategy::None);
     size_t next_worker_id = m_workers.size();
