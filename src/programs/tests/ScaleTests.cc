@@ -8,7 +8,12 @@
 
 TEST_CASE("NThreads") {
 
-    JApplication app;
+    auto parms = new JParameterManager;
+    // parms->SetParameter("log:debug","JScheduler,JArrowProcessingController,JWorker,JArrow");
+    parms->SetParameter("jana:nevents",3);
+    JApplication app(parms);
+    app.Add(new scaletest::DummySource("DummySource", &app));
+
     SECTION("If nthreads not provided, default to 1") {
         app.Run(true);
         auto threads = app.GetNThreads();

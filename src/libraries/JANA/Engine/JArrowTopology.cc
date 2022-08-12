@@ -64,6 +64,10 @@ void JArrowTopology::run(int nthreads) {
         return;
     }
     LOG_DEBUG(m_logger) << "JArrowTopology: run() : " << m_current_status << " => Running" << LOG_END;
+
+    if (sources.empty()) {
+        throw JException("No event sources found!");
+    }
     for (auto source : sources) {
         // We activate any sources, and everything downstream activates automatically
         // Note that this won't affect finished sources. It will, however, stop drain().
