@@ -121,10 +121,10 @@ public:
         // calls exit(). The catch2 exit handler somehow segfaults. We really don't want to exit there anyhow. Instead,
         // we want the exception to keep going so that the caller (catch2, JMain, Tridas, etc) handles it instead.
         //
-        // if (m_components->get_evt_srces().empty()) {
-        //     throw JException("No event sources provided!");
-        // }
-        LOG_ERROR(m_topology->m_logger) << "No event sources provided!" << LOG_END;
+        if (m_components->get_evt_srces().empty()) {
+            LOG_ERROR(m_topology->m_logger) << "No event sources provided!" << LOG_END;
+            // throw JException("No event sources provided!");
+        }
 
         for (auto src: m_components->get_evt_srces()) {
 

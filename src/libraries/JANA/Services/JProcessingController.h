@@ -26,8 +26,10 @@ public:
     virtual bool is_stopped() = 0;
     virtual bool is_finished() = 0;
     virtual bool is_timed_out() = 0;
+    virtual bool is_excepted() = 0;
 
     virtual std::unique_ptr<const JPerfSummary> measure_performance() = 0;
+    virtual std::vector<JException> get_exceptions() const = 0;
 
     virtual void print_report() = 0;
     virtual void print_final_report() = 0;

@@ -32,6 +32,9 @@ public:
     bool is_stopped() override;
     bool is_finished() override;
     bool is_timed_out() override;
+    bool is_excepted() override;
+
+    std::vector<JException> get_exceptions() const override;
 
     std::unique_ptr<const JPerfSummary> measure_performance() override;
     std::unique_ptr<const JArrowPerfSummary> measure_internal_performance();

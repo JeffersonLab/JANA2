@@ -43,7 +43,7 @@ void JArrowProcessingController::run(size_t nthreads) {
     while (next_worker_id < nthreads) {
         size_t next_cpu_id = m_topology->mapping.get_cpu_id(next_worker_id);
         size_t next_loc_id = m_topology->mapping.get_loc_id(next_worker_id);
-        auto worker = new JWorker(m_scheduler, next_worker_id, next_cpu_id, next_loc_id, pin_to_cpu);
+        auto worker = new JWorker(this, m_scheduler, next_worker_id, next_cpu_id, next_loc_id, pin_to_cpu);
         worker->logger = m_worker_logger;
         m_workers.push_back(worker);
         next_worker_id++;
@@ -74,7 +74,7 @@ void JArrowProcessingController::scale(size_t nthreads) {
         size_t next_cpu_id = m_topology->mapping.get_cpu_id(next_worker_id);
         size_t next_loc_id = m_topology->mapping.get_loc_id(next_worker_id);
 
-        auto worker = new JWorker(m_scheduler, next_worker_id, next_cpu_id, next_loc_id, pin_to_cpu);
+        auto worker = new JWorker(this, m_scheduler, next_worker_id, next_cpu_id, next_loc_id, pin_to_cpu);
         worker->logger = m_worker_logger;
         m_workers.push_back(worker);
         next_worker_id++;
@@ -171,6 +171,25 @@ bool JArrowProcessingController::is_timed_out() {
         }
     }
     return found_timeout;
+}
+
+bool JArrowProcessingController::is_excepted() {
+    for (auto worker : m_workers) {
+        if (worker->get_runstate() == JWorker::RunState::Excepted) {
+            return true;
+        }
+    }
+    return false;
+}
+
+std::vector<JException> JArrowProcessingController::get_exceptions() const {
+    std::vector<JException> exceptions;
+    for (auto worker : m_workers) {
+        if (worker->get_runstate() == JWorker::RunState::Excepted) {
+            exceptions.push_back(worker->get_exception());
+        }
+    }
+    return exceptions;
 }
 
 JArrowProcessingController::~JArrowProcessingController() {

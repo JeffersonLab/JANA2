@@ -30,8 +30,10 @@ public:
     bool is_stopped() override;
     bool is_finished() override;
     bool is_timed_out() override;
+    bool is_excepted() override;
 
     std::unique_ptr<const JPerfSummary> measure_performance() override;
+    std::vector<JException> get_exceptions() const override;
 
     void print_report() override;
     void print_final_report() override;
@@ -49,6 +51,8 @@ private:
     std::atomic_ullong m_total_events_processed {0}; // Grows monotonically with multiple calls to Run, Stop, Scale
 
     std::vector<std::thread*> m_workers;
+    std::vector<JException> m_exceptions;
+    std::mutex m_exception_mutex;
     JLogger m_logger = JLogger();
     JPerfMetrics m_perf_metrics;
     JComponentManager* m_component_manager = nullptr;

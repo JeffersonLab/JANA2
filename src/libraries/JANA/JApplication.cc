@@ -201,6 +201,16 @@ void JApplication::Run(bool wait_until_finished) {
             SetExitCode((int) ExitCode::Timeout);
             break;
         }
+
+        // Test for exception
+        if (m_processing_controller->is_excepted()) {
+            LOG_FATAL(m_logger) << "Exception in worker!" << LOG_END;
+            SetExitCode((int) ExitCode::UnhandledException);
+
+            // The threads
+            // We are going to throw the first exception and ignore the others.
+            throw m_processing_controller->get_exceptions()[0];
+        }
     }
 
     // Join all threads

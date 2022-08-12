@@ -12,9 +12,6 @@ TEST_CASE("UserExceptionTests") {
     JApplication app;
     app.SetParameterValue("jana:extended_report", 0);
 
-    // TODO: Re-enable once we forward exceptions to master thread
-#if 0
-
     SECTION("JEventSource::Open() excepts, debug engine") {
 
         app.SetParameterValue("jana:engine", 1);
@@ -28,9 +25,7 @@ TEST_CASE("UserExceptionTests") {
        app.SetParameterValue("jana:engine", 1);
        app.Add(new FlakySource("open_excepting_source", &app, false, true));
        app.Add(new FlakyProcessor(&app, false, false, false));
-       //REQUIRE_THROWS(app.Run(true));
-       app.Run(true);
-       REQUIRE(app.GetExitCode() == 99);
+       REQUIRE_THROWS(app.Run(true));
    }
 
 
@@ -58,9 +53,7 @@ TEST_CASE("UserExceptionTests") {
        REQUIRE_THROWS(app.Run(true));
    }
 
-#endif
-
-    SECTION("JEventSource::Open() excepts, new engine") {
+    SECTION("JEventSource::Open() excepts, default engine") {
 
         app.SetParameterValue("jana:engine", 0);
         app.Add(new FlakySource("open_excepting_source", &app, true, false));
@@ -68,15 +61,15 @@ TEST_CASE("UserExceptionTests") {
         REQUIRE_THROWS(app.Run(true));
     }
 
-//    SECTION("JEventSource::GetEvent() excepts, new engine") {
-//
-//        app.SetParameterValue("jana:engine", 0);
-//        app.Add(new FlakySource("open_excepting_source", &app, false, true));
-//        app.Add(new FlakyProcessor(&app, false, false, false));
-//        REQUIRE_THROWS(app.Run(true));
-//    }
+    SECTION("JEventSource::GetEvent() excepts, default engine") {
 
-    SECTION("JEventProcessor::Init() excepts, new engine") {
+        app.SetParameterValue("jana:engine", 0);
+        app.Add(new FlakySource("open_excepting_source", &app, false, true));
+        app.Add(new FlakyProcessor(&app, false, false, false));
+        REQUIRE_THROWS(app.Run(true));
+    }
+
+    SECTION("JEventProcessor::Init() excepts, default engine") {
 
         app.SetParameterValue("jana:engine", 0);
         app.Add(new FlakySource("open_excepting_source", &app, false, false));
@@ -84,20 +77,20 @@ TEST_CASE("UserExceptionTests") {
         REQUIRE_THROWS(app.Run(true));
     }
 
-//    SECTION("JEventProcessor::Process() excepts, new engine") {
-//
-//        app.SetParameterValue("jana:engine", 0);
-//        app.Add(new FlakySource("open_excepting_source", &app, false, false));
-//        app.Add(new FlakyProcessor(&app, false, true, false));
-//        REQUIRE_THROWS(app.Run(true));
-//    }
+    SECTION("JEventProcessor::Process() excepts, default engine") {
 
-//    SECTION("JEventProcessor::Finish() excepts, new engine") {
-//
-//        app.SetParameterValue("jana:engine", 0);
-//        app.Add(new FlakySource("open_excepting_source", &app, false, false));
-//        app.Add(new FlakyProcessor(&app, false, false, true));
-//        REQUIRE_THROWS(app.Run(true));
-//    }
+        app.SetParameterValue("jana:engine", 0);
+        app.Add(new FlakySource("open_excepting_source", &app, false, false));
+        app.Add(new FlakyProcessor(&app, false, true, false));
+        REQUIRE_THROWS(app.Run(true));
+    }
+
+    SECTION("JEventProcessor::Finish() excepts, default engine") {
+
+        app.SetParameterValue("jana:engine", 0);
+        app.Add(new FlakySource("open_excepting_source", &app, false, false));
+        app.Add(new FlakyProcessor(&app, false, false, true));
+        REQUIRE_THROWS(app.Run(true));
+    }
 }
 

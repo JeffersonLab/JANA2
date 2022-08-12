@@ -3,6 +3,7 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #include <JANA/Engine/JWorker.h>
+#include <JANA/Engine/JArrowProcessingController.h>
 #include <JANA/Utils/JCpuInfo.h>
 
 /// This allows someone (aka JArrowProcessingController) to declare that this
@@ -106,9 +107,9 @@ void JWorker::measure_perf(WorkerSummary& summary) {
 }
 
 
-JWorker::JWorker(JScheduler* scheduler, unsigned worker_id, unsigned cpu_id, unsigned location_id, bool pin_to_cpu) :
-
+JWorker::JWorker(JArrowProcessingController* japc, JScheduler* scheduler, unsigned worker_id, unsigned cpu_id, unsigned location_id, bool pin_to_cpu) :
         m_scheduler(scheduler),
+        m_japc(japc),
         m_worker_id(worker_id),
         m_cpu_id(cpu_id),
         m_location_id(location_id),
@@ -162,6 +163,10 @@ void JWorker::wait_for_stop() {
             // By this point, the JWorker must either be Stopped or TimedOut
         }
     }
+}
+
+const JException& JWorker::get_exception() const {
+    return m_exception;
 }
 
 void JWorker::loop() {
@@ -263,12 +268,18 @@ void JWorker::loop() {
         // This means that Workers must pass JExceptions back to the master thread.
         LOG_DEBUG(logger) << "Worker " << m_worker_id << " shutdown due to JException." << LOG_END;
         LOG_FATAL(logger) << e << LOG_END;
-        exit(-1);
-    }catch (std::runtime_error& e){
+        m_run_state = RunState::Excepted;
+        m_exception = e;
+        m_japc->request_pause(); // We aren't going to even try to drain queues.
+    }
+    catch (std::runtime_error& e){
         // same as above
         LOG_DEBUG(logger) << "Worker " << m_worker_id << " shutdown due to std::runtime_error." << LOG_END;
         LOG_FATAL(logger) << e.what() << LOG_END;
-        exit(-1);
+        m_run_state = RunState::Excepted;
+        m_exception = JException(e.what());
+        m_exception.nested_exception = std::current_exception();
+        m_japc->request_pause(); // We aren't going to even try to drain queues.
     }
 }
 

@@ -77,7 +77,7 @@ struct SimpleProcessor : public JEventProcessor {
 
 
 
-int main(int argc, char* argv[]) {
+int main() {
 
     MyProcessor processor;
     JMailbox<std::shared_ptr<JEvent>> events_in;
