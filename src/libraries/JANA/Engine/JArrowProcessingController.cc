@@ -33,7 +33,27 @@ void JArrowProcessingController::initialize() {
 }
 
 void JArrowProcessingController::run(size_t nthreads) {
-    scale(nthreads);
+    LOG_INFO(m_logger) << "run(): Launching " << nthreads << " workers" << LOG_END;
+    // topology->run needs to happen _before_ threads are started so that threads don't quit due to lack of assignments
+    m_topology->run(nthreads);
+
+    bool pin_to_cpu = (m_topology->mapping.get_affinity() != JProcessorMapping::AffinityStrategy::None);
+
+    size_t next_worker_id = 0;
+    while (next_worker_id < nthreads) {
+        size_t next_cpu_id = m_topology->mapping.get_cpu_id(next_worker_id);
+        size_t next_loc_id = m_topology->mapping.get_loc_id(next_worker_id);
+        auto worker = new JWorker(m_scheduler, next_worker_id, next_cpu_id, next_loc_id, pin_to_cpu);
+        worker->logger = m_worker_logger;
+        m_workers.push_back(worker);
+        next_worker_id++;
+    }
+    for (size_t i=0; i<nthreads; ++i) {
+        m_workers.at(i)->start();
+    };
+    // It's tempting to put a barrier here so that JAPC::run() blocks until all workers have entered loop().
+    // The reason it doesn't work is that the topology might exit immediately (or close to immediately), leaving
+    // the supervisor thread waiting forever for workers to reach RunState::Running when they've already Stopped.
 }
 
 void JArrowProcessingController::scale(size_t nthreads) {
