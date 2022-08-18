@@ -7,3 +7,12 @@ include("${CMAKE_CURRENT_LIST_DIR}/JANATargets.cmake")
 get_target_property(JANA_INCLUDE_DIRS JANA::jana2 INCLUDE_DIRECTORIES)
 set(JANA_LIBRARIES JANA::jana2)
 set(JANA_LIB JANA::jana2)
+
+# FIXME: This avoid the issue with only JANA_INCLUDE_DIRS
+# FIXME: being defined and having a value "NOT_FOUND".
+# FIXME: It also provides legacy support for JANA_LIBRARY
+set(JANA_INCLUDE_DIR @CMAKE_INSTALL_PREFIX@/include)
+set(JANA_INCLUDE_DIRS @CMAKE_INSTALL_PREFIX@/include)
+set(JANA_LIBRARY JANA::jana2)
+
+
