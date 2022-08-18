@@ -131,10 +131,12 @@ void JArrowProcessingController::wait_until_stopped() {
 }
 
 bool JArrowProcessingController::is_stopped() {
+    std::lock_guard<std::mutex> lock(m_topology->m_mutex);
     return m_topology->m_current_status == JArrowTopology::Status::Paused;
 }
 
 bool JArrowProcessingController::is_finished() {
+    std::lock_guard<std::mutex> lock(m_topology->m_mutex);
     return m_topology->m_current_status == JArrowTopology::Status::Finished;
 }
 

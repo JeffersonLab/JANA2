@@ -22,6 +22,7 @@ JArrowTopology::~JArrowTopology() {
 }
 
 void JArrowTopology::drain() {
+    std::lock_guard<std::mutex> lock(m_mutex);
     if (m_current_status == Status::Finished) {
         LOG_DEBUG(m_logger) << "JArrowTopology: drain(): Skipping because topology is already Finished" << LOG_END;
         return;
@@ -59,6 +60,7 @@ std::ostream& operator<<(std::ostream& os, JArrowTopology::Status status) {
 
 void JArrowTopology::run(int nthreads) {
 
+    std::lock_guard<std::mutex> lock(m_mutex);
     if (m_current_status == Status::Running || m_current_status == Status::Finished) {
         LOG_DEBUG(m_logger) << "JArrowTopology: run() : " << m_current_status << " => " << m_current_status << LOG_END;
         return;
@@ -81,6 +83,7 @@ void JArrowTopology::run(int nthreads) {
 }
 
 void JArrowTopology::request_pause() {
+    std::lock_guard<std::mutex> lock(m_mutex);
     // This sets all Running arrows to Paused, which prevents Workers from picking up any additional assignments
     // Once all Workers have completed their remaining assignments, the scheduler will notify us via achieve_pause().
     if (m_current_status == Status::Running) {
@@ -98,6 +101,7 @@ void JArrowTopology::request_pause() {
 
 void JArrowTopology::achieve_pause() {
     // This is meant to be used by the scheduler to tell us when all workers have stopped, so it is safe to stop(), etc
+    std::lock_guard<std::mutex> lock(m_mutex);
     if (m_current_status == Status::Running || m_current_status == Status::Pausing || m_current_status == Status::Draining) {
         LOG_DEBUG(m_logger) << "JArrowTopology: achieve_pause() : " << m_current_status << " => " << Status::Paused << LOG_END;
         metrics.stop();
@@ -109,6 +113,7 @@ void JArrowTopology::achieve_pause() {
 }
 
 void JArrowTopology::finish() {
+    std::lock_guard<std::mutex> lock(m_mutex);
     // This finalizes all arrows. Once this happens, we cannot restart the topology.
     if (m_current_status == JArrowTopology::Status::Finished) {
         LOG_DEBUG(m_logger) << "JArrowTopology: finish() : " << m_current_status << " => Finished" << LOG_END;
