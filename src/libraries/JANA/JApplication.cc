@@ -197,15 +197,19 @@ void JApplication::Run(bool wait_until_finished) {
 
         // Test for timeout
         if(m_timeout_on && m_processing_controller->is_timed_out()) {
-            LOG_FATAL(m_logger) << "Timeout detected." << LOG_END;
+            LOG_FATAL(m_logger) << "Detected timeout in worker! Stopping." << LOG_END;
             SetExitCode((int) ExitCode::Timeout);
+            m_processing_controller->request_stop();
+            // TODO: Timeout error is not obvious enough from UI. Maybe throw an exception instead?
+            // TODO: Send USR2 signal to obtain a backtrace for timed out threads?
             break;
         }
 
         // Test for exception
         if (m_processing_controller->is_excepted()) {
-            LOG_FATAL(m_logger) << "Exception in worker!" << LOG_END;
+            LOG_FATAL(m_logger) << "Detected exception in worker! Re-throwing on main thread." << LOG_END;
             SetExitCode((int) ExitCode::UnhandledException);
+            m_processing_controller->request_stop();
 
             // We are going to throw the first exception and ignore the others.
             throw m_processing_controller->get_exceptions()[0];

@@ -266,16 +266,16 @@ void JWorker::loop() {
         // For now the excepting Worker prints the error, and then terminates the whole program.
         // Eventually we want to unify error handling across JApplication::Run, and maybe even across the entire JApplication.
         // This means that Workers must pass JExceptions back to the master thread.
-        LOG_DEBUG(logger) << "Worker " << m_worker_id << " shutdown due to JException." << LOG_END;
-        LOG_FATAL(logger) << e << LOG_END;
+        LOG_INFO(logger) << "Worker " << m_worker_id << " shutdown due to JException: " << e.what() << LOG_END;
+        LOG_DEBUG(logger) << e << LOG_END;
         m_run_state = RunState::Excepted;
         m_exception = e;
         m_japc->request_pause(); // We aren't going to even try to drain queues.
     }
     catch (std::runtime_error& e){
         // same as above
-        LOG_DEBUG(logger) << "Worker " << m_worker_id << " shutdown due to std::runtime_error." << LOG_END;
-        LOG_FATAL(logger) << e.what() << LOG_END;
+        LOG_INFO(logger) << "Worker " << m_worker_id << " shutdown due to std::runtime_error:" << e.what() << LOG_END;
+        LOG_DEBUG(logger) << e.what() << LOG_END;
         m_run_state = RunState::Excepted;
         m_exception = JException(e.what());
         m_exception.nested_exception = std::current_exception();
