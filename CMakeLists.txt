@@ -46,6 +46,16 @@ if (${USE_ROOT})
     add_compile_definitions(HAVE_ROOT)
     include_directories(${ROOT_INCLUDE_DIRS})
     link_libraries(${ROOT_LIBRARIES})
+    execute_process(
+        COMMAND ${ROOT_BINDIR}/root-config --features
+        OUTPUT_VARIABLE ROOT_FEATURES
+    )
+    if(NOT ${ROOT_FEATURES} MATCHES .*cxx${CMAKE_CXX_STANDARD}.*)
+        message(STATUS "root-config --features: ${ROOT_FEATURES}.")
+        message(FATAL_ERROR "ROOT was not compiled against C++${CMAKE_CXX_STANDARD}. "
+            "Specify the C++ standard used to compile ROOT with e.g. -DCMAKE_CXX_STANDARD=17. "
+            "Check the root-config output above for cxx flags.")
+    endif()
 endif()
 
 if (${USE_ZEROMQ})

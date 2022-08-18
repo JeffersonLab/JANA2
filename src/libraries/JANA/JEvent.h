@@ -177,7 +177,9 @@ inline JFactoryT<T>* JEvent::GetFactory(const std::string& tag, bool throw_on_mi
     auto factory = mFactorySet->GetFactory<T>(resolved_tag);
     if (factory == nullptr) {
         if (throw_on_missing) {
-            throw JException("Could not find JFactoryT<" + JTypeInfo::demangle<T>() + "> with tag=" + tag);
+            JException ex("Could not find JFactoryT<" + JTypeInfo::demangle<T>() + "> with tag=" + tag);
+            ex.show_stacktrace = false;
+            throw ex;
         }
     };
     return factory;
@@ -266,10 +268,14 @@ template<class T> const T* JEvent::GetSingleStrict(const std::string& tag) const
     auto iterators = GetFactory<T>(tag, true)->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
     mCallGraph.FinishFactoryCall();
     if (std::distance(iterators.first, iterators.second) == 0) {
-        throw JException("GetSingle failed due to missing %d", NAME_OF(T));
+        JException ex("GetSingle failed due to missing %d", NAME_OF(T));
+        ex.show_stacktrace = false;
+        throw ex;
     }
     else if (std::distance(iterators.first, iterators.second) > 1) {
-        throw JException("GetSingle failed due to too many %d", NAME_OF(T));
+        JException ex("GetSingle failed due to too many %d", NAME_OF(T));
+        ex.show_stacktrace = false;
+        throw ex;
     }
     return *iterators.first;
 }
@@ -296,7 +302,9 @@ inline std::vector<JFactoryT<T>*> JEvent::GetFactoryAll(bool throw_on_missing) c
     auto factories = mFactorySet->GetAllFactories<T>();
     if (factories.size() == 0) {
         if (throw_on_missing) {
-            throw JException("Could not find any JFactoryT<" + JTypeInfo::demangle<T>() + "> (from any tag)");
+            JException ex("Could not find any JFactoryT<" + JTypeInfo::demangle<T>() + "> (from any tag)");
+            ex.show_stacktrace = false;
+            throw ex;
         }
     };
     return factories;

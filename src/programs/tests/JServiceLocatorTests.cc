@@ -9,6 +9,21 @@
 #include "JServiceLocatorTests.h"
 
 
+TEST_CASE("JServiceLocatorMissingServiceTest") {
+    JServiceLocator sut;
+    sut.wire_everything();
+    REQUIRE_THROWS(sut.get<ParameterSvc>());
+    /*
+    try {
+        sut.get<ParameterSvc>();
+        REQUIRE(0 == 1); // Never gets here because it throws
+    }
+    catch (JException ex) {
+        std::cout << ex << std::endl;
+    }
+    */
+}
+
 TEST_CASE("JServiceLocator chicken-and-egg tests") {
 
     JServiceLocator sl;

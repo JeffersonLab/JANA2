@@ -45,7 +45,7 @@ public:
 
     /// Convenience method for formatting complete error data
     inline friend std::ostream& operator<<(std::ostream& os, JException const& ex) {
-        os << "Exception: " << ex.message << std::endl << std::endl;
+        os << "Exception: " << ex.message << std::endl;
         if (ex.plugin_name.length() != 0) {
             os << "  Plugin:         " << ex.plugin_name << std::endl;
         }
@@ -56,7 +56,7 @@ public:
             os << "  Factory name:   " << ex.factory_name << std::endl;
             os << "  Factory tag:    " << ex.factory_tag << std::endl;
         }
-        if (ex.stacktrace.length() != 0) {
+        if (ex.stacktrace.length() != 0 && ex.show_stacktrace) {
             os << "  Backtrace:" << std::endl << std::endl << ex.stacktrace;
         }
         return os;
@@ -69,6 +69,7 @@ public:
     std::string factory_tag;
     std::string stacktrace;
     std::exception_ptr nested_exception;
+    bool show_stacktrace=true;
 
 };
 
