@@ -9,7 +9,9 @@
 
 TEST_CASE("UserExceptionTests") {
 
-    JApplication app;
+    auto parms = new JParameterManager;
+    //parms->SetParameter("log:debug","JApplication,JScheduler,JArrowProcessingController,JWorker,JArrow");
+    JApplication app(parms);
     app.SetParameterValue("jana:extended_report", 0);
 
     SECTION("JEventSource::Open() excepts, debug engine") {
@@ -45,7 +47,7 @@ TEST_CASE("UserExceptionTests") {
        REQUIRE_THROWS(app.Run(true));
    }
 
-   SECTION("JEventSource::Finish() excepts, debug engine") {
+   SECTION("JEventProcessor::Finish() excepts, debug engine") {
 
        app.SetParameterValue("jana:engine", 1);
        app.Add(new FlakySource("open_excepting_source", &app, false, false));
