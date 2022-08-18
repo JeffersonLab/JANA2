@@ -8,7 +8,7 @@
 
 #include <JANA/JApplication.h>
 
-TEST_CASE("TimeoutTests", "[.][performance") {
+TEST_CASE("TimeoutTests", "[.][performance]") {
 
     std::cout << "Running timeout tests..." << std::endl;
     JApplication app;

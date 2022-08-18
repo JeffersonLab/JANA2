@@ -3,6 +3,7 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #include "catch.hpp"
+#include "JANA/Engine/JTopologyBuilder.h"
 
 #include <TestTopologyComponents.h>
 #include <JANA/Utils/JPerfUtils.h>
@@ -39,7 +40,7 @@ TEST_CASE("JTopology: Basic functionality") {
     SubOneProcessor p2;
     SumSink<double> sink;
 
-    JArrowTopology topology;
+    auto topology = std::make_shared<JArrowTopology>();
 
     auto q1 = new JMailbox<int>();
     auto q2 = new JMailbox<double>();
@@ -54,17 +55,17 @@ TEST_CASE("JTopology: Basic functionality") {
     multiply_by_two->attach(subtract_one);
     subtract_one->attach(sum_everything);
 
-    topology.sources.push_back(emit_rand_ints);
-    topology.arrows.push_back(emit_rand_ints);
-    topology.arrows.push_back(multiply_by_two);
-    topology.arrows.push_back(subtract_one);
-    topology.arrows.push_back(sum_everything);
-    topology.sinks.push_back(sum_everything);
+    topology->sources.push_back(emit_rand_ints);
+    topology->arrows.push_back(emit_rand_ints);
+    topology->arrows.push_back(multiply_by_two);
+    topology->arrows.push_back(subtract_one);
+    topology->arrows.push_back(sum_everything);
+    topology->sinks.push_back(sum_everything);
 
     emit_rand_ints->set_chunksize(1);
 
     auto logger = JLogger(JLogger::Level::TRACE);
-    topology.m_logger = logger;
+    topology->m_logger = logger;
     source.logger = logger;
 
 
@@ -98,10 +99,8 @@ TEST_CASE("JTopology: Basic functionality") {
     SECTION("After emitting") {
         LOG_INFO(logger) << "After emitting; should be something in q0" << LOG_END;
 
-        log_status(topology);
-        topology.run(1);
+        topology->run(1);
         step(emit_rand_ints);
-        log_status(topology);
 
         REQUIRE(multiply_by_two->get_pending() == 1);
         REQUIRE(subtract_one->get_pending() == 0);
@@ -121,7 +120,7 @@ TEST_CASE("JTopology: Basic functionality") {
     SECTION("Running each stage sequentially yields the correct results") {
 
         //LOG_INFO(logger) << "Running each stage sequentially yields the correct results" << LOG_END;
-        topology.run(1);
+        topology->run(1);
 
         for (int i = 0; i < 20; ++i) {
             step(emit_rand_ints);
@@ -163,7 +162,7 @@ TEST_CASE("JTopology: Basic functionality") {
         results["sum_everything"] = JArrowMetrics::Status::KeepGoing;
 
         // Put something in the queue to get started
-        topology.run(1);
+        topology->run(1);
         step(emit_rand_ints);
 
         bool work_left = true;
@@ -196,10 +195,10 @@ TEST_CASE("JTopology: Basic functionality") {
     SECTION("Finished flag propagates") {
 
         logger = JLogger(JLogger::Level::OFF);
-        topology.m_logger = logger;
+        topology->m_logger = logger;
         source.logger = logger;
 
-        topology.run(1);
+        topology->run(1);
 
         REQUIRE(emit_rand_ints->get_status() == JArrow::Status::Running);
         REQUIRE(multiply_by_two->get_status() == JArrow::Status::Running);
@@ -242,7 +241,22 @@ TEST_CASE("JTopology: Basic functionality") {
         REQUIRE(subtract_one->get_status() == JArrow::Status::Finished);
         REQUIRE(sum_everything->get_status() == JArrow::Status::Finished);
 
-        log_status(topology);
+        log_status(*topology);
+
+    }
+
+    SECTION("Running from inside JApplication returns the correct answer") {
+        JApplication app;
+        auto builder = app.GetService<JTopologyBuilder>();
+        builder->set(topology);
+
+        REQUIRE(sink.sum == 0);
+
+        app.Run(true);
+
+        REQUIRE(topology->m_current_status == JArrowTopology::Status::Finished);
+        REQUIRE(sum_everything->get_status() == JArrow::Status::Finished);
+        REQUIRE(sink.sum == 20 * 13);
 
     }
 }

@@ -47,7 +47,7 @@ TEST_CASE("MemoryBottleneckTest", "[.][performance]") {
 //    entangled "block of 40": dis * 40
 //
 
-    auto topology = new JArrowTopology;
+    auto topology = std::make_shared<JArrowTopology>();
 
     auto q1 = new JMailbox<Event*>();
     auto q2 = new JMailbox<Event*>();

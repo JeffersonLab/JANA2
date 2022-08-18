@@ -13,6 +13,8 @@
 #include <atomic>
 
 
+class JArrowProcessingController;
+
 class JWorker {
     /// Designed so that the Worker checks in with the Scheduler on his own terms;
     /// i.e. nobody will update the worker's assignment externally. This eliminates
@@ -21,7 +23,7 @@ class JWorker {
 
 public:
     /// The Worker may be configured to try different backoff strategies
-    enum class RunState { Running, Stopping, Stopped, TimedOut };
+    enum class RunState { Running, Stopping, Stopped, TimedOut, Excepted };
 
     /// The logger is made public so that somebody else may set it
     JLogger logger;
@@ -30,6 +32,7 @@ private:
     /// Machinery that nobody else should modify. These should be protected eventually.
     /// Probably simply make them private and expose via get_status() -> Worker::Status
     JScheduler* m_scheduler;
+    JArrowProcessingController* m_japc; // This is used to turn off the other workers if an exception happens
     unsigned m_worker_id;
     unsigned m_cpu_id;
     unsigned m_location_id;
@@ -40,9 +43,10 @@ private:
     JWorkerMetrics m_worker_metrics;
     JArrowMetrics m_arrow_metrics;
     std::mutex m_assignment_mutex;
+    JException m_exception;
 
 public:
-    JWorker(JScheduler* scheduler, unsigned worker_id, unsigned cpu_id, unsigned domain_id, bool pin_to_cpu);
+    JWorker(JArrowProcessingController* japc, JScheduler* scheduler, unsigned worker_id, unsigned cpu_id, unsigned domain_id, bool pin_to_cpu);
     ~JWorker();
 
     /// If we copy or move the Worker, the underlying std::thread will be left with a
@@ -58,6 +62,7 @@ public:
     void request_stop();
     void wait_for_stop();
     void declare_timeout();
+    const JException& get_exception() const;
 
     /// This is what the encapsulated thread is supposed to be doing
     void loop();

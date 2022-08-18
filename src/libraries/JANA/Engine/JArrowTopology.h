@@ -38,11 +38,12 @@ struct JArrowTopology {
     std::vector<EventQueue*> queues;        // Queues shared between arrows
     JProcessorMapping mapping;
 
-    // JActivable stuff
-    int64_t running_arrow_count = 0;         // Detects when the topology has paused
-    int64_t running_worker_count = 0;        // Detects when the workers have all joined
+    std::mutex m_mutex;                           // Protects m_current_status
+    Status m_current_status = Status::Paused;
+    std::atomic_int64_t running_arrow_count {0};  // Detects when the topology has paused
+    // int64_t running_worker_count = 0;          // Detects when the workers have all joined
 
-    size_t event_pool_size = 1;                 //  Will be defaulted to nthreads by builder
+    size_t event_pool_size = 1;                   //  Will be defaulted to nthreads by builder
     bool limit_total_events_in_flight = true;
     bool enable_call_graph_recording = false;
     size_t event_queue_threshold = 80;
@@ -55,7 +56,6 @@ struct JArrowTopology {
 
     JLogger m_logger;
 
-    Status m_current_status = Status::Paused;
     void drain();
     void run(int nthreads);
     void request_pause();

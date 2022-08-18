@@ -7,6 +7,7 @@
 #define GREENFIELD_ARROW_H
 
 #include <iostream>
+#include <atomic>
 #include <cassert>
 #include <vector>
 
@@ -42,8 +43,8 @@ private:
     // These are protected by the Topology mutex, NOT the Arrow mutex!!!
     Status m_status = Status::Unopened;
     int64_t m_thread_count = 0;            // Current number of threads assigned to this arrow
-    int64_t m_running_upstreams = 0;       // Current number of running arrows immediately upstream
-    int64_t* m_running_arrows = nullptr;   // Current number of running arrows total, so we can detect pauses
+    std::atomic_int64_t m_running_upstreams {0};       // Current number of running arrows immediately upstream
+    std::atomic_int64_t* m_running_arrows = nullptr;   // Current number of running arrows total, so we can detect pauses
     std::vector<JArrow *> m_listeners;     // Downstream Arrows
 
 protected:
@@ -159,6 +160,7 @@ public:
 
 
     Status get_status() const {
+        std::lock_guard<std::mutex> lock(m_mutex);
         return m_status;
     }
 
@@ -166,11 +168,13 @@ public:
         return m_running_upstreams;
     }
 
-    void set_running_arrows(int64_t* running_arrows_ptr) {
+    void set_running_arrows(std::atomic_int64_t* running_arrows_ptr) {
+        std::lock_guard<std::mutex> lock(m_mutex);
         m_running_arrows = running_arrows_ptr;
     }
 
     void run() {
+        std::lock_guard<std::mutex> lock(m_mutex);
         if (m_status == Status::Running || m_status == Status::Finished) {
             LOG_DEBUG(m_logger) << "Arrow '" << m_name << "' run() : " << m_status << " => " << m_status << LOG_END;
             return;
@@ -190,6 +194,7 @@ public:
     }
 
     void pause() {
+        std::lock_guard<std::mutex> lock(m_mutex);
         if (m_status != Status::Running) {
             LOG_DEBUG(m_logger) << "JArrow '" << m_name << "' pause() : " << m_status << " => " << m_status << LOG_END;
             return; // pause() is a no-op unless running
@@ -207,6 +212,7 @@ public:
     }
 
     void finish() {
+        std::lock_guard<std::mutex> lock(m_mutex);
         LOG_DEBUG(m_logger) << "JArrow '" << m_name << "' finish() : " << m_status << " => Finished" << LOG_END;
         Status old_status = m_status;
         if (old_status == Status::Unopened) {

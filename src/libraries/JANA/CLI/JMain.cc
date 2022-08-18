@@ -120,7 +120,17 @@ int Execute(JApplication* app, UserOptions &options) {
     }
     else {
         // Run JANA in normal mode
-        app->Run();
+        try {
+            app->Run();
+        }
+        catch (JException& e) {
+            std::cout << "----------------------------------------------------------" << std::endl;
+            std::cout << e << std::endl;
+        }
+        catch (std::runtime_error& e) {
+            std::cout << "----------------------------------------------------------" << std::endl;
+            std::cout << "Exception: " << e.what() << std::endl;
+        }
     }
     return (int) app->GetExitCode();
 }

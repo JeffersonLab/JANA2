@@ -17,7 +17,7 @@
 class JArrowProcessingController : public JProcessingController {
 public:
 
-    explicit JArrowProcessingController(JArrowTopology* topology) : m_topology(topology) {};
+    explicit JArrowProcessingController(std::shared_ptr<JArrowTopology> topology) : m_topology(topology) {};
     ~JArrowProcessingController() override;
     void acquire_services(JServiceLocator *) override;
 
@@ -32,6 +32,9 @@ public:
     bool is_stopped() override;
     bool is_finished() override;
     bool is_timed_out() override;
+    bool is_excepted() override;
+
+    std::vector<JException> get_exceptions() const override;
 
     std::unique_ptr<const JPerfSummary> measure_performance() override;
     std::unique_ptr<const JArrowPerfSummary> measure_internal_performance();
@@ -47,7 +50,7 @@ private:
     int m_warmup_timeout_s = 30;
 
     JArrowPerfSummary m_perf_summary;
-    JArrowTopology* m_topology;       // Owned by JArrowProcessingController
+    std::shared_ptr<JArrowTopology> m_topology;       // Owned by JArrowProcessingController
     JScheduler* m_scheduler = nullptr;
 
     std::vector<JWorker*> m_workers;

@@ -15,16 +15,13 @@
 int main() {
 
 	JApplication app;
+        auto topology = app.GetService<JTopologyBuilder>()->create_empty();
 
-	auto source = new BlockExampleSource;
+        auto source = new BlockExampleSource;
 	auto processor = new BlockExampleProcessor;
-	auto topology = new JArrowTopology;
 
 	auto block_queue = new JMailbox<MyBlock*>;
 	auto event_queue = new JMailbox<std::shared_ptr<JEvent>>;
-
-	topology->component_manager = app.GetService<JComponentManager>();  // Ensure the lifespan of the component manager exceeds that of the topology
-	topology->event_pool = std::make_shared<JEventPool>(topology->component_manager, 20, 1, true);
 
 	auto block_source_arrow = new JBlockSourceArrow<MyBlock>("block_source", source, block_queue);
 	auto block_disentangler_arrow = new JBlockDisentanglerArrow<MyBlock>("block_disentangler", source, block_queue, event_queue, topology->event_pool);
@@ -39,9 +36,10 @@ int main() {
 	topology->sources.push_back(block_source_arrow);
 	topology->sinks.push_back(processor_arrow);
 
-	auto builder = app.GetService<JTopologyBuilder>();
-	builder->set_override(topology);
+        block_source_arrow->attach(block_disentangler_arrow);
+        block_disentangler_arrow->attach(processor_arrow);
 
+	app.SetParameterValue("log:trace", "JWorker");
 	app.Run(true);
 }
 

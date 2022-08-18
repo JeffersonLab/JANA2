@@ -57,7 +57,7 @@ public:
             os << "  Factory tag:    " << ex.factory_tag << std::endl;
         }
         if (ex.stacktrace.length() != 0 && ex.show_stacktrace) {
-            os << "  Backtrace:" << std::endl << std::endl << ex.stacktrace << std::endl << std::endl;
+            os << "  Backtrace:" << std::endl << std::endl << ex.stacktrace;
         }
         return os;
     }

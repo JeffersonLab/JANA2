@@ -34,6 +34,7 @@ option(USE_ZEROMQ "Include ZeroMQ dependency. (Needed for examples/StreamingExam
 option(USE_XERCES "Include XercesC 3 dependency. (Needed for JGeometryXML)" OFF)
 option(USE_PYTHON "Include Python dependency. This requires python-devel and python-distutils." OFF)
 option(USE_ASAN "Compile with address sanitizer" OFF)
+option(USE_TSAN "Compile with thread sanitizer" OFF)
 
 
 if (${USE_ROOT})
@@ -73,7 +74,13 @@ if (${USE_XERCES})
 endif()
 
 if (${USE_ASAN})
-    add_compile_options(-fsanitize=address)
+    add_compile_options(-fsanitize=address -g -O2)
+    add_link_options(-fsanitize=address)
+endif()
+
+if (${USE_TSAN})
+    add_compile_options(-fsanitize=thread -g -O2)
+    add_link_options(-fsanitize=thread)
 endif()
 
 #---------
@@ -108,6 +115,11 @@ if (${USE_ASAN})
 else()
     message(STATUS "USE_ASAN    Off")
 endif()
+if (${USE_TSAN})
+    message(STATUS "USE_TSAN    On")
+else()
+    message(STATUS "USE_TSAN    Off")
+endif()
 message(STATUS "-----------------------")
 
 #---------
@@ -121,6 +133,7 @@ add_subdirectory(src/examples)
 add_subdirectory(src/plugins)
 add_subdirectory(src/programs/jana)
 add_subdirectory(src/programs/tests)
+add_subdirectory(src/programs/perf_tests)
 
 add_subdirectory(src/python)
 

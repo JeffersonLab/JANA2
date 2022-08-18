@@ -7,7 +7,7 @@
 #include <JANA/Services/JLoggingService.h>
 
 
-JScheduler::JScheduler(JArrowTopology* topology)
+JScheduler::JScheduler(std::shared_ptr<JArrowTopology> topology)
     : m_topology(topology)
     , m_next_idx(0)
     {
@@ -81,7 +81,16 @@ JArrow* JScheduler::next_assignment(uint32_t worker_id, JArrow* assignment, JArr
 
     } while (current_idx != m_next_idx);
 
+    if (m_topology->running_arrow_count == 0 && m_topology->m_current_status == JArrowTopology::Status::Running) {
+        // This exists just in case the user provided a topology that cannot self-exit, e.g. because no event sources
+        // have been specified. If no arrows can be assigned to this worker, and no arrows have yet been assigned to any
+        // workers, we can conclude that the topology is dead. After deactivating the topology, is_stopped() returns true,
+        // and Run(true) terminates.
+        LOG_DEBUG(logger) << "No active arrows found. Deactivating topology." << LOG_END;
+        m_topology->achieve_pause();
+    }
     m_mutex.unlock();
+
     return nullptr;  // We've looped through everything with no luck
 }
 

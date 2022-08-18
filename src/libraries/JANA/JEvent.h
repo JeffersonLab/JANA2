@@ -35,6 +35,7 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 
         explicit JEvent(JApplication* aApplication=nullptr) : mInspector(&(*this)) {
             mApplication = aApplication;
+            mFactorySet = new JFactorySet();
         }
         virtual ~JEvent() {
             if (mFactorySet != nullptr) mFactorySet->Release();
