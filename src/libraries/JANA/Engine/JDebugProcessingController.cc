@@ -70,10 +70,11 @@ void JDebugProcessingController::run_worker() {
         if (m_total_active_workers == 0) {
 
             m_stop_achieved = true;
-            m_finish_achieved = true;
+            bool finish_achieved = true;
             for (auto evt_src: evt_srces) {
-                m_finish_achieved &= (evt_src->GetStatus() == JEventSource::SourceStatus::Finished);
+                finish_achieved &= (evt_src->GetStatus() == JEventSource::SourceStatus::Finished);
             }
+            m_finish_achieved = finish_achieved;
 
             // Previously, we finalized event processors _only_ if finish was achieved.
             // Now, however, "stop" means finalize everything, and the alternative is named "pause".
@@ -148,6 +149,7 @@ bool JDebugProcessingController::is_timed_out() {
 }
 
 bool JDebugProcessingController::is_excepted() {
+    std::lock_guard<std::mutex> lock(m_exception_mutex);
     return m_exceptions.size() > 0;
 }
 
@@ -176,7 +178,8 @@ std::unique_ptr<const JPerfSummary> JDebugProcessingController::measure_performa
 }
 
 std::vector<JException> JDebugProcessingController::get_exceptions() const {
-    return m_exceptions;
+    std::lock_guard<std::mutex> lock(m_exception_mutex);
+    return m_exceptions; // This copm
 }
 
 

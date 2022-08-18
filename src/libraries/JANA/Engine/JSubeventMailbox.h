@@ -128,7 +128,7 @@ public:
 
         auto& mb = m_mailboxes[domain];
         std::lock_guard<std::mutex> lock(mb.mutex);
-        // mb.reserved_count -= reserved_count;
+        mb.reserved_count -= reserved_count;
         for (const auto& subevent : buffer) {
 
             // Problem: Are we sure we are updating the event in a way which is effectively thread-safe?

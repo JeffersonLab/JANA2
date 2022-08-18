@@ -42,9 +42,9 @@ private:
 
     void run_worker();
 
-    bool m_stop_requested = false;
-    bool m_stop_achieved = false;
-    bool m_finish_achieved = false;
+    std::atomic_bool m_stop_requested {false};
+    std::atomic_bool m_stop_achieved {false};
+    std::atomic_bool m_finish_achieved {false};
 
     std::atomic_uint m_total_active_workers {0};
     std::atomic_ullong m_total_events_emitted {0};
@@ -52,7 +52,7 @@ private:
 
     std::vector<std::thread*> m_workers;
     std::vector<JException> m_exceptions;
-    std::mutex m_exception_mutex;
+    mutable std::mutex m_exception_mutex;
     JLogger m_logger = JLogger();
     JPerfMetrics m_perf_metrics;
     JComponentManager* m_component_manager = nullptr;
