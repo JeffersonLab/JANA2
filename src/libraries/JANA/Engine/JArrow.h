@@ -7,6 +7,7 @@
 #define GREENFIELD_ARROW_H
 
 #include <iostream>
+#include <atomic>
 #include <cassert>
 #include <vector>
 
