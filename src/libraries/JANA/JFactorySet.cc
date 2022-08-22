@@ -79,7 +79,10 @@ bool JFactorySet::Add(JFactory* aFactory)
     if (typed_result != std::end(mFactories) || untyped_result != std::end(mFactoriesFromString)) {
         // Factory is duplicate. Since this almost certainly indicates a user error, and
         // the caller will not be able to do anything about it anyway, throw an exception.
-        throw JException("JFactorySet::Add failed because factory is duplicate");
+        throw JException("JFactorySet::Add failed: a factory with objectName '%s' and tag '%s' is already in the FactorySet",
+                         aFactory->GetObjectName().c_str(),
+                         aFactory->GetTag().c_str()
+                         );
         // return false;
     }
 
