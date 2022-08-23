@@ -13,6 +13,17 @@
 namespace jana {
 namespace explicit_wiring_tests {
 
+class Autowirable {
+    friend class JWiring;
+    std::map<std::string, std::string*> m_autowires;
+
+public:
+    void Autowire(const std::string& abstract_tag, std::string& member) {
+        m_autowires[abstract_tag] = &member;
+    }
+};
+
+
 struct PodX: public JObject {
     JOBJECT_PUBLIC(PodX);
     PodX(double E): E(E) {};
@@ -31,20 +42,24 @@ struct PodZ: public JObject {
     bool trigger = false;
 };
 
-struct FacA: public JFactoryT<PodX> {
+struct FacA: public JFactoryT<PodX>, Autowirable {
     void Process(const std::shared_ptr<const JEvent>& ) override {
         Insert(new PodX(22.2));
         Insert(new PodX(0.8));
     }
 };
-struct FacB: public JFactoryT<PodX> {
+struct FacB: public JFactoryT<PodX>, Autowirable {
     void Process(const std::shared_ptr<const JEvent>& ) override {
         Insert(new PodX(33.3));
         Insert(new PodX(0.7));
     }
 };
-struct FacC: public JFactoryT<PodY> {
+struct FacC: public JFactoryT<PodY>, Autowirable {
     std::string podx_tag = "DetA:PodY:FacC";
+
+    FacC() {
+        Autowire("DetJPodX", podx_tag);
+    }
 
     void Process(const std::shared_ptr<const JEvent>& event) override {
         auto podas = event->Get<PodX>(podx_tag);   // Which PodA does it get?
@@ -55,9 +70,12 @@ struct FacC: public JFactoryT<PodY> {
         Insert(new PodY(E_tot));
     }
 };
-struct FacD: public JFactoryT<PodZ> {
+struct FacD: public JFactoryT<PodZ>, Autowirable {
     std::string pody_tag = "DetA:PodZ:FacD";
 
+    FacD() {
+        Autowire("DetJPodY", pody_tag);
+    }
     void Process(const std::shared_ptr<const JEvent>& event) override {
         auto podb = event->GetSingle<PodY>(pody_tag);
         if (podb->E_tot > 25) {
@@ -152,6 +170,9 @@ public:
         for (auto& tag=tag_range.first; tag != tag_range.second; ++tag) {
             results.push_back(tag->second);
         }
+        if (results.empty()) {
+            throw JException("JWiring does not know about JFactory with typename '%s'", fac_typename.c_str());
+        }
         return results;
     }
 
@@ -160,60 +181,43 @@ public:
         auto concrete_callee_tag = caller_node->GetDependency(abstract_callee_tag)->GetConcreteTag();
         return concrete_callee_tag;
     }
+
+    // T needs to be both a JFactory and an Autowirable
+    template <typename T, typename... Args>
+    void GenerateAndWire(JFactorySet* factorySet, Args... args) {
+        for (auto caller_tag: GetConcreteTagsForFactory(JTypeInfo::demangle<T>())) {
+            auto fac = new T(std::forward<Args>(args)...);
+            fac->SetTag(caller_tag);
+            for (auto pair : fac->m_autowires) {
+                std::string* member = pair.second;
+                *member = GetConcreteCalleeTag(caller_tag, pair.first);
+            }
+            factorySet->Add(fac);
+        }
+    }
 };
 
 class WiredFactoryGenerator : public JFactoryGenerator {
     JWiring wiring;
 
 public:
-    WiredFactoryGenerator(JWiring wiring) : wiring(std::move(wiring)) {};
+    explicit WiredFactoryGenerator(JWiring wiring) : wiring(std::move(wiring)) {};
 
     void GenerateFactories(JFactorySet *factory_set) override {
-
-        // Generate all necessary FacA's
-        auto fac_a_tags = wiring.GetConcreteTagsForFactory("FacA");
-        for (auto caller_tag: fac_a_tags) {
-            auto fac = new FacA;
-            fac->SetTag(caller_tag);
-            factory_set->Add(fac);
-        }
-
-        // Generate all necessary FacB's
-        auto fac_b_tags = wiring.GetConcreteTagsForFactory("FacB");
-        for (auto caller_tag: fac_b_tags) {
-            auto fac = new FacB;
-            fac->SetTag(caller_tag);
-            factory_set->Add(fac);
-        }
-
-        // Generate all necessary FacC's
-        auto fac_c_tags = wiring.GetConcreteTagsForFactory("FacC");
-        for (auto caller_tag: fac_c_tags) {
-            auto fac = new FacC;
-            fac->SetTag(caller_tag);
-            fac->podx_tag = wiring.GetConcreteCalleeTag(caller_tag, "DetJPodX");
-            factory_set->Add(fac);
-        }
-
-        // Generate all necessary FacD's
-        auto fac_d_tags = wiring.GetConcreteTagsForFactory("FacD");
-        for (auto caller_tag: fac_d_tags) {
-            auto fac = new FacD;
-            fac->SetTag(caller_tag);
-            fac->pody_tag = wiring.GetConcreteCalleeTag(caller_tag, "DetJPodY");
-            factory_set->Add(fac);
-        }
-
+        wiring.GenerateAndWire<FacA>(factory_set);
+        wiring.GenerateAndWire<FacB>(factory_set);
+        wiring.GenerateAndWire<FacC>(factory_set);
+        wiring.GenerateAndWire<FacD>(factory_set);
     }
 };
 
 TEST_CASE("ExplicitWiringTestsWithoutDefaults") {
     JWiring wiring;
-    auto facA = wiring.DeclareFactoryInstance("PodX","FacA",0);
-    auto facB = wiring.DeclareFactoryInstance("PodX","FacB",0);
-    auto facC = wiring.DeclareFactoryInstance("PodY","FacC",0)
+    auto facA = wiring.DeclareFactoryInstance("PodX", JTypeInfo::demangle<FacA>(),0);
+    auto facB = wiring.DeclareFactoryInstance("PodX", JTypeInfo::demangle<FacB>(),0);
+    auto facC = wiring.DeclareFactoryInstance("PodY", JTypeInfo::demangle<FacC>(),0)
             ->AddDependency("DetJPodX", facA);
-    auto facD = wiring.DeclareFactoryInstance("PodZ","FacD",0)
+    auto facD = wiring.DeclareFactoryInstance("PodZ", JTypeInfo::demangle<FacD>(),0)
             ->AddDependency("DetJPodY", facC);
 
     JApplication app;
