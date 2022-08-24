@@ -137,7 +137,8 @@ extern "C" {
         app->Add(new QuickTutorialProcessor);
         app->Add(new RandomSource("random", app));    // <- ADD THIS LINE
     }
-}```
+}
+```
 
 And finally, rebuild ...
 ```
