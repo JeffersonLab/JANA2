@@ -54,7 +54,7 @@ measuring the overall throughput. You can cancel processing at any time by press
 With JANA working, we can now create our own plugin. JANA provides a script which generates code skeletons 
 to help us get started. We shall generate a skeleton for a plugin named "QuickTutorial" as follows:
 ```
-jana-generate.py Plugin QuickTutorial
+jana-generate.py Plugin QuickTutorial 1 1 0 0
 ```
 
 This creates the following directory tree. By default, a minimal skelton is created in a single file:

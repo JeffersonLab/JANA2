@@ -667,8 +667,6 @@ public:
 jroot_output_processor_h = """
 #include <JANA/JEventProcessor.h>
 #include <JANA/Services/JGlobalRootLock.h>
-#include <TH1D.h>
-#include <TFile.h>
 
 class {processor_name}: public JEventProcessor {{
 
