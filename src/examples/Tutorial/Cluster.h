@@ -1,7 +1,4 @@
 
-// Copyright 2020, Jefferson Science Associates, LLC.
-// Subject to the terms in the LICENSE file found in the top-level directory.
-
 
 #ifndef _Cluster_h_
 #define _Cluster_h_
@@ -16,7 +13,6 @@
 /// Think of a JObject as being a row in a database table, with event number as an implicit foreign key.
 
 struct Cluster : public JObject {
-
     double x_center;     // Pixel coordinates centered around 0,0
     double y_center;     // Pixel coordinates centered around 0,0
     double E_tot;     // Energy loss in GeV
@@ -25,6 +21,15 @@ struct Cluster : public JObject {
 
     Cluster(double x_center, double y_center, double E_tot, double t_begin, double t_end)
             : x_center(x_center), y_center(y_center), E_tot(E_tot), t_begin(t_begin), t_end(t_end) {};
+
+
+    /// Override className to tell JANA to store the exact name of this class where we can
+    /// access it at runtime. JANA provides a NAME_OF_THIS macro so that this will return the correct value
+    /// even if you rename the class using automatic refactoring tools.
+
+    const std::string className() const override {
+        return NAME_OF_THIS;
+    }
 
     /// Override Summarize to tell JANA how to produce a convenient string representation for our JObject.
     /// This can be used called from user code, but also lets JANA automatically inspect its own data. For instance,
@@ -37,14 +42,6 @@ struct Cluster : public JObject {
         summary.add(E_tot, NAME_OF(E_tot), "%f", "Energy loss in GeV");
         summary.add(t_begin, NAME_OF(t_begin), "%f", "Earliest observed time in us");
         summary.add(t_end, NAME_OF(t_end), "%f", "Latest observed time in us");
-    }
-
-    /// Override className to tell JANA to store the exact name of this class where we can
-    /// access it at runtime. JANA provides a NAME_OF_THIS macro so that this will return the correct value
-    /// even if you rename the class using automatic refactoring tools.
-
-    const std::string className() const override {
-        return NAME_OF_THIS;
     }
 };
 

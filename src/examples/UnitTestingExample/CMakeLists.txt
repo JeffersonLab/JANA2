@@ -1,6 +1,6 @@
 
 set (UnitTestingExample_SOURCES
-        SimpleClusterFactoryTests.cc
+        Cluster_factory_Simple_Tests.cc
     )
 
 add_executable(UnitTestingExample ${UnitTestingExample_SOURCES})

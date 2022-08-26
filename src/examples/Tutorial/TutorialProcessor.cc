@@ -1,9 +1,6 @@
 
-// Copyright 2020, Jefferson Science Associates, LLC.
-// Subject to the terms in the LICENSE file found in the top-level directory.
-
-#include "TutorialProcessor.h"
 #include "Hit.h"
+#include "TutorialProcessor.h"
 #include <JANA/JLogger.h>
 
 TutorialProcessor::TutorialProcessor() {
@@ -11,7 +8,7 @@ TutorialProcessor::TutorialProcessor() {
 }
 
 void TutorialProcessor::Init() {
-    LOG << "QuickTutorialProcessor::Init: Initializing heatmap" << LOG_END;
+    LOG << "TutorialProcessor::Init: Initializing heatmap" << LOG_END;
 
     for (int i=0; i<100; ++i) {
         for (int j=0; j<100; ++j) {
@@ -33,14 +30,12 @@ void TutorialProcessor::Process(const std::shared_ptr<const JEvent> &event) {
     /// Do the rest sequentially
     /// Now we are free to access shared state such as m_heatmap
     for (const Hit* hit : hits) {
-        m_heatmap[hit->x][hit->y] += hit->E;    // ADD ME
-        /// Update shared state
+        m_heatmap[hit->x][hit->y] += hit->E;
     }
 }
 
 void TutorialProcessor::Finish() {
-    // Close any resources
-    LOG << "QuickTutorialProcessor::Finish: Displaying heatmap" << LOG_END;
+    LOG << "TutorialProcessor::Finish: Displaying heatmap" << LOG_END;
 
     double min_value = m_heatmap[0][0];
     double max_value = m_heatmap[0][0];

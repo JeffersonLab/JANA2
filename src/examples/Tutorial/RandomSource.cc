@@ -1,15 +1,9 @@
 
-// Copyright 2020, Jefferson Science Associates, LLC.
-// Subject to the terms in the LICENSE file found in the top-level directory.
-
-
+#include "Hit.h"
 #include "RandomSource.h"
 
 #include <JANA/JApplication.h>
 #include <JANA/JEvent.h>
-
-/// Include headers to any JObjects you wish to associate with each event
-#include "Hit.h"
 
 /// There are two different ways of instantiating JEventSources
 /// 1. Creating them manually and registering them with the JApplication
@@ -24,17 +18,10 @@ RandomSource::RandomSource(std::string resource_name, JApplication* app) : JEven
 
 void RandomSource::Open() {
 
-    /// Open is called exactly once when processing begins.
-    
-    /// Get any configuration parameters from the JApplication
     JApplication* app = GetApplication();
     app->SetDefaultParameter("random_source:max_emit_freq_hz",
                              m_max_emit_freq_hz,
                              "Maximum event rate [Hz] for RandomSource");
-
-    /// For opening a file, get the filename via:
-    // std::string resource_name = GetResourceName();
-    /// Open the file here!
 }
 
 void RandomSource::GetEvent(std::shared_ptr <JEvent> event) {
@@ -47,25 +34,21 @@ void RandomSource::GetEvent(std::shared_ptr <JEvent> event) {
     event->SetEventNumber(current_event_number++);
     event->SetRunNumber(22);
 
-    /// Slow down event source
-    auto delay_ms = std::chrono::milliseconds(1000/m_max_emit_freq_hz);
-    std::this_thread::sleep_for(delay_ms);
-
-    /// Insert simulated data into event
-    std::vector<Hit*> hits;
-    hits.push_back(new Hit(0, 0, 1.0, 0));
-    hits.push_back(new Hit(0, 1, 1.0, 0));
-    hits.push_back(new Hit(1, 0, 1.0, 0));
-    hits.push_back(new Hit(1, 1, 1.0, 0));
-    event->Insert(hits);
+    /// Insert whatever data was read into the event
+     std::vector<Hit*> hits;
+     hits.push_back(new Hit(0,0,1.0,0));
+     hits.push_back(new Hit(0,1,1.0,0));
+     hits.push_back(new Hit(1,0,1.0,0));
+     hits.push_back(new Hit(1,1,1.0,0));
+     event->Insert(hits);
 
     /// If you are reading a file of events and have reached the end, terminate the stream like this:
     // // Close file pointer!
     // throw RETURN_STATUS::kNO_MORE_EVENTS;
 
-    /// If you are streaming events and there are no new events in the message queue,
-    /// tell JANA that GetEvent() was temporarily unsuccessful like this:
-    // throw RETURN_STATUS::kBUSY;
+    /// Slow down event source
+    auto delay_ms = std::chrono::milliseconds(1000/m_max_emit_freq_hz);
+    std::this_thread::sleep_for(delay_ms);
 }
 
 std::string RandomSource::GetDescription() {
