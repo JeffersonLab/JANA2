@@ -1,7 +1,4 @@
 
-// Copyright 2020, Jefferson Science Associates, LLC.
-// Subject to the terms in the LICENSE file found in the top-level directory.
-
 #ifndef _TutorialProcessor_h_
 #define _TutorialProcessor_h_
 
@@ -9,8 +6,8 @@
 
 class TutorialProcessor : public JEventProcessor {
 
-    /// Shared state (e.g. histograms, TTrees, TFiles) live
     double m_heatmap[100][100];
+    // Shared state (e.g. histograms, TTrees, TFiles) live
     std::mutex m_mutex;
     
 public:

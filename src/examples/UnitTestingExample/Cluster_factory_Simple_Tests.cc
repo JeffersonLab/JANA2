@@ -6,14 +6,14 @@
 #include <JANA/JApplication.h>
 #include <JANA/JEvent.h>
 #include "../Tutorial/Hit.h"
-#include "../Tutorial/SimpleClusterFactory.h"
+#include "../Tutorial/Cluster_factory_Simple.h"
 
-TEST_CASE("SimpleClusterFactoryTests") {
+TEST_CASE("Cluster_factory_Simple_Tests") {
 
     // Turn off all unnecessary loggers and turn on the loggers in the factory being tested.
     // Note this needs to happen BEFORE creating the JApplication.
     auto params = new JParameterManager;
-    params->SetParameter("log:debug", "SimpleClusterFactory");
+    params->SetParameter("log:debug", "Cluster_factory_Simple");
     params->SetParameter("log:off", "JApplication,JParameterManager,JArrowProcessingController,JArrow");
 
     // We need to fire up the JApplication so that our Factory can access all of its JServices.
@@ -25,7 +25,7 @@ TEST_CASE("SimpleClusterFactoryTests") {
 
     // Create an instance of the JFactory we are testing
     // Unlike with regular JANA, we can hold on to a pointer to the factory, and ask it questions directly.
-    auto factory = new SimpleClusterFactory;
+    auto factory = new Cluster_factory_Simple;
 
     // Create a JEvent and give it the factory
     auto event = std::make_shared<JEvent>();

@@ -21,6 +21,8 @@ The end result for this example is available under
 ## Introduction
 
 Before we begin, we need to make sure that 
+* [ROOT](https://root.cern/install/) is installed and ROOT environment is configured by
+ `source /path/to/root/bin/thisroot.sh`
 * The JANA library is installed
 * The `JANA_HOME` environment variable points to the installation directory
 * Your `$PATH` contains `$JANA_HOME/bin`. 
@@ -52,7 +54,7 @@ measuring the overall throughput. You can cancel processing at any time by press
 With JANA working, we can now create our own plugin. JANA provides a script which generates code skeletons 
 to help us get started. We shall generate a skeleton for a plugin named "QuickTutorial" as follows:
 ```
-jana-generate.py Plugin QuickTutorial
+jana-generate.py Plugin QuickTutorial 1 1 0 0
 ```
 
 This creates the following directory tree. By default, a minimal skelton is created in a single file:
@@ -119,9 +121,18 @@ To use our new RandomSource as-is, we need to do three things:
 * Register our `RandomSource` with JANA inside `QuickTutorial.cc`
 * Rebuild the cmake project, rebuild the plugin target, and install.
 
-The modified line in the CMakeLists.txt line should look like:
+The modified line in the `CMakeLists.txt` should look like:
 ```
-add_library(QuickTutorial_plugin SHARED QuickTutorial.cc RandomSource.cc RandomSource.h)
+if(true)
+    ...
+else()
+    # Manually manage source file list, add new files here
+    set (QuickTutorial_PLUGIN_SOURCES
+            QuickTutorial.cc
+            RandomSource.cc
+            RandomSource.h
+  )
+endif()
 ```
 
 The modified `QuickTuorial.cc` file needs to have the new `RandomSource.h` header included so
@@ -129,7 +140,8 @@ it can instantiatie an object and pass it over to the JApplication in the `InitP
 The bottom of the file should look like this: 
 
 ```
-#include <RandomSource.h>                             // <- ADD THIS LINE (probably better to put this at top of file)
+/// ============ QuickTuorial.cc
+#include "RandomSource.h"                             // <- ADD THIS LINE (probably better to put this at top of file)
 
 extern "C" {
     void InitPlugin(JApplication *app) {
@@ -159,8 +171,9 @@ inside `GetEvent`. Perhaps we'd even like to set the emit frequency at runtime. 
 `RandomSource`, initializing it to our preferred default value:
 
 ```
+/// ========== RandomSource.h
 class RandomSource : public JEventSource {
-    int m_max_emit_freq_hz = 100;             // <- ADD THIS LINE
+    int m_max_emit_freq_hz = 100;             // ADD THIS
 
 public:
     RandomSource(std::string resource_name, JApplication* app);
@@ -180,6 +193,7 @@ files. Note that we conventionally prefix our parameter names with the name of t
 plugin. This helps prevent namespace collisions. 
 
 ```
+/// ============ RandomSource.cc
 void RandomSource::Open() {
     JApplication* app = GetApplication(); 								        // <- ADD THIS LINE
     app->SetDefaultParameter("random_source:max_emit_freq_hz",            // <- ADD THIS LINE
@@ -192,6 +206,7 @@ We can now use the value of `m_max_emit_freq_hz`, confident that it is consisten
 runtime configuration:
 
 ```
+/// ============ RandomSource.cc
 void RandomSource::GetEvent(std::shared_ptr <JEvent> event) {
 
     /// Configure event and run numbers
@@ -220,7 +235,6 @@ to set up our data model. Although we can insert pointers of any kind into our `
 recommend using `JObjects` for reasons we will discuss later. 
 
 ```
-cd src
 jana-generate.py JObject Hit
 ```
 
@@ -232,11 +246,12 @@ nested STL containers, but the recommended approach is to maintain a flat struct
 A JObject should conceptually resemble a row in a database table.
 
 ```
+/// ============ Hit.h
 struct Hit : public JObject {
     int x;     // Pixel coordinates
     int y;     // Pixel coordinates
     double E;  // Energy loss in GeV
-    double t;  // Time in us
+    double t;  // Time in ms
 
     // Make it possible to construct a Hit as a one-liner
     Hit(int x, int y, double E, double t) : x(x), y(y), E(E), t(t) {};
@@ -256,7 +271,7 @@ name as well.
         summary.add(x, NAME_OF(x), "%d", "Pixel coordinates centered around 0,0");
         summary.add(y, NAME_OF(y), "%d", "Pixel coordinates centered around 0,0");
         summary.add(E, NAME_OF(E), "%f", "Energy loss in GeV");
-        summary.add(t, NAME_OF(t), "%f", "Time in us");
+        summary.add(t, NAME_OF(t), "%f", "Time in ms");
     }
 }
 ```
@@ -277,7 +292,8 @@ of granularity. For instance, if we have two detectors which both use the `Hit` 
 logic, we want to be able to access them independently.
 
 ```
-#include "Hit.h"
+/// ============ RandomSource.cc
+#include "Hit.h"                                // ADD ME
 // ...
 
 void RandomSource::GetEvent(std::shared_ptr<JEvent> event) {
@@ -307,6 +323,7 @@ a file 'Hit.csv' should appear in the current working directory. Note that the C
 will be closed correctly even when we terminate JANA using Ctrl-C. 
 
 ```
+/// ============ QuickTutorial.cc
 #include <JANA/JCsvWriter.h>                      // ADD ME
 #include "Hit.h"                                  // ADD ME
 // ...
@@ -333,10 +350,18 @@ produce a histogram using all of the tracks of all of the events.
 
 In this section, we are going to modify the automatically generated `TutorialProcessor` to 
 produce a heatmap that only uses hit data. We discuss how to structure more complicated 
-calculations later. First, we add a quick-and-dirty heatmap member variable:
+calculations later. First, we generate a `JEventProcessor` and add the generated
+`TutorialProcessor.h` and `Tutorial.cc` to `CMakeLists.txt`.
+
+```bash
+jana-generate.py JEventProcessor TutorialProcessor
+```
+
+Add a quick-and-dirty heatmap member variable:
 
 ```
-class QuickTutorialProcessor : public JEventProcessor {
+/// ====== TutorialProcessor.h
+class TutorialProcessor : public JEventProcessor {
     double m_heatmap[100][100];     // ADD ME
     std::mutex m_mutex;
 
@@ -353,9 +378,10 @@ be allowed to access it at a time, which we enforce using `m_mutex`. Let's look 
 is used:
 
 ```
+/// ====== TutorialProcessor.cc
 #include "Hit.h"                                // ADD ME
 
-void QuickTutorialProcessor::Process(const std::shared_ptr<const JEvent> &event) {
+void TutorialProcessor::Process(const std::shared_ptr<const JEvent> &event) {
 
     /// Do everything we can in parallel
     /// Warning: We are only allowed to use local variables and `event` here
@@ -386,8 +412,9 @@ incrementally like we do with JCsvWriter, we can open it in `Init`, access it `P
 the lock, and close it in `Finish`.
 
 ```
-void QuickTutorialProcessor::Init() {
-    LOG << "QuickTutorialProcessor::Init: Initializing heatmap" << LOG_END;
+/// ====== TutorialProcessor.cc
+void TutorialProcessor::Init() {
+    LOG << "TutorialProcessor::Init: Initializing heatmap" << LOG_END;
 
     for (int i=0; i<100; ++i) {
         for (int j=0; j<100; ++j) {
@@ -396,8 +423,8 @@ void QuickTutorialProcessor::Init() {
     }
 }
 
-void QuickTutorialProcessor::Finish() {
-    LOG << "QuickTutorialProcessor::Finish: Displaying heatmap" << LOG_END;
+void TutorialProcessor::Finish() {
+    LOG << "TutorialProcessor::Finish: Displaying heatmap" << LOG_END;
 
     double min_value = m_heatmap[0][0];
     double max_value = m_heatmap[0][0];
@@ -421,6 +448,27 @@ void QuickTutorialProcessor::Finish() {
     }
 }
 ```
+
+Register the `TutorialProcessor`.
+
+```
+/// ======= QuickTutorial.cc
+#include "TutorialProcessor.h"                              // ADD ME
+
+/// DELETE class "QuickTutorialProcessor" <---- // DO THIS
+
+extern "C" {
+    void InitPlugin(JApplication* app) {
+
+        InitJANAPlugin(app);
+
+        app->Add(new TutorialProcessor);    // CHANGE THIS
+        app->Add(new RandomSource("random", app));
+        app->Add(new JCsvWriter<Hit>());
+    }
+}
+```
+
 
 ## Organizing computations using JFactories
 
@@ -447,6 +495,8 @@ and time interval. Note that using JObjects helps keep our domain model malleabl
 time as we learn more. 
 
 ```
+/// ===== Cluster.h
+/// Replace the generated contents with below
 struct Cluster : public JObject {
     double x_center;     // Pixel coordinates centered around 0,0
     double y_center;     // Pixel coordinates centered around 0,0
@@ -457,6 +507,8 @@ struct Cluster : public JObject {
     Cluster(double x_center, double y_center, double E_tot, double t_begin, double t_end)
         : x_center(x_center), y_center(y_center), E_tot(E_tot), t_begin(t_begin), t_end(t_end) {};
 
+    ...
+
     void Summarize(JObjectSummary& summary) const override {
         summary.add(x_center, NAME_OF(x_center), "%f", "Pixel coords <- [0,80)");
         summary.add(y_center, NAME_OF(y_center), "%f", "Pixel coords <- [0,24)");
@@ -464,7 +516,7 @@ struct Cluster : public JObject {
         summary.add(t_begin, NAME_OF(t_begin), "%f", "Earliest observed time in us");
         summary.add(t_end, NAME_OF(t_end), "%f", "Latest observed time in us");
     }
-...
+    ...
 }
 ```
 
@@ -472,7 +524,7 @@ Now we generate a JFactory which will compute n `Cluster`s given m `Hit`s. Note 
 we need to provide both the classname of our factory and the classname of the JObject
 it produces.
 
-```jana-generate.py JFactory SimpleClusterFactory Cluster```
+```jana-generate.py JFactory Cluster Simple```
 
 The heart of a JFactory is the function `Process`, where we take an event, extract
 whatever inputs we need by calling `JEvent::Get` or one of its variants, produce 
@@ -482,10 +534,11 @@ To keep things really simple, our example shall assume there is only one cluster
 hits associated with this event belong to it.
 
 ```
+/// ===== Cluster_factory_Simple.cc
 #include "Hit.h"
 // ...
 
-void SimpleClusterFactory::Process(const std::shared_ptr<const JEvent> &event) {
+void Cluster_factory_Simple::Process(const std::shared_ptr<const JEvent> &event) {
 
     auto hits = event->Get<Hit>();
 
@@ -519,30 +572,32 @@ threads, and possibly more depending on how JANA is configured, so `Initialize` 
 to share state between different instances of the same JFactory, this practice is 
 discouraged. That state should live in a JService instead.
 
-Next, we register our `SimpleClusterFactory` with our JApplication. Because JANA will
-need arbitrarily many instances of these, we pass in a `JFactoryGenerator` which
-knows how to create a `SimpleClusterFactory`. As long as our JFactory has a zero-argument
-constructor, this is easy: 
+Next, we register our `Cluster_factory_Simple` with our JApplication.
+Because JANA will need arbitrarily many instances of these, we pass in a `JFactoryGenerator`
+which knows how to create a `Cluster_factory_Simple`. As long as our JFactory
+has a zero-argument constructor, this is easy: 
 
 ```
+/// ======= QuickTutorial.cc
 #include <JANA/JFactoryGenerator.h>                         // ADD ME
-#include "SimpleClusterFactory.h"                            // ADD ME
-// ...
+#include "Cluster_factory_Simple.h"                         // ADD ME
+
+// DELETE THE class "QuickTutorialProcessor" <----
 
 extern "C" {
-void InitPlugin(JApplication* app) {
+    void InitPlugin(JApplication* app) {
 
-    InitJANAPlugin(app);
+        InitJANAPlugin(app);
 
-    app->Add(new QuickTutorialProcessor);
-    app->Add(new RandomSource("random", app));
-    app->Add(new JCsvWriter<Hit>());
-    app->Add(new JFactoryGeneratorT<SimpleClusterFactory>);  // ADD ME
-}
+        app->Add(new TutorialProcessor);
+        app->Add(new RandomSource("random", app));
+        app->Add(new JCsvWriter<Hit>());
+        app->Add(new JFactoryGeneratorT<Cluster_factory_Simple>);  // ADD ME
+    }
 }
 ```
 
-We are now free to modify `QuickTutorialProcessor` (or create a new
+We are now free to modify `TutorialProcessor` (or create a new
 `JEventProcessor`) which histograms clusters instead of hits. Crucially,
 `JEvent::Get` doesn't care whether the `JObjects` were `Insert`ed by an event
 source or whether they were `Set` by a `JFactory`. The interface for retrieving
@@ -572,7 +627,7 @@ a corresponding `JEventSourceGenerator`:
 ```
 #include <JANA/JApplication.h>
 #include <JANA/JFactoryGenerator.h>
-#include <JANA/JEventSourceGeneratorT.h>                    // ADD ME
+#include <JANA/JEventSourceGeneratorT.h>        // ADD ME
 #include <JANA/JCsvWriter.h>
 
 #include "Hit.h"
@@ -589,7 +644,7 @@ void InitPlugin(JApplication* app) {
     // app->Add(new RandomSource("random", app));           // REMOVE ME
     app->Add(new JEventSourceGeneratorT<RandomSource>);     // ADD ME
     app->Add(new JCsvWriter<Hit>());
-    app->Add(new JFactoryGeneratorT<SimpleClusterFactory>);
+    app->Add(new JFactoryGeneratorT<Cluster_factory_Simple>);
 }
 }
 ```

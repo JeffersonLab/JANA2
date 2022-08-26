@@ -1,14 +1,31 @@
 
-// Copyright 2020, Jefferson Science Associates, LLC.
-// Subject to the terms in the LICENSE file found in the top-level directory.
-
-#include "SimpleClusterFactory.h"
+#include "Cluster_factory_Simple.h"
 #include "Hit.h"
 
 #include <JANA/JEvent.h>
 
-void SimpleClusterFactory::Init() {
-    // auto app = GetApplication();
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+// Please add the following lines to your InitPlugin or similar routine
+// in order to register this factory with the system.
+//
+// #include "Cluster_factory_Simple.h"
+//
+//     app->Add( new JFactoryGeneratorT<Cluster_factory_Simple>() );
+//- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+
+//------------------------
+// Constructor
+//------------------------
+Cluster_factory_Simple::Cluster_factory_Simple(){
+    SetTag("Simple");
+}
+
+//------------------------
+// Init
+//------------------------
+void Cluster_factory_Simple::Init() {
+    auto app = GetApplication();
     
     /// Acquire any parameters
     // app->GetParameter("parameter_name", m_destination);
@@ -20,26 +37,25 @@ void SimpleClusterFactory::Init() {
     // SetFactoryFlag(JFactory_Flags_t::NOT_OBJECT_OWNER);
 }
 
-void SimpleClusterFactory::ChangeRun(const std::shared_ptr<const JEvent> & /* event */) {
+//------------------------
+// ChangeRun
+//------------------------
+void Cluster_factory_Simple::ChangeRun(const std::shared_ptr<const JEvent> &event) {
     /// This is automatically run before Process, when a new run number is seen
     /// Usually we update our calibration constants by asking a JService
     /// to give us the latest data for this run number
     
-    // auto run_nr = event->GetRunNumber();
+    auto run_nr = event->GetRunNumber();
     // m_calibration = m_service->GetCalibrationsForRun(run_nr);
 }
 
-void SimpleClusterFactory::Process(const std::shared_ptr<const JEvent> &event) {
+//------------------------
+// Process
+//------------------------
+void Cluster_factory_Simple::Process(const std::shared_ptr<const JEvent> &event) {
 
-    /// JFactories are local to a thread, so we are free to access and modify
-    /// member variables here. However, be aware that events are _scattered_ to
-    /// different JFactory instances, not _broadcast_: this means that JFactory 
-    /// instances only see _some_ of the events. 
-    
-    /// Acquire inputs (This may recursively call other JFactories)
     auto hits = event->Get<Hit>();
 
-    /// Do some computation
     auto cluster = new Cluster(0,0,0,0,0);
     for (auto hit : hits) {
         cluster->x_center += hit->x;
@@ -51,7 +67,6 @@ void SimpleClusterFactory::Process(const std::shared_ptr<const JEvent> &event) {
     cluster->x_center /= hits.size();
     cluster->y_center /= hits.size();
 
-    /// Publish outputs
     std::vector<Cluster*> results;
     results.push_back(cluster);
     Set(results);
