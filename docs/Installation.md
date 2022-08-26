@@ -29,7 +29,7 @@ a `cmake-build-debug` directory which works just fine.
 Finally, you can cd into your build directory and build and install everything the usual CMake way.
 
 ~~~ bash
-export JANA_VERSION=v2.0.5                    # Convenient to set this once for specific release
+export JANA_VERSION=v2.0.6                    # Convenient to set this once for specific release
 export JANA_HOME=${PWD}/JANA${JANA_VERSION}   # Set full path to install dir
 
 git clone https://github.com/JeffersonLab/JANA2 --branch ${JANA_VERSION} ${JANA_HOME}  # Get JANA2

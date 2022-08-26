@@ -976,8 +976,7 @@ def create_jfactory(jobject_name, tag=''):
        directory if the file does not already exist. You may need to delete this
        manually if you already have this class defined elsewhere in the source tree.
     """
-
-    factory_name = f'JFactory_{jobject_name}'
+    factory_name = f'{jobject_name}_factory'
     if tag != '' : factory_name += f'_{tag}'
 
     print(f"Creating {factory_name}:public JFactoryT<{jobject_name}>")
