@@ -10,17 +10,41 @@ JAutoActivator::JAutoActivator() {
 }
 
 bool JAutoActivator::IsRequested(std::shared_ptr <JParameterManager> params) {
-    return params->Exists("AUTOACTIVATE") && (!params->GetParameterValue<string>("AUTOACTIVATE").empty());
+    return params->Exists("autoactivate") && (!params->GetParameterValue<string>("autoactivate").empty());
 }
 
 void JAutoActivator::AddAutoActivatedFactory(string factory_name, string factory_tag) {
     m_auto_activated_factories.push_back({std::move(factory_name), std::move(factory_tag)});
 }
 
+/// Converts "ObjName:TagName" into ("ObjName", "TagName")
+///      and "name::space::ObjName:TagName" into ("name::space::ObjName", "TagName")
+std::pair<std::string, std::string> JAutoActivator::Split(std::string factory_name) {
+
+    std::string::size_type pos = -1;
+    while (true) {
+        // Find the next colon
+        pos = factory_name.find(':', pos+1);
+
+        if (pos == std::string::npos) {
+            // There are no colons at all remaining. Everything is objname
+            return std::make_pair(factory_name, "");
+        }
+        else if (factory_name[pos+1] == ':') {
+            // Else we found a double colon, which is part of the objname namespace. Keep going.
+            pos += 1;
+        }
+        else {
+            // We found the first single colon, which has to delimit the objname from the tag. Stop.
+            return std::make_pair(factory_name.substr(0, pos), factory_name.substr(pos+1));
+        }
+    }
+}
+
 void JAutoActivator::Init() {
 
     string autoactivate_conf;
-    if (GetApplication()->GetParameter("AUTOACTIVATE", autoactivate_conf)) {
+    if (GetApplication()->GetParameter("autoactivate", autoactivate_conf)) {
         try {
             if (!autoactivate_conf.empty()) {
                 // Loop over comma separated list of factories to auto activate
@@ -37,15 +61,8 @@ void JAutoActivator::Init() {
                 // form) and parse the strings as needed in order to add them to
                 // the auto activate list.
                 for (unsigned int i = 0; i < myfactories.size(); i++) {
-                    string nametag = myfactories[i];
-                    string name = nametag;
-                    string tag = "";
-                    string::size_type pos = nametag.find(":");
-                    if (pos != string::npos) {
-                        name = nametag.substr(0, pos);
-                        tag = nametag.substr(pos + 1, nametag.size() - pos);
-                    }
-                    AddAutoActivatedFactory(name, tag);
+                    auto pair = Split(myfactories[i]);
+                    AddAutoActivatedFactory(pair.first, pair.second);
                 }
             }
         }
