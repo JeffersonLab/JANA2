@@ -82,20 +82,25 @@ void JParameterManager::PrintParameters(bool all) {
 
     // First we filter
     vector<JParameter*> params_to_print;
-    bool deprecated_params_present = false;
+    bool warnings_present = false;
 
     for (auto& p : m_parameters) {
         string key = p.first;
         auto j = p.second;
 
-        if ((!all) && j->IsDefault()) continue;
-        if (j->IsHidden()) continue;
+        if ((!all) && j->IsDefault()) continue;  // Hide all parameters that were set by default and the user didn't provide
         if (j->IsDeprecated() && j->IsDefault()) continue;    // Hide deprecated parameters that are NOT in use
+        if (j->IsHidden()) continue;
 
         if (j->IsDeprecated() && !j->IsDefault()) {
             // Warn for any deprecated parameters that ARE in use.
             LOG_WARN(m_logger) << "Parameter '" << key << "' has been deprecated and will no longer be supported in the next release." << LOG_END;
-            deprecated_params_present = true;
+            warnings_present = true;
+        }
+        if (!j->IsUsed()) {
+            // Warn about any unused parameters
+            LOG_WARN(m_logger) << "Parameter '" << key << "' appears to be unused at this time. Possible typo?" << LOG_END;
+            warnings_present = true;
         }
         params_to_print.push_back(p.second);
     }
@@ -109,17 +114,26 @@ void JParameterManager::PrintParameters(bool all) {
     // Generate the whole table
     JTablePrinter table;
     table.AddColumn("Name");
-    if (deprecated_params_present) {
-        table.AddColumn(" ");  // IsDeprecated column
+    if (warnings_present) {
+        table.AddColumn("Warnings");  // IsDeprecated column
     }
     table.AddColumn("Value");
     table.AddColumn("Default");
     table.AddColumn("Description");
 
     for (JParameter* p: params_to_print) {
-        if (deprecated_params_present) {
+        if (warnings_present) {
+            std::string warning;
+            if (p->IsDeprecated()) {
+                warning = "Deprecated";
+            }
+            else if (!p->IsUsed()) {
+                // Can't be both deprecated and unused, since JANA only finds out that it is deprecated by trying to use it
+                warning = "Unused";
+            }
+
             table | p->GetKey()
-                  | (p->IsDeprecated() ? "!" : " ")
+                  | warning
                   | p->GetValue()
                   | p->GetDefault()
                   | p->GetDescription();
