@@ -15,12 +15,22 @@
 #include <JANA/Services/JServiceLocator.h>
 
 class JParameter {
+
     std::string m_name;             // A token (no whitespace, colon-prefixed), e.g. "my_plugin:use_mc"
     std::string m_value;            // Stringified value, e.g. "1". Can handle comma-separated vectors of strings e.g. "abc, def"
     std::string m_default_value;    // Optional default value, which may or may not equal value
     std::string m_description;      // One-liner
+
     bool m_has_default = false;     // Indicates that a default value is present. Does not indicate whether said value is in use.
+                                    //   We need this because "" is a valid default value.
     bool m_is_default = false;      // Indicates that we are actually using this default value.
+                                    //   We need this because we want to know if the user provided a value that happened to match the default value.
+    bool m_is_deprecated = false;   // This lets us print a warning if a user provides a deprecated parameter,
+                                    //   It also lets us suppress printing this parameter in the parameter list.
+    bool m_is_hidden = false;       // Some JANA parameters control internal details that aren't part of the contract between JANA and its users.
+                                    //   We want to differentiate these from the parameters that users are meant to control and understand.
+    bool m_is_used = false;         // If a parameter hasn't been used, it probably contains a typo, and we should warn the user.
+
 
 public:
 
@@ -36,15 +46,22 @@ public:
     inline const std::string& GetValue() const { return m_value; }
     inline const std::string& GetDefault() const { return m_default_value; }
     inline const std::string& GetDescription() const { return m_description; }
-    inline bool IsDefault() const { return m_is_default; }
+
     inline bool HasDefault() const { return m_has_default; }
+    inline bool IsDefault() const { return m_is_default; }
+    inline bool IsHidden() const { return m_is_hidden; }
+    inline bool IsUsed() const { return m_is_used; }
+    inline bool IsDeprecated() const { return m_is_deprecated; }
 
     inline void SetKey(std::string key) { m_name = std::move(key); }
     inline void SetValue(std::string val) { m_value = std::move(val); }
     inline void SetDefault(std::string defaultValue) { m_default_value = std::move(defaultValue); }
     inline void SetDescription(std::string desc) { m_description = std::move(desc); }
-    inline void SetIsDefault(bool isDefault) { m_is_default = isDefault; }
     inline void SetHasDefault(bool hasDefault) { m_has_default = hasDefault; }
+    inline void SetIsDefault(bool isDefault) { m_is_default = isDefault; }
+    inline void SetIsHidden(bool isHidden) { m_is_hidden = isHidden; }
+    inline void SetIsUsed(bool isUsed) { m_is_used = isUsed; }
+    inline void SetIsDeprecated(bool isDeprecated) { m_is_deprecated = isDeprecated; }
 };
 
 class JParameterManager : public JService {
@@ -122,6 +139,7 @@ JParameter* JParameterManager::GetParameter(std::string name, T& val) {
         return nullptr;
     }
     val = parse<T>(result->second->GetValue());
+    result->second->SetIsUsed(true);
     return result->second;
 }
 
@@ -138,6 +156,7 @@ T JParameterManager::GetParameterValue(std::string name) {
     if (result == m_parameters.end()) {
         throw JException("Unknown parameter \"%s\"", name.c_str());
     }
+    result->second->SetIsUsed(true);
     return parse<T>(result->second->GetValue());
 }
 
@@ -205,10 +224,19 @@ JParameter* JParameterManager::SetDefaultParameter(std::string name, T& val, std
             param->SetHasDefault(true);
             param->SetDefault(stringify(val));
         }
-        // else if (parse<T>(param->default_value) != val) {
-        //     // Our existing value is another default, and it conflicts
-        //     LOG_WARN(m_logger) << "Parameter '" << name << "' has conflicting defaults" << LOG_END;
-        // }
+        else {
+            // We tried to set the same default parameter twice. This is fine; this happens all the time
+            // because we construct lots of copies of JFactories, each of which calls SetDefaultParameter on its own.
+            // However, we still want to warn the user if the same parameter was declared with different values.
+            // This comparison is fraught, primarily because floats get extra-rounded when they are stringified.
+            // What we do is compare the stringified versions.
+            std::string stringified_val = stringify(val);
+            if (stringified_val != param->GetDefault()) {
+                LOG_WARN(m_logger) << "Parameter '" << name << "' has conflicting defaults: '"
+                                   << stringified_val << "' vs '" << param->GetDefault() << "'"
+                                   << LOG_END;
+            }
+        }
     }
     else {
         // We are storing a value for this parameter for the first time
@@ -226,6 +254,7 @@ JParameter* JParameterManager::SetDefaultParameter(std::string name, T& val, std
     // Always put val through the stringification/parsing cycle to be consistent with
     // values passed in from config file, accesses from other threads
     val = parse<T>(param->GetValue());
+    param->SetIsUsed(true);
     return param;
 }
 

@@ -25,7 +25,7 @@ JParameterManager::JParameterManager(const JParameterManager& other) {
 
     m_logger = other.m_logger;
     // Do a deep copy of contained JParameters to avoid double frees
-    for (auto param : other.m_parameters) {
+    for (const auto& param : other.m_parameters) {
         m_parameters.insert({param.first, new JParameter(*param.second)});
     }
 }
@@ -33,7 +33,7 @@ JParameterManager::JParameterManager(const JParameterManager& other) {
 /// @brief Destructor
 /// @details Destroys all contained JParameter objects.
 JParameterManager::~JParameterManager() {
-    for (auto p : m_parameters) delete p.second;
+    for (const auto& p : m_parameters) delete p.second;
     m_parameters.clear();
 }
 
@@ -80,31 +80,56 @@ JParameter* JParameterManager::FindParameter(std::string name) {
 ///                   Defaults to false.
 void JParameterManager::PrintParameters(bool all) {
 
-    // Find maximum key length
-    uint32_t max_key_len = 4;
-    vector<string> keys;
+    // First we filter
+    vector<JParameter*> params_to_print;
+    bool deprecated_params_present = false;
+
     for (auto& p : m_parameters) {
         string key = p.first;
         auto j = p.second;
+
         if ((!all) && j->IsDefault()) continue;
-        keys.push_back(key);
-        if (key.length() > max_key_len) max_key_len = key.length();
+        if (j->IsHidden()) continue;
+        if (j->IsDeprecated() && j->IsDefault()) continue;    // Hide deprecated parameters that are NOT in use
+
+        if (j->IsDeprecated() && !j->IsDefault()) {
+            // Warn for any deprecated parameters that ARE in use.
+            LOG_WARN(m_logger) << "Parameter '" << key << "' has been deprecated and will no longer be supported in the next release." << LOG_END;
+            deprecated_params_present = true;
+        }
+        params_to_print.push_back(p.second);
     }
 
-    // If all params are set to default values, then print a one line
-    // summary
-    if (keys.empty()) {
+    // If all params are set to default values, then print a one line summary and return
+    if (params_to_print.empty()) {
         LOG << "All configuration parameters set to default values." << LOG_END;
         return;
     }
 
+    // Generate the whole table
     JTablePrinter table;
-    table.AddColumn("Name", JTablePrinter::Justify::Right);
+    table.AddColumn("Name");
+    if (deprecated_params_present) {
+        table.AddColumn(" ");  // IsDeprecated column
+    }
     table.AddColumn("Value");
-    for (string& key : keys) {
-        auto name = m_parameters[key]->GetKey();
-        string val = m_parameters[key]->GetValue();
-        table | name | val;
+    table.AddColumn("Default");
+    table.AddColumn("Description");
+
+    for (JParameter* p: params_to_print) {
+        if (deprecated_params_present) {
+            table | p->GetKey()
+                  | (p->IsDeprecated() ? "!" : " ")
+                  | p->GetValue()
+                  | p->GetDefault()
+                  | p->GetDescription();
+        }
+        else {
+            table | p->GetKey()
+            | p->GetValue()
+            | p->GetDefault()
+            | p->GetDescription();
+        }
     }
     std::ostringstream ss;
     table.Render(ss);
