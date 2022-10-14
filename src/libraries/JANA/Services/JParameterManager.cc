@@ -90,7 +90,7 @@ void JParameterManager::PrintParameters(bool all) {
 
         if ((!all) && j->IsDefault()) continue;  // Hide all parameters that were set by default and the user didn't provide
         if (j->IsDeprecated() && j->IsDefault()) continue;    // Hide deprecated parameters that are NOT in use
-        if (j->IsHidden()) continue;
+        if (j->IsHidden() && j->IsDefault()) continue;
 
         if (j->IsDeprecated() && !j->IsDefault()) {
             // Warn for any deprecated parameters that ARE in use.
@@ -100,6 +100,10 @@ void JParameterManager::PrintParameters(bool all) {
         if (!j->IsUsed()) {
             // Warn about any unused parameters
             LOG_WARN(m_logger) << "Parameter '" << key << "' appears to be unused at this time. Possible typo?" << LOG_END;
+            warnings_present = true;
+        }
+        if (j->IsHidden()) {
+            // Inform user that this parameter is hidden
             warnings_present = true;
         }
         params_to_print.push_back(p.second);
@@ -131,6 +135,10 @@ void JParameterManager::PrintParameters(bool all) {
                 // Can't be both deprecated and unused, since JANA only finds out that it is deprecated by trying to use it
                 warning = "Unused";
             }
+            else if (p->IsHidden()) {
+                warning = "Hidden";
+            }
+
 
             table | p->GetKey()
                   | warning
