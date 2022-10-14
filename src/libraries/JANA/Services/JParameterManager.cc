@@ -78,7 +78,7 @@ JParameter* JParameterManager::FindParameter(std::string name) {
 /// @param [in] all   If false, prints only parameters whose values differ from the defaults.
 ///                   If true, prints all parameters.
 ///                   Defaults to false.
-void JParameterManager::PrintParameters(bool all) {
+void JParameterManager::PrintParameters(bool show_defaulted, bool show_advanced, bool warn_on_unused) {
 
     // First we filter
     vector<JParameter*> params_to_print;
@@ -88,22 +88,22 @@ void JParameterManager::PrintParameters(bool all) {
         string key = p.first;
         auto j = p.second;
 
-        if ((!all) && j->IsDefault()) continue;  // Hide all parameters that were set by default and the user didn't provide
+        if ((!show_defaulted) && j->IsDefault()) continue;  // Hide all parameters that were set by default and the user didn't provide
         if (j->IsDeprecated() && j->IsDefault()) continue;    // Hide deprecated parameters that are NOT in use
-        if (j->IsHidden() && j->IsDefault()) continue;
+        if (!show_advanced && j->IsAdvanced() && j->IsDefault()) continue;
 
         if (j->IsDeprecated() && !j->IsDefault()) {
-            // Warn for any deprecated parameters that ARE in use.
+            // Warn for any deprecated parameters that are overriden.
             LOG_WARN(m_logger) << "Parameter '" << key << "' has been deprecated and will no longer be supported in the next release." << LOG_END;
             warnings_present = true;
         }
-        if (!j->IsUsed()) {
+        if (warn_on_unused && !j->IsUsed()) {
             // Warn about any unused parameters
             LOG_WARN(m_logger) << "Parameter '" << key << "' appears to be unused at this time. Possible typo?" << LOG_END;
             warnings_present = true;
         }
-        if (j->IsHidden()) {
-            // Inform user that this parameter is hidden
+        if (j->IsAdvanced()) {
+            // Inform user that this parameter is advanced
             warnings_present = true;
         }
         params_to_print.push_back(p.second);
@@ -129,14 +129,16 @@ void JParameterManager::PrintParameters(bool all) {
         if (warnings_present) {
             std::string warning;
             if (p->IsDeprecated()) {
+                // If deprecated, it no longer matters whether it is advanced or not. If unused, won't show up here anyway.
                 warning = "Deprecated";
             }
-            else if (!p->IsUsed()) {
+            else if (warn_on_unused && !p->IsUsed()) {
                 // Can't be both deprecated and unused, since JANA only finds out that it is deprecated by trying to use it
+                // Can't be both advanced and unused, since JANA only finds out that it is advanced by trying to use it
                 warning = "Unused";
             }
-            else if (p->IsHidden()) {
-                warning = "Hidden";
+            else if (p->IsAdvanced()) {
+                warning = "Advanced";
             }
 
 

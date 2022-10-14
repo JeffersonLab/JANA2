@@ -64,15 +64,33 @@ public:
             }
         }
 
-        m_params->SetDefaultParameter("jana:event_pool_size", m_event_pool_size, "Sets the initial size of the event pool. Having too few events starves the workers; having too many consumes memory and introduces overhead from extra factory initializations");
-        m_params->SetDefaultParameter("jana:limit_total_events_in_flight", m_limit_total_events_in_flight, "Controls whether the event pool is allowed to automatically grow beyond jana:event_pool_size");
-        m_params->SetDefaultParameter("jana:event_queue_threshold", m_event_queue_threshold, "Max number of events allowed on the main event queue. Higher => Better load balancing; Lower => Fewer events in flight");
-        m_params->SetDefaultParameter("jana:event_source_chunksize", m_event_source_chunksize, "Max number of events that a JEventSource may enqueue at once. Higher => less queue contention; Lower => better load balancing");
-        m_params->SetDefaultParameter("jana:event_processor_chunksize", m_event_processor_chunksize, "Max number of events that the JEventProcessors may dequeue at once. Higher => less queue contention; Lower => better load balancing");
-        m_params->SetDefaultParameter("jana:enable_stealing", m_enable_stealing, "Enable work stealing. Improves load balancing when jana:locality != 0; otherwise does nothing.");
-        m_params->SetDefaultParameter("jana:affinity", m_affinity, "Constrain worker thread CPU affinity. 0=Let the OS decide. 1=Avoid extra memory movement at the expense of using hyperthreads. 2=Avoid hyperthreads at the expense of extra memory movement");
-        m_params->SetDefaultParameter("jana:locality", m_locality, "Constrain memory locality. 0=No constraint. 1=Events stay on the same socket. 2=Events stay on the same NUMA domain. 3=Events stay on same core. 4=Events stay on same cpu/hyperthread.");
-        m_params->SetDefaultParameter("record_call_stack", m_enable_call_graph_recording, "Records a trace of who called each factory. Reduces performance but necessary for plugins such as janadot.");
+        m_params->SetDefaultParameter("jana:event_pool_size", m_event_pool_size,
+                                      "Sets the initial size of the event pool. Having too few events starves the workers; having too many consumes memory and introduces overhead from extra factory initializations")
+                ->SetIsAdvanced(true);
+        m_params->SetDefaultParameter("jana:limit_total_events_in_flight", m_limit_total_events_in_flight,
+                                      "Controls whether the event pool is allowed to automatically grow beyond jana:event_pool_size")
+                ->SetIsAdvanced(true);
+        m_params->SetDefaultParameter("jana:event_queue_threshold", m_event_queue_threshold,
+                                      "Max number of events allowed on the main event queue. Higher => Better load balancing; Lower => Fewer events in flight")
+                ->SetIsAdvanced(true);
+        m_params->SetDefaultParameter("jana:event_source_chunksize", m_event_source_chunksize,
+                                      "Max number of events that a JEventSource may enqueue at once. Higher => less queue contention; Lower => better load balancing")
+                ->SetIsAdvanced(true);
+        m_params->SetDefaultParameter("jana:event_processor_chunksize", m_event_processor_chunksize,
+                                      "Max number of events that the JEventProcessors may dequeue at once. Higher => less queue contention; Lower => better load balancing")
+                ->SetIsAdvanced(true);
+        m_params->SetDefaultParameter("jana:enable_stealing", m_enable_stealing,
+                                      "Enable work stealing. Improves load balancing when jana:locality != 0; otherwise does nothing.")
+                ->SetIsAdvanced(true);
+        m_params->SetDefaultParameter("jana:affinity", m_affinity,
+                                      "Constrain worker thread CPU affinity. 0=Let the OS decide. 1=Avoid extra memory movement at the expense of using hyperthreads. 2=Avoid hyperthreads at the expense of extra memory movement")
+                ->SetIsAdvanced(true);
+        m_params->SetDefaultParameter("jana:locality", m_locality,
+                                      "Constrain memory locality. 0=No constraint. 1=Events stay on the same socket. 2=Events stay on the same NUMA domain. 3=Events stay on same core. 4=Events stay on same cpu/hyperthread.")
+                ->SetIsAdvanced(true);
+        m_params->SetDefaultParameter("record_call_stack", m_enable_call_graph_recording,
+                                      "Records a trace of who called each factory. Reduces performance but necessary for plugins such as janadot.")
+                ->SetIsAdvanced(true);
 
         m_arrow_logger = sl->get<JLoggingService>()->get_logger("JArrow");
     };

@@ -27,7 +27,7 @@ class JParameter {
                                     //   We need this because we want to know if the user provided a value that happened to match the default value.
     bool m_is_deprecated = false;   // This lets us print a warning if a user provides a deprecated parameter,
                                     //   It also lets us suppress printing this parameter in the parameter list.
-    bool m_is_hidden = false;       // Some JANA parameters control internal details that aren't part of the contract between JANA and its users.
+    bool m_is_advanced = false;       // Some JANA parameters control internal details that aren't part of the contract between JANA and its users.
                                     //   We want to differentiate these from the parameters that users are meant to control and understand.
     bool m_is_used = false;         // If a parameter hasn't been used, it probably contains a typo, and we should warn the user.
 
@@ -49,7 +49,7 @@ public:
 
     inline bool HasDefault() const { return m_has_default; }
     inline bool IsDefault() const { return m_is_default; }
-    inline bool IsHidden() const { return m_is_hidden; }
+    inline bool IsAdvanced() const { return m_is_advanced; }
     inline bool IsUsed() const { return m_is_used; }
     inline bool IsDeprecated() const { return m_is_deprecated; }
 
@@ -59,7 +59,7 @@ public:
     inline void SetDescription(std::string desc) { m_description = std::move(desc); }
     inline void SetHasDefault(bool hasDefault) { m_has_default = hasDefault; }
     inline void SetIsDefault(bool isDefault) { m_is_default = isDefault; }
-    inline void SetIsHidden(bool isHidden) { m_is_hidden = isHidden; }
+    inline void SetIsAdvanced(bool isHidden) { m_is_advanced = isHidden; }
     inline void SetIsUsed(bool isUsed) { m_is_used = isUsed; }
     inline void SetIsDeprecated(bool isDeprecated) { m_is_deprecated = isDeprecated; }
 };
@@ -77,7 +77,7 @@ public:
 
     JParameter* FindParameter(std::string);
 
-    void PrintParameters(bool all = false);
+    void PrintParameters(bool show_defaulted, bool show_advanced, bool warn_on_unused);
 
     std::map<std::string, JParameter*> GetAllParameters();
 

@@ -122,7 +122,8 @@ void JApplication::Initialize() {
         m_component_manager->resolve_event_sources();
 
         int engine_choice = 0;
-        m_params->SetDefaultParameter("jana:engine", engine_choice, "0: Use arrow engine, 1: Use debug engine")->SetIsHidden(true);
+        m_params->SetDefaultParameter("jana:engine", engine_choice,
+                                      "0: Use arrow engine, 1: Use debug engine")->SetIsAdvanced(true);
 
         if (engine_choice == 0) {
             std::shared_ptr<JTopologyBuilder> topology_builder = m_service_locator.get<JTopologyBuilder>();
