@@ -77,14 +77,14 @@ void JComponentManager::initialize() {
     // or Run() are called. Otherwise, the parameters have to be set before the
     // JApplication is even constructed.
     auto parms = m_app->GetJParameterManager();
-    parms->SetDefaultParameter("RECORD_CALL_STACK", m_enable_call_graph_recording);
+    parms->SetDefaultParameter("record_call_stack", m_enable_call_graph_recording, "Records a trace of who called each factory");
     parms->FilterParameters(m_default_tags, "DEFTAG:");
 }
 
 
 void JComponentManager::resolve_event_sources() {
 
-    m_app->SetDefaultParameter("event_source_type", m_user_evt_src_typename, "");
+    m_app->SetDefaultParameter("event_source_type", m_user_evt_src_typename, "Manually specifies which JEventSource should open the input file");
 
     m_user_evt_src_gen = resolve_user_event_source_generator();
     for (auto& source_name : m_src_names) {

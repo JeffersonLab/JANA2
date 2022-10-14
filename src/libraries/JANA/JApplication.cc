@@ -111,18 +111,18 @@ void JApplication::Initialize() {
 
         // Set desired nthreads. We parse the 'nthreads' parameter two different ways for backwards compatibility.
         m_desired_nthreads = 1;
-        m_params->SetDefaultParameter("nthreads", m_desired_nthreads, "The total number of worker threads");
+        m_params->SetDefaultParameter("nthreads", m_desired_nthreads, "Desired number of worker threads, or 'Ncores' to use all available cores.");
         if (m_params->GetParameterValue<std::string>("nthreads") == "Ncores") {
             m_desired_nthreads = JCpuInfo::GetNumCpus();
         }
 
-        m_params->SetDefaultParameter("jana:extended_report", m_extended_report);
+        m_params->SetDefaultParameter("jana:extended_report", m_extended_report, "Controls whether the ticker shows simple vs detailed performance metrics");
 
         m_component_manager->initialize();
         m_component_manager->resolve_event_sources();
 
         int engine_choice = 0;
-        m_params->SetDefaultParameter("jana:engine", engine_choice, "0: Arrow engine, 1: Debug engine");
+        m_params->SetDefaultParameter("jana:engine", engine_choice, "0: Use arrow engine, 1: Use debug engine")->SetIsHidden(true);
 
         if (engine_choice == 0) {
             std::shared_ptr<JTopologyBuilder> topology_builder = m_service_locator.get<JTopologyBuilder>();
