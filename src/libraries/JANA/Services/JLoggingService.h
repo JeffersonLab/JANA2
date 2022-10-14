@@ -47,37 +47,37 @@ public:
 
         auto params = serviceLocator->get<JParameterManager>();
         std::vector<std::string> groups;
-        params->SetDefaultParameter("log:off", groups, "");
+        params->SetDefaultParameter("log:off", groups, "Comma-separated list of loggers that should be turned off completely");
         for (auto& s : groups) {
             m_local_log_levels[s] = JLogger::Level::OFF;
         }
         groups.clear();
-        params->SetDefaultParameter("log:fatal", groups, "");
+        params->SetDefaultParameter("log:fatal", groups, "Comma-separated list of loggers that should only print FATAL");
         for (auto& s : groups) {
             m_local_log_levels[s] = JLogger::Level::FATAL;
         }
         groups.clear();
-        params->SetDefaultParameter("log:error", groups, "");
+        params->SetDefaultParameter("log:error", groups, "Comma-separated list of loggers that should only print ERROR or higher");
         for (auto& s : groups) {
             m_local_log_levels[s] = JLogger::Level::ERROR;
         }
         groups.clear();
-        params->SetDefaultParameter("log:warn", groups, "");
+        params->SetDefaultParameter("log:warn", groups, "Comma-separated list of loggers that should only print WARN or higher");
         for (auto& s : groups) {
             m_local_log_levels[s] = JLogger::Level::WARN;
         }
         groups.clear();
-        params->SetDefaultParameter("log:info", groups, "");
+        params->SetDefaultParameter("log:info", groups, "Comma-separated list of loggers that should only print INFO or higher");
         for (auto& s : groups) {
             m_local_log_levels[s] = JLogger::Level::INFO;
         }
         groups.clear();
-        params->SetDefaultParameter("log:debug", groups, "");
+        params->SetDefaultParameter("log:debug", groups, "Comma-separated list of loggers that should only print DEBUG or higher");
         for (auto& s : groups) {
             m_local_log_levels[s] = JLogger::Level::DEBUG;
         }
         groups.clear();
-        params->SetDefaultParameter("log:trace", groups, "");
+        params->SetDefaultParameter("log:trace", groups, "Comma-separated list of loggers that should print everything");
         for (auto& s : groups) {
             m_local_log_levels[s] = JLogger::Level::TRACE;
         }

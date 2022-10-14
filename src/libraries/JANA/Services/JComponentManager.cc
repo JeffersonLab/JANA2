@@ -77,7 +77,7 @@ void JComponentManager::initialize() {
     // or Run() are called. Otherwise, the parameters have to be set before the
     // JApplication is even constructed.
     auto parms = m_app->GetJParameterManager();
-    parms->SetDefaultParameter("record_call_stack", m_enable_call_graph_recording, "Records a trace of who called each factory");
+    parms->SetDefaultParameter("record_call_stack", m_enable_call_graph_recording, "Records a trace of who called each factory. Reduces performance but necessary for plugins such as janadot.");
     parms->FilterParameters(m_default_tags, "DEFTAG:");
 }
 
