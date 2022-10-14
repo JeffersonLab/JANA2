@@ -77,7 +77,7 @@ public:
 
     JParameter* FindParameter(std::string);
 
-    void PrintParameters(bool show_defaulted, bool show_advanced=false, bool warn_on_unused=false);
+    void PrintParameters(bool show_defaulted, bool show_advanced=true, bool warn_on_unused=false);
 
     std::map<std::string, JParameter*> GetAllParameters();
 

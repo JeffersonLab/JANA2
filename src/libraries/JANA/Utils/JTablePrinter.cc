@@ -4,6 +4,7 @@
 
 
 #include "JTablePrinter.h"
+#include "JANA/JLogger.h"
 
 
 JTablePrinter::Column& JTablePrinter::AddColumn(std::string header, Justify justify, int desired_width) {
@@ -17,23 +18,34 @@ JTablePrinter::Column& JTablePrinter::AddColumn(std::string header, Justify just
     return col;
 }
 
-
-void JTablePrinter::FormatCell(std::ostream& os, std::string contents, int max_width, Justify justify) {
-    auto cs = contents.size();
-    if (cs > (size_t) max_width) {
-        os << contents.substr(0, max_width-2) << "\u2026";
+size_t JTablePrinter::GetLinesInRow(size_t row) {
+    size_t lines = 1;
+    for (const Column& c : columns) {
+        if (c.use_desired_width == false) continue;
+        if (c.desired_width == 0) continue;
+        size_t len = c.values[row].size();  // This probably doesn't handle non-ASCII character encodings correctly
+        size_t col_lines = (len % c.desired_width == 0) ? len/c.desired_width : len/c.desired_width+1;
+        if (col_lines > lines) lines = col_lines;
     }
-    else if (justify == Justify::Left) {
-        os << std::left << std::setw(max_width) << contents;
+    return lines;
+}
+
+void JTablePrinter::FormatCell(std::ostream& os, size_t line, std::string contents, int max_width, Justify justify) {
+    auto cs = contents.size();
+    size_t start = max_width*line; // Inclusive
+    std::string line_contents = (start < cs) ? contents.substr(start, max_width) : "";
+
+    if (justify == Justify::Left) {
+        os << std::left << std::setw(max_width) << line_contents;
     }
     else if (justify == Justify::Right) {
-        os << std::right << std::setw(max_width) << contents;
+        os << std::right << std::setw(max_width) << line_contents;
     }
     else {
         int lpad = (max_width-cs)/2; // center slightly to the left
         int rpad = (max_width-cs) - lpad;
         for (int i=0; i<lpad; ++i) os << " ";
-        os << contents;
+        os << line_contents;
         for (int i=0; i<rpad; ++i) os << " ";
     }
 }
@@ -70,7 +82,7 @@ void JTablePrinter::Render(std::ostream& os) {
     for (int i = 0; i<indent; ++i) os << " ";
     for (const auto& col : columns) {
         // os << col.header;
-        FormatCell(os, col.header, col.use_desired_width?col.desired_width:col.contents_width, Justify::Center);
+        FormatCell(os, 0, col.header, col.use_desired_width?col.desired_width:col.contents_width, Justify::Center);
         for (int i=0; i<cell_margin; ++i) os << " ";
     }
     os << std::endl;
@@ -93,12 +105,16 @@ void JTablePrinter::Render(std::ostream& os) {
 
     // Print rows
     for (int row = 0; row < total_rows; ++row) {
-        for (int i = 0; i<indent; ++i) os << " ";
-        for (const auto& col : columns) {
-            FormatCell(os, col.values[row], col.use_desired_width?col.desired_width:col.contents_width, col.justify);
-            for (int i=0; i<cell_margin; ++i) os << " ";
+        size_t lines = GetLinesInRow(row);
+        for (size_t line=0; line < lines; ++line) {
+            for (int i = 0; i<indent; ++i) os << " ";
+            for (const auto& col : columns) {
+                FormatCell(os, line, col.values[row], col.use_desired_width?col.desired_width:col.contents_width, col.justify);
+                for (int i=0; i<cell_margin; ++i) os << " ";
+            }
+            os << std::endl;
+
         }
-        os << std::endl;
     }
 
     // Print bottom rule

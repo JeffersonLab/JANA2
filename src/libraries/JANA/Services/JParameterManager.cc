@@ -121,9 +121,9 @@ void JParameterManager::PrintParameters(bool show_defaulted, bool show_advanced,
     if (warnings_present) {
         table.AddColumn("Warnings");  // IsDeprecated column
     }
-    table.AddColumn("Value");
-    table.AddColumn("Default");
-    table.AddColumn("Description");
+    table.AddColumn("Value", JTablePrinter::Justify::Left, 20);
+    table.AddColumn("Default", JTablePrinter::Justify::Left, 20);
+    table.AddColumn("Description", JTablePrinter::Justify::Left, 80);
 
     for (JParameter* p: params_to_print) {
         if (warnings_present) {

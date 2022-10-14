@@ -41,8 +41,9 @@ public:
     int cell_margin = 2;
 
     JTablePrinter::Column& AddColumn(std::string header, Justify justify=Justify::Left, int desired_width=0);
-    void FormatCell(std::ostream& os, std::string contents, int max_width, Justify justify);
+    void FormatCell(std::ostream& os, size_t line, std::string contents, int max_width, Justify justify);
     void Render(std::ostream& os);
+    size_t GetLinesInRow(size_t row);
 
     template <typename T> JTablePrinter& operator|(T);
 
