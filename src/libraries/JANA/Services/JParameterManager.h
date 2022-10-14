@@ -223,6 +223,7 @@ JParameter* JParameterManager::SetDefaultParameter(std::string name, T& val, std
             // We still want to remember the default for future conflict detection.
             param->SetHasDefault(true);
             param->SetDefault(stringify(val));
+            param->SetDescription(std::move(description));
         }
         else {
             // We tried to set the same default parameter twice. This is fine; this happens all the time
