@@ -1,7 +1,15 @@
 
 
 # Generate JVersion.h
-# Note that we have to re-run cmake to force this to update
+
+# Force CMake to reconfigure itself whenever git's HEAD pointer changes
+set_property(
+        DIRECTORY
+        APPEND
+        PROPERTY CMAKE_CONFIGURE_DEPENDS
+        ${CMAKE_SOURCE_DIR}/.git/HEAD
+)
+
 execute_process(
         COMMAND git log -1 --format=%H
         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
