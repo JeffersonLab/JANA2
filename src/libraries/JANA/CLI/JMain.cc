@@ -45,11 +45,9 @@ void PrintUsageOptions() {
 void PrintVersion() {
     /// Prints JANA version information to stdout, for use by the CLI.
 
-    std::cout << "          JANA version: " << JVersion::GetVersion() << std::endl;
-    std::cout << "        JANA ID string: " << JVersion::GetIDstring() << std::endl;
-    std::cout << "     JANA git revision: " << JVersion::GetRevision() << std::endl;
-    std::cout << "JANA last changed date: " << JVersion::GetDate() << std::endl;
-    std::cout << "           JANA source: " << JVersion::GetSource() << std::endl;
+    std::cout << "JANA2 version:  " << JVersion::GetVersion() << std::endl;
+    std::cout << "Commit hash:    " << JVersion::GetCommitHash() << std::endl;
+    std::cout << "Commit date:    " << JVersion::GetCommitDate() << std::endl;
 }
 
 JApplication* CreateJApplication(UserOptions& options) {
@@ -83,19 +81,12 @@ JApplication* CreateJApplication(UserOptions& options) {
 int Execute(JApplication* app, UserOptions &options) {
 
     std::cout << std::endl;
-    std::cout << "     ____      _     ___      ___       _               \n"
-		 "     `MM'     dM.    `MM\\     `M'      dM.              \n"
-		 "      MM     ,MMb     MMM\\     M      ,MMb              \n"
-		 "      MM     d'YM.    M\\MM\\    M      d'YM.      ____   \n"
-		 "      MM    ,P `Mb    M \\MM\\   M     ,P `Mb     6MMMMb  \n"
-		 "      MM    d'  YM.   M  \\MM\\  M     d'  YM.   MM'  `Mb \n"
-		 "      MM   ,P   `Mb   M   \\MM\\ M    ,P   `Mb        ,MM \n"
-		 "      MM   d'    YM.  M    \\MM\\M    d'    YM.      ,MM' \n"
-		 "(8)   MM  ,MMMMMMMMb  M     \\MMM   ,MMMMMMMMb    ,M'    \n"
-		 "((   ,M9  d'      YM. M      \\MM   d'      YM. ,M'      \n"
-		 " YMMMM9 _dM_     _dMM_M_      \\M _dM_     _dMM_MMMMMMMM " << std::endl << std::endl;
-
-    // std::cout << "JANA " << JVersion::GetVersion() << " [" << JVersion::GetRevision() << "]" << std::endl;
+    std::cout << "       |    \\      \\  |     \\    ___ \\   " << std::endl;
+    std::cout << "       |   _ \\      \\ |    _ \\      ) |" << std::endl;
+    std::cout << "   \\   |  ___ \\   |\\  |   ___ \\    __/" << std::endl;
+    std::cout << "  \\___/ _/    _\\ _| \\_| _/    _\\ _____|" << std::endl;
+    std::cout << std::endl;
+    PrintVersion();
     JSignalHandler::register_handlers(app);
 
     if (options.flags[ShowConfigs]) {
