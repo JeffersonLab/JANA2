@@ -27,8 +27,15 @@ struct JVersion {
     static std::string GetVersion() {
         std::stringstream ss;
         ss << major << "." << minor << "." << patch;
-        ss << "-" << (is_release ? "release" : "development");
-        if (is_modified) ss << " (modified)";
+        if (is_modified) {
+            ss << " (modified)";
+        }
+        else if (is_release) {
+            ss << " (release)";
+        }
+        else {
+            ss << " (development)";
+        }
         return ss.str();
     }
 };
