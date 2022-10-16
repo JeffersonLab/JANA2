@@ -12,26 +12,29 @@ struct JVersion {
     static const int major = @jana2_VERSION_MAJOR@;
     static const int minor = @jana2_VERSION_MINOR@;
     static const int patch = @jana2_VERSION_PATCH@;
-    static const bool release = false; //@JVERSION_RELEASE@;
-    static const std::string git_commit_hash;
-    static const std::string git_commit_date;
+    static const std::string last_commit_hash;
+    static const std::string last_commit_date;
+    static const bool is_release = @JVERSION_RELEASE@;
+    static const bool is_modified = @JVERSION_MODIFIED@;
 
     static unsigned int GetMajorNumber() { return major; }
     static unsigned int GetMinorNumber() { return minor; }
     static unsigned int GetPatchNumber() { return patch; }
 
-    static std::string GetCommitHash() { return git_commit_hash; }
-    static std::string GetCommitDate() { return git_commit_date; }
+    static std::string GetCommitHash() { return last_commit_hash; }
+    static std::string GetCommitDate() { return last_commit_date; }
 
     static std::string GetVersion() {
         std::stringstream ss;
-        ss << major << "." << minor << "." << patch; // << " (" << (release ? "release" : "snapshot") << ")";
+        ss << major << "." << minor << "." << patch;
+        ss << "-" << (is_release ? "release" : "development");
+        if (is_modified) ss << " (modified)";
         return ss.str();
     }
 };
 
-const std::string JVersion::git_commit_hash = "@JVERSION_COMMIT_HASH@";
-const std::string JVersion::git_commit_date = "@JVERSION_COMMIT_DATE@";
+const std::string JVersion::last_commit_hash = "@JVERSION_COMMIT_HASH@";
+const std::string JVersion::last_commit_date = "@JVERSION_COMMIT_DATE@";
 
 #endif // _JVersion_h_
 
