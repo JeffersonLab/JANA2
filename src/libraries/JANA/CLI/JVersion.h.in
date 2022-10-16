@@ -9,9 +9,9 @@
 
 struct JVersion {
 
-    static const int major = 2; //@jana2_VERSION_MAJOR@;
-    static const int minor = 0; //@jana2_VERSION_MINOR@;
-    static const int patch = 7; //@jana2_VERSION_PATCH@;
+    static const int major = @jana2_VERSION_MAJOR@;
+    static const int minor = @jana2_VERSION_MINOR@;
+    static const int patch = @jana2_VERSION_PATCH@;
     static const bool release = false; //@JVERSION_RELEASE@;
     static const std::string git_commit_hash;
     static const std::string git_commit_date;
