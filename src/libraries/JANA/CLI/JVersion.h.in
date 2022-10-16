@@ -25,13 +25,13 @@ struct JVersion {
 
     static std::string GetVersion() {
         std::stringstream ss;
-        ss << major << "." << minor << "." << patch << " (" << (release ? "release" : "snapshot") << ")";
+        ss << major << "." << minor << "." << patch; // << " (" << (release ? "release" : "snapshot") << ")";
         return ss.str();
     }
 };
 
-const std::string JVersion::git_commit_hash = "28bf59642adb3d82f0cc3bd6405279076bf8f1e6"; //@JVERSION_COMMIT_HASH@;
-const std::string JVersion::git_commit_date = "Wed Oct 25 23:19:03 2017 -0400";  //@JVERSION_COMMIT_DATE@;
+const std::string JVersion::git_commit_hash = "@JVERSION_COMMIT_HASH@";
+const std::string JVersion::git_commit_date = "@JVERSION_COMMIT_DATE@";
 
 #endif // _JVersion_h_
 
