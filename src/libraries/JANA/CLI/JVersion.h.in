@@ -1,0 +1,47 @@
+
+// Copyright 2020, Jefferson Science Associates, LLC.
+// Subject to the terms in the LICENSE file found in the top-level directory.
+
+#ifndef _JVersion_h_
+#define _JVersion_h_
+
+#include <sstream>
+
+struct JVersion {
+
+    static const int major = @jana2_VERSION_MAJOR@;
+    static const int minor = @jana2_VERSION_MINOR@;
+    static const int patch = @jana2_VERSION_PATCH@;
+    static const std::string last_commit_hash;
+    static const std::string last_commit_date;
+    static const bool is_release = @JVERSION_RELEASE@;
+    static const bool is_modified = @JVERSION_MODIFIED@;
+
+    static unsigned int GetMajorNumber() { return major; }
+    static unsigned int GetMinorNumber() { return minor; }
+    static unsigned int GetPatchNumber() { return patch; }
+
+    static std::string GetCommitHash() { return last_commit_hash; }
+    static std::string GetCommitDate() { return last_commit_date; }
+
+    static std::string GetVersion() {
+        std::stringstream ss;
+        ss << major << "." << minor << "." << patch;
+        if (is_modified) {
+            ss << " (modified)";
+        }
+        else if (is_release) {
+            ss << " (release)";
+        }
+        else {
+            ss << " (development)";
+        }
+        return ss.str();
+    }
+};
+
+const std::string JVersion::last_commit_hash = "@JVERSION_COMMIT_HASH@";
+const std::string JVersion::last_commit_date = "@JVERSION_COMMIT_DATE@";
+
+#endif // _JVersion_h_
+

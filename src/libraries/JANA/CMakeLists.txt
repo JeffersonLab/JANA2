@@ -1,4 +1,8 @@
 
+# For now all the CMakeLists in 'CLI' does is generate and install JVersion.h
+add_subdirectory(CLI)
+
+# Everything else happens below
 set(JANA2_SOURCES
 
     JApplication.cc
@@ -103,7 +107,6 @@ set(JANA2_SOURCES
     Calibrations/JLargeCalibration.cc
     Calibrations/JLargeCalibration.h
 
-    CLI/JVersion.h
     CLI/JBenchmarker.cc
     CLI/JBenchmarker.h
     CLI/JSignalHandler.h
@@ -137,6 +140,9 @@ add_library(jana2 STATIC ${JANA2_SOURCES})
 
 find_package(Threads REQUIRED)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
+target_include_directories(jana2 PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/..)
+# So that we can find the generated JVersion.h before install
+
 target_link_libraries(jana2 ${CMAKE_DL_LIBS} Threads::Threads)
 set_target_properties(jana2 PROPERTIES PREFIX "lib" OUTPUT_NAME "JANA")
 
@@ -167,6 +173,7 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/JANAConfigVersion.cmake" DESTINATION 
 
 
 # Export targets so that outside projects can use them
+
 
 # Install "public" header files
 
