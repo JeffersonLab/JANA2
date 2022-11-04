@@ -8,6 +8,8 @@
 
 std::vector<std::string> JTablePrinter::SplitContents(std::string contents, size_t max_width) {
     auto split_by_newlines = SplitContentsByNewlines(contents);
+    if (max_width == 0) return split_by_newlines;
+
     std::vector<std::string> results;
     for (auto& s: split_by_newlines) {
         auto split_by_spaces = SplitContentsBySpaces(s, max_width);
@@ -70,11 +72,11 @@ std::vector<std::string> JTablePrinter::SplitContentsBySpaces(std::string conten
             }
         }
     }
-    if (split_start == split_end) split_end = contents_end;
+    split_end = contents_end;
     // std::cout << "Setting split = [" << split_start << ", " << split_end << "]" << std::endl;
 
     split_by_spaces.push_back(contents.substr(split_start, split_end - split_start));
-    // std::cout << "Pushing back " << split_by_spaces.back() << std::endl;
+    // std::cout << "Pushing back " << split_by_spaces.back() << "(cleanup)" << std::endl;
     return split_by_spaces;
 }
 
@@ -89,42 +91,28 @@ JTablePrinter::Column& JTablePrinter::AddColumn(std::string header, Justify just
     return col;
 }
 
-size_t JTablePrinter::GetLinesInRow(size_t row) {
-    size_t lines = 1;
-    for (const Column& c : columns) {
-        if (c.use_desired_width == false) continue;
-        if (c.desired_width == 0) continue;
-        size_t len = c.values[row].size();  // This probably doesn't handle non-ASCII character encodings correctly
-        size_t col_lines = (len % c.desired_width == 0) ? len/c.desired_width : len/c.desired_width+1;
-        if (col_lines > lines) lines = col_lines;
-    }
-    if (vertical_padding) lines += 1;
-    return lines;
-}
 
-void JTablePrinter::FormatCell(std::ostream& os, size_t line, std::string contents, int max_width, Justify justify) {
+void JTablePrinter::FormatLine(std::ostream& os, std::string contents, int max_width, Justify justify) {
     auto cs = contents.size();
-    size_t start = max_width*line; // Inclusive
-    std::string line_contents = (start < cs) ? contents.substr(start, max_width) : "";
 
     if (justify == Justify::Left) {
-        os << std::left << std::setw(max_width) << line_contents;
+        os << std::left << std::setw(max_width) << contents;
     }
     else if (justify == Justify::Right) {
-        os << std::right << std::setw(max_width) << line_contents;
+        os << std::right << std::setw(max_width) << contents;
     }
     else {
         int lpad = (max_width-cs)/2; // center slightly to the left
         int rpad = (max_width-cs) - lpad;
         for (int i=0; i<lpad; ++i) os << " ";
-        os << line_contents;
+        os << contents;
         for (int i=0; i<rpad; ++i) os << " ";
     }
 }
 
 void JTablePrinter::Render(std::ostream& os) {
 
-    int total_rows = current_row;
+    size_t total_rows = current_row;
     current_row = 0;
 
     // Calculate table width
@@ -154,7 +142,7 @@ void JTablePrinter::Render(std::ostream& os) {
     for (int i = 0; i<indent; ++i) os << " ";
     for (const auto& col : columns) {
         // os << col.header;
-        FormatCell(os, 0, col.header, col.use_desired_width?col.desired_width:col.contents_width, Justify::Center);
+        FormatLine(os, col.header, col.use_desired_width ? col.desired_width : col.contents_width, Justify::Center);
         for (int i=0; i<cell_margin; ++i) os << " ";
     }
     os << std::endl;
@@ -176,12 +164,28 @@ void JTablePrinter::Render(std::ostream& os) {
     }
 
     // Print rows
-    for (int row = 0; row < total_rows; ++row) {
-        size_t lines = GetLinesInRow(row);
-        for (size_t line=0; line < lines; ++line) {
+    for (size_t row = 0; row < total_rows; ++row) {
+        std::vector<std::vector<std::string>> lines;
+        size_t line_count = 1;
+        for (const auto& col : columns) {
+            auto split = SplitContents(col.values[row], col.desired_width);
+            lines.push_back(split);
+            if (split.size() > line_count) line_count = split.size();
+        }
+        if (vertical_padding) line_count += 1;
+
+        for (size_t line=0; line < line_count; ++line) {
             for (int i = 0; i<indent; ++i) os << " ";
-            for (const auto& col : columns) {
-                FormatCell(os, line, col.values[row], col.use_desired_width?col.desired_width:col.contents_width, col.justify);
+
+            size_t col_count = columns.size();
+            for (size_t col = 0; col < col_count; ++col) {
+                auto& column = columns[col];
+                if (line < lines[col].size()) {
+                    FormatLine(os, lines[col][line], column.use_desired_width ? column.desired_width : column.contents_width, column.justify);
+                }
+                else {
+                    FormatLine(os, "", column.use_desired_width ? column.desired_width : column.contents_width, column.justify);
+                }
                 for (int i=0; i<cell_margin; ++i) os << " ";
             }
             os << std::endl;

@@ -5,6 +5,12 @@
 #include <catch.hpp>
 #include <JANA/Utils/JTablePrinter.h>
 
+TEST_CASE("Short noop") {
+    auto result = JTablePrinter::SplitContents("record_call_stack", 50);
+    REQUIRE(result.size() == 1);
+    REQUIRE(result[0] == "record_call_stack");
+}
+
 TEST_CASE("Cell split by newlines") {
     auto result = JTablePrinter::SplitContents("This\nis a\ntest", 10);
     REQUIRE(result.size() == 3);
@@ -70,4 +76,14 @@ TEST_CASE("Evenly divides") {
     REQUIRE(result[1] == "bbb");
     REQUIRE(result[2] == "ccc");
 
+}
+
+TEST_CASE("Weird one") {
+    std::string s = "Max time (in seconds) JANA will wait for a thread to update its heartbeat before hard-exiting. 0 to disable timeout completely.";
+    auto result = JTablePrinter::SplitContents(s, 30);
+    for (auto& s: result) {
+        std::cout << ">> " << s << std::endl;
+    }
+    REQUIRE(result.size() == 5);
+    REQUIRE(result[4] == "timeout completely.");
 }
