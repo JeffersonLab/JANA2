@@ -59,3 +59,15 @@ TEST_CASE("Nothing splittable") {
     REQUIRE(result[2] == "test");
 
 }
+
+TEST_CASE("Evenly divides") {
+    auto result = JTablePrinter::SplitContents("aaa bbb ccc", 3);
+    for (auto& s: result) {
+        std::cout << ">> " << s << std::endl;
+    }
+    REQUIRE(result.size() == 3);
+    REQUIRE(result[0] == "aaa");
+    REQUIRE(result[1] == "bbb");
+    REQUIRE(result[2] == "ccc");
+
+}

@@ -46,6 +46,8 @@ public:
     void Render(std::ostream& os);
     size_t GetLinesInRow(size_t row);
     static std::vector<std::string> SplitContents(std::string contents, size_t max_width);
+    static std::vector<std::string> SplitContentsByNewlines(std::string contents);
+    static std::vector<std::string> SplitContentsBySpaces(std::string contents, size_t max_width);
 
     template <typename T> JTablePrinter& operator|(T);
 

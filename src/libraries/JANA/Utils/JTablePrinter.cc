@@ -6,55 +6,75 @@
 #include "JTablePrinter.h"
 #include "JANA/JLogger.h"
 
-
 std::vector<std::string> JTablePrinter::SplitContents(std::string contents, size_t max_width) {
+    auto split_by_newlines = SplitContentsByNewlines(contents);
+    std::vector<std::string> results;
+    for (auto& s: split_by_newlines) {
+        auto split_by_spaces = SplitContentsBySpaces(s, max_width);
+        for (auto& ss : split_by_spaces) {
+            results.push_back(ss);
+        }
+    }
+    return results;
+}
+
+std::vector<std::string> JTablePrinter::SplitContentsByNewlines(std::string contents) {
     std::vector<std::string> split_by_newlines;
     size_t contents_width = contents.size();
     size_t line_start = 0;
     size_t line_end = line_start;
     while (line_end < contents_width) {
         if (contents[line_end] == '\n') {
-            split_by_newlines.push_back(contents.substr(line_start, line_end-line_start));
-            line_start = line_end+1;
+            split_by_newlines.push_back(contents.substr(line_start, line_end - line_start));
+            line_start = line_end + 1;
             line_end = line_start;
         }
         line_end += 1;
     }
-    split_by_newlines.push_back(contents.substr(line_start, contents_width-line_start));
+    split_by_newlines.push_back(contents.substr(line_start, contents_width - line_start));
+    return split_by_newlines;
+}
+
+std::vector<std::string> JTablePrinter::SplitContentsBySpaces(std::string contents, size_t max_width) {
 
     std::vector<std::string> split_by_spaces;
-    for (auto& line : split_by_newlines) {
-        if (line.size() <= max_width) {
-            split_by_spaces.push_back(line);
+    if (contents.size() <= max_width) {
+        split_by_spaces.push_back(contents);
+        return split_by_spaces;
+    }
+
+    size_t split_start = 0;
+    size_t split_end = 0;
+    size_t contents_end = contents.size();
+    for (size_t i = 0; i < contents_end; ++i) {
+        if (contents[i] == ' ') {
+            // std::cout << "Found ' ' on i=" << i << std::endl;
+            split_end = i;
+            // std::cout << "Setting split = [" << split_start << ", " << split_end << "]" << std::endl;
         }
-        else {
-            size_t split_start = 0;
-            size_t split_end = 0;
-            size_t contents_end = line.size();
-            for (size_t i=0; i<contents_end; ++i) {
-                if (line[i] == ' ') {
-                    if (i - split_start > max_width) {
-                        split_by_spaces.push_back(line.substr(split_start, split_end-split_start));
-                        split_start = split_end+1;
-                        split_end = i;
-                    }
-                    else {
-                        split_end = i;
-                    }
-                }
-                else if (i-split_start == max_width) {
-                    split_by_spaces.push_back(line.substr(split_start,i-split_start));
-                    split_start = i;
-                    split_end = i;
-                }
+        if (i - split_start == max_width) {
+            // std::cout << "Hit max_width on i=" << i << std::endl;
+            if (split_end == split_start) {
+                split_by_spaces.push_back(contents.substr(split_start, i - split_start));
+                // std::cout << "Pushing back " << split_by_spaces.back() << " (no split!)" << std::endl;
+                split_start = i;
+                split_end = i; // Because we didn't find a split, we don't want to lose any characters here
+                // std::cout << "Setting split = [" << split_start << ", " << split_end << "]" << std::endl;
             }
-            split_by_spaces.push_back(line.substr(split_start, split_end-split_start));
-            if (split_end != contents_end) {
-                split_by_spaces.push_back(line.substr(split_end+1, contents_end-(split_end+1)));
+            else {
+                split_by_spaces.push_back(contents.substr(split_start, split_end - split_start));
+                // std::cout << "Pushing back " << split_by_spaces.back() << " (found split!)" << std::endl;
+                split_start = split_end + 1; // Because we found a split, we want to lose the extra space
+                split_end = split_start;
+                // std::cout << "Setting split = [" << split_start << ", " << split_end << "]" << std::endl;
             }
         }
     }
+    if (split_start == split_end) split_end = contents_end;
+    // std::cout << "Setting split = [" << split_start << ", " << split_end << "]" << std::endl;
 
+    split_by_spaces.push_back(contents.substr(split_start, split_end - split_start));
+    // std::cout << "Pushing back " << split_by_spaces.back() << std::endl;
     return split_by_spaces;
 }
 
