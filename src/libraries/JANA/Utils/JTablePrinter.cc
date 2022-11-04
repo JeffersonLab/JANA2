@@ -7,6 +7,57 @@
 #include "JANA/JLogger.h"
 
 
+std::vector<std::string> JTablePrinter::SplitContents(std::string contents, size_t max_width) {
+    std::vector<std::string> split_by_newlines;
+    size_t contents_width = contents.size();
+    size_t line_start = 0;
+    size_t line_end = line_start;
+    while (line_end < contents_width) {
+        if (contents[line_end] == '\n') {
+            split_by_newlines.push_back(contents.substr(line_start, line_end-line_start));
+            line_start = line_end+1;
+            line_end = line_start;
+        }
+        line_end += 1;
+    }
+    split_by_newlines.push_back(contents.substr(line_start, contents_width-line_start));
+
+    std::vector<std::string> split_by_spaces;
+    for (auto& line : split_by_newlines) {
+        if (line.size() <= max_width) {
+            split_by_spaces.push_back(line);
+        }
+        else {
+            size_t split_start = 0;
+            size_t split_end = 0;
+            size_t contents_end = line.size();
+            for (size_t i=0; i<contents_end; ++i) {
+                if (line[i] == ' ') {
+                    if (i - split_start > max_width) {
+                        split_by_spaces.push_back(line.substr(split_start, split_end-split_start));
+                        split_start = split_end+1;
+                        split_end = i;
+                    }
+                    else {
+                        split_end = i;
+                    }
+                }
+                else if (i-split_start == max_width) {
+                    split_by_spaces.push_back(line.substr(split_start,i-split_start));
+                    split_start = i;
+                    split_end = i;
+                }
+            }
+            split_by_spaces.push_back(line.substr(split_start, split_end-split_start));
+            if (split_end != contents_end) {
+                split_by_spaces.push_back(line.substr(split_end+1, contents_end-(split_end+1)));
+            }
+        }
+    }
+
+    return split_by_spaces;
+}
+
 JTablePrinter::Column& JTablePrinter::AddColumn(std::string header, Justify justify, int desired_width) {
     columns.emplace_back();
     Column& col = columns.back();
@@ -27,6 +78,7 @@ size_t JTablePrinter::GetLinesInRow(size_t row) {
         size_t col_lines = (len % c.desired_width == 0) ? len/c.desired_width : len/c.desired_width+1;
         if (col_lines > lines) lines = col_lines;
     }
+    if (vertical_padding) lines += 1;
     return lines;
 }
 

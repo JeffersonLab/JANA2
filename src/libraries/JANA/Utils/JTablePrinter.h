@@ -45,6 +45,7 @@ public:
     void FormatCell(std::ostream& os, size_t line, std::string contents, int max_width, Justify justify);
     void Render(std::ostream& os);
     size_t GetLinesInRow(size_t row);
+    static std::vector<std::string> SplitContents(std::string contents, size_t max_width);
 
     template <typename T> JTablePrinter& operator|(T);
 
