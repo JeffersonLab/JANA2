@@ -39,6 +39,7 @@ public:
 
     int indent = 2;
     int cell_margin = 2;
+    bool vertical_padding = 0; // Automatically turned on if cell contents overflow desired_width
 
     JTablePrinter::Column& AddColumn(std::string header, Justify justify=Justify::Left, int desired_width=0);
     void FormatCell(std::ostream& os, size_t line, std::string contents, int max_width, Justify justify);
@@ -62,6 +63,9 @@ inline JTablePrinter& JTablePrinter::operator|(std::string cell) {
     auto len = cell.size();
     if ((size_t) columns[current_column].contents_width < len) {
 	columns[current_column].contents_width = len;
+    }
+    if (len > (size_t) columns[current_column].desired_width) {
+        vertical_padding = 1;
     }
     columns[current_column].values.push_back(cell);
     current_column += 1;
