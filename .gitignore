@@ -45,6 +45,10 @@ Darwin_*
 .Darwin_*
 Makefile
 
+build/
+cmake-build-debug/
+install/
+
 # Doxygen generated files
 docs/html/*
 docs/latex/*
