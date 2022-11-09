@@ -139,7 +139,9 @@ void handle_usr2(int) {
 }
 
 void handle_sigsegv(int /*signal_number*/, siginfo_t* /*signal_info*/, void* /*context*/) {
+    LOG_FATAL(*g_logger) << "Segfault detected! Printing backtraces and exiting." << LOG_END;
     produce_overall_report();
+    exit(static_cast<int>(JApplication::ExitCode::Segfault));
 }
 
 
