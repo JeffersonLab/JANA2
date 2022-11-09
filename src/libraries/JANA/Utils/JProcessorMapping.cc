@@ -5,6 +5,7 @@
 #include "JProcessorMapping.h"
 #include <iomanip>
 #include <unistd.h>
+#include <sys/wait.h>
 #include <algorithm>
 
 void JProcessorMapping::initialize(AffinityStrategy affinity, LocalityStrategy locality) {
@@ -30,8 +31,8 @@ void JProcessorMapping::initialize(AffinityStrategy affinity, LocalityStrategy l
         dup2(pipe_fd[1], 1);  // Redirect stdout to pipe
         close(pipe_fd[0]);
         close(pipe_fd[1]);
-        execlp("lscpu", "lscpu", "-b", "-pcpu,core,node,socket", nullptr);
-        fclose(stdout); // Send an additional EOF so that the parent doesn't hang
+        execlp("lscpu", "lscpu", "-b", "-pcpu,core,node,socket", (char*) nullptr);
+        // Unreachable
         exit(-1);
     }
     else { // We are the parent process
@@ -69,6 +70,8 @@ void JProcessorMapping::initialize(AffinityStrategy affinity, LocalityStrategy l
         }
     }
     fclose(infile);
+    int state = 0;
+    waitpid(pid, &state, 0);  // Wait for child to exit and acknowledge. This prevents child from becoming a zombie.
 
     if (m_mapping.empty()) {
         m_error_msg = "Unable to parse lscpu output";
