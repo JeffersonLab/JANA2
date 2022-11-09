@@ -57,7 +57,7 @@ void produce_thread_report() {
 /// If something goes wrong, we want to signal all threads to assemble a report
 /// Whereas USR1 is meant to be triggered externally and is caught by one thread,
 /// produce_overall_report triggers USR2 and is caught by all threads.
-void produce_overall_report() {
+std::string produce_overall_report() {
     std::stringstream ss;
 
     // Include detailed report from JApplication
@@ -102,9 +102,13 @@ void produce_overall_report() {
     else {
         ss << "Thread model: unknown" << std::endl;
     }
+    return ss.str();
+}
 
-    LOG_WARN(*g_logger) << ss.str() << LOG_END;
-    send_to_named_pipe(g_path_to_named_pipe, ss.str());
+void send_overall_report_to_named_pipe() {
+    LOG_INFO(*g_logger) << "Caught USR1 signal! Sending status report to named pipe. \n"
+                        << "  `cat " << g_path_to_named_pipe << "` to view report..." << LOG_END;
+    send_to_named_pipe(g_path_to_named_pipe, produce_overall_report());
 }
 
 
@@ -131,7 +135,7 @@ void handle_sigint(int) {
 }
 
 void handle_usr1(int) {
-    std::thread th(produce_overall_report);
+    std::thread th(send_overall_report_to_named_pipe);
     th.detach();
 }
 
@@ -141,7 +145,8 @@ void handle_usr2(int) {
 
 void handle_sigsegv(int /*signal_number*/, siginfo_t* /*signal_info*/, void* /*context*/) {
     LOG_FATAL(*g_logger) << "Segfault detected! Printing backtraces and exiting." << LOG_END;
-    produce_overall_report();
+    auto report = produce_overall_report();
+    LOG_INFO(*g_logger) << report << LOG_END;
     exit(static_cast<int>(JApplication::ExitCode::Segfault));
 }
 
