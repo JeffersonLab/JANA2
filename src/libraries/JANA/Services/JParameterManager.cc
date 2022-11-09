@@ -25,7 +25,7 @@ JParameterManager::JParameterManager(const JParameterManager& other) {
 
     m_logger = other.m_logger;
     // Do a deep copy of contained JParameters to avoid double frees
-    for (auto param : other.m_parameters) {
+    for (const auto& param : other.m_parameters) {
         m_parameters.insert({param.first, new JParameter(*param.second)});
     }
 }
@@ -33,7 +33,7 @@ JParameterManager::JParameterManager(const JParameterManager& other) {
 /// @brief Destructor
 /// @details Destroys all contained JParameter objects.
 JParameterManager::~JParameterManager() {
-    for (auto p : m_parameters) delete p.second;
+    for (const auto& p : m_parameters) delete p.second;
     m_parameters.clear();
 }
 
@@ -78,33 +78,82 @@ JParameter* JParameterManager::FindParameter(std::string name) {
 /// @param [in] all   If false, prints only parameters whose values differ from the defaults.
 ///                   If true, prints all parameters.
 ///                   Defaults to false.
-void JParameterManager::PrintParameters(bool all) {
+void JParameterManager::PrintParameters(bool show_defaulted, bool show_advanced, bool warn_on_unused) {
 
-    // Find maximum key length
-    uint32_t max_key_len = 4;
-    vector<string> keys;
+    // First we filter
+    vector<JParameter*> params_to_print;
+    bool warnings_present = false;
+
     for (auto& p : m_parameters) {
         string key = p.first;
         auto j = p.second;
-        if ((!all) && j->IsDefault()) continue;
-        keys.push_back(key);
-        if (key.length() > max_key_len) max_key_len = key.length();
+
+        if ((!show_defaulted) && j->IsDefault()) continue;  // Hide all parameters that were set by default and the user didn't provide
+        if (j->IsDeprecated() && j->IsDefault()) continue;    // Hide deprecated parameters that are NOT in use
+        if (!show_advanced && j->IsAdvanced() && j->IsDefault()) continue;
+
+        if (j->IsDeprecated() && !j->IsDefault()) {
+            // Warn for any deprecated parameters that are overriden.
+            LOG_WARN(m_logger) << "Parameter '" << key << "' has been deprecated and will no longer be supported in the next release." << LOG_END;
+            warnings_present = true;
+        }
+        if (warn_on_unused && !j->IsUsed()) {
+            // Warn about any unused parameters
+            LOG_WARN(m_logger) << "Parameter '" << key << "' appears to be unused at this time. Possible typo?" << LOG_END;
+            warnings_present = true;
+        }
+        if (j->IsAdvanced()) {
+            // Inform user that this parameter is advanced
+            warnings_present = true;
+        }
+        params_to_print.push_back(p.second);
     }
 
-    // If all params are set to default values, then print a one line
-    // summary
-    if (keys.empty()) {
+    // If all params are set to default values, then print a one line summary and return
+    if (params_to_print.empty()) {
         LOG << "All configuration parameters set to default values." << LOG_END;
         return;
     }
 
+    // Generate the whole table
     JTablePrinter table;
-    table.AddColumn("Name", JTablePrinter::Justify::Right);
-    table.AddColumn("Value");
-    for (string& key : keys) {
-        auto name = m_parameters[key]->GetKey();
-        string val = m_parameters[key]->GetValue();
-        table | name | val;
+    table.AddColumn("Name");
+    if (warnings_present) {
+        table.AddColumn("Warnings");  // IsDeprecated column
+    }
+    table.AddColumn("Value", JTablePrinter::Justify::Left, 20);
+    table.AddColumn("Default", JTablePrinter::Justify::Left, 20);
+    table.AddColumn("Description", JTablePrinter::Justify::Left, 80);
+
+    for (JParameter* p: params_to_print) {
+        if (warnings_present) {
+            std::string warning;
+            if (p->IsDeprecated()) {
+                // If deprecated, it no longer matters whether it is advanced or not. If unused, won't show up here anyway.
+                warning = "Deprecated";
+            }
+            else if (warn_on_unused && !p->IsUsed()) {
+                // Can't be both deprecated and unused, since JANA only finds out that it is deprecated by trying to use it
+                // Can't be both advanced and unused, since JANA only finds out that it is advanced by trying to use it
+                warning = "Unused";
+            }
+            else if (p->IsAdvanced()) {
+                warning = "Advanced";
+            }
+
+
+            table | p->GetKey()
+                  | warning
+                  | p->GetValue()
+                  | p->GetDefault()
+                  | p->GetDescription();
+        }
+        else {
+            table | p->GetKey()
+            | p->GetValue()
+            | p->GetDefault()
+            | p->GetDescription();
+        }
     }
     std::ostringstream ss;
     table.Render(ss);

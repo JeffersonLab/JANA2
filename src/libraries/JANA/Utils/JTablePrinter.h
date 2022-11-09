@@ -39,10 +39,14 @@ public:
 
     int indent = 2;
     int cell_margin = 2;
+    bool vertical_padding = 0; // Automatically turned on if cell contents overflow desired_width
 
     JTablePrinter::Column& AddColumn(std::string header, Justify justify=Justify::Left, int desired_width=0);
-    void FormatCell(std::ostream& os, std::string contents, int max_width, Justify justify);
+    void FormatLine(std::ostream& os, std::string contents, int max_width, Justify justify);
     void Render(std::ostream& os);
+    static std::vector<std::string> SplitContents(std::string contents, size_t max_width);
+    static std::vector<std::string> SplitContentsByNewlines(std::string contents);
+    static std::vector<std::string> SplitContentsBySpaces(std::string contents, size_t max_width);
 
     template <typename T> JTablePrinter& operator|(T);
 
@@ -59,10 +63,15 @@ JTablePrinter& JTablePrinter::operator|(T cell) {
 template <>
 inline JTablePrinter& JTablePrinter::operator|(std::string cell) {
     auto len = cell.size();
-    if ((size_t) columns[current_column].contents_width < len) {
-	columns[current_column].contents_width = len;
+    auto& col = columns[current_column];
+    if ((size_t) col.contents_width < len) {
+        col.contents_width = len;
     }
-    columns[current_column].values.push_back(cell);
+    if (len > (size_t) col.desired_width && col.desired_width != 0) {
+        vertical_padding = true;
+        // columns[current_column].use_desired_width = true; // TODO: use_desired_width is broken
+    }
+    col.values.push_back(cell);
     current_column += 1;
     if ((size_t) current_column >= columns.size()) {
 	current_column = 0;

@@ -35,6 +35,7 @@ set(TEST_SOURCES
     JFactoryDefTagsTests.cc
     SubeventTests.cc
     JAutoactivableTests.cc
+    JTablePrinterTests.cc
     )
 
 add_executable(janatests ${TEST_SOURCES})

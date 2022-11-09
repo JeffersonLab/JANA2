@@ -148,11 +148,10 @@ void register_handlers(JApplication* app) {
     assert (app != nullptr);
     g_app = app;
     g_logger = &default_cout_logger;
-    g_app->GetJParameterManager()->SetDefaultParameter("JANA:STATUS_FNAME", g_path_to_named_pipe,
+    g_app->GetJParameterManager()->SetDefaultParameter("jana:status_fname", g_path_to_named_pipe,
         "Filename of named pipe for retrieving instantaneous status info");
     create_named_pipe(g_path_to_named_pipe);
 
-    LOG_INFO(*g_logger) << "Setting signal handlers" << LOG_END;
     //Define signal action
     struct sigaction sSignalAction;
     sSignalAction.sa_sigaction = handle_sigsegv;
@@ -162,9 +161,11 @@ void register_handlers(JApplication* app) {
     sigemptyset(&sSignalAction.sa_mask);
     sigaction(SIGSEGV, &sSignalAction, nullptr);
 
-    signal(SIGINT,  handle_sigint);
+    LOG_INFO(*g_logger) << "Setting signal handler USR1. Use to write status info to the named pipe." << LOG_END;
     signal(SIGUSR1, handle_usr1);
     signal(SIGUSR2, handle_usr2);
+    LOG_INFO(*g_logger) << "Setting signal handler SIGINT (Ctrl-C). Use a single SIGINT for a graceful shutdown, multiple SIGINTs for a hard shutdown." << LOG_END;
+    signal(SIGINT,  handle_sigint);
 }
 
 

@@ -74,7 +74,6 @@ void JPluginLoader::attach_plugins(JComponentManager* jcm) {
     add_plugin_path(".");
 
     // 2. Next we look for plugins in locations specified via parameters. (Colon-separated)
-    m_app->SetDefaultParameter("jana:plugin_path", m_plugin_paths_str, "Colon-separated paths to search for plugins");
     std::stringstream param_ss(m_plugin_paths_str);
     std::string path;
     while (getline(param_ss, path, ':')) add_plugin_path(path);
@@ -220,10 +219,10 @@ JPluginLoader::~JPluginLoader(){
 void JPluginLoader::acquire_services(JServiceLocator* sl) {
 
     auto params = sl->get<JParameterManager>();
-    params->SetDefaultParameter("plugins", m_plugins_to_include, "");
-    params->SetDefaultParameter("plugins_to_ignore", m_plugins_to_exclude, "");
-    params->SetDefaultParameter("JANA:DEBUG_PLUGIN_LOADING", m_verbose,
-                                "Trace the plugin search path and display any loading errors");
+    params->SetDefaultParameter("plugins", m_plugins_to_include, "Comma-separated list of plugins to load.");
+    params->SetDefaultParameter("plugins_to_ignore", m_plugins_to_exclude, "Comma-separated list of plugins to NOT load, even if they are specified in 'plugins'.");
+    m_app->SetDefaultParameter("jana:plugin_path", m_plugin_paths_str, "Colon-separated list of paths to search for plugins");
+    params->SetDefaultParameter("jana:debug_plugin_loading", m_verbose, "Trace the plugin search path and display any loading errors");
 
     m_logger = sl->get<JLoggingService>()->get_logger("JPluginLoader");
     if (m_verbose) {

@@ -20,8 +20,8 @@ void JArrowProcessingController::acquire_services(JServiceLocator * sl) {
 
     // Obtain timeouts from parameter manager
     auto params = sl->get<JParameterManager>();
-    params->SetDefaultParameter("jana:timeout", m_timeout_s, "Max. time (in seconds) system will wait for a thread to update its heartbeat before killing it and launching a new one. 0 to disable timeout completely.");
-    params->SetDefaultParameter("jana:warmup_timeout", m_warmup_timeout_s, "Max. time (in seconds) system will wait for the initial events to complete before killing program.");
+    params->SetDefaultParameter("jana:timeout", m_timeout_s, "Max time (in seconds) JANA will wait for a thread to update its heartbeat before hard-exiting. 0 to disable timeout completely.");
+    params->SetDefaultParameter("jana:warmup_timeout", m_warmup_timeout_s, "Max time (in seconds) JANA will wait for 'initial' events to complete before hard-exiting.");
     // Originally "THREAD_TIMEOUT" and "THREAD_TIMEOUT_FIRST_EVENT"
 }
 
