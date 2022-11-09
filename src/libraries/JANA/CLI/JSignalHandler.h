@@ -62,7 +62,7 @@ std::string produce_overall_report() {
 
     // Include detailed report from JApplication
     auto t = time(nullptr);
-    ss << "JANA STATUS REPORT: " << ctime(&t) << std::endl;
+    ss << "JANA status report: " << ctime(&t) << std::endl;
     ss << g_app->GetComponentSummary() << std::endl;
 
     // Include backtraces from each individual thread
@@ -106,8 +106,7 @@ std::string produce_overall_report() {
 }
 
 void send_overall_report_to_named_pipe() {
-    LOG_INFO(*g_logger) << "Caught USR1 signal! Sending status report to named pipe. \n"
-                        << "  `cat " << g_path_to_named_pipe << "` to view report..." << LOG_END;
+    LOG_WARN(*g_logger) << "Caught USR1 signal! Sending status report to named pipe. `cat " << g_path_to_named_pipe << "` to view." << LOG_END;
     send_to_named_pipe(g_path_to_named_pipe, produce_overall_report());
 }
 
