@@ -42,8 +42,9 @@ void send_to_named_pipe(const std::string& path_to_named_pipe, const std::string
         close(fd);
     }
     else {
-        LOG_ERROR(*g_logger) << "Unable to open named pipe '"
-                             << g_path_to_named_pipe << "' for writing" << LOG_END;
+        LOG_WARN(*g_logger) << "Unable to open named pipe '" << g_path_to_named_pipe << "' for writing. \n"
+        << "  You can use a different named pipe for status info by setting the parameter `jana:status_fname`.\n"
+        << "  The status report will still show up in the log." << LOG_END;
     }
 }
 
