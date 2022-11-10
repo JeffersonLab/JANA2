@@ -385,8 +385,9 @@ JFactoryT<T>* JEvent::GetSingle(const T* &t, const char *tag, bool exception_if_
     /// know if the call succeeded.
 
     std::vector<const T*> v;
-    JFactoryT<T> *fac = Get(v, tag);
+    auto fac = GetFactory<T>(tag, true); // throw exception if factory not found
     JCallGraphEntryMaker cg_entry(mCallGraph, fac); // times execution until this goes out of scope
+    Get(v, tag);
     if(v.size()!=1){
         t = NULL;
         if(exception_if_not_one) throw v.size();
