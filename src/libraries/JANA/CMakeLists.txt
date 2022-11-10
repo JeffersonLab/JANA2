@@ -94,6 +94,7 @@ set(JANA2_SOURCES
     Utils/JTablePrinter.h
     Utils/JCallGraphRecorder.h
     Utils/JCallGraphRecorder.cc
+    Utils/JCallGraphEntryMaker.h
     Utils/JInspector.cc
     Utils/JInspector.h
 
