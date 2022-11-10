@@ -38,6 +38,7 @@ void JEventProcessorArrow::execute(JArrowMetrics& result, size_t location_id) {
     if (success) {
         LOG_DEBUG(m_logger) << "JEventProcessorArrow '" << get_name() << "': Starting event# " << x->GetEventNumber() << LOG_END;
         for (JEventProcessor* processor : m_processors) {
+            JCallGraphEntryMaker cg_entry(*x->GetJCallGraphRecorder(), processor->GetTypeName()); // times execution until this goes out of scope
             processor->DoMap(x);
         }
         LOG_DEBUG(m_logger) << "JEventProcessorArrow '" << get_name() << "': Finished event# " << x->GetEventNumber() << LOG_END;

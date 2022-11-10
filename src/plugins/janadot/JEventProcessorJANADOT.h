@@ -70,9 +70,7 @@ class JEventProcessorJANADOT:public JEventProcessor
 
 
 	public:
-        JEventProcessorJANADOT() {
-            SetTypeName("JEventProcessorJANADOT");
-        }
+        JEventProcessorJANADOT();
 
         void Init() override;
         void BeginRun(const std::shared_ptr<const JEvent>& event) override;
@@ -84,6 +82,7 @@ class JEventProcessorJANADOT:public JEventProcessor
 			kDefault,
 			kProcessor,
 			kFactory,
+            kCache,
 			kSource
 		};
 
@@ -144,7 +143,7 @@ class JEventProcessorJANADOT:public JEventProcessor
 
 		map<CallLink, CallStats> call_links;
 		map<string, FactoryCallStats> factory_stats;
-		pthread_mutex_t mutex;
+		std::mutex mutex;
 		bool force_all_factories_active;
 		bool suppress_unused_factories;
 		map<string,vector<string> > groups;

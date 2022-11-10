@@ -7,6 +7,7 @@
 #include <iostream>
 #include <iomanip>
 #include <fstream>
+#include <regex>
 #include <set>
 using namespace std;
 
@@ -19,29 +20,27 @@ extern "C"{
 void InitPlugin(JApplication *app){
 	InitJANAPlugin(app);
 	app->Add(new JEventProcessorJANADOT());
+    app->GetJParameterManager()->SetParameter("RECORD_CALL_STACK", true);
 }
 } // "C"
 
 //------------------------------------------------------------------
-// init 
+// Constructor
 //------------------------------------------------------------------
-void JEventProcessorJANADOT::Init()
-{
-    auto app = GetApplication();
+JEventProcessorJANADOT::JEventProcessorJANADOT() {
+    SetTypeName("JEventProcessorJANADOT");
+
+    auto app = japp;
+
 	// Turn on call stack recording
-	bool record_call_stack=true;
 	force_all_factories_active = false;
 	suppress_unused_factories = true;
+    focus_factory = "";
 	try{
-		app->GetJParameterManager()->SetDefaultParameter("RECORD_CALL_STACK", record_call_stack);
-		if(app->GetJParameterManager()->Exists("FORCE_ALL_FACTORIES_ACTIVE")){
-			app->GetJParameterManager()->GetParameter("FORCE_ALL_FACTORIES_ACTIVE", force_all_factories_active);
-		}
-		if(app->GetJParameterManager()->Exists("JANADOT:FOCUS")){
-			has_focus = true;
-			app->GetJParameterManager()->GetParameter("JANADOT:FOCUS", focus_factory);
-			jout<<" Setting JANADOT focus to: "<<focus_factory<<endl;
-		}
+		app->GetJParameterManager()->SetDefaultParameter("JANADOT:FORCE_ALL_FACTORIES_ACTIVE", force_all_factories_active);
+		app->GetJParameterManager()->SetDefaultParameter("JANADOT:FOCUS", focus_factory, "Factory to have janadot call graph focus on when drawing.");
+        has_focus = !focus_factory.empty();
+        if( has_focus )jout<<" Setting JANADOT focus to: "<< focus_factory <<endl;
 		app->GetJParameterManager()->SetDefaultParameter("JANADOT:SUPPRESS_UNUSED_FACTORIES", suppress_unused_factories, "If true, then do not list factories in groups that did not show up in list of factories recorded during processing. If false, these will show up as white ovals with no connections (ghosts)");
 
 		// User can specify grouping using configuration parameters starting with
@@ -94,9 +93,13 @@ void JEventProcessorJANADOT::Init()
 		}
 
 	}catch(...){}
+}
 
-	// Initialize our mutex
-	pthread_mutex_init(&mutex, NULL);
+//------------------------------------------------------------------
+// init
+//------------------------------------------------------------------
+void JEventProcessorJANADOT::Init() {
+    // Nothing to do here
 }
 
 //------------------------------------------------------------------
@@ -120,10 +123,10 @@ void JEventProcessorJANADOT::Process(const std::shared_ptr<const JEvent>& event)
 
 	// Get the call stack for ths event and add the results to our stats
 	auto stack = event->GetJCallGraphRecorder()->GetCallGraph();
-	
+
 	// Lock mutex in case we are running with multiple threads
-	pthread_mutex_lock(&mutex);
-	
+    std::lock_guard<std::mutex> lck(mutex);
+
 	// Loop over the call stack elements and add in the values
 	for(unsigned int i=0; i<stack.size(); i++){
 
@@ -133,10 +136,10 @@ void JEventProcessorJANADOT::Process(const std::shared_ptr<const JEvent>& event)
 
 		FactoryCallStats &fcallstats1 = factory_stats[nametag1];
 		FactoryCallStats &fcallstats2 = factory_stats[nametag2];
-		
-		double delta_t = (stack[i].start_time - stack[i].end_time)*1000.0;
-		fcallstats1.time_waiting += delta_t;
-		fcallstats2.time_waited_on += delta_t;
+
+        auto delta_t_ms = std::chrono::duration_cast<std::chrono::milliseconds>(stack[i].end_time - stack[i].start_time).count();
+		fcallstats1.time_waiting += delta_t_ms;
+		fcallstats2.time_waited_on += delta_t_ms;
 
 		// Get pointer to CallStats object representing this calling pair
 		CallLink link;
@@ -149,29 +152,26 @@ void JEventProcessorJANADOT::Process(const std::shared_ptr<const JEvent>& event)
 		switch(stack[i].data_source){
             case JCallGraphRecorder::DATA_NOT_AVAILABLE:
 				stats.Ndata_not_available++;
-				stats.data_not_available_ms += delta_t;
+				stats.data_not_available_ms += delta_t_ms;
 				break;
 			case JCallGraphRecorder::DATA_FROM_CACHE:
 				fcallstats2.Nfrom_cache++;
 				stats.Nfrom_cache++;
-				stats.from_cache_ms += delta_t;
+				stats.from_cache_ms += delta_t_ms;
 				break;
 			case JCallGraphRecorder::DATA_FROM_SOURCE:
 				fcallstats2.Nfrom_source++;
 				stats.Nfrom_source++;
-				stats.from_source_ms += delta_t;
+				stats.from_source_ms += delta_t_ms;
 				break;
 			case JCallGraphRecorder::DATA_FROM_FACTORY:
 				fcallstats2.Nfrom_factory++;
 				stats.Nfrom_factory++;
-				stats.from_factory_ms += delta_t;
+				stats.from_factory_ms += delta_t_ms;
 				break;				
 		}
 		
 	}
-	
-	// Unlock mutex
-	pthread_mutex_unlock(&mutex);
 }
 
 //------------------------------------------------------------------
@@ -280,17 +280,19 @@ void JEventProcessorJANADOT::Finish()
 			if(focus_relatives.find(nodename)==focus_relatives.end()) continue;
 		}
 
-		// Decide whether this is a factory, processor, or source
-		if(fcall_stats.Nfrom_source==0 && fcall_stats.Nfrom_factory==0 && fcall_stats.Nfrom_cache==0){
-			fcall_stats.type = kProcessor;
-		}else if(fcall_stats.Nfrom_factory > 0){
-			fcall_stats.type = kFactory;
-		}else if(fcall_stats.Nfrom_cache>0 && fcall_stats.Nfrom_source==0){
-			fcall_stats.type = kFactory;
-		}else{
-			fcall_stats.type = kSource;
-		}
-		
+		// Decide whether this is a factory, processor, or source.
+        // Because sources can Insert objects that trigger automatic
+        // factory creation to hold them, the values of call_stats.Nfrom_factory
+        // and call_stats.Nfrom_cache etc. can be unreliable. Here, we
+        // rely on whether the node shows up in callers, callees, or both
+        // to determine the type.
+        bool is_caller = callers.count(nodename);
+        bool is_callee = callees.count(nodename);
+        fcall_stats.type = kFactory; // default
+        if( (fcall_stats.Nfrom_cache+fcall_stats.Nfrom_factory)>0 && !is_caller ) fcall_stats.type = kCache;
+        if( fcall_stats.Nfrom_source ) fcall_stats.type = kSource;
+        if(  is_caller && !is_callee ) fcall_stats.type = kProcessor;
+
 		// Get time spent in this factory proper
 		double time_spent_in_factory = fcall_stats.time_waited_on - fcall_stats.time_waiting;
 		string timestr=MakeTimeString(time_spent_in_factory);
@@ -318,12 +320,18 @@ void JEventProcessorJANADOT::Finish()
 				if(has_focus && nodename==focus_factory) shape = "tripleoctagon";
 				factory_nodes.insert(nodename);
 				break;
-			case kSource:
-				fillcolor = "green";
-				shape = "trapezium";
-				source_nodes.push_back(nodename);
-				break;
-			case kDefault:
+            case kCache:
+                fillcolor = "yellow";
+                if(node_colors.find(nodename)!=node_colors.end()) fillcolor = node_colors[nodename];
+                shape = "box";
+                if(has_focus && nodename==focus_factory) shape = "tripleoctagon";
+                break;
+            case kSource:
+                fillcolor = "green";
+                shape = "trapezium";
+                source_nodes.push_back(nodename);
+                break;
+ 			case kDefault:
 			default:
 				fillcolor = "lightgrey";
 				shape = "hexagon";
@@ -403,11 +411,9 @@ void JEventProcessorJANADOT::Finish()
 	// Print message to tell user how to use the dot file
 	cout<<endl
 	<<"Factory calling information written to \"jana.dot\". To create a graphic"<<endl
-	<<"from this, use the dot program. For example, to make a PDF file using an"<<endl
-	<<"intermediate postscript file do the following:"<<endl
+	<<"from this, use the dot program. For example, to make a PDF file do the following:"<<endl
 	<<endl
-	<<"   dot -Tps2 jana.dot -o jana.ps"<<endl
-	<<"   ps2pdf jana.ps"<<endl
+	<<"   dot -Tpdf jana.dot -o jana.pdf"<<endl
 	<<endl
 	<<"This should give you a file named \"jana.pdf\"."<<endl
 	<<endl;
@@ -481,9 +487,12 @@ string JEventProcessorJANADOT::MakeTimeString(double time_in_ms)
 //------------------------------------------------------------------
 string JEventProcessorJANADOT::MakeNametag(const string &name, const string &tag)
 {
-		string nametag = name;
-		if(tag.size()>0)nametag += ":"+tag;
-		
-		return nametag;
+    string nametag = name;
+    if(tag.size()>0)nametag += ":"+tag;
+
+    nametag = std::regex_replace(nametag, std::regex("<"), "&lt;");
+    nametag = std::regex_replace(nametag, std::regex(">"), "&gt;");
+
+    return nametag;
 }
 

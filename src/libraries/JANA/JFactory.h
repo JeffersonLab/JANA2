@@ -7,6 +7,7 @@
 
 #include <JANA/JException.h>
 #include <JANA/Utils/JAny.h>
+#include <JANA/Utils/JCallGraphRecorder.h>
 
 #include <string>
 #include <typeindex>
@@ -26,6 +27,7 @@ class JApplication;
 class JFactory {
 public:
 
+    enum class Status {Uninitialized, Unprocessed, Processed, Inserted};
     enum class CreationStatus { NotCreatedYet, Created, Inserted, InsertedViaGetObjects, NeverCreated };
 
     enum JFactory_Flags_t {
@@ -47,7 +49,9 @@ public:
     std::string GetObjectName() const { return mObjectName; }
     std::string GetFactoryName() const { return mFactoryName; }
     std::string GetPluginName() const { return mPluginName; }
+    Status GetStatus() const { return mStatus; }
     CreationStatus GetCreationStatus() const { return mCreationStatus; }
+    JCallGraphRecorder::JDataOrigin GetInsertOrigin() const { return m_insert_origin; } ///< If objects were placed here by JEvent::Insert() this records whether that call was made from a source or factory.
 
     uint32_t GetPreviousRunNumber(void) const { return mPreviousRunNumber; }
 
@@ -58,6 +62,9 @@ public:
     void SetObjectName(std::string objectName) { mObjectName = std::move(objectName); }
     void SetFactoryName(std::string factoryName) { mFactoryName = std::move(factoryName); }
     void SetPluginName(std::string pluginName) { mPluginName = std::move(pluginName); }
+    void SetStatus(Status status){ mStatus = status; }
+    void SetCreationStatus(CreationStatus status){ mCreationStatus = status; }
+    void SetInsertOrigin(JCallGraphRecorder::JDataOrigin origin) { m_insert_origin = origin; } ///< Called automatically by JEvent::Insert() to records whether that call was made by a source or factory.
 
     void SetPreviousRunNumber(uint32_t aRunNumber) { mPreviousRunNumber = aRunNumber; }
 
@@ -79,7 +86,18 @@ public:
         return (mFlags & (uint32_t) f) == (uint32_t) f;
     }
 
-
+    /// Get data source value depending on how objects came to be here. (Used mainly by JEvent::Get() )
+    inline JCallGraphRecorder::JDataSource GetDataSource() const {
+        JCallGraphRecorder::JDataSource datasource = JCallGraphRecorder::DATA_FROM_FACTORY;
+         if( mCreationStatus == JFactory::CreationStatus::Inserted ){
+            if( m_insert_origin == JCallGraphRecorder::ORIGIN_FROM_SOURCE ){
+                datasource = JCallGraphRecorder::DATA_FROM_SOURCE;
+            }else{
+                datasource = JCallGraphRecorder::DATA_FROM_CACHE; // Really came from factory, but if Inserted, it was a secondary data type.
+            }
+        }
+        return datasource;
+    }
 
     // Overloaded by JFactoryT
     virtual std::type_index GetObjectType() const = 0;
@@ -148,8 +166,8 @@ protected:
     JApplication* mApp = nullptr;
     std::unordered_map<std::type_index, std::unique_ptr<JAny>> mUpcastVTable;
 
-    enum class Status {Uninitialized, Unprocessed, Processed, Inserted};
     mutable Status mStatus = Status::Uninitialized;
+    mutable JCallGraphRecorder::JDataOrigin m_insert_origin = JCallGraphRecorder::ORIGIN_NOT_AVAILABLE; // (see note at top of JCallGraphRecorder.h)
 
     CreationStatus mCreationStatus = CreationStatus::NotCreatedYet;
     mutable std::mutex mMutex;

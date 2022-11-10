@@ -21,7 +21,7 @@ void JCallGraphRecorder::Reset() {
     m_error_call_stack.clear();
 }
 
-void JCallGraphRecorder::PrintErrorCallStack() {
+void JCallGraphRecorder::PrintErrorCallStack() const {
 
     // Create a list of the call strings while finding the longest one
     vector<string> routines;

@@ -16,6 +16,7 @@
 #include <JANA/Utils/JTypeInfo.h>
 #include <JANA/Utils/JCpuInfo.h>
 #include <JANA/Utils/JCallGraphRecorder.h>
+#include <JANA/Utils/JCallGraphEntryMaker.h>
 
 #include <vector>
 #include <cstddef>
@@ -129,6 +130,7 @@ inline JFactoryT<T>* JEvent::Insert(T* item, const std::string& tag) const {
         mFactorySet->Add(factory);
     }
     factory->Insert(item);
+    factory->SetInsertOrigin( mCallGraph.GetInsertDataOrigin() ); // (see note at top of JCallGraphRecorder.h)
     return factory;
 }
 
@@ -149,6 +151,9 @@ inline JFactoryT<T>* JEvent::Insert(const std::vector<T*>& items, const std::str
     for (T* item : items) {
         factory->Insert(item);
     }
+    factory->SetStatus(JFactory::Status::Inserted); // for when items is empty
+    factory->SetCreationStatus(JFactory::CreationStatus::Inserted); // for when items is empty
+    factory->SetInsertOrigin( mCallGraph.GetInsertDataOrigin() ); // (see note at top of JCallGraphRecorder.h)
     return factory;
 }
 
@@ -209,8 +214,8 @@ inline JMetadata<T> JEvent::GetMetadata(const std::string& tag) const {
 template<class T>
 JFactoryT<T>* JEvent::Get(const T** destination, const std::string& tag) const
 {
-    mCallGraph.StartFactoryCall(JTypeInfo::demangle<T>(), tag);
     auto factory = GetFactory<T>(tag, true);
+    JCallGraphEntryMaker cg_entry(mCallGraph, factory); // times execution until this goes out of scope
     auto iterators = factory->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
     if (std::distance(iterators.first, iterators.second) == 0) {
         *destination = nullptr;
@@ -218,7 +223,6 @@ JFactoryT<T>* JEvent::Get(const T** destination, const std::string& tag) const
     else {
         *destination = *iterators.first;
     }
-    mCallGraph.FinishFactoryCall();
     return factory;
 }
 
@@ -226,13 +230,12 @@ JFactoryT<T>* JEvent::Get(const T** destination, const std::string& tag) const
 template<class T>
 JFactoryT<T>* JEvent::Get(std::vector<const T*>& destination, const std::string& tag) const
 {
-    mCallGraph.StartFactoryCall(JTypeInfo::demangle<T>(), tag);
     auto factory = GetFactory<T>(tag, true);
+    JCallGraphEntryMaker cg_entry(mCallGraph, factory); // times execution until this goes out of scope
     auto iterators = factory->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
     for (auto it=iterators.first; it!=iterators.second; it++) {
         destination.push_back(*it);
     }
-    mCallGraph.FinishFactoryCall();
     return factory;
 }
 
@@ -247,13 +250,12 @@ JFactoryT<T>* JEvent::Get(std::vector<const T*>& destination, const std::string&
 /// - If the factory contains more than one item, GetSingle returns the first item
 
 template<class T> const T* JEvent::GetSingle(const std::string& tag) const {
-    mCallGraph.StartFactoryCall(JTypeInfo::demangle<T>(), tag);
-    auto iterators = GetFactory<T>(tag, true)->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
+    auto factory = GetFactory<T>(tag, true);
+    JCallGraphEntryMaker cg_entry(mCallGraph, factory); // times execution until this goes out of scope
+    auto iterators = factory->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
     if (std::distance(iterators.first, iterators.second) == 0) {
-        mCallGraph.FinishFactoryCall();
         return nullptr;
     }
-    mCallGraph.FinishFactoryCall();
     return *iterators.first;
 }
 
@@ -264,9 +266,9 @@ template<class T> const T* JEvent::GetSingle(const std::string& tag) const {
 /// - If the factory exists but contains no items, GetSingleStrict throws an exception
 /// - If the factory contains more than one item, GetSingleStrict throws an exception
 template<class T> const T* JEvent::GetSingleStrict(const std::string& tag) const {
-    mCallGraph.StartFactoryCall(JTypeInfo::demangle<T>(), tag);
-    auto iterators = GetFactory<T>(tag, true)->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
-    mCallGraph.FinishFactoryCall();
+    auto factory = GetFactory<T>(tag, true);
+    JCallGraphEntryMaker cg_entry(mCallGraph, factory); // times execution until this goes out of scope
+    auto iterators = factory->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
     if (std::distance(iterators.first, iterators.second) == 0) {
         JException ex("GetSingle failed due to missing %d", NAME_OF(T));
         ex.show_stacktrace = false;
@@ -284,13 +286,13 @@ template<class T> const T* JEvent::GetSingleStrict(const std::string& tag) const
 template<class T>
 std::vector<const T*> JEvent::Get(const std::string& tag) const {
 
-    mCallGraph.StartFactoryCall(JTypeInfo::demangle<T>(), tag);
-    auto iters = GetFactory<T>(tag, true)->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
+    auto factory = GetFactory<T>(tag, true);
+    JCallGraphEntryMaker cg_entry(mCallGraph, factory); // times execution until this goes out of scope
+    auto iters = factory->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
     std::vector<const T*> vec;
     for (auto it=iters.first; it!=iters.second; ++it) {
         vec.push_back(*it);
     }
-    mCallGraph.FinishFactoryCall();
     return vec; // Assumes RVO
 }
 
@@ -360,9 +362,9 @@ std::map<std::pair<std::string, std::string>, std::vector<S*>> JEvent::GetAllChi
 
 template<class T>
 typename JFactoryT<T>::PairType JEvent::GetIterators(const std::string& tag) const {
-    mCallGraph.StartFactoryCall(JTypeInfo::demangle<T>(), tag);
-    auto iters =GetFactory<T>(tag, true)->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
-    mCallGraph.FinishFactoryCall();
+    auto factory = GetFactory<T>(tag, true);
+    JCallGraphEntryMaker cg_entry(mCallGraph, factory); // times execution until this goes out of scope
+    auto iters = factory->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
     return iters;
 }
 
@@ -382,15 +384,14 @@ JFactoryT<T>* JEvent::GetSingle(const T* &t, const char *tag, bool exception_if_
     /// exception_if_not_one to false. In that case, you will have to check if t==NULL to
     /// know if the call succeeded.
 
-    mCallGraph.StartFactoryCall(JTypeInfo::demangle<T>(), tag);
     std::vector<const T*> v;
     JFactoryT<T> *fac = Get(v, tag);
+    JCallGraphEntryMaker cg_entry(mCallGraph, fac); // times execution until this goes out of scope
     if(v.size()!=1){
         t = NULL;
         if(exception_if_not_one) throw v.size();
     }
     t = v[0];
-    mCallGraph.FinishFactoryCall();
     return fac;
 }
 
