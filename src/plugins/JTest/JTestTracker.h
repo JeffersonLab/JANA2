@@ -20,6 +20,11 @@ class JTestTracker : public JFactoryT<JTestTrackData> {
 
 public:
 
+    struct JTestTrackAuxilliaryData{
+        int something = 1;
+        float something2 = 2;
+    };
+
     void Init() override {
 
         auto app = GetApplication();
@@ -43,6 +48,11 @@ public:
         auto td = new JTestTrackData;
         write_memory(td->buffer, m_write_bytes, m_write_spread);
         Insert(td);
+
+        // Insert some additional objects
+        std::vector<JTestTrackAuxilliaryData*> auxObjs;
+        for(int i=0;i<4;i++) auxObjs.push_back( new JTestTrackAuxilliaryData);
+        aEvent->Insert( auxObjs );
     }
 };
 
