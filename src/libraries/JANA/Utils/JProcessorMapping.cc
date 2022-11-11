@@ -77,7 +77,7 @@ void JProcessorMapping::initialize(AffinityStrategy affinity, LocalityStrategy l
         else {
             // On machines with no NUMA domains, lscpu returns "" instead of "0"
             int count = sscanf(buffer, "%zu,%zu,,%zu", &row.cpu_id, &row.core_id, &row.socket_id);
-            row.numa_domain_id = 0;
+            row.numa_domain_id = row.socket_id;
             if (count == 3) {
                 switch (m_locality_strategy) {
                     case LocalityStrategy::CpuLocal:        row.location_id = row.cpu_id; break;
@@ -100,7 +100,7 @@ void JProcessorMapping::initialize(AffinityStrategy affinity, LocalityStrategy l
     int status = 0;
     waitpid(pid, &status, 0);  // Wait for child to exit and acknowledge. This prevents child from becoming a zombie.
 
-    if (WIFEXITED(status)) {
+    if (!WIFEXITED(status)) {
         m_error_msg = "lscpu child process returned abnormally";
         return;
     }
