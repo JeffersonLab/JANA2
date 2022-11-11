@@ -3,6 +3,8 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #include "JProcessorMapping.h"
+
+#include <JANA/Utils/JTablePrinter.h>
 #include <iomanip>
 #include <unistd.h>
 #include <sys/wait.h>
@@ -171,21 +173,19 @@ std::ostream& operator<<(std::ostream& os, const JProcessorMapping& m) {
     }
 
     if (m.m_initialized) {
-        os << "  +--------+----------+-------+--------+-----------+--------+" << std::endl
-           << "  | worker | location |  cpu  |  core  | numa node | socket |" << std::endl
-           << "  +--------+----------+-------+--------+-----------+--------+" << std::endl;
+        JTablePrinter table;
+        table.AddColumn("worker", JTablePrinter::Justify::Right);
+        table.AddColumn("location", JTablePrinter::Justify::Right);
+        table.AddColumn("cpu", JTablePrinter::Justify::Right);
+        table.AddColumn("core", JTablePrinter::Justify::Right);
+        table.AddColumn("numa node", JTablePrinter::Justify::Right);
+        table.AddColumn("socket", JTablePrinter::Justify::Right);
 
         size_t worker_id = 0;
         for (const JProcessorMapping::Row& row : m.m_mapping) {
-            os <<  "  | " << std::right << std::setw(6) << worker_id++;
-            os << " | " << std::setw(8) << row.location_id;
-            os << " | " << std::setw(5) << row.cpu_id;
-            os << " | " << std::setw(6) << row.core_id;
-            os << " | " << std::setw(9) << row.numa_domain_id;
-            os << " | " << std::setw(6) << row.socket_id << " |" << std::endl;
+            table | worker_id++ | row.location_id | row.cpu_id | row.core_id | row.numa_domain_id | row.socket_id;
         }
-
-        os << "  +--------+----------+-------+--------+-----------+--------+" << std::endl;
+        table.Render(os);
     }
     else if (!m.m_error_msg.empty()) {
         os << "  Error: " << m.m_error_msg << std::endl;
