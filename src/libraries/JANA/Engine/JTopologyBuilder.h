@@ -24,7 +24,7 @@ class JTopologyBuilder : public JService {
     bool m_enable_call_graph_recording = false;
     bool m_enable_stealing = false;
     bool m_limit_total_events_in_flight = true;
-    int m_affinity = 2;
+    int m_affinity = 0;
     int m_locality = 0;
     JLogger m_arrow_logger;
 

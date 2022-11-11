@@ -51,8 +51,8 @@ struct JArrowTopology {
     size_t event_processor_chunksize = 1;
     size_t location_count = 1;
     bool enable_stealing = false;
-    int affinity = 2;
-    int locality = 0;
+    int affinity = 0; // By default, don't pin the CPU at all
+    int locality = 0; // By default, assume no NUMA domains
 
     JLogger m_logger;
 
