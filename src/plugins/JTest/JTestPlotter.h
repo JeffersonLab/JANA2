@@ -7,6 +7,7 @@
 
 #include <JANA/JApplication.h>
 #include <JANA/JEventProcessor.h>
+#include "JTestTracker.h"
 
 class JTestPlotter : public JEventProcessor {
 
@@ -37,6 +38,9 @@ public:
         // Read the track data
         auto td = aEvent->GetSingle<JTestTrackData>();
         read_memory(td->buffer);
+
+        // Read the extra data objects inserted by JTestTracker
+        aEvent->Get<JTestTracker::JTestTrackAuxilliaryData>();
 
         // Consume CPU
         consume_cpu_ms(m_cputime_ms, m_cputime_spread);

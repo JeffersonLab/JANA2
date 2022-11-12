@@ -9,6 +9,27 @@
 #include <string>
 #include <cassert>
 #include <sys/time.h>
+#include <chrono>
+
+#include <JANA/Services/JLoggingService.h>
+
+// Note on tracking how/where Insert() objects came from.
+//
+// The JEvent class has a JCallGraphRecorder member object. This object has a member called
+// m_insert_dataorigin_type that is used to indicate how new inserts should be classified. This
+// value is copied into the m_insert_origin member of the JFactory during the call to JEvent::Insert. This
+// is set to ORIGIN_FROM_SOURCE in JEventSource::DoNext just before GetEvent is called and reset after.
+// This should capture all Insert calls made by the source.
+//
+// The default value for m_insert_dataorigin_type is ORIGIN_FROM_FACTORY which will usually be
+// correct. Note that the factory's m_insert_origin member is initialized to ORIGIN_NOT_AVAILABLE,
+// but this will be overwritten iff the factory has objects inserted by an Insert() call.
+//
+// WARNING: The above described mechanism could fail if a more complex subevent task scheme is implemented
+// that results in multiple threads inserting into the same JEvent at the same time. It would actually
+// need to be one thread inserting from a factory while another inserts from a source. Multiple source
+// scenarios and multiple factory scenarios would be OK, but a mixture could result in incorrect
+// values for the origin type being recorded.
 
 class JCallGraphRecorder {
 public:
@@ -19,13 +40,19 @@ public:
         DATA_FROM_FACTORY
     };
 
+    enum JDataOrigin {
+        ORIGIN_NOT_AVAILABLE = 1,
+        ORIGIN_FROM_FACTORY,
+        ORIGIN_FROM_SOURCE
+    };
+
     struct JCallGraphNode {
         std::string caller_name;
         std::string caller_tag;
         std::string callee_name;
         std::string callee_tag;
-        double start_time = 0;
-        double end_time = 0;
+        std::chrono::steady_clock::time_point start_time;
+        std::chrono::steady_clock::time_point end_time;
         JDataSource data_source = DATA_NOT_AVAILABLE;
 	JCallGraphNode() {}
 	JCallGraphNode(std::string caller_name, std::string caller_tag, std::string callee_name, std::string callee_tag) 
@@ -35,7 +62,7 @@ public:
     struct JCallStackFrame {
         std::string factory_name;
         std::string factory_tag;
-        double start_time = 0;
+        std::chrono::steady_clock::time_point start_time;
     };
 
     struct JErrorCallStack {
@@ -50,17 +77,20 @@ private:
     std::vector<JCallStackFrame> m_call_stack;
     std::vector<JErrorCallStack> m_error_call_stack;
     std::vector<JCallGraphNode> m_call_graph;
+    JDataOrigin m_insert_dataorigin_type = ORIGIN_FROM_FACTORY; // See note at top of file
 
 public:
     inline bool IsEnabled() const { return m_enabled; }
     inline void SetEnabled(bool recordingEnabled=true){ m_enabled = recordingEnabled; }
     inline void StartFactoryCall(const std::string& callee_name, const std::string& callee_tag);
+    inline JDataOrigin SetInsertDataOrigin(JDataOrigin origin){ auto previous = m_insert_dataorigin_type; m_insert_dataorigin_type = origin; return previous; }
+    inline JDataOrigin GetInsertDataOrigin(){ return m_insert_dataorigin_type; }
     inline void FinishFactoryCall(JDataSource data_source=JDataSource::DATA_FROM_FACTORY);
     inline std::vector<JCallGraphNode> GetCallGraph() {return m_call_graph;} ///< Get the current factory call stack
     inline void AddToCallGraph(const JCallGraphNode &cs) {if(m_enabled) m_call_graph.push_back(cs);} ///< Add specified item to call stack record but only if record_call_stack is true
     inline void AddToErrorCallStack(const JErrorCallStack &cs) {if (m_enabled) m_error_call_stack.push_back(cs);} ///< Add layer to the factory call stack
     inline std::vector<JErrorCallStack> GetErrorCallStack(){return m_error_call_stack;} ///< Get the current factory error call stack
-    void PrintErrorCallStack(); ///< Print the current factory call stack
+    void PrintErrorCallStack() const; ///< Print the current factory call stack
     void Reset();
     std::vector<std::pair<std::string, std::string>> TopologicalSort() const;
 };
@@ -76,13 +106,10 @@ void JCallGraphRecorder::StartFactoryCall(const std::string& callee_name, const 
     /// the call stack (presumably for good and not evil).
 
     if (!m_enabled) return;
-    struct itimerval tmr;
-    getitimer(ITIMER_PROF, &tmr);
-    double start_time = tmr.it_value.tv_sec + tmr.it_value.tv_usec / 1.0E6;
     JCallStackFrame frame;
     frame.factory_name = callee_name;
     frame.factory_tag = callee_tag;
-    frame.start_time = start_time;
+    frame.start_time = std::chrono::steady_clock::now();
     m_call_stack.push_back(frame);
 }
 
@@ -96,17 +123,13 @@ void JCallGraphRecorder::FinishFactoryCall(JCallGraphRecorder::JDataSource data_
     if (!m_enabled) return;
     assert(!m_call_stack.empty());
 
-    struct itimerval tmr;
-    getitimer(ITIMER_PROF, &tmr);
-    double end_time = tmr.it_value.tv_sec + tmr.it_value.tv_usec/1.0E6;
-
     JCallStackFrame& callee_frame = m_call_stack.back();
 
     JCallGraphNode node;
     node.callee_name = callee_frame.factory_name;
     node.callee_tag = callee_frame.factory_tag;
     node.start_time = callee_frame.start_time;
-    node.end_time = end_time;
+    node.end_time = std::chrono::steady_clock::now();
     node.data_source = data_source;
 
     m_call_stack.pop_back();

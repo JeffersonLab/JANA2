@@ -1,5 +1,7 @@
-cmake_minimum_required(VERSION 3.9)
-project(jana2 VERSION 2.0.7)
+cmake_minimum_required(VERSION 3.16)
+cmake_policy(SET CMP0074 NEW) # find_package() uses <PackageName>_ROOT implicit hints
+
+project(jana2 VERSION 2.0.8)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)   # Enable -fPIC for all targets
 
@@ -16,13 +18,32 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 # Require the user to specify CMAKE_INSTALL_PREFIX directly. DO NOT AUTOMATICALLY INSTALL to /usr/local!
 # Remember that we ultimately want CMAKE_INSTALL_PREFIX=$ENV{JANA_HOME}
 if(NOT CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-#        message(STATUS "Installing to ${CMAKE_INSTALL_PREFIX}")
+    message(STATUS "Installing to ${CMAKE_INSTALL_PREFIX} .")
 elseif(DEFINED ENV{JANA_HOME})
+    message(STATUS "Installing to $ENV{JANA_HOME} ..")
     set(CMAKE_INSTALL_PREFIX $ENV{JANA_HOME} CACHE PATH "Comment explaining this nonsense" FORCE)
 else()
-    #    message(WARNING "Missing CMAKE_INSTALL_PREFIX=$JANA_HOME => Defaulting to ./install")
+    message(STATUS "Missing CMAKE_INSTALL_PREFIX=$JANA_HOME => Defaulting to ${CMAKE_BINARY_DIR}/install")
     set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/install CACHE PATH "Comment explaining this nonsense" FORCE)
 endif()
+
+
+# Useful for debugging. Copied from:
+# https://stackoverflow.com/questions/9298278/cmake-print-out-all-accessible-variables-in-a-script
+function(dump_cmake_variables)
+    get_cmake_property(_variableNames VARIABLES)
+    list (SORT _variableNames)
+    foreach (_variableName ${_variableNames})
+        if (ARGV0)
+            unset(MATCHED)
+            string(REGEX MATCH ${ARGV0} MATCHED ${_variableName})
+            if (NOT MATCHED)
+                continue()
+            endif()
+        endif()
+        message(STATUS "${_variableName}=${${_variableName}}")
+    endforeach()
+endfunction()
 
 
 #----------------------
