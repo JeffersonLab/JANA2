@@ -142,8 +142,8 @@ public:
             assert(casted != nullptr);
             mData.push_back(casted);
         }
-        mStatus = Status::Inserted;
-        mCreationStatus = CreationStatus::Inserted;
+        mStatus = Status::Inserted;                  // n.b. This will be overwritten in GetOrCreate above
+        mCreationStatus = CreationStatus::Inserted;  // n.b. This will be overwritten in GetOrCreate above
     }
 
     /// Please use the typed setters instead whenever possible

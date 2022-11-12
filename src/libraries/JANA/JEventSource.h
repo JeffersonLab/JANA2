@@ -165,7 +165,9 @@ public:
             if (m_status == SourceStatus::Opened) {
                 if (m_event_count < first_evt_nr) {
                     event->SetEventNumber(m_event_count); // Default event number to event count
+                    auto previous_origin = event->GetJCallGraphRecorder()->SetInsertDataOrigin( JCallGraphRecorder::ORIGIN_FROM_SOURCE);  // (see note at top of JCallGraphRecorder.h)
                     GetEvent(event);
+                    event->GetJCallGraphRecorder()->SetInsertDataOrigin( previous_origin );
                     m_event_count += 1;
                     return ReturnStatus::TryAgain;  // Reject this event and recycle it
                 } else if (m_nevents != 0 && (m_event_count == last_evt_nr)) {
@@ -173,7 +175,9 @@ public:
                     return ReturnStatus::Finished;
                 } else {
                     event->SetEventNumber(m_event_count); // Default event number to event count
+                    auto previous_origin = event->GetJCallGraphRecorder()->SetInsertDataOrigin( JCallGraphRecorder::ORIGIN_FROM_SOURCE);  // (see note at top of JCallGraphRecorder.h)
                     GetEvent(event);
+                    event->GetJCallGraphRecorder()->SetInsertDataOrigin( previous_origin );
                     m_event_count += 1;
                     return ReturnStatus::Success; // Don't reject this event!
                 }
