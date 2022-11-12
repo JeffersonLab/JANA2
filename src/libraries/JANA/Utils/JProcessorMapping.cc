@@ -3,14 +3,23 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #include "JProcessorMapping.h"
+
+#include <JANA/Utils/JTablePrinter.h>
 #include <iomanip>
 #include <unistd.h>
+#include <sys/wait.h>
 #include <algorithm>
 
 void JProcessorMapping::initialize(AffinityStrategy affinity, LocalityStrategy locality) {
 
     m_affinity_strategy = affinity;
     m_locality_strategy = locality;
+
+    if (affinity == AffinityStrategy::None && locality == LocalityStrategy::Global) {
+        // User doesn't care about NUMA awareness, so we can skip building the processor map completely
+        m_error_msg = ""; // Denotes "no error" as used by stringifier
+        return;
+    }
 
     // Capture lscpu info
 
@@ -30,8 +39,8 @@ void JProcessorMapping::initialize(AffinityStrategy affinity, LocalityStrategy l
         dup2(pipe_fd[1], 1);  // Redirect stdout to pipe
         close(pipe_fd[0]);
         close(pipe_fd[1]);
-        execlp("lscpu", "lscpu", "-b", "-pcpu,core,node,socket", nullptr);
-        fclose(stdout); // Send an additional EOF so that the parent doesn't hang
+        execlp("lscpu", "lscpu", "-b", "-pcpu,core,node,socket", (char*) nullptr);
+        // Unreachable
         exit(-1);
     }
     else { // We are the parent process
@@ -67,17 +76,47 @@ void JProcessorMapping::initialize(AffinityStrategy affinity, LocalityStrategy l
             }
             m_mapping.push_back(row);
         }
+        else {
+            // On machines with no NUMA domains, lscpu returns "" instead of "0"
+            int count = sscanf(buffer, "%zu,%zu,,%zu", &row.cpu_id, &row.core_id, &row.socket_id);
+            row.numa_domain_id = row.socket_id;
+            if (count == 3) {
+                switch (m_locality_strategy) {
+                    case LocalityStrategy::CpuLocal:        row.location_id = row.cpu_id; break;
+                    case LocalityStrategy::CoreLocal:       row.location_id = row.core_id; break;
+                    case LocalityStrategy::NumaDomainLocal: row.location_id = row.numa_domain_id; break;
+                    case LocalityStrategy::SocketLocal:     row.location_id = row.socket_id; break;
+                    case LocalityStrategy::Global:
+                    default:                                row.location_id = 0; break;
+                }
+                if (row.location_id >= m_loc_count) {
+                    // Assume all of these ids are zero-indexed and contiguous
+                    m_loc_count = row.location_id + 1;
+                }
+                m_mapping.push_back(row);
+            }
+
+        }
     }
     fclose(infile);
+    int status = 0;
+    waitpid(pid, &status, 0);  // Wait for child to exit and acknowledge. This prevents child from becoming a zombie.
 
-    if (m_mapping.empty()) {
+    if (!WIFEXITED(status)) {
+        m_error_msg = "lscpu child process returned abnormally";
+        return;
+    }
+    else if (WEXITSTATUS(status) != 0) {
+        m_error_msg = "lscpu child process returned with an exit code of " + std::to_string(WEXITSTATUS(status));
+        return;
+    }
+    else if (m_mapping.empty()){
         m_error_msg = "Unable to parse lscpu output";
         return;
     }
 
     // Apply affinity strategy by sorting over sets of columns
     switch (m_affinity_strategy) {
-
 
         case AffinityStrategy::ComputeBound:
 
@@ -126,30 +165,30 @@ std::ostream& operator<<(std::ostream& os, const JProcessorMapping::LocalityStra
 
 std::ostream& operator<<(std::ostream& os, const JProcessorMapping& m) {
 
-    os << "NUMA Configuration" << std::endl << std::endl;
+    os << "NUMA Configuration" << std::endl;
     os << "  Affinity strategy: " << m.m_affinity_strategy << std::endl;
     os << "  Locality strategy: " << m.m_locality_strategy << std::endl;
-    os << "  Location count: " << m.m_loc_count << std::endl;
+    if (m.m_locality_strategy != JProcessorMapping::LocalityStrategy::Global) {
+        os << "  Location count: " << m.m_loc_count << std::endl;
+    }
 
     if (m.m_initialized) {
-        os << "  +--------+----------+-------+--------+-----------+--------+" << std::endl
-           << "  | worker | location |  cpu  |  core  | numa node | socket |" << std::endl
-           << "  +--------+----------+-------+--------+-----------+--------+" << std::endl;
+        JTablePrinter table;
+        table.AddColumn("worker", JTablePrinter::Justify::Right);
+        table.AddColumn("location", JTablePrinter::Justify::Right);
+        table.AddColumn("cpu", JTablePrinter::Justify::Right);
+        table.AddColumn("core", JTablePrinter::Justify::Right);
+        table.AddColumn("numa node", JTablePrinter::Justify::Right);
+        table.AddColumn("socket", JTablePrinter::Justify::Right);
 
         size_t worker_id = 0;
         for (const JProcessorMapping::Row& row : m.m_mapping) {
-            os <<  "  | " << std::right << std::setw(6) << worker_id++;
-            os << " | " << std::setw(8) << row.location_id;
-            os << " | " << std::setw(5) << row.cpu_id;
-            os << " | " << std::setw(6) << row.core_id;
-            os << " | " << std::setw(9) << row.numa_domain_id;
-            os << " | " << std::setw(6) << row.socket_id << " |" << std::endl;
+            table | worker_id++ | row.location_id | row.cpu_id | row.core_id | row.numa_domain_id | row.socket_id;
         }
-
-        os << "  +--------+----------+-------+--------+-----------+--------+" << std::endl;
+        table.Render(os);
     }
-    else {
-        os << "  ERROR: " << m.m_error_msg << std::endl;
+    else if (!m.m_error_msg.empty()) {
+        os << "  Error: " << m.m_error_msg << std::endl;
     }
     return os;
 }
