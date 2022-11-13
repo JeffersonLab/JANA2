@@ -38,8 +38,7 @@ struct JArrowTopology {
     std::vector<EventQueue*> queues;        // Queues shared between arrows
     JProcessorMapping mapping;
 
-    std::mutex m_mutex;                           // Protects m_current_status
-    Status m_current_status = Status::Paused;
+    std::atomic<Status> m_current_status {Status::Paused};
     std::atomic_int64_t running_arrow_count {0};  // Detects when the topology has paused
     // int64_t running_worker_count = 0;          // Detects when the workers have all joined
 
