@@ -97,58 +97,51 @@ void JApplication::Initialize() {
     /// This is called by the Run method so users will usually not
     /// need to call this directly.
 
-    try {
-        // Only run this once
-        if (m_initialized) return;
+    // Only run this once
+    if (m_initialized) return;
 
-        // Attach all plugins
-        m_plugin_loader->attach_plugins(m_component_manager.get());
+    // Attach all plugins
+    m_plugin_loader->attach_plugins(m_component_manager.get());
 
-        // Look for factories to auto-activate
-        if (JAutoActivator::IsRequested(m_params)) {
-            m_component_manager->add(new JAutoActivator);
-        }
-
-        // Set desired nthreads. We parse the 'nthreads' parameter two different ways for backwards compatibility.
-        m_desired_nthreads = 1;
-        m_params->SetDefaultParameter("nthreads", m_desired_nthreads, "Desired number of worker threads, or 'Ncores' to use all available cores.");
-        if (m_params->GetParameterValue<std::string>("nthreads") == "Ncores") {
-            m_desired_nthreads = JCpuInfo::GetNumCpus();
-        }
-
-        m_params->SetDefaultParameter("jana:extended_report", m_extended_report, "Controls whether the ticker shows simple vs detailed performance metrics");
-
-        m_component_manager->initialize();
-        m_component_manager->resolve_event_sources();
-
-        int engine_choice = 0;
-        m_params->SetDefaultParameter("jana:engine", engine_choice,
-                                      "0: Use arrow engine, 1: Use debug engine")->SetIsAdvanced(true);
-
-        if (engine_choice == 0) {
-            std::shared_ptr<JTopologyBuilder> topology_builder = m_service_locator.get<JTopologyBuilder>();
-            auto topology = topology_builder->get_or_create();
-            
-            auto japc = std::make_shared<JArrowProcessingController>(topology);
-            m_service_locator.provide(japc);  // Make concrete class available via SL
-            m_processing_controller = m_service_locator.get<JArrowProcessingController>();  // Get deps from SL
-            m_service_locator.provide(m_processing_controller);  // Make abstract class available via SL
-        }
-        else {
-            auto jdpc = std::make_shared<JDebugProcessingController>(m_component_manager.get());
-            m_service_locator.provide(jdpc);  // Make the concrete class available via SL
-            m_processing_controller = m_service_locator.get<JDebugProcessingController>();  // Get deps from SL
-            m_service_locator.provide(m_processing_controller); // Make abstract class available via SL
-        }
-
-        m_processing_controller->initialize();
-        m_initialized = true;
+    // Look for factories to auto-activate
+    if (JAutoActivator::IsRequested(m_params)) {
+        m_component_manager->add(new JAutoActivator);
     }
-    catch (JException& e) {
-        LOG_FATAL(m_logger) << e << LOG_END;
-        // TODO: This belongs in JMain. We want someone embedding JANA to be able to catch these
-        exit((int) ExitCode::UnhandledException);
+
+    // Set desired nthreads. We parse the 'nthreads' parameter two different ways for backwards compatibility.
+    m_desired_nthreads = 1;
+    m_params->SetDefaultParameter("nthreads", m_desired_nthreads, "Desired number of worker threads, or 'Ncores' to use all available cores.");
+    if (m_params->GetParameterValue<std::string>("nthreads") == "Ncores") {
+        m_desired_nthreads = JCpuInfo::GetNumCpus();
     }
+
+    m_params->SetDefaultParameter("jana:extended_report", m_extended_report, "Controls whether the ticker shows simple vs detailed performance metrics");
+
+    m_component_manager->initialize();
+    m_component_manager->resolve_event_sources();
+
+    int engine_choice = 0;
+    m_params->SetDefaultParameter("jana:engine", engine_choice,
+                                  "0: Use arrow engine, 1: Use debug engine")->SetIsAdvanced(true);
+
+    if (engine_choice == 0) {
+        std::shared_ptr<JTopologyBuilder> topology_builder = m_service_locator.get<JTopologyBuilder>();
+        auto topology = topology_builder->get_or_create();
+
+        auto japc = std::make_shared<JArrowProcessingController>(topology);
+        m_service_locator.provide(japc);  // Make concrete class available via SL
+        m_processing_controller = m_service_locator.get<JArrowProcessingController>();  // Get deps from SL
+        m_service_locator.provide(m_processing_controller);  // Make abstract class available via SL
+    }
+    else {
+        auto jdpc = std::make_shared<JDebugProcessingController>(m_component_manager.get());
+        m_service_locator.provide(jdpc);  // Make the concrete class available via SL
+        m_processing_controller = m_service_locator.get<JDebugProcessingController>();  // Get deps from SL
+        m_service_locator.provide(m_processing_controller); // Make abstract class available via SL
+    }
+
+    m_processing_controller->initialize();
+    m_initialized = true;
 }
 
 void JApplication::Run(bool wait_until_finished) {
