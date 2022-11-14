@@ -17,7 +17,7 @@
 
 
 struct JArrowTopology {
-    enum class Status { Paused, Running, Pausing, Draining, Finished };
+    enum class Status { Uninitialized, Paused, Running, Pausing, Draining, Finished };
 
     using Event = std::shared_ptr<JEvent>;
     using EventQueue = JMailbox<Event>;
@@ -38,7 +38,7 @@ struct JArrowTopology {
     std::vector<EventQueue*> queues;        // Queues shared between arrows
     JProcessorMapping mapping;
 
-    std::atomic<Status> m_current_status {Status::Paused};
+    std::atomic<Status> m_current_status {Status::Uninitialized};
     std::atomic_int64_t running_arrow_count {0};  // Detects when the topology has paused
     // int64_t running_worker_count = 0;          // Detects when the workers have all joined
 
@@ -55,6 +55,7 @@ struct JArrowTopology {
 
     JLogger m_logger;
 
+    void initialize();
     void drain();
     void run(int nthreads);
     void request_pause();

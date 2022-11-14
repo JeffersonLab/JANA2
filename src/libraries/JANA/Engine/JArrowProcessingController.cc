@@ -30,6 +30,9 @@ void JArrowProcessingController::initialize() {
     m_scheduler = new JScheduler(m_topology);
     m_scheduler->logger = m_scheduler_logger;
     LOG_INFO(m_logger) << m_topology->mapping << LOG_END;
+
+    m_topology->initialize();
+
 }
 
 void JArrowProcessingController::run(size_t nthreads) {

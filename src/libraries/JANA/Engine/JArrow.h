@@ -13,6 +13,7 @@
 
 #include "JArrowMetrics.h"
 #include <JANA/JLogger.h>
+#include <JANA/JException.h>
 
 class JArrow {
 
@@ -143,7 +144,7 @@ public:
 
     virtual ~JArrow() = default;
 
-    virtual void initialize() {};
+    virtual void initialize() { };
 
     virtual void execute(JArrowMetrics& result, size_t location_id) = 0;
 
@@ -172,19 +173,20 @@ public:
 
     void run() {
         Status status = m_status;
-        if (m_status == Status::Running || m_status == Status::Finished) {
-            LOG_DEBUG(m_logger) << "Arrow '" << m_name << "' run() : " << status << " => " << status << LOG_END;
-            return;
-        }
+
+        // if (status == Status::Unopened) {
+        //     LOG_DEBUG(m_logger) << "Arrow '" << m_name << "' run(): Not initialized!" << LOG_END;
+        //     throw JException("Arrow %s has not been initialized!", m_name.c_str());
+        // }
+        // if (status == Status::Running || m_status == Status::Finished) {
+        //     LOG_DEBUG(m_logger) << "Arrow '" << m_name << "' run() : " << status << " => " << status << LOG_END;
+        //     return;
+        // }
         LOG_DEBUG(m_logger) << "Arrow '" << m_name << "' run() : " << status << " => Running" << LOG_END;
         if (m_running_arrows != nullptr) (*m_running_arrows)++;
         for (auto listener: m_listeners) {
             listener->m_running_upstreams++;
             listener->run();  // Activating something recursively activates everything downstream.
-        }
-        if (status == Status::Unopened) {
-            LOG_TRACE(m_logger) << "JArrow '" << m_name << "': Initializing (this must only happen once)" << LOG_END;
-            initialize();
         }
         m_status = Status::Running;
     }
@@ -212,8 +214,8 @@ public:
         LOG_DEBUG(m_logger) << "JArrow '" << m_name << "' finish() : " << status << " => Finished" << LOG_END;
         Status old_status = m_status;
         if (old_status == Status::Unopened) {
-            LOG_DEBUG(m_logger) << "JArrow '" << m_name << "': Initializing (this must only happen once) (called from finish(), surprisingly)" << LOG_END;
-            initialize();
+            LOG_DEBUG(m_logger) << "JArrow '" << m_name << "': Uninitialized!" << LOG_END;
+            throw JException("JArrow::finish(): Arrow %s has not been initialized!", m_name.c_str());
         }
         if (old_status == Status::Running) {
             if (m_running_arrows != nullptr) (*m_running_arrows)--;
