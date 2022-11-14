@@ -36,12 +36,11 @@ private:
     duration_t m_checkin_time = std::chrono::milliseconds(500);
     unsigned m_backoff_tries = 4;
 
-    mutable std::mutex m_mutex;  // Protects access to arrow properties.
-
+    mutable std::mutex m_arrow_mutex;  // Protects access to arrow properties, except m_status
+    std::atomic<Status> m_status {Status::Unopened};
 
     // Scheduler stats
     // These are protected by the Topology mutex, NOT the Arrow mutex!!!
-    Status m_status = Status::Unopened;
     int64_t m_thread_count = 0;            // Current number of threads assigned to this arrow
     std::atomic_int64_t m_running_upstreams {0};       // Current number of running arrows immediately upstream
     std::atomic_int64_t* m_running_arrows = nullptr;   // Current number of running arrows total, so we can detect pauses
@@ -68,62 +67,62 @@ public:
     }
 
     void set_chunksize(size_t chunksize) {
-        std::lock_guard<std::mutex> lock(m_mutex);
+        std::lock_guard<std::mutex> lock(m_arrow_mutex);
         m_chunksize = chunksize;
     }
 
     size_t get_chunksize() const {
-        std::lock_guard<std::mutex> lock(m_mutex);
+        std::lock_guard<std::mutex> lock(m_arrow_mutex);
         return m_chunksize;
     }
 
     void set_backoff_tries(unsigned backoff_tries) {
-        std::lock_guard<std::mutex> lock(m_mutex);
+        std::lock_guard<std::mutex> lock(m_arrow_mutex);
         m_backoff_tries = backoff_tries;
     }
 
     unsigned get_backoff_tries() const {
-        std::lock_guard<std::mutex> lock(m_mutex);
+        std::lock_guard<std::mutex> lock(m_arrow_mutex);
         return m_backoff_tries;
     }
 
     BackoffStrategy get_backoff_strategy() const {
-        std::lock_guard<std::mutex> lock(m_mutex);
+        std::lock_guard<std::mutex> lock(m_arrow_mutex);
         return m_backoff_strategy;
     }
 
     void set_backoff_strategy(BackoffStrategy backoff_strategy) {
-        std::lock_guard<std::mutex> lock(m_mutex);
+        std::lock_guard<std::mutex> lock(m_arrow_mutex);
         m_backoff_strategy = backoff_strategy;
     }
 
     duration_t get_initial_backoff_time() const {
-        std::lock_guard<std::mutex> lock(m_mutex);
+        std::lock_guard<std::mutex> lock(m_arrow_mutex);
         return m_initial_backoff_time;
     }
 
     void set_initial_backoff_time(const duration_t& initial_backoff_time) {
-        std::lock_guard<std::mutex> lock(m_mutex);
+        std::lock_guard<std::mutex> lock(m_arrow_mutex);
         m_initial_backoff_time = initial_backoff_time;
     }
 
     const duration_t& get_checkin_time() const {
-        std::lock_guard<std::mutex> lock(m_mutex);
+        std::lock_guard<std::mutex> lock(m_arrow_mutex);
         return m_checkin_time;
     }
 
     void set_checkin_time(const duration_t& checkin_time) {
-        std::lock_guard<std::mutex> lock(m_mutex);
+        std::lock_guard<std::mutex> lock(m_arrow_mutex);
         m_checkin_time = checkin_time;
     }
 
     void update_thread_count(int thread_count_delta) {
-        std::lock_guard<std::mutex> lock(m_mutex);
+        std::lock_guard<std::mutex> lock(m_arrow_mutex);
         m_thread_count += thread_count_delta;
     }
 
     size_t get_thread_count() {
-        std::lock_guard<std::mutex> lock(m_mutex);
+        std::lock_guard<std::mutex> lock(m_arrow_mutex);
         return m_thread_count;
     }
 
@@ -160,7 +159,6 @@ public:
 
 
     Status get_status() const {
-        std::lock_guard<std::mutex> lock(m_mutex);
         return m_status;
     }
 
@@ -169,24 +167,22 @@ public:
     }
 
     void set_running_arrows(std::atomic_int64_t* running_arrows_ptr) {
-        std::lock_guard<std::mutex> lock(m_mutex);
         m_running_arrows = running_arrows_ptr;
     }
 
     void run() {
-        std::lock_guard<std::mutex> lock(m_mutex);
+        Status status = m_status;
         if (m_status == Status::Running || m_status == Status::Finished) {
-            LOG_DEBUG(m_logger) << "Arrow '" << m_name << "' run() : " << m_status << " => " << m_status << LOG_END;
+            LOG_DEBUG(m_logger) << "Arrow '" << m_name << "' run() : " << status << " => " << status << LOG_END;
             return;
         }
-        LOG_DEBUG(m_logger) << "Arrow '" << m_name << "' run() : " << m_status << " => Running" << LOG_END;
-        Status old_status = m_status;
+        LOG_DEBUG(m_logger) << "Arrow '" << m_name << "' run() : " << status << " => Running" << LOG_END;
         if (m_running_arrows != nullptr) (*m_running_arrows)++;
         for (auto listener: m_listeners) {
             listener->m_running_upstreams++;
             listener->run();  // Activating something recursively activates everything downstream.
         }
-        if (old_status == Status::Unopened) {
+        if (status == Status::Unopened) {
             LOG_TRACE(m_logger) << "JArrow '" << m_name << "': Initializing (this must only happen once)" << LOG_END;
             initialize();
         }
@@ -194,12 +190,12 @@ public:
     }
 
     void pause() {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        if (m_status != Status::Running) {
-            LOG_DEBUG(m_logger) << "JArrow '" << m_name << "' pause() : " << m_status << " => " << m_status << LOG_END;
+        Status status = m_status;
+        if (status != Status::Running) {
+            LOG_DEBUG(m_logger) << "JArrow '" << m_name << "' pause() : " << status << " => " << status << LOG_END;
             return; // pause() is a no-op unless running
         }
-        LOG_DEBUG(m_logger) << "JArrow '" << m_name << "' pause() : " << m_status << " => Paused" << LOG_END;
+        LOG_DEBUG(m_logger) << "JArrow '" << m_name << "' pause() : " << status << " => Paused" << LOG_END;
         if (m_running_arrows != nullptr) (*m_running_arrows)--;
         for (auto listener: m_listeners) {
             listener->m_running_upstreams--;
@@ -212,8 +208,8 @@ public:
     }
 
     void finish() {
-        std::lock_guard<std::mutex> lock(m_mutex);
-        LOG_DEBUG(m_logger) << "JArrow '" << m_name << "' finish() : " << m_status << " => Finished" << LOG_END;
+        Status status = m_status;
+        LOG_DEBUG(m_logger) << "JArrow '" << m_name << "' finish() : " << status << " => Finished" << LOG_END;
         Status old_status = m_status;
         if (old_status == Status::Unopened) {
             LOG_DEBUG(m_logger) << "JArrow '" << m_name << "': Initializing (this must only happen once) (called from finish(), surprisingly)" << LOG_END;
