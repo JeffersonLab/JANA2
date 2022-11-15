@@ -44,7 +44,6 @@ TEST_CASE("TerminationTests") {
         REQUIRE(processor->processed_count == 10);
         REQUIRE(processor->finish_call_count == 1);
         REQUIRE(app.GetNEventsProcessed() == source->event_count);
-        app.Quit(); // prevent destructor from triggering finish() before REQUIRE statements
     }
 
     SECTION("Arrow engine, interrupted during JEventSource::Open()") {
@@ -59,7 +58,6 @@ TEST_CASE("TerminationTests") {
         // The topology run() exits early (because draining) and finish is called on the event processors.
 
         REQUIRE(app.GetNEventsProcessed() == source->GetEventCount());
-        app.Quit(); // prevent destructor from triggering finish() before REQUIRE statements
     }
 
     SECTION("Debug engine, self-termination") {
