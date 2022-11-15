@@ -235,18 +235,40 @@ void JApplication::Scale(int nthreads) {
 }
 
 void JApplication::Stop(bool wait_until_idle) {
-    m_processing_controller->request_stop();
-    if (wait_until_idle) {
-        m_processing_controller->wait_until_stopped();
+    if (!m_initialized) {
+        // People might call Stop() during Initialize() rather than Run().
+        // For instance, during JEventProcessor::Init, or via Ctrl-C.
+        // If this is the case, we finish with initialization and then cancel the Run().
+        // We don't wait on  because we don't want to Finalize() anything
+        // we haven't Initialize()d yet.
+        m_quitting = true;
+    }
+    else {
+        // Once we've called Initialize(), we can Finish() all of our components
+        // whenever we like
+        m_processing_controller->request_stop();
+        if (wait_until_idle) {
+            m_processing_controller->wait_until_stopped();
+        }
+
     }
 }
 
 void JApplication::Quit(bool skip_join) {
-    m_skip_join = skip_join;
-    m_quitting = true;
-    if (!skip_join && m_processing_controller != nullptr) {
-        Stop(true);
+
+    if (m_initialized) {
+        m_skip_join = skip_join;
+        m_quitting = true;
+        if (!skip_join && m_processing_controller != nullptr) {
+            Stop(true);
+        }
     }
+
+    // People might call Quit() during Initialize() rather than Run().
+    // For instance, during JEventProcessor::Init, or via Ctrl-C.
+    // If this is the case, we exit immediately rather than make the user
+    // wait on a long Initialize() if no data has been generated yet.
+
     exit(m_exit_code);
 }
 
