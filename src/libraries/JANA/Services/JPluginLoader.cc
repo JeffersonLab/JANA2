@@ -102,25 +102,37 @@ void JPluginLoader::attach_plugins(JComponentManager* jcm) {
     // until all are attached. (see below)
     auto add_plugins_lamda = [=](std::vector<std::string> &plugins) {
         std::stringstream paths_checked;
-        for (std::string plugin : plugins) {
-            if (exclusions.find(plugin) != exclusions.end()) {
-                LOG_DEBUG(m_logger) << "Excluding plugin `" << plugin << "`" << LOG_END;
+        for (const std::string& plugin : plugins) {
+            // The user might provide a short name like "JTest", or a long name like "JTest.so".
+            // We assume that the plugin extension is always ".so". This may pose a problem on macOS
+            // where the extension might default to ".dylib".
+            std::string plugin_shortname;
+            std::string plugin_fullname;
+            if (plugin.substr(plugin.size() - 3) != ".so") {
+                plugin_fullname = plugin + ".so";
+                plugin_shortname = plugin;
+            }
+            else {
+                plugin_fullname = plugin;
+                plugin_shortname = plugin.substr(0, plugin.size()-3);
+            }
+            if (exclusions.find(plugin_shortname) != exclusions.end() ||
+                 exclusions.find(plugin_fullname) != exclusions.end()) {
+
+                LOG_INFO(m_logger) << "Excluding plugin `" << plugin << "`" << LOG_END;
                 continue;
             }
-            // Sometimes, the user will include the ".so" suffix in the
-            // plugin name. If they don't, then we add it here.
-            if (plugin.substr(plugin.size() - 3) != ".so") plugin = plugin + ".so";
 
             // Loop over paths
             bool found_plugin = false;
             for (std::string path : m_plugin_paths) {
-                std::string fullpath = path + "/" + plugin;
+                std::string fullpath = path + "/" + plugin_fullname;
                 LOG_DEBUG(m_logger) << "Looking for '" << fullpath << "' ...." << LOG_END;
                 paths_checked << "    " << fullpath << "  =>  ";
                 if (access(fullpath.c_str(), F_OK) != -1) {
                     LOG_DEBUG(m_logger) << "Found!" << LOG_END;
                     try {
-                        jcm->next_plugin(plugin);
+                        jcm->next_plugin(plugin_shortname);
                         attach_plugin(fullpath.c_str());
                         paths_checked << "Loaded successfully" << std::endl;
                         found_plugin = true;
