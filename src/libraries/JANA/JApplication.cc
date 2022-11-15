@@ -244,9 +244,10 @@ void JApplication::Stop(bool wait_until_idle) {
 void JApplication::Quit(bool skip_join) {
     m_skip_join = skip_join;
     m_quitting = true;
-    if (m_processing_controller != nullptr) {
-        Stop(!skip_join);
+    if (!skip_join && m_processing_controller != nullptr) {
+        Stop(true);
     }
+    exit(m_exit_code);
 }
 
 void JApplication::SetExitCode(int exit_code) {
