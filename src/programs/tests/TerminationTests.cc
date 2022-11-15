@@ -44,7 +44,20 @@ TEST_CASE("TerminationTests") {
         REQUIRE(processor->processed_count == 10);
         REQUIRE(processor->finish_call_count == 1);
         REQUIRE(app.GetNEventsProcessed() == source->event_count);
-        app.Quit(); // prevent destructor from triggering finish() before REQUIRE statements
+    }
+
+    SECTION("Arrow engine, interrupted during JEventSource::Open()") {
+
+        app.SetParameterValue("jana:engine", 0);
+        auto source = new InterruptedSource("InterruptedSource", &app);
+        app.Add(source);
+        app.Run(true);
+        REQUIRE(processor->processed_count == 0);
+        REQUIRE(processor->finish_call_count == 0);
+        // Stop() tells JApplication to finish Initialize() but not to proceed with Run().
+        // If we had called Quit() instead, it would have exited Initialize() immediately and ended the program.
+
+        REQUIRE(app.GetNEventsProcessed() == source->GetEventCount());
     }
 
     SECTION("Debug engine, self-termination") {

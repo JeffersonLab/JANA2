@@ -60,7 +60,6 @@ TEST_CASE("ScaleNWorkerUpdate") {
     threads = perf_summary->thread_count;
 
     REQUIRE(threads == 8);
-    app.Quit();
 }
 
 TEST_CASE("ScaleThroughputImprovement", "[.][performance]") {
@@ -93,7 +92,6 @@ TEST_CASE("ScaleThroughputImprovement", "[.][performance]") {
     auto throughput_hz_4 = japc->measure_internal_performance()->latest_throughput_hz;
     japc->print_report();
     std::cout << "nthreads=4: throughput_hz=" << throughput_hz_4 << std::endl;
-    app.Quit();
     REQUIRE(throughput_hz_2 > throughput_hz_1*1.5);
     REQUIRE(throughput_hz_4 > throughput_hz_2*1.25);
 }

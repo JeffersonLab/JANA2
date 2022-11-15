@@ -139,7 +139,7 @@ private:
     bool m_quitting = false;
     bool m_draining_queues = false;
     bool m_skip_join = false;
-    bool m_initialized = false;
+    std::atomic_bool m_initialized {false};
     bool m_ticker_on = true;
     bool m_timeout_on = true;
     bool m_extended_report = false;

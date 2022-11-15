@@ -30,6 +30,9 @@ void JArrowProcessingController::initialize() {
     m_scheduler = new JScheduler(m_topology);
     m_scheduler->logger = m_scheduler_logger;
     LOG_INFO(m_logger) << m_topology->mapping << LOG_END;
+
+    m_topology->initialize();
+
 }
 
 void JArrowProcessingController::run(size_t nthreads) {
@@ -131,12 +134,12 @@ void JArrowProcessingController::wait_until_stopped() {
 }
 
 bool JArrowProcessingController::is_stopped() {
-    std::lock_guard<std::mutex> lock(m_topology->m_mutex);
+    // TODO: Protect topology current status
     return m_topology->m_current_status == JArrowTopology::Status::Paused;
 }
 
 bool JArrowProcessingController::is_finished() {
-    std::lock_guard<std::mutex> lock(m_topology->m_mutex);
+    // TODO: Protect topology current status
     return m_topology->m_current_status == JArrowTopology::Status::Finished;
 }
 
