@@ -108,11 +108,11 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
 }
 
 void JEventSourceArrow::initialize() {
-    LOG_INFO(m_logger) << "Initializing JEventSource '" << m_source->GetResourceName() << "' (" << m_source->GetTypeName() << ")" << LOG_END;
     m_source->DoInitialize();
+    LOG_INFO(m_logger) << "Initialized JEventSource '" << m_source->GetResourceName() << "' (" << m_source->GetTypeName() << ")" << LOG_END;
 }
 
 void JEventSourceArrow::finalize() {
-    LOG_INFO(m_logger) << "Finalizing JEventSource '" << m_source->GetResourceName() << "' (" << m_source->GetTypeName() << ")" << LOG_END;
     m_source->DoFinalize();
+    LOG_INFO(m_logger) << "Finalized JEventSource '" << m_source->GetResourceName() << "' (" << m_source->GetTypeName() << ")" << LOG_END;
 }

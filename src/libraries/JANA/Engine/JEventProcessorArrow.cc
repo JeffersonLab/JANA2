@@ -77,18 +77,18 @@ void JEventProcessorArrow::execute(JArrowMetrics& result, size_t location_id) {
 
 void JEventProcessorArrow::initialize() {
 
-    LOG_DEBUG(m_logger) << "JEventProcessorArrow: Initializing arrow '" << get_name() << "'" << LOG_END;
+    LOG_DEBUG(m_logger) << "Initializing arrow '" << get_name() << "'" << LOG_END;
     for (auto processor : m_processors) {
-        LOG_INFO(m_logger) << "Initializing JEventProcessor '" << processor->GetType() << "'" << LOG_END;
         processor->DoInitialize();
+        LOG_INFO(m_logger) << "Initialized JEventProcessor '" << processor->GetType() << "'" << LOG_END;
     }
 }
 
 void JEventProcessorArrow::finalize() {
-    LOG_DEBUG(m_logger) << "JEventProcessorArrow: Finalizing arrow '" << get_name() << "'" << LOG_END;
+    LOG_DEBUG(m_logger) << "Finalizing arrow '" << get_name() << "'" << LOG_END;
     for (auto processor : m_processors) {
-        LOG_INFO(m_logger) << "Finalizing JEventProcessor '" << processor->GetType() << "'" << LOG_END;
         processor->DoFinalize();
+        LOG_INFO(m_logger) << "Finalized JEventProcessor '" << processor->GetType() << "'" << LOG_END;
     }
 }
 
