@@ -53,9 +53,9 @@ TEST_CASE("TerminationTests") {
         app.Add(source);
         app.Run(true);
         REQUIRE(processor->processed_count == 0);
-        REQUIRE(processor->finish_call_count == 1);
-        // The "interrupt" sets the topology status flag to draining. Open() runs fully even with the interrupt.
-        // The topology run() exits early (because draining) and finish is called on the event processors.
+        REQUIRE(processor->finish_call_count == 0);
+        // Stop() tells JApplication to finish Initialize() but not to proceed with Run().
+        // If we had called Quit() instead, it would have exited Initialize() immediately and ended the program.
 
         REQUIRE(app.GetNEventsProcessed() == source->GetEventCount());
     }

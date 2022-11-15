@@ -15,7 +15,7 @@ struct InterruptedSource : public JEventSource {
     InterruptedSource(std::string source_name, JApplication* app) : JEventSource(source_name, app) {}
     static std::string GetDescription() { return "ComponentTests Fake Event Source"; }
     std::string GetType(void) const override { return JTypeInfo::demangle<decltype(*this)>(); }
-    void Open() override { GetApplication()->Quit(); }
+    void Open() override { GetApplication()->Stop(); }
     void GetEvent(std::shared_ptr<JEvent>) override {}
 };
 

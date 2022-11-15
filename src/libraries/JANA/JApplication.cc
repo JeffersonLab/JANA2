@@ -269,7 +269,7 @@ void JApplication::Quit(bool skip_join) {
     // If this is the case, we exit immediately rather than make the user
     // wait on a long Initialize() if no data has been generated yet.
 
-    exit(m_exit_code);
+    _exit(m_exit_code);
 }
 
 void JApplication::SetExitCode(int exit_code) {
