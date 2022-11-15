@@ -47,6 +47,21 @@ TEST_CASE("TerminationTests") {
         app.Quit(); // prevent destructor from triggering finish() before REQUIRE statements
     }
 
+    SECTION("Arrow engine, interrupted during JEventSource::Open()") {
+
+        app.SetParameterValue("jana:engine", 0);
+        auto source = new InterruptedSource("InterruptedSource", &app);
+        app.Add(source);
+        app.Run(true);
+        REQUIRE(processor->processed_count == 0);
+        REQUIRE(processor->finish_call_count == 1);
+        // The "interrupt" sets the topology status flag to draining. Open() runs fully even with the interrupt.
+        // The topology run() exits early (because draining) and finish is called on the event processors.
+
+        REQUIRE(app.GetNEventsProcessed() == source->GetEventCount());
+        app.Quit(); // prevent destructor from triggering finish() before REQUIRE statements
+    }
+
     SECTION("Debug engine, self-termination") {
 
         app.SetParameterValue("jana:engine", 1);

@@ -213,10 +213,10 @@ public:
         Status status = m_status;
         LOG_DEBUG(m_logger) << "JArrow '" << m_name << "' finish() : " << status << " => Finished" << LOG_END;
         Status old_status = m_status;
-        if (old_status == Status::Unopened) {
-            LOG_DEBUG(m_logger) << "JArrow '" << m_name << "': Uninitialized!" << LOG_END;
-            throw JException("JArrow::finish(): Arrow %s has not been initialized!", m_name.c_str());
-        }
+        // if (old_status == Status::Unopened) {
+        //     LOG_DEBUG(m_logger) << "JArrow '" << m_name << "': Uninitialized!" << LOG_END;
+        //     throw JException("JArrow::finish(): Arrow %s has not been initialized!", m_name.c_str());
+        // }
         if (old_status == Status::Running) {
             if (m_running_arrows != nullptr) (*m_running_arrows)--;
             for (auto listener: m_listeners) {
