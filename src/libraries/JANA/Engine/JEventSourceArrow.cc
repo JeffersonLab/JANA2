@@ -48,23 +48,6 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
                 in_status = JEventSource::ReturnStatus::TryAgain;
                 break;
             }
-            if (event->GetJEventSource() != m_source) {
-                // If we have multiple event sources, we need to make sure we are using
-                // event-source-specific factories on top of the default ones.
-                // This is obviously not the best way to handle this but I'll need to
-                // rejigger the whole thing anyway when we re-add parallel event sources.
-                auto factory_set = new JFactorySet();
-                auto src_fac_gen = m_source->GetFactoryGenerator();
-                if (src_fac_gen != nullptr) {
-                    src_fac_gen->GenerateFactories(factory_set);
-                }
-                factory_set->Merge(*event->GetFactorySet());
-                event->SetFactorySet(factory_set);
-                event->SetJEventSource(m_source);
-            }
-            event->SetSequential(false);
-            event->SetJApplication(m_source->GetApplication());
-            event->GetJCallGraphRecorder()->Reset();
             in_status = m_source->DoNext(event);
             if (in_status == JEventSource::ReturnStatus::Success) {
                 m_chunk_buffer.push_back(std::move(event));

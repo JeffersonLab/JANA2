@@ -9,6 +9,7 @@
 #include <JANA/JException.h>
 #include <JANA/Utils/JTypeInfo.h>
 #include <JANA/JEvent.h>
+#include <JANA/JFactoryGenerator.h>
 
 #include <string>
 #include <atomic>
@@ -164,6 +165,7 @@ public:
             }
             if (m_status == SourceStatus::Opened) {
                 if (m_event_count < first_evt_nr) {
+                    // Skip these events due to nskip
                     event->SetEventNumber(m_event_count); // Default event number to event count
                     auto previous_origin = event->GetJCallGraphRecorder()->SetInsertDataOrigin( JCallGraphRecorder::ORIGIN_FROM_SOURCE);  // (see note at top of JCallGraphRecorder.h)
                     GetEvent(event);
@@ -171,10 +173,25 @@ public:
                     m_event_count += 1;
                     return ReturnStatus::TryAgain;  // Reject this event and recycle it
                 } else if (m_nevents != 0 && (m_event_count == last_evt_nr)) {
+                    // Declare ourselves finished due to nevents
                     m_status = SourceStatus::Finished;
                     return ReturnStatus::Finished;
                 } else {
-                    event->SetEventNumber(m_event_count); // Default event number to event count
+                    // Actually emit an event.
+                    // GetEvent() expects the following things from its incoming JEvent
+                    event->SetEventNumber(m_event_count);
+                    event->SetJApplication(m_application);
+                    event->SetSequential(false);
+                    event->GetJCallGraphRecorder()->Reset();
+                    if (event->GetJEventSource() != this && m_factory_generator != nullptr) {
+                        // If we have multiple event sources, we need to make sure we are using
+                        // event-source-specific factories on top of the default ones.
+                        auto factory_set = new JFactorySet();
+                        m_factory_generator->GenerateFactories(factory_set);
+                        factory_set->Merge(*event->GetFactorySet());
+                        event->SetFactorySet(factory_set);
+                        event->SetJEventSource(this);
+                    }
                     auto previous_origin = event->GetJCallGraphRecorder()->SetInsertDataOrigin( JCallGraphRecorder::ORIGIN_FROM_SOURCE);  // (see note at top of JCallGraphRecorder.h)
                     GetEvent(event);
                     event->GetJCallGraphRecorder()->SetInsertDataOrigin( previous_origin );
