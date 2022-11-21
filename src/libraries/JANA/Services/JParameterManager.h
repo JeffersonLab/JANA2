@@ -223,8 +223,7 @@ JParameter* JParameterManager::SetDefaultParameter(std::string name, T& val, std
         param = result->second;
 
         if (!param->HasDefault()) {
-            // Our existing value is a non-default value.
-            // We still want to remember the default for future conflict detection.
+            // We don't have a default value yet. Our existing value is a non-default value.
             param->SetHasDefault(true);
             param->SetDefault(Stringify(val));
             param->SetDescription(std::move(description));
@@ -237,6 +236,12 @@ JParameter* JParameterManager::SetDefaultParameter(std::string name, T& val, std
                 LOG_WARN(m_logger) << "Parameter '" << name << "' has conflicting defaults: '"
                                    << Stringify(val) << "' vs '" << param->GetDefault() << "'"
                                    << LOG_END;
+                if (param->IsDefault()) {
+                    // If we tried to set the same default parameter twice with different values, and there is no
+                    // existing non-default value, we remember the _latest_ default value. This way, we return the
+                    // default provided by the caller, instead of the default provided by the mysterious interloper.
+                    param->SetValue(Stringify(val));
+                }
             }
         }
     }

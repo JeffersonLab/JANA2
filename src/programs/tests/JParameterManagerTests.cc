@@ -76,16 +76,14 @@ TEST_CASE("JParameterManager::SetDefaultParameter") {
         REQUIRE(x == 22);
 
 
-        // If unset, the _first_ default value wins
-        // TODO: This is not right. We can do better
-
+        // If no value set and there are two conflicting defaults, use the _local_ one
         int z = 44;
         jpm.SetDefaultParameter("testing:dummy_var_2", z);
         REQUIRE(z == 44);
 
         int zz = 77;
         jpm.SetDefaultParameter("testing:dummy_var_2", zz);
-        REQUIRE(zz == 44); // Ideally 77
+        REQUIRE(zz == 77);
     }
 }
 
