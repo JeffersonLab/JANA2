@@ -1,0 +1,27 @@
+name: CUDA CI farm
+
+on:
+  push:
+    branches: [ cissie_self-runner ]
+#  pull_request:
+#    branches: [ master ]
+
+jobs:
+  build-n-run-SubeventCUDAExample:
+    runs-on:
+      - self-hosted
+    steps:
+    - uses: actions/checkout@v3
+    #    - name: print path
+    #      run: |
+    #        echo `pwd`   # /w/epsci-sciwork18/xmei/actions-runner/projects/JANA2/JANA2
+    #        echo $GITHUB_WORKSPACE  # /w/epsci-sciwork18/xmei/actions-runner/projects/JANA2/JANA2
+    - name: print hostname
+      run: |
+        hostname
+    - name: launch farm job through slurm script
+      run: |
+        export JID=`sbatch --gres gpu:A100:1 $GITHUB_WORKSPACE/scripts/ci/submit_SubeventCUDAExample.slurm | awk '{print $4}'`
+        sleep 30
+        tail -f slurm_${JID}.out & \
+           sleep 120  # manually exit by sleep
