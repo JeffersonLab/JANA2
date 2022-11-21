@@ -174,7 +174,7 @@ public:
                     return ReturnStatus::TryAgain;  // Reject this event and recycle it
                 } else if (m_nevents != 0 && (m_event_count == last_evt_nr)) {
                     // Declare ourselves finished due to nevents
-                    m_status = SourceStatus::Finished;
+                    DoFinalize(); // Close out the event source as soon as it declares itself finished
                     return ReturnStatus::Finished;
                 } else {
                     // Actually emit an event.
@@ -207,7 +207,7 @@ public:
         catch (RETURN_STATUS rs) {
 
             if (rs == RETURN_STATUS::kNO_MORE_EVENTS) {
-                m_status = SourceStatus::Finished;
+                DoFinalize();
                 return ReturnStatus::Finished;
             }
             else if (rs == RETURN_STATUS::kTRY_AGAIN || rs == RETURN_STATUS::kBUSY) {

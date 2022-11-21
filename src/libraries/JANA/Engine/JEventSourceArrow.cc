@@ -12,12 +12,12 @@
 using SourceStatus = JEventSource::RETURN_STATUS;
 
 JEventSourceArrow::JEventSourceArrow(std::string name,
-                                     JEventSource* source,
+                                     std::vector<JEventSource*> sources,
                                      EventQueue* output_queue,
                                      std::shared_ptr<JEventPool> pool
                                      )
     : JArrow(name, false, NodeType::Source)
-    , m_source(source)
+    , m_sources(sources)
     , m_output_queue(output_queue)
     , m_pool(pool) {
 }
@@ -48,7 +48,18 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
                 in_status = JEventSource::ReturnStatus::TryAgain;
                 break;
             }
-            in_status = m_source->DoNext(event);
+            while (m_current_source < m_sources.size()) {
+                in_status = m_sources[m_current_source]->DoNext(event);
+
+                if (in_status == JEventSource::ReturnStatus::Finished) {
+                    m_current_source++;
+                    // TODO: Adjust nskip and nevents for the new source
+                }
+                else {
+                    // This JEventSource isn't finished yet, so we obtained either Success or TryAgainLater
+                    break;
+                }
+            }
             if (in_status == JEventSource::ReturnStatus::Success) {
                 m_chunk_buffer.push_back(std::move(event));
             }
@@ -91,11 +102,17 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
 }
 
 void JEventSourceArrow::initialize() {
-    m_source->DoInitialize();
-    LOG_INFO(m_logger) << "Initialized JEventSource '" << m_source->GetResourceName() << "' (" << m_source->GetTypeName() << ")" << LOG_END;
+    // Initialization of individual sources happens on-demand, in order to keep us from having lots of open files
 }
 
 void JEventSourceArrow::finalize() {
-    m_source->DoFinalize();
-    LOG_INFO(m_logger) << "Finalized JEventSource '" << m_source->GetResourceName() << "' (" << m_source->GetTypeName() << ")" << LOG_END;
+    // Generally JEventSources finalize themselves as soon as they detect that they have run out of events.
+    // However, we can't rely on the JEventSources turning themselves off since execution can be externally paused.
+    // Instead we leave everything open until we finalize the whole topology, and finalize remaining event sources then.
+    for (JEventSource* source : m_sources) {
+        if (source->GetStatus() == JEventSource::SourceStatus::Opened) {
+            LOG_INFO(m_logger) << "Finalizing JEventSource '" << source->GetTypeName() << "' (" << source->GetResourceName() << ")" << LOG_END;
+            source->DoFinalize();
+        }
+    }
 }
