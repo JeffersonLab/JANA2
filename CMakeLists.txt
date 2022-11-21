@@ -56,6 +56,7 @@ option(USE_XERCES "Include XercesC 3 dependency. (Needed for JGeometryXML)" OFF)
 option(USE_PYTHON "Include Python dependency. This requires python-devel and python-distutils." OFF)
 option(USE_ASAN "Compile with address sanitizer" OFF)
 option(USE_TSAN "Compile with thread sanitizer" OFF)
+option(USE_CUDA "Compile CUDA-involved examples (Needed for examples/SubeventCUDAExample)." OFF)
 
 
 if (${USE_ROOT})
@@ -104,6 +105,10 @@ if (${USE_TSAN})
     add_link_options(-fsanitize=thread)
 endif()
 
+if (${USE_CUDA})
+    find_package(CUDA REQUIRED)
+endif()
+
 #---------
 # Report back to the user what we've discovered
 #---------
@@ -140,6 +145,11 @@ if (${USE_TSAN})
     message(STATUS "USE_TSAN    On")
 else()
     message(STATUS "USE_TSAN    Off")
+endif()
+if (${USE_CUDA})
+    message(STATUS "USE_CUDA    On")
+else()
+    message(STATUS "USE_CUDA    Off")
 endif()
 message(STATUS "-----------------------")
 
