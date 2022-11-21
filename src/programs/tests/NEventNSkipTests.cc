@@ -12,6 +12,8 @@ struct NEventNSkipBoundedSource : public JEventSource {
     std::atomic_int event_count {0};
     int event_bound = 100;
     std::vector<int> events_emitted;
+    std::atomic_int open_count{0};
+    std::atomic_int close_count{0};
 
     NEventNSkipBoundedSource(std::string source_name, JApplication *app) : JEventSource(source_name, app) { }
 
@@ -21,6 +23,15 @@ struct NEventNSkipBoundedSource : public JEventSource {
         }
         event_count += 1;
         events_emitted.push_back(event_count);
+    }
+
+    void Open() override {
+        open_count++;
+        LOG << "Opening source " << GetResourceName() << LOG_END;
+    }
+    void Close() override {
+        close_count++;
+        LOG << "Closing source " << GetResourceName() << LOG_END;
     }
 };
 
@@ -65,5 +76,98 @@ TEST_CASE("NEventNSkipTests") {
         // All 50 events get filled, but the first 30 are discarded without emitting
         // However, all 50 go into events_emitted
     }
+}
+
+TEST_CASE("JEventSourceArrow with multiple JEventSources") {
+    JParameterManager* params = new JParameterManager;
+    params->SetParameter("log:debug","JArrow,JArrowProcessingController");
+    JApplication app(params);
+    auto source1 = new NEventNSkipBoundedSource("BoundedSource1", &app);
+    auto source2 = new NEventNSkipBoundedSource("BoundedSource2", &app);
+    auto source3 = new NEventNSkipBoundedSource("BoundedSource3", &app);
+    app.Add(source1);
+    app.Add(source2);
+    app.Add(source3);
+
+    SECTION("All three event sources initialize, run, and finish") {
+        source1->event_bound = 9;
+        source2->event_bound = 13;
+        source3->event_bound = 7;
+
+        app.SetParameterValue("jana:nskip", 0);
+        app.SetParameterValue("jana:nevents", 0);
+        app.SetParameterValue("nthreads", 4);
+        app.Run(true);
+
+        REQUIRE(app.GetExitCode() == (int) JApplication::ExitCode::Success);
+        REQUIRE(source1->GetStatus() == JEventSource::SourceStatus::Finished);
+        REQUIRE(source2->GetStatus() == JEventSource::SourceStatus::Finished);
+        REQUIRE(source3->GetStatus() == JEventSource::SourceStatus::Finished);
+        REQUIRE(source1->open_count == 1);
+        REQUIRE(source2->open_count == 1);
+        REQUIRE(source3->open_count == 1);
+        REQUIRE(source1->close_count == 1);
+        REQUIRE(source2->close_count == 1);
+        REQUIRE(source3->close_count == 1);
+        REQUIRE(source1->GetEventCount() == 9);
+        REQUIRE(source2->GetEventCount() == 13);
+        REQUIRE(source3->GetEventCount() == 7);
+        REQUIRE(app.GetNEventsProcessed() == 9+13+7);
+    }
+
+    SECTION("All three event sources initialize, run, and finish, each using the same nskip,nevents (self-terminated)") {
+        source1->event_bound = 9;
+        source2->event_bound = 13;
+        source3->event_bound = 7;
+
+        app.SetParameterValue("jana:nskip", 3);
+        app.SetParameterValue("jana:nevents", 9);
+        app.SetParameterValue("nthreads", 4);
+        app.Run(true);
+
+        REQUIRE(app.GetExitCode() == (int) JApplication::ExitCode::Success);
+        REQUIRE(source1->GetStatus() == JEventSource::SourceStatus::Finished);
+        REQUIRE(source2->GetStatus() == JEventSource::SourceStatus::Finished);
+        REQUIRE(source3->GetStatus() == JEventSource::SourceStatus::Finished);
+        REQUIRE(source1->open_count == 1);
+        REQUIRE(source2->open_count == 1);
+        REQUIRE(source3->open_count == 1);
+        REQUIRE(source1->close_count == 1);
+        REQUIRE(source2->close_count == 1);
+        REQUIRE(source3->close_count == 1);
+        REQUIRE(source1->GetEventCount() == 9);   // 3 dropped, 6 emitted
+        REQUIRE(source2->GetEventCount() == 12);  // 3 dropped, 9 emitted
+        REQUIRE(source3->GetEventCount() == 7);   // 3 dropped, 4 emitted
+        REQUIRE(app.GetNEventsProcessed() == 19);
+    }
+
+
+    SECTION("All three event sources initialize, run, and finish, using individualized nskip,nevents (nevents-terminated)") {
+        source1->event_bound = 9;
+        source2->event_bound = 13;
+        source3->event_bound = 7;
+        source1->SetRange(2, 4);
+        source2->SetRange(0, 0);
+        source3->SetRange(0, 4);
+
+        app.SetParameterValue("nthreads", 4);
+        app.Run(true);
+
+        REQUIRE(app.GetExitCode() == (int) JApplication::ExitCode::Success);
+        REQUIRE(source1->GetStatus() == JEventSource::SourceStatus::Finished);
+        REQUIRE(source2->GetStatus() == JEventSource::SourceStatus::Finished);
+        REQUIRE(source3->GetStatus() == JEventSource::SourceStatus::Finished);
+        REQUIRE(source1->open_count == 1);
+        REQUIRE(source2->open_count == 1);
+        REQUIRE(source3->open_count == 1);
+        REQUIRE(source1->close_count == 1);
+        REQUIRE(source2->close_count == 1);
+        REQUIRE(source3->close_count == 1);
+        REQUIRE(source1->GetEventCount() == 6);   // 2 dropped, 4 emitted
+        REQUIRE(source2->GetEventCount() == 13);  // 13 emitted
+        REQUIRE(source3->GetEventCount() == 4);   // 4 emitted
+        REQUIRE(app.GetNEventsProcessed() == 21);
+    }
+
 }
 

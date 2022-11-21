@@ -144,7 +144,7 @@ public:
             throw(JException(e.what()));
         }
         catch (...) {
-            auto ex = JException("Unknown exception in JEventSource::Open()");
+            auto ex = JException("Unknown exception in JEventSource::Close()");
             ex.nested_exception = std::current_exception();
             ex.plugin_name = m_plugin_name;
             ex.component_name = GetType();
@@ -181,6 +181,7 @@ public:
                     // GetEvent() expects the following things from its incoming JEvent
                     event->SetEventNumber(m_event_count);
                     event->SetJApplication(m_application);
+                    event->SetJEventSource(this);
                     event->SetSequential(false);
                     event->GetJCallGraphRecorder()->Reset();
                     if (event->GetJEventSource() != this && m_factory_generator != nullptr) {
@@ -190,7 +191,6 @@ public:
                         m_factory_generator->GenerateFactories(factory_set);
                         factory_set->Merge(*event->GetFactorySet());
                         event->SetFactorySet(factory_set);
-                        event->SetJEventSource(this);
                     }
                     auto previous_origin = event->GetJCallGraphRecorder()->SetInsertDataOrigin( JCallGraphRecorder::ORIGIN_FROM_SOURCE);  // (see note at top of JCallGraphRecorder.h)
                     GetEvent(event);
