@@ -66,7 +66,7 @@ private:
 };
 
 template <>
-inline std::string JParameterManager::stringify(const JInspector::Format& value) {
+inline std::string JParameterManager::Stringify(const JInspector::Format& value) {
     switch (value) {
         case JInspector::Format::Table: return "table";
         case JInspector::Format::Json: return "json";
@@ -76,8 +76,8 @@ inline std::string JParameterManager::stringify(const JInspector::Format& value)
 }
 
 template <>
-inline JInspector::Format JParameterManager::parse(const std::string& value) {
-    auto lowered = JParameterManager::to_lower(value);
+inline JInspector::Format JParameterManager::Parse(const std::string& value) {
+    auto lowered = JParameterManager::ToLower(value);
     if (lowered == "table") return JInspector::Format::Table;
     if (lowered == "json") return JInspector::Format::Json;
     if (lowered == "tsv") return JInspector::Format::Tsv;
