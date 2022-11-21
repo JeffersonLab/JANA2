@@ -277,6 +277,10 @@ public:
     //This should create default factories for all types available in the event source
     JFactoryGenerator* GetFactoryGenerator() const { return m_factory_generator; }
 
+    uint64_t GetNSkip() { return m_nskip; }
+    uint64_t GetNEvents() { return m_nevents; }
+
+
     /// SetTypeName is intended as a replacement to GetType(), which should be less confusing for the
     /// user. It should be called from the constructor. For convenience, we provide a
     /// NAME_OF_THIS macro so that the user doesn't have to type the class name as a string, which may
@@ -305,10 +309,10 @@ public:
     void SetPluginName(std::string plugin_name) { m_plugin_name = std::move(plugin_name); };
 
     // Meant to be called by JANA
-    void SetRange(uint64_t nskip, uint64_t nevents) {
-        m_nskip = nskip;
-        m_nevents = nevents;
-    };
+    void SetNEvents(uint64_t nevents) { m_nevents = nevents; };
+
+    // Meant to be called by JANA
+    void SetNSkip(uint64_t nskip) { m_nskip = nskip; };
 
 
 private:

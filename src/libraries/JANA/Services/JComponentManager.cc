@@ -103,7 +103,11 @@ void JComponentManager::resolve_event_sources() {
     m_app->SetDefaultParameter("jana:nskip", m_nskip, "Number of events that sources should skip before starting emitting");
 
     for (auto source : m_evt_srces) {
-        source->SetRange(m_nskip, m_nevents);
+        // If nskip/nevents are set individually on JEventSources, respect those. Otherwise use global values.
+        // Note that this is not what we usually want when we have multiple event sources. It would make more sense to
+        // take the nskip/nevent slice across the stream of events emitted by each JEventSource in turn.
+        if (source->GetNSkip() == 0) source->SetNSkip(m_nskip);
+        if (source->GetNEvents() == 0) source->SetNEvents(m_nevents);
     }
 }
 

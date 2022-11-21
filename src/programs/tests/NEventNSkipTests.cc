@@ -146,9 +146,9 @@ TEST_CASE("JEventSourceArrow with multiple JEventSources") {
         source1->event_bound = 9;
         source2->event_bound = 13;
         source3->event_bound = 7;
-        source1->SetRange(2, 4);
-        source2->SetRange(0, 0);
-        source3->SetRange(0, 4);
+        source1->SetNSkip(2);
+        source1->SetNEvents(4);
+        source3->SetNEvents(4);
 
         app.SetParameterValue("nthreads", 4);
         app.Run(true);
