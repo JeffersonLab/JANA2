@@ -100,21 +100,21 @@ public:
     void WriteConfigFile(std::string name);
 
     template<typename T>
-    T Parse(const std::string& value);
+    static T Parse(const std::string& value);
 
     template<typename T>
-    std::string Stringify(const T& value);
+    static std::string Stringify(const T& value);
 
     template<typename T>
-    bool Equals(const T& lhs, const T& rhs);
+    static bool Equals(const T& lhs, const T& rhs);
 
     template<typename T>
-    std::vector<T> ParseVector(const std::string& value);
+    static std::vector<T> ParseVector(const std::string& value);
 
     template<typename T>
-    std::string StringifyVector(const std::vector<T>& values);
+    static std::string StringifyVector(const std::vector<T>& values);
 
-    std::string ToLower(const std::string& name);
+    static std::string ToLower(const std::string& name);
 
 private:
 
