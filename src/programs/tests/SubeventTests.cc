@@ -180,7 +180,7 @@ TEST_CASE("Basic subevent arrow functionality") {
 
         auto topology = app.GetService<JTopologyBuilder>()->create_empty();
         auto source_arrow = new JEventSourceArrow("simpleSource",
-                                                  new SimpleSource("simpleSource"),
+                                                  {new SimpleSource("simpleSource")},
                                                   &events_in,
                                                   topology->event_pool);
         auto proc_arrow = new JEventProcessorArrow("simpleProcessor", &events_out, nullptr, topology->event_pool);

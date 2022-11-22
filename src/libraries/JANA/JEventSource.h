@@ -9,6 +9,7 @@
 #include <JANA/JException.h>
 #include <JANA/Utils/JTypeInfo.h>
 #include <JANA/JEvent.h>
+#include <JANA/JFactoryGenerator.h>
 
 #include <string>
 #include <atomic>
@@ -143,7 +144,7 @@ public:
             throw(JException(e.what()));
         }
         catch (...) {
-            auto ex = JException("Unknown exception in JEventSource::Open()");
+            auto ex = JException("Unknown exception in JEventSource::Close()");
             ex.nested_exception = std::current_exception();
             ex.plugin_name = m_plugin_name;
             ex.component_name = GetType();
@@ -164,6 +165,7 @@ public:
             }
             if (m_status == SourceStatus::Opened) {
                 if (m_event_count < first_evt_nr) {
+                    // Skip these events due to nskip
                     event->SetEventNumber(m_event_count); // Default event number to event count
                     auto previous_origin = event->GetJCallGraphRecorder()->SetInsertDataOrigin( JCallGraphRecorder::ORIGIN_FROM_SOURCE);  // (see note at top of JCallGraphRecorder.h)
                     GetEvent(event);
@@ -171,10 +173,25 @@ public:
                     m_event_count += 1;
                     return ReturnStatus::TryAgain;  // Reject this event and recycle it
                 } else if (m_nevents != 0 && (m_event_count == last_evt_nr)) {
-                    m_status = SourceStatus::Finished;
+                    // Declare ourselves finished due to nevents
+                    DoFinalize(); // Close out the event source as soon as it declares itself finished
                     return ReturnStatus::Finished;
                 } else {
-                    event->SetEventNumber(m_event_count); // Default event number to event count
+                    // Actually emit an event.
+                    // GetEvent() expects the following things from its incoming JEvent
+                    event->SetEventNumber(m_event_count);
+                    event->SetJApplication(m_application);
+                    event->SetJEventSource(this);
+                    event->SetSequential(false);
+                    event->GetJCallGraphRecorder()->Reset();
+                    if (event->GetJEventSource() != this && m_factory_generator != nullptr) {
+                        // If we have multiple event sources, we need to make sure we are using
+                        // event-source-specific factories on top of the default ones.
+                        auto factory_set = new JFactorySet();
+                        m_factory_generator->GenerateFactories(factory_set);
+                        factory_set->Merge(*event->GetFactorySet());
+                        event->SetFactorySet(factory_set);
+                    }
                     auto previous_origin = event->GetJCallGraphRecorder()->SetInsertDataOrigin( JCallGraphRecorder::ORIGIN_FROM_SOURCE);  // (see note at top of JCallGraphRecorder.h)
                     GetEvent(event);
                     event->GetJCallGraphRecorder()->SetInsertDataOrigin( previous_origin );
@@ -190,7 +207,7 @@ public:
         catch (RETURN_STATUS rs) {
 
             if (rs == RETURN_STATUS::kNO_MORE_EVENTS) {
-                m_status = SourceStatus::Finished;
+                DoFinalize();
                 return ReturnStatus::Finished;
             }
             else if (rs == RETURN_STATUS::kTRY_AGAIN || rs == RETURN_STATUS::kBUSY) {
@@ -260,6 +277,10 @@ public:
     //This should create default factories for all types available in the event source
     JFactoryGenerator* GetFactoryGenerator() const { return m_factory_generator; }
 
+    uint64_t GetNSkip() { return m_nskip; }
+    uint64_t GetNEvents() { return m_nevents; }
+
+
     /// SetTypeName is intended as a replacement to GetType(), which should be less confusing for the
     /// user. It should be called from the constructor. For convenience, we provide a
     /// NAME_OF_THIS macro so that the user doesn't have to type the class name as a string, which may
@@ -288,10 +309,10 @@ public:
     void SetPluginName(std::string plugin_name) { m_plugin_name = std::move(plugin_name); };
 
     // Meant to be called by JANA
-    void SetRange(uint64_t nskip, uint64_t nevents) {
-        m_nskip = nskip;
-        m_nevents = nevents;
-    };
+    void SetNEvents(uint64_t nevents) { m_nevents = nevents; };
+
+    // Meant to be called by JANA
+    void SetNSkip(uint64_t nskip) { m_nskip = nskip; };
 
 
 private:

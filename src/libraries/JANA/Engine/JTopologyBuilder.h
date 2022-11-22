@@ -140,17 +140,15 @@ public:
         // 2. Oftentimes we want to call JApplication::Initialize() just to set up plugins and services, i.e. for testing.
         //    We don't want to force the user to create a dummy event source if they know they are never going to call JApplication::Run().
 
-        for (auto src: m_components->get_evt_srces()) {
+        // Create arrow for sources.
+        JArrow *arrow = new JEventSourceArrow("sources", m_components->get_evt_srces(), queue, m_topology->event_pool);
+        arrow->set_backoff_tries(0);
+        m_topology->arrows.push_back(arrow);
+        m_topology->sources.push_back(arrow);
+        arrow->set_chunksize(m_event_source_chunksize);
+        arrow->set_logger(m_arrow_logger);
+        arrow->set_running_arrows(&m_topology->running_arrow_count);
 
-            // create arrow for each source. Don't open until arrow.activate() called
-            JArrow *arrow = new JEventSourceArrow(src->GetName(), src, queue, m_topology->event_pool);
-            arrow->set_backoff_tries(0);
-            m_topology->arrows.push_back(arrow);
-            m_topology->sources.push_back(arrow);
-            arrow->set_chunksize(m_event_source_chunksize);
-            arrow->set_logger(m_arrow_logger);
-            arrow->set_running_arrows(&m_topology->running_arrow_count);
-        }
 
         auto proc_arrow = new JEventProcessorArrow("processors", queue, nullptr, m_topology->event_pool);
         proc_arrow->set_chunksize(m_event_processor_chunksize);

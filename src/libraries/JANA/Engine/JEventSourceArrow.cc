@@ -12,12 +12,12 @@
 using SourceStatus = JEventSource::RETURN_STATUS;
 
 JEventSourceArrow::JEventSourceArrow(std::string name,
-                                     JEventSource* source,
+                                     std::vector<JEventSource*> sources,
                                      EventQueue* output_queue,
                                      std::shared_ptr<JEventPool> pool
                                      )
     : JArrow(name, false, NodeType::Source)
-    , m_source(source)
+    , m_sources(sources)
     , m_output_queue(output_queue)
     , m_pool(pool) {
 }
@@ -48,24 +48,18 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
                 in_status = JEventSource::ReturnStatus::TryAgain;
                 break;
             }
-            if (event->GetJEventSource() != m_source) {
-                // If we have multiple event sources, we need to make sure we are using
-                // event-source-specific factories on top of the default ones.
-                // This is obviously not the best way to handle this but I'll need to
-                // rejigger the whole thing anyway when we re-add parallel event sources.
-                auto factory_set = new JFactorySet();
-                auto src_fac_gen = m_source->GetFactoryGenerator();
-                if (src_fac_gen != nullptr) {
-                    src_fac_gen->GenerateFactories(factory_set);
+            while (m_current_source < m_sources.size()) {
+                in_status = m_sources[m_current_source]->DoNext(event);
+
+                if (in_status == JEventSource::ReturnStatus::Finished) {
+                    m_current_source++;
+                    // TODO: Adjust nskip and nevents for the new source
                 }
-                factory_set->Merge(*event->GetFactorySet());
-                event->SetFactorySet(factory_set);
-                event->SetJEventSource(m_source);
+                else {
+                    // This JEventSource isn't finished yet, so we obtained either Success or TryAgainLater
+                    break;
+                }
             }
-            event->SetSequential(false);
-            event->SetJApplication(m_source->GetApplication());
-            event->GetJCallGraphRecorder()->Reset();
-            in_status = m_source->DoNext(event);
             if (in_status == JEventSource::ReturnStatus::Success) {
                 m_chunk_buffer.push_back(std::move(event));
             }
@@ -108,11 +102,17 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
 }
 
 void JEventSourceArrow::initialize() {
-    m_source->DoInitialize();
-    LOG_INFO(m_logger) << "Initialized JEventSource '" << m_source->GetResourceName() << "' (" << m_source->GetTypeName() << ")" << LOG_END;
+    // Initialization of individual sources happens on-demand, in order to keep us from having lots of open files
 }
 
 void JEventSourceArrow::finalize() {
-    m_source->DoFinalize();
-    LOG_INFO(m_logger) << "Finalized JEventSource '" << m_source->GetResourceName() << "' (" << m_source->GetTypeName() << ")" << LOG_END;
+    // Generally JEventSources finalize themselves as soon as they detect that they have run out of events.
+    // However, we can't rely on the JEventSources turning themselves off since execution can be externally paused.
+    // Instead we leave everything open until we finalize the whole topology, and finalize remaining event sources then.
+    for (JEventSource* source : m_sources) {
+        if (source->GetStatus() == JEventSource::SourceStatus::Opened) {
+            LOG_INFO(m_logger) << "Finalizing JEventSource '" << source->GetTypeName() << "' (" << source->GetResourceName() << ")" << LOG_END;
+            source->DoFinalize();
+        }
+    }
 }

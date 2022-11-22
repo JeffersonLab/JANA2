@@ -97,12 +97,12 @@ int main() {
     app.SetTicker(false);
 
     auto source = new SimpleSource("simpleSource");
-    source->SetRange(0, 10); // limit ourselves to 10 events. Note that the 'jana:nevents' param won't work
+    source->SetNEvents(10);  // limit ourselves to 10 events. Note that the 'jana:nevents' param won't work
                              // here because we aren't using JComponentManager to manage the EventSource
 
     auto topology = app.GetService<JTopologyBuilder>()->create_empty();
     auto source_arrow = new JEventSourceArrow("simpleSource",
-                                              source,
+                                              {source},
                                               &events_in,
                                               topology->event_pool);
     auto proc_arrow = new JEventProcessorArrow("simpleProcessor", &events_out, nullptr, topology->event_pool);
