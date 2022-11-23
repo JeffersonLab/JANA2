@@ -42,7 +42,7 @@ class JMailbox {
 
 private:
 
-    struct alignas(CACHE_LINE_BYTES) LocalMailbox {
+    struct LocalMailbox {
         std::mutex mutex;
         std::deque<T> queue;
         size_t reserved_count = 0;

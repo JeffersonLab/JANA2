@@ -25,6 +25,42 @@ TEST_CASE("JParameterManager::SetDefaultParameter") {
     }
 
 
+    SECTION("Multiple calls to SetDefaultParameter with same defaults succeed, float") {
+
+        float x = 1.1;
+        jpm.SetDefaultParameter("small_float", x);
+        float y = 1.1;
+        jpm.SetDefaultParameter("small_float", y);
+
+        REQUIRE(jpm.Equals(jpm.Parse<float>(jpm.Stringify(1.1f)), 1.1f));
+        REQUIRE(!jpm.Equals(jpm.Parse<float>(jpm.Stringify(1.1f)), 1.10001f));
+
+        float v = 1.1e20f;
+        jpm.SetDefaultParameter("large_float", v);
+        float w = 1.1e20f;
+        jpm.SetDefaultParameter("large_float", w);
+
+        REQUIRE(jpm.Equals(jpm.Parse<float>(jpm.Stringify(1.1e20f)), 1.1e20f));
+        REQUIRE(!jpm.Equals(jpm.Parse<float>(jpm.Stringify(1.1e20f)), 1.100001e20f));
+
+        double xx = 1.1;
+        jpm.SetDefaultParameter("small_double", xx);
+        double yy = 1.1;
+        jpm.SetDefaultParameter("small_double", yy);
+
+        REQUIRE(jpm.Equals(jpm.Parse<double>(jpm.Stringify(1.1)), 1.1));
+        REQUIRE(!jpm.Equals(jpm.Parse<double>(jpm.Stringify(1.1)), 1.100001));
+
+        double vv = 1.1e50;
+        jpm.SetDefaultParameter("large_double", vv);
+        double ww = 1.1e50;
+        jpm.SetDefaultParameter("large_double", ww);
+
+        REQUIRE(jpm.Equals(jpm.Parse<double>(jpm.Stringify(1.1e20)), 1.1e20));
+        REQUIRE(!jpm.Equals(jpm.Parse<double>(jpm.Stringify(1.1e20)), 1.1000000001e20));
+    }
+
+
     SECTION("Multiple calls to SetDefaultParameter with different defaults") {
 
         // If set, the user provided value overrides ALL default values
@@ -40,16 +76,14 @@ TEST_CASE("JParameterManager::SetDefaultParameter") {
         REQUIRE(x == 22);
 
 
-        // If unset, the _first_ default value wins
-        // TODO: This is not right. We can do better
-
+        // If no value set and there are two conflicting defaults, use the _local_ one
         int z = 44;
         jpm.SetDefaultParameter("testing:dummy_var_2", z);
         REQUIRE(z == 44);
 
         int zz = 77;
         jpm.SetDefaultParameter("testing:dummy_var_2", zz);
-        REQUIRE(zz == 44); // Ideally 77
+        REQUIRE(zz == 77);
     }
 }
 

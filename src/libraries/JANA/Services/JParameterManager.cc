@@ -43,7 +43,7 @@ JParameterManager::~JParameterManager() {
 /// @details  When accessing the m_parameters map, strings are always converted to
 ///           lower case. This makes configuration parameters case-insensitive in effect,
 ///           while still preserving the user's choice of case in the parameter name.
-std::string JParameterManager::to_lower(const std::string& name) {
+std::string JParameterManager::ToLower(const std::string& name) {
     std::string tmp(name);
     std::transform(tmp.begin(), tmp.end(), tmp.begin(), ::tolower);
     return tmp;
@@ -55,7 +55,7 @@ std::string JParameterManager::to_lower(const std::string& name) {
 /// @param [in] name    the parameter name
 /// @return             whether that parameter was found
 bool JParameterManager::Exists(string name) {
-    return m_parameters.find(to_lower(name)) != m_parameters.end();
+    return m_parameters.find(ToLower(name)) != m_parameters.end();
 }
 
 
@@ -66,7 +66,7 @@ bool JParameterManager::Exists(string name) {
 ///
 /// @note The JParameter pointer is still owned by the JParameterManager, so don't delete it.
 JParameter* JParameterManager::FindParameter(std::string name) {
-    auto result = m_parameters.find(to_lower(name));
+    auto result = m_parameters.find(ToLower(name));
     if (result == m_parameters.end()) {
         return nullptr;
     }
