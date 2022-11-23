@@ -141,7 +141,7 @@ int main() {
 
     auto topology = app.GetService<JTopologyBuilder>()->create_empty();
     auto source_arrow = new JEventSourceArrow("simpleSource",
-                                              source,
+                                              {source},
                                               &events_in,
                                               topology->event_pool);
     auto proc_arrow = new JEventProcessorArrow("simpleProcessor", &events_out, nullptr, topology->event_pool);
