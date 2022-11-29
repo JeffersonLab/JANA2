@@ -46,8 +46,10 @@ void PrintVersion() {
     /// Prints JANA version information to stdout, for use by the CLI.
 
     std::cout << "JANA2 version:  " << JVersion::GetVersion() << std::endl;
-    std::cout << "Commit hash:    " << JVersion::GetCommitHash() << std::endl;
-    std::cout << "Commit date:    " << JVersion::GetCommitDate() << std::endl;
+    if (!JVersion::is_unknown) {
+        std::cout << "Commit hash:    " << JVersion::GetCommitHash() << std::endl;
+        std::cout << "Commit date:    " << JVersion::GetCommitDate() << std::endl;
+    }
 }
 
 JApplication* CreateJApplication(UserOptions& options) {

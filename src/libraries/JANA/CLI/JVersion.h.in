@@ -14,6 +14,7 @@ struct JVersion {
     static const int patch = @jana2_VERSION_PATCH@;
     static const std::string last_commit_hash;
     static const std::string last_commit_date;
+    static const bool is_unknown = @JVERSION_UNKNOWN@;
     static const bool is_release = @JVERSION_RELEASE@;
     static const bool is_modified = @JVERSION_MODIFIED@;
 
@@ -27,7 +28,10 @@ struct JVersion {
     static std::string GetVersion() {
         std::stringstream ss;
         ss << major << "." << minor << "." << patch;
-        if (is_modified) {
+        if (is_unknown) {
+            ss << " (git status unknown)";
+        }
+        else if (is_modified) {
             ss << " (modified)";
         }
         else if (is_release) {
