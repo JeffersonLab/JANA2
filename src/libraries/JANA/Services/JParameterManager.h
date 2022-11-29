@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <vector>
 #include <map>
+#include <cmath>
 
 #include <JANA/JLogger.h>
 #include <JANA/JException.h>
