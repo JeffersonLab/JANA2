@@ -67,6 +67,7 @@ else()
     set(JVERSION_MODIFIED 1)
 endif()
 
+message(STATUS "Generating JVersion.h")
 configure_file(JVersion.h.in JVersion.h)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/JVersion.h DESTINATION include/JANA/CLI)

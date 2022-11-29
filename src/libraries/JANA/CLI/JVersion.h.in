@@ -29,10 +29,11 @@ struct JVersion {
         std::stringstream ss;
         ss << major << "." << minor << "." << patch;
         if (is_unknown) {
-            ss << " (git status unknown)";
+            // ss << " (git status unknown)";
+            // If .git is not present, degrade gracefully. Don't lead the user to believe that there is an error
         }
         else if (is_modified) {
-            ss << " (modified)";
+            ss << " (uncommitted changes)";
         }
         else if (is_release) {
             ss << " (release)";
