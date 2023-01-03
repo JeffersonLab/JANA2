@@ -21,7 +21,7 @@ inline std::ostream& make_backtrace(std::ostream& os) {
         const int max_frames = 100;
         void* backtrace_buffer[max_frames];
         int frame_count = backtrace(backtrace_buffer, max_frames);
-        char** symbols = backtrace_symbols(backtrace_buffer, max_frames);
+        char** symbols = backtrace_symbols(backtrace_buffer, frame_count);
         // Skip the first two frames, because those are "make_backtrace" and "JException::JException"
         for (int i=2; i<frame_count; ++i) {
 
