@@ -57,6 +57,7 @@ option(USE_PYTHON "Include Python dependency. This requires python-devel and pyt
 option(USE_ASAN "Compile with address sanitizer" OFF)
 option(USE_TSAN "Compile with thread sanitizer" OFF)
 option(USE_CUDA "Compile CUDA-involved examples (Needed for examples/SubeventCUDAExample)." OFF)
+option(BUILD_SHARED_LIBS "Build into both shared and static libs." ON)
 
 
 if (${USE_ROOT})
@@ -150,6 +151,11 @@ if (${USE_CUDA})
     message(STATUS "USE_CUDA    On")
 else()
     message(STATUS "USE_CUDA    Off")
+endif()
+if (${BUILD_SHARED_LIBS})
+    message(STATUS "BUILD_SHARED_LIBS    On")
+else()
+    message(STATUS "BUILD_SHARED_LIBS    Off")
 endif()
 message(STATUS "-----------------------")
 

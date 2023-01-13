@@ -60,7 +60,7 @@ uint64_t write_memory(std::vector<char>& buffer, uint64_t bytes, double spread) 
     return sampled*2;
 }
 
-inline void init_generator() {
+void init_generator() {
     if (!generator) {
         std::hash<std::thread::id> hasher;
         long now = std::chrono::steady_clock::now().time_since_epoch().count();
