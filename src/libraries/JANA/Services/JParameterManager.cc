@@ -202,10 +202,11 @@ void JParameterManager::ReadConfigFile(std::string filename) {
     }
 
     // Loop over lines
-    char line[1024];
+    char line[8192];
     while (!ifs.eof()) {
         // Read in next line ignoring comments
-        ifs.getline(line, 1024);
+        bzero(line, 8192);
+        ifs.getline(line, 8190);
         if (strlen(line) == 0) continue;
         if (line[0] == '#') continue;
         string str(line);
