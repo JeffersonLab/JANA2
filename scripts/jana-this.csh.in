@@ -30,6 +30,7 @@ setenv PATH @JANA_INSTALL_DIR@/bin:${PATH}
 # ROOT
 if ( "@HAVE_ROOT@" == "1" ) then
     if ( -f "@ROOTSYS@/bin/thisroot.csh" ) then
+        unsetenv ROOTSYS
         source  "@ROOTSYS@/bin/thisroot.csh"
     endif
 endif
