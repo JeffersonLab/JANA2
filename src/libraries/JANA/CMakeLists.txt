@@ -22,6 +22,10 @@ set(JANA2_SOURCES
     JObject.h
     JCsvWriter.h
     JLogger.h
+    JEventCallback.cc
+    JEventCallback.h
+    JMultifactory.cc
+    JMultifactory.h
 
     Engine/JArrow.h
     Engine/JArrowMetrics.h

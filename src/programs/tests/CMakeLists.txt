@@ -36,6 +36,7 @@ set(TEST_SOURCES
     SubeventTests.cc
     JAutoactivableTests.cc
     JTablePrinterTests.cc
+    JMultiFactoryTests.cc
     )
 
 if (${USE_PODIO})
