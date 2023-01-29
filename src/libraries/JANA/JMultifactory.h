@@ -8,16 +8,19 @@
 
 #include <JANA/JFactoryT.h>
 #include <JANA/JFactorySet.h>
-#include <JANA/JFactoryGenerator.h>
 
 class JMultifactory;
 
 template <typename T>
 class JMultifactoryHelper : public JFactoryT<T>{
 
-    std::shared_ptr<JMultifactory> mMultiFactory;
+    JMultifactory* mMultiFactory;
 
 public:
+    JMultifactoryHelper(JMultifactory* parent) : mMultiFactory(parent) {}
+    virtual ~JMultifactoryHelper() = default;
+    // This does NOT own mMultiFactory; the enclosing JFactorySet does
+
     void Process(const std::shared_ptr<const JEvent>&) override;
     // We really want to override Create, not Process!!!
     // It might make more sense to (1) put Create() back on JFactory, (2) make Create() virtual, (3) override Create()
@@ -27,11 +30,7 @@ public:
 
 class JMultifactory {
 
-    JFactorySet mHelpers;
-    // TODO: PROBLEM WITH OWNERSHIP OF HELPERS
-    // Does mHelpers have ownership of the JMultifactoryHelpers, or does the JEvent's JFactorySet?
-    // Assume that the JMultifactoryGenerator transfers ownership over.
-    // Meanwhile the ownership of the Multifactory itself is shared by the different helpers
+    JFactorySet mHelpers; // This has ownership UNTIL JFactorySet::Add() takes it over
 
     std::once_flag m_is_initialized;
     std::once_flag m_is_finished;
@@ -40,12 +39,27 @@ class JMultifactory {
     // However, don't worry about a Status variable. Every time Execute() gets called, so does Process()
 
 public:
+    JMultifactory() = default;
+    virtual ~JMultifactory() = default;
+
+    // IMPLEMENTED BY USERS
+
     virtual void Init() {}
     virtual void BeginRun(const std::shared_ptr<const JEvent>&) {}
     virtual void Process(const std::shared_ptr<const JEvent>&) {}
     virtual void EndRun() {}
     virtual void Finish() {}
     // I'm tempted to factor out something like JEventCallback from JFactory, JMultifactory, and JEventProcessor.
+
+
+    // CALLED BY USERS
+
+    template <typename T>
+    void DeclareOutput(std::string tag);
+
+    template <typename T>
+    void SetData(std::string tag, std::vector<T*> data);
+
 
     /// CALLED BY JANA
 
@@ -57,21 +71,16 @@ public:
     // Release makes sure Finish() is called exactly once
 
     JFactorySet* GetHelpers();
-    // This exposes the JFactorySet. Note that the caller can remove JFactories from the set, and/or claim ownership!
+    // This exposes the mHelpers JFactorySet, which contains a JFactoryT<T> for each declared output of the multifactory.
+    // This is meant to be called from JFactorySet, which will take ownership of the helpers while leaving the pointers
+    // in place. This method is only supposed to be called by JFactorySet::Add(JMultifactory).
 
-    /// CALLED BY USERS
-
-    template <typename T>
-    void DeclareOutput(std::string tag);
-
-    template <typename T>
-    void SetData(std::string tag, std::vector<T*> data);
 };
 
 template <typename T>
 void JMultifactory::DeclareOutput(std::string tag) {
-    JFactory* helper = new JMultifactoryHelper<T>;
-    helper->SetTag(tag);
+    JFactory* helper = new JMultifactoryHelper<T>(this);
+    helper->SetTag(std::move(tag));
     mHelpers.Add(helper);
 }
 
@@ -93,12 +102,6 @@ void JMultifactoryHelper<T>::Process(const std::shared_ptr<const JEvent> &event)
     mMultiFactory->Execute(event);
 }
 
-template <typename T>
-class JMultifactoryGeneratorT : public JFactoryGenerator {
-    void GenerateFactories(JFactorySet *factory_set) override;
-};
-
-
 // TODO: JFactoryGenerator lets you specify a instance-specific tag that overrides whatever tag
 //       the class itself declared. This won't work with multifactories because one multifactory
 //       has a number of different outputs, each with potentially different tags.
@@ -107,32 +110,6 @@ class JMultifactoryGeneratorT : public JFactoryGenerator {
 //          reference the tags by index instead? [This one seems more promising]
 //       This is just idle musing now, but maybe we could specify tags when calling DeclareInput() as well,
 //          and then call event->Get<MyT>(InputTag(1))
-template <typename T>
-void JMultifactoryGeneratorT<T>::GenerateFactories(JFactorySet *factory_set) {
-    JMultifactory *multifactory = new T;
-    // Two options:
-    // 1. Keep helpers inside mHelpers.
-    //    - Requires making JFactorySet ownership semantics much more ambiguous
-    //    -
-    // 2. Remember (typeid, tag), but hand over mHelpers
-    //    - This keeps JFactorySet::Merge semantics intact (as well as ownership semantics)
-    //    - This means that we deepen our dependence on JEvent::Insert in a way I don't like
-    //    - This is sketchy because we are throwing away the string-typeid fallback
-
-    // Outputs should have all been declared in the multifactory constructor, so it is ready to access the helper factories
-
-    for (JFactory* fac : multifactory->GetHelpers()->GetAllFactories()) {
-        fac->SetFactoryName(JTypeInfo::demangle<T>());
-        fac->SetPluginName(GetPluginName());
-        factory_set->Add(fac);
-    }
-
-    // TODO: Finish me!
-    //multifactory->GetHelpers()->SetOwnership(false);
-
-
-}
-
 
 
 #endif //JANA2_JMULTIFACTORY_H

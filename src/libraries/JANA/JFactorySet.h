@@ -15,6 +15,7 @@
 
 class JFactoryGenerator;
 class JFactory;
+class JMultifactory;
 
 
 class JFactorySet : public JResettable
@@ -26,6 +27,7 @@ class JFactorySet : public JResettable
         virtual ~JFactorySet();
 
         bool Add(JFactory* aFactory);
+        bool Add(JMultifactory* multifactory);
         void Merge(JFactorySet &aFactorySet);
         void Print(void) const;
         void Release(void);
@@ -40,6 +42,8 @@ class JFactorySet : public JResettable
     protected:
         std::map<std::pair<std::type_index, std::string>, JFactory*> mFactories;        // {(typeid, tag) : factory}
         std::map<std::pair<std::string, std::string>, JFactory*> mFactoriesFromString;  // {(objname, tag) : factory}
+        std::vector<JMultifactory*> mMultifactories;
+        bool mIsFactoryOwner = true;
 };
 
 
