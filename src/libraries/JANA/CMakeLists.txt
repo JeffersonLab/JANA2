@@ -133,6 +133,13 @@ set(JANA2_SOURCES
     Compatibility/JGetObjectsFactory.h
     )
 
+if (${USE_PODIO})
+    list(APPEND JANA2_SOURCES
+            Podio/JEventProcessorPodio.cc
+            Podio/JEventSourcePodio.cc
+        )
+endif()
+
 if (NOT ${USE_XERCES})
     message(STATUS "Skipping support for libJANA's JGeometryXML because USE_XERCES=Off")
 endif()
@@ -200,6 +207,7 @@ file(GLOB jana_utils_headers "Utils/*.h*")
 file(GLOB jana_calibs_headers "Calibrations/*.h*")
 file(GLOB jana_cli_headers "CLI/*.h*")
 file(GLOB jana_compat_headers "Compatibility/*.h*")
+file(GLOB jana_podio_headers "Podio/*.h*")
 
 install(FILES ${jana_headers} DESTINATION include/JANA)
 install(FILES ${jana_engine_headers} DESTINATION include/JANA/Engine)
@@ -210,6 +218,12 @@ install(FILES ${jana_utils_headers} DESTINATION include/JANA/Utils)
 install(FILES ${jana_calibs_headers} DESTINATION include/JANA/Calibrations)
 install(FILES ${jana_cli_headers} DESTINATION include/JANA/CLI)
 install(FILES ${jana_compat_headers} DESTINATION include/JANA/Compatibility)
+
+if (${USE_PODIO})
+    install(FILES ${jana_podio_headers} DESTINATION include/JANA/Podio)
+endif()
+
+
 
 
 

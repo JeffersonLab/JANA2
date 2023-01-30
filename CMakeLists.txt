@@ -57,6 +57,7 @@ option(USE_PYTHON "Include Python dependency. This requires python-devel and pyt
 option(USE_ASAN "Compile with address sanitizer" OFF)
 option(USE_TSAN "Compile with thread sanitizer" OFF)
 option(USE_CUDA "Compile CUDA-involved examples (Needed for examples/SubeventCUDAExample)." OFF)
+option(USE_PODIO "Compile with PODIO support" ON)
 option(BUILD_SHARED_LIBS "Build into both shared and static libs." ON)
 
 
@@ -110,6 +111,11 @@ if (${USE_CUDA})
     find_package(CUDA REQUIRED)
 endif()
 
+if (${USE_PODIO})
+    # find_package(PODIO REQUIRED) # TODO: Enable
+    add_compile_definitions(HAVE_PODIO)
+endif()
+
 #---------
 # Report back to the user what we've discovered
 #---------
@@ -151,6 +157,11 @@ if (${USE_CUDA})
     message(STATUS "USE_CUDA    On")
 else()
     message(STATUS "USE_CUDA    Off")
+endif()
+if (${USE_PODIO})
+    message(STATUS "USE_PODIO   On")
+else()
+    message(STATUS "USE_PODIO   Off")
 endif()
 if (${BUILD_SHARED_LIBS})
     message(STATUS "BUILD_SHARED_LIBS    On")
