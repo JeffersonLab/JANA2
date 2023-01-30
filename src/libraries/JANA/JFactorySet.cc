@@ -111,6 +111,7 @@ bool JFactorySet::Add(JMultifactory *multifactory) {
     /// This is a little bit weird, but we are using a JFactorySet internally to JMultifactory in order to store and
     /// efficiently access its JMultifactoryHelpers. Ownership of the JMultifactoryHelpers is transferred to
     /// the enclosing JFactorySet.
+    return true;
 }
 
 //---------------------------------
