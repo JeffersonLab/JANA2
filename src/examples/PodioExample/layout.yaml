@@ -1,0 +1,41 @@
+---
+# A more complete example is provided by podio under tests/datalayout.yaml
+
+options :
+  # should getters / setters be prefixed with get / set?
+  getSyntax: False
+  # should POD members be exposed with getters/setters in classes that have them as members?
+  exposePODMembers: True
+  includeSubfolder: True
+
+datatypes :
+  EventInfo:
+    Description : "Event info"
+    Author : "B. Hegner"
+    Members :
+      - int Number // event number
+    MutableExtraCode :
+      declaration: "void setNumber(int n) { Number( n ) ; } "
+    ExtraCode:
+      declaration: "int getNumber() const;"
+      implementation: "int {name}::getNumber() const { return Number(); }"
+
+  ExampleHit :
+    Description : "Example Hit"
+    Author : "B. Hegner"
+    Members:
+      - unsigned long long cellID      // cellID
+      - double x      // x-coordinate
+      - double y      // y-coordinate
+      - double z      // z-coordinate
+      - double energy // measured energy deposit
+
+  model::ExampleCluster :
+    Description : "Cluster"
+    Author : "B. Hegner"
+    Members:
+      - double energy // cluster energy
+    OneToManyRelations:
+      - ExampleHit Hits // hits contained in the cluster
+      - ExampleCluster Clusters // sub clusters used to create this cluster
+
