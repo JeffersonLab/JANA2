@@ -6,5 +6,17 @@
 #ifndef JANA2_PODIOCOLLECTION_H
 #define JANA2_PODIOCOLLECTION_H
 
-struct PodioCollection {};
+#include <vector>
+#include <JANA/JObject.h>
+
+struct PodioCollection {
+    std::vector<JObject*> data;
+
+    inline ~PodioCollection() {
+        for (auto* datum : data) {
+            delete datum;
+        }
+    }
+};
+
 #endif //JANA2_PODIOCOLLECTION_H

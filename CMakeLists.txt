@@ -112,7 +112,7 @@ if (${USE_CUDA})
 endif()
 
 if (${USE_PODIO})
-    # find_package(PODIO REQUIRED) # TODO: Enable
+    find_package(podio REQUIRED)
     add_compile_definitions(HAVE_PODIO)
 endif()
 

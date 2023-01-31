@@ -6,6 +6,17 @@
 #ifndef JANA2_PODIOFRAME_H
 #define JANA2_PODIOFRAME_H
 
-struct PodioFrame {};
+
+#include "PodioCollection.h"
+
+struct PodioFrame {
+    std::map<std::string, PodioCollection*> store;
+
+    inline ~PodioFrame() {
+        for (auto& pair : store) {
+            delete pair.second;
+        }
+    }
+};
 
 #endif //JANA2_PODIOFRAME_H
