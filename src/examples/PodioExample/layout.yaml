@@ -30,7 +30,7 @@ datatypes :
       - double z      // z-coordinate
       - double energy // measured energy deposit
 
-  model::ExampleCluster :
+  ExampleCluster :
     Description : "Cluster"
     Author : "B. Hegner"
     Members:
