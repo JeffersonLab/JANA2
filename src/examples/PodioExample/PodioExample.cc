@@ -15,25 +15,40 @@ struct FakeJANA {
     std::vector<const ExampleHit*> m_cache;
 
     void Process() {
-        auto coll = new ExampleHitCollection;
         MutableExampleHit hit;
         hit.cellID(22);
         hit.energy(100.0);
         hit.x(0);
         hit.y(0);
         hit.z(0);
-        std::cout << hit << std::endl;
-        coll->push_back(hit);
-        SetCollection<ExampleHit>(coll, "hits");
 
+        MutableExampleHit hit2;
+        hit2.cellID(49);
+        hit2.energy(97.1);
+        hit2.x(1);
+        hit2.y(2);
+        hit2.z(3);
+
+        auto coll = new ExampleHitCollection;
+        coll->push_back(hit);
+        coll->push_back(hit2);
+
+        auto cluster_coll = new ExampleClusterCollection;
+        MutableExampleCluster cluster;
+        cluster.addHits(hit);
+        cluster.addHits(hit2);
+        cluster_coll->push_back(cluster);
+
+        SetCollection<ExampleHit>(coll, "hits");
+        SetCollection<ExampleCluster>(cluster_coll, "clusters");
     }
 
     template <typename T>
     void SetCollection(typename PodioTypeMap<T>::collection_t* coll, std::string coll_name) {
         const auto& moved = m_frame.put(std::move(*coll), coll_name);
-        for (const ExampleHit& item : moved) {
-            m_cache.push_back(&item); // Is this stable?
-        }
+        // for (const ExampleHit& item : moved) {
+        //    m_cache.push_back(&item); // Is this stable?
+        //}
     }
 
     template <typename T>
@@ -53,21 +68,19 @@ struct FakeJANA {
 };
 
 int main() {
-    std::cout << "Hello world" << std::endl;
-    auto coll = new ExampleHitCollection;
-    MutableExampleHit hit;
-    hit.cellID(22);
-    hit.energy(100.0);
-    hit.x(0);
-    hit.y(0);
-    hit.z(0);
-    std::cout << hit << std::endl;
-    coll->push_back(hit);
-    podio::Frame frame;
-    frame.put(std::move(*coll), "SillyCollection");
+    FakeJANA jannah;
+    jannah.Process();
+
+    std::cout << "WRITING TO ROOT FILE:" << std::endl;
+    for (const auto& hit : jannah.m_frame.get<ExampleHitCollection>("hits")) {
+        std::cout << "HIT:" << std::endl << hit << std::endl;
+    }
+    for (const auto& cluster : jannah.m_frame.get<ExampleClusterCollection>("clusters")) {
+        std::cout << "CLUSTER:" << std::endl << cluster << std::endl;
+    }
 
     podio::ROOTFrameWriter writer("podio_output.root");
-    writer.writeFrame(frame, "events");
+    writer.writeFrame(jannah.m_frame, "events");
     writer.finish();
 
     podio::ROOTFrameReader reader;
@@ -75,9 +88,12 @@ int main() {
     auto framedata = reader.readEntry("events", 0);
     auto frame2 = podio::Frame(std::move(framedata));
 
-    auto& readcol = frame2.get<ExampleHitCollection>("SillyCollection");
-    const auto& readhit = readcol[0];
-    std::cout << readhit << std::endl;
-
+    std::cout << "READ FROM ROOT FILE:" << std::endl;
+    for (const auto& hit : frame2.get<ExampleHitCollection>("hits")) {
+        std::cout << "HIT:" << std::endl << hit << std::endl;
+    }
+    for (const auto& cluster : frame2.get<ExampleClusterCollection>("clusters")) {
+        std::cout << "CLUSTER:" << std::endl << cluster << std::endl;
+    }
 }
 
