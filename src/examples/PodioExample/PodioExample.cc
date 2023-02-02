@@ -67,7 +67,7 @@ struct FakeJANA {
 
 };
 
-struct PrintPodioCollection {
+struct PrintingVisitor {
     template <typename T>
     void operator() (const podio::CollectionBase* coll, std::string coll_name) {
         using CollT = const typename PodioTypeMap<T>::collection_t;
@@ -81,15 +81,23 @@ struct PrintPodioCollection {
     }
 };
 
+template<typename ... Ts>
+struct Overload : Ts ... {
+    using Ts::operator() ...;
+};
+template<class... Ts> Overload(Ts...) -> Overload<Ts...>;
+
+
 int main() {
     FakeJANA jannah;
     jannah.Process();
 
+    PrintingVisitor printer;
 
     std::cout << "WRITING TO ROOT FILE:" << std::endl;
     for (const std::string& coll_name : jannah.m_frame.getAvailableCollections()) {
         const podio::CollectionBase* coll = jannah.m_frame.get(coll_name);
-        PodioTypedProcedure<PrintPodioCollection, const podio::CollectionBase*, std::string>(coll->getValueTypeName(), coll, coll_name);
+        visitPodioType(coll->getValueTypeName(), printer, coll, coll_name);
     }
 
     podio::ROOTFrameWriter writer("podio_output.root");
@@ -104,7 +112,18 @@ int main() {
     std::cout << "READ FROM ROOT FILE:" << std::endl;
     for (const std::string& coll_name : frame2.getAvailableCollections()) {
         const podio::CollectionBase* coll = frame2.get(coll_name);
-        PodioTypedProcedure<PrintPodioCollection, const podio::CollectionBase*, std::string>(coll->getValueTypeName(), coll, coll_name);
+        visitPodioType(coll->getValueTypeName(), Overload {
+               [=]<typename T>(const podio::CollectionBase* coll, std::string name) {
+                   using CollT = const typename PodioTypeMap<T>::collection_t;
+                   CollT* typed_col = static_cast<CollT*>(coll);
+
+                   std::cout << coll_name << std::endl;
+                   for (const T& object : *typed_col) {
+                       std::cout << coll->getValueTypeName() << std::endl;
+                       std::cout << object << std::endl;
+                   }
+               }
+            }, coll, coll_name);
     }
 
     // auto untyped_coll = frame2.get("hits");
