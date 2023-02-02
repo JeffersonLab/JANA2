@@ -31,10 +31,24 @@ struct PodioTypeMap<ExampleCluster> {
 
 template <>
 struct PodioTypeMap<EventInfo> {
-    using mutable_t = EventInfoCollection;
-    using collection_t = MutableEventInfo;
+    using mutable_t = MutableEventInfo;
+    using collection_t = EventInfoCollection;
 };
 
 
+template <typename F, typename... ArgsT>
+void PodioTypedProcedure(const std::string& podio_typename, ArgsT... args) {
+    F helper;
+    if (podio_typename == "EventInfo") {
+        return helper.template operator()<EventInfo>(std::forward<ArgsT>(args)...);
+    }
+    else if (podio_typename == "ExampleHit") {
+        return helper.template operator()<ExampleHit>(std::forward<ArgsT>(args)...);
+    }
+    else if (podio_typename == "ExampleCluster") {
+        return helper.template operator()<ExampleCluster>(std::forward<ArgsT>(args)...);
+    }
+    throw std::runtime_error("Not a podio typename!");
+}
 
 #endif //JANA2_DATAMODELGLUE_H

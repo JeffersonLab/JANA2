@@ -67,16 +67,29 @@ struct FakeJANA {
 
 };
 
+struct PrintPodioCollection {
+    template <typename T>
+    void operator() (const podio::CollectionBase* coll, std::string coll_name) {
+        using CollT = const typename PodioTypeMap<T>::collection_t;
+        CollT* typed_col = static_cast<CollT*>(coll);
+
+        std::cout << coll_name << std::endl;
+        for (const T& object : *typed_col) {
+            std::cout << coll->getValueTypeName() << std::endl;
+            std::cout << object << std::endl;
+        }
+    }
+};
+
 int main() {
     FakeJANA jannah;
     jannah.Process();
 
+
     std::cout << "WRITING TO ROOT FILE:" << std::endl;
-    for (const auto& hit : jannah.m_frame.get<ExampleHitCollection>("hits")) {
-        std::cout << "HIT:" << std::endl << hit << std::endl;
-    }
-    for (const auto& cluster : jannah.m_frame.get<ExampleClusterCollection>("clusters")) {
-        std::cout << "CLUSTER:" << std::endl << cluster << std::endl;
+    for (const std::string& coll_name : jannah.m_frame.getAvailableCollections()) {
+        const podio::CollectionBase* coll = jannah.m_frame.get(coll_name);
+        PodioTypedProcedure<PrintPodioCollection, const podio::CollectionBase*, std::string>(coll->getValueTypeName(), coll, coll_name);
     }
 
     podio::ROOTFrameWriter writer("podio_output.root");
@@ -89,11 +102,12 @@ int main() {
     auto frame2 = podio::Frame(std::move(framedata));
 
     std::cout << "READ FROM ROOT FILE:" << std::endl;
-    for (const auto& hit : frame2.get<ExampleHitCollection>("hits")) {
-        std::cout << "HIT:" << std::endl << hit << std::endl;
+    for (const std::string& coll_name : frame2.getAvailableCollections()) {
+        const podio::CollectionBase* coll = frame2.get(coll_name);
+        PodioTypedProcedure<PrintPodioCollection, const podio::CollectionBase*, std::string>(coll->getValueTypeName(), coll, coll_name);
     }
-    for (const auto& cluster : frame2.get<ExampleClusterCollection>("clusters")) {
-        std::cout << "CLUSTER:" << std::endl << cluster << std::endl;
-    }
+
+    // auto untyped_coll = frame2.get("hits");
+    // std::cout << "ExampleHit collection: Typename=" << untyped_coll->getTypeName() << ", DataTypeName=" << untyped_coll->getDataTypeName() << ", ValueTypeName=" << untyped_coll->getValueTypeName() << std::endl;
 }
 
