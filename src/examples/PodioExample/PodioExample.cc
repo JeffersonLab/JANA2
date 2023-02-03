@@ -45,7 +45,7 @@ struct FakeJANA {
 
     template <typename T>
     void SetCollection(typename PodioTypeMap<T>::collection_t* coll, std::string coll_name) {
-        const auto& moved = m_frame.put(std::move(*coll), coll_name);
+        m_frame.put(std::move(*coll), coll_name);
         // for (const ExampleHit& item : moved) {
         //    m_cache.push_back(&item); // Is this stable?
         //}
@@ -81,12 +81,6 @@ struct PrintingVisitor {
     }
 };
 
-template<typename ... Ts>
-struct Overload : Ts ... {
-    using Ts::operator() ...;
-};
-template<class... Ts> Overload(Ts...) -> Overload<Ts...>;
-
 
 int main() {
     FakeJANA jannah;
@@ -112,17 +106,16 @@ int main() {
     std::cout << "READ FROM ROOT FILE:" << std::endl;
     for (const std::string& coll_name : frame2.getAvailableCollections()) {
         const podio::CollectionBase* coll = frame2.get(coll_name);
-        visitPodioType(coll->getValueTypeName(), Overload {
-               [=]<typename T>(const podio::CollectionBase* coll, std::string name) {
+        visitPodioType(coll->getValueTypeName(),
+               [&]<typename T>(const podio::CollectionBase* coll, std::string name) {
                    using CollT = const typename PodioTypeMap<T>::collection_t;
                    CollT* typed_col = static_cast<CollT*>(coll);
 
-                   std::cout << coll_name << std::endl;
+                   std::cout << name << std::endl;
                    for (const T& object : *typed_col) {
                        std::cout << coll->getValueTypeName() << std::endl;
                        std::cout << object << std::endl;
                    }
-               }
             }, coll, coll_name);
     }
 

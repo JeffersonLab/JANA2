@@ -36,6 +36,12 @@ struct PodioTypeMap<EventInfo> {
 };
 
 
+template<typename ... Ts>
+struct Overload : Ts ... {
+    using Ts::operator() ...;
+};
+template<class... Ts> Overload(Ts...) -> Overload<Ts...>;
+
 template <typename F, typename... ArgsT>
 void visitPodioType(const std::string& podio_typename, F& helper, ArgsT... args) {
     if (podio_typename == "EventInfo") {
