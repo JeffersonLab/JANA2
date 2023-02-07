@@ -2,6 +2,9 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
+#ifndef _JFactoryT_h_
+#define _JFactoryT_h_
+
 #include <vector>
 #include <type_traits>
 
@@ -14,8 +17,10 @@
 #include <TObject.h>
 #endif
 
-#ifndef _JFactoryT_h_
-#define _JFactoryT_h_
+#ifdef HAVE_PODIO
+#include <podio/Frame.h>
+#endif
+
 
 /// Class template for metadata. This constrains JFactoryT<T> to use the same (user-defined)
 /// metadata structure, JMetadata<T> for that T. This is essential for retrieving metadata from
@@ -63,7 +68,6 @@ public:
     void ChangeRun(const std::shared_ptr<const JEvent>&) override {}
     void EndRun() override {}
     void Process(const std::shared_ptr<const JEvent>&) override {}
-
 
     std::type_index GetObjectType(void) const override {
         return std::type_index(typeid(T));
@@ -137,10 +141,33 @@ public:
     /// Please use the typed setters instead whenever possible
     void Set(const std::vector<JObject*>& aData) override {
         ClearData();
-        for (auto jobj : aData) {
-            T* casted = dynamic_cast<T*>(jobj);
-            assert(casted != nullptr);
-            mData.push_back(casted);
+        if (mIsPodio) {
+#ifdef HAVE_PODIO
+            if (mCollection == nullptr) {
+                mFrame->put(std::make_unique<typename PodioTypeMap<T>::collection_t>());
+                mCollection = &mFrame->get<typename PodioTypeMap<T>::collection_t>(mTag);
+            } else {
+                mCollection->clear();
+            }
+            for (auto jobj: aData) {
+                T *casted = dynamic_cast<T *>(jobj);
+                assert(casted != nullptr);
+                mCollection->push_back(*casted);
+            }
+            for (const T &item: mCollection) {
+                mData.push_back(&item);
+            }
+#else
+        throw std::runtime_error("Not compiled with Podio support! mIsPodio is probably corrupted");
+#endif
+        }
+        else {
+            // No PODIO!
+            for (auto jobj: aData) {
+                T *casted = dynamic_cast<T *>(jobj);
+                assert(casted != nullptr);
+                mData.push_back(casted);
+            }
         }
         mStatus = Status::Inserted;                  // n.b. This will be overwritten in GetOrCreate above
         mCreationStatus = CreationStatus::Inserted;  // n.b. This will be overwritten in GetOrCreate above
@@ -148,39 +175,88 @@ public:
 
     /// Please use the typed setters instead whenever possible
     void Insert(JObject* aDatum) override {
-        T* casted = dynamic_cast<T*>(aDatum);
-        assert(casted != nullptr);
-        mData.push_back(casted);
-        mStatus = Status::Inserted;
-        mCreationStatus = CreationStatus::Inserted;
-    }
-
-    void Set(const std::vector<T*>& aData) {
-        if (aData == mData) {
-            // The user populated mData directly instead of populating a temporary vector and passing it to us.
-            // Doing this breaks the JFactory::Status invariant unless they remember to call Set() afterwards.
-            // Ideally, they would use a temporary vector and not access mData at all, but they are used to this
-            // from JANA1 and I haven't found a cleaner solution that gives them what they want yet.
+        if (mIsPodio) {
+#ifdef HAVE_PODIO
+            T *casted = dynamic_cast<T *>(aDatum);
+            assert(casted != nullptr);
+            auto coll = std::make_unique<typename PodioTypeMap<T>::collection_t>();
+            coll->push_back(casted);
+            mFrame->put(coll, mTag);
+            mCollection = mFrame->get<typename PodioTypeMap<T>::collection_t>(mTag);
+            mData.push_back((*mCollection)[0]);
+            mStatus = Status::Inserted;
+            mCreationStatus = CreationStatus::Inserted;
+#else
+            throw std::runtime_error("Not compiled with Podio support! mIsPodio is probably corrupted");
+#endif
+        }
+        else {
+            T *casted = dynamic_cast<T *>(aDatum);
+            assert(casted != nullptr);
+            mData.push_back(casted);
             mStatus = Status::Inserted;
             mCreationStatus = CreationStatus::Inserted;
         }
-        else {
-            ClearData();
-            mData = aData;
+    }
+
+    void Set(const std::vector<T*>& aData) {
+        // If the user populates mData directly instead of populating a temporary vector, they still need to
+        // call Set() so that the JFactory::Status gets updated.
+        // Doing this breaks the JFactory::Status invariant unless they remember to call Set() afterwards.
+        // Ideally, they would use a temporary vector and not access mData at all, but they are used to this
+        // from JANA1 and I haven't found a cleaner solution that gives them what they want yet.
+
+        if (mIsPodio) {
+#ifdef HAVE_PODIO
+            if (aData != mData) {
+                ClearData();
+                mData = aData;
+                auto coll = new typename PodioTypeMap<T>::collection_t;
+                for (T* d : aData) {
+                    coll->push_back(d);
+                }
+                mCollection = coll;
+                // TODO: Frame should own collection
+            }
             mStatus = Status::Inserted;
             mCreationStatus = CreationStatus::Inserted;
+#else
+            throw std::runtime_error("Not compiled with Podio support! mIsPodio is probably corrupted");
+#endif
+        }
+        else {
+            if (aData != mData) {
+                ClearData();
+                mData = aData;
+            }
+            mStatus = Status::Inserted;
+            mCreationStatus = CreationStatus::Inserted;
+
         }
     }
 
     void Set(std::vector<T*>&& aData) {
         ClearData();
         mData = std::move(aData);
+#ifdef HAVE_PODIO
+        auto coll = new typename PodioTypeMap<T>::collection_t;
+        for (T* d : aData) {
+            coll->push_back(d);
+        }
+        mCollection = coll;
+#endif
         mStatus = Status::Inserted;
         mCreationStatus = CreationStatus::Inserted;
     }
 
     void Insert(T* aDatum) {
         mData.push_back(aDatum);
+#ifdef HAVE_PODIO
+        if (mCollection == nullptr) {
+            mCollection = new typename PodioTypeMap<T>::collection_t;
+        }
+        mCollection->push_back(aDatum);
+#endif
         mStatus = Status::Inserted;
         mCreationStatus = CreationStatus::Inserted;
     }
@@ -214,6 +290,8 @@ public:
             for (auto p : mData) delete p;
         }
         mData.clear();
+        mCollection = nullptr;  // "Cleared" when frame gets cleared
+        // TODO: Who owns mCollection? The frame, or the factory?
         mStatus = Status::Unprocessed;
         mCreationStatus = CreationStatus::NotCreatedYet;
     }
@@ -228,9 +306,45 @@ public:
     JMetadata<T> GetMetadata() { return mMetadata; }
 
 
+#ifdef HAVE_PODIO
+    void EnablePodioCollectionAccess() {
+        mIsPodio = true;
+        SetFactoryFlag(JFactory_Flags_t::NOT_OBJECT_OWNER);
+    }
+
+    template <typename S> struct PodioTypeMap;
+
+    const podio::CollectionBase* GetCollection() { return mCollection; } // TODO: GetOrCreate?
+
+    template <typename PodioT> void SetCollection(typename PodioTypeMap<PodioT>::collection_t* collection) {
+        if (!mIsPodio) throw std::runtime_error("PODIO collection access has not been enabled!");
+        // TODO: Insert into frame immediately? Or can we get away with storing the collection independently and inserting later?
+        ClearData();
+        mCollection = collection;
+        for (const PodioT& item : collection) {
+            mData.push_back(&item);
+        }
+        mStatus = Status::Inserted;
+        mCreationStatus = CreationStatus::Inserted;
+    }
+
+#endif
+
+
+
 protected:
     std::vector<T*> mData;
     JMetadata<T> mMetadata;
+    bool mIsPodio = false; // Always false unless user chooses to EnablePodioCollectionAccess()
+
+#ifdef HAVE_PODIO
+    const typename PodioTypeMap<T>::collection_t* mCollection = nullptr;
+    podio::Frame* mFrame = nullptr;
+    // mCollection is owned by the frame.
+    // mFrame is owned by the JFactoryT<podio::Frame>.
+    // mData holds lightweight value objects which hold a pointer into mCollection.
+    // This factory owns these value objects.
+#endif
 };
 
 template<typename T>

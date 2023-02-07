@@ -151,7 +151,11 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 target_include_directories(jana2 PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/..)
 # So that we can find the generated JVersion.h before install
 
-target_link_libraries(jana2 ${CMAKE_DL_LIBS} Threads::Threads)
+if (${USE_PODIO})
+    target_link_libraries(jana2 ${CMAKE_DL_LIBS} Threads::Threads podio::podio podio::podioRootIO)
+else()
+    target_link_libraries(jana2 ${CMAKE_DL_LIBS} Threads::Threads)
+endif()
 
 if (BUILD_SHARED_LIBS)
     message("-- Build into both shared and static libs")
