@@ -14,6 +14,7 @@ set(JANA2_SOURCES
     JEventSourceGeneratorT.h
     JException.h
     JFactory.h
+    JFactory.cc
     JFactoryGenerator.h
     JFactorySet.cc
     JFactorySet.h

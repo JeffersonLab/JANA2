@@ -81,80 +81,30 @@ public:
     /// ChangeRun(), and Process() methods. These include making sure the JFactory JApplication is set, Init() is called
     /// exactly once, exceptions are tagged with the originating plugin and eventsource, ChangeRun() is
     /// called if and only if the run number changes, etc.
-    PairType GetOrCreate(const std::shared_ptr<const JEvent>& event, JApplication* app, int32_t run_number) {
-
-        // std::lock_guard<std::mutex> lock(mMutex);
-        // TODO: We might want _some_ locking here actually
-        if (mApp == nullptr) {
-            mApp = app;
+    PairType GetOrCreate(const std::shared_ptr<const JEvent>& event) {
+        if (mStatus == Status::Uninitialized || mStatus == Status::Unprocessed) {
+            Create(event);
         }
-        if (mStatus == Status::Uninitialized) {
-            try {
-                std::call_once(mInitFlag, &JFactory::Init, this);
-                mStatus = Status::Unprocessed;
-            }
-            catch (JException& ex) {
-                ex.plugin_name = mPluginName;
-                ex.component_name = mFactoryName;
-                throw ex;
-            }
-            catch (...) {
-                auto ex = JException("Unknown exception in JFactoryT::Init()");
-                ex.nested_exception = std::current_exception();
-                ex.plugin_name = mPluginName;
-                ex.component_name = mFactoryName;
-                throw ex;
-            }
+        if (mStatus != Status::Processed && mStatus != Status::Inserted) {
+            throw JException("JFactoryT::Status is corrupted");
         }
-        if (mStatus == Status::Unprocessed) {
-            if (mPreviousRunNumber == -1) {
-                // This is the very first run
-                ChangeRun(event);
-                BeginRun(event);
-                mPreviousRunNumber = run_number;
-            }
-            else if (mPreviousRunNumber != run_number) {
-                // This is a later run, and it has changed
-                EndRun();
-                ChangeRun(event);
-                BeginRun(event);
-                mPreviousRunNumber = run_number;
-            }
-            Process(event);
-            mStatus = Status::Processed;
-            mCreationStatus = CreationStatus::Created;
-        }
-        if (mStatus == Status::Processed || mStatus == Status::Inserted) {
-            return std::make_pair(mData.cbegin(), mData.cend());
-        }
-        else {
-            throw JException("JFactoryT::Status is set to a garbage value");
-        }
+        return std::make_pair(mData.cbegin(), mData.cend());
     }
-
-    size_t Create(const std::shared_ptr<const JEvent>& event, JApplication* app, uint64_t run_number) final {
-        auto result = GetOrCreate(event, app, run_number);
-        return std::distance(result.first, result.second);
-    }
-
 
     /// Please use the typed setters instead whenever possible
     void Set(const std::vector<JObject*>& aData) override {
         ClearData();
         if (mIsPodio) {
 #ifdef HAVE_PODIO
-            if (mCollection == nullptr) {
-                mFrame->put(std::make_unique<typename PodioTypeMap<T>::collection_t>());
-                mCollection = &mFrame->get<typename PodioTypeMap<T>::collection_t>(mTag);
-            } else {
-                mCollection->clear();
-            }
+            auto coll = std::make_unique<typename PodioTypeMap<T>::collection_t>();
             for (auto jobj: aData) {
                 T *casted = dynamic_cast<T *>(jobj);
                 assert(casted != nullptr);
-                mCollection->push_back(*casted);
+                coll->push_back(*casted);
             }
-            for (const T &item: mCollection) {
+            auto moved = mFrame->put(coll, mTag);
+            mCollection = &moved;
+            for (const T &item: moved) {
                 mData.push_back(&item);
             }
 #else
@@ -162,7 +112,6 @@ public:
 #endif
         }
         else {
-            // No PODIO!
             for (auto jobj: aData) {
                 T *casted = dynamic_cast<T *>(jobj);
                 assert(casted != nullptr);
@@ -181,11 +130,9 @@ public:
             assert(casted != nullptr);
             auto coll = std::make_unique<typename PodioTypeMap<T>::collection_t>();
             coll->push_back(casted);
-            mFrame->put(coll, mTag);
-            mCollection = mFrame->get<typename PodioTypeMap<T>::collection_t>(mTag);
-            mData.push_back((*mCollection)[0]);
-            mStatus = Status::Inserted;
-            mCreationStatus = CreationStatus::Inserted;
+            auto moved = mFrame->put(coll, mTag);
+            mCollection = &moved;
+            mData.push_back(moved[0]);
 #else
             throw std::runtime_error("Not compiled with Podio support! mIsPodio is probably corrupted");
 #endif
@@ -194,9 +141,9 @@ public:
             T *casted = dynamic_cast<T *>(aDatum);
             assert(casted != nullptr);
             mData.push_back(casted);
-            mStatus = Status::Inserted;
-            mCreationStatus = CreationStatus::Inserted;
         }
+        mStatus = Status::Inserted;
+        mCreationStatus = CreationStatus::Inserted;
     }
 
     void Set(const std::vector<T*>& aData) {
@@ -213,13 +160,10 @@ public:
                 mData = aData;
                 auto coll = new typename PodioTypeMap<T>::collection_t;
                 for (T* d : aData) {
-                    coll->push_back(d);
+                    coll->push_back(*d);
                 }
-                mCollection = coll;
-                // TODO: Frame should own collection
+                mCollection = &(mFrame->put(coll, mTag));
             }
-            mStatus = Status::Inserted;
-            mCreationStatus = CreationStatus::Inserted;
 #else
             throw std::runtime_error("Not compiled with Podio support! mIsPodio is probably corrupted");
 #endif
@@ -229,34 +173,50 @@ public:
                 ClearData();
                 mData = aData;
             }
-            mStatus = Status::Inserted;
-            mCreationStatus = CreationStatus::Inserted;
-
         }
+        mStatus = Status::Inserted;
+        mCreationStatus = CreationStatus::Inserted;
     }
 
     void Set(std::vector<T*>&& aData) {
-        ClearData();
-        mData = std::move(aData);
+        if (mIsPodio) {
 #ifdef HAVE_PODIO
-        auto coll = new typename PodioTypeMap<T>::collection_t;
-        for (T* d : aData) {
-            coll->push_back(d);
-        }
-        mCollection = coll;
+            auto coll = new typename PodioTypeMap<T>::collection_t;
+            for (T *d: aData) {
+                coll->push_back(d);
+            }
+            auto moved = mFrame->put(coll, mTag);
+            mCollection = &moved;
+            for (const T &item: moved) {
+                mData.push_back(&item);
+            }
+#else
+            throw std::runtime_error("Not compiled with Podio support! mIsPodio is probably corrupted");
 #endif
+        }
+        else {
+            ClearData();
+            mData = std::move(aData);
+        }
         mStatus = Status::Inserted;
         mCreationStatus = CreationStatus::Inserted;
     }
 
     void Insert(T* aDatum) {
-        mData.push_back(aDatum);
+        if (mIsPodio) {
 #ifdef HAVE_PODIO
-        if (mCollection == nullptr) {
-            mCollection = new typename PodioTypeMap<T>::collection_t;
-        }
-        mCollection->push_back(aDatum);
+            auto coll = new typename PodioTypeMap<T>::collection_t;
+            coll->push_back(aDatum);
+            typename PodioTypeMap<T>::collection_t *moved = &(mFrame->put(coll, mTag));
+            mCollection = moved;
+            mData.push_back(&mCollection[0]);
+#else
+            throw std::runtime_error("Not compiled with Podio support! mIsPodio is probably corrupted");
 #endif
+        }
+        else {
+            mData.push_back(aDatum);
+        }
         mStatus = Status::Inserted;
         mCreationStatus = CreationStatus::Inserted;
     }
@@ -291,7 +251,6 @@ public:
         }
         mData.clear();
         mCollection = nullptr;  // "Cleared" when frame gets cleared
-        // TODO: Who owns mCollection? The frame, or the factory?
         mStatus = Status::Unprocessed;
         mCreationStatus = CreationStatus::NotCreatedYet;
     }
@@ -309,19 +268,20 @@ public:
 #ifdef HAVE_PODIO
     void EnablePodioCollectionAccess() {
         mIsPodio = true;
-        SetFactoryFlag(JFactory_Flags_t::NOT_OBJECT_OWNER);
+        // Factory IS the owner of the mData pointers, because those are just lightweight
+        // wrapper objects that point into the Collection.
     }
 
     template <typename S> struct PodioTypeMap;
 
     const podio::CollectionBase* GetCollection() { return mCollection; } // TODO: GetOrCreate?
 
-    template <typename PodioT> void SetCollection(typename PodioTypeMap<PodioT>::collection_t* collection) {
+    template <typename PodioT> void SetCollection(std::unique_ptr<typename PodioTypeMap<PodioT>::collection_t> collection) {
+
         if (!mIsPodio) throw std::runtime_error("PODIO collection access has not been enabled!");
-        // TODO: Insert into frame immediately? Or can we get away with storing the collection independently and inserting later?
-        ClearData();
-        mCollection = collection;
-        for (const PodioT& item : collection) {
+        auto moved = mFrame->put(collection, mTag);
+        mCollection = &moved;
+        for (const PodioT& item : moved) {
             mData.push_back(&item);
         }
         mStatus = Status::Inserted;
@@ -338,8 +298,7 @@ protected:
     bool mIsPodio = false; // Always false unless user chooses to EnablePodioCollectionAccess()
 
 #ifdef HAVE_PODIO
-    const typename PodioTypeMap<T>::collection_t* mCollection = nullptr;
-    podio::Frame* mFrame = nullptr;
+    const podio::CollectionBase* mCollection = nullptr;
     // mCollection is owned by the frame.
     // mFrame is owned by the JFactoryT<podio::Frame>.
     // mData holds lightweight value objects which hold a pointer into mCollection.

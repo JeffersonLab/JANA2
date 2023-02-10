@@ -20,6 +20,9 @@
 #include <functional>
 
 
+namespace podio {
+    class Frame;
+}
 class JEvent;
 class JObject;
 class JApplication;
@@ -119,13 +122,6 @@ public:
         return 0;
     }
 
-    // Copy/Move objects into factory
-    template<typename T>
-    void Set(const std::vector<T *> &items) {
-        for (T *item : items) {
-            Insert(item);
-        }
-    }
 
     /// Access the encapsulated data, performing an upcast if necessary. This is useful for extracting data from
     /// all JFactories<T> where T extends a parent class S, such as JObject or TObject, in contexts where T is not known
@@ -142,7 +138,7 @@ public:
     /// Create() calls JFactory::Init,BeginRun,Process in an invariant-preserving way without knowing the exact
     /// type of object contained. It returns the number of objects created. In order to access said objects,
     /// use JFactory::GetAs().
-    virtual size_t Create(const std::shared_ptr<const JEvent>& event, JApplication* app, uint64_t run_number) = 0;
+    void Create(const std::shared_ptr<const JEvent>& event);
 
     /// JApplication setter. This is meant to be used under the hood.
     void SetApplication(JApplication* app) { mApp = app; }
@@ -165,6 +161,7 @@ protected:
     int32_t mPreviousRunNumber = -1;
     JApplication* mApp = nullptr;
     std::unordered_map<std::type_index, std::unique_ptr<JAny>> mUpcastVTable;
+    podio::Frame* mFrame;
 
     mutable Status mStatus = Status::Uninitialized;
     mutable JCallGraphRecorder::JDataOrigin m_insert_origin = JCallGraphRecorder::ORIGIN_NOT_AVAILABLE; // (see note at top of JCallGraphRecorder.h)

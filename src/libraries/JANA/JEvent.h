@@ -197,7 +197,7 @@ inline JMetadata<T> JEvent::GetMetadata(const std::string& tag) const {
 
     auto factory = GetFactory<T>(tag, true);
     // Make sure that JFactoryT::Process has already been called before returning the metadata
-    factory->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
+    factory->GetOrCreate(this->shared_from_this());
     return factory->GetMetadata();
 }
 
@@ -216,7 +216,7 @@ JFactoryT<T>* JEvent::Get(const T** destination, const std::string& tag) const
 {
     auto factory = GetFactory<T>(tag, true);
     JCallGraphEntryMaker cg_entry(mCallGraph, factory); // times execution until this goes out of scope
-    auto iterators = factory->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
+    auto iterators = factory->GetOrCreate(this->shared_from_this());
     if (std::distance(iterators.first, iterators.second) == 0) {
         *destination = nullptr;
     }
@@ -232,7 +232,7 @@ JFactoryT<T>* JEvent::Get(std::vector<const T*>& destination, const std::string&
 {
     auto factory = GetFactory<T>(tag, true);
     JCallGraphEntryMaker cg_entry(mCallGraph, factory); // times execution until this goes out of scope
-    auto iterators = factory->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
+    auto iterators = factory->GetOrCreate(this->shared_from_this());
     for (auto it=iterators.first; it!=iterators.second; it++) {
         destination.push_back(*it);
     }
@@ -252,7 +252,7 @@ JFactoryT<T>* JEvent::Get(std::vector<const T*>& destination, const std::string&
 template<class T> const T* JEvent::GetSingle(const std::string& tag) const {
     auto factory = GetFactory<T>(tag, true);
     JCallGraphEntryMaker cg_entry(mCallGraph, factory); // times execution until this goes out of scope
-    auto iterators = factory->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
+    auto iterators = factory->GetOrCreate(this->shared_from_this());
     if (std::distance(iterators.first, iterators.second) == 0) {
         return nullptr;
     }
@@ -268,7 +268,7 @@ template<class T> const T* JEvent::GetSingle(const std::string& tag) const {
 template<class T> const T* JEvent::GetSingleStrict(const std::string& tag) const {
     auto factory = GetFactory<T>(tag, true);
     JCallGraphEntryMaker cg_entry(mCallGraph, factory); // times execution until this goes out of scope
-    auto iterators = factory->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
+    auto iterators = factory->GetOrCreate(this->shared_from_this());
     if (std::distance(iterators.first, iterators.second) == 0) {
         JException ex("GetSingle failed due to missing %d", NAME_OF(T));
         ex.show_stacktrace = false;
@@ -288,7 +288,7 @@ std::vector<const T*> JEvent::Get(const std::string& tag) const {
 
     auto factory = GetFactory<T>(tag, true);
     JCallGraphEntryMaker cg_entry(mCallGraph, factory); // times execution until this goes out of scope
-    auto iters = factory->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
+    auto iters = factory->GetOrCreate(this->shared_from_this());
     std::vector<const T*> vec;
     for (auto it=iters.first; it!=iters.second; ++it) {
         vec.push_back(*it);
@@ -317,7 +317,7 @@ template<class T>
 void JEvent::GetAll(std::vector<const T*>& destination) const {
     auto factories = GetFactoryAll<T>(true);
     for (auto factory : factories) {
-        auto iterators = factory->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
+        auto iterators = factory->GetOrCreate(this->shared_from_this());
         for (auto it = iterators.first; it != iterators.second; it++) {
             destination.push_back(*it);
         }
@@ -331,7 +331,7 @@ std::vector<const T*> JEvent::GetAll() const {
     auto factories = GetFactoryAll<T>(true);
 
     for (auto factory : factories) {
-        auto iters = factory->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
+        auto iters = factory->GetOrCreate(this->shared_from_this());
         std::vector<const T*> vec;
         for (auto it = iters.first; it != iters.second; ++it) {
             vec.push_back(*it);
@@ -364,7 +364,7 @@ template<class T>
 typename JFactoryT<T>::PairType JEvent::GetIterators(const std::string& tag) const {
     auto factory = GetFactory<T>(tag, true);
     JCallGraphEntryMaker cg_entry(mCallGraph, factory); // times execution until this goes out of scope
-    auto iters = factory->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
+    auto iters = factory->GetOrCreate(this->shared_from_this());
     return iters;
 }
 
