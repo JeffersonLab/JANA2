@@ -113,6 +113,9 @@ public:
     template <typename T>
     JParameter* SetDefaultParameter(std::string name, T& val, std::string description="");
 
+    template <typename T>
+    T RegisterParameter(std::string name, const T default_val, std::string description="");
+
     // Locating services
 
     /// Use this in EventSources, Factories, or EventProcessors. Do not call this
@@ -171,6 +174,11 @@ JParameter* JApplication::SetParameterValue(std::string name, T val) {
 template <typename T>
 JParameter* JApplication::SetDefaultParameter(std::string name, T& val, std::string description) {
     return m_params->SetDefaultParameter(name.c_str(), val, description);
+}
+
+template <typename T>
+T JApplication::RegisterParameter(std::string name, const T default_val, std::string description) {
+    return m_params->RegisterParameter(name.c_str(), default_val, description);
 }
 
 template <typename T>
