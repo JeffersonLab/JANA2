@@ -4,3 +4,9 @@
 
 
 #include "JFactoryPodioT.h"
+#include <JANA/JEvent.h>
+
+podio::Frame* GetFrame(const JEvent& event) {
+
+    return const_cast<podio::Frame*>(event.GetSingle<podio::Frame>(""));
+}

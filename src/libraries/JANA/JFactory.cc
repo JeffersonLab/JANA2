@@ -5,6 +5,11 @@
 #include <JANA/JFactory.h>
 #include <JANA/JEvent.h>
 
+#ifdef HAVE_PODIO
+#include <podio/Frame.h>
+// So that JTypeInfo::demangle() can RTTI podio::Frame
+#endif
+
 
 void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
 
