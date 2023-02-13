@@ -1,6 +1,7 @@
 
 set(PodioExample_SOURCES
         PodioExample.cc
+        ExampleClusterFactory.cc
         )
 
 if (USE_PODIO)

@@ -108,10 +108,8 @@ public:
     virtual void ClearData() = 0;
 
 
-
     // Overloaded by user Factories
     virtual void Init() {}
-
     virtual void BeginRun(const std::shared_ptr<const JEvent>&) {}
     virtual void ChangeRun(const std::shared_ptr<const JEvent>&) {}
     virtual void EndRun() {}

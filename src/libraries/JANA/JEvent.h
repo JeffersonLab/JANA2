@@ -26,6 +26,13 @@
 #include <mutex>
 #include "JANA/Utils/JInspector.h"
 
+#ifdef HAVE_PODIO
+#include <JANA/Podio/JFactoryPodioT.h>
+namespace podio {
+class CollectionBase;
+}
+#endif
+
 class JApplication;
 class JEventSource;
 
@@ -78,13 +85,18 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
         template <class T> JFactoryT<T>* Insert(T* item, const std::string& aTag = "") const;
         template <class T> JFactoryT<T>* Insert(const std::vector<T*>& items, const std::string& tag = "") const;
 
+        // PODIO
+#ifdef HAVE_PODIO
+        template <typename T> const typename PodioTypeMap<T>::collection_t* GetCollection(std::string tag) const;
+        template <typename T> JFactoryPodioT<T>* InsertCollection(typename PodioTypeMap<T>::collection_t* collection, std::string tag);
+#endif
+
         //SETTERS
         void SetRunNumber(int32_t aRunNumber){mRunNumber = aRunNumber;}
         void SetEventNumber(uint64_t aEventNumber){mEventNumber = aEventNumber;}
         void SetJApplication(JApplication* app){mApplication = app;}
         void SetJEventSource(JEventSource* aSource){mEventSource = aSource;}
         void SetDefaultTags(std::map<std::string, std::string> aDefaultTags){mDefaultTags=aDefaultTags; mUseDefaultTags = !mDefaultTags.empty();}
-
         void SetSequential(bool isSequential) {mIsBarrierEvent = isSequential;}
 
         //GETTERS
@@ -97,6 +109,8 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
         void Inspect() const { mInspector.Loop();} // TODO: Force this not to be inlined AND used so it is defined in libJANA.a
         bool GetSequential() const {return mIsBarrierEvent;}
         friend class JEventPool;
+
+
 
     private:
         JApplication* mApplication = nullptr;
@@ -395,6 +409,60 @@ JFactoryT<T>* JEvent::GetSingle(const T* &t, const char *tag, bool exception_if_
     t = v[0];
     return fac;
 }
+
+#ifdef HAVE_PODIO
+
+template <typename T>
+const typename PodioTypeMap<T>::collection_t* JEvent::GetCollection(std::string tag) const {
+    JFactoryT<T>* factory = GetFactory<T>(tag, true);
+    JFactoryPodioT<T>* typed_factory = dynamic_cast<JFactoryPodioT<T>*>(factory);
+    if (typed_factory == nullptr) {
+        throw JException("Factory must inherit from JFactoryPodioT in order to use JEvent::GetCollection()");
+    }
+    JCallGraphEntryMaker cg_entry(mCallGraph, typed_factory); // times execution until this goes out of scope
+    typed_factory->Create(this->shared_from_this());
+    return typed_factory->GetCollection();
+}
+
+template <typename T>
+JFactoryPodioT<T>* JEvent::InsertCollection(typename PodioTypeMap<T>::collection_t* collection, std::string tag) {
+
+    // Users are allowed to Insert with tag="" if and only if that tag gets resolved by default tags.
+    if (mUseDefaultTags && tag.empty()) {
+        auto defaultTag = mDefaultTags.find(JTypeInfo::demangle<T>());
+        if (defaultTag != mDefaultTags.end()) tag = defaultTag->second;
+    }
+
+    // Retrieve factory if it already exists, else create it
+    JFactoryT<T>* factory = mFactorySet->GetFactory<T>(tag);
+    if (factory == nullptr) {
+        factory = new JFactoryPodioT<T>(tag);
+        mFactorySet->Add(factory);
+        // TODO: If we are adding a new factory, we must test that the tag is unique
+        //       among all PODIO tags.
+    }
+
+    // PODIO collections can only be inserted once, unlike regular JANA factories.
+    if (factory->GetStatus() == JFactory::Status::Inserted  ||
+        factory->GetStatus() == JFactory::Status::Processed) {
+
+        throw JException("PODIO collections can only be inserted once, but factory already has data");
+    }
+
+    // There's a chance that some user already added to the event's JFactorySet a
+    // JFactoryT<PodioT> which ISN'T a JFactoryPodioT<T>. In this case, we cannot set the collection.
+    JFactoryPodioT<T>* typed_factory = dynamic_cast<JFactoryPodioT<T>>(factory);
+    if (typed_factory == nullptr) {
+        throw std::runtime_error("Factory must inherit from JFactoryPodioT in order to use JEvent::GetCollection()");
+    }
+
+    // Set the collection
+    typed_factory->SetCollection(this->shared_from_this(), collection);
+    typed_factory->SetInsertOrigin( mCallGraph.GetInsertDataOrigin() );
+    return typed_factory;
+}
+
+#endif // HAVE_PODIO
 
 
 #endif // _JEvent_h_
