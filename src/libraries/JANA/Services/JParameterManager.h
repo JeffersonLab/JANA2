@@ -292,13 +292,18 @@ inline T JParameterManager::RegisterParameter(std::string name, const T default_
 
 
 /// @brief Logic for parsing different types in a generic way
-/// @throws JException in case parsing fails.
 template <typename T>
 inline T JParameterManager::Parse(const std::string& value) {
     std::stringstream ss(value);
     T val;
     ss >> val;
     return val;
+}
+
+/// @brief Specialization for handling strings that don't need parsing
+template <>
+inline std::string JParameterManager::Parse(const std::string& value) {
+    return std::string(value);
 }
 
 /// @brief Specialization for bool

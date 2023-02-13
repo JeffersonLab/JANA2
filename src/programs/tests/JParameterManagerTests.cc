@@ -85,6 +85,26 @@ TEST_CASE("JParameterManager::SetDefaultParameter") {
         jpm.SetDefaultParameter("testing:dummy_var_2", zz);
         REQUIRE(zz == 77);
     }
+
+    SECTION("Multiple calls to check strings with spaces") {
+
+        // basic string test
+        std::string x = "MyStringValue";
+        jpm.SetDefaultParameter("testing:dummy_var", x);
+        REQUIRE(x == "MyStringValue");
+
+        // string with spaces
+        std::string y = "My String Value With Spaces";
+        auto p = jpm.SetDefaultParameter("testing:dummy_var2", y);
+        REQUIRE(p->GetValue() == "My String Value With Spaces");
+
+        // Stringify returns identical string
+        REQUIRE( jpm.Stringify("My String Value With Spaces") == "My String Value With Spaces" );
+
+        // Parse returns identical string
+        std::string z = "My String Value With Spaces";
+        REQUIRE( jpm.Parse<std::string>(z) == "My String Value With Spaces" );
+    }
 }
 
 
