@@ -37,7 +37,7 @@ public:
     void ClearData() final;
 
     const typename PodioTypeMap<T>::collection_t* GetCollection() { return mCollection; }
-    void SetCollection(const std::shared_ptr<const JEvent>&, std::unique_ptr<typename PodioTypeMap<T>::collection_t> collection);
+    void SetCollection(const std::shared_ptr<const JEvent>&, typename PodioTypeMap<T>::collection_t* collection);
 
 };
 
@@ -59,11 +59,11 @@ JFactoryPodioT<T>::~JFactoryPodioT() {
 
 template <typename T>
 void JFactoryPodioT<T>::SetCollection(const std::shared_ptr<const JEvent> & event,
-                                      std::unique_ptr<typename PodioTypeMap<T>::collection_t> collection) {
+                                      typename PodioTypeMap<T>::collection_t* collection) {
 
     // auto moved = mFrame->put(collection, mTag);
     auto frame = GetFrame(*event);
-    auto moved = frame->put(collection, this->GetTag());
+    auto& moved = frame->put(std::move(*collection), this->GetTag());
     mCollection = &moved;
     for (const T& item : moved) {
         mData.push_back(&item);

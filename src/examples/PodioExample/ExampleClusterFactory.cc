@@ -9,4 +9,11 @@
 
 void ExampleClusterFactory::Process(const std::shared_ptr<const JEvent> &event) {
     auto hits = event->GetCollection<ExampleHit>("hits");
+    MutableExampleCluster cluster;
+    for (auto hit : *hits) {
+        cluster.addHits(hit);
+    }
+    auto* clusters = new ExampleClusterCollection();
+    clusters->push_back(cluster);
+    SetCollection(event, clusters);
 }
