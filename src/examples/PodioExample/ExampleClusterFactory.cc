@@ -17,3 +17,6 @@ void ExampleClusterFactory::Process(const std::shared_ptr<const JEvent> &event) 
     clusters->push_back(cluster);
     SetCollection(event, clusters);
 }
+
+
+// TODO: Expose collections as refs, not ptrs?

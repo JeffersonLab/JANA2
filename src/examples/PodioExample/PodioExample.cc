@@ -10,6 +10,11 @@
 #include <podio/ROOTFrameReader.h>
 #include "DatamodelGlue.h"
 
+#include <JANA/JApplication.h>
+#include "JANA/JFactoryGenerator.h"
+#include "PodioExampleProcessor.h"
+#include "ExampleClusterFactory.h"
+
 struct FakeJANA {
     podio::Frame m_frame;
     std::vector<const ExampleHit*> m_cache;
@@ -67,22 +72,22 @@ struct FakeJANA {
 
 };
 
-struct PrintingVisitor {
-    template <typename T>
-    void operator() (const podio::CollectionBase* coll, std::string coll_name) {
-        using CollT = const typename PodioTypeMap<T>::collection_t;
-        CollT* typed_col = static_cast<CollT*>(coll);
-
-        std::cout << coll_name << std::endl;
-        for (const T& object : *typed_col) {
-            std::cout << coll->getValueTypeName() << std::endl;
-            std::cout << object << std::endl;
-        }
-    }
-};
-
 
 int main() {
+
+    JApplication app;
+    app.Add(new PodioExampleProcessor);
+    app.Add(new JFactoryGeneratorT<ExampleClusterFactory>());
+
+
+    // Write an input file full of hits
+
+    // Have JANA process the input file and produce the output file
+
+    // Read the output file
+
+
+    /*
     FakeJANA jannah;
     jannah.Process();
 
@@ -121,5 +126,6 @@ int main() {
 
     // auto untyped_coll = frame2.get("hits");
     // std::cout << "ExampleHit collection: Typename=" << untyped_coll->getTypeName() << ", DataTypeName=" << untyped_coll->getDataTypeName() << ", ValueTypeName=" << untyped_coll->getValueTypeName() << std::endl;
+     */
 }
 

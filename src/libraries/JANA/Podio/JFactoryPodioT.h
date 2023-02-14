@@ -19,10 +19,9 @@ class JFactoryPodioT : public JFactoryT<T> {
     // This factory owns these value objects.
     // podio::Frame* mFrame = nullptr;
     const typename PodioTypeMap<T>::collection_t* mCollection = nullptr;
-    std::vector<const T*> mData;
 
 public:
-    explicit JFactoryPodioT(std::string tag);
+    explicit JFactoryPodioT();
     ~JFactoryPodioT() override;
 
     void Init() override {}
@@ -46,10 +45,7 @@ podio::Frame* GetFrame(const JEvent& event);
 
 
 template <typename T>
-JFactoryPodioT<T>::JFactoryPodioT(std::string tag) : JFactory(JTypeInfo::demangle<T>(), tag) {
-    if (tag.empty())
-        throw std::runtime_error("PODIO factories require a unique, non-empty tag because the tag is also used as the PODIO collection name");
-}
+JFactoryPodioT<T>::JFactoryPodioT() : JFactoryT<T>(JTypeInfo::demangle<T>(), "") {}
 
 template <typename T>
 JFactoryPodioT<T>::~JFactoryPodioT() {
@@ -66,7 +62,7 @@ void JFactoryPodioT<T>::SetCollection(const std::shared_ptr<const JEvent> & even
     auto& moved = frame->put(std::move(*collection), this->GetTag());
     mCollection = &moved;
     for (const T& item : moved) {
-        mData.push_back(&item);
+        this->mData.push_back(&item);
     }
     this->mStatus = JFactory::Status::Inserted;
     this->mCreationStatus = JFactory::CreationStatus::Inserted;
@@ -74,8 +70,8 @@ void JFactoryPodioT<T>::SetCollection(const std::shared_ptr<const JEvent> & even
 
 template <typename T>
 void JFactoryPodioT<T>::ClearData() {
-    for (auto p : mData) delete p;
-    mData.clear();
+    for (auto p : this->mData) delete p;
+    this->mData.clear();
     mCollection = nullptr;  // Collection is owned by the Frame, so we ignore here
     this->mFrame = nullptr;  // Frame is owned by the JEvent, so we ignore here
     this->mStatus = JFactory::Status::Unprocessed;
