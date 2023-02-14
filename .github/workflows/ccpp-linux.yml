@@ -20,7 +20,7 @@ jobs:
     # Note that every step starts out in the $GITHUB_WORKSPACE
     # directory.
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: deps
       run: |
         sudo apt-get install -y libzmq3-dev libxerces-c-dev python3-dev
