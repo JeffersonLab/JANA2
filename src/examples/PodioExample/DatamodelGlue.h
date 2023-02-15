@@ -56,18 +56,19 @@ void visitPodioType(const std::string& podio_typename, F& helper, ArgsT... args)
     throw std::runtime_error("Not a podio typename!");
 }
 
-template <typename F, typename... ArgsT>
-void visitPodioType(const std::string& podio_typename, F&& helper, ArgsT... args) {
-    if (podio_typename == "EventInfo") {
-        return helper.template operator()<EventInfo>(std::forward<ArgsT>(args)...);
+template <typename F>
+void visitPodioCollection(const podio::CollectionBase& collection, F& helper) {
+    std::string podio_typename = collection.getTypeName();
+    if (podio_typename == "EventInfoCollection") {
+        return helper(static_cast<const EventInfoCollection&>(collection));
     }
-    else if (podio_typename == "ExampleHit") {
-        return helper.template operator()<ExampleHit>(std::forward<ArgsT>(args)...);
+    else if (podio_typename == "ExampleHitCollection") {
+        return helper(static_cast<const ExampleHitCollection&>(collection));
     }
-    else if (podio_typename == "ExampleCluster") {
-        return helper.template operator()<ExampleCluster>(std::forward<ArgsT>(args)...);
+    else if (podio_typename == "ExampleClusterCollection") {
+        return helper(static_cast<const ExampleClusterCollection&>(collection));
     }
-    throw std::runtime_error("Not a podio typename!");
+    throw std::runtime_error("Unrecognized podio typename!");
 }
 
 #endif //JANA2_DATAMODELGLUE_H

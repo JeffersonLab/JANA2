@@ -7,9 +7,8 @@
 #define JANA2_JEVENTSOURCEPODIO_H
 
 #include <JANA/JEventSource.h>
-#include "PodioFrame.h"
 
-
+// template <template <typename> Visit>
 class JEventSourcePodio : public JEventSource {
 
     JEventSourcePodio(std::string filename);
@@ -27,10 +26,7 @@ class JEventSourcePodio : public JEventSource {
     /// - background events
     /// Event index is like event number except it starts at zero and increments.
     /// It is equivalent to Podio's record index.
-    virtual std::unique_ptr<PodioFrame> NextFrame(int event_index) = 0;
-    // TODO: How do we get event and run numbers out of the ROOT file?
-    //       Do these have a slot in the podio frame? I hope they do.
-    //       We may need to add them, though.
+    virtual std::unique_ptr<podio::Frame> NextFrame(int event_index, int& event_number, int& run_number) = 0;
 
     /// User may override Open() in case they need multiple files open concurrently,
     /// e.g. for background events. The existing implementation assumes exactly

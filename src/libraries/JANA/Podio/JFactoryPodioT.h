@@ -45,7 +45,7 @@ podio::Frame* GetFrame(const JEvent& event);
 
 
 template <typename T>
-JFactoryPodioT<T>::JFactoryPodioT() : JFactoryT<T>(JTypeInfo::demangle<T>(), "") {}
+JFactoryPodioT<T>::JFactoryPodioT() = default;
 
 template <typename T>
 JFactoryPodioT<T>::~JFactoryPodioT() {
@@ -62,7 +62,8 @@ void JFactoryPodioT<T>::SetCollection(const std::shared_ptr<const JEvent> & even
     auto& moved = frame->put(std::move(*collection), this->GetTag());
     mCollection = &moved;
     for (const T& item : moved) {
-        this->mData.push_back(&item);
+        T* clone = new T(item);
+        this->mData.push_back(clone); // TODO: Verify that clone points to underlying and does not do a deep copy
     }
     this->mStatus = JFactory::Status::Inserted;
     this->mCreationStatus = JFactory::CreationStatus::Inserted;

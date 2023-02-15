@@ -10,13 +10,11 @@
 #include "datamodel/ExampleCluster.h"
 #include "DatamodelGlue.h"
 
-class ExampleClusterFactory : JFactoryPodioT<ExampleCluster> {
+class ExampleClusterFactory : public JFactoryPodioT<ExampleCluster> {
 public:
-    ExampleClusterFactory();
+    ExampleClusterFactory() = default;
     void Process(const std::shared_ptr<const JEvent> &event) override;
 };
-
-ExampleClusterFactory::ExampleClusterFactory() {}
 
 
 #endif //JANA2_EXAMPLECLUSTERFACTORY_H

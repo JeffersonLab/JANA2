@@ -7,12 +7,14 @@
 #define JANA2_JEVENTPROCESSORPODIO_H
 
 #include <JANA/JEventProcessor.h>
+#include <podio/ROOTFrameWriter.h>
 
 class JEventProcessorPodio : public JEventProcessor {
 
-    std::string m_output_filename;
+    std::string m_output_filename = "podio_output.root";
     std::set<std::string> m_output_include_collections;
     std::set<std::string> m_output_exclude_collections;
+    std::unique_ptr<podio::ROOTFrameWriter> m_writer;
 
 public:
     void Init() override;
