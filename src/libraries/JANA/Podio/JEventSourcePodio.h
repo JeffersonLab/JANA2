@@ -14,6 +14,7 @@ class JEventSourcePodio : public JEventSource {
 
 protected:
     podio::ROOTFrameReader m_reader;
+    uint64_t m_entry_count = 0;
 
 public:
     // Constructor that is compatible with JEventSourceGenerator
@@ -75,13 +76,13 @@ JEventSourcePodio<VisitT>::JEventSourcePodio(std::string filename)
 template <template <typename> typename VisitT>
 void JEventSourcePodio<VisitT>::GetEvent(std::shared_ptr<JEvent> event) {
 
-    int event_index = event->GetEventNumber(); // Event number starts from zero by default
+    uint64_t event_index = event->GetEventNumber(); // Event number starts from zero by default
+    if (event_index >= m_entry_count) throw RETURN_STATUS::kNO_MORE_EVENTS;
     int event_number = 0;
     int run_number = 0;
     auto frame = NextFrame(event_index, event_number, run_number);
     event->SetEventNumber(event_number);
     event->SetRunNumber(run_number);
-    event->Insert(frame.release());
 
     VisitT<InsertingVisitor> visit;   // This is how we work on PODIO types while using collections
     for (const std::string& coll_name : frame->getAvailableCollections()) {
@@ -89,12 +90,14 @@ void JEventSourcePodio<VisitT>::GetEvent(std::shared_ptr<JEvent> event) {
         InsertingVisitor visitor(*event, coll_name);
         visit(*collection, visitor);
     }
+    event->Insert(frame.release()); // Transfer ownership from unique_ptr to JFactoryT<podio::Frame>
 }
 
 
 template <template <typename> typename VisitT>
 void JEventSourcePodio<VisitT>::Open() {
     m_reader.openFile(GetResourceName());
+    m_entry_count = m_reader.getEntries("events");
 }
 
 template <template <typename> typename VisitT>

@@ -59,6 +59,7 @@ struct Overload : Ts ... {
 };
 template<class... Ts> Overload(Ts...) -> Overload<Ts...>;
 
+
 template <typename F, typename... ArgsT>
 void visitPodioType(const std::string& podio_typename, F& helper, ArgsT... args) {
     if (podio_typename == "EventInfo") {
@@ -72,6 +73,21 @@ void visitPodioType(const std::string& podio_typename, F& helper, ArgsT... args)
     }
     throw std::runtime_error("Not a podio typename!");
 }
+
+// If you are using C++20, you can use templated lambdas to write your visitor completely inline like so:
+/*
+           visitPodioType(coll->getValueTypeName(),
+               [&]<typename T>(const podio::CollectionBase* coll, std::string name) {
+                   using CollT = const typename PodioTypeMap<T>::collection_t;
+                   CollT* typed_col = static_cast<CollT*>(coll);
+
+                   std::cout << name << std::endl;
+                   for (const T& object : *typed_col) {
+                       std::cout << coll->getValueTypeName() << std::endl;
+                       std::cout << object << std::endl;
+                   }
+            }, coll, coll_name);
+ */
 
 template <typename Visitor>
 struct DatamodelCollectionVisit {
@@ -87,5 +103,7 @@ struct DatamodelCollectionVisit {
         throw std::runtime_error("Unrecognized podio typename!");
     }
 };
+
+// TODO: Change argument to collection pointer instead of reference because that is what we do everywhere else?
 
 #endif //JANA2_DATAMODELGLUE_H

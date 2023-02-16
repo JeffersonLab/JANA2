@@ -39,7 +39,7 @@ public:
     void ClearData() final;
 
     const typename PodioTypeMap<T>::collection_t* GetCollection() { return mCollection; }
-    void SetCollection(const std::shared_ptr<const JEvent>&, CollectionT* collection);
+    void SetCollection(CollectionT* collection);
 
 private:
     // This is meant to be called by JEvent::Insert
@@ -47,12 +47,11 @@ private:
     void SetCollectionAlreadyInFrame(const CollectionT* collection);
 };
 
-// This helper function is needed to break the dependency loop between JFactory and JEvent.
-podio::Frame* GetFrame(const JEvent& event);
-
 
 template <typename T>
-JFactoryPodioT<T>::JFactoryPodioT() = default;
+JFactoryPodioT<T>::JFactoryPodioT() {
+    this->mFrameNeeded = true; // Tells JFactory::Create to hold on to the Frame for us
+}
 
 template <typename T>
 JFactoryPodioT<T>::~JFactoryPodioT() {
@@ -61,12 +60,12 @@ JFactoryPodioT<T>::~JFactoryPodioT() {
 }
 
 template <typename T>
-void JFactoryPodioT<T>::SetCollection(const std::shared_ptr<const JEvent> & event,
-                                      typename PodioTypeMap<T>::collection_t* collection) {
+void JFactoryPodioT<T>::SetCollection(typename PodioTypeMap<T>::collection_t* collection) {
 
-    // auto moved = mFrame->put(collection, mTag);
-    auto frame = GetFrame(*event);
-    auto& moved = frame->put(std::move(*collection), this->GetTag());
+    if (this->mFrame == nullptr) {
+        throw JException("JFactoryPodioT: Unable to add collection to frame as frame is missing!");
+    }
+    auto& moved = this->mFrame->put(std::move(*collection), this->GetTag());
     mCollection = &moved;
     for (const T& item : moved) {
         T* clone = new T(item);
@@ -92,6 +91,7 @@ void JFactoryPodioT<T>::SetCollectionAlreadyInFrame(const CollectionT* collectio
         T* clone = new T(item);
         this->mData.push_back(clone); // TODO: Verify that clone points to underlying and does not do a deep copy
     }
+    mCollection = collection;
     this->mStatus = JFactory::Status::Inserted;
     this->mCreationStatus = JFactory::CreationStatus::Inserted;
 }

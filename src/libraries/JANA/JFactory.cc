@@ -49,7 +49,18 @@ void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
             BeginRun(event);
             mPreviousRunNumber = run_number;
         }
-        mFrame = const_cast<podio::Frame*>(event->GetSingle<podio::Frame>(""));
+#ifdef HAVE_PODIO
+        if (mFrameNeeded) {
+            // Retrieve the frame from the event object. If it doesn't exist, create and insert it
+            try {
+                mFrame = const_cast<podio::Frame*>(event->GetSingle<podio::Frame>(""));
+            }
+            catch (...) {
+                mFrame = new podio::Frame;
+                event->Insert(mFrame);
+            }
+        }
+#endif
         Process(event);
         mStatus = Status::Processed;
         mCreationStatus = CreationStatus::Created;

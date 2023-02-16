@@ -8,127 +8,100 @@
 #include "datamodel/ExampleHitCollection.h"
 #include <podio/ROOTFrameWriter.h>
 #include <podio/ROOTFrameReader.h>
-#include "DatamodelGlue.h"
 
 #include <JANA/JApplication.h>
 #include <JANA/JFactoryGenerator.h>
+#include <JANA/Podio/JEventProcessorPodio.h>
 
 #include "PodioExampleSource.h"
 #include "PodioExampleProcessor.h"
 #include "ExampleClusterFactory.h"
 
 
+void create_hits_file() {
 
+    MutableExampleHit hit1;
+    hit1.cellID(22);
+    hit1.energy(100.0);
+    hit1.x(0);
+    hit1.y(0);
+    hit1.z(0);
 
-struct FakeJANA {
-    podio::Frame m_frame;
-    std::vector<const ExampleHit*> m_cache;
+    MutableExampleHit hit2;
+    hit2.cellID(49);
+    hit2.energy(97.1);
+    hit2.x(1);
+    hit2.y(2);
+    hit2.z(3);
 
-    void Process() {
-        MutableExampleHit hit;
-        hit.cellID(22);
-        hit.energy(100.0);
-        hit.x(0);
-        hit.y(0);
-        hit.z(0);
+    ExampleHitCollection hits1;
+    hits1.push_back(hit1);
+    hits1.push_back(hit2);
 
-        MutableExampleHit hit2;
-        hit2.cellID(49);
-        hit2.energy(97.1);
-        hit2.x(1);
-        hit2.y(2);
-        hit2.z(3);
+    podio::Frame event1;
+    event1.put(std::move(hits1), "hits");
 
-        auto coll = new ExampleHitCollection;
-        coll->push_back(hit);
-        coll->push_back(hit2);
+    podio::ROOTFrameWriter writer("hits.root");
+    writer.writeFrame(event1, "events");
 
-        auto cluster_coll = new ExampleClusterCollection;
-        MutableExampleCluster cluster;
-        cluster.addHits(hit);
-        cluster.addHits(hit2);
-        cluster_coll->push_back(cluster);
+    MutableExampleHit hit3;
+    hit3.cellID(42);
+    hit3.energy(7.6);
+    hit3.x(5);
+    hit3.y(-5);
+    hit3.z(5);
 
-        SetCollection<ExampleHit>(coll, "hits");
-        SetCollection<ExampleCluster>(cluster_coll, "clusters");
-    }
+    MutableExampleHit hit4;
+    hit4.cellID(618);
+    hit4.energy(99.9);
+    hit4.x(-3);
+    hit4.y(-5);
+    hit4.z(1);
 
-    template <typename T>
-    void SetCollection(typename PodioTypeMap<T>::collection_t* coll, std::string coll_name) {
-        m_frame.put(std::move(*coll), coll_name);
-        // for (const ExampleHit& item : moved) {
-        //    m_cache.push_back(&item); // Is this stable?
-        //}
-    }
+    MutableExampleHit hit5;
+    hit5.cellID(27);
+    hit5.energy(22.22);
+    hit5.x(-10);
+    hit5.y(10);
+    hit5.z(10);
 
-    template <typename T>
-    void Set(const std::vector<T*>& hits) {
-        auto coll = new typename PodioTypeMap<T>::collection_t;
-        for (T* hit : hits) {
-            coll->push_back(hit);
-        }
-    }
+    ExampleHitCollection hits2;
+    hits2.push_back(hit3);
+    hits2.push_back(hit4);
+    hits2.push_back(hit5);
 
-    template <typename T>
-    const typename PodioTypeMap<T>::collection_t& GetCollection() {
-        return m_frame.get<PodioTypeMap<T>::collection_t>("FakeFactory");
-    }
-};
+    podio::Frame event2;
+    event2.put(std::move(hits2), "hits");
+
+    writer.writeFrame(event2, "events");
+    writer.finish();
+
+}
+
+void verify_clusters_file() {
+    podio::ROOTFrameReader reader;
+    reader.openFile("podio_output.root");
+    auto event0 = podio::Frame(reader.readEntry("events", 0));
+
+    std::cout << "Event 0: Expected 2 clusters, got " << event0.get("clusters")->size() << std::endl;
+
+    auto event1 = podio::Frame(reader.readEntry("events", 1));
+    std::cout << "Event 1: Expected 3 clusters, got " << event1.get("clusters")->size() << std::endl;
+}
 
 
 int main() {
 
+    create_hits_file();
+
     JApplication app;
     app.Add(new PodioExampleProcessor);
+    app.Add(new JEventProcessorPodio);
     app.Add(new JFactoryGeneratorT<ExampleClusterFactory>());
-    app.Add(new PodioExampleSource("infile.root"));
+    app.Add(new PodioExampleSource("hits.root"));
+    app.Run();
 
-    // Write an input file full of hits
+    verify_clusters_file();
 
-    // Have JANA process the input file and produce the output file
-
-    // Read the output file
-
-
-    /*
-    FakeJANA jannah;
-    jannah.Process();
-
-    PrintingVisitor printer;
-
-    std::cout << "WRITING TO ROOT FILE:" << std::endl;
-    for (const std::string& coll_name : jannah.m_frame.getAvailableCollections()) {
-        const podio::CollectionBase* coll = jannah.m_frame.get(coll_name);
-        visitPodioType(coll->getValueTypeName(), printer, coll, coll_name);
-    }
-
-    podio::ROOTFrameWriter writer("podio_output.root");
-    writer.writeFrame(jannah.m_frame, "events");
-    writer.finish();
-
-    podio::ROOTFrameReader reader;
-    reader.openFile("podio_output.root");
-    auto framedata = reader.readEntry("events", 0);
-    auto frame2 = podio::Frame(std::move(framedata));
-
-    std::cout << "READ FROM ROOT FILE:" << std::endl;
-    for (const std::string& coll_name : frame2.getAvailableCollections()) {
-        const podio::CollectionBase* coll = frame2.get(coll_name);
-        visitPodioType(coll->getValueTypeName(),
-               [&]<typename T>(const podio::CollectionBase* coll, std::string name) {
-                   using CollT = const typename PodioTypeMap<T>::collection_t;
-                   CollT* typed_col = static_cast<CollT*>(coll);
-
-                   std::cout << name << std::endl;
-                   for (const T& object : *typed_col) {
-                       std::cout << coll->getValueTypeName() << std::endl;
-                       std::cout << object << std::endl;
-                   }
-            }, coll, coll_name);
-    }
-
-    // auto untyped_coll = frame2.get("hits");
-    // std::cout << "ExampleHit collection: Typename=" << untyped_coll->getTypeName() << ", DataTypeName=" << untyped_coll->getDataTypeName() << ", ValueTypeName=" << untyped_coll->getValueTypeName() << std::endl;
-     */
 }
 

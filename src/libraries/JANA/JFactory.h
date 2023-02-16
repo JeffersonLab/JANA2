@@ -159,7 +159,11 @@ protected:
     int32_t mPreviousRunNumber = -1;
     JApplication* mApp = nullptr;
     std::unordered_map<std::type_index, std::unique_ptr<JAny>> mUpcastVTable;
+
+#ifdef HAVE_PODIO
     podio::Frame* mFrame;
+    bool mFrameNeeded = false;
+#endif
 
     mutable Status mStatus = Status::Uninitialized;
     mutable JCallGraphRecorder::JDataOrigin m_insert_origin = JCallGraphRecorder::ORIGIN_NOT_AVAILABLE; // (see note at top of JCallGraphRecorder.h)

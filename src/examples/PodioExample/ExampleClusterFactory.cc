@@ -7,6 +7,11 @@
 #include "datamodel/ExampleHit.h"
 #include <JANA/JEvent.h>
 
+ExampleClusterFactory::ExampleClusterFactory() {
+    SetTag("clusters");
+    // TODO: Need to throw an exception if you try to register a PODIO factory with an empty or non-unique tag
+}
+
 void ExampleClusterFactory::Process(const std::shared_ptr<const JEvent> &event) {
     auto hits = event->GetCollection<ExampleHit>("hits");
     MutableExampleCluster cluster;
@@ -15,7 +20,7 @@ void ExampleClusterFactory::Process(const std::shared_ptr<const JEvent> &event) 
     }
     auto* clusters = new ExampleClusterCollection();
     clusters->push_back(cluster);
-    SetCollection(event, clusters);
+    SetCollection(clusters);
 }
 
 
