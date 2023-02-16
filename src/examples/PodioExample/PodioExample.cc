@@ -20,19 +20,12 @@
 
 void create_hits_file() {
 
-    MutableExampleHit hit1;
-    hit1.cellID(22);
-    hit1.energy(100.0);
-    hit1.x(0);
-    hit1.y(0);
-    hit1.z(0);
+    EventInfo eventinfo1(7, 22);
+    EventInfoCollection eventinfos1;
+    eventinfos1.push_back(eventinfo1);
 
-    MutableExampleHit hit2;
-    hit2.cellID(49);
-    hit2.energy(97.1);
-    hit2.x(1);
-    hit2.y(2);
-    hit2.z(3);
+    MutableExampleHit hit1(22, 100, 0, 0, 0);
+    MutableExampleHit hit2(49, 97.1, 1, 2, 3);
 
     ExampleHitCollection hits1;
     hits1.push_back(hit1);
@@ -40,30 +33,18 @@ void create_hits_file() {
 
     podio::Frame event1;
     event1.put(std::move(hits1), "hits");
+    event1.put(std::move(eventinfos1), "eventinfos");
 
     podio::ROOTFrameWriter writer("hits.root");
     writer.writeFrame(event1, "events");
 
-    MutableExampleHit hit3;
-    hit3.cellID(42);
-    hit3.energy(7.6);
-    hit3.x(5);
-    hit3.y(-5);
-    hit3.z(5);
+    EventInfo eventinfo2(8, 22);
+    EventInfoCollection eventinfos2;
+    eventinfos2.push_back(eventinfo2);
 
-    MutableExampleHit hit4;
-    hit4.cellID(618);
-    hit4.energy(99.9);
-    hit4.x(-3);
-    hit4.y(-5);
-    hit4.z(1);
-
-    MutableExampleHit hit5;
-    hit5.cellID(27);
-    hit5.energy(22.22);
-    hit5.x(-10);
-    hit5.y(10);
-    hit5.z(10);
+    MutableExampleHit hit3(42, 7.6, 5, -5, 5);
+    MutableExampleHit hit4(618, 99.9, -3, -5, 1);
+    MutableExampleHit hit5(27, 22.22, -10, 10, 10);
 
     ExampleHitCollection hits2;
     hits2.push_back(hit3);
@@ -72,6 +53,7 @@ void create_hits_file() {
 
     podio::Frame event2;
     event2.put(std::move(hits2), "hits");
+    event2.put(std::move(eventinfos2), "eventinfos");
 
     writer.writeFrame(event2, "events");
     writer.finish();

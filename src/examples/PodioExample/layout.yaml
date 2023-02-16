@@ -11,14 +11,10 @@ options :
 datatypes :
   EventInfo:
     Description : "Event info"
-    Author : "B. Hegner"
+    Author : "N. Brei"
     Members :
-      - int Number // event number
-    MutableExtraCode :
-      declaration: "void setNumber(int n) { Number( n ) ; } "
-    ExtraCode:
-      declaration: "int getNumber() const;"
-      implementation: "int {name}::getNumber() const { return Number(); }"
+      - int EventNumber // event number
+      - int RunNumber // run number
 
   ExampleHit :
     Description : "Example Hit"
