@@ -206,6 +206,31 @@ TEST_CASE("JParameterManager_VectorParams") {
         auto param = jpm.GetParameter("test", outputs);
         REQUIRE(param->GetValue() == "22,49.2,42");
     }
+}
+
+TEST_CASE("JParameterManager::RegisterParameter") {
+
+    JParameterManager jpm;
+
+    SECTION("Set/Get") {
+        int x_default = 44;
+        auto x_actual = jpm.RegisterParameter("testing:dummy_var", x_default);
+        REQUIRE(x_actual == x_default);
+    }
+
+    SECTION("Set/Get templated float") {
+        auto y_actual = jpm.RegisterParameter("testing:dummy_var2", 22.0);
+        REQUIRE(y_actual == 22.0);
+    }
+
+    SECTION("Set/Get default") {
+        jpm.SetParameter("testing:dummy_var", 22);
+        auto x_actual = jpm.RegisterParameter("testing:dummy_var", 44);  // this should set the default value to 44 while keeping value at 22
+        auto x_default_str = jpm.FindParameter("testing:dummy_var")->GetDefault();
+        auto x_default = jpm.Parse<int>(x_default_str);
+        REQUIRE(x_actual == 22);
+        REQUIRE(x_default == 44);
+    }
 
 }
 
