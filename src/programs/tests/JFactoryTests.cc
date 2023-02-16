@@ -91,49 +91,53 @@ TEST_CASE("JFactoryTests") {
     }
 
     SECTION("not PERSISTENT && not NOT_OBJECT_OWNER => JObject is cleared and deleted") {
+        auto event = std::make_shared<JEvent>();
         JFactoryT<JFactoryTestDummyObject> sut; // Process() is a no-op
         bool deleted_flag = false;
         sut.ClearFactoryFlag(JFactory::PERSISTENT);
         sut.ClearFactoryFlag(JFactory::NOT_OBJECT_OWNER);
         sut.Insert(new JFactoryTestDummyObject(42, &deleted_flag));
         sut.ClearData();
-        auto results = sut.GetOrCreate(nullptr);
+        auto results = sut.GetOrCreate(event);
         REQUIRE(std::distance(results.first, results.second) == 0);
         REQUIRE(deleted_flag == true);
     }
 
     SECTION("not PERSISTENT && NOT_OBJECT_OWNER => JObject is cleared but not deleted") {
+        auto event = std::make_shared<JEvent>();
         JFactoryT<JFactoryTestDummyObject> sut; // Process() is a no-op
         bool deleted_flag = false;
         sut.ClearFactoryFlag(JFactory::PERSISTENT);
         sut.SetFactoryFlag(JFactory::NOT_OBJECT_OWNER);
         sut.Insert(new JFactoryTestDummyObject(42, &deleted_flag));
         sut.ClearData();
-        auto results = sut.GetOrCreate(nullptr);
+        auto results = sut.GetOrCreate(event);
         REQUIRE(std::distance(results.first, results.second) == 0);
         REQUIRE(deleted_flag == false);
     }
 
     SECTION("PERSISTENT && not NOT_OBJECT_OWNER => JObject is neither cleared nor deleted") {
         JFactoryT<JFactoryTestDummyObject> sut; // Process() is a no-op
+        auto event = std::make_shared<JEvent>();
         bool deleted_flag = false;
         sut.SetFactoryFlag(JFactory::PERSISTENT);
         sut.ClearFactoryFlag(JFactory::NOT_OBJECT_OWNER);
         sut.Insert(new JFactoryTestDummyObject(42, &deleted_flag));
         sut.ClearData();
-        auto results = sut.GetOrCreate(nullptr);
+        auto results = sut.GetOrCreate(event);
         REQUIRE(std::distance(results.first, results.second) == 1);
         REQUIRE(deleted_flag == false);
     }
 
     SECTION("PERSISTENT && NOT_OBJECT_OWNER => JObject is neither cleared nor deleted") {
         JFactoryT<JFactoryTestDummyObject> sut; // Process() is a no-op
+        auto event = std::make_shared<JEvent>();
         bool deleted_flag = false;
         sut.SetFactoryFlag(JFactory::PERSISTENT);
         sut.SetFactoryFlag(JFactory::NOT_OBJECT_OWNER);
         sut.Insert(new JFactoryTestDummyObject(42, &deleted_flag));
         sut.ClearData();
-        auto results = sut.GetOrCreate(nullptr);
+        auto results = sut.GetOrCreate(event);
         REQUIRE(std::distance(results.first, results.second) == 1);
         REQUIRE(deleted_flag == false);
     }
@@ -155,7 +159,8 @@ TEST_CASE("JFactoryTests") {
         // Now, we account for this case. I still think we should clean up this abstraction, though.
 
         Issue135Factory sut;
-        auto results = sut.GetOrCreate(nullptr);
+        auto event = std::make_shared<JEvent>();
+        auto results = sut.GetOrCreate(event);
         REQUIRE(sut.GetNumObjects() == 3);
         REQUIRE(std::distance(results.first, results.second) == 3);
 
