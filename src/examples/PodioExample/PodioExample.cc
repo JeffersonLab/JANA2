@@ -11,9 +11,14 @@
 #include "DatamodelGlue.h"
 
 #include <JANA/JApplication.h>
-#include "JANA/JFactoryGenerator.h"
+#include <JANA/JFactoryGenerator.h>
+
+#include "PodioExampleSource.h"
 #include "PodioExampleProcessor.h"
 #include "ExampleClusterFactory.h"
+
+
+
 
 struct FakeJANA {
     podio::Frame m_frame;
@@ -68,8 +73,6 @@ struct FakeJANA {
     const typename PodioTypeMap<T>::collection_t& GetCollection() {
         return m_frame.get<PodioTypeMap<T>::collection_t>("FakeFactory");
     }
-
-
 };
 
 
@@ -78,7 +81,7 @@ int main() {
     JApplication app;
     app.Add(new PodioExampleProcessor);
     app.Add(new JFactoryGeneratorT<ExampleClusterFactory>());
-
+    app.Add(new PodioExampleSource("infile.root"));
 
     // Write an input file full of hits
 

@@ -2,6 +2,7 @@
 set(PodioExample_SOURCES
         PodioExample.cc
         PodioExampleProcessor.cc
+        PodioExampleSource.cc
         ExampleClusterFactory.cc
         )
 

@@ -137,7 +137,6 @@ set(JANA2_SOURCES
 if (${USE_PODIO})
     list(APPEND JANA2_SOURCES
             Podio/JEventProcessorPodio.cc
-            Podio/JEventSourcePodio.cc
             Podio/JFactoryPodioT.cc
         )
 endif()

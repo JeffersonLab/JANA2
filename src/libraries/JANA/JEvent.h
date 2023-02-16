@@ -88,7 +88,7 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
         // PODIO
 #ifdef HAVE_PODIO
         template <typename T> const typename PodioTypeMap<T>::collection_t* GetCollection(std::string tag) const;
-        template <typename T> JFactoryPodioT<T>* InsertCollection(typename PodioTypeMap<T>::collection_t* collection, std::string tag);
+        template <typename T> JFactoryPodioT<T>* InsertCollection(const typename PodioTypeMap<T>::collection_t* collection, std::string tag);
 #endif
 
         //SETTERS
@@ -425,7 +425,7 @@ const typename PodioTypeMap<T>::collection_t* JEvent::GetCollection(std::string 
 }
 
 template <typename T>
-JFactoryPodioT<T>* JEvent::InsertCollection(typename PodioTypeMap<T>::collection_t* collection, std::string tag) {
+JFactoryPodioT<T>* JEvent::InsertCollection(const typename PodioTypeMap<T>::collection_t* collection, std::string tag) {
 
     // Users are allowed to Insert with tag="" if and only if that tag gets resolved by default tags.
     if (mUseDefaultTags && tag.empty()) {
@@ -436,7 +436,8 @@ JFactoryPodioT<T>* JEvent::InsertCollection(typename PodioTypeMap<T>::collection
     // Retrieve factory if it already exists, else create it
     JFactoryT<T>* factory = mFactorySet->GetFactory<T>(tag);
     if (factory == nullptr) {
-        factory = new JFactoryPodioT<T>(tag);
+        factory = new JFactoryPodioT<T>();
+        factory->SetTag(tag);
         mFactorySet->Add(factory);
         // TODO: If we are adding a new factory, we must test that the tag is unique
         //       among all PODIO tags.
@@ -451,13 +452,13 @@ JFactoryPodioT<T>* JEvent::InsertCollection(typename PodioTypeMap<T>::collection
 
     // There's a chance that some user already added to the event's JFactorySet a
     // JFactoryT<PodioT> which ISN'T a JFactoryPodioT<T>. In this case, we cannot set the collection.
-    JFactoryPodioT<T>* typed_factory = dynamic_cast<JFactoryPodioT<T>>(factory);
+    JFactoryPodioT<T>* typed_factory = dynamic_cast<JFactoryPodioT<T>*>(factory);
     if (typed_factory == nullptr) {
         throw std::runtime_error("Factory must inherit from JFactoryPodioT in order to use JEvent::GetCollection()");
     }
 
     // Set the collection
-    typed_factory->SetCollection(this->shared_from_this(), collection);
+    typed_factory->SetCollectionAlreadyInFrame(collection);
     typed_factory->SetInsertOrigin( mCallGraph.GetInsertDataOrigin() );
     return typed_factory;
 }

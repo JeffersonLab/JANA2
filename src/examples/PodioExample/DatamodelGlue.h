@@ -14,6 +14,23 @@
 #include <datamodel/EventInfoCollection.h>
 
 template <typename T>
+struct PodioCollectionMap {
+};
+
+template <>
+struct PodioCollectionMap<ExampleHitCollection> {
+    using contents_t = ExampleHit;
+};
+template <>
+struct PodioCollectionMap<ExampleClusterCollection> {
+    using contents_t = ExampleCluster;
+};
+template <>
+struct PodioCollectionMap<EventInfoCollection> {
+    using contents_t = EventInfo;
+};
+
+template <typename T>
 struct PodioTypeMap {
 };
 
@@ -56,19 +73,19 @@ void visitPodioType(const std::string& podio_typename, F& helper, ArgsT... args)
     throw std::runtime_error("Not a podio typename!");
 }
 
-template <typename F>
-void visitPodioCollection(const podio::CollectionBase& collection, F& helper) {
-    std::string podio_typename = collection.getTypeName();
-    if (podio_typename == "EventInfoCollection") {
-        return helper(static_cast<const EventInfoCollection&>(collection));
+template <typename Visitor>
+struct DatamodelCollectionVisit {
+    void operator()(const podio::CollectionBase &collection, Visitor& visitor) {
+        std::string podio_typename = collection.getTypeName();
+        if (podio_typename == "EventInfoCollection") {
+            return visitor(static_cast<const EventInfoCollection &>(collection));
+        } else if (podio_typename == "ExampleHitCollection") {
+            return visitor(static_cast<const ExampleHitCollection &>(collection));
+        } else if (podio_typename == "ExampleClusterCollection") {
+            return visitor(static_cast<const ExampleClusterCollection &>(collection));
+        }
+        throw std::runtime_error("Unrecognized podio typename!");
     }
-    else if (podio_typename == "ExampleHitCollection") {
-        return helper(static_cast<const ExampleHitCollection&>(collection));
-    }
-    else if (podio_typename == "ExampleClusterCollection") {
-        return helper(static_cast<const ExampleClusterCollection&>(collection));
-    }
-    throw std::runtime_error("Unrecognized podio typename!");
-}
+};
 
 #endif //JANA2_DATAMODELGLUE_H

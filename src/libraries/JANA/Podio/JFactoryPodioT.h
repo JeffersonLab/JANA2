@@ -13,12 +13,15 @@ template <typename S> struct PodioTypeMap;
 
 template <typename T>
 class JFactoryPodioT : public JFactoryT<T> {
+public:
+    using CollectionT = typename PodioTypeMap<T>::collection_t;
+private:
     // mCollection is owned by the frame.
     // mFrame is owned by the JFactoryT<podio::Frame>.
     // mData holds lightweight value objects which hold a pointer into mCollection.
     // This factory owns these value objects.
     // podio::Frame* mFrame = nullptr;
-    const typename PodioTypeMap<T>::collection_t* mCollection = nullptr;
+    const CollectionT* mCollection = nullptr;
 
 public:
     explicit JFactoryPodioT();
@@ -36,8 +39,12 @@ public:
     void ClearData() final;
 
     const typename PodioTypeMap<T>::collection_t* GetCollection() { return mCollection; }
-    void SetCollection(const std::shared_ptr<const JEvent>&, typename PodioTypeMap<T>::collection_t* collection);
+    void SetCollection(const std::shared_ptr<const JEvent>&, CollectionT* collection);
 
+private:
+    // This is meant to be called by JEvent::Insert
+    friend class JEvent;
+    void SetCollectionAlreadyInFrame(const CollectionT* collection);
 };
 
 // This helper function is needed to break the dependency loop between JFactory and JEvent.
@@ -79,6 +86,15 @@ void JFactoryPodioT<T>::ClearData() {
     this->mCreationStatus = JFactory::CreationStatus::NotCreatedYet;
 }
 
+template <typename T>
+void JFactoryPodioT<T>::SetCollectionAlreadyInFrame(const CollectionT* collection) {
+    for (const T& item : *collection) {
+        T* clone = new T(item);
+        this->mData.push_back(clone); // TODO: Verify that clone points to underlying and does not do a deep copy
+    }
+    this->mStatus = JFactory::Status::Inserted;
+    this->mCreationStatus = JFactory::CreationStatus::Inserted;
+}
 
 
 #endif //JANA2_JFACTORYPODIOT_H
