@@ -20,9 +20,6 @@
 #include <functional>
 
 
-namespace podio {
-    class Frame;
-}
 class JEvent;
 class JObject;
 class JApplication;
@@ -136,7 +133,7 @@ public:
     /// Create() calls JFactory::Init,BeginRun,Process in an invariant-preserving way without knowing the exact
     /// type of object contained. It returns the number of objects created. In order to access said objects,
     /// use JFactory::GetAs().
-    void Create(const std::shared_ptr<const JEvent>& event);
+    virtual void Create(const std::shared_ptr<const JEvent>& event);
 
     /// JApplication setter. This is meant to be used under the hood.
     void SetApplication(JApplication* app) { mApp = app; }
@@ -159,11 +156,6 @@ protected:
     int32_t mPreviousRunNumber = -1;
     JApplication* mApp = nullptr;
     std::unordered_map<std::type_index, std::unique_ptr<JAny>> mUpcastVTable;
-
-#ifdef HAVE_PODIO
-    podio::Frame* mFrame;
-    bool mFrameNeeded = false;
-#endif
 
     mutable Status mStatus = Status::Uninitialized;
     mutable JCallGraphRecorder::JDataOrigin m_insert_origin = JCallGraphRecorder::ORIGIN_NOT_AVAILABLE; // (see note at top of JCallGraphRecorder.h)

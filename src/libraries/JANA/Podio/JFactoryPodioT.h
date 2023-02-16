@@ -22,6 +22,7 @@ private:
     // This factory owns these value objects.
     // podio::Frame* mFrame = nullptr;
     const CollectionT* mCollection = nullptr;
+    podio::Frame* mFrame = nullptr;
 
 public:
     explicit JFactoryPodioT();
@@ -34,6 +35,7 @@ public:
     void EndRun() override {}
     void Finish() override {}
 
+    void Create(const std::shared_ptr<const JEvent>& event) final;
     std::type_index GetObjectType() const final { return std::type_index(typeid(T)); }
     std::size_t GetNumObjects() const final { return mCollection->size(); }
     void ClearData() final;
@@ -45,13 +47,12 @@ private:
     // This is meant to be called by JEvent::Insert
     friend class JEvent;
     void SetCollectionAlreadyInFrame(const CollectionT* collection);
+
 };
 
 
 template <typename T>
-JFactoryPodioT<T>::JFactoryPodioT() {
-    this->mFrameNeeded = true; // Tells JFactory::Create to hold on to the Frame for us
-}
+JFactoryPodioT<T>::JFactoryPodioT() = default;
 
 template <typename T>
 JFactoryPodioT<T>::~JFactoryPodioT() {
@@ -94,6 +95,15 @@ void JFactoryPodioT<T>::SetCollectionAlreadyInFrame(const CollectionT* collectio
     mCollection = collection;
     this->mStatus = JFactory::Status::Inserted;
     this->mCreationStatus = JFactory::CreationStatus::Inserted;
+}
+
+// This free function is used to break the dependency loop between JFactoryPodioT and JEvent.
+podio::Frame*GetOrCreateFrame(const std::shared_ptr<const JEvent>& event);
+
+template <typename T>
+void JFactoryPodioT<T>::Create(const std::shared_ptr<const JEvent>& event) {
+    mFrame = GetOrCreateFrame(event);
+    JFactory::Create(event);
 }
 
 
