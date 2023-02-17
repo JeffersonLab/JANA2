@@ -133,7 +133,7 @@ template <class T>
 inline JFactoryT<T>* JEvent::Insert(T* item, const std::string& tag) const {
 
     std::string resolved_tag = tag;
-    if (mUseDefaultTags) {
+    if (mUseDefaultTags && tag.empty()) {
         auto defaultTag = mDefaultTags.find(JTypeInfo::demangle<T>());
         if (defaultTag != mDefaultTags.end()) resolved_tag = defaultTag->second;
     }
@@ -152,7 +152,7 @@ template <class T>
 inline JFactoryT<T>* JEvent::Insert(const std::vector<T*>& items, const std::string& tag) const {
 
     std::string resolved_tag = tag;
-    if (mUseDefaultTags) {
+    if (mUseDefaultTags && tag.empty()) {
         auto defaultTag = mDefaultTags.find(JTypeInfo::demangle<T>());
         if (defaultTag != mDefaultTags.end()) resolved_tag = defaultTag->second;
     }
@@ -189,7 +189,7 @@ template<class T>
 inline JFactoryT<T>* JEvent::GetFactory(const std::string& tag, bool throw_on_missing) const
 {
     std::string resolved_tag = tag;
-    if (mUseDefaultTags) {
+    if (mUseDefaultTags && tag.empty()) {
         auto defaultTag = mDefaultTags.find(JTypeInfo::demangle<T>());
         if (defaultTag != mDefaultTags.end()) resolved_tag = defaultTag->second;
     }
