@@ -440,7 +440,7 @@ inline std::vector<std::string> JEvent::GetAllCollectionTags() const {
 }
 
 inline const podio::CollectionBase* JEvent::GetCollectionBase(std::string tag) const {
-    auto it = mPodioFactories.find("tag");
+    auto it = mPodioFactories.find(tag);
     if (it == mPodioFactories.end()) {
         throw JException("No factory with tag '%s' found", tag.c_str());
     }
@@ -485,7 +485,7 @@ JFactoryPodioT<T>* JEvent::InsertCollection(const typename PodioTypeMap<T>::coll
 
         auto it = mPodioFactories.find(tag);
         if (it != mPodioFactories.end()) {
-            throw JException("InsertCollection failed because tag '%s' is not unique", tag);
+            throw JException("InsertCollection failed because tag '%s' is not unique", tag.c_str());
         }
         mPodioFactories[tag] = factory;
     }
@@ -501,7 +501,7 @@ JFactoryPodioT<T>* JEvent::InsertCollection(const typename PodioTypeMap<T>::coll
     // JFactoryT<PodioT> which ISN'T a JFactoryPodioT<T>. In this case, we cannot set the collection.
     JFactoryPodioT<T>* typed_factory = dynamic_cast<JFactoryPodioT<T>*>(factory);
     if (typed_factory == nullptr) {
-        throw std::runtime_error("Factory must inherit from JFactoryPodioT in order to use JEvent::GetCollection()");
+        throw JException("Factory must inherit from JFactoryPodioT in order to use JEvent::GetCollection()");
     }
 
     // Set the collection

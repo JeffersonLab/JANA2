@@ -38,10 +38,22 @@ set(TEST_SOURCES
     JTablePrinterTests.cc
     )
 
+if (${USE_PODIO})
+    list(APPEND TEST_SOURCES
+            PodioTests.cc
+            )
+endif()
+
 add_executable(janatests ${TEST_SOURCES})
 find_package(Threads REQUIRED)
 target_include_directories(janatests PUBLIC .)
-target_link_libraries(janatests jana2 Threads::Threads)
+target_link_libraries(janatests jana2)
+
+if (${USE_PODIO})
+    # Pull in the data model from examples/PodioExample.
+    # We don't want to have two separate toy data models in the JANA codebase
+    target_link_libraries(janatests DataModelLib DataModelDict)
+endif()
 
 install(TARGETS janatests DESTINATION bin)
 install(FILES catch.hpp DESTINATION include/external)
