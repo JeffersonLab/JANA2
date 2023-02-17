@@ -90,27 +90,26 @@ public:
 
 
     /// Please use the typed setters instead whenever possible
+    // TODO: Deprecate this!
     void Set(const std::vector<JObject*>& aData) override {
-        ClearData();
-        for (auto jobj : aData) {
-            T* casted = dynamic_cast<T*>(jobj);
+        std::vector<T*> data;
+        for (auto obj : aData) {
+            T* casted = dynamic_cast<T*>(obj);
             assert(casted != nullptr);
-            mData.push_back(casted);
+            data.push_back(casted);
         }
-        mStatus = Status::Inserted;                  // n.b. This will be overwritten in GetOrCreate above
-        mCreationStatus = CreationStatus::Inserted;  // n.b. This will be overwritten in GetOrCreate above
+        Set(std::move(data));
     }
 
     /// Please use the typed setters instead whenever possible
+    // TODO: Deprecate this!
     void Insert(JObject* aDatum) override {
         T* casted = dynamic_cast<T*>(aDatum);
         assert(casted != nullptr);
-        mData.push_back(casted);
-        mStatus = Status::Inserted;
-        mCreationStatus = CreationStatus::Inserted;
+        Insert(casted);
     }
 
-    void Set(const std::vector<T*>& aData) {
+    virtual void Set(const std::vector<T*>& aData) {
         if (aData == mData) {
             // The user populated mData directly instead of populating a temporary vector and passing it to us.
             // Doing this breaks the JFactory::Status invariant unless they remember to call Set() afterwards.
@@ -127,14 +126,14 @@ public:
         }
     }
 
-    void Set(std::vector<T*>&& aData) {
+    virtual void Set(std::vector<T*>&& aData) {
         ClearData();
         mData = std::move(aData);
         mStatus = Status::Inserted;
         mCreationStatus = CreationStatus::Inserted;
     }
 
-    void Insert(T* aDatum) {
+    virtual void Insert(T* aDatum) {
         mData.push_back(aDatum);
         mStatus = Status::Inserted;
         mCreationStatus = CreationStatus::Inserted;

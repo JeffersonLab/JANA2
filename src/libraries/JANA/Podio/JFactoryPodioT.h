@@ -52,6 +52,11 @@ public:
     void ClearData() final;
 
     void SetCollection(CollectionT* collection);
+    void Set(const std::vector<T*>& aData) final;
+    void Set(std::vector<T*>&& aData) final;
+    void Insert(T* aDatum) final;
+
+
 
 private:
     // This is meant to be called by JEvent::Insert
@@ -116,5 +121,29 @@ void JFactoryPodioT<T>::Create(const std::shared_ptr<const JEvent>& event) {
     JFactory::Create(event);
 }
 
+template <typename T>
+void JFactoryPodioT<T>::Set(const std::vector<T*>& aData) {
+    auto* collection = new typename PodioTypeMap<T>::collection_t();
+    for (T* item : aData) {
+        collection->push_back(*item);
+    }
+    SetCollection(collection);
+}
+
+template <typename T>
+void JFactoryPodioT<T>::Set(std::vector<T*>&& aData) {
+    auto* collection = new typename PodioTypeMap<T>::collection_t();
+    for (T* item : aData) {
+        collection->push_back(*item);
+    }
+    SetCollection(collection);
+}
+
+template <typename T>
+void JFactoryPodioT<T>::Insert(T* aDatum) {
+    auto* collection = new typename PodioTypeMap<T>::collection_t();
+    collection->push_back(*aDatum);
+    SetCollection(collection);
+}
 
 #endif //JANA2_JFACTORYPODIOT_H
