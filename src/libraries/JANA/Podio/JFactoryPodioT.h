@@ -11,8 +11,20 @@
 
 template <typename S> struct PodioTypeMap;
 
+/// The point of this additional base class is to allow us _untyped_ access to the underlying PODIO collection,
+/// at the cost of some weird multiple inheritance. The JEvent can trigger the untyped factory using Create(), then
+///
+class JFactoryPodio {
+protected:
+    const podio::CollectionBase* mCollection = nullptr;
+private:
+    friend class JEvent;
+    const podio::CollectionBase* GetCollection() { return mCollection; }
+};
+
+
 template <typename T>
-class JFactoryPodioT : public JFactoryT<T> {
+class JFactoryPodioT : public JFactoryT<T>, public JFactoryPodio {
 public:
     using CollectionT = typename PodioTypeMap<T>::collection_t;
 private:
@@ -21,7 +33,6 @@ private:
     // mData holds lightweight value objects which hold a pointer into mCollection.
     // This factory owns these value objects.
     // podio::Frame* mFrame = nullptr;
-    const CollectionT* mCollection = nullptr;
     podio::Frame* mFrame = nullptr;
 
 public:
@@ -40,7 +51,6 @@ public:
     std::size_t GetNumObjects() const final { return mCollection->size(); }
     void ClearData() final;
 
-    const typename PodioTypeMap<T>::collection_t* GetCollection() { return mCollection; }
     void SetCollection(CollectionT* collection);
 
 private:
@@ -67,7 +77,7 @@ void JFactoryPodioT<T>::SetCollection(typename PodioTypeMap<T>::collection_t* co
         throw JException("JFactoryPodioT: Unable to add collection to frame as frame is missing!");
     }
     auto& moved = this->mFrame->put(std::move(*collection), this->GetTag());
-    mCollection = &moved;
+    this->mCollection = &moved;
     for (const T& item : moved) {
         T* clone = new T(item);
         this->mData.push_back(clone); // TODO: Verify that clone points to underlying and does not do a deep copy
@@ -80,7 +90,7 @@ template <typename T>
 void JFactoryPodioT<T>::ClearData() {
     for (auto p : this->mData) delete p;
     this->mData.clear();
-    mCollection = nullptr;  // Collection is owned by the Frame, so we ignore here
+    this->mCollection = nullptr;  // Collection is owned by the Frame, so we ignore here
     this->mFrame = nullptr;  // Frame is owned by the JEvent, so we ignore here
     this->mStatus = JFactory::Status::Unprocessed;
     this->mCreationStatus = JFactory::CreationStatus::NotCreatedYet;
@@ -92,7 +102,7 @@ void JFactoryPodioT<T>::SetCollectionAlreadyInFrame(const CollectionT* collectio
         T* clone = new T(item);
         this->mData.push_back(clone); // TODO: Verify that clone points to underlying and does not do a deep copy
     }
-    mCollection = collection;
+    this->mCollection = collection;
     this->mStatus = JFactory::Status::Inserted;
     this->mCreationStatus = JFactory::CreationStatus::Inserted;
 }
