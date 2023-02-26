@@ -54,7 +54,7 @@ void JEventProcessorArrow::execute(JArrowMetrics& result, size_t location_id) {
         }
         else {
             // This IS the last arrow in the topology. Notify the event source and return event to the pool.
-            x->GetJEventSource()->DoFinish(*x);
+            if( auto es = x->GetJEventSource() ) es->DoFinish(*x);
             m_pool->put(x, location_id);
         }
     }
