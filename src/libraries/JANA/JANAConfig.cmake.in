@@ -4,15 +4,32 @@ find_package(Threads REQUIRED)
 
 include("${CMAKE_CURRENT_LIST_DIR}/JANATargets.cmake")
 
-get_target_property(JANA_INCLUDE_DIRS JANA::jana2 INCLUDE_DIRECTORIES)
-set(JANA_LIBRARIES JANA::jana2)
-set(JANA_LIB JANA::jana2)
 
-# FIXME: This avoid the issue with only JANA_INCLUDE_DIRS
-# FIXME: being defined and having a value "NOT_FOUND".
-# FIXME: It also provides legacy support for JANA_LIBRARY
-set(JANA_INCLUDE_DIR @CMAKE_INSTALL_PREFIX@/include)
-set(JANA_INCLUDE_DIRS @CMAKE_INSTALL_PREFIX@/include)
-set(JANA_LIBRARY JANA::jana2)
+# Provide user with shared libraries by default if JANA was built with them. 
+# Otherwise, provide them with the static version. They can always specify themselves
+# using the JANA::jana2_shared_lib and JANA::jana2_static_lib targets explicitly.
+# n.b. this would be cleaner if we could use an ALIAS, but that would require cmake
+# 3.18 or greater and we want to support legacy versions at this point.
+set(BUILD_SHARED_LIBS @BUILD_SHARED_LIBS@)
+if (${BUILD_SHARED_LIBS})
+    get_target_property(JANA_INCLUDE_DIRS JANA::jana2_shared_lib INTERFACE_INCLUDE_DIRECTORIES)
+    set(JANA_LIBRARIES JANA::jana2_shared_lib)
+else()
+    get_target_property(JANA_INCLUDE_DIRS JANA::jana2_static_lib INTERFACE_INCLUDE_DIRECTORIES)
+    set(JANA_LIBRARIES JANA::jana2_static_lib)
+endif()
+
+# There are some issues with the include directories being passed through as a property
+# of the imported targets. This shows up as JANA_INCLUDE_DIRS being set to
+# "JANA_INCLUDE_DIRS-NOTFOUND". As a workaround, if "NOTFOUND" is included in
+# JANA_INCLUDE_DIRS then overwrite it here with what it should have been set to.
+if(${JANA_INCLUDE_DIRS} MATCHES "NOTFOUND")
+    set(JANA_INCLUDE_DIRS @CMAKE_INSTALL_PREFIX@/include)
+endif()
+
+# Backwards compatibility
+set(JANA_INCLUDE_DIR ${JANA_INCLUDE_DIRS})
+set(JANA_LIBRARY ${JANA_LIBRARIES}) 
+set(JANA_LIB ${JANA_LIBRARIES}) 
 
 
