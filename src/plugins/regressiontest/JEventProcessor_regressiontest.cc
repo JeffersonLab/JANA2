@@ -57,11 +57,9 @@ void JEventProcessor_regressiontest::BeginRun(const std::shared_ptr<const JEvent
 //-------------------------------
 void JEventProcessor_regressiontest::Process(const std::shared_ptr<const JEvent>& event)
 {
-    auto app = GetApplication();
     auto evt_nr = event->GetEventNumber();
-    auto run_nr = event->GetRunNumber();
     for (auto fac : event->GetAllFactories()) {
-        fac->Create(event, app, run_nr); // Make sure all factories have run
+        fac->Create(event); // Make sure all factories have run
     }
     auto facs = GetFactoriesTopologicallyOrdered(*event);
 

@@ -43,6 +43,20 @@ struct Fac2 : public JFactoryT<Obj> {
         Insert(obj);
     }
 };
+
+struct Fac3 : public JFactoryT<Obj> {
+    Fac3() {
+        SetTag("tagC");
+    }
+
+    void Process(const std::shared_ptr<const JEvent>& /*event*/) override {
+        auto obj = new Obj;
+        obj->x = 1;
+        obj->y = 1;
+        obj->E = 4.0;
+        Insert(obj);
+    }
+};
 } // namespace deftagstest
 
 TEST_CASE("SmallDefTags") {
@@ -52,6 +66,7 @@ TEST_CASE("SmallDefTags") {
     auto fs = new JFactorySet;
     fs->Add(new Fac1);
     fs->Add(new Fac2);
+    fs->Add(new Fac3);
     event->SetFactorySet(fs);
 
     auto objsA = event->Get<Obj>("");
@@ -65,6 +80,10 @@ TEST_CASE("SmallDefTags") {
     event->SetDefaultTags(deftags);
     auto objsC = event->Get<Obj>();
     REQUIRE(objsC[0]->E == 33.3);
+
+    // Make sure that setting the deftag doesn't interfere with retrieving non-default tags
+    auto objsD = event->Get<Obj>("tagC");
+    REQUIRE(objsD[0]->E == 4.0);
 
 }
 
