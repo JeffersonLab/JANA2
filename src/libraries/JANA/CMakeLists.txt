@@ -158,19 +158,20 @@ else()
     target_link_libraries(jana2 ${CMAKE_DL_LIBS} Threads::Threads)
 endif()
 
+# static library, always there
+add_library(jana2_static_lib STATIC $<TARGET_OBJECTS:jana2>)
+set_target_properties(jana2_static_lib PROPERTIES PREFIX "lib" OUTPUT_NAME "JANA")
+
+# optionally build shared lib
 if (BUILD_SHARED_LIBS)
     message("-- Build into both shared and static libs")
     add_library(jana2_shared_lib SHARED $<TARGET_OBJECTS:jana2>)
     set_target_properties(jana2_shared_lib PROPERTIES PREFIX "lib" OUTPUT_NAME "JANA")
-    install(TARGETS jana2_shared_lib DESTINATION lib)
+    install(TARGETS jana2_shared_lib EXPORT jana2_targets DESTINATION lib)
     set(INSTALL_RPATH_USE_LINK_PATH True)
 else()
     message("-- Build into static lib only")
 endif()
-
-# static library, always there
-add_library(jana2_static_lib STATIC $<TARGET_OBJECTS:jana2>)
-set_target_properties(jana2_static_lib PROPERTIES PREFIX "lib" OUTPUT_NAME "JANA")
 
 # Install library
 install(TARGETS jana2_static_lib EXPORT jana2_targets DESTINATION lib)

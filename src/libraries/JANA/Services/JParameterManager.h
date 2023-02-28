@@ -94,6 +94,9 @@ public:
     template<typename T>
     JParameter* SetDefaultParameter(std::string name, T& val, std::string description = "");
 
+    template <typename T>
+    T RegisterParameter(std::string name, const T default_val, std::string description = "");
+
     void FilterParameters(std::map<std::string,std::string> &parms, std::string filter="");
 
     void ReadConfigFile(std::string name);
@@ -267,15 +270,40 @@ JParameter* JParameterManager::SetDefaultParameter(std::string name, T& val, std
     return param;
 }
 
+/// @brief Retrieve a configuration parameter, if necessary creating it with the provided default value.
+///
+/// @param [in] name            The parameter name. Must not contain spaces.
+/// @param [in,out] default_val Value to set the desired default value to (returned if no value yet set for parameter).
+/// @param [in] description     Optional description, e.g. units, set or range of valid values, etc.
+/// @return                     Current value of parameter
+///
+/// @details This is a convenience method that wraps SetDefaultParameter. The difference
+/// is that this has the default passed by value (not by reference) and the value of the parameter is returned
+/// by value. This allows a slightly different form for declaring configuration parameters with a default value.
+/// e.g.
+///     auto thresh = jpp->RegisterParameter("SystemA:threshold", 1.3, "threshold in MeV");
+///
+template <typename T>
+inline T JParameterManager::RegisterParameter(std::string name, const T default_val, std::string description){
+    T val = default_val;
+    SetDefaultParameter(name.c_str(), val, description);
+    return val;
+}
+
 
 /// @brief Logic for parsing different types in a generic way
-/// @throws JException in case parsing fails.
 template <typename T>
 inline T JParameterManager::Parse(const std::string& value) {
     std::stringstream ss(value);
     T val;
     ss >> val;
     return val;
+}
+
+/// @brief Specialization for handling strings that don't need parsing
+template <>
+inline std::string JParameterManager::Parse(const std::string& value) {
+    return std::string(value);
 }
 
 /// @brief Specialization for bool

@@ -15,7 +15,7 @@ jobs:
     # Note that every step starts out in the $GITHUB_WORKSPACE
     # directory.
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: cmake
       run: |
         mkdir -p $GITHUB_WORKSPACE/build
