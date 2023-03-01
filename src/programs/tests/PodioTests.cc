@@ -203,7 +203,7 @@ struct MyWrapper<T, std::void_t<typename PodioTypeMap<T>::collection_t>> {
     }
 };
 
-TEST_CASE("PODIO SFINAE") {
+TEST_CASE("SFINAE for JFactoryT || JFactoryPodioT") {
     MyWrapper<int> w;
     REQUIRE(w.have_podio() == false);
 
@@ -211,6 +211,34 @@ TEST_CASE("PODIO SFINAE") {
     REQUIRE(ww.have_podio() == true);
 
     ww.x = 22;
+}
+
+template <typename, typename=void>
+struct is_podio : std::false_type {};
+
+template <typename T>
+struct is_podio<T, std::void_t<typename PodioTypeMap<T>::collection_t>> : std::true_type {};
+
+template <typename T>
+static constexpr bool is_podio_v = is_podio<T>::value;
+
+struct FakeMultifactory {
+
+    template <typename T, typename std::enable_if_t<is_podio_v<T>>* = nullptr>
+    bool DeclareOutput(std::string tag) {
+        return true;
+    }
+
+    template <typename T, typename std::enable_if_t<!is_podio_v<T>>* = nullptr>
+    bool DeclareOutput(std::string tag) {
+        return false;
+    }
+};
+
+TEST_CASE("SFINAE for JMultifactory::SetData") {
+    FakeMultifactory sut;
+    REQUIRE(sut.DeclareOutput<int>("asdf") == false);
+    REQUIRE(sut.DeclareOutput<ExampleCluster>("asdf") == true);
 }
 
 } // namespace podiotests
