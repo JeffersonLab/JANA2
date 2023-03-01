@@ -1,6 +1,7 @@
 
 #include <catch.hpp>
 
+#include <type_traits>
 #include <datamodel/ExampleClusterCollection.h>
 #include <DatamodelGlue.h>  // Hopefully this won't be necessary in the future
 #include <JANA/JEvent.h>
@@ -187,14 +188,6 @@ TEST_CASE("PodioTestsShallowCopySemantics") {
 }
 
 
-template< class ... > using void_t = void;
-
-template<class, class=void>
-struct is_podio : std::false_type {};
-
-template<class T>
-struct is_podio<T, void_t<typename PodioTypeMap<T>::collection_t>> : std::true_type {};
-
 template <typename T, typename = void>
 struct MyWrapper {
     bool have_podio() {
@@ -203,7 +196,7 @@ struct MyWrapper {
 };
 
 template <typename T>
-struct MyWrapper<T, std::enable_if_t<is_podio<T>::value>> {
+struct MyWrapper<T, std::void_t<typename PodioTypeMap<T>::collection_t>> {
     int x = 2;
     bool have_podio() {
         return true;
