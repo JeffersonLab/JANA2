@@ -187,4 +187,37 @@ TEST_CASE("PodioTestsShallowCopySemantics") {
 }
 
 
+template< class ... > using void_t = void;
+
+template<class, class=void>
+struct is_podio : std::false_type {};
+
+template<class T>
+struct is_podio<T, void_t<typename PodioTypeMap<T>::collection_t>> : std::true_type {};
+
+template <typename T, typename = void>
+struct MyWrapper {
+    bool have_podio() {
+        return false;
+    }
+};
+
+template <typename T>
+struct MyWrapper<T, std::enable_if_t<is_podio<T>::value>> {
+    int x = 2;
+    bool have_podio() {
+        return true;
+    }
+};
+
+TEST_CASE("PODIO SFINAE") {
+    MyWrapper<int> w;
+    REQUIRE(w.have_podio() == false);
+
+    MyWrapper<ExampleCluster> ww;
+    REQUIRE(ww.have_podio() == true);
+
+    ww.x = 22;
+}
+
 } // namespace podiotests
