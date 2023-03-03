@@ -28,6 +28,15 @@ else()
 endif()
 
 
+# Add library directories to rpath so users don't need to use LD_LIBRARY_PATH.
+# (see https://dev.my-gate.net/2021/08/04/understanding-rpath-with-cmake )
+# TODO: detector MacOS and set MACOSX_RPATH to TRUE
+set( CMAKE_SKIP_BUILD_RPATH FALSE )
+set( CMAKE_BUILD_WITH_INSTALL_RPATH FALSE )
+set( CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib" )
+set( CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE )
+
+
 # Useful for debugging. Copied from:
 # https://stackoverflow.com/questions/9298278/cmake-print-out-all-accessible-variables-in-a-script
 function(dump_cmake_variables)
