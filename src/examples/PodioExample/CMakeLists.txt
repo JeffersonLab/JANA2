@@ -4,6 +4,7 @@ set(PodioExample_SOURCES
         PodioExampleProcessor.cc
         PodioExampleSource.cc
         ExampleClusterFactory.cc
+        ExampleMultifactory.cc
         )
 
 if (USE_PODIO)

@@ -9,6 +9,11 @@
 #include <JANA/JFactoryT.h>
 #include <JANA/JFactorySet.h>
 
+#ifdef HAVE_PODIO
+#include <JANA/Podio/JPodioTypeHelpers.h>
+#include "JANA/Podio/JFactoryPodioT.h"
+#endif
+
 class JMultifactory;
 
 template <typename T>
@@ -24,8 +29,28 @@ public:
     void Process(const std::shared_ptr<const JEvent>&) override;
     // We really want to override Create, not Process!!!
     // It might make more sense to (1) put Create() back on JFactory, (2) make Create() virtual, (3) override Create()
+    // Alternatively, we could move all the JMultiFactoryHelper functionality into JFactoryT directly
+};
+
+
+#ifdef HAVE_PODIO
+// TODO: This redundancy goes away if we merge JFactoryPodioT with JFactoryT
+template <typename T>
+class JMultifactoryHelperPodio : public JFactoryPodioT<T>{
+
+    JMultifactory* mMultiFactory;
+
+public:
+    JMultifactoryHelperPodio(JMultifactory* parent) : mMultiFactory(parent) {}
+    virtual ~JMultifactoryHelperPodio() = default;
+    // This does NOT own mMultiFactory; the enclosing JFactorySet does
+
+    void Process(const std::shared_ptr<const JEvent>&) override;
+    // We really want to override Create, not Process!!!
+    // It might make more sense to (1) put Create() back on JFactory, (2) make Create() virtual, (3) override Create()
     // Alternatively, we could move all of the JMultiFactoryHelper functionality into JFactoryT directly
 };
+#endif // HAVE_PODIO
 
 
 class JMultifactory {
@@ -54,11 +79,33 @@ public:
 
     // CALLED BY USERS
 
-    template <typename T>
+#ifdef HAVE_PODIO
+// We can dramatically simplify this code when we require JANA to use C++17 or higher.
+
+    template <typename T, typename std::enable_if_t<is_podio_v<T>>* = nullptr>
     void DeclareOutput(std::string tag);
+
+    template <typename T, typename std::enable_if_t<!is_podio_v<T>>* = nullptr>
+    void DeclareOutput(std::string tag, bool owns_data=false);
+
+    template <typename T, typename std::enable_if_t<is_podio_v<T>>* = nullptr>
+    void SetData(std::string tag, std::vector<T*> data);
+
+    template <typename T, typename std::enable_if_t<!is_podio_v<T>>* = nullptr>
+    void SetData(std::string tag, std::vector<T*> data);
+
+    template <typename T, typename std::enable_if_t<is_podio_v<T>>* = nullptr>
+    void SetCollection(std::string tag, typename PodioTypeMap<T>::collection_t* collection);
+
+#else
+
+    template <typename T>
+    void DeclareOutput(std::string tag, bool owns_data=true);
 
     template <typename T>
     void SetData(std::string tag, std::vector<T*> data);
+
+#endif
 
 
     /// CALLED BY JANA
@@ -77,15 +124,69 @@ public:
 
 };
 
-template <typename T>
+
+
+#ifdef HAVE_PODIO
+
+template <typename T, typename std::enable_if_t<is_podio_v<T>>*>
 void JMultifactory::DeclareOutput(std::string tag) {
+    // TODO: Decouple tag name from collection name
+    JFactory* helper = new JMultifactoryHelperPodio<T>(this);
+    helper->SetTag(std::move(tag));
+    mHelpers.Add(helper);
+}
+
+template <typename T, typename std::enable_if_t<!is_podio_v<T>>*>
+void JMultifactory::DeclareOutput(std::string tag, bool owns_data) {
     JFactory* helper = new JMultifactoryHelper<T>(this);
+    if (!owns_data) helper->SetFactoryFlag(JFactory::JFactory_Flags_t::NOT_OBJECT_OWNER);
+    helper->SetTag(std::move(tag));
+    mHelpers.Add(helper);
+}
+
+template <typename T, typename std::enable_if_t<is_podio_v<T>>*>
+void JMultifactory::SetData(std::string tag, std::vector<T*> data) {
+    JFactoryT<T>* helper = mHelpers.GetFactory<T>(tag);
+    if (helper == nullptr) {
+        throw JException("JMultifactory: Attempting to SetData() without corresponding DeclareOutput()");
+    }
+    helper->Set(data);
+}
+
+template <typename T, typename std::enable_if_t<!is_podio_v<T>>*>
+void JMultifactory::SetData(std::string tag, std::vector<T*> data) {
+    JFactoryT<T>* helper = mHelpers.GetFactory<T>(tag);
+    if (helper == nullptr) {
+        throw JException("JMultifactory: Attempting to SetData() without corresponding DeclareOutput()");
+    }
+    helper->Set(data);
+}
+
+template <typename T, typename std::enable_if_t<is_podio_v<T>>*>
+void JMultifactory::SetCollection(std::string tag, typename PodioTypeMap<T>::collection_t* collection) {
+    JFactoryT<T>* helper = mHelpers.GetFactory<T>(tag);
+    if (helper == nullptr) {
+        throw JException("JMultifactory: Attempting to SetData() without corresponding DeclareOutput()");
+    }
+    auto* typed = dynamic_cast<JFactoryPodioT<T>*>(helper);
+    if (typed == nullptr) {
+        throw JException("JMultifactory: Helper needs to be a JFactoryPodioT (this shouldn't be reachable)");
+    }
+    typed->SetCollection(collection);
+}
+
+#else // NOT HAVE_PODIO
+
+template <typename T>
+void JMultifactory::DeclareOutput(std::string tag, bool owns_data) {
+    JFactory* helper = new JMultifactoryHelper<T>(this);
+    if (!owns_data) helper->SetFactoryFlag(JFactory::JFactory_Flags_t::NOT_OBJECT_OWNER);
     helper->SetTag(std::move(tag));
     mHelpers.Add(helper);
 }
 
 template <typename T>
-void JMultifactory::SetData(std::string tag, std::vector<T *> data) {
+void SetData(std::string tag, std::vector<T*> data) {
     JFactoryT<T>* helper = mHelpers.GetFactory<T>(tag);
     if (helper == nullptr) {
         throw JException("JMultifactory: Attempting to SetData() without corresponding DeclareOutput()");
@@ -97,10 +198,21 @@ void JMultifactory::SetData(std::string tag, std::vector<T *> data) {
     // 2. I eventually want to remove the ability to insert directly into the event from anywhere except EventSources
 }
 
+#endif // HAVE_PODIO
+
+
 template <typename T>
 void JMultifactoryHelper<T>::Process(const std::shared_ptr<const JEvent> &event) {
     mMultiFactory->Execute(event);
 }
+
+#ifdef HAVE_PODIO
+template <typename T>
+void JMultifactoryHelperPodio<T>::Process(const std::shared_ptr<const JEvent> &event) {
+    mMultiFactory->Execute(event);
+}
+#endif // HAVE_PODIO
+
 
 // TODO: JFactoryGenerator lets you specify a instance-specific tag that overrides whatever tag
 //       the class itself declared. This won't work with multifactories because one multifactory
