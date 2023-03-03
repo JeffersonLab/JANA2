@@ -28,7 +28,7 @@ public:
     }
 };
 
-
+/// JFactoryGeneratorT works for both JFactories and JMultifactories
 template<class T>
 class JFactoryGeneratorT : public JFactoryGenerator {
 
@@ -41,7 +41,7 @@ public:
     explicit JFactoryGeneratorT(std::string tag) : m_tag(std::move(tag)), m_tag_specified(true) {};
 
     void GenerateFactories(JFactorySet *factory_set) override {
-        JFactory *factory = new T;
+        auto* factory = new T;
 
         if (m_tag_specified) {
             // If user specified a tag via the generator (even the empty tag!), use that.

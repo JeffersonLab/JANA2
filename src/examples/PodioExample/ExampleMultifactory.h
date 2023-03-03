@@ -9,7 +9,7 @@
 #include <JANA/JMultifactory.h>
 
 class ExampleMultifactory : public JMultifactory {
-
+public:
     ExampleMultifactory();
     void Process(const std::shared_ptr<const JEvent>&) override;
 };

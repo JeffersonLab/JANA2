@@ -30,7 +30,7 @@ public:
         std::vector<B*> bs;
         as.push_back(new A {3.3, 4.4});
         as.push_back(new A {5.5, 6.6});
-        bs.push_back(new B {1});
+        bs.push_back(new B {1,1});
         SetData("first", as);
         SetData("second", bs);
         if (m_set_wrong_output) SetData("third", bs);

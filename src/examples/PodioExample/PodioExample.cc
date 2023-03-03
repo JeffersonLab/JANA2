@@ -16,6 +16,7 @@
 #include "PodioExampleSource.h"
 #include "PodioExampleProcessor.h"
 #include "ExampleClusterFactory.h"
+#include "ExampleMultifactory.h"
 
 
 void create_hits_file() {
@@ -76,6 +77,7 @@ int main() {
     app.Add(new PodioExampleProcessor);
     app.Add(new JEventProcessorPodio);
     app.Add(new JFactoryGeneratorT<ExampleClusterFactory>());
+    app.Add(new JFactoryGeneratorT<ExampleMultifactory>());
     app.Add(new PodioExampleSource("hits.root"));
     app.Run();
 

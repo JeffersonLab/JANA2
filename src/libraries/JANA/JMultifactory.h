@@ -61,7 +61,14 @@ class JMultifactory {
     std::once_flag m_is_finished;
     int32_t m_last_run_number = -1;
     // Remember where we are in the stream so that the correct sequence of callbacks get called.
-    // However, don't worry about a Status variable. Every time Execute() gets called, so does Process()
+    // However, don't worry about a Status variable. Every time Execute() gets called, so does Process().
+    // The JMultifactoryHelpers will control calls to Execute().
+
+    std::string mTagSuffix;  // In order to have multiple (differently configured) instances in the same factorySet
+    std::string mPluginName; // So we can propagate this to the JMultifactoryHelpers, so we can have useful error messages
+    std::string mFactoryName; // So we can propagate this to the JMultifactoryHelpers, so we can have useful error messages
+
+
 
 public:
     JMultifactory() = default;
@@ -122,6 +129,10 @@ public:
     // This is meant to be called from JFactorySet, which will take ownership of the helpers while leaving the pointers
     // in place. This method is only supposed to be called by JFactorySet::Add(JMultifactory).
 
+    // These are set by JFactoryGeneratorT (just like JFactories) and get propagated to each of the JMultifactoryHelpers
+    void SetTag(std::string tagSuffix) { mTagSuffix = std::move(tagSuffix); }
+    void SetFactoryName(std::string factoryName) { mFactoryName = std::move(factoryName); }
+    void SetPluginName(std::string pluginName) { mPluginName = std::move(pluginName); }
 };
 
 
@@ -132,7 +143,10 @@ template <typename T, typename std::enable_if_t<is_podio_v<T>>*>
 void JMultifactory::DeclareOutput(std::string tag) {
     // TODO: Decouple tag name from collection name
     JFactory* helper = new JMultifactoryHelperPodio<T>(this);
+    tag += mTagSuffix;
     helper->SetTag(std::move(tag));
+    helper->SetPluginName(mPluginName);
+    helper->SetFactoryName(mFactoryName);
     mHelpers.Add(helper);
 }
 
@@ -140,7 +154,10 @@ template <typename T, typename std::enable_if_t<!is_podio_v<T>>*>
 void JMultifactory::DeclareOutput(std::string tag, bool owns_data) {
     JFactory* helper = new JMultifactoryHelper<T>(this);
     if (!owns_data) helper->SetFactoryFlag(JFactory::JFactory_Flags_t::NOT_OBJECT_OWNER);
+    tag += mTagSuffix;
     helper->SetTag(std::move(tag));
+    helper->SetPluginName(mPluginName);
+    helper->SetFactoryName(mFactoryName);
     mHelpers.Add(helper);
 }
 
@@ -181,6 +198,9 @@ template <typename T>
 void JMultifactory::DeclareOutput(std::string tag, bool owns_data) {
     JFactory* helper = new JMultifactoryHelper<T>(this);
     if (!owns_data) helper->SetFactoryFlag(JFactory::JFactory_Flags_t::NOT_OBJECT_OWNER);
+    tag += mTagSuffix;
+    helper->SetPluginName(mPluginName);
+    helper->SetFactoryName(mFactoryName);
     helper->SetTag(std::move(tag));
     mHelpers.Add(helper);
 }
@@ -212,16 +232,6 @@ void JMultifactoryHelperPodio<T>::Process(const std::shared_ptr<const JEvent> &e
     mMultiFactory->Execute(event);
 }
 #endif // HAVE_PODIO
-
-
-// TODO: JFactoryGenerator lets you specify a instance-specific tag that overrides whatever tag
-//       the class itself declared. This won't work with multifactories because one multifactory
-//       has a number of different outputs, each with potentially different tags.
-//       A. Maybe we could set an instance-level tag on the multifactory, and use that to mangle the factory tags?
-//       B. Maybe we could pass in a vector of tags as a ctor arg, and have DeclareOutput and SetData/PublishOutput
-//          reference the tags by index instead? [This one seems more promising]
-//       This is just idle musing now, but maybe we could specify tags when calling DeclareInput() as well,
-//          and then call event->Get<MyT>(InputTag(1))
 
 
 #endif //JANA2_JMULTIFACTORY_H
