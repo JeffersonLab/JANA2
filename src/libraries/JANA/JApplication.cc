@@ -144,6 +144,24 @@ void JApplication::Initialize() {
     m_initialized = true;
 }
 
+/// @brief Run the application, launching 1 or more threads to do the work.
+///
+/// This will initialize the application, attaching plugins etc. and launching
+/// threads to process events/time slices. This will then either return immediately
+/// (if wait_until_finish=false) or enter a lazy loop checking the progress
+/// of the data processing (if wait_until_finish=true).
+///
+/// In the `wait_until_finished` mode, this will run continuously until 
+/// the JProcessingController indicates it is finished or stopped or 
+/// some other condition exists that would cause it to end early. Under
+/// normal conditions, the data processing stops when polling JProcessingController::is_finished()
+/// indicates the JArrowTopology is in the `JArrowTopology::Status::Finished`
+/// state. This will occur when all event sources have been exhausted and
+/// all events have been processed such that all JWorkers have stopped.
+///
+/// See JProcessingController::run() for more details.
+///
+/// @param [in] wait_until_finished If true (default) do not return until the work has completed.
 void JApplication::Run(bool wait_until_finished) {
 
     Initialize();
