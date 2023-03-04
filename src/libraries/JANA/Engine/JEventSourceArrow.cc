@@ -48,6 +48,10 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
                 in_status = JEventSource::ReturnStatus::TryAgain;
                 break;
             }
+
+            // If there are no sources available then we are automatically finished.
+            if( m_sources.empty() ) in_status = JEventSource::ReturnStatus::Finished;
+            
             while (m_current_source < m_sources.size()) {
                 in_status = m_sources[m_current_source]->DoNext(event);
 
