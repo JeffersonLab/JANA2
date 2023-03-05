@@ -19,7 +19,8 @@ namespace py = pybind11;
 #include "JEventProcessorPY.h"
 
 static py::module_ *PY_MODULE = nullptr;       // set at end of JANA_MODULE_DEF
-static py::module_ PY_MODULE_JSON = py::none();  // set at end of JANA_MODULE_DEF
+static py::module_ PY_MODULE_JSON;  // set at end of JANA_MODULE_DEF
+// static py::module_ PY_MODULE_JSON = py::none();  // This will prevent the module from loading!
 bool PY_INITIALIZED = false;
 static bool PY_MODULE_INSTANTIATED_JAPPLICATION = false;
 static JApplication *pyjapp = nullptr;
@@ -145,7 +146,13 @@ m.def("SetParameterValue",           &janapy_SetParameterValue,           "Set c
 m.def("AddProcessor",                &janapy_AddProcessor,                "Add an event processor"); \
 \
 PY_MODULE = &m;\
-PY_MODULE_JSON = py::module_::import("json");\
+try{\
+    PY_MODULE_JSON = py::module_::import("json");\
+}catch(pybind11::type_error &e){\
+    _DBG_<<" Error importing python json module!"<<std::endl;\
+}catch(...){\
+    _DBG_<<" Error importing python json module!"<<std::endl;\
+}\
 \
 //================================================================================
 
