@@ -7,6 +7,6 @@
 import jana
 
 jana.AddPlugin('JTest')
-jana.SetParameterValue('jana:nevents', 200)
+jana.SetParameterValue('jana:nevents', 10)
 
 jana.Run()
