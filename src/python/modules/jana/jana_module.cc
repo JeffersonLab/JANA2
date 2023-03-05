@@ -3,6 +3,7 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #include <janapy.h>
+#include <JANA/CLI/JMain.h>
 
 //================================================================================
 // Module definition
@@ -17,6 +18,8 @@ PYBIND11_MODULE(jana, m) {
     // (see src/python/common/janapy.h)
     JANA_MODULE_DEF
 
-    pyjapp = new JApplication();
+    auto options = jana::ParseCommandLineOptions(0, nullptr, false);
+    pyjapp = jana::CreateJApplication(options);
+
     PY_MODULE_INSTANTIATED_JAPPLICATION = true;
 }
