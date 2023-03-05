@@ -33,7 +33,7 @@
 
 if (${USE_PYTHON})
 
-    set(bundled_pybind11 externals/pybind11-2.6.1)
+    set(bundled_pybind11 externals/pybind11-2.10.3)
 
     # If the user has defined USE_BUNDLED_PYBIND11 then
     # exclusively try using what they indicated.
