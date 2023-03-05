@@ -21,6 +21,7 @@ extern std::mutex pymutex;    // declared in JEventProcessorPY.h
 void JANA_EmbeddedPythonModuleInit(JApplication *sApp);
 
 extern "C"{
+__attribute__((visibility("default")))  // counteract the -fvisibility=hidden compiler option
 void InitPlugin(JApplication *app){
     InitJANAPlugin(app);
 
