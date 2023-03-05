@@ -1,6 +1,6 @@
 
 
-include_directories(${PYTHON_INCLUDE_DIRS} ${PYBIND11_INCLUDE_DIR} ../../common)
+include_directories(${PYTHON_INCLUDE_DIRS} ${pybind11_INCLUDE_DIRS} ../../common)
 link_libraries(${PYTHON_LIBRARIES} pybind11::embed jana2)
 
 add_library(janapy_plugin SHARED janapy_plugin.cc)
