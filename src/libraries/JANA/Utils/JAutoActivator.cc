@@ -78,7 +78,7 @@ void JAutoActivator::Process(const std::shared_ptr<const JEvent> &event) {
         auto tag = pair.second;
         auto factory = event->GetFactory(name, tag);
         if (factory != nullptr) {
-            factory->Create(event, event->GetJApplication(), event->GetRunNumber());
+            factory->Create(event); // This will do nothing if factory is already created
         }
         else {
             LOG << "Warning: Could not find factory with name=" << name << ", tag=" << tag << LOG_END;

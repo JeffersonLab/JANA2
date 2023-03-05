@@ -14,6 +14,7 @@ set(JANA2_SOURCES
     JEventSourceGeneratorT.h
     JException.h
     JFactory.h
+    JFactory.cc
     JFactoryGenerator.h
     JFactorySet.cc
     JFactorySet.h
@@ -133,6 +134,13 @@ set(JANA2_SOURCES
     Compatibility/JGetObjectsFactory.h
     )
 
+if (${USE_PODIO})
+    list(APPEND JANA2_SOURCES
+            Podio/JEventProcessorPodio.cc
+            Podio/JFactoryPodioT.cc
+        )
+endif()
+
 if (NOT ${USE_XERCES})
     message(STATUS "Skipping support for libJANA's JGeometryXML because USE_XERCES=Off")
 endif()
@@ -144,7 +152,11 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 target_include_directories(jana2 PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/..)
 # So that we can find the generated JVersion.h before install
 
-target_link_libraries(jana2 ${CMAKE_DL_LIBS} Threads::Threads)
+if (${USE_PODIO})
+    target_link_libraries(jana2 ${CMAKE_DL_LIBS} Threads::Threads podio::podio podio::podioRootIO)
+else()
+    target_link_libraries(jana2 ${CMAKE_DL_LIBS} Threads::Threads)
+endif()
 
 # static library, always there
 add_library(jana2_static_lib STATIC $<TARGET_OBJECTS:jana2>)
@@ -201,6 +213,7 @@ file(GLOB jana_utils_headers "Utils/*.h*")
 file(GLOB jana_calibs_headers "Calibrations/*.h*")
 file(GLOB jana_cli_headers "CLI/*.h*")
 file(GLOB jana_compat_headers "Compatibility/*.h*")
+file(GLOB jana_podio_headers "Podio/*.h*")
 
 install(FILES ${jana_headers} DESTINATION include/JANA)
 install(FILES ${jana_engine_headers} DESTINATION include/JANA/Engine)
@@ -211,6 +224,12 @@ install(FILES ${jana_utils_headers} DESTINATION include/JANA/Utils)
 install(FILES ${jana_calibs_headers} DESTINATION include/JANA/Calibrations)
 install(FILES ${jana_cli_headers} DESTINATION include/JANA/CLI)
 install(FILES ${jana_compat_headers} DESTINATION include/JANA/Compatibility)
+
+if (${USE_PODIO})
+    install(FILES ${jana_podio_headers} DESTINATION include/JANA/Podio)
+endif()
+
+
 
 
 

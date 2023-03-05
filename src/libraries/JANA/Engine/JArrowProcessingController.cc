@@ -35,6 +35,15 @@ void JArrowProcessingController::initialize() {
 
 }
 
+/// @brief This will run the JArrowTopology and create N JWorker objects, each with thier own threads.
+///
+/// This will first call JTopology::run(size_t) to initialize the topology and
+/// prepare it for workers. It will then create `nthreads` JWorker objects and call
+/// their JWorker::start() methods causing them to create their own threads and
+/// start running their JWorker::loop() methods. This will return after the worker
+/// threads are launched.
+///
+/// @param [in] nthreads The number of worker threads to start
 void JArrowProcessingController::run(size_t nthreads) {
     LOG_INFO(m_logger) << "run(): Launching " << nthreads << " workers" << LOG_END;
     // topology->run needs to happen _before_ threads are started so that threads don't quit due to lack of assignments

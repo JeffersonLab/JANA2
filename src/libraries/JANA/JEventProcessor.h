@@ -131,7 +131,7 @@ public:
 
     virtual void BeginRun(const std::shared_ptr<const JEvent>&) {}
 
-    virtual void Process(const std::shared_ptr<const JEvent>&) {
+    virtual void Process(const std::shared_ptr<const JEvent>& /*event*/) {
         throw JException("Not implemented yet!");
     }
     virtual void EndRun() {}

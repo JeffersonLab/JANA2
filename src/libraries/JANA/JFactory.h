@@ -105,10 +105,8 @@ public:
     virtual void ClearData() = 0;
 
 
-
     // Overloaded by user Factories
     virtual void Init() {}
-
     virtual void BeginRun(const std::shared_ptr<const JEvent>&) {}
     virtual void ChangeRun(const std::shared_ptr<const JEvent>&) {}
     virtual void EndRun() {}
@@ -119,13 +117,6 @@ public:
         return 0;
     }
 
-    // Copy/Move objects into factory
-    template<typename T>
-    void Set(const std::vector<T *> &items) {
-        for (T *item : items) {
-            Insert(item);
-        }
-    }
 
     /// Access the encapsulated data, performing an upcast if necessary. This is useful for extracting data from
     /// all JFactories<T> where T extends a parent class S, such as JObject or TObject, in contexts where T is not known
@@ -142,7 +133,7 @@ public:
     /// Create() calls JFactory::Init,BeginRun,Process in an invariant-preserving way without knowing the exact
     /// type of object contained. It returns the number of objects created. In order to access said objects,
     /// use JFactory::GetAs().
-    virtual size_t Create(const std::shared_ptr<const JEvent>& event, JApplication* app, uint64_t run_number) = 0;
+    virtual void Create(const std::shared_ptr<const JEvent>& event);
 
     /// JApplication setter. This is meant to be used under the hood.
     void SetApplication(JApplication* app) { mApp = app; }

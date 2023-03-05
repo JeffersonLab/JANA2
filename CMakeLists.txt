@@ -28,6 +28,15 @@ else()
 endif()
 
 
+# Add library directories to rpath so users don't need to use LD_LIBRARY_PATH.
+# (see https://dev.my-gate.net/2021/08/04/understanding-rpath-with-cmake )
+# TODO: detector MacOS and set MACOSX_RPATH to TRUE
+set( CMAKE_SKIP_BUILD_RPATH FALSE )
+set( CMAKE_BUILD_WITH_INSTALL_RPATH FALSE )
+set( CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib" )
+set( CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE )
+
+
 # Useful for debugging. Copied from:
 # https://stackoverflow.com/questions/9298278/cmake-print-out-all-accessible-variables-in-a-script
 function(dump_cmake_variables)
@@ -57,6 +66,7 @@ option(USE_PYTHON "Include Python dependency. This requires python-devel and pyt
 option(USE_ASAN "Compile with address sanitizer" OFF)
 option(USE_TSAN "Compile with thread sanitizer" OFF)
 option(USE_CUDA "Compile CUDA-involved examples (Needed for examples/SubeventCUDAExample)." OFF)
+option(USE_PODIO "Compile with PODIO support" OFF)
 option(BUILD_SHARED_LIBS "Build into both shared and static libs." ON)
 
 
@@ -110,6 +120,11 @@ if (${USE_CUDA})
     find_package(CUDA REQUIRED)
 endif()
 
+if (${USE_PODIO})
+    find_package(podio REQUIRED)
+    add_compile_definitions(HAVE_PODIO)
+endif()
+
 #---------
 # Report back to the user what we've discovered
 #---------
@@ -151,6 +166,11 @@ if (${USE_CUDA})
     message(STATUS "USE_CUDA    On")
 else()
     message(STATUS "USE_CUDA    Off")
+endif()
+if (${USE_PODIO})
+    message(STATUS "USE_PODIO   On  --> " ${podio_DIR})
+else()
+    message(STATUS "USE_PODIO   Off")
 endif()
 if (${BUILD_SHARED_LIBS})
     message(STATUS "BUILD_SHARED_LIBS    On")

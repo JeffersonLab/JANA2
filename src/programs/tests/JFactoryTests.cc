@@ -18,21 +18,21 @@ TEST_CASE("JFactoryTests") {
         auto event = std::make_shared<JEvent>();
 
         // The first time it is run, Init, ChangeRun, and Process each get run once
-        sut.GetOrCreate(event, nullptr, 0);
+        sut.GetOrCreate(event);
         REQUIRE(sut.init_call_count == 1);
         REQUIRE(sut.change_run_call_count == 1);
         REQUIRE(sut.process_call_count == 1);
 
         // We can getOrCreate as many times as we want and nothing will happen
         // until somebody clears the factory (assuming persistence flag is unset)
-        sut.GetOrCreate(event, nullptr, 0);
+        sut.GetOrCreate(event);
         REQUIRE(sut.init_call_count == 1);
         REQUIRE(sut.change_run_call_count == 1);
         REQUIRE(sut.process_call_count == 1);
 
         // Once we clear the factory, Process gets called again but Init and ChangeRun do not.
         sut.ClearData();
-        sut.GetOrCreate(event, nullptr, 0);
+        sut.GetOrCreate(event);
         REQUIRE(sut.init_call_count == 1);
         REQUIRE(sut.change_run_call_count == 1);
         REQUIRE(sut.process_call_count == 2);
@@ -62,78 +62,82 @@ TEST_CASE("JFactoryTests") {
         // For the first event, ChangeRun() always gets called
         event->SetEventNumber(1);
         event->SetRunNumber(22);
-        sut.GetOrCreate(event, nullptr, 22);
+        sut.GetOrCreate(event);
         REQUIRE(sut.change_run_call_count == 1);
 
         // Subsequent events with the same run number do not trigger ChangeRun()
         event->SetEventNumber(2);
         sut.ClearData();
-        sut.GetOrCreate(event, nullptr, 22);
+        sut.GetOrCreate(event);
 
         event->SetEventNumber(3);
         sut.ClearData();
-        sut.GetOrCreate(event, nullptr, 22);
+        sut.GetOrCreate(event);
         REQUIRE(sut.change_run_call_count == 1);
 
         // As soon as the run number changes, ChangeRun() gets called again
         event->SetEventNumber(4);
         event->SetRunNumber(49);
         sut.ClearData();
-        sut.GetOrCreate(event, nullptr, 49);
+        sut.GetOrCreate(event);
         REQUIRE(sut.change_run_call_count == 2);
 
         // This keeps happening
         event->SetEventNumber(5);
         event->SetRunNumber(6180);
         sut.ClearData();
-        sut.GetOrCreate(event, nullptr, 6180);
+        sut.GetOrCreate(event);
         REQUIRE(sut.change_run_call_count == 3);
     }
 
     SECTION("not PERSISTENT && not NOT_OBJECT_OWNER => JObject is cleared and deleted") {
+        auto event = std::make_shared<JEvent>();
         JFactoryT<JFactoryTestDummyObject> sut; // Process() is a no-op
         bool deleted_flag = false;
         sut.ClearFactoryFlag(JFactory::PERSISTENT);
         sut.ClearFactoryFlag(JFactory::NOT_OBJECT_OWNER);
         sut.Insert(new JFactoryTestDummyObject(42, &deleted_flag));
         sut.ClearData();
-        auto results = sut.GetOrCreate(nullptr, nullptr, 0);
+        auto results = sut.GetOrCreate(event);
         REQUIRE(std::distance(results.first, results.second) == 0);
         REQUIRE(deleted_flag == true);
     }
 
     SECTION("not PERSISTENT && NOT_OBJECT_OWNER => JObject is cleared but not deleted") {
+        auto event = std::make_shared<JEvent>();
         JFactoryT<JFactoryTestDummyObject> sut; // Process() is a no-op
         bool deleted_flag = false;
         sut.ClearFactoryFlag(JFactory::PERSISTENT);
         sut.SetFactoryFlag(JFactory::NOT_OBJECT_OWNER);
         sut.Insert(new JFactoryTestDummyObject(42, &deleted_flag));
         sut.ClearData();
-        auto results = sut.GetOrCreate(nullptr, nullptr, 0);
+        auto results = sut.GetOrCreate(event);
         REQUIRE(std::distance(results.first, results.second) == 0);
         REQUIRE(deleted_flag == false);
     }
 
     SECTION("PERSISTENT && not NOT_OBJECT_OWNER => JObject is neither cleared nor deleted") {
         JFactoryT<JFactoryTestDummyObject> sut; // Process() is a no-op
+        auto event = std::make_shared<JEvent>();
         bool deleted_flag = false;
         sut.SetFactoryFlag(JFactory::PERSISTENT);
         sut.ClearFactoryFlag(JFactory::NOT_OBJECT_OWNER);
         sut.Insert(new JFactoryTestDummyObject(42, &deleted_flag));
         sut.ClearData();
-        auto results = sut.GetOrCreate(nullptr, nullptr, 0);
+        auto results = sut.GetOrCreate(event);
         REQUIRE(std::distance(results.first, results.second) == 1);
         REQUIRE(deleted_flag == false);
     }
 
     SECTION("PERSISTENT && NOT_OBJECT_OWNER => JObject is neither cleared nor deleted") {
         JFactoryT<JFactoryTestDummyObject> sut; // Process() is a no-op
+        auto event = std::make_shared<JEvent>();
         bool deleted_flag = false;
         sut.SetFactoryFlag(JFactory::PERSISTENT);
         sut.SetFactoryFlag(JFactory::NOT_OBJECT_OWNER);
         sut.Insert(new JFactoryTestDummyObject(42, &deleted_flag));
         sut.ClearData();
-        auto results = sut.GetOrCreate(nullptr, nullptr, 0);
+        auto results = sut.GetOrCreate(event);
         REQUIRE(std::distance(results.first, results.second) == 1);
         REQUIRE(deleted_flag == false);
     }
@@ -155,7 +159,8 @@ TEST_CASE("JFactoryTests") {
         // Now, we account for this case. I still think we should clean up this abstraction, though.
 
         Issue135Factory sut;
-        auto results = sut.GetOrCreate(nullptr, nullptr, 0);
+        auto event = std::make_shared<JEvent>();
+        auto results = sut.GetOrCreate(event);
         REQUIRE(sut.GetNumObjects() == 3);
         REQUIRE(std::distance(results.first, results.second) == 3);
 

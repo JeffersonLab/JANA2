@@ -26,6 +26,13 @@
 #include <mutex>
 #include "JANA/Utils/JInspector.h"
 
+#ifdef HAVE_PODIO
+#include <JANA/Podio/JFactoryPodioT.h>
+namespace podio {
+class CollectionBase;
+}
+#endif
+
 class JApplication;
 class JEventSource;
 
@@ -46,6 +53,19 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
         void SetFactorySet(JFactorySet* aFactorySet) {
             delete mFactorySet;
             mFactorySet = aFactorySet;
+#ifdef HAVE_PODIO
+            // Maintain the index of PODIO factories
+            for (JFactory* factory : mFactorySet->GetAllFactories()) {
+                if (dynamic_cast<JFactoryPodio*>(factory) != nullptr) {
+                    auto tag = factory->GetTag();
+                    auto it = mPodioFactories.find(tag);
+                    if (it != mPodioFactories.end()) {
+                        throw JException("SetFactorySet failed because PODIO factory tag '%s' is not unique", tag.c_str());
+                    }
+                    mPodioFactories[tag] = factory;
+                }
+            }
+#endif
         }
 
         JFactorySet* GetFactorySet() const { return mFactorySet; }
@@ -78,13 +98,20 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
         template <class T> JFactoryT<T>* Insert(T* item, const std::string& aTag = "") const;
         template <class T> JFactoryT<T>* Insert(const std::vector<T*>& items, const std::string& tag = "") const;
 
+        // PODIO
+#ifdef HAVE_PODIO
+        std::vector<std::string> GetAllCollectionTags() const;
+        const podio::CollectionBase* GetCollectionBase(std::string tag) const;
+        template <typename T> const typename PodioTypeMap<T>::collection_t* GetCollection(std::string tag) const;
+        template <typename T> JFactoryPodioT<T>* InsertCollection(const typename PodioTypeMap<T>::collection_t* collection, std::string tag);
+#endif
+
         //SETTERS
         void SetRunNumber(int32_t aRunNumber){mRunNumber = aRunNumber;}
         void SetEventNumber(uint64_t aEventNumber){mEventNumber = aEventNumber;}
         void SetJApplication(JApplication* app){mApplication = app;}
         void SetJEventSource(JEventSource* aSource){mEventSource = aSource;}
         void SetDefaultTags(std::map<std::string, std::string> aDefaultTags){mDefaultTags=aDefaultTags; mUseDefaultTags = !mDefaultTags.empty();}
-
         void SetSequential(bool isSequential) {mIsBarrierEvent = isSequential;}
 
         //GETTERS
@@ -98,6 +125,8 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
         bool GetSequential() const {return mIsBarrierEvent;}
         friend class JEventPool;
 
+
+
     private:
         JApplication* mApplication = nullptr;
         int32_t mRunNumber = 0;
@@ -109,6 +138,10 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
         std::map<std::string, std::string> mDefaultTags;
         JEventSource* mEventSource = nullptr;
         bool mIsBarrierEvent = false;
+
+#ifdef HAVE_PODIO
+        std::map<std::string, JFactory*> mPodioFactories;
+#endif
 };
 
 /// Insert() allows an EventSource to insert items directly into the JEvent,
@@ -119,7 +152,7 @@ template <class T>
 inline JFactoryT<T>* JEvent::Insert(T* item, const std::string& tag) const {
 
     std::string resolved_tag = tag;
-    if (mUseDefaultTags) {
+    if (mUseDefaultTags && tag.empty()) {
         auto defaultTag = mDefaultTags.find(JTypeInfo::demangle<T>());
         if (defaultTag != mDefaultTags.end()) resolved_tag = defaultTag->second;
     }
@@ -138,7 +171,7 @@ template <class T>
 inline JFactoryT<T>* JEvent::Insert(const std::vector<T*>& items, const std::string& tag) const {
 
     std::string resolved_tag = tag;
-    if (mUseDefaultTags) {
+    if (mUseDefaultTags && tag.empty()) {
         auto defaultTag = mDefaultTags.find(JTypeInfo::demangle<T>());
         if (defaultTag != mDefaultTags.end()) resolved_tag = defaultTag->second;
     }
@@ -175,7 +208,7 @@ template<class T>
 inline JFactoryT<T>* JEvent::GetFactory(const std::string& tag, bool throw_on_missing) const
 {
     std::string resolved_tag = tag;
-    if (mUseDefaultTags) {
+    if (mUseDefaultTags && tag.empty()) {
         auto defaultTag = mDefaultTags.find(JTypeInfo::demangle<T>());
         if (defaultTag != mDefaultTags.end()) resolved_tag = defaultTag->second;
     }
@@ -197,7 +230,7 @@ inline JMetadata<T> JEvent::GetMetadata(const std::string& tag) const {
 
     auto factory = GetFactory<T>(tag, true);
     // Make sure that JFactoryT::Process has already been called before returning the metadata
-    factory->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
+    factory->GetOrCreate(this->shared_from_this());
     return factory->GetMetadata();
 }
 
@@ -216,7 +249,7 @@ JFactoryT<T>* JEvent::Get(const T** destination, const std::string& tag) const
 {
     auto factory = GetFactory<T>(tag, true);
     JCallGraphEntryMaker cg_entry(mCallGraph, factory); // times execution until this goes out of scope
-    auto iterators = factory->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
+    auto iterators = factory->GetOrCreate(this->shared_from_this());
     if (std::distance(iterators.first, iterators.second) == 0) {
         *destination = nullptr;
     }
@@ -232,7 +265,7 @@ JFactoryT<T>* JEvent::Get(std::vector<const T*>& destination, const std::string&
 {
     auto factory = GetFactory<T>(tag, true);
     JCallGraphEntryMaker cg_entry(mCallGraph, factory); // times execution until this goes out of scope
-    auto iterators = factory->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
+    auto iterators = factory->GetOrCreate(this->shared_from_this());
     for (auto it=iterators.first; it!=iterators.second; it++) {
         destination.push_back(*it);
     }
@@ -252,7 +285,7 @@ JFactoryT<T>* JEvent::Get(std::vector<const T*>& destination, const std::string&
 template<class T> const T* JEvent::GetSingle(const std::string& tag) const {
     auto factory = GetFactory<T>(tag, true);
     JCallGraphEntryMaker cg_entry(mCallGraph, factory); // times execution until this goes out of scope
-    auto iterators = factory->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
+    auto iterators = factory->GetOrCreate(this->shared_from_this());
     if (std::distance(iterators.first, iterators.second) == 0) {
         return nullptr;
     }
@@ -268,7 +301,7 @@ template<class T> const T* JEvent::GetSingle(const std::string& tag) const {
 template<class T> const T* JEvent::GetSingleStrict(const std::string& tag) const {
     auto factory = GetFactory<T>(tag, true);
     JCallGraphEntryMaker cg_entry(mCallGraph, factory); // times execution until this goes out of scope
-    auto iterators = factory->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
+    auto iterators = factory->GetOrCreate(this->shared_from_this());
     if (std::distance(iterators.first, iterators.second) == 0) {
         JException ex("GetSingle failed due to missing %d", NAME_OF(T));
         ex.show_stacktrace = false;
@@ -288,7 +321,7 @@ std::vector<const T*> JEvent::Get(const std::string& tag) const {
 
     auto factory = GetFactory<T>(tag, true);
     JCallGraphEntryMaker cg_entry(mCallGraph, factory); // times execution until this goes out of scope
-    auto iters = factory->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
+    auto iters = factory->GetOrCreate(this->shared_from_this());
     std::vector<const T*> vec;
     for (auto it=iters.first; it!=iters.second; ++it) {
         vec.push_back(*it);
@@ -317,7 +350,7 @@ template<class T>
 void JEvent::GetAll(std::vector<const T*>& destination) const {
     auto factories = GetFactoryAll<T>(true);
     for (auto factory : factories) {
-        auto iterators = factory->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
+        auto iterators = factory->GetOrCreate(this->shared_from_this());
         for (auto it = iterators.first; it != iterators.second; it++) {
             destination.push_back(*it);
         }
@@ -331,7 +364,7 @@ std::vector<const T*> JEvent::GetAll() const {
     auto factories = GetFactoryAll<T>(true);
 
     for (auto factory : factories) {
-        auto iters = factory->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
+        auto iters = factory->GetOrCreate(this->shared_from_this());
         std::vector<const T*> vec;
         for (auto it = iters.first; it != iters.second; ++it) {
             vec.push_back(*it);
@@ -364,7 +397,7 @@ template<class T>
 typename JFactoryT<T>::PairType JEvent::GetIterators(const std::string& tag) const {
     auto factory = GetFactory<T>(tag, true);
     JCallGraphEntryMaker cg_entry(mCallGraph, factory); // times execution until this goes out of scope
-    auto iters = factory->GetOrCreate(this->shared_from_this(), mApplication, mRunNumber);
+    auto iters = factory->GetOrCreate(this->shared_from_this());
     return iters;
 }
 
@@ -395,6 +428,89 @@ JFactoryT<T>* JEvent::GetSingle(const T* &t, const char *tag, bool exception_if_
     t = v[0];
     return fac;
 }
+
+#ifdef HAVE_PODIO
+
+inline std::vector<std::string> JEvent::GetAllCollectionTags() const {
+    std::vector<std::string> keys;
+    for (auto pair : mPodioFactories) {
+        keys.push_back(pair.first);
+    }
+    return keys;
+}
+
+inline const podio::CollectionBase* JEvent::GetCollectionBase(std::string tag) const {
+    auto it = mPodioFactories.find(tag);
+    if (it == mPodioFactories.end()) {
+        throw JException("No factory with tag '%s' found", tag.c_str());
+    }
+    JFactoryPodio* factory = dynamic_cast<JFactoryPodio*>(it->second);
+    if (factory == nullptr) {
+        // Should be no way to get here if we encapsulate mPodioFactories correctly
+        throw JException("Factory with tag '%s' does not inherit from JFactoryPodio!", tag.c_str());
+    }
+    JCallGraphEntryMaker cg_entry(mCallGraph, it->second); // times execution until this goes out of scope
+    it->second->Create(this->shared_from_this());
+    return factory->GetCollection();
+    // TODO: Might be cheaper/simpler to obtain factory from mPodioFactories instead of mFactorySet
+}
+
+template <typename T>
+const typename PodioTypeMap<T>::collection_t* JEvent::GetCollection(std::string tag) const {
+    JFactoryT<T>* factory = GetFactory<T>(tag, true);
+    JFactoryPodioT<T>* typed_factory = dynamic_cast<JFactoryPodioT<T>*>(factory);
+    if (typed_factory == nullptr) {
+        throw JException("Factory must inherit from JFactoryPodioT in order to use JEvent::GetCollection()");
+    }
+    JCallGraphEntryMaker cg_entry(mCallGraph, typed_factory); // times execution until this goes out of scope
+    typed_factory->Create(this->shared_from_this());
+    return static_cast<const typename PodioTypeMap<T>::collection_t*>(typed_factory->GetCollection());
+}
+
+template <typename T>
+JFactoryPodioT<T>* JEvent::InsertCollection(const typename PodioTypeMap<T>::collection_t* collection, std::string tag) {
+
+    // Users are allowed to Insert with tag="" if and only if that tag gets resolved by default tags.
+    if (mUseDefaultTags && tag.empty()) {
+        auto defaultTag = mDefaultTags.find(JTypeInfo::demangle<T>());
+        if (defaultTag != mDefaultTags.end()) tag = defaultTag->second;
+    }
+
+    // Retrieve factory if it already exists, else create it
+    JFactoryT<T>* factory = mFactorySet->GetFactory<T>(tag);
+    if (factory == nullptr) {
+        factory = new JFactoryPodioT<T>();
+        factory->SetTag(tag);
+        mFactorySet->Add(factory);
+
+        auto it = mPodioFactories.find(tag);
+        if (it != mPodioFactories.end()) {
+            throw JException("InsertCollection failed because tag '%s' is not unique", tag.c_str());
+        }
+        mPodioFactories[tag] = factory;
+    }
+
+    // PODIO collections can only be inserted once, unlike regular JANA factories.
+    if (factory->GetStatus() == JFactory::Status::Inserted  ||
+        factory->GetStatus() == JFactory::Status::Processed) {
+
+        throw JException("PODIO collections can only be inserted once, but factory already has data");
+    }
+
+    // There's a chance that some user already added to the event's JFactorySet a
+    // JFactoryT<PodioT> which ISN'T a JFactoryPodioT<T>. In this case, we cannot set the collection.
+    JFactoryPodioT<T>* typed_factory = dynamic_cast<JFactoryPodioT<T>*>(factory);
+    if (typed_factory == nullptr) {
+        throw JException("Factory must inherit from JFactoryPodioT in order to use JEvent::GetCollection()");
+    }
+
+    // Set the collection
+    typed_factory->SetCollectionAlreadyInFrame(collection);
+    typed_factory->SetInsertOrigin( mCallGraph.GetInsertDataOrigin() );
+    return typed_factory;
+}
+
+#endif // HAVE_PODIO
 
 
 #endif // _JEvent_h_

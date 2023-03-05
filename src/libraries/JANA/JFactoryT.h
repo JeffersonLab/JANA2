@@ -2,6 +2,9 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
+#ifndef _JFactoryT_h_
+#define _JFactoryT_h_
+
 #include <vector>
 #include <type_traits>
 
@@ -14,8 +17,6 @@
 #include <TObject.h>
 #endif
 
-#ifndef _JFactoryT_h_
-#define _JFactoryT_h_
 
 /// Class template for metadata. This constrains JFactoryT<T> to use the same (user-defined)
 /// metadata structure, JMetadata<T> for that T. This is essential for retrieving metadata from
@@ -77,85 +78,38 @@ public:
     /// ChangeRun(), and Process() methods. These include making sure the JFactory JApplication is set, Init() is called
     /// exactly once, exceptions are tagged with the originating plugin and eventsource, ChangeRun() is
     /// called if and only if the run number changes, etc.
-    PairType GetOrCreate(const std::shared_ptr<const JEvent>& event, JApplication* app, int32_t run_number) {
-
-        // std::lock_guard<std::mutex> lock(mMutex);
-        // TODO: We might want _some_ locking here actually
-        if (mApp == nullptr) {
-            mApp = app;
+    PairType GetOrCreate(const std::shared_ptr<const JEvent>& event) {
+        if (mStatus == Status::Uninitialized || mStatus == Status::Unprocessed) {
+            Create(event);
         }
-        if (mStatus == Status::Uninitialized) {
-            try {
-                std::call_once(mInitFlag, &JFactory::Init, this);
-                mStatus = Status::Unprocessed;
-            }
-            catch (JException& ex) {
-                ex.plugin_name = mPluginName;
-                ex.component_name = mFactoryName;
-                throw ex;
-            }
-            catch (...) {
-                auto ex = JException("Unknown exception in JFactoryT::Init()");
-                ex.nested_exception = std::current_exception();
-                ex.plugin_name = mPluginName;
-                ex.component_name = mFactoryName;
-                throw ex;
-            }
+        if (mStatus != Status::Processed && mStatus != Status::Inserted) {
+            throw JException("JFactoryT::Status is corrupted");
         }
-        if (mStatus == Status::Unprocessed) {
-            if (mPreviousRunNumber == -1) {
-                // This is the very first run
-                ChangeRun(event);
-                BeginRun(event);
-                mPreviousRunNumber = run_number;
-            }
-            else if (mPreviousRunNumber != run_number) {
-                // This is a later run, and it has changed
-                EndRun();
-                ChangeRun(event);
-                BeginRun(event);
-                mPreviousRunNumber = run_number;
-            }
-            Process(event);
-            mStatus = Status::Processed;
-            mCreationStatus = CreationStatus::Created;
-        }
-        if (mStatus == Status::Processed || mStatus == Status::Inserted) {
-            return std::make_pair(mData.cbegin(), mData.cend());
-        }
-        else {
-            throw JException("JFactoryT::Status is set to a garbage value");
-        }
-    }
-
-    size_t Create(const std::shared_ptr<const JEvent>& event, JApplication* app, uint64_t run_number) final {
-        auto result = GetOrCreate(event, app, run_number);
-        return std::distance(result.first, result.second);
+        return std::make_pair(mData.cbegin(), mData.cend());
     }
 
 
     /// Please use the typed setters instead whenever possible
+    // TODO: Deprecate this!
     void Set(const std::vector<JObject*>& aData) override {
-        ClearData();
-        for (auto jobj : aData) {
-            T* casted = dynamic_cast<T*>(jobj);
+        std::vector<T*> data;
+        for (auto obj : aData) {
+            T* casted = dynamic_cast<T*>(obj);
             assert(casted != nullptr);
-            mData.push_back(casted);
+            data.push_back(casted);
         }
-        mStatus = Status::Inserted;                  // n.b. This will be overwritten in GetOrCreate above
-        mCreationStatus = CreationStatus::Inserted;  // n.b. This will be overwritten in GetOrCreate above
+        Set(std::move(data));
     }
 
     /// Please use the typed setters instead whenever possible
+    // TODO: Deprecate this!
     void Insert(JObject* aDatum) override {
         T* casted = dynamic_cast<T*>(aDatum);
         assert(casted != nullptr);
-        mData.push_back(casted);
-        mStatus = Status::Inserted;
-        mCreationStatus = CreationStatus::Inserted;
+        Insert(casted);
     }
 
-    void Set(const std::vector<T*>& aData) {
+    virtual void Set(const std::vector<T*>& aData) {
         if (aData == mData) {
             // The user populated mData directly instead of populating a temporary vector and passing it to us.
             // Doing this breaks the JFactory::Status invariant unless they remember to call Set() afterwards.
@@ -172,14 +126,14 @@ public:
         }
     }
 
-    void Set(std::vector<T*>&& aData) {
+    virtual void Set(std::vector<T*>&& aData) {
         ClearData();
         mData = std::move(aData);
         mStatus = Status::Inserted;
         mCreationStatus = CreationStatus::Inserted;
     }
 
-    void Insert(T* aDatum) {
+    virtual void Insert(T* aDatum) {
         mData.push_back(aDatum);
         mStatus = Status::Inserted;
         mCreationStatus = CreationStatus::Inserted;
