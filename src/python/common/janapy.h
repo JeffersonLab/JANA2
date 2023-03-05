@@ -10,6 +10,7 @@ using namespace std;
 
 
 #include <JANA/JApplication.h>
+#include <JANA/CLI/JMain.h>
 #include <JANA/Utils/JCpuInfo.h>
 #include <JANA/Services/JParameterManager.h>
 
@@ -29,7 +30,6 @@ static JApplication *pyjapp = nullptr;
 // n.b. The default values here will NEVER be used. They must be passed in explicitly to
 // pybind11. They are only here for convenience!
 inline void     janapy_Start(void) { PY_INITIALIZED = true; }
-inline void     janapy_Run(void) { if(PY_MODULE_INSTANTIATED_JAPPLICATION) {pyjapp->Run();}else{janapy_Start();} }
 inline void     janapy_Quit(bool skip_join=false) { pyjapp->Quit(skip_join); }
 inline void     janapy_Stop(bool wait_until_idle=false) { pyjapp->Stop(wait_until_idle); }
 inline void     janapy_Resume(void) { pyjapp->Resume(); }
@@ -51,6 +51,19 @@ inline size_t   janapy_GetNcores(void) { return JCpuInfo::GetNumCpus(); }
 inline void     janapy_PrintStatus(void) { pyjapp->PrintStatus(); }
 inline void     janapy_PrintParameters(bool all=false) { pyjapp->GetJParameterManager()->PrintParameters(all); }
 inline string   janapy_GetParameterValue(string key) { return pyjapp->GetJParameterManager()->Exists(key) ? pyjapp->GetParameterValue<string>(key):"Not Defined"; }
+
+inline void     janapy_Run(void)
+{
+    if(PY_MODULE_INSTANTIATED_JAPPLICATION) {
+        // Being run as python module
+        auto options = jana::ParseCommandLineOptions(0, nullptr, false);
+        auto exit_code = jana::Execute(pyjapp, options);
+        LOG << "JANA processing complete. Exit code: " << exit_code << LOG_END;
+    }else{
+        // Being run from C++ executable with janapy plugin
+        janapy_Start();
+    }
+}
 
 // Not sure of the clean way to have python cast val object to string before passing to us ...
 inline void     janapy_SetParameterValue(string key, py::object valobj)
