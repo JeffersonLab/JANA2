@@ -15,6 +15,7 @@ class JTopologyBuilder : public JService {
     std::shared_ptr<JParameterManager> m_params;
     std::shared_ptr<JComponentManager> m_components;
     std::shared_ptr<JArrowTopology> m_topology;
+    std::function<std::shared_ptr<JArrowTopology>(std::shared_ptr<JArrowTopology>)> m_configure_topology;
 
     size_t m_event_pool_size = 4;
     size_t m_event_queue_threshold = 80;
@@ -34,8 +35,19 @@ public:
 
     ~JTopologyBuilder() override = default;
 
+    /// set allows the user to specify a topology directly. Note that this needs to be set before JApplication::Initialize
+    /// gets called, which means that you won't be able to include components loaded from plugins. You probably want to use
+    /// JTopologyBuilder::set_configure_fn instead, which does give you that access.
     inline void set(std::shared_ptr<JArrowTopology> topology) {
-        m_topology = topology;
+        m_topology = std::move(topology);
+    }
+
+    /// set_cofigure_fn lets the user provide a lambda that sets up a topology after all components have been loaded.
+    /// It provides an 'empty' JArrowTopology which has been furnished with a pointer to the JComponentManager, the JEventPool,
+    /// and the JProcessorMapping (in case you care about NUMA details). However, it does not contain any queues or arrows.
+    /// You have to furnish those yourself.
+    inline void set_configure_fn(std::function<std::shared_ptr<JArrowTopology>(std::shared_ptr<JArrowTopology>)> configure_fn) {
+        m_configure_topology = std::move(configure_fn);
     }
 
     inline std::shared_ptr<JArrowTopology> get() {
@@ -43,10 +55,17 @@ public:
     }
 
     inline std::shared_ptr<JArrowTopology> get_or_create() {
-        if (m_topology == nullptr) {
-            create_default_topology();
+        if (m_topology != nullptr) {
+            return m_topology;
         }
-        return m_topology;
+        else if (m_configure_topology) {
+            m_topology = m_configure_topology(create_empty());
+            return m_topology;
+        }
+        else {
+            m_topology = create_default_topology();
+            return m_topology;
+        }
     }
 
 
