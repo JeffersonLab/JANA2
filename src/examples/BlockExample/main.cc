@@ -48,6 +48,7 @@ std::shared_ptr<JArrowTopology> configure_block_topology(std::shared_ptr<JArrowT
 
 int main() {
     JApplication app;
+    app.SetParameterValue("jana:limit_total_events_in_flight", false);  // Otherwise we run out and segfault!!!
     app.GetService<JTopologyBuilder>()->set_configure_fn(configure_block_topology);
     app.SetParameterValue("log:trace", "JWorker");
     app.Run(true);
