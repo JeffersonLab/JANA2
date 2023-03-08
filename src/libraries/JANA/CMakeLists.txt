@@ -111,6 +111,7 @@ set(JANA2_SOURCES
 
     CLI/JBenchmarker.cc
     CLI/JBenchmarker.h
+    CLI/JSignalHandler.cc
     CLI/JSignalHandler.h
     CLI/JMain.cc
     CLI/JMain.h
