@@ -38,10 +38,20 @@ class BlockExampleSource : public JBlockedEventSource<MyBlock> {
 
 		LOG_DEBUG(m_logger) <<  "JBlockedEventSource::DisentangleBlock" << LOG_END;
 		std::vector<std::shared_ptr<JEvent>> events;
+		bool result = pool.get_many(events, block.data.size());
+
+		if (result == false) {
+
+		    // TODO: Change this method signature so that we are automatically given the correct number of events
+		    //       instead of having to interact with the JEventPool ourselves.
+
+		    throw JException("Unable to obtain events from pool! Set jana:limit_events_in_flight=false");
+		}
+		std::vector<std::shared_ptr<JEvent>> output_events;
+
+		size_t i = 0;
 		for (auto datum : block.data) {
-			auto event = pool.get(0);  // TODO: Make location be transparent to end user
-			event->Insert(new MyObject(datum));
-			events.push_back(event);
+			events[i++]->Insert(new MyObject(datum));
 		}
 		return events;
 	}
