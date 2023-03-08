@@ -52,6 +52,7 @@ public:
 					chunk_buffer.push_back(m_next_block);
 					m_next_block = nullptr;
 				}
+                lambda_result = result;
 			}
 
 			// We have to return our reservation regardless of whether our pop succeeded
