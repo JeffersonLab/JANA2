@@ -47,15 +47,16 @@ public:
 				if (m_next_block == nullptr) {
 					m_next_block = new T;
 				}
-				auto result = m_source->NextBlock(*m_next_block);
-				if (result == Status::Success) {
+				lambda_result = m_source->NextBlock(*m_next_block);
+				if (lambda_result == Status::Success) {
+					LOG_TRACE(m_logger) << "JBlockSourceArrow: Success! Pushing valid block to chunk buffer" << LOG_END;
 					chunk_buffer.push_back(m_next_block);
 					m_next_block = nullptr;
 				}
-                lambda_result = result;
 			}
 
 			// We have to return our reservation regardless of whether our pop succeeded
+			LOG_TRACE(m_logger) << "JBlockSourceArrow: Pushing " << chunk_buffer.size() << " blocks to queue" << LOG_END;
 			m_block_queue->push(chunk_buffer, reserved_count, location_id);
 
 			if (lambda_result == Status::Success) {
@@ -66,6 +67,10 @@ public:
 				// TODO: Consider reporting queueempty/queuefull/sourcebusy here instead
 			}
 			else if (lambda_result == Status::FailFinished) {
+				finish();
+				// TODO: finish() really ought to be called by JScheduler.
+				//       However, it is not, nor is it being called for JEventSourceArrow either.
+				//       I'm going to try to fix this when I get around to parallel event sources (issue #72)
 				status = JArrowMetrics::Status::Finished;
 			}
 		}
