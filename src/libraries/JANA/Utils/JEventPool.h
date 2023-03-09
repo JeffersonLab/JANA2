@@ -47,7 +47,7 @@ public:
         }
     }
 
-    inline std::shared_ptr<JEvent> get(size_t location) {
+    inline std::shared_ptr<JEvent> get(size_t location=0) {
 
         LocalPool& pool = m_pools[location % m_location_count];
         std::lock_guard<std::mutex> lock(pool.mutex);
@@ -72,7 +72,8 @@ public:
         }
     }
 
-    inline void put(std::shared_ptr<JEvent>& event, size_t location) {
+
+    inline void put(std::shared_ptr<JEvent>& event, size_t location=0) {
 
         LocalPool& pool = m_pools[location % m_location_count];
         std::lock_guard<std::mutex> lock(pool.mutex);
@@ -83,6 +84,52 @@ public:
     }
 
     inline size_t size() { return m_pool_size; }
+
+
+    inline bool get_many(std::vector<std::shared_ptr<JEvent>>& dest, size_t count, size_t location=0) {
+        std::vector<std::shared_ptr<JEvent>> results;
+
+        LocalPool& pool = m_pools[location % m_location_count];
+        std::lock_guard<std::mutex> lock(pool.mutex);
+        // TODO: We probably want to steal from other event pools if jana:enable_stealing=true
+
+        if (m_limit_total_events_in_flight && pool.events.size() < count) {
+            return false;
+        }
+        else {
+            while (count > 0 && !pool.events.empty()) {
+                auto event = std::move(pool.events.back());
+                pool.events.pop_back();
+                event->mFactorySet->Release();
+                event->mInspector.Reset();
+                event->GetJCallGraphRecorder()->Reset();
+                dest.push_back(event);
+                count -= 1;
+            }
+            while (count > 0) {
+                auto event = std::make_shared<JEvent>();
+                m_component_manager->configure_event(*event);
+                dest.push_back(event);
+                count -= 1;
+            }
+            return true;
+        }
+    }
+
+    inline void put_many(std::vector<std::shared_ptr<JEvent>>& finished_events, size_t location=0) {
+
+        LocalPool& pool = m_pools[location % m_location_count];
+        std::lock_guard<std::mutex> lock(pool.mutex);
+        // TODO: We may want to distribute to other event pools if jana:enable_stealing=true
+
+        size_t count = finished_events.size();
+        while (count-- > 0 && pool.events.size() < m_pool_size) {
+            pool.events.push_back(std::move(finished_events.back()));
+            finished_events.pop_back();
+        }
+        // Items that are added back to the pool get removed from finished_events.
+        // Remaining items go out of scope on their own
+    }
 };
 
 
