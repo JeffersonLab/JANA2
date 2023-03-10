@@ -555,6 +555,8 @@ void JControlZMQ::HostStatusPROCMacOSX(std::map<std::string,float> &vals)
     vals["cpu_idle" ] = idle_percent;
     vals["cpu_total"] = cpu_usage;
 
+#else
+    _DBG_<<"Calling HostStatusPROCMacOSX on non-APPLE machine. " << vals.size() << std::endl; // vals.size() is just to prevent compiler warning
 #endif // __APPLE__
 }
 
