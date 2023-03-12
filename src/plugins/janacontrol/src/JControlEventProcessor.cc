@@ -49,6 +49,8 @@ void JControlEventProcessor::Process(const std::shared_ptr<const JEvent> &event)
         // Release shared_ptr to JEvent since we are done with it.
         _jevent.reset();
     }
+
+    if( _fetch_flag ) FetchObjects( event );
  }
 
 //-------------------------------------------------------------
@@ -111,6 +113,73 @@ void JControlEventProcessor::GetObjects(const std::string &/* factory_name */, c
     if(_jevent.get() == nullptr ) return;
 
     jstringification->GetObjectSummaries(objects, _jevent, object_name, factory_tag);
+}
+
+//-------------------------------------------------------------
+// SetFetch
+//
+// Set list of factories whose objects should be retrieved and packaged
+// into strings during the next event.
+//-------------------------------------------------------------
+void JControlEventProcessor::SetFetchFactories(std::set<std::string> &factorytags){
+
+    _fetch_object_summaries.clear();
+    _fetch_metadata.clear();
+    _fetch_factorytags = factorytags;
+    _fetch_flag = true;
+}
+
+//-------------------------------------------------------------
+// FetchObjects
+//
+/// Fetch the objects set in the fetch list by an earlier call to
+/// SetFetch(). Objects will be retrieved from the given event
+/// and JObjectSummary objects created for them and stored in
+/// the _fetch_object_summaries container. The _fetch_flag
+/// will be set to false once the objects in _fetch_object_summaries
+/// are ready.
+//-------------------------------------------------------------
+void JControlEventProcessor::FetchObjects(std::shared_ptr<const JEvent> jevent){
+
+    _fetch_object_summaries.clear(); // should be redundant with clear in SetFetchFactories()
+    _fetch_metadata.clear();
+
+    _fetch_metadata["run_number"]   = ToString( GetRunNumber());
+    _fetch_metadata["event_number"] = ToString( GetEventNumber());
+
+    // Loop over factories set in a previous call to SetFetchFactories()
+    for( const auto& factorytag : _fetch_factorytags){
+        // Add entry to _fetch_object_summaries and get reference to it
+        auto &objects = _fetch_object_summaries[factorytag];
+
+        // Split factorytag string into factory part and tag part
+        auto pos = factorytag.find(":");
+        std::string factory_name = factorytag.substr(0, pos);
+        std::string tag = (pos==std::string::npos ? "":factorytag.substr(pos+1));
+
+        jstringification->GetObjectSummaries(objects, jevent, factory_name, tag);
+    }
+
+    // All done. Notify JControlZMQ::FetchJANAObjectsJSON
+    _fetch_flag = false;
+}
+
+//-------------------------------------------------------------
+// FetchObjectsNow
+//
+/// This is a wrapper to FetchObjects that can be called while in
+/// debug mode (i.e. when event processing is stalled). It allows
+/// JControlZMQ::FetchJANAObjectsJSON to get objects from the
+/// current event while in debug_mode. Like FetchObjects(), this
+/// assumes SetFetch() has already been called. This will set the
+/// _fetch_flag to false when done and should be followed by a
+/// call to GetLastFetchResult() to get the actual results.
+//-------------------------------------------------------------
+void JControlEventProcessor::FetchObjectsNow(void){
+    // bombproof against getting called with no active JEvent
+    if(_jevent.get() == nullptr ) return;
+
+    FetchObjects( _jevent );
 }
 
 //-------------------------------------------------------------
