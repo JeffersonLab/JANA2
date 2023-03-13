@@ -28,6 +28,7 @@ public:
     std::string GetJANAFactoryListJSON();
     std::string GetJANAObjectListJSON();
     std::string GetJANAObjectsJSON(const std::string &object_name, const std::string &factory_name, const std::string &factory_tag);
+    std::string FetchJANAObjectsJSON(std::vector<std::string> &vals);
 
 private:
 
