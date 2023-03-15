@@ -88,7 +88,7 @@ void JEventSourcePodio<VisitT>::GetEvent(std::shared_ptr<JEvent> event) {
     for (const std::string& coll_name : frame->getAvailableCollections()) {
         const podio::CollectionBase* collection = frame->get(coll_name);
         InsertingVisitor visitor(*event, coll_name);
-        visit(*collection, visitor);
+        visit(visitor, *collection);
     }
     event->Insert(frame.release()); // Transfer ownership from unique_ptr to JFactoryT<podio::Frame>
 }

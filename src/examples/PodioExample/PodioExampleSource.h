@@ -9,9 +9,9 @@
 #include "DatamodelGlue.h"   // Has to come BEFORE JEventSourcePodio.h
 #include <JANA/Podio/JEventSourcePodio.h>
 
-class PodioExampleSource : public JEventSourcePodio<DatamodelCollectionVisit> {
+class PodioExampleSource : public JEventSourcePodio<VisitExampleDatamodel> {
 public:
-    explicit PodioExampleSource(std::string filename) : JEventSourcePodio<DatamodelCollectionVisit>(std::move(filename)) {
+    explicit PodioExampleSource(std::string filename) : JEventSourcePodio(std::move(filename)) {
     }
     std::unique_ptr<podio::Frame> NextFrame(int event_index, int &event_number, int &run_number) override;
 
