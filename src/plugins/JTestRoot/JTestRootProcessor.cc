@@ -26,7 +26,7 @@ void JTestRootProcessor::Process(const std::shared_ptr<const JEvent> &event) {
     std::lock_guard<std::mutex>lock(m_mutex);
 
     // At this point we can do something with the Cluster objects
-    for (auto cluster : clusters) {
-         //Use cluster object (e.g. fill histogram or write object to output file)
-    }
+    // for (auto cluster : clusters) {
+    //      //Use cluster object (e.g. fill histogram or write object to output file)
+    // }
 }

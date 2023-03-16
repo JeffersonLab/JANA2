@@ -1113,8 +1113,12 @@ std::string JGeometryXML::EntityResolver::GetMD5_checksum(void)
     md5_byte_t digest[16];
     md5_finish(&pms, digest);
 
-    char hex_output[16*2 + 1];
-    for(int di = 0; di < 16; ++di) sprintf(hex_output + di * 2, "%02x", digest[di]);
+    const size_t str_len = 16*2 + 1;
+    char hex_output[str_len];
+    for(int di = 0; di < 16; ++di) {
+        size_t buff_left = str_len - di * 2;
+        snprintf(hex_output + di * 2, buff_left, "%02x", digest[di]);
+    }
 
     return hex_output;
 }

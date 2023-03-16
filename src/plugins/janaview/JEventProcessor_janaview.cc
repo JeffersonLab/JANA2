@@ -55,7 +55,7 @@ bool FactoryNameSort(JFactory *a,JFactory *b){
 // C-callable routine that can be used with pthread_create to launch
 // a thread that creates the ROOT GUI and handles all ROOT GUI interactions
 //-------------------
-void* JanaViewRootGUIThread(void *arg)
+void* JanaViewRootGUIThread(void */*arg*/)
 {
 //	JEventProcessor_janaview *jproc = (JEventProcessor_janaview*)arg;
 
@@ -134,8 +134,8 @@ void JEventProcessor_janaview::Process(const std::shared_ptr<const JEvent>& even
 
 	// static bool processed_first_event = false;
 
-	this->loop = loop;
-	this->eventnumber = eventnumber;
+	this->loop = event;
+	this->eventnumber = event->GetEventNumber();
 	
 	JEventSource *source = event->GetJEventSource();
 	JVMF->UpdateInfo(source->GetResourceName(), event->GetRunNumber(), event->GetEventNumber());
@@ -278,7 +278,7 @@ void JEventProcessor_janaview::MakeCallGraph(string nametag)
 	// of their callees
 	do{
 		bool nothing_changed = true;
-		map<string, CGobj*>::iterator iter = cgobjs.begin();
+		// map<string, CGobj*>::iterator iter = cgobjs.begin();
 
 		for(auto p : cgobjs){	
 			CGobj *caller_obj = p.second;

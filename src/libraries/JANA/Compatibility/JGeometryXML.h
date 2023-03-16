@@ -145,14 +145,14 @@ class JGeometryXML:public JGeometry{
                  //  Constructors and Destructor
                  ErrorHandler(){}
                  ~ErrorHandler(){}
-                 bool handleError(const xercesc::DOMError& domError){jerr<<"Got Error!!"<<std::endl; return false;}
+                 bool handleError(const xercesc::DOMError& /*domError*/){jerr<<"Got Error!!"<<std::endl; return false;}
              void resetErrors(){}
       
             // Purely virtual methods
 #if XERCES3
-      void warning(const xercesc::SAXParseException& exc){}
-      void error(const xercesc::SAXParseException& exc){}
-      void fatalError(const xercesc::SAXParseException& exc){}
+      void warning(const xercesc::SAXParseException& /*exc*/){}
+      void error(const xercesc::SAXParseException& /*exc*/){}
+      void fatalError(const xercesc::SAXParseException& /*exc*/){}
 #endif  // XERCES3
 
             private :

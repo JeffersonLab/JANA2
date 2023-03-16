@@ -144,7 +144,7 @@ void JControlZMQ::ServerLoop()
 
     // Bind to port number specified in constructor. Most likely this came from JANA_ZMQ_PORT config. parameter
     char bind_str[256];
-	sprintf( bind_str, "tcp://*:%d", _port );
+	snprintf( bind_str, 256, "tcp://*:%d", _port );
 	void *responder = zmq_socket( _zmq_context, ZMQ_REP );
 	auto ret = zmq_bind( responder, bind_str);
 	if( ret != 0 ){
@@ -354,7 +354,7 @@ void JControlZMQ::HostStatusPROC(std::map<std::string,float> &vals)
 //---------------------------------
 // HostStatusPROCLinux
 //---------------------------------
-void JControlZMQ::HostStatusPROCLinux(std::map<std::string,float> &vals)
+void JControlZMQ::HostStatusPROCLinux(std::map<std::string,float> & vals )
 {
 #ifdef __linux__
     /// Get host info using the /proc mechanism on Linux machines.
@@ -451,6 +451,8 @@ void JControlZMQ::HostStatusPROCLinux(std::map<std::string,float> &vals)
     getrusage(RUSAGE_SELF, &usage);
     double mem_usage = (double)(usage.ru_maxrss)/1024.0; // convert to MB
     vals["ram_used_this_proc_GB"] = (double)mem_usage*1.0E-3;
+#else
+    _DBG_<<"Calling HostStatusPROCLinux on non-Linux machine. " << vals.size() << std::endl; // vals.size() is just to prevent compiler warning
 #endif // __linux__
 }
 
