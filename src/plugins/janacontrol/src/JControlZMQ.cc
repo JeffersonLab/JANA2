@@ -354,7 +354,7 @@ void JControlZMQ::HostStatusPROC(std::map<std::string,float> &vals)
 //---------------------------------
 // HostStatusPROCLinux
 //---------------------------------
-void JControlZMQ::HostStatusPROCLinux(std::map<std::string,float> & /*vals*/ )
+void JControlZMQ::HostStatusPROCLinux(std::map<std::string,float> & vals )
 {
 #ifdef __linux__
     /// Get host info using the /proc mechanism on Linux machines.
@@ -451,6 +451,8 @@ void JControlZMQ::HostStatusPROCLinux(std::map<std::string,float> & /*vals*/ )
     getrusage(RUSAGE_SELF, &usage);
     double mem_usage = (double)(usage.ru_maxrss)/1024.0; // convert to MB
     vals["ram_used_this_proc_GB"] = (double)mem_usage*1.0E-3;
+#else
+    _DBG_<<"Calling HostStatusPROCLinux on non-Linux machine. " << vals.size() << std::endl; // vals.size() is just to prevent compiler warning
 #endif // __linux__
 }
 
