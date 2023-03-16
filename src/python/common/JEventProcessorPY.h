@@ -110,7 +110,7 @@ class JEventProcessorPY {
 
             auto fac = aEvent->GetFactory( p.first, p.second);
             if( fac == nullptr ){
-                jerr << "Unable to find factory specified for prefetching: factory=" << p.first << " tag=" << p.second << std::endl;
+                LOG_ERROR(default_cout_logger) << "Unable to find factory specified for prefetching: factory=" << p.first << " tag=" << p.second << LOG_END;
             }else {
                 auto v = fac->GetAs<JObject>();
 #ifdef HAVE_ROOT
@@ -199,7 +199,7 @@ class JEventProcessorPY {
             std::string tag_str = tag.is(py::none()) ? "":py::str(tag);
             prefetch_factories[fac_name_str] = tag_str;
         }else{
-            jerr << "Unknown type passed to Prefetch: " << std::string(py::str(fac_name)) << std::endl;
+            LOG_ERROR(default_cout_logger) << "Unknown type passed to Prefetch: " << std::string(py::str(fac_name)) << LOG_END;
         }
     }
 
@@ -220,7 +220,7 @@ class JEventProcessorPY {
                 auto dict = json_loads( py::str(obj_json) );
                 list.append( dict );
             }catch(...){
-                jerr << "Python json loads function not available!" << std::endl;
+                LOG_ERROR(default_cout_logger) << "Python json loads function not available!" << LOG_END;
             }
         }
 
