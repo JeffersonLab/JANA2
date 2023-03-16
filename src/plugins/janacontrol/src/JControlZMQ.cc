@@ -144,7 +144,7 @@ void JControlZMQ::ServerLoop()
 
     // Bind to port number specified in constructor. Most likely this came from JANA_ZMQ_PORT config. parameter
     char bind_str[256];
-	sprintf( bind_str, "tcp://*:%d", _port );
+	snprintf( bind_str, 256, "tcp://*:%d", _port );
 	void *responder = zmq_socket( _zmq_context, ZMQ_REP );
 	auto ret = zmq_bind( responder, bind_str);
 	if( ret != 0 ){

@@ -209,7 +209,7 @@ void jv_mainframe::DoSelectObjectType(Int_t id)
 	lbObjects->RemoveAll();
 	for(uint32_t i=0; i<vobjs.size(); i++){
 		char str[256];
-		sprintf(str, "0x%016lx %s", (unsigned long)vobjs[i], ((JObject*)vobjs[i])->className().c_str());
+		snprintf(str, 256, "0x%016lx %s", (unsigned long)vobjs[i], ((JObject*)vobjs[i])->className().c_str());
 		lbObjects->AddEntry(str, i+1);
 	}
 	
@@ -242,7 +242,7 @@ void jv_mainframe::DoSelectObject(Int_t id)
 	obj->GetT(aobjs);
 	for(uint32_t i=0; i<aobjs.size(); i++){
 		char str[256];
-		sprintf(str, "0x%016lx %s", (unsigned long)aobjs[i], aobjs[i]->className().c_str());
+		snprintf(str, 256, "0x%016lx %s", (unsigned long)aobjs[i], aobjs[i]->className().c_str());
 		lbAssociatedObjects->AddEntry(str, i+1);
 	}
 	Redraw(lbAssociatedObjects);
@@ -252,7 +252,7 @@ void jv_mainframe::DoSelectObject(Int_t id)
 	JEP->GetAssociatedTo(obj, a2objs);
 	for(uint32_t i=0; i<a2objs.size(); i++){
 		char str[256];
-		sprintf(str, "0x%016lx %s", (unsigned long)a2objs[i], a2objs[i]->className().c_str());
+		snprintf(str, 256, "0x%016lx %s", (unsigned long)a2objs[i], a2objs[i]->className().c_str());
 		lbAssociatedToObjects->AddEntry(str, i+1);
 	}
 	Redraw(lbAssociatedToObjects);
@@ -387,9 +387,9 @@ void jv_mainframe::UpdateInfo(string source, int run, int event)
 	lSource->SetText(source.c_str());
 
 	char str[256];
-	sprintf(str, "%d     ", run);
+	snprintf(str, 256, "%d     ", run);
 	lRun->SetText(str);
-	sprintf(str, "%d            ", event);
+	snprintf(str, 256, "%d            ", event);
 	lEvent->SetText(str);
 	
 	Redraw(lSource);
@@ -439,7 +439,7 @@ void jv_mainframe::UpdateObjectTypeList(vector<JVFactoryInfo> &facinfo)
 void jv_mainframe::UpdateObjectValues(JObject *obj)
 {
 	char title[256];
-	sprintf(title, "0x%016lx : %s", (unsigned long)obj, obj->className().c_str());
+	snprintf(title, 256, "0x%016lx : %s", (unsigned long)obj, obj->className().c_str());
 	lObjectValue->SetTitle(title);
 	lObjectValue->Resize();
 
