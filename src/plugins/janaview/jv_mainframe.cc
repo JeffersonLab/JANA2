@@ -13,7 +13,7 @@
 //---------------------------------
 // jv_mainframe    (Constructor)
 //---------------------------------
-jv_mainframe::jv_mainframe(const TGWindow *p, UInt_t w, UInt_t h,  bool build_gui):TGMainFrame(p,w,h, kMainFrame | kVerticalFrame)
+jv_mainframe::jv_mainframe(const TGWindow *p, UInt_t w, UInt_t h,  bool /*build_gui*/):TGMainFrame(p,w,h, kMainFrame | kVerticalFrame)
 {
 	CreateGUI();
 	
@@ -313,7 +313,7 @@ void jv_mainframe::DoDoubleClickAssociatedToObject(Int_t id)
 //-------------------
 // DoCallGraphClicked
 //-------------------
-void jv_mainframe::DoCallGraphClicked(Int_t event, Int_t x, Int_t y, TObject *selected)
+void jv_mainframe::DoCallGraphClicked(Int_t event, Int_t x, Int_t y, TObject */*selected*/)
 {
 	if( event != kButton1Up ) return;
 	
@@ -544,7 +544,7 @@ TGLabel* jv_mainframe::AddLabel(TGCompositeFrame* frame, string text, Int_t mode
 //-------------------
 // AddNamedLabel
 //-------------------
-TGLabel* jv_mainframe::AddNamedLabel(TGCompositeFrame* frame, string title, Int_t mode, ULong_t hints)
+TGLabel* jv_mainframe::AddNamedLabel(TGCompositeFrame* frame, string title, Int_t mode, ULong_t /*hints*/)
 {
 	TGHorizontalFrame *f = new TGHorizontalFrame(frame);
 	AddLabel(f, title, kTextRight);

@@ -354,7 +354,7 @@ void JControlZMQ::HostStatusPROC(std::map<std::string,float> &vals)
 //---------------------------------
 // HostStatusPROCLinux
 //---------------------------------
-void JControlZMQ::HostStatusPROCLinux(std::map<std::string,float> &vals)
+void JControlZMQ::HostStatusPROCLinux(std::map<std::string,float> & /*vals*/ )
 {
 #ifdef __linux__
     /// Get host info using the /proc mechanism on Linux machines.

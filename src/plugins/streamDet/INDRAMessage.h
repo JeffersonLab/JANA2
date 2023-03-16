@@ -107,7 +107,7 @@ public:
 
     void set_end_of_stream() { as_indra_message()->flags = 1; }
     void set_event_number(size_t event_number) { as_indra_message()->record_counter = event_number; }
-    static void set_run_number(size_t run_number) { ; }
+    static void set_run_number(size_t /* run_number */) { ; }
 
     ////////////////////////////////////////////////////////////////////////////////////////
     /// Everything in this section is used by user-defined JFactories and JEventProcessors to access
@@ -179,6 +179,7 @@ inline std::ostream& operator<< (std::ostream& os, const DASEventMessage& messag
     std::string subSocket = message.get_sub_socket();
     ss << "INDRA Message received on " << subSocket
        << " -> Event " << eventNum
+       << ", mess. freq. = " << msgFreq
        << ", buffer size = " << buffSize
        << ", payload = ";
     for (int i = 0; i < 10 && i < (int) length; ++i) {
