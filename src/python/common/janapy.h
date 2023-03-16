@@ -20,8 +20,7 @@ namespace py = pybind11;
 #include "JEventProcessorPY.h"
 
 static py::module_ *PY_MODULE = nullptr;       // set at end of JANA_MODULE_DEF
-static py::module_ PY_MODULE_JSON;  // set at end of JANA_MODULE_DEF
-// static py::module_ PY_MODULE_JSON = py::none();  // This will prevent the module from loading!
+// static py::module_ PY_MODULE_JSON;          // set at end of JANA_MODULE_DEF
 bool PY_INITIALIZED = false;
 static bool PY_MODULE_INSTANTIATED_JAPPLICATION = false;
 static JApplication *pyjapp = nullptr;
@@ -92,13 +91,13 @@ inline void     janapy_SetParameterValue(string key, py::object valobj)
 //-----------------------------------------
 inline void janapy_AddProcessor(py::object &pyproc ) {
 
-    // The JEventProcessorPY is instantiated from python by vitue of
+    // The JEventProcessorPY is instantiated from python by virtue of
     // it being a base class for whatever jana.JEventProcessor class
     // the python script defines. Here though we set some data members
     // only accessible via C++.
     JEventProcessorPY *proc = pyproc.cast<JEventProcessorPY *>();
     proc->pymodule = PY_MODULE;
-    proc->pymodule_json = &PY_MODULE_JSON;
+    // proc->pymodule_json = &PY_MODULE_JSON;  // (see comment at bottom of file)
 
     if (pyjapp != nullptr) {
         cout << "[INFO] Adding JEventProcessorPY" << endl;
@@ -159,6 +158,14 @@ m.def("SetParameterValue",           &janapy_SetParameterValue,           "Set c
 m.def("AddProcessor",                &janapy_AddProcessor,                "Add an event processor"); \
 \
 PY_MODULE = &m;\
+//================================================================================
+
+
+// The following is left over from an earlier effort to automatically make
+// the python json module available without having to import it. The exact
+// motivation for this has been lost. It has been disabled since the
+// PY_MODULE_JSON global was causing seg. faults at program exit.
+#if 0
 try{\
     PY_MODULE_JSON = py::module_::import("json");\
 }catch(pybind11::type_error &e){\
@@ -167,5 +174,5 @@ try{\
     _DBG_<<" Error importing python json module!"<<std::endl;\
 }\
 \
-//================================================================================
 
+#endif
