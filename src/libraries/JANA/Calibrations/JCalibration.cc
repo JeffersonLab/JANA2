@@ -216,7 +216,7 @@ void JCalibration::DumpCalibrationsToFiles(string basedir)
     // Create base directory for writing calibrations into
     mode_t mode=S_IRWXU | S_IRWXG | S_IRWXO;
     char str[256];
-    sprintf(str, "calib%d/", GetRun());
+    snprintf(str, 256, "calib%d/", GetRun());
     basedir += string(str);
     mkdir(basedir.c_str(), mode);
 

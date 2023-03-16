@@ -237,7 +237,7 @@ void JEventProcessorJANADOT::Finish()
 		double my_ms = stats.from_factory_ms + stats.from_source_ms + stats.from_cache_ms;
 		double percent = 100.0*my_ms/total_ms;
 		char percentstr[32];
-		sprintf(percentstr, "%5.1f%%", percent);
+		snprintf(percentstr, 32, "%5.1f%%", percent);
 		
 		string timestr=MakeTimeString(stats.from_factory_ms);
 		
@@ -299,7 +299,7 @@ void JEventProcessorJANADOT::Finish()
 
 		double percent = 100.0*time_spent_in_factory/total_ms;
 		char percentstr[32];
-		sprintf(percentstr, "%5.1f%%", percent);
+		snprintf(percentstr, 32, "%5.1f%%", percent);
 		
 		string fillcolor;
 		string shape;

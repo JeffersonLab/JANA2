@@ -92,7 +92,7 @@ inline std::string to_string_with_si_prefix(float val) {
         units = "m";
     }
     char str[256];
-    sprintf(str, "%3.1f %s", val, units);
+    snprintf(str, 256, "%3.1f %s", val, units);
     return std::string(str);
 }
 
