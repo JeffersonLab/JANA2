@@ -40,14 +40,21 @@ public:
 		m_max_events_per_block = max_events_per_block;
 	}
 
+	size_t get_pending() override {
+		return m_block_queue->size();
+	}
+
+	size_t get_threshold() override {
+		return m_block_queue->get_threshold();
+	}
 
 	void execute(JArrowMetrics& result, size_t location_id) final {
 
-                if (get_status() != Status::Running) {
-                    result.update_finished();
-                    throw JException("I wonder if we actually get here. Do we want to?");
-                    return;
-                }
+		if (get_status() != Status::Running) {
+		    result.update_finished();
+		    throw JException("I wonder if we actually get here. Do we want to?");
+		    return;
+		}
 		JArrowMetrics::Status status;
 		JArrowMetrics::duration_t latency;
 		JArrowMetrics::duration_t overhead; // TODO: Populate these
@@ -66,13 +73,14 @@ public:
 			event_buffer.insert(event_buffer.end(), events.begin(), events.end());
 		}
 
+		LOG_TRACE(m_logger) << "JBlockDisentanglerArrow: successfully emitting " << event_buffer.size() << " events" << LOG_END;
 		auto output_queue_status = m_event_queue->push(event_buffer, reserved_events, location_id);
 
 		if (reserved_events == 0 ||
-                    input_queue_status == JMailbox<T*>::Status::Congested ||
-                    output_queue_status == JMailbox<Event>::Status::Full ||
-                    input_queue_status == JMailbox<T*>::Status::Empty
-                   ) {
+		    input_queue_status == JMailbox<T*>::Status::Congested ||
+		    output_queue_status == JMailbox<Event>::Status::Full ||
+		    input_queue_status == JMailbox<T*>::Status::Empty
+		   ) {
 			status = JArrowMetrics::Status::ComeBackLater;
 		}
 		else {

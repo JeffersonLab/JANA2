@@ -45,8 +45,10 @@ struct JVersion {
     }
 };
 
-const std::string JVersion::last_commit_hash = "@JVERSION_COMMIT_HASH@";
-const std::string JVersion::last_commit_date = "@JVERSION_COMMIT_DATE@";
+// These are defined here to allow cmake to set them but are
+// actually used in JMain.cc.
+#define JVERSION_COMMIT_HASH "@JVERSION_COMMIT_HASH@"
+#define JVERSION_COMMIT_DATE "@JVERSION_COMMIT_DATE@"
 
 #endif // _JVersion_h_
 

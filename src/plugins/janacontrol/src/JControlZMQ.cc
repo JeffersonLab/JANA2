@@ -53,12 +53,6 @@ using namespace std;
 //#define JSONADD(K) ss<<",\n\""<<K<<"\":"
 //#define JSONADS(K,V) ss<<",\n\""<<K<<"\":\""<<V<<"\""
 
-template <typename T>
-std::string ToString(const T &t){
-    stringstream ss;
-    ss << t;
-    return ss.str();
-}
 
 template<class T>
 void JSONADD(stringstream &ss, string K, T V, int indent_level=0, bool first_element=false){
@@ -150,7 +144,7 @@ void JControlZMQ::ServerLoop()
 
     // Bind to port number specified in constructor. Most likely this came from JANA_ZMQ_PORT config. parameter
     char bind_str[256];
-	sprintf( bind_str, "tcp://*:%d", _port );
+	snprintf( bind_str, 256, "tcp://*:%d", _port );
 	void *responder = zmq_socket( _zmq_context, ZMQ_REP );
 	auto ret = zmq_bind( responder, bind_str);
 	if( ret != 0 ){
@@ -282,10 +276,13 @@ void JControlZMQ::ServerLoop()
         }else if( vals[0] == "get_object_count" ){
             //------------------ get_object_count
             ss << GetJANAObjectListJSON();
-        }else if( vals[0] == "get_objects" ){
+        }else if( vals[0] == "get_objects" ){  // get objects from single factory iff debug_mode is currently true
             //------------------ get_objects
             std::string factory_tag = vals.size()>=4 ? vals[3]:"";
             ss << GetJANAObjectsJSON( vals[1], vals[2], factory_tag );
+        }else if( vals[0] == "fetch_objects" ){ // get objects from multiple factories regardless of debug_mode state
+            //------------------ fetch_objects
+            ss << FetchJANAObjectsJSON( vals );
         }else{
 		    //------------------ Unknown Command
 			ss << "{message:\"Bad Command: " << vals[0] << "\"}";
@@ -357,7 +354,7 @@ void JControlZMQ::HostStatusPROC(std::map<std::string,float> &vals)
 //---------------------------------
 // HostStatusPROCLinux
 //---------------------------------
-void JControlZMQ::HostStatusPROCLinux(std::map<std::string,float> &vals)
+void JControlZMQ::HostStatusPROCLinux(std::map<std::string,float> & vals )
 {
 #ifdef __linux__
     /// Get host info using the /proc mechanism on Linux machines.
@@ -454,6 +451,8 @@ void JControlZMQ::HostStatusPROCLinux(std::map<std::string,float> &vals)
     getrusage(RUSAGE_SELF, &usage);
     double mem_usage = (double)(usage.ru_maxrss)/1024.0; // convert to MB
     vals["ram_used_this_proc_GB"] = (double)mem_usage*1.0E-3;
+#else
+    _DBG_<<"Calling HostStatusPROCLinux on non-Linux machine. " << vals.size() << std::endl; // vals.size() is just to prevent compiler warning
 #endif // __linux__
 }
 
@@ -555,6 +554,8 @@ void JControlZMQ::HostStatusPROCMacOSX(std::map<std::string,float> &vals)
     vals["cpu_idle" ] = idle_percent;
     vals["cpu_total"] = cpu_usage;
 
+#else
+    _DBG_<<"Calling HostStatusPROCMacOSX on non-APPLE machine. " << vals.size() << std::endl; // vals.size() is just to prevent compiler warning
 #endif // __APPLE__
 }
 
@@ -675,6 +676,8 @@ std::string JControlZMQ::GetJANAObjectListJSON(){
 //---------------------------------
 std::string JControlZMQ::GetJANAObjectsJSON(const std::string &object_name, const std::string &factory_name, const std::string &factory_tag){
     /// Get the object contents (if possible) for the specified factory.
+    /// If this is called while not in debug_mode then it will return
+    /// no objects.
 
     // Get map of objects where key is address as hex string
     std::map<std::string, JObjectSummary> objects;
@@ -699,3 +702,65 @@ std::string JControlZMQ::GetJANAObjectsJSON(const std::string &object_name, cons
 //    cout << json << std::endl;
     return json;
 }
+
+//---------------------------------
+// FetchJANAObjectsJSON
+//---------------------------------
+std::string JControlZMQ::FetchJANAObjectsJSON(std::vector<std::string> &vals){
+    /// Fetch multiple objects from the next event to be processed or
+    /// from the current event if debug_mode is currently true.
+    /// This is intended to be used in a situation where the event processing
+    /// should be allowed to continue basically uninhibited and one simply
+    /// wants to spectate occasional events. E.g. a remote event monitor.
+    ///
+    /// Upon entry, vals will contain the full command which should look like
+    ///
+    ///   "fetch_objects" "factory:tag1" "factory:tag2" ...
+    ///
+    /// where "factory:tag" is the combined factory + tag string.
+
+    std::set<std::string> factorytags;
+    for( size_t i=1; i<vals.size(); i++ ) factorytags.insert( vals[i] );
+    _jproc->SetFetchFactories( factorytags ); // this automatically sets the fetch flag
+
+    // If we are in debug_mode then fetch the objects immediately for the 
+    // current event. Note that FetchObjectsNow will clear the fetch_flag
+    // so the wait loop below will exit immediately on the first iteration.
+    if( _jproc->GetDebugMode() ) _jproc->FetchObjectsNow();
+    
+    // Build map of values to create JSON record of. Add some redundant
+    // info so there is the option of verifying the exact origin of this
+    // by the consumer.
+    std::unordered_map<std::string, std::string> mvals;
+    mvals["program"] = "JANAcp";
+    mvals["host"] = _host;
+    mvals["PID"] = ToString(_pid);
+    
+    // Wait up to 3 seconds for the fetch to finish.
+    for(int i=0; i<1000; i++){
+        if( !_jproc->GetFetchFlag() ) break;
+        std::this_thread::sleep_for(std::chrono::milliseconds(3));
+    }
+
+    // run_number and event_number are recorded when the data is fetched
+    // from the event into the metadata. Append all FetchMetadata to
+    // record.
+    auto metadata = _jproc->GetLastFetchMetadata();
+    mvals.insert(metadata.begin(), metadata.end() );
+    
+     // Get the results of the fetch operation
+    auto results = _jproc->GetLastFetchResult();
+
+    // Convert all object summaries into JSON strings
+    std::unordered_map<std::string, std::string> mobjvals;
+    for( auto& [factorytag, objects] : results ){
+        mobjvals[factorytag] = JJSON_Create(objects, 3); // Create JSON of objects
+    }
+    mvals["objects"] = JJSON_Create(mobjvals);
+
+    // Create JSON string
+    std::string json = JJSON_Create(mvals);
+    return json;
+}
+
+

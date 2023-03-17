@@ -39,7 +39,7 @@ void InitPlugin(JApplication *app){
     while( !PY_INITIALIZED ) std::this_thread::sleep_for (std::chrono::milliseconds(100));
 }
 
-void FinalizePlugin(JApplication *){
+void FinalizePlugin(JApplication */*app*/){
     // Finalize the python interpreter
     if( PY_INITIALIZED ) {
         // Wait upt to 2 seconds for interpreter to not be in use before finalizing it.

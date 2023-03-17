@@ -135,7 +135,7 @@ class JEventProcessorPY {
             // nullptr so that it does not hold on the the JEvent after we return
             // from this method. We use this trick to ensure it happens even if an
             // exception is thrown from pymProcess().
-            std::shared_ptr<int> mEvent_free(nullptr, [=](int *){ mEvent = nullptr;});
+            std::shared_ptr<int> mEvent_free(nullptr, [=](int */*ptr*/){ mEvent = nullptr;});
             mEvent = aEvent; // remember this JEvent so it can be used in calls to Get()
 
             pymProcess();
