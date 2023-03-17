@@ -52,7 +52,7 @@ void FinalizePlugin(JApplication *){
                 //  called, but couldn't find how to plug things up completely. Thus, to avoid
                 //  crashes when ending (especially when ctl-C is hit) we do not finalize the
                 //  python interpreter.
-                //py::finalize_interpreter();
+                py::finalize_interpreter();
                 break;
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
