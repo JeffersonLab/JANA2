@@ -185,6 +185,11 @@ message(STATUS "-----------------------")
 
 include_directories(src/libraries)   # So that everyone can find the JANA header files
 
+# This is needed on macos to allow plugins to link without resolving all JANA symbols until runtime
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    add_link_options(-undefined dynamic_lookup)
+endif()
+
 add_subdirectory(src/libraries/JANA)
 add_subdirectory(src/examples)
 add_subdirectory(src/plugins)
