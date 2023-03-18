@@ -36,8 +36,13 @@ PYBIND11_MODULE(jana, m) {
     // (by virtue of the BUILD_SHARED_LIBS cmake variable being set to
     // Off).
 
+    std::string suffix = ".so";
+#if __APPLE__
+    suffix = ".dylib";
+#endif
+
     auto jana_install_dir = JVersion::GetInstallDir();
-    auto shared_lib = jana_install_dir + "/lib/libJANA.so";
+    auto shared_lib = jana_install_dir + "/lib/libJANA" + suffix;
     void* handle = dlopen(shared_lib.c_str(), RTLD_LAZY | RTLD_GLOBAL | RTLD_NODELETE);
     if (!handle) {
         LOG_ERROR(default_cerr_logger) << dlerror() << LOG_END;
