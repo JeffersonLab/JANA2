@@ -10,7 +10,6 @@ add_library(jtest SHARED
     )
 
 find_package(Threads REQUIRED)
-target_link_libraries(jtest jana2)
 target_link_libraries(jtest Threads::Threads)
 set_target_properties(jtest PROPERTIES PREFIX "" OUTPUT_NAME "JTest" SUFFIX ".so")
 install(TARGETS jtest DESTINATION plugins)

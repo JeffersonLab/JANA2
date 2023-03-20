@@ -21,6 +21,7 @@ extern std::mutex pymutex;    // declared in JEventProcessorPY.h
 void JANA_EmbeddedPythonModuleInit(JApplication *sApp);
 
 extern "C"{
+__attribute__((visibility("default")))  // counteract the -fvisibility=hidden compiler option
 void InitPlugin(JApplication *app){
     InitJANAPlugin(app);
 
@@ -51,7 +52,7 @@ void FinalizePlugin(JApplication */*app*/){
                 //  called, but couldn't find how to plug things up completely. Thus, to avoid
                 //  crashes when ending (especially when ctl-C is hit) we do not finalize the
                 //  python interpreter.
-                //py::finalize_interpreter();
+                py::finalize_interpreter();
                 break;
             }
             std::this_thread::sleep_for(std::chrono::milliseconds(100));

@@ -10,6 +10,7 @@ using namespace std;
 
 
 #include <JANA/JApplication.h>
+#include <JANA/CLI/JMain.h>
 #include <JANA/Utils/JCpuInfo.h>
 #include <JANA/Services/JParameterManager.h>
 
@@ -19,7 +20,7 @@ namespace py = pybind11;
 #include "JEventProcessorPY.h"
 
 static py::module_ *PY_MODULE = nullptr;       // set at end of JANA_MODULE_DEF
-static py::module_ PY_MODULE_JSON = py::none();  // set at end of JANA_MODULE_DEF
+// static py::module_ PY_MODULE_JSON;          // set at end of JANA_MODULE_DEF
 bool PY_INITIALIZED = false;
 static bool PY_MODULE_INSTANTIATED_JAPPLICATION = false;
 static JApplication *pyjapp = nullptr;
@@ -28,7 +29,6 @@ static JApplication *pyjapp = nullptr;
 // n.b. The default values here will NEVER be used. They must be passed in explicitly to
 // pybind11. They are only here for convenience!
 inline void     janapy_Start(void) { PY_INITIALIZED = true; }
-inline void     janapy_Run(void) { if(PY_MODULE_INSTANTIATED_JAPPLICATION) {pyjapp->Run();}else{janapy_Start();} }
 inline void     janapy_Quit(bool skip_join=false) { pyjapp->Quit(skip_join); }
 inline void     janapy_Stop(bool wait_until_idle=false) { pyjapp->Stop(wait_until_idle); }
 inline void     janapy_Resume(void) { pyjapp->Resume(); }
@@ -50,6 +50,19 @@ inline size_t   janapy_GetNcores(void) { return JCpuInfo::GetNumCpus(); }
 inline void     janapy_PrintStatus(void) { pyjapp->PrintStatus(); }
 inline void     janapy_PrintParameters(bool all=false) { pyjapp->GetJParameterManager()->PrintParameters(all); }
 inline string   janapy_GetParameterValue(string key) { return pyjapp->GetJParameterManager()->Exists(key) ? pyjapp->GetParameterValue<string>(key):"Not Defined"; }
+
+inline void     janapy_Run(void)
+{
+    if(PY_MODULE_INSTANTIATED_JAPPLICATION) {
+        // Being run as python module
+        auto options = jana::ParseCommandLineOptions(0, nullptr, false);
+        auto exit_code = jana::Execute(pyjapp, options);
+        LOG << "JANA processing complete. Exit code: " << exit_code << LOG_END;
+    }else{
+        // Being run from C++ executable with janapy plugin
+        janapy_Start();
+    }
+}
 
 // Not sure of the clean way to have python cast val object to string before passing to us ...
 inline void     janapy_SetParameterValue(string key, py::object valobj)
@@ -78,13 +91,13 @@ inline void     janapy_SetParameterValue(string key, py::object valobj)
 //-----------------------------------------
 inline void janapy_AddProcessor(py::object &pyproc ) {
 
-    // The JEventProcessorPY is instantiated from python by vitue of
+    // The JEventProcessorPY is instantiated from python by virtue of
     // it being a base class for whatever jana.JEventProcessor class
     // the python script defines. Here though we set some data members
     // only accessible via C++.
     JEventProcessorPY *proc = pyproc.cast<JEventProcessorPY *>();
     proc->pymodule = PY_MODULE;
-    proc->pymodule_json = &PY_MODULE_JSON;
+    // proc->pymodule_json = &PY_MODULE_JSON;  // (see comment at bottom of file)
 
     if (pyjapp != nullptr) {
         cout << "[INFO] Adding JEventProcessorPY" << endl;
@@ -145,7 +158,21 @@ m.def("SetParameterValue",           &janapy_SetParameterValue,           "Set c
 m.def("AddProcessor",                &janapy_AddProcessor,                "Add an event processor"); \
 \
 PY_MODULE = &m;\
-PY_MODULE_JSON = py::module_::import("json");\
-\
 //================================================================================
 
+
+// The following is left over from an earlier effort to automatically make
+// the python json module available without having to import it. The exact
+// motivation for this has been lost. It has been disabled since the
+// PY_MODULE_JSON global was causing seg. faults at program exit.
+#if 0
+try{\
+    PY_MODULE_JSON = py::module_::import("json");\
+}catch(pybind11::type_error &e){\
+    _DBG_<<" Error importing python json module!"<<std::endl;\
+}catch(...){\
+    _DBG_<<" Error importing python json module!"<<std::endl;\
+}\
+\
+
+#endif
