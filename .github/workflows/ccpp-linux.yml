@@ -42,11 +42,16 @@ jobs:
       run: |
         cd $GITHUB_WORKSPACE/build
         make install
-    - name: run tests
+    - name: JTest
       run: |
         export JANA_PLUGIN_PATH=$GITHUB_WORKSPACE/Linux/plugins
         echo "--- Running JTest plugin -----------------------"
         $GITHUB_WORKSPACE/Linux/bin/jana -PPLUGINS=JTest -Pjana:nevents=100
+    - name: janatests
+      run: |
         echo "--- Running janatests ------------------------------"
         $GITHUB_WORKSPACE/Linux/bin/janatests
-
+    - name: BlockExample
+      run: |
+        echo "--- Running BlockExample ------------------------------"
+        $GITHUB_WORKSPACE/Linux/plugins/BlockExample.so
