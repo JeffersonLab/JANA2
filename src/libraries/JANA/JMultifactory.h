@@ -206,7 +206,7 @@ void JMultifactory::DeclareOutput(std::string tag, bool owns_data) {
 }
 
 template <typename T>
-void SetData(std::string tag, std::vector<T*> data) {
+void JMultifactory::SetData(std::string tag, std::vector<T*> data) {
     JFactoryT<T>* helper = mHelpers.GetFactory<T>(tag);
     if (helper == nullptr) {
         throw JException("JMultifactory: Attempting to SetData() without corresponding DeclareOutput()");
