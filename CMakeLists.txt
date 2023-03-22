@@ -123,6 +123,7 @@ endif()
 if (${USE_PODIO})
     find_package(podio REQUIRED)
     add_compile_definitions(HAVE_PODIO)
+    include_directories(SYSTEM ${podio_INCLUDE_DIR})
 endif()
 
 #---------
