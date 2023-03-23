@@ -85,7 +85,7 @@ void JFactoryPodioT<T>::SetCollection(typename PodioTypeMap<T>::collection_t* co
     }
     auto unique_collection = std::unique_ptr<typename PodioTypeMap<T>::collection_t>(collection);
     this->mFrame->put(std::move(unique_collection), this->GetTag());
-    const auto* moved = &this->mFrame->get<typename PodioTypeMap<T>::collection_t>(this->GetTag());
+    const auto* moved = &this->mFrame->template get<typename PodioTypeMap<T>::collection_t>(this->GetTag());
     this->mCollection = moved;
 
     for (const T& item : *moved) {
