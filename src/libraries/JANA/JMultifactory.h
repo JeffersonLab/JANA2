@@ -30,6 +30,8 @@ public:
     // We really want to override Create, not Process!!!
     // It might make more sense to (1) put Create() back on JFactory, (2) make Create() virtual, (3) override Create()
     // Alternatively, we could move all the JMultiFactoryHelper functionality into JFactoryT directly
+
+    JMultifactory* GetMultifactory() { return mMultiFactory; }
 };
 
 
@@ -49,6 +51,8 @@ public:
     // We really want to override Create, not Process!!!
     // It might make more sense to (1) put Create() back on JFactory, (2) make Create() virtual, (3) override Create()
     // Alternatively, we could move all of the JMultiFactoryHelper functionality into JFactoryT directly
+
+    JMultifactory* GetMultifactory() { return mMultiFactory; }
 };
 #endif // HAVE_PODIO
 
