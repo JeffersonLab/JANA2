@@ -103,7 +103,8 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
         std::vector<std::string> GetAllCollectionNames() const;
         const podio::CollectionBase* GetCollectionBase(std::string name) const;
         template <typename T> const typename PodioTypeMap<T>::collection_t* GetCollection(std::string name) const;
-        template <typename T> JFactoryPodioT<T>* InsertCollection(const typename PodioTypeMap<T>::collection_t* collection, std::string name);
+        template <typename T> JFactoryPodioT<T>* InsertCollection(typename PodioTypeMap<T>::collection_t&& collection, std::string name);
+        template <typename T> JFactoryPodioT<T>* InsertCollectionAlreadyInFrame(const typename PodioTypeMap<T>::collection_t* collection, std::string name);
 #endif
 
         //SETTERS
@@ -467,8 +468,22 @@ const typename PodioTypeMap<T>::collection_t* JEvent::GetCollection(std::string 
     return static_cast<const typename PodioTypeMap<T>::collection_t*>(typed_factory->GetCollection());
 }
 
+
 template <typename T>
-JFactoryPodioT<T>* JEvent::InsertCollection(const typename PodioTypeMap<T>::collection_t* collection, std::string name) {
+JFactoryPodioT<T>* JEvent::InsertCollection(typename PodioTypeMap<T>::collection_t&& collection, std::string name) {
+    /// InsertCollection inserts the provided PODIO collection into both the podio::Frame and then a JFactoryPodioT<T>
+
+    auto frame = GetOrCreateFrame(shared_from_this());
+    const auto& owned_collection = frame->put(std::move(collection), name);
+    return InsertCollectionAlreadyInFrame<T>(&owned_collection, name);
+}
+
+
+template <typename T>
+JFactoryPodioT<T>* JEvent::InsertCollectionAlreadyInFrame(const typename PodioTypeMap<T>::collection_t* collection, std::string name) {
+    /// InsertCollection inserts the provided PODIO collection into a JFactoryPodioT<T>. It assumes that the collection pointer
+    /// is _already_ owned by the podio::Frame corresponding to this JEvent. This is meant to be used if you are starting out
+    /// with a PODIO frame (e.g. a JEventSource that uses podio::ROOTFrameReader).
 
     // Users are allowed to Insert with tag="" if and only if that tag gets resolved by default tags.
     if (mUseDefaultTags && name.empty()) {
@@ -504,7 +519,6 @@ JFactoryPodioT<T>* JEvent::InsertCollection(const typename PodioTypeMap<T>::coll
         throw JException("Factory must inherit from JFactoryPodioT in order to use JEvent::GetCollection()");
     }
 
-    // Set the collection
     typed_factory->SetCollectionAlreadyInFrame(collection);
     typed_factory->SetInsertOrigin( mCallGraph.GetInsertDataOrigin() );
     return typed_factory;

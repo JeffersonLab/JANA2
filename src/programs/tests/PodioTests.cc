@@ -10,12 +10,12 @@ namespace podiotests {
 
 
 TEST_CASE("PodioTestsInsertAndRetrieve") {
-    auto* clusters_to_insert = new ExampleClusterCollection;
-    clusters_to_insert->push_back({16.0});
-    clusters_to_insert->push_back({128.0});
+    ExampleClusterCollection clusters_to_insert;
+    clusters_to_insert.push_back({16.0});
+    clusters_to_insert.push_back({128.0});
 
     auto event = std::make_shared<JEvent>();
-    event->InsertCollection<ExampleCluster>(clusters_to_insert, "clusters");
+    event->InsertCollection<ExampleCluster>(std::move(clusters_to_insert), "clusters");
 
     SECTION("Retrieve using JEvent::GetCollection()") {
         auto* collection_retrieved = event->GetCollection<ExampleCluster>("clusters");
@@ -35,6 +35,13 @@ TEST_CASE("PodioTestsInsertAndRetrieve") {
         std::vector<const ExampleCluster*> clusters_retrieved = event->Get<ExampleCluster>("clusters");
         REQUIRE(clusters_retrieved.size() == 2);
         REQUIRE(clusters_retrieved[0]->energy() == 16.0);
+    }
+
+    SECTION("Retrieve directly from podio::Frame") {
+        auto frame = event->GetSingle<podio::Frame>();
+        auto* collection_retrieved = dynamic_cast<const ExampleClusterCollection*>(frame->get("clusters"));
+        REQUIRE(collection_retrieved->size() == 2);
+        REQUIRE((*collection_retrieved)[0].energy() == 16.0);
     }
 
 }
@@ -100,9 +107,9 @@ TEST_CASE("PodioTestsShallowCopySemantics") {
         // auto a_id = a.id();
         // auto a_ptr = &(a.energy());
 
-        auto* clusters_to_insert = new ExampleClusterCollection;
-        clusters_to_insert->push_back(a);
-        event->InsertCollection<ExampleCluster>(clusters_to_insert, "clusters");
+        ExampleClusterCollection clusters_to_insert;
+        clusters_to_insert.push_back(a);
+        event->InsertCollection<ExampleCluster>(std::move(clusters_to_insert), "clusters");
 
         // Retrieve via event->GetCollection
         const ExampleClusterCollection* retrieved_via_collection = event->GetCollection<ExampleCluster>("clusters");
@@ -241,24 +248,25 @@ TEST_CASE("SFINAE for JMultifactory::SetData") {
     REQUIRE(sut.DeclareOutput<ExampleCluster>("asdf") == true);
 }
 
+
 TEST_CASE("PODIO 'subset' collections handled correctly (not involving factories yet") {
     auto event = std::make_shared<JEvent>();
 
     auto a1 = MutableExampleCluster(22.2);
     auto a2 = MutableExampleCluster(4.0);
-    auto* clusters_to_insert = new ExampleClusterCollection;
-    clusters_to_insert->push_back(a1);
-    clusters_to_insert->push_back(a2);
-    event->InsertCollection<ExampleCluster>(clusters_to_insert, "original_clusters");
+    ExampleClusterCollection clusters_to_insert;
+    clusters_to_insert.push_back(a1);
+    clusters_to_insert.push_back(a2);
+    event->InsertCollection<ExampleCluster>(std::move(clusters_to_insert), "original_clusters");
 
     auto* retrieved_clusters = event->GetCollection<ExampleCluster>("original_clusters");
     auto b = (*retrieved_clusters)[1];
     REQUIRE(b.energy() == 4.0);
 
-    auto* subset_clusters = new ExampleClusterCollection;
-    subset_clusters->setSubsetCollection(true);
-    subset_clusters->push_back(b);
-    event->InsertCollection<ExampleCluster>(subset_clusters, "subset_clusters");
+    ExampleClusterCollection subset_clusters;
+    subset_clusters.setSubsetCollection(true);
+    subset_clusters.push_back(b);
+    event->InsertCollection<ExampleCluster>(std::move(subset_clusters), "subset_clusters");
 
 
     // Retrieve via event->GetCollection

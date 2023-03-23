@@ -113,7 +113,7 @@ void JFactoryPodioT<T>::SetCollectionAlreadyInFrame(const CollectionT* collectio
 }
 
 // This free function is used to break the dependency loop between JFactoryPodioT and JEvent.
-podio::Frame*GetOrCreateFrame(const std::shared_ptr<const JEvent>& event);
+podio::Frame* GetOrCreateFrame(const std::shared_ptr<const JEvent>& event);
 
 template <typename T>
 void JFactoryPodioT<T>::Create(const std::shared_ptr<const JEvent>& event) {
