@@ -77,13 +77,18 @@ JFactoryPodioT<T>::~JFactoryPodioT() {
 
 template <typename T>
 void JFactoryPodioT<T>::SetCollection(typename PodioTypeMap<T>::collection_t* collection) {
+    /// Provide a PODIO collection. Note that PODIO assumes ownership of this collection, and the
+    /// collection pointer should be assumed to be invalid after this call
 
     if (this->mFrame == nullptr) {
         throw JException("JFactoryPodioT: Unable to add collection to frame as frame is missing!");
     }
-    auto& moved = this->mFrame->put(std::move(*collection), this->GetTag());
-    this->mCollection = &moved;
-    for (const T& item : moved) {
+    auto unique_collection = std::unique_ptr<typename PodioTypeMap<T>::collection_t>(collection);
+    this->mFrame->put(std::move(unique_collection), this->GetTag());
+    const auto* moved = &this->mFrame->get<typename PodioTypeMap<T>::collection_t>(this->GetTag());
+    this->mCollection = moved;
+
+    for (const T& item : *moved) {
         T* clone = new T(item);
         this->mData.push_back(clone); // TODO: Verify that clone points to underlying and does not do a deep copy
     }
