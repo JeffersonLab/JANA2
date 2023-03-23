@@ -225,12 +225,12 @@ static constexpr bool is_podio_v = is_podio<T>::value;
 struct FakeMultifactory {
 
     template <typename T, typename std::enable_if_t<is_podio_v<T>>* = nullptr>
-    bool DeclareOutput(std::string tag) {
+    bool DeclareOutput(std::string /*tag*/) {
         return true;
     }
 
     template <typename T, typename std::enable_if_t<!is_podio_v<T>>* = nullptr>
-    bool DeclareOutput(std::string tag) {
+    bool DeclareOutput(std::string /*tag*/) {
         return false;
     }
 };
@@ -239,6 +239,35 @@ TEST_CASE("SFINAE for JMultifactory::SetData") {
     FakeMultifactory sut;
     REQUIRE(sut.DeclareOutput<int>("asdf") == false);
     REQUIRE(sut.DeclareOutput<ExampleCluster>("asdf") == true);
+}
+
+TEST_CASE("PODIO 'subset' collections handled correctly (not involving factories yet") {
+    auto event = std::make_shared<JEvent>();
+
+    auto a1 = MutableExampleCluster(22.2);
+    auto a2 = MutableExampleCluster(4.0);
+    auto* clusters_to_insert = new ExampleClusterCollection;
+    clusters_to_insert->push_back(a1);
+    clusters_to_insert->push_back(a2);
+    event->InsertCollection<ExampleCluster>(clusters_to_insert, "original_clusters");
+
+    auto* retrieved_clusters = event->GetCollection<ExampleCluster>("original_clusters");
+    auto b = (*retrieved_clusters)[1];
+    REQUIRE(b.energy() == 4.0);
+
+    auto* subset_clusters = new ExampleClusterCollection;
+    subset_clusters->setSubsetCollection(true);
+    subset_clusters->push_back(b);
+    event->InsertCollection<ExampleCluster>(subset_clusters, "subset_clusters");
+
+
+    // Retrieve via event->GetCollection
+    const ExampleClusterCollection* retrieved_subset_clusters = event->GetCollection<ExampleCluster>("subset_clusters");
+    const ExampleCluster& c = (*retrieved_subset_clusters)[0];
+    REQUIRE(c.energy() == 4.0);
+    REQUIRE(c.id() == b.id());
+    REQUIRE(&(c.energy()) == &(b.energy()));
+
 }
 
 } // namespace podiotests
