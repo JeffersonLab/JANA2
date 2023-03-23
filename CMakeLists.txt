@@ -5,9 +5,9 @@ project(jana2 VERSION 2.0.8)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)   # Enable -fPIC for all targets
 
-# Set default standard to C++14, but allow user to override at command line
+# Set default standard to C++17, but allow user to override at command line
 if(NOT "${CMAKE_CXX_STANDARD}")
-    set(CMAKE_CXX_STANDARD 14)
+    set(CMAKE_CXX_STANDARD 17)
 endif()
 
 string(APPEND CMAKE_CXX_FLAGS_DEBUG " -O0 -g -Wall -Wextra")
