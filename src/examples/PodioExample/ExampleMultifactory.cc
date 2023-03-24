@@ -10,9 +10,9 @@
 ExampleMultifactory::ExampleMultifactory() {
 
     // We need to declare upfront what our Multifactory produces.
-    DeclareOutput<ExampleHit>("hits_filtered");
-    DeclareOutput<ExampleCluster>("clusters_from_hits_filtered");
-    DeclareOutput<ExampleCluster>("clusters_filtered");
+    DeclarePodioOutput<ExampleHit>("hits_filtered", false);
+    DeclarePodioOutput<ExampleCluster>("clusters_from_hits_filtered");
+    DeclarePodioOutput<ExampleCluster>("clusters_filtered", false);
 
     // TODO: Discuss tag vs collection names
 }

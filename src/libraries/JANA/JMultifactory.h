@@ -162,8 +162,9 @@ void JMultifactory::SetData(std::string tag, std::vector<T*> data) {
 template <typename T>
 void JMultifactory::DeclarePodioOutput(std::string tag, bool owns_data) {
     // TODO: Decouple tag name from collection name
-    // TODO: Propagate owns_data to helper so that we SetData() into a subset collection
-    JFactory* helper = new JMultifactoryHelperPodio<T>(this);
+    JMultifactoryHelperPodio<T>* helper = new JMultifactoryHelperPodio<T>(this);
+    if (!owns_data) helper->SetSubsetCollection(true);
+
     tag += mTagSuffix;
     helper->SetTag(std::move(tag));
     helper->SetPluginName(mPluginName);

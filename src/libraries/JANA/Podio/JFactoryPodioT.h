@@ -17,9 +17,13 @@ template <typename S> struct PodioTypeMap;
 class JFactoryPodio {
 protected:
     const podio::CollectionBase* mCollection = nullptr;
+    bool mIsSubsetCollection = false;
 private:
     friend class JEvent;
     const podio::CollectionBase* GetCollection() { return mCollection; }
+public:
+    // Meant to be called from ctor, or externally, if we are creating a dummy factory such as a multifactory helper
+    void SetSubsetCollection(bool isSubsetCollection=true) { mIsSubsetCollection = isSubsetCollection; }
 };
 
 
@@ -129,6 +133,7 @@ void JFactoryPodioT<T>::Create(const std::shared_ptr<const JEvent>& event) {
 template <typename T>
 void JFactoryPodioT<T>::Set(const std::vector<T*>& aData) {
     auto* collection = new typename PodioTypeMap<T>::collection_t();
+    if (mIsSubsetCollection) collection->setSubsetCollection(true);
     for (T* item : aData) {
         collection->push_back(*item);
     }
@@ -138,6 +143,7 @@ void JFactoryPodioT<T>::Set(const std::vector<T*>& aData) {
 template <typename T>
 void JFactoryPodioT<T>::Set(std::vector<T*>&& aData) {
     auto* collection = new typename PodioTypeMap<T>::collection_t();
+    if (mIsSubsetCollection) collection->setSubsetCollection(true);
     for (T* item : aData) {
         collection->push_back(*item);
     }
@@ -147,6 +153,7 @@ void JFactoryPodioT<T>::Set(std::vector<T*>&& aData) {
 template <typename T>
 void JFactoryPodioT<T>::Insert(T* aDatum) {
     auto* collection = new typename PodioTypeMap<T>::collection_t();
+    if (mIsSubsetCollection) collection->setSubsetCollection(true);
     collection->push_back(*aDatum);
     SetCollection(collection);
 }
