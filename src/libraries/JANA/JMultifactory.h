@@ -90,31 +90,22 @@ public:
 
     // CALLED BY USERS
 
-#ifdef HAVE_PODIO
-// We can dramatically simplify this code when we require JANA to use C++17 or higher.
-
-    template <typename T, typename std::enable_if_t<is_podio_v<T>>* = nullptr>
-    void DeclareOutput(std::string tag);
-
-    template <typename T, typename std::enable_if_t<!is_podio_v<T>>* = nullptr>
-    void DeclareOutput(std::string tag, bool owns_data=false);
-
-    template <typename T, typename std::enable_if_t<is_podio_v<T>>* = nullptr>
-    void SetData(std::string tag, std::vector<T*> data);
-
-    template <typename T, typename std::enable_if_t<!is_podio_v<T>>* = nullptr>
-    void SetData(std::string tag, std::vector<T*> data);
-
-    template <typename T, typename std::enable_if_t<is_podio_v<T>>* = nullptr>
-    void SetCollection(std::string tag, typename PodioTypeMap<T>::collection_t* collection);
-
-#else
-
     template <typename T>
     void DeclareOutput(std::string tag, bool owns_data=true);
 
     template <typename T>
     void SetData(std::string tag, std::vector<T*> data);
+
+#ifdef HAVE_PODIO
+
+    template <typename T>
+    void DeclarePodioOutput(std::string tag, bool owns_data=true);
+
+    template <typename T>
+    void SetPodioData(std::string tag, std::vector<T*> data);
+
+    template <typename T>
+    void SetCollection(std::string tag, typename PodioTypeMap<T>::collection_t* collection);
 
 #endif
 
@@ -141,63 +132,6 @@ public:
 
 
 
-#ifdef HAVE_PODIO
-
-template <typename T, typename std::enable_if_t<is_podio_v<T>>*>
-void JMultifactory::DeclareOutput(std::string tag) {
-    // TODO: Decouple tag name from collection name
-    JFactory* helper = new JMultifactoryHelperPodio<T>(this);
-    tag += mTagSuffix;
-    helper->SetTag(std::move(tag));
-    helper->SetPluginName(mPluginName);
-    helper->SetFactoryName(mFactoryName);
-    mHelpers.Add(helper);
-}
-
-template <typename T, typename std::enable_if_t<!is_podio_v<T>>*>
-void JMultifactory::DeclareOutput(std::string tag, bool owns_data) {
-    JFactory* helper = new JMultifactoryHelper<T>(this);
-    if (!owns_data) helper->SetFactoryFlag(JFactory::JFactory_Flags_t::NOT_OBJECT_OWNER);
-    tag += mTagSuffix;
-    helper->SetTag(std::move(tag));
-    helper->SetPluginName(mPluginName);
-    helper->SetFactoryName(mFactoryName);
-    mHelpers.Add(helper);
-}
-
-template <typename T, typename std::enable_if_t<is_podio_v<T>>*>
-void JMultifactory::SetData(std::string tag, std::vector<T*> data) {
-    JFactoryT<T>* helper = mHelpers.GetFactory<T>(tag);
-    if (helper == nullptr) {
-        throw JException("JMultifactory: Attempting to SetData() without corresponding DeclareOutput()");
-    }
-    helper->Set(data);
-}
-
-template <typename T, typename std::enable_if_t<!is_podio_v<T>>*>
-void JMultifactory::SetData(std::string tag, std::vector<T*> data) {
-    JFactoryT<T>* helper = mHelpers.GetFactory<T>(tag);
-    if (helper == nullptr) {
-        throw JException("JMultifactory: Attempting to SetData() without corresponding DeclareOutput()");
-    }
-    helper->Set(data);
-}
-
-template <typename T, typename std::enable_if_t<is_podio_v<T>>*>
-void JMultifactory::SetCollection(std::string tag, typename PodioTypeMap<T>::collection_t* collection) {
-    JFactoryT<T>* helper = mHelpers.GetFactory<T>(tag);
-    if (helper == nullptr) {
-        throw JException("JMultifactory: Attempting to SetData() without corresponding DeclareOutput()");
-    }
-    auto* typed = dynamic_cast<JFactoryPodioT<T>*>(helper);
-    if (typed == nullptr) {
-        throw JException("JMultifactory: Helper needs to be a JFactoryPodioT (this shouldn't be reachable)");
-    }
-    typed->SetCollection(collection);
-}
-
-#else // NOT HAVE_PODIO
-
 template <typename T>
 void JMultifactory::DeclareOutput(std::string tag, bool owns_data) {
     JFactory* helper = new JMultifactoryHelper<T>(this);
@@ -220,6 +154,43 @@ void JMultifactory::SetData(std::string tag, std::vector<T*> data) {
     // I can think of two reasons NOT to do that:
     // 1. Correctness and sanity checking, e.g. preventing users from clobbering other factories
     // 2. I eventually want to remove the ability to insert directly into the event from anywhere except EventSources
+}
+
+
+#ifdef HAVE_PODIO
+
+template <typename T>
+void JMultifactory::DeclarePodioOutput(std::string tag, bool owns_data) {
+    // TODO: Decouple tag name from collection name
+    // TODO: Propagate owns_data to helper so that we SetData() into a subset collection
+    JFactory* helper = new JMultifactoryHelperPodio<T>(this);
+    tag += mTagSuffix;
+    helper->SetTag(std::move(tag));
+    helper->SetPluginName(mPluginName);
+    helper->SetFactoryName(mFactoryName);
+    mHelpers.Add(helper);
+}
+
+template <typename T>
+void JMultifactory::SetPodioData(std::string tag, std::vector<T*> data) {
+    JFactoryT<T>* helper = mHelpers.GetFactory<T>(tag);
+    if (helper == nullptr) {
+        throw JException("JMultifactory: Attempting to SetData() without corresponding DeclareOutput()");
+    }
+    helper->Set(data);
+}
+
+template <typename T>
+void JMultifactory::SetCollection(std::string tag, typename PodioTypeMap<T>::collection_t* collection) {
+    JFactoryT<T>* helper = mHelpers.GetFactory<T>(tag);
+    if (helper == nullptr) {
+        throw JException("JMultifactory: Attempting to SetData() without corresponding DeclareOutput()");
+    }
+    auto* typed = dynamic_cast<JFactoryPodioT<T>*>(helper);
+    if (typed == nullptr) {
+        throw JException("JMultifactory: Helper needs to be a JFactoryPodioT (this shouldn't be reachable)");
+    }
+    typed->SetCollection(collection);
 }
 
 #endif // HAVE_PODIO
