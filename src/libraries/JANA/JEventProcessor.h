@@ -83,6 +83,13 @@ public:
             ex.component_name = GetType();
             throw ex;
         }
+        catch (std::exception& e) {
+            auto ex = JException(e.what());
+            ex.nested_exception = std::current_exception();
+            ex.plugin_name = m_plugin_name;
+            ex.component_name = GetType();
+            throw ex;
+        }
         catch (...) {
             auto ex = JException("Unknown exception in JEventProcessor::DoMap()");
             ex.nested_exception = std::current_exception();
