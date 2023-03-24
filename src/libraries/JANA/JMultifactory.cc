@@ -9,6 +9,12 @@
 
 void JMultifactory::Execute(const std::shared_ptr<const JEvent>& event) {
 
+#ifdef HAVE_PODIO
+    if (mNeedPodio) {
+        mPodioFrame = GetOrCreateFrame(event);
+    }
+#endif
+
     auto run_number = event->GetRunNumber();
     std::call_once(m_is_initialized, &JMultifactory::Init, this);
     if (m_last_run_number == -1) {

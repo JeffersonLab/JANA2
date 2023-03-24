@@ -50,6 +50,7 @@ public:
     void EndRun() override {}
     void Finish() override {}
 
+    void SetFrame(podio::Frame* frame) { mFrame = frame; }
     void Create(const std::shared_ptr<const JEvent>& event) final;
     std::type_index GetObjectType() const final { return std::type_index(typeid(T)); }
     std::size_t GetNumObjects() const final { return mCollection->size(); }

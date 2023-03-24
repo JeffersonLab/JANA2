@@ -72,7 +72,10 @@ class JMultifactory {
     std::string mPluginName; // So we can propagate this to the JMultifactoryHelpers, so we can have useful error messages
     std::string mFactoryName; // So we can propagate this to the JMultifactoryHelpers, so we can have useful error messages
 
-
+#ifdef HAVE_PODIO
+    bool mNeedPodio = false;      // Whether we need to retrieve the podio::Frame
+    podio::Frame* mPodioFrame = nullptr;  // To provide the podio::Frame to SetPodioData, SetCollection
+#endif
 
 public:
     JMultifactory() = default;
@@ -162,7 +165,7 @@ void JMultifactory::SetData(std::string tag, std::vector<T*> data) {
 template <typename T>
 void JMultifactory::DeclarePodioOutput(std::string tag, bool owns_data) {
     // TODO: Decouple tag name from collection name
-    JMultifactoryHelperPodio<T>* helper = new JMultifactoryHelperPodio<T>(this);
+    auto* helper = new JMultifactoryHelperPodio<T>(this);
     if (!owns_data) helper->SetSubsetCollection(true);
 
     tag += mTagSuffix;
@@ -170,6 +173,7 @@ void JMultifactory::DeclarePodioOutput(std::string tag, bool owns_data) {
     helper->SetPluginName(mPluginName);
     helper->SetFactoryName(mFactoryName);
     mHelpers.Add(helper);
+    mNeedPodio = true;
 }
 
 template <typename T>
@@ -178,7 +182,12 @@ void JMultifactory::SetPodioData(std::string tag, std::vector<T*> data) {
     if (helper == nullptr) {
         throw JException("JMultifactory: Attempting to SetData() without corresponding DeclareOutput()");
     }
-    helper->Set(data);
+    auto* typed = dynamic_cast<JFactoryPodioT<T>*>(helper);
+    if (typed == nullptr) {
+        throw JException("JMultifactory: Helper needs to be a JFactoryPodioT (this shouldn't be reachable)");
+    }
+    typed->SetFrame(mPodioFrame);
+    typed->Set(data);
 }
 
 template <typename T>
@@ -191,6 +200,8 @@ void JMultifactory::SetCollection(std::string tag, typename PodioTypeMap<T>::col
     if (typed == nullptr) {
         throw JException("JMultifactory: Helper needs to be a JFactoryPodioT (this shouldn't be reachable)");
     }
+
+    typed->SetFrame(mPodioFrame);
     typed->SetCollection(collection);
 }
 

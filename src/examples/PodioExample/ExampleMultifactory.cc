@@ -26,17 +26,20 @@ void ExampleMultifactory::Process(const std::shared_ptr<const JEvent> & event) {
 
     // We are going to write back a collection of hits that are simply a filtered version of the other ones
     // These are already owned by the 'hits' collection, and we are smart enough to not have to duplicate them.
-    std::vector<ExampleHit*> hits_filtered;
+    // We have to set the SubsetCollection property on our new collection before we can add the owned PODIO objects to it.
+    auto hits_filtered = new ExampleHitCollection;
+    hits_filtered->setSubsetCollection(true);
     for (auto* hit : hits) {
         if (hit->energy() > 1.0) {
-            hits_filtered.push_back(const_cast<ExampleHit*>(hit));
-            // TODO: Do something about the const cast
+            hits_filtered->push_back(*hit);
         }
     }
-    SetData<ExampleHit>("hits_filtered", hits_filtered);
+
+    SetCollection<ExampleHit>("hits_filtered", hits_filtered);
 
 
-    // If we have created PODIO objects that DON'T belong to a collection already, it will create the collection.
+    // Here we are using the classic JANA SetData() with _unowned_ (fresh) PODIO objects.
+    // JANA will create the collection for us.
     // Note that references still work.
     std::vector<ExampleCluster*> clusters_from_hits_filtered;
 
@@ -70,11 +73,8 @@ void ExampleMultifactory::Process(const std::shared_ptr<const JEvent> & event) {
     SetData<ExampleCluster>("clusters_from_hits_filtered", clusters_from_hits_filtered);
 
 
-    // In this section we use the PODIO-specific event->GetCollection<T> and SetCollection<T>.
-    // These are useful when you are interacting with algorithms
     auto clusters = event->GetCollection<ExampleCluster>("clusters");
     auto clusters_filtered = new ExampleClusterCollection;
-    // TODO: Unique pointer, raw pointer, or value?
 
     for (auto cluster : *clusters) {
         if (cluster.energy() > 5.0) {
