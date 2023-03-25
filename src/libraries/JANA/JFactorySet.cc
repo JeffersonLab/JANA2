@@ -108,6 +108,7 @@ bool JFactorySet::Add(JMultifactory *multifactory) {
         Add(fac);
     }
     helpers->mIsFactoryOwner = false;
+    mMultifactories.push_back(multifactory);
     /// This is a little bit weird, but we are using a JFactorySet internally to JMultifactory in order to store and
     /// efficiently access its JMultifactoryHelpers. Ownership of the JMultifactoryHelpers is transferred to
     /// the enclosing JFactorySet.
@@ -173,6 +174,12 @@ void JFactorySet::Merge(JFactorySet &aFactorySet)
     // Copy duplicates back to aFactorySet
     aFactorySet.mFactories.swap( tmpSet.mFactories );
     tmpSet.mFactories.clear(); // prevent ~JFactorySet from deleting any factories
+
+    // Move ownership of multifactory pointers over.
+    for (auto* mf : aFactorySet.mMultifactories) {
+        mMultifactories.push_back(mf);
+    }
+    aFactorySet.mMultifactories.clear();
 }
 
 //---------------------------------
