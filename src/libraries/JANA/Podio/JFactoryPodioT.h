@@ -18,9 +18,17 @@ class JFactoryPodio {
 protected:
     const podio::CollectionBase* mCollection = nullptr;
     bool mIsSubsetCollection = false;
+    podio::Frame* mFrame = nullptr;
+
 private:
+    // Meant to be called internally, from JMultifactory
+    friend class JMultifactory;
+    void SetFrame(podio::Frame* frame) { mFrame = frame; }
+
+    // Meant to be called internally, from JEvent:
     friend class JEvent;
     const podio::CollectionBase* GetCollection() { return mCollection; }
+
 public:
     // Meant to be called from ctor, or externally, if we are creating a dummy factory such as a multifactory helper
     void SetSubsetCollection(bool isSubsetCollection=true) { mIsSubsetCollection = isSubsetCollection; }
@@ -36,8 +44,6 @@ private:
     // mFrame is owned by the JFactoryT<podio::Frame>.
     // mData holds lightweight value objects which hold a pointer into mCollection.
     // This factory owns these value objects.
-    // podio::Frame* mFrame = nullptr;
-    podio::Frame* mFrame = nullptr;
 
 public:
     explicit JFactoryPodioT();
@@ -50,7 +56,6 @@ public:
     void EndRun() override {}
     void Finish() override {}
 
-    void SetFrame(podio::Frame* frame) { mFrame = frame; }
     void Create(const std::shared_ptr<const JEvent>& event) final;
     std::type_index GetObjectType() const final { return std::type_index(typeid(T)); }
     std::size_t GetNumObjects() const final { return mCollection->size(); }

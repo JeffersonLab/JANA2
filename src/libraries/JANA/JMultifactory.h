@@ -105,13 +105,9 @@ public:
     void DeclarePodioOutput(std::string tag, bool owns_data=true);
 
     template <typename T>
-    void SetPodioData(std::string tag, std::vector<T*> data);
-
-    template <typename T>
     void SetCollection(std::string tag, typename PodioTypeMap<T>::collection_t* collection);
 
 #endif
-
 
     /// CALLED BY JANA
 
@@ -152,11 +148,14 @@ void JMultifactory::SetData(std::string tag, std::vector<T*> data) {
     if (helper == nullptr) {
         throw JException("JMultifactory: Attempting to SetData() without corresponding DeclareOutput()");
     }
+#ifdef HAVE_PODIO
+    // This may or may not be a Podio factory. We find out if it is, and if so, set the frame before calling Set().
+    auto* typed = dynamic_cast<JFactoryPodio*>(helper);
+    if (typed != nullptr) {
+        typed->SetFrame(mPodioFrame); // Needs to be called before helper->Set(), otherwise Set() excepts
+    }
+#endif
     helper->Set(data);
-    // Or we could just insert directly into the event
-    // I can think of two reasons NOT to do that:
-    // 1. Correctness and sanity checking, e.g. preventing users from clobbering other factories
-    // 2. I eventually want to remove the ability to insert directly into the event from anywhere except EventSources
 }
 
 
@@ -174,20 +173,6 @@ void JMultifactory::DeclarePodioOutput(std::string tag, bool owns_data) {
     helper->SetFactoryName(mFactoryName);
     mHelpers.Add(helper);
     mNeedPodio = true;
-}
-
-template <typename T>
-void JMultifactory::SetPodioData(std::string tag, std::vector<T*> data) {
-    JFactoryT<T>* helper = mHelpers.GetFactory<T>(tag);
-    if (helper == nullptr) {
-        throw JException("JMultifactory: Attempting to SetData() without corresponding DeclareOutput()");
-    }
-    auto* typed = dynamic_cast<JFactoryPodioT<T>*>(helper);
-    if (typed == nullptr) {
-        throw JException("JMultifactory: Helper needs to be a JFactoryPodioT (this shouldn't be reachable)");
-    }
-    typed->SetFrame(mPodioFrame);
-    typed->Set(data);
 }
 
 template <typename T>
