@@ -53,7 +53,7 @@ target_link_libraries(janatests jana2)
 if (${USE_PODIO})
     # Pull in the data model from examples/PodioExample.
     # We don't want to have two separate toy data models in the JANA codebase
-    target_link_libraries(janatests DataModelLib DataModelDict)
+    target_link_libraries(janatests PodioExampleDatamodel PodioExampleDatamodelDict)
 endif()
 
 install(TARGETS janatests DESTINATION bin)
