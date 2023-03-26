@@ -87,6 +87,5 @@ struct VisitExampleDatamodel {
     }
 };
 
-// TODO: Change argument to collection pointer instead of reference because that is what we do everywhere else?
 
 #endif //JANA2_DATAMODELGLUE_H

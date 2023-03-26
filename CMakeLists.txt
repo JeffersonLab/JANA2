@@ -5,9 +5,10 @@ project(jana2 VERSION 2.0.8)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)   # Enable -fPIC for all targets
 
-# Set default standard to C++17, but allow user to override at command line
-if(NOT "${CMAKE_CXX_STANDARD}")
-    set(CMAKE_CXX_STANDARD 17)
+# Default the C++ standard to C++17, and validate that they provided one we can use
+set(CMAKE_CXX_STANDARD 17 CACHE STRING "Set the C++ standard to be used")
+if(NOT CMAKE_CXX_STANDARD MATCHES "17|20|23")
+    message(FATAL_ERROR "Unsupported C++ standard: ${CMAKE_CXX_STANDARD}")
 endif()
 
 string(APPEND CMAKE_CXX_FLAGS_DEBUG " -O0 -g -Wall -Wextra")
@@ -132,6 +133,7 @@ endif()
 
 message(STATUS "-----------------------")
 message(STATUS "Build type is ${CMAKE_BUILD_TYPE}")
+message(STATUS "C++ standard is ${CMAKE_CXX_STANDARD}")
 message(STATUS "Installation directory is ${CMAKE_INSTALL_PREFIX}")
 if (${USE_ROOT})
     message(STATUS "USE_ROOT    On  --> " ${ROOT_DIR})
