@@ -100,10 +100,11 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 
         // PODIO
 #ifdef HAVE_PODIO
-        std::vector<std::string> GetAllCollectionTags() const;
-        const podio::CollectionBase* GetCollectionBase(std::string tag) const;
-        template <typename T> const typename PodioTypeMap<T>::collection_t* GetCollection(std::string tag) const;
-        template <typename T> JFactoryPodioT<T>* InsertCollection(const typename PodioTypeMap<T>::collection_t* collection, std::string tag);
+        std::vector<std::string> GetAllCollectionNames() const;
+        const podio::CollectionBase* GetCollectionBase(std::string name) const;
+        template <typename T> const typename PodioTypeMap<T>::collection_t* GetCollection(std::string name) const;
+        template <typename T> JFactoryPodioT<T>* InsertCollection(typename PodioTypeMap<T>::collection_t&& collection, std::string name);
+        template <typename T> JFactoryPodioT<T>* InsertCollectionAlreadyInFrame(const typename PodioTypeMap<T>::collection_t* collection, std::string name);
 #endif
 
         //SETTERS
@@ -431,7 +432,7 @@ JFactoryT<T>* JEvent::GetSingle(const T* &t, const char *tag, bool exception_if_
 
 #ifdef HAVE_PODIO
 
-inline std::vector<std::string> JEvent::GetAllCollectionTags() const {
+inline std::vector<std::string> JEvent::GetAllCollectionNames() const {
     std::vector<std::string> keys;
     for (auto pair : mPodioFactories) {
         keys.push_back(pair.first);
@@ -439,15 +440,15 @@ inline std::vector<std::string> JEvent::GetAllCollectionTags() const {
     return keys;
 }
 
-inline const podio::CollectionBase* JEvent::GetCollectionBase(std::string tag) const {
-    auto it = mPodioFactories.find(tag);
+inline const podio::CollectionBase* JEvent::GetCollectionBase(std::string name) const {
+    auto it = mPodioFactories.find(name);
     if (it == mPodioFactories.end()) {
-        throw JException("No factory with tag '%s' found", tag.c_str());
+        throw JException("No factory with tag '%s' found", name.c_str());
     }
     JFactoryPodio* factory = dynamic_cast<JFactoryPodio*>(it->second);
     if (factory == nullptr) {
         // Should be no way to get here if we encapsulate mPodioFactories correctly
-        throw JException("Factory with tag '%s' does not inherit from JFactoryPodio!", tag.c_str());
+        throw JException("Factory with tag '%s' does not inherit from JFactoryPodio!", name.c_str());
     }
     JCallGraphEntryMaker cg_entry(mCallGraph, it->second); // times execution until this goes out of scope
     it->second->Create(this->shared_from_this());
@@ -456,8 +457,8 @@ inline const podio::CollectionBase* JEvent::GetCollectionBase(std::string tag) c
 }
 
 template <typename T>
-const typename PodioTypeMap<T>::collection_t* JEvent::GetCollection(std::string tag) const {
-    JFactoryT<T>* factory = GetFactory<T>(tag, true);
+const typename PodioTypeMap<T>::collection_t* JEvent::GetCollection(std::string name) const {
+    JFactoryT<T>* factory = GetFactory<T>(name, true);
     JFactoryPodioT<T>* typed_factory = dynamic_cast<JFactoryPodioT<T>*>(factory);
     if (typed_factory == nullptr) {
         throw JException("Factory must inherit from JFactoryPodioT in order to use JEvent::GetCollection()");
@@ -467,27 +468,41 @@ const typename PodioTypeMap<T>::collection_t* JEvent::GetCollection(std::string 
     return static_cast<const typename PodioTypeMap<T>::collection_t*>(typed_factory->GetCollection());
 }
 
+
 template <typename T>
-JFactoryPodioT<T>* JEvent::InsertCollection(const typename PodioTypeMap<T>::collection_t* collection, std::string tag) {
+JFactoryPodioT<T>* JEvent::InsertCollection(typename PodioTypeMap<T>::collection_t&& collection, std::string name) {
+    /// InsertCollection inserts the provided PODIO collection into both the podio::Frame and then a JFactoryPodioT<T>
+
+    auto frame = GetOrCreateFrame(shared_from_this());
+    const auto& owned_collection = frame->put(std::move(collection), name);
+    return InsertCollectionAlreadyInFrame<T>(&owned_collection, name);
+}
+
+
+template <typename T>
+JFactoryPodioT<T>* JEvent::InsertCollectionAlreadyInFrame(const typename PodioTypeMap<T>::collection_t* collection, std::string name) {
+    /// InsertCollection inserts the provided PODIO collection into a JFactoryPodioT<T>. It assumes that the collection pointer
+    /// is _already_ owned by the podio::Frame corresponding to this JEvent. This is meant to be used if you are starting out
+    /// with a PODIO frame (e.g. a JEventSource that uses podio::ROOTFrameReader).
 
     // Users are allowed to Insert with tag="" if and only if that tag gets resolved by default tags.
-    if (mUseDefaultTags && tag.empty()) {
+    if (mUseDefaultTags && name.empty()) {
         auto defaultTag = mDefaultTags.find(JTypeInfo::demangle<T>());
-        if (defaultTag != mDefaultTags.end()) tag = defaultTag->second;
+        if (defaultTag != mDefaultTags.end()) name = defaultTag->second;
     }
 
     // Retrieve factory if it already exists, else create it
-    JFactoryT<T>* factory = mFactorySet->GetFactory<T>(tag);
+    JFactoryT<T>* factory = mFactorySet->GetFactory<T>(name);
     if (factory == nullptr) {
         factory = new JFactoryPodioT<T>();
-        factory->SetTag(tag);
+        factory->SetTag(name);
         mFactorySet->Add(factory);
 
-        auto it = mPodioFactories.find(tag);
+        auto it = mPodioFactories.find(name);
         if (it != mPodioFactories.end()) {
-            throw JException("InsertCollection failed because tag '%s' is not unique", tag.c_str());
+            throw JException("InsertCollection failed because tag '%s' is not unique", name.c_str());
         }
-        mPodioFactories[tag] = factory;
+        mPodioFactories[name] = factory;
     }
 
     // PODIO collections can only be inserted once, unlike regular JANA factories.
@@ -504,7 +519,6 @@ JFactoryPodioT<T>* JEvent::InsertCollection(const typename PodioTypeMap<T>::coll
         throw JException("Factory must inherit from JFactoryPodioT in order to use JEvent::GetCollection()");
     }
 
-    // Set the collection
     typed_factory->SetCollectionAlreadyInFrame(collection);
     typed_factory->SetInsertOrigin( mCallGraph.GetInsertDataOrigin() );
     return typed_factory;

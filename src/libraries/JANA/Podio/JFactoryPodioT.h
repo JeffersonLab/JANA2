@@ -17,9 +17,21 @@ template <typename S> struct PodioTypeMap;
 class JFactoryPodio {
 protected:
     const podio::CollectionBase* mCollection = nullptr;
+    bool mIsSubsetCollection = false;
+    podio::Frame* mFrame = nullptr;
+
 private:
+    // Meant to be called internally, from JMultifactory
+    friend class JMultifactory;
+    void SetFrame(podio::Frame* frame) { mFrame = frame; }
+
+    // Meant to be called internally, from JEvent:
     friend class JEvent;
     const podio::CollectionBase* GetCollection() { return mCollection; }
+
+public:
+    // Meant to be called from ctor, or externally, if we are creating a dummy factory such as a multifactory helper
+    void SetSubsetCollection(bool isSubsetCollection=true) { mIsSubsetCollection = isSubsetCollection; }
 };
 
 
@@ -32,8 +44,6 @@ private:
     // mFrame is owned by the JFactoryT<podio::Frame>.
     // mData holds lightweight value objects which hold a pointer into mCollection.
     // This factory owns these value objects.
-    // podio::Frame* mFrame = nullptr;
-    podio::Frame* mFrame = nullptr;
 
 public:
     explicit JFactoryPodioT();
@@ -51,7 +61,8 @@ public:
     std::size_t GetNumObjects() const final { return mCollection->size(); }
     void ClearData() final;
 
-    void SetCollection(CollectionT* collection);
+    void SetCollection(CollectionT&& collection);
+    void SetCollection(std::unique_ptr<CollectionT> collection);
     void Set(const std::vector<T*>& aData) final;
     void Set(std::vector<T*>&& aData) final;
     void Insert(T* aDatum) final;
@@ -76,20 +87,45 @@ JFactoryPodioT<T>::~JFactoryPodioT() {
 }
 
 template <typename T>
-void JFactoryPodioT<T>::SetCollection(typename PodioTypeMap<T>::collection_t* collection) {
+void JFactoryPodioT<T>::SetCollection(typename PodioTypeMap<T>::collection_t&& collection) {
+    /// Provide a PODIO collection. Note that PODIO assumes ownership of this collection, and the
+    /// collection pointer should be assumed to be invalid after this call
 
     if (this->mFrame == nullptr) {
         throw JException("JFactoryPodioT: Unable to add collection to frame as frame is missing!");
     }
-    auto& moved = this->mFrame->put(std::move(*collection), this->GetTag());
+    const auto& moved = this->mFrame->put(std::move(collection), this->GetTag());
     this->mCollection = &moved;
+
     for (const T& item : moved) {
         T* clone = new T(item);
-        this->mData.push_back(clone); // TODO: Verify that clone points to underlying and does not do a deep copy
+        this->mData.push_back(clone);
     }
     this->mStatus = JFactory::Status::Inserted;
     this->mCreationStatus = JFactory::CreationStatus::Inserted;
 }
+
+
+template <typename T>
+void JFactoryPodioT<T>::SetCollection(std::unique_ptr<typename PodioTypeMap<T>::collection_t> collection) {
+    /// Provide a PODIO collection. Note that PODIO assumes ownership of this collection, and the
+    /// collection pointer should be assumed to be invalid after this call
+
+    if (this->mFrame == nullptr) {
+        throw JException("JFactoryPodioT: Unable to add collection to frame as frame is missing!");
+    }
+    this->mFrame->put(std::move(collection), this->GetTag());
+    const auto* moved = &this->mFrame->template get<typename PodioTypeMap<T>::collection_t>(this->GetTag());
+    this->mCollection = moved;
+
+    for (const T& item : *moved) {
+        T* clone = new T(item);
+        this->mData.push_back(clone);
+    }
+    this->mStatus = JFactory::Status::Inserted;
+    this->mCreationStatus = JFactory::CreationStatus::Inserted;
+}
+
 
 template <typename T>
 void JFactoryPodioT<T>::ClearData() {
@@ -105,7 +141,7 @@ template <typename T>
 void JFactoryPodioT<T>::SetCollectionAlreadyInFrame(const CollectionT* collection) {
     for (const T& item : *collection) {
         T* clone = new T(item);
-        this->mData.push_back(clone); // TODO: Verify that clone points to underlying and does not do a deep copy
+        this->mData.push_back(clone);
     }
     this->mCollection = collection;
     this->mStatus = JFactory::Status::Inserted;
@@ -113,7 +149,7 @@ void JFactoryPodioT<T>::SetCollectionAlreadyInFrame(const CollectionT* collectio
 }
 
 // This free function is used to break the dependency loop between JFactoryPodioT and JEvent.
-podio::Frame*GetOrCreateFrame(const std::shared_ptr<const JEvent>& event);
+podio::Frame* GetOrCreateFrame(const std::shared_ptr<const JEvent>& event);
 
 template <typename T>
 void JFactoryPodioT<T>::Create(const std::shared_ptr<const JEvent>& event) {
@@ -123,27 +159,30 @@ void JFactoryPodioT<T>::Create(const std::shared_ptr<const JEvent>& event) {
 
 template <typename T>
 void JFactoryPodioT<T>::Set(const std::vector<T*>& aData) {
-    auto* collection = new typename PodioTypeMap<T>::collection_t();
+    typename PodioTypeMap<T>::collection_t collection;
+    if (mIsSubsetCollection) collection.setSubsetCollection(true);
     for (T* item : aData) {
-        collection->push_back(*item);
+        collection.push_back(*item);
     }
-    SetCollection(collection);
+    SetCollection(std::move(collection));
 }
 
 template <typename T>
 void JFactoryPodioT<T>::Set(std::vector<T*>&& aData) {
-    auto* collection = new typename PodioTypeMap<T>::collection_t();
+    typename PodioTypeMap<T>::collection_t collection;
+    if (mIsSubsetCollection) collection.setSubsetCollection(true);
     for (T* item : aData) {
-        collection->push_back(*item);
+        collection.push_back(*item);
     }
-    SetCollection(collection);
+    SetCollection(std::move(collection));
 }
 
 template <typename T>
 void JFactoryPodioT<T>::Insert(T* aDatum) {
-    auto* collection = new typename PodioTypeMap<T>::collection_t();
+    typename PodioTypeMap<T>::collection_t collection;
+    if (mIsSubsetCollection) collection->setSubsetCollection(true);
     collection->push_back(*aDatum);
-    SetCollection(collection);
+    SetCollection(std::move(collection));
 }
 
 #endif //JANA2_JFACTORYPODIOT_H

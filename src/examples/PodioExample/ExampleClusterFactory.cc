@@ -43,14 +43,14 @@ void ExampleClusterFactory::Process(const std::shared_ptr<const JEvent> &event) 
 
         }
     }
-    auto* clusters = new ExampleClusterCollection();
-    if (quadrant1.Hits_size() > 0) clusters->push_back(quadrant1);
-    if (quadrant2.Hits_size() > 0) clusters->push_back(quadrant2);
-    if (quadrant3.Hits_size() > 0) clusters->push_back(quadrant3);
-    if (quadrant4.Hits_size() > 0) clusters->push_back(quadrant4);
+    ExampleClusterCollection clusters;
+    if (quadrant1.Hits_size() > 0) clusters.push_back(quadrant1);
+    if (quadrant2.Hits_size() > 0) clusters.push_back(quadrant2);
+    if (quadrant3.Hits_size() > 0) clusters.push_back(quadrant3);
+    if (quadrant4.Hits_size() > 0) clusters.push_back(quadrant4);
 
     // If no hits were assigned to a cluster, it will self-destruct when it goes out of scope
-    SetCollection(clusters);
+    SetCollection(std::move(clusters));
 }
 
 

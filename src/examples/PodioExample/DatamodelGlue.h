@@ -14,23 +14,6 @@
 #include <datamodel/EventInfoCollection.h>
 
 template <typename T>
-struct PodioCollectionMap {
-};
-
-template <>
-struct PodioCollectionMap<ExampleHitCollection> {
-    using contents_t = ExampleHit;
-};
-template <>
-struct PodioCollectionMap<ExampleClusterCollection> {
-    using contents_t = ExampleCluster;
-};
-template <>
-struct PodioCollectionMap<EventInfoCollection> {
-    using contents_t = EventInfo;
-};
-
-template <typename T>
 struct PodioTypeMap {
 };
 
@@ -90,8 +73,8 @@ void visitPodioType(const std::string& podio_typename, F& helper, ArgsT... args)
  */
 
 template <typename Visitor>
-struct DatamodelCollectionVisit {
-    void operator()(const podio::CollectionBase &collection, Visitor& visitor) {
+struct VisitExampleDatamodel {
+    void operator()(Visitor& visitor, const podio::CollectionBase &collection) {
         std::string podio_typename = collection.getTypeName();
         if (podio_typename == "EventInfoCollection") {
             return visitor(static_cast<const EventInfoCollection &>(collection));
@@ -104,6 +87,5 @@ struct DatamodelCollectionVisit {
     }
 };
 
-// TODO: Change argument to collection pointer instead of reference because that is what we do everywhere else?
 
 #endif //JANA2_DATAMODELGLUE_H

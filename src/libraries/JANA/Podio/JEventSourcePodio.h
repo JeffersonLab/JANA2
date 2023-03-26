@@ -61,8 +61,8 @@ struct InsertingVisitor {
 
     template <typename T>
     void operator() (const T& collection) {
-        using ContentsT = typename PodioCollectionMap<T>::contents_t;
-        m_event.InsertCollection<ContentsT>(&collection, m_collection_name);
+        using ContentsT = decltype(collection[0]);
+        m_event.InsertCollectionAlreadyInFrame<ContentsT>(&collection, m_collection_name);
     }
 };
 
@@ -88,7 +88,7 @@ void JEventSourcePodio<VisitT>::GetEvent(std::shared_ptr<JEvent> event) {
     for (const std::string& coll_name : frame->getAvailableCollections()) {
         const podio::CollectionBase* collection = frame->get(coll_name);
         InsertingVisitor visitor(*event, coll_name);
-        visit(*collection, visitor);
+        visit(visitor, *collection);
     }
     event->Insert(frame.release()); // Transfer ownership from unique_ptr to JFactoryT<podio::Frame>
 }

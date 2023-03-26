@@ -1,6 +1,7 @@
 
 #include <catch.hpp>
 
+#include <type_traits>
 #include <datamodel/ExampleClusterCollection.h>
 #include <DatamodelGlue.h>  // Hopefully this won't be necessary in the future
 #include <JANA/JEvent.h>
@@ -9,12 +10,12 @@ namespace podiotests {
 
 
 TEST_CASE("PodioTestsInsertAndRetrieve") {
-    auto* clusters_to_insert = new ExampleClusterCollection;
-    clusters_to_insert->push_back({16.0});
-    clusters_to_insert->push_back({128.0});
+    ExampleClusterCollection clusters_to_insert;
+    clusters_to_insert.push_back({16.0});
+    clusters_to_insert.push_back({128.0});
 
     auto event = std::make_shared<JEvent>();
-    event->InsertCollection<ExampleCluster>(clusters_to_insert, "clusters");
+    event->InsertCollection<ExampleCluster>(std::move(clusters_to_insert), "clusters");
 
     SECTION("Retrieve using JEvent::GetCollection()") {
         auto* collection_retrieved = event->GetCollection<ExampleCluster>("clusters");
@@ -34,6 +35,13 @@ TEST_CASE("PodioTestsInsertAndRetrieve") {
         std::vector<const ExampleCluster*> clusters_retrieved = event->Get<ExampleCluster>("clusters");
         REQUIRE(clusters_retrieved.size() == 2);
         REQUIRE(clusters_retrieved[0]->energy() == 16.0);
+    }
+
+    SECTION("Retrieve directly from podio::Frame") {
+        auto frame = event->GetSingle<podio::Frame>();
+        auto* collection_retrieved = dynamic_cast<const ExampleClusterCollection*>(frame->get("clusters"));
+        REQUIRE(collection_retrieved->size() == 2);
+        REQUIRE((*collection_retrieved)[0].energy() == 16.0);
     }
 
 }
@@ -99,9 +107,9 @@ TEST_CASE("PodioTestsShallowCopySemantics") {
         // auto a_id = a.id();
         // auto a_ptr = &(a.energy());
 
-        auto* clusters_to_insert = new ExampleClusterCollection;
-        clusters_to_insert->push_back(a);
-        event->InsertCollection<ExampleCluster>(clusters_to_insert, "clusters");
+        ExampleClusterCollection clusters_to_insert;
+        clusters_to_insert.push_back(a);
+        event->InsertCollection<ExampleCluster>(std::move(clusters_to_insert), "clusters");
 
         // Retrieve via event->GetCollection
         const ExampleClusterCollection* retrieved_via_collection = event->GetCollection<ExampleCluster>("clusters");
@@ -186,5 +194,88 @@ TEST_CASE("PodioTestsShallowCopySemantics") {
     }
 }
 
+
+template <typename T, typename = void>
+struct MyWrapper {
+    bool have_podio() {
+        return false;
+    }
+};
+
+template <typename T>
+struct MyWrapper<T, std::void_t<typename PodioTypeMap<T>::collection_t>> {
+    int x = 2;
+    bool have_podio() {
+        return true;
+    }
+};
+
+TEST_CASE("SFINAE for JFactoryT || JFactoryPodioT") {
+    MyWrapper<int> w;
+    REQUIRE(w.have_podio() == false);
+
+    MyWrapper<ExampleCluster> ww;
+    REQUIRE(ww.have_podio() == true);
+
+    ww.x = 22;
+}
+
+template <typename, typename=void>
+struct is_podio : std::false_type {};
+
+template <typename T>
+struct is_podio<T, std::void_t<typename PodioTypeMap<T>::collection_t>> : std::true_type {};
+
+template <typename T>
+static constexpr bool is_podio_v = is_podio<T>::value;
+
+struct FakeMultifactory {
+
+    template <typename T, typename std::enable_if_t<is_podio_v<T>>* = nullptr>
+    bool DeclareOutput(std::string /*tag*/) {
+        return true;
+    }
+
+    template <typename T, typename std::enable_if_t<!is_podio_v<T>>* = nullptr>
+    bool DeclareOutput(std::string /*tag*/) {
+        return false;
+    }
+};
+
+TEST_CASE("SFINAE for JMultifactory::SetData") {
+    FakeMultifactory sut;
+    REQUIRE(sut.DeclareOutput<int>("asdf") == false);
+    REQUIRE(sut.DeclareOutput<ExampleCluster>("asdf") == true);
+}
+
+
+TEST_CASE("PODIO 'subset' collections handled correctly (not involving factories yet") {
+    auto event = std::make_shared<JEvent>();
+
+    auto a1 = MutableExampleCluster(22.2);
+    auto a2 = MutableExampleCluster(4.0);
+    ExampleClusterCollection clusters_to_insert;
+    clusters_to_insert.push_back(a1);
+    clusters_to_insert.push_back(a2);
+    event->InsertCollection<ExampleCluster>(std::move(clusters_to_insert), "original_clusters");
+
+    auto* retrieved_clusters = event->GetCollection<ExampleCluster>("original_clusters");
+    auto b = (*retrieved_clusters)[1];
+    REQUIRE(b.energy() == 4.0);
+
+    ExampleClusterCollection subset_clusters;
+    subset_clusters.setSubsetCollection(true);
+    subset_clusters.push_back(b);
+    event->InsertCollection<ExampleCluster>(std::move(subset_clusters), "subset_clusters");
+
+
+    // Retrieve via event->GetCollection
+    const ExampleClusterCollection* retrieved_subset_clusters = event->GetCollection<ExampleCluster>("subset_clusters");
+    const ExampleCluster& c = (*retrieved_subset_clusters)[0];
+    REQUIRE(c.energy() == 4.0);
+    REQUIRE(c.id() == b.id());
+    REQUIRE(&(c.energy()) == &(b.energy()));
+
+}
 
 } // namespace podiotests

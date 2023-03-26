@@ -8,6 +8,7 @@
 #include "JApplication.h"
 #include "JFactorySet.h"
 #include "JFactory.h"
+#include "JMultifactory.h"
 #include "JFactoryGenerator.h"
 
 //---------------------------------
@@ -55,8 +56,16 @@ JFactorySet::JFactorySet(JFactoryGenerator* source_gen, const std::vector<JFacto
 //---------------------------------
 JFactorySet::~JFactorySet()
 {
-    /// The destructor will delete any factories in the set.
-    for( auto f : mFactories ) delete f.second;
+    /// The destructor will delete any factories in the set, unless mIsFactoryOwner is set to false.
+    /// The only time mIsFactoryOwner should/can be set false is when a JMultifactory is using a JFactorySet internally
+    /// to manage its JMultifactoryHelpers.
+    if (mIsFactoryOwner) {
+        for (auto& f : mFactories) delete f.second;
+    }
+    // Now that the factories are deleted, nothing can call the multifactories so it is safe to delete them as well
+    for (auto* mf : mMultifactories) { delete mf; }
+
+
 }
 
 //---------------------------------
@@ -85,6 +94,24 @@ bool JFactorySet::Add(JFactory* aFactory)
 
     mFactories[typed_key] = aFactory;
     mFactoriesFromString[untyped_key] = aFactory;
+    return true;
+}
+
+
+bool JFactorySet::Add(JMultifactory *multifactory) {
+    /// Add a JMultifactory to this JFactorySet. This JFactorySet takes ownership of its JMultifactoryHelpers,
+    /// which was previously held by the JMultifactory.mHelpers JFactorySet.
+    /// Ownership of the JMultifactory itself is shared among those helpers.
+
+    auto helpers = multifactory->GetHelpers();
+    for (auto fac : helpers->GetAllFactories()) {
+        Add(fac);
+    }
+    helpers->mIsFactoryOwner = false;
+    mMultifactories.push_back(multifactory);
+    /// This is a little bit weird, but we are using a JFactorySet internally to JMultifactory in order to store and
+    /// efficiently access its JMultifactoryHelpers. Ownership of the JMultifactoryHelpers is transferred to
+    /// the enclosing JFactorySet.
     return true;
 }
 
@@ -147,6 +174,12 @@ void JFactorySet::Merge(JFactorySet &aFactorySet)
     // Copy duplicates back to aFactorySet
     aFactorySet.mFactories.swap( tmpSet.mFactories );
     tmpSet.mFactories.clear(); // prevent ~JFactorySet from deleting any factories
+
+    // Move ownership of multifactory pointers over.
+    for (auto* mf : aFactorySet.mMultifactories) {
+        mMultifactories.push_back(mf);
+    }
+    aFactorySet.mMultifactories.clear();
 }
 
 //---------------------------------

@@ -44,37 +44,42 @@ void PodioExampleProcessor::Process(const std::shared_ptr<const JEvent> &event) 
 
     // Obtain a typed collection just like you would in a JFactory
     auto hits = event->GetCollection<ExampleHit>("hits");
+    auto hits_filtered = event->GetCollection<ExampleHit>("hits_filtered");
     auto clusters = event->GetCollection<ExampleCluster>("clusters");
+    auto clusters_filtered = event->GetCollection<ExampleCluster>("clusters_filtered");
+    auto clusters_from_hits_filtered = event->GetCollection<ExampleCluster>("clusters_from_hits_filtered");
 
     std::cout << "========================" << std::endl;
     std::cout << "Event nr: " << event->GetEventNumber() << ", Cluster count: " << clusters->size() << std::endl;
 
-    std::cout << "Hits:" << std::endl;
+    std::cout << "hits:" << std::endl;
     for (const ExampleHit& hit : *hits) {
         std::cout << "    " << hit.id() << ": energy=" << hit.energy() << ", x=" << hit.x() << ", y=" << hit.y() << std::endl;
     }
+    std::cout << "hits_filtered:" << std::endl;
+    for (const ExampleHit& hit : *hits_filtered) {
+        std::cout << "    " << hit.id() << ": energy=" << hit.energy() << ", x=" << hit.x() << ", y=" << hit.y() << std::endl;
+    }
 
-    std::cout << "Clusters:" << std::endl;
+    std::cout << "clusters:" << std::endl;
     for (const ExampleCluster& cluster : *clusters) {
         std::cout << "    " << cluster.id() << ": energy=" << cluster.energy() << ", hits=" << std::endl;
         for (const ExampleHit& hit : cluster.Hits()) {
             std::cout << "        " << hit.id() << ": energy=" << hit.energy() << ", x=" << hit.x() << ", y=" << hit.y() << std::endl;
         }
     }
-
-
-    // Iterate over all collections that have already been constructed (this won't trigger Process())
-    // TODO: Add event->GetAllCollections() so that we can trigger the factories
-
-    // PrintingVisitor printer;
-    // TODO: Visitor should be passed by reference so that we can get output from it
-    /*
-    auto frame = event->GetSingle<podio::Frame>();
-
-    for (const std::string& coll_name : frame->getAvailableCollections()) {
-        const podio::CollectionBase* coll = frame->get(coll_name);
-        visitPodioType(coll->getValueTypeName(), printer, coll, coll_name);
+    std::cout << "clusters_filtered:" << std::endl;
+    for (const ExampleCluster& cluster : *clusters_filtered) {
+        std::cout << "    " << cluster.id() << ": energy=" << cluster.energy() << ", hits=" << std::endl;
+        for (const ExampleHit& hit : cluster.Hits()) {
+            std::cout << "        " << hit.id() << ": energy=" << hit.energy() << ", x=" << hit.x() << ", y=" << hit.y() << std::endl;
+        }
     }
-     */
-
+    std::cout << "clusters_from_hits_filtered:" << std::endl;
+    for (const ExampleCluster& cluster : *clusters_from_hits_filtered) {
+        std::cout << "    " << cluster.id() << ": energy=" << cluster.energy() << ", hits=" << std::endl;
+        for (const ExampleHit& hit : cluster.Hits()) {
+            std::cout << "        " << hit.id() << ": energy=" << hit.energy() << ", x=" << hit.x() << ", y=" << hit.y() << std::endl;
+        }
+    }
 }
