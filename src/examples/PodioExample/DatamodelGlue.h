@@ -14,23 +14,6 @@
 #include <datamodel/EventInfoCollection.h>
 
 template <typename T>
-struct PodioCollectionMap {
-};
-
-template <>
-struct PodioCollectionMap<ExampleHitCollection> {
-    using contents_t = ExampleHit;
-};
-template <>
-struct PodioCollectionMap<ExampleClusterCollection> {
-    using contents_t = ExampleCluster;
-};
-template <>
-struct PodioCollectionMap<EventInfoCollection> {
-    using contents_t = EventInfo;
-};
-
-template <typename T>
 struct PodioTypeMap {
 };
 
