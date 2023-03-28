@@ -278,4 +278,41 @@ TEST_CASE("PODIO 'subset' collections handled correctly (not involving factories
 
 }
 
+namespace jana2_tests_podiotests_init {
+
+struct TestFac : public JFactoryPodioT<ExampleCluster> {
+    TestFac() {
+        SetTag("clusters");
+    }
+    bool init_called = false;
+    void Init() override {
+        init_called = true;
+    }
+    void Process(const std::shared_ptr<const JEvent>& event) override {
+        ExampleClusterCollection c;
+        c.push_back(ExampleCluster(16.0));
+        SetCollection(std::move(c));
+    }
+};
+}
+
+TEST_CASE("JFactoryPodioT::Init gets called") {
+
+    JApplication app;
+    auto event = std::make_shared<JEvent>(&app);
+    auto fs = new JFactorySet;
+    fs->Add(new jana2_tests_podiotests_init::TestFac);
+    event->SetFactorySet(fs);
+    event->GetFactorySet()->Release();  // Simulate a trip to the JEventPool
+
+    auto r = event->GetCollectionBase("clusters");
+    REQUIRE(r != nullptr);
+    const auto* res = dynamic_cast<const ExampleClusterCollection*>(r);
+    REQUIRE(res != nullptr);
+    REQUIRE((*res)[0].energy() == 16.0);
+    auto fac = dynamic_cast<jana2_tests_podiotests_init::TestFac*>(event->GetFactory<ExampleCluster>("clusters"));
+    REQUIRE(fac != nullptr);
+    REQUIRE(fac->init_called == true);
+}
+
 } // namespace podiotests

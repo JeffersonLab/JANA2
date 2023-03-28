@@ -129,6 +129,9 @@ void JFactoryPodioT<T>::SetCollection(std::unique_ptr<typename PodioTypeMap<T>::
 
 template <typename T>
 void JFactoryPodioT<T>::ClearData() {
+    if (this->mStatus == JFactory::Status::Uninitialized) {
+        return;
+    }
     for (auto p : this->mData) delete p;
     this->mData.clear();
     this->mCollection = nullptr;  // Collection is owned by the Frame, so we ignore here
