@@ -33,6 +33,13 @@
 
 if (${USE_PYTHON})
 
+    # Ensure that all components needed for pybind11 are imported.
+    # In situation when an external package requests python, but 
+    # doesn't request all the required components, the pybind11's
+    # cmake module will not re-run find_package(Python) again.
+    # e.g. https://github.com/AIDASoft/podio/blob/f4c9219ddde59b1efc73db3fd9c25139222a7b3c/cmake/podioConfig.cmake.in#L28-L32
+    find_package(Python 3.6 COMPONENTS Interpreter Development REQUIRED)
+
     set(bundled_pybind11 externals/pybind11-2.10.3)
 
     # If the user has defined USE_BUNDLED_PYBIND11 then
