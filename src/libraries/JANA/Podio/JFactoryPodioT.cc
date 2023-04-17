@@ -9,6 +9,10 @@ podio::Frame* GetOrCreateFrame(const std::shared_ptr<const JEvent>& event) {
     podio::Frame* result = nullptr;
     try {
         result = const_cast<podio::Frame*>(event->GetSingle<podio::Frame>(""));
+        if (result == nullptr) {
+            result = new podio::Frame;
+            event->Insert(result);
+        }
     }
     catch (...) {
         result = new podio::Frame;
@@ -16,3 +20,4 @@ podio::Frame* GetOrCreateFrame(const std::shared_ptr<const JEvent>& event) {
     }
     return result;
 }
+
