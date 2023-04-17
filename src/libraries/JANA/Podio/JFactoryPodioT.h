@@ -157,7 +157,22 @@ podio::Frame* GetOrCreateFrame(const std::shared_ptr<const JEvent>& event);
 template <typename T>
 void JFactoryPodioT<T>::Create(const std::shared_ptr<const JEvent>& event) {
     mFrame = GetOrCreateFrame(event);
-    JFactory::Create(event);
+    try {
+        JFactory::Create(event);
+    }
+    catch (...) {
+        if (mCollection == nullptr) {
+            // If calling Create() excepts, we still create an empty collection
+            // so that podio::ROOTFrameWriter doesn't segfault on the null mCollection pointer
+            SetCollection(typename PodioTypeMap<T>::collection_t());
+        }
+        throw;
+    }
+    if (mCollection == nullptr) {
+        SetCollection(typename PodioTypeMap<T>::collection_t());
+        // If calling Process() didn't result in a call to Set() or SetCollection(), we create an empty collection
+        // so that podio::ROOTFrameWriter doesn't segfault on the null mCollection pointer
+    }
 }
 
 template <typename T>
