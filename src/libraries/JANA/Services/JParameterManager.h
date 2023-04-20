@@ -346,20 +346,28 @@ inline std::vector<T> JParameterManager::ParseVector(const std::string &value) {
 }
 
 template <>
-inline std::vector<int32_t> JParameterManager::Parse(const std::string& value) {
-    return ParseVector<int32_t>(value);
+inline std::vector<int> JParameterManager::Parse(const std::string& value) {
+    return ParseVector<int>(value);
 }
 template <>
-inline std::vector<int64_t> JParameterManager::Parse(const std::string& value) {
-    return ParseVector<int64_t>(value);
+inline std::vector<long int> JParameterManager::Parse(const std::string& value) {
+    return ParseVector<long int>(value);
 }
 template <>
-inline std::vector<uint32_t> JParameterManager::Parse(const std::string& value) {
-    return ParseVector<uint32_t>(value);
+inline std::vector<long long int> JParameterManager::Parse(const std::string& value) {
+    return ParseVector<long long int>(value);
 }
 template <>
-inline std::vector<uint64_t> JParameterManager::Parse(const std::string& value) {
-    return ParseVector<uint64_t>(value);
+inline std::vector<unsigned int> JParameterManager::Parse(const std::string& value) {
+    return ParseVector<unsigned int>(value);
+}
+template <>
+inline std::vector<unsigned long int> JParameterManager::Parse(const std::string& value) {
+    return ParseVector<unsigned long int>(value);
+}
+template <>
+inline std::vector<unsigned long long int> JParameterManager::Parse(const std::string& value) {
+    return ParseVector<unsigned long long int>(value);
 }
 template <>
 inline std::vector<float> JParameterManager::Parse(const std::string& value) {
@@ -400,22 +408,32 @@ inline std::string JParameterManager::Stringify(const std::vector<std::string>& 
 }
 
 template<>
-inline std::string JParameterManager::Stringify(const std::vector<int32_t>& values) {
+inline std::string JParameterManager::Stringify(const std::vector<int>& values) {
     return StringifyVector(values);
 }
 
 template<>
-inline std::string JParameterManager::Stringify(const std::vector<int64_t>& values) {
+inline std::string JParameterManager::Stringify(const std::vector<long int>& values) {
     return StringifyVector(values);
 }
 
 template<>
-inline std::string JParameterManager::Stringify(const std::vector<uint32_t>& values) {
+inline std::string JParameterManager::Stringify(const std::vector<long long int>& values) {
     return StringifyVector(values);
 }
 
 template<>
-inline std::string JParameterManager::Stringify(const std::vector<uint64_t>& values) {
+inline std::string JParameterManager::Stringify(const std::vector<unsigned int>& values) {
+    return StringifyVector(values);
+}
+
+template<>
+inline std::string JParameterManager::Stringify(const std::vector<unsigned long int>& values) {
+    return StringifyVector(values);
+}
+
+template<>
+inline std::string JParameterManager::Stringify(const std::vector<unsigned long long int>& values) {
     return StringifyVector(values);
 }
 
