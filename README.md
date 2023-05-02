@@ -2,6 +2,8 @@
 ![C/C++ CI docker](https://github.com/JeffersonLab/JANA2/actions/workflows/ccpp-docker.yml/badge.svg)<br>
 ![C/C++ CI macos](https://github.com/JeffersonLab/JANA2/actions/workflows/ccpp-macos.yml/badge.svg)<br>
 ![C/C++ CI cuda-ifarm](https://github.com/JeffersonLab/JANA2/actions/workflows/cuda-farm.yml/badge.svg)<br>
+
+[![DOI](https://zenodo.org/badge/117695469.svg)](https://zenodo.org/badge/latestdoi/117695469)
 ## Welcome to JANA!
 
 JANA is a C++ framework for multi-threaded HENP (High Energy and Nuclear Physics)  event reconstruction.
