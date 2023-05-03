@@ -7,7 +7,7 @@ on:
     branches: [ master ]
 
 jobs:
-  build-n-install:
+  build-n-install-jana:
     # matching the label to corresponding self-hosted runner
     runs-on: [self-hosted, macOS]
     # Run cmake, make, and make install as separate steps
@@ -34,12 +34,17 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/build
           make install
-#      - name: run JTest
-#        run: |
-#          export JANA_PLUGIN_PATH=$GITHUB_WORKSPACE/Darwin/plugins
-#          echo "--- Running JTest plugin -----------------------"
-#          $GITHUB_WORKSPACE/Darwin/bin/jana -PPLUGINS=JTest -Pjana:nevents=100
-#      - name: run janatests
-#        run: |
-#          echo "--- Running janatests ------------------------------"
-#          $GITHUB_WORKSPACE/Darwin/bin/janatests
+  # depends on build-n-install-jana
+  run-jtest-plugin:
+    runs-on: [ self-hosted, macOS ]
+    needs: build-n-install-jana
+    steps:
+      - run: |
+          export JANA_PLUGIN_PATH=$GITHUB_WORKSPACE/Darwin/plugins
+          ls $JANA_PLUGIN_PATH
+          $GITHUB_WORKSPACE/Darwin/bin/jana -PPLUGINS=JTest -Pjana:nevents=100
+  run-jana-tests:
+    runs-on: [ self-hosted, macOS ]
+    needs: build-n-install-jana
+    steps:
+      - run: $GITHUB_WORKSPACE/Darwin/bin/janatests
