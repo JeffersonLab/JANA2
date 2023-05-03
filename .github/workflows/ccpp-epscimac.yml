@@ -1,4 +1,4 @@
-name: C/C++ CI epscimac
+name: C/C++ CI epscimac server
 
 on:
   push:
@@ -6,18 +6,20 @@ on:
   pull_request:
     branches: [ master ]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-n-install-jana:
     # matching the label to corresponding self-hosted runner
     runs-on: [self-hosted, macOS]
     # Run cmake, make, and make install as separate steps
-    # Note that every step starts out in the $GITHUB_WORKSPACE
-    # directory.
+    # Note that every step starts out in the $GITHUB_WORKSPACE directory.
     steps:
       - uses: actions/checkout@v3
 #      - name: show path
 #        run: |
-#          echo `pwd`  # /Users/xmei/actions-runners/_work/JANA2/JANA2
 #          echo $GITHUB_WORKSPACE  # /Users/xmei/actions-runners/_work/JANA2/JANA2
       - name: cmake configure
         run: |
