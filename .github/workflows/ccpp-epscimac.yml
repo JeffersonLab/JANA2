@@ -7,7 +7,7 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
+  build-n-install:
     # matching the label to corresponding self-hosted runner
     runs-on: [self-hosted, macOS]
     # Run cmake, make, and make install as separate steps
@@ -19,21 +19,21 @@ jobs:
 #        run: |
 #          echo `pwd`  # /Users/xmei/actions-runners/_work/JANA2/JANA2
 #          echo $GITHUB_WORKSPACE  # /Users/xmei/actions-runners/_work/JANA2/JANA2
-      - name: add cmake to path
+      - name: cmake configure
         run: |
           export PATH=/opt/homebrew/bin:$PATH
           which cmake
           mkdir -p $GITHUB_WORKSPACE/build
           cd $GITHUB_WORKSPACE/build
           cmake ../ -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/Darwin -DUSE_ROOT=Off
-#      - name: make
-#        run: |
-#          cd $GITHUB_WORKSPACE/build
-#          make
-#      - name: make install
-#        run: |
-#          cd $GITHUB_WORKSPACE/build
-#          make install
+      - name: make
+        run: |
+          cd $GITHUB_WORKSPACE/build
+          make
+      - name: make install
+        run: |
+          cd $GITHUB_WORKSPACE/build
+          make install
 #      - name: run JTest
 #        run: |
 #          export JANA_PLUGIN_PATH=$GITHUB_WORKSPACE/Darwin/plugins
