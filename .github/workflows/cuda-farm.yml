@@ -1,10 +1,11 @@
 name: CUDA CI farm
 
+# disable this one by naming an invalid branch
 on:
   push:
-    branches: [ master, cissie_ci ]
+    branches: [ cissie_cuda ]
   pull_request:
-    branches: [ master ]
+    branches: [ cissie_cuda ]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
