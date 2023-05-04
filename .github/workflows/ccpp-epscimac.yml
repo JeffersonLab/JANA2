@@ -1,0 +1,54 @@
+name: C/C++ CI epscimac server
+
+on:
+  push:
+    branches: [ master, cissie_ci ]
+  pull_request:
+    branches: [ master ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-n-install-jana:
+    # matching the label to corresponding self-hosted runner
+    runs-on: [self-hosted, macOS, ARM64]
+    # Run cmake, make, and make install as separate steps
+    # Note that every step starts out in the $GITHUB_WORKSPACE directory.
+    steps:
+      - uses: actions/checkout@v3
+#      - name: show path
+#        run: |
+#          echo $GITHUB_WORKSPACE  # /Users/xmei/actions-runners/_work/JANA2/JANA2
+      - name: cmake configure
+        run: |
+          export PATH=/opt/homebrew/bin:$PATH
+          which cmake
+          mkdir -p $GITHUB_WORKSPACE/build
+          cd $GITHUB_WORKSPACE/build
+          cmake ../ -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/Darwin -DUSE_ROOT=Off
+      - name: make
+        run: |
+          cd $GITHUB_WORKSPACE/build
+          make
+      - name: make install
+        run: |
+          cd $GITHUB_WORKSPACE/build
+          make install
+  # depends on build-n-install-jana
+  run-jtest-plugin:
+    runs-on: [ self-hosted, macOS ]
+    needs: build-n-install-jana
+    steps:
+      - name: run jtest plugin
+        run: |
+          export JANA_PLUGIN_PATH=$GITHUB_WORKSPACE/Darwin/plugins
+          ls $JANA_PLUGIN_PATH
+          $GITHUB_WORKSPACE/Darwin/bin/jana -PPLUGINS=JTest -Pjana:nevents=100
+  run-jana-tests:
+    runs-on: [ self-hosted, macOS ]
+    needs: build-n-install-jana
+    steps:
+      - name: run jana tests
+        run: $GITHUB_WORKSPACE/Darwin/bin/janatests
