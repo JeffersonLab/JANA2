@@ -2,14 +2,18 @@ name: CUDA CI farm
 
 on:
   push:
-    branches: [ cissie_self-runner ]
-#  pull_request:
-#    branches: [ master ]
+    branches: [ master, cissie_ci ]
+  pull_request:
+    branches: [ master ]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-n-run-SubeventCUDAExample:
-    runs-on:
-      - self-hosted
+    # the label of your runner
+    runs-on: [self-hosted, gpu, Linux, X64]
     steps:
     - uses: actions/checkout@v3
     #    - name: print path
@@ -24,4 +28,4 @@ jobs:
         export JID=`sbatch --gres gpu:A100:1 $GITHUB_WORKSPACE/scripts/ci/submit_SubeventCUDAExample.slurm | awk '{print $4}'`
         sleep 30
         tail -f slurm_${JID}.out & \
-           sleep 120  # manually exit by sleep
+           sleep 240  # manually exit by sleep 4 minutes

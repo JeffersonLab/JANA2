@@ -38,6 +38,7 @@
 .pydevproject
 .cproject
 .settings
+.patch
 .sconsign.dblite
 Linux_*
 Darwin_*
