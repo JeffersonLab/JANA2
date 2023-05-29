@@ -32,9 +32,6 @@ public:
     /// If GetEvent() reaches an error state, it should throw a JException instead.
     enum class ReturnStatus { Success, TryAgain, Finished };
 
-    /// The user is supposed to _throw_ RETURN_STATUS::kNO_MORE_EVENTS or kBUSY from GetEvent()
-    enum class RETURN_STATUS { kSUCCESS, kNO_MORE_EVENTS, kBUSY, kTRY_AGAIN, kERROR, kUNKNOWN };
-
 
     // Constructor
 
@@ -81,11 +78,11 @@ public:
     /// Note that JEvents are usually recycled. Although all reconstruction data is cleared before `GetEvent` is called,
     /// the constituent `JFactories` may retain some state, e.g. statistics, or calibration data keyed off of run number.
 
-    /// If an event cannot be emitted, either because the resource is not ready or because we have reached the end of
-    /// the event stream, the implementor should throw the corresponding `RETURN_STATUS`. The user should NEVER throw
-    /// `RETURN_STATUS SUCCESS` because this will hurt performance. Instead, they should simply return normally.
+    /// If an event is emitted successfully, GetEvent should return ReturnStatus::Success. If it has reached end-of-file or 
+    /// end-of-stream _without_ emitting an event, GetEvent should return ReturnStatus::Finished. If it has polled the resource
+    /// and didn't find any new events but expects to find some later, it should return ReturnStatus::TryAgain.
 
-    virtual void GetEvent(std::shared_ptr<JEvent>) = 0;
+    virtual ReturnStatus GetEvent(std::shared_ptr<JEvent>) = 0;
 
 
     /// `FinishEvent` is used to notify the `JEventSource` that an event has been completely processed. This is the final
@@ -168,10 +165,18 @@ public:
                     // Skip these events due to nskip
                     event->SetEventNumber(m_event_count); // Default event number to event count
                     auto previous_origin = event->GetJCallGraphRecorder()->SetInsertDataOrigin( JCallGraphRecorder::ORIGIN_FROM_SOURCE);  // (see note at top of JCallGraphRecorder.h)
-                    GetEvent(event);
-                    event->GetJCallGraphRecorder()->SetInsertDataOrigin( previous_origin );
-                    m_event_count += 1;
-                    return ReturnStatus::TryAgain;  // Reject this event and recycle it
+                    auto rs = GetEvent(event);
+
+                    if (rs == ReturnStatus::Finished) {
+                        DoFinalize();
+                        return ReturnStatus::Finished;
+                    }
+                    if (rs == ReturnStatus::Success) {
+                        event->GetJCallGraphRecorder()->SetInsertDataOrigin( previous_origin );
+                        m_event_count += 1;
+                    }
+                    return ReturnStatus::TryAgain;  // Reject this event and recycle it, even if it actually returned Success
+
                 } else if (m_nevents != 0 && (m_event_count == last_evt_nr)) {
                     // Declare ourselves finished due to nevents
                     DoFinalize(); // Close out the event source as soon as it declares itself finished
@@ -193,34 +198,21 @@ public:
                         event->SetFactorySet(factory_set);
                     }
                     auto previous_origin = event->GetJCallGraphRecorder()->SetInsertDataOrigin( JCallGraphRecorder::ORIGIN_FROM_SOURCE);  // (see note at top of JCallGraphRecorder.h)
-                    GetEvent(event);
-                    event->GetJCallGraphRecorder()->SetInsertDataOrigin( previous_origin );
-                    m_event_count += 1;
-                    return ReturnStatus::Success; // Don't reject this event!
+                    auto rs = GetEvent(event);
+
+                    if (rs == ReturnStatus::Finished) {
+                        DoFinalize();
+                    }
+                    if (rs == ReturnStatus::Success) {
+                        event->GetJCallGraphRecorder()->SetInsertDataOrigin( previous_origin );
+                        m_event_count += 1;
+                    }
+                    return rs;
                 }
             } else if (m_status == SourceStatus::Finished) {
                 return ReturnStatus::Finished;
             } else {
                 throw JException("Invalid ReturnStatus");
-            }
-        }
-        catch (RETURN_STATUS rs) {
-
-            if (rs == RETURN_STATUS::kNO_MORE_EVENTS) {
-                DoFinalize();
-                return ReturnStatus::Finished;
-            }
-            else if (rs == RETURN_STATUS::kTRY_AGAIN || rs == RETURN_STATUS::kBUSY) {
-                return ReturnStatus::TryAgain;
-            }
-            else if (rs == RETURN_STATUS::kERROR || rs == RETURN_STATUS::kUNKNOWN) {
-                JException ex ("JEventSource threw RETURN_STATUS::kERROR or kUNKNOWN");
-                ex.plugin_name = m_plugin_name;
-                ex.component_name = GetType();
-                throw ex;
-            }
-            else {
-                return ReturnStatus::Success;
             }
         }
         catch (JException& ex) {
