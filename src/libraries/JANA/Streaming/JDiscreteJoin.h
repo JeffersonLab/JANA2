@@ -37,19 +37,17 @@ public:
         m_transport->initialize();
     }
 
-    void GetEvent(std::shared_ptr<JEvent> event) override {
+    ReturnStatus GetEvent(std::shared_ptr<JEvent> event) override {
 
         auto item = new T();  // This is why T requires a zero-arg ctor
         auto result = m_transport->receive(*item);
         switch (result) {
             case JTransport::Result::FINISHED:
-                throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
+                return ReturnStatus::Finished;
             case JTransport::Result::TRY_AGAIN:
-                throw JEventSource::RETURN_STATUS::kTRY_AGAIN;
+                return ReturnStatus::TryAgain;
             case JTransport::Result::FAILURE:
-                throw JEventSource::RETURN_STATUS::kERROR;
-            default:
-                break;
+                throw JException("Transport failure!");
         }
         // At this point, we know that item contains a valid Sample<T>
 
@@ -57,6 +55,7 @@ public:
         m_next_id += 1;
         event->Insert<T>(item);
         std::cout << "Emit: " << *item << std::endl;
+        return ReturnStatus::Success;
     }
 
     static std::string GetDescription() {

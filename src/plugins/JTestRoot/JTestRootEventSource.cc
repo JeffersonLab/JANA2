@@ -19,7 +19,7 @@ JTestRootEventSource::JTestRootEventSource(std::string resource_name, JApplicati
     SetTypeName(NAME_OF_THIS); // Provide JANA with class name
 }
 
-void JTestRootEventSource::GetEvent(std::shared_ptr <JEvent> event) {
+JEventSource::ReturnStatus JTestRootEventSource::GetEvent(std::shared_ptr <JEvent> event) {
     /// Generate an event by inserting objects into "event".
     /// (n.b. a normal event source would read these from a file or stream)
 
@@ -45,4 +45,5 @@ void JTestRootEventSource::GetEvent(std::shared_ptr <JEvent> event) {
 
     // Add Hit objects to event
     event->Insert(hits);
+    return ReturnStatus::Success;
 }

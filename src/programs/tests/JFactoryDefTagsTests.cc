@@ -107,7 +107,9 @@ struct DummySource : public JEventSource {
         SetTypeName(NAME_OF_THIS);
     };
 
-    void GetEvent(std::shared_ptr<JEvent>) override {};
+    ReturnStatus GetEvent(std::shared_ptr<JEvent>) override {
+        return ReturnStatus::Success;
+    };
 };
 
 struct DummyProcessor : public JEventProcessor {

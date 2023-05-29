@@ -197,7 +197,7 @@ public:
 
     void Open() override;
 
-    void GetEvent(std::shared_ptr<JEvent>) override;
+    ReturnStatus GetEvent(std::shared_ptr<JEvent>) override;
     
     static std::string GetDescription();
 
@@ -243,7 +243,7 @@ void {name}::Open() {{
     /// Open the file here!
 }}
 
-void {name}::GetEvent(std::shared_ptr <JEvent> event) {{
+JEventSource::ReturnStatus {name}::GetEvent(std::shared_ptr <JEvent> event) {{
 
     /// Calls to GetEvent are synchronized with each other, which means they can
     /// read and write state on the JEventSource without causing race conditions.
@@ -260,11 +260,13 @@ void {name}::GetEvent(std::shared_ptr <JEvent> event) {{
 
     /// If you are reading a file of events and have reached the end, terminate the stream like this:
     // // Close file pointer!
-    // throw RETURN_STATUS::kNO_MORE_EVENTS;
+    // return ReturnStatus::Finished;
 
-    /// If you are streaming events and there are no new events in the message queue,
+    /// If you are streaming events and there are no new events waiting,
     /// tell JANA that GetEvent() was temporarily unsuccessful like this:
-    // throw RETURN_STATUS::kBUSY;
+    // return ReturnStatus::TryAgain;
+    
+    return ReturnStatus::Success;
 }}
 
 std::string {name}::GetDescription() {{

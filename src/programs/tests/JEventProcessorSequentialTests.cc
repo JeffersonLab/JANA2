@@ -19,7 +19,9 @@ struct DummySource : public JEventSource {
     }
 
     // By default, this will emit empty events with event numbers 0,1,2...
-    void GetEvent(std::shared_ptr<JEvent>) override {}
+    ReturnStatus GetEvent(std::shared_ptr<JEvent>) override {
+        return ReturnStatus::Success;
+    }
 };
 
 struct MyRootProcessor : public JEventProcessorSequentialRoot {

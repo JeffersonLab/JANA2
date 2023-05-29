@@ -146,15 +146,15 @@ TEST_CASE("Basic subevent arrow functionality") {
 
     struct SimpleSource : public JEventSource {
         SimpleSource(std::string name) : JEventSource(name) {};
-        void GetEvent(std::shared_ptr<JEvent> event) override {
+        ReturnStatus GetEvent(std::shared_ptr<JEvent> event) override {
+            if (GetEventCount() == 10) return ReturnStatus::Finished;
             std::vector<MyInput*> inputs;
             inputs.push_back(new MyInput(22,3.6));
             inputs.push_back(new MyInput(23,3.5));
             inputs.push_back(new MyInput(24,3.4));
             inputs.push_back(new MyInput(25,3.3));
             event->Insert(inputs);
-            if (GetEventCount() == 10)
-                throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
+            return ReturnStatus::Success;
         }
     };
 

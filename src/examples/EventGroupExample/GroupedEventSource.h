@@ -26,10 +26,10 @@ public:
         m_current_event_number = 0;
     };
 
-    void GetEvent(std::shared_ptr<JEvent> event) override {
+    ReturnStatus GetEvent(std::shared_ptr<JEvent> event) override {
 
         if (m_current_group_id == 5) {
-            throw RETURN_STATUS::kNO_MORE_EVENTS;
+            return ReturnStatus::Finished;
         }
 
         // TODO: We can hold on to the pointer instead of doing the lookup everytime
@@ -48,6 +48,7 @@ public:
             m_current_group_id += 1;
         }
 
+        return ReturnStatus::Success;
     }
 };
 

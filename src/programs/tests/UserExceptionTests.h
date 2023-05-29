@@ -31,15 +31,16 @@ struct FlakySource : public JEventSource {
         }
     }
 
-    void GetEvent(std::shared_ptr<JEvent>) override {
+    ReturnStatus GetEvent(std::shared_ptr<JEvent>) override {
 
         if (++event_count > 10) {
-            throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
+            return ReturnStatus::Finished;
         }
 
         if (getevent_excepts) {
             throw JException("Unable to getEvent!");
         }
+        return ReturnStatus::Success;
     }
 };
 

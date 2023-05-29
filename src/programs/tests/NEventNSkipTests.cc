@@ -17,12 +17,13 @@ struct NEventNSkipBoundedSource : public JEventSource {
 
     NEventNSkipBoundedSource(std::string source_name, JApplication *app) : JEventSource(source_name, app) { }
 
-    void GetEvent(std::shared_ptr<JEvent>) override {
+    ReturnStatus GetEvent(std::shared_ptr<JEvent>) override {
         if (event_count >= event_bound) {
-            throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
+            return ReturnStatus::Finished;
         }
         event_count += 1;
         events_emitted.push_back(event_count);
+        return ReturnStatus::Success;
     }
 
     void Open() override {

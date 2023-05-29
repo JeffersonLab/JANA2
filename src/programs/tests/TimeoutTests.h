@@ -36,7 +36,7 @@ struct SourceWithTimeout : public JEventSource {
     void Open() override {
     }
 
-    void GetEvent(std::shared_ptr<JEvent>) override {
+    ReturnStatus GetEvent(std::shared_ptr<JEvent>) override {
         event_count += 1;
         std::cout << "Processing event # " << event_count << std::endl;
         std::flush(std::cout);
@@ -46,7 +46,7 @@ struct SourceWithTimeout : public JEventSource {
         }
 
         if (event_count == 100) {
-            throw RETURN_STATUS::kNO_MORE_EVENTS;
+            return ReturnStatus::Finished;
         }
 
         if (event_count == timeout_on_event_nr) {
@@ -54,6 +54,7 @@ struct SourceWithTimeout : public JEventSource {
                 std::this_thread::sleep_for(std::chrono::milliseconds(100));
             }; // Endless loop
         }
+        return ReturnStatus::Success;
     }
 };
 

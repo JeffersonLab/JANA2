@@ -30,11 +30,11 @@ public:
     void Open() override {
     }
 
-    void GetEvent(std::shared_ptr<JEvent> event) override {
+    ReturnStatus GetEvent(std::shared_ptr<JEvent> event) override {
         event_count++;
 
         if (event_count >= 100) {
-            throw RETURN_STATUS::kNO_MORE_EVENTS;
+            return ReturnStatus::Finished;
         }
 
         LOG << "Emitting event " << event_count << LOG_END;
@@ -43,7 +43,7 @@ public:
         if (event_count % 10 == 0) {
             event->SetSequential(true);
         }
-
+        return ReturnStatus::Success;
     }
 };
 

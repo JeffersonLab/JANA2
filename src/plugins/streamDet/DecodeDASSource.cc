@@ -31,7 +31,7 @@ void DecodeDASSource::Open() {
 
 }
 
-void DecodeDASSource::GetEvent(std::shared_ptr<JEvent> event) {
+JEventSource::ReturnStatus DecodeDASSource::GetEvent(std::shared_ptr<JEvent> event) {
 
     // TODO: Put these somewhere that makes sense
     size_t MAX_CHANNELS = 80;
@@ -55,14 +55,13 @@ void DecodeDASSource::GetEvent(std::shared_ptr<JEvent> event) {
             // populate the jevent with the adc samples
             event->Insert(hits);
             event->SetEventNumber(current_event_nr++);
-            return;
+            return JEventSource::ReturnStatus::Success;
         }
         // close file stream when the end of file is reached
         std::cout << "Reached end of file/stream " << GetName() << std::endl;
         ifs.close();
     }
-    // signal jana to terminate
-    throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
+    return JEventSource::ReturnStatus::Finished;
 
 }
 

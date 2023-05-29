@@ -11,10 +11,11 @@ struct Obj4 : public JObject { int data; };
 
 class Src : public JEventSource {
 
-    void GetEvent(std::shared_ptr<JEvent> event) override {
+    ReturnStatus GetEvent(std::shared_ptr<JEvent> event) override {
         auto obj = new Obj1;
         obj->data = 21;
         event->Insert(obj);
+        return ReturnStatus::Success;
     }
     bool GetObjects(const std::shared_ptr<const JEvent>&, JFactory* fac) override {
         if (fac->GetObjectName() == "Obj2") {

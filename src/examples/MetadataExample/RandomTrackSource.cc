@@ -39,7 +39,7 @@ void RandomTrackSource::Open() {
     m_max_run_number = 10;
 }
 
-void RandomTrackSource::GetEvent(std::shared_ptr <JEvent> event) {
+RandomTrackSource::ReturnStatus RandomTrackSource::GetEvent(std::shared_ptr <JEvent> event) {
 
     /// Calls to GetEvent are synchronized with each other, which means they can
     /// read and write state on the JEventSource without causing race conditions.
@@ -51,7 +51,7 @@ void RandomTrackSource::GetEvent(std::shared_ptr <JEvent> event) {
     }
 
     if (m_current_run_number > m_max_run_number) {
-        throw RETURN_STATUS::kNO_MORE_EVENTS;
+        return ReturnStatus::Finished;
     }
 
     event->SetEventNumber(m_current_event_number);
@@ -67,6 +67,8 @@ void RandomTrackSource::GetEvent(std::shared_ptr <JEvent> event) {
     JMetadata<Track> metadata;
     metadata.elapsed_time_ns = std::chrono::nanoseconds {5};
     event->GetFactory<Track>("generated")->SetMetadata(metadata);
+
+    return ReturnStatus::Success;
 }
 
 std::string RandomTrackSource::GetDescription() {

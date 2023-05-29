@@ -44,14 +44,14 @@ public:
         return "JTest Fake Event Source";
     }
 
-    void GetEvent(std::shared_ptr<JEvent> event) {
+    ReturnStatus GetEvent(std::shared_ptr<JEvent> event) override {
         if (m_max_event_count != 0 && m_events_generated > m_max_event_count) {
-            throw RETURN_STATUS::kNO_MORE_EVENTS;
+            return ReturnStatus::Finished;
         }
 
         if ((m_events_generated % 40) == 0) {
             // "Read" new entangled event every 40 events
-            m_latest_entangled_buffer = std::shared_ptr<std::vector<char>>(new std::vector<char>);
+            m_latest_entangled_buffer = std::make_shared<std::vector<char>>();
             write_memory(*m_latest_entangled_buffer, m_write_bytes, m_write_spread);
         }
 
@@ -67,6 +67,7 @@ public:
 
         event->SetEventNumber(m_events_generated);
         event->SetRunNumber(1);
+        return ReturnStatus::Success;
     }
 
 };

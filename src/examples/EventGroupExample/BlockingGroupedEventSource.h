@@ -49,13 +49,13 @@ public:
     /// GetEvent polls the queue of submitted TridasEvents and feeds them into JEvents along with a
     /// JEventGroup. A downstream EventProcessor may report the event as being finished. Once all
     /// events in the eventgroup are finished, the corresponding call to SubmitAndWait will unblock.
-    void GetEvent(std::shared_ptr<JEvent> event) override {
+    ReturnStatus GetEvent(std::shared_ptr<JEvent> event) override {
 
         std::pair<TridasEvent*, JEventGroup*> next_event;
         {
             std::lock_guard<std::mutex> lock(m_pending_mutex);
             if (m_pending_events.empty()) {
-                throw RETURN_STATUS::kTRY_AGAIN;
+                return ReturnStatus::TryAgain;
             }
             else {
                 next_event = m_pending_events.front();
@@ -74,6 +74,8 @@ public:
         // JANA always needs an event number and a run number, so extract these from the Tridas data somehow
         event->SetEventNumber(next_event.first->event_number);
         event->SetRunNumber(next_event.first->run_number);
+
+        return ReturnStatus::Success;
     }
 };
 
