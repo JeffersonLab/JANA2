@@ -1,0 +1,18 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: JANA2 Multi-threaded HENP Event Reconstruction
+message: >-
+  If you use this software, please cite it using the
+  DOI from the appropriate release.
+type: software
+authors:
+  - family-names: Experimental Nuclear Physics Community
+identifiers:
+  - type: url
+    value: 'https://github.com/JeffersonLab/JANA2'
+    description: GitHub site
+repository-code: 'https://github.com/JeffersonLab/JANA2'
+url: 'https://jeffersonlab.github.io/JANA2/'
+abstract: C++ framework for multi-threaded event reconstruction
