@@ -6,6 +6,7 @@
 #ifndef _JTypeInfo_h_
 #define _JTypeInfo_h_
 
+#include <cstdint>
 #include <cxxabi.h>
 #include <string>
 
