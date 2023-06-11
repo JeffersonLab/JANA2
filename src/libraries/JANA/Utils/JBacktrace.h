@@ -60,6 +60,8 @@ inline std::ostream& make_backtrace(std::ostream& os) {
 
             os << std::string(i+5, ' ') + "`- " << name << " (" << std::hex << backtrace_buffer[i] << std::dec << ")" << std::endl;
         }
+        
+        free(symbols);
     }
     catch (...) {
         // If this fails (e.g. bad alloc), just keep going
