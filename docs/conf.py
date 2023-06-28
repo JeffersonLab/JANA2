@@ -1,4 +1,3 @@
-
 #
 # The following code was added during an automated build on readthedocs.org
 # It is auto created and injected for every build. The result is based on the
