@@ -37,3 +37,5 @@ sphinx:
  #   - method: pip
   #    path: another/package
 #  system_packages: true
+
+pip install myst-parser
