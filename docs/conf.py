@@ -156,7 +156,7 @@ if 'extensions' in globals():
     extensions.insert(0, "readthedocs_ext.readthedocs")
 else:
     extensions = ["readthedocs_ext.readthedocs"]
-
+extensions.append("myst_parser")
 # Add External version warning banner to the external version documentation
 if 'branch' == 'external':
     extensions.insert(1, "readthedocs_ext.external_version_warning")
@@ -199,4 +199,3 @@ elif japanese:
 exclude_patterns = globals().get('exclude_patterns', [])
 exclude_patterns.extend(['_build'])
 
-extensions = ["myst_parser"]
