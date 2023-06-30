@@ -4,5 +4,5 @@ API
 .. autosummary::
    :toctree: generated
 
-   .. image:: https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/SNice.svg/1200px-SNice.svg.png
+   .. image:: https://e0.pxfuel.com/wallpapers/598/557/desktop-wallpaper-animated-smiley-faces-cartoon-smiley-face.jpg
       :width: 600
