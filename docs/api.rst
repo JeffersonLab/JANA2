@@ -4,5 +4,7 @@ API
 .. autosummary::
    :toctree: generated
 
-   lumache
-   
+JANA2
+
+   .. image:: images/smiley.png
+      :width: 600
