@@ -21,3 +21,4 @@ Contents
    api
    tutorial
    how-to guides
+   random
