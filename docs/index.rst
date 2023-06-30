@@ -21,4 +21,5 @@ Contents
    api
    tutorial
    how-to guides
-   random
+   principles
+   reference
