@@ -3,6 +3,3 @@ Tutorial
 
 .. autosummary::
    :toctree: generated
-
-
-   
