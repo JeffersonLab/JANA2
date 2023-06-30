@@ -1,5 +1,3 @@
 Tutorial
 ===
 
-.. autosummary::
-   :toctree: generated
