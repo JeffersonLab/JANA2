@@ -20,3 +20,4 @@ Contents
    usage
    api
    tutorial
+   how-to guides
