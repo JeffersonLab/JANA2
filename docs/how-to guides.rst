@@ -36,7 +36,7 @@ Along with specifying plugins, you need to specify the input files containing th
 
 The command-line flags are:
 
-.. list-table:: Title
+.. list-table:: 
    :widths: 25 25 50
    :header-rows: 1
 
