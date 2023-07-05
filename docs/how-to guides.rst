@@ -71,7 +71,7 @@ JANA provides a parameter manager so that configuration options may be controlle
 
 The following configuration options are used most commonly:
 
-..list-table::
+.. list-table::
   :header-rows: 1
    * - Name
      - Type
