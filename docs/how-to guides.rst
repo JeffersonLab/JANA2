@@ -113,7 +113,7 @@ JANA has its own logger. You can control the verbosity of different components u
 The following parameters are used for benchmarking:
 
 .. list-table:: Title
-   :widths: 25 10 50 50
+   :widths: 25 10 25 50
    :header-rows: 1
 
    * - Name
@@ -124,7 +124,21 @@ The following parameters are used for benchmarking:
      - int
      - 15
      - Number of measurements made for each thread count
-   * - 
-     - 
-     - 
-     - 
+   * - benchmark:minthreads
+     - int
+     - 1
+     - Minimum thread count
+   * - benchmark:maxthread
+     - int
+     - ncores
+     - Maximum thread count
+   * - benchmark:threadstep
+     - int
+     - 1
+     - Thread count increment
+   * - benchmark:resultsdir
+     - string
+     - JANA_Test_Results
+     - Directory name for benchmark test results
+
+The following parameters may come in handy when doing performance tuning:
