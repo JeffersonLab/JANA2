@@ -150,11 +150,6 @@ The following parameters may come in handy when doing performance tuning:
      - Type
      - Default
      - Description
-   * - benchmark:nsamples
-   * - Name
-     - Type
-     - Default
-     - Description
    * - jana:engine
      - int
      - 0
