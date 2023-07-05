@@ -24,9 +24,6 @@ JObjects are data containers for specific resuts, e.g. clusters or tracks. They 
 
 By default, a JFactory owns all of the JObjects that it created during :py:func:`Process()`. Once all event processors have finished processing a :py:func:`JEvent`, all :py:func:`JFactories` associated with that :py:func:`JEvent` will clears and delete their :py:func:`JObjects`. However, you can change this behavior by setting one of the factory flags:
 
-
-Design philosophy
------------------
 * :py:func:`PERSISTENT`: Objects are neither cleared nor deleted. This is usually used for calibrations and translation tables. Note that if an object is persistent, :py:func:`JFactory::Process` will not be re-run on the next :py:func:``JEvent`. The user may still update the objects manually, via :py:func:`JFactory::BeginRun`, and must delete the objects manually via :py:func:`JFactory::EndRun` or :py:func:`JFactory::Finish`.
 
 * :py:func:`NOT_OBJECT_OWNER`: Objects are cleared from the :py:func:`JFactory` but not deleted. This is useful for “proxy” factories (which reorganize objects that are owned by a different factory) and for :py:func:`JEventGroups`. :py:func:`JFactory`::Process will be re-run for each :py:func:`JEvent`. As long as the objects are owned by a different :py:func:`JFactory`, the user doesn’t have to do any cleanup.
@@ -38,6 +35,13 @@ The lifetime of a :py:func:`JEventSource` spans the time that all of its emitted
 The lifetime of a :py:func:`JEventProcessor` spans the time that any :py:func:`JEventSources` are active.
 
 The lifetime of a :py:func:`JService` not only spans the time that any :py:func:`JEventProcessors` are active, but also the lifetime of :py:func:`JApplication` itself. Furthermore, because JServices use :py:func:`shared_ptr`, they are allowed to live even longer than :py:func:`JApplication`, which is helpful for things like writing test cases.
+
+Design philosophy
+-----------------
+JANA’s design philosophy can be boiled down to five values, ordered by importance:
+
+Simple to use
+____________
 
 Comparison to other frameworks
 --------------------------------
