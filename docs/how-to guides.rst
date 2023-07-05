@@ -75,6 +75,7 @@ The following configuration options are used most commonly:
 .. list-table::
   :widths: 25 25 50
   :header-rows: 1
+
    * - Name
      - Type
      - Descriptioin
@@ -112,7 +113,9 @@ JANA has its own logger. You can control the verbosity of different components u
 The following parameters are used for benchmarking:
 
 ..list-table::
+  :widths: 25 25 50
   :header-rows: 1
+
    * - Name
      - Type
      - Default
