@@ -18,16 +18,16 @@ The installation process is described here. We can quickly test that our install
 
 We can understand this command as follows:
 
-* jana is the default command-line tool for launching JANA. If you would rather create your own executable which uses JANA internally, you are free to do so.
+* :py:func:`jana' is the default command-line tool for launching JANA. If you would rather create your own executable which uses JANA internally, you are free to do so.
 
 
-* The -P flag specifies a configuration parameter, e.g. -Pjana:debug_plugin_loading=1 tells JANA to log detailed information about where the plugin loader went looking and what it found.
+* The :py:func:`-P' flag specifies a configuration parameter, e.g. :py:func:'-Pjana:debug_plugin_loading=1' tells JANA to log detailed information about where the plugin loader went looking and what it found.
 
 
-* plugins is the parameter specifying the names of plugins to load, as a comma-separated list (without spaces). By default JANA searches for these in $JANA_HOME/plugins, although you can also specify full paths.
+* :py:func:`plugins' is the parameter specifying the names of plugins to load, as a comma-separated list (without spaces). By default JANA searches for these in :py:func:'$JANA_HOME/plugins', although you can also specify full paths.
 
 
-* -b tells JANA to run everything in benchmark mode, i.e. it slowly increases the number of threads while measuring the overall throughput. You can cancel processing at any time by pressing Ctrl-C.
+* :py:func:'-b tells' JANA to run everything in benchmark mode, i.e. it slowly increases the number of threads while measuring the overall throughput. You can cancel processing at any time by pressing Ctrl-C.
 
 
 Creating a JANA plugin
