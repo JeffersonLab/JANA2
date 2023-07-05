@@ -22,7 +22,7 @@ Object lifecycles
 ------------------
 JObjects are data containers for specific resuts, e.g. clusters or tracks. They may be plain-old structs or they may optionally inherit from (e.g.) ROOT or NumPy datatypes.
 
-By default, a JFactory owns all of the JObjects that it created during Process(). Once all event processors have finished processing a JEvent, all JFactories associated with that JEvent will clears and delete their JObjects. However, you can change this behavior by setting one of the factory flags:
+By default, a JFactory owns all of the JObjects that it created during ``Process()``. Once all event processors have finished processing a ``JEvent``, all ``JFactories`` associated with that ``JEvent`` will clears and delete their ``JObjects``. However, you can change this behavior by setting one of the factory flags:
 
 
 Design philosophy
