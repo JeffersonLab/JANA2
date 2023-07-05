@@ -72,7 +72,7 @@ JANA provides a parameter manager so that configuration options may be controlle
 
 The following configuration options are used most commonly:
 
-.. list-table:: Title
+.. list-table:: 
    :widths: 25 25 50
    :header-rows: 1
 
@@ -112,9 +112,9 @@ JANA has its own logger. You can control the verbosity of different components u
 
 The following parameters are used for benchmarking:
 
-.. list-table::
-  :widths: 25 10 20 50
-  :header-rows: 1
+.. list-table:: Title
+   :widths: 25 10 50 50
+   :header-rows: 1
 
    * - Name
      - Type
