@@ -81,5 +81,3 @@ Comparison to other frameworks
 Many different event reconstruction frameworks exist. The following are frequently compared and contrasted with JANA:
 
 * `Clara <https://claraweb.jlab.org/clara/>`_ While JANA specializes in thread-level parallelism, Clara uses node-level parallelism via a message-passing interface. This higher level of abstraction comes with some performance overhead and significant orchestration requirements. On the other hand, it can scale to larger problem sizes and support more general stream topologies. JANA is to OpenMP as Clara is to MPI.
-
-* `Fun4all <https://github.com/sPHENIX-Collaboration/Fun4All>`_ Comparison coming soon!
