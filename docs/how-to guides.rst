@@ -23,15 +23,6 @@ Table of contents
 17. Process subevents
 18. Migrate from JANA1 to JANA2
 
-Short	Long	Meaning
--h	–help	Display help message
--v	–version	Display version information
--c	–configs	Display configuration parameters
--l	–loadconfigs	Load configuration parameters from file
--d	–dumpconfigs	Dump configuration parameters to file
--b	–benchmark	Run JANA in benchmark mode
--P	 	Specify a configuration parameter (see below)
-
 Using the JANA CLI
 -------------------
 JANA is typically run like this:
@@ -52,10 +43,26 @@ The command-line flags are:
    * - Short
      - Long
      - Meaning
-   * - Row 1, column 1
-     -
-     - Row 1, column 3
-   * - Row 2, column 1
-     - Row 2, column 2
-     - Row 2, column 3
+   * - -h
+     - –help
+     - 	Display help message
+   * - -v
+     - 	–version
+     - 	Display version information
+   * - -c
+     - 	–configs
+     - 	Display configuration parameters
+   * - -l
+     - 	–loadconfigs
+     - 	Load configuration parameters from file
+   * - -d
+     - –dumpconfigs
+     - Dump configuration parameters to file
+   * - -b
+     - 	–benchmark
+     - 	Run JANA in benchmark mode
+   * - -P
+     - 
+     - Specify a configuration parameter (see below)
+
 
