@@ -31,12 +31,18 @@ Creating a JANA plugin
 
 With JANA working, we can now create our own plugin. JANA provides a script which generates code skeletons to help us get started. We shall generate a skeleton for a plugin named “QuickTutorial” as follows:
 
-jana-generate.py Plugin QuickTutorial
+.. code-block:: console
+
+    jana-generate.py Plugin QuickTutorial
+
 This creates the following directory tree. By default, a minimal skelton is created in a single file: QuickTutorial.cc. This provides a JEventProcessor class as well as the the plugin entry point. The generated files include lots of comments providing helpful hints on their use.
 
-QuickTutorial/
-├── CMakeLists.txt
-│├─ QuickTutorial.cc
+.. code-block:: console
+
+    QuickTutorial/
+    ├── CMakeLists.txt
+    │├─ QuickTutorial.cc
+
 The jana-generate.py Plugin ... command provides some option flags as well that can be given at the end of the command line. Run jana-generate.py --help to see what they are.
 
 Integrating into an existing project
@@ -44,7 +50,10 @@ Integrating into an existing project
 
 If you are working with an existing project such as eJANA or GlueX, then you don’t need the CMake project. All you need are the source files (e.g. QuickTutorial.cc):
 
-cp QuickTutorial $PATH_TO_PROJECT_SOURCE/src/plugins/QuickTutorial
+.. code-block:: console
+
+    cp QuickTutorial $PATH_TO_PROJECT_SOURCE/src/plugins/QuickTutorial
+
 Be aware that you will have to manually tell the parent CMakeLists.txt to add_subdirectory(QuickTutorial).
 
 The rest of the tutorial assumes that we are using a standalone plugin.
@@ -54,20 +63,26 @@ Building the plugin
 
 We build and run the plugin with the following:
 
-cd QuickTutorial
-mkdir build
-cd build
-cmake3 ..
-make install
-jana -Pplugins=QuickTutorial
+.. code-block:: console
+
+    cd QuickTutorial
+    mkdir build
+    cd build
+    cmake3 ..
+    make install
+    jana -Pplugins=QuickTutorial
+
 
 Adding an event source
 ------------------------
 
 When we run this, we observe that JANA loads the plugin, opens our QuickTutorialProcessor, closes it again without processing any events, and exits. This is because there is nothing to do because we haven’t specified any sources. If we are running in the context of an existing project, we can pull in event sources from other plugins and observe our processor dutifully print out the event number. For now, however, we assume that we don’t have access to an event source, so we’ll create one ourselves. Our first event source will emit an infinite stream of random data, so we’ll name it RandomSource.
 
-cd ..
-jana-generate.py JEventSource RandomSource
+.. code-block:: console
+
+    cd ..
+    jana-generate.py JEventSource RandomSource
+
 This creates two files, RandomSource.cc and RandomSource.h, in the current directory. We’ll need to add them to CMakeLists.txt ourselves. Note that we retain complete control over our directory structure. In this tutorial, for simplicity, we’ll keep all .h and .cc files in the topmost directory. For larger projects, jana-generate project MyProjectName creates a much more complex code skeleton.
 
 To use our new RandomSource as-is, we need to do three things:
@@ -77,22 +92,31 @@ Register our RandomSource with JANA inside QuickTutorial.cc
 Rebuild the cmake project, rebuild the plugin target, and install.
 The modified line in the CMakeLists.txt line should look like:
 
-add_library(QuickTutorial_plugin SHARED QuickTutorial.cc RandomSource.cc RandomSource.h)
+.. code-block:: console
+
+    add_library(QuickTutorial_plugin SHARED QuickTutorial.cc RandomSource.cc RandomSource.h)
+
 The modified QuickTuorial.cc file needs to have the new RandomSource.h header included so it can instantiatie an object and pass it over to the JApplication in the InitPlugin() routine. The bottom of the file should look like this:
 
-#include <RandomSource.h>                             // <- ADD THIS LINE (probably better to put this at top of file)
+.. code-block:: console
 
-extern "C" {
-    void InitPlugin(JApplication *app) {
-        InitJANAPlugin(app);
-        app->Add(new QuickTutorialProcessor);
-        app->Add(new RandomSource("random", app));    // <- ADD THIS LINE
+    #include <RandomSource.h>                             // <- ADD THIS LINE (probably better to put this at top of file)
+    
+    extern "C" {
+        void InitPlugin(JApplication *app) {
+            InitJANAPlugin(app);
+            app->Add(new QuickTutorialProcessor);
+            app->Add(new RandomSource("random", app));    // <- ADD THIS LINE
+        }
     }
-}
+
 And finally, rebuild …
 
-cd build
-make install
+.. code-block:: console
+
+    cdbuild
+    make install
+
 When we run the QuickTutorial plugin now, we observe that QuickTutorialProcessor::Process is being called on every event. Note that Process is ‘seeing’ events slightly out-of-order. This is because there are multiple threads running Process, which means that we have to be careful about how we organize the work we do inside there. This will be discussed in depth later.
 
 Configuring an event source
