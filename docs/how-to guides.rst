@@ -28,7 +28,7 @@ Using the JANA CLI
 JANA is typically run like this:
 .. code-block:: console 
 
-  jana -Pplugins=JTest -b   # (cancel with Ctrl-C)
+  $JANA_HOME/bin/jana -Pplugins=JTest -Pnthreads=8 ~/data/inputfile.txt
 
 
 Note that the JANA executable won’t do anything until you provide plugins. A simple plugin is provided called JTest, which verifies that everything is working and optionally does a quick performance benchmark. Additional simple plugins are provided in py:func:`src/examples`. Instructions on how to write your own are given in the Tutorial section.
