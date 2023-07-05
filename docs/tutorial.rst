@@ -490,21 +490,21 @@ We fill out the definition in RandomSource.cc:
 
 Note that JEventSourceGenerator puts some constraints on our JEventSource. Specifically, we need to note that:
 
-*Our JEventSource needs a two-argument constructor which accepts a string containing the resource name, and a JApplication pointer.
+* Our JEventSource needs a two-argument constructor which accepts a string containing the resource name, and a JApplication pointer.
 
-*Our JEventSource needs a static method GetDescription, to help JANA report to the user which sources are available and which ended up being chosen.
+* Our JEventSource needs a static method GetDescription, to help JANA report to the user which sources are available and which ended up being chosen.
 
-*In case we need to override JANA’s preferred JEventSource for some resource, we can specify the typename of the event source we’d rather use instead via the configuration parameter event_source_type.
+* In case we need to override JANA’s preferred JEventSource for some resource, we can specify the typename of the event source we’d rather use instead via the configuration parameter event_source_type.
 
-*When we implement Open for an event source that reads a file, we get the filename from JEventSource::GetResourceName().
+* When we implement Open for an event source that reads a file, we get the filename from JEventSource::GetResourceName().
 
 Exercises for the reader
 -------------------------
 
-*Create a new JEventProcessor which generates a heatmap of Clusters instead of Hits.
+* Create a new JEventProcessor which generates a heatmap of Clusters instead of Hits.
 
-*Create a BetterClusterFactory which handles multiple clusters per event. Bonus points if it is a lightweight wrapper around an industrial-strength clustering algorithm. Inside InitPlugin, use a configuration parameter to decide which JFactoryT<Cluster> gets registered with the JApplication.
+* Create a BetterClusterFactory which handles multiple clusters per event. Bonus points if it is a lightweight wrapper around an industrial-strength clustering algorithm. Inside InitPlugin, use a configuration parameter to decide which JFactoryT<Cluster> gets registered with the JApplication.
 
-*Use tags to register both ClusterFactories with the JApplication. Create a JEventProcessor which asks for the results from both algorithms and compares their results.
+* Use tags to register both ClusterFactories with the JApplication. Create a JEventProcessor which asks for the results from both algorithms and compares their results.
 
-*Create a CsvFileSource which reads the CSV file generated from the JCsvWriter<Hit>. For CheckOpenable, read the first line of the file and check whether the column headers match what we’d expect for a table of Hits. Verify that we get the same histograms whether we use the RandomSource or the CsvFileSource.
+* Create a CsvFileSource which reads the CSV file generated from the JCsvWriter<Hit>. For CheckOpenable, read the first line of the file and check whether the column headers match what we’d expect for a table of Hits. Verify that we get the same histograms whether we use the RandomSource or the CsvFileSource.
