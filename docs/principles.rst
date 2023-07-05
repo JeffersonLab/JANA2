@@ -27,6 +27,10 @@ By default, a JFactory owns all of the JObjects that it created during :py:func:
 
 Design philosophy
 -----------------
+* :py:func:`PERSISTENT`: Objects are neither cleared nor deleted. This is usually used for calibrations and translation tables. Note that if an object is persistent, :py:func:`JFactory::Process` will not be re-run on the next :py:func:``JEvent`. The user
+may still update the objects manually, via :py:func:`JFactory::BeginRun`, and must delete the objects manually via :py:func:`JFactory::EndRun` or :py:func:`JFactory::Finish`.
+
+* :py:func:`NOT_OBJECT_OWNER`: Objects are cleared from the :py:func:`JFactory` but not deleted. This is useful for “proxy” factories (which reorganize objects that are owned by a different factory) and for :py:func:`JEventGroups`. :py:func:`JFactory`::Process will be re-run for each :py:func:`JEvent`. As long as the objects are owned by a different :py:func:`JFactory`, the user doesn’t have to do any cleanup.
 
 Comparison to other frameworks
 --------------------------------
