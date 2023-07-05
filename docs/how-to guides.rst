@@ -1,4 +1,4 @@
-How-to...
+How-to guides
 =============
 This section walks the user through specific steps for solving a real-world problem.
 
