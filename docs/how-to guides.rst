@@ -38,7 +38,7 @@ Along with specifying plugins, you need to specify the input files containing th
 The command-line flags are:
 
 .. list-table:: 
-   :widths: 25 25 50
+   :widths: 10 25 50
    :header-rows: 1
 
    * - Short
@@ -112,8 +112,8 @@ JANA has its own logger. You can control the verbosity of different components u
 
 The following parameters are used for benchmarking:
 
-..list-table::
-  :widths: 25 25 50
+.. list-table::
+  :widths: 25 10 20 50
   :header-rows: 1
 
    * - Name
