@@ -65,4 +65,61 @@ The command-line flags are:
      - 
      - Specify a configuration parameter (see below)
 
+Configuring JANA
+-----------------
+JANA provides a parameter manager so that configuration options may be controlled via code, command-line args, and config files in a consistent and self-documenting way. Plugins are free to request any existing parameters or register their own.
 
+The following configuration options are used most commonly:
+
+..list-table::
+  :header-rows: 1
+   * - Name
+     - Type
+     - Descriptioin
+   * - nthreads
+     - int
+     - Size of thread team (Defaults to the number of cores on your machine)
+   * - plugins
+     - string
+     - Comma-separated list of plugin filenames. JANA will look for these on the :py:func:`$JANA_PLUGIN_PATH`
+   * - plugins_to_ignore
+     - string
+     - This removes plugins which had been specified in :py:func:`plugins`.
+   * - event_source_type
+     - string
+     - Manually override JANA’s decision about which JEventSource to use
+   * - jana:nevents
+     - int	
+     - 	Limit the number of events each source may emit
+   * - jana:nskip
+     - int	
+     - 	Skip processing the first n events from each event source
+   * - jana:extended_report
+     - bool
+     - 	The amount of status information to show while running
+   * - jana:status_fname
+     - string
+     - 	Named pipe for retrieving status information remotely
+
+JANA has its own logger. You can control the verbosity of different components using the parameters :py:func:`log:off`, :py:func:`log:fatal`, :py:func:`log:error`, :py:func:`log:warn`, :py:func:`log:info`, :py:func:`log:debug`, and :py:func:`log:trace`. The following example shows how you would increase the verbosity of JPluginLoader and JComponentManager:
+
+.. code-block:: console 
+
+  jana -Pplugins=JTest -Plog:debug=JPluginLoader,JComponentManager
+
+The following parameters are used for benchmarking:
+
+..list-table::
+  :header-rows: 1
+   * - Name
+     - Type
+     - Default
+     - Description
+   * - benchmark:nsamples
+     - int
+     - 15
+     - Number of measurements made for each thread count
+   * - 
+     - 
+     - 
+     - 
