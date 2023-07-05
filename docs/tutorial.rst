@@ -345,12 +345,12 @@ Just as JANA uses JObjects to organize experiment data, it uses JFactories to or
 
 JFactories are slightly different from the ‘Factory’ design patterns: rather than abstracting away the subclass of the object being constructed, JFactories abstract away the multiplicity instead. This is a good match for nuclear and high-energy physics, where m inputs produce n outputs and n isn’t always known until after the algorithm has finished. JFactories confer other benefits as well:
 
-Algorithms can be swapped at runtime
-Results are calculated only if they are needed (‘lazy’)
-Results are only calculated once and then reused as needed (‘memoized’)
-JFactories are agnostic as to whether their inputs were calculated by another JFactory or inserted by a JEventSource
-Different paths for deriving a result may come into play depending on the source data
-For this example, we create a simple algorithm computing clusters, given hit data. We start by generating a cluster JObject:
+* Algorithms can be swapped at runtime
+* Results are calculated only if they are needed (‘lazy’)
+* Results are only calculated once and then reused as needed (‘memoized’)
+* JFactories are agnostic as to whether their inputs were calculated by another JFactory or inserted by a JEventSource
+* Different paths for deriving a result may come into play depending on the source data
+* For this example, we create a simple algorithm computing clusters, given hit data. We start by generating a cluster JObject:
 
 jana-generate.py JObject Cluster
 
