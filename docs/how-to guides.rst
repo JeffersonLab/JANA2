@@ -26,6 +26,7 @@ Table of contents
 Using the JANA CLI
 -------------------
 JANA is typically run like this:
+
 .. code-block:: console 
 
   $JANA_HOME/bin/jana -Pplugins=JTest -Pnthreads=8 ~/data/inputfile.txt
@@ -72,6 +73,7 @@ JANA provides a parameter manager so that configuration options may be controlle
 The following configuration options are used most commonly:
 
 .. list-table::
+  :widths: 25 25 50
   :header-rows: 1
    * - Name
      - Type
