@@ -154,7 +154,9 @@ The following parameters may come in handy when doing performance tuning:
    * - jana:engine
      - int
      - 0
-     - 
+     - Which parallelism engine to use. 0: 
+        JArrowProcessingController. 1: 
+        JDebugProcessingController.
    * - jana:event_pool_size
      - int
      - nthreads
@@ -166,15 +168,15 @@ The following parameters may come in handy when doing performance tuning:
    * - jana:affinity
      - int
      - 0
-     - 	
+     - Thread pinning strategy. 0: None. 1: Minimize number of memory localities. 2: Minimize number of hyperthreads.
    * - jana:locality
      - int
      - 0
-     - 
+     - Memory locality strategy. 0: Global. 1: Socket-local. 2: Numa-domain-local. 3. Core-local. 4. Cpu-local
    * - jana:enable_stealing
      - bool
      - 0
-     - 
+     - Allow threads to pick up work from a different memory location if their local mailbox is empty.
    * - jana:event_queue_threshold
      - int
      - 80
