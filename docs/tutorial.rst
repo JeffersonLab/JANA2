@@ -13,6 +13,7 @@ Before we begin, we need to make sure that
 The installation process is described here. We can quickly test that our install was successful by running a builtin benchmarking/scaling test:
 
 .. code-block:: console
+
     jana -Pplugins=JTest -b   # (cancel with Ctrl-C)
 
 We can understand this command as follows:
