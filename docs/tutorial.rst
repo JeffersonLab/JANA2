@@ -12,6 +12,7 @@ Before we begin, we need to make sure that
 
 The installation process is described here. We can quickly test that our install was successful by running a builtin benchmarking/scaling test:
 
+
 jana -Pplugins=JTest -b   # (cancel with Ctrl-C)
 We can understand this command as follows:
 
@@ -24,6 +25,8 @@ plugins is the parameter specifying the names of plugins to load, as a comma-sep
 -b tells JANA to run everything in benchmark mode, i.e. it slowly increases the number of threads while measuring the overall throughput. You can cancel processing at any time by pressing Ctrl-C.
 
 Creating a JANA plugin
+-----------------------
+
 With JANA working, we can now create our own plugin. JANA provides a script which generates code skeletons to help us get started. We shall generate a skeleton for a plugin named “QuickTutorial” as follows:
 
 jana-generate.py Plugin QuickTutorial
@@ -35,6 +38,8 @@ QuickTutorial/
 The jana-generate.py Plugin ... command provides some option flags as well that can be given at the end of the command line. Run jana-generate.py --help to see what they are.
 
 Integrating into an existing project
+--------------------------------------
+
 If you are working with an existing project such as eJANA or GlueX, then you don’t need the CMake project. All you need are the source files (e.g. QuickTutorial.cc):
 
 cp QuickTutorial $PATH_TO_PROJECT_SOURCE/src/plugins/QuickTutorial
@@ -43,6 +48,8 @@ Be aware that you will have to manually tell the parent CMakeLists.txt to add_su
 The rest of the tutorial assumes that we are using a standalone plugin.
 
 Building the plugin
+--------------------
+
 We build and run the plugin with the following:
 
 cd QuickTutorial
@@ -51,7 +58,10 @@ cd build
 cmake3 ..
 make install
 jana -Pplugins=QuickTutorial
+
 Adding an event source
+------------------------
+
 When we run this, we observe that JANA loads the plugin, opens our QuickTutorialProcessor, closes it again without processing any events, and exits. This is because there is nothing to do because we haven’t specified any sources. If we are running in the context of an existing project, we can pull in event sources from other plugins and observe our processor dutifully print out the event number. For now, however, we assume that we don’t have access to an event source, so we’ll create one ourselves. Our first event source will emit an infinite stream of random data, so we’ll name it RandomSource.
 
 cd ..
@@ -84,6 +94,8 @@ make install
 When we run the QuickTutorial plugin now, we observe that QuickTutorialProcessor::Process is being called on every event. Note that Process is ‘seeing’ events slightly out-of-order. This is because there are multiple threads running Process, which means that we have to be careful about how we organize the work we do inside there. This will be discussed in depth later.
 
 Configuring an event source
+----------------------------
+
 Because neither the source nor the processor are doing any ‘real work’, the events are being processed very quickly. To throttle the rate events get emitted, to whatever frequency we like, we can add a delay inside GetEvent. Perhaps we’d even like to set the emit frequency at runtime. First, we declare a member variable on RandomSource, initializing it to our preferred default value:
 
 class RandomSource : public JEventSource {
@@ -120,7 +132,10 @@ void RandomSource::GetEvent(std::shared_ptr <JEvent> event) {
 Finally, we can set this parameter on the command line and observe the throughput change accordingly:
 
 jana -Pplugins=QuickTutorial -Prandom_source:max_emit_freq_hz=10
+
 Creating JObjects
+------------------
+
 So far RandomSource has been emitting events with no data attached. Now we’d like to have them emit randomly generated ‘Hit’ objects which simulate the readout from a detector. First, we need to set up our data model. Although we can insert pointers of any kind into our JEvent, we strongly recommend using JObjects for reasons we will discuss later.
 
 cd src
@@ -146,7 +161,10 @@ The only additional thing we need to fill out is the Summarize method, which aid
         summary.add(t, NAME_OF(t), "%f", "Time in us");
     }
 }
+
 Inserting JObjects into a JEvent
+---------------------------------
+
 Now it is time to have our RandomSource emit events which contain Hit objects. For the sake of brevity, we shall keep our hit generation logic as simple as possible: four hits which are constant. We can make our detector simulation arbitrarily complex, but be aware that JEventSources only run on a single thread by default, so complex simulations can reduce the event rate. Synchronizing GetEvent makes our job easier, however, because we can manipulate non-thread-local state such as file pointers or cursors or message buffers without having to worry about race conditions and deadlocks.
 
 The pattern we use for inserting data into the event is simple: For data of type T, create a std::vector<T*>, fill it, and pass it to JEvent::Insert, which will move its contents directly into the JEvent object. If we want, when we insert we can also specify a tag, which is just a string. The purpose of a tag is to provide an extra level of granularity. For instance, if we have two detectors which both use the Hit datatype but have separate processing logic, we want to be able to access them independently.
@@ -185,7 +203,10 @@ void InitPlugin(JApplication* app) {
     app->Add(new JCsvWriter<Hit>);                // ADD ME
     //app->Add(new JCsvWriter<Hit>("fcal"));      // If we used a tag
 }
+
 Writing our own JEventProcessor
+--------------------------------
+
 A JEventProcessor does two things: It calculates a bunch of intermediate results for each event (this part is done in parallel), and then it aggregates those results into a single output (this part is done sequentially). The canonical example is to calculate clusters, track candidates, and tracks separately for each event, and then produce a histogram using all of the tracks of all of the events.
 
 In this section, we are going to modify the automatically generated TutorialProcessor to produce a heatmap that only uses hit data. We discuss how to structure more complicated calculations later. First, we add a quick-and-dirty heatmap member variable:
@@ -253,7 +274,10 @@ void QuickTutorialProcessor::Finish() {
         }
     }
 }
+
 Organizing computations using JFactories
+-----------------------------------------
+
 Just as JANA uses JObjects to organize experiment data, it uses JFactories to organize the algorithms for processing said data.
 
 JFactories are slightly different from the ‘Factory’ design patterns: rather than abstracting away the subclass of the object being constructed, JFactories abstract away the multiplicity instead. This is a good match for nuclear and high-energy physics, where m inputs produce n outputs and n isn’t always known until after the algorithm has finished. JFactories confer other benefits as well:
@@ -340,6 +364,8 @@ void InitPlugin(JApplication* app) {
 We are now free to modify QuickTutorialProcessor (or create a new JEventProcessor) which histograms clusters instead of hits. Crucially, JEvent::Get doesn’t care whether the JObjects were Inserted by an event source or whether they were Set by a JFactory. The interface for retrieving them is the same either way.
 
 Reading files using a JEventSource
+-----------------------------------
+
 Earlier we created a JEventSource which we added directly to the JApplication. This works well for simple cases but becomes cumbersome due to the amount of configuration needed: First we’d have to tell the plugin which JEventSource to register, then tell that source which files to open, and we’d have to do this for each JEventSource separately. Instead, JANA gives us a cleaner option tailored to our workflow: we specify a set of input URIs (a.k.a. file paths or sockets) and let JANA decide which JEventSource to instantiate for each. Thus we prefer to call JANA like this:
 
 jana -PQuickTutorial,CsvSourcePlugin,RootSourcePlugin path/to/file1.csv path/to/file2.root
@@ -388,6 +414,8 @@ In case we need to override JANA’s preferred JEventSource for some resource, w
 When we implement Open for an event source that reads a file, we get the filename from JEventSource::GetResourceName().
 
 Exercises for the reader
+-------------------------
+
 Create a new JEventProcessor which generates a heatmap of Clusters instead of Hits.
 
 Create a BetterClusterFactory which handles multiple clusters per event. Bonus points if it is a lightweight wrapper around an industrial-strength clustering algorithm. Inside InitPlugin, use a configuration parameter to decide which JFactoryT<Cluster> gets registered with the JApplication.
