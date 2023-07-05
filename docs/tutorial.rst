@@ -124,24 +124,29 @@ Configuring an event source
 
 Because neither the source nor the processor are doing any ‘real work’, the events are being processed very quickly. To throttle the rate events get emitted, to whatever frequency we like, we can add a delay inside GetEvent. Perhaps we’d even like to set the emit frequency at runtime. First, we declare a member variable on RandomSource, initializing it to our preferred default value:
 
-class RandomSource : public JEventSource {
-    int m_max_emit_freq_hz = 100;             // <- ADD THIS LINE
+.. code-block:: console
 
-public:
-    RandomSource(std::string resource_name, JApplication* app);
-    virtual ~RandomSource() = default;
-    void Open() override;
-    void GetEvent(std::shared_ptr<JEvent>) override;
-    static std::string GetDescription();
-};
+    class RandomSource : public JEventSource {
+        int m_max_emit_freq_hz = 100;             // <- ADD THIS LINE
+
+    public:
+        RandomSource(std::string resource_name, JApplication* app);
+        virtual ~RandomSource() = default;
+        void Open() override;
+        void GetEvent(std::shared_ptr<JEvent>) override;
+        static std::string GetDescription();
+    };
+
 Next we sync the variable with the parameter manager inside Open. We do this by calling JApplication::SetDefaultParameter, which tells JANA to look among its configuration parameters for one called “random_source:max_emit_freq_hz”. If it finds one, it sets m_max_emit_freq_hz to the value it found. Otherwise, it leaves the variable alone. JANA remembers all such ‘default parameters’ along with their default values so that it can report them and generate config files. Note that we conventionally prefix our parameter names with the name of the requesting component or plugin. This helps prevent namespace collisions.
 
-void RandomSource::Open() {
-    JApplication* app = GetApplication(); 								        // <- ADD THIS LINE
-    app->SetDefaultParameter("random_source:max_emit_freq_hz",            // <- ADD THIS LINE
-                             m_max_emit_freq_hz,                          // <- ADD THIS LINE
-                             "Maximum event rate [Hz] for RandomSource"); // <- ADD THIS LINE
-}
+.. code-block:: console
+    void RandomSource::Open() {
+        JApplication* app = GetApplication(); 								        // <- ADD THIS LINE
+        app->SetDefaultParameter("random_source:max_emit_freq_hz",            // <- ADD THIS LINE
+                                 m_max_emit_freq_hz,                          // <- ADD THIS LINE
+                                 "Maximum event rate [Hz] for RandomSource"); // <- ADD THIS LINE
+    }
+
 We can now use the value of m_max_emit_freq_hz, confident that it is consistent with the current runtime configuration:
 
 void RandomSource::GetEvent(std::shared_ptr <JEvent> event) {
