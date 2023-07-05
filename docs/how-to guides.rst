@@ -210,8 +210,8 @@ Mini plugins are project plugins which have been stripped down to a single cc fi
 
 .. code-block:: console 
 
-jana-generate.py MiniStandalonePlugin PluginNameInCamelCase
-jana-generate.py MiniProjectPlugin PluginNameInCamelCase
+  jana-generate.py MiniStandalonePlugin PluginNameInCamelCase
+  jana-generate.py MiniProjectPlugin PluginNameInCamelCase
 
 Standalone plugins
 ___________________
@@ -244,10 +244,10 @@ Note that this script, like the others, does not update your :py:func:`CMakeList
 
 .. code-block:: console
 
-find_package(ROOT)
-include_directories(${ROOT_INCLUDE_DIRS})
-link_directories(${ROOT_LIBRARY_DIR})
-target_link_libraries(${PLUGIN_NAME} ${ROOT_LIBRARIES})
+  find_package(ROOT)
+  include_directories(${ROOT_INCLUDE_DIRS})
+  link_directories(${ROOT_LIBRARY_DIR})
+  target_link_libraries(${PLUGIN_NAME} ${ROOT_LIBRARIES})
 
 JFactories
 ___________
