@@ -87,10 +87,10 @@ This creates two files, RandomSource.cc and RandomSource.h, in the current direc
 
 To use our new RandomSource as-is, we need to do three things:
 
-Add RandomSource.cc and RandomSource.h to the add_library(...) line in CMakeLists.txt.
-Register our RandomSource with JANA inside QuickTutorial.cc
-Rebuild the cmake project, rebuild the plugin target, and install.
-The modified line in the CMakeLists.txt line should look like:
+* Add RandomSource.cc and RandomSource.h to the add_library(...) line in CMakeLists.txt.
+* Register our RandomSource with JANA inside QuickTutorial.cc
+* Rebuild the cmake project, rebuild the plugin target, and install.
+* The modified line in the CMakeLists.txt line should look like:
 
 .. code-block:: console
 
