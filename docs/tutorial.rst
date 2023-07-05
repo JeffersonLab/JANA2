@@ -14,6 +14,7 @@ The installation process is described here. We can quickly test that our install
 
 .. code-block:: console
     jana -Pplugins=JTest -b   # (cancel with Ctrl-C)
+
 We can understand this command as follows:
 
 jana is the default command-line tool for launching JANA. If you would rather create your own executable which uses JANA internally, you are free to do so.
