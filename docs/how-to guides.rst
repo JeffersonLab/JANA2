@@ -145,7 +145,6 @@ The following parameters may come in handy when doing performance tuning:
 .. list-table:: 
    :widths: 25 10 25 50
    :header-rows: 1
-
    * - Name
      - Type
      - Default
