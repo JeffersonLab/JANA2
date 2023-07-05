@@ -154,7 +154,7 @@ The following parameters may come in handy when doing performance tuning:
    * - jana:engine
      - int
      - 0
-     - Which parallelism engine to use. 0: | JArrowProcessingController. 1: | JDebugProcessingController.
+     - Which parallelism engine to use. 0: JArrowProcessingController. 1: JDebugProcessingController.
    * - jana:event_pool_size
      - int
      - nthreads
