@@ -75,7 +75,6 @@ The following configuration options are used most commonly:
 .. list-table::
   :widths: 25 25 50
   :header-rows: 1
-
    * - Name
      - Type
      - Descriptioin
