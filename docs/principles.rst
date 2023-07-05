@@ -19,6 +19,7 @@ JANA concepts
 
 Object lifecycles
 ------------------
+JObjects are data containers for specific resuts, e.g. clusters or tracks. They may be plain-old structs or they may optionally inherit from (e.g.) ROOT or NumPy datatypes.
 
 Design philosophy
 -----------------
