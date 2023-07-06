@@ -23,3 +23,4 @@ Contents
    how-to guides
    principles
    reference
+   how-to instructions
