@@ -190,7 +190,7 @@ The following parameters may come in handy when doing performance tuning:
 
 Creating code skeletons
 ------------------------
-JANA provides a script, :py:func`$JANA_HOME/bin/jana-generate.py`, which generates code skeletons for different kinds of JANA components, but also entire project structures. These are intended to compile and run with zero or minimal modification, to provide all of the boilerplate needed, and to include comments explaining what each piece of boilerplate does and what the user is expected to add. The aim is to demonstrate idiomatic usage of the JANA framework and reduce the learning curve as much as possible.
+JANA provides a script, :py:func:`$JANA_HOME/bin/jana-generate.py`, which generates code skeletons for different kinds of JANA components, but also entire project structures. These are intended to compile and run with zero or minimal modification, to provide all of the boilerplate needed, and to include comments explaining what each piece of boilerplate does and what the user is expected to add. The aim is to demonstrate idiomatic usage of the JANA framework and reduce the learning curve as much as possible.
 
 Complete projects
 _________________
@@ -221,7 +221,7 @@ Standalone plugins are useful for getting started quickly. They are also effecti
 
 Executables
 _____________
-Executables are useful when using the provided $JANA_HOME/bin/jana is inconvenient. This may be because the project is sufficiently simple that multiple plugins aren’t even needed, or because the project is sufficiently complex that specialized configuration is needed before loading any other plugins.
+Executables are useful when using the provided :py:func`$JANA_HOME/bin/jana` is inconvenient. This may be because the project is sufficiently simple that multiple plugins aren’t even needed, or because the project is sufficiently complex that specialized configuration is needed before loading any other plugins.
 
 :py:func:`jana-generate.py Executable ExecutableNameInCamelCase`
 
@@ -253,7 +253,7 @@ JFactories
 ___________
 Because JFactories are templates parameterized by the type of JObjects they produce, we need two arguments to generate them. The naming convention is left up to the user, but the following is recommended. If the JObject name is ‘RecoTrack’, and the factory uses Genfit under the hood, the factory name should be ‘RecoTrackFactory_Genfit’.
 
-:py:func`jana-generate.py JFactory JFactoryNameInCamelCase JObjectNameInCamelCase`
+:py:func:`jana-generate.py JFactory JFactoryNameInCamelCase JObjectNameInCamelCase`
 
 Run the Status Control Debugger GUI
 -------------------------------------
