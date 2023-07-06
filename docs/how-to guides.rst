@@ -7,7 +7,7 @@ Table of contents
 1. Download and `install <https://jana.readthedocs.io/en/latest/how-to%20guides.html#building-jana>`_ JANA
 2. `Use the JANA command-line program <https://jana.readthedocs.io/en/latest/how-to%20guides.html#using-the-jana-cli>`_
 3. `Configure JANA <https://jana.readthedocs.io/en/latest/how-to%20guides.html#configuring-jana>`_
-4. Benchmark a JANA program
+4. `Benchmark a JANA program <https://jana.readthedocs.io/en/latest/how-to%20guides.html#how-to-benchmark-jana>`_
 5. `Generate code skeletons <https://jana.readthedocs.io/en/latest/how-to%20guides.html#creating-code-skeletons>`_ for projects, plugins, components, etc
 6. `Run the JANA Status/Control/Debugger GUI <https://jana.readthedocs.io/en/latest/how-to%20guides.html#run-the-status-control-debugger-gui>`_
 7. `Work with factory metadata <https://jana.readthedocs.io/en/latest/how-to%20guides.html#using-factory-metadata>`_ for collecting statistics, etc
@@ -151,6 +151,62 @@ These are the relevant configuration parameters for :py:func`JTest`:
      - string
      - JANA_Test_Results
      - Directory name for benchmark test results
+
+Detect when a group of events has finished
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Sometimes it is necessary to organize events into groups, process the events the usual way, but then notify some component whenever a group has completely finished. The original motivating example for this was EPICS data, which was maintained as a bundle of shared state. Whenever updates arrived, JANA1 would emit a ‘barrier event’ which would stop the data flow until all in-flight events completed, so that preceding events could only read the old state and subsequent events could only read the new state. We now recommend EPICS data be handled differently. Nevertheless this pattern still occasionally comes into play.
+
+One example is a JEventProcessor which writes statistics for the previous run every time the run number changes. This is trickier than it first appears because events may arrive out of order. The JEventProcessor can easily maintain a set of run numbers it has already seen, but it won’t know when it has seen all of the events for a given run number. For that it needs an additional piece of information: the number of events emitted with that run number. Complicating things further, this information needs to be read and modified by both the JEventSource and the JEventProcessor.
+
+Our current recommendation is a :py:func:`JService` called :py:func:`JEventGroupManager`. This is designed to be used as follows:
+
+A JEventSource should keep a pointer to the current JEventGroup, which it obtains through the JEventGroupManager. Groups are given a unique id, which
+
+Whenever the JEventSource emits a new event, it should insert the JEventGroup into the JEvent. The event is now tagged as belonging to that group.
+
+When the JEventSource moves on to the next group, e.g. if the run number changed, it should close out the old group by calling JEventGroup::CloseGroup(). The group needs to be closed before it will report itself as finished, even if there are no events still in-flight.
+
+A JEventProcessor should retrieve the JEventGroup object by calling JEvent::Get. It should report that an event is finished by calling JEventGroup::FinishEvent. Please only call this once; although we could make JEventGroup robust against repeated calls, it would add some overhead.
+
+A JEventSource or JEventProcessor (or technically anything whose lifespan is enclosed by the lifespan of JServices) may then test whether this is the last event in its group by calling JEventGroup::IsGroupFinished(). A blocking version, JEventGroup::WaitUntilGroupFinished(), is also provided. This mechanism allows relatively arbitrary hooks into the event stream.
+
+Stream data to and from JANA
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+1. The first question to ask is: What is the relationship between messages and events? Remember, a message is just a packet of data sent over the wire, whereas an event is JANA’s main unit of independent computation, corresponding to all data associated with one physics interaction. The answer will depend on:
+
+* What systems already exist upstream, and how difficult they are to change
+* The expected size of each event
+* Whether event building is handled upstream or within JANA
+
+If events are large enough (>0.5MB), the cleanest thing to do is to establish a one-to-one relationship between messages and events. JANA provides JStreamingEventSource to make this convenient.
+
+If events are very small, you probably want many events in one message. A corresponding helper class does not exist yet, but would be a straightforward adaptation of the above.
+
+If upstream doesn’t do any event building (e.g. it is reading out ADC samples over a fixed time window) you probably want to have JANA determine physically meaningful event boundaries, maybe even incorporating a software L2 trigger. This is considerably more complicated, and is discussed in `the event building how-to <https://jana.readthedocs.io/en/latest/how-to%20guides.html#>`_ instead.
+
+For the remainder of this how-to we assume that messages and events are one-to-one.
+
+2. The second question to ask is: What transport should be used?
+
+JANA makes it so that the message format and transport can be varied independently. The transport wrapper need only implement the JTransport interface, which is essentially just:
+
+.. code-block:: console 
+       enum class Result {SUCCESS, TRYAGAIN};
+          
+       virtual void initialize();
+       virtual Result send(const JMessage& src_msg);
+       virtual Result receive(JMessage& dest_msg);
+
+The key detail is that both :py:func:`send` and :py:func:`receive` should block until data has finished transferring to/from the :py:func:`JMessage` buffer so that the buffer may be accessed by the caller with no additional synchronization. If there are no pending messages, :py:func:`receive` should return :py:func:`TRYAGAIN` immediately so as not to block the event source. In contrast, :py:func:`send` must block until it succeeds, as otherwise there will be data loss.
+
+An implementation already exists for ZeroMQ. See :py:func:`examples/JExample7/ZmqTransport.h`
+
+The final and most important question to ask is: What is the message format?
+
+Message formats each get their own class, which must inherit from the JMessage and JEventMessage interfaces.
+
 
 Using the JANA CLI
 -------------------
