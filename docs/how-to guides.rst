@@ -23,10 +23,6 @@ Table of contents
 17. Process subevents
 18. Migrate from JANA1 to JANA2
 
-testing
-~~~~~~~~
-hello
-
 
 Using the JANA CLI
 -------------------
