@@ -23,9 +23,53 @@ Table of contents
 17. Process subevents
 18. Migrate from JANA1 to JANA2
 
+Building JANA
+~~~~~~~~~~~~~~
+First, set your :py:func:`$JANA_HOME` environment variable. This is where the executables, libraries, headers, and plugins get installed. (It is also where we will clone the source). CMake will install to :py:func:`$JANA_HOME` if it is set (it will install to :py:func:`${CMAKE_BINARY_DIR}/install` if not). Be aware that although CMake usually defaults :py:func:`CMAKE_INSTALL_PREFIX` to :py:func:`/usr/local`, we have disabled this because we rarely want this in practice, and we don’t want the build system picking up outdated headers and libraries we installed to :py:func:`/usr/local` by accident. If you want to set :py:func:`JANA_HOME=/usr/local`, you are free to do so, but you must do so deliberately.
+
+Next, set your build directory. This is where CMake’s caches, logs, intermediate build artifacts, etc go. The convention is to name it :py:func:`build` and put it in the project’s root directory. If you are using CLion, it will automatically create a :py:func:`cmake-build-debug` directory which works just fine.
+
+Finally, you can cd into your build directory and build and install everything the usual CMake way.
+
+.. code-block:: console 
+
+  export JANA_VERSION=v2.0.5                    # Convenient to set this once for specific release
+  export JANA_HOME=${PWD}/JANA${JANA_VERSION}   # Set full path to install dir
+  
+  git clone https://github.com/JeffersonLab/JANA2 --branch ${JANA_VERSION} ${JANA_HOME}  # Get JANA2
+  
+  mkdir build                                   # Set build dir
+  cd build
+  cmake3 ${JANA_HOME}  # Generate makefiles     # Generate makefiles
+  make -j8 install                              # Build (using 8 threads) and install
+  
+  source ${JANA_HOME}/bin/jana-this.sh          # Set PATH (and other envars)
+  jana -Pplugins=JTest                          # Run JTest plugin to verify successful install
+
+Note: If you want to use a compiler other than the default one on your system, it is not enough to modify your $PATH, as CMake ignores this by design. You either need to set the :py:func:`CXX` environment variable or the :py:func:`CMAKE_CXX_COMPILER` CMake variable.
+
+By default, JANA will look for plugins under :py:func:`$JANA_HOME/plugins`. For your plugins to propagate here, you have to :py:func:`install` them. If you don’t want to do that, you can also set the environment variable :py:func:`$JANA_PLUGIN_PATH` to point to the build directory of your project. JANA will report where exactly it went looking for your plugins and what happened when it tried to load them if you set the JANA config :py:func:`jana:debug_plugin_loading=1`.
+
+.. code-block:: console 
+
+  jana -Pplugins=JTest -Pjana:debug_plugin_loading=1
+
+Using JANA in a CMake project
+______________________________
+To use JANA in a CMake project, simply add :py:func:`$JANA_HOME/lib/cmake/JANA` to your :py:func:`CMAKE_PREFIX_PATH`, or alternatively, set the CMake variable :py:func:`JANA_DIR=$JANA_HOME/lib/cmake/JANA`.
+
+Using JANA in a non-CMake project
+__________________________________
+
+To use JANA in a non-CMake project:
+
+Source :py:func:`$JANA_HOME/bin/jana-this.sh` to set the environment variables needed for JANA’s dependencies
+Use :py:func:`$JANA_HOME/bin/jana-config --cflags` to obtain JANA’s compiler flags
+Use :py:func:`$JANA_HOME/bin/jana_config --libs` to obtain JANA’s linker flags
 
 Using the JANA CLI
 -------------------
+
 JANA is typically run like this:
 
 .. code-block:: console 
