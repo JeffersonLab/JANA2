@@ -22,8 +22,8 @@ Streaming Extensions
 User-facing utilities
 -----------------------
 
-* `JParameter < https://www.jlab.org/JANA/jana_doc_latest/class_j_parameter.html>`_ : Configure the behavior of components at runtime
-* `JLogger < https://www.jlab.org/JANA/jana_doc_latest/struct_j_logger.html>`_ : Publish debugging information to standard out in a structured, convenient, threadsafe way
+* `JParameter <https://www.jlab.org/JANA/jana_doc_latest/class_j_parameter.html>`_ : Configure the behavior of components at runtime
+* `JLogger <https://www.jlab.org/JANA/jana_doc_latest/struct_j_logger.html>`_ : Publish debugging information to standard out in a structured, convenient, threadsafe way
 * `JService <https://www.jlab.org/JANA/jana_doc_latest/struct_j_service.html>`_ : Share external (stateful) services such as calibration constants and magnetic field maps
 * `JCsvWriter <https://www.jlab.org/JANA/jana_doc_latest/class_j_csv_writer.html>`_ : Conveniently debug a JFactory by writing its generated JObjects to CSV
 
