@@ -265,6 +265,6 @@ The :py:func:`JFactoryT<T>` interface abstracts the creation logic for a vector 
 
 A naive solution is to put member variables on the factory and then access them from a :py:func:`JEventProcessor` by obtaining the :py:func:`JFactoryT<T>` via :py:func:`GetFactory<>` and performing a dynamic cast to the underlying factory type. Although this works, it means that that factory can no longer be swapped with an alternate version without modifying the calling code. This degrades the whole project’s ability to take advantage of the plugin architecture and hurts its overall code quality.
 
-Instead, we recommend using the :py:func:`JMetadata` template trait. Each :py:func:`JFactoryT<T>` not only produces a vector of :py:func:`T`, but also a singular :py:func:`JMetadata<T>` struct whose contents can be completely arbitrary, but cannot be redefined for a particular T. All :py:func:`JFactoryT<T>` for some :py:func:`<T>` will use it.
+Instead, we recommend using the :py:func:`JMetadata` template trait. Each :py:func:`JFactoryT<T>` not only produces a vector of :py:func:`T`, but also a singular :py:func:`JMetadata<T>` struct whose contents can be completely arbitrary, but cannot be redefined for a particular T. All :py:func:`JFactoryT<T>` for some :py:func:`T` will use it.
 
 An example project demonstrating usage of JMetadata can be found under :py:func:`examples/MetadataExample`.
