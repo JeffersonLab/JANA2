@@ -5,12 +5,12 @@ This section walks the user through specific steps for solving a real-world prob
 Table of contents
 -----------------
 1. Download and install JANA
-2. Use the JANA command-line program
-3. Configure JANA
+2. `Use the JANA command-line program <https://jana.readthedocs.io/en/latest/how-to%20guides.html#using-the-jana-cli>`_
+3. `Configure JANA <https://jana.readthedocs.io/en/latest/how-to%20guides.html#configuring-jana>`_
 4. Benchmark a JANA program
-5. Generate code skeletons for projects, plugins, components, etc
-6. Run the JANA Status/Control/Debugger GUI
-7. Work with factory metadata for collecting statistics, etc
+5. `Generate code skeletons <https://jana.readthedocs.io/en/latest/how-to%20guides.html#creating-code-skeletons>`_ for projects, plugins, components, etc
+6. `Run the JANA Status/Control/Debugger GUI <https://jana.readthedocs.io/en/latest/how-to%20guides.html#run-the-status-control-debugger-gui>`_
+7. `Work with factory metadata <https://jana.readthedocs.io/en/latest/how-to%20guides.html#using-factory-metadata>`_ for collecting statistics, etc
 8. Create a service which can be shared between different plugins
 9. Handle both real and simulated data
 10. Handle EPICS data
