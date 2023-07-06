@@ -25,3 +25,8 @@ Contents
    reference
    how-to instructions
 
+.. toctree::
+   :maxdepth: 2
+   howtobenchmarkjana
+   how-to instructions
+
