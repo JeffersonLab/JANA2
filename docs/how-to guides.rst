@@ -73,7 +73,7 @@ JANA includes a built-in facililty for benchmarking programs and plugins. It pro
 
 In case you don’t have JANA code ready to benchmark yet, JANA provides a plugin called :py:func:`JJTest` which can simulate different workloads. :py:func:`JTest` runs a dummy algorithm on randomly generated data, using a user-specified event size and number of FLOPs (floating point operations) per event. This gives a rough estimate of your code’s performance. If you don’t know the number of FLOPs per event, you can still compare the performance of JANA on different hardware architectures just by using the default settings.
 
-Here is how you do benchmarking with :py:func:`JTest:`
+Here is how you do benchmarking with :py:func:`JTest`:
 
 .. code-block:: console 
 
@@ -121,7 +121,7 @@ If you already have a JANA project you would like to benchmark, all you have to 
   # Show the scalability curve in a matplotlib window
   ./jana-plot-scaletest.py
 
-These are the relevant configuration parameters for :py:func`JTest`:
+These are the relevant configuration parameters for :py:func:`JTest`:
 
 .. list-table:: Title
    :widths: 25 15 25 50
@@ -161,15 +161,15 @@ One example is a JEventProcessor which writes statistics for the previous run ev
 
 Our current recommendation is a :py:func:`JService` called :py:func:`JEventGroupManager`. This is designed to be used as follows:
 
-A JEventSource should keep a pointer to the current JEventGroup, which it obtains through the JEventGroupManager. Groups are given a unique id, which
+1. A JEventSource should keep a pointer to the current JEventGroup, which it obtains through the JEventGroupManager. Groups are given a unique id, which
 
-Whenever the JEventSource emits a new event, it should insert the JEventGroup into the JEvent. The event is now tagged as belonging to that group.
+2. Whenever the JEventSource emits a new event, it should insert the JEventGroup into the JEvent. The event is now tagged as belonging to that group.
 
-When the JEventSource moves on to the next group, e.g. if the run number changed, it should close out the old group by calling JEventGroup::CloseGroup(). The group needs to be closed before it will report itself as finished, even if there are no events still in-flight.
+3. When the JEventSource moves on to the next group, e.g. if the run number changed, it should close out the old group by calling JEventGroup::CloseGroup(). The group needs to be closed before it will report itself as finished, even if there are no events still in-flight.
 
-A JEventProcessor should retrieve the JEventGroup object by calling JEvent::Get. It should report that an event is finished by calling JEventGroup::FinishEvent. Please only call this once; although we could make JEventGroup robust against repeated calls, it would add some overhead.
+4. A JEventProcessor should retrieve the JEventGroup object by calling JEvent::Get. It should report that an event is finished by calling JEventGroup::FinishEvent. Please only call this once; although we could make JEventGroup robust against repeated calls, it would add some overhead.
 
-A JEventSource or JEventProcessor (or technically anything whose lifespan is enclosed by the lifespan of JServices) may then test whether this is the last event in its group by calling JEventGroup::IsGroupFinished(). A blocking version, JEventGroup::WaitUntilGroupFinished(), is also provided. This mechanism allows relatively arbitrary hooks into the event stream.
+5. A JEventSource or JEventProcessor (or technically anything whose lifespan is enclosed by the lifespan of JServices) may then test whether this is the last event in its group by calling JEventGroup::IsGroupFinished(). A blocking version, JEventGroup::WaitUntilGroupFinished(), is also provided. This mechanism allows relatively arbitrary hooks into the event stream.
 
 Stream data to and from JANA
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
