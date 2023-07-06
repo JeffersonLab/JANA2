@@ -202,7 +202,7 @@ Project plugins
 _________________
 Project plugins are used to modularize some functionality within the context of an existing project. Not only does this help separate concerns, so that many members of a collaboration can work together without interfering with another, but it also helps manage the complexity arising from build dependencies. Some scientific software stubbornly refuses to build on certain platforms, and plugins are a much cleaner solution than the traditional mix of environment variables, build system variables, and preprocessor macros. Project plugins include one JEventProcessor by default.
 
-:py:func`jana-generate.py ProjectPlugin PluginNameInCamelCase`
+:py:func:`jana-generate.py ProjectPlugin PluginNameInCamelCase`
 
 Mini plugins
 ______________
@@ -221,7 +221,7 @@ Standalone plugins are useful for getting started quickly. They are also effecti
 
 Executables
 _____________
-Executables are useful when using the provided :py:func`$JANA_HOME/bin/jana` is inconvenient. This may be because the project is sufficiently simple that multiple plugins aren’t even needed, or because the project is sufficiently complex that specialized configuration is needed before loading any other plugins.
+Executables are useful when using the provided :py:func:`$JANA_HOME/bin/jana` is inconvenient. This may be because the project is sufficiently simple that multiple plugins aren’t even needed, or because the project is sufficiently complex that specialized configuration is needed before loading any other plugins.
 
 :py:func:`jana-generate.py Executable ExecutableNameInCamelCase`
 
