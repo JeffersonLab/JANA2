@@ -6,7 +6,7 @@ This section describes the underlying machinery of JANA. This is essentially a l
 Main API
 -----------
 
-* `JApplication <https://www.jlab.org/JANA/jana_doc_latest/class_j_application.html>`: The main entry point into the program
+* `JApplication <https://www.jlab.org/JANA/jana_doc_latest/class_j_application.html>`_: The main entry point into the program
 * `JObject <https://www.jlab.org/JANA/jana_doc_latest/class_j_object.html`: Data containers for specific results
 * `JEventSource <https://www.jlab.org/JANA/jana_doc_latest/class_j_event_source.html>` : From a file or messaging producer, expose a stream of events. Each event is an aggregate of JObjects
 * `JFactory <https://www.jlab.org/JANA/jana_doc_latest/class_j_factory.html>` : Given an event, calculate a specific result, potentially calling other JFactories recursively to obtain any prereqs
