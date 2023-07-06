@@ -14,11 +14,11 @@ Table of contents
 8. Create a service which can be shared between different plugins
 9. Handle both real and simulated data
 10. Handle EPICS data
-11. Detect when a group of events has finished
+11. `Detect when a group of events has finished <https://jana.readthedocs.io/en/latest/how-to%20guides.html#detect-when-a-group-of-events-has-finished>`_
 12. Use JANA with ROOT
 13. Persist the entire DST using ROOT
 14. Checkpoint the entire DST using ROOT
-15. Stream data to and from JANA
+15. `Stream data to and from JANA <https://jana.readthedocs.io/en/latest/how-to%20guides.html#stream-data-to-and-from-jana>`_
 16. Build and filter events (“L1 and L2 triggers”)
 17. Process subevents
 18. Migrate from JANA1 to JANA2
