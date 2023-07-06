@@ -23,8 +23,6 @@ Table of contents
 17. Process subevents
 18. Migrate from JANA1 to JANA2
 
-.. toctree::
-install
 
 Using the JANA CLI
 -------------------
