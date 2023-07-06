@@ -4,7 +4,7 @@ This section walks the user through specific steps for solving a real-world prob
 
 Table of contents
 -----------------
-1. Download and `install <https://jana.readthedocs.io/en/latest/how-to%20guides.html#building-jana>`_ JANA
+1. `Download <https://github.com/JeffersonLab/JANA2>`_ and `install <https://jana.readthedocs.io/en/latest/how-to%20guides.html#building-jana>`_ JANA
 2. `Use the JANA command-line program <https://jana.readthedocs.io/en/latest/how-to%20guides.html#using-the-jana-cli>`_
 3. `Configure JANA <https://jana.readthedocs.io/en/latest/how-to%20guides.html#configuring-jana>`_
 4. `Benchmark a JANA program <https://jana.readthedocs.io/en/latest/how-to%20guides.html#how-to-benchmark-jana>`_
