@@ -380,18 +380,21 @@ JANA provides a script, ``$JANA_HOME/bin/jana-generate.py``, which generates cod
 
 Complete projects
 _________________
+
 The ‘project’ skeleton lays out the recommended structure for a complex experiment with multiple plugins, a domain model which is shared between plugins, and a custom executable. In general, each experiment is expected to have one project.
 
 ``jana-generate.py project ProjectName``
 
 Project plugins
 _________________
+
 Project plugins are used to modularize some functionality within the context of an existing project. Not only does this help separate concerns, so that many members of a collaboration can work together without interfering with another, but it also helps manage the complexity arising from build dependencies. Some scientific software stubbornly refuses to build on certain platforms, and plugins are a much cleaner solution than the traditional mix of environment variables, build system variables, and preprocessor macros. Project plugins include one JEventProcessor by default.
 
 ``jana-generate.py ProjectPlugin PluginNameInCamelCase``
 
 Mini plugins
 ______________
+
 Mini plugins are project plugins which have been stripped down to a single cc file. They are useful when someone wants to do a quick analysis and doesn’t need or want the additional boilerplate. They include one JEventProcessor with support for ROOT histograms. There are two options:
 
 .. code-block:: console 
@@ -401,6 +404,7 @@ Mini plugins are project plugins which have been stripped down to a single cc fi
 
 Standalone plugins
 ___________________
+
 Standalone plugins are useful for getting started quickly. They are also effective when someone wishes to integrate with an existing project, but want their analyses to live in a separate repository.
 
 ``jana-generate.py StandalonePlugin PluginNameInCamelCase``
@@ -413,14 +417,17 @@ Executables are useful when using the provided ``$JANA_HOME/bin/jana`` is inconv
 
 JEventSources
 _____________
+
 ``jana-generate.py JEventSource NameInCamelCase``
 
 JEventProcessors
 ________________
+
 ``jana-generate.py JEventProcessor NameInCamelCase``
 
 JEventProcessors which output to ROOT
 _____________________________________
+
 This JEventProcessor includes the boilerplate for creating a ROOT histogram in a specific virtual subdirectory of a TFile. If this TFile is shared among different ``JEventProcessors``, it should be encapsulated in a JService. Otherwise, it can be specified as a simple parameter. We recommend naming the subdirectory after the plugin name. E.g. a ``trk_eff`` plugin contains a ``TrackingEfficiencyProcessor`` which writes all of its results to the ``trk_eff`` subdirectory of the TFile.
 
 ``jana-generate.py RootEventProcessor ProcessorNameInCamelCase``
@@ -447,7 +454,7 @@ The JANA Status/Control/Debugger GUI can be a useful tool for probing a running 
 
 Using factory metadata
 ----------------------
-The ``JFactoryT<T>` interface abstracts the creation logic for a vector of n objects of type ``T``. However, often we also care about single pieces of data associated with the same computation. For instance, a track fitting factory might want to return statistics about how many fits succeeded and failed.
+The ``JFactoryT<T>`` interface abstracts the creation logic for a vector of n objects of type ``T``. However, often we also care about single pieces of data associated with the same computation. For instance, a track fitting factory might want to return statistics about how many fits succeeded and failed.
 
 A naive solution is to put member variables on the factory and then access them from a ``JEventProcessor`` by obtaining the ``JFactoryT<T>`` via ``GetFactory<>`` and performing a dynamic cast to the underlying factory type. Although this works, it means that that factory can no longer be swapped with an alternate version without modifying the calling code. This degrades the whole project’s ability to take advantage of the plugin architecture and hurts its overall code quality.
 
