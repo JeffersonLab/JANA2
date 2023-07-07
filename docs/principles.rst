@@ -28,7 +28,7 @@ By default, a JFactory owns all of the JObjects that it created during ``Process
 
 * ``NOT_OBJECT_OWNER``: Objects are cleared from the ``JFactory`` but not deleted. This is useful for “proxy” factories (which reorganize objects that are owned by a different factory) and for ``JEventGroups``. ``JFactory``::Process will be re-run for each ``JEvent``. As long as the objects are owned by a different ``JFactory``, the user doesn’t have to do any cleanup.
 
-The lifetime of a ``JFactory` spans the time that a ``JEvent`` is in-flight. No other guarantees are made: ``JFactories`` might be re-used for multiple ``JEvents`` for the sake of efficiency, but the implementation is free to not do so. In particular, the user must never assume that one ``JFactory`` will see the entire ``JEvent`` stream.
+The lifetime of a ``JFactory`` spans the time that a ``JEvent`` is in-flight. No other guarantees are made: ``JFactories`` might be re-used for multiple ``JEvents`` for the sake of efficiency, but the implementation is free to not do so. In particular, the user must never assume that one ``JFactory`` will see the entire ``JEvent`` stream.
 
 The lifetime of a ``JEventSource`` spans the time that all of its emitted ``JEvents`` are in-flight.
 
