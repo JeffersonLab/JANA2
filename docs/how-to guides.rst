@@ -54,10 +54,12 @@ By default, JANA will look for plugins und=$JANA_HOME/plugins`. For your plugins
 
   jana -Pplugins=JTest -Pjana:debug_plugin_loading=1
 
+
 Using JANA in a CMake project
 ------------------------------
 
 To use JANA in a CMake project, simply add ``$JANA_HOME/lib/cmake/JANA`` to your ``CMAKE_PREFIX_PATH``, or alternatively, set the CMake variable ``JANA_DIR=$JANA_HOME/lib/cmake/JANA``.
+
 
 Using JANA in a non-CMake project
 ----------------------------------
@@ -67,6 +69,7 @@ To use JANA in a non-CMake project:
 1. Source ``$JANA_HOME/bin/jana-this.sh`` to set the environment variables needed for JANA’s dependencies
 2. Use ``$JANA_HOME/bin/jana-config --cflags`` to obtain JANA’s compiler flags
 3. Use ``$JANA_HOME/bin/jana_config --libs`` to obtain JANA’s linker flags
+
 
 How to benchmark JANA
 ~~~~~~~~~~~~~~~~~~~~~~~
@@ -153,6 +156,7 @@ These are the relevant configuration parameters for ``JTest``:
      - JANA_Test_Results
      - Directory name for benchmark test results
 
+
 Detect when a group of events has finished
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -171,6 +175,7 @@ Our current recommendation is a ``JService`` called ``JEventGroupManager``. This
 4. A JEventProcessor should retrieve the JEventGroup object by calling JEvent::Get. It should report that an event is finished by calling JEventGroup::FinishEvent. Please only call this once; although we could make JEventGroup robust against repeated calls, it would add some overhead.
 
 5. A JEventSource or JEventProcessor (or technically anything whose lifespan is enclosed by the lifespan of JServices) may then test whether this is the last event in its group by calling JEventGroup::IsGroupFinished(). A blocking version, JEventGroup::WaitUntilGroupFinished(), is also provided. This mechanism allows relatively arbitrary hooks into the event stream.
+
 
 Stream data to and from JANA
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -252,6 +257,7 @@ The command-line flags are:
    * - -P
      - 
      - Specify a configuration parameter (see below)
+
 
 Configuring JANA
 -----------------
@@ -379,6 +385,7 @@ Creating code skeletons
 ------------------------
 JANA provides a script, ``$JANA_HOME/bin/jana-generate.py``, which generates code skeletons for different kinds of JANA components, but also entire project structures. These are intended to compile and run with zero or minimal modification, to provide all of the boilerplate needed, and to include comments explaining what each piece of boilerplate does and what the user is expected to add. The aim is to demonstrate idiomatic usage of the JANA framework and reduce the learning curve as much as possible.
 
+
 Complete projects
 ~~~~~~~~~~~~~~~~~~
 
@@ -386,12 +393,14 @@ The ‘project’ skeleton lays out the recommended structure for a complex expe
 
 ``jana-generate.py project ProjectName``
 
+
 Project plugins
 ~~~~~~~~~~~~~~~~~
 
 Project plugins are used to modularize some functionality within the context of an existing project. Not only does this help separate concerns, so that many members of a collaboration can work together without interfering with another, but it also helps manage the complexity arising from build dependencies. Some scientific software stubbornly refuses to build on certain platforms, and plugins are a much cleaner solution than the traditional mix of environment variables, build system variables, and preprocessor macros. Project plugins include one JEventProcessor by default.
 
 ``jana-generate.py ProjectPlugin PluginNameInCamelCase``
+
 
 Mini plugins
 ~~~~~~~~~~~~~~~
@@ -403,6 +412,7 @@ Mini plugins are project plugins which have been stripped down to a single cc fi
   jana-generate.py MiniStandalonePlugin PluginNameInCamelCase
   jana-generate.py MiniProjectPlugin PluginNameInCamelCase
 
+
 Standalone plugins
 ~~~~~~~~~~~~~~~~~~~
 
@@ -410,21 +420,25 @@ Standalone plugins are useful for getting started quickly. They are also effecti
 
 ``jana-generate.py StandalonePlugin PluginNameInCamelCase``
 
+
 Executables
 ~~~~~~~~~~~~~
 Executables are useful when using the provided ``$JANA_HOME/bin/jana`` is inconvenient. This may be because the project is sufficiently simple that multiple plugins aren’t even needed, or because the project is sufficiently complex that specialized configuration is needed before loading any other plugins.
 
 ``jana-generate.py Executable ExecutableNameInCamelCase``
 
+
 JEventSources
 ~~~~~~~~~~~~~~~~~
 
 ``jana-generate.py JEventSource NameInCamelCase``
 
+
 JEventProcessors
 ~~~~~~~~~~~~~~~
 
 ``jana-generate.py JEventProcessor NameInCamelCase``
+
 
 JEventProcessors which output to ROOT
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -441,6 +455,7 @@ Note that this script, like the others, does not update your ``CMakeLists.txt``.
   include_directories(${ROOT_INCLUDE_DIRS})
   link_directories(${ROOT_LIBRARY_DIR})
   target_link_libraries(${PLUGIN_NAME} ${ROOT_LIBRARIES})
+
 
 JFactories
 ~~~~~~~~~~~~
