@@ -8,7 +8,7 @@ Before we begin, we need to make sure that
 
 * The JANA library is installed
 * The ``JANA_HOME`` environment variable points to the installation directory
-*  Your :py:func:`$PATH` contains :py:func:`$JANA_HOME/bin`.
+*  Your ``$PATH ` contains ``$JANA_HOME/bin``.
 
 The installation process is described here. We can quickly test that our install was successful by running a builtin benchmarking/scaling test:
 
