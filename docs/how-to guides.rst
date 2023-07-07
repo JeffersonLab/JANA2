@@ -56,13 +56,13 @@ By default, JANA will look for plugins und=$JANA_HOME/plugins`. For your plugins
 
 
 Using JANA in a CMake project
-------------------------------
+_______________________________
 
 To use JANA in a CMake project, simply add ``$JANA_HOME/lib/cmake/JANA`` to your ``CMAKE_PREFIX_PATH``, or alternatively, set the CMake variable ``JANA_DIR=$JANA_HOME/lib/cmake/JANA``.
 
 
 Using JANA in a non-CMake project
-----------------------------------
+___________________________________
 
 To use JANA in a non-CMake project:
 
