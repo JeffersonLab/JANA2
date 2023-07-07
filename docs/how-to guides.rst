@@ -387,7 +387,7 @@ JANA provides a script, ``$JANA_HOME/bin/jana-generate.py``, which generates cod
 
 
 Complete projects
-_________________
+~~~~~~~~~~~~~~~~~~~
 
 The ‘project’ skeleton lays out the recommended structure for a complex experiment with multiple plugins, a domain model which is shared between plugins, and a custom executable. In general, each experiment is expected to have one project.
 
@@ -395,7 +395,7 @@ The ‘project’ skeleton lays out the recommended structure for a complex expe
 
 
 Project plugins
-_________________
+~~~~~~~~~~~~~~~~~~~
 
 Project plugins are used to modularize some functionality within the context of an existing project. Not only does this help separate concerns, so that many members of a collaboration can work together without interfering with another, but it also helps manage the complexity arising from build dependencies. Some scientific software stubbornly refuses to build on certain platforms, and plugins are a much cleaner solution than the traditional mix of environment variables, build system variables, and preprocessor macros. Project plugins include one JEventProcessor by default.
 
@@ -403,7 +403,7 @@ Project plugins are used to modularize some functionality within the context of 
 
 
 Mini plugins
-_________________
+~~~~~~~~~~~~~~~~~~~
 
 Mini plugins are project plugins which have been stripped down to a single cc file. They are useful when someone wants to do a quick analysis and doesn’t need or want the additional boilerplate. They include one JEventProcessor with support for ROOT histograms. There are two options:
 
@@ -414,7 +414,7 @@ Mini plugins are project plugins which have been stripped down to a single cc fi
 
 
 Standalone plugins
-_________________
+~~~~~~~~~~~~~~~~~~~
 
 Standalone plugins are useful for getting started quickly. They are also effective when someone wishes to integrate with an existing project, but want their analyses to live in a separate repository.
 
@@ -422,20 +422,20 @@ Standalone plugins are useful for getting started quickly. They are also effecti
 
 
 Executables
-_____________
+~~~~~~~~~~~~~~~~~~~
 Executables are useful when using the provided ``$JANA_HOME/bin/jana`` is inconvenient. This may be because the project is sufficiently simple that multiple plugins aren’t even needed, or because the project is sufficiently complex that specialized configuration is needed before loading any other plugins.
 
 ``jana-generate.py Executable ExecutableNameInCamelCase``
 
 
 JEventSources
-_______________
+~~~~~~~~~~~~~~~~~~~
 
 ``jana-generate.py JEventSource NameInCamelCase``
 
 
 JEventProcessors
-_______________
+~~~~~~~~~~~~~~~~~~~
 
 ``jana-generate.py JEventProcessor NameInCamelCase``
 
