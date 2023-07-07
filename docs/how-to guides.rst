@@ -421,12 +421,12 @@ ________________
 
 JEventProcessors which output to ROOT
 _____________________________________
-This JEventProcessor includes the boilerplate for creating a ROOT histogram in a specific virtual subdirectory of a TFile. If this TFile is shared among different ``JEventProcessors``, it should be encapsulated in a JService. Otherwise, it can be specified as a simple parameter. We recommend naming the subdirectory after the plugin name. E.g. a :py:func:`trk_eff`` plugin contains a :py:func:`TrackingEfficiencyProcessor`` which writes all of its results to the :py:func:`trk_eff`` subdirectory of the TFile.
+This JEventProcessor includes the boilerplate for creating a ROOT histogram in a specific virtual subdirectory of a TFile. If this TFile is shared among different ``JEventProcessors``, it should be encapsulated in a JService. Otherwise, it can be specified as a simple parameter. We recommend naming the subdirectory after the plugin name. E.g. a ``trk_eff`` plugin contains a ``TrackingEfficiencyProcessor`` which writes all of its results to the ``trk_eff`` subdirectory of the TFile.
 
-:py:func:`jana-generate.py RootEventProcessor ProcessorNameInCamelCase``
-:py:func:`directory_name_in_snake_case``
+``jana-generate.py RootEventProcessor ProcessorNameInCamelCase``
+``directory_name_in_snake_case``
 
-Note that this script, like the others, does not update your :py:func:`CMakeLists.txt``. Not only will you need to add the file to :py:func:`PluginName_PLUGIN_SOURCES``, but you may need to add ROOT as a dependency if your project hasn’t yet:
+Note that this script, like the others, does not update your ``CMakeLists.txt``. Not only will you need to add the file to ``PluginName_PLUGIN_SOURCES``, but you may need to add ROOT as a dependency if your project hasn’t yet:
 
 .. code-block:: console
 
@@ -439,7 +439,7 @@ JFactories
 ___________
 Because JFactories are templates parameterized by the type of JObjects they produce, we need two arguments to generate them. The naming convention is left up to the user, but the following is recommended. If the JObject name is ‘RecoTrack’, and the factory uses Genfit under the hood, the factory name should be ‘RecoTrackFactory_Genfit’.
 
-:py:func:`jana-generate.py JFactory JFactoryNameInCamelCase JObjectNameInCamelCase``
+``jana-generate.py JFactory JFactoryNameInCamelCase JObjectNameInCamelCase``
 
 Run the Status Control Debugger GUI
 -------------------------------------
@@ -447,10 +447,10 @@ The JANA Status/Control/Debugger GUI can be a useful tool for probing a running 
 
 Using factory metadata
 ----------------------
-The :py:func:`JFactoryT<T>` interface abstracts the creation logic for a vector of n objects of type :py:func:`T``. However, often we also care about single pieces of data associated with the same computation. For instance, a track fitting factory might want to return statistics about how many fits succeeded and failed.
+The ``JFactoryT<T>` interface abstracts the creation logic for a vector of n objects of type ``T``. However, often we also care about single pieces of data associated with the same computation. For instance, a track fitting factory might want to return statistics about how many fits succeeded and failed.
 
-A naive solution is to put member variables on the factory and then access them from a :py:func:`JEventProcessor`` by obtaining the :py:func:`JFactoryT<T>`` via :py:func:`GetFactory<>`` and performing a dynamic cast to the underlying factory type. Although this works, it means that that factory can no longer be swapped with an alternate version without modifying the calling code. This degrades the whole project’s ability to take advantage of the plugin architecture and hurts its overall code quality.
+A naive solution is to put member variables on the factory and then access them from a ``JEventProcessor`` by obtaining the ``JFactoryT<T>`` via ``GetFactory<>`` and performing a dynamic cast to the underlying factory type. Although this works, it means that that factory can no longer be swapped with an alternate version without modifying the calling code. This degrades the whole project’s ability to take advantage of the plugin architecture and hurts its overall code quality.
 
-Instead, we recommend using the :py:func:`JMetadata`` template trait. Each :py:func:`JFactoryT<T>`` not only produces a vector of :py:func:`T``, but also a singular :py:func:`JMetadata<T>`` struct whose contents can be completely arbitrary, but cannot be redefined for a particular T. All :py:func:`JFactoryT<T>`` for some :py:func:`T`` will use it.
+Instead, we recommend using the ``JMetadata`` template trait. Each ``JFactoryT<T>`` not only produces a vector of ``T``, but also a singular ``JMetadata<T>`` struct whose contents can be completely arbitrary, but cannot be redefined for a particular T. All ``JFactoryT<T>`` for some ``T`` will use it.
 
-An example project demonstrating usage of JMetadata can be found under :py:func:`examples/MetadataExample``.
+An example project demonstrating usage of JMetadata can be found under ``examples/MetadataExample``.
