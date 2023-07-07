@@ -25,9 +25,9 @@ Table of contents
 
 Building JANA
 ~~~~~~~~~~~~~~
-First, set your :py:func:`$JANA_HOME` environment variable. This is where the executables, libraries, headers, and plugins get installed. (It is also where we will clone the source). CMake will install to :py:func:`$JANA_HOME` if it is set (it will install to :py:func:`${CMAKE_BINARY_DIR}/install` if not). Be aware that although CMake usually defaults :py:func:`CMAKE_INSTALL_PREFIX` to :py:func:`/usr/local`, we have disabled this because we rarely want this in practice, and we don’t want the build system picking up outdated headers and libraries we installed to :py:func:`/usr/local` by accident. If you want to set :py:func:`JANA_HOME=/usr/local`, you are free to do so, but you must do so deliberately.
+First, set your ``$JANA_HOME`` environment variable. This is where the executables, libraries, headers, and plugins get installed. (It is also where we will clone the source). CMake will install to ``$JANA_HOME`` if it is set (it will install to ``${CMAKE_BINARY_DIR}/install`` if not). Be aware that although CMake usually defaults ``CMAKE_INSTALL_PREFIX`` to ``/usr/local``, we have disabled this because we rarely want this in practice, and we don’t want the build system picking up outdated headers and libraries we installed to ``/usr/local`` by accident. If you want to set ``JANA_HOME=/usr/local``, you are free to do so, but you must do so deliberately.
 
-Next, set your build directory. This is where CMake’s caches, logs, intermediate build artifacts, etc go. The convention is to name it :py:func:`build` and put it in the project’s root directory. If you are using CLion, it will automatically create a :py:func:`cmake-build-debug` directory which works just fine.
+Next, set your build directory. This is where CMake’s caches, logs, intermediate build artifacts, etc go. The convention is to name it ``build`` and put it in the project’s root directory. If you are using CLion, it will automatically create a ``cmake-build-debug`` directory which works just fine.
 
 Finally, you can cd into your build directory and build and install everything the usual CMake way.
 
@@ -46,9 +46,9 @@ Finally, you can cd into your build directory and build and install everything t
   source ${JANA_HOME}/bin/jana-this.sh          # Set PATH (and other envars)
   jana -Pplugins=JTest                          # Run JTest plugin to verify successful install
 
-Note: If you want to use a compiler other than the default one on your system, it is not enough to modify your $PATH, as CMake ignores this by design. You either need to set the :py:func:`CXX` environment variable or the :py:func:`CMAKE_CXX_COMPILER` CMake variable.
+Note: If you want to use a compiler other than the default one on your system, it is not enough to modify your $PATH, as CMake ignores this by design. You either need to set the ``CXX`` environment variable or the ``CMAKE_CXX_COMPILER`` CMake variable.
 
-By default, JANA will look for plugins under :py:func:`$JANA_HOME/plugins`. For your plugins to propagate here, you have to :py:func:`install` them. If you don’t want to do that, you can also set the environment variable :py:func:`$JANA_PLUGIN_PATH` to point to the build directory of your project. JANA will report where exactly it went looking for your plugins and what happened when it tried to load them if you set the JANA config :py:func:`jana:debug_plugin_loading=1`.
+By default, JANA will look for plugins und=$JANA_HOME/plugins`. For your plugins to propagate here, you have to ``install`` them. If you don’t want to do that, you can also set the environment variable ``$JANA_PLUGIN_PATH`` to point to the build directory of your project. JANA will report where exactly it went looking for your plugins and what happened when it tried to load them if you set the JANA config ``jana:debug_plugin_loading=1``.
 
 .. code-block:: console 
 
@@ -56,24 +56,24 @@ By default, JANA will look for plugins under :py:func:`$JANA_HOME/plugins`. For 
 
 Using JANA in a CMake project
 ______________________________
-To use JANA in a CMake project, simply add :py:func:`$JANA_HOME/lib/cmake/JANA` to your :py:func:`CMAKE_PREFIX_PATH`, or alternatively, set the CMake variable :py:func:`JANA_DIR=$JANA_HOME/lib/cmake/JANA`.
+To use JANA in a CMake project, simply add ``$JANA_HOME/lib/cmake/JANA`` to your ``CMAKE_PREFIX_PATH``, or alternatively, set the CMake variable ``JANA_DIR=$JANA_HOME/lib/cmake/JANA``.
 
 Using JANA in a non-CMake project
 __________________________________
 
 To use JANA in a non-CMake project:
 
-Source :py:func:`$JANA_HOME/bin/jana-this.sh` to set the environment variables needed for JANA’s dependencies
-Use :py:func:`$JANA_HOME/bin/jana-config --cflags` to obtain JANA’s compiler flags
-Use :py:func:`$JANA_HOME/bin/jana_config --libs` to obtain JANA’s linker flags
+Source ``$JANA_HOME/bin/jana-this.sh`` to set the environment variables needed for JANA’s dependencies
+Use ``$JANA_HOME/bin/jana-config --cflags`` to obtain JANA’s compiler flags
+Use ``$JANA_HOME/bin/jana_config --libs`` to obtain JANA’s linker flags
 
 How to benchmark JANA
 ~~~~~~~~~~~~~~~~~~~~~~~
 JANA includes a built-in facililty for benchmarking programs and plugins. It produces a scalability curve by repeatedly pausing execution, adding additional worker threads, resuming execution, and measuring the resulting throughput over fixed time intervals. There is an additional option to measure the scalability curves for a matrix of different affinity and locality strategies. This is useful when your hardware architecture has nonuniform memory access.
 
-In case you don’t have JANA code ready to benchmark yet, JANA provides a plugin called :py:func:`JJTest` which can simulate different workloads. :py:func:`JTest` runs a dummy algorithm on randomly generated data, using a user-specified event size and number of FLOPs (floating point operations) per event. This gives a rough estimate of your code’s performance. If you don’t know the number of FLOPs per event, you can still compare the performance of JANA on different hardware architectures just by using the default settings.
+In case you don’t have JANA code ready to benchmark yet, JANA provides a plugin called ``JJTest`` which can simulate different workloads. ``JTest`` runs a dummy algorithm on randomly generated data, using a user-specified event size and number of FLOPs (floating point operations) per event. This gives a rough estimate of your code’s performance. If you don’t know the number of FLOPs per event, you can still compare the performance of JANA on different hardware architectures just by using the default settings.
 
-Here is how you do benchmarking with :py:func:`JTest`:
+Here is how you do benchmarking with ``JTest``:
 
 .. code-block:: console 
 
@@ -121,7 +121,7 @@ If you already have a JANA project you would like to benchmark, all you have to 
   # Show the scalability curve in a matplotlib window
   ./jana-plot-scaletest.py
 
-These are the relevant configuration parameters for :py:func:`JTest`:
+These are the relevant configuration parameters for ``JTest``:
 
 .. list-table:: Title
    :widths: 25 15 25 50
@@ -159,7 +159,7 @@ Sometimes it is necessary to organize events into groups, process the events the
 
 One example is a JEventProcessor which writes statistics for the previous run every time the run number changes. This is trickier than it first appears because events may arrive out of order. The JEventProcessor can easily maintain a set of run numbers it has already seen, but it won’t know when it has seen all of the events for a given run number. For that it needs an additional piece of information: the number of events emitted with that run number. Complicating things further, this information needs to be read and modified by both the JEventSource and the JEventProcessor.
 
-Our current recommendation is a :py:func:`JService` called :py:func:`JEventGroupManager`. This is designed to be used as follows:
+Our current recommendation is a ``JService`` called ``JEventGroupManager``. This is designed to be used as follows:
 
 1. A JEventSource should keep a pointer to the current JEventGroup, which it obtains through the JEventGroupManager. Groups are given a unique id, which
 
@@ -199,9 +199,9 @@ JANA makes it so that the message format and transport can be varied independent
        virtual Result send(const JMessage& src_msg);
        virtual Result receive(JMessage& dest_msg);
 
-The key detail is that both :py:func:`send` and :py:func:`receive` should block until data has finished transferring to/from the :py:func:`JMessage` buffer so that the buffer may be accessed by the caller with no additional synchronization. If there are no pending messages, :py:func:`receive` should return :py:func:`TRYAGAIN` immediately so as not to block the event source. In contrast, :py:func:`send` must block until it succeeds, as otherwise there will be data loss.
+The key detail is that both ``send`` and ``receive`` should block until data has finished transferring to/from the ``JMessage`` buffer so that the buffer may be accessed by the caller with no additional synchronization. If there are no pending messages, ``receive`` should return ``TRYAGAIN`` immediately so as not to block the event source. In contrast, ``send`` must block until it succeeds, as otherwise there will be data loss.
 
-An implementation already exists for ZeroMQ. See :py:func:`examples/JExample7/ZmqTransport.h`
+An implementation already exists for ZeroMQ. See ``examples/JExample7/ZmqTransport.h``
 
 The final and most important question to ask is: What is the message format?
 
@@ -217,7 +217,7 @@ JANA is typically run like this:
 
   $JANA_HOME/bin/jana -Pplugins=JTest -Pnthreads=8 ~/data/inputfile.txt
 
-Note that the JANA executable won’t do anything until you provide plugins. A simple plugin is provided called JTest, which verifies that everything is working and optionally does a quick performance benchmark. Additional simple plugins are provided in py:func:`src/examples`. Instructions on how to write your own are given in the Tutorial section.
+Note that the JANA executable won’t do anything until you provide plugins. A simple plugin is provided called JTest, which verifies that everything is working and optionally does a quick performance benchmark. Additional simple plugins are provided in ``src/examples``. Instructions on how to write your own are given in the Tutorial section.
 
 Along with specifying plugins, you need to specify the input files containing the events you wish to process. Note that JTest ignores these and crunches randomly generated data instead.
 
@@ -270,10 +270,10 @@ The following configuration options are used most commonly:
      - Size of thread team (Defaults to the number of cores on your machine)
    * - plugins
      - string
-     - Comma-separated list of plugin filenames. JANA will look for these on the :py:func:`$JANA_PLUGIN_PATH`
+     - Comma-separated list of plugin filenames. JANA will look for these on the ``$JANA_PLUGIN_PATH``
    * - plugins_to_ignore
      - string
-     - This removes plugins which had been specified in :py:func:`plugins`.
+     - This removes plugins which had been specified in ``plugins``.
    * - event_source_type
      - string
      - Manually override JANA’s decision about which JEventSource to use
