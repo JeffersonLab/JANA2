@@ -416,9 +416,9 @@ The heart of a JFactory is the function ``Process``, where we take an event, ext
 
 For our tutorial, we don’t need to do anything inside ``Init`` or ``ChangeRun``. Usually, these are useful for collecting statistics, or when the algorithm depends on calibration constants which we want to cache. We are free to access member variables without locking a mutex because a JFactory is assigned to at most one thread at a time.
 
-Although JFactories are relatively simple, there are several important details. First, because each instance is assigned at most one thread, it won’t see the entire event stream. Second, there will be at least as many instances of each JFactory in existence as threads, and possibly more depending on how JANA is configured, so ``Initialize`` and :py:func:`ChangeRun` should be fast. Thirdly, although it is tempting to use static variables to share state between different instances of the same JFactory, this practice is discouraged. That state should live in a JService instead.
+Although JFactories are relatively simple, there are several important details. First, because each instance is assigned at most one thread, it won’t see the entire event stream. Second, there will be at least as many instances of each JFactory in existence as threads, and possibly more depending on how JANA is configured, so ``Initialize`` and ``ChangeRun`` should be fast. Thirdly, although it is tempting to use static variables to share state between different instances of the same JFactory, this practice is discouraged. That state should live in a JService instead.
 
-Next, we register our :py:func:`SimpleClusterFactory` with our JApplication. Because JANA will need arbitrarily many instances of these, we pass in a :py:func:`JFactoryGenerator` which knows how to create a :py:func:`SimpleClusterFactory`. As long as our JFactory has a zero-argument constructor, this is easy:
+Next, we register our ``SimpleClusterFactory`` with our JApplication. Because JANA will need arbitrarily many instances of these, we pass in a ``JFactoryGenerator`` which knows how to create a ``SimpleClusterFactory``. As long as our JFactory has a zero-argument constructor, this is easy:
 
 .. code-block:: console
 
@@ -438,18 +438,18 @@ Next, we register our :py:func:`SimpleClusterFactory` with our JApplication. Bec
     }
     }
 
-We are now free to modify :py:func:`QuickTutorialProcessor` (or create a new :py:func:`JEventProcessor`) which histograms clusters instead of hits. Crucially, :py:func:`JEvent::Get` doesn’t care whether the :py:func:`JObjects` were Inserted by an event source or whether they were :py:func:`Set` by a :py:func:`JFactory`. The interface for retrieving them is the same either way.
+We are now free to modify ``QuickTutorialProcessor`` (or create a new ``JEventProcessor``) which histograms clusters instead of hits. Crucially, ``JEvent::Get`` doesn’t care whether the ``JObjects`` were Inserted by an event source or whether they were ``Set`` by a ``JFactory``. The interface for retrieving them is the same either way.
 
 Reading files using a JEventSource
 -----------------------------------
 
-Earlier we created a :py:func:`JEventSource` which we added directly to the :py:func:`JApplication`. This works well for simple cases but becomes cumbersome due to the amount of configuration needed: First we’d have to tell the plugin which :py:func:`JEventSource` to register, then tell that source which files to open, and we’d have to do this for each :py:func:`JEventSource` separately. Instead, JANA gives us a cleaner option tailored to our workflow: we specify a set of input URIs (a.k.a. file paths or sockets) and let JANA decide which JEventSource to instantiate for each. Thus we prefer to call JANA like this:
+Earlier we created a ``JEventSource`` which we added directly to the ``JApplication``. This works well for simple cases but becomes cumbersome due to the amount of configuration needed: First we’d have to tell the plugin which ``JEventSource`` to register, then tell that source which files to open, and we’d have to do this for each ``JEventSource`` separately. Instead, JANA gives us a cleaner option tailored to our workflow: we specify a set of input URIs (a.k.a. file paths or sockets) and let JANA decide which JEventSource to instantiate for each. Thus we prefer to call JANA like this:
 
 .. code-block:: console
 
     jana -PQuickTutorial,CsvSourcePlugin,RootSourcePlugin path/to/file1.csv path/to/file2.root
 
-In order to make this happen, we need to define a :py:func:`JEventSourceGenerator`. This is conceptually similar to the :py:func:`JFactoryGenerator` we mentioned earlier, with one important addition: a method which reports back the likelihood that the underlying event source can make sense of that resource. Let’s remove the line where we added the :py:func:`RandomSource` instance directly to the JApplication, and replace it with a corresponding :py:func:`JEventSourceGenerator`:
+In order to make this happen, we need to define a ``JEventSourceGenerator``. This is conceptually similar to the ``JFactoryGenerator`` we mentioned earlier, with one important addition: a method which reports back the likelihood that the underlying event source can make sense of that resource. Let’s remove the line where we added the ``RandomSource`` instance directly to the JApplication, and replace it with a corresponding ``JEventSourceGenerator``:
 
 .. code-block:: console
 
@@ -476,7 +476,7 @@ In order to make this happen, we need to define a :py:func:`JEventSourceGenerato
     }
     }
 
-By default, :py:func:`JEventSourceGeneratorT` will report a confidence of 0.1 that it can open any resource it is given. Let’s make this more realistic: suppose we want to use this event source if and only if the resource name is “random”. In :py:func:`RandomSource.h`, observe that :py:func:`jana-generate.py` already declared for us:
+By default, ``JEventSourceGeneratorT`` will report a confidence of 0.1 that it can open any resource it is given. Let’s make this more realistic: suppose we want to use this event source if and only if the resource name is “random”. In ``RandomSource.h``, observe that ``jana-generate.py`` already declared for us:
 
 .. code-block:: console
 
@@ -484,7 +484,7 @@ By default, :py:func:`JEventSourceGeneratorT` will report a confidence of 0.1 th
     double JEventSourceGeneratorT<RandomSource>::CheckOpenable(std::string);
 
 
-We fill out the definition in :py:func:`RandomSource.cc`:
+We fill out the definition in ``RandomSource.cc``:
 
 .. code-block:: console
 
@@ -493,23 +493,23 @@ We fill out the definition in :py:func:`RandomSource.cc`:
         return (resource_name == "random") ? 1.0 : 0.0;
     }
 
-Note that :py:func:`JEventSourceGenerator` puts some constraints on our :py:func:`JEventSource`. Specifically, we need to note that:
+Note that ``JEventSourceGenerator`` puts some constraints on our ``JEventSource``. Specifically, we need to note that:
 
-* Our :py:func:`JEventSource` needs a two-argument constructor which accepts a string containing the resource name, and a :py:func:`JApplication pointer`.
+* Our ``JEventSource`` needs a two-argument constructor which accepts a string containing the resource name, and a ``JApplication pointer``.
 
-* Our :py:func:`JEventSource` needs a static method :py:func:`GetDescription`, to help JANA report to the user which sources are available and which ended up being chosen.
+* Our ``JEventSource`` needs a static method ``GetDescription``, to help JANA report to the user which sources are available and which ended up being chosen.
 
-* In case we need to override JANA’s preferred JEventSource for some resource, we can specify the typename of the event source we’d rather use instead via the configuration parameter :py:func:`event_source_type`.
+* In case we need to override JANA’s preferred JEventSource for some resource, we can specify the typename of the event source we’d rather use instead via the configuration parameter ``event_source_type``.
 
-* When we implement Open for an event source that reads a file, we get the filename from :py:func:`JEventSource::GetResourceName()`.
+* When we implement Open for an event source that reads a file, we get the filename from ``JEventSource::GetResourceName()``.
 
 Exercises for the reader
 -------------------------
 
-* Create a new :py:func:`JEventProcessor` which generates a heatmap of :py:func:`Clusters` instead of :py:func:`Hits`.
+* Create a new ``JEventProcessor`` which generates a heatmap of ``Clusters`` instead of ``Hits``.
 
-* Create a :py:func:`BetterClusterFactory` which handles multiple clusters per event. Bonus points if it is a lightweight wrapper around an industrial-strength clustering algorithm. Inside :py:func:`InitPlugin`, use a configuration parameter to decide which :py:func:`JFactoryT<Cluster>` gets registered with the :py:func:`JApplication`.
+* Create a ``BetterClusterFactory`` which handles multiple clusters per event. Bonus points if it is a lightweight wrapper around an industrial-strength clustering algorithm. Inside ``InitPlugin``, use a configuration parameter to decide which ``JFactoryT<Cluster>`` gets registered with the ``JApplication``.
 
-* Use tags to register both :py:func:`ClusterFactories` with the :py:func:`JApplication`. Create a :py:func:`JEventProcessor` which asks for the results from both algorithms and compares their results.
+* Use tags to register both ``ClusterFactories`` with the ``JApplication``. Create a ``JEventProcessor`` which asks for the results from both algorithms and compares their results.
 
-* Create a :py:func:`CsvFileSource` which reads the CSV file generated from the :py:func:`JCsvWriter<Hit>`. For CheckOpenable, read the first line of the file and check whether the column headers match what we’d expect for a table of :py:func:`Hits`. Verify that we get the same histograms whether we use the:py:func:`RandomSource` or the:py:func:`CsvFileSource`.
+* Create a ``CsvFileSource`` which reads the CSV file generated from the ``JCsvWriter<Hit>``. For CheckOpenable, read the first line of the file and check whether the column headers match what we’d expect for a table of ``Hits``. Verify that we get the same histograms whether we use the``RandomSource`` or the``CsvFileSource``.
