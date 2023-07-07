@@ -290,7 +290,7 @@ The following configuration options are used most commonly:
      - string
      - 	Named pipe for retrieving status information remotely
 
-JANA has its own logger. You can control the verbosity of different components using the parameters :py:func:`log:off`, :py:func:`log:fatal`, :py:func:`log:error`, :py:func:`log:warn`, :py:func:`log:info`, :py:func:`log:debug`, and :py:func:`log:trace`. The following example shows how you would increase the verbosity of JPluginLoader and JComponentManager:
+JANA has its own logger. You can control the verbosity of different components using the parameters ``log:off``, ``log:fatal``, ``log:error``, ``log:warn``, ``log:info``, ``log:debug``, and ``log:trace``. The following example shows how you would increase the verbosity of JPluginLoader and JComponentManager:
 
 .. code-block:: console 
 
@@ -376,19 +376,19 @@ The following parameters may come in handy when doing performance tuning:
 
 Creating code skeletons
 ------------------------
-JANA provides a script, :py:func:`$JANA_HOME/bin/jana-generate.py`, which generates code skeletons for different kinds of JANA components, but also entire project structures. These are intended to compile and run with zero or minimal modification, to provide all of the boilerplate needed, and to include comments explaining what each piece of boilerplate does and what the user is expected to add. The aim is to demonstrate idiomatic usage of the JANA framework and reduce the learning curve as much as possible.
+JANA provides a script, ``$JANA_HOME/bin/jana-generate.py``, which generates code skeletons for different kinds of JANA components, but also entire project structures. These are intended to compile and run with zero or minimal modification, to provide all of the boilerplate needed, and to include comments explaining what each piece of boilerplate does and what the user is expected to add. The aim is to demonstrate idiomatic usage of the JANA framework and reduce the learning curve as much as possible.
 
 Complete projects
 _________________
 The ‘project’ skeleton lays out the recommended structure for a complex experiment with multiple plugins, a domain model which is shared between plugins, and a custom executable. In general, each experiment is expected to have one project.
 
-:py:func:`jana-generate.py project ProjectName`
+``jana-generate.py project ProjectName``
 
 Project plugins
 _________________
 Project plugins are used to modularize some functionality within the context of an existing project. Not only does this help separate concerns, so that many members of a collaboration can work together without interfering with another, but it also helps manage the complexity arising from build dependencies. Some scientific software stubbornly refuses to build on certain platforms, and plugins are a much cleaner solution than the traditional mix of environment variables, build system variables, and preprocessor macros. Project plugins include one JEventProcessor by default.
 
-:py:func:`jana-generate.py ProjectPlugin PluginNameInCamelCase`
+``jana-generate.py ProjectPlugin PluginNameInCamelCase``
 
 Mini plugins
 ______________
@@ -403,30 +403,30 @@ Standalone plugins
 ___________________
 Standalone plugins are useful for getting started quickly. They are also effective when someone wishes to integrate with an existing project, but want their analyses to live in a separate repository.
 
-:py:func:`jana-generate.py StandalonePlugin PluginNameInCamelCase`
+``jana-generate.py StandalonePlugin PluginNameInCamelCase``
 
 Executables
 _____________
-Executables are useful when using the provided :py:func:`$JANA_HOME/bin/jana` is inconvenient. This may be because the project is sufficiently simple that multiple plugins aren’t even needed, or because the project is sufficiently complex that specialized configuration is needed before loading any other plugins.
+Executables are useful when using the provided ``$JANA_HOME/bin/jana`` is inconvenient. This may be because the project is sufficiently simple that multiple plugins aren’t even needed, or because the project is sufficiently complex that specialized configuration is needed before loading any other plugins.
 
-:py:func:`jana-generate.py Executable ExecutableNameInCamelCase`
+``jana-generate.py Executable ExecutableNameInCamelCase``
 
 JEventSources
 _____________
-:py:func:`jana-generate.py JEventSource NameInCamelCase`
+``jana-generate.py JEventSource NameInCamelCase``
 
 JEventProcessors
 ________________
-:py:func:`jana-generate.py JEventProcessor NameInCamelCase`
+``jana-generate.py JEventProcessor NameInCamelCase``
 
 JEventProcessors which output to ROOT
 _____________________________________
-This JEventProcessor includes the boilerplate for creating a ROOT histogram in a specific virtual subdirectory of a TFile. If this TFile is shared among different :py:func:`JEventProcessors`, it should be encapsulated in a JService. Otherwise, it can be specified as a simple parameter. We recommend naming the subdirectory after the plugin name. E.g. a :py:func:`trk_eff` plugin contains a :py:func:`TrackingEfficiencyProcessor` which writes all of its results to the :py:func:`trk_eff` subdirectory of the TFile.
+This JEventProcessor includes the boilerplate for creating a ROOT histogram in a specific virtual subdirectory of a TFile. If this TFile is shared among different ``JEventProcessors``, it should be encapsulated in a JService. Otherwise, it can be specified as a simple parameter. We recommend naming the subdirectory after the plugin name. E.g. a :py:func:`trk_eff`` plugin contains a :py:func:`TrackingEfficiencyProcessor`` which writes all of its results to the :py:func:`trk_eff`` subdirectory of the TFile.
 
-:py:func:`jana-generate.py RootEventProcessor ProcessorNameInCamelCase`
-:py:func:`directory_name_in_snake_case`
+:py:func:`jana-generate.py RootEventProcessor ProcessorNameInCamelCase``
+:py:func:`directory_name_in_snake_case``
 
-Note that this script, like the others, does not update your :py:func:`CMakeLists.txt`. Not only will you need to add the file to :py:func:`PluginName_PLUGIN_SOURCES`, but you may need to add ROOT as a dependency if your project hasn’t yet:
+Note that this script, like the others, does not update your :py:func:`CMakeLists.txt``. Not only will you need to add the file to :py:func:`PluginName_PLUGIN_SOURCES``, but you may need to add ROOT as a dependency if your project hasn’t yet:
 
 .. code-block:: console
 
@@ -439,7 +439,7 @@ JFactories
 ___________
 Because JFactories are templates parameterized by the type of JObjects they produce, we need two arguments to generate them. The naming convention is left up to the user, but the following is recommended. If the JObject name is ‘RecoTrack’, and the factory uses Genfit under the hood, the factory name should be ‘RecoTrackFactory_Genfit’.
 
-:py:func:`jana-generate.py JFactory JFactoryNameInCamelCase JObjectNameInCamelCase`
+:py:func:`jana-generate.py JFactory JFactoryNameInCamelCase JObjectNameInCamelCase``
 
 Run the Status Control Debugger GUI
 -------------------------------------
@@ -447,10 +447,10 @@ The JANA Status/Control/Debugger GUI can be a useful tool for probing a running 
 
 Using factory metadata
 ----------------------
-The :py:func:`JFactoryT<T>` interface abstracts the creation logic for a vector of n objects of type :py:func:`T`. However, often we also care about single pieces of data associated with the same computation. For instance, a track fitting factory might want to return statistics about how many fits succeeded and failed.
+The :py:func:`JFactoryT<T>` interface abstracts the creation logic for a vector of n objects of type :py:func:`T``. However, often we also care about single pieces of data associated with the same computation. For instance, a track fitting factory might want to return statistics about how many fits succeeded and failed.
 
-A naive solution is to put member variables on the factory and then access them from a :py:func:`JEventProcessor` by obtaining the :py:func:`JFactoryT<T>` via :py:func:`GetFactory<>` and performing a dynamic cast to the underlying factory type. Although this works, it means that that factory can no longer be swapped with an alternate version without modifying the calling code. This degrades the whole project’s ability to take advantage of the plugin architecture and hurts its overall code quality.
+A naive solution is to put member variables on the factory and then access them from a :py:func:`JEventProcessor`` by obtaining the :py:func:`JFactoryT<T>`` via :py:func:`GetFactory<>`` and performing a dynamic cast to the underlying factory type. Although this works, it means that that factory can no longer be swapped with an alternate version without modifying the calling code. This degrades the whole project’s ability to take advantage of the plugin architecture and hurts its overall code quality.
 
-Instead, we recommend using the :py:func:`JMetadata` template trait. Each :py:func:`JFactoryT<T>` not only produces a vector of :py:func:`T`, but also a singular :py:func:`JMetadata<T>` struct whose contents can be completely arbitrary, but cannot be redefined for a particular T. All :py:func:`JFactoryT<T>` for some :py:func:`T` will use it.
+Instead, we recommend using the :py:func:`JMetadata`` template trait. Each :py:func:`JFactoryT<T>`` not only produces a vector of :py:func:`T``, but also a singular :py:func:`JMetadata<T>`` struct whose contents can be completely arbitrary, but cannot be redefined for a particular T. All :py:func:`JFactoryT<T>`` for some :py:func:`T`` will use it.
 
-An example project demonstrating usage of JMetadata can be found under :py:func:`examples/MetadataExample`.
+An example project demonstrating usage of JMetadata can be found under :py:func:`examples/MetadataExample``.
