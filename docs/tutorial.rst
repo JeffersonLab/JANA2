@@ -24,10 +24,10 @@ We can understand this command as follows:
 * The :py:func:`-P` flag specifies a configuration parameter, e.g. ``-Pjana:debug_plugin_loading=1`` tells JANA to log detailed information about where the plugin loader went looking and what it found.
 
 
-* :py:func:`plugins` is the parameter specifying the names of plugins to load, as a comma-separated list (without spaces). By default JANA searches for these in :py:func:`$JANA_HOME/plugins`, although you can also specify full paths.
+* ``plugins`` is the parameter specifying the names of plugins to load, as a comma-separated list (without spaces). By default JANA searches for these in ``$JANA_HOME/plugins``, although you can also specify full paths.
 
 
-* :py:func:`-b tells` JANA to run everything in benchmark mode, i.e. it slowly increases the number of threads while measuring the overall throughput. You can cancel processing at any time by pressing Ctrl-C.
+* ``-b tells`` JANA to run everything in benchmark mode, i.e. it slowly increases the number of threads while measuring the overall throughput. You can cancel processing at any time by pressing Ctrl-C.
 
 
 Creating a JANA plugin
@@ -39,7 +39,7 @@ With JANA working, we can now create our own plugin. JANA provides a script whic
 
     jana-generate.py Plugin QuickTutorial
 
-This creates the following directory tree. By default, a minimal skelton is created in a single file: :py:func:`QuickTutorial.cc`. This provides a JEventProcessor class as well as the the plugin entry point. The generated files include lots of comments providing helpful hints on their use.
+This creates the following directory tree. By default, a minimal skelton is created in a single file: ``QuickTutorial.cc``. This provides a JEventProcessor class as well as the the plugin entry point. The generated files include lots of comments providing helpful hints on their use.
 This creates the following directory tree. By default, a minimal skelton is created in a single file: 
 
 .. code-block:: console
@@ -48,7 +48,7 @@ This creates the following directory tree. By default, a minimal skelton is crea
     ├── CMakeLists.txt
     │├─ QuickTutorial.cc
 
-The :py:func:`jana-generate.py` Plugin ... command provides some option flags as well that can be given at the end of the command line. Run :py:func:`jana-generate.py` --help to see what they are.
+The ``jana-generate.py`` Plugin ... command provides some option flags as well that can be given at the end of the command line. Run ``jana-generate.py`` --help to see what they are.
 
 Integrating into an existing project
 --------------------------------------
@@ -59,7 +59,7 @@ If you are working with an existing project such as eJANA or GlueX, then you don
 
     cp QuickTutorial $PATH_TO_PROJECT_SOURCE/src/plugins/QuickTutorial
 
-Be aware that you will have to manually tell the parent CMakeLists.txt to :py:func:`add_subdirectory(QuickTutorial)`.
+Be aware that you will have to manually tell the parent CMakeLists.txt to ``add_subdirectory(QuickTutorial)``.
 
 The rest of the tutorial assumes that we are using a standalone plugin.
 
@@ -88,12 +88,12 @@ When we run this, we observe that JANA loads the plugin, opens our QuickTutorial
     cd ..
     jana-generate.py JEventSource RandomSource
 
-This creates two files, RandomSource.cc and RandomSource.h, in the current directory. We’ll need to add them to :py:func:`CMakeLists.txt` ourselves. Note that we retain complete control over our directory structure. In this tutorial, for simplicity, we’ll keep all .h and .cc files in the topmost directory. For larger projects, :py:func:`jana-generate project MyProjectName` creates a much more complex code skeleton.
+This creates two files, RandomSource.cc and RandomSource.h, in the current directory. We’ll need to add them to ``CMakeLists.txt`` ourselves. Note that we retain complete control over our directory structure. In this tutorial, for simplicity, we’ll keep all .h and .cc files in the topmost directory. For larger projects, ``jana-generate project MyProjectName`` creates a much more complex code skeleton.
 
 To use our new RandomSource as-is, we need to do three things:
 
-* Add :py:func:`RandomSource.cc` and :py:func:`RandomSource.h` to the :py:func:`add_library(...)` line in :py:func:`CMakeLists.txt`.
-* Register our :py:func:`RandomSource` with JANA inside :py:func:`QuickTutorial.cc`
+* Add ``RandomSource.cc`` and ``RandomSource.h`` to the ``add_library(...)`` line in ``CMakeLists.txt``.
+* Register our ``RandomSource`` with JANA inside ``QuickTutorial.cc``
 * Rebuild the cmake project, rebuild the plugin target, and install.
 * The modified line in the CMakeLists.txt line should look like:
 
