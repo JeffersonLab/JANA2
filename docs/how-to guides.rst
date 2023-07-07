@@ -441,7 +441,7 @@ JEventProcessors
 
 
 JEventProcessors which output to ROOT
-______________________________________
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 This JEventProcessor includes the boilerplate for creating a ROOT histogram in a specific virtual subdirectory of a TFile. If this TFile is shared among different ``JEventProcessors``, it should be encapsulated in a JService. Otherwise, it can be specified as a simple parameter. We recommend naming the subdirectory after the plugin name. E.g. a ``trk_eff`` plugin contains a ``TrackingEfficiencyProcessor`` which writes all of its results to the ``trk_eff`` subdirectory of the TFile.
 
 ``jana-generate.py RootEventProcessor ProcessorNameInCamelCase``
@@ -458,7 +458,7 @@ Note that this script, like the others, does not update your ``CMakeLists.txt``.
 
 
 JFactories
-____________
+~~~~~~~~~~~
 Because JFactories are templates parameterized by the type of JObjects they produce, we need two arguments to generate them. The naming convention is left up to the user, but the following is recommended. If the JObject name is ‘RecoTrack’, and the factory uses Genfit under the hood, the factory name should be ‘RecoTrackFactory_Genfit’.
 
 ``jana-generate.py JFactory JFactoryNameInCamelCase JObjectNameInCamelCase``
