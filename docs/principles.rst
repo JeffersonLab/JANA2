@@ -22,19 +22,19 @@ Object lifecycles
 ------------------
 JObjects are data containers for specific resuts, e.g. clusters or tracks. They may be plain-old structs or they may optionally inherit from (e.g.) ROOT or NumPy datatypes.
 
-By default, a JFactory owns all of the JObjects that it created during :py:func:`Process()`. Once all event processors have finished processing a :py:func:`JEvent`, all :py:func:`JFactories` associated with that :py:func:`JEvent` will clears and delete their :py:func:`JObjects`. However, you can change this behavior by setting one of the factory flags:
+By default, a JFactory owns all of the JObjects that it created during ``Process()``. Once all event processors have finished processing a ``JEvent``, all ``JFactories`` associated with that ``JEvent`` will clears and delete their ``JObjects``. However, you can change this behavior by setting one of the factory flags:
 
-* :py:func:`PERSISTENT`: Objects are neither cleared nor deleted. This is usually used for calibrations and translation tables. Note that if an object is persistent, :py:func:`JFactory::Process` will not be re-run on the next :py:func:`JEvent`. The user may still update the objects manually, via :py:func:`JFactory::BeginRun`, and must delete the objects manually via :py:func:`JFactory::EndRun` or :py:func:`JFactory::Finish`.
+* ``PERSISTENT`` Objects are neither cleared nor deleted. This is usually used for calibrations and translation tables. Note that if an object is persistent, ``JFactory::Process`` will not be re-run on the next ``JEvent``. The user may still update the objects manually, via ``JFactory::BeginRun``, and must delete the objects manually via ``JFactory::EndRun`` or ``JFactory::Finish``.
 
-* :py:func:`NOT_OBJECT_OWNER`: Objects are cleared from the :py:func:`JFactory` but not deleted. This is useful for “proxy” factories (which reorganize objects that are owned by a different factory) and for :py:func:`JEventGroups`. :py:func:`JFactory`::Process will be re-run for each :py:func:`JEvent`. As long as the objects are owned by a different :py:func:`JFactory`, the user doesn’t have to do any cleanup.
+* :py:func:`NOT_OBJECT_OWNER`: Objects are cleared from the ``JFactory`` but not deleted. This is useful for “proxy” factories (which reorganize objects that are owned by a different factory) and for :py:func:`JEventGroups`. ``JFactory``::Process will be re-run for each ``JEvent``. As long as the objects are owned by a different :py:func:`JFactory`, the user doesn’t have to do any cleanup.
 
-The lifetime of a :py:func:`JFactory` spans the time that a :py:func:`JEvent` is in-flight. No other guarantees are made: :py:func:`JFactories` might be re-used for multiple :py:func:`JEvents` for the sake of efficiency, but the implementation is free to not do so. In particular, the user must never assume that one :py:func:`JFactory` will see the entire :py:func:`JEvent` stream.
+The lifetime of a :py:func:`JFactory` spans the time that a ``JEvent`` is in-flight. No other guarantees are made: ``JFactories`` might be re-used for multiple :py:func:`JEvents` for the sake of efficiency, but the implementation is free to not do so. In particular, the user must never assume that one :py:func:`JFactory` will see the entire :py:func:`JEvent` stream.
 
-The lifetime of a :py:func:`JEventSource` spans the time that all of its emitted :py:func:`JEvents` are in-flight.
+The lifetime of a ``JEventSource`` spans the time that all of its emitted ``JEvents`` are in-flight.
 
-The lifetime of a :py:func:`JEventProcessor` spans the time that any :py:func:`JEventSources` are active.
+The lifetime of a ``JEventProcessor`` spans the time that any ``JEventSources`` are active.
 
-The lifetime of a :py:func:`JService` not only spans the time that any :py:func:`JEventProcessors` are active, but also the lifetime of :py:func:`JApplication` itself. Furthermore, because JServices use :py:func:`shared_ptr`, they are allowed to live even longer than :py:func:`JApplication`, which is helpful for things like writing test cases.
+The lifetime of a ``JService`` not only spans the time that any ``JEventProcessors`` are active, but also the lifetime of ``JApplication`` itself. Furthermore, because JServices use ``shared_ptr``, they are allowed to live even longer than ``JApplication``, which is helpful for things like writing test cases.
 
 Design philosophy
 -----------------
