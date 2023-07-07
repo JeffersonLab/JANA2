@@ -55,17 +55,17 @@ By default, JANA will look for plugins und=$JANA_HOME/plugins`. For your plugins
   jana -Pplugins=JTest -Pjana:debug_plugin_loading=1
 
 Using JANA in a CMake project
-______________________________
+------------------------------
 To use JANA in a CMake project, simply add ``$JANA_HOME/lib/cmake/JANA`` to your ``CMAKE_PREFIX_PATH``, or alternatively, set the CMake variable ``JANA_DIR=$JANA_HOME/lib/cmake/JANA``.
 
 Using JANA in a non-CMake project
-__________________________________
+----------------------------------
 
 To use JANA in a non-CMake project:
 
-Source ``$JANA_HOME/bin/jana-this.sh`` to set the environment variables needed for JANA’s dependencies
-Use ``$JANA_HOME/bin/jana-config --cflags`` to obtain JANA’s compiler flags
-Use ``$JANA_HOME/bin/jana_config --libs`` to obtain JANA’s linker flags
+1. Source ``$JANA_HOME/bin/jana-this.sh`` to set the environment variables needed for JANA’s dependencies
+2. Use ``$JANA_HOME/bin/jana-config --cflags`` to obtain JANA’s compiler flags
+3. Use ``$JANA_HOME/bin/jana_config --libs`` to obtain JANA’s linker flags
 
 How to benchmark JANA
 ~~~~~~~~~~~~~~~~~~~~~~~
