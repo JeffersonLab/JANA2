@@ -150,7 +150,7 @@ private:
     int  m_desired_nthreads;
 
     std::mutex m_status_mutex;
-    std::chrono::milliseconds m_ticker_interval {500};
+    int m_ticker_interval_ms = 1000;
     std::chrono::time_point<std::chrono::high_resolution_clock> m_last_measurement;
     std::unique_ptr<const JPerfSummary> m_perf_summary;
 
