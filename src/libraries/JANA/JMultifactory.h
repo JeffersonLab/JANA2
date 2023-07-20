@@ -71,6 +71,7 @@ class JMultifactory {
     std::string mTagSuffix;  // In order to have multiple (differently configured) instances in the same factorySet
     std::string mPluginName; // So we can propagate this to the JMultifactoryHelpers, so we can have useful error messages
     std::string mFactoryName; // So we can propagate this to the JMultifactoryHelpers, so we can have useful error messages
+    JApplication* mApp;
 
 #ifdef HAVE_PODIO
     bool mNeedPodio = false;      // Whether we need to retrieve the podio::Frame
@@ -125,6 +126,9 @@ public:
     // This exposes the mHelpers JFactorySet, which contains a JFactoryT<T> for each declared output of the multifactory.
     // This is meant to be called from JFactorySet, which will take ownership of the helpers while leaving the pointers
     // in place. This method is only supposed to be called by JFactorySet::Add(JMultifactory).
+
+    void SetApplication(JApplication* app) { mApp = app; }
+    JApplication* GetApplication() { return mApp; }
 
     // These are set by JFactoryGeneratorT (just like JFactories) and get propagated to each of the JMultifactoryHelpers
     void SetTag(std::string tagSuffix) { mTagSuffix = std::move(tagSuffix); }
@@ -213,12 +217,14 @@ void JMultifactory::SetCollection(std::string tag, std::unique_ptr<typename Podi
 
 template <typename T>
 void JMultifactoryHelper<T>::Process(const std::shared_ptr<const JEvent> &event) {
+    mMultiFactory->SetApplication(this->GetApplication());
     mMultiFactory->Execute(event);
 }
 
 #ifdef HAVE_PODIO
 template <typename T>
 void JMultifactoryHelperPodio<T>::Process(const std::shared_ptr<const JEvent> &event) {
+    mMultiFactory->SetApplication(this->GetApplication());
     mMultiFactory->Execute(event);
 }
 #endif // HAVE_PODIO
