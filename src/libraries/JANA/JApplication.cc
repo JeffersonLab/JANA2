@@ -115,6 +115,7 @@ void JApplication::Initialize() {
         m_desired_nthreads = JCpuInfo::GetNumCpus();
     }
 
+    m_params->SetDefaultParameter("jana:ticker_interval", m_ticker_interval_ms, "Controls the ticker interval (in ms)");
     m_params->SetDefaultParameter("jana:extended_report", m_extended_report, "Controls whether the ticker shows simple vs detailed performance metrics");
 
     m_component_manager->initialize();
@@ -202,7 +203,7 @@ void JApplication::Run(bool wait_until_finished) {
         }
 
         // Sleep a few cycles
-        std::this_thread::sleep_for(m_ticker_interval);
+        std::this_thread::sleep_for(std::chrono::milliseconds(m_ticker_interval_ms));
 
         // Print status
         if( m_ticker_on ) PrintStatus();
@@ -351,7 +352,7 @@ void JApplication::PrintFinalReport() {
 /// Performs a new measurement if the time elapsed since the previous measurement exceeds some threshold
 void JApplication::update_status() {
     auto now = std::chrono::high_resolution_clock::now();
-    if ((now - m_last_measurement) >= m_ticker_interval || m_perf_summary == nullptr) {
+    if ((now - m_last_measurement) >= std::chrono::milliseconds(m_ticker_interval_ms) || m_perf_summary == nullptr) {
         m_perf_summary = m_processing_controller->measure_performance();
         m_last_measurement = now;
     }
