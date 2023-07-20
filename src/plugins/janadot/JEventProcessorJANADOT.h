@@ -152,6 +152,8 @@ class JEventProcessorJANADOT:public JEventProcessor
 		set<string> no_subgraph_groups;
 		bool has_focus;
 		string focus_factory;
+		std::string m_output_filename = "jana.dot"; 
+		bool m_weight_edges = true;
 		
 		void FindDecendents(string caller, set<string> &decendents);
 		void FindAncestors(string callee, set<string> &ancestors);

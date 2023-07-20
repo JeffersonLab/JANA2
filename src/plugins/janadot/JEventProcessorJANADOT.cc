@@ -31,6 +31,8 @@ JEventProcessorJANADOT::JEventProcessorJANADOT() {
     SetTypeName("JEventProcessorJANADOT");
 
     auto app = japp;
+	app->SetDefaultParameter("janadot:output_file", m_output_filename, "Output filename for call graph visualization");
+	app->SetDefaultParameter("janadot:weight_edges", m_weight_edges, "Use edge weight (penwidth) to represent the percent of time spent in call");
 
 	// Turn on call stack recording
 	force_all_factories_active = false;
@@ -217,8 +219,8 @@ void JEventProcessorJANADOT::Finish()
 	}
 
 	// Open dot file for writing
-	cout<<"Opening output file \"jana.dot\""<<endl;
-	ofstream file("jana.dot");
+	cout<<"Opening output file \"" << m_output_filename << "\""<<endl;
+	ofstream file(m_output_filename);
 	
 	file<<"digraph G {"<<endl;
 
@@ -253,7 +255,10 @@ void JEventProcessorJANADOT::Finish()
 		file<<"\""<<nametag2<<"\"";
 		file<<" [style=bold, fontsize=8";
 		file<<", label=\""<<Ntotal<<" calls\\n"<<timestr<<"\\n"<<percentstr<<"\"";
-		//file<<", penwidth="<<(int)(percent/10.0);
+		if (m_weight_edges) {
+			int width = (percent / 20.0) + 1; // width ranges from 1 to 6 points
+			file<<", penwidth="<<width;
+		}
 		file<<"];";
 		file<<endl;
 	}
