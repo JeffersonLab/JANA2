@@ -2,9 +2,9 @@ name: C/C++ CI epscimac server
 
 on:
   push:
-    branches: [ master, cissie_ci ]
+    branches: [ cissie_ci ]
   pull_request:
-    branches: [ master ]
+    branches: [ cissie_ci ]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
