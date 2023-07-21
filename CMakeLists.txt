@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 cmake_policy(SET CMP0074 NEW) # find_package() uses <PackageName>_ROOT implicit hints
 
-project(jana2 VERSION 2.1.0)
+project(jana2 VERSION 2.1.1)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)   # Enable -fPIC for all targets
 
