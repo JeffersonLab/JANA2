@@ -22,6 +22,7 @@ struct MyMultifactory : public JMultifactory {
 
     bool m_set_wrong_output = false;
     int m_process_call_count = 0;
+    int m_init_call_count = 0;
 
 public:
     MyMultifactory(bool set_wrong_output=false) : m_set_wrong_output(set_wrong_output) {
@@ -29,7 +30,13 @@ public:
         DeclareOutput<B>("second");
     }
 
-    void Process(const std::shared_ptr<const JEvent>&) {
+    void Init() override {
+        auto app = GetApplication();
+        REQUIRE(app != nullptr);
+        m_init_call_count += 1;
+    }
+
+    void Process(const std::shared_ptr<const JEvent>&) override {
         m_process_call_count += 1;
         std::vector<A*> as;
         std::vector<B*> bs;
@@ -92,20 +99,24 @@ TEST_CASE("MultiFactoryTests") {
         REQUIRE(sut != nullptr);
 
         REQUIRE(sut->m_process_call_count == 0);
+        REQUIRE(sut->m_init_call_count == 0);
 
         auto as = event->Get<A>("first");
         REQUIRE(as.size() == 2);
         REQUIRE(as[1]->x == 5.5);
+        REQUIRE(sut->m_init_call_count == 1);
         REQUIRE(sut->m_process_call_count == 1);
 
         auto bs = event->Get<B>("second");
         REQUIRE(bs.size() == 1);
         REQUIRE(bs[0]->en == 1);
+        REQUIRE(sut->m_init_call_count == 1);
         REQUIRE(sut->m_process_call_count == 1);
 
         as = event->Get<A>("first");
         REQUIRE(as.size() == 2);
         REQUIRE(as[1]->x == 5.5);
+        REQUIRE(sut->m_init_call_count == 1);
         REQUIRE(sut->m_process_call_count == 1);
     }
 
