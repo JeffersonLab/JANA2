@@ -75,7 +75,7 @@ void visitPodioType(const std::string& podio_typename, F& helper, ArgsT... args)
 template <typename Visitor>
 struct VisitExampleDatamodel {
     void operator()(Visitor& visitor, const podio::CollectionBase &collection) {
-        std::string podio_typename = collection.getTypeName();
+        const auto podio_typename = collection.getTypeName();
         if (podio_typename == "EventInfoCollection") {
             return visitor(static_cast<const EventInfoCollection &>(collection));
         } else if (podio_typename == "ExampleHitCollection") {
