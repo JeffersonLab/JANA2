@@ -254,5 +254,57 @@ TEST_CASE("JParameterManager::RegisterParameter") {
 
 }
 
+TEST_CASE("JParameterManager_ArrayParams") {
+    JParameterManager jpm;
+
+    SECTION("Reading a array of strings") {
+        jpm.SetParameter("test", "simple,whitespace in middle, also with whitespace padding ");
+        std::array<std::string,3> vals;
+        jpm.GetParameter<std::array<std::string,3>>("test", vals);
+
+        REQUIRE(vals[0] == "simple");
+        REQUIRE(vals[1] == "whitespace in middle");
+        REQUIRE(vals[2] == " also with whitespace padding ");
+    }
+    SECTION("Writing a vector of strings") {
+        std::array<std::string,3> inputs = {"first", "second one" , " third one "};
+        jpm.SetDefaultParameter("test", inputs);
+        std::array<std::string,3> outputs;
+        auto param = jpm.GetParameter("test", outputs);
+        REQUIRE(param->GetValue() == "first,second one, third one ");
+    }
+    SECTION("Reading a array of ints") {
+        jpm.SetParameter("test", "1,2, 3 ");
+        std::array<int32_t,3> vals;
+        jpm.GetParameter("test", vals);
+
+        REQUIRE(vals[0] == 1);
+        REQUIRE(vals[1] == 2);
+        REQUIRE(vals[2] == 3);
+    }
+    SECTION("Writing a array of ints") {
+        std::array<int32_t,3> inputs = {22,49,42};
+        jpm.SetDefaultParameter("test", inputs);
+        std::array<std::string,3> outputs;
+        auto param = jpm.GetParameter("test", outputs);
+        REQUIRE(param->GetValue() == "22,49,42");
+    }
+    SECTION("Reading a array of floats") {
+        jpm.SetParameter("test", "1,2,3");
+        std::array<float,3> vals;
+        jpm.GetParameter("test", vals);
+
+        REQUIRE(vals[0] == 1.0f);
+        REQUIRE(vals[1] == 2.0f);
+        REQUIRE(vals[2] == 3.0f);
+    }
+    SECTION("Writing a vector of floats") {
+        std::array<float,3> inputs = {22.0,49.2,42.0};
+        jpm.SetDefaultParameter("test", inputs);
+        std::array<float,3> outputs;
+        auto param = jpm.GetParameter("test", outputs);
+        REQUIRE(param->GetValue() == "22,49.2,42");
+    }
+}
 
 

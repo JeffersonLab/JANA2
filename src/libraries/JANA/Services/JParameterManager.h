@@ -8,6 +8,7 @@
 #include <string>
 #include <algorithm>
 #include <vector>
+#include <array>
 #include <map>
 #include <cmath>
 
@@ -109,6 +110,9 @@ public:
     template<typename T>
     static std::string Stringify(const T& value);
 
+    template<typename T,size_t N>
+    static std::string Stringify(const std::array<T,N>& value);
+
     template<typename T>
     static bool Equals(const T& lhs, const T& rhs);
 
@@ -117,6 +121,14 @@ public:
 
     template<typename T>
     static std::string StringifyVector(const std::vector<T>& values);
+
+    // support for array along with vector has been introduced
+
+    template<typename T, size_t arrSize>
+    static std::array<T,arrSize> ParseArray(const std::string& value); 
+
+    template<typename T, size_t arrSize>
+    static std::string StringifyArray(const std::array<T,arrSize>& values);
 
     static std::string ToLower(const std::string& name);
 
@@ -318,6 +330,67 @@ inline bool JParameterManager::Parse(const std::string& value) {
     throw JException("'%s' not parseable as bool", value.c_str());
 }
 
+// template to parse a string and return in an array
+
+template <typename T, size_t arrSize>
+inline std::array<T,arrSize> JParameterManager::ParseArray(const std::string &value) {
+    std::stringstream ss(value);
+    std::array<T, arrSize> result;
+    std::string s;
+    int pos = 0;
+    while (getline(ss, s, ',')) {
+        std::stringstream sss(s);
+        T t;
+        sss >> t;
+        result[pos++] = t;
+    }
+    return result;
+}
+
+template<>
+inline std::array<std::string,3> JParameterManager::Parse(const std::string& value) {
+    std::stringstream ss(value);
+    std::array<std::string,3> result;
+    std::string s;
+    int indx = 0;
+    while (getline(ss, s, ',')) {
+        result[indx++]= s;
+    }
+    return result;
+}
+
+template <>
+inline std::array<int,3> JParameterManager::Parse(const std::string& value) {
+    return ParseArray<int,3>(value);
+}
+template <>
+inline std::array<long int,3> JParameterManager::Parse(const std::string& value) {
+    return ParseArray<long int,3>(value);
+}
+template <>
+inline std::array<long long int,3> JParameterManager::Parse(const std::string& value) {
+    return ParseArray<long long int,3>(value);
+}
+template <>
+inline std::array<unsigned int,3> JParameterManager::Parse(const std::string& value) {
+    return ParseArray<unsigned int,3>(value);
+}
+template <>
+inline std::array<unsigned long int,3> JParameterManager::Parse(const std::string& value) {
+    return ParseArray<unsigned long int,3>(value);
+}
+template <>
+inline std::array<unsigned long long int,3> JParameterManager::Parse(const std::string& value) {
+    return ParseArray<unsigned long long int,3>(value);
+}
+template <>
+inline std::array<float,3> JParameterManager::Parse(const std::string& value) {
+    return ParseArray<float,3>(value);
+}
+template <>
+inline std::array<double,3> JParameterManager::Parse(const std::string& value) {
+    return ParseArray<double,3>(value);
+}
 
 /// @brief Specialization for std::vector<std::string>
 template<>
@@ -400,6 +473,27 @@ inline std::string JParameterManager::StringifyVector(const std::vector<T> &valu
     return ss.str();
 }
 
+// Stringifying the array 
+template <typename T, size_t N>
+inline std::string JParameterManager::StringifyArray(const std::array<T,N> &values) {
+    std::stringstream ss;
+    size_t len = values.size();
+    for (size_t i = 0; i+1 < N; ++i) {
+        ss << values[i];
+        ss << ",";
+    }
+    if (len != 0) {
+        ss << values[len-1];
+    }
+    return ss.str();
+}
+
+/// Partial specialization for the array 
+template<typename T, size_t N>
+inline std::string JParameterManager::Stringify(const std::array<T,N>& values) {
+    return StringifyArray(values);
+}
+
 /// Specializations of Stringify
 
 template<>
@@ -463,4 +557,5 @@ inline bool JParameterManager::Equals(const double& lhs, const double& rhs) {
 }
 
 #endif // _JParameterManager_h_
+
 
