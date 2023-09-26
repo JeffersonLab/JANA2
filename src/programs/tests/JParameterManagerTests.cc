@@ -266,7 +266,7 @@ TEST_CASE("JParameterManager_ArrayParams") {
         REQUIRE(vals[1] == "whitespace in middle");
         REQUIRE(vals[2] == " also with whitespace padding ");
     }
-    SECTION("Writing a vector of strings") {
+    SECTION("Writing a array of strings") {
         std::array<std::string,3> inputs = {"first", "second one" , " third one "};
         jpm.SetDefaultParameter("test", inputs);
         std::array<std::string,3> outputs;
@@ -298,7 +298,7 @@ TEST_CASE("JParameterManager_ArrayParams") {
         REQUIRE(vals[1] == 2.0f);
         REQUIRE(vals[2] == 3.0f);
     }
-    SECTION("Writing a vector of floats") {
+    SECTION("Writing a array of floats") {
         std::array<float,3> inputs = {22.0,49.2,42.0};
         jpm.SetDefaultParameter("test", inputs);
         std::array<float,3> outputs;
