@@ -308,3 +308,35 @@ TEST_CASE("JParameterManager_ArrayParams") {
 }
 
 
+template <typename T> 
+void parse(std::string s, std::vector<T>& ts) {
+    std::cout << "Parsing vector T"  << std::endl;
+}
+
+template <typename T, size_t N>
+void parse(std::string s, std::array<T,N>& ts) {
+    std::cout << "Parsing array<T,N>" << std::endl;
+}
+
+template <typename T> 
+void parse(std::string s, T& t) {
+    std::cout << "Parsing basic T"  << std::endl;
+}
+
+template <typename T>
+T getParam(std::string s) {
+    T t;
+    parse(s, t);
+    return t;
+}
+
+
+TEST_CASE("Playground") {
+    getParam<int>("22");
+    getParam<std::vector<int>>("22");
+    getParam<std::array<int,1>>("22");
+}
+
+
+
+
