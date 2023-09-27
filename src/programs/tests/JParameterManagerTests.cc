@@ -309,6 +309,11 @@ TEST_CASE("JParameterManager_ArrayParams") {
 
 
 template <typename T> 
+void parse(std::string s, T& t) {
+    std::cout << "Parsing basic T"  << std::endl;
+}
+
+template <typename T> 
 void parse(std::string s, std::vector<T>& ts) {
     std::cout << "Parsing vector T"  << std::endl;
 }
@@ -318,9 +323,9 @@ void parse(std::string s, std::array<T,N>& ts) {
     std::cout << "Parsing array<T,N>" << std::endl;
 }
 
-template <typename T> 
-void parse(std::string s, T& t) {
-    std::cout << "Parsing basic T"  << std::endl;
+template <size_t N>
+void parse(std::string s, std::array<double,N>& ts) {
+    std::cout << "Parsing array<double,N>" << std::endl;
 }
 
 template <typename T>
@@ -331,12 +336,50 @@ T getParam(std::string s) {
 }
 
 
+
+template <typename T> 
+std::string stringify(T t) {
+    std::cout << "Stringifying T" << std::endl;
+    return "";
+}
+
+template <typename T>
+std::string stringify(std::vector<T> ts) {
+    std::cout << "Stringifying vector<T>" << std::endl;
+    return "";
+}
+
+template <typename T, size_t N>
+std::string stringify(std::array<T,N> ts) {
+    std::cout << "Stringifying array<T,N>" << std::endl;
+    return "";
+}
+
+template <size_t N>
+std::string stringify(std::array<double,N> ts) {
+    std::cout << "Stringifying array<double,N>" << std::endl;
+    return "";
+
+}
+
+
 TEST_CASE("Playground") {
     getParam<int>("22");
     getParam<std::vector<int>>("22");
     getParam<std::array<int,1>>("22");
-}
+    getParam<std::array<double,1>>("22");
 
+
+    int a = 22;
+    std::vector<int> b {22};
+    std::array<int,1> c {22};
+    std::array<double,1> d {22};
+
+    stringify(a);
+    stringify(b);
+    stringify(c);
+    stringify(d);
+}
 
 
 
