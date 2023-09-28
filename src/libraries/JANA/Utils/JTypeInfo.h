@@ -12,6 +12,20 @@
 
 namespace JTypeInfo {
 
+
+template <typename, typename=void>
+struct is_parseable : std::false_type {};
+
+template <typename T>
+struct is_parseable<T, std::void_t<decltype(std::declval<std::istream>() >> std::declval<T&>())>> : std::true_type {};
+
+template <typename, typename=void>
+struct is_serializable : std::false_type {};
+
+template <typename T>
+struct is_serializable<T, std::void_t<decltype(std::declval<std::ostream>() << std::declval<T>())>> : std::true_type {};
+
+
 template<typename T>
 std::string demangle(void) {
 
