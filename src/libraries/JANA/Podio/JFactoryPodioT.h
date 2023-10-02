@@ -132,7 +132,12 @@ void JFactoryPodioT<T>::ClearData() {
     if (this->mStatus == JFactory::Status::Uninitialized) {
         return;
     }
-    for (auto p : this->mData) delete p;
+    for (auto p : this->mData) {
+      // Avoid potentially invalid call to ObjBase::release(). The frame and
+      // all the collections and all Obj may have been deallocated at this point.
+      p->unlink();
+      delete p;
+    }
     this->mData.clear();
     this->mCollection = nullptr;  // Collection is owned by the Frame, so we ignore here
     this->mFrame = nullptr;  // Frame is owned by the JEvent, so we ignore here
