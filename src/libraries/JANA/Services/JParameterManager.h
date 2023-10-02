@@ -325,8 +325,8 @@ inline void JParameterManager::Parse(const std::string& value, std::string& out)
 template <>
 inline void JParameterManager::Parse(const std::string& value, bool& val) {
     if (value == "0" || value =="false" || value == "off") val = false;
-    if (value == "1" || value == "true" || value == "on") val = true;
-    throw JException("'%s' not parseable as bool", value.c_str());
+    else if (value == "1" || value == "true" || value == "on") val = true;
+    else throw JException("'%s' not parseable as bool", value.c_str());
 }
 
 // @brief Template to parse a string and return in an array
