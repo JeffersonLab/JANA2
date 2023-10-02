@@ -8,6 +8,7 @@
 #include <string>
 #include <algorithm>
 #include <vector>
+#include <array>
 #include <map>
 #include <cmath>
 
@@ -104,19 +105,26 @@ public:
     void WriteConfigFile(std::string name);
 
     template<typename T>
-    static T Parse(const std::string& value);
+    static inline void Parse(const std::string& value, T& out);
+
+    template<typename T>
+    static inline void Parse(const std::string& value, std::vector<T>& out);
+
+    template<typename T, size_t arrSize>
+    static inline void Parse(const std::string& value, std::array<T,arrSize>& out); 
 
     template<typename T>
     static std::string Stringify(const T& value);
 
     template<typename T>
+    static std::string Stringify(const std::vector<T>& values);
+
+    template<typename T,size_t N>
+    static std::string Stringify(const std::array<T,N>& values);
+
+    template<typename T>
     static bool Equals(const T& lhs, const T& rhs);
 
-    template<typename T>
-    static std::vector<T> ParseVector(const std::string& value);
-
-    template<typename T>
-    static std::string StringifyVector(const std::vector<T>& values);
 
     static std::string ToLower(const std::string& name);
 
@@ -145,7 +153,7 @@ JParameter* JParameterManager::GetParameter(std::string name, T& val) {
     if (result == m_parameters.end()) {
         return nullptr;
     }
-    val = Parse<T>(result->second->GetValue());
+    Parse(result->second->GetValue(),val);
     result->second->SetIsUsed(true);
     return result->second;
 }
@@ -159,12 +167,14 @@ JParameter* JParameterManager::GetParameter(std::string name, T& val) {
 ///
 template<typename T>
 T JParameterManager::GetParameterValue(std::string name) {
+    T t;
     auto result = m_parameters.find(ToLower(name));
     if (result == m_parameters.end()) {
         throw JException("Unknown parameter \"%s\"", name.c_str());
     }
     result->second->SetIsUsed(true);
-    return Parse<T>(result->second->GetValue());
+    Parse(result->second->GetValue(),t);
+    return t;
 }
 
 
@@ -220,7 +230,7 @@ JParameter* JParameterManager::SetDefaultParameter(std::string name, T& val, std
 
     std::lock_guard<std::mutex> lock(m_mutex);
     JParameter* param = nullptr;
-
+    T t;
     auto result = m_parameters.find(ToLower(name));
     if (result != m_parameters.end()) {
         // We already have a value stored for this parameter
@@ -236,7 +246,8 @@ JParameter* JParameterManager::SetDefaultParameter(std::string name, T& val, std
             // We tried to set the same default parameter twice. This is fine; this happens all the time
             // because we construct lots of copies of JFactories, each of which calls SetDefaultParameter on its own.
             // However, we still want to warn the user if the same parameter was declared with different values.
-            if (!Equals(val, Parse<T>(param->GetDefault()))) {
+            Parse(param->GetDefault(),t);
+            if (!Equals(val, t)) {
                 LOG_WARN(m_logger) << "Parameter '" << name << "' has conflicting defaults: '"
                                    << Stringify(val) << "' vs '" << param->GetDefault() << "'"
                                    << LOG_END;
@@ -256,7 +267,9 @@ JParameter* JParameterManager::SetDefaultParameter(std::string name, T& val, std
 
         // Test whether parameter is one-to-one with its string representation.
         // If not, warn the user they may have a problem.
-        if (!Equals(val, Parse<T>(valstr))) {
+        
+        Parse(valstr,t);
+        if (!Equals(val, t)) {
             LOG_WARN(m_logger) << "Parameter '" << name << "' with value '" << valstr
                                << "' loses equality with itself after stringification" << LOG_END;
         }
@@ -265,7 +278,8 @@ JParameter* JParameterManager::SetDefaultParameter(std::string name, T& val, std
 
     // Always put val through the stringification/parsing cycle to be consistent with
     // values passed in from config file, accesses from other threads
-    val = Parse<T>(param->GetValue());
+    Parse(param->GetValue(),t);
+    val = t;
     param->SetIsUsed(true);
     return param;
 }
@@ -293,89 +307,51 @@ inline T JParameterManager::RegisterParameter(std::string name, const T default_
 
 /// @brief Logic for parsing different types in a generic way
 template <typename T>
-inline T JParameterManager::Parse(const std::string& value) {
+void JParameterManager::Parse(const std::string& value, T& val) {
     std::stringstream ss(value);
-    T val;
     ss >> val;
-    return val;
 }
 
-/// @brief Specialization for handling strings that don't need parsing
+
+/// @brief Specialization for string. 
+/// The stream operator is not only redundant here, but it also splits the string (see Issue #191)
 template <>
-inline std::string JParameterManager::Parse(const std::string& value) {
-    return std::string(value);
+inline void JParameterManager::Parse(const std::string& value, std::string& out) {
+    out = value;
 }
+
 
 /// @brief Specialization for bool
 template <>
-inline bool JParameterManager::Parse(const std::string& value) {
-    if (value == "0") return false;
-    if (value == "1") return true;
-    if (value == "false") return false;
-    if (value == "true") return true;
-    if (value == "off") return false;
-    if (value == "on") return true;
-    throw JException("'%s' not parseable as bool", value.c_str());
+inline void JParameterManager::Parse(const std::string& value, bool& val) {
+    if (value == "0" || value =="false" || value == "off") val = false;
+    else if (value == "1" || value == "true" || value == "on") val = true;
+    else throw JException("'%s' not parseable as bool", value.c_str());
 }
 
+// @brief Template to parse a string and return in an array
+template<typename T, size_t N>
+inline void JParameterManager::Parse(const std::string& value,std::array<T,N> &val) {
+    std::string s;
+    std::stringstream ss(value);
+    int indx = 0;
+    while (getline(ss, s, ',')) {
+        T t;
+        Parse(s, t);
+        val[indx++]= t;
+    }    
+}
 
 /// @brief Specialization for std::vector<std::string>
-template<>
-inline std::vector<std::string> JParameterManager::Parse(const std::string& value) {
+template<typename T>
+inline void JParameterManager::Parse(const std::string& value, std::vector<T> &val) {
     std::stringstream ss(value);
-    std::vector<std::string> result;
     std::string s;
     while (getline(ss, s, ',')) {
-        result.push_back(s);
-    }
-    return result;
-}
-
-template <typename T>
-inline std::vector<T> JParameterManager::ParseVector(const std::string &value) {
-    std::stringstream ss(value);
-    std::vector<T> result;
-    std::string s;
-    while (getline(ss, s, ',')) {
-        std::stringstream sss(s);
         T t;
-        sss >> t;
-        result.push_back(t);
+        Parse(s, t);
+        val.push_back(t);
     }
-    return result;
-}
-
-template <>
-inline std::vector<int> JParameterManager::Parse(const std::string& value) {
-    return ParseVector<int>(value);
-}
-template <>
-inline std::vector<long int> JParameterManager::Parse(const std::string& value) {
-    return ParseVector<long int>(value);
-}
-template <>
-inline std::vector<long long int> JParameterManager::Parse(const std::string& value) {
-    return ParseVector<long long int>(value);
-}
-template <>
-inline std::vector<unsigned int> JParameterManager::Parse(const std::string& value) {
-    return ParseVector<unsigned int>(value);
-}
-template <>
-inline std::vector<unsigned long int> JParameterManager::Parse(const std::string& value) {
-    return ParseVector<unsigned long int>(value);
-}
-template <>
-inline std::vector<unsigned long long int> JParameterManager::Parse(const std::string& value) {
-    return ParseVector<unsigned long long int>(value);
-}
-template <>
-inline std::vector<float> JParameterManager::Parse(const std::string& value) {
-    return ParseVector<float>(value);
-}
-template <>
-inline std::vector<double> JParameterManager::Parse(const std::string& value) {
-    return ParseVector<double>(value);
 }
 
 /// @brief Logic for stringifying different types in a generic way
@@ -386,8 +362,15 @@ inline std::string JParameterManager::Stringify(const T& value) {
     return ss.str();
 }
 
+// @brief Specialization for strings. The stream operator is not only redundant here, but it also splits the string (see Issue #191)
+template <>
+inline std::string JParameterManager::Stringify(const std::string& value) {
+    return value;
+}
+
+
 template <typename T>
-inline std::string JParameterManager::StringifyVector(const std::vector<T> &values) {
+inline std::string JParameterManager::Stringify(const std::vector<T> &values) {
     std::stringstream ss;
     size_t len = values.size();
     for (size_t i = 0; i+1 < len; ++i) {
@@ -400,51 +383,19 @@ inline std::string JParameterManager::StringifyVector(const std::vector<T> &valu
     return ss.str();
 }
 
-/// Specializations of Stringify
-
-template<>
-inline std::string JParameterManager::Stringify(const std::vector<std::string>& values) {
-    return StringifyVector(values);
-}
-
-template<>
-inline std::string JParameterManager::Stringify(const std::vector<int>& values) {
-    return StringifyVector(values);
-}
-
-template<>
-inline std::string JParameterManager::Stringify(const std::vector<long int>& values) {
-    return StringifyVector(values);
-}
-
-template<>
-inline std::string JParameterManager::Stringify(const std::vector<long long int>& values) {
-    return StringifyVector(values);
-}
-
-template<>
-inline std::string JParameterManager::Stringify(const std::vector<unsigned int>& values) {
-    return StringifyVector(values);
-}
-
-template<>
-inline std::string JParameterManager::Stringify(const std::vector<unsigned long int>& values) {
-    return StringifyVector(values);
-}
-
-template<>
-inline std::string JParameterManager::Stringify(const std::vector<unsigned long long int>& values) {
-    return StringifyVector(values);
-}
-
-template<>
-inline std::string JParameterManager::Stringify(const std::vector<float>& values) {
-    return StringifyVector(values);
-}
-
-template<>
-inline std::string JParameterManager::Stringify(const std::vector<double>& values) {
-    return StringifyVector(values);
+// @brief Template for generically stringifying an array
+template <typename T, size_t N>
+inline std::string JParameterManager::Stringify(const std::array<T,N> &values) {
+    std::stringstream ss;
+    size_t len = values.size();
+    for (size_t i = 0; i+1 < N; ++i) {
+        ss << values[i];
+        ss << ",";
+    }
+    if (len != 0) {
+        ss << values[len-1];
+    }
+    return ss.str();
 }
 
 template <typename T>
@@ -463,4 +414,6 @@ inline bool JParameterManager::Equals(const double& lhs, const double& rhs) {
 }
 
 #endif // _JParameterManager_h_
+
+
 

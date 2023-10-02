@@ -11,7 +11,7 @@ TEST_CASE("JParameterManager::SetDefaultParameter") {
     JParameterManager jpm;
 
 
-    SECTION("Multiple calls to SetDefaultParameter with same defaults succeed") {
+   SECTION("Multiple calls to SetDefaultParameter with same defaults succeed") {
 
         jpm.SetParameter("testing:dummy_var", 22);
 
@@ -31,33 +31,41 @@ TEST_CASE("JParameterManager::SetDefaultParameter") {
         jpm.SetDefaultParameter("small_float", x);
         float y = 1.1;
         jpm.SetDefaultParameter("small_float", y);
-
-        REQUIRE(jpm.Equals(jpm.Parse<float>(jpm.Stringify(1.1f)), 1.1f));
-        REQUIRE(!jpm.Equals(jpm.Parse<float>(jpm.Stringify(1.1f)), 1.10001f));
+        float temp;
+        jpm.Parse<float>(jpm.Stringify(1.1f), temp);
+        REQUIRE(jpm.Equals(temp, 1.1f));
+        jpm.Parse<float>(jpm.Stringify(1.1f), temp);
+        REQUIRE(!jpm.Equals(temp, 1.10001f));
 
         float v = 1.1e20f;
         jpm.SetDefaultParameter("large_float", v);
         float w = 1.1e20f;
-        jpm.SetDefaultParameter("large_float", w);
 
-        REQUIRE(jpm.Equals(jpm.Parse<float>(jpm.Stringify(1.1e20f)), 1.1e20f));
-        REQUIRE(!jpm.Equals(jpm.Parse<float>(jpm.Stringify(1.1e20f)), 1.100001e20f));
+        jpm.SetDefaultParameter("large_float", w);
+        jpm.Parse<float>(jpm.Stringify(1.1e20f), temp);
+        REQUIRE(jpm.Equals(temp, 1.1e20f));
+        jpm.Parse<float>(jpm.Stringify(1.1e20f), temp);
+        REQUIRE(!jpm.Equals(temp, 1.100001e20f));
 
         double xx = 1.1;
         jpm.SetDefaultParameter("small_double", xx);
         double yy = 1.1;
         jpm.SetDefaultParameter("small_double", yy);
-
-        REQUIRE(jpm.Equals(jpm.Parse<double>(jpm.Stringify(1.1)), 1.1));
-        REQUIRE(!jpm.Equals(jpm.Parse<double>(jpm.Stringify(1.1)), 1.100001));
+        
+        double tempD;
+        jpm.Parse<double>(jpm.Stringify(1.1), tempD);
+        REQUIRE(jpm.Equals(tempD, 1.1));
+        jpm.Parse<double>(jpm.Stringify(1.1), tempD);
+        REQUIRE(!jpm.Equals(tempD, 1.100001));
 
         double vv = 1.1e50;
         jpm.SetDefaultParameter("large_double", vv);
         double ww = 1.1e50;
         jpm.SetDefaultParameter("large_double", ww);
 
-        REQUIRE(jpm.Equals(jpm.Parse<double>(jpm.Stringify(1.1e20)), 1.1e20));
-        REQUIRE(!jpm.Equals(jpm.Parse<double>(jpm.Stringify(1.1e20)), 1.1000000001e20));
+        jpm.Parse<double>(jpm.Stringify(1.1e20), tempD);
+        REQUIRE(jpm.Equals(tempD, 1.1e20));
+        REQUIRE(!jpm.Equals(tempD, 1.1000000001e20));
     }
 
 
@@ -103,7 +111,9 @@ TEST_CASE("JParameterManager::SetDefaultParameter") {
 
         // Parse returns identical string
         std::string z = "My String Value With Spaces";
-        REQUIRE( jpm.Parse<std::string>(z) == "My String Value With Spaces" );
+        std::string testString;
+        jpm.Parse<std::string>(z,testString);
+        REQUIRE( testString == "My String Value With Spaces" );
     }
 }
 
@@ -247,12 +257,64 @@ TEST_CASE("JParameterManager::RegisterParameter") {
         jpm.SetParameter("testing:dummy_var", 22);
         auto x_actual = jpm.RegisterParameter("testing:dummy_var", 44);  // this should set the default value to 44 while keeping value at 22
         auto x_default_str = jpm.FindParameter("testing:dummy_var")->GetDefault();
-        auto x_default = jpm.Parse<int>(x_default_str);
+        int x_default;
+        jpm.Parse<int>(x_default_str,x_default);
         REQUIRE(x_actual == 22);
         REQUIRE(x_default == 44);
     }
 
 }
 
+TEST_CASE("JParameterManager_ArrayParams") {
+    JParameterManager jpm;
+
+    SECTION("Reading a array of strings") {
+        jpm.SetParameter("test", "simple,whitespace in middle, also with whitespace padding ");
+        std::array<std::string,3> vals;
+        jpm.GetParameter<std::array<std::string,3>>("test", vals); 
+        REQUIRE(vals[0] == "simple");
+        REQUIRE(vals[1] == "whitespace in middle");
+        REQUIRE(vals[2] == " also with whitespace padding ");
+    }
+    SECTION("Writing a array of strings") {
+        std::array<std::string,3> inputs = {"first", "second one" , " third one "};
+        jpm.SetDefaultParameter("test", inputs);
+        std::array<std::string,3> outputs;
+        auto param = jpm.GetParameter("test", outputs);
+        REQUIRE(param->GetValue() == "first,second one, third one ");
+    }
+    SECTION("Reading a array of ints") {
+        jpm.SetParameter("test", "1,2, 3 ");
+        std::array<int32_t,3> vals;
+        jpm.GetParameter("test", vals);
+
+        REQUIRE(vals[0] == 1);
+        REQUIRE(vals[1] == 2);
+        REQUIRE(vals[2] == 3);
+    }
+    SECTION("Writing a array of ints") {
+        std::array<int32_t,3> inputs = {22,49,42};
+        jpm.SetDefaultParameter("test", inputs);
+        std::array<std::string,3> outputs;
+        auto param = jpm.GetParameter("test", outputs);
+        REQUIRE(param->GetValue() == "22,49,42");
+    }
+    SECTION("Reading a array of floats") {
+        jpm.SetParameter("test", "1,2,3");
+        std::array<float,3> vals;
+        jpm.GetParameter("test", vals);
+
+        REQUIRE(vals[0] == 1.0f);
+        REQUIRE(vals[1] == 2.0f);
+        REQUIRE(vals[2] == 3.0f);
+    }
+    SECTION("Writing a array of floats") {
+        std::array<float,3> inputs = {22.0,49.2,42.0};
+        jpm.SetDefaultParameter("test", inputs);
+        std::array<float,3> outputs;
+        auto param = jpm.GetParameter("test", outputs);
+        REQUIRE(param->GetValue() == "22,49.2,42");
+    }
+}
 
 
