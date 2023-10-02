@@ -76,12 +76,12 @@ inline std::string JParameterManager::Stringify(const JInspector::Format& value)
 }
 
 template <>
-inline JInspector::Format JParameterManager::Parse(const std::string& value) {
+inline void JParameterManager::Parse(const std::string& value, JInspector::Format& val) {
     auto lowered = JParameterManager::ToLower(value);
-    if (lowered == "table") return JInspector::Format::Table;
-    if (lowered == "json") return JInspector::Format::Json;
-    if (lowered == "tsv") return JInspector::Format::Tsv;
-    else return JInspector::Format::Table;
+    if (lowered == "table") val = JInspector::Format::Table;
+    if (lowered == "json") val =  JInspector::Format::Json;
+    if (lowered == "tsv") val =  JInspector::Format::Tsv;
+    else val =  JInspector::Format::Table;
 }
 
 #endif // _JIntrospection_h_
