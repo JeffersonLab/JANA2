@@ -105,30 +105,26 @@ public:
     void WriteConfigFile(std::string name);
 
     template<typename T>
-    static void Parse(const std::string& value, T& val);
+    static inline void Parse(const std::string& value, T& out);
+
+    template<typename T>
+    static inline void Parse(const std::string& value, std::vector<T>& out);
+
+    template<typename T, size_t arrSize>
+    static inline void Parse(const std::string& value, std::array<T,arrSize>& out); 
 
     template<typename T>
     static std::string Stringify(const T& value);
 
+    template<typename T>
+    static std::string Stringify(const std::vector<T>& values);
+
     template<typename T,size_t N>
-    static std::string Stringify(const std::array<T,N>& value);
+    static std::string Stringify(const std::array<T,N>& values);
 
     template<typename T>
     static bool Equals(const T& lhs, const T& rhs);
 
-    template<typename T>
-    static std::vector<T> ParseVector(const std::string& value);
-
-    template<typename T>
-    static std::string StringifyVector(const std::vector<T>& values);
-
-    // support for array along with vector has been introduced
-
-    template<typename T, size_t arrSize>
-    static std::array<T,arrSize> ParseArray(const std::string& value); 
-
-    template<typename T, size_t arrSize>
-    static std::string StringifyArray(const std::array<T,arrSize>& values);
 
     static std::string ToLower(const std::string& name);
 
@@ -311,39 +307,50 @@ inline T JParameterManager::RegisterParameter(std::string name, const T default_
 
 /// @brief Logic for parsing different types in a generic way
 template <typename T>
-inline void Parse(const std::string& value, T& val) {
+void JParameterManager::Parse(const std::string& value, T& val) {
     std::stringstream ss(value);
     ss >> val;
 }
 
 
+/// @brief Specialization for string. 
+/// The stream operator is not only redundant here, but it also splits the string (see Issue #191)
+template <>
+inline void JParameterManager::Parse(const std::string& value, std::string& out) {
+    out = value;
+}
+
+
 /// @brief Specialization for bool
 template <>
-inline void Parse(const std::string& value, bool& val) {
+inline void JParameterManager::Parse(const std::string& value, bool& val) {
     if (value == "0" || value =="false" || value == "off") val = false;
     if (value == "1" || value == "true" || value == "on") val = true;
     throw JException("'%s' not parseable as bool", value.c_str());
 }
 
-// template to parse a string and return in an array
-
+// @brief Template to parse a string and return in an array
 template<typename T, size_t N>
-inline void Parse(const std::string& value,std::array<T,N> &val) {
+inline void JParameterManager::Parse(const std::string& value,std::array<T,N> &val) {
     std::string s;
     std::stringstream ss(value);
     int indx = 0;
     while (getline(ss, s, ',')) {
-        val[indx++]= s;
+        T t;
+        Parse(s, t);
+        val[indx++]= t;
     }    
 }
 
 /// @brief Specialization for std::vector<std::string>
 template<typename T>
-inline void Parse(const std::string& value, std::vector<T> &val) {
+inline void JParameterManager::Parse(const std::string& value, std::vector<T> &val) {
     std::stringstream ss(value);
     std::string s;
     while (getline(ss, s, ',')) {
-        val.push_back(s);
+        T t;
+        Parse(s, t);
+        val.push_back(t);
     }
 }
 
@@ -355,8 +362,15 @@ inline std::string JParameterManager::Stringify(const T& value) {
     return ss.str();
 }
 
+// @brief Specialization for strings. The stream operator is not only redundant here, but it also splits the string (see Issue #191)
+template <>
+inline std::string JParameterManager::Stringify(const std::string& value) {
+    return value;
+}
+
+
 template <typename T>
-inline std::string JParameterManager::StringifyVector(const std::vector<T> &values) {
+inline std::string JParameterManager::Stringify(const std::vector<T> &values) {
     std::stringstream ss;
     size_t len = values.size();
     for (size_t i = 0; i+1 < len; ++i) {
@@ -369,9 +383,9 @@ inline std::string JParameterManager::StringifyVector(const std::vector<T> &valu
     return ss.str();
 }
 
-// Stringifying the array 
+// @brief Template for generically stringifying an array
 template <typename T, size_t N>
-inline std::string JParameterManager::StringifyArray(const std::array<T,N> &values) {
+inline std::string JParameterManager::Stringify(const std::array<T,N> &values) {
     std::stringstream ss;
     size_t len = values.size();
     for (size_t i = 0; i+1 < N; ++i) {
@@ -382,59 +396,6 @@ inline std::string JParameterManager::StringifyArray(const std::array<T,N> &valu
         ss << values[len-1];
     }
     return ss.str();
-}
-
-/// Partial specialization for the array 
-template<typename T, size_t N>
-inline std::string JParameterManager::Stringify(const std::array<T,N>& values) {
-    return StringifyArray(values);
-}
-
-/// Specializations of Stringify
-
-template<>
-inline std::string JParameterManager::Stringify(const std::vector<std::string>& values) {
-    return StringifyVector(values);
-}
-
-template<>
-inline std::string JParameterManager::Stringify(const std::vector<int>& values) {
-    return StringifyVector(values);
-}
-
-template<>
-inline std::string JParameterManager::Stringify(const std::vector<long int>& values) {
-    return StringifyVector(values);
-}
-
-template<>
-inline std::string JParameterManager::Stringify(const std::vector<long long int>& values) {
-    return StringifyVector(values);
-}
-
-template<>
-inline std::string JParameterManager::Stringify(const std::vector<unsigned int>& values) {
-    return StringifyVector(values);
-}
-
-template<>
-inline std::string JParameterManager::Stringify(const std::vector<unsigned long int>& values) {
-    return StringifyVector(values);
-}
-
-template<>
-inline std::string JParameterManager::Stringify(const std::vector<unsigned long long int>& values) {
-    return StringifyVector(values);
-}
-
-template<>
-inline std::string JParameterManager::Stringify(const std::vector<float>& values) {
-    return StringifyVector(values);
-}
-
-template<>
-inline std::string JParameterManager::Stringify(const std::vector<double>& values) {
-    return StringifyVector(values);
 }
 
 template <typename T>
