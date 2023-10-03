@@ -317,4 +317,39 @@ TEST_CASE("JParameterManager_ArrayParams") {
     }
 }
 
+TEST_CASE("JParameterManager_Replicating_Issue_233") {
+    JParameterManager jpm;
+
+    SECTION("Double Test case: 1") {
+        const double testVal = 0.00000001;
+        std::string result = jpm.Stringify <double>(testVal);
+        REQUIRE(result == "0.00000001");
+    }
+    SECTION("Double Test case: 2") {
+        const double testVal = 0.01;
+        std::string result = jpm.Stringify <double>(testVal);
+        REQUIRE(result == "0.01");
+    }
+    SECTION("Double Test case: 3") {
+        const double testVal = 0.0;
+        std::string result = jpm.Stringify <double>(testVal);
+        REQUIRE(result == "0.0");
+    }
+
+    SECTION("Float Test case: 1") {
+        const float testVal = 0.0f;
+        std::string result = jpm.Stringify <float>(testVal);
+        REQUIRE(result == "0.0");
+    }
+
+    SECTION("Float Test case: 2") {
+        const float testVal = 0.0001f;
+        std::string result = jpm.Stringify <float>(testVal);
+        REQUIRE(result == "0.0001");
+    }
+
+
+
+}
+
 

@@ -359,7 +359,12 @@ template <typename T>
 inline std::string JParameterManager::Stringify(const T& value) {
     std::stringstream ss;
     ss << value;
-    return ss.str();
+    if (ss.str() != (std::to_string((uintptr_t)value))) {
+        return ss.str();
+    }
+    else {
+        return ss.str()+".0";
+    }    
 }
 
 // @brief Specialization for strings. The stream operator is not only redundant here, but it also splits the string (see Issue #191)
