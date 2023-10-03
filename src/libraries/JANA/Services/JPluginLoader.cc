@@ -139,7 +139,7 @@ void JPluginLoader::attach_plugins(JComponentManager* jcm) {
                         break;
                     } catch (...) {
                         paths_checked << "Loading failure: " << dlerror() << std::endl;
-                        LOG_DEBUG(m_logger) << "Loading failure: " << dlerror() << LOG_END;
+                        LOG_WARN(m_logger) << "Loading failure: " << dlerror() << LOG_END;
                         continue;
                     }
                 }
