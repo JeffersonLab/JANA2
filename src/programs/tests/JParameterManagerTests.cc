@@ -317,7 +317,7 @@ TEST_CASE("JParameterManager_ArrayParams") {
     }
 }
 
-TEST_CASE("JParameter: Issue 233") {
+TEST_CASE("JParameterManagerFloatingPointRoundTrip") {
     JParameterManager jpm;
 
     SECTION("Integer") {
@@ -376,5 +376,20 @@ TEST_CASE("JParameter: Issue 233") {
     }
 
 }
+
+
+TEST_CASE("JParameterManagerIssue233") {
+    JParameterManager jpm;
+    double x = 0.0;
+    jpm.SetDefaultParameter("x", x, "Description");
+    // This should NOT print out a warning about losing equality with itself after stringification
+
+    // We reproduce the logic inside SetDefaultParameter here so that CI can catch regressions
+    std::string x_stringified = JParameterManager::Stringify(x);
+    double x_roundtrip;
+    JParameterManager::Parse(x_stringified, x_roundtrip);
+    REQUIRE(JParameterManager::Equals(x_roundtrip, x));
+}
+
 
 
