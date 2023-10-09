@@ -11,6 +11,7 @@
 #include <array>
 #include <map>
 #include <cmath>
+#include <iomanip>
 
 #include <JANA/JLogger.h>
 #include <JANA/JException.h>
