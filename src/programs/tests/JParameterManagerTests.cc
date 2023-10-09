@@ -317,49 +317,62 @@ TEST_CASE("JParameterManager_ArrayParams") {
     }
 }
 
-TEST_CASE("JParamter: Issue 233:") {
+TEST_CASE("JParameter: Issue 233") {
     JParameterManager jpm;
 
-    SECTION("int Test case: ") {
-        const int testVal = 123;
-        int temp;
-        jpm.Parse<int>(jpm.Stringify(testVal), temp);
-        REQUIRE(temp == testVal);    
+    SECTION("Integer") {
+        const std::string testValString = jpm.Stringify(123);
+        REQUIRE(testValString == "123");
+        int testValParsed;
+        jpm.Parse<int>(testValString, testValParsed);
+        REQUIRE(testValParsed == 123);
     }
 
-    SECTION("double Test case: 1") {
+    SECTION("Double requiring low precision") {
         const double testVal = 123;
-        double temp;
-        jpm.Parse<double>(jpm.Stringify(testVal), temp);
-        REQUIRE(temp == testVal);    
+        const std::string testValString = jpm.Stringify(testVal);
+        REQUIRE(testValString == "123");
+        double testValParsed;
+        jpm.Parse<double>(testValString, testValParsed);
+        REQUIRE(testValParsed == 123.0);
     }
 
-    SECTION("double Test case: 2") {
+    SECTION("Double requiring low precision, with extra zeros") {
         const double testVal = 123.0;
-        double temp;
-        jpm.Parse<double>(jpm.Stringify(testVal), temp);
-        REQUIRE(temp == testVal);    
+        const std::string testValString = jpm.Stringify(testVal);
+        REQUIRE(testValString == "123");
+        double testValParsed;
+        jpm.Parse<double>(testValString, testValParsed);
+        REQUIRE(testValParsed == 123.0);
     }
 
-    SECTION("double Test case: 3") {
-        const double testVal = 123.00001;
-        double temp;
-        jpm.Parse<double>(jpm.Stringify(testVal), temp);
-        REQUIRE(temp == testVal);    
+    SECTION("Double requiring high precision") {
+        const double testVal = 123.0001;
+        const std::string testValString = jpm.Stringify(testVal);
+        std::cout << "High-precision double stringified to " << testValString << std::endl;
+        // REQUIRE(testValString == "123.0001");
+        double testValParsed;
+        jpm.Parse<double>(testValString, testValParsed);
+        REQUIRE(testValParsed == 123.0001);
     }
 
-    SECTION("float Test case: 1") {
+    SECTION("Float requiring high precision") {
         const float testVal = 123.0001f;
-        float temp;
-        jpm.Parse<float>(jpm.Stringify(testVal), temp);
-        REQUIRE(temp == testVal);    
+        const std::string testValString = jpm.Stringify(testVal);
+        std::cout << "High-precision float stringified to " << testValString << std::endl;
+        // REQUIRE(testValString == "123.0001");
+        float testValParsed;
+        jpm.Parse<float>(testValString, testValParsed);
+        REQUIRE(testValParsed == 123.0001f);
     }
 
-    SECTION("float Test case: 2") {
+    SECTION("Float requiring low precision") {
         const float testVal = 123.0f;
-        float temp;
-        jpm.Parse<float>(jpm.Stringify(testVal), temp);
-        REQUIRE(temp == testVal);    
+        const std::string testValString = jpm.Stringify(testVal);
+        REQUIRE(testValString == "123");
+        float testValParsed;
+        jpm.Parse<float>(testValString, testValParsed);
+        REQUIRE(testValParsed == 123.0f);
     }
 
 }

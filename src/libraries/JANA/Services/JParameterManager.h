@@ -5,6 +5,7 @@
 #ifndef _JParameterManager_h_
 #define _JParameterManager_h_
 
+#include <limits>
 #include <string>
 #include <algorithm>
 #include <vector>
@@ -120,12 +121,6 @@ public:
     */
     template<typename T>
     static std::string Stringify(const T& value);
-    
-    template<typename T>
-    static std::string Stringify(const float value);
-
-    template<typename T>
-    static std::string Stringify(const double value);
     
     template<typename T>
     static std::string Stringify(const std::vector<T>& values);
@@ -369,35 +364,35 @@ inline void JParameterManager::Parse(const std::string& value, std::vector<T> &v
 template <typename T>
 inline std::string JParameterManager::Stringify(const T& value) {
     std::stringstream ss;
-    ss << std::setprecision(30) << value ; 
-    return ss.str();    
+    ss << value;
+    return ss.str();
 }
 
-// Template specialization for Stringifying a float  
-template <typename T>
-inline std::string JParameterManager::Stringify(const float value) {
+template <>
+inline std::string JParameterManager::Stringify(const float& value) {
     std::stringstream ss;
-    ss << value;
-    float tempVal;
-    Parse(ss.str(), tempVal);
-    if (!(value == tempVal)){
-        ss << std::setprecision(30) << tempVal;
-    }  
-    return ss.str();    
+    // Use enough precision to make sure that the "float -> string -> float" roundtrip is exact. 
+    // The stringstream << operator is smart enough to give us a clean representation when one is available.
+    ss << std::setprecision(std::numeric_limits<float>::max_digits10) << value;
+    return ss.str();
+}
+template <>
+inline std::string JParameterManager::Stringify(const double& value) {
+    std::stringstream ss;
+    // Use enough precision to make sure that the "double -> string -> double" roundtrip is exact. 
+    // The stringstream << operator is smart enough to give us a clean representation when one is available.
+    ss << std::setprecision(std::numeric_limits<double>::max_digits10) << value;
+    return ss.str();
+}
+template <>
+inline std::string JParameterManager::Stringify(const long double& value) {
+    std::stringstream ss;
+    // Use enough precision to make sure that the "long double -> string -> long double" roundtrip is exact. 
+    // The stringstream << operator is smart enough to give us a clean representation when one is available.
+    ss << std::setprecision(std::numeric_limits<long double>::max_digits10) << value;
+    return ss.str();
 }
 
-// Template specialization for Stringifying a double 
-template <typename T>
-inline std::string JParameterManager::Stringify(const double value) {
-    std::stringstream ss;
-    ss << value;
-    double tempVal;
-    Parse(ss.str(), tempVal);
-    if (!(value == tempVal)){
-        ss << std::setprecision(30) << tempVal;
-    } 
-    return ss.str();    
-}
 // @brief Specialization for strings. The stream operator is not only redundant here, but it also splits the string (see Issue #191)
 template <>
 inline std::string JParameterManager::Stringify(const std::string& value) {
@@ -418,6 +413,7 @@ inline std::string JParameterManager::Stringify(const std::vector<T> &values) {
     }
     return ss.str();
 }
+
 
 // @brief Template for generically stringifying an array
 template <typename T, size_t N>
