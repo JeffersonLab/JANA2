@@ -113,9 +113,19 @@ public:
     template<typename T, size_t arrSize>
     static inline void Parse(const std::string& value, std::array<T,arrSize>& out); 
 
+    /*
+    Template specialization done for double and float numbers in order to match the 
+    precision of the number with the string
+    */
     template<typename T>
     static std::string Stringify(const T& value);
+    
+    template<typename T>
+    static std::string Stringify(const float value);
 
+    template<typename T>
+    static std::string Stringify(const double value);
+    
     template<typename T>
     static std::string Stringify(const std::vector<T>& values);
 
@@ -358,16 +368,35 @@ inline void JParameterManager::Parse(const std::string& value, std::vector<T> &v
 template <typename T>
 inline std::string JParameterManager::Stringify(const T& value) {
     std::stringstream ss;
-    /* ss << value;
-    T tempVal;
-    Parse(ss.str(), tempVal);
-    if (!(value == tempVal)){
-        ss << std::setprecision(30) << tempVal;
-    } */
     ss << std::setprecision(30) << value ; 
     return ss.str();    
 }
 
+// Template specialization for Stringifying a float  
+template <typename T>
+inline std::string JParameterManager::Stringify(const float value) {
+    std::stringstream ss;
+    ss << value;
+    float tempVal;
+    Parse(ss.str(), tempVal);
+    if (!(value == tempVal)){
+        ss << std::setprecision(30) << tempVal;
+    }  
+    return ss.str();    
+}
+
+// Template specialization for Stringifying a double 
+template <typename T>
+inline std::string JParameterManager::Stringify(const double value) {
+    std::stringstream ss;
+    ss << value;
+    double tempVal;
+    Parse(ss.str(), tempVal);
+    if (!(value == tempVal)){
+        ss << std::setprecision(30) << tempVal;
+    } 
+    return ss.str();    
+}
 // @brief Specialization for strings. The stream operator is not only redundant here, but it also splits the string (see Issue #191)
 template <>
 inline std::string JParameterManager::Stringify(const std::string& value) {
