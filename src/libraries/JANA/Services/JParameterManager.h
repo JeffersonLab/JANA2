@@ -430,20 +430,14 @@ inline std::string JParameterManager::Stringify(const std::array<T,N> &values) {
     return ss.str();
 }
 
+// @brief Equals() is called internally by SetDefaultParameter. This allows the user to define equivalence relations on custom data types so that
+// they can silence any spurious "loses equality with itself after stringification" warnings. Generally you should try specializing Stringify and Parse
+// first to normalize your data representation.
 template <typename T>
 inline bool JParameterManager::Equals(const T& lhs, const T& rhs) {
     return lhs == rhs;
 }
 
-template <>
-inline bool JParameterManager::Equals(const float& lhs, const float& rhs) {
-    return (std::abs(lhs-rhs) < std::abs(lhs)*std::numeric_limits<float>::epsilon());
-}
-
-template <>
-inline bool JParameterManager::Equals(const double& lhs, const double& rhs) {
-    return (std::abs(lhs-rhs) < std::abs(lhs)*std::numeric_limits<double>::epsilon());
-}
 
 #endif // _JParameterManager_h_
 
