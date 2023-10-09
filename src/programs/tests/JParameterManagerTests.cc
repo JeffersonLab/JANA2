@@ -402,32 +402,16 @@ TEST_CASE("JParameterManager_Issue217StringsWithWhitespace") {
     }
 }
 
-#if __cplusplus >= 201703L
-template <typename T>
-void fakeParse(std::string s, T& out) {
-    constexpr bool parseable = JTypeInfo::is_parseable<T>::value;
-    static_assert(parseable, "Type is not automatically supported by the ParameterManager. To use, implement a template specialization for Parse(std::string in, T& out).");
-    if constexpr (parseable) {
-        std::stringstream ss;
-        ss >> out;
-    }
-}
-#else
-template <typename T>
-void fakeParse(std::string s, T& out) {
-    std::stringstream ss;
-    ss >> out;
-}
-#endif
-}
-
 
 enum class Mood {Good, Bad, Mediocre};
-TEST_CASE("Error message on bad parse") {
+TEST_CASE("JParameterManager_CompileTimeErrorForParseAndStringify") {
+
     int x;
-    fakeParse("22", x);
+    JParameterManager::Parse("22", x);
     Mood m;
-    fakeParse("Mediocre", m);
+    // Uncomment these to test compile-time error message
+    //JParameterManager::Parse("Mediocre", m);
+    //JParameterManager::Stringify(m);
 }
 
 
