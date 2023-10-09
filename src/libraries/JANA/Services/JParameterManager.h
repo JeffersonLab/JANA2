@@ -5,12 +5,14 @@
 #ifndef _JParameterManager_h_
 #define _JParameterManager_h_
 
+#include <limits>
 #include <string>
 #include <algorithm>
 #include <vector>
 #include <array>
 #include <map>
 #include <cmath>
+#include <iomanip>
 
 #include <JANA/JLogger.h>
 #include <JANA/JException.h>
@@ -113,9 +115,13 @@ public:
     template<typename T, size_t arrSize>
     static inline void Parse(const std::string& value, std::array<T,arrSize>& out); 
 
+    /*
+    Template specialization done for double and float numbers in order to match the 
+    precision of the number with the string
+    */
     template<typename T>
     static std::string Stringify(const T& value);
-
+    
     template<typename T>
     static std::string Stringify(const std::vector<T>& values);
 
@@ -362,6 +368,31 @@ inline std::string JParameterManager::Stringify(const T& value) {
     return ss.str();
 }
 
+template <>
+inline std::string JParameterManager::Stringify(const float& value) {
+    std::stringstream ss;
+    // Use enough precision to make sure that the "float -> string -> float" roundtrip is exact. 
+    // The stringstream << operator is smart enough to give us a clean representation when one is available.
+    ss << std::setprecision(std::numeric_limits<float>::max_digits10) << value;
+    return ss.str();
+}
+template <>
+inline std::string JParameterManager::Stringify(const double& value) {
+    std::stringstream ss;
+    // Use enough precision to make sure that the "double -> string -> double" roundtrip is exact. 
+    // The stringstream << operator is smart enough to give us a clean representation when one is available.
+    ss << std::setprecision(std::numeric_limits<double>::max_digits10) << value;
+    return ss.str();
+}
+template <>
+inline std::string JParameterManager::Stringify(const long double& value) {
+    std::stringstream ss;
+    // Use enough precision to make sure that the "long double -> string -> long double" roundtrip is exact. 
+    // The stringstream << operator is smart enough to give us a clean representation when one is available.
+    ss << std::setprecision(std::numeric_limits<long double>::max_digits10) << value;
+    return ss.str();
+}
+
 // @brief Specialization for strings. The stream operator is not only redundant here, but it also splits the string (see Issue #191)
 template <>
 inline std::string JParameterManager::Stringify(const std::string& value) {
@@ -383,6 +414,7 @@ inline std::string JParameterManager::Stringify(const std::vector<T> &values) {
     return ss.str();
 }
 
+
 // @brief Template for generically stringifying an array
 template <typename T, size_t N>
 inline std::string JParameterManager::Stringify(const std::array<T,N> &values) {
@@ -398,20 +430,14 @@ inline std::string JParameterManager::Stringify(const std::array<T,N> &values) {
     return ss.str();
 }
 
+// @brief Equals() is called internally by SetDefaultParameter. This allows the user to define equivalence relations on custom data types so that
+// they can silence any spurious "loses equality with itself after stringification" warnings. Generally you should try specializing Stringify and Parse
+// first to normalize your data representation.
 template <typename T>
 inline bool JParameterManager::Equals(const T& lhs, const T& rhs) {
     return lhs == rhs;
 }
 
-template <>
-inline bool JParameterManager::Equals(const float& lhs, const float& rhs) {
-    return (std::abs(lhs-rhs) < std::abs(lhs)*std::numeric_limits<float>::epsilon());
-}
-
-template <>
-inline bool JParameterManager::Equals(const double& lhs, const double& rhs) {
-    return (std::abs(lhs-rhs) < std::abs(lhs)*std::numeric_limits<double>::epsilon());
-}
 
 #endif // _JParameterManager_h_
 

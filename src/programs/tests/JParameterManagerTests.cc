@@ -317,6 +317,81 @@ TEST_CASE("JParameterManager_ArrayParams") {
     }
 }
 
+TEST_CASE("JParameterManagerFloatingPointRoundTrip") {
+    JParameterManager jpm;
+
+    SECTION("Integer") {
+        const std::string testValString = jpm.Stringify(123);
+        REQUIRE(testValString == "123");
+        int testValParsed;
+        jpm.Parse<int>(testValString, testValParsed);
+        REQUIRE(testValParsed == 123);
+    }
+
+    SECTION("Double requiring low precision") {
+        const double testVal = 123;
+        const std::string testValString = jpm.Stringify(testVal);
+        REQUIRE(testValString == "123");
+        double testValParsed;
+        jpm.Parse<double>(testValString, testValParsed);
+        REQUIRE(testValParsed == 123.0);
+    }
+
+    SECTION("Double requiring low precision, with extra zeros") {
+        const double testVal = 123.0;
+        const std::string testValString = jpm.Stringify(testVal);
+        REQUIRE(testValString == "123");
+        double testValParsed;
+        jpm.Parse<double>(testValString, testValParsed);
+        REQUIRE(testValParsed == 123.0);
+    }
+
+    SECTION("Double requiring high precision") {
+        const double testVal = 123.0001;
+        const std::string testValString = jpm.Stringify(testVal);
+        std::cout << "High-precision double stringified to " << testValString << std::endl;
+        // REQUIRE(testValString == "123.0001");
+        double testValParsed;
+        jpm.Parse<double>(testValString, testValParsed);
+        REQUIRE(testValParsed == 123.0001);
+    }
+
+    SECTION("Float requiring high precision") {
+        const float testVal = 123.0001f;
+        const std::string testValString = jpm.Stringify(testVal);
+        std::cout << "High-precision float stringified to " << testValString << std::endl;
+        // REQUIRE(testValString == "123.0001");
+        float testValParsed;
+        jpm.Parse<float>(testValString, testValParsed);
+        REQUIRE(testValParsed == 123.0001f);
+    }
+
+    SECTION("Float requiring low precision") {
+        const float testVal = 123.0f;
+        const std::string testValString = jpm.Stringify(testVal);
+        REQUIRE(testValString == "123");
+        float testValParsed;
+        jpm.Parse<float>(testValString, testValParsed);
+        REQUIRE(testValParsed == 123.0f);
+    }
+
+}
+
+
+TEST_CASE("JParameterManagerIssue233") {
+    JParameterManager jpm;
+    double x = 0.0;
+    jpm.SetDefaultParameter("x", x, "Description");
+    // This should NOT print out a warning about losing equality with itself after stringification
+
+    // We reproduce the logic inside SetDefaultParameter here so that CI can catch regressions
+    std::string x_stringified = JParameterManager::Stringify(x);
+    double x_roundtrip;
+    JParameterManager::Parse(x_stringified, x_roundtrip);
+    REQUIRE(JParameterManager::Equals(x_roundtrip, x));
+}
+
+
 TEST_CASE("JParameterManager_Issue217StringsWithWhitespace") {
     JParameterManager jpm;
     SECTION("Reading a array of strings") {
