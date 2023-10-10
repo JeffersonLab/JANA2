@@ -403,3 +403,18 @@ TEST_CASE("JParameterManager_Issue217StringsWithWhitespace") {
 }
 
 
+enum class Mood {Good, Bad, Mediocre};
+TEST_CASE("JParameterManager_CompileTimeErrorForParseAndStringify") {
+
+    int x;
+    JParameterManager::Parse("22", x);
+    Mood m;
+    // Uncomment these to test compile-time error message
+    //JParameterManager::Parse("Mediocre", m);
+    //JParameterManager::Stringify(m);
+}
+
+
+
+
+

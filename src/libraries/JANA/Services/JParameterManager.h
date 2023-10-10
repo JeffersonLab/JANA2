@@ -311,12 +311,25 @@ inline T JParameterManager::RegisterParameter(std::string name, const T default_
 }
 
 
-/// @brief Logic for parsing different types in a generic way
+#if __cplusplus >= 201703L
+/// @brief Basic implementation of Parse for C++17 and newer. Provides a helpful error message when attempting to parse a type that doesn't come with a stream operator.
 template <typename T>
-void JParameterManager::Parse(const std::string& value, T& val) {
-    std::stringstream ss(value);
-    ss >> val;
+void JParameterManager::Parse(const std::string& s, T& out) {
+    constexpr bool parseable = JTypeInfo::is_parseable<T>::value;
+    static_assert(parseable, "Type is not automatically parseable by JParameterManager. To use, provide a template specialization for JParameterManager::Parse(std::string in, T& out).");
+    if constexpr (parseable) {
+        std::stringstream ss(s);
+        ss >> out;
+    }
 }
+#else
+/// @brief Basic implementation of Parse for C++14 and earlier.
+template <typename T>
+void JParameterManager::Parse(const std::string& s, T& out) {
+    std::stringstream ss(s);
+    ss >> out;
+}
+#endif
 
 
 /// @brief Specialization for string. 
@@ -360,13 +373,28 @@ inline void JParameterManager::Parse(const std::string& value, std::vector<T> &v
     }
 }
 
-/// @brief Logic for stringifying different types in a generic way
+#if __cplusplus >= 201703L
+/// @brief Basic implementation of Stringify for C++17 and newer. Provides a helpful error message when attempting to stringify a type that doesn't come with a stream operator.
+template <typename T>
+inline std::string JParameterManager::Stringify(const T& value) {
+    constexpr bool serializable = JTypeInfo::is_serializable<T>::value;
+    static_assert(serializable, "Type is not automatically serializable by JParameterManager. To use, provide a template specialization for JParameterManager::Stringify(const T& val) -> std::string.");
+    if constexpr (serializable) {
+        std::stringstream ss;
+        ss << value;
+        return ss.str();
+    }
+}
+#else
+/// @brief Basic implementation of Parse for C++14 and earlier.
 template <typename T>
 inline std::string JParameterManager::Stringify(const T& value) {
     std::stringstream ss;
     ss << value;
     return ss.str();
 }
+#endif
+
 
 template <>
 inline std::string JParameterManager::Stringify(const float& value) {
