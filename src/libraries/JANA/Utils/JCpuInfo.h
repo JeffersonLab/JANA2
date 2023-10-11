@@ -8,6 +8,8 @@
 
 namespace JCpuInfo {
 
+    const uint32_t getCacheLineByte = 64;
+
     size_t GetNumCpus();
 
     uint32_t GetCpuID();

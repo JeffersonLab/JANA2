@@ -10,9 +10,10 @@
 #include <mutex>
 #include <JANA/Services/JLoggingService.h>
 #include <JANA/JEvent.h>
+#include <JANA/Utils/JCpuInfo.h>
 
 #ifndef CACHE_LINE_BYTES
-#define CACHE_LINE_BYTES 64
+#define CACHE_LINE_BYTES JCpuInfo::getCacheLineByte
 #endif
 
 

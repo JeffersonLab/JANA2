@@ -13,6 +13,7 @@
 #include <iostream>
 #include <type_traits>
 #include <memory>
+#include <JANA/Utils/JCpuInfo.h>
 #include <algorithm>
 #include <iterator>
 
@@ -98,7 +99,7 @@ template <typename DType> class JResourcePool
 
             //cache line size is 64 for ifarm1402, gcc won't allow larger than 128
             //the cache line size is in /sys/devices/system/cpu/cpu0/cache/index0/coherency_line_size
-            return 64; //units are in bytes
+            return JCpuInfo::getCacheLineByte ; //units are in bytes
         }
 
     private:

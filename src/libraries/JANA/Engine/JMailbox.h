@@ -8,6 +8,7 @@
 
 #include <queue>
 #include <mutex>
+#include <JANA/Utils/JCpuInfo.h>
 #include <JANA/Services/JLoggingService.h>
 
 /// JMailbox is a threadsafe event queue designed for communication between Arrows.
@@ -33,7 +34,7 @@
 
 
 #ifndef CACHE_LINE_BYTES
-#define CACHE_LINE_BYTES 64
+#define CACHE_LINE_BYTES JCpuInfo::getCacheLineByte
 #endif
 
 
