@@ -33,11 +33,6 @@
 ///   3. Triple mutex trick to give push() priority?
 
 
-#ifndef CACHE_LINE_BYTES
-#define CACHE_LINE_BYTES JCpuInfo::JANA2_CACHE_LINE_BYTES
-#endif
-
-
 template <typename T>
 class JMailbox {
 

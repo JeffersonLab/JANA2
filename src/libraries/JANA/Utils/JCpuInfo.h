@@ -1,14 +1,15 @@
 
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
-
 #pragma once
+
+#ifndef JANA2_CACHE_LINE_BYTES
+#define JANA2_CACHE_LINE_BYTES 64
+#endif
 
 #include <thread>
 
 namespace JCpuInfo {
-
-    const uint32_t JANA2_CACHE_LINE_BYTES = 64;
 
     size_t GetNumCpus();
 
