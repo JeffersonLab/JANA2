@@ -25,7 +25,6 @@ extern JApplication* japp;
 #include <JANA/Services/JParameterManager.h>
 #include <JANA/Services/JLoggingService.h>
 #include <JANA/Status/JComponentSummary.h>
-#include <JANA/Utils/JResourcePool.h>
 #include <JANA/Status/JPerfSummary.h>
 
 
