@@ -8,6 +8,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <atomic>
 
 class JApplication;
 class JEventProcessor;
@@ -29,7 +30,7 @@ extern JApplication* japp;
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
-/// JANA application class (singleton).
+/// JANA application class
 ///
 /// The JApplication class serves as a central access point for getting to most things
 /// in the JANA application. It owns the JThreadManager, JParameterManager, etc.
