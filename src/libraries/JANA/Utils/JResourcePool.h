@@ -99,7 +99,7 @@ template <typename DType> class JResourcePool
 
             //cache line size is 64 for ifarm1402, gcc won't allow larger than 128
             //the cache line size is in /sys/devices/system/cpu/cpu0/cache/index0/coherency_line_size
-            return JCpuInfo::getCacheLineByte ; //units are in bytes
+            return JCpuInfo::JANA2_CACHE_LINE_BYTES ; //units are in bytes
         }
 
     private:

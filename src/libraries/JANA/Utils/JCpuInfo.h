@@ -8,7 +8,7 @@
 
 namespace JCpuInfo {
 
-    const uint32_t getCacheLineByte = 64;
+    const uint32_t JANA2_CACHE_LINE_BYTES = 64;
 
     size_t GetNumCpus();
 

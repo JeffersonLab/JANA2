@@ -13,7 +13,7 @@
 class JEventPool {
 private:
 
-    struct alignas(JCpuInfo::getCacheLineByte) LocalPool {
+    struct alignas(JCpuInfo::JANA2_CACHE_LINE_BYTES) LocalPool {
         std::mutex mutex;
         std::vector<std::shared_ptr<JEvent>> events;
     };

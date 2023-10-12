@@ -34,7 +34,7 @@
 
 
 #ifndef CACHE_LINE_BYTES
-#define CACHE_LINE_BYTES JCpuInfo::getCacheLineByte
+#define CACHE_LINE_BYTES JCpuInfo::JANA2_CACHE_LINE_BYTES
 #endif
 
 
