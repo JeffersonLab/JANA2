@@ -8,6 +8,7 @@
 
 #include <queue>
 #include <mutex>
+#include <JANA/Utils/JCpuInfo.h>
 #include <JANA/Services/JLoggingService.h>
 
 /// JMailbox is a threadsafe event queue designed for communication between Arrows.
@@ -30,11 +31,6 @@
 ///   1. Pad DomainLocalMailbox
 ///   2. Enable work stealing
 ///   3. Triple mutex trick to give push() priority?
-
-
-#ifndef CACHE_LINE_BYTES
-#define CACHE_LINE_BYTES 64
-#endif
 
 
 template <typename T>

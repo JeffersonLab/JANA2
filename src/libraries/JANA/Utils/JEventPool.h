@@ -7,13 +7,13 @@
 #define JANA2_JEVENTPOOL_H
 
 #include <JANA/JEvent.h>
+#include <JANA/Utils/JCpuInfo.h>
 #include <JANA/JFactoryGenerator.h>
 #include <JANA/Services/JComponentManager.h>
-
 class JEventPool {
 private:
 
-    struct alignas(64) LocalPool {
+    struct alignas(JANA2_CACHE_LINE_BYTES) LocalPool {
         std::mutex mutex;
         std::vector<std::shared_ptr<JEvent>> events;
     };

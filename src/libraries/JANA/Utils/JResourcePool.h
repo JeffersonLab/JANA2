@@ -13,6 +13,7 @@
 #include <iostream>
 #include <type_traits>
 #include <memory>
+#include <JANA/Utils/JCpuInfo.h>
 #include <algorithm>
 #include <iterator>
 
@@ -88,18 +89,6 @@ template <typename DType> class JResourcePool
         std::size_t Get_PoolSize(void) const;
         std::size_t Get_NumObjectsAllThreads(void) const{return dObjectCounter;}
 
-        static constexpr unsigned int Get_CacheLineSize(void)
-        {
-            /// Returns the cache line size for the processor of the target platform.
-            /*! The cache line size is useful for creating a buffer to make sure that a variable accessed by multiple threads does not share the cache line it is on.
-                This is useful for variables that may be written-to by one of the threads, because the thread will acquire locked access to the entire cache line.
-                This blocks other threads from operating on the other data stored on the cache line. Note that it is also important to align the shared data as well.
-                See http://www.drdobbs.com/parallel/eliminate-false-sharing/217500206?pgno=4 for more details. */
-
-            //cache line size is 64 for ifarm1402, gcc won't allow larger than 128
-            //the cache line size is in /sys/devices/system/cpu/cpu0/cache/index0/coherency_line_size
-            return 64; //units are in bytes
-        }
 
     private:
 
@@ -119,10 +108,10 @@ template <typename DType> class JResourcePool
         void Recycle_Resources_StaticPool(std::vector<DType*>& sResources);
         void Recycle_Resource_StaticPool(DType* sResource);
 
-        alignas(Get_CacheLineSize()) std::size_t dDebugLevel = 0;
+        alignas(JANA2_CACHE_LINE_BYTES) std::size_t dDebugLevel = 0;
 
         //static class members have external linkage: same instance shared between every translation unit (would be globally, put only private access)
-        alignas(Get_CacheLineSize()) static std::atomic<bool> dPoolLock;
+        alignas(JANA2_CACHE_LINE_BYTES) static std::atomic<bool> dPoolLock;
         alignas(Get_CacheLineSize()) static std::vector<DType*> mResourcePool;
         alignas(Get_CacheLineSize()) static std::size_t dMaxPoolSize;
         alignas(Get_CacheLineSize()) static std::size_t dPoolCounter; //must be accessed within a lock due to how it's used in destructor: freeing all resources
@@ -147,11 +136,11 @@ template <typename DType> class JSharedPtrRecycler
 
 //STATIC MEMBER DEFINITIONS
 //Since these are part of a template, these statics will only be defined once, no matter how much this header is included
-template <typename DType> std::atomic<bool> JResourcePool<DType>::dPoolLock{0};
-template <typename DType> std::vector<DType*> JResourcePool<DType>::mResourcePool = {};
-template <typename DType> std::size_t JResourcePool<DType>::dMaxPoolSize{10};
-template <typename DType> std::size_t JResourcePool<DType>::dPoolCounter{0};
-template <typename DType> std::atomic<std::size_t> JResourcePool<DType>::dObjectCounter{0};
+template <typename DType> alignas(JANA2_CACHE_LINE_BYTES) std::atomic<bool> JResourcePool<DType>::dPoolLock{0};
+template <typename DType> alignas(JANA2_CACHE_LINE_BYTES) std::vector<DType*> JResourcePool<DType>::mResourcePool = {};
+template <typename DType> alignas(JANA2_CACHE_LINE_BYTES) std::size_t JResourcePool<DType>::dMaxPoolSize{10};
+template <typename DType> alignas(JANA2_CACHE_LINE_BYTES) std::size_t JResourcePool<DType>::dPoolCounter{0};
+template <typename DType> alignas(JANA2_CACHE_LINE_BYTES) std::atomic<std::size_t> JResourcePool<DType>::dObjectCounter{0};
 
 //CONSTRUCTORS
 template <typename DType> JResourcePool<DType>::JResourcePool(std::size_t sMaxPoolSize, std::size_t sDebugLevel) : JResourcePool()

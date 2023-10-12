@@ -10,11 +10,7 @@
 #include <mutex>
 #include <JANA/Services/JLoggingService.h>
 #include <JANA/JEvent.h>
-
-#ifndef CACHE_LINE_BYTES
-#define CACHE_LINE_BYTES 64
-#endif
-
+#include <JANA/Utils/JCpuInfo.h>
 
 template <typename SubeventT>
 struct SubeventWrapper {
@@ -37,7 +33,7 @@ class JSubeventMailbox {
 
 private:
 
-    struct alignas(CACHE_LINE_BYTES) LocalMailbox {
+    struct alignas(JANA2_CACHE_LINE_BYTES) LocalMailbox {
         std::mutex mutex;
         std::deque<std::shared_ptr<JEvent>> ready;
         std::map<std::shared_ptr<JEvent>, size_t> in_progress;
