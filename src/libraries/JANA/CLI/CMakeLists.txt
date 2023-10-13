@@ -11,7 +11,7 @@ set_property(
         DIRECTORY
         APPEND
         PROPERTY CMAKE_CONFIGURE_DEPENDS
-        ${CMAKE_SOURCE_DIR}/.git/HEAD
+        ${PROJECT_SOURCE_DIR}/.git/HEAD
 )
 
 execute_process(

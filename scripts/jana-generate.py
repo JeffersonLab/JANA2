@@ -370,7 +370,7 @@ endif()
 
 add_library({name}_plugin SHARED ${{{name}_PLUGIN_SOURCES}})
 
-target_include_directories({name}_plugin PUBLIC  ${{CMAKE_SOURCE_DIR}} ${{JANA_INCLUDE_DIR}} {extra_includes})
+target_include_directories({name}_plugin PUBLIC  ${{PROJECT_SOURCE_DIR}} ${{JANA_INCLUDE_DIR}} {extra_includes})
 target_link_libraries({name}_plugin ${{JANA_LIBRARY}} {extra_libraries})
 set_target_properties({name}_plugin PROPERTIES PREFIX "" OUTPUT_NAME "{name}" SUFFIX ".so")
 
@@ -410,7 +410,7 @@ endif()
 
 add_library({name}_plugin SHARED ${{{name}_PLUGIN_SOURCES}})
 
-target_include_directories({name}_plugin PUBLIC ${{CMAKE_SOURCE_DIR}} ${{JANA_INCLUDE_DIR}} {extra_includes})
+target_include_directories({name}_plugin PUBLIC ${{PROJECT_SOURCE_DIR}} ${{JANA_INCLUDE_DIR}} {extra_includes})
 target_link_libraries({name}_plugin ${{JANA_LIB}} {extra_libraries})
 set_target_properties({name}_plugin PROPERTIES PREFIX "" OUTPUT_NAME "{name}" SUFFIX ".so")
 
