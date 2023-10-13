@@ -12,7 +12,7 @@
 # in generating the jana-config script so that it can report those flags
 # for use when building against this version of JANA.
 #
-# In addition, some variables such as HAVE_ROOT are set which can be used
+# In addition, some variables such as JANA2_HAVE_ROOT are set which can be used
 # in preprocessor directives to conditionally compile code depending on
 # whether the 3rd party package is present.
 #
@@ -26,7 +26,7 @@ execute_process(COMMAND SBMS/osrelease.pl
 
 # ROOT
 if(DEFINED ENV{ROOTSYS})
-    set(HAVE_ROOT 1)
+    set(JANA2_HAVE_ROOT 1)
     set(ROOTSYS $ENV{ROOTSYS})
 
     execute_process(COMMAND $ENV{ROOTSYS}/bin/root-config --cflags
@@ -38,7 +38,7 @@ if(DEFINED ENV{ROOTSYS})
                     OUTPUT_STRIP_TRAILING_WHITESPACE)
 else()
 #    message(STATUS "Did not find ROOT")
-    set(HAVE_ROOT 0)
+    set(JANA2_HAVE_ROOT 0)
 endif()
 
 # XERCESC

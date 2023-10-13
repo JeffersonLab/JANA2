@@ -29,13 +29,13 @@ using std::endl;
 #include <pybind11/pybind11.h>
 namespace py = pybind11;
 
-#ifdef HAVE_ROOT
+#ifdef JANA2_HAVE_ROOT
 #include <TObject.h>
 #include <TClass.h>
 #include <TDataMember.h>
 #include <TMethodCall.h>
 #include <TList.h>
-#endif // HAVE_ROOT
+#endif // JANA2_HAVE_ROOT
 
 #include <JANA/JEventProcessor.h>
 #include <JANA/JEvent.h>
@@ -113,9 +113,9 @@ class JEventProcessorPY {
                 LOG_ERROR(default_cout_logger) << "Unable to find factory specified for prefetching: factory=" << p.first << " tag=" << p.second << LOG_END;
             }else {
                 auto v = fac->GetAs<JObject>();
-#ifdef HAVE_ROOT
+#ifdef JANA2_HAVE_ROOT
                 if( v.empty() )fac->GetAs<TObject>();
-#endif // HAVE_ROOT
+#endif // JANA2_HAVE_ROOT
 
                 _DBG_<<"Prefetching from factory: " << p.first <<":" << p.second << "  - " << v.size() << " objects" <<std::endl;
             }

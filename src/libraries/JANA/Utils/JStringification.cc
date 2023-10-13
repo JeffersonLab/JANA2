@@ -47,7 +47,7 @@ void JStringification::GetObjectSummaries(std::map<std::string, JObjectSummary> 
             ss << "0x" << std::hex << (uint64_t)jobj << std::dec;
             objects[ss.str()] = summary; // key is address of object converted to string
         }
-#ifdef HAVE_ROOT
+#ifdef JANA2_HAVE_ROOT
         // For objects inheriting from TObject, we try and convert members automatically
         // into JObjectSummary form. This relies on dictionaries being compiled in.
         // (see ROOT_GENERATE_DICTIONARY for cmake files).
@@ -103,7 +103,7 @@ std::string JStringification::ObjectToJSON( const std::string &hexaddr, const JO
 //-------------------------------------------------------------
 // GetRootObjectMemberAsString
 //-------------------------------------------------------------
-#if HAVE_ROOT
+#if JANA2_HAVE_ROOT
 /// GetRootObjectMemberAsString is the entry point for converting members of
 /// TObject derived objects into strings. This really only works for a few
 /// primitive types, but is useful for debugging/viewing single events.
@@ -131,4 +131,4 @@ std::string JStringification::GetRootObjectMemberAsString(const TObject *tobj, c
     else if( type == "string"        ) return GetAddrAsString<std::string>(addr);
     return "unknown";
 }
-#endif // HAVE_ROOT
+#endif // JANA2_HAVE_ROOT

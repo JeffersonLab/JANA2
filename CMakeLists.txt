@@ -77,7 +77,7 @@ if (${USE_ROOT})
     endif()
     find_package(ROOT REQUIRED)
     include(${ROOT_USE_FILE})
-    add_compile_definitions(HAVE_ROOT)
+    add_compile_definitions(JANA2_HAVE_ROOT)
     include_directories(${ROOT_INCLUDE_DIRS})
     link_libraries(${ROOT_LIBRARIES})
     execute_process(

@@ -18,7 +18,7 @@ export JANA_HOME="@JANA_INSTALL_DIR@"
 export PATH=@JANA_INSTALL_DIR@/bin:${PATH}
 
 # ROOT
-if [ "@HAVE_ROOT@" == "1" ]; then
+if [ "@JANA2_HAVE_ROOT@" == "1" ]; then
     if [ -f "@ROOTSYS@/bin/thisroot.sh" ]; then
         unset ROOTSYS
         .  "@ROOTSYS@/bin/thisroot.sh"

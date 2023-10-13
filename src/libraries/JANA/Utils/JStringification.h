@@ -8,13 +8,13 @@
 
 #include <sstream>
 
-#ifdef HAVE_ROOT
+#ifdef JANA2_HAVE_ROOT
 #include <TObject.h>
 #include <TClass.h>
 #include <TDataMember.h>
 #include <TMethodCall.h>
 #include <TList.h>
-#endif // HAVE_ROOT
+#endif // JANA2_HAVE_ROOT
 
 #include <JANA/JObject.h>
 #include <JANA/JEvent.h>
@@ -44,9 +44,9 @@ public:
 
     template <typename T> std::string GetAddrAsString(void *addr) const;
 
-#ifdef HAVE_ROOT
+#ifdef JANA2_HAVE_ROOT
     std::string GetRootObjectMemberAsString(const TObject *tobj, const TDataMember *memitem, std::string type) const;
-#endif // HAVE_ROOT
+#endif // JANA2_HAVE_ROOT
 
 private:
 
