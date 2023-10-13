@@ -9,7 +9,7 @@
 
 void JMultifactory::Execute(const std::shared_ptr<const JEvent>& event) {
 
-#ifdef HAVE_PODIO
+#ifdef JANA2_HAVE_PODIO
     if (mNeedPodio) {
         mPodioFrame = GetOrCreateFrame(event);
     }

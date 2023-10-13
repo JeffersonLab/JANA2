@@ -3,7 +3,7 @@
 //
 
 #define HAVE_ROOT     @HAVE_ROOT@
-#define HAVE_XERCES   @HAVE_XERCES@
+#define JANA2_HAVE_XERCES   @JANA2_HAVE_XERCES@
 #define XERCES3       @XERCES3@
 #define HAVE_CCDB     @HAVE_CCDB@
 #define HAVE_NUMA     @HAVE_NUMA@

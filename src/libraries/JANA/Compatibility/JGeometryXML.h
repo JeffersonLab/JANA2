@@ -20,7 +20,7 @@
 
 
 
-#if HAVE_XERCES
+#if JANA2_HAVE_XERCES
 #if !defined(__CINT__) && !defined(__CLING__)
 
 #if XERCES3
@@ -54,7 +54,7 @@ class xercesc::DOMErrorHandler;
 class xercesc::DOMError;
 }
 #endif // __CINT__  __CLING__
-#endif // HAVE_XERCES
+#endif // JANA2_HAVE_XERCES
 
 
 class JGeometryXML:public JGeometry{
@@ -70,9 +70,9 @@ class JGeometryXML:public JGeometry{
         virtual const char* className(void){return static_className();}
          static const char* static_className(void){return "JGeometryXML";}
 
-#if HAVE_XERCES
+#if JANA2_HAVE_XERCES
                        void MapNodeNames(xercesc::DOMNode *current_node);
-#endif  // HAVE_XERCES
+#endif  // JANA2_HAVE_XERCES
                        bool Get(string xpath, string &sval);
                        bool Get(string xpath, map<string, string> &svals);
                        bool GetMultiple(string xpath, vector<string> &vsval);
@@ -94,11 +94,11 @@ class JGeometryXML:public JGeometry{
         string md5_checksum;
         map<string, string> found_xpaths; // used to store xpaths already found to speed up subsequent requests
         pthread_mutex_t found_xpaths_mutex;
-#if HAVE_XERCES
+#if JANA2_HAVE_XERCES
         map<xercesc::DOMNode*, string> node_names;
-#endif  // HAVE_XERCES
+#endif  // JANA2_HAVE_XERCES
 
-#if HAVE_XERCES
+#if JANA2_HAVE_XERCES
 
         class SearchParameters{
             public:
@@ -190,7 +190,7 @@ class JGeometryXML:public JGeometry{
             JCalibration *jcalib;
             bool PRINT_CHECKSUM_INPUT_FILES;
     };
-#endif  // HAVE_XERCES
+#endif  // JANA2_HAVE_XERCES
 
 };
 
