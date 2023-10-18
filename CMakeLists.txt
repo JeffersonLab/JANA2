@@ -125,7 +125,7 @@ if (${USE_PODIO})
     find_package(podio REQUIRED)
     add_compile_definitions(HAVE_PODIO)
     include_directories(SYSTEM ${podio_INCLUDE_DIR})
-    link_libraries(podio::podio podio::podioRootIO)
+    target_link_libraries(jana2_shared_lib podio::podio podio::podioRootIO)
 endif()
 
 #---------
