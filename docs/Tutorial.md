@@ -280,7 +280,7 @@ logic, we want to be able to access them independently.
 #include "Hit.h"
 // ...
 
-void RandomSource::GetEvent(std::shared_ptr<JEvent> event) {
+JEventSource::ReturnStatus RandomSource::GetEvent(std::shared_ptr<JEvent> event) {
     // ...
 
     /// Insert simulated data into event       // ADD ME
@@ -292,6 +292,7 @@ void RandomSource::GetEvent(std::shared_ptr<JEvent> event) {
     hits.push_back(new Hit(1, 1, 1.0, 0));     // ADD ME
     event->Insert(hits);                       // ADD ME
     //event->Insert(hits, "fcal");             // If we used a tag
+    return ReturnStatus::Success;
 }
 ```
 

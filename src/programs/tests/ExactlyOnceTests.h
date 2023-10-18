@@ -31,10 +31,11 @@ struct SimpleSource : public JEventSource {
         open_count += 1;
     }
 
-    void GetEvent(std::shared_ptr<JEvent>) override {
+    ReturnStatus GetEvent(std::shared_ptr<JEvent>) override {
         if (++event_count == 5) {
-            throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
+            return ReturnStatus::Finished;
         }
+        return ReturnStatus::Success;
     }
     void Close() override {
         close_count += 1;

@@ -55,7 +55,8 @@ struct JFactoryTestDummySource: public JEventSource {
 
     JFactoryTestDummySource() : JEventSource("dummy", nullptr) {}
 
-    void GetEvent(std::shared_ptr<JEvent>) override {
+    ReturnStatus GetEvent(std::shared_ptr<JEvent>) override {
+        return ReturnStatus::Success;
     };
 
     bool GetObjects(const std::shared_ptr<const JEvent>&, JFactory* aFactory) override {

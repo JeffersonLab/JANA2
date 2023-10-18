@@ -23,7 +23,7 @@ public:
 
     void Open() override;
 
-    void GetEvent(std::shared_ptr<JEvent>) override;
+    ReturnStatus GetEvent(std::shared_ptr<JEvent>) override;
     
     static std::string GetDescription();
 

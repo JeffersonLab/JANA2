@@ -22,7 +22,7 @@ public:
     // define public methods
     static std::string GetDescription() { return "streamDet event source (direct ADC serialization mode)"; }
     void Open() final;
-    void GetEvent(std::shared_ptr<JEvent>) final;
+    ReturnStatus GetEvent(std::shared_ptr<JEvent>) final;
 
 private:
 

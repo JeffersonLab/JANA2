@@ -25,7 +25,7 @@ void DstExampleSource::Open() {
     /// Open the file here!
 }
 
-void DstExampleSource::GetEvent(std::shared_ptr <JEvent> event) {
+JEventSource::ReturnStatus DstExampleSource::GetEvent(std::shared_ptr <JEvent> event) {
 
     /// Calls to GetEvent are synchronized with each other, which means they can
     /// read and write state on the JEventSource without causing race conditions.
@@ -37,7 +37,7 @@ void DstExampleSource::GetEvent(std::shared_ptr <JEvent> event) {
 
     /// Limit ourselves to 1 event
     if (current_event_number > 2) {
-        throw RETURN_STATUS::kNO_MORE_EVENTS;
+        return ReturnStatus::Finished;
     }
 
     /// Insert some canned MyJObjects
@@ -67,6 +67,8 @@ void DstExampleSource::GetEvent(std::shared_ptr <JEvent> event) {
     /// Enable automatic upcast to both JObjects and Renderable
     my_both_fac->EnableGetAs<JObject>();
     my_both_fac->EnableGetAs<Renderable>();
+
+    return ReturnStatus::Success;
 }
 
 std::string DstExampleSource::GetDescription() {

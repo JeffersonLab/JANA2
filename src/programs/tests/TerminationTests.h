@@ -16,7 +16,7 @@ struct InterruptedSource : public JEventSource {
     static std::string GetDescription() { return "ComponentTests Fake Event Source"; }
     std::string GetType(void) const override { return JTypeInfo::demangle<decltype(*this)>(); }
     void Open() override { GetApplication()->Stop(); }
-    void GetEvent(std::shared_ptr<JEvent>) override {}
+    ReturnStatus GetEvent(std::shared_ptr<JEvent>) override {}
 };
 
 struct BoundedSource : public JEventSource {
@@ -37,9 +37,9 @@ struct BoundedSource : public JEventSource {
     void Open() override {
     }
 
-    void GetEvent(std::shared_ptr<JEvent>) override {
+    ReturnStatus GetEvent(std::shared_ptr<JEvent>) override {
         if (event_count >= 10) {
-            throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
+            return ReturnStatus::Finished;
         }
         event_count += 1;
     }
@@ -63,7 +63,7 @@ struct UnboundedSource : public JEventSource {
     void Open() override {
     }
 
-    void GetEvent(std::shared_ptr<JEvent> event) override {
+    ReturnStatus GetEvent(std::shared_ptr<JEvent> event) override {
         event_count += 1;
         event->SetEventNumber(event_count);
         std::this_thread::sleep_for(std::chrono::milliseconds(200));

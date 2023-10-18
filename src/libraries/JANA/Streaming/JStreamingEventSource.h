@@ -59,7 +59,7 @@ public:
     /// GetEvent attempts to receive a JEventMessage. If it succeeds, it inserts it into the JEvent and sets
     /// the event number and run number appropriately.
 
-    void GetEvent(std::shared_ptr<JEvent> event) override {
+    ReturnStatus GetEvent(std::shared_ptr<JEvent> event) override {
 
         if (m_next_item == nullptr) {
             m_next_item = new MessageT(GetApplication());
@@ -67,9 +67,9 @@ public:
 
         auto result = m_transport->receive(*m_next_item);
         switch (result) {
-            case JTransport::Result::FINISHED:   throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
-            case JTransport::Result::TRY_AGAIN:  throw JEventSource::RETURN_STATUS::kTRY_AGAIN;
-            case JTransport::Result::FAILURE:    throw JEventSource::RETURN_STATUS::kERROR;
+            case JTransport::Result::FINISHED:   return ReturnStatus::Finished;
+            case JTransport::Result::TRY_AGAIN:  return ReturnStatus::TryAgain;
+            case JTransport::Result::FAILURE:    throw JException("Transport failure");
             default:                             break;
         }
 
@@ -82,6 +82,7 @@ public:
         event->SetRunNumber(item->get_run_number());
         event->Insert<MessageT>(item);
         std::cout << "JStreamingEventSource: Emitting " << *item << std::endl;
+        return ReturnStatus::Success;
     }
 
     static std::string GetDescription() {

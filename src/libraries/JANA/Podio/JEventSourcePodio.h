@@ -74,10 +74,10 @@ JEventSourcePodio<VisitT>::JEventSourcePodio(std::string filename)
 
 
 template <template <typename> typename VisitT>
-void JEventSourcePodio<VisitT>::GetEvent(std::shared_ptr<JEvent> event) {
+JEventSource::ReturnStatus JEventSourcePodio<VisitT>::GetEvent(std::shared_ptr<JEvent> event) {
 
     uint64_t event_index = event->GetEventNumber(); // Event number starts from zero by default
-    if (event_index >= m_entry_count) throw RETURN_STATUS::kNO_MORE_EVENTS;
+    if (event_index >= m_entry_count) return ReturnStatus::Finished;
     int event_number = 0;
     int run_number = 0;
     auto frame = NextFrame(event_index, event_number, run_number);
@@ -91,6 +91,7 @@ void JEventSourcePodio<VisitT>::GetEvent(std::shared_ptr<JEvent> event) {
         visit(visitor, *collection);
     }
     event->Insert(frame.release()); // Transfer ownership from unique_ptr to JFactoryT<podio::Frame>
+    return ReturnStatus::Success;
 }
 
 

@@ -9,7 +9,6 @@
 #include <JANA/Utils/JEventPool.h>
 
 
-using SourceStatus = JEventSource::RETURN_STATUS;
 
 JEventSourceArrow::JEventSourceArrow(std::string name,
                                      std::vector<JEventSource*> sources,
