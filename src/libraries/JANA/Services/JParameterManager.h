@@ -237,7 +237,6 @@ JParameter* JParameterManager::SetDefaultParameter(std::string name, T& val, std
     std::lock_guard<std::mutex> lock(m_mutex);
     JParameter* param = nullptr;
     T t;
-    T t1;
     auto result = m_parameters.find(ToLower(name));
     if (result != m_parameters.end()) {
         // We already have a value stored for this parameter
@@ -367,7 +366,7 @@ template<typename T>
 inline void JParameterManager::Parse(const std::string& value, std::vector<T> &val) {
     std::stringstream ss(value);
     std::string s;
-    val.clear(); // clearing the input vector to make remove dulication which can be caused due to val.push_back(t);
+    val.clear(); // clearing the input vector to ensure no dulication which can be caused due to val.push_back(t);
     while (getline(ss, s, ',')) {
         T t;
         Parse(s, t);
