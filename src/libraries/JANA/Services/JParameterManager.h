@@ -285,8 +285,8 @@ JParameter* JParameterManager::SetDefaultParameter(std::string name, T& val, std
 
     // Always put val through the stringification/parsing cycle to be consistent with
     // values passed in from config file, accesses from other threads
-    Parse(param->GetValue(),t1);
-    val = t1;
+    Parse(param->GetValue(),t);
+    val = t;
     param->SetIsUsed(true);
     return param;
 }
@@ -367,6 +367,7 @@ template<typename T>
 inline void JParameterManager::Parse(const std::string& value, std::vector<T> &val) {
     std::stringstream ss(value);
     std::string s;
+    val.clear(); // clearing the input vector to make remove dulication which can be caused due to val.push_back(t);
     while (getline(ss, s, ',')) {
         T t;
         Parse(s, t);
