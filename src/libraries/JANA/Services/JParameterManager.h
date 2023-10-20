@@ -366,6 +366,7 @@ template<typename T>
 inline void JParameterManager::Parse(const std::string& value, std::vector<T> &val) {
     std::stringstream ss(value);
     std::string s;
+    val.clear(); // clearing the input vector to ensure no dulication which can be caused due to val.push_back(t);
     while (getline(ss, s, ',')) {
         T t;
         Parse(s, t);
