@@ -192,7 +192,6 @@ TEST_CASE("JParameterManager_VectorParams") {
         inputs.emplace_back(" third one ");
 
         jpm.SetDefaultParameter("test", inputs);
-        std::cout << " Size of the vector after calling the SetDefaultParameter" << inputs.size() << std::endl;
         std::vector<std::string> outputs;
         auto param = jpm.GetParameter("test", outputs);
         REQUIRE(param->GetValue() == "first,second one, third one ");
