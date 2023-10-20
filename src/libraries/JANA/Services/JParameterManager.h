@@ -237,6 +237,7 @@ JParameter* JParameterManager::SetDefaultParameter(std::string name, T& val, std
     std::lock_guard<std::mutex> lock(m_mutex);
     JParameter* param = nullptr;
     T t;
+    T t1;
     auto result = m_parameters.find(ToLower(name));
     if (result != m_parameters.end()) {
         // We already have a value stored for this parameter
@@ -284,8 +285,8 @@ JParameter* JParameterManager::SetDefaultParameter(std::string name, T& val, std
 
     // Always put val through the stringification/parsing cycle to be consistent with
     // values passed in from config file, accesses from other threads
-    Parse(param->GetValue(),t);
-    val = t;
+    Parse(param->GetValue(),t1);
+    val = t1;
     param->SetIsUsed(true);
     return param;
 }
