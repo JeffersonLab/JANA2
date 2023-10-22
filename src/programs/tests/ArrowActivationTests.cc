@@ -7,6 +7,8 @@
 
 #include <TestTopologyComponents.h>
 #include <JANA/Engine/JArrowTopology.h>
+#include <JANA/Engine/JScheduler.h>
+
 
 JArrowMetrics::Status steppe(JArrow* arrow) {
     if (arrow->get_type() != JArrow::NodeType::Source &&
@@ -30,7 +32,8 @@ TEST_CASE("ArrowActivationTests") {
     SubOneProcessor p2;
     SumSink<double> sink;
 
-    JArrowTopology topology;
+    auto topology = std::make_shared<JArrowTopology>();
+    JScheduler scheduler(topology);
 
     auto q1 = new JMailbox<int>();
     auto q2 = new JMailbox<double>();
@@ -45,18 +48,18 @@ TEST_CASE("ArrowActivationTests") {
     multiply_by_two->attach(subtract_one);
     subtract_one->attach(sum_everything);
 
-    topology.sources.push_back(emit_rand_ints);
+    topology->sources.push_back(emit_rand_ints);
 
-    topology.arrows.push_back(emit_rand_ints);
-    topology.arrows.push_back(multiply_by_two);
-    topology.arrows.push_back(subtract_one);
-    topology.arrows.push_back(sum_everything);
-    topology.sinks.push_back(sum_everything);
+    topology->arrows.push_back(emit_rand_ints);
+    topology->arrows.push_back(multiply_by_two);
+    topology->arrows.push_back(subtract_one);
+    topology->arrows.push_back(sum_everything);
+    topology->sinks.push_back(sum_everything);
 
     emit_rand_ints->set_chunksize(1);
 
     auto logger = JLogger(JLogger::Level::OFF);
-    topology.m_logger = logger;
+    topology->m_logger = logger;
     source.logger = logger;
 
 
@@ -84,7 +87,7 @@ TEST_CASE("ArrowActivationTests") {
         REQUIRE(subtract_one->get_status() == JArrow::Status::Unopened);
         REQUIRE(sum_everything->get_status() == JArrow::Status::Unopened);
 
-        topology.run(1);
+        scheduler.run_topology(1);
         // TODO: Check that initialize has been called, but not finalize
 
         REQUIRE(emit_rand_ints->get_status() == JArrow::Status::Running);
@@ -105,7 +108,8 @@ TEST_CASE("ActivableDeactivationTests") {
     SubOneProcessor p2;
     SumSink<double> sink;
 
-    JArrowTopology topology;
+    auto topology = std::make_shared<JArrowTopology>();
+    JScheduler scheduler(topology);
 
     auto q1 = new JMailbox<int>();
     auto q2 = new JMailbox<double>();
@@ -120,15 +124,15 @@ TEST_CASE("ActivableDeactivationTests") {
     multiply_by_two->attach(subtract_one);
     subtract_one->attach(sum_everything);
 
-    topology.sources.push_back(emit_rand_ints);
-    topology.arrows.push_back(emit_rand_ints);
-    topology.arrows.push_back(multiply_by_two);
-    topology.arrows.push_back(subtract_one);
-    topology.arrows.push_back(sum_everything);
-    topology.sinks.push_back(sum_everything);
+    topology->sources.push_back(emit_rand_ints);
+    topology->arrows.push_back(emit_rand_ints);
+    topology->arrows.push_back(multiply_by_two);
+    topology->arrows.push_back(subtract_one);
+    topology->arrows.push_back(sum_everything);
+    topology->sinks.push_back(sum_everything);
 
     auto logger = JLogger(JLogger::Level::OFF);
-    topology.m_logger = logger;
+    topology->m_logger = logger;
     source.logger = logger;
 
     REQUIRE(emit_rand_ints->get_status() == JArrow::Status::Unopened);
@@ -136,7 +140,7 @@ TEST_CASE("ActivableDeactivationTests") {
     REQUIRE(subtract_one->get_status() == JArrow::Status::Unopened);
     REQUIRE(sum_everything->get_status() == JArrow::Status::Unopened);
 
-    topology.run(1);
+    scheduler.run_topology(1);
 
     REQUIRE(emit_rand_ints->get_status() == JArrow::Status::Running);
     REQUIRE(multiply_by_two->get_status() == JArrow::Status::Running);
@@ -152,7 +156,6 @@ TEST_CASE("ActivableDeactivationTests") {
 
     // TODO: Test that finalize was called exactly once
 } // TEST_CASE
-
 
 
 

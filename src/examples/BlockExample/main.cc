@@ -39,10 +39,6 @@ std::shared_ptr<JArrowTopology> configure_block_topology(std::shared_ptr<JArrowT
     block_source_arrow->attach(block_disentangler_arrow);
     block_disentangler_arrow->attach(processor_arrow);
 
-    block_source_arrow->set_running_arrows(&topology->running_arrow_count);
-    block_disentangler_arrow->set_running_arrows(&topology->running_arrow_count);
-    processor_arrow->set_running_arrows(&topology->running_arrow_count);
-
     // If you want to add additional processors loaded from plugins, do this like so:
     for (auto proc : topology->component_manager->get_evt_procs()) {
         processor_arrow->add_processor(proc);

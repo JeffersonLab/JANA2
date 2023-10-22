@@ -31,7 +31,7 @@ void JArrowProcessingController::initialize() {
     m_scheduler->logger = m_scheduler_logger;
     LOG_INFO(m_logger) << m_topology->mapping << LOG_END;
 
-    m_topology->initialize();
+    m_scheduler->initialize_topology();
 
 }
 
@@ -46,8 +46,8 @@ void JArrowProcessingController::initialize() {
 /// @param [in] nthreads The number of worker threads to start
 void JArrowProcessingController::run(size_t nthreads) {
     LOG_INFO(m_logger) << "run(): Launching " << nthreads << " workers" << LOG_END;
-    // topology->run needs to happen _before_ threads are started so that threads don't quit due to lack of assignments
-    m_topology->run(nthreads);
+    // run_topology needs to happen _before_ threads are started so that threads don't quit due to lack of assignments
+    m_scheduler->run_topology(nthreads);
 
     bool pin_to_cpu = (m_topology->mapping.get_affinity() != JProcessorMapping::AffinityStrategy::None);
 
@@ -71,11 +71,11 @@ void JArrowProcessingController::run(size_t nthreads) {
 void JArrowProcessingController::scale(size_t nthreads) {
 
     LOG_INFO(m_logger) << "scale(): Stopping all running workers" << LOG_END;
-    m_topology->request_pause();
+    m_scheduler->request_topology_pause();
     for (JWorker* worker : m_workers) {
         worker->wait_for_stop();
     }
-    m_topology->achieve_pause();
+    m_scheduler->achieve_topology_pause();
 
     LOG_INFO(m_logger) << "scale(): All workers are stopped" << LOG_END;
     bool pin_to_cpu = (m_topology->mapping.get_affinity() != JProcessorMapping::AffinityStrategy::None);
@@ -94,7 +94,7 @@ void JArrowProcessingController::scale(size_t nthreads) {
 
     LOG_INFO(m_logger) << "scale(): Restarting " << nthreads << " workers" << LOG_END;
     // topology->run needs to happen _before_ threads are started so that threads don't quit due to lack of assignments
-    m_topology->run(nthreads);
+    m_scheduler->run_topology(nthreads);
 
     for (size_t i=0; i<nthreads; ++i) {
         m_workers.at(i)->start();
@@ -102,7 +102,7 @@ void JArrowProcessingController::scale(size_t nthreads) {
 }
 
 void JArrowProcessingController::request_pause() {
-    m_topology->request_pause();
+    m_scheduler->request_topology_pause();
     // Or:
     // for (JWorker* worker : m_workers) {
     //     worker->request_stop();
@@ -116,7 +116,7 @@ void JArrowProcessingController::wait_until_paused() {
     // Join all the worker threads.
     // Do not trigger the pause (we may want the pause to come internally, e.g. from an event source running out.)
     // Do NOT finish() the topology (we want the ability to be able to restart it)
-    m_topology->achieve_pause();
+    m_scheduler->achieve_topology_pause();
 }
 
 void JArrowProcessingController::request_stop() {
@@ -128,7 +128,7 @@ void JArrowProcessingController::request_stop() {
     //      request_pause     =>   pause
     //      wait_until_stop   =>   join_then_finish
     //      wait_until_pause  =>   join
-    m_topology->drain();
+    m_scheduler->drain_topology();
 }
 
 void JArrowProcessingController::wait_until_stopped() {
@@ -138,18 +138,16 @@ void JArrowProcessingController::wait_until_stopped() {
     }
     // finish out the topology
     // (note some arrows might have already finished e.g. event sources, but that's fine, finish() is idempotent)
-    m_topology->achieve_pause();
-    m_topology->finish();
+    m_scheduler->achieve_topology_pause();
+    m_scheduler->finish_topology();
 }
 
 bool JArrowProcessingController::is_stopped() {
-    // TODO: Protect topology current status
-    return m_topology->m_current_status == JArrowTopology::Status::Paused;
+    return m_scheduler->get_topology_status() == JScheduler::TopologyStatus::Paused;
 }
 
 bool JArrowProcessingController::is_finished() {
-    // TODO: Protect topology current status
-    return m_topology->m_current_status == JArrowTopology::Status::Finished;
+    return m_scheduler->get_topology_status() == JScheduler::TopologyStatus::Finished;
 }
 
 bool JArrowProcessingController::is_timed_out() {

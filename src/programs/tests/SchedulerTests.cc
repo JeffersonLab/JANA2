@@ -17,6 +17,7 @@ TEST_CASE("SchedulerTests") {
     SumSink<double> sink;
 
     auto topology = std::make_shared<JArrowTopology>();
+    JScheduler scheduler(topology);
 
     auto q1 = new JMailbox<int>();
     auto q2 = new JMailbox<double>();
@@ -39,7 +40,7 @@ TEST_CASE("SchedulerTests") {
     topology->sinks.push_back(sum_everything);
 
     emit_rand_ints->set_chunksize(1);
-    topology->run(1);
+    scheduler.run_topology(1);
 
     JArrow* assignment;
     JArrowMetrics::Status last_result;
@@ -49,7 +50,6 @@ TEST_CASE("SchedulerTests") {
 
         auto logger = JLogger(JLogger::Level::OFF);
 
-        JScheduler scheduler(topology);
 
         last_result = JArrowMetrics::Status::ComeBackLater;
         assignment = nullptr;
@@ -119,9 +119,10 @@ TEST_CASE("SchedulerRoundRobinBehaviorTests") {
     topology->sinks.push_back(sum_everything);
 
     emit_rand_ints->set_chunksize(1);
-    topology->run(1);
 
     JScheduler scheduler(topology);
+    scheduler.run_topology(1);
+
     auto logger = JLogger(JLogger::Level::OFF);
 
     auto last_result = JArrowMetrics::Status::ComeBackLater;

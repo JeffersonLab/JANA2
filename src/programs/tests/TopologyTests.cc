@@ -8,6 +8,7 @@
 #include <TestTopologyComponents.h>
 #include <JANA/Utils/JPerfUtils.h>
 #include <JANA/Engine/JArrowTopology.h>
+#include <JANA/Engine/JScheduler.h>
 
 
 JArrowMetrics::Status step(JArrow* arrow) {
@@ -41,6 +42,7 @@ TEST_CASE("JTopology: Basic functionality") {
     SumSink<double> sink;
 
     auto topology = std::make_shared<JArrowTopology>();
+    JScheduler scheduler(topology);
 
     auto q1 = new JMailbox<int>();
     auto q2 = new JMailbox<double>();
@@ -99,7 +101,7 @@ TEST_CASE("JTopology: Basic functionality") {
     SECTION("After emitting") {
         LOG_INFO(logger) << "After emitting; should be something in q0" << LOG_END;
 
-        topology->run(1);
+        scheduler.run_topology(1);
         step(emit_rand_ints);
 
         REQUIRE(multiply_by_two->get_pending() == 1);
@@ -120,7 +122,7 @@ TEST_CASE("JTopology: Basic functionality") {
     SECTION("Running each stage sequentially yields the correct results") {
 
         //LOG_INFO(logger) << "Running each stage sequentially yields the correct results" << LOG_END;
-        topology->run(1);
+        scheduler.run_topology(1);
 
         for (int i = 0; i < 20; ++i) {
             step(emit_rand_ints);
@@ -162,7 +164,7 @@ TEST_CASE("JTopology: Basic functionality") {
         results["sum_everything"] = JArrowMetrics::Status::KeepGoing;
 
         // Put something in the queue to get started
-        topology->run(1);
+        scheduler.run_topology(1);
         step(emit_rand_ints);
 
         bool work_left = true;
@@ -198,7 +200,7 @@ TEST_CASE("JTopology: Basic functionality") {
         topology->m_logger = logger;
         source.logger = logger;
 
-        topology->run(1);
+        scheduler.run_topology(1);
 
         REQUIRE(emit_rand_ints->get_status() == JArrow::Status::Running);
         REQUIRE(multiply_by_two->get_status() == JArrow::Status::Running);
@@ -254,7 +256,8 @@ TEST_CASE("JTopology: Basic functionality") {
 
         app.Run(true);
 
-        REQUIRE(topology->m_current_status == JArrowTopology::Status::Finished);
+        // TODO: Access the JScheduler managed by JApplication
+        // REQUIRE(scheduler.get_topology_status() == JScheduler::TopologyStatus::Finished);
         REQUIRE(sum_everything->get_status() == JArrow::Status::Finished);
         REQUIRE(sink.sum == 20 * 13);
 

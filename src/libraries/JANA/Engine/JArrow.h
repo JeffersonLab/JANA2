@@ -44,7 +44,7 @@ private:
     // These are protected by the Topology mutex, NOT the Arrow mutex!!!
     int64_t m_thread_count = 0;            // Current number of threads assigned to this arrow
     std::atomic_int64_t m_running_upstreams {0};       // Current number of running arrows immediately upstream
-    std::atomic_int64_t* m_running_arrows = nullptr;   // Current number of running arrows total, so we can detect pauses
+    int64_t* m_running_arrows = nullptr;   // Current number of running arrows total, so we can detect pauses
     std::vector<JArrow *> m_listeners;     // Downstream Arrows
 
 protected:
@@ -167,7 +167,7 @@ public:
         return m_running_upstreams;
     }
 
-    void set_running_arrows(std::atomic_int64_t* running_arrows_ptr) {
+    void set_running_arrows(int64_t* running_arrows_ptr) {
         m_running_arrows = running_arrows_ptr;
     }
 

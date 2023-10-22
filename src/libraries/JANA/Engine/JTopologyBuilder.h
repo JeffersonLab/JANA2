@@ -166,13 +166,11 @@ public:
         m_topology->sources.push_back(arrow);
         arrow->set_chunksize(m_event_source_chunksize);
         arrow->set_logger(m_arrow_logger);
-        arrow->set_running_arrows(&m_topology->running_arrow_count);
 
 
         auto proc_arrow = new JEventProcessorArrow("processors", queue, nullptr, m_topology->event_pool);
         proc_arrow->set_chunksize(m_event_processor_chunksize);
         proc_arrow->set_logger(m_arrow_logger);
-        proc_arrow->set_running_arrows(&m_topology->running_arrow_count);
         m_topology->arrows.push_back(proc_arrow);
 
         for (auto proc: m_components->get_evt_procs()) {
