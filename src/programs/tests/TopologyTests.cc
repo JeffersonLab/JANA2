@@ -257,7 +257,7 @@ TEST_CASE("JTopology: Basic functionality") {
         app.Run(true);
 
         // TODO: Access the JScheduler managed by JApplication
-        // REQUIRE(scheduler.get_topology_status() == JScheduler::TopologyStatus::Finished);
+        // REQUIRE(scheduler.get_topology_status() == JScheduler::TopologyStatus::Finalized);
         REQUIRE(sum_everything->get_status() == JArrow::Status::Finished);
         REQUIRE(sink.sum == 20 * 13);
 

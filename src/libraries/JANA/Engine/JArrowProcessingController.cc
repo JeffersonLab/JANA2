@@ -147,7 +147,7 @@ bool JArrowProcessingController::is_stopped() {
 }
 
 bool JArrowProcessingController::is_finished() {
-    return m_scheduler->get_topology_status() == JScheduler::TopologyStatus::Finished;
+    return m_scheduler->get_topology_status() == JScheduler::TopologyStatus::Finalized;
 }
 
 bool JArrowProcessingController::is_timed_out() {
@@ -232,11 +232,11 @@ std::unique_ptr<const JArrowPerfSummary> JArrowProcessingController::measure_int
 
     // Measure perf on all Workers first, as this will prompt them to publish
     // any ArrowMetrics they have collected
-    m_perf_summary.workers.clear();
-    for (JWorker* worker : m_workers) {
-        WorkerSummary summary;
-        worker->measure_perf(summary);
-        m_perf_summary.workers.push_back(summary);
+    if (m_perf_summary.workers.size() != m_workers.size()) {
+        m_perf_summary.workers = std::vector<WorkerSummary>(m_workers.size());
+    }
+    for (size_t i=0; i<m_workers.size(); ++i) {
+        m_workers[i]->measure_perf(m_perf_summary.workers[i]);
     }
 
     size_t monotonic_event_count = 0;
@@ -251,59 +251,16 @@ std::unique_ptr<const JArrowPerfSummary> JArrowProcessingController::measure_int
     double worst_seq_latency = 0;
     double worst_par_latency = 0;
 
-    m_perf_summary.arrows.clear();
-    for (JArrow* arrow : m_topology->arrows) {
-        JArrowMetrics::Status last_status;
-        size_t total_message_count;
-        size_t last_message_count;
-        size_t total_queue_visits;
-        size_t last_queue_visits;
-        JArrowMetrics::duration_t total_latency;
-        JArrowMetrics::duration_t last_latency;
-        JArrowMetrics::duration_t total_queue_latency;
-        JArrowMetrics::duration_t last_queue_latency;
+    m_scheduler->summarize_arrows(m_perf_summary.arrows);
+    
 
-        arrow->get_metrics().get(last_status, total_message_count, last_message_count, total_queue_visits,
-                                 last_queue_visits, total_latency, last_latency, total_queue_latency, last_queue_latency);
-
-        auto total_latency_ms = millisecs(total_latency).count();
-        auto total_queue_latency_ms = millisecs(total_queue_latency).count();
-
-        ArrowSummary summary;
-        summary.arrow_type = arrow->get_type();
-        summary.is_parallel = arrow->is_parallel();
-        summary.thread_count = arrow->get_thread_count();
-        summary.arrow_name = arrow->get_name();
-        summary.chunksize = arrow->get_chunksize();
-        summary.messages_pending = arrow->get_pending();
-        summary.running_upstreams = arrow->get_running_upstreams();
-        summary.threshold = arrow->get_threshold();
-        summary.status = arrow->get_status();
-
-        summary.total_messages_completed = total_message_count;
-        summary.last_messages_completed = last_message_count;
-        summary.queue_visit_count = total_queue_visits;
-
-        summary.avg_queue_latency_ms = (total_queue_visits == 0)
-                                       ? std::numeric_limits<double>::infinity()
-                                       : total_queue_latency_ms / total_queue_visits;
-
-        summary.avg_queue_overhead_frac = total_queue_latency_ms / (total_queue_latency_ms + total_latency_ms);
-
-        summary.avg_latency_ms = (total_message_count == 0)
-                               ? std::numeric_limits<double>::infinity()
-                               : total_latency_ms/total_message_count;
-
-        summary.last_latency_ms = (last_message_count == 0)
-                                ? std::numeric_limits<double>::infinity()
-                                : millisecs(last_latency).count()/last_message_count;
-
-        if (arrow->is_parallel()) {
+    // Figure out what the bottlenecks in this topology are
+    for (const ArrowSummary& summary : m_perf_summary.arrows) {
+        if (summary.is_parallel) {
             worst_par_latency = std::max(worst_par_latency, summary.avg_latency_ms);
         } else {
             worst_seq_latency = std::max(worst_seq_latency, summary.avg_latency_ms);
         }
-        m_perf_summary.arrows.push_back(summary);
     }
 
     // bottlenecks

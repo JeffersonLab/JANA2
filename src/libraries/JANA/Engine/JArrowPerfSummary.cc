@@ -22,14 +22,13 @@ std::ostream& operator<<(std::ostream& os, const JArrowPerfSummary& s) {
     os << "  Efficiency [0..1]:           " << std::setprecision(3) << s.avg_efficiency_frac << std::endl;
     os << std::endl;
 
-    os << "  +--------------------------+------------+--------+-----+---------+-------+--------+---------+-------------+" << std::endl;
-    os << "  |           Name           |   Status   |  Type  | Par | Threads | Chunk | Thresh | Pending |  Completed  |" << std::endl;
-    os << "  +--------------------------+------------+--------+-----+---------+-------+--------+---------+-------------+" << std::endl;
+    os << "  +--------------------------+--------+-----+---------+-------+--------+---------+-------------+" << std::endl;
+    os << "  |           Name           |  Type  | Par | Threads | Chunk | Thresh | Pending |  Completed  |" << std::endl;
+    os << "  +--------------------------+--------+-----+---------+-------+--------+---------+-------------+" << std::endl;
 
     for (auto as : s.arrows) {
         os << "  | "
            << std::setw(24) << std::left << as.arrow_name << " | "
-           << std::setw(11) << as.status << "| "
            << std::setw(6) << std::left << as.arrow_type << " | "
            << std::setw(3) << std::right << (as.is_parallel ? " T " : " F ") << " | "
            << std::setw(7) << as.thread_count << " |"

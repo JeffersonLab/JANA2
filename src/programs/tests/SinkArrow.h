@@ -41,10 +41,6 @@ public:
     };
 
     void execute(JArrowMetrics& result, size_t /* location_id */) override {
-        if (get_status() == Status::Finished) {
-            result.update_finished();
-            return;
-        }
         if (!_is_initialized) {
             _sink.initialize();
             _chunk_buffer.reserve(get_chunksize());
@@ -71,12 +67,6 @@ public:
         auto overhead = (stop_time - start_time) - latency;
 
         JArrowMetrics::Status status;
-        // TODO: NOT HERE. Finalize the sink in on_status_change().
-        // if (in_status == JMailbox<T>::Status::Finished) {
-        //     set_status(JActivable::Status::Finished);
-        //     _sink.finalize();
-        //     status = JArrowMetrics::Status::Finished;
-        // }
         if (in_status == JMailbox<T>::Status::Empty) {
             status = JArrowMetrics::Status::ComeBackLater;
         }
