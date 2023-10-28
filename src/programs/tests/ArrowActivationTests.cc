@@ -131,28 +131,31 @@ TEST_CASE("ActivableDeactivationTests") {
     source.logger = logger;
 
     JScheduler scheduler(topology);
+    scheduler.logger = logger;
     JScheduler::TopologyState state = scheduler.get_topology_state();
 
     REQUIRE(state.arrow_states[0].status == JScheduler::ArrowStatus::Uninitialized);
-    REQUIRE(state.arrow_states[0].status == JScheduler::ArrowStatus::Uninitialized);
-    REQUIRE(state.arrow_states[0].status == JScheduler::ArrowStatus::Uninitialized);
-    REQUIRE(state.arrow_states[0].status == JScheduler::ArrowStatus::Uninitialized);
+    REQUIRE(state.arrow_states[1].status == JScheduler::ArrowStatus::Uninitialized);
+    REQUIRE(state.arrow_states[2].status == JScheduler::ArrowStatus::Uninitialized);
+    REQUIRE(state.arrow_states[3].status == JScheduler::ArrowStatus::Uninitialized);
 
     scheduler.run_topology(1);
     state = scheduler.get_topology_state();
 
     REQUIRE(state.arrow_states[0].status == JScheduler::ArrowStatus::Active);
-    REQUIRE(state.arrow_states[0].status == JScheduler::ArrowStatus::Active);
-    REQUIRE(state.arrow_states[0].status == JScheduler::ArrowStatus::Active);
-    REQUIRE(state.arrow_states[0].status == JScheduler::ArrowStatus::Active);
+    REQUIRE(state.arrow_states[1].status == JScheduler::ArrowStatus::Active);
+    REQUIRE(state.arrow_states[2].status == JScheduler::ArrowStatus::Active);
+    REQUIRE(state.arrow_states[3].status == JScheduler::ArrowStatus::Active);
 
-    steppe(emit_rand_ints);
+    auto result = steppe(emit_rand_ints);
+
+    scheduler.next_assignment(0, emit_rand_ints, result);
     state = scheduler.get_topology_state();
 
     REQUIRE(state.arrow_states[0].status == JScheduler::ArrowStatus::Finalized);
-    REQUIRE(state.arrow_states[0].status == JScheduler::ArrowStatus::Active);
-    REQUIRE(state.arrow_states[0].status == JScheduler::ArrowStatus::Active);
-    REQUIRE(state.arrow_states[0].status == JScheduler::ArrowStatus::Active);
+    REQUIRE(state.arrow_states[1].status == JScheduler::ArrowStatus::Active);
+    REQUIRE(state.arrow_states[2].status == JScheduler::ArrowStatus::Active);
+    REQUIRE(state.arrow_states[3].status == JScheduler::ArrowStatus::Active);
 
     // TODO: Test that finalize was called exactly once
 } // TEST_CASE

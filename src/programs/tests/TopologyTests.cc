@@ -194,6 +194,7 @@ TEST_CASE("JTopology: Basic functionality") {
 
         scheduler.run_topology(1);
         auto ts = scheduler.get_topology_state();
+        JArrowMetrics::Status status;
 
         REQUIRE(ts.arrow_states[0].status == JScheduler::ArrowStatus::Active);
         REQUIRE(ts.arrow_states[1].status == JScheduler::ArrowStatus::Active);
@@ -201,8 +202,9 @@ TEST_CASE("JTopology: Basic functionality") {
         REQUIRE(ts.arrow_states[3].status == JScheduler::ArrowStatus::Active);
 
         for (int i = 0; i < 20; ++i) {
-            step(emit_rand_ints);
+            status = step(emit_rand_ints);
         }
+        scheduler.next_assignment(0, emit_rand_ints, status);
         ts = scheduler.get_topology_state();
 
         REQUIRE(ts.arrow_states[0].status == JScheduler::ArrowStatus::Finalized);
@@ -213,6 +215,7 @@ TEST_CASE("JTopology: Basic functionality") {
         for (int i = 0; i < 20; ++i) {
             step(multiply_by_two);
         }
+        scheduler.next_assignment(0, multiply_by_two, status);
         ts = scheduler.get_topology_state();
 
         REQUIRE(ts.arrow_states[0].status == JScheduler::ArrowStatus::Finalized);
@@ -223,6 +226,7 @@ TEST_CASE("JTopology: Basic functionality") {
         for (int i = 0; i < 20; ++i) {
             step(subtract_one);
         }
+        scheduler.next_assignment(0, subtract_one, status);
         ts = scheduler.get_topology_state();
 
         REQUIRE(ts.arrow_states[0].status == JScheduler::ArrowStatus::Finalized);
@@ -233,6 +237,7 @@ TEST_CASE("JTopology: Basic functionality") {
         for (int i = 0; i < 20; ++i) {
             step(sum_everything);
         }
+        scheduler.next_assignment(0, sum_everything, status);
         ts = scheduler.get_topology_state();
 
         REQUIRE(ts.arrow_states[0].status == JScheduler::ArrowStatus::Finalized);

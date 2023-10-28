@@ -41,6 +41,7 @@ TEST_CASE("SchedulerTests") {
     emit_rand_ints->set_chunksize(1);
 
     JScheduler scheduler(topology);
+    // scheduler.logger = JLogger(JLogger::Level::DEBUG);
     scheduler.run_topology(1);
 
     JArrow* assignment;
@@ -48,9 +49,6 @@ TEST_CASE("SchedulerTests") {
 
 
     SECTION("When run sequentially, RRS returns nullptr => topology finished") {
-
-        auto logger = JLogger(JLogger::Level::OFF);
-
 
         last_result = JArrowMetrics::Status::ComeBackLater;
         assignment = nullptr;
@@ -65,15 +63,13 @@ TEST_CASE("SchedulerTests") {
 
         JScheduler::TopologyState state = scheduler.get_topology_state();
         REQUIRE(state.arrow_states[0].status == JScheduler::ArrowStatus::Finalized);
-        REQUIRE(state.arrow_states[1].status == JScheduler::ArrowStatus::Inactive);
-        REQUIRE(state.arrow_states[2].status == JScheduler::ArrowStatus::Inactive);
-        REQUIRE(state.arrow_states[3].status == JScheduler::ArrowStatus::Inactive);
+        REQUIRE(state.arrow_states[1].status == JScheduler::ArrowStatus::Finalized);
+        REQUIRE(state.arrow_states[2].status == JScheduler::ArrowStatus::Finalized);
+        REQUIRE(state.arrow_states[3].status == JScheduler::ArrowStatus::Finalized);
     }
 
     SECTION("When run sequentially, topology finished => RRS returns nullptr") {
 
-        auto logger = JLogger(JLogger::Level::OFF);
-        JScheduler scheduler(topology);
         last_result = JArrowMetrics::Status::ComeBackLater;
         assignment = nullptr;
 

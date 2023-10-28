@@ -106,7 +106,9 @@ void JScheduler::checkin_unprotected(JArrow* assignment, JArrowMetrics::Status l
     if (found_inactive_source || found_inactive_stage_or_sink) {
 
         // Deactivate arrow
-        as.status = ArrowStatus::Inactive;
+        // Because we are deactivating it from Active state, we know the topology has not been paused. Hence we can finalize immediately.
+        assignment->finalize();
+        as.status = ArrowStatus::Finalized;
         m_topology_state.active_or_draining_arrow_count--;
 
         LOG_DEBUG(logger) << "Deactivated arrow '" << assignment->get_name() << "' (" << m_topology_state.active_or_draining_arrow_count << " remaining)" << LOG_END;
@@ -119,11 +121,6 @@ void JScheduler::checkin_unprotected(JArrow* assignment, JArrowMetrics::Status l
         // Drain arrow
         as.status = ArrowStatus::Draining;
         LOG_DEBUG(logger) << "Draining arrow '" << assignment->get_name() << "' (" << m_topology_state.active_or_draining_arrow_count << " remaining)" << LOG_END;
-    }
-
-    if (found_inactive_source) {
-        // Sources are finalized immediately, unlike other arrows. This is to facilitate closing resources like sockets and file handles
-        assignment->finalize();
     }
 
     // Test if this was the last arrow running
@@ -312,7 +309,7 @@ void JScheduler::pause_arrow_unprotected(size_t index) {
         return; // pause() is a no-op unless running
     }
     LOG_DEBUG(logger) << "JArrow '" << name << "' pause() : " << status << " => Inactive" << LOG_END;
-    m_topology_state.active_or_draining_arrow_count++;
+    m_topology_state.active_or_draining_arrow_count--;
     for (size_t downstream: m_topology_state.arrow_states[index].downstream_arrow_indices) {
         m_topology_state.arrow_states[downstream].active_or_draining_upstream_arrow_count--;
     }
