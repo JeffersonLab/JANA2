@@ -4,6 +4,7 @@
 
 #include "catch.hpp"
 #include "JANA/Engine/JTopologyBuilder.h"
+#include <JANA/Engine/JArrowProcessingController.h>
 
 #include <TestTopologyComponents.h>
 #include <JANA/Utils/JPerfUtils.h>
@@ -12,15 +13,6 @@
 
 
 JArrowMetrics::Status step(JArrow* arrow) {
-
-        if (arrow->get_type() != JArrow::NodeType::Source &&
-                arrow->get_status() == JArrow::Status::Running &&
-            arrow->get_pending() == 0 &&
-            arrow->get_running_upstreams() == 0) {
-
-            arrow->finish();
-            return JArrowMetrics::Status::Finished;
-        }
 
         JArrowMetrics metrics;
         arrow->execute(metrics, 0);
@@ -42,7 +34,6 @@ TEST_CASE("JTopology: Basic functionality") {
     SumSink<double> sink;
 
     auto topology = std::make_shared<JArrowTopology>();
-    JScheduler scheduler(topology);
 
     auto q1 = new JMailbox<int>();
     auto q2 = new JMailbox<double>();
@@ -69,14 +60,15 @@ TEST_CASE("JTopology: Basic functionality") {
     auto logger = JLogger(JLogger::Level::TRACE);
     topology->m_logger = logger;
     source.logger = logger;
+    JScheduler scheduler(topology);
 
 
     SECTION("Before anything runs...") {
 
         // All queues are empty, none are finished
         REQUIRE(multiply_by_two->get_pending() == 0);
-        REQUIRE(subtract_one->get_pending() == 0);
         REQUIRE(sum_everything->get_pending() == 0);
+        REQUIRE(subtract_one->get_pending() == 0);
     }
 
     SECTION("When nothing is in the input queue...") {
@@ -201,47 +193,52 @@ TEST_CASE("JTopology: Basic functionality") {
         source.logger = logger;
 
         scheduler.run_topology(1);
+        auto ts = scheduler.get_topology_state();
 
-        REQUIRE(emit_rand_ints->get_status() == JArrow::Status::Running);
-        REQUIRE(multiply_by_two->get_status() == JArrow::Status::Running);
-        REQUIRE(subtract_one->get_status() == JArrow::Status::Running);
-        REQUIRE(sum_everything->get_status() == JArrow::Status::Running);
+        REQUIRE(ts.arrow_states[0].status == JScheduler::ArrowStatus::Active);
+        REQUIRE(ts.arrow_states[1].status == JScheduler::ArrowStatus::Active);
+        REQUIRE(ts.arrow_states[2].status == JScheduler::ArrowStatus::Active);
+        REQUIRE(ts.arrow_states[3].status == JScheduler::ArrowStatus::Active);
 
         for (int i = 0; i < 20; ++i) {
             step(emit_rand_ints);
         }
+        ts = scheduler.get_topology_state();
 
-        REQUIRE(emit_rand_ints->get_status() == JArrow::Status::Finished);
-        REQUIRE(multiply_by_two->get_status() == JArrow::Status::Running);
-        REQUIRE(subtract_one->get_status() == JArrow::Status::Running);
-        REQUIRE(sum_everything->get_status() == JArrow::Status::Running);
+        REQUIRE(ts.arrow_states[0].status == JScheduler::ArrowStatus::Finalized);
+        REQUIRE(ts.arrow_states[1].status == JScheduler::ArrowStatus::Active);
+        REQUIRE(ts.arrow_states[2].status == JScheduler::ArrowStatus::Active);
+        REQUIRE(ts.arrow_states[3].status == JScheduler::ArrowStatus::Active);
 
         for (int i = 0; i < 20; ++i) {
             step(multiply_by_two);
         }
+        ts = scheduler.get_topology_state();
 
-        REQUIRE(emit_rand_ints->get_status() == JArrow::Status::Finished);
-        REQUIRE(multiply_by_two->get_status() == JArrow::Status::Finished);
-        REQUIRE(subtract_one->get_status() == JArrow::Status::Running);
-        REQUIRE(sum_everything->get_status() == JArrow::Status::Running);
+        REQUIRE(ts.arrow_states[0].status == JScheduler::ArrowStatus::Finalized);
+        REQUIRE(ts.arrow_states[1].status == JScheduler::ArrowStatus::Finalized);
+        REQUIRE(ts.arrow_states[2].status == JScheduler::ArrowStatus::Active);
+        REQUIRE(ts.arrow_states[3].status == JScheduler::ArrowStatus::Active);
 
         for (int i = 0; i < 20; ++i) {
             step(subtract_one);
         }
+        ts = scheduler.get_topology_state();
 
-        REQUIRE(emit_rand_ints->get_status() == JArrow::Status::Finished);
-        REQUIRE(multiply_by_two->get_status() == JArrow::Status::Finished);
-        REQUIRE(subtract_one->get_status() == JArrow::Status::Finished);
-        REQUIRE(sum_everything->get_status() == JArrow::Status::Running);
+        REQUIRE(ts.arrow_states[0].status == JScheduler::ArrowStatus::Finalized);
+        REQUIRE(ts.arrow_states[1].status == JScheduler::ArrowStatus::Finalized);
+        REQUIRE(ts.arrow_states[2].status == JScheduler::ArrowStatus::Finalized);
+        REQUIRE(ts.arrow_states[3].status == JScheduler::ArrowStatus::Active);
 
         for (int i = 0; i < 20; ++i) {
             step(sum_everything);
         }
+        ts = scheduler.get_topology_state();
 
-        REQUIRE(emit_rand_ints->get_status() == JArrow::Status::Finished);
-        REQUIRE(multiply_by_two->get_status() == JArrow::Status::Finished);
-        REQUIRE(subtract_one->get_status() == JArrow::Status::Finished);
-        REQUIRE(sum_everything->get_status() == JArrow::Status::Finished);
+        REQUIRE(ts.arrow_states[0].status == JScheduler::ArrowStatus::Finalized);
+        REQUIRE(ts.arrow_states[1].status == JScheduler::ArrowStatus::Finalized);
+        REQUIRE(ts.arrow_states[2].status == JScheduler::ArrowStatus::Finalized);
+        REQUIRE(ts.arrow_states[3].status == JScheduler::ArrowStatus::Finalized);
 
         log_status(*topology);
 
@@ -255,10 +252,12 @@ TEST_CASE("JTopology: Basic functionality") {
         REQUIRE(sink.sum == 0);
 
         app.Run(true);
+        auto scheduler = app.GetService<JArrowProcessingController>()->get_scheduler();
 
-        // TODO: Access the JScheduler managed by JApplication
-        // REQUIRE(scheduler.get_topology_status() == JScheduler::TopologyStatus::Finalized);
-        REQUIRE(sum_everything->get_status() == JArrow::Status::Finished);
+
+        auto ts = scheduler->get_topology_state();
+        REQUIRE(ts.current_topology_status == JScheduler::TopologyStatus::Finalized);
+        REQUIRE(ts.arrow_states[0].status == JScheduler::ArrowStatus::Finalized);
         REQUIRE(sink.sum == 20 * 13);
 
     }

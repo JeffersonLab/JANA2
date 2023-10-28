@@ -17,7 +17,6 @@ TEST_CASE("SchedulerTests") {
     SumSink<double> sink;
 
     auto topology = std::make_shared<JArrowTopology>();
-    JScheduler scheduler(topology);
 
     auto q1 = new JMailbox<int>();
     auto q2 = new JMailbox<double>();
@@ -40,6 +39,8 @@ TEST_CASE("SchedulerTests") {
     topology->sinks.push_back(sum_everything);
 
     emit_rand_ints->set_chunksize(1);
+
+    JScheduler scheduler(topology);
     scheduler.run_topology(1);
 
     JArrow* assignment;
@@ -62,10 +63,11 @@ TEST_CASE("SchedulerTests") {
             }
         } while (assignment != nullptr);
 
-        REQUIRE(emit_rand_ints->get_status() == JArrow::Status::Finished);
-        REQUIRE(multiply_by_two->get_status() == JArrow::Status::Paused);
-        REQUIRE(subtract_one->get_status() == JArrow::Status::Paused);
-        REQUIRE(sum_everything->get_status() == JArrow::Status::Paused);
+        JScheduler::TopologyState state = scheduler.get_topology_state();
+        REQUIRE(state.arrow_states[0].status == JScheduler::ArrowStatus::Finalized);
+        REQUIRE(state.arrow_states[1].status == JScheduler::ArrowStatus::Inactive);
+        REQUIRE(state.arrow_states[2].status == JScheduler::ArrowStatus::Inactive);
+        REQUIRE(state.arrow_states[3].status == JScheduler::ArrowStatus::Inactive);
     }
 
     SECTION("When run sequentially, topology finished => RRS returns nullptr") {
