@@ -1,0 +1,28 @@
+---
+# A more complete example is provided by podio under tests/datalayout.yaml
+
+options :
+  # should getters / setters be prefixed with get / set?
+  getSyntax: False
+  # should POD members be exposed with getters/setters in classes that have them as members?
+  exposePODMembers: True
+  includeSubfolder: True
+
+datatypes :
+  JTestEventData:
+    Description : "JTest Event Data using PODIO"
+    Author : "A.Roy"
+    Members :
+      - std::vector<char> buffer; 
+
+  JTestTrackData:
+   Description : "JTest Track data using PODIO"
+    Author : "A.Roy"
+    Members :
+      - std::vector<char> buffer; 
+
+  JTestHistogramData:
+  Description : "JTest Histograms data using PODIO"
+    Author : "A.Roy"
+    Members :
+      - std::vector<char> buffer; 
