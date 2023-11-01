@@ -39,17 +39,16 @@ TEST_CASE("SchedulerTests") {
     topology->sinks.push_back(sum_everything);
 
     emit_rand_ints->set_chunksize(1);
-    topology->run(1);
+
+    JScheduler scheduler(topology);
+    // scheduler.logger = JLogger(JLogger::Level::DEBUG);
+    scheduler.run_topology(1);
 
     JArrow* assignment;
     JArrowMetrics::Status last_result;
 
 
     SECTION("When run sequentially, RRS returns nullptr => topology finished") {
-
-        auto logger = JLogger(JLogger::Level::OFF);
-
-        JScheduler scheduler(topology);
 
         last_result = JArrowMetrics::Status::ComeBackLater;
         assignment = nullptr;
@@ -62,16 +61,15 @@ TEST_CASE("SchedulerTests") {
             }
         } while (assignment != nullptr);
 
-        REQUIRE(emit_rand_ints->get_status() == JArrow::Status::Finished);
-        REQUIRE(multiply_by_two->get_status() == JArrow::Status::Paused);
-        REQUIRE(subtract_one->get_status() == JArrow::Status::Paused);
-        REQUIRE(sum_everything->get_status() == JArrow::Status::Paused);
+        JScheduler::TopologyState state = scheduler.get_topology_state();
+        REQUIRE(state.arrow_states[0].status == JScheduler::ArrowStatus::Finalized);
+        REQUIRE(state.arrow_states[1].status == JScheduler::ArrowStatus::Finalized);
+        REQUIRE(state.arrow_states[2].status == JScheduler::ArrowStatus::Finalized);
+        REQUIRE(state.arrow_states[3].status == JScheduler::ArrowStatus::Finalized);
     }
 
     SECTION("When run sequentially, topology finished => RRS returns nullptr") {
 
-        auto logger = JLogger(JLogger::Level::OFF);
-        JScheduler scheduler(topology);
         last_result = JArrowMetrics::Status::ComeBackLater;
         assignment = nullptr;
 
@@ -119,9 +117,10 @@ TEST_CASE("SchedulerRoundRobinBehaviorTests") {
     topology->sinks.push_back(sum_everything);
 
     emit_rand_ints->set_chunksize(1);
-    topology->run(1);
 
     JScheduler scheduler(topology);
+    scheduler.run_topology(1);
+
     auto logger = JLogger(JLogger::Level::OFF);
 
     auto last_result = JArrowMetrics::Status::ComeBackLater;

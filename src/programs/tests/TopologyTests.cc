@@ -4,22 +4,15 @@
 
 #include "catch.hpp"
 #include "JANA/Engine/JTopologyBuilder.h"
+#include <JANA/Engine/JArrowProcessingController.h>
 
 #include <TestTopologyComponents.h>
 #include <JANA/Utils/JPerfUtils.h>
 #include <JANA/Engine/JArrowTopology.h>
+#include <JANA/Engine/JScheduler.h>
 
 
 JArrowMetrics::Status step(JArrow* arrow) {
-
-        if (arrow->get_type() != JArrow::NodeType::Source &&
-                arrow->get_status() == JArrow::Status::Running &&
-            arrow->get_pending() == 0 &&
-            arrow->get_running_upstreams() == 0) {
-
-            arrow->finish();
-            return JArrowMetrics::Status::Finished;
-        }
 
         JArrowMetrics metrics;
         arrow->execute(metrics, 0);
@@ -67,14 +60,15 @@ TEST_CASE("JTopology: Basic functionality") {
     auto logger = JLogger(JLogger::Level::TRACE);
     topology->m_logger = logger;
     source.logger = logger;
+    JScheduler scheduler(topology);
 
 
     SECTION("Before anything runs...") {
 
         // All queues are empty, none are finished
         REQUIRE(multiply_by_two->get_pending() == 0);
-        REQUIRE(subtract_one->get_pending() == 0);
         REQUIRE(sum_everything->get_pending() == 0);
+        REQUIRE(subtract_one->get_pending() == 0);
     }
 
     SECTION("When nothing is in the input queue...") {
@@ -99,7 +93,7 @@ TEST_CASE("JTopology: Basic functionality") {
     SECTION("After emitting") {
         LOG_INFO(logger) << "After emitting; should be something in q0" << LOG_END;
 
-        topology->run(1);
+        scheduler.run_topology(1);
         step(emit_rand_ints);
 
         REQUIRE(multiply_by_two->get_pending() == 1);
@@ -120,7 +114,7 @@ TEST_CASE("JTopology: Basic functionality") {
     SECTION("Running each stage sequentially yields the correct results") {
 
         //LOG_INFO(logger) << "Running each stage sequentially yields the correct results" << LOG_END;
-        topology->run(1);
+        scheduler.run_topology(1);
 
         for (int i = 0; i < 20; ++i) {
             step(emit_rand_ints);
@@ -162,7 +156,7 @@ TEST_CASE("JTopology: Basic functionality") {
         results["sum_everything"] = JArrowMetrics::Status::KeepGoing;
 
         // Put something in the queue to get started
-        topology->run(1);
+        scheduler.run_topology(1);
         step(emit_rand_ints);
 
         bool work_left = true;
@@ -198,48 +192,58 @@ TEST_CASE("JTopology: Basic functionality") {
         topology->m_logger = logger;
         source.logger = logger;
 
-        topology->run(1);
+        scheduler.run_topology(1);
+        auto ts = scheduler.get_topology_state();
+        JArrowMetrics::Status status;
 
-        REQUIRE(emit_rand_ints->get_status() == JArrow::Status::Running);
-        REQUIRE(multiply_by_two->get_status() == JArrow::Status::Running);
-        REQUIRE(subtract_one->get_status() == JArrow::Status::Running);
-        REQUIRE(sum_everything->get_status() == JArrow::Status::Running);
+        REQUIRE(ts.arrow_states[0].status == JScheduler::ArrowStatus::Active);
+        REQUIRE(ts.arrow_states[1].status == JScheduler::ArrowStatus::Active);
+        REQUIRE(ts.arrow_states[2].status == JScheduler::ArrowStatus::Active);
+        REQUIRE(ts.arrow_states[3].status == JScheduler::ArrowStatus::Active);
 
         for (int i = 0; i < 20; ++i) {
-            step(emit_rand_ints);
+            status = step(emit_rand_ints);
         }
+        scheduler.next_assignment(0, emit_rand_ints, status);
+        ts = scheduler.get_topology_state();
 
-        REQUIRE(emit_rand_ints->get_status() == JArrow::Status::Finished);
-        REQUIRE(multiply_by_two->get_status() == JArrow::Status::Running);
-        REQUIRE(subtract_one->get_status() == JArrow::Status::Running);
-        REQUIRE(sum_everything->get_status() == JArrow::Status::Running);
+        REQUIRE(ts.arrow_states[0].status == JScheduler::ArrowStatus::Finalized);
+        REQUIRE(ts.arrow_states[1].status == JScheduler::ArrowStatus::Active);
+        REQUIRE(ts.arrow_states[2].status == JScheduler::ArrowStatus::Active);
+        REQUIRE(ts.arrow_states[3].status == JScheduler::ArrowStatus::Active);
 
         for (int i = 0; i < 20; ++i) {
             step(multiply_by_two);
         }
+        scheduler.next_assignment(0, multiply_by_two, status);
+        ts = scheduler.get_topology_state();
 
-        REQUIRE(emit_rand_ints->get_status() == JArrow::Status::Finished);
-        REQUIRE(multiply_by_two->get_status() == JArrow::Status::Finished);
-        REQUIRE(subtract_one->get_status() == JArrow::Status::Running);
-        REQUIRE(sum_everything->get_status() == JArrow::Status::Running);
+        REQUIRE(ts.arrow_states[0].status == JScheduler::ArrowStatus::Finalized);
+        REQUIRE(ts.arrow_states[1].status == JScheduler::ArrowStatus::Finalized);
+        REQUIRE(ts.arrow_states[2].status == JScheduler::ArrowStatus::Active);
+        REQUIRE(ts.arrow_states[3].status == JScheduler::ArrowStatus::Active);
 
         for (int i = 0; i < 20; ++i) {
             step(subtract_one);
         }
+        scheduler.next_assignment(0, subtract_one, status);
+        ts = scheduler.get_topology_state();
 
-        REQUIRE(emit_rand_ints->get_status() == JArrow::Status::Finished);
-        REQUIRE(multiply_by_two->get_status() == JArrow::Status::Finished);
-        REQUIRE(subtract_one->get_status() == JArrow::Status::Finished);
-        REQUIRE(sum_everything->get_status() == JArrow::Status::Running);
+        REQUIRE(ts.arrow_states[0].status == JScheduler::ArrowStatus::Finalized);
+        REQUIRE(ts.arrow_states[1].status == JScheduler::ArrowStatus::Finalized);
+        REQUIRE(ts.arrow_states[2].status == JScheduler::ArrowStatus::Finalized);
+        REQUIRE(ts.arrow_states[3].status == JScheduler::ArrowStatus::Active);
 
         for (int i = 0; i < 20; ++i) {
             step(sum_everything);
         }
+        scheduler.next_assignment(0, sum_everything, status);
+        ts = scheduler.get_topology_state();
 
-        REQUIRE(emit_rand_ints->get_status() == JArrow::Status::Finished);
-        REQUIRE(multiply_by_two->get_status() == JArrow::Status::Finished);
-        REQUIRE(subtract_one->get_status() == JArrow::Status::Finished);
-        REQUIRE(sum_everything->get_status() == JArrow::Status::Finished);
+        REQUIRE(ts.arrow_states[0].status == JScheduler::ArrowStatus::Finalized);
+        REQUIRE(ts.arrow_states[1].status == JScheduler::ArrowStatus::Finalized);
+        REQUIRE(ts.arrow_states[2].status == JScheduler::ArrowStatus::Finalized);
+        REQUIRE(ts.arrow_states[3].status == JScheduler::ArrowStatus::Finalized);
 
         log_status(*topology);
 
@@ -253,9 +257,12 @@ TEST_CASE("JTopology: Basic functionality") {
         REQUIRE(sink.sum == 0);
 
         app.Run(true);
+        auto scheduler = app.GetService<JArrowProcessingController>()->get_scheduler();
 
-        REQUIRE(topology->m_current_status == JArrowTopology::Status::Finished);
-        REQUIRE(sum_everything->get_status() == JArrow::Status::Finished);
+
+        auto ts = scheduler->get_topology_state();
+        REQUIRE(ts.current_topology_status == JScheduler::TopologyStatus::Finalized);
+        REQUIRE(ts.arrow_states[0].status == JScheduler::ArrowStatus::Finalized);
         REQUIRE(sink.sum == 20 * 13);
 
     }

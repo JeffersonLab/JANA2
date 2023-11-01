@@ -48,10 +48,6 @@ public:
     }
 
     void execute(JArrowMetrics& result, size_t /* location_id */) override {
-        if (get_status() == Status::Finished) {
-             result.update_finished();
-             return;
-        }
 
         auto start_time = std::chrono::steady_clock::now();
         auto in_status = _source.inprocess(_chunk_buffer, get_chunksize());
@@ -65,7 +61,6 @@ public:
 
         JArrowMetrics::Status status;
         if (in_status == Source<T>::Status::Finished) {
-            finish();  // This will call finalize() which will call _source.finalize()
             status = JArrowMetrics::Status::Finished;
         }
         else if (in_status == Source<T>::Status::KeepGoing && out_status == JMailbox<T>::Status::Ready) {

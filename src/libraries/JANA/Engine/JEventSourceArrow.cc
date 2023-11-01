@@ -93,7 +93,8 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
     JArrowMetrics::Status status;
 
     if (in_status == JEventSource::ReturnStatus::Finished) {
-        finish();
+        // finish();
+        // TODO: NWB: It is extra very important to not call finish() here
         status = JArrowMetrics::Status::Finished;
     }
     else if (in_status == JEventSource::ReturnStatus::Success && out_status == EventQueue::Status::Ready) {

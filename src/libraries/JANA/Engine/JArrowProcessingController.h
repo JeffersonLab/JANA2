@@ -42,6 +42,9 @@ public:
     void print_report() override;
     void print_final_report() override;
 
+    // This is so we can test
+    inline JScheduler* get_scheduler() { return m_scheduler; }
+
 
 private:
 

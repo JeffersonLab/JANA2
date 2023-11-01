@@ -7,20 +7,13 @@
 
 #include <TestTopologyComponents.h>
 #include <JANA/Engine/JArrowTopology.h>
+#include <JANA/Engine/JScheduler.h>
+
 
 JArrowMetrics::Status steppe(JArrow* arrow) {
-    if (arrow->get_type() != JArrow::NodeType::Source &&
-            arrow->get_status() == JArrow::Status::Running &&
-        arrow->get_pending() == 0 &&
-        arrow->get_running_upstreams() == 0) {
-
-        arrow->finish();
-        return JArrowMetrics::Status::Finished;
-    }
-
     JArrowMetrics metrics;
-        arrow->execute(metrics, 0);
-        return metrics.get_last_status();
+    arrow->execute(metrics, 0);
+    return metrics.get_last_status();
 }
 
 TEST_CASE("ArrowActivationTests") {
@@ -30,7 +23,7 @@ TEST_CASE("ArrowActivationTests") {
     SubOneProcessor p2;
     SumSink<double> sink;
 
-    JArrowTopology topology;
+    auto topology = std::make_shared<JArrowTopology>();
 
     auto q1 = new JMailbox<int>();
     auto q2 = new JMailbox<double>();
@@ -45,18 +38,19 @@ TEST_CASE("ArrowActivationTests") {
     multiply_by_two->attach(subtract_one);
     subtract_one->attach(sum_everything);
 
-    topology.sources.push_back(emit_rand_ints);
+    topology->sources.push_back(emit_rand_ints);
 
-    topology.arrows.push_back(emit_rand_ints);
-    topology.arrows.push_back(multiply_by_two);
-    topology.arrows.push_back(subtract_one);
-    topology.arrows.push_back(sum_everything);
-    topology.sinks.push_back(sum_everything);
+    topology->arrows.push_back(emit_rand_ints);
+    topology->arrows.push_back(multiply_by_two);
+    topology->arrows.push_back(subtract_one);
+    topology->arrows.push_back(sum_everything);
+    topology->sinks.push_back(sum_everything);
 
     emit_rand_ints->set_chunksize(1);
+    JScheduler scheduler(topology);
 
     auto logger = JLogger(JLogger::Level::OFF);
-    topology.m_logger = logger;
+    topology->m_logger = logger;
     source.logger = logger;
 
 
@@ -66,10 +60,12 @@ TEST_CASE("ArrowActivationTests") {
         REQUIRE(q2->size() == 0);
         REQUIRE(q3->size() == 0);
 
-        REQUIRE(emit_rand_ints->get_status() == JArrow::Status::Unopened);
-        REQUIRE(multiply_by_two->get_status() == JArrow::Status::Unopened);
-        REQUIRE(subtract_one->get_status() == JArrow::Status::Unopened);
-        REQUIRE(sum_everything->get_status() == JArrow::Status::Unopened);
+        JScheduler::TopologyState state = scheduler.get_topology_state();
+
+        REQUIRE(state.arrow_states[0].status == JScheduler::ArrowStatus::Uninitialized);
+        REQUIRE(state.arrow_states[1].status == JScheduler::ArrowStatus::Uninitialized);
+        REQUIRE(state.arrow_states[2].status == JScheduler::ArrowStatus::Uninitialized);
+        REQUIRE(state.arrow_states[3].status == JScheduler::ArrowStatus::Uninitialized);
 
         REQUIRE(emit_rand_ints->get_pending() == 0);
         REQUIRE(multiply_by_two->get_pending() == 0);
@@ -79,18 +75,21 @@ TEST_CASE("ArrowActivationTests") {
 
     SECTION("As a message propagates, arrows and queues downstream automatically activate") {
 
-        REQUIRE(emit_rand_ints->get_status() == JArrow::Status::Unopened);
-        REQUIRE(multiply_by_two->get_status() == JArrow::Status::Unopened);
-        REQUIRE(subtract_one->get_status() == JArrow::Status::Unopened);
-        REQUIRE(sum_everything->get_status() == JArrow::Status::Unopened);
+        JScheduler::TopologyState state = scheduler.get_topology_state();
 
-        topology.run(1);
+        REQUIRE(state.arrow_states[0].status == JScheduler::ArrowStatus::Uninitialized);
+        REQUIRE(state.arrow_states[1].status == JScheduler::ArrowStatus::Uninitialized);
+        REQUIRE(state.arrow_states[2].status == JScheduler::ArrowStatus::Uninitialized);
+        REQUIRE(state.arrow_states[3].status == JScheduler::ArrowStatus::Uninitialized);
+
+        scheduler.run_topology(1);
+        state = scheduler.get_topology_state();
         // TODO: Check that initialize has been called, but not finalize
 
-        REQUIRE(emit_rand_ints->get_status() == JArrow::Status::Running);
-        REQUIRE(multiply_by_two->get_status() == JArrow::Status::Running);
-        REQUIRE(subtract_one->get_status() == JArrow::Status::Running);
-        REQUIRE(sum_everything->get_status() == JArrow::Status::Running);
+        REQUIRE(state.arrow_states[0].status == JScheduler::ArrowStatus::Active);
+        REQUIRE(state.arrow_states[1].status == JScheduler::ArrowStatus::Active);
+        REQUIRE(state.arrow_states[2].status == JScheduler::ArrowStatus::Active);
+        REQUIRE(state.arrow_states[3].status == JScheduler::ArrowStatus::Active);
     }
 
 } // TEST_CASE
@@ -105,7 +104,7 @@ TEST_CASE("ActivableDeactivationTests") {
     SubOneProcessor p2;
     SumSink<double> sink;
 
-    JArrowTopology topology;
+    auto topology = std::make_shared<JArrowTopology>();
 
     auto q1 = new JMailbox<int>();
     auto q2 = new JMailbox<double>();
@@ -120,39 +119,46 @@ TEST_CASE("ActivableDeactivationTests") {
     multiply_by_two->attach(subtract_one);
     subtract_one->attach(sum_everything);
 
-    topology.sources.push_back(emit_rand_ints);
-    topology.arrows.push_back(emit_rand_ints);
-    topology.arrows.push_back(multiply_by_two);
-    topology.arrows.push_back(subtract_one);
-    topology.arrows.push_back(sum_everything);
-    topology.sinks.push_back(sum_everything);
+    topology->sources.push_back(emit_rand_ints);
+    topology->arrows.push_back(emit_rand_ints);
+    topology->arrows.push_back(multiply_by_two);
+    topology->arrows.push_back(subtract_one);
+    topology->arrows.push_back(sum_everything);
+    topology->sinks.push_back(sum_everything);
 
     auto logger = JLogger(JLogger::Level::OFF);
-    topology.m_logger = logger;
+    topology->m_logger = logger;
     source.logger = logger;
 
-    REQUIRE(emit_rand_ints->get_status() == JArrow::Status::Unopened);
-    REQUIRE(multiply_by_two->get_status() == JArrow::Status::Unopened);
-    REQUIRE(subtract_one->get_status() == JArrow::Status::Unopened);
-    REQUIRE(sum_everything->get_status() == JArrow::Status::Unopened);
+    JScheduler scheduler(topology);
+    scheduler.logger = logger;
+    JScheduler::TopologyState state = scheduler.get_topology_state();
 
-    topology.run(1);
+    REQUIRE(state.arrow_states[0].status == JScheduler::ArrowStatus::Uninitialized);
+    REQUIRE(state.arrow_states[1].status == JScheduler::ArrowStatus::Uninitialized);
+    REQUIRE(state.arrow_states[2].status == JScheduler::ArrowStatus::Uninitialized);
+    REQUIRE(state.arrow_states[3].status == JScheduler::ArrowStatus::Uninitialized);
 
-    REQUIRE(emit_rand_ints->get_status() == JArrow::Status::Running);
-    REQUIRE(multiply_by_two->get_status() == JArrow::Status::Running);
-    REQUIRE(subtract_one->get_status() == JArrow::Status::Running);
-    REQUIRE(sum_everything->get_status() == JArrow::Status::Running);
+    scheduler.run_topology(1);
+    state = scheduler.get_topology_state();
 
-    steppe(emit_rand_ints);
+    REQUIRE(state.arrow_states[0].status == JScheduler::ArrowStatus::Active);
+    REQUIRE(state.arrow_states[1].status == JScheduler::ArrowStatus::Active);
+    REQUIRE(state.arrow_states[2].status == JScheduler::ArrowStatus::Active);
+    REQUIRE(state.arrow_states[3].status == JScheduler::ArrowStatus::Active);
 
-    REQUIRE(emit_rand_ints->get_status() == JArrow::Status::Finished);
-    REQUIRE(multiply_by_two->get_status() == JArrow::Status::Running);
-    REQUIRE(subtract_one->get_status() == JArrow::Status::Running);
-    REQUIRE(sum_everything->get_status() == JArrow::Status::Running);
+    auto result = steppe(emit_rand_ints);
+
+    scheduler.next_assignment(0, emit_rand_ints, result);
+    state = scheduler.get_topology_state();
+
+    REQUIRE(state.arrow_states[0].status == JScheduler::ArrowStatus::Finalized);
+    REQUIRE(state.arrow_states[1].status == JScheduler::ArrowStatus::Active);
+    REQUIRE(state.arrow_states[2].status == JScheduler::ArrowStatus::Active);
+    REQUIRE(state.arrow_states[3].status == JScheduler::ArrowStatus::Active);
 
     // TODO: Test that finalize was called exactly once
 } // TEST_CASE
-
 
 
 

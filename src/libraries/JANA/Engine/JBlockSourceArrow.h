@@ -64,19 +64,13 @@ public:
 			}
 			else if (lambda_result == Status::FailTryAgain) {
 				status = JArrowMetrics::Status::ComeBackLater;
-				// TODO: Consider reporting queueempty/queuefull/sourcebusy here instead
 			}
 			else if (lambda_result == Status::FailFinished) {
-				finish();
-				// TODO: finish() really ought to be called by JScheduler.
-				//       However, it is not, nor is it being called for JEventSourceArrow either.
-				//       I'm going to try to fix this when I get around to parallel event sources (issue #72)
 				status = JArrowMetrics::Status::Finished;
 			}
 		}
 		else { // reserved_count = 0  => downstream is full
 			status = JArrowMetrics::Status::ComeBackLater;
-			// TODO: Consider reporting queueempty/queuefull/sourcebusy here instead
 		}
 		result.update(status, message_count, 1, latency, overhead);
 	}
