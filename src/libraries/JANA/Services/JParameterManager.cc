@@ -111,7 +111,7 @@ void JParameterManager::PrintParameters(bool show_defaulted, bool show_advanced,
 
     // If all params are set to default values, then print a one line summary and return
     if (params_to_print.empty()) {
-        LOG << "All configuration parameters set to default values." << LOG_END;
+        LOG_INFO(m_logger) << "All configuration parameters set to default values." << LOG_END;
         return;
     }
 
@@ -157,7 +157,7 @@ void JParameterManager::PrintParameters(bool show_defaulted, bool show_advanced,
     }
     std::ostringstream ss;
     table.Render(ss);
-    LOG << "Configuration Parameters\n"  << ss.str() << LOG_END;
+    LOG_INFO(m_logger) << "Configuration Parameters\n"  << ss.str() << LOG_END;
 }
 
 /// @brief Access entire map of parameters

@@ -43,11 +43,10 @@ int main() {
         // entangled "block of 40": dis * 40
         
         auto params = new JParameterManager;
-        params->SetParameter("log:off", "JApplication,JPluginLoader"); // Log levels get set as soon as JApp gets constructed XD
+        params->SetParameter("log:off", "JApplication,JPluginLoader,JArrowProcessingController,JArrow"); // Log levels get set as soon as JApp gets constructed XD
         params->SetParameter("jtest:parser_ms", 2);
 
         JApplication app(params);
-        app.GetService<JLoggingService>()->set_level(JLogger::Level::OFF);
         app.AddPlugin("JTest");
         benchmark(app);
     }
@@ -57,7 +56,7 @@ int main() {
         std::cout << "Running JTest with all sleeps and computations turned off" << std::endl;
 
         auto params = new JParameterManager;
-        params->SetParameter("log:off", "JApplication,JPluginLoader"); // Log levels get set as soon as JApp gets constructed XD
+        params->SetParameter("log:off", "JApplication,JPluginLoader,JArrowProcessingController,JArrow"); // Log levels get set as soon as JApp gets constructed XD
                                                                        //
         params->SetParameter("jtest:parser_ms", 0);
         params->SetParameter("jtest:parser_spread", 0);
@@ -80,7 +79,6 @@ int main() {
         params->SetParameter("jtest:plotter_bytes_spread", 0);
 
         JApplication app(params);
-        app.GetService<JLoggingService>()->set_level(JLogger::Level::OFF);
         app.AddPlugin("JTest");
         benchmark(app);
     }
