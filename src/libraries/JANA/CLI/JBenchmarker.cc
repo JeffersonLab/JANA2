@@ -17,35 +17,35 @@ JBenchmarker::JBenchmarker(JApplication* app) : m_app(app) {
 
     auto params = app->GetJParameterManager();
 
-    params->SetParameter("NEVENTS", 0);
-    // Prevent users' choice of events from interfering with everything
+    params->SetParameter("jana:nevents", 0);
+    // Prevent users' choice of nevents from interfering with everything
 
     params->SetDefaultParameter(
-            "BENCHMARK:NSAMPLES",
+            "benchmark:nsamples",
             m_nsamples,
             "Number of samples for each benchmark test");
 
     params->SetDefaultParameter(
-            "BENCHMARK:MINTHREADS",
+            "benchmark:minthreads",
             m_min_threads,
             "Minimum number of threads for benchmark test");
 
     params->SetDefaultParameter(
-            "BENCHMARK:MAXTHREADS",
+            "benchmark:maxthreads",
             m_max_threads,
             "Maximum number of threads for benchmark test");
 
     params->SetDefaultParameter(
-            "BENCHMARK:THREADSTEP",
+            "benchmark:threadstep",
             m_thread_step,
             "Delta number of threads between each benchmark test");
 
     params->SetDefaultParameter(
-            "BENCHMARK:RESULTSDIR",
+            "benchmark:resultsdir",
             m_output_dir,
             "Output directory name for benchmark test results");
 
-    params->SetParameter("NTHREADS", m_max_threads);
+    params->SetParameter("nthreads", m_max_threads);
     // Otherwise JApplication::Scale() doesn't scale up. This is an interesting bug. TODO: Remove me when fixed.
 }
 
@@ -74,7 +74,7 @@ void JBenchmarker::RunUntilFinished() {
     std::map<uint32_t, std::pair<double, double> > rates; // key=nthreads  val.first=rate in Hz, val.second=rms of rate in Hz
     for (uint32_t nthreads = m_min_threads; nthreads <= m_max_threads && !m_app->IsQuitting(); nthreads += m_thread_step) {
 
-        std::cout << "Setting NTHREADS = " << nthreads << " ..." << std::endl;
+        std::cout << "Setting nthreads = " << nthreads << " ..." << std::endl;
         m_app->Scale(nthreads);
 
         // Loop for at most 60 seconds waiting for the number of threads to update
