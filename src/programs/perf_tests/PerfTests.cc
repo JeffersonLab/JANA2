@@ -14,17 +14,19 @@
 
 
 void benchmark(JApplication& app) {
+
     app.Run(false);
-    std::cout << app.GetIntegratedRate() << std::endl;
     for (int nthreads=1; nthreads<=8; nthreads*=2) {
+
         app.Scale(nthreads);
-        // Warm up for 10 secs
-        std::cout << "Warming up (10 secs)" << std::endl;
-        std::this_thread::sleep_for(std::chrono::seconds(10));
+        std::cout << "Scaling to " << nthreads << " threads... (5 second warmup)" << std::endl;
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+
         app.GetInstantaneousRate(); // Reset the clock
-        std::cout << "Measuring throughput (20 secs)" << std::endl;
-        std::this_thread::sleep_for(std::chrono::seconds(20));
-        std::cout << nthreads << "    " << app.GetInstantaneousRate() << std::endl;
+        for (int i=0; i<15; ++i) {
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+            std::cout << app.GetInstantaneousRate() << " Hz" << std::endl;
+        }
     }
     app.Stop(true);
 }
