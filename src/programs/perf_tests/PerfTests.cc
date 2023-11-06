@@ -16,16 +16,17 @@
 void benchmark(JApplication& app) {
 
     app.Run(false);
+    auto logger = app.GetService<JLoggingService>()->get_logger("PerfTests");
     for (int nthreads=1; nthreads<=8; nthreads*=2) {
 
         app.Scale(nthreads);
-        std::cout << "Scaling to " << nthreads << " threads... (5 second warmup)" << std::endl;
+        LOG_INFO(logger) << "Scaling to " << nthreads << " threads... (5 second warmup)" << LOG_END;
         std::this_thread::sleep_for(std::chrono::seconds(5));
 
         app.GetInstantaneousRate(); // Reset the clock
         for (int i=0; i<15; ++i) {
             std::this_thread::sleep_for(std::chrono::seconds(1));
-            std::cout << app.GetInstantaneousRate() << " Hz" << std::endl;
+            LOG_INFO(logger) << "Measured instantaneous rate: " << app.GetInstantaneousRate() << " Hz" << LOG_END;
         }
     }
     app.Stop(true);
@@ -35,7 +36,6 @@ void benchmark(JApplication& app) {
 int main() {
     
     {
-        std::cout << "Running JTest tuned to imitate halld_recon:" << std::endl;
 
         // 5Hz for full reconstruction
         // 20kHz for stripped-down reconstruction (not per-core)
@@ -49,13 +49,15 @@ int main() {
         params->SetParameter("jtest:parser_ms", 2);
 
         JApplication app(params);
+        auto logger = app.GetService<JLoggingService>()->get_logger("PerfTests");
         app.AddPlugin("JTest");
+
+        LOG_INFO(logger) << "Running JTest tuned to imitate halld_recon:" << LOG_END;
         benchmark(app);
     }
 
 
     {
-        std::cout << "Running JTest with all sleeps and computations turned off" << std::endl;
 
         auto params = new JParameterManager;
         params->SetParameter("log:off", "JApplication,JPluginLoader,JArrowProcessingController,JArrow"); // Log levels get set as soon as JApp gets constructed XD
@@ -81,7 +83,10 @@ int main() {
         params->SetParameter("jtest:plotter_bytes_spread", 0);
 
         JApplication app(params);
+        auto logger = app.GetService<JLoggingService>()->get_logger("PerfTests");
         app.AddPlugin("JTest");
+
+        LOG_INFO(logger) << "Running JTest with all sleeps and computations turned off" << LOG_END;
         benchmark(app);
     }
     // Next: Run with PODIO datatypes
