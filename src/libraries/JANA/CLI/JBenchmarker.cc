@@ -57,6 +57,12 @@ JBenchmarker::~JBenchmarker() {}
 
 void JBenchmarker::RunUntilFinished() {
 
+    LOG_INFO(m_logger) << "Running benchmarker with the following settings:\n"
+                       << "    benchmark:minthreads = " << m_min_threads << "\n"
+                       << "    benchmark:maxthreads = " << m_max_threads << "\n"
+                       << "    benchmark:threadstep = " << m_thread_step << "\n"
+                       << "    benchmark:resultsdir = " << m_output_dir << LOG_END;
+
     m_app->SetTicker(false);
     m_app->Run(false);
 
@@ -138,9 +144,9 @@ void JBenchmarker::RunUntilFinished() {
 
     LOG_INFO(m_logger) 
         << "Testing finished. To view a plot of test results:\n" 
-        << "   cd " << m_output_dir 
-        << "\n  ./jana-plot-scaletest.py\n" << LOG_END;
-    m_app->Quit();
+        << "    cd " << m_output_dir 
+        << "\n    ./jana-plot-scaletest.py\n" << LOG_END;
+    m_app->Stop();
 }
 
 
