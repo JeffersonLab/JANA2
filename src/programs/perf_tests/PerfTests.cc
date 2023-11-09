@@ -17,25 +17,6 @@
 #include <thread>
 
 
-void benchmark(JApplication& app) {
-
-    app.Run(false);
-    auto logger = app.GetService<JLoggingService>()->get_logger("PerfTests");
-    for (int nthreads=1; nthreads<=8; nthreads*=2) {
-
-        app.Scale(nthreads);
-        LOG_INFO(logger) << "Scaling to " << nthreads << " threads... (5 second warmup)" << LOG_END;
-        std::this_thread::sleep_for(std::chrono::seconds(5));
-
-        app.GetInstantaneousRate(); // Reset the clock
-        for (int i=0; i<15; ++i) {
-            std::this_thread::sleep_for(std::chrono::seconds(1));
-            LOG_INFO(logger) << "Measured instantaneous rate: " << app.GetInstantaneousRate() << " Hz" << LOG_END;
-        }
-    }
-    app.Stop(true);
-}
-
 
 int main() {
     
