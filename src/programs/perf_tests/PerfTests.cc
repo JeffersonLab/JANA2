@@ -8,6 +8,7 @@
 
 #include <JANA/JApplication.h>
 #include <JANA/JFactoryGenerator.h>
+#include <JANA/CLI/JBenchmarker.h>
 #if HAVE_PODIO
 #include <PodioStressTest.h>
 #endif
@@ -51,12 +52,15 @@ int main() {
         params->SetParameter("log:off", "JApplication,JPluginLoader,JArrowProcessingController,JArrow"); // Log levels get set as soon as JApp gets constructed XD
         params->SetParameter("jtest:parser_ms", 2);
 
+        params->SetParameter("benchmark:resultsdir", "perftest_fake_halldrecon");
+
         JApplication app(params);
         auto logger = app.GetService<JLoggingService>()->get_logger("PerfTests");
         app.AddPlugin("JTest");
 
         LOG_INFO(logger) << "Running JTest tuned to imitate halld_recon:" << LOG_END;
-        benchmark(app);
+        JBenchmarker benchmarker(&app);
+        benchmarker.RunUntilFinished();
     }
 
 
@@ -85,12 +89,15 @@ int main() {
         params->SetParameter("jtest:plotter_bytes", 0);
         params->SetParameter("jtest:plotter_bytes_spread", 0);
 
+        params->SetParameter("benchmark:resultsdir", "perftest_pure_overhead");
+
         JApplication app(params);
         auto logger = app.GetService<JLoggingService>()->get_logger("PerfTests");
         app.AddPlugin("JTest");
 
         LOG_INFO(logger) << "Running JTest with all sleeps and computations turned off" << LOG_END;
-        benchmark(app);
+        JBenchmarker benchmarker(&app);
+        benchmarker.RunUntilFinished();
     }
 
 #if HAVE_PODIO

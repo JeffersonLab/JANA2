@@ -47,6 +47,11 @@ JBenchmarker::JBenchmarker(JApplication* app) : m_app(app) {
             m_output_dir,
             "Output directory name for benchmark test results");
 
+    params->SetDefaultParameter(
+            "benchmark:copyscript",
+            m_copy_script,
+            "Copy plotting script to results dir");
+
     params->SetParameter("nthreads", m_max_threads);
     // Otherwise JApplication::Scale() doesn't scale up. This is an interesting bug. TODO: Remove me when fixed.
 }
@@ -61,6 +66,7 @@ void JBenchmarker::RunUntilFinished() {
                        << "    benchmark:minthreads = " << m_min_threads << "\n"
                        << "    benchmark:maxthreads = " << m_max_threads << "\n"
                        << "    benchmark:threadstep = " << m_thread_step << "\n"
+                       << "    benchmark:nsamples = " << m_nsamples << "\n"
                        << "    benchmark:resultsdir = " << m_output_dir << LOG_END;
 
     m_app->SetTicker(false);
@@ -140,12 +146,19 @@ void JBenchmarker::RunUntilFinished() {
     }
     ofs2.close();
 
-    copy_to_output_dir("${JANA_HOME}/bin/jana-plot-scaletest.py");
-
-    LOG_INFO(m_logger) 
-        << "Testing finished. To view a plot of test results:\n" 
-        << "    cd " << m_output_dir 
-        << "\n    ./jana-plot-scaletest.py\n" << LOG_END;
+    if (m_copy_script) {
+        copy_to_output_dir("${JANA_HOME}/bin/jana-plot-scaletest.py");
+        LOG_INFO(m_logger)
+            << "Testing finished. To view a plot of test results:\n"
+            << "    cd " << m_output_dir
+            << "\n    ./jana-plot-scaletest.py\n" << LOG_END;
+    }
+    else {
+        LOG_INFO(m_logger) 
+            << "Testing finished. To view a plot of test results:\n"
+            << "    cd " << m_output_dir << "\n"
+            << "    $JANA_HOME/bin/jana-plot-scaletest.py\n" << LOG_END;
+    }
     m_app->Stop();
 }
 
