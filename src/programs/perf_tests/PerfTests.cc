@@ -7,10 +7,13 @@
 // a variety of workloads we care about.
 
 #include <JANA/JApplication.h>
+#include <JANA/JFactoryGenerator.h>
+#if HAVE_PODIO
+#include <PodioStressTest.h>
+#endif
 
 #include <iostream>
 #include <thread>
-
 
 
 void benchmark(JApplication& app) {
@@ -89,8 +92,25 @@ int main() {
         LOG_INFO(logger) << "Running JTest with all sleeps and computations turned off" << LOG_END;
         benchmark(app);
     }
-    // Next: Run with PODIO datatypes
+
+#if HAVE_PODIO
+    {
+        // Test that we can link against PODIO datamodel
+        // TODO: Delete me 
+        ExampleHitCollection c;
+
+        auto params = new JParameterManager;
+        params->SetParameter("log:off", "JApplication,JPluginLoader,JArrowProcessingController,JArrow"); // Log levels get set as soon as JApp gets constructed XD
+        JApplication app(params);
+        auto logger = app.GetService<JLoggingService>()->get_logger("PerfTests");
+        // TODO: Add Podio sources, processors, and factories just like JTest
+        LOG_INFO(logger) << "Running PODIO stress test" << LOG_END;
+        benchmark(app);
+    }
+#endif
+
     // Next: Run with subevents
     // Next: Run with more and more arrows to see how that scales
+    // Next: Barrier events
 
 }
