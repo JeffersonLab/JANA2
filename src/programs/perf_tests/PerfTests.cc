@@ -50,6 +50,7 @@ int main() {
         
         auto params = new JParameterManager;
         params->SetParameter("log:off", "JApplication,JPluginLoader,JArrowProcessingController,JArrow"); // Log levels get set as soon as JApp gets constructed XD
+        params->SetParameter("jtest:write_csv", false);
         params->SetParameter("jtest:parser_ms", 2);
 
         params->SetParameter("benchmark:resultsdir", "perftest_fake_halldrecon");
@@ -58,7 +59,7 @@ int main() {
         auto logger = app.GetService<JLoggingService>()->get_logger("PerfTests");
         app.AddPlugin("JTest");
 
-        LOG_INFO(logger) << "Running JTest tuned to imitate halld_recon:" << LOG_END;
+        LOG_INFO(logger) << "Running JTest tuned to imitate halld_recon" << LOG_END;
         JBenchmarker benchmarker(&app);
         benchmarker.RunUntilFinished();
     }
@@ -68,7 +69,8 @@ int main() {
 
         auto params = new JParameterManager;
         params->SetParameter("log:off", "JApplication,JPluginLoader,JArrowProcessingController,JArrow"); // Log levels get set as soon as JApp gets constructed XD
-                                                                       //
+        params->SetParameter("jtest:write_csv", false);
+
         params->SetParameter("jtest:parser_ms", 0);
         params->SetParameter("jtest:parser_spread", 0);
         params->SetParameter("jtest:parser_bytes", 0);
