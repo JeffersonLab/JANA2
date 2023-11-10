@@ -81,6 +81,8 @@ public:
         for (auto& s : groups) {
             m_local_log_levels[s] = JLogger::Level::TRACE;
         }
+        // Set the log level on the parameter manager, resolving the chicken-and-egg problem.
+        params->SetLogger(get_logger("JParameterManager"));
     }
 
     JLogger get_logger() {

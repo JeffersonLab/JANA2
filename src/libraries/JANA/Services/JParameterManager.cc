@@ -3,7 +3,6 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #include "JParameterManager.h"
-#include "JLoggingService.h"
 
 #include <vector>
 #include <string>
@@ -16,7 +15,10 @@ using namespace std;
 
 /// @brief Default constructor
 JParameterManager::JParameterManager() {
-    m_logger = JLoggingService::logger("JParameterManager");
+    // Set the logger temporarily, until the JLoggingService figures out the correct log level
+    m_logger.show_classname = true;
+    m_logger.className = "JParameterManager";
+    m_logger.level = JLogger::Level::INFO;
 }
 
 /// @brief Copy constructor

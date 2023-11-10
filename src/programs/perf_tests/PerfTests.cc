@@ -30,9 +30,11 @@ int main() {
         // entangled "block of 40": dis * 40
         
         auto params = new JParameterManager;
-        params->SetParameter("log:off", "JApplication,JPluginLoader,JArrowProcessingController,JArrow"); // Log levels get set as soon as JApp gets constructed XD
+        params->SetParameter("log:off", "JApplication,JPluginLoader,JArrowProcessingController,JArrow,JParameterManager");
+        // Log levels get set as soon as JApp gets constructed
         params->SetParameter("jtest:write_csv", false);
         params->SetParameter("jtest:parser_ms", 2);
+        params->SetParameter("jtest:plotter_ms", 2);
 
         params->SetParameter("benchmark:resultsdir", "perftest_fake_halldrecon");
 
@@ -49,7 +51,8 @@ int main() {
     {
 
         auto params = new JParameterManager;
-        params->SetParameter("log:off", "JApplication,JPluginLoader,JArrowProcessingController,JArrow"); // Log levels get set as soon as JApp gets constructed XD
+        params->SetParameter("log:off", "JApplication,JPluginLoader,JArrowProcessingController,JArrow,JParameterManager");
+        // Log levels get set as soon as JApp gets constructed
         params->SetParameter("jtest:write_csv", false);
 
         params->SetParameter("jtest:parser_ms", 0);
