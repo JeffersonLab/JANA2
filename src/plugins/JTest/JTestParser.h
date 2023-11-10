@@ -18,7 +18,7 @@
 
 class JTestParser : public JEventSource {
 
-    size_t m_cputime_ms = 10;
+    size_t m_cputime_ms = 0;
     size_t m_write_bytes = 2000000;
     double m_cputime_spread = 0.25;
     double m_write_spread = 0.25;
@@ -51,7 +51,7 @@ public:
         }
 
         // Spin the CPU
-        consume_cpu_ms(m_cputime_ms);
+        consume_cpu_ms(m_cputime_ms, m_cputime_spread);
 
         // Emit a shared pointer to the entangled event buffer
         auto eec = new JTestEntangledEventData;
