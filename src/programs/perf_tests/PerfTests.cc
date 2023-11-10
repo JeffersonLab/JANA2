@@ -7,51 +7,103 @@
 // a variety of workloads we care about.
 
 #include <JANA/JApplication.h>
+#include <JANA/JFactoryGenerator.h>
+#include <JANA/CLI/JBenchmarker.h>
+#if HAVE_PODIO
+#include <PodioStressTest.h>
+#endif
 
 #include <iostream>
 #include <thread>
 
+
+
 int main() {
-
-    auto params = new JParameterManager;
-    params->SetParameter("log:off", "JApplication,JPluginLoader"); // Log levels get set as soon as JApp gets constructed XD
-
-    std::cout << "Running JTest using sleeps:" << std::endl;
+    
     {
-        JApplication app;
-        app.GetService<JLoggingService>()->set_level(JLogger::Level::OFF);
+
+        // 5Hz for full reconstruction
+        // 20kHz for stripped-down reconstruction (not per-core)
+        // Base memory allcation: 100 MB/core + 600MB
+        // 1 thread/event, disentangle 1 event, turn into 40.
+        // disentangled (single event size) : 12.5 kB / event (before blown up)
+        // entangled "block of 40": dis * 40
+        
+        auto params = new JParameterManager;
+        params->SetParameter("log:off", "JApplication,JPluginLoader,JArrowProcessingController,JArrow,JParameterManager");
+        // Log levels get set as soon as JApp gets constructed
+        params->SetParameter("jtest:write_csv", false);
+        params->SetParameter("jtest:parser_ms", 2);
+        params->SetParameter("jtest:plotter_ms", 2);
+
+        params->SetParameter("benchmark:resultsdir", "perftest_fake_halldrecon");
+
+        JApplication app(params);
+        auto logger = app.GetService<JLoggingService>()->get_logger("PerfTests");
         app.AddPlugin("JTest");
-        app.Run(false);
-        std::cout << app.GetIntegratedRate() << std::endl;
-        for (int nthreads=1; nthreads<=8; nthreads*=2) {
-            app.Scale(nthreads);
-            // Warm up for 10 secs
-            std::this_thread::sleep_for(std::chrono::seconds(10));
-            app.GetInstantaneousRate(); // Reset the clock
-            std::this_thread::sleep_for(std::chrono::seconds(20));
-            std::cout << nthreads << "    " << app.GetInstantaneousRate() << std::endl;
-        }
-        app.Stop(true);
-    }
-    std::cout << "Running JTest using actual computations:" << std::endl;
-    {
-        for (int i=1; i<=8; i*=2) {
-            std::cout << i << std::endl;
-        }
 
-    }
-    std::cout << "Running JTest with all sleeps and computations turned off (pure overhead):" << std::endl;
-    {
-        for (int i=1; i<=8; i*=2) {
-            std::cout << i << std::endl;
-        }
+        LOG_INFO(logger) << "Running JTest tuned to imitate halld_recon" << LOG_END;
+        JBenchmarker benchmarker(&app);
+        benchmarker.RunUntilFinished();
     }
 
-//    5Hz for full reconstruction
-//    20kHz for stripped-down reconstruction (not per-core)
-//    Base memory allcation: 100 MB/core + 600MB
-//    1 thread/event, disentangle 1 event, turn into 40.
-//    disentangled (single event size) : 12.5 kB / event (before blown up)
-//    entangled "block of 40": dis * 40
+
+    {
+
+        auto params = new JParameterManager;
+        params->SetParameter("log:off", "JApplication,JPluginLoader,JArrowProcessingController,JArrow,JParameterManager");
+        // Log levels get set as soon as JApp gets constructed
+        params->SetParameter("jtest:write_csv", false);
+
+        params->SetParameter("jtest:parser_ms", 0);
+        params->SetParameter("jtest:parser_spread", 0);
+        params->SetParameter("jtest:parser_bytes", 0);
+        params->SetParameter("jtest:parser_bytes_spread", 0);
+
+        params->SetParameter("jtest:disentangler_ms", 0);
+        params->SetParameter("jtest:disentangler_spread", 0);
+        params->SetParameter("jtest:disentangler_bytes", 0);
+        params->SetParameter("jtest:disentangler_bytes_spread", 0);
+
+        params->SetParameter("jtest:tracker_ms", 0);
+        params->SetParameter("jtest:tracker_spread", 0);
+        params->SetParameter("jtest:tracker_bytes", 0);
+        params->SetParameter("jtest:tracker_bytes_spread", 0);
+
+        params->SetParameter("jtest:plotter_ms", 0);
+        params->SetParameter("jtest:plotter_spread", 0);
+        params->SetParameter("jtest:plotter_bytes", 0);
+        params->SetParameter("jtest:plotter_bytes_spread", 0);
+
+        params->SetParameter("benchmark:resultsdir", "perftest_pure_overhead");
+
+        JApplication app(params);
+        auto logger = app.GetService<JLoggingService>()->get_logger("PerfTests");
+        app.AddPlugin("JTest");
+
+        LOG_INFO(logger) << "Running JTest with all sleeps and computations turned off" << LOG_END;
+        JBenchmarker benchmarker(&app);
+        benchmarker.RunUntilFinished();
+    }
+
+#if HAVE_PODIO
+    {
+        // Test that we can link against PODIO datamodel
+        // TODO: Delete me 
+        ExampleHitCollection c;
+
+        auto params = new JParameterManager;
+        params->SetParameter("log:off", "JApplication,JPluginLoader,JArrowProcessingController,JArrow"); // Log levels get set as soon as JApp gets constructed XD
+        JApplication app(params);
+        auto logger = app.GetService<JLoggingService>()->get_logger("PerfTests");
+        // TODO: Add Podio sources, processors, and factories just like JTest
+        LOG_INFO(logger) << "Running PODIO stress test" << LOG_END;
+        benchmark(app);
+    }
+#endif
+
+    // Next: Run with subevents
+    // Next: Run with more and more arrows to see how that scales
+    // Next: Barrier events
 
 }

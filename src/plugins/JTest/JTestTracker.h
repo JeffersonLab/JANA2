@@ -29,10 +29,10 @@ public:
 
         auto app = GetApplication();
         assert (app != nullptr);
-        app->GetParameter("jtest:tracker_bytes", m_write_bytes);
-        app->GetParameter("jtest:tracker_ms", m_cputime_ms);
-        app->GetParameter("jtest:tracker_bytes_spread", m_write_spread);
-        app->GetParameter("jtest:tracker_spread", m_cputime_spread);
+        app->SetDefaultParameter("jtest:tracker_ms", m_cputime_ms, "Time spent during tracking");
+        app->SetDefaultParameter("jtest:tracker_spread", m_cputime_spread, "Spread of time spent during tracking");
+        app->SetDefaultParameter("jtest:tracker_bytes", m_write_bytes, "Bytes written during tracking");
+        app->SetDefaultParameter("jtest:tracker_bytes_spread", m_write_spread, "Spread of bytes written during tracking");
     }
 
     void Process(const std::shared_ptr<const JEvent> &aEvent) override {

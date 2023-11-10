@@ -24,6 +24,7 @@ jobs:
     - uses: actions/checkout@v3
     - name: deps
       run: |
+        sudo apt-get update
         sudo apt-get install -y libzmq3-dev libxerces-c-dev python3-dev
     - name: cmake
       run: |
@@ -49,8 +50,8 @@ jobs:
         $GITHUB_WORKSPACE/Linux/bin/jana -PPLUGINS=JTest -Pjana:nevents=100
     - name: janatests
       run: |
-        echo "--- Running janatests ------------------------------"
-        $GITHUB_WORKSPACE/Linux/bin/janatests
+        echo "--- Running jana-unit-tests ------------------------------"
+        $GITHUB_WORKSPACE/Linux/bin/jana-unit-tests
     - name: BlockExample
       run: |
         echo "--- Running BlockExample ------------------------------"

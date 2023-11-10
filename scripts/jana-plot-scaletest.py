@@ -37,15 +37,15 @@ Usage:
  You can control several parameters of the test using these
  JANA configuration parameters:
 
-   BENCHMARK:NSAMPLES     # Number of samples for each benchmark test
-   BENCHMARK:MINTHREADS   # Minimum number of threads for benchmark test
-   BENCHMARK:MAXTHREADS   # Maximum number of threads for benchmark test
-   BENCHMARK:RESULTSDIR   # Output directory name for benchmark test results
-   BENCHMARK:THREADSTEP   # Delta number of threads between each benchmark test
+   benchmark:nsamples     # Number of samples for each benchmark test
+   benchmark:minthreads   # Minimum number of threads for benchmark test
+   benchmark:maxthreads   # Maximum number of threads for benchmark test
+   benchmark:resultsdir   # Output directory name for benchmark test results
+   benchmark:threadstep   # Delta number of threads between each benchmark test
 
  Run "jana -c -b" to see the default values for each of these.
 
- To use this just go into the BENCHMARK:RESULTSDIR where the
+ To use this just go into the benchmark:resultsdir where the
  rates.dat file is and run it. Note that you must have python
  installed as well as the numpy and matplotlib python packages.
 

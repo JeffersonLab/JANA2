@@ -8,13 +8,15 @@
 #include <JANA/JApplication.h>
 #include <JANA/JEventProcessor.h>
 #include "JTestTracker.h"
+#include <mutex>
 
 class JTestPlotter : public JEventProcessor {
 
-    size_t m_cputime_ms = 20;
+    size_t m_cputime_ms = 0;
     size_t m_write_bytes = 1000;
     double m_cputime_spread = 0.25;
     double m_write_spread = 0.25;
+    std::mutex m_mutex;
 
 public:
 
@@ -22,10 +24,10 @@ public:
 
         SetTypeName(NAME_OF_THIS);
 
-        app->GetParameter("jtest:plotter_bytes", m_write_bytes);
-        app->GetParameter("jtest:plotter_ms", m_cputime_ms);
-        app->GetParameter("jtest:plotter_bytes_spread", m_write_spread);
-        app->GetParameter("jtest:plotter_spread", m_cputime_spread);
+        app->SetDefaultParameter("jtest:plotter_ms", m_cputime_ms, "Time spent during plotting");
+        app->SetDefaultParameter("jtest:plotter_spread", m_cputime_spread, "Spread of time spent during plotting");
+        app->SetDefaultParameter("jtest:plotter_bytes", m_write_bytes, "Bytes written during plotting");
+        app->SetDefaultParameter("jtest:plotter_bytes_spread", m_write_spread, "Spread of bytes written during plotting");
     }
 
     virtual std::string GetType() const {
@@ -41,6 +43,9 @@ public:
 
         // Read the extra data objects inserted by JTestTracker
         aEvent->Get<JTestTracker::JTestTrackAuxilliaryData>();
+
+        // Everything that happens after here is in a critical section
+        std::lock_guard<std::mutex> lock(m_mutex);
 
         // Consume CPU
         consume_cpu_ms(m_cputime_ms, m_cputime_spread);

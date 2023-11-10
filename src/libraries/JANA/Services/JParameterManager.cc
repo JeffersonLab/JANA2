@@ -3,7 +3,6 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #include "JParameterManager.h"
-#include "JLoggingService.h"
 
 #include <vector>
 #include <string>
@@ -16,7 +15,10 @@ using namespace std;
 
 /// @brief Default constructor
 JParameterManager::JParameterManager() {
-    m_logger = JLoggingService::logger("JParameterManager");
+    // Set the logger temporarily, until the JLoggingService figures out the correct log level
+    m_logger.show_classname = true;
+    m_logger.className = "JParameterManager";
+    m_logger.level = JLogger::Level::INFO;
 }
 
 /// @brief Copy constructor
@@ -111,7 +113,7 @@ void JParameterManager::PrintParameters(bool show_defaulted, bool show_advanced,
 
     // If all params are set to default values, then print a one line summary and return
     if (params_to_print.empty()) {
-        LOG << "All configuration parameters set to default values." << LOG_END;
+        LOG_INFO(m_logger) << "All configuration parameters set to default values." << LOG_END;
         return;
     }
 
@@ -157,7 +159,7 @@ void JParameterManager::PrintParameters(bool show_defaulted, bool show_advanced,
     }
     std::ostringstream ss;
     table.Render(ss);
-    LOG << "Configuration Parameters\n"  << ss.str() << LOG_END;
+    LOG_INFO(m_logger) << "Configuration Parameters\n"  << ss.str() << LOG_END;
 }
 
 /// @brief Access entire map of parameters

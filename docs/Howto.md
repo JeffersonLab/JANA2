@@ -99,6 +99,29 @@ The following example shows how you would increase the verbosity of JPluginLoade
 jana -Pplugins=JTest -Plog:debug=JPluginLoader,JComponentManager
 ```
 
+The `JTest` plugin lets you test JANA's performance for different workloads. It simulates a typical reconstruction pipeline with four stages: parsing, disentangling, tracking, and plotting. Parsing and plotting are sequential, whereas disentangling and tracking are parallel. Each stage reads all of the data written during the previous stage. The time spent and bytes written (and random variation thereof) are set using the following parameters:
+ 
+| Name | Type | Default | Description |
+|:-----|:-----|:------------|:--------|
+jtest:parser_ms | int | 0 | Time spent during parsing
+jtest:parser_spread | int | 0.25 | Spread of time spent during parsing
+jtest:parser_bytes | int | 2000000 | Bytes written during parsing
+jtest:parser_bytes_spread | double | 0.25 | Spread of bytes written during parsing
+jtest:disentangler_ms | int | 20 | Time spent during disentangling
+jtest:disentangler_spread | double | 0.25 | Spread of time spent during disentangling
+jtest:disentangler_bytes | int | 500000 | Bytes written during disentangling
+jtest:disentangler_bytes_spread | double | 0.25 | Spread of bytes written during disentangling
+jtest:tracker_ms | int | 200 | Time spent during tracking
+jtest:tracker_spread | double | 0.25 | Spread of time spent during tracking
+jtest:tracker_bytes | int | 1000 | Bytes written during tracking
+jtest:tracker_bytes_spread | double | 0.25 | Spread of bytes written during tracking
+jtest:plotter_ms | int | 0 | Time spent during plotting
+jtest:plotter_spread | double | 0.25 | Spread of time spent during plotting
+jtest:plotter_bytes | int | 1000 | Bytes written during plotting
+jtest:plotter_bytes_spread | double | 0.25 | Spread of bytes written during plotting
+
+
+
 The following parameters are used for benchmarking:
 
 | Name | Type | Default | Description |
@@ -110,7 +133,7 @@ benchmark:threadstep  | int    | 1  | Thread count increment
 benchmark:resultsdir  | string | JANA_Test_Results | Directory name for benchmark test results
 
 
-The following parameters may come in handy when doing performance tuning:
+The following parameters are more advanced, but may come in handy when doing performance tuning:
 
 | Name | Type | Default | Description |
 |:-----|:-----|:------------|:--------|

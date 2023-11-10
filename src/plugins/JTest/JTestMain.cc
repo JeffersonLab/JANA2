@@ -23,9 +23,12 @@ void InitPlugin(JApplication *app){
 	app->Add(new JFactoryGeneratorT<JTestDisentangler>());
 	app->Add(new JFactoryGeneratorT<JTestTracker>());
 
-    // Demonstrates attaching a CSV writer so we can view the results from any JFactory
-    app->SetParameterValue<std::string>("csv:dest_dir", ".");
-    app->Add(new JCsvWriter<JTestTrackData>());
+    bool write_csv = false;
+    app->SetDefaultParameter("jtest:write_csv", write_csv);
+    if (write_csv) {
+        // Demonstrates attaching a CSV writer so we can view the results from any JFactory
+        app->Add(new JCsvWriter<JTestTrackData>());
+    }
 
     // Demonstrates sharing user-defined services with our components
 	app->ProvideService(std::make_shared<JTestCalibrationService>());

@@ -66,6 +66,7 @@ public:
     inline void SetIsAdvanced(bool isHidden) { m_is_advanced = isHidden; }
     inline void SetIsUsed(bool isUsed) { m_is_used = isUsed; }
     inline void SetIsDeprecated(bool isDeprecated) { m_is_deprecated = isDeprecated; }
+
 };
 
 class JParameterManager : public JService {
@@ -76,6 +77,8 @@ public:
     JParameterManager(const JParameterManager&);
 
     ~JParameterManager() override;
+
+    inline void SetLogger(JLogger logger) { m_logger = logger; }
 
     bool Exists(std::string name);
 

@@ -45,16 +45,16 @@ if (${USE_PODIO})
             )
 endif()
 
-add_executable(janatests ${TEST_SOURCES})
+add_executable(jana-unit-tests ${TEST_SOURCES})
 find_package(Threads REQUIRED)
-target_include_directories(janatests PUBLIC .)
-target_link_libraries(janatests jana2)
+target_include_directories(jana-unit-tests PUBLIC .)
+target_link_libraries(jana-unit-tests jana2)
 
 if (${USE_PODIO})
     # Pull in the data model from examples/PodioExample.
     # We don't want to have two separate toy data models in the JANA codebase
-    target_link_libraries(janatests PodioExampleDatamodel PodioExampleDatamodelDict)
+    target_link_libraries(jana-unit-tests PodioExampleDatamodel PodioExampleDatamodelDict)
 endif()
 
-install(TARGETS janatests DESTINATION bin)
+install(TARGETS jana-unit-tests DESTINATION bin)
 install(FILES catch.hpp DESTINATION include/external)

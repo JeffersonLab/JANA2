@@ -27,10 +27,10 @@ public:
     void Init() override {
         auto app = GetApplication();
         assert (app != nullptr);
-        app->GetParameter("jtest:disentangler_bytes", m_write_bytes);
-        app->GetParameter("jtest:disentangler_ms", m_cputime_ms);
-        app->GetParameter("jtest:disentangler_bytes_spread", m_write_spread);
-        app->GetParameter("jtest:disentangler_spread", m_cputime_spread);
+        app->SetDefaultParameter("jtest:disentangler_ms", m_cputime_ms, "Time spent during disentangling");
+        app->SetDefaultParameter("jtest:disentangler_spread", m_cputime_spread, "Spread of time spent during disentangling");
+        app->SetDefaultParameter("jtest:disentangler_bytes", m_write_bytes, "Bytes written during disentangling");
+        app->SetDefaultParameter("jtest:disentangler_bytes_spread", m_write_spread, "Spread of bytes written during disentangling");
 
         // Retrieve calibration service from JApp
         m_calibration_service = app->GetService<JTestCalibrationService>();

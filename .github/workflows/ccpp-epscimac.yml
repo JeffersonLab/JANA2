@@ -51,4 +51,4 @@ jobs:
     needs: build-n-install-jana
     steps:
       - name: run jana tests
-        run: $GITHUB_WORKSPACE/Darwin/bin/janatests
+        run: $GITHUB_WORKSPACE/Darwin/bin/jana-unit-tests
