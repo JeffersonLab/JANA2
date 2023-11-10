@@ -24,10 +24,10 @@ public:
 
         SetTypeName(NAME_OF_THIS);
 
-        app->GetParameter("jtest:plotter_bytes", m_write_bytes);
-        app->GetParameter("jtest:plotter_ms", m_cputime_ms);
-        app->GetParameter("jtest:plotter_bytes_spread", m_write_spread);
-        app->GetParameter("jtest:plotter_spread", m_cputime_spread);
+        app->SetDefaultParameter("jtest:plotter_ms", m_cputime_ms, "Time spent during plotting");
+        app->SetDefaultParameter("jtest:plotter_spread", m_cputime_spread, "Spread of time spent during plotting");
+        app->SetDefaultParameter("jtest:plotter_bytes", m_write_bytes, "Bytes written during plotting");
+        app->SetDefaultParameter("jtest:plotter_bytes_spread", m_write_spread, "Spread of bytes written during plotting");
     }
 
     virtual std::string GetType() const {

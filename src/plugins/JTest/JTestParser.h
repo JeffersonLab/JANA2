@@ -30,10 +30,10 @@ public:
 
     JTestParser(std::string source_name, JApplication* app) : JEventSource(source_name, app)
     {
-        app->GetParameter("jtest:parser_bytes", m_write_bytes);
-        app->GetParameter("jtest:parser_ms", m_cputime_ms);
-        app->GetParameter("jtest:parser_bytes_spread", m_write_spread);
-        app->GetParameter("jtest:parser_spread", m_cputime_spread);
+        app->SetDefaultParameter("jtest:parser_ms", m_cputime_ms, "Time spent during parsing");
+        app->SetDefaultParameter("jtest:parser_spread", m_cputime_spread, "Spread of time spent during parsing");
+        app->SetDefaultParameter("jtest:parser_bytes", m_write_bytes, "Bytes written during parsing");
+        app->SetDefaultParameter("jtest:parser_bytes_spread", m_write_spread, "Spread of bytes written during parsing");
 
         SetTypeName(NAME_OF_THIS);
     }
