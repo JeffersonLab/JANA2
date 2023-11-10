@@ -115,10 +115,10 @@ jtest:tracker_ms | int | 200 | Time spent during tracking
 jtest:tracker_spread | double | 0.25 | Spread of time spent during tracking
 jtest:tracker_bytes | int | 1000 | Bytes written during tracking
 jtest:tracker_bytes_spread | double | 0.25 | Spread of bytes written during tracking
-jtest:plotter_ms | int | 20 | Time spent during plotting
+jtest:plotter_ms | int | 0 | Time spent during plotting
 jtest:plotter_spread | double | 0.25 | Spread of time spent during plotting
 jtest:plotter_bytes | int | 1000 | Bytes written during plotting
-jtest:plotter_bytes_spread | int | 0.25 | Spread of bytes written during plotting
+jtest:plotter_bytes_spread | double | 0.25 | Spread of bytes written during plotting
 
 
 
