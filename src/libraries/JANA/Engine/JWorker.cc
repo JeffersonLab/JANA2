@@ -203,18 +203,13 @@ void JWorker::loop() {
             }
             else {
 
-                auto initial_backoff_time = m_assignment->get_initial_backoff_time();
-                auto backoff_strategy = m_assignment->get_backoff_strategy();
-                auto backoff_tries = m_assignment->get_backoff_tries();
-                auto checkin_time = m_assignment->get_checkin_time();
-
                 uint32_t current_tries = 0;
-                auto backoff_duration = initial_backoff_time;
+                auto backoff_duration = m_initial_backoff_time;
 
-                while (current_tries <= backoff_tries &&
+                while (current_tries <= m_backoff_tries &&
                        (last_result == JArrowMetrics::Status::KeepGoing || last_result == JArrowMetrics::Status::ComeBackLater || last_result == JArrowMetrics::Status::NotRunYet) &&
                        (m_run_state == RunState::Running) &&
-                       (jclock_t::now() - start_time) < checkin_time) {
+                       (jclock_t::now() - start_time) < m_checkin_time) {
 
                     LOG_TRACE(logger) << "Worker " << m_worker_id << " is executing "
                                       << m_assignment->get_name() << LOG_END;
@@ -228,15 +223,15 @@ void JWorker::loop() {
                         LOG_DEBUG(logger) << "Worker " << m_worker_id << " succeeded at "
                                           << m_assignment->get_name() << LOG_END;
                         current_tries = 0;
-                        backoff_duration = initial_backoff_time;
+                        backoff_duration = m_initial_backoff_time;
                     }
                     else {
                         current_tries++;
-                        if (backoff_tries > 0) {
-                            if (backoff_strategy == JArrow::BackoffStrategy::Linear) {
-                                backoff_duration += initial_backoff_time;
+                        if (m_backoff_tries > 0) {
+                            if (m_backoff_strategy == BackoffStrategy::Linear) {
+                                backoff_duration += m_initial_backoff_time;
                             }
-                            else if (backoff_strategy == JArrow::BackoffStrategy::Exponential) {
+                            else if (m_backoff_strategy == BackoffStrategy::Exponential) {
                                 backoff_duration *= 2;
                             }
                             LOG_TRACE(logger) << "Worker " << m_worker_id << " backing off with "

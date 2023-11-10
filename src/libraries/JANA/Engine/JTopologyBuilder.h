@@ -161,7 +161,6 @@ public:
 
         // Create arrow for sources.
         JArrow *arrow = new JEventSourceArrow("sources", m_components->get_evt_srces(), queue, m_topology->event_pool);
-        arrow->set_backoff_tries(0);
         m_topology->arrows.push_back(arrow);
         m_topology->sources.push_back(arrow);
         arrow->set_chunksize(m_event_source_chunksize);

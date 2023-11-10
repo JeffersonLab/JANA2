@@ -18,10 +18,7 @@
 class JArrow {
 
 public:
-    enum class NodeType {Source, Sink, Stage, Group};
-    enum class BackoffStrategy { Constant, Linear, Exponential };
-    using duration_t = std::chrono::steady_clock::duration;
-
+    enum class NodeType {Source, Sink, Stage};
 
 private:
     // Info
@@ -34,10 +31,6 @@ private:
 
     // Knobs
     size_t m_chunksize = 1;       // Number of items to pop off the input queue at once
-    BackoffStrategy m_backoff_strategy = BackoffStrategy::Exponential;
-    duration_t m_initial_backoff_time = std::chrono::microseconds(1);
-    duration_t m_checkin_time = std::chrono::milliseconds(500);
-    unsigned m_backoff_tries = 4;
 
     friend class JScheduler;
     std::vector<JArrow *> m_listeners;     // Downstream Arrows
@@ -72,45 +65,6 @@ public:
         return m_chunksize;
     }
 
-    void set_backoff_tries(unsigned backoff_tries) {
-        std::lock_guard<std::mutex> lock(m_arrow_mutex);
-        m_backoff_tries = backoff_tries;
-    }
-
-    unsigned get_backoff_tries() const {
-        std::lock_guard<std::mutex> lock(m_arrow_mutex);
-        return m_backoff_tries;
-    }
-
-    BackoffStrategy get_backoff_strategy() const {
-        std::lock_guard<std::mutex> lock(m_arrow_mutex);
-        return m_backoff_strategy;
-    }
-
-    void set_backoff_strategy(BackoffStrategy backoff_strategy) {
-        std::lock_guard<std::mutex> lock(m_arrow_mutex);
-        m_backoff_strategy = backoff_strategy;
-    }
-
-    duration_t get_initial_backoff_time() const {
-        std::lock_guard<std::mutex> lock(m_arrow_mutex);
-        return m_initial_backoff_time;
-    }
-
-    void set_initial_backoff_time(const duration_t& initial_backoff_time) {
-        std::lock_guard<std::mutex> lock(m_arrow_mutex);
-        m_initial_backoff_time = initial_backoff_time;
-    }
-
-    const duration_t& get_checkin_time() const {
-        std::lock_guard<std::mutex> lock(m_arrow_mutex);
-        return m_checkin_time;
-    }
-
-    void set_checkin_time(const duration_t& checkin_time) {
-        std::lock_guard<std::mutex> lock(m_arrow_mutex);
-        m_checkin_time = checkin_time;
-    }
 
     // TODO: Metrics should be encapsulated so that only actions are to update, clear, or summarize
     JArrowMetrics& get_metrics() {
@@ -154,7 +108,6 @@ inline std::ostream& operator<<(std::ostream& os, const JArrow::NodeType& nt) {
         case JArrow::NodeType::Stage: os << "Stage"; break;
         case JArrow::NodeType::Source: os << "Source"; break;
         case JArrow::NodeType::Sink: os << "Sink"; break;
-        case JArrow::NodeType::Group: os << "Group"; break;
     }
     return os;
 }
