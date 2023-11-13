@@ -41,6 +41,7 @@ set(JANA2_SOURCES
     Engine/JEventSourceArrow.h
     Engine/JBlockSourceArrow.h
     Engine/JBlockDisentanglerArrow.h
+    Engine/JPool.h
 
     Engine/JMailbox.h
     Engine/JScheduler.cc
