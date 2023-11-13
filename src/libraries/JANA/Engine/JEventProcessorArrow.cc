@@ -27,7 +27,7 @@ void JEventProcessorArrow::execute(JArrowMetrics& result, size_t location_id) {
 
     auto start_total_time = std::chrono::steady_clock::now();
 
-    Event x;
+    Event* x;
     bool success;
     auto in_status = m_input_queue->pop(x, success, location_id);
     LOG_TRACE(m_logger) << "JEventProcessorArrow '" << get_name() << "' [" << location_id << "]: "
@@ -36,12 +36,12 @@ void JEventProcessorArrow::execute(JArrowMetrics& result, size_t location_id) {
 
     auto start_latency_time = std::chrono::steady_clock::now();
     if (success) {
-        LOG_DEBUG(m_logger) << "JEventProcessorArrow '" << get_name() << "': Starting event# " << x->GetEventNumber() << LOG_END;
+        LOG_DEBUG(m_logger) << "JEventProcessorArrow '" << get_name() << "': Starting event# " << (*x)->GetEventNumber() << LOG_END;
         for (JEventProcessor* processor : m_processors) {
-            JCallGraphEntryMaker cg_entry(*x->GetJCallGraphRecorder(), processor->GetTypeName()); // times execution until this goes out of scope
-            processor->DoMap(x);
+            JCallGraphEntryMaker cg_entry(*(*x)->GetJCallGraphRecorder(), processor->GetTypeName()); // times execution until this goes out of scope
+            processor->DoMap(*x);
         }
-        LOG_DEBUG(m_logger) << "JEventProcessorArrow '" << get_name() << "': Finished event# " << x->GetEventNumber() << LOG_END;
+        LOG_DEBUG(m_logger) << "JEventProcessorArrow '" << get_name() << "': Finished event# " << (*x)->GetEventNumber() << LOG_END;
     }
     auto end_latency_time = std::chrono::steady_clock::now();
 
@@ -54,7 +54,7 @@ void JEventProcessorArrow::execute(JArrowMetrics& result, size_t location_id) {
         }
         else {
             // This IS the last arrow in the topology. Notify the event source and return event to the pool.
-            if( auto es = x->GetJEventSource() ) es->DoFinish(*x);
+            if( auto es = (*x)->GetJEventSource() ) es->DoFinish(**x);
             m_pool->put(x, location_id);
         }
     }

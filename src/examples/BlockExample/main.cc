@@ -17,7 +17,7 @@ std::shared_ptr<JArrowTopology> configure_block_topology(std::shared_ptr<JArrowT
     auto processor = new BlockExampleProcessor;
 
     auto block_queue = new JMailbox<MyBlock*>;
-    auto event_queue = new JMailbox<std::shared_ptr<JEvent>>;
+    auto event_queue = new JMailbox<std::shared_ptr<JEvent>*>;
 
     // topology->queues.push_back(block_queue);
     // FIXME: block_queue is a (very minor) memory leak

@@ -13,7 +13,7 @@ template <typename T>
 class JBlockDisentanglerArrow : public JArrow {
 	JBlockedEventSource<T>* m_source;  // non-owning
 	JMailbox<T*>* m_block_queue; // owning
-	JMailbox<std::shared_ptr<JEvent>>* m_event_queue; // non-owning
+	JMailbox<std::shared_ptr<JEvent>*>* m_event_queue; // non-owning
 	std::shared_ptr<JEventPool> m_pool;
 
 	size_t m_max_events_per_block = 40;
@@ -22,7 +22,7 @@ public:
 	JBlockDisentanglerArrow(std::string name,
 							JBlockedEventSource<T>* source,
 							JMailbox<T*>* block_queue,
-							JMailbox<std::shared_ptr<JEvent>>* event_queue,
+							JMailbox<std::shared_ptr<JEvent>*>* event_queue,
 							std::shared_ptr<JEventPool> pool
 							)
 							: JArrow(std::move(name), true, NodeType::Stage, 1)
@@ -44,7 +44,7 @@ public:
 		return m_block_queue->size();
 	}
 
-	size_t get_threshold() override {
+	size_e get_threshold() override {
 		return m_block_queue->get_threshold();
 	}
 
@@ -60,7 +60,7 @@ public:
 		int reserved_blocks = reserved_events / m_max_events_per_block; // truncate
 
 		std::vector<T*> block_buffer; // TODO: Get rid of allocations
-		std::vector<std::shared_ptr<JEvent>> event_buffer;
+		std::vector<std::shared_ptr<JEvent>*> event_buffer;
 
 		auto input_queue_status = m_block_queue->pop(block_buffer, reserved_blocks, location_id);
 		for (auto block : block_buffer) {

@@ -11,7 +11,7 @@
 #include <JANA/Engine/JArrow.h>
 #include <JANA/Engine/JMailbox.h>
 
-using Event = std::shared_ptr<JEvent>;
+using Event = std::shared_ptr<JEvent>*;
 using EventQueue = JMailbox<Event>;
 
 class JEventPool;

@@ -53,7 +53,7 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
             if( m_sources.empty() ) in_status = JEventSource::ReturnStatus::Finished;
             
             while (m_current_source < m_sources.size()) {
-                in_status = m_sources[m_current_source]->DoNext(event);
+                in_status = m_sources[m_current_source]->DoNext(*event);
 
                 if (in_status == JEventSource::ReturnStatus::Finished) {
                     m_current_source++;

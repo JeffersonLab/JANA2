@@ -19,7 +19,7 @@
 struct JArrowTopology {
 
     using Event = std::shared_ptr<JEvent>;
-    using EventQueue = JMailbox<Event>;
+    using EventQueue = JMailbox<Event*>;
 
     explicit JArrowTopology();
     virtual ~JArrowTopology();

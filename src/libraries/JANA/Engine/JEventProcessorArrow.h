@@ -16,7 +16,7 @@ class JEventProcessorArrow : public JArrow {
 
 public:
     using Event = std::shared_ptr<JEvent>;
-    using EventQueue = JMailbox<Event>;
+    using EventQueue = JMailbox<Event*>;
 
 private:
     std::vector<JEventProcessor*> m_processors;
