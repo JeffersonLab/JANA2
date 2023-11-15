@@ -102,9 +102,9 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 #ifdef HAVE_PODIO
         std::vector<std::string> GetAllCollectionNames() const;
         const podio::CollectionBase* GetCollectionBase(std::string name) const;
-        template <typename T> const typename PodioTypeMap<T>::collection_t* GetCollection(std::string name) const;
-        template <typename T> JFactoryPodioT<T>* InsertCollection(typename PodioTypeMap<T>::collection_t&& collection, std::string name);
-        template <typename T> JFactoryPodioT<T>* InsertCollectionAlreadyInFrame(const typename PodioTypeMap<T>::collection_t* collection, std::string name);
+        template <typename T> const typename JFactoryPodioT<T>::CollectionT* GetCollection(std::string name) const;
+        template <typename T> JFactoryPodioT<T>* InsertCollection(typename JFactoryPodioT<T>::CollectionT&& collection, std::string name);
+        template <typename T> JFactoryPodioT<T>* InsertCollectionAlreadyInFrame(const typename JFactoryPodioT<T>::CollectionT* collection, std::string name);
 #endif
 
         //SETTERS
@@ -457,7 +457,7 @@ inline const podio::CollectionBase* JEvent::GetCollectionBase(std::string name) 
 }
 
 template <typename T>
-const typename PodioTypeMap<T>::collection_t* JEvent::GetCollection(std::string name) const {
+const typename JFactoryPodioT<T>::CollectionT* JEvent::GetCollection(std::string name) const {
     JFactoryT<T>* factory = GetFactory<T>(name, true);
     JFactoryPodioT<T>* typed_factory = dynamic_cast<JFactoryPodioT<T>*>(factory);
     if (typed_factory == nullptr) {
@@ -465,12 +465,12 @@ const typename PodioTypeMap<T>::collection_t* JEvent::GetCollection(std::string 
     }
     JCallGraphEntryMaker cg_entry(mCallGraph, typed_factory); // times execution until this goes out of scope
     typed_factory->Create(this->shared_from_this());
-    return static_cast<const typename PodioTypeMap<T>::collection_t*>(typed_factory->GetCollection());
+    return static_cast<const typename JFactoryPodioT<T>::CollectionT*>(typed_factory->GetCollection());
 }
 
 
 template <typename T>
-JFactoryPodioT<T>* JEvent::InsertCollection(typename PodioTypeMap<T>::collection_t&& collection, std::string name) {
+JFactoryPodioT<T>* JEvent::InsertCollection(typename JFactoryPodioT<T>::CollectionT&& collection, std::string name) {
     /// InsertCollection inserts the provided PODIO collection into both the podio::Frame and then a JFactoryPodioT<T>
 
     auto frame = GetOrCreateFrame(shared_from_this());
@@ -480,7 +480,7 @@ JFactoryPodioT<T>* JEvent::InsertCollection(typename PodioTypeMap<T>::collection
 
 
 template <typename T>
-JFactoryPodioT<T>* JEvent::InsertCollectionAlreadyInFrame(const typename PodioTypeMap<T>::collection_t* collection, std::string name) {
+JFactoryPodioT<T>* JEvent::InsertCollectionAlreadyInFrame(const typename JFactoryPodioT<T>::CollectionT* collection, std::string name) {
     /// InsertCollection inserts the provided PODIO collection into a JFactoryPodioT<T>. It assumes that the collection pointer
     /// is _already_ owned by the podio::Frame corresponding to this JEvent. This is meant to be used if you are starting out
     /// with a PODIO frame (e.g. a JEventSource that uses podio::ROOTFrameReader).

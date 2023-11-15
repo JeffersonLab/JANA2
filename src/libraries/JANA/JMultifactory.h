@@ -106,10 +106,10 @@ public:
     void DeclarePodioOutput(std::string tag, bool owns_data=true);
 
     template <typename T>
-    void SetCollection(std::string tag, typename PodioTypeMap<T>::collection_t&& collection);
+    void SetCollection(std::string tag, typename JFactoryPodioT<T>::CollectionT&& collection);
 
     template <typename T>
-    void SetCollection(std::string tag, std::unique_ptr<typename PodioTypeMap<T>::collection_t> collection);
+    void SetCollection(std::string tag, std::unique_ptr<typename JFactoryPodioT<T>::CollectionT> collection);
 
 #endif
 
@@ -183,7 +183,7 @@ void JMultifactory::DeclarePodioOutput(std::string tag, bool owns_data) {
 }
 
 template <typename T>
-void JMultifactory::SetCollection(std::string tag, typename PodioTypeMap<T>::collection_t&& collection) {
+void JMultifactory::SetCollection(std::string tag, typename JFactoryPodioT<T>::CollectionT&& collection) {
     JFactoryT<T>* helper = mHelpers.GetFactory<T>(tag);
     if (helper == nullptr) {
         throw JException("JMultifactory: Attempting to SetData() without corresponding DeclareOutput()");
@@ -198,7 +198,7 @@ void JMultifactory::SetCollection(std::string tag, typename PodioTypeMap<T>::col
 }
 
 template <typename T>
-void JMultifactory::SetCollection(std::string tag, std::unique_ptr<typename PodioTypeMap<T>::collection_t> collection) {
+void JMultifactory::SetCollection(std::string tag, std::unique_ptr<typename JFactoryPodioT<T>::CollectionT> collection) {
     JFactoryT<T>* helper = mHelpers.GetFactory<T>(tag);
     if (helper == nullptr) {
         throw JException("JMultifactory: Attempting to SetData() without corresponding DeclareOutput()");

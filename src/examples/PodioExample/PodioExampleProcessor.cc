@@ -11,7 +11,7 @@ struct PrintingVisitor {
     template <typename T>
     void operator() (const podio::CollectionBase* collection, std::string collection_name) {
 
-        auto* typed_collection = static_cast<const typename PodioTypeMap<T>::collection_t*>(collection);
+        auto* typed_collection = static_cast<const typename T::collection_type*>(collection);
 
         std::cout << collection_name << " :: " << collection->getValueTypeName() << " = [";
         for (const T& object : *typed_collection) {
