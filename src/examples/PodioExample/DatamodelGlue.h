@@ -6,6 +6,8 @@
 #ifndef JANA2_DATAMODELGLUE_H
 #define JANA2_DATAMODELGLUE_H
 
+#include <podio/podioVersion.h>
+
 #include <datamodel/ExampleHit.h>
 #include <datamodel/ExampleHitCollection.h>
 #include <datamodel/ExampleCluster.h>
@@ -13,6 +15,8 @@
 #include <datamodel/EventInfo.h>
 #include <datamodel/EventInfoCollection.h>
 
+#if podio_VERSION < PODIO_VERSION(0, 17, 0)
+/// Legacy PODIO support
 template <typename T>
 struct PodioTypeMap {
 };
@@ -34,6 +38,7 @@ struct PodioTypeMap<EventInfo> {
     using mutable_t = MutableEventInfo;
     using collection_t = EventInfoCollection;
 };
+#endif
 
 
 template<typename ... Ts>
@@ -61,7 +66,7 @@ void visitPodioType(const std::string& podio_typename, F& helper, ArgsT... args)
 /*
            visitPodioType(coll->getValueTypeName(),
                [&]<typename T>(const podio::CollectionBase* coll, std::string name) {
-                   using CollT = const typename PodioTypeMap<T>::collection_t;
+                   using CollT = const typename T::collection_type;
                    CollT* typed_col = static_cast<CollT*>(coll);
 
                    std::cout << name << std::endl;

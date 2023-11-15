@@ -203,7 +203,7 @@ struct MyWrapper {
 };
 
 template <typename T>
-struct MyWrapper<T, std::void_t<typename PodioTypeMap<T>::collection_t>> {
+struct MyWrapper<T, std::void_t<typename T::collection_type>> {
     int x = 2;
     bool have_podio() {
         return true;
@@ -224,7 +224,7 @@ template <typename, typename=void>
 struct is_podio : std::false_type {};
 
 template <typename T>
-struct is_podio<T, std::void_t<typename PodioTypeMap<T>::collection_t>> : std::true_type {};
+struct is_podio<T, std::void_t<typename T::collection_type>> : std::true_type {};
 
 template <typename T>
 static constexpr bool is_podio_v = is_podio<T>::value;
