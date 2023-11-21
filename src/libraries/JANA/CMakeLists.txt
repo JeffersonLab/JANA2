@@ -154,30 +154,56 @@ find_package(Threads REQUIRED)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 target_include_directories(jana2 PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/..)
 # So that we can find the generated JVersion.h before install
-
+target_link_libraries(jana2 ${CMAKE_DL_LIBS} Threads::Threads)
 if (${USE_PODIO})
-    target_link_libraries(jana2 ${CMAKE_DL_LIBS} Threads::Threads podio::podio podio::podioRootIO)
-else()
-    target_link_libraries(jana2 ${CMAKE_DL_LIBS} Threads::Threads)
+    target_compile_definitions(jana2 PUBLIC JANA2_HAVE_PODIO=1 JANA2_HAVE_ROOT=1)
+    target_link_libraries(jana2 podio::podio podio::podioRootIO ${ROOT_LIBRARIES})
+elseif (${USE_ROOT})
+    target_compile_definitions(jana2 PUBLIC JANA2_HAVE_ROOT=1)
+    target_link_libraries(jana2 ${ROOT_LIBRARIES})
 endif()
+
 
 # static library, always there
 add_library(jana2_static_lib STATIC $<TARGET_OBJECTS:jana2>)
 set_target_properties(jana2_static_lib PROPERTIES PREFIX "lib" OUTPUT_NAME "JANA")
 
+target_include_directories(jana2_static_lib PUBLIC $<INSTALL_INTERFACE:include>)
+target_link_libraries(jana2_static_lib ${CMAKE_DL_LIBS} Threads::Threads)
+
+if (${USE_PODIO})
+    target_compile_definitions(jana2_static_lib PUBLIC JANA2_HAVE_PODIO=1 JANA2_HAVE_ROOT=1)
+    target_link_libraries(jana2_static_lib podio::podio podio::podioRootIO ${ROOT_LIBRARIES})
+elseif (${USE_ROOT})
+    target_compile_definitions(jana2_static_lib PUBLIC JANA2_HAVE_ROOT=1)
+    target_link_libraries(jana2_static_lib ${ROOT_LIBRARIES})
+endif()
+install(TARGETS jana2_static_lib EXPORT jana2_targets DESTINATION lib)
+
+
 # optionally build shared lib
 if (BUILD_SHARED_LIBS)
-    message("-- Build into both shared and static libs")
+    message(STATUS "Building both shared and static libraries")
     add_library(jana2_shared_lib SHARED $<TARGET_OBJECTS:jana2>)
     set_target_properties(jana2_shared_lib PROPERTIES PREFIX "lib" OUTPUT_NAME "JANA")
+
+    target_include_directories(jana2_shared_lib PUBLIC $<INSTALL_INTERFACE:include>)
+    target_link_libraries(jana2_shared_lib ${CMAKE_DL_LIBS} Threads::Threads)
+
+    if (${USE_PODIO})
+        target_compile_definitions(jana2_shared_lib PUBLIC JANA2_HAVE_PODIO=1 JANA2_HAVE_ROOT=1)
+        target_link_libraries(jana2_shared_lib podio::podio podio::podioRootIO ${ROOT_LIBRARIES})
+    elseif (${USE_ROOT})
+        target_compile_definitions(jana2_shared_lib PUBLIC JANA2_HAVE_ROOT=1)
+        target_link_libraries(jana2_shared_lib ${ROOT_LIBRARIES})
+    endif()
+
     install(TARGETS jana2_shared_lib EXPORT jana2_targets DESTINATION lib)
     set(INSTALL_RPATH_USE_LINK_PATH True)
 else()
-    message("-- Build into static lib only")
+    message(STATUS "Building static library only")
 endif()
 
-# Install library
-install(TARGETS jana2_static_lib EXPORT jana2_targets DESTINATION lib)
 
 # Install JANATargets.cmake
 install(EXPORT jana2_targets FILE JANATargets.cmake NAMESPACE JANA:: DESTINATION lib/cmake/JANA)

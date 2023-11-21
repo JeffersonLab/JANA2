@@ -9,7 +9,7 @@
 #include <JANA/JFactoryT.h>
 #include <JANA/JFactorySet.h>
 
-#ifdef HAVE_PODIO
+#ifdef JANA2_HAVE_PODIO
 #include <JANA/Podio/JPodioTypeHelpers.h>
 #include "JANA/Podio/JFactoryPodioT.h"
 #endif
@@ -35,7 +35,7 @@ public:
 };
 
 
-#ifdef HAVE_PODIO
+#ifdef JANA2_HAVE_PODIO
 // TODO: This redundancy goes away if we merge JFactoryPodioT with JFactoryT
 template <typename T>
 class JMultifactoryHelperPodio : public JFactoryPodioT<T>{
@@ -54,7 +54,7 @@ public:
 
     JMultifactory* GetMultifactory() { return mMultiFactory; }
 };
-#endif // HAVE_PODIO
+#endif // JANA2_HAVE_PODIO
 
 
 class JMultifactory {
@@ -73,7 +73,7 @@ class JMultifactory {
     std::string mFactoryName; // So we can propagate this to the JMultifactoryHelpers, so we can have useful error messages
     JApplication* mApp;
 
-#ifdef HAVE_PODIO
+#ifdef JANA2_HAVE_PODIO
     bool mNeedPodio = false;      // Whether we need to retrieve the podio::Frame
     podio::Frame* mPodioFrame = nullptr;  // To provide the podio::Frame to SetPodioData, SetCollection
 #endif
@@ -100,7 +100,7 @@ public:
     template <typename T>
     void SetData(std::string tag, std::vector<T*> data);
 
-#ifdef HAVE_PODIO
+#ifdef JANA2_HAVE_PODIO
 
     template <typename T>
     void DeclarePodioOutput(std::string tag, bool owns_data=true);
@@ -155,7 +155,7 @@ void JMultifactory::SetData(std::string tag, std::vector<T*> data) {
     if (helper == nullptr) {
         throw JException("JMultifactory: Attempting to SetData() without corresponding DeclareOutput()");
     }
-#ifdef HAVE_PODIO
+#ifdef JANA2_HAVE_PODIO
     // This may or may not be a Podio factory. We find out if it is, and if so, set the frame before calling Set().
     auto* typed = dynamic_cast<JFactoryPodio*>(helper);
     if (typed != nullptr) {
@@ -166,7 +166,7 @@ void JMultifactory::SetData(std::string tag, std::vector<T*> data) {
 }
 
 
-#ifdef HAVE_PODIO
+#ifdef JANA2_HAVE_PODIO
 
 template <typename T>
 void JMultifactory::DeclarePodioOutput(std::string tag, bool owns_data) {
@@ -212,7 +212,7 @@ void JMultifactory::SetCollection(std::string tag, std::unique_ptr<typename JFac
     typed->SetCollection(std::move(collection));
 }
 
-#endif // HAVE_PODIO
+#endif // JANA2_HAVE_PODIO
 
 
 template <typename T>
@@ -221,13 +221,13 @@ void JMultifactoryHelper<T>::Process(const std::shared_ptr<const JEvent> &event)
     mMultiFactory->Execute(event);
 }
 
-#ifdef HAVE_PODIO
+#ifdef JANA2_HAVE_PODIO
 template <typename T>
 void JMultifactoryHelperPodio<T>::Process(const std::shared_ptr<const JEvent> &event) {
     mMultiFactory->SetApplication(this->GetApplication());
     mMultiFactory->Execute(event);
 }
-#endif // HAVE_PODIO
+#endif // JANA2_HAVE_PODIO
 
 
 #endif //JANA2_JMULTIFACTORY_H

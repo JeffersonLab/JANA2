@@ -28,7 +28,7 @@ setenv JANA_HOME "@JANA_INSTALL_DIR@"
 setenv PATH @JANA_INSTALL_DIR@/bin:${PATH}
 
 # ROOT
-if ( "@HAVE_ROOT@" == "1" ) then
+if ( "@JANA2_HAVE_ROOT@" == "1" ) then
     if ( -f "@ROOTSYS@/bin/thisroot.csh" ) then
         unsetenv ROOTSYS
         source  "@ROOTSYS@/bin/thisroot.csh"
@@ -36,7 +36,7 @@ if ( "@HAVE_ROOT@" == "1" ) then
 endif
 
 # Xerces
-if ( "@HAVE_XERCES@" == "1" ) then
+if ( "@JANA2_HAVE_XERCES@" == "1" ) then
     setenv XERCESCROOT "@XERCESCROOT@"
     # only add to LD_LIBRARY_PATH if XERCESCROOT does not appear to be a system directory
     if ( ${XERCESCROOT} != /usr ) set MY_TMP_LD_LIBRARY_PATH=${XERCESCROOT}/lib:${MY_TMP_LD_LIBRARY_PATH}

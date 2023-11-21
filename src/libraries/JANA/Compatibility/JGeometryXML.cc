@@ -18,7 +18,7 @@ using namespace std;
 #include <JANA/Services/JParameterManager.h>
 #include "JGeometryXML.h"
 
-#if HAVE_XERCES
+#if JANA2_HAVE_XERCES
 
 #if XERCES3
 // XERCES 3
@@ -66,7 +66,7 @@ JGeometryXML::JGeometryXML(string url, int run, string context):JGeometry(url,ru
     valid_xmlfile = false;
     md5_checksum = "";
     jcalib = NULL;
-#if HAVE_XERCES
+#if JANA2_HAVE_XERCES
     parser = NULL;
     doc = NULL;
 #endif
@@ -168,7 +168,7 @@ void JGeometryXML::Init(string xmlfile, string xml)
     /// data member jcalib will also be non-NULL.
 
 
-#if !HAVE_XERCES
+#if !JANA2_HAVE_XERCES
     (void) xmlfile; // Suppress unused parameter warning
     (void) xml;     // Suppress unused parameter warning
     jerr<<endl;
@@ -241,7 +241,7 @@ void JGeometryXML::Init(string xmlfile, string xml)
     // Make map of node names to speed up code in SearchTree later
     MapNodeNames(doc);
 
-#endif  // !HAVE_XERCES
+#endif  // !JANA2_HAVE_XERCES
 }
 
 //---------------------------------
@@ -249,7 +249,7 @@ void JGeometryXML::Init(string xmlfile, string xml)
 //---------------------------------
 JGeometryXML::~JGeometryXML()
 {
-#if HAVE_XERCES
+#if JANA2_HAVE_XERCES
     // Release parser and delete any memory it allocated
     if(valid_xmlfile){
         //parser->release(); // This seems to be causing seg. faults so it is commented out.
@@ -260,7 +260,7 @@ JGeometryXML::~JGeometryXML()
 #endif
 }
 
-#if HAVE_XERCES
+#if JANA2_HAVE_XERCES
 //---------------------------------
 // MapNodeNames
 //---------------------------------
@@ -277,7 +277,7 @@ void JGeometryXML::MapNodeNames(xercesc::DOMNode *current_node)
         MapNodeNames(current_node); // attributes are automatically added as the tree is searched
     }
 }
-#endif // HAVE_XERCES
+#endif // JANA2_HAVE_XERCES
 
 //---------------------------------
 // Get
@@ -316,7 +316,7 @@ bool JGeometryXML::Get(string xpath, string &sval)
     //      the cache entry once the mutex is finally released
     //      below.
 
-#if HAVE_XERCES
+#if JANA2_HAVE_XERCES
 
     // XERCES locks its own mutex which causes horrible problems if the thread
     // is canceled while it has the lock. Disable cancelibility while here.
@@ -370,7 +370,7 @@ bool JGeometryXML::Get(string xpath, map<string, string> &svals)
 
     if(!valid_xmlfile)return false;
 
-#if HAVE_XERCES
+#if JANA2_HAVE_XERCES
 
     // XERCES locks its own mutex which causes horrible problems if the thread
     // is canceled while it has the lock. Disable cancelibility while here.
@@ -411,7 +411,7 @@ bool JGeometryXML::GetMultiple(string xpath, vector<string> &vsval)
 
     if(!valid_xmlfile){return false;}
 
-#if HAVE_XERCES
+#if JANA2_HAVE_XERCES
 
     // XERCES locks its own mutex which causes horrible problems if the thread
     // is canceled while it has the lock. Disable cancelibility while here.
@@ -452,7 +452,7 @@ bool JGeometryXML::GetMultiple(string xpath, vector<map<string, string> >&vsvals
 
     if(!valid_xmlfile){return false;}
 
-#if HAVE_XERCES
+#if JANA2_HAVE_XERCES
 
     // XERCES locks its own mutex which causes horrible problems if the thread
     // is canceled while it has the lock. Disable cancelibility while here.
@@ -498,7 +498,7 @@ void JGeometryXML::GetXPaths(vector<string> &xpaths, ATTR_LEVEL_t level, const s
 
     if(!valid_xmlfile){xpaths.clear(); return;}
 
-#if HAVE_XERCES
+#if JANA2_HAVE_XERCES
     AddNodeToList((DOMNode*)doc->getDocumentElement(), "", xpaths, level);
 #else
     (void) level; // Suppress unused parameter warning
@@ -724,7 +724,7 @@ void JGeometryXML::ParseXPath(string xpath, vector<pair<string, map<string,strin
 
 }
 
-#if HAVE_XERCES
+#if JANA2_HAVE_XERCES
 //---------------------------------
 // AddNodeToList
 //---------------------------------

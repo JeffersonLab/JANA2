@@ -12,7 +12,7 @@
 
 /// These allow us to have both a PODIO-enabled and a PODIO-free definition of certain key structures and functions.
 
-#ifdef HAVE_PODIO
+#ifdef JANA2_HAVE_PODIO
 // Sadly, this will only work with C++17 or higher, and for now JANA still supports C++14 (when not using PODIO)
 
 template <typename T>
@@ -36,6 +36,6 @@ struct is_podio<T, std::void_t<typename PodioTypeMap<T>::collection_t>> : std::t
 template <typename T>
 static constexpr bool is_podio_v = is_podio<T>::value;
 
-#endif //ifdef HAVE_PODIO
+#endif //ifdef JANA2_HAVE_PODIO
 
 #endif //JANA2_JPODIOTYPEHELPERS_H

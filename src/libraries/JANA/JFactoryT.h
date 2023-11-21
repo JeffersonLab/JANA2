@@ -13,7 +13,7 @@
 #include <JANA/JObject.h>
 #include <JANA/Utils/JTypeInfo.h>
 
-#ifdef HAVE_ROOT
+#ifdef JANA2_HAVE_ROOT
 #include <TObject.h>
 #endif
 
@@ -36,7 +36,7 @@ public:
     JFactoryT(const std::string& aName, const std::string& aTag) __attribute__ ((deprecated)) : JFactory(aName, aTag) {
         EnableGetAs<T>();
         EnableGetAs<JObject>( std::is_convertible<T,JObject>() ); // Automatically add JObject if this can be converted to it
-#ifdef HAVE_ROOT
+#ifdef JANA2_HAVE_ROOT
         EnableGetAs<TObject>( std::is_convertible<T,TObject>() ); // Automatically add TObject if this can be converted to it
 #endif
     }
@@ -44,7 +44,7 @@ public:
     JFactoryT(const std::string& aName) __attribute__ ((deprecated))  : JFactory(aName, "") {
         EnableGetAs<T>();
         EnableGetAs<JObject>( std::is_convertible<T,JObject>() ); // Automatically add JObject if this can be converted to it
-#ifdef HAVE_ROOT
+#ifdef JANA2_HAVE_ROOT
         EnableGetAs<TObject>( std::is_convertible<T,TObject>() ); // Automatically add TObject if this can be converted to it
 #endif
     }
@@ -52,7 +52,7 @@ public:
     JFactoryT() : JFactory(JTypeInfo::demangle<T>(), ""){
         EnableGetAs<T>();
         EnableGetAs<JObject>( std::is_convertible<T,JObject>() ); // Automatically add JObject if this can be converted to it
-#ifdef HAVE_ROOT
+#ifdef JANA2_HAVE_ROOT
         EnableGetAs<TObject>( std::is_convertible<T,TObject>() ); // Automatically add TObject if this can be converted to it
 #endif
     }

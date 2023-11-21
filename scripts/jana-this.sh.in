@@ -18,7 +18,7 @@ export JANA_HOME="@JANA_INSTALL_DIR@"
 export PATH=@JANA_INSTALL_DIR@/bin:${PATH}
 
 # ROOT
-if [ "@HAVE_ROOT@" == "1" ]; then
+if [ "@JANA2_HAVE_ROOT@" == "1" ]; then
     if [ -f "@ROOTSYS@/bin/thisroot.sh" ]; then
         unset ROOTSYS
         .  "@ROOTSYS@/bin/thisroot.sh"
@@ -26,7 +26,7 @@ if [ "@HAVE_ROOT@" == "1" ]; then
 fi
 
 # Xerces
-if [ "@HAVE_XERCES@" == "1" ]; then
+if [ "@JANA2_HAVE_XERCES@" == "1" ]; then
     export XERCESCROOT="@XERCESCROOT@"
     # only add to LD_LIBRARY_PATH if XERCESCROOT does not appear to be a system directory
     [[ ${XERCESCROOT} != /usr ]] && export LD_LIBRARY_PATH=${XERCESCROOT}/lib:${LD_LIBRARY_PATH}

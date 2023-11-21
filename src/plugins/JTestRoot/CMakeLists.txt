@@ -34,7 +34,7 @@ if(${USE_ROOT})
 		)
 
 	add_library(JTestRoot_plugin SHARED ${JTestRoot_PLUGIN_SOURCES})
-	target_compile_definitions(JTestRoot_plugin PUBLIC HAVE_ROOT)
+	target_compile_definitions(JTestRoot_plugin PUBLIC JANA2_HAVE_ROOT)
 	target_include_directories(JTestRoot_plugin PUBLIC ${JANA_INCLUDE_DIR} ${ROOT_INCLUDE_DIRS})
 	target_link_libraries(JTestRoot_plugin jana2)
 	target_link_libraries(JTestRoot_plugin ${ROOT_LIBRARIES})

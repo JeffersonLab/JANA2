@@ -26,7 +26,7 @@
 #include <mutex>
 #include "JANA/Utils/JInspector.h"
 
-#ifdef HAVE_PODIO
+#ifdef JANA2_HAVE_PODIO
 #include <JANA/Podio/JFactoryPodioT.h>
 namespace podio {
 class CollectionBase;
@@ -53,7 +53,7 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
         void SetFactorySet(JFactorySet* aFactorySet) {
             delete mFactorySet;
             mFactorySet = aFactorySet;
-#ifdef HAVE_PODIO
+#ifdef JANA2_HAVE_PODIO
             // Maintain the index of PODIO factories
             for (JFactory* factory : mFactorySet->GetAllFactories()) {
                 if (dynamic_cast<JFactoryPodio*>(factory) != nullptr) {
@@ -99,7 +99,7 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
         template <class T> JFactoryT<T>* Insert(const std::vector<T*>& items, const std::string& tag = "") const;
 
         // PODIO
-#ifdef HAVE_PODIO
+#ifdef JANA2_HAVE_PODIO
         std::vector<std::string> GetAllCollectionNames() const;
         const podio::CollectionBase* GetCollectionBase(std::string name) const;
         template <typename T> const typename JFactoryPodioT<T>::CollectionT* GetCollection(std::string name) const;
@@ -140,7 +140,7 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
         JEventSource* mEventSource = nullptr;
         bool mIsBarrierEvent = false;
 
-#ifdef HAVE_PODIO
+#ifdef JANA2_HAVE_PODIO
         std::map<std::string, JFactory*> mPodioFactories;
 #endif
 };
@@ -430,7 +430,7 @@ JFactoryT<T>* JEvent::GetSingle(const T* &t, const char *tag, bool exception_if_
     return fac;
 }
 
-#ifdef HAVE_PODIO
+#ifdef JANA2_HAVE_PODIO
 
 inline std::vector<std::string> JEvent::GetAllCollectionNames() const {
     std::vector<std::string> keys;
@@ -524,7 +524,7 @@ JFactoryPodioT<T>* JEvent::InsertCollectionAlreadyInFrame(const typename JFactor
     return typed_factory;
 }
 
-#endif // HAVE_PODIO
+#endif // JANA2_HAVE_PODIO
 
 
 #endif // _JEvent_h_
