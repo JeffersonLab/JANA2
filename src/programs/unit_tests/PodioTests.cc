@@ -202,6 +202,15 @@ struct MyWrapper {
     }
 };
 
+#if podio_VERSION < PODIO_VERSION(0, 17, 0)
+template <typename T>
+struct MyWrapper<T, std::void_t<typename PodioTypeMap<T>::collection_t>> {
+    int x = 2;
+    bool have_podio() {
+        return true;
+    }
+};
+#else
 template <typename T>
 struct MyWrapper<T, std::void_t<typename T::collection_type>> {
     int x = 2;
@@ -209,8 +218,10 @@ struct MyWrapper<T, std::void_t<typename T::collection_type>> {
         return true;
     }
 };
+#endif
 
 TEST_CASE("SFINAE for JFactoryT || JFactoryPodioT") {
+
     MyWrapper<int> w;
     REQUIRE(w.have_podio() == false);
 
@@ -218,13 +229,19 @@ TEST_CASE("SFINAE for JFactoryT || JFactoryPodioT") {
     REQUIRE(ww.have_podio() == true);
 
     ww.x = 22;
+
 }
 
 template <typename, typename=void>
 struct is_podio : std::false_type {};
 
+#if podio_VERSION < PODIO_VERSION(0, 17, 0)
+template <typename T>
+struct is_podio<T, std::void_t<typename PodioTypeMap<T>::collection_t>> : std::true_type {};
+#else
 template <typename T>
 struct is_podio<T, std::void_t<typename T::collection_type>> : std::true_type {};
+#endif
 
 template <typename T>
 static constexpr bool is_podio_v = is_podio<T>::value;
@@ -313,6 +330,39 @@ TEST_CASE("JFactoryPodioT::Init gets called") {
     auto fac = dynamic_cast<jana2_tests_podiotests_init::TestFac*>(event->GetFactory<ExampleCluster>("clusters"));
     REQUIRE(fac != nullptr);
     REQUIRE(fac->init_called == true);
+}
+
+namespace jana2_tests_podiotests_insert {
+
+struct TestFac : public JFactoryPodioT<ExampleCluster> {
+    TestFac() {
+        SetTag("clusters");
+    }
+    void Process(const std::shared_ptr<const JEvent>& event) override {
+        Insert(new ExampleCluster(16.0));
+    }
+};
+}
+
+TEST_CASE("JFactoryPodioT::Insert() and retrieval") {
+
+    JApplication app;
+    auto event = std::make_shared<JEvent>(&app);
+    auto fs = new JFactorySet;
+    fs->Add(new jana2_tests_podiotests_insert::TestFac);
+    event->SetFactorySet(fs);
+    event->GetFactorySet()->Release();  // Simulate a trip to the JEventPool
+
+    // Retrieve as vector<ExampleCluster*> (Goes through mData)
+    auto vcp = event->Get<ExampleCluster>("clusters");
+    REQUIRE(vcp.size() == 1);
+    REQUIRE(vcp[0]->energy() == 16.0);
+
+    // Retrieve as ExampleClusterCollection (Goes through Frame)
+    auto r = event->GetCollection<ExampleCluster>("clusters");
+    REQUIRE(r != nullptr);
+    REQUIRE(r->size() == 1);
+    REQUIRE((*r)[0].energy() == 16.0);
 }
 
 } // namespace podiotests

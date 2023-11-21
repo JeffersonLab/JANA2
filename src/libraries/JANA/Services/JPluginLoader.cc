@@ -100,7 +100,7 @@ void JPluginLoader::attach_plugins(JComponentManager* jcm) {
     // be attached. To accommodate this we wrap the following chunk of code in
     // a lambda function so we can run it over the additional plugins recursively
     // until all are attached. (see below)
-    auto add_plugins_lamda = [=](std::vector<std::string> &plugins) {
+    auto add_plugins_lamda = [=, this](std::vector<std::string> &plugins) {
         std::stringstream paths_checked;
         for (const std::string& plugin : plugins) {
             // The user might provide a short name like "JTest", or a long name like "JTest.so".

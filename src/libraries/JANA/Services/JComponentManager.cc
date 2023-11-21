@@ -43,6 +43,7 @@ void JComponentManager::add(JEventSourceGenerator *source_generator) {
 
 void JComponentManager::add(JFactoryGenerator *factory_generator) {
     factory_generator->SetPluginName(m_current_plugin_name);
+    factory_generator->SetApplication(m_app);
     m_fac_gens.push_back(factory_generator);
 }
 
@@ -52,7 +53,9 @@ void JComponentManager::add(JEventSource *event_source) {
     m_evt_srces.push_back(event_source);
     auto fac_gen = event_source->GetFactoryGenerator();
     if (fac_gen != nullptr) {
-        m_fac_gens.push_back(event_source->GetFactoryGenerator());
+        fac_gen->SetPluginName(m_current_plugin_name);
+        fac_gen->SetApplication(m_app);
+        m_fac_gens.push_back(fac_gen);
     }
 }
 
@@ -94,6 +97,8 @@ void JComponentManager::resolve_event_sources() {
         source->SetApplication(m_app);
         auto fac_gen = source->GetFactoryGenerator();
         if (fac_gen != nullptr) {
+            fac_gen->SetPluginName(m_current_plugin_name);
+            fac_gen->SetApplication(m_app);
             m_fac_gens.push_back(fac_gen);
         }
         m_evt_srces.push_back(source);

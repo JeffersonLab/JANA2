@@ -98,7 +98,8 @@ int main() {
         auto logger = app.GetService<JLoggingService>()->get_logger("PerfTests");
         // TODO: Add Podio sources, processors, and factories just like JTest
         LOG_INFO(logger) << "Running PODIO stress test" << LOG_END;
-        benchmark(app);
+        JBenchmarker benchmarker(&app);
+        benchmarker.RunUntilFinished();
     }
 #endif
 

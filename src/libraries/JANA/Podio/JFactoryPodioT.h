@@ -193,6 +193,7 @@ void JFactoryPodioT<T>::Set(const std::vector<T*>& aData) {
     if (mIsSubsetCollection) collection.setSubsetCollection(true);
     for (T* item : aData) {
         collection.push_back(*item);
+        delete item;
     }
     SetCollection(std::move(collection));
 }
@@ -203,6 +204,7 @@ void JFactoryPodioT<T>::Set(std::vector<T*>&& aData) {
     if (mIsSubsetCollection) collection.setSubsetCollection(true);
     for (T* item : aData) {
         collection.push_back(*item);
+        delete item;
     }
     SetCollection(std::move(collection));
 }
@@ -212,6 +214,7 @@ void JFactoryPodioT<T>::Insert(T* aDatum) {
     CollectionT collection;
     if (mIsSubsetCollection) collection->setSubsetCollection(true);
     collection->push_back(*aDatum);
+    delete aDatum;
     SetCollection(std::move(collection));
 }
 

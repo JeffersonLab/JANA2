@@ -9,9 +9,12 @@
 #ifndef _JFactoryGenerator_h_
 #define _JFactoryGenerator_h_
 
+class JApplication;
+
 class JFactoryGenerator {
 
     std::string m_plugin_name;
+    JApplication* m_app;
 
 public:
 
@@ -25,6 +28,14 @@ public:
 
     inline void SetPluginName(std::string plugin_name) {
         m_plugin_name = std::move(plugin_name);
+    }
+
+    inline void SetApplication(JApplication* app) {
+        m_app = app;
+    }
+
+    inline JApplication* GetApplication() {
+        return m_app;
     }
 };
 
