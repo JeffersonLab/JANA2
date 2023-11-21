@@ -68,8 +68,9 @@ class JMultifactory {
     // However, don't worry about a Status variable. Every time Execute() gets called, so does Process().
     // The JMultifactoryHelpers will control calls to Execute().
 
-    std::string mTagSuffix;  // In order to have multiple (differently configured) instances in the same factorySet
-    std::string mPluginName; // So we can propagate this to the JMultifactoryHelpers, so we can have useful error messages
+    std::string mTag;         // JMultifactories each get their own name
+                              // This can be used for parameter and collection name prefixing, though at a higher level
+    std::string mPluginName;  // So we can propagate this to the JMultifactoryHelpers, so we can have useful error messages
     std::string mFactoryName; // So we can propagate this to the JMultifactoryHelpers, so we can have useful error messages
     JApplication* mApp;
 
@@ -131,7 +132,7 @@ public:
     JApplication* GetApplication() { return mApp; }
 
     // These are set by JFactoryGeneratorT (just like JFactories) and get propagated to each of the JMultifactoryHelpers
-    void SetTag(std::string tagSuffix) { mTagSuffix = std::move(tagSuffix); }
+    void SetTag(std::string tag) { mTag = std::move(tag); }
     void SetFactoryName(std::string factoryName) { mFactoryName = std::move(factoryName); }
     void SetPluginName(std::string pluginName) { mPluginName = std::move(pluginName); }
 };
@@ -142,7 +143,6 @@ template <typename T>
 void JMultifactory::DeclareOutput(std::string tag, bool owns_data) {
     JFactory* helper = new JMultifactoryHelper<T>(this);
     if (!owns_data) helper->SetFactoryFlag(JFactory::JFactory_Flags_t::NOT_OBJECT_OWNER);
-    tag += mTagSuffix;
     helper->SetPluginName(mPluginName);
     helper->SetFactoryName(mFactoryName);
     helper->SetTag(std::move(tag));
@@ -174,7 +174,6 @@ void JMultifactory::DeclarePodioOutput(std::string tag, bool owns_data) {
     auto* helper = new JMultifactoryHelperPodio<T>(this);
     if (!owns_data) helper->SetSubsetCollection(true);
 
-    tag += mTagSuffix;
     helper->SetTag(std::move(tag));
     helper->SetPluginName(mPluginName);
     helper->SetFactoryName(mFactoryName);
