@@ -80,8 +80,8 @@ struct SimpleProcessor : public JEventProcessor {
 int main() {
 
     MyProcessor processor;
-    JMailbox<std::shared_ptr<JEvent>> events_in;
-    JMailbox<std::shared_ptr<JEvent>> events_out;
+    JMailbox<std::shared_ptr<JEvent>*> events_in;
+    JMailbox<std::shared_ptr<JEvent>*> events_out;
     JMailbox<SubeventWrapper<MyInput>> subevents_in;
     JMailbox<SubeventWrapper<MyOutput>> subevents_out;
 

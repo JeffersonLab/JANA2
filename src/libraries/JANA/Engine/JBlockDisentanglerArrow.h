@@ -44,7 +44,7 @@ public:
 		return m_block_queue->size();
 	}
 
-	size_e get_threshold() override {
+	size_t get_threshold() override {
 		return m_block_queue->get_threshold();
 	}
 

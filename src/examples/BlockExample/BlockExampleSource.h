@@ -34,7 +34,7 @@ class BlockExampleSource : public JBlockedEventSource<MyBlock> {
 		return Status::Success;
 	}
 
-	virtual std::vector<std::shared_ptr<JEvent>> DisentangleBlock(MyBlock& block, JEventPool& pool) {
+	virtual std::vector<std::shared_ptr<JEvent>*> DisentangleBlock(MyBlock& block, JEventPool& pool) {
 
 		LOG_DEBUG(m_logger) <<  "BlockDisentangler: Disentangling block " << block.block_number << LOG_END;
 		std::vector<std::shared_ptr<JEvent>*> events;

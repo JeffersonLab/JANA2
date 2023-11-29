@@ -15,12 +15,12 @@
 template <typename SubeventT>
 struct SubeventWrapper {
 
-    std::shared_ptr<JEvent> parent;
+    std::shared_ptr<JEvent>* parent;
     SubeventT* data;
     size_t id;
     size_t total;
 
-    SubeventWrapper(std::shared_ptr<JEvent> parent, SubeventT* data, size_t id, size_t total)
+    SubeventWrapper(std::shared_ptr<JEvent>* parent, SubeventT* data, size_t id, size_t total)
     : parent(std::move(parent))
     , data(data)
     , id(id)
@@ -35,8 +35,8 @@ private:
 
     struct alignas(JANA2_CACHE_LINE_BYTES) LocalMailbox {
         std::mutex mutex;
-        std::deque<std::shared_ptr<JEvent>> ready;
-        std::map<std::shared_ptr<JEvent>, size_t> in_progress;
+        std::deque<std::shared_ptr<JEvent>*> ready;
+        std::map<std::shared_ptr<JEvent>*, size_t> in_progress;
         size_t reserved_count = 0;
     };
 
@@ -129,7 +129,7 @@ public:
 
             // Problem: Are we sure we are updating the event in a way which is effectively thread-safe?
             // Should we be doing this insert, or should the caller?
-            subevent.parent->template Insert<SubeventT>(subevent.data);
+            (*(subevent.parent))->template Insert<SubeventT>(subevent.data);
             if (subevent.total == 1) {
                 // Goes straight into "ready"
                 mb.ready.push_back(subevent.parent);
@@ -160,7 +160,7 @@ public:
     /// pop() will pop up to requested_count items for the desired domain.
     /// If many threads are contending for the queue, this will fail with Status::Contention,
     /// in which case the caller should probably consult the Scheduler.
-    Status pop(std::vector<std::shared_ptr<JEvent>>& buffer, size_t requested_count, size_t location_id = 0) {
+    Status pop(std::vector<std::shared_ptr<JEvent>*>& buffer, size_t requested_count, size_t location_id = 0) {
 
         auto& mb = m_mailboxes[location_id];
         if (!mb.mutex.try_lock()) {
