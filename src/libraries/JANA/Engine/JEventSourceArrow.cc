@@ -45,6 +45,7 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
         for (size_t i=0; i<emit_count && in_status==JEventSource::ReturnStatus::Success; ++i) {
             auto event = m_pool->get(location_id);
             if (event == nullptr) {
+                LOG_DEBUG(m_logger) << "JEventSourceArrow retrieved nullptr from pool." << LOG_END;
                 in_status = JEventSource::ReturnStatus::TryAgain;
                 break;
             }
@@ -93,8 +94,6 @@ void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
     JArrowMetrics::Status status;
 
     if (in_status == JEventSource::ReturnStatus::Finished) {
-        // finish();
-        // TODO: NWB: It is extra very important to not call finish() here
         status = JArrowMetrics::Status::Finished;
     }
     else if (in_status == JEventSource::ReturnStatus::Success && out_status == EventQueue::Status::Ready) {

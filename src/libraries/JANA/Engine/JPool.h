@@ -3,6 +3,7 @@
 
 #pragma once
 #include <JANA/Utils/JCpuInfo.h>
+#include <JANA/JLogger.h>
 
 template <typename T>
 class JPool {
@@ -17,7 +18,7 @@ private:
     size_t m_location_count;
     bool m_limit_total_events_in_flight;
     std::unique_ptr<LocalPool[]> m_pools;
-  
+
 public:
     JPool(size_t pool_size,
                       size_t location_count,
@@ -28,12 +29,18 @@ public:
     {
         assert(m_location_count >= 1);
         assert(m_pool_size > 0 || !m_limit_total_events_in_flight);
-        m_pools = std::unique_ptr<LocalPool[]>(new LocalPool[location_count]());
+    }
+
+    void init() {
+        m_pools = std::unique_ptr<LocalPool[]>(new LocalPool[m_location_count]());
 
         for (size_t j=0; j<m_location_count; ++j) {
-            for (size_t i=0; i<m_pool_size; ++i) {
-                m_pools[j].items.emplace_back();
-                configure_item(&(m_pools[j].items[i]));
+
+            m_pools[j].items = std::vector<T>(m_pool_size); // Default-construct everything in place
+
+            for (T& item : m_pools[j].items) {
+                configure_item(&item);
+                m_pools[j].available_items.push_back(&item);
             }
         }
     }
@@ -70,17 +77,23 @@ public:
 
     void put(T* item, size_t location=0) {
 
-        // TODO: Try to return item to original LocalPool
+        // Do any necessary teardown within the item itself
         release_item(item);
-        LocalPool& pool = m_pools[location % m_location_count];
-        std::lock_guard<std::mutex> lock(pool.mutex);
 
-        if (pool.available_items.size() < m_pool_size) {
-            pool.available_items.push_back(item);
+        // Consider each location starting with current one
+        for (size_t l = location; l<location+m_location_count; ++l) {
+            LocalPool& pool = m_pools[l % m_location_count];
+
+            // Check if item came from this location
+            if ((item >= &(pool.items[0])) && (item <= &(pool.items[m_pool_size-1]))) {
+                std::lock_guard<std::mutex> lock(pool.mutex);
+                pool.available_items.push_back(item);
+                return;
+            }
+
         }
-        else {
-            delete item;
-        }
+        // Otherwise it was allocated on the heap
+        delete item;
     }
 
     size_t size() { return m_pool_size; }
@@ -90,7 +103,6 @@ public:
 
         LocalPool& pool = m_pools[location % m_location_count];
         std::lock_guard<std::mutex> lock(pool.mutex);
-        // TODO: We probably want to steal from other event pools if jana:enable_stealing=true
 
         if (m_limit_total_events_in_flight && pool.available_items.size() < count) {
             return false;
@@ -112,24 +124,9 @@ public:
         }
     }
 
-    void put_many(std::vector<std::shared_ptr<JEvent>>& finished_events, size_t location=0) {
-
-        LocalPool& pool = m_pools[location % m_location_count];
-        std::lock_guard<std::mutex> lock(pool.mutex);
-        // TODO: We may want to distribute to other event pools if jana:enable_stealing=true
-
-        size_t count = finished_events.size();
-        while (count-- > 0 && pool.events.size() < m_pool_size) {
-            T* t = finished_events.back();
-            finished_events.pop_back();
-            release_item(t);
-            pool.available_items.push_back(t);
-        }
-        while (count-- > 0) {
-            T* t = finished_events.back();
-            finished_events.pop_back();
-            release_item(t);
-            delete t;
+    void put_many(std::vector<T*>& finished_events, size_t location=0) {
+        for (T* item : finished_events) {
+            put(item, location);
         }
     }
 };

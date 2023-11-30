@@ -124,6 +124,7 @@ public:
                                                               m_event_pool_size,
                                                               m_location_count,
                                                               m_limit_total_events_in_flight);
+        m_topology->event_pool->init();
         return m_topology;
 
     }
