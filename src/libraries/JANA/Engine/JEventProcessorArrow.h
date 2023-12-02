@@ -7,25 +7,19 @@
 
 
 #include <JANA/JEventProcessor.h>
-#include <JANA/Engine/JArrow.h>
-#include <JANA/Engine/JMailbox.h>
+#include <JANA/Engine/JPipelineArrow.h>
 
 class JEventPool;
 
-class JEventProcessorArrow : public JArrow {
+using Event = std::shared_ptr<JEvent>;
+using EventQueue = JMailbox<Event*>;
 
-public:
-    using Event = std::shared_ptr<JEvent>;
-    using EventQueue = JMailbox<Event*>;
+class JEventProcessorArrow : public JPipelineArrow<JEventProcessorArrow, Event> {
 
 private:
     std::vector<JEventProcessor*> m_processors;
-    EventQueue* m_input_queue;
-    EventQueue* m_output_queue;
-    std::shared_ptr<JEventPool> m_pool;
 
 public:
-
     JEventProcessorArrow(std::string name,
                          EventQueue *input_queue,
                          EventQueue *output_queue,
@@ -33,14 +27,10 @@ public:
 
     void add_processor(JEventProcessor* processor);
 
+    JArrowMetrics::Status process(Event* event);
+
     void initialize() final;
     void finalize() final;
-    void execute(JArrowMetrics& result, size_t location_id) final;
-
-    size_t get_pending() final;
-    size_t get_threshold() final;
-    void set_threshold(size_t) final;
-
 };
 
 

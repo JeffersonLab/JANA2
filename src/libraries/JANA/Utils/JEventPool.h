@@ -31,6 +31,7 @@ public:
     }
 
     void release_item(std::shared_ptr<JEvent>* item) override {
+        if (auto source = (*item)->GetJEventSource()) source->DoFinish(**item);
         (*item)->mFactorySet->Release();
         (*item)->mInspector.Reset();
         (*item)->GetJCallGraphRecorder()->Reset();

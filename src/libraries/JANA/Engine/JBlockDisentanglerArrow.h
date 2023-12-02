@@ -73,7 +73,7 @@ public:
 
 		if (reserved_events == 0 ||
 		    input_queue_status == JMailbox<T*>::Status::Congested ||
-		    output_queue_status == JMailbox<Event>::Status::Full ||
+		    output_queue_status == JMailbox<Event*>::Status::Full ||
 		    input_queue_status == JMailbox<T*>::Status::Empty
 		   ) {
 			status = JArrowMetrics::Status::ComeBackLater;

@@ -11,8 +11,8 @@
 #include <JANA/Engine/JArrow.h>
 #include <JANA/Engine/JMailbox.h>
 
-using Event = std::shared_ptr<JEvent>*;
-using EventQueue = JMailbox<Event>;
+using Event = std::shared_ptr<JEvent>;
+using EventQueue = JMailbox<Event*>;
 
 class JEventPool;
 
@@ -22,7 +22,7 @@ private:
     size_t m_current_source = 0;
     EventQueue* m_output_queue;
     std::shared_ptr<JEventPool> m_pool;
-    std::vector<Event> m_chunk_buffer;
+    std::vector<Event*> m_chunk_buffer;
 
 public:
     JEventSourceArrow(std::string name, std::vector<JEventSource*> sources, EventQueue* output_queue, std::shared_ptr<JEventPool> pool);
