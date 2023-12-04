@@ -10,8 +10,6 @@ set(TEST_SOURCES
     SchedulerTests.cc
     JEventTests.cc
     JEventTests.h
-    PerformanceTests.cc
-    PerformanceTests.h
     ExactlyOnceTests.cc
     ExactlyOnceTests.h
     TerminationTests.cc
