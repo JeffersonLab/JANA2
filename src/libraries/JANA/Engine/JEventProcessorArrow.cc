@@ -24,7 +24,9 @@ void JEventProcessorArrow::add_processor(JEventProcessor* processor) {
     m_processors.push_back(processor);
 }
 
-JArrowMetrics::Status JEventProcessorArrow::process(Event* event) {
+void JEventProcessorArrow::process(Event* event, bool& success, JArrowMetrics::Status& status) {
+    
+
     LOG_DEBUG(m_logger) << "JEventProcessorArrow '" << get_name() << "': Starting event# " << (*event)->GetEventNumber() << LOG_END;
     for (JEventProcessor* processor : m_processors) {
         // TODO: Move me into JEventProcessor::DoMap
@@ -32,7 +34,8 @@ JArrowMetrics::Status JEventProcessorArrow::process(Event* event) {
         processor->DoMap(*event);
     }
     LOG_DEBUG(m_logger) << "JEventProcessorArrow '" << get_name() << "': Finished event# " << (*event)->GetEventNumber() << LOG_END;
-    return JArrowMetrics::Status::KeepGoing;
+    success = true;
+    status = JArrowMetrics::Status::KeepGoing;
 }
 
 void JEventProcessorArrow::initialize() {

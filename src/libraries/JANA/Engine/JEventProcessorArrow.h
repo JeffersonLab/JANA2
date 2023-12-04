@@ -27,7 +27,7 @@ public:
 
     void add_processor(JEventProcessor* processor);
 
-    JArrowMetrics::Status process(Event* event);
+    void process(Event* event, bool& success, JArrowMetrics::Status& status);
 
     void initialize() final;
     void finalize() final;

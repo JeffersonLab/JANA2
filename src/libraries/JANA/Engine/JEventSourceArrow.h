@@ -23,7 +23,7 @@ public:
     void initialize() final;
     void finalize() final;
 
-    JArrowMetrics::Status process(Event* event);
+    void process(Event* event, bool& success, JArrowMetrics::Status& status);
 };
 
 #endif //JANA2_JEVENTSOURCEARROW_H

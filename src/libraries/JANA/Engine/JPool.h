@@ -21,8 +21,8 @@ private:
 
 public:
     JPool(size_t pool_size,
-                      size_t location_count,
-                      bool limit_total_events_in_flight)
+          size_t location_count,
+          bool limit_total_events_in_flight)
         : m_pool_size(pool_size)
         , m_location_count(location_count)
         , m_limit_total_events_in_flight(limit_total_events_in_flight)
@@ -30,6 +30,8 @@ public:
         assert(m_location_count >= 1);
         assert(m_pool_size > 0 || !m_limit_total_events_in_flight);
     }
+
+    virtual ~JPool() = default;
 
     void init() {
         m_pools = std::unique_ptr<LocalPool[]>(new LocalPool[m_location_count]());
@@ -45,10 +47,10 @@ public:
         }
     }
 
-    virtual void configure_item(T* item) {
+    virtual void configure_item(T*) {
     }
 
-    virtual void release_item(T* item) {
+    virtual void release_item(T*) {
     }
 
 

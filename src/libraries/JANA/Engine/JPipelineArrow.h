@@ -68,7 +68,7 @@ public:
         }
         else {
             // Obtain from queue
-            auto input_status = m_input_queue->pop(event, pop_succeeded, location_id);
+            m_input_queue->pop(event, pop_succeeded, location_id);
         }
         if (!pop_succeeded) {
             // Exit early!
@@ -84,8 +84,9 @@ public:
 
         auto start_processing_time = std::chrono::steady_clock::now();
 
-        auto process_status = static_cast<DerivedT*>(this)->process(event);
-        bool process_succeeded = (process_status == JArrowMetrics::Status::KeepGoing);
+        bool process_succeeded = true;
+        JArrowMetrics::Status process_status = JArrowMetrics::Status::KeepGoing;
+        static_cast<DerivedT*>(this)->process(event, process_succeeded, process_status);
 
         auto end_processing_time = std::chrono::steady_clock::now();
 

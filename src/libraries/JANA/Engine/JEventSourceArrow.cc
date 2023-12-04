@@ -20,28 +20,37 @@ JEventSourceArrow::JEventSourceArrow(std::string name,
 }
 
 
-JArrowMetrics::Status JEventSourceArrow::process(Event* event) {
+void JEventSourceArrow::process(Event* event, bool& success, JArrowMetrics::Status& arrow_status) {
 
     // If there are no sources available then we are automatically finished.
-    if (m_sources.empty()) return JArrowMetrics::Status::Finished;
+    if (m_sources.empty()) {
+        success = false;
+        arrow_status = JArrowMetrics::Status::Finished;
+        return;
+    }
 
     while (m_current_source < m_sources.size()) {
 
-        auto status = m_sources[m_current_source]->DoNext(*event);
+        auto source_status = m_sources[m_current_source]->DoNext(*event);
 
-        if (status == JEventSource::ReturnStatus::Finished) {
+        if (source_status == JEventSource::ReturnStatus::Finished) {
             m_current_source++;
             // TODO: Adjust nskip and nevents for the new source
         }
-        else if (status == JEventSource::ReturnStatus::TryAgain){
+        else if (source_status == JEventSource::ReturnStatus::TryAgain){
             // This JEventSource isn't finished yet, so we obtained either Success or TryAgainLater
-            return JArrowMetrics::Status::ComeBackLater;
+            success = false;
+            arrow_status = JArrowMetrics::Status::ComeBackLater;
+            return;
         }
         else {
-            return JArrowMetrics::Status::KeepGoing;
+            success = true;
+            arrow_status = JArrowMetrics::Status::KeepGoing;
+            return;
         }
     }
-    return JArrowMetrics::Status::Finished;
+    success = false;
+    arrow_status = JArrowMetrics::Status::Finished;
 }
 
 void JEventSourceArrow::initialize() {
