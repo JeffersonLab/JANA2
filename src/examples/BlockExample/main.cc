@@ -18,12 +18,13 @@ std::shared_ptr<JArrowTopology> configure_block_topology(std::shared_ptr<JArrowT
 
     auto block_queue = new JMailbox<MyBlock*>;
     auto event_queue = new JMailbox<std::shared_ptr<JEvent>*>;
+    auto block_pool = new JPool<MyBlock>(0, 1, false);
 
     // topology->queues.push_back(block_queue);
     // FIXME: block_queue is a (very minor) memory leak
     topology->queues.push_back(event_queue);
 
-    auto block_source_arrow = new JBlockSourceArrow<MyBlock>("block_source", source, block_queue);
+    auto block_source_arrow = new JBlockSourceArrow<MyBlock>("block_source", source, block_pool, block_queue);
     auto block_disentangler_arrow = new JBlockDisentanglerArrow<MyBlock>("block_disentangler", source, block_queue, event_queue, topology->event_pool);
     auto processor_arrow = new JEventProcessorArrow("processors", event_queue, nullptr, topology->event_pool);
 
