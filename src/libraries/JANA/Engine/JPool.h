@@ -98,38 +98,59 @@ public:
         delete item;
     }
 
+    // TODO: This is wrong. Do we use this anywhere?
     size_t size() { return m_pool_size; }
 
 
-    bool get_many(std::vector<T*>& dest, size_t count, size_t location=0) {
+    size_t pop(T** dest, size_t min_count, size_t max_count, size_t location=0) {
 
         LocalPool& pool = m_pools[location % m_location_count];
         std::lock_guard<std::mutex> lock(pool.mutex);
 
-        if (m_limit_total_events_in_flight && pool.available_items.size() < count) {
-            return false;
+        size_t available_count = pool.available_items.size();
+
+        if (m_limit_total_events_in_flight && available_count < min_count) {
+            // Exit immmediately if we can't reach the minimum
+            return 0;
         }
-        else {
-            while (count > 0 && !pool.available_items.empty()) {
+        if (m_limit_total_events_in_flight) {
+            // Return as many as we can. We aren't allowed to create any more
+            size_t count = std::min(available_count, max_count);
+            for (size_t i=0; i<count; ++i) {
                 T* t = pool.available_items.back();
                 pool.available_items.pop_back();
-                dest.push_back(t);
-                count -= 1;
+                dest[i] = t;
             }
-            while (count > 0) {
+            return count;
+        }
+        else {
+            // Try to minimize number of allocations, as long as we meet min_count
+            size_t count = std::min(available_count, max_count);
+            int i=0;
+            for (i=0; i<count; ++i) {
+                // Pop the items already in the pool
+                T* t = pool.available_items.back();
+                pool.available_items.pop_back();
+                dest[i] = t;
+            }
+            for (; i<min_count; ++i) {
+                // If we haven't reached our min count yet, allocate just enough to reach it
                 auto t = new T;
                 configure_item(t);
-                dest.push_back(t);
-                count -= 1;
+                dest[i] = t;
             }
-            return true;
+            return i;
         }
     }
 
-    void put_many(std::vector<T*>& finished_events, size_t location=0) {
-        for (T* item : finished_events) {
-            put(item, location);
+    void push(T** source, size_t count, size_t location=0) {
+        for (size_t i=0; i<count; ++i) {
+            put(source[i], location);
+            source[i] = nullptr;
         }
     }
 };
+
+
+
 

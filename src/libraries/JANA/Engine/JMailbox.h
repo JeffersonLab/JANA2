@@ -210,6 +210,49 @@ public:
     size_t get_threshold() { return m_threshold; }
     void set_threshold(size_t threshold) { m_threshold = threshold; }
 
+
+    void push_and_unreserve(T* buffer, size_t count, size_t reserved_count = 0, size_t domain = 0) {
+
+        auto& mb = m_mailboxes[domain];
+        std::lock_guard<std::mutex> lock(mb.mutex);
+        mb.reserved_count -= reserved_count;
+        assert(mb.queue.size() + count <= m_threshold);
+        for (size_t i=0; i<count; ++i) {
+             mb.queue.push_back(buffer[i]);
+             buffer[i] = nullptr;
+        }
+    }
+
+    size_t pop_and_reserve(T* buffer, size_t min_requested_count, size_t max_requested_count, size_t location_id = 0) {
+
+        auto& mb = m_mailboxes[location_id];
+        std::lock_guard<std::mutex> lock(mb.mutex);
+
+        if (mb.queue.size() < min_requested_count) return 0;
+
+        auto nitems = std::min(max_requested_count, mb.queue.size());
+        mb.reserved_count += nitems;
+
+        for (size_t i=0; i<nitems; ++i) {
+            buffer[i] = mb.queue.front();
+            mb.queue.pop_front();
+        }
+        return nitems;
+    }
+
+    size_t reserve(size_t min_requested_count, size_t max_requested_count, size_t domain = 0) {
+
+        LocalMailbox& mb = m_mailboxes[domain];
+        std::lock_guard<std::mutex> lock(mb.mutex);
+        size_t available_count = m_threshold - mb.queue.size() - mb.reserved_count;
+        size_t count = std::min(available_count, max_requested_count);
+        if (count < min_requested_count) {
+            return 0;
+        }
+        mb.reserved_count += count;
+        return count;
+    };
+
 };
 
 
