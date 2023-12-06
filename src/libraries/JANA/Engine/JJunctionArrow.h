@@ -7,23 +7,43 @@
 #include <JANA/Engine/JMailbox.h>
 #include <JANA/Engine/JPool.h>
 
-template <typename T, size_t BufSize>
+
+#ifndef JANA2_ARROWDATA_MAX_SIZE
+#define JANA2_ARROWDATA_MAX_SIZE 10
+#endif
+
+template <typename T>
 struct Data {
-    std::array<T*, BufSize> items;
-    size_t item_count;
-    size_t reserve_count;
+    std::array<T*, JANA2_ARROWDATA_MAX_SIZE> items;
+    size_t item_count = 0;
+    size_t reserve_count = 0;
     size_t location_id;
-}
+
+    Data(size_t location_id = 0) : location_id(location_id) {
+        items = {nullptr};
+    }
+};
 
 template <typename T>
 struct PlaceRef {
-    JMailbox<T*>* queue;
-    JPool<T>* pool;
-    bool is_input;
-    size_t min_item_count;
-    size_t max_item_count;
+    JMailbox<T*>* queue = nullptr;
+    JPool<T>* pool = nullptr;
+    bool is_input = false;
+    size_t min_item_count = 1;
+    size_t max_item_count = 1;
 
-    bool pull(Data& data) {
+    PlaceRef() = default;
+
+    PlaceRef(JMailbox<T*>* queue, bool is_input, size_t min_item_count, size_t max_item_count) 
+        : queue(queue), is_input(is_input), 
+          min_item_count(min_item_count), max_item_count(max_item_count) {}
+
+    PlaceRef(JPool<T>* pool, bool is_input, size_t min_item_count, size_t max_item_count) 
+        : pool(pool), is_input(is_input), 
+          min_item_count(min_item_count), max_item_count(max_item_count) {}
+
+
+    bool pull(Data<T>& data) {
         if (is_input) { // Actually pull the data
             if (queue != nullptr) {
                 data.item_count = queue->pop_and_reserve(data.items.data(), min_item_count, max_item_count, data.location_id);
@@ -40,7 +60,7 @@ struct PlaceRef {
             if (queue != nullptr) {
                 // Reserve a space on the output queue
                 data.item_count = 0;
-                data.reserve_count = m_output_queue->reserve(min_item_count, max_item_count, data.location_id);
+                data.reserve_count = queue->reserve(min_item_count, max_item_count, data.location_id);
                 return (data.reserve_count >= min_item_count);
             }
             else {
@@ -52,7 +72,7 @@ struct PlaceRef {
         }
     }
 
-    void revert(Data& data, size_t location_id) {
+    void revert(Data<T>& data) {
         if (queue != nullptr) {
             queue->push_and_unreserve(data.items.data(), data.item_count, data.reserve_count, data.location_id);
         }
@@ -63,30 +83,37 @@ struct PlaceRef {
         }
     }
 
-    size_t push(Data& data) {
+    size_t push(Data<T>& data) {
         if (queue != nullptr) {
             queue->push_and_unreserve(data.items.data(), data.item_count, data.reserve_count, data.location_id);
+            data.item_count = 0;
+            data.reserve_count = 0;
             return is_input ? 0 : data.item_count;
         }
         else {
-            pool.push(data.items.data(), data.item_count, data.location_id);
-            return 0;
+            pool->push(data.items.data(), data.item_count, data.location_id);
+            data.item_count = 0;
+            data.reserve_count = 0;
+            return 1;
         }
     }
-}
+};
 
-template <typename DerivedT, typename FirstT, typename SecondT, size_t BufSize=40>
+template <typename DerivedT, typename FirstT, typename SecondT>
 class JJunctionArrow : public JArrow {
-    
+
+protected:    
     PlaceRef<FirstT> first_input;
     PlaceRef<FirstT> first_output;
     PlaceRef<SecondT> second_input;
     PlaceRef<SecondT> second_output;
 
 public:
+    using Status = JArrowMetrics::Status;
+
     JJunctionArrow(std::string name,
                    bool is_parallel,
-                   JArrow::NodeType node_type,
+                   JArrow::NodeType node_type
                   )
         : JArrow(std::move(name), is_parallel, node_type)
     {
@@ -104,7 +131,7 @@ public:
         return 0;
     }
 
-    void set_threshold(size_t threshold) final {  }
+    void set_threshold(size_t) final {  }
 
 
     bool try_pull_all(Data<FirstT>& fi, Data<FirstT>& fo, Data<SecondT>& si, Data<SecondT>& so) {
@@ -152,14 +179,18 @@ public:
         Data<FirstT> first_output_data;
         Data<SecondT> second_input_data;
         Data<SecondT> second_output_data;
+        first_input_data.location_id = location_id;
+        first_output_data.location_id = location_id;
+        second_input_data.location_id = location_id;
+        second_output_data.location_id = location_id;
 
-        bool success = try_pull_all(first_input_data, first_output_data, second_input_data, second_output_data, location_id);
+        bool success = try_pull_all(first_input_data, first_output_data, second_input_data, second_output_data);
         if (success) {
 
             auto start_processing_time = std::chrono::steady_clock::now();
             auto process_status = static_cast<DerivedT*>(this)->process(first_input_data, first_output_data, second_input_data, second_output_data);
             auto end_processing_time = std::chrono::steady_clock::now();
-            size_t events_processed = push_all(first_input_data, first_output_data, second_input_data, second_output_data, location_id);
+            size_t events_processed = push_all(first_input_data, first_output_data, second_input_data, second_output_data);
 
             auto end_total_time = std::chrono::steady_clock::now();
             auto latency = (end_processing_time - start_processing_time);

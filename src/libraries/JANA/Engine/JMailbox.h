@@ -240,7 +240,7 @@ public:
         return nitems;
     }
 
-    size_t reserve(size_t min_requested_count, size_t max_requested_count, size_t domain = 0) {
+    size_t reserve(size_t min_requested_count, size_t max_requested_count, size_t domain) {
 
         LocalMailbox& mb = m_mailboxes[domain];
         std::lock_guard<std::mutex> lock(mb.mutex);

@@ -101,6 +101,39 @@ public:
     // TODO: This is wrong. Do we use this anywhere?
     size_t size() { return m_pool_size; }
 
+    // TODO: Remove me
+    bool get_many(std::vector<T*>& dest, size_t count, size_t location=0) {
+
+        LocalPool& pool = m_pools[location % m_location_count];
+        std::lock_guard<std::mutex> lock(pool.mutex);
+
+        if (m_limit_total_events_in_flight && pool.available_items.size() < count) {
+            return false;
+        }
+        else {
+            while (count > 0 && !pool.available_items.empty()) {
+                T* t = pool.available_items.back();
+                pool.available_items.pop_back();
+                dest.push_back(t);
+                count -= 1;
+            }
+            while (count > 0) {
+                auto t = new T;
+                configure_item(t);
+                dest.push_back(t);
+                count -= 1;
+            }
+            return true;
+        }
+    }
+
+    // TODO: Remove me
+    void put_many(std::vector<T*>& finished_events, size_t location=0) {
+        for (T* item : finished_events) {
+            put(item, location);
+        }
+    }
+
 
     size_t pop(T** dest, size_t min_count, size_t max_count, size_t location=0) {
 
@@ -126,7 +159,7 @@ public:
         else {
             // Try to minimize number of allocations, as long as we meet min_count
             size_t count = std::min(available_count, max_count);
-            int i=0;
+            size_t i=0;
             for (i=0; i<count; ++i) {
                 // Pop the items already in the pool
                 T* t = pool.available_items.back();
