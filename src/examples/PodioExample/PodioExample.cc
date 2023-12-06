@@ -26,10 +26,10 @@ void create_hits_file() {
     eventinfos1.push_back(eventinfo1);
 
     ExampleHitCollection hits1;
-    hits1.push_back({22, -1, -1, 0, 100});
-    hits1.push_back({49, 1, 1, 0, 15.5});
-    hits1.push_back({47, 1, 2, 0, 0.5});
-    hits1.push_back({42, 2, 1, 0, 4.0});
+    hits1.push_back(ExampleHit({22, -1, -1, 0, 100}));
+    hits1.push_back(ExampleHit({49, 1, 1, 0, 15.5}));
+    hits1.push_back(ExampleHit({47, 1, 2, 0, 0.5}));
+    hits1.push_back(ExampleHit({42, 2, 1, 0, 4.0}));
 
     podio::Frame event1;
     event1.put(std::move(hits1), "hits");
@@ -43,10 +43,10 @@ void create_hits_file() {
     eventinfos2.push_back(eventinfo2);
 
     ExampleHitCollection hits2;
-    hits2.push_back({42, 5, -5, 5, 7.6});
-    hits2.push_back({618, -3, -5, 1, 99.9});
-    hits2.push_back({27, -10, 10, 10, 22.2});
-    hits2.push_back({28, -9, 11, 10, 7.8});
+    hits2.push_back(ExampleHit({42, 5, -5, 5, 7.6}));
+    hits2.push_back(ExampleHit({618, -3, -5, 1, 99.9}));
+    hits2.push_back(ExampleHit({27, -10, 10, 10, 22.2}));
+    hits2.push_back(ExampleHit({28, -9, 11, 10, 7.8}));
 
     podio::Frame event2;
     event2.put(std::move(hits2), "hits");
