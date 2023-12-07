@@ -223,8 +223,9 @@ public:
 
         auto& mb = m_queues[location_id];
         std::lock_guard<std::mutex> lock(mb.mutex);
-        mb.reserved_count -= reserved_count;
+        assert(reserved_count <= mb.reserved_count);
         assert(mb.queue.size() + count <= m_capacity);
+        mb.reserved_count -= reserved_count;
         for (size_t i=0; i<count; ++i) {
              mb.queue.push_back(buffer[i]);
              buffer[i] = nullptr;
@@ -281,7 +282,7 @@ public:
 
         LocalQueue& mb = m_queues[location_id];
         std::lock_guard<std::mutex> lock(mb.mutex);
-        assert(reserved_count < mb.reserved_count);
+        assert(reserved_count <= mb.reserved_count);
         mb.reserved_count -= reserved_count;
     };
 
