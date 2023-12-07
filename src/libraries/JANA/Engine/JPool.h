@@ -5,8 +5,26 @@
 #include <JANA/Utils/JCpuInfo.h>
 #include <JANA/JLogger.h>
 
+
+class JPoolBase {
+protected:
+    size_t m_pool_size;
+    size_t m_location_count;
+    bool m_limit_total_events_in_flight;
+public:
+    JPoolBase(
+        size_t pool_size,
+        size_t location_count,
+        bool limit_total_events_in_flight)
+      : m_pool_size(pool_size)
+      , m_location_count(location_count)
+      , m_limit_total_events_in_flight(limit_total_events_in_flight) {}
+
+    virtual ~JPoolBase() = default;
+};
+
 template <typename T>
-class JPool {
+class JPool : public JPoolBase {
 private:
     struct alignas(JANA2_CACHE_LINE_BYTES) LocalPool {
         std::mutex mutex;
@@ -14,18 +32,12 @@ private:
         std::vector<T> items;
     };
 
-    size_t m_pool_size;
-    size_t m_location_count;
-    bool m_limit_total_events_in_flight;
     std::unique_ptr<LocalPool[]> m_pools;
 
 public:
     JPool(size_t pool_size,
           size_t location_count,
-          bool limit_total_events_in_flight)
-        : m_pool_size(pool_size)
-        , m_location_count(location_count)
-        , m_limit_total_events_in_flight(limit_total_events_in_flight)
+          bool limit_total_events_in_flight) : JPoolBase(pool_size, location_count, limit_total_events_in_flight)
     {
         assert(m_location_count >= 1);
         assert(m_pool_size > 0 || !m_limit_total_events_in_flight);
