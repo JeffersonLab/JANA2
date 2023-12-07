@@ -11,12 +11,10 @@
 template <typename DerivedT, typename MessageT>
 class JPipelineArrow : public JArrow {
 private:
-    JMailbox<MessageT*>* m_input_queue;
-    JMailbox<MessageT*>* m_output_queue;
-    JPool<MessageT>* m_pool;
+    PlaceRef<MessageT> m_input {this, true, 1, 1};
+    PlaceRef<MessageT> m_output {this, false, 1, 1};
 
 public:
-
     JPipelineArrow(std::string name,
                    bool is_parallel,
                    bool is_source,
@@ -25,106 +23,58 @@ public:
                    JMailbox<MessageT*>* output_queue,
                    JPool<MessageT>* pool
                   )
-        : JArrow(std::move(name), is_parallel, is_source, is_sink),
-          m_input_queue(input_queue),
-          m_output_queue(output_queue),
-          m_pool(pool) 
-    {
+        : JArrow(std::move(name), is_parallel, is_source, is_sink) {
+
+        if (input_queue == nullptr) {
+            assert(pool != nullptr);
+            m_input.set_pool(pool);
+        }
+        else {
+            m_input.set_queue(input_queue);
+        }
+        if (output_queue == nullptr) {
+            assert(pool != nullptr);
+            m_output.set_pool(pool);
+        }
+        else {
+            m_output.set_queue(output_queue);
+        }
     }
-
-    size_t get_pending() final { return (m_input_queue == nullptr) ? 0 : m_input_queue->size(); };
-
-    size_t get_threshold() final { return (m_input_queue == nullptr) ? 0 : m_input_queue->get_threshold(); }
-
-    void set_threshold(size_t threshold) final { if (m_input_queue != nullptr) m_input_queue->set_threshold(threshold); }
 
     void execute(JArrowMetrics& result, size_t location_id) final {
 
         auto start_total_time = std::chrono::steady_clock::now();
 
-        // ===================================
-        // Reserve output before popping input
-        // ===================================
-        bool reserve_succeeded = true;
-        if (m_output_queue != nullptr) {
-            auto reserved_count = m_output_queue->reserve(1, location_id);
-            reserve_succeeded = (reserved_count != 0);
-        }
-        if (!reserve_succeeded) {
-            // Exit early!
+        Data<MessageT> in_data {location_id};
+        Data<MessageT> out_data {location_id};
+
+        bool success = m_input.pull(in_data) && m_output.pull(out_data);
+        if (!success) {
+            m_input.revert(in_data);
+            m_output.revert(out_data);
+            // TODO: Test that revert works properly
+            
             auto end_total_time = std::chrono::steady_clock::now();
             result.update(JArrowMetrics::Status::ComeBackLater, 0, 1, std::chrono::milliseconds(0), end_total_time - start_total_time);
             return;
         }
-
-        // =========
-        // Pop input
-        // =========
-        bool pop_succeeded = false;
-        MessageT* event;
-        if (m_input_queue == nullptr) {
-            // Obtain from pool
-            event = m_pool->get(location_id);
-            pop_succeeded = (event != nullptr);
-        }
-        else {
-            // Obtain from queue
-            size_t popped_count = m_input_queue->pop_and_reserve(&event, 1, 1, location_id);
-            pop_succeeded = (popped_count == 1);;
-
-        }
-        if (!pop_succeeded) {
-            // Exit early!
-            auto end_total_time = std::chrono::steady_clock::now();
-            result.update(JArrowMetrics::Status::ComeBackLater, 0, 1, std::chrono::milliseconds(0), end_total_time - start_total_time);
-            return;
-        }
-
-
-        // ========================
-        // Process individual event
-        // ========================
-
-        auto start_processing_time = std::chrono::steady_clock::now();
 
         bool process_succeeded = true;
         JArrowMetrics::Status process_status = JArrowMetrics::Status::KeepGoing;
-        static_cast<DerivedT*>(this)->process(event, process_succeeded, process_status);
+        assert(in_data.item_count == 1);
+        MessageT* event = in_data.items[0];
 
+        auto start_processing_time = std::chrono::steady_clock::now();
+        static_cast<DerivedT*>(this)->process(event, process_succeeded, process_status);
         auto end_processing_time = std::chrono::steady_clock::now();
 
-
-        // ==========
-        // Push event
-        // ==========
         if (process_succeeded) {
-            // process() succeeded, so we push our event to the output queue/pool
-            if (m_output_queue != nullptr) {
-                // Push event to the output queue. This always succeeds due to reserve().
-                m_output_queue->push_and_unreserve(&event, 1, 1, location_id);
-            }
-            else {
-                // Push event to the output pool. This always succeeds.
-                m_pool->put(event, location_id);
-            }
-            if (m_input_queue != nullptr) {
-                m_input_queue->unreserve(1, location_id);
-            }
+            in_data.item_count = 0;
+            out_data.item_count = 1;
+            out_data.items[0] = event;
         }
-        else {
-            // process() failed, so we return the event to the input queue/pool
-            if (m_input_queue != nullptr) {
-                // Return event to input queue. This always succeeds due to pop_and_reserve().
-                m_input_queue->push_and_unreserve(&event, 1, 1, location_id);
-            }
-            else {
-                // Return event to input pool. This always succeeds.
-                m_pool->put(event, location_id);
-            }
-            if (m_output_queue != nullptr) {
-                m_output_queue->unreserve(1, location_id);
-            }
-        }
+        m_input.push(in_data);
+        m_output.push(out_data);
 
         // Publish metrics
         auto end_total_time = std::chrono::steady_clock::now();

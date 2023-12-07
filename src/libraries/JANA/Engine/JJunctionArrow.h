@@ -30,21 +30,6 @@ public:
     {
     }
 
-    size_t get_pending() final { 
-        // This is actually used by JScheduler for better or for worse
-        size_t first_pending = first_input.is_queue ? (static_cast<JMailbox<FirstT*>*>(first_input.place_ref))->size() : 0;
-        size_t second_pending = second_input.is_queue ? (static_cast<JMailbox<SecondT*>*>(second_input.place_ref))->size() : 0;
-        return first_pending + second_pending;
-    };
-
-    size_t get_threshold() final { 
-        // TODO: Is this even meaningful? Only used in JArrowSummary I think -- Maybe get rid of this eventually?
-        return 0;
-    }
-
-    void set_threshold(size_t) final {  }
-
-
     bool try_pull_all(Data<FirstT>& fi, Data<FirstT>& fo, Data<SecondT>& si, Data<SecondT>& so) {
 
         bool success;
@@ -86,14 +71,10 @@ public:
 
         auto start_total_time = std::chrono::steady_clock::now();
 
-        Data<FirstT> first_input_data;
-        Data<FirstT> first_output_data;
-        Data<SecondT> second_input_data;
-        Data<SecondT> second_output_data;
-        first_input_data.location_id = location_id;
-        first_output_data.location_id = location_id;
-        second_input_data.location_id = location_id;
-        second_output_data.location_id = location_id;
+        Data<FirstT> first_input_data {location_id};
+        Data<FirstT> first_output_data {location_id};
+        Data<SecondT> second_input_data {location_id};
+        Data<SecondT> second_output_data {location_id};
 
         bool success = try_pull_all(first_input_data, first_output_data, second_input_data, second_output_data);
         if (success) {

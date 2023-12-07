@@ -93,9 +93,9 @@ public:
     virtual size_t get_pending();
 
     // TODO: Get rid of me
-    virtual size_t get_threshold() { return 0; }
+    virtual size_t get_threshold();
 
-    virtual void set_threshold(size_t /* threshold */) {}
+    virtual void set_threshold(size_t /* threshold */);
 
     void attach(JArrow* downstream) {
         m_listeners.push_back(downstream);
@@ -128,6 +128,8 @@ struct PlaceRefBase {
     size_t max_item_count = 1;
 
     virtual size_t get_pending() { return 0; }
+    virtual size_t get_threshold() { return 0; }
+    virtual void set_threshold(size_t) {}
 };
 
 template <typename T>
@@ -136,6 +138,14 @@ struct PlaceRef : public PlaceRefBase {
     PlaceRef(JArrow* parent) {
         assert(parent != nullptr);
         parent->attach(this);
+    }
+
+    PlaceRef(JArrow* parent, bool is_input, size_t min_item_count, size_t max_item_count) {
+        assert(parent != nullptr);
+        parent->attach(this);
+        this->is_input = is_input;
+        this->min_item_count = min_item_count;
+        this->max_item_count = max_item_count;
     }
 
     PlaceRef(JArrow* parent, JMailbox<T*>* queue, bool is_input, size_t min_item_count, size_t max_item_count) {
@@ -158,13 +168,37 @@ struct PlaceRef : public PlaceRefBase {
         this->max_item_count = max_item_count;
     }
 
-    // TODO: We can get de-virtualize this if we go the parameter pack route
+    void set_queue(JMailbox<T*>* queue) {
+        this->place_ref = queue;
+        this->is_queue = true;
+    }
+
+    void set_pool(JPool<T>* pool) {
+        this->place_ref = pool;
+        this->is_queue = false;
+    }
+
     size_t get_pending() override {
         if (is_input && is_queue) {
             auto queue = static_cast<JMailbox<T*>*>(place_ref);
             return queue->size();
         }
         return 0;
+    }
+
+    size_t get_threshold() override {
+        if (is_input && is_queue) {
+            auto queue = static_cast<JMailbox<T*>*>(place_ref);
+            return queue->get_threshold();
+        }
+        return -1;
+    }
+
+    void set_threshold(size_t threshold) override {
+        if (is_input && is_queue) {
+            auto queue = static_cast<JMailbox<T*>*>(place_ref);
+            queue->set_threshold(threshold);
+        }
     }
 
     bool pull(Data<T>& data) {
@@ -236,6 +270,21 @@ inline size_t JArrow::get_pending() {
         sum += place->get_pending();
     }
     return sum;
+}
+
+inline size_t JArrow::get_threshold() {
+    size_t result = -1;
+    for (PlaceRefBase* place : m_places) {
+        result = std::min(result, place->get_threshold());
+    }
+    return result;
+
+}
+
+inline void JArrow::set_threshold(size_t threshold) {
+    for (PlaceRefBase* place : m_places) {
+        place->set_threshold(threshold);
+    }
 }
 
 
