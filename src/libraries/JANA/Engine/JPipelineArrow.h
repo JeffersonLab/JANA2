@@ -68,7 +68,9 @@ public:
         }
         else {
             // Obtain from queue
-            m_input_queue->pop(event, pop_succeeded, location_id);
+            size_t popped_count = m_input_queue->pop_and_reserve(&event, 1, 1, location_id);
+            pop_succeeded = (popped_count == 1);;
+
         }
         if (!pop_succeeded) {
             // Exit early!
@@ -98,8 +100,8 @@ public:
             // process() succeeded, so we push our event to the output queue/pool
             if (m_output_queue != nullptr) {
                 // Push event to the output queue. This always succeeds due to reserve().
-                m_output_queue->push(event, location_id);
-                // TODO: Unreserve from input queue
+                m_output_queue->push_and_unreserve(&event, 1, 1, location_id);
+                m_input_queue->unreserve(1, location_id);
             }
             else {
                 // Push event to the output pool. This always succeeds.
@@ -111,12 +113,14 @@ public:
             // process() failed, so we return the event to the input queue/pool
             if (m_input_queue != nullptr) {
                 // Return event to input queue. This always succeeds due to pop_and_reserve().
-                // TODO: Implement JMailbox::pop_and_reserve().
-                throw std::runtime_error("Haven't implemented pop_and_reserve() for JMailbox yet");
+                m_input_queue->push_and_unreserve(&event, 1, 1, location_id);
             }
             else {
                 // Return event to input pool. This always succeeds.
                 m_pool->put(event, location_id);
+            }
+            if (m_output_queue != nullptr) {
+                m_output_queue->unreserve(1, location_id);
             }
         }
 
