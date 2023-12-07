@@ -196,7 +196,13 @@ void JScheduler::run_topology(int nthreads) {
     }
     LOG_DEBUG(logger) << "JScheduler: run_topology() : " << current_status << " => Running" << LOG_END;
 
-    if (m_topology->sources.empty()) {
+    bool source_found = false;
+    for (JArrow* arrow : m_topology->arrows) {
+        if (arrow->get_type() == JArrow::NodeType::Source) {
+            source_found = true;
+        }
+    }
+    if (!source_found) {
         throw JException("No event sources found!");
     }
     for (size_t i=0; i<m_topology_state.arrow_states.size(); ++i) {

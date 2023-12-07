@@ -240,8 +240,10 @@ std::unique_ptr<const JArrowPerfSummary> JArrowProcessingController::measure_int
     }
 
     size_t monotonic_event_count = 0;
-    for (JArrow* arrow : m_topology->sinks) {
-        monotonic_event_count += arrow->get_metrics().get_total_message_count();
+    for (JArrow* arrow : m_topology->arrows) {
+        if (arrow->get_type() == JArrow::NodeType::Sink) {
+            monotonic_event_count += arrow->get_metrics().get_total_message_count();
+        }
     }
 
     // Uptime

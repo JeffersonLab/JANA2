@@ -40,8 +40,6 @@ TEST_CASE("ArrowActivationTests") {
     multiply_by_two->attach(subtract_one);
     subtract_one->attach(sum_everything);
 
-    topology->sources.push_back(emit_rand_ints);
-
     topology->arrows.push_back(emit_rand_ints);
     topology->arrows.push_back(multiply_by_two);
     topology->arrows.push_back(subtract_one);

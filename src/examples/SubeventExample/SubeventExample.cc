@@ -109,7 +109,6 @@ int main() {
     proc_arrow->add_processor(new SimpleProcessor);
 
     topology->arrows.push_back(source_arrow);
-    topology->sources.push_back(source_arrow);
     topology->arrows.push_back(split_arrow);
     topology->arrows.push_back(subprocess_arrow);
     topology->arrows.push_back(merge_arrow);

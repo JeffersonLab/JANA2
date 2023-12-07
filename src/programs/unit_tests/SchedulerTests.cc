@@ -33,8 +33,6 @@ TEST_CASE("SchedulerTests") {
     multiply_by_two->attach(subtract_one);
     subtract_one->attach(sum_everything);
 
-    topology->sources.push_back(emit_rand_ints);
-
     topology->arrows.push_back(emit_rand_ints);
     topology->arrows.push_back(multiply_by_two);
     topology->arrows.push_back(subtract_one);
@@ -121,8 +119,6 @@ TEST_CASE("SchedulerRoundRobinBehaviorTests") {
     emit_rand_ints->attach(multiply_by_two);
     multiply_by_two->attach(subtract_one);
     subtract_one->attach(sum_everything);
-
-    topology->sources.push_back(emit_rand_ints);
 
     topology->arrows.push_back(emit_rand_ints);
     topology->arrows.push_back(multiply_by_two);
