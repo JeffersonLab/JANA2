@@ -20,7 +20,7 @@ struct RandIntSource : public JPipelineArrow<RandIntSource, int> {
     JLogger logger;
 
     RandIntSource(std::string name, JPool<int>* pool, JMailbox<int*>* output_queue)
-        : JPipelineArrow<RandIntSource, int>(name, false, JArrow::NodeType::Source, nullptr, output_queue, pool) {}
+        : JPipelineArrow<RandIntSource, int>(name, false, true, false, nullptr, output_queue, pool) {}
 
     void process(int* item, bool& success, JArrowMetrics::Status& status) {
 
@@ -59,7 +59,7 @@ struct MultByTwoProcessor : public ParallelProcessor<int*, double*> {
 struct SubOneProcessor : public JPipelineArrow<SubOneProcessor, double> {
 
     SubOneProcessor(std::string name, JMailbox<double*>* input_queue, JMailbox<double*>* output_queue) 
-        : JPipelineArrow<SubOneProcessor, double>(name, true, JArrow::NodeType::Stage, input_queue, output_queue, nullptr) {}
+        : JPipelineArrow<SubOneProcessor, double>(name, true, false, false, input_queue, output_queue, nullptr) {}
 
     void process(double* item, bool&, JArrowMetrics::Status&) {
         *item -= 1;
@@ -73,7 +73,7 @@ struct SumSink : public JPipelineArrow<SumSink<T>, T> {
     T sum = 0;
 
     SumSink(std::string name, JMailbox<T*>* input_queue, JPool<T>* pool) 
-        : JPipelineArrow<SumSink<T>,T>(name, false, JArrow::NodeType::Sink, input_queue, nullptr, pool) {}
+        : JPipelineArrow<SumSink<T>,T>(name, false, false, true, input_queue, nullptr, pool) {}
 
     void process(T* item, bool&, JArrowMetrics::Status&) {
         sum += *item;

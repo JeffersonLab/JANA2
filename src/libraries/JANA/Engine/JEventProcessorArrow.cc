@@ -15,7 +15,8 @@ JEventProcessorArrow::JEventProcessorArrow(std::string name,
                                            std::shared_ptr<JEventPool> pool)
         : JPipelineArrow(std::move(name),
                          true,
-                         NodeType::Sink,
+                         false,
+                         true,
                          input_queue,
                          output_queue,
                          pool.get()) {}

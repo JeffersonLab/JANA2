@@ -81,13 +81,13 @@ void JScheduler::checkin_unprotected(JArrow* assignment, JArrowMetrics::Status l
     as.thread_count -= 1;
 
     bool found_inactive_source = 
-        assignment->get_type() == JArrow::NodeType::Source && 
+        assignment->is_source() && 
         last_result == JArrowMetrics::Status::Finished &&           // Only Sources get to declare themselves finished!
         as.status == ArrowStatus::Active;                           // We only want to deactivate once
 
 
     bool found_draining_stage_or_sink = 
-        assignment->get_type() != JArrow::NodeType::Source &&       // We aren't a source
+        !assignment->is_source() &&                                 // We aren't a source
         as.active_or_draining_upstream_arrow_count == 0 &&          // All upstreams arrows are inactive
         assignment->get_pending() == 0 &&                           // All upstream queues are empty
         as.thread_count > 0 &&                                      // There are other workers still assigned to this arrow
@@ -95,7 +95,7 @@ void JScheduler::checkin_unprotected(JArrow* assignment, JArrowMetrics::Status l
 
 
     bool found_inactive_stage_or_sink = 
-        assignment->get_type() != JArrow::NodeType::Source &&       // We aren't a source
+        !assignment->is_source() &&                                 // We aren't a source
         as.active_or_draining_upstream_arrow_count == 0 &&          // All upstreams arrows are inactive
         assignment->get_pending() == 0 &&                           // All upstream queues are empty
         as.thread_count == 0 &&                                     // There are NO other workers still assigned to this arrow
@@ -179,7 +179,7 @@ void JScheduler::drain_topology() {
         //
     for (size_t i=0; i<m_topology_state.arrow_states.size(); ++i) {
         ArrowState& as = m_topology_state.arrow_states[i];
-        if (as.arrow->get_type() == JArrow::NodeType::Source) {
+        if (as.arrow->is_source()) {
             pause_arrow_unprotected(i);
         }
     }
@@ -198,7 +198,7 @@ void JScheduler::run_topology(int nthreads) {
 
     bool source_found = false;
     for (JArrow* arrow : m_topology->arrows) {
-        if (arrow->get_type() == JArrow::NodeType::Source) {
+        if (arrow->is_source()) {
             source_found = true;
         }
     }
@@ -209,7 +209,7 @@ void JScheduler::run_topology(int nthreads) {
         // We activate any sources, and everything downstream activates automatically
         // Note that this won't affect finished sources. It will, however, stop drain().
         ArrowState& as = m_topology_state.arrow_states[i];
-        if (as.arrow->get_type() == JArrow::NodeType::Source) {
+        if (as.arrow->is_source()) {
             run_arrow_unprotected(i);
         }
     }
@@ -387,8 +387,9 @@ void JScheduler::summarize_arrows(std::vector<ArrowSummary>& summaries) {
         auto& summary = summaries[i];
 
         summary.arrow_name = as.arrow->get_name();
-        summary.arrow_type = as.arrow->get_type();
         summary.is_parallel = as.arrow->is_parallel();
+        summary.is_source = as.arrow->is_source();
+        summary.is_sink = as.arrow->is_sink();
         summary.chunksize = as.arrow->get_chunksize();
         summary.messages_pending = as.arrow->get_pending();
         summary.threshold = as.arrow->get_threshold();

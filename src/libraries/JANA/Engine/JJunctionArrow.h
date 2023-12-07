@@ -113,9 +113,10 @@ public:
 
     JJunctionArrow(std::string name,
                    bool is_parallel,
-                   JArrow::NodeType node_type
+                   bool is_source,
+                   bool is_sink
                   )
-        : JArrow(std::move(name), is_parallel, node_type)
+        : JArrow(std::move(name), is_parallel, is_source, is_sink)
     {
     }
 

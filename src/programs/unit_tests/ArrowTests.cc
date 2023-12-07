@@ -13,7 +13,7 @@ struct TestMapArrow : public JJunctionArrow<TestMapArrow, int, double> {
                  JPool<int>* pi,
                  JPool<double>* pd,
                  JMailbox<double*>* qd) 
-    : JJunctionArrow<TestMapArrow,int,double>("testmaparrow", false, JArrow::NodeType::Sink) {
+    : JJunctionArrow<TestMapArrow,int,double>("testmaparrow", false, false, true) {
 
         first_input = {qi, true, 1, 1};
         first_output = {pi, false, 1, 1};
@@ -62,7 +62,7 @@ struct TestMapArrow : public JJunctionArrow<TestMapArrow, int, double> {
 
 struct TestMapArrow2 : public JOmniArrow<TestMapArrow2, int, double> {
 
-    TestMapArrow2() : JOmniArrow<TestMapArrow2,int,double>("testmaparrow", false, JArrow::NodeType::Sink) {
+    TestMapArrow2() : JOmniArrow<TestMapArrow2,int,double>("testmaparrow", false, false, true) {
     }
 /*
     Status process(Data<int>& input_int, 

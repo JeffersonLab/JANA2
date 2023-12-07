@@ -16,8 +16,9 @@
 struct ArrowSummary {
     std::string arrow_name;
     bool is_parallel;
+    bool is_source;
+    bool is_sink;
     size_t thread_count;
-    JArrow::NodeType arrow_type;
     int running_upstreams;
     bool has_backpressure;
     size_t messages_pending;

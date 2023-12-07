@@ -16,7 +16,7 @@ JEventSourceArrow::JEventSourceArrow(std::string name,
                                      EventQueue* output_queue,
                                      std::shared_ptr<JEventPool> pool
                                      )
-    : JPipelineArrow(name, false, NodeType::Source, nullptr, output_queue, pool.get()), m_sources(sources) {
+    : JPipelineArrow(name, false, true, false, nullptr, output_queue, pool.get()), m_sources(sources) {
 }
 
 

@@ -19,12 +19,13 @@ public:
 
     JPipelineArrow(std::string name,
                    bool is_parallel,
-                   JArrow::NodeType node_type,
+                   bool is_source,
+                   bool is_sink,
                    JMailbox<MessageT*>* input_queue,
                    JMailbox<MessageT*>* output_queue,
                    JPool<MessageT>* pool
                   )
-        : JArrow(std::move(name), is_parallel, node_type),
+        : JArrow(std::move(name), is_parallel, is_source, is_sink),
           m_input_queue(input_queue),
           m_output_queue(output_queue),
           m_pool(pool) 

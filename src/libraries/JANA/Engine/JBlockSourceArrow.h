@@ -15,7 +15,7 @@ class JBlockSourceArrow : public JPipelineArrow<JBlockSourceArrow<T>, T> {
 
 public:
 	JBlockSourceArrow(std::string name, JBlockedEventSource<T>* source, JPool<T>* pool, JMailbox<T*>* block_queue)
-		: JPipelineArrow<JBlockSourceArrow<T>,T>(name, false, JArrow::NodeType::Source, nullptr, block_queue, pool)
+		: JPipelineArrow<JBlockSourceArrow<T>,T>(name, false, true, false, nullptr, block_queue, pool)
 		, m_source(source)
 	{}
 

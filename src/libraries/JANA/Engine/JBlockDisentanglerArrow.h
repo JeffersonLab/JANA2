@@ -25,7 +25,7 @@ public:
 							JMailbox<std::shared_ptr<JEvent>*>* event_queue,
 							std::shared_ptr<JEventPool> pool
 							)
-							: JArrow(std::move(name), true, NodeType::Stage, 1)
+							: JArrow(std::move(name), true, false, false, 1)
 							, m_source(source)
 							, m_block_queue(block_queue)
 							, m_event_queue(event_queue)

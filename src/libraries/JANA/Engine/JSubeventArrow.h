@@ -47,7 +47,7 @@ public:
                    JSubeventProcessor<InputT,OutputT>* processor,
                    JMailbox<SubeventWrapper<InputT>>* inbox,
                    JMailbox<SubeventWrapper<OutputT>>* outbox)
-        : JArrow(name, true, NodeType::Stage), m_processor(processor), m_inbox(inbox), m_outbox(outbox) {
+        : JArrow(name, true, false, false), m_processor(processor), m_inbox(inbox), m_outbox(outbox) {
     }
 
     size_t get_pending() final { return m_inbox->size(); };
@@ -67,7 +67,7 @@ public:
                 JSubeventProcessor<InputT,OutputT>* processor,
                 JMailbox<std::shared_ptr<JEvent>*>* inbox,
                 JMailbox<SubeventWrapper<InputT>>* outbox)
-        : JArrow(name, true, NodeType::Stage), m_processor(processor), m_inbox(inbox), m_outbox(outbox) {
+        : JArrow(name, true, false, false), m_processor(processor), m_inbox(inbox), m_outbox(outbox) {
     }
 
     size_t get_pending() final { return m_inbox->size(); };
@@ -88,7 +88,7 @@ public:
                 JSubeventProcessor<InputT,OutputT>* processor,
                 JMailbox<SubeventWrapper<OutputT>>* inbox,
                 JMailbox<std::shared_ptr<JEvent>*>* outbox)
-        : JArrow(name, false, NodeType::Stage), m_processor(processor), m_inbox(inbox), m_outbox(outbox) {
+        : JArrow(name, false, false, false), m_processor(processor), m_inbox(inbox), m_outbox(outbox) {
     }
 
     size_t get_pending() final { return m_inbox->size(); };
