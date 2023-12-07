@@ -90,7 +90,7 @@ public:
     virtual void finalize() {};
 
     // TODO: Make no longer virtual
-    virtual size_t get_pending() { return 0; }
+    virtual size_t get_pending();
 
     // TODO: Get rid of me
     virtual size_t get_threshold() { return 0; }
@@ -126,6 +126,8 @@ struct PlaceRefBase {
     bool is_input = false;
     size_t min_item_count = 1;
     size_t max_item_count = 1;
+
+    virtual size_t get_pending() { return 0; }
 };
 
 template <typename T>
@@ -154,6 +156,15 @@ struct PlaceRef : public PlaceRefBase {
         this->is_input = is_input;
         this->min_item_count = min_item_count;
         this->max_item_count = max_item_count;
+    }
+
+    // TODO: We can get de-virtualize this if we go the parameter pack route
+    size_t get_pending() override {
+        if (is_input && is_queue) {
+            auto queue = static_cast<JMailbox<T*>*>(place_ref);
+            return queue->size();
+        }
+        return 0;
     }
 
     bool pull(Data<T>& data) {
@@ -219,6 +230,13 @@ struct PlaceRef : public PlaceRefBase {
     }
 };
 
+inline size_t JArrow::get_pending() { 
+    size_t sum = 0;
+    for (PlaceRefBase* place : m_places) {
+        sum += place->get_pending();
+    }
+    return sum;
+}
 
 
 #endif // GREENFIELD_ARROW_H
