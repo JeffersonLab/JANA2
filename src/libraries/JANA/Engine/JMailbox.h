@@ -33,10 +33,25 @@
 ///   3. Triple mutex trick to give push() priority?
 
 
-template <typename T>
-class JMailbox {
+class JQueue {
+protected:
+    size_t m_threshold;
+    size_t m_locations_count;
+    bool m_enable_work_stealing = false;
 
-private:
+public:
+    inline size_t get_threshold() { return m_threshold; }
+    inline size_t get_locations_count() { return m_locations_count; }
+    inline bool is_work_stealing_enabled() { return m_enable_work_stealing; }
+
+
+    inline JQueue(size_t threshold, size_t locations_count, bool enable_work_stealing)
+        : m_threshold(threshold), m_locations_count(locations_count), m_enable_work_stealing(enable_work_stealing) {}
+    virtual ~JQueue() = default;
+};
+
+template <typename T>
+class JMailbox : public JQueue {
 
     struct LocalMailbox {
         std::mutex mutex;
@@ -45,11 +60,7 @@ private:
     };
 
     // TODO: Copy these params into DLMB for better locality
-    size_t m_threshold;
-    size_t m_locations_count;
-    bool m_enable_work_stealing = false;
     std::unique_ptr<LocalMailbox[]> m_mailboxes;
-    JLogger m_logger;
 
 public:
 
@@ -71,9 +82,7 @@ public:
     /// domain_count: the number of domains
     /// enable_work_stealing: allow domains to pop from other domains' queues when theirs is empty
     JMailbox(size_t threshold=100, size_t locations_count=1, bool enable_work_stealing=false)
-        : m_threshold(threshold)
-        , m_locations_count(locations_count)
-        , m_enable_work_stealing(enable_work_stealing) {
+        : JQueue(threshold, locations_count, enable_work_stealing) {
 
         m_mailboxes = std::unique_ptr<LocalMailbox[]>(new LocalMailbox[locations_count]);
     }
@@ -81,6 +90,9 @@ public:
     virtual ~JMailbox() {
         //delete [] m_mailboxes;
     }
+
+    // We can do this (for now) because we use a deque underneath, so threshold is 'soft'
+    inline void set_threshold(size_t threshold) { m_threshold = threshold; }
 
     /// size() counts the number of items in the queue across all domains
     /// This should be used sparingly because it will mess up a bunch of caches.
@@ -207,8 +219,6 @@ public:
     }
 
 
-    size_t get_threshold() { return m_threshold; }
-    void set_threshold(size_t threshold) { m_threshold = threshold; }
 
 
     bool try_push(T* buffer, size_t count, size_t domain = 0) {
