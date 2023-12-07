@@ -151,19 +151,6 @@ public:
         return Status::Ready;
     }
 
-    Status push(T& item, size_t reserved_count = 0, size_t domain = 0) {
-
-        auto& mb = m_mailboxes[domain];
-        std::lock_guard<std::mutex> lock(mb.mutex);
-        mb.reserved_count -= reserved_count;
-        mb.queue.push_back(std::move(item));
-        size_t size = mb.queue.size();
-        if (size > m_threshold) {
-            return Status::Full;
-        }
-        return Status::Ready;
-    }
-
 
     /// pop() will pop up to requested_count items for the desired domain.
     /// If many threads are contending for the queue, this will fail with Status::Contention,
@@ -288,6 +275,14 @@ public:
         }
         mb.reserved_count += count;
         return count;
+    };
+
+    void unreserve(size_t reserved_count, size_t location_id) {
+
+        LocalMailbox& mb = m_mailboxes[location_id];
+        std::lock_guard<std::mutex> lock(mb.mutex);
+        assert(reserved_count < mb.reserved_count);
+        mb.reserved_count -= reserved_count;
     };
 
 };

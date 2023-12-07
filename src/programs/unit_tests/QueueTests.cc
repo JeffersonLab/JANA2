@@ -7,29 +7,33 @@
 #include "catch.hpp"
 
 
-TEST_CASE("Queue: Basic functionality") {
-    JMailbox<int> q;
+TEST_CASE("QueueTests_Basic") {
+
+    JMailbox<int*> q;
     REQUIRE(q.size() == 0);
 
-    int item = 22;
-    q.push(item, 0);
+    int* item = new int {22};
+    bool result = q.try_push(&item, 1, 0);
     REQUIRE(q.size() == 1);
+    REQUIRE(result == true);
 
-    std::vector<int> items;
-    auto result = q.pop(items, 22);
-    REQUIRE(items.size() == 1);
+    int* items[10];
+    auto count = q.pop(items, 1, 10, 0);
+    REQUIRE(count == 1);
     REQUIRE(q.size() == 0);
-    REQUIRE(result == JMailbox<int>::Status::Empty);
+    REQUIRE(*(items[0]) == 22);
 
-    std::vector<int> buffer {1,2,3};
-    q.push(buffer, 0);
+    *(items[0]) = 33;
+    items[1] = new int {44};
+    items[2] = new int {55};
+
+    size_t reserve_count = q.reserve(3, 5, 0);
+    REQUIRE(reserve_count == 5);
+
+    q.push_and_unreserve(items, 3, reserve_count, 0);
     REQUIRE(q.size() == 3);
-    REQUIRE(buffer.size() == 0);
 
-    items.clear();
-    result = q.pop(items, 2);
-    REQUIRE(items.size() == 2);
+    count = q.pop_and_reserve(items, 2, 2, 0);
+    REQUIRE(count == 2);
     REQUIRE(q.size() == 1);
-    REQUIRE(result == JMailbox<int>::Status::Ready);
-
 }
