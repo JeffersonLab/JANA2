@@ -34,8 +34,6 @@ std::shared_ptr<JArrowTopology> configure_block_topology(std::shared_ptr<JArrowT
     topology->arrows.push_back(block_disentangler_arrow);
     topology->arrows.push_back(processor_arrow);
 
-    topology->sinks.push_back(processor_arrow);
-
     block_source_arrow->attach(block_disentangler_arrow);
     block_disentangler_arrow->attach(processor_arrow);
 

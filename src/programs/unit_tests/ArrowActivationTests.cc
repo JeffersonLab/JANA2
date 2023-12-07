@@ -44,7 +44,6 @@ TEST_CASE("ArrowActivationTests") {
     topology->arrows.push_back(multiply_by_two);
     topology->arrows.push_back(subtract_one);
     topology->arrows.push_back(sum_everything);
-    topology->sinks.push_back(sum_everything);
 
     auto logger = JLogger(JLogger::Level::OFF);
     topology->m_logger = logger;

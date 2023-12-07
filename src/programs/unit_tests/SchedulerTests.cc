@@ -37,7 +37,6 @@ TEST_CASE("SchedulerTests") {
     topology->arrows.push_back(multiply_by_two);
     topology->arrows.push_back(subtract_one);
     topology->arrows.push_back(sum_everything);
-    topology->sinks.push_back(sum_everything);
 
     auto logger = JLogger(JLogger::Level::INFO);
     topology->m_logger = logger;
@@ -124,7 +123,6 @@ TEST_CASE("SchedulerRoundRobinBehaviorTests") {
     topology->arrows.push_back(multiply_by_two);
     topology->arrows.push_back(subtract_one);
     topology->arrows.push_back(sum_everything);
-    topology->sinks.push_back(sum_everything);
 
     auto logger = JLogger(JLogger::Level::INFO);
     topology->m_logger = logger;

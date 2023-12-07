@@ -191,7 +191,6 @@ TEST_CASE("Basic subevent arrow functionality") {
         topology->arrows.push_back(subprocess_arrow);
         topology->arrows.push_back(merge_arrow);
         topology->arrows.push_back(proc_arrow);
-        topology->sinks.push_back(proc_arrow);
         source_arrow->attach(split_arrow);
         split_arrow->attach(subprocess_arrow);
         subprocess_arrow->attach(merge_arrow);

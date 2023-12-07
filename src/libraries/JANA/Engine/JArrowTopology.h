@@ -32,7 +32,6 @@ struct JArrowTopology {
     JPerfMetrics metrics;
 
     std::vector<JArrow*> arrows;
-    std::vector<JArrow*> sinks;             // Sinks needed for finished message count // TODO: Replace NodeType with activates_topology and finishes_topology
     std::vector<JQueue*> queues;            // Queues shared between arrows
     std::vector<JPoolBase*> pools;          // Pools shared between arrows
     JProcessorMapping mapping;
