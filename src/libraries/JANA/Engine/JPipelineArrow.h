@@ -101,13 +101,14 @@ public:
             if (m_output_queue != nullptr) {
                 // Push event to the output queue. This always succeeds due to reserve().
                 m_output_queue->push_and_unreserve(&event, 1, 1, location_id);
-                m_input_queue->unreserve(1, location_id);
             }
             else {
                 // Push event to the output pool. This always succeeds.
                 m_pool->put(event, location_id);
             }
-
+            if (m_input_queue != nullptr) {
+                m_input_queue->unreserve(1, location_id);
+            }
         }
         else {
             // process() failed, so we return the event to the input queue/pool
