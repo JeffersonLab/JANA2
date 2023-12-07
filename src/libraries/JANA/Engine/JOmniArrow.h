@@ -100,8 +100,22 @@ struct PlaceRef {
 template <typename DerivedT, typename... PlaceTs>
 class JOmniArrow : public JArrow {
 
+    /*
+    template <typename... Ts>
+    struct PlaceRefPack {
+        std::tuple<PlaceRef<PlaceTs>...> places {this};
+
+        template <typename Arg>
+        PlaceRefPack(Arg arg) : places((sizeof(Ts),arg)...) {}
+    };
+    */
+
+
 protected:
-    std::tuple<PlaceRef<PlaceTs>...> places;
+    //PlaceRefPack<PlaceTs...> places_pack{this};
+    std::tuple<PlaceRef<PlaceTs>...> places {(sizeof(PlaceTs), this)...};
+
+
 public:
     using Status = JArrowMetrics::Status;
 

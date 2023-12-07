@@ -13,10 +13,10 @@ template <typename DerivedT, typename FirstT, typename SecondT>
 class JJunctionArrow : public JArrow {
 
 protected:    
-    PlaceRef<FirstT> first_input;
-    PlaceRef<FirstT> first_output;
-    PlaceRef<SecondT> second_input;
-    PlaceRef<SecondT> second_output;
+    PlaceRef<FirstT> first_input {this};
+    PlaceRef<FirstT> first_output {this};
+    PlaceRef<SecondT> second_input {this};
+    PlaceRef<SecondT> second_output {this};
 
 public:
     using Status = JArrowMetrics::Status;
@@ -32,8 +32,8 @@ public:
 
     size_t get_pending() final { 
         // This is actually used by JScheduler for better or for worse
-        size_t first_pending = first_input.queue ? first_input.queue->size() : 0;
-        size_t second_pending = second_input.queue ? second_input.queue->size() : 0;
+        size_t first_pending = first_input.is_queue ? (static_cast<JMailbox<FirstT*>*>(first_input.place_ref))->size() : 0;
+        size_t second_pending = second_input.is_queue ? (static_cast<JMailbox<SecondT*>*>(second_input.place_ref))->size() : 0;
         return first_pending + second_pending;
     };
 
