@@ -60,16 +60,15 @@ struct TestMapArrow : public JJunctionArrow<TestMapArrow, int, double> {
 
 };
 
-struct TestMapArrow2 : public JOmniArrow<TestMapArrow2, int, double> {
+struct TestMapArrow2 : public JOmniArrow<TestMapArrow2, int, int, double, double> {
 
-    TestMapArrow2() : JOmniArrow<TestMapArrow2,int,double>("testmaparrow", false, false, true) {
+    TestMapArrow2() : JOmniArrow<TestMapArrow2,int,int,double,double>("testmaparrow", false, false, true) {
     }
-/*
-    Status process(Data<int>& input_int, 
-                   Data<int>& output_int, 
-                   Data<double>& input_double, 
-                   Data<double>& output_double) {
+
+    Status process(std::tuple<Data<int>, Data<int>, Data<double>, Data<double>>& data) {
         std::cout << "Hello from process" << std::endl;
+
+        auto& [input_int, output_int, input_double, output_double] = data;
 
         REQUIRE(input_int.item_count == 1);
         REQUIRE(input_int.reserve_count == 1);
@@ -101,8 +100,8 @@ struct TestMapArrow2 : public JOmniArrow<TestMapArrow2, int, double> {
         output_double.item_count = 1;
         return Status::KeepGoing;
     }
-*/
 };
+
 
 
 
@@ -129,8 +128,6 @@ TEST_CASE("ArrowTests_Basic") {
     double* y;
     qd.pop_and_reserve(&y, 1, 1, 0);
     REQUIRE(*y == 122.2);
-
-    TestMapArrow2 aa;
 
 }
 
