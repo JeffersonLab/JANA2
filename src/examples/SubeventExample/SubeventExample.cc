@@ -4,7 +4,6 @@
 
 #include <JANA/JApplication.h>
 #include <JANA/JObject.h>
-#include <JANA/Engine/JSubeventMailbox.h>
 #include <JANA/Engine/JSubeventArrow.h>
 #include <JANA/JEventSource.h>
 #include <JANA/JEventProcessor.h>

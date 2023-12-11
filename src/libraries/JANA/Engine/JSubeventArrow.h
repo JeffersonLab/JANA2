@@ -10,7 +10,7 @@
 #include "JArrow.h"
 #include <JANA/JEvent.h>
 
-/// SubtaskProcessor offers sub-event-level parallelism. The idea is to split parent
+/// SubeventProcessor offers sub-event-level parallelism. The idea is to split parent
 /// event S into independent subtasks T, and automatically bundling them with
 /// bookkeeping information X onto a Queue<pair<T,X>. process :: T -> U handles the stateless,
 /// parallel parts; its Arrow pushes messages on to a Queue<pair<U,X>, so that merge() :: S -> [U] -> V
@@ -34,6 +34,21 @@ struct JSubeventProcessor {
 
     virtual OutputT* ProcessSubevent(InputT* input) = 0;
 
+};
+
+template <typename SubeventT>
+struct SubeventWrapper {
+
+    std::shared_ptr<JEvent>* parent;
+    SubeventT* data;
+    size_t id;
+    size_t total;
+
+    SubeventWrapper(std::shared_ptr<JEvent>* parent, SubeventT* data, size_t id, size_t total)
+    : parent(std::move(parent))
+    , data(data)
+    , id(id)
+    , total(total) {}
 };
 
 

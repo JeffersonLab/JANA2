@@ -7,7 +7,6 @@
 
 #include <JANA/JObject.h>
 #include <JANA/JEvent.h>
-#include <JANA/Engine/JSubeventMailbox.h>
 #include <JANA/Engine/JSubeventArrow.h>
 #include "JANA/Engine/JArrowTopology.h"
 #include "JANA/Engine/JTopologyBuilder.h"
@@ -42,7 +41,7 @@ TEST_CASE("Create subevent processor") {
     REQUIRE(output->z == 29.6f);
 }
 
-
+#if 0
 TEST_CASE("Simplest working SubeventMailbox") {
 
     std::vector<SubeventWrapper<MyOutput>> unmerged;
@@ -123,7 +122,7 @@ TEST_CASE("SubeventMailbox with two overlapping events") {
     auto items_in_event = (*(merged[0]))->Get<MyOutput>();
     REQUIRE(items_in_event.size() == 4);
 }
-
+#endif
 
 TEST_CASE("Basic subevent arrow functionality") {
 
