@@ -4,6 +4,7 @@
 #pragma once
 #include <JANA/Utils/JCpuInfo.h>
 #include <JANA/JLogger.h>
+#include <mutex>
 
 
 class JPoolBase {
