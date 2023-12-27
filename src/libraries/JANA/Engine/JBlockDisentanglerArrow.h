@@ -12,7 +12,7 @@
 template <typename T>
 class JBlockDisentanglerArrow : public JArrow {
 	JBlockedEventSource<T>* m_source;  // non-owning
-	JMailbox<T*>* m_block_queue; // owning
+	JMailbox<T*>* m_block_queue; // non-owning
 	JMailbox<std::shared_ptr<JEvent>*>* m_event_queue; // non-owning
 	std::shared_ptr<JEventPool> m_pool;
 
@@ -33,7 +33,6 @@ public:
 							{}
 
 	~JBlockDisentanglerArrow() {
-		delete m_block_queue;
 	}
 
 	void set_max_events_per_block(size_t max_events_per_block) {
@@ -57,15 +56,17 @@ public:
 
 		int requested_events = this->get_chunksize() * m_max_events_per_block; // chunksize is measured in blocks
 		int reserved_events = m_event_queue->reserve(requested_events, location_id);
-		int reserved_blocks = reserved_events / m_max_events_per_block; // truncate
+		int requested_blocks = reserved_events / m_max_events_per_block; // truncate
 
 		std::vector<T*> block_buffer; // TODO: Get rid of allocations
 		std::vector<std::shared_ptr<JEvent>*> event_buffer;
 
-		auto input_queue_status = m_block_queue->pop(block_buffer, reserved_blocks, location_id);
+		auto input_queue_status = m_block_queue->pop(block_buffer, requested_blocks, location_id);
+        int obtained_blocks = block_buffer.size();
 		for (auto block : block_buffer) {
 			auto events = m_source->DisentangleBlock(*block, *m_pool);
 			event_buffer.insert(event_buffer.end(), events.begin(), events.end());
+            delete block;
 		}
 
 		LOG_TRACE(m_logger) << "JBlockDisentanglerArrow: successfully emitting " << event_buffer.size() << " events" << LOG_END;
@@ -81,7 +82,7 @@ public:
 		else {
 			status = JArrowMetrics::Status::KeepGoing;
 		}
-		result.update(status, reserved_blocks, 1, latency, overhead);
+		result.update(status, obtained_blocks, 1, latency, overhead);
 	}
 
 };

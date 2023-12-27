@@ -29,7 +29,7 @@ std::ostream& operator<<(std::ostream& os, const JArrowPerfSummary& s) {
     for (auto as : s.arrows) {
         os << "  | "
            << std::setw(24) << std::left << as.arrow_name << " | "
-           << std::setw(6) << std::left << (as.is_source ? "Src" : "") << (as.is_sink? "Sink" : "") << " | "
+           << std::setw(6) << std::left << (as.is_source ? "Src" : (as.is_sink ? "Sink" : "")) << " | "
            << std::setw(3) << std::right << (as.is_parallel ? " T " : " F ") << " | "
            << std::setw(7) << as.thread_count << " |"
            << std::setw(6) << as.chunksize << " |";

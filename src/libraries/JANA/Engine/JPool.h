@@ -69,6 +69,7 @@ public:
 
     T* get(size_t location=0) {
 
+        assert(m_pools != nullptr); // If you hit this, you forgot to call init().
         LocalPool& pool = m_pools[location % m_location_count];
         std::lock_guard<std::mutex> lock(pool.mutex);
 
@@ -92,6 +93,8 @@ public:
 
     void put(T* item, size_t location=0) {
 
+        assert(m_pools != nullptr); // If you hit this, you forgot to call init().
+        
         // Do any necessary teardown within the item itself
         release_item(item);
 
@@ -116,6 +119,8 @@ public:
 
     // TODO: Remove me
     bool get_many(std::vector<T*>& dest, size_t count, size_t location=0) {
+
+        assert(m_pools != nullptr); // If you hit this, you forgot to call init().
 
         LocalPool& pool = m_pools[location % m_location_count];
         std::lock_guard<std::mutex> lock(pool.mutex);
@@ -149,6 +154,8 @@ public:
 
 
     size_t pop(T** dest, size_t min_count, size_t max_count, size_t location=0) {
+
+        assert(m_pools != nullptr); // If you hit this, you forgot to call init().
 
         LocalPool& pool = m_pools[location % m_location_count];
         std::lock_guard<std::mutex> lock(pool.mutex);

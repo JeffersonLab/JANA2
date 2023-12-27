@@ -150,6 +150,7 @@ struct PlaceRef : public PlaceRefBase {
 
     PlaceRef(JArrow* parent, JMailbox<T*>* queue, bool is_input, size_t min_item_count, size_t max_item_count) {
         assert(parent != nullptr);
+        assert(queue != nullptr);
         parent->attach(this);
         this->place_ref = queue;
         this->is_queue = true;
@@ -160,6 +161,7 @@ struct PlaceRef : public PlaceRefBase {
 
     PlaceRef(JArrow* parent, JPool<T>* pool, bool is_input, size_t min_item_count, size_t max_item_count)  {
         assert(parent != nullptr);
+        assert(pool != nullptr);
         parent->attach(this);
         this->place_ref = pool;
         this->is_queue = false;
@@ -169,16 +171,19 @@ struct PlaceRef : public PlaceRefBase {
     }
 
     void set_queue(JMailbox<T*>* queue) {
+        assert(queue != nullptr);
         this->place_ref = queue;
         this->is_queue = true;
     }
 
     void set_pool(JPool<T>* pool) {
+        assert(pool != nullptr);
         this->place_ref = pool;
         this->is_queue = false;
     }
 
     size_t get_pending() override {
+        assert(place_ref != nullptr);
         if (is_input && is_queue) {
             auto queue = static_cast<JMailbox<T*>*>(place_ref);
             return queue->size();
@@ -187,6 +192,7 @@ struct PlaceRef : public PlaceRefBase {
     }
 
     size_t get_threshold() override {
+        assert(place_ref != nullptr);
         if (is_input && is_queue) {
             auto queue = static_cast<JMailbox<T*>*>(place_ref);
             return queue->get_threshold();
@@ -195,6 +201,7 @@ struct PlaceRef : public PlaceRefBase {
     }
 
     void set_threshold(size_t threshold) override {
+        assert(place_ref != nullptr);
         if (is_input && is_queue) {
             auto queue = static_cast<JMailbox<T*>*>(place_ref);
             queue->set_threshold(threshold);
@@ -202,6 +209,7 @@ struct PlaceRef : public PlaceRefBase {
     }
 
     bool pull(Data<T>& data) {
+        assert(place_ref != nullptr);
         if (is_input) { // Actually pull the data
             if (is_queue) {
                 auto queue = static_cast<JMailbox<T*>*>(place_ref);
@@ -234,6 +242,7 @@ struct PlaceRef : public PlaceRefBase {
     }
 
     void revert(Data<T>& data) {
+        assert(place_ref != nullptr);
         if (is_queue) {
             auto queue = static_cast<JMailbox<T*>*>(place_ref);
             queue->push_and_unreserve(data.items.data(), data.item_count, data.reserve_count, data.location_id);
@@ -247,6 +256,7 @@ struct PlaceRef : public PlaceRefBase {
     }
 
     size_t push(Data<T>& data) {
+        assert(place_ref != nullptr);
         if (is_queue) {
             auto queue = static_cast<JMailbox<T*>*>(place_ref);
             queue->push_and_unreserve(data.items.data(), data.item_count, data.reserve_count, data.location_id);

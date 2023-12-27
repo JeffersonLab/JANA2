@@ -19,6 +19,7 @@ std::shared_ptr<JArrowTopology> configure_block_topology(std::shared_ptr<JArrowT
     auto block_queue = new JMailbox<MyBlock*>;
     auto event_queue = new JMailbox<std::shared_ptr<JEvent>*>;
     auto block_pool = new JPool<MyBlock>(0, 1, false);
+    block_pool->init();
 
     topology->queues.push_back(event_queue);
     topology->queues.push_back(block_queue);
