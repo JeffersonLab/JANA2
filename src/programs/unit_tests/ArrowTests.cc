@@ -1,7 +1,6 @@
 
 #include <catch.hpp>
 #include <JANA/Engine/JJunctionArrow.h>
-#include <JANA/Engine/JOmniArrow.h>
 
 namespace jana {
 namespace arrowtests {
@@ -59,50 +58,6 @@ struct TestMapArrow : public JJunctionArrow<TestMapArrow, int, double> {
     }
 
 };
-
-struct TestMapArrow2 : public JOmniArrow<TestMapArrow2, int, int, double, double> {
-
-    TestMapArrow2() : JOmniArrow<TestMapArrow2,int,int,double,double>("testmaparrow", false, false, true) {
-    }
-
-    Status process(std::tuple<Data<int>, Data<int>, Data<double>, Data<double>>& data) {
-        std::cout << "Hello from process" << std::endl;
-
-        auto& [input_int, output_int, input_double, output_double] = data;
-
-        REQUIRE(input_int.item_count == 1);
-        REQUIRE(input_int.reserve_count == 1);
-        REQUIRE(output_int.item_count == 0);
-        REQUIRE(output_int.reserve_count == 0);
-        REQUIRE(input_double.item_count == 1);
-        REQUIRE(input_double.reserve_count == 0);
-        REQUIRE(output_double.item_count == 0);
-        REQUIRE(output_double.reserve_count == 1);
-        
-        int* x = input_int.items[0];
-        input_int.items[0] = nullptr;
-        input_int.item_count = 0;
-
-        // TODO: Maybe user shouldn't be allowed to modify reserve_count at all 
-        // TODO Maybe user should only be allowed to push and pull from ... range...?
-        
-        double* y = input_double.items[0];
-        input_double.items[0] = nullptr;
-        input_double.item_count = 0;
-
-        // Do something useful here
-        *y = *x + 22.2;
-        
-        output_int.items[0] = x;
-        output_int.item_count = 1;
-
-        output_double.items[0] = y;
-        output_double.item_count = 1;
-        return Status::KeepGoing;
-    }
-};
-
-
 
 
 TEST_CASE("ArrowTests_Basic") {
