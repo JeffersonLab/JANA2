@@ -37,6 +37,9 @@ set(TEST_SOURCES
     JMultiFactoryTests.cc
     JPoolTests.cc
     ArrowTests.cc
+    HierarchicalEventTests.cc
+    FlexibleContentsTests.cc
+    JOmniFactoryTests.cc
     )
 
 if (${USE_PODIO})
