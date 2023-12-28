@@ -29,12 +29,12 @@ std::ostream& operator<<(std::ostream& os, const JArrowPerfSummary& s) {
     for (auto as : s.arrows) {
         os << "  | "
            << std::setw(24) << std::left << as.arrow_name << " | "
-           << std::setw(6) << std::left << as.arrow_type << " | "
+           << std::setw(6) << std::left << (as.is_source ? "Src" : (as.is_sink ? "Sink" : "")) << " | "
            << std::setw(3) << std::right << (as.is_parallel ? " T " : " F ") << " | "
            << std::setw(7) << as.thread_count << " |"
            << std::setw(6) << as.chunksize << " |";
 
-        if (as.arrow_type != JArrow::NodeType::Source) {
+        if (!as.is_source) {
 
             os << std::setw(7) << as.threshold << " |"
                << std::setw(8) << as.messages_pending << " |";
@@ -46,7 +46,7 @@ std::ostream& operator<<(std::ostream& os, const JArrowPerfSummary& s) {
         os << std::setw(12) << as.total_messages_completed << " |"
            << std::endl;
     }
-    os << "  +--------------------------+------------+--------+-----+---------+-------+--------+---------+-------------+" << std::endl;
+    os << "  +--------------------------+--------+-----+---------+-------+--------+---------+-------------+" << std::endl;
 
 
     os << "  +--------------------------+-------------+--------------+----------------+--------------+----------------+" << std::endl;

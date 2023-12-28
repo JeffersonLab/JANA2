@@ -16,94 +16,41 @@ JEventSourceArrow::JEventSourceArrow(std::string name,
                                      EventQueue* output_queue,
                                      std::shared_ptr<JEventPool> pool
                                      )
-    : JArrow(name, false, NodeType::Source)
-    , m_sources(sources)
-    , m_output_queue(output_queue)
-    , m_pool(pool) {
+    : JPipelineArrow(name, false, true, false, nullptr, output_queue, pool.get()), m_sources(sources) {
 }
 
 
+void JEventSourceArrow::process(Event* event, bool& success, JArrowMetrics::Status& arrow_status) {
 
-void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
-
-    JEventSource::ReturnStatus in_status = JEventSource::ReturnStatus::Success;
-    auto start_time = std::chrono::steady_clock::now();
-
-    auto chunksize = get_chunksize();
-    auto reserved_count = m_output_queue->reserve(chunksize, location_id);
-    auto emit_count = reserved_count;
-
-    if (reserved_count != chunksize) {
-        // Ensures that the source _only_ emits in increments of
-        // chunksize, which happens to come in very handy for
-        // processing entangled event blocks
-        in_status = JEventSource::ReturnStatus::TryAgain;
-        emit_count = 0;
-        LOG_DEBUG(m_logger) << "JEventSourceArrow asked for " << chunksize << ", but only reserved " << reserved_count << LOG_END;
+    // If there are no sources available then we are automatically finished.
+    if (m_sources.empty()) {
+        success = false;
+        arrow_status = JArrowMetrics::Status::Finished;
+        return;
     }
-    else {
-        for (size_t i=0; i<emit_count && in_status==JEventSource::ReturnStatus::Success; ++i) {
-            auto event = m_pool->get(location_id);
-            if (event == nullptr) {
-                in_status = JEventSource::ReturnStatus::TryAgain;
-                break;
-            }
 
-            // If there are no sources available then we are automatically finished.
-            if( m_sources.empty() ) in_status = JEventSource::ReturnStatus::Finished;
-            
-            while (m_current_source < m_sources.size()) {
-                in_status = m_sources[m_current_source]->DoNext(event);
+    while (m_current_source < m_sources.size()) {
 
-                if (in_status == JEventSource::ReturnStatus::Finished) {
-                    m_current_source++;
-                    // TODO: Adjust nskip and nevents for the new source
-                }
-                else {
-                    // This JEventSource isn't finished yet, so we obtained either Success or TryAgainLater
-                    break;
-                }
-            }
-            if (in_status == JEventSource::ReturnStatus::Success) {
-                m_chunk_buffer.push_back(std::move(event));
-            }
-            else {
-                m_pool->put(event, location_id);
-            }
+        auto source_status = m_sources[m_current_source]->DoNext(*event);
+
+        if (source_status == JEventSource::ReturnStatus::Finished) {
+            m_current_source++;
+            // TODO: Adjust nskip and nevents for the new source
+        }
+        else if (source_status == JEventSource::ReturnStatus::TryAgain){
+            // This JEventSource isn't finished yet, so we obtained either Success or TryAgainLater
+            success = false;
+            arrow_status = JArrowMetrics::Status::ComeBackLater;
+            return;
+        }
+        else {
+            success = true;
+            arrow_status = JArrowMetrics::Status::KeepGoing;
+            return;
         }
     }
-
-    auto latency_time = std::chrono::steady_clock::now();
-    auto message_count = m_chunk_buffer.size();
-    auto out_status = m_output_queue->push(m_chunk_buffer, reserved_count, location_id);
-    auto finished_time = std::chrono::steady_clock::now();
-
-    if (message_count != 0) {
-        LOG_DEBUG(m_logger) << "JEventSourceArrow '" << get_name() << "' [" << location_id << "]: "
-                            << "Emitted " << message_count << " events; last GetEvent "
-                            << ((in_status==JEventSource::ReturnStatus::Success) ? "succeeded" : "failed")
-                            << LOG_END;
-    }
-    else {
-        LOG_TRACE(m_logger) << "JEventSourceArrow emitted nothing" << LOG_END;
-    }
-
-    auto latency = latency_time - start_time;
-    auto overhead = finished_time - latency_time;
-    JArrowMetrics::Status status;
-
-    if (in_status == JEventSource::ReturnStatus::Finished) {
-        // finish();
-        // TODO: NWB: It is extra very important to not call finish() here
-        status = JArrowMetrics::Status::Finished;
-    }
-    else if (in_status == JEventSource::ReturnStatus::Success && out_status == EventQueue::Status::Ready) {
-        status = JArrowMetrics::Status::KeepGoing;
-    }
-    else {
-        status = JArrowMetrics::Status::ComeBackLater;
-    }
-    result.update(status, message_count, 1, latency, overhead);
+    success = false;
+    arrow_status = JArrowMetrics::Status::Finished;
 }
 
 void JEventSourceArrow::initialize() {

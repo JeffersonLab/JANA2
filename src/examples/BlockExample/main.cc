@@ -17,13 +17,15 @@ std::shared_ptr<JArrowTopology> configure_block_topology(std::shared_ptr<JArrowT
     auto processor = new BlockExampleProcessor;
 
     auto block_queue = new JMailbox<MyBlock*>;
-    auto event_queue = new JMailbox<std::shared_ptr<JEvent>>;
+    auto event_queue = new JMailbox<std::shared_ptr<JEvent>*>;
+    auto block_pool = new JPool<MyBlock>(0, 1, false);
+    block_pool->init();
 
-    // topology->queues.push_back(block_queue);
-    // FIXME: block_queue is a (very minor) memory leak
     topology->queues.push_back(event_queue);
+    topology->queues.push_back(block_queue);
+    topology->pools.push_back(block_pool);
 
-    auto block_source_arrow = new JBlockSourceArrow<MyBlock>("block_source", source, block_queue);
+    auto block_source_arrow = new JBlockSourceArrow<MyBlock>("block_source", source, block_pool, block_queue);
     auto block_disentangler_arrow = new JBlockDisentanglerArrow<MyBlock>("block_disentangler", source, block_queue, event_queue, topology->event_pool);
     auto processor_arrow = new JEventProcessorArrow("processors", event_queue, nullptr, topology->event_pool);
 
@@ -32,9 +34,6 @@ std::shared_ptr<JArrowTopology> configure_block_topology(std::shared_ptr<JArrowT
     topology->arrows.push_back(block_source_arrow);
     topology->arrows.push_back(block_disentangler_arrow);
     topology->arrows.push_back(processor_arrow);
-
-    topology->sources.push_back(block_source_arrow);
-    topology->sinks.push_back(processor_arrow);
 
     block_source_arrow->attach(block_disentangler_arrow);
     block_disentangler_arrow->attach(processor_arrow);

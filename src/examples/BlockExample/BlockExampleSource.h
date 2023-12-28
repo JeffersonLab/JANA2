@@ -34,10 +34,10 @@ class BlockExampleSource : public JBlockedEventSource<MyBlock> {
 		return Status::Success;
 	}
 
-	virtual std::vector<std::shared_ptr<JEvent>> DisentangleBlock(MyBlock& block, JEventPool& pool) {
+	virtual std::vector<std::shared_ptr<JEvent>*> DisentangleBlock(MyBlock& block, JEventPool& pool) {
 
 		LOG_DEBUG(m_logger) <<  "BlockDisentangler: Disentangling block " << block.block_number << LOG_END;
-		std::vector<std::shared_ptr<JEvent>> events;
+		std::vector<std::shared_ptr<JEvent>*> events;
 		bool result = pool.get_many(events, block.data.size());
 
 		if (result == false) {
@@ -51,7 +51,7 @@ class BlockExampleSource : public JBlockedEventSource<MyBlock> {
 		size_t i = 0;
 		for (auto datum : block.data) {
 			LOG_DEBUG(m_logger) << "BlockDisentangler: extracted event containing " << datum << LOG_END;
-			events[i++]->Insert(new MyObject(datum));
+			(*(events[i++]))->Insert(new MyObject(datum));
 		}
 		return events;
 	}

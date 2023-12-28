@@ -10,8 +10,6 @@ set(TEST_SOURCES
     SchedulerTests.cc
     JEventTests.cc
     JEventTests.h
-    PerformanceTests.cc
-    PerformanceTests.h
     ExactlyOnceTests.cc
     ExactlyOnceTests.h
     TerminationTests.cc
@@ -37,6 +35,8 @@ set(TEST_SOURCES
     JAutoactivableTests.cc
     JTablePrinterTests.cc
     JMultiFactoryTests.cc
+    JPoolTests.cc
+    ArrowTests.cc
     )
 
 if (${USE_PODIO})

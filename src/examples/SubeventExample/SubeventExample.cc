@@ -4,7 +4,6 @@
 
 #include <JANA/JApplication.h>
 #include <JANA/JObject.h>
-#include <JANA/Engine/JSubeventMailbox.h>
 #include <JANA/Engine/JSubeventArrow.h>
 #include <JANA/JEventSource.h>
 #include <JANA/JEventProcessor.h>
@@ -80,8 +79,8 @@ struct SimpleProcessor : public JEventProcessor {
 int main() {
 
     MyProcessor processor;
-    JMailbox<std::shared_ptr<JEvent>> events_in;
-    JMailbox<std::shared_ptr<JEvent>> events_out;
+    JMailbox<std::shared_ptr<JEvent>*> events_in;
+    JMailbox<std::shared_ptr<JEvent>*> events_out;
     JMailbox<SubeventWrapper<MyInput>> subevents_in;
     JMailbox<SubeventWrapper<MyOutput>> subevents_out;
 
@@ -109,12 +108,10 @@ int main() {
     proc_arrow->add_processor(new SimpleProcessor);
 
     topology->arrows.push_back(source_arrow);
-    topology->sources.push_back(source_arrow);
     topology->arrows.push_back(split_arrow);
     topology->arrows.push_back(subprocess_arrow);
     topology->arrows.push_back(merge_arrow);
     topology->arrows.push_back(proc_arrow);
-    topology->sinks.push_back(proc_arrow);
 
     source_arrow->attach(split_arrow);
     split_arrow->attach(subprocess_arrow);

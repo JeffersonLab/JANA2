@@ -32,7 +32,7 @@ private:
 
 public:
     MapArrow(std::string name, ParallelProcessor<S,T>& processor, JMailbox<S> *input_queue, JMailbox<T> *output_queue)
-           : JArrow(name, true, NodeType::Stage)
+           : JArrow(name, true, false, false)
            , _processor(processor)
            , _input_queue(input_queue)
            , _output_queue(output_queue) {

@@ -10,14 +10,14 @@
 JArrowTopology::JArrowTopology() = default;
 
 JArrowTopology::~JArrowTopology() {
-    LOG_DEBUG(m_logger) << "JArrowTopology: Entering destructor" << LOG_END;
-    // finish(); // We don't want to call finish() here in case there was an exception in JArrow::initialize(), finalize()
-
     for (auto arrow : arrows) {
         delete arrow;
     }
     for (auto queue : queues) {
         delete queue;
+    }
+    for (auto pool : pools) {
+        delete pool;
     }
 }
 

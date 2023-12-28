@@ -11,37 +11,45 @@
 
 TEST_CASE("SchedulerTests") {
 
-    RandIntSource source;
-    MultByTwoProcessor p1;
-    SubOneProcessor p2;
-    SumSink<double> sink;
+    auto q1 = new JMailbox<int*>();
+    auto q2 = new JMailbox<double*>();
+    auto q3 = new JMailbox<double*>();
+
+    auto p1 = new JPool<int>(0,1,false);
+    auto p2 = new JPool<double>(0,1,false);
+    p1->init();
+    p2->init();
+
+    MultByTwoProcessor processor;
+
+    auto emit_rand_ints = new RandIntSource("emit_rand_ints", p1, q1);
+    auto multiply_by_two = new MapArrow<int*,double*>("multiply_by_two", processor, q1, q2);
+    auto subtract_one = new SubOneProcessor("subtract_one", q2, q3);
+    auto sum_everything = new SumSink<double>("sum_everything", q3, p2);
 
     auto topology = std::make_shared<JArrowTopology>();
-
-    auto q1 = new JMailbox<int>();
-    auto q2 = new JMailbox<double>();
-    auto q3 = new JMailbox<double>();
-
-    auto emit_rand_ints = new SourceArrow<int>("emit_rand_ints", source, q1);
-    auto multiply_by_two = new MapArrow<int,double>("multiply_by_two", p1, q1, q2);
-    auto subtract_one = new MapArrow<double,double>("subtract_one", p2, q2, q3);
-    auto sum_everything = new SinkArrow<double>("sum_everything", sink, q3);
 
     emit_rand_ints->attach(multiply_by_two);
     multiply_by_two->attach(subtract_one);
     subtract_one->attach(sum_everything);
 
-    topology->sources.push_back(emit_rand_ints);
     topology->arrows.push_back(emit_rand_ints);
     topology->arrows.push_back(multiply_by_two);
     topology->arrows.push_back(subtract_one);
     topology->arrows.push_back(sum_everything);
-    topology->sinks.push_back(sum_everything);
+
+    auto logger = JLogger(JLogger::Level::INFO);
+    topology->m_logger = logger;
+    emit_rand_ints->set_logger(logger);
+    multiply_by_two->set_logger(logger);
+    subtract_one->set_logger(logger);
+    sum_everything->set_logger(logger);
 
     emit_rand_ints->set_chunksize(1);
 
     JScheduler scheduler(topology);
-    // scheduler.logger = JLogger(JLogger::Level::DEBUG);
+    scheduler.logger = logger;
+    
     scheduler.run_topology(1);
 
     JArrow* assignment;
@@ -89,39 +97,45 @@ TEST_CASE("SchedulerTests") {
 
 TEST_CASE("SchedulerRoundRobinBehaviorTests") {
 
-    RandIntSource source;
-    MultByTwoProcessor p1;
-    SubOneProcessor p2;
-    SumSink<double> sink;
+    auto q1 = new JMailbox<int*>();
+    auto q2 = new JMailbox<double*>();
+    auto q3 = new JMailbox<double*>();
+
+    auto p1 = new JPool<int>(0,1,false);
+    auto p2 = new JPool<double>(0,1,false);
+    p1->init();
+    p2->init();
+
+    MultByTwoProcessor processor;
+
+    auto emit_rand_ints = new RandIntSource("emit_rand_ints", p1, q1);
+    auto multiply_by_two = new MapArrow<int*,double*>("multiply_by_two", processor, q1, q2);
+    auto subtract_one = new SubOneProcessor("subtract_one", q2, q3);
+    auto sum_everything = new SumSink<double>("sum_everything", q3, p2);
 
     auto topology = std::make_shared<JArrowTopology>();
-
-    auto q1 = new JMailbox<int>();
-    auto q2 = new JMailbox<double>();
-    auto q3 = new JMailbox<double>();
-
-    auto emit_rand_ints = new SourceArrow<int>("emit_rand_ints", source, q1);
-    auto multiply_by_two = new MapArrow<int,double>("multiply_by_two", p1, q1, q2);
-    auto subtract_one = new MapArrow<double,double>("subtract_one", p2, q2, q3);
-    auto sum_everything = new SinkArrow<double>("sum_everything", sink, q3);
 
     emit_rand_ints->attach(multiply_by_two);
     multiply_by_two->attach(subtract_one);
     subtract_one->attach(sum_everything);
 
-    topology->sources.push_back(emit_rand_ints);
     topology->arrows.push_back(emit_rand_ints);
     topology->arrows.push_back(multiply_by_two);
     topology->arrows.push_back(subtract_one);
     topology->arrows.push_back(sum_everything);
-    topology->sinks.push_back(sum_everything);
+
+    auto logger = JLogger(JLogger::Level::INFO);
+    topology->m_logger = logger;
+    emit_rand_ints->set_logger(logger);
+    multiply_by_two->set_logger(logger);
+    subtract_one->set_logger(logger);
+    sum_everything->set_logger(logger);
 
     emit_rand_ints->set_chunksize(1);
 
     JScheduler scheduler(topology);
+    scheduler.logger = logger;
     scheduler.run_topology(1);
-
-    auto logger = JLogger(JLogger::Level::OFF);
 
     auto last_result = JArrowMetrics::Status::ComeBackLater;
     JArrow* assignment = nullptr;

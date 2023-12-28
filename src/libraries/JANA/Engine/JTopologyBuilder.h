@@ -124,6 +124,7 @@ public:
                                                               m_event_pool_size,
                                                               m_location_count,
                                                               m_limit_total_events_in_flight);
+        m_topology->event_pool->init();
         return m_topology;
 
     }
@@ -161,9 +162,7 @@ public:
 
         // Create arrow for sources.
         JArrow *arrow = new JEventSourceArrow("sources", m_components->get_evt_srces(), queue, m_topology->event_pool);
-        arrow->set_backoff_tries(0);
         m_topology->arrows.push_back(arrow);
-        m_topology->sources.push_back(arrow);
         arrow->set_chunksize(m_event_source_chunksize);
         arrow->set_logger(m_arrow_logger);
 
@@ -176,10 +175,7 @@ public:
         for (auto proc: m_components->get_evt_procs()) {
             proc_arrow->add_processor(proc);
         }
-        for (auto src_arrow : m_topology->sources) {
-            src_arrow->attach(proc_arrow);
-        }
-        m_topology->sinks.push_back(proc_arrow);
+        arrow->attach(proc_arrow);
         return m_topology;
     }
 

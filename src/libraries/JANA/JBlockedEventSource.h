@@ -18,7 +18,7 @@ public:
 
 	virtual Status NextBlock(BlockType& block) = 0;
 
-	virtual std::vector<std::shared_ptr<JEvent>> DisentangleBlock(BlockType& block, JEventPool& pool) = 0;
+	virtual std::vector<std::shared_ptr<JEvent>*> DisentangleBlock(BlockType& block, JEventPool& pool) = 0;
 };
 
 

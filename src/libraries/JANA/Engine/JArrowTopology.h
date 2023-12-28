@@ -19,7 +19,7 @@
 struct JArrowTopology {
 
     using Event = std::shared_ptr<JEvent>;
-    using EventQueue = JMailbox<Event>;
+    using EventQueue = JMailbox<Event*>;
 
     explicit JArrowTopology();
     virtual ~JArrowTopology();
@@ -28,13 +28,12 @@ struct JArrowTopology {
     // Ensure that ComponentManager stays alive at least as long as JArrowTopology does
     // Otherwise there is a potential use-after-free when JArrowTopology or JArrowProcessingController access components
 
-    std::shared_ptr<JEventPool> event_pool; // TODO: Belongs somewhere else
+    std::shared_ptr<JEventPool> event_pool; // TODO: Move into pools eventually
     JPerfMetrics metrics;
 
     std::vector<JArrow*> arrows;
-    std::vector<JArrow*> sources;           // Sources needed for activation
-    std::vector<JArrow*> sinks;             // Sinks needed for finished message count // TODO: Not anymore
-    std::vector<EventQueue*> queues;        // Queues shared between arrows
+    std::vector<JQueue*> queues;            // Queues shared between arrows
+    std::vector<JPoolBase*> pools;          // Pools shared between arrows
     JProcessorMapping mapping;
 
     size_t event_pool_size = 1;                   //  Will be defaulted to nthreads by builder
