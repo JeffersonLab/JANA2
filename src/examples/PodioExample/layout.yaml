@@ -1,6 +1,7 @@
 ---
 # A more complete example is provided by podio under tests/datalayout.yaml
 
+schema_version: 1
 options :
   # should getters / setters be prefixed with get / set?
   getSyntax: False
