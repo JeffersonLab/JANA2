@@ -40,6 +40,7 @@ class JEventSource;
 class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 {
     public:
+        enum class Level { Timeslice, Block, SlowControls, PhysicsEvent, SubEvent};
 
         explicit JEvent(JApplication* aApplication=nullptr) : mInspector(&(*this)) {
             mApplication = aApplication;
@@ -127,6 +128,18 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
         friend class JEventPool;
 
 
+        // Hierarchical
+        Level GetLevel() const { return mLevel; }
+
+        void AddParent(JEvent* parent) {
+            // TODO: Add parent
+        }
+        const JEvent& GetParent(Level level) const {
+            // TODO: Get parent
+        }
+
+
+
 
     private:
         JApplication* mApplication = nullptr;
@@ -139,6 +152,13 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
         std::map<std::string, std::string> mDefaultTags;
         JEventSource* mEventSource = nullptr;
         bool mIsBarrierEvent = false;
+
+        // Hierarchical stuff
+        Level mLevel = Level::PhysicsEvent;
+        std::map<Level, JEvent*> mParents;
+        size_t mReferenceCount = 0;
+
+
 
 #ifdef JANA2_HAVE_PODIO
         std::map<std::string, JFactory*> mPodioFactories;
