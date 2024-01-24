@@ -7,7 +7,7 @@ set (SubeventExample_SOURCES
 add_executable(SubeventExample ${SubeventExample_SOURCES})
 
 target_link_libraries(SubeventExample jana2)
-set_target_properties(SubeventExample PROPERTIES PREFIX "" OUTPUT_NAME "SubeventExample" SUFFIX ".so")
-install(TARGETS SubeventExample DESTINATION plugins)
+set_target_properties(SubeventExample PROPERTIES PREFIX "" OUTPUT_NAME "SubeventExample")
+install(TARGETS SubeventExample DESTINATION programs)
 
 
