@@ -132,10 +132,13 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
         Level GetLevel() const { return mLevel; }
 
         void AddParent(JEvent* parent) {
-            // TODO: Add parent
+            Level level = parent->GetLevel();
+            mParents[level] = parent;
+            // TODO: Validate more
         }
         const JEvent& GetParent(Level level) const {
-            // TODO: Get parent
+            return *(mParents.at(level));
+            // TODO: Validate more
         }
 
 
