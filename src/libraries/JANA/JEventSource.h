@@ -8,6 +8,7 @@
 
 #include <JANA/JException.h>
 #include <JANA/Utils/JTypeInfo.h>
+#include <JANA/Utils/JEventLevel.h>
 #include <JANA/JEvent.h>
 #include <JANA/JFactoryGenerator.h>
 
@@ -290,8 +291,7 @@ public:
     void SetTypeName(std::string type_name) { m_type_name = std::move(type_name); }
 
     // Meant to be called by user
-    /// SetFactoryGenerator allows us to override the set of factories. This is somewhat superfluous
-    /// The only time we _really_ need to call SetFactoryGenerator
+    /// SetFactoryGenerator allows us to override the set of factories. This is 
     void SetFactoryGenerator(JFactoryGenerator* generator) { m_factory_generator = generator; }
 
     // Meant to be called by user
@@ -301,6 +301,12 @@ public:
     /// (e.g. for backwards compatibility) because it introduces contention for the JEventSource mutex,
     /// which will hurt performance. Conceptually, FinishEvent isn't great, and so should be avoided when possible.
     void EnableFinishEvent() { m_enable_free_event = true; }
+
+    // Meant to be called by user in constructor
+    void SetLevel(JEventLevel level) { m_level = level; }
+
+    // Meant to be called by JANA
+    JEventLevel GetLevel() { return m_level; }
 
     // Meant to be called by JANA
     void SetApplication(JApplication* app) { m_application = app; }
@@ -317,18 +323,21 @@ public:
 
 private:
     std::string m_resource_name;
-    JApplication* m_application = nullptr;
     JFactoryGenerator* m_factory_generator = nullptr;
     std::atomic<SourceStatus> m_status;
     std::atomic_ullong m_event_count {0};
     uint64_t m_nskip = 0;
     uint64_t m_nevents = 0;
+    bool m_enable_free_event = false;
+
+    // Common to all components?
+    JApplication* m_application = nullptr;
     std::string m_plugin_name;
     std::string m_type_name;
     std::once_flag m_init_flag;
     std::once_flag m_close_flag;
     std::mutex m_mutex;
-    bool m_enable_free_event = false;
+    JEventLevel m_level;
 };
 
 #endif // _JEventSource_h_

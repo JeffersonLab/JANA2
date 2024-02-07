@@ -12,6 +12,7 @@
 #include <JANA/JFactorySet.h>
 #include <JANA/JLogger.h>
 
+#include <JANA/Utils/JEventLevel.h>
 #include <JANA/Utils/JResettable.h>
 #include <JANA/Utils/JTypeInfo.h>
 #include <JANA/Utils/JCpuInfo.h>
@@ -40,7 +41,6 @@ class JEventSource;
 class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 {
     public:
-        enum class Level { Timeslice, Block, SlowControls, PhysicsEvent, SubEvent};
 
         explicit JEvent(JApplication* aApplication=nullptr) : mInspector(&(*this)) {
             mApplication = aApplication;
@@ -129,14 +129,14 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 
 
         // Hierarchical
-        Level GetLevel() const { return mLevel; }
+        JEventLevel GetLevel() const { return mLevel; }
 
         void AddParent(JEvent* parent) {
-            Level level = parent->GetLevel();
+            JEventLevel level = parent->GetLevel();
             mParents[level] = parent;
             // TODO: Validate more
         }
-        const JEvent& GetParent(Level level) const {
+        const JEvent& GetParent(JEventLevel level) const {
             return *(mParents.at(level));
             // TODO: Validate more
         }
@@ -157,8 +157,8 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
         bool mIsBarrierEvent = false;
 
         // Hierarchical stuff
-        Level mLevel = Level::PhysicsEvent;
-        std::map<Level, JEvent*> mParents;
+        JEventLevel mLevel = JEventLevel::Event;
+        std::map<JEventLevel, JEvent*> mParents;
         size_t mReferenceCount = 0;
 
 
