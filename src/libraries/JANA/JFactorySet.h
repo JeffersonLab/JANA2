@@ -10,6 +10,7 @@
 #include <map>
 
 #include <JANA/JFactoryT.h>
+#include <JANA/Utils/JEventLevel.h>
 #include <JANA/Utils/JResettable.h>
 #include <JANA/Status/JComponentSummary.h>
 
@@ -44,6 +45,8 @@ class JFactorySet : public JResettable
         std::map<std::pair<std::string, std::string>, JFactory*> mFactoriesFromString;  // {(objname, tag) : factory}
         std::vector<JMultifactory*> mMultifactories;
         bool mIsFactoryOwner = true;
+        JEventLevel mLevel = JEventLevel::Event;
+        
 };
 
 
@@ -53,12 +56,18 @@ JFactoryT<T>* JFactorySet::GetFactory(const std::string& tag) const {
     auto typed_key = std::make_pair(std::type_index(typeid(T)), tag);
     auto typed_iter = mFactories.find(typed_key);
     if (typed_iter != std::end(mFactories)) {
+        if (typed_iter->second->GetLevel() != mLevel) {
+            throw JException("Factory belongs to a different level on the event hierarchy!");
+        }
         return static_cast<JFactoryT<T>*>(typed_iter->second);
     }
 
     auto untyped_key = std::make_pair(JTypeInfo::demangle<T>(), tag);
     auto untyped_iter = mFactoriesFromString.find(untyped_key);
     if (untyped_iter != std::end(mFactoriesFromString)) {
+        if (untyped_iter->second->GetLevel() != mLevel) {
+            throw JException("Factory belongs to a different level on the event hierarchy!");
+        }
         return static_cast<JFactoryT<T>*>(untyped_iter->second);
     }
     return nullptr;
@@ -70,7 +79,9 @@ std::vector<JFactoryT<T>*> JFactorySet::GetAllFactories() const {
     std::vector<JFactoryT<T>*> data;
     for (auto it=std::begin(mFactories);it!=std::end(mFactories);it++){
         if (it->first.first==sKey){
-            data.push_back(static_cast<JFactoryT<T>*>(it->second));
+            if (it->second->GetLevel() == mLevel) {
+                data.push_back(static_cast<JFactoryT<T>*>(it->second));
+            }
         }
     }
     return data;
