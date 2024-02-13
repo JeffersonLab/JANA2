@@ -191,20 +191,22 @@ protected:
 
 
 private:
-    Status m_status;
-    std::string m_resource_name;
-    std::atomic_ullong m_event_count;
-    int32_t m_last_run_number = -1;
-    bool m_receive_events_in_order = false;
-
     // Common to components
     JEventLevel m_level;
     JApplication* mApplication = nullptr;
+    Status m_status;
     std::string m_plugin_name;
     std::string m_type_name;
     std::once_flag m_init_flag;
     std::once_flag m_finish_flag;
     std::mutex m_mutex;
+
+    // JEventProcessor-specific
+    std::string m_resource_name;
+    std::atomic_ullong m_event_count;
+    int32_t m_last_run_number = -1;
+    bool m_receive_events_in_order = false;
+
 
     /// This is called by JApplication::Add(JEventProcessor*). There
     /// should be no need to call it from anywhere else.

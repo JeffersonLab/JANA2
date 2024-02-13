@@ -38,7 +38,7 @@ public:
 
     virtual void ChangeRun(const JEvent&) {};
 
-    virtual void Preprocess(const JEvent& parent) const {};
+    virtual void Preprocess(const JEvent& /*parent*/) const {};
 
     virtual Result Unfold(const JEvent& parent, JEvent& child, int item) = 0;
 
@@ -111,7 +111,7 @@ public:
         }
     }
 
-    void DoPreprocess(const JEvent& parent, JEvent& child) {
+    void DoPreprocess(const JEvent& parent) {
         try {
             std::lock_guard<std::mutex> lock(m_mutex);
             if (m_status == Status::Initialized) {

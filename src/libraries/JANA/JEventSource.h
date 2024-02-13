@@ -40,10 +40,10 @@ public:
     // Constructor
 
     explicit JEventSource(std::string resource_name, JApplication* app = nullptr)
-        : m_resource_name(std::move(resource_name))
-        , m_application(app)
-        , m_factory_generator(nullptr)
+        : m_application(app)
         , m_status(SourceStatus::Unopened)
+        , m_resource_name(std::move(resource_name))
+        , m_factory_generator(nullptr)
         , m_event_count{0}
         {}
 
@@ -322,22 +322,24 @@ public:
 
 
 private:
-    std::string m_resource_name;
-    JFactoryGenerator* m_factory_generator = nullptr;
-    std::atomic<SourceStatus> m_status;
-    std::atomic_ullong m_event_count {0};
-    uint64_t m_nskip = 0;
-    uint64_t m_nevents = 0;
-    bool m_enable_free_event = false;
-
-    // Common to all components?
+    // Common to all components
+    JEventLevel m_level;
     JApplication* m_application = nullptr;
+    std::atomic<SourceStatus> m_status;
     std::string m_plugin_name;
     std::string m_type_name;
     std::once_flag m_init_flag;
     std::once_flag m_close_flag;
     std::mutex m_mutex;
-    JEventLevel m_level;
+
+    // JEventSource-specific
+    std::string m_resource_name;
+    JFactoryGenerator* m_factory_generator = nullptr;
+    std::atomic_ullong m_event_count {0};
+    uint64_t m_nskip = 0;
+    uint64_t m_nevents = 0;
+    bool m_enable_free_event = false;
+
 };
 
 #endif // _JEventSource_h_

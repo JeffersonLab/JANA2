@@ -159,7 +159,7 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
         // Hierarchical stuff
         JEventLevel mLevel = JEventLevel::Event;
         std::map<JEventLevel, JEvent*> mParents;
-        size_t mReferenceCount = 0;
+        //size_t mReferenceCount = 0;
 
 
 
