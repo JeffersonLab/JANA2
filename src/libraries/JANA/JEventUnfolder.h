@@ -4,8 +4,10 @@
 #pragma once
 
 #include <JANA/Utils/JEventLevel.h>
+#include <JANA/JEvent.h>
 #include <mutex>
 
+class JApplication;
 class JEventUnfolder {
 
 private:
@@ -173,10 +175,6 @@ public:
         try {
             std::lock_guard<std::mutex> lock(m_mutex);
             if (m_status != Status::Finalized) {
-                if (m_last_run_number != -1) {
-                    m_last_run_number = -1;
-                    ChangeRun();
-                }
                 Finish();
                 m_status = Status::Finalized;
             }
@@ -194,6 +192,6 @@ public:
             throw ex;
         }
     }
-}
+};
 
 

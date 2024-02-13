@@ -38,6 +38,7 @@ set(TEST_SOURCES
     JPoolTests.cc
     ArrowTests.cc
     MultiLevelTopologyTests.cc
+    UnfoldTests.cc
     )
 
 if (${USE_PODIO})
