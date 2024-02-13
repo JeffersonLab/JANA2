@@ -40,6 +40,9 @@ class JFactorySet : public JResettable
 
         std::vector<JFactorySummary> Summarize() const;
 
+        JEventLevel GetLevel() const { return mLevel; }
+        void SetLevel(JEventLevel level) { mLevel = level; }
+
     protected:
         std::map<std::pair<std::type_index, std::string>, JFactory*> mFactories;        // {(typeid, tag) : factory}
         std::map<std::pair<std::string, std::string>, JFactory*> mFactoriesFromString;  // {(objname, tag) : factory}

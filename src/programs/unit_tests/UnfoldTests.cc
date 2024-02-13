@@ -37,13 +37,24 @@ TEST_CASE("UnfoldTests_Basic") {
     JApplication app;
     auto jcm = app.GetService<JComponentManager>();
 
-    JEventPool parent_pool {jcm, 5, 1, true}; // size=5, locations=1, limit_total_events_in_flight=true
-    JEventPool child_pool {jcm, 5, 1, true};
+    JEventPool parent_pool {jcm, 5, 1, true, JEventLevel::Timeslice}; // size=5, locations=1, limit_total_events_in_flight=true
+    JEventPool child_pool {jcm, 5, 1, true, JEventLevel::Event};
     JMailbox<EventT*> parent_queue {3}; // size=2
     JMailbox<EventT*> child_queue {3};
 
     parent_pool.init();
     child_pool.init();
+
+    auto evt1 = parent_pool.get();
+    (*evt1)->SetEventNumber(17);
+    (*evt1)->SetLevel(JEventLevel::Timeslice);
+
+    auto evt2= parent_pool.get();
+    (*evt1)->SetEventNumber(18);
+    (*evt1)->SetLevel(JEventLevel::Timeslice);
+
+    parent_queue.try_push(&evt1, 1);
+    parent_queue.try_push(&evt2, 1);
 
     TestUnfolder unfolder;
     JUnfoldArrow arrow("sut", &unfolder, &parent_queue, &child_pool, &child_queue);

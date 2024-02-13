@@ -129,7 +129,8 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 
 
         // Hierarchical
-        JEventLevel GetLevel() const { return mLevel; }
+        JEventLevel GetLevel() const { return mFactorySet->GetLevel(); }
+        void SetLevel(JEventLevel level) { mFactorySet->SetLevel(level); }
 
         void AddParent(JEvent* parent) {
             JEventLevel level = parent->GetLevel();
@@ -157,7 +158,6 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
         bool mIsBarrierEvent = false;
 
         // Hierarchical stuff
-        JEventLevel mLevel = JEventLevel::Event;
         std::map<JEventLevel, JEvent*> mParents;
         //size_t mReferenceCount = 0;
 

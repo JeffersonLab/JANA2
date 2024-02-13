@@ -14,18 +14,22 @@
 class JEventPool : public JPool<std::shared_ptr<JEvent>> {
 
     std::shared_ptr<JComponentManager> m_component_manager;
+    JEventLevel m_level;
 
 public:
     inline JEventPool(std::shared_ptr<JComponentManager> component_manager,
                       size_t pool_size,
                       size_t location_count,
-                      bool limit_total_events_in_flight)
+                      bool limit_total_events_in_flight,
+                      JEventLevel level = JEventLevel::Event)
         : JPool(pool_size, location_count, limit_total_events_in_flight)
-        , m_component_manager(component_manager) {
+        , m_component_manager(component_manager)
+        , m_level(level) {
     }
 
     void configure_item(std::shared_ptr<JEvent>* item) override {
         (*item) = std::make_shared<JEvent>();
+        (*item)->SetLevel(m_level);
         m_component_manager->configure_event(**item);
 
     }
