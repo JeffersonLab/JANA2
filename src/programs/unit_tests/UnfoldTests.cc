@@ -22,13 +22,15 @@ struct TestUnfolder : public JEventUnfolder {
         preprocessed_event_levels.push_back(parent.GetLevel());
     }
 
-    Result Unfold(const JEvent& parent, JEvent& child, int child_nr) override {
-        LOG << "Unfolding " << parent.GetLevel() << " event " << parent.GetEventNumber() << " into " << child.GetLevel() << " " << child_nr << LOG_END;
+    Result Unfold(const JEvent& parent, JEvent& child, int iter) override {
+        auto child_nr = iter + 100 + parent.GetEventNumber();
         unfolded_parent_nrs.push_back(parent.GetEventNumber());
         unfolded_parent_levels.push_back(parent.GetLevel());
         unfolded_child_nrs.push_back(child_nr);
         unfolded_child_levels.push_back(child.GetLevel());
-        return (child_nr == 2 ? Result::Finished : Result::KeepGoing);
+        child.SetEventNumber(child_nr);
+        LOG << "Unfolding " << parent.GetLevel() << " event " << parent.GetEventNumber() << " into " << child.GetLevel() << " " << child_nr << "; iter=" << iter << LOG_END;
+        return (iter == 2 ? Result::Finished : Result::KeepGoing);
     }
 };
 
@@ -49,9 +51,9 @@ TEST_CASE("UnfoldTests_Basic") {
     (*evt1)->SetEventNumber(17);
     (*evt1)->SetLevel(JEventLevel::Timeslice);
 
-    auto evt2= parent_pool.get();
-    (*evt1)->SetEventNumber(18);
-    (*evt1)->SetLevel(JEventLevel::Timeslice);
+    auto evt2 = parent_pool.get();
+    (*evt2)->SetEventNumber(28);
+    (*evt2)->SetLevel(JEventLevel::Timeslice);
 
     parent_queue.try_push(&evt1, 1);
     parent_queue.try_push(&evt2, 1);
@@ -60,8 +62,17 @@ TEST_CASE("UnfoldTests_Basic") {
     JUnfoldArrow arrow("sut", &unfolder, &parent_queue, &child_pool, &child_queue);
 
     JArrowMetrics m;
+    arrow.initialize();
     arrow.execute(m, 0);
     REQUIRE(m.get_last_status() == JArrowMetrics::Status::KeepGoing);
+    REQUIRE(child_queue.size() == 1);
+    REQUIRE(unfolder.preprocessed_event_nrs.size() == 0);
+    REQUIRE(unfolder.unfolded_parent_nrs.size() == 1);
+    REQUIRE(unfolder.unfolded_parent_nrs[0] == 17);
+    REQUIRE(unfolder.unfolded_parent_levels[0] == JEventLevel::Timeslice);
+    REQUIRE(unfolder.unfolded_child_nrs.size() == 1);
+    REQUIRE(unfolder.unfolded_child_nrs[0] == 117);
+    REQUIRE(unfolder.unfolded_child_levels[0] == JEventLevel::Event);
 
 }
 

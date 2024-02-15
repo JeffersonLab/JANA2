@@ -30,9 +30,9 @@ public:
 
       : JArrow(std::move(name), false, false, false), 
         m_unfolder(unfolder),
-        m_parent_in(this, parent_in, true, 1, 3),
-        m_child_in(this, child_in, true, 1, 3),
-        m_child_out(this, child_out, false, 1, 3)
+        m_parent_in(this, parent_in, true, 1, 1),
+        m_child_in(this, child_in, true, 1, 1),
+        m_child_out(this, child_out, false, 1, 1)
     {
     }
 
