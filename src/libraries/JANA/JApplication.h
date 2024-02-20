@@ -19,6 +19,7 @@ class JFactorySet;
 class JComponentManager;
 class JPluginLoader;
 class JProcessingController;
+class JEventUnfolder;
 
 extern JApplication* japp;
 
@@ -64,6 +65,7 @@ public:
     void Add(JFactoryGenerator* factory_generator);
     void Add(JEventSource* event_source);
     void Add(JEventProcessor* processor);
+    void Add(JEventUnfolder* unfolder);
 
 
     // Controlling processing

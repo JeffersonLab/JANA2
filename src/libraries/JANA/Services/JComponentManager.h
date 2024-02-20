@@ -13,6 +13,7 @@
 #include <vector>
 
 class JEventProcessor;
+class JEventUnfolder;
 
 class JComponentManager : public JService {
 public:
@@ -27,6 +28,7 @@ public:
     void add(JFactoryGenerator* factory_generator);
     void add(JEventSource* event_source);
     void add(JEventProcessor* processor);
+    void add(JEventUnfolder* unfolder);
 
     void initialize();
     void resolve_event_sources();
@@ -40,6 +42,7 @@ public:
     std::vector<JEventSource*>& get_evt_srces();
     std::vector<JEventProcessor*>& get_evt_procs();
     std::vector<JFactoryGenerator*>& get_fac_gens();
+    std::vector<JEventUnfolder*>& get_unfolders();
 
     void configure_event(JEvent& event);
 
@@ -56,6 +59,7 @@ private:
     std::vector<JFactoryGenerator*> m_fac_gens;
     std::vector<JEventSource*> m_evt_srces;
     std::vector<JEventProcessor*> m_evt_procs;
+    std::vector<JEventUnfolder*> m_unfolders;
 
     std::map<std::string, std::string> m_default_tags;
     bool m_enable_call_graph_recording = false;

@@ -31,6 +31,8 @@ private:
 
 public:
     // JEventUnfolder interface
+    
+    virtual ~JEventUnfolder() {};
  
     enum class Result { KeepGoing, Finished };
 
@@ -81,7 +83,7 @@ public:
 
     friend JApplication;
     
-    void SetJApplication(JApplication* app) { m_application = app; }
+    void SetApplication(JApplication* app) { m_application = app; }
 
     void SetPluginName(std::string plugin_name) { m_plugin_name = std::move(plugin_name); };
 

@@ -231,6 +231,7 @@ std::vector<JFactorySummary> JFactorySet::Summarize() const {
     for (auto& pair : mFactories) {
         if (pair.second->GetLevel() != mLevel) continue;
         results.push_back({
+            .level = pair.second->GetLevel(),
             .plugin_name = pair.second->GetPluginName(),
             .factory_name = pair.second->GetFactoryName(),
             .factory_tag = pair.second->GetTag(),

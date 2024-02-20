@@ -63,29 +63,34 @@ void JApplication::AddPluginPath(std::string path) {
 // Building a ProcessingTopology
 
 void JApplication::Add(JEventSource* event_source) {
+    /// Adds the given JEventSource to the JANA context. Ownership is passed to JComponentManager.
     m_component_manager->add(event_source);
 }
 
 void JApplication::Add(JEventSourceGenerator *source_generator) {
-    /// Add the given JFactoryGenerator to the list of queues
-    ///
-    /// @param source_generator pointer to source generator to add. Ownership is passed to JApplication
+    /// Adds the given JEventSourceGenerator to the JANA context. Ownership is passed to JComponentManager.
     m_component_manager->add(source_generator);
 }
 
 void JApplication::Add(JFactoryGenerator *factory_generator) {
-    /// Add the given JFactoryGenerator to the list of queues
-    ///
-    /// @param factory_generator pointer to factory generator to add. Ownership is passed to JApplication
+    /// Adds the given JFactoryGenerator to the JANA context. Ownership is passed to JComponentManager.
     m_component_manager->add(factory_generator);
 }
 
 void JApplication::Add(JEventProcessor* processor) {
+    /// Adds the given JEventProcessor to the JANA context. Ownership is passed to JComponentManager.
     m_component_manager->add(processor);
 }
 
 void JApplication::Add(std::string event_source_name) {
+    /// Adds the event source name (e.g. a file or socket name) to the JANA context. JANA will instantiate
+    /// the corresponding JEventSource using a user-provided JEventSourceGenerator.
     m_component_manager->add(event_source_name);
+}
+
+void JApplication::Add(JEventUnfolder* unfolder) {
+    /// Adds the given JEventUnfolder to the JANA context. Ownership is passed to JComponentManager.
+    m_component_manager->add(unfolder);
 }
 
 

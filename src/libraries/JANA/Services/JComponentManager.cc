@@ -6,6 +6,7 @@
 #include "JComponentManager.h"
 #include <JANA/JEventProcessor.h>
 #include <JANA/JFactoryGenerator.h>
+#include <JANA/JEventUnfolder.h>
 
 JComponentManager::JComponentManager(JApplication* app) : m_app(app) {
 }
@@ -23,6 +24,9 @@ JComponentManager::~JComponentManager() {
     }
     for (auto* src_gen : m_src_gens) {
         delete src_gen;
+    }
+    for (auto* unfolder : m_unfolders) {
+        delete unfolder;
     }
 }
 
@@ -65,6 +69,12 @@ void JComponentManager::add(JEventProcessor *processor) {
         processor->SetJApplication(m_app);
     }
     m_evt_procs.push_back(processor);
+}
+
+void JComponentManager::add(JEventUnfolder* unfolder) {
+    unfolder->SetPluginName(m_current_plugin_name);
+    unfolder->SetApplication(m_app);
+    m_unfolders.push_back(unfolder);
 }
 
 void JComponentManager::configure_event(JEvent& event) {
@@ -190,17 +200,25 @@ std::vector<JFactoryGenerator*>& JComponentManager::get_fac_gens() {
     return m_fac_gens;
 }
 
+std::vector<JEventUnfolder*>& JComponentManager::get_unfolders() {
+    return m_unfolders;
+}
+
 JComponentSummary JComponentManager::get_component_summary() {
     JComponentSummary result;
 
     // Event sources
     for (auto * src : m_evt_srces) {
-        result.event_sources.push_back({.plugin_name=src->GetPluginName(), .type_name=src->GetType(), .source_name=src->GetName()});
+        result.event_sources.push_back({.level=src->GetLevel(), .plugin_name=src->GetPluginName(), .type_name=src->GetType(), .source_name=src->GetName()});
     }
 
     // Event processors
     for (auto * evt_proc : m_evt_procs) {
-        result.event_processors.push_back({.plugin_name = evt_proc->GetPluginName(), .type_name=evt_proc->GetTypeName()});
+        result.event_processors.push_back({.level=evt_proc->GetLevel(), .plugin_name = evt_proc->GetPluginName(), .type_name=evt_proc->GetTypeName()});
+    }
+
+    for (auto * unfolder : m_unfolders) {
+        result.event_unfolders.push_back({.level=unfolder->GetLevel(), .plugin_name = unfolder->GetPluginName(), .type_name=unfolder->GetTypeName()});
     }
 
     // Factories
