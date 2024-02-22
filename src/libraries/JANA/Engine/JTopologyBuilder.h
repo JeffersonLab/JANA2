@@ -6,6 +6,7 @@
 #define JANA2_JTOPOLOGYBUILDER_H
 
 #include <JANA/Engine/JArrowTopology.h>
+#include <JANA/JEventUnfolder.h>
 #include "JEventSourceArrow.h"
 #include "JEventProcessorArrow.h"
 #include <memory>
@@ -128,24 +129,94 @@ public:
         return m_topology;
 
     }
-/*
-    inline void add_eventsource_arrows() {
+
+    void attach_lower_level(JEventLevel current_level, JArrow* parent_unfolder, JArrow* parent_folder) {
+
+        // Attach unfolders, folders, processors
+        
+        JEventPool* pool = new JEventPool(m_components,
+                                          m_event_pool_size,
+                                          m_location_count,
+                                          m_limit_total_events_in_flight, 
+                                          current_level);
+        pool->init();
+        m_topology->pools.push_back(pool); // Establishes ownership
+        
+        std::vector<JEventUnfolder*> unfolders_at_level;
+        for (JEventUnfolder* unfolder : m_components->get_unfolders()) {
+            if (unfolder->GetLevel() == current_level) {
+                unfolders_at_level.push_back(unfolder);
+            }
+        }
+        if (unfolders_at_level.size() == 0) {
+            // No unfolders, so this is the last level
+            // skip_lower_level(next_level(current_level));
+        }
+        else {
+            // TODO:: Attach preprocess, unfolder arrow, folder arrow
+            // attach_lower_level(next_level(current_level));
+        }
+
+
+
 
     }
 
-    inline void add_eventproc_arrow() {
+    void attach_top_level(JEventLevel current_level) {
 
+        JEventPool* pool = new JEventPool(m_components,
+                                          m_event_pool_size,
+                                          m_location_count,
+                                          m_limit_total_events_in_flight, 
+                                          current_level);
+        pool->init();
+        m_topology->pools.push_back(pool); // Establishes ownership
+
+        std::vector<JEventSource*> sources_at_level;
+        for (JEventSource* source : m_components->get_evt_srces()) {
+            if (source->GetLevel() == current_level) {
+                sources_at_level.push_back(source);
+            }
+        }
+        if (sources_at_level.size() == 0) {
+            // Skip level entirely for now. Consider eventually supporting 
+            // folding low levels into higher levels without corresponding unfold
+            JEventLevel next = next_level(current_level);
+            if (next == JEventLevel::None) {
+                throw JException("Unable to construct topology: No sources found!");
+            }
+            return attach_top_level(next);
+        }
+
+        // We have a source, so we've found our top level. Now we have two options:
+        // a. This is the only level, in which case we are done
+        // b. We have an unfolder/folder pair, in which case we recursively attach_lower_level().
+
+        std::vector<JEventUnfolder*> unfolders_at_level;
+        for (JEventUnfolder* unfolder : m_components->get_unfolders()) {
+            if (unfolder->GetLevel() == current_level) {
+                unfolders_at_level.push_back(unfolder);
+            }
+        }
+        if (unfolders_at_level.size() == 0) {
+            // No unfolders, so this is the only level
+            // Attach the source to the tap just like before
+            //
+            // We might want to print a friendly warning message communicating why any lower-level
+            // components are being ignored, like so:
+            // skip_lower_level(next_level(current_level));
+        }
+        else {
+            // Have unfolders, so we need to connect our source arrow
+            // to our unfolder (and maybe preprocessor) arrows
+            // Here we attach the source to the map to the unfolder
+            // Also the folder to the tap
+            // Then we pass the unfolder and folder to the attach_lower_level so it can hook those up as well
+            // attach_lower_level(next_level(current_level));
+        }
     }
 
-    template<typename S, typename T>
-    void add_subevent_arrows() {
 
-    }
-
-    inline void add_blockeventsource_arrow() {
-
-    }
-*/
 
     inline std::shared_ptr<JArrowTopology> create_default_topology() {
 
@@ -178,6 +249,9 @@ public:
         arrow->attach(proc_arrow);
         return m_topology;
     }
+
+
+
 
 };
 
