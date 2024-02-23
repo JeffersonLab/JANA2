@@ -14,7 +14,7 @@ class JBlockDisentanglerArrow : public JArrow {
 	JBlockedEventSource<T>* m_source;  // non-owning
 	JMailbox<T*>* m_block_queue; // non-owning
 	JMailbox<std::shared_ptr<JEvent>*>* m_event_queue; // non-owning
-	std::shared_ptr<JEventPool> m_pool;
+	JEventPool* m_pool;
 
 	size_t m_max_events_per_block = 40;
 
@@ -23,13 +23,13 @@ public:
 							JBlockedEventSource<T>* source,
 							JMailbox<T*>* block_queue,
 							JMailbox<std::shared_ptr<JEvent>*>* event_queue,
-							std::shared_ptr<JEventPool> pool
+							JEventPool* pool
 							)
 							: JArrow(std::move(name), true, false, false, 1)
 							, m_source(source)
 							, m_block_queue(block_queue)
 							, m_event_queue(event_queue)
-							, m_pool(std::move(pool))
+							, m_pool(pool)
 							{}
 
 	~JBlockDisentanglerArrow() {

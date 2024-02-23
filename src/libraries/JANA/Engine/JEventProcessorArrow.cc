@@ -12,14 +12,14 @@
 JEventProcessorArrow::JEventProcessorArrow(std::string name,
                                            EventQueue *input_queue,
                                            EventQueue *output_queue,
-                                           std::shared_ptr<JEventPool> pool)
+                                           JEventPool *pool)
         : JPipelineArrow(std::move(name),
                          true,
                          false,
                          true,
                          input_queue,
                          output_queue,
-                         pool.get()) {}
+                         pool) {}
 
 void JEventProcessorArrow::add_processor(JEventProcessor* processor) {
     m_processors.push_back(processor);

@@ -121,10 +121,10 @@ public:
         m_topology->mapping.initialize(static_cast<JProcessorMapping::AffinityStrategy>(m_affinity),
                                        static_cast<JProcessorMapping::LocalityStrategy>(m_locality));
 
-        m_topology->event_pool = std::make_shared<JEventPool>(m_components,
-                                                              m_event_pool_size,
-                                                              m_location_count,
-                                                              m_limit_total_events_in_flight);
+        m_topology->event_pool = new JEventPool(m_components,
+                                                m_event_pool_size,
+                                                m_location_count,
+                                                m_limit_total_events_in_flight);
         m_topology->event_pool->init();
         return m_topology;
 
@@ -156,8 +156,6 @@ public:
             // TODO:: Attach preprocess, unfolder arrow, folder arrow
             // attach_lower_level(next_level(current_level));
         }
-
-
 
 
     }
