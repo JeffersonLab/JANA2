@@ -88,6 +88,8 @@ public:
 
     virtual void GetEvent(std::shared_ptr<JEvent>) = 0;
 
+    virtual void Preprocess(const JEvent&) {};
+
 
     /// `FinishEvent` is used to notify the `JEventSource` that an event has been completely processed. This is the final
     /// chance to interact with the `JEvent` before it is either cleared and recycled, or deleted. Although it is

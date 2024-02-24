@@ -152,6 +152,9 @@ public:
         return m_type_name;
     }
 
+    // Meant to be called by JANA
+    JEventLevel GetLevel() { return m_level; }
+
 
 protected:
 
@@ -186,8 +189,6 @@ protected:
     // Meant to be called by user in constructor
     void SetLevel(JEventLevel level) { m_level = level; }
 
-    // Meant to be called by JANA
-    JEventLevel GetLevel() { return m_level; }
 
 
 private:
