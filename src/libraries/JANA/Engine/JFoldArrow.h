@@ -4,33 +4,40 @@
 #pragma once
 
 #include <JANA/Engine/JArrow.h>
-#include <JANA/JEventUnfolder.h>
 #include <JANA/Utils/JEventPool.h>
+#include <JANA/Utils/JEventLevel.h>
 
 class JFoldArrow : public JArrow {
 private:
     using EventT = std::shared_ptr<JEvent>;
 
-    JEventFolder* m_folder = nullptr;
+    // TODO: Support user-provided folders
+    // JEventFolder* m_folder = nullptr;
 
     PlaceRef<EventT> m_child_in;
     PlaceRef<EventT> m_child_out;
     PlaceRef<EventT> m_parent_out;
 
+    // TODO: I don't particularly like this. Maybe we should make JEvent::m_parents be a stack instead. 
+    //       Or maybe go back to the original idea of having the pool also recycle the parent to the parent pool
+    JEventLevel m_parent_level;
+
+
 public:
 
     JFoldArrow(
         std::string name,
-        JEventFolder* folder,
+        //JEventFolder* folder,
+        JEventLevel m_parent_level,
         JMailbox<EventT*>* child_in,
         JEventPool* child_out,
         JMailbox<EventT*>* parent_out)
 
       : JArrow(std::move(name), false, false, false), 
-        m_folder(folder),
+        // m_folder(folder),
         m_child_in(this, child_in, true, 1, 1),
-        m_child_out(this, child_out, false, 1, 1)
-        m_parent_in(this, parent_out, false, 1, 1),
+        m_child_out(this, child_out, false, 1, 1),
+        m_parent_out(this, parent_out, false, 1, 1)
     {
     }
 
@@ -59,15 +66,15 @@ public:
 
     bool try_pull_all(Data<EventT>& ci, Data<EventT>& co, Data<EventT>& po) {
         bool success;
-        success = m_parent_in.pull(ci);
-        if (! success) {
-            return false;
-        }
         success = m_child_in.pull(co);
         if (! success) {
             return false;
         }
         success = m_child_out.pull(po);
+        if (! success) {
+            return false;
+        }
+        success = m_parent_out.pull(ci);
         if (! success) {
             return false;
         }
@@ -102,17 +109,17 @@ public:
 
             //auto status = m_folder->DoFold(*(child->get()), *(parent->get()));
             
-            EventT* parent = child->GetParent();
-            // TODO: How does fold know parent level?
+            std::shared_ptr<JEvent>* parent = nullptr; //std::const_pointer_cast<std::shared_ptr<JEvent>>(*child)->GetParent(m_parent_level).shared_from_this();
+            // TODO: Need to obtain pointer to parent
 
             child_out_data.items[0] = child;
             child_out_data.item_count = 1;
 
-            parent_out_data.items[0] = child;
+            parent_out_data.items[0] = parent; // FIXME:
             parent_out_data.item_count = 1;
 
             auto end_processing_time = std::chrono::steady_clock::now();
-            size_t events_processed = push_all(parent_in_data, child_in_data, child_out_data);
+            size_t events_processed = push_all(child_in_data, child_out_data, parent_out_data);
 
             auto end_total_time = std::chrono::steady_clock::now();
             auto latency = (end_processing_time - start_processing_time);
