@@ -325,7 +325,7 @@ public:
 
 private:
     // Common to all components
-    JEventLevel m_level;
+    JEventLevel m_level = JEventLevel::Event;
     JApplication* m_application = nullptr;
     std::atomic<SourceStatus> m_status;
     std::string m_plugin_name;

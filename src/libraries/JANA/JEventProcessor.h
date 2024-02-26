@@ -193,7 +193,7 @@ protected:
 
 private:
     // Common to components
-    JEventLevel m_level;
+    JEventLevel m_level = JEventLevel::Event;
     JApplication* mApplication = nullptr;
     Status m_status;
     std::string m_plugin_name;

@@ -68,7 +68,12 @@ public:
             return m_topology;
         }
         else {
-            m_topology = create_default_topology();
+            m_topology = std::make_shared<JArrowTopology>();
+            m_topology->component_manager = m_components;  // Ensure the lifespan of the component manager exceeds that of the topology
+            m_topology->mapping.initialize(static_cast<JProcessorMapping::AffinityStrategy>(m_affinity),
+                                        static_cast<JProcessorMapping::LocalityStrategy>(m_locality));
+
+            attach_top_level(JEventLevel::Run);
             return m_topology;
         }
     }
@@ -176,20 +181,15 @@ public:
         if (sources_at_level.size() == 0) {
             // Skip level entirely for now. Consider eventually supporting 
             // folding low levels into higher levels without corresponding unfold
+            LOG_TRACE(m_arrow_logger) << "JTopologyBuilder: No sources found at level " << current_level << ", skipping" << LOG_END;
             JEventLevel next = next_level(current_level);
             if (next == JEventLevel::None) {
-                throw JException("Unable to construct topology: No sources found!");
+                LOG_WARN(m_arrow_logger) << "No sources found: Processing topology will be empty." << LOG_END;
+                return;
             }
             return attach_top_level(next);
         }
-
-        // We've found the top level
-
-        // Create the topology (once). (We are putting this here for now, but may move it to the caller)
-        m_topology = std::make_shared<JArrowTopology>();
-        m_topology->component_manager = m_components;  // Ensure the lifespan of the component manager exceeds that of the topology
-        m_topology->mapping.initialize(static_cast<JProcessorMapping::AffinityStrategy>(m_affinity),
-                                    static_cast<JProcessorMapping::LocalityStrategy>(m_locality));
+        LOG_DEBUG(m_arrow_logger) << "JTopologyBuilder: Attaching components at level " << current_level << LOG_END;
 
         // We've now found our top level. No matter what, we need an event pool for this level
         JEventPool* pool_at_level = new JEventPool(m_components,
@@ -229,6 +229,8 @@ public:
             // We might want to print a friendly warning message communicating why any lower-level
             // components are being ignored, like so:
             // skip_lower_level(next_level(current_level));
+
+            LOG_DEBUG(m_arrow_logger) << "JTopologyBuilder: No unfolders found at level " << current_level << ", finishing here." << LOG_END;
 
             auto queue = new EventQueue(m_event_queue_threshold, m_topology->mapping.get_loc_count(), m_enable_stealing);
             m_topology->queues.push_back(queue);

@@ -13,14 +13,14 @@ class JEventUnfolder {
 private:
     // Common to components... factor this out someday
 
-    JEventLevel m_level;
+    JEventLevel m_level = JEventLevel::Event;
     JApplication* m_application = nullptr;
     std::string m_plugin_name;
     std::string m_type_name;
     std::mutex m_mutex;
     int32_t m_last_run_number = -1;
     enum class Status { Uninitialized, Initialized, Finalized };
-    Status m_status;
+    Status m_status = Status::Uninitialized;
 
     // JEventUnfolder-specific
     //
@@ -98,6 +98,9 @@ public:
                 Init();
                 m_status = Status::Initialized;
             }
+            else {
+                throw JException("JEventUnfolder: Attempting to initialize twice or from an invalid state");
+            }
         }
         catch (JException& ex) {
             ex.plugin_name = m_plugin_name;
@@ -105,7 +108,7 @@ public:
             throw ex;
         }
         catch (...) {
-            auto ex = JException("Unknown exception in JEventUnfolder::Init()");
+            auto ex = JException("JEventUnfolder: Unknown exception in JEventUnfolder::Init()");
             ex.nested_exception = std::current_exception();
             ex.plugin_name = m_plugin_name;
             ex.component_name = m_type_name;
@@ -120,7 +123,7 @@ public:
                 Preprocess(parent);
             }
             else {
-                throw JException("Component needs to be initialized and not finalized before Unfold can be called");
+                throw JException("JEventUnfolder: Component needs to be initialized and not finalized before Unfold can be called");
             }
         }
         catch (JException& ex) {

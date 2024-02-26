@@ -172,7 +172,7 @@ protected:
     std::once_flag mInitFlag;
 
     // Common to components
-    JEventLevel mLevel;
+    JEventLevel mLevel = JEventLevel::Event;
     std::string mPluginName;
     std::string mFactoryName;
     mutable std::mutex mMutex;
