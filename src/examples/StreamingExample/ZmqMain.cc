@@ -58,8 +58,6 @@ void InitPlugin(JApplication *app) {
     app->Add(new AHitAnomalyDetector(app, 5000));
     app->Add(new JFactoryGeneratorT<AHitParser>());
 
-    // So we don't have to put this on the cmd line every time
-    app->SetParameterValue("jana:legacy_mode", 0);
     app->SetParameterValue("jana:extended_report", 0);
 
     new std::thread(dummy_publisher_loop);
