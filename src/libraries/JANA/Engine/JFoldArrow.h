@@ -104,19 +104,23 @@ public:
             auto child = child_in_data.items[0];
             child_in_data.items[0] = nullptr;
             child_in_data.item_count = 0;
-            // TODO: Decrement parent's ref count
-            // TODO: Maybe fold should provide an identity for parent? What if no items make it past the filter?
 
-            //auto status = m_folder->DoFold(*(child->get()), *(parent->get()));
-            
-            std::shared_ptr<JEvent>* parent = nullptr; //std::const_pointer_cast<std::shared_ptr<JEvent>>(*child)->GetParent(m_parent_level).shared_from_this();
-            // TODO: Need to obtain pointer to parent
+            std::shared_ptr<JEvent>* parent = child->get()->mParents.back().second;
+            child->get()->mParents.pop_back();
+            size_t remaining_siblings = parent->get()->mReferenceCount.fetch_sub(1);
 
             child_out_data.items[0] = child;
             child_out_data.item_count = 1;
 
-            parent_out_data.items[0] = parent; // FIXME:
-            parent_out_data.item_count = 1;
+            // Only recycle the parent once the reference count hits zero
+            if (remaining_siblings == 1) {
+                parent_out_data.items[0] = parent;
+                parent_out_data.item_count = 1;
+            }
+            else {
+                parent_out_data.items[0] = nullptr;
+                parent_out_data.item_count = 0;
+            }
 
             auto end_processing_time = std::chrono::steady_clock::now();
             size_t events_processed = push_all(child_in_data, child_out_data, parent_out_data);

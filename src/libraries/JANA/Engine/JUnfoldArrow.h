@@ -95,8 +95,15 @@ public:
             auto child = child_in_data.items[0];
             child_in_data.items[0] = nullptr;
             child_in_data.item_count = 0;
-
+            // TODO: Assert that the input levels match what the unfolder expects
+            
             auto status = m_unfolder->DoUnfold(*(m_parent_event->get()), *(child->get()));
+
+            // Join always succeeds (for now)
+            (*child)->mParents.push_back({m_parent_event->get()->GetLevel(), m_parent_event});
+            m_parent_event->get()->mReferenceCount.fetch_add(1);
+            // TODO: We'll need something more complicated for the streaming join case
+
             if (status == JEventUnfolder::Result::Finished) {
                 m_ready_to_fetch_parent = true;
                 m_parent_event = nullptr;

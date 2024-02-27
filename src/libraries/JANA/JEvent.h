@@ -132,16 +132,12 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
         JEventLevel GetLevel() const { return mFactorySet->GetLevel(); }
         void SetLevel(JEventLevel level) { mFactorySet->SetLevel(level); }
 
-        void AddParent(JEvent* parent) {
-            JEventLevel level = parent->GetLevel();
-            mParents[level] = parent;
-            // TODO: Validate more
-        }
         const JEvent& GetParent(JEventLevel level) const {
-            return *(mParents.at(level));
-            // TODO: Validate more
+            for (const auto& pair : mParents) {
+                if (pair.first == level) return *(*(pair.second));
+            }
+            throw JException("Unable to find parent at level %s", level);
         }
-
 
 
 
@@ -158,8 +154,10 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
         bool mIsBarrierEvent = false;
 
         // Hierarchical stuff
-        std::map<JEventLevel, JEvent*> mParents;
-        //size_t mReferenceCount = 0;
+        friend class JUnfoldArrow;
+        friend class JFoldArrow;
+        std::vector<std::pair<JEventLevel, std::shared_ptr<JEvent>*>> mParents;
+        std::atomic_size_t mReferenceCount = 0;
 
 
 
