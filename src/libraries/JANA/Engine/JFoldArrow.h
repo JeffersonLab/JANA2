@@ -18,17 +18,10 @@ private:
     PlaceRef<EventT> m_child_out;
     PlaceRef<EventT> m_parent_out;
 
-    // TODO: I don't particularly like this. Maybe we should make JEvent::m_parents be a stack instead. 
-    //       Or maybe go back to the original idea of having the pool also recycle the parent to the parent pool
-    JEventLevel m_parent_level;
-
-
 public:
-
     JFoldArrow(
         std::string name,
         //JEventFolder* folder,
-        JEventLevel m_parent_level,
         JMailbox<EventT*>* child_in,
         JEventPool* child_out,
         JMailbox<EventT*>* parent_out)

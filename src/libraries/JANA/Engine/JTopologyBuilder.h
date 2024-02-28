@@ -318,7 +318,7 @@ public:
             unfold_arrow->set_logger(m_arrow_logger);
             map_arrow->attach(unfold_arrow);
 
-            auto *fold_arrow = new JFoldArrow("fold"+ss.str(), current_level, nullptr, pool_at_level, nullptr);
+            auto *fold_arrow = new JFoldArrow("fold"+ss.str(), nullptr, pool_at_level, nullptr);
             // TODO: Support user-provided folders
             m_topology->arrows.push_back(fold_arrow);
             fold_arrow->set_chunksize(m_event_source_chunksize);
