@@ -41,6 +41,21 @@ public:
     {
     }
 
+    void attach_child_in(JMailbox<EventT*>* child_in) {
+        m_child_in.place_ref = child_in;
+        m_child_in.is_queue = true;
+    }
+
+    void attach_child_out(JMailbox<EventT*>* child_out) {
+        m_child_out.place_ref = child_out;
+        m_child_out.is_queue = true;
+    }
+
+    void attach_parent_out(JMailbox<EventT*>* parent_out) {
+        m_parent_out.place_ref = parent_out;
+        m_parent_out.is_queue = true;
+    }
+
 
     void initialize() final {
         /*

@@ -139,7 +139,7 @@ public:
 
     }
 
-    void attach_lower_level(JEventLevel current_level, JArrow* parent_unfolder, JArrow* parent_folder) {
+    void attach_lower_level(JEventLevel current_level, JUnfoldArrow* parent_unfolder, JFoldArrow* parent_folder) {
 
         std::stringstream ss;
         ss << current_level;
@@ -200,8 +200,8 @@ public:
             proc_arrow->add_processor(proc);
         }
 
-        // TODO: Redirect unfold_arrow to output to q1
-        // TODO: Redirect fold_arrow to input from q2
+        parent_unfolder->attach_child_out(q1);
+        parent_folder->attach_child_in(q2);
         parent_unfolder->attach(proc_arrow);
         proc_arrow->attach(parent_folder);
     }
@@ -294,12 +294,6 @@ public:
             throw JException("At most one unfolder must be provided for each level in the event hierarchy!");
         }
         else {
-            // Have our unfolder, so we need to connect our source arrow
-            // to our unfolder (and maybe preprocessor) arrows
-            // Here we attach the source to the map to the unfolder
-            // Also the folder to the tap
-            // Then we pass the unfolder and folder to the attach_lower_level so it can hook those up as well
-            // attach_lower_level(next_level(current_level));
             
             auto q1 = new EventQueue(m_event_queue_threshold, m_topology->mapping.get_loc_count(), m_enable_stealing);
             auto q2 = new EventQueue(m_event_queue_threshold, m_topology->mapping.get_loc_count(), m_enable_stealing);
@@ -318,7 +312,7 @@ public:
             map_arrow->set_logger(m_arrow_logger);
             src_arrow->attach(map_arrow);
 
-            auto *unfold_arrow = new JUnfoldArrow("unfold"+ss.str(), unfolders_at_level[0], q2, nullptr, nullptr);
+            auto *unfold_arrow = new JUnfoldArrow("unfold"+ss.str(), unfolders_at_level[0], q2, pool_at_level, nullptr);
             m_topology->arrows.push_back(unfold_arrow);
             unfold_arrow->set_chunksize(m_event_source_chunksize);
             unfold_arrow->set_logger(m_arrow_logger);
@@ -344,9 +338,10 @@ public:
                     proc_arrow->add_processor(proc);
                 }
 
-                // TODO: Redirect fold_arrow to output to q3 instead of pool
+                fold_arrow->attach_parent_out(q3);
                 fold_arrow->attach(proc_arrow);
             }
+            attach_lower_level(unfolders_at_level[0]->GetChildLevel(), unfold_arrow, fold_arrow);
         }
     }
 

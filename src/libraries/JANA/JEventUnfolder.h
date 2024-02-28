@@ -56,6 +56,8 @@ public:
     void SetChildLevel(JEventLevel level) { m_child_level = level; }
 
     void SetCallPreprocessUpstream(bool call_upstream) { m_call_preprocess_upstream = call_upstream; }
+    
+    JEventLevel GetChildLevel() { return m_child_level; }
 
 
     // Component setters (set by user)
