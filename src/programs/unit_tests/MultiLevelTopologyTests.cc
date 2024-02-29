@@ -1,6 +1,7 @@
 #include <catch.hpp>
 #include <iostream>
 #include <map>
+#include "MultiLevelTopologyTests.h"
 
 
 enum class Level { None, Timeslice, Event, Subevent };
@@ -434,6 +435,29 @@ TEST_CASE("MultiLevelTopologyBuilderTests") {
         // Timeslice-level components are deactivated
     }
 }
+
+
+
+
+TEST_CASE("TimeslicesTests") {
+
+    auto parms = new JParameterManager;
+    parms->SetParameter("log:trace", "JScheduler,JArrow,JArrowProcessingController");
+    parms->SetParameter("jana:nevents", "5");
+    JApplication app(parms);
+    
+    app.Add(new MyTimesliceSource("Dummy", &app));
+    app.Add(new MyTimesliceUnfolder);
+    app.Add(new MyEventProcessor);
+    app.Add(new JFactoryGeneratorT<MyProtoClusterFactory>);
+    app.Add(new JFactoryGeneratorT<MyClusterFactory>);
+    app.SetTicker(true);
+    app.Run();
+}
+
+
+} // namespace timeslice_tests
+} // namespce jana
 
 
 

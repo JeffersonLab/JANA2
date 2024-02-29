@@ -312,13 +312,16 @@ public:
             map_arrow->set_logger(m_arrow_logger);
             src_arrow->attach(map_arrow);
 
-            auto *unfold_arrow = new JUnfoldArrow("unfold"+ss.str(), unfolders_at_level[0], q2, pool_at_level, nullptr);
+            // TODO: We are using q2 temporarily knowing that it will be overwritten in attach_lower_level.
+            // It would be better to rejigger how we validate PlaceRefs and accept empty placerefs/fewer ctor args
+            auto *unfold_arrow = new JUnfoldArrow("unfold"+ss.str(), unfolders_at_level[0], q2, pool_at_level, q2);
             m_topology->arrows.push_back(unfold_arrow);
             unfold_arrow->set_chunksize(m_event_source_chunksize);
             unfold_arrow->set_logger(m_arrow_logger);
             map_arrow->attach(unfold_arrow);
 
-            auto *fold_arrow = new JFoldArrow("fold"+ss.str(), nullptr, pool_at_level, nullptr);
+            // child_in, child_out, parent_out
+            auto *fold_arrow = new JFoldArrow("fold"+ss.str(), q2, pool_at_level, q2);
             // TODO: Support user-provided folders
             m_topology->arrows.push_back(fold_arrow);
             fold_arrow->set_chunksize(m_event_source_chunksize);
