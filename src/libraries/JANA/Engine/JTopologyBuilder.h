@@ -55,27 +55,25 @@ public:
         m_configure_topology = std::move(configure_fn);
     }
 
-    inline std::shared_ptr<JArrowTopology> get() {
-        return m_topology;
-    }
-
     inline std::shared_ptr<JArrowTopology> get_or_create() {
-        if (m_topology != nullptr) {
-            return m_topology;
-        }
-        else if (m_configure_topology) {
-            m_topology = m_configure_topology(create_empty());
-            return m_topology;
-        }
-        else {
+        if (m_topology == nullptr) {
             m_topology = std::make_shared<JArrowTopology>();
             m_topology->component_manager = m_components;  // Ensure the lifespan of the component manager exceeds that of the topology
             m_topology->mapping.initialize(static_cast<JProcessorMapping::AffinityStrategy>(m_affinity),
                                         static_cast<JProcessorMapping::LocalityStrategy>(m_locality));
 
+            m_topology->event_pool = new JEventPool(m_components,
+                                                    m_event_pool_size,
+                                                    m_location_count,
+                                                    m_limit_total_events_in_flight);
+            m_topology->event_pool->init();
             attach_top_level(JEventLevel::Run);
-            return m_topology;
+
+            if (m_configure_topology) {
+                m_topology = m_configure_topology(m_topology);
+            }
         }
+        return m_topology;
     }
 
 
