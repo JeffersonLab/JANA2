@@ -34,6 +34,21 @@ public:
     {
     }
 
+    JFoldArrow(
+        std::string name,
+        //JEventFolder* folder,
+        JMailbox<EventT*>* child_in,
+        JEventPool* child_out,
+        JEventPool* parent_out)
+
+      : JArrow(std::move(name), false, false, false), 
+        // m_folder(folder),
+        m_child_in(this, child_in, true, 1, 1),
+        m_child_out(this, child_out, false, 1, 1),
+        m_parent_out(this, parent_out, false, 1, 1)
+    {
+    }
+
     void attach_child_in(JMailbox<EventT*>* child_in) {
         m_child_in.place_ref = child_in;
         m_child_in.is_queue = true;
@@ -43,6 +58,17 @@ public:
         m_child_out.place_ref = child_out;
         m_child_out.is_queue = true;
     }
+
+    void attach_child_out(JEventPool* child_out) {
+        m_child_out.place_ref = child_out;
+        m_child_out.is_queue = false;
+    }
+
+    void attach_parent_out(JEventPool* parent_out) {
+        m_parent_out.place_ref = parent_out;
+        m_parent_out.is_queue = false;
+    }
+
 
     void attach_parent_out(JMailbox<EventT*>* parent_out) {
         m_parent_out.place_ref = parent_out;

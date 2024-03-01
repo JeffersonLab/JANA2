@@ -39,6 +39,7 @@ private:
 
     friend class JScheduler;
     std::vector<JArrow *> m_listeners;    // Downstream Arrows
+    friend class JTopologyBuilder;
     std::vector<PlaceRefBase*> m_places;  // Will eventually supplant m_listeners, m_chunksize
 
 protected:

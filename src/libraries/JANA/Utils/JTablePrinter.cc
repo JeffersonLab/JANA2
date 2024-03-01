@@ -109,6 +109,11 @@ void JTablePrinter::FormatLine(std::ostream& os, std::string contents, int max_w
         for (int i=0; i<rpad; ++i) os << " ";
     }
 }
+std::string JTablePrinter::Render() {
+    std::ostringstream ss;
+    Render(ss);
+    return ss.str();
+}
 
 void JTablePrinter::Render(std::ostream& os) {
 

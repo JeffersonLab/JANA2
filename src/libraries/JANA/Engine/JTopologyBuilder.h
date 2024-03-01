@@ -12,6 +12,7 @@
 #include "JEventMapArrow.h"
 #include "JUnfoldArrow.h"
 #include "JFoldArrow.h"
+#include <JANA/Utils/JTablePrinter.h>
 
 #include <memory>
 
@@ -39,6 +40,69 @@ public:
     JTopologyBuilder() = default;
 
     ~JTopologyBuilder() override = default;
+
+    std::string print_topology() {
+        JTablePrinter t;
+        t.AddColumn("Arrow name", JTablePrinter::Justify::Left, 0);
+        t.AddColumn("Arrow type", JTablePrinter::Justify::Left, 0);
+        t.AddColumn("Direction", JTablePrinter::Justify::Left, 0);
+        t.AddColumn("Place type", JTablePrinter::Justify::Left, 0);
+        t.AddColumn("ID", JTablePrinter::Justify::Left, 0);
+
+        // Build index lookup for queues
+        int i = 0;
+        std::map<void*, int> lookup;
+        for (JQueue* queue : m_topology->queues) {
+            lookup[queue] = i;
+            i += 1;
+        }
+        // Build index lookup for pools
+        for (JPoolBase* pool : m_topology->pools) {
+            lookup[pool] = i;
+            i += 1;
+        }
+        // Build table
+
+        bool show_row = true;
+        
+        for (JArrow* arrow : m_topology->arrows) {
+
+            show_row = true;
+            for (PlaceRefBase* place : arrow->m_places) {
+                if (show_row) {
+                    t | arrow->get_name();
+                    if (dynamic_cast<JEventSourceArrow*>(arrow) != nullptr) {
+                        t | "JEventSourceArrow";
+                    }
+                    else if (dynamic_cast<JEventProcessorArrow*>(arrow) != nullptr) {
+                        t | "JEventProcessorArrow";
+
+                    }
+                    else if (dynamic_cast<JEventMapArrow*>(arrow) != nullptr) {
+                        t | "JEventMapArrow";
+                    }
+                    else if (dynamic_cast<JUnfoldArrow*>(arrow) != nullptr) {
+                        t | "JUnfoldArrow";
+                    }
+                    else if (dynamic_cast<JFoldArrow*>(arrow) != nullptr) {
+                        t | "JFoldArrow";
+                    }
+                    else {
+                        t | "Unknown";
+                    }
+                    show_row = false;
+                }
+                else {
+                    t | "" | "";
+                }
+
+                t | ((place->is_input) ? "Input ": "Output");
+                t | ((place->is_queue) ? "Queue ": "Pool");
+                t | lookup[place->place_ref];
+            }
+        }
+        return t.Render();
+    }
 
     /// set allows the user to specify a topology directly. Note that this needs to be set before JApplication::Initialize
     /// gets called, which means that you won't be able to include components loaded from plugins. You probably want to use
@@ -68,9 +132,11 @@ public:
                                                     m_limit_total_events_in_flight);
             m_topology->event_pool->init();
             attach_top_level(JEventLevel::Run);
+            LOG_DEBUG(m_arrow_logger) << "Arrow topology is:\n" << print_topology() << LOG_END;
 
             if (m_configure_topology) {
                 m_topology = m_configure_topology(m_topology);
+                LOG_DEBUG(m_arrow_logger) << "Found custom topology configurator! Modified arrow topology is: \n" << print_topology() << LOG_END;
             }
         }
         return m_topology;
@@ -189,7 +255,7 @@ public:
         auto q2 = new EventQueue(m_event_queue_threshold, m_topology->mapping.get_loc_count(), m_enable_stealing);
         m_topology->queues.push_back(q2);
 
-        auto* proc_arrow = new JEventProcessorArrow("processors"+ss.str(), q1, q2, nullptr);
+        auto* proc_arrow = new JEventProcessorArrow(ss.str()+"Proc", q1, q2, nullptr);
         m_topology->arrows.push_back(proc_arrow);
         proc_arrow->set_chunksize(m_event_processor_chunksize);
         proc_arrow->set_logger(m_arrow_logger);
@@ -198,8 +264,10 @@ public:
             proc_arrow->add_processor(proc);
         }
 
+        parent_unfolder->attach_child_in(pool);
         parent_unfolder->attach_child_out(q1);
         parent_folder->attach_child_in(q2);
+        parent_folder->attach_child_out(pool);
         parent_unfolder->attach(proc_arrow);
         proc_arrow->attach(parent_folder);
     }
@@ -299,12 +367,12 @@ public:
             m_topology->queues.push_back(q1);
             m_topology->queues.push_back(q2);
 
-            auto *src_arrow = new JEventSourceArrow("sources"+ss.str(), sources_at_level, q1, pool_at_level);
+            auto *src_arrow = new JEventSourceArrow(ss.str()+"Src", sources_at_level, q1, pool_at_level);
             m_topology->arrows.push_back(src_arrow);
             src_arrow->set_chunksize(m_event_source_chunksize);
             src_arrow->set_logger(m_arrow_logger);
 
-            auto *map_arrow = new JEventMapArrow("maps"+ss.str(), q1, q2);;
+            auto *map_arrow = new JEventMapArrow(ss.str()+"Map", q1, q2);;
             m_topology->arrows.push_back(map_arrow);
             map_arrow->set_chunksize(m_event_source_chunksize);
             map_arrow->set_logger(m_arrow_logger);
@@ -312,25 +380,29 @@ public:
 
             // TODO: We are using q2 temporarily knowing that it will be overwritten in attach_lower_level.
             // It would be better to rejigger how we validate PlaceRefs and accept empty placerefs/fewer ctor args
-            auto *unfold_arrow = new JUnfoldArrow("unfold"+ss.str(), unfolders_at_level[0], q2, pool_at_level, q2);
+            auto *unfold_arrow = new JUnfoldArrow(ss.str()+"Unfold", unfolders_at_level[0], q2, pool_at_level, q2);
             m_topology->arrows.push_back(unfold_arrow);
             unfold_arrow->set_chunksize(m_event_source_chunksize);
             unfold_arrow->set_logger(m_arrow_logger);
             map_arrow->attach(unfold_arrow);
 
             // child_in, child_out, parent_out
-            auto *fold_arrow = new JFoldArrow("fold"+ss.str(), q2, pool_at_level, q2);
+            auto *fold_arrow = new JFoldArrow(ss.str()+"Fold", q2, pool_at_level, pool_at_level);
             // TODO: Support user-provided folders
-            m_topology->arrows.push_back(fold_arrow);
             fold_arrow->set_chunksize(m_event_source_chunksize);
             fold_arrow->set_logger(m_arrow_logger);
+
+            attach_lower_level(unfolders_at_level[0]->GetChildLevel(), unfold_arrow, fold_arrow);
+
+            // Push fold arrow back _after_ attach_lower_level so that arrows can be iterated over in order
+            m_topology->arrows.push_back(fold_arrow);
 
             if (procs_at_level.size() != 0) {
 
                 auto q3 = new EventQueue(m_event_queue_threshold, m_topology->mapping.get_loc_count(), m_enable_stealing);
                 m_topology->queues.push_back(q3);
 
-                auto* proc_arrow = new JEventProcessorArrow("processors"+ss.str(), q3, nullptr, pool_at_level);
+                auto* proc_arrow = new JEventProcessorArrow(ss.str()+"Proc", q3, nullptr, pool_at_level);
                 m_topology->arrows.push_back(proc_arrow);
                 proc_arrow->set_chunksize(m_event_processor_chunksize);
                 proc_arrow->set_logger(m_arrow_logger);
@@ -342,7 +414,6 @@ public:
                 fold_arrow->attach_parent_out(q3);
                 fold_arrow->attach(proc_arrow);
             }
-            attach_lower_level(unfolders_at_level[0]->GetChildLevel(), unfold_arrow, fold_arrow);
         }
     }
 

@@ -41,6 +41,11 @@ public:
         m_parent_in.is_queue = true;
     }
 
+    void attach_child_in(JEventPool* child_in) {
+        m_child_in.place_ref = child_in;
+        m_child_in.is_queue = false;
+    }
+
     void attach_child_in(JMailbox<EventT*>* child_in) {
         m_child_in.place_ref = child_in;
         m_child_in.is_queue = true;
