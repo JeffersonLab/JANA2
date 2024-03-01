@@ -387,7 +387,7 @@ public:
             map_arrow->attach(unfold_arrow);
 
             // child_in, child_out, parent_out
-            auto *fold_arrow = new JFoldArrow(ss.str()+"Fold", q2, pool_at_level, pool_at_level);
+            auto *fold_arrow = new JFoldArrow(ss.str()+"Fold", current_level, unfolders_at_level[0]->GetChildLevel(), q2, pool_at_level, pool_at_level);
             // TODO: Support user-provided folders
             fold_arrow->set_chunksize(m_event_source_chunksize);
             fold_arrow->set_logger(m_arrow_logger);

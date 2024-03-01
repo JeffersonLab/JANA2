@@ -115,17 +115,29 @@ public:
             auto child = child_in_data.items[0];
             child_in_data.items[0] = nullptr;
             child_in_data.item_count = 0;
-            // TODO: Assert that the input levels match what the unfolder expects
+            if (m_parent_event == nullptr) {
+                throw JException("Attempting to unfold without a valid parent event");
+            }
+            if (m_parent_event->get()->GetLevel() != m_unfolder->GetLevel()) {
+                throw JException("JUnfolder: Expected parent with level %s, got %s", m_unfolder->GetLevel(), m_parent_event->get()->GetLevel());
+            }
+            if (child->get()->GetLevel() != m_unfolder->GetChildLevel()) {
+                throw JException("JUnfolder: Expected child with level %s, got %s", m_unfolder->GetChildLevel(), child->get()->GetLevel());
+            }
             
             auto status = m_unfolder->DoUnfold(*(m_parent_event->get()), *(child->get()));
 
+
             // Join always succeeds (for now)
-            (*child)->mParents.push_back({m_parent_event->get()->GetLevel(), m_parent_event});
-            m_parent_event->get()->mReferenceCount.fetch_add(1);
+            child->get()->SetParent(m_parent_event);
+
+            LOG_DEBUG(m_logger) << "Unfold succeeded: Parent event = " << m_parent_event->get()->GetEventNumber() << ", child event = " << child->get()->GetEventNumber() << LOG_END;
             // TODO: We'll need something more complicated for the streaming join case
 
             if (status == JEventUnfolder::Result::Finished) {
+                LOG_DEBUG(m_logger) << "Unfold finished with parent event = " << m_parent_event->get()->GetEventNumber() << LOG_END;
                 m_ready_to_fetch_parent = true;
+                m_parent_event->get()->Release();
                 m_parent_event = nullptr;
                 m_parent_in.min_item_count = 1;
                 m_parent_in.max_item_count = 1;

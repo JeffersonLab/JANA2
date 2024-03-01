@@ -13,6 +13,9 @@ private:
 
     // TODO: Support user-provided folders
     // JEventFolder* m_folder = nullptr;
+    
+    JEventLevel m_parent_level;
+    JEventLevel m_child_level;
 
     PlaceRef<EventT> m_child_in;
     PlaceRef<EventT> m_child_out;
@@ -22,12 +25,16 @@ public:
     JFoldArrow(
         std::string name,
         //JEventFolder* folder,
+        JEventLevel parent_level,
+        JEventLevel child_level,
         JMailbox<EventT*>* child_in,
         JEventPool* child_out,
         JMailbox<EventT*>* parent_out)
 
       : JArrow(std::move(name), false, false, false), 
         // m_folder(folder),
+        m_parent_level(parent_level),
+        m_child_level(child_level),
         m_child_in(this, child_in, true, 1, 1),
         m_child_out(this, child_out, false, 1, 1),
         m_parent_out(this, parent_out, false, 1, 1)
@@ -37,12 +44,35 @@ public:
     JFoldArrow(
         std::string name,
         //JEventFolder* folder,
+        JEventLevel parent_level,
+        JEventLevel child_level,
+        JMailbox<EventT*>* child_in,
+        JMailbox<EventT*>* child_out,
+        JMailbox<EventT*>* parent_out)
+
+      : JArrow(std::move(name), false, false, false), 
+        // m_folder(folder),
+        m_parent_level(parent_level),
+        m_child_level(child_level),
+        m_child_in(this, child_in, true, 1, 1),
+        m_child_out(this, child_out, false, 1, 1),
+        m_parent_out(this, parent_out, false, 1, 1)
+    {
+    }
+
+    JFoldArrow(
+        std::string name,
+        //JEventFolder* folder,
+        JEventLevel parent_level,
+        JEventLevel child_level,
         JMailbox<EventT*>* child_in,
         JEventPool* child_out,
         JEventPool* parent_out)
 
       : JArrow(std::move(name), false, false, false), 
         // m_folder(folder),
+        m_parent_level(parent_level),
+        m_child_level(child_level),
         m_child_in(this, child_in, true, 1, 1),
         m_child_out(this, child_out, false, 1, 1),
         m_parent_out(this, parent_out, false, 1, 1)
@@ -138,16 +168,19 @@ public:
             auto child = child_in_data.items[0];
             child_in_data.items[0] = nullptr;
             child_in_data.item_count = 0;
+            if (child->get()->GetLevel() != m_child_level) {
+                throw JException("JFoldArrow received a child with the wrong event level");
+            }
 
-            std::shared_ptr<JEvent>* parent = child->get()->mParents.back().second;
-            child->get()->mParents.pop_back();
-            size_t remaining_siblings = parent->get()->mReferenceCount.fetch_sub(1);
+            // TODO: Call folders here
+            auto* parent = child->get()->ReleaseParent(m_parent_level);
 
+            // Put child on the output queue
             child_out_data.items[0] = child;
             child_out_data.item_count = 1;
 
             // Only recycle the parent once the reference count hits zero
-            if (remaining_siblings == 1) {
+            if (parent != nullptr) {
                 parent_out_data.items[0] = parent;
                 parent_out_data.item_count = 1;
             }
