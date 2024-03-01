@@ -130,15 +130,15 @@ public:
 
     bool try_pull_all(Data<EventT>& ci, Data<EventT>& co, Data<EventT>& po) {
         bool success;
-        success = m_child_in.pull(co);
+        success = m_child_in.pull(ci);
         if (! success) {
             return false;
         }
-        success = m_child_out.pull(po);
+        success = m_child_out.pull(co);
         if (! success) {
             return false;
         }
-        success = m_parent_out.pull(ci);
+        success = m_parent_out.pull(po);
         if (! success) {
             return false;
         }

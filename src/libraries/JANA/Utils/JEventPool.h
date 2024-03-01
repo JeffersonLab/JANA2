@@ -29,9 +29,8 @@ public:
 
     void configure_item(std::shared_ptr<JEvent>* item) override {
         (*item) = std::make_shared<JEvent>();
-        (*item)->SetLevel(m_level);
         m_component_manager->configure_event(**item);
-
+        item->get()->SetLevel(m_level); // This needs to happen _after_ configure_event
     }
 
     void release_item(std::shared_ptr<JEvent>* item) override {

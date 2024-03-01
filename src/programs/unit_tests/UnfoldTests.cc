@@ -1,6 +1,7 @@
 
 #include <catch.hpp>
 #include <JANA/Engine/JUnfoldArrow.h>
+#include <JANA/Engine/JFoldArrow.h>
 
 namespace jana {
 namespace unfoldtests {
@@ -41,7 +42,7 @@ TEST_CASE("UnfoldTests_Basic") {
 
     JEventPool parent_pool {jcm, 5, 1, true, JEventLevel::Timeslice}; // size=5, locations=1, limit_total_events_in_flight=true
     JEventPool child_pool {jcm, 5, 1, true, JEventLevel::Event};
-    JMailbox<EventT*> parent_queue {3}; // size=2
+    JMailbox<EventT*> parent_queue {3}; // size
     JMailbox<EventT*> child_queue {3};
 
     parent_pool.init();
@@ -73,6 +74,123 @@ TEST_CASE("UnfoldTests_Basic") {
     REQUIRE(unfolder.unfolded_child_nrs.size() == 1);
     REQUIRE(unfolder.unfolded_child_nrs[0] == 117);
     REQUIRE(unfolder.unfolded_child_levels[0] == JEventLevel::Event);
+
+}
+
+TEST_CASE("FoldArrowTests") {
+
+    JApplication app;
+    auto jcm = app.GetService<JComponentManager>();
+
+    // We only use these to obtain preconfigured JEvents
+    JEventPool parent_pool {jcm, 5, 1, true, JEventLevel::Timeslice}; // size=5, locations=1, limit_total_events_in_flight=true
+    JEventPool child_pool {jcm, 5, 1, true, JEventLevel::Event};
+    parent_pool.init();
+    child_pool.init();
+
+
+    // We set up our test cases by putting events on these queues
+    JMailbox<std::shared_ptr<JEvent>*> child_in;
+    JMailbox<std::shared_ptr<JEvent>*> child_out;
+    JMailbox<std::shared_ptr<JEvent>*> parent_out;
+
+    JFoldArrow arrow("sut", JEventLevel::Timeslice, JEventLevel::Event, &child_in, &child_out, &parent_out);
+    JArrowMetrics metrics;
+    arrow.initialize();
+
+    SECTION("One-to-one relationship between timeslices and events") {
+
+        auto ts1 = parent_pool.get();
+        (*ts1)->SetEventNumber(17);
+        REQUIRE(ts1->get()->GetLevel() == JEventLevel::Timeslice);
+
+        auto ts2 = parent_pool.get();
+        (*ts2)->SetEventNumber(28);
+
+        auto evt1 = child_pool.get();
+        (*evt1)->SetEventNumber(111);
+
+        auto evt2 = child_pool.get();
+        (*evt2)->SetEventNumber(112);
+
+
+        evt1->get()->SetParent(ts1);
+        ts1->get()->Release(); // One-to-one
+        child_in.try_push(&evt1, 1, 0);
+
+        evt2->get()->SetParent(ts2);
+        ts2->get()->Release(); // One-to-one
+        child_in.try_push(&evt2, 1, 0);
+    
+        arrow.execute(metrics, 0);
+
+        REQUIRE(child_in.size() == 1);
+        REQUIRE(child_out.size() == 1);
+        REQUIRE(parent_out.size() == 1);
+
+    }
+
+
+    SECTION("One-to-two relationship between timeslices and events") {
+
+        auto ts1 = parent_pool.get();
+        (*ts1)->SetEventNumber(17);
+        REQUIRE(ts1->get()->GetLevel() == JEventLevel::Timeslice);
+
+        auto ts2 = parent_pool.get();
+        (*ts2)->SetEventNumber(28);
+
+        auto evt1 = child_pool.get();
+        (*evt1)->SetEventNumber(111);
+
+        auto evt2 = child_pool.get();
+        (*evt2)->SetEventNumber(112);
+
+        auto evt3 = child_pool.get();
+        (*evt3)->SetEventNumber(113);
+
+        auto evt4 = child_pool.get();
+        (*evt4)->SetEventNumber(114);
+
+
+        evt1->get()->SetParent(ts1);
+        evt2->get()->SetParent(ts1);
+        ts1->get()->Release(); // One-to-two
+        
+        evt3->get()->SetParent(ts2);
+        evt4->get()->SetParent(ts2);
+        ts2->get()->Release(); // One-to-two
+   
+        child_in.try_push(&evt1, 1, 0);
+        child_in.try_push(&evt2, 1, 0);
+        child_in.try_push(&evt3, 1, 0);
+        child_in.try_push(&evt4, 1, 0);
+
+        arrow.execute(metrics, 0);
+
+        REQUIRE(child_in.size() == 3);
+        REQUIRE(child_out.size() == 1);
+        REQUIRE(parent_out.size() == 0);
+
+        arrow.execute(metrics, 0);
+
+        REQUIRE(child_in.size() == 2);
+        REQUIRE(child_out.size() == 2);
+        REQUIRE(parent_out.size() == 1);
+
+        arrow.execute(metrics, 0);
+
+        REQUIRE(child_in.size() == 1);
+        REQUIRE(child_out.size() == 3);
+        REQUIRE(parent_out.size() == 1);
+
+        arrow.execute(metrics, 0);
+
+        REQUIRE(child_in.size() == 0);
+        REQUIRE(child_out.size() == 4);
+        REQUIRE(parent_out.size() == 2);
+    }
+
 
 }
 

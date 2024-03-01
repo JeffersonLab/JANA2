@@ -154,14 +154,14 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
             }
             auto pair = mParents.back();
             if (pair.first != level) {
-                throw JException("JEvent::ReleaseParent called out of level order");
+                throw JException("JEvent::ReleaseParent called out of level order: Caller expected %d, but parent was actually %d", level, pair.first);
             }
             mParents.pop_back();
             auto remaining_refs = pair.second->get()->mReferenceCount.fetch_sub(1);
-            if (remaining_refs < 0) {
+            if (remaining_refs < 1) { // Remember, this was fetched _before_ the last subtraction
                 throw JException("Parent refcount has gone negative!");
             }
-            if (remaining_refs == 0) {
+            if (remaining_refs == 1) {
                 return pair.second; 
                 // Parent is no longer shared. Transfer back to arrow
             }
