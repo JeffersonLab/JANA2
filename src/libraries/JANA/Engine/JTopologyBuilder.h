@@ -203,7 +203,7 @@ public:
 
     }
 
-    void attach_lower_level(JEventLevel current_level, JUnfoldArrow* parent_unfolder, JFoldArrow* parent_folder) {
+    void attach_lower_level(JEventLevel current_level, JUnfoldArrow* parent_unfolder, JFoldArrow* parent_folder, bool found_sink) {
 
         std::stringstream ss;
         ss << current_level;
@@ -259,6 +259,9 @@ public:
         m_topology->arrows.push_back(proc_arrow);
         proc_arrow->set_chunksize(m_event_processor_chunksize);
         proc_arrow->set_logger(m_arrow_logger);
+        if (found_sink) {
+            proc_arrow->set_is_sink(false);
+        }
 
         for (auto proc: procs_at_level) {
             proc_arrow->add_processor(proc);
@@ -392,7 +395,8 @@ public:
             fold_arrow->set_chunksize(m_event_source_chunksize);
             fold_arrow->set_logger(m_arrow_logger);
 
-            attach_lower_level(unfolders_at_level[0]->GetChildLevel(), unfold_arrow, fold_arrow);
+            bool found_sink = (procs_at_level.size() > 0);
+            attach_lower_level(unfolders_at_level[0]->GetChildLevel(), unfold_arrow, fold_arrow, found_sink);
 
             // Push fold arrow back _after_ attach_lower_level so that arrows can be iterated over in order
             m_topology->arrows.push_back(fold_arrow);

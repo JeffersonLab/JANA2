@@ -15,7 +15,7 @@ JEventMapArrow::JEventMapArrow(std::string name,
         : JPipelineArrow(std::move(name),
                          true,
                          false,
-                         true,
+                         false,
                          input_queue,
                          output_queue,
                          nullptr) {}
