@@ -17,6 +17,11 @@ struct TestUnfolder : public JEventUnfolder {
     std::vector<int> unfolded_child_nrs;
     std::vector<JEventLevel> unfolded_child_levels;
 
+    TestUnfolder() {
+        SetParentLevel(JEventLevel::Timeslice);
+        SetChildLevel(JEventLevel::Event);
+    }
+
     void Preprocess(const JEvent& parent) const override {
         LOG << "Preprocessing " << parent.GetLevel() << " event " << parent.GetEventNumber() << LOG_END;
         preprocessed_event_nrs.push_back(parent.GetEventNumber());
@@ -48,16 +53,14 @@ TEST_CASE("UnfoldTests_Basic") {
     parent_pool.init();
     child_pool.init();
 
-    auto evt1 = parent_pool.get();
-    (*evt1)->SetEventNumber(17);
-    (*evt1)->SetLevel(JEventLevel::Timeslice);
+    auto ts1 = parent_pool.get();
+    (*ts1)->SetEventNumber(17);
 
-    auto evt2 = parent_pool.get();
-    (*evt2)->SetEventNumber(28);
-    (*evt2)->SetLevel(JEventLevel::Timeslice);
+    auto ts2 = parent_pool.get();
+    (*ts2)->SetEventNumber(28);
 
-    parent_queue.try_push(&evt1, 1);
-    parent_queue.try_push(&evt2, 1);
+    parent_queue.try_push(&ts1, 1);
+    parent_queue.try_push(&ts2, 1);
 
     TestUnfolder unfolder;
     JUnfoldArrow arrow("sut", &unfolder, &parent_queue, &child_pool, &child_queue);
