@@ -177,6 +177,10 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
             }
         }
 
+        void Reset() {
+            mReferenceCount = 1;
+        }
+
 
     private:
         JApplication* mApplication = nullptr;

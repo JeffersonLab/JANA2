@@ -38,6 +38,7 @@ public:
         (*item)->mFactorySet->Release();
         (*item)->mInspector.Reset();
         (*item)->GetJCallGraphRecorder()->Reset();
+        (*item)->Reset();
     }
 };
 

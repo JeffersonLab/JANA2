@@ -61,9 +61,13 @@ struct MyTimesliceUnfolder : public JEventUnfolder {
     };
 
     virtual Result Unfold(const JEvent& parent, JEvent& child, int item) {
+        child.SetEventNumber(parent.GetEventNumber()*10 + item);
+        LOG << "Unfolding parent=" << parent.GetEventNumber() << ", child=" << child.GetEventNumber() << ", item=" << item << LOG_END;
         unfold_called_count++;
         // TODO: 
-        if (child.GetEventNumber() % 3 == 0) {
+
+        if (item == 3) {
+            jout << "Unfold found item 3, finishing join" << jendl;
             // TODO: Insert protocluster into child
             return Result::Finished;
         }
