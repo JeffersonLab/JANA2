@@ -146,10 +146,10 @@ public:
     }
 
     size_t push_all(Data<EventT>& ci, Data<EventT>& co, Data<EventT>& po) {
-        size_t message_count = 0;
-        message_count += m_child_in.push(ci);
-        message_count += m_child_out.push(co);
-        message_count += m_parent_out.push(po);
+        size_t message_count = co.item_count;
+        m_child_in.push(ci);
+        m_child_out.push(co);
+        m_parent_out.push(po);
         return message_count;
     }
 
