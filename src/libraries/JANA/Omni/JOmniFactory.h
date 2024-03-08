@@ -39,6 +39,7 @@ public:
 
     struct InputBase {
         std::string type_name;
+        JEventLevel level;
         std::vector<std::string> collection_names;
         bool is_variadic = false;
 
@@ -51,10 +52,11 @@ public:
         std::vector<const T*> m_data;
 
     public:
-        Input(JOmniFactory* owner, std::string default_tag="") {
+        Input(JOmniFactory* owner, JEventLevel level=JEventLevel::Event, std::string default_tag="") {
             owner->RegisterInput(this);
             this->collection_names.push_back(default_tag);
             this->type_name = JTypeInfo::demangle<T>();
+            this->level = level;
         }
 
         const std::vector<const T*>& operator()() { return m_data; }
@@ -63,11 +65,16 @@ public:
         friend class JOmniFactory;
 
         void GetCollection(const JEvent& event) {
-            m_data = event.Get<T>(this->collection_names[0]);
+            if (this->level == event->GetLevel()) {
+                m_data = event.Get<T>(this->collection_names[0]);
+            }
+            else {
+                m_data = event.GetParent(level).Get<T>(this->collection_names[0]);
+            }
         }
     };
 
-
+#ifdef JANA2_HAVE_PODIO
     template <typename PodioT>
     class PodioInput : public InputBase {
 
@@ -75,10 +82,11 @@ public:
 
     public:
 
-        PodioInput(JOmniFactory* owner, std::string default_collection_name="") {
+        PodioInput(JOmniFactory* owner, JEventLevel level=JEventLevel::Event, std::string default_collection_name="") {
             owner->RegisterInput(this);
             this->collection_names.push_back(default_collection_name);
             this->type_name = JTypeInfo::demangle<PodioT>();
+            this->level = level;
         }
 
         const typename PodioTypeMap<PodioT>::collection_t* operator()() {
@@ -89,7 +97,12 @@ public:
         friend class JOmniFactory;
 
         void GetCollection(const JEvent& event) {
-            m_data = event.GetCollection<PodioT>(this->collection_names[0]);
+            if (this->level == event->GetLevel()) {
+                m_data = event.GetCollection<PodioT>(this->collection_names[0]);
+            }
+            else {
+                m_data = event.GetParent(this->level).GetCollection<PodioT>(this->collection_names[0]);
+            }
         }
     };
 
@@ -101,11 +114,12 @@ public:
 
     public:
 
-        VariadicPodioInput(JOmniFactory* owner, std::vector<std::string> default_names = {}) {
+        VariadicPodioInput(JOmniFactory* owner, JEventLevel level=JEventLevel::Event, std::vector<std::string> default_names = {}) {
             owner->RegisterInput(this);
             this->collection_names = default_names;
             this->type_name = JTypeInfo::demangle<PodioT>();
             this->is_variadic = true;
+            this->level = level;
         }
 
         const std::vector<const typename PodioTypeMap<PodioT>::collection_t*> operator()() {
@@ -117,11 +131,19 @@ public:
 
         void GetCollection(const JEvent& event) {
             m_data.clear();
-            for (auto& coll_name : this->collection_names) {
-                m_data.push_back(event.GetCollection<PodioT>(coll_name));
+            if (this->level == event->GetLevel()) {
+                for (auto& coll_name : this->collection_names) {
+                    m_data.push_back(event.GetCollection<PodioT>(coll_name));
+                }
+            }
+            else {
+                for (auto& coll_name : this->collection_names) {
+                    m_data.push_back(event.GetParent(this->level).GetCollection<PodioT>(this->collection_names[0]));
+                }
             }
         }
     };
+#endif
 
     void RegisterInput(InputBase* input) {
         m_inputs.push_back(input);
@@ -170,6 +192,7 @@ public:
     };
 
 
+#ifdef JANA2_HAVE_PODIO
     template <typename PodioT>
     class PodioOutput : public OutputBase {
 
@@ -249,6 +272,7 @@ public:
             }
         }
     };
+#endif
 
     void RegisterOutput(OutputBase* output) {
         m_outputs.push_back(output);
