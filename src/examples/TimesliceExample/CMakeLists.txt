@@ -5,9 +5,9 @@ if (USE_PODIO)
             TimesliceExample.cc
         )
 
-    add_executable(TimesliceExample ${TimesliceExample_SOURCES})
+    add_library(TimesliceExample SHARED ${TimesliceExample_SOURCES})
     target_link_libraries(TimesliceExample jana2 podio::podio PodioExampleDatamodel PodioExampleDatamodelDict podio::podioRootIO)
-    set_target_properties(TimesliceExample PROPERTIES PREFIX "" OUTPUT_NAME "TimesliceExample")
+    set_target_properties(TimesliceExample PROPERTIES PREFIX "" SUFFIX ".so" OUTPUT_NAME "TimesliceExample")
     install(TARGETS TimesliceExample DESTINATION programs)
 
 else()
