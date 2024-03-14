@@ -500,10 +500,15 @@ inline std::vector<std::string> JEvent::GetAllCollectionNames() const {
     return keys;
 }
 
-inline const podio::CollectionBase* JEvent::GetCollectionBase(std::string name) const {
+inline const podio::CollectionBase* JEvent::GetCollectionBase(std::string name, bool throw_on_missing=true) const {
     auto it = mPodioFactories.find(name);
     if (it == mPodioFactories.end()) {
-        throw JException("No factory with tag '%s' found", name.c_str());
+        if (throw_on_missing) {
+            throw JException("No factory with tag '%s' found", name.c_str());
+        }
+        else {
+            return nullptr;
+        }
     }
     JFactoryPodio* factory = dynamic_cast<JFactoryPodio*>(it->second);
     if (factory == nullptr) {
@@ -517,8 +522,11 @@ inline const podio::CollectionBase* JEvent::GetCollectionBase(std::string name) 
 }
 
 template <typename T>
-const typename JFactoryPodioT<T>::CollectionT* JEvent::GetCollection(std::string name) const {
-    JFactoryT<T>* factory = GetFactory<T>(name, true);
+const typename JFactoryPodioT<T>::CollectionT* JEvent::GetCollection(std::string name, bool throw_on_missing=true) const {
+    JFactoryT<T>* factory = GetFactory<T>(name, throw_on_missing);
+    if (factory == nullptr) {
+        return nullptr;
+    }
     JFactoryPodioT<T>* typed_factory = dynamic_cast<JFactoryPodioT<T>*>(factory);
     if (typed_factory == nullptr) {
         throw JException("Factory must inherit from JFactoryPodioT in order to use JEvent::GetCollection()");
