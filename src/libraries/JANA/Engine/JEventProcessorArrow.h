@@ -23,7 +23,7 @@ public:
     JEventProcessorArrow(std::string name,
                          EventQueue *input_queue,
                          EventQueue *output_queue,
-                         std::shared_ptr<JEventPool> pool);
+                         JEventPool *pool);
 
     void add_processor(JEventProcessor* processor);
 

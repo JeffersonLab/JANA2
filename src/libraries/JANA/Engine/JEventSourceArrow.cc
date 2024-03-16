@@ -14,9 +14,9 @@ using SourceStatus = JEventSource::RETURN_STATUS;
 JEventSourceArrow::JEventSourceArrow(std::string name,
                                      std::vector<JEventSource*> sources,
                                      EventQueue* output_queue,
-                                     std::shared_ptr<JEventPool> pool
+                                     JEventPool* pool
                                      )
-    : JPipelineArrow(name, false, true, false, nullptr, output_queue, pool.get()), m_sources(sources) {
+    : JPipelineArrow(name, false, true, false, nullptr, output_queue, pool), m_sources(sources) {
 }
 
 

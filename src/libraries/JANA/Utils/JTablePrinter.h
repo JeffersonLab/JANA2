@@ -44,6 +44,7 @@ public:
     JTablePrinter::Column& AddColumn(std::string header, Justify justify=Justify::Left, int desired_width=0);
     void FormatLine(std::ostream& os, std::string contents, int max_width, Justify justify);
     void Render(std::ostream& os);
+    std::string Render();
     static std::vector<std::string> SplitContents(std::string contents, size_t max_width);
     static std::vector<std::string> SplitContentsByNewlines(std::string contents);
     static std::vector<std::string> SplitContentsBySpaces(std::string contents, size_t max_width);

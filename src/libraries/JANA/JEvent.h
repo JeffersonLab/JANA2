@@ -12,6 +12,7 @@
 #include <JANA/JFactorySet.h>
 #include <JANA/JLogger.h>
 
+#include <JANA/Utils/JEventLevel.h>
 #include <JANA/Utils/JResettable.h>
 #include <JANA/Utils/JTypeInfo.h>
 #include <JANA/Utils/JCpuInfo.h>
@@ -127,6 +128,59 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
         friend class JEventPool;
 
 
+        // Hierarchical
+        JEventLevel GetLevel() const { return mFactorySet->GetLevel(); }
+        void SetLevel(JEventLevel level) { mFactorySet->SetLevel(level); }
+
+        const JEvent& GetParent(JEventLevel level) const {
+            for (const auto& pair : mParents) {
+                if (pair.first == level) return *(*(pair.second));
+            }
+            throw JException("Unable to find parent at level %s", level);
+        }
+
+        void SetParent(std::shared_ptr<JEvent>* parent) {
+            JEventLevel level = parent->get()->GetLevel();
+            for (const auto& pair : mParents) {
+                if (pair.first == level) throw JException("Event already has a parent at level %s", parent->get()->GetLevel());
+            }
+            mParents.push_back({level, parent});
+            parent->get()->mReferenceCount.fetch_add(1);
+        }
+
+        std::shared_ptr<JEvent>* ReleaseParent(JEventLevel level) {
+            if (mParents.size() == 0) {
+                throw JException("ReleaseParent failed: child has no parents!");
+            }
+            auto pair = mParents.back();
+            if (pair.first != level) {
+                throw JException("JEvent::ReleaseParent called out of level order: Caller expected %d, but parent was actually %d", level, pair.first);
+            }
+            mParents.pop_back();
+            auto remaining_refs = pair.second->get()->mReferenceCount.fetch_sub(1);
+            if (remaining_refs < 1) { // Remember, this was fetched _before_ the last subtraction
+                throw JException("Parent refcount has gone negative!");
+            }
+            if (remaining_refs == 1) {
+                return pair.second; 
+                // Parent is no longer shared. Transfer back to arrow
+            }
+            else {
+                return nullptr; // Parent is still shared by other children
+            }
+        }
+
+        void Release() {
+            auto remaining_refs = mReferenceCount.fetch_sub(1);
+            if (remaining_refs < 0) {
+                throw JException("JEvent's own refcount has gone negative!");
+            }
+        }
+
+        void Reset() {
+            mReferenceCount = 1;
+        }
+
 
     private:
         JApplication* mApplication = nullptr;
@@ -139,6 +193,12 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
         std::map<std::string, std::string> mDefaultTags;
         JEventSource* mEventSource = nullptr;
         bool mIsBarrierEvent = false;
+
+        // Hierarchical stuff
+        std::vector<std::pair<JEventLevel, std::shared_ptr<JEvent>*>> mParents;
+        std::atomic_size_t mReferenceCount {1};
+
+
 
 #ifdef JANA2_HAVE_PODIO
         std::map<std::string, JFactory*> mPodioFactories;

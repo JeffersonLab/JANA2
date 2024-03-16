@@ -28,7 +28,7 @@ struct JArrowTopology {
     // Ensure that ComponentManager stays alive at least as long as JArrowTopology does
     // Otherwise there is a potential use-after-free when JArrowTopology or JArrowProcessingController access components
 
-    std::shared_ptr<JEventPool> event_pool; // TODO: Move into pools eventually
+    JEventPool* event_pool; // TODO: Move into pools eventually
     JPerfMetrics metrics;
 
     std::vector<JArrow*> arrows;

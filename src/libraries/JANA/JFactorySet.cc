@@ -122,7 +122,13 @@ JFactory* JFactorySet::GetFactory(const std::string& object_name, const std::str
 {
     auto untyped_key = std::make_pair(object_name, tag);
     auto it = mFactoriesFromString.find(untyped_key);
-    return (it != std::end(mFactoriesFromString)) ? it->second : nullptr;
+    if (it != std::end(mFactoriesFromString)) {
+        if (it->second->GetLevel() != mLevel) {
+            throw JException("Factory belongs to a different level on the event hierarchy!");
+        }
+        return it->second;
+    }
+    return nullptr;
 }
 
 //---------------------------------
@@ -131,7 +137,9 @@ JFactory* JFactorySet::GetFactory(const std::string& object_name, const std::str
 std::vector<JFactory*> JFactorySet::GetAllFactories() const {
     std::vector<JFactory*> results;
     for (auto p : mFactories) {
-        results.push_back(p.second);
+        if (p.second->GetLevel() == mLevel) {
+            results.push_back(p.second);
+        }
     }
     return results;
 }
@@ -189,12 +197,14 @@ void JFactorySet::Print() const
 {
     size_t max_len = 0;
     for (auto p: mFactories) {
+        if (p.second->GetLevel() != mLevel) continue;
         auto len = p.second->GetObjectName().length();
         if( len > max_len ) max_len = len;
     }
 
     max_len += 4;
     for (auto p: mFactories) {
+        if (p.second->GetLevel() != mLevel) continue;
         auto name = p.second->GetObjectName();
         auto tag = p.second->GetTag();
 
@@ -219,7 +229,9 @@ std::vector<JFactorySummary> JFactorySet::Summarize() const {
 
     std::vector<JFactorySummary> results;
     for (auto& pair : mFactories) {
+        if (pair.second->GetLevel() != mLevel) continue;
         results.push_back({
+            .level = pair.second->GetLevel(),
             .plugin_name = pair.second->GetPluginName(),
             .factory_name = pair.second->GetFactoryName(),
             .factory_tag = pair.second->GetTag(),

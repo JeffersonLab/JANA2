@@ -25,7 +25,6 @@ TEST_CASE("ExactlyOnceTests") {
     REQUIRE(processor->init_count == 0);
     REQUIRE(processor->finish_count == 0);
 
-    app.SetParameterValue("jana:legacy_mode", 1);
     app.Run(true);
 
     REQUIRE(source->open_count == 1);

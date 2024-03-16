@@ -7,6 +7,7 @@
 
 #include <JANA/JEvent.h>
 #include <JANA/Utils/JTypeInfo.h>
+#include <JANA/Utils/JEventLevel.h>
 #include <atomic>
 
 class JApplication;
@@ -151,6 +152,9 @@ public:
         return m_type_name;
     }
 
+    // Meant to be called by JANA
+    JEventLevel GetLevel() { return m_level; }
+
 
 protected:
 
@@ -182,28 +186,36 @@ protected:
 
     void SetEventsOrdered(bool receive_events_in_order) { m_receive_events_in_order = receive_events_in_order; }
 
-    // TODO: Stop getting mApplication this way, use GetApplication() instead, or pass directly to Init()
-    JApplication* mApplication = nullptr;
+    // Meant to be called by user in constructor
+    void SetLevel(JEventLevel level) { m_level = level; }
+
+
 
 private:
+    // Common to components
+    JEventLevel m_level = JEventLevel::Event;
+    JApplication* mApplication = nullptr;
     Status m_status;
     std::string m_plugin_name;
     std::string m_type_name;
-    std::string m_resource_name;
     std::once_flag m_init_flag;
     std::once_flag m_finish_flag;
+    std::mutex m_mutex;
+
+    // JEventProcessor-specific
+    std::string m_resource_name;
     std::atomic_ullong m_event_count;
     int32_t m_last_run_number = -1;
-    std::mutex m_mutex;
     bool m_receive_events_in_order = false;
+
 
     /// This is called by JApplication::Add(JEventProcessor*). There
     /// should be no need to call it from anywhere else.
     void SetJApplication(JApplication* app) { mApplication = app; }
 
     friend JComponentManager;
+
     /// SetPluginName is called by ComponentManager and should not be exposed to the user.
-    // TODO: Maybe we want JApplication to track the current plugin instead
     void SetPluginName(std::string plugin_name) { m_plugin_name = std::move(plugin_name); };
 
 };

@@ -29,7 +29,7 @@ private:
     const std::string m_name;     // Used for human understanding
     const bool m_is_parallel;     // Whether or not it is safe to parallelize
     const bool m_is_source;       // Whether or not this arrow should activate/drain the topology
-    const bool m_is_sink;         // Whether or not tnis arrow contributes to the final event count
+    bool m_is_sink;         // Whether or not tnis arrow contributes to the final event count
     JArrowMetrics m_metrics;      // Performance information accumulated over all workers
 
     mutable std::mutex m_arrow_mutex;  // Protects access to arrow properties
@@ -39,6 +39,7 @@ private:
 
     friend class JScheduler;
     std::vector<JArrow *> m_listeners;    // Downstream Arrows
+    friend class JTopologyBuilder;
     std::vector<PlaceRefBase*> m_places;  // Will eventually supplant m_listeners, m_chunksize
 
 protected:
@@ -55,6 +56,10 @@ public:
 
     void set_logger(JLogger logger) {
         m_logger = logger;
+    }
+
+    void set_is_sink(bool is_sink) {
+        m_is_sink = is_sink;
     }
 
     // TODO: Get rid of me

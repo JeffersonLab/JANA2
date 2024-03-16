@@ -19,7 +19,7 @@ private:
     size_t m_current_source = 0;
 
 public:
-    JEventSourceArrow(std::string name, std::vector<JEventSource*> sources, EventQueue* output_queue, std::shared_ptr<JEventPool> pool);
+    JEventSourceArrow(std::string name, std::vector<JEventSource*> sources, EventQueue* output_queue, JEventPool* pool);
     void initialize() final;
     void finalize() final;
 

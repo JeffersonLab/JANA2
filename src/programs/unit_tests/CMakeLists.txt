@@ -37,6 +37,8 @@ set(TEST_SOURCES
     JMultiFactoryTests.cc
     JPoolTests.cc
     ArrowTests.cc
+    MultiLevelTopologyTests.cc
+    UnfoldTests.cc
     )
 
 if (${USE_PODIO})

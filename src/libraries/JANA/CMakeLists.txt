@@ -41,6 +41,8 @@ set(JANA2_SOURCES
     Engine/JEventSourceArrow.h
     Engine/JBlockSourceArrow.h
     Engine/JBlockDisentanglerArrow.h
+    Engine/JEventMapArrow.h
+    Engine/JEventMapArrow.cc
     Engine/JPool.h
 
     Engine/JMailbox.h
@@ -244,6 +246,7 @@ file(GLOB jana_calibs_headers "Calibrations/*.h*")
 file(GLOB jana_cli_headers "CLI/*.h*")
 file(GLOB jana_compat_headers "Compatibility/*.h*")
 file(GLOB jana_podio_headers "Podio/*.h*")
+file(GLOB jana_omni_headers "Omni/*.h*")
 
 install(FILES ${jana_headers} DESTINATION include/JANA)
 install(FILES ${jana_engine_headers} DESTINATION include/JANA/Engine)
@@ -254,6 +257,7 @@ install(FILES ${jana_utils_headers} DESTINATION include/JANA/Utils)
 install(FILES ${jana_calibs_headers} DESTINATION include/JANA/Calibrations)
 install(FILES ${jana_cli_headers} DESTINATION include/JANA/CLI)
 install(FILES ${jana_compat_headers} DESTINATION include/JANA/Compatibility)
+install(FILES ${jana_omni_headers} DESTINATION include/JANA/Omni)
 
 if (${USE_PODIO})
     install(FILES ${jana_podio_headers} DESTINATION include/JANA/Podio)

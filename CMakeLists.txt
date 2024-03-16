@@ -108,12 +108,12 @@ if (${USE_XERCES})
 endif()
 
 if (${USE_ASAN})
-    add_compile_options(-fsanitize=address -g -O2)
+    add_compile_options(-fsanitize=address)
     add_link_options(-fsanitize=address)
 endif()
 
 if (${USE_TSAN})
-    add_compile_options(-fsanitize=thread -g -O2)
+    add_compile_options(-fsanitize=thread)
     add_link_options(-fsanitize=thread)
 endif()
 

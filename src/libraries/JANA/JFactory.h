@@ -7,6 +7,7 @@
 
 #include <JANA/JException.h>
 #include <JANA/Utils/JAny.h>
+#include <JANA/Utils/JEventLevel.h>
 #include <JANA/Utils/JCallGraphRecorder.h>
 
 #include <string>
@@ -146,10 +147,15 @@ public:
     virtual void Set(const std::vector<JObject *> &data) = 0;
     virtual void Insert(JObject *data) = 0;
 
+    // Meant to be called by user in constructor
+    void SetLevel(JEventLevel level) { mLevel = level; }
+
+    // Meant to be called by JANA
+    JEventLevel GetLevel() { return mLevel; }
+
+
 protected:
 
-    std::string mPluginName;
-    std::string mFactoryName;
     std::string mObjectName;
     std::string mTag;
     uint32_t mFlags = 0;
@@ -161,10 +167,15 @@ protected:
     mutable JCallGraphRecorder::JDataOrigin m_insert_origin = JCallGraphRecorder::ORIGIN_NOT_AVAILABLE; // (see note at top of JCallGraphRecorder.h)
 
     CreationStatus mCreationStatus = CreationStatus::NotCreatedYet;
-    mutable std::mutex mMutex;
 
     // Used to make sure Init is called only once
     std::once_flag mInitFlag;
+
+    // Common to components
+    JEventLevel mLevel = JEventLevel::Event;
+    std::string mPluginName;
+    std::string mFactoryName;
+    mutable std::mutex mMutex;
 };
 
 // Because C++ doesn't support templated virtual functions, we implement our own dispatch table, mUpcastVTable.
