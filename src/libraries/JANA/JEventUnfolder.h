@@ -21,6 +21,7 @@ private:
     int32_t m_last_run_number = -1;
     enum class Status { Uninitialized, Initialized, Finalized };
     Status m_status = Status::Uninitialized;
+    booll m_enable_simplified_callbacks = false;
 
     // JEventUnfolder-specific
     //
@@ -40,9 +41,15 @@ public:
 
     virtual void ChangeRun(const JEvent&) {};
 
-    virtual void Preprocess(const JEvent& /*parent*/) const {};
+    virtual void ChangeRun(uint64_t run_nr) {};
 
-    virtual Result Unfold(const JEvent& parent, JEvent& child, int item) = 0;
+    virtual void Preprocess(const JEvent& /*parent*/) const {};
+    
+    virtual void Preprocess(uint64_t /*parent_nr*/) const {};
+
+    virtual Result Unfold(const JEvent& parent, JEvent& child, int item_nr) {};
+
+    virtual Result Unfold(uint64_t parent_nr, uint64_t child_nr, int item_nr) {};
 
     virtual void EndRun() {};
 
@@ -89,6 +96,10 @@ public:
 
     void SetPluginName(std::string plugin_name) { m_plugin_name = std::move(plugin_name); };
 
+    // TODO: void SetInputCollectionNames()
+    // TODO: void SetOutputCollectionNames()
+    // TODO: void SetLogger()
+
 
  public:
     // Backend
@@ -96,6 +107,14 @@ public:
     void DoInit() {
         try {
             std::lock_guard<std::mutex> lock(m_mutex);
+            // TODO: Obtain overrides of collection names from param manager
+            
+            for (auto* parameter : m_parameters) {
+                parameter->Configure(*(m_app->GetJParameterManager()), m_prefix);
+            }
+            for (auto* service : m_services) {
+                service->Init(m_app);
+            }
             if (m_status == Status::Uninitialized) {
                 Init();
                 m_status = Status::Initialized;
@@ -110,7 +129,7 @@ public:
             throw ex;
         }
         catch (...) {
-            auto ex = JException("JEventUnfolder: Unknown exception in JEventUnfolder::Init()");
+            auto ex = JException("JEventUnfolder: Exception in Init()");
             ex.nested_exception = std::current_exception();
             ex.plugin_name = m_plugin_name;
             ex.component_name = m_type_name;
@@ -120,9 +139,18 @@ public:
 
     void DoPreprocess(const JEvent& parent) {
         try {
+            // TODO: We only want the mutex for checking the status
             std::lock_guard<std::mutex> lock(m_mutex);
             if (m_status == Status::Initialized) {
-                Preprocess(parent);
+                for (auto* input : m_inputs) {
+                    input->GetCollection(parent);
+                }
+                if (m_enable_simplified_callbacks) {
+                    Preprocess(parent.GetEventNumber());
+                }
+                else {
+                    Preprocess(parent);
+                }
             }
             else {
                 throw JException("JEventUnfolder: Component needs to be initialized and not finalized before Unfold can be called");
@@ -147,13 +175,43 @@ public:
             std::lock_guard<std::mutex> lock(m_mutex);
             if (m_status == Status::Initialized) {
                 if (!m_call_preprocess_upstream) {
-                    Preprocess(parent);
+                    if (m_enable_simplified_callbacks) {
+                        Preprocess(parent.GetEventNumber());
+                    }
+                    else {
+                        Preprocess(parent);
+                    }
                 }
                 if (m_last_run_number != parent.GetRunNumber()) {
-                    ChangeRun(parent);
+                    for (auto* resource : m_resources) {
+                        resource->ChangeRun(parent);
+                    }
+                    if (m_enable_simplified_callbacks) {
+                        ChangeRun(parent.GetRunNumber());
+                    }
+                    else {
+                        ChangeRun(parent);
+                    }
                     m_last_run_number = parent.GetRunNumber();
                 }
-                Result result = Unfold(parent, child, m_per_timeslice_event_count);
+                for (auto* input : m_inputs) {
+                    input->GetCollection(parent);
+                    // TODO: This requires that all inputs come from the parent.
+                    //       However, eventually we will want to support inputs 
+                    //       that come from the child.
+                }
+                for (auto* output : m_outputs) {
+                    output->Reset();
+                }
+                if (m_enable_simplified_callbacks) {
+                    Result result = Unfold(parent.GetEventNumber(), child.GetEventNumber(), m_per_timeslice_event_count);
+                }
+                else {
+                    Result result = Unfold(parent, child, m_per_timeslice_event_count);
+                }
+                for (auto* output : m_outputs) {
+                    output->InsertCollection(child);
+                }
                 m_per_timeslice_event_count += 1;
                 if (result == Result::Finished) {
                     m_per_timeslice_event_count = 0;
@@ -170,7 +228,7 @@ public:
             throw ex;
         }
         catch (...) {
-            auto ex = JException("Unknown exception in JEventUnfolder::DoUnfold()");
+            auto ex = JException("Exception in JEventUnfolder::DoUnfold()");
             ex.nested_exception = std::current_exception();
             ex.plugin_name = m_plugin_name;
             ex.component_name = m_type_name;

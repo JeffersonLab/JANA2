@@ -13,6 +13,23 @@ namespace omni {
 struct JComponent {
 protected:
 
+    struct ParameterBase;
+    struct ServiceBase;
+    struct ResourceBase;
+
+    std::vector<ParameterBase*> m_parameters;
+    std::vector<ServiceBase*> m_services;
+    std::vector<ResourceBase*> m_resources;
+    
+    std::string m_prefix;
+
+public:
+    void SetPrefix(std::string prefix) {
+        m_prefix = prefix;
+    }
+
+
+protected:
     struct ParameterBase {
         std::string m_name;
         std::string m_description;
@@ -27,11 +44,6 @@ protected:
     struct ResourceBase {
         virtual void ChangeRun(const JEvent& event) = 0;
     };
-
-
-    std::vector<ParameterBase*> m_parameters;
-    std::vector<ServiceBase*> m_services;
-    std::vector<ResourceBase*> m_resources;
 
 
     void RegisterParameter(ParameterBase* parameter) {
@@ -112,13 +124,7 @@ protected:
             auto it = fields.find(this->m_name);
             if (it != fields.end()) {
                 const auto& value_str = it->second;
-                if constexpr (10000 * JVersion::major
-                                + 100 * JVersion::minor
-                                + 1 * JVersion::patch < 20102) {
-                    m_data = JParameterManager::Parse<T>(value_str);
-                } else {
-                    JParameterManager::Parse(value_str, m_data);
-                }
+                JParameterManager::Parse(value_str, m_data);
             }
         }
     };
