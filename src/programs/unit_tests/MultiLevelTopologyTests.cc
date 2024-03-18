@@ -65,11 +65,12 @@ class Diagram {
         grid[r][c] = '[';
         grid[r][c+1] = ']';
     }
-
+/*
     void add_connection(size_t start_row, size_t start_col, size_t end_row, size_t end_col) {
         if (start_row == end_row) {
         }
     }
+*/
     void print() {
         for (const auto& line : grid) {
             std::cout << line << std::endl;
@@ -177,7 +178,6 @@ struct MultiLevelTopologyBuilder {
             // Skip lowest level
             if (i < 2) {
                 // Vertical connector to split and merge
-                Level lower = levels[i+1];
                 auto split_it = arrows.find({l, ComponentType::Split});
                 if (split_it != arrows.end()) {
                     std::cout << "                                          |";

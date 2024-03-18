@@ -4,11 +4,15 @@
 #pragma once
 
 #include <JANA/Utils/JEventLevel.h>
+#include <JANA/Omni/JComponent.h>
+#include <JANA/Omni/JHasInputs.h>
+#include <JANA/Omni/JHasOutputs.h>
+#include <JANA/Utils/JEventLevel.h>
 #include <JANA/JEvent.h>
 #include <mutex>
 
 class JApplication;
-class JEventUnfolder {
+class JEventUnfolder : public jana::omni::JComponent, public jana::omni::JHasInputs, public jana::omni::JHasOutputs {
 
 private:
     // Common to components... factor this out someday
@@ -21,7 +25,7 @@ private:
     int32_t m_last_run_number = -1;
     enum class Status { Uninitialized, Initialized, Finalized };
     Status m_status = Status::Uninitialized;
-    booll m_enable_simplified_callbacks = false;
+    bool m_enable_simplified_callbacks = false;
 
     // JEventUnfolder-specific
     //
@@ -38,18 +42,20 @@ public:
     enum class Result { KeepGoing, Finished };
 
     virtual void Init() {};
+    
+    virtual void Preprocess(const JEvent& /*parent*/) const {};
 
     virtual void ChangeRun(const JEvent&) {};
 
-    virtual void ChangeRun(uint64_t run_nr) {};
-
-    virtual void Preprocess(const JEvent& /*parent*/) const {};
+    virtual void ChangeRun(uint64_t /*run_nr*/) {};
     
-    virtual void Preprocess(uint64_t /*parent_nr*/) const {};
+    virtual Result Unfold(const JEvent& /*parent*/, JEvent& /*child*/, int /*item_nr*/) {
+        return Result::KeepGoing;
+    };
 
-    virtual Result Unfold(const JEvent& parent, JEvent& child, int item_nr) {};
-
-    virtual Result Unfold(uint64_t parent_nr, uint64_t child_nr, int item_nr) {};
+    virtual Result Unfold(uint64_t /*parent_nr*/, uint64_t /*child_nr*/, int /*item_nr*/) {
+        return Result::KeepGoing;
+    };
 
     virtual void EndRun() {};
 
@@ -110,10 +116,10 @@ public:
             // TODO: Obtain overrides of collection names from param manager
             
             for (auto* parameter : m_parameters) {
-                parameter->Configure(*(m_app->GetJParameterManager()), m_prefix);
+                parameter->Configure(*(m_application->GetJParameterManager()), m_prefix);
             }
             for (auto* service : m_services) {
-                service->Init(m_app);
+                service->Init(m_application);
             }
             if (m_status == Status::Uninitialized) {
                 Init();
@@ -145,12 +151,7 @@ public:
                 for (auto* input : m_inputs) {
                     input->GetCollection(parent);
                 }
-                if (m_enable_simplified_callbacks) {
-                    Preprocess(parent.GetEventNumber());
-                }
-                else {
-                    Preprocess(parent);
-                }
+                Preprocess(parent);
             }
             else {
                 throw JException("JEventUnfolder: Component needs to be initialized and not finalized before Unfold can be called");
@@ -175,10 +176,7 @@ public:
             std::lock_guard<std::mutex> lock(m_mutex);
             if (m_status == Status::Initialized) {
                 if (!m_call_preprocess_upstream) {
-                    if (m_enable_simplified_callbacks) {
-                        Preprocess(parent.GetEventNumber());
-                    }
-                    else {
+                    if (!m_enable_simplified_callbacks) {
                         Preprocess(parent);
                     }
                 }
@@ -203,11 +201,12 @@ public:
                 for (auto* output : m_outputs) {
                     output->Reset();
                 }
+                Result result;
                 if (m_enable_simplified_callbacks) {
-                    Result result = Unfold(parent.GetEventNumber(), child.GetEventNumber(), m_per_timeslice_event_count);
+                    result = Unfold(parent.GetEventNumber(), child.GetEventNumber(), m_per_timeslice_event_count);
                 }
                 else {
-                    Result result = Unfold(parent, child, m_per_timeslice_event_count);
+                    result = Unfold(parent, child, m_per_timeslice_event_count);
                 }
                 for (auto* output : m_outputs) {
                     output->InsertCollection(child);

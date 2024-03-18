@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include <JEvent.h>
+#include <JANA/JEvent.h>
 
 namespace jana {
 namespace omni {
@@ -12,7 +12,7 @@ namespace omni {
 
 struct JHasOutputs {
 protected:
-    class OutputBase;
+    struct OutputBase;
     std::vector<OutputBase*> m_outputs;
 
     void RegisterOutput(OutputBase* output) {
@@ -34,7 +34,7 @@ protected:
         std::vector<T*> m_data;
 
     public:
-        Output(JHasOutput* owner, std::string default_tag_name="") {
+        Output(JHasOutputs* owner, std::string default_tag_name="") {
             owner->RegisterOutput(this);
             this->collection_names.push_back(default_tag_name);
             this->type_name = JTypeInfo::demangle<T>();
@@ -42,9 +42,9 @@ protected:
 
         std::vector<T*>& operator()() { return m_data; }
 
-    private:
+    protected:
         void InsertCollection(JEvent& event) override {
-            event->Insert(m_data, this->collection_names[0]);
+            event.Insert(m_data, this->collection_names[0]);
         }
         void Reset() override { }
     };
@@ -58,7 +58,7 @@ protected:
 
     public:
 
-        PodioOutput(JHasOutput* owner, std::string default_collection_name="") {
+        PodioOutput(JHasOutputs* owner, std::string default_collection_name="") {
             owner->RegisterOutput(this);
             this->collection_names.push_back(default_collection_name);
             this->type_name = JTypeInfo::demangle<PodioT>();
@@ -66,7 +66,7 @@ protected:
 
         std::unique_ptr<typename PodioTypeMap<PodioT>::collection_t>& operator()() { return m_data; }
 
-    private:
+    protected:
         void InsertCollection(JEvent& event) override {
             event->InsertCollection(std::move(*m_data), this->collection_names[0]);
         }
@@ -83,7 +83,7 @@ protected:
 
     public:
 
-        VariadicPodioOutput(JHasOutput* owner, std::vector<std::string> default_collection_names={}) {
+        VariadicPodioOutput(JHasOutputs* owner, std::vector<std::string> default_collection_names={}) {
             owner->RegisterOutput(this);
             this->collection_names = default_collection_names;
             this->type_name = JTypeInfo::demangle<PodioT>();
@@ -92,7 +92,7 @@ protected:
 
         std::vector<std::unique_ptr<typename PodioTypeMap<PodioT>::collection_t>>& operator()() { return m_data; }
 
-    private:
+    protected:
         void InsertCollection(JEvent& event) override {
             if (m_data.size() != this->collection_names.size()) {
                 throw JException("JOmniFactory: VariadicPodioOutput InsertCollection failed: Declared %d collections, but provided %d.", this->collection_names.size(), m_data.size());
@@ -113,7 +113,7 @@ protected:
     };
 #endif
 
-}
+};
 
 
 

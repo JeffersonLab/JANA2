@@ -78,8 +78,7 @@ protected:
 
         const T& operator()() { return *m_data; }
 
-    private:
-        friend class JOmniFactory;
+    protected:
 
         void Configure(JParameterManager& parman, const std::string& prefix) override {
             parman.SetDefaultParameter(prefix + ":" + this->m_name, *m_data, this->m_description);
@@ -88,13 +87,7 @@ protected:
             auto it = fields.find(this->m_name);
             if (it != fields.end()) {
                 const auto& value_str = it->second;
-                if constexpr (10000 * JVersion::major
-                                + 100 * JVersion::minor
-                                + 1 * JVersion::patch < 20102) {
-                    *m_data = JParameterManager::Parse<T>(value_str);
-                } else {
-                    JParameterManager::Parse(value_str, *m_data);
-                }
+                JParameterManager::Parse(value_str, *m_data);
             }
         }
     };
@@ -105,7 +98,7 @@ protected:
         T m_data;
 
     public:
-        Parameter(JOmniFactory* owner, std::string name, T default_value, std::string description) {
+        Parameter(JComponent* owner, std::string name, T default_value, std::string description) {
             owner->RegisterParameter(this);
             this->m_name = name;
             this->m_description = description;
@@ -114,11 +107,10 @@ protected:
 
         const T& operator()() { return m_data; }
 
-    private:
-        friend class JOmniFactory;
+    protected:
 
         void Configure(JParameterManager& parman, const std::string& prefix) override {
-            parman.SetDefaultParameter(m_prefix + ":" + this->m_name, m_data, this->m_description);
+            parman.SetDefaultParameter(prefix + ":" + this->m_name, m_data, this->m_description);
         }
         void Configure(std::map<std::string, std::string> fields) override {
             auto it = fields.find(this->m_name);
@@ -137,7 +129,7 @@ protected:
 
     public:
 
-        Service(JOmniFactory* owner) {
+        Service(JComponent* owner) {
             owner->RegisterService(this);
         }
 
@@ -145,9 +137,7 @@ protected:
             return *m_data;
         }
 
-    private:
-
-        friend class JOmniFactory;
+    protected:
 
         void Init(JApplication* app) {
             m_data = app->GetService<ServiceT>();
@@ -164,14 +154,13 @@ protected:
 
     public:
 
-        Resource(JOmniFactory* owner, LambdaT lambda) : m_lambda(lambda) {
+        Resource(JComponent* owner, LambdaT lambda) : m_lambda(lambda) {
             owner->RegisterResource(this);
         };
 
         const ResourceT& operator()() { return m_data; }
 
-    private:
-        friend class JOmniFactory;
+    protected:
 
         void ChangeRun(const JEvent& event) {
             auto run_nr = event.GetRunNumber();
@@ -180,7 +169,7 @@ protected:
         }
     };
 
-}
+};
 
 
 

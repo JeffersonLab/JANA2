@@ -54,7 +54,7 @@ struct MyTimesliceUnfolder : public JEventUnfolder {
         init_called_count++;
     };
 
-    virtual void Preprocess(const JEvent& parent) const {
+    virtual void Preprocess(const JEvent& /*parent*/) const {
         preprocess_called_count++;
         // TODO: Are we going to need an omni unfolder?
         // TODO: Call protocluster factory

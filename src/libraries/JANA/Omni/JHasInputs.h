@@ -10,7 +10,7 @@ namespace omni {
 struct JHasInputs {
 protected:
 
-    class InputBase;
+    struct InputBase;
     std::vector<InputBase*> m_inputs;
 
     void RegisterInput(InputBase* input) {
@@ -45,11 +45,11 @@ protected:
         friend class JComponentT;
 
         void GetCollection(const JEvent& event) {
-            if (this->level == event->GetLevel()) {
+            if (this->level == event.GetLevel()) {
                 m_data = event.Get<T>(this->collection_names[0]);
             }
             else {
-                m_data = event.GetParent(level).Get<T>(this->collection_names[0]);
+                m_data = event.GetParent(level).template Get<T>(this->collection_names[0]);
             }
         }
     };
