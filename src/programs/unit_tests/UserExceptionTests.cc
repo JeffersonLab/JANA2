@@ -18,7 +18,7 @@ TEST_CASE("UserExceptionTests") {
 
         app.SetParameterValue("jana:engine", 1);
         app.Add(new FlakySource("open_excepting_source", &app, true, false));
-        app.Add(new FlakyProcessor(&app, false, false, false));
+        app.Add(new FlakyProcessor(false, false, false));
         REQUIRE_THROWS(app.Run(true));
     }
 
@@ -26,7 +26,7 @@ TEST_CASE("UserExceptionTests") {
 
        app.SetParameterValue("jana:engine", 1);
        app.Add(new FlakySource("open_excepting_source", &app, false, true));
-       app.Add(new FlakyProcessor(&app, false, false, false));
+       app.Add(new FlakyProcessor(false, false, false));
        REQUIRE_THROWS(app.Run(true));
    }
 
@@ -35,7 +35,7 @@ TEST_CASE("UserExceptionTests") {
 
         app.SetParameterValue("jana:engine", 1);
         app.Add(new FlakySource("open_excepting_source", &app, false, false));
-        app.Add(new FlakyProcessor(&app, true, false, false));
+        app.Add(new FlakyProcessor(true, false, false));
         REQUIRE_THROWS(app.Run(true));
     }
 
@@ -43,7 +43,7 @@ TEST_CASE("UserExceptionTests") {
 
        app.SetParameterValue("jana:engine", 1);
        app.Add(new FlakySource("open_excepting_source", &app, false, false));
-       app.Add(new FlakyProcessor(&app, false, true, false));
+       app.Add(new FlakyProcessor(false, true, false));
        REQUIRE_THROWS(app.Run(true));
    }
 
@@ -51,7 +51,7 @@ TEST_CASE("UserExceptionTests") {
 
        app.SetParameterValue("jana:engine", 1);
        app.Add(new FlakySource("open_excepting_source", &app, false, false));
-       app.Add(new FlakyProcessor(&app, false, false, true));
+       app.Add(new FlakyProcessor(false, false, true));
        REQUIRE_THROWS(app.Run(true));
    }
 
@@ -59,7 +59,7 @@ TEST_CASE("UserExceptionTests") {
 
         app.SetParameterValue("jana:engine", 0);
         app.Add(new FlakySource("open_excepting_source", &app, true, false));
-        app.Add(new FlakyProcessor(&app, false, false, false));
+        app.Add(new FlakyProcessor(false, false, false));
         REQUIRE_THROWS(app.Run(true));
     }
 
@@ -67,7 +67,7 @@ TEST_CASE("UserExceptionTests") {
 
         app.SetParameterValue("jana:engine", 0);
         app.Add(new FlakySource("open_excepting_source", &app, false, true));
-        app.Add(new FlakyProcessor(&app, false, false, false));
+        app.Add(new FlakyProcessor(false, false, false));
         REQUIRE_THROWS(app.Run(true));
     }
 
@@ -75,7 +75,7 @@ TEST_CASE("UserExceptionTests") {
 
         app.SetParameterValue("jana:engine", 0);
         app.Add(new FlakySource("open_excepting_source", &app, false, false));
-        app.Add(new FlakyProcessor(&app, true, false, false));
+        app.Add(new FlakyProcessor(true, false, false));
         REQUIRE_THROWS(app.Run(true));
     }
 
@@ -83,7 +83,7 @@ TEST_CASE("UserExceptionTests") {
 
         app.SetParameterValue("jana:engine", 0);
         app.Add(new FlakySource("open_excepting_source", &app, false, false));
-        app.Add(new FlakyProcessor(&app, false, true, false));
+        app.Add(new FlakyProcessor(false, true, false));
         REQUIRE_THROWS(app.Run(true));
     }
 
@@ -91,7 +91,7 @@ TEST_CASE("UserExceptionTests") {
 
         app.SetParameterValue("jana:engine", 0);
         app.Add(new FlakySource("open_excepting_source", &app, false, false));
-        app.Add(new FlakyProcessor(&app, false, false, true));
+        app.Add(new FlakyProcessor(false, false, true));
         REQUIRE_THROWS(app.Run(true));
     }
 }

@@ -77,8 +77,6 @@ struct CountingProcessor : public JEventProcessor {
     std::atomic_int finish_call_count {0};
 
 
-    CountingProcessor(JApplication* app) : JEventProcessor(app) {}
-
     void Init() override {}
 
     void Process(const std::shared_ptr<const JEvent>& /*event*/) override {

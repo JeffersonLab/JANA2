@@ -52,8 +52,6 @@ public:
 struct BarrierProcessor : public JEventProcessor {
 
 public:
-    explicit BarrierProcessor(JApplication* app) : JEventProcessor(app) {}
-
     void Process(const std::shared_ptr<const JEvent>& event) override {
 
         if (event->GetSequential()) {

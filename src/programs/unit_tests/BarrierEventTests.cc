@@ -8,7 +8,7 @@
 TEST_CASE("BarrierEventTests") {
 	SECTION("Basic Barrier") {
 		JApplication app;
-		app.Add(new BarrierProcessor(&app));
+		app.Add(new BarrierProcessor);
 		app.Add(new BarrierSource("dummy", &app));
 		app.SetParameterValue("nthreads", 4);
         app.SetParameterValue("jana:event_source_chunksize", 1);

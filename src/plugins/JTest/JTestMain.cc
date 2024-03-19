@@ -19,7 +19,7 @@ void InitPlugin(JApplication *app){
 
 	InitJANAPlugin(app);
     app->Add(new JTestParser("dummy_source", app));
-    app->Add(new JTestPlotter(app));
+    app->Add(new JTestPlotter);
 	app->Add(new JFactoryGeneratorT<JTestDisentangler>());
 	app->Add(new JFactoryGeneratorT<JTestTracker>());
 

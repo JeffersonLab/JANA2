@@ -49,9 +49,8 @@ struct FlakyProcessor : public JEventProcessor {
 
     bool init_excepts, process_excepts, finish_excepts;
 
-    FlakyProcessor(JApplication* app, bool init_excepts, bool process_excepts, bool finish_excepts)
-        : JEventProcessor(app)
-        , init_excepts(init_excepts)
+    FlakyProcessor(bool init_excepts, bool process_excepts, bool finish_excepts)
+        : init_excepts(init_excepts)
         , process_excepts(process_excepts)
         , finish_excepts(finish_excepts)
         {};
@@ -72,10 +71,6 @@ struct FlakyProcessor : public JEventProcessor {
         if (finish_excepts) {
             throw JException("Unable to finish!");
         }
-    }
-
-    std::string GetType(void) const override {
-        return JTypeInfo::demangle<decltype(*this)>();
     }
 };
 

@@ -14,7 +14,7 @@ TEST_CASE("ExactlyOnceTests") {
     JApplication app;
 
     auto source = new SimpleSource("SimpleSource", &app);
-    auto processor = new SimpleProcessor(&app);
+    auto processor = new SimpleProcessor();
 
     app.Add(source);
     app.Add(processor);

@@ -17,7 +17,7 @@ TEST_CASE("TerminationTests") {
     auto parms = new JParameterManager;
     // parms->SetParameter("log:debug","JScheduler,JArrowProcessingController,JWorker,JArrow");
     JApplication app(parms);
-    auto processor = new CountingProcessor(&app);
+    auto processor = new CountingProcessor();
     app.Add(processor);
     app.SetParameterValue("jana:extended_report", 0);
 

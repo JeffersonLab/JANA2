@@ -20,22 +20,18 @@ class JTestPlotter : public JEventProcessor {
 
 public:
 
-    JTestPlotter(JApplication* app) : JEventProcessor(app) {
-
-        SetTypeName(NAME_OF_THIS);
-
+    JTestPlotter() {
+        auto app = GetApplication();
         app->SetDefaultParameter("jtest:plotter_ms", m_cputime_ms, "Time spent during plotting");
         app->SetDefaultParameter("jtest:plotter_spread", m_cputime_spread, "Spread of time spent during plotting");
         app->SetDefaultParameter("jtest:plotter_bytes", m_write_bytes, "Bytes written during plotting");
         app->SetDefaultParameter("jtest:plotter_bytes_spread", m_write_spread, "Spread of bytes written during plotting");
+
+        SetTypeName(NAME_OF_THIS);
     }
 
-    virtual std::string GetType() const {
-        return JTypeInfo::demangle<decltype(*this)>();
-    }
 
-
-    void Process(const std::shared_ptr<const JEvent>& aEvent) {
+    void Process(const std::shared_ptr<const JEvent>& aEvent) override {
 
         // Read the track data
         auto td = aEvent->GetSingle<JTestTrackData>();
