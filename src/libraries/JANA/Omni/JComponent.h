@@ -17,16 +17,50 @@ protected:
     struct ServiceBase;
     struct ResourceBase;
 
+    enum class Status { Uninitialized, Initialized, Finalized };
+
     std::vector<ParameterBase*> m_parameters;
     std::vector<ServiceBase*> m_services;
     std::vector<ResourceBase*> m_resources;
     
+    JEventLevel m_level = JEventLevel::Event;
     std::string m_prefix;
+    std::string m_plugin_name;
+    std::string m_type_name;
+    Status m_status = Status::Uninitialized;
+    std::mutex m_mutex;
+    JApplication* m_app = nullptr;
 
 public:
+    // ---------------------
+    // Meant to be called by users, or alternatively from a Generator
+    // ---------------------
+    void SetLevel(JEventLevel level) { m_level = level; }
+
     void SetPrefix(std::string prefix) {
         m_prefix = prefix;
     }
+    /// For convenience, we provide a NAME_OF_THIS macro so that the user doesn't have to store the type name as a string, 
+    /// because that could get out of sync if automatic refactoring tools are used.
+    void SetTypeName(std::string type_name) { m_type_name = std::move(type_name); }
+
+    JApplication* GetApplication() const { return m_app; }
+
+
+    // ---------------------
+    // Meant to be called by JANA
+    // ---------------------
+    JEventLevel GetLevel() { return m_level; }
+
+    std::string GetPluginName() const { return m_plugin_name; }
+
+    void SetPluginName(std::string plugin_name) { m_plugin_name = std::move(plugin_name); };
+
+    std::string GetTypeName() const { return m_type_name; }
+
+    Status GetStatus() const { return m_status; }
+
+    void SetJApplication(JApplication* app) { m_app = app; }
 
 
 protected:
