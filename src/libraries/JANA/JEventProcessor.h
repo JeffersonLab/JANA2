@@ -8,12 +8,13 @@
 #include <JANA/JEvent.h>
 #include <JANA/Utils/JTypeInfo.h>
 #include <JANA/Utils/JEventLevel.h>
+#include <JANA/Omni/JComponent.h>
 #include <atomic>
 
 class JApplication;
 
 
-class JEventProcessor {
+class JEventProcessor : public jana::omni::JComponent {
 public:
 
     explicit JEventProcessor(JApplication* app = nullptr)
@@ -43,6 +44,12 @@ public:
 
     virtual void DoInitialize() {
         try {
+            for (auto* parameter : m_parameters) {
+                parameter->Configure(*(mApplication->GetJParameterManager()), m_prefix);
+            }
+            for (auto* service : m_services) {
+                service->Init(mApplication);
+            }
             std::call_once(m_init_flag, &JEventProcessor::Init, this);
             m_status = Status::Opened;
         }
@@ -71,6 +78,9 @@ public:
                 if (m_last_run_number != run_number) {
                     if (m_last_run_number != -1) {
                         EndRun();
+                    }
+                    for (auto* resource : m_resources) {
+                        resource->ChangeRun(*(e.get()));
                     }
                     m_last_run_number = run_number;
                     BeginRun(e);
