@@ -6,23 +6,19 @@
 #ifndef _JEventSource_h_
 #define _JEventSource_h_
 
-#include <JANA/JException.h>
-#include <JANA/Utils/JTypeInfo.h>
-#include <JANA/Utils/JEventLevel.h>
-#include <JANA/JEvent.h>
-#include <JANA/JFactoryGenerator.h>
 #include <JANA/Omni/JComponent.h>
+#include <JANA/Omni/JHasOutputs.h>
+#include <JANA/JEvent.h>
+#include <JANA/JException.h>
+#include <JANA/JFactoryGenerator.h>
 
-#include <string>
-#include <atomic>
-#include <memory>
 
 class JFactoryGenerator;
 class JApplication;
 class JFactory;
 
 
-class JEventSource : public jana::omni::JComponent {
+class JEventSource : public jana::omni::JComponent, public jana::omni::JHasOutputs {
 
 public:
 
@@ -221,6 +217,9 @@ public:
                     }
                     auto previous_origin = event->GetJCallGraphRecorder()->SetInsertDataOrigin( JCallGraphRecorder::ORIGIN_FROM_SOURCE);  // (see note at top of JCallGraphRecorder.h)
                     GetEvent(event);
+                    for (auto* output : m_outputs) {
+                        output->InsertCollection(*event);
+                    }
                     event->GetJCallGraphRecorder()->SetInsertDataOrigin( previous_origin );
                     m_event_count += 1;
                     return ReturnStatus::Success; // Don't reject this event!

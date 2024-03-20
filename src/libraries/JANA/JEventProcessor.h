@@ -6,15 +6,13 @@
 #define _JEventProcessor_h_
 
 #include <JANA/JEvent.h>
-#include <JANA/Utils/JTypeInfo.h>
-#include <JANA/Utils/JEventLevel.h>
 #include <JANA/Omni/JComponent.h>
-#include <atomic>
+#include <JANA/Omni/JHasInputs.h>
 
 class JApplication;
 
 
-class JEventProcessor : public jana::omni::JComponent {
+class JEventProcessor : public jana::omni::JComponent, public jana::omni::JHasInputs {
 public:
 
     JEventProcessor() = default;
@@ -82,6 +80,9 @@ public:
                     m_last_run_number = run_number;
                     BeginRun(e);
                 }
+            }
+            for (auto* input : m_inputs) {
+                input->GetCollection(*e);
             }
             Process(e);
             m_event_count += 1;
