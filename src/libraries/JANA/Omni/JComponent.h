@@ -4,7 +4,7 @@
 // Created by Nathan Brei
 
 #pragma once
-#include <JANA/JEvent.h>
+#include <JANA/JApplication.h>
 
 namespace jana {
 namespace omni {
@@ -77,7 +77,7 @@ protected:
     };
 
     struct ResourceBase {
-        virtual void ChangeRun(const JEvent& event) = 0;
+        virtual void ChangeRun(int32_t run_nr, JApplication* app) = 0;
     };
 
 
@@ -197,9 +197,8 @@ protected:
 
     protected:
 
-        void ChangeRun(const JEvent& event) {
-            auto run_nr = event.GetRunNumber();
-            std::shared_ptr<ServiceT> service = event.GetJApplication()->template GetService<ServiceT>();
+        void ChangeRun(int32_t run_nr, JApplication* app) override {
+            std::shared_ptr<ServiceT> service = app->template GetService<ServiceT>();
             m_data = m_lambda(service, run_nr);
         }
     };

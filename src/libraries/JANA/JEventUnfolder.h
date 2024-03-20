@@ -133,7 +133,7 @@ public:
                 }
                 if (m_last_run_number != parent.GetRunNumber()) {
                     for (auto* resource : m_resources) {
-                        resource->ChangeRun(parent);
+                        resource->ChangeRun(parent.GetRunNumber(), m_app);
                     }
                     if (m_enable_simplified_callbacks) {
                         ChangeRun(parent.GetRunNumber());

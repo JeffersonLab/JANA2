@@ -5,9 +5,9 @@
 #ifndef _JEventProcessor_h_
 #define _JEventProcessor_h_
 
-#include <JANA/JEvent.h>
 #include <JANA/Omni/JComponent.h>
 #include <JANA/Omni/JHasInputs.h>
+#include <JANA/JEvent.h>
 
 class JApplication;
 
@@ -75,7 +75,7 @@ public:
                         EndRun();
                     }
                     for (auto* resource : m_resources) {
-                        resource->ChangeRun(*(e.get()));
+                        resource->ChangeRun(e->GetRunNumber(), m_app);
                     }
                     m_last_run_number = run_number;
                     BeginRun(e);

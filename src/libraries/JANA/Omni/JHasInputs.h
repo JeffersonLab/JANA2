@@ -3,6 +3,7 @@
 // Created by Nathan Brei
 
 #pragma once
+#include <JANA/JEvent.h>
 
 namespace jana {
 namespace omni {
