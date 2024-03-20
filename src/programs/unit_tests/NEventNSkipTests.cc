@@ -100,9 +100,9 @@ TEST_CASE("JEventSourceArrow with multiple JEventSources") {
         app.Run(true);
 
         REQUIRE(app.GetExitCode() == (int) JApplication::ExitCode::Success);
-        REQUIRE(source1->GetStatus() == JEventSource::SourceStatus::Finished);
-        REQUIRE(source2->GetStatus() == JEventSource::SourceStatus::Finished);
-        REQUIRE(source3->GetStatus() == JEventSource::SourceStatus::Finished);
+        REQUIRE(source1->GetStatus() == JEventSource::Status::Finalized);
+        REQUIRE(source2->GetStatus() == JEventSource::Status::Finalized);
+        REQUIRE(source3->GetStatus() == JEventSource::Status::Finalized);
         REQUIRE(source1->open_count == 1);
         REQUIRE(source2->open_count == 1);
         REQUIRE(source3->open_count == 1);
@@ -126,9 +126,9 @@ TEST_CASE("JEventSourceArrow with multiple JEventSources") {
         app.Run(true);
 
         REQUIRE(app.GetExitCode() == (int) JApplication::ExitCode::Success);
-        REQUIRE(source1->GetStatus() == JEventSource::SourceStatus::Finished);
-        REQUIRE(source2->GetStatus() == JEventSource::SourceStatus::Finished);
-        REQUIRE(source3->GetStatus() == JEventSource::SourceStatus::Finished);
+        REQUIRE(source1->GetStatus() == JEventSource::Status::Finalized);
+        REQUIRE(source2->GetStatus() == JEventSource::Status::Finalized);
+        REQUIRE(source3->GetStatus() == JEventSource::Status::Finalized);
         REQUIRE(source1->open_count == 1);
         REQUIRE(source2->open_count == 1);
         REQUIRE(source3->open_count == 1);
@@ -154,9 +154,9 @@ TEST_CASE("JEventSourceArrow with multiple JEventSources") {
         app.Run(true);
 
         REQUIRE(app.GetExitCode() == (int) JApplication::ExitCode::Success);
-        REQUIRE(source1->GetStatus() == JEventSource::SourceStatus::Finished);
-        REQUIRE(source2->GetStatus() == JEventSource::SourceStatus::Finished);
-        REQUIRE(source3->GetStatus() == JEventSource::SourceStatus::Finished);
+        REQUIRE(source1->GetStatus() == JEventSource::Status::Finalized);
+        REQUIRE(source2->GetStatus() == JEventSource::Status::Finalized);
+        REQUIRE(source3->GetStatus() == JEventSource::Status::Finalized);
         REQUIRE(source1->open_count == 1);
         REQUIRE(source2->open_count == 1);
         REQUIRE(source3->open_count == 1);

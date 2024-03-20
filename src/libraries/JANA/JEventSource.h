@@ -11,42 +11,41 @@
 #include <JANA/Utils/JEventLevel.h>
 #include <JANA/JEvent.h>
 #include <JANA/JFactoryGenerator.h>
+#include <JANA/Omni/JComponent.h>
 
 #include <string>
 #include <atomic>
 #include <memory>
-#include <mutex>
 
 class JFactoryGenerator;
 class JApplication;
 class JFactory;
 
 
-class JEventSource {
+class JEventSource : public jana::omni::JComponent {
 
 public:
-
-    /// SourceStatus describes the current state of the EventSource
-    enum class SourceStatus { Unopened, Opened, Finished };
 
     /// ReturnStatus describes what happened the last time a GetEvent() was attempted.
     /// If GetEvent() reaches an error state, it should throw a JException instead.
     enum class ReturnStatus { Success, TryAgain, Finished };
 
+    // TODO: Deprecate me!
     /// The user is supposed to _throw_ RETURN_STATUS::kNO_MORE_EVENTS or kBUSY from GetEvent()
     enum class RETURN_STATUS { kSUCCESS, kNO_MORE_EVENTS, kBUSY, kTRY_AGAIN, kERROR, kUNKNOWN };
 
 
     // Constructor
-
+    // TODO: Deprecate me!
     explicit JEventSource(std::string resource_name, JApplication* app = nullptr)
-        : m_application(app)
-        , m_status(SourceStatus::Unopened)
-        , m_resource_name(std::move(resource_name))
+        : m_resource_name(std::move(resource_name))
         , m_factory_generator(nullptr)
         , m_event_count{0}
-        {}
+        {
+            m_app = app;
+        }
 
+    JEventSource() = default;
     virtual ~JEventSource() = default;
 
 
@@ -111,46 +110,72 @@ public:
 
     // Wrappers for calling Open and GetEvent in a safe way
 
-    virtual void DoInitialize() {
+    virtual void DoInitialize(bool with_lock=true) {
         try {
-            std::call_once(m_init_flag, &JEventSource::Open, this);
-            m_status = SourceStatus::Opened;
+            if (with_lock) {
+                std::lock_guard<std::mutex> lock(m_mutex);
+                if (m_status == Status::Uninitialized) {
+                    Open();
+                    m_status = Status::Initialized;
+                }
+            }
+            else {
+                if (m_status == Status::Uninitialized) {
+                    Open();
+                    m_status = Status::Initialized;
+                }
+            }
         }
         catch (JException& ex) {
             ex.plugin_name = m_plugin_name;
-            ex.component_name = GetType();
+            ex.component_name = m_type_name;
             throw ex;
         }
-        catch (std::runtime_error& e){
-            throw(JException(e.what()));
+        catch (std::exception& e){
+            auto ex = JException("Exception in JEventSource::Open(): %s", e.what());
+            ex.nested_exception = std::current_exception();
+            ex.plugin_name = m_plugin_name;
+            ex.component_name = m_type_name;
+            throw ex;
         }
         catch (...) {
             auto ex = JException("Unknown exception in JEventSource::Open()");
             ex.nested_exception = std::current_exception();
             ex.plugin_name = m_plugin_name;
-            ex.component_name = GetType();
+            ex.component_name = m_type_name;
             throw ex;
         }
     }
 
-    virtual void DoFinalize() {
+    virtual void DoFinalize(bool with_lock=true) {
         try {
-            std::call_once(m_close_flag, &JEventSource::Close, this);
-            m_status = SourceStatus::Finished;
+            if (with_lock) {
+                std::lock_guard<std::mutex> lock(m_mutex);
+                Close();
+                m_status = Status::Finalized;
+            }
+            else {
+                Close();
+                m_status = Status::Finalized;
+            }
         }
         catch (JException& ex) {
             ex.plugin_name = m_plugin_name;
-            ex.component_name = GetType();
+            ex.component_name = m_type_name;
             throw ex;
         }
-        catch (std::runtime_error& e){
-            throw(JException(e.what()));
+        catch (std::exception& e){
+            auto ex = JException("Exception in JEventSource::Close(): %s", e.what());
+            ex.nested_exception = std::current_exception();
+            ex.plugin_name = m_plugin_name;
+            ex.component_name = m_type_name;
+            throw ex;
         }
         catch (...) {
             auto ex = JException("Unknown exception in JEventSource::Close()");
             ex.nested_exception = std::current_exception();
             ex.plugin_name = m_plugin_name;
-            ex.component_name = GetType();
+            ex.component_name = m_type_name;
             throw ex;
         }
     }
@@ -162,11 +187,10 @@ public:
         auto last_evt_nr = m_nevents + m_nskip;
 
         try {
-            if (m_status == SourceStatus::Unopened) {
-                DoInitialize();
-                m_status = SourceStatus::Opened;
+            if (m_status == Status::Uninitialized) {
+                DoInitialize(false);
             }
-            if (m_status == SourceStatus::Opened) {
+            if (m_status == Status::Initialized) {
                 if (m_event_count < first_evt_nr) {
                     // Skip these events due to nskip
                     event->SetEventNumber(m_event_count); // Default event number to event count
@@ -177,13 +201,13 @@ public:
                     return ReturnStatus::TryAgain;  // Reject this event and recycle it
                 } else if (m_nevents != 0 && (m_event_count == last_evt_nr)) {
                     // Declare ourselves finished due to nevents
-                    DoFinalize(); // Close out the event source as soon as it declares itself finished
+                    DoFinalize(false); // Close out the event source as soon as it declares itself finished
                     return ReturnStatus::Finished;
                 } else {
                     // Actually emit an event.
                     // GetEvent() expects the following things from its incoming JEvent
                     event->SetEventNumber(m_event_count);
-                    event->SetJApplication(m_application);
+                    event->SetJApplication(m_app);
                     event->SetJEventSource(this);
                     event->SetSequential(false);
                     event->GetJCallGraphRecorder()->Reset();
@@ -201,7 +225,7 @@ public:
                     m_event_count += 1;
                     return ReturnStatus::Success; // Don't reject this event!
                 }
-            } else if (m_status == SourceStatus::Finished) {
+            } else if (m_status == Status::Finalized) {
                 return ReturnStatus::Finished;
             } else {
                 throw JException("Invalid ReturnStatus");
@@ -210,7 +234,7 @@ public:
         catch (RETURN_STATUS rs) {
 
             if (rs == RETURN_STATUS::kNO_MORE_EVENTS) {
-                DoFinalize();
+                DoFinalize(false);
                 return ReturnStatus::Finished;
             }
             else if (rs == RETURN_STATUS::kTRY_AGAIN || rs == RETURN_STATUS::kBUSY) {
@@ -219,7 +243,7 @@ public:
             else if (rs == RETURN_STATUS::kERROR || rs == RETURN_STATUS::kUNKNOWN) {
                 JException ex ("JEventSource threw RETURN_STATUS::kERROR or kUNKNOWN");
                 ex.plugin_name = m_plugin_name;
-                ex.component_name = GetType();
+                ex.component_name = m_type_name;
                 throw ex;
             }
             else {
@@ -228,17 +252,21 @@ public:
         }
         catch (JException& ex) {
             ex.plugin_name = m_plugin_name;
-            ex.component_name = GetType();
+            ex.component_name = m_type_name;
             throw ex;
         }
-        catch (std::runtime_error& e){
-            throw(JException(e.what()));
+        catch (std::exception& e){
+            auto ex = JException("Exception in JEventSource::GetEvent(): %s", e.what());
+            ex.nested_exception = std::current_exception();
+            ex.plugin_name = m_plugin_name;
+            ex.component_name = m_type_name;
+            throw ex;
         }
         catch (...) {
             auto ex = JException("Unknown exception in JEventSource::GetEvent()");
             ex.nested_exception = std::current_exception();
             ex.plugin_name = m_plugin_name;
-            ex.component_name = GetType();
+            ex.component_name = m_type_name;
             throw ex;
         }
     }
@@ -256,23 +284,20 @@ public:
 
 
     // Getters and setters
-
-    SourceStatus GetStatus() const { return m_status; }
-
-    std::string GetPluginName() const { return m_plugin_name; }
-
-    std::string GetTypeName() const { return m_type_name; }
+    
+    void SetResourceName(std::string resource_name) { m_resource_name = resource_name; }
 
     std::string GetResourceName() const { return m_resource_name; }
 
     uint64_t GetEventCount() const { return m_event_count; };
 
-    JApplication* GetApplication() const { return m_application; }
-
+    // TODO: Deprecate me
     virtual std::string GetType() const { return m_type_name; }
 
+    // TODO: Deprecate me
     std::string GetName() const { return m_resource_name; }
 
+    // TODO: Deprecate me
     virtual std::string GetVDescription() const {
         return "<description unavailable>";
     } ///< Optional for getting description via source rather than JEventSourceGenerator
@@ -282,15 +307,6 @@ public:
 
     uint64_t GetNSkip() { return m_nskip; }
     uint64_t GetNEvents() { return m_nevents; }
-
-
-    /// SetTypeName is intended as a replacement to GetType(), which should be less confusing for the
-    /// user. It should be called from the constructor. For convenience, we provide a
-    /// NAME_OF_THIS macro so that the user doesn't have to type the class name as a string, which may
-    /// get out of sync if automatic refactoring tools are used.
-
-    // Meant to be called by user
-    void SetTypeName(std::string type_name) { m_type_name = std::move(type_name); }
 
     // Meant to be called by user
     /// SetFactoryGenerator allows us to override the set of factories. This is 
@@ -304,18 +320,6 @@ public:
     /// which will hurt performance. Conceptually, FinishEvent isn't great, and so should be avoided when possible.
     void EnableFinishEvent() { m_enable_free_event = true; }
 
-    // Meant to be called by user in constructor
-    void SetLevel(JEventLevel level) { m_level = level; }
-
-    // Meant to be called by JANA
-    JEventLevel GetLevel() { return m_level; }
-
-    // Meant to be called by JANA
-    void SetApplication(JApplication* app) { m_application = app; }
-
-    // Meant to be called by JANA
-    void SetPluginName(std::string plugin_name) { m_plugin_name = std::move(plugin_name); };
-
     // Meant to be called by JANA
     void SetNEvents(uint64_t nevents) { m_nevents = nevents; };
 
@@ -324,17 +328,6 @@ public:
 
 
 private:
-    // Common to all components
-    JEventLevel m_level = JEventLevel::Event;
-    JApplication* m_application = nullptr;
-    std::atomic<SourceStatus> m_status;
-    std::string m_plugin_name;
-    std::string m_type_name;
-    std::once_flag m_init_flag;
-    std::once_flag m_close_flag;
-    std::mutex m_mutex;
-
-    // JEventSource-specific
     std::string m_resource_name;
     JFactoryGenerator* m_factory_generator = nullptr;
     std::atomic_ullong m_event_count {0};

@@ -11,13 +11,14 @@ namespace omni {
 
 
 struct JComponent {
+    enum class Status { Uninitialized, Initialized, Finalized };
+
 protected:
 
     struct ParameterBase;
     struct ServiceBase;
     struct ResourceBase;
 
-    enum class Status { Uninitialized, Initialized, Finalized };
 
     std::vector<ParameterBase*> m_parameters;
     std::vector<ServiceBase*> m_services;

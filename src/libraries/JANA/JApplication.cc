@@ -192,7 +192,7 @@ void JApplication::Run(bool wait_until_finished) {
         if (!m_draining_queues) {
             bool draining = true;
             for (auto evt_src : m_component_manager->get_evt_srces()) {
-                draining &= (evt_src->GetStatus() == JEventSource::SourceStatus::Finished);
+                draining &= (evt_src->GetStatus() == JEventSource::Status::Finalized);
             }
             m_draining_queues = draining;
         }

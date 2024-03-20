@@ -72,7 +72,7 @@ void JDebugProcessingController::run_worker() {
             m_stop_achieved = true;
             bool finish_achieved = true;
             for (auto evt_src: evt_srces) {
-                finish_achieved &= (evt_src->GetStatus() == JEventSource::SourceStatus::Finished);
+                finish_achieved &= (evt_src->GetStatus() == JEventSource::Status::Finalized);
             }
             m_finish_achieved = finish_achieved;
 
