@@ -23,12 +23,10 @@ struct MyCluster : public JObject {
 
 struct MyTimesliceSource : public JEventSource {
 
-    MyTimesliceSource(std::string source_name, JApplication *app) : JEventSource(source_name, app) { 
+    MyTimesliceSource() { 
         SetLevel(JEventLevel::Timeslice);
     }
 
-    static std::string GetDescription() { return "MyTimesliceSource"; }
-    std::string GetType(void) const override { return JTypeInfo::demangle<decltype(*this)>(); }
     void Open() override { }
 
     void GetEvent(std::shared_ptr<JEvent> event) override {

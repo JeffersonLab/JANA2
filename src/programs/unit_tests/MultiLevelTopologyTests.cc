@@ -446,7 +446,7 @@ TEST_CASE("TimeslicesTests") {
     parms->SetParameter("jana:nevents", "5");
     JApplication app(parms);
     
-    app.Add(new MyTimesliceSource("Dummy", &app));
+    app.Add(new MyTimesliceSource);
     app.Add(new MyTimesliceUnfolder);
     app.Add(new MyEventProcessor);
     app.Add(new JFactoryGeneratorT<MyProtoClusterFactory>);

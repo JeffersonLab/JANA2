@@ -14,9 +14,6 @@ namespace jeventprocessorsequentialtests {
 // Hence, we protect each Catch test with its own namespace.
 
 struct DummySource : public JEventSource {
-    DummySource() : JEventSource("DummySource", nullptr) {
-        SetTypeName("DummySource");
-    }
 
     // By default, this will emit empty events with event numbers 0,1,2...
     void GetEvent(std::shared_ptr<JEvent>) override {}

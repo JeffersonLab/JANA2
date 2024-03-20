@@ -15,8 +15,6 @@ struct NEventNSkipBoundedSource : public JEventSource {
     std::atomic_int open_count{0};
     std::atomic_int close_count{0};
 
-    NEventNSkipBoundedSource(std::string source_name, JApplication *app) : JEventSource(source_name, app) { }
-
     void GetEvent(std::shared_ptr<JEvent>) override {
         if (event_count >= event_bound) {
             throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
@@ -39,7 +37,7 @@ struct NEventNSkipBoundedSource : public JEventSource {
 TEST_CASE("NEventNSkipTests") {
 
     JApplication app;
-    auto source = new NEventNSkipBoundedSource("BoundedSource", &app);
+    auto source = new NEventNSkipBoundedSource();
     app.Add(source);
 
     SECTION("[1..100] @ nskip=0, nevents=0 => [1..100]") {
@@ -82,9 +80,9 @@ TEST_CASE("JEventSourceArrow with multiple JEventSources") {
     JParameterManager* params = new JParameterManager;
     params->SetParameter("log:debug","JArrow,JArrowProcessingController");
     JApplication app(params);
-    auto source1 = new NEventNSkipBoundedSource("BoundedSource1", &app);
-    auto source2 = new NEventNSkipBoundedSource("BoundedSource2", &app);
-    auto source3 = new NEventNSkipBoundedSource("BoundedSource3", &app);
+    auto source1 = new NEventNSkipBoundedSource();
+    auto source2 = new NEventNSkipBoundedSource();
+    auto source3 = new NEventNSkipBoundedSource();
     app.Add(source1);
     app.Add(source2);
     app.Add(source3);

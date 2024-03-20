@@ -15,23 +15,12 @@ struct SourceWithTimeout : public JEventSource {
     int first_event_delay_ms = 0;
     std::atomic_int event_count {0};
 
-    SourceWithTimeout(std::string source_name,
-                      JApplication *app,
-                      int timeout_on_event_nr=-1,
+    SourceWithTimeout(int timeout_on_event_nr=-1,
                       int first_delay_ms=0 )
 
-        : JEventSource(std::move(source_name), app)
-        , timeout_on_event_nr(timeout_on_event_nr)
+        : timeout_on_event_nr(timeout_on_event_nr)
         , first_event_delay_ms(first_delay_ms)
     { }
-
-    static std::string GetDescription() {
-        return "ComponentTests Fake Event Source";
-    }
-
-    std::string GetType() const override {
-        return JTypeInfo::demangle<decltype(*this)>();
-    }
 
     void Open() override {
     }

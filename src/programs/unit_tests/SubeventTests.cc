@@ -144,7 +144,6 @@ TEST_CASE("Basic subevent arrow functionality") {
     }
 
     struct SimpleSource : public JEventSource {
-        SimpleSource(std::string name) : JEventSource(name) {};
         void GetEvent(std::shared_ptr<JEvent> event) override {
             std::vector<MyInput*> inputs;
             inputs.push_back(new MyInput(22,3.6));
@@ -179,7 +178,7 @@ TEST_CASE("Basic subevent arrow functionality") {
 
         auto topology = app.GetService<JTopologyBuilder>()->create_empty();
         auto source_arrow = new JEventSourceArrow("simpleSource",
-                                                  {new SimpleSource("simpleSource")},
+                                                  {new SimpleSource},
                                                   &events_in,
                                                   topology->event_pool);
         auto proc_arrow = new JEventProcessorArrow("simpleProcessor", &events_out, nullptr, topology->event_pool);

@@ -12,9 +12,6 @@
 #include "catch.hpp"
 
 struct InterruptedSource : public JEventSource {
-    InterruptedSource(std::string source_name, JApplication* app) : JEventSource(source_name, app) {}
-    static std::string GetDescription() { return "ComponentTests Fake Event Source"; }
-    std::string GetType(void) const override { return JTypeInfo::demangle<decltype(*this)>(); }
     void Open() override { GetApplication()->Stop(); }
     void GetEvent(std::shared_ptr<JEvent>) override {}
 };
@@ -22,17 +19,6 @@ struct InterruptedSource : public JEventSource {
 struct BoundedSource : public JEventSource {
 
     uint64_t event_count = 0;
-
-    BoundedSource(std::string source_name, JApplication *app) : JEventSource(source_name, app)
-    { }
-
-    static std::string GetDescription() {
-        return "ComponentTests Fake Event Source";
-    }
-
-    std::string GetType(void) const override {
-        return JTypeInfo::demangle<decltype(*this)>();
-    }
 
     void Open() override {
     }
@@ -48,17 +34,6 @@ struct BoundedSource : public JEventSource {
 struct UnboundedSource : public JEventSource {
 
     uint64_t event_count = 0;
-
-    UnboundedSource(std::string source_name, JApplication *app) : JEventSource(source_name, app)
-    { }
-
-    static std::string GetDescription() {
-        return "ComponentTests Fake Event Source";
-    }
-
-    std::string GetType(void) const override {
-        return JTypeInfo::demangle<decltype(*this)>();
-    }
 
     void Open() override {
     }
