@@ -60,7 +60,7 @@ public:
 
     Status GetStatus() const { return m_status; }
 
-    void SetJApplication(JApplication* app) { m_app = app; }
+    void SetApplication(JApplication* app) { m_app = app; }
 
 
 protected:

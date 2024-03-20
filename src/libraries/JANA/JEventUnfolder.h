@@ -3,32 +3,17 @@
 
 #pragma once
 
-#include <JANA/Utils/JEventLevel.h>
 #include <JANA/Omni/JComponent.h>
 #include <JANA/Omni/JHasInputs.h>
 #include <JANA/Omni/JHasOutputs.h>
-#include <JANA/Utils/JEventLevel.h>
 #include <JANA/JEvent.h>
-#include <mutex>
 
 class JApplication;
 class JEventUnfolder : public jana::omni::JComponent, public jana::omni::JHasInputs, public jana::omni::JHasOutputs {
 
 private:
-    // Common to components... factor this out someday
-
-    JEventLevel m_level = JEventLevel::Event;
-    JApplication* m_application = nullptr;
-    std::string m_plugin_name;
-    std::string m_type_name;
-    std::mutex m_mutex;
     int32_t m_last_run_number = -1;
-    enum class Status { Uninitialized, Initialized, Finalized };
-    Status m_status = Status::Uninitialized;
     bool m_enable_simplified_callbacks = false;
-
-    // JEventUnfolder-specific
-    //
     JEventLevel m_child_level;
     int m_per_timeslice_event_count = 0;
     bool m_call_preprocess_upstream = true;
@@ -73,40 +58,6 @@ public:
     JEventLevel GetChildLevel() { return m_child_level; }
 
 
-    // Component setters (set by user)
-    
-    void SetTypeName(std::string type_name) { m_type_name = std::move(type_name); }
-
-    void SetLevel(JEventLevel level) { m_level = level; }
-
-
-    // Component getters
-    
-    JEventLevel GetLevel() { return m_level; }
-
-    JApplication* GetApplication() const { return m_application; }
-
-    std::string GetPluginName() const { return m_plugin_name; }
-
-    std::string GetTypeName() const { return m_type_name; }
-
-
- private:
-    // Component setters (set by JANA)
-
-    friend JComponentManager;
-
-    friend JApplication;
-    
-    void SetApplication(JApplication* app) { m_application = app; }
-
-    void SetPluginName(std::string plugin_name) { m_plugin_name = std::move(plugin_name); };
-
-    // TODO: void SetInputCollectionNames()
-    // TODO: void SetOutputCollectionNames()
-    // TODO: void SetLogger()
-
-
  public:
     // Backend
     
@@ -116,10 +67,10 @@ public:
             // TODO: Obtain overrides of collection names from param manager
             
             for (auto* parameter : m_parameters) {
-                parameter->Configure(*(m_application->GetJParameterManager()), m_prefix);
+                parameter->Configure(*(m_app->GetJParameterManager()), m_prefix);
             }
             for (auto* service : m_services) {
-                service->Init(m_application);
+                service->Init(m_app);
             }
             if (m_status == Status::Uninitialized) {
                 Init();
