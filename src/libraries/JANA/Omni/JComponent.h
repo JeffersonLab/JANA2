@@ -92,12 +92,15 @@ protected:
     void RegisterResource(ResourceBase* resource) {
         m_resources.push_back(resource);
     }
+public:
 
     void ConfigureAllParameters(std::map<std::string, std::string> fields) {
         for (auto* parameter : this->m_parameters) {
             parameter->Configure(fields);
         }
     }
+
+protected:
     template <typename T>
     class ParameterRef : public ParameterBase {
 

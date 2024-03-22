@@ -36,7 +36,7 @@ protected:
         std::vector<const T*> m_data;
 
     public:
-        Input(JHasInputs* owner, JEventLevel level=JEventLevel::Event, std::string default_tag="") {
+        Input(JHasInputs* owner, std::string default_tag="", JEventLevel level=JEventLevel::None) {
             owner->RegisterInput(this);
             this->collection_names.push_back(default_tag);
             this->type_name = JTypeInfo::demangle<T>();
@@ -49,7 +49,7 @@ protected:
         friend class JComponentT;
 
         void GetCollection(const JEvent& event) {
-            if (this->level == event.GetLevel()) {
+            if (this->level == event.GetLevel() || this->level == JEventLevel::None) {
                 m_data = event.Get<T>(this->collection_names[0]);
             }
             else {
@@ -66,7 +66,7 @@ protected:
 
     public:
 
-        PodioInput(JHasInputs* owner, JEventLevel level=JEventLevel::Event, std::string default_collection_name="") {
+        PodioInput(JHasInputs* owner, std::string default_collection_name="", JEventLevel level=JEventLevel::None) {
             owner->RegisterInput(this);
             this->collection_names.push_back(default_collection_name);
             this->type_name = JTypeInfo::demangle<PodioT>();
@@ -78,7 +78,7 @@ protected:
         }
 
         void GetCollection(const JEvent& event) {
-            if (this->level == event.GetLevel()) {
+            if (this->level == event.GetLevel() || this->level == JEventLevel::None) {
                 m_data = event.GetCollection<PodioT>(this->collection_names[0]);
             }
             else {
@@ -95,7 +95,7 @@ protected:
 
     public:
 
-        VariadicPodioInput(JHasInputs* owner, JEventLevel level=JEventLevel::Event, std::vector<std::string> default_names = {}) {
+        VariadicPodioInput(JHasInputs* owner, std::vector<std::string> default_names={}, JEventLevel level=JEventLevel::None) {
             owner->RegisterInput(this);
             this->collection_names = default_names;
             this->type_name = JTypeInfo::demangle<PodioT>();
@@ -109,7 +109,7 @@ protected:
 
         void GetCollection(const JEvent& event) {
             m_data.clear();
-            if (this->level == event.GetLevel()) {
+            if (this->level == event.GetLevel() || this->level == JEventLevel::None) {
                 for (auto& coll_name : this->collection_names) {
                     m_data.push_back(event.GetCollection<PodioT>(coll_name));
                 }

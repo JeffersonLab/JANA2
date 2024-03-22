@@ -9,7 +9,7 @@
 
 struct MyEventFactory : public JOmniFactory<MyEventFactory> {
 
-    PodioInput<ExampleCluster> protoclusters_in {this, JEventLevel::Event, "protoclusters"};
+    PodioInput<ExampleCluster> protoclusters_in {this, "protoclusters", JEventLevel::Event};
     PodioOutput<ExampleCluster> clusters_out {this, "clusters"};
 
 

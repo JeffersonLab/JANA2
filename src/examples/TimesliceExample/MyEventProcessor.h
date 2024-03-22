@@ -10,7 +10,7 @@
 
 struct MyEventProcessor : public JEventProcessor {
 
-    PodioInput<ExampleCluster> clusters_in {this, JEventLevel::Event, "clusters"};
+    PodioInput<ExampleCluster> clusters_in {this, "clusters", JEventLevel::Event};
 
     std::mutex m_mutex;
     
