@@ -137,13 +137,27 @@ void JPluginLoader::attach_plugins(JComponentManager* jcm) {
                         paths_checked << "Loaded successfully" << std::endl;
                         found_plugin = true;
                         break;
-                    } catch (...) {
-                        paths_checked << "Loading failure: " << dlerror() << std::endl;
-                        LOG_WARN(m_logger) << "Loading failure: " << dlerror() << LOG_END;
+                    } 
+                    catch (JException& e) {
+                        LOG_WARN(m_logger) << "Exception loading plugin: " << e << LOG_END;
+                        paths_checked << "JException: " << e.GetMessage() << std::endl;
+                        continue;
+                    }
+                    catch (std::exception& e) {
+                        LOG_WARN(m_logger) << "Exception loading plugin: " << e.what() << LOG_END;
+                        paths_checked << "Exception: " << e.what() << std::endl;
+                        continue;
+                    }
+                    catch (...) {
+                        LOG_WARN(m_logger) << "Unknown exception loading plugin" << LOG_END;
+                        paths_checked << "Unknown exception" << std::endl;
                         continue;
                     }
                 }
-                paths_checked << "File not found" << std::endl;
+                else {
+                    paths_checked << "File not found" << std::endl;
+
+                }
                 LOG_DEBUG(m_logger) << "Failed to attach '" << fullpath << "'" << LOG_END;
             }
 
@@ -189,7 +203,7 @@ void JPluginLoader::attach_plugin(std::string soname) {
     void* handle = dlopen(soname.c_str(), RTLD_LAZY | RTLD_GLOBAL | RTLD_NODELETE);
     if (!handle) {
         LOG_DEBUG(m_logger) << dlerror() << LOG_END;
-        throw "dlopen failed";
+        throw JException("Plugin dlopen() failed: %s", dlerror());
     }
 
     // Look for an InitPlugin symbol
