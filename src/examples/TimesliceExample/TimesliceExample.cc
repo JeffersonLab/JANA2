@@ -16,7 +16,7 @@ void InitPlugin(JApplication *app) {
 
     InitJANAPlugin(app);
 
-    app->Add(new MyTimesliceSource("Dummy"));
+    app->Add(new MyTimesliceSource);
     app->Add(new MyTimesliceUnfolder);
     app->Add(new MyEventProcessor);
 

@@ -11,6 +11,7 @@
  */
 
 #include <JANA/JMultifactory.h>
+#include <JANA/Omni/JComponent.h>
 #include <JANA/JEvent.h>
 
 #include <JANA/JLogger.h>
@@ -23,7 +24,7 @@
 struct EmptyConfig {};
 
 template <typename AlgoT, typename ConfigT=EmptyConfig>
-class JOmniFactory : public JMultifactory {
+class JOmniFactory : public JMultifactory, public jana::omni::JComponent {
 public:
 
     /// ========================
@@ -90,11 +91,11 @@ public:
         friend class JOmniFactory;
 
         void GetCollection(const JEvent& event) {
-            if (this->level == event->GetLevel()) {
+            if (this->level == event.GetLevel()) {
                 m_data = event.GetCollection<PodioT>(this->collection_names[0]);
             }
             else {
-                m_data = event.GetParent(this->level).GetCollection<PodioT>(this->collection_names[0]);
+                m_data = event.GetParent(this->level).template GetCollection<PodioT>(this->collection_names[0]);
             }
         }
     };
@@ -124,14 +125,14 @@ public:
 
         void GetCollection(const JEvent& event) {
             m_data.clear();
-            if (this->level == event->GetLevel()) {
+            if (this->level == event.GetLevel()) {
                 for (auto& coll_name : this->collection_names) {
-                    m_data.push_back(event.GetCollection<PodioT>(coll_name));
+                    m_data.push_back(event.template GetCollection<PodioT>(coll_name));
                 }
             }
             else {
                 for (auto& coll_name : this->collection_names) {
-                    m_data.push_back(event.GetParent(this->level).GetCollection<PodioT>(this->collection_names[0]));
+                    m_data.push_back(event.GetParent(this->level).template GetCollection<PodioT>(this->collection_names[0]));
                 }
             }
         }

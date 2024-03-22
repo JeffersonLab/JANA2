@@ -22,7 +22,6 @@ protected:
     }
 
     struct OutputBase {
-        JEventLevel level = JEventLevel::Event;
         std::string type_name;
         std::vector<std::string> collection_names;
         bool is_variadic = false;
