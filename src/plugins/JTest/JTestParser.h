@@ -28,18 +28,20 @@ class JTestParser : public JEventSource {
 
 public:
 
-    JTestParser(std::string source_name, JApplication* app) : JEventSource(source_name, app)
-    {
-        app->SetDefaultParameter("jtest:parser_ms", m_cputime_ms, "Time spent during parsing");
-        app->SetDefaultParameter("jtest:parser_spread", m_cputime_spread, "Spread of time spent during parsing");
-        app->SetDefaultParameter("jtest:parser_bytes", m_write_bytes, "Bytes written during parsing");
-        app->SetDefaultParameter("jtest:parser_bytes_spread", m_write_spread, "Spread of bytes written during parsing");
-
+    JTestParser() {
         SetTypeName(NAME_OF_THIS);
     }
 
     static std::string GetDescription() {
         return "JTest Fake Event Source";
+    }
+
+    void Open() {
+        auto app = GetApplication();
+        app->SetDefaultParameter("jtest:parser_ms", m_cputime_ms, "Time spent during parsing");
+        app->SetDefaultParameter("jtest:parser_spread", m_cputime_spread, "Spread of time spent during parsing");
+        app->SetDefaultParameter("jtest:parser_bytes", m_write_bytes, "Bytes written during parsing");
+        app->SetDefaultParameter("jtest:parser_bytes_spread", m_write_spread, "Spread of bytes written during parsing");
     }
 
     void GetEvent(std::shared_ptr<JEvent> event) {

@@ -21,15 +21,16 @@ class JTestPlotter : public JEventProcessor {
 public:
 
     JTestPlotter() {
+        SetTypeName(NAME_OF_THIS);
+    }
+
+    void Init() override {
         auto app = GetApplication();
         app->SetDefaultParameter("jtest:plotter_ms", m_cputime_ms, "Time spent during plotting");
         app->SetDefaultParameter("jtest:plotter_spread", m_cputime_spread, "Spread of time spent during plotting");
         app->SetDefaultParameter("jtest:plotter_bytes", m_write_bytes, "Bytes written during plotting");
         app->SetDefaultParameter("jtest:plotter_bytes_spread", m_write_spread, "Spread of bytes written during plotting");
-
-        SetTypeName(NAME_OF_THIS);
     }
-
 
     void Process(const std::shared_ptr<const JEvent>& aEvent) override {
 
