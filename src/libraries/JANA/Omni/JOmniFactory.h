@@ -10,23 +10,16 @@
  * which might be changed by user parameters.
  */
 
-#include "services/io/podio/datamodel_glue.h"
-#include <JANA/CLI/JVersion.h>
 #include <JANA/JMultifactory.h>
 #include <JANA/JEvent.h>
-/*
-// TODO: Integrate JANA logger with spdlog under the hood
-#include <spdlog/spdlog.h>
-#include "extensions/spdlog/SpdlogExtensions.h"
-#include "services/log/Log_service.h"
-*/
-#include <JLogger.h>
+
+#include <JANA/JLogger.h>
 #include <JANA/Services/JLoggingService.h>
 
 #include <string>
 #include <vector>
 
-using namespace eicrecon;
+
 struct EmptyConfig {};
 
 template <typename AlgoT, typename ConfigT=EmptyConfig>
@@ -65,11 +58,11 @@ public:
         friend class JOmniFactory;
 
         void GetCollection(const JEvent& event) {
-            if (this->level == event->GetLevel()) {
+            if (this->level == event.GetLevel()) {
                 m_data = event.Get<T>(this->collection_names[0]);
             }
             else {
-                m_data = event.GetParent(level).Get<T>(this->collection_names[0]);
+                m_data = event.GetParent(this->level).template Get<T>(this->collection_names[0]);
             }
         }
     };
@@ -315,13 +308,7 @@ public:
             auto it = fields.find(this->m_name);
             if (it != fields.end()) {
                 const auto& value_str = it->second;
-                if constexpr (10000 * JVersion::major
-                              + 100 * JVersion::minor
-                                + 1 * JVersion::patch < 20102) {
-                    *m_data = JParameterManager::Parse<T>(value_str);
-                } else {
-                    JParameterManager::Parse(value_str, *m_data);
-                }
+                JParameterManager::Parse(value_str, *m_data);
             }
         }
     };
@@ -345,19 +332,13 @@ public:
         friend class JOmniFactory;
 
         void Configure(JParameterManager& parman, const std::string& prefix) override {
-            parman.SetDefaultParameter(m_prefix + ":" + this->m_name, m_data, this->m_description);
+            parman.SetDefaultParameter(prefix + ":" + this->m_name, m_data, this->m_description);
         }
         void Configure(std::map<std::string, std::string> fields) override {
             auto it = fields.find(this->m_name);
             if (it != fields.end()) {
                 const auto& value_str = it->second;
-                if constexpr (10000 * JVersion::major
-                              + 100 * JVersion::minor
-                                + 1 * JVersion::patch < 20102) {
-                    m_data = JParameterManager::Parse<T>(value_str);
-                } else {
-                    JParameterManager::Parse(value_str, m_data);
-                }
+                JParameterManager::Parse(value_str, m_data);
             }
         }
     };
@@ -500,6 +481,10 @@ public:
         return variadic_collection_count;
     }
 
+    inline void SetPrefix(std::string prefix) {
+        m_prefix = prefix;
+    }
+
     inline void PreInit(std::string tag,
                         std::vector<std::string> default_input_collection_names,
                         std::vector<std::string> default_output_collection_names ) {
@@ -522,7 +507,8 @@ public:
         size_t variadic_input_collection_count = FindVariadicCollectionCount(m_inputs.size(), variadic_input_count, default_input_collection_names.size(), true);
 
         // Set input collection names
-        for (size_t i = 0; auto* input : m_inputs) {
+        size_t i = 0;
+        for (auto* input : m_inputs) {
             input->collection_names.clear();
             if (input->is_variadic) {
                 for (size_t j = 0; j<(variadic_input_collection_count/variadic_input_count); ++j) {
@@ -544,7 +530,8 @@ public:
         size_t variadic_output_collection_count = FindVariadicCollectionCount(m_outputs.size(), variadic_output_count, default_output_collection_names.size(), true);
 
         // Set output collection names and create corresponding helper factories
-        for (size_t i = 0; auto* output : m_outputs) {
+        i = 0;
+        for (auto* output : m_outputs) {
             output->collection_names.clear();
             if (output->is_variadic) {
                 for (size_t j = 0; j<(variadic_output_collection_count/variadic_output_count); ++j) {
@@ -593,7 +580,7 @@ public:
             for (auto* output : m_outputs) {
                 output->Reset();
             }
-            static_cast<AlgoT*>(this)->Process(event->GetRunNumber(), event->GetEventNumber());
+            static_cast<AlgoT*>(this)->Execute(event->GetRunNumber(), event->GetEventNumber());
             for (auto* output : m_outputs) {
                 output->SetCollection(*this);
             }

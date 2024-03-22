@@ -74,7 +74,7 @@ public:
     void AddWiring(std::string tag,
                    std::vector<std::string> default_input_tags,
                    std::vector<std::string> default_output_tags,
-                   std::map<std::string, std::string> config_params) {
+                   std::map<std::string, std::string> config_params={}) {
 
         // Create throwaway factory so we can populate its config using our map<string,string>.
         FactoryT factory;
