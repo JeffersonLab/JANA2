@@ -26,6 +26,7 @@ datatypes :
       - double y      // y-coordinate
       - double z      // z-coordinate
       - double energy // measured energy deposit
+      - uint64_t time   // ticks since start of timeframe
 
   ExampleCluster :
     Description : "Cluster"

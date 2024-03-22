@@ -102,8 +102,8 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
         // PODIO
 #ifdef JANA2_HAVE_PODIO
         std::vector<std::string> GetAllCollectionNames() const;
-        const podio::CollectionBase* GetCollectionBase(std::string name) const;
-        template <typename T> const typename JFactoryPodioT<T>::CollectionT* GetCollection(std::string name) const;
+        const podio::CollectionBase* GetCollectionBase(std::string name, bool throw_on_missing=true) const;
+        template <typename T> const typename JFactoryPodioT<T>::CollectionT* GetCollection(std::string name, bool throw_on_missing=true) const;
         template <typename T> JFactoryPodioT<T>* InsertCollection(typename JFactoryPodioT<T>::CollectionT&& collection, std::string name);
         template <typename T> JFactoryPodioT<T>* InsertCollectionAlreadyInFrame(const typename JFactoryPodioT<T>::CollectionT* collection, std::string name);
 #endif
@@ -196,7 +196,7 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 
         // Hierarchical stuff
         std::vector<std::pair<JEventLevel, std::shared_ptr<JEvent>*>> mParents;
-        std::atomic_size_t mReferenceCount {1};
+        std::atomic_int mReferenceCount {1};
 
 
 
@@ -500,7 +500,7 @@ inline std::vector<std::string> JEvent::GetAllCollectionNames() const {
     return keys;
 }
 
-inline const podio::CollectionBase* JEvent::GetCollectionBase(std::string name, bool throw_on_missing=true) const {
+inline const podio::CollectionBase* JEvent::GetCollectionBase(std::string name, bool throw_on_missing) const {
     auto it = mPodioFactories.find(name);
     if (it == mPodioFactories.end()) {
         if (throw_on_missing) {
@@ -522,7 +522,7 @@ inline const podio::CollectionBase* JEvent::GetCollectionBase(std::string name, 
 }
 
 template <typename T>
-const typename JFactoryPodioT<T>::CollectionT* JEvent::GetCollection(std::string name, bool throw_on_missing=true) const {
+const typename JFactoryPodioT<T>::CollectionT* JEvent::GetCollection(std::string name, bool throw_on_missing) const {
     JFactoryT<T>* factory = GetFactory<T>(name, throw_on_missing);
     if (factory == nullptr) {
         return nullptr;

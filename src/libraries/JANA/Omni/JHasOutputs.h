@@ -6,6 +6,8 @@
 
 #include <JANA/JEvent.h>
 
+template <typename T> struct PodioTypeMap;
+
 namespace jana {
 namespace omni {
 
@@ -52,7 +54,7 @@ protected:
 
 #ifdef JANA2_HAVE_PODIO
     template <typename PodioT>
-    class PodioOutput : public EventOutputBase {
+    class PodioOutput : public OutputBase {
 
         std::unique_ptr<typename PodioTypeMap<PodioT>::collection_t> m_data;
 
@@ -68,7 +70,7 @@ protected:
 
     protected:
         void InsertCollection(JEvent& event) override {
-            event->InsertCollection(std::move(*m_data), this->collection_names[0]);
+            event.InsertCollection<PodioT>(std::move(*m_data), this->collection_names[0]);
         }
         void Reset() override {
             m_data = std::move(std::make_unique<typename PodioTypeMap<PodioT>::collection_t>());
@@ -77,7 +79,7 @@ protected:
 
 
     template <typename PodioT>
-    class VariadicPodioOutput : public EventOutputBase {
+    class VariadicPodioOutput : public OutputBase {
 
         std::vector<std::unique_ptr<typename PodioTypeMap<PodioT>::collection_t>> m_data;
 
@@ -95,12 +97,12 @@ protected:
     protected:
         void InsertCollection(JEvent& event) override {
             if (m_data.size() != this->collection_names.size()) {
-                throw JException("JOmniFactory: VariadicPodioOutput InsertCollection failed: Declared %d collections, but provided %d.", this->collection_names.size(), m_data.size());
+                throw JException("VariadicPodioOutput InsertCollection failed: Declared %d collections, but provided %d.", this->collection_names.size(), m_data.size());
                 // Otherwise this leads to a PODIO segfault
             }
             size_t i = 0;
             for (auto& coll_name : this->collection_names) {
-                event->InsertCollection(std::move(*(m_data[i++])), coll_name);
+                event.InsertCollection(std::move(*(m_data[i++])), coll_name);
             }
         }
 

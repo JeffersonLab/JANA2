@@ -5,8 +5,11 @@
 #pragma once
 #include <JANA/JEvent.h>
 
+template <typename T> struct PodioTypeMap;
+
 namespace jana {
 namespace omni {
+
 
 struct JHasInputs {
 protected:
@@ -27,13 +30,13 @@ protected:
         virtual void GetCollection(const JEvent& event) = 0;
     };
 
-    template <typename T, typename ComponentT>
+    template <typename T>
     class Input : public InputBase {
 
         std::vector<const T*> m_data;
 
     public:
-        Input(ComponentT* owner, JEventLevel level=JEventLevel::Event, std::string default_tag="") {
+        Input(JHasInputs* owner, JEventLevel level=JEventLevel::Event, std::string default_tag="") {
             owner->RegisterInput(this);
             this->collection_names.push_back(default_tag);
             this->type_name = JTypeInfo::demangle<T>();
@@ -63,7 +66,7 @@ protected:
 
     public:
 
-        PodioInput(JOmniFactory* owner, JEventLevel level=JEventLevel::Event, std::string default_collection_name="") {
+        PodioInput(JHasInputs* owner, JEventLevel level=JEventLevel::Event, std::string default_collection_name="") {
             owner->RegisterInput(this);
             this->collection_names.push_back(default_collection_name);
             this->type_name = JTypeInfo::demangle<PodioT>();
@@ -74,11 +77,8 @@ protected:
             return m_data;
         }
 
-    private:
-        friend class JOmniFactory;
-
         void GetCollection(const JEvent& event) {
-            if (this->level == event->GetLevel()) {
+            if (this->level == event.GetLevel()) {
                 m_data = event.GetCollection<PodioT>(this->collection_names[0]);
             }
             else {
@@ -95,7 +95,7 @@ protected:
 
     public:
 
-        VariadicPodioInput(JOmniFactory* owner, JEventLevel level=JEventLevel::Event, std::vector<std::string> default_names = {}) {
+        VariadicPodioInput(JHasInputs* owner, JEventLevel level=JEventLevel::Event, std::vector<std::string> default_names = {}) {
             owner->RegisterInput(this);
             this->collection_names = default_names;
             this->type_name = JTypeInfo::demangle<PodioT>();
@@ -107,12 +107,9 @@ protected:
             return m_data;
         }
 
-    private:
-        friend class JOmniFactory;
-
         void GetCollection(const JEvent& event) {
             m_data.clear();
-            if (this->level == event->GetLevel()) {
+            if (this->level == event.GetLevel()) {
                 for (auto& coll_name : this->collection_names) {
                     m_data.push_back(event.GetCollection<PodioT>(coll_name));
                 }
