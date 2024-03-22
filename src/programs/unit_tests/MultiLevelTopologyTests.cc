@@ -323,15 +323,6 @@ struct MultiLevelTopologyBuilder {
 };
 
 
-//            Source    Filter    Map       Split     Merge     Reduce
-// 
-// Timeslice   [] -----> [] -----> [] -----> []        [] -----> []
-//                                          /            \
-//                                      ---                ---
-//                                    /                        \
-// Event                           [] -------------------------> []
-
-
 
 TEST_CASE("MultiLevelTopologyBuilderTests") {
     MultiLevelTopologyBuilder b;
