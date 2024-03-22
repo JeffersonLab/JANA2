@@ -45,7 +45,12 @@ public:
     /// because that could get out of sync if automatic refactoring tools are used.
     void SetTypeName(std::string type_name) { m_type_name = std::move(type_name); }
 
-    JApplication* GetApplication() const { return m_app; }
+    JApplication* GetApplication() const { 
+        if (m_app == nullptr) {
+            throw JException("JApplication pointer hasn't been provided yet! Hint: Component configuration should happen inside Init(), not in the constructor.");
+        }
+        return m_app; 
+    }
 
 
     // ---------------------
