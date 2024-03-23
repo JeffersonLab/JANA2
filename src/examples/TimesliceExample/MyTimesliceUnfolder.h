@@ -14,6 +14,7 @@ struct MyTimesliceUnfolder : public JEventUnfolder {
 
 
     MyTimesliceUnfolder() {
+        SetTypeName(NAME_OF_THIS);
         SetParentLevel(JEventLevel::Timeslice);
         SetChildLevel(JEventLevel::Event);
     }

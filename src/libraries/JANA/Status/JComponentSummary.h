@@ -29,12 +29,14 @@ struct JEventProcessorSummary {
     JEventLevel level;
     std::string plugin_name;
     std::string type_name;
+    std::string prefix;
 };
 
 struct JEventUnfolderSummary {
     JEventLevel level;
     std::string plugin_name;
     std::string type_name;
+    std::string prefix;
 };
 
 struct JComponentSummary {

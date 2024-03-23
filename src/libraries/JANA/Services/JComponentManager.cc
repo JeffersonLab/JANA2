@@ -207,16 +207,25 @@ JComponentSummary JComponentManager::get_component_summary() {
 
     // Event sources
     for (auto * src : m_evt_srces) {
-        result.event_sources.push_back({.level=src->GetLevel(), .plugin_name=src->GetPluginName(), .type_name=src->GetType(), .source_name=src->GetName()});
+        result.event_sources.push_back({.level=src->GetLevel(), 
+                                        .plugin_name=src->GetPluginName(), 
+                                        .type_name=src->GetType(), 
+                                        .source_name=src->GetName()});
     }
 
     // Event processors
     for (auto * evt_proc : m_evt_procs) {
-        result.event_processors.push_back({.level=evt_proc->GetLevel(), .plugin_name = evt_proc->GetPluginName(), .type_name=evt_proc->GetTypeName()});
+        result.event_processors.push_back({.level=evt_proc->GetLevel(), 
+                                           .plugin_name = evt_proc->GetPluginName(), 
+                                           .type_name=evt_proc->GetTypeName(), 
+                                           .prefix=evt_proc->GetPrefix()});
     }
 
     for (auto * unfolder : m_unfolders) {
-        result.event_unfolders.push_back({.level=unfolder->GetLevel(), .plugin_name = unfolder->GetPluginName(), .type_name=unfolder->GetTypeName()});
+        result.event_unfolders.push_back({.level=unfolder->GetLevel(), 
+                                          .plugin_name = unfolder->GetPluginName(), 
+                                          .type_name=unfolder->GetTypeName(), 
+                                          .prefix=unfolder->GetPrefix()});
     }
 
     // Factories
