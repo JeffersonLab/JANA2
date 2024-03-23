@@ -155,7 +155,7 @@ struct TestFac : public JFactoryPodioT<ExampleCluster> {
     void Init() override {
         init_called = true;
     }
-    void Process(const std::shared_ptr<const JEvent>& event) override {
+    void Process(const std::shared_ptr<const JEvent>&) override {
         ExampleClusterCollection c;
         c.push_back(ExampleCluster(16.0));
         SetCollection(std::move(c));
@@ -188,7 +188,7 @@ struct TestFac : public JFactoryPodioT<ExampleCluster> {
     TestFac() {
         SetTag("clusters");
     }
-    void Process(const std::shared_ptr<const JEvent>& event) override {
+    void Process(const std::shared_ptr<const JEvent>&) override {
         Insert(new ExampleCluster(16.0));
     }
 };
