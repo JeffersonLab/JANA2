@@ -29,8 +29,14 @@ void InitPlugin(JApplication *app){
 //------------------------------------------------------------------
 JEventProcessorJANADOT::JEventProcessorJANADOT() {
     SetTypeName("JEventProcessorJANADOT");
+}
 
-    auto app = japp;
+//------------------------------------------------------------------
+// init
+//------------------------------------------------------------------
+void JEventProcessorJANADOT::Init() {
+
+    auto app = GetApplication();
 	app->SetDefaultParameter("janadot:output_file", m_output_filename, "Output filename for call graph visualization");
 	app->SetDefaultParameter("janadot:weight_edges", m_weight_edges, "Use edge weight (penwidth) to represent the percent of time spent in call");
 
@@ -95,13 +101,6 @@ JEventProcessorJANADOT::JEventProcessorJANADOT() {
 		}
 
 	}catch(...){}
-}
-
-//------------------------------------------------------------------
-// init
-//------------------------------------------------------------------
-void JEventProcessorJANADOT::Init() {
-    // Nothing to do here
 }
 
 //------------------------------------------------------------------
