@@ -8,6 +8,8 @@
 #include "MyTimesliceFactory.h"
 #include "MyEventFactory.h"
 
+#include <JANA/Omni/JOmniFactoryGeneratorT.h>
+
 #include <JANA/JApplication.h>
 
 
@@ -20,8 +22,8 @@ void InitPlugin(JApplication *app) {
     app->Add(new MyTimesliceUnfolder);
     app->Add(new MyEventProcessor);
 
-    app->Add(new JFactoryGeneratorT<MyTimesliceFactory>());
-    app->Add(new JFactoryGeneratorT<MyEventFactory>());
+    app->Add(new JOmniFactoryGeneratorT<MyTimesliceFactory>("protoclusterizer", {"hits"}, {"ts_protoclusters"}, app));
+    app->Add(new JOmniFactoryGeneratorT<MyEventFactory>("clusterizer", {"evt_protoclusters"}, {"clusters"}, app));
 
     app->SetParameterValue("jana:extended_report", 0);
 }

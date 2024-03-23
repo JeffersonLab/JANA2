@@ -56,6 +56,8 @@ public:
     // ---------------------
     // Meant to be called by JANA
     // ---------------------
+    std::string GetPrefix() { return m_prefix; }
+
     JEventLevel GetLevel() { return m_level; }
 
     std::string GetPluginName() const { return m_plugin_name; }

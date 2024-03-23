@@ -172,6 +172,7 @@ void JMultifactory::DeclarePodioOutput(std::string tag, bool owns_data) {
     helper->SetTag(std::move(tag));
     helper->SetPluginName(m_plugin_name);
     helper->SetFactoryName(mFactoryName);
+    helper->SetLevel(m_level);
     mHelpers.Add(helper);
     mNeedPodio = true;
 }
