@@ -23,6 +23,13 @@ struct MyEventProcessor : public JEventProcessor {
 
         std::lock_guard<std::mutex> guard(m_mutex);
 
+        std::ostringstream oss;
+        oss << "----------------------" << std::endl;
+        oss << "MyEventProcessor: Event " << event->GetEventNumber() << ": ";
+        clusters_in()->print(oss);
+        oss << "----------------------" << std::endl;
+        LOG << oss.str() << LOG_END;
+
     }
 };
 

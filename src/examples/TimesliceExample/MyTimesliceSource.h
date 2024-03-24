@@ -9,7 +9,7 @@
 
 struct MyTimesliceSource : public JEventSource {
 
-    PodioOutput<ExampleHit> hits_out {this, "hits"};
+    PodioOutput<ExampleHit> m_hits_out {this, "hits"};
 
     MyTimesliceSource() {
         SetLevel(JEventLevel::Timeslice);
@@ -18,15 +18,19 @@ struct MyTimesliceSource : public JEventSource {
 
     void Open() override { }
 
-    void GetEvent(std::shared_ptr<JEvent> /*event*/) override {
+    void GetEvent(std::shared_ptr<JEvent> event) override {
 
-        /*
-        auto evt = event->GetEventNumber();
-        auto hits = std::make_unique<ExampleHitCollection>();
-        hits.push_back(ExampleHit(22));
-        hits.push_back(ExampleHit(23));
-        hits.push_back(ExampleHit(24));
-        event->InsertCollection(hits);
-        */
+        auto ts_nr = event->GetEventNumber();
+        auto hits_out  = std::make_unique<ExampleHitCollection>();
+        hits_out->push_back(ExampleHit(0, 0, 0, 0, ts_nr, 0));
+
+        std::ostringstream oss;
+        oss << "----------------------" << std::endl;
+        oss << "MyTimesliceSource: Timeslice " << event->GetEventNumber() << std::endl;
+        hits_out->print(oss);
+        oss << "----------------------" << std::endl;
+        LOG << oss.str() << LOG_END;
+
+        m_hits_out() = std::move(hits_out);
     }
 };

@@ -22,7 +22,14 @@ struct MyTimesliceFactory : public JOmniFactory<MyTimesliceFactory> {
     void ChangeRun(int32_t /*run_nr*/) {
     }
 
-    void Execute(int32_t run_nr, uint64_t evt_nr) {
+    void Execute(int32_t /*run_nr*/, uint64_t /*evt_nr*/) {
+
+        auto cs = std::make_unique<ExampleClusterCollection>();
+        auto hit = hits_in()->at(0);
+        auto cluster = MutableExampleCluster(hit.energy());
+        cluster.addHits(hit);
+        cs->push_back(cluster);
+        clusters_out() = std::move(cs);
     }
 };
 

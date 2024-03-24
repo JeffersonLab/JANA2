@@ -9,9 +9,10 @@
 
 struct MyTimesliceUnfolder : public JEventUnfolder {
 
-    PodioInput<ExampleCluster> timeslice_clusters_in {this, "protoclusters", JEventLevel::Timeslice};
-    PodioOutput<ExampleCluster> event_clusters_out {this, "protoclusters"};
+    PodioInput<ExampleCluster> m_timeslice_clusters_in {this, "ts_protoclusters", JEventLevel::Timeslice};
+    PodioOutput<ExampleCluster> m_event_clusters_out {this, "evt_protoclusters"};
 
+    size_t next_time_bucket = 0;
 
     MyTimesliceUnfolder() {
         SetTypeName(NAME_OF_THIS);
@@ -20,28 +21,24 @@ struct MyTimesliceUnfolder : public JEventUnfolder {
     }
 
 
-    Result Unfold(const JEvent& /*parent*/, JEvent& /*child*/, int /*item*/) override {
-        /*
-        auto protos = parent.Get<MyCluster>("protos");
+    Result Unfold(const JEvent& parent, JEvent& child, int iter) override {
 
-        child.SetEventNumber(parent.GetEventNumber()*10 + item);
-        LOG << "Unfolding parent=" << parent.GetEventNumber() << ", child=" << child.GetEventNumber() << ", item=" << item << LOG_END;
+        // For now, a one-to-one relationship between timeslices and events
 
-        std::vector<MyCluster*> child_protos;
-        for (auto proto: protos) {
-            if (true) {
-                // TODO: condition
-                child_protos.push_back(proto);
-            }
-        }
-        // child->Insert(child_protos, "event_protos")->SetFactoryFlag(JFactoryFlag::NOT_OBJECT_OWNER);
+        auto event_clusters_out = std::make_unique<ExampleClusterCollection>();
+        event_clusters_out->setSubsetCollection(true);
+        event_clusters_out->push_back(m_timeslice_clusters_in()->at(0));
 
-        if (item == 3) {
-            jout << "Unfold found item 3, finishing join" << jendl;
-            return Result::Finished;
-        }
-        */
-        return Result::KeepGoing;
+        std::ostringstream oss;
+        oss << "----------------------" << std::endl;
+        oss << "MyTimesliceUnfolder: Timeslice " << parent.GetEventNumber() <<  ", Event " << child.GetEventNumber() << std::endl;
+        event_clusters_out->print(oss);
+        oss << "----------------------" << std::endl;
+        LOG << oss.str() << LOG_END;
+
+        m_event_clusters_out() = std::move(event_clusters_out);
+
+        return Result::Finished;
     }
 };
 
