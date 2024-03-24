@@ -40,7 +40,7 @@ void JEventProcessorJANARATE::Init(void)
 	Ncalls = 0;
 	prescale = 100;
 
-	mApplication->GetJParameterManager()->SetDefaultParameter(
+	GetApplication()->GetJParameterManager()->SetDefaultParameter(
 		"RATE:PRESCALE", 
 		prescale, 
 		"Prescale entries in rate tree by this");
