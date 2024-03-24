@@ -19,6 +19,9 @@ JArrowTopology::~JArrowTopology() {
     for (auto pool : pools) {
         delete pool;
     }
+    if (event_pool != nullptr) {
+        delete event_pool;
+    }
 }
 
 
