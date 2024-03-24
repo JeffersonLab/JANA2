@@ -18,8 +18,10 @@ void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
             mStatus = Status::Unprocessed;
         }
         catch (JException& ex) {
-            ex.plugin_name = mPluginName;
-            ex.component_name = mFactoryName;
+            if (ex.plugin_name.empty()) ex.plugin_name = mPluginName;
+            if (ex.component_name.empty()) ex.component_name = mFactoryName;
+            if (ex.factory_name.empty()) ex.factory_name = mFactoryName;
+            if (ex.factory_tag.empty()) ex.factory_tag = mTag;
             throw ex;
         }
         catch (...) {
@@ -27,24 +29,62 @@ void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
             ex.nested_exception = std::current_exception();
             ex.plugin_name = mPluginName;
             ex.component_name = mFactoryName;
+            ex.factory_name = mFactoryName;
+            ex.factory_tag = mTag;
             throw ex;
         }
     }
     if (mStatus == Status::Unprocessed) {
-        if (mPreviousRunNumber == -1) {
-            // This is the very first run
-            ChangeRun(event);
-            BeginRun(event);
-            mPreviousRunNumber = run_number;
+        try {
+            if (mPreviousRunNumber == -1) {
+                // This is the very first run
+                ChangeRun(event);
+                BeginRun(event);
+                mPreviousRunNumber = run_number;
+            }
+            else if (mPreviousRunNumber != run_number) {
+                // This is a later run, and it has changed
+                EndRun();
+                ChangeRun(event);
+                BeginRun(event);
+                mPreviousRunNumber = run_number;
+            }
         }
-        else if (mPreviousRunNumber != run_number) {
-            // This is a later run, and it has changed
-            EndRun();
-            ChangeRun(event);
-            BeginRun(event);
-            mPreviousRunNumber = run_number;
+        catch (JException& ex) {
+            if (ex.plugin_name.empty()) ex.plugin_name = mPluginName;
+            if (ex.component_name.empty()) ex.component_name = mFactoryName;
+            if (ex.factory_name.empty()) ex.factory_name = mFactoryName;
+            if (ex.factory_tag.empty()) ex.factory_tag = mTag;
+            throw ex;
         }
-        Process(event);
+        catch (...) {
+            auto ex = JException("Unknown exception in JFactoryT::BeginRun/ChangeRun/EndRun()");
+            ex.nested_exception = std::current_exception();
+            ex.plugin_name = mPluginName;
+            ex.component_name = mFactoryName;
+            ex.factory_name = mFactoryName;
+            ex.factory_tag = mTag;
+            throw ex;
+        }
+        try {
+            Process(event);
+        }
+        catch (JException& ex) {
+            if (ex.plugin_name.empty()) ex.plugin_name = mPluginName;
+            if (ex.component_name.empty()) ex.component_name = mFactoryName;
+            if (ex.factory_name.empty()) ex.factory_name = mFactoryName;
+            if (ex.factory_tag.empty()) ex.factory_tag = mTag;
+            throw ex;
+        }
+        catch (...) {
+            auto ex = JException("Unknown exception in JFactoryT::Process()");
+            ex.nested_exception = std::current_exception();
+            ex.plugin_name = mPluginName;
+            ex.component_name = mFactoryName;
+            ex.factory_name = mFactoryName;
+            ex.factory_tag = mTag;
+            throw ex;
+        }
         mStatus = Status::Processed;
         mCreationStatus = CreationStatus::Created;
     }

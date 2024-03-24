@@ -20,6 +20,12 @@ inline std::ostream& operator<<(std::ostream& os, JEventLevel level) {
     return os;
 }
 
+inline std::string toString(JEventLevel level) {
+    std::stringstream ss;
+    ss << level;
+    return ss.str();
+}
+
 
 inline JEventLevel next_level(JEventLevel current_level) {
     switch (current_level) {

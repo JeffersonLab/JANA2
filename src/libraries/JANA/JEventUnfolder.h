@@ -110,7 +110,9 @@ public:
         }
         catch (JException& ex) {
             ex.plugin_name = m_plugin_name;
-            ex.component_name = m_type_name;
+            if (ex.component_name.empty()) {
+                ex.component_name = m_type_name;
+            }
             throw ex;
         }
         catch (...) {
@@ -174,7 +176,9 @@ public:
         }
         catch (JException& ex) {
             ex.plugin_name = m_plugin_name;
-            ex.component_name = m_type_name;
+            if (ex.component_name.empty()) {
+                ex.component_name = m_type_name;
+            }
             throw ex;
         }
         catch (...) {

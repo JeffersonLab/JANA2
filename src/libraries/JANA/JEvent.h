@@ -221,6 +221,7 @@ inline JFactoryT<T>* JEvent::Insert(T* item, const std::string& tag) const {
     if (factory == nullptr) {
         factory = new JFactoryT<T>;
         factory->SetTag(tag);
+        factory->SetLevel(mFactorySet->GetLevel());
         mFactorySet->Add(factory);
     }
     factory->Insert(item);
@@ -240,6 +241,7 @@ inline JFactoryT<T>* JEvent::Insert(const std::vector<T*>& items, const std::str
     if (factory == nullptr) {
         factory = new JFactoryT<T>;
         factory->SetTag(tag);
+        factory->SetLevel(mFactorySet->GetLevel());
         mFactorySet->Add(factory);
     }
     for (T* item : items) {
@@ -564,6 +566,7 @@ JFactoryPodioT<T>* JEvent::InsertCollectionAlreadyInFrame(const typename JFactor
     if (factory == nullptr) {
         factory = new JFactoryPodioT<T>();
         factory->SetTag(name);
+        factory->SetLevel(GetLevel());
         mFactorySet->Add(factory);
 
         auto it = mPodioFactories.find(name);
@@ -577,7 +580,7 @@ JFactoryPodioT<T>* JEvent::InsertCollectionAlreadyInFrame(const typename JFactor
     if (factory->GetStatus() == JFactory::Status::Inserted  ||
         factory->GetStatus() == JFactory::Status::Processed) {
 
-        throw JException("PODIO collections can only be inserted once, but factory already has data");
+        throw JException("PODIO collections can only be inserted once, but factory with tag '%s' already has data", name.c_str());
     }
 
     // There's a chance that some user already added to the event's JFactorySet a

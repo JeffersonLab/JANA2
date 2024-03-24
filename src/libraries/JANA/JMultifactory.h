@@ -141,6 +141,8 @@ void JMultifactory::DeclareOutput(std::string tag, bool owns_data) {
     helper->SetPluginName(m_plugin_name);
     helper->SetFactoryName(mFactoryName);
     helper->SetTag(std::move(tag));
+    helper->SetLevel(GetLevel());
+    mHelpers.SetLevel(GetLevel());
     mHelpers.Add(helper);
 }
 
@@ -148,7 +150,10 @@ template <typename T>
 void JMultifactory::SetData(std::string tag, std::vector<T*> data) {
     JFactoryT<T>* helper = mHelpers.GetFactory<T>(tag);
     if (helper == nullptr) {
-        throw JException("JMultifactory: Attempting to SetData() without corresponding DeclareOutput()");
+        auto ex = JException("JMultifactory: Attempting to SetData() without corresponding DeclareOutput()");
+        ex.factory_name = m_type_name;
+        ex.factory_tag = m_prefix;
+        throw ex;
     }
 #ifdef JANA2_HAVE_PODIO
     // This may or may not be a Podio factory. We find out if it is, and if so, set the frame before calling Set().
@@ -172,7 +177,8 @@ void JMultifactory::DeclarePodioOutput(std::string tag, bool owns_data) {
     helper->SetTag(std::move(tag));
     helper->SetPluginName(m_plugin_name);
     helper->SetFactoryName(mFactoryName);
-    helper->SetLevel(m_level);
+    helper->SetLevel(GetLevel());
+    mHelpers.SetLevel(GetLevel());
     mHelpers.Add(helper);
     mNeedPodio = true;
 }
@@ -181,11 +187,17 @@ template <typename T>
 void JMultifactory::SetCollection(std::string tag, typename JFactoryPodioT<T>::CollectionT&& collection) {
     JFactoryT<T>* helper = mHelpers.GetFactory<T>(tag);
     if (helper == nullptr) {
-        throw JException("JMultifactory: Attempting to SetData() without corresponding DeclareOutput()");
+        auto ex = JException("JMultifactory: Attempting to SetData() without corresponding DeclareOutput()");
+        ex.factory_name = m_type_name;
+        ex.factory_tag = m_prefix;
+        throw ex;
     }
     auto* typed = dynamic_cast<JFactoryPodioT<T>*>(helper);
     if (typed == nullptr) {
-        throw JException("JMultifactory: Helper needs to be a JFactoryPodioT (this shouldn't be reachable)");
+        auto ex = JException("JMultifactory: Helper needs to be a JFactoryPodioT (this shouldn't be reachable)");
+        ex.factory_name = m_type_name;
+        ex.factory_tag = m_prefix;
+        throw ex;
     }
 
     typed->SetFrame(mPodioFrame);
@@ -196,11 +208,17 @@ template <typename T>
 void JMultifactory::SetCollection(std::string tag, std::unique_ptr<typename JFactoryPodioT<T>::CollectionT> collection) {
     JFactoryT<T>* helper = mHelpers.GetFactory<T>(tag);
     if (helper == nullptr) {
-        throw JException("JMultifactory: Attempting to SetData() without corresponding DeclareOutput()");
+        auto ex = JException("JMultifactory: Attempting to SetData() without corresponding DeclareOutput()");
+        ex.factory_name = m_type_name;
+        ex.factory_tag = m_prefix;
+        throw ex;
     }
     auto* typed = dynamic_cast<JFactoryPodioT<T>*>(helper);
     if (typed == nullptr) {
-        throw JException("JMultifactory: Helper needs to be a JFactoryPodioT (this shouldn't be reachable)");
+        auto ex = JException("JMultifactory: Helper needs to be a JFactoryPodioT (this shouldn't be reachable)");
+        ex.factory_name = m_type_name;
+        ex.factory_tag = m_prefix;
+        throw ex;
     }
 
     typed->SetFrame(mPodioFrame);
