@@ -21,6 +21,7 @@ struct MyEventProcessor : public JEventProcessor {
     PodioInput<ExampleCluster> m_evt_clusters_in {this, "clusters", JEventLevel::Event};
 
     Input<podio::Frame> m_evt_frame_in {this, "", JEventLevel::Event};
+    Input<podio::Frame> m_ts_frame_in {this, "", JEventLevel::Timeslice};
 
     std::unique_ptr<podio::ROOTFrameWriter> m_writer = nullptr;
 
@@ -41,6 +42,9 @@ struct MyEventProcessor : public JEventProcessor {
 
         std::lock_guard<std::mutex> guard(m_mutex);
         m_writer->writeFrame(*(m_evt_frame_in().at(0)), "events");
+        if (event->GetEventIndex() == 0) {
+            m_writer->writeFrame(*(m_ts_frame_in().at(0)), "timeslices");
+        }
 
         LOG << "MyEventProcessor: Event " << event->GetEventNumber() << " from Timeslice " << ts_nr
             << "\nTimeslice-level hits\n"

@@ -15,7 +15,7 @@ private:
     int32_t m_last_run_number = -1;
     bool m_enable_simplified_callbacks = false;
     JEventLevel m_child_level;
-    int m_per_timeslice_event_count = 0;
+    int m_child_number = 0;
     bool m_call_preprocess_upstream = true;
 
 
@@ -155,18 +155,19 @@ public:
                     output->Reset();
                 }
                 Result result;
+                child.SetEventIndex(m_child_number);
                 if (m_enable_simplified_callbacks) {
-                    result = Unfold(parent.GetEventNumber(), child.GetEventNumber(), m_per_timeslice_event_count);
+                    result = Unfold(parent.GetEventNumber(), child.GetEventNumber(), m_child_number);
                 }
                 else {
-                    result = Unfold(parent, child, m_per_timeslice_event_count);
+                    result = Unfold(parent, child, m_child_number);
                 }
                 for (auto* output : m_outputs) {
                     output->InsertCollection(child);
                 }
-                m_per_timeslice_event_count += 1;
+                m_child_number += 1;
                 if (result == Result::Finished) {
-                    m_per_timeslice_event_count = 0;
+                    m_child_number = 0;
                 }
                 return result;
             }
