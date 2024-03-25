@@ -5,6 +5,7 @@
 
 #include <DatamodelGlue.h>
 #include <JANA/JEventSource.h>
+#include "CollectionTabulators.h"
 
 
 struct MyTimesliceSource : public JEventSource {
@@ -22,14 +23,15 @@ struct MyTimesliceSource : public JEventSource {
 
         auto ts_nr = event->GetEventNumber();
         auto hits_out  = std::make_unique<ExampleHitCollection>();
-        hits_out->push_back(ExampleHit(0, 0, 0, 0, ts_nr, 0));
 
-        std::ostringstream oss;
-        oss << "----------------------" << std::endl;
-        oss << "MyTimesliceSource: Timeslice " << event->GetEventNumber() << std::endl;
-        hits_out->print(oss);
-        oss << "----------------------" << std::endl;
-        LOG << oss.str() << LOG_END;
+        // ExampleHit(unsigned long long cellID, double x, double y, double z, double energy, std::uint64_t time);
+        hits_out->push_back(ExampleHit(ts_nr, 0, 22, 22, 22, 0));
+        hits_out->push_back(ExampleHit(ts_nr, 0, 49, 49, 49, 1));
+        hits_out->push_back(ExampleHit(ts_nr, 0, 7.6, 7.6, 7.6, 2));
+
+        LOG << "MyTimesliceSource: Timeslice " << event->GetEventNumber() << "\n"
+            << TabulateHits(hits_out.get())
+            << LOG_END;
 
         m_hits_out() = std::move(hits_out);
     }

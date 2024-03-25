@@ -6,6 +6,7 @@
 #include <DatamodelGlue.h>
 
 #include <JANA/JEventUnfolder.h>
+#include "CollectionTabulators.h"
 
 struct MyTimesliceUnfolder : public JEventUnfolder {
 
@@ -21,24 +22,29 @@ struct MyTimesliceUnfolder : public JEventUnfolder {
     }
 
 
-    Result Unfold(const JEvent& parent, JEvent& child, int iter) override {
+    Result Unfold(const JEvent& parent, JEvent& child, int iteration) override {
+
+        auto timeslice_nr = parent.GetEventNumber();
+        size_t event_nr = 100*timeslice_nr + iteration;
+        child.SetEventNumber(event_nr);
 
         // For now, a one-to-one relationship between timeslices and events
 
         auto event_clusters_out = std::make_unique<ExampleClusterCollection>();
         event_clusters_out->setSubsetCollection(true);
-        event_clusters_out->push_back(m_timeslice_clusters_in()->at(0));
+        event_clusters_out->push_back(m_timeslice_clusters_in()->at(iteration));
 
-        std::ostringstream oss;
-        oss << "----------------------" << std::endl;
-        oss << "MyTimesliceUnfolder: Timeslice " << parent.GetEventNumber() <<  ", Event " << child.GetEventNumber() << std::endl;
-        event_clusters_out->print(oss);
-        oss << "----------------------" << std::endl;
-        LOG << oss.str() << LOG_END;
+        LOG << "MyTimesliceUnfolder: Timeslice " << parent.GetEventNumber() 
+            <<  ", Event " << child.GetEventNumber()
+            << "\nTimeslice clusters in:\n"
+            << TabulateClusters(m_timeslice_clusters_in())
+            << "\nEvent clusters out:\n"
+            << TabulateClusters(event_clusters_out.get())
+            << LOG_END;
 
         m_event_clusters_out() = std::move(event_clusters_out);
 
-        return Result::Finished;
+        return (iteration == 2) ? Result::Finished : Result::KeepGoing;
     }
 };
 

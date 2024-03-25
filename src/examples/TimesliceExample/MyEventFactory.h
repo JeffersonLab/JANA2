@@ -9,8 +9,8 @@
 
 struct MyEventFactory : public JOmniFactory<MyEventFactory> {
 
-    PodioInput<ExampleCluster> protoclusters_in {this, "evt_protoclusters", JEventLevel::Event};
-    PodioOutput<ExampleCluster> clusters_out {this, "clusters"};
+    PodioInput<ExampleCluster> m_protoclusters_in {this, "evt_protoclusters", JEventLevel::Event};
+    PodioOutput<ExampleCluster> m_clusters_out {this, "clusters"};
 
 
     MyEventFactory() {
@@ -25,15 +25,15 @@ struct MyEventFactory : public JOmniFactory<MyEventFactory> {
 
     void Execute(int32_t /*run_nr*/, uint64_t /*evt_nr*/) {
 
-
         auto cs = std::make_unique<ExampleClusterCollection>();
-        if (protoclusters_in()->size() != 1) throw JException("Wrong size!");
-        auto pc = protoclusters_in()->at(0);
-        auto c = MutableExampleCluster(pc.energy() + 1000);
-        c.addClusters(pc);
-        cs->push_back(c);
 
-        clusters_out() = std::move(cs);
+        for (auto protocluster : *m_protoclusters_in()) {
+            auto cluster = MutableExampleCluster(protocluster.energy() + 1000);
+            cluster.addClusters(protocluster);
+            cs->push_back(cluster);
+        }
+
+        m_clusters_out() = std::move(cs);
     }
 };
 

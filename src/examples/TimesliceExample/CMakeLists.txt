@@ -3,6 +3,7 @@
 if (USE_PODIO)
     set (TimesliceExample_SOURCES
             TimesliceExample.cc
+            CollectionTabulators.cc
         )
 
     add_library(TimesliceExample SHARED ${TimesliceExample_SOURCES})
