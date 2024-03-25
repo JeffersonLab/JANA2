@@ -5,8 +5,13 @@
 #pragma once
 
 #include <DatamodelGlue.h>
+
 #include <JANA/JEventProcessor.h>
+#include <podio/ROOTFrameWriter.h>
+
 #include "CollectionTabulators.h"
+
+
 
 struct MyEventProcessor : public JEventProcessor {
 
@@ -15,6 +20,10 @@ struct MyEventProcessor : public JEventProcessor {
     PodioInput<ExampleCluster> m_evt_protoclusters_in {this, "evt_protoclusters", JEventLevel::Event};
     PodioInput<ExampleCluster> m_evt_clusters_in {this, "clusters", JEventLevel::Event};
 
+    Input<podio::Frame> m_evt_frame_in {this, "", JEventLevel::Event};
+
+    std::unique_ptr<podio::ROOTFrameWriter> m_writer = nullptr;
+
     std::mutex m_mutex;
     
     MyEventProcessor() {
@@ -22,10 +31,16 @@ struct MyEventProcessor : public JEventProcessor {
         SetTypeName("MyEventProcessor");
     }
 
+    void Init() {
+        m_writer = std::make_unique<podio::ROOTFrameWriter>("output.root");
+    }
+
     void Process(const std::shared_ptr<const JEvent>& event) {
 
-        std::lock_guard<std::mutex> guard(m_mutex);
         auto ts_nr = event->GetParent(JEventLevel::Timeslice).GetEventNumber();
+
+        std::lock_guard<std::mutex> guard(m_mutex);
+        m_writer->writeFrame(*(m_evt_frame_in().at(0)), "events");
 
         LOG << "MyEventProcessor: Event " << event->GetEventNumber() << " from Timeslice " << ts_nr
             << "\nTimeslice-level hits\n"
@@ -37,6 +52,10 @@ struct MyEventProcessor : public JEventProcessor {
             << "\nEvent-level clusters\n"
             << TabulateClusters(m_evt_clusters_in())
             << LOG_END;
+    }
+
+    void Finish() {
+        m_writer->finish();
     }
 };
 
