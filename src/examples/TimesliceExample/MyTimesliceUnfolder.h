@@ -22,17 +22,17 @@ struct MyTimesliceUnfolder : public JEventUnfolder {
     }
 
 
-    Result Unfold(const JEvent& parent, JEvent& child, int iteration) override {
+    Result Unfold(const JEvent& parent, JEvent& child, int child_idx) override {
 
         auto timeslice_nr = parent.GetEventNumber();
-        size_t event_nr = 100*timeslice_nr + iteration;
+        size_t event_nr = 100*timeslice_nr + child_idx;
         child.SetEventNumber(event_nr);
 
         // For now, a one-to-one relationship between timeslices and events
 
         auto event_clusters_out = std::make_unique<ExampleClusterCollection>();
         event_clusters_out->setSubsetCollection(true);
-        event_clusters_out->push_back(m_timeslice_clusters_in()->at(iteration));
+        event_clusters_out->push_back(m_timeslice_clusters_in()->at(child_idx));
 
         LOG << "MyTimesliceUnfolder: Timeslice " << parent.GetEventNumber() 
             <<  ", Event " << child.GetEventNumber()
@@ -44,7 +44,7 @@ struct MyTimesliceUnfolder : public JEventUnfolder {
 
         m_event_clusters_out() = std::move(event_clusters_out);
 
-        return (iteration == 2) ? Result::Finished : Result::KeepGoing;
+        return (child_idx == 2) ? Result::Finished : Result::KeepGoing;
     }
 };
 
