@@ -58,33 +58,52 @@ public:
 
 
     virtual void DoMap(const std::shared_ptr<const JEvent>& e) {
+
+        for (auto* input : m_inputs) {
+            input->PrefetchCollection(*e);
+        }
+        // JExceptions with factory info will be furnished by the callee,
+        // so we don't need to try/catch here. 
+        
+        // Also we don't have 
+        // a Preprocess(), so we don't technically need Init() here even
+        
+        if (m_callback_style != CallbackStyle::Declarative) {
+            DoReduce(e); // This does all the locking!
+        }
+    }
+
+
+    virtual void DoReduce(const std::shared_ptr<const JEvent>& e) {
         try {
             auto run_number = e->GetRunNumber();
-            {
-                std::lock_guard<std::mutex> lock(m_mutex);
+            std::lock_guard<std::mutex> lock(m_mutex);
 
-                if (m_status == Status::Uninitialized) {
-                    DoInitialize();
+            if (m_status == Status::Uninitialized) {
+                DoInitialize();
+            }
+            else if (m_status == Status::Finalized) {
+                throw JException("JEventProcessor: Attempted to call DoMap() after Finalize()");
+            }
+            if (m_last_run_number != run_number) {
+                if (m_last_run_number != -1) {
+                    EndRun();
                 }
-                else if (m_status == Status::Finalized) {
-                    throw JException("JEventProcessor: Attempted to call DoMap() after Finalize()");
+                for (auto* resource : m_resources) {
+                    resource->ChangeRun(e->GetRunNumber(), m_app);
                 }
-
-                if (m_last_run_number != run_number) {
-                    if (m_last_run_number != -1) {
-                        EndRun();
-                    }
-                    for (auto* resource : m_resources) {
-                        resource->ChangeRun(e->GetRunNumber(), m_app);
-                    }
-                    m_last_run_number = run_number;
-                    BeginRun(e);
-                }
+                m_last_run_number = run_number;
+                BeginRun(e);
             }
             for (auto* input : m_inputs) {
                 input->GetCollection(*e);
             }
-            Process(e);
+            if (m_callback_style == CallbackStyle::Declarative) {
+                Process(e->GetRunNumber(), e->GetEventNumber(), e->GetEventIndex());
+            }
+            else {
+                Process(e);
+            }
             m_event_count += 1;
         }
         catch (JException& ex) {
@@ -100,18 +119,13 @@ public:
             throw ex;
         }
         catch (...) {
-            auto ex = JException("Unknown exception in JEventProcessor::DoMap()");
+            auto ex = JException("Unknown exception in JEventProcessor::DoReduce()");
             ex.nested_exception = std::current_exception();
             ex.plugin_name = m_plugin_name;
             ex.component_name = m_type_name;
             throw ex;
         }
     }
-
-
-    // Reduce does nothing in the basic version because the current API tells
-    // the user to lock a mutex in Process(), which takes care of it for us.
-    virtual void DoReduce(const std::shared_ptr<const JEvent>&) {}
 
 
     virtual void DoFinalize() {
@@ -144,9 +158,18 @@ public:
 
     virtual void BeginRun(const std::shared_ptr<const JEvent>&) {}
 
+    virtual void ChangeRun(const std::shared_ptr<const JEvent>&) {}
+
+    virtual void ChangeRun(int64_t /*run_nr*/) {}
+
     virtual void Process(const std::shared_ptr<const JEvent>& /*event*/) {
         throw JException("Not implemented yet!");
     }
+
+    virtual void Process(int64_t /*run_nr*/, uint64_t /*event_nr*/, uint64_t /*event_idx*/) {
+        throw JException("Not implemented yet!");
+    }
+
     virtual void EndRun() {}
 
     virtual void Finish() {}

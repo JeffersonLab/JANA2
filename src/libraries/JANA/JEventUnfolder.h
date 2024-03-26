@@ -96,16 +96,18 @@ public:
 
     void DoPreprocess(const JEvent& parent) {
         try {
-            // TODO: We only want the mutex for checking the status
-            std::lock_guard<std::mutex> lock(m_mutex);
-            if (m_status == Status::Initialized) {
-                for (auto* input : m_inputs) {
-                    input->GetCollection(parent);
+            {
+                std::lock_guard<std::mutex> lock(m_mutex);
+                if (m_status != Status::Initialized) {
+                    throw JException("JEventUnfolder: Component needs to be initialized and not finalized before Unfold can be called");
+                    // TODO: Consider calling Initialize(with_lock=false) like we do elsewhere
                 }
-                Preprocess(parent);
             }
-            else {
-                throw JException("JEventUnfolder: Component needs to be initialized and not finalized before Unfold can be called");
+            for (auto* input : m_inputs) {
+                input->PrefetchCollection(parent);
+            }
+            if (m_callback_style != CallbackStyle::Declarative) {
+                Preprocess(parent);
             }
         }
         catch (JException& ex) {
@@ -137,7 +139,7 @@ public:
                     for (auto* resource : m_resources) {
                         resource->ChangeRun(parent.GetRunNumber(), m_app);
                     }
-                    if (m_enable_simplified_callbacks) {
+                    if (m_callback_style == CallbackStyle::Declarative) {
                         ChangeRun(parent.GetRunNumber());
                     }
                     else {

@@ -12,6 +12,7 @@ namespace omni {
 
 struct JComponent {
     enum class Status { Uninitialized, Initialized, Finalized };
+    enum class CallbackStyle { Compatibility, Classic, Declarative };
 
 protected:
 
@@ -25,6 +26,7 @@ protected:
     std::vector<ResourceBase*> m_resources;
     
     JEventLevel m_level = JEventLevel::Event;
+    CallbackStyle m_callback_style = CallbackStyle::Compatibility;
     std::string m_prefix;
     std::string m_plugin_name;
     std::string m_type_name;
@@ -37,6 +39,8 @@ public:
     // Meant to be called by users, or alternatively from a Generator
     // ---------------------
     void SetLevel(JEventLevel level) { m_level = level; }
+
+    void SetCallbackStyle(CallbackStyle style) { m_callback_style = style; }
 
     void SetPrefix(std::string prefix) {
         m_prefix = prefix;

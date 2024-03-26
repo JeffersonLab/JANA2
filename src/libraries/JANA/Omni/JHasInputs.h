@@ -28,6 +28,7 @@ protected:
         bool is_variadic = false;
 
         virtual void GetCollection(const JEvent& event) = 0;
+        virtual void PrefetchCollection(const JEvent& event) = 0;
     };
 
     template <typename T>
@@ -54,6 +55,14 @@ protected:
             }
             else {
                 m_data = event.GetParent(level).template Get<T>(this->collection_names[0]);
+            }
+        }
+        void PrefetchCollection(const JEvent& event) {
+            if (this->level == event.GetLevel() || this->level == JEventLevel::None) {
+                event.Get<T>(this->collection_names[0]);
+            }
+            else {
+                event.GetParent(level).template Get<T>(this->collection_names[0]);
             }
         }
     };
@@ -83,6 +92,15 @@ protected:
             }
             else {
                 m_data = event.GetParent(this->level).GetCollection<PodioT>(this->collection_names[0]);
+            }
+        }
+
+        void PrefetchCollection(const JEvent& event) {
+            if (this->level == event.GetLevel() || this->level == JEventLevel::None) {
+                event.GetCollection<PodioT>(this->collection_names[0]);
+            }
+            else {
+                event.GetParent(this->level).GetCollection<PodioT>(this->collection_names[0]);
             }
         }
     };
@@ -117,6 +135,19 @@ protected:
             else {
                 for (auto& coll_name : this->collection_names) {
                     m_data.push_back(event.GetParent(this->level).GetCollection<PodioT>(this->collection_names[0]));
+                }
+            }
+        }
+
+        void PrefetchCollection(const JEvent& event) {
+            if (this->level == event.GetLevel() || this->level == JEventLevel::None) {
+                for (auto& coll_name : this->collection_names) {
+                    event.GetCollection<PodioT>(coll_name);
+                }
+            }
+            else {
+                for (auto& coll_name : this->collection_names) {
+                    event.GetParent(this->level).GetCollection<PodioT>(this->collection_names[0]);
                 }
             }
         }
