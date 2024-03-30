@@ -56,7 +56,6 @@ void JDebugProcessingController::run_worker() {
 
                     for (JEventProcessor *proc: evt_procs) {
                         proc->DoMap(event);
-                        proc->DoReduce(event);
                     }
                     m_total_events_processed += 1;
                     event->GetFactorySet()->Release();
