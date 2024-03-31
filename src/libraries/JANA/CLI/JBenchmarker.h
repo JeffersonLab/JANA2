@@ -10,7 +10,7 @@
 class JBenchmarker {
 
     JApplication* m_app;
-    JLogger m_logger = JLoggingService::logger("JBenchmarker");
+    JLogger m_logger;
 
     size_t m_min_threads = 1;
     size_t m_max_threads = 0;
