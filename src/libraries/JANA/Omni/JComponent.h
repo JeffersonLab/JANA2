@@ -31,7 +31,7 @@ protected:
     std::string m_plugin_name;
     std::string m_type_name;
     Status m_status = Status::Uninitialized;
-    std::mutex m_mutex;
+    mutable std::mutex m_mutex;
     JApplication* m_app = nullptr;
 
 public:
@@ -70,7 +70,10 @@ public:
 
     std::string GetTypeName() const { return m_type_name; }
 
-    Status GetStatus() const { return m_status; }
+    Status GetStatus() const { 
+        std::lock_guard<std::mutex> lock(m_mutex);
+        return m_status; 
+    }
 
     void SetApplication(JApplication* app) { m_app = app; }
 
