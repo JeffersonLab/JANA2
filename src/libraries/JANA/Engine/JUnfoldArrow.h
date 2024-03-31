@@ -157,6 +157,8 @@ public:
             return;
         }
         else {
+            // Send everything back where it came from so as not to lose events
+            push_all(parent_in_data, child_in_data, child_out_data);
             auto end_total_time = std::chrono::steady_clock::now();
             metrics.update(JArrowMetrics::Status::ComeBackLater, 0, 1, std::chrono::milliseconds(0), end_total_time - start_total_time);
             return;
