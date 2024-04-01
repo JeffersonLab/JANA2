@@ -21,6 +21,21 @@
 
 JApplication *japp = nullptr;
 
+JApplication::JApplication(JLogger::Level verbosity) {
+    m_params = std::make_shared<JParameterManager>();
+    m_params->SetParameter("log:global", verbosity);
+    m_service_locator.provide(m_params);
+    m_service_locator.provide(std::make_shared<JLoggingService>());
+    m_service_locator.provide(std::make_shared<JPluginLoader>(this));
+    m_service_locator.provide(std::make_shared<JComponentManager>(this));
+    m_service_locator.provide(std::make_shared<JGlobalRootLock>());
+    m_service_locator.provide(std::make_shared<JTopologyBuilder>());
+
+    m_plugin_loader = m_service_locator.get<JPluginLoader>();
+    m_component_manager = m_service_locator.get<JComponentManager>();
+    m_logger = m_service_locator.get<JLoggingService>()->get_logger("JApplication");
+    m_logger.show_classname = false;
+}
 
 JApplication::JApplication(JParameterManager* params) {
 

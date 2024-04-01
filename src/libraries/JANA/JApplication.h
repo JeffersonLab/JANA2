@@ -49,6 +49,7 @@ public:
     enum class ExitCode {Success=0, UnhandledException, Timeout, Segfault=139};
 
     explicit JApplication(JParameterManager* params = nullptr);
+    explicit JApplication(JLogger::Level verbosity);
     ~JApplication();
 
 
