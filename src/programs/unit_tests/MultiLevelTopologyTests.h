@@ -67,9 +67,9 @@ struct MyTimesliceUnfolder : public JEventUnfolder {
         if (item == 3) {
             jout << "Unfold found item 3, finishing join" << jendl;
             // TODO: Insert protocluster into child
-            return Result::Finished;
+            return Result::NextChildNextParent;
         }
-        return Result::KeepGoing;
+        return Result::NextChildKeepParent;
     }
 
     virtual void Finish() {

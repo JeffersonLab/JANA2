@@ -44,7 +44,7 @@ struct MyTimesliceUnfolder : public JEventUnfolder {
 
         m_event_clusters_out() = std::move(event_clusters_out);
 
-        return (child_idx == 2) ? Result::Finished : Result::KeepGoing;
+        return (child_idx == 2) ? Result::NextChildNextParent : Result::NextChildKeepParent;
     }
 };
 

@@ -151,7 +151,7 @@ public:
             LOG_DEBUG(m_logger) << "Unfold succeeded: Parent event = " << m_parent_event->get()->GetEventNumber() << ", child event = " << child->get()->GetEventNumber() << LOG_END;
             // TODO: We'll need something more complicated for the streaming join case
 
-            if (status == JEventUnfolder::Result::Finished) {
+            if (status == JEventUnfolder::Result::NextChildNextParent || status == JEventUnfolder::Result::KeepChildNextParent) {
                 LOG_DEBUG(m_logger) << "Unfold finished with parent event = " << m_parent_event->get()->GetEventNumber() << LOG_END;
                 m_ready_to_fetch_parent = true;
                 m_parent_event->get()->Release();

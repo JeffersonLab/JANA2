@@ -24,7 +24,7 @@ public:
     
     virtual ~JEventUnfolder() {};
  
-    enum class Result { KeepGoing, Finished };
+    enum class Result { NextChildNextParent, NextChildKeepParent, KeepChildNextParent };
 
     virtual void Init() {};
     
@@ -35,11 +35,11 @@ public:
     virtual void ChangeRun(uint64_t /*run_nr*/) {};
     
     virtual Result Unfold(const JEvent& /*parent*/, JEvent& /*child*/, int /*item_nr*/) {
-        return Result::KeepGoing;
+        throw JException("Not implemented yet!");
     };
 
     virtual Result Unfold(uint64_t /*parent_nr*/, uint64_t /*child_nr*/, int /*item_nr*/) {
-        return Result::KeepGoing;
+        throw JException("Not implemented yet!");
     };
 
     virtual void EndRun() {};
@@ -168,7 +168,7 @@ public:
                     output->InsertCollection(child);
                 }
                 m_child_number += 1;
-                if (result == Result::Finished) {
+                if (result == Result::NextChildNextParent || result == Result::KeepChildNextParent) {
                     m_child_number = 0;
                 }
                 return result;
