@@ -39,12 +39,12 @@ private:
 
     friend class JScheduler;
     std::vector<JArrow *> m_listeners;    // Downstream Arrows
-    friend class JTopologyBuilder;
-    std::vector<PlaceRefBase*> m_places;  // Will eventually supplant m_listeners, m_chunksize
 
 protected:
     // This is usable by subclasses.
     JLogger m_logger;
+    friend class JTopologyBuilder;
+    std::vector<PlaceRefBase*> m_places;  // Will eventually supplant m_listeners, m_chunksize
 
 public:
     bool is_parallel() { return m_is_parallel; }

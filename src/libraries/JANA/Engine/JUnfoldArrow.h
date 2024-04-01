@@ -75,10 +75,13 @@ public:
         }
         success = m_child_in.pull(ci);
         if (! success) {
+            m_parent_in.push(pi);
             return false;
         }
         success = m_child_out.pull(co);
         if (! success) {
+            m_parent_in.push(pi);
+            m_child_in.push(ci);
             return false;
         }
         return true;
@@ -91,6 +94,20 @@ public:
         message_count += m_child_out.push(child_out);
         return message_count;
     }
+
+
+    size_t get_pending() final {
+        size_t sum = 0;
+        for (PlaceRefBase* place : m_places) {
+            sum += place->get_pending();
+        }
+        if (m_parent_event != nullptr) {
+            sum += 1; 
+            // Handle the case of UnfoldArrow hanging on to a parent
+        }
+        return sum;
+    }
+
 
     void execute(JArrowMetrics& metrics, size_t location_id) final {
 
@@ -157,8 +174,6 @@ public:
             return;
         }
         else {
-            // Send everything back where it came from so as not to lose events
-            push_all(parent_in_data, child_in_data, child_out_data);
             auto end_total_time = std::chrono::steady_clock::now();
             metrics.update(JArrowMetrics::Status::ComeBackLater, 0, 1, std::chrono::milliseconds(0), end_total_time - start_total_time);
             return;
