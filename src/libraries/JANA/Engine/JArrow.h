@@ -44,8 +44,7 @@ private:
 
 protected:
     // This is usable by subclasses.
-    // Note that it has to be injected because JArrow doesn't know about JApplication, etc
-    JLogger m_logger {JLogger::Level::OFF};
+    JLogger m_logger;
 
 public:
     bool is_parallel() { return m_is_parallel; }
