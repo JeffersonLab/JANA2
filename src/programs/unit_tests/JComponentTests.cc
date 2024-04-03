@@ -115,9 +115,10 @@ struct TestFac : public JOmniFactory<TestFac> {
 
     void Configure() {
     }
-
-    void ChangeRun(int64_t) {
+    
+    void ChangeRun(int32_t) final {
     }
+
 
     // NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
     void Execute(int64_t, uint64_t) {

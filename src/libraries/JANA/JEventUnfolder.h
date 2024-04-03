@@ -6,10 +6,14 @@
 #include <JANA/Omni/JComponent.h>
 #include <JANA/Omni/JHasInputs.h>
 #include <JANA/Omni/JHasOutputs.h>
+#include <JANA/Omni/JHasRunCallbacks.h>
 #include <JANA/JEvent.h>
 
 class JApplication;
-class JEventUnfolder : public jana::omni::JComponent, public jana::omni::JHasInputs, public jana::omni::JHasOutputs {
+class JEventUnfolder : public jana::omni::JComponent, 
+                       public jana::omni::JHasRunCallbacks,
+                       public jana::omni::JHasInputs, 
+                       public jana::omni::JHasOutputs {
 
 private:
     int32_t m_last_run_number = -1;
@@ -30,10 +34,6 @@ public:
     
     virtual void Preprocess(const JEvent& /*parent*/) const {};
 
-    virtual void ChangeRun(const JEvent&) {};
-
-    virtual void ChangeRun(uint64_t /*run_nr*/) {};
-    
     virtual Result Unfold(const JEvent& /*parent*/, JEvent& /*child*/, int /*item_nr*/) {
         throw JException("Not implemented yet!");
     };
@@ -41,8 +41,6 @@ public:
     virtual Result Unfold(uint64_t /*parent_nr*/, uint64_t /*child_nr*/, int /*item_nr*/) {
         throw JException("Not implemented yet!");
     };
-
-    virtual void EndRun() {};
 
     virtual void Finish() {};
 

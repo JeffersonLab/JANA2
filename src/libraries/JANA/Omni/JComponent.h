@@ -18,12 +18,9 @@ protected:
 
     struct ParameterBase;
     struct ServiceBase;
-    struct ResourceBase;
-
 
     std::vector<ParameterBase*> m_parameters;
     std::vector<ServiceBase*> m_services;
-    std::vector<ResourceBase*> m_resources;
     
     JEventLevel m_level = JEventLevel::Event;
     CallbackStyle m_callback_style = CallbackStyle::Compatibility;
@@ -90,11 +87,6 @@ protected:
         virtual void Init(JApplication* app) = 0;
     };
 
-    struct ResourceBase {
-        virtual void ChangeRun(int32_t run_nr, JApplication* app) = 0;
-    };
-
-
     void RegisterParameter(ParameterBase* parameter) {
         m_parameters.push_back(parameter);
     }
@@ -103,9 +95,6 @@ protected:
         m_services.push_back(service);
     }
 
-    void RegisterResource(ResourceBase* resource) {
-        m_resources.push_back(resource);
-    }
 public:
 
     void ConfigureAllParameters(std::map<std::string, std::string> fields) {
@@ -199,26 +188,6 @@ protected:
 
 
 
-    template <typename ServiceT, typename ResourceT, typename LambdaT>
-    class Resource : public ResourceBase {
-        ResourceT m_data;
-        LambdaT m_lambda;
-
-    public:
-
-        Resource(JComponent* owner, LambdaT lambda) : m_lambda(lambda) {
-            owner->RegisterResource(this);
-        };
-
-        const ResourceT& operator()() { return m_data; }
-
-    protected:
-
-        void ChangeRun(int32_t run_nr, JApplication* app) override {
-            std::shared_ptr<ServiceT> service = app->template GetService<ServiceT>();
-            m_data = m_lambda(service, run_nr);
-        }
-    };
 
 };
 

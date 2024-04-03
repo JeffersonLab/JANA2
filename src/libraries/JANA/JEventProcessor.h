@@ -7,12 +7,15 @@
 
 #include <JANA/Omni/JComponent.h>
 #include <JANA/Omni/JHasInputs.h>
+#include <JANA/Omni/JHasRunCallbacks.h>
 #include <JANA/JEvent.h>
 
 class JApplication;
 
 
-class JEventProcessor : public jana::omni::JComponent, public jana::omni::JHasInputs {
+class JEventProcessor : public jana::omni::JComponent, 
+                        public jana::omni::JHasRunCallbacks, 
+                        public jana::omni::JHasInputs {
 public:
 
     JEventProcessor() = default;
@@ -156,11 +159,6 @@ public:
 
     virtual void Init() {}
 
-    virtual void BeginRun(const std::shared_ptr<const JEvent>&) {}
-
-    virtual void ChangeRun(const std::shared_ptr<const JEvent>&) {}
-
-    virtual void ChangeRun(int64_t /*run_nr*/) {}
 
     virtual void Process(const std::shared_ptr<const JEvent>& /*event*/) {
         throw JException("Not implemented yet!");
@@ -170,7 +168,6 @@ public:
         throw JException("Not implemented yet!");
     }
 
-    virtual void EndRun() {}
 
     virtual void Finish() {}
 
@@ -207,7 +204,6 @@ protected:
 private:
     std::string m_resource_name;
     std::atomic_ullong m_event_count {0};
-    int32_t m_last_run_number = -1;
     bool m_receive_events_in_order = false;
 
 };

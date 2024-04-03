@@ -9,6 +9,7 @@
 #include <JANA/JFactoryT.h>
 #include <JANA/JFactorySet.h>
 #include <JANA/Omni/JComponent.h>
+#include <JANA/Omni/JHasRunCallbacks.h>
 
 #ifdef JANA2_HAVE_PODIO
 #include <JANA/Podio/JPodioTypeHelpers.h>
@@ -58,7 +59,8 @@ public:
 #endif // JANA2_HAVE_PODIO
 
 
-class JMultifactory : public jana::omni::JComponent {
+class JMultifactory : public jana::omni::JComponent,
+                      public jana::omni::JHasRunCallbacks {
 
     JFactorySet mHelpers; // This has ownership UNTIL JFactorySet::Add() takes it over
 
