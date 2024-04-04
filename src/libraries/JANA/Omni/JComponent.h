@@ -30,6 +30,7 @@ protected:
     Status m_status = Status::Uninitialized;
     mutable std::mutex m_mutex;
     JApplication* m_app = nullptr;
+    JLogger m_logger;
 
 public:
     // ---------------------
@@ -53,6 +54,8 @@ public:
         return m_app; 
     }
 
+    JLogger& GetLogger() { return m_logger; }
+
 
     // ---------------------
     // Meant to be called by JANA
@@ -60,6 +63,8 @@ public:
     std::string GetPrefix() { return m_prefix; }
 
     JEventLevel GetLevel() { return m_level; }
+
+    std::string GetLoggerName() const { return m_prefix.empty() ? m_type_name : m_prefix; }
 
     std::string GetPluginName() const { return m_plugin_name; }
 
@@ -73,6 +78,8 @@ public:
     }
 
     void SetApplication(JApplication* app) { m_app = app; }
+
+    void SetLogger(JLogger logger) { m_logger = logger; }
 
 
 protected:

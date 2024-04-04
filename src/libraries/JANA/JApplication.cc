@@ -139,7 +139,6 @@ void JApplication::Initialize() {
     m_params->SetDefaultParameter("jana:extended_report", m_extended_report, "Controls whether the ticker shows simple vs detailed performance metrics");
 
     m_component_manager->initialize();
-    m_component_manager->resolve_event_sources();
 
     int engine_choice = 0;
     m_params->SetDefaultParameter("jana:engine", engine_choice,

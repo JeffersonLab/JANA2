@@ -29,7 +29,7 @@ struct MyTimesliceSource : public JEventSource {
         hits_out->push_back(ExampleHit(ts_nr, 0, 49, 49, 49, 1));
         hits_out->push_back(ExampleHit(ts_nr, 0, 7.6, 7.6, 7.6, 2));
 
-        LOG << "MyTimesliceSource: Timeslice " << event->GetEventNumber() << "\n"
+        LOG_DEBUG(GetLogger()) << "MyTimesliceSource: Timeslice " << event->GetEventNumber() << "\n"
             << TabulateHits(hits_out.get())
             << LOG_END;
 

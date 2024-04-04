@@ -90,6 +90,20 @@ void JComponentManager::initialize() {
     auto parms = m_app->GetJParameterManager();
     parms->SetDefaultParameter("record_call_stack", m_enable_call_graph_recording, "Records a trace of who called each factory. Reduces performance but necessary for plugins such as janadot.");
     parms->FilterParameters(m_default_tags, "DEFTAG:");
+
+    resolve_event_sources();
+
+    auto logging_svc = m_app->GetService<JLoggingService>();
+
+    for (JEventSource* source : m_evt_srces) {
+        source->SetLogger(logging_svc->get_logger(source->GetLoggerName()));
+    }
+    for (JEventProcessor* proc : m_evt_procs) {
+        proc->SetLogger(logging_svc->get_logger(proc->GetLoggerName()));
+    }
+    for (JEventUnfolder* unfolder : m_unfolders) {
+        unfolder->SetLogger(logging_svc->get_logger(unfolder->GetLoggerName()));
+    }
 }
 
 

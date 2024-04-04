@@ -50,7 +50,8 @@ struct MyEventProcessor : public JEventProcessor {
             m_writer->writeFrame(*(m_ts_frame_in().at(0)), "timeslices");
         }
 
-        LOG << "MyEventProcessor: Event " << event->GetEventNumber() << " from Timeslice " << ts_nr
+        LOG_DEBUG(GetLogger()) 
+            << "MyEventProcessor: Event " << event->GetEventNumber() << " from Timeslice " << ts_nr
             << "\nTimeslice-level hits\n"
             << TabulateHits(m_ts_hits_in())
             << "\nTimeslice-level protoclusters\n"

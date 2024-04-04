@@ -34,7 +34,7 @@ struct MyTimesliceUnfolder : public JEventUnfolder {
         event_clusters_out->setSubsetCollection(true);
         event_clusters_out->push_back(m_timeslice_clusters_in()->at(child_idx));
 
-        LOG << "MyTimesliceUnfolder: Timeslice " << parent.GetEventNumber() 
+        LOG_DEBUG(GetLogger()) << "MyTimesliceUnfolder: Timeslice " << parent.GetEventNumber() 
             <<  ", Event " << child.GetEventNumber()
             << "\nTimeslice clusters in:\n"
             << TabulateClusters(m_timeslice_clusters_in())
