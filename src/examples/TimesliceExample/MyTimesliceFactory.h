@@ -9,7 +9,7 @@
 
 struct MyTimesliceFactory : public JOmniFactory<MyTimesliceFactory> {
 
-    PodioInput<ExampleHit> hits_in {this, "hits", JEventLevel::Timeslice};
+    PodioInput<ExampleHit> hits_in {this, "hits"};
     PodioOutput<ExampleCluster> clusters_out {this, "protoclusters"};
 
     MyTimesliceFactory() {
