@@ -34,6 +34,8 @@ class JTopologyBuilder : public JService {
     int m_affinity = 0;
     int m_locality = 0;
     JLogger m_arrow_logger;
+    JLogger m_queue_logger;
+    JLogger m_builder_logger;
 
 public:
 
@@ -132,12 +134,21 @@ public:
                                                     m_limit_total_events_in_flight);
             m_topology->event_pool->init();
             attach_top_level(JEventLevel::Run);
-            LOG_DEBUG(m_arrow_logger) << "Arrow topology is:\n" << print_topology() << LOG_END;
+            LOG_DEBUG(m_builder_logger) << "Arrow topology is:\n" << print_topology() << LOG_END;
 
             if (m_configure_topology) {
                 m_topology = m_configure_topology(m_topology);
-                LOG_DEBUG(m_arrow_logger) << "Found custom topology configurator! Modified arrow topology is: \n" << print_topology() << LOG_END;
+                LOG_DEBUG(m_builder_logger) << "Found custom topology configurator! Modified arrow topology is: \n" << print_topology() << LOG_END;
             }
+        }
+        int id=0;
+        for (auto* queue : m_topology->queues) {
+            queue->set_logger(m_queue_logger);
+            queue->set_id(id);
+            id += 1;
+        }
+        for (auto* arrow : m_topology->arrows) {
+            arrow->set_logger(m_arrow_logger);
         }
         return m_topology;
     }
@@ -185,7 +196,10 @@ public:
                                       "Records a trace of who called each factory. Reduces performance but necessary for plugins such as janadot.")
                 ->SetIsAdvanced(true);
 
-        m_arrow_logger = sl->get<JLoggingService>()->get_logger("JArrow");
+        auto m_logging_svc = sl->get<JLoggingService>();
+        m_arrow_logger = m_logging_svc->get_logger("JArrow");
+        m_queue_logger = m_logging_svc->get_logger("JQueue");
+        m_builder_logger = m_logging_svc->get_logger("JTopologyBuilder");
     };
 
     inline std::shared_ptr<JArrowTopology> create_empty() {
@@ -347,12 +361,10 @@ public:
             auto* src_arrow = new JEventSourceArrow("sources", sources_at_level, queue, pool_at_level);
             m_topology->arrows.push_back(src_arrow);
             src_arrow->set_chunksize(m_event_source_chunksize);
-            src_arrow->set_logger(m_arrow_logger);
 
             auto* proc_arrow = new JEventProcessorArrow("processors", queue, nullptr, pool_at_level);
             m_topology->arrows.push_back(proc_arrow);
             proc_arrow->set_chunksize(m_event_processor_chunksize);
-            proc_arrow->set_logger(m_arrow_logger);
 
             for (auto proc: procs_at_level) {
                 proc_arrow->add_processor(proc);
@@ -373,12 +385,10 @@ public:
             auto *src_arrow = new JEventSourceArrow(ss.str()+"Src", sources_at_level, q1, pool_at_level);
             m_topology->arrows.push_back(src_arrow);
             src_arrow->set_chunksize(m_event_source_chunksize);
-            src_arrow->set_logger(m_arrow_logger);
 
             auto *map_arrow = new JEventMapArrow(ss.str()+"Map", q1, q2);;
             m_topology->arrows.push_back(map_arrow);
             map_arrow->set_chunksize(m_event_source_chunksize);
-            map_arrow->set_logger(m_arrow_logger);
             src_arrow->attach(map_arrow);
 
             // TODO: We are using q2 temporarily knowing that it will be overwritten in attach_lower_level.
@@ -386,14 +396,12 @@ public:
             auto *unfold_arrow = new JUnfoldArrow(ss.str()+"Unfold", unfolders_at_level[0], q2, pool_at_level, q2);
             m_topology->arrows.push_back(unfold_arrow);
             unfold_arrow->set_chunksize(m_event_source_chunksize);
-            unfold_arrow->set_logger(m_arrow_logger);
             map_arrow->attach(unfold_arrow);
 
             // child_in, child_out, parent_out
             auto *fold_arrow = new JFoldArrow(ss.str()+"Fold", current_level, unfolders_at_level[0]->GetChildLevel(), q2, pool_at_level, pool_at_level);
             // TODO: Support user-provided folders
             fold_arrow->set_chunksize(m_event_source_chunksize);
-            fold_arrow->set_logger(m_arrow_logger);
 
             bool found_sink = (procs_at_level.size() > 0);
             attach_lower_level(unfolders_at_level[0]->GetChildLevel(), unfold_arrow, fold_arrow, found_sink);
@@ -409,7 +417,6 @@ public:
                 auto* proc_arrow = new JEventProcessorArrow(ss.str()+"Proc", q3, nullptr, pool_at_level);
                 m_topology->arrows.push_back(proc_arrow);
                 proc_arrow->set_chunksize(m_event_processor_chunksize);
-                proc_arrow->set_logger(m_arrow_logger);
 
                 for (auto proc: procs_at_level) {
                     proc_arrow->add_processor(proc);

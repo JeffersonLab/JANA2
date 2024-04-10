@@ -137,9 +137,7 @@ JFactory* JFactorySet::GetFactory(const std::string& object_name, const std::str
 std::vector<JFactory*> JFactorySet::GetAllFactories() const {
     std::vector<JFactory*> results;
     for (auto p : mFactories) {
-        if (p.second->GetLevel() == mLevel) {
-            results.push_back(p.second);
-        }
+        results.push_back(p.second);
     }
     return results;
 }
@@ -229,7 +227,6 @@ std::vector<JFactorySummary> JFactorySet::Summarize() const {
 
     std::vector<JFactorySummary> results;
     for (auto& pair : mFactories) {
-        if (pair.second->GetLevel() != mLevel) continue;
         results.push_back({
             .level = pair.second->GetLevel(),
             .plugin_name = pair.second->GetPluginName(),

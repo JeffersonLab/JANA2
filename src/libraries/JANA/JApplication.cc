@@ -21,6 +21,21 @@
 
 JApplication *japp = nullptr;
 
+JApplication::JApplication(JLogger::Level verbosity) {
+    m_params = std::make_shared<JParameterManager>();
+    m_params->SetParameter("log:global", verbosity);
+    m_service_locator.provide(m_params);
+    m_service_locator.provide(std::make_shared<JLoggingService>());
+    m_service_locator.provide(std::make_shared<JPluginLoader>(this));
+    m_service_locator.provide(std::make_shared<JComponentManager>(this));
+    m_service_locator.provide(std::make_shared<JGlobalRootLock>());
+    m_service_locator.provide(std::make_shared<JTopologyBuilder>());
+
+    m_plugin_loader = m_service_locator.get<JPluginLoader>();
+    m_component_manager = m_service_locator.get<JComponentManager>();
+    m_logger = m_service_locator.get<JLoggingService>()->get_logger("JApplication");
+    m_logger.show_classname = false;
+}
 
 JApplication::JApplication(JParameterManager* params) {
 
@@ -124,7 +139,6 @@ void JApplication::Initialize() {
     m_params->SetDefaultParameter("jana:extended_report", m_extended_report, "Controls whether the ticker shows simple vs detailed performance metrics");
 
     m_component_manager->initialize();
-    m_component_manager->resolve_event_sources();
 
     int engine_choice = 0;
     m_params->SetDefaultParameter("jana:engine", engine_choice,
@@ -192,7 +206,7 @@ void JApplication::Run(bool wait_until_finished) {
         if (!m_draining_queues) {
             bool draining = true;
             for (auto evt_src : m_component_manager->get_evt_srces()) {
-                draining &= (evt_src->GetStatus() == JEventSource::SourceStatus::Finished);
+                draining &= (evt_src->GetStatus() == JEventSource::Status::Finalized);
             }
             m_draining_queues = draining;
         }

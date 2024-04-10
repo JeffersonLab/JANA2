@@ -36,7 +36,7 @@ struct TestUnfolder : public JEventUnfolder {
         unfolded_child_levels.push_back(child.GetLevel());
         child.SetEventNumber(child_nr);
         LOG << "Unfolding " << parent.GetLevel() << " event " << parent.GetEventNumber() << " into " << child.GetLevel() << " " << child_nr << "; iter=" << iter << LOG_END;
-        return (iter == 2 ? Result::Finished : Result::KeepGoing);
+        return (iter == 2 ? Result::NextChildNextParent : Result::NextChildKeepParent);
     }
 };
 

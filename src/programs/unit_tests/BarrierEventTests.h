@@ -16,16 +16,6 @@ class BarrierSource : public JEventSource {
     int event_count=0;
 
 public:
-    BarrierSource(std::string source_name, JApplication *app) : JEventSource(source_name, app)
-    { }
-
-    static std::string GetDescription() {
-        return "BarrierTests fake event source";
-    }
-
-    std::string GetType(void) const override {
-        return JTypeInfo::demangle<decltype(*this)>();
-    }
 
     void Open() override {
     }
@@ -52,8 +42,6 @@ public:
 struct BarrierProcessor : public JEventProcessor {
 
 public:
-    explicit BarrierProcessor(JApplication* app) : JEventProcessor(app) {}
-
     void Process(const std::shared_ptr<const JEvent>& event) override {
 
         if (event->GetSequential()) {

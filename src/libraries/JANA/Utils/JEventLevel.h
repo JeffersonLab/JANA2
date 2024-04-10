@@ -15,9 +15,15 @@ inline std::ostream& operator<<(std::ostream& os, JEventLevel level) {
         case JEventLevel::Event: os << "Event"; break;
         case JEventLevel::Subevent: os << "Subevent"; break;
         case JEventLevel::Task: os << "Task"; break;
-        case JEventLevel::None: os << "None"; break;
+        default: os << "None"; break;
     }
     return os;
+}
+
+inline std::string toString(JEventLevel level) {
+    std::stringstream ss;
+    ss << level;
+    return ss.str();
 }
 
 
@@ -30,6 +36,6 @@ inline JEventLevel next_level(JEventLevel current_level) {
         case JEventLevel::Event: return JEventLevel::Subevent;
         case JEventLevel::Subevent: return JEventLevel::Task;
         case JEventLevel::Task: return JEventLevel::None;
-        case JEventLevel::None: return JEventLevel::None;
+        default: return JEventLevel::None;
     }
 }

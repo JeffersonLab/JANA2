@@ -28,7 +28,6 @@ public:
     void Init() override {
 
         auto app = GetApplication();
-        assert (app != nullptr);
         app->SetDefaultParameter("jtest:tracker_ms", m_cputime_ms, "Time spent during tracking");
         app->SetDefaultParameter("jtest:tracker_spread", m_cputime_spread, "Spread of time spent during tracking");
         app->SetDefaultParameter("jtest:tracker_bytes", m_write_bytes, "Bytes written during tracking");

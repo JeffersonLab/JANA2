@@ -53,8 +53,6 @@ struct JFactoryTestDummyFactory : public JFactoryT<JFactoryTestDummyObject> {
 
 struct JFactoryTestDummySource: public JEventSource {
 
-    JFactoryTestDummySource() : JEventSource("dummy", nullptr) {}
-
     void GetEvent(std::shared_ptr<JEvent>) override {
     };
 

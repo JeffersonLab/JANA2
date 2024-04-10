@@ -215,3 +215,8 @@ void JTablePrinter::Render(std::ostream& os) {
     }
 }
 
+std::ostream& operator<<(std::ostream& os, JTablePrinter& t) {
+    t.Render(os);
+    return os;
+}
+

@@ -54,6 +54,8 @@ public:
 
 };
 
+std::ostream& operator<<(std::ostream& os, JTablePrinter& t);
+
 template <typename T>
 JTablePrinter& JTablePrinter::operator|(T cell) {
     std::ostringstream ss;

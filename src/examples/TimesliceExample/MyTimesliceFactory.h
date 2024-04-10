@@ -2,35 +2,35 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #pragma once
-#include "MyDataModel.h"
 
+#include <DatamodelGlue.h>
 #include <JANA/Omni/JOmniFactory.h>
-#include <JANA/JFactoryT.h>
 
 
-struct MyProtoClusterFactory : public JFactoryT<MyCluster> {
+struct MyTimesliceFactory : public JOmniFactory<MyTimesliceFactory> {
 
-    int init_call_count = 0;
-    int change_run_call_count = 0;
-    int process_call_count = 0;
+    PodioInput<ExampleHit> hits_in {this, "hits"};
+    PodioOutput<ExampleCluster> clusters_out {this, "protoclusters"};
 
-    MyProtoClusterFactory() {
+    MyTimesliceFactory() {
         SetLevel(JEventLevel::Timeslice);
     }
 
-    void Init() override {
-        ++init_call_count;
+    void Configure() {
     }
 
-    void ChangeRun(const std::shared_ptr<const JEvent>&) override {
-        ++change_run_call_count;
+    void ChangeRun(int32_t /*run_nr*/) {
     }
 
-    void Process(const std::shared_ptr<const JEvent>& event) override {
-        ++process_call_count;
+    void Execute(int32_t /*run_nr*/, uint64_t /*evt_nr*/) {
 
-        auto protos = event->Get<MyCluster>("protos");
-        // TODO: Output something sensible
+        auto cs = std::make_unique<ExampleClusterCollection>();
+        for (auto hit : *hits_in()) {
+            auto cluster = MutableExampleCluster(hit.energy());
+            cluster.addHits(hit);
+            cs->push_back(cluster);
+        }
+        clusters_out() = std::move(cs);
     }
 };
 

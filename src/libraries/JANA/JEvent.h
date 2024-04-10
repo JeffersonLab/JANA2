@@ -102,8 +102,8 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
         // PODIO
 #ifdef JANA2_HAVE_PODIO
         std::vector<std::string> GetAllCollectionNames() const;
-        const podio::CollectionBase* GetCollectionBase(std::string name) const;
-        template <typename T> const typename JFactoryPodioT<T>::CollectionT* GetCollection(std::string name) const;
+        const podio::CollectionBase* GetCollectionBase(std::string name, bool throw_on_missing=true) const;
+        template <typename T> const typename JFactoryPodioT<T>::CollectionT* GetCollection(std::string name, bool throw_on_missing=true) const;
         template <typename T> JFactoryPodioT<T>* InsertCollection(typename JFactoryPodioT<T>::CollectionT&& collection, std::string name);
         template <typename T> JFactoryPodioT<T>* InsertCollectionAlreadyInFrame(const typename JFactoryPodioT<T>::CollectionT* collection, std::string name);
 #endif
@@ -131,6 +131,8 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
         // Hierarchical
         JEventLevel GetLevel() const { return mFactorySet->GetLevel(); }
         void SetLevel(JEventLevel level) { mFactorySet->SetLevel(level); }
+        void SetEventIndex(int event_index) { mEventIndex = event_index; }
+        int64_t GetEventIndex() const { return mEventIndex; }
 
         const JEvent& GetParent(JEventLevel level) const {
             for (const auto& pair : mParents) {
@@ -196,7 +198,8 @@ class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
 
         // Hierarchical stuff
         std::vector<std::pair<JEventLevel, std::shared_ptr<JEvent>*>> mParents;
-        std::atomic_size_t mReferenceCount {1};
+        std::atomic_int mReferenceCount {1};
+        int64_t mEventIndex = -1;
 
 
 
@@ -221,6 +224,7 @@ inline JFactoryT<T>* JEvent::Insert(T* item, const std::string& tag) const {
     if (factory == nullptr) {
         factory = new JFactoryT<T>;
         factory->SetTag(tag);
+        factory->SetLevel(mFactorySet->GetLevel());
         mFactorySet->Add(factory);
     }
     factory->Insert(item);
@@ -240,6 +244,7 @@ inline JFactoryT<T>* JEvent::Insert(const std::vector<T*>& items, const std::str
     if (factory == nullptr) {
         factory = new JFactoryT<T>;
         factory->SetTag(tag);
+        factory->SetLevel(mFactorySet->GetLevel());
         mFactorySet->Add(factory);
     }
     for (T* item : items) {
@@ -500,10 +505,15 @@ inline std::vector<std::string> JEvent::GetAllCollectionNames() const {
     return keys;
 }
 
-inline const podio::CollectionBase* JEvent::GetCollectionBase(std::string name) const {
+inline const podio::CollectionBase* JEvent::GetCollectionBase(std::string name, bool throw_on_missing) const {
     auto it = mPodioFactories.find(name);
     if (it == mPodioFactories.end()) {
-        throw JException("No factory with tag '%s' found", name.c_str());
+        if (throw_on_missing) {
+            throw JException("No factory with tag '%s' found", name.c_str());
+        }
+        else {
+            return nullptr;
+        }
     }
     JFactoryPodio* factory = dynamic_cast<JFactoryPodio*>(it->second);
     if (factory == nullptr) {
@@ -517,8 +527,11 @@ inline const podio::CollectionBase* JEvent::GetCollectionBase(std::string name) 
 }
 
 template <typename T>
-const typename JFactoryPodioT<T>::CollectionT* JEvent::GetCollection(std::string name) const {
-    JFactoryT<T>* factory = GetFactory<T>(name, true);
+const typename JFactoryPodioT<T>::CollectionT* JEvent::GetCollection(std::string name, bool throw_on_missing) const {
+    JFactoryT<T>* factory = GetFactory<T>(name, throw_on_missing);
+    if (factory == nullptr) {
+        return nullptr;
+    }
     JFactoryPodioT<T>* typed_factory = dynamic_cast<JFactoryPodioT<T>*>(factory);
     if (typed_factory == nullptr) {
         throw JException("Factory must inherit from JFactoryPodioT in order to use JEvent::GetCollection()");
@@ -556,6 +569,7 @@ JFactoryPodioT<T>* JEvent::InsertCollectionAlreadyInFrame(const typename JFactor
     if (factory == nullptr) {
         factory = new JFactoryPodioT<T>();
         factory->SetTag(name);
+        factory->SetLevel(GetLevel());
         mFactorySet->Add(factory);
 
         auto it = mPodioFactories.find(name);
@@ -569,7 +583,7 @@ JFactoryPodioT<T>* JEvent::InsertCollectionAlreadyInFrame(const typename JFactor
     if (factory->GetStatus() == JFactory::Status::Inserted  ||
         factory->GetStatus() == JFactory::Status::Processed) {
 
-        throw JException("PODIO collections can only be inserted once, but factory already has data");
+        throw JException("PODIO collections can only be inserted once, but factory with tag '%s' already has data", name.c_str());
     }
 
     // There's a chance that some user already added to the event's JFactorySet a

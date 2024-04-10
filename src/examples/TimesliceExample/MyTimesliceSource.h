@@ -2,39 +2,37 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #pragma once
-#include "MyDataModel.h"
+
+#include <DatamodelGlue.h>
 #include <JANA/JEventSource.h>
+#include "CollectionTabulators.h"
 
 
 struct MyTimesliceSource : public JEventSource {
 
-    MyTimesliceSource(std::string source_name, JApplication *app) : JEventSource(source_name, app) { 
+    PodioOutput<ExampleHit> m_hits_out {this, "hits"};
+
+    MyTimesliceSource() {
         SetLevel(JEventLevel::Timeslice);
+        SetTypeName("MyTimesliceSource");
     }
-
-    static std::string GetDescription() { return "MyTimesliceSource"; }
-
-    std::string GetType(void) const override { return JTypeInfo::demangle<decltype(*this)>(); }
 
     void Open() override { }
 
     void GetEvent(std::shared_ptr<JEvent> event) override {
 
-        auto evt = event->GetEventNumber();
-        std::vector<MyInput*> inputs;
-        inputs.push_back(new MyInput(22,3.6,evt,0));
-        inputs.push_back(new MyInput(23,3.5,evt,1));
-        inputs.push_back(new MyInput(24,3.4,evt,2));
-        inputs.push_back(new MyInput(25,3.3,evt,3));
-        inputs.push_back(new MyInput(26,3.2,evt,4));
-        event->Insert(inputs);
+        auto ts_nr = event->GetEventNumber();
+        auto hits_out  = std::make_unique<ExampleHitCollection>();
 
-        auto hits = std::make_unique<ExampleHitCollection>();
-        hits.push_back(ExampleHit(22));
-        hits.push_back(ExampleHit(23));
-        hits.push_back(ExampleHit(24));
-        event->InsertCollection(hits);
+        // ExampleHit(unsigned long long cellID, double x, double y, double z, double energy, std::uint64_t time);
+        hits_out->push_back(ExampleHit(ts_nr, 0, 22, 22, 22, 0));
+        hits_out->push_back(ExampleHit(ts_nr, 0, 49, 49, 49, 1));
+        hits_out->push_back(ExampleHit(ts_nr, 0, 7.6, 7.6, 7.6, 2));
 
-        jout << "MyTimesliceSource: Emitting " << event->GetEventNumber() << jendl;
+        LOG_DEBUG(GetLogger()) << "MyTimesliceSource: Timeslice " << event->GetEventNumber() << "\n"
+            << TabulateHits(hits_out.get())
+            << LOG_END;
+
+        m_hits_out() = std::move(hits_out);
     }
 };

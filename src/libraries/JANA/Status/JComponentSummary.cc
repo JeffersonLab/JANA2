@@ -10,50 +10,37 @@
 std::ostream& operator<<(std::ostream& os, JComponentSummary const& cs) {
 
     os << "Component Summary" << std::endl << std::endl;
-    os << std::left;
-    os << "  SOURCES" << std::endl;
-    JTablePrinter sourcesTable;
-    sourcesTable.AddColumn("Plugin");
-    sourcesTable.AddColumn("Name");
-    sourcesTable.AddColumn("Source");
-    sourcesTable.AddColumn("Level");
+
+    JTablePrinter table;
+    table.AddColumn("Plugin");
+    table.AddColumn("Type");
+    table.AddColumn("Level");
+    table.AddColumn("Name");
+    table.AddColumn("Tag");
+
     for (const auto& source : cs.event_sources) {
-        sourcesTable | source.plugin_name | source.type_name | source.source_name | source.level;
+        table | source.plugin_name | "JEventSource" | source.level | source.type_name | source.source_name;
     }
-    sourcesTable.Render(os);
-    os << "  PROCESSORS" << std::endl;
-    JTablePrinter procsTable;
-    procsTable.AddColumn("Plugin");
-    procsTable.AddColumn("Name");
-    procsTable.AddColumn("Level");
+    for (const auto& unfolder : cs.event_unfolders) {
+        table | unfolder.plugin_name | "JEventUnfolder" | unfolder.level | unfolder.type_name | unfolder.prefix;
+    }
+
     for (const auto& proc : cs.event_processors) {
-        procsTable | proc.plugin_name | proc.type_name | proc.level;
-    }
-    procsTable.Render(os);
-
-    if (cs.event_unfolders.size() != 0) {
-        os << "  UNFOLDERS" << std::endl;
-        JTablePrinter unfoldersTable;
-        unfoldersTable.AddColumn("Plugin");
-        unfoldersTable.AddColumn("Name");
-        unfoldersTable.AddColumn("Level");
-        for (const auto& unfolder : cs.event_unfolders) {
-            unfoldersTable | unfolder.plugin_name | unfolder.type_name | unfolder.level;
-        }
-        sourcesTable.Render(os);
+        table | proc.plugin_name | "JEventProcessor" | proc.level | proc.type_name | proc.prefix;
     }
 
-    os << "  FACTORIES" << std::endl;
+    os << table << std::endl;
 
     JTablePrinter factoryTable;
     factoryTable.AddColumn("Plugin");
-    factoryTable.AddColumn("Object name");
-    factoryTable.AddColumn("Tag");
+    factoryTable.AddColumn("Factory");
     factoryTable.AddColumn("Level");
+    factoryTable.AddColumn("Collection type");
+    factoryTable.AddColumn("Collection tag");
     for (const auto& factory : cs.factories) {
-        factoryTable | factory.plugin_name | factory.object_name | factory.factory_tag | factory.level;
+        factoryTable | factory.plugin_name | factory.factory_name | factory.level | factory.object_name | factory.factory_tag;
     }
-    factoryTable.Render(os);
+    os << factoryTable << std::endl;
     return os;
 
 }

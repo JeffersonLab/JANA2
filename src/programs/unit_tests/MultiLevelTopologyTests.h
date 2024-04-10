@@ -23,12 +23,10 @@ struct MyCluster : public JObject {
 
 struct MyTimesliceSource : public JEventSource {
 
-    MyTimesliceSource(std::string source_name, JApplication *app) : JEventSource(source_name, app) { 
+    MyTimesliceSource() { 
         SetLevel(JEventLevel::Timeslice);
     }
 
-    static std::string GetDescription() { return "MyTimesliceSource"; }
-    std::string GetType(void) const override { return JTypeInfo::demangle<decltype(*this)>(); }
     void Open() override { }
 
     void GetEvent(std::shared_ptr<JEvent> event) override {
@@ -54,7 +52,7 @@ struct MyTimesliceUnfolder : public JEventUnfolder {
         init_called_count++;
     };
 
-    virtual void Preprocess(const JEvent& parent) const {
+    virtual void Preprocess(const JEvent& /*parent*/) const {
         preprocess_called_count++;
         // TODO: Are we going to need an omni unfolder?
         // TODO: Call protocluster factory
@@ -69,9 +67,9 @@ struct MyTimesliceUnfolder : public JEventUnfolder {
         if (item == 3) {
             jout << "Unfold found item 3, finishing join" << jendl;
             // TODO: Insert protocluster into child
-            return Result::Finished;
+            return Result::NextChildNextParent;
         }
-        return Result::KeepGoing;
+        return Result::NextChildKeepParent;
     }
 
     virtual void Finish() {

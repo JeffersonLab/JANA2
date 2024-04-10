@@ -16,14 +16,8 @@ struct FlakySource : public JEventSource {
     bool open_excepts, getevent_excepts;
     int event_count = 0;
 
-    FlakySource(std::string source_name, JApplication* app, bool open_excepts, bool getevent_excepts)
-            : JEventSource(source_name, app), open_excepts(open_excepts), getevent_excepts(getevent_excepts) {}
-
-    static std::string GetDescription() { return "UnopenableEventSource"; }
-
-    std::string GetType(void) const override {
-        return JTypeInfo::demangle<decltype(*this)>();
-    }
+    FlakySource(bool open_excepts, bool getevent_excepts)
+            : open_excepts(open_excepts), getevent_excepts(getevent_excepts) {}
 
     void Open() override {
         if (open_excepts) {
@@ -49,9 +43,8 @@ struct FlakyProcessor : public JEventProcessor {
 
     bool init_excepts, process_excepts, finish_excepts;
 
-    FlakyProcessor(JApplication* app, bool init_excepts, bool process_excepts, bool finish_excepts)
-        : JEventProcessor(app)
-        , init_excepts(init_excepts)
+    FlakyProcessor(bool init_excepts, bool process_excepts, bool finish_excepts)
+        : init_excepts(init_excepts)
         , process_excepts(process_excepts)
         , finish_excepts(finish_excepts)
         {};
@@ -72,10 +65,6 @@ struct FlakyProcessor : public JEventProcessor {
         if (finish_excepts) {
             throw JException("Unable to finish!");
         }
-    }
-
-    std::string GetType(void) const override {
-        return JTypeInfo::demangle<decltype(*this)>();
     }
 };
 

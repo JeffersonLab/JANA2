@@ -43,7 +43,7 @@ void JEventProcessorArrow::initialize() {
     LOG_DEBUG(m_logger) << "Initializing arrow '" << get_name() << "'" << LOG_END;
     for (auto processor : m_processors) {
         processor->DoInitialize();
-        LOG_INFO(m_logger) << "Initialized JEventProcessor '" << processor->GetType() << "'" << LOG_END;
+        LOG_INFO(m_logger) << "Initialized JEventProcessor '" << processor->GetTypeName() << "'" << LOG_END;
     }
 }
 
@@ -51,7 +51,7 @@ void JEventProcessorArrow::finalize() {
     LOG_DEBUG(m_logger) << "Finalizing arrow '" << get_name() << "'" << LOG_END;
     for (auto processor : m_processors) {
         processor->DoFinalize();
-        LOG_INFO(m_logger) << "Finalized JEventProcessor '" << processor->GetType() << "'" << LOG_END;
+        LOG_INFO(m_logger) << "Finalized JEventProcessor '" << processor->GetTypeName() << "'" << LOG_END;
     }
 }
 

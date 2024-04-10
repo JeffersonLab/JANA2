@@ -58,6 +58,7 @@ set(JANA2_SOURCES
     Services/JComponentManager.h
     Services/JGlobalRootLock.h
     Services/JLoggingService.h
+    Services/JLoggingService.cc
     Services/JParameterManager.cc
     Services/JParameterManager.h
     Services/JPluginLoader.cc

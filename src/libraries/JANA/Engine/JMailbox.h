@@ -10,6 +10,7 @@
 #include <mutex>
 #include <JANA/Utils/JCpuInfo.h>
 #include <JANA/Services/JLoggingService.h>
+#include <JANA/JEvent.h>
 
 /// JMailbox is a threadsafe event queue designed for communication between Arrows.
 /// It is different from the standard data structure in the following ways:
@@ -38,11 +39,15 @@ protected:
     size_t m_capacity;
     size_t m_locations_count;
     bool m_enable_work_stealing = false;
+    int m_id = 0;
+    JLogger m_logger;
 
 public:
     inline size_t get_threshold() { return m_capacity; }
     inline size_t get_locations_count() { return m_locations_count; }
     inline bool is_work_stealing_enabled() { return m_enable_work_stealing; }
+    void set_logger(JLogger logger) { m_logger = logger; }
+    void set_id(int id) { m_id = id; }
 
 
     inline JQueue(size_t threshold, size_t locations_count, bool enable_work_stealing)
@@ -287,6 +292,40 @@ public:
     };
 
 };
+
+template <>
+inline void JMailbox<std::shared_ptr<JEvent>*>::push_and_unreserve(std::shared_ptr<JEvent>** buffer, size_t count, size_t reserved_count, size_t location_id) {
+
+    auto& mb = m_queues[location_id];
+    std::lock_guard<std::mutex> lock(mb.mutex);
+    assert(reserved_count <= mb.reserved_count);
+    assert(mb.queue.size() + count <= m_capacity);
+    mb.reserved_count -= reserved_count;
+    for (size_t i=0; i<count; ++i) {
+        LOG_TRACE(m_logger) << "JMailbox: push_and_unreserve(): queue #" << m_id << ", event #" << buffer[i]->get()->GetEventNumber() << LOG_END;
+        mb.queue.push_back(buffer[i]);
+        buffer[i] = nullptr;
+    }
+} 
+
+template <>
+inline size_t JMailbox<std::shared_ptr<JEvent>*>::pop_and_reserve(std::shared_ptr<JEvent>** buffer, size_t min_requested_count, size_t max_requested_count, size_t location_id) {
+
+    auto& mb = m_queues[location_id];
+    std::lock_guard<std::mutex> lock(mb.mutex);
+
+    if (mb.queue.size() < min_requested_count) return 0;
+
+    auto nitems = std::min(max_requested_count, mb.queue.size());
+    mb.reserved_count += nitems;
+
+    for (size_t i=0; i<nitems; ++i) {
+        buffer[i] = mb.queue.front();
+        LOG_TRACE(m_logger) << "JMailbox: pop_and_reserve(): queue #" << m_id << ", event #" << buffer[i]->get()->GetEventNumber() << LOG_END;
+        mb.queue.pop_front();
+    }
+    return nitems;
+}
 
 
 

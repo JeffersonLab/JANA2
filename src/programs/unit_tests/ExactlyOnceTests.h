@@ -16,16 +16,6 @@ struct SimpleSource : public JEventSource {
     std::atomic_int close_count {0};
     std::atomic_int event_count {0};
 
-    SimpleSource(std::string source_name, JApplication *app) : JEventSource(source_name, app)
-    { }
-
-    static std::string GetDescription() {
-        return "ComponentTests Fake Event Source";
-    }
-
-    std::string GetType(void) const override {
-        return JTypeInfo::demangle<decltype(*this)>();
-    }
 
     void Open() override {
         open_count += 1;
@@ -46,8 +36,6 @@ struct SimpleProcessor : public JEventProcessor {
 
     std::atomic_int init_count {0};
     std::atomic_int finish_count {0};
-
-    SimpleProcessor(JApplication* app) : JEventProcessor(app) {}
 
     void Init() override {
         init_count += 1;

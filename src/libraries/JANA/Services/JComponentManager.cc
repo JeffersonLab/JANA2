@@ -65,9 +65,7 @@ void JComponentManager::add(JEventSource *event_source) {
 
 void JComponentManager::add(JEventProcessor *processor) {
     processor->SetPluginName(m_current_plugin_name);
-    if (processor->GetApplication() == nullptr) {
-        processor->SetJApplication(m_app);
-    }
+    processor->SetApplication(m_app);
     m_evt_procs.push_back(processor);
 }
 
@@ -92,6 +90,20 @@ void JComponentManager::initialize() {
     auto parms = m_app->GetJParameterManager();
     parms->SetDefaultParameter("record_call_stack", m_enable_call_graph_recording, "Records a trace of who called each factory. Reduces performance but necessary for plugins such as janadot.");
     parms->FilterParameters(m_default_tags, "DEFTAG:");
+
+    resolve_event_sources();
+
+    auto logging_svc = m_app->GetService<JLoggingService>();
+
+    for (JEventSource* source : m_evt_srces) {
+        source->SetLogger(logging_svc->get_logger(source->GetLoggerName()));
+    }
+    for (JEventProcessor* proc : m_evt_procs) {
+        proc->SetLogger(logging_svc->get_logger(proc->GetLoggerName()));
+    }
+    for (JEventUnfolder* unfolder : m_unfolders) {
+        unfolder->SetLogger(logging_svc->get_logger(unfolder->GetLoggerName()));
+    }
 }
 
 
@@ -209,16 +221,25 @@ JComponentSummary JComponentManager::get_component_summary() {
 
     // Event sources
     for (auto * src : m_evt_srces) {
-        result.event_sources.push_back({.level=src->GetLevel(), .plugin_name=src->GetPluginName(), .type_name=src->GetType(), .source_name=src->GetName()});
+        result.event_sources.push_back({.level=src->GetLevel(), 
+                                        .plugin_name=src->GetPluginName(), 
+                                        .type_name=src->GetType(), 
+                                        .source_name=src->GetName()});
     }
 
     // Event processors
     for (auto * evt_proc : m_evt_procs) {
-        result.event_processors.push_back({.level=evt_proc->GetLevel(), .plugin_name = evt_proc->GetPluginName(), .type_name=evt_proc->GetTypeName()});
+        result.event_processors.push_back({.level=evt_proc->GetLevel(), 
+                                           .plugin_name = evt_proc->GetPluginName(), 
+                                           .type_name=evt_proc->GetTypeName(), 
+                                           .prefix=evt_proc->GetPrefix()});
     }
 
     for (auto * unfolder : m_unfolders) {
-        result.event_unfolders.push_back({.level=unfolder->GetLevel(), .plugin_name = unfolder->GetPluginName(), .type_name=unfolder->GetTypeName()});
+        result.event_unfolders.push_back({.level=unfolder->GetLevel(), 
+                                          .plugin_name = unfolder->GetPluginName(), 
+                                          .type_name=unfolder->GetTypeName(), 
+                                          .prefix=unfolder->GetPrefix()});
     }
 
     // Factories

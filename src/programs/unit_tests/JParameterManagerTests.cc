@@ -409,8 +409,8 @@ TEST_CASE("JParameterManager_CompileTimeErrorForParseAndStringify") {
 
     int x;
     JParameterManager::Parse("22", x);
-    Mood m;
     // Uncomment these to test compile-time error message
+    //Mood m;
     //JParameterManager::Parse("Mediocre", m);
     //JParameterManager::Stringify(m);
 }

@@ -9,7 +9,6 @@
 #include <JANA/Utils/JEventPool.h>
 
 
-using SourceStatus = JEventSource::RETURN_STATUS;
 
 JEventSourceArrow::JEventSourceArrow(std::string name,
                                      std::vector<JEventSource*> sources,
@@ -62,7 +61,7 @@ void JEventSourceArrow::finalize() {
     // However, we can't rely on the JEventSources turning themselves off since execution can be externally paused.
     // Instead we leave everything open until we finalize the whole topology, and finalize remaining event sources then.
     for (JEventSource* source : m_sources) {
-        if (source->GetStatus() == JEventSource::SourceStatus::Opened) {
+        if (source->GetStatus() == JEventSource::Status::Initialized) {
             LOG_INFO(m_logger) << "Finalizing JEventSource '" << source->GetTypeName() << "' (" << source->GetResourceName() << ")" << LOG_END;
             source->DoFinalize();
         }

@@ -75,10 +75,13 @@ public:
         }
         success = m_child_in.pull(ci);
         if (! success) {
+            m_parent_in.push(pi);
             return false;
         }
         success = m_child_out.pull(co);
         if (! success) {
+            m_parent_in.push(pi);
+            m_child_in.push(ci);
             return false;
         }
         return true;
@@ -91,6 +94,20 @@ public:
         message_count += m_child_out.push(child_out);
         return message_count;
     }
+
+
+    size_t get_pending() final {
+        size_t sum = 0;
+        for (PlaceRefBase* place : m_places) {
+            sum += place->get_pending();
+        }
+        if (m_parent_event != nullptr) {
+            sum += 1; 
+            // Handle the case of UnfoldArrow hanging on to a parent
+        }
+        return sum;
+    }
+
 
     void execute(JArrowMetrics& metrics, size_t location_id) final {
 
@@ -134,7 +151,7 @@ public:
             LOG_DEBUG(m_logger) << "Unfold succeeded: Parent event = " << m_parent_event->get()->GetEventNumber() << ", child event = " << child->get()->GetEventNumber() << LOG_END;
             // TODO: We'll need something more complicated for the streaming join case
 
-            if (status == JEventUnfolder::Result::Finished) {
+            if (status == JEventUnfolder::Result::NextChildNextParent || status == JEventUnfolder::Result::KeepChildNextParent) {
                 LOG_DEBUG(m_logger) << "Unfold finished with parent event = " << m_parent_event->get()->GetEventNumber() << LOG_END;
                 m_ready_to_fetch_parent = true;
                 m_parent_event->get()->Release();

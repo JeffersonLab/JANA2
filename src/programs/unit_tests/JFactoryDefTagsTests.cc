@@ -103,7 +103,7 @@ TEST_CASE("MediumDefTags") {
 
 namespace deftagstest {
 struct DummySource : public JEventSource {
-    DummySource() : JEventSource("DummySource") {
+    DummySource() {
         SetTypeName(NAME_OF_THIS);
     };
 

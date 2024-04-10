@@ -17,14 +17,14 @@ TEST_CASE("TerminationTests") {
     auto parms = new JParameterManager;
     // parms->SetParameter("log:debug","JScheduler,JArrowProcessingController,JWorker,JArrow");
     JApplication app(parms);
-    auto processor = new CountingProcessor(&app);
+    auto processor = new CountingProcessor();
     app.Add(processor);
     app.SetParameterValue("jana:extended_report", 0);
 
     SECTION("Arrow engine, manual termination") {
 
         app.SetParameterValue("jana:engine", 0);
-        auto source = new UnboundedSource("UnboundedSource", &app);
+        auto source = new UnboundedSource();
         app.Add(source);
         app.Run(false);
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
@@ -37,7 +37,7 @@ TEST_CASE("TerminationTests") {
     SECTION("Arrow engine, self termination") {
 
         app.SetParameterValue("jana:engine", 0);
-        auto source = new BoundedSource("BoundedSource", &app);
+        auto source = new BoundedSource();
         app.Add(source);
         app.Run(true);
         REQUIRE(source->event_count == 10);
@@ -53,7 +53,7 @@ TEST_CASE("TerminationTests") {
         //       What we really want is an Arrow that has an initialize() that we override.
         //       However to do that, we need to extend JESA and create a custom topology.
         app.SetParameterValue("jana:engine", 0);
-        auto source = new InterruptedSource("InterruptedSource", &app);
+        auto source = new InterruptedSource();
         app.Add(source);
         app.Run(true);
         REQUIRE(processor->processed_count == 1);  // TODO: Was 0, should become zero again
@@ -67,7 +67,7 @@ TEST_CASE("TerminationTests") {
     SECTION("Debug engine, self-termination") {
 
         app.SetParameterValue("jana:engine", 1);
-        auto source = new BoundedSource("BoundedSource", &app);
+        auto source = new BoundedSource();
         app.Add(source);
         app.Run(true);
         REQUIRE(source->event_count == 10);
@@ -79,7 +79,7 @@ TEST_CASE("TerminationTests") {
     SECTION("Debug engine, manual termination") {
 
         app.SetParameterValue("jana:engine", 1);
-        auto source = new UnboundedSource("UnboundedSource", &app);
+        auto source = new UnboundedSource();
         app.Add(source);
         app.Run(false);
         std::this_thread::sleep_for(std::chrono::milliseconds(10));

@@ -15,7 +15,6 @@
 #include <datamodel/EventInfo.h>
 #include <datamodel/EventInfoCollection.h>
 
-#if podio_VERSION < PODIO_VERSION(0, 17, 0)
 /// Legacy PODIO support
 template <typename T>
 struct PodioTypeMap {
@@ -38,7 +37,6 @@ struct PodioTypeMap<EventInfo> {
     using mutable_t = MutableEventInfo;
     using collection_t = EventInfoCollection;
 };
-#endif
 
 
 template<typename ... Ts>

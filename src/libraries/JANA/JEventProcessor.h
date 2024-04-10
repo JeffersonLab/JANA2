@@ -5,168 +5,182 @@
 #ifndef _JEventProcessor_h_
 #define _JEventProcessor_h_
 
+#include <JANA/Omni/JComponent.h>
+#include <JANA/Omni/JHasInputs.h>
+#include <JANA/Omni/JHasRunCallbacks.h>
 #include <JANA/JEvent.h>
-#include <JANA/Utils/JTypeInfo.h>
-#include <JANA/Utils/JEventLevel.h>
-#include <atomic>
 
 class JApplication;
 
 
-class JEventProcessor {
+class JEventProcessor : public jana::omni::JComponent, 
+                        public jana::omni::JHasRunCallbacks, 
+                        public jana::omni::JHasInputs {
 public:
 
-    explicit JEventProcessor(JApplication* app = nullptr)
-        : mApplication(app)
-        , m_status(Status::Unopened)
-        , m_event_count{0}
-    {}
-
+    JEventProcessor() = default;
     virtual ~JEventProcessor() = default;
 
-    enum class Status { Unopened, Opened, Finished };
+    // TODO: Deprecate
+    explicit JEventProcessor(JApplication* app) {
+        m_app = app;
+    }
 
-    Status GetStatus() const { return m_status; }
-
-    std::string GetPluginName() const { return m_plugin_name; }
-
-    std::string GetTypeName() const { return m_type_name; }
 
     std::string GetResourceName() const { return m_resource_name; }
 
     uint64_t GetEventCount() const { return m_event_count; };
-
-    JApplication* GetApplication() const { return mApplication; }
 
     bool AreEventsOrdered() const { return m_receive_events_in_order; }
 
 
     virtual void DoInitialize() {
         try {
-            std::call_once(m_init_flag, &JEventProcessor::Init, this);
-            m_status = Status::Opened;
+            for (auto* parameter : m_parameters) {
+                parameter->Configure(*(m_app->GetJParameterManager()), m_prefix);
+            }
+            for (auto* service : m_services) {
+                service->Init(m_app);
+            }
+            Init();
+            m_status = Status::Initialized;
         }
         catch (JException& ex) {
             ex.plugin_name = m_plugin_name;
-            ex.component_name = GetType();
+            ex.component_name = m_type_name;
             throw ex;
         }
         catch (...) {
             auto ex = JException("Unknown exception in JEventProcessor::Open()");
             ex.nested_exception = std::current_exception();
             ex.plugin_name = m_plugin_name;
-            ex.component_name = GetType();
+            ex.component_name = m_type_name;
             throw ex;
         }
     }
 
 
-    // TODO: Improve this type signature
     virtual void DoMap(const std::shared_ptr<const JEvent>& e) {
+
+        for (auto* input : m_inputs) {
+            input->PrefetchCollection(*e);
+        }
+        // JExceptions with factory info will be furnished by the callee,
+        // so we don't need to try/catch here. 
+        
+        // Also we don't have 
+        // a Preprocess(), so we don't technically need Init() here even
+        
+        if (m_callback_style != CallbackStyle::Declarative) {
+            DoReduce(e); // This does all the locking!
+        }
+    }
+
+
+    virtual void DoReduce(const std::shared_ptr<const JEvent>& e) {
         try {
-            std::call_once(m_init_flag, &JEventProcessor::DoInitialize, this);
             auto run_number = e->GetRunNumber();
-            {
-                std::lock_guard<std::mutex> lock(m_mutex);
-                if (m_last_run_number != run_number) {
-                    if (m_last_run_number != -1) {
-                        EndRun();
-                    }
-                    m_last_run_number = run_number;
-                    BeginRun(e);
-                }
+            std::lock_guard<std::mutex> lock(m_mutex);
+
+            if (m_status == Status::Uninitialized) {
+                DoInitialize();
             }
-            Process(e);
+            else if (m_status == Status::Finalized) {
+                throw JException("JEventProcessor: Attempted to call DoMap() after Finalize()");
+            }
+            if (m_last_run_number != run_number) {
+                if (m_last_run_number != -1) {
+                    EndRun();
+                }
+                for (auto* resource : m_resources) {
+                    resource->ChangeRun(e->GetRunNumber(), m_app);
+                }
+                m_last_run_number = run_number;
+                BeginRun(e);
+            }
+            for (auto* input : m_inputs) {
+                input->GetCollection(*e);
+            }
+            if (m_callback_style == CallbackStyle::Declarative) {
+                Process(e->GetRunNumber(), e->GetEventNumber(), e->GetEventIndex());
+            }
+            else {
+                Process(e);
+            }
             m_event_count += 1;
         }
         catch (JException& ex) {
             ex.plugin_name = m_plugin_name;
-            ex.component_name = GetType();
+            ex.component_name = m_type_name;
             throw ex;
         }
         catch (std::exception& e) {
             auto ex = JException(e.what());
             ex.nested_exception = std::current_exception();
             ex.plugin_name = m_plugin_name;
-            ex.component_name = GetType();
+            ex.component_name = m_type_name;
             throw ex;
         }
         catch (...) {
-            auto ex = JException("Unknown exception in JEventProcessor::DoMap()");
+            auto ex = JException("Unknown exception in JEventProcessor::DoReduce()");
             ex.nested_exception = std::current_exception();
             ex.plugin_name = m_plugin_name;
-            ex.component_name = GetType();
+            ex.component_name = m_type_name;
             throw ex;
         }
     }
 
 
-    // Reduce does nothing in the basic version because the current API tells
-    // the user to lock a mutex in Process(), which takes care of it for us.
-    virtual void DoReduce(const std::shared_ptr<const JEvent>&) {}
-
-
     virtual void DoFinalize() {
         try {
             std::lock_guard<std::mutex> lock(m_mutex);
-            if (m_status != Status::Finished) {
+            if (m_status != Status::Finalized) {
                 if (m_last_run_number != -1) {
                     EndRun();
                 }
                 Finish();
-                m_status = Status::Finished;
+                m_status = Status::Finalized;
             }
         }
         catch (JException& ex) {
             ex.plugin_name = m_plugin_name;
-            ex.component_name = GetType();
+            ex.component_name = m_type_name;
             throw ex;
         }
         catch (...) {
             auto ex = JException("Unknown exception in JEventProcessor::Finish()");
             ex.nested_exception = std::current_exception();
             ex.plugin_name = m_plugin_name;
-            ex.component_name = GetType();
+            ex.component_name = m_type_name;
             throw ex;
         }
     }
 
 
-    // TODO: Make these protected?
-    /// JEventProcessor::Init, Process, and Finish are meant to be written by the user.
-    /// Each JEventProcessor is intended to generate one distinct output,
     virtual void Init() {}
 
-    virtual void BeginRun(const std::shared_ptr<const JEvent>&) {}
 
     virtual void Process(const std::shared_ptr<const JEvent>& /*event*/) {
         throw JException("Not implemented yet!");
     }
-    virtual void EndRun() {}
+
+    virtual void Process(int64_t /*run_nr*/, uint64_t /*event_nr*/, uint64_t /*event_idx*/) {
+        throw JException("Not implemented yet!");
+    }
+
 
     virtual void Finish() {}
 
 
-    // TODO: Can we please deprecate this in favor of GetTypeName?
+    // TODO: Deprecate
     virtual std::string GetType() const {
         return m_type_name;
     }
-
-    // Meant to be called by JANA
-    JEventLevel GetLevel() { return m_level; }
-
 
 protected:
 
     // The following are meant to be called by the user from the constructor in order to
     // configure their JEventProcessor instance.
-
-    /// SetTypeName is intended as a replacement to GetType(), which should be less confusing for the
-    /// user. It should be called from the constructor. For convenience, we provide a
-    /// NAME_OF_THIS macro so that the user doesn't have to type the class name as a string, which may
-    /// get out of sync if automatic refactoring tools are used.
-
-    void SetTypeName(std::string type_name) { m_type_name = std::move(type_name); }
 
     /// Resource name lets the user tell the parallelization engine to synchronize different EventProcessors
     /// which write to the same shared resource; e.g. if you have two EventProcessors
@@ -177,46 +191,20 @@ protected:
     /// assume that you are manually synchronizing access via your own mutex, which will be safe if and only
     /// if you use your locks correctly, and also may result in a performance penalty.
 
-    void SetResourceName(std::string resource_name) { m_resource_name = std::move(resource_name); }
+    // void SetResourceName(std::string resource_name) { m_resource_name = std::move(resource_name); }
 
     /// SetEventsOrdered allows the user to tell the parallelization engine that it needs to see
     /// the event stream ordered by increasing event IDs. (Note that this requires all EventSources
     /// emit event IDs which are consecutive.) Ordering by event ID makes for cleaner output, but comes
     /// with a performance penalty, so it is best if this is enabled during debugging, and disabled otherwise.
 
-    void SetEventsOrdered(bool receive_events_in_order) { m_receive_events_in_order = receive_events_in_order; }
-
-    // Meant to be called by user in constructor
-    void SetLevel(JEventLevel level) { m_level = level; }
-
+    // void SetEventsOrdered(bool receive_events_in_order) { m_receive_events_in_order = receive_events_in_order; }
 
 
 private:
-    // Common to components
-    JEventLevel m_level = JEventLevel::Event;
-    JApplication* mApplication = nullptr;
-    Status m_status;
-    std::string m_plugin_name;
-    std::string m_type_name;
-    std::once_flag m_init_flag;
-    std::once_flag m_finish_flag;
-    std::mutex m_mutex;
-
-    // JEventProcessor-specific
     std::string m_resource_name;
-    std::atomic_ullong m_event_count;
-    int32_t m_last_run_number = -1;
+    std::atomic_ullong m_event_count {0};
     bool m_receive_events_in_order = false;
-
-
-    /// This is called by JApplication::Add(JEventProcessor*). There
-    /// should be no need to call it from anywhere else.
-    void SetJApplication(JApplication* app) { mApplication = app; }
-
-    friend JComponentManager;
-
-    /// SetPluginName is called by ComponentManager and should not be exposed to the user.
-    void SetPluginName(std::string plugin_name) { m_plugin_name = std::move(plugin_name); };
 
 };
 

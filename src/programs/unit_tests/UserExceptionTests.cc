@@ -17,16 +17,16 @@ TEST_CASE("UserExceptionTests") {
     SECTION("JEventSource::Open() excepts, debug engine") {
 
         app.SetParameterValue("jana:engine", 1);
-        app.Add(new FlakySource("open_excepting_source", &app, true, false));
-        app.Add(new FlakyProcessor(&app, false, false, false));
+        app.Add(new FlakySource(true, false));
+        app.Add(new FlakyProcessor(false, false, false));
         REQUIRE_THROWS(app.Run(true));
     }
 
    SECTION("JEventSource::GetEvent() excepts, debug engine") {
 
        app.SetParameterValue("jana:engine", 1);
-       app.Add(new FlakySource("open_excepting_source", &app, false, true));
-       app.Add(new FlakyProcessor(&app, false, false, false));
+       app.Add(new FlakySource(false, true));
+       app.Add(new FlakyProcessor(false, false, false));
        REQUIRE_THROWS(app.Run(true));
    }
 
@@ -34,64 +34,64 @@ TEST_CASE("UserExceptionTests") {
     SECTION("JEventProcessor::Init() excepts, debug engine") {
 
         app.SetParameterValue("jana:engine", 1);
-        app.Add(new FlakySource("open_excepting_source", &app, false, false));
-        app.Add(new FlakyProcessor(&app, true, false, false));
+        app.Add(new FlakySource(false, false));
+        app.Add(new FlakyProcessor(true, false, false));
         REQUIRE_THROWS(app.Run(true));
     }
 
    SECTION("JEventProcessor::Process() excepts, debug engine") {
 
        app.SetParameterValue("jana:engine", 1);
-       app.Add(new FlakySource("open_excepting_source", &app, false, false));
-       app.Add(new FlakyProcessor(&app, false, true, false));
+       app.Add(new FlakySource(false, false));
+       app.Add(new FlakyProcessor(false, true, false));
        REQUIRE_THROWS(app.Run(true));
    }
 
    SECTION("JEventProcessor::Finish() excepts, debug engine") {
 
        app.SetParameterValue("jana:engine", 1);
-       app.Add(new FlakySource("open_excepting_source", &app, false, false));
-       app.Add(new FlakyProcessor(&app, false, false, true));
+       app.Add(new FlakySource(false, false));
+       app.Add(new FlakyProcessor(false, false, true));
        REQUIRE_THROWS(app.Run(true));
    }
 
     SECTION("JEventSource::Open() excepts, default engine") {
 
         app.SetParameterValue("jana:engine", 0);
-        app.Add(new FlakySource("open_excepting_source", &app, true, false));
-        app.Add(new FlakyProcessor(&app, false, false, false));
+        app.Add(new FlakySource(true, false));
+        app.Add(new FlakyProcessor(false, false, false));
         REQUIRE_THROWS(app.Run(true));
     }
 
     SECTION("JEventSource::GetEvent() excepts, default engine") {
 
         app.SetParameterValue("jana:engine", 0);
-        app.Add(new FlakySource("open_excepting_source", &app, false, true));
-        app.Add(new FlakyProcessor(&app, false, false, false));
+        app.Add(new FlakySource(false, true));
+        app.Add(new FlakyProcessor(false, false, false));
         REQUIRE_THROWS(app.Run(true));
     }
 
     SECTION("JEventProcessor::Init() excepts, default engine") {
 
         app.SetParameterValue("jana:engine", 0);
-        app.Add(new FlakySource("open_excepting_source", &app, false, false));
-        app.Add(new FlakyProcessor(&app, true, false, false));
+        app.Add(new FlakySource(false, false));
+        app.Add(new FlakyProcessor(true, false, false));
         REQUIRE_THROWS(app.Run(true));
     }
 
     SECTION("JEventProcessor::Process() excepts, default engine") {
 
         app.SetParameterValue("jana:engine", 0);
-        app.Add(new FlakySource("open_excepting_source", &app, false, false));
-        app.Add(new FlakyProcessor(&app, false, true, false));
+        app.Add(new FlakySource(false, false));
+        app.Add(new FlakyProcessor(false, true, false));
         REQUIRE_THROWS(app.Run(true));
     }
 
     SECTION("JEventProcessor::Finish() excepts, default engine") {
 
         app.SetParameterValue("jana:engine", 0);
-        app.Add(new FlakySource("open_excepting_source", &app, false, false));
-        app.Add(new FlakyProcessor(&app, false, false, true));
+        app.Add(new FlakySource(false, false));
+        app.Add(new FlakyProcessor(false, false, true));
         REQUIRE_THROWS(app.Run(true));
     }
 }
