@@ -34,6 +34,12 @@ void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
             throw ex;
         }
     }
+
+    if (TestFactoryFlag(REGENERATE) && (mStatus == Status::Inserted)) {
+        ClearData();
+        // ClearData will reset mStatus to Status::Unprocessed
+    }
+
     if (mStatus == Status::Unprocessed) {
         try {
             if (mPreviousRunNumber == -1) {

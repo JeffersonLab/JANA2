@@ -79,12 +79,7 @@ public:
     /// exactly once, exceptions are tagged with the originating plugin and eventsource, ChangeRun() is
     /// called if and only if the run number changes, etc.
     PairType GetOrCreate(const std::shared_ptr<const JEvent>& event) {
-        if (mStatus == Status::Uninitialized || mStatus == Status::Unprocessed) {
-            Create(event);
-        }
-        if (mStatus != Status::Processed && mStatus != Status::Inserted) {
-            throw JException("JFactoryT::Status is corrupted");
-        }
+        Create(event);
         return std::make_pair(mData.cbegin(), mData.cend());
     }
 

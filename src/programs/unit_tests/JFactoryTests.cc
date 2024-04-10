@@ -170,5 +170,32 @@ TEST_CASE("JFactoryTests") {
             data++;
         }
     }
+
+    struct RegenerateFactory : public JFactoryT<JFactoryTestDummyObject> {
+        RegenerateFactory() {
+            SetRegenerateFlag(true);
+        }
+        void Process(const std::shared_ptr<const JEvent>&) override {
+            mData.emplace_back(new JFactoryTestDummyObject(49));
+            Set(mData);
+        }
+    };
+
+    SECTION("Factory regeneration") {
+        RegenerateFactory sut;
+        auto event = std::make_shared<JEvent>();
+
+        std::vector<JFactoryTestDummyObject*> inserted_data;
+        inserted_data.push_back(new JFactoryTestDummyObject(22));
+        inserted_data.push_back(new JFactoryTestDummyObject(618));
+        sut.Set(inserted_data);
+
+        REQUIRE(sut.GetStatus() == JFactory::Status::Inserted);
+
+        auto results = sut.GetOrCreate(event);
+        auto it = results.first;
+        REQUIRE((*it)->data == 49);
+        REQUIRE(sut.GetNumObjects() == 1);
+    }
 }
 
