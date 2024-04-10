@@ -128,7 +128,7 @@ public:
             pthread_mutex_unlock(&mutex);
             return !result; //JANA has false - if success and true if error
         }
-        catch (std::exception ex) {
+        catch (std::exception& ex) {
             //>oO CCDB debug output
 #ifdef CCDB_DEBUG_OUTPUT
             cout <<"CCDB::janaccdb Exception caught at GetCalib(string namepath, map<string, string> &svals, int event_number=0)"<<endl;
@@ -206,7 +206,7 @@ public:
             pthread_mutex_unlock(&mutex);
             return !result; //JANA has false - if success and true if error
         }
-        catch (std::exception ex) {
+        catch (std::exception& ex) {
             //>oO CCDB debug output
 #ifdef CCDB_DEBUG_OUTPUT
             cout <<"CCDB::janaccdb Exception caught at GetCalib(string namepath, map<string, string> &svals, int event_number=0)"<<endl;
@@ -261,7 +261,7 @@ public:
             pthread_mutex_unlock(&mutex);
             return !result; //JANA has false - if success and true if error, CCDB otherwise
         }
-        catch (std::exception ex) {
+        catch (std::exception& ex) {
             //>oO CCDB debug output
 #ifdef CCDB_DEBUG_OUTPUT
             cout <<"CCDB::janaccdb Exception caught at GetCalib(string namepath, map<string, string> &svals, int event_number=0)"<<endl;
@@ -315,7 +315,7 @@ public:
             pthread_mutex_unlock(&mutex);
             return !result; //JANA has false - if success and true if error, CCDB otherwise
         }
-        catch (std::exception ex) {
+        catch (std::exception& ex) {
             //>oO CCDB debug output
 #ifdef CCDB_DEBUG_OUTPUT
             cout <<"CCDB::janaccdb Exception caught at GetCalib(string namepath, map<string, string> &svals, int event_number=0)"<<endl;
@@ -345,7 +345,7 @@ public:
 
             mCalibration->GetListOfNamepaths(namepaths);
         }
-        catch (std::exception ex) {
+        catch (std::exception& ex) {
 
             //some ccdb debug output
 #ifdef CCDB_DEBUG_OUTPUT
