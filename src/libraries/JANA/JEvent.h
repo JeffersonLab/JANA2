@@ -13,7 +13,6 @@
 #include <JANA/JLogger.h>
 
 #include <JANA/Utils/JEventLevel.h>
-#include <JANA/Utils/JResettable.h>
 #include <JANA/Utils/JTypeInfo.h>
 #include <JANA/Utils/JCpuInfo.h>
 #include <JANA/Utils/JCallGraphRecorder.h>
@@ -38,7 +37,7 @@ class JApplication;
 class JEventSource;
 
 
-class JEvent : public JResettable, public std::enable_shared_from_this<JEvent>
+class JEvent : public std::enable_shared_from_this<JEvent>
 {
     public:
 
