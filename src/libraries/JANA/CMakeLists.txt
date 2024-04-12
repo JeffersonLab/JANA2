@@ -33,8 +33,6 @@ set(JANA2_SOURCES
     Engine/JArrowProcessingController.h
     Engine/JArrowTopology.cc
     Engine/JArrowTopology.h
-    Engine/JDebugProcessingController.cc
-    Engine/JDebugProcessingController.h
     Engine/JEventProcessorArrow.cc
     Engine/JEventProcessorArrow.h
     Engine/JEventSourceArrow.cc
