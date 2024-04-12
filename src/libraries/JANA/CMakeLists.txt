@@ -37,8 +37,6 @@ set(JANA2_SOURCES
     Engine/JEventProcessorArrow.h
     Engine/JEventSourceArrow.cc
     Engine/JEventSourceArrow.h
-    Engine/JBlockSourceArrow.h
-    Engine/JBlockDisentanglerArrow.h
     Engine/JEventMapArrow.h
     Engine/JEventMapArrow.cc
     Engine/JPool.h
