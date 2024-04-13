@@ -54,5 +54,6 @@ jobs:
         $GITHUB_WORKSPACE/Linux/bin/jana-unit-tests
     - name: BlockExample
       run: |
-        echo "--- Running BlockExample ------------------------------"
-        $GITHUB_WORKSPACE/Linux/plugins/BlockExample.so
+        echo "--- Running TimesliceExample ------------------------------"
+        $GITHUB_WORKSPACE/Linux/bin/jana -Pjana:nevents=100 -Pnthreads=4 -Pplugins=$GITHUB_WORKSPACE/Linux/plugins/TimesliceExample.so
+

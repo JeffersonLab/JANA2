@@ -35,7 +35,6 @@ public:
     // TODO: Deprecate me!
     explicit JEventSource(std::string resource_name, JApplication* app = nullptr)
         : m_resource_name(std::move(resource_name))
-        , m_factory_generator(nullptr)
         , m_event_count{0}
         {
             m_app = app;
@@ -207,14 +206,6 @@ public:
                     event->SetJEventSource(this);
                     event->SetSequential(false);
                     event->GetJCallGraphRecorder()->Reset();
-                    if (event->GetJEventSource() != this && m_factory_generator != nullptr) {
-                        // If we have multiple event sources, we need to make sure we are using
-                        // event-source-specific factories on top of the default ones.
-                        auto factory_set = new JFactorySet();
-                        m_factory_generator->GenerateFactories(factory_set);
-                        factory_set->Merge(*event->GetFactorySet());
-                        event->SetFactorySet(factory_set);
-                    }
                     auto previous_origin = event->GetJCallGraphRecorder()->SetInsertDataOrigin( JCallGraphRecorder::ORIGIN_FROM_SOURCE);  // (see note at top of JCallGraphRecorder.h)
                     GetEvent(event);
                     for (auto* output : m_outputs) {
@@ -301,15 +292,9 @@ public:
         return "<description unavailable>";
     } ///< Optional for getting description via source rather than JEventSourceGenerator
 
-    //This should create default factories for all types available in the event source
-    JFactoryGenerator* GetFactoryGenerator() const { return m_factory_generator; }
 
     uint64_t GetNSkip() { return m_nskip; }
     uint64_t GetNEvents() { return m_nevents; }
-
-    // Meant to be called by user
-    /// SetFactoryGenerator allows us to override the set of factories. This is 
-    void SetFactoryGenerator(JFactoryGenerator* generator) { m_factory_generator = generator; }
 
     // Meant to be called by user
     /// EnableFinishEvent() is intended to be called by the user in the constructor in order to
@@ -328,7 +313,6 @@ public:
 
 private:
     std::string m_resource_name;
-    JFactoryGenerator* m_factory_generator = nullptr;
     std::atomic_ullong m_event_count {0};
     uint64_t m_nskip = 0;
     uint64_t m_nevents = 0;

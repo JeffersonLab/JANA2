@@ -14,7 +14,6 @@
 #include <JANA/Services/JComponentManager.h>
 #include <JANA/Services/JGlobalRootLock.h>
 #include <JANA/Engine/JArrowProcessingController.h>
-#include <JANA/Engine/JDebugProcessingController.h>
 #include <JANA/Utils/JCpuInfo.h>
 #include <JANA/Utils/JAutoActivator.h>
 #include <JANA/Engine/JTopologyBuilder.h>
@@ -140,27 +139,24 @@ void JApplication::Initialize() {
 
     m_component_manager->initialize();
 
+    /*
     int engine_choice = 0;
     m_params->SetDefaultParameter("jana:engine", engine_choice,
-                                  "0: Use arrow engine, 1: Use debug engine")->SetIsAdvanced(true);
+                                  "0: Use arrow engine")->SetIsAdvanced(true);
 
-    if (engine_choice == 0) {
-        std::shared_ptr<JTopologyBuilder> topology_builder = m_service_locator.get<JTopologyBuilder>();
-        auto topology = topology_builder->get_or_create();
-
-        auto japc = std::make_shared<JArrowProcessingController>(topology);
-        m_service_locator.provide(japc);  // Make concrete class available via SL
-        m_processing_controller = m_service_locator.get<JArrowProcessingController>();  // Get deps from SL
-        m_service_locator.provide(m_processing_controller);  // Make abstract class available via SL
+    if (engine_choice != 0) {
+        LOG_WARN(m_logger) << "Unrecognized engine choice! Falling back to jana:engine=0" << LOG_END;
     }
-    else {
-        auto jdpc = std::make_shared<JDebugProcessingController>(m_component_manager.get());
-        m_service_locator.provide(jdpc);  // Make the concrete class available via SL
-        m_processing_controller = m_service_locator.get<JDebugProcessingController>();  // Get deps from SL
-        m_service_locator.provide(m_processing_controller); // Make abstract class available via SL
-    }
+    */
+    std::shared_ptr<JTopologyBuilder> topology_builder = m_service_locator.get<JTopologyBuilder>();
+    auto topology = topology_builder->get_or_create();
 
+    auto japc = std::make_shared<JArrowProcessingController>(topology);
+    m_service_locator.provide(japc);  // Make concrete class available via SL
+    m_processing_controller = m_service_locator.get<JArrowProcessingController>();  // Get deps from SL
+    m_service_locator.provide(m_processing_controller);  // Make abstract class available via SL
     m_processing_controller->initialize();
+
     m_initialized = true;
 }
 
