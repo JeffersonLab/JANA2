@@ -5,7 +5,7 @@
 #include "JBenchmarker.h"
 
 #include <JANA/Utils/JCpuInfo.h>
-#include <JANA/JLogger.h>
+#include <JANA/Services/JLoggingService.h>
 
 #include <fstream>
 #include <cmath>

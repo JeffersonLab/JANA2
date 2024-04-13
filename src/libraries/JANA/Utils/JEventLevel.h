@@ -3,6 +3,7 @@
 
 #pragma once
 #include <ostream>
+#include <sstream>
 
 enum class JEventLevel { Run, Subrun, Timeslice, Block, Event, Subevent, Task, None };
 

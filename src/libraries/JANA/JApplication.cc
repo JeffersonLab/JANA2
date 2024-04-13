@@ -4,10 +4,7 @@
 
 #include <JANA/JApplication.h>
 
-#include <JANA/JEventProcessor.h>
 #include <JANA/JEventSource.h>
-#include <JANA/JEventSourceGenerator.h>
-#include <JANA/JFactoryGenerator.h>
 
 #include <JANA/Services/JParameterManager.h>
 #include <JANA/Services/JPluginLoader.h>
@@ -21,18 +18,19 @@
 JApplication *japp = nullptr;
 
 JApplication::JApplication(JLogger::Level verbosity) {
+    m_service_locator = new JServiceLocator;
     m_params = std::make_shared<JParameterManager>();
     m_params->SetParameter("log:global", verbosity);
-    m_service_locator.provide(m_params);
-    m_service_locator.provide(std::make_shared<JLoggingService>());
-    m_service_locator.provide(std::make_shared<JPluginLoader>(this));
-    m_service_locator.provide(std::make_shared<JComponentManager>(this));
-    m_service_locator.provide(std::make_shared<JGlobalRootLock>());
-    m_service_locator.provide(std::make_shared<JTopologyBuilder>());
+    m_service_locator->provide(m_params);
+    m_service_locator->provide(std::make_shared<JLoggingService>());
+    m_service_locator->provide(std::make_shared<JPluginLoader>(this));
+    m_service_locator->provide(std::make_shared<JComponentManager>(this));
+    m_service_locator->provide(std::make_shared<JGlobalRootLock>());
+    m_service_locator->provide(std::make_shared<JTopologyBuilder>());
 
-    m_plugin_loader = m_service_locator.get<JPluginLoader>();
-    m_component_manager = m_service_locator.get<JComponentManager>();
-    m_logger = m_service_locator.get<JLoggingService>()->get_logger("JApplication");
+    m_plugin_loader = m_service_locator->get<JPluginLoader>();
+    m_component_manager = m_service_locator->get<JComponentManager>();
+    m_logger = m_service_locator->get<JLoggingService>()->get_logger("JApplication");
     m_logger.show_classname = false;
 }
 
@@ -45,17 +43,18 @@ JApplication::JApplication(JParameterManager* params) {
         m_params = std::shared_ptr<JParameterManager>(params);
     }
 
-    m_service_locator.provide(m_params);
-    m_service_locator.provide(std::make_shared<JLoggingService>());
-    m_service_locator.provide(std::make_shared<JPluginLoader>(this));
-    m_service_locator.provide(std::make_shared<JComponentManager>(this));
-    m_service_locator.provide(std::make_shared<JGlobalRootLock>());
-    m_service_locator.provide(std::make_shared<JTopologyBuilder>());
+    m_service_locator = new JServiceLocator;
+    m_service_locator->provide(m_params);
+    m_service_locator->provide(std::make_shared<JLoggingService>());
+    m_service_locator->provide(std::make_shared<JPluginLoader>(this));
+    m_service_locator->provide(std::make_shared<JComponentManager>(this));
+    m_service_locator->provide(std::make_shared<JGlobalRootLock>());
+    m_service_locator->provide(std::make_shared<JTopologyBuilder>());
 
-    m_plugin_loader = m_service_locator.get<JPluginLoader>();
-    m_component_manager = m_service_locator.get<JComponentManager>();
+    m_plugin_loader = m_service_locator->get<JPluginLoader>();
+    m_component_manager = m_service_locator->get<JComponentManager>();
 
-    m_logger = m_service_locator.get<JLoggingService>()->get_logger("JApplication");
+    m_logger = m_service_locator->get<JLoggingService>()->get_logger("JApplication");
     m_logger.show_classname = false;
 }
 
@@ -148,13 +147,13 @@ void JApplication::Initialize() {
         LOG_WARN(m_logger) << "Unrecognized engine choice! Falling back to jana:engine=0" << LOG_END;
     }
     */
-    std::shared_ptr<JTopologyBuilder> topology_builder = m_service_locator.get<JTopologyBuilder>();
+    std::shared_ptr<JTopologyBuilder> topology_builder = m_service_locator->get<JTopologyBuilder>();
     auto topology = topology_builder->get_or_create();
 
     auto japc = std::make_shared<JArrowProcessingController>(topology);
-    m_service_locator.provide(japc);  // Make concrete class available via SL
-    m_processing_controller = m_service_locator.get<JArrowProcessingController>();  // Get deps from SL
-    m_service_locator.provide(m_processing_controller);  // Make abstract class available via SL
+    m_service_locator->provide(japc);  // Make concrete class available via SL
+    m_processing_controller = m_service_locator->get<JArrowProcessingController>();  // Get deps from SL
+    m_service_locator->provide(m_processing_controller);  // Make abstract class available via SL
     m_processing_controller->initialize();
 
     m_initialized = true;
