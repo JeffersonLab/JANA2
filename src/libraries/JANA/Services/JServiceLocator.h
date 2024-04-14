@@ -6,7 +6,6 @@
 #ifndef _JSERVICELOCATOR_H_
 #define _JSERVICELOCATOR_H_
 
-#include <JANA/JException.h>
 
 #include <map>
 #include <typeinfo>
@@ -15,29 +14,16 @@
 #include <assert.h>
 #include <memory>
 #include <mutex>
+
+#include <JANA/JException.h>
 #include "JANA/Utils/JTypeInfo.h"
+#include <JANA/JServiceFwd.h>
 
 
-class JServiceLocator;
 
 /// JService is a trait indicating that an object can be shared among JANA components
 /// via a simple ServiceLocator. It provides a callback interface for configuring itself
 /// when it depends on other JServices.
-struct JService {
-
-    /// acquire_services is a callback which allows the user to configure a JService
-    /// which relies on other JServices. The idea is that the user uses a constructor
-    /// or initialize() method to configure things which don't rely on other JServices, and
-    /// then use acquire_services() to configure the things which do. We need this because
-    /// due to JANA's plugin architecture, we can't guarantee the order in which JServices
-    /// get provided. So instead, we collect all of the JServices first and wire them
-    /// together afterwards in a separate phase.
-    ///
-    /// Note: Don't call JApplication::GetService() or JServiceLocator::get() from InitPlugin()!
-
-    virtual ~JService() = default;
-    virtual void acquire_services(JServiceLocator*) {};
-};
 
 /// JServiceLocator is a nexus for collecting, initializing, and retrieving JServices.
 /// This may be exposed via the JApplication facade, or used on its own. JServiceLocator
