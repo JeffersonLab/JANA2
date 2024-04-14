@@ -18,6 +18,10 @@ struct JService : public jana::omni::JComponent {
 
     virtual ~JService() = default;
 
+    void DoInit(JServiceLocator*);
+
+    virtual void Init() {};
+
     // This will be deprecated eventually
     virtual void acquire_services(JServiceLocator*) {};
 };

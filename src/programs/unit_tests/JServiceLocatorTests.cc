@@ -5,8 +5,9 @@
 #define CATCH_CONFIG_MAIN
 #include "catch.hpp"
 
-#include <JANA/Services/JServiceLocator.h>
 #include "JServiceLocatorTests.h"
+#include <JANA/JService.h>
+#include <JANA/Services/JServiceLocator.h>
 
 
 TEST_CASE("JServiceLocatorMissingServiceTest") {
@@ -73,6 +74,25 @@ TEST_CASE("JServiceLocator chicken-and-egg tests") {
 
 }
 
+struct OmniService : public JService {
 
+    Service<JParameterManager> parman {this};
+    Parameter<int> bucket_count {this, "bucket_count", 5, "Some integer representing a bucket count"};
 
+    void Init() override {
+        LOG_INFO(GetLogger()) << "Calling OmniService::Init" << LOG_END;
+        REQUIRE(parman().GetParameterValue<int>("bucket_count") == 22);
+        REQUIRE(bucket_count() == 22);
+    }
+};
+
+TEST_CASE("JService Omni interface") {
+    JApplication app;
+    app.SetParameterValue("bucket_count", 22);
+    app.ProvideService(std::make_shared<OmniService>());
+    app.Initialize();
+    auto sut = app.GetService<OmniService>();
+    REQUIRE(sut->GetStatus() == JService::Status::Initialized);
+    REQUIRE(sut->bucket_count() == 22);
+}
 

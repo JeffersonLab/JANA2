@@ -45,6 +45,7 @@ std::shared_ptr<T> JApplication::GetService() {
 /// A convenience method which delegates to JServiceLocator
 template <typename T>
 void JApplication::ProvideService(std::shared_ptr<T> service) {
+    service->SetApplication(this);
     m_service_locator->provide(service);
 }
 

@@ -10,7 +10,6 @@
 #include <map>
 #include <typeinfo>
 #include <typeindex>
-#include <iostream>
 #include <assert.h>
 #include <memory>
 #include <mutex>
@@ -72,7 +71,7 @@ public:
         auto& pair = iter->second;
         auto& wired = pair.second;
         auto ptr = pair.first;
-        std::call_once(*wired, [&](){ptr->acquire_services(this);});
+        std::call_once(*wired, [&](){ptr->DoInit(this);});
         auto svc = std::static_pointer_cast<T>(ptr);
         return svc;
     }
@@ -85,7 +84,7 @@ public:
         for (auto& item : underlying) {
             auto sharedptr = item.second.first;
             auto& wired = item.second.second;
-            std::call_once(*wired, [&](){sharedptr->acquire_services(this);});
+            std::call_once(*wired, [&](){sharedptr->DoInit(this);});
         }
     }
 };
