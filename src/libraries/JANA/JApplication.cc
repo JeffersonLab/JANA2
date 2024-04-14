@@ -22,11 +22,12 @@ JApplication::JApplication(JLogger::Level verbosity) {
     m_params = std::make_shared<JParameterManager>();
     m_params->SetParameter("log:global", verbosity);
     m_service_locator->provide(m_params);
-    m_service_locator->provide(std::make_shared<JLoggingService>());
-    m_service_locator->provide(std::make_shared<JPluginLoader>(this));
-    m_service_locator->provide(std::make_shared<JComponentManager>(this));
-    m_service_locator->provide(std::make_shared<JGlobalRootLock>());
-    m_service_locator->provide(std::make_shared<JTopologyBuilder>());
+    ProvideService(m_params);
+    ProvideService(std::make_shared<JLoggingService>());
+    ProvideService(std::make_shared<JPluginLoader>(this));
+    ProvideService(std::make_shared<JComponentManager>(this));
+    ProvideService(std::make_shared<JGlobalRootLock>());
+    ProvideService(std::make_shared<JTopologyBuilder>());
 
     m_plugin_loader = m_service_locator->get<JPluginLoader>();
     m_component_manager = m_service_locator->get<JComponentManager>();
@@ -44,12 +45,12 @@ JApplication::JApplication(JParameterManager* params) {
     }
 
     m_service_locator = new JServiceLocator;
-    m_service_locator->provide(m_params);
-    m_service_locator->provide(std::make_shared<JLoggingService>());
-    m_service_locator->provide(std::make_shared<JPluginLoader>(this));
-    m_service_locator->provide(std::make_shared<JComponentManager>(this));
-    m_service_locator->provide(std::make_shared<JGlobalRootLock>());
-    m_service_locator->provide(std::make_shared<JTopologyBuilder>());
+    ProvideService(m_params);
+    ProvideService(std::make_shared<JLoggingService>());
+    ProvideService(std::make_shared<JPluginLoader>());
+    ProvideService(std::make_shared<JComponentManager>(this));
+    ProvideService(std::make_shared<JGlobalRootLock>());
+    ProvideService(std::make_shared<JTopologyBuilder>());
 
     m_plugin_loader = m_service_locator->get<JPluginLoader>();
     m_component_manager = m_service_locator->get<JComponentManager>();
