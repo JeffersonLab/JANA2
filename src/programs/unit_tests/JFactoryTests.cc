@@ -12,27 +12,27 @@
 TEST_CASE("JFactoryTests") {
 
 
-    SECTION("GetOrCreate calls Init, ChangeRun, and Process as needed") {
+    SECTION("CreateAndGetData calls Init, ChangeRun, and Process as needed") {
 
         JFactoryTestDummyFactory sut;
         auto event = std::make_shared<JEvent>();
 
         // The first time it is run, Init, ChangeRun, and Process each get run once
-        sut.GetOrCreate(event);
+        sut.CreateAndGetData(event);
         REQUIRE(sut.init_call_count == 1);
         REQUIRE(sut.change_run_call_count == 1);
         REQUIRE(sut.process_call_count == 1);
 
         // We can getOrCreate as many times as we want and nothing will happen
         // until somebody clears the factory (assuming persistence flag is unset)
-        sut.GetOrCreate(event);
+        sut.CreateAndGetData(event);
         REQUIRE(sut.init_call_count == 1);
         REQUIRE(sut.change_run_call_count == 1);
         REQUIRE(sut.process_call_count == 1);
 
         // Once we clear the factory, Process gets called again but Init and ChangeRun do not.
         sut.ClearData();
-        sut.GetOrCreate(event);
+        sut.CreateAndGetData(event);
         REQUIRE(sut.init_call_count == 1);
         REQUIRE(sut.change_run_call_count == 1);
         REQUIRE(sut.process_call_count == 2);
@@ -62,31 +62,31 @@ TEST_CASE("JFactoryTests") {
         // For the first event, ChangeRun() always gets called
         event->SetEventNumber(1);
         event->SetRunNumber(22);
-        sut.GetOrCreate(event);
+        sut.CreateAndGetData(event);
         REQUIRE(sut.change_run_call_count == 1);
 
         // Subsequent events with the same run number do not trigger ChangeRun()
         event->SetEventNumber(2);
         sut.ClearData();
-        sut.GetOrCreate(event);
+        sut.CreateAndGetData(event);
 
         event->SetEventNumber(3);
         sut.ClearData();
-        sut.GetOrCreate(event);
+        sut.CreateAndGetData(event);
         REQUIRE(sut.change_run_call_count == 1);
 
         // As soon as the run number changes, ChangeRun() gets called again
         event->SetEventNumber(4);
         event->SetRunNumber(49);
         sut.ClearData();
-        sut.GetOrCreate(event);
+        sut.CreateAndGetData(event);
         REQUIRE(sut.change_run_call_count == 2);
 
         // This keeps happening
         event->SetEventNumber(5);
         event->SetRunNumber(6180);
         sut.ClearData();
-        sut.GetOrCreate(event);
+        sut.CreateAndGetData(event);
         REQUIRE(sut.change_run_call_count == 3);
     }
 
@@ -98,7 +98,7 @@ TEST_CASE("JFactoryTests") {
         sut.ClearFactoryFlag(JFactory::NOT_OBJECT_OWNER);
         sut.Insert(new JFactoryTestDummyObject(42, &deleted_flag));
         sut.ClearData();
-        auto results = sut.GetOrCreate(event);
+        auto results = sut.CreateAndGetData(event);
         REQUIRE(std::distance(results.first, results.second) == 0);
         REQUIRE(deleted_flag == true);
     }
@@ -111,7 +111,7 @@ TEST_CASE("JFactoryTests") {
         sut.SetFactoryFlag(JFactory::NOT_OBJECT_OWNER);
         sut.Insert(new JFactoryTestDummyObject(42, &deleted_flag));
         sut.ClearData();
-        auto results = sut.GetOrCreate(event);
+        auto results = sut.CreateAndGetData(event);
         REQUIRE(std::distance(results.first, results.second) == 0);
         REQUIRE(deleted_flag == false);
     }
@@ -124,7 +124,7 @@ TEST_CASE("JFactoryTests") {
         sut.ClearFactoryFlag(JFactory::NOT_OBJECT_OWNER);
         sut.Insert(new JFactoryTestDummyObject(42, &deleted_flag));
         sut.ClearData();
-        auto results = sut.GetOrCreate(event);
+        auto results = sut.CreateAndGetData(event);
         REQUIRE(std::distance(results.first, results.second) == 1);
         REQUIRE(deleted_flag == false);
     }
@@ -137,7 +137,7 @@ TEST_CASE("JFactoryTests") {
         sut.SetFactoryFlag(JFactory::NOT_OBJECT_OWNER);
         sut.Insert(new JFactoryTestDummyObject(42, &deleted_flag));
         sut.ClearData();
-        auto results = sut.GetOrCreate(event);
+        auto results = sut.CreateAndGetData(event);
         REQUIRE(std::distance(results.first, results.second) == 1);
         REQUIRE(deleted_flag == false);
     }
@@ -160,7 +160,7 @@ TEST_CASE("JFactoryTests") {
 
         Issue135Factory sut;
         auto event = std::make_shared<JEvent>();
-        auto results = sut.GetOrCreate(event);
+        auto results = sut.CreateAndGetData(event);
         REQUIRE(sut.GetNumObjects() == 3);
         REQUIRE(std::distance(results.first, results.second) == 3);
 
@@ -192,7 +192,7 @@ TEST_CASE("JFactoryTests") {
 
         REQUIRE(sut.GetStatus() == JFactory::Status::Inserted);
 
-        auto results = sut.GetOrCreate(event);
+        auto results = sut.CreateAndGetData(event);
         auto it = results.first;
         REQUIRE((*it)->data == 49);
         REQUIRE(sut.GetNumObjects() == 1);
