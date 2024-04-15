@@ -6,8 +6,8 @@
 #ifndef JANA2_JPLUGINLOADER_H
 #define JANA2_JPLUGINLOADER_H
 
-#include <JANA/Services/JLoggingService.h>
 #include <JANA/Services/JParameterManager.h>
+#include <JANA/JService.h>
 
 #include <string>
 #include <vector>
@@ -20,9 +20,9 @@ class JPluginLoader : public JService {
 
 public:
 
-    JPluginLoader(JApplication* app);
+    JPluginLoader();
     ~JPluginLoader() override;
-    void acquire_services(JServiceLocator*) override;
+    void InitPhase2();
 
     void add_plugin(std::string plugin_name);
     void add_plugin_path(std::string path);
@@ -30,6 +30,7 @@ public:
     void attach_plugin(std::string plugin_name);
 
 private:
+    Service<JParameterManager> m_params {this};
 
     std::vector<std::string> m_plugins_to_include;
     std::vector<std::string> m_plugins_to_exclude;
@@ -38,9 +39,6 @@ private:
     std::map<std::string, void*> m_sohandles; // key=plugin name  val=dlopen handle
 
     bool m_verbose = false;
-    JLogger m_logger;
-
-    JApplication* m_app = nullptr;
 
 };
 

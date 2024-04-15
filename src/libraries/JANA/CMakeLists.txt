@@ -24,6 +24,7 @@ set(JANA2_SOURCES
     JLogger.h
     JMultifactory.cc
     JMultifactory.h
+    JService.cc
 
     Engine/JArrow.h
     Engine/JArrowMetrics.h
