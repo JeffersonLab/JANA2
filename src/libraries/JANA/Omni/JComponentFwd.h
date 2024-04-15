@@ -7,10 +7,13 @@
 
 class JApplication;
 class JParameterManager;
+
 #include <JANA/Utils/JEventLevel.h>
 #include <JANA/JLogger.h>
 #include <JANA/JException.h>
+
 #include <vector>
+#include <mutex>
 
 namespace jana {
 namespace omni {
