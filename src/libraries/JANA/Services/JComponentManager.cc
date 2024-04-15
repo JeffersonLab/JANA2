@@ -8,8 +8,7 @@
 #include <JANA/JFactoryGenerator.h>
 #include <JANA/JEventUnfolder.h>
 
-JComponentManager::JComponentManager(JApplication* app) : m_app(app) {
-}
+JComponentManager::JComponentManager() {}
 
 JComponentManager::~JComponentManager() {
 
@@ -30,6 +29,17 @@ JComponentManager::~JComponentManager() {
     }
 }
 
+void JComponentManager::InitPhase2() {
+
+    // We don't set these in Init() because Init() gets called by the JApplication constructor and we want to give the user a chance to 
+    // set them manually before they call JApplication::Init().
+    m_params().SetDefaultParameter("event_source_type", m_user_evt_src_typename, "Manually specifies which JEventSource should open the input file");
+    m_params().SetDefaultParameter("record_call_stack", m_enable_call_graph_recording, "Records a trace of who called each factory. Reduces performance but necessary for plugins such as janadot.");
+    m_params().SetDefaultParameter("jana:nevents", m_nevents, "Max number of events that sources can emit");
+    m_params().SetDefaultParameter("jana:nskip", m_nskip, "Number of events that sources should skip before starting emitting");
+    m_params().FilterParameters(m_default_tags, "DEFTAG:");
+}
+
 void JComponentManager::next_plugin(std::string plugin_name) {
     // We defer resolving event sources until we have finished loading all plugins
     m_current_plugin_name = plugin_name;
@@ -41,31 +51,36 @@ void JComponentManager::add(std::string event_source_name) {
 
 void JComponentManager::add(JEventSourceGenerator *source_generator) {
     source_generator->SetPluginName(m_current_plugin_name);
-    source_generator->SetJApplication(m_app);
+    source_generator->SetJApplication(GetApplication());
+    // source_generator->SetLogger(m_logging().get_logger(source_generator->GetLoggerName()));
     m_src_gens.push_back(source_generator);
 }
 
 void JComponentManager::add(JFactoryGenerator *factory_generator) {
     factory_generator->SetPluginName(m_current_plugin_name);
-    factory_generator->SetApplication(m_app);
+    factory_generator->SetApplication(GetApplication());
+    // factory_generator->SetLogger(m_logging().get_logger(factory_generator->GetLoggerName()));
     m_fac_gens.push_back(factory_generator);
 }
 
 void JComponentManager::add(JEventSource *event_source) {
     event_source->SetPluginName(m_current_plugin_name);
-    event_source->SetApplication(m_app);
+    event_source->SetApplication(GetApplication());
+    event_source->SetLogger(m_logging().get_logger(event_source->GetLoggerName()));
     m_evt_srces.push_back(event_source);
 }
 
 void JComponentManager::add(JEventProcessor *processor) {
     processor->SetPluginName(m_current_plugin_name);
-    processor->SetApplication(m_app);
+    processor->SetApplication(GetApplication());
+    processor->SetLogger(m_logging().get_logger(processor->GetLoggerName()));
     m_evt_procs.push_back(processor);
 }
 
 void JComponentManager::add(JEventUnfolder* unfolder) {
     unfolder->SetPluginName(m_current_plugin_name);
-    unfolder->SetApplication(m_app);
+    unfolder->SetApplication(GetApplication());
+    unfolder->SetLogger(m_logging().get_logger(unfolder->GetLoggerName()));
     m_unfolders.push_back(unfolder);
 }
 
@@ -76,46 +91,17 @@ void JComponentManager::configure_event(JEvent& event) {
     event.GetJCallGraphRecorder()->SetEnabled(m_enable_call_graph_recording);
 }
 
-void JComponentManager::initialize() {
-    // We want to obtain parameters from here rather than in the constructor.
-    // If we set them here, plugins and test cases can set parameters right up until JApplication::Initialize()
-    // or Run() are called. Otherwise, the parameters have to be set before the
-    // JApplication is even constructed.
-    auto parms = m_app->GetJParameterManager();
-    parms->SetDefaultParameter("record_call_stack", m_enable_call_graph_recording, "Records a trace of who called each factory. Reduces performance but necessary for plugins such as janadot.");
-    parms->FilterParameters(m_default_tags, "DEFTAG:");
-
-    resolve_event_sources();
-
-    auto logging_svc = m_app->GetService<JLoggingService>();
-
-    for (JEventSource* source : m_evt_srces) {
-        source->SetLogger(logging_svc->get_logger(source->GetLoggerName()));
-    }
-    for (JEventProcessor* proc : m_evt_procs) {
-        proc->SetLogger(logging_svc->get_logger(proc->GetLoggerName()));
-    }
-    for (JEventUnfolder* unfolder : m_unfolders) {
-        unfolder->SetLogger(logging_svc->get_logger(unfolder->GetLoggerName()));
-    }
-}
-
 
 void JComponentManager::resolve_event_sources() {
-
-    m_app->SetDefaultParameter("event_source_type", m_user_evt_src_typename, "Manually specifies which JEventSource should open the input file");
 
     m_user_evt_src_gen = resolve_user_event_source_generator();
     for (auto& source_name : m_src_names) {
         auto* generator = resolve_event_source(source_name);
         auto source = generator->MakeJEventSource(source_name);
         source->SetPluginName(generator->GetPluginName());
-        source->SetApplication(m_app);
+        source->SetApplication(GetApplication());
         m_evt_srces.push_back(source);
     }
-
-    m_app->SetDefaultParameter("jana:nevents", m_nevents, "Max number of events that sources can emit");
-    m_app->SetDefaultParameter("jana:nskip", m_nskip, "Number of events that sources should skip before starting emitting");
 
     for (auto source : m_evt_srces) {
         // If nskip/nevents are set individually on JEventSources, respect those. Otherwise use global values.

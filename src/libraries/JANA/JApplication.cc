@@ -24,8 +24,8 @@ JApplication::JApplication(JLogger::Level verbosity) {
     m_service_locator->provide(m_params);
     ProvideService(m_params);
     ProvideService(std::make_shared<JLoggingService>());
-    ProvideService(std::make_shared<JPluginLoader>(this));
-    ProvideService(std::make_shared<JComponentManager>(this));
+    ProvideService(std::make_shared<JPluginLoader>());
+    ProvideService(std::make_shared<JComponentManager>());
     ProvideService(std::make_shared<JGlobalRootLock>());
     ProvideService(std::make_shared<JTopologyBuilder>());
 
@@ -48,7 +48,7 @@ JApplication::JApplication(JParameterManager* params) {
     ProvideService(m_params);
     ProvideService(std::make_shared<JLoggingService>());
     ProvideService(std::make_shared<JPluginLoader>());
-    ProvideService(std::make_shared<JComponentManager>(this));
+    ProvideService(std::make_shared<JComponentManager>());
     ProvideService(std::make_shared<JGlobalRootLock>());
     ProvideService(std::make_shared<JTopologyBuilder>());
 
@@ -119,6 +119,10 @@ void JApplication::Initialize() {
     // Only run this once
     if (m_initialized) return;
 
+    // Obtain final values of parameters and loggers
+    m_plugin_loader->InitPhase2();
+    m_component_manager->InitPhase2();
+
     // Attach all plugins
     m_plugin_loader->attach_plugins(m_component_manager.get());
 
@@ -137,7 +141,7 @@ void JApplication::Initialize() {
     m_params->SetDefaultParameter("jana:ticker_interval", m_ticker_interval_ms, "Controls the ticker interval (in ms)");
     m_params->SetDefaultParameter("jana:extended_report", m_extended_report, "Controls whether the ticker shows simple vs detailed performance metrics");
 
-    m_component_manager->initialize();
+    m_component_manager->resolve_event_sources();
 
     /*
     int engine_choice = 0;

@@ -18,8 +18,9 @@ class JEventUnfolder;
 class JComponentManager : public JService {
 public:
 
-    explicit JComponentManager(JApplication*);
+    explicit JComponentManager();
     ~JComponentManager() override;
+    void InitPhase2();
 
     void next_plugin(std::string plugin_name);
 
@@ -30,7 +31,6 @@ public:
     void add(JEventProcessor* processor);
     void add(JEventUnfolder* unfolder);
 
-    void initialize();
     void resolve_event_sources();
     JEventSourceGenerator* resolve_user_event_source_generator() const;
     JEventSourceGenerator* resolve_event_source(std::string source_name) const;
@@ -51,7 +51,8 @@ private:
     // Processors need: { typename, pluginname, mutexgroup, status, evtcnt }
     // Factories need:  { typename, pluginname }
 
-    JApplication* m_app;
+    Service<JParameterManager> m_params {this};
+    Service<JLoggingService> m_logging {this};
 
     std::string m_current_plugin_name;
     std::vector<std::string> m_src_names;

@@ -5,7 +5,6 @@
 
 #include "JPluginLoader.h"
 #include "JComponentManager.h"
-#include "JLoggingService.h"
 #include "JParameterManager.h"
 
 #include <dlfcn.h>
@@ -14,6 +13,22 @@
 #include <set>
 
 class JApplication;
+
+void JPluginLoader::InitPhase2() {
+
+    m_params().SetDefaultParameter("plugins", m_plugins_to_include, "Comma-separated list of plugins to load.");
+    m_params().SetDefaultParameter("plugins_to_ignore", m_plugins_to_exclude, "Comma-separated list of plugins to NOT load, even if they are specified in 'plugins'.");
+    m_params().SetDefaultParameter("jana:plugin_path", m_plugin_paths_str, "Colon-separated list of paths to search for plugins");
+    m_params().SetDefaultParameter("jana:debug_plugin_loading", m_verbose, "Trace the plugin search path and display any loading errors");
+
+    if (m_verbose) {
+        // The jana:debug_plugin_loading parameter is kept around for backwards compatibility
+        // at least for now
+        GetLogger().level = JLogger::Level::TRACE;
+    }
+}
+
+
 
 void JPluginLoader::add_plugin(std::string plugin_name) {
     /// Add the specified plugin to the list of plugins to be
@@ -211,7 +226,7 @@ void JPluginLoader::attach_plugin(std::string soname) {
     InitPlugin_t* initialize_proc = (InitPlugin_t*) dlsym(handle, "InitPlugin");
     if (initialize_proc) {
         LOG_INFO(m_logger) << "Initializing plugin \"" << soname << "\"" << LOG_END;
-        (*initialize_proc)(m_app);
+        (*initialize_proc)(GetApplication());
         m_sohandles[soname] = handle;
     } else {
         dlclose(handle);
@@ -221,9 +236,9 @@ void JPluginLoader::attach_plugin(std::string soname) {
 }
 
 
-JPluginLoader::JPluginLoader(JApplication* app) : m_app(app) {}
+JPluginLoader::JPluginLoader() {}
 
-JPluginLoader::~JPluginLoader(){
+JPluginLoader::~JPluginLoader() {
 
     // Loop over open plugin handles.
     // Call FinalizePlugin if it has one and close it in all cases.
@@ -234,29 +249,11 @@ JPluginLoader::~JPluginLoader(){
         FinalizePlugin_t* finalize_proc = (FinalizePlugin_t*) dlsym(handle, "FinalizePlugin");
         if (finalize_proc) {
             LOG_INFO(m_logger) << "Finalizing plugin \"" << soname << "\"" << LOG_END;
-            (*finalize_proc)(m_app);
+            (*finalize_proc)(GetApplication());
         }
 
         // Close plugin handle
         dlclose(handle);
     }
 }
-
-void JPluginLoader::acquire_services(JServiceLocator* sl) {
-
-    auto params = sl->get<JParameterManager>();
-    params->SetDefaultParameter("plugins", m_plugins_to_include, "Comma-separated list of plugins to load.");
-    params->SetDefaultParameter("plugins_to_ignore", m_plugins_to_exclude, "Comma-separated list of plugins to NOT load, even if they are specified in 'plugins'.");
-    m_app->SetDefaultParameter("jana:plugin_path", m_plugin_paths_str, "Colon-separated list of paths to search for plugins");
-    params->SetDefaultParameter("jana:debug_plugin_loading", m_verbose, "Trace the plugin search path and display any loading errors");
-
-    m_logger = sl->get<JLoggingService>()->get_logger("JPluginLoader");
-    if (m_verbose) {
-        // The jana:debug_plugin_loading parameter is kept around for backwards compatibility
-        // at least for now
-        m_logger.level = JLogger::Level::TRACE;
-    }
-}
-
-
 
