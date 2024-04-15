@@ -7,6 +7,7 @@
 #include <JANA/JEventProcessor.h>
 #include <JANA/JFactoryGenerator.h>
 #include <JANA/JEventUnfolder.h>
+#include <JANA/Utils/JAutoActivator.h>
 
 JComponentManager::JComponentManager() {}
 
@@ -38,6 +39,12 @@ void JComponentManager::InitPhase2() {
     m_params().SetDefaultParameter("jana:nevents", m_nevents, "Max number of events that sources can emit");
     m_params().SetDefaultParameter("jana:nskip", m_nskip, "Number of events that sources should skip before starting emitting");
     m_params().FilterParameters(m_default_tags, "DEFTAG:");
+
+    // Look for factories to auto-activate
+    // Right now AutoActivator parameter won't show up in parameters list. Reconsider this.
+    if (JAutoActivator::IsRequested(m_params())) {
+        add(new JAutoActivator);
+    }
 }
 
 void JComponentManager::next_plugin(std::string plugin_name) {

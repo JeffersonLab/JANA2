@@ -12,7 +12,6 @@
 #include <JANA/Services/JGlobalRootLock.h>
 #include <JANA/Engine/JArrowProcessingController.h>
 #include <JANA/Utils/JCpuInfo.h>
-#include <JANA/Utils/JAutoActivator.h>
 #include <JANA/Engine/JTopologyBuilder.h>
 
 JApplication *japp = nullptr;
@@ -122,14 +121,14 @@ void JApplication::Initialize() {
     // Obtain final values of parameters and loggers
     m_plugin_loader->InitPhase2();
     m_component_manager->InitPhase2();
+    m_logger = m_service_locator->get<JLoggingService>()->get_logger("JApplication");
+    m_logger.show_classname = false;
 
     // Attach all plugins
     m_plugin_loader->attach_plugins(m_component_manager.get());
 
-    // Look for factories to auto-activate
-    if (JAutoActivator::IsRequested(m_params)) {
-        m_component_manager->add(new JAutoActivator);
-    }
+    // Resolve all event sources now that all plugins have been loaded
+    m_component_manager->resolve_event_sources();
 
     // Set desired nthreads. We parse the 'nthreads' parameter two different ways for backwards compatibility.
     m_desired_nthreads = 1;
@@ -141,7 +140,6 @@ void JApplication::Initialize() {
     m_params->SetDefaultParameter("jana:ticker_interval", m_ticker_interval_ms, "Controls the ticker interval (in ms)");
     m_params->SetDefaultParameter("jana:extended_report", m_extended_report, "Controls whether the ticker shows simple vs detailed performance metrics");
 
-    m_component_manager->resolve_event_sources();
 
     /*
     int engine_choice = 0;

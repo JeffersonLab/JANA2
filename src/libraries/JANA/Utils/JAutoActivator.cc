@@ -9,8 +9,8 @@ JAutoActivator::JAutoActivator() {
     SetTypeName("JAutoActivator");
 }
 
-bool JAutoActivator::IsRequested(std::shared_ptr <JParameterManager> params) {
-    return params->Exists("autoactivate") && (!params->GetParameterValue<string>("autoactivate").empty());
+bool JAutoActivator::IsRequested(JParameterManager& params) {
+    return params.Exists("autoactivate") && (!params.GetParameterValue<string>("autoactivate").empty());
 }
 
 void JAutoActivator::AddAutoActivatedFactory(string factory_name, string factory_tag) {

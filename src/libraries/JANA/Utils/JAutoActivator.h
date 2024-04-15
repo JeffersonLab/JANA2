@@ -16,7 +16,7 @@ class JAutoActivator : public JEventProcessor {
 
 public:
     JAutoActivator();
-    static bool IsRequested(std::shared_ptr<JParameterManager> params);
+    static bool IsRequested(JParameterManager& params);
     static std::pair<std::string, std::string> Split(std::string factory_name);
     void AddAutoActivatedFactory(string factory_name, string factory_tag);
     void Init() override;

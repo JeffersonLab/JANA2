@@ -6,6 +6,8 @@
 
 #include <string>
 #include <atomic>
+#include <memory>
+#include <chrono>
 
 class JEventProcessor;
 class JEventSource;

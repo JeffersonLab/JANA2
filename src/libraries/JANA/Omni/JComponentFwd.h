@@ -10,6 +10,7 @@ class JParameterManager;
 #include <JANA/Utils/JEventLevel.h>
 #include <JANA/JLogger.h>
 #include <JANA/JException.h>
+#include <vector>
 
 namespace jana {
 namespace omni {
