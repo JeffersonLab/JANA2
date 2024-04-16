@@ -126,10 +126,17 @@ int Execute(JApplication* app, UserOptions &options) {
         catch (JException& e) {
             std::cout << "----------------------------------------------------------" << std::endl;
             std::cout << e << std::endl;
+            app->SetExitCode((int) JApplication::ExitCode::UnhandledException);
         }
-        catch (std::runtime_error& e) {
+        catch (std::exception& e) {
             std::cout << "----------------------------------------------------------" << std::endl;
             std::cout << "Exception: " << e.what() << std::endl;
+            app->SetExitCode((int) JApplication::ExitCode::UnhandledException);
+        }
+        catch (...) {
+            std::cout << "----------------------------------------------------------" << std::endl;
+            std::cout << "Unknown exception" << std::endl;
+            app->SetExitCode((int) JApplication::ExitCode::UnhandledException);
         }
     }
     return (int) app->GetExitCode();
