@@ -74,17 +74,12 @@ public:
         return mData.size();
     }
 
-    /// GetOrCreate handles all the preconditions and postconditions involved in calling the user-defined Open(),
+    /// CreateAndGetData handles all the preconditions and postconditions involved in calling the user-defined Open(),
     /// ChangeRun(), and Process() methods. These include making sure the JFactory JApplication is set, Init() is called
     /// exactly once, exceptions are tagged with the originating plugin and eventsource, ChangeRun() is
     /// called if and only if the run number changes, etc.
-    PairType GetOrCreate(const std::shared_ptr<const JEvent>& event) {
-        if (mStatus == Status::Uninitialized || mStatus == Status::Unprocessed) {
-            Create(event);
-        }
-        if (mStatus != Status::Processed && mStatus != Status::Inserted) {
-            throw JException("JFactoryT::Status is corrupted");
-        }
+    PairType CreateAndGetData(const std::shared_ptr<const JEvent>& event) {
+        Create(event);
         return std::make_pair(mData.cbegin(), mData.cend());
     }
 

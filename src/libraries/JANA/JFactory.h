@@ -32,10 +32,11 @@ public:
     enum class CreationStatus { NotCreatedYet, Created, Inserted, InsertedViaGetObjects, NeverCreated };
 
     enum JFactory_Flags_t {
-        JFACTORY_NULL = 0x00,
-        PERSISTENT = 0x01,
-        WRITE_TO_OUTPUT = 0x02,
-        NOT_OBJECT_OWNER = 0x04
+        JFACTORY_NULL = 0x00,    // Not used anywhere
+        PERSISTENT = 0x01,       // Used heavily. Possibly better served by JServices, hierarchical events, or event groups. 
+        WRITE_TO_OUTPUT = 0x02,  // Set in halld_recon but not read except by JANA1 janaroot and janacontrol plugins
+        NOT_OBJECT_OWNER = 0x04, // Used heavily. Small conflict with PODIO subset collections, which do the same thing at a different level
+        REGENERATE = 0x08        // Replaces JANA1 JFactory_base::use_factory and JFactory::GetCheckSourceFirst()
     };
 
     JFactory(std::string aName, std::string aTag = "")
@@ -69,6 +70,7 @@ public:
 
     void SetPreviousRunNumber(uint32_t aRunNumber) { mPreviousRunNumber = aRunNumber; }
 
+    // Note: JFactory_Flags_t is going to be deprecated. Use Set...Flag()s instead
     /// Get all flags in the form of a single word
     inline uint32_t GetFactoryFlags() const { return mFlags; }
 
@@ -85,6 +87,38 @@ public:
     /// Test if a flag (or set of flags) is set
     inline bool TestFactoryFlag(JFactory_Flags_t f) const {
         return (mFlags & (uint32_t) f) == (uint32_t) f;
+    }
+
+    inline void SetPersistentFlag(bool persistent) { 
+        if (persistent) { 
+            SetFactoryFlag(PERSISTENT); }
+        else { 
+            ClearFactoryFlag(PERSISTENT); }
+    }
+
+    inline void SetNotOwnerFlag(bool not_owner) { 
+        if (not_owner) {
+            SetFactoryFlag(NOT_OBJECT_OWNER); }
+        else { 
+            ClearFactoryFlag(NOT_OBJECT_OWNER); }
+    }
+
+    inline void SetRegenerateFlag(bool regenerate) { 
+        if (regenerate) {
+            SetFactoryFlag(REGENERATE); }
+        else { 
+            ClearFactoryFlag(REGENERATE); }
+    }
+
+    inline void SetWriteToOutputFlag(bool write_to_output) { 
+        if (write_to_output) {
+            SetFactoryFlag(WRITE_TO_OUTPUT); }
+        else {
+            ClearFactoryFlag(WRITE_TO_OUTPUT); }
+    }
+
+    inline bool GetWriteToOutputFlag() { 
+        return TestFactoryFlag(WRITE_TO_OUTPUT);
     }
 
     /// Get data source value depending on how objects came to be here. (Used mainly by JEvent::Get() )
@@ -158,7 +192,7 @@ protected:
 
     std::string mObjectName;
     std::string mTag;
-    uint32_t mFlags = 0;
+    uint32_t mFlags = WRITE_TO_OUTPUT;
     int32_t mPreviousRunNumber = -1;
     JApplication* mApp = nullptr;
     std::unordered_map<std::type_index, std::unique_ptr<JAny>> mUpcastVTable;
