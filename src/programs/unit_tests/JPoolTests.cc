@@ -1,6 +1,6 @@
 
 #include <catch.hpp>
-#include <JANA/Engine/JPool.h>
+#include <JANA/Topology/JPool.h>
 
 namespace jana {
 namespace jpooltests {

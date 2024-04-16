@@ -5,7 +5,7 @@
 #ifndef GREENFIELD_MAPARROW_H
 #define GREENFIELD_MAPARROW_H
 
-#include <JANA/Engine/JArrow.h>
+#include <JANA/Topology/JArrow.h>
 
 
 /// ParallelProcessor transforms S to T and it does so in a way which is thread-safe

@@ -14,8 +14,8 @@
 #include "JArrowMetrics.h"
 #include <JANA/JLogger.h>
 #include <JANA/JException.h>
-#include <JANA/Engine/JMailbox.h>
-#include <JANA/Engine/JPool.h>
+#include <JANA/Topology/JMailbox.h>
+#include <JANA/Topology/JPool.h>
 
 
 #ifndef JANA2_ARROWDATA_MAX_SIZE

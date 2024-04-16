@@ -3,7 +3,7 @@
 
 #pragma once
 
-#include <JANA/Engine/JArrow.h>
+#include <JANA/Topology/JArrow.h>
 #include <JANA/JEventUnfolder.h>
 #include <JANA/Utils/JEventPool.h>
 

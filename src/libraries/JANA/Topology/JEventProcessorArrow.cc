@@ -3,7 +3,7 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 
-#include <JANA/Engine/JEventProcessorArrow.h>
+#include <JANA/Topology/JEventProcessorArrow.h>
 #include <JANA/Utils/JEventPool.h>
 #include <JANA/JEventProcessor.h>
 #include <JANA/JEventSource.h>

@@ -5,7 +5,7 @@
 #ifndef JANA2_JTOPOLOGYBUILDER_H
 #define JANA2_JTOPOLOGYBUILDER_H
 
-#include <JANA/Engine/JArrowTopology.h>
+#include <JANA/Topology/JArrowTopology.h>
 
 #include "JEventSourceArrow.h"
 #include "JEventProcessorArrow.h"

@@ -6,7 +6,7 @@
 
 #include "JScheduler.h"
 #include <JANA/Engine/JScheduler.h>
-#include <JANA/Engine/JArrowTopology.h>
+#include <JANA/Topology/JArrowTopology.h>
 #include <JANA/Services/JLoggingService.h>
 
 

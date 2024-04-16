@@ -7,9 +7,9 @@
 
 #include <JANA/Services/JProcessingController.h>
 
-#include <JANA/Engine/JArrow.h>
+#include <JANA/Topology/JArrow.h>
 #include <JANA/Engine/JWorker.h>
-#include <JANA/Engine/JArrowTopology.h>
+#include <JANA/Topology/JArrowTopology.h>
 #include <JANA/Engine/JArrowPerfSummary.h>
 
 #include <vector>

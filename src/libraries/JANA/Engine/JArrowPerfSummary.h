@@ -8,7 +8,7 @@
 
 
 #include <JANA/Status/JPerfSummary.h>
-#include <JANA/Engine/JArrow.h>
+#include <JANA/Topology/JArrow.h>
 
 #include <vector>
 #include <string>

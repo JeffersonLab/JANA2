@@ -7,7 +7,7 @@
 #define JANA2_JEVENTSOURCEARROW_H
 
 
-#include <JANA/Engine/JPipelineArrow.h>
+#include <JANA/Topology/JPipelineArrow.h>
 
 using Event = std::shared_ptr<JEvent>;
 using EventQueue = JMailbox<Event*>;

@@ -3,12 +3,14 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #include "catch.hpp"
-#include "JANA/Engine/JTopologyBuilder.h"
+
+#include <JANA/Topology/JArrowTopology.h>
+#include "JANA/Topology/JTopologyBuilder.h"
+
 #include <JANA/Engine/JArrowProcessingController.h>
 
 #include <TestTopologyComponents.h>
 #include <JANA/Utils/JPerfUtils.h>
-#include <JANA/Engine/JArrowTopology.h>
 #include <JANA/Engine/JScheduler.h>
 
 

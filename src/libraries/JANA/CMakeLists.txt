@@ -26,30 +26,30 @@ set(JANA2_SOURCES
     JMultifactory.h
     JService.cc
 
-    Engine/JArrow.h
-    Engine/JArrowMetrics.h
     Engine/JArrowPerfSummary.cc
     Engine/JArrowPerfSummary.h
     Engine/JArrowProcessingController.cc
     Engine/JArrowProcessingController.h
-    Engine/JArrowTopology.cc
-    Engine/JArrowTopology.h
-    Engine/JEventProcessorArrow.cc
-    Engine/JEventProcessorArrow.h
-    Engine/JEventSourceArrow.cc
-    Engine/JEventSourceArrow.h
-    Engine/JEventMapArrow.h
-    Engine/JEventMapArrow.cc
-    Engine/JPool.h
-
-    Engine/JMailbox.h
     Engine/JScheduler.cc
     Engine/JScheduler.h
-    Engine/JSubeventArrow.h
     Engine/JWorker.h
     Engine/JWorker.cc
     Engine/JWorkerMetrics.h
-    Engine/JTopologyBuilder.h
+
+    Topology/JArrow.h
+    Topology/JArrowMetrics.h
+    Topology/JArrowTopology.cc
+    Topology/JArrowTopology.h
+    Topology/JEventProcessorArrow.cc
+    Topology/JEventProcessorArrow.h
+    Topology/JEventSourceArrow.cc
+    Topology/JEventSourceArrow.h
+    Topology/JEventMapArrow.h
+    Topology/JEventMapArrow.cc
+    Topology/JPool.h
+    Topology/JMailbox.h
+    Topology/JSubeventArrow.h
+    Topology/JTopologyBuilder.h
 
     Services/JComponentManager.cc
     Services/JComponentManager.h
@@ -245,6 +245,7 @@ file(GLOB jana_cli_headers "CLI/*.h*")
 file(GLOB jana_compat_headers "Compatibility/*.h*")
 file(GLOB jana_podio_headers "Podio/*.h*")
 file(GLOB jana_omni_headers "Omni/*.h*")
+file(GLOB jana_topology_headers "Topology/*.h*")
 
 install(FILES ${jana_headers} DESTINATION include/JANA)
 install(FILES ${jana_engine_headers} DESTINATION include/JANA/Engine)
@@ -256,6 +257,7 @@ install(FILES ${jana_calibs_headers} DESTINATION include/JANA/Calibrations)
 install(FILES ${jana_cli_headers} DESTINATION include/JANA/CLI)
 install(FILES ${jana_compat_headers} DESTINATION include/JANA/Compatibility)
 install(FILES ${jana_omni_headers} DESTINATION include/JANA/Omni)
+install(FILES ${jana_topology_headers} DESTINATION include/JANA/Topology)
 
 if (${USE_PODIO})
     install(FILES ${jana_podio_headers} DESTINATION include/JANA/Podio)

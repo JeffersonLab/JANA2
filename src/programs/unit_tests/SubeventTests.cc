@@ -7,9 +7,9 @@
 
 #include <JANA/JObject.h>
 #include <JANA/JEvent.h>
-#include <JANA/Engine/JSubeventArrow.h>
-#include "JANA/Engine/JArrowTopology.h"
-#include "JANA/Engine/JTopologyBuilder.h"
+#include <JANA/Topology/JSubeventArrow.h>
+#include <JANA/Topology/JArrowTopology.h>
+#include <JANA/Topology/JTopologyBuilder.h>
 
 
 struct MyInput : public JObject {

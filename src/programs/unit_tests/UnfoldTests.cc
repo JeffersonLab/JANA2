@@ -1,7 +1,7 @@
 
 #include <catch.hpp>
-#include <JANA/Engine/JUnfoldArrow.h>
-#include <JANA/Engine/JFoldArrow.h>
+#include <JANA/Topology/JUnfoldArrow.h>
+#include <JANA/Topology/JFoldArrow.h>
 
 namespace jana {
 namespace unfoldtests {

@@ -8,7 +8,7 @@
 #include <mutex>
 #include <vector>
 
-#include <JANA/Engine/JArrow.h>
+#include <JANA/Topology/JArrow.h>
 #include <JANA/Engine/JArrowPerfSummary.h>
 #include <JANA/Services/JLoggingService.h>
 

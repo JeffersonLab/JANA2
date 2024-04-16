@@ -7,7 +7,7 @@
 #include <iostream>
 
 #include <JANA/Services/JLoggingService.h>
-#include <JANA/Engine/JPipelineArrow.h>
+#include <JANA/Topology/JPipelineArrow.h>
 #include <thread>
 #include <MapArrow.h>
 

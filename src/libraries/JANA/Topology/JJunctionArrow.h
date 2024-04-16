@@ -3,9 +3,9 @@
 
 #pragma once
 
-#include <JANA/Engine/JArrow.h>
-#include <JANA/Engine/JMailbox.h>
-#include <JANA/Engine/JPool.h>
+#include <JANA/Topology/JArrow.h>
+#include <JANA/Topology/JMailbox.h>
+#include <JANA/Topology/JPool.h>
 
 
 

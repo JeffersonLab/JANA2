@@ -7,7 +7,7 @@
 
 #include <JANA/Engine/JScheduler.h>
 #include <TestTopologyComponents.h>
-#include <JANA/Engine/JArrowTopology.h>
+#include <JANA/Topology/JArrowTopology.h>
 
 TEST_CASE("SchedulerTests") {
 

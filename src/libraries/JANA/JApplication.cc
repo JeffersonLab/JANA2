@@ -6,14 +6,15 @@
 
 #include <JANA/JEventSource.h>
 
+#include <JANA/Utils/JCpuInfo.h>
 #include <JANA/Services/JParameterManager.h>
+#include <JANA/Services/JGlobalRootLock.h>
 #include <JANA/Services/JPluginLoader.h>
 #include <JANA/Services/JComponentManager.h>
+#include <JANA/Topology/JTopologyBuilder.h>
 #include <JANA/Services/JLoggingService.h>
 #include <JANA/Services/JGlobalRootLock.h>
 #include <JANA/Engine/JArrowProcessingController.h>
-#include <JANA/Utils/JCpuInfo.h>
-#include <JANA/Engine/JTopologyBuilder.h>
 
 JApplication *japp = nullptr;
 

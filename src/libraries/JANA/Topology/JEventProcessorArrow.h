@@ -7,7 +7,7 @@
 
 
 #include <JANA/JEventProcessor.h>
-#include <JANA/Engine/JPipelineArrow.h>
+#include <JANA/Topology/JPipelineArrow.h>
 
 class JEventPool;
 

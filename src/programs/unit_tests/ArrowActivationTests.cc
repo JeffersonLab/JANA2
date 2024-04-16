@@ -6,7 +6,7 @@
 #include "catch.hpp"
 
 #include <TestTopologyComponents.h>
-#include <JANA/Engine/JArrowTopology.h>
+#include <JANA/Topology/JArrowTopology.h>
 #include <JANA/Engine/JScheduler.h>
 
 

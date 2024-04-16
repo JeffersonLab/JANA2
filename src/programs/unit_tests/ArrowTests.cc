@@ -1,6 +1,6 @@
 
 #include <catch.hpp>
-#include <JANA/Engine/JJunctionArrow.h>
+#include <JANA/Topology/JJunctionArrow.h>
 
 namespace jana {
 namespace arrowtests {

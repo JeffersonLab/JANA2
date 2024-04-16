@@ -2,7 +2,7 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 
-#include <JANA/Engine/JEventMapArrow.h>
+#include <JANA/Topology/JEventMapArrow.h>
 
 #include <JANA/JEventSource.h>
 #include <JANA/JEventUnfolder.h>
