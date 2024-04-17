@@ -30,8 +30,11 @@ inline void JParameterManager::Parse(const std::string& in, JLogger::Level& out)
     else if (std::strcmp(token.c_str(), "fatal") == 0) { 
         out = JLogger::Level::FATAL;
     }
+    else if (std::strcmp(token.c_str(), "off") == 0) { 
+        out = JLogger::Level::OFF;
+    }
     else {
-        throw JException("Unable to parse log level: '%s'. Options are: TRACE, DEBUG, INFO, WARN, ERROR, FATAL", in.c_str());
+        throw JException("Unable to parse log level: '%s'. Options are: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF", in.c_str());
     }
 }
 
