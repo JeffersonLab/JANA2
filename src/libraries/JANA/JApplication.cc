@@ -123,6 +123,9 @@ void JApplication::Initialize() {
 
     // Resolve all event sources now that all plugins have been loaded
     component_manager->resolve_event_sources();
+    
+    // Give all components a JApplication pointer and a logger
+    component_manager->configure_components();
 
     // Set desired nthreads. We parse the 'nthreads' parameter two different ways for backwards compatibility.
     m_desired_nthreads = 1;

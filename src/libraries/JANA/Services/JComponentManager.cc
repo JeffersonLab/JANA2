@@ -43,8 +43,9 @@ void JComponentManager::Init() {
     if (JAutoActivator::IsRequested(m_params())) {
         add(new JAutoActivator);
     }
+}
 
-    // Set up loggers for everything
+void JComponentManager::configure_components() {
     for (auto* src : m_evt_srces) {
         src->SetApplication(GetApplication());
         src->SetLogger(m_logging().get_logger(src->GetLoggerName()));
@@ -65,7 +66,6 @@ void JComponentManager::Init() {
         unfolder->SetApplication(GetApplication());
         unfolder->SetLogger(m_logging().get_logger(unfolder->GetLoggerName()));
     }
-
 }
 
 void JComponentManager::next_plugin(std::string plugin_name) {
@@ -108,6 +108,7 @@ void JComponentManager::configure_event(JEvent& event) {
     event.SetDefaultTags(m_default_tags);
     event.GetJCallGraphRecorder()->SetEnabled(m_enable_call_graph_recording);
 }
+
 
 
 void JComponentManager::resolve_event_sources() {
