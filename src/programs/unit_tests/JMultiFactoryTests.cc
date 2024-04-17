@@ -79,6 +79,7 @@ TEST_CASE("MultiFactoryTests") {
 
     SECTION("Multifactories work with JFactoryGeneratorT") {
         app.Add(new JFactoryGeneratorT<MyMultifactory>());
+        app.Initialize();
         auto jcm = app.GetService<JComponentManager>();
         auto event = std::make_shared<JEvent>(&app);
         jcm->configure_event(*event);
@@ -89,6 +90,7 @@ TEST_CASE("MultiFactoryTests") {
 
     SECTION("Test that multifactory Process() is only called once") {
         app.Add(new JFactoryGeneratorT<MyMultifactory>());
+        app.Initialize();
         auto jcm = app.GetService<JComponentManager>();
         auto event = std::make_shared<JEvent>(&app);
         jcm->configure_event(*event);
