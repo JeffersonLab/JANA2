@@ -9,10 +9,6 @@ JAutoActivator::JAutoActivator() {
     SetTypeName("JAutoActivator");
 }
 
-bool JAutoActivator::IsRequested(JParameterManager& params) {
-    return params.Exists("autoactivate") && (!params.GetParameterValue<string>("autoactivate").empty());
-}
-
 void JAutoActivator::AddAutoActivatedFactory(string factory_name, string factory_tag) {
     m_auto_activated_factories.push_back({std::move(factory_name), std::move(factory_tag)});
 }
@@ -67,7 +63,8 @@ void JAutoActivator::Init() {
             }
         }
         catch (...) {
-            LOG << "Error parsing AUTOACTIVATE=" << autoactivate_conf << LOG_END;
+            LOG_ERROR(GetLogger()) << "Error parsing parameter 'autoactivate'. Found: " << autoactivate_conf << LOG_END;
+            throw JException("AutoActivator could not parse parameter 'autoactivate'");
         }
     }
 }
@@ -81,7 +78,8 @@ void JAutoActivator::Process(const std::shared_ptr<const JEvent> &event) {
             factory->Create(event); // This will do nothing if factory is already created
         }
         else {
-            LOG << "Warning: Could not find factory with name=" << name << ", tag=" << tag << LOG_END;
+            LOG_ERROR(GetLogger()) << "Could not find factory with typename=" << name << ", tag=" << tag << LOG_END;
+            throw JException("AutoActivator could not find factory with typename=%s, tag=%s", name.c_str(), tag.c_str());
         }
     }
 }
