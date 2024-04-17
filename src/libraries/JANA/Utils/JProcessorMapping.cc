@@ -165,12 +165,11 @@ std::ostream& operator<<(std::ostream& os, const JProcessorMapping::LocalityStra
 
 std::ostream& operator<<(std::ostream& os, const JProcessorMapping& m) {
 
-    os << "NUMA Configuration" << std::endl;
-    os << "  Affinity strategy: " << m.m_affinity_strategy << std::endl;
-    os << "  Locality strategy: " << m.m_locality_strategy << std::endl;
+    os << "NUMA Configuration: " << "affinity=" << m.m_affinity_strategy << ", locality=" << m.m_locality_strategy;
     if (m.m_locality_strategy != JProcessorMapping::LocalityStrategy::Global) {
-        os << "  Location count: " << m.m_loc_count << std::endl;
+        os << " (" << m.m_loc_count << " locations)";
     }
+    os << std::endl;
 
     if (m.m_initialized) {
         JTablePrinter table;
