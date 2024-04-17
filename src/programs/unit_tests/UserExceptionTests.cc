@@ -13,82 +13,36 @@ TEST_CASE("UserExceptionTests") {
     app.SetParameterValue("log:debug","JApplication,JScheduler,JArrowProcessingController,JWorker,JArrow");
     app.SetParameterValue("jana:extended_report", 0);
 
-    SECTION("JEventSource::Open() excepts, debug engine") {
+    SECTION("JEventSource::Open() excepts") {
 
-        app.SetParameterValue("jana:engine", 1);
         app.Add(new FlakySource(true, false));
         app.Add(new FlakyProcessor(false, false, false));
         REQUIRE_THROWS(app.Run(true));
     }
 
-   SECTION("JEventSource::GetEvent() excepts, debug engine") {
+    SECTION("JEventSource::GetEvent() excepts") {
 
-       app.SetParameterValue("jana:engine", 1);
-       app.Add(new FlakySource(false, true));
-       app.Add(new FlakyProcessor(false, false, false));
-       REQUIRE_THROWS(app.Run(true));
-   }
-
-
-    SECTION("JEventProcessor::Init() excepts, debug engine") {
-
-        app.SetParameterValue("jana:engine", 1);
-        app.Add(new FlakySource(false, false));
-        app.Add(new FlakyProcessor(true, false, false));
-        REQUIRE_THROWS(app.Run(true));
-    }
-
-   SECTION("JEventProcessor::Process() excepts, debug engine") {
-
-       app.SetParameterValue("jana:engine", 1);
-       app.Add(new FlakySource(false, false));
-       app.Add(new FlakyProcessor(false, true, false));
-       REQUIRE_THROWS(app.Run(true));
-   }
-
-   SECTION("JEventProcessor::Finish() excepts, debug engine") {
-
-       app.SetParameterValue("jana:engine", 1);
-       app.Add(new FlakySource(false, false));
-       app.Add(new FlakyProcessor(false, false, true));
-       REQUIRE_THROWS(app.Run(true));
-   }
-
-    SECTION("JEventSource::Open() excepts, default engine") {
-
-        app.SetParameterValue("jana:engine", 0);
-        app.Add(new FlakySource(true, false));
-        app.Add(new FlakyProcessor(false, false, false));
-        REQUIRE_THROWS(app.Run(true));
-    }
-
-    SECTION("JEventSource::GetEvent() excepts, default engine") {
-
-        app.SetParameterValue("jana:engine", 0);
         app.Add(new FlakySource(false, true));
         app.Add(new FlakyProcessor(false, false, false));
         REQUIRE_THROWS(app.Run(true));
     }
 
-    SECTION("JEventProcessor::Init() excepts, default engine") {
+    SECTION("JEventProcessor::Init() excepts") {
 
-        app.SetParameterValue("jana:engine", 0);
         app.Add(new FlakySource(false, false));
         app.Add(new FlakyProcessor(true, false, false));
         REQUIRE_THROWS(app.Run(true));
     }
 
-    SECTION("JEventProcessor::Process() excepts, default engine") {
+    SECTION("JEventProcessor::Process() excepts") {
 
-        app.SetParameterValue("jana:engine", 0);
         app.Add(new FlakySource(false, false));
         app.Add(new FlakyProcessor(false, true, false));
         REQUIRE_THROWS(app.Run(true));
     }
 
-    SECTION("JEventProcessor::Finish() excepts, default engine") {
+    SECTION("JEventProcessor::Finish() excepts") {
 
-        app.SetParameterValue("jana:engine", 0);
         app.Add(new FlakySource(false, false));
         app.Add(new FlakyProcessor(false, false, true));
         REQUIRE_THROWS(app.Run(true));
