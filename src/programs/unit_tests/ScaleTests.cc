@@ -8,10 +8,10 @@
 
 TEST_CASE("NThreads") {
 
-    auto parms = new JParameterManager;
-    // parms->SetParameter("log:debug","JScheduler,JArrowProcessingController,JWorker,JArrow");
-    parms->SetParameter("jana:nevents",3);
-    JApplication app(parms);
+    JApplication app;
+    app.SetParameterValue("jana:nevents",3);
+    app.SetParameterValue("log:global", "OFF");
+    app.SetParameterValue("log:warn", "JScheduler,JArrow,JWorker,JArrowProcessingController");
     app.Add(new scaletest::DummySource);
 
     SECTION("If nthreads not provided, default to 1") {
@@ -37,12 +37,12 @@ TEST_CASE("NThreads") {
 }
 
 TEST_CASE("ScaleNWorkerUpdate") {
-    auto params = new JParameterManager();
-    // params->SetParameter("log:debug", "JWorker,JArrowTopology,JScheduler,JArrow");
-    JApplication app(params);
+    JApplication app;
+    app.SetParameterValue("nthreads",4);
+    app.SetParameterValue("log:global", "OFF");
+    app.SetParameterValue("log:warn", "JScheduler,JArrow,JWorker,JArrowProcessingController");
     app.Add(new scaletest::DummySource);
     app.Add(new scaletest::DummyProcessor);
-    app.SetParameterValue("nthreads", 4);
     app.Run(false);
     auto threads = app.GetNThreads();
     REQUIRE(threads == 4);
@@ -64,10 +64,9 @@ TEST_CASE("ScaleNWorkerUpdate") {
 
 TEST_CASE("ScaleThroughputImprovement", "[.][performance]") {
 
-    auto parms = new JParameterManager;
-    // parms->SetParameter("log:debug","JArrowProcessingController,JWorker,JArrow");
-    // parms->SetParameter("log:info","JScheduler");
-    JApplication app(parms);
+    JApplication app;
+    app.SetParameterValue("log:global", "INFO");
+    // app.SetParameterValue("log:warn", "JScheduler,JArrow,JWorker,JArrowProcessingController");
     app.SetTicker(false);
     app.Add(new scaletest::DummySource);
     app.Add(new scaletest::DummyProcessor);

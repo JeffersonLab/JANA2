@@ -9,9 +9,8 @@
 
 TEST_CASE("UserExceptionTests") {
 
-    auto parms = new JParameterManager;
-    //parms->SetParameter("log:debug","JApplication,JScheduler,JArrowProcessingController,JWorker,JArrow");
-    JApplication app(parms);
+    JApplication app;
+    app.SetParameterValue("log:debug","JApplication,JScheduler,JArrowProcessingController,JWorker,JArrow");
     app.SetParameterValue("jana:extended_report", 0);
 
     SECTION("JEventSource::Open() excepts, debug engine") {

@@ -128,10 +128,8 @@ int main() {
                                                                   &subevents_out);
     auto merge_arrow = new JMergeArrow<MyInput, MyOutput>("merge", &processor, &subevents_out, &events_out);
 
-    auto parms = new JParameterManager;
-    // Some params need to be present BEFORE JApplication is constructed, e.g. log levels are lost
-    // parms->SetParameter("log:debug", "JWorker,JScheduler,JArrowProcessingController,JEventProcessorArrow");
-    JApplication app(parms);
+    JApplication app;
+    app.SetParameterValue("log:info", "JWorker,JScheduler,JArrowProcessingController,JEventProcessorArrow");
     app.SetTimeoutEnabled(false);
     app.SetTicker(false);
 
