@@ -22,7 +22,7 @@ public:
 
     JPluginLoader();
     ~JPluginLoader() override;
-    void InitPhase2();
+    void Init() override;
 
     void add_plugin(std::string plugin_name);
     void add_plugin_path(std::string path);

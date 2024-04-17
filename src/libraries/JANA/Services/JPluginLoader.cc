@@ -14,7 +14,7 @@
 
 class JApplication;
 
-void JPluginLoader::InitPhase2() {
+void JPluginLoader::Init() {
 
     m_params().SetDefaultParameter("plugins", m_plugins_to_include, "Comma-separated list of plugins to load.");
     m_params().SetDefaultParameter("plugins_to_ignore", m_plugins_to_exclude, "Comma-separated list of plugins to NOT load, even if they are specified in 'plugins'.");

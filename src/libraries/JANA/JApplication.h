@@ -18,6 +18,9 @@ T JApplication::GetParameterValue(std::string name) {
 /// A convenience method which delegates to JParameterManager
 template<typename T>
 JParameter* JApplication::SetParameterValue(std::string name, T val) {
+    if (m_initialized) {
+        throw JException("Always call SetParameterValue() before Initialize(), as otherwise your value won't be used!");
+    }
     return m_params->SetParameter(name, val);
 }
 
@@ -39,12 +42,19 @@ JParameter* JApplication::GetParameter(std::string name, T& result) {
 /// A convenience method which delegates to JServiceLocator
 template <typename T>
 std::shared_ptr<T> JApplication::GetService() {
+    if (!m_services_available) {
+        LOG_WARN(m_logger) << "Calling GetService() prematurely may mean your parameters and logger settings get lost!" << LOG_END;
+        //throw JException("Application needs initialization before services become available");
+    }
     return m_service_locator->get<T>();
 }
 
 /// A convenience method which delegates to JServiceLocator
 template <typename T>
 void JApplication::ProvideService(std::shared_ptr<T> service) {
+    if (m_initialized) {
+        throw JException("Services need to be provided before JApplication::Initialize(), or inside InitPlugin()");
+    }
     service->SetApplication(this);
     m_service_locator->provide(service);
 }

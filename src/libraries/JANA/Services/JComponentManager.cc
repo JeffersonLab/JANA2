@@ -30,10 +30,8 @@ JComponentManager::~JComponentManager() {
     }
 }
 
-void JComponentManager::InitPhase2() {
+void JComponentManager::Init() {
 
-    // We don't set these in Init() because Init() gets called by the JApplication constructor and we want to give the user a chance to 
-    // set them manually before they call JApplication::Init().
     m_params().SetDefaultParameter("event_source_type", m_user_evt_src_typename, "Manually specifies which JEventSource should open the input file");
     m_params().SetDefaultParameter("record_call_stack", m_enable_call_graph_recording, "Records a trace of who called each factory. Reduces performance but necessary for plugins such as janadot.");
     m_params().SetDefaultParameter("jana:nevents", m_nevents, "Max number of events that sources can emit");
@@ -45,6 +43,29 @@ void JComponentManager::InitPhase2() {
     if (JAutoActivator::IsRequested(m_params())) {
         add(new JAutoActivator);
     }
+
+    // Set up loggers for everything
+    for (auto* src : m_evt_srces) {
+        src->SetApplication(GetApplication());
+        src->SetLogger(m_logging().get_logger(src->GetLoggerName()));
+    }
+    for (auto* proc : m_evt_procs) {
+        proc->SetApplication(GetApplication());
+        proc->SetLogger(m_logging().get_logger(proc->GetLoggerName()));
+    }
+    for (auto* fac_gen : m_fac_gens) {
+        fac_gen->SetApplication(GetApplication());
+        //fac_gen->SetLogger(m_logging().get_logger(fac_gen->GetLoggerName()));
+    }
+    for (auto* src_gen : m_src_gens) {
+        src_gen->SetJApplication(GetApplication());
+        //src_gen->SetLogger(m_logging().get_logger(src_gen->GetLoggerName()));
+    }
+    for (auto* unfolder : m_unfolders) {
+        unfolder->SetApplication(GetApplication());
+        unfolder->SetLogger(m_logging().get_logger(unfolder->GetLoggerName()));
+    }
+
 }
 
 void JComponentManager::next_plugin(std::string plugin_name) {
@@ -58,36 +79,26 @@ void JComponentManager::add(std::string event_source_name) {
 
 void JComponentManager::add(JEventSourceGenerator *source_generator) {
     source_generator->SetPluginName(m_current_plugin_name);
-    source_generator->SetJApplication(GetApplication());
-    // source_generator->SetLogger(m_logging().get_logger(source_generator->GetLoggerName()));
     m_src_gens.push_back(source_generator);
 }
 
 void JComponentManager::add(JFactoryGenerator *factory_generator) {
     factory_generator->SetPluginName(m_current_plugin_name);
-    factory_generator->SetApplication(GetApplication());
-    // factory_generator->SetLogger(m_logging().get_logger(factory_generator->GetLoggerName()));
     m_fac_gens.push_back(factory_generator);
 }
 
 void JComponentManager::add(JEventSource *event_source) {
     event_source->SetPluginName(m_current_plugin_name);
-    event_source->SetApplication(GetApplication());
-    event_source->SetLogger(m_logging().get_logger(event_source->GetLoggerName()));
     m_evt_srces.push_back(event_source);
 }
 
 void JComponentManager::add(JEventProcessor *processor) {
     processor->SetPluginName(m_current_plugin_name);
-    processor->SetApplication(GetApplication());
-    processor->SetLogger(m_logging().get_logger(processor->GetLoggerName()));
     m_evt_procs.push_back(processor);
 }
 
 void JComponentManager::add(JEventUnfolder* unfolder) {
     unfolder->SetPluginName(m_current_plugin_name);
-    unfolder->SetApplication(GetApplication());
-    unfolder->SetLogger(m_logging().get_logger(unfolder->GetLoggerName()));
     m_unfolders.push_back(unfolder);
 }
 

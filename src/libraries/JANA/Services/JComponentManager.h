@@ -20,7 +20,7 @@ public:
 
     explicit JComponentManager();
     ~JComponentManager() override;
-    void InitPhase2();
+    void Init() override;
 
     void next_plugin(std::string plugin_name);
 
