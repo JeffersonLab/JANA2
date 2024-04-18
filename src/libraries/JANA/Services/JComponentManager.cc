@@ -32,11 +32,11 @@ JComponentManager::~JComponentManager() {
 
 void JComponentManager::Init() {
 
-    m_params().SetDefaultParameter("event_source_type", m_user_evt_src_typename, "Manually specifies which JEventSource should open the input file");
-    m_params().SetDefaultParameter("record_call_stack", m_enable_call_graph_recording, "Records a trace of who called each factory. Reduces performance but necessary for plugins such as janadot.");
-    m_params().SetDefaultParameter("jana:nevents", m_nevents, "Max number of events that sources can emit");
-    m_params().SetDefaultParameter("jana:nskip", m_nskip, "Number of events that sources should skip before starting emitting");
-    m_params().FilterParameters(m_default_tags, "DEFTAG:");
+    m_params->SetDefaultParameter("event_source_type", m_user_evt_src_typename, "Manually specifies which JEventSource should open the input file");
+    m_params->SetDefaultParameter("record_call_stack", m_enable_call_graph_recording, "Records a trace of who called each factory. Reduces performance but necessary for plugins such as janadot.");
+    m_params->SetDefaultParameter("jana:nevents", m_nevents, "Max number of events that sources can emit");
+    m_params->SetDefaultParameter("jana:nskip", m_nskip, "Number of events that sources should skip before starting emitting");
+    m_params->FilterParameters(m_default_tags, "DEFTAG:");
 
     // Look for factories to auto-activate
     // Right now AutoActivator parameter won't show up in parameters list. Reconsider this.
@@ -48,23 +48,23 @@ void JComponentManager::Init() {
 void JComponentManager::configure_components() {
     for (auto* src : m_evt_srces) {
         src->SetApplication(GetApplication());
-        src->SetLogger(m_logging().get_logger(src->GetLoggerName()));
+        src->SetLogger(m_logging->get_logger(src->GetLoggerName()));
     }
     for (auto* proc : m_evt_procs) {
         proc->SetApplication(GetApplication());
-        proc->SetLogger(m_logging().get_logger(proc->GetLoggerName()));
+        proc->SetLogger(m_logging->get_logger(proc->GetLoggerName()));
     }
     for (auto* fac_gen : m_fac_gens) {
         fac_gen->SetApplication(GetApplication());
-        //fac_gen->SetLogger(m_logging().get_logger(fac_gen->GetLoggerName()));
+        //fac_gen->SetLogger(m_logging->get_logger(fac_gen->GetLoggerName()));
     }
     for (auto* src_gen : m_src_gens) {
         src_gen->SetJApplication(GetApplication());
-        //src_gen->SetLogger(m_logging().get_logger(src_gen->GetLoggerName()));
+        //src_gen->SetLogger(m_logging->get_logger(src_gen->GetLoggerName()));
     }
     for (auto* unfolder : m_unfolders) {
         unfolder->SetApplication(GetApplication());
-        unfolder->SetLogger(m_logging().get_logger(unfolder->GetLoggerName()));
+        unfolder->SetLogger(m_logging->get_logger(unfolder->GetLoggerName()));
     }
 }
 

@@ -16,10 +16,10 @@ class JApplication;
 
 void JPluginLoader::Init() {
 
-    m_params().SetDefaultParameter("plugins", m_plugins_to_include, "Comma-separated list of plugins to load.");
-    m_params().SetDefaultParameter("plugins_to_ignore", m_plugins_to_exclude, "Comma-separated list of plugins to NOT load, even if they are specified in 'plugins'.");
-    m_params().SetDefaultParameter("jana:plugin_path", m_plugin_paths_str, "Colon-separated list of paths to search for plugins");
-    m_params().SetDefaultParameter("jana:debug_plugin_loading", m_verbose, "Trace the plugin search path and display any loading errors");
+    m_params->SetDefaultParameter("plugins", m_plugins_to_include, "Comma-separated list of plugins to load.");
+    m_params->SetDefaultParameter("plugins_to_ignore", m_plugins_to_exclude, "Comma-separated list of plugins to NOT load, even if they are specified in 'plugins'.");
+    m_params->SetDefaultParameter("jana:plugin_path", m_plugin_paths_str, "Colon-separated list of paths to search for plugins");
+    m_params->SetDefaultParameter("jana:debug_plugin_loading", m_verbose, "Trace the plugin search path and display any loading errors");
 
     if (m_verbose) {
         // The jana:debug_plugin_loading parameter is kept around for backwards compatibility

@@ -97,11 +97,11 @@ public:
         return *m_data;
     }
 
-    ServiceT& operator->() {
+    ServiceT* operator->() {
         if (m_data == nullptr) {
             throw JException("Attempted to access a Service which hasn't been attached to this Component yet!");
         }
-        return *m_data;
+        return m_data.get();
     }
 
 protected:
