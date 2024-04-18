@@ -36,12 +36,13 @@ void JComponentManager::Init() {
     m_params->SetDefaultParameter("record_call_stack", m_enable_call_graph_recording, "Records a trace of who called each factory. Reduces performance but necessary for plugins such as janadot.");
     m_params->SetDefaultParameter("jana:nevents", m_nevents, "Max number of events that sources can emit");
     m_params->SetDefaultParameter("jana:nskip", m_nskip, "Number of events that sources should skip before starting emitting");
+    m_params->SetDefaultParameter("autoactivate", m_autoactivate, "List of factories to activate regardless of what the event processors request. Format is typename:tag,typename:tag");
     m_params->FilterParameters(m_default_tags, "DEFTAG:");
 
     // Look for factories to auto-activate
-    // Right now AutoActivator parameter won't show up in parameters list. Reconsider this.
-    if (JAutoActivator::IsRequested(m_params())) {
+    if (!m_autoactivate.empty()) {
         add(new JAutoActivator);
+        // JAutoActivator will re-parse the autoactivate list by itself
     }
 }
 

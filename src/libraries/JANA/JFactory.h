@@ -202,9 +202,6 @@ protected:
 
     CreationStatus mCreationStatus = CreationStatus::NotCreatedYet;
 
-    // Used to make sure Init is called only once
-    std::once_flag mInitFlag;
-
     // Common to components
     JEventLevel mLevel = JEventLevel::Event;
     std::string mPluginName;

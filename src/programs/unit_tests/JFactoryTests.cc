@@ -197,5 +197,27 @@ TEST_CASE("JFactoryTests") {
         REQUIRE((*it)->data == 49);
         REQUIRE(sut.GetNumObjects() == 1);
     }
+
+    SECTION("Exception in JFactory::Process") {
+        LOG << "JFactoryTests: Exception in JFactory::Process" << LOG_END;
+        auto event = std::make_shared<JEvent>();
+        JFactoryTestExceptingFactory fac;
+        REQUIRE(fac.GetStatus() == JFactory::Status::Uninitialized);
+        REQUIRE_THROWS(fac.CreateAndGetData(event));
+
+        REQUIRE(fac.GetStatus() == JFactory::Status::Unprocessed);
+        REQUIRE_THROWS(fac.CreateAndGetData(event));
+    }
+
+    SECTION("Exception in JFactory::Init") {
+        LOG << "JFactoryTests: Exception in JFactory::Init" << LOG_END;
+        auto event = std::make_shared<JEvent>();
+        JFactoryTestExceptingInInitFactory fac;
+        REQUIRE(fac.GetStatus() == JFactory::Status::Uninitialized);
+        REQUIRE_THROWS(fac.CreateAndGetData(event));
+
+        REQUIRE(fac.GetStatus() == JFactory::Status::Uninitialized);
+        REQUIRE_THROWS(fac.CreateAndGetData(event));
+    }
 }
 

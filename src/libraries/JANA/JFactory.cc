@@ -14,7 +14,7 @@ void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
 
     if (mStatus == Status::Uninitialized) {
         try {
-            std::call_once(mInitFlag, &JFactory::Init, this);
+            Init();
             mStatus = Status::Unprocessed;
         }
         catch (JException& ex) {

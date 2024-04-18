@@ -50,6 +50,22 @@ struct JFactoryTestDummyFactory : public JFactoryT<JFactoryTestDummyObject> {
     }
 };
 
+struct JFactoryTestExceptingFactory : public JFactoryT<JFactoryTestDummyObject> {
+
+    void Process(const std::shared_ptr<const JEvent>&) override {
+        throw JException("This was never going to work!");
+    }
+};
+
+struct JFactoryTestExceptingInInitFactory : public JFactoryT<JFactoryTestDummyObject> {
+
+    void Init() override {
+        throw JException("This was never going to initialize even");
+    }
+    void Process(const std::shared_ptr<const JEvent>&) override {
+    }
+};
+
 
 struct JFactoryTestDummySource: public JEventSource {
 

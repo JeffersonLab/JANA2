@@ -65,6 +65,7 @@ private:
 
     std::map<std::string, std::string> m_default_tags;
     bool m_enable_call_graph_recording = false;
+    std::string m_autoactivate;
 
     uint64_t m_nskip=0;
     uint64_t m_nevents=0;
