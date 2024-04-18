@@ -51,8 +51,12 @@ class JEventSourceGenerator{
         /// GetPluginName is called by JANA itself and should not be exposed to the user.
         std::string GetPluginName() const { return mPluginName; }
 
+        JEventLevel GetLevel() { return mLevel; }
+        void SetLevel(JEventLevel level) { mLevel = level; }
+
         JApplication* mApplication{nullptr};
         std::string mPluginName;
+        JEventLevel mLevel = JEventLevel::None;
 };
 
 #endif // _JEventSourceGenerator_h_
