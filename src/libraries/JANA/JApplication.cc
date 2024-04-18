@@ -9,6 +9,7 @@
 #include <JANA/Services/JParameterManager.h>
 #include <JANA/Services/JPluginLoader.h>
 #include <JANA/Services/JComponentManager.h>
+#include <JANA/Services/JLoggingService.h>
 #include <JANA/Services/JGlobalRootLock.h>
 #include <JANA/Engine/JArrowProcessingController.h>
 #include <JANA/Utils/JCpuInfo.h>
@@ -16,25 +17,16 @@
 
 JApplication *japp = nullptr;
 
-JApplication::JApplication(JLogger::Level verbosity) {
-    m_service_locator = new JServiceLocator;
-    m_params = std::make_shared<JParameterManager>();
-    m_params->SetParameter("log:global", verbosity);
-    m_service_locator->provide(m_params);
-    ProvideService(m_params);
-    ProvideService(std::make_shared<JLoggingService>());
-    ProvideService(std::make_shared<JPluginLoader>());
-    ProvideService(std::make_shared<JComponentManager>());
-    ProvideService(std::make_shared<JGlobalRootLock>());
-    ProvideService(std::make_shared<JTopologyBuilder>());
-
-    m_plugin_loader = m_service_locator->get<JPluginLoader>();
-    m_component_manager = m_service_locator->get<JComponentManager>();
-    m_logger = m_service_locator->get<JLoggingService>()->get_logger("JApplication");
-    m_logger.show_classname = false;
-}
 
 JApplication::JApplication(JParameterManager* params) {
+
+    // We set up some very essential services here, but note 
+    // that they won't have been initialized yet. We need them now
+    // so that they can passively receive components, plugin names, parameter values, etc.
+    // These passive operations don't require any parameters, services, or
+    // logging output, so they don't need to be initialized until later.
+    // They will be fully initialized in JApplication::Initialize().
+    // Only then they will be exposed to the user through the service locator.
 
     if (params == nullptr) {
         m_params = std::make_shared<JParameterManager>();
@@ -42,20 +34,17 @@ JApplication::JApplication(JParameterManager* params) {
     else {
         m_params = std::shared_ptr<JParameterManager>(params);
     }
-
+    m_component_manager = std::make_shared<JComponentManager>();
+    m_plugin_loader = std::make_shared<JPluginLoader>();
     m_service_locator = new JServiceLocator;
+
     ProvideService(m_params);
+    ProvideService(m_component_manager);
+    ProvideService(m_plugin_loader);
     ProvideService(std::make_shared<JLoggingService>());
-    ProvideService(std::make_shared<JPluginLoader>());
-    ProvideService(std::make_shared<JComponentManager>());
     ProvideService(std::make_shared<JGlobalRootLock>());
     ProvideService(std::make_shared<JTopologyBuilder>());
 
-    m_plugin_loader = m_service_locator->get<JPluginLoader>();
-    m_component_manager = m_service_locator->get<JComponentManager>();
-
-    m_logger = m_service_locator->get<JLoggingService>()->get_logger("JApplication");
-    m_logger.show_classname = false;
 }
 
 
@@ -107,28 +96,36 @@ void JApplication::Add(JEventUnfolder* unfolder) {
 }
 
 
-// Controlling processing
-
 void JApplication::Initialize() {
 
     /// Initialize the application in preparation for data processing.
-    /// This is called by the Run method so users will usually not
-    /// need to call this directly.
+    /// This is called by the Run method so users will usually not need to call this directly.
 
     // Only run this once
     if (m_initialized) return;
 
-    // Obtain final values of parameters and loggers
-    m_plugin_loader->InitPhase2();
-    m_component_manager->InitPhase2();
-    m_logger = m_service_locator->get<JLoggingService>()->get_logger("JApplication");
+    // Now that all parameters, components, plugin names, etc have been set, 
+    // we can expose our builtin services to the user via GetService()
+    m_services_available = true;
+    
+    // We trigger initialization 
+    auto logging_service = m_service_locator->get<JLoggingService>();
+    auto component_manager = m_service_locator->get<JComponentManager>();
+    auto plugin_loader = m_service_locator->get<JPluginLoader>();
+    auto topology_builder = m_service_locator->get<JTopologyBuilder>();
+
+    // Set logger on JApplication itself
+    m_logger = logging_service->get_logger("JApplication");
     m_logger.show_classname = false;
 
     // Attach all plugins
-    m_plugin_loader->attach_plugins(m_component_manager.get());
+    plugin_loader->attach_plugins(component_manager.get());
 
     // Resolve all event sources now that all plugins have been loaded
-    m_component_manager->resolve_event_sources();
+    component_manager->resolve_event_sources();
+    
+    // Give all components a JApplication pointer and a logger
+    component_manager->configure_components();
 
     // Set desired nthreads. We parse the 'nthreads' parameter two different ways for backwards compatibility.
     m_desired_nthreads = 1;
@@ -150,16 +147,15 @@ void JApplication::Initialize() {
         LOG_WARN(m_logger) << "Unrecognized engine choice! Falling back to jana:engine=0" << LOG_END;
     }
     */
-    std::shared_ptr<JTopologyBuilder> topology_builder = m_service_locator->get<JTopologyBuilder>();
     auto topology = topology_builder->get_or_create();
+    ProvideService(std::make_shared<JArrowProcessingController>(topology));
 
-    auto japc = std::make_shared<JArrowProcessingController>(topology);
-    m_service_locator->provide(japc);  // Make concrete class available via SL
     m_processing_controller = m_service_locator->get<JArrowProcessingController>();  // Get deps from SL
-    m_service_locator->provide(m_processing_controller);  // Make abstract class available via SL
+    ProvideService(m_processing_controller);  // Make abstract class available via SL
     m_processing_controller->initialize();
 
     m_initialized = true;
+    // This needs to be at the end so that m_initialized==false while InitPlugin() is being called
 }
 
 /// @brief Run the application, launching 1 or more threads to do the work.

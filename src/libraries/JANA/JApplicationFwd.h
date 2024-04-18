@@ -146,6 +146,7 @@ private:
     bool m_draining_queues = false;
     bool m_skip_join = false;
     std::atomic_bool m_initialized {false};
+    std::atomic_bool m_services_available {false};
     bool m_ticker_on = true;
     bool m_timeout_on = true;
     bool m_extended_report = false;

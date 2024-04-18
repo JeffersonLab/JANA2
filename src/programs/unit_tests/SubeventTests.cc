@@ -169,10 +169,8 @@ TEST_CASE("Basic subevent arrow functionality") {
 
     SECTION("Execute subevent arrows end-to-end using same example as in JSubeventMailbox") {
 
-        auto parms = new JParameterManager;
-        // Some params need to be present BEFORE JApplication is constructed, e.g. log levels are lost
-        parms->SetParameter("log:trace", "JWorker,JScheduler,JArrow,JArrowProcessingController,JEventProcessorArrow");
-        JApplication app(parms);
+        JApplication app;
+        app.SetParameterValue("log:info", "JWorker,JScheduler,JArrow,JArrowProcessingController,JEventProcessorArrow");
         app.SetTimeoutEnabled(false);
         app.SetTicker(false);
 

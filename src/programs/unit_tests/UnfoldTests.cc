@@ -43,6 +43,7 @@ struct TestUnfolder : public JEventUnfolder {
 TEST_CASE("UnfoldTests_Basic") {
 
     JApplication app;
+    app.Initialize();
     auto jcm = app.GetService<JComponentManager>();
 
     JEventPool parent_pool {jcm, 5, 1, true, JEventLevel::Timeslice}; // size=5, locations=1, limit_total_events_in_flight=true
@@ -83,7 +84,9 @@ TEST_CASE("UnfoldTests_Basic") {
 TEST_CASE("FoldArrowTests") {
 
     JApplication app;
+    app.Initialize();
     auto jcm = app.GetService<JComponentManager>();
+    
 
     // We only use these to obtain preconfigured JEvents
     JEventPool parent_pool {jcm, 5, 1, true, JEventLevel::Timeslice}; // size=5, locations=1, limit_total_events_in_flight=true

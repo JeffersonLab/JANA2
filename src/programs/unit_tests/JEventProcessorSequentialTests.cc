@@ -50,14 +50,14 @@ struct MyRootProcessor : public JEventProcessorSequentialRoot {
 
 TEST_CASE("JEventProcessorSequentialRootTests") {
 
-    JParameterManager *params = new JParameterManager;
-    // params->SetParameter("log:trace", "JScheduler,JArrow,JArrowProcessingController");
-    JApplication app(params);
+    JApplication app;
     app.Add(new DummySource);
     app.SetParameterValue("nthreads", 4);
     app.SetParameterValue("jana:nevents", 4);
     app.SetParameterValue("jana:event_source_chunksize", 1);
     app.SetParameterValue("jana:event_processor_chunksize", 1);
+    app.SetParameterValue("log:global", "OFF");
+    app.SetParameterValue("log:warn", "JScheduler,JArrow,JArrowProcessingController");
     auto proc = new MyRootProcessor;
     app.Add(proc);
     app.Run(true);
@@ -137,14 +137,14 @@ struct MySeqProcessor : public JEventProcessorSequential {
 
 TEST_CASE("JEventProcessorSequentialTests") {
 
-    JParameterManager *params = new JParameterManager;
-    // params->SetParameter("log:trace", "JScheduler,JArrow,JArrowProcessingController");
-    JApplication app(params);
+    JApplication app;
     app.Add(new DummySource);
     app.SetParameterValue("nthreads", 4);
     app.SetParameterValue("jana:nevents", 4);
     app.SetParameterValue("jana:event_source_chunksize", 1);
     app.SetParameterValue("jana:event_processor_chunksize", 1);
+    app.SetParameterValue("log:global", "OFF");
+    app.SetParameterValue("log:warn", "JScheduler,JArrow,JArrowProcessingController");
     auto proc = new MySeqProcessor;
     app.Add(proc);
     app.Run(true);

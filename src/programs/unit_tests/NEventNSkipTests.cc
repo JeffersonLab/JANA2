@@ -77,9 +77,8 @@ TEST_CASE("NEventNSkipTests") {
 }
 
 TEST_CASE("JEventSourceArrow with multiple JEventSources") {
-    JParameterManager* params = new JParameterManager;
-    params->SetParameter("log:debug","JArrow,JArrowProcessingController");
-    JApplication app(params);
+    JApplication app;
+    app.SetParameterValue("log:info","JArrow,JArrowProcessingController");
     auto source1 = new NEventNSkipBoundedSource();
     auto source2 = new NEventNSkipBoundedSource();
     auto source3 = new NEventNSkipBoundedSource();

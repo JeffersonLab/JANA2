@@ -432,10 +432,9 @@ TEST_CASE("MultiLevelTopologyBuilderTests") {
 
 TEST_CASE("TimeslicesTests") {
 
-    auto parms = new JParameterManager;
-    parms->SetParameter("log:trace", "JScheduler,JArrow,JArrowProcessingController");
-    parms->SetParameter("jana:nevents", "5");
-    JApplication app(parms);
+    JApplication app;
+    app.SetParameterValue("log:info", "JScheduler,JArrow,JArrowProcessingController");
+    app.SetParameterValue("jana:nevents", "5");
     
     app.Add(new MyTimesliceSource);
     app.Add(new MyTimesliceUnfolder);

@@ -81,7 +81,7 @@ struct OmniService : public JService {
 
     void Init() override {
         LOG_INFO(GetLogger()) << "Calling OmniService::Init" << LOG_END;
-        REQUIRE(parman().GetParameterValue<int>("bucket_count") == 22);
+        REQUIRE(parman->GetParameterValue<int>("bucket_count") == 22);
         REQUIRE(bucket_count() == 22);
     }
 };

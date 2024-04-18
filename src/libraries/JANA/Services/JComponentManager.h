@@ -20,7 +20,7 @@ public:
 
     explicit JComponentManager();
     ~JComponentManager() override;
-    void InitPhase2();
+    void Init() override;
 
     void next_plugin(std::string plugin_name);
 
@@ -31,6 +31,7 @@ public:
     void add(JEventProcessor* processor);
     void add(JEventUnfolder* unfolder);
 
+    void configure_components();
     void resolve_event_sources();
     JEventSourceGenerator* resolve_user_event_source_generator() const;
     JEventSourceGenerator* resolve_event_source(std::string source_name) const;
