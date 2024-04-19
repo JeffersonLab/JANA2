@@ -37,6 +37,7 @@ struct MyFileWriter : public JEventProcessor {
 
     void Process(const std::shared_ptr<const JEvent>& event) {
 
+        std::lock_guard<std::mutex> guard(m_mutex);
         if (event->HasParent(JEventLevel::Timeslice)) {
 
             auto& ts = event->GetParent(JEventLevel::Timeslice);
@@ -63,7 +64,6 @@ struct MyFileWriter : public JEventProcessor {
                 << LOG_END;
         }
 
-        std::lock_guard<std::mutex> guard(m_mutex);
         m_writer->writeFrame(*(m_evt_frame_in().at(0)), "events");
 
     }
