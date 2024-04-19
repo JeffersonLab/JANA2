@@ -27,20 +27,20 @@ void InitPlugin(JApplication *app) {
                 { .tag = "timeslice_protoclusterizer", 
                   .level = JEventLevel::Timeslice,
                   .input_tags = {"hits"}, 
-                  .output_tags = {"timeslice_protoclusters"}},
+                  .output_tags = {"ts_protoclusters"}},
                 app));
 
     // Factory that produces event-level protoclusters from event-level hits
     app->Add(new JOmniFactoryGeneratorT<MyProtoclusterFactory>(
                 { .tag = "event_protoclusterizer", 
                   .input_tags = {"hits"}, 
-                  .output_tags = {"protoclusters"}}, 
+                  .output_tags = {"evt_protoclusters"}}, 
                 app));
 
     // Factory that produces event-level clusters from event-level protoclusters
     app->Add(new JOmniFactoryGeneratorT<MyClusterFactory>(
                 { .tag = "clusterizer", 
-                  .input_tags = {"protoclusters"}, 
+                  .input_tags = {"evt_protoclusters"}, 
                   .output_tags = {"clusters"}},
                 app));
 

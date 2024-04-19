@@ -17,8 +17,8 @@ struct MyFileWriter : public JEventProcessor {
 
     PodioInput<ExampleHit> m_ts_hits_in {this, "hits", JEventLevel::Timeslice};
     PodioInput<ExampleCluster> m_ts_protoclusters_in {this, "ts_protoclusters", JEventLevel::Timeslice};
-    PodioInput<ExampleCluster> m_evt_protoclusters_in {this, "evt_protoclusters", JEventLevel::Event};
-    PodioInput<ExampleCluster> m_evt_clusters_in {this, "clusters", JEventLevel::Event};
+    PodioInput<ExampleCluster> m_evt_protoclusters_in {this, "evt_protoclusters"};
+    PodioInput<ExampleCluster> m_evt_clusters_in {this, "clusters"};
 
     Input<podio::Frame> m_evt_frame_in {this, "", JEventLevel::Event};
     Input<podio::Frame> m_ts_frame_in {this, "", JEventLevel::Timeslice};
