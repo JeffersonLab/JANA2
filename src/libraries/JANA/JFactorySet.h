@@ -48,7 +48,7 @@ class JFactorySet : public JResettable
         std::map<std::pair<std::string, std::string>, JFactory*> mFactoriesFromString;  // {(objname, tag) : factory}
         std::vector<JMultifactory*> mMultifactories;
         bool mIsFactoryOwner = true;
-        JEventLevel mLevel = JEventLevel::Event;
+        JEventLevel mLevel = JEventLevel::PhysicsEvent;
         
 };
 

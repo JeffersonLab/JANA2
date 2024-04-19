@@ -19,7 +19,7 @@ struct TestUnfolder : public JEventUnfolder {
 
     TestUnfolder() {
         SetParentLevel(JEventLevel::Timeslice);
-        SetChildLevel(JEventLevel::Event);
+        SetChildLevel(JEventLevel::PhysicsEvent);
     }
 
     void Preprocess(const JEvent& parent) const override {
@@ -47,7 +47,7 @@ TEST_CASE("UnfoldTests_Basic") {
     auto jcm = app.GetService<JComponentManager>();
 
     JEventPool parent_pool {jcm, 5, 1, true, JEventLevel::Timeslice}; // size=5, locations=1, limit_total_events_in_flight=true
-    JEventPool child_pool {jcm, 5, 1, true, JEventLevel::Event};
+    JEventPool child_pool {jcm, 5, 1, true, JEventLevel::PhysicsEvent};
     JMailbox<EventT*> parent_queue {3}; // size
     JMailbox<EventT*> child_queue {3};
 
@@ -77,7 +77,7 @@ TEST_CASE("UnfoldTests_Basic") {
     REQUIRE(unfolder.unfolded_parent_levels[0] == JEventLevel::Timeslice);
     REQUIRE(unfolder.unfolded_child_nrs.size() == 1);
     REQUIRE(unfolder.unfolded_child_nrs[0] == 117);
-    REQUIRE(unfolder.unfolded_child_levels[0] == JEventLevel::Event);
+    REQUIRE(unfolder.unfolded_child_levels[0] == JEventLevel::PhysicsEvent);
 
 }
 
@@ -90,7 +90,7 @@ TEST_CASE("FoldArrowTests") {
 
     // We only use these to obtain preconfigured JEvents
     JEventPool parent_pool {jcm, 5, 1, true, JEventLevel::Timeslice}; // size=5, locations=1, limit_total_events_in_flight=true
-    JEventPool child_pool {jcm, 5, 1, true, JEventLevel::Event};
+    JEventPool child_pool {jcm, 5, 1, true, JEventLevel::PhysicsEvent};
     parent_pool.init();
     child_pool.init();
 
@@ -100,7 +100,7 @@ TEST_CASE("FoldArrowTests") {
     JMailbox<std::shared_ptr<JEvent>*> child_out;
     JMailbox<std::shared_ptr<JEvent>*> parent_out;
 
-    JFoldArrow arrow("sut", JEventLevel::Timeslice, JEventLevel::Event, &child_in, &child_out, &parent_out);
+    JFoldArrow arrow("sut", JEventLevel::Timeslice, JEventLevel::PhysicsEvent, &child_in, &child_out, &parent_out);
     JArrowMetrics metrics;
     arrow.initialize();
 

@@ -19,7 +19,7 @@ struct MyFileWriter : public JEventProcessor {
     PodioInput<ExampleCluster> m_evt_clusters_in {this, "clusters"};
 
     // Retrieve the PODIO frame so we can write it directly
-    Input<podio::Frame> m_evt_frame_in {this, "", JEventLevel::Event};
+    Input<podio::Frame> m_evt_frame_in {this, "", JEventLevel::PhysicsEvent};
 
     // TODO: Support optional inputs
     // Input<podio::Frame> m_ts_frame_in {this, "", JEventLevel::Timeslice};

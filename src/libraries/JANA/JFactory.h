@@ -203,7 +203,7 @@ protected:
     CreationStatus mCreationStatus = CreationStatus::NotCreatedYet;
 
     // Common to components
-    JEventLevel mLevel = JEventLevel::Event;
+    JEventLevel mLevel = JEventLevel::PhysicsEvent;
     std::string mPluginName;
     std::string mFactoryName;
     mutable std::mutex mMutex;

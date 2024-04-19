@@ -15,7 +15,7 @@ public:
 
     struct TypedWiring {
         std::string tag = "";
-        JEventLevel level = JEventLevel::Event;
+        JEventLevel level = JEventLevel::PhysicsEvent;
         std::vector<std::string> input_tags = {};
         std::vector<JEventLevel> input_levels = {};
         std::vector<std::string> output_tags = {};
@@ -24,7 +24,7 @@ public:
 
     struct UntypedWiring {
         std::string tag = "";
-        JEventLevel level = JEventLevel::Event;
+        JEventLevel level = JEventLevel::PhysicsEvent;
         std::vector<std::string> input_tags = {};
         std::vector<JEventLevel> input_levels = {};
         std::vector<std::string> output_tags = {};

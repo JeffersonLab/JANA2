@@ -30,7 +30,7 @@ protected:
     std::vector<ParameterBase*> m_parameters;
     std::vector<ServiceBase*> m_services;
     
-    JEventLevel m_level = JEventLevel::Event;
+    JEventLevel m_level = JEventLevel::PhysicsEvent;
     CallbackStyle m_callback_style = CallbackStyle::Compatibility;
     std::string m_prefix;
     std::string m_plugin_name;

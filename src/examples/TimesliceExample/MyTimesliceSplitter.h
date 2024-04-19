@@ -18,7 +18,7 @@ struct MyTimesliceSplitter : public JEventUnfolder {
     MyTimesliceSplitter() {
         SetTypeName(NAME_OF_THIS);
         SetParentLevel(JEventLevel::Timeslice);
-        SetChildLevel(JEventLevel::Event);
+        SetChildLevel(JEventLevel::PhysicsEvent);
     }
 
 

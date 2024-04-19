@@ -5,7 +5,7 @@
 #include <ostream>
 #include <sstream>
 
-enum class JEventLevel { Run, Subrun, Timeslice, Block, Event, Subevent, Task, None };
+enum class JEventLevel { Run, Subrun, Timeslice, Block, PhysicsEvent, Subevent, Task, None };
 
 inline std::ostream& operator<<(std::ostream& os, JEventLevel level) {
     switch (level) {
@@ -13,7 +13,7 @@ inline std::ostream& operator<<(std::ostream& os, JEventLevel level) {
         case JEventLevel::Subrun: os << "Subrun"; break;
         case JEventLevel::Timeslice: os << "Timeslice"; break;
         case JEventLevel::Block: os << "Block"; break;
-        case JEventLevel::Event: os << "Event"; break;
+        case JEventLevel::PhysicsEvent: os << "PhysicsEvent"; break;
         case JEventLevel::Subevent: os << "Subevent"; break;
         case JEventLevel::Task: os << "Task"; break;
         default: os << "None"; break;
@@ -33,8 +33,8 @@ inline JEventLevel next_level(JEventLevel current_level) {
         case JEventLevel::Run: return JEventLevel::Subrun;
         case JEventLevel::Subrun: return JEventLevel::Timeslice;
         case JEventLevel::Timeslice: return JEventLevel::Block;
-        case JEventLevel::Block: return JEventLevel::Event;
-        case JEventLevel::Event: return JEventLevel::Subevent;
+        case JEventLevel::Block: return JEventLevel::PhysicsEvent;
+        case JEventLevel::PhysicsEvent: return JEventLevel::Subevent;
         case JEventLevel::Subevent: return JEventLevel::Task;
         case JEventLevel::Task: return JEventLevel::None;
         default: return JEventLevel::None;

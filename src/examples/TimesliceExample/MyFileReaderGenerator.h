@@ -16,7 +16,7 @@ class MyFileReaderGenerator : public JEventSourceGenerator {
             source->SetLevel(JEventLevel::Timeslice);
         }
         else {
-            source->SetLevel(JEventLevel::Event);
+            source->SetLevel(JEventLevel::PhysicsEvent);
         }
         return source;
     }
