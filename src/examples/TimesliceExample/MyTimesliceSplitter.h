@@ -11,9 +11,9 @@
 struct MyTimesliceSplitter : public JEventUnfolder {
 
     PodioInput<ExampleCluster> m_timeslice_clusters_in {this, "ts_protoclusters", JEventLevel::Timeslice};
-    PodioOutput<ExampleCluster> m_event_clusters_out {this, "evt_protoclusters"};
 
-    size_t next_time_bucket = 0;
+    PodioOutput<ExampleCluster> m_event_clusters_out {this, "evt_protoclusters"};
+    PodioOutput<EventInfo> m_event_info_out {this, "evt_info"};
 
     MyTimesliceSplitter() {
         SetTypeName(NAME_OF_THIS);
@@ -34,6 +34,9 @@ struct MyTimesliceSplitter : public JEventUnfolder {
         event_clusters_out->setSubsetCollection(true);
         event_clusters_out->push_back(m_timeslice_clusters_in()->at(child_idx));
 
+        auto event_info_out = std::make_unique<EventInfoCollection>();
+        event_info_out->push_back(EventInfo(event_nr, timeslice_nr, 0));
+
         LOG_DEBUG(GetLogger()) << "MyTimesliceSplitter: Timeslice " << parent.GetEventNumber() 
             <<  ", Event " << child.GetEventNumber()
             << "\nTimeslice clusters in:\n"
@@ -43,6 +46,7 @@ struct MyTimesliceSplitter : public JEventUnfolder {
             << LOG_END;
 
         m_event_clusters_out() = std::move(event_clusters_out);
+        m_event_info_out() = std::move(event_info_out);
 
         return (child_idx == 2) ? Result::NextChildNextParent : Result::NextChildKeepParent;
     }
