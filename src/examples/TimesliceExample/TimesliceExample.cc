@@ -2,7 +2,7 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 
-#include "MyFileReader.h"
+#include "MyFileReaderGenerator.h"
 #include "MyFileWriter.h"
 #include "MyTimesliceSplitter.h"
 #include "MyProtoclusterFactory.h"
@@ -18,6 +18,13 @@ void InitPlugin(JApplication *app) {
 
     InitJANAPlugin(app);
 
+    // Event source generator instantiates a FileReader for each filename passed to jana.
+    // The event source it produces is configured to either produce Timeslices or Events.
+    // Either way, these files contain just hits
+    app->Add(new MyFileReaderGenerator());
+
+    // Event processor that writes events (and timeslices, if they are present) to file
+    app->Add(new MyFileWriter());
 
     // Unfolder that takes timeslices and splits them into physics events.
     app->Add(new MyTimesliceSplitter());
@@ -44,12 +51,6 @@ void InitPlugin(JApplication *app) {
                   .output_tags = {"clusters"}}
                 ));
 
-    // Event source that can read files containing either timeslices or events
-    // Either way, these files contain just hits
-    app->Add(new MyFileReader());
-
-    // Processor that writes events (and timeslices, if they are present) to file
-    app->Add(new MyFileWriter());
 
 }
 } // "C"

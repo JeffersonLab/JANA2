@@ -14,7 +14,6 @@ struct MyFileReader : public JEventSource {
 
     MyFileReader() {
         SetTypeName(NAME_OF_THIS);
-        SetLevel(JEventLevel::Timeslice);
     }
 
     void Open() override { }

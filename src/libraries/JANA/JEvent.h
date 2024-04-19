@@ -137,13 +137,13 @@ class JEvent : public std::enable_shared_from_this<JEvent>
             for (const auto& pair : mParents) {
                 if (pair.first == level) return *(*(pair.second));
             }
-            throw JException("Unable to find parent at level %s", level);
+            throw JException("Unable to find parent at level %s", toString(level));
         }
 
         void SetParent(std::shared_ptr<JEvent>* parent) {
             JEventLevel level = parent->get()->GetLevel();
             for (const auto& pair : mParents) {
-                if (pair.first == level) throw JException("Event already has a parent at level %s", parent->get()->GetLevel());
+                if (pair.first == level) throw JException("Event already has a parent at level %s", toString(parent->get()->GetLevel()));
             }
             mParents.push_back({level, parent});
             parent->get()->mReferenceCount.fetch_add(1);
