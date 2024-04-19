@@ -133,6 +133,13 @@ class JEvent : public std::enable_shared_from_this<JEvent>
         void SetEventIndex(int event_index) { mEventIndex = event_index; }
         int64_t GetEventIndex() const { return mEventIndex; }
 
+        bool HasParent(JEventLevel level) const {
+            for (const auto& pair : mParents) {
+                if (pair.first == level) return true;
+            }
+            return false;
+        }
+
         const JEvent& GetParent(JEventLevel level) const {
             for (const auto& pair : mParents) {
                 if (pair.first == level) return *(*(pair.second));
