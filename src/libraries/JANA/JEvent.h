@@ -137,13 +137,15 @@ class JEvent : public std::enable_shared_from_this<JEvent>
             for (const auto& pair : mParents) {
                 if (pair.first == level) return *(*(pair.second));
             }
-            throw JException("Unable to find parent at level %s", toString(level));
+            throw JException("Unable to find parent at level %s", 
+                             toString(level).c_str());
         }
 
         void SetParent(std::shared_ptr<JEvent>* parent) {
             JEventLevel level = parent->get()->GetLevel();
             for (const auto& pair : mParents) {
-                if (pair.first == level) throw JException("Event already has a parent at level %s", toString(parent->get()->GetLevel()));
+                if (pair.first == level) throw JException("Event already has a parent at level %s", 
+                                                          toString(parent->get()->GetLevel()).c_str());
             }
             mParents.push_back({level, parent});
             parent->get()->mReferenceCount.fetch_add(1);
@@ -155,7 +157,8 @@ class JEvent : public std::enable_shared_from_this<JEvent>
             }
             auto pair = mParents.back();
             if (pair.first != level) {
-                throw JException("JEvent::ReleaseParent called out of level order: Caller expected %d, but parent was actually %d", level, pair.first);
+                throw JException("JEvent::ReleaseParent called out of level order: Caller expected %s, but parent was actually %s", 
+                        toString(level).c_str(), toString(pair.first).c_str());
             }
             mParents.pop_back();
             auto remaining_refs = pair.second->get()->mReferenceCount.fetch_sub(1);
