@@ -8,14 +8,14 @@
 #include <JANA/JEventUnfolder.h>
 #include "CollectionTabulators.h"
 
-struct MyTimesliceUnfolder : public JEventUnfolder {
+struct MyTimesliceSplitter : public JEventUnfolder {
 
     PodioInput<ExampleCluster> m_timeslice_clusters_in {this, "ts_protoclusters", JEventLevel::Timeslice};
     PodioOutput<ExampleCluster> m_event_clusters_out {this, "evt_protoclusters"};
 
     size_t next_time_bucket = 0;
 
-    MyTimesliceUnfolder() {
+    MyTimesliceSplitter() {
         SetTypeName(NAME_OF_THIS);
         SetParentLevel(JEventLevel::Timeslice);
         SetChildLevel(JEventLevel::Event);
@@ -34,7 +34,7 @@ struct MyTimesliceUnfolder : public JEventUnfolder {
         event_clusters_out->setSubsetCollection(true);
         event_clusters_out->push_back(m_timeslice_clusters_in()->at(child_idx));
 
-        LOG_DEBUG(GetLogger()) << "MyTimesliceUnfolder: Timeslice " << parent.GetEventNumber() 
+        LOG_DEBUG(GetLogger()) << "MyTimesliceSplitter: Timeslice " << parent.GetEventNumber() 
             <<  ", Event " << child.GetEventNumber()
             << "\nTimeslice clusters in:\n"
             << TabulateClusters(m_timeslice_clusters_in())

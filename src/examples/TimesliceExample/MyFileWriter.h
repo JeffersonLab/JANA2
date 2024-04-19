@@ -13,7 +13,7 @@
 
 
 
-struct MyEventProcessor : public JEventProcessor {
+struct MyFileWriter : public JEventProcessor {
 
     PodioInput<ExampleHit> m_ts_hits_in {this, "hits", JEventLevel::Timeslice};
     PodioInput<ExampleCluster> m_ts_protoclusters_in {this, "ts_protoclusters", JEventLevel::Timeslice};
@@ -29,9 +29,8 @@ struct MyEventProcessor : public JEventProcessor {
 
     std::mutex m_mutex;
     
-    MyEventProcessor() {
-        SetLevel(JEventLevel::Event);
-        SetTypeName("MyEventProcessor");
+    MyFileWriter() {
+        SetTypeName(NAME_OF_THIS);
     }
 
     void Init() {

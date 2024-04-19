@@ -8,28 +8,28 @@
 #include "CollectionTabulators.h"
 
 
-struct MyTimesliceSource : public JEventSource {
+struct MyFileReader : public JEventSource {
 
     PodioOutput<ExampleHit> m_hits_out {this, "hits"};
 
-    MyTimesliceSource() {
+    MyFileReader() {
+        SetTypeName(NAME_OF_THIS);
         SetLevel(JEventLevel::Timeslice);
-        SetTypeName("MyTimesliceSource");
     }
 
     void Open() override { }
 
     void GetEvent(std::shared_ptr<JEvent> event) override {
 
-        auto ts_nr = event->GetEventNumber();
+        auto event_nr = event->GetEventNumber();
         auto hits_out  = std::make_unique<ExampleHitCollection>();
 
         // ExampleHit(unsigned long long cellID, double x, double y, double z, double energy, std::uint64_t time);
-        hits_out->push_back(ExampleHit(ts_nr, 0, 22, 22, 22, 0));
-        hits_out->push_back(ExampleHit(ts_nr, 0, 49, 49, 49, 1));
-        hits_out->push_back(ExampleHit(ts_nr, 0, 7.6, 7.6, 7.6, 2));
+        hits_out->push_back(ExampleHit(event_nr, 0, 22, 22, 22, 0));
+        hits_out->push_back(ExampleHit(event_nr, 0, 49, 49, 49, 1));
+        hits_out->push_back(ExampleHit(event_nr, 0, 7.6, 7.6, 7.6, 2));
 
-        LOG_DEBUG(GetLogger()) << "MyTimesliceSource: Timeslice " << event->GetEventNumber() << "\n"
+        LOG_DEBUG(GetLogger()) << "MySource: Emitted " << GetLevel() << " " << event->GetEventNumber() << "\n"
             << TabulateHits(hits_out.get())
             << LOG_END;
 

@@ -7,14 +7,11 @@
 #include <JANA/Omni/JOmniFactory.h>
 
 
-struct MyTimesliceFactory : public JOmniFactory<MyTimesliceFactory> {
+struct MyClusterFactory : public JOmniFactory<MyClusterFactory> {
 
-    PodioInput<ExampleHit> hits_in {this, "hits"};
-    PodioOutput<ExampleCluster> clusters_out {this, "protoclusters"};
+    PodioInput<ExampleCluster> m_protoclusters_in {this, "evt_protoclusters"};
+    PodioOutput<ExampleCluster> m_clusters_out {this, "clusters"};
 
-    MyTimesliceFactory() {
-        SetLevel(JEventLevel::Timeslice);
-    }
 
     void Configure() {
     }
@@ -25,12 +22,14 @@ struct MyTimesliceFactory : public JOmniFactory<MyTimesliceFactory> {
     void Execute(int32_t /*run_nr*/, uint64_t /*evt_nr*/) {
 
         auto cs = std::make_unique<ExampleClusterCollection>();
-        for (auto hit : *hits_in()) {
-            auto cluster = MutableExampleCluster(hit.energy());
-            cluster.addHits(hit);
+
+        for (auto protocluster : *m_protoclusters_in()) {
+            auto cluster = MutableExampleCluster(protocluster.energy() + 1000);
+            cluster.addClusters(protocluster);
             cs->push_back(cluster);
         }
-        clusters_out() = std::move(cs);
+
+        m_clusters_out() = std::move(cs);
     }
 };
 
