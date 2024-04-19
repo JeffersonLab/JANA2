@@ -226,10 +226,22 @@ public:
             if (input->is_variadic) {
                 for (size_t j = 0; j<(variadic_input_collection_count/variadic_input_count); ++j) {
                     input->collection_names.push_back(input_collection_names[i++]);
+                    if (!input_collection_levels.empty()) {
+                        input->collection_levels.push_back(input_collection_levels[i++]);
+                    }
+                    else {
+                        input->collection_levels.push_back(level);
+                    }
                 }
             }
             else {
                 input->collection_names.push_back(input_collection_names[i++]);
+                if (!input_collection_levels.empty()) {
+                    input->collection_levels.push_back(input_collection_levels[i++]);
+                }
+                else {
+                    input->collection_levels.push_back(level);
+                }
             }
         }
 

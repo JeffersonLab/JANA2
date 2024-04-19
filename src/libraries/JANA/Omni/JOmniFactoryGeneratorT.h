@@ -62,6 +62,12 @@ public:
 
     }
 
+    explicit JOmniFactoryGeneratorT(TypedWiring&& wiring, 
+                                    JApplication* app) {
+        m_typed_wirings.push_back(std::move(wiring));
+        m_app = app;
+    }
+
 
     void AddWiring(std::string tag,
                    std::vector<std::string> default_input_tags,
