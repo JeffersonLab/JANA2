@@ -27,22 +27,22 @@ void InitPlugin(JApplication *app) {
                 { .tag = "timeslice_protoclusterizer", 
                   .level = JEventLevel::Timeslice,
                   .input_tags = {"hits"}, 
-                  .output_tags = {"ts_protoclusters"}},
-                app));
+                  .output_tags = {"ts_protoclusters"}
+                }));
 
     // Factory that produces event-level protoclusters from event-level hits
     app->Add(new JOmniFactoryGeneratorT<MyProtoclusterFactory>(
                 { .tag = "event_protoclusterizer", 
                   .input_tags = {"hits"}, 
-                  .output_tags = {"evt_protoclusters"}}, 
-                app));
+                  .output_tags = {"evt_protoclusters"}}
+                ));
 
     // Factory that produces event-level clusters from event-level protoclusters
     app->Add(new JOmniFactoryGeneratorT<MyClusterFactory>(
                 { .tag = "clusterizer", 
                   .input_tags = {"evt_protoclusters"}, 
-                  .output_tags = {"clusters"}},
-                app));
+                  .output_tags = {"clusters"}}
+                ));
 
     // Event source that can read files containing either timeslices or events
     // Either way, these files contain just hits
@@ -51,7 +51,6 @@ void InitPlugin(JApplication *app) {
     // Processor that writes events (and timeslices, if they are present) to file
     app->Add(new MyFileWriter());
 
-    app->SetParameterValue("jana:extended_report", 0);
 }
 } // "C"
 

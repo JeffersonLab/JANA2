@@ -33,15 +33,12 @@ public:
 
 public:
 
-    explicit JOmniFactoryGeneratorT(JApplication* app) : m_app(app) {
-    }
+    explicit JOmniFactoryGeneratorT() = default;
 
     explicit JOmniFactoryGeneratorT(std::string tag,
                                     std::vector<std::string> default_input_tags,
                                     std::vector<std::string> default_output_tags,
-                                    FactoryConfigType configs,
-                                    JApplication* app) {
-        m_app = app;
+                                    FactoryConfigType configs) {
         m_typed_wirings.push_back({.tag=tag,
                              .input_tags=default_input_tags,
                              .output_tags=default_output_tags,
@@ -51,9 +48,7 @@ public:
 
     explicit JOmniFactoryGeneratorT(std::string tag,
                                     std::vector<std::string> default_input_tags,
-                                    std::vector<std::string> default_output_tags,
-                                    JApplication* app) {
-        m_app = app;
+                                    std::vector<std::string> default_output_tags) {
         m_typed_wirings.push_back({.tag=tag,
                              .input_tags=default_input_tags,
                              .output_tags=default_output_tags,
@@ -62,10 +57,8 @@ public:
 
     }
 
-    explicit JOmniFactoryGeneratorT(TypedWiring&& wiring, 
-                                    JApplication* app) {
+    explicit JOmniFactoryGeneratorT(TypedWiring&& wiring) {
         m_typed_wirings.push_back(std::move(wiring));
-        m_app = app;
     }
 
 
@@ -109,7 +102,7 @@ public:
 
 
             FactoryT *factory = new FactoryT;
-            factory->SetApplication(m_app);
+            factory->SetApplication(GetApplication());
             factory->SetPluginName(this->GetPluginName());
             factory->SetFactoryName(JTypeInfo::demangle<FactoryT>());
             // factory->SetTag(wiring.m_tag);
@@ -129,6 +122,4 @@ public:
 
 private:
     std::vector<TypedWiring> m_typed_wirings;
-    JApplication* m_app;
-
 };
