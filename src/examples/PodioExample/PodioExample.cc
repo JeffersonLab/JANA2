@@ -21,7 +21,7 @@
 
 void create_hits_file() {
 
-    EventInfo eventinfo1(7, 22);
+    EventInfo eventinfo1(7, 0, 22);
     EventInfoCollection eventinfos1;
     eventinfos1.push_back(eventinfo1);
 
@@ -38,7 +38,7 @@ void create_hits_file() {
     podio::ROOTFrameWriter writer("hits.root");
     writer.writeFrame(event1, "events");
 
-    EventInfo eventinfo2(8, 22);
+    EventInfo eventinfo2(8, 0, 22);
     EventInfoCollection eventinfos2;
     eventinfos2.push_back(eventinfo2);
 

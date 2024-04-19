@@ -21,7 +21,7 @@ public:
                       size_t pool_size,
                       size_t location_count,
                       bool limit_total_events_in_flight,
-                      JEventLevel level = JEventLevel::Event)
+                      JEventLevel level = JEventLevel::PhysicsEvent)
         : JPool(pool_size, location_count, limit_total_events_in_flight)
         , m_component_manager(component_manager)
         , m_level(level) {

@@ -23,8 +23,8 @@ protected:
 
     struct InputBase {
         std::string type_name;
-        JEventLevel level;
         std::vector<std::string> collection_names;
+        std::vector<JEventLevel> collection_levels;
         bool is_variadic = false;
 
         virtual void GetCollection(const JEvent& event) = 0;
@@ -41,7 +41,7 @@ protected:
             owner->RegisterInput(this);
             this->collection_names.push_back(default_tag);
             this->type_name = JTypeInfo::demangle<T>();
-            this->level = level;
+            this->collection_levels.push_back(level);
         }
 
         const std::vector<const T*>& operator()() { return m_data; }
@@ -50,7 +50,8 @@ protected:
         friend class JComponentT;
 
         void GetCollection(const JEvent& event) {
-            if (this->level == event.GetLevel() || this->level == JEventLevel::None) {
+            auto& level = this->collection_levels[0];
+            if (level == event.GetLevel() || level == JEventLevel::None) {
                 m_data = event.Get<T>(this->collection_names[0]);
             }
             else {
@@ -58,11 +59,13 @@ protected:
             }
         }
         void PrefetchCollection(const JEvent& event) {
-            if (this->level == event.GetLevel() || this->level == JEventLevel::None) {
-                event.Get<T>(this->collection_names[0]);
+            auto& level = this->collection_levels[0];
+            auto& name = this->collection_names[0];
+            if (level == event.GetLevel() || level == JEventLevel::None) {
+                event.Get<T>(name);
             }
             else {
-                event.GetParent(level).template Get<T>(this->collection_names[0]);
+                event.GetParent(level).template Get<T>(name);
             }
         }
     };
@@ -78,8 +81,8 @@ protected:
         PodioInput(JHasInputs* owner, std::string default_collection_name="", JEventLevel level=JEventLevel::None) {
             owner->RegisterInput(this);
             this->collection_names.push_back(default_collection_name);
+            this->collection_levels.push_back(level);
             this->type_name = JTypeInfo::demangle<PodioT>();
-            this->level = level;
         }
 
         const typename PodioTypeMap<PodioT>::collection_t* operator()() {
@@ -87,20 +90,24 @@ protected:
         }
 
         void GetCollection(const JEvent& event) {
-            if (this->level == event.GetLevel() || this->level == JEventLevel::None) {
-                m_data = event.GetCollection<PodioT>(this->collection_names[0]);
+            auto& level = this->collection_levels[0];
+            auto& name = this->collection_names[0];
+            if (level == event.GetLevel() || level == JEventLevel::None) {
+                m_data = event.GetCollection<PodioT>(name);
             }
             else {
-                m_data = event.GetParent(this->level).GetCollection<PodioT>(this->collection_names[0]);
+                m_data = event.GetParent(level).template GetCollection<PodioT>(name);
             }
         }
 
         void PrefetchCollection(const JEvent& event) {
-            if (this->level == event.GetLevel() || this->level == JEventLevel::None) {
-                event.GetCollection<PodioT>(this->collection_names[0]);
+            auto& level = this->collection_levels[0];
+            auto& name = this->collection_names[0];
+            if (level == event.GetLevel() || level == JEventLevel::None) {
+                event.GetCollection<PodioT>(name);
             }
             else {
-                event.GetParent(this->level).GetCollection<PodioT>(this->collection_names[0]);
+                event.GetParent(level).template GetCollection<PodioT>(name);
             }
         }
     };
@@ -118,7 +125,9 @@ protected:
             this->collection_names = default_names;
             this->type_name = JTypeInfo::demangle<PodioT>();
             this->is_variadic = true;
-            this->level = level;
+            for (int i=0; i<default_names.size(); ++i) {
+                this->collection_levels.push_back(level);
+            }
         }
 
         const std::vector<const typename PodioTypeMap<PodioT>::collection_t*> operator()() {
@@ -127,27 +136,33 @@ protected:
 
         void GetCollection(const JEvent& event) {
             m_data.clear();
-            if (this->level == event.GetLevel() || this->level == JEventLevel::None) {
-                for (auto& coll_name : this->collection_names) {
+            if (collection_names.size() != collection_levels.size()) {
+                throw JException("Misconfigured VariadicPodioInput: collection_names.size()=%d, collection_levels.size()=%d", collection_names.size(), collection_levels.size());
+            }
+            for (size_t i=0; i<collection_names.size(); i++) {
+                auto& coll_name = collection_names[i];
+                auto& level = collection_levels[i];
+                if (level == event.GetLevel() || level == JEventLevel::None) {
                     m_data.push_back(event.GetCollection<PodioT>(coll_name));
                 }
-            }
-            else {
-                for (auto& coll_name : this->collection_names) {
-                    m_data.push_back(event.GetParent(this->level).GetCollection<PodioT>(this->collection_names[0]));
+                else {
+                    m_data.push_back(event.GetParent(level).GetCollection<PodioT>(coll_name));
                 }
             }
         }
 
         void PrefetchCollection(const JEvent& event) {
-            if (this->level == event.GetLevel() || this->level == JEventLevel::None) {
-                for (auto& coll_name : this->collection_names) {
+            if (collection_names.size() != collection_levels.size()) {
+                throw JException("Misconfigured VariadicPodioInput: collection_names.size()=%d, collection_levels.size()=%d", collection_names.size(), collection_levels.size());
+            }
+            for (size_t i=0; i<collection_names.size(); i++) {
+                auto& coll_name = collection_names[i];
+                auto& level = collection_levels[i];
+                if (level == event.GetLevel() || level == JEventLevel::None) {
                     event.GetCollection<PodioT>(coll_name);
                 }
-            }
-            else {
-                for (auto& coll_name : this->collection_names) {
-                    event.GetParent(this->level).GetCollection<PodioT>(this->collection_names[0]);
+                else {
+                    event.GetParent(level).GetCollection<PodioT>(coll_name);
                 }
             }
         }

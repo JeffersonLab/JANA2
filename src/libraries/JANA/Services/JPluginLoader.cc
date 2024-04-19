@@ -11,6 +11,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <set>
+#include <filesystem>
 
 class JApplication;
 
@@ -125,12 +126,13 @@ void JPluginLoader::attach_plugins(JComponentManager* jcm) {
             std::string plugin_fullname;
             if (plugin.substr(plugin.size() - 3) != ".so") {
                 plugin_fullname = plugin + ".so";
-                plugin_shortname = plugin;
             }
             else {
                 plugin_fullname = plugin;
-                plugin_shortname = plugin.substr(0, plugin.size()-3);
             }
+
+            plugin_shortname = std::filesystem::path(plugin_fullname).filename().stem().string();
+
             if (exclusions.find(plugin_shortname) != exclusions.end() ||
                  exclusions.find(plugin_fullname) != exclusions.end()) {
 

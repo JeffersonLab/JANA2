@@ -15,6 +15,14 @@ datatypes :
     Author : "N. Brei"
     Members :
       - int EventNumber // event number
+      - int TimesliceNumber // timeslice number
+      - int RunNumber // run number
+
+  TimesliceInfo:
+    Description : "Timeslice info"
+    Author : "N. Brei"
+    Members :
+      - int TimesliceNumber // timeslice number
       - int RunNumber // run number
 
   ExampleHit :

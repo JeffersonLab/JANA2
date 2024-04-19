@@ -45,7 +45,7 @@ struct MyTimesliceUnfolder : public JEventUnfolder {
 
     MyTimesliceUnfolder() {
         SetParentLevel(JEventLevel::Timeslice);
-        SetChildLevel(JEventLevel::Event);
+        SetChildLevel(JEventLevel::PhysicsEvent);
     }
 
     virtual void Init() {
@@ -137,7 +137,7 @@ struct MyClusterFactory : public JFactoryT<MyCluster> {
     int process_call_count = 0;
 
     MyClusterFactory() {
-        SetLevel(JEventLevel::Event);
+        SetLevel(JEventLevel::PhysicsEvent);
     }
 
     void Init() override {

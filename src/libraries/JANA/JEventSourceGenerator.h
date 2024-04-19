@@ -32,8 +32,8 @@ class JEventSourceGenerator{
         virtual ~JEventSourceGenerator(){}
 
         // Default versions of these are defined in JEventSourceGeneratorT.h
-        virtual std::string GetType(void) const = 0; ///< Return name of the source type this will generate
-        virtual std::string GetDescription(void) const = 0; ///< Return description of the source type this will generate
+        virtual std::string GetType(void) const { return "Unknown";} ///< Return name of the source type this will generate
+        virtual std::string GetDescription(void) const { return ""; } ///< Return description of the source type this will generate
         virtual JEventSource* MakeJEventSource( std::string source ) = 0; ///< Create an instance of the source type this generates
         virtual double CheckOpenable( std::string source ) = 0; ///< See JEventSourceGeneratorT for description
 
@@ -51,8 +51,12 @@ class JEventSourceGenerator{
         /// GetPluginName is called by JANA itself and should not be exposed to the user.
         std::string GetPluginName() const { return mPluginName; }
 
+        JEventLevel GetLevel() { return mLevel; }
+        void SetLevel(JEventLevel level) { mLevel = level; }
+
         JApplication* mApplication{nullptr};
         std::string mPluginName;
+        JEventLevel mLevel = JEventLevel::None;
 };
 
 #endif // _JEventSourceGenerator_h_

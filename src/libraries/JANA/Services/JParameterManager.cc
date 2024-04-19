@@ -125,7 +125,7 @@ void JParameterManager::PrintParameters(bool show_defaulted, bool show_advanced,
     }
     table.AddColumn("Value", JTablePrinter::Justify::Left, 20);
     table.AddColumn("Default", JTablePrinter::Justify::Left, 20);
-    table.AddColumn("Description", JTablePrinter::Justify::Left, 80);
+    table.AddColumn("Description", JTablePrinter::Justify::Left, 50);
 
     for (JParameter* p: params_to_print) {
         if (warnings_present) {

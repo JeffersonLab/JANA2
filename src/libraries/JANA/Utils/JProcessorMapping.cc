@@ -169,9 +169,9 @@ std::ostream& operator<<(std::ostream& os, const JProcessorMapping& m) {
     if (m.m_locality_strategy != JProcessorMapping::LocalityStrategy::Global) {
         os << " (" << m.m_loc_count << " locations)";
     }
-    os << std::endl;
 
     if (m.m_initialized) {
+        os << std::endl;
         JTablePrinter table;
         table.AddColumn("worker", JTablePrinter::Justify::Right);
         table.AddColumn("location", JTablePrinter::Justify::Right);
@@ -187,7 +187,7 @@ std::ostream& operator<<(std::ostream& os, const JProcessorMapping& m) {
         table.Render(os);
     }
     else if (!m.m_error_msg.empty()) {
-        os << "  Error: " << m.m_error_msg << std::endl;
+        os << std::endl << "  Error: " << m.m_error_msg << std::endl;
     }
     return os;
 }

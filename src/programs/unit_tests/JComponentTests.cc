@@ -132,9 +132,10 @@ TEST_CASE("JOmniFactoryParametersTests") {
 
     SECTION("JOmniFactory using default parameters") {
         app.Initialize();
-        JOmniFactoryGeneratorT<TestFac> facgen (&app);
+        JOmniFactoryGeneratorT<TestFac> facgen;
         facgen.AddWiring("ECalTestAlg", {}, {"specific_clusters_out"});
         JFactorySet facset;
+        facgen.SetApplication(&app);
         facgen.GenerateFactories(&facset);
         auto sut = RetrieveMultifactory<MyCluster,TestFac>(&facset, "specific_clusters_out");
         // RetrieveMultifactory() will call DoInitialize() for us

@@ -8,17 +8,17 @@
 #include <JANA/JEventUnfolder.h>
 #include "CollectionTabulators.h"
 
-struct MyTimesliceUnfolder : public JEventUnfolder {
+struct MyTimesliceSplitter : public JEventUnfolder {
 
     PodioInput<ExampleCluster> m_timeslice_clusters_in {this, "ts_protoclusters", JEventLevel::Timeslice};
+
     PodioOutput<ExampleCluster> m_event_clusters_out {this, "evt_protoclusters"};
+    PodioOutput<EventInfo> m_event_info_out {this, "evt_info"};
 
-    size_t next_time_bucket = 0;
-
-    MyTimesliceUnfolder() {
+    MyTimesliceSplitter() {
         SetTypeName(NAME_OF_THIS);
         SetParentLevel(JEventLevel::Timeslice);
-        SetChildLevel(JEventLevel::Event);
+        SetChildLevel(JEventLevel::PhysicsEvent);
     }
 
 
@@ -34,7 +34,10 @@ struct MyTimesliceUnfolder : public JEventUnfolder {
         event_clusters_out->setSubsetCollection(true);
         event_clusters_out->push_back(m_timeslice_clusters_in()->at(child_idx));
 
-        LOG_DEBUG(GetLogger()) << "MyTimesliceUnfolder: Timeslice " << parent.GetEventNumber() 
+        auto event_info_out = std::make_unique<EventInfoCollection>();
+        event_info_out->push_back(EventInfo(event_nr, timeslice_nr, 0));
+
+        LOG_DEBUG(GetLogger()) << "MyTimesliceSplitter: Timeslice " << parent.GetEventNumber() 
             <<  ", Event " << child.GetEventNumber()
             << "\nTimeslice clusters in:\n"
             << TabulateClusters(m_timeslice_clusters_in())
@@ -43,6 +46,7 @@ struct MyTimesliceUnfolder : public JEventUnfolder {
             << LOG_END;
 
         m_event_clusters_out() = std::move(event_clusters_out);
+        m_event_info_out() = std::move(event_info_out);
 
         return (child_idx == 2) ? Result::NextChildNextParent : Result::NextChildKeepParent;
     }

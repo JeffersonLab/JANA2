@@ -196,16 +196,19 @@ public:
     }
 
     inline void PreInit(std::string tag,
-                        std::vector<std::string> default_input_collection_names,
-                        std::vector<std::string> default_output_collection_names ) {
+                        JEventLevel level,
+                        std::vector<std::string> input_collection_names,
+                        std::vector<JEventLevel> input_collection_levels,
+                        std::vector<std::string> output_collection_names ) {
 
         // TODO: NWB: JMultiFactory::GetTag,SetTag are not currently usable
         m_prefix = (this->GetPluginName().empty()) ? tag : this->GetPluginName() + ":" + tag;
+        m_level = level;
 
         // Obtain collection name overrides if provided.
         // Priority = [JParameterManager, JOmniFactoryGenerator]
-        m_app->SetDefaultParameter(m_prefix + ":InputTags", default_input_collection_names, "Input collection names");
-        m_app->SetDefaultParameter(m_prefix + ":OutputTags", default_output_collection_names, "Output collection names");
+        m_app->SetDefaultParameter(m_prefix + ":InputTags", input_collection_names, "Input collection names");
+        m_app->SetDefaultParameter(m_prefix + ":OutputTags", output_collection_names, "Output collection names");
 
         // Figure out variadic inputs
         size_t variadic_input_count = 0;
@@ -214,7 +217,7 @@ public:
                variadic_input_count += 1;
             }
         }
-        size_t variadic_input_collection_count = FindVariadicCollectionCount(m_inputs.size(), variadic_input_count, default_input_collection_names.size(), true);
+        size_t variadic_input_collection_count = FindVariadicCollectionCount(m_inputs.size(), variadic_input_count, input_collection_names.size(), true);
 
         // Set input collection names
         size_t i = 0;
@@ -222,11 +225,23 @@ public:
             input->collection_names.clear();
             if (input->is_variadic) {
                 for (size_t j = 0; j<(variadic_input_collection_count/variadic_input_count); ++j) {
-                    input->collection_names.push_back(default_input_collection_names[i++]);
+                    input->collection_names.push_back(input_collection_names[i++]);
+                    if (!input_collection_levels.empty()) {
+                        input->collection_levels.push_back(input_collection_levels[i++]);
+                    }
+                    else {
+                        input->collection_levels.push_back(level);
+                    }
                 }
             }
             else {
-                input->collection_names.push_back(default_input_collection_names[i++]);
+                input->collection_names.push_back(input_collection_names[i++]);
+                if (!input_collection_levels.empty()) {
+                    input->collection_levels.push_back(input_collection_levels[i++]);
+                }
+                else {
+                    input->collection_levels.push_back(level);
+                }
             }
         }
 
@@ -237,7 +252,7 @@ public:
                variadic_output_count += 1;
             }
         }
-        size_t variadic_output_collection_count = FindVariadicCollectionCount(m_outputs.size(), variadic_output_count, default_output_collection_names.size(), true);
+        size_t variadic_output_collection_count = FindVariadicCollectionCount(m_outputs.size(), variadic_output_count, output_collection_names.size(), true);
 
         // Set output collection names and create corresponding helper factories
         i = 0;
@@ -245,11 +260,11 @@ public:
             output->collection_names.clear();
             if (output->is_variadic) {
                 for (size_t j = 0; j<(variadic_output_collection_count/variadic_output_count); ++j) {
-                    output->collection_names.push_back(default_output_collection_names[i++]);
+                    output->collection_names.push_back(output_collection_names[i++]);
                 }
             }
             else {
-                output->collection_names.push_back(default_output_collection_names[i++]);
+                output->collection_names.push_back(output_collection_names[i++]);
             }
             output->CreateHelperFactory(*this);
         }
