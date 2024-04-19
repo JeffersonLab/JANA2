@@ -14,21 +14,21 @@ public:
     using FactoryConfigType = typename FactoryT::ConfigType;
 
     struct TypedWiring {
-        std::string tag;
+        std::string tag = "";
         JEventLevel level = JEventLevel::Event;
-        std::vector<std::string> input_tags;
-        std::vector<JEventLevel> input_levels;
-        std::vector<std::string> output_tags;
-        FactoryConfigType configs; /// Must be copyable!
+        std::vector<std::string> input_tags = {};
+        std::vector<JEventLevel> input_levels = {};
+        std::vector<std::string> output_tags = {};
+        FactoryConfigType configs = {}; /// Must be copyable!
     };
 
     struct UntypedWiring {
-        std::string tag;
+        std::string tag = "";
         JEventLevel level = JEventLevel::Event;
-        std::vector<std::string> input_tags;
-        std::vector<JEventLevel> input_levels;
-        std::vector<std::string> output_tags;
-        std::map<std::string, std::string> configs;
+        std::vector<std::string> input_tags = {};
+        std::vector<JEventLevel> input_levels = {};
+        std::vector<std::string> output_tags = {};
+        std::map<std::string, std::string> configs = {};
     };
 
 public:
