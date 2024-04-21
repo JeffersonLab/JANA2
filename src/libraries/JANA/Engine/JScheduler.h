@@ -9,7 +9,7 @@
 #include <vector>
 
 #include <JANA/Topology/JArrow.h>
-#include <JANA/Engine/JArrowPerfSummary.h>
+#include <JANA/Engine/JPerfSummary.h>
 #include <JANA/Services/JLoggingService.h>
 
 

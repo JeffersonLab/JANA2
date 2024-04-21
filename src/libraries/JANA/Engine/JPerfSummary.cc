@@ -3,12 +3,12 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 
-#include "JArrowPerfSummary.h"
+#include "JPerfSummary.h"
 
 #include <ostream>
 #include <iomanip>
 
-std::ostream& operator<<(std::ostream& os, const JArrowPerfSummary& s) {
+std::ostream& operator<<(std::ostream& os, const JPerfSummary& s) {
 
     os << std::endl;
     os << "  Thread team size [count]:    " << s.thread_count << std::endl;

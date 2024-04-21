@@ -26,8 +26,6 @@ set(JANA2_SOURCES
     JMultifactory.h
     JService.cc
 
-    Engine/JArrowPerfSummary.cc
-    Engine/JArrowPerfSummary.h
     Engine/JArrowProcessingController.cc
     Engine/JArrowProcessingController.h
     Engine/JScheduler.cc
@@ -37,6 +35,7 @@ set(JANA2_SOURCES
     Engine/JWorkerMetrics.h
     Engine/JPerfMetrics.cc
     Engine/JPerfMetrics.h
+    Engine/JPerfSummary.cc
     Engine/JPerfSummary.h
 
     Topology/JArrow.h

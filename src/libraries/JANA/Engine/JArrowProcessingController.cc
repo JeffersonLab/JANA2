@@ -3,7 +3,7 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #include <JANA/Engine/JArrowProcessingController.h>
-#include <JANA/Engine/JArrowPerfSummary.h>
+#include <JANA/Engine/JPerfSummary.h>
 #include <JANA/Utils/JCpuInfo.h>
 #include <JANA/JLogger.h>
 
@@ -228,7 +228,7 @@ void JArrowProcessingController::print_final_report() {
     LOG_INFO(m_logger) << "Final Report" << *metrics << LOG_END;
 }
 
-std::unique_ptr<const JArrowPerfSummary> JArrowProcessingController::measure_performance() {
+std::unique_ptr<const JPerfSummary> JArrowProcessingController::measure_performance() {
 
     // Measure perf on all Workers first, as this will prompt them to publish
     // any ArrowMetrics they have collected
@@ -275,7 +275,7 @@ std::unique_ptr<const JArrowPerfSummary> JArrowProcessingController::measure_per
                                       ? std::numeric_limits<double>::infinity()
                                       : m_perf_summary.avg_throughput_hz / tighter_bottleneck;
 
-    return std::unique_ptr<JArrowPerfSummary>(new JArrowPerfSummary(m_perf_summary));
+    return std::unique_ptr<JPerfSummary>(new JPerfSummary(m_perf_summary));
 }
 
 

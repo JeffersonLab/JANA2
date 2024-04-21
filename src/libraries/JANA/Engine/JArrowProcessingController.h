@@ -8,7 +8,7 @@
 
 #include <JANA/Topology/JArrowTopology.h>
 #include <JANA/Engine/JWorker.h>
-#include <JANA/Engine/JArrowPerfSummary.h>
+#include <JANA/Engine/JPerfSummary.h>
 
 #include <vector>
 
@@ -34,7 +34,7 @@ public:
 
     std::vector<JException> get_exceptions() const;
 
-    std::unique_ptr<const JArrowPerfSummary> measure_performance();
+    std::unique_ptr<const JPerfSummary> measure_performance();
 
     void print_report();
     void print_final_report();
@@ -49,7 +49,7 @@ private:
     int m_timeout_s = 8;
     int m_warmup_timeout_s = 30;
 
-    JArrowPerfSummary m_perf_summary;
+    JPerfSummary m_perf_summary;
     std::shared_ptr<JArrowTopology> m_topology;       // Owned by JArrowProcessingController
     JScheduler* m_scheduler = nullptr;
 

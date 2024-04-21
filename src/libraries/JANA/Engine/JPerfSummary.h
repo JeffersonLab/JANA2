@@ -3,17 +3,57 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 
-#ifndef JANA2_JPERFORMANCESUMMARY_H
-#define JANA2_JPERFORMANCESUMMARY_H
+#ifndef JANA2_JARROWPERFSUMMARY_H
+#define JANA2_JARROWPERFSUMMARY_H
 
 
-#include <cstddef>
-#include <ostream>
-#include <iomanip>
+#include <vector>
+#include <string>
 
-/// JPerfSummary is a plain-old-data container for performance metrics.
-/// JProcessingControllers expose a JPerfSummary object, which they may
-/// extend in order to expose additional, implementation-specific information.
+struct ArrowSummary {
+    std::string arrow_name;
+    bool is_parallel;
+    bool is_source;
+    bool is_sink;
+    size_t thread_count;
+    int running_upstreams;
+    bool has_backpressure;
+    size_t messages_pending;
+    size_t threshold;
+    size_t chunksize;
+
+    size_t total_messages_completed;
+    size_t last_messages_completed;
+    double avg_latency_ms;
+    double avg_queue_latency_ms;
+    double last_latency_ms;
+    double last_queue_latency_ms;
+    double avg_queue_overhead_frac;
+    size_t queue_visit_count;
+};
+
+struct WorkerSummary {
+    int worker_id;
+    int cpu_id;
+    bool is_pinned;
+    double last_heartbeat_ms;
+    double total_useful_time_ms;
+    double total_retry_time_ms;
+    double total_idle_time_ms;
+    double total_scheduler_time_ms;
+    double last_useful_time_ms;
+    double last_retry_time_ms;
+    double last_idle_time_ms;
+    double last_scheduler_time_ms;
+    long scheduler_visit_count;
+    std::string last_arrow_name;
+    double last_arrow_avg_latency_ms;
+    double last_arrow_avg_queue_latency_ms;
+    double last_arrow_last_latency_ms;
+    double last_arrow_last_queue_latency_ms;
+    size_t last_arrow_queue_visit_count;
+};
+
 struct JPerfSummary {
 
     size_t monotonic_events_completed = 0;  // Since program started
@@ -25,19 +65,16 @@ struct JPerfSummary {
     double avg_throughput_hz = 0;
     double latest_throughput_hz = 0;
 
-    JPerfSummary() = default;
-    JPerfSummary(const JPerfSummary&) = default;
-    virtual ~JPerfSummary() = default;
+    double avg_seq_bottleneck_hz;
+    double avg_par_bottleneck_hz;
+    double avg_efficiency_frac;
+
+    std::vector<WorkerSummary> workers;
+    std::vector<ArrowSummary> arrows;
+
 };
 
-inline std::ostream& operator<<(std::ostream& os, const JPerfSummary& x) {
-    os << "  Threads:               " << x.thread_count << std::endl
-       << "  Events processed:      " << x.total_events_completed << std::endl
-       << "  Inst throughput [Hz]:  " << x.latest_throughput_hz << std::endl
-       << "  Avg throughput [Hz]:   " << x.avg_throughput_hz << std::endl;
-    return os;
-}
+std::ostream& operator<<(std::ostream& stream, const JPerfSummary& data);
 
 
-
-#endif //JANA2_JPERFORMANCESUMMARY_H
+#endif //JANA2_JARROWPERFSUMMARY_H
