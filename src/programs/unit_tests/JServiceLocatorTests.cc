@@ -78,11 +78,14 @@ struct OmniService : public JService {
 
     Service<JParameterManager> parman {this};
     Parameter<int> bucket_count {this, "bucket_count", 5, "Some integer representing a bucket count"};
+    std::atomic_int init_call_count {0};
 
     void Init() override {
         LOG_INFO(GetLogger()) << "Calling OmniService::Init" << LOG_END;
         REQUIRE(parman->GetParameterValue<int>("bucket_count") == 22);
         REQUIRE(bucket_count() == 22);
+        REQUIRE(init_call_count == 0);
+        init_call_count++;
     }
 };
 
@@ -94,5 +97,9 @@ TEST_CASE("JService Omni interface") {
     auto sut = app.GetService<OmniService>();
     REQUIRE(sut->GetStatus() == JService::Status::Initialized);
     REQUIRE(sut->bucket_count() == 22);
+
+    // Fetch again to make sure Init() is only called once
+    sut = app.GetService<OmniService>();
+    LOG << "Retrieved service " << sut << LOG_END; // Just in case the optimizer tries to get rid of this
 }
 

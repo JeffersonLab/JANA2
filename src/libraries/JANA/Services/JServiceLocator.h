@@ -30,16 +30,11 @@
 /// but also don't get freed prematurely if a JApplication or JServiceLocator go out of scope.
 class JServiceLocator {
 
-    std::map<std::type_index, std::pair<std::shared_ptr<JService>, std::once_flag*>> underlying;
+    std::map<std::type_index, std::shared_ptr<JService>> underlying;
     std::mutex mutex;
 
 public:
 
-    ~JServiceLocator() {
-        for (auto pair : underlying) {
-            delete pair.second.second; // Delete each pointer to once_flag
-        }
-    }
 
     template<typename T>
     void provide(std::shared_ptr<T> t) {
@@ -51,7 +46,7 @@ public:
         std::lock_guard<std::mutex> lock(mutex);
         auto svc = std::dynamic_pointer_cast<JService>(t);
         assert(svc != nullptr);
-        underlying[std::type_index(typeid(T))] = std::make_pair(svc, new std::once_flag());
+        underlying[std::type_index(typeid(T))] = svc;
     }
 
     template<typename T>
@@ -68,12 +63,13 @@ public:
             oss << "Service not found: '" << JTypeInfo::demangle<T>() << "'. Did you forget to include a plugin?" << std::endl;
             throw JException(oss.str());
         }
-        auto& pair = iter->second;
-        auto& wired = pair.second;
-        auto ptr = pair.first;
-        std::call_once(*wired, [&](){ptr->DoInit(this);});
-        auto svc = std::static_pointer_cast<T>(ptr);
-        return svc;
+        auto svc = iter->second;
+        svc->DoInit(this); 
+        // Will short-circuit if already initialized
+        // Note: Requires JApplication to already be set.
+
+        auto svc_typed = std::static_pointer_cast<T>(svc);
+        return svc_typed;
     }
 
     void wire_everything() {
@@ -81,10 +77,8 @@ public:
         /// but it makes user errors easier to understand, and it prevents Services from being
         /// unpredictably finalized later on, particularly during computation.
 
-        for (auto& item : underlying) {
-            auto sharedptr = item.second.first;
-            auto& wired = item.second.second;
-            std::call_once(*wired, [&](){sharedptr->DoInit(this);});
+        for (auto& entry : underlying) {
+            entry.second->DoInit(this); 
         }
     }
 };
