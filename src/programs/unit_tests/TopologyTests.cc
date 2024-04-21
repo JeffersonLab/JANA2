@@ -4,9 +4,7 @@
 
 #include "catch.hpp"
 
-#include <JANA/Topology/JArrowTopology.h>
 #include "JANA/Topology/JTopologyBuilder.h"
-
 #include <JANA/Engine/JArrowProcessingController.h>
 
 #include <TestTopologyComponents.h>
@@ -22,9 +20,6 @@ JArrowMetrics::Status step(JArrow* arrow) {
         return status;
 }
 
-void log_status(JArrowTopology& /*topology*/) {
-
-}
 
 
 
@@ -46,7 +41,7 @@ TEST_CASE("JTopology: Basic functionality") {
     auto subtract_one = new SubOneProcessor("subtract_one", q2, q3);
     auto sum_everything = new SumSink<double>("sum_everything", q3, p2);
 
-    auto topology = std::make_shared<JArrowTopology>();
+    auto topology = std::make_shared<JTopologyBuilder>();
 
     emit_rand_ints->attach(multiply_by_two);
     multiply_by_two->attach(subtract_one);
@@ -58,7 +53,7 @@ TEST_CASE("JTopology: Basic functionality") {
     topology->arrows.push_back(sum_everything);
 
     auto logger = JLogger(JLogger::Level::INFO);
-    topology->m_logger = logger;
+    topology->SetLogger(logger);
     emit_rand_ints->set_logger(logger);
     multiply_by_two->set_logger(logger);
     subtract_one->set_logger(logger);
@@ -247,20 +242,16 @@ TEST_CASE("JTopology: Basic functionality") {
         REQUIRE(ts.arrow_states[2].status == JScheduler::ArrowStatus::Finalized);
         REQUIRE(ts.arrow_states[3].status == JScheduler::ArrowStatus::Finalized);
 
-        log_status(*topology);
-
     }
 
     SECTION("Running from inside JApplication returns the correct answer") {
         JApplication app;
-        auto builder = app.GetService<JTopologyBuilder>();
-        builder->set(topology);
+        app.ProvideService<JTopologyBuilder>(topology); // Override the builtin one
 
         REQUIRE(sum_everything->sum == 0);
 
         app.Run(true);
         auto scheduler = app.GetService<JArrowProcessingController>()->get_scheduler();
-
 
         auto ts = scheduler->get_topology_state();
         REQUIRE(ts.current_topology_status == JScheduler::TopologyStatus::Finalized);

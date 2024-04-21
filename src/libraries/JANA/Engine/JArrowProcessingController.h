@@ -6,7 +6,7 @@
 #define JANA2_JARROWPROCESSINGCONTROLLER_H
 
 
-#include <JANA/Topology/JArrowTopology.h>
+#include <JANA/Topology/JTopologyBuilder.h>
 #include <JANA/Engine/JWorker.h>
 #include <JANA/Engine/JPerfSummary.h>
 
@@ -15,7 +15,6 @@
 class JArrowProcessingController : public JService {
 public:
 
-    explicit JArrowProcessingController(std::shared_ptr<JArrowTopology> topology) : m_topology(topology) {};
     ~JArrowProcessingController() override;
     void acquire_services(JServiceLocator *) override;
 
@@ -44,13 +43,13 @@ public:
 
 
 private:
+    std::shared_ptr<JTopologyBuilder> m_topology;
 
     using jclock_t = std::chrono::steady_clock;
     int m_timeout_s = 8;
     int m_warmup_timeout_s = 30;
 
     JPerfSummary m_perf_summary;
-    std::shared_ptr<JArrowTopology> m_topology;       // Owned by JArrowProcessingController
     JScheduler* m_scheduler = nullptr;
 
     std::vector<JWorker*> m_workers;

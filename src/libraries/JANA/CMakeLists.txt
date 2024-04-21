@@ -40,8 +40,6 @@ set(JANA2_SOURCES
 
     Topology/JArrow.h
     Topology/JArrowMetrics.h
-    Topology/JArrowTopology.cc
-    Topology/JArrowTopology.h
     Topology/JEventProcessorArrow.cc
     Topology/JEventProcessorArrow.h
     Topology/JEventSourceArrow.cc

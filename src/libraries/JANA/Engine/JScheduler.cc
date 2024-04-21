@@ -6,11 +6,11 @@
 
 #include "JScheduler.h"
 #include <JANA/Engine/JScheduler.h>
-#include <JANA/Topology/JArrowTopology.h>
+#include <JANA/Topology/JTopologyBuilder.h>
 #include <JANA/Services/JLoggingService.h>
 
 
-JScheduler::JScheduler(std::shared_ptr<JArrowTopology> topology)
+JScheduler::JScheduler(std::shared_ptr<JTopologyBuilder> topology)
     : m_topology(topology)
     {
         m_topology_state.next_arrow_index = 0;

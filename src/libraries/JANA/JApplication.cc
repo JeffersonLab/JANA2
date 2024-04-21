@@ -150,8 +150,8 @@ void JApplication::Initialize() {
         LOG_WARN(m_logger) << "Unrecognized engine choice! Falling back to jana:engine=0" << LOG_END;
     }
     */
-    auto topology = topology_builder->get_or_create();
-    ProvideService(std::make_shared<JArrowProcessingController>(topology));
+    topology_builder->create_topology();
+    ProvideService(std::make_shared<JArrowProcessingController>());
     m_processing_controller = m_service_locator->get<JArrowProcessingController>();  // Get deps from SL
     m_processing_controller->initialize();
 

@@ -4,6 +4,7 @@
 
 #include <JANA/Engine/JArrowProcessingController.h>
 #include <JANA/Engine/JPerfSummary.h>
+#include <JANA/Topology/JTopologyBuilder.h>
 #include <JANA/Utils/JCpuInfo.h>
 #include <JANA/JLogger.h>
 
@@ -17,6 +18,8 @@ void JArrowProcessingController::acquire_services(JServiceLocator * sl) {
     m_logger = ls->get_logger("JArrowProcessingController");
     m_worker_logger = ls->get_logger("JWorker");
     m_scheduler_logger = ls->get_logger("JScheduler");
+
+    m_topology = sl->get<JTopologyBuilder>();
 
     // Obtain timeouts from parameter manager
     auto params = sl->get<JParameterManager>();
@@ -160,11 +163,11 @@ bool JArrowProcessingController::is_timed_out() {
     auto metrics = measure_performance();
 
     int timeout_s;
-    if (metrics->total_uptime_s < m_warmup_timeout_s * m_topology->event_pool_size / metrics->thread_count) {
+    if (metrics->total_uptime_s < m_warmup_timeout_s * m_topology->m_event_pool_size / metrics->thread_count) {
         // We are at the beginning and not all events have necessarily had a chance to warm up
         timeout_s = m_warmup_timeout_s;
     }
-    else if (!m_topology->limit_total_events_in_flight) {
+    else if (!m_topology->m_limit_total_events_in_flight) {
         // New events are constantly emitted, each of which may contain jfactorysets which need to be warmed up
         timeout_s = m_warmup_timeout_s;
     }

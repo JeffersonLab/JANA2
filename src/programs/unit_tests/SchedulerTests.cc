@@ -7,7 +7,7 @@
 
 #include <JANA/Engine/JScheduler.h>
 #include <TestTopologyComponents.h>
-#include <JANA/Topology/JArrowTopology.h>
+#include <JANA/Topology/JTopologyBuilder.h>
 
 TEST_CASE("SchedulerTests") {
 
@@ -27,7 +27,7 @@ TEST_CASE("SchedulerTests") {
     auto subtract_one = new SubOneProcessor("subtract_one", q2, q3);
     auto sum_everything = new SumSink<double>("sum_everything", q3, p2);
 
-    auto topology = std::make_shared<JArrowTopology>();
+    auto topology = std::make_shared<JTopologyBuilder>();
 
     emit_rand_ints->attach(multiply_by_two);
     multiply_by_two->attach(subtract_one);
@@ -39,7 +39,7 @@ TEST_CASE("SchedulerTests") {
     topology->arrows.push_back(sum_everything);
 
     auto logger = JLogger(JLogger::Level::INFO);
-    topology->m_logger = logger;
+    topology->SetLogger(logger);
     emit_rand_ints->set_logger(logger);
     multiply_by_two->set_logger(logger);
     subtract_one->set_logger(logger);
@@ -113,7 +113,7 @@ TEST_CASE("SchedulerRoundRobinBehaviorTests") {
     auto subtract_one = new SubOneProcessor("subtract_one", q2, q3);
     auto sum_everything = new SumSink<double>("sum_everything", q3, p2);
 
-    auto topology = std::make_shared<JArrowTopology>();
+    auto topology = std::make_shared<JTopologyBuilder>();
 
     emit_rand_ints->attach(multiply_by_two);
     multiply_by_two->attach(subtract_one);
@@ -125,7 +125,7 @@ TEST_CASE("SchedulerRoundRobinBehaviorTests") {
     topology->arrows.push_back(sum_everything);
 
     auto logger = JLogger(JLogger::Level::INFO);
-    topology->m_logger = logger;
+    topology->SetLogger(logger);
     emit_rand_ints->set_logger(logger);
     multiply_by_two->set_logger(logger);
     subtract_one->set_logger(logger);

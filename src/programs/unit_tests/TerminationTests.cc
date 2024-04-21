@@ -4,7 +4,6 @@
 
 #include "TerminationTests.h"
 #include "catch.hpp"
-#include <JANA/Topology/JArrowTopology.h>
 #include <JANA/Engine/JArrowProcessingController.h>
 #include <JANA/JApplication.h>
 #include <thread>

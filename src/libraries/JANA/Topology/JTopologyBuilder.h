@@ -4,21 +4,40 @@
 
 #pragma once
 
-#include <JANA/Topology/JArrowTopology.h>
-
 #include <memory>
+#include <JANA/JService.h>
+#include <JANA/Utils/JProcessorMapping.h>
+#include <JANA/Engine/JPerfMetrics.h>  // TODO: Should't be here
 
+#include <JANA/Services/JParameterManager.h>
+#include <JANA/Services/JComponentManager.h>
+#include <JANA/Services/JLoggingService.h>
+
+
+class JParameterManager;
+class JLoggingService;
+class JComponentManager;
+class JArrow;
+class JQueue;
+class JPoolBase;
+class JQueue;
 class JFoldArrow;
 class JUnfoldArrow;
-class JServiceLocator;
+class JEventPool;
 
 class JTopologyBuilder : public JService {
-
-    std::shared_ptr<JParameterManager> m_params;
+public:
+    // Services
+    Service<JParameterManager> m_params {this};
+    Service<JLoggingService> m_logging {this};
     std::shared_ptr<JComponentManager> m_components;
-    std::shared_ptr<JArrowTopology> m_topology;
-    std::function<std::shared_ptr<JArrowTopology>(std::shared_ptr<JArrowTopology>)> m_configure_topology;
 
+    // The topology itself
+    std::vector<JArrow*> arrows;
+    std::vector<JQueue*> queues;            // Queues shared between arrows
+    std::vector<JPoolBase*> pools;          // Pools shared between arrows
+    
+    // Topology configuration
     size_t m_event_pool_size = 4;
     size_t m_event_queue_threshold = 80;
     size_t m_event_source_chunksize = 40;
@@ -29,38 +48,38 @@ class JTopologyBuilder : public JService {
     bool m_limit_total_events_in_flight = true;
     int m_affinity = 0;
     int m_locality = 0;
+
+    // Things that probably shouldn't be here
+    std::function<void(JTopologyBuilder&)> m_configure_topology;
+    JEventPool* event_pool = nullptr; // TODO: Move into pools eventually
+    JPerfMetrics metrics;
+    JProcessorMapping mapping;
+
     JLogger m_arrow_logger;
     JLogger m_queue_logger;
-    JLogger m_builder_logger;
 
 public:
 
     JTopologyBuilder() = default;
 
-    ~JTopologyBuilder() override = default;
+    ~JTopologyBuilder() override;
 
-    std::string print_topology();
-
-    /// set allows the user to specify a topology directly. Note that this needs to be set before JApplication::Initialize
-    /// gets called, which means that you won't be able to include components loaded from plugins. You probably want to use
-    /// JTopologyBuilder::set_configure_fn instead, which does give you that access.
-    void set(std::shared_ptr<JArrowTopology> topology);
+    void acquire_services(JServiceLocator *sl) override;
 
     /// set_cofigure_fn lets the user provide a lambda that sets up a topology after all components have been loaded.
     /// It provides an 'empty' JArrowTopology which has been furnished with a pointer to the JComponentManager, the JEventPool,
     /// and the JProcessorMapping (in case you care about NUMA details). However, it does not contain any queues or arrows.
     /// You have to furnish those yourself.
-    void set_configure_fn(std::function<std::shared_ptr<JArrowTopology>(std::shared_ptr<JArrowTopology>)> configure_fn);
+    void set_configure_fn(std::function<void(JTopologyBuilder&)> configure_fn);
 
-    std::shared_ptr<JArrowTopology> get_or_create();
-
-    void acquire_services(JServiceLocator *sl) override;
-
-    std::shared_ptr<JArrowTopology> create_empty();
+    void create_topology();
 
     void attach_lower_level(JEventLevel current_level, JUnfoldArrow* parent_unfolder, JFoldArrow* parent_folder, bool found_sink);
 
     void attach_top_level(JEventLevel current_level);
+
+    std::string print_topology();
+
 
 };
 

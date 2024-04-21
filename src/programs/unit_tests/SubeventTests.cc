@@ -10,7 +10,6 @@
 #include <JANA/Topology/JEventSourceArrow.h>
 #include <JANA/Topology/JEventProcessorArrow.h>
 #include <JANA/Topology/JSubeventArrow.h>
-#include <JANA/Topology/JArrowTopology.h>
 #include <JANA/Topology/JTopologyBuilder.h>
 
 
@@ -182,23 +181,26 @@ TEST_CASE("Basic subevent arrow functionality") {
         app.SetTimeoutEnabled(false);
         app.SetTicker(false);
 
-        auto topology = app.GetService<JTopologyBuilder>()->create_empty();
-        auto source_arrow = new JEventSourceArrow("simpleSource",
-                                                  {new SimpleSource},
-                                                  &events_in,
-                                                  topology->event_pool);
-        auto proc_arrow = new JEventProcessorArrow("simpleProcessor", &events_out, nullptr, topology->event_pool);
-        proc_arrow->add_processor(new SimpleProcessor);
+        auto topology = app.GetService<JTopologyBuilder>();
+        topology->set_configure_fn([&](JTopologyBuilder& topology) {
+            auto source_arrow = new JEventSourceArrow("simpleSource",
+                                                    {new SimpleSource},
+                                                    &events_in,
+                                                    topology.event_pool);
+            auto proc_arrow = new JEventProcessorArrow("simpleProcessor", &events_out, 
+                    nullptr, topology.event_pool);
+            proc_arrow->add_processor(new SimpleProcessor);
 
-        topology->arrows.push_back(source_arrow);
-        topology->arrows.push_back(split_arrow);
-        topology->arrows.push_back(subprocess_arrow);
-        topology->arrows.push_back(merge_arrow);
-        topology->arrows.push_back(proc_arrow);
-        source_arrow->attach(split_arrow);
-        split_arrow->attach(subprocess_arrow);
-        subprocess_arrow->attach(merge_arrow);
-        merge_arrow->attach(proc_arrow);
+            topology.arrows.push_back(source_arrow);
+            topology.arrows.push_back(split_arrow);
+            topology.arrows.push_back(subprocess_arrow);
+            topology.arrows.push_back(merge_arrow);
+            topology.arrows.push_back(proc_arrow);
+            source_arrow->attach(split_arrow);
+            split_arrow->attach(subprocess_arrow);
+            subprocess_arrow->attach(merge_arrow);
+            merge_arrow->attach(proc_arrow);
+        });
 
         app.Run(true);
     }
