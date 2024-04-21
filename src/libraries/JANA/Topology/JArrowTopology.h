@@ -8,7 +8,7 @@
 
 
 #include <JANA/Services/JComponentManager.h>
-#include <JANA/Status/JPerfMetrics.h>
+#include <JANA/Engine/JPerfMetrics.h>
 #include <JANA/Utils/JEventPool.h>
 #include <JANA/Utils/JProcessorMapping.h>
 

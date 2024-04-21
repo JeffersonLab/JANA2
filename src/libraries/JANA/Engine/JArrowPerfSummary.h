@@ -7,7 +7,7 @@
 #define JANA2_JARROWPERFSUMMARY_H
 
 
-#include <JANA/Status/JPerfSummary.h>
+#include <JANA/Engine/JPerfSummary.h>
 #include <JANA/Topology/JArrow.h>
 
 #include <vector>

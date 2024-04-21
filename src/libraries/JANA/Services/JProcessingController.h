@@ -11,7 +11,7 @@
 #include <memory>
 
 #include <JANA/Services/JServiceLocator.h>
-#include <JANA/Status/JPerfSummary.h>
+#include <JANA/Engine/JPerfSummary.h>
 
 class JProcessingController : public JService {
 public:

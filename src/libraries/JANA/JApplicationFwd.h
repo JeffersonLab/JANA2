@@ -26,7 +26,7 @@ class JApplication;
 extern JApplication* japp;
 
 #include <JANA/Status/JComponentSummary.h>
-#include <JANA/Status/JPerfSummary.h>
+#include <JANA/Engine/JPerfSummary.h>
 #include <JANA/JLogger.h>
 
 

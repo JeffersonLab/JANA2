@@ -35,6 +35,9 @@ set(JANA2_SOURCES
     Engine/JWorker.h
     Engine/JWorker.cc
     Engine/JWorkerMetrics.h
+    Engine/JPerfMetrics.cc
+    Engine/JPerfMetrics.h
+    Engine/JPerfSummary.h
 
     Topology/JArrow.h
     Topology/JArrowMetrics.h
@@ -66,9 +69,6 @@ set(JANA2_SOURCES
 
     Status/JComponentSummary.h
     Status/JComponentSummary.cc
-    Status/JPerfMetrics.cc
-    Status/JPerfMetrics.h
-    Status/JPerfSummary.h
 
     Streaming/JDiscreteJoin.h
     Streaming/JEventBuilder.h
