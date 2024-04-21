@@ -20,12 +20,61 @@ protected:
     void RegisterInput(InputBase* input) {
         m_inputs.push_back(input);
     }
+    
+    struct InputOptions {
+        std::string collection_name {""};
+        JEventLevel level {JEventLevel::None};
+        bool is_optional {false};
+        // bool is_shortcircuiting {false};
+        // bool contains_single_item {false};
+    };
+
+    struct VariadicInputOptions {
+        std::vector<std::string> collection_names {""};
+        std::vector<JEventLevel> levels {JEventLevel::None};
+        bool is_optional {false};
+        // bool is_shortcircuiting {false};
+        // bool contains_single_item {false};
+    };
 
     struct InputBase {
         std::string type_name;
         std::vector<std::string> collection_names;
         std::vector<JEventLevel> collection_levels;
         bool is_variadic = false;
+        bool is_optional = false;
+        //bool is_shortcircuiting = false;
+        //bool contains_single_item = false;
+
+
+        void Configure(const InputOptions& options) {
+            this->collection_names.clear();
+            this->collection_names.push_back(options.collection_name);
+            this->collection_levels.clear();
+            this->collection_levels.push_back(options.level);
+            this->is_optional = options.is_optional;
+            // this->is_shortcircuiting = options.is_shortcircuiting;
+            // this->contains_single_item = options.contains_single_item;
+        }
+
+        void ConfigureVariadic(const VariadicInputOptions& options) {
+            if (!is_variadic) { throw JException("Setting variadic options on non-variadic input"); }
+            this->collection_names = options.collection_names;
+            if (options.levels.size() == options.collection_names.size()) {
+                this->collection_levels = options.levels;
+            }
+            else if (options.levels.size() == 0) {
+                for (size_t i=0; i<collection_names.size(); ++i) {
+                    this->collection_levels.push_back(JEventLevel::None);
+                }
+            }
+            else {
+                throw JException("Wrong number of levels provided!");
+            }
+            this->is_optional = options.is_optional;
+            // this->is_shortcircuiting = options.is_shortcircuiting;
+            // this->contains_single_item = options.contains_single_item;
+        }
 
         virtual void GetCollection(const JEvent& event) = 0;
         virtual void PrefetchCollection(const JEvent& event) = 0;
@@ -37,14 +86,15 @@ protected:
         std::vector<const T*> m_data;
 
     public:
-        Input(JHasInputs* owner, std::string default_tag="", JEventLevel level=JEventLevel::None) {
+
+        Input(JHasInputs* owner, const InputOptions& options = {}) {
             owner->RegisterInput(this);
-            this->collection_names.push_back(default_tag);
             this->type_name = JTypeInfo::demangle<T>();
-            this->collection_levels.push_back(level);
+            Configure(options);
         }
 
         const std::vector<const T*>& operator()() { return m_data; }
+
 
     private:
         friend class JComponentT;
@@ -78,11 +128,10 @@ protected:
 
     public:
 
-        PodioInput(JHasInputs* owner, std::string default_collection_name="", JEventLevel level=JEventLevel::None) {
+        PodioInput(JHasInputs* owner, const InputOptions& options = {}) {
             owner->RegisterInput(this);
-            this->collection_names.push_back(default_collection_name);
-            this->collection_levels.push_back(level);
             this->type_name = JTypeInfo::demangle<PodioT>();
+            Configure(options);
         }
 
         const typename PodioTypeMap<PodioT>::collection_t* operator()() {
@@ -120,14 +169,11 @@ protected:
 
     public:
 
-        VariadicPodioInput(JHasInputs* owner, std::vector<std::string> default_names={}, JEventLevel level=JEventLevel::None) {
+        VariadicPodioInput(JHasInputs* owner, const VariadicInputOptions& options) {
             owner->RegisterInput(this);
-            this->collection_names = default_names;
             this->type_name = JTypeInfo::demangle<PodioT>();
             this->is_variadic = true;
-            for (int i=0; i<default_names.size(); ++i) {
-                this->collection_levels.push_back(level);
-            }
+            ConfigureVariadic(options);
         }
 
         const std::vector<const typename PodioTypeMap<PodioT>::collection_t*> operator()() {
