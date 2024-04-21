@@ -63,7 +63,6 @@ set(JANA2_SOURCES
     Services/JParameterManager.h
     Services/JPluginLoader.cc
     Services/JPluginLoader.h
-    Services/JProcessingController.h
     Services/JServiceLocator.h
     Services/JEventGroupTracker.h
 

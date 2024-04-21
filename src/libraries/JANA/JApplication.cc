@@ -16,6 +16,8 @@
 #include <JANA/Services/JGlobalRootLock.h>
 #include <JANA/Engine/JArrowProcessingController.h>
 
+#include <unistd.h>
+
 JApplication *japp = nullptr;
 
 
@@ -150,9 +152,7 @@ void JApplication::Initialize() {
     */
     auto topology = topology_builder->get_or_create();
     ProvideService(std::make_shared<JArrowProcessingController>(topology));
-
     m_processing_controller = m_service_locator->get<JArrowProcessingController>();  // Get deps from SL
-    ProvideService(m_processing_controller);  // Make abstract class available via SL
     m_processing_controller->initialize();
 
     m_initialized = true;

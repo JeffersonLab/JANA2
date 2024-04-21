@@ -53,9 +53,9 @@ TEST_CASE("ScaleNWorkerUpdate") {
     // threads = app.GetNThreads();
     // However, we can't, because JApplication caches performance metrics based off of a ticker interval, and
     // Scale() doesn't invalidate the cache. We don't have a clean mechanism to manually force a cache invalidation
-    // from JApplication yet. So for now we will obtain the thread count directly from the JProcessingController.
+    // from JApplication yet. So for now we will obtain the thread count directly from the JArrowProcessingController.
 
-    auto pc = app.GetService<JProcessingController>();
+    auto pc = app.GetService<JArrowProcessingController>();
     auto perf_summary = pc->measure_performance();
     threads = perf_summary->thread_count;
 
@@ -78,17 +78,17 @@ TEST_CASE("ScaleThroughputImprovement", "[.][performance]") {
     auto japc = app.GetService<JArrowProcessingController>();
     app.Run(false);
     std::this_thread::sleep_for(std::chrono::seconds(5));
-    auto throughput_hz_1 = japc->measure_internal_performance()->latest_throughput_hz;
+    auto throughput_hz_1 = japc->measure_performance()->latest_throughput_hz;
     japc->print_report();
     std::cout << "nthreads=1: throughput_hz=" << throughput_hz_1 << std::endl;
     app.Scale(2);
     std::this_thread::sleep_for(std::chrono::seconds(5));
-    auto throughput_hz_2 = japc->measure_internal_performance()->latest_throughput_hz;
+    auto throughput_hz_2 = japc->measure_performance()->latest_throughput_hz;
     japc->print_report();
     std::cout << "nthreads=2: throughput_hz=" << throughput_hz_2 << std::endl;
     app.Scale(4);
     std::this_thread::sleep_for(std::chrono::seconds(5));
-    auto throughput_hz_4 = japc->measure_internal_performance()->latest_throughput_hz;
+    auto throughput_hz_4 = japc->measure_performance()->latest_throughput_hz;
     japc->print_report();
     std::cout << "nthreads=4: throughput_hz=" << throughput_hz_4 << std::endl;
     REQUIRE(throughput_hz_2 > throughput_hz_1*1.5);

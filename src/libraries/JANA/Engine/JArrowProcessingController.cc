@@ -157,7 +157,7 @@ bool JArrowProcessingController::is_timed_out() {
     // Probably want to refactor so that we only make one such call per ticker iteration.
     // Since we are storing our metrics summary anyway, we could call measure_performance()
     // and have print_report(), print_final_report(), is_timed_out(), etc use the cached version
-    auto metrics = measure_internal_performance();
+    auto metrics = measure_performance();
 
     int timeout_s;
     if (metrics->total_uptime_s < m_warmup_timeout_s * m_topology->event_pool_size / metrics->thread_count) {
@@ -219,16 +219,16 @@ JArrowProcessingController::~JArrowProcessingController() {
 }
 
 void JArrowProcessingController::print_report() {
-    auto metrics = measure_internal_performance();
+    auto metrics = measure_performance();
     LOG_INFO(m_logger) << "Running" << *metrics << LOG_END;
 }
 
 void JArrowProcessingController::print_final_report() {
-    auto metrics = measure_internal_performance();
+    auto metrics = measure_performance();
     LOG_INFO(m_logger) << "Final Report" << *metrics << LOG_END;
 }
 
-std::unique_ptr<const JArrowPerfSummary> JArrowProcessingController::measure_internal_performance() {
+std::unique_ptr<const JArrowPerfSummary> JArrowProcessingController::measure_performance() {
 
     // Measure perf on all Workers first, as this will prompt them to publish
     // any ArrowMetrics they have collected
@@ -278,9 +278,6 @@ std::unique_ptr<const JArrowPerfSummary> JArrowProcessingController::measure_int
     return std::unique_ptr<JArrowPerfSummary>(new JArrowPerfSummary(m_perf_summary));
 }
 
-std::unique_ptr<const JPerfSummary> JArrowProcessingController::measure_performance() {
-    return measure_internal_performance();
-}
 
 
 
