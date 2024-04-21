@@ -52,6 +52,7 @@ set(JANA2_SOURCES
     Topology/JMailbox.h
     Topology/JSubeventArrow.h
     Topology/JTopologyBuilder.h
+    Topology/JTopologyBuilder.cc
 
     Services/JComponentManager.cc
     Services/JComponentManager.h

@@ -7,6 +7,8 @@
 #include <JANA/JEventSource.h>
 #include <JANA/JEventProcessor.h>
 
+#include <JANA/Topology/JEventSourceArrow.h>
+#include <JANA/Topology/JEventProcessorArrow.h>
 #include <JANA/Topology/JSubeventArrow.h>
 #include "JANA/Topology/JTopologyBuilder.h"
 
