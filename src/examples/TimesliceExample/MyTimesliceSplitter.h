@@ -10,7 +10,7 @@
 
 struct MyTimesliceSplitter : public JEventUnfolder {
 
-    PodioInput<ExampleCluster> m_timeslice_clusters_in {this, {.collection_name = "ts_protoclusters", 
+    PodioInput<ExampleCluster> m_timeslice_clusters_in {this, {.name = "ts_protoclusters", 
                                                                .level = JEventLevel::Timeslice}};
 
     PodioOutput<ExampleCluster> m_event_clusters_out {this, "evt_protoclusters"};

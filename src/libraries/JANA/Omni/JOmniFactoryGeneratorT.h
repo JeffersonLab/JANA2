@@ -16,18 +16,18 @@ public:
     struct TypedWiring {
         std::string tag = "";
         JEventLevel level = JEventLevel::PhysicsEvent;
-        std::vector<std::string> input_tags = {};
+        std::vector<std::string> input_names = {};
         std::vector<JEventLevel> input_levels = {};
-        std::vector<std::string> output_tags = {};
+        std::vector<std::string> output_names = {};
         FactoryConfigType configs = {}; /// Must be copyable!
     };
 
     struct UntypedWiring {
         std::string tag = "";
         JEventLevel level = JEventLevel::PhysicsEvent;
-        std::vector<std::string> input_tags = {};
+        std::vector<std::string> input_names = {};
         std::vector<JEventLevel> input_levels = {};
-        std::vector<std::string> output_tags = {};
+        std::vector<std::string> output_names = {};
         std::map<std::string, std::string> configs = {};
     };
 
@@ -36,24 +36,23 @@ public:
     explicit JOmniFactoryGeneratorT() = default;
 
     explicit JOmniFactoryGeneratorT(std::string tag,
-                                    std::vector<std::string> default_input_tags,
-                                    std::vector<std::string> default_output_tags,
+                                    std::vector<std::string> input_names,
+                                    std::vector<std::string> output_names,
                                     FactoryConfigType configs) {
         m_typed_wirings.push_back({.tag=tag,
-                             .input_tags=default_input_tags,
-                             .output_tags=default_output_tags,
-                             .configs=configs
-                            });
+                                   .input_names=input_names,
+                                   .output_names=output_names,
+                                   .configs=configs
+                                  });
     };
 
     explicit JOmniFactoryGeneratorT(std::string tag,
-                                    std::vector<std::string> default_input_tags,
-                                    std::vector<std::string> default_output_tags) {
+                                    std::vector<std::string> input_names,
+                                    std::vector<std::string> output_names) {
         m_typed_wirings.push_back({.tag=tag,
-                             .input_tags=default_input_tags,
-                             .output_tags=default_output_tags,
-                             .configs={}
-                            });
+                                   .input_names=input_names,
+                                   .output_names=output_names
+                                  });
 
     }
 
@@ -63,20 +62,20 @@ public:
 
 
     void AddWiring(std::string tag,
-                   std::vector<std::string> default_input_tags,
-                   std::vector<std::string> default_output_tags,
+                   std::vector<std::string> input_names,
+                   std::vector<std::string> output_names,
                    FactoryConfigType configs) {
 
-        m_typed_wirings.push_back({.m_tag=tag,
-                             .m_default_input_tags=default_input_tags,
-                             .m_default_output_tags=default_output_tags,
-                             .configs=configs
-                            });
+        m_typed_wirings.push_back({.tag=tag,
+                                   .input_names=input_names,
+                                   .output_names=output_names,
+                                   .configs=configs
+                                  });
     }
 
     void AddWiring(std::string tag,
-                   std::vector<std::string> input_tags,
-                   std::vector<std::string> output_tags,
+                   std::vector<std::string> input_names,
+                   std::vector<std::string> output_names,
                    std::map<std::string, std::string> configs={}) {
 
         // Create throwaway factory so we can populate its config using our map<string,string>.
@@ -85,10 +84,10 @@ public:
         auto configs_typed = factory.config();
 
         m_typed_wirings.push_back({.tag=tag,
-                             .input_tags=input_tags,
-                             .output_tags=output_tags,
-                             .configs=configs_typed
-                            });
+                                   .input_names=input_names,
+                                   .output_names=output_names,
+                                   .configs=configs_typed
+                                  });
 
     }
 
@@ -113,7 +112,7 @@ public:
             // Set up all of the wiring prereqs so that Init() can do its thing
             // Specifically, it needs valid input/output tags, a valid logger, and
             // valid default values in its Config object
-            factory->PreInit(wiring.tag, wiring.level, wiring.input_tags, wiring.input_levels, wiring.output_tags);
+            factory->PreInit(wiring.tag, wiring.level, wiring.input_names, wiring.input_levels, wiring.output_names);
 
             // Factory is ready
             factory_set->Add(factory);

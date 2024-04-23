@@ -16,10 +16,10 @@
 struct MyFileWriter : public JEventProcessor {
 
     // Trigger the creation of clusters
-    PodioInput<ExampleCluster> m_evt_clusters_in {this, {.collection_name="clusters"}};
+    PodioInput<ExampleCluster> m_evt_clusters_in {this, {.name="clusters"}};
 
     // Retrieve the PODIO frame so we can write it directly
-    Input<podio::Frame> m_evt_frame_in {this, {.collection_name = "", 
+    Input<podio::Frame> m_evt_frame_in {this, {.name = "", 
                                                .level = JEventLevel::PhysicsEvent}};
 
     // TODO: Support optional inputs
