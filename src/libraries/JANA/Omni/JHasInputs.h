@@ -102,20 +102,22 @@ protected:
         void GetCollection(const JEvent& event) {
             auto& level = this->levels[0];
             if (level == event.GetLevel() || level == JEventLevel::None) {
-                m_data = event.Get<T>(this->names[0]);
+                m_data = event.Get<T>(this->names[0], !this->is_optional);
             }
             else {
-                m_data = event.GetParent(level).template Get<T>(this->names[0]);
+                if (this->is_optional && !event.HasParent(level)) return;
+                m_data = event.GetParent(level).template Get<T>(this->names[0], !this->is_optional);
             }
         }
         void PrefetchCollection(const JEvent& event) {
             auto& level = this->levels[0];
             auto& name = this->names[0];
             if (level == event.GetLevel() || level == JEventLevel::None) {
-                event.Get<T>(name);
+                event.Get<T>(name, !this->is_optional);
             }
             else {
-                event.GetParent(level).template Get<T>(name);
+                if (this->is_optional && !event.HasParent(level)) return;
+                event.GetParent(level).template Get<T>(name, !this->is_optional);
             }
         }
     };
@@ -142,10 +144,11 @@ protected:
             auto& level = this->levels[0];
             auto& name = this->names[0];
             if (level == event.GetLevel() || level == JEventLevel::None) {
-                m_data = event.GetCollection<PodioT>(name);
+                m_data = event.GetCollection<PodioT>(name, !this->is_optional);
             }
             else {
-                m_data = event.GetParent(level).template GetCollection<PodioT>(name);
+                if (this->is_optional && !event.HasParent(level)) return;
+                m_data = event.GetParent(level).template GetCollection<PodioT>(name, !this->is_optional);
             }
         }
 
@@ -153,10 +156,11 @@ protected:
             auto& level = this->levels[0];
             auto& name = this->names[0];
             if (level == event.GetLevel() || level == JEventLevel::None) {
-                event.GetCollection<PodioT>(name);
+                event.GetCollection<PodioT>(name, !this->is_optional);
             }
             else {
-                event.GetParent(level).template GetCollection<PodioT>(name);
+                if (this->is_optional && !event.HasParent(level)) return;
+                event.GetParent(level).template GetCollection<PodioT>(name, !this->is_optional);
             }
         }
     };
@@ -189,10 +193,11 @@ protected:
                 auto& coll_name = names[i];
                 auto& level = levels[i];
                 if (level == event.GetLevel() || level == JEventLevel::None) {
-                    m_data.push_back(event.GetCollection<PodioT>(coll_name));
+                    m_data.push_back(event.GetCollection<PodioT>(coll_name, !this->is_optional));
                 }
                 else {
-                    m_data.push_back(event.GetParent(level).GetCollection<PodioT>(coll_name));
+                    if (this->is_optional && !event.HasParent(level)) return;
+                    m_data.push_back(event.GetParent(level).GetCollection<PodioT>(coll_name, !this->is_optional));
                 }
             }
         }
@@ -205,10 +210,11 @@ protected:
                 auto& coll_name = names[i];
                 auto& level = levels[i];
                 if (level == event.GetLevel() || level == JEventLevel::None) {
-                    event.GetCollection<PodioT>(coll_name);
+                    event.GetCollection<PodioT>(coll_name, !this->is_optional);
                 }
                 else {
-                    event.GetParent(level).GetCollection<PodioT>(coll_name);
+                    if (this->is_optional && !event.HasParent(level)) return;
+                    event.GetParent(level).GetCollection<PodioT>(coll_name, !this->is_optional);
                 }
             }
         }

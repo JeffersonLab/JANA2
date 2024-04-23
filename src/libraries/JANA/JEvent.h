@@ -80,13 +80,13 @@ class JEvent : public std::enable_shared_from_this<JEvent>
         //OBJECTS
         // C style getters
         template<class T> JFactoryT<T>* Get(const T** item, const std::string& tag="") const;
-        template<class T> JFactoryT<T>* Get(std::vector<const T*> &vec, const std::string& tag = "") const;
+        template<class T> JFactoryT<T>* Get(std::vector<const T*> &vec, const std::string& tag = "", bool strict=true) const;
         template<class T> void GetAll(std::vector<const T*> &vec) const;
 
         // C++ style getters
         template<class T> const T* GetSingle(const std::string& tag = "") const;
         template<class T> const T* GetSingleStrict(const std::string& tag = "") const;
-        template<class T> std::vector<const T*> Get(const std::string& tag = "") const;
+        template<class T> std::vector<const T*> Get(const std::string& tag = "", bool strict=true) const;
         template<class T> typename JFactoryT<T>::PairType GetIterators(const std::string& aTag = "") const;
         template<class T> std::vector<const T*> GetAll() const;
         template<class T> std::map<std::pair<std::string,std::string>,std::vector<T*>> GetAllChildren() const;
@@ -336,9 +336,10 @@ JFactoryT<T>* JEvent::Get(const T** destination, const std::string& tag) const
 
 
 template<class T>
-JFactoryT<T>* JEvent::Get(std::vector<const T*>& destination, const std::string& tag) const
+JFactoryT<T>* JEvent::Get(std::vector<const T*>& destination, const std::string& tag, bool strict) const
 {
-    auto factory = GetFactory<T>(tag, true);
+    auto factory = GetFactory<T>(tag, strict);
+    if (factory == nullptr) return nullptr; // Will have thrown already if strict==true
     JCallGraphEntryMaker cg_entry(mCallGraph, factory); // times execution until this goes out of scope
     auto iterators = factory->CreateAndGetData(this->shared_from_this());
     for (auto it=iterators.first; it!=iterators.second; it++) {
@@ -392,12 +393,13 @@ template<class T> const T* JEvent::GetSingleStrict(const std::string& tag) const
 
 
 template<class T>
-std::vector<const T*> JEvent::Get(const std::string& tag) const {
+std::vector<const T*> JEvent::Get(const std::string& tag, bool strict) const {
 
-    auto factory = GetFactory<T>(tag, true);
+    auto factory = GetFactory<T>(tag, strict);
+    std::vector<const T*> vec;
+    if (factory == nullptr) return vec; // Will have thrown already if strict==true
     JCallGraphEntryMaker cg_entry(mCallGraph, factory); // times execution until this goes out of scope
     auto iters = factory->CreateAndGetData(this->shared_from_this());
-    std::vector<const T*> vec;
     for (auto it=iters.first; it!=iters.second; ++it) {
         vec.push_back(*it);
     }
