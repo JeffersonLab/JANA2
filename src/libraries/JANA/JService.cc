@@ -7,6 +7,7 @@
 
 void JService::DoInit(JServiceLocator* sl) {
     std::lock_guard<std::mutex> lock(m_mutex);
+    if (this->m_status != Status::Uninitialized) return; 
     try {
         for (auto* parameter : m_parameters) {
             parameter->Configure(*(m_app->GetJParameterManager()), m_prefix);

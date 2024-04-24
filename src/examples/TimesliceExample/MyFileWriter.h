@@ -16,13 +16,15 @@
 struct MyFileWriter : public JEventProcessor {
 
     // Trigger the creation of clusters
-    PodioInput<ExampleCluster> m_evt_clusters_in {this, "clusters"};
+    PodioInput<ExampleCluster> m_evt_clusters_in {this, {.name="clusters"}};
 
     // Retrieve the PODIO frame so we can write it directly
-    Input<podio::Frame> m_evt_frame_in {this, "", JEventLevel::PhysicsEvent};
+    Input<podio::Frame> m_evt_frame_in {this, {.name = "", 
+                                               .level = JEventLevel::PhysicsEvent}};
 
-    // TODO: Support optional inputs
-    // Input<podio::Frame> m_ts_frame_in {this, "", JEventLevel::Timeslice};
+    Input<podio::Frame> m_ts_frame_in {this, {.name = "", 
+                                              .level = JEventLevel::Timeslice,
+                                              .is_optional = true }};
 
     std::unique_ptr<podio::ROOTFrameWriter> m_writer = nullptr;
     std::mutex m_mutex;
@@ -44,9 +46,7 @@ struct MyFileWriter : public JEventProcessor {
             auto ts_nr = ts.GetEventNumber();
 
             if (event->GetEventIndex() == 0) {
-                // m_writer->writeFrame(*(m_ts_frame_in().at(0)), "timeslices");
-                auto ts_frame_in = ts.Get<podio::Frame>();
-                m_writer->writeFrame(*(ts_frame_in.at(0)), "timeslices");
+                m_writer->writeFrame(*(m_ts_frame_in().at(0)), "timeslices");
             }
 
             LOG_DEBUG(GetLogger()) 

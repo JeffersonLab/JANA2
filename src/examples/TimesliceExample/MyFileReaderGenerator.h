@@ -8,6 +8,7 @@ class MyFileReaderGenerator : public JEventSourceGenerator {
     JEventSource* MakeJEventSource(std::string resource_name) override {
 
         auto source = new MyFileReader;
+        source->SetResourceName(resource_name);
 
         // Check if the string "timeslices" appears anywhere in our filename. 
         // If so, we assume the file contains timeslices, otherwise it contains physics events.

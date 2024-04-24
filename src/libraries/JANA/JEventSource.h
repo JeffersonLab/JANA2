@@ -111,12 +111,24 @@ public:
                 std::lock_guard<std::mutex> lock(m_mutex);
                 if (m_status == Status::Uninitialized) {
                     Open();
+                    if (GetResourceName().empty()) {
+                        LOG_INFO(GetLogger()) << "Opened event source" << LOG_END;
+                    }
+                    else {
+                        LOG_INFO(GetLogger()) << "Opened event source '" << GetResourceName() << "'" << LOG_END;
+                    }
                     m_status = Status::Initialized;
                 }
             }
             else {
                 if (m_status == Status::Uninitialized) {
                     Open();
+                    if (GetResourceName().empty()) {
+                        LOG_INFO(GetLogger()) << "Opened event source" << LOG_END;
+                    }
+                    else {
+                        LOG_INFO(GetLogger()) << "Opened event source '" << GetResourceName() << "'" << LOG_END;
+                    }
                     m_status = Status::Initialized;
                 }
             }
@@ -147,10 +159,22 @@ public:
             if (with_lock) {
                 std::lock_guard<std::mutex> lock(m_mutex);
                 Close();
+                if (GetResourceName().empty()) {
+                    LOG_INFO(GetLogger()) << "Closed event source" << LOG_END;
+                }
+                else {
+                    LOG_INFO(GetLogger()) << "Closed event source '" << GetResourceName() << "'" << LOG_END;
+                }
                 m_status = Status::Finalized;
             }
             else {
                 Close();
+                if (GetResourceName().empty()) {
+                    LOG_INFO(GetLogger()) << "Closed event source" << LOG_END;
+                }
+                else {
+                    LOG_INFO(GetLogger()) << "Closed event source '" << GetResourceName() << "'" << LOG_END;
+                }
                 m_status = Status::Finalized;
             }
         }

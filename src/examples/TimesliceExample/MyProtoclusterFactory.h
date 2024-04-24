@@ -9,8 +9,8 @@
 
 struct MyProtoclusterFactory : public JOmniFactory<MyProtoclusterFactory> {
 
-    PodioInput<ExampleHit> hits_in {this, "hits"};
-    PodioOutput<ExampleCluster> clusters_out {this, "protoclusters"};
+    PodioInput<ExampleHit> hits_in {this};
+    PodioOutput<ExampleCluster> clusters_out {this};
 
     void Configure() {
     }
