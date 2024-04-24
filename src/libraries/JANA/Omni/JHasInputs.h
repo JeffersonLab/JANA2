@@ -87,7 +87,12 @@ protected:
 
     public:
 
-        Input(JHasInputs* owner, const InputOptions& options = {}) {
+        Input(JHasInputs* owner) {
+            owner->RegisterInput(this);
+            this->type_name = JTypeInfo::demangle<T>();
+        }
+
+        Input(JHasInputs* owner, const InputOptions& options) {
             owner->RegisterInput(this);
             this->type_name = JTypeInfo::demangle<T>();
             Configure(options);
@@ -130,7 +135,12 @@ protected:
 
     public:
 
-        PodioInput(JHasInputs* owner, const InputOptions& options = {}) {
+        PodioInput(JHasInputs* owner) {
+            owner->RegisterInput(this);
+            this->type_name = JTypeInfo::demangle<PodioT>();
+        }
+
+        PodioInput(JHasInputs* owner, const InputOptions& options) {
             owner->RegisterInput(this);
             this->type_name = JTypeInfo::demangle<PodioT>();
             Configure(options);
@@ -172,6 +182,12 @@ protected:
         std::vector<const typename PodioTypeMap<PodioT>::collection_t*> m_data;
 
     public:
+
+        VariadicPodioInput(JHasInputs* owner) {
+            owner->RegisterInput(this);
+            this->type_name = JTypeInfo::demangle<PodioT>();
+            this->is_variadic = true;
+        }
 
         VariadicPodioInput(JHasInputs* owner, const VariadicInputOptions& options) {
             owner->RegisterInput(this);
