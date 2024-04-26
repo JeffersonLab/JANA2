@@ -9,31 +9,35 @@
 
 void JMultifactory::Execute(const std::shared_ptr<const JEvent>& event) {
 
+    std::lock_guard<std::mutex> lock(m_mutex);
 #ifdef JANA2_HAVE_PODIO
     if (mNeedPodio) {
         mPodioFrame = GetOrCreateFrame(event);
     }
 #endif
 
-    auto run_number = event->GetRunNumber();
-    try {
-        std::call_once(m_is_initialized, &JMultifactory::Init, this);
-    }
-    catch(std::exception &e) {
-        // Rethrow as a JException so that we can add context information
-        throw JException(e.what());
-    }
-
-    if (m_last_run_number == -1) {
-        // This is the very first run
+    if (m_status == Status::Uninitialized) {
         try {
-            BeginRun(event);
+            Init();
+            m_status = Status::Initialized;
         }
         catch(std::exception &e) {
             // Rethrow as a JException so that we can add context information
             throw JException(e.what());
         }
-        m_last_run_number = run_number;
+    }
+
+    auto run_number = event->GetRunNumber();
+    if (m_last_run_number == -1) {
+        // This is the very first run
+        try {
+            BeginRun(event);
+            m_last_run_number = run_number;
+        }
+        catch(std::exception &e) {
+            // Rethrow as a JException so that we can add context information
+            throw JException(e.what());
+        }
     }
     else if (m_last_run_number != run_number) {
         // This is a later run, and it has changed
@@ -46,12 +50,12 @@ void JMultifactory::Execute(const std::shared_ptr<const JEvent>& event) {
         }
         try {
             BeginRun(event);
+            m_last_run_number = run_number;
         }
         catch(std::exception &e) {
             // Rethrow as a JException so that we can add context information
             throw JException(e.what());
         }
-        m_last_run_number = run_number;
     }
     try {
         Process(event);
@@ -63,8 +67,14 @@ void JMultifactory::Execute(const std::shared_ptr<const JEvent>& event) {
 }
 
 void JMultifactory::Release() {
+    std::lock_guard<std::mutex> lock(m_mutex);
     try {
-        std::call_once(m_is_finished, &JMultifactory::Finish, this);
+        // Only call Finish() if we actually initialized
+        // Only call Finish() once
+        if (m_status == Status::Initialized) {
+            Finish();
+            m_status = Status::Finalized;
+        }
     }
     catch(std::exception &e) {
         // Rethrow as a JException so that we can add context information
