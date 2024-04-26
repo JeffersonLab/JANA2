@@ -54,7 +54,7 @@ public:
     virtual void Open() {}
 
 
-    // `Emit` is called by JANA in order to emit a fresh event into the stream, when using CallbackStyle::Classic. 
+    // `Emit` is called by JANA in order to emit a fresh event into the stream, when using CallbackStyle::ExpertMode. 
     // It is very similar to GetEvent(), except the user returns a Result status code instead of throwing an exception.
     // Exceptions are reserved for unrecoverable errors. It accepts an out parameter JEvent. If there is another 
     // entry in the file, or another message waiting at the socket, the user reads the data into the JEvent and returns
@@ -214,7 +214,7 @@ public:
 
         std::lock_guard<std::mutex> lock(m_mutex); // In general, DoNext must be synchronized.
         
-        if (m_callback_style == CallbackStyle::Compatibility) {
+        if (m_callback_style == CallbackStyle::LegacyMode) {
             return DoNextCompatibility(event);
         }
 

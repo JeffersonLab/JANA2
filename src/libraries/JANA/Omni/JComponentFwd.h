@@ -21,7 +21,7 @@ namespace omni {
 
 struct JComponent {
     enum class Status { Uninitialized, Initialized, Finalized };
-    enum class CallbackStyle { Compatibility, Classic, Declarative };
+    enum class CallbackStyle { LegacyMode, ExpertMode, DeclarativeMode };
 
     struct ParameterBase;
     struct ServiceBase;
@@ -31,7 +31,7 @@ protected:
     std::vector<ServiceBase*> m_services;
     
     JEventLevel m_level = JEventLevel::PhysicsEvent;
-    CallbackStyle m_callback_style = CallbackStyle::Compatibility;
+    CallbackStyle m_callback_style = CallbackStyle::LegacyMode;
     std::string m_prefix;
     std::string m_plugin_name;
     std::string m_type_name;
