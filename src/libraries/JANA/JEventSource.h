@@ -22,11 +22,9 @@ class JEventSource : public jana::omni::JComponent, public jana::omni::JHasOutpu
 
 public:
     
+    /// Result describes what happened the last time a GetEvent() was attempted.
+    /// If Emit() or GetEvent() reaches an error state, it should throw a JException instead.
     enum class Result { Success, FailureTryAgain, FailureFinished };
-
-    /// ReturnStatus describes what happened the last time a GetEvent() was attempted.
-    /// If GetEvent() reaches an error state, it should throw a JException instead.
-    enum class ReturnStatus { Success, TryAgain, Finished };
 
     // TODO: Deprecate me!
     /// The user is supposed to _throw_ RETURN_STATUS::kNO_MORE_EVENTS or kBUSY from GetEvent()
@@ -212,7 +210,7 @@ public:
         }
     }
     
-    ReturnStatus DoNext(std::shared_ptr<JEvent> event) {
+    Result DoNext(std::shared_ptr<JEvent> event) {
 
         std::lock_guard<std::mutex> lock(m_mutex); // In general, DoNext must be synchronized.
         
@@ -231,7 +229,7 @@ public:
                 if (m_nevents != 0 && (m_event_count == last_evt_nr)) {
                     // We exit early (and recycle) because we hit our jana:nevents limit
                     DoFinalize(false);
-                    return ReturnStatus::Finished; // ReturnStatus::Finished is a failure condition
+                    return Result::FailureFinished;
                 }
                 // If we reach this point, we will need to actually read an event
 
@@ -257,27 +255,27 @@ public:
                     if (m_event_count < first_evt_nr) {
                         // We immediately throw away this whole event because of nskip 
                         // (although really we should be handling this with Seek())
-                        return ReturnStatus::TryAgain; // Failure condition
+                        return Result::FailureTryAgain;
                     }
-                    return ReturnStatus::Success;
+                    return Result::Success;
                 }
                 else if (result == Result::FailureFinished) {
                     // We end up here if we tried to read an entry in a file, but found EOF
                     // or if we received a message from a socket that contained no data and indicated no more data will be coming
                     DoFinalize(false);
-                    return ReturnStatus::Finished;
+                    return Result::FailureFinished;
                 }
                 else if (result == Result::FailureTryAgain) {
                     // We end up here if we tried to read an entry in a file but it is on a tape drive and isn't ready yet
                     // or if we polled the socket, found no new messages, but still expect messages later
-                    return ReturnStatus::TryAgain;
+                    return Result::FailureTryAgain;
                 }
                 else {
                     throw JException("Invalid JEventSource::Result value!");
                 }
             }
             else { // status == Finalized
-                return ReturnStatus::Finished;
+                return Result::FailureFinished;
             }
         }
         catch (JException& ex) {
@@ -301,7 +299,7 @@ public:
         }
     }
 
-    ReturnStatus DoNextCompatibility(std::shared_ptr<JEvent> event) {
+    Result DoNextCompatibility(std::shared_ptr<JEvent> event) {
 
         auto first_evt_nr = m_nskip;
         auto last_evt_nr = m_nevents + m_nskip;
@@ -318,11 +316,11 @@ public:
                     GetEvent(event);
                     event->GetJCallGraphRecorder()->SetInsertDataOrigin( previous_origin );
                     m_event_count += 1;
-                    return ReturnStatus::TryAgain;  // Reject this event and recycle it
+                    return Result::FailureTryAgain;  // Reject this event and recycle it
                 } else if (m_nevents != 0 && (m_event_count == last_evt_nr)) {
                     // Declare ourselves finished due to nevents
                     DoFinalize(false); // Close out the event source as soon as it declares itself finished
-                    return ReturnStatus::Finished;
+                    return Result::FailureFinished;
                 } else {
                     // Actually emit an event.
                     // GetEvent() expects the following things from its incoming JEvent
@@ -338,22 +336,22 @@ public:
                     }
                     event->GetJCallGraphRecorder()->SetInsertDataOrigin( previous_origin );
                     m_event_count += 1;
-                    return ReturnStatus::Success; // Don't reject this event!
+                    return Result::Success; // Don't reject this event!
                 }
             } else if (m_status == Status::Finalized) {
-                return ReturnStatus::Finished;
+                return Result::FailureFinished;
             } else {
-                throw JException("Invalid ReturnStatus");
+                throw JException("Invalid m_status");
             }
         }
         catch (RETURN_STATUS rs) {
 
             if (rs == RETURN_STATUS::kNO_MORE_EVENTS) {
                 DoFinalize(false);
-                return ReturnStatus::Finished;
+                return Result::FailureFinished;
             }
             else if (rs == RETURN_STATUS::kTRY_AGAIN || rs == RETURN_STATUS::kBUSY) {
-                return ReturnStatus::TryAgain;
+                return Result::FailureTryAgain;
             }
             else if (rs == RETURN_STATUS::kERROR || rs == RETURN_STATUS::kUNKNOWN) {
                 JException ex ("JEventSource threw RETURN_STATUS::kERROR or kUNKNOWN");
@@ -362,7 +360,7 @@ public:
                 throw ex;
             }
             else {
-                return ReturnStatus::Success;
+                return Result::Success;
             }
         }
         catch (JException& ex) {
