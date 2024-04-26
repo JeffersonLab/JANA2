@@ -21,6 +21,8 @@ class JFactory;
 class JEventSource : public jana::omni::JComponent, public jana::omni::JHasOutputs {
 
 public:
+    
+    enum class Result { Success, FailureTryAgain, FailureFinished };
 
     /// ReturnStatus describes what happened the last time a GetEvent() was attempted.
     /// If GetEvent() reaches an error state, it should throw a JException instead.
@@ -54,6 +56,17 @@ public:
     virtual void Open() {}
 
 
+    // `Emit` is called by JANA in order to emit a fresh event into the stream, when using CallbackStyle::Classic. 
+    // It is very similar to GetEvent(), except the user returns a Result status code instead of throwing an exception.
+    // Exceptions are reserved for unrecoverable errors. It accepts an out parameter JEvent. If there is another 
+    // entry in the file, or another message waiting at the socket, the user reads the data into the JEvent and returns
+    // Result::Success, at which point JANA pushes the JEvent onto the downstream queue. If there is no data waiting yet,
+    // the user returns Result::FailureTryAgain, at which point JANA recycles the JEvent to the pool. If there is no more
+    // data, the user returns Result::FailureFinished, at which point JANA recycles the JEvent to the pool and calls Close().
+
+    virtual Result Emit(JEvent&) { return Result::Success; };
+
+
     /// `Close` is called by JANA when it is finished accepting events from this event source. Here is where you should
     /// cleanly close files, sockets, etc. Although GetEvent() knows when (for instance) there are no more events in a
     /// file, the logic for closing needs to live here because there are other ways a computation may end besides
@@ -80,7 +93,7 @@ public:
     /// the event stream, the implementor should throw the corresponding `RETURN_STATUS`. The user should NEVER throw
     /// `RETURN_STATUS SUCCESS` because this will hurt performance. Instead, they should simply return normally.
 
-    virtual void GetEvent(std::shared_ptr<JEvent>) = 0;
+    virtual void GetEvent(std::shared_ptr<JEvent>) {};
 
     virtual void Preprocess(const JEvent&) {};
 
@@ -198,10 +211,98 @@ public:
             throw ex;
         }
     }
-
+    
     ReturnStatus DoNext(std::shared_ptr<JEvent> event) {
 
         std::lock_guard<std::mutex> lock(m_mutex); // In general, DoNext must be synchronized.
+        
+        if (m_callback_style == CallbackStyle::Compatibility) {
+            return DoNextCompatibility(event);
+        }
+
+        auto first_evt_nr = m_nskip;
+        auto last_evt_nr = m_nevents + m_nskip;
+
+        try {
+            if (m_status == Status::Uninitialized) {
+                DoInitialize(false);
+            }
+            if (m_status == Status::Initialized) {
+                if (m_nevents != 0 && (m_event_count == last_evt_nr)) {
+                    // We exit early (and recycle) because we hit our jana:nevents limit
+                    DoFinalize(false);
+                    return ReturnStatus::Finished; // ReturnStatus::Finished is a failure condition
+                }
+                // If we reach this point, we will need to actually read an event
+
+                // We configure the event
+                event->SetEventNumber(m_event_count); // Default event number to event count
+                event->SetJApplication(m_app);
+                event->SetJEventSource(this);
+                event->SetSequential(false);
+                event->GetJCallGraphRecorder()->Reset();
+
+                // Now we call the new-style interface
+                auto previous_origin = event->GetJCallGraphRecorder()->SetInsertDataOrigin( JCallGraphRecorder::ORIGIN_FROM_SOURCE);  // (see note at top of JCallGraphRecorder.h)
+                auto result = Emit(*event);
+                event->GetJCallGraphRecorder()->SetInsertDataOrigin( previous_origin );
+
+                if (result == Result::Success) {
+                    // We end up here if we read an entry in our file or retrieved a message from our socket,
+                    // and believe we could obtain another one immediately if we wanted to
+                    for (auto* output : m_outputs) {
+                        output->InsertCollection(*event);
+                    }
+                    m_event_count += 1; 
+                    if (m_event_count < first_evt_nr) {
+                        // We immediately throw away this whole event because of nskip 
+                        // (although really we should be handling this with Seek())
+                        return ReturnStatus::TryAgain; // Failure condition
+                    }
+                    return ReturnStatus::Success;
+                }
+                else if (result == Result::FailureFinished) {
+                    // We end up here if we tried to read an entry in a file, but found EOF
+                    // or if we received a message from a socket that contained no data and indicated no more data will be coming
+                    DoFinalize(false);
+                    return ReturnStatus::Finished;
+                }
+                else if (result == Result::FailureTryAgain) {
+                    // We end up here if we tried to read an entry in a file but it is on a tape drive and isn't ready yet
+                    // or if we polled the socket, found no new messages, but still expect messages later
+                    return ReturnStatus::TryAgain;
+                }
+                else {
+                    throw JException("Invalid JEventSource::Result value!");
+                }
+            }
+            else { // status == Finalized
+                return ReturnStatus::Finished;
+            }
+        }
+        catch (JException& ex) {
+            ex.plugin_name = m_plugin_name;
+            ex.component_name = m_type_name;
+            throw ex;
+        }
+        catch (std::exception& e){
+            auto ex = JException("Exception in JEventSource::Emit(): %s", e.what());
+            ex.nested_exception = std::current_exception();
+            ex.plugin_name = m_plugin_name;
+            ex.component_name = m_type_name;
+            throw ex;
+        }
+        catch (...) {
+            auto ex = JException("Unknown exception in JEventSource::Emit()");
+            ex.nested_exception = std::current_exception();
+            ex.plugin_name = m_plugin_name;
+            ex.component_name = m_type_name;
+            throw ex;
+        }
+    }
+
+    ReturnStatus DoNextCompatibility(std::shared_ptr<JEvent> event) {
+
         auto first_evt_nr = m_nskip;
         auto last_evt_nr = m_nevents + m_nskip;
 
