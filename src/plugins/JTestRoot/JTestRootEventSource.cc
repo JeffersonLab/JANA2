@@ -15,11 +15,12 @@
 #include <JANA/JEvent.h>
 #include <JANA/Utils/JPerfUtils.h>
 
-JTestRootEventSource::JTestRootEventSource(std::string resource_name, JApplication* app) : JEventSource(resource_name, app) {
+JTestRootEventSource::JTestRootEventSource() {
     SetTypeName(NAME_OF_THIS); // Provide JANA with class name
+    SetCallbackStyle(CallbackStyle::ExpertMode);
 }
 
-void JTestRootEventSource::GetEvent(std::shared_ptr <JEvent> event) {
+JEventSource::Result JTestRootEventSource::Emit(JEvent& event) {
     /// Generate an event by inserting objects into "event".
     /// (n.b. a normal event source would read these from a file or stream)
 
@@ -28,8 +29,8 @@ void JTestRootEventSource::GetEvent(std::shared_ptr <JEvent> event) {
 
     // Configure event and run numbers
     static size_t current_event_number = 1;
-    event->SetEventNumber(current_event_number++);
-    event->SetRunNumber(222);
+    event.SetEventNumber(current_event_number++);
+    event.SetRunNumber(222);
 
     // Generate hit objects. We use random numbers to give some variation
     // and make things look a little more realistic
@@ -44,5 +45,7 @@ void JTestRootEventSource::GetEvent(std::shared_ptr <JEvent> event) {
     }
 
     // Add Hit objects to event
-    event->Insert(hits);
+    event.Insert(hits);
+    return Result::Success;
 }
+
