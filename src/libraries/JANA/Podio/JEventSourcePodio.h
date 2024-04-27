@@ -25,7 +25,7 @@ public:
     /// the PODIO frame is part of the contract between JANA and PODIO. We
     /// don't prevent users from accessing the PODIO frame directly, but
     /// strongly discourage them from using this for anything other than debugging.
-    void GetEvent(std::shared_ptr<JEvent>) final;
+    Result Emit(JEvent&) final;
 
 
     /// User overrides NextFrame so that they can populate the frame however
@@ -70,27 +70,29 @@ struct InsertingVisitor {
 template <template <typename> typename VisitT>
 JEventSourcePodio<VisitT>::JEventSourcePodio(std::string filename)
         : JEventSource(filename) {
+    SetCallbackStyle(CallbackStyle::ExpertMode);
 }
 
 
 template <template <typename> typename VisitT>
-void JEventSourcePodio<VisitT>::GetEvent(std::shared_ptr<JEvent> event) {
+JEventSource::Result JEventSourcePodio<VisitT>::Emit(JEvent& event) {
 
-    uint64_t event_index = event->GetEventNumber(); // Event number starts from zero by default
-    if (event_index >= m_entry_count) throw RETURN_STATUS::kNO_MORE_EVENTS;
+    uint64_t event_index = event.GetEventNumber(); // Event number starts from zero by default
+    if (event_index >= m_entry_count) return Result::FailureFinished;
     int event_number = 0;
     int run_number = 0;
     auto frame = NextFrame(event_index, event_number, run_number);
-    event->SetEventNumber(event_number);
-    event->SetRunNumber(run_number);
+    event.SetEventNumber(event_number);
+    event.SetRunNumber(run_number);
 
     VisitT<InsertingVisitor> visit;   // This is how we work on PODIO types while using collections
     for (const std::string& coll_name : frame->getAvailableCollections()) {
         const podio::CollectionBase* collection = frame->get(coll_name);
-        InsertingVisitor visitor(*event, coll_name);
+        InsertingVisitor visitor(event, coll_name);
         visit(visitor, *collection);
     }
-    event->Insert(frame.release()); // Transfer ownership from unique_ptr to JFactoryT<podio::Frame>
+    event.Insert(frame.release()); // Transfer ownership from unique_ptr to JFactoryT<podio::Frame>
+    return Result::Success;
 }
 
 
