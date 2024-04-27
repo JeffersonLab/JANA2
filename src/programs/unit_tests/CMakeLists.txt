@@ -40,6 +40,7 @@ set(TEST_SOURCES
     MultiLevelTopologyTests.cc
     UnfoldTests.cc
     JComponentTests.cc
+    Components/JEventSourceTests.cc
     )
 
 if (${USE_PODIO})
