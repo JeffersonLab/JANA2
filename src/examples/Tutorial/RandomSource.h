@@ -14,13 +14,17 @@ class RandomSource : public JEventSource {
     int m_max_emit_freq_hz = 100;
 
 public:
+    RandomSource();
+
     RandomSource(std::string resource_name, JApplication* app);
 
     virtual ~RandomSource() = default;
 
     void Open() override;
 
-    void GetEvent(std::shared_ptr<JEvent>) override;
+    Result Emit(JEvent&) override;
+
+    void Close() override;
     
     static std::string GetDescription();
 

@@ -30,6 +30,7 @@ public:
 
     JTestParser() {
         SetTypeName(NAME_OF_THIS);
+        SetCallbackStyle(CallbackStyle::ExpertMode);
     }
 
     static std::string GetDescription() {
@@ -44,7 +45,7 @@ public:
         app->SetDefaultParameter("jtest:parser_bytes_spread", m_write_spread, "Spread of bytes written during parsing");
     }
 
-    void GetEvent(std::shared_ptr<JEvent> event) {
+    Result Emit(JEvent& event) {
 
         if ((m_events_generated % 40) == 0) {
             // "Read" new entangled event every 40 events
@@ -58,12 +59,13 @@ public:
         // Emit a shared pointer to the entangled event buffer
         auto eec = new JTestEntangledEventData;
         eec->buffer = m_latest_entangled_buffer;
-        event->Insert<JTestEntangledEventData>(eec);
+        event.Insert<JTestEntangledEventData>(eec);
 
         m_events_generated++;
 
-        event->SetEventNumber(m_events_generated);
-        event->SetRunNumber(1);
+        event.SetEventNumber(m_events_generated);
+        event.SetRunNumber(1);
+        return Result::Success;
     }
 
 };

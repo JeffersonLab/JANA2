@@ -18,8 +18,14 @@
 ///    to find the most appropriate JEventSource corresponding to that filename, instantiate and register it.
 ///    For this to work, the JEventSource constructor has to have the following constructor arguments:
 
+RandomSource::RandomSource() : JEventSource() {
+    SetTypeName(NAME_OF_THIS); // Provide JANA with class name
+    SetCallbackStyle(CallbackStyle::ExpertMode);
+}
+
 RandomSource::RandomSource(std::string resource_name, JApplication* app) : JEventSource(resource_name, app) {
     SetTypeName(NAME_OF_THIS); // Provide JANA with class name
+    SetCallbackStyle(CallbackStyle::ExpertMode);
 }
 
 void RandomSource::Open() {
@@ -37,15 +43,19 @@ void RandomSource::Open() {
     /// Open the file here!
 }
 
-void RandomSource::GetEvent(std::shared_ptr <JEvent> event) {
+void RandomSource::Close() {
+    // Close the file pointer here!
+}
+
+JEventSource::Result RandomSource::Emit(JEvent& event) {
 
     /// Calls to GetEvent are synchronized with each other, which means they can
     /// read and write state on the JEventSource without causing race conditions.
     
     /// Configure event and run numbers
     static size_t current_event_number = 1;
-    event->SetEventNumber(current_event_number++);
-    event->SetRunNumber(22);
+    event.SetEventNumber(current_event_number++);
+    event.SetRunNumber(22);
 
     /// Slow down event source
     auto delay_ms = std::chrono::milliseconds(1000/m_max_emit_freq_hz);
@@ -57,15 +67,17 @@ void RandomSource::GetEvent(std::shared_ptr <JEvent> event) {
     hits.push_back(new Hit(0, 1, 1.0, 0));
     hits.push_back(new Hit(1, 0, 1.0, 0));
     hits.push_back(new Hit(1, 1, 1.0, 0));
-    event->Insert(hits);
+    event.Insert(hits);
 
-    /// If you are reading a file of events and have reached the end, terminate the stream like this:
-    // // Close file pointer!
-    // throw RETURN_STATUS::kNO_MORE_EVENTS;
+    /// If you are reading a file of events and have reached the end
+    /// Note that you should close the file handle in Close(), not here.
+    // return Result::FailureFinished;
 
     /// If you are streaming events and there are no new events in the message queue,
     /// tell JANA that GetEvent() was temporarily unsuccessful like this:
-    // throw RETURN_STATUS::kBUSY;
+    // return Result::FailureTryAgain;
+
+    return Result::Success;
 }
 
 std::string RandomSource::GetDescription() {
