@@ -14,13 +14,16 @@ struct MyFileReader : public JEventSource {
 
     MyFileReader() {
         SetTypeName(NAME_OF_THIS);
+        SetCallbackStyle(CallbackStyle::ExpertMode);
     }
 
     void Open() override { }
 
-    void GetEvent(std::shared_ptr<JEvent> event) override {
+    void Close() override { }
 
-        auto event_nr = event->GetEventNumber();
+    Result Emit(JEvent&) override {
+
+        auto event_nr = event.GetEventNumber();
 
         auto hits_out  = std::make_unique<ExampleHitCollection>();
 
@@ -29,7 +32,7 @@ struct MyFileReader : public JEventSource {
         hits_out->push_back(ExampleHit(event_nr, 0, 49, 49, 49, 1));
         hits_out->push_back(ExampleHit(event_nr, 0, 7.6, 7.6, 7.6, 2));
 
-        LOG_DEBUG(GetLogger()) << "MySource: Emitted " << GetLevel() << " " << event->GetEventNumber() << "\n"
+        LOG_DEBUG(GetLogger()) << "MySource: Emitted " << GetLevel() << " " << event.GetEventNumber() << "\n"
             << TabulateHits(hits_out.get())
             << LOG_END;
 
@@ -39,12 +42,13 @@ struct MyFileReader : public JEventSource {
         if (GetLevel() == JEventLevel::Timeslice) {
             TimesliceInfoCollection info;
             info.push_back(TimesliceInfo(event_nr, 0)); // event nr, run nr
-            event->InsertCollection<TimesliceInfo>(std::move(info), "ts_info");
+            event.InsertCollection<TimesliceInfo>(std::move(info), "ts_info");
         }
         else {
             EventInfoCollection info;
             info.push_back(EventInfo(event_nr, 0, 0)); // event nr, timeslice nr, run nr
-            event->InsertCollection<EventInfo>(std::move(info), "evt_info");
+            event.InsertCollection<EventInfo>(std::move(info), "evt_info");
         }
+        return Result::Success;
     }
 };

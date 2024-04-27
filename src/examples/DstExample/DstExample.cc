@@ -17,7 +17,7 @@ void InitPlugin(JApplication* app) {
 
     LOG << "Loading DstExample" << LOG_END;
     app->Add(new DstExampleProcessor);
-    app->Add(new DstExampleSource("dummy", app));
+    app->Add(new DstExampleSource);
     app->Add(new JFactoryGeneratorT<DstExampleFactory>());
 }
 }
