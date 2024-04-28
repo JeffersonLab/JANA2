@@ -69,13 +69,13 @@ void JAutoActivator::Init() {
     }
 }
 
-void JAutoActivator::Process(const std::shared_ptr<const JEvent> &event) {
+void JAutoActivator::Process(const JEvent& event) {
     for (const auto &pair: m_auto_activated_factories) {
         auto name = pair.first;
         auto tag = pair.second;
-        auto factory = event->GetFactory(name, tag);
+        auto factory = event.GetFactory(name, tag);
         if (factory != nullptr) {
-            factory->Create(event); // This will do nothing if factory is already created
+            factory->Create(event.shared_from_this()); // This will do nothing if factory is already created
         }
         else {
             LOG_ERROR(GetLogger()) << "Could not find factory with typename=" << name << ", tag=" << tag << LOG_END;

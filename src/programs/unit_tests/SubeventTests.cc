@@ -160,8 +160,11 @@ TEST_CASE("Basic subevent arrow functionality") {
     };
 
     struct SimpleProcessor : public JEventProcessor {
-        void Process(const std::shared_ptr<const JEvent>& event) {
-            auto outputs = event->Get<MyOutput>();
+        SimpleProcessor() {
+            SetCallbackStyle(CallbackStyle::ExpertMode);
+        }
+        void Process(const JEvent& event) {
+            auto outputs = event.Get<MyOutput>();
             REQUIRE(outputs.size() == 4);
             REQUIRE(outputs[0]->z == 25.6f);
             REQUIRE(outputs[1]->z == 26.5f);

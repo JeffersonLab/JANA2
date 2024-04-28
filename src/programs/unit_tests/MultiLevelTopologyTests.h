@@ -84,15 +84,19 @@ struct MyEventProcessor : public JEventProcessor {
     std::atomic_int process_called_count {0};
     std::atomic_int finish_called_count {0};
 
+    MyEventProcessor() {
+        SetCallbackStyle(CallbackStyle::ExpertMode);
+    }
+
     void Init() override {
         init_called_count++;
     }
 
-    void Process(const std::shared_ptr<const JEvent>& event) override {
+    void Process(const JEvent& event) override {
         process_called_count++;
         // TODO: Trigger cluster factory
         // TODO: Validate that the clusters make sense
-        jout << "MyEventProcessor: Processing " << event->GetEventNumber() << jendl;
+        jout << "MyEventProcessor: Processing " << event.GetEventNumber() << jendl;
         REQUIRE(init_called_count == 1);
         REQUIRE(finish_called_count == 0);
     }

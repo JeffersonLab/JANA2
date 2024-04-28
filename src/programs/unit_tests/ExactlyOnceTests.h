@@ -41,11 +41,15 @@ struct SimpleProcessor : public JEventProcessor {
     std::atomic_int init_count {0};
     std::atomic_int finish_count {0};
 
+    SimpleProcessor() {
+        SetCallbackStyle(CallbackStyle::ExpertMode);
+    }
+
     void Init() override {
         init_count += 1;
     }
 
-    void Process(const std::shared_ptr<const JEvent>&) override {
+    void Process(const JEvent&) override {
     }
 
     void Finish() override {

@@ -16,11 +16,12 @@
 
 JTestRootProcessor::JTestRootProcessor() {
     SetTypeName(NAME_OF_THIS); // Provide JANA with this class's name
+    SetCallbackStyle(CallbackStyle::ExpertMode);
 }
 
-void JTestRootProcessor::Process(const std::shared_ptr<const JEvent> &event) {
+void JTestRootProcessor::Process(const JEvent&) {
     // Get the cluster objects
-    auto clusters = event->Get<Cluster>();
+    auto clusters = event.Get<Cluster>();
 
     // Lock mutex so operations on ROOT objects are serialized
     std::lock_guard<std::mutex>lock(m_mutex);

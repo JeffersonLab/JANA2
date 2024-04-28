@@ -25,6 +25,7 @@ public:
 
     JCsvWriter(std::string tag = "") : m_tag(std::move(tag)) {
         SetTypeName(NAME_OF_THIS);
+        SetCallbackStyle(CallbackStyle::ExpertMode);
     };
 
     void Init() override {
@@ -41,10 +42,10 @@ public:
         m_dest_file.open(filename, std::fstream::out);
     }
 
-    void Process(const std::shared_ptr<const JEvent>& event) override {
+    void Process(const JEvent& event) override {
 
-        auto event_nr = event->GetEventNumber();
-        auto jobjs = event->Get<T>(m_tag);
+        auto event_nr = event.GetEventNumber();
+        auto jobjs = event.Get<T>(m_tag);
 
         std::lock_guard<std::mutex> lock(m_mutex);
 
