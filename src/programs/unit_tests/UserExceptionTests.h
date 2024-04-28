@@ -17,7 +17,9 @@ struct FlakySource : public JEventSource {
     int event_count = 0;
 
     FlakySource(bool open_excepts, bool getevent_excepts)
-            : open_excepts(open_excepts), getevent_excepts(getevent_excepts) {}
+            : open_excepts(open_excepts), getevent_excepts(getevent_excepts) {
+                SetCallbackStyle(CallbackStyle::ExpertMode);
+            }
 
     void Open() override {
         if (open_excepts) {
@@ -25,15 +27,16 @@ struct FlakySource : public JEventSource {
         }
     }
 
-    void GetEvent(std::shared_ptr<JEvent>) override {
+    Result Emit(JEvent&) override {
 
         if (++event_count > 10) {
-            throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
+            return Result::FailureFinished;
         }
 
         if (getevent_excepts) {
             throw JException("Unable to getEvent!");
         }
+        return Result::Success;
     }
 };
 

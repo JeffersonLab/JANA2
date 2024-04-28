@@ -10,11 +10,14 @@ struct Obj3 : public JObject { int data; };
 struct Obj4 : public JObject { int data; };
 
 class Src : public JEventSource {
-
-    void GetEvent(std::shared_ptr<JEvent> event) override {
+    Src() {
+        SetCallbackStyle(CallbackStyle::ExpertMode);
+    }
+    Result Emit(JEvent& event) override {
         auto obj = new Obj1;
         obj->data = 21;
-        event->Insert(obj);
+        event.Insert(obj);
+        return Result::Success;
     }
     bool GetObjects(const std::shared_ptr<const JEvent>&, JFactory* fac) override {
         if (fac->GetObjectName() == "Obj2") {

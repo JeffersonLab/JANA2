@@ -102,13 +102,6 @@ TEST_CASE("MediumDefTags") {
 }
 
 namespace deftagstest {
-struct DummySource : public JEventSource {
-    DummySource() {
-        SetTypeName(NAME_OF_THIS);
-    };
-
-    void GetEvent(std::shared_ptr<JEvent>) override {};
-};
 
 struct DummyProcessor : public JEventProcessor {
     double E = 0.5;
@@ -135,7 +128,7 @@ TEST_CASE("LargeDefTags") {
     JApplication app;
     app.Add(new JFactoryGeneratorT<Fac1>);
     app.Add(new JFactoryGeneratorT<Fac2>);
-    app.Add(new DummySource);
+    app.Add(new JEventSource);
     auto proc = new DummyProcessor;
     app.Add(proc);
     app.SetParameterValue("jana:nevents", 3);
