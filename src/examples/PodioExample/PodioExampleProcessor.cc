@@ -40,17 +40,22 @@ struct PrintingVisitor {
 // TODO: C++20 visitor using a lambda overload set
 // TODO: Less generic visitor, e.g. VisitCollection
 
-void PodioExampleProcessor::Process(const std::shared_ptr<const JEvent> &event) {
+PodioExampleProcessor::PodioExampleProcessor() {
+    SetTypeName(NAME_OF_THIS);
+    SetCallbackStyle(CallbackStyle::ExpertMode);
+}
+
+void PodioExampleProcessor::Process(const JEvent& event) {
 
     // Obtain a typed collection just like you would in a JFactory
-    auto hits = event->GetCollection<ExampleHit>("hits");
-    auto hits_filtered = event->GetCollection<ExampleHit>("hits_filtered");
-    auto clusters = event->GetCollection<ExampleCluster>("clusters");
-    auto clusters_filtered = event->GetCollection<ExampleCluster>("clusters_filtered");
-    auto clusters_from_hits_filtered = event->GetCollection<ExampleCluster>("clusters_from_hits_filtered");
+    auto hits = event.GetCollection<ExampleHit>("hits");
+    auto hits_filtered = event.GetCollection<ExampleHit>("hits_filtered");
+    auto clusters = event.GetCollection<ExampleCluster>("clusters");
+    auto clusters_filtered = event.GetCollection<ExampleCluster>("clusters_filtered");
+    auto clusters_from_hits_filtered = event.GetCollection<ExampleCluster>("clusters_from_hits_filtered");
 
     std::cout << "========================" << std::endl;
-    std::cout << "Event nr: " << event->GetEventNumber() << ", Cluster count: " << clusters->size() << std::endl;
+    std::cout << "Event nr: " << event.GetEventNumber() << ", Cluster count: " << clusters->size() << std::endl;
 
     std::cout << "hits:" << std::endl;
     for (const ExampleHit& hit : *hits) {

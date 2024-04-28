@@ -19,8 +19,6 @@ class MetadataAggregator : public JEventProcessor {
         std::chrono::nanoseconds total_latency_ns {0};
     };
 
-    std::mutex m_mutex;
-
     std::string m_track_factory = "smeared"; // So we can choose what we are measuring at runtime
 
     std::map<int, Statistics> m_statistics; // Keyed off of run nr
@@ -43,7 +41,7 @@ public:
     virtual ~MetadataAggregator() = default;
 
     void Init() override;
-    void Process(const std::shared_ptr<const JEvent>& event) override;
+    void Process(const JEvent&) override;
     void Finish() override;
 
 };

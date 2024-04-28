@@ -9,9 +9,8 @@
 
 class TutorialProcessor : public JEventProcessor {
 
-    /// Shared state (e.g. histograms, TTrees, TFiles) live
+    /// Shared state (e.g. histograms, TTrees, TFiles) live here
     double m_heatmap[100][100];
-    std::mutex m_mutex;
     
 public:
 
@@ -19,7 +18,7 @@ public:
     virtual ~TutorialProcessor() = default;
 
     void Init() override;
-    void Process(const std::shared_ptr<const JEvent>& event) override;
+    void Process(const JEvent& event) override;
     void Finish() override;
 
 };

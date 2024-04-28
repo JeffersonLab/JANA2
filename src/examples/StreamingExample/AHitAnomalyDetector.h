@@ -16,16 +16,18 @@ class AHitAnomalyDetector : public JEventProcessor {
 public:
     AHitAnomalyDetector(JApplication* app = nullptr, size_t delay_ms=1000)
         : JEventProcessor(app)
-        , m_delay_ms(delay_ms) {};
+        , m_delay_ms(delay_ms) {
+            SetCallbackStyle(CallbackStyle::ExpertMode);
+        };
 
     void Init() override {
 
     }
-    void Process(const std::shared_ptr<const JEvent>& event) override {
+    void Process(const JEvent& event) override {
 
-        auto a_hits = event->Get<AHit>();
+        auto a_hits = event.Get<AHit>();
         std::stringstream ss;
-        ss << "Anomaly detection: Event #" << event->GetEventNumber() << " : {";
+        ss << "Anomaly detection: Event #" << event.GetEventNumber() << " : {";
         for (auto & hit : a_hits) {
             ss << "(" << hit->E << "," << hit->x << "), ";
         }
