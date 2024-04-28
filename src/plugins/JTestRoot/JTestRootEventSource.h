@@ -15,7 +15,7 @@ public:
     JTestRootEventSource(std::string resource_name, JApplication* app);
     virtual ~JTestRootEventSource() = default;
 
-    void GetEvent(std::shared_ptr<JEvent>) override;
+    Result Emit(JEvent& event) override;
 
 protected:
     std::default_random_engine generator;

@@ -71,7 +71,7 @@ public:
         // Also we don't have 
         // a Preprocess(), so we don't technically need Init() here even
         
-        if (m_callback_style != CallbackStyle::Declarative) {
+        if (m_callback_style != CallbackStyle::DeclarativeMode) {
             DoReduce(e); // This does all the locking!
         }
     }
@@ -101,7 +101,7 @@ public:
             for (auto* input : m_inputs) {
                 input->GetCollection(*e);
             }
-            if (m_callback_style == CallbackStyle::Declarative) {
+            if (m_callback_style == CallbackStyle::DeclarativeMode) {
                 Process(e->GetRunNumber(), e->GetEventNumber(), e->GetEventIndex());
             }
             else {

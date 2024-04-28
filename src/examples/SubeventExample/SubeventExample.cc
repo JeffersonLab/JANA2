@@ -39,18 +39,20 @@ struct MyProcessor : public JSubeventProcessor<MyInput, MyOutput> {
 
 
 struct SimpleSource : public JEventSource {
-    SimpleSource(std::string name) : JEventSource(name) {};
-    void GetEvent(std::shared_ptr<JEvent> event) override {
-        auto evt = event->GetEventNumber();
+    SimpleSource() : JEventSource() { 
+        SetCallbackStyle(CallbackStyle::ExpertMode); 
+    };
+    Result Emit(JEvent& event) override {
+        auto evt = event.GetEventNumber();
         std::vector<MyInput*> inputs;
         inputs.push_back(new MyInput(22,3.6,evt,0));
         inputs.push_back(new MyInput(23,3.5,evt,1));
         inputs.push_back(new MyInput(24,3.4,evt,2));
         inputs.push_back(new MyInput(25,3.3,evt,3));
         inputs.push_back(new MyInput(26,3.2,evt,4));
-        event->Insert(inputs);
-        LOG << "Emitting event " << event->GetEventNumber() << LOG_END;
-        // throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
+        event.Insert(inputs);
+        LOG << "Emitting event " << event.GetEventNumber() << LOG_END;
+        return Result::Success;
     }
 };
 
@@ -93,7 +95,7 @@ int main() {
     app.SetTimeoutEnabled(false);
     app.SetTicker(false);
 
-    auto source = new SimpleSource("simpleSource");
+    auto source = new SimpleSource();
     source->SetNEvents(10);  // limit ourselves to 10 events. Note that the 'jana:nevents' param won't work
                              // here because we aren't using JComponentManager to manage the EventSource
 

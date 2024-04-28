@@ -12,9 +12,14 @@
 namespace scaletest {
 struct DummySource : public JEventSource {
 
-    void GetEvent(std::shared_ptr<JEvent>) override {
+    DummySource() {
+        SetCallbackStyle(CallbackStyle::ExpertMode);
+    }
+
+    Result Emit(JEvent&) override {
         consume_cpu_ms(20);
         std::this_thread::sleep_for(std::chrono::nanoseconds(1));
+        return Result::Success;
     }
 };
 

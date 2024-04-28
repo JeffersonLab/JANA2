@@ -20,6 +20,7 @@
 
 RandomTrackSource::RandomTrackSource(std::string resource_name, JApplication* app) : JEventSource(resource_name, app) {
     SetTypeName(NAME_OF_THIS); // Provide JANA with class name
+    SetCallbackStyle(CallbackStyle::ExpertMode);
 }
 
 void RandomTrackSource::Open() {
@@ -39,7 +40,7 @@ void RandomTrackSource::Open() {
     m_max_run_number = 10;
 }
 
-void RandomTrackSource::GetEvent(std::shared_ptr <JEvent> event) {
+RandomTrackSource::Result RandomTrackSource::Emit(JEvent& event) {
 
     /// Calls to GetEvent are synchronized with each other, which means they can
     /// read and write state on the JEventSource without causing race conditions.
@@ -51,22 +52,24 @@ void RandomTrackSource::GetEvent(std::shared_ptr <JEvent> event) {
     }
 
     if (m_current_run_number > m_max_run_number) {
-        throw RETURN_STATUS::kNO_MORE_EVENTS;
+        return Result::FailureFinished;
     }
 
-    event->SetEventNumber(m_current_event_number);
-    event->SetRunNumber(m_current_run_number);
+    event.SetEventNumber(m_current_event_number);
+    event.SetRunNumber(m_current_run_number);
 
     /// Insert whatever data was read into the event
     std::vector<Track*> tracks;
     tracks.push_back(new Track(0,0,0,0,0,0,0,0));
-    event->Insert(tracks, "generated");
+    event.Insert(tracks, "generated");
 
     // Insert metadata corresponding to these tracks
     // TODO: Overload event->Insert() to make this look nicer
     JMetadata<Track> metadata;
     metadata.elapsed_time_ns = std::chrono::nanoseconds {5};
-    event->GetFactory<Track>("generated")->SetMetadata(metadata);
+    event.GetFactory<Track>("generated")->SetMetadata(metadata);
+
+    return Result::Success;
 }
 
 std::string RandomTrackSource::GetDescription() {

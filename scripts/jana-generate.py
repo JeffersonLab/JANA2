@@ -191,13 +191,17 @@ class {name} : public JEventSource {{
     /// Add member variables here
 
 public:
+    {name}();
+
     {name}(std::string resource_name, JApplication* app);
 
     virtual ~{name}() = default;
 
     void Open() override;
 
-    void GetEvent(std::shared_ptr<JEvent>) override;
+    void Close() override;
+
+    Result Emit(JEvent& event) override;
     
     static std::string GetDescription();
 
@@ -227,9 +231,16 @@ jeventsource_template_cc = """
 ///    to find the most appropriate JEventSource corresponding to that filename, instantiate and register it.
 ///    For this to work, the JEventSource constructor has to have the following constructor arguments:
 
+{name}::{name}() : JEventSource() {{
+    SetTypeName(NAME_OF_THIS); // Provide JANA with class name
+    SetCallbackStyle(CallbackStyle::ExpertMode);
+}}
+
 {name}::{name}(std::string resource_name, JApplication* app) : JEventSource(resource_name, app) {{
     SetTypeName(NAME_OF_THIS); // Provide JANA with class name
+    SetCallbackStyle(CallbackStyle::ExpertMode);
 }}
+
 
 void {name}::Open() {{
 
@@ -243,28 +254,38 @@ void {name}::Open() {{
     /// Open the file here!
 }}
 
-void {name}::GetEvent(std::shared_ptr <JEvent> event) {{
+void {name}::Close() {{
+
+    /// Close is called exactly once when processing ends. This is where you should close your files or sockets.
+    /// It is important to do that here instead of in Emit() because we want everything to be cleanly closed 
+    /// even when JANA is terminated via Ctrl-C or via a timeout.
+
+}}
+
+JEventSource::Result {name}::Emit(JEvent& event) {{
 
     /// Calls to GetEvent are synchronized with each other, which means they can
     /// read and write state on the JEventSource without causing race conditions.
     
     /// Configure event and run numbers
     static size_t current_event_number = 1;
-    event->SetEventNumber(current_event_number++);
-    event->SetRunNumber(22);
+    event.SetEventNumber(current_event_number++);
+    event.SetRunNumber(22);
 
     /// Insert whatever data was read into the event
     // std::vector<Hit*> hits;
     // hits.push_back(new Hit(0,0,1.0,0));
-    // event->Insert(hits);
+    // event.Insert(hits);
 
     /// If you are reading a file of events and have reached the end, terminate the stream like this:
-    // // Close file pointer!
-    // throw RETURN_STATUS::kNO_MORE_EVENTS;
+    /// Note that you should close any file handles or sockets in Close(), not here!
+    // return Result::FailureFinished;
 
     /// If you are streaming events and there are no new events in the message queue,
-    /// tell JANA that GetEvent() was temporarily unsuccessful like this:
-    // throw RETURN_STATUS::kBUSY;
+    /// tell JANA that Emit() was temporarily unsuccessful like this:
+    // return Result::FailureTryAgain;
+
+    return Result::Success;
 }}
 
 std::string {name}::GetDescription() {{

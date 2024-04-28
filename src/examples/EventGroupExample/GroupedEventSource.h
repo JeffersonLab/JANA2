@@ -21,25 +21,26 @@ class GroupedEventSource : public JEventSource {
 public:
     GroupedEventSource(std::string res_name, JApplication* app) : JEventSource(std::move(res_name), app) {
         // TODO: Get EventGroupManager from ServiceLocator instead
+        SetCallbackStyle(CallbackStyle::ExpertMode);
         m_remaining_events_in_group = 5;
         m_current_group_id = 0;
         m_current_event_number = 0;
     };
 
-    void GetEvent(std::shared_ptr<JEvent> event) override {
+    Result Emit(JEvent& event) override {
 
         if (m_current_group_id == 5) {
-            throw RETURN_STATUS::kNO_MORE_EVENTS;
+            return Result::FailureFinished;
         }
 
         // TODO: We can hold on to the pointer instead of doing the lookup everytime
         auto current_group = m_egm.GetEventGroup(m_current_group_id);
 
         current_group->StartEvent();
-        event->Insert(current_group);
-        event->GetFactory<JEventGroup>()->SetFactoryFlag(JFactory::JFactory_Flags_t::NOT_OBJECT_OWNER);
-        event->SetEventNumber(++m_current_event_number);
-        event->SetRunNumber(m_current_group_id);
+        event.Insert(current_group);
+        event.GetFactory<JEventGroup>()->SetFactoryFlag(JFactory::JFactory_Flags_t::NOT_OBJECT_OWNER);
+        event.SetEventNumber(++m_current_event_number);
+        event.SetRunNumber(m_current_group_id);
 
         m_remaining_events_in_group -= 1;
         if (m_remaining_events_in_group == 0) {
@@ -48,6 +49,7 @@ public:
             m_current_group_id += 1;
         }
 
+        return Result::Success;
     }
 };
 

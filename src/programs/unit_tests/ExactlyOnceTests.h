@@ -16,15 +16,19 @@ struct SimpleSource : public JEventSource {
     std::atomic_int close_count {0};
     std::atomic_int event_count {0};
 
+    SimpleSource() {
+        SetCallbackStyle(CallbackStyle::ExpertMode);
+    }
 
     void Open() override {
         open_count += 1;
     }
 
-    void GetEvent(std::shared_ptr<JEvent>) override {
+    Result Emit(JEvent&) override {
         if (++event_count == 5) {
-            throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
+            return Result::FailureFinished;
         }
+        return Result::Success;
     }
     void Close() override {
         close_count += 1;

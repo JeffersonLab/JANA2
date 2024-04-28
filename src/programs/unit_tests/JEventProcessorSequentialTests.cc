@@ -13,11 +13,6 @@ namespace jeventprocessorsequentialtests {
 // the linker will cheerfully not notice and you will get VERY weird errors.
 // Hence, we protect each Catch test with its own namespace.
 
-struct DummySource : public JEventSource {
-
-    // By default, this will emit empty events with event numbers 0,1,2...
-    void GetEvent(std::shared_ptr<JEvent>) override {}
-};
 
 struct MyRootProcessor : public JEventProcessorSequentialRoot {
     std::vector<std::pair<int, int>> access_log;
@@ -51,7 +46,7 @@ struct MyRootProcessor : public JEventProcessorSequentialRoot {
 TEST_CASE("JEventProcessorSequentialRootTests") {
 
     JApplication app;
-    app.Add(new DummySource);
+    app.Add(new JEventSource());
     app.SetParameterValue("nthreads", 4);
     app.SetParameterValue("jana:nevents", 4);
     app.SetParameterValue("jana:event_source_chunksize", 1);
@@ -138,7 +133,7 @@ struct MySeqProcessor : public JEventProcessorSequential {
 TEST_CASE("JEventProcessorSequentialTests") {
 
     JApplication app;
-    app.Add(new DummySource);
+    app.Add(new JEventSource());
     app.SetParameterValue("nthreads", 4);
     app.SetParameterValue("jana:nevents", 4);
     app.SetParameterValue("jana:event_source_chunksize", 1);

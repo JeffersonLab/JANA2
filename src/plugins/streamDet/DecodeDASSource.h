@@ -16,13 +16,14 @@ class DecodeDASSource : public JEventSource {
 public:
 
     // constructors and destructors
-    DecodeDASSource(std::string source_name, JApplication* app);
+    DecodeDASSource();
     ~DecodeDASSource() override;
 
     // define public methods
     static std::string GetDescription() { return "streamDet event source (direct ADC serialization mode)"; }
     void Open() final;
-    void GetEvent(std::shared_ptr<JEvent>) final;
+    void Close() final;
+    Result Emit(JEvent&) final;
 
 private:
 

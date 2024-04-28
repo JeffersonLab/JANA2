@@ -36,6 +36,7 @@ public:
         , m_transport(std::move(transport))
         , m_trigger(std::move(trigger))
         , m_window(std::move(window)) {
+            SetCallbackStyle(CallbackStyle::ExpertMode);
     }
 
     void addJoin(std::unique_ptr<JDiscreteJoin<T>>&& join) {
@@ -52,25 +53,23 @@ public:
         return "JEventBuilder";
     }
 
-    void GetEvent(std::shared_ptr<JEvent> event) override {
+    Result Emit(JEvent& event) override {
 
         auto item = new T();  // This is why T requires a zero-arg ctor
         auto result = m_transport->receive(*item);
         switch (result) {
             case JTransport::Result::FINISHED:
-                throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
+                return Result::FailureFinished;
             case JTransport::Result::TRY_AGAIN:
-                throw JEventSource::RETURN_STATUS::kTRY_AGAIN;
+                return Result::FailureTryAgain;
             case JTransport::Result::FAILURE:
-                throw JEventSource::RETURN_STATUS::kERROR;
-            default:
-                break;
+                throw JException("Transport failure!");
         }
         // At this point, we know that item contains a valid Sample<T>
 
-        event->SetEventNumber(m_next_id);
+        event.SetEventNumber(m_next_id);
         m_next_id += 1;
-        event->Insert<T>(item);
+        event.Insert<T>(item);
 
         /// This is really bad because we have to worry about downstream HitSource returning TryAgainLater
         /// and we really don't want to block here
@@ -78,6 +77,7 @@ public:
             join->GetEvent(event);
         }
         std::cout << "Emit: " << *item << std::endl;
+        return Result::Success;
     }
 
 

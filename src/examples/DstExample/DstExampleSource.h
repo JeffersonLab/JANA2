@@ -15,13 +15,17 @@ class DstExampleSource : public JEventSource {
     /// Add member variables here
 
 public:
+    DstExampleSource();
+
     DstExampleSource(std::string resource_name, JApplication* app);
 
     virtual ~DstExampleSource() = default;
 
     void Open() override;
 
-    void GetEvent(std::shared_ptr<JEvent>) override;
+    void Close() override;
+
+    Result Emit(JEvent&) override;
     
     static std::string GetDescription();
 

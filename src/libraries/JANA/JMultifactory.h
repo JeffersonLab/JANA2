@@ -64,9 +64,6 @@ class JMultifactory : public jana::omni::JComponent,
 
     JFactorySet mHelpers; // This has ownership UNTIL JFactorySet::Add() takes it over
 
-    std::once_flag m_is_initialized;
-    std::once_flag m_is_finished;
-    int32_t m_last_run_number = -1;
     // Remember where we are in the stream so that the correct sequence of callbacks get called.
     // However, don't worry about a Status variable. Every time Execute() gets called, so does Process().
     // The JMultifactoryHelpers will control calls to Execute().

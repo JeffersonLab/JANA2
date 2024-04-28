@@ -12,22 +12,30 @@
 #include "catch.hpp"
 
 struct InterruptedSource : public JEventSource {
+    InterruptedSource() {
+        SetCallbackStyle(CallbackStyle::ExpertMode);
+    }
     void Open() override { GetApplication()->Stop(); }
-    void GetEvent(std::shared_ptr<JEvent>) override {}
+    Result Emit(JEvent&) override { return Result::Success; }
 };
 
 struct BoundedSource : public JEventSource {
 
     uint64_t event_count = 0;
 
+    BoundedSource() {
+        SetCallbackStyle(CallbackStyle::ExpertMode);
+    }
+
     void Open() override {
     }
 
-    void GetEvent(std::shared_ptr<JEvent>) override {
+    Result Emit(JEvent&) override {
         if (event_count >= 10) {
-            throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
+            return Result::FailureFinished;
         }
         event_count += 1;
+        return Result::Success;
     }
 };
 
@@ -35,14 +43,18 @@ struct UnboundedSource : public JEventSource {
 
     uint64_t event_count = 0;
 
+    UnboundedSource() {
+        SetCallbackStyle(CallbackStyle::ExpertMode);
+    }
+
     void Open() override {
     }
 
-    void GetEvent(std::shared_ptr<JEvent> event) override {
+    Result Emit(JEvent& event) override {
         event_count += 1;
-        event->SetEventNumber(event_count);
+        event.SetEventNumber(event_count);
         std::this_thread::sleep_for(std::chrono::milliseconds(200));
-        // jout << "Emitting " << event_count << jendl;
+        return Result::Success;
     }
 };
 

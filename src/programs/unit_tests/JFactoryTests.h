@@ -69,7 +69,12 @@ struct JFactoryTestExceptingInInitFactory : public JFactoryT<JFactoryTestDummyOb
 
 struct JFactoryTestDummySource: public JEventSource {
 
-    void GetEvent(std::shared_ptr<JEvent>) override {
+    JFactoryTestDummySource() {
+        SetCallbackStyle(CallbackStyle::ExpertMode);
+    }
+
+    Result Emit(JEvent&) override {
+        return Result::Success;
     };
 
     bool GetObjects(const std::shared_ptr<const JEvent>&, JFactory* aFactory) override {

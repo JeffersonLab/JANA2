@@ -111,7 +111,7 @@ The modified ``QuickTuorial.cc`` file needs to have the new ``RandomSource.h`` h
         void InitPlugin(JApplication *app) {
             InitJANAPlugin(app);
             app->Add(new QuickTutorialProcessor);
-            app->Add(new RandomSource("random", app));    // <- ADD THIS LINE
+            app->Add(new RandomSource);    // <- ADD THIS LINE
         }
     }
 
@@ -135,10 +135,12 @@ Because neither the source nor the processor are doing any ‘real work’, the 
         int m_max_emit_freq_hz = 100;             // <- ADD THIS LINE
 
     public:
+        RandomSource();
         RandomSource(std::string resource_name, JApplication* app);
         virtual ~RandomSource() = default;
         void Open() override;
-        void GetEvent(std::shared_ptr<JEvent>) override;
+        void Close() override;
+        Result Emit(JEvent& event) override;
         static std::string GetDescription();
     };
 
@@ -157,16 +159,18 @@ We can now use the value of ``m_max_emit_freq_hz``, confident that it is consist
 
 .. code-block:: console
 
-    void RandomSource::GetEvent(std::shared_ptr <JEvent> event) {
+    JEventSource::Result RandomSource::Emit(JEvent& event) {
 
         /// Configure event and run numbers
         static size_t current_event_number = 1;
-        event->SetEventNumber(current_event_number++);
-        event->SetRunNumber(22);
+        event.SetEventNumber(current_event_number++);
+        event.SetRunNumber(22);
 
         /// Slow down event source                                           // <- ADD THIS LINE
         auto delay_ms = std::chrono::milliseconds(1000/m_max_emit_freq_hz);  // <- ADD THIS LINE
         std::this_thread::sleep_for(delay_ms);                               // <- ADD THIS LINE
+
+        return Result::Success;
     }
 
 Finally, we can set this parameter on the command line and observe the throughput change accordingly:
@@ -227,7 +231,7 @@ The pattern we use for inserting data into the event is simple: For data of type
     #include "Hit.h"
         // ...
 
-    void RandomSource::GetEvent(std::shared_ptr<JEvent> event) {
+    JEventSource::Result RandomSource::Emit(JEvent& event) {
         // ...
 
         /// Insert simulated data into event       // ADD ME
@@ -237,8 +241,10 @@ The pattern we use for inserting data into the event is simple: For data of type
         hits.push_back(new Hit(0, 1, 1.0, 0));     // ADD ME
         hits.push_back(new Hit(1, 0, 1.0, 0));     // ADD ME
         hits.push_back(new Hit(1, 1, 1.0, 0));     // ADD ME
-        event->Insert(hits);                       // ADD ME
-        //event->Insert(hits, "fcal");             // If we used a tag
+        event.Insert(hits);                       // ADD ME
+        //event.Insert(hits, "fcal");             // If we used a tag
+
+        return Result::Success;
     }
 
 We now have ``Hits`` in our event stream. The next section will cover how the ``QuickTutorialProcessor`` should access them. However, we don’t need to create a custom JEventProcessor to examine our event stream. JANA provides a small utility called ``JCsvWriter`` which creates a CSV file containing all ``JObjects` of a certain type and tag. It can figure out how to do this thanks to ``JObject::Summarize``. You can examine the full code for ``JCsvWriter`` if you look under ``$JANA_HOME/include/JANA/JCsvWriter.h``. Be aware that ``JCsvWriter`` is very inefficient and should be used for debugging, not for production.
@@ -257,7 +263,7 @@ To use ``JCsvWriter``, we merely register it with our ``JApplication``. If we ru
         InitJANAPlugin(app);
 
         app->Add(new QuickTutorialProcessor);
-        app->Add(new RandomSource("random", app));
+        app->Add(new RandomSource);
         app->Add(new JCsvWriter<Hit>);                // ADD ME
         //app->Add(new JCsvWriter<Hit>("fcal"));      // If we used a tag
     }
@@ -423,7 +429,7 @@ Next, we register our ``SimpleClusterFactory`` with our JApplication. Because JA
 .. code-block:: console
 
     #include <JANA/JFactoryGenerator.h>                         // ADD ME
-    #include "SimpleClusterFactory.h"                            // ADD ME
+    #include "SimpleClusterFactory.h"                           // ADD ME
     // ...
 
     extern "C" {
@@ -432,7 +438,7 @@ Next, we register our ``SimpleClusterFactory`` with our JApplication. Because JA
         InitJANAPlugin(app);
 
         app->Add(new QuickTutorialProcessor);
-        app->Add(new RandomSource("random", app));
+        app->Add(new RandomSource);
         app->Add(new JCsvWriter<Hit>());
         app->Add(new JFactoryGeneratorT<SimpleClusterFactory>);  // ADD ME
     }
@@ -469,7 +475,7 @@ In order to make this happen, we need to define a ``JEventSourceGenerator``. Thi
         InitJANAPlugin(app);
 
         app->Add(new QuickTutorialProcessor);
-        // app->Add(new RandomSource("random", app));           // REMOVE ME
+        // app->Add(new RandomSource);           // REMOVE ME
         app->Add(new JEventSourceGeneratorT<RandomSource>);     // ADD ME
         app->Add(new JCsvWriter<Hit>());
         app->Add(new JFactoryGeneratorT<SimpleClusterFactory>);
@@ -495,7 +501,7 @@ We fill out the definition in ``RandomSource.cc``:
 
 Note that ``JEventSourceGenerator`` puts some constraints on our ``JEventSource``. Specifically, we need to note that:
 
-* Our ``JEventSource`` needs a two-argument constructor which accepts a string containing the resource name, and a ``JApplication pointer``.
+* Our ``JEventSource`` needs a two-argument constructor which accepts a string containing the resource name, and a ``JApplication`` pointer.
 
 * Our ``JEventSource`` needs a static method ``GetDescription``, to help JANA report to the user which sources are available and which ended up being chosen.
 

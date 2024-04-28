@@ -32,11 +32,11 @@ void JEventSourceArrow::process(Event* event, bool& success, JArrowMetrics::Stat
 
         auto source_status = m_sources[m_current_source]->DoNext(*event);
 
-        if (source_status == JEventSource::ReturnStatus::Finished) {
+        if (source_status == JEventSource::Result::FailureFinished) {
             m_current_source++;
             // TODO: Adjust nskip and nevents for the new source
         }
-        else if (source_status == JEventSource::ReturnStatus::TryAgain){
+        else if (source_status == JEventSource::Result::FailureTryAgain){
             // This JEventSource isn't finished yet, so we obtained either Success or TryAgainLater
             success = false;
             arrow_status = JArrowMetrics::Status::ComeBackLater;

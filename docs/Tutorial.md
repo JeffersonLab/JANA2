@@ -135,7 +135,7 @@ extern "C" {
     void InitPlugin(JApplication *app) {
         InitJANAPlugin(app);
         app->Add(new QuickTutorialProcessor);
-        app->Add(new RandomSource("random", app));    // <- ADD THIS LINE
+        app->Add(new RandomSource);    // <- ADD THIS LINE
     }
 }
 ```
@@ -163,10 +163,12 @@ class RandomSource : public JEventSource {
     int m_max_emit_freq_hz = 100;             // <- ADD THIS LINE
 
 public:
+    RandomSource();
     RandomSource(std::string resource_name, JApplication* app);
     virtual ~RandomSource() = default;
     void Open() override;
-    void GetEvent(std::shared_ptr<JEvent>) override;
+    void Close() override;
+    Result Emit(JEvent& event) override;
     static std::string GetDescription();
 };
 ```
@@ -192,16 +194,18 @@ We can now use the value of `m_max_emit_freq_hz`, confident that it is consisten
 runtime configuration:
 
 ```
-void RandomSource::GetEvent(std::shared_ptr <JEvent> event) {
+JEventSource::Result RandomSource::Emit(JEvent& event) {
 
     /// Configure event and run numbers
     static size_t current_event_number = 1;
-    event->SetEventNumber(current_event_number++);
-    event->SetRunNumber(22);
+    event.SetEventNumber(current_event_number++);
+    event.SetRunNumber(22);
 
     /// Slow down event source                                           // <- ADD THIS LINE
     auto delay_ms = std::chrono::milliseconds(1000/m_max_emit_freq_hz);  // <- ADD THIS LINE
     std::this_thread::sleep_for(delay_ms);                               // <- ADD THIS LINE
+
+    return Result::Success;
 }
 ```
 
@@ -280,7 +284,7 @@ logic, we want to be able to access them independently.
 #include "Hit.h"
 // ...
 
-void RandomSource::GetEvent(std::shared_ptr<JEvent> event) {
+Result RandomSource::Emit(JEvent& event) {
     // ...
 
     /// Insert simulated data into event       // ADD ME
@@ -290,8 +294,11 @@ void RandomSource::GetEvent(std::shared_ptr<JEvent> event) {
     hits.push_back(new Hit(0, 1, 1.0, 0));     // ADD ME
     hits.push_back(new Hit(1, 0, 1.0, 0));     // ADD ME
     hits.push_back(new Hit(1, 1, 1.0, 0));     // ADD ME
-    event->Insert(hits);                       // ADD ME
-    //event->Insert(hits, "fcal");             // If we used a tag
+
+    event.Insert(hits);                       // ADD ME
+    //event.Insert(hits, "fcal");             // If we used a tag
+
+    return Result::Success;
 }
 ```
 
@@ -317,7 +324,7 @@ void InitPlugin(JApplication* app) {
     InitJANAPlugin(app);
 
     app->Add(new QuickTutorialProcessor);
-    app->Add(new RandomSource("random", app));
+    app->Add(new RandomSource);
     app->Add(new JCsvWriter<Hit>);                // ADD ME
     //app->Add(new JCsvWriter<Hit>("fcal"));      // If we used a tag
 }
@@ -535,7 +542,7 @@ void InitPlugin(JApplication* app) {
     InitJANAPlugin(app);
 
     app->Add(new QuickTutorialProcessor);
-    app->Add(new RandomSource("random", app));
+    app->Add(new RandomSource);
     app->Add(new JCsvWriter<Hit>());
     app->Add(new JFactoryGeneratorT<SimpleClusterFactory>);  // ADD ME
 }
@@ -586,7 +593,7 @@ void InitPlugin(JApplication* app) {
     InitJANAPlugin(app);
 
     app->Add(new QuickTutorialProcessor);
-    // app->Add(new RandomSource("random", app));           // REMOVE ME
+    // app->Add(new RandomSource);           // REMOVE ME
     app->Add(new JEventSourceGeneratorT<RandomSource>);     // ADD ME
     app->Add(new JCsvWriter<Hit>());
     app->Add(new JFactoryGeneratorT<SimpleClusterFactory>);

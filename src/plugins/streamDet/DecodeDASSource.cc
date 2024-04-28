@@ -12,15 +12,10 @@
 // DecodeDASSource    (Constructor)
 //---------------------------------
 DecodeDASSource::DecodeDASSource(std::string source_name, JApplication* app) : JEventSource(source_name, app) {
-
+    SetCallbackStyle(CallbackStyle::ExpertMode);
 }
 
 DecodeDASSource::~DecodeDASSource() {
-
-    // Close the file/stream here.
-    std::cout << "Closing " << GetName() << std::endl;
-    ifs.close();
-
 }
 
 void DecodeDASSource::Open() {
@@ -31,7 +26,13 @@ void DecodeDASSource::Open() {
 
 }
 
-void DecodeDASSource::GetEvent(std::shared_ptr<JEvent> event) {
+void DecodeDASSource::Close() {
+    // Close the file/stream here.
+    std::cout << "Closing " << GetName() << std::endl;
+    ifs.close();
+}
+
+JEventSource::Result DecodeDASSource::Emit(JEvent& event) {
 
     // TODO: Put these somewhere that makes sense
     size_t MAX_CHANNELS = 80;
@@ -53,16 +54,14 @@ void DecodeDASSource::GetEvent(std::shared_ptr<JEvent> event) {
                 }
             }
             // populate the jevent with the adc samples
-            event->Insert(hits);
-            event->SetEventNumber(current_event_nr++);
-            return;
+            event.Insert(hits);
+            event.SetEventNumber(current_event_nr++);
+            return Result::Success;
         }
         // close file stream when the end of file is reached
         std::cout << "Reached end of file/stream " << GetName() << std::endl;
-        ifs.close();
     }
-    // signal jana to terminate
-    throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
+    return Result::FailureFinished;
 
 }
 

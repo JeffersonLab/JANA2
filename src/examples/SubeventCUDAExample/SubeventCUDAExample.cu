@@ -77,19 +77,21 @@ struct MyProcessor : public JSubeventProcessor<MyInput, MyOutput> {
 
 
 struct SimpleSource : public JEventSource {
-    SimpleSource(std::string name) : JEventSource(name) {};
+    SimpleSource() {
+        SetCallbackStyle(CallbackStyle::ExpertMode); 
+    };
 
-    void GetEvent(std::shared_ptr <JEvent> event) override {
-        auto evt = event->GetEventNumber();
+    Result Emit(JEvent& event) override {
+        auto evt = event.GetEventNumber();
         std::vector < MyInput * > inputs;
         inputs.push_back(new MyInput(22, 3.6, evt, 0));
         inputs.push_back(new MyInput(23, 3.5, evt, 1));
         inputs.push_back(new MyInput(24, 3.4, evt, 2));
         inputs.push_back(new MyInput(25, 3.3, evt, 3));
         inputs.push_back(new MyInput(26, 3.2, evt, 4));
-        event->Insert(inputs);
+        event.Insert(inputs);
         LOG << "Emitting event " << event->GetEventNumber() << LOG_END;
-        // throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
+        return Result::Success;
     }
 };
 

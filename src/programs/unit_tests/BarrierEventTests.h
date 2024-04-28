@@ -17,23 +17,27 @@ class BarrierSource : public JEventSource {
 
 public:
 
+    BarrierSource() {
+        SetCallbackStyle(CallbackStyle::ExpertMode);
+    }
+
     void Open() override {
     }
 
-    void GetEvent(std::shared_ptr<JEvent> event) override {
+    Result Emit(JEvent& event) override {
         event_count++;
 
         if (event_count >= 100) {
-            throw RETURN_STATUS::kNO_MORE_EVENTS;
+            return Result::FailureFinished;
         }
 
         LOG << "Emitting event " << event_count << LOG_END;
-        event->SetEventNumber(event_count);
+        event.SetEventNumber(event_count);
 
         if (event_count % 10 == 0) {
-            event->SetSequential(true);
+            event.SetSequential(true);
         }
-
+        return Result::Success;
     }
 };
 

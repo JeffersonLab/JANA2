@@ -104,7 +104,7 @@ public:
             for (auto* input : m_inputs) {
                 input->PrefetchCollection(parent);
             }
-            if (m_callback_style != CallbackStyle::Declarative) {
+            if (m_callback_style != CallbackStyle::DeclarativeMode) {
                 Preprocess(parent);
             }
         }
@@ -137,7 +137,7 @@ public:
                     for (auto* resource : m_resources) {
                         resource->ChangeRun(parent.GetRunNumber(), m_app);
                     }
-                    if (m_callback_style == CallbackStyle::Declarative) {
+                    if (m_callback_style == CallbackStyle::DeclarativeMode) {
                         ChangeRun(parent.GetRunNumber());
                     }
                     else {
