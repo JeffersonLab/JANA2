@@ -61,11 +61,13 @@ struct ProcessorWithTimeout : public JEventProcessor {
                                   int first_event_delay_ms = 0)
         : timeout_on_event_nr(timeout_on_event_nr)
         , first_event_delay_ms(first_event_delay_ms)
-    { }
+    { 
+        SetCallbackStyle(CallbackStyle::ExpertMode);
+    }
 
     void Init() override {}
 
-    void Process(const std::shared_ptr<const JEvent>&) override {
+    void Process(const JEvent&) override {
         processed_count += 1;
         if (processed_count == 1) {
             std::this_thread::sleep_for(std::chrono::milliseconds(first_event_delay_ms));

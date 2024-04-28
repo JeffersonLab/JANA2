@@ -25,7 +25,10 @@ struct DummySource : public JEventSource {
 
 struct DummyProcessor : public JEventProcessor {
 
-    void Process(const std::shared_ptr<const JEvent> &) override {
+    DummyProcessor() {
+        SetCallbackStyle(CallbackStyle::ExpertMode);
+    }
+    void Process(const JEvent&) override {
         consume_cpu_ms(100);
         std::this_thread::sleep_for(std::chrono::nanoseconds(1));
     }

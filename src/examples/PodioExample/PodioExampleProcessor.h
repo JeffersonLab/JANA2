@@ -11,9 +11,8 @@
 
 class PodioExampleProcessor : public JEventProcessor {
 public:
-    void Process(const std::shared_ptr<const JEvent> &ptr) override;
-
-
+    PodioExampleProcessor();
+    void Process(const JEvent&) override;
 };
 
 

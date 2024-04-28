@@ -46,14 +46,17 @@ public:
 struct BarrierProcessor : public JEventProcessor {
 
 public:
-    void Process(const std::shared_ptr<const JEvent>& event) override {
+    BarrierProcessor() {
+        SetCallbackStyle(CallbackStyle::ExpertMode);
+    }
+    void Process(const JEvent& event) override {
 
-        if (event->GetSequential()) {
+        if (event.GetSequential()) {
             global_resource += 1;
-            LOG << "Barrier event = " << event->GetEventNumber() << ", writing global var = " << global_resource << LOG_END;
+            LOG << "Barrier event = " << event.GetEventNumber() << ", writing global var = " << global_resource << LOG_END;
         }
         else {
-            LOG << "Processing non-barrier event = " << event->GetEventNumber() << ", reading global var = " << global_resource << LOG_END;
+            LOG << "Processing non-barrier event = " << event.GetEventNumber() << ", reading global var = " << global_resource << LOG_END;
         }
     }
 };

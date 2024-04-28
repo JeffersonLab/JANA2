@@ -17,17 +17,19 @@ class AHitBHitFuser : public JEventProcessor {
 public:
     AHitAnomalyDetector(JApplication* app = nullptr, size_t delay_ms=1000)
         : JEventProcessor(app)
-        , m_delay_ms(delay_ms) {};
+        , m_delay_ms(delay_ms) {
+            SetCallbackStyle(CallbackStyle::ExpertMode);
+        };
 
     void Init() override {
 
     }
-    void Process(const std::shared_ptr<const JEvent>& event) override {
+    void Process(const JEvent& event) override {
 
-        auto a_hits = event->Get<AHit>();
-        auto b_hits = event->Get<BHit>();
+        auto a_hits = event.Get<AHit>();
+        auto b_hits = event.Get<BHit>();
         std::stringstream ss;
-        ss << "AHit/BHit fusion: Event #" << event->GetEventNumber() << " : {";
+        ss << "AHit/BHit fusion: Event #" << event.GetEventNumber() << " : {";
         for (auto & hit : a_hits) {
             ss << "(" << hit->E << "," << hit->t << "), ";
         }
@@ -40,10 +42,10 @@ public:
         consume_cpu_ms(m_delay_ms);
 
 
-        auto raw_hits = event->Get<AHit>("raw_hits");
+        auto raw_hits = event.Get<AHit>("raw_hits");
 
 
-        std::cout << "Processing event #" << event->GetEventNumber() << std::endl;
+        std::cout << "Processing event #" << event.GetEventNumber() << std::endl;
         Serializer<AHit> serializer;
         for (auto & hit : raw_hits) {
             AHit* calibrated_hit = new DetectorAHit(*hit);

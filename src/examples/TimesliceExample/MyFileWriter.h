@@ -31,26 +31,27 @@ struct MyFileWriter : public JEventProcessor {
     
     MyFileWriter() {
         SetTypeName(NAME_OF_THIS);
+        SetCallbackStyle(CallbackStyle::ExpertMode);
     }
 
     void Init() {
         m_writer = std::make_unique<podio::ROOTFrameWriter>("output.root");
     }
 
-    void Process(const std::shared_ptr<const JEvent>& event) {
+    void Process(const JEvent& event) {
 
         std::lock_guard<std::mutex> guard(m_mutex);
-        if (event->HasParent(JEventLevel::Timeslice)) {
+        if (event.HasParent(JEventLevel::Timeslice)) {
 
-            auto& ts = event->GetParent(JEventLevel::Timeslice);
+            auto& ts = event.GetParent(JEventLevel::Timeslice);
             auto ts_nr = ts.GetEventNumber();
 
-            if (event->GetEventIndex() == 0) {
+            if (event.GetEventIndex() == 0) {
                 m_writer->writeFrame(*(m_ts_frame_in().at(0)), "timeslices");
             }
 
             LOG_DEBUG(GetLogger()) 
-                << "Event " << event->GetEventNumber() << " from Timeslice " << ts_nr
+                << "Event " << event.GetEventNumber() << " from Timeslice " << ts_nr
                 << "\nClusters\n"
                 << TabulateClusters(m_evt_clusters_in())
                 << LOG_END;
@@ -58,7 +59,7 @@ struct MyFileWriter : public JEventProcessor {
         else {
 
             LOG_DEBUG(GetLogger()) 
-                << "Event " << event->GetEventNumber()
+                << "Event " << event.GetEventNumber()
                 << "\nClusters\n"
                 << TabulateClusters(m_evt_clusters_in())
                 << LOG_END;

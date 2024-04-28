@@ -63,10 +63,13 @@ struct CountingProcessor : public JEventProcessor {
     std::atomic_int processed_count {0};
     std::atomic_int finish_call_count {0};
 
+    CountingProcessor() {
+        SetCallbackStyle(CallbackStyle::ExpertMode);
+    }
 
     void Init() override {}
 
-    void Process(const std::shared_ptr<const JEvent>& /*event*/) override {
+    void Process(const JEvent&) override {
         processed_count += 1;
         // jout << "Processing " << event->GetEventNumber() << jendl;
         REQUIRE(finish_call_count == 0);

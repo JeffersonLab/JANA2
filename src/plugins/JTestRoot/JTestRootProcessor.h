@@ -9,14 +9,13 @@
 class JTestRootProcessor : public JEventProcessor {
 
     // Shared state (e.g. histograms, TTrees, TFiles) live
-    std::mutex m_mutex;
     
 public:
 
     JTestRootProcessor();
     virtual ~JTestRootProcessor() = default;
 
-    void Process(const std::shared_ptr<const JEvent>& event) override;
+    void Process(const JEvent&) override;
 };
 
 

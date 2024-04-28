@@ -104,6 +104,9 @@ public:
             if (m_callback_style == CallbackStyle::DeclarativeMode) {
                 Process(e->GetRunNumber(), e->GetEventNumber(), e->GetEventIndex());
             }
+            else if (m_callback_style == CallbackStyle::ExpertMode) {
+                Process(*e);
+            }
             else {
                 Process(e);
             }
@@ -161,6 +164,10 @@ public:
 
 
     virtual void Process(const std::shared_ptr<const JEvent>& /*event*/) {
+        throw JException("Not implemented yet!");
+    }
+    
+    virtual void Process(const JEvent& /*event*/) {
         throw JException("Not implemented yet!");
     }
 

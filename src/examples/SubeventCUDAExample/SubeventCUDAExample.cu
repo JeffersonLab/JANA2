@@ -96,23 +96,26 @@ struct SimpleSource : public JEventSource {
 };
 
 struct SimpleProcessor : public JEventProcessor {
-    std::mutex m_mutex;
 
-    void Process(const std::shared_ptr<const JEvent> &event) {
+    SimpleProcessor() {
+        SetCallbackStyle(CallbackStyle::ExpertMode);
+    }
+
+    void Process(const JEvent& event) {
 
         std::lock_guard <std::mutex> guard(m_mutex);
 
-        auto outputs = event->Get<MyOutput>();
+        auto outputs = event.Get<MyOutput>();
         // assert(outputs.size() == 4);
         // assert(outputs[0]->z == 25.6f);
         // assert(outputs[1]->z == 26.5f);
         // assert(outputs[2]->z == 27.4f);
         // assert(outputs[3]->z == 28.3f);
-        LOG << " Contents of event " << event->GetEventNumber() << LOG_END;
+        LOG << " Contents of event " << event.GetEventNumber() << LOG_END;
         for (auto output: outputs) {
             LOG << " " << output->evt << ":" << output->sub << " " << output->z << LOG_END;
         }
-        LOG << " DONE with contents of event " << event->GetEventNumber() << LOG_END;
+        LOG << " DONE with contents of event " << event.GetEventNumber() << LOG_END;
     }
 };
 

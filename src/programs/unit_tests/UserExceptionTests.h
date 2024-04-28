@@ -50,7 +50,9 @@ struct FlakyProcessor : public JEventProcessor {
         : init_excepts(init_excepts)
         , process_excepts(process_excepts)
         , finish_excepts(finish_excepts)
-        {};
+        {
+            SetCallbackStyle(CallbackStyle::ExpertMode);
+        };
 
     void Init() override {
         if (init_excepts) {
@@ -58,7 +60,7 @@ struct FlakyProcessor : public JEventProcessor {
         }
     };
 
-    void Process(const std::shared_ptr<const JEvent>&) override {
+    void Process(const JEvent&) override {
         if (process_excepts) {
             throw JException("Unable to process!");
         }
