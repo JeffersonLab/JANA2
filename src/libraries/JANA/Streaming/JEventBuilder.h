@@ -53,7 +53,7 @@ public:
         return "JEventBuilder";
     }
 
-    Result Emit(JEvent&) override {
+    Result Emit(JEvent& event) override {
 
         auto item = new T();  // This is why T requires a zero-arg ctor
         auto result = m_transport->receive(*item);
