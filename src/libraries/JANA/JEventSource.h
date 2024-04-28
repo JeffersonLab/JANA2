@@ -246,13 +246,13 @@ public:
                 event->GetJCallGraphRecorder()->SetInsertDataOrigin( previous_origin );
 
                 if (result == Result::Success) {
+                    m_event_count += 1; 
                     // We end up here if we read an entry in our file or retrieved a message from our socket,
                     // and believe we could obtain another one immediately if we wanted to
                     for (auto* output : m_outputs) {
                         output->InsertCollection(*event);
                     }
-                    m_event_count += 1; 
-                    if (m_event_count < first_evt_nr) {
+                    if (m_event_count <= first_evt_nr) {
                         // We immediately throw away this whole event because of nskip 
                         // (although really we should be handling this with Seek())
                         return Result::FailureTryAgain;

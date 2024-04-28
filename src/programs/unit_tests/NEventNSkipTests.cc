@@ -15,12 +15,17 @@ struct NEventNSkipBoundedSource : public JEventSource {
     std::atomic_int open_count{0};
     std::atomic_int close_count{0};
 
-    void GetEvent(std::shared_ptr<JEvent>) override {
+    NEventNSkipBoundedSource() {
+        SetCallbackStyle(CallbackStyle::ExpertMode);
+    }
+
+    Result Emit(JEvent&) override {
         if (event_count >= event_bound) {
-            throw JEventSource::RETURN_STATUS::kNO_MORE_EVENTS;
+            return Result::FailureFinished;
         }
         event_count += 1;
         events_emitted.push_back(event_count);
+        return Result::Success;
     }
 
     void Open() override {
