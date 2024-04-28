@@ -41,6 +41,7 @@ set(TEST_SOURCES
     UnfoldTests.cc
     JComponentTests.cc
     Components/JEventSourceTests.cc
+    Components/JEventProcessorTests.cc
     )
 
 if (${USE_PODIO})
