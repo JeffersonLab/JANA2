@@ -7,7 +7,7 @@
 #include "JANA/Topology/JTopologyBuilder.h"
 #include <JANA/Engine/JArrowProcessingController.h>
 
-#include <TestTopologyComponents.h>
+#include "TestTopologyComponents.h"
 #include <JANA/Utils/JPerfUtils.h>
 #include <JANA/Engine/JScheduler.h>
 

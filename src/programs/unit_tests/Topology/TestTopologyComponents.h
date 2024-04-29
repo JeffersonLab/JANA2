@@ -9,7 +9,7 @@
 #include <JANA/Services/JLoggingService.h>
 #include <JANA/Topology/JPipelineArrow.h>
 #include <thread>
-#include <MapArrow.h>
+#include "MapArrow.h"
 
 
 struct RandIntSource : public JPipelineArrow<RandIntSource, int> {

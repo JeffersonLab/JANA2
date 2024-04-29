@@ -5,7 +5,7 @@
 
 #include "catch.hpp"
 
-#include <TestTopologyComponents.h>
+#include "../Topology/TestTopologyComponents.h"
 #include <JANA/Engine/JScheduler.h>
 
 

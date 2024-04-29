@@ -6,8 +6,9 @@
 #include "catch.hpp"
 
 #include <JANA/Engine/JScheduler.h>
-#include <TestTopologyComponents.h>
 #include <JANA/Topology/JTopologyBuilder.h>
+
+#include "../Topology/TestTopologyComponents.h"
 
 TEST_CASE("SchedulerTests") {
 
