@@ -1,53 +1,51 @@
 
 set(TEST_SOURCES
-    catch.hpp
-    ArrowActivationTests.cc
-    JObjectTests.cc
-    JServiceLocatorTests.cc
-    JServiceLocatorTests.h
-    QueueTests.cc
-    TopologyTests.cc
-    SchedulerTests.cc
-    JEventTests.cc
-    JEventTests.h
-    ExactlyOnceTests.cc
-    ExactlyOnceTests.h
-    TerminationTests.cc
-    TerminationTests.h
-    UserExceptionTests.cc
-    UserExceptionTests.h
-    JEventGroupTests.cc
-    JFactoryTests.h
-    JFactoryTests.cc
-    NEventNSkipTests.cc
-    JEventGetAllTests.cc
-    JParameterManagerTests.cc
-    JStatusBitsTests.cc
-    TimeoutTests.cc
-    ScaleTests.cc
-    BarrierEventTests.cc
-    BarrierEventTests.h
-    GetObjectsTests.cc
-    JCallGraphRecorderTests.cc
-    JEventProcessorSequentialTests.cc
-    JFactoryDefTagsTests.cc
-    SubeventTests.cc
-    JAutoactivableTests.cc
-    JTablePrinterTests.cc
-    JMultiFactoryTests.cc
-    JPoolTests.cc
-    ArrowTests.cc
-    MultiLevelTopologyTests.cc
-    UnfoldTests.cc
-    JComponentTests.cc
-    Components/JEventSourceTests.cc
+    
+    Topology/ArrowTests.cc
+    Topology/JPoolTests.cc
+    Topology/MultiLevelTopologyTests.cc
+    Topology/QueueTests.cc
+    Topology/SubeventTests.cc
+    Topology/TopologyTests.cc
+
+    Components/BarrierEventTests.cc
+    Components/JObjectTests.cc
+    Components/ExactlyOnceTests.cc
+    Components/GetObjectsTests.cc
+    Components/NEventNSkipTests.cc
+    Components/JComponentTests.cc
+    Components/JEventGetAllTests.cc
     Components/JEventProcessorTests.cc
+    Components/JEventProcessorSequentialTests.cc
+    Components/JEventSourceTests.cc
+    Components/JEventTests.cc
+    Components/JFactoryDefTagsTests.cc
+    Components/JFactoryTests.cc
+    Components/JMultiFactoryTests.cc
+    Components/UnfoldTests.cc
+    Components/UserExceptionTests.cc
+
+    Services/JServiceLocatorTests.cc
+    Services/JParameterManagerTests.cc
+
+    Engine/ArrowActivationTests.cc
+    Engine/ScaleTests.cc
+    Engine/SchedulerTests.cc
+    Engine/TerminationTests.cc
+    Engine/TimeoutTests.cc
+
+    Utils/JAutoactivableTests.cc
+    Utils/JEventGroupTests.cc
+    Utils/JTablePrinterTests.cc
+    Utils/JStatusBitsTests.cc
+    Utils/JCallGraphRecorderTests.cc
+
     )
 
 if (${USE_PODIO})
     list(APPEND TEST_SOURCES
-            PodioTests.cc
-            )
+        Components/PodioTests.cc
+        )
 endif()
 
 add_executable(jana-unit-tests ${TEST_SOURCES})

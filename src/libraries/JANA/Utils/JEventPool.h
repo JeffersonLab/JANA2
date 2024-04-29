@@ -8,7 +8,7 @@
 
 #include <JANA/JEvent.h>
 #include <JANA/Services/JComponentManager.h>
-#include <JANA/Engine/JPool.h>
+#include <JANA/Topology/JPool.h>
 
 
 class JEventPool : public JPool<std::shared_ptr<JEvent>> {

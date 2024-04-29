@@ -9,7 +9,7 @@
 #include <JANA/Services/JLoggingService.h>
 #include <JANA/Engine/JScheduler.h>
 #include <JANA/Engine/JWorkerMetrics.h>
-#include <JANA/Engine/JArrowPerfSummary.h>
+#include <JANA/Engine/JPerfSummary.h>
 #include <atomic>
 
 

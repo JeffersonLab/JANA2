@@ -17,7 +17,7 @@ class JFactoryGenerator;
 class JFactorySet;
 class JComponentManager;
 class JPluginLoader;
-class JProcessingController;
+class JArrowProcessingController;
 class JEventUnfolder;
 class JServiceLocator;
 class JParameter;
@@ -26,7 +26,7 @@ class JApplication;
 extern JApplication* japp;
 
 #include <JANA/Status/JComponentSummary.h>
-#include <JANA/Status/JPerfSummary.h>
+#include <JANA/Engine/JPerfSummary.h>
 #include <JANA/JLogger.h>
 
 
@@ -140,7 +140,7 @@ private:
     std::shared_ptr<JParameterManager> m_params;
     std::shared_ptr<JPluginLoader> m_plugin_loader;
     std::shared_ptr<JComponentManager> m_component_manager;
-    std::shared_ptr<JProcessingController> m_processing_controller;
+    std::shared_ptr<JArrowProcessingController> m_processing_controller;
 
     bool m_quitting = false;
     bool m_draining_queues = false;

@@ -4,10 +4,13 @@
 
 #include <JANA/JApplication.h>
 #include <JANA/JObject.h>
-#include <JANA/Engine/JSubeventArrow.h>
 #include <JANA/JEventSource.h>
 #include <JANA/JEventProcessor.h>
-#include "JANA/Engine/JTopologyBuilder.h"
+
+#include <JANA/Topology/JEventSourceArrow.h>
+#include <JANA/Topology/JEventProcessorArrow.h>
+#include <JANA/Topology/JSubeventArrow.h>
+#include "JANA/Topology/JTopologyBuilder.h"
 
 
 struct MyInput : public JObject {
@@ -82,16 +85,6 @@ struct SimpleProcessor : public JEventProcessor {
 
 int main() {
 
-    MyProcessor processor;
-    JMailbox<std::shared_ptr<JEvent>*> events_in;
-    JMailbox<std::shared_ptr<JEvent>*> events_out;
-    JMailbox<SubeventWrapper<MyInput>> subevents_in;
-    JMailbox<SubeventWrapper<MyOutput>> subevents_out;
-
-    auto split_arrow = new JSplitArrow<MyInput, MyOutput>("split", &processor, &events_in, &subevents_in);
-    auto subprocess_arrow = new JSubeventArrow<MyInput, MyOutput>("subprocess", &processor, &subevents_in, &subevents_out);
-    auto merge_arrow = new JMergeArrow<MyInput, MyOutput>("merge", &processor, &subevents_out, &events_out);
-
     JApplication app;
     app.SetParameterValue("log:info", "JWorker,JScheduler,JArrowProcessingController,JEventProcessorArrow");
     app.SetTimeoutEnabled(false);
@@ -100,25 +93,39 @@ int main() {
     auto source = new SimpleSource();
     source->SetNEvents(10);  // limit ourselves to 10 events. Note that the 'jana:nevents' param won't work
                              // here because we aren't using JComponentManager to manage the EventSource
+    MyProcessor processor;
 
-    auto topology = app.GetService<JTopologyBuilder>()->create_empty();
-    auto source_arrow = new JEventSourceArrow("simpleSource",
-                                              {source},
-                                              &events_in,
-                                              topology->event_pool);
-    auto proc_arrow = new JEventProcessorArrow("simpleProcessor", &events_out, nullptr, topology->event_pool);
-    proc_arrow->add_processor(new SimpleProcessor);
+    auto topology = app.GetService<JTopologyBuilder>();
+    topology->set_configure_fn([&](JTopologyBuilder& builder) {
 
-    topology->arrows.push_back(source_arrow);
-    topology->arrows.push_back(split_arrow);
-    topology->arrows.push_back(subprocess_arrow);
-    topology->arrows.push_back(merge_arrow);
-    topology->arrows.push_back(proc_arrow);
+        JMailbox<std::shared_ptr<JEvent>*> events_in;
+        JMailbox<std::shared_ptr<JEvent>*> events_out;
+        JMailbox<SubeventWrapper<MyInput>> subevents_in;
+        JMailbox<SubeventWrapper<MyOutput>> subevents_out;
 
-    source_arrow->attach(split_arrow);
-    split_arrow->attach(subprocess_arrow);
-    subprocess_arrow->attach(merge_arrow);
-    merge_arrow->attach(proc_arrow);
+        auto split_arrow = new JSplitArrow<MyInput, MyOutput>("split", &processor, &events_in, &subevents_in);
+        auto subprocess_arrow = new JSubeventArrow<MyInput, MyOutput>("subprocess", &processor, &subevents_in, &subevents_out);
+        auto merge_arrow = new JMergeArrow<MyInput, MyOutput>("merge", &processor, &subevents_out, &events_out);
+
+        auto source_arrow = new JEventSourceArrow("simpleSource",
+                                                    {source},
+                                                    &events_in,
+                                                    topology->event_pool);
+        auto proc_arrow = new JEventProcessorArrow("simpleProcessor", &events_out, nullptr, topology->event_pool);
+        proc_arrow->add_processor(new SimpleProcessor);
+
+        builder.arrows.push_back(source_arrow);
+        builder.arrows.push_back(split_arrow);
+        builder.arrows.push_back(subprocess_arrow);
+        builder.arrows.push_back(merge_arrow);
+        builder.arrows.push_back(proc_arrow);
+
+        source_arrow->attach(split_arrow);
+        split_arrow->attach(subprocess_arrow);
+        subprocess_arrow->attach(merge_arrow);
+        merge_arrow->attach(proc_arrow);
+    });
+
 
     app.Run(true);
 

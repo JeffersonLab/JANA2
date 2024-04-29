@@ -6,14 +6,17 @@
 
 #include <JANA/JEventSource.h>
 
+#include <JANA/Utils/JCpuInfo.h>
 #include <JANA/Services/JParameterManager.h>
+#include <JANA/Services/JGlobalRootLock.h>
 #include <JANA/Services/JPluginLoader.h>
 #include <JANA/Services/JComponentManager.h>
+#include <JANA/Topology/JTopologyBuilder.h>
 #include <JANA/Services/JLoggingService.h>
 #include <JANA/Services/JGlobalRootLock.h>
 #include <JANA/Engine/JArrowProcessingController.h>
-#include <JANA/Utils/JCpuInfo.h>
-#include <JANA/Engine/JTopologyBuilder.h>
+
+#include <unistd.h>
 
 JApplication *japp = nullptr;
 
@@ -147,11 +150,9 @@ void JApplication::Initialize() {
         LOG_WARN(m_logger) << "Unrecognized engine choice! Falling back to jana:engine=0" << LOG_END;
     }
     */
-    auto topology = topology_builder->get_or_create();
-    ProvideService(std::make_shared<JArrowProcessingController>(topology));
-
+    topology_builder->create_topology();
+    ProvideService(std::make_shared<JArrowProcessingController>());
     m_processing_controller = m_service_locator->get<JArrowProcessingController>();  // Get deps from SL
-    ProvideService(m_processing_controller);  // Make abstract class available via SL
     m_processing_controller->initialize();
 
     m_initialized = true;

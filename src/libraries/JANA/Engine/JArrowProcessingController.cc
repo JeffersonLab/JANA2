@@ -3,7 +3,8 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #include <JANA/Engine/JArrowProcessingController.h>
-#include <JANA/Engine/JArrowPerfSummary.h>
+#include <JANA/Engine/JPerfSummary.h>
+#include <JANA/Topology/JTopologyBuilder.h>
 #include <JANA/Utils/JCpuInfo.h>
 #include <JANA/JLogger.h>
 
@@ -17,6 +18,8 @@ void JArrowProcessingController::acquire_services(JServiceLocator * sl) {
     m_logger = ls->get_logger("JArrowProcessingController");
     m_worker_logger = ls->get_logger("JWorker");
     m_scheduler_logger = ls->get_logger("JScheduler");
+
+    m_topology = sl->get<JTopologyBuilder>();
 
     // Obtain timeouts from parameter manager
     auto params = sl->get<JParameterManager>();
@@ -157,14 +160,14 @@ bool JArrowProcessingController::is_timed_out() {
     // Probably want to refactor so that we only make one such call per ticker iteration.
     // Since we are storing our metrics summary anyway, we could call measure_performance()
     // and have print_report(), print_final_report(), is_timed_out(), etc use the cached version
-    auto metrics = measure_internal_performance();
+    auto metrics = measure_performance();
 
     int timeout_s;
-    if (metrics->total_uptime_s < m_warmup_timeout_s * m_topology->event_pool_size / metrics->thread_count) {
+    if (metrics->total_uptime_s < m_warmup_timeout_s * m_topology->m_event_pool_size / metrics->thread_count) {
         // We are at the beginning and not all events have necessarily had a chance to warm up
         timeout_s = m_warmup_timeout_s;
     }
-    else if (!m_topology->limit_total_events_in_flight) {
+    else if (!m_topology->m_limit_total_events_in_flight) {
         // New events are constantly emitted, each of which may contain jfactorysets which need to be warmed up
         timeout_s = m_warmup_timeout_s;
     }
@@ -219,16 +222,16 @@ JArrowProcessingController::~JArrowProcessingController() {
 }
 
 void JArrowProcessingController::print_report() {
-    auto metrics = measure_internal_performance();
+    auto metrics = measure_performance();
     LOG_INFO(m_logger) << "Running" << *metrics << LOG_END;
 }
 
 void JArrowProcessingController::print_final_report() {
-    auto metrics = measure_internal_performance();
+    auto metrics = measure_performance();
     LOG_INFO(m_logger) << "Final Report" << *metrics << LOG_END;
 }
 
-std::unique_ptr<const JArrowPerfSummary> JArrowProcessingController::measure_internal_performance() {
+std::unique_ptr<const JPerfSummary> JArrowProcessingController::measure_performance() {
 
     // Measure perf on all Workers first, as this will prompt them to publish
     // any ArrowMetrics they have collected
@@ -275,12 +278,9 @@ std::unique_ptr<const JArrowPerfSummary> JArrowProcessingController::measure_int
                                       ? std::numeric_limits<double>::infinity()
                                       : m_perf_summary.avg_throughput_hz / tighter_bottleneck;
 
-    return std::unique_ptr<JArrowPerfSummary>(new JArrowPerfSummary(m_perf_summary));
+    return std::unique_ptr<JPerfSummary>(new JPerfSummary(m_perf_summary));
 }
 
-std::unique_ptr<const JPerfSummary> JArrowProcessingController::measure_performance() {
-    return measure_internal_performance();
-}
 
 
 

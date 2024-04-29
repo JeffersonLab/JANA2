@@ -8,9 +8,9 @@
 #include <mutex>
 #include <vector>
 
-#include <JANA/Engine/JArrow.h>
-#include <JANA/Engine/JArrowPerfSummary.h>
-#include <JANA/Services/JLoggingService.h>
+#include <JANA/Topology/JArrow.h>
+#include <JANA/Topology/JTopologyBuilder.h>
+#include <JANA/Engine/JPerfSummary.h>
 
 
 struct JArrowTopology;
@@ -54,7 +54,7 @@ private:
     // This mutex controls ALL scheduler state
     std::mutex m_mutex;
 
-    std::shared_ptr<JArrowTopology> m_topology;
+    std::shared_ptr<JTopologyBuilder> m_topology;
 
     // Protected state
     TopologyState m_topology_state;
@@ -63,7 +63,7 @@ private:
 public:
 
     /// Constructor. Note that a Scheduler operates on a vector of Arrow*s.
-    JScheduler(std::shared_ptr<JArrowTopology> topology);
+    JScheduler(std::shared_ptr<JTopologyBuilder> topology);
 
 
     // Worker-facing operations
