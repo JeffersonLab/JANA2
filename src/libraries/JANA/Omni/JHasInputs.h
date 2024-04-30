@@ -213,7 +213,7 @@ protected:
                 }
                 else {
                     if (this->is_optional && !event.HasParent(level)) return;
-                    m_data.push_back(event.GetParent(level).GetCollection<PodioT>(coll_name, !this->is_optional));
+                    m_data.push_back(event.GetParent(level).template GetCollection<PodioT>(coll_name, !this->is_optional));
                 }
             }
         }
@@ -230,7 +230,7 @@ protected:
                 }
                 else {
                     if (this->is_optional && !event.HasParent(level)) return;
-                    event.GetParent(level).GetCollection<PodioT>(coll_name, !this->is_optional);
+                    event.GetParent(level).template GetCollection<PodioT>(coll_name, !this->is_optional);
                 }
             }
         }
