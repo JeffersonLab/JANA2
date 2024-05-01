@@ -12,7 +12,7 @@
 class JTestRootEventSource : public JEventSource {
 
 public:
-    JTestRootEventSource(std::string resource_name, JApplication* app);
+    JTestRootEventSource();
     virtual ~JTestRootEventSource() = default;
 
     Result Emit(JEvent& event) override;

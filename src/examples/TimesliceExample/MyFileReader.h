@@ -21,7 +21,7 @@ struct MyFileReader : public JEventSource {
 
     void Close() override { }
 
-    Result Emit(JEvent&) override {
+    Result Emit(JEvent& event) override {
 
         auto event_nr = event.GetEventNumber();
 
