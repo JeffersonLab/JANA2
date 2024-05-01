@@ -29,5 +29,5 @@ if (${USE_ROOT} AND ${USE_ZEROMQ})
     install(FILES ${my_headers} DESTINATION include/streamDet)
 
 else()
-    message(STATUS "Skipping plugins/streamDet because USE_ROOT=Off or USE_ZEROMQ=Off")
+    message(STATUS "Skipping examples/InteractiveStreamingExample because USE_ROOT=Off or USE_ZEROMQ=Off")
 endif()
