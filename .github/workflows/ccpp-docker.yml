@@ -28,7 +28,8 @@ jobs:
           -DUSE_PODIO=ON \
           -DUSE_XERCES=ON \
           -DXercesC_DIR=/usr \
-          -DUSE_ZEROMQ=ON
+          -DUSE_ZEROMQ=ON \
+          -Dpodio_DIR=/app/podio/install/lib/cmake/podio/
     - name: make
       run: |
         cd $GITHUB_WORKSPACE/build
