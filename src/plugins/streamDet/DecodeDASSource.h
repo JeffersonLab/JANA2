@@ -16,7 +16,7 @@ class DecodeDASSource : public JEventSource {
 public:
 
     // constructors and destructors
-    DecodeDASSource();
+    DecodeDASSource(std::string source_name, JApplication* app);
     ~DecodeDASSource() override;
 
     // define public methods
