@@ -39,7 +39,7 @@ JApplication::JApplication(JParameterManager* params) {
     }
     m_component_manager = std::make_shared<JComponentManager>();
     m_plugin_loader = std::make_shared<JPluginLoader>();
-    m_service_locator = new JServiceLocator;
+    m_service_locator = std::make_unique<JServiceLocator>();
 
     ProvideService(m_params);
     ProvideService(m_component_manager);

@@ -135,7 +135,8 @@ public:
 private:
 
     JLogger m_logger;
-    JServiceLocator* m_service_locator;
+
+    std::unique_ptr<JServiceLocator> m_service_locator;
 
     std::shared_ptr<JParameterManager> m_params;
     std::shared_ptr<JPluginLoader> m_plugin_loader;
