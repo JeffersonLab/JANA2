@@ -48,6 +48,7 @@ JApplication::JApplication(JParameterManager* params) {
     ProvideService(std::make_shared<JLoggingService>());
     ProvideService(std::make_shared<JGlobalRootLock>());
     ProvideService(std::make_shared<JTopologyBuilder>());
+    ProvideService(std::make_shared<JEngine>());
 
 }
 
@@ -181,107 +182,12 @@ void JApplication::Initialize() {
 /// See JProcessingController::run() for more details.
 ///
 /// @param [in] wait_until_finished If true (default) do not return until the work has completed.
-void JApplication::Run(bool wait_until_finished) {
-
-    Initialize();
-    if(m_quitting) return;
-
-    // At this point, all components should have been provided and all parameter values should have been set.
-    // Let's report what we found!
-    //
-    // You might be wondering why we do this here instead of at the end of Initialize(), which might make more sense.
-    // The reason is that there might be other things, specifically JBenchmarker, that do request Parameters and Services
-    // but aren't JComponents (yet). These have to happen after JApplication::Initialize() and before the parameter table
-    // gets printed. Because of their weird position, they are not able to add additional plugins or components, nor 
-    // submit Parameter values.
-    //
-    // Print summary of all config parameters
-    m_params->PrintParameters();
-
-    LOG_INFO(m_logger) << GetComponentSummary() << LOG_END;
-    LOG_INFO(m_logger) << "Starting processing with " << m_desired_nthreads << " threads requested..." << LOG_END;
-    m_processing_controller->run(m_desired_nthreads);
-
-    if (!wait_until_finished) {
-        return;
-    }
-
-    // Monitor status of all threads
-    while (!m_quitting) {
-
-        // If we are finishing up (all input sources are closed, and are waiting for all events to finish processing)
-        // This flag is used by the integrated rate calculator
-        if (!m_draining_queues) {
-            bool draining = true;
-            for (auto evt_src : m_component_manager->get_evt_srces()) {
-                draining &= (evt_src->GetStatus() == JEventSource::Status::Finalized);
-            }
-            m_draining_queues = draining;
-        }
-
-        // Run until topology is deactivated, either because it finished or because another thread called stop()
-        if (m_processing_controller->is_stopped()) {
-            LOG_INFO(m_logger) << "All workers have stopped." << LOG_END;
-            break;
-        }
-        if (m_processing_controller->is_finished()) {
-            LOG_INFO(m_logger) << "All workers have finished." << LOG_END;
-            break;
-        }
-
-        // Sleep a few cycles
-        std::this_thread::sleep_for(std::chrono::milliseconds(m_ticker_interval_ms));
-
-        // Print status
-        if( m_ticker_on ) PrintStatus();
-
-        // Test for timeout
-        if(m_timeout_on && m_processing_controller->is_timed_out()) {
-            LOG_FATAL(m_logger) << "Detected timeout in worker! Stopping." << LOG_END;
-            SetExitCode((int) ExitCode::Timeout);
-            m_processing_controller->request_stop();
-            // TODO: Timeout error is not obvious enough from UI. Maybe throw an exception instead?
-            // TODO: Send USR2 signal to obtain a backtrace for timed out threads?
-            break;
-        }
-
-        // Test for exception
-        if (m_processing_controller->is_excepted()) {
-            LOG_FATAL(m_logger) << "Detected exception in worker! Re-throwing on main thread." << LOG_END;
-            SetExitCode((int) ExitCode::UnhandledException);
-            m_processing_controller->request_stop();
-
-            // We are going to throw the first exception and ignore the others.
-            throw m_processing_controller->get_exceptions()[0];
-        }
-
-        if (m_inspecting) {
-            Inspect();
-        }
-    }
-
-    // Join all threads
-    if (!m_skip_join) {
-        LOG_INFO(m_logger) << "Merging threads ..." << LOG_END;
-        m_processing_controller->wait_until_stopped();
-    }
-
-    LOG_INFO(m_logger) << "Event processing ended." << LOG_END;
-    PrintFinalReport();
-
-    // Test for exception one more time, in case it shut down the topology before the supervisor could detect it
-    if (m_processing_controller->is_excepted()) {
-        LOG_FATAL(m_logger) << "Exception in worker!" << LOG_END;
-        SetExitCode((int) ExitCode::UnhandledException);
-        // We are going to throw the first exception and ignore the others.
-        throw m_processing_controller->get_exceptions()[0];
-    }
+void JEngine::Run(bool wait_until_finished) {
+    m_engine->Run(wait_until_finished);
 }
 
-
 void JApplication::Scale(int nthreads) {
-    LOG_INFO(m_logger) << "Scaling to " << nthreads << " threads" << LOG_END;
-    m_processing_controller->scale(nthreads);
+    m_engine->Scale(nthreads);
 }
 
 void JApplication::Inspect() {
@@ -313,14 +219,7 @@ void JApplication::Stop(bool wait_until_idle) {
 }
 
 void JApplication::Quit(bool skip_join) {
-
-    if (m_initialized) {
-        m_skip_join = skip_join;
-        m_quitting = true;
-        if (!skip_join && m_processing_controller != nullptr) {
-            Stop(true);
-        }
-    }
+    m_engine->Quit(skip_join);
 
     // People might call Quit() during Initialize() rather than Run().
     // For instance, during JEventProcessor::Init, or via Ctrl-C.
@@ -433,6 +332,7 @@ uint64_t JApplication::GetNThreads() {
 /// Note: This data gets stale. If you need event counts and rates
 /// which are more consistent with one another, call GetStatus() instead.
 uint64_t JApplication::GetNEventsProcessed() {
+    return m_engine->GetPerfSummary()->total_events_completed;
     std::lock_guard<std::mutex> lock(m_status_mutex);
     update_status();
     return m_perf_summary->total_events_completed;
