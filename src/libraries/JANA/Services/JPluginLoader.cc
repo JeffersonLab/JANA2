@@ -219,8 +219,9 @@ void JPluginLoader::attach_plugin(std::string soname) {
     // Open shared object
     void* handle = dlopen(soname.c_str(), RTLD_LAZY | RTLD_GLOBAL | RTLD_NODELETE);
     if (!handle) {
-        LOG_DEBUG(m_logger) << dlerror() << LOG_END;
-        throw JException("Plugin dlopen() failed: %s", dlerror());
+        std::string err = dlerror();
+        LOG_DEBUG(m_logger) << "Plugin dlopen() failed: " << err << LOG_END;
+        throw JException("Plugin dlopen() failed: %s", err.c_str());
     }
 
     // Look for an InitPlugin symbol
