@@ -8,10 +8,14 @@ struct MyEventProcessor : public JEventProcessor {
     int init_count = 0;
     int process_count = 0;
     int finish_count = 0;
+    int* destroy_count = nullptr;
 
     MyEventProcessor() {
         SetCallbackStyle(CallbackStyle::ExpertMode);
         SetTypeName(NAME_OF_THIS);
+    }
+    ~MyEventProcessor() {
+        (*destroy_count)++;
     }
     void Init() override {
         LOG_INFO(GetLogger()) << "Init() called" << LOG_END;
@@ -32,20 +36,27 @@ TEST_CASE("JEventProcessor_ExpertMode_ProcessCount") {
     LOG << "Running test: JEventProcessor_ExpertMode_ProcessCount" << LOG_END;
 
     auto sut = new MyEventProcessor;
+    int destroy_count = 0;
+    sut->destroy_count = &destroy_count;
 
-    JApplication app;
-    app.SetParameterValue("log:global", "off");
-    app.SetParameterValue("log:info", "MyEventProcessor");
-    app.SetParameterValue("jana:nevents", 5);
+    {
+        JApplication app;
+        app.SetParameterValue("log:global", "off");
+        app.SetParameterValue("log:info", "MyEventProcessor");
+        app.SetParameterValue("jana:nevents", 5);
 
-    app.Add(new JEventSource);
-    app.Add(sut);
-    app.Run();
+        app.Add(new JEventSource);
+        app.Add(sut);
+        app.Run();
 
-    REQUIRE(sut->init_count == 1);
-    REQUIRE(sut->process_count == 5);
-    REQUIRE(sut->GetEventCount() == 5);
-    REQUIRE(sut->finish_count == 1);
+        REQUIRE(sut->init_count == 1);
+        REQUIRE(sut->process_count == 5);
+        REQUIRE(sut->GetEventCount() == 5);
+        REQUIRE(sut->finish_count == 1);
+        REQUIRE(destroy_count == 0);
 
+        // App goes out of scope; sut should be destroyed
+    }
+    REQUIRE(destroy_count == 1);
 }
 
