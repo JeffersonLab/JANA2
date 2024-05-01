@@ -60,4 +60,4 @@ if (${USE_PODIO})
 endif()
 
 install(TARGETS jana-unit-tests DESTINATION bin)
-install(FILES catch.hpp DESTINATION include/external)
+install(FILES ../../external/catch.hpp DESTINATION include/external)
