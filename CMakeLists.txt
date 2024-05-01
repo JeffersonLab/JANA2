@@ -187,6 +187,7 @@ message(STATUS "-----------------------")
 #---------
 
 include_directories(src/libraries)   # So that everyone can find the JANA header files
+include_directories(src/external)    # So that everyone can find our vendorized header-old libraries
 
 # This is needed on macos to allow plugins to link without resolving all JANA symbols until runtime
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")

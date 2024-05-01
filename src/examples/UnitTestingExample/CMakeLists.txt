@@ -5,8 +5,8 @@ set (UnitTestingExample_SOURCES
 
 add_executable(UnitTestingExample ${UnitTestingExample_SOURCES})
 
-# Our copy of catch.hpp lives in this weird place. Maybe we should move it to ${CMAKE_SOURCE_DIR}/src/external
-target_include_directories(UnitTestingExample PRIVATE ${CMAKE_SOURCE_DIR}/src/programs/unit_tests)
+# Need to be able to find catch.hpp
+target_include_directories(UnitTestingExample PRIVATE ${CMAKE_SOURCE_DIR}/src/external)
 
 target_link_libraries(UnitTestingExample Tutorial_plugin jana2)
 set_target_properties(UnitTestingExample PROPERTIES PREFIX "" OUTPUT_NAME "UnitTestingExample")
