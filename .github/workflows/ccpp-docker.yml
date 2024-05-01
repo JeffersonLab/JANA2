@@ -7,14 +7,52 @@ on:
     branches: [ master ]
 
 jobs:
-  JTest_job:
-
+  build:
+    name: Build JANA2 with all options enabled
     runs-on: ubuntu-latest
-    name: Full build with tests
+    container:
+      image: nbrei/jana2_env_everything_except_cuda
     
     # Build Docker container and run the entrypoint.sh script in it
     steps:
-    - name: Build and run
-      id: build_and_run
-      uses: nathanwbrei/DockerAction-JANA2@v2.0.1
+
+    - uses: actions/checkout@v4
+
+    - name: cmake
+      run: |
+        mkdir -p $GITHUB_WORKSPACE/build
+        cd $GITHUB_WORKSPACE/build
+        cmake ../ -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/Linux \
+          -DUSE_PYTHON=ON \
+          -DUSE_ROOT=ON \
+          -DUSE_PODIO=ON \
+          -DUSE_XERCES=ON \
+          -DXercesC_DIR=/usr \
+          -DUSE_ZEROMQ=ON
+    - name: make
+      run: |
+        cd $GITHUB_WORKSPACE/build
+        make
+    - name: make install
+      run: |
+        cd $GITHUB_WORKSPACE/build
+        make install
+    - name: JTest
+      run: |
+        export JANA_PLUGIN_PATH=$GITHUB_WORKSPACE/Linux/plugins
+        echo "--- Running JTest plugin -----------------------"
+        $GITHUB_WORKSPACE/Linux/bin/jana -PPLUGINS=JTest -Pjana:nevents=100
+    - name: jana-unit-tests
+      run: |
+        echo "--- Running jana-unit-tests ------------------------------"
+        $GITHUB_WORKSPACE/Linux/bin/jana-unit-tests
+    - name: TimesliceExample with simple (physics event) topology
+      run: |
+        echo "--- Running TimesliceExample with simple topology ------------------------------"
+        $GITHUB_WORKSPACE/Linux/bin/jana -Pplugins=TimesliceExample -Pjana:nevents=100 events.root
+    - name: TimesliceExample with complex (timeslice) topology
+      run: |
+        echo "--- Running TimesliceExample with complex topology ------------------------------"
+        $GITHUB_WORKSPACE/Linux/bin/jana -Pplugins=TimesliceExample -Pjana:nevents=100 timeslices.root
+
 
