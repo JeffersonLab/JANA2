@@ -24,6 +24,15 @@ void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
             if (ex.factory_tag.empty()) ex.factory_tag = mTag;
             throw ex;
         }
+        catch (std::exception& e) {
+            auto ex = JException("Exception in JFactoryT::Init(): %s", e.what());
+            ex.nested_exception = std::current_exception();
+            ex.plugin_name = mPluginName;
+            ex.component_name = mFactoryName;
+            ex.factory_name = mFactoryName;
+            ex.factory_tag = mTag;
+            throw ex;
+        }
         catch (...) {
             auto ex = JException("Unknown exception in JFactoryT::Init()");
             ex.nested_exception = std::current_exception();
@@ -63,8 +72,17 @@ void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
             if (ex.factory_tag.empty()) ex.factory_tag = mTag;
             throw ex;
         }
+        catch (std::exception& e) {
+            auto ex = JException("Exception in JFactory::BeginRun/ChangeRun/EndRun(): %s", e.what());
+            ex.nested_exception = std::current_exception();
+            ex.plugin_name = mPluginName;
+            ex.component_name = mFactoryName;
+            ex.factory_name = mFactoryName;
+            ex.factory_tag = mTag;
+            throw ex;
+        }
         catch (...) {
-            auto ex = JException("Unknown exception in JFactoryT::BeginRun/ChangeRun/EndRun()");
+            auto ex = JException("Unknown exception in JFactory::BeginRun/ChangeRun/EndRun()");
             ex.nested_exception = std::current_exception();
             ex.plugin_name = mPluginName;
             ex.component_name = mFactoryName;
@@ -82,8 +100,17 @@ void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
             if (ex.factory_tag.empty()) ex.factory_tag = mTag;
             throw ex;
         }
+        catch (std::exception& e) {
+            auto ex = JException("Exception in JFactory::Process(): %s", e.what());
+            ex.nested_exception = std::current_exception();
+            ex.plugin_name = mPluginName;
+            ex.component_name = mFactoryName;
+            ex.factory_name = mFactoryName;
+            ex.factory_tag = mTag;
+            throw ex;
+        }
         catch (...) {
-            auto ex = JException("Unknown exception in JFactoryT::Process()");
+            auto ex = JException("Unknown exception in JFactory::Process()");
             ex.nested_exception = std::current_exception();
             ex.plugin_name = mPluginName;
             ex.component_name = mFactoryName;
