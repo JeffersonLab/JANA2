@@ -17,71 +17,49 @@ void JMultifactory::Execute(const std::shared_ptr<const JEvent>& event) {
 #endif
 
     if (m_status == Status::Uninitialized) {
-        try {
+        CallWithJExceptionWrapper("JMultifactory::Init", [&](){
             Init();
-            m_status = Status::Initialized;
-        }
-        catch(std::exception &e) {
-            // Rethrow as a JException so that we can add context information
-            throw JException(e.what());
-        }
+        });
+        m_status = Status::Initialized;
     }
 
     auto run_number = event->GetRunNumber();
     if (m_last_run_number == -1) {
         // This is the very first run
-        try {
+        CallWithJExceptionWrapper("JMultifactory::BeginRun", [&](){
             BeginRun(event);
-            m_last_run_number = run_number;
-        }
-        catch(std::exception &e) {
-            // Rethrow as a JException so that we can add context information
-            throw JException(e.what());
-        }
+        });
+        m_last_run_number = run_number;
     }
     else if (m_last_run_number != run_number) {
         // This is a later run, and it has changed
-        try {
+        CallWithJExceptionWrapper("JMultifactory::EndRun", [&](){
             EndRun();
-        }
-        catch(std::exception &e) {
-            // Rethrow as a JException so that we can add context information
-            throw JException(e.what());
-        }
-        try {
+        });
+        CallWithJExceptionWrapper("JMultifactory::BeginRun", [&](){
             BeginRun(event);
-            m_last_run_number = run_number;
-        }
-        catch(std::exception &e) {
-            // Rethrow as a JException so that we can add context information
-            throw JException(e.what());
-        }
+        });
+        m_last_run_number = run_number;
     }
-    try {
+    CallWithJExceptionWrapper("JMultifactory::Process", [&](){
         Process(event);
-    }
-    catch(std::exception &e) {
-        // Rethrow as a JException so that we can add context information
-        throw JException(e.what());
-    }
+    });
 }
 
 void JMultifactory::Release() {
     std::lock_guard<std::mutex> lock(m_mutex);
-    try {
-        // Only call Finish() if we actually initialized
-        // Only call Finish() once
-        if (m_status == Status::Initialized) {
+    // Only call Finish() if we actually initialized
+    // Only call Finish() once
+    if (m_status == Status::Initialized) {
+        CallWithJExceptionWrapper("JMultifactory::Finish", [&](){
             Finish();
-            m_status = Status::Finalized;
-        }
-    }
-    catch(std::exception &e) {
-        // Rethrow as a JException so that we can add context information
-        throw JException(e.what());
+        });
+        m_status = Status::Finalized;
     }
 }
+
 
 JFactorySet* JMultifactory::GetHelpers() {
     return &mHelpers;
 }
+

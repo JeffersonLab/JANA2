@@ -117,96 +117,54 @@ public:
     // Wrappers for calling Open and GetEvent in a safe way
 
     virtual void DoInitialize(bool with_lock=true) {
-        try {
-            if (with_lock) {
-                std::lock_guard<std::mutex> lock(m_mutex);
-                if (m_status == Status::Uninitialized) {
-                    Open();
-                    if (GetResourceName().empty()) {
-                        LOG_INFO(GetLogger()) << "Opened event source" << LOG_END;
-                    }
-                    else {
-                        LOG_INFO(GetLogger()) << "Opened event source '" << GetResourceName() << "'" << LOG_END;
-                    }
-                    m_status = Status::Initialized;
+        if (with_lock) {
+            std::lock_guard<std::mutex> lock(m_mutex);
+            if (m_status == Status::Uninitialized) {
+                CallWithJExceptionWrapper("JEventSource::Open", [&](){ Open();});
+                if (GetResourceName().empty()) {
+                    LOG_INFO(GetLogger()) << "Opened event source" << LOG_END;
                 }
-            }
-            else {
-                if (m_status == Status::Uninitialized) {
-                    Open();
-                    if (GetResourceName().empty()) {
-                        LOG_INFO(GetLogger()) << "Opened event source" << LOG_END;
-                    }
-                    else {
-                        LOG_INFO(GetLogger()) << "Opened event source '" << GetResourceName() << "'" << LOG_END;
-                    }
-                    m_status = Status::Initialized;
+                else {
+                    LOG_INFO(GetLogger()) << "Opened event source '" << GetResourceName() << "'" << LOG_END;
                 }
+                m_status = Status::Initialized;
             }
         }
-        catch (JException& ex) {
-            ex.plugin_name = m_plugin_name;
-            ex.component_name = m_type_name;
-            throw ex;
-        }
-        catch (std::exception& e){
-            auto ex = JException("Exception in JEventSource::Open(): %s", e.what());
-            ex.nested_exception = std::current_exception();
-            ex.plugin_name = m_plugin_name;
-            ex.component_name = m_type_name;
-            throw ex;
-        }
-        catch (...) {
-            auto ex = JException("Unknown exception in JEventSource::Open()");
-            ex.nested_exception = std::current_exception();
-            ex.plugin_name = m_plugin_name;
-            ex.component_name = m_type_name;
-            throw ex;
+        else {
+            if (m_status == Status::Uninitialized) {
+                CallWithJExceptionWrapper("JEventSource::Open", [&](){ Open();});
+                if (GetResourceName().empty()) {
+                    LOG_INFO(GetLogger()) << "Opened event source" << LOG_END;
+                }
+                else {
+                    LOG_INFO(GetLogger()) << "Opened event source '" << GetResourceName() << "'" << LOG_END;
+                }
+                m_status = Status::Initialized;
+            }
         }
     }
 
     virtual void DoFinalize(bool with_lock=true) {
-        try {
-            if (with_lock) {
-                std::lock_guard<std::mutex> lock(m_mutex);
-                Close();
-                if (GetResourceName().empty()) {
-                    LOG_INFO(GetLogger()) << "Closed event source" << LOG_END;
-                }
-                else {
-                    LOG_INFO(GetLogger()) << "Closed event source '" << GetResourceName() << "'" << LOG_END;
-                }
-                m_status = Status::Finalized;
+        if (with_lock) {
+            std::lock_guard<std::mutex> lock(m_mutex);
+            CallWithJExceptionWrapper("JEventSource::Close", [&](){ Close();});
+            if (GetResourceName().empty()) {
+                LOG_INFO(GetLogger()) << "Closed event source" << LOG_END;
             }
             else {
-                Close();
-                if (GetResourceName().empty()) {
-                    LOG_INFO(GetLogger()) << "Closed event source" << LOG_END;
-                }
-                else {
-                    LOG_INFO(GetLogger()) << "Closed event source '" << GetResourceName() << "'" << LOG_END;
-                }
-                m_status = Status::Finalized;
+                LOG_INFO(GetLogger()) << "Closed event source '" << GetResourceName() << "'" << LOG_END;
             }
+            m_status = Status::Finalized;
         }
-        catch (JException& ex) {
-            ex.plugin_name = m_plugin_name;
-            ex.component_name = m_type_name;
-            throw ex;
-        }
-        catch (std::exception& e){
-            auto ex = JException("Exception in JEventSource::Close(): %s", e.what());
-            ex.nested_exception = std::current_exception();
-            ex.plugin_name = m_plugin_name;
-            ex.component_name = m_type_name;
-            throw ex;
-        }
-        catch (...) {
-            auto ex = JException("Unknown exception in JEventSource::Close()");
-            ex.nested_exception = std::current_exception();
-            ex.plugin_name = m_plugin_name;
-            ex.component_name = m_type_name;
-            throw ex;
+        else {
+            CallWithJExceptionWrapper("JEventSource::Close", [&](){ Close();});
+            if (GetResourceName().empty()) {
+                LOG_INFO(GetLogger()) << "Closed event source" << LOG_END;
+            }
+            else {
+                LOG_INFO(GetLogger()) << "Closed event source '" << GetResourceName() << "'" << LOG_END;
+            }
+            m_status = Status::Finalized;
         }
     }
     
@@ -221,81 +179,63 @@ public:
         auto first_evt_nr = m_nskip;
         auto last_evt_nr = m_nevents + m_nskip;
 
-        try {
-            if (m_status == Status::Uninitialized) {
-                DoInitialize(false);
-            }
-            if (m_status == Status::Initialized) {
-                if (m_nevents != 0 && (m_event_count == last_evt_nr)) {
-                    // We exit early (and recycle) because we hit our jana:nevents limit
-                    DoFinalize(false);
-                    return Result::FailureFinished;
-                }
-                // If we reach this point, we will need to actually read an event
-
-                // We configure the event
-                event->SetEventNumber(m_event_count); // Default event number to event count
-                event->SetJApplication(m_app);
-                event->SetJEventSource(this);
-                event->SetSequential(false);
-                event->GetJCallGraphRecorder()->Reset();
-
-                // Now we call the new-style interface
-                auto previous_origin = event->GetJCallGraphRecorder()->SetInsertDataOrigin( JCallGraphRecorder::ORIGIN_FROM_SOURCE);  // (see note at top of JCallGraphRecorder.h)
-                auto result = Emit(*event);
-                event->GetJCallGraphRecorder()->SetInsertDataOrigin( previous_origin );
-
-                if (result == Result::Success) {
-                    m_event_count += 1; 
-                    // We end up here if we read an entry in our file or retrieved a message from our socket,
-                    // and believe we could obtain another one immediately if we wanted to
-                    for (auto* output : m_outputs) {
-                        output->InsertCollection(*event);
-                    }
-                    if (m_event_count <= first_evt_nr) {
-                        // We immediately throw away this whole event because of nskip 
-                        // (although really we should be handling this with Seek())
-                        return Result::FailureTryAgain;
-                    }
-                    return Result::Success;
-                }
-                else if (result == Result::FailureFinished) {
-                    // We end up here if we tried to read an entry in a file, but found EOF
-                    // or if we received a message from a socket that contained no data and indicated no more data will be coming
-                    DoFinalize(false);
-                    return Result::FailureFinished;
-                }
-                else if (result == Result::FailureTryAgain) {
-                    // We end up here if we tried to read an entry in a file but it is on a tape drive and isn't ready yet
-                    // or if we polled the socket, found no new messages, but still expect messages later
-                    return Result::FailureTryAgain;
-                }
-                else {
-                    throw JException("Invalid JEventSource::Result value!");
-                }
-            }
-            else { // status == Finalized
+        if (m_status == Status::Uninitialized) {
+            DoInitialize(false);
+        }
+        if (m_status == Status::Initialized) {
+            if (m_nevents != 0 && (m_event_count == last_evt_nr)) {
+                // We exit early (and recycle) because we hit our jana:nevents limit
+                DoFinalize(false);
                 return Result::FailureFinished;
             }
+            // If we reach this point, we will need to actually read an event
+
+            // We configure the event
+            event->SetEventNumber(m_event_count); // Default event number to event count
+            event->SetJApplication(m_app);
+            event->SetJEventSource(this);
+            event->SetSequential(false);
+            event->GetJCallGraphRecorder()->Reset();
+
+            // Now we call the new-style interface
+            auto previous_origin = event->GetJCallGraphRecorder()->SetInsertDataOrigin( JCallGraphRecorder::ORIGIN_FROM_SOURCE);  // (see note at top of JCallGraphRecorder.h)
+            JEventSource::Result result;
+            CallWithJExceptionWrapper("JEventSource::Emit", [&](){
+                result = Emit(*event);
+            });
+            event->GetJCallGraphRecorder()->SetInsertDataOrigin( previous_origin );
+
+            if (result == Result::Success) {
+                m_event_count += 1; 
+                // We end up here if we read an entry in our file or retrieved a message from our socket,
+                // and believe we could obtain another one immediately if we wanted to
+                for (auto* output : m_outputs) {
+                    output->InsertCollection(*event);
+                }
+                if (m_event_count <= first_evt_nr) {
+                    // We immediately throw away this whole event because of nskip 
+                    // (although really we should be handling this with Seek())
+                    return Result::FailureTryAgain;
+                }
+                return Result::Success;
+            }
+            else if (result == Result::FailureFinished) {
+                // We end up here if we tried to read an entry in a file, but found EOF
+                // or if we received a message from a socket that contained no data and indicated no more data will be coming
+                DoFinalize(false);
+                return Result::FailureFinished;
+            }
+            else if (result == Result::FailureTryAgain) {
+                // We end up here if we tried to read an entry in a file but it is on a tape drive and isn't ready yet
+                // or if we polled the socket, found no new messages, but still expect messages later
+                return Result::FailureTryAgain;
+            }
+            else {
+                throw JException("Invalid JEventSource::Result value!");
+            }
         }
-        catch (JException& ex) {
-            ex.plugin_name = m_plugin_name;
-            ex.component_name = m_type_name;
-            throw ex;
-        }
-        catch (std::exception& e){
-            auto ex = JException("Exception in JEventSource::Emit(): %s", e.what());
-            ex.nested_exception = std::current_exception();
-            ex.plugin_name = m_plugin_name;
-            ex.component_name = m_type_name;
-            throw ex;
-        }
-        catch (...) {
-            auto ex = JException("Unknown exception in JEventSource::Emit()");
-            ex.nested_exception = std::current_exception();
-            ex.plugin_name = m_plugin_name;
-            ex.component_name = m_type_name;
-            throw ex;
+        else { // status == Finalized
+            return Result::FailureFinished;
         }
     }
 
@@ -313,7 +253,9 @@ public:
                     // Skip these events due to nskip
                     event->SetEventNumber(m_event_count); // Default event number to event count
                     auto previous_origin = event->GetJCallGraphRecorder()->SetInsertDataOrigin( JCallGraphRecorder::ORIGIN_FROM_SOURCE);  // (see note at top of JCallGraphRecorder.h)
-                    GetEvent(event);
+                    CallWithJExceptionWrapper("JEventSource::GetEvent", [&](){
+                        GetEvent(event);
+                    });
                     event->GetJCallGraphRecorder()->SetInsertDataOrigin( previous_origin );
                     m_event_count += 1;
                     return Result::FailureTryAgain;  // Reject this event and recycle it
@@ -330,7 +272,9 @@ public:
                     event->SetSequential(false);
                     event->GetJCallGraphRecorder()->Reset();
                     auto previous_origin = event->GetJCallGraphRecorder()->SetInsertDataOrigin( JCallGraphRecorder::ORIGIN_FROM_SOURCE);  // (see note at top of JCallGraphRecorder.h)
-                    GetEvent(event);
+                    CallWithJExceptionWrapper("JEventSource::GetEvent", [&](){
+                        GetEvent(event);
+                    });
                     for (auto* output : m_outputs) {
                         output->InsertCollection(*event);
                     }
@@ -363,25 +307,6 @@ public:
                 return Result::Success;
             }
         }
-        catch (JException& ex) {
-            ex.plugin_name = m_plugin_name;
-            ex.component_name = m_type_name;
-            throw ex;
-        }
-        catch (std::exception& e){
-            auto ex = JException("Exception in JEventSource::GetEvent(): %s", e.what());
-            ex.nested_exception = std::current_exception();
-            ex.plugin_name = m_plugin_name;
-            ex.component_name = m_type_name;
-            throw ex;
-        }
-        catch (...) {
-            auto ex = JException("Unknown exception in JEventSource::GetEvent()");
-            ex.nested_exception = std::current_exception();
-            ex.plugin_name = m_plugin_name;
-            ex.component_name = m_type_name;
-            throw ex;
-        }
     }
 
     /// Calls the optional-and-discouraged user-provided FinishEvent virtual method, enforcing
@@ -391,7 +316,9 @@ public:
     void DoFinish(JEvent& event) {
         if (m_enable_free_event) {
             std::lock_guard<std::mutex> lock(m_mutex);
-            FinishEvent(event);
+            CallWithJExceptionWrapper("JEventSource::FinishEvent", [&](){
+                FinishEvent(event);
+            });
         }
     }
 
