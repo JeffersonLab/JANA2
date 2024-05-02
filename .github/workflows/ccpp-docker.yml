@@ -40,20 +40,23 @@ jobs:
         make install
     - name: JTest
       run: |
-        export JANA_PLUGIN_PATH=$GITHUB_WORKSPACE/Linux/plugins
         echo "--- Running JTest plugin -----------------------"
+        export JANA_PLUGIN_PATH=$GITHUB_WORKSPACE/Linux/plugins
         $GITHUB_WORKSPACE/Linux/bin/jana -PPLUGINS=JTest -Pjana:nevents=100
     - name: jana-unit-tests
       run: |
         echo "--- Running jana-unit-tests ------------------------------"
+        export JANA_PLUGIN_PATH=$GITHUB_WORKSPACE/Linux/plugins
         $GITHUB_WORKSPACE/Linux/bin/jana-unit-tests
     - name: TimesliceExample with simple (physics event) topology
       run: |
         echo "--- Running TimesliceExample with simple topology ------------------------------"
+        export JANA_PLUGIN_PATH=$GITHUB_WORKSPACE/Linux/plugins
         $GITHUB_WORKSPACE/Linux/bin/jana -Pplugins=TimesliceExample -Pjana:nevents=100 events.root
     - name: TimesliceExample with complex (timeslice) topology
       run: |
         echo "--- Running TimesliceExample with complex topology ------------------------------"
+        export JANA_PLUGIN_PATH=$GITHUB_WORKSPACE/Linux/plugins
         $GITHUB_WORKSPACE/Linux/bin/jana -Pplugins=TimesliceExample -Pjana:nevents=100 timeslices.root
 
 
