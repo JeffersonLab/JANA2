@@ -89,6 +89,8 @@ public:
 
     void SetLogger(JLogger logger) { m_logger = logger; }
 
+    template <typename F> 
+    inline void CallWithJExceptionWrapper(std::string func_name, F func);
 
     // ---------------------
     // "Registered member" helpers

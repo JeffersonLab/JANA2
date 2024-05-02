@@ -112,6 +112,32 @@ protected:
 };
 
 
+template <typename F> 
+inline void JComponent::CallWithJExceptionWrapper(std::string func_name, F func) {
+    try {
+        func();
+    }
+    catch (JException& ex) {
+        if (ex.plugin_name.empty()) ex.plugin_name = m_plugin_name;
+        if (ex.component_name.empty()) ex.component_name = m_type_name;
+        throw ex;
+    }
+    catch (std::exception& e) {
+        auto ex = JException("Exception in %s: %s", func_name.c_str(), e.what());
+        ex.nested_exception = std::current_exception();
+        ex.plugin_name = m_plugin_name;
+        ex.component_name = m_type_name;
+        throw ex;
+    }
+    catch (...) {
+        auto ex = JException("Unknown exception in %s", func_name.c_str());
+        ex.nested_exception = std::current_exception();
+        ex.plugin_name = m_plugin_name;
+        ex.component_name = m_type_name;
+        throw ex;
+    }
+}
+
 
 } // namespace omni
 } // namespace jana
