@@ -5,6 +5,7 @@ if (${USE_ROOT} AND ${USE_ZEROMQ})
     find_package(ROOT REQUIRED)
 
     set(STREAMDET_SOURCES
+            InteractiveStreamingExample.cc
             MonitoringProcessor.cc
             MonitoringProcessor.h
             RootProcessor.cc
@@ -12,7 +13,6 @@ if (${USE_ROOT} AND ${USE_ZEROMQ})
             DecodeDASSource.cc
             DecodeDASSource.h
             JFactoryGenerator_streamDet.h
-            streamDet.cc
             ZmqTransport.h
             INDRAMessage.h
             ADCSample.h
@@ -29,5 +29,5 @@ if (${USE_ROOT} AND ${USE_ZEROMQ})
     install(FILES ${my_headers} DESTINATION include/streamDet)
 
 else()
-    message(STATUS "Skipping plugins/streamDet because USE_ROOT=Off or USE_ZEROMQ=Off")
+    message(STATUS "Skipping examples/InteractiveStreamingExample because USE_ROOT=Off or USE_ZEROMQ=Off")
 endif()

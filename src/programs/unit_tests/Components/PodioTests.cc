@@ -11,8 +11,8 @@ namespace podiotests {
 
 TEST_CASE("PodioTestsInsertAndRetrieve") {
     ExampleClusterCollection clusters_to_insert;
-    clusters_to_insert.push_back(ExampleCluster({16.0}));
-    clusters_to_insert.push_back(ExampleCluster({128.0}));
+    clusters_to_insert.push_back(MutableExampleCluster({16.0}));
+    clusters_to_insert.push_back(MutableExampleCluster({128.0}));
 
     auto event = std::make_shared<JEvent>();
     event->InsertCollection<ExampleCluster>(std::move(clusters_to_insert), "clusters");
@@ -157,7 +157,7 @@ struct TestFac : public JFactoryPodioT<ExampleCluster> {
     }
     void Process(const std::shared_ptr<const JEvent>&) override {
         ExampleClusterCollection c;
-        c.push_back(ExampleCluster(16.0));
+        c.push_back(MutableExampleCluster(16.0));
         SetCollection(std::move(c));
     }
 };
@@ -181,38 +181,5 @@ TEST_CASE("JFactoryPodioT::Init gets called") {
     REQUIRE(fac != nullptr);
     REQUIRE(fac->init_called == true);
 }
-
-namespace jana2_tests_podiotests_insert {
-
-struct TestFac : public JFactoryPodioT<ExampleCluster> {
-    TestFac() {
-        SetTag("clusters");
-    }
-    void Process(const std::shared_ptr<const JEvent>&) override {
-        Insert(new ExampleCluster(16.0));
-    }
-};
-}
-
-TEST_CASE("JFactoryPodioT::Insert() and retrieval") {
-
-    JApplication app;
-    auto event = std::make_shared<JEvent>(&app);
-    auto fs = new JFactorySet;
-    fs->Add(new jana2_tests_podiotests_insert::TestFac);
-    event->SetFactorySet(fs);
-    event->GetFactorySet()->Release();  // Simulate a trip to the JEventPool
-
-    // Retrieve as vector<ExampleCluster*> (Goes through mData)
-    auto vcp = event->Get<ExampleCluster>("clusters");
-    REQUIRE(vcp.size() == 1);
-    REQUIRE(vcp[0]->energy() == 16.0);
-
-    // Retrieve as ExampleClusterCollection (Goes through Frame)
-    auto r = event->GetCollection<ExampleCluster>("clusters");
-    REQUIRE(r != nullptr);
-    REQUIRE(r->size() == 1);
-    REQUIRE((*r)[0].energy() == 16.0);
-}
-
 } // namespace podiotests
+

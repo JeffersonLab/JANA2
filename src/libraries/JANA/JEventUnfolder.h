@@ -115,6 +115,13 @@ public:
             }
             throw ex;
         }
+        catch (std::exception& e) {
+            auto ex = JException("Exception in JEventUnfolder::DoPreprocess(): %s", e.what());
+            ex.nested_exception = std::current_exception();
+            ex.plugin_name = m_plugin_name;
+            ex.component_name = m_type_name;
+            throw ex;
+        }
         catch (...) {
             auto ex = JException("Unknown exception in JEventUnfolder::DoPreprocess()");
             ex.nested_exception = std::current_exception();
@@ -180,6 +187,13 @@ public:
             if (ex.component_name.empty()) {
                 ex.component_name = m_type_name;
             }
+            throw ex;
+        }
+        catch (std::exception& e) {
+            auto ex = JException("Exception in JEventUnfolder::DoUnfold(): %s", e.what());
+            ex.nested_exception = std::current_exception();
+            ex.plugin_name = m_plugin_name;
+            ex.component_name = m_type_name;
             throw ex;
         }
         catch (...) {

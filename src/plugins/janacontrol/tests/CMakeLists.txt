@@ -1,7 +1,6 @@
 
 
 set (janacontrol_PLUGIN_TESTS_SOURCES
-        catch.hpp
         TestsMain.cc
         IntegrationTests.cc
         # Add component tests here

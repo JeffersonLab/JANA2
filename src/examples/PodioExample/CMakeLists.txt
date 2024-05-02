@@ -26,6 +26,8 @@ if (USE_PODIO)
     set_target_properties(PodioExample PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
 
     install(TARGETS PodioExample DESTINATION bin)
+    install(TARGETS PodioExampleDatamodel DESTINATION lib)
+    install(TARGETS PodioExampleDatamodelDict DESTINATION lib)
 else()
     message(STATUS "Skipping examples/PodioExample because USE_PODIO=Off")
 

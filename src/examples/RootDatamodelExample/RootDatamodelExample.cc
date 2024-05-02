@@ -18,7 +18,7 @@ void InitPlugin(JApplication* app) {
 
     InitJANAPlugin(app);
 
-    LOG << "Loading JTestRoot" << LOG_END;
+    LOG << "Loading RootDatamodelExample" << LOG_END;
     app->Add(new JTestRootEventSource);
     app->Add(new JTestRootProcessor);
     app->Add(new JFactoryGeneratorT<JFactory_Cluster>);

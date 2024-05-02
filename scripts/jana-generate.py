@@ -935,7 +935,7 @@ def create_root_eventprocessor(processor_name, dir_name):
 def build_plugin_test(plugin_name, copy_catch_hpp=True, dir="."):
 
     if copy_catch_hpp:
-        files_to_copy = {"catch.hpp": {"sourcedir": "src/programs/tests",
+        files_to_copy = {"catch.hpp": {"sourcedir": "src/external",
                                        "installdir": "include/external",
                                        "destname": dir+"/catch.hpp"}}
         copy_from_source_dir(files_to_copy)
@@ -959,7 +959,7 @@ def build_plugin_test(plugin_name, copy_catch_hpp=True, dir="."):
 def build_jeventprocessor_test(processor_name, is_mini=True, copy_catch_hpp=True, dir="."):
 
     if copy_catch_hpp:
-        files_to_copy = {"catch.hpp": {"sourcedir": "src/programs/tests",
+        files_to_copy = {"catch.hpp": {"sourcedir": "src/external",
                                        "installdir": "include/external",
                                        "destname": dir+"/catch.hpp"}}
         copy_from_source_dir(files_to_copy)

@@ -21,15 +21,15 @@
 
 void create_hits_file() {
 
-    EventInfo eventinfo1(7, 0, 22);
+    MutableEventInfo eventinfo1(7, 0, 22);
     EventInfoCollection eventinfos1;
     eventinfos1.push_back(eventinfo1);
 
     ExampleHitCollection hits1;
-    hits1.push_back(ExampleHit(22, -1, -1, 0, 100, 0));
-    hits1.push_back(ExampleHit(49, 1, 1, 0, 15.5, 0));
-    hits1.push_back(ExampleHit(47, 1, 2, 0, 0.5, 0));
-    hits1.push_back(ExampleHit(42, 2, 1, 0, 4.0, 0));
+    hits1.push_back(MutableExampleHit(22, -1, -1, 0, 100, 0));
+    hits1.push_back(MutableExampleHit(49, 1, 1, 0, 15.5, 0));
+    hits1.push_back(MutableExampleHit(47, 1, 2, 0, 0.5, 0));
+    hits1.push_back(MutableExampleHit(42, 2, 1, 0, 4.0, 0));
 
     podio::Frame event1;
     event1.put(std::move(hits1), "hits");
@@ -38,15 +38,15 @@ void create_hits_file() {
     podio::ROOTFrameWriter writer("hits.root");
     writer.writeFrame(event1, "events");
 
-    EventInfo eventinfo2(8, 0, 22);
+    MutableEventInfo eventinfo2(8, 0, 22);
     EventInfoCollection eventinfos2;
     eventinfos2.push_back(eventinfo2);
 
     ExampleHitCollection hits2;
-    hits2.push_back(ExampleHit(42, 5, -5, 5, 7.6, 0));
-    hits2.push_back(ExampleHit(618, -3, -5, 1, 99.9, 0));
-    hits2.push_back(ExampleHit(27, -10, 10, 10, 22.2, 0));
-    hits2.push_back(ExampleHit(28, -9, 11, 10, 7.8, 0));
+    hits2.push_back(MutableExampleHit(42, 5, -5, 5, 7.6, 0));
+    hits2.push_back(MutableExampleHit(618, -3, -5, 1, 99.9, 0));
+    hits2.push_back(MutableExampleHit(27, -10, 10, 10, 22.2, 0));
+    hits2.push_back(MutableExampleHit(28, -9, 11, 10, 7.8, 0));
 
     podio::Frame event2;
     event2.put(std::move(hits2), "hits");
