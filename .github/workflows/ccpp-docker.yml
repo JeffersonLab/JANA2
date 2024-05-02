@@ -7,8 +7,8 @@ on:
     branches: [ master ]
 
 jobs:
-  build:
-    name: Build JANA2 with all options enabled
+  jana2_env_everything_except_cuda:
+    name: Build JANA2 with all dependencies except CUDA
     runs-on: ubuntu-latest
     container:
       image: nbrei/jana2_env_everything_except_cuda
@@ -52,11 +52,13 @@ jobs:
       run: |
         echo "--- Running TimesliceExample with simple topology ------------------------------"
         export JANA_PLUGIN_PATH=$GITHUB_WORKSPACE/Linux/plugins
+        export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/Linux/lib:/app/podio/install/lib:$LD_LIBRARY_PATH
         $GITHUB_WORKSPACE/Linux/bin/jana -Pplugins=TimesliceExample -Pjana:nevents=100 events.root
     - name: TimesliceExample with complex (timeslice) topology
       run: |
         echo "--- Running TimesliceExample with complex topology ------------------------------"
         export JANA_PLUGIN_PATH=$GITHUB_WORKSPACE/Linux/plugins
+        export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/Linux/lib:/app/podio/install/lib:$LD_LIBRARY_PATH
         $GITHUB_WORKSPACE/Linux/bin/jana -Pplugins=TimesliceExample -Pjana:nevents=100 timeslices.root
 
 

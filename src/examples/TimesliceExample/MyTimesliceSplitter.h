@@ -36,7 +36,7 @@ struct MyTimesliceSplitter : public JEventUnfolder {
         event_clusters_out->push_back(m_timeslice_clusters_in()->at(child_idx));
 
         auto event_info_out = std::make_unique<EventInfoCollection>();
-        event_info_out->push_back(EventInfo(event_nr, timeslice_nr, 0));
+        event_info_out->push_back(MutableEventInfo(event_nr, timeslice_nr, 0));
 
         LOG_DEBUG(GetLogger()) << "MyTimesliceSplitter: Timeslice " << parent.GetEventNumber() 
             <<  ", Event " << child.GetEventNumber()
