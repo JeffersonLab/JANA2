@@ -46,8 +46,8 @@ public:
     /// Convenience method for formatting complete error data
     inline friend std::ostream& operator<<(std::ostream& os, JException const& ex) {
         os << "Exception: " << ex.message << std::endl;
-        if (ex.plugin_name.length() != 0) {
-            os << "  Plugin:         " << ex.plugin_name << std::endl;
+        if (ex.callback_name.length() != 0) {
+            os << "  Callback:       " << ex.callback_name << std::endl;
         }
         if (ex.component_name.length() != 0) {
             os << "  Component:      " << ex.component_name << std::endl;
@@ -55,6 +55,9 @@ public:
         if (ex.factory_name.length() != 0) {
             os << "  Factory name:   " << ex.factory_name << std::endl;
             os << "  Factory tag:    " << ex.factory_tag << std::endl;
+        }
+        if (ex.plugin_name.length() != 0) {
+            os << "  Plugin:         " << ex.plugin_name << std::endl;
         }
         if (ex.stacktrace.length() != 0 && ex.show_stacktrace) {
             os << "  Backtrace:" << std::endl << std::endl << ex.stacktrace;
@@ -65,6 +68,8 @@ public:
     std::string message;
     std::string plugin_name;
     std::string component_name;
+    std::string callback_name;
+    std::string component_prefix;
     std::string factory_name;
     std::string factory_tag;
     std::string stacktrace;
