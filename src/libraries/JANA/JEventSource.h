@@ -300,7 +300,9 @@ public:
             else if (rs == RETURN_STATUS::kERROR || rs == RETURN_STATUS::kUNKNOWN) {
                 JException ex ("JEventSource threw RETURN_STATUS::kERROR or kUNKNOWN");
                 ex.plugin_name = m_plugin_name;
-                ex.component_name = m_type_name;
+                ex.type_name = m_type_name;
+                ex.function_name = "JEventSource::GetEvent";
+                ex.instance_name = m_resource_name;
                 throw ex;
             }
             else {

@@ -118,25 +118,28 @@ inline void JComponent::CallWithJExceptionWrapper(std::string func_name, F func)
         func();
     }
     catch (JException& ex) {
+        if (ex.function_name.empty()) ex.function_name = func_name;
+        if (ex.type_name.empty()) ex.type_name = m_type_name;
+        if (ex.instance_name.empty()) ex.instance_name = m_prefix;
         if (ex.plugin_name.empty()) ex.plugin_name = m_plugin_name;
-        if (ex.component_name.empty()) ex.component_name = m_type_name;
-        if (ex.callback_name.empty()) ex.callback_name = func_name;
         throw ex;
     }
     catch (std::exception& e) {
         auto ex = JException(e.what());
         ex.nested_exception = std::current_exception();
-        ex.callback_name = func_name;
+        ex.function_name = func_name;
+        ex.type_name = m_type_name;
+        ex.instance_name = m_prefix;
         ex.plugin_name = m_plugin_name;
-        ex.component_name = m_type_name;
         throw ex;
     }
     catch (...) {
         auto ex = JException("Unknown exception");
         ex.nested_exception = std::current_exception();
-        ex.callback_name = func_name;
+        ex.function_name = func_name;
+        ex.type_name = m_type_name;
+        ex.instance_name = m_prefix;
         ex.plugin_name = m_plugin_name;
-        ex.component_name = m_type_name;
         throw ex;
     }
 }

@@ -18,28 +18,29 @@ void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
             mStatus = Status::Unprocessed;
         }
         catch (JException& ex) {
+            std::string instanceName = mTag.empty() ? mObjectName : mObjectName + ":" + mTag;
+            if (ex.function_name.empty()) ex.function_name = "JFactory::Init";
+            if (ex.type_name.empty()) ex.type_name = mFactoryName;
+            if (ex.instance_name.empty()) ex.instance_name = instanceName;
             if (ex.plugin_name.empty()) ex.plugin_name = mPluginName;
-            if (ex.component_name.empty()) ex.component_name = mFactoryName;
-            if (ex.factory_name.empty()) ex.factory_name = mFactoryName;
-            if (ex.factory_tag.empty()) ex.factory_tag = mTag;
             throw ex;
         }
         catch (std::exception& e) {
             auto ex = JException("Exception in JFactoryT::Init(): %s", e.what());
             ex.nested_exception = std::current_exception();
+            ex.function_name = "JFactory::Init";
+            ex.type_name = mFactoryName;
+            ex.instance_name = mTag.empty() ? mObjectName : mObjectName + ":" + mTag;
             ex.plugin_name = mPluginName;
-            ex.component_name = mFactoryName;
-            ex.factory_name = mFactoryName;
-            ex.factory_tag = mTag;
             throw ex;
         }
         catch (...) {
-            auto ex = JException("Unknown exception in JFactoryT::Init()");
+            auto ex = JException("Unknown exception");
             ex.nested_exception = std::current_exception();
+            ex.function_name = "JFactory::Init";
+            ex.type_name = mFactoryName;
+            ex.instance_name = mTag.empty() ? mObjectName : mObjectName + ":" + mTag;
             ex.plugin_name = mPluginName;
-            ex.component_name = mFactoryName;
-            ex.factory_name = mFactoryName;
-            ex.factory_tag = mTag;
             throw ex;
         }
     }
@@ -66,56 +67,58 @@ void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
             }
         }
         catch (JException& ex) {
+            std::string instanceName = mTag.empty() ? mObjectName : mObjectName + ":" + mTag;
+            if (ex.function_name.empty()) ex.function_name = "JFactory::BeginRun/ChangeRun/EndRun(";
+            if (ex.type_name.empty()) ex.type_name = mFactoryName;
+            if (ex.instance_name.empty()) ex.instance_name = instanceName;
             if (ex.plugin_name.empty()) ex.plugin_name = mPluginName;
-            if (ex.component_name.empty()) ex.component_name = mFactoryName;
-            if (ex.factory_name.empty()) ex.factory_name = mFactoryName;
-            if (ex.factory_tag.empty()) ex.factory_tag = mTag;
             throw ex;
         }
         catch (std::exception& e) {
-            auto ex = JException("Exception in JFactory::BeginRun/ChangeRun/EndRun(): %s", e.what());
+            auto ex = JException(e.what());
             ex.nested_exception = std::current_exception();
+            ex.function_name = "JFactory::BeginRun/ChangeRun/EndRun";
+            ex.type_name = mFactoryName;
+            ex.instance_name = mTag.empty() ? mObjectName : mObjectName + ":" + mTag;
             ex.plugin_name = mPluginName;
-            ex.component_name = mFactoryName;
-            ex.factory_name = mFactoryName;
-            ex.factory_tag = mTag;
             throw ex;
         }
         catch (...) {
-            auto ex = JException("Unknown exception in JFactory::BeginRun/ChangeRun/EndRun()");
+            auto ex = JException("Unknown exception");
             ex.nested_exception = std::current_exception();
+            ex.function_name = "JFactory::BeginRun/ChangeRun/EndRun";
+            ex.type_name = mFactoryName;
+            ex.instance_name = mTag.empty() ? mObjectName : mObjectName + ":" + mTag;
             ex.plugin_name = mPluginName;
-            ex.component_name = mFactoryName;
-            ex.factory_name = mFactoryName;
-            ex.factory_tag = mTag;
             throw ex;
         }
         try {
             Process(event);
         }
         catch (JException& ex) {
+            std::string instanceName = mTag.empty() ? mObjectName : mObjectName + ":" + mTag;
+            if (ex.function_name.empty()) ex.function_name = "JFactory::Process";
+            if (ex.type_name.empty()) ex.type_name = mFactoryName;
+            if (ex.instance_name.empty()) ex.instance_name = instanceName;
             if (ex.plugin_name.empty()) ex.plugin_name = mPluginName;
-            if (ex.component_name.empty()) ex.component_name = mFactoryName;
-            if (ex.factory_name.empty()) ex.factory_name = mFactoryName;
-            if (ex.factory_tag.empty()) ex.factory_tag = mTag;
             throw ex;
         }
         catch (std::exception& e) {
-            auto ex = JException("Exception in JFactory::Process(): %s", e.what());
+            auto ex = JException(e.what());
             ex.nested_exception = std::current_exception();
+            ex.function_name = "JFactory::Process";
+            ex.type_name = mFactoryName;
+            ex.instance_name = mTag.empty() ? mObjectName : mObjectName + ":" + mTag;
             ex.plugin_name = mPluginName;
-            ex.component_name = mFactoryName;
-            ex.factory_name = mFactoryName;
-            ex.factory_tag = mTag;
             throw ex;
         }
         catch (...) {
-            auto ex = JException("Unknown exception in JFactory::Process()");
+            auto ex = JException("Unknown exception");
             ex.nested_exception = std::current_exception();
+            ex.function_name = "JFactory::Process";
+            ex.type_name = mFactoryName;
+            ex.instance_name = mTag.empty() ? mObjectName : mObjectName + ":" + mTag;
             ex.plugin_name = mPluginName;
-            ex.component_name = mFactoryName;
-            ex.factory_name = mFactoryName;
-            ex.factory_tag = mTag;
             throw ex;
         }
         mStatus = Status::Processed;
