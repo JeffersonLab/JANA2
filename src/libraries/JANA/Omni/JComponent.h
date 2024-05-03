@@ -6,6 +6,7 @@
 #pragma once
 #include <JANA/JApplication.h>
 #include <JANA/Omni/JComponentFwd.h>
+#include <JANA/Utils/JTypeInfo.h>
 
 namespace jana {
 namespace omni {
@@ -126,6 +127,7 @@ inline void JComponent::CallWithJExceptionWrapper(std::string func_name, F func)
     }
     catch (std::exception& e) {
         auto ex = JException(e.what());
+        ex.exception_type = JTypeInfo::demangle_current_exception_type();
         ex.nested_exception = std::current_exception();
         ex.function_name = func_name;
         ex.type_name = m_type_name;
@@ -135,6 +137,7 @@ inline void JComponent::CallWithJExceptionWrapper(std::string func_name, F func)
     }
     catch (...) {
         auto ex = JException("Unknown exception");
+        ex.exception_type = JTypeInfo::demangle_current_exception_type();
         ex.nested_exception = std::current_exception();
         ex.function_name = func_name;
         ex.type_name = m_type_name;

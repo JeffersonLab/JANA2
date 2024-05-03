@@ -4,6 +4,7 @@
 
 #include <JANA/JFactory.h>
 #include <JANA/JEvent.h>
+#include <JANA/Utils/JTypeInfo.h>
 
 
 void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
@@ -27,6 +28,7 @@ void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
         }
         catch (std::exception& e) {
             auto ex = JException("Exception in JFactoryT::Init(): %s", e.what());
+            ex.exception_type = JTypeInfo::demangle_current_exception_type();
             ex.nested_exception = std::current_exception();
             ex.function_name = "JFactory::Init";
             ex.type_name = mFactoryName;
@@ -36,6 +38,7 @@ void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
         }
         catch (...) {
             auto ex = JException("Unknown exception");
+            ex.exception_type = JTypeInfo::demangle_current_exception_type();
             ex.nested_exception = std::current_exception();
             ex.function_name = "JFactory::Init";
             ex.type_name = mFactoryName;
@@ -76,6 +79,7 @@ void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
         }
         catch (std::exception& e) {
             auto ex = JException(e.what());
+            ex.exception_type = JTypeInfo::demangle_current_exception_type();
             ex.nested_exception = std::current_exception();
             ex.function_name = "JFactory::BeginRun/ChangeRun/EndRun";
             ex.type_name = mFactoryName;
@@ -85,6 +89,7 @@ void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
         }
         catch (...) {
             auto ex = JException("Unknown exception");
+            ex.exception_type = JTypeInfo::demangle_current_exception_type();
             ex.nested_exception = std::current_exception();
             ex.function_name = "JFactory::BeginRun/ChangeRun/EndRun";
             ex.type_name = mFactoryName;
@@ -105,6 +110,7 @@ void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
         }
         catch (std::exception& e) {
             auto ex = JException(e.what());
+            ex.exception_type = JTypeInfo::demangle_current_exception_type();
             ex.nested_exception = std::current_exception();
             ex.function_name = "JFactory::Process";
             ex.type_name = mFactoryName;
@@ -114,6 +120,7 @@ void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
         }
         catch (...) {
             auto ex = JException("Unknown exception");
+            ex.exception_type = JTypeInfo::demangle_current_exception_type();
             ex.nested_exception = std::current_exception();
             ex.function_name = "JFactory::Process";
             ex.type_name = mFactoryName;

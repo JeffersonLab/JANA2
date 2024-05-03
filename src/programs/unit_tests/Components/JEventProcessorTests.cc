@@ -60,3 +60,26 @@ TEST_CASE("JEventProcessor_ExpertMode_ProcessCount") {
     REQUIRE(destroy_count == 1);
 }
 
+struct MyExceptingProcessor : public JEventProcessor {
+    void Process(const std::shared_ptr<const JEvent>&) override {
+        throw std::runtime_error("Mystery!");
+    }
+};
+
+TEST_CASE("JEventProcessor_Exception") {
+    JApplication app;
+    app.Add(new JEventSource);
+    app.Add(new MyExceptingProcessor);
+    bool found_throw = false;
+    try {
+        app.Run();
+    }
+    catch(JException& ex) {
+        REQUIRE(ex.function_name == "JEventProcessor::Process");
+        REQUIRE(ex.message == "Mystery!");
+        REQUIRE(ex.exception_type == "std::runtime_error");
+        found_throw = true;
+    }
+    REQUIRE(found_throw == true);
+
+}

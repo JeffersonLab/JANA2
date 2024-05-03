@@ -46,7 +46,12 @@ public:
     /// Convenience method for formatting complete error data
     inline friend std::ostream& operator<<(std::ostream& os, JException const& ex) {
         os << "JException" << std::endl;
-        os <<     "  Message:  " << ex.message << std::endl;
+        if (ex.exception_type.length() != 0) {
+            os << "  Type:     " << ex.exception_type << std::endl;
+        }
+        if (ex.message.length() != 0) {
+            os << "  Message:  " << ex.message << std::endl;
+        }
         if (ex.function_name.length() != 0) {
             os << "  Function: " << ex.function_name << std::endl;
         }
@@ -65,6 +70,7 @@ public:
         return os;
     }
 
+    std::string exception_type;
     std::string message;
     std::string plugin_name;
     std::string type_name;

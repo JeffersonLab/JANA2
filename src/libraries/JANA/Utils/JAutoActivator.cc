@@ -7,6 +7,7 @@
 
 JAutoActivator::JAutoActivator() {
     SetTypeName("JAutoActivator");
+    SetCallbackStyle(CallbackStyle::ExpertMode);
 }
 
 void JAutoActivator::AddAutoActivatedFactory(string factory_name, string factory_tag) {

@@ -221,3 +221,29 @@ TEST_CASE("JFactoryTests") {
     }
 }
 
+
+struct MyExceptingFactory : public JFactoryT<JFactoryTestDummyObject> {
+    void Process(const std::shared_ptr<const JEvent>&) override {
+        throw std::runtime_error("Weird mystery!");
+    }
+};
+
+TEST_CASE("JFactory_Exception") {
+    JApplication app;
+    app.Add(new JEventSource);
+    app.Add(new JFactoryGeneratorT<MyExceptingFactory>());
+    app.SetParameterValue("autoactivate", "JFactoryTestDummyObject");
+    bool found_throw = false;
+    try {
+        app.Run();
+    }
+    catch(JException& ex) {
+        LOG << ex << LOG_END;
+        REQUIRE(ex.function_name == "JFactory::Process");
+        REQUIRE(ex.message == "Weird mystery!");
+        REQUIRE(ex.exception_type == "std::runtime_error");
+        found_throw = true;
+    }
+    REQUIRE(found_throw == true);
+}
+
