@@ -9,6 +9,7 @@
 #include <JANA/Utils/JEventLevel.h>
 #include <JANA/Utils/JCallGraphRecorder.h>
 #include <JANA/Omni/JComponent.h>
+#include <JANA/Omni/JCollection.h>
 
 #include <string>
 #include <typeindex>
@@ -46,7 +47,11 @@ public:
           SetPrefix(aTag.empty() ? mObjectName : mObjectName + ":" + mTag);
     };
 
-    virtual ~JFactory() = default;
+    virtual ~JFactory() {
+        for (JCollection* collection : mCollections) {
+            delete collection;
+        }
+    }
 
 
     std::string GetName() const __attribute__ ((deprecated))  { return mObjectName; }
@@ -60,6 +65,7 @@ public:
 
     uint32_t GetPreviousRunNumber(void) const { return mPreviousRunNumber; }
 
+    std::vector<JCollection*>& GetCollections() { return mCollections; }
 
     void SetName(std::string objectName) __attribute__ ((deprecated)) { mObjectName = std::move(objectName); }
 
@@ -183,6 +189,7 @@ public:
 
 protected:
 
+    std::vector<JCollection*> mCollections;
     std::string mObjectName;
     std::string mTag;
     uint32_t mFlags = WRITE_TO_OUTPUT;
@@ -195,26 +202,9 @@ protected:
     CreationStatus mCreationStatus = CreationStatus::NotCreatedYet;
 };
 
-// Because C++ doesn't support templated virtual functions, we implement our own dispatch table, mUpcastVTable.
-// This means that the JFactoryT is forced to manually populate this table by calling JFactoryT<T>::EnableGetAs.
-// We have the option to make the vtable be a static member of JFactoryT<T>, but we have chosen not to because:
-//
-//   1. It would be inconsistent with the fact that the user is supposed to call EnableGetAs in the ctor
-//   2. People in the future may want to generalize GetAs to support user-defined S* -> T* conversions (which I don't recommend)
-//   3. The size of the vtable is expected to be very small (<10 elements, most likely 2)
-
 template<typename S>
 std::vector<S*> JFactory::GetAs() {
-    std::vector<S*> results;
-    auto ti = std::type_index(typeid(S));
-    auto search = mUpcastVTable.find(ti);
-    if (search != mUpcastVTable.end()) {
-        using upcast_fn_t = std::function<std::vector<S*>()>;
-        auto temp = static_cast<JAnyT<upcast_fn_t>*>(&(*search->second));
-        upcast_fn_t upcast_fn = temp->t;
-        results = upcast_fn();
-    }
-    return results;
+    return mCollections[0]->GetAs<S>();
 }
 
 
