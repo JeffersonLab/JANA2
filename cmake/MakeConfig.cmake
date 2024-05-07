@@ -141,11 +141,11 @@ endif()
 set(HAVE_NUMA 0)
 
 configure_file(scripts/jana-config.in jana-config @ONLY)
-configure_file(scripts/jana_config.h.in jana_config.h @ONLY)
+configure_file(scripts/jana_config.h.in src/libraries/JANA/jana_config.h @ONLY)
 configure_file(scripts/jana-this.sh.in  jana-this.sh  @ONLY)
 configure_file(scripts/jana-this.csh.in jana-this.csh  @ONLY)
 
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/jana-config DESTINATION bin)
-install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/jana_config.h DESTINATION include/JANA)
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/src/libraries/JANA/jana_config.h DESTINATION include/JANA)
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/jana-this.sh  DESTINATION bin)
 install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/jana-this.csh  DESTINATION bin)
