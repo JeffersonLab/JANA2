@@ -242,6 +242,8 @@ TEST_CASE("JFactory_Exception") {
         REQUIRE(ex.function_name == "JFactory::Process");
         REQUIRE(ex.message == "Weird mystery!");
         REQUIRE(ex.exception_type == "std::runtime_error");
+        REQUIRE(ex.type_name == "MyExceptingFactory");
+        REQUIRE(ex.instance_name == "JFactoryTestDummyObject");
         found_throw = true;
     }
     REQUIRE(found_throw == true);

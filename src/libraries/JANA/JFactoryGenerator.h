@@ -61,6 +61,7 @@ public:
         }
         factory->SetFactoryName(JTypeInfo::demangle<T>());
         factory->SetPluginName(GetPluginName());
+        factory->SetApplication(GetApplication());
         factory_set->Add(factory);
     }
 };

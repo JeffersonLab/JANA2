@@ -68,7 +68,7 @@ public:
     // ---------------------
     // Meant to be called by JANA
     // ---------------------
-    std::string GetPrefix() { return m_prefix; }
+    std::string GetPrefix() { return m_prefix.empty() ? m_type_name : m_prefix; }
 
     JEventLevel GetLevel() { return m_level; }
 
