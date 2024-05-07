@@ -249,3 +249,22 @@ TEST_CASE("JFactory_Exception") {
     REQUIRE(found_throw == true);
 }
 
+struct MyLoggedFactory : public JFactoryT<JFactoryTestDummyObject> {
+    MyLoggedFactory() {
+        SetPrefix("myfac");
+    }
+    void Process(const std::shared_ptr<const JEvent>&) override {
+        LOG_INFO(GetLogger()) << "Process ran!" << LOG_END;
+        REQUIRE(GetLogger().level == JLogger::Level::DEBUG);
+    }
+};
+TEST_CASE("JFactory_Logger") {
+    JApplication app;
+    app.Add(new JEventSource);
+    app.Add(new JFactoryGeneratorT<MyLoggedFactory>());
+    app.SetParameterValue("log:debug", "myfac");
+    app.SetParameterValue("jana:nevents", "1");
+    app.SetParameterValue("autoactivate", "JFactoryTestDummyObject");
+    app.Run();
+}
+
