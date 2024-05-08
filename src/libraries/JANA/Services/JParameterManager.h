@@ -84,6 +84,11 @@ public:
 
     JParameter* FindParameter(std::string);
 
+    void PrintParameters();
+    
+    void PrintParameters(int verbosity, int strictness);
+
+    [[deprecated]]
     void PrintParameters(bool show_defaulted, bool show_advanced=true, bool warn_on_unused=false);
 
     std::map<std::string, JParameter*> GetAllParameters();
@@ -140,6 +145,9 @@ public:
 private:
 
     std::map<std::string, JParameter*> m_parameters;
+
+    int m_strictness = 1;
+    int m_verbosity = 1;
 
     JLogger m_logger;
 

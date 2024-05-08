@@ -182,8 +182,17 @@ void JApplication::Run(bool wait_until_finished) {
     Initialize();
     if(m_quitting) return;
 
-    // Print summary of all config parameters (if any aren't default)
-    m_params->PrintParameters(false);
+    // At this point, all components should have been provided and all parameter values should have been set.
+    // Let's report what we found!
+    //
+    // You might be wondering why we do this here instead of at the end of Initialize(), which might make more sense.
+    // The reason is that there might be other things, specifically JBenchmarker, that do request Parameters and Services
+    // but aren't JComponents (yet). These have to happen after JApplication::Initialize() and before the parameter table
+    // gets printed. Because of their weird position, they are not able to add additional plugins or components, nor 
+    // submit Parameter values.
+    //
+    // Print summary of all config parameters
+    m_params->PrintParameters();
 
     LOG_INFO(m_logger) << GetComponentSummary() << LOG_END;
     LOG_INFO(m_logger) << "Starting processing with " << m_desired_nthreads << " threads requested..." << LOG_END;

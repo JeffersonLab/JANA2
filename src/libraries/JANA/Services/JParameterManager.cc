@@ -75,41 +75,111 @@ JParameter* JParameterManager::FindParameter(std::string name) {
     return result->second;
 }
 
+void JParameterManager::PrintParameters() {
+    // In an ideal world, these parameters would be declared in Init(). However, we always have the chicken-and-egg problem to contend with
+    // when initializing ParameterManager and other Services. As long as PrintParameters() gets called at the end of JApplication::Initialize(),
+    // this is fine.
+    SetDefaultParameter("jana:parameter_verbosity", m_verbosity, "0: Don't show parameters table\n"
+                                                                 "1: Show user-provided parameters only\n"
+                                                                 "2: Show defaulted parameters\n"
+                                                                 "3: Show defaulted advanced parameters");
+    
+    SetDefaultParameter("jana:parameter_strictness", m_strictness, "0: Ignore unused parameters\n"
+                                                                   "1: Warn on unused parameters\n"
+                                                                   "2: Throw on unused parameters");
+
+    if ((m_verbosity < 0) || (m_verbosity > 3)) throw JException("jana:parameter_verbosity: Bad parameter value!");
+    if ((m_strictness < 0) || (m_strictness > 2)) throw JException("jana:parameter_strictness: Bad parameter value!");
+
+    PrintParameters(m_verbosity, m_strictness);
+}
+
+void JParameterManager::PrintParameters(bool show_defaulted, bool show_advanced, bool warn_on_unused) {
+    int verbosity = 1;
+    int strictness = 0;
+
+    if (show_advanced) {
+        verbosity = 3;
+    }
+    else if (show_defaulted) {
+        verbosity = 2;
+    }
+    if (warn_on_unused) {
+        strictness = 1;
+    }
+    PrintParameters(verbosity, strictness);
+}
+
+
 /// @brief Prints parameters to stdout
 ///
-/// @param [in] all   If false, prints only parameters whose values differ from the defaults.
-///                   If true, prints all parameters.
-///                   Defaults to false.
-void JParameterManager::PrintParameters(bool show_defaulted, bool show_advanced, bool warn_on_unused) {
+/// @param [in] int verbosity   0: Don't show parameters table
+///                             1: Show parameters with user-provided values only
+///                             2: Show parameters with default values, except those marked "advanced"
+///                             3: Show parameters with default values, including those marked "advanced"
+///
+/// @param [in] int strictness  0: Ignore unused parameters
+///                             1: Warn on unused parameters
+///                             2: Throw on unused parameters
+void JParameterManager::PrintParameters(int verbosity, int strictness) {
 
-    // First we filter
-    vector<JParameter*> params_to_print;
+    if (verbosity == 0) {
+        LOG_INFO(m_logger) << "Configuration parameters table hidden. Set jana:parameter_verbosity > 0 to view." << LOG_END;
+        return;
+    }
+
     bool warnings_present = false;
+    bool strictness_violation = false;
 
-    for (auto& p : m_parameters) {
-        string key = p.first;
-        auto j = p.second;
+    // We don't need to show "Advanced" as a warning unless we are using full verbosity
+    if (verbosity == 3) {
+        warnings_present = true;
+    }
 
-        if ((!show_defaulted) && j->IsDefault()) continue;  // Hide all parameters that were set by default and the user didn't provide
-        if (j->IsDeprecated() && j->IsDefault()) continue;    // Hide deprecated parameters that are NOT in use
-        if (!show_advanced && j->IsAdvanced() && j->IsDefault()) continue;
-
-        if (j->IsDeprecated() && !j->IsDefault()) {
-            // Warn for any deprecated parameters that are overriden.
+    // Check for warnings and unused parameters first 
+    // The former might change the table columns and the latter might change the filter verbosity
+    for (auto& pair : m_parameters) {
+        const auto& key = pair.first;
+        auto param = pair.second;
+        
+        if ((strictness > 0) && (!param->IsDefault()) && (!param->IsUsed())) {
+            strictness_violation = true;
+            warnings_present = true;
+            if (strictness < 2) {
+                LOG_WARN(m_logger) << "Parameter '" << key << "' appears to be unused. Possible typo?" << LOG_END;
+            }
+            else {
+                LOG_FATAL(m_logger) << "Parameter '" << key << "' appears to be unused. Possible typo?" << LOG_END;
+            }
+        }
+        if ((!param->IsDefault()) && (param->IsDeprecated())) {
             LOG_WARN(m_logger) << "Parameter '" << key << "' has been deprecated and will no longer be supported in the next release." << LOG_END;
             warnings_present = true;
         }
-        if (warn_on_unused && !j->IsUsed()) {
-            // Warn about any unused parameters
-            LOG_WARN(m_logger) << "Parameter '" << key << "' appears to be unused at this time. Possible typo?" << LOG_END;
-            warnings_present = true;
-        }
-        if (j->IsAdvanced()) {
-            // Inform user that this parameter is advanced
-            warnings_present = true;
-        }
-        params_to_print.push_back(p.second);
     }
+
+    if (strictness_violation) {
+        LOG_WARN(m_logger) << "Printing parameter table with full verbosity due to strictness warning" << LOG_END;
+        verbosity = 3; // Crank up verbosity before printing out table
+    }
+
+    // Filter table
+    vector<JParameter*> params_to_print;
+
+    for (auto& pair : m_parameters) {
+        auto param = pair.second;
+
+        if (param->IsDeprecated() && (param->IsDefault())) continue;      
+        // Always hide deprecated parameters that are NOT in use
+        
+        if ((verbosity == 1) && (param->IsDefault())) continue;           
+        // At verbosity level 1, hide all default-valued parameters
+        
+        if ((verbosity == 2) && (param->IsDefault()) && (param->IsAdvanced())) continue;
+        // At verbosity level 2, hide only advanced default-valued parameters
+        
+        params_to_print.push_back(param);
+    } 
 
     // If all params are set to default values, then print a one line summary and return
     if (params_to_print.empty()) {
@@ -117,7 +187,7 @@ void JParameterManager::PrintParameters(bool show_defaulted, bool show_advanced,
         return;
     }
 
-    // Generate the whole table
+    // Print table
     JTablePrinter table;
     table.AddColumn("Name");
     if (warnings_present) {
@@ -134,7 +204,7 @@ void JParameterManager::PrintParameters(bool show_defaulted, bool show_advanced,
                 // If deprecated, it no longer matters whether it is advanced or not. If unused, won't show up here anyway.
                 warning = "Deprecated";
             }
-            else if (warn_on_unused && !p->IsUsed()) {
+            else if (!p->IsUsed()) {
                 // Can't be both deprecated and unused, since JANA only finds out that it is deprecated by trying to use it
                 // Can't be both advanced and unused, since JANA only finds out that it is advanced by trying to use it
                 warning = "Unused";
@@ -142,7 +212,6 @@ void JParameterManager::PrintParameters(bool show_defaulted, bool show_advanced,
             else if (p->IsAdvanced()) {
                 warning = "Advanced";
             }
-
 
             table | p->GetKey()
                   | warning
@@ -160,6 +229,11 @@ void JParameterManager::PrintParameters(bool show_defaulted, bool show_advanced,
     std::ostringstream ss;
     table.Render(ss);
     LOG_INFO(m_logger) << "Configuration Parameters\n"  << ss.str() << LOG_END;
+
+    // Now that we've printed the table, we can throw an exception if we are being super strict
+    if (strictness_violation && strictness > 1) {
+        throw JException("Unrecognized parameters found! Throwing an exception because jana:parameter_strictness=2. See full parameters table in log.");
+    }
 }
 
 /// @brief Access entire map of parameters

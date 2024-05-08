@@ -104,7 +104,7 @@ int Execute(JApplication* app, UserOptions &options) {
         if (options.flags[Benchmark]) {
             JBenchmarker benchmarker(app);  // Show benchmarking configs only if benchmarking mode specified
         }
-        app->GetJParameterManager()->PrintParameters(true);
+        app->GetJParameterManager()->PrintParameters(2, 1);
     }
     else if (options.flags[DumpConfigs]) {
         // Load all plugins, dump parameters to file, exit without running anything
