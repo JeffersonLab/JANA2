@@ -2,10 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-
-#ifndef JANA2_JLOCKSERVICE_H
-#define JANA2_JLOCKSERVICE_H
-
+#pragma once
 #include <JANA/Services/JServiceLocator.h>
 
 class JEventProcessor;
@@ -273,4 +270,3 @@ inline pthread_rwlock_t *JLockService::RootFillUnLock(JEventProcessor *proc) {
 }
 
 
-#endif //JANA2_JLOCKSERVICE_H

@@ -1,8 +1,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-#ifndef _JCalibrationCCDB_
-#define _JCalibrationCCDB_
+#pragma once
 
 // This entire file was copied from the CCDB 0.06 source
 // (janaccdb directory). It has been modified based on
@@ -363,4 +362,3 @@ private:
 };
 
 
-#endif // _JCalibrationCCDB_

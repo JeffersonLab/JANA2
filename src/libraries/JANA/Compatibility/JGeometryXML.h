@@ -5,9 +5,7 @@
 // Creator: davidl
 //
 
-#ifndef _JGeometryXML_
-#define _JGeometryXML_
-
+#pragma once
 #include <iostream>
 
 #include <JANA/Compatibility/jerror.h>
@@ -199,7 +197,4 @@ class JGeometryXML:public JGeometry{
 typedef JGeometryXML::node_t node_t;
 #endif
 
-
-
-#endif // _JGeometryXML_
 

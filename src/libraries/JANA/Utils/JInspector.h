@@ -1,8 +1,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-#ifndef _JInspector_h_
-#define _JInspector_h_
+#pragma once
 
 #include <string>
 #include <map>
@@ -84,4 +83,3 @@ inline void JParameterManager::Parse(const std::string& value, JInspector::Forma
     else val =  JInspector::Format::Table;
 }
 
-#endif // _JIntrospection_h_

@@ -2,9 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-#ifndef _JCalibrationFile_
-#define _JCalibrationFile_
-
+#pragma once
 #include "JCalibration.h"
 
 #include <fstream>
@@ -37,6 +35,4 @@ class JCalibrationFile:public JCalibration{
         void AddToNamepathList(string dir, vector<string> &namepaths);
 };
 
-
-#endif // _JCalibrationFile_
 

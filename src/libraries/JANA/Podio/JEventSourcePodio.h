@@ -3,9 +3,7 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 
-#ifndef JANA2_JEVENTSOURCEPODIO_H
-#define JANA2_JEVENTSOURCEPODIO_H
-
+#pragma once
 #include <JANA/JEventSource.h>
 #include <podio/ROOTFrameReader.h>
 
@@ -108,5 +106,3 @@ void JEventSourcePodio<VisitT>::Close() {
 }
 
 
-
-#endif //JANA2_JEVENTSOURCEPODIO_H

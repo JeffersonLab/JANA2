@@ -3,10 +3,7 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 
-#ifndef JANA2_JARROWPERFSUMMARY_H
-#define JANA2_JARROWPERFSUMMARY_H
-
-
+#pragma once
 #include <vector>
 #include <string>
 
@@ -77,4 +74,3 @@ struct JPerfSummary {
 std::ostream& operator<<(std::ostream& stream, const JPerfSummary& data);
 
 
-#endif //JANA2_JARROWPERFSUMMARY_H

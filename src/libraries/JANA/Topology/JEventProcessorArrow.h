@@ -2,10 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-#ifndef JANA2_JEVENTPROCESSORARROW_H
-#define JANA2_JEVENTPROCESSORARROW_H
-
-
+#pragma once
 #include <JANA/JEventProcessor.h>
 #include <JANA/Topology/JPipelineArrow.h>
 
@@ -33,5 +30,3 @@ public:
     void finalize() final;
 };
 
-
-#endif //JANA2_JEVENTPROCESSORARROW_H

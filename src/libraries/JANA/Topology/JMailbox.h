@@ -2,10 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-
-#ifndef JANA2_JMAILBOX_H
-#define JANA2_JMAILBOX_H
-
+#pragma once
 #include <queue>
 #include <mutex>
 #include <JANA/Utils/JCpuInfo.h>
@@ -328,5 +325,3 @@ inline size_t JMailbox<std::shared_ptr<JEvent>*>::pop_and_reserve(std::shared_pt
 }
 
 
-
-#endif //JANA2_JMAILBOX_H

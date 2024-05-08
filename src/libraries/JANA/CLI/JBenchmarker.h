@@ -2,9 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-#ifndef JANA2_JBENCHMARKER_H
-#define JANA2_JBENCHMARKER_H
-
+#pragma once
 #include <JANA/JApplication.h>
 
 class JBenchmarker {
@@ -29,4 +27,3 @@ private:
 };
 
 
-#endif //JANA2_JBENCHMARKER_H

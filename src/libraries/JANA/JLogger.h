@@ -2,9 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-
-#ifndef JANA2_JLOGGER_H
-#define JANA2_JLOGGER_H
+#pragma once
 
 #include <iostream>
 #include <sstream>
@@ -128,5 +126,3 @@ inline void operator<<(JLogMessage&& m, JLogMessage::End const&) {
 #define LOG_DEBUG(logger) LOG_AT_LEVEL(logger, JLogger::Level::DEBUG)
 #define LOG_TRACE(logger) LOG_AT_LEVEL(logger, JLogger::Level::TRACE)
 
-
-#endif //JANA2_JLOGGER_H

@@ -3,8 +3,7 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 
-#ifndef JANA2_JEVENTPOOL_H
-#define JANA2_JEVENTPOOL_H
+#pragma once
 
 #include <JANA/JEvent.h>
 #include <JANA/Services/JComponentManager.h>
@@ -43,4 +42,3 @@ public:
 };
 
 
-#endif //JANA2_JEVENTPOOL_H

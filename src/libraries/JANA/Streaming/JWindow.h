@@ -2,9 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-#ifndef JANA2_JWINDOW_H
-#define JANA2_JWINDOW_H
-
+#pragma once
 #include <JANA/Streaming/JMessage.h>
 #include <JANA/JEvent.h>
 
@@ -126,4 +124,3 @@ private:
     Timestamp m_event_interval; // TODO: This should be a duration
 };
 
-#endif //JANA2_JWINDOW_H

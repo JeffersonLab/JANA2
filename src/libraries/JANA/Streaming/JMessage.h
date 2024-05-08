@@ -2,9 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-#ifndef JANA2_JMESSAGE_H
-#define JANA2_JMESSAGE_H
-
+#pragma once
 #include <JANA/JObject.h>
 
 using DetectorId = uint64_t;
@@ -92,4 +90,3 @@ struct JHitMessage : public JMessage {
     virtual Timestamp get_timestamp() const = 0;
 };
 
-#endif //JANA2_JMESSAGE_H

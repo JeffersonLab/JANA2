@@ -3,9 +3,7 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 
-#ifndef JANA2_JMERGEWINDOW_H
-#define JANA2_JMERGEWINDOW_H
-
+#pragma once
 #include <JANA/Streaming/JWindow.h>
 
 /// JMergeWindow 'hydrates' an existing JEvent by appending any JMessages that fall into its
@@ -21,4 +19,3 @@ public:
 private:
 };
 
-#endif //JANA2_JMERGEWINDOW_H

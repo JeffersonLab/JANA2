@@ -2,9 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-
-#ifndef JANA2_PERFUTILS_H
-#define JANA2_PERFUTILS_H
+#pragma once
 
 #include <vector>
 #include <random>
@@ -25,4 +23,3 @@ int randint(int min, int max);
 double randdouble(double min=0.0, double max=1000.0);
 
 float randfloat(float min=0.0, float max=1000.0);
-#endif // JANA2_PERFUTILS_H

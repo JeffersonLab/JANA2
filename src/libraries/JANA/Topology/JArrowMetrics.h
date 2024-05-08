@@ -2,9 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-#ifndef JANA2_JARROWMETRIC_H
-#define JANA2_JARROWMETRIC_H
-
+#pragma once
 #include <mutex>
 #include <chrono>
 
@@ -181,4 +179,3 @@ inline std::string to_string(JArrowMetrics::Status h) {
     }
 }
 
-#endif //JANA2_JARROWMETRIC_H

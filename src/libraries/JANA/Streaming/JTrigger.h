@@ -2,10 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-
-#ifndef JANA2_JTRIGGER_H
-#define JANA2_JTRIGGER_H
-
+#pragma once
 
 /// JTrigger determines whether an event contains data worth passing downstream, or whether
 /// it should be immediately recycled. The user can call arbitrary JFactories from a Trigger
@@ -25,5 +22,3 @@ struct JTrigger {
 };
 
 
-
-#endif //JANA2_JTRIGGER_H

@@ -2,11 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-
-#ifndef JANA2_JEVENTSOURCEARROW_H
-#define JANA2_JEVENTSOURCEARROW_H
-
-
+#pragma once
 #include <JANA/Topology/JPipelineArrow.h>
 
 using Event = std::shared_ptr<JEvent>;
@@ -26,4 +22,3 @@ public:
     void process(Event* event, bool& success, JArrowMetrics::Status& status);
 };
 
-#endif //JANA2_JEVENTSOURCEARROW_H

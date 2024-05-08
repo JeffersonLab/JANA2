@@ -8,10 +8,7 @@
 //  obscure protected-member rules. 
 //*************************************************************
 
-
-#ifndef _DSTREAMLOG_H_
-#define _DSTREAMLOG_H_
-
+#pragma once
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -65,4 +62,3 @@ extern JStreamLog jout;
 extern JStreamLog jerr;
 #define jendl std::endl
 
-#endif //_DSTREAMLOG_H_

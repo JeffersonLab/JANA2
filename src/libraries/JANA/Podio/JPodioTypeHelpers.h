@@ -3,9 +3,7 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 
-#ifndef JANA2_JPODIOTYPEHELPERS_H
-#define JANA2_JPODIOTYPEHELPERS_H
-
+#pragma once
 #include <type_traits>
 
 #include <podio/podioVersion.h>
@@ -38,4 +36,3 @@ static constexpr bool is_podio_v = is_podio<T>::value;
 
 #endif //ifdef JANA2_HAVE_PODIO
 
-#endif //JANA2_JPODIOTYPEHELPERS_H

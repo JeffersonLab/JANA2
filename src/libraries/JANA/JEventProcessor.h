@@ -2,8 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-#ifndef _JEventProcessor_h_
-#define _JEventProcessor_h_
+#pragma once
 
 #include <JANA/Omni/JComponent.h>
 #include <JANA/Omni/JHasInputs.h>
@@ -168,5 +167,4 @@ private:
 
 };
 
-#endif // _JEventProcessor_h_
 

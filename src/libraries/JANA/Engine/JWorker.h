@@ -2,9 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-#ifndef JANA_JWORKER_H
-#define JANA_JWORKER_H
-
+#pragma once
 #include <thread>
 #include <JANA/Services/JLoggingService.h>
 #include <JANA/Engine/JScheduler.h>
@@ -97,5 +95,3 @@ public:
 
 };
 
-
-#endif

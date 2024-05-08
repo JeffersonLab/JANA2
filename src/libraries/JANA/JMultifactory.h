@@ -2,9 +2,7 @@
 // Copyright 2023, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-
-#ifndef JANA2_JMULTIFACTORY_H
-#define JANA2_JMULTIFACTORY_H
+#pragma once
 
 #include <JANA/JFactoryT.h>
 #include <JANA/JFactorySet.h>
@@ -252,4 +250,3 @@ void JMultifactoryHelperPodio<T>::Process(const std::shared_ptr<const JEvent> &e
 #endif // JANA2_HAVE_PODIO
 
 
-#endif //JANA2_JMULTIFACTORY_H

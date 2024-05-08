@@ -2,8 +2,7 @@
 // Created by Nathan Brei on 10/25/21.
 //
 
-#ifndef JANA2_JCALLGRAPHRECORDER_H
-#define JANA2_JCALLGRAPHRECORDER_H
+#pragma once
 
 #include <vector>
 #include <string>
@@ -143,4 +142,3 @@ void JCallGraphRecorder::FinishFactoryCall(JCallGraphRecorder::JDataSource data_
 }
 
 
-#endif //JANA2_JCALLGRAPHRECORDER_H

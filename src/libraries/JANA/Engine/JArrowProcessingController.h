@@ -2,9 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-#ifndef JANA2_JARROWPROCESSINGCONTROLLER_H
-#define JANA2_JARROWPROCESSINGCONTROLLER_H
-
+#pragma once
 
 #include <JANA/Topology/JTopologyBuilder.h>
 #include <JANA/Engine/JWorker.h>
@@ -59,4 +57,3 @@ private:
 
 };
 
-#endif //JANA2_JARROWPROCESSINGCONTROLLER_H

@@ -2,8 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-#ifndef _JException_h_
-#define _JException_h_
+#pragma once
 
 #include <JANA/Utils/JBacktrace.h>
 #include <string>
@@ -92,5 +91,4 @@ JException::JException(std::string format_str, Args... args) {
     message = cmess;
 }
 
-#endif // _JException_h_
 

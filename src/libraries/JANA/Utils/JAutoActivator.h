@@ -3,9 +3,7 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 
-#ifndef JANA2_JAUTOACTIVATOR_H
-#define JANA2_JAUTOACTIVATOR_H
-
+#pragma once
 #include <JANA/JEventProcessor.h>
 
 using std::vector;
@@ -26,5 +24,3 @@ private:
 };
 
 
-
-#endif //JANA2_JAUTOACTIVATOR_H

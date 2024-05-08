@@ -9,9 +9,7 @@
 //  obscure protected-member rules. 
 //*************************************************************
 
-#ifndef _DSTREAMLOGBUFFER_H_
-#define _DSTREAMLOGBUFFER_H_
-
+#pragma once
 #include <iostream>
 #include <string.h>
 #include <pthread.h>
@@ -62,4 +60,3 @@ class JStreamLogBuffer : public std::streambuf
         void SetThreadstampFlag(bool prepend_threadstamp=true){__prepend_threadstamp=prepend_threadstamp;}
 };
 
-#endif //_DSTREAMLOGBUFFER_H_

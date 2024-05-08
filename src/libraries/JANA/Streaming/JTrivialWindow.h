@@ -2,10 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-
-#ifndef JANA2_JTRIVIALWINDOW_H
-#define JANA2_JTRIVIALWINDOW_H
-
+#pragma once
 #include <JANA/Streaming/JWindow.h>
 
 /// JTrivialWindow emits a new JEvent for each JMessage it receives. This may be useful for simple
@@ -20,4 +17,3 @@ private:
     std::deque<T*> m_pending_messages;
 };
 
-#endif //JANA2_JTRIVIALWINDOW_H

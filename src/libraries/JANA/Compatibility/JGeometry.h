@@ -5,9 +5,7 @@
 // Creator: davidl (on Darwin fwing-dhcp61.jlab.org 8.10.1 i386)
 //
 
-#ifndef _JGeometry_
-#define _JGeometry_
-
+#pragma once
 #include "jerror.h"
 
 #include <map>
@@ -384,4 +382,3 @@ bool JGeometry::GetMultiple(string xpath, vector<map<string,T> > &vvals)
     return res;
 }
 
-#endif // _JGeometry_
