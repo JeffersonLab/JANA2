@@ -35,28 +35,14 @@ public:
 
 
     virtual void DoInitialize() {
-        try {
-            for (auto* parameter : m_parameters) {
-                parameter->Configure(*(m_app->GetJParameterManager()), m_prefix);
-            }
-            for (auto* service : m_services) {
-                service->Init(m_app);
-            }
-            Init();
-            m_status = Status::Initialized;
+        for (auto* parameter : m_parameters) {
+            parameter->Configure(*(m_app->GetJParameterManager()), m_prefix);
         }
-        catch (JException& ex) {
-            ex.plugin_name = m_plugin_name;
-            ex.component_name = m_type_name;
-            throw ex;
+        for (auto* service : m_services) {
+            service->Init(m_app);
         }
-        catch (...) {
-            auto ex = JException("Unknown exception in JEventProcessor::Open()");
-            ex.nested_exception = std::current_exception();
-            ex.plugin_name = m_plugin_name;
-            ex.component_name = m_type_name;
-            throw ex;
-        }
+        CallWithJExceptionWrapper("JEventProcessor::Init", [&](){ Init(); });
+        m_status = Status::Initialized;
     }
 
 
@@ -78,84 +64,51 @@ public:
 
 
     virtual void DoReduce(const std::shared_ptr<const JEvent>& e) {
-        try {
-            auto run_number = e->GetRunNumber();
-            std::lock_guard<std::mutex> lock(m_mutex);
+        auto run_number = e->GetRunNumber();
+        std::lock_guard<std::mutex> lock(m_mutex);
 
-            if (m_status == Status::Uninitialized) {
-                DoInitialize();
+        if (m_status == Status::Uninitialized) {
+            DoInitialize();
+        }
+        else if (m_status == Status::Finalized) {
+            throw JException("JEventProcessor: Attempted to call DoMap() after Finalize()");
+        }
+        if (m_last_run_number != run_number) {
+            if (m_last_run_number != -1) {
+                CallWithJExceptionWrapper("JEventProcessor::EndRun", [&](){ EndRun(); });
             }
-            else if (m_status == Status::Finalized) {
-                throw JException("JEventProcessor: Attempted to call DoMap() after Finalize()");
+            for (auto* resource : m_resources) {
+                resource->ChangeRun(e->GetRunNumber(), m_app);
             }
-            if (m_last_run_number != run_number) {
-                if (m_last_run_number != -1) {
-                    EndRun();
-                }
-                for (auto* resource : m_resources) {
-                    resource->ChangeRun(e->GetRunNumber(), m_app);
-                }
-                m_last_run_number = run_number;
-                BeginRun(e);
-            }
-            for (auto* input : m_inputs) {
-                input->GetCollection(*e);
-            }
-            if (m_callback_style == CallbackStyle::DeclarativeMode) {
+            m_last_run_number = run_number;
+            CallWithJExceptionWrapper("JEventProcessor::BeginRun", [&](){ BeginRun(e); });
+        }
+        for (auto* input : m_inputs) {
+            input->GetCollection(*e);
+        }
+        if (m_callback_style == CallbackStyle::DeclarativeMode) {
+            CallWithJExceptionWrapper("JEventProcessor::Process", [&](){ 
                 Process(e->GetRunNumber(), e->GetEventNumber(), e->GetEventIndex());
-            }
-            else if (m_callback_style == CallbackStyle::ExpertMode) {
-                Process(*e);
-            }
-            else {
-                Process(e);
-            }
-            m_event_count += 1;
+            });
         }
-        catch (JException& ex) {
-            ex.plugin_name = m_plugin_name;
-            ex.component_name = m_type_name;
-            throw ex;
+        else if (m_callback_style == CallbackStyle::ExpertMode) {
+            CallWithJExceptionWrapper("JEventProcessor::Process", [&](){ Process(*e); });
         }
-        catch (std::exception& e) {
-            auto ex = JException(e.what());
-            ex.nested_exception = std::current_exception();
-            ex.plugin_name = m_plugin_name;
-            ex.component_name = m_type_name;
-            throw ex;
+        else {
+            CallWithJExceptionWrapper("JEventProcessor::Process", [&](){ Process(e); });
         }
-        catch (...) {
-            auto ex = JException("Unknown exception in JEventProcessor::DoReduce()");
-            ex.nested_exception = std::current_exception();
-            ex.plugin_name = m_plugin_name;
-            ex.component_name = m_type_name;
-            throw ex;
-        }
+        m_event_count += 1;
     }
 
 
     virtual void DoFinalize() {
-        try {
-            std::lock_guard<std::mutex> lock(m_mutex);
-            if (m_status != Status::Finalized) {
-                if (m_last_run_number != -1) {
-                    EndRun();
-                }
-                Finish();
-                m_status = Status::Finalized;
+        std::lock_guard<std::mutex> lock(m_mutex);
+        if (m_status != Status::Finalized) {
+            if (m_last_run_number != -1) {
+                CallWithJExceptionWrapper("JEventProcessor::EndRun", [&](){ EndRun(); });
             }
-        }
-        catch (JException& ex) {
-            ex.plugin_name = m_plugin_name;
-            ex.component_name = m_type_name;
-            throw ex;
-        }
-        catch (...) {
-            auto ex = JException("Unknown exception in JEventProcessor::Finish()");
-            ex.nested_exception = std::current_exception();
-            ex.plugin_name = m_plugin_name;
-            ex.component_name = m_type_name;
-            throw ex;
+            CallWithJExceptionWrapper("JEventProcessor::Finish", [&](){ Finish(); });
+            m_status = Status::Finalized;
         }
     }
 

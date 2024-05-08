@@ -45,16 +45,24 @@ public:
 
     /// Convenience method for formatting complete error data
     inline friend std::ostream& operator<<(std::ostream& os, JException const& ex) {
-        os << "Exception: " << ex.message << std::endl;
+        os << "JException" << std::endl;
+        if (ex.exception_type.length() != 0) {
+            os << "  Type:     " << ex.exception_type << std::endl;
+        }
+        if (ex.message.length() != 0) {
+            os << "  Message:  " << ex.message << std::endl;
+        }
+        if (ex.function_name.length() != 0) {
+            os << "  Function: " << ex.function_name << std::endl;
+        }
+        if (ex.type_name.length() != 0) {
+            os << "  Class:    " << ex.type_name << std::endl;
+        }
+        if (ex.instance_name.length() != 0) {
+            os << "  Instance: " << ex.instance_name << std::endl;
+        }
         if (ex.plugin_name.length() != 0) {
-            os << "  Plugin:         " << ex.plugin_name << std::endl;
-        }
-        if (ex.component_name.length() != 0) {
-            os << "  Component:      " << ex.component_name << std::endl;
-        }
-        if (ex.factory_name.length() != 0) {
-            os << "  Factory name:   " << ex.factory_name << std::endl;
-            os << "  Factory tag:    " << ex.factory_tag << std::endl;
+            os << "  Plugin:   " << ex.plugin_name << std::endl;
         }
         if (ex.stacktrace.length() != 0 && ex.show_stacktrace) {
             os << "  Backtrace:" << std::endl << std::endl << ex.stacktrace;
@@ -62,11 +70,12 @@ public:
         return os;
     }
 
+    std::string exception_type;
     std::string message;
     std::string plugin_name;
-    std::string component_name;
-    std::string factory_name;
-    std::string factory_tag;
+    std::string type_name;
+    std::string function_name;
+    std::string instance_name;
     std::string stacktrace;
     std::exception_ptr nested_exception;
     bool show_stacktrace=true;

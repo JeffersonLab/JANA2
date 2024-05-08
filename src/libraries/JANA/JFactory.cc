@@ -4,44 +4,18 @@
 
 #include <JANA/JFactory.h>
 #include <JANA/JEvent.h>
+#include <JANA/Utils/JTypeInfo.h>
 
 
 void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
 
-    // Make sure that we have a valid JApplication before attempting to call callbacks
-    if (mApp == nullptr) mApp = event->GetJApplication();
-    auto run_number = event->GetRunNumber();
+    // We need this for JMultifactoryHelper. Eventually it should go away
+    auto app = event->GetJApplication();
+    if (app != nullptr) SetApplication(app);
 
     if (mStatus == Status::Uninitialized) {
-        try {
-            Init();
-            mStatus = Status::Unprocessed;
-        }
-        catch (JException& ex) {
-            if (ex.plugin_name.empty()) ex.plugin_name = mPluginName;
-            if (ex.component_name.empty()) ex.component_name = mFactoryName;
-            if (ex.factory_name.empty()) ex.factory_name = mFactoryName;
-            if (ex.factory_tag.empty()) ex.factory_tag = mTag;
-            throw ex;
-        }
-        catch (std::exception& e) {
-            auto ex = JException("Exception in JFactoryT::Init(): %s", e.what());
-            ex.nested_exception = std::current_exception();
-            ex.plugin_name = mPluginName;
-            ex.component_name = mFactoryName;
-            ex.factory_name = mFactoryName;
-            ex.factory_tag = mTag;
-            throw ex;
-        }
-        catch (...) {
-            auto ex = JException("Unknown exception in JFactoryT::Init()");
-            ex.nested_exception = std::current_exception();
-            ex.plugin_name = mPluginName;
-            ex.component_name = mFactoryName;
-            ex.factory_name = mFactoryName;
-            ex.factory_tag = mTag;
-            throw ex;
-        }
+        CallWithJExceptionWrapper("JFactory::Init", [&](){ Init(); });
+        mStatus = Status::Unprocessed;
     }
 
     if (TestFactoryFlag(REGENERATE) && (mStatus == Status::Inserted)) {
@@ -50,74 +24,21 @@ void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
     }
 
     if (mStatus == Status::Unprocessed) {
-        try {
-            if (mPreviousRunNumber == -1) {
-                // This is the very first run
-                ChangeRun(event);
-                BeginRun(event);
-                mPreviousRunNumber = run_number;
-            }
-            else if (mPreviousRunNumber != run_number) {
-                // This is a later run, and it has changed
-                EndRun();
-                ChangeRun(event);
-                BeginRun(event);
-                mPreviousRunNumber = run_number;
-            }
+        auto run_number = event->GetRunNumber();
+        if (mPreviousRunNumber == -1) {
+            // This is the very first run
+            CallWithJExceptionWrapper("JFactory::ChangeRun", [&](){ ChangeRun(event); });
+            CallWithJExceptionWrapper("JFactory::BeginRun", [&](){ BeginRun(event); });
+            mPreviousRunNumber = run_number;
         }
-        catch (JException& ex) {
-            if (ex.plugin_name.empty()) ex.plugin_name = mPluginName;
-            if (ex.component_name.empty()) ex.component_name = mFactoryName;
-            if (ex.factory_name.empty()) ex.factory_name = mFactoryName;
-            if (ex.factory_tag.empty()) ex.factory_tag = mTag;
-            throw ex;
+        else if (mPreviousRunNumber != run_number) {
+            // This is a later run, and it has changed
+            CallWithJExceptionWrapper("JFactory::EndRun", [&](){ EndRun(); });
+            CallWithJExceptionWrapper("JFactory::ChangeRun", [&](){ ChangeRun(event); });
+            CallWithJExceptionWrapper("JFactory::BeginRun", [&](){ BeginRun(event); });
+            mPreviousRunNumber = run_number;
         }
-        catch (std::exception& e) {
-            auto ex = JException("Exception in JFactory::BeginRun/ChangeRun/EndRun(): %s", e.what());
-            ex.nested_exception = std::current_exception();
-            ex.plugin_name = mPluginName;
-            ex.component_name = mFactoryName;
-            ex.factory_name = mFactoryName;
-            ex.factory_tag = mTag;
-            throw ex;
-        }
-        catch (...) {
-            auto ex = JException("Unknown exception in JFactory::BeginRun/ChangeRun/EndRun()");
-            ex.nested_exception = std::current_exception();
-            ex.plugin_name = mPluginName;
-            ex.component_name = mFactoryName;
-            ex.factory_name = mFactoryName;
-            ex.factory_tag = mTag;
-            throw ex;
-        }
-        try {
-            Process(event);
-        }
-        catch (JException& ex) {
-            if (ex.plugin_name.empty()) ex.plugin_name = mPluginName;
-            if (ex.component_name.empty()) ex.component_name = mFactoryName;
-            if (ex.factory_name.empty()) ex.factory_name = mFactoryName;
-            if (ex.factory_tag.empty()) ex.factory_tag = mTag;
-            throw ex;
-        }
-        catch (std::exception& e) {
-            auto ex = JException("Exception in JFactory::Process(): %s", e.what());
-            ex.nested_exception = std::current_exception();
-            ex.plugin_name = mPluginName;
-            ex.component_name = mFactoryName;
-            ex.factory_name = mFactoryName;
-            ex.factory_tag = mTag;
-            throw ex;
-        }
-        catch (...) {
-            auto ex = JException("Unknown exception in JFactory::Process()");
-            ex.nested_exception = std::current_exception();
-            ex.plugin_name = mPluginName;
-            ex.component_name = mFactoryName;
-            ex.factory_name = mFactoryName;
-            ex.factory_tag = mTag;
-            throw ex;
-        }
+        CallWithJExceptionWrapper("JFactory::Process", [&](){ Process(event); });
         mStatus = Status::Processed;
         mCreationStatus = CreationStatus::Created;
     }

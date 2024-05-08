@@ -68,7 +68,7 @@ public:
     // ---------------------
     // Meant to be called by JANA
     // ---------------------
-    std::string GetPrefix() { return m_prefix; }
+    std::string GetPrefix() { return m_prefix.empty() ? m_type_name : m_prefix; }
 
     JEventLevel GetLevel() { return m_level; }
 
@@ -85,10 +85,17 @@ public:
         return m_status; 
     }
 
-    void SetApplication(JApplication* app) { m_app = app; }
+    void SetApplication(JApplication* app) { 
+        if (app == nullptr) {
+            throw JException("Attempting to set a null JApplication pointer!");
+        }
+        m_app = app; 
+    }
 
     void SetLogger(JLogger logger) { m_logger = logger; }
 
+    template <typename F> 
+    inline void CallWithJExceptionWrapper(std::string func_name, F func);
 
     // ---------------------
     // "Registered member" helpers

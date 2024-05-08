@@ -60,170 +60,112 @@ public:
     // Backend
     
     void DoInit() {
-        try {
-            std::lock_guard<std::mutex> lock(m_mutex);
-            // TODO: Obtain overrides of collection names from param manager
-            
-            for (auto* parameter : m_parameters) {
-                parameter->Configure(*(m_app->GetJParameterManager()), m_prefix);
-            }
-            for (auto* service : m_services) {
-                service->Init(m_app);
-            }
-            if (m_status == Status::Uninitialized) {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        // TODO: Obtain overrides of collection names from param manager
+        
+        for (auto* parameter : m_parameters) {
+            parameter->Configure(*(m_app->GetJParameterManager()), m_prefix);
+        }
+        for (auto* service : m_services) {
+            service->Init(m_app);
+        }
+        if (m_status == Status::Uninitialized) {
+            CallWithJExceptionWrapper("JEventUnfolder::Init", [&](){
                 Init();
-                m_status = Status::Initialized;
-            }
-            else {
-                throw JException("JEventUnfolder: Attempting to initialize twice or from an invalid state");
-            }
+            });
+            m_status = Status::Initialized;
         }
-        catch (JException& ex) {
-            ex.plugin_name = m_plugin_name;
-            ex.component_name = m_type_name;
-            throw ex;
-        }
-        catch (...) {
-            auto ex = JException("JEventUnfolder: Exception in Init()");
-            ex.nested_exception = std::current_exception();
-            ex.plugin_name = m_plugin_name;
-            ex.component_name = m_type_name;
-            throw ex;
+        else {
+            throw JException("JEventUnfolder: Attempting to initialize twice or from an invalid state");
         }
     }
 
     void DoPreprocess(const JEvent& parent) {
-        try {
-            {
-                std::lock_guard<std::mutex> lock(m_mutex);
-                if (m_status != Status::Initialized) {
-                    throw JException("JEventUnfolder: Component needs to be initialized and not finalized before Unfold can be called");
-                    // TODO: Consider calling Initialize(with_lock=false) like we do elsewhere
-                }
+        {
+            std::lock_guard<std::mutex> lock(m_mutex);
+            if (m_status != Status::Initialized) {
+                throw JException("JEventUnfolder: Component needs to be initialized and not finalized before Unfold can be called");
+                // TODO: Consider calling Initialize(with_lock=false) like we do elsewhere
             }
-            for (auto* input : m_inputs) {
-                input->PrefetchCollection(parent);
-            }
-            if (m_callback_style != CallbackStyle::DeclarativeMode) {
+        }
+        for (auto* input : m_inputs) {
+            input->PrefetchCollection(parent);
+        }
+        if (m_callback_style != CallbackStyle::DeclarativeMode) {
+            CallWithJExceptionWrapper("JEventUnfolder::Preprocess", [&](){
                 Preprocess(parent);
-            }
-        }
-        catch (JException& ex) {
-            ex.plugin_name = m_plugin_name;
-            if (ex.component_name.empty()) {
-                ex.component_name = m_type_name;
-            }
-            throw ex;
-        }
-        catch (std::exception& e) {
-            auto ex = JException("Exception in JEventUnfolder::DoPreprocess(): %s", e.what());
-            ex.nested_exception = std::current_exception();
-            ex.plugin_name = m_plugin_name;
-            ex.component_name = m_type_name;
-            throw ex;
-        }
-        catch (...) {
-            auto ex = JException("Unknown exception in JEventUnfolder::DoPreprocess()");
-            ex.nested_exception = std::current_exception();
-            ex.plugin_name = m_plugin_name;
-            ex.component_name = m_type_name;
-            throw ex;
+            });
         }
     }
 
     Result DoUnfold(const JEvent& parent, JEvent& child) {
-        try {
-            std::lock_guard<std::mutex> lock(m_mutex);
-            if (m_status == Status::Initialized) {
-                if (!m_call_preprocess_upstream) {
-                    if (!m_enable_simplified_callbacks) {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        if (m_status == Status::Initialized) {
+            if (!m_call_preprocess_upstream) {
+                if (!m_enable_simplified_callbacks) {
+                    CallWithJExceptionWrapper("JEventUnfolder::Preprocess", [&](){
                         Preprocess(parent);
-                    }
+                    });
                 }
-                if (m_last_run_number != parent.GetRunNumber()) {
-                    for (auto* resource : m_resources) {
-                        resource->ChangeRun(parent.GetRunNumber(), m_app);
-                    }
-                    if (m_callback_style == CallbackStyle::DeclarativeMode) {
+            }
+            if (m_last_run_number != parent.GetRunNumber()) {
+                for (auto* resource : m_resources) {
+                    resource->ChangeRun(parent.GetRunNumber(), m_app);
+                }
+                if (m_callback_style == CallbackStyle::DeclarativeMode) {
+                    CallWithJExceptionWrapper("JEventUnfolder::ChangeRun", [&](){
                         ChangeRun(parent.GetRunNumber());
-                    }
-                    else {
-                        ChangeRun(parent);
-                    }
-                    m_last_run_number = parent.GetRunNumber();
-                }
-                for (auto* input : m_inputs) {
-                    input->GetCollection(parent);
-                    // TODO: This requires that all inputs come from the parent.
-                    //       However, eventually we will want to support inputs 
-                    //       that come from the child.
-                }
-                for (auto* output : m_outputs) {
-                    output->Reset();
-                }
-                Result result;
-                child.SetEventIndex(m_child_number);
-                if (m_enable_simplified_callbacks) {
-                    result = Unfold(parent.GetEventNumber(), child.GetEventNumber(), m_child_number);
+                    });
                 }
                 else {
-                    result = Unfold(parent, child, m_child_number);
+                    CallWithJExceptionWrapper("JEventUnfolder::ChangeRun", [&](){
+                        ChangeRun(parent);
+                    });
                 }
-                for (auto* output : m_outputs) {
-                    output->InsertCollection(child);
-                }
-                m_child_number += 1;
-                if (result == Result::NextChildNextParent || result == Result::KeepChildNextParent) {
-                    m_child_number = 0;
-                }
-                return result;
+                m_last_run_number = parent.GetRunNumber();
+            }
+            for (auto* input : m_inputs) {
+                input->GetCollection(parent);
+                // TODO: This requires that all inputs come from the parent.
+                //       However, eventually we will want to support inputs 
+                //       that come from the child.
+            }
+            for (auto* output : m_outputs) {
+                output->Reset();
+            }
+            Result result;
+            child.SetEventIndex(m_child_number);
+            if (m_enable_simplified_callbacks) {
+                CallWithJExceptionWrapper("JEventUnfolder::Unfold", [&](){
+                    result = Unfold(parent.GetEventNumber(), child.GetEventNumber(), m_child_number);
+                });
             }
             else {
-                throw JException("Component needs to be initialized and not finalized before Unfold can be called");
+                CallWithJExceptionWrapper("JEventUnfolder::Unfold", [&](){
+                    result = Unfold(parent, child, m_child_number);
+                });
             }
-        }
-        catch (JException& ex) {
-            ex.plugin_name = m_plugin_name;
-            if (ex.component_name.empty()) {
-                ex.component_name = m_type_name;
+            for (auto* output : m_outputs) {
+                output->InsertCollection(child);
             }
-            throw ex;
+            m_child_number += 1;
+            if (result == Result::NextChildNextParent || result == Result::KeepChildNextParent) {
+                m_child_number = 0;
+            }
+            return result;
         }
-        catch (std::exception& e) {
-            auto ex = JException("Exception in JEventUnfolder::DoUnfold(): %s", e.what());
-            ex.nested_exception = std::current_exception();
-            ex.plugin_name = m_plugin_name;
-            ex.component_name = m_type_name;
-            throw ex;
-        }
-        catch (...) {
-            auto ex = JException("Exception in JEventUnfolder::DoUnfold()");
-            ex.nested_exception = std::current_exception();
-            ex.plugin_name = m_plugin_name;
-            ex.component_name = m_type_name;
-            throw ex;
+        else {
+            throw JException("Component needs to be initialized and not finalized before Unfold can be called");
         }
     }
 
     void DoFinish() {
-        try {
-            std::lock_guard<std::mutex> lock(m_mutex);
-            if (m_status != Status::Finalized) {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        if (m_status != Status::Finalized) {
+            CallWithJExceptionWrapper("JEventUnfolder::Finish", [&](){
                 Finish();
-                m_status = Status::Finalized;
-            }
-        }
-        catch (JException& ex) {
-            ex.plugin_name = m_plugin_name;
-            ex.component_name = m_type_name;
-            throw ex;
-        }
-        catch (...) {
-            auto ex = JException("Unknown exception in JEventUnfolder::Finish()");
-            ex.nested_exception = std::current_exception();
-            ex.plugin_name = m_plugin_name;
-            ex.component_name = m_type_name;
-            throw ex;
+            });
+            m_status = Status::Finalized;
         }
     }
 };

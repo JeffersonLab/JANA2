@@ -221,3 +221,50 @@ TEST_CASE("JFactoryTests") {
     }
 }
 
+
+struct MyExceptingFactory : public JFactoryT<JFactoryTestDummyObject> {
+    void Process(const std::shared_ptr<const JEvent>&) override {
+        throw std::runtime_error("Weird mystery!");
+    }
+};
+
+TEST_CASE("JFactory_Exception") {
+    JApplication app;
+    app.Add(new JEventSource);
+    app.Add(new JFactoryGeneratorT<MyExceptingFactory>());
+    app.SetParameterValue("autoactivate", "JFactoryTestDummyObject");
+    bool found_throw = false;
+    try {
+        app.Run();
+    }
+    catch(JException& ex) {
+        LOG << ex << LOG_END;
+        REQUIRE(ex.function_name == "JFactory::Process");
+        REQUIRE(ex.message == "Weird mystery!");
+        REQUIRE(ex.exception_type == "std::runtime_error");
+        REQUIRE(ex.type_name == "MyExceptingFactory");
+        REQUIRE(ex.instance_name == "JFactoryTestDummyObject");
+        found_throw = true;
+    }
+    REQUIRE(found_throw == true);
+}
+
+struct MyLoggedFactory : public JFactoryT<JFactoryTestDummyObject> {
+    MyLoggedFactory() {
+        SetPrefix("myfac");
+    }
+    void Process(const std::shared_ptr<const JEvent>&) override {
+        LOG_INFO(GetLogger()) << "Process ran!" << LOG_END;
+        REQUIRE(GetLogger().level == JLogger::Level::DEBUG);
+    }
+};
+TEST_CASE("JFactory_Logger") {
+    JApplication app;
+    app.Add(new JEventSource);
+    app.Add(new JFactoryGeneratorT<MyLoggedFactory>());
+    app.SetParameterValue("log:debug", "myfac");
+    app.SetParameterValue("jana:nevents", "1");
+    app.SetParameterValue("autoactivate", "JFactoryTestDummyObject");
+    app.Run();
+}
+

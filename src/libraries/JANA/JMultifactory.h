@@ -150,8 +150,10 @@ void JMultifactory::SetData(std::string tag, std::vector<T*> data) {
     JFactoryT<T>* helper = mHelpers.GetFactory<T>(tag);
     if (helper == nullptr) {
         auto ex = JException("JMultifactory: Attempting to SetData() without corresponding DeclareOutput()");
-        ex.factory_name = m_type_name;
-        ex.factory_tag = m_prefix;
+        ex.function_name = "JMultifactory::SetData";
+        ex.type_name = m_type_name;
+        ex.instance_name = m_prefix;
+        ex.plugin_name = m_plugin_name;
         throw ex;
     }
 #ifdef JANA2_HAVE_PODIO
@@ -187,15 +189,19 @@ void JMultifactory::SetCollection(std::string tag, typename JFactoryPodioT<T>::C
     JFactoryT<T>* helper = mHelpers.GetFactory<T>(tag);
     if (helper == nullptr) {
         auto ex = JException("JMultifactory: Attempting to SetData() without corresponding DeclareOutput()");
-        ex.factory_name = m_type_name;
-        ex.factory_tag = m_prefix;
+        ex.function_name = "JMultifactory::SetCollection";
+        ex.type_name = m_type_name;
+        ex.instance_name = m_prefix;
+        ex.plugin_name = m_plugin_name;
         throw ex;
     }
     auto* typed = dynamic_cast<JFactoryPodioT<T>*>(helper);
     if (typed == nullptr) {
         auto ex = JException("JMultifactory: Helper needs to be a JFactoryPodioT (this shouldn't be reachable)");
-        ex.factory_name = m_type_name;
-        ex.factory_tag = m_prefix;
+        ex.function_name = "JMultifactory::SetCollection";
+        ex.type_name = m_type_name;
+        ex.instance_name = m_prefix;
+        ex.plugin_name = m_plugin_name;
         throw ex;
     }
 
@@ -208,15 +214,19 @@ void JMultifactory::SetCollection(std::string tag, std::unique_ptr<typename JFac
     JFactoryT<T>* helper = mHelpers.GetFactory<T>(tag);
     if (helper == nullptr) {
         auto ex = JException("JMultifactory: Attempting to SetData() without corresponding DeclareOutput()");
-        ex.factory_name = m_type_name;
-        ex.factory_tag = m_prefix;
+        ex.function_name = "JMultifactory::SetCollection";
+        ex.type_name = m_type_name;
+        ex.instance_name = m_prefix;
+        ex.plugin_name = m_plugin_name;
         throw ex;
     }
     auto* typed = dynamic_cast<JFactoryPodioT<T>*>(helper);
     if (typed == nullptr) {
         auto ex = JException("JMultifactory: Helper needs to be a JFactoryPodioT (this shouldn't be reachable)");
-        ex.factory_name = m_type_name;
-        ex.factory_tag = m_prefix;
+        ex.function_name = "JMultifactory::SetCollection";
+        ex.type_name = m_type_name;
+        ex.instance_name = m_prefix;
+        ex.plugin_name = m_plugin_name;
         throw ex;
     }
 

@@ -27,11 +27,11 @@ struct is_serializable<T, std::void_t<decltype(std::declval<std::ostream>() << s
 
 
 template<typename T>
-std::string demangle(void) {
+std::string demangle() {
 
     /// Return the demangled name (if available) for the type the template
     /// is based. Call it like this:
-    ///   cout << GetDemangledName<MyType>() << endl;
+    ///   cout << demangle<MyType>() << endl;
     int status = -1;
     auto cstr = abi::__cxa_demangle(typeid(T).name(), NULL, NULL, &status);
     std::string type(cstr);
@@ -40,6 +40,16 @@ std::string demangle(void) {
     return type;
 }
 
+
+inline std::string demangle_current_exception_type() {
+
+    int status = -1;
+    auto cstr = abi::__cxa_demangle(abi::__cxa_current_exception_type()->name(), NULL, NULL, &status);
+    std::string type(cstr);
+    free(cstr);
+    if (status != 0) type = abi::__cxa_current_exception_type()->name();
+    return type;
+}
 
 /// Macro for conveniently turning a variable name into a string. This is used by JObject::Summarize
 /// in order to play nicely with refactoring tools. Because the symbol is picked up by the

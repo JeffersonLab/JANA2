@@ -9,6 +9,7 @@
 #include <JANA/Utils/JAny.h>
 #include <JANA/Utils/JEventLevel.h>
 #include <JANA/Utils/JCallGraphRecorder.h>
+#include <JANA/Omni/JComponent.h>
 
 #include <string>
 #include <typeindex>
@@ -25,7 +26,7 @@ class JEvent;
 class JObject;
 class JApplication;
 
-class JFactory {
+class JFactory : public jana::omni::JComponent {
 public:
 
     enum class Status {Uninitialized, Unprocessed, Processed, Inserted};
@@ -40,7 +41,11 @@ public:
     };
 
     JFactory(std::string aName, std::string aTag = "")
-    : mObjectName(std::move(aName)), mTag(std::move(aTag)), mStatus(Status::Uninitialized) {};
+    : mObjectName(std::move(aName)), 
+      mTag(std::move(aTag)), 
+      mStatus(Status::Uninitialized) {
+          SetPrefix(aTag.empty() ? mObjectName : mObjectName + ":" + mTag);
+    };
 
     virtual ~JFactory() = default;
 
@@ -49,8 +54,7 @@ public:
 
     std::string GetTag() const { return mTag; }
     std::string GetObjectName() const { return mObjectName; }
-    std::string GetFactoryName() const { return mFactoryName; }
-    std::string GetPluginName() const { return mPluginName; }
+    std::string GetFactoryName() const { return m_type_name; }
     Status GetStatus() const { return mStatus; }
     CreationStatus GetCreationStatus() const { return mCreationStatus; }
     JCallGraphRecorder::JDataOrigin GetInsertOrigin() const { return m_insert_origin; } ///< If objects were placed here by JEvent::Insert() this records whether that call was made from a source or factory.
@@ -62,8 +66,8 @@ public:
 
     void SetTag(std::string tag) { mTag = std::move(tag); }
     void SetObjectName(std::string objectName) { mObjectName = std::move(objectName); }
-    void SetFactoryName(std::string factoryName) { mFactoryName = std::move(factoryName); }
-    void SetPluginName(std::string pluginName) { mPluginName = std::move(pluginName); }
+    void SetFactoryName(std::string factoryName) { SetTypeName(factoryName); }
+
     void SetStatus(Status status){ mStatus = status; }
     void SetCreationStatus(CreationStatus status){ mCreationStatus = status; }
     void SetInsertOrigin(JCallGraphRecorder::JDataOrigin origin) { m_insert_origin = origin; } ///< Called automatically by JEvent::Insert() to records whether that call was made by a source or factory.
@@ -170,22 +174,8 @@ public:
     /// use JFactory::GetAs().
     virtual void Create(const std::shared_ptr<const JEvent>& event);
 
-    /// JApplication setter. This is meant to be used under the hood.
-    void SetApplication(JApplication* app) { mApp = app; }
-
-    /// JApplication getter. This is meant to be called by user-defined JFactories which need to
-    /// acquire parameter values or services from JFactory::Init()
-    JApplication* GetApplication() { return mApp; }
-
-
     virtual void Set(const std::vector<JObject *> &data) = 0;
     virtual void Insert(JObject *data) = 0;
-
-    // Meant to be called by user in constructor
-    void SetLevel(JEventLevel level) { mLevel = level; }
-
-    // Meant to be called by JANA
-    JEventLevel GetLevel() { return mLevel; }
 
 
 protected:
@@ -194,19 +184,12 @@ protected:
     std::string mTag;
     uint32_t mFlags = WRITE_TO_OUTPUT;
     int32_t mPreviousRunNumber = -1;
-    JApplication* mApp = nullptr;
     std::unordered_map<std::type_index, std::unique_ptr<JAny>> mUpcastVTable;
 
     mutable Status mStatus = Status::Uninitialized;
     mutable JCallGraphRecorder::JDataOrigin m_insert_origin = JCallGraphRecorder::ORIGIN_NOT_AVAILABLE; // (see note at top of JCallGraphRecorder.h)
 
     CreationStatus mCreationStatus = CreationStatus::NotCreatedYet;
-
-    // Common to components
-    JEventLevel mLevel = JEventLevel::PhysicsEvent;
-    std::string mPluginName;
-    std::string mFactoryName;
-    mutable std::mutex mMutex;
 };
 
 // Because C++ doesn't support templated virtual functions, we implement our own dispatch table, mUpcastVTable.
