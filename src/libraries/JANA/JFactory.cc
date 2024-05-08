@@ -10,7 +10,8 @@
 void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
 
     // We need this for JMultifactoryHelper. Eventually it should go away
-    SetApplication(event->GetJApplication());
+    auto app = event->GetJApplication();
+    if (app != nullptr) SetApplication(app);
 
     if (mStatus == Status::Uninitialized) {
         CallWithJExceptionWrapper("JFactory::Init", [&](){ Init(); });

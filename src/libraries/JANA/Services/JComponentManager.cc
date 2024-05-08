@@ -108,6 +108,7 @@ void JComponentManager::configure_event(JEvent& event) {
     event.SetFactorySet(factory_set);
     event.SetDefaultTags(m_default_tags);
     event.GetJCallGraphRecorder()->SetEnabled(m_enable_call_graph_recording);
+    event.SetJApplication(GetApplication());
 }
 
 

@@ -85,7 +85,12 @@ public:
         return m_status; 
     }
 
-    void SetApplication(JApplication* app) { m_app = app; }
+    void SetApplication(JApplication* app) { 
+        if (app == nullptr) {
+            throw JException("Attempting to set a null JApplication pointer!");
+        }
+        m_app = app; 
+    }
 
     void SetLogger(JLogger logger) { m_logger = logger; }
 

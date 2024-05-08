@@ -192,7 +192,6 @@ public:
 
             // We configure the event
             event->SetEventNumber(m_event_count); // Default event number to event count
-            event->SetJApplication(m_app);
             event->SetJEventSource(this);
             event->SetSequential(false);
             event->GetJCallGraphRecorder()->Reset();
