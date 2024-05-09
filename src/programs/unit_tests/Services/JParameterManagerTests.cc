@@ -416,6 +416,24 @@ TEST_CASE("JParameterManager_CompileTimeErrorForParseAndStringify") {
 }
 
 
+TEST_CASE("JParameterManager_Strictness") {
+    JParameterManager sut;
+    sut.SetParameter("jana:parameter_strictness", 2);
+    sut.SetParameter("jana:unused", 22);
+    bool exception_found = false;
+    try {
+        sut.PrintParameters();
+    }
+    catch (JException& e) {
+        exception_found = true;
+    }
+    REQUIRE(exception_found == true);
+}
+
+
+
+
+
 
 
 
