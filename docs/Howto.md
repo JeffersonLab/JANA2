@@ -37,6 +37,7 @@ Table of contents
 15. Build and filter events ("L1 and L2 triggers")
 16. Process subevents
 17. Migrate from JANA1 to JANA2
+18. [Contributing to JANA2](Contributing.html)
 
 
 Using the JANA CLI
