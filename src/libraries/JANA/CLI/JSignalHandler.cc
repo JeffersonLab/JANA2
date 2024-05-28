@@ -116,20 +116,7 @@ void send_overall_report_to_named_pipe() {
 /// The first 2 SIGINT signals received will tell JANA to shutdown gracefully.
 /// On the 3rd SIGINT, the program will try to exit immediately.
 void handle_sigint(int) {
-    g_sigint_count++;
-    switch (g_sigint_count) {
-        case 1:
-            LOG_FATAL(*g_logger) << "Exiting gracefully..." << LOG_END;
-            g_app->Quit(false);
-            break;
-        case 2:
-            LOG_FATAL(*g_logger) << "Exiting without waiting for threads to join..." << LOG_END;
-            japp->Quit(true);
-            break;
-        default:
-            LOG_FATAL(*g_logger) << "Exiting immediately." << LOG_END;
-            exit(-2);
-    }
+    g_app->HandleSigint();
 }
 
 void handle_usr1(int) {
@@ -170,7 +157,7 @@ void register_handlers(JApplication* app) {
     LOG_INFO(*g_logger) << "Setting signal handler USR1. Use to write status info to the named pipe." << LOG_END;
     signal(SIGUSR1, handle_usr1);
     signal(SIGUSR2, handle_usr2);
-    LOG_INFO(*g_logger) << "Setting signal handler SIGINT (Ctrl-C). Use a single SIGINT for a graceful shutdown, multiple SIGINTs for a hard shutdown." << LOG_END;
+    LOG_INFO(*g_logger) << "Setting signal handler SIGINT (Ctrl-C). Use a single SIGINT to enter the Inspector, or multiple SIGINTs for an immediate shutdown." << LOG_END;
     signal(SIGINT,  handle_sigint);
 }
 

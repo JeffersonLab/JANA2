@@ -98,6 +98,8 @@ set(JANA2_SOURCES
     Utils/JCallGraphEntryMaker.h
     Utils/JInspector.cc
     Utils/JInspector.h
+    Utils/JApplicationInspector.cc
+    Utils/JApplicationInspector.h
 
     Calibrations/JCalibration.cc
     Calibrations/JCalibration.h
