@@ -76,9 +76,11 @@ public:
     void Scale(int nthreads);
     void Stop(bool wait_until_idle = false);
     void Resume() {};  // TODO: Do we need this?
+    void Inspect();
     void Quit(bool skip_join = false);
     void SetExitCode(int exitCode);
     int GetExitCode();
+    void HandleSigint();
 
 
     // Performance/status monitoring
@@ -143,6 +145,7 @@ private:
     std::shared_ptr<JComponentManager> m_component_manager;
     std::shared_ptr<JArrowProcessingController> m_processing_controller;
 
+    bool m_inspecting = false;
     bool m_quitting = false;
     bool m_draining_queues = false;
     bool m_skip_join = false;
@@ -153,6 +156,7 @@ private:
     bool m_extended_report = false;
     int  m_exit_code = (int) ExitCode::Success;
     int  m_desired_nthreads;
+    std::atomic_int m_sigint_count = 0;
 
     std::mutex m_status_mutex;
     int m_ticker_interval_ms = 1000;

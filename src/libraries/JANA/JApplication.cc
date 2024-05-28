@@ -15,6 +15,7 @@
 #include <JANA/Services/JLoggingService.h>
 #include <JANA/Services/JGlobalRootLock.h>
 #include <JANA/Engine/JArrowProcessingController.h>
+#include <JANA/Utils/JApplicationInspector.h>
 
 #include <unistd.h>
 
@@ -250,6 +251,10 @@ void JApplication::Run(bool wait_until_finished) {
             // We are going to throw the first exception and ignore the others.
             throw m_processing_controller->get_exceptions()[0];
         }
+
+        if (m_inspecting) {
+            Inspect();
+        }
     }
 
     // Join all threads
@@ -274,6 +279,14 @@ void JApplication::Run(bool wait_until_finished) {
 void JApplication::Scale(int nthreads) {
     LOG_INFO(m_logger) << "Scaling to " << nthreads << " threads" << LOG_END;
     m_processing_controller->scale(nthreads);
+}
+
+void JApplication::Inspect() {
+    ::InspectApplication(this);
+    // While we are inside InspectApplication, any SIGINTs will lead to shutdown.
+    // Once we exit InspectApplication, one SIGINT will pause processing and reopen InspectApplication.
+    m_sigint_count = 0; 
+    m_inspecting = false;
 }
 
 void JApplication::Stop(bool wait_until_idle) {
@@ -331,6 +344,29 @@ int JApplication::GetExitCode() {
     /// value can be set via the SetExitCode method.
 
     return m_exit_code;
+}
+
+void JApplication::HandleSigint() {
+    m_sigint_count++;
+    switch (m_sigint_count) {
+        case 1:
+            LOG_WARN(m_logger) << "Entering Inspector..." << LOG_END;
+            m_inspecting = true;
+            m_processing_controller->request_pause();
+            break;
+        case 2:
+            LOG_FATAL(m_logger) << "Exiting gracefully..." << LOG_END;
+            japp->Quit(false);
+            break;
+        case 3:
+            LOG_FATAL(m_logger) << "Exiting without waiting for threads to join..." << LOG_END;
+            japp->Quit(true);
+            break;
+        default:
+            LOG_FATAL(m_logger) << "Exiting immediately." << LOG_END;
+            exit(-2);
+    }
+
 }
 
 JComponentSummary JApplication::GetComponentSummary() {
