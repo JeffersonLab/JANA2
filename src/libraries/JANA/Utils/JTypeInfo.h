@@ -12,7 +12,7 @@
 
 namespace JTypeInfo {
 
-
+#if __cplusplus >= 201703L
 template <typename, typename=void>
 struct is_parseable : std::false_type {};
 
@@ -24,6 +24,7 @@ struct is_serializable : std::false_type {};
 
 template <typename T>
 struct is_serializable<T, std::void_t<decltype(std::declval<std::ostream>() << std::declval<T>())>> : std::true_type {};
+#endif
 
 
 template<typename T>
