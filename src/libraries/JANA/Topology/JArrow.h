@@ -2,10 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-
-#ifndef GREENFIELD_ARROW_H
-#define GREENFIELD_ARROW_H
-
+#pragma once
 #include <iostream>
 #include <atomic>
 #include <cassert>
@@ -302,4 +299,3 @@ inline void JArrow::set_threshold(size_t threshold) {
 }
 
 
-#endif // GREENFIELD_ARROW_H

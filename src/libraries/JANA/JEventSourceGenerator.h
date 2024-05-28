@@ -2,10 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-
-#ifndef _JEventSourceGenerator_h_
-#define _JEventSourceGenerator_h_
-
+#pragma once
 #include <string>
 
 #include <JANA/JEventSource.h>
@@ -59,5 +56,4 @@ class JEventSourceGenerator{
         JEventLevel mLevel = JEventLevel::None;
 };
 
-#endif // _JEventSourceGenerator_h_
 

@@ -6,9 +6,7 @@
 /// of type jerror_t. This header should be included in all
 /// files which must deal with this type.
 
-
-#ifndef _JERROR_H_
-#define _JERROR_H_
+#pragma once
 
 #define _DBG_ std::cerr<<__FILE__<<":"<<__LINE__<<" "
 #define _DBG__ std::cerr<<__FILE__<<":"<<__LINE__<<std::endl
@@ -42,6 +40,4 @@ enum jerror_t{
 // The following is here just so we can use ROOT's THtml class to generate documentation.
 #include <JANA/Compatibility/cint.h>
 
-
-#endif //_JERROR_H_
 

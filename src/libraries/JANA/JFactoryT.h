@@ -2,8 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-#ifndef _JFactoryT_h_
-#define _JFactoryT_h_
+#pragma once
 
 #include <vector>
 #include <type_traits>
@@ -199,5 +198,4 @@ void JFactoryT<T>::EnableGetAs() {
     mUpcastVTable[key] = std::unique_ptr<JAny>(new JAnyT<upcast_fn_t>(std::move(upcast_lambda)));
 }
 
-#endif // _JFactoryT_h_
 

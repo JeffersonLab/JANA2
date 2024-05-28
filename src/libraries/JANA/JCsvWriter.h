@@ -3,9 +3,7 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 
-#ifndef JANA2_JCSVEVENTPROCESSOR_H
-#define JANA2_JCSVEVENTPROCESSOR_H
-
+#pragma once
 
 #include <JANA/JEventProcessor.h>
 #include <JANA/JObject.h>
@@ -82,4 +80,3 @@ public:
 };
 
 
-#endif //JANA2_JCSVEVENTPROCESSOR_H

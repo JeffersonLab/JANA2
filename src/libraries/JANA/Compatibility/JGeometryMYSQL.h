@@ -5,9 +5,7 @@
 // Creator: davidl (on Darwin swire-d95.jlab.org 8.11.1 i386)
 //
 
-#ifndef _JGeometryMYSQL_
-#define _JGeometryMYSQL_
-
+#pragma once
 #include <JANA/Compatibility/jerror.h>
 #include <JANA/Compatibility/JGeometry.h>
 //#include <JANA/jana_config.h>
@@ -32,5 +30,4 @@ class JGeometryMYSQL:public JGeometry{
 
 };
 
-#endif // _JGeometryMYSQL_
 

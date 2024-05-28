@@ -3,9 +3,7 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 
-#ifndef JANA2_JTOPOLOGYMETRICS_H
-#define JANA2_JTOPOLOGYMETRICS_H
-
+#pragma once
 #include <chrono>
 #include <mutex>
 #include "JPerfSummary.h"
@@ -55,4 +53,3 @@ private:
 };
 
 
-#endif //JANA2_JTOPOLOGYMETRICS_H

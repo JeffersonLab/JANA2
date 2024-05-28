@@ -2,10 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-#ifndef JANA2_JSUBEVENTARROW_H
-#define JANA2_JSUBEVENTARROW_H
-
-
+#pragma once
 #include "JMailbox.h"
 #include "JArrow.h"
 #include <JANA/JEvent.h>
@@ -267,6 +264,5 @@ void JMergeArrow<InputT, OutputT>::execute(JArrowMetrics& result, size_t locatio
     result.update(status, outputs_size, 1, latency, overhead);
 }
 
-#endif //JANA2_JSUBEVENTARROW_H
 
 

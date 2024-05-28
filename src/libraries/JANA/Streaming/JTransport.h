@@ -2,10 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-
-#ifndef JANA2_JTRANSPORT_H
-#define JANA2_JTRANSPORT_H
-
+#pragma once
 #include <JANA/Streaming/JMessage.h>
 
 /// JTransport is a lightweight wrapper for integrating different messaging systems with JANA.
@@ -38,4 +35,3 @@ struct JTransport {
     virtual ~JTransport() = default;
 };
 
-#endif //JANA2_JTRANSPORT_H

@@ -2,6 +2,8 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
+#pragma once
+
 #include <string>
 
 #include <JANA/JEventSourceGenerator.h>
@@ -42,8 +44,6 @@ class JApplication;
 /// 	indicate a URL or how to connect to some other non-file source.
 ///
 
-#ifndef _JEventSourceGeneratorT_h_
-#define _JEventSourceGeneratorT_h_
 
 template <typename T>
 class JEventSourceGeneratorT:public JEventSourceGenerator{
@@ -88,5 +88,4 @@ class JEventSourceGeneratorT:public JEventSourceGenerator{
         void SetJApplication(JApplication *app){ mApplication = app; }
 };
 
-#endif // _JEventSourceGeneratorT_h_
 

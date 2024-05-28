@@ -1,7 +1,5 @@
 
-#ifndef _JEventProcessorSequential_h_
-#define _JEventProcessorSequential_h_
-
+#pragma once
 #include <mutex>
 
 #include <JANA/JEventProcessor.h>
@@ -118,5 +116,4 @@ private:
 };
 
 
-#endif // _JEventProcessorSequential_h_
 

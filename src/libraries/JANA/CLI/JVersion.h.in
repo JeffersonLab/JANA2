@@ -2,9 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-#ifndef _JVersion_h_
-#define _JVersion_h_
-
+#pragma once
 #include <sstream>
 
 struct JVersion {
@@ -54,5 +52,4 @@ struct JVersion {
 #define JVERSION_COMMIT_DATE "@JVERSION_COMMIT_DATE@"
 #define CMAKE_INSTALL_PREFIX "@CMAKE_INSTALL_PREFIX@"
 
-#endif // _JVersion_h_
 

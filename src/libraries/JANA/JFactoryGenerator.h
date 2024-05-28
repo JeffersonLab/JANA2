@@ -2,12 +2,10 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
+#pragma once
+
 #include <vector>
-
 #include <JANA/JFactorySet.h>
-
-#ifndef _JFactoryGenerator_h_
-#define _JFactoryGenerator_h_
 
 class JApplication;
 
@@ -67,7 +65,5 @@ public:
     }
 };
 
-
-#endif // _JFactoryGenerator_h_
 
 

@@ -1,8 +1,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-#ifndef JCalibrationGeneratorCCDB_h__
-#define JCalibrationGeneratorCCDB_h__
+#pragma once
 
 // This entire file was copied from the CCDB 0.06 source
 // (janaccdb directory). The only modification was to wrap
@@ -101,5 +100,4 @@
 
 #endif // HAVE_CCDB
 
-#endif // JCalibrationGeneratorCCDB_h__
 

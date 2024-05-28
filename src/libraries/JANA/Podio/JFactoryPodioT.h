@@ -3,8 +3,7 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 
-#ifndef JANA2_JFACTORYPODIOT_H
-#define JANA2_JFACTORYPODIOT_H
+#pragma once
 
 #include <JANA/JFactoryT.h>
 #include <podio/podioVersion.h>
@@ -218,4 +217,3 @@ void JFactoryPodioT<T>::Insert(T* aDatum) {
     SetCollection(std::move(collection));
 }
 
-#endif //JANA2_JFACTORYPODIOT_H

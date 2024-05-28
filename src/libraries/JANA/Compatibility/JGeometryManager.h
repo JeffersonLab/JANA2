@@ -2,10 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-
-#ifndef JANA2_JGEOMETRYMANAGER_H
-#define JANA2_JGEOMETRYMANAGER_H
-
+#pragma once
 #include <JANA/Services/JServiceLocator.h>
 #include <JANA/Compatibility/JGeometry.h>
 
@@ -23,4 +20,3 @@ public:
 };
 
 
-#endif //JANA2_JGEOMETRYMANAGER_H

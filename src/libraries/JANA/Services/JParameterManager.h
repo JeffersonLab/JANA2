@@ -2,8 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-#ifndef _JParameterManager_h_
-#define _JParameterManager_h_
+#pragma once
 
 #include <limits>
 #include <string>
@@ -478,8 +477,6 @@ inline bool JParameterManager::Equals(const T& lhs, const T& rhs) {
     return lhs == rhs;
 }
 
-
-#endif // _JParameterManager_h_
 
 
 

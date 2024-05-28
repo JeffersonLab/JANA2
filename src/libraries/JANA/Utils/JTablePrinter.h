@@ -3,9 +3,7 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 
-#ifndef JANA2_JTABLEPRINTER_H
-#define JANA2_JTABLEPRINTER_H
-
+#pragma once
 #include <string>
 #include <vector>
 #include <iostream>
@@ -83,4 +81,3 @@ inline JTablePrinter& JTablePrinter::operator|(std::string cell) {
     return *this;
 }
 
-#endif //JANA2_JTABLEPRINTER_H

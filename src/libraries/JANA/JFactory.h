@@ -2,8 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-#ifndef _JFactory_h_
-#define _JFactory_h_
+#pragma once 
 
 #include <JANA/JException.h>
 #include <JANA/Utils/JAny.h>
@@ -214,5 +213,4 @@ std::vector<S*> JFactory::GetAs() {
     return results;
 }
 
-#endif // _JFactory_h_
 

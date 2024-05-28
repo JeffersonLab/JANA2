@@ -2,8 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-#ifndef _JFactorySet_h_
-#define _JFactorySet_h_
+#pragma once
 
 #include <string>
 #include <typeindex>
@@ -93,5 +92,4 @@ std::vector<JFactoryT<T>*> JFactorySet::GetAllFactories() const {
 }
 
 
-#endif // _JFactorySet_h_
 

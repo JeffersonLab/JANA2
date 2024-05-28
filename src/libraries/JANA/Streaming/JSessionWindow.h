@@ -2,9 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-#ifndef JANA2_JSESSIONWINDOW_H
-#define JANA2_JSESSIONWINDOW_H
-
+#pragma once
 #include <JANA/Streaming/JWindow.h>
 
 #include <map>
@@ -96,4 +94,3 @@ private:
 };
 
 
-#endif //JANA2_JSESSIONWINDOW_H

@@ -2,8 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-#ifndef JResettable_h
-#define JResettable_h
+#pragma once
 
 //primarily for JResourcePool objects
 class JResettable
@@ -16,4 +15,3 @@ class JResettable
 
 inline JResettable::~JResettable(void) { }
 
-#endif // JResettable_h

@@ -2,9 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-#ifndef _JCalibration_
-#define _JCalibration_
-
+#pragma once
 #include <JANA/JException.h>
 
 #include <typeinfo>
@@ -612,6 +610,4 @@ JCalibration::containerType_t JCalibration::TrycontainerType(string typeid_name)
 
     return kUnknownType;
 }
-
-#endif // _JCalibration_
 

@@ -2,9 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-#ifndef JANA2_JWORKERMAPPING_H
-#define JANA2_JWORKERMAPPING_H
-
+#pragma once
 #include <cstddef>
 #include <ostream>
 #include <vector>
@@ -61,4 +59,3 @@ private:
 };
 
 
-#endif //JANA2_JWORKERMAPPING_H

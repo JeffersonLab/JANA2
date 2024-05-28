@@ -2,10 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-
-#ifndef _JTypeInfo_h_
-#define _JTypeInfo_h_
-
+#pragma once
 #include <cstdint>
 #include <cxxabi.h>
 #include <string>
@@ -124,4 +121,3 @@ inline std::string to_string_with_si_prefix(float val) {
 
 
 } // namespace JTypeInfo
-#endif

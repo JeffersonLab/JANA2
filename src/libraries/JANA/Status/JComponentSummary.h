@@ -2,10 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-
-#ifndef JANA2_JCOMPONENTSUMMARY_H
-#define JANA2_JCOMPONENTSUMMARY_H
-
+#pragma once
 #include <string>
 #include <vector>
 #include <JANA/Utils/JEventLevel.h>
@@ -49,5 +46,3 @@ struct JComponentSummary {
 std::ostream& operator<<(std::ostream& os, JComponentSummary const & cs);
 
 
-
-#endif //JANA2_JCOMPONENTSUMMARY_H

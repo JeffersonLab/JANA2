@@ -2,11 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-
-#ifndef JANA2_JGETOBJECTSFACTORY_H
-#define JANA2_JGETOBJECTSFACTORY_H
-
-
+#pragma once
 #include <JANA/JEvent.h>
 #include <JANA/JEventSource.h>
 
@@ -34,4 +30,3 @@ public:
     }
 
 };
-#endif //JANA2_JGETOBJECTSFACTORY_H

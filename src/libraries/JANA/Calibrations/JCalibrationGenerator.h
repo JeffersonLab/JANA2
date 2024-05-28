@@ -2,9 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-#ifndef _JCalibrationGenerator_
-#define _JCalibrationGenerator_
-
+#pragma once
 #include <stdint.h>
 #include <string>
 
@@ -50,5 +48,4 @@ class JCalibrationGenerator{
 
 };
 
-#endif // _JCalibrationGenerator_
 

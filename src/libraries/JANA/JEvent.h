@@ -2,9 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-#ifndef _JEvent_h_
-#define _JEvent_h_
-
+#pragma once
 
 #include <JANA/JObject.h>
 #include <JANA/JException.h>
@@ -612,5 +610,4 @@ JFactoryPodioT<T>* JEvent::InsertCollectionAlreadyInFrame(const typename JFactor
 #endif // JANA2_HAVE_PODIO
 
 
-#endif // _JEvent_h_
 

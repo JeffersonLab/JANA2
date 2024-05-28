@@ -2,10 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-
-#ifndef JANA2_JWORKERMETRICS_H
-#define JANA2_JWORKERMETRICS_H
-
+#pragma once
 #include <chrono>
 #include <mutex>
 
@@ -144,4 +141,3 @@ public:
 };
 
 
-#endif //JANA2_JWORKERMETRICS_H

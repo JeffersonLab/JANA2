@@ -3,8 +3,7 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 
-#ifndef JResourcePool_h
-#define JResourcePool_h
+#pragma once
 
 #include <atomic>
 #include <typeinfo>
@@ -433,4 +432,3 @@ template <typename DType> std::size_t JResourcePool<DType>::Get_PoolSize(void) c
     return sSize;
 }
 
-#endif // JResourcePool_h

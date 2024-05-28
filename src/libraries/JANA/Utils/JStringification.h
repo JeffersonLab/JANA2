@@ -2,10 +2,7 @@
 // Copyright 2021, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-
-#ifndef JSTRINGIFICATION_H
-#define JSTRINGIFICATION_H
-
+#pragma once
 #include <sstream>
 
 #ifdef JANA2_HAVE_ROOT
@@ -75,4 +72,3 @@ std::string JStringification::GetAddrAsString(void *addr) const {
     return ss.str();
 }
 
-#endif //JSTRINGIFICATION_H

@@ -2,10 +2,7 @@
 // Copyright 2023, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-
-#ifndef JANA2_JEVENTPROCESSORPODIO_H
-#define JANA2_JEVENTPROCESSORPODIO_H
-
+#pragma once
 #include <JANA/JEventProcessor.h>
 #include <podio/ROOTFrameWriter.h>
 
@@ -26,4 +23,3 @@ public:
 };
 
 
-#endif //JANA2_JEVENTPROCESSORPODIO_H

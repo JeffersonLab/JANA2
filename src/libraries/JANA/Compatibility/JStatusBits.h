@@ -2,8 +2,7 @@
 // Created by Nathan Brei on 6/18/20.
 //
 
-#ifndef JANA2_JSTATUSBITS_H
-#define JANA2_JSTATUSBITS_H
+#pragma once
 
 #include <map>
 #include <mutex>
@@ -173,4 +172,3 @@ template <typename T>
 std::map<uint32_t, std::string> JStatusBits<T>::m_status_bit_descriptions;
 
 
-#endif //JANA2_JSTATUSBITS_H

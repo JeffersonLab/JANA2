@@ -3,8 +3,7 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 
-#ifndef JANA2_JBACKTRACE_H
-#define JANA2_JBACKTRACE_H
+#pragma once
 
 #include <ostream>
 #include <string>
@@ -69,5 +68,3 @@ inline std::ostream& make_backtrace(std::ostream& os) {
     return os;
 }
 
-
-#endif //JANA2_JBACKTRACE_H

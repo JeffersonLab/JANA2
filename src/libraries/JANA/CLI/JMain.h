@@ -2,10 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-
-#ifndef JANA2_JMAIN_H
-#define JANA2_JMAIN_H
-
+#pragma once
 #include <JANA/JApplication.h>
 
 namespace jana {
@@ -32,4 +29,3 @@ int Execute(JApplication* app, UserOptions& options);
 
 }
 
-#endif //JANA2_JMAIN_H

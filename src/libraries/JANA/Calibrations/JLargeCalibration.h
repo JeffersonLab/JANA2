@@ -5,9 +5,7 @@
 // Creator: davidl (on Darwin eleanor.jlab.org 12.2.0 i386)
 //
 
-#ifndef _JLargeCalibration_
-#define _JLargeCalibration_
-
+#pragma once
 #include <string>
 
 using std::string;
@@ -172,6 +170,4 @@ bool JLargeCalibration::Get(string namepath, T &vals, int event_number) {
     return jcalibfile->Get(path, vals, event_number);
 }
 
-
-#endif // _JLargeCalibration_
 
