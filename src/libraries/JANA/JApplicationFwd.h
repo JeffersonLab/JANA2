@@ -10,6 +10,7 @@
 #include <memory>
 #include <chrono>
 
+class JEngine;
 class JEventProcessor;
 class JEventSource;
 class JEventSourceGenerator;
@@ -23,6 +24,7 @@ class JServiceLocator;
 class JParameter;
 class JParameterManager;
 class JApplication;
+
 extern JApplication* japp;
 
 #include <JANA/Status/JComponentSummary.h>
@@ -75,8 +77,6 @@ public:
     void Run(bool wait_until_finished = true);
     void Scale(int nthreads);
     void Stop(bool wait_until_idle = false);
-    void Resume() {};  // TODO: Do we need this?
-    void Inspect();
     void Quit(bool skip_join = false);
     void SetExitCode(int exitCode);
     int GetExitCode();
@@ -85,9 +85,9 @@ public:
 
     // Performance/status monitoring
 
-    bool IsInitialized(void){return m_initialized;}
-    bool IsQuitting(void) { return m_quitting; }
-    bool IsDrainingQueues(void) { return m_draining_queues; }
+    bool IsInitialized() {return m_initialized;}
+    bool IsQuitting();
+    bool IsDrainingQueues();
 
     void SetTicker(bool ticker_on = true);
     bool IsTickerEnabled();
@@ -147,11 +147,7 @@ private:
 
     std::atomic_bool m_initialized {false};
     std::atomic_bool m_services_available {false};
-    int  m_exit_code = (int) ExitCode::Success;
-    int  m_desired_nthreads;
-    std::atomic_int m_sigint_count {0};
-
-    std::mutex m_status_mutex;
+    int m_exit_code = (int) ExitCode::Success;
 };
 
 

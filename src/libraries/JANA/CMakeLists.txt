@@ -28,6 +28,7 @@ set(JANA2_SOURCES
 
     Engine/JArrowProcessingController.cc
     Engine/JArrowProcessingController.h
+    Engine/JEngine.cc
     Engine/JScheduler.cc
     Engine/JScheduler.h
     Engine/JWorker.h
