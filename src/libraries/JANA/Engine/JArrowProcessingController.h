@@ -29,6 +29,8 @@ public:
     bool is_timed_out();
     bool is_excepted();
 
+    JArrowMetrics::Status execute_arrow(int);
+
     std::vector<JException> get_exceptions() const;
 
     std::unique_ptr<const JPerfSummary> measure_performance();

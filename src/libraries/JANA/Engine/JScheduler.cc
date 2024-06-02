@@ -130,6 +130,25 @@ void JScheduler::checkin_unprotected(JArrow* assignment, JArrowMetrics::Status l
     }
 }
 
+
+JArrow* JScheduler::checkout(int arrow_index) {
+
+    std::lock_guard<std::mutex> lock(m_mutex);
+
+    if (arrow_index >= m_topology_state.arrow_states.size()) return nullptr;
+
+    ArrowState& candidate = m_topology_state.arrow_states[arrow_index];
+
+    if (candidate.status == ArrowStatus::Active &&                              // This excludes Draining arrows
+        (candidate.arrow->is_parallel() || candidate.thread_count == 0)) {      // This excludes non-parallel arrows that are already assigned to a worker
+
+        return candidate.arrow;
+
+    }
+    return nullptr;
+}
+
+
 JArrow* JScheduler::checkout_unprotected() {
 
     // Choose a new arrow. Loop over all arrows, starting at where we last left off, and pick the first arrow that works

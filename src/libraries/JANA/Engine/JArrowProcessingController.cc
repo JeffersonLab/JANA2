@@ -221,6 +221,14 @@ JArrowProcessingController::~JArrowProcessingController() {
     delete m_scheduler;
 }
 
+JArrowMetrics::Status JArrowProcessingController::execute_arrow(int arrow_index) {
+    auto arrow = m_scheduler->checkout(arrow_index);
+    if (arrow == nullptr) return JArrowMetrics::Status::Error;
+    JArrowMetrics metrics;
+    arrow->execute(metrics, 0);
+    return metrics.get_last_status();
+}
+
 void JArrowProcessingController::print_report() {
     auto metrics = measure_performance();
     LOG_INFO(m_logger) << "Running" << *metrics << LOG_END;
