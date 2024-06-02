@@ -1,4 +1,6 @@
 
+#include "JApplicationInspector.h"
+#include "JANA/Topology/JTopologyBuilder.h"
 #include <JANA/JApplication.h>
 #include <JANA/Engine/JArrowProcessingController.h>
 
@@ -17,6 +19,17 @@ void PrintMenu() {
     std::cout << "  q    Quit" << std::endl;
     std::cout << "  h    Help" << std::endl;
     std::cout << "  -----------------------------------------" << std::endl;
+}
+
+void InspectTopology(JApplication* app) {
+    auto topology = app->GetService<JTopologyBuilder>();
+    std::cout << topology->print_topology() << std::endl;
+}
+
+void Fire(JApplication* app, int arrow_id) {
+    auto engine = app->GetService<JArrowProcessingController>();
+    auto result = engine->execute_arrow(arrow_id);
+    std::cout << to_string(result) << std::endl;
 }
 
 void InspectApplication(JApplication* app) {
@@ -46,7 +59,7 @@ void InspectApplication(JApplication* app) {
                 // InspectComponents();
             }
             else if ((token == "InspectTopology" || token == "it") && args.empty()) {
-                // InspectTopology(0);
+                InspectTopology(app);
             }
             else if ((token == "InspectPlace" || token == "ip") && args.size() == 2) {
                 // InspectPlace(std::stoi(args[0]), std::stoi(args[1]));
@@ -55,7 +68,7 @@ void InspectApplication(JApplication* app) {
                 // InspectEvent(std::stoi(args[0])
             }
             else if ((token == "Fire" || token == "f") && (args.size() == 1)) {
-                // Fire(args[0]);
+                Fire(app, args[0]);
             }
             else if (token == "Resume" || token == "r") {
                 app->Run(false);
