@@ -38,7 +38,7 @@ public:
 
         current_group->StartEvent();
         event.Insert(current_group);
-        event.GetFactory<JEventGroup>()->SetFactoryFlag(JFactory::JFactory_Flags_t::NOT_OBJECT_OWNER);
+        event.GetFactory<JEventGroup>()->SetNotOwnerFlag(true);
         event.SetEventNumber(++m_current_event_number);
         event.SetRunNumber(m_current_group_id);
 

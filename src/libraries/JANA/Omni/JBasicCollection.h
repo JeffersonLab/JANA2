@@ -12,7 +12,6 @@
 class JBasicCollection : public JCollection {
     bool m_is_persistent = false;
     bool m_not_object_owner = false;
-    bool m_regenerate = false;
     bool m_write_to_output = true;
 
 public:
@@ -20,12 +19,10 @@ public:
     ~JBasicCollection() override = default;
     void SetPersistentFlag(bool persistent) { m_is_persistent = persistent; }
     void SetNotOwnerFlag(bool not_owner) { m_not_object_owner = not_owner; }
-    void SetRegenerateFlag(bool regenerate) { m_regenerate = regenerate; }
     void SetWriteToOutputFlag(bool write_to_output) { m_write_to_output = write_to_output; }
 
     bool GetPersistentFlag() { return m_is_persistent; }
     bool GetNotOwnerFlag() { return m_not_object_owner; }
-    bool GetRegenerateFlag() { return m_regenerate; }
     bool GetWriteToOutputFlag() { return m_write_to_output; }
 };
 

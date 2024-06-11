@@ -69,8 +69,8 @@ public:
         event.Insert(next_event.second); // JEventGroup
 
         // Tell JANA not to assume ownership of these objects!
-        event.GetFactory<TridasEvent>()->SetFactoryFlag(JFactory::JFactory_Flags_t::NOT_OBJECT_OWNER);
-        event.GetFactory<JEventGroup>()->SetFactoryFlag(JFactory::JFactory_Flags_t::NOT_OBJECT_OWNER);
+        event.GetFactory<TridasEvent>()->SetNotOwnerFlag(true);
+        event.GetFactory<JEventGroup>()->SetNotOwnerFlag(true);
 
         // JANA always needs an event number and a run number, so extract these from the Tridas data somehow
         event.SetEventNumber(next_event.first->event_number);
