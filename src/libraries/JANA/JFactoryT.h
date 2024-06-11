@@ -26,6 +26,15 @@ struct JMetadata {};
 
 template<typename T>
 class JFactoryT : public JFactory {
+public:
+    enum JFactory_Flags_t {
+        JFACTORY_NULL = 0x00,    // Not used anywhere
+        PERSISTENT = 0x01,       // Used heavily. Possibly better served by JServices, hierarchical events, or event groups. 
+        WRITE_TO_OUTPUT = 0x02,  // Set in halld_recon but not read except by JANA1 janaroot and janacontrol plugins
+        NOT_OBJECT_OWNER = 0x04, // Used heavily. Small conflict with PODIO subset collections, which do the same thing at a different level
+        REGENERATE = 0x08        // Replaces JANA1 JFactory_base::use_factory and JFactory::GetCheckSourceFirst()
+    };
+
 protected:
     // Fields
     JBasicCollectionT<T>* mCollection;
@@ -169,6 +178,68 @@ public:
     /// and also used by JEvent under the hood.
     /// Metadata will *not* be cleared on ClearData(), but will be destroyed when the JFactoryT is.
     JMetadata<T> GetMetadata() { return mMetadata; }
+
+
+    // Note: JFactory_Flags_t is going to be deprecated. Use Set...Flag()s instead
+    /// Get all flags in the form of a single word
+    inline uint32_t GetFactoryFlags() const { 
+        uint32_t mFlags = 0;
+        if (mCollection->GetPersistentFlag()) { mFlags += 1; }
+        if (mCollection->GetWriteToOutputFlag()) { mFlags += 2; }
+        if (mCollection->GetNotOwnerFlag()) { mFlags += 4; }
+        if (mCollection->GetRegenerateFlag()) { mFlags += 8; }
+        return mFlags; 
+    }
+
+    /// Set a flag (or flags)
+    inline void SetFactoryFlag(JFactory_Flags_t f) {
+        switch (f) {
+            case PERSISTENT: return mCollection->SetPersistentFlag(true);
+            case NOT_OBJECT_OWNER: return mCollection->SetNotOwnerFlag(true);
+            case REGENERATE: return SetRegenerateFlag(true);
+            case WRITE_TO_OUTPUT: return mCollection->SetWriteToOutputFlag(true);
+            default: throw JException("Invalid factory flag %d", f);
+        }
+    }
+
+    /// Clear a flag (or flags)
+    inline void ClearFactoryFlag(JFactory_Flags_t f) {
+        switch (f) {
+            case PERSISTENT: return mCollection->SetPersistentFlag(false);
+            case NOT_OBJECT_OWNER: return mCollection->SetNotOwnerFlag(false);
+            case REGENERATE: return SetRegenerateFlag(false);
+            case WRITE_TO_OUTPUT: return mCollection->SetWriteToOutputFlag(false);
+            default: throw JException("Invalid factory flag %d", f);
+        }
+    }
+
+    /// Test if a flag (or set of flags) is set
+    inline bool TestFactoryFlag(JFactory_Flags_t f) const {
+        switch (f) {
+            case PERSISTENT: return mCollection->GetPersistentFlag();
+            case NOT_OBJECT_OWNER: return mCollection->GetNotOwnerFlag();
+            case REGENERATE: return GetRegenerateFlag();
+            case WRITE_TO_OUTPUT: return mCollection->GetWriteToOutputFlag();
+            default: throw JException("Invalid factory flag %d", f);
+        }
+    }
+
+    inline void SetPersistentFlag(bool persistent) { 
+        mCollection->SetPersistentFlag(persistent);
+    }
+
+    inline void SetNotOwnerFlag(bool not_owner) { 
+        mCollection->SetNotOwnerFlag(not_owner);
+    }
+
+    inline void SetWriteToOutputFlag(bool write_to_output) { 
+        mCollection->SetWriteToOutputFlag(write_to_output);
+    }
+
+    inline bool GetWriteToOutputFlag() { 
+        return mCollection->GetWriteToOutputFlag();
+    }
+
 
 };
 

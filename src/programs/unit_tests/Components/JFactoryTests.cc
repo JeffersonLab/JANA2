@@ -94,8 +94,8 @@ TEST_CASE("JFactoryTests") {
         auto event = std::make_shared<JEvent>();
         JFactoryT<JFactoryTestDummyObject> sut; // Process() is a no-op
         bool deleted_flag = false;
-        sut.ClearFactoryFlag(JFactory::PERSISTENT);
-        sut.ClearFactoryFlag(JFactory::NOT_OBJECT_OWNER);
+        sut.SetPersistentFlag(false);
+        sut.SetNotOwnerFlag(false);
         sut.Insert(new JFactoryTestDummyObject(42, &deleted_flag));
         sut.ClearData();
         auto results = sut.CreateAndGetData(event);
@@ -107,8 +107,8 @@ TEST_CASE("JFactoryTests") {
         auto event = std::make_shared<JEvent>();
         JFactoryT<JFactoryTestDummyObject> sut; // Process() is a no-op
         bool deleted_flag = false;
-        sut.ClearFactoryFlag(JFactory::PERSISTENT);
-        sut.SetFactoryFlag(JFactory::NOT_OBJECT_OWNER);
+        sut.SetPersistentFlag(false);
+        sut.SetNotOwnerFlag(true);
         sut.Insert(new JFactoryTestDummyObject(42, &deleted_flag));
         sut.ClearData();
         auto results = sut.CreateAndGetData(event);
@@ -120,8 +120,8 @@ TEST_CASE("JFactoryTests") {
         JFactoryT<JFactoryTestDummyObject> sut; // Process() is a no-op
         auto event = std::make_shared<JEvent>();
         bool deleted_flag = false;
-        sut.SetFactoryFlag(JFactory::PERSISTENT);
-        sut.ClearFactoryFlag(JFactory::NOT_OBJECT_OWNER);
+        sut.SetPersistentFlag(true);
+        sut.SetNotOwnerFlag(false);
         sut.Insert(new JFactoryTestDummyObject(42, &deleted_flag));
         sut.ClearData();
         auto results = sut.CreateAndGetData(event);
@@ -133,8 +133,8 @@ TEST_CASE("JFactoryTests") {
         JFactoryT<JFactoryTestDummyObject> sut; // Process() is a no-op
         auto event = std::make_shared<JEvent>();
         bool deleted_flag = false;
-        sut.SetFactoryFlag(JFactory::PERSISTENT);
-        sut.SetFactoryFlag(JFactory::NOT_OBJECT_OWNER);
+        sut.SetPersistentFlag(true);
+        sut.SetNotOwnerFlag(true);
         sut.Insert(new JFactoryTestDummyObject(42, &deleted_flag));
         sut.ClearData();
         auto results = sut.CreateAndGetData(event);

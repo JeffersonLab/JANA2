@@ -14,7 +14,7 @@ void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
         mStatus = Status::Unprocessed;
     }
 
-    if (TestFactoryFlag(REGENERATE) && (mStatus == Status::Inserted)) {
+    if (m_regenerate && (mStatus == Status::Inserted)) {
         ClearData();
         // ClearData will reset mStatus to Status::Unprocessed
     }
