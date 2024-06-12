@@ -15,8 +15,7 @@ class JPodioCollection : public JCollection {
     podio::Frame* m_frame = nullptr;
 
     // Getters
-    template <typename T>
-    const T* GetCollection();
+    const podio::CollectionBase* GetCollection() { return m_collection; }
 
     // Setters
     void SetFrame(podio::Frame* frame) { m_frame = frame; }
