@@ -94,6 +94,9 @@ bool JFactorySet::Add(JFactory* aFactory)
 
     mFactories[typed_key] = aFactory;
     mFactoriesFromString[untyped_key] = aFactory;
+    for (JCollection* coll : aFactory->GetCollections()) {
+        mCollectionsByName[coll->GetCollectionName()] = {coll, aFactory};
+    }
     return true;
 }
 
@@ -115,6 +118,44 @@ bool JFactorySet::Add(JMultifactory *multifactory) {
     /// the enclosing JFactorySet.
     return true;
 }
+
+
+//---------------------------------
+// GetCollection
+//---------------------------------
+std::pair<JCollection*, JFactory*> JFactorySet::GetCollection(std::string collection_name) const {
+    auto it = mCollectionsByName.find(collection_name);
+    if (it == std::end(mCollectionsByName)) {
+        return {nullptr, nullptr};
+    }
+    return it->second;
+}
+
+
+//---------------------------------
+// GetAllCollections
+//---------------------------------
+std::vector<JCollection*> JFactorySet::GetAllCollections() const {
+    std::vector<JCollection*> results;
+    for (auto& pair : mCollectionsByName) {
+        results.push_back(pair.second.first);
+    }
+    return results;
+}
+
+
+//---------------------------------
+// InsertCollection
+//---------------------------------
+void JFactorySet::InsertCollection(JCollection* collection) {
+    const auto& name = collection->GetCollectionName();
+    auto it = mCollectionsByName.find(name);
+    if (it != mCollectionsByName.end()) {
+        throw JException("InsertCollection failed because name '%s' is not unique", name.c_str());
+    }
+    mCollectionsByName[name] = {collection, nullptr};
+}
+
 
 //---------------------------------
 // GetFactory
