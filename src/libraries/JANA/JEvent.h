@@ -4,28 +4,23 @@
 
 #pragma once
 
-#include <JANA/JObject.h>
-#include <JANA/JException.h>
-#include <JANA/JFactoryT.h>
-#include <JANA/JFactorySet.h>
 #include <JANA/JLogger.h>
+#include <JANA/JException.h>
+#include <JANA/JFactorySet.h>
+#include <JANA/JFactory.h>
 
 #include <JANA/Utils/JEventLevel.h>
 #include <JANA/Utils/JTypeInfo.h>
-#include <JANA/Utils/JCpuInfo.h>
 #include <JANA/Utils/JCallGraphRecorder.h>
 #include <JANA/Utils/JCallGraphEntryMaker.h>
+#include <JANA/Utils/JInspector.h>
 
 #include <vector>
 #include <cstddef>
 #include <memory>
-#include <exception>
 #include <atomic>
-#include <mutex>
-#include "JANA/Utils/JInspector.h"
 
 #ifdef JANA2_HAVE_PODIO
-#include <JANA/Podio/JFactoryPodioT.h>
 #include <JANA/Omni/JPodioCollection.h>
 namespace podio {
 class CollectionBase;
@@ -57,40 +52,41 @@ class JEvent : public std::enable_shared_from_this<JEvent>
         JFactorySet* GetFactorySet() const { return mFactorySet; }
 
         JFactory* GetFactory(const std::string& object_name, const std::string& tag) const;
+        template<class T> JFactory* GetFactory(const std::string& tag = "", bool throw_on_missing=false) const;
+
         std::vector<JFactory*> GetAllFactories() const;
-        template<class T> JFactoryT<T>* GetFactory(const std::string& tag = "", bool throw_on_missing=false) const;
-        template<class T> std::vector<JFactoryT<T>*> GetFactoryAll(bool throw_on_missing = false) const;
+        template<class T> std::vector<JFactory*> GetFactoryAll(bool throw_on_missing = false) const;
 
         template<class T> JMetadata<T> GetMetadata(const std::string& tag = "") const;
 
         //OBJECTS
         // C style getters
-        template<class T> JFactoryT<T>* Get(const T** item, const std::string& tag="") const;
-        template<class T> JFactoryT<T>* Get(std::vector<const T*> &vec, const std::string& tag = "", bool strict=true) const;
+        template<class T> JBasicCollectionT<T>* Get(const T** item, const std::string& tag="") const;
+        template<class T> JBasicCollectionT<T>* Get(std::vector<const T*> &vec, const std::string& tag = "", bool strict=true) const;
         template<class T> void GetAll(std::vector<const T*> &vec) const;
 
         // C++ style getters
         template<class T> const T* GetSingle(const std::string& tag = "") const;
         template<class T> const T* GetSingleStrict(const std::string& tag = "") const;
         template<class T> std::vector<const T*> Get(const std::string& tag = "", bool strict=true) const;
-        template<class T> typename JFactoryT<T>::PairType GetIterators(const std::string& aTag = "") const;
+        template<class T> typename JBasicCollectionT<T>::PairType GetIterators(const std::string& aTag = "") const;
         template<class T> std::vector<const T*> GetAll() const;
         template<class T> std::map<std::pair<std::string,std::string>,std::vector<T*>> GetAllChildren() const;
 
         // JANA1 compatibility getters
-        template<class T> JFactoryT<T>* GetSingle(const T* &t, const char *tag="", bool exception_if_not_one=true) const;
+        template<class T> JBasicCollectionT<T>* GetSingle(const T* &t, const char *tag="", bool exception_if_not_one=true) const;
 
         // Insert
-        template <class T> JFactoryT<T>* Insert(T* item, const std::string& aTag = "") const;
-        template <class T> JFactoryT<T>* Insert(const std::vector<T*>& items, const std::string& tag = "") const;
+        template <class T> JBasicCollectionT<T>* Insert(T* item, const std::string& tag="") const;
+        template <class T> JBasicCollectionT<T>* Insert(const std::vector<T*>& items, const std::string& tag="") const;
 
         // PODIO
 #ifdef JANA2_HAVE_PODIO
         std::vector<std::string> GetAllCollectionNames() const;
         const podio::CollectionBase* GetCollectionBase(std::string name, bool throw_on_missing=true) const;
-        template <typename T> const typename JFactoryPodioT<T>::CollectionT* GetCollection(std::string name, bool throw_on_missing=true) const;
-        template <typename T> JFactoryPodioT<T>* InsertCollection(typename JFactoryPodioT<T>::CollectionT&& collection, std::string name);
-        template <typename T> JFactoryPodioT<T>* InsertCollectionAlreadyInFrame(const typename JFactoryPodioT<T>::CollectionT* collection, std::string name);
+        template <typename T> const typename T::collection_type* GetCollection(std::string name, bool throw_on_missing=true) const;
+        template <typename T> JPodioCollection* InsertCollection(typename T::collection_type&& collection, std::string name);
+        template <typename T> JPodioCollection* InsertCollectionAlreadyInFrame(const typename T::collection_type* collection, std::string name);
 #endif
 
         //SETTERS
@@ -108,7 +104,7 @@ class JEvent : public std::enable_shared_from_this<JEvent>
         JEventSource* GetJEventSource() const {return mEventSource; }
         JCallGraphRecorder* GetJCallGraphRecorder() const {return &mCallGraph;}
         JInspector* GetJInspector() const {return &mInspector;}
-        void Inspect() const { mInspector.Loop();} // TODO: Force this not to be inlined AND used so it is defined in libJANA.a
+        void Inspect() const { mInspector.Loop();} // TODO: Force this not to be inlined AND used so it is defined in libJctoryTANA.a
         bool GetSequential() const {return mIsBarrierEvent;}
         friend class JEventPool;
 
@@ -203,7 +199,7 @@ class JEvent : public std::enable_shared_from_this<JEvent>
 /// Repeated calls to Insert() will append to the previous data rather than overwrite it,
 /// which saves the user from having to allocate a throwaway vector and requires less error handling.
 template <class T>
-inline JFactoryT<T>* JEvent::Insert(T* item, const std::string& tag) const {
+inline JBasicCollectionT<T>* JEvent::Insert(T* item, const std::string& tag) const {
 
     std::string resolved_tag = tag;
     if (mUseDefaultTags && tag.empty()) {
@@ -261,7 +257,7 @@ inline std::vector<JFactory*> JEvent::GetAllFactories() const {
 /// GetFactory() should be used with extreme care because it subverts the JEvent abstraction.
 /// Most historical uses of GetFactory are far better served by GetMetadata.
 template<class T>
-inline JFactoryT<T>* JEvent::GetFactory(const std::string& tag, bool throw_on_missing) const
+inline JFactory* JEvent::GetFactory(const std::string& tag, bool throw_on_missing) const
 {
     std::string resolved_tag = tag;
     if (mUseDefaultTags && tag.empty()) {
