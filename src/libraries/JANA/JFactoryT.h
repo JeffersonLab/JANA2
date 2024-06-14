@@ -47,8 +47,11 @@ public:
 
     /// JFactoryT constructor requires a name and a tag.
     /// Name should always be JTypeInfo::demangle<T>(), tag is usually "".
-    JFactoryT(const std::string& aName, const std::string& aTag) __attribute__ ((deprecated)) : JFactory(aName, aTag) {
+    JFactoryT(const std::string& aName, const std::string& aTag) __attribute__ ((deprecated)) {
+        SetObjectName(aName);
+        SetTag(aTag);
         mCollection = new JBasicCollectionT<T>();
+        mCollection->SetTypeName(aName);
         mCollection->SetCollectionTag(aTag);
         mCollection->template EnableGetAs<T>();
         mCollection->template EnableGetAs<JObject>( std::is_convertible<T,JObject>() ); // Automatically add JObject if this can be converted to it
@@ -58,7 +61,8 @@ public:
         mCollections.push_back(mCollection);
     }
 
-    JFactoryT(const std::string& aName) __attribute__ ((deprecated))  : JFactory(aName, "") {
+    JFactoryT(const std::string& aName) __attribute__ ((deprecated)) {
+        SetObjectName(aName);
         mCollection = new JBasicCollectionT<T>();
         mCollection->template EnableGetAs<T>();
         mCollection->template EnableGetAs<JObject>( std::is_convertible<T,JObject>() ); // Automatically add JObject if this can be converted to it
@@ -68,7 +72,7 @@ public:
         mCollections.push_back(mCollection);
     }
 
-    JFactoryT() : JFactory(JTypeInfo::demangle<T>(), ""){
+    JFactoryT() {
         mCollection = new JBasicCollectionT<T>();
         mCollection->template EnableGetAs<T>();
         mCollection->template EnableGetAs<JObject>( std::is_convertible<T,JObject>() ); // Automatically add JObject if this can be converted to it
@@ -86,6 +90,10 @@ public:
     void EndRun() override {}
     void Process(const std::shared_ptr<const JEvent>&) override {}
 
+    std::string GetFactoryName() const { return m_type_name; }
+    std::string GetName() const __attribute__ ((deprecated))  { return mCollections[0]->GetTypeName(); }
+    std::string GetTag() const { return mCollections[0]->GetTag(); }
+    std::string GetObjectName() const { return mCollections[0]->GetTypeName(); }
 
     std::type_index GetObjectType(void) const override {
         return std::type_index(typeid(T));
@@ -108,7 +116,7 @@ public:
 
     /// Please use the typed setters instead whenever possible
     // TODO: Deprecate this!
-    void Set(const std::vector<JObject*>& aData) override {
+    void Set(const std::vector<JObject*>& aData) {
         mCollection->ClearData();
         std::vector<T*>& data = mCollection->GetData();
         for (auto obj : aData) {
@@ -120,20 +128,20 @@ public:
 
     /// Please use the typed setters instead whenever possible
     // TODO: Deprecate this!
-    void Insert(JObject* aDatum) override {
+    void Insert(JObject* aDatum) {
         T* casted = dynamic_cast<T*>(aDatum);
         assert(casted != nullptr);
         Insert(casted);
     }
 
-    virtual void Set(const std::vector<T*>& aData) {
+    void Set(const std::vector<T*>& aData) {
         mCollection->ClearData();
         mCollection->GetData() = aData;
         mCollection->SetCreationStatus(JCollection::CreationStatus::Inserted);
         mStatus = Status::Inserted;
     }
 
-    virtual void Set(std::vector<T*>&& aData) {
+    void Set(std::vector<T*>&& aData) {
         mCollection->ClearData();
         auto& data = mCollection->GetData();
         data = std::move(aData);
@@ -141,7 +149,7 @@ public:
         mStatus = Status::Inserted;
     }
 
-    virtual void Insert(T* aDatum) {
+    void Insert(T* aDatum) {
         auto& data = mCollection->GetData();
         data.push_back(aDatum);
         mCollection->SetCreationStatus(JCollection::CreationStatus::Inserted);
@@ -239,7 +247,11 @@ public:
     inline bool GetWriteToOutputFlag() { 
         return mCollection->GetWriteToOutputFlag();
     }
-
+    
+    void SetName(std::string objectName) __attribute__ ((deprecated)) { mCollections[0]->SetTypeName(objectName); }
+    void SetTag(std::string tag) { mCollections[0]->SetCollectionTag(tag); }
+    void SetObjectName(std::string objectName) { mCollections[0]->SetTypeName(objectName); }
+    void SetFactoryName(std::string factoryName) { SetTypeName(factoryName); }
 
 };
 

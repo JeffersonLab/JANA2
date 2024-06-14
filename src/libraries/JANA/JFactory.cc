@@ -12,6 +12,11 @@ void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
     // We need this for JMultifactoryHelper. Eventually it should go away
     auto app = event->GetJApplication();
     if (app != nullptr) SetApplication(app);
+#ifdef JANA2_HAVE_PODIO
+    if (mNeedPodio) {
+        mPodioFrame = GetOrCreateFrame(event);
+    }
+#endif
 
     if (mStatus == Status::Uninitialized) {
         CallWithJExceptionWrapper("JFactory::Init", [&](){ Init(); });
@@ -41,5 +46,15 @@ void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
         CallWithJExceptionWrapper("JFactory::Process", [&](){ Process(event); });
         mStatus = Status::Processed;
         mCreationStatus = CreationStatus::Created;
+    }
+}
+
+void JFactory::Release() {
+    std::lock_guard<std::mutex> lock(m_mutex);
+    // Only call Finish() if we actually initialized
+    // Only call Finish() once
+    if (m_status != Status::Uninitialized) {
+        CallWithJExceptionWrapper("JFactory::Finish", [&](){ Finish(); });
+        m_status = Status::Finalized;
     }
 }
