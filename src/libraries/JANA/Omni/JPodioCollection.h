@@ -5,7 +5,9 @@
 
 #include <JANA/Omni/JCollection.h>
 #include <podio/podioVersion.h>
-#include <podio/Fame.h>
+#include <podio/Frame.h>
+
+#include <unordered_map>
 
 
 class JPodioCollection : public JCollection {   
@@ -14,41 +16,67 @@ class JPodioCollection : public JCollection {
     const podio::CollectionBase* m_collection = nullptr;
     podio::Frame* m_frame = nullptr;
 
+public:
     // Getters
     const podio::CollectionBase* GetCollection() { return m_collection; }
+    
+    podio::Frame* GetFrame() { return m_frame; }
 
     // Setters
     void SetFrame(podio::Frame* frame) { m_frame = frame; }
 
     template <typename T>
-    void SetCollection(std::unique_ptr<CollectionT> collection);
+    void SetCollection(std::unique_ptr<typename T::collection_type> collection);
 
     template <typename T>
-    void SetCollectionAlreadyInFrame(const CollectionT* collection);
-}
+    void SetCollection(typename T::collection_type&& collection);
+
+    template <typename T>
+    void SetCollectionAlreadyInFrame(const typename T::collection_type* collection);
+    
+
+    size_t GetSize() const override { return m_collection->size(); }
+
+    void ClearData() override { 
+        m_collection = nullptr; 
+        m_frame = nullptr; 
+    };
+};
 
 
 
 template <typename T>
-void JFactoryPodioT<T>::SetCollection(std::unique_ptr<CollectionT> collection) {
+void JPodioCollection::SetCollection(std::unique_ptr<typename T::collection_type> collection) {
     /// Provide a PODIO collection. Note that PODIO assumes ownership of this collection, and the
     /// collection pointer should be assumed to be invalid after this call
 
-    if (this->mFrame == nullptr) {
+    if (this->m_frame == nullptr) {
         throw JException("JPodioCollection: Unable to add collection to frame as frame is missing!");
     }
-    this->mFrame->put(std::move(collection), this->GetTag());
-    const auto* moved = &this->mFrame->template get<CollectionT>(this->GetTag());
-    this->mCollection = moved;
-
-    this->mCreationStatus = JFactory::CreationStatus::Inserted;
+    this->m_frame->put(std::move(collection), this->GetCollectionName());
+    const auto* moved = &this->m_frame->template get<typename T::collection_type>(this->GetCollectionName());
+    this->m_collection = moved;
+    SetCreationStatus(CreationStatus::Inserted);
 }
 
 template <typename T>
-void JFactoryPodioT<T>::SetCollectionAlreadyInFrame(const CollectionT* collection) {
+void JPodioCollection::SetCollection(typename T::collection_type&& collection) {
+    /// Provide a PODIO collection. Note that PODIO assumes ownership of this collection, and the
+    /// collection pointer should be assumed to be invalid after this call
+
+    if (this->m_frame == nullptr) {
+        throw JException("JPodioCollection: Unable to add collection to frame as frame is missing!");
+    }
+    this->m_frame->put(std::move(collection), this->GetCollectionName());
+    const auto* moved = &this->m_frame->template get<typename T::collection_type>(this->GetCollectionName());
+    this->m_collection = moved;
+    SetCreationStatus(CreationStatus::Inserted);
+}
+
+template <typename T>
+void JPodioCollection::SetCollectionAlreadyInFrame(const typename T::collection_type* collection) {
     m_collection = collection;
-    SetStatus(J)actory::Status::Inserted;
-    this->mCreationStatus = JFactory::CreationStatus::Inserted;
+    SetCreationStatus(CreationStatus::Inserted);
 }
 
 

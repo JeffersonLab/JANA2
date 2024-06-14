@@ -26,6 +26,7 @@
 
 #ifdef JANA2_HAVE_PODIO
 #include <JANA/Podio/JFactoryPodioT.h>
+#include <JANA/Omni/JPodioCollection.h>
 namespace podio {
 class CollectionBase;
 }
@@ -490,8 +491,8 @@ JFactoryT<T>* JEvent::GetSingle(const T* &t, const char *tag, bool exception_if_
 
 inline std::vector<std::string> JEvent::GetAllCollectionNames() const {
     std::vector<std::string> keys;
-    for (auto pair : mFactorySet->GetCollections()) {
-        keys.push_back(pair.first);
+    for (auto* collection : mFactorySet->GetAllCollections()) {
+        keys.push_back(collection->GetCollectionName());
     }
     return keys;
 }
@@ -505,17 +506,17 @@ inline const podio::CollectionBase* JEvent::GetCollectionBase(std::string name, 
     if (typed_coll == nullptr) {
         throw JException("Collection '%s' is not a JPodioCollection!", name.c_str());
     }
-    JCallGraphEntryMaker cg_entry(mCallGraph, it->second); // times execution until this goes out of scope
-    it->second->Create(this->shared_from_this()); // Create will short-circuit if needed
+    JCallGraphEntryMaker cg_entry(mCallGraph, pair.second); // times execution until this goes out of scope
+    pair.second->Create(this->shared_from_this()); // Create will short-circuit if needed
     return typed_coll->GetCollection();
 }
 
 template <typename T>
 const typename JFactoryPodioT<T>::CollectionT* JEvent::GetCollection(std::string name, bool throw_on_missing) const {
     auto* untyped = GetCollectionBase(name, throw_on_missing);
-    auto* typed = std::dynamic_cast<T::collection_type>(untyped);
+    auto* typed = dynamic_cast<const typename T::collection_type*>(untyped);
     if (typed == nullptr) {
-        throw JException("Collection '%s' is not of type %s", name.c_str(), JTypeInfo::demangle<T::collection_type>());
+        throw JException("Collection '%s' is not of type %s", name.c_str(), JTypeInfo::demangle<typename T::collection_type>());
     }
     return typed;
 }
@@ -544,7 +545,7 @@ JFactoryPodioT<T>* JEvent::InsertCollectionAlreadyInFrame(const typename JFactor
     }
 
     // Retrieve factory if it already exists, else create it
-    JFactoryT<T>* factory = mFactorySet->GetFactory<T>(name);
+    JFactory* factory = mFactorySet->GetFactory<T>(name);
     if (factory == nullptr) {
         factory = new JFactoryPodioT<T>();
         factory->SetTag(name);

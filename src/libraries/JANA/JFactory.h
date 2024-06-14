@@ -32,6 +32,7 @@ public:
     enum class Status {Uninitialized, Unprocessed, Processed, Inserted};
     enum class CreationStatus { NotCreatedYet, Created, Inserted, InsertedViaGetObjects, NeverCreated };
 
+    JFactory() = default;
 
     JFactory(std::string aName, std::string aTag = "")
     : mObjectName(std::move(aName)), 
@@ -59,7 +60,7 @@ public:
     uint32_t GetPreviousRunNumber(void) const { return mPreviousRunNumber; }
 
     std::vector<JCollection*>& GetCollections() { return mCollections; }
-    bool GetRegenerateFlag() { return m_regenerate; }
+    bool GetRegenerateFlag() const { return m_regenerate; }
 
     void SetName(std::string objectName) __attribute__ ((deprecated)) { mObjectName = std::move(objectName); }
 
@@ -90,7 +91,7 @@ public:
     // Overloaded by JFactoryT
     virtual std::type_index GetObjectType() const = 0;
 
-    virtual void ClearData() = 0;
+    virtual void ClearData() {};
 
 
     // Overloaded by user Factories
@@ -127,8 +128,8 @@ public:
     void Summarize(JComponentSummary& summary);
 
 
-    virtual void Set(const std::vector<JObject *> &data) = 0;
-    virtual void Insert(JObject *data) = 0;
+    virtual void Set(const std::vector<JObject *> &data) { throw JException("Unsupported!"); }
+    virtual void Insert(JObject *data) { throw JException("Unsupported!"); }
 
 
 protected:

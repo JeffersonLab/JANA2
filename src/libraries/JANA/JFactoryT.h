@@ -187,7 +187,7 @@ public:
         if (mCollection->GetPersistentFlag()) { mFlags += 1; }
         if (mCollection->GetWriteToOutputFlag()) { mFlags += 2; }
         if (mCollection->GetNotOwnerFlag()) { mFlags += 4; }
-        if (mCollection->GetRegenerateFlag()) { mFlags += 8; }
+        if (GetRegenerateFlag()) { mFlags += 8; }
         return mFlags; 
     }
 
