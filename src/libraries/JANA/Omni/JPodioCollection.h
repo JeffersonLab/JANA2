@@ -15,6 +15,7 @@ class JPodioCollection : public JCollection {
     // Fields
     const podio::CollectionBase* m_collection = nullptr;
     podio::Frame* m_frame = nullptr;
+    bool m_owns_data = true;
 
 public:
     // Getters

@@ -12,10 +12,12 @@
 #include <functional>
 
 
+class JFactory;
+
 class JCollection {
 public:
     // Typedefs
-    enum class CreationStatus { NotCreatedYet, Created, Inserted, InsertedViaGetObjects, NeverCreated };
+    enum class CreationStatus { NotCreatedYet, Created, InsertFromSource, InsertedFromFactory, InsertedFromGetObjects };
 
 private:
     // Fields

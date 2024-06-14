@@ -5,41 +5,35 @@
 #pragma once 
 
 #include <JANA/JException.h>
-#include <JANA/Utils/JAny.h>
-#include <JANA/Utils/JEventLevel.h>
 #include <JANA/Utils/JCallGraphRecorder.h>
 #include <JANA/Omni/JComponent.h>
 #include <JANA/Omni/JCollection.h>
 
-#include <string>
-#include <typeindex>
-#include <memory>
-#include <limits>
-#include <atomic>
-#include <vector>
-#include <mutex>
-#include <unordered_map>
-#include <functional>
-
-
 class JEvent;
-class JObject;
-class JApplication;
 
 class JFactory : public jana::omni::JComponent {
-public:
 
-    enum class Status {Uninitialized, Unprocessed, Processed, Inserted};
-    enum class CreationStatus { NotCreatedYet, Created, Inserted, InsertedViaGetObjects, NeverCreated };
+public:
+    enum class Status {Uninitialized, Unprocessed, Processed, Inserted, Finalized};
+    enum class CreationStatus { NotCreatedYet, Created, Inserted, InsertedViaGetObjects };
+
+protected:
+    std::vector<JCollection*> mCollections;
+    int32_t mPreviousRunNumber = -1;
+    bool m_regenerate = false;
+    mutable Status mStatus = Status::Uninitialized;
+    CreationStatus mCreationStatus = CreationStatus::NotCreatedYet;
+    mutable JCallGraphRecorder::JDataOrigin m_insert_origin = JCallGraphRecorder::ORIGIN_NOT_AVAILABLE; // (see note at top of JCallGraphRecorder.h)
 
     JFactory() = default;
+#ifdef JANA2_HAVE_PODIO
+    bool mNeedPodio = false;      // Whether we need to retrieve the podio::Frame
+    podio::Frame* mPodioFrame = nullptr;  // To provide the podio::Frame to SetPodioData, SetCollection
+#endif
 
-    JFactory(std::string aName, std::string aTag = "")
-    : mObjectName(std::move(aName)), 
-      mTag(std::move(aTag)), 
-      mStatus(Status::Uninitialized) {
-          SetPrefix(aTag.empty() ? mObjectName : mObjectName + ":" + mTag);
-    };
+
+public:
+    JFactory() = default;
 
     virtual ~JFactory() {
         for (JCollection* collection : mCollections) {
@@ -47,12 +41,10 @@ public:
         }
     }
 
+    std::vector<JCollection*>& GetCollections() { return mCollections; }
 
-    std::string GetName() const __attribute__ ((deprecated))  { return mObjectName; }
-
-    std::string GetTag() const { return mTag; }
-    std::string GetObjectName() const { return mObjectName; }
-    std::string GetFactoryName() const { return m_type_name; }
+    uint32_t GetPreviousRunNumber(void) const { return mPreviousRunNumber; }
+    bool GetRegenerateFlag() { return m_regenerate; }
     Status GetStatus() const { return mStatus; }
     CreationStatus GetCreationStatus() const { return mCreationStatus; }
     JCallGraphRecorder::JDataOrigin GetInsertOrigin() const { return m_insert_origin; } ///< If objects were placed here by JEvent::Insert() this records whether that call was made from a source or factory.
@@ -71,30 +63,19 @@ public:
     void SetStatus(Status status){ mStatus = status; }
     void SetCreationStatus(CreationStatus status){ mCreationStatus = status; }
     void SetInsertOrigin(JCallGraphRecorder::JDataOrigin origin) { m_insert_origin = origin; } ///< Called automatically by JEvent::Insert() to records whether that call was made by a source or factory.
-
     void SetPreviousRunNumber(uint32_t aRunNumber) { mPreviousRunNumber = aRunNumber; }
     void SetRegenerateFlag(bool regenerate) { m_regenerate = regenerate; }
 
-    /// Get data source value depending on how objects came to be here. (Used mainly by JEvent::Get() )
-    inline JCallGraphRecorder::JDataSource GetDataSource() const {
-        JCallGraphRecorder::JDataSource datasource = JCallGraphRecorder::DATA_FROM_FACTORY;
-         if( mCreationStatus == JFactory::CreationStatus::Inserted ){
-            if( m_insert_origin == JCallGraphRecorder::ORIGIN_FROM_SOURCE ){
-                datasource = JCallGraphRecorder::DATA_FROM_SOURCE;
-            }else{
-                datasource = JCallGraphRecorder::DATA_FROM_CACHE; // Really came from factory, but if Inserted, it was a secondary data type.
-            }
-        }
-        return datasource;
-    }
 
-    // Overloaded by JFactoryT
-    virtual std::type_index GetObjectType() const = 0;
+    // Called by JANA
+    // Create() calls JFactory::Init,BeginRun,Process in an invariant-preserving way
+    virtual void Create(const std::shared_ptr<const JEvent>& event);
 
     virtual void ClearData() {};
+    // Release() makes sure Finish() is called exactly once
+    void Release();
 
-
-    // Overloaded by user Factories
+    // Implemented by user
     virtual void Init() {}
     virtual void BeginRun(const std::shared_ptr<const JEvent>&) {}
     virtual void ChangeRun(const std::shared_ptr<const JEvent>&) {}
@@ -102,20 +83,12 @@ public:
     virtual void Process(const std::shared_ptr<const JEvent>&) {}
     virtual void Finish() {}
 
-    virtual std::size_t GetNumObjects() const {
-        return 0;
-    }
 
+    // These will go away pretty soon hopefully
+    virtual size_t GetNumObjects() const { return mCollections[0]->GetSize(); }
+    virtual std::type_index GetObjectType() const { throw JException("No object typeindex known in the general case"); }
+    virtual void ClearData() { for (JCollection* c : mCollections) c->ClearData(); };
 
-    /// Access the encapsulated data, performing an upcast if necessary. This is useful for extracting data from
-    /// all JFactories<T> where T extends a parent class S, such as JObject or TObject, in contexts where T is not known
-    /// or it would introduce an unwanted coupling. The main application is for building DSTs.
-    ///
-    /// Be aware of the following caveats:
-    /// - The factory's object type must not use virtual inheritance.
-    /// - If JFactory::Process hasn't already been called, this will return an empty vector. This will NOT call JFactory::Process.
-    /// - Someone must call JFactoryT<T>::EnableGetAs<S>, preferably the constructor. Otherwise, this will return an empty vector.
-    /// - If S isn't a base class of T, this will return an empty vector.
     template<typename S>
     std::vector<S*> GetAs();
 
@@ -146,6 +119,7 @@ protected:
     CreationStatus mCreationStatus = CreationStatus::NotCreatedYet;
 };
 
+// This will go away pretty soon hopefully
 template<typename S>
 std::vector<S*> JFactory::GetAs() {
     return mCollections[0]->GetAs<S>();

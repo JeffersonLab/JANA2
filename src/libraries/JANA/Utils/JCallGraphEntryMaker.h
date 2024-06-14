@@ -27,7 +27,24 @@ public:
     }
 
     ~JCallGraphEntryMaker(){
-        m_call_graph.FinishFactoryCall( m_factory ? m_factory->GetDataSource():JCallGraphRecorder::DATA_NOT_AVAILABLE );
+        JCallGraphRecorder::JDataSource datasource = JCallGraphRecorder::DATA_NOT_AVAILABLE;
+        if (m_factory) {
+            auto status = m_factory->GetCreationStatus();
+            auto origin = m_factory->GetInsertOrigin();
+            if (status == JFactory::CreationStatus::Inserted) {
+                if (origin == JCallGraphRecorder::ORIGIN_FROM_SOURCE) {
+                    datasource = JCallGraphRecorder::DATA_FROM_SOURCE;
+                } 
+                else {
+                    datasource = JCallGraphRecorder::DATA_FROM_CACHE; 
+                    // Really came from factory, but if Inserted, it was a secondary data type.
+                }
+            }
+            else {
+                datasource = JCallGraphRecorder::DATA_FROM_FACTORY;
+            }
+        }
+        m_call_graph.FinishFactoryCall(datasource);
     }
 
 protected:
