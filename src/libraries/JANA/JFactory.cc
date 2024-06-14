@@ -9,6 +9,16 @@
 
 void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
 
+    // We need this for JMultifactoryHelper. Eventually it should go away
+    auto app = event->GetJApplication();
+    if (app != nullptr) SetApplication(app);
+#ifdef JANA2_HAVE_PODIO
+    // TODO: Do this correctly please
+    if (mNeedPodio) {
+        mPodioFrame = GetOrCreateFrame(event);
+    }
+#endif
+
     if (mStatus == Status::Uninitialized) {
         CallWithJExceptionWrapper("JFactory::Init", [&](){ Init(); });
         mStatus = Status::Unprocessed;
