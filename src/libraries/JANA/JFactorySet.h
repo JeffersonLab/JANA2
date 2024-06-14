@@ -1,93 +1,49 @@
-
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #pragma once
 
-#include <string>
-#include <typeindex>
-#include <map>
-
-#include <JANA/JFactoryT.h>
+#include <JANA/JFactory.h>
 #include <JANA/Utils/JEventLevel.h>
 #include <JANA/Utils/JResettable.h>
 #include <JANA/Status/JComponentSummary.h>
 
-class JFactoryGenerator;
-class JFactory;
-class JMultifactory;
+#include <string>
+#include <vector>
+#include <map>
 
+class JFactoryGenerator;
+
+/// JFactorySet contains all factories associated with a single JEvent (and consequently a single worker thread). 
+/// These are indexed by the names of the collections that each JFactory provides. JFactorySet doesn't execute any
+/// JFactories on its own. All it does is retrieve collections and their corresponding factories for JEvent, and provide 
+/// sensible error handling in case the user provides multiple factories that can produce a particular collection, etc.
 
 class JFactorySet : public JResettable {
 
 protected:
-    std::map<std::pair<std::type_index, std::string>, JFactory*> mFactories;        // {(typeid, tag) : factory}
-    std::map<std::pair<std::string, std::string>, JFactory*> mFactoriesFromString;  // {(objname, tag) : factory}
-    std::map<std::string, std::pair<JCollection*,JFactory*>> mCollectionsByName;    // {"objname:tag" : (collection, factory)}
-    std::vector<JMultifactory*> mMultifactories;
-    bool mIsFactoryOwner = true;
+    std::map<std::string, std::pair<JCollection*,JFactory*>> mCollections;    // {"objname:tag" : (collection, factory)}
+    std::vector<JFactory*> mFactories;
     JEventLevel mLevel = JEventLevel::PhysicsEvent;
 
 public:
-    JFactorySet(void);
-    JFactorySet(const std::vector<JFactoryGenerator*>& aFactoryGenerators);
-    JFactorySet(JFactoryGenerator* source_gen, const std::vector<JFactoryGenerator*>& default_gens);
+    JFactorySet();
+    JFactorySet(const std::vector<JFactoryGenerator*>& generators);
     virtual ~JFactorySet();
         std::vector<JMultifactory*> GetAllMultifactories() const;
 
-        JEventLevel GetLevel() const { return mLevel; }
-        void SetLevel(JEventLevel level) { mLevel = level; }
+    void Add(JCollection* collection);
+    bool Add(JFactory* collection);
 
-    JFactory* GetFactory(const std::string& object_name, const std::string& tag="") const;
-    template<typename T> JFactoryT<T>* GetFactory(const std::string& tag = "") const;
+    std::pair<JCollection*, JFactory*> GetCollection(std::string collection_name) const;
+    std::vector<JCollection*> GetAllCollections() const;
     std::vector<JFactory*> GetAllFactories() const;
-    template<typename T> std::vector<JFactoryT<T>*> GetAllFactories() const;
 
     std::vector<JFactorySummary> Summarize() const;
-
+    void Print() const;
+    void Release();
     JEventLevel GetLevel() const { return mLevel; }
     void SetLevel(JEventLevel level) { mLevel = level; }
+
 };
-
-
-template<typename T>
-JFactoryT<T>* JFactorySet::GetFactory(const std::string& tag) const {
-
-    auto typed_key = std::make_pair(std::type_index(typeid(T)), tag);
-    auto typed_iter = mFactories.find(typed_key);
-    if (typed_iter != std::end(mFactories)) {
-        JEventLevel found_level = typed_iter->second->GetLevel();
-        if (found_level != mLevel) {
-            throw JException("Factory belongs to a different level on the event hierarchy. Expected: %s, Found: %s", toString(mLevel).c_str(), toString(found_level).c_str());
-        }
-        return static_cast<JFactoryT<T>*>(typed_iter->second);
-    }
-
-    auto untyped_key = std::make_pair(JTypeInfo::demangle<T>(), tag);
-    auto untyped_iter = mFactoriesFromString.find(untyped_key);
-    if (untyped_iter != std::end(mFactoriesFromString)) {
-        JEventLevel found_level = untyped_iter->second->GetLevel();
-        if (found_level != mLevel) {
-            throw JException("Factory belongs to a different level on the event hierarchy. Expected: %s, Found: %s", toString(mLevel).c_str(), toString(found_level).c_str());
-        }
-        return static_cast<JFactoryT<T>*>(untyped_iter->second);
-    }
-    return nullptr;
-}
-
-template<typename T>
-std::vector<JFactoryT<T>*> JFactorySet::GetAllFactories() const {
-    auto sKey = std::type_index(typeid(T));
-    std::vector<JFactoryT<T>*> data;
-    for (auto it=std::begin(mFactories);it!=std::end(mFactories);it++){
-        if (it->first.first==sKey){
-            if (it->second->GetLevel() == mLevel) {
-                data.push_back(static_cast<JFactoryT<T>*>(it->second));
-            }
-        }
-    }
-    return data;
-}
-
-
 

@@ -8,115 +8,110 @@
 #include "JApplication.h"
 #include "JFactorySet.h"
 #include "JFactory.h"
-#include "JMultifactory.h"
 #include "JFactoryGenerator.h"
 
 //---------------------------------
 // JFactorySet    (Constructor)
 //---------------------------------
-JFactorySet::JFactorySet(void)
-{
-
+JFactorySet::JFactorySet() {
 }
 
 //---------------------------------
 // JFactorySet    (Constructor)
 //---------------------------------
-JFactorySet::JFactorySet(const std::vector<JFactoryGenerator*>& aFactoryGenerators)
-{
-    //Add all factories from all factory generators
-    for(auto sGenerator : aFactoryGenerators){
-
-        // Generate the factories into a temporary JFactorySet.
-        JFactorySet myset;
-        sGenerator->GenerateFactories( &myset );
-
-        // Merge factories from temporary JFactorySet into this one. Any that
-        // already exist here will leave the duplicates in the temporary set
-        // where they will be destroyed by its destructor as it falls out of scope.
-        Merge( myset );
-    }
-}
-
-JFactorySet::JFactorySet(JFactoryGenerator* source_gen, const std::vector<JFactoryGenerator*>& default_gens) {
-
-    if (source_gen != nullptr) source_gen->GenerateFactories(this);
-    for (auto gen : default_gens) {
-        JFactorySet temp_set;
-        gen->GenerateFactories(&temp_set);
-        Merge(temp_set); // Factories which are shadowed stay in temp_set; others are removed
-        for (auto straggler : temp_set.GetAllFactories()) {
-            LOG << "Factory '" << straggler->GetFactoryName() << "' overriden, will be excluded from event." << LOG_END;
-        }
+JFactorySet::JFactorySet(const std::vector<JFactoryGenerator*>& generators) {
+    for (auto generator : generators) {
+        generator->GenerateFactories(this);
     }
 }
 
 //---------------------------------
 // ~JFactorySet    (Destructor)
 //---------------------------------
-JFactorySet::~JFactorySet()
-{
-    /// The destructor will delete any factories in the set, unless mIsFactoryOwner is set to false.
-    /// The only time mIsFactoryOwner should/can be set false is when a JMultifactory is using a JFactorySet internally
-    /// to manage its JMultifactoryHelpers.
-    if (mIsFactoryOwner) {
-        for (auto& f : mFactories) delete f.second;
+JFactorySet::~JFactorySet() {
+
+    // JFactories are owned by the JFactorySet.
+    // JCollections are owned by their JFactory, unless no JFactory exists,
+    // in which case collections are owned by the JFactorySet.
+
+    for (auto& pair : mCollections) {
+        if (pair->second.second == nullptr) {
+            delete pair->second.first;
+        }
     }
-    // Now that the factories are deleted, nothing can call the multifactories so it is safe to delete them as well
-    for (auto* mf : mMultifactories) { delete mf; }
-
-
+    for (auto& f : mFactories) { 
+        delete f.second; 
+    }
 }
+
 
 //---------------------------------
 // Add
 //---------------------------------
-bool JFactorySet::Add(JFactory* aFactory)
-{
-    /// Add a JFactory to this JFactorySet. The JFactorySet assumes ownership of this factory.
-    /// If the JFactorySet already contains a JFactory with the same key,
-    /// throw an exception and let the user figure out what to do.
-    /// This scenario occurs when the user has multiple JFactory<T> producing the
-    /// same T JObject, and is not distinguishing between them via tags.
+void JFactorySet::Add(JCollection* collection) {
 
-    auto typed_key = std::make_pair( aFactory->GetObjectType(), aFactory->GetTag() );
-    auto untyped_key = std::make_pair( aFactory->GetObjectName(), aFactory->GetTag() );
-
-    auto typed_result = mFactories.find(typed_key);
-    auto untyped_result = mFactoriesFromString.find(untyped_key);
-
-    if (typed_result != std::end(mFactories) || untyped_result != std::end(mFactoriesFromString)) {
-        // Factory is duplicate. Since this almost certainly indicates a user error, and
-        // the caller will not be able to do anything about it anyway, throw an exception.
-        throw JException("JFactorySet::Add failed because factory is duplicate");
-        // return false;
+    const auto& name = collection->GetCollectionName();
+    auto it = mCollections.find(name);
+    if (it != mCollections.end()) {
+        // Collection is already present
+        throw JException("Add(JCollection*) failed because collection '%s' is already present."
+                         "Caller should first test using GetCollection()", name.c_str());
     }
-
-    mFactories[typed_key] = aFactory;
-    mFactoriesFromString[untyped_key] = aFactory;
-    for (JCollection* coll : aFactory->GetCollections()) {
-        mCollectionsByName[coll->GetCollectionName()] = {coll, aFactory};
-    }
-    return true;
+    mCollections[name] = {collection, nullptr};
 }
 
 
-bool JFactorySet::Add(JMultifactory *multifactory) {
-    /// Add a JMultifactory to this JFactorySet. This JFactorySet takes ownership of its JMultifactoryHelpers,
-    /// which was previously held by the JMultifactory.mHelpers JFactorySet.
-    /// Ownership of the JMultifactory itself is shared among those helpers.
+//---------------------------------
+// Add
+//---------------------------------
+bool JFactorySet::Add(JFactory* factory) {
+    /// Add a JFactory to this JFactorySet. This is usually called by the user from 
+    /// JFactoryGenerator::GenerateFactories(). The JFactorySet assumes ownership of the
+    /// factory.
+    /// - If multiple factories produce the same collection, this throws an error.
+    /// - If the same factory is added multiple times (e.g. by different plugins),
+    ///   this prints a warning message but does NOT throw an error. The new factory 
+    ///   will be immediately deleted.
 
-    auto helpers = multifactory->GetHelpers();
-    for (auto fac : helpers->GetAllFactories()) {
-        fac->SetApplication(multifactory->GetApplication());
-        Add(fac);
+
+    JFactory* duplicate_factory = nullptr;
+
+    for (JCollection* coll : factory->GetCollections()) {
+
+        auto name = coll->GetCollectionName();
+        auto it = mCollections.find(name);
+        if (it != mCollections.end()) {
+            // Already in index
+            if (factory->GetTypeName() == it->second->GetTypeName()) {
+                // Found duplicate version of the same factory
+                duplicate_factory = it->second;
+                break;
+            }
+            else {
+                throw JException("Two different factories are producing the same collection: '%s', '%s'", 
+                        factory->GetTypeName().c_str(), 
+                        it->second->GetTypeName().c_str());
+            }
+        }
+        else {
+            // Not in index, so we insert it and continue
+            mCollections[name] = {coll, factory};
+        }
     }
-    helpers->mIsFactoryOwner = false;
-    mMultifactories.push_back(multifactory);
-    /// This is a little bit weird, but we are using a JFactorySet internally to JMultifactory in order to store and
-    /// efficiently access its JMultifactoryHelpers. Ownership of the JMultifactoryHelpers is transferred to
-    /// the enclosing JFactorySet.
-    return true;
+
+    if (duplicate_factory != nullptr) {
+        JLogMessage(default_cout_logger, JLogger::Level::WARN) 
+            << "Factory '" << factory->GetTypeName() << "' is being added twice. Plugins are: "
+            << factory->GetPluginName() << ", " << duplicate_factory->GetPluginName() 
+            << LOG_END;
+
+        delete factory;
+        return false;
+    }
+    else {
+        mFactories.push_back(factory);
+        return true;
+    }
 }
 
 
@@ -124,9 +119,19 @@ bool JFactorySet::Add(JMultifactory *multifactory) {
 // GetCollection
 //---------------------------------
 std::pair<JCollection*, JFactory*> JFactorySet::GetCollection(std::string collection_name) const {
-    auto it = mCollectionsByName.find(collection_name);
-    if (it == std::end(mCollectionsByName)) {
+    /// If collection is absent, returns {nullptr, nullptr}
+    /// If collection is present and factory is present, returns {collection, factory}
+    /// If collection is present but factory is not, returns {collection, nullptr}
+    /// If collection lives at the wrong event level, throw an exception
+
+    auto it = mCollections.find(collection_name);
+    if (it == std::end(mCollections)) {
         return {nullptr, nullptr};
+    }
+    JEventLevel found_level = it->second->GetLevel();
+    if (found_level != mLevel) {
+        throw JException("Collection belongs to a different level on the event hierarchy. Expected: %s, Found: %s", 
+                toString(mLevel).c_str(), toString(found_level).c_str());
     }
     return it->second;
 }
@@ -136,50 +141,30 @@ std::pair<JCollection*, JFactory*> JFactorySet::GetCollection(std::string collec
 // GetAllCollections
 //---------------------------------
 std::vector<JCollection*> JFactorySet::GetAllCollections() const {
+    /// Returns all JCollections that live at this event level
+
     std::vector<JCollection*> results;
-    for (auto& pair : mCollectionsByName) {
-        results.push_back(pair.second.first);
+    for (auto& pair : mCollections) {
+        if (pair.second.second->GetEventLevel() == mLevel) {
+            results.push_back(pair.second.first);
+        }
     }
     return results;
 }
 
 
-//---------------------------------
-// InsertCollection
-//---------------------------------
-void JFactorySet::InsertCollection(JCollection* collection) {
-    const auto& name = collection->GetCollectionName();
-    auto it = mCollectionsByName.find(name);
-    if (it != mCollectionsByName.end()) {
-        throw JException("InsertCollection failed because name '%s' is not unique", name.c_str());
-    }
-    mCollectionsByName[name] = {collection, nullptr};
-}
-
-
-//---------------------------------
-// GetFactory
-//---------------------------------
-JFactory* JFactorySet::GetFactory(const std::string& object_name, const std::string& tag) const
-{
-    auto untyped_key = std::make_pair(object_name, tag);
-    auto it = mFactoriesFromString.find(untyped_key);
-    if (it != std::end(mFactoriesFromString)) {
-        if (it->second->GetLevel() != mLevel) {
-            throw JException("Factory belongs to a different level on the event hierarchy!");
-        }
-        return it->second;
-    }
-    return nullptr;
-}
 
 //---------------------------------
 // GetAllFactories
 //---------------------------------
 std::vector<JFactory*> JFactorySet::GetAllFactories() const {
+    /// Returns all JFactories that live at this event level
+
     std::vector<JFactory*> results;
-    for (auto p : mFactories) {
-        results.push_back(p.second);
+    for (JFactory* fac : mFactories) {
+        if (fac->GetLevel() == mLevel) {
+            results.push_back(fac);
+        }
     }
     return results;
 }
@@ -195,49 +180,22 @@ std::vector<JMultifactory*> JFactorySet::GetAllMultifactories() const {
     return results;
 }
 
-//---------------------------------
-// Merge
-//---------------------------------
-void JFactorySet::Merge(JFactorySet &aFactorySet)
-{
-    /// Merge any factories in the specified JFactorySet into this
-    /// one. Any factories which don't have the same type and tag as one
-    /// already in this set will be transferred and this JFactorySet
-    /// will take ownership of them. Ones that have a type and tag
-    /// that matches one already in this set will be left in the
-    /// original JFactorySet. Thus, all factories left in the JFactorySet
-    /// passed into this method upon return from it can be considered
-    /// duplicates. It will be left to the caller to delete those.
+/// Summarize() generates a JFactorySummary data object describing each JFactory
+/// that this JFactorySet contains. The data is extracted from the JFactory itself.
+/// Note that this includes ALL event levels, unlike GetAllCollections() and GetAllFactories().
+std::vector<JFactorySummary> JFactorySet::Summarize() const {
 
-    JFactorySet tmpSet; // keep track of duplicates to copy back into aFactorySet
-    for( auto pair : aFactorySet.mFactories ){
-        auto factory = pair.second;
-
-        auto typed_key = std::make_pair(factory->GetObjectType(), factory->GetTag());
-        auto untyped_key = std::make_pair(factory->GetObjectName(), factory->GetTag());
-
-        auto typed_result = mFactories.find(typed_key);
-        auto untyped_result = mFactoriesFromString.find(untyped_key);
-
-        if (typed_result != std::end(mFactories) || untyped_result != std::end(mFactoriesFromString)) {
-            // Factory is duplicate. Return to caller just in case
-            tmpSet.mFactories[pair.first] = factory;
-        }
-        else {
-            mFactories[typed_key] = factory;
-            mFactoriesFromString[untyped_key] = factory;
-        }
+    std::vector<JFactorySummary> results;
+    for (auto& pair : mFactories) {
+        results.push_back({
+            .level = pair.second->GetLevel(),
+            .plugin_name = pair.second->GetPluginName(),
+            .factory_name = pair.second->GetFactoryName(),
+            .factory_tag = pair.second->GetTag(),
+            .object_name = pair.second->GetObjectName()
+        });
     }
-
-    // Copy duplicates back to aFactorySet
-    aFactorySet.mFactories.swap( tmpSet.mFactories );
-    tmpSet.mFactories.clear(); // prevent ~JFactorySet from deleting any factories
-
-    // Move ownership of multifactory pointers over.
-    for (auto* mf : aFactorySet.mMultifactories) {
-        mMultifactories.push_back(mf);
-    }
-    aFactorySet.mMultifactories.clear();
+    return results;
 }
 
 //---------------------------------
@@ -267,9 +225,8 @@ void JFactorySet::Print() const
 /// Release() loops over all contained factories, clearing their data
 void JFactorySet::Release() {
 
-    for (const auto& sFactoryPair : mFactories) {
-        auto sFactory = sFactoryPair.second;
-        sFactory->ClearData();
+    for (const auto& pair : mCollections) {
+        auto coll = pair->second.first;
+        coll->ClearData();
     }
 }
-
