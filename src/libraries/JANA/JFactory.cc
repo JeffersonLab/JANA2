@@ -13,6 +13,7 @@ void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
     auto app = event->GetJApplication();
     if (app != nullptr) SetApplication(app);
 #ifdef JANA2_HAVE_PODIO
+    // TODO: Do this correctly please
     if (mNeedPodio) {
         mPodioFrame = GetOrCreateFrame(event);
     }
