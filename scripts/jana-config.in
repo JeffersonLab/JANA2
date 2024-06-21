@@ -75,7 +75,12 @@ while test $# -gt 0; do
 	esac
 	case $1 in
 		--libs)
-			mess="$mess -L${JANA_INSTALL_DIR}/lib -lJANA ${LDFLAGS} ${JANA_ONLY_LIBS} ${LIBS}"
+			mess="$mess -Wl,-rpath,${JANA_INSTALL_DIR}/lib -L${JANA_INSTALL_DIR}/lib -lJANA ${LDFLAGS} ${JANA_ONLY_LIBS} ${LIBS}"
+			;;
+	esac
+	case $1 in
+		--static-libs)
+			mess="$mess ${JANA_INSTALL_DIR}/lib/libJANA.a ${LDFLAGS} ${JANA_ONLY_LIBS} ${LIBS}"
 			;;
 	esac
 	case $1 in
