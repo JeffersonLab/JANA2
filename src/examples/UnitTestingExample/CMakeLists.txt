@@ -10,4 +10,4 @@ target_include_directories(UnitTestingExample PRIVATE ${CMAKE_SOURCE_DIR}/src/ex
 
 target_link_libraries(UnitTestingExample Tutorial_plugin jana2)
 set_target_properties(UnitTestingExample PROPERTIES PREFIX "" OUTPUT_NAME "UnitTestingExample")
-install(TARGETS UnitTestingExample DESTINATION programs)
+install(TARGETS UnitTestingExample DESTINATION bin)

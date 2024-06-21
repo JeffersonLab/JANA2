@@ -40,5 +40,5 @@ srun cmake --build build -j 32 --target install
 
 # run
 echo "\n Launching SubeventCUDAExample for 1s..."
-srun ./install/programs/SubeventCUDAExample & \
+srun ./install/bin/SubeventCUDAExample & \
   sleep 1  # exit effect
