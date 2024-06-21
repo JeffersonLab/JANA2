@@ -22,6 +22,6 @@ This is an example that can run on a single GPU.
    ```
    Launch the application.
    ```bash
-   bash-4.2$ ./install/programs/SubeventCUDAExample
+   bash-4.2$ ./install/bin/SubeventCUDAExample
    ```
 
