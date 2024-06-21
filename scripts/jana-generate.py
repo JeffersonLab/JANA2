@@ -1031,12 +1031,12 @@ def create_executable(name):
     pass
 
 
-def create_plugin(name, is_standalone=True, is_mini=True, include_root=True, include_tests=False):
+def create_plugin(name, is_standalone=True, is_mini=True, include_root=False, include_tests=False):
     """Create a code skeleton for a plugin in its own directory. Takes the following positional arguments:
           name            The name of the plugin, e.g. "trk_eff" or "TrackingEfficiency"
          [is_standalone]  Is this a new project, or are we inside the source tree of an existing CMake project? (default=True)
          [is_mini]        Reduce boilerplate and put everything in a single file? (default=True)
-         [include_root]   Include a ROOT dependency and stubs for filling a ROOT histogram? (default=True)
+         [include_root]   Include a ROOT dependency and stubs for filling a ROOT histogram? (default=False)
 
        Example: `jana_generate.py Plugin TrackingEfficiency 1 0 0`
     """
