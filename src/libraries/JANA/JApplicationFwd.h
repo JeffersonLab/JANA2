@@ -156,7 +156,7 @@ private:
     bool m_extended_report = false;
     int  m_exit_code = (int) ExitCode::Success;
     int  m_desired_nthreads;
-    std::atomic_int m_sigint_count = 0;
+    std::atomic_int m_sigint_count {0};
 
     std::mutex m_status_mutex;
     int m_ticker_interval_ms = 1000;
