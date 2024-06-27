@@ -111,6 +111,8 @@ public:
 #endif
 
     /// CALLED BY JANA
+    
+    void DoInit();
 
     void Execute(const std::shared_ptr<const JEvent>&);
     // Should this be execute or create? Who is tracking that this is called at most once per event?

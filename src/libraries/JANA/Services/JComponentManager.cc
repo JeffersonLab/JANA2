@@ -46,7 +46,7 @@ void JComponentManager::Init() {
     }
 }
 
-void JComponentManager::configure_components() {
+void JComponentManager::preinitialize_components() {
     for (auto* src : m_evt_srces) {
         src->SetApplication(GetApplication());
         src->SetLogger(m_logging->get_logger(src->GetLoggerName()));
@@ -66,6 +66,13 @@ void JComponentManager::configure_components() {
     for (auto* unfolder : m_unfolders) {
         unfolder->SetApplication(GetApplication());
         unfolder->SetLogger(m_logging->get_logger(unfolder->GetLoggerName()));
+    }
+}
+
+void JComponentManager::initialize_factories() {
+    JFactorySet dummy_fac_set(m_fac_gens);
+    for (auto* fac : dummy_fac_set.GetAllFactories()) {
+        fac->DoInit();
     }
 }
 

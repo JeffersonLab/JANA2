@@ -55,6 +55,7 @@ TEST_CASE("MultiFactoryTests") {
 
     SECTION("Calling from JEvent") {
         auto sut = new MyMultifactory(false);
+        sut->SetApplication(&app);
         auto event = std::make_shared<JEvent>(&app);
         auto fs = new JFactorySet;
         fs->Add(sut);
@@ -70,6 +71,7 @@ TEST_CASE("MultiFactoryTests") {
 
     SECTION("Multifactory sets the wrong data") {
         auto sut = new MyMultifactory(true);
+        sut->SetApplication(&app);
         auto event = std::make_shared<JEvent>(&app);
         auto fs = new JFactorySet;
         fs->Add(sut);
