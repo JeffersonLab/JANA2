@@ -69,10 +69,33 @@ void JComponentManager::preinitialize_components() {
     }
 }
 
-void JComponentManager::initialize_factories() {
+void JComponentManager::initialize_components() {
+    // For now, this only computes the summary for all components except factories.
+    // However, we are likely to eventually want summaries to access information only
+    // available after component initialization, specifically parameters. In this case, 
+    // we would move responsibility for source, unfolder, and processor initialization 
+    // out from the JArrowTopology and into here.
+
+    // Event sources
+    for (auto * src : m_evt_srces) {
+        src->Summarize(m_summary);
+    }
+
+    // Event processors
+    for (auto * evt_proc : m_evt_procs) {
+        evt_proc->Summarize(m_summary);
+    }
+
+    // Unfolders
+    for (auto * unfolder : m_unfolders) {
+        unfolder->Summarize(m_summary);
+    }
+
+    // Factories
     JFactorySet dummy_fac_set(m_fac_gens);
     for (auto* fac : dummy_fac_set.GetAllFactories()) {
         fac->DoInit();
+        fac->Summarize(m_summary);
     }
 }
 
@@ -98,16 +121,19 @@ void JComponentManager::add(JFactoryGenerator *factory_generator) {
 void JComponentManager::add(JEventSource *event_source) {
     event_source->SetPluginName(m_current_plugin_name);
     m_evt_srces.push_back(event_source);
+    event_source->Summarize(m_summary);
 }
 
 void JComponentManager::add(JEventProcessor *processor) {
     processor->SetPluginName(m_current_plugin_name);
     m_evt_procs.push_back(processor);
+    processor->Summarize(m_summary);
 }
 
 void JComponentManager::add(JEventUnfolder* unfolder) {
     unfolder->SetPluginName(m_current_plugin_name);
     m_unfolders.push_back(unfolder);
+    unfolder->Summarize(m_summary);
 }
 
 void JComponentManager::configure_event(JEvent& event) {
@@ -218,29 +244,7 @@ std::vector<JEventUnfolder*>& JComponentManager::get_unfolders() {
     return m_unfolders;
 }
 
-JComponentSummary JComponentManager::get_component_summary() {
-    JComponentSummary result;
-
-    // Event sources
-    for (auto * src : m_evt_srces) {
-        src->Summarize(result);
-    }
-
-    // Event processors
-    for (auto * evt_proc : m_evt_procs) {
-        evt_proc->Summarize(result);
-    }
-
-    // Unfolders
-    for (auto * unfolder : m_unfolders) {
-        unfolder->Summarize(result);
-    }
-
-    // Factories
-    JFactorySet dummy_fac_set(m_fac_gens);
-    for (auto * fac : dummy_fac_set.GetAllFactories()) {
-        fac->Summarize(result);
-    }
-    return result;
+const JComponentSummary& JComponentManager::get_component_summary() {
+    return m_summary;
 }
 
