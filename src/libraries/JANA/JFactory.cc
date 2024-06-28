@@ -51,11 +51,22 @@ void JFactory::DoInit() {
 }
 
 void JFactory::Summarize(JComponentSummary& summary) {
-    summary.factories.push_back({
-        .level = GetLevel(),
-        .plugin_name = GetPluginName(),
-        .factory_name = GetFactoryName(),
-        .factory_tag = GetTag(),
-        .object_name = GetObjectName()
-    });
+
+    auto fs = new JComponentSummary::Component(
+            JComponentSummary::ComponentType::Factory,
+            GetPrefix(),
+            GetTypeName(),
+            GetLevel(),
+            GetPluginName());
+
+    auto coll = new JComponentSummary::Collection(
+            GetTag(), 
+            GetTag(),
+            GetObjectName(), 
+            GetLevel());
+
+    fs->AddOutput(coll);
+    summary.Add(fs);
 }
+
+

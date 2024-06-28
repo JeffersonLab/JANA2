@@ -84,20 +84,20 @@ struct JLogMessage {
 /// Stream operators
 
 template <typename T>
-inline JLogMessage&& operator<<(JLogger& l, T t) {
+inline JLogMessage&& operator<<(JLogger& l, const T& t) {
     JLogMessage m(l);
     m.builder << t;
     return std::move(m);
 }
 
 template<typename T>
-inline JLogMessage& operator<<(JLogMessage& m, T t) {
+inline JLogMessage& operator<<(JLogMessage& m, const T& t) {
     m.builder << t;
     return m;
 }
 
 template<typename T>
-inline JLogMessage&& operator<<(JLogMessage&& m, T t) {
+inline JLogMessage&& operator<<(JLogMessage&& m, const T& t) {
     m.builder << t;
     return std::move(m);
 }

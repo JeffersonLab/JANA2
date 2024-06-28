@@ -170,11 +170,22 @@ public:
     }
 
     void Summarize(JComponentSummary& summary) override {
-        summary.event_unfolders.push_back({.level = GetLevel(), 
-                                           .plugin_name = GetPluginName(), 
-                                           .type_name = GetTypeName(), 
-                                           .prefix = GetPrefix()});
+        auto* us = new JComponentSummary::Component( 
+                JComponentSummary::ComponentType::Unfolder, GetPrefix(), GetTypeName(), GetLevel(), GetPluginName());
 
+        for (const auto* input : m_inputs) {
+            size_t subinput_count = input->names.size();
+            for (size_t i=0; i<subinput_count; ++i) {
+                us->AddInput(new JComponentSummary::Collection("", input->names[i], input->type_name, input->levels[i]));
+            }
+        }
+        for (const auto* output : m_outputs) {
+            size_t suboutput_count = output->collection_names.size();
+            for (size_t i=0; i<suboutput_count; ++i) {
+                us->AddOutput(new JComponentSummary::Collection("", output->collection_names[i], output->type_name, GetLevel()));
+            }
+        }
+        summary.Add(us);
     }
 
 };

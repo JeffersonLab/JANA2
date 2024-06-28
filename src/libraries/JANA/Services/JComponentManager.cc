@@ -5,6 +5,7 @@
 
 #include "JComponentManager.h"
 #include <JANA/JEventProcessor.h>
+#include <JANA/JMultifactory.h>
 #include <JANA/JFactoryGenerator.h>
 #include <JANA/JEventUnfolder.h>
 #include <JANA/Utils/JAutoActivator.h>
@@ -91,9 +92,16 @@ void JComponentManager::initialize_components() {
         unfolder->Summarize(m_summary);
     }
 
-    // Factories
     JFactorySet dummy_fac_set(m_fac_gens);
+
+    // Factories
     for (auto* fac : dummy_fac_set.GetAllFactories()) {
+        fac->DoInit();
+        fac->Summarize(m_summary);
+    }
+
+    // Multifactories
+    for (auto* fac : dummy_fac_set.GetAllMultifactories()) {
         fac->DoInit();
         fac->Summarize(m_summary);
     }
