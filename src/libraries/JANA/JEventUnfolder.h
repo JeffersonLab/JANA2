@@ -168,6 +168,15 @@ public:
             m_status = Status::Finalized;
         }
     }
+
+    void Summarize(JComponentSummary& summary) override {
+        summary.event_unfolders.push_back({.level = GetLevel(), 
+                                           .plugin_name = GetPluginName(), 
+                                           .type_name = GetTypeName(), 
+                                           .prefix = GetPrefix()});
+
+    }
+
 };
 
 

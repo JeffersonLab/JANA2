@@ -345,6 +345,12 @@ public:
         }
     }
 
+    void Summarize(JComponentSummary& summary) {
+        summary.event_sources.push_back({.level = GetLevel(), 
+                                         .plugin_name = GetPluginName(), 
+                                         .type_name = GetType(), 
+                                         .source_name = GetName()});
+    }
 
     // Getters and setters
     

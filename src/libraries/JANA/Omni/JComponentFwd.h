@@ -11,6 +11,7 @@ class JParameterManager;
 #include <JANA/Utils/JEventLevel.h>
 #include <JANA/JLogger.h>
 #include <JANA/JException.h>
+#include <JANA/Status/JComponentSummary.h>
 
 #include <vector>
 #include <mutex>
@@ -79,6 +80,8 @@ public:
     void SetPluginName(std::string plugin_name) { m_plugin_name = std::move(plugin_name); };
 
     std::string GetTypeName() const { return m_type_name; }
+
+    virtual void Summarize(JComponentSummary&) {};
 
     Status GetStatus() const { 
         std::lock_guard<std::mutex> lock(m_mutex);

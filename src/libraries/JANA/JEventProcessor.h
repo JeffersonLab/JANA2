@@ -112,6 +112,15 @@ public:
     }
 
 
+    void Summarize(JComponentSummary& summary) {
+        summary.event_processors.push_back({.level = GetLevel(), 
+                                            .plugin_name = GetPluginName(), 
+                                            .type_name = GetTypeName(), 
+                                            .prefix = GetPrefix()});
+
+    }
+
+
     virtual void Init() {}
 
 

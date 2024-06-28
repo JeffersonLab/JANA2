@@ -49,3 +49,13 @@ void JFactory::DoInit() {
         mStatus = Status::Unprocessed;
     }
 }
+
+void JFactory::Summarize(JComponentSummary& summary) {
+    summary.factories.push_back({
+        .level = GetLevel(),
+        .plugin_name = GetPluginName(),
+        .factory_name = GetFactoryName(),
+        .factory_tag = GetTag(),
+        .object_name = GetObjectName()
+    });
+}
