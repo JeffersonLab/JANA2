@@ -53,7 +53,10 @@ void JEventSourceArrow::process(Event* event, bool& success, JArrowMetrics::Stat
 }
 
 void JEventSourceArrow::initialize() {
-    // Initialization of individual sources happens on-demand, in order to keep us from having lots of open files
+    // We initialize everything immediately, but don't open any resources until we absolutely have to; see process(): source->DoNext()
+    for (JEventSource* source : m_sources) {
+        source->DoInit();
+    }
 }
 
 void JEventSourceArrow::finalize() {
@@ -61,9 +64,6 @@ void JEventSourceArrow::finalize() {
     // However, we can't rely on the JEventSources turning themselves off since execution can be externally paused.
     // Instead we leave everything open until we finalize the whole topology, and finalize remaining event sources then.
     for (JEventSource* source : m_sources) {
-        if (source->GetStatus() == JEventSource::Status::Initialized) {
-            LOG_INFO(m_logger) << "Finalizing JEventSource '" << source->GetTypeName() << "' (" << source->GetResourceName() << ")" << LOG_END;
-            source->DoFinalize();
-        }
+        source->DoClose();
     }
 }
