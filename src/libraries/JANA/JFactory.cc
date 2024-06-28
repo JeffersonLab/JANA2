@@ -9,10 +9,6 @@
 
 void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
 
-    // We need this for JMultifactoryHelper. Eventually it should go away
-    auto app = event->GetJApplication();
-    if (app != nullptr) SetApplication(app);
-
     if (mStatus == Status::Uninitialized) {
         CallWithJExceptionWrapper("JFactory::Init", [&](){ Init(); });
         mStatus = Status::Unprocessed;
@@ -41,5 +37,15 @@ void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
         CallWithJExceptionWrapper("JFactory::Process", [&](){ Process(event); });
         mStatus = Status::Processed;
         mCreationStatus = CreationStatus::Created;
+    }
+}
+
+void JFactory::DoInit() {
+    if (GetApplication() == nullptr) {
+        throw JException("JFactory::DoInit(): Null JApplication pointer");
+    }
+    if (mStatus == Status::Uninitialized) {
+        CallWithJExceptionWrapper("JFactory::Init", [&](){ Init(); });
+        mStatus = Status::Unprocessed;
     }
 }

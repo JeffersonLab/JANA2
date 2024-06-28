@@ -168,10 +168,13 @@ public:
     template<typename S>
     std::vector<S*> GetAs();
 
+
+
     /// Create() calls JFactory::Init,BeginRun,Process in an invariant-preserving way without knowing the exact
-    /// type of object contained. It returns the number of objects created. In order to access said objects,
-    /// use JFactory::GetAs().
+    /// type of object contained. In order to access these objects when all you have is a JFactory*, use JFactory::GetAs().
     virtual void Create(const std::shared_ptr<const JEvent>& event);
+    void DoInit();
+
 
     virtual void Set(const std::vector<JObject *> &data) = 0;
     virtual void Insert(JObject *data) = 0;

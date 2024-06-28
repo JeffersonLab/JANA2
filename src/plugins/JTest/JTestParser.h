@@ -37,7 +37,7 @@ public:
         return "JTest Fake Event Source";
     }
 
-    void Open() {
+    void Init() override {
         auto app = GetApplication();
         app->SetDefaultParameter("jtest:parser_ms", m_cputime_ms, "Time spent during parsing");
         app->SetDefaultParameter("jtest:parser_spread", m_cputime_spread, "Spread of time spent during parsing");
@@ -45,7 +45,10 @@ public:
         app->SetDefaultParameter("jtest:parser_bytes_spread", m_write_spread, "Spread of bytes written during parsing");
     }
 
-    Result Emit(JEvent& event) {
+    void Open() override {
+    }
+
+    Result Emit(JEvent& event) override {
 
         if ((m_events_generated % 40) == 0) {
             // "Read" new entangled event every 40 events

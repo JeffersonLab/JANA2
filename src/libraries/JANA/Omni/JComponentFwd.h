@@ -20,7 +20,7 @@ namespace omni {
 
 
 struct JComponent {
-    enum class Status { Uninitialized, Initialized, Finalized };
+    enum class Status { Uninitialized, Initialized, Opened, Closed, Finalized };
     enum class CallbackStyle { LegacyMode, ExpertMode, DeclarativeMode };
 
     struct ParameterBase;

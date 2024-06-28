@@ -63,3 +63,15 @@ JFactorySet* JMultifactory::GetHelpers() {
     return &mHelpers;
 }
 
+void JMultifactory::DoInit() {
+
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if (m_status == Status::Uninitialized) {
+        CallWithJExceptionWrapper("JMultifactory::Init", [&](){
+            Init();
+        });
+        m_status = Status::Initialized;
+    }
+}
+
+

@@ -42,6 +42,10 @@ public:
     virtual ~JEventSource() = default;
 
 
+    // `Init` is where the user requests parameters and services. If the user requests all parameters and services here,
+    // JANA can report them back to the user without having to open the resource and run the topology.
+
+    virtual void Init() {}
 
     // To be implemented by the user
     /// `Open` is called by JANA when it is ready to accept events from this event source. The implementor should open
@@ -112,57 +116,73 @@ public:
     }
 
 
-    // Wrappers for calling Open and GetEvent in a safe way
-
-    virtual void DoInitialize(bool with_lock=true) {
-        if (with_lock) {
-            std::lock_guard<std::mutex> lock(m_mutex);
-            if (m_status == Status::Uninitialized) {
-                CallWithJExceptionWrapper("JEventSource::Open", [&](){ Open();});
-                if (GetResourceName().empty()) {
-                    LOG_INFO(GetLogger()) << "Opened event source" << LOG_END;
-                }
-                else {
-                    LOG_INFO(GetLogger()) << "Opened event source '" << GetResourceName() << "'" << LOG_END;
-                }
-                m_status = Status::Initialized;
-            }
+    virtual void DoInit() {
+        if (m_status == Status::Uninitialized) {
+            CallWithJExceptionWrapper("JEventSource::Init", [&](){ Init();});
+            m_status = Status::Initialized;
+            LOG_INFO(GetLogger()) << "Initialized JEventSource '" << GetTypeName() << "' ('" << GetResourceName() << "')" << LOG_END;
         }
         else {
-            if (m_status == Status::Uninitialized) {
-                CallWithJExceptionWrapper("JEventSource::Open", [&](){ Open();});
-                if (GetResourceName().empty()) {
-                    LOG_INFO(GetLogger()) << "Opened event source" << LOG_END;
-                }
-                else {
-                    LOG_INFO(GetLogger()) << "Opened event source '" << GetResourceName() << "'" << LOG_END;
-                }
-                m_status = Status::Initialized;
-            }
+            throw JException("Attempted to initialize a JEventSource that is not uninitialized!");
         }
     }
 
-    virtual void DoFinalize(bool with_lock=true) {
+    virtual void DoOpen(bool with_lock=true) {
         if (with_lock) {
             std::lock_guard<std::mutex> lock(m_mutex);
-            CallWithJExceptionWrapper("JEventSource::Close", [&](){ Close();});
+            if (m_status != Status::Initialized) {
+                throw JException("Attempted to open a JEventSource that hasn't been initialized!");
+            }
+            CallWithJExceptionWrapper("JEventSource::Open", [&](){ Open();});
             if (GetResourceName().empty()) {
-                LOG_INFO(GetLogger()) << "Closed event source" << LOG_END;
+                LOG_INFO(GetLogger()) << "Opened JEventSource '" << GetTypeName() << "'" << LOG_END;
             }
             else {
-                LOG_INFO(GetLogger()) << "Closed event source '" << GetResourceName() << "'" << LOG_END;
+                LOG_INFO(GetLogger()) << "Opened JEventSource '" << GetTypeName() << "' ('" << GetResourceName() << "')" << LOG_END;
             }
-            m_status = Status::Finalized;
+            m_status = Status::Opened;
         }
         else {
-            CallWithJExceptionWrapper("JEventSource::Close", [&](){ Close();});
+            if (m_status != Status::Initialized) {
+                throw JException("Attempted to open a JEventSource that hasn't been initialized!");
+            }
+            CallWithJExceptionWrapper("JEventSource::Open", [&](){ Open();});
             if (GetResourceName().empty()) {
-                LOG_INFO(GetLogger()) << "Closed event source" << LOG_END;
+                LOG_INFO(GetLogger()) << "Opened JEventSource '" << GetTypeName() << "'" << LOG_END;
             }
             else {
-                LOG_INFO(GetLogger()) << "Closed event source '" << GetResourceName() << "'" << LOG_END;
+                LOG_INFO(GetLogger()) << "Opened JEventSource '" << GetTypeName() << "' ('" << GetResourceName() << "')" << LOG_END;
             }
-            m_status = Status::Finalized;
+            m_status = Status::Opened;
+        }
+    }
+
+    virtual void DoClose(bool with_lock=true) {
+        if (with_lock) {
+            std::lock_guard<std::mutex> lock(m_mutex);
+
+            if (m_status != JEventSource::Status::Opened) return;
+
+            CallWithJExceptionWrapper("JEventSource::Close", [&](){ Close();});
+            if (GetResourceName().empty()) {
+                LOG_INFO(GetLogger()) << "Closed JEventSource '" << GetTypeName() << "'" << LOG_END;
+            }
+            else {
+                LOG_INFO(GetLogger()) << "Closed JEventSource '" << GetTypeName() << "' ('" << GetResourceName() << "')" << LOG_END;
+            }
+            m_status = Status::Closed;
+        }
+        else {
+            if (m_status != JEventSource::Status::Opened) return;
+
+            CallWithJExceptionWrapper("JEventSource::Close", [&](){ Close();});
+            if (GetResourceName().empty()) {
+                LOG_INFO(GetLogger()) << "Closed JEventSource '" << GetTypeName() << "'" << LOG_END;
+            }
+            else {
+                LOG_INFO(GetLogger()) << "Closed JEventSource '" << GetTypeName() << "' ('" << GetResourceName() << "')" << LOG_END;
+            }
+            m_status = Status::Closed;
         }
     }
     
@@ -170,6 +190,10 @@ public:
 
         std::lock_guard<std::mutex> lock(m_mutex); // In general, DoNext must be synchronized.
         
+        if (m_status == Status::Uninitialized) {
+            throw JException("JEventSource has not been initialized!");
+        }
+
         if (m_callback_style == CallbackStyle::LegacyMode) {
             return DoNextCompatibility(event);
         }
@@ -177,13 +201,13 @@ public:
         auto first_evt_nr = m_nskip;
         auto last_evt_nr = m_nevents + m_nskip;
 
-        if (m_status == Status::Uninitialized) {
-            DoInitialize(false);
-        }
         if (m_status == Status::Initialized) {
+            DoOpen(false);
+        }
+        if (m_status == Status::Opened) {
             if (m_nevents != 0 && (m_event_count == last_evt_nr)) {
                 // We exit early (and recycle) because we hit our jana:nevents limit
-                DoFinalize(false);
+                DoClose(false);
                 return Result::FailureFinished;
             }
             // If we reach this point, we will need to actually read an event
@@ -219,7 +243,7 @@ public:
             else if (result == Result::FailureFinished) {
                 // We end up here if we tried to read an entry in a file, but found EOF
                 // or if we received a message from a socket that contained no data and indicated no more data will be coming
-                DoFinalize(false);
+                DoClose(false);
                 return Result::FailureFinished;
             }
             else if (result == Result::FailureTryAgain) {
@@ -231,7 +255,7 @@ public:
                 throw JException("Invalid JEventSource::Result value!");
             }
         }
-        else { // status == Finalized
+        else { // status == Closed
             return Result::FailureFinished;
         }
     }
@@ -242,10 +266,10 @@ public:
         auto last_evt_nr = m_nevents + m_nskip;
 
         try {
-            if (m_status == Status::Uninitialized) {
-                DoInitialize(false);
-            }
             if (m_status == Status::Initialized) {
+                DoOpen(false);
+            }
+            if (m_status == Status::Opened) {
                 if (m_event_count < first_evt_nr) {
                     // Skip these events due to nskip
                     event->SetEventNumber(m_event_count); // Default event number to event count
@@ -258,7 +282,7 @@ public:
                     return Result::FailureTryAgain;  // Reject this event and recycle it
                 } else if (m_nevents != 0 && (m_event_count == last_evt_nr)) {
                     // Declare ourselves finished due to nevents
-                    DoFinalize(false); // Close out the event source as soon as it declares itself finished
+                    DoClose(false); // Close out the event source as soon as it declares itself finished
                     return Result::FailureFinished;
                 } else {
                     // Actually emit an event.
@@ -279,7 +303,7 @@ public:
                     m_event_count += 1;
                     return Result::Success; // Don't reject this event!
                 }
-            } else if (m_status == Status::Finalized) {
+            } else if (m_status == Status::Closed) {
                 return Result::FailureFinished;
             } else {
                 throw JException("Invalid m_status");
@@ -288,7 +312,7 @@ public:
         catch (RETURN_STATUS rs) {
 
             if (rs == RETURN_STATUS::kNO_MORE_EVENTS) {
-                DoFinalize(false);
+                DoClose(false);
                 return Result::FailureFinished;
             }
             else if (rs == RETURN_STATUS::kTRY_AGAIN || rs == RETURN_STATUS::kBUSY) {

@@ -105,6 +105,7 @@ bool JFactorySet::Add(JMultifactory *multifactory) {
 
     auto helpers = multifactory->GetHelpers();
     for (auto fac : helpers->GetAllFactories()) {
+        fac->SetApplication(multifactory->GetApplication());
         Add(fac);
     }
     helpers->mIsFactoryOwner = false;
@@ -142,6 +143,16 @@ std::vector<JFactory*> JFactorySet::GetAllFactories() const {
     return results;
 }
 
+//---------------------------------
+// GetAllMultifactories
+//---------------------------------
+std::vector<JMultifactory*> JFactorySet::GetAllMultifactories() const {
+    std::vector<JMultifactory*> results;
+    for (auto f : mMultifactories) {
+        results.push_back(f);
+    }
+    return results;
+}
 
 //---------------------------------
 // Merge

@@ -35,6 +35,7 @@ class JFactorySet : public JResettable
         JFactory* GetFactory(const std::string& object_name, const std::string& tag="") const;
         template<typename T> JFactoryT<T>* GetFactory(const std::string& tag = "") const;
         std::vector<JFactory*> GetAllFactories() const;
+        std::vector<JMultifactory*> GetAllMultifactories() const;
         template<typename T> std::vector<JFactoryT<T>*> GetAllFactories() const;
 
         std::vector<JFactorySummary> Summarize() const;
