@@ -7,7 +7,7 @@
 
 namespace jana {
 
-enum Flag {Unknown, ShowUsage, ShowVersion, ShowConfigs, LoadConfigs, DumpConfigs, Benchmark};
+enum Flag {Unknown, ShowUsage, ShowVersion, ShowConfigs, LoadConfigs, DumpConfigs, Benchmark, InspectCollection, InspectComponent};
 
 struct UserOptions {
     /// Code representation of all user options.
@@ -18,6 +18,8 @@ struct UserOptions {
     std::vector<std::string> eventSources;
     std::string load_config_file;
     std::string dump_config_file;
+    std::string collection_query;
+    std::string component_query;
 };
 
 void PrintUsage();

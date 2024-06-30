@@ -41,12 +41,14 @@ void PrintUsage() {
 }
 
 void PrintUsageOptions() {
-    std::cout << "   -v   --version               Display version information" << std::endl;
-    std::cout << "   -c   --configs               Display configuration parameters" << std::endl;
-    std::cout << "   -l   --loadconfigs <file>    Load configuration parameters from file" << std::endl;
-    std::cout << "   -d   --dumpconfigs <file>    Dump configuration parameters to file" << std::endl;
-    std::cout << "   -b   --benchmark             Run in benchmark mode" << std::endl;
-    std::cout << "   -Pkey=value                  Specify a configuration parameter" << std::endl << std::endl;
+    std::cout << "   -Pkey=value                        Specify a configuration parameter" << std::endl << std::endl;
+    std::cout << "   -v   --version                     Display version information" << std::endl;
+    std::cout << "   -c   --configs                     Display configuration parameters" << std::endl;
+    std::cout << "   -l   --loadconfigs <file>          Load configuration parameters from file" << std::endl;
+    std::cout << "   -d   --dumpconfigs <file>          Dump configuration parameters to file" << std::endl;
+    std::cout << "   -b   --benchmark                   Run in benchmark mode" << std::endl;
+    std::cout << "        --inspect-collection <name>   Inspect a collection" << std::endl;
+    std::cout << "        --inspect-component <name>    Inspect a component" << std::endl;
 }
 
 void PrintVersion() {
@@ -113,6 +115,51 @@ int Execute(JApplication* app, UserOptions &options) {
                   << std::endl;
         app->GetJParameterManager()->WriteConfigFile(options.dump_config_file);
     }
+    else if (options.flags[InspectCollection]) {
+        app->Initialize();
+        const auto& summary = app->GetComponentSummary();
+        std::cout << "----------------------------------------------------------" << std::endl;
+        if (options.collection_query.empty()) {
+            PrintCollectionTable(std::cout, summary);
+        }
+        else {
+            auto lookup = summary.FindCollections(options.collection_query);
+            std::cout << "Collection query: '" << options.collection_query << "'" << std::endl;
+            if (lookup.empty()) {
+                std::cout << "Collection not found!" << std::endl;
+            }
+            else {
+                std::cout << "----------------------------------------------------------" << std::endl;
+                for (auto* item : lookup) {
+                    std::cout << *item;
+                    std::cout << "----------------------------------------------------------" << std::endl;
+                }
+            }
+        }
+    }
+    else if (options.flags[InspectComponent]) {
+        app->Initialize();
+        const auto& summary = app->GetComponentSummary();
+        std::cout << "----------------------------------------------------------" << std::endl;
+        if (options.component_query.empty()) {
+            PrintComponentTable(std::cout, summary);
+        }
+        else {
+            auto lookup = summary.FindComponents(options.component_query);
+            std::cout << "Component query: '" << options.component_query << "'" << std::endl;
+            if (lookup.empty()) {
+                std::cout << "Component not found!" << std::endl;
+            }
+            else {
+                std::cout << "----------------------------------------------------------" << std::endl;
+                for (auto* item : lookup) {
+                    std::cout << *item;
+                    std::cout << "----------------------------------------------------------" << std::endl;
+                }
+            }
+        }
+    }
+
     else if (options.flags[Benchmark]) {
         // Run JANA in benchmark mode
         JBenchmarker benchmarker(app); // Benchmarking params override default params
@@ -160,6 +207,8 @@ UserOptions ParseCommandLineOptions(int nargs, char *argv[], bool expect_extra) 
     tokenizer["--dumpconfigs"] = DumpConfigs;
     tokenizer["-b"] = Benchmark;
     tokenizer["--benchmark"] = Benchmark;
+    tokenizer["--inspect-collection"] = InspectCollection;
+    tokenizer["--inspect-component"] = InspectComponent;
 
     if (nargs == 1) {
         options.flags[ShowUsage] = true;
@@ -211,6 +260,21 @@ UserOptions ParseCommandLineOptions(int nargs, char *argv[], bool expect_extra) 
                 } else {
                     options.dump_config_file = "jana.config";
                 }
+ 
+            case InspectCollection:
+                options.flags[InspectCollection] = true;
+                if (i + 1 < nargs && argv[i + 1][0] != '-') {
+                    options.collection_query = argv[i + 1];
+                    i += 1;
+                } 
+                break;
+
+            case InspectComponent:
+                options.flags[InspectComponent] = true;
+                if (i + 1 < nargs && argv[i + 1][0] != '-') {
+                    options.component_query = argv[i + 1];
+                    i += 1;
+                } 
                 break;
 
             case Unknown:

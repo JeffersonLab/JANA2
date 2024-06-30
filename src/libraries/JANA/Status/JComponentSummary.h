@@ -74,10 +74,10 @@ public:
         std::string GetName() const { return m_name; }
         std::string GetTypeName() const { return m_type_name; }
         JEventLevel GetLevel() const { return m_level; }
-        std::vector<const Component*> GetProducers() const { 
+        std::vector<const Component*> GetProducers() const {
             return m_producers;
         }
-        std::vector<const Component*> GetConsumers() const { 
+        std::vector<const Component*> GetConsumers() const {
             return m_consumers;
         }
     };
@@ -121,18 +121,24 @@ public:
         return results; 
     }
 
-    std::vector<const Collection*> FindCollections(std::string collection_name="") { 
+    std::vector<const Collection*> FindCollections(std::string collection_name="") const { 
         std::vector<const Collection*> results;
-        for (auto* col: m_collection_lookups[collection_name]) {
-            results.push_back(col);
+        auto it = m_collection_lookups.find(collection_name);
+        if (it != m_collection_lookups.end()) {
+            for (auto* col: m_collection_lookups.at(collection_name)) {
+                results.push_back(col);
+            }
         }
         return results;
     }
 
-    std::vector<const Component*> FindComponents(std::string component_name="") { 
+    std::vector<const Component*> FindComponents(std::string component_name="") const { 
         std::vector<const Component*> results;
-        for (auto* comp: m_component_lookups[component_name]) {
-            results.push_back(comp);
+        auto it = m_component_lookups.find(component_name);
+        if (it != m_component_lookups.end()) {
+            for (auto* comp: m_component_lookups.at(component_name)) {
+                results.push_back(comp);
+            }
         }
         return results; 
     }
@@ -151,7 +157,10 @@ public:
 };
 
 std::ostream& operator<<(std::ostream& os, const JComponentSummary& cs);
-std::ostream& operator<<(std::ostream& os, JComponentSummary::Collection const& cs);
+std::ostream& operator<<(std::ostream& os, JComponentSummary::Collection const&);
+std::ostream& operator<<(std::ostream& os, JComponentSummary::Component const&);
+void PrintComponentTable(std::ostream& os, const JComponentSummary&);
+void PrintCollectionTable(std::ostream& os, const JComponentSummary&);
 
 inline bool operator==(const JComponentSummary::Collection& lhs, const JComponentSummary::Collection& rhs) {
     return (lhs.GetLevel() == rhs.GetLevel()) && 

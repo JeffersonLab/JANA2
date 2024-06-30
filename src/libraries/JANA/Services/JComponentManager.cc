@@ -129,19 +129,16 @@ void JComponentManager::add(JFactoryGenerator *factory_generator) {
 void JComponentManager::add(JEventSource *event_source) {
     event_source->SetPluginName(m_current_plugin_name);
     m_evt_srces.push_back(event_source);
-    event_source->Summarize(m_summary);
 }
 
 void JComponentManager::add(JEventProcessor *processor) {
     processor->SetPluginName(m_current_plugin_name);
     m_evt_procs.push_back(processor);
-    processor->Summarize(m_summary);
 }
 
 void JComponentManager::add(JEventUnfolder* unfolder) {
     unfolder->SetPluginName(m_current_plugin_name);
     m_unfolders.push_back(unfolder);
-    unfolder->Summarize(m_summary);
 }
 
 void JComponentManager::configure_event(JEvent& event) {

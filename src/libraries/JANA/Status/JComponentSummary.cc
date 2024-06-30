@@ -10,7 +10,11 @@
 
 
 void JComponentSummary::Add(JComponentSummary::Component* component) {
+
     m_components.push_back(component);
+    m_component_lookups[component->GetTypeName()].push_back(component);
+    m_component_lookups[component->GetPrefix()].push_back(component);
+
     size_t output_count = component->m_outputs.size();
     for (size_t i=0; i<output_count; ++i) {
         JComponentSummary::Collection* coll = component->m_outputs[i];
@@ -28,6 +32,8 @@ void JComponentSummary::Add(JComponentSummary::Component* component) {
         if (!found) {
             coll->AddProducer(component);
             lookups.push_back(coll);
+            m_collections.push_back(coll);
+            m_collection_lookups[coll->GetTypeName()].push_back(coll);
         }
     }
     size_t input_count = component->m_inputs.size();
@@ -48,6 +54,7 @@ void JComponentSummary::Add(JComponentSummary::Component* component) {
             coll->AddConsumer(component);
             lookups.push_back(coll);
             m_collections.push_back(coll);
+            m_collection_lookups[coll->GetTypeName()].push_back(coll);
         }
     }
 
@@ -63,28 +70,59 @@ void JComponentSummary::Add(JComponentSummary::Component* component) {
 }
 
 
-std::ostream& operator<<(std::ostream& os, JComponentSummary const& cs) {
-
-    os << "Component Summary" << std::endl << std::endl;
-
-    JTablePrinter comp_table;
-    comp_table.AddColumn("Plugin");
-    comp_table.AddColumn("Type");
-    comp_table.AddColumn("Level");
-    comp_table.AddColumn("Name");
-    comp_table.AddColumn("Tag");
-
+void PrintCollectionTable(std::ostream& os, const JComponentSummary& cs) {
 
     JTablePrinter coll_table;
-    coll_table.AddColumn("Plugin");
-    coll_table.AddColumn("Factory");
+    coll_table.AddColumn("Type");
+    coll_table.AddColumn("Name");
+    coll_table.AddColumn("Tag");
     coll_table.AddColumn("Level");
-    coll_table.AddColumn("Collection type");
-    coll_table.AddColumn("Collection tag");
+    /*
+    coll_table.AddColumn("Direction");
+    coll_table.AddColumn("Factory Type");
+    coll_table.AddColumn("Factory Prefix");
+    coll_table.AddColumn("Plugin");
+    */
 
-    std::string component_type;
+    os << "  Collection Summary" << std::endl;
+
+    for (const auto* coll : cs.GetAllCollections()) {
+        coll_table | coll->GetTypeName() | coll->GetName() | coll->GetTag() | coll->GetLevel();
+        /*
+        bool first = true;
+
+        for (const auto* producer : coll->GetProducers()) {
+            if (!first) {
+                coll_table | "" | "" | "" | "";
+            }
+            coll_table | "Output" | producer->GetTypeName() | producer->GetPrefix() | producer->GetPluginName();
+            first = false;
+        }
+        for (const auto* consumer : coll->GetConsumers()) {
+            if (!first) {
+                coll_table | "" | "" | "" | "";
+            }
+            coll_table | "Input" | consumer->GetTypeName() | consumer->GetPrefix() | consumer->GetPluginName();
+            first = false;
+        }
+        */
+    }
+    os << coll_table;
+}
+
+void PrintComponentTable(std::ostream& os, const JComponentSummary& cs) {
+
+
+    JTablePrinter comp_table;
+    comp_table.AddColumn("Base");
+    comp_table.AddColumn("Type");
+    comp_table.AddColumn("Prefix");
+    comp_table.AddColumn("Level");
+    comp_table.AddColumn("Plugin");
+
+    os << "  Component Summary" << std::endl;
+
     for (const auto* comp : cs.GetAllComponents()) {
-        comp_table | comp->GetPluginName();
         switch(comp->GetComponentType()) {
             case JComponentSummary::ComponentType::Source: comp_table | "Source"; break;
             case JComponentSummary::ComponentType::Processor: comp_table | "Processor"; break;
@@ -92,60 +130,93 @@ std::ostream& operator<<(std::ostream& os, JComponentSummary const& cs) {
             case JComponentSummary::ComponentType::Unfolder: comp_table | "Unfolder"; break;
             case JComponentSummary::ComponentType::Folder: comp_table | "Folder"; break;
         }
-        comp_table | comp->GetLevel() | comp->GetTypeName() | comp->GetPrefix();
-        
-        bool first = true;
-        for (auto* coll : comp->GetOutputs()) {
-            if (first) {
-                coll_table | comp->GetPluginName() | comp->GetTypeName() | coll->GetLevel() | coll->GetTypeName() | coll->GetName();
-            }
-            else {
-                coll_table | "" | "" | coll->GetLevel() | coll->GetTypeName() | coll->GetName();
-            }
-        }
+        comp_table | comp->GetTypeName() | comp->GetPrefix() | comp->GetLevel() | comp->GetPluginName();
     }
+    os << comp_table;
+}
 
-    os << comp_table << std::endl;
-    os << coll_table << std::endl;
+
+std::ostream& operator<<(std::ostream& os, JComponentSummary const& cs) {
+
+    PrintComponentTable(os,cs);
     return os;
 }
 
 
 std::ostream& operator<<(std::ostream& os, const JComponentSummary::Collection& col) {
 
-    os << "    Name:  " << col.GetName() << std::endl;
-    os << "    Type:  " << col.GetTypeName() << std::endl;
-    os << "    Tag:   " << col.GetTag() << std::endl;
-    os << "    Level: " << col.GetLevel() << std::endl;
+    os << "  Type:  " << col.GetTypeName() << std::endl;
+    os << "  Name:  " << col.GetName() << std::endl;
+    os << "  Tag:   " << col.GetTag() << std::endl;
+    os << "  Level: " << col.GetLevel() << std::endl;
     os << std::endl;
 
     if (!col.GetProducers().empty()) {
-        os << "Produced by:" << std::endl;
+        os << "  Producers:" << std::endl;
         JTablePrinter table;
-        table.AddColumn("Prefix");
         table.AddColumn("Type");
+        table.AddColumn("Prefix");
         table.AddColumn("Level");
         table.AddColumn("Plugin");
         for (const auto* p : col.GetProducers()) {
-            table | p->GetPrefix() | p->GetTypeName() | p->GetLevel() | p->GetPluginName();
+            table | p->GetTypeName() | p->GetPrefix() | p->GetLevel() | p->GetPluginName();
         }
         os << table.Render();
     }
     os << std::endl;
 
     if (!col.GetConsumers().empty()) {
-        os << "Consumed by:" << std::endl;
+        os << "  Consumers:" << std::endl;
         JTablePrinter table;
-        table.AddColumn("Prefix");
         table.AddColumn("Type");
+        table.AddColumn("Prefix");
         table.AddColumn("Level");
         table.AddColumn("Plugin");
         for (const auto& c : col.GetConsumers()) {
-            table | c->GetPrefix() | c->GetTypeName() | c->GetLevel() | c->GetPluginName();
+            table | c->GetTypeName() | c->GetPrefix() | c->GetLevel() | c->GetPluginName();
         }
         os << table.Render();
     }
     return os;
 }
+
+
+std::ostream& operator<<(std::ostream& os, const JComponentSummary::Component& c) {
+
+    os << "  Type:   " << c.GetTypeName() << std::endl;
+    os << "  Prefix: " << c.GetPrefix() << std::endl;
+    os << "  Level:  " << c.GetLevel() << std::endl;
+    os << "  Plugin: " << c.GetPluginName() << std::endl;
+
+    if (!c.GetInputs().empty()) {
+        os << std::endl;
+        os << "  Inputs:" << std::endl;
+        JTablePrinter table;
+        table.AddColumn("Type");
+        table.AddColumn("Name");
+        table.AddColumn("Tag");
+        table.AddColumn("Level");
+        for (const auto* col : c.GetInputs()) {
+            table | col->GetTypeName() | col->GetName() | col->GetTag() | col->GetLevel();
+        }
+        os << table.Render();
+    }
+
+    if (!c.GetOutputs().empty()) {
+        os << std::endl;
+        os << "  Outputs:" << std::endl;
+        JTablePrinter table;
+        table.AddColumn("Type");
+        table.AddColumn("Name");
+        table.AddColumn("Tag");
+        table.AddColumn("Level");
+        for (const auto* col : c.GetOutputs()) {
+            table | col->GetTypeName() | col->GetName() | col->GetTag() | col->GetLevel();
+        }
+        os << table.Render();
+    }
+    return os;
+}
+
 
 
