@@ -59,7 +59,7 @@ void JComponentSummary::Add(JComponentSummary::Component* component) {
     }
 
     for (JComponentSummary::Collection* output : component->m_outputs) {
-        JComponentSummary::Factory fac;
+        JFactorySummary fac;
         fac.level = output->GetLevel();
         fac.plugin_name = component->GetPluginName();
         fac.factory_name = component->GetTypeName();

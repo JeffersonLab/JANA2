@@ -11,6 +11,15 @@
 #include <memory>
 
 
+// Keeping this around for backwards compatibility only
+struct JFactorySummary {
+    JEventLevel level;
+    std::string plugin_name;
+    std::string factory_name;
+    std::string factory_tag;
+    std::string object_name;
+};
+
 
 class JComponentSummary {
 public:
@@ -145,15 +154,7 @@ public:
 
 public:
     // Kept for backwards compatibility
-    struct Factory {
-        JEventLevel level;
-        std::string plugin_name;
-        std::string factory_name;
-        std::string factory_tag;
-        std::string object_name;
-    };
-
-    std::vector<Factory> factories;
+    std::vector<JFactorySummary> factories;
 };
 
 std::ostream& operator<<(std::ostream& os, const JComponentSummary& cs);
