@@ -599,9 +599,9 @@ std::string JControlZMQ::GetJANAFactoryListJSON()
     JSONADD( ss,"PID" , _pid );
     ss << ",\n" << R"("factories":[)";
 
-    auto component_summary = _japp->GetComponentSummary();
+    const auto& component_summary = _japp->GetComponentSummary();
     bool is_first = true;
-    for( auto fac_summary : component_summary.factories ){
+    for( const auto& fac_summary : component_summary.factories ){
 
         int indent_level = 2;
         if( !is_first ) ss << ",";
@@ -645,7 +645,6 @@ std::string JControlZMQ::GetJANAObjectListJSON(){
     JSONADD( ss,"event_number" , _jproc->GetEventNumber() );
     ss << ",\n" << R"("factories":[)";
 
-    auto component_summary = _japp->GetComponentSummary();
     bool is_first = true;
     for( auto pfac_summary : factory_object_counts ){
 
