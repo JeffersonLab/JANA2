@@ -131,8 +131,8 @@ void JApplication::Initialize() {
     // Resolve all event sources now that all plugins have been loaded
     component_manager->resolve_event_sources();
 
-    // Call Init() for all factories/multifactories. This populates the ParameterManager
-    component_manager->initialize_factories();
+    // Call Summarize() and Init() in order to populate JComponentSummary and JParameterManager, respectively
+    component_manager->initialize_components();
 
     // Set desired nthreads. We parse the 'nthreads' parameter two different ways for backwards compatibility.
     m_desired_nthreads = 1;
@@ -372,7 +372,7 @@ void JApplication::HandleSigint() {
 
 }
 
-JComponentSummary JApplication::GetComponentSummary() {
+const JComponentSummary& JApplication::GetComponentSummary() {
     /// Returns a data object describing all components currently running
     return m_component_manager->get_component_summary();
 }

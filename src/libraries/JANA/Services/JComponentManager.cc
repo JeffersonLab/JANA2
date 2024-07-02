@@ -5,6 +5,7 @@
 
 #include "JComponentManager.h"
 #include <JANA/JEventProcessor.h>
+#include <JANA/JMultifactory.h>
 #include <JANA/JFactoryGenerator.h>
 #include <JANA/JEventUnfolder.h>
 #include <JANA/Utils/JAutoActivator.h>
@@ -69,10 +70,40 @@ void JComponentManager::preinitialize_components() {
     }
 }
 
-void JComponentManager::initialize_factories() {
+void JComponentManager::initialize_components() {
+    // For now, this only computes the summary for all components except factories.
+    // However, we are likely to eventually want summaries to access information only
+    // available after component initialization, specifically parameters. In this case, 
+    // we would move responsibility for source, unfolder, and processor initialization 
+    // out from the JArrowTopology and into here.
+
+    // Event sources
+    for (auto * src : m_evt_srces) {
+        src->Summarize(m_summary);
+    }
+
+    // Event processors
+    for (auto * evt_proc : m_evt_procs) {
+        evt_proc->Summarize(m_summary);
+    }
+
+    // Unfolders
+    for (auto * unfolder : m_unfolders) {
+        unfolder->Summarize(m_summary);
+    }
+
     JFactorySet dummy_fac_set(m_fac_gens);
+
+    // Factories
     for (auto* fac : dummy_fac_set.GetAllFactories()) {
         fac->DoInit();
+        fac->Summarize(m_summary);
+    }
+
+    // Multifactories
+    for (auto* fac : dummy_fac_set.GetAllMultifactories()) {
+        fac->DoInit();
+        fac->Summarize(m_summary);
     }
 }
 
@@ -218,36 +249,7 @@ std::vector<JEventUnfolder*>& JComponentManager::get_unfolders() {
     return m_unfolders;
 }
 
-JComponentSummary JComponentManager::get_component_summary() {
-    JComponentSummary result;
-
-    // Event sources
-    for (auto * src : m_evt_srces) {
-        result.event_sources.push_back({.level=src->GetLevel(), 
-                                        .plugin_name=src->GetPluginName(), 
-                                        .type_name=src->GetType(), 
-                                        .source_name=src->GetName()});
-    }
-
-    // Event processors
-    for (auto * evt_proc : m_evt_procs) {
-        result.event_processors.push_back({.level=evt_proc->GetLevel(), 
-                                           .plugin_name = evt_proc->GetPluginName(), 
-                                           .type_name=evt_proc->GetTypeName(), 
-                                           .prefix=evt_proc->GetPrefix()});
-    }
-
-    for (auto * unfolder : m_unfolders) {
-        result.event_unfolders.push_back({.level=unfolder->GetLevel(), 
-                                          .plugin_name = unfolder->GetPluginName(), 
-                                          .type_name=unfolder->GetTypeName(), 
-                                          .prefix=unfolder->GetPrefix()});
-    }
-
-    // Factories
-    JFactorySet dummy_fac_set(m_fac_gens);
-    result.factories = dummy_fac_set.Summarize();
-
-    return result;
+const JComponentSummary& JComponentManager::get_component_summary() {
+    return m_summary;
 }
 

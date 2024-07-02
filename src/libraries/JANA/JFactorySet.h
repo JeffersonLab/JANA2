@@ -38,8 +38,6 @@ class JFactorySet : public JResettable
         std::vector<JMultifactory*> GetAllMultifactories() const;
         template<typename T> std::vector<JFactoryT<T>*> GetAllFactories() const;
 
-        std::vector<JFactorySummary> Summarize() const;
-
         JEventLevel GetLevel() const { return mLevel; }
         void SetLevel(JEventLevel level) { mLevel = level; }
 

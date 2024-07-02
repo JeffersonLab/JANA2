@@ -82,9 +82,9 @@ public:
     // IMPLEMENTED BY USERS
 
     virtual void Init() {}
-    virtual void BeginRun(const std::shared_ptr<const JEvent>&) {}
+    void BeginRun(const std::shared_ptr<const JEvent>&) override {}
     virtual void Process(const std::shared_ptr<const JEvent>&) {}
-    virtual void EndRun() {}
+    void EndRun() override {}
     virtual void Finish() {}
     // I'm tempted to factor out something like JEventCallback from JFactory, JMultifactory, and JEventProcessor.
 
@@ -129,6 +129,8 @@ public:
     // These are set by JFactoryGeneratorT (just like JFactories) and get propagated to each of the JMultifactoryHelpers
     void SetTag(std::string tag) { mTag = std::move(tag); }
     void SetFactoryName(std::string factoryName) { mFactoryName = std::move(factoryName); }
+    
+    void Summarize(JComponentSummary& summary) override;
 };
 
 

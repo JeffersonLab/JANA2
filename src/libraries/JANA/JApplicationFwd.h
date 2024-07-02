@@ -100,7 +100,7 @@ public:
     float GetIntegratedRate();
     float GetInstantaneousRate();
 
-    JComponentSummary GetComponentSummary();
+    const JComponentSummary& GetComponentSummary();
 
     // Parameter config
 

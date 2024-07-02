@@ -49,3 +49,24 @@ void JFactory::DoInit() {
         mStatus = Status::Unprocessed;
     }
 }
+
+void JFactory::Summarize(JComponentSummary& summary) {
+
+    auto fs = new JComponentSummary::Component(
+            JComponentSummary::ComponentType::Factory,
+            GetPrefix(),
+            GetTypeName(),
+            GetLevel(),
+            GetPluginName());
+
+    auto coll = new JComponentSummary::Collection(
+            GetTag(), 
+            GetTag(),
+            GetObjectName(), 
+            GetLevel());
+
+    fs->AddOutput(coll);
+    summary.Add(fs);
+}
+
+

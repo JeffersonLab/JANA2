@@ -345,6 +345,20 @@ public:
         }
     }
 
+    void Summarize(JComponentSummary& summary) {
+
+        auto* result = new JComponentSummary::Component(
+                JComponentSummary::ComponentType::Source, GetPrefix(), GetTypeName(), GetLevel(), GetPluginName());
+
+        for (const auto* output : m_outputs) {
+            size_t suboutput_count = output->collection_names.size();
+            for (size_t i=0; i<suboutput_count; ++i) {
+                result->AddOutput(new JComponentSummary::Collection("", output->collection_names[i], output->type_name, GetLevel()));
+            }
+        }
+
+        summary.Add(result);
+    }
 
     // Getters and setters
     

@@ -174,6 +174,7 @@ public:
     /// type of object contained. In order to access these objects when all you have is a JFactory*, use JFactory::GetAs().
     virtual void Create(const std::shared_ptr<const JEvent>& event);
     void DoInit();
+    void Summarize(JComponentSummary& summary);
 
 
     virtual void Set(const std::vector<JObject *> &data) = 0;

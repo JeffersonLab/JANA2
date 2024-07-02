@@ -74,4 +74,21 @@ void JMultifactory::DoInit() {
     }
 }
 
+void JMultifactory::Summarize(JComponentSummary& summary) {
+    auto mfs = new JComponentSummary::Component(
+            JComponentSummary::ComponentType::Factory,
+            GetPrefix(),
+            GetTypeName(),
+            GetLevel(),
+            GetPluginName());
 
+    for (auto* helper : GetHelpers()->GetAllFactories()) {
+        auto coll = new JComponentSummary::Collection(
+                helper->GetTag(), 
+                helper->GetFactoryName(), 
+                helper->GetObjectName(), 
+                helper->GetLevel());
+        mfs->AddOutput(coll);
+    }
+    summary.Add(mfs);
+}
