@@ -58,6 +58,7 @@ struct JLogMessage {
     JLogger::Level level;
     std::ostringstream builder;
 
+
     JLogMessage(const JLogger& logger = default_cout_logger,
                 JLogger::Level level = JLogger::Level::INFO)
                 : logger(logger), level(level) {
@@ -84,10 +85,10 @@ struct JLogMessage {
 /// Stream operators
 
 template <typename T>
-inline JLogMessage&& operator<<(JLogger& l, const T& t) {
+inline JLogMessage operator<<(JLogger& l, const T& t) {
     JLogMessage m(l);
     m.builder << t;
-    return std::move(m);
+    return m;
 }
 
 template<typename T>
