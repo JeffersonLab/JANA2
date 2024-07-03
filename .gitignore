@@ -61,6 +61,7 @@ docs/latex/*
 *.swp
 cmake-build*/
 .idea/*
+.cache
 
 # PODIO generated artifacts
 src/examples/PodioExample/datamodel/*

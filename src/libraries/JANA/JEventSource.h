@@ -127,6 +127,11 @@ public:
         }
     }
 
+    [[deprecated("Replaced by JEventSource::DoOpen()")]]
+    virtual void DoInitialize() {
+        DoOpen();
+    }
+
     virtual void DoOpen(bool with_lock=true) {
         if (with_lock) {
             std::lock_guard<std::mutex> lock(m_mutex);
