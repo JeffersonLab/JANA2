@@ -48,7 +48,7 @@ inline uint32_t janapy_GetNThreads(void) { return pyjapp->GetNThreads(); }
 inline uint32_t janapy_SetNThreads(int Nthreads) { auto prev = pyjapp->GetNThreads(); pyjapp->Scale(Nthreads); return prev; }
 inline size_t   janapy_GetNcores(void) { return JCpuInfo::GetNumCpus(); }
 inline void     janapy_PrintStatus(void) { pyjapp->PrintStatus(); }
-inline void     janapy_PrintParameters(bool all=false) { pyjapp->GetJParameterManager()->PrintParameters(all); }
+inline void     janapy_PrintParameters(bool all=false) { pyjapp->GetJParameterManager()->PrintParameters((all ? 3 : 1), 0); }
 inline string   janapy_GetParameterValue(string key) { return pyjapp->GetJParameterManager()->Exists(key) ? pyjapp->GetParameterValue<string>(key):"Not Defined"; }
 
 inline void     janapy_Run(void)

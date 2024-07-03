@@ -260,6 +260,7 @@ UserOptions ParseCommandLineOptions(int nargs, char *argv[], bool expect_extra) 
                 } else {
                     options.dump_config_file = "jana.config";
                 }
+                break;
  
             case InspectCollection:
                 options.flags[InspectCollection] = true;
