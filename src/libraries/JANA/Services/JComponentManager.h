@@ -33,11 +33,11 @@ public:
 
     void preinitialize_components();
     void resolve_event_sources();
-    void initialize_factories();
+    void initialize_components();
     JEventSourceGenerator* resolve_user_event_source_generator() const;
     JEventSourceGenerator* resolve_event_source(std::string source_name) const;
 
-    JComponentSummary get_component_summary();
+    const JComponentSummary& get_component_summary();
 
     // Unsafe access into our own repository of components
     std::vector<JEventSourceGenerator*>& get_evt_src_gens();
@@ -73,6 +73,7 @@ private:
     std::string m_user_evt_src_typename = "";
     JEventSourceGenerator* m_user_evt_src_gen = nullptr;
 
+    JComponentSummary m_summary;
 };
 
 

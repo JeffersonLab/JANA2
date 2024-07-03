@@ -112,6 +112,20 @@ public:
     }
 
 
+    void Summarize(JComponentSummary& summary) {
+        auto* result = new JComponentSummary::Component(
+                JComponentSummary::ComponentType::Processor, GetPrefix(), GetTypeName(), GetLevel(), GetPluginName());
+
+        for (const auto* input : m_inputs) {
+            size_t subinput_count = input->names.size();
+            for (size_t i=0; i<subinput_count; ++i) {
+                result->AddInput(new JComponentSummary::Collection("", input->names[i], input->type_name, input->levels[i]));
+            }
+        }
+        summary.Add(result);
+    }
+
+
     virtual void Init() {}
 
 

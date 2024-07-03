@@ -11,8 +11,8 @@ namespace podiotests {
 
 TEST_CASE("PodioTestsInsertAndRetrieve") {
     ExampleClusterCollection clusters_to_insert;
-    clusters_to_insert.push_back(MutableExampleCluster({16.0}));
-    clusters_to_insert.push_back(MutableExampleCluster({128.0}));
+    clusters_to_insert.push_back(MutableExampleCluster(16.0));
+    clusters_to_insert.push_back(MutableExampleCluster(128.0));
 
     auto event = std::make_shared<JEvent>();
     event->InsertCollection<ExampleCluster>(std::move(clusters_to_insert), "clusters");

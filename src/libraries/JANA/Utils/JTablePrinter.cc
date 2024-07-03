@@ -92,7 +92,7 @@ JTablePrinter::Column& JTablePrinter::AddColumn(std::string header, Justify just
 }
 
 
-void JTablePrinter::FormatLine(std::ostream& os, std::string contents, int max_width, Justify justify) {
+void JTablePrinter::FormatLine(std::ostream& os, std::string contents, int max_width, Justify justify) const {
     auto cs = contents.size();
 
     if (justify == Justify::Left) {
@@ -109,16 +109,13 @@ void JTablePrinter::FormatLine(std::ostream& os, std::string contents, int max_w
         for (int i=0; i<rpad; ++i) os << " ";
     }
 }
-std::string JTablePrinter::Render() {
+std::string JTablePrinter::Render() const {
     std::ostringstream ss;
     Render(ss);
     return ss.str();
 }
 
-void JTablePrinter::Render(std::ostream& os) {
-
-    size_t total_rows = current_row;
-    current_row = 0;
+void JTablePrinter::Render(std::ostream& os) const {
 
     // Calculate table width
     int table_width = 0;
@@ -169,7 +166,7 @@ void JTablePrinter::Render(std::ostream& os) {
     }
 
     // Print rows
-    for (size_t row = 0; row < total_rows; ++row) {
+    for (size_t row = 0; row < current_row; ++row) {
         std::vector<std::vector<std::string>> lines;
         size_t line_count = 1;
         for (const auto& col : columns) {
@@ -215,7 +212,7 @@ void JTablePrinter::Render(std::ostream& os) {
     }
 }
 
-std::ostream& operator<<(std::ostream& os, JTablePrinter& t) {
+std::ostream& operator<<(std::ostream& os, const JTablePrinter& t) {
     t.Render(os);
     return os;
 }
