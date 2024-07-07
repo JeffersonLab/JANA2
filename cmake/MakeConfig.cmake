@@ -25,46 +25,55 @@ execute_process(COMMAND SBMS/osrelease.pl
         OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 # ROOT
-if(DEFINED ENV{ROOTSYS})
-    set(JANA2_HAVE_ROOT 1)
-    set(ROOTSYS $ENV{ROOTSYS})
+if(${USE_ROOT})
+    if(DEFINED ENV{ROOTSYS})
+        set(JANA2_HAVE_ROOT 1)
+        set(ROOTSYS $ENV{ROOTSYS})
 
-    execute_process(COMMAND $ENV{ROOTSYS}/bin/root-config --cflags
-                    OUTPUT_VARIABLE ROOTCFLAGS
-                    OUTPUT_STRIP_TRAILING_WHITESPACE)
+        execute_process(COMMAND $ENV{ROOTSYS}/bin/root-config --cflags
+                        OUTPUT_VARIABLE ROOTCFLAGS
+                        OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-    execute_process(COMMAND $ENV{ROOTSYS}/bin/root-config --glibs
-                    OUTPUT_VARIABLE ROOTGLIBS
-                    OUTPUT_STRIP_TRAILING_WHITESPACE)
-else()
+        execute_process(COMMAND $ENV{ROOTSYS}/bin/root-config --glibs
+                        OUTPUT_VARIABLE ROOTGLIBS
+                        OUTPUT_STRIP_TRAILING_WHITESPACE)
+    else()
 #    message(STATUS "Did not find ROOT")
+        set(JANA2_HAVE_ROOT 0)
+    endif()
+else()
     set(JANA2_HAVE_ROOT 0)
 endif()
 
 # XERCESC
 # n.b. this is hard-coded for now to assume XERCES 3
-if(DEFINED ENV{XERCESCROOT})
-    set(JANA2_HAVE_XERCES 1)
-    set(XERCES3 1)
-    set(XERCESCROOT $ENV{XERCESCROOT})
-    set(XERCES_CPPFLAGS "-I${XERCESCROOT}/include/xercesc")
-    set(XERCES_LIBS "-lxerces-c")
-    if( NOT $XERCESCROOT EQUAL "/usr" )
-        set(XERCES_CPPFLAGS "${XERCES_CPPFLAGS} -I${XERCESCROOT}/include")
-        set(XERCES_LDFLAGS "-L${XERCESCROOT}/lib")
-    endif()
-else()
-    find_package(XercesC)
-    if(XercesC_FOUND)
+if(${USE_XERCES})
+    if(DEFINED ENV{XERCESCROOT})
         set(JANA2_HAVE_XERCES 1)
         set(XERCES3 1)
-        get_filename_component(XERCESCROOT "${XercesC_INCLUDE_DIRS}" DIRECTORY)
-        set(XERCES_CPPFLAGS "-I${XercesC_INCLUDE_DIRS} -I${XercesC_INCLUDE_DIRS}/xercesc")
-        set(XERCES_LIBS "${XercesC_LIBRARIES}")
+        set(XERCESCROOT $ENV{XERCESCROOT})
+        set(XERCES_CPPFLAGS "-I${XERCESCROOT}/include/xercesc")
+        set(XERCES_LIBS "-lxerces-c")
+        if( NOT $XERCESCROOT EQUAL "/usr" )
+            set(XERCES_CPPFLAGS "${XERCES_CPPFLAGS} -I${XERCESCROOT}/include")
+            set(XERCES_LDFLAGS "-L${XERCESCROOT}/lib")
+        endif()
     else()
-        set(JANA2_HAVE_XERCES 0)
-        set(XERCES3 0)
+        find_package(XercesC)
+        if(XercesC_FOUND)
+            set(JANA2_HAVE_XERCES 1)
+            set(XERCES3 1)
+            get_filename_component(XERCESCROOT "${XercesC_INCLUDE_DIRS}" DIRECTORY)
+            set(XERCES_CPPFLAGS "-I${XercesC_INCLUDE_DIRS} -I${XercesC_INCLUDE_DIRS}/xercesc")
+            set(XERCES_LIBS "${XercesC_LIBRARIES}")
+        else()
+            set(JANA2_HAVE_XERCES 0)
+            set(XERCES3 0)
+        endif()
     endif()
+else()
+    set(JANA2_HAVE_XERCES 0)
+    set(XERCES3 0)
 endif()
 
 # cMsg
