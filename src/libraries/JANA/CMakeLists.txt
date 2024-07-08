@@ -1,6 +1,4 @@
 
-# For now all the CMakeLists in 'CLI' does is generate and install JVersion.h
-add_subdirectory(CLI)
 
 # Everything else happens below
 set(JANA2_SOURCES
