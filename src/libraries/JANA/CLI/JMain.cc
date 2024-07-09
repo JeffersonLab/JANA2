@@ -8,12 +8,6 @@
 #include <JANA/CLI/JBenchmarker.h>
 #include <JANA/CLI/JSignalHandler.h>
 
-// The values of JVERSION_COMMIT_HASH and JVERSION_COMMIT_DATE
-// are #defined in JVersion.h.in so cmake can set them.
-const std::string JVersion::last_commit_hash = JVERSION_COMMIT_HASH;
-const std::string JVersion::last_commit_date = JVERSION_COMMIT_DATE;
-const std::string JVersion::installdir = CMAKE_INSTALL_PREFIX;
-
 
 namespace jana {
 
