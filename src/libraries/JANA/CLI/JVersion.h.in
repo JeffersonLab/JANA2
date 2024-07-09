@@ -5,6 +5,18 @@
 #pragma once
 #include <sstream>
 
+#ifndef JANA2_HAVE_PODIO
+#  define JANA2_HAVE_PODIO @JANA2_HAVE_PODIO@
+#endif
+#ifndef JANA2_HAVE_ROOT
+#  define JANA2_HAVE_ROOT @JANA2_HAVE_ROOT@
+#endif
+#ifndef JANA2_HAVE_XERCES
+#  define JANA2_HAVE_XERCES @JANA2_HAVE_XERCES@
+#  define XERCES3 @JANA2_HAVE_XERCES3@
+#endif
+
+
 struct JVersion {
 
     static const int major = @jana2_VERSION_MAJOR@;
@@ -23,8 +35,11 @@ struct JVersion {
 
     static std::string GetCommitHash() { return last_commit_hash; }
     static std::string GetCommitDate() { return last_commit_date; }
-
     static std::string GetInstallDir() { return installdir; }
+
+    static bool HasPodio() { return JANA2_HAVE_PODIO; }
+    static bool HasROOT() { return JANA2_HAVE_ROOT; }
+    static bool HasXerces() { return JANA2_HAVE_XERCES; }
 
     static std::string GetVersion() {
         std::stringstream ss;
