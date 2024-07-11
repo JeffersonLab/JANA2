@@ -12,7 +12,7 @@
 #include <JANA/Compatibility/JGeometry.h>
 #include <JANA/Compatibility/JStreamLog.h>
 #include <JANA/Calibrations/JCalibration.h>
-#include <JANA/jana_config.h>
+#include <JANA/CLI/JVersion.h>
 
 #include <JANA/Compatibility/md5.h>
 

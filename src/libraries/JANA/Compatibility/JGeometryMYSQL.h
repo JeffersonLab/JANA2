@@ -8,7 +8,7 @@
 #pragma once
 #include <JANA/Compatibility/jerror.h>
 #include <JANA/Compatibility/JGeometry.h>
-//#include <JANA/jana_config.h>
+#include <JANA/CLI/JVersion.h>
 
 
 class JGeometryMYSQL:public JGeometry{
