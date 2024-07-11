@@ -33,7 +33,6 @@ if(${USE_ROOT})
 		)
 
     add_library(RootDatamodelExample_plugin SHARED ${RootDatamodelExample_PLUGIN_SOURCES})
-    target_compile_definitions(RootDatamodelExample_plugin PUBLIC JANA2_HAVE_ROOT)
     target_include_directories(RootDatamodelExample_plugin PUBLIC ${JANA_INCLUDE_DIR} ${ROOT_INCLUDE_DIRS})
     target_link_libraries(RootDatamodelExample_plugin jana2)
     target_link_libraries(RootDatamodelExample_plugin ${ROOT_LIBRARIES})

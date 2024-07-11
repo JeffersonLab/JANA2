@@ -51,7 +51,7 @@ protected:
     };
 
 
-#ifdef JANA2_HAVE_PODIO
+#if JANA2_HAVE_PODIO
     template <typename PodioT>
     class PodioOutput : public OutputBase {
 

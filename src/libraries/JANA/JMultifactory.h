@@ -8,8 +8,9 @@
 #include <JANA/JFactorySet.h>
 #include <JANA/Omni/JComponent.h>
 #include <JANA/Omni/JHasRunCallbacks.h>
+#include <JANA/CLI/JVersion.h>
 
-#ifdef JANA2_HAVE_PODIO
+#if JANA2_HAVE_PODIO
 #include <JANA/Podio/JPodioTypeHelpers.h>
 #include "JANA/Podio/JFactoryPodioT.h"
 #endif
@@ -35,7 +36,7 @@ public:
 };
 
 
-#ifdef JANA2_HAVE_PODIO
+#if JANA2_HAVE_PODIO
 // TODO: This redundancy goes away if we merge JFactoryPodioT with JFactoryT
 template <typename T>
 class JMultifactoryHelperPodio : public JFactoryPodioT<T>{
@@ -70,7 +71,7 @@ class JMultifactory : public jana::omni::JComponent,
                               // This can be used for parameter and collection name prefixing, though at a higher level
     std::string mFactoryName; // So we can propagate this to the JMultifactoryHelpers, so we can have useful error messages
 
-#ifdef JANA2_HAVE_PODIO
+#if JANA2_HAVE_PODIO
     bool mNeedPodio = false;      // Whether we need to retrieve the podio::Frame
     podio::Frame* mPodioFrame = nullptr;  // To provide the podio::Frame to SetPodioData, SetCollection
 #endif
@@ -97,7 +98,7 @@ public:
     template <typename T>
     void SetData(std::string tag, std::vector<T*> data);
 
-#ifdef JANA2_HAVE_PODIO
+#if JANA2_HAVE_PODIO
 
     template <typename T>
     void DeclarePodioOutput(std::string tag, bool owns_data=true);
@@ -158,7 +159,7 @@ void JMultifactory::SetData(std::string tag, std::vector<T*> data) {
         ex.plugin_name = m_plugin_name;
         throw ex;
     }
-#ifdef JANA2_HAVE_PODIO
+#if JANA2_HAVE_PODIO
     // This may or may not be a Podio factory. We find out if it is, and if so, set the frame before calling Set().
     auto* typed = dynamic_cast<JFactoryPodio*>(helper);
     if (typed != nullptr) {
@@ -169,7 +170,7 @@ void JMultifactory::SetData(std::string tag, std::vector<T*> data) {
 }
 
 
-#ifdef JANA2_HAVE_PODIO
+#if JANA2_HAVE_PODIO
 
 template <typename T>
 void JMultifactory::DeclarePodioOutput(std::string tag, bool owns_data) {
@@ -245,7 +246,7 @@ void JMultifactoryHelper<T>::Process(const std::shared_ptr<const JEvent> &event)
     mMultiFactory->Execute(event);
 }
 
-#ifdef JANA2_HAVE_PODIO
+#if JANA2_HAVE_PODIO
 template <typename T>
 void JMultifactoryHelperPodio<T>::Process(const std::shared_ptr<const JEvent> &event) {
     mMultiFactory->SetApplication(this->GetApplication());

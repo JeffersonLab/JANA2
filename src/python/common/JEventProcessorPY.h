@@ -20,6 +20,7 @@
 // n.b. There may actually be a way to do this with one class by
 // manipulating the ref counter in the python object
 
+#include <JANA/CLI/JVersion.h>
 
 #include <mutex>
 #include <iostream>
@@ -29,7 +30,8 @@ using std::endl;
 #include <pybind11/pybind11.h>
 namespace py = pybind11;
 
-#ifdef JANA2_HAVE_ROOT
+
+#if JANA2_HAVE_ROOT
 #include <TObject.h>
 #include <TClass.h>
 #include <TDataMember.h>
@@ -113,7 +115,7 @@ class JEventProcessorPY {
                 LOG_ERROR(default_cout_logger) << "Unable to find factory specified for prefetching: factory=" << p.first << " tag=" << p.second << LOG_END;
             }else {
                 auto v = fac->GetAs<JObject>();
-#ifdef JANA2_HAVE_ROOT
+#if JANA2_HAVE_ROOT
                 if( v.empty() )fac->GetAs<TObject>();
 #endif // JANA2_HAVE_ROOT
 
