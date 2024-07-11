@@ -19,26 +19,6 @@ using namespace std;
 #include "JGeometryXML.h"
 
 #if JANA2_HAVE_XERCES
-
-#if XERCES3
-// XERCES 3
-
-#else
-// XERCES 2
-#include <xercesc/util/PlatformUtils.hpp>
-#include <xercesc/parsers/AbstractDOMParser.hpp>
-#include <xercesc/dom/DOMImplementationLS.hpp>
-#include <xercesc/dom/DOMImplementationRegistry.hpp>
-#include <xercesc/dom/DOMNamedNodeMap.hpp>
-#include <xercesc/dom/DOMAttr.hpp>
-#include <xercesc/util/XMLString.hpp>
-#include <xercesc/dom/DOMBuilder.hpp>
-#include <xercesc/dom/DOMDocument.hpp>
-#include <xercesc/dom/DOMException.hpp>
-#include <xercesc/dom/DOMXPathResult.hpp>
-
-#endif
-
 using namespace xercesc;
 #endif
 
@@ -181,18 +161,12 @@ void JGeometryXML::Init(string xmlfile, string xml)
     XMLPlatformUtils::Initialize();
 
     // Instantiate the DOM parser.
-#if XERCES3
     parser = new XercesDOMParser();
     parser->setCreateEntityReferenceNodes(false);
     parser->setValidationScheme(XercesDOMParser::Val_Always);
     parser->setValidationSchemaFullChecking(true);
     parser->setDoSchema(true);
     parser->setDoNamespaces(true);    // optional
-#else
-    static const XMLCh gLS[] = { chLatin_L, chLatin_S, chNull };
-    DOMImplementation *impl = DOMImplementationRegistry::getDOMImplementation(gLS);
-    parser = ((DOMImplementationLS*)impl)->createDOMBuilder(DOMImplementationLS::MODE_SYNCHRONOUS, 0);
-#endif
 
     // Create an error handler and install it
     JGeometryXML::ErrorHandler errorHandler;
@@ -208,30 +182,19 @@ void JGeometryXML::Init(string xmlfile, string xml)
     // Parse top-level file allowing entity resolver to handle lower levels
     if( xml != "" ){
         // --- Read lower levels from Calib DB
-#if XERCES3
         xercesc::MemBufInputSource myxml_buf((const unsigned char*)xml.c_str(), xml.size(), "myxml (in memory)");
         parser->parse(myxml_buf);
         md5_checksum = myEntityResolver.GetMD5_checksum();
-#else
-        jerr << "XML string (as opposed to file) parsing not supported with xerces2" << endl;
-        exit(-1);
-#endif
     }else{
         // --- Read top and lower levels from files
-#if XERCES3
         parser->parse(xmlfile.c_str());
         md5_checksum = myEntityResolver.GetMD5_checksum();
-#else
-        doc = parser->parseURI(xmlfile.c_str());
-#endif
     }
  
     // Process xml string
 
-#if XERCES3
     // Get full DOM
     doc = parser->getDocument();
-#endif
 
     valid_xmlfile = true;
 
@@ -998,11 +961,7 @@ JGeometryXML::EntityResolver::~EntityResolver()
 //----------------------------------
 // resolveEntity
 //----------------------------------
-#if XERCES3
 xercesc::InputSource* JGeometryXML::EntityResolver::resolveEntity(const XMLCh* const publicId, const XMLCh* const systemId)
-#else
-xercesc::DOMInputSource* JGeometryXML::EntityResolver::resolveEntity(const XMLCh* const publicId, const XMLCh* const systemId, const XMLCh* const baseURI)
-#endif
 {
     /// This method gets called from the xerces parser each time it
     /// opens a file (except for the top-level file). For each of these,

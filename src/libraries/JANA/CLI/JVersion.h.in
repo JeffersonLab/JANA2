@@ -13,7 +13,6 @@
 #endif
 #ifndef JANA2_HAVE_XERCES
 #  define JANA2_HAVE_XERCES @JANA2_HAVE_XERCES@
-#  define XERCES3 @JANA2_HAVE_XERCES3@
 #endif
 
 
