@@ -7,7 +7,6 @@
 
 #include <JANA/JLogger.h>
 #include <JANA/Compatibility/JGeometryXML.h>
-#include <JANA/Compatibility/JGeometryMYSQL.h>
 
 
 JGeometry *JGeometryManager::GetJGeometry(unsigned int run_number) {
@@ -53,9 +52,11 @@ JGeometry *JGeometryManager::GetJGeometry(unsigned int run_number) {
     if (url_str.find("xmlfile://") == 0 || url_str.find("ccdb://") == 0) {
         g = new JGeometryXML(string(url), run_number, context);
     }
+    /*
     else if (url_str.find("mysql:") == 0) {
         g = new JGeometryMYSQL(string(url), run_number, context);
     }
+    */
     if (g) {
         geometries.push_back(g);
     }

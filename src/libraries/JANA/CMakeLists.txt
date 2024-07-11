@@ -125,8 +125,6 @@ set(JANA2_SOURCES
     Compatibility/JGeometry.h
     Compatibility/JGeometryManager.cc
     Compatibility/JGeometryManager.h
-    Compatibility/JGeometryMYSQL.cc
-    Compatibility/JGeometryMYSQL.h
     Compatibility/JGeometryXML.cc
     Compatibility/JGeometryXML.h
     Compatibility/md5.c
