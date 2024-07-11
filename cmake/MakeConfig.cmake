@@ -144,9 +144,6 @@ else()
     set(HAVE_CURL 0)
 endif()
 
-# TODO: FindNuma.cmake
-set(HAVE_NUMA 0)
-
 configure_file(scripts/jana-config.in jana-config @ONLY)
 configure_file(scripts/jana-this.sh.in  jana-this.sh  @ONLY)
 configure_file(scripts/jana-this.csh.in jana-this.csh  @ONLY)

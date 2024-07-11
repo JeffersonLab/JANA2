@@ -19,9 +19,6 @@
 #include <sched.h>
 #endif //__APPLE__
 
-#ifdef HAVE_NUMA
-#include <numa.h>
-#endif //HAVE_NUMA
 
 #include <JANA/Utils/JCpuInfo.h>
 
@@ -74,45 +71,6 @@ uint32_t GetCpuID() {
 #else //__APPLE__
     return sched_getcpu();
 #endif //__APPLE__
-}
-
-
-
-size_t GetNumaNodeID() {
-#ifdef HAVE_NUMA
-    if (numa_available() == -1) {
-        return 0;
-    } else {
-        return numa_node_of_cpu(GetCpuID());
-    }
-#else //HAVE_NUMA
-    return 0;
-#endif //HAVE_NUMA
-}
-
-size_t GetNumaNodeID(size_t cpu_id) {
-#ifdef HAVE_NUMA
-        if (numa_available() == -1) {
-        return 0;
-    } else {
-        return numa_node_of_cpu(cpu_id);
-    }
-#else //HAVE_NUMA
-        (void) cpu_id; // suppress compiler warning.
-        return 0;
-#endif //HAVE_NUMA
-}
-
-size_t GetNumNumaNodes() {
-#ifdef HAVE_NUMA
-    if (numa_available() == -1) {
-        return 1;
-    } else {
-        return numa_num_configured_nodes();
-    }
-#else //HAVE_NUMA
-    return 1;
-#endif //HAVE_NUMA
 }
 
 
