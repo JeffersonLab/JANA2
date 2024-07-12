@@ -5,15 +5,9 @@
 #pragma once
 #include <sstream>
 
-#ifndef JANA2_HAVE_PODIO
-#  define JANA2_HAVE_PODIO @JANA2_HAVE_PODIO@
-#endif
-#ifndef JANA2_HAVE_ROOT
-#  define JANA2_HAVE_ROOT @JANA2_HAVE_ROOT@
-#endif
-#ifndef JANA2_HAVE_XERCES
-#  define JANA2_HAVE_XERCES @JANA2_HAVE_XERCES@
-#endif
+#define JANA2_HAVE_PODIO @JANA2_HAVE_PODIO@
+#define JANA2_HAVE_ROOT @JANA2_HAVE_ROOT@
+#define JANA2_HAVE_XERCES @JANA2_HAVE_XERCES@
 
 
 struct JVersion {
