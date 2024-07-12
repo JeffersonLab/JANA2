@@ -1,5 +1,7 @@
 
 #include "JApplicationInspector.h"
+#include "JANA/Services/JComponentManager.h"
+#include "JANA/Status/JComponentSummary.h"
 #include "JANA/Topology/JTopologyBuilder.h"
 #include <JANA/JApplication.h>
 #include <JANA/Engine/JArrowProcessingController.h>
@@ -9,7 +11,10 @@ void PrintMenu() {
     std::cout << "  -----------------------------------------" << std::endl;
     std::cout << "  Available commands" << std::endl;
     std::cout << "  -----------------------------------------" << std::endl;
-    std::cout << "  ic   InspectComponents" << std::endl;
+    std::cout << "  icm  InspectComponents" << std::endl;
+    std::cout << "  icm  InspectComponent component_name" << std::endl;
+    std::cout << "  icl  InspectCollections" << std::endl;
+    std::cout << "  icl  InspectCollection collection_name" << std::endl;
     std::cout << "  it   InspectTopology" << std::endl;
     std::cout << "  ip   InspectPlace arrow_id place_id" << std::endl;
     std::cout << "  ie   InspectEvent arrow_id place_id slot_id" << std::endl;
@@ -32,6 +37,47 @@ void Fire(JApplication* app, int arrow_id) {
     std::cout << to_string(result) << std::endl;
 }
 
+void InspectComponents(JApplication* app) {
+    auto& summary = app->GetComponentSummary();
+    PrintComponentTable(std::cout, summary);
+}
+
+void InspectComponent(JApplication* app, std::string component_name) {
+    const auto& summary = app->GetComponentSummary();
+    auto lookup = summary.FindComponents(component_name);
+    if (lookup.empty()) {
+        std::cout << "Component not found!" << std::endl;
+    }
+    else {
+        std::cout << "----------------------------------------------------------" << std::endl;
+        for (auto* item : lookup) {
+            std::cout << *item;
+            std::cout << "----------------------------------------------------------" << std::endl;
+        }
+    }
+}
+
+void InspectCollections(JApplication* app) {
+    const auto& summary = app->GetComponentSummary();
+    PrintCollectionTable(std::cout, summary);
+}
+
+void InspectCollection(JApplication* app, std::string collection_name) {
+    const auto& summary = app->GetComponentSummary();
+    auto lookup = summary.FindCollections(collection_name);
+    if (lookup.empty()) {
+        std::cout << "Collection not found!" << std::endl;
+    }
+    else {
+        std::cout << "----------------------------------------------------------" << std::endl;
+        for (auto* item : lookup) {
+            std::cout << *item;
+            std::cout << "----------------------------------------------------------" << std::endl;
+        }
+    }
+}
+
+
 void InspectApplication(JApplication* app) {
     auto engine = app->GetService<JArrowProcessingController>();
     engine->request_pause();
@@ -49,14 +95,23 @@ void InspectApplication(JApplication* app) {
         std::stringstream ss(user_input);
         std::string token;
         ss >> token;
-        std::vector<int> args;
+        std::vector<std::string> args;
         std::string arg;
         try {
             while (ss >> arg) {
-                args.push_back(std::stoi(arg));
+                args.push_back(arg);
             }
-            if (token == "InspectComponents" || token == "ic") {
-                // InspectComponents();
+            if ((token == "InspectComponents" || token == "icm") && args.empty()) {
+                InspectComponents(app);
+            }
+            else if ((token == "InspectComponent" || token == "icm") && (args.size() == 1)) {
+                InspectComponent(app, args[0]);
+            }
+            else if ((token == "InspectCollections" || token == "icl") && args.empty()) {
+                InspectCollections(app);
+            }
+            else if ((token == "InspectCollection" || token == "icl") && (args.size() == 1)) {
+                InspectCollection(app, args[0]);
             }
             else if ((token == "InspectTopology" || token == "it") && args.empty()) {
                 InspectTopology(app);
@@ -68,14 +123,14 @@ void InspectApplication(JApplication* app) {
                 // InspectEvent(std::stoi(args[0])
             }
             else if ((token == "Fire" || token == "f") && (args.size() == 1)) {
-                Fire(app, args[0]);
+                Fire(app, std::stoi(args[0]));
             }
             else if (token == "Resume" || token == "r") {
                 app->Run(false);
                 break;
             }
             else if ((token == "Scale" || token == "s") && (args.size() == 1)) {
-                app->Scale(args[0]);
+                app->Scale(std::stoi(args[0]));
                 break;
             }
             else if (token == "Quit" || token == "q") {
