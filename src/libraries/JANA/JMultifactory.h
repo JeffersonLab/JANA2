@@ -8,7 +8,7 @@
 #include <JANA/JFactorySet.h>
 #include <JANA/Omni/JComponent.h>
 #include <JANA/Omni/JHasRunCallbacks.h>
-#include <JANA/CLI/JVersion.h>
+#include <JANA/JVersion.h>
 
 #if JANA2_HAVE_PODIO
 #include <JANA/Podio/JPodioTypeHelpers.h>

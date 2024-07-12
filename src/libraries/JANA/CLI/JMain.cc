@@ -4,7 +4,7 @@
 
 #include "JMain.h"
 
-#include <JANA/CLI/JVersion.h>
+#include <JANA/JVersion.h>
 #include <JANA/CLI/JBenchmarker.h>
 #include <JANA/CLI/JSignalHandler.h>
 

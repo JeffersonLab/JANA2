@@ -69,5 +69,5 @@ endif()
 
 message(STATUS "Generating JVersion.h")
 
-configure_file(src/libraries/JANA/CLI/JVersion.h.in ${CMAKE_CURRENT_BINARY_DIR}/src/libraries/JANA/CLI/JVersion.h @ONLY)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/src/libraries/JANA/CLI/JVersion.h DESTINATION include/JANA/CLI)
+configure_file(src/libraries/JANA/JVersion.h.in ${CMAKE_CURRENT_BINARY_DIR}/src/libraries/JANA/JVersion.h @ONLY)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/src/libraries/JANA/JVersion.h DESTINATION include/JANA)

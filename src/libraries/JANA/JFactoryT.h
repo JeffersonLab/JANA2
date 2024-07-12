@@ -10,8 +10,8 @@
 #include <JANA/JApplication.h>
 #include <JANA/JFactory.h>
 #include <JANA/JObject.h>
+#include <JANA/JVersion.h>
 #include <JANA/Utils/JTypeInfo.h>
-#include <JANA/CLI/JVersion.h>
 
 #if JANA2_HAVE_ROOT
 #include <TObject.h>

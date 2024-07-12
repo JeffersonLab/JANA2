@@ -148,9 +148,8 @@ add_library(jana2 OBJECT ${JANA2_SOURCES})
 
 find_package(Threads REQUIRED)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
-target_include_directories(jana2 PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/..)
-# So that we can find the generated JVersion.h before install
 target_link_libraries(jana2 ${CMAKE_DL_LIBS} Threads::Threads)
+
 if (${USE_PODIO})
     target_link_libraries(jana2 podio::podio podio::podioRootIO ${ROOT_LIBRARIES})
 elseif (${USE_ROOT})

@@ -10,7 +10,7 @@
 #include <JANA/JFactorySet.h>
 #include <JANA/JLogger.h>
 
-#include <JANA/CLI/JVersion.h>
+#include <JANA/JVersion.h>
 
 #include <JANA/Utils/JEventLevel.h>
 #include <JANA/Utils/JTypeInfo.h>

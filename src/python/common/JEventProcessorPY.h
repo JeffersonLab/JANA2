@@ -20,7 +20,7 @@
 // n.b. There may actually be a way to do this with one class by
 // manipulating the ref counter in the python object
 
-#include <JANA/CLI/JVersion.h>
+#include <JANA/JVersion.h>
 
 #include <mutex>
 #include <iostream>

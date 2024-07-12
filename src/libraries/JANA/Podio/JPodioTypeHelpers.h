@@ -7,7 +7,7 @@
 #include <type_traits>
 
 #include <podio/podioVersion.h>
-#include <JANA/CLI/JVersion.h>
+#include <JANA/JVersion.h>
 
 /// These allow us to have both a PODIO-enabled and a PODIO-free definition of certain key structures and functions.
 

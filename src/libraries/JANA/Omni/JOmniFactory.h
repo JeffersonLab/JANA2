@@ -10,10 +10,10 @@
  * which might be changed by user parameters.
  */
 
-#include <JANA/CLI/JVersion.h>
-#include <JANA/JMultifactory.h>
-#include <JANA/Omni/JHasInputs.h>
 #include <JANA/JEvent.h>
+#include <JANA/JMultifactory.h>
+#include <JANA/JVersion.h>
+#include <JANA/Omni/JHasInputs.h>
 
 #include <JANA/JLogger.h>
 #include <JANA/Services/JLoggingService.h>

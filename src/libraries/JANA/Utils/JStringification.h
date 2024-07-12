@@ -5,7 +5,7 @@
 #pragma once
 #include <sstream>
 
-#include <JANA/CLI/JVersion.h>
+#include <JANA/JVersion.h>
 
 #if JANA2_HAVE_ROOT
 #include <TObject.h>
