@@ -10,9 +10,10 @@
  * which might be changed by user parameters.
  */
 
-#include <JANA/JMultifactory.h>
-#include <JANA/Omni/JHasInputs.h>
 #include <JANA/JEvent.h>
+#include <JANA/JMultifactory.h>
+#include <JANA/JVersion.h>
+#include <JANA/Omni/JHasInputs.h>
 
 #include <JANA/JLogger.h>
 #include <JANA/Services/JLoggingService.h>
@@ -69,7 +70,7 @@ public:
     };
 
 
-#ifdef JANA2_HAVE_PODIO
+#if JANA2_HAVE_PODIO
     template <typename PodioT>
     class PodioOutput : public OutputBase {
 

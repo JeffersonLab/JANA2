@@ -5,14 +5,21 @@
 #pragma once
 #include <sstream>
 
+#define JANA2_HAVE_PODIO @JANA2_HAVE_PODIO@
+#define JANA2_HAVE_ROOT @JANA2_HAVE_ROOT@
+#define JANA2_HAVE_XERCES @JANA2_HAVE_XERCES@
+
+
 struct JVersion {
 
     static const int major = @jana2_VERSION_MAJOR@;
     static const int minor = @jana2_VERSION_MINOR@;
     static const int patch = @jana2_VERSION_PATCH@;
-    static const std::string last_commit_hash;
-    static const std::string last_commit_date;
-    static const std::string installdir;
+
+    inline static const std::string last_commit_hash = "@JVERSION_COMMIT_HASH@";
+    inline static const std::string last_commit_date = "@JVERSION_COMMIT_DATE@";
+    inline static const std::string installdir = "@CMAKE_INSTALL_PREFIX@";
+
     static const bool is_unknown = @JVERSION_UNKNOWN@;
     static const bool is_release = @JVERSION_RELEASE@;
     static const bool is_modified = @JVERSION_MODIFIED@;
@@ -23,8 +30,11 @@ struct JVersion {
 
     static std::string GetCommitHash() { return last_commit_hash; }
     static std::string GetCommitDate() { return last_commit_date; }
-
     static std::string GetInstallDir() { return installdir; }
+
+    static bool HasPodio() { return JANA2_HAVE_PODIO; }
+    static bool HasROOT() { return JANA2_HAVE_ROOT; }
+    static bool HasXerces() { return JANA2_HAVE_XERCES; }
 
     static std::string GetVersion() {
         std::stringstream ss;
@@ -46,10 +56,5 @@ struct JVersion {
     }
 };
 
-// These are defined here to allow cmake to set them but are
-// actually used in JMain.cc.
-#define JVERSION_COMMIT_HASH "@JVERSION_COMMIT_HASH@"
-#define JVERSION_COMMIT_DATE "@JVERSION_COMMIT_DATE@"
-#define CMAKE_INSTALL_PREFIX "@CMAKE_INSTALL_PREFIX@"
 
 

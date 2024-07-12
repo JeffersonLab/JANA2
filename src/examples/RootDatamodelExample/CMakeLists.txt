@@ -1,7 +1,6 @@
 
 if(${USE_ROOT})
 	find_package(ROOT REQUIRED)
-	include(${ROOT_USE_FILE})
 
 	# Generate ROOT dictionaries for each of our ROOT object types
     # The foreach statement below should end with a list of classes
@@ -34,7 +33,6 @@ if(${USE_ROOT})
 		)
 
     add_library(RootDatamodelExample_plugin SHARED ${RootDatamodelExample_PLUGIN_SOURCES})
-    target_compile_definitions(RootDatamodelExample_plugin PUBLIC JANA2_HAVE_ROOT)
     target_include_directories(RootDatamodelExample_plugin PUBLIC ${JANA_INCLUDE_DIR} ${ROOT_INCLUDE_DIRS})
     target_link_libraries(RootDatamodelExample_plugin jana2)
     target_link_libraries(RootDatamodelExample_plugin ${ROOT_LIBRARIES})

@@ -10,11 +10,14 @@
 #include <JANA/JFactorySet.h>
 #include <JANA/JLogger.h>
 
+#include <JANA/JVersion.h>
+
 #include <JANA/Utils/JEventLevel.h>
 #include <JANA/Utils/JTypeInfo.h>
 #include <JANA/Utils/JCpuInfo.h>
 #include <JANA/Utils/JCallGraphRecorder.h>
 #include <JANA/Utils/JCallGraphEntryMaker.h>
+#include <JANA/Utils/JInspector.h>
 
 #include <vector>
 #include <cstddef>
@@ -22,9 +25,8 @@
 #include <exception>
 #include <atomic>
 #include <mutex>
-#include "JANA/Utils/JInspector.h"
 
-#ifdef JANA2_HAVE_PODIO
+#if JANA2_HAVE_PODIO
 #include <JANA/Podio/JFactoryPodioT.h>
 namespace podio {
 class CollectionBase;
@@ -51,7 +53,7 @@ class JEvent : public std::enable_shared_from_this<JEvent>
         void SetFactorySet(JFactorySet* aFactorySet) {
             delete mFactorySet;
             mFactorySet = aFactorySet;
-#ifdef JANA2_HAVE_PODIO
+#if JANA2_HAVE_PODIO
             // Maintain the index of PODIO factories
             for (JFactory* factory : mFactorySet->GetAllFactories()) {
                 if (dynamic_cast<JFactoryPodio*>(factory) != nullptr) {
@@ -97,7 +99,7 @@ class JEvent : public std::enable_shared_from_this<JEvent>
         template <class T> JFactoryT<T>* Insert(const std::vector<T*>& items, const std::string& tag = "") const;
 
         // PODIO
-#ifdef JANA2_HAVE_PODIO
+#if JANA2_HAVE_PODIO
         std::vector<std::string> GetAllCollectionNames() const;
         const podio::CollectionBase* GetCollectionBase(std::string name, bool throw_on_missing=true) const;
         template <typename T> const typename JFactoryPodioT<T>::CollectionT* GetCollection(std::string name, bool throw_on_missing=true) const;
@@ -210,7 +212,7 @@ class JEvent : public std::enable_shared_from_this<JEvent>
 
 
 
-#ifdef JANA2_HAVE_PODIO
+#if JANA2_HAVE_PODIO
         std::map<std::string, JFactory*> mPodioFactories;
 #endif
 };
@@ -504,7 +506,7 @@ JFactoryT<T>* JEvent::GetSingle(const T* &t, const char *tag, bool exception_if_
     return fac;
 }
 
-#ifdef JANA2_HAVE_PODIO
+#if JANA2_HAVE_PODIO
 
 inline std::vector<std::string> JEvent::GetAllCollectionNames() const {
     std::vector<std::string> keys;

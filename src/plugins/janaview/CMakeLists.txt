@@ -3,7 +3,6 @@
 if(USE_ROOT)
     find_package(ROOT REQUIRED COMPONENTS Gui Core RIO Net Hist Graf Graf3d Gpad Tree Rint Postscript Matrix Physics MathCore Thread MultiProc)
 
-    include(${ROOT_USE_FILE})
     ROOT_GENERATE_DICTIONARY(G__jv_mainframe jv_mainframe.h)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 

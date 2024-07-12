@@ -12,7 +12,7 @@
 #include <JANA/Compatibility/JGeometry.h>
 #include <JANA/Compatibility/JStreamLog.h>
 #include <JANA/Calibrations/JCalibration.h>
-#include <JANA/jana_config.h>
+#include <JANA/JVersion.h>
 
 #include <JANA/Compatibility/md5.h>
 
@@ -20,9 +20,6 @@
 
 #if JANA2_HAVE_XERCES
 #if !defined(__CINT__) && !defined(__CLING__)
-
-#if XERCES3
-
 // XERCES3
 #include <xercesc/parsers/XercesDOMParser.hpp>
 #include <xercesc/dom/DOM.hpp>
@@ -30,18 +27,6 @@
 #include <xercesc/util/XMLString.hpp>
 #include <xercesc/util/PlatformUtils.hpp>
 #include <xercesc/framework/MemBufInputSource.hpp>
-#else
-
-// XERCES2
-#include <xercesc/dom/DOMErrorHandler.hpp>
-#include <xercesc/dom/DOMEntityResolver.hpp>
-#include <xercesc/dom/DOMInputSource.hpp>
-#include <xercesc/dom/DOMBuilder.hpp>
-#include <xercesc/dom/DOMDocument.hpp>
-#include <xercesc/dom/DOMNode.hpp>
-#include <xercesc/dom/DOMAttr.hpp>
-
-#endif
 
 #else // __CINT__  __CLING__
 namespace xercesc{
@@ -118,11 +103,7 @@ class JGeometryXML:public JGeometry{
         };
 
 
-#if XERCES3
       xercesc::XercesDOMParser *parser;
-#else  // XERCES3
-      xercesc::DOMBuilder *parser;
-#endif  // XERCES3
       xercesc::DOMDocument *doc;
 
         void AddNodeToList(xercesc::DOMNode* start, string start_path, vector<string> &xpaths, JGeometry::ATTR_LEVEL_t level);
@@ -133,11 +114,7 @@ class JGeometryXML:public JGeometry{
         static void GetAttributes(xercesc::DOMNode* node, map<string,string> &attributes);
 
         // Error handler callback class
-#if XERCES3
    class ErrorHandler : public xercesc::ErrorHandler
-#else  // XERCES3
-   class ErrorHandler : public xercesc::DOMErrorHandler
-#endif  // XERCES3
    {
             public:
                  //  Constructors and Destructor
@@ -147,11 +124,9 @@ class JGeometryXML:public JGeometry{
              void resetErrors(){}
       
             // Purely virtual methods
-#if XERCES3
       void warning(const xercesc::SAXParseException& /*exc*/){}
       void error(const xercesc::SAXParseException& /*exc*/){}
       void fatalError(const xercesc::SAXParseException& /*exc*/){}
-#endif  // XERCES3
 
             private :
                  //  Unimplemented constructors and operators
@@ -162,20 +137,12 @@ class JGeometryXML:public JGeometry{
     // A simple entity resolver to keep track of files being
     // included from the top-level XML file so a full MD5 sum
     // can be made
-#if XERCES3
     class EntityResolver : public xercesc::EntityResolver
-#else
-    class EntityResolver : public xercesc::DOMEntityResolver
-#endif  // XERCES3
     {
         public:
             EntityResolver(const std::string &xmlFile, JCalibration *jcalib);
             ~EntityResolver();
-#if XERCES3
             xercesc::InputSource* resolveEntity(const XMLCh* const publicId, const XMLCh* const systemId);
-#else  // XERCES3
-            xercesc::DOMInputSource* resolveEntity(const XMLCh* const publicId, const XMLCh* const systemId, const XMLCh* const baseURI);
-#endif  // XERCES3
 
 
             std::vector<std::string> GetXMLFilenames(void);

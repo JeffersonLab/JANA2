@@ -1,6 +1,4 @@
 
-# For now all the CMakeLists in 'CLI' does is generate and install JVersion.h
-add_subdirectory(CLI)
 
 # Everything else happens below
 set(JANA2_SOURCES
@@ -127,8 +125,6 @@ set(JANA2_SOURCES
     Compatibility/JGeometry.h
     Compatibility/JGeometryManager.cc
     Compatibility/JGeometryManager.h
-    Compatibility/JGeometryMYSQL.cc
-    Compatibility/JGeometryMYSQL.h
     Compatibility/JGeometryXML.cc
     Compatibility/JGeometryXML.h
     Compatibility/md5.c
@@ -152,14 +148,11 @@ add_library(jana2 OBJECT ${JANA2_SOURCES})
 
 find_package(Threads REQUIRED)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
-target_include_directories(jana2 PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/..)
-# So that we can find the generated JVersion.h before install
 target_link_libraries(jana2 ${CMAKE_DL_LIBS} Threads::Threads)
+
 if (${USE_PODIO})
-    target_compile_definitions(jana2 PUBLIC JANA2_HAVE_PODIO=1 JANA2_HAVE_ROOT=1)
     target_link_libraries(jana2 podio::podio podio::podioRootIO ${ROOT_LIBRARIES})
 elseif (${USE_ROOT})
-    target_compile_definitions(jana2 PUBLIC JANA2_HAVE_ROOT=1)
     target_link_libraries(jana2 ${ROOT_LIBRARIES})
 endif()
 
@@ -172,10 +165,8 @@ target_include_directories(jana2_static_lib PUBLIC $<INSTALL_INTERFACE:include>)
 target_link_libraries(jana2_static_lib ${CMAKE_DL_LIBS} Threads::Threads)
 
 if (${USE_PODIO})
-    target_compile_definitions(jana2_static_lib PUBLIC JANA2_HAVE_PODIO=1 JANA2_HAVE_ROOT=1)
     target_link_libraries(jana2_static_lib podio::podio podio::podioRootIO ${ROOT_LIBRARIES})
 elseif (${USE_ROOT})
-    target_compile_definitions(jana2_static_lib PUBLIC JANA2_HAVE_ROOT=1)
     target_link_libraries(jana2_static_lib ${ROOT_LIBRARIES})
 endif()
 install(TARGETS jana2_static_lib EXPORT jana2_targets DESTINATION lib)
@@ -191,10 +182,8 @@ if (BUILD_SHARED_LIBS)
     target_link_libraries(jana2_shared_lib ${CMAKE_DL_LIBS} Threads::Threads)
 
     if (${USE_PODIO})
-        target_compile_definitions(jana2_shared_lib PUBLIC JANA2_HAVE_PODIO=1 JANA2_HAVE_ROOT=1)
         target_link_libraries(jana2_shared_lib podio::podio podio::podioRootIO ${ROOT_LIBRARIES})
     elseif (${USE_ROOT})
-        target_compile_definitions(jana2_shared_lib PUBLIC JANA2_HAVE_ROOT=1)
         target_link_libraries(jana2_shared_lib ${ROOT_LIBRARIES})
     endif()
 

@@ -70,14 +70,22 @@ option(USE_CUDA "Compile CUDA-involved examples (Needed for examples/SubeventCUD
 option(USE_PODIO "Compile with PODIO support" OFF)
 option(BUILD_SHARED_LIBS "Build into both shared and static libs." ON)
 
+if (${USE_PODIO})
+    find_package(podio REQUIRED)
+    set(JANA2_HAVE_PODIO 1)
+    set(USE_ROOT ON)
+    include_directories(SYSTEM ${podio_INCLUDE_DIR})
+else()
+    set(JANA2_HAVE_PODIO 0)
+endif()
+
 
 if (${USE_ROOT})
     if((NOT DEFINED ROOT_DIR) AND (DEFINED ENV{ROOTSYS}))
         set(ROOT_DIR $ENV{ROOTSYS}/cmake)
     endif()
     find_package(ROOT REQUIRED)
-    include(${ROOT_USE_FILE})
-    add_compile_definitions(JANA2_HAVE_ROOT)
+    set(JANA2_HAVE_ROOT 1)
     include_directories(${ROOT_INCLUDE_DIRS})
     link_libraries(${ROOT_LIBRARIES})
     execute_process(
@@ -90,6 +98,8 @@ if (${USE_ROOT})
             "Specify the C++ standard used to compile ROOT with e.g. -DCMAKE_CXX_STANDARD=17. "
             "Check the root-config output above for cxx flags.")
     endif()
+else()
+    set(JANA2_HAVE_ROOT 0)
 endif()
 
 if (${USE_ZEROMQ})
@@ -101,10 +111,11 @@ if (${USE_XERCES})
         set(XercesC_DIR $ENV{XERCESCROOT})
     endif()
     find_package(XercesC REQUIRED)
-    add_compile_definitions(JANA2_HAVE_XERCES)
-    add_compile_definitions(XERCES3)
+    set(JANA2_HAVE_XERCES 1)
     include_directories(${XercesC_INCLUDE_DIRS})
     link_libraries(${XercesC_LIBRARIES})
+else()
+    set(JANA2_HAVE_XERCES 0)
 endif()
 
 if (${USE_ASAN})
@@ -121,11 +132,6 @@ if (${USE_CUDA})
     find_package(CUDA REQUIRED)
 endif()
 
-if (${USE_PODIO})
-    find_package(podio REQUIRED)
-    add_compile_definitions(JANA2_HAVE_PODIO)
-    include_directories(SYSTEM ${podio_INCLUDE_DIR})
-endif()
 
 #---------
 # Report back to the user what we've discovered
@@ -188,6 +194,7 @@ message(STATUS "-----------------------")
 
 include_directories(src/libraries)   # So that everyone can find the JANA header files
 include_directories(src/external)    # So that everyone can find our vendorized header-old libraries
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/src/libraries)   # So that everyone can find JVersion.h
 
 # This is needed on macos to allow plugins to link without resolving all JANA symbols until runtime
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -208,3 +215,4 @@ add_subdirectory(src/python)
 install(DIRECTORY scripts/ DESTINATION bin FILES_MATCHING PATTERN "jana-*.py"
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_READ WORLD_EXECUTE)
 include(${CMAKE_SOURCE_DIR}/cmake/MakeConfig.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/MakeJVersionH.cmake)

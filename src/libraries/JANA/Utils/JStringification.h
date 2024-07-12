@@ -5,7 +5,9 @@
 #pragma once
 #include <sstream>
 
-#ifdef JANA2_HAVE_ROOT
+#include <JANA/JVersion.h>
+
+#if JANA2_HAVE_ROOT
 #include <TObject.h>
 #include <TClass.h>
 #include <TDataMember.h>
@@ -41,7 +43,7 @@ public:
 
     template <typename T> std::string GetAddrAsString(void *addr) const;
 
-#ifdef JANA2_HAVE_ROOT
+#if JANA2_HAVE_ROOT
     std::string GetRootObjectMemberAsString(const TObject *tobj, const TDataMember *memitem, std::string type) const;
 #endif // JANA2_HAVE_ROOT
 

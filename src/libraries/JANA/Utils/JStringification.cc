@@ -47,7 +47,7 @@ void JStringification::GetObjectSummaries(std::map<std::string, JObjectSummary> 
             ss << "0x" << std::hex << (uint64_t)jobj << std::dec;
             objects[ss.str()] = summary; // key is address of object converted to string
         }
-#ifdef JANA2_HAVE_ROOT
+#if JANA2_HAVE_ROOT
         // For objects inheriting from TObject, we try and convert members automatically
         // into JObjectSummary form. This relies on dictionaries being compiled in.
         // (see ROOT_GENERATE_DICTIONARY for cmake files).
