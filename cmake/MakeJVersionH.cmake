@@ -15,7 +15,7 @@ set_property(
 )
 
 execute_process(
-        COMMAND git log -1 --format=%H
+        COMMAND git log -1 --format=%H 2>/dev/null
         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
         RESULT_VARIABLE JVERSION_GIT_RESULT
         OUTPUT_VARIABLE JVERSION_COMMIT_HASH
@@ -23,21 +23,21 @@ execute_process(
 )
 
 execute_process(
-        COMMAND git log -1 --format=%aD
+        COMMAND git log -1 --format=%aD 2>/dev/null
         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
         OUTPUT_VARIABLE JVERSION_COMMIT_DATE
         OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
 execute_process(
-        COMMAND git show-ref -s v${jana2_VERSION_MAJOR}.${jana2_VERSION_MINOR}.${jana2_VERSION_PATCH}
+        COMMAND git show-ref -s v${jana2_VERSION_MAJOR}.${jana2_VERSION_MINOR}.${jana2_VERSION_PATCH} 2>/dev/null
         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
         OUTPUT_VARIABLE JVERSION_RELEASE_COMMIT_HASH
         OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
 execute_process(
-        COMMAND git status --porcelain
+        COMMAND git status --porcelain 2>/dev/null
         WORKING_DIRECTORY ${CMAKE_CURRENT_LIST_DIR}
         OUTPUT_VARIABLE JVERSION_MODIFIED_FILES
         OUTPUT_STRIP_TRAILING_WHITESPACE
