@@ -23,6 +23,7 @@ set(JANA2_SOURCES
     JMultifactory.cc
     JMultifactory.h
     JService.cc
+    JVersion.cc
 
     Engine/JArrowProcessingController.cc
     Engine/JArrowProcessingController.h

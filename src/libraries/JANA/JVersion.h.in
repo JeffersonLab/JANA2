@@ -3,7 +3,7 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #pragma once
-#include <sstream>
+#include <ostream>
 
 #define JANA2_HAVE_PODIO @JANA2_HAVE_PODIO@
 #define JANA2_HAVE_ROOT @JANA2_HAVE_ROOT@
@@ -36,24 +36,11 @@ struct JVersion {
     static bool HasROOT() { return JANA2_HAVE_ROOT; }
     static bool HasXerces() { return JANA2_HAVE_XERCES; }
 
-    static std::string GetVersion() {
-        std::stringstream ss;
-        ss << major << "." << minor << "." << patch;
-        if (is_unknown) {
-            // ss << " (git status unknown)";
-            // If .git is not present, degrade gracefully. Don't lead the user to believe that there is an error
-        }
-        else if (is_modified) {
-            ss << " (uncommitted changes)";
-        }
-        else if (is_release) {
-            ss << " (release)";
-        }
-        else {
-            ss << " (development)";
-        }
-        return ss.str();
-    }
+    static std::string GetVersion();
+    static void PrintSplash(std::ostream& os);
+    static void PrintVersionNumbers(std::ostream& os);
+    static void PrintVersionDescription(std::ostream& os);
+
 };
 
 

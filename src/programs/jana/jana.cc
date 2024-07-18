@@ -3,6 +3,7 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #include <JANA/CLI/JMain.h>
+#include <JANA/JVersion.h>
 
 int main(int argc, char* argv[]) {
 
@@ -15,7 +16,7 @@ int main(int argc, char* argv[]) {
 	}
 	if (options.flags[jana::ShowVersion]) {
 		// Show version information and exit immediately
-		jana::PrintVersion();
+		JVersion::PrintVersionDescription(std::cout);
 		return -1;
 	}
 	auto app = jana::CreateJApplication(options);
