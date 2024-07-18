@@ -6,6 +6,10 @@
 #include <sstream>
 
 
+constexpr size_t JVersion::GetVersionNumber() {
+    return 1000000*major + 1000*minor + patch;
+}
+
 std::string JVersion::GetVersion() {
     std::stringstream ss;
     PrintVersionNumbers(ss);

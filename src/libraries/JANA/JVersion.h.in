@@ -37,6 +37,8 @@ struct JVersion {
     static bool HasXerces() { return JANA2_HAVE_XERCES; }
 
     static std::string GetVersion();
+    static constexpr size_t GetVersionNumber();
+
     static void PrintSplash(std::ostream& os);
     static void PrintVersionNumbers(std::ostream& os);
     static void PrintVersionDescription(std::ostream& os);
