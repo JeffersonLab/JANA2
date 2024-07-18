@@ -3,6 +3,7 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #pragma once
+#include <cstdint>
 #include <ostream>
 
 #define JANA2_HAVE_PODIO @JANA2_HAVE_PODIO@
@@ -12,9 +13,9 @@
 
 struct JVersion {
 
-    static const int major = @jana2_VERSION_MAJOR@;
-    static const int minor = @jana2_VERSION_MINOR@;
-    static const int patch = @jana2_VERSION_PATCH@;
+    static const uint64_t major = @jana2_VERSION_MAJOR@;
+    static const uint64_t minor = @jana2_VERSION_MINOR@;
+    static const uint64_t patch = @jana2_VERSION_PATCH@;
 
     inline static const std::string last_commit_hash = "@JVERSION_COMMIT_HASH@";
     inline static const std::string last_commit_date = "@JVERSION_COMMIT_DATE@";
@@ -24,20 +25,20 @@ struct JVersion {
     static const bool is_release = @JVERSION_RELEASE@;
     static const bool is_modified = @JVERSION_MODIFIED@;
 
-    static unsigned int GetMajorNumber() { return major; }
-    static unsigned int GetMinorNumber() { return minor; }
-    static unsigned int GetPatchNumber() { return patch; }
+    static constexpr uint64_t GetMajorNumber() { return major; }
+    static constexpr uint64_t GetMinorNumber() { return minor; }
+    static constexpr uint64_t GetPatchNumber() { return patch; }
 
     static std::string GetCommitHash() { return last_commit_hash; }
     static std::string GetCommitDate() { return last_commit_date; }
     static std::string GetInstallDir() { return installdir; }
 
-    static bool HasPodio() { return JANA2_HAVE_PODIO; }
-    static bool HasROOT() { return JANA2_HAVE_ROOT; }
-    static bool HasXerces() { return JANA2_HAVE_XERCES; }
+    static constexpr bool HasPodio() { return JANA2_HAVE_PODIO; }
+    static constexpr bool HasROOT() { return JANA2_HAVE_ROOT; }
+    static constexpr bool HasXerces() { return JANA2_HAVE_XERCES; }
 
     static std::string GetVersion();
-    static constexpr size_t GetVersionNumber();
+    static constexpr uint64_t GetVersionNumber();
 
     static void PrintSplash(std::ostream& os);
     static void PrintVersionNumbers(std::ostream& os);
