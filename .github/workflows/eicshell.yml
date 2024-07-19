@@ -30,7 +30,6 @@ jobs:
             -DUSE_PODIO=ON \
             -DUSE_XERCES=ON \
             -DUSE_ZEROMQ=ON \
-            -DUSE_ASAN=ON \
             -DXercesC_DIR=/opt/local
 
     - name: make install
