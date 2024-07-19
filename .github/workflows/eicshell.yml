@@ -86,8 +86,7 @@ jobs:
           echo "--- Compiling EICrecon ---"
           git clone https://github.com/eic/EICrecon
           cd EICrecon
-          export JANA_HOME=$GITHUB_WORKSPACE/jana_home
-          cmake -S . -B build
+          cmake -S . -B build -DJANA_DIR=$GITHUB_WORKSPACE/jana_home/lib/cmake/JANA
           cmake --build build --target install -- -j8
 
 
