@@ -6,6 +6,7 @@
 #include "JPluginLoader.h"
 #include "JComponentManager.h"
 #include "JParameterManager.h"
+#include <JANA/JVersion.h>
 
 #include <dlfcn.h>
 #include <iostream>
@@ -55,6 +56,39 @@ void JPluginLoader::add_plugin(std::string plugin_name) {
     m_plugins_to_include.push_back(plugin_name);
 }
 
+void JPluginLoader::resolve_plugin_paths() {
+    // Build our list of plugin search paths.
+ 
+    // 1. First we look for plugins in the local directory
+    add_plugin_path(".");
+
+    // 2. Next we look for plugins in locations specified via parameters. (Colon-separated)
+    std::stringstream param_ss(m_plugin_paths_str);
+    std::string path;
+    while (getline(param_ss, path, ':')) add_plugin_path(path);
+
+    // 3. Next we look for plugins in locations specified via environment variable. (Colon-separated)
+    const char* jpp = getenv("JANA_PLUGIN_PATH");
+    if (jpp) {
+        std::stringstream envvar_ss(jpp);
+        while (getline(envvar_ss, path, ':')) add_plugin_path(path);
+    }
+
+    // 4. Next we look in the plugin directories relative to $JANA_HOME
+    if (const char* jana_home = getenv("JANA_HOME")) {
+        add_plugin_path(std::string(jana_home) + "/plugins/JANA");  // In case we did a system install and want to avoid conflicts.
+        add_plugin_path(std::string(jana_home) + "/plugins");
+    }
+
+    // 5. Finally we look in the JANA install directory.
+    // By checking here, the user no longer needs to set JANA_HOME in order to run built-in plugins 
+    // such as janadot and JTest. The install directory is supposed to be the same as JANA_HOME, 
+    // but we can't guarantee that because the user can set JANA_HOME to be anything they want.
+    // It would be nice if nothing in the JANA codebase itself relied on JANA_HOME, although we 
+    // won't be removing it anytime soon because of build_scripts.
+    add_plugin_path(JVersion::GetInstallDir() + "/plugins");
+}
+
 
 void JPluginLoader::add_plugin_path(std::string path) {
 
@@ -84,28 +118,7 @@ void JPluginLoader::attach_plugins(JComponentManager* jcm) {
     /// Loop over list of plugin names added via AddPlugin() and
     /// actually attach and initialize them. See AddPlugin method
     /// for more.
-
-    // Build our list of plugin search paths.
-    // 1. First we look for plugins in the local directory
-    add_plugin_path(".");
-
-    // 2. Next we look for plugins in locations specified via parameters. (Colon-separated)
-    std::stringstream param_ss(m_plugin_paths_str);
-    std::string path;
-    while (getline(param_ss, path, ':')) add_plugin_path(path);
-
-    // 3. Next we look for plugins in locations specified via environment variable. (Colon-separated)
-    const char* jpp = getenv("JANA_PLUGIN_PATH");
-    if (jpp) {
-        std::stringstream envvar_ss(jpp);
-        while (getline(envvar_ss, path, ':')) add_plugin_path(path);
-    }
-
-    // 4. Finally we look in the plugin directories relative to $JANA_HOME
-    if (const char* jana_home = getenv("JANA_HOME")) {
-        add_plugin_path(std::string(jana_home) + "/plugins/JANA");  // In case we did a system install and want to avoid conflicts.
-        add_plugin_path(std::string(jana_home) + "/plugins");
-    }
+    resolve_plugin_paths();
 
     // Add plugins specified via PLUGINS configuration parameter
     // (comma separated list).

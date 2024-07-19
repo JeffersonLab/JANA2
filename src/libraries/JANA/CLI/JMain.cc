@@ -4,7 +4,6 @@
 
 #include "JMain.h"
 
-#include <JANA/JVersion.h>
 #include <JANA/CLI/JBenchmarker.h>
 #include <JANA/CLI/JSignalHandler.h>
 
@@ -45,15 +44,6 @@ void PrintUsageOptions() {
     std::cout << "        --inspect-component <name>    Inspect a component" << std::endl;
 }
 
-void PrintVersion() {
-    /// Prints JANA version information to stdout, for use by the CLI.
-
-    std::cout << "JANA2 version:  " << JVersion::GetVersion() << std::endl;
-    if (!JVersion::is_unknown) {
-        std::cout << "Commit hash:    " << JVersion::GetCommitHash() << std::endl;
-        std::cout << "Commit date:    " << JVersion::GetCommitDate() << std::endl;
-    }
-}
 
 JApplication* CreateJApplication(UserOptions& options) {
 
@@ -85,13 +75,6 @@ JApplication* CreateJApplication(UserOptions& options) {
 
 int Execute(JApplication* app, UserOptions &options) {
 
-    std::cout << std::endl;
-    std::cout << "       |    \\      \\  |     \\    ___ \\   " << std::endl;
-    std::cout << "       |   _ \\      \\ |    _ \\      ) |" << std::endl;
-    std::cout << "   \\   |  ___ \\   |\\  |   ___ \\    __/" << std::endl;
-    std::cout << "  \\___/ _/    _\\ _| \\_| _/    _\\ _____|" << std::endl;
-    std::cout << std::endl;
-    PrintVersion();
     JSignalHandler::register_handlers(app);
 
     if (options.flags[ShowConfigs]) {

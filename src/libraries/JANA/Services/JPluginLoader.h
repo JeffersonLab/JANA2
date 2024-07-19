@@ -28,6 +28,7 @@ public:
     void add_plugin_path(std::string path);
     void attach_plugins(JComponentManager* jcm);
     void attach_plugin(std::string plugin_name);
+    void resolve_plugin_paths();
 
 private:
     Service<JParameterManager> m_params {this};

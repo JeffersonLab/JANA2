@@ -17,6 +17,7 @@
 #include <JANA/Engine/JArrowProcessingController.h>
 #include <JANA/Utils/JApplicationInspector.h>
 
+#include <sstream>
 #include <unistd.h>
 
 JApplication *japp = nullptr;
@@ -107,6 +108,12 @@ void JApplication::Initialize() {
 
     // Only run this once
     if (m_initialized) return;
+
+    std::ostringstream oss;
+    oss << "Initializing..." << std::endl;
+    JVersion::PrintSplash(oss);
+    JVersion::PrintVersionDescription(oss);
+    LOG_INFO(m_logger) << oss.str() << LOG_END;
 
     // Now that all parameters, components, plugin names, etc have been set, 
     // we can expose our builtin services to the user via GetService()
