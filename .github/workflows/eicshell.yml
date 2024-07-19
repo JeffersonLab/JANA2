@@ -1,0 +1,80 @@
+
+name: Test JANA2 against eic-shell/EICrecon
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  jana2_eicshell:
+    name: Build JANA2 on eic-shell
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: cvmfs-contrib/github-action-cvmfs@v2
+
+    - name: cmake
+      uses: eic/run-cvmfs-osg-eic-shell@main
+      with:
+        platform-release: "jug_xl:nightly"
+        run: |
+          mkdir -p $GITHUB_WORKSPACE/build
+          cd $GITHUB_WORKSPACE/build
+          cmake .. \
+            -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/jana_home \
+            -DCMAKE_CXX_STANDARD=20 \
+            -DUSE_PYTHON=ON \
+            -DUSE_ROOT=ON \
+            -DUSE_PODIO=ON \
+            -DUSE_XERCES=ON \
+            -DUSE_ZEROMQ=ON \
+            -DXercesC_DIR=/opt/local
+
+    - name: make install
+      uses: eic/run-cvmfs-osg-eic-shell@main
+      with:
+        platform-release: "jug_xl:nightly"
+        run: |
+          cd $GITHUB_WORKSPACE/build
+          make -j4 install
+
+    - name: Run JTest plugin with 100 events
+      uses: eic/run-cvmfs-osg-eic-shell@main
+      with:
+        platform-release: "jug_xl:nightly"
+        run: |
+            $GITHUB_WORKSPACE/jana_home/bin/jana \
+              -Pjana:plugin_path=$GITHUB_WORKSPACE/jana_home/plugins \
+              -Pplugins=JTest \
+              -Pjana:nevents=100
+
+    - name: Run jana-unit-tests
+      uses: eic/run-cvmfs-osg-eic-shell@main
+      with:
+        platform-release: "jug_xl:nightly"
+        run: |
+          $GITHUB_WORKSPACE/jana_home/bin/jana-unit-tests
+
+    - name: Run TimesliceExample with simple (physics event) topology
+      uses: eic/run-cvmfs-osg-eic-shell@main
+      with:
+        platform-release: "jug_xl:nightly"
+        run: |
+          echo "--- Running TimesliceExample with simple topology ------------------------------"
+          $GITHUB_WORKSPACE/jana_home/bin/jana \
+            -Pjana:plugin_path=$GITHUB_WORKSPACE/jana_home/plugins \
+            -Pplugins=TimesliceExample \
+            -Pjana:nevents=100 \
+            events.root
+
+    - name: Run TimesliceExample with complex (timeslice) topology
+      uses: eic/run-cvmfs-osg-eic-shell@main
+      with:
+        platform-release: "jug_xl:nightly"
+        run: |
+          echo "--- Running TimesliceExample with simple topology ------------------------------"
+          $GITHUB_WORKSPACE/jana_home/bin/jana -Pjana:plugin_path=$GITHUB_WORKSPACE/jana_home/plugins -Pplugins=TimesliceExample -Pjana:nevents=100 timeslices.root
+
+
