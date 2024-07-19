@@ -1,5 +1,5 @@
 
-name: Test JANA2 against eic-shell/EICrecon
+name: eic-shell
 
 on:
   push:
@@ -9,7 +9,7 @@ on:
 
 jobs:
   jana2_eicshell:
-    name: Build JANA2 on eic-shell
+    name: eic-shell
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -76,5 +76,18 @@ jobs:
         run: |
           echo "--- Running TimesliceExample with simple topology ------------------------------"
           $GITHUB_WORKSPACE/jana_home/bin/jana -Pjana:plugin_path=$GITHUB_WORKSPACE/jana_home/plugins -Pplugins=TimesliceExample -Pjana:nevents=100 timeslices.root
+
+
+    - name: Compile EICrecon
+      uses: eic/run-cvmfs-osg-eic-shell@main
+      with:
+        platform-release: "jug_xl:nightly"
+        run: |
+          echo "--- Compiling EICrecon ---"
+          git clone https://github.com/eic/EICrecon
+          cd EICrecon
+          export JANA_HOME=$GITHUB_WORKSPACE/jana_home
+          cmake -S . -B build
+          cmake --build build --target install -- -j8
 
 
