@@ -4,7 +4,6 @@
 
 #include "JMain.h"
 
-#include <JANA/JVersion.h>
 #include <JANA/CLI/JBenchmarker.h>
 #include <JANA/CLI/JSignalHandler.h>
 
@@ -76,8 +75,6 @@ JApplication* CreateJApplication(UserOptions& options) {
 
 int Execute(JApplication* app, UserOptions &options) {
 
-    JVersion::PrintSplash(std::cout);
-    JVersion::PrintVersionDescription(std::cout);
     JSignalHandler::register_handlers(app);
 
     if (options.flags[ShowConfigs]) {
