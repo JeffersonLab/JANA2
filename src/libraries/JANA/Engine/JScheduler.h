@@ -76,6 +76,10 @@ public:
     /// any more. The scheduler is thus free to reassign the arrow to one of the remaining workers.
     void last_assignment(uint32_t worker_id, JArrow* assignment, JArrowMetrics::Status result);
 
+    /// Lets a Worker, test case, or user request a specific arrow. Returns nullptr if arrow can not be 
+    /// checked up because it's no longer active or because it's already at its max parallelism.
+    JArrow* checkout(int arrow_index);
+
     /// Logger is public so that somebody else can configure it
     JLogger logger;
 

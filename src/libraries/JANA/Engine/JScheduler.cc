@@ -130,6 +130,29 @@ void JScheduler::checkin_unprotected(JArrow* assignment, JArrowMetrics::Status l
     }
 }
 
+
+JArrow* JScheduler::checkout(int arrow_index) {
+    // Note that this lets us check out Inactive arrows, whereas checkout_unprotected() does not. This because we are called by JApplicationInspector
+    // whereas checkout_unprotected is called by JWorker. This is because JArrowProcessingController::request_pause shuts off the topology
+    // instead of shutting off the workers, which in hindsight might have been the wrong choice.
+
+    std::lock_guard<std::mutex> lock(m_mutex);
+
+    if (arrow_index >= m_topology_state.arrow_states.size()) return nullptr;
+
+    ArrowState& candidate = m_topology_state.arrow_states[arrow_index];
+
+    if ((candidate.status == ArrowStatus::Active || candidate.status == ArrowStatus::Inactive) &&   // This excludes Draining arrows
+        (candidate.arrow->is_parallel() || candidate.thread_count == 0)) {      // This excludes non-parallel arrows that are already assigned to a worker
+
+        m_topology_state.arrow_states[arrow_index].thread_count += 1;
+        return candidate.arrow;
+
+    }
+    return nullptr;
+}
+
+
 JArrow* JScheduler::checkout_unprotected() {
 
     // Choose a new arrow. Loop over all arrows, starting at where we last left off, and pick the first arrow that works

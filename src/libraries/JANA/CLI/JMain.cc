@@ -40,6 +40,7 @@ void PrintUsageOptions() {
     std::cout << "   -l   --loadconfigs <file>          Load configuration parameters from file" << std::endl;
     std::cout << "   -d   --dumpconfigs <file>          Dump configuration parameters to file" << std::endl;
     std::cout << "   -b   --benchmark                   Run in benchmark mode" << std::endl;
+    std::cout << "   -i   --interactive                 Run in interactive mode" << std::endl;
     std::cout << "        --inspect-collection <name>   Inspect a collection" << std::endl;
     std::cout << "        --inspect-component <name>    Inspect a component" << std::endl;
 }
@@ -136,7 +137,14 @@ int Execute(JApplication* app, UserOptions &options) {
             }
         }
     }
-
+    else if (options.flags[Interactive]) {
+        app->Initialize();
+        app->Inspect();
+        // TODO: Resume and Scale won't work because Inspector calls nonblocking Run()
+        //       Another thing we could do is app->RequestInspection(); app->Run(true);
+        //       as long as we rejigger app->Run() to jump straight to Inspect() when m_inspecting is set
+        //       Or we could wait until we factor out Run() into JSupervisor
+    }
     else if (options.flags[Benchmark]) {
         // Run JANA in benchmark mode
         JBenchmarker benchmarker(app); // Benchmarking params override default params
@@ -184,6 +192,8 @@ UserOptions ParseCommandLineOptions(int nargs, char *argv[], bool expect_extra) 
     tokenizer["--dumpconfigs"] = DumpConfigs;
     tokenizer["-b"] = Benchmark;
     tokenizer["--benchmark"] = Benchmark;
+    tokenizer["-i"] = Interactive;
+    tokenizer["--interactive"] = Interactive;
     tokenizer["--inspect-collection"] = InspectCollection;
     tokenizer["--inspect-component"] = InspectComponent;
 
@@ -253,6 +263,10 @@ UserOptions ParseCommandLineOptions(int nargs, char *argv[], bool expect_extra) 
                     options.component_query = argv[i + 1];
                     i += 1;
                 } 
+                break;
+
+            case Interactive:
+                options.flags[Interactive] = true;
                 break;
 
             case Unknown:

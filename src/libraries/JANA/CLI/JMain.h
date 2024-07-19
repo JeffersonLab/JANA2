@@ -7,7 +7,7 @@
 
 namespace jana {
 
-enum Flag {Unknown, ShowUsage, ShowVersion, ShowConfigs, LoadConfigs, DumpConfigs, Benchmark, InspectCollection, InspectComponent};
+enum Flag {Unknown, ShowUsage, ShowVersion, ShowConfigs, LoadConfigs, DumpConfigs, Benchmark, InspectCollection, InspectComponent, Interactive};
 
 struct UserOptions {
     /// Code representation of all user options.

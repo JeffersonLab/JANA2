@@ -62,6 +62,7 @@ docs/latex/*
 cmake-build*/
 .idea/*
 .cache
+compile_commands.json
 
 # PODIO generated artifacts
 src/examples/PodioExample/datamodel/*

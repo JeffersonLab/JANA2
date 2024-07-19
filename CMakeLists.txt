@@ -37,6 +37,8 @@ set( CMAKE_BUILD_WITH_INSTALL_RPATH FALSE )
 set( CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib" )
 set( CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE )
 
+# Generate a compilation database, e.g. for IDE autocompletion
+set( CMAKE_EXPORT_COMPILE_COMMANDS TRUE )
 
 # Useful for debugging. Copied from:
 # https://stackoverflow.com/questions/9298278/cmake-print-out-all-accessible-variables-in-a-script
