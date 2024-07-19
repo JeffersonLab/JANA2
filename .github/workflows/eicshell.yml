@@ -46,7 +46,10 @@ jobs:
       with:
         platform-release: "jug_xl:nightly"
         run: |
-          $GITHUB_WORKSPACE/jana_home/bin/jana -PPLUGINS=JTest -Pjana:nevents=100
+            $GITHUB_WORKSPACE/jana_home/bin/jana \
+              -Pjana:plugin_path=$GITHUB_WORKSPACE/jana_home/plugins \
+              -Pplugins=JTest \
+              -Pjana:nevents=100
 
     - name: Run jana-unit-tests
       uses: eic/run-cvmfs-osg-eic-shell@main
@@ -61,7 +64,11 @@ jobs:
         platform-release: "jug_xl:nightly"
         run: |
           echo "--- Running TimesliceExample with simple topology ------------------------------"
-          $GITHUB_WORKSPACE/jana_home/bin/jana -Pjana:plugin_path=$GITHUB_WORKSPACE/jana_home/plugins -Pplugins=TimesliceExample -Pjana:nevents=100 events.root
+          $GITHUB_WORKSPACE/jana_home/bin/jana \
+            -Pjana:plugin_path=$GITHUB_WORKSPACE/jana_home/plugins \
+            -Pplugins=TimesliceExample \
+            -Pjana:nevents=100 \
+            events.root
 
     - name: Run TimesliceExample with complex (timeslice) topology
       uses: eic/run-cvmfs-osg-eic-shell@main
