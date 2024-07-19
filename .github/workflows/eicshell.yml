@@ -29,7 +29,9 @@ jobs:
             -DUSE_ROOT=ON \
             -DUSE_PODIO=ON \
             -DUSE_XERCES=ON \
-            -DUSE_ZEROMQ=ON
+            -DUSE_ZEROMQ=ON \
+            -DUSE_ASAN=ON \
+            -DXercesC_DIR=/opt/local
 
     - name: make install
       uses: eic/run-cvmfs-osg-eic-shell@main
