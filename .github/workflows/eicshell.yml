@@ -89,4 +89,24 @@ jobs:
           cmake -S . -B build -DJANA_DIR=$GITHUB_WORKSPACE/jana_home/lib/cmake/JANA
           cmake --build build --target install -- -j8
 
+    - name: Generate EICrecon input data
+      uses: eic/run-cvmfs-osg-eic-shell@main
+      with:
+        platform-release: "jug_xl:nightly"
+        setup: "/opt/detector/epic-main/bin/thisepic.sh"
+        run: |
+          echo "--- Generating EICrecon input data ---"
+          npsim --compactFile ${DETECTOR_PATH}/${DETECTOR}_craterlake.xml \
+            -G --random.seed 1 --gun.particle "e-" --gun.momentumMin "1*GeV" \
+            --gun.momentumMax "20*GeV" --gun.distribution "uniform" -N 20 \
+            --outputFile sim_e_1GeV_20GeV_craterlake.edm4hep.root -v WARNING
+
+    - name: Run EICrecon
+      uses: eic/run-cvmfs-osg-eic-shell@main
+      with:
+        platform-release: "jug_xl:nightly"
+        setup: "/opt/detector/epic-main/bin/thisepic.sh"
+        run: |
+          echo "--- Running EICrecon ---"
+          eicrecon sim_e_1GeV_20GeV_craterlake.edm4hep.root
 
