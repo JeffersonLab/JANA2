@@ -48,7 +48,7 @@ jobs:
           chmod +x setenv.sh
      
       - name: Create version.xml
-      run: |
+        run: |
           cat <<EOF > version.xml
           <?xml version="1.0" encoding="UTF-8"?>
           <?xml-stylesheet type="text/xsl" href="https://halldweb.jlab.org/halld_versions/version7.xsl"?>
@@ -83,3 +83,4 @@ jobs:
       - name: Setup Environment
         run: |
           source setenv.sh
+          echo $JANA_HOME
