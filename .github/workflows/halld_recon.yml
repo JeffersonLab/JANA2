@@ -31,7 +31,8 @@ jobs:
       
       - name: checking cvmfs /group/halld
         run: |
-          cat /cvmfs/group/halld/Software/build_scripts/gluex_env_boot_jlab.sh
+          ls /cvmfs/oasis.opensciencegrid.org/gluex/group/halld
+          cat /cvmfs/oasis.opensciencegrid.org/gluex/group/halld/Software/build_scripts/gluex_env_boot_jlab.sh
       
       # - name: Create setenv.csh
       #   run: |
