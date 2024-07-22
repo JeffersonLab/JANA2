@@ -14,22 +14,27 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - uses: cvmfs-contrib/github-action-cvmfs@v4
+      # - uses: cvmfs-contrib/github-action-cvmfs@v4
       
-      - name: Test CernVM-FS
-        run: |
-          ls /cvmfs/lhcb.cern.ch
-          ls /cvmfs/auger.egi.eu
-          ls /cvmfs/dune.opensciencegrid.org
-          ls /cvmfs/sw.hsf.org
-          ls /cvmfs/sft.cern.ch
+      # - name: Test CernVM-FS
+      #   run: |
+      #     ls /cvmfs/lhcb.cern.ch
+      #     ls /cvmfs/auger.egi.eu
+      #     ls /cvmfs/dune.opensciencegrid.org
+      #     ls /cvmfs/sw.hsf.org
+      #     ls /cvmfs/sft.cern.ch
       
-      - name: Check CMake Installation
+      # - name: Check CMake Installation
+      #   run: |
+      #     if command -v cmake >/dev/null 2>&1; then
+      #       echo "CMake is installed."
+      #       cmake --version
+      #     else
+      #       echo "CMake is not installed."
+      #       exit 1
+      #     fi
+      
+      - name: checking Current dir structure
         run: |
-          if command -v cmake >/dev/null 2>&1; then
-            echo "CMake is installed."
-            cmake --version
-          else
-            echo "CMake is not installed."
-            exit 1
-          fi
+          echo $GITHUB_WORKSPACE
+          ls $GITHUB_WORKSPACE
