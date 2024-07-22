@@ -29,60 +29,64 @@ jobs:
           echo $GITHUB_WORKSPACE
           ls $GITHUB_WORKSPACE
       
-      - name: Create setenv.csh
+      - name: checking cvmfs /group/halld
         run: |
-          echo '#!/bin/bash' > setenv.sh
-          echo 'export CC=$(which gcc)' >> setenv.sh
-          echo 'export CXX=$(which g++)' >> setenv.sh
-          echo 'export PROJECT_ROOT=$GITHUB_WORKSPACE' >> setenv.sh
-          echo 'export BUILD_SCRIPTS=/group/halld/Software/build_scripts' >> setenv.sh
-          echo 'export JANA_HOME=$PROJECT_ROOT/JANA2' >> setenv.sh
-          echo 'export JANA_PLUGIN_PATH=$PROJECT_ROOT/JANA2/plugins' >> setenv.sh
-          echo 'source $BUILD_SCRIPTS/gluex_env_boot_jlab.sh' >> setenv.sh
-          echo 'gxenv $PROJECT_ROOT/version.xml' >> setenv.sh
-          chmod +x setenv.sh
+          cat /cvmfs/group/halld/Software/build_scripts/gluex_env_boot_jlab.sh
+      
+      # - name: Create setenv.csh
+      #   run: |
+      #     echo '#!/bin/bash' > setenv.sh
+      #     echo 'export CC=$(which gcc)' >> setenv.sh
+      #     echo 'export CXX=$(which g++)' >> setenv.sh
+      #     echo 'export PROJECT_ROOT=$GITHUB_WORKSPACE' >> setenv.sh
+      #     echo 'export BUILD_SCRIPTS=/group/halld/Software/build_scripts' >> setenv.sh
+      #     echo 'export JANA_HOME=$PROJECT_ROOT/JANA2' >> setenv.sh
+      #     echo 'export JANA_PLUGIN_PATH=$PROJECT_ROOT/JANA2/plugins' >> setenv.sh
+      #     echo 'source $BUILD_SCRIPTS/gluex_env_boot_jlab.sh' >> setenv.sh
+      #     echo 'gxenv $PROJECT_ROOT/version.xml' >> setenv.sh
+      #     chmod +x setenv.sh
 
-      - name: Create version.xml
-        run: |
-          echo '<?xml version="1.0" encoding="UTF-8"?>' > version.xml
-          echo '<?xml-stylesheet type="text/xsl" href="https://halldweb.jlab.org/halld_versions/version7.xsl"?>' >> version.xml
-          echo '<gversions file="version_5.12.0.xml" date="2023-10-13">' >> version.xml
-          echo '  <description>Update to amptools, gluex_root_analysis, halld_recont, halld_sim, hdgeant4, hd_utilities</description>' >> version.xml
-          echo '  <package name="amptools" version="0.15.1"/>' >> version.xml
-          echo '  <package name="ccdb" version="1.06.11"/>' >> version.xml
-          echo '  <package name="cernlib" version="2005" word_length="64-bit"/>' >> version.xml
-          echo '  <package name="diracxx" version="2.0.2"/>' >> version.xml
-          echo '  <package name="evio" version="4.4.6"/>' >> version.xml
-          echo '  <package name="evtgen" version="01.07.00"/>' >> version.xml
-          echo '  <package name="geant4" version="10.04.p02"/>' >> version.xml
-          echo '  <package name="gluex_MCwrapper" version="v2.7.0"/>' >> version.xml
-          echo '  <package name="gluex_root_analysis" version="1.25.0"/>' >> version.xml
-          echo '  <package name="halld_recon" version="4.42.0"/>' >> version.xml
-          echo '  <package name="halld_sim" version="4.46.0"/>' >> version.xml
-          echo '  <package name="hdds" version="4.15.0"/>' >> version.xml
-          echo '  <package name="hdgeant4" version="2.36.0"/>' >> version.xml
-          echo '  <package name="hd_utilities" version="1.46"/>' >> version.xml
-          echo '  <package name="hepmc" version="2.06.10"/>' >> version.xml
-          echo '  <package name="jana" version="2.1.2" home=$GITHUB_WORKSPACE />' >> version.xml
-          echo '  <package name="lapack" version="3.9.0"/>' >> version.xml
-          echo '  <package name="photos" version="3.61"/>' >> version.xml
-          echo '  <package name="rcdb" version="0.07.01"/>' >> version.xml
-          echo '  <package name="root" version="6.24.04"/>' >> version.xml
-          echo '  <package name="sqlitecpp" version="3.1.1"/>' >> version.xml
-          echo '  <package name="sqlite" version="3.36.0" year="2021"/>' >> version.xml
-          echo '  <package name="xerces-c" version="3.2.3"/>' >> version.xml
-          echo '</gversions>' >> version.xml
+      # - name: Create version.xml
+      #   run: |
+      #     echo '<?xml version="1.0" encoding="UTF-8"?>' > version.xml
+      #     echo '<?xml-stylesheet type="text/xsl" href="https://halldweb.jlab.org/halld_versions/version7.xsl"?>' >> version.xml
+      #     echo '<gversions file="version_5.12.0.xml" date="2023-10-13">' >> version.xml
+      #     echo '  <description>Update to amptools, gluex_root_analysis, halld_recont, halld_sim, hdgeant4, hd_utilities</description>' >> version.xml
+      #     echo '  <package name="amptools" version="0.15.1"/>' >> version.xml
+      #     echo '  <package name="ccdb" version="1.06.11"/>' >> version.xml
+      #     echo '  <package name="cernlib" version="2005" word_length="64-bit"/>' >> version.xml
+      #     echo '  <package name="diracxx" version="2.0.2"/>' >> version.xml
+      #     echo '  <package name="evio" version="4.4.6"/>' >> version.xml
+      #     echo '  <package name="evtgen" version="01.07.00"/>' >> version.xml
+      #     echo '  <package name="geant4" version="10.04.p02"/>' >> version.xml
+      #     echo '  <package name="gluex_MCwrapper" version="v2.7.0"/>' >> version.xml
+      #     echo '  <package name="gluex_root_analysis" version="1.25.0"/>' >> version.xml
+      #     echo '  <package name="halld_recon" version="4.42.0"/>' >> version.xml
+      #     echo '  <package name="halld_sim" version="4.46.0"/>' >> version.xml
+      #     echo '  <package name="hdds" version="4.15.0"/>' >> version.xml
+      #     echo '  <package name="hdgeant4" version="2.36.0"/>' >> version.xml
+      #     echo '  <package name="hd_utilities" version="1.46"/>' >> version.xml
+      #     echo '  <package name="hepmc" version="2.06.10"/>' >> version.xml
+      #     echo '  <package name="jana" version="2.1.2" home=$GITHUB_WORKSPACE />' >> version.xml
+      #     echo '  <package name="lapack" version="3.9.0"/>' >> version.xml
+      #     echo '  <package name="photos" version="3.61"/>' >> version.xml
+      #     echo '  <package name="rcdb" version="0.07.01"/>' >> version.xml
+      #     echo '  <package name="root" version="6.24.04"/>' >> version.xml
+      #     echo '  <package name="sqlitecpp" version="3.1.1"/>' >> version.xml
+      #     echo '  <package name="sqlite" version="3.36.0" year="2021"/>' >> version.xml
+      #     echo '  <package name="xerces-c" version="3.2.3"/>' >> version.xml
+      #     echo '</gversions>' >> version.xml
 
-      - name: Display Files
-        run: |
-          source setenv.sh
+      # - name: Display Files
+      #   run: |
+      #     source setenv.sh
 
-      - name: Check CMake Installation
-        run: |
-          if command -v cmake >/dev/null 2>&1; then
-            echo "CMake is installed."
-            cmake --version
-          else
-            echo "CMake is not installed."
-            exit 1
-          fi
+      # - name: Check CMake Installation
+      #   run: |
+      #     if command -v cmake >/dev/null 2>&1; then
+      #       echo "CMake is installed."
+      #       cmake --version
+      #     else
+      #       echo "CMake is not installed."
+      #       exit 1
+      #     fi
