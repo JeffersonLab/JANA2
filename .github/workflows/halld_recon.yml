@@ -1,0 +1,25 @@
+name: halld_recon
+
+on:
+  push:
+    branches: [rasool_gluex_ci_testing]
+  pull_requests:
+    branches: [rasool_gluex_ci_testing]
+
+
+jobs:
+  jana2_halld_recon:
+    name: halld_recon
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cvmfs-contrib/github-action-cvmfs@v4
+      
+      - name: Test CernVM-FS
+        run: |
+          ls /cvmfs/lhcb.cern.ch
+          ls /cvmfs/auger.egi.eu
+          ls /cvmfs/dune.opensciencegrid.org
+          ls /cvmfs/sw.hsf.org
+          ls /cvmfs/sft.cern.ch
