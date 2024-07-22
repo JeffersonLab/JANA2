@@ -43,7 +43,7 @@ jobs:
           echo 'export BUILD_SCRIPTS=/cvmfs/oasis.opensciencegrid.org/gluex/group/halld/Software/build_scripts' >> setenv.sh
           echo 'export JANA_HOME=$PROJECT_ROOT/JANA2' >> setenv.sh
           echo 'export JANA_PLUGIN_PATH=$PROJECT_ROOT/JANA2/plugins' >> setenv.sh
-          echo 'source $BUILD_SCRIPTS/gluex_env_boot_jlab.sh' >> setenv.sh
+          echo 'source $BUILD_SCRIPTS/gluex_env_boot_jlab.sh --bs $BUILD_SCRIPTS' >> setenv.sh
           echo 'gxenv $PROJECT_ROOT/version.xml' >> setenv.sh
           chmod +x setenv.sh
      
