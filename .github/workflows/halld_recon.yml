@@ -23,3 +23,13 @@ jobs:
           ls /cvmfs/dune.opensciencegrid.org
           ls /cvmfs/sw.hsf.org
           ls /cvmfs/sft.cern.ch
+      
+      - name: Check CMake Installation
+        run: |
+          if command -v cmake >/dev/null 2>&1; then
+            echo "CMake is installed."
+            cmake --version
+          else
+            echo "CMake is not installed."
+            exit 1
+          fi
