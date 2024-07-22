@@ -3,7 +3,7 @@ name: halld_recon
 on:
   push:
     branches: [rasool_gluex_ci_testing]
-  pull_requests:
+  pull_request:
     branches: [rasool_gluex_ci_testing]
 
 
