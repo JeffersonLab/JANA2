@@ -85,6 +85,8 @@ jobs:
             echo 'Listing cvmfs files'
             ls /group/halld/
             ls /JANA2/
+            source setenv.sh
+            echo $JANA_HOME
           "
       # - name: Setup Environment
       #   run: |
