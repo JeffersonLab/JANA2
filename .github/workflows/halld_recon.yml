@@ -16,6 +16,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: cvmfs-contrib/github-action-cvmfs@v4
       
+      - name: Install Perl Modules
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y perl cpanminus
+          cpanm XML::Simple
+
       # - name: Test CernVM-FS
       #   run: |
       #     ls /cvmfs/oasis.opensciencegrid.org/gluex/group/halld
