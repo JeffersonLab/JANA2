@@ -18,8 +18,7 @@ jobs:
 
       - name: Test CernVM-FS inside the container
         run: |
-          ls /cvmfs/oasis.opensciencegrid.org/gluex/group/halld
-          ls /cvmfs/lhcb.cern.ch
+          ls -l /cvmfs
 
       - name: Run AlmaLinux 9 Container with CVMFS Mount
         run: |
