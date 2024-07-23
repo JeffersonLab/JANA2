@@ -22,6 +22,8 @@ jobs:
             --mount type=bind,source=/cvmfs,target=/cvmfs \
             raiqarasool/rjones-gluex:latest /bin/bash -c "
             echo 'Running inside AlmaLinux container...'
+            echo "Listing /cvmfs files"
+            ls /cvmfs/lhcb.cern.ch
             ls /cvmfs/oasis.opensciencegrid.org/
           "
       # - name: Test CernVM-FS inside the container

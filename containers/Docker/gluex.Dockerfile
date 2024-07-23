@@ -60,7 +60,6 @@ RUN dnf -y install https://zeus.phys.uconn.edu/halld/gridwork/dcache-srmclient-3
 
 # Fix for Silverblue's toolbox utility
 RUN dnf -y install passwd sudo
-RUN ln -s /cvmfs/oasis.opensciencegrid.org/gluex/group /group
 RUN touch /.dockerenv
 
 
