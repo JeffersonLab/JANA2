@@ -16,19 +16,6 @@ jobs:
       - uses: actions/checkout@v4
       - uses: cvmfs-contrib/github-action-cvmfs@v4
 
-      # - name: Test CernVM-FS Mounting
-      #   run: |
-      #     ls /cvmfs/oasis.opensciencegrid.org/gluex/group/halld
-
-      - name: Run AlmaLinux 9 Container with CVMFS Mount
-        run: |
-          docker run --rm \
-            --volume /cvmfs/oasis.opensciencegrid.org/gluex/group/:/group \
-            raiqarasool/rjones-gluex:latest /bin/bash -c "
-            echo 'Running inside AlmaLinux container...'
-            echo 'Listing cvmfs files'
-            ls /group
-          "
       # - name: Test CernVM-FS mounting
       #   run: |
       #     ls /cvmfs/oasis.opensciencegrid.org/gluex/group/halld
@@ -37,63 +24,68 @@ jobs:
       #     ls /cvmfs/dune.opensciencegrid.org
       #     ls /cvmfs/sw.hsf.org
       #     ls /cvmfs/sft.cern.ch
-    
 
       # - name: checking Current dir structure
       #   run: |
       #     echo $GITHUB_WORKSPACE
       #     ls $GITHUB_WORKSPACE
       
-      # - name: checking cvmfs /group/halld
-      #   run: |
-      #     ls /cvmfs/oasis.opensciencegrid.org/gluex/group/halld
-      
-      # - name: Create setenv.csh
-      #   run: |
-      #     echo '#!/bin/bash' > setenv.sh
-      #     echo 'export CC=$(which gcc)' >> setenv.sh
-      #     echo 'export CXX=$(which g++)' >> setenv.sh
-      #     echo 'export PROJECT_ROOT=$GITHUB_WORKSPACE' >> setenv.sh
-      #     echo 'export BUILD_SCRIPTS=/cvmfs/oasis.opensciencegrid.org/gluex/group/halld/Software/build_scripts' >> setenv.sh
-      #     echo 'export JANA_HOME=$PROJECT_ROOT/JANA2' >> setenv.sh
-      #     echo 'export JANA_PLUGIN_PATH=$PROJECT_ROOT/JANA2/plugins' >> setenv.sh
-      #     echo 'source $BUILD_SCRIPTS/gluex_env_boot_jlab.sh --bs $BUILD_SCRIPTS' >> setenv.sh
-      #     echo 'gxenv $PROJECT_ROOT/version.xml' >> setenv.sh
-      #     chmod +x setenv.sh
+      - name: Create setenv.csh
+        run: |
+          echo '#!/bin/bash' > setenv.sh
+          echo 'export CC=$(which gcc)' >> setenv.sh
+          echo 'export CXX=$(which g++)' >> setenv.sh
+          echo 'export BUILD_SCRIPTS=/group/halld/Software/build_scripts' >> setenv.sh
+          echo 'export JANA_HOME=/JANA2' >> setenv.sh
+          echo 'export JANA_PLUGIN_PATH=/JANA2/plugins' >> setenv.sh
+          echo 'source $BUILD_SCRIPTS/gluex_env_boot_jlab.sh --bs $BUILD_SCRIPTS' >> setenv.sh
+          echo 'gxenv /JANA2/version.xml' >> setenv.sh
+          chmod +x setenv.sh
      
-      # - name: Create version.xml
-      #   run: |
-      #     cat <<EOF > version.xml
-      #     <?xml version="1.0" encoding="UTF-8"?>
-      #     <?xml-stylesheet type="text/xsl" href="https://halldweb.jlab.org/halld_versions/version7.xsl"?>
-      #     <gversions file="version_5.12.0.xml" date="2023-10-13">
-      #       <description>Update to amptools, gluex_root_analysis, halld_recont, halld_sim, hdgeant4, hd_utilities</description>
-      #       <package name="amptools" version="0.15.1"/>
-      #       <package name="ccdb" version="1.06.11"/>
-      #       <package name="cernlib" version="2005" word_length="64-bit"/>
-      #       <package name="diracxx" version="2.0.2"/>
-      #       <package name="evio" version="4.4.6"/>
-      #       <package name="evtgen" version="01.07.00"/>
-      #       <package name="geant4" version="10.04.p02"/>
-      #       <package name="gluex_MCwrapper" version="v2.7.0"/>
-      #       <package name="gluex_root_analysis" version="1.25.0"/>
-      #       <package name="halld_recon" version="4.42.0"/>
-      #       <package name="halld_sim" version="4.46.0"/>
-      #       <package name="hdds" version="4.15.0"/>
-      #       <package name="hdgeant4" version="2.36.0"/>
-      #       <package name="hd_utilities" version="1.46"/>
-      #       <package name="hepmc" version="2.06.10"/>
-      #       <package name="jana" version="2.1.2" home="$GITHUB_WORKSPACE"/>
-      #       <package name="lapack" version="3.9.0"/>
-      #       <package name="photos" version="3.61"/>
-      #       <package name="rcdb" version="0.07.01"/>
-      #       <package name="root" version="6.24.04"/>
-      #       <package name="sqlitecpp" version="3.1.1"/>
-      #       <package name="sqlite" version="3.36.0" year="2021"/>
-      #       <package name="xerces-c" version="3.2.3"/>
-      #     </gversions>
-      #     EOF
+      - name: Create version.xml
+        run: |
+          cat <<EOF > version.xml
+          <?xml version="1.0" encoding="UTF-8"?>
+          <?xml-stylesheet type="text/xsl" href="https://halldweb.jlab.org/halld_versions/version7.xsl"?>
+          <gversions file="version_5.12.0.xml" date="2023-10-13">
+            <description>Update to amptools, gluex_root_analysis, halld_recont, halld_sim, hdgeant4, hd_utilities</description>
+            <package name="amptools" version="0.15.1"/>
+            <package name="ccdb" version="1.06.11"/>
+            <package name="cernlib" version="2005" word_length="64-bit"/>
+            <package name="diracxx" version="2.0.2"/>
+            <package name="evio" version="4.4.6"/>
+            <package name="evtgen" version="01.07.00"/>
+            <package name="geant4" version="10.04.p02"/>
+            <package name="gluex_MCwrapper" version="v2.7.0"/>
+            <package name="gluex_root_analysis" version="1.25.0"/>
+            <package name="halld_recon" version="4.42.0"/>
+            <package name="halld_sim" version="4.46.0"/>
+            <package name="hdds" version="4.15.0"/>
+            <package name="hdgeant4" version="2.36.0"/>
+            <package name="hd_utilities" version="1.46"/>
+            <package name="hepmc" version="2.06.10"/>
+            <package name="jana" version="2.1.2" home="/JANA2/"/>
+            <package name="lapack" version="3.9.0"/>
+            <package name="photos" version="3.61"/>
+            <package name="rcdb" version="0.07.01"/>
+            <package name="root" version="6.24.04"/>
+            <package name="sqlitecpp" version="3.1.1"/>
+            <package name="sqlite" version="3.36.0" year="2021"/>
+            <package name="xerces-c" version="3.2.3"/>
+          </gversions>
+          EOF
       
+      - name: Run AlmaLinux 9 Container with CVMFS Mount
+        run: |
+          docker run --rm \
+            --volume /cvmfs/oasis.opensciencegrid.org/gluex/group/:/group \
+            --mount type=bind,source=${{ github.workspace }},target=/JANA2 \
+            raiqarasool/rjones-gluex:latest /bin/bash -c "
+            echo 'Running inside AlmaLinux container...'
+            echo 'Listing cvmfs files'
+            ls /group/halld/
+            ls /JANA2/
+          "
       # - name: Setup Environment
       #   run: |
       #     source setenv.sh
