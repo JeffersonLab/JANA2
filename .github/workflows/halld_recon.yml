@@ -11,28 +11,29 @@ jobs:
   jana2_halld_recon:
     name: halld_recon
     runs-on: ubuntu-latest
-    container:
-      image: almalinux:9
 
     steps:
       - uses: actions/checkout@v4
       - uses: cvmfs-contrib/github-action-cvmfs@v4
-      
-      - name: Install Perl Modules
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y perl cpanminus
-          cpanm XML::Simple
 
-      - name: Test CernVM-FS
+      - name: Run AlmaLinux 9 Container with CVMFS Mount
         run: |
-          ls /cvmfs/oasis.opensciencegrid.org/gluex/group/halld
-          ls /cvmfs/lhcb.cern.ch
-          ls /cvmfs/auger.egi.eu
-          ls /cvmfs/dune.opensciencegrid.org
-          ls /cvmfs/sw.hsf.org
-          ls /cvmfs/sft.cern.ch
-      
+          docker run -it --rm \
+            --mount type=bind,source=/cvmfs,target=/cvmfs \
+            raiqarasool/rjones-gluex:latest /bin/bash -c "
+            echo 'Running inside AlmaLinux container...'
+            ls /cvmfs/oasis.opensciencegrid.org/gluex/group/halld
+          "
+      # - name: Test CernVM-FS inside the container
+      #   run: |
+      #     ls /cvmfs/oasis.opensciencegrid.org/gluex/group/halld
+      #     ls /cvmfs/lhcb.cern.ch
+      #     ls /cvmfs/auger.egi.eu
+      #     ls /cvmfs/dune.opensciencegrid.org
+      #     ls /cvmfs/sw.hsf.org
+      #     ls /cvmfs/sft.cern.ch
+    
+
       # - name: checking Current dir structure
       #   run: |
       #     echo $GITHUB_WORKSPACE
