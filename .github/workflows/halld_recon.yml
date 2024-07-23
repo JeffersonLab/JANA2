@@ -22,7 +22,7 @@ jobs:
             --volume /cvmfs:/cvmfs \
             raiqarasool/rjones-gluex:latest /bin/bash -c "
             echo 'Running inside AlmaLinux container...'
-            echo "Listing /cvmfs files"
+            echo "Listing cvmfs files"
             ls /cvmfs/lhcb.cern.ch
             ls /cvmfs/oasis.opensciencegrid.org/
           "
