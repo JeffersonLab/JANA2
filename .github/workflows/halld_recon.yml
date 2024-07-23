@@ -16,6 +16,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: cvmfs-contrib/github-action-cvmfs@v4
 
+      - name: Test CernVM-FS inside the container
+        run: |
+          ls /cvmfs/oasis.opensciencegrid.org/gluex/group/halld
+          ls /cvmfs/lhcb.cern.ch
+
       - name: Run AlmaLinux 9 Container with CVMFS Mount
         run: |
           docker run --rm \
@@ -23,8 +28,8 @@ jobs:
             raiqarasool/rjones-gluex:latest /bin/bash -c "
             echo 'Running inside AlmaLinux container...'
             echo 'Listing cvmfs files'
+            ls /cvmfs/oasis.opensciencegrid.org/gluex/group/halld
             ls /cvmfs/lhcb.cern.ch
-            ls /cvmfs/oasis.opensciencegrid.org/
           "
       # - name: Test CernVM-FS inside the container
       #   run: |
