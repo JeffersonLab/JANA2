@@ -8,7 +8,14 @@
 # usage: [as root] $ docker build Dockerfile .
 #
 
-FROM docker.io/almalinux:9
+FROM almalinux:9
+
+
+# Add JLab CA certificate
+ADD http://pki.jlab.org/JLabCA.crt /etc/pki/ca-trust/source/anchors/JLabCA.crt
+# Update CA certificates
+RUN chmod 644 /etc/pki/ca-trust/source/anchors/JLabCA.crt && update-ca-trust
+
 
 # install the necessary yum repositories
 RUN dnf -y update
