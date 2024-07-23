@@ -19,7 +19,7 @@ jobs:
       - name: Run AlmaLinux 9 Container with CVMFS Mount
         run: |
           docker run --rm \
-            --mount type=bind,source=/cvmfs,target=/cvmfs \
+            --volume /cvmfs:/cvmfs \
             raiqarasool/rjones-gluex:latest /bin/bash -c "
             echo 'Running inside AlmaLinux container...'
             echo "Listing /cvmfs files"
