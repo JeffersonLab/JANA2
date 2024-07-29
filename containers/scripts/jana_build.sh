@@ -17,5 +17,5 @@ mkdir -p build
 cd build
 
 echo "Building start"
-cmake3 $JANA_HOME -DUSE_XERCES=1
+cmake3 $JANA_HOME -DUSE_XERCES=1 -DCMAKE_CXX_STANDARD=17
 make -j8 install
