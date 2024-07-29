@@ -39,8 +39,11 @@ jobs:
           echo 'export PROJECT_ROOT=/workscope' >> setenv.sh
           echo 'export JANA_HOME=$PROJECT_ROOT/JANA2' >> setenv.sh
           echo 'export JANA_PLUGIN_PATH=$PROJECT_ROOT/JANA2/plugins' >> setenv.sh
+          echo 'I am before running gluex_env_boot_jlab.sh: $BUILD_SCRIPTS' >>setenv.sh
           echo 'source $BUILD_SCRIPTS/gluex_env_boot_jlab.sh --bs $BUILD_SCRIPTS' >> setenv.sh
-          echo 'gxenv /JANA2/version.xml' >> setenv.sh
+          echo 'I am after running gluex_env_boot_jlab.sh: $BUILD_SCRIPTS' >>setenv.sh
+          echo 'gxenv $PROJECT_ROOT/JANA2/version.xml' >> setenv.sh
+          echo 'I am after gxenv version.xml: $BUILD_SCRIPTS' >>setenv.sh
           chmod +x setenv.sh
      
       - name: Create version.xml
@@ -85,7 +88,8 @@ jobs:
             echo 'Running inside AlmaLinux container...'
             echo 'Listing cvmfs files'
             ls /group/halld/Software/build_scripts
-            ls /JANA2/
+            cd /workscope/JANA2
+            ls /workscope/JANA2/
             source setenv.sh
             echo $JANA_HOME
           "
