@@ -18,7 +18,7 @@ jobs:
           path: JANA2
 
       - uses: cvmfs-contrib/github-action-cvmfs@v4
-      
+
       - name: Make all container scripts executable
         run: |
           ls .
@@ -29,8 +29,8 @@ jobs:
           docker run --rm \
             --user $(id -u):$(id -g) \
             --volume /cvmfs/oasis.opensciencegrid.org/gluex/group/:/group \
-            --mount type=bind,source=${{ github.workspace }},target=/ \
-            raiqarasool/rjones-gluex:latest /bin/bash -c "source /JANA2/containers/scripts/jana_build.sh"
+            --mount type=bind,source=${{ github.workspace }},target=/workspace \
+            raiqarasool/rjones-gluex:latest /bin/bash -c "source /workspace/JANA2/containers/scripts/jana_build.sh"
             
       - name: Git Clone Halld_recon
         run: |
@@ -43,8 +43,8 @@ jobs:
           docker run --rm \
             --user $(id -u):$(id -g) \
             --volume /cvmfs/oasis.opensciencegrid.org/gluex/group/:/group \
-            --mount type=bind,source=${{ github.workspace }},target=/ \
-            raiqarasool/rjones-gluex:latest /bin/bash -c "source /JANA2/containers/scripts/halld_recon_build.sh"
+            --mount type=bind,source=${{ github.workspace }},target=/workspace \
+            raiqarasool/rjones-gluex:latest /bin/bash -c "source /workspace/JANA2/containers/scripts/halld_recon_build.sh"
             
 
 
