@@ -10,4 +10,4 @@ gxenv /workspace/JANA2/containers/prereqs_versions/halld_recon_build_prereqs_ver
 chmod +x $JANA_HOME/bin/jana-config
 
 cd src
-nice scons install -j32
+nice scons install
