@@ -18,22 +18,24 @@ jobs:
       
       - name: Create jana_build.sh
         run: |
-          echo '#!/bin/bash' >
-          echo 'export CC=$(which gcc)' > jana_build.sh
-          echo 'export CXX=$(which g++)' >> jana_build.sh
-          echo 'export BUILD_SCRIPTS=/group/halld/Software/build_scripts' >> jana_build.sh
-          echo 'export PROJECT_ROOT=/workscope' >> jana_build.sh
-          echo 'export JANA_HOME=$PROJECT_ROOT/JANA2' >> jana_build.sh
-          echo 'export JANA_PLUGIN_PATH=$PROJECT_ROOT/JANA2/plugins' >> jana_build.sh
-          echo 'source $BUILD_SCRIPTS/gluex_env_boot_jlab.sh --bs $BUILD_SCRIPTS' >> jana_build.sh
-          echo 'gxenv $PROJECT_ROOT/JANA2/jana_prereqs_version.xml' >> jana_build.sh
-          echo 'echo "jana_home value: $JANA_HOME"' >> jana_build.sh
-          echo 'cd $JANA_HOME' >> jana_build.sh
-          echo 'mkdir -p build' >> jana_build.sh
-          echo 'cd build' >> jana_build.sh
-          echo 'echo "Building start"' >> jana_build.sh
-          echo 'cmake3 $JANA_HOME -DUSE_XERCES=1' >> jana_build.sh
-          echo 'make -j8 install' >> jana_build.sh
+          cat <<EOF > jana_build.sh
+          #!/bin/bash
+          export CC=\$(which gcc)
+          export CXX=\$(which g++)
+          export BUILD_SCRIPTS=/group/halld/Software/build_scripts
+          export PROJECT_ROOT=/workscope
+          export JANA_HOME=\$PROJECT_ROOT/JANA2
+          export JANA_PLUGIN_PATH=\$PROJECT_ROOT/JANA2/plugins
+          source \$BUILD_SCRIPTS/gluex_env_boot_jlab.sh --bs \$BUILD_SCRIPTS
+          gxenv \$PROJECT_ROOT/JANA2/jana_prereqs_version.xml
+          echo "jana_home value: \$JANA_HOME"
+          cd \$JANA_HOME
+          mkdir -p build
+          cd build
+          echo "Building start"
+          cmake3 \$JANA_HOME -DUSE_XERCES=1
+          make -j8 install
+          EOF
           chmod +x jana_build.sh
 
       - name: Create jana_prereqs_version.xml
