@@ -92,7 +92,7 @@ jobs:
             --user $(id -u):$(id -g) \
             --volume /cvmfs/oasis.opensciencegrid.org/gluex/group/:/group \
             --mount type=bind,source=${{ github.workspace }},target=/workscope/JANA2 \
-            raiqarasool/rjones-gluex:latest /bin/bash -c "/workscope/JANA2/setenv.csh"
+            raiqarasool/rjones-gluex:latest /bin/bash -c "source /workscope/JANA2/setenv.sh"
       # - name: Setup Environment
       #   run: |
       #     source setenv.sh
