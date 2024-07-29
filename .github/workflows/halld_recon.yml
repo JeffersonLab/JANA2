@@ -19,63 +19,65 @@ jobs:
 
       - uses: cvmfs-contrib/github-action-cvmfs@v4
       
-      - name: Create jana_prereqs_version.xml
-        run: |
-          cd JANA2
-          cat <<EOF > jana_prereqs_version.xml
-          <?xml version="1.0" encoding="UTF-8"?>
-          <?xml-stylesheet type="text/xsl" href="https://halldweb.jlab.org/halld_versions/version7.xsl"?>
-          <gversions file="version_5.12.0.xml" date="2023-10-13">
-            <description>Update to amptools, gluex_root_analysis, halld_recont, halld_sim, hdgeant4, hd_utilities</description>
-            <package name="amptools" version="0.15.1"/>
-            <package name="ccdb" version="1.06.11"/>
-            <package name="cernlib" version="2005" word_length="64-bit"/>
-            <package name="diracxx" version="2.0.2"/>
-            <package name="evio" version="4.4.6"/>
-            <package name="evtgen" version="01.07.00"/>
-            <package name="geant4" version="10.04.p02"/>
-            <package name="gluex_MCwrapper" version="v2.7.0"/>
-            <package name="gluex_root_analysis" version="1.25.0"/>
-            <package name="halld_recon" version="4.42.0"/>
-            <package name="halld_sim" version="4.46.0"/>
-            <package name="hdds" version="4.15.0"/>
-            <package name="hdgeant4" version="2.36.0"/>
-            <package name="hd_utilities" version="1.46"/>
-            <package name="hepmc" version="2.06.10"/>
-            <package name="jana" version="2.1.2" home="/workspace/JANA2/"/>
-            <package name="lapack" version="3.9.0"/>
-            <package name="photos" version="3.61"/>
-            <package name="rcdb" version="0.07.01"/>
-            <package name="root" version="6.24.04"/>
-            <package name="sqlitecpp" version="3.1.1"/>
-            <package name="sqlite" version="3.36.0" year="2021"/>
-            <package name="xerces-c" version="3.2.3"/>
-          </gversions>
-          EOF
+      # - name: Create jana_prereqs_version.xml
+      #   run: |
+      #     cd JANA2
+      #     cat <<EOF > jana_prereqs_version.xml
+      #     <?xml version="1.0" encoding="UTF-8"?>
+      #     <?xml-stylesheet type="text/xsl" href="https://halldweb.jlab.org/halld_versions/version7.xsl"?>
+      #     <gversions file="version_5.12.0.xml" date="2023-10-13">
+      #       <description>Update to amptools, gluex_root_analysis, halld_recont, halld_sim, hdgeant4, hd_utilities</description>
+      #       <package name="amptools" version="0.15.1"/>
+      #       <package name="ccdb" version="1.06.11"/>
+      #       <package name="cernlib" version="2005" word_length="64-bit"/>
+      #       <package name="diracxx" version="2.0.2"/>
+      #       <package name="evio" version="4.4.6"/>
+      #       <package name="evtgen" version="01.07.00"/>
+      #       <package name="geant4" version="10.04.p02"/>
+      #       <package name="gluex_MCwrapper" version="v2.7.0"/>
+      #       <package name="gluex_root_analysis" version="1.25.0"/>
+      #       <package name="halld_recon" version="4.42.0"/>
+      #       <package name="halld_sim" version="4.46.0"/>
+      #       <package name="hdds" version="4.15.0"/>
+      #       <package name="hdgeant4" version="2.36.0"/>
+      #       <package name="hd_utilities" version="1.46"/>
+      #       <package name="hepmc" version="2.06.10"/>
+      #       <package name="jana" version="2.1.2" home="/workspace/JANA2/"/>
+      #       <package name="lapack" version="3.9.0"/>
+      #       <package name="photos" version="3.61"/>
+      #       <package name="rcdb" version="0.07.01"/>
+      #       <package name="root" version="6.24.04"/>
+      #       <package name="sqlitecpp" version="3.1.1"/>
+      #       <package name="sqlite" version="3.36.0" year="2021"/>
+      #       <package name="xerces-c" version="3.2.3"/>
+      #     </gversions>
+      #     EOF
 
-      - name: Create jana_build.sh
-        run: |
-          cd JANA2
-          cat <<EOF > jana_build.sh
-          #!/bin/bash
-          export CC=\$(which gcc)
-          export CXX=\$(which g++)
-          export BUILD_SCRIPTS=/group/halld/Software/build_scripts
-          export PROJECT_ROOT=/workspace
-          export JANA_HOME=\$PROJECT_ROOT/JANA2
-          export JANA_PLUGIN_PATH=\$PROJECT_ROOT/JANA2/plugins
-          source \$BUILD_SCRIPTS/gluex_env_boot_jlab.sh --bs \$BUILD_SCRIPTS
-          gxenv \$PROJECT_ROOT/JANA2/jana_prereqs_version.xml
-          echo "jana_home value: \$JANA_HOME"
-          cd \$JANA_HOME
-          mkdir -p build
-          cd build
-          echo "Building start"
-          cmake3 \$JANA_HOME -DUSE_XERCES=1
-          make -j8 install
-          EOF
-          chmod +x jana_build.sh
+      # - name: Create jana_build.sh
+      #   run: |
+      #     cd JANA2
+      #     cat <<EOF > jana_build.sh
+      #     #!/bin/bash
+      #     export CC=\$(which gcc)
+      #     export CXX=\$(which g++)
+      #     export BUILD_SCRIPTS=/group/halld/Software/build_scripts
+      #     export PROJECT_ROOT=/workspace
+      #     export JANA_HOME=\$PROJECT_ROOT/JANA2
+      #     export JANA_PLUGIN_PATH=\$PROJECT_ROOT/JANA2/plugins
+      #     source \$BUILD_SCRIPTS/gluex_env_boot_jlab.sh --bs \$BUILD_SCRIPTS
+      #     gxenv \$PROJECT_ROOT/JANA2/containers/prereqs_versions/jana_prereqs_version.xml
+      #     cd \$JANA_HOME
+      #     mkdir -p build
+      #     cd build
+      #     echo "Building start"
+      #     cmake3 \$JANA_HOME -DUSE_XERCES=1
+      #     make -j8 install
+      #     EOF
+      #     chmod +x jana_build.sh
 
+      - name: Make all container scripts executable
+        run: |
+          chmod +x $GITHUB_WORKSPACE/JANA2/containers/scripts/*.sh
 
       - name: Build JANA2
         run: |
@@ -83,7 +85,7 @@ jobs:
             --user $(id -u):$(id -g) \
             --volume /cvmfs/oasis.opensciencegrid.org/gluex/group/:/group \
             --mount type=bind,source=${{ github.workspace }},target=/workspace \
-            raiqarasool/rjones-gluex:latest /bin/bash -c "source /workspace/JANA2/jana_build.sh"
+            raiqarasool/rjones-gluex:latest /bin/bash -c "source /workspace/JANA2/containers/scripts/jana_build.sh"
             
       - name: Git Clone Halld_recon
         run: |
@@ -92,55 +94,55 @@ jobs:
           git clone --branch rasool_jana2 https://github.com/JeffersonLab/halld_recon.git .
 
 
-      - name: Create halld_recon_build_prereqs_version.xml
-        run: |
-          cd halld_recon
-          cat <<EOF > halld_recon_build_prereqs_version.xml
-          <?xml version="1.0" encoding="UTF-8"?>
-          <?xml-stylesheet type="text/xsl" href="https://halldweb.jlab.org/halld_versions/version7.xsl"?>
-          <gversions file="version_5.16.0.xml" date="2024-04-03">
-          <description>Update of halld_recon, halld_sim, hdgeant4, and gluex_MCWrapper</description>
-          <package name="ccdb" version="1.06.11"/>
-          <package name="cernlib" version="2005" word_length="64-bit"/>
-          <package name="evio" version="4.4.6"/>
-          <package name="hddm" version="4.31.0"/>
-          <package name="hdds" version="4.15.0"/>
-          <package name="jana" version="2.1.2" home="/workspace/JANA2"/>
-          <package name="rcdb" version="0.07.01"/>
-          <package name="root" version="6.24.04"/>
-          <package name="sqlitecpp" version="3.1.1"/>
-          <package name="sqlite" version="3.36.0" year="2021"/>
-          <package name="xerces-c" version="3.2.3"/>
-          </gversions>
-          EOF
+      # - name: Create halld_recon_build_prereqs_version.xml
+      #   run: |
+      #     cd halld_recon
+      #     cat <<EOF > halld_recon_build_prereqs_version.xml
+      #     <?xml version="1.0" encoding="UTF-8"?>
+      #     <?xml-stylesheet type="text/xsl" href="https://halldweb.jlab.org/halld_versions/version7.xsl"?>
+      #     <gversions file="version_5.16.0.xml" date="2024-04-03">
+      #     <description>Update of halld_recon, halld_sim, hdgeant4, and gluex_MCWrapper</description>
+      #     <package name="ccdb" version="1.06.11"/>
+      #     <package name="cernlib" version="2005" word_length="64-bit"/>
+      #     <package name="evio" version="4.4.6"/>
+      #     <package name="hddm" version="4.31.0"/>
+      #     <package name="hdds" version="4.15.0"/>
+      #     <package name="jana" version="2.1.2" home="/workspace/JANA2"/>
+      #     <package name="rcdb" version="0.07.01"/>
+      #     <package name="root" version="6.24.04"/>
+      #     <package name="sqlitecpp" version="3.1.1"/>
+      #     <package name="sqlite" version="3.36.0" year="2021"/>
+      #     <package name="xerces-c" version="3.2.3"/>
+      #     </gversions>
+      #     EOF
 
       
-      - name: Create halld_recon_build.sh
-        run: |
-            cd halld_recon
-            cat <<EOF > halld_recon_build.sh
-            #!/bin/bash
-            cd /workspace/halld_recon
-            export BUILD_SCRIPTS=/group/halld/Software/build_scripts
-            source \$BUILD_SCRIPTS/gluex_env_boot_jlab.sh --bs \$BUILD_SCRIPTS
-            gxenv halld_recon_build_prereqs_version.xml
-            echo "JANA_HOME value here"
-            echo $JANA_HOME
-            chmod +x $JANA_HOME/bin/jana-config
-            echo "Listing /workspace"
-            ls /workspace
-            echo "I am listing JANA2"
-            ls /workspace/JANA2
-            echo "I am listing jana2 bin"
-            ls /workspace/JANA2/bin
-            echo "I am listing halld_recon"
-            ls /workspace/halld_recon
-            echo "Listing halld_recon/src"
-            ls /workspace/halld_recon/src
-            cd src
-            nice scons install -j32
-            EOF
-            chmod +x halld_recon_build.sh
+      # - name: Create halld_recon_build.sh
+      #   run: |
+      #       cd halld_recon
+      #       cat <<EOF > halld_recon_build.sh
+      #       #!/bin/bash
+      #       cd /workspace/halld_recon
+      #       export BUILD_SCRIPTS=/group/halld/Software/build_scripts
+      #       source \$BUILD_SCRIPTS/gluex_env_boot_jlab.sh --bs \$BUILD_SCRIPTS
+      #       gxenv halld_recon_build_prereqs_version.xml
+      #       echo "JANA_HOME value here"
+      #       echo $JANA_HOME
+      #       chmod +x $JANA_HOME/bin/jana-config
+      #       echo "Listing /workspace"
+      #       ls /workspace
+      #       echo "I am listing JANA2"
+      #       ls /workspace/JANA2
+      #       echo "I am listing jana2 bin"
+      #       ls /workspace/JANA2/bin
+      #       echo "I am listing halld_recon"
+      #       ls /workspace/halld_recon
+      #       echo "Listing halld_recon/src"
+      #       ls /workspace/halld_recon/src
+      #       cd src
+      #       nice scons install -j32
+      #       EOF
+      #       chmod +x halld_recon_build.sh
       
       - name: Build Halld_recon
         run: |
@@ -148,7 +150,7 @@ jobs:
             --user $(id -u):$(id -g) \
             --volume /cvmfs/oasis.opensciencegrid.org/gluex/group/:/group \
             --mount type=bind,source=${{ github.workspace }},target=/workspace \
-            raiqarasool/rjones-gluex:latest /bin/bash -c "source /workspace/halld_recon/halld_recon_build.sh"
+            raiqarasool/rjones-gluex:latest /bin/bash -c "source /workspace/JANA2/containers/scripts/halld_recon/halld_recon_build.sh"
             
 
 

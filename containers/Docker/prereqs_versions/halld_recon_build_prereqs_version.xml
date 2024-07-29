@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="https://halldweb.jlab.org/halld_versions/version7.xsl"?>
+<gversions file="version_5.16.0.xml" date="2024-04-03">
+<description>Update of halld_recon, halld_sim, hdgeant4, and gluex_MCWrapper</description>
+<package name="ccdb" version="1.06.11"/>
+<package name="cernlib" version="2005" word_length="64-bit"/>
+<package name="evio" version="4.4.6"/>
+<package name="hddm" version="4.31.0"/>
+<package name="hdds" version="4.15.0"/>
+<package name="jana" version="2.1.2" home="/workspace/JANA2"/>
+<package name="rcdb" version="0.07.01"/>
+<package name="root" version="6.24.04"/>
+<package name="sqlitecpp" version="3.1.1"/>
+<package name="sqlite" version="3.36.0" year="2021"/>
+<package name="xerces-c" version="3.2.3"/>
+</gversions>

@@ -6,7 +6,7 @@ export PROJECT_ROOT=/workspace
 export JANA_HOME=\$PROJECT_ROOT/JANA2
 export JANA_PLUGIN_PATH=\$PROJECT_ROOT/JANA2/plugins
 source \$BUILD_SCRIPTS/gluex_env_boot_jlab.sh --bs \$BUILD_SCRIPTS
-gxenv \$PROJECT_ROOT/JANA2/jana_prereqs_version.xml
+gxenv \$PROJECT_ROOT/JANA2/containers/prereqs_versions/jana_prereqs_version.xml
 echo "jana_home value: \$JANA_HOME"
 cd \$JANA_HOME
 mkdir -p build
