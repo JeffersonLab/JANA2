@@ -77,7 +77,7 @@ jobs:
 
       - name: Make all container scripts executable
         run: |
-          chmod +x $GITHUB_WORKSPACE/JANA2/containers/scripts/*.sh
+          chmod +x $GITHUB_WORKSPACE/containers/scripts/*.sh
 
       - name: Build JANA2
         run: |
