@@ -116,7 +116,8 @@ jobs:
             cat <<EOF > halld_recon_build.sh
             #!/bin/bash
             cd /workscope/halld_recon
-            source /group/halld/Software/build_scripts/gluex_env_boot_jlab.csh
+            export BUILD_SCRIPTS=/group/halld/Software/build_scripts
+            source \$BUILD_SCRIPTS/gluex_env_boot_jlab.sh --bs \$BUILD_SCRIPTS
             gxenv halld_recon_build_prereqs_version.xml
             cd src
             nice scons install -j32
