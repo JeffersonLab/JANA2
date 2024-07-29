@@ -30,14 +30,15 @@ jobs:
       #     echo $GITHUB_WORKSPACE
       #     ls $GITHUB_WORKSPACE
       
-      - name: Create setenv.csh
+      - name: Create setenv.sh
         run: |
           echo '#!/bin/bash' > setenv.sh
           echo 'export CC=$(which gcc)' >> setenv.sh
           echo 'export CXX=$(which g++)' >> setenv.sh
           echo 'export BUILD_SCRIPTS=/group/halld/Software/build_scripts' >> setenv.sh
-          echo 'export JANA_HOME=/JANA2' >> setenv.sh
-          echo 'export JANA_PLUGIN_PATH=/JANA2/plugins' >> setenv.sh
+          echo 'export PROJECT_ROOT=/workscope' >> setenv.sh
+          echo 'export JANA_HOME=$PROJECT_ROOT/JANA2' >> setenv.sh
+          echo 'export JANA_PLUGIN_PATH=$PROJECT_ROOT/JANA2/plugins' >> setenv.sh
           echo 'source $BUILD_SCRIPTS/gluex_env_boot_jlab.sh --bs $BUILD_SCRIPTS' >> setenv.sh
           echo 'gxenv /JANA2/version.xml' >> setenv.sh
           chmod +x setenv.sh
@@ -64,7 +65,7 @@ jobs:
             <package name="hdgeant4" version="2.36.0"/>
             <package name="hd_utilities" version="1.46"/>
             <package name="hepmc" version="2.06.10"/>
-            <package name="jana" version="2.1.2" home="/JANA2/"/>
+            <package name="jana" version="2.1.2" home="/workscope/JANA2/"/>
             <package name="lapack" version="3.9.0"/>
             <package name="photos" version="3.61"/>
             <package name="rcdb" version="0.07.01"/>
@@ -79,11 +80,11 @@ jobs:
         run: |
           docker run --rm \
             --volume /cvmfs/oasis.opensciencegrid.org/gluex/group/:/group \
-            --mount type=bind,source=${{ github.workspace }},target=/JANA2 \
+            --mount type=bind,source=${{ github.workspace }},target=/workscope/JANA2 \
             raiqarasool/rjones-gluex:latest /bin/bash -c "
             echo 'Running inside AlmaLinux container...'
             echo 'Listing cvmfs files'
-            ls /group/halld/
+            ls /group/halld/Software/build_scripts
             ls /JANA2/
             source setenv.sh
             echo $JANA_HOME
