@@ -83,6 +83,7 @@ jobs:
       - name: Run AlmaLinux 9 Container with CVMFS Mount
         run: |
           docker run --rm \
+            --user $(id -u):$(id -g) \
             --volume /cvmfs/oasis.opensciencegrid.org/gluex/group/:/group \
             --mount type=bind,source=${{ github.workspace }},target=/workscope/JANA2 \
             raiqarasool/rjones-gluex:latest /bin/bash -c "
