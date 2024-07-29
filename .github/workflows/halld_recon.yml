@@ -88,12 +88,15 @@ jobs:
             --mount type=bind,source=${{ github.workspace }},target=/workscope/JANA2 \
             raiqarasool/rjones-gluex:latest /bin/bash -c "
             echo 'Running inside AlmaLinux container...'
-            echo 'Listing cvmfs files'
-            ls /group/halld/Software/build_scripts
             cd /workscope/JANA2
-            ls /workscope/JANA2/
             source setenv.sh
+            echo 'I am jana_home'
             echo $JANA_HOME
+            mkdir build
+            cd build
+            echo 'Building start'
+            cmake3 ${JANA_HOME} -DUSE_XERCES=1
+            make -j8 install
           "
       # - name: Setup Environment
       #   run: |
