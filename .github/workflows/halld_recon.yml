@@ -78,7 +78,7 @@ jobs:
       - name: Make all container scripts executable
         run: |
           ls .
-          chmod +x /JANA2/containers/scripts/*.sh
+          chmod +x JANA2/containers/scripts/*.sh
 
       - name: Build JANA2
         run: |
