@@ -120,20 +120,23 @@ jobs:
             cd halld_recon
             cat <<EOF > halld_recon_build.sh
             #!/bin/bash
-            cd /workscope/halld_recon
+            cd /workspace/halld_recon
             export BUILD_SCRIPTS=/group/halld/Software/build_scripts
             source \$BUILD_SCRIPTS/gluex_env_boot_jlab.sh --bs \$BUILD_SCRIPTS
             gxenv halld_recon_build_prereqs_version.xml
-            echo "Listing /workscope"
-            ls /workscope
+            echo "JANA_HOME value here"
+            echo $JANA_HOME
+            chmod +x $JANA_HOME/bin/jana-config
+            echo "Listing /workspace"
+            ls /workspace
             echo "I am listing JANA2"
-            ls /workscope/JANA2
+            ls /workspace/JANA2
             echo "I am listing jana2 bin"
-            ls /workscope/JANA2/bin
+            ls /workspace/JANA2/bin
             echo "I am listing halld_recon"
-            ls /workscope/halld_recon
+            ls /workspace/halld_recon
             echo "Listing halld_recon/src"
-            ls /workscope/halld_recon/src
+            ls /workspace/halld_recon/src
             cd src
             nice scons install -j32
             EOF
@@ -144,8 +147,8 @@ jobs:
           docker run --rm \
             --user $(id -u):$(id -g) \
             --volume /cvmfs/oasis.opensciencegrid.org/gluex/group/:/group \
-            --mount type=bind,source=${{ github.workspace }},target=/workscope \
-            raiqarasool/rjones-gluex:latest /bin/bash -c "source /workscope/halld_recon/halld_recon_build.sh"
+            --mount type=bind,source=${{ github.workspace }},target=/workspace \
+            raiqarasool/rjones-gluex:latest /bin/bash -c "source /workspace/halld_recon/halld_recon_build.sh"
             
 
 
