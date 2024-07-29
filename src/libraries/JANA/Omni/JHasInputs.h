@@ -5,8 +5,6 @@
 #pragma once
 #include <JANA/JEvent.h>
 
-template <typename T> struct PodioTypeMap;
-
 namespace jana {
 namespace omni {
 
@@ -131,7 +129,7 @@ protected:
     template <typename PodioT>
     class PodioInput : public InputBase {
 
-        const typename PodioTypeMap<PodioT>::collection_t* m_data;
+        const typename PodioT::collection_type* m_data;
 
     public:
 
@@ -146,7 +144,7 @@ protected:
             Configure(options);
         }
 
-        const typename PodioTypeMap<PodioT>::collection_t* operator()() {
+        const typename PodioT::collection_type* operator()() {
             return m_data;
         }
 
@@ -179,7 +177,7 @@ protected:
     template <typename PodioT>
     class VariadicPodioInput : public InputBase {
 
-        std::vector<const typename PodioTypeMap<PodioT>::collection_t*> m_data;
+        std::vector<const typename PodioT::collection_type*> m_data;
 
     public:
 
@@ -196,7 +194,7 @@ protected:
             ConfigureVariadic(options);
         }
 
-        const std::vector<const typename PodioTypeMap<PodioT>::collection_t*> operator()() {
+        const std::vector<const typename PodioT::collection_type*> operator()() {
             return m_data;
         }
 

@@ -6,12 +6,7 @@
 #pragma once
 
 #include <JANA/JFactoryT.h>
-#include <podio/podioVersion.h>
 #include <podio/Frame.h>
-
-#if podio_VERSION < PODIO_VERSION(0, 17, 0)
-template <typename S> struct PodioTypeMap;
-#endif
 
 /// The point of this additional base class is to allow us _untyped_ access to the underlying PODIO collection,
 /// at the cost of some weird multiple inheritance. The JEvent can trigger the untyped factory using Create(), then
@@ -40,11 +35,7 @@ public:
 template <typename T>
 class JFactoryPodioT : public JFactoryT<T>, public JFactoryPodio {
 public:
-#if podio_VERSION >= PODIO_VERSION(0, 17, 0)
     using CollectionT = typename T::collection_type;
-#else
-    using CollectionT = typename PodioTypeMap<T>::collection_t;
-#endif
 private:
     // mCollection is owned by the frame.
     // mFrame is owned by the JFactoryT<podio::Frame>.
