@@ -14,10 +14,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with: 
+          path: JANA2
+
       - uses: cvmfs-contrib/github-action-cvmfs@v4
       
       - name: Create jana_prereqs_version.xml
         run: |
+          cd JANA2
           cat <<EOF > jana_prereqs_version.xml
           <?xml version="1.0" encoding="UTF-8"?>
           <?xml-stylesheet type="text/xsl" href="https://halldweb.jlab.org/halld_versions/version7.xsl"?>
@@ -38,7 +42,7 @@ jobs:
             <package name="hdgeant4" version="2.36.0"/>
             <package name="hd_utilities" version="1.46"/>
             <package name="hepmc" version="2.06.10"/>
-            <package name="jana" version="2.1.2" home="/workscope/JANA2/"/>
+            <package name="jana" version="2.1.2" home="/workspace/JANA2/"/>
             <package name="lapack" version="3.9.0"/>
             <package name="photos" version="3.61"/>
             <package name="rcdb" version="0.07.01"/>
@@ -51,12 +55,13 @@ jobs:
 
       - name: Create jana_build.sh
         run: |
+          cd JANA2
           cat <<EOF > jana_build.sh
           #!/bin/bash
           export CC=\$(which gcc)
           export CXX=\$(which g++)
           export BUILD_SCRIPTS=/group/halld/Software/build_scripts
-          export PROJECT_ROOT=/workscope
+          export PROJECT_ROOT=/workspace
           export JANA_HOME=\$PROJECT_ROOT/JANA2
           export JANA_PLUGIN_PATH=\$PROJECT_ROOT/JANA2/plugins
           source \$BUILD_SCRIPTS/gluex_env_boot_jlab.sh --bs \$BUILD_SCRIPTS
@@ -77,8 +82,8 @@ jobs:
           docker run --rm \
             --user $(id -u):$(id -g) \
             --volume /cvmfs/oasis.opensciencegrid.org/gluex/group/:/group \
-            --mount type=bind,source=${{ github.workspace }},target=/workscope/JANA2 \
-            raiqarasool/rjones-gluex:latest /bin/bash -c "source /workscope/JANA2/jana_build.sh"
+            --mount type=bind,source=${{ github.workspace }},target=/workspace \
+            raiqarasool/rjones-gluex:latest /bin/bash -c "source /workspace/JANA2/jana_build.sh"
             
       - name: Git Clone Halld_recon
         run: |
@@ -100,7 +105,7 @@ jobs:
           <package name="evio" version="4.4.6"/>
           <package name="hddm" version="4.31.0"/>
           <package name="hdds" version="4.15.0"/>
-          <package name="jana" version="2.1.2" home="/workscope/JANA2"/>
+          <package name="jana" version="2.1.2" home="/workspace/JANA2"/>
           <package name="rcdb" version="0.07.01"/>
           <package name="root" version="6.24.04"/>
           <package name="sqlitecpp" version="3.1.1"/>
