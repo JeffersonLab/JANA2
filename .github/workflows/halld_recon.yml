@@ -32,8 +32,8 @@ jobs:
       
       - name: Create setenv.sh
         run: |
-          echo '#!/bin/bash' > setenv.sh
-          echo 'export CC=$(which gcc)' >> setenv.sh
+          #!/bin/bash
+          echo 'export CC=$(which gcc)' > setenv.sh
           echo 'export CXX=$(which g++)' >> setenv.sh
           echo 'export BUILD_SCRIPTS=/group/halld/Software/build_scripts' >> setenv.sh
           echo 'export PROJECT_ROOT=/workscope' >> setenv.sh
@@ -44,9 +44,15 @@ jobs:
           echo 'echo "I am after running gluex_env_boot_jlab.sh: $BUILD_SCRIPTS"' >> setenv.sh
           echo 'gxenv $PROJECT_ROOT/JANA2/version.xml' >> setenv.sh
           echo 'echo "I am after gxenv version.xml: $BUILD_SCRIPTS"' >> setenv.sh
+          echo 'echo "jana_home value: $JANA_HOME"' >> setenv.sh
+          echo 'cd $JANA_HOME' >> setenv.sh
+          echo 'mkdir -p build' >> setenv.sh
+          echo 'cd build' >> setenv.sh
+          echo 'echo "Building start"' >> setenv.sh
+          echo 'cmake3 $JANA_HOME -DUSE_XERCES=1' >> setenv.sh
+          echo 'make -j8 install' >> setenv.sh
           chmod +x setenv.sh
 
-     
       - name: Create version.xml
         run: |
           cat <<EOF > version.xml
@@ -79,25 +85,14 @@ jobs:
             <package name="xerces-c" version="3.2.3"/>
           </gversions>
           EOF
-      
+
       - name: Run AlmaLinux 9 Container with CVMFS Mount
         run: |
           docker run --rm \
             --user $(id -u):$(id -g) \
             --volume /cvmfs/oasis.opensciencegrid.org/gluex/group/:/group \
             --mount type=bind,source=${{ github.workspace }},target=/workscope/JANA2 \
-            raiqarasool/rjones-gluex:latest /bin/bash -c "
-            echo 'Running inside AlmaLinux container...'
-            cd /workscope/JANA2
-            source setenv.sh
-            echo 'I am jana_home'
-            echo $JANA_HOME
-            mkdir build
-            cd build
-            echo 'Building start'
-            cmake3 ${JANA_HOME} -DUSE_XERCES=1
-            make -j8 install
-          "
+            raiqarasool/rjones-gluex:latest /bin/bash -c "/workscope/JANA2/setenv.csh"
       # - name: Setup Environment
       #   run: |
       #     source setenv.sh
