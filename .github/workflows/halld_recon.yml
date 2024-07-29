@@ -15,47 +15,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: cvmfs-contrib/github-action-cvmfs@v4
-
-      # - name: Test CernVM-FS mounting
-      #   run: |
-      #     ls /cvmfs/oasis.opensciencegrid.org/gluex/group/halld
-      #     ls /cvmfs/lhcb.cern.ch
-      #     ls /cvmfs/auger.egi.eu
-      #     ls /cvmfs/dune.opensciencegrid.org
-      #     ls /cvmfs/sw.hsf.org
-      #     ls /cvmfs/sft.cern.ch
-
-      # - name: checking Current dir structure
-      #   run: |
-      #     echo $GITHUB_WORKSPACE
-      #     ls $GITHUB_WORKSPACE
       
-      - name: Create setenv.sh
+      - name: Create jana_build.sh
         run: |
-          #!/bin/bash
-          echo 'export CC=$(which gcc)' > setenv.sh
-          echo 'export CXX=$(which g++)' >> setenv.sh
-          echo 'export BUILD_SCRIPTS=/group/halld/Software/build_scripts' >> setenv.sh
-          echo 'export PROJECT_ROOT=/workscope' >> setenv.sh
-          echo 'export JANA_HOME=$PROJECT_ROOT/JANA2' >> setenv.sh
-          echo 'export JANA_PLUGIN_PATH=$PROJECT_ROOT/JANA2/plugins' >> setenv.sh
-          echo 'echo "I am before running gluex_env_boot_jlab.sh: $BUILD_SCRIPTS"' >> setenv.sh
-          echo 'source $BUILD_SCRIPTS/gluex_env_boot_jlab.sh --bs $BUILD_SCRIPTS' >> setenv.sh
-          echo 'echo "I am after running gluex_env_boot_jlab.sh: $BUILD_SCRIPTS"' >> setenv.sh
-          echo 'gxenv $PROJECT_ROOT/JANA2/version.xml' >> setenv.sh
-          echo 'echo "I am after gxenv version.xml: $BUILD_SCRIPTS"' >> setenv.sh
-          echo 'echo "jana_home value: $JANA_HOME"' >> setenv.sh
-          echo 'cd $JANA_HOME' >> setenv.sh
-          echo 'mkdir -p build' >> setenv.sh
-          echo 'cd build' >> setenv.sh
-          echo 'echo "Building start"' >> setenv.sh
-          echo 'cmake3 $JANA_HOME -DUSE_XERCES=1' >> setenv.sh
-          echo 'make -j8 install' >> setenv.sh
-          chmod +x setenv.sh
+          echo '#!/bin/bash' >
+          echo 'export CC=$(which gcc)' > jana_build.sh
+          echo 'export CXX=$(which g++)' >> jana_build.sh
+          echo 'export BUILD_SCRIPTS=/group/halld/Software/build_scripts' >> jana_build.sh
+          echo 'export PROJECT_ROOT=/workscope' >> jana_build.sh
+          echo 'export JANA_HOME=$PROJECT_ROOT/JANA2' >> jana_build.sh
+          echo 'export JANA_PLUGIN_PATH=$PROJECT_ROOT/JANA2/plugins' >> jana_build.sh
+          echo 'source $BUILD_SCRIPTS/gluex_env_boot_jlab.sh --bs $BUILD_SCRIPTS' >> jana_build.sh
+          echo 'gxenv $PROJECT_ROOT/JANA2/jana_prereqs_version.xml' >> jana_build.sh
+          echo 'echo "jana_home value: $JANA_HOME"' >> jana_build.sh
+          echo 'cd $JANA_HOME' >> jana_build.sh
+          echo 'mkdir -p build' >> jana_build.sh
+          echo 'cd build' >> jana_build.sh
+          echo 'echo "Building start"' >> jana_build.sh
+          echo 'cmake3 $JANA_HOME -DUSE_XERCES=1' >> jana_build.sh
+          echo 'make -j8 install' >> jana_build.sh
+          chmod +x jana_build.sh
 
-      - name: Create version.xml
+      - name: Create jana_prereqs_version.xml
         run: |
-          cat <<EOF > version.xml
+          cat <<EOF > jana_prereqs_version.xml
           <?xml version="1.0" encoding="UTF-8"?>
           <?xml-stylesheet type="text/xsl" href="https://halldweb.jlab.org/halld_versions/version7.xsl"?>
           <gversions file="version_5.12.0.xml" date="2023-10-13">
@@ -86,14 +69,10 @@ jobs:
           </gversions>
           EOF
 
-      - name: Run AlmaLinux 9 Container with CVMFS Mount
+      - name: Build JANA2
         run: |
           docker run --rm \
             --user $(id -u):$(id -g) \
             --volume /cvmfs/oasis.opensciencegrid.org/gluex/group/:/group \
             --mount type=bind,source=${{ github.workspace }},target=/workscope/JANA2 \
-            raiqarasool/rjones-gluex:latest /bin/bash -c "source /workscope/JANA2/setenv.sh"
-      # - name: Setup Environment
-      #   run: |
-      #     source setenv.sh
-      #     echo $JANA_HOME
+            raiqarasool/rjones-gluex:latest /bin/bash -c "source /workscope/JANA2/jana_build.sh"
