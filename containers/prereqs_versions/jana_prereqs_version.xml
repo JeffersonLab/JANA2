@@ -17,7 +17,7 @@
 <package name="hdgeant4" version="2.36.0"/>
 <package name="hd_utilities" version="1.46"/>
 <package name="hepmc" version="2.06.10"/>
-<package name="jana" version="2.1.2" home="/workspace/JANA2/"/>
+<package name="jana" version="2.1.2" home="/JANA2/"/>
 <package name="lapack" version="3.9.0"/>
 <package name="photos" version="3.61"/>
 <package name="rcdb" version="0.07.01"/>

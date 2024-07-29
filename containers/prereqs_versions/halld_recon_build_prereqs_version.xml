@@ -7,7 +7,7 @@
 <package name="evio" version="4.4.6"/>
 <package name="hddm" version="4.31.0"/>
 <package name="hdds" version="4.15.0"/>
-<package name="jana" version="2.1.2" home="/workspace/JANA2"/>
+<package name="jana" version="2.1.2" home="/JANA2"/>
 <package name="rcdb" version="0.07.01"/>
 <package name="root" version="6.24.04"/>
 <package name="sqlitecpp" version="3.1.1"/>
