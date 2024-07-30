@@ -1,4 +1,4 @@
-name: Frontend CI/CD Workflow
+name: Documentation generation
 
 on:
   push:
@@ -28,7 +28,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: doxygen-site
-          path: ./html/
+          path: ./doxygen_build/html/
 
   deploy:
     if: github.ref == 'refs/heads/main'
