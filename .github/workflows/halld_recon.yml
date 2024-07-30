@@ -127,7 +127,7 @@ jobs:
           chmod +x \$JANA_HOME/bin/*
 
           cd src
-          nice scons install
+          scons install
           EOF
           chmod +x halld_recon_build.sh
 
