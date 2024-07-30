@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: 
-          ref: tags/rasool_jana2
+          ref: refs/tags/rasool_jana2
           path: JANA2
 
       - uses: cvmfs-contrib/github-action-cvmfs@v4
