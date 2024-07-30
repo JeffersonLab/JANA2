@@ -43,7 +43,6 @@ public:
     size_t m_event_source_chunksize = 40;
     size_t m_event_processor_chunksize = 1;
     size_t m_location_count = 1;
-    bool m_enable_call_graph_recording = false;
     bool m_enable_stealing = false;
     bool m_limit_total_events_in_flight = true;
     int m_affinity = 0;

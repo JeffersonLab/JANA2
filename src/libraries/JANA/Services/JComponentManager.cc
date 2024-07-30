@@ -41,7 +41,10 @@ void JComponentManager::Init() {
 void JComponentManager::configure_components() {
 
     m_params->SetDefaultParameter("event_source_type", m_user_evt_src_typename, "Manually specifies which JEventSource should open the input file");
-    m_params->SetDefaultParameter("record_call_stack", m_enable_call_graph_recording, "Records a trace of who called each factory. Reduces performance but necessary for plugins such as janadot.");
+    m_params->SetDefaultParameter("record_call_stack", 
+                                  m_enable_call_graph_recording,
+                                  "Records a trace of who called each factory. Reduces performance but necessary for plugins such as janadot.")
+            ->SetIsAdvanced(true);
     m_params->SetDefaultParameter("jana:nevents", m_nevents, "Max number of events that sources can emit");
     m_params->SetDefaultParameter("jana:nskip", m_nskip, "Number of events that sources should skip before starting emitting");
     m_params->SetDefaultParameter("autoactivate", m_autoactivate, "List of factories to activate regardless of what the event processors request. Format is typename:tag,typename:tag");
