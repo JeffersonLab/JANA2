@@ -1,0 +1,71 @@
+name: Frontend CI/CD Workflow
+
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./docs
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Doxygen
+        run: sudo apt-get update && sudo apt-get install -y doxygen graphviz
+
+      - name: Build
+        run: |
+          doxygen Doxyfile
+
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: doxygen-site
+          path: ./html/
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      id-token: write
+      contents: read
+      pages: write
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: doxygen-site
+          path: ./dist/
+
+      - name: Introspect
+        run: |
+          echo "--- pwd"
+          pwd
+          echo "--- ls"
+          ls
+          echo "--- ls ./docs/"
+          ls -latrh ./dist
+          echo "--- ls ./dist/html"
+          ls -latrh ./dist/html
+
+#
+#      - name: Setup Pages
+#        uses: actions/configure-pages@v5
+#      - name: Upload artifact
+#        uses: actions/upload-pages-artifact@v3
+#        with:
+#          # Upload entire repository
+#          path: './dist/html'
+#      - name: Deploy to GitHub Pages
+#        id: deployment
+#        uses: actions/deploy-pages@v4
