@@ -153,9 +153,6 @@ void JTopologyBuilder::acquire_services(JServiceLocator *sl) {
     m_params->SetDefaultParameter("jana:locality", m_locality,
                                     "Constrain memory locality. 0=No constraint. 1=Events stay on the same socket. 2=Events stay on the same NUMA domain. 3=Events stay on same core. 4=Events stay on same cpu/hyperthread.")
             ->SetIsAdvanced(true);
-    m_params->SetDefaultParameter("record_call_stack", m_enable_call_graph_recording,
-                                    "Records a trace of who called each factory. Reduces performance but necessary for plugins such as janadot.")
-            ->SetIsAdvanced(true);
 
     m_arrow_logger = m_logging->get_logger("JArrow");
     m_queue_logger = m_logging->get_logger("JQueue");
