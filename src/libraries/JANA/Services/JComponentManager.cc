@@ -32,6 +32,13 @@ JComponentManager::~JComponentManager() {
 }
 
 void JComponentManager::Init() {
+    // Because this is an 'internal' JService, it works a little differently than user-provided
+    // JServices. Specifically, we have to fetch parameters _after_ plugin loading because some 
+    // plugins want to set parameter values that JComponentManager needs (most notably janadot). 
+    // We handle parameters in configure_components() instead.
+}
+
+void JComponentManager::configure_components() {
 
     m_params->SetDefaultParameter("event_source_type", m_user_evt_src_typename, "Manually specifies which JEventSource should open the input file");
     m_params->SetDefaultParameter("record_call_stack", m_enable_call_graph_recording, "Records a trace of who called each factory. Reduces performance but necessary for plugins such as janadot.");
@@ -45,6 +52,15 @@ void JComponentManager::Init() {
         add(new JAutoActivator);
         // JAutoActivator will re-parse the autoactivate list by itself
     }
+
+    // Give all components a JApplication pointer and a logger
+    preinitialize_components();
+
+    // Resolve all event sources now that all plugins have been loaded
+    resolve_event_sources();
+
+    // Call Summarize() and Init() in order to populate JComponentSummary and JParameterManager, respectively
+    initialize_components();
 }
 
 void JComponentManager::preinitialize_components() {

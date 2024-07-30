@@ -132,14 +132,8 @@ void JApplication::Initialize() {
     // Attach all plugins
     plugin_loader->attach_plugins(component_manager.get());
 
-    // Give all components a JApplication pointer and a logger
-    component_manager->preinitialize_components();
-
-    // Resolve all event sources now that all plugins have been loaded
-    component_manager->resolve_event_sources();
-
-    // Call Summarize() and Init() in order to populate JComponentSummary and JParameterManager, respectively
-    component_manager->initialize_components();
+    // Resolve and initialize all components
+    component_manager->configure_components();
 
     // Set desired nthreads. We parse the 'nthreads' parameter two different ways for backwards compatibility.
     m_desired_nthreads = 1;
@@ -151,16 +145,6 @@ void JApplication::Initialize() {
     m_params->SetDefaultParameter("jana:ticker_interval", m_ticker_interval_ms, "Controls the ticker interval (in ms)");
     m_params->SetDefaultParameter("jana:extended_report", m_extended_report, "Controls whether the ticker shows simple vs detailed performance metrics");
 
-
-    /*
-    int engine_choice = 0;
-    m_params->SetDefaultParameter("jana:engine", engine_choice,
-                                  "0: Use arrow engine")->SetIsAdvanced(true);
-
-    if (engine_choice != 0) {
-        LOG_WARN(m_logger) << "Unrecognized engine choice! Falling back to jana:engine=0" << LOG_END;
-    }
-    */
     topology_builder->create_topology();
     ProvideService(std::make_shared<JArrowProcessingController>());
     m_processing_controller = m_service_locator->get<JArrowProcessingController>();  // Get deps from SL
