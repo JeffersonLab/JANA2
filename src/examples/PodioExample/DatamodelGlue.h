@@ -6,41 +6,10 @@
 #ifndef JANA2_DATAMODELGLUE_H
 #define JANA2_DATAMODELGLUE_H
 
-#include <podio/podioVersion.h>
-
 #include <datamodel/ExampleHitCollection.h>
 #include <datamodel/ExampleClusterCollection.h>
 #include <datamodel/EventInfoCollection.h>
 #include <datamodel/TimesliceInfoCollection.h>
-
-/// Legacy PODIO support
-template <typename T>
-struct PodioTypeMap {
-};
-
-template <>
-struct PodioTypeMap<ExampleHit> {
-    using mutable_t = MutableExampleHit;
-    using collection_t = ExampleHitCollection;
-};
-
-template <>
-struct PodioTypeMap<ExampleCluster> {
-    using mutable_t = MutableExampleCluster;
-    using collection_t = ExampleClusterCollection;
-};
-
-template <>
-struct PodioTypeMap<EventInfo> {
-    using mutable_t = MutableEventInfo;
-    using collection_t = EventInfoCollection;
-};
-
-template <>
-struct PodioTypeMap<TimesliceInfo> {
-    using mutable_t = MutableTimesliceInfo;
-    using collection_t = TimesliceInfoCollection;
-};
 
 
 template<typename ... Ts>

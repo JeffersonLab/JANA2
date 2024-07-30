@@ -6,8 +6,6 @@
 
 #include <JANA/JEvent.h>
 
-template <typename T> struct PodioTypeMap;
-
 namespace jana {
 namespace omni {
 
@@ -55,7 +53,7 @@ protected:
     template <typename PodioT>
     class PodioOutput : public OutputBase {
 
-        std::unique_ptr<typename PodioTypeMap<PodioT>::collection_t> m_data;
+        std::unique_ptr<typename PodioT::collection_type> m_data;
 
     public:
 
@@ -65,14 +63,14 @@ protected:
             this->type_name = JTypeInfo::demangle<PodioT>();
         }
 
-        std::unique_ptr<typename PodioTypeMap<PodioT>::collection_t>& operator()() { return m_data; }
+        std::unique_ptr<typename PodioT::collection_type>& operator()() { return m_data; }
 
     protected:
         void InsertCollection(JEvent& event) override {
             event.InsertCollection<PodioT>(std::move(*m_data), this->collection_names[0]);
         }
         void Reset() override {
-            m_data = std::move(std::make_unique<typename PodioTypeMap<PodioT>::collection_t>());
+            m_data = std::move(std::make_unique<typename PodioT::collection_type>());
         }
     };
 
@@ -80,7 +78,7 @@ protected:
     template <typename PodioT>
     class VariadicPodioOutput : public OutputBase {
 
-        std::vector<std::unique_ptr<typename PodioTypeMap<PodioT>::collection_t>> m_data;
+        std::vector<std::unique_ptr<typename PodioT::collection_type>> m_data;
 
     public:
 
@@ -91,7 +89,7 @@ protected:
             this->is_variadic = true;
         }
 
-        std::vector<std::unique_ptr<typename PodioTypeMap<PodioT>::collection_t>>& operator()() { return m_data; }
+        std::vector<std::unique_ptr<typename PodioT::collection_type>>& operator()() { return m_data; }
 
     protected:
         void InsertCollection(JEvent& event) override {
@@ -108,7 +106,7 @@ protected:
         void Reset() override {
             m_data.clear();
             for (auto& coll_name : this->collection_names) {
-                m_data.push_back(std::make_unique<typename PodioTypeMap<PodioT>::collection_t>());
+                m_data.push_back(std::make_unique<typename PodioT::collection_type>());
             }
         }
     };
