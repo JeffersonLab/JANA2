@@ -28,7 +28,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: doxygen-site
-          path: ./doxygen_build/html/
+          path: ./docs/doxygen_build/html/
 
   deploy:
     if: github.ref == 'refs/heads/main'
