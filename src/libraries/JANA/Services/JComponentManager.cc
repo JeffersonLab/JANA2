@@ -115,13 +115,28 @@ void JComponentManager::initialize_components() {
 
     // Factories
     for (auto* fac : dummy_fac_set.GetAllFactories()) {
-        fac->DoInit();
+        try {
+            // Run Init() on each factory in order to capture any parameters 
+            // (and eventually services) that are retrieved via GetApplication().
+            fac->DoInit();
+        }
+        catch (...) {
+            // Swallow any exceptions!
+            // Everything in dummy_fac_set will be destroyed immediately after this.
+            // The same exception will be thrown from a fresh factory
+            // set once processing begins, unless the factory is never used.
+        }
         fac->Summarize(m_summary);
     }
 
     // Multifactories
     for (auto* fac : dummy_fac_set.GetAllMultifactories()) {
-        fac->DoInit();
+        try {
+            fac->DoInit();
+        }
+        catch (...) {
+            // Swallow any exceptions! See above.
+        }
         fac->Summarize(m_summary);
     }
 }
