@@ -1,4 +1,4 @@
 <!-- docs/_sidebar.md -->
 
-* [Home](/)
+* [Home](index.md)
 * [Contributing](Contributing.md)

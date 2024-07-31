@@ -27,3 +27,11 @@ One can test the generated website:
 # assuming cwd is JANA2/docs 
 python3 -m http.server -d doxygen_build/html/ 8000
 ```
+
+### Docsify
+
+[Available plugins](https://docsify-theme-github.vercel.app/#/awesome?id=plugins):
+
+- Example panels [github](https://github.com/VagnerDomingues/docsify-example-panels) [demo](https://vagnerdomingues.github.io/docsify-example-panels/#/)
+- Docsify Fontawesome [github](https://github.com/erickjx/docsify-fontawesome) [Fontawesome](https://fontawesome.com/)
+- Select documentation version [github](https://github.com/UliGall/docsify-versioned-plugin)
