@@ -105,7 +105,6 @@ bool JFactorySet::Add(JMultifactory *multifactory) {
 
     auto helpers = multifactory->GetHelpers();
     for (auto fac : helpers->GetAllFactories()) {
-        fac->SetApplication(multifactory->GetApplication());
         Add(fac);
     }
     helpers->mIsFactoryOwner = false;

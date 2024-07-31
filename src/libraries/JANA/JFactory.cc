@@ -41,9 +41,6 @@ void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
 }
 
 void JFactory::DoInit() {
-    if (GetApplication() == nullptr) {
-        throw JException("JFactory::DoInit(): Null JApplication pointer");
-    }
     if (mStatus == Status::Uninitialized) {
         CallWithJExceptionWrapper("JFactory::Init", [&](){ Init(); });
         mStatus = Status::Unprocessed;
