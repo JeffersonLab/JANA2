@@ -279,9 +279,7 @@ public:
                     // Skip these events due to nskip
                     event->SetEventNumber(m_event_count); // Default event number to event count
                     auto previous_origin = event->GetJCallGraphRecorder()->SetInsertDataOrigin( JCallGraphRecorder::ORIGIN_FROM_SOURCE);  // (see note at top of JCallGraphRecorder.h)
-                    CallWithJExceptionWrapper("JEventSource::GetEvent", [&](){
-                        GetEvent(event);
-                    });
+                    GetEvent(event);
                     event->GetJCallGraphRecorder()->SetInsertDataOrigin( previous_origin );
                     m_event_count += 1;
                     return Result::FailureTryAgain;  // Reject this event and recycle it
@@ -298,9 +296,7 @@ public:
                     event->SetSequential(false);
                     event->GetJCallGraphRecorder()->Reset();
                     auto previous_origin = event->GetJCallGraphRecorder()->SetInsertDataOrigin( JCallGraphRecorder::ORIGIN_FROM_SOURCE);  // (see note at top of JCallGraphRecorder.h)
-                    CallWithJExceptionWrapper("JEventSource::GetEvent", [&](){
-                        GetEvent(event);
-                    });
+                    GetEvent(event);
                     for (auto* output : m_outputs) {
                         output->InsertCollection(*event);
                     }
@@ -334,6 +330,33 @@ public:
             else {
                 return Result::Success;
             }
+        }
+        catch (JException& ex) {
+            if (ex.function_name.empty()) ex.function_name = "JEventSource::GetEvent";
+            if (ex.type_name.empty()) ex.type_name = m_type_name;
+            if (ex.instance_name.empty()) ex.instance_name = m_prefix;
+            if (ex.plugin_name.empty()) ex.plugin_name = m_plugin_name;
+            throw ex;
+        }
+        catch (std::exception& e){
+            auto ex = JException(e.what());
+            ex.exception_type = JTypeInfo::demangle_current_exception_type();
+            ex.nested_exception = std::current_exception();
+            ex.function_name = "JEventSource::GetEvent";
+            ex.type_name = m_type_name;
+            ex.instance_name = m_prefix;
+            ex.plugin_name = m_plugin_name;
+            throw ex;
+        }
+        catch (...) {
+            auto ex = JException("Unknown exception");
+            ex.exception_type = JTypeInfo::demangle_current_exception_type();
+            ex.nested_exception = std::current_exception();
+            ex.function_name = "JEventSource::GetEvent";
+            ex.type_name = m_type_name;
+            ex.instance_name = m_prefix;
+            ex.plugin_name = m_plugin_name;
+            throw ex;
         }
     }
 
