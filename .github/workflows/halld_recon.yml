@@ -23,11 +23,11 @@ jobs:
       - name: checking cvmfs repos 
         run: | 
           echo "listing cvmfs folder"
-          ls -l /opt/cvmfs
+          ls -l /cvmfs
           echo "listing eic folder"
-          ls /opt/cvmfs/eic.opensciencegrid.org
+          ls /cvmfs/eic.opensciencegrid.org
           echo "list oasis folder"
-          ls /opt/cvmfs/oasis.opensciencegrid.org
+          ls /cvmfs/oasis.opensciencegrid.org
 
       - name: Create jana build files
         run: |
