@@ -10,16 +10,16 @@
 #define JANA2_HAVE_ROOT @JANA2_HAVE_ROOT@
 #define JANA2_HAVE_XERCES @JANA2_HAVE_XERCES@
 
+#define JANA2_COMMIT_HASH "@JVERSION_COMMIT_HASH@"
+#define JANA2_COMMIT_DATE "@JVERSION_COMMIT_DATE@"
+#define JANA2_INSTALL_PREFIX "@CMAKE_INSTALL_PREFIX@"
+
 
 struct JVersion {
 
     static const uint64_t major = @jana2_VERSION_MAJOR@;
     static const uint64_t minor = @jana2_VERSION_MINOR@;
     static const uint64_t patch = @jana2_VERSION_PATCH@;
-
-    inline static const std::string last_commit_hash = "@JVERSION_COMMIT_HASH@";
-    inline static const std::string last_commit_date = "@JVERSION_COMMIT_DATE@";
-    inline static const std::string installdir = "@CMAKE_INSTALL_PREFIX@";
 
     static const bool is_unknown = @JVERSION_UNKNOWN@;
     static const bool is_release = @JVERSION_RELEASE@;
@@ -29,9 +29,9 @@ struct JVersion {
     static constexpr uint64_t GetMinorNumber() { return minor; }
     static constexpr uint64_t GetPatchNumber() { return patch; }
 
-    static std::string GetCommitHash() { return last_commit_hash; }
-    static std::string GetCommitDate() { return last_commit_date; }
-    static std::string GetInstallDir() { return installdir; }
+    static std::string GetCommitHash() { return JANA2_COMMIT_HASH; }
+    static std::string GetCommitDate() { return JANA2_COMMIT_DATE; }
+    static std::string GetInstallDir() { return JANA2_INSTALL_PREFIX; }
 
     static constexpr bool HasPodio() { return JANA2_HAVE_PODIO; }
     static constexpr bool HasROOT() { return JANA2_HAVE_ROOT; }
