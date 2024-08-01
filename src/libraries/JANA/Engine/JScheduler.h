@@ -78,7 +78,7 @@ public:
 
     /// Lets a Worker, test case, or user request a specific arrow. Returns nullptr if arrow can not be 
     /// checked up because it's no longer active or because it's already at its max parallelism.
-    JArrow* checkout(int arrow_index);
+    JArrow* checkout(size_t arrow_index);
 
     /// Logger is public so that somebody else can configure it
     JLogger logger;

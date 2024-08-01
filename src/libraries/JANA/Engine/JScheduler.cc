@@ -131,7 +131,7 @@ void JScheduler::checkin_unprotected(JArrow* assignment, JArrowMetrics::Status l
 }
 
 
-JArrow* JScheduler::checkout(int arrow_index) {
+JArrow* JScheduler::checkout(size_t arrow_index) {
     // Note that this lets us check out Inactive arrows, whereas checkout_unprotected() does not. This because we are called by JApplicationInspector
     // whereas checkout_unprotected is called by JWorker. This is because JArrowProcessingController::request_pause shuts off the topology
     // instead of shutting off the workers, which in hindsight might have been the wrong choice.

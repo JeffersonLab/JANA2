@@ -242,14 +242,12 @@ void JMultifactory::SetCollection(std::string tag, std::unique_ptr<typename JFac
 
 template <typename T>
 void JMultifactoryHelper<T>::Process(const std::shared_ptr<const JEvent> &event) {
-    mMultiFactory->SetApplication(this->GetApplication());
     mMultiFactory->Execute(event);
 }
 
 #if JANA2_HAVE_PODIO
 template <typename T>
 void JMultifactoryHelperPodio<T>::Process(const std::shared_ptr<const JEvent> &event) {
-    mMultiFactory->SetApplication(this->GetApplication());
     mMultiFactory->Execute(event);
 }
 #endif // JANA2_HAVE_PODIO
