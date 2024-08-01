@@ -20,6 +20,15 @@ jobs:
 
       - uses: cvmfs-contrib/github-action-cvmfs@v4
 
+      - name: checking cvmfs repos 
+        run: | 
+          echo "listing cvmfs folder"
+          ls -l /opt/cvmfs
+          echo "listing eic folder"
+          ls /opt/cvmfs/eic.opensciencegrid.org
+          echo "list oasis folder"
+          ls /opt/cvmfs/oasis.opensciencegrid.org
+
       - name: Create jana build files
         run: |
           cd JANA2
