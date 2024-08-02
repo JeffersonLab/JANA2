@@ -936,7 +936,7 @@ def build_plugin_test(plugin_name, copy_catch_hpp=True, dir="."):
 
     if copy_catch_hpp:
         files_to_copy = {"catch.hpp": {"sourcedir": "src/external",
-                                       "installdir": "include/external",
+                                       "installdir": "include/JANA/external",
                                        "destname": dir+"/catch.hpp"}}
         copy_from_source_dir(files_to_copy)
 
@@ -960,7 +960,7 @@ def build_jeventprocessor_test(processor_name, is_mini=True, copy_catch_hpp=True
 
     if copy_catch_hpp:
         files_to_copy = {"catch.hpp": {"sourcedir": "src/external",
-                                       "installdir": "include/external",
+                                       "installdir": "include/JANA/external",
                                        "destname": dir+"/catch.hpp"}}
         copy_from_source_dir(files_to_copy)
 
