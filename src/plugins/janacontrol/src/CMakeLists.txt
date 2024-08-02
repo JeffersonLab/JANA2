@@ -17,7 +17,7 @@ if (${USE_ZEROMQ})
     target_include_directories(janacontrol_plugin PUBLIC ${JANA_INCLUDE_DIR} ${ZeroMQ_INCLUDE_DIRS})
     target_link_libraries(janacontrol_plugin jana2 Threads::Threads ${ZeroMQ_LIBRARIES})
     set_target_properties(janacontrol_plugin PROPERTIES PREFIX "" OUTPUT_NAME "janacontrol" SUFFIX ".so")
-    install(TARGETS janacontrol_plugin DESTINATION plugins)
+    install(TARGETS janacontrol_plugin DESTINATION lib/JANA/plugins)
 
 else()
     message(STATUS "Skipping plugins/janacontrol because USE_ZEROMQ=Off")

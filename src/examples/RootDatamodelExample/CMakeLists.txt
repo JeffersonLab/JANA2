@@ -37,13 +37,13 @@ if(${USE_ROOT})
     target_link_libraries(RootDatamodelExample_plugin jana2)
     target_link_libraries(RootDatamodelExample_plugin ${ROOT_LIBRARIES})
     set_target_properties(RootDatamodelExample_plugin PROPERTIES PREFIX "" OUTPUT_NAME "JTestRoot" SUFFIX ".so")
-    install(TARGETS RootDatamodelExample_plugin DESTINATION plugins)
+    install(TARGETS RootDatamodelExample_plugin DESTINATION lib/JANA/plugins)
 
     message(STATUS "Installing ROOT PCM files: ${my_pcms}")
-    install(FILES ${my_pcms} DESTINATION plugins)
+    install(FILES ${my_pcms} DESTINATION lib/JANA/plugins)
         
     file(GLOB my_headers "*.h*")
-    install(FILES ${my_headers} DESTINATION include/RootDatamodelExample)
+    install(FILES ${my_headers} DESTINATION include/JANA/plugins/RootDatamodelExample)
 
 else()
     message(STATUS "Skipping plugins/RootDatamodelExample because USE_ROOT=Off")

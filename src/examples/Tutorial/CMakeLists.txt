@@ -16,5 +16,5 @@ add_library(Tutorial_plugin SHARED ${Tutorial_PLUGIN_SOURCES})
 
 target_link_libraries(Tutorial_plugin jana2)
 set_target_properties(Tutorial_plugin PROPERTIES PREFIX "" OUTPUT_NAME "Tutorial" SUFFIX ".so")
-install(TARGETS Tutorial_plugin DESTINATION plugins)
+install(TARGETS Tutorial_plugin DESTINATION lib/JANA/plugins)
 

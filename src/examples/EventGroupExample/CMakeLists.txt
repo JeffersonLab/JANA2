@@ -12,8 +12,8 @@ add_library(EventGroupExample_plugin SHARED ${EventGroupExample_SOURCES})
 
 target_include_directories(EventGroupExample_plugin PUBLIC ${JANA_INCLUDE_DIRS})
 target_link_libraries(EventGroupExample_plugin jana2 ${JANA_LIBRARIES})
-set_target_properties(EventGroupExample_plugin PROPERTIES PREFIX "" SUFFIX ".so")
+set_target_properties(EventGroupExample_plugin PROPERTIES PREFIX "" OUTPUT_NAME "EventGroupExample" SUFFIX ".so")
 
-install(TARGETS EventGroupExample_plugin DESTINATION ${CMAKE_INSTALL_PREFIX}/plugins)
+install(TARGETS EventGroupExample_plugin DESTINATION lib/JANA/plugins)
 
 

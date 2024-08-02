@@ -15,7 +15,7 @@ if (USE_ZEROMQ)
     target_include_directories(StreamingExample_plugin PUBLIC ${ZeroMQ_INCLUDE_DIRS})
     target_link_libraries(StreamingExample_plugin jana2 ${ZeroMQ_LIBRARIES})
     set_target_properties(StreamingExample_plugin PROPERTIES PREFIX "" SUFFIX ".so")
-    install(TARGETS StreamingExample_plugin DESTINATION plugins)
+    install(TARGETS StreamingExample_plugin DESTINATION lib/JANA/plugins)
 else()
     message(STATUS "Skipping examples/StreamingExample because USE_ZEROMQ=Off")
 

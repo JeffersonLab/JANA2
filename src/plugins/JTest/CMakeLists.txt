@@ -12,7 +12,7 @@ add_library(jtest SHARED
 find_package(Threads REQUIRED)
 target_link_libraries(jtest Threads::Threads)
 set_target_properties(jtest PROPERTIES PREFIX "" OUTPUT_NAME "JTest" SUFFIX ".so")
-install(TARGETS jtest DESTINATION plugins)
+install(TARGETS jtest DESTINATION lib/JANA/plugins)
         
 file(GLOB my_headers "*.h*")
-install(FILES ${my_headers} DESTINATION include/JTest)
+install(FILES ${my_headers} DESTINATION include/JANA/plugins/JTest)

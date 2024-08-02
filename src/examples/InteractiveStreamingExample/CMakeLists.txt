@@ -23,10 +23,10 @@ if (${USE_ROOT} AND ${USE_ZEROMQ})
     target_include_directories(streamDet PUBLIC ${ROOT_INCLUDE_DIRS} ${ZeroMQ_INCLUDE_DIRS})
     target_link_libraries(streamDet jana2 ${ZeroMQ_LIBRARIES} ${ROOT_LIBRARIES})
     set_target_properties(streamDet PROPERTIES PREFIX "" SUFFIX ".so")
-    install(TARGETS streamDet DESTINATION plugins)
+    install(TARGETS streamDet DESTINATION lib/JANA/plugins)
 
     file(GLOB my_headers "*.h*")
-    install(FILES ${my_headers} DESTINATION include/streamDet)
+    install(FILES ${my_headers} DESTINATION include/JANA/plugins/streamDet)
 
 else()
     message(STATUS "Skipping examples/InteractiveStreamingExample because USE_ROOT=Off or USE_ZEROMQ=Off")

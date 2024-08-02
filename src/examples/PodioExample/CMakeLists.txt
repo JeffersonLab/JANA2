@@ -30,11 +30,11 @@ if (USE_PODIO)
     install(TARGETS PodioExample DESTINATION bin)
 
     install(TARGETS PodioExampleDatamodel
-            LIBRARY DESTINATION lib
-            PUBLIC_HEADER DESTINATION include/PodioExampleDatamodel #include/JANA/Plugins/PodioExampleDatamodel
+        LIBRARY DESTINATION lib/JANA/plugins
+        PUBLIC_HEADER DESTINATION include/JANA/plugins/PodioExampleDatamodel
     )
     
-    install(TARGETS PodioExampleDatamodelDict DESTINATION lib)
+    install(TARGETS PodioExampleDatamodelDict DESTINATION lib/JANA/plugins)
 
 
 else()
