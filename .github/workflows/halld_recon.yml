@@ -20,7 +20,7 @@ jobs:
 
       - uses: cvmfs-contrib/github-action-cvmfs@v4
 
-      - name: checking cvmfs repos 
+      - name: checking cvmfs repos structure
         run: | 
           echo "listing cvmfs folder"
           ls -l /cvmfs
