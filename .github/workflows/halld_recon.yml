@@ -10,24 +10,39 @@ on:
 jobs:
   jana2_halld_recon:
     name: halld_recon
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, macOS, ARM64]
 
     steps:
       - uses: actions/checkout@v4
         with: 
           ref: refs/tags/rasool_jana2
           path: JANA2
-
-      - uses: cvmfs-contrib/github-action-cvmfs@v4
-
-      - name: checking cvmfs repos structure
-        run: | 
+      
+      - name: Check CVMFS mount check at epscidocker
+        run: |
+          ls /
           echo "listing cvmfs folder"
-          ls -l /cvmfs
+          ls -l /opt/cvmfs
           echo "listing eic folder"
-          ls /cvmfs/eic.opensciencegrid.org
-          echo "list oasis folder"
-          ls /cvmfs/oasis.opensciencegrid.org
+          ls /opt/cvmfs/eic.opensciencegrid.org
+          ls /opt/cvmfs/oasis.opensciencegrid.org
+          ls /Users/epscidocker/
+          pwd
+          ls .
+          echo "I am user"
+          whoami
+          id -u
+          echo "Checking CVMFS mount status"
+          if [ -d "/opt/cvmfs/oasis.opensciencegrid.org/gluex/group/" ]; then
+            echo "Path exists"
+            echo "Getting group files:"
+            ls /opt/cvmfs/oasis.opensciencegrid.org/gluex/group/
+            echo "Getting software listings:"
+            ls /opt/cvmfs/oasis.opensciencegrid.org/gluex/group/halld/Software/build_scripts
+          else
+            echo "Path does not exist or is not mounted correctly"
+            exit 1
+          fi
 
       - name: Create jana build files
         run: |
@@ -83,7 +98,7 @@ jobs:
 
           echo "Building start"
           cmake3 \$JANA_HOME -DUSE_XERCES=1 -DCMAKE_CXX_STANDARD=17
-          make install
+          make install -j12
           EOF
           chmod +x jana_build.sh
     
@@ -91,8 +106,9 @@ jobs:
       - name: Build JANA2 on Alma9
         run: |
           docker run --rm \
+            --platform linux/amd64 \
             --user $(id -u):$(id -g) \
-            --volume /cvmfs/oasis.opensciencegrid.org/gluex/group/:/group \
+            --volume /opt/cvmfs/oasis.opensciencegrid.org/gluex/group/:/group \
             --mount type=bind,source=${{ github.workspace }},target=/workspace \
             raiqarasool/gluex_build:latest /bin/bash -c "source /workspace/JANA2/jana_build.sh"
             
@@ -136,7 +152,7 @@ jobs:
           chmod +x \$JANA_HOME/bin/*
 
           cd src
-          scons install
+          scons install -j12
           EOF
           chmod +x halld_recon_build.sh
 
@@ -144,8 +160,9 @@ jobs:
       - name: Build Halld_recon on Alma9
         run: |
           docker run --rm \
+            --platform linux/amd64 \
             --user $(id -u):$(id -g) \
-            --volume /cvmfs/oasis.opensciencegrid.org/gluex/group/:/group \
+            --volume /opt/cvmfs/oasis.opensciencegrid.org/gluex/group/:/group \
             --mount type=bind,source=${{ github.workspace }},target=/workspace \
             raiqarasool/gluex_build:latest /bin/bash -c "source /workspace/halld_recon/halld_recon_build.sh"
             
