@@ -4,8 +4,8 @@
 #include <iostream>
 #include <podio/CollectionBase.h>
 #include <podio/Frame.h>
-#include "datamodel/MutableExampleHit.h"
-#include "datamodel/ExampleHitCollection.h"
+#include "PodioExampleDatamodel/MutableExampleHit.h"
+#include "PodioExampleDatamodel/ExampleHitCollection.h"
 #include <podio/ROOTFrameWriter.h>
 #include <podio/ROOTFrameReader.h>
 
