@@ -18,47 +18,35 @@ jobs:
 
     - uses: actions/checkout@v4
 
-    - name: cmake
+    - name: build
       run: |
-        mkdir -p $GITHUB_WORKSPACE/build
-        cd $GITHUB_WORKSPACE/build
-        cmake ../ -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/Linux \
+        cmake -S . -B build -DCMAKE_INSTALL_PREFIX=`pwd` \
           -DUSE_PYTHON=ON \
           -DUSE_ROOT=ON \
           -DUSE_PODIO=ON \
           -DUSE_XERCES=ON \
-          -DXercesC_DIR=/usr \
           -DUSE_ZEROMQ=ON \
+          -DXercesC_DIR=/usr \
           -Dpodio_DIR=/app/podio/install/lib/cmake/podio/
-    - name: make
-      run: |
-        cd $GITHUB_WORKSPACE/build
-        make
-    - name: make install
-      run: |
-        cd $GITHUB_WORKSPACE/build
-        make install
+        cmake --build build --target install
     - name: JTest
       run: |
         echo "--- Running JTest plugin -----------------------"
-        export JANA_PLUGIN_PATH=$GITHUB_WORKSPACE/Linux/plugins
-        $GITHUB_WORKSPACE/Linux/bin/jana -PPLUGINS=JTest -Pjana:nevents=100
+        $GITHUB_WORKSPACE/bin/jana -PPLUGINS=JTest -Pjana:nevents=100
     - name: jana-unit-tests
       run: |
         echo "--- Running jana-unit-tests ------------------------------"
-        export JANA_PLUGIN_PATH=$GITHUB_WORKSPACE/Linux/plugins
-        $GITHUB_WORKSPACE/Linux/bin/jana-unit-tests
+        export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/lib/JANA/plugins:$LD_LIBRARY_PATH
+        $GITHUB_WORKSPACE/bin/jana-unit-tests
     - name: TimesliceExample with simple (physics event) topology
       run: |
         echo "--- Running TimesliceExample with simple topology ------------------------------"
-        export JANA_PLUGIN_PATH=$GITHUB_WORKSPACE/Linux/plugins
-        export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/Linux/lib:/app/podio/install/lib:$LD_LIBRARY_PATH
-        $GITHUB_WORKSPACE/Linux/bin/jana -Pplugins=TimesliceExample -Pjana:nevents=100 events.root
+        export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/lib/JANA/plugins:/app/podio/install/lib:$LD_LIBRARY_PATH
+        $GITHUB_WORKSPACE/bin/jana -Pplugins=TimesliceExample -Pjana:nevents=100 events.root
     - name: TimesliceExample with complex (timeslice) topology
       run: |
         echo "--- Running TimesliceExample with complex topology ------------------------------"
-        export JANA_PLUGIN_PATH=$GITHUB_WORKSPACE/Linux/plugins
-        export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/Linux/lib:/app/podio/install/lib:$LD_LIBRARY_PATH
-        $GITHUB_WORKSPACE/Linux/bin/jana -Pplugins=TimesliceExample -Pjana:nevents=100 timeslices.root
+        export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/lib/JANA/plugins:/app/podio/install/lib:$LD_LIBRARY_PATH
+        $GITHUB_WORKSPACE/bin/jana -Pplugins=TimesliceExample -Pjana:nevents=100 timeslices.root
 
 
