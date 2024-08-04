@@ -392,7 +392,7 @@ void JParameterManager::WriteConfigFile(std::string filename) {
 /// @param [out] parms        A map of {key: string, parameter: string}. The contents of this
 ///                           map are replaced on each call. Parameter values are returned
 ///                           as strings rather than as JParameter objects, which means we don't
-///                           have to worry about ownership.
+///                           have to worry about ownership. Returned parameters are marked as used.
 ///
 void JParameterManager::FilterParameters(std::map<std::string, std::string> &parms, std::string filter) {
 
@@ -405,6 +405,7 @@ void JParameterManager::FilterParameters(std::map<std::string, std::string> &par
             if (key.substr(0, filter.size()) != filter) continue;
             key.erase(0, filter.size());
         }
+        pair.second->SetIsUsed(true);
         parms[key] = value;
     }
 }
