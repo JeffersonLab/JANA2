@@ -51,7 +51,7 @@ endif()
 add_executable(jana-unit-tests ${TEST_SOURCES})
 find_package(Threads REQUIRED)
 target_include_directories(jana-unit-tests PUBLIC .)
-target_link_libraries(jana-unit-tests jana2)
+target_link_libraries(jana-unit-tests jana2 VendoredCatch2)
 
 if (${USE_PODIO})
     # Pull in the data model from examples/PodioExample.
@@ -60,4 +60,4 @@ if (${USE_PODIO})
 endif()
 
 install(TARGETS jana-unit-tests DESTINATION bin)
-install(FILES ../../external/catch.hpp DESTINATION include/JANA/external)
+
