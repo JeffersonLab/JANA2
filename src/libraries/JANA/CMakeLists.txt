@@ -195,32 +195,6 @@ else()
 endif()
 
 
-# Install JANATargets.cmake
-install(EXPORT jana2_targets FILE JANATargets.cmake NAMESPACE JANA:: DESTINATION lib/cmake/JANA)
-
-# Generate JANAConfig.cmake, pointing it to JANATargets
-include(CMakePackageConfigHelpers)
-configure_package_config_file(
-        "JANAConfig.cmake.in"
-        "${CMAKE_CURRENT_BINARY_DIR}/JANAConfig.cmake"
-        INSTALL_DESTINATION "lib/cmake/JANA"
-)
-
-# Generate JANAConfigVersion.cmake
-write_basic_package_version_file(
-        JANAConfigVersion.cmake
-        VERSION ${PACKAGE_VERSION}
-        COMPATIBILITY AnyNewerVersion
-)
-
-# Install JANAConfig.cmake and JANAConfigVersion.cmake
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/JANAConfig.cmake" DESTINATION "lib/cmake/JANA")
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/JANAConfigVersion.cmake" DESTINATION "lib/cmake/JANA")
-
-
-# Export targets so that outside projects can use them
-
-
 # Install "public" header files
 
 file(GLOB jana_headers "*.h*")
