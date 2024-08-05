@@ -1,18 +1,9 @@
 
-add_library(jtest SHARED
-    JTestMain.cc
-    JTestDataObjects.h
-    JTestParser.h
-    JTestDisentangler.h
-    JTestTracker.h
-    JTestPlotter.h
-    JTestCalibrationService.h
-    )
+
+file(GLOB JTEST_HEADERS "*.h*")
+
+add_jana_plugin(JTest SOURCES JTestMain.cc PUBLIC_HEADER ${JTEST_HEADERS})
 
 find_package(Threads REQUIRED)
-target_link_libraries(jtest Threads::Threads)
-set_target_properties(jtest PROPERTIES PREFIX "" OUTPUT_NAME "JTest" SUFFIX ".so")
-install(TARGETS jtest DESTINATION lib/JANA/plugins)
-        
-file(GLOB my_headers "*.h*")
-install(FILES ${my_headers} DESTINATION include/JANA/plugins/JTest)
+target_link_libraries(JTest PUBLIC Threads::Threads)
+

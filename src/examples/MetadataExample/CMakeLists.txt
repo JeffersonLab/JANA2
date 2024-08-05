@@ -1,20 +1,9 @@
 
+file(GLOB MetadataExample_SOURCES "*.c*")
+file(GLOB MetadataExample_HEADERS "*.h*")
 
-set (MetadataExample_PLUGIN_SOURCES
-		MetadataExample.cc
-		MetadataAggregator.cc
-		MetadataAggregator.h
-		Track.h
-		TrackSmearingFactory.cc
-		TrackSmearingFactory.h
-		RandomTrackSource.cc
-		RandomTrackSource.h
-	)
+add_jana_plugin(MetadataExample 
+    SOURCES ${MetadataExample_SOURCES}
+    PUBLIC_HEADER ${MetadataExample_HEADERS})
 
-add_library(MetadataExample_plugin SHARED ${MetadataExample_PLUGIN_SOURCES})
-
-target_include_directories(MetadataExample_plugin PUBLIC ${JANA_INCLUDE_DIR})
-target_link_libraries(MetadataExample_plugin jana2)
-set_target_properties(MetadataExample_plugin PROPERTIES PREFIX "" OUTPUT_NAME "MetadataExample" SUFFIX ".so")
-install(TARGETS MetadataExample_plugin DESTINATION lib/JANA/plugins)
 

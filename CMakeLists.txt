@@ -34,7 +34,7 @@ endif()
 # TODO: detector MacOS and set MACOSX_RPATH to TRUE
 set( CMAKE_SKIP_BUILD_RPATH FALSE )
 set( CMAKE_BUILD_WITH_INSTALL_RPATH FALSE )
-set( CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib" )
+set( CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib:${CMAKE_INSTALL_PREFIX}/lib/JANA/plugins" )
 set( CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE )
 
 # Generate a compilation database, e.g. for IDE autocompletion
@@ -201,6 +201,9 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}/src/libraries)   # So that every
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     add_link_options(-undefined dynamic_lookup)
 endif()
+
+include(CTest)
+include(cmake/AddInternalPlugin.cmake)
 
 add_subdirectory(src/external)
 add_subdirectory(src/libraries/JANA)

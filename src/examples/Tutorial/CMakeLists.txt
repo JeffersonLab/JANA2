@@ -1,20 +1,20 @@
 
 
-set (Tutorial_PLUGIN_SOURCES
-        Tutorial.cc
-        TutorialProcessor.cc
-        TutorialProcessor.h
-        RandomSource.cc
-        RandomSource.h
-        Hit.h
-        Cluster.h
-        SimpleClusterFactory.cc
-        SimpleClusterFactory.h
-    )
+set (Tutorial_SOURCES
+    Tutorial.cc
+    RandomSource.cc
+    TutorialProcessor.cc
+    SimpleClusterFactory.cc)
 
-add_library(Tutorial_plugin SHARED ${Tutorial_PLUGIN_SOURCES})
+set (Tutorial_HEADERS
+    TutorialProcessor.h
+    RandomSource.h
+    Hit.h
+    Cluster.h
+    SimpleClusterFactory.h)
 
-target_link_libraries(Tutorial_plugin jana2)
-set_target_properties(Tutorial_plugin PROPERTIES PREFIX "" OUTPUT_NAME "Tutorial" SUFFIX ".so")
-install(TARGETS Tutorial_plugin DESTINATION lib/JANA/plugins)
+add_jana_plugin(Tutorial 
+    SOURCES ${Tutorial_SOURCES}
+    PUBLIC_HEADER ${Tutorial_HEADERS})
+
 

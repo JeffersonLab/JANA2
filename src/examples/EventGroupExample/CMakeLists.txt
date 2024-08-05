@@ -1,19 +1,9 @@
-# JExample 7 plugin
 
-set(EventGroupExample_SOURCES SHARED
-        BlockingGroupedEventSource.h
-        EventGroupExamplePlugin.cc
-        GroupedEventProcessor.h
-        GroupedEventSource.h
-        TridasEvent.h
-)
+file(GLOB EventGroupExample_SOURCES "*.c*")
+file(GLOB EventGroupExample_HEADERS "*.h*")
 
-add_library(EventGroupExample_plugin SHARED ${EventGroupExample_SOURCES})
-
-target_include_directories(EventGroupExample_plugin PUBLIC ${JANA_INCLUDE_DIRS})
-target_link_libraries(EventGroupExample_plugin jana2 ${JANA_LIBRARIES})
-set_target_properties(EventGroupExample_plugin PROPERTIES PREFIX "" OUTPUT_NAME "EventGroupExample" SUFFIX ".so")
-
-install(TARGETS EventGroupExample_plugin DESTINATION lib/JANA/plugins)
+add_jana_plugin(EventGroupExample 
+    SOURCES ${EventGroupExample_SOURCES} 
+    PUBLIC_HEADER ${EventGroupExample_HEADERS})
 
 

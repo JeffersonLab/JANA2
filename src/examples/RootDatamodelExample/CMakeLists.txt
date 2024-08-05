@@ -18,33 +18,31 @@ if(${USE_ROOT})
         list(APPEND my_pcms ${CMAKE_CURRENT_BINARY_DIR}/lib${CLASS}_rdict.pcm )
     endforeach()
 
-    set (RootDatamodelExample_PLUGIN_SOURCES
-            RootDatamodelExample.cc
-			JTestRootEventSource.cc
-			JTestRootEventSource.h
-			JFactory_Cluster.cc
-			JFactory_Cluster.h
-			JTestRootProcessor.cc
-			JTestRootProcessor.h
-			Hit.h
-			Cluster.h
-			G__Hit.cxx
-			G__Cluster.cxx
-		)
+    set (RootDataModelExample_HEADERS
+        Hit.h 
+        Cluster.h 
+        JFactory_Cluster.h
+		JTestRootEventSource.h
+		JTestRootProcessor.h)
 
-    add_library(RootDatamodelExample_plugin SHARED ${RootDatamodelExample_PLUGIN_SOURCES})
-    target_include_directories(RootDatamodelExample_plugin PUBLIC ${JANA_INCLUDE_DIR} ${ROOT_INCLUDE_DIRS})
-    target_link_libraries(RootDatamodelExample_plugin jana2)
-    target_link_libraries(RootDatamodelExample_plugin ${ROOT_LIBRARIES})
-    set_target_properties(RootDatamodelExample_plugin PROPERTIES PREFIX "" OUTPUT_NAME "JTestRoot" SUFFIX ".so")
-    install(TARGETS RootDatamodelExample_plugin DESTINATION lib/JANA/plugins)
+    set (RootDatamodelExample_SOURCES
+        RootDatamodelExample.cc
+        JTestRootEventSource.cc
+        JFactory_Cluster.cc
+        JTestRootProcessor.cc
+        G__Hit.cxx
+        G__Cluster.cxx)
+
+    add_jana_plugin(RootDataModelExample 
+        SOURCES ${RootDatamodelExample_SOURCES}
+        PUBLIC_HEADER ${RootDataModelExample_HEADERS})
+
+    target_include_directories(RootDatamodelExample PUBLIC ${ROOT_INCLUDE_DIRS})
+    target_link_libraries(RootDatamodelExample PUBLIC ${ROOT_LIBRARIES})
 
     message(STATUS "Installing ROOT PCM files: ${my_pcms}")
     install(FILES ${my_pcms} DESTINATION lib/JANA/plugins)
         
-    file(GLOB my_headers "*.h*")
-    install(FILES ${my_headers} DESTINATION include/JANA/plugins/RootDatamodelExample)
-
 else()
     message(STATUS "Skipping plugins/RootDatamodelExample because USE_ROOT=Off")
 
