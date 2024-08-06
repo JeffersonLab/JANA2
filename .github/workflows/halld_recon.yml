@@ -167,7 +167,7 @@ jobs:
           echo "rootsys"
           echo \$ROOTSYS
           chmod +x \$JANA_HOME/bin/*
-
+          ln -s /cvmfs/oasis.opensciencegrid.org/gluex/group/halld/Software/build_scripts /group
           cd src
           scons install -j12
           EOF
