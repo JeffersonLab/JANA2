@@ -149,12 +149,12 @@ jobs:
 
           cd /workspace/halld_recon
           echo "checking software access rights"
-          ls -ld /opt/cvmfs/oasis.opensciencegrid.org/gluex/group/halld/Software/builds
+          ls -ld /group/halld/Software/builds
           echo "checking common include presence"
-          ls -l /opt/cvmfs/oasis.opensciencegrid.org/gluex/group/halld/Software/builds/Linux_Alma9-x86_64-gcc11.4.1-cntr/evio/evio-4.4.6/common/include
+          ls -l /group/halld/Software/builds/Linux_Alma9-x86_64-gcc11.4.1-cntr/evio/evio-4.4.6/common/include
           echo "checking evio access rights"
-          ls -ld /opt/cvmfs/oasis.opensciencegrid.org/gluex/group/halld/Software/builds/Linux_Alma9-x86_64-gcc11.4.1-cntr/evio/evio-4.4.6/Linux-x86_64/include
-          export BUILD_SCRIPTS=/opt/cvmfs/oasis.opensciencegrid.org/gluex/group/halld/Software/build_scripts
+          ls -ld /group/halld/Software/builds/Linux_Alma9-x86_64-gcc11.4.1-cntr/evio/evio-4.4.6/Linux-x86_64/include
+          export BUILD_SCRIPTS=/group/halld/Software/build_scripts
 
           source \$BUILD_SCRIPTS/gluex_env_boot_jlab.sh --bs \$BUILD_SCRIPTS
           gxenv /workspace/halld_recon/halld_recon_build_prereqs_version.xml
@@ -172,7 +172,7 @@ jobs:
           docker run --rm \
             --platform linux/amd64 \
             --user $(id -u):$(id -g) \
-            --volume /opt/cvmfs/oasis.opensciencegrid.org/gluex/group/:/opt/cvmfs/oasis.opensciencegrid.org/gluex/group/ \
+            --volume /opt/cvmfs/oasis.opensciencegrid.org/gluex/group/:/group/ \
             --mount type=bind,source=${{ github.workspace }},target=/workspace \
             raiqarasool/gluex_build:latest /bin/bash -c "source /workspace/halld_recon/halld_recon_build.sh"
 
