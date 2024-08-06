@@ -32,9 +32,9 @@ jobs:
           whoami
           id -u
           echo "checking software access rights"
-          ls -ld /group/halld/Software/builds
+          ls -ld /opt/cvmfs/oasis.opensciencegrid.org/gluex/group/halld/Software/builds
           echo "checking evio access rights"
-          ls -ld /group/halld/Software/builds/Linux_Alma9-x86_64-gcc11.4.1-cntr/evio/evio-4.4.6/Linux-x86_64/include
+          ls -ld /opt/cvmfs/oasis.opensciencegrid.org/gluex/group/halld/Software/builds/Linux_Alma9-x86_64-gcc11.4.1-cntr/evio/evio-4.4.6/Linux-x86_64/include
           echo "Checking CVMFS mount status"
           if [ -d "/opt/cvmfs/oasis.opensciencegrid.org/gluex/group/" ]; then
             echo "Path exists"
