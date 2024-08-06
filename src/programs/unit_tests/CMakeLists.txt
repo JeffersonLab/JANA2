@@ -43,21 +43,15 @@ set(TEST_SOURCES
     )
 
 if (${USE_PODIO})
-    list(APPEND TEST_SOURCES
-        Components/PodioTests.cc
-        )
+    list(APPEND TEST_SOURCES Components/PodioTests.cc)
 endif()
 
-add_executable(jana-unit-tests ${TEST_SOURCES})
-find_package(Threads REQUIRED)
-target_include_directories(jana-unit-tests PUBLIC .)
-target_link_libraries(jana-unit-tests jana2 VendoredCatch2)
+add_jana_test(jana-unit-tests SOURCES ${TEST_SOURCES})
 
 if (${USE_PODIO})
     # Pull in the data model from examples/PodioExample.
-    # We don't want to have two separate toy data models in the JANA codebase
-    target_link_libraries(jana-unit-tests PodioExampleDatamodel PodioExampleDatamodelDict)
+    # We don't want to have multiple separate toy data models in the JANA codebase
+    target_link_libraries(jana-unit-tests PRIVATE PodioExampleDatamodel PodioExampleDatamodelDict)
 endif()
 
-install(TARGETS jana-unit-tests DESTINATION bin)
 
