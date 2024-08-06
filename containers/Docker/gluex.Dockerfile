@@ -62,6 +62,7 @@ RUN dnf -y install https://ecsft.cern.ch/dist/cvmfs/cvmfs-release/cvmfs-release-
     && echo "CVMFS_HTTP_PROXY=DIRECT" | tee -a /etc/cvmfs/default.local \
     && echo "CVMFS_REPOSITORIES=oasis.opensciencegrid.org,singularity.opensciencegrid.org" | tee -a /etc/cvmfs/default.local \
     && echo "CVMFS_CLIENT_PROFILE=single" | tee -a /etc/cvmfs/default.local \
+    && dnf -y install fuse \
     && dnf clean all
 
 # Fix for Silverblue's toolbox utility

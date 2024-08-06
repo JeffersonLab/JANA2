@@ -149,6 +149,7 @@ jobs:
           #!/bin/bash
 
           cd /workspace/halld_recon
+          chmod 666 /dev/fuse
           echo "mounting cvmfs"
           mount -t cvmfs oasis.opensciencegrid.org /cvmfs/oasis.opensciencegrid.org
           echo "checking software access rights"
