@@ -18,7 +18,7 @@ if(${USE_ROOT})
         list(APPEND my_pcms ${CMAKE_CURRENT_BINARY_DIR}/lib${CLASS}_rdict.pcm )
     endforeach()
 
-    set (RootDataModelExample_HEADERS
+    set (RootDatamodelExample_HEADERS
         Hit.h 
         Cluster.h 
         JFactory_Cluster.h
@@ -33,9 +33,9 @@ if(${USE_ROOT})
         G__Hit.cxx
         G__Cluster.cxx)
 
-    add_jana_plugin(RootDataModelExample 
+    add_jana_plugin(RootDatamodelExample 
         SOURCES ${RootDatamodelExample_SOURCES}
-        PUBLIC_HEADER ${RootDataModelExample_HEADERS})
+        PUBLIC_HEADER ${RootDatamodelExample_HEADERS})
 
     target_include_directories(RootDatamodelExample PUBLIC ${ROOT_INCLUDE_DIRS})
     target_link_libraries(RootDatamodelExample PUBLIC ${ROOT_LIBRARIES})

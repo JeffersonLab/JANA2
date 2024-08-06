@@ -12,7 +12,7 @@ if (${USE_ROOT} AND ${USE_ZEROMQ})
         PUBLIC_HEADER ${InteractiveStreamingExample_HEADERS})
 
     target_include_directories(InteractiveStreamingExample PUBLIC ${ROOT_INCLUDE_DIRS} ${ZeroMQ_INCLUDE_DIRS})
-    target_link_libraries(InteractiveStreamingExample jana2_shared_lib ${ZeroMQ_LIBRARIES} ${ROOT_LIBRARIES})
+    target_link_libraries(InteractiveStreamingExample PUBLIC ${ZeroMQ_LIBRARIES} ${ROOT_LIBRARIES})
 
 else()
 

@@ -17,7 +17,7 @@ if (USE_ZEROMQ)
         PUBLIC_HEADER ${StreamingExample_HEADERS})
 
     target_include_directories(StreamingExample PUBLIC ${ZeroMQ_INCLUDE_DIRS})
-    target_link_libraries(StreamingExample jana2 ${ZeroMQ_LIBRARIES})
+    target_link_libraries(StreamingExample PUBLIC ${ZeroMQ_LIBRARIES})
 
 else()
 

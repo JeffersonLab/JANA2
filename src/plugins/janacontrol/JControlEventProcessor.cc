@@ -66,7 +66,7 @@ void JControlEventProcessor::Finish() {
 //-------------------------------------------------------------
 void JControlEventProcessor::SetDebugMode(bool debug_mode){
     _debug_mode = debug_mode;
-	GetApplication()->SetTimeoutEnabled( !_debug_mode ); // TODO: Add a GetTimeoutEnabled() to JApplication
+	GetApplication()->SetTimeoutEnabled( !_debug_mode );
 }
 
 //-------------------------------------------------------------
