@@ -22,8 +22,8 @@ RUN dnf -y update
 RUN dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-9.noarch.rpm
 RUN grep 'enabled=1' /etc/yum.repos.d/epel.repo
 RUN /usr/bin/crb enable
-RUN dnf -y install https://repo.opensciencegrid.org/osg/3.6/osg-3.6-el9-release-latest.rpm
-RUN grep 'enabled=1' /etc/yum.repos.d/osg.repo
+# RUN dnf -y install https://repo.opensciencegrid.org/osg/3.6/osg-3.6-el9-release-latest.rpm
+# RUN grep 'enabled=1' /etc/yum.repos.d/osg.repo
 
 # install a few utility rpms
 RUN dnf -y install dnf dnf-plugins-core
@@ -46,17 +46,23 @@ RUN dnf -y install lapack lapack-devel openmpi openmpi-devel xalan-j2
 RUN dnf -y install openssh-server postgresql-server-devel postgresql-upgrade-devel
 RUN dnf -y install procps-ng strace ucx valgrind xerces-c xerces-c-devel xerces-c-doc
 RUN dnf -y install qt5 qt5-qtx11extras qt5-devel openblas-devel libnsl2-devel
-RUN dnf -y install libcurl-devel uClibc-devel libuuid-devel
 
 
 # install the osg worker node client packages
-RUN dnf -y install osg-ca-certs
-RUN dnf -y install osg-wn-client
+# RUN dnf -y install osg-ca-certs
+# RUN dnf -y install osg-wn-client
 RUN dnf -y install python3-h5py python3-scipy python3-tqdm
 
 # install some dcache client tools
 RUN dnf -y install https://zeus.phys.uconn.edu/halld/gridwork/dcache-srmclient-3.0.11-1.noarch.rpm
 
+#Installing cvmfs
+RUN dnf -y install https://ecsft.cern.ch/dist/cvmfs/cvmfs-release/cvmfs-release-latest.noarch.rpm \
+    && dnf -y install cvmfs cvmfs-config-default \
+    && echo "CVMFS_HTTP_PROXY=DIRECT" | tee -a /etc/cvmfs/default.local \
+    && echo "CVMFS_REPOSITORIES=oasis.opensciencegrid.org,singularity.opensciencegrid.org" | tee -a /etc/cvmfs/default.local \
+    && echo "CVMFS_CLIENT_PROFILE=single" | tee -a /etc/cvmfs/default.local \
+    && dnf clean all
 
 # Fix for Silverblue's toolbox utility
 RUN dnf -y install passwd sudo
