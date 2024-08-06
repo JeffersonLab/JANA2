@@ -172,7 +172,7 @@ jobs:
           docker run --rm \
             --platform linux/amd64 \
             --user $(id -u):$(id -g) \
-            --volume /opt/cvmfs/oasis.opensciencegrid.org/gluex/group/:/opt/cvmfs/oasis.opensciencegrid.org/gluex/group/ -v /opt/cvmfs/oasis.opensciencegrid.org/gluex/group/halld/Software/builds/Linux_Alma9-x86_64-gcc11.4.1-cntr/evio/evio-4.4.6/common/include:/opt/cvmfs/oasis.opensciencegrid.org/gluex/group/halld/Software/builds/Linux_Alma9-x86_64-gcc11.4.1-cntr/evio/evio-4.4.6/common/include \
+            --mount type=bind,source=/opt/cvmfs/oasis.opensciencegrid.org/gluex/group/,target=/opt/cvmfs/oasis.opensciencegrid.org/gluex/group/ \
             --mount type=bind,source=${{ github.workspace }},target=/workspace \
             raiqarasool/gluex_build:latest /bin/bash -c "source /workspace/halld_recon/halld_recon_build.sh"
 
