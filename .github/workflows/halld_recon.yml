@@ -128,7 +128,7 @@ jobs:
           cd halld_recon
           git clone --branch rasool_jana2 https://github.com/JeffersonLab/halld_recon.git .
       
-      - name: Creat halld_recon build files here
+      - name: Creat halld_recon build files
         run: |
           cd halld_recon
           cat <<EOF > halld_recon_build_prereqs_version.xml
