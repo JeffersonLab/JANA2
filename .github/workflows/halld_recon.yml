@@ -150,7 +150,6 @@ jobs:
 
           cd /workspace/halld_recon
           echo "mounting cvmfs"
-          mkdir -p /cvmfs/oasis.opensciencegrid.org
           mount -t cvmfs oasis.opensciencegrid.org /cvmfs/oasis.opensciencegrid.org
           echo "checking software access rights"
           ls -ld /cvmfs/oasis.opensciencegrid.org/gluex/group/halld/Software/builds
@@ -176,6 +175,7 @@ jobs:
           docker run --rm \
             --platform linux/amd64 \
             --user $(id -u):$(id -g) \
+            --privileged \
             --mount type=bind,source=${{ github.workspace }},target=/workspace \
             raiqarasool/gluex_build:cvmfs /bin/bash -c "source /workspace/halld_recon/halld_recon_build.sh"
 
