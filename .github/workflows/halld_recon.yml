@@ -167,6 +167,12 @@ jobs:
             --volume /opt/cvmfs/oasis.opensciencegrid.org/gluex/group/:/group \
             --mount type=bind,source=${{ github.workspace }},target=/workspace \
             raiqarasool/gluex_build:latest /bin/bash -c "source /workspace/halld_recon/halld_recon_build.sh"
+
+      - name: Cleaning up created folders
+        run: |
+          rm -rf JANA2
+          rm -rf halld_recon
+
             
 
 
