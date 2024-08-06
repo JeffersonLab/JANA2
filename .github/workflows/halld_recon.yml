@@ -152,6 +152,9 @@ jobs:
           ls -ld /opt/cvmfs/oasis.opensciencegrid.org/gluex/group/halld/Software/builds
           echo "checking common include presence"
           ls -l /opt/cvmfs/oasis.opensciencegrid.org/gluex/group/halld/Software/builds/Linux_Alma9-x86_64-gcc11.4.1-cntr/evio/evio-4.4.6/common/include
+          echo 'Recreating broken symlink';
+          rm /opt/cvmfs/oasis.opensciencegrid.org/gluex/group/halld/Software/builds/Linux_Alma9-x86_64-gcc11.4.1-cntr/evio/evio-4.4.6/Linux-x86_64/include;
+          ln -s /opt/cvmfs/oasis.opensciencegrid.org/gluex/group/halld/Software/builds/Linux_Alma9-x86_64-gcc11.4.1-cntr/evio/common/include /opt/cvmfs/oasis.opensciencegrid.org/gluex/group/halld/Software/builds/Linux_Alma9-x86_64-gcc11.4.1-cntr/evio/evio-4.4.6/Linux-x86_64/include;
           echo "checking evio access rights"
           ls -ld /opt/cvmfs/oasis.opensciencegrid.org/gluex/group/halld/Software/builds/Linux_Alma9-x86_64-gcc11.4.1-cntr/evio/evio-4.4.6/Linux-x86_64/include
           export BUILD_SCRIPTS=/opt/cvmfs/oasis.opensciencegrid.org/gluex/group/halld/Software/build_scripts
