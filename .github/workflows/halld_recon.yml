@@ -18,7 +18,7 @@ jobs:
           ref: refs/tags/rasool_jana2
           path: JANA2
       
-      - name: Check CVMFS mount check at epscidocker user
+      - name: Check CVMFS mount check
         run: |
           ls /
           echo "listing cvmfs folder"
