@@ -164,6 +164,8 @@ jobs:
           source \$BUILD_SCRIPTS/gluex_env_boot_jlab.sh --bs \$BUILD_SCRIPTS
           gxenv /workspace/halld_recon/halld_recon_build_prereqs_version.xml
 
+          echo "rootsys"
+          echo \$ROOTSYS
           chmod +x \$JANA_HOME/bin/*
 
           cd src
