@@ -134,7 +134,7 @@ jobs:
           cat <<EOF > halld_recon_build_prereqs_version.xml
             <?xml version="1.0" encoding="UTF-8"?>
             <?xml-stylesheet type="text/xsl" href="https://halldweb.jlab.org/halld_versions/version7.xsl"?>
-            <gversions file="version_5.16.0.xml" date="2024-04-03">
+            <gversions file="version_5.12.0.xml" date="2023-10-13">
             <description>Update of halld_recon, halld_sim, hdgeant4, and gluex_MCWrapper</description>
             <package name="ccdb" version="1.06.11"/>
             <package name="cernlib" version="2005" word_length="64-bit"/>
