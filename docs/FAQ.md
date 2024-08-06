@@ -22,3 +22,5 @@ Have a question? [File an issue!](https://github.com/JeffersonLab/JANA2/issues)
 CMake by design won't use `$PATH` to find the compiler. You either need to set the `CXX` environment variable or 
 the `CMAKE_CXX_COMPILER` CMake variable. 
 
+Another option is use <a href="https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html" target="_blank">CMakePresets.json</a>,
+a file that has to be placed in CMake root directory and that may contain additional options. 

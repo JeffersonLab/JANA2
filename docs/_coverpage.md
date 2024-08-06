@@ -1,16 +1,15 @@
 <!-- _coverpage.md -->
 
-![logo](images/elves-logo-full.png)
+![logo](_media/jana2-logo-diagram-reduced.png)
 
-# docsify <small>3.5</small>
+> Modern C++ Reconstruction framework in Nuclear and High Energy Physics
 
-> JANA2: Simplifying Multi-Threaded Reconstruction in Nuclear and High Energy Physics
 
-Focus on scientific discovery, while JANA2 handles complex parallelization and scheduling, offering flexible tuning when needed
 
-- **Streamlined Multi-Threading**: Leverage expert-tuned parallelism without coding complexities
-- **Scalability**: High efficiency from personal computers to large-scale clusters.
-- **Modern C++ Core**: Best industry practices, high-performance, low-risk code.
+- <strong>Focus on scientific discovery!</strong> JANA2 handles complex parallelization and scheduling, 
+minimizing coding complexities (while still offering flexible tuning when needed)
+- **Scalability** - High efficiency from personal computers to large-scale clusters.
+- **Modern C++ Core** - Best industry practices, high-performance, low-risk code.
 
-[GitHub](https://github.com/JeffersonLab/JANA2/)
+<a href="https://github.com/JeffersonLab/JANA2/" target="_blank">GitHUB</a>
 [Get Started](#docsify)
