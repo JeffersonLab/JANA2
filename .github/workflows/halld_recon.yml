@@ -90,7 +90,7 @@ jobs:
           chmod 666 /dev/fuse
           mkdir -p /cvmfs/oasis.opensciencegrid.org
           mount -t cvmfs oasis.opensciencegrid.org /cvmfs/oasis.opensciencegrid.org
-          
+
           export CC=\$(which gcc)
           export CXX=\$(which g++)
           export BUILD_SCRIPTS=/cvmfs/oasis.opensciencegrid.org/gluex/group/halld/Software/build_scripts
@@ -120,7 +120,7 @@ jobs:
             --platform linux/amd64 \
             --privileged \
             --mount type=bind,source=${{ github.workspace }},target=/workspace \
-            raiqarasool/gluex_build:latest /bin/bash -c "source /workspace/JANA2/jana_build.sh"
+            raiqarasool/gluex_build:cvmfs /bin/bash -c "source /workspace/JANA2/jana_build.sh"
             
       - name: Git Clone Halld_recon
         run: |
