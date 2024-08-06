@@ -178,6 +178,7 @@ jobs:
             --platform linux/amd64 \
             --user $(id -u):$(id -g) \
             --privileged \
+            --privileged \
             --mount type=bind,source=${{ github.workspace }},target=/workspace \
             raiqarasool/gluex_build:cvmfs /bin/bash -c "source /workspace/halld_recon/halld_recon_build.sh"
 
