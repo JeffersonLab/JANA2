@@ -150,6 +150,8 @@ jobs:
 
           cd /workspace/halld_recon
           echo "mounting cvmfs"
+          yum -y install fuse
+          chmod 666 /dev/fuse
           mount -t cvmfs oasis.opensciencegrid.org /cvmfs/oasis.opensciencegrid.org
           echo "checking software access rights"
           ls -ld /cvmfs/oasis.opensciencegrid.org/gluex/group/halld/Software/builds
