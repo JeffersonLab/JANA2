@@ -36,6 +36,10 @@ if (USE_PODIO)
     
     install(TARGETS PodioExampleDatamodelDict DESTINATION lib/JANA/plugins)
 
+    add_test(NAME jana-example-podio-tests
+        COMMAND PodioExample)
+
+    set_tests_properties(jana-example-podio-tests PROPERTIES DISABLED TRUE)
 
 else()
     message(STATUS "Skipping examples/PodioExample because USE_PODIO=Off")

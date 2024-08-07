@@ -42,7 +42,13 @@ if(${USE_ROOT})
 
     message(STATUS "Installing ROOT PCM files: ${my_pcms}")
     install(FILES ${my_pcms} DESTINATION lib/JANA/plugins)
+
+    add_test(NAME jana-example-rootdatamodel-tests
+        COMMAND jana -Pplugins=RootDatamodelExample -Pjana:nevents=10)
         
+    set_tests_properties(jana-example-rootdatamodel-tests
+        PROPERTIES DISABLED TRUE)
+
 else()
     message(STATUS "Skipping plugins/RootDatamodelExample because USE_ROOT=Off")
 

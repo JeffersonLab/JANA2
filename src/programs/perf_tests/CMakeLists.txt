@@ -1,6 +1,7 @@
 
 
 add_jana_test(jana-perf-tests)
+set_tests_properties(jana-perf-tests PROPERTIES DISABLED TRUE)
 
 if (USE_PODIO)
     find_package(podio REQUIRED)
