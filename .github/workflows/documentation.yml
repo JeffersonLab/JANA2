@@ -13,14 +13,14 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: ./docs
+        working-directory: ./docs/doxygen
     steps:
       - uses: actions/checkout@v4
 
       - name: Install Doxygen
         run: sudo apt-get update && sudo apt-get install -y doxygen graphviz
 
-      - name: Build
+      - name: Build Doxygen
         run: |
           doxygen Doxyfile
 
@@ -28,11 +28,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: doxygen-full
-          path: ./docs/doxygen_build/
+          path: ./docs/doxygen/doxygen_build/
 
-      - name: Cleanup website files
+      - name: Cleanup after Doxygen
         run: |
-          mv ./doxygen_build/html doxygen
+          mv ./doxygen_build/html ../refcpp
           rm -rf ./doxygen_build
 
       - name: Upload Website Artifact
@@ -62,8 +62,6 @@ jobs:
         run: |
           echo "--- pwd"
           pwd
-          echo "--- ls"
-          ls
           echo "--- ls ./docs/"
           ls -latrh ./dist
           echo "--- ls ./dist/"
