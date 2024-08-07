@@ -12,12 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: nbrei/jana2_env_everything_except_cuda
-    
-    # Build Docker container and run the entrypoint.sh script in it
     steps:
-
     - uses: actions/checkout@v4
-
     - name: build
       run: |
         cmake -S . -B build -DCMAKE_INSTALL_PREFIX=`pwd` \
@@ -32,21 +28,18 @@ jobs:
     - name: JTest
       run: |
         echo "--- Running JTest plugin -----------------------"
-        $GITHUB_WORKSPACE/bin/jana -PPLUGINS=JTest -Pjana:nevents=100
+        ctest --test-dir build -R jana-plugin-jtest-tests
     - name: jana-unit-tests
       run: |
         echo "--- Running jana-unit-tests ------------------------------"
-        export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/lib/JANA/plugins:$LD_LIBRARY_PATH
-        $GITHUB_WORKSPACE/bin/jana-unit-tests
+        ctest --test-dir build -R jana-unit-tests
     - name: TimesliceExample with simple (physics event) topology
       run: |
         echo "--- Running TimesliceExample with simple topology ------------------------------"
-        export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/lib/JANA/plugins:/app/podio/install/lib:$LD_LIBRARY_PATH
-        $GITHUB_WORKSPACE/bin/jana -Pplugins=TimesliceExample -Pjana:nevents=100 events.root
+        ctest --test-dir build -R jana-example-timeslices-simple-tests
     - name: TimesliceExample with complex (timeslice) topology
       run: |
         echo "--- Running TimesliceExample with complex topology ------------------------------"
-        export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/lib/JANA/plugins:/app/podio/install/lib:$LD_LIBRARY_PATH
-        $GITHUB_WORKSPACE/bin/jana -Pplugins=TimesliceExample -Pjana:nevents=100 timeslices.root
+        ctest --test-dir build -R jana-example-timeslices-simple-tests
 
 
