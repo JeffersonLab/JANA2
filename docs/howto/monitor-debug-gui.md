@@ -1,20 +1,6 @@
----
-title: JANA: Multi-threaded HENP Event Reconstruction
----
+### JANA2 Status/Control Monitoring and Debugging GUI <!-- {docsify-ignore-all} -->
 
-<center>
-<table border="0" width="100%" align="center">
-<TH width="20%"><A href="index.html">Welcome</A></TH>
-<TH width="20%"><A href="Tutorial.html">Tutorial</A></TH>
-<TH width="20%"><A href="Howto.html">How-to guides</A></TH>
-<TH width="20%"><A href="Explanation.html">Principles</A></TH>
-<TH width="20%"><A href="Reference.html">Reference</A></TH>
-</table>
-</center>
-
-### JANA Status/Control Monitoring and Debugging GUI
-
-![](images/JANA_Status_Control_GUI.png)
+![JANA Status Control GUI](../_media/JANA_Status_Control_GUI.png)
 
 A very basic GUI program is included with JANA2 to help with monitoring and debugging JANA2 applications.
 The JANA2 process that is to be monitored/debugged can be

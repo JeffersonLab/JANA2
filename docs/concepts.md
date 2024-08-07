@@ -1,19 +1,5 @@
----
-title: JANA: Multi-threaded HENP Event Reconstruction
----
-
-<center>
-<table border="0" width="100%" align="center">
-<TH width="20%"><A href="index.html">Welcome</A></TH>
-<TH width="20%"><A href="Tutorial.html">Tutorial</A></TH>
-<TH width="20%"><A href="Howto.html">How-to guides</A></TH>
-<TH width="20%"><A href="Explanation.html">Principles</A></TH>
-<TH width="20%"><A href="Reference.html">Reference</A></TH>
-</table>
-</center>
-
-Principles
-===========
+JANA2 Concepts
+==============
 
 This section provides higher-level background and context for JANA, and discusses JANA's design philosophy and the
 associated tradeoffs.
@@ -144,5 +130,4 @@ Many different event reconstruction frameworks exist. The following are frequent
  overhead and significant orchestration requirements. On the other hand, it can scale to larger problem sizes and 
  support more general stream topologies. JANA is to OpenMP as Clara is to MPI.
 
-- [Fun4all](https://github.com/sPHENIX-Collaboration/Fun4All) Comparison coming soon!
 

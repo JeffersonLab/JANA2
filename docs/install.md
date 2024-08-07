@@ -1,16 +1,3 @@
----
-title: JANA: Multi-threaded HENP Event Reconstruction
----
-
-<center>
-<table border="0" width="100%" align="center">
-<TH width="20%"><A href="index.html">Welcome</A></TH>
-<TH width="20%"><A href="Tutorial.html">Tutorial</A></TH>
-<TH width="20%"><A href="Howto.html">How-to guides</A></TH>
-<TH width="20%"><A href="Explanation.html">Principles</A></TH>
-<TH width="20%"><A href="Reference.html">Reference</A></TH>
-</table>
-</center>
 
 
 ### Building JANA
@@ -28,7 +15,7 @@ a `cmake-build-debug` directory which works just fine.
 
 Finally, you can cd into your build directory and build and install everything the usual CMake way.
 
-~~~ bash
+```bash
 export JANA_VERSION=v2.0.5                    # Convenient to set this once for specific release
 export JANA_HOME=${PWD}/JANA${JANA_VERSION}   # Set full path to install dir
 
@@ -41,7 +28,7 @@ make -j8 install                              # Build (using 8 threads) and inst
 
 source ${JANA_HOME}/bin/jana-this.sh          # Set PATH (and other envars)
 jana -Pplugins=JTest                          # Run JTest plugin to verify successful install
-~~~
+```
 
 Note: If you want to use a compiler other than the default one on your system, it is not enough to modify your
 `$PATH`, as CMake ignores this by design. You either need to set the `CXX` environment variable or the 
@@ -52,9 +39,9 @@ them. If you don't want to do that, you can also set the environment variable `$
 directory of your project. JANA will report where exactly it went looking for your plugins and what happened when it tried
 to load them if you set the JANA config `jana:debug_plugin_loading=1`.
 
-~~~ bash
+```bash
 jana -Pplugins=JTest -Pjana:debug_plugin_loading=1
-~~~
+```
 
 ### Using JANA in a CMake project
 
@@ -68,3 +55,11 @@ To use JANA in a non-CMake project:
 2. Use `$JANA_HOME/bin/jana-config --cflags` to obtain JANA's compiler flags
 3. Use `$JANA_HOME/bin/jana_config --libs` to obtain JANA's linker flags
 
+
+### Using non standard system compiler
+
+CMake by design won't use `$PATH` to find the compiler. You either need to set the `CXX` environment variable or 
+the `CMAKE_CXX_COMPILER` CMake variable. 
+
+Another option is use <a href="https://cmake.org/cmake/help/latest/manual/cmake-presets.7.html" target="_blank">CMakePresets.json</a>,
+a file that has to be placed in CMake root directory and that may contain additional options. 

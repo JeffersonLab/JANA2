@@ -11,7 +11,7 @@ Before we begin, we need to make sure that
 * The `JANA_HOME` environment variable points to the installation directory
 * Your `$PATH` contains `$JANA_HOME/bin`. 
 
-The installation process is described [here](Installation.html). We can quickly test that our install 
+The installation process is described [here](install.md). We can quickly test that our install 
 was successful by running a builtin benchmarking/scaling test:
 
 ```

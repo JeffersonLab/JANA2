@@ -1,16 +1,6 @@
----
-title: JANA: Multi-threaded HENP Event Reconstruction
----
 
-<center>
-<table border="0" width="100%" align="center">
-<TH width="20%"><A href="index.html">Welcome</A></TH>
-<TH width="20%"><A href="Tutorial.html">Tutorial</A></TH>
-<TH width="20%"><A href="Howto.html">How-to guides</A></TH>
-<TH width="20%"><A href="Explanation.html">Principles</A></TH>
-<TH width="20%"><A href="Reference.html">Reference</A></TH>
-</table>
-</center>
+# JANA: Multi-threaded HENP Event Reconstruction
+
 
 ## Welcome to JANA!
 
@@ -28,10 +18,26 @@ JANA has undergone a large rewrite with the newer version dubbed JANA2. The code
 and you are free to browse around. The project is 
 [hosted on GitHub](https://github.com/JeffersonLab/JANA2)
 
-```
+```cpp
 auto tracks = jevent->Get<DTrack>();
 
 for(auto t : tracks){
   // ... do something with a track
 }
 ```
+
+## Publications
+
+Publications:
+https://arxiv.org/abs/2202.03085 
+https://doi.org/10.1051/epjconf/202125104011 Streaming Readout of the CLAS12 Forward Tagger Using TriDAS and JANA2
+
+https://doi.org/10.1051/epjconf/202024507037 Offsite Data Processing for the GlueX Experiment
+
+- [Running AI in JANA2](https://indico.cern.ch/event/1238718/contributions/5431992/attachments/2691231/4670186/2023-07-27_Running-AI-in-JANA2.pdf)
+- [JANA2 Framework for Event Based and Triggerless Data Processing](https://doi.org/10.1051/epjconf/202024501022)
+- [Streaming readout for next generation electron scattering experiments](https://arxiv.org/abs/2202.03085)
+- [Streaming Readout of the CLAS12 Forward Tagger Using TriDAS and JANA2](https://arxiv.org/abs/2104.11388)
+- [Offsite Data Processing for the GlueX Experiment](https://doi.org/10.1051/epjconf/202024507037)
+
+

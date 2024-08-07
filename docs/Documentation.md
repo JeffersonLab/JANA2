@@ -54,8 +54,13 @@ Add this to doxygen footer before `</body>` closing tag:
 
 ### Docsify
 
+The main documentation is powered by the Docsify JavaScript library https://docsify.js.org/#/
+
 [Available plugins](https://docsify-theme-github.vercel.app/#/awesome?id=plugins):
 
 - Example panels [github](https://github.com/VagnerDomingues/docsify-example-panels) [demo](https://vagnerdomingues.github.io/docsify-example-panels/#/)
 - Docsify Fontawesome [github](https://github.com/erickjx/docsify-fontawesome) [Fontawesome](https://fontawesome.com/)
 - Select documentation version [github](https://github.com/UliGall/docsify-versioned-plugin)
+- Docsify themebable [github](https://jhildenbiddle.github.io/docsify-themeable/#/)
+- Theme switcher [github](https://github.com/
+- Marked is used as markdown [Marked](https://github.com/markedjs/marked)
