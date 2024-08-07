@@ -2,9 +2,9 @@ name: halld_recon
 
 on:
   push:
-    branches: [rasool_gluex_ci]
+    branches: [master]
   pull_request:
-    branches: [rasool_gluex_ci]
+    branches: [master]
 
 
 jobs:
