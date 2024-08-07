@@ -28,6 +28,30 @@ One can test the generated website:
 python3 -m http.server -d doxygen_build/html/ 8000
 ```
 
+To add doxygen links and some other fine tuning of doxygen page look, 
+header and footer files were generated. If doxygen will ever change the template, 
+those probably has to be regenerated: 
+
+```
+doxygen -w html doxygen_header.html doxygen_footer.html doxygen_stylesheet.css
+```
+
+Add this to doxygen footer before `</body>` closing tag: 
+
+```html
+<!-- JANA2 custom footer addition -->
+<script type="text/javascript">
+  $(document).ready(function() {
+      let navHeader = '<li><a href="https://github.com/JeffersonLab/JANA2" target="_blank">Project GitHUB</a></li>';
+      // Append it to the navigation div or another appropriate place in the menu
+      $('#main-menu').append(navHeader);
+  });
+</script>
+<!-- END JANA2 custom footer addition -->
+```
+
+
+
 ### Docsify
 
 [Available plugins](https://docsify-theme-github.vercel.app/#/awesome?id=plugins):
