@@ -15,7 +15,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: 
-          ref: refs/tags/rasool_jana2
           path: JANA2
 
       - name: Make Scripts executable
