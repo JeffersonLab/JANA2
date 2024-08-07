@@ -169,7 +169,7 @@ jobs:
           echo \$ROOTSYS
           chmod +x \$JANA_HOME/bin/*
           cd src
-          scons install -j12
+          scons install -j8
           EOF
           chmod +x halld_recon_build.sh
 
