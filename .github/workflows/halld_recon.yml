@@ -28,7 +28,7 @@ jobs:
           ls /Users/epscidocker/
           pwd
           ls .
-          echo "I am user"
+          echo "I am user running"
           whoami
           id -u
           echo "checking software access rights"
