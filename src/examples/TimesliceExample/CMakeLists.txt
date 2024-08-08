@@ -8,10 +8,10 @@ if (USE_PODIO)
     target_link_libraries(TimesliceExample PUBLIC PodioExampleDatamodel PodioExampleDatamodelDict podio::podioRootIO)
 
     add_test(NAME jana-example-timeslices-simple-tests
-        COMMAND jana -Pplugins=TimesliceExample -Pjana:nevents=10 events.root)
+        COMMAND ${CMAKE_INSTALL_PREFIX}/bin/jana -Pplugins=TimesliceExample -Pjana:nevents=10 events.root)
 
     add_test(NAME jana-example-timeslices-complex-tests
-        COMMAND jana -Pplugins=TimesliceExample -Pjana:nevents=10 timeslices.root)
+        COMMAND ${CMAKE_INSTALL_PREFIX}/bin/jana -Pplugins=TimesliceExample -Pjana:nevents=10 timeslices.root)
 
 else()
     message(STATUS "Skipping examples/TimesliceExample because USE_PODIO=Off")

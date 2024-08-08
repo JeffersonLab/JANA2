@@ -16,7 +16,7 @@ macro(add_jana_plugin plugin_name)
         PREFIX ""
         SUFFIX ".so"
         SKIP_BUILD_RPATH FALSE
-        BUILD_WITH_INSTALL_RPATH FALSE
+        BUILD_WITH_INSTALL_RPATH TRUE
         INSTALL_RPATH_USE_LINK_PATH TRUE
         INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib;${CMAKE_INSTALL_PREFIX}/lib/JANA/plugins"
     )
@@ -48,7 +48,7 @@ macro(add_jana_plugin plugin_name)
         target_link_libraries(${plugin_name}_tests PRIVATE ${plugin_name} VendoredCatch2)
         set_target_properties(${plugin_name}_tests PROPERTIES
             SKIP_BUILD_RPATH FALSE
-            BUILD_WITH_INSTALL_RPATH FALSE
+            BUILD_WITH_INSTALL_RPATH TRUE
             INSTALL_RPATH_USE_LINK_PATH TRUE
             INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib;${CMAKE_INSTALL_PREFIX}/lib/JANA/plugins"
         )
