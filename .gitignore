@@ -52,6 +52,7 @@ Makefile
 /bin/
 /include/
 /lib/
+/plugins/
 
 # Doxygen generated files
 /docs/doxygen_build/*

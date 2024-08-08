@@ -119,7 +119,7 @@ void JEventProcessorJANADOT::Process(const std::shared_ptr<const JEvent>& event)
 	// If we are supposed to activate all factories, do that now
 	if(force_all_factories_active){
 		vector<JFactory*> factories = event->GetAllFactories();
-		for(unsigned int i=0; i<factories.size(); i++)factories[i]->GetNumObjects();
+		for(unsigned int i=0; i<factories.size(); i++)factories[i]->Create(event);
 	}
 
 	// Get the call stack for ths event and add the results to our stats

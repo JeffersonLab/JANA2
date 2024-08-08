@@ -25,6 +25,13 @@ title: JANA: Multi-threaded HENP Event Reconstruction
 - [See online doxygen documentation](http://www.jlab.org/JANA/jana_doc_latest/index.html)
 - [Download doxygen documentation](http://www.jlab.org/JANA/jana_doc_latest.tar.gz)
 
+### 2.3.1
+This release fixes a bug which caused the `janadot` plugin to stop producing output. It also drops support for Podio <= 00-17 by replacing the user-provided `PodioTypeMap` with the built-in `PodioT::collection_type`. 
+
+- [See release on GitHub](https://github.com/JeffersonLab/JANA2/releases/tag/v2.3.1)
+- [See online doxygen documentation](http://www.jlab.org/JANA/jana_doc_2.3.1/index.html)
+- [Download doxygen documentation](http://www.jlab.org/JANA/jana_doc_2.3.1.tar.gz)
+
 ### 2.3.0 
 - [See release on GitHub](https://github.com/JeffersonLab/JANA2/releases/tag/v2.3.0)
 - [See online doxygen documentation](http://www.jlab.org/JANA/jana_doc_2.3.0/index.html)

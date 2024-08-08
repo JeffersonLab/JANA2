@@ -22,6 +22,7 @@ public:
     ~JComponentManager() override;
     void Init() override;
 
+    // Called during plugin loading
     void next_plugin(std::string plugin_name);
 
     void add(std::string event_source_name);
@@ -31,15 +32,19 @@ public:
     void add(JEventProcessor* processor);
     void add(JEventUnfolder* unfolder);
 
+    // Called after plugin loading
+    void configure_components();
+
+    // Helpers
     void preinitialize_components();
     void resolve_event_sources();
     void initialize_components();
     JEventSourceGenerator* resolve_user_event_source_generator() const;
     JEventSourceGenerator* resolve_event_source(std::string source_name) const;
 
+    // Called after JApplication::Initialize() finishes
     const JComponentSummary& get_component_summary();
 
-    // Unsafe access into our own repository of components
     std::vector<JEventSourceGenerator*>& get_evt_src_gens();
     std::vector<JEventSource*>& get_evt_srces();
     std::vector<JEventProcessor*>& get_evt_procs();
@@ -49,9 +54,6 @@ public:
     void configure_event(JEvent& event);
 
 private:
-    // Sources need:    { typename, pluginname, srcname, status, evtcnt }
-    // Processors need: { typename, pluginname, mutexgroup, status, evtcnt }
-    // Factories need:  { typename, pluginname }
 
     Service<JParameterManager> m_params {this};
     Service<JLoggingService> m_logging {this};
