@@ -28,18 +28,18 @@ jobs:
     - name: JTest
       run: |
         echo "--- Running JTest plugin -----------------------"
-        ctest --test-dir build -R jana-plugin-jtest-tests
+        ctest --test-dir build -R jana-plugin-jtest-tests --rerun-failed --output-on-failure
     - name: jana-unit-tests
       run: |
         echo "--- Running jana-unit-tests ------------------------------"
-        ctest --test-dir build -R jana-unit-tests
+        ctest --test-dir build -R jana-unit-tests --rerun-failed --output-on-failure
     - name: TimesliceExample with simple (physics event) topology
       run: |
         echo "--- Running TimesliceExample with simple topology ------------------------------"
-        ctest --test-dir build -R jana-example-timeslices-simple-tests
+        ctest --test-dir build -R jana-example-timeslices-simple-tests --rerun-failed --output-on-failure
     - name: TimesliceExample with complex (timeslice) topology
       run: |
         echo "--- Running TimesliceExample with complex topology ------------------------------"
-        ctest --test-dir build -R jana-example-timeslices-simple-tests
+        ctest --test-dir build -R jana-example-timeslices-simple-tests --rerun-failed --output-on-failure
 
 
