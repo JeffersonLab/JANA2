@@ -41,15 +41,21 @@ jobs:
         objdump -x bin/PodioExample | grep PATH
     - name: JTest
       run: |
+        export LD_LIBRARY_PATH=/app/podio/install/lib:$LD_LIBRARY_PATH
+        # Note that podio needs to be on the LD_LIBRARY_PATH, not merely someone's RPath, because 
+        # Cling needs to be able to find the libpodioDict*
         ctest --test-dir build --output-on-failure -R jana-plugin-jtest-tests
     - name: jana-unit-tests
       run: |
+        export LD_LIBRARY_PATH=/app/podio/install/lib:$LD_LIBRARY_PATH
         ctest --test-dir build --output-on-failure -R jana-unit-tests
     - name: TimesliceExample with simple (physics event) topology
       run: |
+        export LD_LIBRARY_PATH=/app/podio/install/lib:$LD_LIBRARY_PATH
         ctest --test-dir build --output-on-failure -R jana-example-timeslices-simple-tests
     - name: TimesliceExample with complex (timeslice) topology
       run: |
+        export LD_LIBRARY_PATH=/app/podio/install/lib:$LD_LIBRARY_PATH
         ctest --test-dir build --output-on-failure -R jana-example-timeslices-complex-tests
 
 
