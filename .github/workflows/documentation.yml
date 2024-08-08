@@ -1,0 +1,78 @@
+name: Documentation generation
+
+on:
+  push:
+    branches:
+      - '*'
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./docs/doxygen
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Doxygen
+        run: sudo apt-get update && sudo apt-get install -y doxygen graphviz
+
+      - name: Build Doxygen
+        run: |
+          doxygen Doxyfile
+
+      - name: Upload Doxygen Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: doxygen-full
+          path: ./docs/doxygen/doxygen_build/
+
+      - name: Cleanup after Doxygen
+        run: |
+          mv ./doxygen_build/html ../refcpp
+          rm -rf ./doxygen_build
+
+      - name: Upload Website Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: website
+          path: ./docs
+
+  deploy:
+    #if: github.ref == 'refs/heads/main'
+    permissions:
+      id-token: write
+      contents: read
+      pages: write
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: website
+          path: ./dist/
+
+      - name: Introspect
+        run: |
+          echo "--- pwd"
+          pwd
+          echo "--- ls ./docs/"
+          ls -latrh ./dist
+          echo "--- ls ./dist/"
+          ls -latrh ./dist/
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # Upload entire repository
+          path: './dist'
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

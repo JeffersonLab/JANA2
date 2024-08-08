@@ -1,4 +1,0 @@
-theme: jekyll-theme-architect
-include: ["html/_*"]
-markdown: kramdown
-

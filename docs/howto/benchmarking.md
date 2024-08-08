@@ -1,19 +1,5 @@
----
-title: JANA: Multi-threaded HENP Event Reconstruction
----
+# Benchmarking JANA2  <!-- {docsify-ignore-all} -->
 
-<center>
-<table border="0" width="100%" align="center">
-<TH width="20%"><A href="index.html">Welcome</A></TH>
-<TH width="20%"><A href="Tutorial.html">Tutorial</A></TH>
-<TH width="20%"><A href="Howto.html">How-to guides</A></TH>
-<TH width="20%"><A href="Explanation.html">Principles</A></TH>
-<TH width="20%"><A href="Reference.html">Reference</A></TH>
-</table>
-</center>
-
-
-## How to benchmark JANA
 
 JANA includes a built-in facililty for benchmarking programs and plugins. It produces a scalability curve by repeatedly pausing execution, adding additional worker threads, resuming execution, and measuring the resulting throughput over fixed time intervals. There is an additional option to measure the scalability curves for a matrix of different affinity and locality strategies. This is useful when your hardware architecture has nonuniform memory access.
 
@@ -57,6 +43,7 @@ cd JANA_Test_Results
 
 
 If you already have a JANA project you would like to benchmark, all you have to do is build and install it the way you usually would, and then run
+
 ```bash
 jana -b -Pplugins=$MY_PLUGIN
 # Or
@@ -74,6 +61,7 @@ cd JANA_Test_Results
 
 These are the relevant configuration parameters for `JTest`:
 
+
 | Name                 | Units  | Default           | Description                                       |
 |:-------------------- |:------ |:----------------- |:------------------------------------------------- |
 | benchmark:nsamples   | int    | 15                | Number of measurements made for each thread count |
@@ -81,5 +69,3 @@ These are the relevant configuration parameters for `JTest`:
 | benchmark:maxthreads | int    | ncores            | Maximum thread count                              |
 | benchmark:threadstep | int    | 1                 | Thread count increment                            |
 | benchmark:resultsdir | string | JANA_Test_Results | Directory name for benchmark test results         |
-
-

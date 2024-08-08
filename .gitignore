@@ -55,8 +55,7 @@ Makefile
 /plugins/
 
 # Doxygen generated files
-docs/html/*
-docs/latex/*
+/docs/doxygen_build/*
 
 # IDE artifacts
 *.swp

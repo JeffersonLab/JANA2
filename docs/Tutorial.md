@@ -1,17 +1,3 @@
----
-title: JANA: Multi-threaded HENP Event Reconstruction
----
-
-<center>
-<table border="0" width="100%" align="center">
-<TH width="20%"><A href="index.html">Welcome</A></TH>
-<TH width="20%"><A href="Tutorial.html">Tutorial</A></TH>
-<TH width="20%"><A href="Howto.html">How-to guides</A></TH>
-<TH width="20%"><A href="Explanation.html">Principles</A></TH>
-<TH width="20%"><A href="Reference.html">Reference</A></TH>
-</table>
-</center>
-
 # Tutorial
 
 This tutorial will walk you through creating a standalone JANA plugin, introducing the key ideas along the way. 
@@ -25,7 +11,7 @@ Before we begin, we need to make sure that
 * The `JANA_HOME` environment variable points to the installation directory
 * Your `$PATH` contains `$JANA_HOME/bin`. 
 
-The installation process is described [here](Installation.html). We can quickly test that our install 
+The installation process is described [here](install.md). We can quickly test that our install 
 was successful by running a builtin benchmarking/scaling test:
 
 ```

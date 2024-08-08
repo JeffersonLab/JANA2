@@ -1,20 +1,7 @@
----
-title: JANA: Multi-threaded HENP Event Reconstruction
----
+# Stream data to and from JANA
 
-<center>
-<table border="0" width="100%" align="center">
-<TH width="20%"><A href="index.html">Welcome</A></TH>
-<TH width="20%"><A href="Tutorial.html">Tutorial</A></TH>
-<TH width="20%"><A href="Howto.html">How-to guides</A></TH>
-<TH width="20%"><A href="Explanation.html">Principles</A></TH>
-<TH width="20%"><A href="Reference.html">Reference</A></TH>
-</table>
-</center>
 
-How To...
-=========
-## Stream data to and from JANA
+## Messages and Events
 
 1. The first question to ask is: What is the relationship between messages and events? Remember, a message is just 
    a packet of data sent over the wire, whereas an event is JANA's main unit of independent computation, corresponding
@@ -38,7 +25,10 @@ How To...
    instead.
       
    For the remainder of this how-to we assume that messages and events are one-to-one.
-   
+
+
+## Transport
+
 2. The second question to ask is: What transport should be used? 
 
     JANA makes it so that the message format and transport can be varied independently. The transport wrapper need only
@@ -58,7 +48,9 @@ How To...
      `send` must block until it succeeds, as otherwise there will be data loss.
 
     An implementation already exists for ZeroMQ. See `examples/JExample7/ZmqTransport.h` 
-     
+
+## Message format
+
 3. The final and most important question to ask is: What is the message format?
 
     Message formats each get their own class, which must inherit from the JMessage and JEventMessage interfaces.

@@ -1,17 +1,3 @@
----
-title: JANA: Multi-threaded HENP Event Reconstruction
----
-
-<center>
-<table border="0" width="100%" align="center">
-<TH width="20%"><A href="index.html">Welcome</A></TH>
-<TH width="20%"><A href="Tutorial.html">Tutorial</A></TH>
-<TH width="20%"><A href="Howto.html">How-to guides</A></TH>
-<TH width="20%"><A href="Explanation.html">Principles</A></TH>
-<TH width="20%"><A href="Reference.html">Reference</A></TH>
-</table>
-</center>
-
 Contributing to JANA2
 =====================
 
@@ -52,3 +38,6 @@ Add a line to `packages/jana2/package.py` that associates the release version wi
 ```
 Note that the spack version identifier does _not_ have a 'v' prefix.
 
+
+[filename](Documentation.md ':include')
+[filename](mermaid-example.md ':include')
