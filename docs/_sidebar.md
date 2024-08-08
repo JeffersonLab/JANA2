@@ -6,7 +6,10 @@
 - HowTo:  
   * [Benchmarking](howto/benchmarking.md "JANA2: Benchmarking")
   * [Monitoring](howto/monitor-debug-gui.md "JANA2: Status Debug Monitoring")
-  * [Use in experiment](howto/use-in-new-experiment.md)
+  * [New experiments](howto/use-in-new-experiment.md "JANA2: How to use in new experiments")
+  * [Group Events](howto/group-events.md "JANA2: Group Events")
+  * [Streaming](howto/group-events.md "JANA2: Streaming readout")
+  * [Other HowTos](howto/howto.md "JANA2: HowTO list")
 - Development
   * [Contributing](Contributing.md)
   * [Mermaid](mermaid-example.md)
