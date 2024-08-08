@@ -35,6 +35,10 @@ jobs:
         objdump -x bin/jana | grep PATH
         echo "lib/libJANA.so rpath"
         objdump -x lib/libJANA.so | grep PATH
+        echo "lib/JANA/plugins/TimesliceExample.so"
+        objdump -x lib/JANA/plugins/TimesliceExample.so | grep PATH
+        echo "bin/PodioExample"
+        objdump -x bin/PodioExample | grep PATH
     - name: JTest
       run: |
         ctest --test-dir build --output-on-failure -R jana-plugin-jtest-tests
