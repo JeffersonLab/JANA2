@@ -33,8 +33,10 @@ if (USE_PODIO)
         LIBRARY DESTINATION lib/JANA/plugins
         PUBLIC_HEADER DESTINATION include/JANA/plugins/PodioExampleDatamodel
     )
-    
+
     install(TARGETS PodioExampleDatamodelDict DESTINATION lib/JANA/plugins)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/PodioExampleDatamodelDictDict.rootmap DESTINATION lib/JANA/plugins)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libPodioExampleDatamodelDict_rdict.pcm DESTINATION lib/JANA/plugins)
 
     add_test(NAME jana-example-podio-tests
         COMMAND PodioExample)

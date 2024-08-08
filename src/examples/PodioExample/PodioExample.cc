@@ -69,7 +69,7 @@ void verify_clusters_file() {
 
     auto event1 = podio::Frame(reader.readEntry("events", 1));
     std::cout << "Event 1: Expected 3 clusters, got " << event1.get("clusters")->size() << std::endl;
-    assert(event1.get("clusters")->size() == 1);
+    assert(event1.get("clusters")->size() == 3);
 }
 
 
