@@ -1,12 +1,13 @@
 
-# JANA: Multi-threaded HENP Event Reconstruction
+# JANA2
 
+### C++ Reconstruction framework in Nuclear and High Energy Physics
 
-## Welcome to JANA!
+## Welcome to JANA2!
 
-JANA is a C++ framework for multi-threaded HENP (High Energy and Nuclear Physics)  event reconstruction.
+JANA2 is a C++ framework for multi-threaded HENP (High Energy and Nuclear Physics)  event reconstruction.
 It is very efficient at multi-threading with a design that makes it easy for less experienced programmers
-to contribute pieces to the larger reconstruction project. The same JANA program can be used to easily
+to contribute pieces to the larger reconstruction project. The same JANA2 program can be used to easily
 do partial or full reconstruction, fully maximizing the available cores for the current job.
 
 Its design strives to be extremely easy to setup when first getting started, yet have a depth of customization
@@ -26,7 +27,7 @@ for(auto t : tracks){
 
 ## History
 
-[JANA](https://halldweb.jlab.org/DocDB/0011/001133/002/Multithreading_lawrence.pdf) (JLab ANAlysis framework) 
+[JANA](https://halldweb.jlab.org/DocDB/0011/001133/002/Multithreading_lawrence.pdf) (**J**Lab **ANA**lysis framework) 
 was one of the earliest implementations of a multi-threaded, event processing framework designed to run on commercial
 CPU hardware. The framework, which was developed since 2005, has been used for many aspects of [the GlueX experiment](https://arxiv.org/abs/1911.11239)
 at Jefferson Lab which was commissioned in 2016. In addition to the reconstruction of both
