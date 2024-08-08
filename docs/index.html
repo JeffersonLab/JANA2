@@ -1,107 +1,100 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-   <meta charset="utf-8">
-   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1.0, shrink-to-fit=no, viewport-fit=cover">
-   <meta name="description" content="">
-   <title>JANA2 - Modern C++ Reconstruction Framework</title>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1.0, shrink-to-fit=no, viewport-fit=cover">
+    <meta name="description" content="">
+    <title>JANA2 - Modern C++ Reconstruction Framework</title>
 
-   <!-- Favicon -->
-   <link rel="icon" type="image/x-icon" href="_media/favicon.ico">
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="_media/favicon.ico">
 
-   <!-- Theme switcher -->
-   <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify-darklight-theme@3/dist/docsify-themeable/style.min.css" type="text/css">
+    <!-- Theme switcher -->
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify-darklight-theme@3/dist/docsify-themeable/style.min.css" type="text/css">
 
-   <!-- Themes (light + dark) -->
-   <!-- <link rel="stylesheet" media="(prefers-color-scheme: dark)" href="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/css/theme-simple-dark.css">
-   <link rel="stylesheet" media="(prefers-color-scheme: light)" href="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/css/theme-simple.css"> -->
-   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/css/theme-simple.css" title="light">
-   <link rel="stylesheet alternative" href="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/css/theme-simple-dark.css" title="dark">
-   
-   <!-- Mermaid styles -->
-   <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.css">
+    <!-- Themes (light + dark) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/css/theme-simple.css" title="light">
+    <link rel="stylesheet alternative" href="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/css/theme-simple-dark.css" title="dark">
 
-   <!-- Custom Styles -->
-   <style>
-     :root {
-       /* --theme-hue: 325; */
-       --cover-max-width: 55em;       
-       --cover-background-color: #2E3842;
-       /* --cover-background-image: radial-gradient(ellipse at center bottom, var(--mono-tint3), transparent); */
-       --cover-background-image: radial-gradient(ellipse at center 115%, rgba(37, 38, 33, 0.901), transparent);
-       --cover-blockquote-color: #f8c213;
-       --cover-color: #e7e7e7;
-     }
-   </style>
-</head>
-<body>
-   <div id="app"></div>
+    <!-- Mermaid styles -->
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.css">
 
-   <script>
-     // Docsify Configuration
-     window.$docsify = {
-        homepage: 'index.md',       // What file is the homepage
-        coverpage: true,            // Enable gnomes
-        auto2top: true,             // Automatically scroll to top when navigation change
-        name: 'JANA2',              // IDK but docsify use it
-        namespace: 'JANA2-docs',    // This is used by browser localstorage to store constants
-        loadSidebar: true,          // Enable sidebar from _sidebar.md
-        subMaxLevel: 2,             // Sidebar levels
-        search: 'auto',             // Enable full text search
-        plugins: [
-            (hook, vm) => {
-                console.log("I am working plugin!");
-                console.log(hook);
-                console.log(vm);
-            }
-  
-        ]
-    }
-   </script>
-
-   <!-- Required -->
-   <script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/docsify.min.js"></script>
-   <!-- <script src="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/js/docsify-themeable.min.js"></script> -->
-   <script src="//cdn.jsdelivr.net/npm/docsify-darklight-theme@3/dist/docsify-themeable/main.min.js"></script>
-   <script src="//cdn.jsdelivr.net/npm/docsify-darklight-theme@3/dist/docsify-themeable/index.min.js"></script>
-
-   <!-- Recommended -->
-   <script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/plugins/search.js"></script>
-   <script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/plugins/zoom-image.min.js"></script>
-
-   <!-- Prism additional language highlighting support -->   
-   <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-c.min.js"></script>
-   <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-cpp.min.js"></script>
-   <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-python.min.js"></script>
-   <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-bash.min.js"></script>
-
-   <!-- Mermaid support -->
-  <script type="module">
-    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
-    
-    let theme = "base";
-    let dlTheme = localStorage.getItem('DARK_LIGHT_THEME');
-    if (dlTheme) {
-        if ( dlTheme === "dark") {
-            theme = "dark";
-            console.log("DARK_LIGHT_THEME === dark");
+    <!-- Custom Styles -->
+    <style>
+        :root {
+            --cover-max-width: 55em;
+            --cover-background-color: #2E3842;
+            --cover-background-image: radial-gradient(ellipse at center 115%, rgba(37, 38, 33, 0.901), transparent);
+            --cover-blockquote-color: #f8c213;
+            --cover-color: #e7e7e7;
         }
-    }  else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
-        console.log("(prefers-color-scheme: dark) === dark");
-        theme = "dark";
-    }
+    </style>
+</head>
 
-    console.log("THEME: ", theme);
+<body>
+    <div id="app"></div>
 
-    mermaid.initialize({ 
-        startOnLoad: true, 
-        theme: theme 
-    });
-    window.mermaid = mermaid;
-  </script>
-  <script src="//unpkg.com/docsify-mermaid@2.0.1/dist/docsify-mermaid.js"></script>
-    
+    <script>
+        // Docsify Configuration
+        window.$docsify = {
+            homepage: 'index.md',       // What file is the homepage
+            coverpage: true,            // Enable gnomes
+            auto2top: true,             // Automatically scroll to top when navigation change
+            name: 'JANA2',              // IDK but docsify use it
+            namespace: 'JANA2-docs',    // This is used by browser localstorage to store constants
+            loadSidebar: true,          // Enable sidebar from _sidebar.md
+            subMaxLevel: 2,             // Sidebar levels
+            search: 'auto',             // Enable full text search
+            plugins: [
+                (hook, vm) => {
+                    console.log("I am working plugin!");
+                    console.log(hook);
+                    console.log(vm);
+                }
+
+            ]
+        }
+    </script>
+
+    <!-- Required -->
+    <script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/docsify.min.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/docsify-darklight-theme@3/dist/docsify-themeable/main.min.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/docsify-darklight-theme@3/dist/docsify-themeable/index.min.js"></script>
+
+    <!-- Full text search  -->
+    <script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/plugins/search.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/docsify@4/lib/plugins/zoom-image.min.js"></script>
+
+    <!-- Prism additional language highlighting support -->
+    <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-c.min.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-cpp.min.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-python.min.js"></script>
+    <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-bash.min.js"></script>
+
+    <!-- Mermaid support -->
+    <script type="module">
+        import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+
+        let theme = "base";
+        let dlTheme = localStorage.getItem('DARK_LIGHT_THEME');
+        if (dlTheme) {
+            if (dlTheme === "dark") {
+                theme = "dark";
+            }
+        } else if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+            theme = "dark";
+        }
+
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: theme
+        });
+        window.mermaid = mermaid;
+    </script>
+    <script src="//unpkg.com/docsify-mermaid@2.0.1/dist/docsify-mermaid.js"></script>
+
 
 </body>
 </html>
