@@ -1,19 +1,6 @@
----
-title: JANA: Multi-threaded HENP Event Reconstruction
----
 
-<center>
-<table border="0" width="100%" align="center">
-<TH width="20%"><A href="index.html">Welcome</A></TH>
-<TH width="20%"><A href="Tutorial.html">Tutorial</A></TH>
-<TH width="20%"><A href="Howto.html">How-to guides</A></TH>
-<TH width="20%"><A href="Explanation.html">Principles</A></TH>
-<TH width="20%"><A href="Reference.html">Reference</A></TH>
-</table>
-</center>
+# Group events <!-- {docsify-ignore-all} -->
 
-How To...
-=========
 ## Detect when a group of events has finished
 
 Sometimes it is necessary to organize events into groups, process the events the usual way, but then notify 
