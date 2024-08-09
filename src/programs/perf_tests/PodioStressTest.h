@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <datamodel/ExampleHitCollection.h>
-#include <datamodel/ExampleClusterCollection.h>
+#include <PodioExampleDatamodel/ExampleHitCollection.h>
+#include <PodioExampleDatamodel/ExampleClusterCollection.h>
 
 

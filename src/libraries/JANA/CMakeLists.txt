@@ -149,12 +149,12 @@ add_library(jana2 OBJECT ${JANA2_SOURCES})
 
 find_package(Threads REQUIRED)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
-target_link_libraries(jana2 ${CMAKE_DL_LIBS} Threads::Threads)
+target_link_libraries(jana2 PUBLIC ${CMAKE_DL_LIBS} Threads::Threads)
 
 if (${USE_PODIO})
-    target_link_libraries(jana2 podio::podio podio::podioRootIO ${ROOT_LIBRARIES})
+    target_link_libraries(jana2 PUBLIC podio::podio podio::podioRootIO ${ROOT_LIBRARIES})
 elseif (${USE_ROOT})
-    target_link_libraries(jana2 ${ROOT_LIBRARIES})
+    target_link_libraries(jana2 PUBLIC ${ROOT_LIBRARIES})
 endif()
 
 
@@ -163,12 +163,12 @@ add_library(jana2_static_lib STATIC $<TARGET_OBJECTS:jana2>)
 set_target_properties(jana2_static_lib PROPERTIES PREFIX "lib" OUTPUT_NAME "JANA")
 
 target_include_directories(jana2_static_lib PUBLIC $<INSTALL_INTERFACE:include>)
-target_link_libraries(jana2_static_lib ${CMAKE_DL_LIBS} Threads::Threads)
+target_link_libraries(jana2_static_lib PUBLIC ${CMAKE_DL_LIBS} Threads::Threads)
 
 if (${USE_PODIO})
-    target_link_libraries(jana2_static_lib podio::podio podio::podioRootIO ${ROOT_LIBRARIES})
+    target_link_libraries(jana2_static_lib PUBLIC podio::podio podio::podioRootIO ${ROOT_LIBRARIES})
 elseif (${USE_ROOT})
-    target_link_libraries(jana2_static_lib ${ROOT_LIBRARIES})
+    target_link_libraries(jana2_static_lib PUBLIC ${ROOT_LIBRARIES})
 endif()
 install(TARGETS jana2_static_lib EXPORT jana2_targets DESTINATION lib)
 
@@ -180,12 +180,12 @@ if (BUILD_SHARED_LIBS)
     set_target_properties(jana2_shared_lib PROPERTIES PREFIX "lib" OUTPUT_NAME "JANA")
 
     target_include_directories(jana2_shared_lib PUBLIC $<INSTALL_INTERFACE:include>)
-    target_link_libraries(jana2_shared_lib ${CMAKE_DL_LIBS} Threads::Threads)
+    target_link_libraries(jana2_shared_lib PUBLIC ${CMAKE_DL_LIBS} Threads::Threads)
 
     if (${USE_PODIO})
-        target_link_libraries(jana2_shared_lib podio::podio podio::podioRootIO ${ROOT_LIBRARIES})
+        target_link_libraries(jana2_shared_lib PUBLIC podio::podio podio::podioRootIO ${ROOT_LIBRARIES})
     elseif (${USE_ROOT})
-        target_link_libraries(jana2_shared_lib ${ROOT_LIBRARIES})
+        target_link_libraries(jana2_shared_lib PUBLIC ${ROOT_LIBRARIES})
     endif()
 
     install(TARGETS jana2_shared_lib EXPORT jana2_targets DESTINATION lib)
@@ -193,32 +193,6 @@ if (BUILD_SHARED_LIBS)
 else()
     message(STATUS "Building static library only")
 endif()
-
-
-# Install JANATargets.cmake
-install(EXPORT jana2_targets FILE JANATargets.cmake NAMESPACE JANA:: DESTINATION lib/cmake/JANA)
-
-# Generate JANAConfig.cmake, pointing it to JANATargets
-include(CMakePackageConfigHelpers)
-configure_package_config_file(
-        "JANAConfig.cmake.in"
-        "${CMAKE_CURRENT_BINARY_DIR}/JANAConfig.cmake"
-        INSTALL_DESTINATION "lib/cmake/JANA"
-)
-
-# Generate JANAConfigVersion.cmake
-write_basic_package_version_file(
-        JANAConfigVersion.cmake
-        VERSION ${PACKAGE_VERSION}
-        COMPATIBILITY AnyNewerVersion
-)
-
-# Install JANAConfig.cmake and JANAConfigVersion.cmake
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/JANAConfig.cmake" DESTINATION "lib/cmake/JANA")
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/JANAConfigVersion.cmake" DESTINATION "lib/cmake/JANA")
-
-
-# Export targets so that outside projects can use them
 
 
 # Install "public" header files

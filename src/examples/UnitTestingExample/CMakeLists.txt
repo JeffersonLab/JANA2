@@ -1,13 +1,4 @@
 
-set (UnitTestingExample_SOURCES
-        SimpleClusterFactoryTests.cc
-    )
+add_jana_test(jana-example-unit-tests)
+target_link_libraries(jana-example-unit-tests PUBLIC Tutorial)
 
-add_executable(UnitTestingExample ${UnitTestingExample_SOURCES})
-
-# Need to be able to find catch.hpp
-target_include_directories(UnitTestingExample PRIVATE ${CMAKE_SOURCE_DIR}/src/external)
-
-target_link_libraries(UnitTestingExample Tutorial_plugin jana2)
-set_target_properties(UnitTestingExample PROPERTIES PREFIX "" OUTPUT_NAME "UnitTestingExample")
-install(TARGETS UnitTestingExample DESTINATION bin)

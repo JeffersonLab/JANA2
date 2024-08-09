@@ -34,7 +34,7 @@ endif()
 # TODO: detector MacOS and set MACOSX_RPATH to TRUE
 set( CMAKE_SKIP_BUILD_RPATH FALSE )
 set( CMAKE_BUILD_WITH_INSTALL_RPATH FALSE )
-set( CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib" )
+set( CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib:${CMAKE_INSTALL_PREFIX}/lib/JANA/plugins" )
 set( CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE )
 
 # Generate a compilation database, e.g. for IDE autocompletion
@@ -195,7 +195,6 @@ message(STATUS "-----------------------")
 #---------
 
 include_directories(src/libraries)   # So that everyone can find the JANA header files
-include_directories(src/external)    # So that everyone can find our vendorized header-old libraries
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/src/libraries)   # So that everyone can find JVersion.h
 
 # This is needed on macos to allow plugins to link without resolving all JANA symbols until runtime
@@ -203,18 +202,24 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     add_link_options(-undefined dynamic_lookup)
 endif()
 
+include(CTest)
+include(cmake/AddJanaPlugin.cmake)
+include(cmake/AddJanaTest.cmake)
+
+add_subdirectory(src/external)
 add_subdirectory(src/libraries/JANA)
 add_subdirectory(src/examples)
 add_subdirectory(src/plugins)
 add_subdirectory(src/programs/jana)
 add_subdirectory(src/programs/unit_tests)
 add_subdirectory(src/programs/perf_tests)
-
 add_subdirectory(src/python)
 
 #---------------------------------------------------------------------------------------
 
 install(DIRECTORY scripts/ DESTINATION bin FILES_MATCHING PATTERN "jana-*.py"
         PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ WORLD_READ WORLD_EXECUTE)
+
 include(${CMAKE_SOURCE_DIR}/cmake/MakeConfig.cmake)
+include(${CMAKE_SOURCE_DIR}/cmake/MakeJanaThis.cmake)
 include(${CMAKE_SOURCE_DIR}/cmake/MakeJVersionH.cmake)

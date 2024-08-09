@@ -1,20 +1,9 @@
 
 
-set (Tutorial_PLUGIN_SOURCES
-        Tutorial.cc
-        TutorialProcessor.cc
-        TutorialProcessor.h
-        RandomSource.cc
-        RandomSource.h
-        Hit.h
-        Cluster.h
-        SimpleClusterFactory.cc
-        SimpleClusterFactory.h
-    )
+add_jana_plugin(Tutorial)
 
-add_library(Tutorial_plugin SHARED ${Tutorial_PLUGIN_SOURCES})
+add_test(NAME jana-example-tutorial-tests
+    COMMAND jana -Pplugins=Tutorial)
 
-target_link_libraries(Tutorial_plugin jana2)
-set_target_properties(Tutorial_plugin PROPERTIES PREFIX "" OUTPUT_NAME "Tutorial" SUFFIX ".so")
-install(TARGETS Tutorial_plugin DESTINATION plugins)
+set_tests_properties(jana-example-tutorial-tests PROPERTIES DISABLED TRUE)
 

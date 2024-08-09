@@ -1,11 +1,10 @@
 
 // Copyright 2023, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
-#include <iostream>
 #include <podio/CollectionBase.h>
 #include <podio/Frame.h>
-#include "datamodel/MutableExampleHit.h"
-#include "datamodel/ExampleHitCollection.h"
+#include "PodioExampleDatamodel/MutableExampleHit.h"
+#include "PodioExampleDatamodel/ExampleHitCollection.h"
 #include <podio/ROOTFrameWriter.h>
 #include <podio/ROOTFrameReader.h>
 
@@ -17,6 +16,9 @@
 #include "PodioExampleProcessor.h"
 #include "ExampleClusterFactory.h"
 #include "ExampleMultifactory.h"
+
+#include <iostream>
+#include <cassert>
 
 
 void create_hits_file() {
@@ -63,9 +65,11 @@ void verify_clusters_file() {
     auto event0 = podio::Frame(reader.readEntry("events", 0));
 
     std::cout << "Event 0: Expected 2 clusters, got " << event0.get("clusters")->size() << std::endl;
+    assert(event0.get("clusters")->size() == 2);
 
     auto event1 = podio::Frame(reader.readEntry("events", 1));
     std::cout << "Event 1: Expected 3 clusters, got " << event1.get("clusters")->size() << std::endl;
+    assert(event1.get("clusters")->size() == 3);
 }
 
 
@@ -83,5 +87,6 @@ int main() {
 
     verify_clusters_file();
 
+    return app.GetExitCode();
 }
 
