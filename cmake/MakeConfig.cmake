@@ -24,7 +24,7 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/cmake/JANAConfig.cmake"
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/cmake/JANAConfigVersion.cmake" 
     DESTINATION "lib/JANA/cmake")
 
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/cmake/AddExternalPlugin.cmake"
+install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/cmake/AddJanaPlugin.cmake"
     DESTINATION "lib/JANA/cmake")
 
 

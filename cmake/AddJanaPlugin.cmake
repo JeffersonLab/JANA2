@@ -3,7 +3,7 @@ macro(add_jana_plugin plugin_name)
 
     # Parse remaining arguments
     set(options)
-    set(oneValueArgs)
+    set(oneValueArgs EXPORT)
     set(multiValueArgs SOURCES PUBLIC_HEADER TESTS)
 
     cmake_parse_arguments(PLUGIN "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
@@ -35,6 +35,22 @@ macro(add_jana_plugin plugin_name)
         message(STATUS "Plugin ${plugin_name}: found tests: ${PLUGIN_TESTS}")
     endif()
 
+    if (${PROJECT_NAME} STREQUAL "jana2")
+        # This is an internal plugin
+        set(INSTALL_NAMESPACE "JANA")
+        set(JANA_NAMESPACE "")
+        if (NOT PLUGIN_EXPORT)
+            set(PLUGIN_EXPORT "jana2_targets")
+        endif()
+    else()
+        # This is an external plugin
+        # Figure out install namespace, which _might_ be different than PROJECT_NAME
+        if (NOT DEFINED INSTALL_NAMESPACE)
+            set(INSTALL_NAMESPACE ${PROJECT_NAME} CACHE STRING "Project-specific namespace for installation paths, e.g. /lib/PROJECT_NAMESPACE/plugins")
+        endif()
+        set(JANA_NAMESPACE "JANA::")
+    endif()
+
     # Set up target
     add_library(${plugin_name} SHARED ${PLUGIN_SOURCES})
 
@@ -45,10 +61,10 @@ macro(add_jana_plugin plugin_name)
         SKIP_BUILD_RPATH FALSE
         BUILD_WITH_INSTALL_RPATH TRUE
         INSTALL_RPATH_USE_LINK_PATH TRUE
-        INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib;${CMAKE_INSTALL_PREFIX}/lib/JANA/plugins"
+        INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib;${CMAKE_INSTALL_PREFIX}/lib/${INSTALL_NAMESPACE}/plugins"
     )
 
-    target_link_libraries(${plugin_name} PUBLIC jana2_static_lib)
+    target_link_libraries(${plugin_name} PUBLIC "${JANA_NAMESPACE}jana2_static_lib")
 
     # Handle public headers
     if (PLUGIN_PUBLIC_HEADER)
@@ -58,29 +74,29 @@ macro(add_jana_plugin plugin_name)
         target_include_directories(${plugin_name}
             PUBLIC
                 $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-                $<INSTALL_INTERFACE:include/JANA/plugins/${plugin_name}>
+                $<INSTALL_INTERFACE:include/${INSTALL_NAMESPACE}/plugins/${plugin_name}>
         )
     endif()
 
     # Install target
     install(TARGETS ${plugin_name}
-        EXPORT ParentTargets
-        PUBLIC_HEADER DESTINATION include/JANA/plugins/${plugin_name}
-        LIBRARY DESTINATION lib/JANA/plugins
+        EXPORT ${PLUGIN_EXPORT}
+        PUBLIC_HEADER DESTINATION include/${INSTALL_NAMESPACE}/plugins/${plugin_name}
+        LIBRARY DESTINATION lib/${INSTALL_NAMESPACE}/plugins
     )
 
     # Handle tests
     if (PLUGIN_TESTS)
         add_executable(${plugin_name}_tests ${PLUGIN_TESTS})
-        target_link_libraries(${plugin_name}_tests PRIVATE ${plugin_name} VendoredCatch2)
+        target_link_libraries(${plugin_name}_tests PRIVATE ${plugin_name} "${JANA_NAMESPACE}VendoredCatch2")
         set_target_properties(${plugin_name}_tests PROPERTIES
             SKIP_BUILD_RPATH FALSE
             BUILD_WITH_INSTALL_RPATH TRUE
             INSTALL_RPATH_USE_LINK_PATH TRUE
-            INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib;${CMAKE_INSTALL_PREFIX}/lib/JANA/plugins"
+            INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib;${CMAKE_INSTALL_PREFIX}/lib/${INSTALL_NAMESPACE}/plugins"
         )
-        install(TARGETS ${plugin_name}_tests RUNTIME DESTINATION bin)
-        add_test(NAME ${plugin_name}_tests COMMAND ${CMAKE_INSTALL_PREFIX}/bin/jana-${plugin_name}-tests)
+        #install(TARGETS ${plugin_name}_tests RUNTIME DESTINATION bin)
+        add_test(NAME ${plugin_name}_tests COMMAND ${plugin_name}_tests)
     endif()
 endmacro()
 

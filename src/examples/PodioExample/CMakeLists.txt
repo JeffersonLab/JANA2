@@ -30,11 +30,15 @@ if (USE_PODIO)
     install(TARGETS PodioExample DESTINATION bin)
 
     install(TARGETS PodioExampleDatamodel
+        EXPORT jana2_targets
         LIBRARY DESTINATION lib/JANA/plugins
         PUBLIC_HEADER DESTINATION include/JANA/plugins/PodioExampleDatamodel
     )
 
-    install(TARGETS PodioExampleDatamodelDict DESTINATION lib/JANA/plugins)
+    install(TARGETS PodioExampleDatamodelDict 
+        EXPORT jana2_targets
+        DESTINATION lib/JANA/plugins)
+
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/PodioExampleDatamodelDictDict.rootmap DESTINATION lib/JANA/plugins)
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libPodioExampleDatamodelDict_rdict.pcm DESTINATION lib/JANA/plugins)
 

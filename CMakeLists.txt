@@ -203,7 +203,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif()
 
 include(CTest)
-include(cmake/AddInternalPlugin.cmake)
+include(cmake/AddJanaPlugin.cmake)
 include(cmake/AddJanaTest.cmake)
 
 add_subdirectory(src/external)
