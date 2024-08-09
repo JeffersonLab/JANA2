@@ -1,21 +1,8 @@
-# JExample 7 plugin
-
-set(StreamingExample_SOURCES
-    ZmqMain.cc)
-
-set(StreamingExample_HEADERS
-    ZmqTransport.h
-    ReadoutMessageAuto.h
-    AHit.h
-    AHitAnomalyDetector.h
-    AHitParser.h)
 
 if (USE_ZEROMQ)
     find_package(ZeroMQ REQUIRED)
-    add_jana_plugin(StreamingExample 
-        SOURCES ${StreamingExample_SOURCES}
-        PUBLIC_HEADER ${StreamingExample_HEADERS})
 
+    add_jana_plugin(StreamingExample)
     target_include_directories(StreamingExample PUBLIC ${ZeroMQ_INCLUDE_DIRS})
     target_link_libraries(StreamingExample PUBLIC ${ZeroMQ_LIBRARIES})
 

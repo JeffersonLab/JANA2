@@ -8,6 +8,33 @@ macro(add_jana_plugin plugin_name)
 
     cmake_parse_arguments(PLUGIN "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
+    if (NOT PLUGIN_SOURCES AND NOT PLUGIN_PUBLIC_HEADER AND NOT PLUGIN_TESTS)
+        # If no arguments provided, glob everything
+        file(GLOB HEADERS_IN_SUBDIR "include/*")
+        file(GLOB SOURCES_IN_SUBDIR "src/*")
+        file(GLOB TESTS_IN_SUBDIR "test*/*")
+        file(GLOB HEADERS_IN_CWD "*.h*")
+        set(SOURCES_IN_CWD)
+        set(TESTS_IN_CWD)
+
+        file(GLOB ALL_SOURCES_IN_CWD "*.c*")
+        foreach(file IN LISTS ALL_SOURCES_IN_CWD)
+            string(TOLOWER "${file}" file_lower)
+            if(NOT file_lower MATCHES ".*/test[^/]*$|.*test$|.*tests$")
+                list(APPEND SOURCES_IN_CWD ${file})
+            else()
+                list(APPEND TESTS_IN_CWD ${file})
+            endif()
+        endforeach()
+
+        set(PLUGIN_SOURCES ${SOURCES_IN_CWD} ${SOURCES_IN_SUBDIR})
+        set(PLUGIN_PUBLIC_HEADER ${HEADERS_IN_CWD} ${HEADERS_IN_SUBDIR})
+        set(PLUGIN_TESTS ${TESTS_IN_CWD} ${TESTS_IN_SUBDIR})
+        message(STATUS "Plugin ${plugin_name}: found sources: ${PLUGIN_SOURCES}")
+        message(STATUS "Plugin ${plugin_name}: found headers: ${PLUGIN_PUBLIC_HEADER}")
+        message(STATUS "Plugin ${plugin_name}: found tests: ${PLUGIN_TESTS}")
+    endif()
+
     # Set up target
     add_library(${plugin_name} SHARED ${PLUGIN_SOURCES})
 

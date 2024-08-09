@@ -2,8 +2,7 @@
 
 if (USE_PODIO)
 
-    add_jana_plugin(TimesliceExample
-        SOURCES TimesliceExample.cc CollectionTabulators.cc)
+    add_jana_plugin(TimesliceExample)
 
     target_link_libraries(TimesliceExample PUBLIC PodioExampleDatamodel PodioExampleDatamodelDict podio::podioRootIO)
 

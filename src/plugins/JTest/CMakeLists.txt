@@ -1,8 +1,6 @@
 
 
-file(GLOB JTEST_HEADERS "*.h*")
-
-add_jana_plugin(JTest SOURCES JTestMain.cc PUBLIC_HEADER ${JTEST_HEADERS})
+add_jana_plugin(JTest)
 
 add_test(NAME jana-plugin-jtest-tests
     COMMAND jana -Pplugins=JTest -Pjana:nevents=20)

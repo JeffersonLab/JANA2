@@ -1,7 +1,5 @@
 
-add_jana_plugin(janadot 
-    SOURCES JEventProcessorJANADOT.cc 
-    PUBLIC_HEADER JEventProcessorJANADOT.h)
+add_jana_plugin(janadot)
 
 find_package(Threads REQUIRED)
 target_link_libraries(janadot PUBLIC Threads::Threads)

@@ -2,8 +2,7 @@
 
 if (${USE_ROOT})
 
-    file(GLOB JTEST_HEADERS "*.h*")
-    add_jana_plugin(janarate SOURCES JEventProcessorJANARATE.cc PUBLIC_HEADER ${JTEST_HEADERS})
+    add_jana_plugin(janarate)
 
     target_include_directories(janarate PUBLIC ${ROOT_INCLUDE_DIRS})
     target_link_libraries(janarate PUBLIC ${ROOT_LIBRARIES})
