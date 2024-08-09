@@ -13,6 +13,7 @@
 #include <unistd.h>
 #include <set>
 #include <filesystem>
+#include <memory>
 
 class JApplication;
 
@@ -163,7 +164,7 @@ void JPluginLoader::attach_plugins(JComponentManager* jcm) {
                     LOG_DEBUG(m_logger) << "Found!" << LOG_END;
                     try {
                         jcm->next_plugin(plugin_shortname);
-                        attach_plugin(fullpath.c_str());
+                        attach_plugin(plugin_shortname, fullpath);
                         paths_checked << "Loaded successfully" << std::endl;
                         found_plugin = true;
                         break;
@@ -213,7 +214,7 @@ void JPluginLoader::attach_plugins(JComponentManager* jcm) {
 }
 
 
-void JPluginLoader::attach_plugin(std::string soname) {
+void JPluginLoader::attach_plugin(std::string name, std::string path) {
 
     /// Attach a plugin by opening the shared object file and running the
     /// InitPlugin_t(JApplication* app) global C-style routine in it.
@@ -230,10 +231,10 @@ void JPluginLoader::attach_plugin(std::string soname) {
     ///
 
     // Open shared object
-    void* handle = dlopen(soname.c_str(), RTLD_LAZY | RTLD_GLOBAL | RTLD_NODELETE);
+    void* handle = dlopen(path.c_str(), RTLD_LAZY | RTLD_GLOBAL | RTLD_NODELETE);
     if (!handle) {
         std::string err = dlerror();
-        LOG_DEBUG(m_logger) << "Plugin dlopen() failed: " << err << LOG_END;
+        LOG_ERROR(m_logger) << "Plugin dlopen() failed: " << err << LOG_END;
         throw JException("Plugin dlopen() failed: %s", err.c_str());
     }
 
@@ -241,35 +242,35 @@ void JPluginLoader::attach_plugin(std::string soname) {
     typedef void InitPlugin_t(JApplication* app);
     InitPlugin_t* initialize_proc = (InitPlugin_t*) dlsym(handle, "InitPlugin");
     if (initialize_proc) {
-        LOG_INFO(m_logger) << "Initializing plugin \"" << soname << "\"" << LOG_END;
+        LOG_INFO(m_logger) << "Initializing plugin \"" << name << "\" at path \"" << path << "\"" << LOG_END;
         (*initialize_proc)(GetApplication());
-        m_sohandles[soname] = handle;
+        auto plugin = std::make_unique<JPlugin>(name, path);
+        plugin->m_app = GetApplication();
+        plugin->m_logger = m_logger;
+        plugin->m_handle = handle;
+        m_plugin_index[name] = plugin.get();
+        m_plugins.push_front(std::move(plugin)); 
+        // We push to the front so that plugins get unloaded in the reverse order they were originally added
     } else {
         dlclose(handle);
-        LOG_DEBUG(m_logger) << "Plugin \"" << soname
+        LOG_ERROR(m_logger) << "Plugin \"" << name
                             << "\" does not have an InitPlugin() function. Ignoring." << LOG_END;
     }
 }
 
 
-JPluginLoader::JPluginLoader() {}
+JPlugin::~JPlugin() {
 
-JPluginLoader::~JPluginLoader() {
-
-    // Loop over open plugin handles.
-    // Call FinalizePlugin if it has one and close it in all cases.
+    // Call FinalizePlugin()
     typedef void FinalizePlugin_t(JApplication* app);
-    for( auto p :m_sohandles ){
-        auto soname = p.first;
-        auto handle = p.second;
-        FinalizePlugin_t* finalize_proc = (FinalizePlugin_t*) dlsym(handle, "FinalizePlugin");
-        if (finalize_proc) {
-            LOG_INFO(m_logger) << "Finalizing plugin \"" << soname << "\"" << LOG_END;
-            (*finalize_proc)(GetApplication());
-        }
-
-        // Close plugin handle
-        dlclose(handle);
+    FinalizePlugin_t* finalize_proc = (FinalizePlugin_t*) dlsym(m_handle, "FinalizePlugin");
+    if (finalize_proc) {
+        LOG_INFO(m_logger) << "Finalizing plugin \"" << m_name << "\"" << LOG_END;
+        (*finalize_proc)(m_app);
     }
+
+    // Close plugin handle
+    dlclose(m_handle);
+    LOG_DEBUG(m_logger) << "Unloaded plugin \"" << m_name << "\"" << LOG_END;
 }
 
