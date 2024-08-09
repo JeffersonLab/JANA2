@@ -1,4 +1,4 @@
-# Stream data to and from JANA
+# Stream data to and from JANA <!-- {docsify-ignore-all} -->
 
 
 ## Messages and Events
@@ -13,7 +13,7 @@
    
    If events are large enough (>0.5MB), the cleanest thing to do is to 
    establish a one-to-one relationship between messages and events. JANA provides 
-   [JStreamingEventSource](html/class_j_streaming_event_source.html)
+   [JStreamingEventSource](refcpp/class_j_streaming_event_source.html)
    to make this convenient.
      
    If events are very small, you probably want many events in one message. A corresponding helper class does not 
@@ -21,7 +21,7 @@
    
    If upstream doesn't do any event building (e.g. it is reading out ADC samples over a fixed time window) you 
    probably want to have JANA determine physically meaningful event boundaries, maybe even incorporating a software 
-   L2 trigger. This is considerably more complicated, and is discussed in [the event building how-to](Howto.html) 
+   L2 trigger. This is considerably more complicated, and is discussed in [the event building how-to](./other-howtos.md) 
    instead.
       
    For the remainder of this how-to we assume that messages and events are one-to-one.
@@ -32,9 +32,9 @@
 2. The second question to ask is: What transport should be used? 
 
     JANA makes it so that the message format and transport can be varied independently. The transport wrapper need only
-    implement the [JTransport](html/struct_j_transport.html) interface, which is essentially just:
+    implement the [JTransport](refcpp/struct_j_transport.html) interface, which is essentially just:
 
-    ```c++
+    ```cpp
         enum class Result {SUCCESS, TRYAGAIN};
         
         virtual void initialize();
@@ -55,7 +55,5 @@
 
     Message formats each get their own class, which must inherit from the JMessage and JEventMessage interfaces.
 
-4. 
-   
 
 

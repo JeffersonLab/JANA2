@@ -1,5 +1,5 @@
-Contributing to JANA2
-=====================
+Contributing
+============
 
 ## Coding Conventions
 
@@ -39,5 +39,3 @@ Add a line to `packages/jana2/package.py` that associates the release version wi
 Note that the spack version identifier does _not_ have a 'v' prefix.
 
 
-[filename](Documentation.md ':include')
-[filename](mermaid-example.md ':include')
