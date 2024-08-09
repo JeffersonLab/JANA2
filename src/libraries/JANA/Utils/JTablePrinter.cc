@@ -166,7 +166,7 @@ void JTablePrinter::Render(std::ostream& os) const {
     }
 
     // Print rows
-    for (size_t row = 0; row < current_row; ++row) {
+    for (int row = 0; row < current_row; ++row) {
         std::vector<std::vector<std::string>> lines;
         size_t line_count = 1;
         for (const auto& col : columns) {

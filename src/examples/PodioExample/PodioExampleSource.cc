@@ -4,7 +4,7 @@
 
 
 #include "PodioExampleSource.h"
-#include <datamodel/EventInfo.h>
+#include <PodioExampleDatamodel/EventInfo.h>
 
 std::unique_ptr<podio::Frame> PodioExampleSource::NextFrame(int event_index, int &event_number, int &run_number) {
 

@@ -7,7 +7,7 @@
 #define JANA2_EXAMPLECLUSTERFACTORY_H
 
 #include <JANA/Podio/JFactoryPodioT.h>
-#include "datamodel/ExampleCluster.h"
+#include "PodioExampleDatamodel/ExampleCluster.h"
 #include "DatamodelGlue.h"
 
 class ExampleClusterFactory : public JFactoryPodioT<ExampleCluster> {

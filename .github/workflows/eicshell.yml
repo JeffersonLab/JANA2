@@ -39,6 +39,24 @@ jobs:
         run: |
           cd $GITHUB_WORKSPACE/build
           make -j4 install
+    
+    - name: Examine dynamic linking
+      run: |
+        export JANA_HOME=$GITHUB_WORKSPACE
+        export JANA_PLUGIN_PATH=$JANA_HOME/plugins
+        export LD_LIBRARY_PATH=$JANA_HOME/lib:$JANA_HOME/lib/JANA/plugins:$LD_LIBRARY_PATH
+        echo "ldd bin/jana"
+        ldd bin/jana
+        echo "ldd bin/libJANA.so"
+        ldd lib/libJANA.so
+        echo "bin/jana rpath"
+        objdump -x bin/jana | grep PATH
+        echo "lib/libJANA.so rpath"
+        objdump -x lib/libJANA.so | grep PATH
+        echo "lib/JANA/plugins/TimesliceExample.so"
+        objdump -x lib/JANA/plugins/TimesliceExample.so | grep PATH
+        echo "bin/PodioExample"
+        objdump -x bin/PodioExample | grep PATH
 
     - name: Run JTest plugin with 100 events
       uses: eic/run-cvmfs-osg-eic-shell@main
@@ -47,7 +65,7 @@ jobs:
         run: |
             export JANA_HOME=$GITHUB_WORKSPACE
             export JANA_PLUGIN_PATH=$JANA_HOME/plugins
-            export LD_LIBRARY_PATH=$JANA_HOME/lib:$LD_LIBRARY_PATH
+            export LD_LIBRARY_PATH=$JANA_HOME/lib:$JANA_HOME/lib/JANA/plugins:$LD_LIBRARY_PATH
             $GITHUB_WORKSPACE/bin/jana -Pplugins=JTest -Pjana:nevents=100
 
     - name: Run jana-unit-tests
@@ -57,7 +75,7 @@ jobs:
         run: |
           export JANA_HOME=$GITHUB_WORKSPACE
           export JANA_PLUGIN_PATH=$JANA_HOME/plugins
-          export LD_LIBRARY_PATH=$JANA_HOME/lib:$LD_LIBRARY_PATH
+          export LD_LIBRARY_PATH=$JANA_HOME/lib:$JANA_HOME/lib/JANA/plugins:$LD_LIBRARY_PATH
           $GITHUB_WORKSPACE/bin/jana-unit-tests
 
     - name: Run TimesliceExample with simple (physics event) topology
@@ -68,7 +86,7 @@ jobs:
           echo "--- Running TimesliceExample with simple topology ------------------------------"
           export JANA_HOME=$GITHUB_WORKSPACE
           export JANA_PLUGIN_PATH=$JANA_HOME/plugins
-          export LD_LIBRARY_PATH=$JANA_HOME/lib:$LD_LIBRARY_PATH
+          export LD_LIBRARY_PATH=$JANA_HOME/lib:$JANA_HOME/lib/JANA/plugins:$LD_LIBRARY_PATH
           $GITHUB_WORKSPACE/bin/jana \
             -Pplugins=TimesliceExample \
             -Pjana:nevents=100 \
@@ -82,7 +100,7 @@ jobs:
           echo "--- Running TimesliceExample with simple topology ------------------------------"
           export JANA_HOME=$GITHUB_WORKSPACE
           export JANA_PLUGIN_PATH=$JANA_HOME/plugins
-          export LD_LIBRARY_PATH=$JANA_HOME/lib:$LD_LIBRARY_PATH
+          export LD_LIBRARY_PATH=$JANA_HOME/lib:$JANA_HOME/lib/JANA/plugins:$LD_LIBRARY_PATH
           $GITHUB_WORKSPACE/bin/jana -Pplugins=TimesliceExample -Pjana:nevents=100 timeslices.root
 
 
@@ -120,7 +138,7 @@ jobs:
         run: |
           echo "--- Running EICrecon ---"
           export JANA_HOME=$GITHUB_WORKSPACE
-          export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/../EICrecon/lib:$JANA_HOME/lib:$LD_LIBRARY_PATH
           export JANA_PLUGIN_PATH=$GITHUB_WORKSPACE/../EICrecon/lib/EICrecon/plugins
+          export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/../EICrecon/lib:$JANA_HOME/lib:$JANA_HOME/lib/JANA/plugins:$LD_LIBRARY_PATH
           ../EICrecon/bin/eicrecon sim_e_1GeV_20GeV_craterlake.edm4hep.root
 

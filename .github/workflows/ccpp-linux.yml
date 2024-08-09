@@ -47,8 +47,8 @@ jobs:
       run: |
         export JANA_PLUGIN_PATH=$GITHUB_WORKSPACE/Linux/plugins
         echo "--- Running JTest plugin -----------------------"
-        $GITHUB_WORKSPACE/Linux/bin/jana -PPLUGINS=JTest -Pjana:nevents=100
+        ctest --test-dir build -R jana-plugin-jtest-tests
     - name: jana-unit-tests
       run: |
         echo "--- Running jana-unit-tests ------------------------------"
-        $GITHUB_WORKSPACE/Linux/bin/jana-unit-tests
+        ctest --test-dir build -R jana-unit-tests

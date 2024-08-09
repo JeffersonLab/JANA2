@@ -2,7 +2,7 @@
 #include <catch.hpp>
 
 #include <type_traits>
-#include <datamodel/ExampleClusterCollection.h>
+#include <PodioExampleDatamodel/ExampleClusterCollection.h>
 #include <DatamodelGlue.h>  // Hopefully this won't be necessary in the future
 #include <JANA/JEvent.h>
 

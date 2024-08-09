@@ -52,7 +52,6 @@ Makefile
 /bin/
 /include/
 /lib/
-/plugins/
 
 # Doxygen generated files
 /docs/doxygen_build/*
@@ -64,9 +63,4 @@ cmake-build*/
 .cache
 compile_commands.json
 
-# PODIO generated artifacts
-src/examples/PodioExample/datamodel/*
-src/examples/PodioExample/src/*
-src/examples/PodioExample/podio_generated_files.cmake
 
-podio_build/

@@ -12,53 +12,50 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: nbrei/jana2_env_everything_except_cuda
-    
-    # Build Docker container and run the entrypoint.sh script in it
     steps:
-
     - uses: actions/checkout@v4
-
-    - name: cmake
+    - name: build
       run: |
-        mkdir -p $GITHUB_WORKSPACE/build
-        cd $GITHUB_WORKSPACE/build
-        cmake ../ -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE/Linux \
+        cmake -S . -B build -DCMAKE_INSTALL_PREFIX=`pwd` \
           -DUSE_PYTHON=ON \
           -DUSE_ROOT=ON \
           -DUSE_PODIO=ON \
           -DUSE_XERCES=ON \
-          -DXercesC_DIR=/usr \
           -DUSE_ZEROMQ=ON \
+          -DXercesC_DIR=/usr \
           -Dpodio_DIR=/app/podio/install/lib/cmake/podio/
-    - name: make
+        cmake --build build --target install
+    - name: Examine dynamic linking
       run: |
-        cd $GITHUB_WORKSPACE/build
-        make
-    - name: make install
-      run: |
-        cd $GITHUB_WORKSPACE/build
-        make install
+        echo "ldd bin/jana"
+        ldd bin/jana
+        echo "ldd bin/libJANA.so"
+        ldd lib/libJANA.so
+        echo "bin/jana rpath"
+        objdump -x bin/jana | grep PATH
+        echo "lib/libJANA.so rpath"
+        objdump -x lib/libJANA.so | grep PATH
+        echo "lib/JANA/plugins/TimesliceExample.so"
+        objdump -x lib/JANA/plugins/TimesliceExample.so | grep PATH
+        echo "bin/PodioExample"
+        objdump -x bin/PodioExample | grep PATH
     - name: JTest
       run: |
-        echo "--- Running JTest plugin -----------------------"
-        export JANA_PLUGIN_PATH=$GITHUB_WORKSPACE/Linux/plugins
-        $GITHUB_WORKSPACE/Linux/bin/jana -PPLUGINS=JTest -Pjana:nevents=100
+        export LD_LIBRARY_PATH=/app/podio/install/lib:$LD_LIBRARY_PATH
+        # Note that podio needs to be on the LD_LIBRARY_PATH, not merely someone's RPath, because 
+        # Cling needs to be able to find the libpodioDict*
+        ctest --test-dir build --output-on-failure -R jana-plugin-jtest-tests
     - name: jana-unit-tests
       run: |
-        echo "--- Running jana-unit-tests ------------------------------"
-        export JANA_PLUGIN_PATH=$GITHUB_WORKSPACE/Linux/plugins
-        $GITHUB_WORKSPACE/Linux/bin/jana-unit-tests
+        export LD_LIBRARY_PATH=/app/podio/install/lib:$LD_LIBRARY_PATH
+        ctest --test-dir build --output-on-failure -R jana-unit-tests
     - name: TimesliceExample with simple (physics event) topology
       run: |
-        echo "--- Running TimesliceExample with simple topology ------------------------------"
-        export JANA_PLUGIN_PATH=$GITHUB_WORKSPACE/Linux/plugins
-        export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/Linux/lib:/app/podio/install/lib:$LD_LIBRARY_PATH
-        $GITHUB_WORKSPACE/Linux/bin/jana -Pplugins=TimesliceExample -Pjana:nevents=100 events.root
+        export LD_LIBRARY_PATH=/app/podio/install/lib:$LD_LIBRARY_PATH
+        ctest --test-dir build --output-on-failure -R jana-example-timeslices-simple-tests
     - name: TimesliceExample with complex (timeslice) topology
       run: |
-        echo "--- Running TimesliceExample with complex topology ------------------------------"
-        export JANA_PLUGIN_PATH=$GITHUB_WORKSPACE/Linux/plugins
-        export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/Linux/lib:/app/podio/install/lib:$LD_LIBRARY_PATH
-        $GITHUB_WORKSPACE/Linux/bin/jana -Pplugins=TimesliceExample -Pjana:nevents=100 timeslices.root
+        export LD_LIBRARY_PATH=/app/podio/install/lib:$LD_LIBRARY_PATH
+        ctest --test-dir build --output-on-failure -R jana-example-timeslices-complex-tests
 
 

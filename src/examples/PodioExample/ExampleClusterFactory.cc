@@ -4,7 +4,7 @@
 
 
 #include "ExampleClusterFactory.h"
-#include "datamodel/ExampleHit.h"
+#include "PodioExampleDatamodel/ExampleHit.h"
 #include <JANA/JEvent.h>
 
 ExampleClusterFactory::ExampleClusterFactory() {

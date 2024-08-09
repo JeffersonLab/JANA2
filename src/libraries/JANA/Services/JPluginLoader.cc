@@ -76,7 +76,7 @@ void JPluginLoader::resolve_plugin_paths() {
 
     // 4. Next we look in the plugin directories relative to $JANA_HOME
     if (const char* jana_home = getenv("JANA_HOME")) {
-        add_plugin_path(std::string(jana_home) + "/plugins/JANA");  // In case we did a system install and want to avoid conflicts.
+        add_plugin_path(std::string(jana_home) + "/lib/JANA/plugins");  // In case we did a system install and want to avoid conflicts.
         add_plugin_path(std::string(jana_home) + "/plugins");
     }
 
@@ -86,7 +86,7 @@ void JPluginLoader::resolve_plugin_paths() {
     // but we can't guarantee that because the user can set JANA_HOME to be anything they want.
     // It would be nice if nothing in the JANA codebase itself relied on JANA_HOME, although we 
     // won't be removing it anytime soon because of build_scripts.
-    add_plugin_path(JVersion::GetInstallDir() + "/plugins");
+    add_plugin_path(JVersion::GetInstallDir() + "/lib/JANA/plugins");
 }
 
 
