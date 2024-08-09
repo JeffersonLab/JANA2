@@ -12,12 +12,6 @@ if(USE_ROOT)
         PUBLIC_HEADER ${JANAVIEW_HEADERS}
     )
 
-    target_include_directories(janaview PUBLIC ${ROOT_INCLUDE_DIRS})
-    target_link_libraries(janaview PUBLIC ${ROOT_LIBRARIES})
-
-    find_package(Threads REQUIRED)
-    target_link_libraries(janaview PUBLIC Threads::Threads)
-
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libjv_mainframe_rdict.pcm DESTINATION lib/JANA/plugins)
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libjv_mainframe.rootmap DESTINATION lib/JANA/plugins)
 

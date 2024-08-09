@@ -149,12 +149,12 @@ add_library(jana2 OBJECT ${JANA2_SOURCES})
 
 find_package(Threads REQUIRED)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
-target_link_libraries(jana2 ${CMAKE_DL_LIBS} Threads::Threads)
+target_link_libraries(jana2 PUBLIC ${CMAKE_DL_LIBS} Threads::Threads)
 
 if (${USE_PODIO})
-    target_link_libraries(jana2 podio::podio podio::podioRootIO ${ROOT_LIBRARIES})
+    target_link_libraries(jana2 PUBLIC podio::podio podio::podioRootIO ${ROOT_LIBRARIES})
 elseif (${USE_ROOT})
-    target_link_libraries(jana2 ${ROOT_LIBRARIES})
+    target_link_libraries(jana2 PUBLIC ${ROOT_LIBRARIES})
 endif()
 
 
@@ -163,12 +163,12 @@ add_library(jana2_static_lib STATIC $<TARGET_OBJECTS:jana2>)
 set_target_properties(jana2_static_lib PROPERTIES PREFIX "lib" OUTPUT_NAME "JANA")
 
 target_include_directories(jana2_static_lib PUBLIC $<INSTALL_INTERFACE:include>)
-target_link_libraries(jana2_static_lib ${CMAKE_DL_LIBS} Threads::Threads)
+target_link_libraries(jana2_static_lib PUBLIC ${CMAKE_DL_LIBS} Threads::Threads)
 
 if (${USE_PODIO})
-    target_link_libraries(jana2_static_lib podio::podio podio::podioRootIO ${ROOT_LIBRARIES})
+    target_link_libraries(jana2_static_lib PUBLIC podio::podio podio::podioRootIO ${ROOT_LIBRARIES})
 elseif (${USE_ROOT})
-    target_link_libraries(jana2_static_lib ${ROOT_LIBRARIES})
+    target_link_libraries(jana2_static_lib PUBLIC ${ROOT_LIBRARIES})
 endif()
 install(TARGETS jana2_static_lib EXPORT jana2_targets DESTINATION lib)
 
@@ -180,12 +180,12 @@ if (BUILD_SHARED_LIBS)
     set_target_properties(jana2_shared_lib PROPERTIES PREFIX "lib" OUTPUT_NAME "JANA")
 
     target_include_directories(jana2_shared_lib PUBLIC $<INSTALL_INTERFACE:include>)
-    target_link_libraries(jana2_shared_lib ${CMAKE_DL_LIBS} Threads::Threads)
+    target_link_libraries(jana2_shared_lib PUBLIC ${CMAKE_DL_LIBS} Threads::Threads)
 
     if (${USE_PODIO})
-        target_link_libraries(jana2_shared_lib podio::podio podio::podioRootIO ${ROOT_LIBRARIES})
+        target_link_libraries(jana2_shared_lib PUBLIC podio::podio podio::podioRootIO ${ROOT_LIBRARIES})
     elseif (${USE_ROOT})
-        target_link_libraries(jana2_shared_lib ${ROOT_LIBRARIES})
+        target_link_libraries(jana2_shared_lib PUBLIC ${ROOT_LIBRARIES})
     endif()
 
     install(TARGETS jana2_shared_lib EXPORT jana2_targets DESTINATION lib)
