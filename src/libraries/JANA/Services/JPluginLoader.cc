@@ -8,8 +8,10 @@
 #include "JParameterManager.h"
 #include <JANA/JVersion.h>
 
+#include <cstdlib>
 #include <dlfcn.h>
 #include <iostream>
+#include <sstream>
 #include <unistd.h>
 #include <set>
 #include <filesystem>
@@ -60,28 +62,23 @@ void JPluginLoader::add_plugin(std::string plugin_name) {
 void JPluginLoader::resolve_plugin_paths() {
     // Build our list of plugin search paths.
  
-    // 1. First we look for plugins in the local directory
-    add_plugin_path(".");
-
-    // 2. Next we look for plugins in locations specified via parameters. (Colon-separated)
+    // 1. First we look for plugins in locations specified via parameters. (Colon-separated)
     std::stringstream param_ss(m_plugin_paths_str);
     std::string path;
     while (getline(param_ss, path, ':')) add_plugin_path(path);
 
-    // 3. Next we look for plugins in locations specified via environment variable. (Colon-separated)
-    const char* jpp = getenv("JANA_PLUGIN_PATH");
-    if (jpp) {
+    // 2. Next we look for plugins in locations specified via environment variable. (Colon-separated)
+    if (const char* jpp = getenv("JANA_PLUGIN_PATH")) {
         std::stringstream envvar_ss(jpp);
         while (getline(envvar_ss, path, ':')) add_plugin_path(path);
     }
 
-    // 4. Next we look in the plugin directories relative to $JANA_HOME
+    // 3. Next we look in the plugin directories relative to $JANA_HOME
     if (const char* jana_home = getenv("JANA_HOME")) {
         add_plugin_path(std::string(jana_home) + "/lib/JANA/plugins");  // In case we did a system install and want to avoid conflicts.
-        add_plugin_path(std::string(jana_home) + "/plugins");
     }
 
-    // 5. Finally we look in the JANA install directory.
+    // 4. Finally we look in the JANA install directory.
     // By checking here, the user no longer needs to set JANA_HOME in order to run built-in plugins 
     // such as janadot and JTest. The install directory is supposed to be the same as JANA_HOME, 
     // but we can't guarantee that because the user can set JANA_HOME to be anything they want.
@@ -119,97 +116,62 @@ void JPluginLoader::attach_plugins(JComponentManager* jcm) {
     /// Loop over list of plugin names added via AddPlugin() and
     /// actually attach and initialize them. See AddPlugin method
     /// for more.
+    
+    // Figure out the search paths for plugins. For now, plugins _cannot_ add to the search paths
     resolve_plugin_paths();
 
-    // Add plugins specified via PLUGINS configuration parameter
-    // (comma separated list).
+    // Figure out the set of plugins to exclude. Note that this applies to plugins added
+    // by other plugins as well.
     std::set<std::string> exclusions(m_plugins_to_exclude.begin(), m_plugins_to_exclude.end());
 
-    // Loop over plugins
-    // It is possible for plugins to add additional plugins that will also need to
-    // be attached. To accommodate this we wrap the following chunk of code in
-    // a lambda function so we can run it over the additional plugins recursively
-    // until all are attached. (see below)
-    auto add_plugins_lamda = [=, this](std::vector<std::string> &plugins) {
-        std::stringstream paths_checked;
-        for (const std::string& plugin : plugins) {
-            // The user might provide a short name like "JTest", or a long name like "JTest.so".
-            // We assume that the plugin extension is always ".so". This may pose a problem on macOS
-            // where the extension might default to ".dylib".
-            std::string plugin_shortname;
-            std::string plugin_fullname;
-            if (plugin.substr(plugin.size() - 3) != ".so") {
-                plugin_fullname = plugin + ".so";
+    // Loop over all requested plugins as per the `plugins` parameter. Note that this vector may grow as 
+    // plugins themselves request additional plugins. These get appended to the back of `m_plugins_to_include`.
+    for (int i=0; i<m_plugins_to_include.size(); ++i) {
+        std::ostringstream paths_checked;
+        auto [name, path] = extract_name_and_maybe_path(m_plugins_to_include[i]);
+        jcm->next_plugin(name);
+
+        if (exclusions.find(name) != exclusions.end() || exclusions.find(name) != exclusions.end()) {
+            LOG_INFO(m_logger) << "Excluding plugin `" << name << "`" << LOG_END;
+            continue;
+        }
+        // TODO: Check if plugin has already been loaded!!!
+
+        bool found_plugin = false;
+        if (path != std::nullopt) {
+            found_plugin = validate_path(*path);
+            if (found_plugin) {
+                paths_checked << "    " << *path << " => Found" << std::endl;
             }
             else {
-                plugin_fullname = plugin;
-            }
-
-            plugin_shortname = std::filesystem::path(plugin_fullname).filename().stem().string();
-
-            if (exclusions.find(plugin_shortname) != exclusions.end() ||
-                 exclusions.find(plugin_fullname) != exclusions.end()) {
-
-                LOG_INFO(m_logger) << "Excluding plugin `" << plugin << "`" << LOG_END;
-                continue;
-            }
-
-            // Loop over paths
-            bool found_plugin = false;
-            for (std::string path : m_plugin_paths) {
-                std::string fullpath = path + "/" + plugin_fullname;
-                LOG_DEBUG(m_logger) << "Looking for '" << fullpath << "' ...." << LOG_END;
-                paths_checked << "    " << fullpath << "  =>  ";
-                if (access(fullpath.c_str(), F_OK) != -1) {
-                    LOG_DEBUG(m_logger) << "Found!" << LOG_END;
-                    try {
-                        jcm->next_plugin(plugin_shortname);
-                        attach_plugin(plugin_shortname, fullpath);
-                        paths_checked << "Loaded successfully" << std::endl;
-                        found_plugin = true;
-                        break;
-                    } 
-                    catch (JException& e) {
-                        LOG_WARN(m_logger) << "Exception loading plugin: " << e << LOG_END;
-                        paths_checked << "JException: " << e.GetMessage() << std::endl;
-                        continue;
-                    }
-                    catch (std::exception& e) {
-                        LOG_WARN(m_logger) << "Exception loading plugin: " << e.what() << LOG_END;
-                        paths_checked << "Exception: " << e.what() << std::endl;
-                        continue;
-                    }
-                    catch (...) {
-                        LOG_WARN(m_logger) << "Unknown exception loading plugin" << LOG_END;
-                        paths_checked << "Unknown exception" << std::endl;
-                        continue;
-                    }
-                }
-                else {
-                    paths_checked << "File not found" << std::endl;
-
-                }
-                LOG_DEBUG(m_logger) << "Failed to attach '" << fullpath << "'" << LOG_END;
-            }
-
-            // If we didn't find the plugin, then complain and quit
-            if (!found_plugin) {
-                LOG_ERROR(m_logger) << "Couldn't load plugin '" << plugin << "'\n" <<
-                                    "  Make sure that JANA_HOME and/or JANA_PLUGIN_PATH environment variables are set correctly.\n"
-                                    <<
-                                    "  Paths checked:\n" << paths_checked.str() << LOG_END;
-                throw JException("Couldn't find plugin '%s'", plugin.c_str());
+                paths_checked << "    " << *path << " => Not found" << std::endl;
             }
         }
-    };
+        else {
+            // User didn't provide a path, so we have to search
+            path = find_first_valid_path(name, paths_checked);
+            found_plugin = (path != std::nullopt);
+        }
+        if (!found_plugin) {
 
-    // Recursively loop over the list of plugins to ensure new plugins added by ones being
-    // attached are also attached.
-    uint64_t inext = 0;
-    while(inext < m_plugins_to_include.size() ){
-        std::vector<std::string> myplugins(m_plugins_to_include.begin() + inext, m_plugins_to_include.end());
-        inext = m_plugins_to_include.size(); // new plugins will be attached to end of vector
-        add_plugins_lamda(myplugins);
+            LOG_ERROR(m_logger) << "Couldn't find plugin '" << name << "'\n" <<
+                                "  Make sure that JANA_HOME and/or JANA_PLUGIN_PATH environment variables are set correctly.\n"
+                                <<
+                                "  Paths checked:\n" << paths_checked.str() << LOG_END;
+            throw JException("Couldn't find plugin '%s'", name.c_str());
+        }
+
+        // At this point, the plugin has been found, and we are going to try to attach it. 
+        // If the attachment fails for any reason, so does attach_plugins() and ultimately JApplication::Initialize().
+        // We do not attempt to search for non-failing plugins by looking further down the search path, because this 
+        // masks the "root cause" error and causes much greater confusion. A specific example is working in an environment
+        // that has a read-only system install of JANA, e.g. Singularity or CVMFS. If the host application is built using
+        // a newer version of JANA which is not binary-compatible with the system install, and both locations end up on the 
+        // plugin search path, a legitimate error loading the correct plugin would be suppressed, and the user would instead
+        // see an extremely difficult-to-debug error (usually a segfault) stemming from the binary incompatibility 
+        // between the host application and the plugin.
+
+        attach_plugin(name, *path); // Throws JException on failure
     }
 }
 
@@ -221,41 +183,66 @@ void JPluginLoader::attach_plugin(std::string name, std::string path) {
     /// An exception will be thrown if the plugin is not successfully opened.
     /// Users will not need to call this directly since it is called automatically
     /// from Initialize().
-    ///
-    /// @param soname name of shared object file to attach. This may include
-    ///               an absolute or relative path.
-    ///
-    /// @param verbose if set to true, failed attempts will be recorded via the
-    ///                JLog. Default is false so JANA can silently ignore files
-    ///                that are not valid plugins.
-    ///
 
     // Open shared object
+    dlerror(); // Clear any earlier dlerrors
     void* handle = dlopen(path.c_str(), RTLD_LAZY | RTLD_GLOBAL | RTLD_NODELETE);
     if (!handle) {
         std::string err = dlerror();
-        LOG_ERROR(m_logger) << "Plugin dlopen() failed: " << err << LOG_END;
-        throw JException("Plugin dlopen() failed: %s", err.c_str());
+        LOG_ERROR(m_logger) << "Plugin \"" << name << "\" dlopen() failed: " << err << LOG_END;
+        throw JException("Plugin '%s' dlopen() failed: %s", name.c_str(), err.c_str());
     }
 
-    // Look for an InitPlugin symbol
+    // Retrieve the InitPlugin symbol
     typedef void InitPlugin_t(JApplication* app);
     InitPlugin_t* initialize_proc = (InitPlugin_t*) dlsym(handle, "InitPlugin");
-    if (initialize_proc) {
-        LOG_INFO(m_logger) << "Initializing plugin \"" << name << "\" at path \"" << path << "\"" << LOG_END;
-        (*initialize_proc)(GetApplication());
-        auto plugin = std::make_unique<JPlugin>(name, path);
-        plugin->m_app = GetApplication();
-        plugin->m_logger = m_logger;
-        plugin->m_handle = handle;
-        m_plugin_index[name] = plugin.get();
-        m_plugins.push_front(std::move(plugin)); 
-        // We push to the front so that plugins get unloaded in the reverse order they were originally added
-    } else {
+    if (!initialize_proc) {
         dlclose(handle);
-        LOG_ERROR(m_logger) << "Plugin \"" << name
-                            << "\" does not have an InitPlugin() function. Ignoring." << LOG_END;
+        LOG_ERROR(m_logger) << "Plugin \"" << name << "\" is missing 'InitPlugin' symbol" << LOG_END;
+        throw JException("Plugin '%s' is missing 'InitPlugin' symbol", name.c_str());
     }
+
+    // Run InitPlugin() and wrap exceptions as needed
+    LOG_INFO(m_logger) << "Initializing plugin \"" << name << "\" at path \"" << path << "\"" << LOG_END;
+
+    try {
+        (*initialize_proc)(GetApplication());
+    }
+    catch (JException& ex) {
+        if (ex.function_name.empty()) ex.function_name = "attach_plugin";
+        if (ex.type_name.empty()) ex.type_name = "JPluginLoader";
+        if (ex.instance_name.empty()) ex.instance_name = m_prefix;
+        if (ex.plugin_name.empty()) ex.plugin_name = name;
+        throw ex;
+    }
+    catch (std::exception& e) {
+        auto ex = JException(e.what());
+        ex.exception_type = JTypeInfo::demangle_current_exception_type();
+        ex.nested_exception = std::current_exception();
+        ex.function_name = "attach_plugin";
+        ex.type_name = "JPluginLoader";
+        ex.instance_name = m_prefix;
+        ex.plugin_name = name;
+        throw ex;
+    }
+    catch (...) {
+        auto ex = JException("Unknown exception");
+        ex.exception_type = JTypeInfo::demangle_current_exception_type();
+        ex.nested_exception = std::current_exception();
+        ex.function_name = "attach_plugin";
+        ex.type_name = "JPluginLoader";
+        ex.instance_name = m_prefix;
+        ex.plugin_name = name;
+        throw ex;
+    }
+
+    // Do some bookkeeping
+    auto plugin = std::make_unique<JPlugin>(name, path);
+    plugin->m_app = GetApplication();
+    plugin->m_logger = m_logger;
+    plugin->m_handle = handle;
+    m_plugin_index[name] = plugin.get();
+    m_plugins.push_front(std::move(plugin)); 
 }
 
 
@@ -273,4 +260,51 @@ JPlugin::~JPlugin() {
     dlclose(m_handle);
     LOG_DEBUG(m_logger) << "Unloaded plugin \"" << m_name << "\"" << LOG_END;
 }
+
+std::pair<std::string, std::optional<std::string>> JPluginLoader::extract_name_and_maybe_path(std::string user_name_or_path) {
+    if (user_name_or_path.find('/') != -1) {
+        std::string name = std::filesystem::path(user_name_or_path).filename().stem().string();
+        std::string path = user_name_or_path;
+        return {name, path};
+    }
+    else {
+        if (user_name_or_path.substr(user_name_or_path.size() - 3) == ".so") {
+            user_name_or_path = user_name_or_path.substr(0, user_name_or_path.size() - 3);
+        }
+        return {user_name_or_path, std::nullopt};
+    }
+}
+
+
+std::string JPluginLoader::make_path_from_name(std::string name, const std::string& path_prefix) {
+    std::ostringstream oss;
+    oss << path_prefix;
+    if (!path_prefix.ends_with('/')) {
+        oss << "/";
+    }
+    oss << name;
+    oss << ".so";
+    return oss.str();
+}
+
+std::optional<std::string> JPluginLoader::find_first_valid_path(std::string name, std::ostringstream& debug_log) {
+
+    for (const std::string& path_prefix : m_plugin_paths) {
+        auto path = make_path_from_name(name, path_prefix);
+
+        if (validate_path(path)) {
+            debug_log << "    " << path << " => Found" << std::endl;
+            return path;
+        }
+        else {
+            debug_log << "    " << path << " => Not found" << std::endl;
+        }
+    }
+    return std::nullopt;
+}
+
+bool JPluginLoader::validate_path(const std::string& path) {
+    return (access(path.c_str(), F_OK) != -1);
+}
+
 

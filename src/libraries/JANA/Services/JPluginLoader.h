@@ -12,6 +12,7 @@
 #include <string>
 #include <vector>
 #include <list>
+#include <optional>
 
 
 class JComponentManager;
@@ -44,6 +45,11 @@ public:
     void attach_plugins(JComponentManager* jcm);
     void attach_plugin(std::string name, std::string path);
     void resolve_plugin_paths();
+
+    std::pair<std::string, std::optional<std::string>> extract_name_and_maybe_path(std::string user_plugin);
+    std::optional<std::string> find_first_valid_path(std::string name, std::ostringstream& debug_log);
+    std::string make_path_from_name(std::string name, const std::string& path_prefix);
+    bool validate_path(const std::string& path);
 
 private:
     Service<JParameterManager> m_params {this};
