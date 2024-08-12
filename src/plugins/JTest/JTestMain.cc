@@ -23,6 +23,11 @@ void InitPlugin(JApplication *app){
 	app->Add(new JFactoryGeneratorT<JTestDisentangler>());
 	app->Add(new JFactoryGeneratorT<JTestTracker>());
 
+    bool except_on_loading = app->RegisterParameter("jtest:except_on_loading", false);
+    if (except_on_loading) {
+        throw JException("Planned exception on loading!");
+    }
+
     bool write_csv = false;
     app->SetDefaultParameter("jtest:write_csv", write_csv);
     if (write_csv) {
