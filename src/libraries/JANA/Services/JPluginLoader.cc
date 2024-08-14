@@ -261,9 +261,22 @@ JPlugin::~JPlugin() {
     LOG_DEBUG(m_logger) << "Unloaded plugin \"" << m_name << "\"" << LOG_END;
 }
 
+std::string path_filename_stem(const std::string& filesystem_path) {
+    // Ideally we would just do this, but we want to be C++17 compatible
+    // return std::filesystem::path(filesystem_path).filename().stem().string();
+    
+    size_t pos_begin = filesystem_path.find_last_of('/');
+    if (pos_begin == std::string::npos) pos_begin = 0;
+    
+    size_t pos_end = filesystem_path.find_last_of('.');
+    //if (pos_end == std::string::npos) pos_end = filesystem_path.size();
+
+    return filesystem_path.substr(pos_begin+1, pos_end-pos_begin-1);
+}
+
 std::pair<std::string, std::optional<std::string>> JPluginLoader::extract_name_and_maybe_path(std::string user_name_or_path) {
     if (user_name_or_path.find('/') != -1) {
-        std::string name = std::filesystem::path(user_name_or_path).filename().stem().string();
+        std::string name = path_filename_stem(user_name_or_path);
         std::string path = user_name_or_path;
         return {name, path};
     }
@@ -275,11 +288,17 @@ std::pair<std::string, std::optional<std::string>> JPluginLoader::extract_name_a
     }
 }
 
+bool ends_with(const std::string& s, char c) {
+    // Ideally we would just do s.ends_with(c), but we want to be C++17 compatible
+    if (s.empty()) return false;
+    return s.back() == c;
+}
+
 
 std::string JPluginLoader::make_path_from_name(std::string name, const std::string& path_prefix) {
     std::ostringstream oss;
     oss << path_prefix;
-    if (!path_prefix.ends_with('/')) {
+    if (!ends_with(path_prefix, '/')) {
         oss << "/";
     }
     oss << name;
@@ -302,6 +321,7 @@ std::optional<std::string> JPluginLoader::find_first_valid_path(std::string name
     }
     return std::nullopt;
 }
+
 
 bool JPluginLoader::validate_path(const std::string& path) {
     return (access(path.c_str(), F_OK) != -1);
