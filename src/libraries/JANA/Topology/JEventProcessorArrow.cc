@@ -32,7 +32,14 @@ void JEventProcessorArrow::process(Event* event, bool& success, JArrowMetrics::S
     for (JEventProcessor* processor : m_processors) {
         // TODO: Move me into JEventProcessor::DoMap
         JCallGraphEntryMaker cg_entry(*(*event)->GetJCallGraphRecorder(), processor->GetTypeName()); // times execution until this goes out of scope
-        processor->DoMap(*event);
+        if (processor->GetCallbackStyle() == JEventProcessor::CallbackStyle::LegacyMode) {
+            processor->DoLegacyProcess(*event);
+        }
+        else {
+            processor->DoMap(*event);
+            processor->DoTap(*event);
+
+        }
     }
     LOG_DEBUG(m_logger) << "JEventProcessorArrow '" << get_name() << "': Finished event# " << (*event)->GetEventNumber() << LOG_END;
     success = true;
