@@ -13,9 +13,6 @@
 #include <PodioStressTest.h>
 #endif
 
-#include <iostream>
-#include <thread>
-
 
 
 int main() {

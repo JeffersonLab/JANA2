@@ -23,7 +23,6 @@ public:
     JTestPlotter() {
         SetPrefix("jtest:plotter");
         SetTypeName(NAME_OF_THIS);
-        SetCallbackStyle(CallbackStyle::ExpertMode);
     }
 
     void Init() override {
@@ -34,14 +33,14 @@ public:
         app->SetDefaultParameter("jtest:plotter_bytes_spread", m_write_spread, "Spread of bytes written during plotting");
     }
 
-    void Process(const JEvent& event) override {
+    void Process(const std::shared_ptr<const JEvent>& event) override {
 
         // Read the track data
-        auto td = event.GetSingle<JTestTrackData>();
+        auto td = event->GetSingle<JTestTrackData>();
         read_memory(td->buffer);
 
         // Read the extra data objects inserted by JTestTracker
-        event.Get<JTestTracker::JTestTrackAuxilliaryData>();
+        event->Get<JTestTracker::JTestTrackAuxilliaryData>();
 
         // Everything that happens after here is in a critical section
         std::lock_guard<std::mutex> lock(m_mutex);
@@ -52,7 +51,7 @@ public:
         // Write the histogram data
         auto hd = new JTestHistogramData;
         write_memory(hd->buffer, m_write_bytes, m_write_spread);
-        event.Insert(hd);
+        event->Insert(hd);
     }
 
 };
