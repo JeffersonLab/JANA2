@@ -57,5 +57,15 @@ jobs:
       run: |
         export LD_LIBRARY_PATH=/app/podio/install/lib:$LD_LIBRARY_PATH
         ctest --test-dir build --output-on-failure -R jana-example-timeslices-complex-tests
+    - name: Janadot
+      run: |
+        export LD_LIBRARY_PATH=/app/podio/install/lib:$LD_LIBRARY_PATH
+        ctest --test-dir build --output-on-failure -R jana-plugin-janadot-tests
+    - name: Other examples
+      run: |
+        export LD_LIBRARY_PATH=/app/podio/install/lib:$LD_LIBRARY_PATH
+        ctest --test-dir build --output-on-failure -R "jana-example-dst-tests|jana-example-tutorial-tests|jana-example-eventgroup-tests|jana-example-unit-tests"
+
+
 
 
