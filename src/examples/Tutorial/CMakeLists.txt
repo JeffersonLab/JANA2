@@ -3,7 +3,6 @@
 add_jana_plugin(Tutorial)
 
 add_test(NAME jana-example-tutorial-tests
-    COMMAND jana -Pplugins=Tutorial)
+    COMMAND jana -Pplugins=Tutorial -Pjana:nevents=50)
 
-set_tests_properties(jana-example-tutorial-tests PROPERTIES DISABLED TRUE)
 

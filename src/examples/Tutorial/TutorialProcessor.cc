@@ -8,7 +8,7 @@
 
 TutorialProcessor::TutorialProcessor() {
     SetTypeName(NAME_OF_THIS); // Provide JANA with this class's name
-    SetCallbackStyle(CallbackStyle::ExpertMode);
+    SetCallbackStyle(CallbackStyle::LegacyMode);
 }
 
 void TutorialProcessor::Init() {
@@ -21,12 +21,12 @@ void TutorialProcessor::Init() {
     }
 }
 
-void TutorialProcessor::Process(const JEvent& event) {
-    LOG << "TutorialProcessor::Process, Event #" << event.GetEventNumber() << LOG_END;
+void TutorialProcessor::Process(const std::shared_ptr<const JEvent>& event) {
+    LOG << "TutorialProcessor::Process, Event #" << event->GetEventNumber() << LOG_END;
     
     /// Do everything we can in parallel
     /// Warning: We are only allowed to use local variables and `event` here
-    auto hits = event.Get<Hit>();
+    auto hits = event->Get<Hit>();
 
     /// Lock mutex
     std::lock_guard<std::mutex>lock(m_mutex);
