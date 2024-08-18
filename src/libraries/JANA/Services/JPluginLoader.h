@@ -46,12 +46,10 @@ public:
     void attach_plugin(std::string name, std::string path);
     void resolve_plugin_paths();
 
-    bool is_path(const std::string user_plugin);
-    std::string normalize_name(const std::string user_plugin);
-    std::string extract_name_from_path(const std::string user_plugin);
-    std::string find_first_valid_path(const std::string& name, std::ostringstream& debug_log);
-    std::string make_path_from_name(std::string name, const std::string& path_prefix);
-    bool validate_path(const std::string& path);
+    bool is_valid_plugin_name(const std::string& plugin_name) const;
+    bool is_valid_path(const std::string& path) const;
+    std::string find_first_valid_path(const std::string& name, std::ostringstream& debug_log) const;
+    std::string make_path_from_name(const std::string& name, const std::string& path_prefix) const;
 
 private:
     Service<JParameterManager> m_params {this};

@@ -115,18 +115,13 @@ void JPluginLoader::attach_plugins(JComponentManager* jcm) {
 
     while (!m_all_plugins_requested.empty()) {
 
-        const std::string& user_plugin = m_all_plugins_requested.front();
+        const std::string name = m_all_plugins_requested.front();
         m_all_plugins_requested.pop();
 
         std::ostringstream paths_checked;
 
-        std::string name;
-        bool user_provided_path = is_path(user_plugin);
-        if (user_provided_path) {
-            name = extract_name_from_path(user_plugin);
-        }
-        else {
-            name = normalize_name(user_plugin);
+        if (!is_valid_plugin_name(name)) {
+            throw JException("Invalid plugin name: '%s'. Should not be a path or have an extension.", name.c_str());
         }
 
         if (exclusions.find(name) != exclusions.end()) {
@@ -135,37 +130,19 @@ void JPluginLoader::attach_plugins(JComponentManager* jcm) {
         }
         if (m_plugin_index.find(name) != m_plugin_index.end()) {
             // Make sure each plugin is only loaded once (whether provided as a path or not)
-            // Things get very weird if you request a plugin by specifying a path, and a elsewhere
-            // request the same plugin by name, but it resolves to a different path. Maybe this
-            // is a sign that this whole approach is flawed and we should _only_ load plugins by name.
-
             LOG_DEBUG(m_logger) << "Ignoring already-loaded plugin `" << name << "`" << LOG_END;
             continue;
         }
 
-        std::string path;
-        if (user_provided_path) {
-            if(validate_path(user_plugin)) {
-                paths_checked << "    " << user_plugin << " => Found" << std::endl;
-                path = user_plugin;
-            }
-            else {
-                // User entered an invalid path; `path` variable stays enpty
-                paths_checked << "    " << user_plugin << " => Not found" << std::endl;
-            }
-        }
-        else {
-            path = find_first_valid_path(name, paths_checked);
-            // User didn't provide a path, so we have to search
-            // If no valid paths found, `path` variable stays empty
-        }
+        std::string path = find_first_valid_path(name, paths_checked);
+        // User didn't provide a path, so we have to search
+        // If no valid paths found, `path` variable stays empty
 
         if (path.empty()) {
-
-            LOG_ERROR(m_logger) << "Couldn't find plugin '" << name << "'\n" <<
-                                "  Make sure that JANA_HOME and/or JANA_PLUGIN_PATH environment variables are set correctly.\n"
-                                <<
-                                "  Paths checked:\n" << paths_checked.str() << LOG_END;
+            LOG_ERROR(m_logger) 
+                << "Couldn't find plugin '" << name << "'\n" 
+                << "  Make sure that the plugin search path is correctly set using the 'jana:plugin_path' parameter or the JANA_PLUGIN_PATH environment variable.\n"
+                << "  Paths checked:\n" << paths_checked.str() << LOG_END;
             throw JException("Couldn't find plugin '%s'", name.c_str());
         }
 
@@ -270,29 +247,12 @@ JPlugin::~JPlugin() {
     LOG_DEBUG(m_logger) << "Unloaded plugin \"" << m_name << "\"" << LOG_END;
 }
 
-
-bool JPluginLoader::is_path(const std::string user_plugin) {
-    return user_plugin.find('/') != -1;
-}
-
-std::string JPluginLoader::normalize_name(const std::string user_plugin) {
-    if (user_plugin.substr(user_plugin.size() - 3) == ".so") {
-        return user_plugin.substr(0, user_plugin.size() - 3);
-    }
-    return user_plugin;
-}
-
-std::string JPluginLoader::extract_name_from_path(const std::string user_plugin) {
-    // Ideally we would just do this, but we want to be C++17 compatible
-    // return std::filesystem::path(filesystem_path).filename().stem().string();
+bool JPluginLoader::is_valid_plugin_name(const std::string& plugin_name) const {
     
-    size_t pos_begin = user_plugin.find_last_of('/');
-    if (pos_begin == std::string::npos) pos_begin = 0;
-    
-    size_t pos_end = user_plugin.find_last_of('.');
-    //if (pos_end == std::string::npos) pos_end = filesystem_path.size();
-
-    return user_plugin.substr(pos_begin+1, pos_end-pos_begin-1);
+    if (plugin_name.size() > 2 && plugin_name.substr(plugin_name.size() - 3) == ".so") return false;
+    if (plugin_name.size() > 5 && plugin_name.substr(plugin_name.size() - 6) == ".dylib") return false;
+    if (plugin_name.find('/') != std::string::npos) return false;
+    return true;
 }
 
 bool ends_with(const std::string& s, char c) {
@@ -301,7 +261,7 @@ bool ends_with(const std::string& s, char c) {
     return s.back() == c;
 }
 
-std::string JPluginLoader::make_path_from_name(std::string name, const std::string& path_prefix) {
+std::string JPluginLoader::make_path_from_name(const std::string& name, const std::string& path_prefix) const {
     std::ostringstream oss;
     oss << path_prefix;
     if (!ends_with(path_prefix, '/')) {
@@ -312,12 +272,12 @@ std::string JPluginLoader::make_path_from_name(std::string name, const std::stri
     return oss.str();
 }
 
-std::string JPluginLoader::find_first_valid_path(const std::string& name, std::ostringstream& debug_log) {
+std::string JPluginLoader::find_first_valid_path(const std::string& name, std::ostringstream& debug_log) const {
 
     for (const std::string& path_prefix : m_plugin_paths) {
         auto path = make_path_from_name(name, path_prefix);
 
-        if (validate_path(path)) {
+        if (is_valid_path(path)) {
             debug_log << "    " << path << " => Found" << std::endl;
             return path;
         }
@@ -329,7 +289,7 @@ std::string JPluginLoader::find_first_valid_path(const std::string& name, std::o
 }
 
 
-bool JPluginLoader::validate_path(const std::string& path) {
+bool JPluginLoader::is_valid_path(const std::string& path) const {
     return (access(path.c_str(), F_OK) != -1);
 }
 
