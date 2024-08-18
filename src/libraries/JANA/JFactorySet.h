@@ -21,14 +21,12 @@ class JMultifactory;
 class JFactorySet : public JResettable
 {
     public:
-        JFactorySet(void);
+        JFactorySet();
         JFactorySet(const std::vector<JFactoryGenerator*>& aFactoryGenerators);
-        JFactorySet(JFactoryGenerator* source_gen, const std::vector<JFactoryGenerator*>& default_gens);
         virtual ~JFactorySet();
 
         bool Add(JFactory* aFactory);
         bool Add(JMultifactory* multifactory);
-        void Merge(JFactorySet &aFactorySet);
         void Print(void) const;
         void Release(void);
 
