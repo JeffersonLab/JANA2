@@ -12,6 +12,7 @@
 #include <string>
 #include <vector>
 #include <list>
+#include <queue>
 
 
 class JComponentManager;
@@ -55,7 +56,8 @@ public:
 private:
     Service<JParameterManager> m_params {this};
 
-    std::vector<std::string> m_plugins_to_include;
+    std::queue<std::string> m_all_plugins_requested;
+    std::vector<std::string> m_plugins_from_parameter;
     std::vector<std::string> m_plugins_to_exclude;
     std::vector<std::string> m_plugin_paths;
     std::string m_plugin_paths_str;

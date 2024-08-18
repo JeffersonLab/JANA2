@@ -14,14 +14,13 @@
 #include <sstream>
 #include <unistd.h>
 #include <set>
-#include <filesystem>
 #include <memory>
 
 class JApplication;
 
 void JPluginLoader::Init() {
 
-    m_params->SetDefaultParameter("plugins", m_plugins_to_include, "Comma-separated list of plugins to load.");
+    m_params->SetDefaultParameter("plugins", m_plugins_from_parameter, "Comma-separated list of plugins to load.");
     m_params->SetDefaultParameter("plugins_to_ignore", m_plugins_to_exclude, "Comma-separated list of plugins to NOT load, even if they are specified in 'plugins'.");
     m_params->SetDefaultParameter("jana:plugin_path", m_plugin_paths_str, "Colon-separated list of paths to search for plugins");
     m_params->SetDefaultParameter("jana:debug_plugin_loading", m_verbose, "Trace the plugin search path and display any loading errors");
@@ -36,27 +35,19 @@ void JPluginLoader::Init() {
 
 
 void JPluginLoader::add_plugin(std::string plugin_name) {
-    /// Add the specified plugin to the list of plugins to be
-    /// attached. This only records the name. The plugin is not
-    /// actually attached until AttachPlugins() is called (typically
-    /// from Initialize() which is called from Run()).
-    /// This will check if the plugin already exists in the list
-    /// of plugins to attach and will not add it a second time
-    /// if it is already there. This may be important if the order
-    /// of plugins is important. It is left to the user to handle
-    /// in those cases.
+    /// Add the specified plugin to the list of plugins to be attached. This only records 
+    /// the plugin name. The plugin is not actually attached until AttachPlugins() is called during
+    /// JApplication::Initialize(). Note that any plugins specified by the 'plugins' parameter
+    /// are loaded _after_ any plugins specified via 'add_plugin'. This lets the maintainers
+    /// of a project specify a minimum set of plugins that always get loaded, and enforce that 
+    /// their loading order. This also prevents users from clobbering the minimum plugin set, unless
+    /// they explicitly intend to, in which case they should use the 'plugins_to_ignore' parameter.
     ///
-    /// @param plugin_name name of the plugin. Do not include the
-    ///                    ".so" or ".dylib" suffix in the name.
-    ///                    The path to the plugin will be searched
-    ///                    from the JANA_PLUGIN_PATH envar.
+    /// @param plugin_name name of the plugin. Do not include the ".so" or ".dylib" suffix in the name.
+    ///                    The path to the plugin will be searched first from the 'jana:plugin_path' parameter,
+    ///                    followed by the JANA_PLUGIN_PATH envar, followed by the JANA install prefix.
     ///
-    for (std::string& n : m_plugins_to_include) {
-        if (n == plugin_name) {
-            return;
-        }
-    }
-    m_plugins_to_include.push_back(plugin_name);
+    m_all_plugins_requested.push(plugin_name);
 }
 
 void JPluginLoader::resolve_plugin_paths() {
@@ -116,9 +107,18 @@ void JPluginLoader::attach_plugins(JComponentManager* jcm) {
 
     // Loop over all requested plugins as per the `plugins` parameter. Note that this vector may grow as 
     // plugins themselves request additional plugins. These get appended to the back of `m_plugins_to_include`.
-    for (int i=0; i<m_plugins_to_include.size(); ++i) {
+    
+    // Add the contents of the "plugins" parameter to the back of the requested plugins queue.
+    for (const auto& plugin_name : m_plugins_from_parameter) {
+        m_all_plugins_requested.push(plugin_name);
+    }
+
+    while (!m_all_plugins_requested.empty()) {
+
+        const std::string& user_plugin = m_all_plugins_requested.front();
+        m_all_plugins_requested.pop();
+
         std::ostringstream paths_checked;
-        const std::string& user_plugin = m_plugins_to_include[i];
 
         std::string name;
         bool user_provided_path = is_path(user_plugin);
@@ -129,8 +129,17 @@ void JPluginLoader::attach_plugins(JComponentManager* jcm) {
             name = normalize_name(user_plugin);
         }
 
-        if (exclusions.find(name) != exclusions.end() || exclusions.find(name) != exclusions.end()) {
+        if (exclusions.find(name) != exclusions.end()) {
             LOG_INFO(m_logger) << "Excluding plugin `" << name << "`" << LOG_END;
+            continue;
+        }
+        if (m_plugin_index.find(name) != m_plugin_index.end()) {
+            // Make sure each plugin is only loaded once (whether provided as a path or not)
+            // Things get very weird if you request a plugin by specifying a path, and a elsewhere
+            // request the same plugin by name, but it resolves to a different path. Maybe this
+            // is a sign that this whole approach is flawed and we should _only_ load plugins by name.
+
+            LOG_DEBUG(m_logger) << "Ignoring already-loaded plugin `" << name << "`" << LOG_END;
             continue;
         }
 
