@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include "JANA/Utils/JTypeInfo.h"
 #include <JANA/JFactoryT.h>
 #include <JANA/JFactorySet.h>
 #include <JANA/Omni/JComponent.h>
@@ -67,10 +68,6 @@ class JMultifactory : public jana::omni::JComponent,
     // However, don't worry about a Status variable. Every time Execute() gets called, so does Process().
     // The JMultifactoryHelpers will control calls to Execute().
 
-    std::string mTag;         // JMultifactories each get their own name
-                              // This can be used for parameter and collection name prefixing, though at a higher level
-    std::string mFactoryName; // So we can propagate this to the JMultifactoryHelpers, so we can have useful error messages
-
 #if JANA2_HAVE_PODIO
     bool mNeedPodio = false;      // Whether we need to retrieve the podio::Frame
     podio::Frame* mPodioFrame = nullptr;  // To provide the podio::Frame to SetPodioData, SetCollection
@@ -128,8 +125,11 @@ public:
     // in place. This method is only supposed to be called by JFactorySet::Add(JMultifactory).
 
     // These are set by JFactoryGeneratorT (just like JFactories) and get propagated to each of the JMultifactoryHelpers
-    void SetTag(std::string tag) { mTag = std::move(tag); }
-    void SetFactoryName(std::string factoryName) { mFactoryName = std::move(factoryName); }
+    void SetTag(std::string tag) { SetPrefix(tag); }
+
+    void SetFactoryName(std::string factoryName) { 
+        SetTypeName(factoryName);
+    }
     
     void Summarize(JComponentSummary& summary) override;
 };
@@ -141,7 +141,7 @@ void JMultifactory::DeclareOutput(std::string tag, bool owns_data) {
     JFactory* helper = new JMultifactoryHelper<T>(this);
     if (!owns_data) helper->SetFactoryFlag(JFactory::JFactory_Flags_t::NOT_OBJECT_OWNER);
     helper->SetPluginName(m_plugin_name);
-    helper->SetFactoryName(mFactoryName);
+    helper->SetFactoryName(GetTypeName()+"::Helper<" + JTypeInfo::demangle<T>() + ">");
     helper->SetTag(std::move(tag));
     helper->SetLevel(GetLevel());
     mHelpers.SetLevel(GetLevel());
@@ -180,7 +180,7 @@ void JMultifactory::DeclarePodioOutput(std::string tag, bool owns_data) {
 
     helper->SetTag(std::move(tag));
     helper->SetPluginName(m_plugin_name);
-    helper->SetFactoryName(mFactoryName);
+    helper->SetFactoryName(GetTypeName() + "::Helper<" + JTypeInfo::demangle<T>() + ">");
     helper->SetLevel(GetLevel());
     mHelpers.SetLevel(GetLevel());
     mHelpers.Add(helper);

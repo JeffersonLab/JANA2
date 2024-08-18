@@ -202,7 +202,6 @@ public:
                         std::vector<JEventLevel> input_collection_levels,
                         std::vector<std::string> output_collection_names ) {
 
-        // TODO: NWB: JMultiFactory::GetTag,SetTag are not currently usable
         m_prefix = (this->GetPluginName().empty()) ? tag : this->GetPluginName() + ":" + tag;
         m_level = level;
 
