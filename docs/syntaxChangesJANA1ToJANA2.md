@@ -4,55 +4,72 @@
 
 ### JANA Namespace
 ##### **JANA1**
-Adding following on top of all files was necessary in JANA1
+Adding following on top of all files was necessary in JANA1:
 
 ```
 using namespace jana;
 ```
 ##### **JANA2**
-No more required to add that line in JANA2
+This line is no longer required in JANA2.
 
 ### Application
-#### Getting application
+#### Getting the JApplication
 ##### **JANA1**
-There was just a japp that could be used directly, am I right??
+In JANA1 there is a global variable `japp` which is a pointer to the project's `JApplication`. You can also obtain it from `JEventLoop::GetJApplication()`.
 ##### **JANA2**
-###### _Within a particular context_
+In JANA2, `japp` is still around but we are strongly discouraging its future use. If you are within any JANA component (for instance: JFactory, JEventProcessor, JEventSource, JService) you can obtain the `JApplication` pointer from `this`, like so:
 ```
-// Figure out what context, don't know yet ??
 auto app = GetApplication();
 ```
-###### _Out of that particular context, you can get it from event_, don't know which??
+
+You can also obtain it from the `JEvent` the same way as you used to from `JEventLoop`, i.e. 
+```c++
+auto app = event->GetJApplication();
 ```
-auto app = locEvent->GetJApplication();
-```
+
+
 ### Parameters
-#### Setting Parameter
+#### Setting Parameters
 ##### **JANA1**
 ```
 gPARMS->GetParameter("OUTPUT_FILENAME", dOutputFileName);
 ```
 ##### **JANA2**
-######  _Inside Init_ ????? Is this right?
+
+You should obtain parameters as shown below. 
+
 ```
 auto app = GetApplication();
-app->SetDefaultParameter("OUTPUT_FILENAME", dOutputFileName);
+app->SetDefaultParameter("component_prefix:value_name", ref_to_member_var);
 ```
-###### _Inside Constructor_ ???
-```
-japp->SetDefaultParameter(locFullParamName, locKeyValue);
-```
-#### Getting Parameter
+
+We strongly recommend you register all parameters from inside the `Init()` callbacks of your JANA components, or from `InitPlugin()`. This helps JANA:
+
+- Report back which parameters are available without having to process an input file.
+- Emit a warning (or error!) when a user-provided parameter is misspelled
+- Emit a warning when two plugins register the same parameter with conflicting default values.
+- Inspect the exact parameter values used by a factory
+
+If you register parameters in other contexts, this machinery might not work and you might get incomplete parameter lists and missing or spurious error messages. Worse, your code might not see the parameter values you expect it to see. Registering parameters from inside component constructors is less problematic but still discouraged because it won't work with some upcoming new features.
+
+
+#### Getting parameter maps
 ##### **JANA1**
+
+To obtain a map of all parameters that share a common prefix:
+
 ```
 //gets all parameters with this filter at the beginning of the key
 gPARMS->GetParameters(locParameterMap, "COMBO_DEDXCUT:"); 
 ```
 ##### **JANA2**
-###### _Inside Constructor_ ??? Is this right??
+
+In JANA2 this has been renamed to `FilterParameters` but the functionality is the same.
+Note that this method is not on `JApplication` directly; you have to obtain the parameter manager like so:
+
 ```
 //gets all parameters with this filter at the beginning of the key
-japp->GetJParameterManager()->FilterParameters(locParameterMap, "COMBO_DEDXCUT:");
+GetApplication()->GetJParameterManager()->FilterParameters(locParameterMap, "COMBO_DEDXCUT:");
 ```
 
 ### DApplication
@@ -65,7 +82,7 @@ dApplication = dynamic_cast<DApplication*>(locEventLoop->GetJApplication
 ```
 
 ##### **JANA2**
-There is no DApplication anymore in JANA2
+There is no `DApplication` anymore in JANA2. `JApplication` is `final`, which means you can't inherit from it. The functionality on `DApplication` has been moved into `JService`s, which can be accessed via `JApplication::GetService<ServiceT>()`. 
 
 ### DGeometry
 #### Getting DGeometry
@@ -83,26 +100,10 @@ const DGeometry *dgeom = dapp->GetDGeometry(runnumber);
 #include "DANA/DApplication.h"
 #include "HDGEOMETRY/DGeometry.h"
 
-dApplication = dynamic_cast<DApplication*>(eventLoop->GetJApplication
 DGeometry *locGeom = dApplication ? dApplication->GetDGeometry(eventLoop->GetJEvent().GetRunNumber()) : NULL;
-
 ```
 ##### **JANA2**
-###### Using japp
-```
-#include "HDGEOMETRY/DGeometry.h"
-
-auto dgeoman = japp->GetService<DGeometryManager>();
-const DGeometry *dgeom = dgeoman->GetDGeometry(event->GetRunNumber());
-```
-###### Using DEvent
-```
-#include "DANA/DEvent.h"
-#include "HDGEOMETRY/DGeometry.h"
-
-DGeometry *locGeometry = DEvent::GetDGeometry(locEvent);
-```
-###### Using app
+In JANA2, you obtain the `DGeometryManager` from the `JApplication` and from there you use the run number to obtain the corresponding `DGeometry`:
 ```
 #include "HDGEOMETRY/DGeometry.h"
 
@@ -112,6 +113,16 @@ auto geo_manager = app->GetService<DGeometryManager>();
 auto geom = geo_manager->GetDGeometry(runnumber);
 ```
 
+To reduce the boilerplate, we've provided a handy helper function, `DEvent::GetDGeometry()`, that does all of these steps for you:
+
+```
+#include "DANA/DEvent.h"
+
+DGeometry *locGeometry = DEvent::GetDGeometry(locEvent);
+```
+
+You should call `GetDGeometry` from `JFactory::BeginRun` or `JEventProcessor::BeginRun`.
+
 ### Calibration
 #### GetCalib
 ##### **JANA1**
@@ -119,23 +130,25 @@ auto geom = geo_manager->GetDGeometry(runnumber);
 locEventLoop->GetCalib(locTOFParmsTable.c_str(), tofparms);
 ```
 ##### **JANA2**
-###### 1. Using DEvent
+
+Analogously to `DGeometry`, you obtain the calibrations by obtaining the `JCalibrationManager` from `JApplication::GetService<>()` and then loading the calibration object corresponding to the event's run number. We recommend you use `DEvent::GetCalib` to avoid this boilerplate. You should call this from your `BeginRun` callback. 
+
 ```
 #include "DANA/DEvent.h"
 
-DEvent::GetCalib(locEvent, locTOFParmsTable.c_str(), tofparms);
+DEvent::GetCalib(event, locTOFParmsTable.c_str(), tofparms);
 ```
-###### 2. Using GetApplication
-Requires you to be inside a particular context. What context exactly???
+
+In principle, the calibrations could also be keyed off of event number intervals, in which case you should call it from `Process` and pass the event number as well:
+
 ```
 #include <JANA/JEvent.h>
 #include <JANA/Calibrations/JCalibrationManager.h>
 
 auto event_number = event->GetEventNumber();
-auto run_number = event->GetRunNumber
+auto run_number = event->GetRunNumber();
 
 auto app = GetApplication();
-
 auto calibration = app->GetService<JCalibrationManager>()->GetJCalibration(run_number);
 calibration->Get("BCAL/mc_parms", bcalparms, event_number)
 
@@ -149,13 +162,16 @@ calibration->Get("BCAL/mc_parms", bcalparms, event_number)
 locEventLoop->GetJEvent().GetStatusBit(kSTATUS_PHYSICS_EVENT)
 ```
 ##### **JANA2**
+
+Status bits are no longer an event member variable. Instead, they are inserted and retrieved just like the other collections:
+
 ```
 #include "DANA/DStatusBits.h"
 
 
 locEvent->GetSingle<DStatusBits>()->GetStatusBit(kSTATUS_PHYSICS_EVENT)
 
-// or 
+// or, for a little bit more safety:
 
 locEvent->GetSingleStrict<DStatusBits>()->GetStatusBit(kSTATUS_REST);
 ```
@@ -166,11 +182,15 @@ locEvent->GetSingleStrict<DStatusBits>()->GetStatusBit(kSTATUS_REST);
 ```
 #include "DANA/DApplication.h"
 
-dApplication = dynamic_cast<DApplication*>(locEventLoop->GetJApplication
+dApplication = dynamic_cast<DApplication*>(locEventLoop->GetJApplication());
 dMagFMap= dApplication->GetBfield(locEventLoop->GetJEvent().GetRunNumber());
 
 ```
 ##### **JANA2**
+
+In JANA2, the magnetic field map is a resource handled analogously to `DGeometry` and `JCalibrationManager`. Thus, we recommend obtaining the 
+field map by calling `DEvent::GetBField(event)` from inside `BeginRun`:
+
 ```
 #include "DANA/DEvent.h"
 
@@ -179,7 +199,7 @@ dMagneticFieldMap = DEvent::GetBfield(locEvent);
 
 
 
-## Modified Gets
+## Modified Getters
 
 ### JObject
 #### 1. GetSingleT
@@ -189,9 +209,9 @@ Was present in JANA1
 ```
 ##### **JANA2**
 ```
-No more available in JANA2, use GetSingle instead
+No longer available in JANA2; use GetSingle() instead
 ```
-#### 2. Get Single
+#### 2. GetSingle
 ##### **JANA1**
 ```
 // Pass by reference
@@ -291,17 +311,15 @@ private:
 #define _JEventProcessor_secondTest_
 #include <JANA/JEventProcessor.h>
 
-class JEventProcessor_secondTest:public JEventProcessor{
+class JEventProcessor_secondTest : public JEventProcessor {
 
 public:
-	JEventProcessor_secondTest();
-	~JEventProcessor_secondTest();
-	const char* className(void){return "JEventProcessor_secondTest";}
-
-  
+	JEventProcessor_secondTest() { 
+        SetTypeName(NAME_OF_THIS);
+    }
+	~JEventProcessor_secondTest() = default;
 
 private:
-
 	void Init() override;
 	void BeginRun(const std::shared_ptr<const JEvent>& event) override; 
 	void Process(const std::shared_ptr<const JEvent>& event) override; 
@@ -309,37 +327,32 @@ private:
 	void Finish() override; 
 };
 
-  
-
 #endif // _JEventProcessor_secondTest_
 ```
 
 
 ## JObject
-### Child JObject Basic Header File
+### JObject Header File
 ##### JANA1
 ```
 #include <JANA/JObject.h>
-#include <JANA/JFactory.h> // No more required in JANA2
+#include <JANA/JFactory.h>
 
-using namespace jana; // No more required in JANA2
+using namespace jana;
 
 class DCereHit: public JObject {
-
 public:
 
-JOBJECT_PUBLIC (DCereHit);
-int sector; 
-float pe; 
-float t;
+    JOBJECT_PUBLIC(DCereHit);
+    int sector; 
+    float pe; 
+    float t;
 
-//Changed to Summarize in JANA2
-void toStrings(vector<pair<string, string> >&items) const { 
-AddString(items, "sector", "%d", sector);
-AddString(items, "pe", "%1.3f", pe);
-AddString(items, "t", "%1.3f", t);
-}
-
+    void toStrings(vector<pair<string, string> >&items) const { 
+        AddString(items, "sector", "%d", sector);
+        AddString(items, "pe", "%1.3f", pe);
+        AddString(items, "t", "%1.3f", t);
+    }
 };
 ```
 ##### JANA2
@@ -347,21 +360,18 @@ AddString(items, "t", "%1.3f", t);
 #include <JANA/JObject.h>
 
 class DCereHit: public JObject {
-
 public:
 
-JOBJECT_PUBLIC (DCereHit);
-int sector; 
-float pe; 
-float t; 
+    JOBJECT_PUBLIC(DCereHit);
+    int sector;
+    float pe;
+    float t;
 
-// This function was called toStrings in JANA1
-void Summarize(JObjectSummary& summary) const override {
-summary.add(sector, "sector", "%d");
-summary.add(pe, "pe", "%1.3f");
-summary.add(t, "t", "%1.3f");
-}
-
+    void Summarize(JObjectSummary& summary) const override {
+        summary.add(sector, "sector", "%d");
+        summary.add(pe, "pe", "%1.3f");
+        summary.add(t, "t", "%1.3f");
+    }
 };
 ```
 ### id
@@ -373,22 +383,23 @@ DBCALShower *shower = new DBCALShower;
 shower->id = id++;
 ```
 ##### **JANA2**
+
+
+JANA2 no longer provides a built-in object id. However, you can always add one as a field to your `JObject` and set it yourself.
+
 ```
 // id data member does not exist in JObject anymore in JANA2
 
 DBCALShower *shower = new DBCALShower;
 shower->id = id++; // Throw Error: no id member
 ```
-### oid_t
-##### **JANA1**
-```
-JObject::oid_t 
-```
-##### **JANA2**
+
+Similarly, the `JObject::oid_t` type has been removed from JANA2 as well. If you need it, it lives on in the halld_recon codebase:
+
 ```
 #include "DANA/DObjectID.h"
 
-oid_t //Not inside JObject anymore?
+oid_t // Not inside JObject anymore!
 ```
 
 
@@ -398,37 +409,35 @@ oid_t //Not inside JObject anymore?
 ### JFactory to JFactoryT
 ##### **JANA1**
 ```
-Was existing and getting used in JANA1, write what for
+In JANA1, `JFactory_base` was a common factory base class, and `JFactory` was a template that inherits from `JFactory_base` and adds functionality specific to the type of the factory's output collection.
 ```
 
 ##### **JANA2**
 ```
-Now JFactoryT is getting used everywhere instead of JFactory, I think but not sure if their functionality is same. Write how it is same and different from previous one? Also apparently JFactory still exist in JANA2 why so? and how is it different compared to one in JANA1?
+In JANA2, the base class was renamed to `JFactory`, and the template was renamed to `JFactoryT`. JANA2 adds some new functionality, but the old functionality is largely consistent with JANA1. One important difference is that in JANA1, there is always one factory set assigned to each thread, whereas in JANA2, there is one factory set for each event in flight. The number of in-flight events is a parameter controlled separately from the thread count.
 ```
 
-### Child Factory Basic Header File
+### Factory header file
 ##### JANA1
 ```
 #ifndef _myfactory_factory_
 #define _myfactory_factory_
 
 #include <JANA/JFactory.h>
-#include "myfactory.h"
+#include "myobject.h"
 
-class myfactory_factory:public jana::JFactory<myfactory>{
+class myfactory_factory : public jana::JFactory<myobject> {
 
 public:
-myfactory_factory(){};
-~myfactory_factory(){};
+    myfactory_factory() = default;
+    ~myfactory_factory() = default;
 
 private:
-
-jerror_t init(void); 
-jerror_t brun(jana::JEventLoop *eventLoop, int32_t runnumber); 
-jerror_t evnt(jana::JEventLoop *eventLoop, uint64_t eventnumber); 
-jerror_t erun(void); 
-jerror_t fini(void); 
-
+    jerror_t init(void); 
+    jerror_t brun(jana::JEventLoop *eventLoop, int32_t runnumber); 
+    jerror_t evnt(jana::JEventLoop *eventLoop, uint64_t eventnumber); 
+    jerror_t erun(void); 
+    jerror_t fini(void); 
 };
 
 #endif
@@ -439,23 +448,21 @@ jerror_t fini(void);
 #define _thirdFacTest_factory_
 
 #include <JANA/JFactoryT.h>
-#include "thirdFacTest.h"
+#include "myobject.h"
 
-class thirdFacTest_factory:public JFactoryT<thirdFacTest>{
+class thirdFacTest_factory : public JFactoryT<myobject> {
 public:
-thirdFacTest_factory(){
-SetTag("");
-}
-~thirdFacTest_factory(){}
-
+    thirdFacTest_factory() { 
+        SetTag("MyTag");
+    }
+    ~thirdFacTest_factory() = default;
 
 private:
-void Init() override;
-void BeginRun(const std::shared_ptr<const JEvent>& event) override; 
-void Process(const std::shared_ptr<const JEvent>& event) override; 
-void EndRun() override; 
-void Finish() override; 
-
+    void Init() override;
+    void BeginRun(const std::shared_ptr<const JEvent>& event) override; 
+    void Process(const std::shared_ptr<const JEvent>& event) override; 
+    void EndRun() override; 
+    void Finish() override; 
 };
 
 #endif
