@@ -113,11 +113,11 @@ void PrintComponentTable(std::ostream& os, const JComponentSummary& cs) {
 
 
     JTablePrinter comp_table;
-    comp_table.AddColumn("Base");
-    comp_table.AddColumn("Type");
-    comp_table.AddColumn("Prefix");
-    comp_table.AddColumn("Level");
-    comp_table.AddColumn("Plugin");
+    comp_table.AddColumn("Base", JTablePrinter::Justify::Left, 12);
+    comp_table.AddColumn("Type", JTablePrinter::Justify::Left, 40);
+    comp_table.AddColumn("Prefix", JTablePrinter::Justify::Left, 40);
+    comp_table.AddColumn("Level", JTablePrinter::Justify::Left, 12);
+    comp_table.AddColumn("Plugin", JTablePrinter::Justify::Left, 16);
 
     os << "  Component Summary" << std::endl;
 

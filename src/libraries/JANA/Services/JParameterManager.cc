@@ -189,12 +189,12 @@ void JParameterManager::PrintParameters(int verbosity, int strictness) {
 
     // Print table
     JTablePrinter table;
-    table.AddColumn("Name");
+    table.AddColumn("Name", JTablePrinter::Justify::Left, 20);
     if (warnings_present) {
         table.AddColumn("Warnings");  // IsDeprecated column
     }
-    table.AddColumn("Value", JTablePrinter::Justify::Left, 20);
-    table.AddColumn("Default", JTablePrinter::Justify::Left, 20);
+    table.AddColumn("Value", JTablePrinter::Justify::Left, 25);
+    table.AddColumn("Default", JTablePrinter::Justify::Left, 25);
     table.AddColumn("Description", JTablePrinter::Justify::Left, 50);
 
     for (JParameter* p: params_to_print) {
