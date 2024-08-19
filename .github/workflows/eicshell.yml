@@ -24,6 +24,7 @@ jobs:
           cd $GITHUB_WORKSPACE/build
           cmake .. \
             -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE \
+            -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_CXX_STANDARD=20 \
             -DUSE_PYTHON=ON \
             -DUSE_ROOT=ON \
@@ -115,7 +116,7 @@ jobs:
           cd ..
           git clone https://github.com/eic/EICrecon
           cd EICrecon
-          cmake -S . -B build -DJANA_DIR=$JANA_HOME/lib/cmake/JANA
+          cmake -S . -B build -DJANA_DIR=$JANA_HOME/lib/JANA/cmake -DCMAKE_BUILD_TYPE=Debug
           cmake --build build --target install -- -j8
 
     - name: Generate EICrecon input data
