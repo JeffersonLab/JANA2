@@ -325,10 +325,10 @@ public:
 
 
     /// Generate summary for UI, inspector
-    void Summarize(JComponentSummary& summary) override {
+    void Summarize(JComponentSummary& summary) const override {
 
         auto* mfs = new JComponentSummary::Component(
-                JComponentSummary::ComponentType::Factory, GetPrefix(), GetTypeName(), GetLevel(), GetPluginName());
+            "OmniFactory", GetPrefix(), GetTypeName(), GetLevel(), GetPluginName());
 
         for (const auto* input : m_inputs) {
             size_t subinput_count = input->names.size();

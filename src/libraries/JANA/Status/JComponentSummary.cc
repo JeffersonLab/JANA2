@@ -3,7 +3,6 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #include <iostream>
-#include <iomanip>
 #include <JANA/Utils/JTablePrinter.h>
 #include "JComponentSummary.h"
 
@@ -123,14 +122,7 @@ void PrintComponentTable(std::ostream& os, const JComponentSummary& cs) {
     os << "  Component Summary" << std::endl;
 
     for (const auto* comp : cs.GetAllComponents()) {
-        switch(comp->GetComponentType()) {
-            case JComponentSummary::ComponentType::Source: comp_table | "Source"; break;
-            case JComponentSummary::ComponentType::Processor: comp_table | "Processor"; break;
-            case JComponentSummary::ComponentType::Factory: comp_table | "Factory"; break;
-            case JComponentSummary::ComponentType::Unfolder: comp_table | "Unfolder"; break;
-            case JComponentSummary::ComponentType::Folder: comp_table | "Folder"; break;
-        }
-        comp_table | comp->GetTypeName() | comp->GetPrefix() | comp->GetLevel() | comp->GetPluginName();
+        comp_table | comp->GetBaseName() | comp->GetTypeName() | comp->GetPrefix() | comp->GetLevel() | comp->GetPluginName();
     }
     os << comp_table;
 }

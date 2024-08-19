@@ -69,9 +69,9 @@ public:
     // ---------------------
     // Meant to be called by JANA
     // ---------------------
-    std::string GetPrefix() { return m_prefix.empty() ? m_type_name : m_prefix; }
+    std::string GetPrefix() const { return m_prefix.empty() ? m_type_name : m_prefix; }
 
-    JEventLevel GetLevel() { return m_level; }
+    JEventLevel GetLevel() const { return m_level; }
 
     std::string GetLoggerName() const { return m_prefix.empty() ? m_type_name : m_prefix; }
 
@@ -81,7 +81,7 @@ public:
 
     std::string GetTypeName() const { return m_type_name; }
 
-    virtual void Summarize(JComponentSummary&) {};
+    virtual void Summarize(JComponentSummary&) const {};
 
     Status GetStatus() const { 
         std::lock_guard<std::mutex> lock(m_mutex);

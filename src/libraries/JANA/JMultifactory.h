@@ -34,6 +34,9 @@ public:
     // Alternatively, we could move all the JMultiFactoryHelper functionality into JFactoryT directly
 
     JMultifactory* GetMultifactory() { return mMultiFactory; }
+
+    // Helpers do not produce any summary information
+    void Summarize(JComponentSummary&) const override { }
 };
 
 
@@ -46,6 +49,7 @@ class JMultifactoryHelperPodio : public JFactoryPodioT<T>{
 
 public:
     JMultifactoryHelperPodio(JMultifactory* parent) : mMultiFactory(parent) {}
+
     virtual ~JMultifactoryHelperPodio() = default;
     // This does NOT own mMultiFactory; the enclosing JFactorySet does
 
@@ -55,6 +59,9 @@ public:
     // Alternatively, we could move all of the JMultiFactoryHelper functionality into JFactoryT directly
 
     JMultifactory* GetMultifactory() { return mMultiFactory; }
+
+    // Helpers do not produce any summary information
+    void Summarize(JComponentSummary&) const override { }
 };
 #endif // JANA2_HAVE_PODIO
 
@@ -131,7 +138,7 @@ public:
         SetTypeName(factoryName);
     }
     
-    void Summarize(JComponentSummary& summary) override;
+    void Summarize(JComponentSummary& summary) const override;
 };
 
 

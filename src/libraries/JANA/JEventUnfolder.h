@@ -169,9 +169,9 @@ public:
         }
     }
 
-    void Summarize(JComponentSummary& summary) override {
+    void Summarize(JComponentSummary& summary) const override {
         auto* us = new JComponentSummary::Component( 
-                JComponentSummary::ComponentType::Unfolder, GetPrefix(), GetTypeName(), GetLevel(), GetPluginName());
+            "Unfolder", GetPrefix(), GetTypeName(), GetLevel(), GetPluginName());
 
         for (const auto* input : m_inputs) {
             size_t subinput_count = input->names.size();
