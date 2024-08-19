@@ -21,23 +21,23 @@ class GroupedEventProcessor : public JEventProcessor {
 public:
     GroupedEventProcessor() {
         SetTypeName(NAME_OF_THIS);
-        SetCallbackStyle(CallbackStyle::ExpertMode);
+        SetCallbackStyle(CallbackStyle::LegacyMode);
     }
 
-    void Process(const JEvent& event) override {
+    void Process(const std::shared_ptr<const JEvent>& event) override {
 
         // In parallel, perform a random amount of (slow) computation
         consume_cpu_ms(100, 1.0);
 
-        auto tridas_event = event.GetSingle<TridasEvent>();
+        auto tridas_event = event->GetSingle<TridasEvent>();
         tridas_event->should_keep = true;
 
-        auto group = event.GetSingle<JEventGroup>();
+        auto group = event->GetSingle<JEventGroup>();
 
         // Sequentially, process each event and report when a group finishes
         std::lock_guard<std::mutex> lock(m_mutex);
 
-        LOG << "Processed group #" << group->GetGroupId() << ", event #" << event.GetEventNumber() << LOG_END;
+        LOG << "Processed group #" << group->GetGroupId() << ", event #" << event->GetEventNumber() << LOG_END;
 
         bool finishes_group = group->FinishEvent();
         if (finishes_group) {

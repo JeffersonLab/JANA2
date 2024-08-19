@@ -83,6 +83,8 @@ public:
 
     virtual void Summarize(JComponentSummary&) const {};
 
+    CallbackStyle GetCallbackStyle() const { return m_callback_style; }
+
     Status GetStatus() const { 
         std::lock_guard<std::mutex> lock(m_mutex);
         return m_status; 

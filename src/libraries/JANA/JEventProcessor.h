@@ -47,24 +47,70 @@ public:
 
     virtual void DoMap(const std::shared_ptr<const JEvent>& e) {
 
+        if (m_callback_style == CallbackStyle::LegacyMode) {
+            throw JException("Called DoMap() on a legacy-mode JEventProcessor");
+        }
+
         for (auto* input : m_inputs) {
             input->PrefetchCollection(*e);
-        }
-        // JExceptions with factory info will be furnished by the callee,
-        // so we don't need to try/catch here. 
-        
-        // Also we don't have 
-        // a Preprocess(), so we don't technically need Init() here even
-        
-        if (m_callback_style != CallbackStyle::DeclarativeMode) {
-            DoReduce(e); // This does all the locking!
         }
     }
 
 
-    virtual void DoReduce(const std::shared_ptr<const JEvent>& e) {
-        auto run_number = e->GetRunNumber();
+    virtual void DoTap(const std::shared_ptr<const JEvent>& e) {
+
+        if (m_callback_style == CallbackStyle::LegacyMode) {
+            throw JException("Called DoReduce() on a legacy-mode JEventProcessor");
+        }
         std::lock_guard<std::mutex> lock(m_mutex);
+        // In principle DoReduce() is being called by one thread at a time, but we hold a lock anyway 
+        // so that this runs correctly even if that isn't happening. This lock shouldn't experience
+        // any contention.
+
+        if (m_status == Status::Uninitialized) {
+            DoInitialize();
+        }
+        else if (m_status == Status::Finalized) {
+            throw JException("JEventProcessor: Attempted to call DoMap() after Finalize()");
+        }
+        for (auto* input : m_inputs) {
+            // This collection should have already been computed during DoMap()
+            // We do this before ChangeRun() just in case we will need to pull data out of
+            // a begin-of-run event.
+            input->GetCollection(*e);
+        }
+        auto run_number = e->GetRunNumber();
+        if (m_last_run_number != run_number) {
+            if (m_last_run_number != -1) {
+                CallWithJExceptionWrapper("JEventProcessor::EndRun", [&](){ EndRun(); });
+            }
+            for (auto* resource : m_resources) {
+                resource->ChangeRun(e->GetRunNumber(), m_app);
+            }
+            m_last_run_number = run_number;
+            CallWithJExceptionWrapper("JEventProcessor::BeginRun", [&](){ BeginRun(e); });
+        }
+        if (m_callback_style == CallbackStyle::DeclarativeMode) {
+            CallWithJExceptionWrapper("JEventProcessor::Process", [&](){ 
+                Process(e->GetRunNumber(), e->GetEventNumber(), e->GetEventIndex());
+            });
+        }
+        else if (m_callback_style == CallbackStyle::ExpertMode) {
+            CallWithJExceptionWrapper("JEventProcessor::Process", [&](){ Process(*e); });
+        }
+        m_event_count += 1;
+    }
+
+
+    virtual void DoLegacyProcess(const std::shared_ptr<const JEvent>& event) {
+
+        // DoLegacyProcess doesn't hold any locks, as it requires the user to hold a lock for it.
+        // Because of this, 
+        if (m_callback_style != CallbackStyle::LegacyMode) {
+            throw JException("Called DoLegacyProcess() on a non-legacy-mode JEventProcessor");
+        }
+
+        auto run_number = event->GetRunNumber();
 
         if (m_status == Status::Uninitialized) {
             DoInitialize();
@@ -77,25 +123,12 @@ public:
                 CallWithJExceptionWrapper("JEventProcessor::EndRun", [&](){ EndRun(); });
             }
             for (auto* resource : m_resources) {
-                resource->ChangeRun(e->GetRunNumber(), m_app);
+                resource->ChangeRun(event->GetRunNumber(), m_app);
             }
             m_last_run_number = run_number;
-            CallWithJExceptionWrapper("JEventProcessor::BeginRun", [&](){ BeginRun(e); });
+            CallWithJExceptionWrapper("JEventProcessor::BeginRun", [&](){ BeginRun(event); });
         }
-        for (auto* input : m_inputs) {
-            input->GetCollection(*e);
-        }
-        if (m_callback_style == CallbackStyle::DeclarativeMode) {
-            CallWithJExceptionWrapper("JEventProcessor::Process", [&](){ 
-                Process(e->GetRunNumber(), e->GetEventNumber(), e->GetEventIndex());
-            });
-        }
-        else if (m_callback_style == CallbackStyle::ExpertMode) {
-            CallWithJExceptionWrapper("JEventProcessor::Process", [&](){ Process(*e); });
-        }
-        else {
-            CallWithJExceptionWrapper("JEventProcessor::Process", [&](){ Process(e); });
-        }
+        CallWithJExceptionWrapper("JEventProcessor::Process", [&](){ Process(event); });
         m_event_count += 1;
     }
 

@@ -41,7 +41,7 @@ public:
     virtual ~MetadataAggregator() = default;
 
     void Init() override;
-    void Process(const JEvent&) override;
+    void Process(const std::shared_ptr<const JEvent>&) override;
     void Finish() override;
 
 };
