@@ -373,10 +373,10 @@ public:
         }
     }
 
-    void Summarize(JComponentSummary& summary) {
+    void Summarize(JComponentSummary& summary) const override {
 
         auto* result = new JComponentSummary::Component(
-                JComponentSummary::ComponentType::Source, GetPrefix(), GetTypeName(), GetLevel(), GetPluginName());
+            "Source", GetPrefix(), GetTypeName(), GetLevel(), GetPluginName());
 
         for (const auto* output : m_outputs) {
             size_t suboutput_count = output->collection_names.size();

@@ -112,9 +112,9 @@ public:
     }
 
 
-    void Summarize(JComponentSummary& summary) {
+    void Summarize(JComponentSummary& summary) const override {
         auto* result = new JComponentSummary::Component(
-                JComponentSummary::ComponentType::Processor, GetPrefix(), GetTypeName(), GetLevel(), GetPluginName());
+            "Processor", GetPrefix(), GetTypeName(), GetLevel(), GetPluginName());
 
         for (const auto* input : m_inputs) {
             size_t subinput_count = input->names.size();

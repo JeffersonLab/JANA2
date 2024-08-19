@@ -4,6 +4,7 @@
 #include <JANA/JEventSource.h>
 #include <JANA/JEventUnfolder.h>
 #include <JANA/JEventProcessor.h>
+#include <catch.hpp>
 
 namespace jana {
 namespace timeslice_tests {
@@ -94,9 +95,9 @@ struct MyEventProcessor : public JEventProcessor {
 
     void Process(const JEvent& event) override {
         process_called_count++;
-        // TODO: Trigger cluster factory
-        // TODO: Validate that the clusters make sense
         jout << "MyEventProcessor: Processing " << event.GetEventNumber() << jendl;
+        auto clusters = event.Get<MyCluster>("evt");
+        // TODO: Validate that the clusters make sense
         REQUIRE(init_called_count == 1);
         REQUIRE(finish_called_count == 0);
     }
@@ -116,6 +117,7 @@ struct MyProtoClusterFactory : public JFactoryT<MyCluster> {
 
     MyProtoClusterFactory() {
         SetLevel(JEventLevel::Timeslice);
+        SetTag("ts");
     }
 
     void Init() override {
@@ -142,6 +144,7 @@ struct MyClusterFactory : public JFactoryT<MyCluster> {
 
     MyClusterFactory() {
         SetLevel(JEventLevel::PhysicsEvent);
+        SetTag("evt");
     }
 
     void Init() override {
@@ -159,4 +162,5 @@ struct MyClusterFactory : public JFactoryT<MyCluster> {
     }
 };
 
-
+} // namespace timeslice_tests
+} // namespace jana

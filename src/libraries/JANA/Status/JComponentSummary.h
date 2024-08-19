@@ -8,7 +8,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <memory>
 
 
 // Keeping this around for backwards compatibility only
@@ -23,14 +22,13 @@ struct JFactorySummary {
 
 class JComponentSummary {
 public:
-    enum class ComponentType { Source, Processor, Factory, Unfolder, Folder };
 
     class Collection;
 
     class Component {
         friend class JComponentSummary;
 
-        ComponentType m_component_type;
+        std::string m_base_name;
         std::string m_prefix;
         std::string m_type_name;
         JEventLevel m_level;
@@ -39,11 +37,11 @@ public:
         std::vector<Collection*> m_outputs;
 
     public:
-        Component(ComponentType component_type, std::string prefix, std::string type_name, JEventLevel level, std::string plugin_name)
-            : m_component_type(component_type), m_prefix(prefix), m_type_name(type_name), m_level(level), m_plugin_name(plugin_name) {}
+        Component(std::string base_name, std::string prefix, std::string type_name, JEventLevel level, std::string plugin_name)
+            : m_base_name(base_name), m_prefix(prefix), m_type_name(type_name), m_level(level), m_plugin_name(plugin_name) {}
         void AddInput(Collection* input) { m_inputs.push_back(input); }
         void AddOutput(Collection* output) { m_outputs.push_back(output); }
-        ComponentType GetComponentType() const { return m_component_type; }
+        std::string GetBaseName() const { return m_base_name; }
         std::string GetPrefix() const { return m_prefix; }
         std::string GetTypeName() const { return m_type_name; }
         JEventLevel GetLevel() const { return m_level; }

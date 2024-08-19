@@ -57,7 +57,7 @@ public:
             // Otherwise, use whatever tag the factory may have set for itself.
             factory->SetTag(m_tag);
         }
-        factory->SetFactoryName(JTypeInfo::demangle<T>());
+        factory->SetTypeName(JTypeInfo::demangle<T>());
         factory->SetPluginName(GetPluginName());
         factory->SetApplication(GetApplication());
         factory->SetLogger(GetApplication()->template GetService<JLoggingService>()->get_logger(factory->GetPrefix()));

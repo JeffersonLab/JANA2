@@ -24,6 +24,7 @@ jobs:
           cd $GITHUB_WORKSPACE/build
           cmake .. \
             -DCMAKE_INSTALL_PREFIX=$GITHUB_WORKSPACE \
+            -DCMAKE_BUILD_TYPE=Debug \
             -DCMAKE_CXX_STANDARD=20 \
             -DUSE_PYTHON=ON \
             -DUSE_ROOT=ON \
@@ -40,23 +41,26 @@ jobs:
           cd $GITHUB_WORKSPACE/build
           make -j4 install
     
-    - name: Examine dynamic linking
-      run: |
-        export JANA_HOME=$GITHUB_WORKSPACE
-        export JANA_PLUGIN_PATH=$JANA_HOME/plugins
-        export LD_LIBRARY_PATH=$JANA_HOME/lib:$JANA_HOME/lib/JANA/plugins:$LD_LIBRARY_PATH
-        echo "ldd bin/jana"
-        ldd bin/jana
-        echo "ldd bin/libJANA.so"
-        ldd lib/libJANA.so
-        echo "bin/jana rpath"
-        objdump -x bin/jana | grep PATH
-        echo "lib/libJANA.so rpath"
-        objdump -x lib/libJANA.so | grep PATH
-        echo "lib/JANA/plugins/TimesliceExample.so"
-        objdump -x lib/JANA/plugins/TimesliceExample.so | grep PATH
-        echo "bin/PodioExample"
-        objdump -x bin/PodioExample | grep PATH
+    - name: Examine JANA2 dynamic linking
+      uses: eic/run-cvmfs-osg-eic-shell@main
+      with:
+        platform-release: "jug_xl:nightly"
+        run: |
+          export JANA_HOME=$GITHUB_WORKSPACE
+          export JANA_PLUGIN_PATH=$JANA_HOME/plugins
+          export LD_LIBRARY_PATH=$JANA_HOME/lib:$JANA_HOME/lib/JANA/plugins:$LD_LIBRARY_PATH
+          echo "ldd bin/jana"
+          ldd bin/jana
+          echo "ldd bin/libJANA.so"
+          ldd lib/libJANA.so
+          echo "bin/jana rpath"
+          objdump -x bin/jana | grep PATH
+          echo "lib/libJANA.so rpath"
+          objdump -x lib/libJANA.so | grep PATH
+          echo "lib/JANA/plugins/TimesliceExample.so"
+          objdump -x lib/JANA/plugins/TimesliceExample.so | grep PATH
+          echo "bin/PodioExample"
+          objdump -x bin/PodioExample | grep PATH
 
     - name: Run JTest plugin with 100 events
       uses: eic/run-cvmfs-osg-eic-shell@main
@@ -115,8 +119,24 @@ jobs:
           cd ..
           git clone https://github.com/eic/EICrecon
           cd EICrecon
-          cmake -S . -B build -DJANA_DIR=$JANA_HOME/lib/cmake/JANA
+          cmake -S . -B build -DJANA_DIR=$JANA_HOME/lib/JANA/cmake -DCMAKE_BUILD_TYPE=Debug
           cmake --build build --target install -- -j8
+    
+    - name: Examine EICrecon dynamic linking
+      uses: eic/run-cvmfs-osg-eic-shell@main
+      with:
+        platform-release: "jug_xl:nightly"
+        run: |
+          export JANA_HOME=$GITHUB_WORKSPACE
+          export JANA_PLUGIN_PATH=$JANA_HOME/plugins
+          export LD_LIBRARY_PATH=${GITHUB_WORKSPACE}/../EICrecon/lib:${GITHUB_WORKSPACE}/../EICrecon/lib/EICrecon/plugins:${JANA_HOME}/lib:${JANA_HOME}/lib/JANA/plugins:$LD_LIBRARY_PATH
+          cd ../EICrecon
+          echo "ldd bin/eicrecon"
+          ldd bin/eicrecon
+          echo "ldd lib/libreco.so"
+          ldd lib/libreco.so
+          echo "ldd lib/EICrecon/plugins/tracking.so"
+          ldd lib/EICrecon/plugins/tracking.so
 
     - name: Generate EICrecon input data
       uses: eic/run-cvmfs-osg-eic-shell@main
@@ -136,9 +156,8 @@ jobs:
         platform-release: "jug_xl:nightly"
         setup: "/opt/detector/epic-main/bin/thisepic.sh"
         run: |
-          echo "--- Running EICrecon ---"
           export JANA_HOME=$GITHUB_WORKSPACE
           export JANA_PLUGIN_PATH=$GITHUB_WORKSPACE/../EICrecon/lib/EICrecon/plugins
-          export LD_LIBRARY_PATH=$GITHUB_WORKSPACE/../EICrecon/lib:$JANA_HOME/lib:$JANA_HOME/lib/JANA/plugins:$LD_LIBRARY_PATH
+          export LD_LIBRARY_PATH=${GITHUB_WORKSPACE}/../EICrecon/lib:${GITHUB_WORKSPACE}/../EICrecon/lib/EICrecon/plugins:${JANA_HOME}/lib:${JANA_HOME}/lib/JANA/plugins:$LD_LIBRARY_PATH
           ../EICrecon/bin/eicrecon sim_e_1GeV_20GeV_craterlake.edm4hep.root
 

@@ -99,14 +99,10 @@ public:
 
         for (const auto& wiring : m_typed_wirings) {
 
-
             FactoryT *factory = new FactoryT;
             factory->SetApplication(GetApplication());
             factory->SetPluginName(this->GetPluginName());
-            factory->SetFactoryName(JTypeInfo::demangle<FactoryT>());
-            // factory->SetTag(wiring.m_tag);
-            // We do NOT want to do this because JMF will use the tag to suffix the collection names
-            // TODO: NWB: Change this in JANA
+            factory->SetTypeName(JTypeInfo::demangle<FactoryT>());
             factory->config() = wiring.configs;
 
             // Set up all of the wiring prereqs so that Init() can do its thing
