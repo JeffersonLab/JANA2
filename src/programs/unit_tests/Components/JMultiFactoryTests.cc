@@ -37,6 +37,7 @@ public:
     }
 
     void Process(const std::shared_ptr<const JEvent>&) override {
+        REQUIRE(GetApplication() != nullptr);
         m_process_call_count += 1;
         std::vector<A*> as;
         std::vector<B*> bs;

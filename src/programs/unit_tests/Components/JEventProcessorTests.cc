@@ -18,14 +18,17 @@ struct MyEventProcessor : public JEventProcessor {
         (*destroy_count)++;
     }
     void Init() override {
+        REQUIRE(GetApplication() != nullptr);
         LOG_INFO(GetLogger()) << "Init() called" << LOG_END;
         init_count++;
     }
     void Process(const JEvent&) override {
+        REQUIRE(GetApplication() != nullptr);
         process_count++;
         LOG_INFO(GetLogger()) << "Process() called" << LOG_END;
     }
     void Finish() override {
+        REQUIRE(GetApplication() != nullptr);
         LOG_INFO(GetLogger()) << "Finish() called" << LOG_END;
         finish_count++;
     }
