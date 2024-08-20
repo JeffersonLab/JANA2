@@ -5,6 +5,7 @@
 #include <JANA/Utils/JCpuInfo.h>
 #include <JANA/JLogger.h>
 #include <mutex>
+#include <vector>
 
 
 class JPoolBase {

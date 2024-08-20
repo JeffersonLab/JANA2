@@ -7,6 +7,7 @@
 #include <memory>
 #include <JANA/JService.h>
 #include <JANA/Utils/JProcessorMapping.h>
+#include <JANA/Utils/JEventPool.h>
 #include <JANA/Engine/JPerfMetrics.h>  // TODO: Should't be here
 
 #include <JANA/Services/JParameterManager.h>
@@ -21,7 +22,6 @@ class JPoolBase;
 class JQueue;
 class JFoldArrow;
 class JUnfoldArrow;
-class JEventPool;
 
 class JTopologyBuilder : public JService {
 public:

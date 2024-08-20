@@ -212,7 +212,9 @@ void JTopologyBuilder::attach_lower_level(JEventLevel current_level, JUnfoldArro
     auto q2 = new EventQueue(m_event_queue_threshold, mapping.get_loc_count(), m_enable_stealing);
     queues.push_back(q2);
 
-    auto* proc_arrow = new JEventProcessorArrow(ss.str()+"Tap", q1, q2, nullptr);
+    auto* proc_arrow = new JEventProcessorArrow(ss.str()+"Tap");
+    proc_arrow->set_input(q1);
+    proc_arrow->set_output(q2);
     arrows.push_back(proc_arrow);
     proc_arrow->set_chunksize(m_event_processor_chunksize);
     proc_arrow->set_logger(GetLogger());
@@ -302,11 +304,15 @@ void JTopologyBuilder::attach_top_level(JEventLevel current_level) {
         auto queue = new EventQueue(m_event_queue_threshold, mapping.get_loc_count(), m_enable_stealing);
         queues.push_back(queue);
 
-        auto* src_arrow = new JEventSourceArrow(level_str+"Source", sources_at_level, queue, pool_at_level);
+        auto* src_arrow = new JEventSourceArrow(level_str+"Source", sources_at_level);
+        src_arrow->set_input(pool_at_level);
+        src_arrow->set_output(queue);
         arrows.push_back(src_arrow);
         src_arrow->set_chunksize(m_event_source_chunksize);
 
-        auto* proc_arrow = new JEventProcessorArrow(level_str+"Tap", queue, nullptr, pool_at_level);
+        auto* proc_arrow = new JEventProcessorArrow(level_str+"Tap");
+        proc_arrow->set_input(queue);
+        proc_arrow->set_output(pool_at_level);
         arrows.push_back(proc_arrow);
         proc_arrow->set_chunksize(m_event_processor_chunksize);
 
@@ -326,11 +332,15 @@ void JTopologyBuilder::attach_top_level(JEventLevel current_level) {
         queues.push_back(q1);
         queues.push_back(q2);
 
-        auto *src_arrow = new JEventSourceArrow(level_str+"Source", sources_at_level, q1, pool_at_level);
+        auto *src_arrow = new JEventSourceArrow(level_str+"Source", sources_at_level);
+        src_arrow->set_input(pool_at_level);
+        src_arrow->set_output(q1);
         arrows.push_back(src_arrow);
         src_arrow->set_chunksize(m_event_source_chunksize);
 
-        auto *map_arrow = new JEventMapArrow(level_str+"Map", q1, q2);;
+        auto *map_arrow = new JEventMapArrow(level_str+"Map");
+        map_arrow->set_input(q1);
+        map_arrow->set_output(q2);
         arrows.push_back(map_arrow);
         map_arrow->set_chunksize(m_event_source_chunksize);
         src_arrow->attach(map_arrow);
@@ -358,7 +368,9 @@ void JTopologyBuilder::attach_top_level(JEventLevel current_level) {
             auto q3 = new EventQueue(m_event_queue_threshold, mapping.get_loc_count(), m_enable_stealing);
             queues.push_back(q3);
 
-            auto* proc_arrow = new JEventProcessorArrow(level_str+"Tap", q3, nullptr, pool_at_level);
+            auto* proc_arrow = new JEventProcessorArrow(level_str+"Tap");
+            proc_arrow->set_input(q3);
+            proc_arrow->set_output(pool_at_level);
             arrows.push_back(proc_arrow);
             proc_arrow->set_chunksize(m_event_processor_chunksize);
 
