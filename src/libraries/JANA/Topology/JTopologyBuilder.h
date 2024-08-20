@@ -12,6 +12,7 @@
 #include <JANA/Services/JParameterManager.h>
 #include <JANA/Services/JComponentManager.h>
 #include <JANA/Services/JLoggingService.h>
+#include <JANA/Utils/JEventPool.h>
 
 
 class JParameterManager;
@@ -23,7 +24,6 @@ class JPoolBase;
 class JQueue;
 class JFoldArrow;
 class JUnfoldArrow;
-class JEventPool;
 
 class JTopologyBuilder : public JService {
 public:

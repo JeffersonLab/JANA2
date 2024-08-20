@@ -9,17 +9,8 @@
 #include <JANA/JEvent.h>
 
 
-JEventTapArrow::JEventTapArrow(std::string name,
-                               EventQueue *input_queue,
-                               EventQueue *output_queue,
-                               JEventPool *pool)
-        : JPipelineArrow(std::move(name),
-                         false,
-                         false,
-                         false,
-                         input_queue,
-                         output_queue,
-                         pool) {}
+JEventTapArrow::JEventTapArrow(std::string name)
+        : JPipelineArrow(std::move(name), false, false, false) {}
 
 void JEventTapArrow::add_processor(JEventProcessor* proc) {
     m_procs.push_back(proc);

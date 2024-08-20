@@ -11,11 +11,8 @@
 
 
 JEventSourceArrow::JEventSourceArrow(std::string name,
-                                     std::vector<JEventSource*> sources,
-                                     EventQueue* output_queue,
-                                     JEventPool* pool
-                                     )
-    : JPipelineArrow(name, false, true, false, nullptr, output_queue, pool), m_sources(sources) {
+                                     std::vector<JEventSource*> sources)
+    : JPipelineArrow(name, false, true, false), m_sources(sources) {
 }
 
 
