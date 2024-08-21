@@ -169,6 +169,7 @@ public:
 
     /// Set the JFactory's metadata. This is meant to be called by user during their JFactoryT::Process
     /// Metadata will *not* be cleared on ClearData(), but will be destroyed when the JFactoryT is.
+    [[deprecated("Use JMultifactory instead")]]
     void SetMetadata(JMetadata<T> metadata) { mMetadata = metadata; }
 
     /// Get the JFactory's metadata. This is meant to be called by user during their JFactoryT::Process
