@@ -108,10 +108,10 @@ inline std::string to_string_with_si_prefix(float val) {
     } else if (val < 1.0E-7) {
         units = "";
     } else if (val < 1.0E-4) {
-        val /= 1.0E6;
+        val *= 1.0E6;
         units = "u";
     } else if (val < 1.0E-1) {
-        val /= 1.0E3;
+        val *= 1.0E3;
         units = "m";
     }
     char str[256];
