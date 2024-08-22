@@ -10,7 +10,7 @@
 #include <JANA/JEventProcessor.h>
 #include <JANA/JLogger.h>
 #include <JANA/Services/JEventGroupTracker.h>
-#include <JANA/Utils/JPerfUtils.h>
+#include <JANA/Utils/JBenchUtils.h>
 
 #include "TridasEvent.h"
 
@@ -26,8 +26,9 @@ public:
 
     void Process(const std::shared_ptr<const JEvent>& event) override {
 
+        std::unique_ptr<JBenchUtils> bench_utils = std::make_unique<JBenchUtils>(event->GetEventNumber(), NAME_OF_THIS);
         // In parallel, perform a random amount of (slow) computation
-        consume_cpu_ms(100, 1.0);
+        bench_utils->consume_cpu_ms(100, 1.0);
 
         auto tridas_event = event->GetSingle<TridasEvent>();
         tridas_event->should_keep = true;

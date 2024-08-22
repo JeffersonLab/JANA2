@@ -7,8 +7,10 @@
 #include <JANA/JApplication.h>
 #include <JANA/JFactoryGenerator.h>
 #include <JANA/JEventSourceGeneratorT.h>
+#include <JANA/Utils/JBenchUtils.h>
 #include <JANA/Streaming/JEventBuilder.h>
 #include <JANA/Streaming/JStreamingEventSource.h>
+
 
 #include "ReadoutMessageAuto.h"
 #include "ZmqTransport.h"
@@ -18,7 +20,8 @@
 
 void dummy_publisher_loop() {
 
-    consume_cpu_ms(3000, 0, false);
+    std::unique_ptr<JBenchUtils> bench_utils = std::make_unique<JBenchUtils>(6, "ZmqMain.cc:dummy_publisher_loop");
+    bench_utils->consume_cpu_ms(3000, 0, false);
 
     auto transport = ZmqTransport("tcp://127.0.0.1:5555", true);
     transport.initialize();
@@ -30,14 +33,14 @@ void dummy_publisher_loop() {
         message.event_number = counter;
 
         message.payload_size = 4;
-        message.payload[0] = randfloat(0,1);
-        message.payload[1] = randfloat(-100,100);
-        message.payload[2] = randfloat(-100,100);
-        message.payload[3] = randfloat(-100,100);
+        message.payload[0] = bench_utils->randfloat(0,1);
+        message.payload[1] = bench_utils->randfloat(-100,100);
+        message.payload[2] = bench_utils->randfloat(-100,100);
+        message.payload[3] = bench_utils->randfloat(-100,100);
 
         transport.send(message);
         std::cout << "Send: " << message << "(" << message.get_buffer_capacity() << " bytes)" << std::endl;
-        consume_cpu_ms(1000, 0, false);
+        bench_utils->consume_cpu_ms(1000, 0, false);
     }
 
     // Send end-of-stream message so that JANA knows to shut down

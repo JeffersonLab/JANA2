@@ -13,7 +13,7 @@
 
 #include <JANA/JApplication.h>
 #include <JANA/JEvent.h>
-#include <JANA/Utils/JPerfUtils.h>
+#include <JANA/Utils/JBenchUtils.h>
 
 JTestRootEventSource::JTestRootEventSource() {
     SetTypeName(NAME_OF_THIS); // Provide JANA with class name
@@ -24,13 +24,14 @@ JEventSource::Result JTestRootEventSource::Emit(JEvent& event) {
     /// Generate an event by inserting objects into "event".
     /// (n.b. a normal event source would read these from a file or stream)
 
-    // Spin the CPU a bit to limit the rate
-    consume_cpu_ms(5);
-
     // Configure event and run numbers
     static size_t current_event_number = 1;
     event.SetEventNumber(current_event_number++);
     event.SetRunNumber(222);
+    
+    std::unique_ptr<JBenchUtils> bench_utils = std::make_unique<JBenchUtils>(event.GetEventNumber(), NAME_OF_THIS);
+    // Spin the CPU a bit to limit the rate
+    bench_utils->consume_cpu_ms(5);
 
     // Generate hit objects. We use random numbers to give some variation
     // and make things look a little more realistic

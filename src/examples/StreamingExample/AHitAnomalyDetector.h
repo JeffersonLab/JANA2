@@ -8,7 +8,7 @@
 
 #include <JANA/JEventProcessor.h>
 #include <JANA/JEvent.h>
-#include <JANA/Utils/JPerfUtils.h>
+#include <JANA/Utils/JBenchUtils.h>
 #include "AHit.h"
 
 class AHitAnomalyDetector : public JEventProcessor {
@@ -33,7 +33,8 @@ public:
         }
         ss << "}" << std::endl;
         std::cout << ss.str();
-        consume_cpu_ms(m_delay_ms);
+        std::unique_ptr<JBenchUtils> bench_utils = std::make_unique<JBenchUtils>(event.GetEventNumber(), NAME_OF_THIS);
+        bench_utils->consume_cpu_ms(m_delay_ms);
     }
     void Finish() override {
         std::cout << "Anomaly detection: Done!" << std::endl;

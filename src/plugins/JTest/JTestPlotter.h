@@ -35,9 +35,10 @@ public:
 
     void Process(const std::shared_ptr<const JEvent>& event) override {
 
+        std::unique_ptr<JBenchUtils> bench_utils = std::make_unique<JBenchUtils>(event->GetEventNumber(), typeid(*this).name());
         // Read the track data
         auto td = event->GetSingle<JTestTrackData>();
-        read_memory(td->buffer);
+        bench_utils->read_memory(td->buffer);
 
         // Read the extra data objects inserted by JTestTracker
         event->Get<JTestTracker::JTestTrackAuxilliaryData>();
@@ -46,11 +47,11 @@ public:
         std::lock_guard<std::mutex> lock(m_mutex);
 
         // Consume CPU
-        consume_cpu_ms(m_cputime_ms, m_cputime_spread);
+        bench_utils->consume_cpu_ms(m_cputime_ms, m_cputime_spread);
 
         // Write the histogram data
         auto hd = new JTestHistogramData;
-        write_memory(hd->buffer, m_write_bytes, m_write_spread);
+        bench_utils->write_memory(hd->buffer, m_write_bytes, m_write_spread);
         event->Insert(hd);
     }
 

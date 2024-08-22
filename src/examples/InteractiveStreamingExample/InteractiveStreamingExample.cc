@@ -6,6 +6,8 @@
 #include <JANA/Streaming/JStreamingEventSource.h>
 #include <JANA/JCsvWriter.h>
 #include <JANA/JEventSourceGeneratorT.h>
+#include <JANA/Utils/JBenchUtils.h>
+
 
 #include "RootProcessor.h"
 #include "MonitoringProcessor.h"
@@ -19,6 +21,7 @@ void dummy_publisher_loop(JApplication* app) {
 
     size_t delay_ms = 1;
     auto logger = app->GetService<JLoggingService>()->get_logger("dummy_publisher_loop");
+    std::unique_ptr<JBenchUtils> bench_utils = std::make_unique<JBenchUtils>(7, "InteractiveStreamingExample.cc:dummy_publisher_loop");
 
     std::this_thread::yield();
     //std::this_thread::sleep_for(std::chrono::milliseconds(10));  // Wait for JANA to fire up so we don't lose data
@@ -51,7 +54,7 @@ void dummy_publisher_loop(JApplication* app) {
         //LOG_DEBUG(logger) << "Send: " << message << " (" << message.get_buffer_size() << " bytes)" << LOG_END;
         std::cout << "dummy_producer_loop: Sending '" << message << "' (" << message.get_buffer_size() << " bytes)" << std::endl;
         transport.send(message);
-        consume_cpu_ms(delay_ms, 0, false);
+        bench_utils->consume_cpu_ms(delay_ms, 0, false);
         std::this_thread::yield();
     }
 
