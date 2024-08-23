@@ -54,7 +54,7 @@ public:
     void Finish() override {}
 
     void Create(const std::shared_ptr<const JEvent>& event) final;
-    std::type_index GetObjectType() const final { return std::type_index(typeid(T)); }
+    std::optional<std::type_index> GetObjectType() const final { return std::type_index(typeid(T)); }
     std::size_t GetNumObjects() const final { return mCollection->size(); }
     void ClearData() final;
 

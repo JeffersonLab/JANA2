@@ -55,47 +55,36 @@ bool JFactorySet::Add(JFactory* aFactory)
     /// throw an exception and let the user figure out what to do.
     /// This scenario occurs when the user has multiple JFactory<T> producing the
     /// same T JObject, and is not distinguishing between them via tags.
+    
+    // There are two different ways JFactories can work now. In the old way, JFactory must be
+    // either a JFactoryT or a JFactoryPodioT, and have exactly one output collection. In the
+    // new way, JFactory has an arbitrary number of output collections which are explicitly
+    // represented, similar to but better than JMultifactory. We distinguish between
+    // these two cases by checking whether JFactory::GetObjectType returns an object type vs nullopt.
 
-    auto typed_key = std::make_pair( aFactory->GetObjectType(), aFactory->GetTag() );
-    auto untyped_key = std::make_pair( aFactory->GetObjectName(), aFactory->GetTag() );
 
-    auto typed_result = mFactories.find(typed_key);
-    auto untyped_result = mFactoriesFromString.find(untyped_key);
+    auto object_type = aFactory->GetObjectType();
+    if (object_type != std::nullopt) {
+    
+        // We have an old-style JFactory!
 
-    if (typed_result != std::end(mFactories) || untyped_result != std::end(mFactoriesFromString)) {
-        // Factory is duplicate. Since this almost certainly indicates a user error, and
-        // the caller will not be able to do anything about it anyway, throw an exception.
-        // We show the user which factory is causing this problem, including both plugin names
-        std::string other_plugin_name;
-        if (typed_result != std::end(mFactories)) {
-            other_plugin_name = typed_result->second->GetPluginName();
-        }
-        else {
-            other_plugin_name = untyped_result->second->GetPluginName();
-        }
-        auto ex = JException("Attempted to add duplicate factories");
-        ex.function_name = "JFactorySet::Add";
-        ex.instance_name = aFactory->GetPrefix();
-        ex.type_name = aFactory->GetTypeName();
-        ex.plugin_name = aFactory->GetPluginName() + ", " + other_plugin_name;
-        throw ex;
-    }
+        auto typed_key = std::make_pair( *object_type, aFactory->GetTag() );
+        auto untyped_key = std::make_pair( aFactory->GetObjectName(), aFactory->GetTag() );
 
-    mFactories[typed_key] = aFactory;
-    mFactoriesFromString[untyped_key] = aFactory;
+        auto typed_result = mFactories.find(typed_key);
+        auto untyped_result = mFactoriesFromString.find(untyped_key);
 
-    // Also add any enclosed collections to the collection map
-    for (const auto& coll : aFactory->GetOutputCollections()) {
-        auto named_result = mCollectionsFromName.find(coll->GetCollectionName());
-        if (named_result != std::end(mCollectionsFromName)) {
-            // Collection is duplicate. Since this almost certainly indicates a user error, and
+        if (typed_result != std::end(mFactories) || untyped_result != std::end(mFactoriesFromString)) {
+            // Factory is duplicate. Since this almost certainly indicates a user error, and
             // the caller will not be able to do anything about it anyway, throw an exception.
             // We show the user which factory is causing this problem, including both plugin names
-            
-            // TODO: I haven't thought through insert vs process for collections yet
-            assert(named_result->second->GetFactory() != nullptr);
-
-            std::string other_plugin_name = named_result->second->GetFactory()->GetPluginName();
+            std::string other_plugin_name;
+            if (typed_result != std::end(mFactories)) {
+                other_plugin_name = typed_result->second->GetPluginName();
+            }
+            else {
+                other_plugin_name = untyped_result->second->GetPluginName();
+            }
             auto ex = JException("Attempted to add duplicate factories");
             ex.function_name = "JFactorySet::Add";
             ex.instance_name = aFactory->GetPrefix();
@@ -103,7 +92,32 @@ bool JFactorySet::Add(JFactory* aFactory)
             ex.plugin_name = aFactory->GetPluginName() + ", " + other_plugin_name;
             throw ex;
         }
-        mCollectionsFromName[coll->GetCollectionName()] = coll.get();
+
+        mFactories[typed_key] = aFactory;
+        mFactoriesFromString[untyped_key] = aFactory;
+    }
+    else {
+        // We have a new-style JFactory!
+        for (const auto& coll : aFactory->GetOutputCollections()) {
+            auto named_result = mCollectionsFromName.find(coll->GetCollectionName());
+            if (named_result != std::end(mCollectionsFromName)) {
+                // Collection is duplicate. Since this almost certainly indicates a user error, and
+                // the caller will not be able to do anything about it anyway, throw an exception.
+                // We show the user which factory is causing this problem, including both plugin names
+                
+                // TODO: I haven't thought through insert vs process for collections yet
+                assert(named_result->second->GetFactory() != nullptr);
+
+                std::string other_plugin_name = named_result->second->GetFactory()->GetPluginName();
+                auto ex = JException("Attempted to add duplicate factories");
+                ex.function_name = "JFactorySet::Add";
+                ex.instance_name = aFactory->GetPrefix();
+                ex.type_name = aFactory->GetTypeName();
+                ex.plugin_name = aFactory->GetPluginName() + ", " + other_plugin_name;
+                throw ex;
+            }
+            mCollectionsFromName[coll->GetCollectionName()] = coll.get();
+        }
     }
     return true;
 }

@@ -13,6 +13,7 @@ set(TEST_SOURCES
     Components/ExactlyOnceTests.cc
     Components/GetObjectsTests.cc
     Components/NEventNSkipTests.cc
+    Components/JCollectionTests.cc
     Components/JComponentTests.cc
     Components/JEventGetAllTests.cc
     Components/JEventProcessorTests.cc

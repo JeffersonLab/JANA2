@@ -17,6 +17,7 @@
 #include <vector>
 #include <unordered_map>
 #include <functional>
+#include <optional>
 
 
 class JEvent;
@@ -50,6 +51,9 @@ protected:
 
 
 public:
+    JFactory() : mStatus(Status::Uninitialized) {
+    }
+
     JFactory(std::string aName, std::string aTag = "")
     : mObjectName(std::move(aName)), 
       mTag(std::move(aTag)), 
@@ -149,9 +153,8 @@ public:
     }
 
     // Overloaded by JFactoryT
-    virtual std::type_index GetObjectType() const = 0;
 
-    virtual void ClearData() = 0;
+    virtual void ClearData() {};
 
 
     // Overloaded by user Factories
@@ -162,8 +165,10 @@ public:
     virtual void Process(const std::shared_ptr<const JEvent>&) {}
     virtual void Finish() {}
 
+    virtual std::optional<std::type_index> GetObjectType() const { return std::nullopt; }
+
     virtual std::size_t GetNumObjects() const {
-        return 0;
+        throw JException("Not implemented!");
     }
 
 
@@ -187,9 +192,13 @@ public:
     void DoInit();
     void Summarize(JComponentSummary& summary) const override;
 
+    virtual void Set(const std::vector<JObject*> &) {
+        throw JException("Not implemented!");
+    };
 
-    virtual void Set(const std::vector<JObject *> &data) = 0;
-    virtual void Insert(JObject *data) = 0;
+    virtual void Insert(JObject*) {
+        throw JException("Not implemented!");
+    };
 
 
 };
