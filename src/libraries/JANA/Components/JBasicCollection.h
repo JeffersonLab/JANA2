@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <JANA/Omni/JCollection.h>
+#include <JANA/Components/JCollection.h>
 #include <JANA/JObject.h> 
 #include <JANA/Utils/JTypeInfo.h>
 

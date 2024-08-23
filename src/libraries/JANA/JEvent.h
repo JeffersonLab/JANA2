@@ -9,9 +9,7 @@
 #include <JANA/JFactoryT.h>
 #include <JANA/JFactorySet.h>
 #include <JANA/JLogger.h>
-
 #include <JANA/JVersion.h>
-
 #include <JANA/Utils/JEventLevel.h>
 #include <JANA/Utils/JTypeInfo.h>
 #include <JANA/Utils/JCpuInfo.h>
@@ -22,15 +20,11 @@
 #include <vector>
 #include <cstddef>
 #include <memory>
-#include <exception>
 #include <atomic>
-#include <mutex>
 
 #if JANA2_HAVE_PODIO
 #include <JANA/Podio/JFactoryPodioT.h>
-namespace podio {
-class CollectionBase;
-}
+#include <JANA/Components/JPodioCollection.h>
 #endif
 
 class JApplication;
@@ -106,6 +100,9 @@ class JEvent : public std::enable_shared_from_this<JEvent>
         template <typename T> JFactoryPodioT<T>* InsertCollection(typename JFactoryPodioT<T>::CollectionT&& collection, std::string name);
         template <typename T> JFactoryPodioT<T>* InsertCollectionAlreadyInFrame(const podio::CollectionBase* collection, std::string name);
 #endif
+
+        // EXPERIMENTAL NEW THING
+        JCollection* CreateAndGetCollection(std::string name, bool throw_on_missing) const;
 
         //SETTERS
         void SetRunNumber(int32_t aRunNumber){mRunNumber = aRunNumber;}
@@ -507,9 +504,30 @@ JFactoryT<T>* JEvent::GetSingle(const T* &t, const char *tag, bool exception_if_
     return fac;
 }
 
+inline JCollection* JEvent::CreateAndGetCollection(std::string name, bool throw_on_missing) const {
+
+    auto* coll = mFactorySet->GetCollection(name);
+    if (coll == nullptr) {
+        if (throw_on_missing) {
+            throw JException("No collection with tag '%s' found", name.c_str());
+        }
+        else {
+            return nullptr;
+        }
+    }
+    if (coll->GetFactory() != nullptr) {
+        // If this was inserted, there would be no factory to run
+        // fac->Create() will short-circuit if something was already inserted
+        JCallGraphEntryMaker cg_entry(mCallGraph, coll->GetFactory()); // times execution until this goes out of scope
+        coll->GetFactory()->Create(this->shared_from_this());
+    }
+    return coll;
+}
+
 #if JANA2_HAVE_PODIO
 
 inline std::vector<std::string> JEvent::GetAllCollectionNames() const {
+    // TODO: Obtain from JFactorySet
     std::vector<std::string> keys;
     for (auto pair : mPodioFactories) {
         keys.push_back(pair.first);
@@ -518,6 +536,19 @@ inline std::vector<std::string> JEvent::GetAllCollectionNames() const {
 }
 
 inline const podio::CollectionBase* JEvent::GetCollectionBase(std::string name, bool throw_on_missing) const {
+    // First try finding it using the new collection model
+    auto* coll = CreateAndGetCollection(name, throw_on_missing);
+    if (coll != nullptr) {
+        auto* podio_coll = dynamic_cast<JPodioCollection*>(coll);
+        if (podio_coll == nullptr) {
+            throw JException("Not a podio collection: %s", name.c_str());
+        }
+        else {
+            return podio_coll->GetCollection();
+        }
+    }
+
+    // We couldn't find it using the new collection model, so now we search mPodioFactories
     auto it = mPodioFactories.find(name);
     if (it == mPodioFactories.end()) {
         if (throw_on_missing) {
@@ -540,6 +571,19 @@ inline const podio::CollectionBase* JEvent::GetCollectionBase(std::string name, 
 
 template <typename T>
 const typename JFactoryPodioT<T>::CollectionT* JEvent::GetCollection(std::string name, bool throw_on_missing) const {
+    // First try finding it using the new collection model
+    auto* coll = CreateAndGetCollection(name, throw_on_missing);
+    if (coll != nullptr) {
+        auto* podio_coll = dynamic_cast<JPodioCollection*>(coll);
+        if (podio_coll == nullptr) {
+            throw JException("Not a podio collection: %s", name.c_str());
+        }
+        else {
+            return podio_coll->GetCollection<T>();
+        }
+    }
+
+    // Next try finding it using the old way
     JFactoryT<T>* factory = GetFactory<T>(name, throw_on_missing);
     if (factory == nullptr) {
         return nullptr;

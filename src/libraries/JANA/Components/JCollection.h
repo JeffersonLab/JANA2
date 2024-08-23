@@ -13,6 +13,8 @@
 #include <unordered_map>
 
 
+class JFactory;
+
 class JCollection {
 public:
     // Typedefs
@@ -24,6 +26,7 @@ private:
     std::string m_collection_name;
     std::string m_collection_tag;
     std::string m_type_name;
+    JFactory* m_factory = nullptr;
     mutable JCallGraphRecorder::JDataOrigin m_insert_origin = JCallGraphRecorder::ORIGIN_NOT_AVAILABLE;
 
 protected:
@@ -37,11 +40,12 @@ public:
     virtual void ClearData() = 0;
 
     // Getters
-    CreationStatus GetCreationStatus() { return m_creation_status; }
-    std::string GetCollectionName() { return m_collection_name; }
-    std::string GetCollectionTag() { return m_collection_tag; }
-    std::string GetTypeName() { return m_type_name; }
+    CreationStatus GetCreationStatus() const { return m_creation_status; }
+    std::string GetCollectionName() const { return m_collection_name; }
+    std::string GetCollectionTag() const { return m_collection_tag; }
+    std::string GetTypeName() const { return m_type_name; }
     JCallGraphRecorder::JDataOrigin GetInsertOrigin() const { return m_insert_origin; } ///< If objects were placed here by JEvent::Insert() this records whether that call was made from a source or factory.
+    JFactory* GetFactory() const { return m_factory; }
 
     // Setters
     void SetCreationStatus(CreationStatus s) { m_creation_status = s;}
@@ -49,7 +53,8 @@ public:
     void SetCollectionTag(std::string collection_tag) { m_collection_tag = collection_tag; }
     void SetTypeName(std::string type_name) { m_type_name = type_name; }
     void SetInsertOrigin(JCallGraphRecorder::JDataOrigin origin) { m_insert_origin = origin; } ///< Called automatically by JEvent::Insert() to records whether that call was made by a source or factory.
-                                                                                               ///
+    void SetFactory(JFactory* fac) { m_factory = fac; }
+    
     // Templates 
     //
     /// Generically access the encapsulated data, performing an upcast if necessary. This is useful for extracting data from

@@ -9,6 +9,7 @@
 #include <map>
 
 #include <JANA/JFactoryT.h>
+#include <JANA/Components/JPodioCollection.h>
 #include <JANA/Utils/JEventLevel.h>
 #include <JANA/Components/JComponentSummary.h>
 
@@ -18,6 +19,14 @@ class JMultifactory;
 
 
 class JFactorySet {
+
+    protected:
+        std::map<std::pair<std::type_index, std::string>, JFactory*> mFactories;        // {(typeid, tag) : factory}
+        std::map<std::pair<std::string, std::string>, JFactory*> mFactoriesFromString;  // {(objname, tag) : factory}
+        std::map<std::string, JCollection*> mCollectionsFromName;
+        std::vector<JMultifactory*> mMultifactories;
+        bool mIsFactoryOwner = true;
+        JEventLevel mLevel = JEventLevel::PhysicsEvent;
 
     public:
         JFactorySet();
@@ -29,6 +38,7 @@ class JFactorySet {
         void Print(void) const;
         void Release(void);
 
+        JCollection* GetCollection(const std::string& collection_name) const;
         JFactory* GetFactory(const std::string& object_name, const std::string& tag="") const;
         template<typename T> JFactoryT<T>* GetFactory(const std::string& tag = "") const;
         std::vector<JFactory*> GetAllFactories() const;
@@ -37,14 +47,6 @@ class JFactorySet {
 
         JEventLevel GetLevel() const { return mLevel; }
         void SetLevel(JEventLevel level) { mLevel = level; }
-
-    protected:
-        std::map<std::pair<std::type_index, std::string>, JFactory*> mFactories;        // {(typeid, tag) : factory}
-        std::map<std::pair<std::string, std::string>, JFactory*> mFactoriesFromString;  // {(objname, tag) : factory}
-        std::vector<JMultifactory*> mMultifactories;
-        bool mIsFactoryOwner = true;
-        JEventLevel mLevel = JEventLevel::PhysicsEvent;
-        
 };
 
 
