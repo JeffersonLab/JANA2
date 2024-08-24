@@ -3,22 +3,35 @@
 #include <JANA/Components/JCollection.h>
 #include <memory>
 
+class JEvent;
+
 namespace jana::components {
 
-struct JHasFactoryOutputs {
+
+class JHasFactoryOutputs {
+public:
+    struct OutputBase {
+    protected:
+        std::vector<std::string> m_collection_names; // TODO: Possibly don't need anymore
+        std::vector<std::unique_ptr<JCollection>> m_collections;
+        bool m_is_variadic = false;
+    public:
+        const std::vector<std::unique_ptr<JCollection>>& GetCollections() const { return m_collections;}
+        virtual void PutCollections(const JEvent& event) = 0;
+        virtual void Reset() = 0;
+    };
 
 private:
-    std::vector<std::unique_ptr<JCollection>> m_output_collections;
+    std::vector<OutputBase*> m_outputs;
 
 public:
-    const std::vector<std::unique_ptr<JCollection>>& GetOutputCollections() {
-        return m_output_collections;
+    const std::vector<OutputBase*>& GetOutputs() {
+        return m_outputs;
     }
 
-    void RegisterCollection(std::unique_ptr<JCollection>&& coll) {
-        m_output_collections.push_back(std::move(coll));
+    void RegisterOutput(OutputBase* output) {
+        m_outputs.push_back(output);
     }
-
 };
 
 
