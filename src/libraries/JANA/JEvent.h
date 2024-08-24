@@ -537,7 +537,7 @@ inline std::vector<std::string> JEvent::GetAllCollectionNames() const {
 
 inline const podio::CollectionBase* JEvent::GetCollectionBase(std::string name, bool throw_on_missing) const {
     // First try finding it using the new collection model
-    auto* coll = CreateAndGetCollection(name, throw_on_missing);
+    auto* coll = CreateAndGetCollection(name, false);
     if (coll != nullptr) {
         auto* podio_coll = dynamic_cast<JPodioCollection*>(coll);
         if (podio_coll == nullptr) {
@@ -572,7 +572,7 @@ inline const podio::CollectionBase* JEvent::GetCollectionBase(std::string name, 
 template <typename T>
 const typename JFactoryPodioT<T>::CollectionT* JEvent::GetCollection(std::string name, bool throw_on_missing) const {
     // First try finding it using the new collection model
-    auto* coll = CreateAndGetCollection(name, throw_on_missing);
+    auto* coll = CreateAndGetCollection(name, false);
     if (coll != nullptr) {
         auto* podio_coll = dynamic_cast<JPodioCollection*>(coll);
         if (podio_coll == nullptr) {

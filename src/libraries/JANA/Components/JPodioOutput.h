@@ -1,8 +1,9 @@
 #pragma once
-#include "JANA/Components/JPodioCollection.h"
-#include "JANA/Utils/JTypeInfo.h"
+#include <JANA/Components/JPodioCollection.h>
+#include <JANA/Utils/JTypeInfo.h>
 #include <JANA/JEvent.h>
 #include <JANA/Components/JHasFactoryOutputs.h>
+#include <memory>
 
 
 namespace jana::components {
@@ -22,6 +23,7 @@ public:
         coll->SetTypeName(JTypeInfo::demangle<PodioT>());
         m_collection = coll.get();
         m_collections.push_back(std::move(coll));
+        m_data = std::move(std::make_unique<typename PodioT::collection_type>());
     }
 
     std::unique_ptr<typename PodioT::collection_type>& operator()() { return m_data; }
@@ -31,7 +33,19 @@ protected:
     //}
 
     void PutCollections(const JEvent& event) override {
-        auto frame = const_cast<podio::Frame*>(event.GetSingle<podio::Frame>());
+        podio::Frame* frame;
+        try {
+            frame = const_cast<podio::Frame*>(event.GetSingle<podio::Frame>());
+            if (frame == nullptr) {
+                frame = new podio::Frame;
+                event.Insert<podio::Frame>(frame);
+            }
+        }
+        catch (...) {
+            frame = new podio::Frame;
+            event.Insert<podio::Frame>(frame);
+        }
+
         frame->put(std::move(m_data), m_collection->GetCollectionName());
         const auto* moved = &frame->template get<typename PodioT::collection_type>(m_collection->GetCollectionName());
         m_data = nullptr;
@@ -60,12 +74,28 @@ public:
             coll->SetTypeName(JTypeInfo::demangle<PodioT>());
             m_collections.push_back(std::move(coll));
         }
+        for (auto& coll_name : this->collection_names) {
+            m_data.push_back(std::make_unique<typename PodioT::collection_type>());
+        }
     }
     void PutCollections(const JEvent& event) override {
         if (m_data.size() != this->collection_names.size()) {
             throw JException("VariadicPodioOutput InsertCollection failed: Declared %d collections, but provided %d.", this->collection_names.size(), m_data.size());
         }
-        auto frame = const_cast<podio::Frame*>(event.GetSingle<podio::Frame>());
+
+        podio::Frame* frame;
+        try {
+            frame = const_cast<podio::Frame*>(event.GetSingle<podio::Frame>());
+            if (frame == nullptr) {
+                frame = new podio::Frame;
+                event.Insert<podio::Frame>(frame);
+            }
+        }
+        catch (...) {
+            frame = new podio::Frame;
+            event.Insert<podio::Frame>(frame);
+        }
+
         size_t i = 0;
         for (auto& datum : m_data) {
             frame->put(std::move(std::move(datum)), m_collections[i]->GetCollectionName());
