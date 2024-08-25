@@ -35,6 +35,7 @@ class JFactorySet {
 
         bool Add(JFactory* aFactory);
         bool Add(JMultifactory* multifactory);
+        void Add(JCollection* collection);
         void Print(void) const;
         void Release(void);
 

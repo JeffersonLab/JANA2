@@ -10,6 +10,7 @@
 #include <JANA/JFactorySet.h>
 #include <JANA/JLogger.h>
 #include <JANA/JVersion.h>
+#include <JANA/Components/JCollection.h>
 #include <JANA/Utils/JEventLevel.h>
 #include <JANA/Utils/JTypeInfo.h>
 #include <JANA/Utils/JCpuInfo.h>
@@ -96,9 +97,9 @@ class JEvent : public std::enable_shared_from_this<JEvent>
 #if JANA2_HAVE_PODIO
         std::vector<std::string> GetAllCollectionNames() const;
         const podio::CollectionBase* GetCollectionBase(std::string name, bool throw_on_missing=true) const;
-        template <typename T> const typename JFactoryPodioT<T>::CollectionT* GetCollection(std::string name, bool throw_on_missing=true) const;
-        template <typename T> JFactoryPodioT<T>* InsertCollection(typename JFactoryPodioT<T>::CollectionT&& collection, std::string name);
-        template <typename T> JFactoryPodioT<T>* InsertCollectionAlreadyInFrame(const podio::CollectionBase* collection, std::string name);
+        template <typename PodioT> const typename PodioT::collection_type* GetCollection(std::string name, bool throw_on_missing=true) const;
+        template <typename PodioT> JPodioCollection* InsertCollection(typename PodioT::collection_type&& collection, std::string name);
+        template <typename PodioT> JPodioCollection* InsertCollectionAlreadyInFrame(const podio::CollectionBase* collection, std::string name);
 #endif
 
         // EXPERIMENTAL NEW THING
@@ -570,7 +571,7 @@ inline const podio::CollectionBase* JEvent::GetCollectionBase(std::string name, 
 }
 
 template <typename T>
-const typename JFactoryPodioT<T>::CollectionT* JEvent::GetCollection(std::string name, bool throw_on_missing) const {
+const typename T::collection_type* JEvent::GetCollection(std::string name, bool throw_on_missing) const {
     // First try finding it using the new collection model
     auto* coll = CreateAndGetCollection(name, false);
     if (coll != nullptr) {
@@ -598,66 +599,60 @@ const typename JFactoryPodioT<T>::CollectionT* JEvent::GetCollection(std::string
 }
 
 
-template <typename T>
-JFactoryPodioT<T>* JEvent::InsertCollection(typename JFactoryPodioT<T>::CollectionT&& collection, std::string name) {
+template <typename PodioT>
+JPodioCollection* JEvent::InsertCollection(typename PodioT::collection_type&& collection, std::string name) {
     /// InsertCollection inserts the provided PODIO collection into both the podio::Frame and then a JFactoryPodioT<T>
 
     auto frame = GetOrCreateFrame(shared_from_this());
     const auto& owned_collection = frame->put(std::move(collection), name);
-    return InsertCollectionAlreadyInFrame<T>(&owned_collection, name);
+    return InsertCollectionAlreadyInFrame<PodioT>(&owned_collection, name);
 }
 
 
-template <typename T>
-JFactoryPodioT<T>* JEvent::InsertCollectionAlreadyInFrame(const podio::CollectionBase* collection, std::string name) {
-    /// InsertCollection inserts the provided PODIO collection into a JFactoryPodioT<T>. It assumes that the collection pointer
+template <typename PodioT>
+JPodioCollection* JEvent::InsertCollectionAlreadyInFrame(const podio::CollectionBase* collection, std::string name) {
+    /// InsertCollection inserts the provided PODIO collection into a JPodioCollection. It assumes that the collection pointer
     /// is _already_ owned by the podio::Frame corresponding to this JEvent. This is meant to be used if you are starting out
     /// with a PODIO frame (e.g. a JEventSource that uses podio::ROOTFrameReader).
     
-    const auto* typed_collection = dynamic_cast<const typename T::collection_type*>(collection);
+    const auto* typed_collection = dynamic_cast<const typename PodioT::collection_type*>(collection);
     if (typed_collection == nullptr) {
         throw JException("Attempted to insert a collection of the wrong type! name='%s', expected type='%s', actual type='%s'",
-            name.c_str(), JTypeInfo::demangle<typename T::collection_type>().c_str(), collection->getDataTypeName().data());
+            name.c_str(), JTypeInfo::demangle<typename PodioT::collection_type>().c_str(), collection->getDataTypeName().data());
     }
 
     // Users are allowed to Insert with tag="" if and only if that tag gets resolved by default tags.
     if (mUseDefaultTags && name.empty()) {
-        auto defaultTag = mDefaultTags.find(JTypeInfo::demangle<T>());
+        auto defaultTag = mDefaultTags.find(JTypeInfo::demangle<PodioT>());
         if (defaultTag != mDefaultTags.end()) name = defaultTag->second;
     }
 
-    // Retrieve factory if it already exists, else create it
-    JFactoryT<T>* factory = mFactorySet->GetFactory<T>(name);
-    if (factory == nullptr) {
-        factory = new JFactoryPodioT<T>();
-        factory->SetTag(name);
-        factory->SetLevel(GetLevel());
-        mFactorySet->Add(factory);
+    // Retrieve storage if it already exists, else create it
+    auto storage = mFactorySet->GetCollection(name);
 
-        auto it = mPodioFactories.find(name);
-        if (it != mPodioFactories.end()) {
-            throw JException("InsertCollection failed because tag '%s' is not unique", name.c_str());
+    if (storage == nullptr) {
+        // No factories already registered this! E.g. from an event source
+        auto coll = new JPodioCollection;
+        coll->SetCollectionName(name);
+        coll->SetTypeName(JTypeInfo::demangle<PodioT>());
+        coll->SetCreationStatus(JCollection::CreationStatus::Inserted);
+        coll->SetInsertOrigin(mCallGraph.GetInsertDataOrigin());
+        coll->SetCollectionAlreadyInFrame<PodioT>(typed_collection);
+        mFactorySet->Add(coll);
+        return coll;
+    }
+    else {
+        // This is overriding a factory
+        // Check that we only inserted this collection once
+        if (storage->GetCreationStatus() != JCollection::CreationStatus::NotCreatedYet) {
+            throw JException("Collections can only be inserted once!");
         }
-        mPodioFactories[name] = factory;
+        auto typed_storage = dynamic_cast<JPodioCollection*>(storage);
+        typed_storage->SetCollectionAlreadyInFrame<PodioT>(typed_collection);
+        typed_storage->SetCreationStatus(JPodioCollection::CreationStatus::Inserted);
+        typed_storage->SetInsertOrigin(mCallGraph.GetInsertDataOrigin());
+        return typed_storage;
     }
-
-    // PODIO collections can only be inserted once, unlike regular JANA factories.
-    if (factory->GetStatus() == JFactory::Status::Inserted  ||
-        factory->GetStatus() == JFactory::Status::Processed) {
-
-        throw JException("PODIO collections can only be inserted once, but factory with tag '%s' already has data", name.c_str());
-    }
-
-    // There's a chance that some user already added to the event's JFactorySet a
-    // JFactoryT<PodioT> which ISN'T a JFactoryPodioT<T>. In this case, we cannot set the collection.
-    JFactoryPodioT<T>* typed_factory = dynamic_cast<JFactoryPodioT<T>*>(factory);
-    if (typed_factory == nullptr) {
-        throw JException("Factory must inherit from JFactoryPodioT in order to use JEvent::GetCollection()");
-    }
-
-    typed_factory->SetCollectionAlreadyInFrame(typed_collection);
-    typed_factory->SetInsertOrigin( mCallGraph.GetInsertDataOrigin() );
-    return typed_factory;
 }
 
 #endif // JANA2_HAVE_PODIO

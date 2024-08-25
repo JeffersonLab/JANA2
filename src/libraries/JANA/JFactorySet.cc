@@ -48,6 +48,34 @@ JFactorySet::~JFactorySet()
 //---------------------------------
 // Add
 //---------------------------------
+void JFactorySet::Add(JCollection* collection) {
+    auto named_result = mCollectionsFromName.find(collection->GetCollectionName());
+    if (named_result != std::end(mCollectionsFromName)) {
+        // Collection is duplicate. Since this almost certainly indicates a user error, and
+        // the caller will not be able to do anything about it anyway, throw an exception.
+        // We show the user which factory is causing this problem, including both plugin names
+
+        auto ex = JException("Attempted to add duplicate collections");
+        ex.function_name = "JFactorySet::Add";
+        ex.instance_name = collection->GetCollectionName();
+
+        auto fac = collection->GetFactory();
+        if (fac != nullptr) {
+            ex.type_name = fac->GetTypeName();
+            ex.plugin_name = fac->GetPluginName();
+            if (named_result->second->GetFactory() != nullptr) {
+                ex.plugin_name += ", " + named_result->second->GetFactory()->GetPluginName();
+            }
+        }
+        throw ex;
+    }
+    // Note that this is agnostic to event level. We may decide to change this.
+    mCollectionsFromName[collection->GetCollectionName()] = collection;
+}
+
+//---------------------------------
+// Add
+//---------------------------------
 bool JFactorySet::Add(JFactory* aFactory)
 {
     /// Add a JFactory to this JFactorySet. The JFactorySet assumes ownership of this factory.
@@ -65,7 +93,6 @@ bool JFactorySet::Add(JFactory* aFactory)
 
     auto object_type = aFactory->GetObjectType();
     if (object_type != std::nullopt) {
-    
         // We have an old-style JFactory!
 
         auto typed_key = std::make_pair( *object_type, aFactory->GetTag() );
@@ -100,25 +127,7 @@ bool JFactorySet::Add(JFactory* aFactory)
         // We have a new-style JFactory!
         for (const auto* output : aFactory->GetOutputs()) {
             for (const auto& coll : output->GetCollections()) {
-                auto named_result = mCollectionsFromName.find(coll->GetCollectionName());
-                if (named_result != std::end(mCollectionsFromName)) {
-                    // Collection is duplicate. Since this almost certainly indicates a user error, and
-                    // the caller will not be able to do anything about it anyway, throw an exception.
-                    // We show the user which factory is causing this problem, including both plugin names
-
-                    // TODO: I haven't thought through insert vs process for collections yet
-                    assert(named_result->second->GetFactory() != nullptr);
-
-                    std::string other_plugin_name = named_result->second->GetFactory()->GetPluginName();
-                    auto ex = JException("Attempted to add duplicate factories");
-                    ex.function_name = "JFactorySet::Add";
-                    ex.instance_name = aFactory->GetPrefix();
-                    ex.type_name = aFactory->GetTypeName();
-                    ex.plugin_name = aFactory->GetPluginName() + ", " + other_plugin_name;
-                    throw ex;
-                }
-                coll->SetFactory(aFactory);
-                mCollectionsFromName[coll->GetCollectionName()] = coll.get();
+                Add(coll.get());
             }
         }
     }
@@ -149,8 +158,8 @@ bool JFactorySet::Add(JMultifactory *multifactory) {
 JCollection* JFactorySet::GetCollection(const std::string& collection_name) const {
     auto it = mCollectionsFromName.find(collection_name);
     if (it != std::end(mCollectionsFromName)) {
-        assert(it->second->GetFactory() != nullptr);
-        if (it->second->GetFactory()->GetLevel() != mLevel) {
+        auto fac = it->second->GetFactory();
+        if (fac != nullptr && fac->GetLevel() != mLevel) {
             throw JException("Collection belongs to a different level on the event hierarchy!");
         }
         return it->second;
