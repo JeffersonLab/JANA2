@@ -1,8 +1,20 @@
-JANA2 Concepts
-==============
+# JANA2 Concepts
+
+
+## Core Architecture
 
 This section provides higher-level background and context for JANA, and discusses JANA's design philosophy and the
-associated tradeoffs.
+associated tradeoffs.At its core, JANA2’s job is to take data in one form and apply some algorithms to it to produce
+data in a more refined form. This process is organized into two main layers:
+
+1. **Queue-Arrow Mechanism:** At the highest level, JANA2 uses [arrow model](https://en.wikipedia.org/wiki/Arrow_\(computer_science\)). In this model, data starts in a queue. An "arrow" is responsible for pulling data from the queue, processing it with algorithms, and then placing the processed data into another queue. The simplest setup consists of just two queues: one for input and one for output, with the arrow handling all the necessary algorithms to reconstruct the event. However, JANA2 can support much more complex configurations, where multiple queues and arrows are chained together. These arrows can operate sequentially or in parallel, depending on the needs of the processing task.
+
+2. **Algorithm Management within Arrows:** Within each arrow, JANA2 organizes and manages the algorithms, along with their respective inputs and outputs. This internal structure allows for flexibility in how algorithms are applied to the data. Arrows can be configured differently to split the processing load across multiple types of algorithms.
+
+By assigning threads to arrows, JANA2 takes full advantage of modern hardware, allowing it to process data concurrently across multiple cores and processors. This makes the framework both powerful and scalable, capable of handling complex data processing tasks efficiently.
+
+![JANA2 Factory diagram](_media/concepts-factory-diagram.png)
+
 
 ## JANA concepts
 
