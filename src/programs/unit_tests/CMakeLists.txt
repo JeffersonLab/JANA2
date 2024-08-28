@@ -27,6 +27,7 @@ set(TEST_SOURCES
 
     Services/JServiceLocatorTests.cc
     Services/JParameterManagerTests.cc
+    Services/JExternalWiringServiceTests.cc
 
     Engine/ArrowActivationTests.cc
     Engine/ScaleTests.cc

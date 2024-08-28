@@ -25,6 +25,7 @@ set(JANA2_SOURCES
     Services/JLoggingService.cc
     Services/JParameterManager.cc
     Services/JPluginLoader.cc
+    Services/JExternalWiringService.cc
 
     Components/JComponentSummary.cc
 
@@ -68,6 +69,7 @@ add_library(jana2 OBJECT ${JANA2_SOURCES})
 find_package(Threads REQUIRED)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 target_link_libraries(jana2 PUBLIC ${CMAKE_DL_LIBS} Threads::Threads)
+target_link_libraries(jana2 PRIVATE VendoredTomlPlusPlus)
 
 if (${USE_PODIO})
     target_link_libraries(jana2 PUBLIC podio::podio podio::podioRootIO ${ROOT_LIBRARIES})
@@ -82,6 +84,7 @@ set_target_properties(jana2_static_lib PROPERTIES PREFIX "lib" OUTPUT_NAME "JANA
 
 target_include_directories(jana2_static_lib PUBLIC $<INSTALL_INTERFACE:include>)
 target_link_libraries(jana2_static_lib PUBLIC ${CMAKE_DL_LIBS} Threads::Threads)
+target_link_libraries(jana2_static_lib PUBLIC VendoredTomlPlusPlus)
 
 if (${USE_PODIO})
     target_link_libraries(jana2_static_lib PUBLIC podio::podio podio::podioRootIO ${ROOT_LIBRARIES})
@@ -89,7 +92,6 @@ elseif (${USE_ROOT})
     target_link_libraries(jana2_static_lib PUBLIC ${ROOT_LIBRARIES})
 endif()
 install(TARGETS jana2_static_lib EXPORT jana2_targets DESTINATION lib)
-
 
 # optionally build shared lib
 if (BUILD_SHARED_LIBS)
@@ -99,6 +101,7 @@ if (BUILD_SHARED_LIBS)
 
     target_include_directories(jana2_shared_lib PUBLIC $<INSTALL_INTERFACE:include>)
     target_link_libraries(jana2_shared_lib PUBLIC ${CMAKE_DL_LIBS} Threads::Threads)
+    target_link_libraries(jana2_shared_lib PUBLIC VendoredTomlPlusPlus)
 
     if (${USE_PODIO})
         target_link_libraries(jana2_shared_lib PUBLIC podio::podio podio::podioRootIO ${ROOT_LIBRARIES})
