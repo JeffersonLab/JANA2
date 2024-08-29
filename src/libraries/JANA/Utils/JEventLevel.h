@@ -2,6 +2,7 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #pragma once
+#include <JANA/JException.h>
 #include <ostream>
 #include <sstream>
 
@@ -26,6 +27,18 @@ inline std::string toString(JEventLevel level) {
     std::stringstream ss;
     ss << level;
     return ss.str();
+}
+
+inline JEventLevel parseEventLevel(const std::string& level) {
+    if (level == "Run") return JEventLevel::Run;
+    if (level == "Subrun") return JEventLevel::Subrun;
+    if (level == "Timeslice") return JEventLevel::Timeslice;
+    if (level == "Block") return JEventLevel::Block;
+    if (level == "SlowControls") return JEventLevel::SlowControls;
+    if (level == "PhysicsEvent") return JEventLevel::PhysicsEvent;
+    if (level == "Subevent") return JEventLevel::Subevent;
+    if (level == "Task") return JEventLevel::Task;
+    throw JException("Invalid JEventLevel '%s'", level.c_str());
 }
 
 
