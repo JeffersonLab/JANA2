@@ -38,6 +38,7 @@ inline JEventLevel parseEventLevel(const std::string& level) {
     if (level == "PhysicsEvent") return JEventLevel::PhysicsEvent;
     if (level == "Subevent") return JEventLevel::Subevent;
     if (level == "Task") return JEventLevel::Task;
+    if (level == "None") return JEventLevel::None;
     throw JException("Invalid JEventLevel '%s'", level.c_str());
 }
 
