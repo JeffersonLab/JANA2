@@ -2,6 +2,7 @@
 #include <JANA/Services/JExternalWiringService.h>
 #include <catch.hpp>
 #include <toml.hpp>
+#include <iostream>
 
 
 static constexpr std::string_view some_wiring = R"(
@@ -52,3 +53,30 @@ TEST_CASE("ExternalWiringTests") {
     REQUIRE(wirings[0]->configs["y"] == "verbose");
 
 }
+
+static constexpr std::string_view duplicate_prefixes = R"(
+    [[factory]]
+    plugin_name = "BCAL"
+    type_name = "MyFac"
+    prefix = "myfac"
+
+    [[factory]]
+    plugin_name = "BCAL"
+    type_name = "MyFac"
+    prefix = "myfac"
+)";
+
+TEST_CASE("ExternalWiringTests_DuplicatePrefixes") {
+
+    JExternalWiringService sut;
+    toml::table table = toml::parse(duplicate_prefixes);
+    try {
+        auto wirings = sut.parse_table(table);
+        REQUIRE(1 == 0);
+    }
+    catch (const JException& e) {
+        std::cout << e << std::endl;
+    }
+}
+
+

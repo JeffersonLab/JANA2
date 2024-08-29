@@ -2,11 +2,13 @@
 #include "JExternalWiringService.h"
 #include "JANA/Utils/JEventLevel.h"
 #include <memory>
+#include <ostream>
 
 
 std::vector<std::unique_ptr<JExternalWiringService::Wiring>> JExternalWiringService::parse_table(const toml::table& table) {
 
     std::vector<std::unique_ptr<Wiring>> wirings;
+    std::map<std::string, const Wiring*> prefix_lookup;
 
     auto facs = table["factory"].as_array();
     if (facs == nullptr) {
@@ -23,6 +25,17 @@ std::vector<std::unique_ptr<JExternalWiringService::Wiring>> JExternalWiringServ
         wiring->plugin_name = f["plugin_name"].value<std::string>().value();
         wiring->type_name = f["type_name"].value<std::string>().value();
         wiring->prefix = f["prefix"].value<std::string>().value();
+        auto it = prefix_lookup.find(wiring->prefix);
+        if (it != prefix_lookup.end()) {
+            std::ostringstream oss;
+            oss << "Duplicated factory prefix in wiring file: " << std::endl;
+            oss << "    Prefix:      " << wiring->prefix << std::endl;
+            oss << "    Type name:   " << wiring->type_name << " vs " << it->second->type_name << std::endl;
+            oss << "    Plugin name: " << wiring->plugin_name << " vs " << it->second->plugin_name << std::endl;
+            throw JException(oss.str());
+        }
+        prefix_lookup[wiring->prefix] = wiring.get();
+
         wiring->level = parseEventLevel(f["level"].value_or<std::string>("None"));
 
         auto input_names = f["input_names"].as_array();
