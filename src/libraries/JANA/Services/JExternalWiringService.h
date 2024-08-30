@@ -10,6 +10,9 @@
 #include <vector>
 #include <memory>
 
+namespace jana {
+namespace services {
+
 
 class JExternalWiringService {
 
@@ -25,17 +28,22 @@ public:
         std::map<std::string, std::string> configs;
     };
 
+    using WiringIndex = std::map<std::pair<std::string,std::string>, std::map<std::string,Wiring*>>;
+    // { (plugin_name,typename) : {prefix : const Wiring*}}
+
 private:
     std::vector<std::unique_ptr<Wiring>> m_wirings;
-    //std::set<std::string> m_prefixes;
-    //std::map<std::pair<std::string,std::string>, std::map<std::string,const Wiring*>> m_wirings_index;
-    // { (plugin_name,typename) : {prefix : const Wiring*}}
+    WiringIndex m_wirings_index;
 
 public:
     void parse_file(std::string filename);
     void add_wiring(std::unique_ptr<Wiring> wiring);
+    std::unique_ptr<Wiring> overlay(std::unique_ptr<Wiring>&& above, std::unique_ptr<Wiring>&& below);
     const Wiring* get_wiring(std::string plugin_name, std::string type_name, std::string prefix);
     const std::vector<std::unique_ptr<Wiring>>& get_wirings();
     std::vector<std::unique_ptr<Wiring>> parse_table(const toml::table& table);
 
 };
+
+} // namespace services
+} // namespace jana

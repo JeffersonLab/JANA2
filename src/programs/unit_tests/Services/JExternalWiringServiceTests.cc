@@ -1,6 +1,9 @@
 
+#include "JANA/JException.h"
+#include "JANA/Utils/JEventLevel.h"
 #include <JANA/Services/JExternalWiringService.h>
 #include <catch.hpp>
+#include <memory>
 #include <toml.hpp>
 #include <iostream>
 
@@ -35,7 +38,7 @@ static constexpr std::string_view some_wiring = R"(
 
 TEST_CASE("ExternalWiringTests") {
 
-    JExternalWiringService sut;
+    jana::services::JExternalWiringService sut;
     toml::table table = toml::parse(some_wiring);
     auto wirings = sut.parse_table(table);
     REQUIRE(wirings.size() == 2);
@@ -68,7 +71,7 @@ static constexpr std::string_view duplicate_prefixes = R"(
 
 TEST_CASE("ExternalWiringTests_DuplicatePrefixes") {
 
-    JExternalWiringService sut;
+    jana::services::JExternalWiringService sut;
     toml::table table = toml::parse(duplicate_prefixes);
     try {
         auto wirings = sut.parse_table(table);
@@ -77,6 +80,32 @@ TEST_CASE("ExternalWiringTests_DuplicatePrefixes") {
     catch (const JException& e) {
         std::cout << e << std::endl;
     }
+}
+
+TEST_CASE("ExternalWiringTests_Overlay") {
+    using Wiring = jana::services::JExternalWiringService::Wiring;
+    auto above = std::make_unique<Wiring>();
+    above->prefix = "myfac";
+    above->type_name = "ClusteringFac";
+    above->plugin_name = "FCAL";
+    above->input_names = {"this", "should", "make", "it"};
+    above->configs["x"] = "6.18";
+
+    auto below = std::make_unique<Wiring>();
+    below->prefix = "myfac";
+    below->type_name = "ClusteringFac";
+    below->plugin_name = "FCAL";
+    below->input_names = {"this", "should", "NOT", "make", "it"};
+    below->input_levels = {JEventLevel::Run, JEventLevel::PhysicsEvent};
+    below->configs["x"] = "7.6";
+    below->configs["y"] = "42";
+
+    auto sut = jana::services::JExternalWiringService();
+    auto result = sut.overlay(std::move(above), std::move(below));
+    REQUIRE(result->input_names[2] == "make");
+    REQUIRE(result->input_levels[1] == JEventLevel::PhysicsEvent);
+    REQUIRE(result->configs["x"] == "6.18");
+    REQUIRE(result->configs["y"] == "42");
 }
 
 

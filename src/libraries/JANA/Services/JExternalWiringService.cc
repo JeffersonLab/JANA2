@@ -4,6 +4,33 @@
 #include <memory>
 #include <ostream>
 
+namespace jana::services {
+
+
+std::unique_ptr<JExternalWiringService::Wiring> JExternalWiringService::overlay(std::unique_ptr<Wiring>&& above, std::unique_ptr<Wiring>&& below) {
+
+    // In theory this should be handled by the caller, but let's check just in case
+    if (above->plugin_name != below->plugin_name) throw JException("Plugin name mismatch!");
+    if (above->type_name != below->type_name) throw JException("Type name mismatch!");
+
+    if (above->input_names.empty() && !below->input_names.empty()) {
+        above->input_names = std::move(below->input_names);
+    }
+    if (above->input_levels.empty() && !below->input_levels.empty()) {
+        above->input_levels = std::move(below->input_levels);
+    }
+    if (above->output_names.empty() && !below->output_names.empty()) {
+        above->output_names = std::move(below->output_names);
+    }
+    for (const auto& [key, val] : below->configs) {
+        if (above->configs.find(key) == above->configs.end()) {
+            above->configs[key] = val;
+        }
+    }
+    // below gets automatically deleted
+    return std::move(above);
+}
+
 
 std::vector<std::unique_ptr<JExternalWiringService::Wiring>> JExternalWiringService::parse_table(const toml::table& table) {
 
@@ -75,3 +102,6 @@ std::vector<std::unique_ptr<JExternalWiringService::Wiring>> JExternalWiringServ
 }
 
 
+
+
+}
