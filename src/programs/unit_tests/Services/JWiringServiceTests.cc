@@ -1,7 +1,7 @@
 
 #include "JANA/JException.h"
 #include "JANA/Utils/JEventLevel.h"
-#include <JANA/Services/JExternalWiringService.h>
+#include <JANA/Services/JWiringService.h>
 #include <catch.hpp>
 #include <memory>
 #include <toml.hpp>
@@ -36,9 +36,9 @@ static constexpr std::string_view some_wiring = R"(
 
 )";
 
-TEST_CASE("ExternalWiringTests") {
+TEST_CASE("WiringTests") {
 
-    jana::services::JExternalWiringService sut;
+    jana::services::JWiringService sut;
     toml::table table = toml::parse(some_wiring);
     auto wirings = sut.parse_table(table);
     REQUIRE(wirings.size() == 2);
@@ -69,9 +69,9 @@ static constexpr std::string_view duplicate_prefixes = R"(
     prefix = "myfac"
 )";
 
-TEST_CASE("ExternalWiringTests_DuplicatePrefixes") {
+TEST_CASE("WiringTests_DuplicatePrefixes") {
 
-    jana::services::JExternalWiringService sut;
+    jana::services::JWiringService sut;
     toml::table table = toml::parse(duplicate_prefixes);
     try {
         auto wirings = sut.parse_table(table);
@@ -82,8 +82,8 @@ TEST_CASE("ExternalWiringTests_DuplicatePrefixes") {
     }
 }
 
-TEST_CASE("ExternalWiringTests_Overlay") {
-    using Wiring = jana::services::JExternalWiringService::Wiring;
+TEST_CASE("WiringTests_Overlay") {
+    using Wiring = jana::services::JWiringService::Wiring;
     auto above = std::make_unique<Wiring>();
     above->prefix = "myfac";
     above->type_name = "ClusteringFac";
@@ -100,7 +100,7 @@ TEST_CASE("ExternalWiringTests_Overlay") {
     below->configs["x"] = "7.6";
     below->configs["y"] = "42";
 
-    auto sut = jana::services::JExternalWiringService();
+    auto sut = jana::services::JWiringService();
     auto result = sut.overlay(std::move(above), std::move(below));
     REQUIRE(result->input_names[2] == "make");
     REQUIRE(result->input_levels[1] == JEventLevel::PhysicsEvent);

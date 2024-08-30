@@ -25,7 +25,7 @@ set(JANA2_SOURCES
     Services/JLoggingService.cc
     Services/JParameterManager.cc
     Services/JPluginLoader.cc
-    Services/JExternalWiringService.cc
+    Services/JWiringService.cc
 
     Components/JComponentSummary.cc
 

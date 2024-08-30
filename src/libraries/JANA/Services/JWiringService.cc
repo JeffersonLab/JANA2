@@ -1,5 +1,5 @@
 
-#include "JExternalWiringService.h"
+#include "JWiringService.h"
 #include "JANA/Utils/JEventLevel.h"
 #include <memory>
 #include <ostream>
@@ -7,7 +7,7 @@
 namespace jana::services {
 
 
-std::unique_ptr<JExternalWiringService::Wiring> JExternalWiringService::overlay(std::unique_ptr<Wiring>&& above, std::unique_ptr<Wiring>&& below) {
+std::unique_ptr<JWiringService::Wiring> JWiringService::overlay(std::unique_ptr<Wiring>&& above, std::unique_ptr<Wiring>&& below) {
 
     // In theory this should be handled by the caller, but let's check just in case
     if (above->plugin_name != below->plugin_name) throw JException("Plugin name mismatch!");
@@ -32,7 +32,7 @@ std::unique_ptr<JExternalWiringService::Wiring> JExternalWiringService::overlay(
 }
 
 
-std::vector<std::unique_ptr<JExternalWiringService::Wiring>> JExternalWiringService::parse_table(const toml::table& table) {
+std::vector<std::unique_ptr<JWiringService::Wiring>> JWiringService::parse_table(const toml::table& table) {
 
     std::vector<std::unique_ptr<Wiring>> wirings;
     std::map<std::string, const Wiring*> prefix_lookup;
@@ -104,4 +104,4 @@ std::vector<std::unique_ptr<JExternalWiringService::Wiring>> JExternalWiringServ
 
 
 
-}
+} // namespace jana::services

@@ -14,7 +14,7 @@ namespace jana {
 namespace services {
 
 
-class JExternalWiringService {
+class JWiringService {
 
 public:
     struct Wiring {
