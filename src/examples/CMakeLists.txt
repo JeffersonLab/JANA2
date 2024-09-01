@@ -1,4 +1,5 @@
 
+add_subdirectory(CsvWriter)
 add_subdirectory(DstExample)
 add_subdirectory(Tutorial)
 add_subdirectory(StreamingExample)
