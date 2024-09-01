@@ -6,6 +6,14 @@
 
 namespace jana::services {
 
+void JWiringService::Init() {
+    LOG_INFO(GetLogger()) << "Initializing JWiringService" << LOG_END;
+    // User is _only_ allowed to specify wiring file via parameter
+    // This way, we can restrict calling JWiringService::Init until inside JApplication::Init
+    // Then we can load the wiring file exactly once. All WiredFactoryGenerators 
+    // (Recursively) load files
+
+}
 
 std::unique_ptr<JWiringService::Wiring> JWiringService::overlay(std::unique_ptr<Wiring>&& above, std::unique_ptr<Wiring>&& below) {
 

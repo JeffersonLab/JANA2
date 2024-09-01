@@ -3,7 +3,7 @@
 // Created by Nathan Brei
 
 #pragma once
-#include <JANA/Utils/JEventLevel.h>
+#include <JANA/JService.h>
 #include <toml.hpp>
 #include <string>
 #include <map>
@@ -14,7 +14,7 @@ namespace jana {
 namespace services {
 
 
-class JWiringService {
+class JWiringService : public JService {
 
 public:
     struct Wiring {
@@ -32,10 +32,17 @@ public:
     // { (plugin_name,typename) : {prefix : const Wiring*}}
 
 private:
+    Parameter<std::string> m_wirings_input_file {this, "jana:wiring_file", "wiring.toml", 
+        "Path to TOML file containing wiring definitions"};
+
+    Parameter<bool> m_strict_inheritance {this, "jana:wiring_strictness", true,
+        "Allow multiple definitions inside wiring files"};
+
     std::vector<std::unique_ptr<Wiring>> m_wirings;
     WiringIndex m_wirings_index;
 
 public:
+    void Init() override;
     void parse_file(std::string filename);
     void add_wiring(std::unique_ptr<Wiring> wiring);
     std::unique_ptr<Wiring> overlay(std::unique_ptr<Wiring>&& above, std::unique_ptr<Wiring>&& below);
