@@ -35,14 +35,14 @@ public:
 
     void Init() override {
 
-        m_dest_file.open(m_dest_path(), std::fstream::out);
+        m_dest_file.open(*m_dest_path, std::fstream::out);
 
         // For historical reasons, our JEvent interface requires types and tags to be separated
         // for non-Podio types. Ideally we could deprecate this in favor of a unified concept of
         // collection name that includes both type and tag information. However this takes some finesse.
         // So for now, we do the separation here in order to minimize runtime costs.
         std::vector<std::pair<std::string, std::string>> m_collection_types_and_tags;
-        for (auto collection_name : m_collection_names()) {
+        for (auto collection_name : *m_collection_names) {
             auto pos = collection_name.find(":");
             std::string type_name = collection_name.substr(0, pos);
             std::string tag = (pos==std::string::npos ? "":collection_name.substr(pos+1));
