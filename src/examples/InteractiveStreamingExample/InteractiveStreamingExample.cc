@@ -4,7 +4,6 @@
 
 
 #include <JANA/Streaming/JStreamingEventSource.h>
-#include <JANA/JCsvWriter.h>
 #include <JANA/JEventSourceGeneratorT.h>
 
 #include "RootProcessor.h"
@@ -114,7 +113,6 @@ void InitPlugin(JApplication* app) {
 
     app->Add(new RootProcessor());
     app->Add(new MonitoringProcessor());
-    //app->Add(new JCsvWriter<ADCSample>());
     app->Add(new JFactoryGeneratorT<ADCSampleFactory>());
 
 }

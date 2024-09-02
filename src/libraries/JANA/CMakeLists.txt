@@ -18,7 +18,6 @@ set(JANA2_SOURCES
     JFactorySet.h
     JFactoryT.h
     JObject.h
-    JCsvWriter.h
     JLogger.h
     JMultifactory.cc
     JMultifactory.h
