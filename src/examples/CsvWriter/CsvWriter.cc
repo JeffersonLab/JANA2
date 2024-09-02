@@ -41,7 +41,6 @@ public:
         // for non-Podio types. Ideally we could deprecate this in favor of a unified concept of
         // collection name that includes both type and tag information. However this takes some finesse.
         // So for now, we do the separation here in order to minimize runtime costs.
-        std::vector<std::pair<std::string, std::string>> m_collection_types_and_tags;
         for (auto collection_name : *m_collection_names) {
             auto pos = collection_name.find(":");
             std::string type_name = collection_name.substr(0, pos);
@@ -50,6 +49,7 @@ public:
             // places once the JStorage mechanism is fully implemented and merged.
 
             m_collection_types_and_tags.push_back({type_name, tag});
+            LOG_INFO(GetLogger()) << "Requesting collection with type=" << type_name << ", tag=" << tag << LOG_END;
         }
     }
 
