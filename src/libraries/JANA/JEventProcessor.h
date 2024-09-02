@@ -50,9 +50,14 @@ public:
         if (m_callback_style == CallbackStyle::LegacyMode) {
             throw JException("Called DoMap() on a legacy-mode JEventProcessor");
         }
-
         for (auto* input : m_inputs) {
             input->PrefetchCollection(*e);
+        }
+        if (m_callback_style == CallbackStyle::ExpertMode) {
+            ProcessParallel(*e);
+        }
+        else {
+            ProcessParallel(e->GetRunNumber(), e->GetEventNumber(), e->GetEventIndex());
         }
     }
 
@@ -162,11 +167,24 @@ public:
     virtual void Init() {}
 
 
+    // LegacyMode-specific callbacks
+
     virtual void Process(const std::shared_ptr<const JEvent>& /*event*/) {
         throw JException("Not implemented yet!");
     }
     
+    // ExpertMode-specific callbacks
+
+    virtual void ProcessParallel(const JEvent& /*event*/) {
+    }
+
     virtual void Process(const JEvent& /*event*/) {
+        throw JException("Not implemented yet!");
+    }
+
+    // DeclarativeMode-specific callbacks
+
+    virtual void ProcessParallel(int64_t /*run_nr*/, uint64_t /*event_nr*/, uint64_t /*event_idx*/) {
         throw JException("Not implemented yet!");
     }
 

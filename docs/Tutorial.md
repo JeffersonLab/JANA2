@@ -288,33 +288,6 @@ Result RandomSource::Emit(JEvent& event) {
 }
 ```
 
-We now have `Hit`s in our event stream. The next section will cover how the `QuickTutorialProcessor` should
-access them. However, we don't need to create a custom JEventProcessor to examine our event stream. JANA provides
-a small utility called `JCsvWriter` which creates a CSV file containing all `JObjects` of a certain type and tag. 
-It can figure out how to do this thanks to `JObject::Summarize`. You can examine the full code for `JCsvWriter` 
-if you look under `$JANA_HOME/include/JANA/JCsvWriter.h`. Be aware that `JCsvWriter` is very inefficient and 
-should be used for debugging, not for production.
-
-To use `JCsvWriter`, we merely register it with our `JApplication`. If we run JANA now, 
-a file 'Hit.csv' should appear in the current working directory. Note that the CSV file 
-will be closed correctly even when we terminate JANA using Ctrl-C. 
-
-```
-#include <JANA/JCsvWriter.h>                      // ADD ME
-#include "Hit.h"                                  // ADD ME
-// ...
-
-extern "C" {
-void InitPlugin(JApplication* app) {
-
-    InitJANAPlugin(app);
-
-    app->Add(new QuickTutorialProcessor);
-    app->Add(new RandomSource);
-    app->Add(new JCsvWriter<Hit>);                // ADD ME
-    //app->Add(new JCsvWriter<Hit>("fcal"));      // If we used a tag
-}
-```
 
 ## Writing our own JEventProcessor
 
@@ -375,8 +348,7 @@ We proceed to define our `Init` and `Finish` methods. The former zeroes out each
 the latter prints the heatmap to standard out as ASCII art. Note that if we want to output 
 our results to a file all at once, we should do so in `Finish`. `Finish` will be called even 
 if we forcibly terminate JANA with Ctrl-C. On the other hand, if we wanted to write to a file
-incrementally like we do with JCsvWriter, we can open it in `Init`, access it `Process` inside
-the lock, and close it in `Finish`.
+incrementally, we can open it in `Init`, access it `Process`, and close it in `Finish`.
 
 ```
 void QuickTutorialProcessor::Init() {
@@ -529,7 +501,6 @@ void InitPlugin(JApplication* app) {
 
     app->Add(new QuickTutorialProcessor);
     app->Add(new RandomSource);
-    app->Add(new JCsvWriter<Hit>());
     app->Add(new JFactoryGeneratorT<SimpleClusterFactory>);  // ADD ME
 }
 }
@@ -566,7 +537,6 @@ a corresponding `JEventSourceGenerator`:
 #include <JANA/JApplication.h>
 #include <JANA/JFactoryGenerator.h>
 #include <JANA/JEventSourceGeneratorT.h>                    // ADD ME
-#include <JANA/JCsvWriter.h>
 
 #include "Hit.h"
 #include "RandomSource.h"
@@ -581,7 +551,6 @@ void InitPlugin(JApplication* app) {
     app->Add(new QuickTutorialProcessor);
     // app->Add(new RandomSource);           // REMOVE ME
     app->Add(new JEventSourceGeneratorT<RandomSource>);     // ADD ME
-    app->Add(new JCsvWriter<Hit>());
     app->Add(new JFactoryGeneratorT<SimpleClusterFactory>);
 }
 }
@@ -634,9 +603,5 @@ from `JEventSource::GetResourceName()`.
 - Use tags to register both `ClusterFactories` with the `JApplication`. Create a 
   `JEventProcessor` which asks for the results from both algorithms and compares their results.
 
-- Create a `CsvFileSource` which reads the CSV file generated from the `JCsvWriter<Hit>`.
-  For `CheckOpenable`, read the first line of the file and check whether the column headers
-  match what we'd expect for a table of `Hit`s. Verify that we get the same histograms
-  whether we use the `RandomSource` or the `CsvFileSource`.
 
 

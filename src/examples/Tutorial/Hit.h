@@ -16,6 +16,8 @@
 /// Think of a JObject as being a row in a database table, with event number as an implicit foreign key.
 
 struct Hit : public JObject {
+    JOBJECT_PUBLIC(Hit)
+
     int x;     // Pixel coordinates centered around 0,0
     int y;     // Pixel coordinates centered around 0,0
     double E;  // Energy loss in GeV
@@ -26,18 +28,10 @@ struct Hit : public JObject {
     Hit(int x, int y, double E, double t) : x(x), y(y), E(E), t(t) {};
 
 
-    /// Override className to tell JANA to store the exact name of this class where we can
-    /// access it at runtime. JANA provides a NAME_OF_THIS macro so that this will return the correct value
-    /// even if you rename the class using automatic refactoring tools.
-
-    const std::string className() const override {
-        return NAME_OF_THIS;
-    }
-
     /// Override Summarize to tell JANA how to produce a convenient string representation for our JObject.
-    /// This can be used called from user code, but also lets JANA automatically inspect its own data. For instance,
-    /// adding JCsvWriter<Hit> will automatically generate a CSV file containing each hit. Warning: This is obviously
-    /// slow, so use this for debugging and monitoring but not inside the performance critical code paths.
+    /// This can be called from user code, but also lets JANA automatically inspect its own data. See the
+    /// CsvWriter example. Warning: Because this is slow, it should be used for debugging and monitoring 
+    /// but not inside the performance critical code paths.
 
     void Summarize(JObjectSummary& summary) const override {
         summary.add(x, NAME_OF(x), "%d", "Pixel coordinates centered around 0,0");

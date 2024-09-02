@@ -25,6 +25,7 @@ public:
     }
 
     const T& operator()() { return *m_data; }
+    const T& operator*() { return *m_data; }
 
 protected:
 
@@ -59,6 +60,7 @@ public:
     }
 
     const T& operator()() { return m_data; }
+    const T& operator*() { return m_data; }
 
 protected:
 
