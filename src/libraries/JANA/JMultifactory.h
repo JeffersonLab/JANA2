@@ -7,8 +7,8 @@
 #include "JANA/Utils/JTypeInfo.h"
 #include <JANA/JFactoryT.h>
 #include <JANA/JFactorySet.h>
-#include <JANA/Omni/JComponent.h>
-#include <JANA/Omni/JHasRunCallbacks.h>
+#include <JANA/Components/JComponent.h>
+#include <JANA/Components/JHasRunCallbacks.h>
 #include <JANA/JVersion.h>
 
 #if JANA2_HAVE_PODIO

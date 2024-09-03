@@ -10,7 +10,7 @@
 
 #include <JANA/JFactoryT.h>
 #include <JANA/Utils/JEventLevel.h>
-#include <JANA/Status/JComponentSummary.h>
+#include <JANA/Components/JComponentSummary.h>
 
 class JFactoryGenerator;
 class JFactory;

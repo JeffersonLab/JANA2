@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <JANA/Omni/JComponent.h>
-#include <JANA/Omni/JHasOutputs.h>
+#include <JANA/Components/JComponent.h>
+#include <JANA/Components/JHasOutputs.h>
 #include <JANA/JEvent.h>
 #include <JANA/JException.h>
 #include <JANA/JFactoryGenerator.h>

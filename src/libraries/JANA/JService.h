@@ -1,5 +1,5 @@
 
 #pragma once
 #include <JANA/JServiceFwd.h>
-#include <JANA/Omni/JComponent.h>
+#include <JANA/Components/JComponent.h>
 

@@ -7,7 +7,7 @@
 
 #include <JANA/JEventSourceGenerator.h>
 #include <JANA/Services/JParameterManager.h>
-#include <JANA/Status/JComponentSummary.h>
+#include <JANA/Components/JComponentSummary.h>
 #include <JANA/Services/JServiceLocator.h>
 
 #include <vector>

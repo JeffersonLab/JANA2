@@ -5,7 +5,7 @@
 
 #pragma once
 #include <JANA/JApplication.h>
-#include <JANA/Omni/JComponentFwd.h>
+#include <JANA/Components/JComponentFwd.h>
 #include <JANA/Utils/JTypeInfo.h>
 
 namespace jana {

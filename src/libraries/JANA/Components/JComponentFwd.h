@@ -11,7 +11,7 @@ class JParameterManager;
 #include <JANA/Utils/JEventLevel.h>
 #include <JANA/JLogger.h>
 #include <JANA/JException.h>
-#include <JANA/Status/JComponentSummary.h>
+#include <JANA/Components/JComponentSummary.h>
 
 #include <vector>
 #include <mutex>

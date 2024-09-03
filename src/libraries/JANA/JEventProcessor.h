@@ -4,9 +4,9 @@
 
 #pragma once
 
-#include <JANA/Omni/JComponent.h>
-#include <JANA/Omni/JHasInputs.h>
-#include <JANA/Omni/JHasRunCallbacks.h>
+#include <JANA/Components/JComponent.h>
+#include <JANA/Components/JHasInputs.h>
+#include <JANA/Components/JHasRunCallbacks.h>
 #include <JANA/JEvent.h>
 
 class JApplication;

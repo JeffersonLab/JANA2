@@ -8,7 +8,7 @@
 #include <JANA/Utils/JAny.h>
 #include <JANA/Utils/JEventLevel.h>
 #include <JANA/Utils/JCallGraphRecorder.h>
-#include <JANA/Omni/JComponent.h>
+#include <JANA/Components/JComponent.h>
 
 #include <string>
 #include <typeindex>

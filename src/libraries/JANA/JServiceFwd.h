@@ -1,6 +1,6 @@
 
 #pragma once
-#include <JANA/Omni/JComponentFwd.h>
+#include <JANA/Components/JComponentFwd.h>
 
 
 class JServiceLocator;
