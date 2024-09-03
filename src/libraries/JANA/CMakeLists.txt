@@ -78,8 +78,6 @@ set(JANA2_SOURCES
     Utils/JCpuInfo.cc
     Utils/JCpuInfo.h
     Utils/JTypeInfo.h
-    Utils/JResourcePool.h
-    Utils/JResettable.h
     Utils/JProcessorMapping.h
     Utils/JProcessorMapping.cc
     Utils/JPerfUtils.cc
