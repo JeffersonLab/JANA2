@@ -4,131 +4,53 @@
 set(JANA2_SOURCES
 
     JApplication.cc
-    JApplication.h
-    JEvent.h
-    JEventProcessor.h
-    JEventSource.h
-    JEventSourceGenerator.h
-    JEventSourceGeneratorT.h
-    JException.h
-    JFactory.h
     JFactory.cc
-    JFactoryGenerator.h
     JFactorySet.cc
-    JFactorySet.h
-    JFactoryT.h
-    JObject.h
-    JLogger.h
     JMultifactory.cc
-    JMultifactory.h
     JService.cc
     JVersion.cc
 
     Engine/JArrowProcessingController.cc
-    Engine/JArrowProcessingController.h
     Engine/JScheduler.cc
-    Engine/JScheduler.h
-    Engine/JWorker.h
     Engine/JWorker.cc
-    Engine/JWorkerMetrics.h
     Engine/JPerfMetrics.cc
-    Engine/JPerfMetrics.h
     Engine/JPerfSummary.cc
-    Engine/JPerfSummary.h
 
-    Topology/JArrow.h
-    Topology/JArrowMetrics.h
     Topology/JEventProcessorArrow.cc
-    Topology/JEventProcessorArrow.h
     Topology/JEventSourceArrow.cc
-    Topology/JEventSourceArrow.h
-    Topology/JEventMapArrow.h
     Topology/JEventMapArrow.cc
-    Topology/JPool.h
-    Topology/JMailbox.h
-    Topology/JSubeventArrow.h
-    Topology/JTopologyBuilder.h
     Topology/JTopologyBuilder.cc
 
     Services/JComponentManager.cc
-    Services/JComponentManager.h
-    Services/JGlobalRootLock.h
-    Services/JLoggingService.h
     Services/JLoggingService.cc
     Services/JParameterManager.cc
-    Services/JParameterManager.h
     Services/JPluginLoader.cc
-    Services/JPluginLoader.h
-    Services/JServiceLocator.h
-    Services/JEventGroupTracker.h
 
-    Components/JComponentSummary.h
     Components/JComponentSummary.cc
 
-    Streaming/JDiscreteJoin.h
-    Streaming/JEventBuilder.h
-    Streaming/JMessage.h
-    Streaming/JStreamingEventSource.h
-    Streaming/JTransport.h
-    Streaming/JTrigger.h
-    Streaming/JWindow.h
-
-    Utils/JBacktrace.h
-    Utils/JEventPool.h
     Utils/JCpuInfo.cc
-    Utils/JCpuInfo.h
-    Utils/JTypeInfo.h
-    Utils/JProcessorMapping.h
     Utils/JProcessorMapping.cc
     Utils/JPerfUtils.cc
-    Utils/JPerfUtils.h
     Utils/JStringification.cc
-    Utils/JStringification.h
     Utils/JAutoActivator.cc
-    Utils/JAutoActivator.h
-    Utils/JAny.h
     Utils/JTablePrinter.cc
-    Utils/JTablePrinter.h
-    Utils/JCallGraphRecorder.h
     Utils/JCallGraphRecorder.cc
-    Utils/JCallGraphEntryMaker.h
     Utils/JInspector.cc
-    Utils/JInspector.h
     Utils/JApplicationInspector.cc
-    Utils/JApplicationInspector.h
 
     Calibrations/JCalibration.cc
-    Calibrations/JCalibration.h
-    Calibrations/JCalibrationCCDB.h
     Calibrations/JCalibrationFile.cc
-    Calibrations/JCalibrationFile.h
-    Calibrations/JCalibrationGenerator.h
-    Calibrations/JCalibrationGeneratorCCDB.h
     Calibrations/JLargeCalibration.cc
-    Calibrations/JLargeCalibration.h
 
     CLI/JBenchmarker.cc
-    CLI/JBenchmarker.h
     CLI/JSignalHandler.cc
-    CLI/JSignalHandler.h
     CLI/JMain.cc
-    CLI/JMain.h
 
     Compatibility/JStreamLog.cc
-    Compatibility/JStreamLog.h
     Compatibility/JStreamLogBuffer.cc
-    Compatibility/JStreamLogBuffer.h
-    Compatibility/JStatusBits.h
-    Compatibility/jerror.h
-    Compatibility/JGeometry.h
     Compatibility/JGeometryManager.cc
-    Compatibility/JGeometryManager.h
     Compatibility/JGeometryXML.cc
-    Compatibility/JGeometryXML.h
     Compatibility/md5.c
-    Compatibility/md5.h
-    Compatibility/JLockService.h
-    Compatibility/JGetObjectsFactory.h
     )
 
 if (${USE_PODIO})
