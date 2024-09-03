@@ -4,6 +4,7 @@
 #include <type_traits>
 #include <PodioDatamodel/ExampleClusterCollection.h>
 #include <JANA/JEvent.h>
+#include <JANA/Podio/JFactoryPodioT.h>
 
 namespace podiotests {
 

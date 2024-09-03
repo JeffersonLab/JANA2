@@ -28,6 +28,9 @@ public:
 
     std::unique_ptr<typename PodioT::collection_type>& operator()() { return m_data; }
 
+    const JCollection* GetCollection() const { return m_collection; }
+
+
 protected:
     //void CreateCollections() override {
     //}

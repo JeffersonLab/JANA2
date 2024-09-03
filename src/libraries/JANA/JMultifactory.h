@@ -74,10 +74,6 @@ class JMultifactory : public jana::components::JComponent,
     // However, don't worry about a Status variable. Every time Execute() gets called, so does Process().
     // The JMultifactoryHelpers will control calls to Execute().
 
-#if JANA2_HAVE_PODIO
-    bool mNeedPodio = false;      // Whether we need to retrieve the podio::Frame
-    podio::Frame* mPodioFrame = nullptr;  // To provide the podio::Frame to SetPodioData, SetCollection
-#endif
 
 public:
     JMultifactory() = default;
@@ -165,13 +161,7 @@ void JMultifactory::SetData(std::string tag, std::vector<T*> data) {
         ex.plugin_name = m_plugin_name;
         throw ex;
     }
-#if JANA2_HAVE_PODIO
-    // This may or may not be a Podio factory. We find out if it is, and if so, set the frame before calling Set().
-    auto* typed = dynamic_cast<JFactoryPodio*>(helper);
-    if (typed != nullptr) {
-        typed->SetFrame(mPodioFrame); // Needs to be called before helper->Set(), otherwise Set() excepts
-    }
-#endif
+    // This will except if helper is a JFactoryPodioT. User should use SetPodioData() instead for PODIO data.
     helper->Set(data);
 }
 
@@ -179,10 +169,9 @@ void JMultifactory::SetData(std::string tag, std::vector<T*> data) {
 #if JANA2_HAVE_PODIO
 
 template <typename T>
-void JMultifactory::DeclarePodioOutput(std::string tag, bool owns_data) {
+void JMultifactory::DeclarePodioOutput(std::string tag, bool) {
     // TODO: Decouple tag name from collection name
     auto* helper = new JMultifactoryHelperPodio<T>(this);
-    if (!owns_data) helper->SetSubsetCollection(true);
 
     helper->SetTag(std::move(tag));
     helper->SetPluginName(m_plugin_name);
@@ -190,7 +179,6 @@ void JMultifactory::DeclarePodioOutput(std::string tag, bool owns_data) {
     helper->SetLevel(GetLevel());
     mHelpers.SetLevel(GetLevel());
     mHelpers.Add(helper);
-    mNeedPodio = true;
 }
 
 template <typename T>
@@ -214,7 +202,6 @@ void JMultifactory::SetCollection(std::string tag, typename JFactoryPodioT<T>::C
         throw ex;
     }
 
-    typed->SetFrame(mPodioFrame);
     typed->SetCollection(std::move(collection));
 }
 
@@ -239,7 +226,6 @@ void JMultifactory::SetCollection(std::string tag, std::unique_ptr<typename JFac
         throw ex;
     }
 
-    typed->SetFrame(mPodioFrame);
     typed->SetCollection(std::move(collection));
 }
 

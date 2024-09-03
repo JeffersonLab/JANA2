@@ -24,7 +24,6 @@
 #include <atomic>
 
 #if JANA2_HAVE_PODIO
-#include <JANA/Podio/JFactoryPodioT.h>
 #include <JANA/Components/JPodioCollection.h>
 #endif
 
@@ -48,19 +47,6 @@ class JEvent : public std::enable_shared_from_this<JEvent>
         void SetFactorySet(JFactorySet* aFactorySet) {
             delete mFactorySet;
             mFactorySet = aFactorySet;
-#if JANA2_HAVE_PODIO
-            // Maintain the index of PODIO factories
-            for (JFactory* factory : mFactorySet->GetAllFactories()) {
-                if (dynamic_cast<JFactoryPodio*>(factory) != nullptr) {
-                    auto tag = factory->GetTag();
-                    auto it = mPodioFactories.find(tag);
-                    if (it != mPodioFactories.end()) {
-                        throw JException("SetFactorySet failed because PODIO factory tag '%s' is not unique", tag.c_str());
-                    }
-                    mPodioFactories[tag] = factory;
-                }
-            }
-#endif
         }
 
         JFactorySet* GetFactorySet() const { return mFactorySet; }
@@ -537,8 +523,7 @@ inline std::vector<std::string> JEvent::GetAllCollectionNames() const {
 }
 
 inline const podio::CollectionBase* JEvent::GetCollectionBase(std::string name, bool throw_on_missing) const {
-    // First try finding it using the new collection model
-    auto* coll = CreateAndGetCollection(name, false);
+    auto* coll = CreateAndGetCollection(name, throw_on_missing);
     if (coll != nullptr) {
         auto* podio_coll = dynamic_cast<JPodioCollection*>(coll);
         if (podio_coll == nullptr) {
@@ -548,32 +533,12 @@ inline const podio::CollectionBase* JEvent::GetCollectionBase(std::string name, 
             return podio_coll->GetCollection();
         }
     }
-
-    // We couldn't find it using the new collection model, so now we search mPodioFactories
-    auto it = mPodioFactories.find(name);
-    if (it == mPodioFactories.end()) {
-        if (throw_on_missing) {
-            throw JException("No factory with tag '%s' found", name.c_str());
-        }
-        else {
-            return nullptr;
-        }
-    }
-    JFactoryPodio* factory = dynamic_cast<JFactoryPodio*>(it->second);
-    if (factory == nullptr) {
-        // Should be no way to get here if we encapsulate mPodioFactories correctly
-        throw JException("Factory with tag '%s' does not inherit from JFactoryPodio!", name.c_str());
-    }
-    JCallGraphEntryMaker cg_entry(mCallGraph, it->second); // times execution until this goes out of scope
-    it->second->Create(this->shared_from_this());
-    return factory->GetCollection();
-    // TODO: Might be cheaper/simpler to obtain factory from mPodioFactories instead of mFactorySet
+    return nullptr;
 }
 
 template <typename T>
 const typename T::collection_type* JEvent::GetCollection(std::string name, bool throw_on_missing) const {
-    // First try finding it using the new collection model
-    auto* coll = CreateAndGetCollection(name, false);
+    auto* coll = CreateAndGetCollection(name, throw_on_missing);
     if (coll != nullptr) {
         auto* podio_coll = dynamic_cast<JPodioCollection*>(coll);
         if (podio_coll == nullptr) {
@@ -583,19 +548,7 @@ const typename T::collection_type* JEvent::GetCollection(std::string name, bool 
             return podio_coll->GetCollection<T>();
         }
     }
-
-    // Next try finding it using the old way
-    JFactoryT<T>* factory = GetFactory<T>(name, throw_on_missing);
-    if (factory == nullptr) {
-        return nullptr;
-    }
-    JFactoryPodioT<T>* typed_factory = dynamic_cast<JFactoryPodioT<T>*>(factory);
-    if (typed_factory == nullptr) {
-        throw JException("Factory must inherit from JFactoryPodioT in order to use JEvent::GetCollection()");
-    }
-    JCallGraphEntryMaker cg_entry(mCallGraph, typed_factory); // times execution until this goes out of scope
-    typed_factory->Create(this->shared_from_this());
-    return static_cast<const typename JFactoryPodioT<T>::CollectionT*>(typed_factory->GetCollection());
+    return nullptr;
 }
 
 
@@ -603,7 +556,18 @@ template <typename PodioT>
 JPodioCollection* JEvent::InsertCollection(typename PodioT::collection_type&& collection, std::string name) {
     /// InsertCollection inserts the provided PODIO collection into both the podio::Frame and then a JFactoryPodioT<T>
 
-    auto frame = GetOrCreateFrame(shared_from_this());
+    podio::Frame* frame = nullptr;
+    try {
+        frame = const_cast<podio::Frame*>(GetSingle<podio::Frame>(""));
+        if (frame == nullptr) {
+            frame = new podio::Frame;
+            Insert(frame);
+        }
+    }
+    catch (...) {
+        frame = new podio::Frame;
+        Insert(frame);
+    }
     const auto& owned_collection = frame->put(std::move(collection), name);
     return InsertCollectionAlreadyInFrame<PodioT>(&owned_collection, name);
 }
