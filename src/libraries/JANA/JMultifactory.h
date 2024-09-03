@@ -12,7 +12,6 @@
 #include <JANA/JVersion.h>
 
 #if JANA2_HAVE_PODIO
-#include <JANA/Podio/JPodioTypeHelpers.h>
 #include "JANA/Podio/JFactoryPodioT.h"
 #endif
 
