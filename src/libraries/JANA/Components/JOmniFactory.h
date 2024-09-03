@@ -21,11 +21,12 @@
 #include <string>
 #include <vector>
 
+namespace jana::components {
 
 struct EmptyConfig {};
 
 template <typename AlgoT, typename ConfigT=EmptyConfig>
-class JOmniFactory : public JMultifactory, public jana::omni::JHasInputs {
+class JOmniFactory : public JMultifactory, public jana::components::JHasInputs {
 public:
 
     /// =========================
@@ -346,3 +347,9 @@ public:
     }
 
 };
+
+} // namespace jana::components
+
+using jana::components::JOmniFactory;
+
+

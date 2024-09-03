@@ -10,10 +10,10 @@
 #include <JANA/JEvent.h>
 
 class JApplication;
-class JEventUnfolder : public jana::omni::JComponent, 
-                       public jana::omni::JHasRunCallbacks,
-                       public jana::omni::JHasInputs, 
-                       public jana::omni::JHasOutputs {
+class JEventUnfolder : public jana::components::JComponent, 
+                       public jana::components::JHasRunCallbacks,
+                       public jana::components::JHasInputs, 
+                       public jana::components::JHasOutputs {
 
 private:
     int32_t m_last_run_number = -1;

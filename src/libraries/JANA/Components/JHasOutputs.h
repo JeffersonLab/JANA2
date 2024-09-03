@@ -6,8 +6,8 @@
 
 #include <JANA/JEvent.h>
 
-namespace jana {
-namespace omni {
+namespace jana::components {
+
 
 
 struct JHasOutputs {
@@ -115,6 +115,4 @@ protected:
 };
 
 
-
-} // namespace omni
-} // namespace jana
+} // namespace jana::components

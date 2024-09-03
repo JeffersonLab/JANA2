@@ -12,9 +12,9 @@
 class JApplication;
 
 
-class JEventProcessor : public jana::omni::JComponent, 
-                        public jana::omni::JHasRunCallbacks, 
-                        public jana::omni::JHasInputs {
+class JEventProcessor : public jana::components::JComponent, 
+                        public jana::components::JHasRunCallbacks, 
+                        public jana::components::JHasInputs {
 public:
 
     JEventProcessor() = default;

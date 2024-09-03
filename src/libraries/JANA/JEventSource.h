@@ -16,7 +16,8 @@ class JApplication;
 class JFactory;
 
 
-class JEventSource : public jana::omni::JComponent, public jana::omni::JHasOutputs {
+class JEventSource : public jana::components::JComponent, 
+                     public jana::components::JHasOutputs {
 
 public:
     

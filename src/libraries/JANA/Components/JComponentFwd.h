@@ -16,8 +16,7 @@ class JParameterManager;
 #include <vector>
 #include <mutex>
 
-namespace jana {
-namespace omni {
+namespace jana::components {
 
 
 struct JComponent {
@@ -139,14 +138,9 @@ public:
             parameter->Configure(fields);
         }
     }
-
-
-    // 
 };
 
 
-
-} // namespace omni
-} // namespace jana
+} // namespace jana::components
 
 

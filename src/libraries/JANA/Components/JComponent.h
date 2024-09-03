@@ -8,8 +8,7 @@
 #include <JANA/Components/JComponentFwd.h>
 #include <JANA/Utils/JTypeInfo.h>
 
-namespace jana {
-namespace omni {
+namespace jana::components {
 
 template <typename T>
 class JComponent::ParameterRef : public JComponent::ParameterBase {
@@ -150,7 +149,6 @@ inline void JComponent::CallWithJExceptionWrapper(std::string func_name, F func)
 }
 
 
-} // namespace omni
-} // namespace jana
+} // namespace jana::components
 
 

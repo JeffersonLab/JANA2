@@ -10,6 +10,8 @@
 #include <map>
 
 
+namespace jana::components {
+
 // Keeping this around for backwards compatibility only
 struct JFactorySummary {
     JEventLevel level;
@@ -170,3 +172,5 @@ inline bool operator==(const JComponentSummary::Collection& lhs, const JComponen
 
 inline bool operator!=(const JComponentSummary::Collection& lhs, const JComponentSummary::Collection& rhs) { return !(lhs == rhs); }
 
+} // namespace jana::components
+using jana::components::JComponentSummary;

@@ -66,8 +66,8 @@ public:
 #endif // JANA2_HAVE_PODIO
 
 
-class JMultifactory : public jana::omni::JComponent,
-                      public jana::omni::JHasRunCallbacks {
+class JMultifactory : public jana::components::JComponent,
+                      public jana::components::JHasRunCallbacks {
 
     JFactorySet mHelpers; // This has ownership UNTIL JFactorySet::Add() takes it over
 
