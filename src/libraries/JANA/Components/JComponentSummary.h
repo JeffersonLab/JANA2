@@ -9,9 +9,6 @@
 #include <vector>
 #include <map>
 
-
-namespace jana::components {
-
 // Keeping this around for backwards compatibility only
 struct JFactorySummary {
     JEventLevel level;
@@ -21,6 +18,8 @@ struct JFactorySummary {
     std::string object_name;
 };
 
+
+namespace jana::components {
 
 class JComponentSummary {
 public:
