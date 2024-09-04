@@ -69,7 +69,7 @@ public:
             // However this is risky because PODIO tracks inter-object associations but
             // doesn't track the resulting inter-collection associations. Thus if the user
             // omits any collections when they read a file, they risk introducing dangling 
-            // pointers. This can silently corrupt the data in the output file.
+            // pointers. This can segfault or silently corrupt the data in the output file.
 
             const podio::CollectionBase* coll = frame->get(coll_name);
             const auto& coll_type = coll->getValueTypeName();
