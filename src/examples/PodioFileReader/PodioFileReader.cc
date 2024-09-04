@@ -28,6 +28,10 @@ public:
         SetCallbackStyle(CallbackStyle::ExpertMode);
     }
 
+    static std::string GetDescription() {
+        return "Example that reads a PODIO file into JANA. This example uses `PodioDatamodel`, but it is trivial to adapt it to any data model. For now this only works on files containing events, not timeslices or any other levels.";
+    }
+
     void Open() final {
         m_reader.openFile(GetResourceName());
         m_entry_count = m_reader.getEntries("events");
@@ -68,7 +72,7 @@ public:
             // pointers. This can silently corrupt the data in the output file.
 
             const podio::CollectionBase* coll = frame->get(coll_name);
-            const auto& coll_type = coll->getDataTypeName();
+            const auto& coll_type = coll->getValueTypeName();
 
             if (coll_type == "EventInfo") {
                 event.InsertCollectionAlreadyInFrame<EventInfo>(coll, coll_name);
@@ -83,7 +87,7 @@ public:
                 event.InsertCollectionAlreadyInFrame<ExampleCluster>(coll, coll_name);
             }
             else {
-                throw JException("Collection '%s' has typename '%' which is not known to PodioFileReader", coll_name.c_str(), coll_type.data());
+                throw JException("Collection '%s' has typename '%s' which is not known to PodioFileReader", coll_name.c_str(), coll_type.data());
             }
         }
 

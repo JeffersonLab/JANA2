@@ -3,7 +3,8 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 #include <podio/CollectionBase.h>
 #include <podio/Frame.h>
-#include "PodioDatamodel/MutableExampleHit.h"
+
+#include "PodioDatamodel/EventInfoCollection.h"
 #include "PodioDatamodel/ExampleHitCollection.h"
 #include <podio/ROOTFrameWriter.h>
 #include <podio/ROOTFrameReader.h>
@@ -12,7 +13,6 @@
 #include <JANA/JFactoryGenerator.h>
 #include <JANA/Podio/JEventProcessorPodio.h>
 
-#include "PodioExampleSource.h"
 #include "PodioExampleProcessor.h"
 #include "ExampleClusterFactory.h"
 #include "ExampleMultifactory.h"
@@ -82,7 +82,8 @@ int main() {
     app.Add(new JEventProcessorPodio);
     app.Add(new JFactoryGeneratorT<ExampleClusterFactory>());
     app.Add(new JFactoryGeneratorT<ExampleMultifactory>());
-    app.Add(new PodioExampleSource("hits.root"));
+    app.Add("hits.root");
+    app.AddPlugin("PodioFileReader");
     app.Run();
 
     verify_clusters_file();

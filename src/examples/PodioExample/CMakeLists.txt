@@ -2,7 +2,6 @@
 set(PodioExample_SOURCES
         PodioExample.cc
         PodioExampleProcessor.cc
-        PodioExampleSource.cc
         ExampleClusterFactory.cc
         ExampleMultifactory.cc
         )
@@ -17,10 +16,7 @@ if (USE_PODIO)
 
     install(TARGETS PodioExample DESTINATION bin)
 
-    add_test(NAME jana-example-podio-tests
-        COMMAND PodioExample)
-
-    set_tests_properties(jana-example-podio-tests PROPERTIES DISABLED TRUE)
+    add_test(NAME jana-example-podio-tests COMMAND PodioExample)
 
 else()
     message(STATUS "Skipping examples/PodioExample because USE_PODIO=Off")
