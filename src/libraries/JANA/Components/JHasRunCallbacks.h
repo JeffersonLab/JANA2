@@ -6,8 +6,8 @@
 
 #include <JANA/JEvent.h>
 
-namespace jana {
-namespace omni {
+namespace jana::components {
+
 
 class JHasRunCallbacks {
 
@@ -60,6 +60,5 @@ public:
 
 };
 
-} // namespace omni
-} // namespace jana
 
+} // namespace jana::components

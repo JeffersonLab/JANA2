@@ -4,17 +4,17 @@
 
 #pragma once
 
-#include <JANA/Omni/JComponent.h>
-#include <JANA/Omni/JHasInputs.h>
-#include <JANA/Omni/JHasRunCallbacks.h>
+#include <JANA/Components/JComponent.h>
+#include <JANA/Components/JHasInputs.h>
+#include <JANA/Components/JHasRunCallbacks.h>
 #include <JANA/JEvent.h>
 
 class JApplication;
 
 
-class JEventProcessor : public jana::omni::JComponent, 
-                        public jana::omni::JHasRunCallbacks, 
-                        public jana::omni::JHasInputs {
+class JEventProcessor : public jana::components::JComponent, 
+                        public jana::components::JHasRunCallbacks, 
+                        public jana::components::JHasInputs {
 public:
 
     JEventProcessor() = default;

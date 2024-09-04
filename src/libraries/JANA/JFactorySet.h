@@ -10,16 +10,15 @@
 
 #include <JANA/JFactoryT.h>
 #include <JANA/Utils/JEventLevel.h>
-#include <JANA/Utils/JResettable.h>
-#include <JANA/Status/JComponentSummary.h>
+#include <JANA/Components/JComponentSummary.h>
 
 class JFactoryGenerator;
 class JFactory;
 class JMultifactory;
 
 
-class JFactorySet : public JResettable
-{
+class JFactorySet {
+
     public:
         JFactorySet();
         JFactorySet(const std::vector<JFactoryGenerator*>& aFactoryGenerators);

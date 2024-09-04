@@ -5,9 +5,8 @@
 #pragma once
 #include <JANA/JEvent.h>
 
-namespace jana {
-namespace omni {
 
+namespace jana::components {
 
 struct JHasInputs {
 protected:
@@ -236,6 +235,5 @@ protected:
 #endif
 };
 
-} // namespace omni
-} // namespace jana
+} // namespace jana::components
 

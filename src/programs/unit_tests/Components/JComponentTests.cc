@@ -3,8 +3,8 @@
 #include <JANA/JApplication.h>
 #include <JANA/JEventUnfolder.h>
 #include <JANA/JEventProcessor.h>
-#include <JANA/Omni/JOmniFactory.h>
-#include <JANA/Omni/JOmniFactoryGeneratorT.h>
+#include <JANA/Components/JOmniFactory.h>
+#include <JANA/Components/JOmniFactoryGeneratorT.h>
 
 namespace jana {
 

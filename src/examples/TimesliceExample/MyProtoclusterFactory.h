@@ -4,7 +4,7 @@
 #pragma once
 
 #include <DatamodelGlue.h>
-#include <JANA/Omni/JOmniFactory.h>
+#include <JANA/Components/JOmniFactory.h>
 
 
 struct MyProtoclusterFactory : public JOmniFactory<MyProtoclusterFactory> {

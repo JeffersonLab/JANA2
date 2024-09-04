@@ -11,13 +11,12 @@ class JParameterManager;
 #include <JANA/Utils/JEventLevel.h>
 #include <JANA/JLogger.h>
 #include <JANA/JException.h>
-#include <JANA/Status/JComponentSummary.h>
+#include <JANA/Components/JComponentSummary.h>
 
 #include <vector>
 #include <mutex>
 
-namespace jana {
-namespace omni {
+namespace jana::components {
 
 
 struct JComponent {
@@ -139,14 +138,9 @@ public:
             parameter->Configure(fields);
         }
     }
-
-
-    // 
 };
 
 
-
-} // namespace omni
-} // namespace jana
+} // namespace jana::components
 
 

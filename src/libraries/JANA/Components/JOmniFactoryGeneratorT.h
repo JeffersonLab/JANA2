@@ -8,6 +8,8 @@
 #include <JANA/JFactoryGenerator.h>
 #include <vector>
 
+namespace jana::components {
+
 template<class FactoryT>
 class JOmniFactoryGeneratorT : public JFactoryGenerator {
 public:
@@ -118,3 +120,6 @@ public:
 private:
     std::vector<TypedWiring> m_typed_wirings;
 };
+
+} // namespace jana::components
+using jana::components::JOmniFactoryGeneratorT;

@@ -13,7 +13,7 @@
 #include <JANA/JEvent.h>
 #include <JANA/JMultifactory.h>
 #include <JANA/JVersion.h>
-#include <JANA/Omni/JHasInputs.h>
+#include <JANA/Components/JHasInputs.h>
 
 #include <JANA/JLogger.h>
 #include <JANA/Services/JLoggingService.h>
@@ -21,11 +21,12 @@
 #include <string>
 #include <vector>
 
+namespace jana::components {
 
 struct EmptyConfig {};
 
 template <typename AlgoT, typename ConfigT=EmptyConfig>
-class JOmniFactory : public JMultifactory, public jana::omni::JHasInputs {
+class JOmniFactory : public JMultifactory, public jana::components::JHasInputs {
 public:
 
     /// =========================
@@ -346,3 +347,9 @@ public:
     }
 
 };
+
+} // namespace jana::components
+
+using jana::components::JOmniFactory;
+
+
