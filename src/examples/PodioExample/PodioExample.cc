@@ -11,7 +11,6 @@
 
 #include <JANA/JApplication.h>
 #include <JANA/JFactoryGenerator.h>
-#include <JANA/Podio/JEventProcessorPodio.h>
 
 #include "PodioExampleProcessor.h"
 #include "ExampleClusterFactory.h"
@@ -79,11 +78,12 @@ int main() {
 
     JApplication app;
     app.Add(new PodioExampleProcessor);
-    app.Add(new JEventProcessorPodio);
     app.Add(new JFactoryGeneratorT<ExampleClusterFactory>());
     app.Add(new JFactoryGeneratorT<ExampleMultifactory>());
     app.Add("hits.root");
     app.AddPlugin("PodioFileReader");
+    app.AddPlugin("PodioFileWriter");
+    app.SetParameterValue("podio:output_collections", "hits_filtered,clusters_from_hits_filtered,clusters_filtered");
     app.Run();
 
     verify_clusters_file();
