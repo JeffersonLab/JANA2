@@ -6,10 +6,10 @@
 #ifndef JANA2_DATAMODELGLUE_H
 #define JANA2_DATAMODELGLUE_H
 
-#include <PodioExampleDatamodel/ExampleHitCollection.h>
-#include <PodioExampleDatamodel/ExampleClusterCollection.h>
-#include <PodioExampleDatamodel/EventInfoCollection.h>
-#include <PodioExampleDatamodel/TimesliceInfoCollection.h>
+#include <PodioDatamodel/ExampleHitCollection.h>
+#include <PodioDatamodel/ExampleClusterCollection.h>
+#include <PodioDatamodel/EventInfoCollection.h>
+#include <PodioDatamodel/TimesliceInfoCollection.h>
 
 
 template<typename ... Ts>

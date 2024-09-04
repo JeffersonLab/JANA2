@@ -1,6 +1,4 @@
 ---
-# A more complete example is provided by podio under tests/datalayout.yaml
-
 schema_version: 1
 options :
   # should getters / setters be prefixed with get / set?
@@ -29,12 +27,12 @@ datatypes :
     Description : "Example Hit"
     Author : "B. Hegner"
     Members:
-      - unsigned long long cellID      // cellID
-      - double x      // x-coordinate
-      - double y      // y-coordinate
-      - double z      // z-coordinate
-      - double energy // measured energy deposit
-      - uint64_t time   // ticks since start of timeframe
+      - uint64_t cellID   // cellID
+      - double x          // x-coordinate
+      - double y          // y-coordinate
+      - double z          // z-coordinate
+      - double energy     // measured energy deposit
+      - uint64_t time     // ticks since start of timeframe
 
   ExampleCluster :
     Description : "Cluster"

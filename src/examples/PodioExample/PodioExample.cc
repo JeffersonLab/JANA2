@@ -3,8 +3,8 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 #include <podio/CollectionBase.h>
 #include <podio/Frame.h>
-#include "PodioExampleDatamodel/MutableExampleHit.h"
-#include "PodioExampleDatamodel/ExampleHitCollection.h"
+#include "PodioDatamodel/MutableExampleHit.h"
+#include "PodioDatamodel/ExampleHitCollection.h"
 #include <podio/ROOTFrameWriter.h>
 #include <podio/ROOTFrameReader.h>
 
