@@ -40,7 +40,7 @@ public:
         m_writer->finish();
     }
 
-    void Process(const JEvent& event) override {
+    void ProcessParallel(const JEvent& event) override {
 
         for (const auto& collection_name : *m_collection_names) {
 
@@ -50,6 +50,9 @@ public:
             // may contain dangling references and segfault upon reading.
             event.GetCollectionBase(collection_name);
         }
+    }
+
+    void Process(const JEvent& event) override {
 
         auto* frame = event.GetSingle<podio::Frame>();
         // This will throw if no PODIO frame is found. 
