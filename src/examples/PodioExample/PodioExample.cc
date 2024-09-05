@@ -83,6 +83,7 @@ int main() {
     app.Add("hits.root");
     app.AddPlugin("PodioFileReader");
     app.AddPlugin("PodioFileWriter");
+    app.SetParameterValue("podio:output_file", "podio_output.root");
     app.SetParameterValue("podio:output_collections", "hits_filtered,clusters_from_hits_filtered,clusters_filtered");
     app.Run();
 

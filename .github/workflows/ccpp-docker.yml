@@ -64,7 +64,7 @@ jobs:
     - name: Other examples
       run: |
         export LD_LIBRARY_PATH=/app/podio/install/lib:$LD_LIBRARY_PATH
-        ctest --test-dir build --output-on-failure -R "jana-example-dst-tests|jana-example-tutorial-tests|jana-example-eventgroup-tests|jana-example-unit-tests"
+        ctest --test-dir build --output-on-failure -R "jana-example-dst-tests|jana-example-tutorial-tests|jana-example-eventgroup-tests|jana-example-unit-tests|jana-example-podio-tests"
 
 
 
