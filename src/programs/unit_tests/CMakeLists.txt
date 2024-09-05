@@ -51,7 +51,7 @@ add_jana_test(jana-unit-tests SOURCES ${TEST_SOURCES})
 if (${USE_PODIO})
     # Pull in the data model from examples/PodioExample.
     # We don't want to have multiple separate toy data models in the JANA codebase
-    target_link_libraries(jana-unit-tests PRIVATE PodioExampleDatamodel PodioExampleDatamodelDict)
+    target_link_libraries(jana-unit-tests PRIVATE PodioDatamodel PodioDatamodelDict)
 endif()
 
 

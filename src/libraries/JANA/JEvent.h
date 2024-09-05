@@ -104,7 +104,7 @@ class JEvent : public std::enable_shared_from_this<JEvent>
         const podio::CollectionBase* GetCollectionBase(std::string name, bool throw_on_missing=true) const;
         template <typename T> const typename JFactoryPodioT<T>::CollectionT* GetCollection(std::string name, bool throw_on_missing=true) const;
         template <typename T> JFactoryPodioT<T>* InsertCollection(typename JFactoryPodioT<T>::CollectionT&& collection, std::string name);
-        template <typename T> JFactoryPodioT<T>* InsertCollectionAlreadyInFrame(const typename JFactoryPodioT<T>::CollectionT* collection, std::string name);
+        template <typename T> JFactoryPodioT<T>* InsertCollectionAlreadyInFrame(const podio::CollectionBase* collection, std::string name);
 #endif
 
         //SETTERS
@@ -565,10 +565,16 @@ JFactoryPodioT<T>* JEvent::InsertCollection(typename JFactoryPodioT<T>::Collecti
 
 
 template <typename T>
-JFactoryPodioT<T>* JEvent::InsertCollectionAlreadyInFrame(const typename JFactoryPodioT<T>::CollectionT* collection, std::string name) {
+JFactoryPodioT<T>* JEvent::InsertCollectionAlreadyInFrame(const podio::CollectionBase* collection, std::string name) {
     /// InsertCollection inserts the provided PODIO collection into a JFactoryPodioT<T>. It assumes that the collection pointer
     /// is _already_ owned by the podio::Frame corresponding to this JEvent. This is meant to be used if you are starting out
     /// with a PODIO frame (e.g. a JEventSource that uses podio::ROOTFrameReader).
+    
+    const auto* typed_collection = dynamic_cast<const typename T::collection_type*>(collection);
+    if (typed_collection == nullptr) {
+        throw JException("Attempted to insert a collection of the wrong type! name='%s', expected type='%s', actual type='%s'",
+            name.c_str(), JTypeInfo::demangle<typename T::collection_type>().c_str(), collection->getDataTypeName().data());
+    }
 
     // Users are allowed to Insert with tag="" if and only if that tag gets resolved by default tags.
     if (mUseDefaultTags && name.empty()) {
@@ -605,7 +611,7 @@ JFactoryPodioT<T>* JEvent::InsertCollectionAlreadyInFrame(const typename JFactor
         throw JException("Factory must inherit from JFactoryPodioT in order to use JEvent::GetCollection()");
     }
 
-    typed_factory->SetCollectionAlreadyInFrame(collection);
+    typed_factory->SetCollectionAlreadyInFrame(typed_collection);
     typed_factory->SetInsertOrigin( mCallGraph.GetInsertDataOrigin() );
     return typed_factory;
 }

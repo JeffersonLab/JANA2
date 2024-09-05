@@ -7,7 +7,6 @@
 #define JANA2_PODIOEXAMPLEPROCESSOR_H
 
 #include <JANA/JEventProcessor.h>
-#include "DatamodelGlue.h"
 
 class PodioExampleProcessor : public JEventProcessor {
 public:

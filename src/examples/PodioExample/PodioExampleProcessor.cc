@@ -4,6 +4,8 @@
 
 
 #include "PodioExampleProcessor.h"
+#include <PodioDatamodel/ExampleHitCollection.h>
+#include <PodioDatamodel/ExampleClusterCollection.h>
 
 /*
 struct PrintingVisitor {
