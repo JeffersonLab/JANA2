@@ -11,6 +11,7 @@
 #include <JANA/Services/JGlobalRootLock.h>
 #include <JANA/Services/JPluginLoader.h>
 #include <JANA/Services/JComponentManager.h>
+#include <JANA/Services/JWiringService.h>
 #include <JANA/Topology/JTopologyBuilder.h>
 #include <JANA/Services/JLoggingService.h>
 #include <JANA/Services/JGlobalRootLock.h>
@@ -128,6 +129,9 @@ void JApplication::Initialize() {
     // Set logger on JApplication itself
     m_logger = logging_service->get_logger("JApplication");
     m_logger.show_classname = false;
+
+    // Set up wiring
+    ProvideService(std::make_shared<jana::services::JWiringService>());
 
     // Attach all plugins
     plugin_loader->attach_plugins(component_manager.get());
