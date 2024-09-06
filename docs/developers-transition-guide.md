@@ -1,8 +1,11 @@
 
 ****
-## Common Functions
+# Developers Transition Guide: Key Syntax Changes between JANA1 to JANA2
 
-### JANA Namespace
+This guide outlines the critical syntax and functional updates between JANA1 and JANA2, helping developers navigate the transition smoothly.
+
+## Commonly Used Features
+### JANA Namespace Handling
 ##### **JANA1**
 Adding following on top of all files was necessary in JANA1:
 
@@ -11,8 +14,7 @@ using namespace jana;
 ```
 ##### **JANA2**
 This line is no longer required in JANA2.
-
-### Application
+### Application Handling
 #### Getting the JApplication
 ##### **JANA1**
 In JANA1 there is a global variable `japp` which is a pointer to the project's `JApplication`. You can also obtain it from `JEventLoop::GetJApplication()`.
@@ -26,16 +28,13 @@ You can also obtain it from the `JEvent` the same way as you used to from `JEven
 ```c++
 auto app = event->GetJApplication();
 ```
-
-
-### Parameters
+### Parameter Management
 #### Setting Parameters
 ##### **JANA1**
 ```
 gPARMS->GetParameter("OUTPUT_FILENAME", dOutputFileName);
 ```
 ##### **JANA2**
-
 You should obtain parameters as shown below. 
 
 ```
@@ -51,11 +50,8 @@ We strongly recommend you register all parameters from inside the `Init()` callb
 - Inspect the exact parameter values used by a factory
 
 If you register parameters in other contexts, this machinery might not work and you might get incomplete parameter lists and missing or spurious error messages. Worse, your code might not see the parameter values you expect it to see. Registering parameters from inside component constructors is less problematic but still discouraged because it won't work with some upcoming new features.
-
-
-#### Getting parameter maps
+#### Getting Parameter Maps
 ##### **JANA1**
-
 To obtain a map of all parameters that share a common prefix:
 
 ```
@@ -63,7 +59,6 @@ To obtain a map of all parameters that share a common prefix:
 gPARMS->GetParameters(locParameterMap, "COMBO_DEDXCUT:"); 
 ```
 ##### **JANA2**
-
 In JANA2 this has been renamed to `FilterParameters` but the functionality is the same.
 Note that this method is not on `JApplication` directly; you have to obtain the parameter manager like so:
 
@@ -71,20 +66,16 @@ Note that this method is not on `JApplication` directly; you have to obtain the 
 //gets all parameters with this filter at the beginning of the key
 GetApplication()->GetJParameterManager()->FilterParameters(locParameterMap, "COMBO_DEDXCUT:");
 ```
-
-### DApplication
+### DApplication Handling
 #### Getting DApplication
 ##### **JANA1**
-
 ```
 #include "DANA/DApplication.h"
 dApplication = dynamic_cast<DApplication*>(locEventLoop->GetJApplication
 ```
-
 ##### **JANA2**
 There is no `DApplication` anymore in JANA2. `JApplication` is `final`, which means you can't inherit from it. The functionality on `DApplication` has been moved into `JService`s, which can be accessed via `JApplication::GetService<ServiceT>()`. 
-
-### DGeometry
+### DGeometry Handling
 #### Getting DGeometry
 ##### **JANA1**
 ###### Using japp
@@ -122,15 +113,13 @@ DGeometry *locGeometry = DEvent::GetDGeometry(locEvent);
 ```
 
 You should call `GetDGeometry` from `JFactory::BeginRun` or `JEventProcessor::BeginRun`.
-
-### Calibration
-#### GetCalib
+### Calibration Handling
+#### Accessing Calibration Data - `GetCalib` 
 ##### **JANA1**
 ```
 locEventLoop->GetCalib(locTOFParmsTable.c_str(), tofparms);
 ```
 ##### **JANA2**
-
 Analogously to `DGeometry`, you obtain the calibrations by obtaining the `JCalibrationManager` from `JApplication::GetService<>()` and then loading the calibration object corresponding to the event's run number. We recommend you use `DEvent::GetCalib` to avoid this boilerplate. You should call this from your `BeginRun` callback. 
 
 ```
@@ -154,15 +143,13 @@ calibration->Get("BCAL/mc_parms", bcalparms, event_number)
 
 
 ```
-
-### Status Bit
-#### GetStatusBit
+### Status Bit Handling
+#### Accessing Status Bit - `GetStatusBit`
 ##### **JANA1**
 ```
 locEventLoop->GetJEvent().GetStatusBit(kSTATUS_PHYSICS_EVENT)
 ```
 ##### **JANA2**
-
 Status bits are no longer an event member variable. Instead, they are inserted and retrieved just like the other collections:
 
 ```
@@ -175,9 +162,8 @@ locEvent->GetSingle<DStatusBits>()->GetStatusBit(kSTATUS_PHYSICS_EVENT)
 
 locEvent->GetSingleStrict<DStatusBits>()->GetStatusBit(kSTATUS_REST);
 ```
-
-### BField
-#### GetBField
+### Magnetic Field Handling
+#### Getting Magnetic Field - `GetBField`
 ##### **JANA1**
 ```
 #include "DANA/DApplication.h"
@@ -187,7 +173,6 @@ dMagFMap= dApplication->GetBfield(locEventLoop->GetJEvent().GetRunNumber());
 
 ```
 ##### **JANA2**
-
 In JANA2, the magnetic field map is a resource handled analogously to `DGeometry` and `JCalibrationManager`. Thus, we recommend obtaining the 
 field map by calling `DEvent::GetBField(event)` from inside `BeginRun`:
 
@@ -197,12 +182,9 @@ field map by calling `DEvent::GetBField(event)` from inside `BeginRun`:
 dMagneticFieldMap = DEvent::GetBfield(locEvent);
 ```
 
-
-
-## Modified Getters
-
-### JObject
-#### 1. GetSingleT
+## Updated Get Functions
+### JObject Getters
+#### 1. `GetSingleT`
 ##### **JANA1**
 ```
 Was present in JANA1
@@ -211,7 +193,7 @@ Was present in JANA1
 ```
 No longer available in JANA2; use GetSingle() instead
 ```
-#### 2. GetSingle
+#### 2. `GetSingle`
 ##### **JANA1**
 ```
 // Pass by reference
@@ -225,7 +207,7 @@ digihit->GetSingle(PPobj);
 // Return pointer to object
 auto PPobj = digihit->GetSingle<Df250PulsePedestal>();
 ```
-#### 3. Get
+#### 3. `Get`
 ##### **JANA1**
 ```
 // Pass by Reference
@@ -238,9 +220,8 @@ point.Get(assoc_hits);
 // Return value
 vector<const DBCALUnifiedHit*> assoc_hits = point.Get<DBCALUnifiedHit>();
 ```
-
-### JEvent 
-#### 1. GetSingle
+### JEvent Getters
+#### 1. `GetSingle`
 ##### **JANA1**
 ```
 // Pass by Reference, 
@@ -255,7 +236,7 @@ loop->GetSingle(locTTabUtilities);
 
 const DTTabUtilities* locTTabUtilities = event->GetSingle<DTTabUtilities>();
 ```
-#### 2. Get
+#### 2. `Get`
 ##### **JANA1**
 ```
 // Pass by Reference
@@ -273,11 +254,9 @@ auto showers = event->Get<DBCALShower>("IU");
 ```
 
 ## JEventProcessor
-### Child JEventProcessor Basic Header File
+### JEventProcessor Header File
 ##### JANA1
 ```
-  
-
 #ifndef _JEventProcessor_myplugin_
 #define _JEventProcessor_myplugin_
 
@@ -287,7 +266,7 @@ auto showers = event->Get<DBCALShower>("IU");
 using namespace jana;
   
 
-class JEventProcessor_myplugin:public jana::JEventProcessor{
+class JEventProcessor_myplugin : public jana::JEventProcessor{
 public:
 	JEventProcessor_myplugin();
 	~JEventProcessor_myplugin();
@@ -306,18 +285,17 @@ private:
 ```
 ##### JANA2
 ```
-
-#ifndef _JEventProcessor_secondTest_
-#define _JEventProcessor_secondTest_
+#ifndef _JEventProcessor_myplugin_
+#define _JEventProcessor_myplugin_
 #include <JANA/JEventProcessor.h>
 
-class JEventProcessor_secondTest : public JEventProcessor {
+class JEventProcessor_myplugin : public JEventProcessor {
 
 public:
-	JEventProcessor_secondTest() { 
+	JEventProcessor_myplugin() { 
         SetTypeName(NAME_OF_THIS);
     }
-	~JEventProcessor_secondTest() = default;
+	~JEventProcessor_myplugin() = default;
 
 private:
 	void Init() override;
@@ -327,9 +305,8 @@ private:
 	void Finish() override; 
 };
 
-#endif // _JEventProcessor_secondTest_
+#endif // _JEventProcessor_myplugin_
 ```
-
 
 ## JObject
 ### JObject Header File
@@ -374,7 +351,7 @@ public:
     }
 };
 ```
-### id
+### JObject ID Handling
 ##### **JANA1**
 ```
 // JANA1 JObject had a data member id
@@ -383,8 +360,6 @@ DBCALShower *shower = new DBCALShower;
 shower->id = id++;
 ```
 ##### **JANA2**
-
-
 JANA2 no longer provides a built-in object id. However, you can always add one as a field to your `JObject` and set it yourself.
 
 ```
@@ -402,22 +377,13 @@ Similarly, the `JObject::oid_t` type has been removed from JANA2 as well. If you
 oid_t // Not inside JObject anymore!
 ```
 
-
 ## JFactory
-
-
-### JFactory to JFactoryT
+### Transition from JFactory to JFactoryT
 ##### **JANA1**
-```
 In JANA1, `JFactory_base` was a common factory base class, and `JFactory` was a template that inherits from `JFactory_base` and adds functionality specific to the type of the factory's output collection.
-```
-
 ##### **JANA2**
-```
 In JANA2, the base class was renamed to `JFactory`, and the template was renamed to `JFactoryT`. JANA2 adds some new functionality, but the old functionality is largely consistent with JANA1. One important difference is that in JANA1, there is always one factory set assigned to each thread, whereas in JANA2, there is one factory set for each event in flight. The number of in-flight events is a parameter controlled separately from the thread count.
-```
-
-### Factory header file
+### Factory Header File
 ##### JANA1
 ```
 #ifndef _myfactory_factory_
@@ -468,7 +434,6 @@ private:
 #endif
 ```
 ### Registering a New Factory
-
 This section require some explanation like how factory was getting added before and how it is now with complete explanation
 ##### **JANA1**
 ###### Using EventLoop
@@ -528,8 +493,7 @@ extern "C"{
 	}
 } // "C"
 ```
-
-### Getting All factories
+### Getting All Factories
 ##### **JANA1**
 ```
 vector<JFactory_base*> locFactories = locEventLoop->GetFactories();
@@ -541,7 +505,6 @@ JFactory<DReaction>* locFactory = dynamic_cast<JFactory<DReaction>*>(locFactorie
 // Directly give particular factory type
 vector<JFactoryT<DReaction>*> locFacs = locEvent->GetFactoryAll<DReaction>();
 ```
-
 ### Saving Created Object(s) to Factory
 ##### _Single Object_
 ###### **JANA1**
@@ -552,7 +515,6 @@ _data.push_back(locAnalysisResults);
 ```
 Insert(locAnalysisResults);
 ```
-
 ##### _Array of Objects_
 ```
 std::vector<fac1*> results;
@@ -568,7 +530,6 @@ for (auto obj: results){
 ```
 Set(results)
 ```
-
 ### Getting Created Objects from Factory
 ##### **JANA1**
 ```
@@ -582,9 +543,8 @@ vector<const DReaction*> locReactionsSubset;
 auto iters = locFactory->GetOrCreate(locEvent, locEvent->GetJApplication(), locEvent->GetRunNumber());
 locReactions.insert(locReactions.end(), iters.first, iters.second);
 ```
-
-### Factory Tag
-#### 1. SetTag
+### Factory Tag Handling
+#### 1. Setting Tag
 ##### **JANA1**
 ```
 //Inside factory class definition this was required to be added
@@ -597,7 +557,7 @@ DChargedTrack_factory_Combo(){
 	SetTag("Combo");
 }
 ```
-#### 2. GetTag
+#### 2. Getting Tag
 ##### **JANA1**
 ```
 locFactory->Tag()
@@ -606,11 +566,8 @@ locFactory->Tag()
 ```
 locFactory->GetTag()
 ```
-
-
-### Factory ObjectName
-#### 1. SetObjectName
-
+### Factory Object Name Handling
+#### 1. Setting Object Name
 ##### **JANA1**
 ```
 // Was not present in JANA1
@@ -630,9 +587,8 @@ SetTag("Thrown");
 }
 ```
 
-
 ## JEvent
-### JEventLoop to JEvent 
+### Transition from JEventLoop to JEvent
 ##### **JANA1**
 ```
 JEventLoop is JANA1 thing, write what it was doing mainly
@@ -665,9 +621,8 @@ run_number = locEventLoop->GetJEvent().GetEventNumber());
 locEvent->GetEventNumber()
 ```
 
-
 ## Acquiring Locks
-### Pre Steps
+### Initialization
 ##### **JANA1**
 ```
 #include "DANA/DApplication.h"
@@ -685,9 +640,8 @@ jLockService = app->GetService<JLockService>();
 // or 
 jLockService = japp->GetService<JLockService>()
 ```
-### Locks
+### Available Locks & Their Acquiring
 #### 1. ReadLock
-
 ##### **JANA1**
 ```
 dActionLock = japp->ReadLock(locLockName); 
@@ -698,9 +652,7 @@ pthread_rwlock_unlock(dActionLock); //unlock
 dActionLock = app->GetService<JLockService>()->ReadLock(locLockName); 
 pthread_rwlock_unlock(dActionLock); //unlock
 ```
-
 #### 2. WriteLock
-
 ##### **JANA1**
 ```
 japp->WriteLock("DAnalysisResults
@@ -711,9 +663,7 @@ japp->Unlock("DAnalysisResults");
 jLockService->WriteLock("DAnalysisResults");
 jLockService->Unlock("DAnalysisResults");
 ```
-
 #### 3.RootWriteLock
-
 ##### **JANA1**
 ```
 dApplication->RootWriteLock();  //lock
@@ -732,8 +682,8 @@ DEvent::GetLockService(locEvent)->RootWriteLock();
 DEvent::GetLockService(locEvent)->RootUnLock();
 ```
 
-## Rarely used
-### use_factory 
+## Rarely Used Features
+### `use_factory`
 ##### **JANA1**
 ```
 Could be used in JANA1
@@ -747,7 +697,7 @@ DEventWriterROOT_factory(){use_factory = 1;};
 No more available in JANA2, how is the functionality that it was providing is getting used?
 DEventWriterROOT_factory() = default;
 ```
-### Unknown Enum
+### `Unknown` Handling
 ##### **JANA1**
 ```
 //Was a plain enum so could be accessed without any scope resolution operator
