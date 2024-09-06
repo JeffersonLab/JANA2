@@ -71,14 +71,14 @@ void JPodioStorage::SetCollection(std::unique_ptr<typename T::collection_type> c
     this->m_collection = moved;
 
     this->SetTypeName(JTypeInfo::demangle<T>());
-    this->SetCreationStatus(JStorage::CreationStatus::Inserted);
+    this->SetStatus(Status::Inserted);
 }
 
 template <typename T>
 void JPodioStorage::SetCollectionAlreadyInFrame(const typename T::collection_type* collection) {
     m_collection = collection;
     this->SetTypeName(JTypeInfo::demangle<T>());
-    SetCreationStatus(JPodioStorage::CreationStatus::Inserted);
+    SetStatus(Status::Inserted);
 }
 
 

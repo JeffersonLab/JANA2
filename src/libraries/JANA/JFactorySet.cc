@@ -127,6 +127,7 @@ bool JFactorySet::Add(JFactory* aFactory)
         // We have a new-style JFactory!
         for (const auto* output : aFactory->GetOutputs()) {
             for (const auto& coll : output->GetCollections()) {
+                coll->SetFactory(aFactory);
                 Add(coll.get());
             }
         }

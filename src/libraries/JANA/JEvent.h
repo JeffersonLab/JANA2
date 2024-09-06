@@ -493,8 +493,8 @@ JFactoryT<T>* JEvent::GetSingle(const T* &t, const char *tag, bool exception_if_
 
 inline JStorage* JEvent::CreateAndGetCollection(std::string name, bool throw_on_missing) const {
 
-    auto* coll = mFactorySet->GetCollection(name);
-    if (coll == nullptr) {
+    auto* storage = mFactorySet->GetCollection(name);
+    if (storage == nullptr) {
         if (throw_on_missing) {
             throw JException("No collection with tag '%s' found", name.c_str());
         }
@@ -502,13 +502,18 @@ inline JStorage* JEvent::CreateAndGetCollection(std::string name, bool throw_on_
             return nullptr;
         }
     }
-    if (coll->GetFactory() != nullptr) {
-        // If this was inserted, there would be no factory to run
-        // fac->Create() will short-circuit if something was already inserted
-        JCallGraphEntryMaker cg_entry(mCallGraph, coll->GetFactory()); // times execution until this goes out of scope
-        coll->GetFactory()->Create(this->shared_from_this());
+    auto fac = storage->GetFactory();
+    if (fac != nullptr) {
+        if ((storage->GetStatus() == JStorage::Status::Empty) || 
+            (fac->TestFactoryFlag(JFactory::JFactory_Flags_t::REGENERATE))) {
+
+            // If this was inserted, there would be no factory to run
+            // fac->Create() will short-circuit if something was already inserted
+            JCallGraphEntryMaker cg_entry(mCallGraph, fac); // times execution until this goes out of scope
+            fac->Create(this->shared_from_this());
+        }
     }
-    return coll;
+    return storage;
 }
 
 #if JANA2_HAVE_PODIO
@@ -599,7 +604,7 @@ JPodioStorage* JEvent::InsertCollectionAlreadyInFrame(const podio::CollectionBas
         auto coll = new JPodioStorage;
         coll->SetCollectionName(name);
         coll->SetTypeName(JTypeInfo::demangle<PodioT>());
-        coll->SetCreationStatus(JStorage::CreationStatus::Inserted);
+        coll->SetStatus(JStorage::Status::Inserted);
         coll->SetInsertOrigin(mCallGraph.GetInsertDataOrigin());
         coll->SetCollectionAlreadyInFrame<PodioT>(typed_collection);
         mFactorySet->Add(coll);
@@ -608,12 +613,12 @@ JPodioStorage* JEvent::InsertCollectionAlreadyInFrame(const podio::CollectionBas
     else {
         // This is overriding a factory
         // Check that we only inserted this collection once
-        if (storage->GetCreationStatus() != JStorage::CreationStatus::NotCreatedYet) {
+        if (storage->GetStatus() != JStorage::Status::Empty) {
             throw JException("Collections can only be inserted once!");
         }
         auto typed_storage = dynamic_cast<JPodioStorage*>(storage);
         typed_storage->SetCollectionAlreadyInFrame<PodioT>(typed_collection);
-        typed_storage->SetCreationStatus(JStorage::CreationStatus::Inserted);
+        typed_storage->SetStatus(JStorage::Status::Inserted);
         typed_storage->SetInsertOrigin(mCallGraph.GetInsertDataOrigin());
         return typed_storage;
     }

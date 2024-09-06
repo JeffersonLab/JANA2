@@ -18,11 +18,11 @@ class JFactory;
 class JStorage {
 public:
     // Typedefs
-    enum class CreationStatus { NotCreatedYet, Created, Inserted, InsertedViaGetObjects, NeverCreated };
+    enum class Status { Empty, Created, Inserted, InsertedViaGetObjects };
 
 private:
     // Fields
-    CreationStatus m_creation_status = CreationStatus::NotCreatedYet;
+    Status m_status = Status::Empty;
     std::string m_collection_name;
     std::string m_collection_tag;
     std::string m_type_name;
@@ -40,7 +40,7 @@ public:
     virtual void ClearData() = 0;
 
     // Getters
-    CreationStatus GetCreationStatus() const { return m_creation_status; }
+    Status GetStatus() const { return m_status; }
     std::string GetCollectionName() const { return m_collection_name; }
     std::string GetCollectionTag() const { return m_collection_tag; }
     std::string GetTypeName() const { return m_type_name; }
@@ -48,7 +48,7 @@ public:
     JFactory* GetFactory() const { return m_factory; }
 
     // Setters
-    void SetCreationStatus(CreationStatus s) { m_creation_status = s;}
+    void SetStatus(Status s) { m_status = s;}
     void SetCollectionName(std::string collection_name) { m_collection_name = collection_name; }
     void SetCollectionTag(std::string collection_tag) { m_collection_tag = collection_tag; }
     void SetTypeName(std::string type_name) { m_type_name = type_name; }
