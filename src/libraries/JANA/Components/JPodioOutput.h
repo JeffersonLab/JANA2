@@ -1,5 +1,5 @@
 #pragma once
-#include <JANA/Components/JPodioCollection.h>
+#include <JANA/Components/JPodioStorage.h>
 #include <JANA/Utils/JTypeInfo.h>
 #include <JANA/JEvent.h>
 #include <JANA/Components/JHasFactoryOutputs.h>
@@ -13,12 +13,12 @@ template <typename PodioT>
 class PodioOutput : public JHasFactoryOutputs::OutputBase {
 private:
     std::unique_ptr<typename PodioT::collection_type> m_data;
-    JPodioCollection* m_collection;
+    JPodioStorage* m_collection;
 public:
     PodioOutput(JHasFactoryOutputs* owner, std::string default_collection_name="") {
         owner->RegisterOutput(this);
         this->m_collection_names.push_back(default_collection_name);
-        auto coll = std::make_unique<JPodioCollection>();
+        auto coll = std::make_unique<JPodioStorage>();
         coll->SetCollectionName(default_collection_name);
         coll->SetTypeName(JTypeInfo::demangle<PodioT>());
         m_collection = coll.get();
@@ -28,7 +28,7 @@ public:
 
     std::unique_ptr<typename PodioT::collection_type>& operator()() { return m_data; }
 
-    const JCollection* GetCollection() const { return m_collection; }
+    const JStorage* GetCollection() const { return m_collection; }
 
 
 protected:
@@ -72,7 +72,7 @@ public:
         this->m_collection_names = default_collection_names;
         this->m_is_variadic = true;
         for (const std::string& name : default_collection_names) {
-            auto coll = std::make_unique<JPodioCollection>();
+            auto coll = std::make_unique<JPodioStorage>();
             coll->SetCollectionName(name);
             coll->SetTypeName(JTypeInfo::demangle<PodioT>());
             m_collections.push_back(std::move(coll));
@@ -104,7 +104,7 @@ public:
             frame->put(std::move(std::move(datum)), m_collections[i]->GetCollectionName());
             const auto* moved = &frame->template get<typename PodioT::collection_type>(m_collections[i]->GetCollectionName());
             datum = nullptr;
-            const auto &coll = dynamic_cast<JPodioCollection>(m_collections[i]);
+            const auto &coll = dynamic_cast<JPodioStorage>(m_collections[i]);
             coll.SetCollectionAlreadyInFrame<PodioT>(moved);
         }
     }

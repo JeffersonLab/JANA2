@@ -9,7 +9,7 @@
 #include <map>
 
 #include <JANA/JFactoryT.h>
-#include <JANA/Components/JPodioCollection.h>
+#include <JANA/Components/JPodioStorage.h>
 #include <JANA/Utils/JEventLevel.h>
 #include <JANA/Components/JComponentSummary.h>
 
@@ -23,7 +23,7 @@ class JFactorySet {
     protected:
         std::map<std::pair<std::type_index, std::string>, JFactory*> mFactories;        // {(typeid, tag) : factory}
         std::map<std::pair<std::string, std::string>, JFactory*> mFactoriesFromString;  // {(objname, tag) : factory}
-        std::map<std::string, JCollection*> mCollectionsFromName;
+        std::map<std::string, JStorage*> mCollectionsFromName;
         std::vector<JMultifactory*> mMultifactories;
         bool mIsFactoryOwner = true;
         JEventLevel mLevel = JEventLevel::PhysicsEvent;
@@ -35,11 +35,11 @@ class JFactorySet {
 
         bool Add(JFactory* aFactory);
         bool Add(JMultifactory* multifactory);
-        void Add(JCollection* collection);
+        void Add(JStorage* storage);
         void Print(void) const;
         void Release(void);
 
-        JCollection* GetCollection(const std::string& collection_name) const;
+        JStorage* GetCollection(const std::string& collection_name) const;
         JFactory* GetFactory(const std::string& object_name, const std::string& tag="") const;
         template<typename T> JFactoryT<T>* GetFactory(const std::string& tag = "") const;
         std::vector<JFactory*> GetAllFactories() const;

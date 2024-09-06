@@ -15,7 +15,7 @@
 
 class JFactory;
 
-class JCollection {
+class JStorage {
 public:
     // Typedefs
     enum class CreationStatus { NotCreatedYet, Created, Inserted, InsertedViaGetObjects, NeverCreated };
@@ -34,8 +34,8 @@ protected:
 
 public:
     // Interface
-    JCollection() = default;
-    virtual ~JCollection() = default;
+    JStorage() = default;
+    virtual ~JStorage() = default;
     virtual size_t GetSize() const = 0;
     virtual void ClearData() = 0;
 
@@ -82,7 +82,7 @@ public:
 //   3. The size of the vtable is expected to be very small (<10 elements, most likely 2)
 
 template<typename S>
-std::vector<S*> JCollection::GetAs() {
+std::vector<S*> JStorage::GetAs() {
     std::vector<S*> results;
     auto ti = std::type_index(typeid(S));
     auto search = mUpcastVTable.find(ti);

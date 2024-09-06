@@ -6,7 +6,7 @@
 #include <iostream>
 
 #include "JFactorySet.h"
-#include "JANA/Components/JCollection.h"
+#include "JANA/Components/JStorage.h"
 #include "JFactory.h"
 #include "JMultifactory.h"
 #include "JFactoryGenerator.h"
@@ -48,7 +48,7 @@ JFactorySet::~JFactorySet()
 //---------------------------------
 // Add
 //---------------------------------
-void JFactorySet::Add(JCollection* collection) {
+void JFactorySet::Add(JStorage* collection) {
     auto named_result = mCollectionsFromName.find(collection->GetCollectionName());
     if (named_result != std::end(mCollectionsFromName)) {
         // Collection is duplicate. Since this almost certainly indicates a user error, and
@@ -155,7 +155,7 @@ bool JFactorySet::Add(JMultifactory *multifactory) {
 //---------------------------------
 // GetCollection
 //---------------------------------
-JCollection* JFactorySet::GetCollection(const std::string& collection_name) const {
+JStorage* JFactorySet::GetCollection(const std::string& collection_name) const {
     auto it = mCollectionsFromName.find(collection_name);
     if (it != std::end(mCollectionsFromName)) {
         auto fac = it->second->GetFactory();

@@ -1,6 +1,6 @@
 
 #pragma once
-#include <JANA/Components/JCollection.h>
+#include <JANA/Components/JStorage.h>
 #include <memory>
 
 class JEvent;
@@ -13,10 +13,10 @@ public:
     struct OutputBase {
     protected:
         std::vector<std::string> m_collection_names; // TODO: Possibly don't need anymore
-        std::vector<std::unique_ptr<JCollection>> m_collections;
+        std::vector<std::unique_ptr<JStorage>> m_collections;
         bool m_is_variadic = false;
     public:
-        const std::vector<std::unique_ptr<JCollection>>& GetCollections() const { return m_collections;}
+        const std::vector<std::unique_ptr<JStorage>>& GetCollections() const { return m_collections;}
         virtual void PutCollections(const JEvent& event) = 0;
         virtual void Reset() = 0;
     };

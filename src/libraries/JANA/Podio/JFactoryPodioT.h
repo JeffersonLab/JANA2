@@ -6,7 +6,7 @@
 #pragma once
 
 #include <JANA/JFactoryT.h>
-#include <JANA/Omni/JPodioOutput.h>
+#include <JANA/Components/JPodioOutput.h>
 
 
 template <typename T>
@@ -15,7 +15,7 @@ public:
     using CollectionT = typename T::collection_type;
 
 private:
-    jana::omni::PodioOutput<T> m_output {this};
+    jana::components::PodioOutput<T> m_output {this};
 
 public:
     explicit JFactoryPodioT();

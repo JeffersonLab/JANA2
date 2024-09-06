@@ -10,7 +10,7 @@
 #include <JANA/JFactorySet.h>
 #include <JANA/JLogger.h>
 #include <JANA/JVersion.h>
-#include <JANA/Components/JCollection.h>
+#include <JANA/Components/JStorage.h>
 #include <JANA/Utils/JEventLevel.h>
 #include <JANA/Utils/JTypeInfo.h>
 #include <JANA/Utils/JCpuInfo.h>
@@ -24,7 +24,7 @@
 #include <atomic>
 
 #if JANA2_HAVE_PODIO
-#include <JANA/Components/JPodioCollection.h>
+#include <JANA/Components/JPodioStorage.h>
 #endif
 
 class JApplication;
@@ -84,12 +84,12 @@ class JEvent : public std::enable_shared_from_this<JEvent>
         std::vector<std::string> GetAllCollectionNames() const;
         const podio::CollectionBase* GetCollectionBase(std::string name, bool throw_on_missing=true) const;
         template <typename PodioT> const typename PodioT::collection_type* GetCollection(std::string name, bool throw_on_missing=true) const;
-        template <typename PodioT> JPodioCollection* InsertCollection(typename PodioT::collection_type&& collection, std::string name);
-        template <typename PodioT> JPodioCollection* InsertCollectionAlreadyInFrame(const podio::CollectionBase* collection, std::string name);
+        template <typename PodioT> JPodioStorage* InsertCollection(typename PodioT::collection_type&& collection, std::string name);
+        template <typename PodioT> JPodioStorage* InsertCollectionAlreadyInFrame(const podio::CollectionBase* collection, std::string name);
 #endif
 
         // EXPERIMENTAL NEW THING
-        JCollection* CreateAndGetCollection(std::string name, bool throw_on_missing) const;
+        JStorage* CreateAndGetCollection(std::string name, bool throw_on_missing) const;
 
         //SETTERS
         void SetRunNumber(int32_t aRunNumber){mRunNumber = aRunNumber;}
@@ -491,7 +491,7 @@ JFactoryT<T>* JEvent::GetSingle(const T* &t, const char *tag, bool exception_if_
     return fac;
 }
 
-inline JCollection* JEvent::CreateAndGetCollection(std::string name, bool throw_on_missing) const {
+inline JStorage* JEvent::CreateAndGetCollection(std::string name, bool throw_on_missing) const {
 
     auto* coll = mFactorySet->GetCollection(name);
     if (coll == nullptr) {
@@ -525,7 +525,7 @@ inline std::vector<std::string> JEvent::GetAllCollectionNames() const {
 inline const podio::CollectionBase* JEvent::GetCollectionBase(std::string name, bool throw_on_missing) const {
     auto* coll = CreateAndGetCollection(name, throw_on_missing);
     if (coll != nullptr) {
-        auto* podio_coll = dynamic_cast<JPodioCollection*>(coll);
+        auto* podio_coll = dynamic_cast<JPodioStorage*>(coll);
         if (podio_coll == nullptr) {
             throw JException("Not a podio collection: %s", name.c_str());
         }
@@ -540,7 +540,7 @@ template <typename T>
 const typename T::collection_type* JEvent::GetCollection(std::string name, bool throw_on_missing) const {
     auto* coll = CreateAndGetCollection(name, throw_on_missing);
     if (coll != nullptr) {
-        auto* podio_coll = dynamic_cast<JPodioCollection*>(coll);
+        auto* podio_coll = dynamic_cast<JPodioStorage*>(coll);
         if (podio_coll == nullptr) {
             throw JException("Not a podio collection: %s", name.c_str());
         }
@@ -553,7 +553,7 @@ const typename T::collection_type* JEvent::GetCollection(std::string name, bool 
 
 
 template <typename PodioT>
-JPodioCollection* JEvent::InsertCollection(typename PodioT::collection_type&& collection, std::string name) {
+JPodioStorage* JEvent::InsertCollection(typename PodioT::collection_type&& collection, std::string name) {
     /// InsertCollection inserts the provided PODIO collection into both the podio::Frame and then a JFactoryPodioT<T>
 
     podio::Frame* frame = nullptr;
@@ -574,8 +574,8 @@ JPodioCollection* JEvent::InsertCollection(typename PodioT::collection_type&& co
 
 
 template <typename PodioT>
-JPodioCollection* JEvent::InsertCollectionAlreadyInFrame(const podio::CollectionBase* collection, std::string name) {
-    /// InsertCollection inserts the provided PODIO collection into a JPodioCollection. It assumes that the collection pointer
+JPodioStorage* JEvent::InsertCollectionAlreadyInFrame(const podio::CollectionBase* collection, std::string name) {
+    /// InsertCollection inserts the provided PODIO collection into a JPodioStorage. It assumes that the collection pointer
     /// is _already_ owned by the podio::Frame corresponding to this JEvent. This is meant to be used if you are starting out
     /// with a PODIO frame (e.g. a JEventSource that uses podio::ROOTFrameReader).
     
@@ -596,10 +596,10 @@ JPodioCollection* JEvent::InsertCollectionAlreadyInFrame(const podio::Collection
 
     if (storage == nullptr) {
         // No factories already registered this! E.g. from an event source
-        auto coll = new JPodioCollection;
+        auto coll = new JPodioStorage;
         coll->SetCollectionName(name);
         coll->SetTypeName(JTypeInfo::demangle<PodioT>());
-        coll->SetCreationStatus(JCollection::CreationStatus::Inserted);
+        coll->SetCreationStatus(JStorage::CreationStatus::Inserted);
         coll->SetInsertOrigin(mCallGraph.GetInsertDataOrigin());
         coll->SetCollectionAlreadyInFrame<PodioT>(typed_collection);
         mFactorySet->Add(coll);
@@ -608,12 +608,12 @@ JPodioCollection* JEvent::InsertCollectionAlreadyInFrame(const podio::Collection
     else {
         // This is overriding a factory
         // Check that we only inserted this collection once
-        if (storage->GetCreationStatus() != JCollection::CreationStatus::NotCreatedYet) {
+        if (storage->GetCreationStatus() != JStorage::CreationStatus::NotCreatedYet) {
             throw JException("Collections can only be inserted once!");
         }
-        auto typed_storage = dynamic_cast<JPodioCollection*>(storage);
+        auto typed_storage = dynamic_cast<JPodioStorage*>(storage);
         typed_storage->SetCollectionAlreadyInFrame<PodioT>(typed_collection);
-        typed_storage->SetCreationStatus(JPodioCollection::CreationStatus::Inserted);
+        typed_storage->SetCreationStatus(JStorage::CreationStatus::Inserted);
         typed_storage->SetInsertOrigin(mCallGraph.GetInsertDataOrigin());
         return typed_storage;
     }

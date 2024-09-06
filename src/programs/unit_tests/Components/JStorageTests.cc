@@ -3,7 +3,7 @@
 // Copyright 2023, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-#include "JANA/Components/JPodioCollection.h"
+#include "JANA/Components/JPodioStorage.h"
 #include "JANA/Services/JComponentManager.h"
 #include "PodioDatamodel/ExampleCluster.h"
 #include "catch.hpp"
@@ -17,7 +17,7 @@
 #include <PodioDatamodel/ExampleClusterCollection.h>
 #include <memory>
 
-namespace jcollection_tests {
+namespace jstorage_tests {
 
 struct TestSource : public JEventSource {
     Parameter<std::string> y {this, "y", "asdf", "Does something"};
@@ -69,7 +69,7 @@ struct TestProc : public JEventProcessor {
     }
 };
 
-TEST_CASE("JCollectionEndToEndTest") {
+TEST_CASE("JStorageEndToEndTest") {
     JApplication app;
     app.Add(new JEventSourceGeneratorT<TestSource>);
     app.Add(new JFactoryGeneratorT<TestFactory>);
@@ -79,7 +79,7 @@ TEST_CASE("JCollectionEndToEndTest") {
     app.Run();
 }
 
-TEST_CASE("JCollectionTests_GetCollectionBase") {
+TEST_CASE("JStorageTests_GetCollectionBase") {
     JApplication app;
     app.Add(new JFactoryGeneratorT<TestFactory>);
     app.Initialize();
@@ -94,7 +94,7 @@ TEST_CASE("JCollectionTests_GetCollectionBase") {
     REQUIRE(typed_coll->at(1).energy() == 27);
 }
 
-TEST_CASE("JCollectionTests_GetCollection") {
+TEST_CASE("JStorageTests_GetCollection") {
     JApplication app;
     app.Add(new JFactoryGeneratorT<TestFactory>);
     app.Initialize();
@@ -108,7 +108,7 @@ TEST_CASE("JCollectionTests_GetCollection") {
     REQUIRE(coll->at(1).energy() == 27);
 }
 
-TEST_CASE("JCollectionTests_InsertCollection") {
+TEST_CASE("JStorageTests_InsertCollection") {
     JApplication app;
     app.Initialize();
 
