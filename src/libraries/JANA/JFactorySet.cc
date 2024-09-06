@@ -156,7 +156,7 @@ bool JFactorySet::Add(JMultifactory *multifactory) {
 //---------------------------------
 // GetCollection
 //---------------------------------
-JStorage* JFactorySet::GetCollection(const std::string& collection_name) const {
+JStorage* JFactorySet::GetStorage(const std::string& collection_name) const {
     auto it = mCollectionsFromName.find(collection_name);
     if (it != std::end(mCollectionsFromName)) {
         auto fac = it->second->GetFactory();

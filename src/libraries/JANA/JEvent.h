@@ -89,7 +89,7 @@ class JEvent : public std::enable_shared_from_this<JEvent>
 #endif
 
         // EXPERIMENTAL NEW THING
-        JStorage* CreateAndGetCollection(std::string name, bool throw_on_missing) const;
+        JStorage* GetStorage(const std::string& name, bool create) const;
 
         //SETTERS
         void SetRunNumber(int32_t aRunNumber){mRunNumber = aRunNumber;}
@@ -491,19 +491,14 @@ JFactoryT<T>* JEvent::GetSingle(const T* &t, const char *tag, bool exception_if_
     return fac;
 }
 
-inline JStorage* JEvent::CreateAndGetCollection(std::string name, bool throw_on_missing) const {
+inline JStorage* JEvent::GetStorage(const std::string& name, bool create) const {
 
-    auto* storage = mFactorySet->GetCollection(name);
-    if (storage == nullptr) {
-        if (throw_on_missing) {
-            throw JException("No collection with tag '%s' found", name.c_str());
-        }
-        else {
-            return nullptr;
-        }
-    }
+    auto* storage = mFactorySet->GetStorage(name);
     auto fac = storage->GetFactory();
-    if (fac != nullptr) {
+
+    if (fac != nullptr && create) {
+
+        // The regenerate logic lives out here now
         if ((storage->GetStatus() == JStorage::Status::Empty) || 
             (fac->TestFactoryFlag(JFactory::JFactory_Flags_t::REGENERATE))) {
 
@@ -528,22 +523,25 @@ inline std::vector<std::string> JEvent::GetAllCollectionNames() const {
 }
 
 inline const podio::CollectionBase* JEvent::GetCollectionBase(std::string name, bool throw_on_missing) const {
-    auto* coll = CreateAndGetCollection(name, throw_on_missing);
-    if (coll != nullptr) {
-        auto* podio_coll = dynamic_cast<JPodioStorage*>(coll);
-        if (podio_coll == nullptr) {
+    auto* storage = GetStorage(name, true);
+    if (storage != nullptr) {
+        auto* podio_storage = dynamic_cast<JPodioStorage*>(storage);
+        if (podio_storage == nullptr) {
             throw JException("Not a podio collection: %s", name.c_str());
         }
         else {
-            return podio_coll->GetCollection();
+            return podio_storage->GetCollection();
         }
+    }
+    else if (throw_on_missing) {
+        throw JException("Collection not found: '%s'", name.c_str());
     }
     return nullptr;
 }
 
 template <typename T>
 const typename T::collection_type* JEvent::GetCollection(std::string name, bool throw_on_missing) const {
-    auto* coll = CreateAndGetCollection(name, throw_on_missing);
+    auto* coll = GetStorage(name, true);
     if (coll != nullptr) {
         auto* podio_coll = dynamic_cast<JPodioStorage*>(coll);
         if (podio_coll == nullptr) {
@@ -552,6 +550,9 @@ const typename T::collection_type* JEvent::GetCollection(std::string name, bool 
         else {
             return podio_coll->GetCollection<T>();
         }
+    }
+    else if (throw_on_missing) {
+        throw JException("Collection not found: '%s'", name.c_str());
     }
     return nullptr;
 }
@@ -597,7 +598,7 @@ JPodioStorage* JEvent::InsertCollectionAlreadyInFrame(const podio::CollectionBas
     }
 
     // Retrieve storage if it already exists, else create it
-    auto storage = mFactorySet->GetCollection(name);
+    auto storage = mFactorySet->GetStorage(name);
 
     if (storage == nullptr) {
         // No factories already registered this! E.g. from an event source
