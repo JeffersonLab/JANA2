@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <JANA/Components/JCollection.h>
+#include <JANA/Components/JStorage.h>
 #include <JANA/JObject.h> 
 #include <JANA/Utils/JTypeInfo.h>
 
@@ -9,35 +9,32 @@
 #include <TObject.h>
 #endif
 
-class JBasicCollection : public JCollection {
+class JBasicStorage : public JStorage {
     bool m_is_persistent = false;
     bool m_not_object_owner = false;
-    bool m_regenerate = false;
     bool m_write_to_output = true;
 
 public:
-    JBasicCollection() = default;
-    ~JBasicCollection() override = default;
+    JBasicStorage() = default;
+    ~JBasicStorage() override = default;
     void SetPersistentFlag(bool persistent) { m_is_persistent = persistent; }
     void SetNotOwnerFlag(bool not_owner) { m_not_object_owner = not_owner; }
-    void SetRegenerateFlag(bool regenerate) { m_regenerate = regenerate; }
     void SetWriteToOutputFlag(bool write_to_output) { m_write_to_output = write_to_output; }
 
     bool GetPersistentFlag() { return m_is_persistent; }
     bool GetNotOwnerFlag() { return m_not_object_owner; }
-    bool GetRegenerateFlag() { return m_regenerate; }
     bool GetWriteToOutputFlag() { return m_write_to_output; }
 };
 
 
 
 template <typename T>
-class JBasicCollectionT : public JBasicCollection {
+class JBasicStorageT : public JBasicStorage {
 private:
     std::vector<T*> m_data;
 
 public:
-    JBasicCollectionT();
+    JBasicStorageT();
     void ClearData() override;
     size_t GetSize() const override { return m_data.size();}
 
@@ -58,7 +55,7 @@ public:
 // Template definitions
 
 template <typename T>
-JBasicCollectionT<T>::JBasicCollectionT() {
+JBasicStorageT<T>::JBasicStorageT() {
     SetTypeName(JTypeInfo::demangle<T>());
     EnableGetAs<T>();
     EnableGetAs<JObject>( std::is_convertible<T,JObject>() ); // Automatically add JObject if this can be converted to it
@@ -68,10 +65,10 @@ JBasicCollectionT<T>::JBasicCollectionT() {
 }
 
 template <typename T>
-void JBasicCollectionT<T>::ClearData() {
+void JBasicStorageT<T>::ClearData() {
 
     // ClearData won't do anything if Init() hasn't been called
-    if (GetCreationStatus() == CreationStatus::NotCreatedYet) {
+    if (GetStatus() == Status::Empty) {
         return;
     }
     // ClearData() does nothing if persistent flag is set.
@@ -85,12 +82,12 @@ void JBasicCollectionT<T>::ClearData() {
         for (auto p : m_data) delete p;
     }
     m_data.clear();
-    SetCreationStatus(CreationStatus::NotCreatedYet);
+    SetStatus(Status::Empty);
 }
 
 template<typename T>
 template<typename S>
-void JBasicCollectionT<T>::EnableGetAs() {
+void JBasicStorageT<T>::EnableGetAs() {
 
     auto upcast_lambda = [this]() {
         std::vector<S*> results;
