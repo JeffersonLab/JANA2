@@ -4,7 +4,6 @@
 
 #pragma once
 
-#include <DatamodelGlue.h>
 #include <podio/ROOTFrameWriter.h>
 #include "CollectionTabulators.h"
 #include <JANA/JEventProcessor.h>

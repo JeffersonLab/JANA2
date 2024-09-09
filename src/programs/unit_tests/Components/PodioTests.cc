@@ -2,8 +2,7 @@
 #include <catch.hpp>
 
 #include <type_traits>
-#include <PodioExampleDatamodel/ExampleClusterCollection.h>
-#include <DatamodelGlue.h>  // Hopefully this won't be necessary in the future
+#include <PodioDatamodel/ExampleClusterCollection.h>
 #include <JANA/JEvent.h>
 
 namespace podiotests {

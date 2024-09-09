@@ -4,7 +4,7 @@ if (USE_PODIO)
 
     add_jana_plugin(TimesliceExample)
 
-    target_link_libraries(TimesliceExample PUBLIC PodioExampleDatamodel PodioExampleDatamodelDict podio::podioRootIO)
+    target_link_libraries(TimesliceExample PUBLIC PodioDatamodel PodioDatamodelDict podio::podioRootIO)
 
     add_test(NAME jana-example-timeslices-simple-tests
         COMMAND ${CMAKE_INSTALL_PREFIX}/bin/jana -Pplugins=TimesliceExample -Pjana:nevents=10 events.root)

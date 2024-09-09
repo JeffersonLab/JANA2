@@ -5,11 +5,10 @@
 
 #pragma once
 #include <JANA/JApplication.h>
-#include <JANA/Omni/JComponentFwd.h>
+#include <JANA/Components/JComponentFwd.h>
 #include <JANA/Utils/JTypeInfo.h>
 
-namespace jana {
-namespace omni {
+namespace jana::components {
 
 template <typename T>
 class JComponent::ParameterRef : public JComponent::ParameterBase {
@@ -25,6 +24,7 @@ public:
     }
 
     const T& operator()() { return *m_data; }
+    const T& operator*() { return *m_data; }
 
 protected:
 
@@ -59,6 +59,7 @@ public:
     }
 
     const T& operator()() { return m_data; }
+    const T& operator*() { return m_data; }
 
 protected:
 
@@ -148,7 +149,6 @@ inline void JComponent::CallWithJExceptionWrapper(std::string func_name, F func)
 }
 
 
-} // namespace omni
-} // namespace jana
+} // namespace jana::components
 
 

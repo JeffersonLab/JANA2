@@ -3,8 +3,9 @@
 
 #pragma once
 
-#include <DatamodelGlue.h>
-#include <JANA/Omni/JOmniFactory.h>
+#include <JANA/Components/JOmniFactory.h>
+#include <PodioDatamodel/ExampleHitCollection.h>
+#include <PodioDatamodel/ExampleClusterCollection.h>
 
 
 struct MyProtoclusterFactory : public JOmniFactory<MyProtoclusterFactory> {

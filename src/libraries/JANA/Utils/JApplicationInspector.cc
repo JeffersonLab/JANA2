@@ -1,7 +1,7 @@
 
 #include "JApplicationInspector.h"
 #include "JANA/Services/JComponentManager.h"
-#include "JANA/Status/JComponentSummary.h"
+#include "JANA/Components/JComponentSummary.h"
 #include "JANA/Topology/JTopologyBuilder.h"
 #include <JANA/JApplication.h>
 #include <JANA/Engine/JArrowProcessingController.h>

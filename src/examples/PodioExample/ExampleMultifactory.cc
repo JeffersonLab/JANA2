@@ -5,7 +5,8 @@
 
 #include "ExampleMultifactory.h"
 #include <JANA/JEvent.h>
-#include "DatamodelGlue.h"
+#include <PodioDatamodel/ExampleHitCollection.h>
+#include <PodioDatamodel/ExampleClusterCollection.h>
 
 ExampleMultifactory::ExampleMultifactory() {
 

@@ -8,15 +8,12 @@
 #include <JANA/Utils/JAny.h>
 #include <JANA/Utils/JEventLevel.h>
 #include <JANA/Utils/JCallGraphRecorder.h>
-#include <JANA/Omni/JComponent.h>
+#include <JANA/Components/JComponent.h>
 
 #include <string>
 #include <typeindex>
 #include <memory>
-#include <limits>
-#include <atomic>
 #include <vector>
-#include <mutex>
 #include <unordered_map>
 #include <functional>
 
@@ -25,7 +22,7 @@ class JEvent;
 class JObject;
 class JApplication;
 
-class JFactory : public jana::omni::JComponent {
+class JFactory : public jana::components::JComponent {
 public:
 
     enum class Status {Uninitialized, Unprocessed, Processed, Inserted};

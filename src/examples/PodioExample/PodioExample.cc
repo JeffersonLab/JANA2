@@ -3,16 +3,15 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 #include <podio/CollectionBase.h>
 #include <podio/Frame.h>
-#include "PodioExampleDatamodel/MutableExampleHit.h"
-#include "PodioExampleDatamodel/ExampleHitCollection.h"
+
+#include "PodioDatamodel/EventInfoCollection.h"
+#include "PodioDatamodel/ExampleHitCollection.h"
 #include <podio/ROOTFrameWriter.h>
 #include <podio/ROOTFrameReader.h>
 
 #include <JANA/JApplication.h>
 #include <JANA/JFactoryGenerator.h>
-#include <JANA/Podio/JEventProcessorPodio.h>
 
-#include "PodioExampleSource.h"
 #include "PodioExampleProcessor.h"
 #include "ExampleClusterFactory.h"
 #include "ExampleMultifactory.h"
@@ -79,10 +78,13 @@ int main() {
 
     JApplication app;
     app.Add(new PodioExampleProcessor);
-    app.Add(new JEventProcessorPodio);
     app.Add(new JFactoryGeneratorT<ExampleClusterFactory>());
     app.Add(new JFactoryGeneratorT<ExampleMultifactory>());
-    app.Add(new PodioExampleSource("hits.root"));
+    app.Add("hits.root");
+    app.AddPlugin("PodioFileReader");
+    app.AddPlugin("PodioFileWriter");
+    app.SetParameterValue("podio:output_file", "podio_output.root");
+    app.SetParameterValue("podio:output_collections", "hits_filtered,clusters_from_hits_filtered,clusters_filtered");
     app.Run();
 
     verify_clusters_file();

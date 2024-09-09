@@ -6,6 +6,7 @@
 #include <JANA/Utils/JTablePrinter.h>
 #include "JComponentSummary.h"
 
+namespace jana::components {
 
 
 void JComponentSummary::Add(JComponentSummary::Component* component) {
@@ -210,5 +211,5 @@ std::ostream& operator<<(std::ostream& os, const JComponentSummary::Component& c
     return os;
 }
 
-
+} // namespace jana::components
 

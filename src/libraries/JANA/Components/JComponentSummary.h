@@ -9,7 +9,6 @@
 #include <vector>
 #include <map>
 
-
 // Keeping this around for backwards compatibility only
 struct JFactorySummary {
     JEventLevel level;
@@ -19,6 +18,8 @@ struct JFactorySummary {
     std::string object_name;
 };
 
+
+namespace jana::components {
 
 class JComponentSummary {
 public:
@@ -170,3 +171,5 @@ inline bool operator==(const JComponentSummary::Collection& lhs, const JComponen
 
 inline bool operator!=(const JComponentSummary::Collection& lhs, const JComponentSummary::Collection& rhs) { return !(lhs == rhs); }
 
+} // namespace jana::components
+using jana::components::JComponentSummary;

@@ -4,141 +4,61 @@
 set(JANA2_SOURCES
 
     JApplication.cc
-    JApplication.h
-    JEvent.h
-    JEventProcessor.h
-    JEventSource.h
-    JEventSourceGenerator.h
-    JEventSourceGeneratorT.h
-    JException.h
-    JFactory.h
     JFactory.cc
-    JFactoryGenerator.h
     JFactorySet.cc
-    JFactorySet.h
-    JFactoryT.h
-    JObject.h
-    JCsvWriter.h
-    JLogger.h
     JMultifactory.cc
-    JMultifactory.h
     JService.cc
     JVersion.cc
 
     Engine/JArrowProcessingController.cc
-    Engine/JArrowProcessingController.h
     Engine/JScheduler.cc
-    Engine/JScheduler.h
-    Engine/JWorker.h
     Engine/JWorker.cc
-    Engine/JWorkerMetrics.h
     Engine/JPerfMetrics.cc
-    Engine/JPerfMetrics.h
     Engine/JPerfSummary.cc
-    Engine/JPerfSummary.h
 
-    Topology/JArrow.h
-    Topology/JArrowMetrics.h
     Topology/JEventProcessorArrow.cc
-    Topology/JEventProcessorArrow.h
     Topology/JEventSourceArrow.cc
-    Topology/JEventSourceArrow.h
-    Topology/JEventMapArrow.h
     Topology/JEventMapArrow.cc
-    Topology/JPool.h
-    Topology/JMailbox.h
-    Topology/JSubeventArrow.h
-    Topology/JTopologyBuilder.h
     Topology/JTopologyBuilder.cc
 
     Services/JComponentManager.cc
-    Services/JComponentManager.h
-    Services/JGlobalRootLock.h
-    Services/JLoggingService.h
     Services/JLoggingService.cc
     Services/JParameterManager.cc
-    Services/JParameterManager.h
     Services/JPluginLoader.cc
-    Services/JPluginLoader.h
-    Services/JServiceLocator.h
-    Services/JEventGroupTracker.h
+    Services/JWiringService.cc
 
-    Status/JComponentSummary.h
-    Status/JComponentSummary.cc
+    Components/JComponentSummary.cc
 
-    Streaming/JDiscreteJoin.h
-    Streaming/JEventBuilder.h
-    Streaming/JMessage.h
-    Streaming/JStreamingEventSource.h
-    Streaming/JTransport.h
-    Streaming/JTrigger.h
-    Streaming/JWindow.h
-
-    Utils/JBacktrace.h
-    Utils/JEventPool.h
     Utils/JCpuInfo.cc
-    Utils/JCpuInfo.h
-    Utils/JTypeInfo.h
-    Utils/JResourcePool.h
-    Utils/JResettable.h
-    Utils/JProcessorMapping.h
     Utils/JProcessorMapping.cc
     Utils/JPerfUtils.cc
     Utils/JPerfUtils.h
     Utils/JBenchUtils.cc
     Utils/JBenchUtils.h
     Utils/JStringification.cc
-    Utils/JStringification.h
     Utils/JAutoActivator.cc
-    Utils/JAutoActivator.h
-    Utils/JAny.h
     Utils/JTablePrinter.cc
-    Utils/JTablePrinter.h
-    Utils/JCallGraphRecorder.h
     Utils/JCallGraphRecorder.cc
-    Utils/JCallGraphEntryMaker.h
     Utils/JInspector.cc
-    Utils/JInspector.h
     Utils/JApplicationInspector.cc
-    Utils/JApplicationInspector.h
 
     Calibrations/JCalibration.cc
-    Calibrations/JCalibration.h
-    Calibrations/JCalibrationCCDB.h
     Calibrations/JCalibrationFile.cc
-    Calibrations/JCalibrationFile.h
-    Calibrations/JCalibrationGenerator.h
-    Calibrations/JCalibrationGeneratorCCDB.h
     Calibrations/JLargeCalibration.cc
-    Calibrations/JLargeCalibration.h
 
     CLI/JBenchmarker.cc
-    CLI/JBenchmarker.h
     CLI/JSignalHandler.cc
-    CLI/JSignalHandler.h
     CLI/JMain.cc
-    CLI/JMain.h
 
     Compatibility/JStreamLog.cc
-    Compatibility/JStreamLog.h
     Compatibility/JStreamLogBuffer.cc
-    Compatibility/JStreamLogBuffer.h
-    Compatibility/JStatusBits.h
-    Compatibility/jerror.h
-    Compatibility/JGeometry.h
     Compatibility/JGeometryManager.cc
-    Compatibility/JGeometryManager.h
     Compatibility/JGeometryXML.cc
-    Compatibility/JGeometryXML.h
     Compatibility/md5.c
-    Compatibility/md5.h
-    Compatibility/JLockService.h
-    Compatibility/JGetObjectsFactory.h
     )
 
 if (${USE_PODIO})
     list(APPEND JANA2_SOURCES
-            Podio/JEventProcessorPodio.cc
             Podio/JFactoryPodioT.cc
         )
 endif()
@@ -152,6 +72,7 @@ add_library(jana2 OBJECT ${JANA2_SOURCES})
 find_package(Threads REQUIRED)
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 target_link_libraries(jana2 PUBLIC ${CMAKE_DL_LIBS} Threads::Threads)
+target_link_libraries(jana2 PRIVATE VendoredTomlPlusPlus)
 
 if (${USE_PODIO})
     target_link_libraries(jana2 PUBLIC podio::podio podio::podioRootIO ${ROOT_LIBRARIES})
@@ -166,6 +87,7 @@ set_target_properties(jana2_static_lib PROPERTIES PREFIX "lib" OUTPUT_NAME "JANA
 
 target_include_directories(jana2_static_lib PUBLIC $<INSTALL_INTERFACE:include>)
 target_link_libraries(jana2_static_lib PUBLIC ${CMAKE_DL_LIBS} Threads::Threads)
+target_link_libraries(jana2_static_lib PUBLIC VendoredTomlPlusPlus)
 
 if (${USE_PODIO})
     target_link_libraries(jana2_static_lib PUBLIC podio::podio podio::podioRootIO ${ROOT_LIBRARIES})
@@ -173,7 +95,6 @@ elseif (${USE_ROOT})
     target_link_libraries(jana2_static_lib PUBLIC ${ROOT_LIBRARIES})
 endif()
 install(TARGETS jana2_static_lib EXPORT jana2_targets DESTINATION lib)
-
 
 # optionally build shared lib
 if (BUILD_SHARED_LIBS)
@@ -183,6 +104,7 @@ if (BUILD_SHARED_LIBS)
 
     target_include_directories(jana2_shared_lib PUBLIC $<INSTALL_INTERFACE:include>)
     target_link_libraries(jana2_shared_lib PUBLIC ${CMAKE_DL_LIBS} Threads::Threads)
+    target_link_libraries(jana2_shared_lib PUBLIC VendoredTomlPlusPlus)
 
     if (${USE_PODIO})
         target_link_libraries(jana2_shared_lib PUBLIC podio::podio podio::podioRootIO ${ROOT_LIBRARIES})
@@ -202,26 +124,24 @@ endif()
 file(GLOB jana_headers "*.h*")
 file(GLOB jana_engine_headers "Engine/*.h*")
 file(GLOB jana_services_headers "Services/*.h*")
-file(GLOB jana_status_headers "Status/*.h*")
 file(GLOB jana_streaming_headers "Streaming/*.h*")
 file(GLOB jana_utils_headers "Utils/*.h*")
 file(GLOB jana_calibs_headers "Calibrations/*.h*")
 file(GLOB jana_cli_headers "CLI/*.h*")
 file(GLOB jana_compat_headers "Compatibility/*.h*")
 file(GLOB jana_podio_headers "Podio/*.h*")
-file(GLOB jana_omni_headers "Omni/*.h*")
+file(GLOB jana_component_headers "Components/*.h*")
 file(GLOB jana_topology_headers "Topology/*.h*")
 
 install(FILES ${jana_headers} DESTINATION include/JANA)
 install(FILES ${jana_engine_headers} DESTINATION include/JANA/Engine)
 install(FILES ${jana_services_headers} DESTINATION include/JANA/Services)
-install(FILES ${jana_status_headers} DESTINATION include/JANA/Status)
 install(FILES ${jana_streaming_headers} DESTINATION include/JANA/Streaming)
 install(FILES ${jana_utils_headers} DESTINATION include/JANA/Utils)
 install(FILES ${jana_calibs_headers} DESTINATION include/JANA/Calibrations)
 install(FILES ${jana_cli_headers} DESTINATION include/JANA/CLI)
 install(FILES ${jana_compat_headers} DESTINATION include/JANA/Compatibility)
-install(FILES ${jana_omni_headers} DESTINATION include/JANA/Omni)
+install(FILES ${jana_component_headers} DESTINATION include/JANA/Components)
 install(FILES ${jana_topology_headers} DESTINATION include/JANA/Topology)
 
 if (${USE_PODIO})

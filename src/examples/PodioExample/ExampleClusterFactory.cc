@@ -4,7 +4,8 @@
 
 
 #include "ExampleClusterFactory.h"
-#include "PodioExampleDatamodel/ExampleHit.h"
+#include "PodioDatamodel/ExampleClusterCollection.h"
+#include "PodioDatamodel/ExampleHitCollection.h"
 #include <JANA/JEvent.h>
 
 ExampleClusterFactory::ExampleClusterFactory() {
@@ -54,4 +55,3 @@ void ExampleClusterFactory::Process(const std::shared_ptr<const JEvent> &event) 
 }
 
 
-// TODO: Expose collections as refs, not ptrs?

@@ -1,6 +1,7 @@
 #pragma once
 
-#include "DatamodelGlue.h"
+#include <PodioDatamodel/ExampleClusterCollection.h>
+#include <PodioDatamodel/ExampleHitCollection.h>
 #include <JANA/Utils/JTablePrinter.h>
 
 JTablePrinter TabulateClusters(const ExampleClusterCollection* c);

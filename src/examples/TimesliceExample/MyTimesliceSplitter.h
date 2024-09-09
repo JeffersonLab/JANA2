@@ -3,9 +3,8 @@
 
 #pragma once
 
-#include <DatamodelGlue.h>
-
 #include <JANA/JEventUnfolder.h>
+#include <PodioDatamodel/EventInfoCollection.h>
 #include "CollectionTabulators.h"
 
 struct MyTimesliceSplitter : public JEventUnfolder {

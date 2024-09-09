@@ -3,8 +3,9 @@
 
 #pragma once
 
-#include <DatamodelGlue.h>
 #include <JANA/JEventSource.h>
+#include <PodioDatamodel/TimesliceInfoCollection.h>
+#include <PodioDatamodel/EventInfoCollection.h>
 #include "CollectionTabulators.h"
 
 
