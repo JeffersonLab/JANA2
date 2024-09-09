@@ -2,11 +2,17 @@
 macro(add_jana_plugin plugin_name)
 
     # Parse remaining arguments
-    set(options)
+    set(options LINK_SHARED)
     set(oneValueArgs EXPORT)
     set(multiValueArgs SOURCES PUBLIC_HEADER TESTS)
 
     cmake_parse_arguments(PLUGIN "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    if (LINK_SHARED)
+        set(PLUGIN_JANA_LIB jana2_shared_lib)
+    else()
+        set(PLUGIN_JANA_LIB jana2_static_lib)
+    endif()
 
     if (NOT PLUGIN_SOURCES AND NOT PLUGIN_PUBLIC_HEADER AND NOT PLUGIN_TESTS)
         # If no arguments provided, glob everything
@@ -64,7 +70,7 @@ macro(add_jana_plugin plugin_name)
         INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib;${CMAKE_INSTALL_PREFIX}/lib/${INSTALL_NAMESPACE}/plugins"
     )
 
-    target_link_libraries(${plugin_name} PUBLIC "${JANA_NAMESPACE}jana2_static_lib")
+    target_link_libraries(${plugin_name} PUBLIC "${JANA_NAMESPACE}${PLUGIN_JANA_LIB}")
 
     # Handle public headers
     if (PLUGIN_PUBLIC_HEADER)
