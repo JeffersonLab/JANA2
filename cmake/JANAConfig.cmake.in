@@ -32,4 +32,9 @@ set(JANA_INCLUDE_DIR ${JANA_INCLUDE_DIRS})
 set(JANA_LIBRARY ${JANA_LIBRARIES}) 
 set(JANA_LIB ${JANA_LIBRARIES}) 
 
+# Include JANA cmake helper macros
+include("${CMAKE_CURRENT_LIST_DIR}/AddJanaPlugin.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/AddJanaLibrary.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/AddJanaTest.cmake")
+
 
