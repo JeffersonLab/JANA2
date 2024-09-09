@@ -11,6 +11,7 @@
 
 class JTestRootEventSource : public JEventSource {
 
+    JBenchUtils m_bench_utils = JBenchUtils();
 public:
     JTestRootEventSource();
     virtual ~JTestRootEventSource() = default;

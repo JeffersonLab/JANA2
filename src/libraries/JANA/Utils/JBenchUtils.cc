@@ -6,7 +6,7 @@
 #include "JBenchUtils.h"
 
 
-JBenchUtils::JBenchUtils(size_t event_number, std::string caller_name)
+void JBenchUtils::set_seed(size_t event_number, std::string caller_name)
 {
     std::hash<std::string> hasher;
     long seed = event_number ^ hasher(caller_name);

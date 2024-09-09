@@ -24,6 +24,7 @@ class JTestParser : public JEventSource {
     size_t m_write_bytes = 2000000;
     double m_cputime_spread = 0.25;
     double m_write_spread = 0.25;
+    JBenchUtils m_bench_utils = JBenchUtils();
     std::shared_ptr<std::vector<char>> m_latest_entangled_buffer;
 
     size_t m_events_generated = 0;
@@ -56,16 +57,16 @@ public:
         m_events_generated++;
         event.SetEventNumber(m_events_generated);
 
-        std::unique_ptr<JBenchUtils> bench_utils = std::make_unique<JBenchUtils>(m_events_generated, typeid(*this).name());
+        m_bench_utils.set_seed(m_events_generated, typeid(*this).name());
 
         if ((prev_m_events_generated % 40) == 0) {
             // "Read" new entangled event every 40 events
             m_latest_entangled_buffer = std::shared_ptr<std::vector<char>>(new std::vector<char>);
-            bench_utils->write_memory(*m_latest_entangled_buffer, m_write_bytes, m_write_spread);
+            m_bench_utils.write_memory(*m_latest_entangled_buffer, m_write_bytes, m_write_spread);
         }
 
         // Spin the CPU
-        bench_utils->consume_cpu_ms(m_cputime_ms, m_cputime_spread);
+        m_bench_utils.consume_cpu_ms(m_cputime_ms, m_cputime_spread);
 
         // Emit a shared pointer to the entangled event buffer
         auto eec = new JTestEntangledEventData;

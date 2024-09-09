@@ -16,6 +16,7 @@ class JTestPlotter : public JEventProcessor {
     size_t m_write_bytes = 1000;
     double m_cputime_spread = 0.25;
     double m_write_spread = 0.25;
+    JBenchUtils m_bench_utils = JBenchUtils();
     std::mutex m_mutex;
 
 public:
@@ -35,10 +36,10 @@ public:
 
     void Process(const std::shared_ptr<const JEvent>& event) override {
 
-        std::unique_ptr<JBenchUtils> bench_utils = std::make_unique<JBenchUtils>(event->GetEventNumber(), typeid(*this).name());
+        m_bench_utils.set_seed(event->GetEventNumber(), typeid(*this).name());
         // Read the track data
         auto td = event->GetSingle<JTestTrackData>();
-        bench_utils->read_memory(td->buffer);
+        m_bench_utils.read_memory(td->buffer);
 
         // Read the extra data objects inserted by JTestTracker
         event->Get<JTestTracker::JTestTrackAuxilliaryData>();
@@ -47,11 +48,11 @@ public:
         std::lock_guard<std::mutex> lock(m_mutex);
 
         // Consume CPU
-        bench_utils->consume_cpu_ms(m_cputime_ms, m_cputime_spread);
+        m_bench_utils.consume_cpu_ms(m_cputime_ms, m_cputime_spread);
 
         // Write the histogram data
         auto hd = new JTestHistogramData;
-        bench_utils->write_memory(hd->buffer, m_write_bytes, m_write_spread);
+        m_bench_utils.write_memory(hd->buffer, m_write_bytes, m_write_spread);
         event->Insert(hd);
     }
 

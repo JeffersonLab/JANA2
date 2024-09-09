@@ -19,6 +19,7 @@ class JTestDisentangler : public JFactoryT<JTestEventData> {
     size_t m_write_bytes = 500000;
     double m_cputime_spread = 0.25;
     double m_write_spread = 0.25;
+    JBenchUtils m_bench_utils = JBenchUtils();
 
     std::shared_ptr<JTestCalibrationService> m_calibration_service;
 
@@ -38,20 +39,20 @@ public:
 
     void Process(const std::shared_ptr<const JEvent> &aEvent) override {
 
-        std::unique_ptr<JBenchUtils> bench_utils = std::make_unique<JBenchUtils>(aEvent->GetEventNumber(), NAME_OF_THIS);
+        m_bench_utils.set_seed(aEvent->GetEventNumber(), NAME_OF_THIS);
         // Read (large) entangled event data
         auto eed = aEvent->GetSingle<JTestEntangledEventData>();
-        bench_utils->read_memory(*eed->buffer);
+        m_bench_utils.read_memory(*eed->buffer);
 
         // Read calibration data
         m_calibration_service->getCalibration();
 
         // Do a little bit of computation
-        bench_utils->consume_cpu_ms(m_cputime_ms, m_cputime_spread);
+        m_bench_utils.consume_cpu_ms(m_cputime_ms, m_cputime_spread);
 
         // Write (large) event data
         auto ed = new JTestEventData;
-        bench_utils->write_memory(ed->buffer, m_write_bytes, m_write_spread);
+        m_bench_utils.write_memory(ed->buffer, m_write_bytes, m_write_spread);
         Insert(ed);
     }
 };

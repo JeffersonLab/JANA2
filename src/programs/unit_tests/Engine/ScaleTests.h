@@ -17,11 +17,14 @@ struct DummySource : public JEventSource {
     }
 
     Result Emit(JEvent& event) override {
-        std::unique_ptr<JBenchUtils> bench_utils = std::make_unique<JBenchUtils>(event.GetEventNumber(), NAME_OF_THIS);
-        bench_utils->consume_cpu_ms(20);
+        m_bench_utils.set_seed(event.GetEventNumber(), NAME_OF_THIS);
+        m_bench_utils.consume_cpu_ms(20);
         std::this_thread::sleep_for(std::chrono::nanoseconds(1));
         return Result::Success;
     }
+
+    private:
+        JBenchUtils m_bench_utils = JBenchUtils();
 };
 
 struct DummyProcessor : public JEventProcessor {
@@ -30,10 +33,13 @@ struct DummyProcessor : public JEventProcessor {
         SetCallbackStyle(CallbackStyle::ExpertMode);
     }
     void Process(const JEvent& event) override {
-        std::unique_ptr<JBenchUtils> bench_utils = std::make_unique<JBenchUtils>(event.GetEventNumber(), NAME_OF_THIS);
-        bench_utils->consume_cpu_ms(100);
+        m_bench_utils.set_seed(event.GetEventNumber(), NAME_OF_THIS);
+        m_bench_utils.consume_cpu_ms(100);
         std::this_thread::sleep_for(std::chrono::nanoseconds(1));
     }
+
+    private:
+        JBenchUtils m_bench_utils = JBenchUtils();
 };
 } // namespace scaletest
 #endif //JANA2_SCALETESTS_H

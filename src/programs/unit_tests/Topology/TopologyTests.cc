@@ -162,10 +162,11 @@ TEST_CASE("JTopology: Basic functionality") {
         step(emit_rand_ints);
 
         bool work_left = true;
-        std::unique_ptr<JBenchUtils> bench_utils = std::make_unique<JBenchUtils>(5, "TopologyTests");
+        JBenchUtils bench_utils = JBenchUtils();
+        bench_utils.set_seed(5, "TopologyTests");
         while (work_left) {
             // Pick a random arrow
-            JArrow* arrow = arrows[bench_utils->randint(0, 3)];
+            JArrow* arrow = arrows[bench_utils.randint(0, 3)];
 
             auto name = arrow->get_name();
             JArrowMetrics metrics;

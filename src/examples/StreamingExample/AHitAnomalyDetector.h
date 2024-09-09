@@ -33,14 +33,15 @@ public:
         }
         ss << "}" << std::endl;
         std::cout << ss.str();
-        std::unique_ptr<JBenchUtils> bench_utils = std::make_unique<JBenchUtils>(event.GetEventNumber(), NAME_OF_THIS);
-        bench_utils->consume_cpu_ms(m_delay_ms);
+        m_bench_utils.set_seed(event.GetEventNumber(), NAME_OF_THIS);
+        m_bench_utils.consume_cpu_ms(m_delay_ms);
     }
     void Finish() override {
         std::cout << "Anomaly detection: Done!" << std::endl;
     }
 private:
     size_t m_delay_ms;
+    JBenchUtils m_bench_utils = JBenchUtils();
 
 };
 

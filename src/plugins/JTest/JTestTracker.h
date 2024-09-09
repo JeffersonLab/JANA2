@@ -17,6 +17,7 @@ class JTestTracker : public JFactoryT<JTestTrackData> {
     size_t m_write_bytes = 1000;
     double m_cputime_spread = 0.25;
     double m_write_spread = 0.25;
+    JBenchUtils m_bench_utils = JBenchUtils();
 
 public:
 
@@ -36,17 +37,17 @@ public:
 
     void Process(const std::shared_ptr<const JEvent> &aEvent) override {
 
-        std::unique_ptr<JBenchUtils> bench_utils = std::make_unique<JBenchUtils>(aEvent->GetEventNumber(), typeid(*this).name());
+        m_bench_utils.set_seed(aEvent->GetEventNumber(), typeid(*this).name());
         // Read (large) event data
         auto ed = aEvent->GetSingle<JTestEventData>();
-        bench_utils->read_memory(ed->buffer);
+        m_bench_utils.read_memory(ed->buffer);
 
         // Do lots of computation
-        bench_utils->consume_cpu_ms(m_cputime_ms, m_cputime_spread);
+        m_bench_utils.consume_cpu_ms(m_cputime_ms, m_cputime_spread);
 
         // Write (small) track data
         auto td = new JTestTrackData;
-        bench_utils->write_memory(td->buffer, m_write_bytes, m_write_spread);
+        m_bench_utils.write_memory(td->buffer, m_write_bytes, m_write_spread);
         Insert(td);
 
         // Insert some additional objects

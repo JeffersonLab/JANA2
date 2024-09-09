@@ -19,7 +19,9 @@ class JBenchUtils {
 
 public:
 
-    JBenchUtils(size_t event_number, std::string caller_name);
+    JBenchUtils(){}
+
+    void set_seed(size_t event_number, std::string caller_name);
 
     size_t rand_size(size_t avg, double spread);
     int randint(int min, int max);

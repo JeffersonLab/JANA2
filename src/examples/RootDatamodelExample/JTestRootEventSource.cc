@@ -29,9 +29,9 @@ JEventSource::Result JTestRootEventSource::Emit(JEvent& event) {
     event.SetEventNumber(current_event_number++);
     event.SetRunNumber(222);
     
-    std::unique_ptr<JBenchUtils> bench_utils = std::make_unique<JBenchUtils>(event.GetEventNumber(), NAME_OF_THIS);
+    m_bench_utils.set_seed(event.GetEventNumber(), NAME_OF_THIS);
     // Spin the CPU a bit to limit the rate
-    bench_utils->consume_cpu_ms(5);
+    m_bench_utils.consume_cpu_ms(5);
 
     // Generate hit objects. We use random numbers to give some variation
     // and make things look a little more realistic
