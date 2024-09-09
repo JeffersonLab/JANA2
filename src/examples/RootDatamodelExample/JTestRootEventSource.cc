@@ -13,7 +13,6 @@
 
 #include <JANA/JApplication.h>
 #include <JANA/JEvent.h>
-#include <JANA/Utils/JBenchUtils.h>
 
 JTestRootEventSource::JTestRootEventSource() {
     SetTypeName(NAME_OF_THIS); // Provide JANA with class name

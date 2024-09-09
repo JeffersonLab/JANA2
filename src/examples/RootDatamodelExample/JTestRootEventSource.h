@@ -8,6 +8,8 @@
 
 #include <JANA/JEventSource.h>
 #include <JANA/JEventSourceGeneratorT.h>
+#include <JANA/Utils/JBenchUtils.h>
+
 
 class JTestRootEventSource : public JEventSource {
 

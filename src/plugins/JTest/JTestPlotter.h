@@ -7,6 +7,7 @@
 
 #include <JANA/JApplication.h>
 #include <JANA/JEventProcessor.h>
+#include <JANA/Utils/JBenchUtils.h>
 #include "JTestTracker.h"
 #include <mutex>
 
