@@ -1,25 +1,25 @@
-
 # JANA1 to JANA2 Parameter Changes Guide
 
-As part of the transition from JANA1 to JANA2, a few parameters have been updated. This guide provides a comparison of these parameters to help you adjust your configurations and usage.
+This guide outlines the key parameter changes from JANA1 to JANA2, helping you adjust your configurations and usage as needed.
 
-## JANA Parameter Changes
+### Commonly Used JANA Parameters
 
-| **Parameter**         | **JANA1**                        | **JANA2**                        |
-|-----------------------|---------------------------------|---------------------------------|
-| **PLUGINS**           | Configured with `PLUGINS`        | Updated configuration method     |
-| **EVENTS_TO_KEEP**    | Previous value or syntax         | New value or syntax              |
-| **EVENTS_TO_SKIP**    | Previous value or syntax         | New value or syntax              |
-| **NTHREADS**          | Number of threads                | Updated usage or default value   |
-| **JANA:BATCH_MODE**   | `1`                              | Updated value or usage           |
-| **JANA_CALIB_CONTEXT**| Previous setting                 | Updated setting or method        |
+The following table compares commonly used JANA parameters between JANA1 and JANA2. Parameters that remain unchanged in JANA2 are marked with `-`. In the "Possible Input" column, `-` means that they are the same as in JANA1. Changes are listed where applicable.
+
+| **Parameter**         | **JANA1**              | **JANA2**                    | **Possible Inputs**                              |
+|-----------------------|------------------------|------------------------------|--------------------------------------------------|
+| **PLUGINS**           | `- `                   | `-`                          | `-`                                              |
+| **EVENTS_TO_KEEP**    | `EVENTS_TO_KEEP`       | `jana:nevents`               | `-`                                              |
+| **EVENTS_TO_SKIP**    | `EVENTS_TO_SKIP`       | `jana:nskips`                | `-`                                              |
+| **NTHREADS**          | `-`                    | `-`                          | `-`                                              |
+| **JANA:BATCH_MODE**   | `JANA:BATCH_MODE`      | `log:global`                 | `TRACE`, `DEBUG`, `INFO`, `WARN`, `FATAL`, `OFF` |
+| **JANA_CALIB_CONTEXT**| `JANA_CALIB_CONTEXT`   | `jana:calib_context`         | `-`                                              |
 
 ## Changes in `halld_recon` Parameters
 
-All parameters in `halld_recon` other than the `-b` option of `hd_dump` remain the same.
+### `hd_dump` Option Update
 
-- **`hd_dump` Option Change:**
-  - **JANA1:** The `-b` option was used for printing event status bits.
-  - **JANA2:** The `-b` option is now used for benchmarking in JANA2. To avoid conflicts, the `hd_dump` parameter is changed to `-B`. Make sure to update your usage accordingly.
+- **JANA1:** The `-b` option was used for printing event status bits in `hd_dump`.
+- **JANA2:** The `-b` option is used for benchmarking in JANA2. Thus, `hd_dump` parameter for event status bits (`-b`) has been changed to `-B`. Update your usage accordingly.
 
-For additional assistance or if you have any questions, contact [rasool@jlab.org](mailto:rasool@jlab.org).
+For additional assistance or questions, please contact [rasool@jlab.org](mailto:rasool@jlab.org).
