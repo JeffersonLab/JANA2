@@ -1,4 +1,4 @@
-# JANA1 to JANA2 Parameter Changes Guide
+# Parameter Changes
 
 This guide outlines the key parameter changes from JANA1 to JANA2, helping you adjust your configurations and usage as needed.
 

@@ -1,11 +1,14 @@
 
-****
-# Developers Transition Guide: Key Syntax Changes between JANA1 to JANA2
+
+# Developers Transition Guide
+
+***Key Syntax Changes between JANA1 to JANA2***
 
 This guide outlines the critical syntax and functional updates between JANA1 and JANA2, helping developers navigate the transition smoothly.
 
-## Commonly Used Features
-### JANA Namespace Handling
+
+
+## Namespace
 ##### **JANA1**
 Adding following on top of all files was necessary in JANA1:
 
@@ -14,30 +17,59 @@ using namespace jana;
 ```
 ##### **JANA2**
 This line is no longer required in JANA2.
-### Application Handling
+
+
+## Application
+
+### JApplication
 #### Getting the JApplication
+
 ##### **JANA1**
 In JANA1 there is a global variable `japp` which is a pointer to the project's `JApplication`. You can also obtain it from `JEventLoop::GetJApplication()`.
+
 ##### **JANA2**
 In JANA2, `japp` is still around but we are strongly discouraging its future use. If you are within any JANA component (for instance: JFactory, JEventProcessor, JEventSource, JService) you can obtain the `JApplication` pointer from `this`, like so:
-```
+
+```cpp
 auto app = GetApplication();
 ```
 
 You can also obtain it from the `JEvent` the same way as you used to from `JEventLoop`, i.e. 
-```c++
+
+```cpp
 auto app = event->GetJApplication();
 ```
-### Parameter Management
-#### Setting Parameters
+
+### DApplication
+### Getting DApplication
 ##### **JANA1**
+
+```cpp
+#include "DANA/DApplication.h"
+dApplication = dynamic_cast<DApplication*>(locEventLoop->GetJApplication
 ```
+
+##### **JANA2**
+There is no `DApplication` anymore in JANA2. `JApplication` is `final`, which means you can't inherit from it. The functionality on `DApplication` has been moved into `JService`s, which can be accessed via `JApplication::GetService<ServiceT>()`. 
+
+```cpp
+auto dapp = GetApplication()->GetService<DApplication>();
+```
+
+
+## Parameter Manager
+### Setting Parameters
+
+##### **JANA1**
+
+```cpp
 gPARMS->GetParameter("OUTPUT_FILENAME", dOutputFileName);
 ```
+
 ##### **JANA2**
 You should obtain parameters as shown below. 
 
-```
+```cpp
 auto app = GetApplication();
 app->SetDefaultParameter("component_prefix:value_name", ref_to_member_var);
 ```
@@ -51,52 +83,52 @@ We strongly recommend you register all parameters from inside the `Init()` callb
 
 If you register parameters in other contexts, this machinery might not work and you might get incomplete parameter lists and missing or spurious error messages. Worse, your code might not see the parameter values you expect it to see. Registering parameters from inside constructors is less problematic but still discouraged because it won't work with some upcoming new features.
 
-#### Getting Parameter Maps
+### Getting Parameter Maps
+
 ##### **JANA1**
 To obtain a map of all parameters that share a common prefix:
 
-```
+```cpp
 //gets all parameters with this filter at the beginning of the key
 gPARMS->GetParameters(locParameterMap, "COMBO_DEDXCUT:"); 
 ```
+
 ##### **JANA2**
 In JANA2 this has been renamed to `FilterParameters` but the functionality is the same.
 Note that this method is not on `JApplication` directly; you have to obtain the parameter manager like so:
 
-```
+```cpp
 //gets all parameters with this filter at the beginning of the key
 GetApplication()->GetJParameterManager()->FilterParameters(locParameterMap, "COMBO_DEDXCUT:");
 ```
-### DApplication Handling
-#### Getting DApplication
-##### **JANA1**
-```
-#include "DANA/DApplication.h"
-dApplication = dynamic_cast<DApplication*>(locEventLoop->GetJApplication
-```
-##### **JANA2**
-There is no `DApplication` anymore in JANA2. `JApplication` is `final`, which means you can't inherit from it. The functionality on `DApplication` has been moved into `JService`s, which can be accessed via `JApplication::GetService<ServiceT>()`. 
-### DGeometry Handling
+
+
+## DGeometry
 #### Getting DGeometry
+
 ##### **JANA1**
 ###### Using japp
-```
+```cpp
 #include "DANA/DApplication.h"
 #include "HDGEOMETRY/DGeometry.h"
 
 DApplication* dapp=dynamic_cast<DApplication*>(japp);
 const DGeometry *dgeom = dapp->GetDGeometry(runnumber);
 ```
+
 ###### Using eventLoop
-```
+
+```cpp
 #include "DANA/DApplication.h"
 #include "HDGEOMETRY/DGeometry.h"
 
 DGeometry *locGeom = dApplication ? dApplication->GetDGeometry(eventLoop->GetJEvent().GetRunNumber()) : NULL;
 ```
+
 ##### **JANA2**
 In JANA2, you obtain the `DGeometryManager` from the `JApplication` and from there you use the run number to obtain the corresponding `DGeometry`:
-```
+
+```cpp
 #include "HDGEOMETRY/DGeometry.h"
 
 auto runnumber = event->GetRunNumber();
@@ -107,23 +139,27 @@ auto geom = geo_manager->GetDGeometry(runnumber);
 
 To reduce the boilerplate, we've provided a handy helper function, `DEvent::GetDGeometry()`, that does all of these steps for you:
 
-```
+```cpp
 #include "DANA/DEvent.h"
 
 DGeometry *locGeometry = DEvent::GetDGeometry(locEvent);
 ```
 
 You should call `GetDGeometry` from `JFactory::BeginRun` or `JEventProcessor::BeginRun`.
-### Calibration Handling
+
+
+## Calibration
 #### Accessing Calibration Data - `GetCalib` 
 ##### **JANA1**
-```
+
+```cpp
 locEventLoop->GetCalib(locTOFParmsTable.c_str(), tofparms);
 ```
+
 ##### **JANA2**
 Analogously to `DGeometry`, you obtain the calibrations by obtaining the `JCalibrationManager` from `JApplication::GetService<>()` and then loading the calibration object corresponding to the event's run number. We recommend you use `DEvent::GetCalib` to avoid this boilerplate. You should call this from your `BeginRun` callback. 
 
-```
+```cpp
 #include "DANA/DEvent.h"
 
 DEvent::GetCalib(event, locTOFParmsTable.c_str(), tofparms);
@@ -131,7 +167,7 @@ DEvent::GetCalib(event, locTOFParmsTable.c_str(), tofparms);
 
 In principle, the calibrations could also be keyed off of event number intervals, in which case you should call it from `Process` and pass the event number as well:
 
-```
+```cpp
 #include <JANA/JEvent.h>
 #include <JANA/Calibrations/JCalibrationManager.h>
 
@@ -141,19 +177,22 @@ auto run_number = event->GetRunNumber();
 auto app = GetApplication();
 auto calibration = app->GetService<JCalibrationManager>()->GetJCalibration(run_number);
 calibration->Get("BCAL/mc_parms", bcalparms, event_number)
-
-
 ```
-### Status Bit Handling
+
+
+## Status Bit
 #### Accessing Status Bit - `GetStatusBit`
+
 ##### **JANA1**
-```
+
+```cpp
 locEventLoop->GetJEvent().GetStatusBit(kSTATUS_PHYSICS_EVENT)
 ```
+
 ##### **JANA2**
 Status bits are no longer an event member variable. Instead, they are inserted and retrieved just like the other collections:
 
-```
+```cpp
 #include "DANA/DStatusBits.h"
 
 
@@ -163,10 +202,14 @@ locEvent->GetSingle<DStatusBits>()->GetStatusBit(kSTATUS_PHYSICS_EVENT)
 
 locEvent->GetSingleStrict<DStatusBits>()->GetStatusBit(kSTATUS_REST);
 ```
-### Magnetic Field Handling
+
+
+## Magnetic Field
 #### Getting Magnetic Field - `GetBField`
+
 ##### **JANA1**
-```
+
+```cpp
 #include "DANA/DApplication.h"
 
 dApplication = dynamic_cast<DApplication*>(locEventLoop->GetJApplication());
@@ -177,13 +220,14 @@ dMagFMap= dApplication->GetBfield(locEventLoop->GetJEvent().GetRunNumber());
 In JANA2, the magnetic field map is a resource handled analogously to `DGeometry` and `JCalibrationManager`. Thus, we recommend obtaining the 
 field map by calling `DEvent::GetBField(event)` from inside `BeginRun`:
 
-```
+```cpp
 #include "DANA/DEvent.h"
 
 dMagneticFieldMap = DEvent::GetBfield(locEvent);
 ```
 
-## Updated Get Functions
+
+## Get Functions
 ### JObject Getters
 
 #### 1. `GetSingleT`
@@ -193,38 +237,46 @@ The new `GetSingle` returns a pointer rather than updating an out parameter. If 
 `nullptr`.
 
 ##### **JANA1**
-```
+
 Was present in JANA1
-```
+
+
 ##### **JANA2**
-```
-No longer available in JANA2; use GetSingle() instead
-```
+
+No longer available in JANA2; use ```GetSingle()``` instead
+
+
 #### 2. `GetSingle`
 ##### **JANA1**
-```
+
+```cpp
 // Pass by reference
 // Set passed param equal to pointer to object
 const Df250PulsePedestal* PPobj = NULL;
 digihit->GetSingle(PPobj);
 ```
+
 ##### **JANA2**
-```
+```cpp
 // Template function
 // Return pointer to object
 auto PPobj = digihit->GetSingle<Df250PulsePedestal>();
 ```
+
+
 #### 3. `Get`
 
 Similarly to `GetSingle`, `Get` returns a vector rather than updating an out parameter.
 ##### **JANA1**
-```
+
+```cpp
 // Pass by Reference
 vector<const DBCALUnifiedHit*> assoc_hits;
 point.Get(assoc_hits);
 ```
+
 ##### **JANA2**
-```
+```cpp
 // Templated Function
 // Return value
 vector<const DBCALUnifiedHit*> assoc_hits = point.Get<DBCALUnifiedHit>();
@@ -234,28 +286,33 @@ vector<const DBCALUnifiedHit*> assoc_hits = point.Get<DBCALUnifiedHit>();
 
 #### 1. `GetSingle`
 ##### **JANA1**
-```
+
+```cpp
 // Pass by Reference, 
 // passed param got assigned pointer to object
 
 const DTTabUtilities* locTTabUtilities = NULL;
 loop->GetSingle(locTTabUtilities); 
 ```
+
 ##### **JANA2**
-```
+```cpp
 // Return the pointer to object based on template type
 
 const DTTabUtilities* locTTabUtilities = event->GetSingle<DTTabUtilities>();
 ```
+
 #### 2. `Get`
 ##### **JANA1**
-```
+
+```cpp
 // Pass by Reference
 vector<const DBCALShower*> showers;
 loop->Get(showers, "IU");
 ```
+
 ##### **JANA2**
-```
+```cpp
 // JANA1 Get is still available but will be deprecated soon
 // So better to use the one given below
 
@@ -281,7 +338,8 @@ down cleanly.
 5. The user no longer provides a `className` callback. Instead, they call `SetTypeName(NAME_OF_THIS);` from the constructor.
 
 ##### JANA1
-```
+
+```cpp
 #ifndef _JEventProcessor_myplugin_
 #define _JEventProcessor_myplugin_
 
@@ -308,8 +366,10 @@ private:
 
 #endif // _JEventProcessor_myplugin_
 ```
+
 ##### JANA2
-```
+
+```cpp
 #ifndef _JEventProcessor_myplugin_
 #define _JEventProcessor_myplugin_
 #include <JANA/JEventProcessor.h>
@@ -346,7 +406,7 @@ based data models, which provide free serialization/deserialization, a first-cla
 memory management and immutability guarantees, and relational object associations.
 
 ##### JANA1
-```
+```cpp
 #include <JANA/JObject.h>
 #include <JANA/JFactory.h>
 
@@ -367,8 +427,10 @@ public:
     }
 };
 ```
+
 ##### JANA2
-```
+
+```cpp
 #include <JANA/JObject.h>
 
 class DCereHit: public JObject {
@@ -395,7 +457,7 @@ establish a convention for how and when it gets set. For reliable, automatic obj
 
 
 ##### **JANA1**
-```
+```cpp
 // JANA1 JObject had a data member id
 
 DBCALShower *shower = new DBCALShower;
@@ -403,7 +465,7 @@ shower->id = id++;
 ```
 ##### **JANA2**
 
-```
+```cpp
 // id data member does not exist in JObject anymore in JANA2
 
 DBCALShower *shower = new DBCALShower;
@@ -411,7 +473,8 @@ shower->id = id++; // Compiler error
 ```
 
 Similarly, the `JObject::oid_t` type has been removed from JANA2 as well. If you need it, it lives on in the halld_recon codebase:
-```
+
+```cpp
 #include "DANA/DObjectID.h"
 
 oid_t // Not inside JObject anymore!
@@ -449,8 +512,10 @@ different queue, where it could later be picked up by a different thread. Import
 given JEvent and its corresponding factory set at any time, so you don't need to worry about thread safety in JFactories.
 
 ### Factory Header File
+
 ##### JANA1
-```
+
+```cpp
 #ifndef _myfactory_factory_
 #define _myfactory_factory_
 
@@ -475,8 +540,10 @@ private:
 
 #endif
 ```
+
 ##### JANA2
-```
+
+```cpp
 #ifndef _thirdFacTest_factory_
 #define _thirdFacTest_factory_
 
@@ -500,6 +567,7 @@ private:
 
 #endif
 ```
+
 ### Registering a New Factory
 
 In JANA1, the user creates a `JFactoryGenerator` with a `GenerateFactories()` callback. Within this callback, 
@@ -518,7 +586,7 @@ pass separate `JFactoryGeneratorT`s for each factory instead.
 
 ##### **JANA1**
 
-```
+```cpp
 #include <JANA/JApplication.h>
 #include "JFactoryGenerator_myfactory.h"
 #include "myfactory.h"
@@ -532,9 +600,10 @@ void InitPlugin(JApplication *app) {
 }
 } // "C"
 ```
+
 ##### **JANA2**
 
-```
+```cpp
 #include <JANA/JApplication.h>
 #include <JANA/JFactoryGenerator.h>
 #include "myfactory.h"
@@ -558,13 +627,15 @@ factories using `GetAll()` and retrieving all objects descended from parent type
 
 ##### **JANA1**
 
-```
+```cpp
 vector<JFactory_base*> locFactories = locEventLoop->GetFactories();
 // Cast JFactory_base to particular factory type
 JFactory<DReaction>* locFactory = dynamic_cast<JFactory<DReaction>*>(locFactories[0]);
 ```
+
 ##### **JANA2**
-```
+
+```cpp
 // Retrieve all factories producing T directly
 vector<JFactoryT<DReaction>*> locFacs = locEvent->GetFactoryAll<DReaction>();
 ```
@@ -580,60 +651,70 @@ renamed to `mData`.
 
 ##### _Single Object_
 ###### **JANA1**
-```
+
+```cpp
 _data.push_back(locAnalysisResults);
 ```
+
 ###### **JANA2**
-```
+
+```cpp
 Insert(locAnalysisResults);
 
 // Or (less preferred)
 mData.push_back(locAnalysisResults);
 ```
+
 ##### _Array of Objects_
-```
+
+```cpp
 std::vector<Hit*> results;
 results.push_back(new Hit(...));
 ```
+
 ###### **JANA1**
-```
+
+```cpp
 for (auto hit: results){
 	_data.push_back(hit); 
 }
 ```
+
 ###### **JANA2**
-```
+
+```cpp
 Set(results)
 ```
 
 ## JEvent
 ### Transition from JEventLoop to JEvent
 ##### **JANA1**
-```
 In JANA1, all processing operated on a `JEventLoop` object. In JANA2, this has been changed to `JEvent`.
 Conceptually, a `JEvent` is just a container for data that can be processed as a discrete unit, indepedently from the rest
 of the stream (this usually correspondings to a physics event, but also potentially a timeslice, block, subevent, etc). This includes the 
 event number, run number, all data read from the event source, all data created by factories so far, and all of
 the factory state necessary to generate additional data belonging to the same context. The factories themselves are managed by a `JFactorySet`
 which is one-to-one with and owned by the JEvent.
-```
+
 ### Getting the Run Number
 ##### **JANA1**
-```
+```cpp
 run_number = locEventLoop->GetJEvent().GetRunNumber());
 ```
 ##### **JANA2**
-```
+```cpp
 locEvent->GetRunNumber()
 ```
 
 #### Getting the Event Number
 ##### **JANA1**
-```
+
+```cpp
 run_number = locEventLoop->GetJEvent().GetEventNumber());
 ```
 ##### **JANA2**
-```
+
+```cpp
 locEvent->GetEventNumber()
 ```
 
@@ -648,13 +729,15 @@ to JANA2 as-is with one minor change: the various lock helper methods have been 
 
 ### ROOT Read/Write locks
 ##### JANA1
-```
+
+```cpp
 dActionLock = japp->RootReadLock(); 
 // ...
 japp->RootUnLock(locLockName);
 ```
 ##### JANA2
-```
+
+```cpp
 auto app = GetApplication(); // or event->GetJApplication()
 auto lock_svc = app->GetService<JLockService>();
 
@@ -664,7 +747,8 @@ lock_svc->RootUnLock();
 ```
 
 To reduce boilerplate, we've added a helper function:
-```
+
+```cpp
 #include "DANA/DEvent.h"
 
 DEvent::GetLockService(locEvent)->RootWriteLock(); 
@@ -674,7 +758,8 @@ DEvent::GetLockService(locEvent)->RootUnLock();
 ### Named locks
 
 ##### JANA1
-```
+
+```cpp
 dActionLock = japp->ReadLock(locLockName); 
 // ...
 pthread_rwlock_unlock(dActionLock);
@@ -682,7 +767,8 @@ pthread_rwlock_unlock(dActionLock);
 ```
 
 ##### JANA2
-```
+
+```cpp
 auto app = GetApplication(); // or event->GetJApplication()
 auto lock_svc = app->GetService<JLockService>();
 
@@ -693,7 +779,8 @@ pthread_rwlock_unlock(dActionLock);
 ```
 
 To reduce boilerplate:
-```
+
+```cpp
 DEvent::GetLockService(locEvent)->ReadLock("app"); 
 DEvent::GetLockService(locEvent)->Unlock("app");
 ```
@@ -707,15 +794,17 @@ The enum in `particleType.h` was experiencing a name conflict with a JANA2 enum,
 to an enum class.
 
 ##### **JANA1**
-```
+
+```cpp
 //Was a plain enum so could be accessed without any scope resolution operator
 
 #include "particleType.h"
 
 return ((locFirstStep->Get_TargetPID() != Unknown) || (locFirstStep->Get_SecondBeamPID() != Unknown));
 ```
+
 ##### **JANA2**
-```
+```cpp
 // Is Enum class now so could be accessed like this `Particle_t::Unknown` only
 
 #include "particleType.h"
