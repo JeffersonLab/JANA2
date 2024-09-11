@@ -11,5 +11,6 @@
   * [Streaming](howto/streaming.md "JANA2: Streaming readout")
   * [Other HowTos](howto/other-howtos.md "JANA2: HowTO list")
 - [Development](development/development.md)
+- [Transition Guide: JANA1 to JANA2](jana1to2/transition-guide-jana1-to-jana2.md)
 - [C++ Reference](https://drateots.github.io/JANA2/refcpp/index.html ':target=_blank')
 - [GitHub](https://github.com/JeffersonLab/JANA2 ':target=_blank')
