@@ -9,7 +9,6 @@
 
 #include "TestTopologyComponents.h"
 #include <JANA/Utils/JBenchUtils.h>
-#include <JANA/Utils/JPerfUtils.h>
 #include <JANA/Engine/JScheduler.h>
 
 

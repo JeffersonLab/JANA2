@@ -31,10 +31,7 @@ set(JANA2_SOURCES
 
     Utils/JCpuInfo.cc
     Utils/JProcessorMapping.cc
-    Utils/JPerfUtils.cc
-    Utils/JPerfUtils.h
     Utils/JBenchUtils.cc
-    Utils/JBenchUtils.h
     Utils/JStringification.cc
     Utils/JAutoActivator.cc
     Utils/JTablePrinter.cc
