@@ -10,14 +10,14 @@
 #include <JANA/JEventProcessor.h>
 #include <JANA/JLogger.h>
 #include <JANA/Services/JEventGroupTracker.h>
-#include <JANA/Utils/JPerfUtils.h>
+#include <JANA/Utils/JBenchUtils.h>
 
 #include "TridasEvent.h"
 
 /// GroupedEventProcessor demonstrates basic usage of JEventGroups
 
 class GroupedEventProcessor : public JEventProcessor {
-
+    JBenchUtils m_bench_utils = JBenchUtils();
 public:
     GroupedEventProcessor() {
         SetTypeName(NAME_OF_THIS);
@@ -26,8 +26,9 @@ public:
 
     void Process(const std::shared_ptr<const JEvent>& event) override {
 
+        m_bench_utils.set_seed(event->GetEventNumber(), NAME_OF_THIS);
         // In parallel, perform a random amount of (slow) computation
-        consume_cpu_ms(100, 1.0);
+        m_bench_utils.consume_cpu_ms(100, 1.0);
 
         auto tridas_event = event->GetSingle<TridasEvent>();
         tridas_event->should_keep = true;

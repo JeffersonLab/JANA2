@@ -7,7 +7,7 @@
 
 #include <JANA/JFactoryT.h>
 #include <JANA/JEvent.h>
-#include <JANA/Utils/JPerfUtils.h>
+#include <JANA/Utils/JBenchUtils.h>
 
 #include "JTestDataObjects.h"
 #include "JTestCalibrationService.h"
@@ -19,6 +19,7 @@ class JTestDisentangler : public JFactoryT<JTestEventData> {
     size_t m_write_bytes = 500000;
     double m_cputime_spread = 0.25;
     double m_write_spread = 0.25;
+    JBenchUtils m_bench_utils = JBenchUtils();
 
     std::shared_ptr<JTestCalibrationService> m_calibration_service;
 
@@ -38,19 +39,20 @@ public:
 
     void Process(const std::shared_ptr<const JEvent> &aEvent) override {
 
+        m_bench_utils.set_seed(aEvent->GetEventNumber(), NAME_OF_THIS);
         // Read (large) entangled event data
         auto eed = aEvent->GetSingle<JTestEntangledEventData>();
-        read_memory(*eed->buffer);
+        m_bench_utils.read_memory(*eed->buffer);
 
         // Read calibration data
         m_calibration_service->getCalibration();
 
         // Do a little bit of computation
-        consume_cpu_ms(m_cputime_ms, m_cputime_spread);
+        m_bench_utils.consume_cpu_ms(m_cputime_ms, m_cputime_spread);
 
         // Write (large) event data
         auto ed = new JTestEventData;
-        write_memory(ed->buffer, m_write_bytes, m_write_spread);
+        m_bench_utils.write_memory(ed->buffer, m_write_bytes, m_write_spread);
         Insert(ed);
     }
 };

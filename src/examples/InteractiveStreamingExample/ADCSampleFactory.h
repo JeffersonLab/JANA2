@@ -7,7 +7,6 @@
 #define _ADCSampleFactory_h_
 
 #include <JANA/JFactoryT.h>
-#include <JANA/Utils/JPerfUtils.h>
 
 #include "ADCSample.h"
 #include "INDRAMessage.h"
