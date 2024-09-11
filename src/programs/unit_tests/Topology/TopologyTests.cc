@@ -8,7 +8,7 @@
 #include <JANA/Engine/JArrowProcessingController.h>
 
 #include "TestTopologyComponents.h"
-#include <JANA/Utils/JPerfUtils.h>
+#include <JANA/Utils/JBenchUtils.h>
 #include <JANA/Engine/JScheduler.h>
 
 
@@ -161,9 +161,11 @@ TEST_CASE("JTopology: Basic functionality") {
         step(emit_rand_ints);
 
         bool work_left = true;
+        JBenchUtils bench_utils = JBenchUtils();
+        bench_utils.set_seed(5, "TopologyTests");
         while (work_left) {
             // Pick a random arrow
-            JArrow* arrow = arrows[randint(0, 3)];
+            JArrow* arrow = arrows[bench_utils.randint(0, 3)];
 
             auto name = arrow->get_name();
             JArrowMetrics metrics;

@@ -8,7 +8,7 @@
 
 #include <JANA/JFactoryT.h>
 #include <JANA/JEvent.h>
-#include <JANA/Utils/JPerfUtils.h>
+#include <JANA/Utils/JBenchUtils.h>
 #include "JTestDataObjects.h"
 
 class JTestTracker : public JFactoryT<JTestTrackData> {
@@ -17,6 +17,7 @@ class JTestTracker : public JFactoryT<JTestTrackData> {
     size_t m_write_bytes = 1000;
     double m_cputime_spread = 0.25;
     double m_write_spread = 0.25;
+    JBenchUtils m_bench_utils = JBenchUtils();
 
 public:
 
@@ -36,16 +37,17 @@ public:
 
     void Process(const std::shared_ptr<const JEvent> &aEvent) override {
 
+        m_bench_utils.set_seed(aEvent->GetEventNumber(), typeid(*this).name());
         // Read (large) event data
         auto ed = aEvent->GetSingle<JTestEventData>();
-        read_memory(ed->buffer);
+        m_bench_utils.read_memory(ed->buffer);
 
         // Do lots of computation
-        consume_cpu_ms(m_cputime_ms, m_cputime_spread);
+        m_bench_utils.consume_cpu_ms(m_cputime_ms, m_cputime_spread);
 
         // Write (small) track data
         auto td = new JTestTrackData;
-        write_memory(td->buffer, m_write_bytes, m_write_spread);
+        m_bench_utils.write_memory(td->buffer, m_write_bytes, m_write_spread);
         Insert(td);
 
         // Insert some additional objects
