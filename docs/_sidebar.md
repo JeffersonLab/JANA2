@@ -10,11 +10,7 @@
   * [Group Events](howto/group-events.md "JANA2: Group Events")
   * [Streaming](howto/streaming.md "JANA2: Streaming readout")
   * [Other HowTos](howto/other-howtos.md "JANA2: HowTO list")
-- JANA1 to 2:
-  * [Users guide](jana1to2/transition-guide-jana1-to-jana2.md)
-  * [Developers guide](jana1to2/developers-transition-guide.md)
-  * [Parameter changes](jana1to2/parameter-changes-guide.md) 
-  * [Syntax changes](jana1to2/syntax-changes.md)
+- [JANA1 => 2](jana1to2/jana1-to-jana2.md)  
 - [Development](development/development.md)
 - [C++ Reference](https://drateots.github.io/JANA2/refcpp/index.html ':target=_blank')
 - [GitHub](https://github.com/JeffersonLab/JANA2 ':target=_blank')
