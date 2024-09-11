@@ -49,7 +49,8 @@ We strongly recommend you register all parameters from inside the `Init()` callb
 - Emit a warning when two plugins register the same parameter with conflicting default values.
 - Inspect the exact parameter values used by a factory
 
-If you register parameters in other contexts, this machinery might not work and you might get incomplete parameter lists and missing or spurious error messages. Worse, your code might not see the parameter values you expect it to see. Registering parameters from inside component constructors is less problematic but still discouraged because it won't work with some upcoming new features.
+If you register parameters in other contexts, this machinery might not work and you might get incomplete parameter lists and missing or spurious error messages. Worse, your code might not see the parameter values you expect it to see. Registering parameters from inside constructors is less problematic but still discouraged because it won't work with some upcoming new features.
+
 #### Getting Parameter Maps
 ##### **JANA1**
 To obtain a map of all parameters that share a common prefix:
@@ -184,7 +185,13 @@ dMagneticFieldMap = DEvent::GetBfield(locEvent);
 
 ## Updated Get Functions
 ### JObject Getters
+
 #### 1. `GetSingleT`
+
+`GetSingleT` has been replaced with `GetSingle`. Templated methods no longer have a `T` suffix; templated classes (such as `JFactoryT`) still do.
+The new `GetSingle` returns a pointer rather than updating an out parameter. If there isn't exactly one associated item of that type, it will return 
+`nullptr`.
+
 ##### **JANA1**
 ```
 Was present in JANA1
@@ -208,6 +215,8 @@ digihit->GetSingle(PPobj);
 auto PPobj = digihit->GetSingle<Df250PulsePedestal>();
 ```
 #### 3. `Get`
+
+Similarly to `GetSingle`, `Get` returns a vector rather than updating an out parameter.
 ##### **JANA1**
 ```
 // Pass by Reference
@@ -221,6 +230,8 @@ point.Get(assoc_hits);
 vector<const DBCALUnifiedHit*> assoc_hits = point.Get<DBCALUnifiedHit>();
 ```
 ### JEvent Getters
+
+
 #### 1. `GetSingle`
 ##### **JANA1**
 ```
@@ -255,6 +266,20 @@ auto showers = event->Get<DBCALShower>("IU");
 
 ## JEventProcessor
 ### JEventProcessor Header File
+
+`JEventProcessors` in JANA2 have a similar feel to JANA1. The key differences are:
+
+1. The names and type signatures of the callbacks have changed
+2. The event number and run number now live on the JEvent object rather than as separate arguments
+3. JANA2 doesn't use `jerror_t` anywhere for several reasons: there's too many options to exhaustively check, most 
+error codes don't apply to JEventProcessors, there's no clear indication which error codes represent failure conditions,
+and no reasonable strategy JANA can take if a failure is reached other than a premature exit. Thus the callbacks return
+void. 
+4. If a failure condition is reached in user code, the user should throw a `JException` with a detailed message. JANA will
+add additional context information (such as the component name, callback, plugin, and backtrace), log everything, and shut
+down cleanly.
+5. The user no longer provides a `className` callback. Instead, they call `SetTypeName(NAME_OF_THIS);` from the constructor.
+
 ##### JANA1
 ```
 #ifndef _JEventProcessor_myplugin_
@@ -310,6 +335,16 @@ private:
 
 ## JObject
 ### JObject Header File
+
+
+`JObjects` in JANA2 are also conceptually similar to their JANA1 counterparts, with a
+syntax refresh aimed at future extensibility. The `toStrings` callback has been
+replaced with a `Summarize` callback as shown below. Note that in JANA2, data model classes
+do not need to inherit from `JObject` anymore - `JObject` merely provides clean, user-specified formatting, 
+and convenient simple tracking of object associations. JANA2 also supports using [PODIO](https://github.com/AIDASoft/podio)
+based data models, which provide free serialization/deserialization, a first-class Python interface, automatic
+memory management and immutability guarantees, and relational object associations.
+
 ##### JANA1
 ```
 #include <JANA/JObject.h>
@@ -352,6 +387,13 @@ public:
 };
 ```
 ### JObject ID Handling
+
+In JANA1, JObjects provided an `id` field. However it was left up to the user how to set and use it. Because JANA can't guarantee
+that it is set reliably or consistently, it is fundamentally part of the data model and not part of the framework. Thus, JANA2 
+no longer provides a built-in object id. If needed, users are welcome to add their own `id` field to their data model classes and
+establish a convention for how and when it gets set. For reliable, automatic object IDs for all data model classes, consider using PODIO.
+
+
 ##### **JANA1**
 ```
 // JANA1 JObject had a data member id
@@ -360,17 +402,15 @@ DBCALShower *shower = new DBCALShower;
 shower->id = id++;
 ```
 ##### **JANA2**
-JANA2 no longer provides a built-in object id. However, you can always add one as a field to your `JObject` and set it yourself.
 
 ```
 // id data member does not exist in JObject anymore in JANA2
 
 DBCALShower *shower = new DBCALShower;
-shower->id = id++; // Throw Error: no id member
+shower->id = id++; // Compiler error
 ```
 
 Similarly, the `JObject::oid_t` type has been removed from JANA2 as well. If you need it, it lives on in the halld_recon codebase:
-
 ```
 #include "DANA/DObjectID.h"
 
@@ -382,7 +422,32 @@ oid_t // Not inside JObject anymore!
 ##### **JANA1**
 In JANA1, `JFactory_base` was a common factory base class, and `JFactory` was a template that inherits from `JFactory_base` and adds functionality specific to the type of the factory's output collection.
 ##### **JANA2**
-In JANA2, the base class was renamed to `JFactory`, and the template was renamed to `JFactoryT`. JANA2 adds some new functionality, but the old functionality is largely consistent with JANA1. One important difference is that in JANA1, there is always one factory set assigned to each thread, whereas in JANA2, there is one factory set for each event in flight. The number of in-flight events is a parameter controlled separately from the thread count.
+In JANA2, the base class was renamed to `JFactory`, and the template was renamed to `JFactoryT`. JANA2 adds some new functionality, but the old functionality is largely consistent with JANA1. 
+
+The syntax differences between JANA1 and JANA2 `JFactory`s' are consistent with those for `JEventProcessor`s. 
+
+1. The names and type signatures of the callbacks have changed
+2. The event number and run number now live on the JEvent object rather than as separate arguments
+3. JANA2 doesn't use `jerror_t` anywhere for several reasons: there's too many options to exhaustively check, most 
+error codes don't apply to JEventProcessors, there's no clear indication which error codes represent failure conditions,
+and no reasonable strategy JANA can take if a failure is reached other than a premature exit. Thus the callbacks return
+void. 
+4. If a failure condition is reached in user code, the user should throw a `JException` with a detailed message. JANA will
+add additional context information (such as the component name, callback, plugin, and backtrace), log everything, and shut
+down cleanly.
+5. The user no longer provides a `className` callback. Instead, they call `SetTypeName(NAME_OF_THIS);` from the constructor.
+
+Another important difference is how factory tags are set. In JANA1, the user provides a `Tag()` callback, whereas in JANA2,
+the user sets the tag by calling `SetTag()` from the constructor. The user can retrieve the factory tag by calling `GetTag()`.
+
+One important semantic difference is that in JANA1, there is always one factory set assigned to each thread, whereas in JANA2, 
+there is one factory set for each event in flight. The number of in-flight events is a parameter controlled separately 
+from the thread count. This is important for ensuring that there is always work for threads to do when running 
+multi-level processing topologies. Another consequence of this design is that factories don't belong to just one thread and hence 
+shouldn't reference thread-local variables - instead, one thread can pop an event from a queue, process it, and push it to a 
+different queue, where it could later be picked up by a different thread. Importantly, however, only one thread has access to any 
+given JEvent and its corresponding factory set at any time, so you don't need to worry about thread safety in JFactories.
+
 ### Factory Header File
 ##### JANA1
 ```
@@ -397,6 +462,8 @@ class myfactory_factory : public jana::JFactory<myobject> {
 public:
     myfactory_factory() = default;
     ~myfactory_factory() = default;
+
+    const char* Tag() { return "MyTag"; }
 
 private:
     jerror_t init(void); 
@@ -434,78 +501,83 @@ private:
 #endif
 ```
 ### Registering a New Factory
-This section require some explanation like how factory was getting added before and how it is now with complete explanation
-##### **JANA1**
-###### Using EventLoop
-```
-jerror_t BCAL_init(JEventLoop *loop)
-{
-/// Create and register BCAL data factories
-loop->AddFactory(new JFactory<DBCALDigiHit>());
-loop->AddFactory(new JFactory<DBCALTDCDigiHit>());
-loop->AddFactory(new DBCALHit_factory());
 
-}
+In JANA1, the user creates a `JFactoryGenerator` with a `GenerateFactories()` callback. Within this callback, 
+the user instantiates new factories and adds them to a `JEventLoop`. (In `halld_recon`, there is a `DFactoryGenerator`
+which instantiates factories for all fundamental detector plugins, calling each plugin's corresponding 
+`$DETECTOR_init()` function.)
+
+In JANA2, the user is still free to create their own `JFactoryGenerator`. It's syntax has been modified (notably, 
+`GenerateFactories()` provides a `JFactorySet` argument that the user adds the factories to), but the core concepts
+are the same. However, there is now also a `JFactoryGeneratorT` utility which reduces the boilerplate. As long
+as the factory is default constructible, the user merely needs to pass the factory class as a template argument to
+`JFactoryGeneratorT`, and JANA will do the rest of the work. JANA2 is perfectly fine with users passing a single 
+`JFactoryGenerator` that instantiates every single factory in the system, but there are future benefits if users
+pass separate `JFactoryGeneratorT`s for each factory instead.
+
+
+##### **JANA1**
+
 ```
-###### Using Factory Generator
-```
-#include "myfactory_factory.h"
-#include "JFactoryGenerator_myfactory.h"
 #include <JANA/JApplication.h>
+#include "JFactoryGenerator_myfactory.h"
+#include "myfactory.h"
+
 using namespace jana;
 
-
-
-extern "C"{
-	void InitPlugin(JApplication *app){
+extern "C" {
+void InitPlugin(JApplication *app) {
 	InitJANAPlugin(app);
 	app->AddFactoryGenerator(new JFactoryGenerator_myfactory());
-	}
+}
 } // "C"
 ```
 ##### **JANA2**
-###### Using Factory Set
+
 ```
-#include <JANA/JFactorySet.h>
-#include <JANA/Compatibility/JGetObjectsFactory.h>
-
-void BCAL_init(JFactorySet *factorySet)
-
-{
-
-/// Create and register BCAL data factories
-factorySet->Add(new JGetObjectsFactory<DBCALDigiHit>());
-factorySet->Add(new JGetObjectsFactory<DBCALTDCDigiHit>());
-factorySet->Add(new DBCALHit_factory());
-
-}
-```
-###### Using Factory Generator
-```
-#include "thirdFacTest_factory.h"
 #include <JANA/JApplication.h>
 #include <JANA/JFactoryGenerator.h>
+#include "myfactory.h"
 
-extern "C"{
-	void InitPlugin(JApplication *app){
+extern "C" {
+void InitPlugin(JApplication *app) {
 	InitJANAPlugin(app);
-	app->Add(new JFactoryGeneratorT<thirdFacTest_factory>());
-	}
+	app->Add(new JFactoryGeneratorT<my_factory>());
+}
 } // "C"
 ```
+
 ### Getting All Factories
+
+Sometimes it is necessary to retrieve all factories that produce objects of a given type. In
+JANA1 this was done by retrieving all factories and doing a `dynamic_cast`. In JANA2 there's a
+dedicated method for this, `GetFactoryAll`. (Note that this will retrieve the factories without
+automatically running them!). JANA2 also supports retrieving all objects of type `T` from all
+factories using `GetAll()` and retrieving all objects descended from parent type `T` 
+(e.g. `JObject` or `TObject`) using `GetAlllChildren()`.
+
 ##### **JANA1**
+
 ```
 vector<JFactory_base*> locFactories = locEventLoop->GetFactories();
-//JFactory_base to particular factory type
+// Cast JFactory_base to particular factory type
 JFactory<DReaction>* locFactory = dynamic_cast<JFactory<DReaction>*>(locFactories[0]);
 ```
 ##### **JANA2**
 ```
-// Directly give particular factory type
+// Retrieve all factories producing T directly
 vector<JFactoryT<DReaction>*> locFacs = locEvent->GetFactoryAll<DReaction>();
 ```
+
 ### Saving Created Object(s) to Factory
+
+When writing a factory, the user creates some data objects inside `Process()` and
+then needs to pass them back to JANA. In JANA1, this was done by modifying the
+`_data` member variable directly. In JANA2, we prefer using a dedicated setter method.
+For the sake of porting GlueX without having to rewrite certain complex factories, 
+we've left the member variable `protected`, though the member variable has been 
+renamed to `mData`.
+
 ##### _Single Object_
 ###### **JANA1**
 ```
@@ -514,95 +586,38 @@ _data.push_back(locAnalysisResults);
 ###### **JANA2**
 ```
 Insert(locAnalysisResults);
+
+// Or (less preferred)
+mData.push_back(locAnalysisResults);
 ```
 ##### _Array of Objects_
 ```
-std::vector<fac1*> results;
-results.push_back(new fac1(...));
+std::vector<Hit*> results;
+results.push_back(new Hit(...));
 ```
 ###### **JANA1**
 ```
-for (auto obj: results){
-	_data.push_back(obj); 
+for (auto hit: results){
+	_data.push_back(hit); 
 }
 ```
 ###### **JANA2**
 ```
 Set(results)
 ```
-### Getting Created Objects from Factory
-##### **JANA1**
-```
-vector<const DReaction*> locReactionsSubset;
-locFactory->Get(locReactionsSubset);
-locReactions.insert(locReactions.end(), locReactionsSubset.begin(), locReactionsSubset.end());
-```
-##### **JANA2**
-```
-vector<const DReaction*> locReactionsSubset;
-auto iters = locFactory->GetOrCreate(locEvent, locEvent->GetJApplication(), locEvent->GetRunNumber());
-locReactions.insert(locReactions.end(), iters.first, iters.second);
-```
-### Factory Tag Handling
-#### 1. Setting Tag
-##### **JANA1**
-```
-//Inside factory class definition this was required to be added
-const char* Tag(void){return "Combo";}
-```
-##### **JANA2**
-```
-// Have to set inside factory constructor now 
-DChargedTrack_factory_Combo(){
-	SetTag("Combo");
-}
-```
-#### 2. Getting Tag
-##### **JANA1**
-```
-locFactory->Tag()
-```
-##### **JANA2**
-```
-locFactory->GetTag()
-```
-### Factory Object Name Handling
-#### 1. Setting Object Name
-##### **JANA1**
-```
-// Was not present in JANA1
-
-DReaction_factory_Thrown(){
-//prevents JANA from searching the input file for these objects
-use_factory = 1;
-}
-```
-##### **JANA2**
-```
-// Present in JANA2 and is set inside constructor. Write what it mainly do? 
-
-DReaction_factory_Thrown(){
-SetObjectName("DReaction");
-SetTag("Thrown");
-}
-```
 
 ## JEvent
 ### Transition from JEventLoop to JEvent
 ##### **JANA1**
 ```
-JEventLoop is JANA1 thing, write what it was doing mainly
-#include <JANA/JEventLoop.h> -- you have to import this header file in factory and where else?
+In JANA1, all processing operated on a `JEventLoop` object. In JANA2, this has been changed to `JEvent`.
+Conceptually, a `JEvent` is just a container for data that can be processed as a discrete unit, indepedently from the rest
+of the stream (this usually correspondings to a physics event, but also potentially a timeslice, block, subevent, etc). This includes the 
+event number, run number, all data read from the event source, all data created by factories so far, and all of
+the factory state necessary to generate additional data belonging to the same context. The factories themselves are managed by a `JFactorySet`
+which is one-to-one with and owned by the JEvent.
 ```
-##### **JANA2**
-```
-JANA2 has replaced JEventLoop with JEvent,
-
-#include <JANA/JEvent.h> --- you have to import it in factory, need to include anywhere else too??
-
-write how it is different that JEventLoop? I think mainly now factoryies are inside factory set instead of having them inside JEvent as it was for JEventLoop.
-```
-### Getting Run Number
+### Getting the Run Number
 ##### **JANA1**
 ```
 run_number = locEventLoop->GetJEvent().GetRunNumber());
@@ -611,7 +626,8 @@ run_number = locEventLoop->GetJEvent().GetRunNumber());
 ```
 locEvent->GetRunNumber()
 ```
-#### Getting Event Number
+
+#### Getting the Event Number
 ##### **JANA1**
 ```
 run_number = locEventLoop->GetJEvent().GetEventNumber());
@@ -622,82 +638,74 @@ locEvent->GetEventNumber()
 ```
 
 ## Acquiring Locks
-### Initialization
-##### **JANA1**
-```
-#include "DANA/DApplication.h"
+
+JANA1 required the user to manually acquire and hold locks when accessing to shared resources in a JEventProcessor.
+JANA2 offers a different interface which handles all locks internally. However, using this new callback interface
+would require restructuring the existing `JEventProcessor` code. When migrating from JANA1 to JANA2 it 
+is much safer to avoid making such deep changes, at least initially. The old-style user-managed locks can be migrated
+to JANA2 as-is with one minor change: the various lock helper methods have been moved from `JApplication` to `JLockService`.
 
 
-dApplication = dynamic_cast<DApplication*>(locEventLoop->GetJApplication
+### ROOT Read/Write locks
+##### JANA1
 ```
-##### **JANA2**
+dActionLock = japp->RootReadLock(); 
+// ...
+japp->RootUnLock(locLockName);
 ```
-#include <JANA/Compatibility/JLockService.h> 
+##### JANA2
+```
+auto app = GetApplication(); // or event->GetJApplication()
+auto lock_svc = app->GetService<JLockService>();
 
+lock_svc->RootReadLock(); 
+// ...
+lock_svc->RootUnLock();
+```
 
-auto app = locEvent->GetJApplication();
-jLockService = app->GetService<JLockService>();
-// or 
-jLockService = japp->GetService<JLockService>()
-```
-### Available Locks & Their Acquiring
-#### 1. ReadLock
-##### **JANA1**
-```
-dActionLock = japp->ReadLock(locLockName); 
-pthread_rwlock_unlock(dActionLock); //unlock
-```
-##### **JANA2**
-```
-dActionLock = app->GetService<JLockService>()->ReadLock(locLockName); 
-pthread_rwlock_unlock(dActionLock); //unlock
-```
-#### 2. WriteLock
-##### **JANA1**
-```
-japp->WriteLock("DAnalysisResults
-japp->Unlock("DAnalysisResults");
-```
-##### **JANA2**
-```
-jLockService->WriteLock("DAnalysisResults");
-jLockService->Unlock("DAnalysisResults");
-```
-#### 3.RootWriteLock
-##### **JANA1**
-```
-dApplication->RootWriteLock();  //lock
-dApplication->RootUnLock(); //unlock
-```
-##### **JANA2**
-###### Using JLockService
-```
-jLockService->RootWriteLock(); //lock
-jLockService->RootUnLock(); //unlock
-```
-###### Using DEvent
+To reduce boilerplate, we've added a helper function:
 ```
 #include "DANA/DEvent.h"
+
 DEvent::GetLockService(locEvent)->RootWriteLock(); 
 DEvent::GetLockService(locEvent)->RootUnLock();
 ```
 
+### Named locks
+
+##### JANA1
+```
+dActionLock = japp->ReadLock(locLockName); 
+// ...
+pthread_rwlock_unlock(dActionLock);
+// Or: japp->Unlock(locLockName);
+```
+
+##### JANA2
+```
+auto app = GetApplication(); // or event->GetJApplication()
+auto lock_svc = app->GetService<JLockService>();
+
+dActionLock = lock_svc->ReadLock(locLockName); 
+// ...
+pthread_rwlock_unlock(dActionLock);
+// Or: lock_svc->Unlock(locLockName);
+```
+
+To reduce boilerplate:
+```
+DEvent::GetLockService(locEvent)->ReadLock("app"); 
+DEvent::GetLockService(locEvent)->Unlock("app");
+```
+
+
 ## Rarely Used Features
-### `use_factory`
-##### **JANA1**
-```
-Could be used in JANA1
 
-
-//prevents JANA from searching the input file for these objects
-DEventWriterROOT_factory(){use_factory = 1;}; 
-```
-##### **JANA2**
-```
-No more available in JANA2, how is the functionality that it was providing is getting used?
-DEventWriterROOT_factory() = default;
-```
 ### `Unknown` Handling
+
+The enum in `particleType.h` was experiencing a name conflict with a JANA2 enum, so it has been changed
+to an enum class.
+
 ##### **JANA1**
 ```
 //Was a plain enum so could be accessed without any scope resolution operator
