@@ -18,7 +18,7 @@ private:
     std::vector<JEventProcessor*> m_procs;
 
 public:
-    JEventTapArrow(std::string name, EventQueue *input_queue, EventQueue *output_queue, JEventPool *pool);
+    JEventTapArrow(std::string name);
 
     void add_processor(JEventProcessor* proc);
     void process(Event* event, bool& success, JArrowMetrics::Status& status);
