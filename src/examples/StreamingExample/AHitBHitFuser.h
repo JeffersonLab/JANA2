@@ -8,7 +8,7 @@
 
 #include <JANA/JEventProcessor.h>
 #include <JANA/JEvent.h>
-#include <JANA/JPerfUtils.h>
+#include <JANA/JBenchUtils.h>
 #include "AHit.h"
 
 /// AHitBHitFuser
@@ -39,7 +39,9 @@ public:
         }
         ss << "}" << std::endl;
         std::cout << ss.str();
-        consume_cpu_ms(m_delay_ms);
+
+        m_bench_utils.set_seed(event.GetEventNumber(), NAME_OF_THIS);
+        m_bench_utils.consume_cpu_ms(m_delay_ms);
 
 
         auto raw_hits = event.Get<AHit>("raw_hits");
@@ -52,13 +54,14 @@ public:
             calibrated_hit->V += 7;
             std::cout << serializer.serialize(*calibrated_hit) << std::endl;
         }
-        consume_cpu_ms(m_delay_ms);
+        m_bench_utils.consume_cpu_ms(m_delay_ms);
     }
     void Finish() override {
         std::cout << "Done!" << std::endl;
     }
 private:
     size_t m_delay_ms;
+    JBenchUtils m_bench_utils = JBenchUtils();
 
 };
 

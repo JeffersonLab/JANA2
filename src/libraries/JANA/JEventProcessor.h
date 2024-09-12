@@ -4,17 +4,17 @@
 
 #pragma once
 
-#include <JANA/Omni/JComponent.h>
-#include <JANA/Omni/JHasInputs.h>
-#include <JANA/Omni/JHasRunCallbacks.h>
+#include <JANA/Components/JComponent.h>
+#include <JANA/Components/JHasInputs.h>
+#include <JANA/Components/JHasRunCallbacks.h>
 #include <JANA/JEvent.h>
 
 class JApplication;
 
 
-class JEventProcessor : public jana::omni::JComponent, 
-                        public jana::omni::JHasRunCallbacks, 
-                        public jana::omni::JHasInputs {
+class JEventProcessor : public jana::components::JComponent, 
+                        public jana::components::JHasRunCallbacks, 
+                        public jana::components::JHasInputs {
 public:
 
     JEventProcessor() = default;
@@ -47,24 +47,75 @@ public:
 
     virtual void DoMap(const std::shared_ptr<const JEvent>& e) {
 
+        if (m_callback_style == CallbackStyle::LegacyMode) {
+            throw JException("Called DoMap() on a legacy-mode JEventProcessor");
+        }
         for (auto* input : m_inputs) {
             input->PrefetchCollection(*e);
         }
-        // JExceptions with factory info will be furnished by the callee,
-        // so we don't need to try/catch here. 
-        
-        // Also we don't have 
-        // a Preprocess(), so we don't technically need Init() here even
-        
-        if (m_callback_style != CallbackStyle::DeclarativeMode) {
-            DoReduce(e); // This does all the locking!
+        if (m_callback_style == CallbackStyle::ExpertMode) {
+            ProcessParallel(*e);
+        }
+        else {
+            ProcessParallel(e->GetRunNumber(), e->GetEventNumber(), e->GetEventIndex());
         }
     }
 
 
-    virtual void DoReduce(const std::shared_ptr<const JEvent>& e) {
-        auto run_number = e->GetRunNumber();
+    virtual void DoTap(const std::shared_ptr<const JEvent>& e) {
+
+        if (m_callback_style == CallbackStyle::LegacyMode) {
+            throw JException("Called DoReduce() on a legacy-mode JEventProcessor");
+        }
         std::lock_guard<std::mutex> lock(m_mutex);
+        // In principle DoReduce() is being called by one thread at a time, but we hold a lock anyway 
+        // so that this runs correctly even if that isn't happening. This lock shouldn't experience
+        // any contention.
+
+        if (m_status == Status::Uninitialized) {
+            DoInitialize();
+        }
+        else if (m_status == Status::Finalized) {
+            throw JException("JEventProcessor: Attempted to call DoMap() after Finalize()");
+        }
+        for (auto* input : m_inputs) {
+            // This collection should have already been computed during DoMap()
+            // We do this before ChangeRun() just in case we will need to pull data out of
+            // a begin-of-run event.
+            input->GetCollection(*e);
+        }
+        auto run_number = e->GetRunNumber();
+        if (m_last_run_number != run_number) {
+            if (m_last_run_number != -1) {
+                CallWithJExceptionWrapper("JEventProcessor::EndRun", [&](){ EndRun(); });
+            }
+            for (auto* resource : m_resources) {
+                resource->ChangeRun(e->GetRunNumber(), m_app);
+            }
+            m_last_run_number = run_number;
+            CallWithJExceptionWrapper("JEventProcessor::BeginRun", [&](){ BeginRun(e); });
+        }
+        if (m_callback_style == CallbackStyle::DeclarativeMode) {
+            CallWithJExceptionWrapper("JEventProcessor::Process", [&](){ 
+                Process(e->GetRunNumber(), e->GetEventNumber(), e->GetEventIndex());
+            });
+        }
+        else if (m_callback_style == CallbackStyle::ExpertMode) {
+            CallWithJExceptionWrapper("JEventProcessor::Process", [&](){ Process(*e); });
+        }
+        m_event_count += 1;
+    }
+
+
+    virtual void DoLegacyProcess(const std::shared_ptr<const JEvent>& event) {
+
+        // DoLegacyProcess doesn't hold any locks, as it requires the user to hold a lock for it.
+        // Because of this, 
+        if (m_callback_style != CallbackStyle::LegacyMode) {
+            throw JException("Called DoLegacyProcess() on a non-legacy-mode JEventProcessor");
+        }
+
+        auto run_number = event->GetRunNumber();
 
         if (m_status == Status::Uninitialized) {
             DoInitialize();
@@ -77,25 +128,12 @@ public:
                 CallWithJExceptionWrapper("JEventProcessor::EndRun", [&](){ EndRun(); });
             }
             for (auto* resource : m_resources) {
-                resource->ChangeRun(e->GetRunNumber(), m_app);
+                resource->ChangeRun(event->GetRunNumber(), m_app);
             }
             m_last_run_number = run_number;
-            CallWithJExceptionWrapper("JEventProcessor::BeginRun", [&](){ BeginRun(e); });
+            CallWithJExceptionWrapper("JEventProcessor::BeginRun", [&](){ BeginRun(event); });
         }
-        for (auto* input : m_inputs) {
-            input->GetCollection(*e);
-        }
-        if (m_callback_style == CallbackStyle::DeclarativeMode) {
-            CallWithJExceptionWrapper("JEventProcessor::Process", [&](){ 
-                Process(e->GetRunNumber(), e->GetEventNumber(), e->GetEventIndex());
-            });
-        }
-        else if (m_callback_style == CallbackStyle::ExpertMode) {
-            CallWithJExceptionWrapper("JEventProcessor::Process", [&](){ Process(*e); });
-        }
-        else {
-            CallWithJExceptionWrapper("JEventProcessor::Process", [&](){ Process(e); });
-        }
+        CallWithJExceptionWrapper("JEventProcessor::Process", [&](){ Process(event); });
         m_event_count += 1;
     }
 
@@ -112,9 +150,9 @@ public:
     }
 
 
-    void Summarize(JComponentSummary& summary) {
+    void Summarize(JComponentSummary& summary) const override {
         auto* result = new JComponentSummary::Component(
-                JComponentSummary::ComponentType::Processor, GetPrefix(), GetTypeName(), GetLevel(), GetPluginName());
+            "Processor", GetPrefix(), GetTypeName(), GetLevel(), GetPluginName());
 
         for (const auto* input : m_inputs) {
             size_t subinput_count = input->names.size();
@@ -129,11 +167,24 @@ public:
     virtual void Init() {}
 
 
+    // LegacyMode-specific callbacks
+
     virtual void Process(const std::shared_ptr<const JEvent>& /*event*/) {
         throw JException("Not implemented yet!");
     }
     
+    // ExpertMode-specific callbacks
+
+    virtual void ProcessParallel(const JEvent& /*event*/) {
+    }
+
     virtual void Process(const JEvent& /*event*/) {
+        throw JException("Not implemented yet!");
+    }
+
+    // DeclarativeMode-specific callbacks
+
+    virtual void ProcessParallel(int64_t /*run_nr*/, uint64_t /*event_nr*/, uint64_t /*event_idx*/) {
         throw JException("Not implemented yet!");
     }
 

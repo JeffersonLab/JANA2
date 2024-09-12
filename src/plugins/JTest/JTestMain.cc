@@ -6,7 +6,6 @@
 
 #include <JANA/JApplication.h>
 #include <JANA/JFactoryGenerator.h>
-#include <JANA/JCsvWriter.h>
 
 #include "JTestParser.h"
 #include "JTestPlotter.h"
@@ -23,11 +22,9 @@ void InitPlugin(JApplication *app){
 	app->Add(new JFactoryGeneratorT<JTestDisentangler>());
 	app->Add(new JFactoryGeneratorT<JTestTracker>());
 
-    bool write_csv = false;
-    app->SetDefaultParameter("jtest:write_csv", write_csv);
-    if (write_csv) {
-        // Demonstrates attaching a CSV writer so we can view the results from any JFactory
-        app->Add(new JCsvWriter<JTestTrackData>());
+    bool except_on_loading = app->RegisterParameter("jtest:except_on_loading", false);
+    if (except_on_loading) {
+        throw JException("Planned exception on loading!");
     }
 
     // Demonstrates sharing user-defined services with our components

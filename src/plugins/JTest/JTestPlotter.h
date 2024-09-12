@@ -7,6 +7,7 @@
 
 #include <JANA/JApplication.h>
 #include <JANA/JEventProcessor.h>
+#include <JANA/Utils/JBenchUtils.h>
 #include "JTestTracker.h"
 #include <mutex>
 
@@ -16,6 +17,7 @@ class JTestPlotter : public JEventProcessor {
     size_t m_write_bytes = 1000;
     double m_cputime_spread = 0.25;
     double m_write_spread = 0.25;
+    JBenchUtils m_bench_utils = JBenchUtils();
     std::mutex m_mutex;
 
 public:
@@ -23,7 +25,6 @@ public:
     JTestPlotter() {
         SetPrefix("jtest:plotter");
         SetTypeName(NAME_OF_THIS);
-        SetCallbackStyle(CallbackStyle::ExpertMode);
     }
 
     void Init() override {
@@ -34,25 +35,26 @@ public:
         app->SetDefaultParameter("jtest:plotter_bytes_spread", m_write_spread, "Spread of bytes written during plotting");
     }
 
-    void Process(const JEvent& event) override {
+    void Process(const std::shared_ptr<const JEvent>& event) override {
 
+        m_bench_utils.set_seed(event->GetEventNumber(), typeid(*this).name());
         // Read the track data
-        auto td = event.GetSingle<JTestTrackData>();
-        read_memory(td->buffer);
+        auto td = event->GetSingle<JTestTrackData>();
+        m_bench_utils.read_memory(td->buffer);
 
         // Read the extra data objects inserted by JTestTracker
-        event.Get<JTestTracker::JTestTrackAuxilliaryData>();
+        event->Get<JTestTracker::JTestTrackAuxilliaryData>();
 
         // Everything that happens after here is in a critical section
         std::lock_guard<std::mutex> lock(m_mutex);
 
         // Consume CPU
-        consume_cpu_ms(m_cputime_ms, m_cputime_spread);
+        m_bench_utils.consume_cpu_ms(m_cputime_ms, m_cputime_spread);
 
         // Write the histogram data
         auto hd = new JTestHistogramData;
-        write_memory(hd->buffer, m_write_bytes, m_write_spread);
-        event.Insert(hd);
+        m_bench_utils.write_memory(hd->buffer, m_write_bytes, m_write_spread);
+        event->Insert(hd);
     }
 
 };

@@ -1,8 +1,11 @@
-#include <catch.hpp>
+#include "MultiLevelTopologyTests.h"
+#include "JANA/JException.h"
+
 #include <iostream>
 #include <map>
-#include "MultiLevelTopologyTests.h"
 
+namespace jana {
+namespace timeslice_tests {
 
 enum class Level { None, Timeslice, Event, Subevent };
 enum class ComponentType { None, Source, Filter, Map, Split, Merge, Reduce };
@@ -442,7 +445,13 @@ TEST_CASE("TimeslicesTests") {
     app.Add(new JFactoryGeneratorT<MyProtoClusterFactory>);
     app.Add(new JFactoryGeneratorT<MyClusterFactory>);
     app.SetTicker(true);
-    app.Run();
+    try {
+        app.Run();
+    }
+    catch (JException& e) {
+        std::cout << e << std::endl;
+        throw e;
+    }
 }
 
 

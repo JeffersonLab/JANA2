@@ -8,6 +8,7 @@
 
 #include <JANA/JEventSourceGenerator.h>
 #include <JANA/Utils/JTypeInfo.h>
+#include <type_traits>
 
 class JApplication;
 
@@ -45,7 +46,7 @@ class JApplication;
 ///
 
 
-template <typename T>
+template <typename T, typename Enable=void>
 class JEventSourceGeneratorT:public JEventSourceGenerator{
     public:
 
@@ -62,7 +63,55 @@ class JEventSourceGeneratorT:public JEventSourceGenerator{
 
         /// Create an instance of the source type this generates
         JEventSource* MakeJEventSource( std::string resource_name ){ 
+
             auto source = new T( resource_name, mApplication ); 
+            if (mLevel != JEventLevel::None) {
+                source->SetLevel(mLevel);
+            }
+            source->SetTypeName(JTypeInfo::demangle<T>());
+            source->SetPluginName(mPluginName);
+            return source;
+        }
+
+        /// Check how likely a source of the type this generates is to read
+        /// the specified source. This mechanism is to allow a single executable
+        /// to read from multiple file types, each corresponding to a different
+        /// JEventSource subclass. If you use only a single source type, then
+        /// there is no need to override this. If you do need this functionality
+        /// however, then override this in your code with something like:
+        ///
+        ///   template<> double JEventSourceGeneratorT<MyType>::CheckOpenable(std::string source) { ... }
+        ///
+        double CheckOpenable( std::string /* source */ ){ return 0.01; }
+};
+
+
+
+
+// Specialization for default-constructible event sources
+template <typename T>
+class JEventSourceGeneratorT<T, std::enable_if_t<std::is_default_constructible_v<T>>> : public JEventSourceGenerator{
+    public:
+
+        JEventSourceGeneratorT() : JEventSourceGenerator() {}
+        virtual ~JEventSourceGeneratorT() {}
+
+        /// Return name of the source type this will generate
+        std::string GetType(void) const {
+            return JTypeInfo::demangle<T>();
+        }
+
+        /// Return description of the source type this will generate
+        std::string GetDescription(void) const { return T::GetDescription(); }
+
+        /// Create an instance of the source type this generates
+        JEventSource* MakeJEventSource(std::string resource_name) { 
+
+            auto source = new T;
+            source->SetTypeName(JTypeInfo::demangle<T>());
+            source->SetResourceName(resource_name);
+            source->SetApplication(mApplication);
+            source->SetPluginName(mPluginName);
             if (mLevel != JEventLevel::None) {
                 source->SetLevel(mLevel);
             }
@@ -79,13 +128,7 @@ class JEventSourceGeneratorT:public JEventSourceGenerator{
         ///   template<> double JEventSourceGeneratorT<MyType>::CheckOpenable(std::string source) { ... }
         ///
         double CheckOpenable( std::string /* source */ ){ return 0.01; }
-
-    protected:
-
-        /// This is called by JEventSourceManager::AddJEventSourceGenerator which
-        /// itself is called by JApplication::Add(JEventSourceGenerator*). There
-        /// should be no need to call it from anywhere else.
-        void SetJApplication(JApplication *app){ mApplication = app; }
 };
+
 
 

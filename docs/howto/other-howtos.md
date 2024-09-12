@@ -11,7 +11,6 @@ Table of contents
 6.  [Benchmark a JANA program](benchmarking.html)
 4.  [Generate code skeletons](#creating-code-skeletons) for projects, plugins, components, etc
 5.  [Run the JANA Status/Control/Debugger GUI](#run-the-status-control-debugger-gui)
-6.  [Work with factory metadata](#using-factory-metadata) for collecting statistics, etc
 7.  Create a service which can be shared between different plugins
 8.  Handle both real and simulated data
 9.  Handle EPICS data
@@ -230,26 +229,6 @@ Run the Status Control Debugger GUI
 
 The JANA Status/Control/Debugger GUI can be a useful tool for probing a running process. Details can
 be found on the [dedicated page for the GUI](GUI_Monitor_Debug.md)
-
-
-Using factory metadata
-----------------------
-
-The `JFactoryT<T>` interface abstracts the creation logic for a vector of n objects of type `T`. However, often
-we also care about single pieces of data associated with the same computation. For instance, a track fitting factory
-might want to return statistics about how many fits succeeded and failed. 
-
-A naive solution is to put member variables on the factory and then access them from a `JEventProcessor` 
-by obtaining the `JFactoryT<T>` via `GetFactory<>` and performing a dynamic cast to the underlying factory type. 
-Although this works, it means that that factory can no longer be swapped with an alternate version without modifying
-the calling code. This degrades the whole project's ability to take advantage of the plugin architecture and hurts 
-its overall code quality.
-
-Instead, we recommend using the `JMetadata` template trait. Each `JFactoryT<T>` not only produces a vector of `T`, 
-but also a singular `JMetadata<T>` struct whose contents can be completely arbitrary, but cannot be redefined for a
-particular T. All `JFactoryT<T>` for some `T` will use it. 
-
-An example project demonstrating usage of JMetadata can be found under `examples/MetadataExample`. 
 
 
 

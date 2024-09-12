@@ -3,17 +3,17 @@
 
 #pragma once
 
-#include <JANA/Omni/JComponent.h>
-#include <JANA/Omni/JHasInputs.h>
-#include <JANA/Omni/JHasOutputs.h>
-#include <JANA/Omni/JHasRunCallbacks.h>
+#include <JANA/Components/JComponent.h>
+#include <JANA/Components/JHasInputs.h>
+#include <JANA/Components/JHasOutputs.h>
+#include <JANA/Components/JHasRunCallbacks.h>
 #include <JANA/JEvent.h>
 
 class JApplication;
-class JEventUnfolder : public jana::omni::JComponent, 
-                       public jana::omni::JHasRunCallbacks,
-                       public jana::omni::JHasInputs, 
-                       public jana::omni::JHasOutputs {
+class JEventUnfolder : public jana::components::JComponent, 
+                       public jana::components::JHasRunCallbacks,
+                       public jana::components::JHasInputs, 
+                       public jana::components::JHasOutputs {
 
 private:
     int32_t m_last_run_number = -1;
@@ -169,9 +169,9 @@ public:
         }
     }
 
-    void Summarize(JComponentSummary& summary) override {
+    void Summarize(JComponentSummary& summary) const override {
         auto* us = new JComponentSummary::Component( 
-                JComponentSummary::ComponentType::Unfolder, GetPrefix(), GetTypeName(), GetLevel(), GetPluginName());
+            "Unfolder", GetPrefix(), GetTypeName(), GetLevel(), GetPluginName());
 
         for (const auto* input : m_inputs) {
             size_t subinput_count = input->names.size();

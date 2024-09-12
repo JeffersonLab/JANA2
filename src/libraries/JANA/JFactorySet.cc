@@ -5,7 +5,6 @@
 #include <iterator>
 #include <iostream>
 
-#include "JApplication.h"
 #include "JFactorySet.h"
 #include "JFactory.h"
 #include "JMultifactory.h"
@@ -22,32 +21,11 @@ JFactorySet::JFactorySet(void)
 //---------------------------------
 // JFactorySet    (Constructor)
 //---------------------------------
-JFactorySet::JFactorySet(const std::vector<JFactoryGenerator*>& aFactoryGenerators)
+JFactorySet::JFactorySet(const std::vector<JFactoryGenerator*>& generators)
 {
-    //Add all factories from all factory generators
-    for(auto sGenerator : aFactoryGenerators){
-
-        // Generate the factories into a temporary JFactorySet.
-        JFactorySet myset;
-        sGenerator->GenerateFactories( &myset );
-
-        // Merge factories from temporary JFactorySet into this one. Any that
-        // already exist here will leave the duplicates in the temporary set
-        // where they will be destroyed by its destructor as it falls out of scope.
-        Merge( myset );
-    }
-}
-
-JFactorySet::JFactorySet(JFactoryGenerator* source_gen, const std::vector<JFactoryGenerator*>& default_gens) {
-
-    if (source_gen != nullptr) source_gen->GenerateFactories(this);
-    for (auto gen : default_gens) {
-        JFactorySet temp_set;
-        gen->GenerateFactories(&temp_set);
-        Merge(temp_set); // Factories which are shadowed stay in temp_set; others are removed
-        for (auto straggler : temp_set.GetAllFactories()) {
-            LOG << "Factory '" << straggler->GetFactoryName() << "' overriden, will be excluded from event." << LOG_END;
-        }
+    // Add all factories from all factory generators
+    for(auto generator : generators){
+        generator->GenerateFactories(this);
     }
 }
 
@@ -64,8 +42,6 @@ JFactorySet::~JFactorySet()
     }
     // Now that the factories are deleted, nothing can call the multifactories so it is safe to delete them as well
     for (auto* mf : mMultifactories) { delete mf; }
-
-
 }
 
 //---------------------------------
@@ -88,8 +64,20 @@ bool JFactorySet::Add(JFactory* aFactory)
     if (typed_result != std::end(mFactories) || untyped_result != std::end(mFactoriesFromString)) {
         // Factory is duplicate. Since this almost certainly indicates a user error, and
         // the caller will not be able to do anything about it anyway, throw an exception.
-        throw JException("JFactorySet::Add failed because factory is duplicate");
-        // return false;
+        // We show the user which factory is causing this problem, including both plugin names
+        std::string other_plugin_name;
+        if (typed_result != std::end(mFactories)) {
+            other_plugin_name = typed_result->second->GetPluginName();
+        }
+        else {
+            other_plugin_name = untyped_result->second->GetPluginName();
+        }
+        auto ex = JException("Attempted to add duplicate factories");
+        ex.function_name = "JFactorySet::Add";
+        ex.instance_name = aFactory->GetPrefix();
+        ex.type_name = aFactory->GetTypeName();
+        ex.plugin_name = aFactory->GetPluginName() + ", " + other_plugin_name;
+        throw ex;
     }
 
     mFactories[typed_key] = aFactory;
@@ -151,51 +139,6 @@ std::vector<JMultifactory*> JFactorySet::GetAllMultifactories() const {
         results.push_back(f);
     }
     return results;
-}
-
-//---------------------------------
-// Merge
-//---------------------------------
-void JFactorySet::Merge(JFactorySet &aFactorySet)
-{
-    /// Merge any factories in the specified JFactorySet into this
-    /// one. Any factories which don't have the same type and tag as one
-    /// already in this set will be transferred and this JFactorySet
-    /// will take ownership of them. Ones that have a type and tag
-    /// that matches one already in this set will be left in the
-    /// original JFactorySet. Thus, all factories left in the JFactorySet
-    /// passed into this method upon return from it can be considered
-    /// duplicates. It will be left to the caller to delete those.
-
-    JFactorySet tmpSet; // keep track of duplicates to copy back into aFactorySet
-    for( auto pair : aFactorySet.mFactories ){
-        auto factory = pair.second;
-
-        auto typed_key = std::make_pair(factory->GetObjectType(), factory->GetTag());
-        auto untyped_key = std::make_pair(factory->GetObjectName(), factory->GetTag());
-
-        auto typed_result = mFactories.find(typed_key);
-        auto untyped_result = mFactoriesFromString.find(untyped_key);
-
-        if (typed_result != std::end(mFactories) || untyped_result != std::end(mFactoriesFromString)) {
-            // Factory is duplicate. Return to caller just in case
-            tmpSet.mFactories[pair.first] = factory;
-        }
-        else {
-            mFactories[typed_key] = factory;
-            mFactoriesFromString[untyped_key] = factory;
-        }
-    }
-
-    // Copy duplicates back to aFactorySet
-    aFactorySet.mFactories.swap( tmpSet.mFactories );
-    tmpSet.mFactories.clear(); // prevent ~JFactorySet from deleting any factories
-
-    // Move ownership of multifactory pointers over.
-    for (auto* mf : aFactorySet.mMultifactories) {
-        mMultifactories.push_back(mf);
-    }
-    aFactorySet.mMultifactories.clear();
 }
 
 //---------------------------------

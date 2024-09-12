@@ -47,10 +47,10 @@ void JFactory::DoInit() {
     }
 }
 
-void JFactory::Summarize(JComponentSummary& summary) {
+void JFactory::Summarize(JComponentSummary& summary) const {
 
     auto fs = new JComponentSummary::Component(
-            JComponentSummary::ComponentType::Factory,
+            "Factory",
             GetPrefix(),
             GetTypeName(),
             GetLevel(),

@@ -8,9 +8,12 @@
 
 #include <JANA/JEventSource.h>
 #include <JANA/JEventSourceGeneratorT.h>
+#include <JANA/Utils/JBenchUtils.h>
+
 
 class JTestRootEventSource : public JEventSource {
 
+    JBenchUtils m_bench_utils = JBenchUtils();
 public:
     JTestRootEventSource();
     virtual ~JTestRootEventSource() = default;

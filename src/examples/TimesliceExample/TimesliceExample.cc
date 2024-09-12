@@ -8,7 +8,7 @@
 #include "MyProtoclusterFactory.h"
 #include "MyClusterFactory.h"
 
-#include <JANA/Omni/JOmniFactoryGeneratorT.h>
+#include <JANA/Components/JOmniFactoryGeneratorT.h>
 
 #include <JANA/JApplication.h>
 

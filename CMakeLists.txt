@@ -7,7 +7,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)   # Enable -fPIC for all targets
 
 # Default the C++ standard to C++17, and validate that they provided one we can use
 set(CMAKE_CXX_STANDARD 17 CACHE STRING "Set the C++ standard to be used")
-if(NOT CMAKE_CXX_STANDARD MATCHES "17|20|23")
+if(NOT CMAKE_CXX_STANDARD MATCHES "14|17|20|23")
     message(FATAL_ERROR "Unsupported C++ standard: ${CMAKE_CXX_STANDARD}")
 endif()
 

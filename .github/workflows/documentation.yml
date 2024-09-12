@@ -42,7 +42,7 @@ jobs:
           path: ./docs
 
   deploy:
-    #if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/master'
     permissions:
       id-token: write
       contents: read

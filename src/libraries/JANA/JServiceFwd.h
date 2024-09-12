@@ -1,10 +1,10 @@
 
 #pragma once
-#include <JANA/Omni/JComponentFwd.h>
+#include <JANA/Components/JComponentFwd.h>
 
 
 class JServiceLocator;
-struct JService : public jana::omni::JComponent {
+struct JService : public jana::components::JComponent {
 
     /// acquire_services is a callback which allows the user to configure a JService
     /// which relies on other JServices. The idea is that the user uses a constructor

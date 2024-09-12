@@ -8,6 +8,7 @@
 class JEventPool;
 class JEventSource;
 class JEventUnfolder;
+class JEventProcessor;
 class JEvent;
 
 using Event = std::shared_ptr<JEvent>;
@@ -18,12 +19,14 @@ class JEventMapArrow : public JPipelineArrow<JEventMapArrow, Event> {
 private:
     std::vector<JEventSource*> m_sources;
     std::vector<JEventUnfolder*> m_unfolders;
+    std::vector<JEventProcessor*> m_procs;
 
 public:
     JEventMapArrow(std::string name, EventQueue *input_queue, EventQueue *output_queue);
 
     void add_source(JEventSource* source);
     void add_unfolder(JEventUnfolder* unfolder);
+    void add_processor(JEventProcessor* proc);
 
     void process(Event* event, bool& success, JArrowMetrics::Status& status);
 

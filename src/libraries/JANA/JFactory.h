@@ -8,15 +8,12 @@
 #include <JANA/Utils/JAny.h>
 #include <JANA/Utils/JEventLevel.h>
 #include <JANA/Utils/JCallGraphRecorder.h>
-#include <JANA/Omni/JComponent.h>
+#include <JANA/Components/JComponent.h>
 
 #include <string>
 #include <typeindex>
 #include <memory>
-#include <limits>
-#include <atomic>
 #include <vector>
-#include <mutex>
 #include <unordered_map>
 #include <functional>
 
@@ -25,7 +22,7 @@ class JEvent;
 class JObject;
 class JApplication;
 
-class JFactory : public jana::omni::JComponent {
+class JFactory : public jana::components::JComponent {
 public:
 
     enum class Status {Uninitialized, Unprocessed, Processed, Inserted};
@@ -174,7 +171,7 @@ public:
     /// type of object contained. In order to access these objects when all you have is a JFactory*, use JFactory::GetAs().
     virtual void Create(const std::shared_ptr<const JEvent>& event);
     void DoInit();
-    void Summarize(JComponentSummary& summary);
+    void Summarize(JComponentSummary& summary) const override;
 
 
     virtual void Set(const std::vector<JObject *> &data) = 0;
