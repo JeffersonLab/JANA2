@@ -2,6 +2,7 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
+#include "JANA/Services/JParameterManager.h"
 #include <JANA/Engine/JArrowProcessingController.h>
 #include <JANA/Engine/JPerfSummary.h>
 #include <JANA/Topology/JTopologyBuilder.h>
@@ -14,15 +15,14 @@ using millisecs = std::chrono::duration<double, std::milli>;
 using secs = std::chrono::duration<double>;
 
 void JArrowProcessingController::acquire_services(JServiceLocator * sl) {
-    auto ls = sl->get<JLoggingService>();
-    m_logger = ls->get_logger("JArrowProcessingController");
-    m_worker_logger = ls->get_logger("JWorker");
-    m_scheduler_logger = ls->get_logger("JScheduler");
+
+    auto params = sl->get<JParameterManager>();
+    m_logger = params->GetLogger("JArrowProcessingController");
+    m_worker_logger = params->GetLogger("JWorker");
+    m_scheduler_logger = params->GetLogger("JScheduler");
 
     m_topology = sl->get<JTopologyBuilder>();
 
-    // Obtain timeouts from parameter manager
-    auto params = sl->get<JParameterManager>();
     params->SetDefaultParameter("jana:timeout", m_timeout_s, "Max time (in seconds) JANA will wait for a thread to update its heartbeat before hard-exiting. 0 to disable timeout completely.");
     params->SetDefaultParameter("jana:warmup_timeout", m_warmup_timeout_s, "Max time (in seconds) JANA will wait for 'initial' events to complete before hard-exiting.");
     // Originally "THREAD_TIMEOUT" and "THREAD_TIMEOUT_FIRST_EVENT"

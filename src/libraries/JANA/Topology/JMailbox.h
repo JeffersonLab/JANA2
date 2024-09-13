@@ -3,11 +3,11 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #pragma once
-#include <queue>
-#include <mutex>
 #include <JANA/Utils/JCpuInfo.h>
-#include <JANA/Services/JLoggingService.h>
 #include <JANA/JEvent.h>
+
+#include <mutex>
+#include <deque>
 
 /// JMailbox is a threadsafe event queue designed for communication between Arrows.
 /// It is different from the standard data structure in the following ways:

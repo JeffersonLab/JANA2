@@ -13,7 +13,6 @@
 #include <JANA/Services/JComponentManager.h>
 #include <JANA/Services/JWiringService.h>
 #include <JANA/Topology/JTopologyBuilder.h>
-#include <JANA/Services/JLoggingService.h>
 #include <JANA/Services/JGlobalRootLock.h>
 #include <JANA/Engine/JArrowProcessingController.h>
 #include <JANA/Utils/JApplicationInspector.h>
@@ -47,7 +46,6 @@ JApplication::JApplication(JParameterManager* params) {
     ProvideService(m_params);
     ProvideService(m_component_manager);
     ProvideService(m_plugin_loader);
-    ProvideService(std::make_shared<JLoggingService>());
     ProvideService(std::make_shared<JGlobalRootLock>());
     ProvideService(std::make_shared<JTopologyBuilder>());
 
@@ -121,13 +119,12 @@ void JApplication::Initialize() {
     m_services_available = true;
     
     // We trigger initialization 
-    auto logging_service = m_service_locator->get<JLoggingService>();
     auto component_manager = m_service_locator->get<JComponentManager>();
     auto plugin_loader = m_service_locator->get<JPluginLoader>();
     auto topology_builder = m_service_locator->get<JTopologyBuilder>();
 
     // Set logger on JApplication itself
-    m_logger = logging_service->get_logger("JApplication");
+    m_logger = m_params->GetLogger("JApplication");
     m_logger.show_classname = false;
 
     // Set up wiring

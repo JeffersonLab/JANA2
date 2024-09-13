@@ -18,9 +18,11 @@
 
 void dummy_publisher_loop(JApplication* app) {
 
+    auto params = app->GetJParameterManager();
+
     JBenchUtils bench_utils = JBenchUtils();
     size_t delay_ms = 1;
-    auto logger = app->GetService<JLoggingService>()->get_logger("dummy_publisher_loop");
+    auto logger = params->GetLogger("dummy_publisher_loop");
     bench_utils.set_seed(7, "InteractiveStreamingExample.cc:dummy_publisher_loop");
 
     std::this_thread::yield();
@@ -71,7 +73,7 @@ extern "C" {
 void InitPlugin(JApplication* app) {
 
     InitJANAPlugin(app);
-    auto logger = app->GetService<JLoggingService>()->get_logger("streamDet");
+    auto logger = app->GetJParameterManager()->GetLogger("streamDet");
 
     app->SetParameterValue("nthreads", 4);
     app->SetParameterValue("jana:extended_report", true);

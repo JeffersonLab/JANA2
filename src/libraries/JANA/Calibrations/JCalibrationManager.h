@@ -7,7 +7,6 @@
 #include <JANA/Calibrations/JCalibrationGenerator.h>
 
 #include <JANA/Services/JServiceLocator.h>
-#include <JANA/Services/JLoggingService.h>
 
 #include <algorithm>
 #include "JLargeCalibration.h"
@@ -30,9 +29,9 @@ public:
     void acquire_services(JServiceLocator *service_locator) {
 
         // Configure our logger
-        m_logger = service_locator->get<JLoggingService>()->get_logger("JCalibrationManager");
 
         m_params = service_locator->get<JParameterManager>();
+        m_logger = m_params->GetLogger("JCalibrationManager");
 
         // Url and context may be passed in either as environment variables
         // or configuration parameters. Default values are used if neither is available.

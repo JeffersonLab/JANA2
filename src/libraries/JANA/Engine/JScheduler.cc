@@ -7,7 +7,6 @@
 #include "JScheduler.h"
 #include <JANA/Engine/JScheduler.h>
 #include <JANA/Topology/JTopologyBuilder.h>
-#include <JANA/Services/JLoggingService.h>
 
 
 JScheduler::JScheduler(std::shared_ptr<JTopologyBuilder> topology)

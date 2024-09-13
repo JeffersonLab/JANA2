@@ -5,38 +5,8 @@
 
 #include <JANA/Services/JLoggingService.h>
 
-#include <iostream>
 
 
-template <>
-inline void JParameterManager::Parse(const std::string& in, JLogger::Level& out) {
-    std::string token(in);
-    std::transform(in.begin(), in.end(), token.begin(), ::tolower);
-    if (std::strcmp(token.c_str(), "trace") == 0) { 
-        out = JLogger::Level::TRACE;
-    }
-    else if (std::strcmp(token.c_str(), "debug") == 0) { 
-        out = JLogger::Level::DEBUG;
-    }
-    else if (std::strcmp(token.c_str(), "info") == 0) { 
-        out = JLogger::Level::INFO;
-    }
-    else if (std::strcmp(token.c_str(), "warn") == 0) { 
-        out = JLogger::Level::WARN;
-    }
-    else if (std::strcmp(token.c_str(), "error") == 0) { 
-        out = JLogger::Level::ERROR;
-    }
-    else if (std::strcmp(token.c_str(), "fatal") == 0) { 
-        out = JLogger::Level::FATAL;
-    }
-    else if (std::strcmp(token.c_str(), "off") == 0) { 
-        out = JLogger::Level::OFF;
-    }
-    else {
-        throw JException("Unable to parse log level: '%s'. Options are: TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF", in.c_str());
-    }
-}
 
 void JLoggingService::acquire_services(JServiceLocator* serviceLocator) {
 

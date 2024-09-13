@@ -11,11 +11,9 @@
 
 #include <JANA/Services/JParameterManager.h>
 #include <JANA/Services/JComponentManager.h>
-#include <JANA/Services/JLoggingService.h>
 
 
 class JParameterManager;
-class JLoggingService;
 class JComponentManager;
 class JArrow;
 class JQueue;
@@ -29,7 +27,6 @@ class JTopologyBuilder : public JService {
 public:
     // Services
     Service<JParameterManager> m_params {this};
-    Service<JLoggingService> m_logging {this};
     std::shared_ptr<JComponentManager> m_components;
 
     // The topology itself

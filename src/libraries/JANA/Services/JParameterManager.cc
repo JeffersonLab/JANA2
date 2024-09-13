@@ -17,10 +17,8 @@ using namespace std;
 
 /// @brief Default constructor
 JParameterManager::JParameterManager() {
-    // Set the logger temporarily, until the JLoggingService figures out the correct log level
-    m_logger.show_classname = true;
-    m_logger.className = "JParameterManager";
-    m_logger.level = JLogger::Level::INFO;
+    // Set the logger temporarily
+    m_logger = GetLogger("JParameterManager");
 }
 
 /// @brief Copy constructor
