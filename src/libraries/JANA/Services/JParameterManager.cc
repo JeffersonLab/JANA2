@@ -3,7 +3,9 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #include "JParameterManager.h"
+#include "JANA/JLogger.h"
 
+#include <sstream>
 #include <vector>
 #include <string>
 #include <fstream>
@@ -408,4 +410,18 @@ void JParameterManager::FilterParameters(std::map<std::string, std::string> &par
         pair.second->SetIsUsed(true);
         parms[key] = value;
     }
+}
+
+JLogger JParameterManager::GetLogger(const std::string& component_prefix) {
+
+    std::ostringstream os;
+    os << component_prefix << ":loglevel";
+
+    auto global_log_level = RegisterParameter("jana:global_log_level", JLogger::Level::INFO, "Global log level");
+    auto local_log_level = RegisterParameter(os.str(), global_log_level, "Component log level");
+
+    JLogger logger;
+    logger.className = component_prefix;
+    logger.level = local_log_level;
+    return logger;
 }

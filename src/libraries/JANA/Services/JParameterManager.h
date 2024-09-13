@@ -141,14 +141,14 @@ public:
 
     static std::string ToLower(const std::string& name);
 
+    JLogger GetLogger(const std::string& prefix);
+
 private:
 
     std::map<std::string, JParameter*> m_parameters;
 
     int m_strictness = 1;
     int m_verbosity = 1;
-
-    JLogger m_logger;
 
     std::mutex m_mutex;
 };
