@@ -416,14 +416,20 @@ void JParameterManager::FilterParameters(std::map<std::string, std::string> &par
 
 JLogger JParameterManager::GetLogger(const std::string& component_prefix) {
 
-    std::ostringstream os;
-    os << component_prefix << ":loglevel";
-
-    auto global_log_level = RegisterParameter("jana:global_loglevel", JLogger::Level::INFO, "Global log level");
-    auto local_log_level = RegisterParameter(os.str(), global_log_level, "Component log level");
-
     JLogger logger;
     logger.className = component_prefix;
-    logger.level = local_log_level;
+
+    auto global_log_level = RegisterParameter("jana:global_loglevel", JLogger::Level::INFO, "Global log level");
+
+    if (component_prefix.empty()) {
+        logger.level = global_log_level;
+    }
+    else {
+        std::ostringstream os;
+        os << component_prefix << ":loglevel";
+        logger.level = RegisterParameter(os.str(), global_log_level, "Component log level");
+    }
     return logger;
 }
+
+

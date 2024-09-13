@@ -34,6 +34,7 @@ protected:
     CallbackStyle m_callback_style = CallbackStyle::LegacyMode;
     std::string m_prefix;
     std::string m_plugin_name;
+    std::string m_logger_name;
     std::string m_type_name;
     Status m_status = Status::Uninitialized;
     mutable std::mutex m_mutex;
@@ -72,9 +73,16 @@ public:
 
     JEventLevel GetLevel() const { return m_level; }
 
-    std::string GetLoggerName() const { return m_prefix.empty() ? m_type_name : m_prefix; }
+    std::string GetLoggerName() const {
+        if (!m_logger_name.empty()) return m_logger_name;
+        if (!m_prefix.empty()) return m_prefix;
+        if (!m_type_name.empty()) return m_type_name;
+        return "";
+    }
 
     std::string GetPluginName() const { return m_plugin_name; }
+
+    void SetLoggerName(std::string logger_name) { m_logger_name = std::move(logger_name); }
 
     void SetPluginName(std::string plugin_name) { m_plugin_name = std::move(plugin_name); };
 

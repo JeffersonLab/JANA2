@@ -9,9 +9,8 @@ void JService::DoInit(JServiceLocator* sl) {
     std::lock_guard<std::mutex> lock(m_mutex);
     if (this->m_status != Status::Uninitialized) return; 
 
-    auto m_logger_classname = (m_prefix.empty()) ? m_type_name : m_prefix;
     auto params = m_app->GetJParameterManager();
-    m_logger = params->GetLogger(m_logger_classname);
+    m_logger = params->GetLogger(GetLoggerName());
 
     for (auto* parameter : m_parameters) {
         parameter->Configure(*params, m_prefix);
