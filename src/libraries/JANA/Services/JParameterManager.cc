@@ -19,6 +19,10 @@ using namespace std;
 JParameterManager::JParameterManager() {
     // Set the logger temporarily
     m_logger = GetLogger("JParameterManager");
+    
+    // Short-circuit JParameterManager::DoInit()
+    // Otherwise there is a cycle when initializing JParameterManager and JLoggingService
+    this->m_status = Status::Initialized;
 }
 
 /// @brief Copy constructor
