@@ -119,7 +119,7 @@ public:
     class Parameter;
 
     struct ServiceBase {
-        virtual void Init(JApplication* app) = 0;
+        virtual void Fetch(JApplication* app) = 0;
     };
 
     template <typename T> 

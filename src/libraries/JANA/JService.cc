@@ -18,7 +18,7 @@ void JService::DoInit(JServiceLocator* sl) {
     }
 
     for (auto* service : m_services) {
-        service->Init(GetApplication()); // TODO: Rename Service::Init to Fetch
+        service->Fetch(m_app);
     }
 
 
