@@ -68,22 +68,22 @@ The following configuration options are used most commonly:
 
 | Name | Type | Description |
 |:-----|:-----|:------------|
-nthreads                  | int     | Size of thread team (Defaults to the number of cores on your machine)
-plugins                   | string  | Comma-separated list of plugin filenames. JANA will look for these on the `$JANA_PLUGIN_PATH`
-plugins_to_ignore         | string  | This removes plugins which had been specified in `plugins`. 
-event_source_type         | string  | Manually override JANA's decision about which JEventSource to use
-jana:nevents              | int     | Limit the number of events each source may emit
-jana:nskip                | int     | Skip processing the first n events from each event source
-jana:extended_report      | bool    | The amount of status information to show while running
-jana:status_fname         | string  | Named pipe for retrieving status information remotely
+| nthreads                  | int     | Size of thread team (Defaults to the number of cores on your machine) |
+| plugins                   | string  | Comma-separated list of plugin filenames. JANA will look for these on the `$JANA_PLUGIN_PATH` |
+| plugins_to_ignore         | string  | This removes plugins which had been specified in `plugins`. |
+| event_source_type         | string  | Manually override JANA's decision about which JEventSource to use |
+| jana:nevents              | int     | Limit the number of events each source may emit |
+| jana:nskip                | int     | Skip processing the first n events from each event source |
+| jana:extended_report      | bool    | The amount of status information to show while running |
+| jana:status_fname         | string  | Named pipe for retrieving status information remotely |
+| jana:loglevel | string | Set the log level (trace,debug,info,warn,error,fatal,off) for loggers internal to JANA |
+| jana:global_loglevel | string | Set the default log level (trace,debug,info,warn,error,fatal,off) for all loggers |
 
+JANA automatically provides each component with its own logger. You can control the logging verbosity of individual components
+just like any other parameter. For instance, if your component prefixes its parameters with `BCAL:tracking`,
+you can set its log level to `DEBUG` by setting `BCAL:tracking:loglevel=debug`. You can set the parameter prefix by calling `SetPrefix()`,
+and if you need the logger name to differ from the parameter prefix for any reason, you can override it by calling `SetLoggerName()`.
 
-JANA has its own logger. You can control the verbosity of different components using 
-the parameters `log:off`, `log:fatal`, `log:error`, `log:warn`, `log:info`, `log:debug`, and `log:trace`.
-The following example shows how you would increase the verbosity of JPluginLoader and JComponentManager:
-```
-jana -Pplugins=JTest -Plog:debug=JPluginLoader,JComponentManager
-```
 
 The `JTest` plugin lets you test JANA's performance for different workloads. It simulates a typical reconstruction pipeline with four stages: parsing, disentangling, tracking, and plotting. Parsing and plotting are sequential, whereas disentangling and tracking are parallel. Each stage reads all of the data written during the previous stage. The time spent and bytes written (and random variation thereof) are set using the following parameters:
  
@@ -123,7 +123,6 @@ The following parameters are more advanced, but may come in handy when doing per
 
 | Name | Type | Default | Description |
 |:-----|:-----|:------------|:--------|
-jana:engine                       | int  | 0        | Which parallelism engine to use. 0: JArrowProcessingController. 1: JDebugProcessingController.
 jana:event_pool_size              | int  | nthreads | The number of events which may be in-flight at once
 jana:limit_total_events_in_flight | bool | 1        | Whether the number of in-flight events should be limited
 jana:affinity                     | int  | 0        | Thread pinning strategy. 0: None. 1: Minimize number of memory localities. 2: Minimize number of hyperthreads.

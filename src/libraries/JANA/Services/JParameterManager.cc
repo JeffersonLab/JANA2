@@ -415,7 +415,7 @@ JLogger JParameterManager::GetLogger(const std::string& component_prefix) {
     std::ostringstream os;
     os << component_prefix << ":loglevel";
 
-    auto global_log_level = RegisterParameter("jana:global_log_level", JLogger::Level::INFO, "Global log level");
+    auto global_log_level = RegisterParameter("jana:global_loglevel", JLogger::Level::INFO, "Global log level");
     auto local_log_level = RegisterParameter(os.str(), global_log_level, "Component log level");
 
     JLogger logger;
