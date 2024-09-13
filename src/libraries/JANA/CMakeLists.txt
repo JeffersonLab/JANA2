@@ -22,7 +22,6 @@ set(JANA2_SOURCES
     Topology/JTopologyBuilder.cc
 
     Services/JComponentManager.cc
-    Services/JLoggingService.cc
     Services/JParameterManager.cc
     Services/JPluginLoader.cc
     Services/JWiringService.cc
