@@ -262,7 +262,8 @@ TEST_CASE("JFactory_Logger") {
     JApplication app;
     app.Add(new JEventSource);
     app.Add(new JFactoryGeneratorT<MyLoggedFactory>());
-    app.SetParameterValue("log:debug", "myfac");
+    app.SetParameterValue("jana:loglevel", "off");
+    app.SetParameterValue("myfac:loglevel", "debug");
     app.SetParameterValue("jana:nevents", "1");
     app.SetParameterValue("autoactivate", "JFactoryTestDummyObject");
     app.Run();

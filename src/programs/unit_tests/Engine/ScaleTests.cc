@@ -10,8 +10,7 @@ TEST_CASE("NThreads") {
 
     JApplication app;
     app.SetParameterValue("jana:nevents",3);
-    app.SetParameterValue("log:global", "OFF");
-    app.SetParameterValue("log:warn", "JScheduler,JArrow,JWorker,JArrowProcessingController");
+    app.SetParameterValue("jana:loglevel","warn");
     app.Add(new scaletest::DummySource);
 
     SECTION("If nthreads not provided, default to 1") {
@@ -39,8 +38,7 @@ TEST_CASE("NThreads") {
 TEST_CASE("ScaleNWorkerUpdate") {
     JApplication app;
     app.SetParameterValue("nthreads",4);
-    app.SetParameterValue("log:global", "OFF");
-    app.SetParameterValue("log:warn", "JScheduler,JArrow,JWorker,JArrowProcessingController");
+    app.SetParameterValue("jana:loglevel","warn");
     app.Add(new scaletest::DummySource);
     app.Add(new scaletest::DummyProcessor);
     app.Run(false);
@@ -65,8 +63,7 @@ TEST_CASE("ScaleNWorkerUpdate") {
 TEST_CASE("ScaleThroughputImprovement", "[.][performance]") {
 
     JApplication app;
-    app.SetParameterValue("log:global", "INFO");
-    // app.SetParameterValue("log:warn", "JScheduler,JArrow,JWorker,JArrowProcessingController");
+    app.SetParameterValue("jana:global_loglevel", "INFO");
     app.SetTicker(false);
     app.Add(new scaletest::DummySource);
     app.Add(new scaletest::DummyProcessor);

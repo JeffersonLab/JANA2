@@ -86,7 +86,7 @@ struct SimpleProcessor : public JEventProcessor {
 int main() {
 
     JApplication app;
-    app.SetParameterValue("log:info", "JWorker,JScheduler,JArrowProcessingController,JEventProcessorArrow");
+    app.SetParameterValue("jana:loglevel", "info");
     app.SetTimeoutEnabled(false);
     app.SetTicker(false);
 

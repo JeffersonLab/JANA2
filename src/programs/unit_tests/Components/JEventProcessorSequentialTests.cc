@@ -51,8 +51,7 @@ TEST_CASE("JEventProcessorSequentialRootTests") {
     app.SetParameterValue("jana:nevents", 4);
     app.SetParameterValue("jana:event_source_chunksize", 1);
     app.SetParameterValue("jana:event_processor_chunksize", 1);
-    app.SetParameterValue("log:global", "OFF");
-    app.SetParameterValue("log:warn", "JScheduler,JArrow,JArrowProcessingController");
+    app.SetParameterValue("jana:loglevel", "warn");
     auto proc = new MyRootProcessor;
     app.Add(proc);
     app.Run(true);
@@ -138,8 +137,7 @@ TEST_CASE("JEventProcessorSequentialTests") {
     app.SetParameterValue("jana:nevents", 4);
     app.SetParameterValue("jana:event_source_chunksize", 1);
     app.SetParameterValue("jana:event_processor_chunksize", 1);
-    app.SetParameterValue("log:global", "OFF");
-    app.SetParameterValue("log:warn", "JScheduler,JArrow,JArrowProcessingController");
+    app.SetParameterValue("jana:loglevel", "warn");
     auto proc = new MySeqProcessor;
     app.Add(proc);
     app.Run(true);

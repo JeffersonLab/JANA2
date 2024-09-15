@@ -133,7 +133,6 @@ int main() {
     auto merge_arrow = new JMergeArrow<MyInput, MyOutput>("merge", &processor, &subevents_out, &events_out);
 
     JApplication app;
-    app.SetParameterValue("log:info", "JWorker,JScheduler,JArrowProcessingController,JEventProcessorArrow");
     app.SetTimeoutEnabled(false);
     app.SetTicker(false);
 

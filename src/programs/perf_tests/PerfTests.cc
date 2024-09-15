@@ -27,7 +27,8 @@ int main() {
         // entangled "block of 40": dis * 40
         
         auto params = new JParameterManager;
-        params->SetParameter("log:off", "JApplication,JPluginLoader,JArrowProcessingController,JArrow,JParameterManager");
+        params->SetParameter("jana:loglevel", "off");
+
         // Log levels get set as soon as JApp gets constructed
         params->SetParameter("jtest:write_csv", false);
         params->SetParameter("jtest:parser_ms", 2);
@@ -48,7 +49,8 @@ int main() {
     {
 
         auto params = new JParameterManager;
-        params->SetParameter("log:off", "JApplication,JPluginLoader,JArrowProcessingController,JArrow,JParameterManager");
+        params->SetParameter("jana:loglevel", "off");
+
         // Log levels get set as soon as JApp gets constructed
         params->SetParameter("jtest:write_csv", false);
 
@@ -90,7 +92,7 @@ int main() {
         ExampleHitCollection c;
 
         auto params = new JParameterManager;
-        params->SetParameter("log:off", "JApplication,JPluginLoader,JArrowProcessingController,JArrow"); // Log levels get set as soon as JApp gets constructed XD
+        params->SetParameter("jana:loglevel", "off");
         JApplication app(params);
         auto logger = params->GetLogger("PerfTests");
         // TODO: Add Podio sources, processors, and factories just like JTest

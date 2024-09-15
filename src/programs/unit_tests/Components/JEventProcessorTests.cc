@@ -41,8 +41,7 @@ TEST_CASE("JEventProcessor_ExpertMode_ProcessCount") {
 
     {
         JApplication app;
-        app.SetParameterValue("log:global", "off");
-        app.SetParameterValue("log:info", "MyEventProcessor");
+        app.SetParameterValue("jana:loglevel", "off");
         app.SetParameterValue("jana:nevents", 5);
 
         app.Add(new JEventSource);
