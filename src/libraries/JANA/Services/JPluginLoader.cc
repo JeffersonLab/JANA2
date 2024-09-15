@@ -189,7 +189,7 @@ void JPluginLoader::attach_plugin(std::string name, std::string path) {
     }
 
     // Run InitPlugin() and wrap exceptions as needed
-    LOG_INFO(m_logger) << "Initializing plugin \"" << name << "\" at path \"" << path << "\"" << LOG_END;
+    LOG_WARN(m_logger) << "Loading plugin '" << name << "' from '" << path << "'" << LOG_END;
 
     try {
         (*initialize_proc)(GetApplication());

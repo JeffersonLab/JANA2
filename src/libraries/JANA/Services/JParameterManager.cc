@@ -152,7 +152,7 @@ void JParameterManager::PrintParameters(int verbosity, int strictness) {
             }
         }
         if ((!param->IsDefault()) && (param->IsDeprecated())) {
-            LOG_WARN(m_logger) << "Parameter '" << key << "' has been deprecated and will no longer be supported in the next release." << LOG_END;
+            LOG_WARN(m_logger) << "Parameter '" << key << "' has been deprecated and may no longer be supported in future releases." << LOG_END;
             warnings_present = true;
         }
     }

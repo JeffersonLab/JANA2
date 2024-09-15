@@ -2,9 +2,9 @@
 // Copyright 2020, Jefferson Science Associates, LLC.
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
-#include "JANA/Services/JParameterManager.h"
 #include <JANA/Engine/JArrowProcessingController.h>
 #include <JANA/Engine/JPerfSummary.h>
+#include <JANA/Services/JParameterManager.h>
 #include <JANA/Topology/JTopologyBuilder.h>
 #include <JANA/Utils/JCpuInfo.h>
 #include <JANA/JLogger.h>
@@ -233,7 +233,11 @@ void JArrowProcessingController::print_report() {
 
 void JArrowProcessingController::print_final_report() {
     auto metrics = measure_performance();
-    LOG_INFO(GetLogger()) << "Final Report" << *metrics << LOG_END;
+    
+
+    LOG_INFO(GetLogger()) << "Detailed report" << *metrics << LOG_END;
+    LOG_WARN(GetLogger()) << "Final report: " << metrics->total_events_completed << " events processed at "
+                       << JTypeInfo::to_string_with_si_prefix(metrics->avg_throughput_hz) << "Hz" << LOG_END;
 }
 
 std::unique_ptr<const JPerfSummary> JArrowProcessingController::measure_performance() {

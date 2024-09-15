@@ -26,7 +26,7 @@ std::atomic_int g_thread_report_count;
 
 void create_named_pipe(const std::string& path_to_named_pipe) {
 
-    LOG_INFO(*g_logger) << "Creating pipe named \"" << g_path_to_named_pipe
+    LOG_WARN(*g_logger) << "Creating pipe named \"" << g_path_to_named_pipe
                         << "\" for status info." << LOG_END;
 
     mkfifo(path_to_named_pipe.c_str(), 0666);
@@ -41,7 +41,7 @@ void send_to_named_pipe(const std::string& path_to_named_pipe, const std::string
         close(fd);
     }
     else {
-        LOG_WARN(*g_logger) << "Unable to open named pipe '" << g_path_to_named_pipe << "' for writing. \n"
+        LOG_ERROR(*g_logger) << "Unable to open named pipe '" << g_path_to_named_pipe << "' for writing. \n"
         << "  You can use a different named pipe for status info by setting the parameter `jana:status_fname`.\n"
         << "  The status report will still show up in the log." << LOG_END;
     }
@@ -131,7 +131,7 @@ void handle_usr2(int) {
 void handle_sigsegv(int /*signal_number*/, siginfo_t* /*signal_info*/, void* /*context*/) {
     LOG_FATAL(*g_logger) << "Segfault detected! Printing backtraces and exiting." << LOG_END;
     auto report = produce_overall_report();
-    LOG_INFO(*g_logger) << report << LOG_END;
+    LOG_FATAL(*g_logger) << report << LOG_END;
     exit(static_cast<int>(JApplication::ExitCode::Segfault));
 }
 
@@ -159,10 +159,10 @@ void register_handlers(JApplication* app) {
     sigemptyset(&sSignalAction.sa_mask);
     sigaction(SIGSEGV, &sSignalAction, nullptr);
 
-    LOG_INFO(*g_logger) << "Setting signal handler USR1. Use to write status info to the named pipe." << LOG_END;
+    LOG_WARN(*g_logger) << "Setting signal handler USR1. Use to write status info to the named pipe." << LOG_END;
     signal(SIGUSR1, handle_usr1);
     signal(SIGUSR2, handle_usr2);
-    LOG_INFO(*g_logger) << "Setting signal handler SIGINT (Ctrl-C). Use a single SIGINT to enter the Inspector, or multiple SIGINTs for an immediate shutdown." << LOG_END;
+    LOG_WARN(*g_logger) << "Setting signal handler SIGINT (Ctrl-C). Use a single SIGINT to enter the Inspector, or multiple SIGINTs for an immediate shutdown." << LOG_END;
     signal(SIGINT,  handle_sigint);
 }
 
