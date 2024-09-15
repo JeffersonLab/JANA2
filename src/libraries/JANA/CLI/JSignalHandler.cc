@@ -141,6 +141,11 @@ void register_handlers(JApplication* app) {
     assert (app != nullptr);
     g_app = app;
     g_logger = &default_cout_logger;
+    *g_logger = app->GetJParameterManager()->GetLogger("jana");
+    // Note that this updates the static default_cout_logger to match the user-provided jana:loglevel.
+    // It would be nice to do this in a less unexpected place, and hopefully that will naturally
+    // emerge from future refactorings.
+
     g_app->GetJParameterManager()->SetDefaultParameter("jana:status_fname", g_path_to_named_pipe,
         "Filename of named pipe for retrieving instantaneous status info");
     create_named_pipe(g_path_to_named_pipe);

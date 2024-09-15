@@ -10,7 +10,9 @@
 #include <JANA/JEventUnfolder.h>
 #include <JANA/Utils/JAutoActivator.h>
 
-JComponentManager::JComponentManager() {}
+JComponentManager::JComponentManager() {
+    SetPrefix("jana");
+}
 
 JComponentManager::~JComponentManager() {
 

@@ -124,7 +124,7 @@ void JApplication::Initialize() {
     auto topology_builder = m_service_locator->get<JTopologyBuilder>();
 
     // Set logger on JApplication itself
-    m_logger = m_params->GetLogger("JApplication");
+    m_logger = m_params->GetLogger("jana");
     m_logger.show_classname = false;
 
     // Set up wiring

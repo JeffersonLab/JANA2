@@ -17,10 +17,6 @@ using secs = std::chrono::duration<double>;
 void JArrowProcessingController::acquire_services(JServiceLocator * sl) {
 
     auto params = sl->get<JParameterManager>();
-    m_logger = params->GetLogger("JArrowProcessingController");
-    m_worker_logger = params->GetLogger("JWorker");
-    m_scheduler_logger = params->GetLogger("JScheduler");
-
     m_topology = sl->get<JTopologyBuilder>();
 
     params->SetDefaultParameter("jana:timeout", m_timeout_s, "Max time (in seconds) JANA will wait for a thread to update its heartbeat before hard-exiting. 0 to disable timeout completely.");
@@ -31,8 +27,8 @@ void JArrowProcessingController::acquire_services(JServiceLocator * sl) {
 void JArrowProcessingController::initialize() {
 
     m_scheduler = new JScheduler(m_topology);
-    m_scheduler->logger = m_scheduler_logger;
-    LOG_INFO(m_logger) << m_topology->mapping << LOG_END;
+    m_scheduler->logger = GetLogger();
+    LOG_INFO(GetLogger()) << m_topology->mapping << LOG_END;
 
     m_scheduler->initialize_topology();
 
@@ -48,7 +44,7 @@ void JArrowProcessingController::initialize() {
 ///
 /// @param [in] nthreads The number of worker threads to start
 void JArrowProcessingController::run(size_t nthreads) {
-    LOG_INFO(m_logger) << "run(): Launching " << nthreads << " workers" << LOG_END;
+    LOG_INFO(GetLogger()) << "run(): Launching " << nthreads << " workers" << LOG_END;
     // run_topology needs to happen _before_ threads are started so that threads don't quit due to lack of assignments
     m_scheduler->run_topology(nthreads);
 
@@ -59,7 +55,7 @@ void JArrowProcessingController::run(size_t nthreads) {
         size_t next_cpu_id = m_topology->mapping.get_cpu_id(next_worker_id);
         size_t next_loc_id = m_topology->mapping.get_loc_id(next_worker_id);
         auto worker = new JWorker(this, m_scheduler, next_worker_id, next_cpu_id, next_loc_id, pin_to_cpu);
-        worker->logger = m_worker_logger;
+        worker->logger = GetLogger();
         m_workers.push_back(worker);
         next_worker_id++;
     }
@@ -73,14 +69,14 @@ void JArrowProcessingController::run(size_t nthreads) {
 
 void JArrowProcessingController::scale(size_t nthreads) {
 
-    LOG_INFO(m_logger) << "scale(): Stopping all running workers" << LOG_END;
+    LOG_INFO(GetLogger()) << "scale(): Stopping all running workers" << LOG_END;
     m_scheduler->request_topology_pause();
     for (JWorker* worker : m_workers) {
         worker->wait_for_stop();
     }
     m_scheduler->achieve_topology_pause();
 
-    LOG_INFO(m_logger) << "scale(): All workers are stopped" << LOG_END;
+    LOG_INFO(GetLogger()) << "scale(): All workers are stopped" << LOG_END;
     bool pin_to_cpu = (m_topology->mapping.get_affinity() != JProcessorMapping::AffinityStrategy::None);
     size_t next_worker_id = m_workers.size();
 
@@ -90,12 +86,12 @@ void JArrowProcessingController::scale(size_t nthreads) {
         size_t next_loc_id = m_topology->mapping.get_loc_id(next_worker_id);
 
         auto worker = new JWorker(this, m_scheduler, next_worker_id, next_cpu_id, next_loc_id, pin_to_cpu);
-        worker->logger = m_worker_logger;
+        worker->logger = GetLogger();
         m_workers.push_back(worker);
         next_worker_id++;
     }
 
-    LOG_INFO(m_logger) << "scale(): Restarting " << nthreads << " workers" << LOG_END;
+    LOG_INFO(GetLogger()) << "scale(): Restarting " << nthreads << " workers" << LOG_END;
     // topology->run needs to happen _before_ threads are started so that threads don't quit due to lack of assignments
     m_scheduler->run_topology(nthreads);
 
@@ -232,12 +228,12 @@ JArrowMetrics::Status JArrowProcessingController::execute_arrow(int arrow_index)
 
 void JArrowProcessingController::print_report() {
     auto metrics = measure_performance();
-    LOG_INFO(m_logger) << "Running" << *metrics << LOG_END;
+    LOG_INFO(GetLogger()) << "Running" << *metrics << LOG_END;
 }
 
 void JArrowProcessingController::print_final_report() {
     auto metrics = measure_performance();
-    LOG_INFO(m_logger) << "Final Report" << *metrics << LOG_END;
+    LOG_INFO(GetLogger()) << "Final Report" << *metrics << LOG_END;
 }
 
 std::unique_ptr<const JPerfSummary> JArrowProcessingController::measure_performance() {

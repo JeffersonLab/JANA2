@@ -51,13 +51,9 @@ public:
     JPerfMetrics metrics;
     JProcessorMapping mapping;
 
-    JLogger m_arrow_logger;
-    JLogger m_queue_logger;
-
 public:
 
-    JTopologyBuilder() = default;
-
+    JTopologyBuilder();
     ~JTopologyBuilder() override;
 
     void acquire_services(JServiceLocator *sl) override;
