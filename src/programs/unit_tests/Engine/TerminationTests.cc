@@ -13,10 +13,9 @@
 TEST_CASE("TerminationTests") {
 
     JApplication app;
-    app.SetParameterValue("log:global", "OFF");
+    app.SetParameterValue("jana:loglevel", "warn");
     auto processor = new CountingProcessor();
     app.Add(processor);
-    app.SetParameterValue("jana:extended_report", 0);
 
     SECTION("Manual termination") {
 

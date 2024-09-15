@@ -95,7 +95,6 @@ TEST_CASE("Basic subevent arrow functionality") {
     SECTION("Execute subevent arrows end-to-end") {
 
         JApplication app;
-        app.SetParameterValue("log:info", "JWorker,JScheduler,JArrow,JArrowProcessingController,JEventProcessorArrow");
         app.SetTimeoutEnabled(false);
         app.SetTicker(false);
 

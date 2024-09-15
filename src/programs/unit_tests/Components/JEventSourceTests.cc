@@ -36,8 +36,7 @@ TEST_CASE("JEventSource_ExpertMode_EmitCount") {
     sut->SetTypeName("MyEventSource");
 
     JApplication app;
-    app.SetParameterValue("log:global", "off");
-    app.SetParameterValue("log:info", "MyEventSource");
+    app.SetParameterValue("jana:loglevel", "off");
     app.Add(sut);
 
     SECTION("ShutsSelfOff") {

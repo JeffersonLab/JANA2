@@ -67,7 +67,7 @@ public:
             parameter->Configure(*(m_app->GetJParameterManager()), m_prefix);
         }
         for (auto* service : m_services) {
-            service->Init(m_app);
+            service->Fetch(m_app);
         }
         if (m_status == Status::Uninitialized) {
             CallWithJExceptionWrapper("JEventUnfolder::Init", [&](){

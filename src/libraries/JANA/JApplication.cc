@@ -3,19 +3,15 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #include <JANA/JApplication.h>
-
 #include <JANA/JEventSource.h>
-
-#include <JANA/Utils/JCpuInfo.h>
-#include <JANA/Services/JParameterManager.h>
-#include <JANA/Services/JGlobalRootLock.h>
-#include <JANA/Services/JPluginLoader.h>
-#include <JANA/Services/JComponentManager.h>
-#include <JANA/Services/JWiringService.h>
-#include <JANA/Topology/JTopologyBuilder.h>
-#include <JANA/Services/JLoggingService.h>
-#include <JANA/Services/JGlobalRootLock.h>
 #include <JANA/Engine/JArrowProcessingController.h>
+#include <JANA/Services/JComponentManager.h>
+#include <JANA/Services/JGlobalRootLock.h>
+#include <JANA/Services/JParameterManager.h>
+#include <JANA/Services/JPluginLoader.h>
+#include <JANA/Topology/JTopologyBuilder.h>
+#include <JANA/Services/JWiringService.h>
+#include <JANA/Utils/JCpuInfo.h>
 #include <JANA/Utils/JApplicationInspector.h>
 
 #include <sstream>
@@ -47,7 +43,6 @@ JApplication::JApplication(JParameterManager* params) {
     ProvideService(m_params);
     ProvideService(m_component_manager);
     ProvideService(m_plugin_loader);
-    ProvideService(std::make_shared<JLoggingService>());
     ProvideService(std::make_shared<JGlobalRootLock>());
     ProvideService(std::make_shared<JTopologyBuilder>());
 
@@ -110,25 +105,25 @@ void JApplication::Initialize() {
     // Only run this once
     if (m_initialized) return;
 
-    std::ostringstream oss;
-    oss << "Initializing..." << std::endl;
-    JVersion::PrintSplash(oss);
-    JVersion::PrintVersionDescription(oss);
-    LOG_INFO(m_logger) << oss.str() << LOG_END;
-
     // Now that all parameters, components, plugin names, etc have been set, 
     // we can expose our builtin services to the user via GetService()
     m_services_available = true;
-    
+
     // We trigger initialization 
-    auto logging_service = m_service_locator->get<JLoggingService>();
+    m_service_locator->get<JParameterManager>();
     auto component_manager = m_service_locator->get<JComponentManager>();
     auto plugin_loader = m_service_locator->get<JPluginLoader>();
     auto topology_builder = m_service_locator->get<JTopologyBuilder>();
 
     // Set logger on JApplication itself
-    m_logger = logging_service->get_logger("JApplication");
+    m_logger = m_params->GetLogger("jana");
     m_logger.show_classname = false;
+
+    std::ostringstream oss;
+    oss << "Initializing..." << std::endl;
+    JVersion::PrintSplash(oss);
+    JVersion::PrintVersionDescription(oss);
+    LOG_WARN(m_logger) << oss.str() << LOG_END;
 
     // Set up wiring
     ProvideService(std::make_shared<jana::services::JWiringService>());
@@ -194,7 +189,7 @@ void JApplication::Run(bool wait_until_finished) {
     m_params->PrintParameters();
 
     LOG_INFO(m_logger) << GetComponentSummary() << LOG_END;
-    LOG_INFO(m_logger) << "Starting processing with " << m_desired_nthreads << " threads requested..." << LOG_END;
+    LOG_WARN(m_logger) << "Starting processing with " << m_desired_nthreads << " threads requested..." << LOG_END;
     m_processing_controller->run(m_desired_nthreads);
 
     if (!wait_until_finished) {
@@ -261,7 +256,7 @@ void JApplication::Run(bool wait_until_finished) {
         m_processing_controller->wait_until_stopped();
     }
 
-    LOG_INFO(m_logger) << "Event processing ended." << LOG_END;
+    LOG_WARN(m_logger) << "Event processing ended." << LOG_END;
     PrintFinalReport();
 
     // Test for exception one more time, in case it shut down the topology before the supervisor could detect it
@@ -275,7 +270,7 @@ void JApplication::Run(bool wait_until_finished) {
 
 
 void JApplication::Scale(int nthreads) {
-    LOG_INFO(m_logger) << "Scaling to " << nthreads << " threads" << LOG_END;
+    LOG_WARN(m_logger) << "Scaling to " << nthreads << " threads" << LOG_END;
     m_processing_controller->scale(nthreads);
 }
 
@@ -396,7 +391,7 @@ void JApplication::PrintStatus() {
     else {
         std::lock_guard<std::mutex> lock(m_status_mutex);
         update_status();
-        LOG_INFO(m_logger) << "Status: " << m_perf_summary->total_events_completed << " events processed  "
+        LOG_WARN(m_logger) << "Status: " << m_perf_summary->total_events_completed << " events processed at "
                            << JTypeInfo::to_string_with_si_prefix(m_perf_summary->latest_throughput_hz) << "Hz ("
                            << JTypeInfo::to_string_with_si_prefix(m_perf_summary->avg_throughput_hz) << "Hz avg)" << LOG_END;
     }

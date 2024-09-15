@@ -27,7 +27,8 @@ int main() {
         // entangled "block of 40": dis * 40
         
         auto params = new JParameterManager;
-        params->SetParameter("log:off", "JApplication,JPluginLoader,JArrowProcessingController,JArrow,JParameterManager");
+        params->SetParameter("jana:loglevel", "off");
+
         // Log levels get set as soon as JApp gets constructed
         params->SetParameter("jtest:write_csv", false);
         params->SetParameter("jtest:parser_ms", 2);
@@ -36,7 +37,7 @@ int main() {
         params->SetParameter("benchmark:resultsdir", "perftest_fake_halldrecon");
 
         JApplication app(params);
-        auto logger = app.GetService<JLoggingService>()->get_logger("PerfTests");
+        auto logger = params->GetLogger("PerfTests");
         app.AddPlugin("JTest");
 
         LOG_INFO(logger) << "Running JTest tuned to imitate halld_recon" << LOG_END;
@@ -48,7 +49,8 @@ int main() {
     {
 
         auto params = new JParameterManager;
-        params->SetParameter("log:off", "JApplication,JPluginLoader,JArrowProcessingController,JArrow,JParameterManager");
+        params->SetParameter("jana:loglevel", "off");
+
         // Log levels get set as soon as JApp gets constructed
         params->SetParameter("jtest:write_csv", false);
 
@@ -75,7 +77,7 @@ int main() {
         params->SetParameter("benchmark:resultsdir", "perftest_pure_overhead");
 
         JApplication app(params);
-        auto logger = app.GetService<JLoggingService>()->get_logger("PerfTests");
+        auto logger = params->GetLogger("PerfTests");
         app.AddPlugin("JTest");
 
         LOG_INFO(logger) << "Running JTest with all sleeps and computations turned off" << LOG_END;
@@ -90,9 +92,9 @@ int main() {
         ExampleHitCollection c;
 
         auto params = new JParameterManager;
-        params->SetParameter("log:off", "JApplication,JPluginLoader,JArrowProcessingController,JArrow"); // Log levels get set as soon as JApp gets constructed XD
+        params->SetParameter("jana:loglevel", "off");
         JApplication app(params);
-        auto logger = app.GetService<JLoggingService>()->get_logger("PerfTests");
+        auto logger = params->GetLogger("PerfTests");
         // TODO: Add Podio sources, processors, and factories just like JTest
         LOG_INFO(logger) << "Running PODIO stress test" << LOG_END;
         JBenchmarker benchmarker(&app);

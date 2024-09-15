@@ -7,12 +7,16 @@
 #include <JANA/Topology/JTopologyBuilder.h>
 #include <JANA/Engine/JWorker.h>
 #include <JANA/Engine/JPerfSummary.h>
+#include <JANA/JService.h>
 
 #include <vector>
 
 class JArrowProcessingController : public JService {
 public:
 
+    JArrowProcessingController() {
+        SetPrefix("jana");
+    }
     ~JArrowProcessingController() override;
     void acquire_services(JServiceLocator *) override;
 
@@ -53,9 +57,5 @@ private:
     JScheduler* m_scheduler = nullptr;
 
     std::vector<JWorker*> m_workers;
-    JLogger m_logger;
-    JLogger m_worker_logger;
-    JLogger m_scheduler_logger;
-
 };
 

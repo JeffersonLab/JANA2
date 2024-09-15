@@ -16,6 +16,10 @@
 using Event = std::shared_ptr<JEvent>;
 using EventQueue = JMailbox<Event*>;
 
+JTopologyBuilder::JTopologyBuilder() {
+    SetPrefix("jana");
+}
+
 JTopologyBuilder::~JTopologyBuilder() {
     for (auto arrow : arrows) {
         delete arrow;
@@ -105,12 +109,12 @@ void JTopologyBuilder::create_topology() {
     }
     int id=0;
     for (auto* queue : queues) {
-        queue->set_logger(m_queue_logger);
+        queue->set_logger(GetLogger());
         queue->set_id(id);
         id += 1;
     }
     for (auto* arrow : arrows) {
-        arrow->set_logger(m_arrow_logger);
+        arrow->set_logger(GetLogger());
     }
 }
 
@@ -153,9 +157,6 @@ void JTopologyBuilder::acquire_services(JServiceLocator *sl) {
     m_params->SetDefaultParameter("jana:locality", m_locality,
                                     "Constrain memory locality. 0=No constraint. 1=Events stay on the same socket. 2=Events stay on the same NUMA domain. 3=Events stay on same core. 4=Events stay on same cpu/hyperthread.")
             ->SetIsAdvanced(true);
-
-    m_arrow_logger = m_logging->get_logger("JArrow");
-    m_queue_logger = m_logging->get_logger("JQueue");
 };
 
 
@@ -214,7 +215,7 @@ void JTopologyBuilder::attach_lower_level(JEventLevel current_level, JUnfoldArro
     auto* proc_arrow = new JEventProcessorArrow(ss.str()+"Tap", q1, q2, nullptr);
     arrows.push_back(proc_arrow);
     proc_arrow->set_chunksize(m_event_processor_chunksize);
-    proc_arrow->set_logger(m_arrow_logger);
+    proc_arrow->set_logger(GetLogger());
     if (found_sink) {
         proc_arrow->set_is_sink(false);
     }

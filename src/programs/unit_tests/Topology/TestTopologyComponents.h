@@ -4,11 +4,7 @@
 
 #pragma once
 
-#include <iostream>
-
-#include <JANA/Services/JLoggingService.h>
 #include <JANA/Topology/JPipelineArrow.h>
-#include <thread>
 #include "MapArrow.h"
 
 
@@ -17,7 +13,6 @@ struct RandIntSource : public JPipelineArrow<RandIntSource, int> {
     size_t emit_limit = 20;  // How many to emit
     size_t emit_count = 0;   // How many emitted so far
     int emit_sum = 0;        // Sum of all ints emitted so far
-    JLogger logger;
 
     RandIntSource(std::string name, JPool<int>* pool, JMailbox<int*>* output_queue)
         : JPipelineArrow<RandIntSource, int>(name, false, true, false, nullptr, output_queue, pool) {}
@@ -32,18 +27,18 @@ struct RandIntSource : public JPipelineArrow<RandIntSource, int> {
         *item = 7;
         emit_sum += *item;
         emit_count += 1;
-        LOG_DEBUG(logger) << "RandIntSource emitted event " << emit_count << " with value " << *item << LOG_END;
+        LOG_DEBUG(JArrow::m_logger) << "RandIntSource emitted event " << emit_count << " with value " << *item << LOG_END;
         success = true;
         status = (emit_count == emit_limit) ? JArrowMetrics::Status::Finished : JArrowMetrics::Status::KeepGoing;
         // This design lets us declare Finished immediately on the last event, instead of after
     }
 
     void initialize() override {
-        LOG_INFO(logger) << "RandIntSource.initialize() called!" << LOG_END;
+        LOG_INFO(JArrow::m_logger) << "RandIntSource.initialize() called!" << LOG_END;
     };
 
     void finalize() override {
-        LOG_INFO(logger) << "RandIntSource.finalize() called!" << LOG_END;
+        LOG_INFO(JArrow::m_logger) << "RandIntSource.finalize() called!" << LOG_END;
     }
 };
 

@@ -10,7 +10,7 @@
 TEST_CASE("UserExceptionTests") {
 
     JApplication app;
-    app.SetParameterValue("log:debug","JApplication,JScheduler,JArrowProcessingController,JWorker,JArrow");
+    app.SetParameterValue("jana:loglevel","debug");
     app.SetParameterValue("jana:extended_report", 0);
 
     SECTION("JEventSource::Open() excepts") {

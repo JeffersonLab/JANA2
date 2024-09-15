@@ -436,7 +436,7 @@ TEST_CASE("MultiLevelTopologyBuilderTests") {
 TEST_CASE("TimeslicesTests") {
 
     JApplication app;
-    app.SetParameterValue("log:info", "JScheduler,JArrow,JArrowProcessingController");
+    app.SetParameterValue("jana:loglevel", "info");
     app.SetParameterValue("jana:nevents", "5");
     
     app.Add(new MyTimesliceSource);

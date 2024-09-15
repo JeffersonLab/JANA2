@@ -10,7 +10,9 @@
 #include <JANA/JEventUnfolder.h>
 #include <JANA/Utils/JAutoActivator.h>
 
-JComponentManager::JComponentManager() {}
+JComponentManager::JComponentManager() {
+    SetPrefix("jana");
+}
 
 JComponentManager::~JComponentManager() {
 
@@ -69,11 +71,11 @@ void JComponentManager::configure_components() {
 void JComponentManager::preinitialize_components() {
     for (auto* src : m_evt_srces) {
         src->SetApplication(GetApplication());
-        src->SetLogger(m_logging->get_logger(src->GetLoggerName()));
+        src->SetLogger(m_params->GetLogger(src->GetLoggerName()));
     }
     for (auto* proc : m_evt_procs) {
         proc->SetApplication(GetApplication());
-        proc->SetLogger(m_logging->get_logger(proc->GetLoggerName()));
+        proc->SetLogger(m_params->GetLogger(proc->GetLoggerName()));
     }
     for (auto* fac_gen : m_fac_gens) {
         fac_gen->SetApplication(GetApplication());
@@ -85,7 +87,7 @@ void JComponentManager::preinitialize_components() {
     }
     for (auto* unfolder : m_unfolders) {
         unfolder->SetApplication(GetApplication());
-        unfolder->SetLogger(m_logging->get_logger(unfolder->GetLoggerName()));
+        unfolder->SetLogger(m_params->GetLogger(unfolder->GetLoggerName()));
     }
 }
 

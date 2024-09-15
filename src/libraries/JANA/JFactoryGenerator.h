@@ -60,7 +60,7 @@ public:
         factory->SetTypeName(JTypeInfo::demangle<T>());
         factory->SetPluginName(GetPluginName());
         factory->SetApplication(GetApplication());
-        factory->SetLogger(GetApplication()->template GetService<JLoggingService>()->get_logger(factory->GetPrefix()));
+        factory->SetLogger(GetApplication()->GetJParameterManager()->GetLogger(factory->GetPrefix()));
         factory_set->Add(factory);
     }
 };

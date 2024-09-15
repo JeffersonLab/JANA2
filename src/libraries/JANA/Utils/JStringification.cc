@@ -75,7 +75,7 @@ void JStringification::GetObjectSummaries(std::map<std::string, JObjectSummary> 
         }
 #endif
     }else{
-        _DBG_<<"No factory found! object_name=" << object_name << std::endl;
+        LOG <<"No factory found! object_name=" << object_name << LOG_END;
     }
 }
 

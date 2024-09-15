@@ -10,7 +10,6 @@
 #include <sys/time.h>
 #include <chrono>
 
-#include <JANA/Services/JLoggingService.h>
 
 // Note on tracking how/where Insert() objects came from.
 //

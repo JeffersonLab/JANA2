@@ -3,7 +3,9 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #include "JParameterManager.h"
+#include "JANA/JLogger.h"
 
+#include <sstream>
 #include <vector>
 #include <string>
 #include <fstream>
@@ -15,10 +17,7 @@ using namespace std;
 
 /// @brief Default constructor
 JParameterManager::JParameterManager() {
-    // Set the logger temporarily, until the JLoggingService figures out the correct log level
-    m_logger.show_classname = true;
-    m_logger.className = "JParameterManager";
-    m_logger.level = JLogger::Level::INFO;
+    SetLoggerName("jana");
 }
 
 /// @brief Copy constructor
@@ -153,7 +152,7 @@ void JParameterManager::PrintParameters(int verbosity, int strictness) {
             }
         }
         if ((!param->IsDefault()) && (param->IsDeprecated())) {
-            LOG_WARN(m_logger) << "Parameter '" << key << "' has been deprecated and will no longer be supported in the next release." << LOG_END;
+            LOG_WARN(m_logger) << "Parameter '" << key << "' has been deprecated and may no longer be supported in future releases." << LOG_END;
             warnings_present = true;
         }
     }
@@ -409,3 +408,23 @@ void JParameterManager::FilterParameters(std::map<std::string, std::string> &par
         parms[key] = value;
     }
 }
+
+JLogger JParameterManager::GetLogger(const std::string& component_prefix) {
+
+    JLogger logger;
+    logger.className = component_prefix;
+
+    auto global_log_level = RegisterParameter("jana:global_loglevel", JLogger::Level::INFO, "Global log level");
+
+    if (component_prefix.empty()) {
+        logger.level = global_log_level;
+    }
+    else {
+        std::ostringstream os;
+        os << component_prefix << ":loglevel";
+        logger.level = RegisterParameter(os.str(), global_log_level, "Component log level");
+    }
+    return logger;
+}
+
+

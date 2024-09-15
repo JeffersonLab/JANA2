@@ -4,7 +4,6 @@
 
 #pragma once
 #include <thread>
-#include <JANA/Services/JLoggingService.h>
 #include <JANA/Engine/JScheduler.h>
 #include <JANA/Engine/JWorkerMetrics.h>
 #include <JANA/Engine/JPerfSummary.h>

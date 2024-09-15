@@ -8,6 +8,7 @@
 #include <sstream>
 #include <JANA/Compatibility/JStreamLog.h>
 
+
 struct JLogger {
     enum class Level { TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF };
     Level level;
