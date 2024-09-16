@@ -144,15 +144,10 @@ void JParameterManager::PrintParameters(int verbosity, int strictness) {
         if ((strictness > 0) && (!param->IsDefault()) && (!param->IsUsed())) {
             strictness_violation = true;
             warnings_present = true;
-            if (strictness < 2) {
-                LOG_WARN(m_logger) << "Parameter '" << key << "' appears to be unused. Possible typo?" << LOG_END;
-            }
-            else {
-                LOG_FATAL(m_logger) << "Parameter '" << key << "' appears to be unused. Possible typo?" << LOG_END;
-            }
+            LOG_ERROR(m_logger) << "Parameter '" << key << "' appears to be unused. Possible typo?" << LOG_END;
         }
         if ((!param->IsDefault()) && (param->IsDeprecated())) {
-            LOG_WARN(m_logger) << "Parameter '" << key << "' has been deprecated and may no longer be supported in future releases." << LOG_END;
+            LOG_ERROR(m_logger) << "Parameter '" << key << "' has been deprecated and may no longer be supported in future releases." << LOG_END;
             warnings_present = true;
         }
     }
@@ -196,38 +191,43 @@ void JParameterManager::PrintParameters(int verbosity, int strictness) {
     table.AddColumn("Default", JTablePrinter::Justify::Left, 25);
     table.AddColumn("Description", JTablePrinter::Justify::Left, 50);
 
+    std::ostringstream ss;
     for (JParameter* p: params_to_print) {
-        if (warnings_present) {
-            std::string warning;
-            if (p->IsDeprecated()) {
-                // If deprecated, it no longer matters whether it is advanced or not. If unused, won't show up here anyway.
-                warning = "Deprecated";
-            }
-            else if (!p->IsUsed()) {
-                // Can't be both deprecated and unused, since JANA only finds out that it is deprecated by trying to use it
-                // Can't be both advanced and unused, since JANA only finds out that it is advanced by trying to use it
-                warning = "Unused";
-            }
-            else if (p->IsAdvanced()) {
-                warning = "Advanced";
-            }
 
-            table | p->GetKey()
-                  | warning
-                  | p->GetValue()
-                  | p->GetDefault()
-                  | p->GetDescription();
+        ss << std::endl;
+        ss << " - key:         \"" << p->GetKey() << "\"" << std::endl;
+        ss << "   value:       \"" << p->GetValue() << "\"" << std::endl;
+        ss << "   default:     \"" << p->GetDefault() << "\"" << std::endl;
+        if (!p->GetDescription().empty()) {
+            ss << "   description: \"";
+            std::istringstream iss(p->GetDescription());
+            std::string line;
+            bool is_first_line =  true;
+            while (std::getline(iss, line)) {
+                if (!is_first_line) {
+                    ss << std::endl << "                 " << line;
+                }
+                else {
+                    ss << line;
+                }
+                is_first_line = false;
+            }
+            ss << "\"" << std::endl;
         }
-        else {
-            table | p->GetKey()
-            | p->GetValue()
-            | p->GetDefault()
-            | p->GetDescription();
+        if (p->IsDeprecated()) {
+            ss << "   warning:      \"Deprecated\"" << std::endl;
+            // If deprecated, it no longer matters whether it is advanced or not. If unused, won't show up here anyway.
+        }
+        else if (!p->IsUsed()) {
+            // Can't be both deprecated and unused, since JANA only finds out that it is deprecated by trying to use it
+            // Can't be both advanced and unused, since JANA only finds out that it is advanced by trying to use it
+            ss << "   warning:     \"Unused\"" << std::endl;
+        }
+        else if (p->IsAdvanced()) {
+            ss << "   warning:     \"Advanced\"" << std::endl;
         }
     }
-    std::ostringstream ss;
-    table.Render(ss);
-    LOG_INFO(m_logger) << "Configuration Parameters\n"  << ss.str() << LOG_END;
+    LOG_WARN(m_logger) << "Configuration Parameters\n"  << ss.str() << LOG_END;
 
     // Now that we've printed the table, we can throw an exception if we are being super strict
     if (strictness_violation && strictness > 1) {

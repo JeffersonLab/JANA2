@@ -31,7 +31,7 @@ void JVersion::PrintSplash(std::ostream& os) {
 
 void JVersion::PrintVersionDescription(std::ostream& os) {
 
-    os << "JANA2 version:   " << JVersion::GetVersion() << " ";
+    os << "  JANA2 version:   " << JVersion::GetVersion() << " ";
     if (is_unknown) {
         os << " (unknown git status)";
     }
@@ -46,12 +46,12 @@ void JVersion::PrintVersionDescription(std::ostream& os) {
     }
     os << std::endl;
     if (!JVersion::is_unknown) {
-        os << "Commit hash:     " << JVersion::GetCommitHash() << std::endl;
-        os << "Commit date:     " << JVersion::GetCommitDate() << std::endl;
+        os << "  Commit hash:     " << JVersion::GetCommitHash() << std::endl;
+        os << "  Commit date:     " << JVersion::GetCommitDate() << std::endl;
     }
-    os << "Install prefix:  " << JVersion::GetInstallDir() << std::endl;
+    os << "  Install prefix:  " << JVersion::GetInstallDir() << std::endl;
     if (JVersion::HasPodio() || JVersion::HasROOT() || JVersion::HasXerces()) {
-        os << "Optional deps:   ";
+        os << "  Optional deps:   ";
         if (JVersion::HasPodio()) os << "Podio ";
         if (JVersion::HasROOT()) os << "ROOT ";
         if (JVersion::HasXerces()) os << "Xerces ";
