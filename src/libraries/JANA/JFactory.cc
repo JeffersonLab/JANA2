@@ -4,6 +4,7 @@
 
 #include <JANA/JFactory.h>
 #include <JANA/JEvent.h>
+#include <JANA/JEventSource.h>
 #include <JANA/Utils/JTypeInfo.h>
 
 
@@ -12,6 +13,23 @@ void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
     if (mStatus == Status::Uninitialized) {
         CallWithJExceptionWrapper("JFactory::Init", [&](){ Init(); });
         mStatus = Status::Unprocessed;
+    }
+
+    auto src = event->GetJEventSource();
+    if (!TestFactoryFlag(REGENERATE) && src != nullptr && src->IsGetObjectsEnabled()) {
+        // Attempt to obtain factory data via source->GetObjects(). This will eventually be deprecated,
+        // but for now we want it for migration purposes. If GetObjects() is not implemented, the default
+        // implementation returns false with a minimal performance penalty.
+        bool found_data = false;
+
+        CallWithJExceptionWrapper("JEventSource::GetObjects", [&](){ 
+            found_data = src->GetObjects(event, this); });
+
+        if (found_data) {
+            mStatus = Status::Inserted;
+            mCreationStatus = CreationStatus::InsertedViaGetObjects;
+            return;
+        }
     }
 
     if (TestFactoryFlag(REGENERATE) && (mStatus == Status::Inserted)) {

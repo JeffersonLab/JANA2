@@ -363,10 +363,10 @@ public:
 
     /// Calls the optional-and-discouraged user-provided FinishEvent virtual method, enforcing
     /// 1. Thread safety
-    /// 2. The m_enable_free_event flag
+    /// 2. The m_enable_finish_event flag
 
     void DoFinish(JEvent& event) {
-        if (m_enable_free_event) {
+        if (m_enable_finish_event) {
             std::lock_guard<std::mutex> lock(m_mutex);
             CallWithJExceptionWrapper("JEventSource::FinishEvent", [&](){
                 FinishEvent(event);
@@ -403,6 +403,9 @@ public:
     // TODO: Deprecate me
     std::string GetName() const { return m_resource_name; }
 
+    bool IsGetObjectsEnabled() const { return m_enable_get_objects; }
+    bool IsFinishEventEnabled() const { return m_enable_finish_event; }
+
     // TODO: Deprecate me
     virtual std::string GetVDescription() const {
         return "<description unavailable>";
@@ -418,7 +421,8 @@ public:
     /// have finished with a given event. This should only be enabled when absolutely necessary
     /// (e.g. for backwards compatibility) because it introduces contention for the JEventSource mutex,
     /// which will hurt performance. Conceptually, FinishEvent isn't great, and so should be avoided when possible.
-    void EnableFinishEvent() { m_enable_free_event = true; }
+    void EnableFinishEvent(bool enable=true) { m_enable_finish_event = enable; }
+    void EnableGetObjects(bool enable=true) { m_enable_get_objects = enable; }
 
     // Meant to be called by JANA
     void SetNEvents(uint64_t nevents) { m_nevents = nevents; };
@@ -432,7 +436,8 @@ private:
     std::atomic_ullong m_event_count {0};
     uint64_t m_nskip = 0;
     uint64_t m_nevents = 0;
-    bool m_enable_free_event = false;
+    bool m_enable_finish_event = false;
+    bool m_enable_get_objects = false;
 
 };
 
