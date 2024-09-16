@@ -160,6 +160,7 @@ std::ostream& operator<<(std::ostream& os, const JComponentSummary& cs);
 std::ostream& operator<<(std::ostream& os, JComponentSummary::Collection const&);
 std::ostream& operator<<(std::ostream& os, JComponentSummary::Component const&);
 void PrintComponentTable(std::ostream& os, const JComponentSummary&);
+void PrintComponentYaml(std::ostream& os, const JComponentSummary&);
 void PrintCollectionTable(std::ostream& os, const JComponentSummary&);
 
 inline bool operator==(const JComponentSummary::Collection& lhs, const JComponentSummary::Collection& rhs) {

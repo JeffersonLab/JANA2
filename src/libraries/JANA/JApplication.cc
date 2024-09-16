@@ -119,11 +119,20 @@ void JApplication::Initialize() {
     m_logger = m_params->GetLogger("jana");
     m_logger.show_classname = false;
 
-    std::ostringstream oss;
-    oss << "Initializing..." << std::endl;
-    JVersion::PrintSplash(oss);
-    JVersion::PrintVersionDescription(oss);
-    LOG_WARN(m_logger) << oss.str() << LOG_END;
+    if (m_logger.level > JLogger::Level::INFO) {
+        std::ostringstream oss;
+        oss << "Initializing..." << std::endl << std::endl;
+        JVersion::PrintVersionDescription(oss);
+        LOG_WARN(m_logger) << oss.str() << LOG_END;
+    }
+    else {
+        std::ostringstream oss;
+        oss << "Initializing..." << std::endl;
+        JVersion::PrintSplash(oss);
+        JVersion::PrintVersionDescription(oss);
+        LOG_WARN(m_logger) << oss.str() << LOG_END;
+
+    }
 
     // Set up wiring
     ProvideService(std::make_shared<jana::services::JWiringService>());
