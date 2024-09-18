@@ -40,7 +40,9 @@ TEST_CASE("WiringTests") {
 
     jana::services::JWiringService sut;
     toml::table table = toml::parse(some_wiring);
-    auto wirings = sut.parse_table(table);
+    sut.AddWirings(table, "testcase");
+
+    const auto& wirings = sut.GetWirings();
     REQUIRE(wirings.size() == 2);
     REQUIRE(wirings[0]->prefix == "myfac");
     REQUIRE(wirings[1]->prefix == "myfac_modified");
@@ -74,7 +76,7 @@ TEST_CASE("WiringTests_DuplicatePrefixes") {
     jana::services::JWiringService sut;
     toml::table table = toml::parse(duplicate_prefixes);
     try {
-        auto wirings = sut.parse_table(table);
+        sut.AddWirings(table,"testcase");
         REQUIRE(1 == 0);
     }
     catch (const JException& e) {
@@ -101,11 +103,79 @@ TEST_CASE("WiringTests_Overlay") {
     below->configs["y"] = "42";
 
     auto sut = jana::services::JWiringService();
-    auto result = sut.overlay(std::move(above), std::move(below));
-    REQUIRE(result->input_names[2] == "make");
-    REQUIRE(result->input_levels[1] == JEventLevel::PhysicsEvent);
-    REQUIRE(result->configs["x"] == "6.18");
-    REQUIRE(result->configs["y"] == "42");
+    sut.Overlay(*above, *below);
+    REQUIRE(above->input_names[2] == "make");
+    REQUIRE(above->input_levels[1] == JEventLevel::PhysicsEvent);
+    REQUIRE(above->configs["x"] == "6.18");
+    REQUIRE(above->configs["y"] == "42");
 }
 
+static constexpr std::string_view fake_wiring_file = R"(
+    [[factory]]
+    plugin_name = "ECAL"
+    type_name = "ClusteringFac"
+    prefix = "myfac"
 
+        [factory.configs]
+        x = "22"
+        y = "verbose"
+
+    [[factory]]
+    plugin_name = "ECAL"
+    type_name = "ClusteringFac"
+    prefix = "variantfac"
+
+        [factory.configs]
+        x = "49"
+        y = "silent"
+
+    [[factory]]
+    plugin_name = "BCAL"
+    type_name = "ClusteringFac"
+    prefix = "sillyfac"
+
+        [factory.configs]
+        x = "618"
+        y = "mediocre"
+)";
+
+
+TEST_CASE("WiringTests_FakeFacGen") {
+    jana::services::JWiringService sut;
+    toml::table table = toml::parse(fake_wiring_file);
+    sut.AddWirings(table, "testcase");
+
+    using Wiring = jana::services::JWiringService::Wiring;
+    std::vector<std::unique_ptr<Wiring>> fake_facgen_wirings;
+    
+    // One gets overlaid with an existing wiring
+    auto a = std::make_unique<Wiring>();
+    a->plugin_name = "ECAL";
+    a->type_name = "ClusteringFac";
+    a->prefix = "variantfac";
+    a->configs["x"] = "42";
+    fake_facgen_wirings.push_back(std::move(a));
+    
+    // The other is brand new
+    auto b = std::make_unique<Wiring>();
+    b->plugin_name = "ECAL";
+    b->type_name = "ClusteringFac";
+    b->prefix = "exuberantfac";
+    b->configs["x"] = "27";
+    fake_facgen_wirings.push_back(std::move(b));
+
+    // We should end up with three in total
+    sut.AddWirings(fake_facgen_wirings, "fake_facgen");
+    auto final_wirings = sut.GetWirings("ECAL", "ClusteringFac");
+
+    REQUIRE(final_wirings.size() == 3);
+
+    REQUIRE(final_wirings[0]->prefix == "myfac");
+    REQUIRE(final_wirings[1]->prefix == "variantfac");
+    REQUIRE(final_wirings[2]->prefix == "exuberantfac");
+
+    REQUIRE(final_wirings[0]->configs["x"] == "22"); // from file only
+    REQUIRE(final_wirings[1]->configs["x"] == "49"); // file overrides facgen
+    REQUIRE(final_wirings[2]->configs["x"] == "27"); // from facgen only
+
+}

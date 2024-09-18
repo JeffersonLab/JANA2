@@ -10,8 +10,7 @@
 #include <vector>
 #include <memory>
 
-namespace jana {
-namespace services {
+namespace jana::services {
 
 
 class JWiringService : public JService {
@@ -25,11 +24,9 @@ public:
         std::vector<std::string> input_names;
         std::vector<JEventLevel> input_levels;
         std::vector<std::string> output_names;
+        std::vector<JEventLevel> output_levels;
         std::map<std::string, std::string> configs;
     };
-
-    using WiringIndex = std::map<std::pair<std::string,std::string>, std::map<std::string,Wiring*>>;
-    // { (plugin_name,typename) : {prefix : const Wiring*}}
 
 private:
     Parameter<std::string> m_wirings_input_file {this, "jana:wiring_file", "wiring.toml", 
@@ -39,18 +36,28 @@ private:
         "Allow multiple definitions inside wiring files"};
 
     std::vector<std::unique_ptr<Wiring>> m_wirings;
-    WiringIndex m_wirings_index;
+    std::map<std::string, Wiring*> m_wirings_from_prefix;
+    std::map<std::pair<std::string,std::string>, std::vector<Wiring*>> m_wirings_from_type_and_plugin_names;
+    std::vector<Wiring*> m_no_wirings;
 
 public:
     void Init() override;
-    void parse_file(std::string filename);
-    void add_wiring(std::unique_ptr<Wiring> wiring);
-    std::unique_ptr<Wiring> overlay(std::unique_ptr<Wiring>&& above, std::unique_ptr<Wiring>&& below);
-    const Wiring* get_wiring(std::string plugin_name, std::string type_name, std::string prefix);
-    const std::vector<std::unique_ptr<Wiring>>& get_wirings();
-    std::vector<std::unique_ptr<Wiring>> parse_table(const toml::table& table);
 
+    void AddWirings(std::vector<std::unique_ptr<Wiring>>& wirings, const std::string& source);
+    void AddWirings(const toml::table& table, const std::string& source);
+    void AddWirings(const std::string& filename);
+
+    const Wiring*
+    GetWiring(const std::string& prefix) const;
+
+    const std::vector<Wiring*>&
+    GetWirings(const std::string& plugin_name, const std::string& type_name) const;
+
+    const std::vector<std::unique_ptr<Wiring>>& 
+    GetWirings() const { return m_wirings; }
+
+    static void Overlay(Wiring& above, const Wiring& below);
 };
 
-} // namespace services
-} // namespace jana
+} // namespace jana::services
+
