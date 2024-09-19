@@ -25,7 +25,7 @@ private:
     std::vector<OutputBase*> m_outputs;
 
 public:
-    const std::vector<OutputBase*>& GetOutputs() {
+    const std::vector<OutputBase*>& GetOutputs() const {
         return m_outputs;
     }
 

@@ -39,6 +39,7 @@ class JFactorySet {
         void Print(void) const;
         void Release(void);
 
+        std::vector<std::string> GetAllCollectionNames() const;
         JStorage* GetStorage(const std::string& collection_name) const;
         JFactory* GetFactory(const std::string& object_name, const std::string& tag="") const;
         template<typename T> JFactoryT<T>* GetFactory(const std::string& tag = "") const;

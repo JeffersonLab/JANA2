@@ -195,10 +195,6 @@ class JEvent : public std::enable_shared_from_this<JEvent>
         int64_t mEventIndex = -1;
 
 
-
-#if JANA2_HAVE_PODIO
-        std::map<std::string, JFactory*> mPodioFactories;
-#endif
 };
 
 /// Insert() allows an EventSource to insert items directly into the JEvent,
@@ -494,6 +490,7 @@ JFactoryT<T>* JEvent::GetSingle(const T* &t, const char *tag, bool exception_if_
 inline JStorage* JEvent::GetStorage(const std::string& name, bool create) const {
 
     auto* storage = mFactorySet->GetStorage(name);
+    if (storage == nullptr) return nullptr;
     auto fac = storage->GetFactory();
 
     if (fac != nullptr && create) {
@@ -514,12 +511,7 @@ inline JStorage* JEvent::GetStorage(const std::string& name, bool create) const 
 #if JANA2_HAVE_PODIO
 
 inline std::vector<std::string> JEvent::GetAllCollectionNames() const {
-    // TODO: Obtain from JFactorySet
-    std::vector<std::string> keys;
-    for (auto pair : mPodioFactories) {
-        keys.push_back(pair.first);
-    }
-    return keys;
+    return mFactorySet->GetAllCollectionNames();
 }
 
 inline const podio::CollectionBase* JEvent::GetCollectionBase(std::string name, bool throw_on_missing) const {

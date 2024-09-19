@@ -4,6 +4,7 @@
 
 #include <iterator>
 #include <iostream>
+#include <vector>
 
 #include "JFactorySet.h"
 #include "JANA/Components/JStorage.h"
@@ -203,6 +204,17 @@ std::vector<JMultifactory*> JFactorySet::GetAllMultifactories() const {
     std::vector<JMultifactory*> results;
     for (auto f : mMultifactories) {
         results.push_back(f);
+    }
+    return results;
+}
+
+//---------------------------------
+// GetAllCollectionNames
+//---------------------------------
+std::vector<std::string> JFactorySet::GetAllCollectionNames() const {
+    std::vector<std::string> results;
+    for (const auto& it : mCollectionsFromName) {
+        results.push_back(it.first);
     }
     return results;
 }
