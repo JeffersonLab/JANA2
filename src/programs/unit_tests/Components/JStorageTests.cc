@@ -13,9 +13,10 @@
 #include <JANA/JFactory.h>
 #include <JANA/JFactoryGenerator.h>
 #include <JANA/Services/JComponentManager.h>
+#include <memory>
+
 #include <JANA/Components/JPodioOutput.h>
 #include <PodioDatamodel/ExampleClusterCollection.h>
-#include <memory>
 
 namespace jstorage_tests {
 

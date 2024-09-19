@@ -13,7 +13,6 @@ set(TEST_SOURCES
     Components/ExactlyOnceTests.cc
     Components/GetObjectsTests.cc
     Components/NEventNSkipTests.cc
-    Components/JStorageTests.cc
     Components/JComponentTests.cc
     Components/JEventGetAllTests.cc
     Components/JEventProcessorTests.cc
@@ -45,7 +44,7 @@ set(TEST_SOURCES
     )
 
 if (${USE_PODIO})
-    list(APPEND TEST_SOURCES Components/PodioTests.cc)
+    list(APPEND TEST_SOURCES Components/PodioTests.cc Components/JStorageTests.cc)
 endif()
 
 add_jana_test(jana-unit-tests SOURCES ${TEST_SOURCES})
