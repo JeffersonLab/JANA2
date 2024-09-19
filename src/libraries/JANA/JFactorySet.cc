@@ -40,10 +40,17 @@ JFactorySet::~JFactorySet()
     /// The only time mIsFactoryOwner should/can be set false is when a JMultifactory is using a JFactorySet internally
     /// to manage its JMultifactoryHelpers.
     if (mIsFactoryOwner) {
-        for (auto& f : mFactories) delete f.second;
+        for (auto& s : mCollectionsFromName) {
+            // Only delete _inserted_ collections. Collections are otherwise owned by their factories
+            if (s.second->GetFactory() == nullptr) {
+                delete s.second;
+            }
+        }
+        for (auto f : mAllFactories) delete f;
+        // Now that the factories are deleted, nothing can call the multifactories so it is safe to delete them as well
+
+        for (auto* mf : mMultifactories) { delete mf; }
     }
-    // Now that the factories are deleted, nothing can call the multifactories so it is safe to delete them as well
-    for (auto* mf : mMultifactories) { delete mf; }
 }
 
 //---------------------------------
@@ -96,6 +103,7 @@ bool JFactorySet::Add(JFactory* aFactory)
     // these two cases by checking whether JFactory::GetObjectType returns an object type vs nullopt.
 
 
+    mAllFactories.push_back(aFactory);
     auto object_type = aFactory->GetObjectType();
     if (object_type != std::nullopt) {
         // We have an old-style JFactory!
@@ -194,22 +202,14 @@ JFactory* JFactorySet::GetFactory(const std::string& object_name, const std::str
 // GetAllFactories
 //---------------------------------
 std::vector<JFactory*> JFactorySet::GetAllFactories() const {
-    std::vector<JFactory*> results;
-    for (auto p : mFactories) {
-        results.push_back(p.second);
-    }
-    return results;
+    return mAllFactories;
 }
 
 //---------------------------------
 // GetAllMultifactories
 //---------------------------------
 std::vector<JMultifactory*> JFactorySet::GetAllMultifactories() const {
-    std::vector<JMultifactory*> results;
-    for (auto f : mMultifactories) {
-        results.push_back(f);
-    }
-    return results;
+    return mMultifactories;
 }
 
 //---------------------------------

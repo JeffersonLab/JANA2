@@ -21,6 +21,7 @@ class JMultifactory;
 class JFactorySet {
 
     protected:
+        std::vector<JFactory*> mAllFactories;
         std::map<std::pair<std::type_index, std::string>, JFactory*> mFactories;        // {(typeid, tag) : factory}
         std::map<std::pair<std::string, std::string>, JFactory*> mFactoriesFromString;  // {(objname, tag) : factory}
         std::map<std::string, JStorage*> mCollectionsFromName;
@@ -45,7 +46,7 @@ class JFactorySet {
         template<typename T> JFactoryT<T>* GetFactory(const std::string& tag = "") const;
         std::vector<JFactory*> GetAllFactories() const;
         std::vector<JMultifactory*> GetAllMultifactories() const;
-        template<typename T> std::vector<JFactoryT<T>*> GetAllFactories() const;
+        template<typename T> std::vector<JFactoryT<T>*> GetAllFactoriesT() const;
 
         JEventLevel GetLevel() const { return mLevel; }
         void SetLevel(JEventLevel level) { mLevel = level; }
@@ -78,7 +79,7 @@ JFactoryT<T>* JFactorySet::GetFactory(const std::string& tag) const {
 }
 
 template<typename T>
-std::vector<JFactoryT<T>*> JFactorySet::GetAllFactories() const {
+std::vector<JFactoryT<T>*> JFactorySet::GetAllFactoriesT() const {
     auto sKey = std::type_index(typeid(T));
     std::vector<JFactoryT<T>*> data;
     for (auto it=std::begin(mFactories);it!=std::end(mFactories);it++){

@@ -4,6 +4,7 @@
 #include <type_traits>
 #include <PodioDatamodel/ExampleClusterCollection.h>
 #include <JANA/JEvent.h>
+#include <JANA/JMultifactory.h>
 #include <JANA/Podio/JFactoryPodioT.h>
 
 namespace podiotests {
@@ -163,5 +164,46 @@ TEST_CASE("JFactoryPodioT::Init gets called") {
     REQUIRE(fac != nullptr);
     REQUIRE(fac->init_called == true);
 }
+
+
+namespace multifactory {
+
+struct TestMultiFac : public JMultifactory {
+    TestMultiFac() {
+        DeclarePodioOutput<ExampleCluster>("sillyclusters");
+    }
+    bool init_called = false;
+    void Init() override {
+        init_called = true;
+    }
+    void Process(const std::shared_ptr<const JEvent>&) override {
+        ExampleClusterCollection c;
+        c.push_back(MutableExampleCluster(16.0));
+        SetCollection<ExampleCluster>("sillyclusters", std::move(c));
+    }
+};
+
+TEST_CASE("Podio JMultifactory::Init gets called") {
+
+    JApplication app;
+    auto event = std::make_shared<JEvent>(&app);
+    auto fs = new JFactorySet;
+    fs->Add(new TestMultiFac);
+    event->SetFactorySet(fs);
+    event->GetFactorySet()->Release();  // Simulate a trip to the JEventPool
+
+    auto r = event->GetCollectionBase("sillyclusters");
+    REQUIRE(r != nullptr);
+    const auto* res = dynamic_cast<const ExampleClusterCollection*>(r);
+    REQUIRE(res != nullptr);
+    REQUIRE((*res)[0].energy() == 16.0);
+
+    auto multifac = event->GetFactorySet()->GetAllMultifactories().at(0);
+    REQUIRE(multifac != nullptr);
+    auto multifac_typed = dynamic_cast<TestMultiFac*>(multifac);
+    REQUIRE(multifac_typed != nullptr);
+    REQUIRE(multifac_typed->init_called == true);
+}
+} // namespace multifactory
 } // namespace podiotests
 
