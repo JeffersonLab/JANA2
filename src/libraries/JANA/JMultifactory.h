@@ -10,6 +10,7 @@
 #include <JANA/Components/JComponent.h>
 #include <JANA/Components/JHasRunCallbacks.h>
 #include <JANA/JVersion.h>
+#include <typeindex>
 
 #if JANA2_HAVE_PODIO
 #include <JANA/Components/JPodioOutput.h>
@@ -163,8 +164,8 @@ void JMultifactory::DeclareOutput(std::string tag, bool owns_data) {
 
 template <typename T>
 void JMultifactory::SetData(std::string tag, std::vector<T*> data) {
-    JFactoryT<T>* helper = mHelpers.GetFactory<T>(tag);
-    if (helper == nullptr) {
+    JFactory* helper_untyped = mHelpers.GetFactory(std::type_index(typeid(T)), JTypeInfo::demangle<T>(), tag);
+    if (helper_untyped == nullptr) {
         auto ex = JException("JMultifactory: Attempting to SetData() without corresponding DeclareOutput()");
         ex.function_name = "JMultifactory::SetData";
         ex.type_name = m_type_name;
@@ -172,6 +173,7 @@ void JMultifactory::SetData(std::string tag, std::vector<T*> data) {
         ex.plugin_name = m_plugin_name;
         throw ex;
     }
+    JFactoryT<T>* helper = static_cast<JFactoryT<T>*>(helper_untyped);
     // This will except if helper is a JMultifactoryHelperPodio. User should use SetPodioData() instead for PODIO data.
     helper->Set(data);
 }

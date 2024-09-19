@@ -4,10 +4,11 @@
 
 #include <iterator>
 #include <iostream>
+#include <typeindex>
 #include <vector>
 
+#include <JANA/Components/JStorage.h>
 #include "JFactorySet.h"
-#include "JANA/Components/JStorage.h"
 #include "JFactory.h"
 #include "JMultifactory.h"
 #include "JFactoryGenerator.h"
@@ -199,10 +200,51 @@ JFactory* JFactorySet::GetFactory(const std::string& object_name, const std::str
 }
 
 //---------------------------------
+// GetFactory
+//---------------------------------
+JFactory* JFactorySet::GetFactory(std::type_index object_type, const std::string& object_name, const std::string& tag) const {
+
+    auto typed_key = std::make_pair(object_type, tag);
+    auto typed_iter = mFactories.find(typed_key);
+    if (typed_iter != std::end(mFactories)) {
+        JEventLevel found_level = typed_iter->second->GetLevel();
+        if (found_level != mLevel) {
+            throw JException("Factory belongs to a different level on the event hierarchy. Expected: %s, Found: %s", toString(mLevel).c_str(), toString(found_level).c_str());
+        }
+        return typed_iter->second;
+    }
+    return GetFactory(object_name, tag);
+}
+
+//---------------------------------
 // GetAllFactories
 //---------------------------------
 std::vector<JFactory*> JFactorySet::GetAllFactories() const {
+
+    // This returns both old-style (JFactoryT) and new-style (JFactory+JStorage) factories, unlike 
+    // GetAllFactories(object_type, object_name) below. This is because we use this method in 
+    // JEventProcessors to activate factories in a generic way, particularly when working with Podio data.
+
     return mAllFactories;
+}
+
+//---------------------------------
+// GetAllFactories
+//---------------------------------
+std::vector<JFactory*> JFactorySet::GetAllFactories(std::type_index object_type, const std::string& object_name) const {
+
+    // This returns all factories which _directly_ produce objects of type object_type, i.e. they don't use a JStorage.
+    // This is what all of its callers already expect anyhow. Obviously we'd like to migrate everything over to JStorage
+    // eventually. Rather than updating this to also check mCollectionsFromName, it probably makes more sense to create 
+    // a JFactorySet::GetAllStorages(type_index, object_name) instead, and migrate all callers to use that.
+
+    std::vector<JFactory*> results;
+    for (auto& it : mFactories) {
+        if (it.second->GetObjectType() == object_type || it.second->GetObjectName() == object_name) {
+            results.push_back(it.second);
+        }
+    }
+    return results;
 }
 
 //---------------------------------

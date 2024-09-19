@@ -18,6 +18,7 @@
 #include <JANA/Utils/JCallGraphEntryMaker.h>
 #include <JANA/Utils/JInspector.h>
 
+#include <typeindex>
 #include <vector>
 #include <cstddef>
 #include <memory>
@@ -204,51 +205,73 @@ class JEvent : public std::enable_shared_from_this<JEvent>
 template <class T>
 inline JFactoryT<T>* JEvent::Insert(T* item, const std::string& tag) const {
 
+    std::string object_name = JTypeInfo::demangle<T>();
+
     std::string resolved_tag = tag;
     if (mUseDefaultTags && tag.empty()) {
-        auto defaultTag = mDefaultTags.find(JTypeInfo::demangle<T>());
+        auto defaultTag = mDefaultTags.find(object_name);
         if (defaultTag != mDefaultTags.end()) resolved_tag = defaultTag->second;
     }
-    auto factory = mFactorySet->GetFactory<T>(resolved_tag);
-    if (factory == nullptr) {
-        factory = new JFactoryT<T>;
-        factory->SetTag(tag);
-        factory->SetLevel(mFactorySet->GetLevel());
-        mFactorySet->Add(factory);
+    auto untyped_factory = mFactorySet->GetFactory(std::type_index(typeid(T)), object_name, resolved_tag);
+    JFactoryT<T>* typed_factory;
+    if (untyped_factory == nullptr) {
+        typed_factory = new JFactoryT<T>;
+        typed_factory->SetTag(tag);
+        typed_factory->SetLevel(mFactorySet->GetLevel());
+        mFactorySet->Add(typed_factory);
     }
-    factory->Insert(item);
-    factory->SetInsertOrigin( mCallGraph.GetInsertDataOrigin() ); // (see note at top of JCallGraphRecorder.h)
-    return factory;
+    else {
+        typed_factory = dynamic_cast<JFactoryT<T>*>(untyped_factory);
+        if (typed_factory == nullptr) {
+            throw JException("Retrieved factory is not a JFactoryT!");
+        }
+    }
+    typed_factory->Insert(item);
+    typed_factory->SetInsertOrigin( mCallGraph.GetInsertDataOrigin() ); // (see note at top of JCallGraphRecorder.h)
+    return typed_factory;
 }
 
 template <class T>
 inline JFactoryT<T>* JEvent::Insert(const std::vector<T*>& items, const std::string& tag) const {
 
+    std::string object_name = JTypeInfo::demangle<T>();
     std::string resolved_tag = tag;
     if (mUseDefaultTags && tag.empty()) {
-        auto defaultTag = mDefaultTags.find(JTypeInfo::demangle<T>());
+        auto defaultTag = mDefaultTags.find(object_name);
         if (defaultTag != mDefaultTags.end()) resolved_tag = defaultTag->second;
     }
-    auto factory = mFactorySet->GetFactory<T>(resolved_tag);
-    if (factory == nullptr) {
-        factory = new JFactoryT<T>;
-        factory->SetTag(tag);
-        factory->SetLevel(mFactorySet->GetLevel());
-        mFactorySet->Add(factory);
+    auto untyped_factory = mFactorySet->GetFactory(std::type_index(typeid(T)), object_name, resolved_tag);
+    JFactoryT<T>* typed_factory;
+    if (untyped_factory == nullptr) {
+        typed_factory = new JFactoryT<T>;
+        typed_factory->SetTag(tag);
+        typed_factory->SetLevel(mFactorySet->GetLevel());
+        mFactorySet->Add(typed_factory);
+    }
+    else {
+        typed_factory = dynamic_cast<JFactoryT<T>*>(untyped_factory);
+        if (typed_factory == nullptr) {
+            throw JException("Retrieved factory is not a JFactoryT!");
+        }
     }
     for (T* item : items) {
-        factory->Insert(item);
+        typed_factory->Insert(item);
     }
-    factory->SetStatus(JFactory::Status::Inserted); // for when items is empty
-    factory->SetCreationStatus(JFactory::CreationStatus::Inserted); // for when items is empty
-    factory->SetInsertOrigin( mCallGraph.GetInsertDataOrigin() ); // (see note at top of JCallGraphRecorder.h)
-    return factory;
+    typed_factory->SetStatus(JFactory::Status::Inserted); // for when items is empty
+    typed_factory->SetCreationStatus(JFactory::CreationStatus::Inserted); // for when items is empty
+    typed_factory->SetInsertOrigin( mCallGraph.GetInsertDataOrigin() ); // (see note at top of JCallGraphRecorder.h)
+    return typed_factory;
 }
 
 /// GetFactory() should be used with extreme care because it subverts the JEvent abstraction.
 /// Most historical uses of GetFactory are far better served by JMultifactory
 inline JFactory* JEvent::GetFactory(const std::string& object_name, const std::string& tag) const {
-    return mFactorySet->GetFactory(object_name, tag);
+    std::string resolved_tag = tag;
+    if (mUseDefaultTags && tag.empty()) {
+        auto defaultTag = mDefaultTags.find(object_name);
+        if (defaultTag != mDefaultTags.end()) resolved_tag = defaultTag->second;
+    }
+    return mFactorySet->GetFactory(object_name, resolved_tag);
 }
 
 /// GetAllFactories() should be used with extreme care because it subverts the JEvent abstraction.
@@ -262,20 +285,27 @@ inline std::vector<JFactory*> JEvent::GetAllFactories() const {
 template<class T>
 inline JFactoryT<T>* JEvent::GetFactory(const std::string& tag, bool throw_on_missing) const
 {
+    std::string object_name = JTypeInfo::demangle<T>();
     std::string resolved_tag = tag;
     if (mUseDefaultTags && tag.empty()) {
-        auto defaultTag = mDefaultTags.find(JTypeInfo::demangle<T>());
+        auto defaultTag = mDefaultTags.find(object_name);
         if (defaultTag != mDefaultTags.end()) resolved_tag = defaultTag->second;
     }
-    auto factory = mFactorySet->GetFactory<T>(resolved_tag);
+    auto factory = mFactorySet->GetFactory(std::type_index(typeid(T)), object_name, resolved_tag);
     if (factory == nullptr) {
         if (throw_on_missing) {
-            JException ex("Could not find JFactoryT<" + JTypeInfo::demangle<T>() + "> with tag=" + tag);
+            JException ex("Could not find JFactory producing '%s' with tag '%s'", object_name.c_str(), resolved_tag.c_str());
             ex.show_stacktrace = false;
             throw ex;
         }
+        return nullptr;
     };
-    return factory;
+    auto typed_factory = dynamic_cast<JFactoryT<T>*>(factory);
+    if (typed_factory == nullptr) {
+        JException ex("JFactory producing '%s' with tag '%s' is not a JFactoryT!", object_name.c_str(), resolved_tag.c_str());
+        throw ex;
+    };
+    return typed_factory;
 }
 
 
@@ -392,15 +422,23 @@ std::vector<const T*> JEvent::Get(const std::string& tag, bool strict) const {
 /// wishes to examine them all together.
 template<class T>
 inline std::vector<JFactoryT<T>*> JEvent::GetFactoryAll(bool throw_on_missing) const {
-    auto factories = mFactorySet->GetAllFactories<T>();
+    std::vector<JFactoryT<T>*> results;
+    std::string object_name = JTypeInfo::demangle<T>();
+    auto factories = mFactorySet->GetAllFactories(std::type_index(typeid(T)), object_name);
     if (factories.size() == 0) {
         if (throw_on_missing) {
-            JException ex("Could not find any JFactoryT<" + JTypeInfo::demangle<T>() + "> (from any tag)");
+            JException ex("Could not find any JFactoryT<%s> (from any tag)", object_name.c_str());
             ex.show_stacktrace = false;
             throw ex;
         }
     };
-    return factories;
+    for (auto* fac : factories) {
+        auto fac_typed = dynamic_cast<JFactoryT<T>*>(fac);
+        if (fac_typed != nullptr) {
+            results.push_back(fac_typed);
+        }
+    }
+    return results;
 }
 
 /// GetAll returns all JObjects of (child) type T, regardless of tag.

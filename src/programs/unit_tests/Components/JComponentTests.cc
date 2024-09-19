@@ -5,12 +5,13 @@
 #include <JANA/JEventProcessor.h>
 #include <JANA/Components/JOmniFactory.h>
 #include <JANA/Components/JOmniFactoryGeneratorT.h>
+#include <typeindex>
 
 namespace jana {
 
 template <typename OutputCollectionT, typename MultifactoryT>
 MultifactoryT* RetrieveMultifactory(JFactorySet* facset, std::string output_collection_name) {
-    auto fac = facset->GetFactory<OutputCollectionT>(output_collection_name);
+    auto fac = facset->GetFactory(std::type_index(typeid(OutputCollectionT)), JTypeInfo::demangle<OutputCollectionT>(), output_collection_name);
     REQUIRE(fac != nullptr);
     auto helper = dynamic_cast<JMultifactoryHelper<OutputCollectionT>*>(fac);
     REQUIRE(helper != nullptr);
