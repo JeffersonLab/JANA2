@@ -183,7 +183,7 @@ void JMultifactory::DeclarePodioOutput(std::string tag, bool) {
 
 template <typename T>
 void JMultifactory::SetCollection(std::string tag, typename JFactoryPodioT<T>::CollectionT&& collection) {
-    JFactoryT<T>* helper = mHelpers.GetFactory<T>(tag);
+    JFactory* helper = mHelpers.GetStorage(tag)->GetFactory();
     if (helper == nullptr) {
         auto ex = JException("JMultifactory: Attempting to SetData() without corresponding DeclareOutput()");
         ex.function_name = "JMultifactory::SetCollection";

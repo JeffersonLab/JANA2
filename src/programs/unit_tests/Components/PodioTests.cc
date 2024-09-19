@@ -31,12 +31,6 @@ TEST_CASE("PodioTestsInsertAndRetrieve") {
         REQUIRE((*collection_retrieved)[0].energy() == 16.0);
     }
 
-    SECTION("Retrieve using JEvent::Get()") {
-        std::vector<const ExampleCluster*> clusters_retrieved = event->Get<ExampleCluster>("clusters");
-        REQUIRE(clusters_retrieved.size() == 2);
-        REQUIRE(clusters_retrieved[0]->energy() == 16.0);
-    }
-
     SECTION("Retrieve directly from podio::Frame") {
         auto frame = event->GetSingle<podio::Frame>();
         auto* collection_retrieved = dynamic_cast<const ExampleClusterCollection*>(frame->get("clusters"));
@@ -162,7 +156,10 @@ TEST_CASE("JFactoryPodioT::Init gets called") {
     const auto* res = dynamic_cast<const ExampleClusterCollection*>(r);
     REQUIRE(res != nullptr);
     REQUIRE((*res)[0].energy() == 16.0);
-    auto fac = dynamic_cast<jana2_tests_podiotests_init::TestFac*>(event->GetFactory<ExampleCluster>("clusters"));
+
+    auto fac_untyped = event->GetStorage("clusters", false)->GetFactory();
+    REQUIRE(fac_untyped != nullptr);
+    auto fac = dynamic_cast<jana2_tests_podiotests_init::TestFac*>(fac_untyped);
     REQUIRE(fac != nullptr);
     REQUIRE(fac->init_called == true);
 }

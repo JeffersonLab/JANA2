@@ -5,12 +5,13 @@
 
 #pragma once
 
-#include <JANA/JFactoryT.h>
+#include "JANA/Utils/JTypeInfo.h"
+#include <JANA/JFactory.h>
 #include <JANA/Components/JPodioOutput.h>
 
 
 template <typename T>
-class JFactoryPodioT : public JFactoryT<T> {
+class JFactoryPodioT : public JFactory {
 public:
     using CollectionT = typename T::collection_type;
 
@@ -21,6 +22,11 @@ public:
     explicit JFactoryPodioT();
     ~JFactoryPodioT() override;
 
+    void SetTag(std::string tag) { 
+        mTag = tag;
+        m_output.GetCollections().at(0)->SetCollectionName(tag);
+    }
+
     void Init() override {}
     void BeginRun(const std::shared_ptr<const JEvent>&) override {}
     void ChangeRun(const std::shared_ptr<const JEvent>&) override {}
@@ -28,21 +34,18 @@ public:
     void EndRun() override {}
     void Finish() override {}
 
-    std::optional<std::type_index> GetObjectType() const final { return std::type_index(typeid(T)); }
     std::size_t GetNumObjects() const final { return m_output.GetCollection()->GetSize(); }
     void ClearData() final;
 
     void SetCollection(CollectionT&& collection);
     void SetCollection(std::unique_ptr<CollectionT> collection);
-    void Set(const std::vector<T*>& aData) final;
-    void Set(std::vector<T*>&& aData) final;
-    void Insert(T* aDatum) final;
-
 };
 
 
 template <typename T>
-JFactoryPodioT<T>::JFactoryPodioT() = default;
+JFactoryPodioT<T>::JFactoryPodioT() {
+    mObjectName = JTypeInfo::demangle<T>();
+}
 
 template <typename T>
 JFactoryPodioT<T>::~JFactoryPodioT() {
@@ -73,18 +76,4 @@ void JFactoryPodioT<T>::ClearData() {
     // Happens automatically now
 }
 
-template <typename T>
-void JFactoryPodioT<T>::Set(const std::vector<T*>&) {
-    throw JException("Not supported!");
-}
-
-template <typename T>
-void JFactoryPodioT<T>::Set(std::vector<T*>&&) {
-    throw JException("Not supported!");
-}
-
-template <typename T>
-void JFactoryPodioT<T>::Insert(T*) {
-    throw JException("Not supported!");
-}
 

@@ -12,7 +12,6 @@ class JHasFactoryOutputs {
 public:
     struct OutputBase {
     protected:
-        std::vector<std::string> m_collection_names; // TODO: Possibly don't need anymore
         std::vector<std::unique_ptr<JStorage>> m_collections;
         bool m_is_variadic = false;
     public:

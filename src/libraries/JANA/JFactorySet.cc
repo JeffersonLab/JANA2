@@ -50,6 +50,10 @@ JFactorySet::~JFactorySet()
 // Add
 //---------------------------------
 void JFactorySet::Add(JStorage* collection) {
+
+    if (collection->GetCollectionName().empty()) {
+        throw JException("Attempted to add a collection with no name");
+    }
     auto named_result = mCollectionsFromName.find(collection->GetCollectionName());
     if (named_result != std::end(mCollectionsFromName)) {
         // Collection is duplicate. Since this almost certainly indicates a user error, and
@@ -86,8 +90,8 @@ bool JFactorySet::Add(JFactory* aFactory)
     /// same T JObject, and is not distinguishing between them via tags.
     
     // There are two different ways JFactories can work now. In the old way, JFactory must be
-    // either a JFactoryT or a JFactoryPodioT, and have exactly one output collection. In the
-    // new way, JFactory has an arbitrary number of output collections which are explicitly
+    // a JFactoryT, and have exactly one output collection. In the new way (which includes JFactoryPodioT), 
+    // JFactory has an arbitrary number of output collections which are explicitly
     // represented, similar to but better than JMultifactory. We distinguish between
     // these two cases by checking whether JFactory::GetObjectType returns an object type vs nullopt.
 

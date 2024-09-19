@@ -17,7 +17,6 @@ private:
 public:
     PodioOutput(JHasFactoryOutputs* owner, std::string default_collection_name="") {
         owner->RegisterOutput(this);
-        this->m_collection_names.push_back(default_collection_name);
         auto coll = std::make_unique<JPodioStorage>();
         coll->SetCollectionName(default_collection_name);
         coll->SetTypeName(JTypeInfo::demangle<PodioT>());
@@ -69,7 +68,6 @@ private:
 public:
     VariadicPodioOutput(JHasFactoryOutputs* owner, std::vector<std::string> default_collection_names={}) {
         owner->RegisterOutput(this);
-        this->m_collection_names = default_collection_names;
         this->m_is_variadic = true;
         for (const std::string& name : default_collection_names) {
             auto coll = std::make_unique<JPodioStorage>();
