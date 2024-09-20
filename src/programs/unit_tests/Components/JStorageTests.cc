@@ -70,7 +70,7 @@ struct RegeneratingTestFactory : public JFactory {
 
 struct TestProc : public JEventProcessor {
 
-    PodioInput<ExampleCluster> m_clusters_in {this, InputOptions("my_collection")};
+    PodioInput<ExampleCluster> m_clusters_in {this, InputOptions{.name="my_collection"}};
 
     TestProc() {
         SetCallbackStyle(CallbackStyle::ExpertMode);
