@@ -44,7 +44,7 @@ struct TestFactory : public JFactory {
     }
     void Init() {
     }
-    void Process(const std::shared_ptr<const JEvent>& event) {
+    void Process(const std::shared_ptr<const JEvent>&) {
         LOG_WARN(GetLogger()) << "Calling TestFactory::Process" << LOG_END;
         m_clusters()->push_back(MutableExampleCluster(22.2));
         m_clusters()->push_back(MutableExampleCluster(27));
@@ -61,7 +61,7 @@ struct RegeneratingTestFactory : public JFactory {
     }
     void Init() {
     }
-    void Process(const std::shared_ptr<const JEvent>& event) {
+    void Process(const std::shared_ptr<const JEvent>&) {
         LOG_WARN(GetLogger()) << "Calling TestFactory::Process" << LOG_END;
         m_clusters()->push_back(MutableExampleCluster(22.2));
         m_clusters()->push_back(MutableExampleCluster(27));

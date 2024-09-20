@@ -12,6 +12,7 @@
 #include <typeindex>
 #include <vector>
 #include <memory>
+#include <unordered_map>
 
 
 class JFactory;

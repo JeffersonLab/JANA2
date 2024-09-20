@@ -18,12 +18,16 @@ private:
 
 public:
     size_t GetSize() const override {
+        if (m_collection == nullptr) {
+            return 0;
+        }
         return m_collection->size();
     }
 
     virtual void ClearData() override {
         m_collection = nullptr;
         m_frame = nullptr;
+        SetStatus(JStorage::Status::Empty);
         // Podio clears the data itself when the frame is destroyed.
         // Until then, the collection is immutable.
         //

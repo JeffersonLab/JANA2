@@ -57,6 +57,7 @@ public:
     : mObjectName(std::move(aName)), 
       mTag(std::move(aTag)), 
       mStatus(Status::Uninitialized) {
+          SetTypeName(mObjectName);
           SetPrefix(aTag.empty() ? mObjectName : mObjectName + ":" + mTag);
     };
 

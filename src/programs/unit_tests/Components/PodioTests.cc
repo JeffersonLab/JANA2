@@ -204,6 +204,49 @@ TEST_CASE("Podio JMultifactory::Init gets called") {
     REQUIRE(multifac_typed != nullptr);
     REQUIRE(multifac_typed->init_called == true);
 }
+TEST_CASE("PodioTests_InsertMultiple") {
+
+    JApplication app;
+    auto event = std::make_shared<JEvent>(&app);
+
+    // Insert a cluster
+
+    auto coll1 = ExampleClusterCollection();
+    auto cluster1 = coll1.create(22.0);
+    auto storage = event->InsertCollection<ExampleCluster>(std::move(coll1), "clusters");
+
+    REQUIRE(storage->GetSize() == 1);
+    REQUIRE(storage->GetStatus() == JStorage::Status::Inserted);
+
+    // Retrieve and validate cluster
+
+    auto cluster1_retrieved = event->GetCollection<ExampleCluster>("clusters");
+    REQUIRE(cluster1_retrieved->at(0).energy() == 22.0);
+
+    // Clear event
+
+    event->GetFactorySet()->Release();  // Simulate a trip to the JEventPool
+    
+    // After clearing, the JStorage will still exist, but it will be empty
+    auto storage2 = event->GetStorage("clusters", false);
+    REQUIRE(storage2->GetStatus() == JStorage::Status::Empty);
+    REQUIRE(storage2->GetSize() == 0);
+
+    // Insert a cluster. If event isn't being cleared correctly, this will throw
+
+    auto coll2 = ExampleClusterCollection();
+    auto cluster2 = coll2.create(33.0);
+    auto storage3 = event->InsertCollection<ExampleCluster>(std::move(coll2), "clusters");
+    REQUIRE(storage3->GetStatus() == JStorage::Status::Inserted);
+    REQUIRE(storage3->GetSize() == 1);
+
+    // Retrieve and validate cluster
+
+    auto cluster2_retrieved = event->GetCollection<ExampleCluster>("clusters");
+    REQUIRE(cluster2_retrieved->at(0).energy() == 33.0);
+}
+
+
 } // namespace multifactory
 } // namespace podiotests
 
