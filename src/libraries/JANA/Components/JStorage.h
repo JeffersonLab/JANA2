@@ -12,7 +12,6 @@
 #include <typeindex>
 #include <vector>
 #include <memory>
-#include <optional>
 
 
 class JFactory;
@@ -26,10 +25,10 @@ private:
     // Fields
     Status m_status = Status::Empty;
     std::string m_collection_name;
-    std::optional<std::string> m_collection_tag = std::nullopt;
+    JOptional<std::string> m_collection_tag;
     std::string m_type_name;
     JFactory* m_factory = nullptr;
-    std::optional<std::type_index> m_inner_type_index = std::nullopt; // e.g. Hit, Cluster
+    JOptional<std::type_index> m_inner_type_index;
     mutable JCallGraphRecorder::JDataOrigin m_insert_origin = JCallGraphRecorder::ORIGIN_NOT_AVAILABLE;
 
 protected:
@@ -45,9 +44,9 @@ public:
     // Getters
     Status GetStatus() const { return m_status; }
     std::string GetCollectionName() const { return m_collection_name; }
-    std::optional<std::string> GetCollectionTag() const { return m_collection_tag; }
+    JOptional<std::string> GetCollectionTag() const { return m_collection_tag; }
     std::string GetTypeName() const { return m_type_name; }
-    std::optional<std::type_index> GetTypeIndex() const { return m_inner_type_index; }
+    JOptional<std::type_index> GetTypeIndex() const { return m_inner_type_index; }
     JCallGraphRecorder::JDataOrigin GetInsertOrigin() const { return m_insert_origin; } ///< If objects were placed here by JEvent::Insert() this records whether that call was made from a source or factory.
     JFactory* GetFactory() const { return m_factory; }
 

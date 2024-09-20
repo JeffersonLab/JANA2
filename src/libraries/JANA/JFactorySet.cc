@@ -105,11 +105,11 @@ bool JFactorySet::Add(JFactory* aFactory)
 
 
     mAllFactories.push_back(aFactory);
-    auto object_type = aFactory->GetObjectType();
-    if (object_type != std::nullopt) {
+
+    if (aFactory->GetOutputs().empty()) {
         // We have an old-style JFactory!
 
-        auto typed_key = std::make_pair( *object_type, aFactory->GetTag() );
+        auto typed_key = std::make_pair( aFactory->GetObjectType(), aFactory->GetTag() );
         auto untyped_key = std::make_pair( aFactory->GetObjectName(), aFactory->GetTag() );
 
         auto typed_result = mFactories.find(typed_key);
@@ -291,10 +291,13 @@ void JFactorySet::Print() const
 
 /// Release() loops over all contained factories, clearing their data
 void JFactorySet::Release() {
-
-    for (const auto& sFactoryPair : mFactories) {
-        auto sFactory = sFactoryPair.second;
-        sFactory->ClearData();
+    for (auto* fac : mAllFactories) {
+        fac->ClearData();
+    }
+    for (auto& it : mCollectionsFromName) {
+        if (it.second->GetFactory() == nullptr) {
+            it.second->ClearData();
+        }
     }
 }
 

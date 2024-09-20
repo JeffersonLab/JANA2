@@ -66,7 +66,7 @@ public:
     void Process(const std::shared_ptr<const JEvent>&) override {}
 
 
-    std::optional<std::type_index> GetObjectType(void) const override {
+    std::type_index GetObjectType(void) const override {
         return std::type_index(typeid(T));
     }
 

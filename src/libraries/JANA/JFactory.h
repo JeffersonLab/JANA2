@@ -17,7 +17,6 @@
 #include <vector>
 #include <unordered_map>
 #include <functional>
-#include <optional>
 
 
 class JEvent;
@@ -165,7 +164,7 @@ public:
     virtual void Process(const std::shared_ptr<const JEvent>&) {}
     virtual void Finish() {}
 
-    virtual std::optional<std::type_index> GetObjectType() const { return std::nullopt; }
+    virtual std::type_index GetObjectType() const { throw JException("GetObjectType not supported for non-JFactoryT's"); }
 
     virtual std::size_t GetNumObjects() const {
         throw JException("Not implemented!");
