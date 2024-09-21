@@ -5,6 +5,7 @@
 #pragma once
 
 #include <JANA/Utils/JEventLevel.h>
+#include <JANA/Utils/JTypeInfo.h>
 
 #include <vector>
 #include <string>
@@ -52,6 +53,13 @@ public:
 
     JEventLevel GetLevel() const { return mLevel; }
     void SetLevel(JEventLevel level) { mLevel = level; }
+
+    template <typename T>
+    [[deprecated]]
+    JFactory* GetFactory(const std::string& tag) const {
+        auto object_name = JTypeInfo::demangle<T>();
+        return GetFactory(object_name, tag);
+    }
 };
 
 
