@@ -35,7 +35,6 @@ public:
     void Finish() override {}
 
     std::size_t GetNumObjects() const final { return m_output.GetCollection()->GetSize(); }
-    void ClearData() final;
 
     void SetCollection(CollectionT&& collection);
     void SetCollection(std::unique_ptr<CollectionT> collection);
@@ -70,10 +69,5 @@ void JFactoryPodioT<T>::SetCollection(std::unique_ptr<CollectionT> collection) {
     m_output() = std::move(collection);
 }
 
-
-template <typename T>
-void JFactoryPodioT<T>::ClearData() {
-    // Happens automatically now
-}
 
 

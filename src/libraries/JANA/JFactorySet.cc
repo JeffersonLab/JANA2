@@ -295,9 +295,11 @@ void JFactorySet::Release() {
         fac->ClearData();
     }
     for (auto& it : mCollectionsFromName) {
-        if (it.second->GetFactory() == nullptr) {
-            it.second->ClearData();
-        }
+        // fac->ClearData() only clears JFactoryT's, because that's how it always worked.
+        // Clearing is fundamentally an operation on the data bundle, not on the factory itself.
+        // Furthermore, "clearing" the factory is misleading because factories can cache arbitrary
+        // state inside member variables, and there's no way to clear that.
+        it.second->ClearData();
     }
 }
 

@@ -154,7 +154,12 @@ public:
 
     // Overloaded by JFactoryT
 
-    virtual void ClearData() {};
+    virtual void ClearData() {
+        if (mStatus == Status::Processed) {
+            mStatus = Status::Unprocessed;
+            mCreationStatus = CreationStatus::NotCreatedYet;
+        }
+    };
 
 
     // Overloaded by user Factories

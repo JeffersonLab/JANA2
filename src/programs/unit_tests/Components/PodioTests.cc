@@ -2,10 +2,15 @@
 #include <catch.hpp>
 
 #include <type_traits>
+
 #include <PodioDatamodel/ExampleClusterCollection.h>
 #include <JANA/JEvent.h>
 #include <JANA/JMultifactory.h>
 #include <JANA/Podio/JFactoryPodioT.h>
+#include <JANA/Components/JOmniFactory.h>
+#include <JANA/Components/JStorage.h>
+#include <JANA/Components/JOmniFactoryGeneratorT.h>
+#include <JANA/Services/JComponentManager.h>
 
 namespace podiotests {
 
@@ -176,21 +181,26 @@ struct TestMultiFac : public JMultifactory {
     void Init() override {
         init_called = true;
     }
-    void Process(const std::shared_ptr<const JEvent>&) override {
+    void Process(const std::shared_ptr<const JEvent>& event) override {
         ExampleClusterCollection c;
-        c.push_back(MutableExampleCluster(16.0));
+        c.push_back(MutableExampleCluster(16.0 + event->GetEventNumber()));
         SetCollection<ExampleCluster>("sillyclusters", std::move(c));
     }
 };
 
-TEST_CASE("Podio JMultifactory::Init gets called") {
+TEST_CASE("PodioTests_JMultifactoryInit") {
 
     JApplication app;
     auto event = std::make_shared<JEvent>(&app);
+    event->SetEventNumber(0);
     auto fs = new JFactorySet;
     fs->Add(new TestMultiFac);
     event->SetFactorySet(fs);
-    event->GetFactorySet()->Release();  // Simulate a trip to the JEventPool
+
+    // Simulate a trip to the event pool _before_ calling JFactory::Process()
+    // This is important because a badly designed JFactory::ClearData() could
+    // mangle the Unprocessed status and consequently skip Init().
+    event->GetFactorySet()->Release(); // In theory this shouldn't hurt
 
     auto r = event->GetCollectionBase("sillyclusters");
     REQUIRE(r != nullptr);
@@ -204,6 +214,30 @@ TEST_CASE("Podio JMultifactory::Init gets called") {
     REQUIRE(multifac_typed != nullptr);
     REQUIRE(multifac_typed->init_called == true);
 }
+
+
+TEST_CASE("PodioTests_MultifacMultiple") {
+
+    JApplication app;
+    auto event = std::make_shared<JEvent>(&app);
+    event->SetEventNumber(0);
+    auto fs = new JFactorySet;
+    fs->Add(new TestMultiFac);
+    event->SetFactorySet(fs);
+
+    auto r = event->GetCollection<ExampleCluster>("sillyclusters");
+    REQUIRE(r->at(0).energy() == 16.0);
+
+    event->GetFactorySet()->Release();  // Simulate a trip to the JEventPool
+    
+    event->SetEventNumber(4);
+    r = event->GetCollection<ExampleCluster>("sillyclusters");
+    REQUIRE(r->at(0).energy() == 20.0);
+
+}
+} // namespace multifactory
+
+
 TEST_CASE("PodioTests_InsertMultiple") {
 
     JApplication app;
@@ -247,6 +281,67 @@ TEST_CASE("PodioTests_InsertMultiple") {
 }
 
 
-} // namespace multifactory
+namespace omnifacmultiple {
+
+struct MyClusterFactory : public JOmniFactory<MyClusterFactory> {
+
+    PodioOutput<ExampleCluster> m_clusters_out{this, "clusters"};
+
+    void Configure() {
+    }
+
+    void ChangeRun(int32_t /*run_nr*/) {
+    }
+
+    void Execute(int32_t /*run_nr*/, uint64_t evt_nr) {
+
+        auto cs = std::make_unique<ExampleClusterCollection>();
+        auto cluster = MutableExampleCluster(101.0 + evt_nr);
+        cs->push_back(cluster);
+        m_clusters_out() = std::move(cs);
+    }
+};
+
+TEST_CASE("PodioTests_OmniFacMultiple") {
+
+    JApplication app;
+    app.SetParameterValue("jana:loglevel", "error");
+    app.Add(new JOmniFactoryGeneratorT<MyClusterFactory>("cluster_fac", {}, {"clusters"}));
+    app.Initialize();
+    auto event = std::make_shared<JEvent>(&app);
+    app.GetService<JComponentManager>()->configure_event(*event);
+    event->SetEventNumber(22);
+
+    // Check that storage is already present
+    auto storage = event->GetStorage("clusters", false);
+    REQUIRE(storage != nullptr);
+    REQUIRE(storage->GetStatus() == JStorage::Status::Empty);
+
+    // Retrieve triggers factory
+    auto coll = event->GetCollection<ExampleCluster>("clusters");
+    REQUIRE(coll->size() == 1);
+    REQUIRE(coll->at(0).energy() == 123.0);
+
+    // Clear everything
+    event->GetFactorySet()->Release();
+    event->SetEventNumber(1010);
+
+    // Check that storage has been reset
+    storage = event->GetStorage("clusters", false);
+    REQUIRE(storage != nullptr);
+    REQUIRE(storage->GetStatus() == JStorage::Status::Empty);
+    
+    REQUIRE(storage->GetFactory() != nullptr);
+    
+    // Retrieve triggers factory
+    auto coll2 = event->GetCollection<ExampleCluster>("clusters");
+    REQUIRE(coll2->size() == 1);
+    REQUIRE(coll2->at(0).energy() == 1111.0);
+}
+
+} // namespace omnifacmultiple
+
+
+
 } // namespace podiotests
 
