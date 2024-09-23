@@ -62,7 +62,6 @@ std::string produce_overall_report() {
     // Include detailed report from JApplication
     auto t = time(nullptr);
     ss << "JANA status report: " << ctime(&t) << std::endl;
-    ss << g_app->GetComponentSummary() << std::endl;
 
     // Include backtraces from each individual thread
     if( typeid(std::thread::native_handle_type) == typeid(pthread_t) ){
