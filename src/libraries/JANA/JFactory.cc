@@ -54,7 +54,7 @@ void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
         }
         CallWithJExceptionWrapper("JFactory::Process", [&](){ Process(event); });
         for (auto& output : this->GetOutputs()) {
-            output->PutCollections(*event);
+            output->StoreData(*event);
         }
         mStatus = Status::Processed;
         mCreationStatus = CreationStatus::Created;

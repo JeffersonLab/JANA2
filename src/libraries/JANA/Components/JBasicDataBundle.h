@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include <JANA/Components/JStorage.h>
+#include <JANA/Components/JDataBundle.h>
 #include <JANA/JObject.h> 
 #include <JANA/Utils/JTypeInfo.h>
 
@@ -9,14 +9,14 @@
 #include <TObject.h>
 #endif
 
-class JBasicStorage : public JStorage {
+class JBasicDataBundle : public JDataBundle {
     bool m_is_persistent = false;
     bool m_not_object_owner = false;
     bool m_write_to_output = true;
 
 public:
-    JBasicStorage() = default;
-    ~JBasicStorage() override = default;
+    JBasicDataBundle() = default;
+    ~JBasicDataBundle() override = default;
     void SetPersistentFlag(bool persistent) { m_is_persistent = persistent; }
     void SetNotOwnerFlag(bool not_owner) { m_not_object_owner = not_owner; }
     void SetWriteToOutputFlag(bool write_to_output) { m_write_to_output = write_to_output; }
@@ -29,12 +29,12 @@ public:
 
 
 template <typename T>
-class JBasicStorageT : public JBasicStorage {
+class JBasicDataBundleT : public JBasicDataBundle {
 private:
     std::vector<T*> m_data;
 
 public:
-    JBasicStorageT();
+    JBasicDataBundleT();
     void ClearData() override;
     size_t GetSize() const override { return m_data.size();}
 
@@ -55,7 +55,7 @@ public:
 // Template definitions
 
 template <typename T>
-JBasicStorageT<T>::JBasicStorageT() {
+JBasicDataBundleT<T>::JBasicDataBundleT() {
     SetTypeName(JTypeInfo::demangle<T>());
     EnableGetAs<T>();
     EnableGetAs<JObject>( std::is_convertible<T,JObject>() ); // Automatically add JObject if this can be converted to it
@@ -65,7 +65,7 @@ JBasicStorageT<T>::JBasicStorageT() {
 }
 
 template <typename T>
-void JBasicStorageT<T>::ClearData() {
+void JBasicDataBundleT<T>::ClearData() {
 
     // ClearData won't do anything if Init() hasn't been called
     if (GetStatus() == Status::Empty) {
@@ -87,7 +87,7 @@ void JBasicStorageT<T>::ClearData() {
 
 template<typename T>
 template<typename S>
-void JBasicStorageT<T>::EnableGetAs() {
+void JBasicDataBundleT<T>::EnableGetAs() {
 
     auto upcast_lambda = [this]() {
         std::vector<S*> results;

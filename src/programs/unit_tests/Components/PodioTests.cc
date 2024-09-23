@@ -3,15 +3,16 @@
 
 #include <type_traits>
 
-#include <PodioDatamodel/ExampleClusterCollection.h>
 #include <JANA/JEvent.h>
 #include <JANA/JMultifactory.h>
 #include <JANA/Podio/JFactoryPodioT.h>
 #include <JANA/Components/JOmniFactory.h>
-#include <JANA/Components/JStorage.h>
+#include <JANA/Components/JDataBundle.h>
 #include <JANA/Components/JOmniFactoryGeneratorT.h>
 #include <JANA/Services/JComponentManager.h>
 
+#include <PodioDatamodel/ExampleClusterCollection.h>
+#include <PodioDatamodel/ExampleHitCollection.h>
 namespace podiotests {
 
 
@@ -163,7 +164,7 @@ TEST_CASE("JFactoryPodioT::Init gets called") {
     REQUIRE(res != nullptr);
     REQUIRE((*res)[0].energy() == 16.0);
 
-    auto fac_untyped = event->GetStorage("clusters", false)->GetFactory();
+    auto fac_untyped = event->GetDataBundle("clusters", false)->GetFactory();
     REQUIRE(fac_untyped != nullptr);
     auto fac = dynamic_cast<jana2_tests_podiotests_init::TestFac*>(fac_untyped);
     REQUIRE(fac != nullptr);
@@ -250,7 +251,7 @@ TEST_CASE("PodioTests_InsertMultiple") {
     auto storage = event->InsertCollection<ExampleCluster>(std::move(coll1), "clusters");
 
     REQUIRE(storage->GetSize() == 1);
-    REQUIRE(storage->GetStatus() == JStorage::Status::Inserted);
+    REQUIRE(storage->GetStatus() == JDataBundle::Status::Inserted);
 
     // Retrieve and validate cluster
 
@@ -261,9 +262,9 @@ TEST_CASE("PodioTests_InsertMultiple") {
 
     event->GetFactorySet()->Release();  // Simulate a trip to the JEventPool
     
-    // After clearing, the JStorage will still exist, but it will be empty
-    auto storage2 = event->GetStorage("clusters", false);
-    REQUIRE(storage2->GetStatus() == JStorage::Status::Empty);
+    // After clearing, the JDataBundle will still exist, but it will be empty
+    auto storage2 = event->GetDataBundle("clusters", false);
+    REQUIRE(storage2->GetStatus() == JDataBundle::Status::Empty);
     REQUIRE(storage2->GetSize() == 0);
 
     // Insert a cluster. If event isn't being cleared correctly, this will throw
@@ -271,7 +272,7 @@ TEST_CASE("PodioTests_InsertMultiple") {
     auto coll2 = ExampleClusterCollection();
     auto cluster2 = coll2.create(33.0);
     auto storage3 = event->InsertCollection<ExampleCluster>(std::move(coll2), "clusters");
-    REQUIRE(storage3->GetStatus() == JStorage::Status::Inserted);
+    REQUIRE(storage3->GetStatus() == JDataBundle::Status::Inserted);
     REQUIRE(storage3->GetSize() == 1);
 
     // Retrieve and validate cluster
@@ -313,9 +314,9 @@ TEST_CASE("PodioTests_OmniFacMultiple") {
     event->SetEventNumber(22);
 
     // Check that storage is already present
-    auto storage = event->GetStorage("clusters", false);
+    auto storage = event->GetDataBundle("clusters", false);
     REQUIRE(storage != nullptr);
-    REQUIRE(storage->GetStatus() == JStorage::Status::Empty);
+    REQUIRE(storage->GetStatus() == JDataBundle::Status::Empty);
 
     // Retrieve triggers factory
     auto coll = event->GetCollection<ExampleCluster>("clusters");
@@ -327,9 +328,9 @@ TEST_CASE("PodioTests_OmniFacMultiple") {
     event->SetEventNumber(1010);
 
     // Check that storage has been reset
-    storage = event->GetStorage("clusters", false);
+    storage = event->GetDataBundle("clusters", false);
     REQUIRE(storage != nullptr);
-    REQUIRE(storage->GetStatus() == JStorage::Status::Empty);
+    REQUIRE(storage->GetStatus() == JDataBundle::Status::Empty);
     
     REQUIRE(storage->GetFactory() != nullptr);
     
@@ -342,6 +343,48 @@ TEST_CASE("PodioTests_OmniFacMultiple") {
 } // namespace omnifacmultiple
 
 
+namespace omnifacreadinsert {
 
+struct RWClusterFac : public JOmniFactory<RWClusterFac> {
+
+    PodioInput<ExampleCluster> m_clusters_in{this};
+    PodioOutput<ExampleCluster> m_clusters_out{this};
+
+    void Configure() {}
+    void ChangeRun(int32_t /*run_nr*/) {}
+    void Execute(int32_t /*run_nr*/, uint64_t evt_nr) {
+
+        auto cs = std::make_unique<ExampleClusterCollection>();
+        for (const auto& cluster_in : *m_clusters_in()) {
+            auto cluster = MutableExampleCluster(1.0 + cluster_in.energy());
+            cs->push_back(cluster);
+        }
+        m_clusters_out() = std::move(cs);
+    }
+};
+
+TEST_CASE("PodioTests_OmniFacReadInsert") {
+
+    JApplication app;
+    app.SetParameterValue("jana:loglevel", "error");
+    app.Add(new JOmniFactoryGeneratorT<RWClusterFac>("cluster_fac", {"protoclusters"}, {"clusters"}));
+    app.Initialize();
+    auto event = std::make_shared<JEvent>(&app);
+    app.GetService<JComponentManager>()->configure_event(*event);
+
+    auto coll1 = ExampleClusterCollection();
+    auto cluster1 = coll1.create(22.0);
+    auto storage = event->InsertCollection<ExampleCluster>(std::move(coll1), "protoclusters");
+
+    REQUIRE(storage->GetSize() == 1);
+    REQUIRE(storage->GetStatus() == JDataBundle::Status::Inserted);
+
+    // Retrieve triggers factory
+    auto coll = event->GetCollection<ExampleCluster>("clusters");
+    REQUIRE(coll->size() == 1);
+    REQUIRE(coll->at(0).energy() == 23.0);
+
+}
+} // namespace omnifacreadinsert
 } // namespace podiotests
 

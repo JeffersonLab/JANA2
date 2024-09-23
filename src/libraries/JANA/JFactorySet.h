@@ -15,7 +15,7 @@
 class JFactoryGenerator;
 class JFactory;
 class JMultifactory;
-class JStorage;
+class JDataBundle;
 
 
 class JFactorySet {
@@ -24,7 +24,7 @@ private:
     std::vector<JFactory*> mAllFactories;
     std::map<std::pair<std::type_index, std::string>, JFactory*> mFactories;        // {(typeid, tag) : factory}
     std::map<std::pair<std::string, std::string>, JFactory*> mFactoriesFromString;  // {(objname, tag) : factory}
-    std::map<std::string, JStorage*> mCollectionsFromName;
+    std::map<std::string, JDataBundle*> mDataBundlesFromName;
     std::vector<JMultifactory*> mMultifactories;
     bool mIsFactoryOwner = true;
     JEventLevel mLevel = JEventLevel::PhysicsEvent;
@@ -36,12 +36,12 @@ public:
 
     bool Add(JFactory* aFactory);
     bool Add(JMultifactory* multifactory);
-    void Add(JStorage* storage);
+    void Add(JDataBundle* storage);
     void Print() const;
     void Release();
 
-    std::vector<std::string> GetAllCollectionNames() const;
-    JStorage* GetStorage(const std::string& collection_name) const;
+    std::vector<std::string> GetAllDataBundleNames() const;
+    JDataBundle* GetDataBundle(const std::string& collection_name) const;
 
     JFactory* GetFactory(const std::string& object_name, const std::string& tag="") const;
     JFactory* GetFactory(std::type_index object_type, const std::string& object_name, const std::string& tag = "") const;

@@ -24,7 +24,7 @@ public:
 
     void SetTag(std::string tag) { 
         mTag = tag;
-        m_output.GetCollections().at(0)->SetCollectionName(tag);
+        m_output.GetDataBundle()->SetUniqueName(tag);
     }
 
     void Init() override {}
@@ -34,7 +34,7 @@ public:
     void EndRun() override {}
     void Finish() override {}
 
-    std::size_t GetNumObjects() const final { return m_output.GetCollection()->GetSize(); }
+    std::size_t GetNumObjects() const final { return m_output.GetDataBundle()->GetSize(); }
 
     void SetCollection(CollectionT&& collection);
     void SetCollection(std::unique_ptr<CollectionT> collection);

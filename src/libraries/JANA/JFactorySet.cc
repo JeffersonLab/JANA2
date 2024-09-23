@@ -3,11 +3,10 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #include <iterator>
-#include <iostream>
 #include <typeindex>
 #include <vector>
 
-#include <JANA/Components/JStorage.h>
+#include <JANA/Components/JDataBundle.h>
 #include "JFactorySet.h"
 #include "JFactory.h"
 #include "JMultifactory.h"
@@ -41,7 +40,7 @@ JFactorySet::~JFactorySet()
     /// The only time mIsFactoryOwner should/can be set false is when a JMultifactory is using a JFactorySet internally
     /// to manage its JMultifactoryHelpers.
     if (mIsFactoryOwner) {
-        for (auto& s : mCollectionsFromName) {
+        for (auto& s : mDataBundlesFromName) {
             // Only delete _inserted_ collections. Collections are otherwise owned by their factories
             if (s.second->GetFactory() == nullptr) {
                 delete s.second;
@@ -57,22 +56,22 @@ JFactorySet::~JFactorySet()
 //---------------------------------
 // Add
 //---------------------------------
-void JFactorySet::Add(JStorage* collection) {
+void JFactorySet::Add(JDataBundle* databundle) {
 
-    if (collection->GetCollectionName().empty()) {
-        throw JException("Attempted to add a collection with no name");
+    if (databundle->GetUniqueName().empty()) {
+        throw JException("Attempted to add a databundle with no unique_name");
     }
-    auto named_result = mCollectionsFromName.find(collection->GetCollectionName());
-    if (named_result != std::end(mCollectionsFromName)) {
+    auto named_result = mDataBundlesFromName.find(databundle->GetUniqueName());
+    if (named_result != std::end(mDataBundlesFromName)) {
         // Collection is duplicate. Since this almost certainly indicates a user error, and
         // the caller will not be able to do anything about it anyway, throw an exception.
         // We show the user which factory is causing this problem, including both plugin names
 
-        auto ex = JException("Attempted to add duplicate collections");
+        auto ex = JException("Attempted to add duplicate databundles");
         ex.function_name = "JFactorySet::Add";
-        ex.instance_name = collection->GetCollectionName();
+        ex.instance_name = databundle->GetUniqueName();
 
-        auto fac = collection->GetFactory();
+        auto fac = databundle->GetFactory();
         if (fac != nullptr) {
             ex.type_name = fac->GetTypeName();
             ex.plugin_name = fac->GetPluginName();
@@ -83,7 +82,7 @@ void JFactorySet::Add(JStorage* collection) {
         throw ex;
     }
     // Note that this is agnostic to event level. We may decide to change this.
-    mCollectionsFromName[collection->GetCollectionName()] = collection;
+    mDataBundlesFromName[databundle->GetUniqueName()] = databundle;
 }
 
 //---------------------------------
@@ -140,9 +139,9 @@ bool JFactorySet::Add(JFactory* aFactory)
     else {
         // We have a new-style JFactory!
         for (const auto* output : aFactory->GetOutputs()) {
-            for (const auto& coll : output->GetCollections()) {
-                coll->SetFactory(aFactory);
-                Add(coll.get());
+            for (const auto& bundle : output->GetDataBundles()) {
+                bundle->SetFactory(aFactory);
+                Add(bundle.get());
             }
         }
     }
@@ -168,14 +167,14 @@ bool JFactorySet::Add(JMultifactory *multifactory) {
 }
 
 //---------------------------------
-// GetCollection
+// GetDataBundle
 //---------------------------------
-JStorage* JFactorySet::GetStorage(const std::string& collection_name) const {
-    auto it = mCollectionsFromName.find(collection_name);
-    if (it != std::end(mCollectionsFromName)) {
+JDataBundle* JFactorySet::GetDataBundle(const std::string& name) const {
+    auto it = mDataBundlesFromName.find(name);
+    if (it != std::end(mDataBundlesFromName)) {
         auto fac = it->second->GetFactory();
         if (fac != nullptr && fac->GetLevel() != mLevel) {
-            throw JException("Collection belongs to a different level on the event hierarchy!");
+            throw JException("Data bundle belongs to a different level on the event hierarchy!");
         }
         return it->second;
     }
@@ -235,7 +234,7 @@ std::vector<JFactory*> JFactorySet::GetAllFactories(std::type_index object_type,
 
     // This returns all factories which _directly_ produce objects of type object_type, i.e. they don't use a JStorage.
     // This is what all of its callers already expect anyhow. Obviously we'd like to migrate everything over to JStorage
-    // eventually. Rather than updating this to also check mCollectionsFromName, it probably makes more sense to create 
+    // eventually. Rather than updating this to also check mDataBundlesFromName, it probably makes more sense to create 
     // a JFactorySet::GetAllStorages(type_index, object_name) instead, and migrate all callers to use that.
 
     std::vector<JFactory*> results;
@@ -255,11 +254,11 @@ std::vector<JMultifactory*> JFactorySet::GetAllMultifactories() const {
 }
 
 //---------------------------------
-// GetAllCollectionNames
+// GetAllDataBundleNames
 //---------------------------------
-std::vector<std::string> JFactorySet::GetAllCollectionNames() const {
+std::vector<std::string> JFactorySet::GetAllDataBundleNames() const {
     std::vector<std::string> results;
-    for (const auto& it : mCollectionsFromName) {
+    for (const auto& it : mDataBundlesFromName) {
         results.push_back(it.first);
     }
     return results;
@@ -294,7 +293,7 @@ void JFactorySet::Release() {
     for (auto* fac : mAllFactories) {
         fac->ClearData();
     }
-    for (auto& it : mCollectionsFromName) {
+    for (auto& it : mDataBundlesFromName) {
         // fac->ClearData() only clears JFactoryT's, because that's how it always worked.
         // Clearing is fundamentally an operation on the data bundle, not on the factory itself.
         // Furthermore, "clearing" the factory is misleading because factories can cache arbitrary

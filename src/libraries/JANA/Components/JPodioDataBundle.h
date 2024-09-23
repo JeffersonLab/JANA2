@@ -3,12 +3,12 @@
 
 #pragma once
 
-#include <JANA/Components/JStorage.h>
+#include <JANA/Components/JDataBundle.h>
 #include <podio/CollectionBase.h>
 #include <podio/podioVersion.h>
 
 
-class JPodioStorage : public JStorage {
+class JPodioDataBundle : public JDataBundle {
 
 private:
     const podio::CollectionBase* m_collection = nullptr;
@@ -23,7 +23,7 @@ public:
 
     virtual void ClearData() override {
         m_collection = nullptr;
-        SetStatus(JStorage::Status::Empty);
+        SetStatus(JDataBundle::Status::Empty);
         // Podio clears the data itself when the frame is destroyed.
         // Until then, the collection is immutable.
         //

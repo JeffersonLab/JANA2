@@ -51,7 +51,7 @@ public:
     JMultifactoryHelperPodio(JMultifactory* parent, std::string collection_name) : mMultiFactory(parent) {
         mObjectName = JTypeInfo::demangle<T>();
         mTag = collection_name;
-        m_output.GetCollections().at(0)->SetCollectionName(collection_name);
+        m_output.GetDataBundle()->SetUniqueName(collection_name);
     }
 
     virtual ~JMultifactoryHelperPodio() = default;
@@ -193,8 +193,8 @@ void JMultifactory::DeclarePodioOutput(std::string coll_name, bool) {
 }
 
 template <typename T>
-void JMultifactory::SetCollection(std::string tag, typename T::collection_type&& collection) {
-    JFactory* helper = mHelpers.GetStorage(tag)->GetFactory();
+void JMultifactory::SetCollection(std::string name, typename T::collection_type&& collection) {
+    JFactory* helper = mHelpers.GetDataBundle(name)->GetFactory();
     if (helper == nullptr) {
         auto ex = JException("JMultifactory: Attempting to SetData() without corresponding DeclareOutput()");
         ex.function_name = "JMultifactory::SetCollection";
@@ -217,8 +217,8 @@ void JMultifactory::SetCollection(std::string tag, typename T::collection_type&&
 }
 
 template <typename T>
-void JMultifactory::SetCollection(std::string tag, std::unique_ptr<typename T::collection_type> collection) {
-    JFactory* helper = mHelpers.GetStorage(tag)->GetFactory();
+void JMultifactory::SetCollection(std::string name, std::unique_ptr<typename T::collection_type> collection) {
+    JFactory* helper = mHelpers.GetDataBundle(name)->GetFactory();
     if (helper == nullptr) {
         auto ex = JException("JMultifactory: Attempting to SetData() without corresponding DeclareOutput()");
         ex.function_name = "JMultifactory::SetCollection";

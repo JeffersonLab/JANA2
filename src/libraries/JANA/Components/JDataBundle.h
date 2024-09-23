@@ -17,7 +17,7 @@
 
 class JFactory;
 
-class JStorage {
+class JDataBundle {
 public:
     // Typedefs
     enum class Status { Empty, Created, Inserted, InsertedViaGetObjects };
@@ -25,8 +25,8 @@ public:
 private:
     // Fields
     Status m_status = Status::Empty;
-    std::string m_collection_name;
-    JOptional<std::string> m_collection_tag;
+    std::string m_unique_name;
+    JOptional<std::string> m_short_name;
     std::string m_type_name;
     JFactory* m_factory = nullptr;
     JOptional<std::type_index> m_inner_type_index;
@@ -37,15 +37,15 @@ protected:
 
 public:
     // Interface
-    JStorage() = default;
-    virtual ~JStorage() = default;
+    JDataBundle() = default;
+    virtual ~JDataBundle() = default;
     virtual size_t GetSize() const = 0;
     virtual void ClearData() = 0;
 
     // Getters
     Status GetStatus() const { return m_status; }
-    std::string GetCollectionName() const { return m_collection_name; }
-    JOptional<std::string> GetCollectionTag() const { return m_collection_tag; }
+    std::string GetUniqueName() const { return m_unique_name; }
+    JOptional<std::string> GetShortName() const { return m_short_name; }
     std::string GetTypeName() const { return m_type_name; }
     JOptional<std::type_index> GetTypeIndex() const { return m_inner_type_index; }
     JCallGraphRecorder::JDataOrigin GetInsertOrigin() const { return m_insert_origin; } ///< If objects were placed here by JEvent::Insert() this records whether that call was made from a source or factory.
@@ -53,12 +53,12 @@ public:
 
     // Setters
     void SetStatus(Status s) { m_status = s;}
-    void SetCollectionName(std::string collection_name) { m_collection_name = collection_name; }
-    void SetCollectionTag(std::string collection_tag) { m_collection_tag = collection_tag; }
+    void SetUniqueName(std::string unique_name) { m_unique_name = unique_name; }
+    void SetShortName(std::string short_name) { m_short_name = short_name; }
     void SetTypeName(std::string type_name) { m_type_name = type_name; }
     void SetInsertOrigin(JCallGraphRecorder::JDataOrigin origin) { m_insert_origin = origin; } ///< Called automatically by JEvent::Insert() to records whether that call was made by a source or factory.
     void SetFactory(JFactory* fac) { m_factory = fac; }
-    
+
     // Templates 
     //
     /// Generically access the encapsulated data, performing an upcast if necessary. This is useful for extracting data from
@@ -86,7 +86,7 @@ public:
 //   3. The size of the vtable is expected to be very small (<10 elements, most likely 2)
 
 template<typename S>
-std::vector<S*> JStorage::GetAs() {
+std::vector<S*> JDataBundle::GetAs() {
     std::vector<S*> results;
     auto ti = std::type_index(typeid(S));
     auto search = mUpcastVTable.find(ti);
