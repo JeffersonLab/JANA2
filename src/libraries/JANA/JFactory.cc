@@ -10,6 +10,13 @@
 
 void JFactory::Create(const std::shared_ptr<const JEvent>& event) {
 
+    if (m_app == nullptr && event->GetJApplication() != nullptr) {
+        // These are usually set by JFactoryGeneratorT, but some user code has custom JFactoryGenerators which don't!
+        // The design of JFactoryGenerator doesn't give us a better place to inject things
+        m_app = event->GetJApplication();
+        m_logger = m_app->GetJParameterManager()->GetLogger(GetLoggerName());
+    }
+
     if (mStatus == Status::Uninitialized) {
         CallWithJExceptionWrapper("JFactory::Init", [&](){ Init(); });
         mStatus = Status::Unprocessed;
