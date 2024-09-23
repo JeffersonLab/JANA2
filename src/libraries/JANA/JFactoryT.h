@@ -25,24 +25,6 @@ public:
     using IteratorType = typename std::vector<T*>::const_iterator;
     using PairType = std::pair<IteratorType, IteratorType>;
 
-    /// JFactoryT constructor requires a name and a tag.
-    /// Name should always be JTypeInfo::demangle<T>(), tag is usually "".
-    JFactoryT(const std::string& aName, const std::string& aTag) __attribute__ ((deprecated)) : JFactory(aName, aTag) {
-        EnableGetAs<T>();
-        EnableGetAs<JObject>( std::is_convertible<T,JObject>() ); // Automatically add JObject if this can be converted to it
-#if JANA2_HAVE_ROOT
-        EnableGetAs<TObject>( std::is_convertible<T,TObject>() ); // Automatically add TObject if this can be converted to it
-#endif
-    }
-
-    JFactoryT(const std::string& aName) __attribute__ ((deprecated))  : JFactory(aName, "") {
-        EnableGetAs<T>();
-        EnableGetAs<JObject>( std::is_convertible<T,JObject>() ); // Automatically add JObject if this can be converted to it
-#if JANA2_HAVE_ROOT
-        EnableGetAs<TObject>( std::is_convertible<T,TObject>() ); // Automatically add TObject if this can be converted to it
-#endif
-    }
-
     JFactoryT() : JFactory(JTypeInfo::demangle<T>(), ""){
         EnableGetAs<T>();
         EnableGetAs<JObject>( std::is_convertible<T,JObject>() ); // Automatically add JObject if this can be converted to it
