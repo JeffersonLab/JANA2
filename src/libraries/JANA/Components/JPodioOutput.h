@@ -3,6 +3,7 @@
 #include <JANA/Utils/JTypeInfo.h>
 #include <JANA/JEvent.h>
 #include <JANA/Components/JHasFactoryOutputs.h>
+#include <podio/Frame.h>
 #include <memory>
 
 
@@ -13,21 +14,21 @@ template <typename PodioT>
 class PodioOutput : public JHasFactoryOutputs::OutputBase {
 private:
     std::unique_ptr<typename PodioT::collection_type> m_data;
-    JPodioStorage* m_collection;
+    JPodioStorage* m_podio_storage;
 public:
     PodioOutput(JHasFactoryOutputs* owner, std::string default_collection_name="") {
         owner->RegisterOutput(this);
-        auto coll = std::make_unique<JPodioStorage>();
-        coll->SetCollectionName(default_collection_name);
-        coll->SetTypeName(JTypeInfo::demangle<PodioT>());
-        m_collection = coll.get();
-        m_collections.push_back(std::move(coll));
+        auto storage = std::make_unique<JPodioStorage>();
+        storage->SetCollectionName(default_collection_name);
+        storage->SetTypeName(JTypeInfo::demangle<PodioT>());
+        m_podio_storage = storage.get();
+        m_collections.push_back(std::move(storage));
         m_data = std::move(std::make_unique<typename PodioT::collection_type>());
     }
 
     std::unique_ptr<typename PodioT::collection_type>& operator()() { return m_data; }
 
-    const JStorage* GetCollection() const { return m_collection; }
+    const JStorage* GetCollection() const { return m_podio_storage; }
 
 
 protected:
@@ -48,11 +49,10 @@ protected:
             event.Insert<podio::Frame>(frame);
         }
 
-        frame->put(std::move(m_data), m_collection->GetCollectionName());
-        const auto* moved = &frame->template get<typename PodioT::collection_type>(m_collection->GetCollectionName());
+        frame->put(std::move(m_data), m_podio_storage->GetCollectionName());
+        const auto* moved = &frame->template get<typename PodioT::collection_type>(m_podio_storage->GetCollectionName());
         m_data = nullptr;
-        m_collection->SetCollectionAlreadyInFrame<PodioT>(moved);
-        //m_collection->SetFrame(frame); // We might not need this!
+        m_podio_storage->SetCollection(moved);
     }
     void Reset() override {
         m_data = std::move(std::make_unique<typename PodioT::collection_type>());
@@ -103,7 +103,8 @@ public:
             const auto* moved = &frame->template get<typename PodioT::collection_type>(m_collections[i]->GetCollectionName());
             datum = nullptr;
             const auto &coll = dynamic_cast<JPodioStorage>(m_collections[i]);
-            coll.SetCollectionAlreadyInFrame<PodioT>(moved);
+            coll.SetCollection(moved);
+            i += 1;
         }
     }
     void Reset() override {

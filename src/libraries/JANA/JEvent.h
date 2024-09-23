@@ -26,6 +26,7 @@
 
 #if JANA2_HAVE_PODIO
 #include <JANA/Components/JPodioStorage.h>
+#include <podio/Frame.h>
 #endif
 
 class JApplication;
@@ -578,7 +579,12 @@ const typename T::collection_type* JEvent::GetCollection(std::string name, bool 
             throw JException("Not a podio collection: %s", name.c_str());
         }
         else {
-            return podio_coll->GetCollection<T>();
+            auto coll = podio_coll->GetCollection();
+            auto typed_coll = dynamic_cast<const typename T::collection_type*>(coll);
+            if (typed_coll == nullptr) {
+                throw JException("Unable to cast Podio collection to %s", JTypeInfo::demangle<typename T::collection_type>().c_str());
+            }
+            return typed_coll;
         }
     }
     else if (throw_on_missing) {
@@ -637,7 +643,7 @@ JPodioStorage* JEvent::InsertCollectionAlreadyInFrame(const podio::CollectionBas
         coll->SetTypeName(JTypeInfo::demangle<PodioT>());
         coll->SetStatus(JStorage::Status::Inserted);
         coll->SetInsertOrigin(mCallGraph.GetInsertDataOrigin());
-        coll->SetCollectionAlreadyInFrame<PodioT>(typed_collection);
+        coll->SetCollection(typed_collection);
         mFactorySet->Add(coll);
         return coll;
     }
@@ -648,7 +654,7 @@ JPodioStorage* JEvent::InsertCollectionAlreadyInFrame(const podio::CollectionBas
             throw JException("Collections can only be inserted once!");
         }
         auto typed_storage = dynamic_cast<JPodioStorage*>(storage);
-        typed_storage->SetCollectionAlreadyInFrame<PodioT>(typed_collection);
+        typed_storage->SetCollection(typed_collection);
         typed_storage->SetStatus(JStorage::Status::Inserted);
         typed_storage->SetInsertOrigin(mCallGraph.GetInsertDataOrigin());
         return typed_storage;
