@@ -18,12 +18,6 @@
 #endif
 
 
-/// Class template for metadata. This constrains JFactoryT<T> to use the same (user-defined)
-/// metadata structure, JMetadata<T> for that T. This is essential for retrieving metadata from
-/// JFactoryT's without breaking the Liskov substitution property.
-template<typename T>
-struct JMetadata {};
-
 template<typename T>
 class JFactoryT : public JFactory {
 public:
@@ -167,20 +161,9 @@ public:
         mCreationStatus = CreationStatus::NotCreatedYet;
     }
 
-    /// Set the JFactory's metadata. This is meant to be called by user during their JFactoryT::Process
-    /// Metadata will *not* be cleared on ClearData(), but will be destroyed when the JFactoryT is.
-    [[deprecated("Use JMultifactory instead")]]
-    void SetMetadata(JMetadata<T> metadata) { mMetadata = metadata; }
-
-    /// Get the JFactory's metadata. This is meant to be called by user during their JFactoryT::Process
-    /// and also used by JEvent under the hood.
-    /// Metadata will *not* be cleared on ClearData(), but will be destroyed when the JFactoryT is.
-    JMetadata<T> GetMetadata() { return mMetadata; }
-
 
 protected:
     std::vector<T*> mData;
-    JMetadata<T> mMetadata;
 };
 
 template<typename T>
