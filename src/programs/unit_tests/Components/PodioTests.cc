@@ -4,6 +4,7 @@
 #include <type_traits>
 #include <PodioDatamodel/ExampleClusterCollection.h>
 #include <JANA/JEvent.h>
+#include <JANA/JFactoryGenerator.h>
 
 namespace podiotests {
 
@@ -150,10 +151,9 @@ struct TestFac : public JFactoryPodioT<ExampleCluster> {
 TEST_CASE("JFactoryPodioT::Init gets called") {
 
     JApplication app;
+    app.Add(new JFactoryGeneratorT<jana2_tests_podiotests_init::TestFac>());
     auto event = std::make_shared<JEvent>(&app);
-    auto fs = new JFactorySet;
-    fs->Add(new jana2_tests_podiotests_init::TestFac);
-    event->SetFactorySet(fs);
+
     event->GetFactorySet()->Release();  // Simulate a trip to the JEventPool
 
     auto r = event->GetCollectionBase("clusters");

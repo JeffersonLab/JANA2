@@ -3,6 +3,7 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 
+#include "JANA/JFactory.h"
 #include "catch.hpp"
 #include "JFactoryTests.h"
 
@@ -40,22 +41,22 @@ TEST_CASE("JFactoryTests") {
 
     }
 
-/*
     SECTION("If no factory is present and nothing inserted, GetObjects called") {
 
         // The event hasn't been given any DummyFactory, nor has anything been inserted.
         // Instead, the JEvent knows to go down to the JEventSource.
         auto event = std::make_shared<JEvent>();
-        DummySource sut;
-        event->SetJEventSource(&sut);
-        event->SetFactorySet(new JFactorySet());
+        JFactoryTestDummySource sut;
 
-        auto data = event->Get<DummyObject>("");
+        // Empty factory needed for GetObjects() to work
+        event->GetFactorySet()->Add(new JFactoryT<JFactoryTestDummyObject>());
+        event->SetJEventSource(&sut);
+
+        auto data = event->Get<JFactoryTestDummyObject>("");
         REQUIRE(data[0]->data == 8);
         REQUIRE(data[1]->data == 88);
     }
 
-*/
     SECTION("ChangeRun called only when run number changes") {
         auto event = std::make_shared<JEvent>();
         JFactoryTestDummyFactory sut;
@@ -263,9 +264,7 @@ TEST_CASE("JFactoryTests_ExceptingInit") {
     JApplication app;
     app.SetParameterValue("jana:loglevel", "error");
     app.Add(new JFactoryGeneratorT<ExceptingInitFactory>());
-    app.Initialize();
-    auto event = std::make_shared<JEvent>();
-    app.GetService<JComponentManager>()->configure_event(*event);
+    auto event = std::make_shared<JEvent>(&app);
 
     bool found_throw = false;
     try {

@@ -159,7 +159,6 @@ TEST_CASE("JFactoryGetAs") {
 TEST_CASE("JEventGetAllChildren") {
 
     auto event = std::make_shared<JEvent>();
-    event->SetFactorySet(new JFactorySet);
 
     SECTION("Single-item JEvent::Insert() can be retrieved via JEvent::GetAllChildren()") {
         auto b = new Base(22);
