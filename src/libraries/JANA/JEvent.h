@@ -41,10 +41,8 @@ class JEvent : public std::enable_shared_from_this<JEvent>
 {
     public:
 
-        explicit JEvent(JApplication* aApplication=nullptr) : mInspector(&(*this)) {
-            mApplication = aApplication;
-            mFactorySet = new JFactorySet();
-        }
+        explicit JEvent(JApplication* app=nullptr);
+
         virtual ~JEvent() {
             if (mFactorySet != nullptr) mFactorySet->Release();
             delete mFactorySet;

@@ -10,6 +10,7 @@ set(JANA2_SOURCES
     JMultifactory.cc
     JService.cc
     JVersion.cc
+    JEvent.cc
 
     Engine/JArrowProcessingController.cc
     Engine/JScheduler.cc
