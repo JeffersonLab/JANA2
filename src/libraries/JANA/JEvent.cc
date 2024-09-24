@@ -2,13 +2,19 @@
 #include <JANA/JEvent.h>
 #include <JANA/Services/JComponentManager.h>
 
-JEvent::JEvent(JApplication* app) : mInspector(&(*this)) {
-    if (app != nullptr) {
-        app->GetService<JComponentManager>()->configure_event(*this);
-    }
-    else {
-        mFactorySet = new JFactorySet();
-    }
+
+JEvent::JEvent() : mInspector(this){
+    mFactorySet = new JFactorySet();
+}
+
+JEvent::JEvent(JApplication* app) : mInspector(this) {
+    // Furnish the JEvent with the parameter values and factory generators provided to the JApplication
+    app->GetService<JComponentManager>()->configure_event(*this);
+}
+
+JEvent::~JEvent() {
+    if (mFactorySet != nullptr) mFactorySet->Release();
+    delete mFactorySet;
 }
 
 void JEvent::SetFactorySet(JFactorySet* factorySet) {
@@ -27,6 +33,19 @@ void JEvent::SetFactorySet(JFactorySet* factorySet) {
         }
     }
 #endif
+}
+
+
+/// GetFactory() should be used with extreme care because it subverts the JEvent abstraction.
+/// Most historical uses of GetFactory are far better served by JMultifactory
+JFactory* JEvent::GetFactory(const std::string& object_name, const std::string& tag) const {
+    return mFactorySet->GetFactory(object_name, tag);
+}
+
+/// GetAllFactories() should be used with extreme care because it subverts the JEvent abstraction.
+/// Most historical uses of GetFactory are far better served by JMultifactory
+std::vector<JFactory*> JEvent::GetAllFactories() const {
+    return mFactorySet->GetAllFactories();
 }
 
 bool JEvent::HasParent(JEventLevel level) const {
@@ -87,3 +106,5 @@ void JEvent::Release() {
 void JEvent::Reset() {
     mReferenceCount = 1;
 }
+
+
