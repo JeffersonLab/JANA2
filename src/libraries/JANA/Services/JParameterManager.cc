@@ -93,22 +93,6 @@ void JParameterManager::PrintParameters() {
     PrintParameters(m_verbosity, m_strictness);
 }
 
-void JParameterManager::PrintParameters(bool show_defaulted, bool show_advanced, bool warn_on_unused) {
-    int verbosity = 1;
-    int strictness = 0;
-
-    if (show_advanced) {
-        verbosity = 3;
-    }
-    else if (show_defaulted) {
-        verbosity = 2;
-    }
-    if (warn_on_unused) {
-        strictness = 1;
-    }
-    PrintParameters(verbosity, strictness);
-}
-
 
 /// @brief Prints parameters to stdout
 ///

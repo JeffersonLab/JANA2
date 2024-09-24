@@ -197,7 +197,6 @@ void JApplication::Run(bool wait_until_finished) {
     // Print summary of all config parameters
     m_params->PrintParameters();
 
-    LOG_INFO(m_logger) << GetComponentSummary() << LOG_END;
     LOG_WARN(m_logger) << "Starting processing with " << m_desired_nthreads << " threads requested..." << LOG_END;
     m_processing_controller->run(m_desired_nthreads);
 
