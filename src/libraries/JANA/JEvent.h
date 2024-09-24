@@ -9,7 +9,6 @@
 #include <JANA/JFactoryT.h>
 #include <JANA/JFactorySet.h>
 #include <JANA/JLogger.h>
-
 #include <JANA/JVersion.h>
 
 #include <JANA/Utils/JEventLevel.h>
@@ -22,9 +21,7 @@
 #include <vector>
 #include <cstddef>
 #include <memory>
-#include <exception>
 #include <atomic>
-#include <mutex>
 
 #if JANA2_HAVE_PODIO
 #include <JANA/Podio/JFactoryPodioT.h>
@@ -48,24 +45,7 @@ class JEvent : public std::enable_shared_from_this<JEvent>
             delete mFactorySet;
         }
 
-        void SetFactorySet(JFactorySet* aFactorySet) {
-            delete mFactorySet;
-            mFactorySet = aFactorySet;
-#if JANA2_HAVE_PODIO
-            // Maintain the index of PODIO factories
-            for (JFactory* factory : mFactorySet->GetAllFactories()) {
-                if (dynamic_cast<JFactoryPodio*>(factory) != nullptr) {
-                    auto tag = factory->GetTag();
-                    auto it = mPodioFactories.find(tag);
-                    if (it != mPodioFactories.end()) {
-                        throw JException("SetFactorySet failed because PODIO factory tag '%s' is not unique", tag.c_str());
-                    }
-                    mPodioFactories[tag] = factory;
-                }
-            }
-#endif
-        }
-
+        void SetFactorySet(JFactorySet* aFactorySet);
         JFactorySet* GetFactorySet() const { return mFactorySet; }
 
         JFactory* GetFactory(const std::string& object_name, const std::string& tag) const;
@@ -118,7 +98,7 @@ class JEvent : public std::enable_shared_from_this<JEvent>
         JEventSource* GetJEventSource() const {return mEventSource; }
         JCallGraphRecorder* GetJCallGraphRecorder() const {return &mCallGraph;}
         JInspector* GetJInspector() const {return &mInspector;}
-        void Inspect() const { mInspector.Loop();} // TODO: Force this not to be inlined AND used so it is defined in libJANA.a
+        void Inspect() const { mInspector.Loop();}
         bool GetSequential() const {return mIsBarrierEvent;}
         friend class JEventPool;
 
@@ -129,65 +109,12 @@ class JEvent : public std::enable_shared_from_this<JEvent>
         void SetEventIndex(int event_index) { mEventIndex = event_index; }
         int64_t GetEventIndex() const { return mEventIndex; }
 
-        bool HasParent(JEventLevel level) const {
-            for (const auto& pair : mParents) {
-                if (pair.first == level) return true;
-            }
-            return false;
-        }
-
-        const JEvent& GetParent(JEventLevel level) const {
-            for (const auto& pair : mParents) {
-                if (pair.first == level) return *(*(pair.second));
-            }
-            throw JException("Unable to find parent at level %s", 
-                             toString(level).c_str());
-        }
-
-        void SetParent(std::shared_ptr<JEvent>* parent) {
-            JEventLevel level = parent->get()->GetLevel();
-            for (const auto& pair : mParents) {
-                if (pair.first == level) throw JException("Event already has a parent at level %s", 
-                                                          toString(parent->get()->GetLevel()).c_str());
-            }
-            mParents.push_back({level, parent});
-            parent->get()->mReferenceCount.fetch_add(1);
-        }
-
-        std::shared_ptr<JEvent>* ReleaseParent(JEventLevel level) {
-            if (mParents.size() == 0) {
-                throw JException("ReleaseParent failed: child has no parents!");
-            }
-            auto pair = mParents.back();
-            if (pair.first != level) {
-                throw JException("JEvent::ReleaseParent called out of level order: Caller expected %s, but parent was actually %s", 
-                        toString(level).c_str(), toString(pair.first).c_str());
-            }
-            mParents.pop_back();
-            auto remaining_refs = pair.second->get()->mReferenceCount.fetch_sub(1);
-            if (remaining_refs < 1) { // Remember, this was fetched _before_ the last subtraction
-                throw JException("Parent refcount has gone negative!");
-            }
-            if (remaining_refs == 1) {
-                return pair.second; 
-                // Parent is no longer shared. Transfer back to arrow
-            }
-            else {
-                return nullptr; // Parent is still shared by other children
-            }
-        }
-
-        void Release() {
-            auto remaining_refs = mReferenceCount.fetch_sub(1);
-            if (remaining_refs < 0) {
-                throw JException("JEvent's own refcount has gone negative!");
-            }
-        }
-
-        void Reset() {
-            mReferenceCount = 1;
-        }
-
+        bool HasParent(JEventLevel level) const;
+        const JEvent& GetParent(JEventLevel level) const;
+        void SetParent(std::shared_ptr<JEvent>* parent);
+        std::shared_ptr<JEvent>* ReleaseParent(JEventLevel level);
+        void Release();
+        void Reset();
 
     private:
         JApplication* mApplication = nullptr;
