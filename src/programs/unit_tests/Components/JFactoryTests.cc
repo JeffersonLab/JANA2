@@ -8,6 +8,7 @@
 
 #include <JANA/JEvent.h>
 #include <JANA/JFactoryT.h>
+#include <JANA/Services/JComponentManager.h>
 
 TEST_CASE("JFactoryTests") {
 
@@ -248,6 +249,56 @@ TEST_CASE("JFactory_Exception") {
     }
     REQUIRE(found_throw == true);
 }
+
+struct ExceptingInitFactory : public JFactoryT<JFactoryTestDummyObject> {
+    void Init() override {
+        throw std::runtime_error("Exception in Init");
+    }
+    void Process(const std::shared_ptr<const JEvent>&) override {
+        throw std::runtime_error("Exception in Process");
+    }
+};
+
+TEST_CASE("JFactoryTests_ExceptingInit") {
+    JApplication app;
+    app.SetParameterValue("jana:loglevel", "error");
+    app.Add(new JFactoryGeneratorT<ExceptingInitFactory>());
+    app.Initialize();
+    auto event = std::make_shared<JEvent>();
+    app.GetService<JComponentManager>()->configure_event(*event);
+
+    bool found_throw = false;
+    try {
+        event->Get<JFactoryTestDummyObject>();
+    }
+    catch(JException& ex) {
+        LOG << ex << LOG_END;
+        REQUIRE(ex.function_name == "JFactory::Init");
+        REQUIRE(ex.message == "Exception in Init");
+        REQUIRE(ex.exception_type == "std::runtime_error");
+        REQUIRE(ex.type_name == "ExceptingInitFactory");
+        REQUIRE(ex.instance_name == "JFactoryTestDummyObject");
+        found_throw = true;
+    }
+    REQUIRE(found_throw == true);
+
+    // Second time around should except from Init again, NOT Process()
+    found_throw = false;
+    try {
+        event->Get<JFactoryTestDummyObject>();
+    }
+    catch(JException& ex) {
+        LOG << ex << LOG_END;
+        REQUIRE(ex.function_name == "JFactory::Init");
+        REQUIRE(ex.message == "Exception in Init");
+        REQUIRE(ex.exception_type == "std::runtime_error");
+        REQUIRE(ex.type_name == "ExceptingInitFactory");
+        REQUIRE(ex.instance_name == "JFactoryTestDummyObject");
+        found_throw = true;
+    }
+    REQUIRE(found_throw == true);
+}
+
 
 struct MyLoggedFactory : public JFactoryT<JFactoryTestDummyObject> {
     MyLoggedFactory() {
