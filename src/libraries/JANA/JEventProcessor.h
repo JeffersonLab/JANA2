@@ -200,7 +200,7 @@ public:
     virtual void Finish() {}
 
 
-    // TODO: Deprecate
+    [[deprecated]]
     virtual std::string GetType() const {
         return m_type_name;
     }
