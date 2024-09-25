@@ -8,6 +8,7 @@
 #include <JANA/Components/JHasInputs.h>
 #include <JANA/Components/JHasRunCallbacks.h>
 #include <JANA/JEvent.h>
+#include <mutex>
 
 class JApplication;
 
@@ -32,6 +33,7 @@ public:
 
 
     virtual void DoInitialize() {
+        std::lock_guard<std::mutex> lock(m_mutex);
         for (auto* parameter : m_parameters) {
             parameter->Configure(*(m_app->GetJParameterManager()), m_prefix);
         }
@@ -107,8 +109,12 @@ public:
 
     virtual void DoLegacyProcess(const std::shared_ptr<const JEvent>& event) {
 
-        // DoLegacyProcess doesn't hold any locks, as it requires the user to hold a lock for it.
-        // Because of this, 
+        // DoLegacyProcess holds a lock to make sure that {Begin,Change,End}Run() are always called before Process(). 
+        // Note that in LegacyMode, Process() requires the user to manage a _separate_ lock for its critical section.
+        // This arrangement means that {Begin,Change,End}Run() will definitely be called at least once before `Process`, but there
+        // may be races when there are multiple run numbers present in the stream. This isn't a problem in practice for now, 
+        // but future work should use ExpertMode or DeclarativeMode for this reason (but also for the usability improvements!)
+
         if (m_callback_style != CallbackStyle::LegacyMode) {
             throw JException("Called DoLegacyProcess() on a non-legacy-mode JEventProcessor");
         }
@@ -121,15 +127,19 @@ public:
         else if (m_status == Status::Finalized) {
             throw JException("JEventProcessor: Attempted to call DoMap() after Finalize()");
         }
-        if (m_last_run_number != run_number) {
-            if (m_last_run_number != -1) {
-                CallWithJExceptionWrapper("JEventProcessor::EndRun", [&](){ EndRun(); });
+        {
+            // Protect the call to BeginRun(), etc, to prevent some threads from running Process() before BeginRun().
+            std::lock_guard<std::mutex> lock(m_mutex);
+            if (m_last_run_number != run_number) {
+                if (m_last_run_number != -1) {
+                    CallWithJExceptionWrapper("JEventProcessor::EndRun", [&](){ EndRun(); });
+                }
+                for (auto* resource : m_resources) {
+                    resource->ChangeRun(event->GetRunNumber(), m_app);
+                }
+                m_last_run_number = run_number;
+                CallWithJExceptionWrapper("JEventProcessor::BeginRun", [&](){ BeginRun(event); });
             }
-            for (auto* resource : m_resources) {
-                resource->ChangeRun(event->GetRunNumber(), m_app);
-            }
-            m_last_run_number = run_number;
-            CallWithJExceptionWrapper("JEventProcessor::BeginRun", [&](){ BeginRun(event); });
         }
         CallWithJExceptionWrapper("JEventProcessor::Process", [&](){ Process(event); });
         m_event_count += 1;
@@ -168,26 +178,22 @@ public:
     // LegacyMode-specific callbacks
 
     virtual void Process(const std::shared_ptr<const JEvent>& /*event*/) {
-        throw JException("Not implemented yet!");
     }
-    
+
     // ExpertMode-specific callbacks
 
     virtual void ProcessParallel(const JEvent& /*event*/) {
     }
 
     virtual void Process(const JEvent& /*event*/) {
-        throw JException("Not implemented yet!");
     }
 
     // DeclarativeMode-specific callbacks
 
     virtual void ProcessParallel(int64_t /*run_nr*/, uint64_t /*event_nr*/, uint64_t /*event_idx*/) {
-        throw JException("Not implemented yet!");
     }
 
     virtual void Process(int64_t /*run_nr*/, uint64_t /*event_nr*/, uint64_t /*event_idx*/) {
-        throw JException("Not implemented yet!");
     }
 
 
