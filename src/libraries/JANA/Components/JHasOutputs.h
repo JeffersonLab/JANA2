@@ -31,6 +31,7 @@ protected:
     template <typename T>
     class Output : public OutputBase {
         std::vector<T*> m_data;
+        bool is_not_owner = false;
 
     public:
         Output(JHasOutputs* owner, std::string default_tag_name="") {
@@ -43,9 +44,12 @@ protected:
 
     protected:
         void InsertCollection(JEvent& event) override {
-            event.Insert(m_data, this->collection_names[0]);
+            auto fac = event.Insert(m_data, this->collection_names[0]);
+            fac->SetIsNotOwnerFlag(is_not_owner);
         }
         void Reset() override { }
+
+        void SetIsNotOwnerFlag(bool not_owner=true) { is_not_owner = not_owner; }
     };
 
 
