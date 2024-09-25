@@ -30,8 +30,6 @@ public:
 
     uint64_t GetEventCount() const { return m_event_count; };
 
-    bool AreEventsOrdered() const { return m_receive_events_in_order; }
-
 
     virtual void DoInitialize() {
         for (auto* parameter : m_parameters) {
@@ -217,18 +215,10 @@ protected:
 
     // void SetResourceName(std::string resource_name) { m_resource_name = std::move(resource_name); }
 
-    /// SetEventsOrdered allows the user to tell the parallelization engine that it needs to see
-    /// the event stream ordered by increasing event IDs. (Note that this requires all EventSources
-    /// emit event IDs which are consecutive.) Ordering by event ID makes for cleaner output, but comes
-    /// with a performance penalty, so it is best if this is enabled during debugging, and disabled otherwise.
-
-    // void SetEventsOrdered(bool receive_events_in_order) { m_receive_events_in_order = receive_events_in_order; }
-
 
 private:
     std::string m_resource_name;
     std::atomic_ullong m_event_count {0};
-    bool m_receive_events_in_order = false;
 
 };
 
