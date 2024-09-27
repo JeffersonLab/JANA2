@@ -172,7 +172,7 @@ const JException& JWorker::get_exception() const {
 void JWorker::loop() {
     using jclock_t = JWorkerMetrics::clock_t;
     try {
-        LOG_DEBUG(logger) << "Worker " << m_worker_id << " has entered loop()." << LOG_END;
+        LOG_TRACE(logger) << "Worker " << m_worker_id << " has entered loop()." << LOG_END;
         JArrowMetrics::Status last_result = JArrowMetrics::Status::NotRunYet;
 
         while (m_run_state == RunState::Running) {
@@ -193,7 +193,7 @@ void JWorker::loop() {
             auto useful_duration = jclock_t::duration::zero();
 
             if (m_assignment == nullptr) {
-                LOG_DEBUG(logger) << "Worker " << m_worker_id << " shutdown driven by topology pause" << LOG_END;
+                LOG_TRACE(logger) << "Worker " << m_worker_id << " shutdown driven by topology pause" << LOG_END;
                 m_run_state = RunState::Stopped;
                 return;
 
@@ -211,7 +211,7 @@ void JWorker::loop() {
                        (m_run_state == RunState::Running) &&
                        (jclock_t::now() - start_time) < m_checkin_time) {
 
-                    LOG_TRACE(logger) << "Worker " << m_worker_id << " is executing "
+                    LOG_TRACE(logger) << "Worker " << m_worker_id << ": Executing "
                                       << m_assignment->get_name() << LOG_END;
                     auto before_execute_time = jclock_t::now();
                     m_assignment->execute(m_arrow_metrics, m_location_id);
@@ -220,8 +220,8 @@ void JWorker::loop() {
 
 
                     if (last_result == JArrowMetrics::Status::KeepGoing) {
-                        LOG_DEBUG(logger) << "Worker " << m_worker_id << " succeeded at "
-                                          << m_assignment->get_name() << LOG_END;
+                        LOG_TRACE(logger) << "Worker " << m_worker_id << ": Executed "
+                                          << m_assignment->get_name() << " with result KeepGoing" << LOG_END;
                         current_tries = 0;
                         backoff_duration = m_initial_backoff_time;
                     }
@@ -234,8 +234,9 @@ void JWorker::loop() {
                             else if (m_backoff_strategy == BackoffStrategy::Exponential) {
                                 backoff_duration *= 2;
                             }
-                            LOG_TRACE(logger) << "Worker " << m_worker_id << " backing off with "
-                                              << m_assignment->get_name() << ", tries = " << current_tries
+                            LOG_TRACE(logger) << "Worker " << m_worker_id << ": Executed "
+                                              << m_assignment->get_name() << " with result " << to_string(last_result)
+                                              << "; backoff try = " << current_tries
                                               << LOG_END;
 
                             std::this_thread::sleep_for(backoff_duration);
@@ -255,22 +256,22 @@ void JWorker::loop() {
 
         m_scheduler->last_assignment(m_worker_id, m_assignment, last_result);
         m_assignment = nullptr; // Worker has 'handed in' the assignment
-        LOG_DEBUG(logger) << "Worker " << m_worker_id << " shutdown due to worker->request_stop()." << LOG_END;
+        LOG_TRACE(logger) << "Worker " << m_worker_id << " shutdown due to worker->request_stop()." << LOG_END;
     }
     catch (const JException& e) {
         // For now the excepting Worker prints the error, and then terminates the whole program.
         // Eventually we want to unify error handling across JApplication::Run, and maybe even across the entire JApplication.
         // This means that Workers must pass JExceptions back to the master thread.
-        LOG_INFO(logger) << "Worker " << m_worker_id << " shutdown due to JException: " << e.what() << LOG_END;
-        LOG_DEBUG(logger) << e << LOG_END;
+        LOG_ERROR(logger) << "Worker " << m_worker_id << " shutdown due to JException: " << e.what() << LOG_END;
+        LOG_ERROR(logger) << e << LOG_END;
         m_run_state = RunState::Excepted;
         m_exception = e;
         m_japc->request_pause(); // We aren't going to even try to drain queues.
     }
     catch (std::runtime_error& e){
         // same as above
-        LOG_INFO(logger) << "Worker " << m_worker_id << " shutdown due to std::runtime_error:" << e.what() << LOG_END;
-        LOG_DEBUG(logger) << e.what() << LOG_END;
+        LOG_ERROR(logger) << "Worker " << m_worker_id << " shutdown due to std::runtime_error:" << e.what() << LOG_END;
+        LOG_ERROR(logger) << e.what() << LOG_END;
         m_run_state = RunState::Excepted;
         m_exception = JException(e.what());
         m_exception.nested_exception = std::current_exception();
