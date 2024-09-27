@@ -79,7 +79,7 @@ struct JLogMessage {
             // Extract milliseconds by calculating the duration since the last whole second
             auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
             builder << buffer << ".";
-            builder << std::setfill('0') << std::setw(5) << milliseconds << std::setfill(' ') << " ";
+            builder << std::setfill('0') << std::setw(3) << milliseconds.count() << std::setfill(' ') << " ";
         }
         if (logger.show_level) {
             switch (level) {
@@ -96,7 +96,7 @@ struct JLogMessage {
             builder << std::this_thread::get_id() << " ";
         }
         if (logger.show_group) {
-            builder << logger.group << ": ";
+            builder << "[" << logger.group << "] ";
         }
     }
 

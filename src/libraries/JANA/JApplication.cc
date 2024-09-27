@@ -117,7 +117,6 @@ void JApplication::Initialize() {
 
     // Set logger on JApplication itself
     m_logger = m_params->GetLogger("jana");
-    m_logger.show_classname = false;
 
     if (m_logger.level > JLogger::Level::INFO) {
         std::ostringstream oss;

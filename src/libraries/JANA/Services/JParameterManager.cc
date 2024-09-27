@@ -403,7 +403,7 @@ JLogger JParameterManager::GetLogger(const std::string& component_prefix) {
     bool enable_timestamp = RegisterParameter("jana:log:show_timestamp", true, "Show timestamp in log output");
     auto enable_threadstamp = RegisterParameter("jana:log:show_threadstamp", false, "Show threadstamp in log output");
     auto enable_group = RegisterParameter("jana:log:show_group", false, "Show threadstamp in log output");
-    auto enable_level = RegisterParameter("jana:log:show_level", false, "Show threadstamp in log output");
+    auto enable_level = RegisterParameter("jana:log:show_level", true, "Show threadstamp in log output");
 
     if (component_prefix.empty()) {
         logger.level = global_log_level;
