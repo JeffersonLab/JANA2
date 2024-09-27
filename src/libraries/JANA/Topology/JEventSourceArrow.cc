@@ -30,19 +30,23 @@ void JEventSourceArrow::process(Event* event, bool& success, JArrowMetrics::Stat
 
     while (m_current_source < m_sources.size()) {
 
+        LOG_DEBUG(m_logger) << "Executing arrow " << get_name() << LOG_END;
         auto source_status = m_sources[m_current_source]->DoNext(*event);
 
         if (source_status == JEventSource::Result::FailureFinished) {
+            LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " with result FailureFinished"<< LOG_END;
             m_current_source++;
             // TODO: Adjust nskip and nevents for the new source
         }
         else if (source_status == JEventSource::Result::FailureTryAgain){
             // This JEventSource isn't finished yet, so we obtained either Success or TryAgainLater
+            LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " with result FailureTryAgain"<< LOG_END;
             success = false;
             arrow_status = JArrowMetrics::Status::ComeBackLater;
             return;
         }
         else {
+            LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " with result Success, emitting event# " << (*event)->GetEventNumber() << LOG_END;
             success = true;
             arrow_status = JArrowMetrics::Status::KeepGoing;
             return;

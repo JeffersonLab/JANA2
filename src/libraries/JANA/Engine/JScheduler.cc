@@ -37,7 +37,7 @@ JArrow* JScheduler::next_assignment(uint32_t worker_id, JArrow* assignment, JArr
 
     std::lock_guard<std::mutex> lock(m_mutex);
 
-    LOG_DEBUG(logger) << "Worker " << worker_id << " checking in: "
+    LOG_TRACE(logger) << "JScheduler: Worker " << worker_id << ": Returned arrow "
                       << ((assignment == nullptr) ? "idle" : assignment->get_name()) << " -> " << to_string(last_result) << LOG_END;
 
     // Check latest arrow back in
@@ -47,8 +47,8 @@ JArrow* JScheduler::next_assignment(uint32_t worker_id, JArrow* assignment, JArr
 
     JArrow* next = checkout_unprotected();
 
-    LOG_DEBUG(logger) << "Worker " << worker_id << " assigned: "
-                      << ((next == nullptr) ? "idle" : next->get_name()) << LOG_END;
+    LOG_TRACE(logger) << "JScheduler: Worker " << worker_id << " assigned arrow "
+                      << ((next == nullptr) ? "(idle)" : next->get_name()) << LOG_END;
     return next;
 
 }
@@ -58,8 +58,8 @@ void JScheduler::last_assignment(uint32_t worker_id, JArrow* assignment, JArrowM
 
     std::lock_guard<std::mutex> lock(m_mutex);
 
-    LOG_DEBUG(logger) << "Worker " << worker_id << " checking in: "
-                       << ((assignment == nullptr) ? "idle" : assignment->get_name())
+    LOG_TRACE(logger) << "JScheduler: Worker " << worker_id << ": returned arrow "
+                       << ((assignment == nullptr) ? "(idle)" : assignment->get_name())
                        << " -> " << to_string(last_result) << "). Shutting down!" << LOG_END;
 
     if (assignment != nullptr) {
@@ -110,7 +110,7 @@ void JScheduler::checkin_unprotected(JArrow* assignment, JArrowMetrics::Status l
         as.status = ArrowStatus::Finalized;
         m_topology_state.active_or_draining_arrow_count--;
 
-        LOG_DEBUG(logger) << "Deactivated arrow '" << assignment->get_name() << "' (" << m_topology_state.active_or_draining_arrow_count << " remaining)" << LOG_END;
+        LOG_TRACE(logger) << "JScheduler: Deactivated arrow " << assignment->get_name() << " (" << m_topology_state.active_or_draining_arrow_count << " remaining)" << LOG_END;
 
         for (size_t downstream: m_topology_state.arrow_states[index].downstream_arrow_indices) {
             m_topology_state.arrow_states[downstream].active_or_draining_upstream_arrow_count--;
@@ -119,12 +119,12 @@ void JScheduler::checkin_unprotected(JArrow* assignment, JArrowMetrics::Status l
     else if (found_draining_stage_or_sink) {
         // Drain arrow
         as.status = ArrowStatus::Draining;
-        LOG_DEBUG(logger) << "Draining arrow '" << assignment->get_name() << "' (" << m_topology_state.active_or_draining_arrow_count << " remaining)" << LOG_END;
+        LOG_DEBUG(logger) << "JScheduler: Draining arrow " << assignment->get_name() << " (" << m_topology_state.active_or_draining_arrow_count << " remaining)" << LOG_END;
     }
 
     // Test if this was the last arrow running
     if (m_topology_state.active_or_draining_arrow_count == 0) {
-        LOG_DEBUG(logger) << "All arrows are inactive. Deactivating topology." << LOG_END;
+        LOG_DEBUG(logger) << "JScheduler: All arrows are inactive. Deactivating topology." << LOG_END;
         achieve_topology_pause_unprotected();
     }
 }
@@ -189,10 +189,10 @@ void JScheduler::initialize_topology() {
 void JScheduler::drain_topology() {
     std::lock_guard<std::mutex> lock(m_mutex);
     if (m_topology_state.current_topology_status == TopologyStatus::Finalized) {
-        LOG_DEBUG(logger) << "JScheduler: drain(): Skipping because topology is already Finalized" << LOG_END;
+        LOG_DEBUG(logger) << "JScheduler: Draining topology: Skipping because topology is already Finalized" << LOG_END;
         return;
     }
-    LOG_DEBUG(logger) << "JScheduler: drain_topology()" << LOG_END;
+    LOG_DEBUG(logger) << "JScheduler: Draining topology" << LOG_END;
 
         // We pause (as opposed to finish) for two reasons:
         // 1. There might be workers in the middle of calling eventSource->GetEvent.
@@ -213,10 +213,10 @@ void JScheduler::run_topology(int nthreads) {
     std::lock_guard<std::mutex> lock(m_mutex);
     TopologyStatus current_status = m_topology_state.current_topology_status;
     if (current_status == TopologyStatus::Running || current_status == TopologyStatus::Finalized) {
-        LOG_DEBUG(logger) << "JScheduler: run_topology() : " << current_status << " => " << current_status << LOG_END;
+        LOG_DEBUG(logger) << "JScheduler: Running topology: " << current_status << " => " << current_status << LOG_END;
         return;
     }
-    LOG_DEBUG(logger) << "JScheduler: run_topology() : " << current_status << " => Running" << LOG_END;
+    LOG_DEBUG(logger) << "JScheduler: Running topology: " << current_status << " => Running" << LOG_END;
 
     bool source_found = false;
     for (JArrow* arrow : m_topology->arrows) {
@@ -306,7 +306,7 @@ JScheduler::TopologyState JScheduler::get_topology_state() {
 
 void JScheduler::run_arrow_unprotected(size_t index) {
     auto& as = m_topology_state.arrow_states[index];
-    auto name = as.arrow->get_name();
+    const auto& name = as.arrow->get_name();
     ArrowStatus status = as.status;
 
     // if (status == ArrowStatus::Unopened) {
@@ -317,7 +317,7 @@ void JScheduler::run_arrow_unprotected(size_t index) {
     //     LOG_DEBUG(logger) << "Arrow '" << name << "' run() : " << status << " => " << status << LOG_END;
     //     return;
     // }
-    LOG_DEBUG(logger) << "Arrow '" << name << "' run() : " << status << " => Active" << LOG_END;
+    LOG_DEBUG(logger) << "JScheduler: Activating arrow " << name << " (Previous status was " << status << ")" << LOG_END;
 
     m_topology_state.active_or_draining_arrow_count++;
     for (size_t downstream: m_topology_state.arrow_states[index].downstream_arrow_indices) {
@@ -329,14 +329,13 @@ void JScheduler::run_arrow_unprotected(size_t index) {
 
 void JScheduler::pause_arrow_unprotected(size_t index) {
     auto& as = m_topology_state.arrow_states[index];
-    auto name = as.arrow->get_name();
+    const auto& name = as.arrow->get_name();
     ArrowStatus status = as.status;
 
+    LOG_DEBUG(logger) << "JScheduler: Pausing arrow " << name << " (Previous status was " << status << ")" << LOG_END;
     if (status != ArrowStatus::Active) {
-        LOG_DEBUG(logger) << "JArrow '" << name << "' pause() : " << status << " => " << status << LOG_END;
         return; // pause() is a no-op unless running
     }
-    LOG_DEBUG(logger) << "JArrow '" << name << "' pause() : " << status << " => Inactive" << LOG_END;
     m_topology_state.active_or_draining_arrow_count--;
     for (size_t downstream: m_topology_state.arrow_states[index].downstream_arrow_indices) {
         m_topology_state.arrow_states[downstream].active_or_draining_upstream_arrow_count--;
@@ -346,11 +345,10 @@ void JScheduler::pause_arrow_unprotected(size_t index) {
 
 void JScheduler::finish_arrow_unprotected(size_t index) {
     auto& as = m_topology_state.arrow_states[index];
-    auto name = as.arrow->get_name();
-    ArrowStatus status = as.status;
+    const auto& name = as.arrow->get_name();
 
-    LOG_DEBUG(logger) << "JArrow '" << name << "' finish() : " << status << " => Finalized" << LOG_END;
     ArrowStatus old_status = as.status;
+    LOG_DEBUG(logger) << "JScheduler: Finishing arrow " << name << " (Previous status was " << old_status << ")" << LOG_END;
     // if (old_status == ArrowStatus::Unopened) {
     //     LOG_DEBUG(logger) << "JArrow '" << name << "': Uninitialized!" << LOG_END;
     //     throw JException("JArrow::finish(): Arrow %s has not been initialized!", name.c_str());
@@ -362,7 +360,7 @@ void JScheduler::finish_arrow_unprotected(size_t index) {
         }
     }
     if (old_status != ArrowStatus::Finalized) {
-        LOG_TRACE(logger) << "JArrow '" << name << "': Finalizing (this must only happen once)" << LOG_END;
+        LOG_DEBUG(logger) << "JScheduler: Finalizing arrow " << name << " (this must only happen once)" << LOG_END;
         as.arrow->finalize();
     }
     m_topology_state.arrow_states[index].status = ArrowStatus::Finalized;

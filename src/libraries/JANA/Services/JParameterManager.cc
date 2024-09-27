@@ -396,9 +396,14 @@ void JParameterManager::FilterParameters(std::map<std::string, std::string> &par
 JLogger JParameterManager::GetLogger(const std::string& component_prefix) {
 
     JLogger logger;
-    logger.className = component_prefix;
+    logger.group = component_prefix;
 
     auto global_log_level = RegisterParameter("jana:global_loglevel", JLogger::Level::INFO, "Global log level");
+
+    bool enable_timestamp = RegisterParameter("jana:log:show_timestamp", true, "Show timestamp in log output");
+    auto enable_threadstamp = RegisterParameter("jana:log:show_threadstamp", false, "Show threadstamp in log output");
+    auto enable_group = RegisterParameter("jana:log:show_group", false, "Show threadstamp in log output");
+    auto enable_level = RegisterParameter("jana:log:show_level", true, "Show threadstamp in log output");
 
     if (component_prefix.empty()) {
         logger.level = global_log_level;
@@ -408,6 +413,11 @@ JLogger JParameterManager::GetLogger(const std::string& component_prefix) {
         os << component_prefix << ":loglevel";
         logger.level = RegisterParameter(os.str(), global_log_level, "Component log level");
     }
+    logger.ShowLevel(enable_level);
+    logger.ShowTimestamp(enable_timestamp);
+    logger.ShowThreadstamp(enable_threadstamp);
+    logger.ShowGroup(enable_group);
+    logger.show_threadstamp = enable_threadstamp;
     return logger;
 }
 
