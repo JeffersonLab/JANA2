@@ -6,7 +6,6 @@
 
 #include <JANA/Compatibility/JStreamLog.h>
 
-#include <atomic>
 #include <iostream>
 #include <sstream>
 #include <chrono>
@@ -19,25 +18,25 @@ struct JLogger {
     enum class Level { TRACE, DEBUG, INFO, WARN, ERROR, FATAL, OFF };
     Level level;
     std::ostream *destination;
-    std::string className;
+    std::string group;
     bool show_level = true;
-    bool show_classname = false;
+    bool show_group = false;
     bool show_timestamp = true;
     bool show_threadstamp = false;
 
     explicit JLogger(JLogger::Level level = JLogger::Level::INFO,
                      std::ostream* destination = &std::cout,
-                     std::string className = "")
-            : level(level), destination(destination), className(std::move(className)) {};
+                     std::string group = "")
+            : level(level), destination(destination), group(std::move(group)) {};
 
     JLogger(const JLogger&) = default;
     JLogger& operator=(const JLogger&) = default;
 
-    void SetTag(std::string tag) {className = tag; }
-    void SetTimestampFlag() {show_timestamp = true; }
-    void UnsetTimestampFlag() {show_timestamp = false; }
-    void SetThreadstampFlag() {show_threadstamp = true; }
-    void UnsetThreadstampFlag() {show_threadstamp = false; }
+    void SetGroup(std::string group) {this->group = group; }
+    void ShowGroup(bool show) {show_group = show; }
+    void ShowLevel(bool show) {show_level = show; }
+    void ShowTimestamp(bool show) {show_timestamp = show; }
+    void ShowThreadstamp(bool show) {show_threadstamp = show; }
 };
 
 static JLogger default_cout_logger = JLogger(JLogger::Level::TRACE, &std::cout, "JANA");
@@ -94,10 +93,10 @@ struct JLogMessage {
             }
         }
         if (logger.show_threadstamp) {
-            builder << "{" << std::this_thread::get_id() << "} ";
+            builder << std::this_thread::get_id() << " ";
         }
-        if (logger.show_classname) {
-            builder << logger.className << ": ";
+        if (logger.show_group) {
+            builder << logger.group << ": ";
         }
     }
 
