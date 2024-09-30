@@ -93,7 +93,7 @@ JEventSource::Result JEventSource::DoNext(std::shared_ptr<JEvent> event) {
         DoOpen(false);
     }
     if (m_status == Status::Opened) {
-        if (m_nevents != 0 && (m_event_count == last_evt_nr)) {
+        if (m_nevents != 0 && (m_events_emitted == last_evt_nr)) {
             // We exit early (and recycle) because we hit our jana:nevents limit
             DoClose(false);
             return Result::FailureFinished;
@@ -101,7 +101,7 @@ JEventSource::Result JEventSource::DoNext(std::shared_ptr<JEvent> event) {
         // If we reach this point, we will need to actually read an event
 
         // We configure the event
-        event->SetEventNumber(m_event_count); // Default event number to event count
+        event->SetEventNumber(m_events_emitted); // Default event number to event count
         event->SetJEventSource(this);
         event->SetSequential(false);
         event->GetJCallGraphRecorder()->Reset();
@@ -115,13 +115,13 @@ JEventSource::Result JEventSource::DoNext(std::shared_ptr<JEvent> event) {
         event->GetJCallGraphRecorder()->SetInsertDataOrigin( previous_origin );
 
         if (result == Result::Success) {
-            m_event_count += 1; 
+            m_events_emitted += 1; 
             // We end up here if we read an entry in our file or retrieved a message from our socket,
             // and believe we could obtain another one immediately if we wanted to
             for (auto* output : m_outputs) {
                 output->InsertCollection(*event);
             }
-            if (m_event_count <= first_evt_nr) {
+            if (m_events_emitted <= first_evt_nr) {
                 // We immediately throw away this whole event because of nskip 
                 // (although really we should be handling this with Seek())
                 return Result::FailureTryAgain;
@@ -158,22 +158,22 @@ JEventSource::Result JEventSource::DoNextCompatibility(std::shared_ptr<JEvent> e
             DoOpen(false);
         }
         if (m_status == Status::Opened) {
-            if (m_event_count < first_evt_nr) {
+            if (m_events_emitted < first_evt_nr) {
                 // Skip these events due to nskip
-                event->SetEventNumber(m_event_count); // Default event number to event count
+                event->SetEventNumber(m_events_emitted); // Default event number to event count
                 auto previous_origin = event->GetJCallGraphRecorder()->SetInsertDataOrigin( JCallGraphRecorder::ORIGIN_FROM_SOURCE);  // (see note at top of JCallGraphRecorder.h)
                 GetEvent(event);
                 event->GetJCallGraphRecorder()->SetInsertDataOrigin( previous_origin );
-                m_event_count += 1;
+                m_events_emitted += 1;
                 return Result::FailureTryAgain;  // Reject this event and recycle it
-            } else if (m_nevents != 0 && (m_event_count == last_evt_nr)) {
+            } else if (m_nevents != 0 && (m_events_emitted == last_evt_nr)) {
                 // Declare ourselves finished due to nevents
                 DoClose(false); // Close out the event source as soon as it declares itself finished
                 return Result::FailureFinished;
             } else {
                 // Actually emit an event.
                 // GetEvent() expects the following things from its incoming JEvent
-                event->SetEventNumber(m_event_count);
+                event->SetEventNumber(m_events_emitted);
                 event->SetJApplication(m_app);
                 event->SetJEventSource(this);
                 event->SetSequential(false);
@@ -184,7 +184,7 @@ JEventSource::Result JEventSource::DoNextCompatibility(std::shared_ptr<JEvent> e
                     output->InsertCollection(*event);
                 }
                 event->GetJCallGraphRecorder()->SetInsertDataOrigin( previous_origin );
-                m_event_count += 1;
+                m_events_emitted += 1;
                 return Result::Success; // Don't reject this event!
             }
         } else if (m_status == Status::Closed) {
@@ -245,9 +245,8 @@ JEventSource::Result JEventSource::DoNextCompatibility(std::shared_ptr<JEvent> e
 
 
 void JEventSource::DoFinish(JEvent& event) {
-    /// Calls the optional-and-discouraged user-provided FinishEvent virtual method, enforcing
-    /// 1. Thread safety
-    /// 2. The m_enable_finish_event flag
+
+    m_events_finished.fetch_add(1);
     if (m_enable_finish_event) {
         std::lock_guard<std::mutex> lock(m_mutex);
         CallWithJExceptionWrapper("JEventSource::FinishEvent", [&](){

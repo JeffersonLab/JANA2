@@ -67,7 +67,7 @@ TEST_CASE("Basic subevent arrow functionality") {
             SetCallbackStyle(CallbackStyle::ExpertMode);
         }
         Result Emit(JEvent& event) override {
-            if (GetEventCount() == 10) return Result::FailureFinished;
+            if (GetEmittedEventCount() == 10) return Result::FailureFinished;
             std::vector<MyInput*> inputs;
             inputs.push_back(new MyInput(22,3.6));
             inputs.push_back(new MyInput(23,3.5));

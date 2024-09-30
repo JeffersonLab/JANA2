@@ -30,7 +30,8 @@ public:
 
 private:
     std::string m_resource_name;
-    std::atomic_ullong m_event_count {0};
+    std::atomic_ullong m_events_emitted {0};
+    std::atomic_ullong m_events_finished {0};
     uint64_t m_nskip = 0;
     uint64_t m_nevents = 0;
     bool m_enable_finish_event = false;
@@ -40,9 +41,7 @@ private:
 public:
     [[deprecated]]
     explicit JEventSource(std::string resource_name, JApplication* app = nullptr)
-        : m_resource_name(std::move(resource_name))
-        , m_event_count{0}
-        {
+        : m_resource_name(std::move(resource_name)) {
             m_app = app;
         }
 
@@ -55,14 +54,13 @@ public:
 
     virtual void Init() {}
 
+
     /// `Open` is called by JANA when it is ready to accept events from this event source. The implementor should open
     /// file pointers or sockets here, instead of in the constructor. This is because the implementor won't know how many
     /// or which event sources the user will decide to activate within one job. Thus the implementor can avoid problems
     /// such as running out of file pointers, or multiple event sources attempting to bind to the same socket.
 
     virtual void Open() {}
-
-
 
 
     // `Emit` is called by JANA in order to emit a fresh event into the stream, when using CallbackStyle::ExpertMode. 
@@ -79,6 +77,17 @@ public:
     /// For work that should be done in parallel on a JEvent, but is tightly coupled to the JEventSource for some reason. 
     /// Called after Emit() by JEventMapArrow
     virtual void Preprocess(const JEvent&) const {};
+
+
+    /// `FinishEvent` is used to notify the `JEventSource` that an event has been completely processed. This is the final
+    /// chance to interact with the `JEvent` before it is either cleared and recycled, or deleted. Although it is
+    /// possible to use this for freeing JObjects stored in the JEvent , this is strongly discouraged in favor of putting
+    /// that logic on the destructor, RAII-style. Instead, this callback should be used for updating and freeing state
+    /// owned by the JEventSource, e.g. raw data which is keyed off of run number and therefore shared among multiple
+    /// JEvents. `FinishEvent` is also well-suited for use with `EventGroup`s, e.g. to notify someone that a batch of
+    /// events has finished, or to implement "barrier events".
+
+    virtual void FinishEvent(JEvent&) {};
 
 
     /// `Close` is called by JANA when it is finished accepting events from this event source. Here is where you should
@@ -110,17 +119,6 @@ public:
     virtual void GetEvent(std::shared_ptr<JEvent>) {};
 
 
-    /// `FinishEvent` is used to notify the `JEventSource` that an event has been completely processed. This is the final
-    /// chance to interact with the `JEvent` before it is either cleared and recycled, or deleted. Although it is
-    /// possible to use this for freeing JObjects stored in the JEvent , this is strongly discouraged in favor of putting
-    /// that logic on the destructor, RAII-style. Instead, this callback should be used for updating and freeing state
-    /// owned by the JEventSource, e.g. raw data which is keyed off of run number and therefore shared among multiple
-    /// JEvents. `FinishEvent` is also well-suited for use with `EventGroup`s, e.g. to notify someone that a batch of
-    /// events has finished, or to implement "barrier events".
-
-    virtual void FinishEvent(JEvent&) {};
-
-
     /// `GetObjects` was historically used for lazily unpacking data from a JEvent and putting it into a "dummy" JFactory.
     /// This mechanism has been replaced by `JEvent::Insert`. All lazy evaluation should happen in a (non-dummy)
     /// JFactory, whereas eager evaluation should happen in `JEventSource::GetEvent` via `JEvent::Insert`.
@@ -133,7 +131,11 @@ public:
     // Getters
     
     std::string GetResourceName() const { return m_resource_name; }
-    uint64_t GetEventCount() const { return m_event_count; };
+
+    [[deprecated]]
+    uint64_t GetEventCount() const { return m_events_emitted; };
+    uint64_t GetEmittedEventCount() const { return m_events_emitted; };
+    uint64_t GetFinishedEventCount() const { return m_events_finished; };
 
     [[deprecated]]
     virtual std::string GetType() const { return m_type_name; }
