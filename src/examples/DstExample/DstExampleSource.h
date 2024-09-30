@@ -17,8 +17,6 @@ class DstExampleSource : public JEventSource {
 public:
     DstExampleSource();
 
-    DstExampleSource(std::string resource_name, JApplication* app);
-
     virtual ~DstExampleSource() = default;
 
     void Open() override;
