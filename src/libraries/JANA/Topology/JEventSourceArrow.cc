@@ -10,9 +10,51 @@
 
 
 
-JEventSourceArrow::JEventSourceArrow(std::string name,
-                                     std::vector<JEventSource*> sources)
-    : JPipelineArrow(name, false, true, false), m_sources(sources) {
+JEventSourceArrow::JEventSourceArrow(std::string name, std::vector<JEventSource*> sources)
+    : JArrow(name, false, true, false), m_sources(sources) {
+}
+
+
+void JEventSourceArrow::execute(JArrowMetrics& result, size_t location_id) {
+
+    auto start_total_time = std::chrono::steady_clock::now();
+
+    Data<Event> in_data {location_id};
+    Data<Event> out_data {location_id};
+
+    bool success = m_input.pull(in_data) && m_output.pull(out_data);
+    if (!success) {
+        m_input.revert(in_data);
+        m_output.revert(out_data);
+        // TODO: Test that revert works properly
+        
+        auto end_total_time = std::chrono::steady_clock::now();
+        result.update(JArrowMetrics::Status::ComeBackLater, 0, 1, std::chrono::milliseconds(0), end_total_time - start_total_time);
+        return;
+    }
+
+    bool process_succeeded = true;
+    JArrowMetrics::Status process_status = JArrowMetrics::Status::KeepGoing;
+    assert(in_data.item_count == 1);
+    Event* event = in_data.items[0];
+
+    auto start_processing_time = std::chrono::steady_clock::now();
+    process(event, process_succeeded, process_status);
+    auto end_processing_time = std::chrono::steady_clock::now();
+
+    if (process_succeeded) {
+        in_data.item_count = 0;
+        out_data.item_count = 1;
+        out_data.items[0] = event;
+    }
+    m_input.push(in_data);
+    m_output.push(out_data);
+
+    // Publish metrics
+    auto end_total_time = std::chrono::steady_clock::now();
+    auto latency = (end_processing_time - start_processing_time);
+    auto overhead = (end_total_time - start_total_time) - latency;
+    result.update(process_status, process_succeeded, 1, latency, overhead);
 }
 
 
