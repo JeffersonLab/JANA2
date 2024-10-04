@@ -13,6 +13,8 @@ class JEventSourceArrow : public JArrow {
 private:
     std::vector<JEventSource*> m_sources;
     size_t m_current_source = 0;
+    bool m_barrier_active = false;
+    std::shared_ptr<JEvent>* m_pending_barrier_event = nullptr;
 
     PlaceRef<Event> m_input {this, true, 1, 1};
     PlaceRef<Event> m_output {this, false, 1, 1};
@@ -36,6 +38,6 @@ public:
     void initialize() final;
     void finalize() final;
     void execute(JArrowMetrics& result, size_t location_id) final;
-    void process(Event* event, bool& success, JArrowMetrics::Status& status);
+    Event* process(Event* event, bool& success, JArrowMetrics::Status& status);
 };
 
