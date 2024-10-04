@@ -159,7 +159,7 @@ void JBenchmarker::RunUntilFinished() {
             << "    cd " << m_output_dir << "\n"
             << "    $JANA_HOME/bin/jana-plot-scaletest.py\n" << LOG_END;
     }
-    m_app->Stop();
+    m_app->Stop(true);
 }
 
 
