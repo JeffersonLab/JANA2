@@ -142,12 +142,6 @@ void JTopologyBuilder::acquire_services(JServiceLocator *sl) {
     m_params->SetDefaultParameter("jana:event_queue_threshold", m_event_queue_threshold,
                                     "Max number of events allowed on the main event queue. Higher => Better load balancing; Lower => Fewer events in flight")
             ->SetIsAdvanced(true);
-    m_params->SetDefaultParameter("jana:event_source_chunksize", m_event_source_chunksize,
-                                    "Max number of events that a JEventSource may enqueue at once. Higher => less queue contention; Lower => better load balancing")
-            ->SetIsAdvanced(true);
-    m_params->SetDefaultParameter("jana:event_processor_chunksize", m_event_processor_chunksize,
-                                    "Max number of events that the JEventProcessors may dequeue at once. Higher => less queue contention; Lower => better load balancing")
-            ->SetIsAdvanced(true);
     m_params->SetDefaultParameter("jana:enable_stealing", m_enable_stealing,
                                     "Enable work stealing. Improves load balancing when jana:locality != 0; otherwise does nothing.")
             ->SetIsAdvanced(true);
@@ -216,7 +210,6 @@ void JTopologyBuilder::attach_lower_level(JEventLevel current_level, JUnfoldArro
     proc_arrow->set_input(q1);
     proc_arrow->set_output(q2);
     arrows.push_back(proc_arrow);
-    proc_arrow->set_chunksize(m_event_processor_chunksize);
     proc_arrow->set_logger(GetLogger());
     if (found_sink) {
         proc_arrow->set_is_sink(false);
@@ -308,13 +301,11 @@ void JTopologyBuilder::attach_top_level(JEventLevel current_level) {
         src_arrow->set_input(pool_at_level);
         src_arrow->set_output(queue);
         arrows.push_back(src_arrow);
-        src_arrow->set_chunksize(m_event_source_chunksize);
 
         auto* proc_arrow = new JEventProcessorArrow(level_str+"Tap");
         proc_arrow->set_input(queue);
         proc_arrow->set_output(pool_at_level);
         arrows.push_back(proc_arrow);
-        proc_arrow->set_chunksize(m_event_processor_chunksize);
 
         for (auto proc: procs_at_level) {
             proc_arrow->add_processor(proc);
@@ -336,26 +327,22 @@ void JTopologyBuilder::attach_top_level(JEventLevel current_level) {
         src_arrow->set_input(pool_at_level);
         src_arrow->set_output(q1);
         arrows.push_back(src_arrow);
-        src_arrow->set_chunksize(m_event_source_chunksize);
 
         auto *map_arrow = new JEventMapArrow(level_str+"Map");
         map_arrow->set_input(q1);
         map_arrow->set_output(q2);
         arrows.push_back(map_arrow);
-        map_arrow->set_chunksize(m_event_source_chunksize);
         src_arrow->attach(map_arrow);
 
         // TODO: We are using q2 temporarily knowing that it will be overwritten in attach_lower_level.
         // It would be better to rejigger how we validate PlaceRefs and accept empty placerefs/fewer ctor args
         auto *unfold_arrow = new JUnfoldArrow(level_str+"Unfold", unfolders_at_level[0], q2, pool_at_level, q2);
         arrows.push_back(unfold_arrow);
-        unfold_arrow->set_chunksize(m_event_source_chunksize);
         map_arrow->attach(unfold_arrow);
 
         // child_in, child_out, parent_out
         auto *fold_arrow = new JFoldArrow(level_str+"Fold", current_level, unfolders_at_level[0]->GetChildLevel(), q2, pool_at_level, pool_at_level);
         // TODO: Support user-provided folders
-        fold_arrow->set_chunksize(m_event_source_chunksize);
 
         bool found_sink = (procs_at_level.size() > 0);
         attach_lower_level(unfolders_at_level[0]->GetChildLevel(), unfold_arrow, fold_arrow, found_sink);
@@ -372,7 +359,6 @@ void JTopologyBuilder::attach_top_level(JEventLevel current_level) {
             proc_arrow->set_input(q3);
             proc_arrow->set_output(pool_at_level);
             arrows.push_back(proc_arrow);
-            proc_arrow->set_chunksize(m_event_processor_chunksize);
 
             for (auto proc: procs_at_level) {
                 proc_arrow->add_processor(proc);

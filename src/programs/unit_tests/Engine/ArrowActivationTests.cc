@@ -53,7 +53,6 @@ TEST_CASE("ArrowActivationTests") {
     multiply_by_two->set_logger(logger);
     subtract_one->set_logger(logger);
     sum_everything->set_logger(logger);
-    emit_rand_ints->set_chunksize(1);
 
     JScheduler scheduler(topology);
     scheduler.logger = logger;
