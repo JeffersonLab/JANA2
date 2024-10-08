@@ -233,9 +233,32 @@ void JArrowProcessingController::print_report() {
 
 void JArrowProcessingController::print_final_report() {
     auto metrics = measure_performance();
-    
 
-    LOG_INFO(GetLogger()) << "Detailed report" << *metrics << LOG_END;
+    LOG_INFO(GetLogger()) << "Detailed report:" << LOG_END;
+    LOG_INFO(GetLogger()) << LOG_END;
+    LOG_INFO(GetLogger()) << "  Thread team size [count]:    " << metrics->thread_count << LOG_END;
+    LOG_INFO(GetLogger()) << "  Total uptime [s]:            " << std::setprecision(4) << metrics->total_uptime_s << LOG_END;
+    LOG_INFO(GetLogger()) << "  Completed events [count]:    " << metrics->total_events_completed << LOG_END;
+    LOG_INFO(GetLogger()) << "  Avg throughput [Hz]:         " << std::setprecision(3) << metrics->avg_throughput_hz << LOG_END;
+    LOG_INFO(GetLogger()) << "  Sequential bottleneck [Hz]:  " << std::setprecision(3) << metrics->avg_seq_bottleneck_hz << LOG_END;
+    LOG_INFO(GetLogger()) << "  Parallel bottleneck [Hz]:    " << std::setprecision(3) << metrics->avg_par_bottleneck_hz << LOG_END;
+    LOG_INFO(GetLogger()) << "  Efficiency [0..1]:           " << std::setprecision(3) << metrics->avg_efficiency_frac << LOG_END;
+
+    if (!metrics->arrows.empty()) {
+        LOG_INFO(GetLogger()) << LOG_END;
+        LOG_INFO(GetLogger()) << "  Arrow-level metrics:" << LOG_END;
+        LOG_INFO(GetLogger()) << LOG_END;
+    }
+    for (auto& as : metrics->arrows) {
+        LOG_INFO(GetLogger()) << "  - Arrow name:                        " << as.arrow_name << LOG_END;
+        LOG_INFO(GetLogger()) << "    Events completed:                  " << as.total_messages_completed << LOG_END;
+        LOG_INFO(GetLogger()) << "    Avg processing latency [ms/event]: " << as.avg_latency_ms << LOG_END;
+        LOG_INFO(GetLogger()) << "    Avg queue latency [ms/event]:      " << as.avg_queue_latency_ms << LOG_END;
+        LOG_INFO(GetLogger()) << "    Total queue visits [count]:        " << as.queue_visit_count << LOG_END;
+        LOG_INFO(GetLogger()) << "    Queue overhead [0..1]:             " << as.avg_queue_overhead_frac << LOG_END;
+        LOG_INFO(GetLogger()) << LOG_END;
+    }
+
     LOG_WARN(GetLogger()) << "Final report: " << metrics->total_events_completed << " events processed at "
                        << JTypeInfo::to_string_with_si_prefix(metrics->avg_throughput_hz) << "Hz" << LOG_END;
 }
