@@ -235,7 +235,7 @@ struct PlaceRef : public PlaceRefBase {
         else {
             if (is_input) {
                 auto pool = static_cast<JPool<T>*>(place_ref);
-                pool->push(data.items.data(), data.item_count, data.location_id);
+                pool->push(data.items.data(), data.item_count, false, data.location_id);
             }
         }
     }
@@ -251,7 +251,7 @@ struct PlaceRef : public PlaceRefBase {
         }
         else {
             auto pool = static_cast<JPool<T>*>(place_ref);
-            pool->push(data.items.data(), data.item_count, data.location_id);
+            pool->push(data.items.data(), data.item_count, !is_input, data.location_id);
             data.item_count = 0;
             data.reserve_count = 0;
             return 1;
