@@ -29,6 +29,9 @@ class JCalibrationManager : public JService {
 public:
 
     JCalibrationManager() { 
+        pthread_mutex_init(&m_calibration_mutex, nullptr);
+        pthread_mutex_init(&m_resource_manager_mutex, nullptr);
+
         SetPrefix("jana"); 
     }
 

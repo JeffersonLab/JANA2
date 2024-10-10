@@ -227,17 +227,22 @@ inline pthread_rwlock_t *JLockService::RootFillLock(JEventProcessor *proc) {
     /// are in use and all contending for the same root lock. You should
     /// only use this when filling a histogram and not for creating. Use
     /// RootWriteLock and RootUnLock for that.
-
     pthread_rwlock_t *lock;
 
     pthread_rwlock_rdlock(&m_root_fill_locks_lock);
     auto iter = m_root_fill_rw_lock.find(proc);
     if (iter == m_root_fill_rw_lock.end()) {
         pthread_rwlock_unlock(&m_root_fill_locks_lock);
-        lock = new pthread_rwlock_t;
         pthread_rwlock_wrlock(&m_root_fill_locks_lock);
-        pthread_rwlock_init(lock, nullptr);
-        m_root_fill_rw_lock[proc] = lock;
+        auto iter_now = m_root_fill_rw_lock.find(proc);
+        if(iter_now == m_root_fill_rw_lock.end()){
+            lock = new pthread_rwlock_t;
+            pthread_rwlock_init(lock, nullptr);
+            m_root_fill_rw_lock[proc] = lock;
+        }
+        else{
+            lock = iter_now->second;
+        }
     }
     else {
         lock = iter->second;
@@ -265,7 +270,7 @@ inline pthread_rwlock_t *JLockService::RootFillUnLock(JEventProcessor *proc) {
     }
     pthread_rwlock_t *lock = iter->second;
     pthread_rwlock_unlock(&m_root_fill_locks_lock);
-    pthread_rwlock_unlock(m_root_fill_rw_lock[proc]);
+    pthread_rwlock_unlock(lock);
     return lock;
 }
 
