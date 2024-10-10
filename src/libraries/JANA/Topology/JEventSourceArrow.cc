@@ -93,6 +93,7 @@ Event* JEventSourceArrow::process(Event* event, bool& success, JArrowMetrics::St
             else {
                 // Topology has _not_ finished draining, all we can do is wait
                 LOG_DEBUG(m_logger) << "JEventSourceArrow: Waiting on pending barrier event" << LOG_END;
+                LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " with result ComeBackLater"<< LOG_END;
                 arrow_status = JArrowMetrics::Status::ComeBackLater;
                 success = false;
                 return nullptr;
@@ -113,6 +114,7 @@ Event* JEventSourceArrow::process(Event* event, bool& success, JArrowMetrics::St
             else {
                 // Barrier event has NOT finished
                 LOG_DEBUG(m_logger) << "JEventSourceArrow: Waiting on in-flight barrier event" << LOG_END;
+                LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " with result ComeBackLater"<< LOG_END;
                 success = false;
                 arrow_status = JArrowMetrics::Status::ComeBackLater;
                 return nullptr;
@@ -138,6 +140,7 @@ Event* JEventSourceArrow::process(Event* event, bool& success, JArrowMetrics::St
         }
         else if ((*event)->GetSequential()){
             // Source succeeded, but returned a barrier event
+            LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " with result Success, holding back barrier event# " << (*event)->GetEventNumber() << LOG_END;
             m_pending_barrier_event = event;
             m_barrier_active = true;
             return nullptr;
