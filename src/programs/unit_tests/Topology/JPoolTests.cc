@@ -38,7 +38,7 @@ TEST_CASE("JPoolTests_SingleLocationLimitEvents") {
     REQUIRE(h == nullptr);
 
     f->x = 5;
-    pool.put(f, 0);
+    pool.put(f, true, 0);
 
     h = pool.get(0);
     REQUIRE(h != nullptr);
@@ -74,11 +74,11 @@ TEST_CASE("JPoolTests_SingleLocationUnlimitedEvents") {
     REQUIRE(g->x == 3);
 
     f->x = 5;
-    pool.put(f, 0);
+    pool.put(f, true, 0);
     // f goes back into the pool, so dtor does not get called
     REQUIRE(was_dtor_called == false);
 
-    pool.put(h, 0);
+    pool.put(h, true, 0);
     // h's dtor DOES get called
     REQUIRE(was_dtor_called == true);
 

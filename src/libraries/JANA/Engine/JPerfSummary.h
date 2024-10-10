@@ -17,7 +17,6 @@ struct ArrowSummary {
     bool has_backpressure;
     size_t messages_pending;
     size_t threshold;
-    size_t chunksize;
 
     size_t total_messages_completed;
     size_t last_messages_completed;

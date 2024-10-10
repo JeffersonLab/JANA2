@@ -8,6 +8,8 @@
 #include <ostream>
 #include <iomanip>
 
+
+
 std::ostream& operator<<(std::ostream& os, const JPerfSummary& s) {
 
     os << std::endl;
@@ -22,17 +24,16 @@ std::ostream& operator<<(std::ostream& os, const JPerfSummary& s) {
     os << "  Efficiency [0..1]:           " << std::setprecision(3) << s.avg_efficiency_frac << std::endl;
     os << std::endl;
 
-    os << "  +--------------------------+--------+-----+---------+-------+--------+---------+-------------+" << std::endl;
-    os << "  |           Name           |  Type  | Par | Threads | Chunk | Thresh | Pending |  Completed  |" << std::endl;
-    os << "  +--------------------------+--------+-----+---------+-------+--------+---------+-------------+" << std::endl;
+    os << "  +--------------------------+--------+-----+---------+--------+---------+-------------+" << std::endl;
+    os << "  |           Name           |  Type  | Par | Threads | Thresh | Pending |  Completed  |" << std::endl;
+    os << "  +--------------------------+--------+-----+---------+--------+---------+-------------+" << std::endl;
 
     for (auto as : s.arrows) {
         os << "  | "
            << std::setw(24) << std::left << as.arrow_name << " | "
            << std::setw(6) << std::left << (as.is_source ? "Src" : (as.is_sink ? "Sink" : "")) << " | "
            << std::setw(3) << std::right << (as.is_parallel ? " T " : " F ") << " | "
-           << std::setw(7) << as.thread_count << " |"
-           << std::setw(6) << as.chunksize << " |";
+           << std::setw(7) << as.thread_count << " |";
 
         if (!as.is_source) {
 
@@ -46,7 +47,7 @@ std::ostream& operator<<(std::ostream& os, const JPerfSummary& s) {
         os << std::setw(12) << as.total_messages_completed << " |"
            << std::endl;
     }
-    os << "  +--------------------------+--------+-----+---------+-------+--------+---------+-------------+" << std::endl;
+    os << "  +--------------------------+--------+-----+---------+--------+---------+-------------+" << std::endl;
 
 
     os << "  +--------------------------+-------------+--------------+----------------+--------------+----------------+" << std::endl;

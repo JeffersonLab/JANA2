@@ -19,7 +19,7 @@ class GroupedEventSource : public JEventSource {
     int m_current_event_number;
 
 public:
-    GroupedEventSource(std::string res_name, JApplication* app) : JEventSource(std::move(res_name), app) {
+    GroupedEventSource() {
         // TODO: Get EventGroupManager from ServiceLocator instead
         SetCallbackStyle(CallbackStyle::ExpertMode);
         m_remaining_events_in_group = 5;

@@ -120,6 +120,7 @@ void JComponentManager::initialize_components() {
         try {
             // Run Init() on each factory in order to capture any parameters 
             // (and eventually services) that are retrieved via GetApplication().
+            fac->SetApplication(GetApplication());
             fac->DoInit();
         }
         catch (...) {

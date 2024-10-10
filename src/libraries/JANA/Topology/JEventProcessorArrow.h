@@ -17,15 +17,9 @@ private:
     std::vector<JEventProcessor*> m_processors;
 
 public:
-    JEventProcessorArrow(std::string name,
-                         EventQueue *input_queue,
-                         EventQueue *output_queue,
-                         JEventPool *pool);
-
+    JEventProcessorArrow(std::string name);
     void add_processor(JEventProcessor* processor);
-
     void process(Event* event, bool& success, JArrowMetrics::Status& status);
-
     void initialize() final;
     void finalize() final;
 };

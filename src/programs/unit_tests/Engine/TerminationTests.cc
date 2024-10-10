@@ -26,7 +26,7 @@ TEST_CASE("TerminationTests") {
         app.Stop(true);
         REQUIRE(source->event_count > 0);
         REQUIRE(processor->finish_call_count == 1);
-        REQUIRE(app.GetNEventsProcessed() == source->event_count);
+        REQUIRE(app.GetNEventsProcessed() == source->GetEmittedEventCount());
     }
 
     SECTION("Self termination") {
@@ -37,7 +37,7 @@ TEST_CASE("TerminationTests") {
         REQUIRE(source->event_count == 10);
         REQUIRE(processor->processed_count == 10);
         REQUIRE(processor->finish_call_count == 1);
-        REQUIRE(app.GetNEventsProcessed() == source->event_count);
+        REQUIRE(app.GetNEventsProcessed() == source->GetEmittedEventCount());
     }
 
     SECTION("Interrupted during JEventSource::Open()") {
@@ -46,7 +46,7 @@ TEST_CASE("TerminationTests") {
         app.Add(source);
         app.Run(true);
         REQUIRE(processor->finish_call_count == 1);
-        REQUIRE(app.GetNEventsProcessed() == source->GetEventCount());
+        REQUIRE(app.GetNEventsProcessed() == source->GetEmittedEventCount());
         // We don't know how many events will emit before Stop() request propagates
     }
 

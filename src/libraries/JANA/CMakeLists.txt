@@ -4,6 +4,7 @@
 set(JANA2_SOURCES
 
     JApplication.cc
+    JEventSource.cc
     JFactory.cc
     JFactorySet.cc
     JMultifactory.cc

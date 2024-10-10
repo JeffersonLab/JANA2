@@ -15,11 +15,6 @@ DstExampleSource::DstExampleSource() : JEventSource() {
     SetCallbackStyle(CallbackStyle::ExpertMode);
 }
 
-DstExampleSource::DstExampleSource(std::string resource_name, JApplication* app) : JEventSource(resource_name, app) {
-    SetTypeName(NAME_OF_THIS); // Provide JANA with class name
-    SetCallbackStyle(CallbackStyle::ExpertMode);
-}
-
 void DstExampleSource::Open() {
 
     /// Open is called exactly once when processing begins.

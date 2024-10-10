@@ -67,7 +67,7 @@ void InitPlugin(JApplication *app) {
 
     app->Add(new GroupedEventProcessor());
 
-    auto evt_src = new BlockingGroupedEventSource("blocking_source", app);
+    auto evt_src = new BlockingGroupedEventSource();
 
     app->Add(evt_src);
 

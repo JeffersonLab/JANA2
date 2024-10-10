@@ -10,16 +10,8 @@
 #include <JANA/JEvent.h>
 
 
-JEventMapArrow::JEventMapArrow(std::string name,
-                                           EventQueue *input_queue,
-                                           EventQueue *output_queue)
-        : JPipelineArrow(std::move(name),
-                         true,
-                         false,
-                         false,
-                         input_queue,
-                         output_queue,
-                         nullptr) {}
+JEventMapArrow::JEventMapArrow(std::string name)
+        : JPipelineArrow(std::move(name), true, false, false) {}
 
 void JEventMapArrow::add_source(JEventSource* source) {
     m_sources.push_back(source);

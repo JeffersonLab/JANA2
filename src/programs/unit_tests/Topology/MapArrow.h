@@ -43,11 +43,11 @@ public:
         auto start_total_time = std::chrono::steady_clock::now();
         std::vector<S> xs;
         std::vector<T> ys;
-        xs.reserve(get_chunksize());
-        ys.reserve(get_chunksize());
-        // TODO: These allocations are unnecessary and should be eliminated
+        xs.reserve(1);
+        ys.reserve(1);
+        // TODO: Push/pop single items instead of list
 
-        auto in_status = _input_queue->pop(xs, get_chunksize());
+        auto in_status = _input_queue->pop(xs, 1);
 
         auto start_latency_time = std::chrono::steady_clock::now();
         for (S &x : xs) {

@@ -18,27 +18,21 @@ public:
     JPipelineArrow(std::string name,
                    bool is_parallel,
                    bool is_source,
-                   bool is_sink,
-                   JMailbox<MessageT*>* input_queue,
-                   JMailbox<MessageT*>* output_queue,
-                   JPool<MessageT>* pool
-                  )
+                   bool is_sink)
         : JArrow(std::move(name), is_parallel, is_source, is_sink) {
+    }
 
-        if (input_queue == nullptr) {
-            assert(pool != nullptr);
-            m_input.set_pool(pool);
-        }
-        else {
-            m_input.set_queue(input_queue);
-        }
-        if (output_queue == nullptr) {
-            assert(pool != nullptr);
-            m_output.set_pool(pool);
-        }
-        else {
-            m_output.set_queue(output_queue);
-        }
+    void set_input(JMailbox<MessageT*>* queue) {
+        m_input.set_queue(queue);
+    }
+    void set_input(JPool<MessageT>* pool) {
+        m_input.set_pool(pool);
+    }
+    void set_output(JMailbox<MessageT*>* queue) {
+        m_output.set_queue(queue);
+    }
+    void set_output(JPool<MessageT>* pool) {
+        m_output.set_pool(pool);
     }
 
     void execute(JArrowMetrics& result, size_t location_id) final {

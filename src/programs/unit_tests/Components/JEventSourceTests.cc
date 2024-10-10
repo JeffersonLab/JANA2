@@ -16,7 +16,7 @@ struct MyEventSource : public JEventSource {
     Result Emit(JEvent&) override {
         emit_count++;
 
-        if (GetEventCount() >= events_in_file) {
+        if (GetEmittedEventCount() >= events_in_file) {
             LOG_INFO(GetLogger()) << "Emit() called, returning FailureFinished" << LOG_END;
             return Result::FailureFinished;
         }
@@ -44,7 +44,7 @@ TEST_CASE("JEventSource_ExpertMode_EmitCount") {
         app.Run();
         REQUIRE(sut->open_count == 1);
         REQUIRE(sut->emit_count == 6);       // Emit called 5 times successfully and fails on the 6th
-        REQUIRE(sut->GetEventCount() == 5);  // Emits 5 events successfully (including skipped)
+        REQUIRE(sut->GetEmittedEventCount() == 5);  // Emits 5 events successfully (including skipped)
         REQUIRE(sut->close_count == 1);
     }
 
@@ -54,7 +54,7 @@ TEST_CASE("JEventSource_ExpertMode_EmitCount") {
         app.Run();
         REQUIRE(sut->open_count == 1);
         REQUIRE(sut->emit_count == 3);        // Emit called 3 times successfully
-        REQUIRE(sut->GetEventCount() == 3);   // Nevents limit discovered outside Emit
+        REQUIRE(sut->GetEmittedEventCount() == 3);   // Nevents limit discovered outside Emit
         REQUIRE(sut->close_count == 1);
     }
 
@@ -64,7 +64,7 @@ TEST_CASE("JEventSource_ExpertMode_EmitCount") {
         app.Run();
         REQUIRE(sut->open_count == 1);
         REQUIRE(sut->emit_count == 6);        // Emit called 5 times successfully and fails on the 6th
-        REQUIRE(sut->GetEventCount() == 5);   // 5 events successfully emitted, 3 of which were (presumably) skipped
+        REQUIRE(sut->GetEmittedEventCount() == 5);   // 5 events successfully emitted, 3 of which were (presumably) skipped
         REQUIRE(sut->close_count == 1);
     }
 }
