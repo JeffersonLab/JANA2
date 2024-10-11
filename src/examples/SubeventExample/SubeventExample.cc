@@ -107,11 +107,13 @@ int main() {
         auto subprocess_arrow = new JSubeventArrow<MyInput, MyOutput>("subprocess", &processor, &subevents_in, &subevents_out);
         auto merge_arrow = new JMergeArrow<MyInput, MyOutput>("merge", &processor, &subevents_out, &events_out);
 
-        auto source_arrow = new JEventSourceArrow("simpleSource",
-                                                    {source},
-                                                    &events_in,
-                                                    topology->event_pool);
-        auto proc_arrow = new JEventProcessorArrow("simpleProcessor", &events_out, nullptr, topology->event_pool);
+        auto source_arrow = new JEventSourceArrow("simpleSource", {source});
+        source_arrow->set_input(topology->event_pool);
+        source_arrow->set_output(&events_in);
+
+        auto proc_arrow = new JEventProcessorArrow("simpleProcessor");
+        proc_arrow->set_input(&events_out);
+        proc_arrow->set_output(topology->event_pool);
         proc_arrow->add_processor(new SimpleProcessor);
 
         builder.arrows.push_back(source_arrow);

@@ -24,7 +24,7 @@ class BlockingGroupedEventSource : public JEventSource {
 
 public:
 
-    BlockingGroupedEventSource(std::string res_name, JApplication* app) : JEventSource(std::move(res_name), app) {
+    BlockingGroupedEventSource() {
         // TODO: Get EventGroupManager from ServiceLocator instead
         SetCallbackStyle(CallbackStyle::ExpertMode);
         m_pending_group_id = 1;

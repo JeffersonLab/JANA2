@@ -410,7 +410,6 @@ void JScheduler::summarize_arrows(std::vector<ArrowSummary>& summaries) {
         summary.is_parallel = as.arrow->is_parallel();
         summary.is_source = as.arrow->is_source();
         summary.is_sink = as.arrow->is_sink();
-        summary.chunksize = as.arrow->get_chunksize();
         summary.messages_pending = as.arrow->get_pending();
         summary.threshold = as.arrow->get_threshold();
 

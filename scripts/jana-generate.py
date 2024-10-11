@@ -187,8 +187,6 @@ class {name} : public JEventSource {{
 public:
     {name}();
 
-    {name}(std::string resource_name, JApplication* app);
-
     virtual ~{name}() = default;
 
     void Open() override;
@@ -229,12 +227,6 @@ jeventsource_template_cc = """
     SetTypeName(NAME_OF_THIS); // Provide JANA with class name
     SetCallbackStyle(CallbackStyle::ExpertMode);
 }}
-
-{name}::{name}(std::string resource_name, JApplication* app) : JEventSource(resource_name, app) {{
-    SetTypeName(NAME_OF_THIS); // Provide JANA with class name
-    SetCallbackStyle(CallbackStyle::ExpertMode);
-}}
-
 
 void {name}::Open() {{
 

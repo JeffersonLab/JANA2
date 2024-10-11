@@ -129,8 +129,6 @@ jana:affinity                     | int  | 0        | Thread pinning strategy. 0
 jana:locality                     | int  | 0        | Memory locality strategy. 0: Global. 1: Socket-local. 2: Numa-domain-local. 3. Core-local. 4. Cpu-local
 jana:enable_stealing              | bool | 0        | Allow threads to pick up work from a different memory location if their local mailbox is empty.
 jana:event_queue_threshold        | int  | 80       | Mailbox buffer size
-jana:event_source_chunksize       | int  | 40       | Reduce mailbox contention by chunking work assignments
-jana:event_processor_chunksize    | int  | 1        | Reduce mailbox contention by chunking work assignments
 
 
 Creating code skeletons

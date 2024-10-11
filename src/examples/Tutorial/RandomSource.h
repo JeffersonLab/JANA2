@@ -16,8 +16,6 @@ class RandomSource : public JEventSource {
 public:
     RandomSource();
 
-    RandomSource(std::string resource_name, JApplication* app);
-
     virtual ~RandomSource() = default;
 
     void Open() override;

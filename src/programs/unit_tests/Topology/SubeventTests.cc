@@ -67,7 +67,7 @@ TEST_CASE("Basic subevent arrow functionality") {
             SetCallbackStyle(CallbackStyle::ExpertMode);
         }
         Result Emit(JEvent& event) override {
-            if (GetEventCount() == 10) return Result::FailureFinished;
+            if (GetEmittedEventCount() == 10) return Result::FailureFinished;
             std::vector<MyInput*> inputs;
             inputs.push_back(new MyInput(22,3.6));
             inputs.push_back(new MyInput(23,3.5));
@@ -100,12 +100,14 @@ TEST_CASE("Basic subevent arrow functionality") {
 
         auto topology = app.GetService<JTopologyBuilder>();
         topology->set_configure_fn([&](JTopologyBuilder& topology) {
-            auto source_arrow = new JEventSourceArrow("simpleSource",
-                                                    {new SimpleSource},
-                                                    &events_in,
-                                                    topology.event_pool);
-            auto proc_arrow = new JEventProcessorArrow("simpleProcessor", &events_out, 
-                    nullptr, topology.event_pool);
+
+            auto source_arrow = new JEventSourceArrow("simpleSource", {new SimpleSource});
+            source_arrow->set_input(topology.event_pool);
+            source_arrow->set_output(&events_in);
+
+            auto proc_arrow = new JEventProcessorArrow("simpleProcessor");
+            proc_arrow->set_input(&events_out);
+            proc_arrow->set_output(topology.event_pool);
             proc_arrow->add_processor(new SimpleProcessor);
 
             topology.arrows.push_back(source_arrow);
@@ -113,6 +115,7 @@ TEST_CASE("Basic subevent arrow functionality") {
             topology.arrows.push_back(subprocess_arrow);
             topology.arrows.push_back(merge_arrow);
             topology.arrows.push_back(proc_arrow);
+
             source_arrow->attach(split_arrow);
             split_arrow->attach(subprocess_arrow);
             subprocess_arrow->attach(merge_arrow);

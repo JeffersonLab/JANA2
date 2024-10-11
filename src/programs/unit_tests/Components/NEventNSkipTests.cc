@@ -110,9 +110,9 @@ TEST_CASE("JEventSourceArrow with multiple JEventSources") {
         REQUIRE(source1->close_count == 1);
         REQUIRE(source2->close_count == 1);
         REQUIRE(source3->close_count == 1);
-        REQUIRE(source1->GetEventCount() == 9);
-        REQUIRE(source2->GetEventCount() == 13);
-        REQUIRE(source3->GetEventCount() == 7);
+        REQUIRE(source1->GetEmittedEventCount() == 9);
+        REQUIRE(source2->GetEmittedEventCount() == 13);
+        REQUIRE(source3->GetEmittedEventCount() == 7);
         REQUIRE(app.GetNEventsProcessed() == 9+13+7);
     }
 
@@ -136,9 +136,9 @@ TEST_CASE("JEventSourceArrow with multiple JEventSources") {
         REQUIRE(source1->close_count == 1);
         REQUIRE(source2->close_count == 1);
         REQUIRE(source3->close_count == 1);
-        REQUIRE(source1->GetEventCount() == 9);   // 3 dropped, 6 emitted
-        REQUIRE(source2->GetEventCount() == 12);  // 3 dropped, 9 emitted
-        REQUIRE(source3->GetEventCount() == 7);   // 3 dropped, 4 emitted
+        REQUIRE(source1->GetEmittedEventCount() == 9);   // 3 dropped, 6 emitted
+        REQUIRE(source2->GetEmittedEventCount() == 12);  // 3 dropped, 9 emitted
+        REQUIRE(source3->GetEmittedEventCount() == 7);   // 3 dropped, 4 emitted
         REQUIRE(app.GetNEventsProcessed() == 19);
     }
 
@@ -164,9 +164,9 @@ TEST_CASE("JEventSourceArrow with multiple JEventSources") {
         REQUIRE(source1->close_count == 1);
         REQUIRE(source2->close_count == 1);
         REQUIRE(source3->close_count == 1);
-        REQUIRE(source1->GetEventCount() == 6);   // 2 dropped, 4 emitted
-        REQUIRE(source2->GetEventCount() == 13);  // 13 emitted
-        REQUIRE(source3->GetEventCount() == 4);   // 4 emitted
+        REQUIRE(source1->GetEmittedEventCount() == 6);   // 2 dropped, 4 emitted
+        REQUIRE(source2->GetEmittedEventCount() == 13);  // 13 emitted
+        REQUIRE(source3->GetEmittedEventCount() == 4);   // 4 emitted
         REQUIRE(app.GetNEventsProcessed() == 21);
     }
 

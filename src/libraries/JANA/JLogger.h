@@ -11,6 +11,7 @@
 #include <chrono>
 #include <thread>
 #include <iomanip>
+#include <time.h>
 
 
 
@@ -72,13 +73,13 @@ struct JLogMessage {
         if (logger.show_timestamp) {
             auto now = std::chrono::system_clock::now();
             std::time_t current_time = std::chrono::system_clock::to_time_t(now);
-            std::tm* local_time = std::localtime(&current_time);
-            char buffer[100];
-            std::strftime(buffer, sizeof(buffer), "%H:%M:%S", local_time);
+            
+            tm tm_buf;
+            localtime_r(&current_time, &tm_buf);
 
             // Extract milliseconds by calculating the duration since the last whole second
             auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
-            builder << buffer << ".";
+            builder << std::put_time(&tm_buf, "%H:%M:%S.");
             builder << std::setfill('0') << std::setw(3) << milliseconds.count() << std::setfill(' ') << " ";
         }
         if (logger.show_level) {

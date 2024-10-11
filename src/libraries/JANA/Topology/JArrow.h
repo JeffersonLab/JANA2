@@ -31,9 +31,6 @@ private:
 
     mutable std::mutex m_arrow_mutex;  // Protects access to arrow properties
 
-    // TODO: Get rid of me
-    size_t m_chunksize = 1;       // Number of items to pop off the input queue at once
-
     friend class JScheduler;
     std::vector<JArrow *> m_listeners;    // Downstream Arrows
 
@@ -58,26 +55,13 @@ public:
         m_is_sink = is_sink;
     }
 
-    // TODO: Get rid of me
-    void set_chunksize(size_t chunksize) {
-        std::lock_guard<std::mutex> lock(m_arrow_mutex);
-        m_chunksize = chunksize;
-    }
-
-    // TODO: Get rid of me
-    size_t get_chunksize() const {
-        std::lock_guard<std::mutex> lock(m_arrow_mutex);
-        return m_chunksize;
-    }
-
-
     // TODO: Metrics should be encapsulated so that only actions are to update, clear, or summarize
     JArrowMetrics& get_metrics() {
         return m_metrics;
     }
 
-    JArrow(std::string name, bool is_parallel, bool is_source, bool is_sink, size_t chunksize=16) :
-            m_name(std::move(name)), m_is_parallel(is_parallel), m_is_source(is_source), m_is_sink(is_sink), m_chunksize(chunksize) {
+    JArrow(std::string name, bool is_parallel, bool is_source, bool is_sink) :
+            m_name(std::move(name)), m_is_parallel(is_parallel), m_is_source(is_source), m_is_sink(is_sink) {
 
         m_metrics.clear();
     };
@@ -251,7 +235,7 @@ struct PlaceRef : public PlaceRefBase {
         else {
             if (is_input) {
                 auto pool = static_cast<JPool<T>*>(place_ref);
-                pool->push(data.items.data(), data.item_count, data.location_id);
+                pool->push(data.items.data(), data.item_count, false, data.location_id);
             }
         }
     }
@@ -267,7 +251,7 @@ struct PlaceRef : public PlaceRefBase {
         }
         else {
             auto pool = static_cast<JPool<T>*>(place_ref);
-            pool->push(data.items.data(), data.item_count, data.location_id);
+            pool->push(data.items.data(), data.item_count, !is_input, data.location_id);
             data.item_count = 0;
             data.reserve_count = 0;
             return 1;

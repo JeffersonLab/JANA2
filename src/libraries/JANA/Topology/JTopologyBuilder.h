@@ -7,6 +7,7 @@
 #include <memory>
 #include <JANA/JService.h>
 #include <JANA/Utils/JProcessorMapping.h>
+#include <JANA/Utils/JEventPool.h>
 #include <JANA/Engine/JPerfMetrics.h>  // TODO: Should't be here
 
 #include <JANA/Services/JParameterManager.h>
@@ -21,7 +22,6 @@ class JPoolBase;
 class JQueue;
 class JFoldArrow;
 class JUnfoldArrow;
-class JEventPool;
 
 class JTopologyBuilder : public JService {
 public:
@@ -37,8 +37,6 @@ public:
     // Topology configuration
     size_t m_event_pool_size = 4;
     size_t m_event_queue_threshold = 80;
-    size_t m_event_source_chunksize = 40;
-    size_t m_event_processor_chunksize = 1;
     size_t m_location_count = 1;
     bool m_enable_stealing = false;
     bool m_limit_total_events_in_flight = true;

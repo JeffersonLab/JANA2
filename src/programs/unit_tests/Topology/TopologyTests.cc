@@ -59,8 +59,6 @@ TEST_CASE("JTopology: Basic functionality") {
     subtract_one->set_logger(logger);
     sum_everything->set_logger(logger);
 
-    emit_rand_ints->set_chunksize(1);
-
     JScheduler scheduler(topology);
     scheduler.logger = logger;
 
