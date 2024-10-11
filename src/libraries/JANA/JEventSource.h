@@ -36,6 +36,7 @@ private:
     uint64_t m_nevents = 0;
     bool m_enable_finish_event = false;
     bool m_enable_get_objects = false;
+    bool m_enable_preprocess = false;
 
 
 public:
@@ -145,11 +146,11 @@ public:
 
     bool IsGetObjectsEnabled() const { return m_enable_get_objects; }
     bool IsFinishEventEnabled() const { return m_enable_finish_event; }
+    bool IsPreprocessEnabled() const { return m_enable_preprocess; }
     
     uint64_t GetNSkip() { return m_nskip; }
     uint64_t GetNEvents() { return m_nevents; }
 
-    // TODO: Deprecate me
     virtual std::string GetVDescription() const {
         return "<description unavailable>";
     } ///< Optional for getting description via source rather than JEventSourceGenerator
@@ -166,6 +167,7 @@ public:
     /// which will hurt performance. Conceptually, FinishEvent isn't great, and so should be avoided when possible.
     void EnableFinishEvent(bool enable=true) { m_enable_finish_event = enable; }
     void EnableGetObjects(bool enable=true) { m_enable_get_objects = enable; }
+    void EnablePreprocess(bool enable=true) { m_enable_preprocess = enable; }
 
     void SetNEvents(uint64_t nevents) { m_nevents = nevents; };
     void SetNSkip(uint64_t nskip) { m_nskip = nskip; };

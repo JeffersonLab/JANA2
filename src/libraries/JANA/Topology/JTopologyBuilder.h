@@ -64,10 +64,11 @@ public:
 
     void create_topology();
 
+    void attach_level(JEventLevel current_level, JUnfoldArrow* parent_unfolder, JFoldArrow* parent_folder);
+    void connect_to_first_available(JArrow* upstream, std::vector<JArrow*> downstreams);
     void connect(JArrow* upstream, size_t upstream_index, JArrow* downstream, size_t downstream_index);
 
     void attach_lower_level(JEventLevel current_level, JUnfoldArrow* parent_unfolder, JFoldArrow* parent_folder, bool found_sink);
-
     void attach_top_level(JEventLevel current_level);
 
     std::string print_topology();
