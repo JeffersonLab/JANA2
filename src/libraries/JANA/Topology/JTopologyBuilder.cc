@@ -308,7 +308,7 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
     JUnfoldArrow* unfold_arrow = nullptr;
     bool need_unfold = have_unfolder;
     if (need_unfold) {
-        unfold_arrow = new JUnfoldArrow(level_str+"Unfold", unfolders_at_level[0], nullptr, pool_at_level, nullptr);
+        unfold_arrow = new JUnfoldArrow(level_str+"Unfold", unfolders_at_level[0]);
         arrows.push_back(unfold_arrow);
     }
 
@@ -318,8 +318,9 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
     JFoldArrow* fold_arrow = nullptr;
     bool need_fold = have_unfolder;
     if(need_fold) {
-        fold_arrow = new JFoldArrow(level_str+"Fold", current_level, unfolders_at_level[0]->GetChildLevel(), nullptr, nullptr, pool_at_level);
+        fold_arrow = new JFoldArrow(level_str+"Fold", current_level, unfolders_at_level[0]->GetChildLevel());
         arrows.push_back(fold_arrow);
+        fold_arrow->attach_parent_out(pool_at_level);
     }
 
     // --------------------------
