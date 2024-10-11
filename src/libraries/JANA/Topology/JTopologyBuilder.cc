@@ -154,6 +154,35 @@ void JTopologyBuilder::acquire_services(JServiceLocator *sl) {
 };
 
 
+void JTopologyBuilder::connect(JArrow* upstream, size_t up_index, JArrow* downstream, size_t down_index) {
+
+    auto queue = new EventQueue(m_event_queue_threshold, mapping.get_loc_count(), m_enable_stealing);
+    queues.push_back(queue);
+
+    size_t i = 0;
+    for (PlaceRefBase* place : upstream->m_places) {
+        if (!place->is_input) {
+            if (i++ == up_index) {
+                // Found the correct output
+                place->is_queue = true;
+                place->place_ref = queue;
+            }
+        }
+    }
+    i = 0;
+    for (PlaceRefBase* place : downstream->m_places) {
+        if (place->is_input) {
+            if (i++ == down_index) {
+                // Found the correct input
+                place->is_queue = true;
+                place->place_ref = queue;
+            }
+        }
+    }
+    upstream->attach(downstream);
+}
+
+
 void JTopologyBuilder::attach_lower_level(JEventLevel current_level, JUnfoldArrow* parent_unfolder, JFoldArrow* parent_folder, bool found_sink) {
 
     std::stringstream ss;

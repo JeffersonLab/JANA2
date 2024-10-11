@@ -64,6 +64,8 @@ public:
 
     void create_topology();
 
+    void connect(JArrow* upstream, size_t upstream_index, JArrow* downstream, size_t downstream_index);
+
     void attach_lower_level(JEventLevel current_level, JUnfoldArrow* parent_unfolder, JFoldArrow* parent_folder, bool found_sink);
 
     void attach_top_level(JEventLevel current_level);
