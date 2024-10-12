@@ -381,6 +381,27 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
         parent_folder->attach_child_out(pool_at_level);
     }
 
+    // Finally, we recur over lower levels!
+    if (need_unfold) {
+        auto next_level = unfolders_at_level[0]->GetChildLevel();
+        attach_level(next_level, unfold_arrow, fold_arrow);
+    }
+    else {
+        // This is the lowest level
+        // TODO: Improve logic for determining event counts for multilevel topologies
+        if (tap_arrow != nullptr) {
+            tap_arrow->set_is_sink(true);
+        }
+        else if (map2_arrow != nullptr) {
+            map2_arrow->set_is_sink(true);
+        }
+        else if (map1_arrow != nullptr) {
+            map1_arrow->set_is_sink(true);
+        }
+        else if (src_arrow != nullptr) {
+            src_arrow->set_is_sink(true);
+        }
+    }
 }
 
 

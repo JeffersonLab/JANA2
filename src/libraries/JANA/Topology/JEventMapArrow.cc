@@ -52,9 +52,25 @@ void JEventMapArrow::process(Event* event, bool& success, JArrowMetrics::Status&
 
 void JEventMapArrow::initialize() {
     LOG_DEBUG(m_logger) << "Initializing arrow '" << get_name() << "'" << LOG_END;
+    for (auto processor : m_procs) {
+        if (processor->GetCallbackStyle() == JEventProcessor::CallbackStyle::LegacyMode) {
+            LOG_INFO(m_logger) << "Initializing JEventProcessor '" << processor->GetTypeName() << "'" << LOG_END;
+            processor->DoInitialize();
+            LOG_INFO(m_logger) << "Initialized JEventProcessor '" << processor->GetTypeName() << "'" << LOG_END;
+        }
+    }
+    LOG_DEBUG(m_logger) << "Initialized arrow '" << get_name() << "'" << LOG_END;
 }
 
 void JEventMapArrow::finalize() {
     LOG_DEBUG(m_logger) << "Finalizing arrow '" << get_name() << "'" << LOG_END;
+    for (auto processor : m_procs) {
+        if (processor->GetCallbackStyle() == JEventProcessor::CallbackStyle::LegacyMode) {
+            LOG_DEBUG(m_logger) << "Finalizing JEventProcessor " << processor->GetTypeName() << LOG_END;
+            processor->DoFinalize();
+            LOG_INFO(m_logger) << "Finalized JEventProcessor " << processor->GetTypeName() << LOG_END;
+        }
+    }
+    LOG_DEBUG(m_logger) << "Finalized arrow " << get_name() << LOG_END;
 }
 

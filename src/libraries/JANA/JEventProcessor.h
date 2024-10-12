@@ -73,7 +73,7 @@ public:
         // any contention.
 
         if (m_status == Status::Uninitialized) {
-            DoInitialize();
+            throw JException("JEventProcessor: Attempted to call DoTap() before Initialize()");
         }
         else if (m_status == Status::Finalized) {
             throw JException("JEventProcessor: Attempted to call DoMap() after Finalize()");
@@ -121,15 +121,16 @@ public:
 
         auto run_number = event->GetRunNumber();
 
-        if (m_status == Status::Uninitialized) {
-            DoInitialize();
-        }
-        else if (m_status == Status::Finalized) {
-            throw JException("JEventProcessor: Attempted to call DoMap() after Finalize()");
-        }
         {
             // Protect the call to BeginRun(), etc, to prevent some threads from running Process() before BeginRun().
             std::lock_guard<std::mutex> lock(m_mutex);
+
+            if (m_status == Status::Uninitialized) {
+                throw JException("JEventProcessor: Attempted to call DoLegacyProcess() before Initialize()");
+            }
+            else if (m_status == Status::Finalized) {
+                throw JException("JEventProcessor: Attempted to call DoLegacyProcess() after Finalize()");
+            }
             if (m_last_run_number != run_number) {
                 if (m_last_run_number != -1) {
                     CallWithJExceptionWrapper("JEventProcessor::EndRun", [&](){ EndRun(); });
