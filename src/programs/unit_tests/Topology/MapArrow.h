@@ -81,10 +81,6 @@ public:
     }
 
     size_t get_pending() final { return _input_queue->size(); }
-
-    size_t get_threshold() final { return _input_queue->get_threshold(); }
-
-    void set_threshold(size_t threshold) final { _input_queue->set_threshold(threshold); }
 };
 
 

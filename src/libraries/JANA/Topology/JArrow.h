@@ -73,11 +73,6 @@ public:
     // TODO: Make no longer virtual
     virtual size_t get_pending();
 
-    // TODO: Get rid of me
-    virtual size_t get_threshold();
-
-    virtual void set_threshold(size_t /* threshold */);
-
     void attach(JArrow* downstream) {
         m_listeners.push_back(downstream);
     };
@@ -109,8 +104,6 @@ struct PlaceRefBase {
     size_t max_item_count = 1;
 
     virtual size_t get_pending() { return 0; }
-    virtual size_t get_threshold() { return 0; }
-    virtual void set_threshold(size_t) {}
 };
 
 template <typename T>
@@ -143,23 +136,6 @@ struct PlaceRef : public PlaceRefBase {
             return queue->size();
         }
         return 0;
-    }
-
-    size_t get_threshold() override {
-        assert(place_ref != nullptr);
-        if (is_input && is_queue) {
-            auto queue = static_cast<JMailbox<T*>*>(place_ref);
-            return queue->get_threshold();
-        }
-        return -1;
-    }
-
-    void set_threshold(size_t threshold) override {
-        assert(place_ref != nullptr);
-        if (is_input && is_queue) {
-            auto queue = static_cast<JMailbox<T*>*>(place_ref);
-            queue->set_threshold(threshold);
-        }
     }
 
     bool pull(Data<T>& data) {
@@ -234,21 +210,6 @@ inline size_t JArrow::get_pending() {
         sum += place->get_pending();
     }
     return sum;
-}
-
-inline size_t JArrow::get_threshold() {
-    size_t result = -1;
-    for (PlaceRefBase* place : m_places) {
-        result = std::min(result, place->get_threshold());
-    }
-    return result;
-
-}
-
-inline void JArrow::set_threshold(size_t threshold) {
-    for (PlaceRefBase* place : m_places) {
-        place->set_threshold(threshold);
-    }
 }
 
 
