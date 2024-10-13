@@ -27,7 +27,7 @@ void JEventMapArrow::add_processor(JEventProcessor* processor) {
 
 void JEventMapArrow::process(Event* event, bool& success, JArrowMetrics::Status& status) {
 
-    LOG_DEBUG(m_logger) << "JEventMapArrow '" << get_name() << "': Starting event# " << (*event)->GetEventNumber() << LOG_END;
+    LOG_DEBUG(m_logger) << "Executing arrow " << get_name() << " for event# " << (*event)->GetEventNumber() << LOG_END;
     for (JEventSource* source : m_sources) {
         JCallGraphEntryMaker cg_entry(*(*event)->GetJCallGraphRecorder(), source->GetTypeName()); // times execution until this goes out of scope
         source->Preprocess(**event);
@@ -45,7 +45,7 @@ void JEventMapArrow::process(Event* event, bool& success, JArrowMetrics::Status&
             processor->DoMap(*event);
         }
     }
-    LOG_DEBUG(m_logger) << "JEventMapArrow '" << get_name() << "': Finished event# " << (*event)->GetEventNumber() << LOG_END;
+    LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " for event# " << (*event)->GetEventNumber() << LOG_END;
     success = true;
     status = JArrowMetrics::Status::KeepGoing;
 }

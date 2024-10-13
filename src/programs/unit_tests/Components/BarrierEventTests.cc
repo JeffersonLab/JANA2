@@ -34,11 +34,36 @@ struct BarrierSource : public JEventSource {
         else {
             LOG_INFO(GetLogger()) << "Emitting non-barrier event " << event_nr << LOG_END;
         }
-        bench.consume_cpu_ms(50, 0, true);
+        bench.consume_cpu_ms(50, 0, false);
         return Result::Success;
     }
 };
 
+
+struct LegacyBarrierProcessor : public JEventProcessor {
+
+    JBenchUtils bench;
+    std::mutex m_my_mutex;
+
+
+    void Process(const std::shared_ptr<const JEvent>& event) override {
+        
+        bench.consume_cpu_ms(200, 0, true);
+
+        std::lock_guard<std::mutex> lock(m_my_mutex);
+
+        if (event->GetSequential()) {
+            LOG_INFO(GetLogger()) << "Processing barrier event = " << event->GetEventNumber() << ", writing global var = " << global_resource+1 << LOG_END;
+            REQUIRE(global_resource == ((event->GetEventNumber() - 1) / 10));
+            global_resource += 1;
+        }
+        else {
+            LOG_INFO(GetLogger()) << "Processing non-barrier event = " << event->GetEventNumber() << ", reading global var = " << global_resource << LOG_END;
+            REQUIRE(global_resource == (event->GetEventNumber() / 10));
+        }
+        bench.consume_cpu_ms(100, 0, true);
+    }
+};
 
 
 struct BarrierProcessor : public JEventProcessor {
@@ -48,6 +73,10 @@ struct BarrierProcessor : public JEventProcessor {
     BarrierProcessor() {
         SetCallbackStyle(CallbackStyle::ExpertMode);
     }
+    void ProcessParallel(const JEvent&) override {
+        bench.consume_cpu_ms(200, 0, false);
+    }
+
     void Process(const JEvent& event) override {
 
         if (event.GetSequential()) {
@@ -59,22 +88,34 @@ struct BarrierProcessor : public JEventProcessor {
             LOG_INFO(GetLogger()) << "Processing non-barrier event = " << event.GetEventNumber() << ", reading global var = " << global_resource << LOG_END;
             REQUIRE(global_resource == (event.GetEventNumber() / 10));
         }
-        bench.consume_cpu_ms(100, 0, true);
+        bench.consume_cpu_ms(100, 0, false);
     }
 };
 
 
 TEST_CASE("BarrierEventTests") {
-	SECTION("Basic Barrier") {
-		JApplication app;
-		app.Add(new BarrierProcessor);
-		app.Add(new BarrierSource);
-		app.SetParameterValue("nthreads", 4);
-		app.SetParameterValue("jana:nevents", 40);
-		app.SetParameterValue("jana:log:show_threadstamp", true);
-		app.SetParameterValue("jana:loglevel", "debug");
-		app.Run(true);
-	}
+    global_resource = 0;
+    JApplication app;
+    app.Add(new BarrierProcessor);
+    app.Add(new BarrierSource);
+    app.SetParameterValue("nthreads", 4);
+    app.SetParameterValue("jana:nevents", 40);
+    //app.SetParameterValue("jana:log:show_threadstamp", true);
+    //app.SetParameterValue("jana:loglevel", "debug");
+    app.Run(true);
+};
+
+
+TEST_CASE("BarrierEventTests_Legacy") {
+    global_resource = 0;
+    JApplication app;
+    app.Add(new LegacyBarrierProcessor);
+    app.Add(new BarrierSource);
+    app.SetParameterValue("nthreads", 4);
+    app.SetParameterValue("jana:nevents", 40);
+    //app.SetParameterValue("jana:log:show_threadstamp", true);
+    //app.SetParameterValue("jana:loglevel", "debug");
+    app.Run(true);
 };
 
 

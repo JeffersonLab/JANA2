@@ -133,7 +133,7 @@ Event* JEventSourceArrow::process(Event* event, bool& success, JArrowMetrics::St
         }
         else if (source_status == JEventSource::Result::FailureTryAgain){
             // This JEventSource isn't finished yet, so we obtained either Success or TryAgainLater
-            LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " with result FailureTryAgain"<< LOG_END;
+            LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " with result ComeBackLater"<< LOG_END;
             success = false;
             arrow_status = JArrowMetrics::Status::ComeBackLater;
             return event;
