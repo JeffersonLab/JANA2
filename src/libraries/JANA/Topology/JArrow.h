@@ -3,8 +3,6 @@
 // Subject to the terms in the LICENSE file found in the top-level directory.
 
 #pragma once
-#include <iostream>
-#include <atomic>
 #include <cassert>
 #include <vector>
 
@@ -28,8 +26,6 @@ private:
     const bool m_is_source;       // Whether or not this arrow should activate/drain the topology
     bool m_is_sink;         // Whether or not tnis arrow contributes to the final event count
     JArrowMetrics m_metrics;      // Performance information accumulated over all workers
-
-    mutable std::mutex m_arrow_mutex;  // Protects access to arrow properties
 
     friend class JScheduler;
     std::vector<JArrow *> m_listeners;    // Downstream Arrows
@@ -120,36 +116,9 @@ struct PlaceRefBase {
 template <typename T>
 struct PlaceRef : public PlaceRefBase {
 
-    PlaceRef(JArrow* parent) {
-        assert(parent != nullptr);
-        parent->attach(this);
-    }
-
     PlaceRef(JArrow* parent, bool is_input, size_t min_item_count, size_t max_item_count) {
         assert(parent != nullptr);
         parent->attach(this);
-        this->is_input = is_input;
-        this->min_item_count = min_item_count;
-        this->max_item_count = max_item_count;
-    }
-
-    PlaceRef(JArrow* parent, JMailbox<T*>* queue, bool is_input, size_t min_item_count, size_t max_item_count) {
-        assert(parent != nullptr);
-        assert(queue != nullptr);
-        parent->attach(this);
-        this->place_ref = queue;
-        this->is_queue = true;
-        this->is_input = is_input;
-        this->min_item_count = min_item_count;
-        this->max_item_count = max_item_count;
-    }
-
-    PlaceRef(JArrow* parent, JPool<T>* pool, bool is_input, size_t min_item_count, size_t max_item_count)  {
-        assert(parent != nullptr);
-        assert(pool != nullptr);
-        parent->attach(this);
-        this->place_ref = pool;
-        this->is_queue = false;
         this->is_input = is_input;
         this->min_item_count = min_item_count;
         this->max_item_count = max_item_count;
