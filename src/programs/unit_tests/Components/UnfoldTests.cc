@@ -64,7 +64,10 @@ TEST_CASE("UnfoldTests_Basic") {
     parent_queue.try_push(&ts2, 1);
 
     TestUnfolder unfolder;
-    JUnfoldArrow arrow("sut", &unfolder, &parent_queue, &child_pool, &child_queue);
+    JUnfoldArrow arrow("sut", &unfolder);
+    arrow.attach_parent_in(&parent_queue);
+    arrow.attach_child_in(&child_pool);
+    arrow.attach_child_out(&child_queue);
 
     JArrowMetrics m;
     arrow.initialize();
@@ -100,7 +103,10 @@ TEST_CASE("FoldArrowTests") {
     JMailbox<std::shared_ptr<JEvent>*> child_out;
     JMailbox<std::shared_ptr<JEvent>*> parent_out;
 
-    JFoldArrow arrow("sut", JEventLevel::Timeslice, JEventLevel::PhysicsEvent, &child_in, &child_out, &parent_out);
+    JFoldArrow arrow("sut", JEventLevel::Timeslice, JEventLevel::PhysicsEvent);
+    arrow.attach_child_in(&child_in);
+    arrow.attach_child_out(&child_out);
+    arrow.attach_parent_out(&parent_out);
     JArrowMetrics metrics;
     arrow.initialize();
 

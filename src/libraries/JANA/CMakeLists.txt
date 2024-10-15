@@ -20,6 +20,7 @@ set(JANA2_SOURCES
     Topology/JEventProcessorArrow.cc
     Topology/JEventSourceArrow.cc
     Topology/JEventMapArrow.cc
+    Topology/JEventTapArrow.cc
     Topology/JTopologyBuilder.cc
 
     Services/JComponentManager.cc

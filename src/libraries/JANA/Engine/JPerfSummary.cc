@@ -24,9 +24,9 @@ std::ostream& operator<<(std::ostream& os, const JPerfSummary& s) {
     os << "  Efficiency [0..1]:           " << std::setprecision(3) << s.avg_efficiency_frac << std::endl;
     os << std::endl;
 
-    os << "  +--------------------------+--------+-----+---------+--------+---------+-------------+" << std::endl;
-    os << "  |           Name           |  Type  | Par | Threads | Thresh | Pending |  Completed  |" << std::endl;
-    os << "  +--------------------------+--------+-----+---------+--------+---------+-------------+" << std::endl;
+    os << "  +--------------------------+--------+-----+---------+---------+-------------+" << std::endl;
+    os << "  |           Name           |  Type  | Par | Threads | Pending |  Completed  |" << std::endl;
+    os << "  +--------------------------+--------+-----+---------+---------+-------------+" << std::endl;
 
     for (auto as : s.arrows) {
         os << "  | "
@@ -37,17 +37,15 @@ std::ostream& operator<<(std::ostream& os, const JPerfSummary& s) {
 
         if (!as.is_source) {
 
-            os << std::setw(7) << as.threshold << " |"
-               << std::setw(8) << as.messages_pending << " |";
+            os << std::setw(8) << as.messages_pending << " |";
         }
         else {
-
-            os << "      - |       - |";
+            os << "       - |";
         }
         os << std::setw(12) << as.total_messages_completed << " |"
            << std::endl;
     }
-    os << "  +--------------------------+--------+-----+---------+--------+---------+-------------+" << std::endl;
+    os << "  +--------------------------+--------+-----+---------+---------+-------------+" << std::endl;
 
 
     os << "  +--------------------------+-------------+--------------+----------------+--------------+----------------+" << std::endl;

@@ -411,7 +411,6 @@ void JScheduler::summarize_arrows(std::vector<ArrowSummary>& summaries) {
         summary.is_source = as.arrow->is_source();
         summary.is_sink = as.arrow->is_sink();
         summary.messages_pending = as.arrow->get_pending();
-        summary.threshold = as.arrow->get_threshold();
 
         summary.thread_count = as.thread_count;
         summary.running_upstreams = as.active_or_draining_upstream_arrow_count;

@@ -35,8 +35,8 @@ public:
     std::vector<JPoolBase*> pools;          // Pools shared between arrows
     
     // Topology configuration
-    size_t m_event_pool_size = 4;
-    size_t m_event_queue_threshold = 80;
+    size_t m_pool_capacity = 4;
+    size_t m_queue_capacity = 4;
     size_t m_location_count = 1;
     bool m_enable_stealing = false;
     bool m_limit_total_events_in_flight = true;
@@ -64,9 +64,9 @@ public:
 
     void create_topology();
 
-    void attach_lower_level(JEventLevel current_level, JUnfoldArrow* parent_unfolder, JFoldArrow* parent_folder, bool found_sink);
-
-    void attach_top_level(JEventLevel current_level);
+    void attach_level(JEventLevel current_level, JUnfoldArrow* parent_unfolder, JFoldArrow* parent_folder);
+    void connect_to_first_available(JArrow* upstream, std::vector<JArrow*> downstreams);
+    void connect(JArrow* upstream, size_t upstream_index, JArrow* downstream, size_t downstream_index);
 
     std::string print_topology();
 

@@ -63,9 +63,6 @@ public:
     }
 
     size_t get_pending() final { return m_inbox->size(); };
-    size_t get_threshold() final { return m_inbox->get_threshold(); };
-    void set_threshold(size_t threshold) final { m_inbox->set_threshold(threshold);};
-
     void execute(JArrowMetrics&, size_t location_id) override;
 };
 
@@ -83,9 +80,6 @@ public:
     }
 
     size_t get_pending() final { return m_inbox->size(); };
-    size_t get_threshold() final { return m_inbox->get_threshold(); };
-    void set_threshold(size_t threshold) final { m_inbox->set_threshold(threshold);};
-
     void execute(JArrowMetrics&, size_t location_id) override;
 };
 
@@ -104,8 +98,6 @@ public:
     }
 
     size_t get_pending() final { return m_inbox->size(); };
-    size_t get_threshold() final { return m_inbox->get_threshold(); };
-    void set_threshold(size_t threshold) final { m_inbox->set_threshold(threshold);};
     void execute(JArrowMetrics&, size_t location_id) override;
 };
 

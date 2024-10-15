@@ -24,58 +24,16 @@ private:
 public:
     JFoldArrow(
         std::string name,
-        //JEventFolder* folder,
         JEventLevel parent_level,
-        JEventLevel child_level,
-        JMailbox<EventT*>* child_in,
-        JEventPool* child_out,
-        JMailbox<EventT*>* parent_out)
+        JEventLevel child_level)
 
       : JArrow(std::move(name), false, false, false), 
         // m_folder(folder),
         m_parent_level(parent_level),
         m_child_level(child_level),
-        m_child_in(this, child_in, true, 1, 1),
-        m_child_out(this, child_out, false, 1, 1),
-        m_parent_out(this, parent_out, false, 1, 1)
-    {
-    }
-
-    JFoldArrow(
-        std::string name,
-        //JEventFolder* folder,
-        JEventLevel parent_level,
-        JEventLevel child_level,
-        JMailbox<EventT*>* child_in,
-        JMailbox<EventT*>* child_out,
-        JMailbox<EventT*>* parent_out)
-
-      : JArrow(std::move(name), false, false, false), 
-        // m_folder(folder),
-        m_parent_level(parent_level),
-        m_child_level(child_level),
-        m_child_in(this, child_in, true, 1, 1),
-        m_child_out(this, child_out, false, 1, 1),
-        m_parent_out(this, parent_out, false, 1, 1)
-    {
-    }
-
-    JFoldArrow(
-        std::string name,
-        //JEventFolder* folder,
-        JEventLevel parent_level,
-        JEventLevel child_level,
-        JMailbox<EventT*>* child_in,
-        JEventPool* child_out,
-        JEventPool* parent_out)
-
-      : JArrow(std::move(name), false, false, false), 
-        // m_folder(folder),
-        m_parent_level(parent_level),
-        m_child_level(child_level),
-        m_child_in(this, child_in, true, 1, 1),
-        m_child_out(this, child_out, false, 1, 1),
-        m_parent_out(this, parent_out, false, 1, 1)
+        m_child_in(this, true, 1, 1),
+        m_child_out(this, false, 1, 1),
+        m_parent_out(this, false, 1, 1)
     {
     }
 

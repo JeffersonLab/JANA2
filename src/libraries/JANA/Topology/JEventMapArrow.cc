@@ -27,7 +27,7 @@ void JEventMapArrow::add_processor(JEventProcessor* processor) {
 
 void JEventMapArrow::process(Event* event, bool& success, JArrowMetrics::Status& status) {
 
-    LOG_DEBUG(m_logger) << "JEventMapArrow '" << get_name() << "': Starting event# " << (*event)->GetEventNumber() << LOG_END;
+    LOG_DEBUG(m_logger) << "Executing arrow " << get_name() << " for event# " << (*event)->GetEventNumber() << LOG_END;
     for (JEventSource* source : m_sources) {
         JCallGraphEntryMaker cg_entry(*(*event)->GetJCallGraphRecorder(), source->GetTypeName()); // times execution until this goes out of scope
         source->Preprocess(**event);
@@ -45,16 +45,32 @@ void JEventMapArrow::process(Event* event, bool& success, JArrowMetrics::Status&
             processor->DoMap(*event);
         }
     }
-    LOG_DEBUG(m_logger) << "JEventMapArrow '" << get_name() << "': Finished event# " << (*event)->GetEventNumber() << LOG_END;
+    LOG_DEBUG(m_logger) << "Executed arrow " << get_name() << " for event# " << (*event)->GetEventNumber() << LOG_END;
     success = true;
     status = JArrowMetrics::Status::KeepGoing;
 }
 
 void JEventMapArrow::initialize() {
     LOG_DEBUG(m_logger) << "Initializing arrow '" << get_name() << "'" << LOG_END;
+    for (auto processor : m_procs) {
+        if (processor->GetCallbackStyle() == JEventProcessor::CallbackStyle::LegacyMode) {
+            LOG_INFO(m_logger) << "Initializing JEventProcessor '" << processor->GetTypeName() << "'" << LOG_END;
+            processor->DoInitialize();
+            LOG_INFO(m_logger) << "Initialized JEventProcessor '" << processor->GetTypeName() << "'" << LOG_END;
+        }
+    }
+    LOG_DEBUG(m_logger) << "Initialized arrow '" << get_name() << "'" << LOG_END;
 }
 
 void JEventMapArrow::finalize() {
     LOG_DEBUG(m_logger) << "Finalizing arrow '" << get_name() << "'" << LOG_END;
+    for (auto processor : m_procs) {
+        if (processor->GetCallbackStyle() == JEventProcessor::CallbackStyle::LegacyMode) {
+            LOG_DEBUG(m_logger) << "Finalizing JEventProcessor " << processor->GetTypeName() << LOG_END;
+            processor->DoFinalize();
+            LOG_INFO(m_logger) << "Finalized JEventProcessor " << processor->GetTypeName() << LOG_END;
+        }
+    }
+    LOG_DEBUG(m_logger) << "Finalized arrow " << get_name() << LOG_END;
 }
 

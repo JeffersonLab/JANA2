@@ -23,18 +23,16 @@ public:
 
     JUnfoldArrow(
         std::string name,
-        JEventUnfolder* unfolder,
-        JMailbox<EventT*>* parent_in,
-        JEventPool* child_in,
-        JMailbox<EventT*>* child_out)
+        JEventUnfolder* unfolder)
 
       : JArrow(std::move(name), false, false, false), 
         m_unfolder(unfolder),
-        m_parent_in(this, parent_in, true, 1, 1),
-        m_child_in(this, child_in, true, 1, 1),
-        m_child_out(this, child_out, false, 1, 1)
+        m_parent_in(this, true, 1, 1),
+        m_child_in(this, true, 1, 1),
+        m_child_out(this, false, 1, 1)
     {
     }
+
 
     void attach_parent_in(JMailbox<EventT*>* parent_in) {
         m_parent_in.place_ref = parent_in;

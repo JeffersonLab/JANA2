@@ -14,10 +14,10 @@ struct TestMapArrow : public JJunctionArrow<TestMapArrow, int, double> {
                  JMailbox<double*>* qd) 
     : JJunctionArrow<TestMapArrow,int,double>("testmaparrow", false, false, true) {
 
-        first_input = {this, qi, true, 1, 1};
-        first_output = {this, pi, false, 1, 1};
-        second_input = {this, pd, true, 1, 1};
-        second_output = {this, qd, false, 1, 1};
+        first_input.set_queue(qi);
+        first_output.set_pool(pi);
+        second_input.set_pool(pd);
+        second_output.set_queue(qd);
     }
 
     Status process(Data<int>& input_int, 

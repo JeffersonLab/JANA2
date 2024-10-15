@@ -13,10 +13,10 @@ template <typename DerivedT, typename FirstT, typename SecondT>
 class JJunctionArrow : public JArrow {
 
 protected:    
-    PlaceRef<FirstT> first_input {this};
-    PlaceRef<FirstT> first_output {this};
-    PlaceRef<SecondT> second_input {this};
-    PlaceRef<SecondT> second_output {this};
+    PlaceRef<FirstT> first_input {this, true, 1, 1};
+    PlaceRef<FirstT> first_output {this, false, 1, 1};
+    PlaceRef<SecondT> second_input {this, true, 1, 1};
+    PlaceRef<SecondT> second_output {this, false, 1, 1};
 
 public:
     using Status = JArrowMetrics::Status;
