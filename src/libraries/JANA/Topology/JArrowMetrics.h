@@ -5,6 +5,7 @@
 #pragma once
 #include <mutex>
 #include <chrono>
+#include <string>
 
 class JArrowMetrics {
 
