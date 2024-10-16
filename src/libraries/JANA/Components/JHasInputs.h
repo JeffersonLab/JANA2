@@ -87,6 +87,9 @@ protected:
         Input(JHasInputs* owner) {
             owner->RegisterInput(this);
             this->type_name = JTypeInfo::demangle<T>();
+            this->names.push_back("");
+            // For non-PODIO inputs, these are technically tags for now, not names
+            this->levels.push_back(JEventLevel::None);
         }
 
         Input(JHasInputs* owner, const InputOptions& options) {
@@ -137,6 +140,8 @@ protected:
         PodioInput(JHasInputs* owner) {
             owner->RegisterInput(this);
             this->type_name = JTypeInfo::demangle<PodioT>();
+            this->names.push_back(this->type_name);
+            this->levels.push_back(JEventLevel::None);
         }
 
         PodioInput(JHasInputs* owner, const InputOptions& options) {
