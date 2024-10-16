@@ -61,23 +61,18 @@ public:
     
     void DoInit() {
         std::lock_guard<std::mutex> lock(m_mutex);
+        if (m_status != Status::Uninitialized) {
+            throw JException("JEventUnfolder: Attempting to initialize twice or from an invalid state");
+        }
         // TODO: Obtain overrides of collection names from param manager
-        
         for (auto* parameter : m_parameters) {
             parameter->Configure(*(m_app->GetJParameterManager()), m_prefix);
         }
         for (auto* service : m_services) {
             service->Fetch(m_app);
         }
-        if (m_status == Status::Uninitialized) {
-            CallWithJExceptionWrapper("JEventUnfolder::Init", [&](){
-                Init();
-            });
-            m_status = Status::Initialized;
-        }
-        else {
-            throw JException("JEventUnfolder: Attempting to initialize twice or from an invalid state");
-        }
+        CallWithJExceptionWrapper("JEventUnfolder::Init", [&](){Init();});
+        m_status = Status::Initialized;
     }
 
     void DoPreprocess(const JEvent& parent) {

@@ -1,14 +1,19 @@
 #include <JANA/JEventSource.h>
 
 void JEventSource::DoInit() {
-    if (m_status == Status::Uninitialized) {
-        CallWithJExceptionWrapper("JEventSource::Init", [&](){ Init();});
-        m_status = Status::Initialized;
-        LOG_INFO(GetLogger()) << "Initialized JEventSource '" << GetTypeName() << "' ('" << GetResourceName() << "')" << LOG_END;
+    std::lock_guard<std::mutex> lock(m_mutex);
+    if (m_status != Status::Uninitialized) {
+        throw JException("Attempted to initialize a JEventSource that is already initialized!");
     }
-    else {
-        throw JException("Attempted to initialize a JEventSource that is not uninitialized!");
+    for (auto* parameter : m_parameters) {
+        parameter->Configure(*(m_app->GetJParameterManager()), m_prefix);
     }
+    for (auto* service : m_services) {
+        service->Fetch(m_app);
+    }
+    CallWithJExceptionWrapper("JEventSource::Init", [&](){ Init(); });
+    m_status = Status::Initialized;
+    LOG_INFO(GetLogger()) << "Initialized JEventSource '" << GetTypeName() << "' ('" << GetResourceName() << "')" << LOG_END;
 }
 
 void JEventSource::DoInitialize() {
