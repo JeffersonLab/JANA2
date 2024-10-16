@@ -108,23 +108,24 @@ protected:
 
         void GetCollection(const JEvent& event) {
             auto& level = this->levels[0];
+            m_data.clear();
             if (level == event.GetLevel() || level == JEventLevel::None) {
-                m_data = event.Get<T>(this->names[0], !this->is_optional);
+                event.Get<T>(m_data, this->names[0], !this->is_optional);
             }
             else {
                 if (this->is_optional && !event.HasParent(level)) return;
-                m_data = event.GetParent(level).template Get<T>(this->names[0], !this->is_optional);
+                event.GetParent(level).template Get<T>(m_data, this->names[0], !this->is_optional);
             }
         }
         void PrefetchCollection(const JEvent& event) {
             auto& level = this->levels[0];
             auto& name = this->names[0];
             if (level == event.GetLevel() || level == JEventLevel::None) {
-                event.Get<T>(name, !this->is_optional);
+                event.GetFactory<T>(name, !this->is_optional)->Create(event.shared_from_this());
             }
             else {
                 if (this->is_optional && !event.HasParent(level)) return;
-                event.GetParent(level).template Get<T>(name, !this->is_optional);
+                event.GetParent(level).template GetFactory<T>(name, !this->is_optional)->Create(event.shared_from_this());
             }
         }
     };
