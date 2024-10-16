@@ -96,6 +96,8 @@ protected:
         }
 
         const std::vector<const T*>& operator()() { return m_data; }
+        const std::vector<const T*>& operator*() { return m_data; }
+        const std::vector<const T*>* operator->() { return &m_data; }
 
 
     private:
@@ -144,6 +146,12 @@ protected:
         }
 
         const typename PodioT::collection_type* operator()() {
+            return m_data;
+        }
+        const typename PodioT::collection_type& operator*() {
+            return *m_data;
+        }
+        const typename PodioT::collection_type* operator->() {
             return m_data;
         }
 
