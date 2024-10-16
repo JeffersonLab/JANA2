@@ -9,6 +9,7 @@
 #include <JANA/Utils/JEventLevel.h>
 #include <JANA/Utils/JCallGraphRecorder.h>
 #include <JANA/Components/JComponent.h>
+#include <JANA/Components/JHasFactoryOutputs.h>
 
 #include <string>
 #include <typeindex>
@@ -22,12 +23,12 @@ class JEvent;
 class JObject;
 class JApplication;
 
-class JFactory : public jana::components::JComponent {
+class JFactory : public jana::components::JComponent,
+                 public jana::components::JHasFactoryOutputs {
 public:
 
     enum class Status {Uninitialized, Unprocessed, Processed, Inserted};
     enum class CreationStatus { NotCreatedYet, Created, Inserted, InsertedViaGetObjects, NeverCreated };
-
     enum JFactory_Flags_t {
         JFACTORY_NULL = 0x00,    // Not used anywhere
         PERSISTENT = 0x01,       // Used heavily. Possibly better served by JServices, hierarchical events, or event groups. 
@@ -36,10 +37,27 @@ public:
         REGENERATE = 0x08        // Replaces JANA1 JFactory_base::use_factory and JFactory::GetCheckSourceFirst()
     };
 
+protected:
+    std::string mObjectName;
+    std::string mTag;
+    uint32_t mFlags = WRITE_TO_OUTPUT;
+    int32_t mPreviousRunNumber = -1;
+    std::unordered_map<std::type_index, std::unique_ptr<JAny>> mUpcastVTable;
+
+    mutable Status mStatus = Status::Uninitialized;
+    CreationStatus mCreationStatus = CreationStatus::NotCreatedYet;
+    mutable JCallGraphRecorder::JDataOrigin m_insert_origin = JCallGraphRecorder::ORIGIN_NOT_AVAILABLE; // (see note at top of JCallGraphRecorder.h)
+
+
+public:
+    JFactory() : mStatus(Status::Uninitialized) {
+    }
+
     JFactory(std::string aName, std::string aTag = "")
     : mObjectName(std::move(aName)), 
       mTag(std::move(aTag)), 
       mStatus(Status::Uninitialized) {
+          SetTypeName(mObjectName);
           SetPrefix(aTag.empty() ? mObjectName : mObjectName + ":" + mTag);
     };
 
@@ -135,9 +153,13 @@ public:
     }
 
     // Overloaded by JFactoryT
-    virtual std::type_index GetObjectType() const = 0;
 
-    virtual void ClearData() = 0;
+    virtual void ClearData() {
+        if (mStatus == Status::Processed) {
+            mStatus = Status::Unprocessed;
+            mCreationStatus = CreationStatus::NotCreatedYet;
+        }
+    };
 
 
     // Overloaded by user Factories
@@ -148,8 +170,10 @@ public:
     virtual void Process(const std::shared_ptr<const JEvent>&) {}
     virtual void Finish() {}
 
+    virtual std::type_index GetObjectType() const { throw JException("GetObjectType not supported for non-JFactoryT's"); }
+
     virtual std::size_t GetNumObjects() const {
-        return 0;
+        throw JException("Not implemented!");
     }
 
 
@@ -173,23 +197,15 @@ public:
     void DoInit();
     void Summarize(JComponentSummary& summary) const override;
 
+    virtual void Set(const std::vector<JObject*> &) {
+        throw JException("Not implemented!");
+    };
 
-    virtual void Set(const std::vector<JObject *> &data) = 0;
-    virtual void Insert(JObject *data) = 0;
+    virtual void Insert(JObject*) {
+        throw JException("Not implemented!");
+    };
 
 
-protected:
-
-    std::string mObjectName;
-    std::string mTag;
-    uint32_t mFlags = WRITE_TO_OUTPUT;
-    int32_t mPreviousRunNumber = -1;
-    std::unordered_map<std::type_index, std::unique_ptr<JAny>> mUpcastVTable;
-
-    mutable Status mStatus = Status::Uninitialized;
-    mutable JCallGraphRecorder::JDataOrigin m_insert_origin = JCallGraphRecorder::ORIGIN_NOT_AVAILABLE; // (see note at top of JCallGraphRecorder.h)
-
-    CreationStatus mCreationStatus = CreationStatus::NotCreatedYet;
 };
 
 // Because C++ doesn't support templated virtual functions, we implement our own dispatch table, mUpcastVTable.
