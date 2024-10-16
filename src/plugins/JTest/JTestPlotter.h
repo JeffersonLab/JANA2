@@ -5,34 +5,23 @@
 #ifndef JTestEventProcessor_h
 #define JTestEventProcessor_h
 
-#include <JANA/JApplication.h>
 #include <JANA/JEventProcessor.h>
 #include <JANA/Utils/JBenchUtils.h>
-#include "JTestTracker.h"
-#include <mutex>
+#include "JTestDataObjects.h"
 
 class JTestPlotter : public JEventProcessor {
 
-    size_t m_cputime_ms = 0;
-    size_t m_write_bytes = 1000;
-    double m_cputime_spread = 0.25;
-    double m_write_spread = 0.25;
+    Parameter<size_t> m_cputime_ms {this, "cputime_ms", 0, "Time spent during plotting" };
+    Parameter<size_t> m_write_bytes {this, "bytes", 1000, "Bytes written during plotting"};
+    Parameter<double> m_cputime_spread {this, "cputime_spread", 0.25, "Spread of time spent during plotting"};
+    Parameter<double> m_write_spread {this, "bytes_spread", 0.25, "Spread of bytes written during plotting"};
     JBenchUtils m_bench_utils = JBenchUtils();
-    std::mutex m_mutex;
 
 public:
 
     JTestPlotter() {
-        SetPrefix("jtest:plotter");
+        SetPrefix("plotter");
         SetTypeName(NAME_OF_THIS);
-    }
-
-    void Init() override {
-        auto app = GetApplication();
-        app->SetDefaultParameter("jtest:plotter_ms", m_cputime_ms, "Time spent during plotting");
-        app->SetDefaultParameter("jtest:plotter_spread", m_cputime_spread, "Spread of time spent during plotting");
-        app->SetDefaultParameter("jtest:plotter_bytes", m_write_bytes, "Bytes written during plotting");
-        app->SetDefaultParameter("jtest:plotter_bytes_spread", m_write_spread, "Spread of bytes written during plotting");
     }
 
     void Process(const std::shared_ptr<const JEvent>& event) override {
@@ -43,17 +32,17 @@ public:
         m_bench_utils.read_memory(td->buffer);
 
         // Read the extra data objects inserted by JTestTracker
-        event->Get<JTestTracker::JTestTrackAuxilliaryData>();
+        auto tad = event->Get<JTestTrackAuxilliaryData>();
 
         // Everything that happens after here is in a critical section
         std::lock_guard<std::mutex> lock(m_mutex);
 
         // Consume CPU
-        m_bench_utils.consume_cpu_ms(m_cputime_ms, m_cputime_spread);
+        m_bench_utils.consume_cpu_ms(*m_cputime_ms + tad.at(0)->something, *m_cputime_spread);
 
         // Write the histogram data
         auto hd = new JTestHistogramData;
-        m_bench_utils.write_memory(hd->buffer, m_write_bytes, m_write_spread);
+        m_bench_utils.write_memory(hd->buffer, *m_write_bytes, *m_write_spread);
         event->Insert(hd);
     }
 

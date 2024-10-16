@@ -45,4 +45,10 @@ struct JTestHistogramData : public JObject {
     JOBJECT_PUBLIC(JTestHistogramData)
 };
 
+struct JTestTrackAuxilliaryData : public JObject {
+    int something = 1;
+    float something2 = 2;
+    JOBJECT_PUBLIC(JTestTrackAuxilliaryData)
+};
+
 #endif //JANA2_JTESTEVENTCONTEXTS_H
