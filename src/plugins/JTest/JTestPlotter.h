@@ -27,15 +27,18 @@ public:
     void Process(const std::shared_ptr<const JEvent>& event) override {
 
         m_bench_utils.set_seed(event->GetEventNumber(), typeid(*this).name());
-        // Read the track data
+       
+        // Produce and acquire the track data
         auto td = event->GetSingle<JTestTrackData>();
-        m_bench_utils.read_memory(td->buffer);
-
-        // Read the extra data objects inserted by JTestTracker
+        
+        // Produce and acquire the track aux data
         auto tad = event->Get<JTestTrackAuxilliaryData>();
 
         // Everything that happens after here is in a critical section
         std::lock_guard<std::mutex> lock(m_mutex);
+
+        // Read the track data
+        m_bench_utils.read_memory(td->buffer);
 
         // Consume CPU
         m_bench_utils.consume_cpu_ms(*m_cputime_ms + tad.at(0)->something, *m_cputime_spread);
