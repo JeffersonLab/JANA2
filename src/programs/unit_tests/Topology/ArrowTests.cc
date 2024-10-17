@@ -1,18 +1,25 @@
 
 #include <catch.hpp>
 #include <JANA/Topology/JJunctionArrow.h>
+#include <JANA/JEvent.h>
 
 namespace jana {
 namespace arrowtests {
 
 
-struct TestMapArrow : public JJunctionArrow<TestMapArrow, int, double> {
+struct ArrowTestData {
+    int x;
+    double y;
+};
 
-    TestMapArrow(JMailbox<int*>* qi,
-                 JPool<int>* pi,
-                 JPool<double>* pd,
-                 JMailbox<double*>* qd) 
-    : JJunctionArrow<TestMapArrow,int,double>("testmaparrow", false, false, true) {
+using EventT = std::shared_ptr<JEvent>;
+struct TestJunctionArrow : public JJunctionArrow<TestJunctionArrow> {
+
+    TestJunctionArrow(JMailbox<EventT*>* qi,
+                      JEventPool* pi,
+                      JEventPool* pd,
+                      JMailbox<EventT*>* qd) 
+    : JJunctionArrow("testjunctionarrow", false, false, true) {
 
         first_input.set_queue(qi);
         first_output.set_pool(pi);
@@ -20,10 +27,10 @@ struct TestMapArrow : public JJunctionArrow<TestMapArrow, int, double> {
         second_output.set_queue(qd);
     }
 
-    Status process(Data<int>& input_int, 
-                   Data<int>& output_int, 
-                   Data<double>& input_double, 
-                   Data<double>& output_double) {
+    Status process(Data& input_int, 
+                   Data& output_int, 
+                   Data& input_double, 
+                   Data& output_double) {
         std::cout << "Hello from process" << std::endl;
 
         REQUIRE(input_int.item_count == 1);
@@ -35,24 +42,27 @@ struct TestMapArrow : public JJunctionArrow<TestMapArrow, int, double> {
         REQUIRE(output_double.item_count == 0);
         REQUIRE(output_double.reserve_count == 1);
         
-        int* x = input_int.items[0];
+        EventT* x_event = input_int.items[0];
         input_int.items[0] = nullptr;
         input_int.item_count = 0;
 
         // TODO: Maybe user shouldn't be allowed to modify reserve_count at all 
         // TODO Maybe user should only be allowed to push and pull from ... range...?
         
-        double* y = input_double.items[0];
+        EventT* y_event = input_double.items[0];
         input_double.items[0] = nullptr;
         input_double.item_count = 0;
 
+        auto data = (*x_event)->Get<ArrowTestData>();
+        int x = data.at(0)->x;
         // Do something useful here
-        *y = *x + 22.2;
+        double y = x + 22.2;
+        (*y_event)->Insert(new ArrowTestData{.x = x, .y = y});
         
-        output_int.items[0] = x;
+        output_int.items[0] = x_event;
         output_int.item_count = 1;
 
-        output_double.items[0] = y;
+        output_double.items[0] = y_event;
         output_double.item_count = 1;
         return Status::KeepGoing;
     }
@@ -60,29 +70,33 @@ struct TestMapArrow : public JJunctionArrow<TestMapArrow, int, double> {
 };
 
 
-TEST_CASE("ArrowTests_Basic") {
+TEST_CASE("ArrowTests_Basic") { 
 
-    JMailbox<int*> qi {2, 1, false};
-    JPool<int> pi {5, 1, true};
-    JPool<double> pd {5, 1, true};
-    JMailbox<double*> qd {2, 1, false};
+    JApplication app;
+    app.Initialize();
+    auto jcm = app.GetService<JComponentManager>();
 
-    pi.init();
-    pd.init();
+    JMailbox<EventT*> qi {2, 1, false};
+    JEventPool pi {jcm, 5, 1, true};
+    JEventPool pd {jcm, 5, 1, true};
+    JMailbox<EventT*> qd {2, 1, false};
 
-    TestMapArrow a {&qi, &pi, &pd, &qd};
+    TestJunctionArrow a {&qi, &pi, &pd, &qd};
 
-    int* x;
+    EventT* x = nullptr;
     pi.pop(&x, 1, 1, 0);
-    *x = 100;
+    REQUIRE(x != nullptr);
+    REQUIRE((*x)->GetEventNumber() == 0);
+    (*x)->Insert(new ArrowTestData {.x = 100, .y=0});
 
     qi.push_and_unreserve(&x, 1, 0, 0);
     JArrowMetrics m;
     a.execute(m, 0);
 
-    double* y;
+    EventT* y;
     qd.pop_and_reserve(&y, 1, 1, 0);
-    REQUIRE(*y == 122.2);
+    auto data = (*y)->Get<ArrowTestData>();
+    REQUIRE(data.at(0)->y == 122.2);
 
 }
 

@@ -5,14 +5,11 @@
 
 #include <JANA/Topology/JPipelineArrow.h>
 
-class JEventPool;
 class JEventProcessor;
 class JEvent;
 
-using Event = std::shared_ptr<JEvent>;
-using EventQueue = JMailbox<Event*>;
 
-class JEventTapArrow : public JPipelineArrow<JEventTapArrow, Event> {
+class JEventTapArrow : public JPipelineArrow<JEventTapArrow> {
 
 private:
     std::vector<JEventProcessor*> m_procs;
@@ -21,7 +18,7 @@ public:
     JEventTapArrow(std::string name);
 
     void add_processor(JEventProcessor* proc);
-    void process(Event* event, bool& success, JArrowMetrics::Status& status);
+    void process(std::shared_ptr<JEvent>* event, bool& success, JArrowMetrics::Status& status);
     void initialize() final;
     void finalize() final;
 };

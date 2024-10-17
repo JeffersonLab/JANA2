@@ -3,7 +3,6 @@
 
 
 #include <JANA/Topology/JEventTapArrow.h>
-#include <JANA/Utils/JEventPool.h>
 #include <JANA/JEventProcessor.h>
 #include <JANA/JEventUnfolder.h>
 #include <JANA/JEvent.h>
@@ -16,7 +15,7 @@ void JEventTapArrow::add_processor(JEventProcessor* proc) {
     m_procs.push_back(proc);
 }
 
-void JEventTapArrow::process(Event* event, bool& success, JArrowMetrics::Status& status) {
+void JEventTapArrow::process(std::shared_ptr<JEvent>* event, bool& success, JArrowMetrics::Status& status) {
 
     LOG_DEBUG(m_logger) << "Executing arrow " << get_name() << " for event# " << (*event)->GetEventNumber() << LOG_END;
     for (JEventProcessor* proc : m_procs) {

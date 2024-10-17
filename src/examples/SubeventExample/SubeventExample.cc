@@ -8,9 +8,9 @@
 #include <JANA/JEventProcessor.h>
 
 #include <JANA/Topology/JEventSourceArrow.h>
-#include <JANA/Topology/JEventProcessorArrow.h>
+#include <JANA/Topology/JEventMapArrow.h>
 #include <JANA/Topology/JSubeventArrow.h>
-#include "JANA/Topology/JTopologyBuilder.h"
+#include <JANA/Topology/JTopologyBuilder.h>
 
 
 struct MyInput : public JObject {
@@ -111,7 +111,7 @@ int main() {
         source_arrow->set_input(topology->event_pool);
         source_arrow->set_output(&events_in);
 
-        auto proc_arrow = new JEventProcessorArrow("simpleProcessor");
+        auto proc_arrow = new JEventMapArrow("simpleProcessor");
         proc_arrow->set_input(&events_out);
         proc_arrow->set_output(topology->event_pool);
         proc_arrow->add_processor(new SimpleProcessor);

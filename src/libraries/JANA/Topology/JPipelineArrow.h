@@ -6,13 +6,15 @@
 
 #include <JANA/Topology/JArrow.h>
 #include <JANA/Topology/JMailbox.h>
-#include <JANA/Topology/JPool.h>
+#include <JANA/Topology/JEventPool.h>
 
-template <typename DerivedT, typename MessageT>
+using MessageT = std::shared_ptr<JEvent>;
+
+template <typename DerivedT>
 class JPipelineArrow : public JArrow {
 private:
-    PlaceRef<MessageT> m_input {this, true, 1, 1};
-    PlaceRef<MessageT> m_output {this, false, 1, 1};
+    Place m_input {this, true, 1, 1};
+    Place m_output {this, false, 1, 1};
 
 public:
     JPipelineArrow(std::string name,
@@ -25,13 +27,13 @@ public:
     void set_input(JMailbox<MessageT*>* queue) {
         m_input.set_queue(queue);
     }
-    void set_input(JPool<MessageT>* pool) {
+    void set_input(JEventPool* pool) {
         m_input.set_pool(pool);
     }
     void set_output(JMailbox<MessageT*>* queue) {
         m_output.set_queue(queue);
     }
-    void set_output(JPool<MessageT>* pool) {
+    void set_output(JEventPool* pool) {
         m_output.set_pool(pool);
     }
 
@@ -39,8 +41,8 @@ public:
 
         auto start_total_time = std::chrono::steady_clock::now();
 
-        Data<MessageT> in_data {location_id};
-        Data<MessageT> out_data {location_id};
+        Data in_data {location_id};
+        Data out_data {location_id};
 
         bool success = m_input.pull(in_data) && m_output.pull(out_data);
         if (!success) {

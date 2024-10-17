@@ -18,11 +18,13 @@
 /// (and possibly other places).
 class JCallGraphEntryMaker{
 public:
+
     JCallGraphEntryMaker(JCallGraphRecorder &callgraphrecorder, JFactory *factory) : m_call_graph(callgraphrecorder), m_factory(factory){
         m_call_graph.StartFactoryCall(m_factory->GetObjectName(), m_factory->GetTag());
     }
+
     JCallGraphEntryMaker(JCallGraphRecorder &callgraphrecorder, std::string name) : m_call_graph(callgraphrecorder) {
-        // (This is used mainly for JEventProcessors and called from JEventProcessorArrow::execute )
+        // This is used mainly for JEventProcessors
         m_call_graph.StartFactoryCall(name, "");
     }
 

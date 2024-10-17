@@ -7,7 +7,7 @@
 #include <memory>
 #include <JANA/JService.h>
 #include <JANA/Utils/JProcessorMapping.h>
-#include <JANA/Utils/JEventPool.h>
+#include <JANA/Topology/JEventPool.h>
 #include <JANA/Engine/JPerfMetrics.h>  // TODO: Should't be here
 
 #include <JANA/Services/JParameterManager.h>
@@ -18,7 +18,6 @@ class JParameterManager;
 class JComponentManager;
 class JArrow;
 class JQueue;
-class JPoolBase;
 class JQueue;
 class JFoldArrow;
 class JUnfoldArrow;
@@ -32,7 +31,7 @@ public:
     // The topology itself
     std::vector<JArrow*> arrows;
     std::vector<JQueue*> queues;            // Queues shared between arrows
-    std::vector<JPoolBase*> pools;          // Pools shared between arrows
+    std::vector<JEventPool*> pools;          // Pools shared between arrows
     
     // Topology configuration
     size_t m_pool_capacity = 4;
