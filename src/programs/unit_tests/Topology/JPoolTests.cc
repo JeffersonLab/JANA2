@@ -14,7 +14,6 @@ TEST_CASE("JPoolTests_SingleLocationLimitEvents") {
     auto jcm = app.GetService<JComponentManager>();
 
     JEventPool pool(jcm, 3, 1, true);
-    pool.init();
 
     auto* e = pool.get(0);
     REQUIRE(e != nullptr);
@@ -45,7 +44,6 @@ TEST_CASE("JPoolTests_SingleLocationUnlimitedEvents") {
     auto jcm = app.GetService<JComponentManager>();
 
     JEventPool pool(jcm, 3, 1, false);
-    pool.init();
 
     auto* e = pool.get(0);
     REQUIRE(e != nullptr);

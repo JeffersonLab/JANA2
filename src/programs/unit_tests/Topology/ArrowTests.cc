@@ -81,9 +81,6 @@ TEST_CASE("ArrowTests_Basic") {
     JEventPool pd {jcm, 5, 1, true};
     JMailbox<EventT*> qd {2, 1, false};
 
-    pi.init();
-    pd.init();
-
     TestJunctionArrow a {&qi, &pi, &pd, &qd};
 
     EventT* x = nullptr;

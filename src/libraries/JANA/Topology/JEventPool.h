@@ -37,18 +37,15 @@ public:
                       bool limit_total_events_in_flight,
                       JEventLevel level = JEventLevel::PhysicsEvent)
 
-        : m_pool_size(pool_size)
-        , m_location_count(location_count)
-        , m_limit_total_events_in_flight(limit_total_events_in_flight)
-        , m_component_manager(component_manager)
-        , m_level(level) {
-        
+            : m_pool_size(pool_size)
+            , m_location_count(location_count)
+            , m_limit_total_events_in_flight(limit_total_events_in_flight)
+            , m_component_manager(component_manager)
+            , m_level(level) {
+
         assert(m_location_count >= 1);
         assert(m_pool_size > 0 || !m_limit_total_events_in_flight);
-    }
 
-
-    void init() {
         m_pools = std::unique_ptr<LocalPool[]>(new LocalPool[m_location_count]());
 
         for (size_t j=0; j<m_location_count; ++j) {

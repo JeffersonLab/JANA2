@@ -98,7 +98,6 @@ void JTopologyBuilder::create_topology() {
                                 m_pool_capacity,
                                 m_location_count,
                                 m_limit_total_events_in_flight);
-    event_pool->init();
 
     if (m_configure_topology) {
         m_configure_topology(*this);
@@ -262,7 +261,6 @@ void JTopologyBuilder::attach_level(JEventLevel current_level, JUnfoldArrow* par
     // 0. Pool
     // --------------------------
     JEventPool* pool_at_level = new JEventPool(m_components, m_pool_capacity, m_location_count, m_limit_total_events_in_flight, current_level);
-    pool_at_level->init();
     pools.push_back(pool_at_level); // Hand over ownership of the pool to the topology
 
     // --------------------------

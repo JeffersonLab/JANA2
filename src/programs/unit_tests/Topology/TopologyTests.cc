@@ -35,8 +35,6 @@ TEST_CASE("JTopology: Basic functionality") {
 
     auto p1 = new JEventPool(jcm, 0,1,false);
     auto p2 = new JEventPool(jcm, 0,1,false);
-    p1->init();
-    p2->init();
 
     auto emit_rand_ints = new RandIntArrow("emit_rand_ints", p1, q1);
     auto multiply_by_two = new MultByTwoArrow("multiply_by_two", q1, q2);
