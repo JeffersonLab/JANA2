@@ -11,10 +11,8 @@ class JEventUnfolder;
 class JEventProcessor;
 class JEvent;
 
-using Event = std::shared_ptr<JEvent>;
-using EventQueue = JMailbox<Event*>;
 
-class JEventMapArrow : public JPipelineArrow<JEventMapArrow, Event> {
+class JEventMapArrow : public JPipelineArrow<JEventMapArrow> {
 
 private:
     std::vector<JEventSource*> m_sources;
@@ -28,7 +26,7 @@ public:
     void add_unfolder(JEventUnfolder* unfolder);
     void add_processor(JEventProcessor* proc);
 
-    void process(Event* event, bool& success, JArrowMetrics::Status& status);
+    void process(std::shared_ptr<JEvent>* event, bool& success, JArrowMetrics::Status& status);
 
     void initialize() final;
     void finalize() final;

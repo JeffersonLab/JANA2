@@ -6,12 +6,8 @@
 #include <JANA/JEventProcessor.h>
 #include <JANA/Topology/JPipelineArrow.h>
 
-class JEventPool;
 
-using Event = std::shared_ptr<JEvent>;
-using EventQueue = JMailbox<Event*>;
-
-class JEventProcessorArrow : public JPipelineArrow<JEventProcessorArrow, Event> {
+class JEventProcessorArrow : public JPipelineArrow<JEventProcessorArrow> {
 
 private:
     std::vector<JEventProcessor*> m_processors;
@@ -19,7 +15,7 @@ private:
 public:
     JEventProcessorArrow(std::string name);
     void add_processor(JEventProcessor* processor);
-    void process(Event* event, bool& success, JArrowMetrics::Status& status);
+    void process(std::shared_ptr<JEvent>* event, bool& success, JArrowMetrics::Status& status);
     void initialize() final;
     void finalize() final;
 };
